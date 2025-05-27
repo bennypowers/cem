@@ -18,7 +18,7 @@
       "id": "generate",
       "type": "promptString",
       "description": "Arguments...",
-      "default": "foo.ts"
+      "default": "../redhat-ux/red-hat-design-system/elements/*/*.ts"
     }
   ]
 }

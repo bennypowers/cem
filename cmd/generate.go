@@ -5,18 +5,21 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
-	"sync"
+	"log"
+	"path/filepath"
 
+	generate "github.com/bennypowers/cemgen/lib"
+	"github.com/repeale/fp-go"
 	"github.com/spf13/cobra"
 )
 
-var wg sync.WaitGroup
-
-func analyze(file string) {
-	defer wg.Done()
-	fmt.Println(file)
-}
+var expand = fp.FlatMap(func (g string) []string {
+	paths, err := filepath.Glob(g)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return paths
+})
 
 // generateCmd represents the generate command
 var generateCmd = &cobra.Command{
@@ -29,12 +32,7 @@ var generateCmd = &cobra.Command{
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		for _, file := range args {
-			wg.Add(1)
-			go analyze(file)
-		}
-		wg.Wait()
-		fmt.Println("Done!")
+		generate.Generate(expand(args))
 	},
 }
 
