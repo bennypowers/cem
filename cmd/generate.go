@@ -9,11 +9,11 @@ import (
 	"path/filepath"
 
 	generate "github.com/bennypowers/cemgen/lib"
-	"github.com/repeale/fp-go"
+	A "github.com/IBM/fp-go/array"
 	"github.com/spf13/cobra"
 )
 
-var expand = fp.FlatMap(func (g string) []string {
+var expand = A.Chain(func (g string) []string {
 	paths, err := filepath.Glob(g)
 	if err != nil {
 		log.Fatal(err)
