@@ -53,12 +53,14 @@ func generateModule(file string, channel chan<- cem.Module, wg *sync.WaitGroup) 
 	}
 	defer query.Close()
 
+	captureNames := query.CaptureNames()
+
 	cursor := ts.NewQueryCursor()
 	defer cursor.Close()
 
 	root := tree.RootNode()
 
-	captures := cursor.Captures(query, root, code)
+	matches := cursor.Matches(query, root, code)
 
 	module := cem.Module {
 		Kind: "javascript-module",
@@ -68,13 +70,13 @@ func generateModule(file string, channel chan<- cem.Module, wg *sync.WaitGroup) 
 	}
 
 	for {
-		match, _ := captures.Next()
+		match := matches.Next()
 		if match == nil {
 			break
 		}
 		var tagName, className string
 		for _, capture := range match.Captures {
-			name := query.CaptureNames()[capture.Index]
+			name := captureNames[capture.Index]
 			switch name {
 			case "tag-name":
 				tagName = capture.Node.Utf8Text(code)
