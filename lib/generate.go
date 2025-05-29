@@ -53,11 +53,6 @@ func generateModule(file string, channel chan<- cem.Module, wg *sync.WaitGroup) 
 	}
 	defer query.Close()
 
-	exportCaptureIndex, ok := query.CaptureIndexForName("export")
-	if !ok {
-		log.Fatal("could not find export capture in query")
-	}
-
 	cursor := ts.NewQueryCursor()
 	defer cursor.Close()
 
@@ -73,33 +68,22 @@ func generateModule(file string, channel chan<- cem.Module, wg *sync.WaitGroup) 
 	}
 
 	for {
-		match, idx := captures.Next()
+		match, _ := captures.Next()
 		if match == nil {
 			break
 		}
-		if idx != exportCaptureIndex {
-			continue
-		}
-		for _, exportNode := range match.NodesForCaptureIndex(exportCaptureIndex) {
-			nodeCursor := exportNode.Walk()
-			decoratorNodes := exportNode.ChildrenByFieldName("decorator", nodeCursor)
-			decoratorNodeIndex := slices.IndexFunc(decoratorNodes, func(n ts.Node) bool {
-				callExpressionNode := n.NamedChild(0)
-				if callExpressionNode.Kind() != "call_expression" { return false }
-				functionName := callExpressionNode.ChildByFieldName("function").Utf8Text(code)
-				return functionName == "customElement"
-			})
-			if decoratorNodeIndex < 0 {
-				continue
+		var tagName, className string
+		for _, capture := range match.Captures {
+			name := query.CaptureNames()[capture.Index]
+			switch name {
+			case "tag-name":
+				tagName = capture.Node.Utf8Text(code)
+			case "class-name":
+				className = capture.Node.Utf8Text(code)
 			}
-			decoratorNode := decoratorNodes[decoratorNodeIndex]
-			decoratorCallExpressionNode := decoratorNode.NamedChild(0)
-			decoratorArgumentsStringStringFragmentNode :=
-				decoratorCallExpressionNode.NamedChild(1).NamedChild(0).NamedChild(0)
-			classDeclarationNode := exportNode.ChildByFieldName("declaration")
-			tagName := decoratorArgumentsStringStringFragmentNode.Utf8Text(code)
-			className := classDeclarationNode.ChildByFieldName("name").Utf8Text(code)
-			declaration := cem.Reference{ Name: className, Module: &file, }
+		}
+		if tagName != "" && className != "" {
+			declaration := cem.Reference{ Name: className, Module: &file }
 			module.Exports = append(module.Exports, &cem.CustomElementExport{
 				Kind: "custom-element-definition",
 				Name: tagName,
