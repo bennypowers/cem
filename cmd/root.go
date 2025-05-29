@@ -35,9 +35,6 @@ var rootCmd = &cobra.Command{
 	Long: `Scans your projects TypeScript sources and identifies custom elements.
 Generates a custom elements manifest file (custom-elements.json) describing your modules.
 Supports projects written with Lit`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

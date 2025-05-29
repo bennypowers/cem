@@ -94,7 +94,7 @@ type Attribute struct {
 	Type        *Type     `json:"type,omitempty"`
 	Default     *string   `json:"default,omitempty"`
 	FieldName   *string   `json:"fieldName,omitempty"`
-	Deprecated  any       `json:"deprecated,omitempty"` // bool or string
+	Deprecated  Deprecated`json:"deprecated,omitempty"` // bool or string
 }
 
 // Event emitted by a custom element.
@@ -104,7 +104,7 @@ type Event struct {
 	Description *string   `json:"description,omitempty"`
 	Type        Type      `json:"type"`
 	InheritedFrom *Reference `json:"inheritedFrom,omitempty"`
-	Deprecated  any       `json:"deprecated,omitempty"` // bool or string
+	Deprecated  Deprecated       `json:"deprecated,omitempty"` // bool or string
 }
 
 // Slot in a custom element.
@@ -112,7 +112,7 @@ type Slot struct {
 	Name        string    `json:"name"`
 	Summary     *string   `json:"summary,omitempty"`
 	Description *string   `json:"description,omitempty"`
-	Deprecated  any       `json:"deprecated,omitempty"` // bool or string
+	Deprecated  Deprecated       `json:"deprecated,omitempty"` // bool or string
 }
 
 // CssPart describes a CSS part.
@@ -120,7 +120,7 @@ type CssPart struct {
 	Name        string    `json:"name"`
 	Summary     *string   `json:"summary,omitempty"`
 	Description *string   `json:"description,omitempty"`
-	Deprecated  any       `json:"deprecated,omitempty"` // bool or string
+	Deprecated  Deprecated       `json:"deprecated,omitempty"` // bool or string
 }
 
 // CssCustomState describes a CSS custom state.
@@ -128,7 +128,7 @@ type CssCustomState struct {
 	Name        string    `json:"name"`
 	Summary     *string   `json:"summary,omitempty"`
 	Description *string   `json:"description,omitempty"`
-	Deprecated  any       `json:"deprecated,omitempty"` // bool or string
+	Deprecated  Deprecated       `json:"deprecated,omitempty"` // bool or string
 }
 
 // CssCustomProperty describes a CSS custom property.
@@ -138,7 +138,7 @@ type CssCustomProperty struct {
 	Default     *string   `json:"default,omitempty"`
 	Summary     *string   `json:"summary,omitempty"`
 	Description *string   `json:"description,omitempty"`
-	Deprecated  any       `json:"deprecated,omitempty"` // bool or string
+	Deprecated  Deprecated       `json:"deprecated,omitempty"` // bool or string
 }
 
 // Type string representation.
@@ -164,7 +164,7 @@ type ClassLike struct {
 	Mixins      []Reference   `json:"mixins,omitempty"`
 	Members     []ClassMember `json:"members,omitempty"`
 	Source      *SourceReference `json:"source,omitempty"`
-	Deprecated  any           `json:"deprecated,omitempty"` // bool or string
+	Deprecated  Deprecated           `json:"deprecated,omitempty"` // bool or string
 }
 
 // ClassDeclaration is a class.
@@ -187,7 +187,7 @@ type PropertyLike struct {
 	Description *string   `json:"description,omitempty"`
 	Type        *Type     `json:"type,omitempty"`
 	Default     *string   `json:"default,omitempty"`
-	Deprecated  any       `json:"deprecated,omitempty"` // bool or string
+	Deprecated  Deprecated       `json:"deprecated,omitempty"` // bool or string
 	Readonly    *bool     `json:"readonly,omitempty"`
 }
 
@@ -256,12 +256,31 @@ type Parameter struct {
 	Rest     *bool `json:"rest,omitempty"`
 }
 
+type Deprecated interface {
+	isDeprecated()
+	Value() any
+}
+
+type DeprecatedFlag bool
+func (DeprecatedFlag) isDeprecated() {}
+func (d DeprecatedFlag) Value() any { return bool(d) }
+func (d DeprecatedFlag) MarshalJSON() ([]byte, error) {
+	return json.Marshal(bool(d))
+}
+
+type DeprecatedReason string
+func (DeprecatedReason) isDeprecated() {}
+func (d DeprecatedReason) Value() any { return string(d) }
+func (d DeprecatedReason) MarshalJSON() ([]byte, error) {
+	return json.Marshal(string(d))
+}
+
 // FunctionLike is the common interface of functions and mixins.
 type FunctionLike struct {
 	Name        string      `json:"name"`
 	Summary     *string     `json:"summary,omitempty"`
 	Description *string     `json:"description,omitempty"`
-	Deprecated  any         `json:"deprecated,omitempty"` // bool or string
+	Deprecated  Deprecated  `json:"deprecated,omitempty"` // bool or string
 	Parameters  []Parameter `json:"parameters,omitempty"`
 	Return      *Return     `json:"return,omitempty"`
 }

@@ -21,21 +21,30 @@ var expand = fp.FlatMap(func (g string) []string {
 	return paths
 })
 
-// generateCmd represents the generate command
-var generateCmd = &cobra.Command{
-	Use:   "generate",
-	Short: "Generates a custom elements manifest",
-	Args: func(cmd *cobra.Command, args []string) error {
-		if len(args) < 1 {
-			return errors.New("requires at least one file argument")
-		}
-		return nil
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-		generate.Generate(expand(args))
-	},
-}
+var excludes []string
 
 func init() {
+	// generateCmd represents the generate command
+	var generateCmd = &cobra.Command{
+		Use:   "generate [files or glob patterns]",
+		Short: "Generates a custom elements manifest",
+		Args: func(cmd *cobra.Command, args []string) error {
+				if len(args) < 1 {
+					return errors.New("requires at least one file argument")
+				}
+				return nil
+			},
+		Run: func(cmd *cobra.Command, args []string) {
+			files := expand(args)
+			exclude := expand(excludes)
+			generate.Generate(files, exclude)
+		},
+	}
+
+	generateCmd.PersistentFlags().StringArrayVarP(&excludes,
+																								"exclude",
+																								"e",
+																								make([] string, 0),
+																								"files or glob patterns to exclude")
 	rootCmd.AddCommand(generateCmd)
 }

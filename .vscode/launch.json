@@ -7,6 +7,25 @@
       "request": "launch",
       "mode": "debug",
       "program": "${workspaceFolder}/main.go",
+      "presentation": {
+        "order": 0
+      },
+      "args": [
+        "generate",
+        "--exclude",
+        "'../redhat-ux/red-hat-design-system/elements/*/*.d.ts'",
+        "../redhat-ux/red-hat-design-system/elements/*/*.ts"
+      ]
+    },
+    {
+      "name": "Debug cemgen generate (args)",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/main.go",
+      "presentation": {
+        "order": 1
+      },
       "args": [
         "generate",
         "${input:generate}"
@@ -18,7 +37,7 @@
       "id": "generate",
       "type": "promptString",
       "description": "Arguments...",
-      "default": "../redhat-ux/red-hat-design-system/elements/*/*.ts"
+      "default": "--exclude '../redhat-ux/red-hat-design-system/elements/*/*.d.ts' ../redhat-ux/red-hat-design-system/elements/*/*.ts"
     }
   ]
 }
