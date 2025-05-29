@@ -118,32 +118,28 @@ func Generate(files []string, exclude []string) {
 
 	var wg sync.WaitGroup
 
-	modules := make(chan cem.Module, len(files))
+	modulesChan := make(chan cem.Module, len(files))
 
 	for _, file := range files {
 		if !excludeSet.Has(file) {
 			wg.Add(1)
-			go generateModule(file, modules, &wg)
+			go generateModule(file, modulesChan, &wg)
 		}
 	}
 
 	wg.Wait()
-	close(modules)
+	close(modulesChan)
 
-	pkg := cem.Package{
-		SchemaVersion: "1.0.0",
-		Modules: make([]cem.Module, 0),
-	}
+	modules := make([]cem.Module, 0)
+	for module := range modulesChan { modules = append(modules, module) }
 
-	for module := range modules {
-		pkg.Modules = append(pkg.Modules, module)
-	}
+	pkg := cem.NewPackage(modules)
 
 	slices.SortFunc(pkg.Modules, func(a, b cem.Module) int {
 		return cmp.Compare(a.Path, b.Path)
 	})
 
-	manifest, err := cem.SerializeToString(&pkg)
+	manifest, err := cem.SerializeToString(pkg)
 	if err != nil {
 		log.Fatal(err)
 	}

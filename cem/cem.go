@@ -12,9 +12,24 @@ type Package struct {
 	Deprecated    any       `json:"deprecated,omitempty"` // bool or string
 }
 
+func NewPackage(modules []Module) *Package {
+	return &Package{
+		SchemaVersion: "1.0.0",
+		Modules: modules,
+	}
+}
+
 // Module may expand in future; currently only JavaScriptModule.
 type Module = JavaScriptModule
 
+func NewModule(file string) *Module {
+	return &Module {
+		Kind: "javascript-module",
+		Path: file,
+		Declarations: make([]Declaration, 0),
+		Exports: make([]Export, 0),
+	}
+}
 type JavaScriptModule struct {
 	Kind        string        `json:"kind"` // 'javascript-module'
 	Path        string        `json:"path"`
