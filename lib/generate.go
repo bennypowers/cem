@@ -35,14 +35,11 @@ func generateModule(file string, channel chan<- cem.Module, wg *sync.WaitGroup) 
 		log.Fatal(err)
 	}
 	language := ts.NewLanguage(tsts.LanguageTypescript())
-
 	parser := ts.NewParser()
 	defer parser.Close()
 	parser.SetLanguage(language)
-
 	tree := parser.Parse(code, nil)
 	defer tree.Close()
-
 	queryText, err := loadQueryFile("customElementDecorator")
 	if err != nil {
 		log.Fatal(nil)
@@ -52,22 +49,13 @@ func generateModule(file string, channel chan<- cem.Module, wg *sync.WaitGroup) 
 		log.Fatal(qerr)
 	}
 	defer query.Close()
-
 	captureNames := query.CaptureNames()
-
 	cursor := ts.NewQueryCursor()
 	defer cursor.Close()
-
 	root := tree.RootNode()
-
 	matches := cursor.Matches(query, root, code)
 
-	module := cem.Module {
-		Kind: "javascript-module",
-		Path: file,
-		Declarations: make([]cem.Declaration, 0),
-		Exports: make([]cem.Export, 0),
-	}
+	module := cem.NewModule(file)
 
 	for {
 		match := matches.Next()
@@ -139,7 +127,7 @@ func Generate(files []string, exclude []string) {
 		return cmp.Compare(a.Path, b.Path)
 	})
 
-	manifest, err := cem.SerializeToString(pkg)
+	manifest, err := cem.SerializeToString(&pkg)
 	if err != nil {
 		log.Fatal(err)
 	}
