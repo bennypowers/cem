@@ -1,9 +1,10 @@
 package generate
 
 import (
+	"cmp"
 	"embed"
 	"fmt"
-	"cmp"
+	"iter"
 	"log"
 	"os"
 	"slices"
@@ -28,61 +29,167 @@ func loadQueryFile(queryName string) (string, error) {
 	return string(data), nil
 }
 
+func allMatches(qc *ts.QueryCursor, q *ts.Query, node *ts.Node, text []byte) iter.Seq2[*ts.QueryMatch, *ts.Query] {
+	qm := qc.Matches(q, node, text)
+	return func(yield func (qm *ts.QueryMatch, q *ts.Query) bool) {
+		for {
+			m := qm.Next()
+			if m == nil {
+				break
+			}
+			if !yield(m, q) {
+				return
+			}
+		}
+	}
+}
+
+func getClassMethodsFromClassDeclarationNode(
+	language *ts.Language,
+	code []byte,
+	node *ts.Node,
+) []cem.ClassMethod {
+	methods := make([]cem.ClassMethod, 0)
+	queryText, err := loadQueryFile("customElementClassMethod")
+	if err != nil {
+		log.Fatal(err)
+	}
+	query, qerr := ts.NewQuery(language, queryText)
+	defer query.Close()
+	if qerr != nil {
+		log.Fatal(qerr)
+	}
+	cursor := ts.NewQueryCursor()
+	defer cursor.Close()
+	for match := range allMatches(cursor, query, node, code) {
+		var methodName string
+		for _, capture := range match.Captures {
+			name := query.CaptureNames()[capture.Index]
+			switch name {
+			case "method.name":
+				methodName = capture.Node.Utf8Text(code)
+			}
+		}
+		if methodName != "" {
+			methods = append(methods, cem.ClassMethod{
+				Kind: "method",
+				FunctionLike: cem.FunctionLike{
+					Name: methodName,
+				},
+			})
+		}
+	}
+	return methods
+}
+
+func getClassFieldsFromClassDeclarationNode(
+	language *ts.Language,
+	code []byte,
+	node *ts.Node,
+) []cem.ClassField {
+
+	fields := make([]cem.ClassField, 0)
+	queryText, err := loadQueryFile("customElementClassField")
+	if err != nil {
+		log.Fatal(err)
+	}
+	query, qerr := ts.NewQuery(language, queryText)
+	defer query.Close()
+	if qerr != nil {
+		log.Fatal(qerr)
+	}
+	cursor := ts.NewQueryCursor()
+	defer cursor.Close()
+	for match := range allMatches(cursor, query, node, code) {
+		var propertyName,typeText string
+		for _, capture := range match.Captures {
+			name := query.CaptureNames()[capture.Index]
+			switch name {
+			case "field.name":
+				propertyName = capture.Node.Utf8Text(code)
+			case "field.type":
+				typeText = capture.Node.Utf8Text(code)
+			}
+		}
+		if propertyName != "" {
+			field := cem.ClassField{
+				Kind: "field",
+				PropertyLike: cem.PropertyLike{
+					Name: propertyName,
+				},
+			}
+			if typeText != "" {
+				field.Type = &cem.Type{
+					Text: typeText,
+				}
+			}
+			fields = append(fields, field)
+		}
+	}
+	return fields
+}
+
 func generateModule(file string, channel chan<- cem.Module, wg *sync.WaitGroup) {
 	defer wg.Done()
+
 	code, err := os.ReadFile(file)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	language := ts.NewLanguage(tsts.LanguageTypescript())
 	parser := ts.NewParser()
 	defer parser.Close()
 	parser.SetLanguage(language)
 	tree := parser.Parse(code, nil)
 	defer tree.Close()
-	queryText, err := loadQueryFile("customElementDecorator")
-	if err != nil {
-		log.Fatal(nil)
-	}
-	query, qerr := ts.NewQuery(language, queryText)
-	if qerr != nil {
-		log.Fatal(qerr)
-	}
-	defer query.Close()
-	captureNames := query.CaptureNames()
-	cursor := ts.NewQueryCursor()
-	defer cursor.Close()
 	root := tree.RootNode()
-	matches := cursor.Matches(query, root, code)
 
 	module := cem.NewModule(file)
 
-	for {
-		match := matches.Next()
-		if match == nil {
-			break
-		}
+	queryText, err := loadQueryFile("customElementDeclaration")
+	if err != nil {
+		log.Fatal(err)
+	}
+	query, qerr := ts.NewQuery(language, queryText)
+	defer query.Close()
+	if qerr != nil {
+		log.Fatal(qerr)
+	}
+	cursor := ts.NewQueryCursor()
+	for match := range allMatches(cursor, query, root, code) {
+		var exportNode ts.Node
 		var tagName, className string
 		for _, capture := range match.Captures {
-			name := captureNames[capture.Index]
+			name := query.CaptureNames()[capture.Index]
 			switch name {
+			case "export": exportNode = capture.Node
 			case "tag-name":
 				tagName = capture.Node.Utf8Text(code)
-			case "class-name":
+			case "class.name":
 				className = capture.Node.Utf8Text(code)
 			}
 		}
+
 		if tagName != "" && className != "" {
-			declaration := cem.Reference{ Name: className, Module: &file }
+			reference := cem.Reference{ Name: className, Module: &file }
+			fields := getClassFieldsFromClassDeclarationNode(language, code, &exportNode)
+			methods := getClassMethodsFromClassDeclarationNode(language, code, &exportNode)
+
+			members := make([]cem.ClassMember, 0)
+			for _, field := range fields { members = append(members, field) }
+			for _, method := range methods { members = append(members, method) }
+
 			module.Exports = append(module.Exports, &cem.CustomElementExport{
 				Kind: "custom-element-definition",
 				Name: tagName,
-				Declaration: declaration,
+				Declaration: reference,
 			}, &cem.JavaScriptExport{
 				Kind: "js",
 				Name: className,
-				Declaration: declaration,
+				Declaration: reference,
 			})
+
 			module.Declarations = append(module.Declarations, &cem.CustomElementDeclaration{
 				CustomElement: cem.CustomElement {
 					CustomElement: true,
@@ -91,12 +198,14 @@ func generateModule(file string, channel chan<- cem.Module, wg *sync.WaitGroup) 
 					Kind: "class",
 					ClassLike: cem.ClassLike{
 						Name: className,
-						Members: []cem.ClassMember{},
+						Members: members,
 					},
 				},
 			})
 		}
 	}
+
+	cursor.Close()
 	channel <- module
 }
 

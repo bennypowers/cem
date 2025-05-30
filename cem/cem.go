@@ -189,11 +189,32 @@ type ClassDeclaration struct {
 }
 func (*ClassDeclaration) isDeclaration() {}
 
-// ClassMember is a union: ClassField or ClassMethod
-type ClassMember struct {
-	ClassField  *ClassField
-	ClassMethod *ClassMethod
+// Declaration is a union of several types.
+type ClassMember interface {
+	isClassMember()
 }
+
+// ClassField is a class field.
+type ClassField struct {
+	PropertyLike
+	Kind      string       `json:"kind"` // 'field'
+	Static    *bool        `json:"static,omitempty"`
+	Privacy   *string      `json:"privacy,omitempty"` // 'public', 'private', 'protected'
+	InheritedFrom *Reference `json:"inheritedFrom,omitempty"`
+	Source    *SourceReference `json:"source,omitempty"`
+}
+func (ClassField) isClassMember() {}
+
+// ClassMethod is a method.
+type ClassMethod struct {
+	FunctionLike
+	Kind         string       `json:"kind"` // 'method'
+	Static       *bool        `json:"static,omitempty"`
+	Privacy      *string      `json:"privacy,omitempty"` // 'public', 'private', 'protected'
+	InheritedFrom *Reference  `json:"inheritedFrom,omitempty"`
+	Source       *SourceReference `json:"source,omitempty"`
+}
+func (ClassMethod) isClassMember() {}
 
 // PropertyLike is the common interface of variables, class fields, and function parameters.
 type PropertyLike struct {
@@ -206,31 +227,11 @@ type PropertyLike struct {
 	Readonly    *bool     `json:"readonly,omitempty"`
 }
 
-// ClassField is a class field.
-type ClassField struct {
-	PropertyLike
-	Kind      string       `json:"kind"` // 'field'
-	Static    *bool        `json:"static,omitempty"`
-	Privacy   *string      `json:"privacy,omitempty"` // 'public', 'private', 'protected'
-	InheritedFrom *Reference `json:"inheritedFrom,omitempty"`
-	Source    *SourceReference `json:"source,omitempty"`
-}
-
 // CustomElementField extends ClassField with attribute/reflects.
 type CustomElementField struct {
 	ClassField
 	Attribute *string `json:"attribute,omitempty"`
 	Reflects  *bool   `json:"reflects,omitempty"`
-}
-
-// ClassMethod is a method.
-type ClassMethod struct {
-	FunctionLike
-	Kind         string       `json:"kind"` // 'method'
-	Static       *bool        `json:"static,omitempty"`
-	Privacy      *string      `json:"privacy,omitempty"` // 'public', 'private', 'protected'
-	InheritedFrom *Reference  `json:"inheritedFrom,omitempty"`
-	Source       *SourceReference `json:"source,omitempty"`
 }
 
 // MixinDeclaration describes a class mixin.
