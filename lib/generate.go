@@ -182,8 +182,7 @@ func generateModule(file string, channel chan<- cem.Module, wg *sync.WaitGroup) 
 
 	for match := range allMatches(cursor, query, root, code) {
 		var declNode ts.Node
-		var tagName, className string
-		var info ClassInfo
+		var tagName, className, jsdoc string
 
 		for _, capture := range match.Captures {
 			name := captureNames[capture.Index]
@@ -191,8 +190,7 @@ func generateModule(file string, channel chan<- cem.Module, wg *sync.WaitGroup) 
 				case "class.declaration":
 					declNode = capture.Node
 				case "jsdoc":
-					source := capture.Node.Utf8Text(code)
-					info = getClassInfoFromJsdoc([]byte(source))
+					jsdoc = capture.Node.Utf8Text(code)
 				case "tag-name":
 					tagName = capture.Node.Utf8Text(code)
 				case "class.name":
@@ -215,24 +213,27 @@ func generateModule(file string, channel chan<- cem.Module, wg *sync.WaitGroup) 
 
 			fields := getClassFieldsFromClassDeclarationNode(language, code, &declNode)
 			methods := getClassMethodsFromClassDeclarationNode(language, code, &declNode)
+
 			// todo: combine jsdoc and field attrs
+
+			classInfo := NewClassInfo(jsdoc)
 
 			declaration := &cem.CustomElementDeclaration{
 				CustomElement: cem.CustomElement {
 					CustomElement: true,
 					TagName: tagName,
-					Slots: info.Slots,
-					Events: info.Events,
-					CssProperties: info.CssProperties,
-					CssParts: info.CssParts,
+					Slots: classInfo.Slots,
+					Events: classInfo.Events,
+					CssProperties: classInfo.CssProperties,
+					CssParts: classInfo.CssParts,
 				},
 				ClassDeclaration: cem.ClassDeclaration{
 					Kind: "class",
 					ClassLike: cem.ClassLike{
 						Name: className,
-						Deprecated: info.Deprecated,
-						Description: info.Description,
-						Summary: info.Summary,
+						Deprecated: classInfo.Deprecated,
+						Description: classInfo.Description,
+						Summary: classInfo.Summary,
 					},
 				},
 			}

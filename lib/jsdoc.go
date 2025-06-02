@@ -88,8 +88,8 @@ func (info TagInfo) parseContentAsCssProp() (TagInfo) {
 	return info
 }
 
-func (info TagInfo) parseError() {
-	re := regexp.MustCompile(`(?m)((?P<tag>@\w+)\s+)?({(?P<type>[^}]+)})?\s*(?P<content>.*)`)
+func (info TagInfo) parseErrorAsCssProp() (TagInfo) {
+	re := regexp.MustCompile(`(?ms)[\s*]*(?P<tag>\@\w+)?\s*(\{(?P<type>[^}]+)\})?[\s*]*(?P<content>.*)`)
 	matches := FindNamedMatches(re, info.source, true)
 	if matches["tag"] != "" {
 		info.Tag = matches["tag"]
@@ -100,6 +100,7 @@ func (info TagInfo) parseError() {
 	if matches["content"] != "" {
 		info.Content = matches["content"]
 	}
+	return info
 }
 
 func (info TagInfo) toCssCustomProperty() (cem.CssCustomProperty) {
@@ -107,24 +108,30 @@ func (info TagInfo) toCssCustomProperty() (cem.CssCustomProperty) {
 	// --var - description
 	// [--var=default]
 	// [--var=default] - description
-	i := info.parseContentAsCssProp()
+	i := info.parseErrorAsCssProp().parseContentAsCssProp()
 	p := cem.CssCustomProperty{
 		Syntax: i.Type,
 		Name: i.Name,
 		Default: i.Value,
+		Description: i.Description,
 	}
 	return p
 }
 
-
 func NewTagInfo(tag string) TagInfo {
+	// I'd rather use jsdoc parser, but it errors with some of my non-standard syntax, 
+	// like @cssprop {<length>} ...
+	matches := FindNamedMatches(regexp.MustCompile(`(?P<tag>\@\w+)`),tag, true)
 	info := TagInfo{
 		source: tag,
+		Tag: matches["tag"],
 	}
 	return info
 }
 
-func getClassInfoFromJsdoc(code []byte) ClassInfo {
+func NewClassInfo(source string) ClassInfo {
+	info := ClassInfo{}
+	code := []byte(source)
 	queryText, err := loadQueryFile("jsdoc")
 	if err != nil {
 		log.Fatal(err)
@@ -145,50 +152,32 @@ func getClassInfoFromJsdoc(code []byte) ClassInfo {
 	cursor := ts.NewQueryCursor()
 	defer cursor.Close()
 
-	classInfo := ClassInfo{}
-
 	for match := range allMatches(cursor, query, root, code) {
 		for _, capture := range match.Captures {
 			name := query.CaptureNames()[capture.Index]
 			switch name {
 				case "doc.description":
-					classInfo.Description = stripTrailingSplat(capture.Node.Utf8Text(code))
+					info.Description = stripTrailingSplat(capture.Node.Utf8Text(code))
 				case "doc.tag":
-					info := NewTagInfo(capture.Node.Utf8Text(code) )
-					sexp := capture.Node.ToSexp()
-					if strings.Contains(sexp, "(ERROR)") {
-						info.parseError()
-					} else {
-						for _, child := range capture.Node.NamedChildren(root.Walk()) {
-							kind := child.GrammarName()
-							switch kind {
-								case "tag_name":
-									info.Tag = child.Utf8Text(code)
-								case "type":
-									info.Type = child.Utf8Text(code)
-								case "description":
-									info.Content = child.Utf8Text(code)
-							}
-						}
-					}
-					switch info.Tag {
+					tagInfo := NewTagInfo(capture.Node.Utf8Text(code))
+					switch tagInfo.Tag {
 						case "@summary":
-							classInfo.Summary = info.Content
+							info.Summary = tagInfo.Content
 						case "@cssprop", "@cssproperty":
-					    prop := info.toCssCustomProperty()
-							classInfo.CssProperties = append(classInfo.CssProperties, prop)
+					    prop := tagInfo.toCssCustomProperty()
+							info.CssProperties = append(info.CssProperties, prop)
 						// todo: slots, events
 						case "@deprecated":
-							if info.Content == "" {
-								classInfo.Deprecated = cem.DeprecatedFlag(true)
+							if tagInfo.Content == "" {
+								info.Deprecated = cem.DeprecatedFlag(true)
 							} else {
-								classInfo.Deprecated = cem.DeprecatedReason(info.Content)
+								info.Deprecated = cem.DeprecatedReason(tagInfo.Content)
 							}
 					}
 			}
 		}
 	}
-	return classInfo
+	return info
 }
 
 func getFieldInfoFromJsdoc(code string) FieldInfo {

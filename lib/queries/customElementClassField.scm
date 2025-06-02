@@ -1,5 +1,5 @@
 (
-  (comment)? @jsdoc
+  (comment)* @jsdoc
   (public_field_definition
     decorator: (decorator)*
     name: (property_identifier) @field.name
