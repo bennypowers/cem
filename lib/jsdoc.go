@@ -291,6 +291,7 @@ func (info TagInfo) toSlot() (cem.Slot) {
 }
 
 type FieldInfo struct {
+	source string;
 	Description string;
 	Summary string;
 	Type string;
@@ -323,7 +324,7 @@ func NewFieldInfo(code string) FieldInfo {
   descriptionCaptureIndex, _ := query.CaptureIndexForName("doc.description")
   tagCaptureIndex, _ := query.CaptureIndexForName("doc.tag")
 
-	info := FieldInfo{}
+	info := FieldInfo{source: code}
 
 	for match := range allMatches(cursor, query, root, barr) {
 		descriptionNodes := match.NodesForCaptureIndex(descriptionCaptureIndex)

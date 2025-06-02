@@ -8,11 +8,13 @@ import (
 	"log"
 	"os"
 	"slices"
+	"strings"
 	"sync"
 
 	"github.com/bennypowers/cemgen/cem"
 	"github.com/bennypowers/cemgen/set"
 
+	A "github.com/IBM/fp-go/array"
 	ts "github.com/tree-sitter/go-tree-sitter"
 	tsts "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
 )
@@ -86,8 +88,8 @@ func getClassFieldsFromClassDeclarationNode(
 	language *ts.Language,
 	code []byte,
 	node *ts.Node,
-) []cem.ClassField {
-	fields := make([]cem.ClassField, 0)
+) []cem.CustomElementField {
+	fields := make([]cem.CustomElementField, 0)
 	queryText, err := loadQueryFile("customElementClassField")
 	if err != nil {
 		log.Fatal(err)
@@ -101,14 +103,20 @@ func getClassFieldsFromClassDeclarationNode(
 	defer cursor.Close()
 	fieldsSet := make(map[string]bool)
 	for match := range allMatches(cursor, query, node, code) {
-		jsdocCaptureIndex, _ := query.CaptureIndexForName("jsdoc")
+		jsdocCaptureIndex, _ := query.CaptureIndexForName("field.jsdoc")
+		attributeCaptureIndex, _ := query.CaptureIndexForName("field.attr.name")
+		reflectsCaptureIndex, _ := query.CaptureIndexForName("field.attr.reflects")
 		fieldNameCaptureIndex, _ := query.CaptureIndexForName("field.name")
 		fieldTypeCaptureIndex, _ := query.CaptureIndexForName("field.type")
 		fieldInitializerCaptureIndex, _ := query.CaptureIndexForName("field.initializer")
+
+		jsdocNodes := match.NodesForCaptureIndex(jsdocCaptureIndex)
+		attributeNodes := match.NodesForCaptureIndex(attributeCaptureIndex)
+		reflectsNodes := match.NodesForCaptureIndex(reflectsCaptureIndex)
 		nameNodes := match.NodesForCaptureIndex(fieldNameCaptureIndex)
 		typeNodes := match.NodesForCaptureIndex(fieldTypeCaptureIndex)
 		initializerNodes := match.NodesForCaptureIndex(fieldInitializerCaptureIndex)
-		jsdocNodes := match.NodesForCaptureIndex(jsdocCaptureIndex)
+
 		for _, node := range nameNodes {
 			name := node.Utf8Text(code)
 			if name != "" && !fieldsSet[name] {
@@ -118,10 +126,23 @@ func getClassFieldsFromClassDeclarationNode(
 				var deprecated cem.Deprecated
 				for _, node := range typeNodes { typeText = node.Utf8Text(code) }
 				for _, node := range initializerNodes { defaultValue = node.Utf8Text(code) }
-				for _, jsdocNode := range jsdocNodes {
-					jsdocInfo = NewFieldInfo(jsdocNode.Utf8Text(code))
+				for _, node := range jsdocNodes { jsdocInfo = NewFieldInfo(node.Utf8Text(code)) }
+
+				fieldType := &cem.Type{
+					Text: (func() (string) {
+						if jsdocInfo.Type != "" {
+							return jsdocInfo.Type
+						} else if typeText != "" {
+							return typeText
+						} else if defaultValue == "true" || defaultValue == "false" {
+							return "boolean"
+						} else {
+							return ""
+						}
+					})(),
 				}
-				fields = append(fields, cem.ClassField{
+
+				classField := cem.ClassField{
 					Kind: "field",
 					PropertyLike: cem.PropertyLike{
 						Name: name,
@@ -129,21 +150,26 @@ func getClassFieldsFromClassDeclarationNode(
 						Default: defaultValue,
 						Summary: jsdocInfo.Summary,
 						Deprecated: deprecated,
-						Type: &cem.Type{
-							Text: (func() (string) {
-								if jsdocInfo.Type != "" {
-									return jsdocInfo.Type
-								} else if typeText != "" {
-									return typeText
-								} else if defaultValue == "true" || defaultValue == "false" {
-									return "boolean"
-								} else {
-									return ""
-								}
-							})(),
-						},
+						Type: fieldType,
 					},
-				})
+				}
+
+					var attribute string
+					var reflects bool
+					if len(attributeNodes) > 0 {
+						attribute = attributeNodes[0].Utf8Text(code)
+					}
+					if len(reflectsNodes) > 0 {
+						reflects = reflectsNodes[0].Utf8Text(code) == "true"
+					}
+				  if reflects && attribute == "" {
+						attribute = strings.ToLower(classField.Name)
+					}
+					fields = append(fields, cem.CustomElementField{
+						ClassField: classField,
+						Attribute: attribute,
+						Reflects: reflects,
+					})
 			}
 		}
 	}
@@ -214,12 +240,27 @@ func generateModule(file string, channel chan<- cem.Module, wg *sync.WaitGroup) 
 			fields := getClassFieldsFromClassDeclarationNode(language, code, &declNode)
 			methods := getClassMethodsFromClassDeclarationNode(language, code, &declNode)
 
-			// todo: combine jsdoc and field attrs
+			fieldAttrs := A.Chain(func(field cem.CustomElementField) ([]cem.Attribute) {
+				if field.Attribute == "" {
+					return []cem.Attribute{}
+				} else {
+					return []cem.Attribute{{
+						Name: field.Attribute,
+						Summary: field.Summary,
+						Description: field.Description,
+						Deprecated: field.Deprecated,
+						Default: field.Default,
+						Type: field.Type,
+						FieldName: field.Name,
+					}}
+				}
+			})(fields)
 
 			classInfo := NewClassInfo(jsdoc)
 
 			declaration := &cem.CustomElementDeclaration{
 				CustomElement: cem.CustomElement {
+					Attributes: slices.Concat(classInfo.Attrs, fieldAttrs),
 					CustomElement: true,
 					TagName: tagName,
 					Slots: classInfo.Slots,
