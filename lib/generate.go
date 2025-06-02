@@ -119,7 +119,7 @@ func getClassFieldsFromClassDeclarationNode(
 				for _, node := range typeNodes { typeText = node.Utf8Text(code) }
 				for _, node := range initializerNodes { defaultValue = node.Utf8Text(code) }
 				for _, jsdocNode := range jsdocNodes {
-					jsdocInfo = getFieldInfoFromJsdoc(jsdocNode.Utf8Text(code))
+					jsdocInfo = NewFieldInfo(jsdocNode.Utf8Text(code))
 				}
 				fields = append(fields, cem.ClassField{
 					Kind: "field",

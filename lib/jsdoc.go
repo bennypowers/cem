@@ -10,37 +10,8 @@ import (
 	tsjsdoc "github.com/tree-sitter/tree-sitter-jsdoc/bindings/go"
 )
 
-
 func stripTrailingSplat(str string) (string) {
 	return regexp.MustCompile(" *\\*$").ReplaceAllString(str, "")
-}
-
-type FieldInfo struct {
-	Description string;
-	Summary string;
-	Type string;
-	Deprecated cem.Deprecated
-}
-
-type ClassInfo struct {
-	Description string;
-	Summary string;
-	Deprecated cem.Deprecated;
-	Attrs []cem.Attribute;
-	CssParts []cem.CssPart;
-	CssProperties []cem.CssCustomProperty;
-	Events []cem.Event;
-	Slots []cem.Slot;
-}
-
-type TagInfo struct {
-	source string
-	Tag string
-	Name string
-	Value string
-	Type string
-	Content string
-	Description string
 }
 
 func FindNamedMatches(regex *regexp.Regexp, str string, includeNotMatchedOptional bool) map[string]string {
@@ -69,64 +40,15 @@ func FindNamedMatches(regex *regexp.Regexp, str string, includeNotMatchedOptiona
     return results
 }
 
-func (info TagInfo) parseContentAsCssProp() (TagInfo) {
-	re := regexp.MustCompile(`(?m)[\s*]*(\[(?P<kv>.*)\]|(?P<name>[\w-]+))[\s*]+(?P<content>.*)`)
-	matches := FindNamedMatches(re, info.Content, true)
-	if matches["kv"] != "" {
-		slice := strings.SplitN(matches["kv"], "=", 2);
-		info.Name = slice[0]
-		if len(slice) > 1 {
-			info.Value = slice[1]
-		}
-	}
-	if matches["name"] != "" {
-		info.Name = matches["name"]
-	}
-	if matches["content"] != "" {
-		info.Description = matches["content"]
-	}
-	return info
-}
-
-func (info TagInfo) parseErrorAsCssProp() (TagInfo) {
-	re := regexp.MustCompile(`(?ms)[\s*]*(?P<tag>\@\w+)?\s*(\{(?P<type>[^}]+)\})?[\s*]*(?P<content>.*)`)
-	matches := FindNamedMatches(re, info.source, true)
-	if matches["tag"] != "" {
-		info.Tag = matches["tag"]
-	}
-	if matches["type"] != "" {
-		info.Type = matches["type"]
-	}
-	if matches["content"] != "" {
-		info.Content = matches["content"]
-	}
-	return info
-}
-
-func (info TagInfo) toCssCustomProperty() (cem.CssCustomProperty) {
-	// --var
-	// --var - description
-	// [--var=default]
-	// [--var=default] - description
-	i := info.parseErrorAsCssProp().parseContentAsCssProp()
-	p := cem.CssCustomProperty{
-		Syntax: i.Type,
-		Name: i.Name,
-		Default: i.Value,
-		Description: i.Description,
-	}
-	return p
-}
-
-func NewTagInfo(tag string) TagInfo {
-	// I'd rather use jsdoc parser, but it errors with some of my non-standard syntax, 
-	// like @cssprop {<length>} ...
-	matches := FindNamedMatches(regexp.MustCompile(`(?P<tag>\@\w+)`),tag, true)
-	info := TagInfo{
-		source: tag,
-		Tag: matches["tag"],
-	}
-	return info
+type ClassInfo struct {
+	Description string;
+	Summary string;
+	Deprecated cem.Deprecated;
+	Attrs []cem.Attribute;
+	CssParts []cem.CssPart;
+	CssProperties []cem.CssCustomProperty;
+	Events []cem.Event;
+	Slots []cem.Slot;
 }
 
 func NewClassInfo(source string) ClassInfo {
@@ -163,6 +85,9 @@ func NewClassInfo(source string) ClassInfo {
 					switch tagInfo.Tag {
 						case "@summary":
 							info.Summary = tagInfo.Content
+						case "@slot":
+							slot := tagInfo.toSlot()
+							info.Slots = append(info.Slots, slot)
 						case "@cssprop", "@cssproperty":
 					    prop := tagInfo.toCssCustomProperty()
 							info.CssProperties = append(info.CssProperties, prop)
@@ -180,7 +105,87 @@ func NewClassInfo(source string) ClassInfo {
 	return info
 }
 
-func getFieldInfoFromJsdoc(code string) FieldInfo {
+type TagInfo struct {
+	source string
+	Tag string
+	Name string
+	Value string
+	Type string
+	Content string
+	Description string
+}
+
+func NewTagInfo(tag string) TagInfo {
+	// I'd rather use jsdoc parser, but it errors with some of my non-standard syntax, 
+	// like @cssprop {<length>} ...
+	matches := FindNamedMatches(regexp.MustCompile(`(?P<tag>\@\w+)`),tag, true)
+	info := TagInfo{
+		source: tag,
+		Tag: matches["tag"],
+	}
+	return info
+}
+
+func (info TagInfo) toCssCustomProperty() (cem.CssCustomProperty) {
+	// --var
+	// --var - description
+	// [--var=default]
+	// [--var=default] - description
+
+	re := regexp.MustCompile(`(?ms)[\s*]*(\@\w+)?\s*(\{(?P<type>[^}]+)\})?[\s*]*(\[(?P<kv>.*)\]|(?P<name>[\w-]+))[\s*]*(?P<content>.*)`)
+	matches := FindNamedMatches(re, info.source, true)
+	if matches["type"] != "" {
+		info.Type = matches["type"]
+	}
+	if matches["kv"] != "" {
+		slice := strings.SplitN(matches["kv"], "=", 2);
+		info.Name = slice[0]
+		if len(slice) > 1 {
+			info.Value = slice[1]
+		}
+	}
+	if matches["name"] != "" {
+		info.Name = matches["name"]
+	}
+	if matches["content"] != "" {
+		info.Description = matches["content"]
+	}
+	return cem.CssCustomProperty{
+		Syntax: info.Type,
+		Name: info.Name,
+		Default: info.Value,
+		Description: info.Description,
+	}
+}
+
+func (info TagInfo) toSlot() (cem.Slot) {
+  // * @slot icon -  Contains the tags's icon, e.g. web-icon-alert-success.
+  // * @slot      -  Must contain the text for the tag.
+	re := regexp.MustCompile(`(?ms)[\s*]*\@slot\s*(?P<name>[^-\s]+)?[\s*]*-[\s*]*(?P<content>.*)`)
+	matches := FindNamedMatches(re, info.source, true)
+	if matches["name"] != "" {
+		info.Name = matches["name"]
+	}
+	if matches["content"] != "" {
+		info.Description = matches["content"]
+	}
+	return cem.Slot{
+		Name: info.Name,
+		Description: info.Description,
+		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
+		// Summary: info.Type,
+		// Deprecated: info.Deprecated,
+	}
+}
+
+type FieldInfo struct {
+	Description string;
+	Summary string;
+	Type string;
+	Deprecated cem.Deprecated
+}
+
+func NewFieldInfo(code string) FieldInfo {
 	barr := []byte(code)
 	queryText, err := loadQueryFile("jsdoc")
 	if err != nil {
@@ -240,5 +245,4 @@ func getFieldInfoFromJsdoc(code string) FieldInfo {
 
 	return info
 }
-
 
