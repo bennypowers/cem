@@ -83,21 +83,32 @@ func NewClassInfo(source string) ClassInfo {
 				case "doc.tag":
 					tagInfo := NewTagInfo(capture.Node.Utf8Text(code))
 					switch tagInfo.Tag {
-						case "@summary":
-							info.Summary = tagInfo.Content
-						case "@slot":
-							slot := tagInfo.toSlot()
-							info.Slots = append(info.Slots, slot)
-						case "@cssprop", "@cssproperty":
+						case "@attr",
+									"@attribute":
+							attr := tagInfo.toAttribute()
+							info.Attrs = append(info.Attrs, attr)
+						case "@csspart":
+					    part := tagInfo.toCssPart()
+							info.CssParts = append(info.CssParts, part)
+						case "@cssprop",
+									"@cssproperty":
 					    prop := tagInfo.toCssCustomProperty()
 							info.CssProperties = append(info.CssProperties, prop)
-						// todo: slots, events
 						case "@deprecated":
 							if tagInfo.Content == "" {
 								info.Deprecated = cem.DeprecatedFlag(true)
 							} else {
 								info.Deprecated = cem.DeprecatedReason(tagInfo.Content)
 							}
+						case "@event",
+									"@fires":
+							event := tagInfo.toEvent()
+							info.Events = append(info.Events, event)
+						case "@slot":
+							slot := tagInfo.toSlot()
+							info.Slots = append(info.Slots, slot)
+						case "@summary":
+							info.Summary = tagInfo.Content
 					}
 			}
 		}
@@ -126,11 +137,109 @@ func NewTagInfo(tag string) TagInfo {
 	return info
 }
 
+func (info TagInfo) toAttribute() (cem.Attribute) {
+	// @cssprop --var
+	// @cssprop --var - description
+	// @cssprop [--var=default]
+	// @cssprop [--var=default] - description
+	// @cssproperty --var
+	// @cssproperty --var - description
+	// @cssproperty [--var=default]
+	// @cssproperty [--var=default] - description
+
+	re := regexp.MustCompile(`(?ms)[\s*]*(\@\w+)?\s*(\{(?P<type>[^}]+)\})?[\s*]*(\[(?P<kv>.*)\]|(?P<name>[\w-]+))[\s*]*(?P<content>.*)`)
+	matches := FindNamedMatches(re, info.source, true)
+	if matches["type"] != "" {
+		info.Type = matches["type"]
+	}
+	if matches["kv"] != "" {
+		slice := strings.SplitN(matches["kv"], "=", 2);
+		info.Name = slice[0]
+		if len(slice) > 1 {
+			info.Value = slice[1]
+		}
+	}
+	if matches["name"] != "" {
+		info.Name = matches["name"]
+	}
+	if matches["content"] != "" {
+		info.Description = matches["content"]
+	}
+	return cem.Attribute{
+		Type: &cem.Type{Text: info.Type},
+		Name: info.Name,
+		Default: info.Value,
+		Description: info.Description,
+		// NB: not applicable to the jsdoc version of this.
+		// field name should be inferred from decorated class fields, or other framework construct
+		// FieldName: NA,
+		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
+		// Summary: info.Type,
+		// Deprecated: info.Deprecated,
+	}
+}
+
+func (info TagInfo) toEvent() (cem.Event) {
+	// @fires name
+	// @fires name - description
+	// @fires {type} name
+	// @fires {type} name - description
+	// @event name
+	// @event name - description
+	// @event {type} name
+	// @event {type} name - description
+
+	re := regexp.MustCompile(`(?ms)[\s*]*(@fires|@event)\s*(\{(?P<type>[^}]+)\})?[\s*]*(?P<name>[^-\s]+)[\s*]*-[\s*]*(?P<description>.*)`)
+	matches := FindNamedMatches(re, info.source, true)
+	if matches["type"] != "" {
+		info.Type = matches["type"]
+	}
+	if matches["name"] != "" {
+		info.Name = matches["name"]
+	}
+	if matches["description"] != "" {
+		info.Description = matches["description"]
+	}
+	return cem.Event{
+		Name: info.Name,
+		Type: &cem.Type{ Text: info.Type },
+		Description: info.Description,
+		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
+		// Summary: info.Type,
+		// Deprecated: info.Deprecated,
+	}
+}
+
+func (info TagInfo) toCssPart() (cem.CssPart) {
+	// @csspart name
+	// @csspart name - description
+
+	re := regexp.MustCompile(`(?ms)[\s*]*\@csspart\s*(?P<name>[^-\s]+)[\s*]*-[\s*]*(?P<description>.*)`)
+	matches := FindNamedMatches(re, info.source, true)
+	if matches["name"] != "" {
+		info.Name = matches["name"]
+	}
+	if matches["description"] != "" {
+		info.Description = matches["description"]
+	}
+	return cem.CssPart{
+		Name: info.Name,
+		Description: info.Description,
+		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
+		// Summary: info.Type,
+		// Deprecated: info.Deprecated,
+	}
+}
+
 func (info TagInfo) toCssCustomProperty() (cem.CssCustomProperty) {
-	// --var
-	// --var - description
-	// [--var=default]
-	// [--var=default] - description
+	// @cssprop --var
+	// @cssprop --var - description
+	// @cssprop [--var=default]
+	// @cssprop [--var=default] - description
+	// @cssproperty --var
+	// @cssproperty --var - description
+	// @cssproperty [--var=default]
+	// @cssproperty [--var=default] - description
 
 	re := regexp.MustCompile(`(?ms)[\s*]*(\@\w+)?\s*(\{(?P<type>[^}]+)\})?[\s*]*(\[(?P<kv>.*)\]|(?P<name>[\w-]+))[\s*]*(?P<content>.*)`)
 	matches := FindNamedMatches(re, info.source, true)
@@ -155,19 +264,22 @@ func (info TagInfo) toCssCustomProperty() (cem.CssCustomProperty) {
 		Name: info.Name,
 		Default: info.Value,
 		Description: info.Description,
+		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
+		// Summary: info.Type,
+		// Deprecated: info.Deprecated,
 	}
 }
 
 func (info TagInfo) toSlot() (cem.Slot) {
   // * @slot icon -  Contains the tags's icon, e.g. web-icon-alert-success.
   // * @slot      -  Must contain the text for the tag.
-	re := regexp.MustCompile(`(?ms)[\s*]*\@slot\s*(?P<name>[^-\s]+)?[\s*]*-[\s*]*(?P<content>.*)`)
+	re := regexp.MustCompile(`(?ms)[\s*]*\@slot\s*(?P<name>[^-\s]+)?[\s*]*-[\s*]*(?P<description>.*)`)
 	matches := FindNamedMatches(re, info.source, true)
 	if matches["name"] != "" {
 		info.Name = matches["name"]
 	}
-	if matches["content"] != "" {
-		info.Description = matches["content"]
+	if matches["description"] != "" {
+		info.Description = matches["description"]
 	}
 	return cem.Slot{
 		Name: info.Name,
