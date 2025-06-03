@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "test-fixtures/jsdoc-attr.ts",
+      "declarations": [
+        {
+          "name": "JsdocAttr",
+          "members": [
+            {
+              "name": "classAttr",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "classattr"
+            }
+          ],
+          "kind": "class",
+          "tagName": "jsdoc-attr",
+          "attributes": [
+            {
+              "name": "attr"
+            },
+            {
+              "name": "attr-description",
+              "description": "attr description"
+            },
+            {
+              "name": "attr-description-multiline",
+              "description": "multiline\nattr description"
+            },
+            {
+              "name": "attr-typed",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "attr-typed-description",
+              "description": "attr typed description",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "attr-typed-description-multiline",
+              "description": "multiline\nattr typed description",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "attribute"
+            },
+            {
+              "name": "attribute-description",
+              "description": "attribute description"
+            },
+            {
+              "name": "attribute-description-multiline",
+              "description": "multiline\nattribute description"
+            },
+            {
+              "name": "attribute-typed",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "attribute-typed-description",
+              "description": "attribute typed description",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "attribute-typed-description-multiline",
+              "description": "multiline\nattribute typed description",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "classattr",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "classAttr"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-attr",
+          "declaration": {
+            "name": "JsdocAttr",
+            "module": "test-fixtures/jsdoc-attr.ts"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "JsdocAttr",
+          "declaration": {
+            "name": "JsdocAttr",
+            "module": "test-fixtures/jsdoc-attr.ts"
+          }
+        }
+      ]
+    }
+  ]
+}

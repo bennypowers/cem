@@ -1,2 +1,2 @@
 #!/bin/bash
-go test -json ./... | tparse -all
+go test -json $argv ./... | go tool tparse -all

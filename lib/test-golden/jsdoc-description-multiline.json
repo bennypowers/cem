@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "test-fixtures/jsdoc-description-multiline.ts",
+      "declarations": [
+        {
+          "name": "JsdocDescriptionMultiline",
+          "description": "multiline\ndescription",
+          "kind": "class",
+          "tagName": "jsdoc-description-multiline",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-description-multiline",
+          "declaration": {
+            "name": "JsdocDescriptionMultiline",
+            "module": "test-fixtures/jsdoc-description-multiline.ts"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "JsdocDescriptionMultiline",
+          "declaration": {
+            "name": "JsdocDescriptionMultiline",
+            "module": "test-fixtures/jsdoc-description-multiline.ts"
+          }
+        }
+      ]
+    }
+  ]
+}

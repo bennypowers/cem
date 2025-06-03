@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "test-fixtures/jsdoc-slot.ts",
+      "declarations": [
+        {
+          "name": "JsdocSlot",
+          "kind": "class",
+          "tagName": "jsdoc-slot",
+          "slots": [
+            {
+              "name": "",
+              "description": "anon description"
+            },
+            {
+              "name": "slot",
+              "description": "slot"
+            },
+            {
+              "name": "slot-description",
+              "description": "slot description"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-slot",
+          "declaration": {
+            "name": "JsdocSlot",
+            "module": "test-fixtures/jsdoc-slot.ts"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "JsdocSlot",
+          "declaration": {
+            "name": "JsdocSlot",
+            "module": "test-fixtures/jsdoc-slot.ts"
+          }
+        }
+      ]
+    }
+  ]
+}

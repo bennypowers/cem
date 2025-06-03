@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "test-fixtures/jsdoc-description.ts",
+      "declarations": [
+        {
+          "name": "JsdocDescription",
+          "description": "description",
+          "kind": "class",
+          "tagName": "jsdoc-description",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-description",
+          "declaration": {
+            "name": "JsdocDescription",
+            "module": "test-fixtures/jsdoc-description.ts"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "JsdocDescription",
+          "declaration": {
+            "name": "JsdocDescription",
+            "module": "test-fixtures/jsdoc-description.ts"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,235 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "test-fixtures/property-fields.ts",
+      "declarations": [
+        {
+          "name": "PropertyFields",
+          "members": [
+            {
+              "name": "string",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "string"
+            },
+            {
+              "name": "stringDescription",
+              "description": "string description",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "stringdescription"
+            },
+            {
+              "name": "summary",
+              "description": "string description",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "summary"
+            },
+            {
+              "name": "multilineSummary",
+              "description": "string description",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "multilinesummary"
+            },
+            {
+              "name": "camelCase",
+              "description": "string description",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "camel-case"
+            },
+            {
+              "name": "reflects",
+              "description": "string description",
+              "type": {
+                "text": "boolean"
+              },
+              "kind": "field",
+              "attribute": "reflects",
+              "reflects": true
+            },
+            {
+              "name": "attrReflects",
+              "description": "string description",
+              "type": {
+                "text": "boolean"
+              },
+              "kind": "field",
+              "attribute": "attr-reflects",
+              "reflects": true
+            },
+            {
+              "name": "truetrue",
+              "description": "string description",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "truetrue",
+              "reflects": true
+            },
+            {
+              "name": "nonAttr",
+              "description": "string description",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "typejsdoc",
+              "description": "string description",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "typejsdoc"
+            },
+            {
+              "name": "deprecated",
+              "description": "string description",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "deprecated"
+            },
+            {
+              "name": "reason",
+              "description": "string description",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "reason"
+            }
+          ],
+          "kind": "class",
+          "tagName": "property-fields",
+          "attributes": [
+            {
+              "name": "string",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "string"
+            },
+            {
+              "name": "stringdescription",
+              "description": "string description",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "stringDescription"
+            },
+            {
+              "name": "summary",
+              "description": "string description",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "summary"
+            },
+            {
+              "name": "multilinesummary",
+              "description": "string description",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "multilineSummary"
+            },
+            {
+              "name": "camel-case",
+              "description": "string description",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "camelCase"
+            },
+            {
+              "name": "reflects",
+              "description": "string description",
+              "type": {
+                "text": "boolean"
+              },
+              "fieldName": "reflects"
+            },
+            {
+              "name": "attr-reflects",
+              "description": "string description",
+              "type": {
+                "text": "boolean"
+              },
+              "fieldName": "attrReflects"
+            },
+            {
+              "name": "truetrue",
+              "description": "string description",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "truetrue"
+            },
+            {
+              "name": "typejsdoc",
+              "description": "string description",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "typejsdoc"
+            },
+            {
+              "name": "deprecated",
+              "description": "string description",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "deprecated"
+            },
+            {
+              "name": "reason",
+              "description": "string description",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "reason"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "property-fields",
+          "declaration": {
+            "name": "PropertyFields",
+            "module": "test-fixtures/property-fields.ts"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "PropertyFields",
+          "declaration": {
+            "name": "PropertyFields",
+            "module": "test-fixtures/property-fields.ts"
+          }
+        }
+      ]
+    }
+  ]
+}

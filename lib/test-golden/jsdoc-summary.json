@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "test-fixtures/jsdoc-summary.ts",
+      "declarations": [
+        {
+          "name": "JsdocSummary",
+          "summary": "summary",
+          "kind": "class",
+          "tagName": "jsdoc-summary",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-summary",
+          "declaration": {
+            "name": "JsdocSummary",
+            "module": "test-fixtures/jsdoc-summary.ts"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "JsdocSummary",
+          "declaration": {
+            "name": "JsdocSummary",
+            "module": "test-fixtures/jsdoc-summary.ts"
+          }
+        }
+      ]
+    }
+  ]
+}

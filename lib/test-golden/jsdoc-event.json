@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "test-fixtures/jsdoc-event.ts",
+      "declarations": [
+        {
+          "name": "JsdocEvents",
+          "kind": "class",
+          "tagName": "jsdoc-events",
+          "events": [
+            {
+              "name": "event"
+            },
+            {
+              "name": "event-description",
+              "description": "event description"
+            },
+            {
+              "name": "event-description-multiline",
+              "description": "multiline\nevent description"
+            },
+            {
+              "name": "event-typed",
+              "type": {
+                "text": "Event"
+              }
+            },
+            {
+              "name": "event-typed-description",
+              "description": "event typed description",
+              "type": {
+                "text": "Event"
+              }
+            },
+            {
+              "name": "event-typed-description-multiline",
+              "description": "multiline\nevent typed description",
+              "type": {
+                "text": "Event"
+              }
+            },
+            {
+              "name": "fires"
+            },
+            {
+              "name": "fires-description",
+              "description": "fires description"
+            },
+            {
+              "name": "fires-description-multiline",
+              "description": "multiline\nfires description"
+            },
+            {
+              "name": "fires-typed",
+              "type": {
+                "text": "Event"
+              }
+            },
+            {
+              "name": "fires-typed-description",
+              "description": "fires typed description",
+              "type": {
+                "text": "Event"
+              }
+            },
+            {
+              "name": "fires-typed-description-multiline",
+              "description": "multiline\nfires typed description",
+              "type": {
+                "text": "Event"
+              }
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-events",
+          "declaration": {
+            "name": "JsdocEvents",
+            "module": "test-fixtures/jsdoc-event.ts"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "JsdocEvents",
+          "declaration": {
+            "name": "JsdocEvents",
+            "module": "test-fixtures/jsdoc-event.ts"
+          }
+        }
+      ]
+    }
+  ]
+}
