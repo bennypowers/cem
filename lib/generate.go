@@ -45,44 +45,6 @@ func allMatches(qc *ts.QueryCursor, q *ts.Query, node *ts.Node, text []byte) ite
 	}
 }
 
-func getClassMethodsFromClassDeclarationNode(
-	language *ts.Language,
-	code []byte,
-	node *ts.Node,
-) []cem.ClassMethod {
-	methods := make([]cem.ClassMethod, 0)
-	queryText, err := loadQueryFile("customElementClassMethod")
-	if err != nil {
-		log.Fatal(err)
-	}
-	query, qerr := ts.NewQuery(language, queryText)
-	defer query.Close()
-	if qerr != nil {
-		log.Fatal(qerr)
-	}
-	cursor := ts.NewQueryCursor()
-	defer cursor.Close()
-	for match := range allMatches(cursor, query, node, code) {
-		var methodName string
-		for _, capture := range match.Captures {
-			name := query.CaptureNames()[capture.Index]
-			switch name {
-			case "method.name":
-				methodName = capture.Node.Utf8Text(code)
-			}
-		}
-		if methodName != "" {
-			methods = append(methods, cem.ClassMethod{
-				Kind: "method",
-				FunctionLike: cem.FunctionLike{
-					Name: methodName,
-				},
-			})
-		}
-	}
-	return methods
-}
-
 func generateModule(file string, channel chan<- cem.Module, wg *sync.WaitGroup) {
 	defer wg.Done()
 

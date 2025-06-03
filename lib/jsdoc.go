@@ -326,6 +326,65 @@ func (info TagInfo) toSlot() (cem.Slot) {
 	}
 }
 
+/**
+ * @return {foo} barbarbar
+ * @returns {baz} qux
+ */
+func (info TagInfo) toReturn() (ReturnInfo) {
+	re := regexp.MustCompile(`(?ms)[\s*]*@return(s)?\s*(\{(?P<type>[^}]+)\})?(([\s*]+-[\s*])*(?P<description>.*))?`)
+	matches := FindNamedMatches(re, info.source, true)
+	ret := ReturnInfo{
+		Description: normalizeJsdocLines(matches["description"]),
+	}
+	if matches["type"] != "" {
+		info.Type = matches["type"]
+	}
+	return ret
+}
+
+/**
+ * description
+ * @param name
+ * @param [optional]
+ * @param [default='default']
+ * @param {Type} typed
+ * @param {Type} [typedOptional]
+ * @param {Type} [typedOptionalDefault='default']
+ * @param obj
+ * @param obj.prop
+ * @param [obj.optional]
+ * @param [obj.default='default']
+ * @param {Type} obj.typed
+ * @param {Type} [obj.typedOptional]
+ * @param {Type} [obj.typedOptionalDefault='default']
+ */
+func (info TagInfo) toParameter() (ParameterInfo) {
+	re := regexp.MustCompile(`(?ms)[\s*]*(\{(?P<type>[^}]+)\}[\s*]+)?(\[(?P<kv>.*)\]|(?P<name>[\w$]+))[\s*]+(([\s*]+-[\s*]+)?(?P<description>.*)$)?`)
+	matches := FindNamedMatches(re, info.Description, true)
+	if matches["kv"] != "" {
+		slice := strings.SplitN(matches["kv"], "=", 2);
+		info.Name = slice[0]
+		if len(slice) > 1 {
+			info.Value = slice[1]
+		}
+	} else {
+		info.Name = matches["name"]
+	}
+	param := ParameterInfo{
+		Type: matches["type"],
+		Name: info.Name,
+		Default: info.Value,
+		Description: strings.TrimSpace(
+			normalizeJsdocLines(
+				regexp.MustCompile(`(\{[^}]+\})|(\[.*\])`).ReplaceAllString(strings.Replace(info.Description, info.Name, "", 1), ""))),
+		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
+		// Summary: info.Type,
+		// Deprecated: info.Deprecated,
+	}
+	param.Optional = info.Value != "" || strings.Contains(info.Description, "["+info.Name+"]")
+	return param
+}
+
 type FieldInfo struct {
 	source string;
 	Description string;
@@ -395,3 +454,84 @@ func NewFieldInfo(code string) FieldInfo {
 	return info
 }
 
+type ParameterInfo struct {
+	Name        string;
+	Description string;
+	Default     string;
+	Deprecated  cem.Deprecated;
+	Type        string;
+	Optional    bool;
+}
+
+type ReturnInfo struct {
+	Type        string;
+	Description string;
+}
+
+type MethodInfo struct {
+	Description string
+	Summary     string
+	Deprecated  cem.Deprecated
+	Parameters  []ParameterInfo
+	Return      *ReturnInfo
+	Privacy     cem.Privacy
+}
+
+func NewMethodInfo(source string) MethodInfo {
+	info := MethodInfo{}
+	code := []byte(source)
+	queryText, err := loadQueryFile("jsdoc")
+	if err != nil {
+		log.Fatal(err)
+	}
+	language := ts.NewLanguage(tsjsdoc.Language())
+	parser := ts.NewParser()
+	defer parser.Close()
+	parser.SetLanguage(language)
+	tree := parser.Parse([]byte(code), nil)
+	defer tree.Close()
+	root := tree.RootNode()
+
+	query, qerr := ts.NewQuery(language, queryText)
+	defer query.Close()
+	if qerr != nil {
+		log.Fatal(qerr)
+	}
+	cursor := ts.NewQueryCursor()
+	defer cursor.Close()
+
+	for match := range allMatches(cursor, query, root, code) {
+		for _, capture := range match.Captures {
+			name := query.CaptureNames()[capture.Index]
+			switch name {
+				case "doc.description":
+					info.Description = normalizeJsdocLines(capture.Node.Utf8Text(code))
+				case "doc.tag":
+					tagInfo := NewTagInfo(capture.Node.Utf8Text(code))
+					switch tagInfo.Tag {
+						case "@param",
+									"@parameter":
+							param := tagInfo.toParameter()
+							// for now, let's just skip object param members
+							if !strings.Contains(param.Name, ".") {
+								info.Parameters = append(info.Parameters, param)
+							}
+						case "@return",
+									"@returns":
+					    ret := tagInfo.toReturn()
+							info.Return = &ret
+						case "@deprecated":
+							if tagInfo.Description == "" {
+								info.Deprecated = cem.DeprecatedFlag(true)
+							} else {
+								info.Deprecated = cem.DeprecatedReason(tagInfo.Description)
+							}
+						case "@summary":
+							info.Summary = normalizeJsdocLines(tagInfo.Description)
+					}
+			}
+		}
+	}
+
+	return info
+}

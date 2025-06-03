@@ -1,3 +1,3 @@
 (document
-  (description)* @doc.description
+  (description)? @doc.description
   (tag)* @doc.tag)
