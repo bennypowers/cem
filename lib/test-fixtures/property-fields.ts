@@ -38,6 +38,12 @@ export class PropertyFields extends LitElement {
 
   @property({ attribute: false }) nonAttr: string;
 
+  /** highly decorated */
+  @squishy
+  @icky()
+  @tickly({ giggly: true })
+  @property({ attribute: 'multi-decorator', reflect: true }) multiDecorator;
+
   /** @type {number} */
   @property() typejsdoc: string;
 
@@ -50,4 +56,6 @@ export class PropertyFields extends LitElement {
    * @deprecated reason
    */
   @property() reason: string;
+
+
 }
