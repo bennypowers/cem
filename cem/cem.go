@@ -33,8 +33,8 @@ func NewModule(file string) Module {
 type JavaScriptModule struct {
 	Kind         string        `json:"kind"` // 'javascript-module'
 	Path         string        `json:"path"`
-	Summary      string       `json:"summary,omitempty"`
-	Description  string       `json:"description,omitempty"`
+	Summary      string        `json:"summary,omitempty"`
+	Description  string        `json:"description,omitempty"`
 	Declarations []Declaration `json:"declarations,omitempty"`
 	Exports      []Export      `json:"exports,omitempty"`
 	Deprecated   any           `json:"deprecated,omitempty"` // bool or string
@@ -47,19 +47,19 @@ type Export interface {
 
 // JavaScriptExport represents a JS export.
 type JavaScriptExport struct {
-	Kind        string    `json:"kind"` // 'js'
-	Name        string    `json:"name"`
+	Kind        string     `json:"kind"` // 'js'
+	Name        string     `json:"name"`
 	Declaration *Reference `json:"declaration"`
-	Deprecated  any       `json:"deprecated,omitempty"` // bool or string
+	Deprecated  any        `json:"deprecated,omitempty"` // bool or string
 }
 func (*JavaScriptExport) isExport() {}
 
 // CustomElementExport represents a custom element definition.
 type CustomElementExport struct {
-	Kind        string    `json:"kind"` // 'custom-element-definition'
-	Name        string    `json:"name"`
+	Kind        string     `json:"kind"` // 'custom-element-definition'
+	Name        string     `json:"name"`
 	Declaration *Reference `json:"declaration"`
-	Deprecated  any       `json:"deprecated,omitempty"` // bool or string
+	Deprecated  any        `json:"deprecated,omitempty"` // bool or string
 }
 func (*CustomElementExport) isExport() {}
 
@@ -70,7 +70,7 @@ type Declaration interface {
 
 // Reference to an export of a module.
 type Reference struct {
-	Name    string  `json:"name"`
+	Name    string `json:"name"`
 	Package string `json:"package,omitempty"`
 	Module  string `json:"module,omitempty"`
 }
@@ -89,77 +89,77 @@ func (*CustomElementDeclaration) isDeclaration() {}
 
 // CustomElement adds fields to classes/mixins for custom elements.
 type CustomElement struct {
-	TagName       string          `json:"tagName,omitempty"`
-	Attributes    []Attribute      `json:"attributes,omitempty"`
-	Events        []Event          `json:"events,omitempty"`
-	Slots         []Slot           `json:"slots,omitempty"`
-	CssParts      []CssPart        `json:"cssParts,omitempty"`
+	TagName       string              `json:"tagName,omitempty"`
+	Attributes    []Attribute         `json:"attributes,omitempty"`
+	Events        []Event             `json:"events,omitempty"`
+	Slots         []Slot              `json:"slots,omitempty"`
+	CssParts      []CssPart           `json:"cssParts,omitempty"`
 	CssProperties []CssCustomProperty `json:"cssProperties,omitempty"`
-	CssStates     []CssCustomState `json:"cssStates,omitempty"`
-	Demos         []Demo           `json:"demos,omitempty"`
-	CustomElement bool             `json:"customElement"`
+	CssStates     []CssCustomState    `json:"cssStates,omitempty"`
+	Demos         []Demo              `json:"demos,omitempty"`
+	CustomElement bool                `json:"customElement"`
 }
 
 // Attribute for custom elements.
 type Attribute struct {
-	Name          string    `json:"name"`
-	Summary       string   `json:"summary,omitempty"`
-	Description   string   `json:"description,omitempty"`
+	Name          string     `json:"name"`
+	Summary       string     `json:"summary,omitempty"`
+	Description   string     `json:"description,omitempty"`
 	InheritedFrom *Reference `json:"inheritedFrom,omitempty"`
-	Type          *Type     `json:"type,omitempty"`
-	Default       string   `json:"default,omitempty"`
-	FieldName     string   `json:"fieldName,omitempty"`
-	Deprecated    Deprecated`json:"deprecated,omitempty"` // bool or string
+	Type          *Type      `json:"type,omitempty"`
+	Default       string     `json:"default,omitempty"`
+	FieldName     string     `json:"fieldName,omitempty"`
+	Deprecated    Deprecated `json:"deprecated,omitempty"` // bool or string
 }
 
 // Event emitted by a custom element.
 type Event struct {
-	Name          string    `json:"name"`
-	Summary       string   `json:"summary,omitempty"`
-	Description   string   `json:"description,omitempty"`
-	Type          *Type      `json:"type"`
+	Name          string     `json:"name"`
+	Summary       string     `json:"summary,omitempty"`
+	Description   string     `json:"description,omitempty"`
+	Type          *Type      `json:"type,omitempty"`
 	InheritedFrom *Reference `json:"inheritedFrom,omitempty"`
-	Deprecated    Deprecated       `json:"deprecated,omitempty"` // bool or string
+	Deprecated    Deprecated `json:"deprecated,omitempty"` // bool or string
 }
 
 // Slot in a custom element.
 type Slot struct {
-	Name        string    `json:"name"`
-	Summary     string   `json:"summary,omitempty"`
-	Description string   `json:"description,omitempty"`
-	Deprecated  Deprecated       `json:"deprecated,omitempty"` // bool or string
+	Name        string     `json:"name"`
+	Summary     string     `json:"summary,omitempty"`
+	Description string     `json:"description,omitempty"`
+	Deprecated  Deprecated `json:"deprecated,omitempty"` // bool or string
 }
 
 // CssPart describes a CSS part.
 type CssPart struct {
-	Name        string    `json:"name"`
-	Summary     string   `json:"summary,omitempty"`
-	Description string   `json:"description,omitempty"`
-	Deprecated  Deprecated       `json:"deprecated,omitempty"` // bool or string
+	Name        string     `json:"name"`
+	Summary     string     `json:"summary,omitempty"`
+	Description string     `json:"description,omitempty"`
+	Deprecated  Deprecated `json:"deprecated,omitempty"` // bool or string
 }
 
 // CssCustomState describes a CSS custom state.
 type CssCustomState struct {
-	Name        string    `json:"name"`
-	Summary     string   `json:"summary,omitempty"`
-	Description string   `json:"description,omitempty"`
-	Deprecated  Deprecated       `json:"deprecated,omitempty"` // bool or string
+	Name        string     `json:"name"`
+	Summary     string     `json:"summary,omitempty"`
+	Description string     `json:"description,omitempty"`
+	Deprecated  Deprecated `json:"deprecated,omitempty"` // bool or string
 }
 
 // CssCustomProperty describes a CSS custom property.
 type CssCustomProperty struct {
-	Name        string    `json:"name"`
-	Syntax      string   `json:"syntax,omitempty"`
-	Default     string   `json:"default,omitempty"`
-	Summary     string   `json:"summary,omitempty"`
-	Description string   `json:"description,omitempty"`
-	Deprecated  Deprecated       `json:"deprecated,omitempty"` // bool or string
+	Name        string     `json:"name"`
+	Syntax      string     `json:"syntax,omitempty"`
+	Default     string     `json:"default,omitempty"`
+	Summary     string     `json:"summary,omitempty"`
+	Description string     `json:"description,omitempty"`
+	Deprecated  Deprecated `json:"deprecated,omitempty"` // bool or string
 }
 
 // Type string representation.
 type Type struct {
-	Text       string          `json:"text"`
-	References []TypeReference `json:"references,omitempty"`
+	Text       string           `json:"text,omitempty"`
+	References []TypeReference  `json:"references,omitempty"`
 	Source     *SourceReference `json:"source,omitempty"`
 }
 
@@ -172,14 +172,14 @@ type TypeReference struct {
 
 // ClassLike is the common interface of classes and mixins.
 type ClassLike struct {
-	Name        string        `json:"name"`
-	Summary     string       `json:"summary,omitempty"`
-	Description string       `json:"description,omitempty"`
-	Superclass  *Reference    `json:"superclass,omitempty"`
-	Mixins      []Reference   `json:"mixins,omitempty"`
-	Members     []ClassMember `json:"members,omitempty"`
+	Name        string           `json:"name"`
+	Summary     string           `json:"summary,omitempty"`
+	Description string           `json:"description,omitempty"`
+	Superclass  *Reference       `json:"superclass,omitempty"`
+	Mixins      []Reference      `json:"mixins,omitempty"`
+	Members     []ClassMember    `json:"members,omitempty"`
 	Source      *SourceReference `json:"source,omitempty"`
-	Deprecated  Deprecated           `json:"deprecated,omitempty"` // bool or string
+	Deprecated  Deprecated        `json:"deprecated,omitempty"` // bool or string
 }
 
 // ClassDeclaration is a class.
@@ -197,11 +197,11 @@ type ClassMember interface {
 // ClassField is a class field.
 type ClassField struct {
 	PropertyLike
-	Kind          string       `json:"kind"` // 'field'
-	Static        bool        `json:"static,omitempty"`
-	Privacy       Privacy      `json:"privacy,omitempty"` // 'public', 'private', 'protected'
-	InheritedFrom *Reference `json:"inheritedFrom,omitempty"`
-	Source        *SourceReference `json:"source,omitempty"`
+	Kind          string       			`json:"kind"` // 'field'
+	Static        bool        			`json:"static,omitempty"`
+	Privacy       Privacy      			`json:"privacy,omitempty"` // 'public', 'private', 'protected'
+	InheritedFrom *Reference 				`json:"inheritedFrom,omitempty"`
+	Source        *SourceReference	`json:"source,omitempty"`
 }
 func (ClassField) isClassMember() {}
 
@@ -311,7 +311,7 @@ type FunctionLike struct {
 
 // Return value for functions.
 type Return struct {
-	Type        *Type    `json:"type,omitempty"`
+	Type        *Type   `json:"type,omitempty"`
 	Summary     string  `json:"summary,omitempty"`
 	Description string  `json:"description,omitempty"`
 }

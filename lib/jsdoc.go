@@ -105,10 +105,10 @@ func NewClassInfo(source string) ClassInfo {
 					    state := tagInfo.toCssCustomState()
 							info.CssStates = append(info.CssStates, state)
 						case "@deprecated":
-							if tagInfo.Content == "" {
+							if tagInfo.Description == "" {
 								info.Deprecated = cem.DeprecatedFlag(true)
 							} else {
-								info.Deprecated = cem.DeprecatedReason(tagInfo.Content)
+								info.Deprecated = cem.DeprecatedReason(tagInfo.Description)
 							}
 						case "@event",
 									"@fires":
@@ -118,7 +118,7 @@ func NewClassInfo(source string) ClassInfo {
 							slot := tagInfo.toSlot()
 							info.Slots = append(info.Slots, slot)
 						case "@summary":
-							info.Summary = normalizeJsdocLines(tagInfo.Content)
+							info.Summary = normalizeJsdocLines(tagInfo.Description)
 					}
 			}
 		}
@@ -132,54 +132,47 @@ type TagInfo struct {
 	Name string
 	Value string
 	Type string
-	Content string
 	Description string
 }
 
 func NewTagInfo(tag string) TagInfo {
 	// I'd rather use jsdoc parser, but it errors with some of my non-standard syntax, 
 	// like @cssprop {<length>} ...
-	matches := FindNamedMatches(regexp.MustCompile(`(?P<tag>\@\w+)`),tag, true)
+	matches := FindNamedMatches(regexp.MustCompile(`(?ms)(?P<tag>\@\w+)([\s*]+(?P<description>.*))?`),tag, true)
 	info := TagInfo{
 		source: tag,
 		Tag: matches["tag"],
+		Description: normalizeJsdocLines(matches["description"]),
 	}
 	return info
 }
 
+/**
+ * @cssprop --var
+ * @cssprop --var - description
+ * @cssprop [--var=default]
+ * @cssprop [--var=default] - description
+ * @cssproperty --var
+ * @cssproperty --var - description
+ * @cssproperty [--var=default]
+ * @cssproperty [--var=default] - description
+ */
 func (info TagInfo) toAttribute() (cem.Attribute) {
-	// @cssprop --var
-	// @cssprop --var - description
-	// @cssprop [--var=default]
-	// @cssprop [--var=default] - description
-	// @cssproperty --var
-	// @cssproperty --var - description
-	// @cssproperty [--var=default]
-	// @cssproperty [--var=default] - description
-
-	re := regexp.MustCompile(`(?ms)[\s*]*(\@\w+)?\s*(\{(?P<type>[^}]+)\})?[\s*]*(\[(?P<kv>.*)\]|(?P<name>[\w-]+))([\s*]+-[\s*]+(?P<description>.*))?`)
+	re := regexp.MustCompile(`(?ms)[\s*]*@attr(ibute)?[\s*]+(\{(?P<type>[^}]+)\}[\s*]+)?(\[(?P<kv>.*)\]|(?P<name>[\w-]+))([\s*]+-[\s*]+(?P<description>.*))?`)
 	matches := FindNamedMatches(re, info.source, true)
-	if matches["type"] != "" {
-		info.Type = matches["type"]
-	}
 	if matches["kv"] != "" {
 		slice := strings.SplitN(matches["kv"], "=", 2);
 		info.Name = slice[0]
 		if len(slice) > 1 {
 			info.Value = slice[1]
 		}
-	}
-	if matches["name"] != "" {
+	} else {
 		info.Name = matches["name"]
 	}
-	if matches["description"] != "" {
-		info.Description = normalizeJsdocLines(matches["description"])
-	}
-	return cem.Attribute{
-		Type: &cem.Type{Text: info.Type},
+	attr := cem.Attribute{
 		Name: info.Name,
 		Default: info.Value,
-		Description: info.Description,
+		Description: normalizeJsdocLines(matches["description"]),
 		// NB: not applicable to the jsdoc version of this.
 		// field name should be inferred from decorated class fields, or other framework construct
 		// FieldName: NA,
@@ -187,133 +180,145 @@ func (info TagInfo) toAttribute() (cem.Attribute) {
 		// Summary: info.Type,
 		// Deprecated: info.Deprecated,
 	}
-}
-
-func (info TagInfo) toEvent() (cem.Event) {
-	// @fires name
-	// @fires name - description
-	// @fires {type} name
-	// @fires {type} name - description
-	// @event name
-	// @event name - description
-	// @event {type} name
-	// @event {type} name - description
-
-	re := regexp.MustCompile(`(?ms)[\s*]*(@fires|@event)\s*(\{(?P<type>[^}]+)\})?[\s*]*(?P<name>[^-\s]+)[\s*]+-[\s*]+(?P<description>.*)`)
-	matches := FindNamedMatches(re, info.source, true)
 	if matches["type"] != "" {
-		info.Type = matches["type"]
+		attr.Type = &cem.Type{Text: matches["type"]}
 	}
-	if matches["name"] != "" {
-		info.Name = matches["name"]
-	}
-	if matches["description"] != "" {
-		info.Description = normalizeJsdocLines(matches["description"])
-	}
-	return cem.Event{
-		Name: info.Name,
-		Type: &cem.Type{ Text: info.Type },
-		Description: info.Description,
-		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
-		// Summary: info.Type,
-		// Deprecated: info.Deprecated,
-	}
+	return attr
 }
 
+/**
+ * @csspart name
+ * @csspart name - description
+ */
 func (info TagInfo) toCssPart() (cem.CssPart) {
-	// @csspart name
-	// @csspart name - description
-
-	re := regexp.MustCompile(`(?ms)[\s*]*\@csspart\s*(?P<name>[^-\s]+)[\s*]+-[\s*]+(?P<description>.*)`)
+	re := regexp.MustCompile(`(?ms)[\s*]*@csspart[\s*]+(?P<name>[\w-]+)([\s*]+-[\s*]+(?P<description>.*))?`)
 	matches := FindNamedMatches(re, info.source, true)
-	if matches["name"] != "" {
-		info.Name = matches["name"]
-	}
-	if matches["description"] != "" {
-		info.Description = matches["description"]
-	}
 	return cem.CssPart{
-		Name: info.Name,
-		Description: info.Description,
+		Name: matches["name"],
+		Description: normalizeJsdocLines(matches["description"]),
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
 		// Summary: info.Type,
 		// Deprecated: info.Deprecated,
 	}
 }
 
+/**
+ * @cssprop --prop
+ * @cssprop --prop-description - prop description
+ * @cssprop --prop-description-multiline - multiline
+ *                                         prop description
+ * @cssprop [--prop-default=none]
+ * @cssprop [--prop-default-description=none] - prop default description
+ * @cssprop [--prop-default-description-multiline=none] - multiline
+ *                                              prop default description
+ * @cssprop {<color>} --prop-typed
+ * @cssprop {<color>} --prop-typed-description - prop typed description
+ * @cssprop {<color>} --prop-typed-description-multiline - multiline
+ *                                                         prop typed description
+ * @cssprop {<color>} [--prop-typed-default=none]
+ * @cssprop {<color>} [--prop-typed-default-description=none] - prop typed default description
+ * @cssprop {<color>} [--prop-typed-default-description-multiline=none] - multiline
+ *                                                                        prop typed default description
+ * @cssproperty --property
+ * @cssproperty --property-description - property description
+ * @cssproperty --property-description-multiline - multiline
+ *                                                 property description
+ * @cssproperty [--property-default=none]
+ * @cssproperty [--property-default-description=none] - property default description
+ * @cssproperty {<color>} [--property-typed-default-description-multiline=none] - multiline
+ *                                                                                property typed default description
+ * @cssproperty {<color>} --property-typed
+ * @cssproperty {<color>} --property-typed-description - property typed description
+ * @cssproperty {<color>} --property-typed-description-multiline - multiline
+ *                                                                 property typed description
+ * @cssproperty {<color>} [--property-typed-default=none]
+ * @cssproperty {<color>} [--property-typed-default-description=none] - property typed default description
+ * @cssproperty {<color>} [--property-typed-default-description-multiline=none] - multiline
+ *                                                                                property typed default description
+ */
 func (info TagInfo) toCssCustomProperty() (cem.CssCustomProperty) {
-	// @cssprop --var
-	// @cssprop --var - description
-	// @cssprop [--var=default]
-	// @cssprop [--var=default] - description
-	// @cssproperty --var
-	// @cssproperty --var - description
-	// @cssproperty [--var=default]
-	// @cssproperty [--var=default] - description
-
-	re := regexp.MustCompile(`(?ms)[\s*]*(\@\w+)?\s*(\{(?P<type>[^}]+)\})?[\s*]*(\[(?P<kv>.*)\]|(?P<name>[\w-]+))[\s*]+-[\s*]+(?P<description>.*)`)
+	re := regexp.MustCompile(`(?ms)[\s*]*@cssprop(erty)?\s*(\{(?P<type>[^}]+)\})?[\s*]*(\[(?P<kv>.*)\]|(?P<name>[\w-]+))([\s*]+-[\s*]+(?P<description>.*)$)?`)
 	matches := FindNamedMatches(re, info.source, true)
-	if matches["type"] != "" {
-		info.Type = matches["type"]
-	}
 	if matches["kv"] != "" {
 		slice := strings.SplitN(matches["kv"], "=", 2);
 		info.Name = slice[0]
 		if len(slice) > 1 {
 			info.Value = slice[1]
 		}
-	}
-	if matches["name"] != "" {
+	} else {
 		info.Name = matches["name"]
 	}
-	if matches["description"] != "" {
-		info.Description = normalizeJsdocLines(matches["description"])
-	}
-	return cem.CssCustomProperty{
-		Syntax: info.Type,
+	prop := cem.CssCustomProperty{
+		Syntax: matches["type"],
 		Name: info.Name,
 		Default: info.Value,
-		Description: info.Description,
+		Description: normalizeJsdocLines(matches["description"]),
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
 		// Summary: info.Type,
 		// Deprecated: info.Deprecated,
 	}
+	return prop
 }
 
+/**
+ * @cssstate name
+ * @cssstate name - description
+ */
 func (info TagInfo) toCssCustomState() (cem.CssCustomState) {
-	// @cssstate name
-	// @cssstate name - description
-
-	re := regexp.MustCompile(`(?ms)[\s*]*\@csspart\s*(?P<name>[^-\s]+)[\s*]+-[\s*]+(?P<description>.*)`)
+	re := regexp.MustCompile(`(?ms)[\s*]*@cssstate[\s*]+(?P<name>[\w-]+)([\s*]+-[\s*]+(?P<description>.*))?`)
 	matches := FindNamedMatches(re, info.source, true)
-	if matches["name"] != "" {
-		info.Name = matches["name"]
-	}
-	if matches["description"] != "" {
-		info.Description = normalizeJsdocLines(matches["description"])
-	}
 	return cem.CssCustomState{
-		Name: info.Name,
-		Description: info.Description,
+		Name: matches["name"],
+		Description: normalizeJsdocLines(matches["description"]),
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
 		// Summary: info.Type,
 		// Deprecated: info.Deprecated,
 	}
 }
 
-func (info TagInfo) toSlot() (cem.Slot) {
-  // * @slot icon -  Contains the tags's icon, e.g. web-icon-alert-success.
-  // * @slot      -  Must contain the text for the tag.
-	re := regexp.MustCompile(`(?ms)[\s*]*\@slot\s*(?P<name>[^-\s]+)?[\s*]+-[\s*]+(?P<description>.*)`)
+/**
+ * @fires name
+ * @fires name - description
+ * @fires {type} name
+ * @fires {type} name - description
+ * @event name
+ * @event name - description
+ * @event {type} name
+ * @event {type} name - description
+ */
+func (info TagInfo) toEvent() (cem.Event) {
+	re := regexp.MustCompile(`(?ms)[\s*]*(@fires|@event)\s*(\{(?P<type>[^}]+)\})?[\s*]*(?P<name>[\w-]+)([\s*]+-[\s*]+(?P<description>.*))?`)
 	matches := FindNamedMatches(re, info.source, true)
-	if matches["name"] != "" {
-		info.Name = matches["name"]
+	event := cem.Event{
+		Name: matches["name"],
+		Description: normalizeJsdocLines(matches["description"]),
+		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
+		// Summary: info.Type,
+		// Deprecated: info.Deprecated,
 	}
+	if matches["type"] != "" {
+		event.Type = &cem.Type{
+			Text: matches["type"],
+		}
+	}
+	return event
+}
+
+/**
+ * @slot icon -  Contains the tags's icon, e.g. web-icon-alert-success.
+ * @slot      -  Must contain the text for the tag.
+ */
+func (info TagInfo) toSlot() (cem.Slot) {
+	re := regexp.MustCompile(`(?ms)[\s*]*(@slot[\s*]+-[\s*]+(?P<anonDescription>.*))|(@slot[\s*]+(?P<name>[\w-]+)([\s*]+-[\s*]+(?P<description>.*))?)`)
+	matches := FindNamedMatches(re, info.source, true)
 	if matches["description"] != "" {
 		info.Description = normalizeJsdocLines(matches["description"])
+	}
+	if matches["anonDescription"] != "" {
+		info.Description = normalizeJsdocLines(matches["anonDescription"])
 	}
 	return cem.Slot{
-		Name: info.Name,
+		Name: matches["name"],
 		Description: info.Description,
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
 		// Summary: info.Type,
@@ -361,23 +366,23 @@ func NewFieldInfo(code string) FieldInfo {
 		descriptionNodes := match.NodesForCaptureIndex(descriptionCaptureIndex)
 		tagNodes := match.NodesForCaptureIndex(tagCaptureIndex)
 		for _, node := range descriptionNodes {
-			info.Description = stripTrailingSplat(node.Utf8Text(barr))
+			info.Description = stripTrailingSplat(normalizeJsdocLines(node.Utf8Text(barr)))
 		}
 		for _, node := range tagNodes {
 			var tagName, tagType, content string
 			for _, child := range node.NamedChildren(root.Walk()) {
 				switch child.GrammarName() {
-					case "tagName": tagName = child.Utf8Text(barr)
+					case "tag_name": tagName = child.Utf8Text(barr)
 					case "type": tagType = child.Utf8Text(barr)
-					case "content": content = child.Utf8Text(barr)
+					case "description": content = stripTrailingSplat(normalizeJsdocLines(child.Utf8Text(barr)))
 				}
 			}
 			switch tagName {
-				case "summary":
-					info.Summary += content
-				case "type":
+				case "@summary":
+					info.Summary += stripTrailingSplat(normalizeJsdocLines(content))
+				case "@type":
 					info.Type = tagType
-				case "deprecated":
+				case "@deprecated":
 					if content == "" {
 						info.Deprecated = cem.DeprecatedFlag(true)
 					} else {
