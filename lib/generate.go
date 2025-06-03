@@ -30,15 +30,25 @@ func loadQueryFile(queryName string) (string, error) {
 	return string(data), nil
 }
 
-func allMatches(qc *ts.QueryCursor, q *ts.Query, node *ts.Node, text []byte) iter.Seq2[*ts.QueryMatch, *ts.Query] {
+func allMatches(qc *ts.QueryCursor, q *ts.Query, node *ts.Node, text []byte) iter.Seq[*ts.QueryMatch] {
 	qm := qc.Matches(q, node, text)
-	return func(yield func (qm *ts.QueryMatch, q *ts.Query) bool) {
+	return func(yield func (qm *ts.QueryMatch) bool) {
 		for {
 			m := qm.Next()
 			if m == nil {
 				break
 			}
-			if !yield(m, q) {
+			if !yield(m) {
+				return
+			}
+		}
+	}
+}
+
+func allCaptureNodes(q *ts.QueryMatch) iter.Seq[*ts.Node] {
+	return func(yield func (c *ts.Node) bool) {
+		for _, c := range q.Captures {
+			if !yield(&c.Node) {
 				return
 			}
 		}

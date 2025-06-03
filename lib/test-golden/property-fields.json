@@ -53,6 +53,13 @@
               "attribute": "camel-case"
             },
             {
+              "name": "initialized",
+              "description": "string description",
+              "default": "'string'",
+              "kind": "field",
+              "attribute": "initialized"
+            },
+            {
               "name": "reflects",
               "description": "string description",
               "type": {
@@ -89,6 +96,14 @@
                 "text": "string"
               },
               "kind": "field"
+            },
+            {
+              "name": "multiDecorator",
+              "description": "string description",
+              "default": "0",
+              "kind": "field",
+              "attribute": "multi-decorator",
+              "reflects": true
             },
             {
               "name": "typejsdoc",
@@ -161,6 +176,12 @@
               "fieldName": "camelCase"
             },
             {
+              "name": "initialized",
+              "description": "string description",
+              "default": "'string'",
+              "fieldName": "initialized"
+            },
+            {
               "name": "reflects",
               "description": "string description",
               "type": {
@@ -183,6 +204,12 @@
                 "text": "string"
               },
               "fieldName": "truetrue"
+            },
+            {
+              "name": "multi-decorator",
+              "description": "string description",
+              "default": "0",
+              "fieldName": "multiDecorator"
             },
             {
               "name": "typejsdoc",

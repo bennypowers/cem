@@ -30,6 +30,8 @@ export class PropertyFields extends LitElement {
    */
   @property({ attribute: 'camel-case' }) camelCase: string;
 
+  @property() initialized = 'string'
+
   @property({ reflects: true, type: Boolean }) reflects: boolean;
 
   @property({ attribute: 'attr-reflects', reflects: true, type: Boolean }) attrReflects: boolean;
@@ -42,7 +44,7 @@ export class PropertyFields extends LitElement {
   @squishy
   @icky()
   @tickly({ giggly: true })
-  @property({ attribute: 'multi-decorator', reflect: true }) multiDecorator;
+  @property({ attribute: 'multi-decorator', reflects: true }) multiDecorator = 0;
 
   /** @type {number} */
   @property() typejsdoc: string;
