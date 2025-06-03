@@ -5,11 +5,13 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 
-	generate "github.com/bennypowers/cemgen/lib"
 	A "github.com/IBM/fp-go/array"
+	generate "github.com/bennypowers/cemgen/lib"
 	"github.com/spf13/cobra"
 )
 
@@ -22,6 +24,7 @@ var expand = A.Chain(func (g string) []string {
 })
 
 var excludes []string
+var output string
 
 func init() {
 	// generateCmd represents the generate command
@@ -37,7 +40,12 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			files := expand(args)
 			exclude := expand(excludes)
-			generate.Generate(files, exclude)
+			result := generate.Generate(files, exclude)
+			if output != "" {
+				os.WriteFile(output, []byte(result), 0666)
+			} else {
+				fmt.Println(result)
+			}
 		},
 	}
 
@@ -46,5 +54,10 @@ func init() {
 																								"e",
 																								make([] string, 0),
 																								"files or glob patterns to exclude")
+	generateCmd.PersistentFlags().StringVarP(&output,
+																						"output",
+																						"o",
+																						"",
+																						"write custom elements manifest to this file")
 	rootCmd.AddCommand(generateCmd)
 }

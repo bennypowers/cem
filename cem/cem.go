@@ -199,7 +199,7 @@ type ClassField struct {
 	PropertyLike
 	Kind          string       `json:"kind"` // 'field'
 	Static        bool        `json:"static,omitempty"`
-	Privacy       string      `json:"privacy,omitempty"` // 'public', 'private', 'protected'
+	Privacy       Privacy      `json:"privacy,omitempty"` // 'public', 'private', 'protected'
 	InheritedFrom *Reference `json:"inheritedFrom,omitempty"`
 	Source        *SourceReference `json:"source,omitempty"`
 }
@@ -210,7 +210,7 @@ type ClassMethod struct {
 	FunctionLike
 	Kind          string       `json:"kind"` // 'method'
 	Static        bool        `json:"static,omitempty"`
-	Privacy       string      `json:"privacy,omitempty"` // 'public', 'private', 'protected'
+	Privacy       Privacy      `json:"privacy,omitempty"` // 'public', 'private', 'protected'
 	InheritedFrom *Reference  `json:"inheritedFrom,omitempty"`
 	Source        *SourceReference `json:"source,omitempty"`
 }
@@ -290,6 +290,14 @@ func (d DeprecatedReason) Value() any { return string(d) }
 func (d DeprecatedReason) MarshalJSON() ([]byte, error) {
 	return json.Marshal(string(d))
 }
+
+type Privacy string
+
+const (
+	Public    Privacy = "public"
+	Protected Privacy = "protected"
+	Private   Privacy = "private"
+)
 
 // FunctionLike is the common interface of functions and mixins.
 type FunctionLike struct {

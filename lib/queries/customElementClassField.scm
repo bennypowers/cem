@@ -10,6 +10,7 @@
                            (pair
                              key: (property_identifier) @key
                              value: [(true)
+                                     (false)
                                      (string
                                       (string_fragment) @field.attr.name
                                       (#eq! @key "attribute"))])

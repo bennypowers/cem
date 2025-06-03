@@ -14,6 +14,12 @@ func stripTrailingSplat(str string) (string) {
 	return regexp.MustCompile(" *\\*$").ReplaceAllString(str, "")
 }
 
+func normalizeJsdocLines(str string) (string) {
+	re := regexp.MustCompile(`(?m)^\s+\*\s+`)
+	new := re.ReplaceAllString(str, "")
+	return new
+}
+
 func FindNamedMatches(regex *regexp.Regexp, str string, includeNotMatchedOptional bool) map[string]string {
     match := regex.FindStringSubmatchIndex(str)
     if match == nil {
@@ -47,6 +53,7 @@ type ClassInfo struct {
 	Attrs []cem.Attribute;
 	CssParts []cem.CssPart;
 	CssProperties []cem.CssCustomProperty;
+	CssStates []cem.CssCustomState;
 	Events []cem.Event;
 	Slots []cem.Slot;
 }
@@ -79,7 +86,7 @@ func NewClassInfo(source string) ClassInfo {
 			name := query.CaptureNames()[capture.Index]
 			switch name {
 				case "doc.description":
-					info.Description = stripTrailingSplat(capture.Node.Utf8Text(code))
+					info.Description = normalizeJsdocLines(capture.Node.Utf8Text(code))
 				case "doc.tag":
 					tagInfo := NewTagInfo(capture.Node.Utf8Text(code))
 					switch tagInfo.Tag {
@@ -94,6 +101,9 @@ func NewClassInfo(source string) ClassInfo {
 									"@cssproperty":
 					    prop := tagInfo.toCssCustomProperty()
 							info.CssProperties = append(info.CssProperties, prop)
+						case "@cssstate":
+					    state := tagInfo.toCssCustomState()
+							info.CssStates = append(info.CssStates, state)
 						case "@deprecated":
 							if tagInfo.Content == "" {
 								info.Deprecated = cem.DeprecatedFlag(true)
@@ -108,7 +118,7 @@ func NewClassInfo(source string) ClassInfo {
 							slot := tagInfo.toSlot()
 							info.Slots = append(info.Slots, slot)
 						case "@summary":
-							info.Summary = tagInfo.Content
+							info.Summary = normalizeJsdocLines(tagInfo.Content)
 					}
 			}
 		}
@@ -147,7 +157,7 @@ func (info TagInfo) toAttribute() (cem.Attribute) {
 	// @cssproperty [--var=default]
 	// @cssproperty [--var=default] - description
 
-	re := regexp.MustCompile(`(?ms)[\s*]*(\@\w+)?\s*(\{(?P<type>[^}]+)\})?[\s*]*(\[(?P<kv>.*)\]|(?P<name>[\w-]+))[\s*]*(?P<content>.*)`)
+	re := regexp.MustCompile(`(?ms)[\s*]*(\@\w+)?\s*(\{(?P<type>[^}]+)\})?[\s*]*(\[(?P<kv>.*)\]|(?P<name>[\w-]+))([\s*]+-[\s*]+(?P<description>.*))?`)
 	matches := FindNamedMatches(re, info.source, true)
 	if matches["type"] != "" {
 		info.Type = matches["type"]
@@ -162,8 +172,8 @@ func (info TagInfo) toAttribute() (cem.Attribute) {
 	if matches["name"] != "" {
 		info.Name = matches["name"]
 	}
-	if matches["content"] != "" {
-		info.Description = matches["content"]
+	if matches["description"] != "" {
+		info.Description = normalizeJsdocLines(matches["description"])
 	}
 	return cem.Attribute{
 		Type: &cem.Type{Text: info.Type},
@@ -189,7 +199,7 @@ func (info TagInfo) toEvent() (cem.Event) {
 	// @event {type} name
 	// @event {type} name - description
 
-	re := regexp.MustCompile(`(?ms)[\s*]*(@fires|@event)\s*(\{(?P<type>[^}]+)\})?[\s*]*(?P<name>[^-\s]+)[\s*]*-[\s*]*(?P<description>.*)`)
+	re := regexp.MustCompile(`(?ms)[\s*]*(@fires|@event)\s*(\{(?P<type>[^}]+)\})?[\s*]*(?P<name>[^-\s]+)[\s*]+-[\s*]+(?P<description>.*)`)
 	matches := FindNamedMatches(re, info.source, true)
 	if matches["type"] != "" {
 		info.Type = matches["type"]
@@ -198,7 +208,7 @@ func (info TagInfo) toEvent() (cem.Event) {
 		info.Name = matches["name"]
 	}
 	if matches["description"] != "" {
-		info.Description = matches["description"]
+		info.Description = normalizeJsdocLines(matches["description"])
 	}
 	return cem.Event{
 		Name: info.Name,
@@ -214,7 +224,7 @@ func (info TagInfo) toCssPart() (cem.CssPart) {
 	// @csspart name
 	// @csspart name - description
 
-	re := regexp.MustCompile(`(?ms)[\s*]*\@csspart\s*(?P<name>[^-\s]+)[\s*]*-[\s*]*(?P<description>.*)`)
+	re := regexp.MustCompile(`(?ms)[\s*]*\@csspart\s*(?P<name>[^-\s]+)[\s*]+-[\s*]+(?P<description>.*)`)
 	matches := FindNamedMatches(re, info.source, true)
 	if matches["name"] != "" {
 		info.Name = matches["name"]
@@ -241,7 +251,7 @@ func (info TagInfo) toCssCustomProperty() (cem.CssCustomProperty) {
 	// @cssproperty [--var=default]
 	// @cssproperty [--var=default] - description
 
-	re := regexp.MustCompile(`(?ms)[\s*]*(\@\w+)?\s*(\{(?P<type>[^}]+)\})?[\s*]*(\[(?P<kv>.*)\]|(?P<name>[\w-]+))[\s*]*(?P<content>.*)`)
+	re := regexp.MustCompile(`(?ms)[\s*]*(\@\w+)?\s*(\{(?P<type>[^}]+)\})?[\s*]*(\[(?P<kv>.*)\]|(?P<name>[\w-]+))[\s*]+-[\s*]+(?P<description>.*)`)
 	matches := FindNamedMatches(re, info.source, true)
 	if matches["type"] != "" {
 		info.Type = matches["type"]
@@ -256,8 +266,8 @@ func (info TagInfo) toCssCustomProperty() (cem.CssCustomProperty) {
 	if matches["name"] != "" {
 		info.Name = matches["name"]
 	}
-	if matches["content"] != "" {
-		info.Description = matches["content"]
+	if matches["description"] != "" {
+		info.Description = normalizeJsdocLines(matches["description"])
 	}
 	return cem.CssCustomProperty{
 		Syntax: info.Type,
@@ -270,16 +280,37 @@ func (info TagInfo) toCssCustomProperty() (cem.CssCustomProperty) {
 	}
 }
 
-func (info TagInfo) toSlot() (cem.Slot) {
-  // * @slot icon -  Contains the tags's icon, e.g. web-icon-alert-success.
-  // * @slot      -  Must contain the text for the tag.
-	re := regexp.MustCompile(`(?ms)[\s*]*\@slot\s*(?P<name>[^-\s]+)?[\s*]*-[\s*]*(?P<description>.*)`)
+func (info TagInfo) toCssCustomState() (cem.CssCustomState) {
+	// @cssstate name
+	// @cssstate name - description
+
+	re := regexp.MustCompile(`(?ms)[\s*]*\@csspart\s*(?P<name>[^-\s]+)[\s*]+-[\s*]+(?P<description>.*)`)
 	matches := FindNamedMatches(re, info.source, true)
 	if matches["name"] != "" {
 		info.Name = matches["name"]
 	}
 	if matches["description"] != "" {
-		info.Description = matches["description"]
+		info.Description = normalizeJsdocLines(matches["description"])
+	}
+	return cem.CssCustomState{
+		Name: info.Name,
+		Description: info.Description,
+		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
+		// Summary: info.Type,
+		// Deprecated: info.Deprecated,
+	}
+}
+
+func (info TagInfo) toSlot() (cem.Slot) {
+  // * @slot icon -  Contains the tags's icon, e.g. web-icon-alert-success.
+  // * @slot      -  Must contain the text for the tag.
+	re := regexp.MustCompile(`(?ms)[\s*]*\@slot\s*(?P<name>[^-\s]+)?[\s*]+-[\s*]+(?P<description>.*)`)
+	matches := FindNamedMatches(re, info.source, true)
+	if matches["name"] != "" {
+		info.Name = matches["name"]
+	}
+	if matches["description"] != "" {
+		info.Description = normalizeJsdocLines(matches["description"])
 	}
 	return cem.Slot{
 		Name: info.Name,
