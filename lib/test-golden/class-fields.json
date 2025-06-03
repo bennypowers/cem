@@ -3,10 +3,10 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "test-fixtures/property-fields.ts",
+      "path": "test-fixtures/class-fields.ts",
       "declarations": [
         {
-          "name": "PropertyFields",
+          "name": "ClassFields",
           "members": [
             {
               "name": "string",
@@ -131,10 +131,19 @@
               },
               "kind": "field",
               "attribute": "reason"
+            },
+            {
+              "name": "protected",
+              "description": "string description",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "privacy": "protected"
             }
           ],
           "kind": "class",
-          "tagName": "property-fields",
+          "tagName": "class-fields",
           "attributes": [
             {
               "name": "string",
@@ -242,18 +251,18 @@
       "exports": [
         {
           "kind": "custom-element-definition",
-          "name": "property-fields",
+          "name": "class-fields",
           "declaration": {
-            "name": "PropertyFields",
-            "module": "test-fixtures/property-fields.ts"
+            "name": "ClassFields",
+            "module": "test-fixtures/class-fields.ts"
           }
         },
         {
           "kind": "js",
-          "name": "PropertyFields",
+          "name": "ClassFields",
           "declaration": {
-            "name": "PropertyFields",
-            "module": "test-fixtures/property-fields.ts"
+            "name": "ClassFields",
+            "module": "test-fixtures/class-fields.ts"
           }
         }
       ]

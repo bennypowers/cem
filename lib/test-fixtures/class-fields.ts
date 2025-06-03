@@ -1,8 +1,8 @@
 import { LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 
-@customElement('property-fields')
-export class PropertyFields extends LitElement {
+@customElement('class-fields')
+export class ClassFields extends LitElement {
   @property() string: string;
 
   /** string description */
@@ -59,5 +59,5 @@ export class PropertyFields extends LitElement {
    */
   @property() reason: string;
 
-
+  @property({ attribute: false }) protected protected: string;
 }

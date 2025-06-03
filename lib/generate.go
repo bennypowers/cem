@@ -45,16 +45,6 @@ func allMatches(qc *ts.QueryCursor, q *ts.Query, node *ts.Node, text []byte) ite
 	}
 }
 
-func allCaptureNodes(q *ts.QueryMatch) iter.Seq[*ts.Node] {
-	return func(yield func (c *ts.Node) bool) {
-		for _, c := range q.Captures {
-			if !yield(&c.Node) {
-				return
-			}
-		}
-	}
-}
-
 func getClassMethodsFromClassDeclarationNode(
 	language *ts.Language,
 	code []byte,

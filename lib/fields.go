@@ -27,7 +27,7 @@ func getClassFieldsFromClassDeclarationNode(
 	fieldsSet := make(map[string]bool)
 	fields := make([]cem.CustomElementField, 0)
 	for match := range allMatches(cursor, query, node, code) {
-		fieldCaptureIndex, _ := query.CaptureIndexForName("match.field")
+		fieldCaptureIndex, _ := query.CaptureIndexForName("field")
 		jsdocCaptureIndex, _ := query.CaptureIndexForName("field.jsdoc")
 		fieldNameCaptureIndex, _ := query.CaptureIndexForName("field.name")
 		fieldTypeCaptureIndex, _ := query.CaptureIndexForName("field.type")
