@@ -9,6 +9,76 @@
           "name": "ClassFields",
           "members": [
             {
+              "name": "rstat",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "readonly": true,
+              "kind": "field",
+              "static": true
+            },
+            {
+              "name": "rstatpub",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "readonly": true,
+              "kind": "field",
+              "static": true
+            },
+            {
+              "name": "rstatpriv",
+              "type": {
+                "text": "Float"
+              },
+              "default": "0.1",
+              "readonly": true,
+              "kind": "field",
+              "static": true,
+              "privacy": "private"
+            },
+            {
+              "name": "rstatprot",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "readonly": true,
+              "kind": "field",
+              "static": true,
+              "privacy": "protected"
+            },
+            {
+              "name": "stat",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field",
+              "static": true
+            },
+            {
+              "name": "statpriv",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field",
+              "static": true
+            },
+            {
+              "name": "statprot",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field",
+              "static": true,
+              "privacy": "protected"
+            },
+            {
               "name": "string",
               "type": {
                 "text": "string"
@@ -18,7 +88,7 @@
             },
             {
               "name": "stringDescription",
-              "description": "string description",
+              "description": "string description field",
               "type": {
                 "text": "string"
               },
@@ -26,8 +96,17 @@
               "attribute": "stringdescription"
             },
             {
+              "name": "stringMultilineDescription",
+              "description": "multiline\ndescription\nfield",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "stringmultilinedescription"
+            },
+            {
               "name": "summary",
-              "description": "string description",
+              "summary": "summary field",
               "type": {
                 "text": "string"
               },
@@ -36,7 +115,7 @@
             },
             {
               "name": "multilineSummary",
-              "description": "string description",
+              "summary": "multiline\nsummary\nfield",
               "type": {
                 "text": "string"
               },
@@ -45,7 +124,8 @@
             },
             {
               "name": "camelCase",
-              "description": "string description",
+              "summary": "camelcase field",
+              "description": "camelcase\nmultiline\ndescription\nfield",
               "type": {
                 "text": "string"
               },
@@ -54,14 +134,15 @@
             },
             {
               "name": "initialized",
-              "description": "string description",
+              "type": {
+                "text": "string"
+              },
               "default": "'string'",
               "kind": "field",
               "attribute": "initialized"
             },
             {
               "name": "reflects",
-              "description": "string description",
               "type": {
                 "text": "boolean"
               },
@@ -71,43 +152,39 @@
             },
             {
               "name": "attrReflects",
-              "description": "string description",
               "type": {
                 "text": "boolean"
               },
               "kind": "field",
-              "attribute": "attr-reflects",
-              "reflects": true
+              "attribute": "attr-reflects"
             },
             {
               "name": "truetrue",
-              "description": "string description",
               "type": {
                 "text": "string"
               },
               "kind": "field",
-              "attribute": "truetrue",
-              "reflects": true
+              "attribute": "truetrue"
             },
             {
               "name": "nonAttr",
-              "description": "string description",
               "type": {
-                "text": "string"
+                "text": "number"
               },
               "kind": "field"
             },
             {
               "name": "multiDecorator",
-              "description": "string description",
+              "description": "highly decorated field",
+              "type": {
+                "text": "number"
+              },
               "default": "0",
               "kind": "field",
-              "attribute": "multi-decorator",
-              "reflects": true
+              "attribute": "multi-decorator"
             },
             {
               "name": "typejsdoc",
-              "description": "string description",
               "type": {
                 "text": "string"
               },
@@ -116,25 +193,24 @@
             },
             {
               "name": "deprecated",
-              "description": "string description",
               "type": {
                 "text": "string"
               },
+              "deprecated": true,
               "kind": "field",
               "attribute": "deprecated"
             },
             {
               "name": "reason",
-              "description": "string description",
               "type": {
                 "text": "string"
               },
+              "deprecated": "reason",
               "kind": "field",
               "attribute": "reason"
             },
             {
               "name": "protected",
-              "description": "string description",
               "type": {
                 "text": "string"
               },
@@ -154,15 +230,23 @@
             },
             {
               "name": "stringdescription",
-              "description": "string description",
+              "description": "string description field",
               "type": {
                 "text": "string"
               },
               "fieldName": "stringDescription"
             },
             {
+              "name": "stringmultilinedescription",
+              "description": "multiline\ndescription\nfield",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "stringMultilineDescription"
+            },
+            {
               "name": "summary",
-              "description": "string description",
+              "summary": "summary field",
               "type": {
                 "text": "string"
               },
@@ -170,7 +254,7 @@
             },
             {
               "name": "multilinesummary",
-              "description": "string description",
+              "summary": "multiline\nsummary\nfield",
               "type": {
                 "text": "string"
               },
@@ -178,7 +262,8 @@
             },
             {
               "name": "camel-case",
-              "description": "string description",
+              "summary": "camelcase field",
+              "description": "camelcase\nmultiline\ndescription\nfield",
               "type": {
                 "text": "string"
               },
@@ -186,13 +271,14 @@
             },
             {
               "name": "initialized",
-              "description": "string description",
+              "type": {
+                "text": "string"
+              },
               "default": "'string'",
               "fieldName": "initialized"
             },
             {
               "name": "reflects",
-              "description": "string description",
               "type": {
                 "text": "boolean"
               },
@@ -200,7 +286,6 @@
             },
             {
               "name": "attr-reflects",
-              "description": "string description",
               "type": {
                 "text": "boolean"
               },
@@ -208,7 +293,6 @@
             },
             {
               "name": "truetrue",
-              "description": "string description",
               "type": {
                 "text": "string"
               },
@@ -216,13 +300,15 @@
             },
             {
               "name": "multi-decorator",
-              "description": "string description",
+              "description": "highly decorated field",
+              "type": {
+                "text": "number"
+              },
               "default": "0",
               "fieldName": "multiDecorator"
             },
             {
               "name": "typejsdoc",
-              "description": "string description",
               "type": {
                 "text": "string"
               },
@@ -230,19 +316,19 @@
             },
             {
               "name": "deprecated",
-              "description": "string description",
               "type": {
                 "text": "string"
               },
-              "fieldName": "deprecated"
+              "fieldName": "deprecated",
+              "deprecated": true
             },
             {
               "name": "reason",
-              "description": "string description",
               "type": {
                 "text": "string"
               },
-              "fieldName": "reason"
+              "fieldName": "reason",
+              "deprecated": "reason"
             }
           ],
           "customElement": true

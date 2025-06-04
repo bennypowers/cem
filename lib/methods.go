@@ -30,7 +30,7 @@ func getClassMethodsFromClassDeclarationNode(
 	for match := range allMatches(cursor, query, node, code) {
 		method := cem.ClassMethod{Kind: "method"}
 
-		captures := getCapturesFromMatch(match, query)
+		captures := *getCapturesFromMatch(match, query)
 
 		methodNames, ok := captures["method.name"]
 		methodName := methodNames[0]

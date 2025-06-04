@@ -2,11 +2,128 @@ package generate
 
 import (
 	"log"
+	"regexp"
 	"strings"
 
 	"github.com/bennypowers/cemgen/cem"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
+
+func handleMatch(
+	match *ts.QueryMatch,
+	query *ts.Query,
+	code []byte,
+	statics map[string]*cem.CustomElementField,
+	fields map[string]*cem.CustomElementField,
+) (*cem.CustomElementField, bool) {
+	captures := *getCapturesFromMatch(match, query)
+
+	fieldName := captures["field.name"][0].Utf8Text(code)
+
+	_, static := captures["field.static"]
+
+	if static {
+		switch fieldName {
+		case "formAssociated", "styles", "shadowRootOptions":
+			return nil, false
+		}
+		if (statics[fieldName] != nil) {
+			return nil, false
+		}
+	}
+
+	if (fields[fieldName] != nil) {
+		return nil, false
+	}
+
+	_, readonly := captures["field.readonly"]
+
+	classField := cem.ClassField{
+		Kind: "field",
+		Static: static,
+		PropertyLike: cem.PropertyLike{
+			Name: fieldName,
+			Readonly: readonly,
+		},
+	}
+
+	for _, node := range captures["field.type"] {
+		typeText := node.Utf8Text(code)
+		if typeText != "" {
+			classField.Type = &cem.Type{
+				Text: typeText,
+			}
+		}
+	}
+
+	for _, node := range captures["field.jsdoc"] {
+		source := node.Utf8Text(code)
+		if strings.HasPrefix(source, `/**`) {
+			info := NewFieldInfo(source)
+			classField.Description += info.Description
+			classField.Summary += info.Summary
+			classField.Deprecated = info.Deprecated
+			if info.Type != "" {
+				classField.Type = &cem.Type{
+					Text: info.Type,
+				}
+			}
+		}
+	}
+
+	for _, node := range captures["field.initializer"] {
+		classField.Default = node.Utf8Text(code)
+		if classField.Type == nil {
+			if (classField.Default == "true" || classField.Default == "false") {
+				classField.Type = &cem.Type{
+					Text: "boolean",
+				}
+			} else if regexp.MustCompile(`^[\d._]+$`).MatchString(classField.Default) {
+				classField.Type = &cem.Type{
+					Text: "number",
+				}
+			} else if regexp.MustCompile(`^('|")`).MatchString(classField.Default) {
+				classField.Type = &cem.Type{
+					Text: "string",
+				}
+			}
+		}
+	}
+
+	for _, node := range captures["field.privacy"] {
+		switch node.Utf8Text(code) {
+			case "private":
+				classField.Privacy = cem.Private
+			case "protected":
+				classField.Privacy = cem.Protected
+		}
+	}
+
+	// for _, node := captures["decorator"] {
+	// 	reflects, attrTrue, attrName = parseDecorator(node.Utf8Text(code))
+	// }
+
+	ceField := cem.CustomElementField{
+		ClassField: classField,
+		Reflects: !classField.Static && len(captures["field.attr.reflects"]) > 0 && captures["field.attr.reflects"][0].Utf8Text(code) == "true",
+	}
+
+	attributeBoolNodes := captures["field.attr.bool"]
+	attributeNameNodes := captures["field.attr.name"]
+
+	if (!classField.Static &&
+			len(attributeBoolNodes) == 0 ||
+			(len(attributeBoolNodes) > 0 && attributeBoolNodes[0].GrammarName() != "false")) {
+		if len(attributeNameNodes) > 0 {
+			ceField.Attribute = attributeNameNodes[0].Utf8Text(code)
+		} else {
+			ceField.Attribute = strings.ToLower(classField.Name)
+		}
+	}
+
+	for k := range captures { delete(captures, k) }
+	return &ceField, true
+}
 
 func getClassFieldsFromClassDeclarationNode(
 	language *ts.Language,
@@ -24,105 +141,33 @@ func getClassFieldsFromClassDeclarationNode(
 	}
 	cursor := ts.NewQueryCursor()
 	defer cursor.Close()
-	fieldsSet := make(map[string]bool)
-	fields := make([]cem.CustomElementField, 0)
+
+	statics := make(map[string]*cem.CustomElementField)
+	staticOrder := make([]string, 0)
+	fields := make(map[string]*cem.CustomElementField)
+	fieldOrder := make([]string, 0)
+
 	for match := range allMatches(cursor, query, node, code) {
-		fieldCaptureIndex, _ := query.CaptureIndexForName("field")
-		jsdocCaptureIndex, _ := query.CaptureIndexForName("field.jsdoc")
-		fieldNameCaptureIndex, _ := query.CaptureIndexForName("field.name")
-		fieldTypeCaptureIndex, _ := query.CaptureIndexForName("field.type")
-		fieldInitializerCaptureIndex, _ := query.CaptureIndexForName("field.initializer")
-		attributeBoolCaptureIndex, _ := query.CaptureIndexForName("field.attr.bool")
-		attributeNameCaptureIndex, _ := query.CaptureIndexForName("field.attr.name")
-		reflectsCaptureIndex, _ := query.CaptureIndexForName("field.attr.reflects")
-
-		jsdocNodes := match.NodesForCaptureIndex(jsdocCaptureIndex)
-		fieldNodes := match.NodesForCaptureIndex(fieldCaptureIndex)
-		fieldNameNodes := match.NodesForCaptureIndex(fieldNameCaptureIndex)
-		attributeBoolNodes := match.NodesForCaptureIndex(attributeBoolCaptureIndex)
-		attributeNameNodes := match.NodesForCaptureIndex(attributeNameCaptureIndex)
-		reflectsNodes := match.NodesForCaptureIndex(reflectsCaptureIndex)
-		typeNodes := match.NodesForCaptureIndex(fieldTypeCaptureIndex)
-		initializerNodes := match.NodesForCaptureIndex(fieldInitializerCaptureIndex)
-
-		for _, node:=range fieldNameNodes {
-			fieldName := node.Utf8Text(code)
-			_, ok := fieldsSet[fieldName]
-			if !ok {
-				fieldsSet[fieldName] = true
-				var static bool
-				var readonly bool
-				var privacy cem.Privacy
-				var defaultValue, typeText string
-				var jsdocInfo FieldInfo
-				var deprecated cem.Deprecated
-				for _, node := range typeNodes { typeText = node.Utf8Text(code) }
-				for _, node := range initializerNodes { defaultValue = node.Utf8Text(code) }
-				for _, node := range jsdocNodes { jsdocInfo = NewFieldInfo(node.Utf8Text(code)) }
-
-				for _, node := range fieldNodes {
-					for _, node := range node.Children(node.Walk()) {
-						text := node.Utf8Text(code)
-						switch text {
-							case "static":
-								static = true
-							case "readonly":
-								readonly = true
-							case "private":
-								privacy = cem.Private
-							case "protected":
-								privacy = cem.Protected
-						}
-					}
-				}
-
-				classField := cem.ClassField{
-					Kind: "field",
-					Static: static,
-					Privacy: privacy,
-					PropertyLike: cem.PropertyLike{
-						Name: fieldName,
-						Description: jsdocInfo.Description,
-						Default: defaultValue,
-						Summary: jsdocInfo.Summary,
-						Deprecated: deprecated,
-						Readonly: readonly,
-					},
-				}
-
-				var attribute string
-				reflects := len(reflectsNodes) > 0 && reflectsNodes[0].Utf8Text(code) == "true"
-				attrFalse := len(attributeBoolNodes) > 0 && attributeBoolNodes[0].GrammarName() == "false"
-				if !attrFalse {
-					if len(attributeNameNodes) > 0 {
-						attribute = attributeNameNodes[0].Utf8Text(code)
-					} else {
-						attribute = strings.ToLower(classField.Name)
-					}
-				}
-
-				if jsdocInfo.Type != "" {
-					classField.Type = &cem.Type{
-						Text: jsdocInfo.Type,
-					}
-				} else if typeText != "" {
-					classField.Type = &cem.Type{
-						Text: typeText,
-					}
-				} else if defaultValue == "true" || defaultValue == "false" {
-					classField.Type = &cem.Type{
-						Text: "boolean",
-					}
-				}
-
-				fields = append(fields, cem.CustomElementField{
-					ClassField: classField,
-					Attribute: attribute,
-					Reflects: reflects,
-				})
+		field, ok := handleMatch(match, query, code, statics, fields)
+		if ok {
+			if field.Static {
+				statics[field.Name] = field
+				staticOrder = append(staticOrder, field.Name)
+			} else {
+				fields[field.Name] = field
+				fieldOrder = append(fieldOrder, field.Name)
 			}
 		}
 	}
-	return fields
+
+	orderedFields := make([]cem.CustomElementField, 0)
+
+	for _, name := range staticOrder {
+		orderedFields = append(orderedFields, *statics[name])
+	}
+	for _, name := range fieldOrder {
+		orderedFields = append(orderedFields, *fields[name])
+	}
+	return orderedFields
 }
 

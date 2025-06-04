@@ -33,7 +33,7 @@ func NewQueryThing(queryName string, language *ts.Language) (*QueryThing, func()
 	}
 }
 
-func getCapturesFromMatch(match *ts.QueryMatch, query *ts.Query) map[string][]ts.Node {
+func getCapturesFromMatch(match *ts.QueryMatch, query *ts.Query) *map[string][]ts.Node {
 	names := query.CaptureNames()
 	captures := make(map[string][]ts.Node);
 	for _, capture := range match.Captures {
@@ -44,6 +44,6 @@ func getCapturesFromMatch(match *ts.QueryMatch, query *ts.Query) map[string][]ts
 		}
 		captures[name] = append(captures[name], capture.Node)
 	}
-	return captures
+	return &captures
 }
 
