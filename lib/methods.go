@@ -13,7 +13,7 @@ func getClassMethodsFromClassDeclarationNode(
 	node *ts.Node,
 ) []cem.ClassMethod {
 	methods := make([]cem.ClassMethod, 0)
-	queryText, err := loadQueryFile("customElementClassMethod")
+	queryText, err := loadQueryFile("classMethod")
 	if err != nil {
 		log.Fatal(err)
 	}

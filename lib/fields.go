@@ -130,7 +130,7 @@ func getClassFieldsFromClassDeclarationNode(
 	code []byte,
 	node *ts.Node,
 ) []cem.CustomElementField {
-	queryText, err := loadQueryFile("customElementClassField")
+	queryText, err := loadQueryFile("classField")
 	if err != nil {
 		log.Fatal(err)
 	}
