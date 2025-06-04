@@ -7,20 +7,6 @@ import (
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
-func getCapturesFromMatch(match *ts.QueryMatch, query *ts.Query) map[string][]ts.Node {
-	captures := make(map[string][]ts.Node);
-	for _, capture := range match.Captures {
-		name := query.CaptureNames()[capture.Index]
-		slice, ok := captures[name]
-		if !ok {
-			captures[name] = make([]ts.Node, 0)
-		}
-		slice, ok = captures[name]
-		captures[name] = append(slice, capture.Node)
-	}
-	return captures
-}
-
 func getClassMethodsFromClassDeclarationNode(
 	language *ts.Language,
 	code []byte,
@@ -64,6 +50,10 @@ func getClassMethodsFromClassDeclarationNode(
 			method.Privacy = cem.Privacy(privacy.Utf8Text(code))
 		}
 
+		staticNodes, ok := captures["method.static"]
+		if ok && len(staticNodes) > 0 {
+			method.Static = true
+		}
 		params, ok := captures["params"]
 		if ok && len(params) > 0 {
 			for _, param := range params[0].NamedChildren(params[0].Walk()) {

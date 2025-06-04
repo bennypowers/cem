@@ -5,11 +5,13 @@ import { customElement, property } from 'lit/decorators.js';
 export class ClassMethods extends LitElement {
   method() {}
 
-  public public() {}
+  static $static() {}
 
-  protected protected() {}
+  public $public() {}
 
-  private private() {}
+  protected $protected() {}
+
+  private $private() {}
 
   unary(unary: string): string {}
 

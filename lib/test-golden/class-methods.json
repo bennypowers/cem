@@ -9,6 +9,30 @@
           "name": "ClassMethods",
           "members": [
             {
+              "name": "method",
+              "kind": "method"
+            },
+            {
+              "name": "$static",
+              "kind": "method",
+              "static": true
+            },
+            {
+              "name": "$public",
+              "kind": "method",
+              "privacy": "public"
+            },
+            {
+              "name": "$protected",
+              "kind": "method",
+              "privacy": "protected"
+            },
+            {
+              "name": "$private",
+              "kind": "method",
+              "privacy": "private"
+            },
+            {
               "name": "unary",
               "parameters": [
                 {
