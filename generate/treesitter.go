@@ -8,9 +8,14 @@ import (
 
 	ts "github.com/tree-sitter/go-tree-sitter"
 	tsts "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
+	tsjsdoc "github.com/tree-sitter/tree-sitter-jsdoc/bindings/go"
 )
 
-var Typescript = ts.NewLanguage(tsts.LanguageTypescript())
+
+var Languages = struct{Typescript *ts.Language; Jsdoc *ts.Language}{
+	Typescript: ts.NewLanguage(tsts.LanguageTypescript()),
+	Jsdoc: ts.NewLanguage(tsjsdoc.Language()),
+}
 
 //go:embed queries/*.scm
 var queries embed.FS
@@ -22,6 +27,11 @@ type NodeInfo struct {
 
 type CaptureMap = map[string][]NodeInfo
 
+type QueryMatcher struct {
+	query *ts.Query
+	cursor *ts.QueryCursor
+}
+
 func LoadQueryFile(queryName string) (string, error) {
 	path := fmt.Sprintf("queries/%s.scm", queryName)
 	data, err := queries.ReadFile(path)
@@ -31,8 +41,25 @@ func LoadQueryFile(queryName string) (string, error) {
 	return string(data), nil
 }
 
-func AllQueryMatches(qc *ts.QueryCursor, q *ts.Query, node *ts.Node, text []byte) iter.Seq[*ts.QueryMatch] {
-	qm := qc.Matches(q, node, text)
+func NewQueryMatcher(queryName string, language *ts.Language) (*QueryMatcher, func()) {
+	queryText, err := LoadQueryFile(queryName)
+	if err != nil {
+		log.Fatal(err) // it's ok to die here because these queries are compiled in via embed
+	}
+	query, qerr := ts.NewQuery(language, queryText)
+	if qerr != nil {
+		log.Fatal(qerr) // it's ok to die here because these queries are compiled in via embed
+	}
+	cursor := ts.NewQueryCursor()
+	thing := QueryMatcher{ query, cursor }
+	return &thing, func() {
+		thing.query.Close()
+		thing.cursor.Close()
+	}
+}
+
+func (q QueryMatcher) AllQueryMatches(node *ts.Node, text []byte) iter.Seq[*ts.QueryMatch] {
+	qm := q.cursor.Matches(q.query, node, text)
 	return func(yield func (qm *ts.QueryMatch) bool) {
 		for {
 			m := qm.Next()
@@ -46,8 +73,8 @@ func AllQueryMatches(qc *ts.QueryCursor, q *ts.Query, node *ts.Node, text []byte
 	}
 }
 
-func GetCapturesFromMatch(match *ts.QueryMatch, query *ts.Query, code []byte) CaptureMap {
-	names := query.CaptureNames()
+func (q QueryMatcher) GetCapturesFromMatch(match *ts.QueryMatch, code []byte) CaptureMap {
+	names := q.query.CaptureNames()
 	captures := make(CaptureMap);
 	for _, capture := range match.Captures {
 		name := names[capture.Index]
@@ -61,29 +88,5 @@ func GetCapturesFromMatch(match *ts.QueryMatch, query *ts.Query, code []byte) Ca
 		})
 	}
 	return captures
-}
-
-type QueryThing struct {
-	query *ts.Query
-	cursor *ts.QueryCursor
-}
-
-func NewQueryThing(queryName string, language *ts.Language) (*QueryThing, func()) {
-	queryText, err := LoadQueryFile(queryName)
-	if err != nil {
-		log.Fatal(err)
-	}
-	query, qerr := ts.NewQuery(language, queryText)
-	defer query.Close()
-	if qerr != nil {
-		log.Fatal(qerr)
-	}
-	cursor := ts.NewQueryCursor()
-	defer cursor.Close()
-	thing := QueryThing{ query, cursor }
-	return &thing, func() {
-		thing.query.Close()
-		thing.cursor.Close()
-	}
 }
 

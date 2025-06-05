@@ -2,7 +2,6 @@ package generate
 
 import (
 	"errors"
-	"log"
 	"regexp"
 	"strings"
 
@@ -194,17 +193,8 @@ func createClassFieldFromFieldMatch(fieldName string, isStatic bool, captures Ca
 }
 
 func getClassFieldsFromClassDeclarationNode(code []byte, node *ts.Node) (err error, field []manifest.CustomElementField) {
-	queryText, error := LoadQueryFile("classField")
-	if error != nil {
-		return errors.Join(err, error), nil
-	}
-	query, qerror := ts.NewQuery(Typescript, queryText)
-	defer query.Close()
-	if qerror != nil {
-		log.Fatal(qerror)
-	}
-	cursor := ts.NewQueryCursor()
-	defer cursor.Close()
+	qm, closeQm := NewQueryMatcher("classField", Languages.Typescript)
+	defer closeQm()
 
 	staticsSet := set.NewSet[string]()
 	fieldsSet := set.NewSet[string]()
@@ -217,8 +207,8 @@ func getClassFieldsFromClassDeclarationNode(code []byte, node *ts.Node) (err err
 	// final list of fields, in source order
 	fields := make([]manifest.CustomElementField, 0)
 
-	for match := range AllQueryMatches(cursor, query, node, code) {
-		captures := GetCapturesFromMatch(match, query, code)
+	for match := range qm.AllQueryMatches(node, code) {
+		captures := qm.GetCapturesFromMatch(match, code)
 		fieldName := captures["field.name"][0].Text
 		_, isAccessor := captures["accessor"]
 		_, isField := captures["field"]

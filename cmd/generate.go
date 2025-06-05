@@ -40,11 +40,15 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			files := expand(args)
 			exclude := expand(excludes)
-			result := generate.Generate(files, exclude)
+			err, manifest := generate.Generate(files, exclude)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error generating manifest: %s", err)
+			}
 			if output != "" {
-				os.WriteFile(output, []byte(result), 0666)
+				os.WriteFile(output, []byte(*manifest), 0666)
+				fmt.Println("Wrote manifest to", output)
 			} else {
-				fmt.Println(result)
+				fmt.Println(manifest)
 			}
 		},
 	}

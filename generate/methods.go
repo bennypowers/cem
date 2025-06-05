@@ -2,7 +2,6 @@ package generate
 
 import (
 	"errors"
-	"log"
 
 	"bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/set"
@@ -10,23 +9,15 @@ import (
 )
 
 func getClassMethodsFromClassDeclarationNode(code []byte, node *ts.Node) (err error, methods []manifest.ClassMethod) {
-	queryText, err := LoadQueryFile("classMethod")
-	if err != nil {
-		log.Fatal(err)
-	}
-	query, qerr := ts.NewQuery(Typescript, queryText)
-	defer query.Close()
-	if qerr != nil {
-		log.Fatal(qerr)
-	}
-	cursor := ts.NewQueryCursor()
+	qm, closeQm := NewQueryMatcher("classMethod", Languages.Typescript)
+	defer closeQm()
 
 	set := set.NewSet[string]()
 
-	for match := range AllQueryMatches(cursor, query, node, code) {
+	for match := range qm.AllQueryMatches(node, code) {
 		method := manifest.ClassMethod{Kind: "method"}
 
-		captures := GetCapturesFromMatch(match, query, code)
+		captures := qm.GetCapturesFromMatch(match, code)
 
 		methodNames, ok := captures["method.name"]
 		methodName := methodNames[0]
@@ -133,6 +124,5 @@ func getClassMethodsFromClassDeclarationNode(code []byte, node *ts.Node) (err er
 		methods = append(methods, method)
 	}
 
-	cursor.Close()
 	return err, methods
 }

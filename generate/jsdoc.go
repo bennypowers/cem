@@ -1,13 +1,11 @@
 package generate
 
 import (
-	"log"
 	"regexp"
 	"strings"
 
 	"bennypowers.dev/cem/manifest"
 	ts "github.com/tree-sitter/go-tree-sitter"
-	tsjsdoc "github.com/tree-sitter/tree-sitter-jsdoc/bindings/go"
 )
 
 type ParameterInfo struct {
@@ -75,29 +73,19 @@ type ClassInfo struct {
 func NewClassInfo(source string) (error, *ClassInfo) {
 	info := ClassInfo{}
 	code := []byte(source)
-	queryText, err := LoadQueryFile("jsdoc")
-	if err != nil {
-		return err, nil
-	}
-	language := ts.NewLanguage(tsjsdoc.Language())
+	qm, closeQm := NewQueryMatcher("jsdoc", Languages.Jsdoc)
+	defer closeQm()
+
 	parser := ts.NewParser()
 	defer parser.Close()
-	parser.SetLanguage(language)
+	parser.SetLanguage(Languages.Jsdoc)
 	tree := parser.Parse([]byte(code), nil)
 	defer tree.Close()
 	root := tree.RootNode()
 
-	query, qerr := ts.NewQuery(language, queryText)
-	defer query.Close()
-	if qerr != nil {
-		log.Fatal(qerr)
-	}
-	cursor := ts.NewQueryCursor()
-	defer cursor.Close()
-
-	for match := range AllQueryMatches(cursor, query, root, code) {
+	for match := range qm.AllQueryMatches(root, code) {
 		for _, capture := range match.Captures {
-			name := query.CaptureNames()[capture.Index]
+			name := qm.query.CaptureNames()[capture.Index]
 			switch name {
 				case "doc.description":
 					info.Description = normalizeJsdocLines(capture.Node.Utf8Text(code))
@@ -137,7 +125,7 @@ func NewClassInfo(source string) (error, *ClassInfo) {
 			}
 		}
 	}
-	return err, &info
+	return nil, &info
 }
 
 type TagInfo struct {
@@ -409,33 +397,22 @@ type FieldInfo struct {
 
 func NewFieldInfo(code string) (error, *FieldInfo) {
 	barr := []byte(code)
-	queryText, err := LoadQueryFile("jsdoc")
-	if err != nil {
-		return err, nil
-	}
-	language := ts.NewLanguage(tsjsdoc.Language())
 	parser := ts.NewParser()
 	defer parser.Close()
-	parser.SetLanguage(language)
+	parser.SetLanguage(Languages.Jsdoc)
 	tree := parser.Parse(barr, nil)
 	defer tree.Close()
 	root := tree.RootNode()
 
-	query, qerr := ts.NewQuery(language, queryText)
-	defer query.Close()
-	if qerr != nil {
-		log.Fatal(qerr)
-	}
-	cursor := ts.NewQueryCursor()
-	defer cursor.Close()
+  qm, closeQm := NewQueryMatcher("jsdoc", Languages.Jsdoc)
+	defer closeQm()
 
-
-  descriptionCaptureIndex, _ := query.CaptureIndexForName("doc.description")
-  tagCaptureIndex, _ := query.CaptureIndexForName("doc.tag")
+  descriptionCaptureIndex, _ := qm.query.CaptureIndexForName("doc.description")
+  tagCaptureIndex, _ := qm.query.CaptureIndexForName("doc.tag")
 
 	info := FieldInfo{source: code}
 
-	for match := range AllQueryMatches(cursor, query, root, barr) {
+	for match := range qm.AllQueryMatches(root, barr) {
 		descriptionNodes := match.NodesForCaptureIndex(descriptionCaptureIndex)
 		tagNodes := match.NodesForCaptureIndex(tagCaptureIndex)
 		for _, node := range descriptionNodes {
@@ -480,29 +457,19 @@ type MethodInfo struct {
 func NewMethodInfo(source string) (error, *MethodInfo) {
 	info := MethodInfo{}
 	code := []byte(source)
-	queryText, err := LoadQueryFile("jsdoc")
-	if err != nil {
-		return err, nil
-	}
-	language := ts.NewLanguage(tsjsdoc.Language())
 	parser := ts.NewParser()
 	defer parser.Close()
-	parser.SetLanguage(language)
+	parser.SetLanguage(Languages.Jsdoc)
 	tree := parser.Parse([]byte(code), nil)
 	defer tree.Close()
 	root := tree.RootNode()
 
-	query, qerr := ts.NewQuery(language, queryText)
-	defer query.Close()
-	if qerr != nil {
-		log.Fatal(qerr)
-	}
-	cursor := ts.NewQueryCursor()
-	defer cursor.Close()
+	qm, closeQm := NewQueryMatcher("jsdoc", Languages.Jsdoc)
+	defer closeQm()
 
-	for match := range AllQueryMatches(cursor, query, root, code) {
+	for match := range qm.AllQueryMatches(root, code) {
 		for _, capture := range match.Captures {
-			name := query.CaptureNames()[capture.Index]
+			name := qm.query.CaptureNames()[capture.Index]
 			switch name {
 				case "doc.description":
 					info.Description = normalizeJsdocLines(capture.Node.Utf8Text(code))
