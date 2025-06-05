@@ -2,12 +2,13 @@ package generate
 
 import (
 	"cmp"
+	"fmt"
 	"log"
 	"os"
 	"slices"
 	"sync"
 
-	"bennypowers.dev/cem/cem"
+	"bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/set"
 
 	A "github.com/IBM/fp-go/array"
@@ -15,12 +16,13 @@ import (
 	tsts "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
 )
 
-func generateModule(file string, channel chan<- cem.Module, wg *sync.WaitGroup) {
+func generateModule(file string, channel chan<-manifest.Module, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	code, err := os.ReadFile(file)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "%s", err)
+		return
 	}
 
 	language := ts.NewLanguage(tsts.LanguageTypescript())
@@ -31,18 +33,18 @@ func generateModule(file string, channel chan<- cem.Module, wg *sync.WaitGroup) 
 	defer tree.Close()
 	root := tree.RootNode()
 
-	module := cem.NewModule(file)
+	module := manifest.NewModule(file)
 
 	queryText, err := LoadQueryFile("customElementDeclaration")
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "%s", err)
 	}
 	query, qerr := ts.NewQuery(language, queryText)
 	defer query.Close()
-	captureNames := query.CaptureNames()
 	if qerr != nil {
 		log.Fatal(qerr)
 	}
+	captureNames := query.CaptureNames()
 	cursor := ts.NewQueryCursor()
 
 	for match := range AllQueryMatches(cursor, query, root, code) {
@@ -64,26 +66,32 @@ func generateModule(file string, channel chan<- cem.Module, wg *sync.WaitGroup) 
 		}
 
 		if tagName != "" && className != "" {
-			reference := cem.Reference{ Name: className, Module: file }
-			module.Exports = append(module.Exports, &cem.CustomElementExport{
+			reference := manifest.Reference{ Name: className, Module: file }
+			module.Exports = append(module.Exports, &manifest.CustomElementExport{
 				Kind: "custom-element-definition",
 				Name: tagName,
 				Declaration: &reference,
-			}, &cem.JavaScriptExport{
+			}, &manifest.JavaScriptExport{
 				Kind: "js",
 				Name: className,
 				Declaration: &reference,
 			})
 
 
-			fields := getClassFieldsFromClassDeclarationNode(code, &declNode)
-			methods := getClassMethodsFromClassDeclarationNode(code, &declNode)
+			err, fields := getClassFieldsFromClassDeclarationNode(code, &declNode)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "%s", err)
+			}
+			err, methods := getClassMethodsFromClassDeclarationNode(code, &declNode)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "%s", err)
+			}
 
-			fieldAttrs := A.Chain(func(field cem.CustomElementField) ([]cem.Attribute) {
+			fieldAttrs := A.Chain(func(field manifest.CustomElementField) ([]manifest.Attribute) {
 				if field.Attribute == "" {
-					return []cem.Attribute{}
+					return []manifest.Attribute{}
 				} else {
-					return []cem.Attribute{{
+					return []manifest.Attribute{{
 						Name: field.Attribute,
 						Summary: field.Summary,
 						Description: field.Description,
@@ -95,10 +103,13 @@ func generateModule(file string, channel chan<- cem.Module, wg *sync.WaitGroup) 
 				}
 			})(fields)
 
-			classInfo := NewClassInfo(jsdoc)
+			err, classInfo := NewClassInfo(jsdoc)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "%s", err)
+			}
 
-			declaration := &cem.CustomElementDeclaration{
-				CustomElement: cem.CustomElement {
+			declaration := &manifest.CustomElementDeclaration{
+				CustomElement: manifest.CustomElement {
 					CustomElement: true,
 					TagName: tagName,
 					Attributes: slices.Concat(classInfo.Attrs, fieldAttrs),
@@ -108,9 +119,9 @@ func generateModule(file string, channel chan<- cem.Module, wg *sync.WaitGroup) 
 					CssParts: classInfo.CssParts,
 					CssStates: classInfo.CssStates,
 				},
-				ClassDeclaration: cem.ClassDeclaration{
+				ClassDeclaration: manifest.ClassDeclaration{
 					Kind: "class",
-					ClassLike: cem.ClassLike{
+					ClassLike: manifest.ClassLike{
 						Name: className,
 						Deprecated: classInfo.Deprecated,
 						Description: classInfo.Description,
@@ -136,7 +147,7 @@ func Generate(files []string, exclude []string) (string) {
 
 	var wg sync.WaitGroup
 
-	modulesChan := make(chan cem.Module, len(files))
+	modulesChan := make(chan manifest.Module, len(files))
 
 	for _, file := range files {
 		if !excludeSet.Has(file) {
@@ -148,18 +159,22 @@ func Generate(files []string, exclude []string) (string) {
 	wg.Wait()
 	close(modulesChan)
 
-	modules := make([]cem.Module, 0)
-	for module := range modulesChan { modules = append(modules, module) }
+	modules := make([]manifest.Module, 0)
+	for module := range modulesChan {
+		modules = append(modules, module)
+	}
 
-	pkg := cem.NewPackage(modules)
+	pkg := manifest.NewPackage(modules)
 
-	slices.SortFunc(pkg.Modules, func(a, b cem.Module) int {
+	slices.SortFunc(pkg.Modules, func(a, b manifest.Module) int {
 		return cmp.Compare(a.Path, b.Path)
 	})
 
-	manifest, err := cem.SerializeToString(&pkg)
+	manifest, err := manifest.SerializeToString(&pkg)
+
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	return manifest
 }

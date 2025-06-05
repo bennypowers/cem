@@ -1,6 +1,6 @@
 // Package cem represents the schema for Custom Elements Manifest.
 // Generated from schema.d.ts of https://github.com/webcomponents/custom-elements-manifest
-package cem
+package manifest
 
 import "encoding/json"
 

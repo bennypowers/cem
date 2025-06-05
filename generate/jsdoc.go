@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"bennypowers.dev/cem/cem"
+	"bennypowers.dev/cem/manifest"
 	ts "github.com/tree-sitter/go-tree-sitter"
 	tsjsdoc "github.com/tree-sitter/tree-sitter-jsdoc/bindings/go"
 )
@@ -14,7 +14,7 @@ type ParameterInfo struct {
 	Name        string;
 	Description string;
 	Default     string;
-	Deprecated  cem.Deprecated;
+	Deprecated  manifest.Deprecated;
 	Type        string;
 	Optional    bool;
 }
@@ -63,21 +63,21 @@ func FindNamedMatches(regex *regexp.Regexp, str string, includeNotMatchedOptiona
 type ClassInfo struct {
 	Description string;
 	Summary string;
-	Deprecated cem.Deprecated;
-	Attrs []cem.Attribute;
-	CssParts []cem.CssPart;
-	CssProperties []cem.CssCustomProperty;
-	CssStates []cem.CssCustomState;
-	Events []cem.Event;
-	Slots []cem.Slot;
+	Deprecated manifest.Deprecated;
+	Attrs []manifest.Attribute;
+	CssParts []manifest.CssPart;
+	CssProperties []manifest.CssCustomProperty;
+	CssStates []manifest.CssCustomState;
+	Events []manifest.Event;
+	Slots []manifest.Slot;
 }
 
-func NewClassInfo(source string) ClassInfo {
+func NewClassInfo(source string) (error, *ClassInfo) {
 	info := ClassInfo{}
 	code := []byte(source)
 	queryText, err := LoadQueryFile("jsdoc")
 	if err != nil {
-		log.Fatal(err)
+		return err, nil
 	}
 	language := ts.NewLanguage(tsjsdoc.Language())
 	parser := ts.NewParser()
@@ -120,9 +120,9 @@ func NewClassInfo(source string) ClassInfo {
 							info.CssStates = append(info.CssStates, state)
 						case "@deprecated":
 							if tagInfo.Description == "" {
-								info.Deprecated = cem.DeprecatedFlag(true)
+								info.Deprecated = manifest.DeprecatedFlag(true)
 							} else {
-								info.Deprecated = cem.DeprecatedReason(tagInfo.Description)
+								info.Deprecated = manifest.DeprecatedReason(tagInfo.Description)
 							}
 						case "@event",
 									"@fires":
@@ -137,7 +137,7 @@ func NewClassInfo(source string) ClassInfo {
 			}
 		}
 	}
-	return info
+	return err, &info
 }
 
 type TagInfo struct {
@@ -150,7 +150,7 @@ type TagInfo struct {
 }
 
 func NewTagInfo(tag string) TagInfo {
-	// I'd rather use jsdoc parser, but it errors with some of my non-standard syntax, 
+	// I'd rather use jsdoc parser, but it errors with some of my non-standard syntax,
 	// like @cssprop {<length>} ...
 	matches := FindNamedMatches(regexp.MustCompile(`(?ms)(?P<tag>\@\w+)([\s*]+(?P<description>.*))?`),tag, true)
 	info := TagInfo{
@@ -171,7 +171,7 @@ func NewTagInfo(tag string) TagInfo {
  * @cssproperty [--var=default]
  * @cssproperty [--var=default] - description
  */
-func (info TagInfo) toAttribute() (cem.Attribute) {
+func (info TagInfo) toAttribute() (manifest.Attribute) {
 	re := regexp.MustCompile(`(?ms)[\s*]*@attr(ibute)?[\s*]+(\{(?P<type>[^}]+)\}[\s*]+)?(\[(?P<kv>.*)\]|(?P<name>[\w-]+))([\s*]+-[\s*]+(?P<description>.*))?`)
 	matches := FindNamedMatches(re, info.source, true)
 	if matches["kv"] != "" {
@@ -183,7 +183,7 @@ func (info TagInfo) toAttribute() (cem.Attribute) {
 	} else {
 		info.Name = matches["name"]
 	}
-	attr := cem.Attribute{
+	attr := manifest.Attribute{
 		Name: info.Name,
 		Default: info.Value,
 		Description: normalizeJsdocLines(matches["description"]),
@@ -195,7 +195,7 @@ func (info TagInfo) toAttribute() (cem.Attribute) {
 		// Deprecated: info.Deprecated,
 	}
 	if matches["type"] != "" {
-		attr.Type = &cem.Type{Text: matches["type"]}
+		attr.Type = &manifest.Type{Text: matches["type"]}
 	}
 	return attr
 }
@@ -204,10 +204,10 @@ func (info TagInfo) toAttribute() (cem.Attribute) {
  * @csspart name
  * @csspart name - description
  */
-func (info TagInfo) toCssPart() (cem.CssPart) {
+func (info TagInfo) toCssPart() (manifest.CssPart) {
 	re := regexp.MustCompile(`(?ms)[\s*]*@csspart[\s*]+(?P<name>[\w-]+)([\s*]+-[\s*]+(?P<description>.*))?`)
 	matches := FindNamedMatches(re, info.source, true)
-	return cem.CssPart{
+	return manifest.CssPart{
 		Name: matches["name"],
 		Description: normalizeJsdocLines(matches["description"]),
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
@@ -250,7 +250,7 @@ func (info TagInfo) toCssPart() (cem.CssPart) {
  * @cssproperty {<color>} [--property-typed-default-description-multiline=none] - multiline
  *                                                                                property typed default description
  */
-func (info TagInfo) toCssCustomProperty() (cem.CssCustomProperty) {
+func (info TagInfo) toCssCustomProperty() (manifest.CssCustomProperty) {
 	re := regexp.MustCompile(`(?ms)[\s*]*@cssprop(erty)?\s*(\{(?P<type>[^}]+)\})?[\s*]*(\[(?P<kv>.*)\]|(?P<name>[\w-]+))([\s*]+-[\s*]+(?P<description>.*)$)?`)
 	matches := FindNamedMatches(re, info.source, true)
 	if matches["kv"] != "" {
@@ -262,7 +262,7 @@ func (info TagInfo) toCssCustomProperty() (cem.CssCustomProperty) {
 	} else {
 		info.Name = matches["name"]
 	}
-	prop := cem.CssCustomProperty{
+	prop := manifest.CssCustomProperty{
 		Syntax: matches["type"],
 		Name: info.Name,
 		Default: info.Value,
@@ -278,10 +278,10 @@ func (info TagInfo) toCssCustomProperty() (cem.CssCustomProperty) {
  * @cssstate name
  * @cssstate name - description
  */
-func (info TagInfo) toCssCustomState() (cem.CssCustomState) {
+func (info TagInfo) toCssCustomState() (manifest.CssCustomState) {
 	re := regexp.MustCompile(`(?ms)[\s*]*@cssstate[\s*]+(?P<name>[\w-]+)([\s*]+-[\s*]+(?P<description>.*))?`)
 	matches := FindNamedMatches(re, info.source, true)
-	return cem.CssCustomState{
+	return manifest.CssCustomState{
 		Name: matches["name"],
 		Description: normalizeJsdocLines(matches["description"]),
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
@@ -300,10 +300,10 @@ func (info TagInfo) toCssCustomState() (cem.CssCustomState) {
  * @event {type} name
  * @event {type} name - description
  */
-func (info TagInfo) toEvent() (cem.Event) {
+func (info TagInfo) toEvent() (manifest.Event) {
 	re := regexp.MustCompile(`(?ms)[\s*]*(@fires|@event)\s*(\{(?P<type>[^}]+)\})?[\s*]*(?P<name>[\w-]+)([\s*]+-[\s*]+(?P<description>.*))?`)
 	matches := FindNamedMatches(re, info.source, true)
-	event := cem.Event{
+	event := manifest.Event{
 		Name: matches["name"],
 		Description: normalizeJsdocLines(matches["description"]),
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
@@ -311,7 +311,7 @@ func (info TagInfo) toEvent() (cem.Event) {
 		// Deprecated: info.Deprecated,
 	}
 	if matches["type"] != "" {
-		event.Type = &cem.Type{
+		event.Type = &manifest.Type{
 			Text: matches["type"],
 		}
 	}
@@ -322,7 +322,7 @@ func (info TagInfo) toEvent() (cem.Event) {
  * @slot icon -  Contains the tags's icon, e.g. web-icon-alert-success.
  * @slot      -  Must contain the text for the tag.
  */
-func (info TagInfo) toSlot() (cem.Slot) {
+func (info TagInfo) toSlot() (manifest.Slot) {
 	re := regexp.MustCompile(`(?ms)[\s*]*(@slot[\s*]+-[\s*]+(?P<anonDescription>.*))|(@slot[\s*]+(?P<name>[\w-]+)([\s*]+-[\s*]+(?P<description>.*))?)`)
 	matches := FindNamedMatches(re, info.source, true)
 	if matches["description"] != "" {
@@ -331,7 +331,7 @@ func (info TagInfo) toSlot() (cem.Slot) {
 	if matches["anonDescription"] != "" {
 		info.Description = normalizeJsdocLines(matches["anonDescription"])
 	}
-	return cem.Slot{
+	return manifest.Slot{
 		Name: matches["name"],
 		Description: info.Description,
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
@@ -404,14 +404,14 @@ type FieldInfo struct {
 	Description string;
 	Summary string;
 	Type string;
-	Deprecated cem.Deprecated
+	Deprecated manifest.Deprecated
 }
 
-func NewFieldInfo(code string) FieldInfo {
+func NewFieldInfo(code string) (error, *FieldInfo) {
 	barr := []byte(code)
 	queryText, err := LoadQueryFile("jsdoc")
 	if err != nil {
-		log.Fatal(err)
+		return err, nil
 	}
 	language := ts.NewLanguage(tsjsdoc.Language())
 	parser := ts.NewParser()
@@ -457,32 +457,32 @@ func NewFieldInfo(code string) FieldInfo {
 					info.Type = tagType
 				case "@deprecated":
 					if content == "" {
-						info.Deprecated = cem.DeprecatedFlag(true)
+						info.Deprecated = manifest.DeprecatedFlag(true)
 					} else {
-						info.Deprecated = cem.DeprecatedReason(content)
+						info.Deprecated = manifest.DeprecatedReason(content)
 					}
 			}
 		}
 	}
 
-	return info
+	return nil, &info
 }
 
 type MethodInfo struct {
 	Description string
 	Summary     string
-	Deprecated  cem.Deprecated
+	Deprecated  manifest.Deprecated
 	Parameters  []ParameterInfo
 	Return      *ReturnInfo
-	Privacy     cem.Privacy
+	Privacy     manifest.Privacy
 }
 
-func NewMethodInfo(source string) MethodInfo {
+func NewMethodInfo(source string) (error, *MethodInfo) {
 	info := MethodInfo{}
 	code := []byte(source)
 	queryText, err := LoadQueryFile("jsdoc")
 	if err != nil {
-		log.Fatal(err)
+		return err, nil
 	}
 	language := ts.NewLanguage(tsjsdoc.Language())
 	parser := ts.NewParser()
@@ -522,9 +522,9 @@ func NewMethodInfo(source string) MethodInfo {
 							info.Return = &ret
 						case "@deprecated":
 							if tagInfo.Description == "" {
-								info.Deprecated = cem.DeprecatedFlag(true)
+								info.Deprecated = manifest.DeprecatedFlag(true)
 							} else {
-								info.Deprecated = cem.DeprecatedReason(tagInfo.Description)
+								info.Deprecated = manifest.DeprecatedReason(tagInfo.Description)
 							}
 						case "@summary":
 							info.Summary = normalizeJsdocLines(tagInfo.Description)
@@ -533,5 +533,5 @@ func NewMethodInfo(source string) MethodInfo {
 		}
 	}
 
-	return info
+	return nil, &info
 }

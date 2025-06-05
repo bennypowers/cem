@@ -1,11 +1,12 @@
 package generate
 
 import (
+	"errors"
 	"log"
 	"regexp"
 	"strings"
 
-	"bennypowers.dev/cem/cem"
+	"bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/set"
 	"dario.cat/mergo"
 	ts "github.com/tree-sitter/go-tree-sitter"
@@ -18,20 +19,16 @@ func createClassFieldFromAccessorMatch(
 	accessor string,
 	isStatic bool,
 	captures CaptureMap,
-) (*cem.CustomElementField) {
-	classField := cem.ClassField{
-		Kind: "field",
-		Static: isStatic,
-		PropertyLike: cem.PropertyLike{
-			Name: fieldName,
-			Readonly: accessor == "get",
-		},
-	}
+) (err error, field manifest.CustomElementField) {
+	field.Kind = "field"
+	field.Static = isStatic
+	field.Name = fieldName
+	field.Readonly = accessor == "get"
 
 	for _, x := range captures["field.type"] {
 		typeText := x.Text
 		if typeText != "" {
-			classField.Type = &cem.Type{
+			field.Type = &manifest.Type{
 				Text: typeText,
 			}
 		}
@@ -40,31 +37,35 @@ func createClassFieldFromAccessorMatch(
 	for _, x := range captures["field.jsdoc"] {
 		source := x.Text
 		if strings.HasPrefix(source, `/**`) {
-			info := NewFieldInfo(source)
-			classField.Description += info.Description
-			classField.Summary += info.Summary
-			classField.Deprecated = info.Deprecated
-			if info.Type != "" {
-				classField.Type = &cem.Type{
-					Text: info.Type,
+			error, info := NewFieldInfo(source)
+			if error != nil {
+				err = errors.Join(err, error)
+			} else {
+				field.Description += info.Description
+				field.Summary += info.Summary
+				field.Deprecated = info.Deprecated
+				if info.Type != "" {
+					field.Type = &manifest.Type{
+						Text: info.Type,
+					}
 				}
 			}
 		}
 	}
 
 	for _, x := range captures["field.initializer"] {
-		classField.Default = x.Text
-		if classField.Type == nil {
-			if (classField.Default == "true" || classField.Default == "false") {
-				classField.Type = &cem.Type{
+		field.Default = x.Text
+		if field.Type == nil {
+			if (field.Default == "true" || field.Default == "false") {
+				field.Type = &manifest.Type{
 					Text: "boolean",
 				}
-			} else if regexp.MustCompile(`^[\d._]+$`).MatchString(classField.Default) {
-				classField.Type = &cem.Type{
+			} else if regexp.MustCompile(`^[\d._]+$`).MatchString(field.Default) {
+				field.Type = &manifest.Type{
 					Text: "number",
 				}
-			} else if regexp.MustCompile(`^('|")`).MatchString(classField.Default) {
-				classField.Type = &cem.Type{
+			} else if regexp.MustCompile(`^('|")`).MatchString(field.Default) {
+				field.Type = &manifest.Type{
 					Text: "string",
 				}
 			}
@@ -74,16 +75,13 @@ func createClassFieldFromAccessorMatch(
 	for _, x := range captures["field.privacy"] {
 		switch x.Text {
 			case "private":
-				classField.Privacy = cem.Private
+				field.Privacy = manifest.Private
 			case "protected":
-				classField.Privacy = cem.Protected
+				field.Privacy = manifest.Protected
 		}
 	}
 
-	ceField := cem.CustomElementField{
-		ClassField: classField,
-		Reflects: !classField.Static && len(captures["field.attr.reflects"]) > 0 && captures["field.attr.reflects"][0].Text == "true",
-	}
+	field.Reflects = !isStatic && len(captures["field.attr.reflects"]) > 0 && captures["field.attr.reflects"][0].Text == "true"
 
 	_, hasDecorators := captures["decorator.name"]
 	var isProperty bool
@@ -100,37 +98,32 @@ func createClassFieldFromAccessorMatch(
 		attributeBoolNodes := captures["field.attr.bool"]
 		attributeNameNodes := captures["field.attr.name"]
 
-		if (!classField.Static &&
+		if (!isStatic &&
 				len(attributeBoolNodes) == 0 ||
 				(len(attributeBoolNodes) > 0 && attributeBoolNodes[0].Node.GrammarName() != "false")) {
 			if len(attributeNameNodes) > 0 {
-				ceField.Attribute = attributeNameNodes[0].Text
+				field.Attribute = attributeNameNodes[0].Text
 			} else {
-				ceField.Attribute = strings.ToLower(classField.Name)
+				field.Attribute = strings.ToLower(field.Name)
 			}
 		}
 	}
 
-	for k := range captures { delete(captures, k) }
-	return &ceField
+	return err, field
 }
 
-func createClassFieldFromFieldMatch(fieldName string, isStatic bool, captures CaptureMap) (*cem.CustomElementField) {
+func createClassFieldFromFieldMatch(fieldName string, isStatic bool, captures CaptureMap) (err error, field manifest.CustomElementField) {
 	_, readonly := captures["field.readonly"]
 
-	classField := cem.ClassField{
-		Kind: "field",
-		Static: isStatic,
-		PropertyLike: cem.PropertyLike{
-			Name: fieldName,
-			Readonly: readonly,
-		},
-	}
+	field.Kind = "field"
+	field.Static = isStatic
+	field.Name = fieldName
+	field.Readonly = readonly
 
 	for _, x := range captures["field.type"] {
 		typeText := x.Text
 		if typeText != "" {
-			classField.Type = &cem.Type{
+			field.Type = &manifest.Type{
 				Text: typeText,
 			}
 		}
@@ -139,12 +132,15 @@ func createClassFieldFromFieldMatch(fieldName string, isStatic bool, captures Ca
 	for _, x := range captures["field.jsdoc"] {
 		source := x.Text
 		if strings.HasPrefix(source, `/**`) {
-			info := NewFieldInfo(source)
-			classField.Description += info.Description
-			classField.Summary += info.Summary
-			classField.Deprecated = info.Deprecated
+			error, info := NewFieldInfo(source)
+			if error != nil {
+				err = errors.Join(err, error)
+			}
+			field.Description += info.Description
+			field.Summary += info.Summary
+			field.Deprecated = info.Deprecated
 			if info.Type != "" {
-				classField.Type = &cem.Type{
+				field.Type = &manifest.Type{
 					Text: info.Type,
 				}
 			}
@@ -152,18 +148,18 @@ func createClassFieldFromFieldMatch(fieldName string, isStatic bool, captures Ca
 	}
 
 	for _, x := range captures["field.initializer"] {
-		classField.Default = x.Text
-		if classField.Type == nil {
-			if (classField.Default == "true" || classField.Default == "false") {
-				classField.Type = &cem.Type{
+		field.Default = x.Text
+		if field.Type == nil {
+			if (field.Default == "true" || field.Default == "false") {
+				field.Type = &manifest.Type{
 					Text: "boolean",
 				}
-			} else if regexp.MustCompile(`^[\d._]+$`).MatchString(classField.Default) {
-				classField.Type = &cem.Type{
+			} else if regexp.MustCompile(`^[\d._]+$`).MatchString(field.Default) {
+				field.Type = &manifest.Type{
 					Text: "number",
 				}
-			} else if regexp.MustCompile(`^('|")`).MatchString(classField.Default) {
-				classField.Type = &cem.Type{
+			} else if regexp.MustCompile(`^('|")`).MatchString(field.Default) {
+				field.Type = &manifest.Type{
 					Text: "string",
 				}
 			}
@@ -173,43 +169,39 @@ func createClassFieldFromFieldMatch(fieldName string, isStatic bool, captures Ca
 	for _, x := range captures["field.privacy"] {
 		switch x.Text {
 			case "private":
-				classField.Privacy = cem.Private
+				field.Privacy = manifest.Private
 			case "protected":
-				classField.Privacy = cem.Protected
+				field.Privacy = manifest.Protected
 		}
 	}
 
-	ceField := cem.CustomElementField{
-		ClassField: classField,
-		Reflects: !classField.Static && len(captures["field.attr.reflects"]) > 0 && captures["field.attr.reflects"][0].Text == "true",
-	}
+	field.Reflects = !field.Static && len(captures["field.attr.reflects"]) > 0 && captures["field.attr.reflects"][0].Text == "true"
 
 	attributeBoolNodes := captures["field.attr.bool"]
 	attributeNameNodes := captures["field.attr.name"]
 
-	if (!classField.Static &&
+	if (!isStatic &&
 			len(attributeBoolNodes) == 0 ||
 			(len(attributeBoolNodes) > 0 && attributeBoolNodes[0].Node.GrammarName() != "false")) {
 		if len(attributeNameNodes) > 0 {
-			ceField.Attribute = attributeNameNodes[0].Text
+			field.Attribute = attributeNameNodes[0].Text
 		} else {
-			ceField.Attribute = strings.ToLower(classField.Name)
+			field.Attribute = strings.ToLower(field.Name)
 		}
 	}
 
-	for k := range captures { delete(captures, k) }
-	return &ceField
+	return err, field
 }
 
-func getClassFieldsFromClassDeclarationNode(code []byte, node *ts.Node) []cem.CustomElementField {
-	queryText, err := LoadQueryFile("classField")
-	if err != nil {
-		log.Fatal(err)
+func getClassFieldsFromClassDeclarationNode(code []byte, node *ts.Node) (err error, field []manifest.CustomElementField) {
+	queryText, error := LoadQueryFile("classField")
+	if error != nil {
+		return errors.Join(err, error), nil
 	}
-	query, qerr := ts.NewQuery(Typescript, queryText)
+	query, qerror := ts.NewQuery(Typescript, queryText)
 	defer query.Close()
-	if qerr != nil {
-		log.Fatal(qerr)
+	if qerror != nil {
+		log.Fatal(qerror)
 	}
 	cursor := ts.NewQueryCursor()
 	defer cursor.Close()
@@ -223,7 +215,7 @@ func getClassFieldsFromClassDeclarationNode(code []byte, node *ts.Node) []cem.Cu
 	accessorIndices := make(map[string]int)
 
 	// final list of fields, in source order
-	fields := make([]cem.CustomElementField, 0)
+	fields := make([]manifest.CustomElementField, 0)
 
 	for match := range AllQueryMatches(cursor, query, node, code) {
 		captures := GetCapturesFromMatch(match, query, code)
@@ -238,12 +230,20 @@ func getClassFieldsFromClassDeclarationNode(code []byte, node *ts.Node) []cem.Cu
 
 		if (isField && isStatic && !staticsSet.Has(fieldName)) {
 			staticsSet.Add(fieldName)
-			field := createClassFieldFromFieldMatch(fieldName, isStatic, captures)
-			fields = append(fields, *field)
+			error, field := createClassFieldFromFieldMatch(fieldName, isStatic, captures)
+			if error != nil {
+				err = errors.Join(err, error)
+			} else {
+				fields = append(fields, field)
+			}
 		} else if (isField && !isStatic && !fieldsSet.Has(fieldName)) {
 			fieldsSet.Add(fieldName)
-			field := createClassFieldFromFieldMatch(fieldName, isStatic, captures)
-			fields = append(fields, *field)
+			error, field := createClassFieldFromFieldMatch(fieldName, isStatic, captures)
+			if error != nil {
+				err = errors.Join(err, error)
+			} else {
+				fields = append(fields, field)
+			}
 		} else if isAccessor {
 			if !gettersSet.Has(fieldName) && !settersSet.Has(fieldName) {
 				accessorIndices[fieldName] = len(fields)
@@ -275,20 +275,29 @@ func getClassFieldsFromClassDeclarationNode(code []byte, node *ts.Node) []cem.Cu
 			index := accessorIndices[fieldName]
 			if hasPair {
 				// field is a *cem.CustomElementField
-				field := createClassFieldFromAccessorMatch(fieldName, accessor, isStatic, captures)
-				// this next line fails at runtime with "dst must be a pointer"
-				err := mergo.Merge(&fields[index], field, mergo.WithOverride)
-				if err != nil {
-					log.Fatal(err)
+				error, field := createClassFieldFromAccessorMatch(fieldName, accessor, isStatic, captures)
+				if error != nil {
+					err = errors.Join(err, error)
+				} else {
+					// this next line fails at runtime with "dst must be a pointer"
+					err := mergo.Merge(&fields[index], field, mergo.WithOverride)
+					if err != nil {
+						err = errors.Join(err, error)
+					} else {
+						fields[index].Readonly = false
+					}
 				}
-				fields[index].Readonly = false
 			} else {
-				field := createClassFieldFromAccessorMatch(fieldName, accessor, isStatic, captures)
-				fields = append(fields, *field)
+				error, field := createClassFieldFromAccessorMatch(fieldName, accessor, isStatic, captures)
+				if error != nil {
+					err = errors.Join(err, error)
+				} else {
+					fields = append(fields, field)
+				}
 			}
 		}
 	}
 
-	return fields
+	return err, fields
 }
 
