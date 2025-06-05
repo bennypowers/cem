@@ -30,7 +30,7 @@ var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "cemgen",
+	Use:   "cem",
 	Short: "Generate a custom elements manifest",
 	Long: `Scans your projects TypeScript sources and identifies custom elements.
 Generates a custom elements manifest file (custom-elements.json) describing your modules.
@@ -48,7 +48,7 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $CWD/.config/cemgen.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $CWD/.config/cem/cem.yaml)")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -61,10 +61,10 @@ func initConfig() {
 		cwd, err := os.Getwd()
 		cobra.CheckErr(err)
 
-		// Search config in home directory with name ".cemgen" (without extension).
+		// Search config in home directory with name ".cem" (without extension).
 		viper.AddConfigPath(path.Join(cwd, ".config"))
 		viper.SetConfigType("yaml")
-		viper.SetConfigName(".cemgen")
+		viper.SetConfigName(".cem")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
