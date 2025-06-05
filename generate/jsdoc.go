@@ -5,10 +5,24 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/bennypowers/cemgen/cem"
+	"bennypowers.dev/cem/cem"
 	ts "github.com/tree-sitter/go-tree-sitter"
 	tsjsdoc "github.com/tree-sitter/tree-sitter-jsdoc/bindings/go"
 )
+
+type ParameterInfo struct {
+	Name        string;
+	Description string;
+	Default     string;
+	Deprecated  cem.Deprecated;
+	Type        string;
+	Optional    bool;
+}
+
+type ReturnInfo struct {
+	Type        string;
+	Description string;
+}
 
 func stripTrailingSplat(str string) (string) {
 	return regexp.MustCompile(" *\\*$").ReplaceAllString(str, "")
@@ -61,7 +75,7 @@ type ClassInfo struct {
 func NewClassInfo(source string) ClassInfo {
 	info := ClassInfo{}
 	code := []byte(source)
-	queryText, err := loadQueryFile("jsdoc")
+	queryText, err := LoadQueryFile("jsdoc")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -81,7 +95,7 @@ func NewClassInfo(source string) ClassInfo {
 	cursor := ts.NewQueryCursor()
 	defer cursor.Close()
 
-	for match := range allMatches(cursor, query, root, code) {
+	for match := range AllQueryMatches(cursor, query, root, code) {
 		for _, capture := range match.Captures {
 			name := query.CaptureNames()[capture.Index]
 			switch name {
@@ -395,7 +409,7 @@ type FieldInfo struct {
 
 func NewFieldInfo(code string) FieldInfo {
 	barr := []byte(code)
-	queryText, err := loadQueryFile("jsdoc")
+	queryText, err := LoadQueryFile("jsdoc")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -421,7 +435,7 @@ func NewFieldInfo(code string) FieldInfo {
 
 	info := FieldInfo{source: code}
 
-	for match := range allMatches(cursor, query, root, barr) {
+	for match := range AllQueryMatches(cursor, query, root, barr) {
 		descriptionNodes := match.NodesForCaptureIndex(descriptionCaptureIndex)
 		tagNodes := match.NodesForCaptureIndex(tagCaptureIndex)
 		for _, node := range descriptionNodes {
@@ -454,20 +468,6 @@ func NewFieldInfo(code string) FieldInfo {
 	return info
 }
 
-type ParameterInfo struct {
-	Name        string;
-	Description string;
-	Default     string;
-	Deprecated  cem.Deprecated;
-	Type        string;
-	Optional    bool;
-}
-
-type ReturnInfo struct {
-	Type        string;
-	Description string;
-}
-
 type MethodInfo struct {
 	Description string
 	Summary     string
@@ -480,7 +480,7 @@ type MethodInfo struct {
 func NewMethodInfo(source string) MethodInfo {
 	info := MethodInfo{}
 	code := []byte(source)
-	queryText, err := loadQueryFile("jsdoc")
+	queryText, err := LoadQueryFile("jsdoc")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -500,7 +500,7 @@ func NewMethodInfo(source string) MethodInfo {
 	cursor := ts.NewQueryCursor()
 	defer cursor.Close()
 
-	for match := range allMatches(cursor, query, root, code) {
+	for match := range AllQueryMatches(cursor, query, root, code) {
 		for _, capture := range match.Captures {
 			name := query.CaptureNames()[capture.Index]
 			switch name {

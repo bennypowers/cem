@@ -1,4 +1,4 @@
-module github.com/bennypowers/cemgen
+module bennypowers.dev/cem
 
 go 1.24.3
 
@@ -11,6 +11,7 @@ require (
 )
 
 require (
+	dario.cat/mergo v1.0.2 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/lipgloss v1.0.0 // indirect
 	github.com/charmbracelet/x/ansi v0.8.0 // indirect

@@ -3,21 +3,18 @@ package generate
 import (
 	"log"
 
-	"github.com/bennypowers/cemgen/cem"
+	"bennypowers.dev/cem/cem"
+	"bennypowers.dev/cem/set"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
-func getClassMethodsFromClassDeclarationNode(
-	language *ts.Language,
-	code []byte,
-	node *ts.Node,
-) []cem.ClassMethod {
+func getClassMethodsFromClassDeclarationNode(code []byte, node *ts.Node) []cem.ClassMethod {
 	methods := make([]cem.ClassMethod, 0)
-	queryText, err := loadQueryFile("classMethod")
+	queryText, err := LoadQueryFile("classMethod")
 	if err != nil {
 		log.Fatal(err)
 	}
-	query, qerr := ts.NewQuery(language, queryText)
+	query, qerr := ts.NewQuery(Typescript, queryText)
 	defer query.Close()
 	if qerr != nil {
 		log.Fatal(qerr)
@@ -25,29 +22,29 @@ func getClassMethodsFromClassDeclarationNode(
 	cursor := ts.NewQueryCursor()
 	defer cursor.Close()
 
-	set := make(map[string]bool)
+	set := set.NewSet[string]()
 
-	for match := range allMatches(cursor, query, node, code) {
+	for match := range AllQueryMatches(cursor, query, node, code) {
 		method := cem.ClassMethod{Kind: "method"}
 
-		captures := *getCapturesFromMatch(match, query)
+		captures := GetCapturesFromMatch(match, query, code)
 
 		methodNames, ok := captures["method.name"]
 		methodName := methodNames[0]
 		if ok {
-			method.Name = methodName.Utf8Text(code)
+			method.Name = methodName.Text
 		}
 
-		if set[method.Name] {
+		if set.Has(method.Name) {
 			continue
 		}
 
-		set[method.Name] = true
+		set.Add(method.Name)
 
 		privacyNodes, ok := captures["method.privacy"]
 		if ok && len(privacyNodes) > 0 {
 			privacy := privacyNodes[0]
-			method.Privacy = cem.Privacy(privacy.Utf8Text(code))
+			method.Privacy = cem.Privacy(privacy.Text)
 		}
 
 		staticNodes, ok := captures["method.static"]
@@ -56,7 +53,8 @@ func getClassMethodsFromClassDeclarationNode(
 		}
 		params, ok := captures["params"]
 		if ok && len(params) > 0 {
-			for _, param := range params[0].NamedChildren(params[0].Walk()) {
+			node := params[0].Node
+			for _, param := range node.NamedChildren(node.Walk()) {
 				nameNode := param.ChildByFieldName("pattern")
 				typeNode := param.ChildByFieldName("type").NamedChild(0)
 				parameter := cem.Parameter{ }
@@ -83,7 +81,7 @@ func getClassMethodsFromClassDeclarationNode(
 			returns := returnNodes[0]
 			method.Return = &cem.Return{
 				Type: &cem.Type{
-					Text: returns.Utf8Text(code),
+					Text: returns.Text,
 				},
 			}
 		}
@@ -91,7 +89,7 @@ func getClassMethodsFromClassDeclarationNode(
 		jsdocs, ok := captures["method.jsdoc"]
 		if ok {
 			for _, jsdoc := range jsdocs {
-				info := NewMethodInfo(jsdoc.Utf8Text(code))
+				info := NewMethodInfo(jsdoc.Text)
 				method.Description = info.Description
 				method.Deprecated = info.Deprecated
 				method.Summary = info.Summary

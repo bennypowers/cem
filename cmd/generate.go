@@ -10,9 +10,9 @@ import (
 	"os"
 	"path/filepath"
 
-	A "github.com/IBM/fp-go/array"
-	generate "github.com/bennypowers/cemgen/lib"
 	"github.com/spf13/cobra"
+	A "github.com/IBM/fp-go/array"
+	generate "bennypowers.dev/cem/generate"
 )
 
 var expand = A.Chain(func (g string) []string {

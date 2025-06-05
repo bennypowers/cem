@@ -16,7 +16,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package main
 
-import "github.com/bennypowers/cemgen/cmd"
+import "bennypowers.dev/cem/cmd"
 
 func main() {
 	cmd.Execute()

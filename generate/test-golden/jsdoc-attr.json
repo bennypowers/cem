@@ -7,16 +7,6 @@
       "declarations": [
         {
           "name": "JsdocAttr",
-          "members": [
-            {
-              "name": "classAttr",
-              "type": {
-                "text": "string"
-              },
-              "kind": "field",
-              "attribute": "classattr"
-            }
-          ],
           "kind": "class",
           "tagName": "jsdoc-attr",
           "attributes": [
@@ -81,13 +71,6 @@
               "type": {
                 "text": "number"
               }
-            },
-            {
-              "name": "classattr",
-              "type": {
-                "text": "string"
-              },
-              "fieldName": "classAttr"
             }
           ],
           "customElement": true

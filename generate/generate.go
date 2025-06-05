@@ -2,48 +2,18 @@ package generate
 
 import (
 	"cmp"
-	"embed"
-	"fmt"
-	"iter"
 	"log"
 	"os"
 	"slices"
 	"sync"
 
-	"github.com/bennypowers/cemgen/cem"
-	"github.com/bennypowers/cemgen/set"
+	"bennypowers.dev/cem/cem"
+	"bennypowers.dev/cem/set"
 
 	A "github.com/IBM/fp-go/array"
 	ts "github.com/tree-sitter/go-tree-sitter"
 	tsts "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
 )
-
-//go:embed queries/*.scm
-var queries embed.FS
-
-func loadQueryFile(queryName string) (string, error) {
-	path := fmt.Sprintf("queries/%s.scm", queryName)
-	data, err := queries.ReadFile(path)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
-}
-
-func allMatches(qc *ts.QueryCursor, q *ts.Query, node *ts.Node, text []byte) iter.Seq[*ts.QueryMatch] {
-	qm := qc.Matches(q, node, text)
-	return func(yield func (qm *ts.QueryMatch) bool) {
-		for {
-			m := qm.Next()
-			if m == nil {
-				break
-			}
-			if !yield(m) {
-				return
-			}
-		}
-	}
-}
 
 func generateModule(file string, channel chan<- cem.Module, wg *sync.WaitGroup) {
 	defer wg.Done()
@@ -63,7 +33,7 @@ func generateModule(file string, channel chan<- cem.Module, wg *sync.WaitGroup) 
 
 	module := cem.NewModule(file)
 
-	queryText, err := loadQueryFile("customElementDeclaration")
+	queryText, err := LoadQueryFile("customElementDeclaration")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -75,7 +45,7 @@ func generateModule(file string, channel chan<- cem.Module, wg *sync.WaitGroup) 
 	}
 	cursor := ts.NewQueryCursor()
 
-	for match := range allMatches(cursor, query, root, code) {
+	for match := range AllQueryMatches(cursor, query, root, code) {
 		var declNode ts.Node
 		var tagName, className, jsdoc string
 
@@ -106,8 +76,8 @@ func generateModule(file string, channel chan<- cem.Module, wg *sync.WaitGroup) 
 			})
 
 
-			fields := getClassFieldsFromClassDeclarationNode(language, code, &declNode)
-			methods := getClassMethodsFromClassDeclarationNode(language, code, &declNode)
+			fields := getClassFieldsFromClassDeclarationNode(code, &declNode)
+			methods := getClassMethodsFromClassDeclarationNode(code, &declNode)
 
 			fieldAttrs := A.Chain(func(field cem.CustomElementField) ([]cem.Attribute) {
 				if field.Attribute == "" {

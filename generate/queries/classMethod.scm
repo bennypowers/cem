@@ -3,6 +3,8 @@
   (method_definition
     (accessibility_modifier)? @method.privacy
     "static"? @method.static
+    ["get" "set"]? @accessor
+    (#not-any-of? @accessor "get" "set")
     name: (property_identifier) @method.name
     parameters: (formal_parameters (_
                                      pattern: [
