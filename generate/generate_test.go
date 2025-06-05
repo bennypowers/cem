@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/nsf/jsondiff"
 )
 
 var update = flag.Bool("update", false, "update golden files")
@@ -29,14 +31,18 @@ func TestGenerate(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			actual := Generate([]string{filepath.Join("test-fixtures", tc.path)}, []string{})
+			err, actual := Generate([]string{filepath.Join("test-fixtures", tc.path)}, []string{})
+			if err != nil {
+				t.Error(err)
+			}
 			golden := filepath.Join("test-golden", tc.name + ".json")
 			if *update {
-				os.WriteFile(golden, []byte(actual), 0644)
+				os.WriteFile(golden, []byte(*actual), 0644)
 			}
 			expected, _ := os.ReadFile(golden)
-			if string(expected) != actual {
-				t.Fail()
+			if string(expected) != *actual {
+				options := jsondiff.DefaultConsoleOptions()
+				t.Error(jsondiff.Compare(expected, []byte(*actual), &options))
 			}
 		})
 	}
