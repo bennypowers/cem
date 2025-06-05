@@ -48,7 +48,7 @@ func init() {
 				os.WriteFile(output, []byte(*manifest), 0666)
 				fmt.Println("Wrote manifest to", output)
 			} else {
-				fmt.Println(manifest)
+				fmt.Println(*manifest)
 			}
 		},
 	}
