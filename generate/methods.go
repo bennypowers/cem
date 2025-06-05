@@ -45,20 +45,23 @@ func getClassMethodsFromClassDeclarationNode(code []byte, node *ts.Node) (err er
 		if ok && len(params) > 0 {
 			node := params[0].Node
 			for _, param := range node.NamedChildren(node.Walk()) {
-				nameNode := param.ChildByFieldName("pattern")
-				typeNode := param.ChildByFieldName("type").NamedChild(0)
 				parameter := manifest.Parameter{ }
+				nameNode := param.ChildByFieldName("pattern")
+				typeParentNode := param.ChildByFieldName("type")
+				if typeParentNode != nil {
+					typeNode := typeParentNode.NamedChild(0)
+					if typeNode != nil {
+						parameter.Type = &manifest.Type{
+							Text: typeNode.Utf8Text(code),
+						}
+					}
+				}
 				if nameNode != nil {
 					if nameNode.GrammarName() == "rest_pattern" {
 						parameter.Rest = true
 						nameNode = nameNode.NamedChild(0)
 					}
 					parameter.Name = nameNode.Utf8Text(code)
-				}
-				if typeNode != nil {
-					parameter.Type = &manifest.Type{
-						Text: typeNode.Utf8Text(code),
-					}
 				}
 				if parameter.Name != "" {
 					method.Parameters = append(method.Parameters, parameter)
@@ -90,15 +93,15 @@ func getClassMethodsFromClassDeclarationNode(code []byte, node *ts.Node) (err er
 						if method.Return == nil {
 							method.Return = &manifest.Return{}
 						}
+						method.Return.Description = info.Return.Description
+						if info.Return.Type != "" {
+							method.Return.Type = &manifest.Type{
+								Text: info.Return.Type,
+							}
+						}
 					}
-					method.Return.Description = info.Return.Description
 					if info.Privacy != "" {
 						method.Privacy = info.Privacy
-					}
-					if info.Return.Type != "" {
-						method.Return.Type = &manifest.Type{
-							Text: info.Return.Type,
-						}
 					}
 					for _, iparam := range info.Parameters {
 						for i, _ := range method.Parameters {
