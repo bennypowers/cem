@@ -22,14 +22,13 @@ func NewPackage(modules []Module) Package {
 // Module may expand in future; currently only JavaScriptModule.
 type Module = JavaScriptModule
 
-func NewModule(file string) Module {
-	return Module {
+func NewModule(file string) (*Module) {
+	return &Module{
 		Kind: "javascript-module",
 		Path: file,
-		Declarations: make([]Declaration, 0),
-		Exports: make([]Export, 0),
 	}
 }
+
 type JavaScriptModule struct {
 	Kind         string        `json:"kind"` // 'javascript-module'
 	Path         string        `json:"path"`

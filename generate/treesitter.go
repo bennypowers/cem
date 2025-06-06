@@ -11,6 +11,14 @@ import (
 	tsjsdoc "github.com/tree-sitter/tree-sitter-jsdoc/bindings/go"
 )
 
+type NoCaptureError struct {
+	CaptureName string
+	QueryName string
+}
+
+func (e *NoCaptureError) Error() string {
+  return fmt.Sprintf("No nodes for capture %s in query %s", e.CaptureName, e.QueryName)
+}
 
 var Languages = struct{Typescript *ts.Language; Jsdoc *ts.Language}{
 	Typescript: ts.NewLanguage(tsts.LanguageTypescript()),
@@ -20,12 +28,12 @@ var Languages = struct{Typescript *ts.Language; Jsdoc *ts.Language}{
 //go:embed queries/*.scm
 var queries embed.FS
 
-type NodeInfo struct {
+type CaptureInfo struct {
 	Node *ts.Node;
 	Text string;
 }
 
-type CaptureMap = map[string][]NodeInfo
+type CaptureMap = map[string][]CaptureInfo
 
 type QueryMatcher struct {
 	query *ts.Query
@@ -80,9 +88,9 @@ func (q QueryMatcher) GetCapturesFromMatch(match *ts.QueryMatch, code []byte) Ca
 		name := names[capture.Index]
 		_, ok := captures[name]
 		if !ok {
-			captures[name] = make([]NodeInfo, 0)
+			captures[name] = make([]CaptureInfo, 0)
 		}
-		captures[name] = append(captures[name], NodeInfo{
+		captures[name] = append(captures[name], CaptureInfo{
 			Node: &capture.Node,
 			Text: capture.Node.Utf8Text(code),
 		})

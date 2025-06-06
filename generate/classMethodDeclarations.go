@@ -9,7 +9,7 @@ import (
 )
 
 func getClassMethodsFromClassDeclarationNode(code []byte, node *ts.Node) (err error, methods []manifest.ClassMethod) {
-	qm, closeQm := NewQueryMatcher("classMethod", Languages.Typescript)
+	qm, closeQm := NewQueryMatcher("classMethodDeclaration", Languages.Typescript)
 	defer closeQm()
 
 	set := set.NewSet[string]()

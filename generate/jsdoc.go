@@ -2,6 +2,7 @@ package generate
 
 import (
 	"regexp"
+	"slices"
 	"strings"
 
 	"bennypowers.dev/cem/manifest"
@@ -29,7 +30,7 @@ func stripTrailingSplat(str string) (string) {
 func normalizeJsdocLines(str string) (string) {
 	re := regexp.MustCompile(`(?m)^\s+\*\s+`)
 	new := re.ReplaceAllString(str, "")
-	return new
+	return stripTrailingSplat(new)
 }
 
 func FindNamedMatches(regex *regexp.Regexp, str string, includeNotMatchedOptional bool) map[string]string {
@@ -126,6 +127,22 @@ func NewClassInfo(source string) (error, *ClassInfo) {
 		}
 	}
 	return nil, &info
+}
+
+func (info *ClassInfo) MergeToClassDeclaration(declaration *manifest.ClassDeclaration) {
+	declaration.ClassLike.Deprecated  = info.Deprecated
+	declaration.ClassLike.Description = info.Description
+	declaration.ClassLike.Summary     = info.Summary
+}
+
+func (info *ClassInfo) MergeToCustomElementDeclaration(declaration *manifest.CustomElementDeclaration) {
+	info.MergeToClassDeclaration(&declaration.ClassDeclaration)
+	declaration.CustomElement.Attributes    = slices.Concat(info.Attrs, declaration.CustomElement.Attributes)
+	declaration.CustomElement.Slots         = info.Slots
+	declaration.CustomElement.Events        = info.Events
+	declaration.CustomElement.CssProperties = info.CssProperties
+	declaration.CustomElement.CssParts      = info.CssParts
+	declaration.CustomElement.CssStates     = info.CssStates
 }
 
 type TagInfo struct {
@@ -416,7 +433,7 @@ func NewFieldInfo(code string) (error, *FieldInfo) {
 		descriptionNodes := match.NodesForCaptureIndex(descriptionCaptureIndex)
 		tagNodes := match.NodesForCaptureIndex(tagCaptureIndex)
 		for _, node := range descriptionNodes {
-			info.Description = stripTrailingSplat(normalizeJsdocLines(node.Utf8Text(barr)))
+			info.Description = normalizeJsdocLines(node.Utf8Text(barr))
 		}
 		for _, node := range tagNodes {
 			var tagName, tagType, content string
@@ -424,12 +441,12 @@ func NewFieldInfo(code string) (error, *FieldInfo) {
 				switch child.GrammarName() {
 					case "tag_name": tagName = child.Utf8Text(barr)
 					case "type": tagType = child.Utf8Text(barr)
-					case "description": content = stripTrailingSplat(normalizeJsdocLines(child.Utf8Text(barr)))
+					case "description": content = normalizeJsdocLines(child.Utf8Text(barr))
 				}
 			}
 			switch tagName {
 				case "@summary":
-					info.Summary += stripTrailingSplat(normalizeJsdocLines(content))
+					info.Summary += normalizeJsdocLines(content)
 				case "@type":
 					info.Type = tagType
 				case "@deprecated":
@@ -501,4 +518,38 @@ func NewMethodInfo(source string) (error, *MethodInfo) {
 	}
 
 	return nil, &info
+}
+
+func (info *MethodInfo) MergeToFunctionDeclaration(declaration *manifest.FunctionDeclaration) {
+	declaration.Description = normalizeJsdocLines(info.Description)
+	declaration.Deprecated = info.Deprecated
+	declaration.Summary = info.Summary
+	if (info.Return != nil) {
+		if declaration.Return == nil {
+			declaration.Return = &manifest.Return{}
+		}
+		declaration.Return.Description = info.Return.Description
+		if info.Return.Type != "" {
+			declaration.Return.Type = &manifest.Type{
+				Text: info.Return.Type,
+			}
+		}
+	}
+	for _, iparam := range info.Parameters {
+		for i, _ := range declaration.Parameters {
+			if declaration.Parameters[i].Name == iparam.Name {
+				declaration.Parameters[i].Description = iparam.Description
+				declaration.Parameters[i].Deprecated = iparam.Deprecated
+				if iparam.Optional {
+					declaration.Parameters[i].Optional = true
+				}
+				if iparam.Type != "" {
+					declaration.Parameters[i].Type.Text = iparam.Type
+				}
+				if iparam.Default != "" {
+					declaration.Parameters[i].Default = iparam.Default
+				}
+			}
+		}
+	}
 }

@@ -193,7 +193,7 @@ func createClassFieldFromFieldMatch(fieldName string, isStatic bool, captures Ca
 }
 
 func getClassFieldsFromClassDeclarationNode(code []byte, node *ts.Node) (err error, field []manifest.CustomElementField) {
-	qm, closeQm := NewQueryMatcher("classField", Languages.Typescript)
+	qm, closeQm := NewQueryMatcher("classFieldDeclaration", Languages.Typescript)
 	defer closeQm()
 
 	staticsSet := set.NewSet[string]()

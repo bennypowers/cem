@@ -26,7 +26,9 @@ func processFile(file string, channel chan<-manifest.Module, wg *sync.WaitGroup)
 		fmt.Fprintf(os.Stderr, "%s", err)
 	}
 
-	channel <- module
+	if module != nil {
+		channel <- *module
+	}
 }
 
 // Generates a custom-elements manifest from a list of typescript files

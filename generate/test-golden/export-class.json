@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "test-fixtures/export-class.ts",
+      "declarations": [
+        {
+          "name": "Simple",
+          "kind": "class"
+        },
+        {
+          "name": "Subclass",
+          "kind": "class"
+        },
+        {
+          "name": "Decorated",
+          "kind": "class"
+        },
+        {
+          "name": "Foo",
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "Simple",
+          "declaration": {
+            "name": "Simple",
+            "module": "test-fixtures/export-class.ts"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "Subclass",
+          "declaration": {
+            "name": "Subclass",
+            "module": "test-fixtures/export-class.ts"
+          }
+        }
+      ]
+    }
+  ]
+}
