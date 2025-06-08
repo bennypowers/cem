@@ -29,7 +29,7 @@ class ClassAccessors extends LitElement {
   set propertyPairDescribed(v: string) {}
 
   /** @summary property pair with summary */
-  @property({ reflects: true })
+  @property({ reflect: true })
   get propertyPairSummarized(): string {}
   set propertyPairSummarized(v: string) {}
 }

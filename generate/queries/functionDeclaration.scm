@@ -12,7 +12,7 @@
                                            (rest_pattern (identifier) @function.param.name)
                                            ]
                                  type: (type_annotation (_) @function.param.type))* ) @function.params
-                 return_type: (type_annotation (_) @function.return.type)?) @function))))
+                 return_type: (type_annotation (_) @function.return.type)?))))) @function
 
 ( ; case: export async function *foo(whatev: string): bool { }
   (comment) * @function.jsdoc (#match? @function.jsdoc "^/\\*\\*") .
@@ -26,4 +26,4 @@
                                 (rest_pattern (identifier) @function.param.name)
                                 ]
                       type: (type_annotation (_) @function.param.type))* ) @function.params
-      return_type: (type_annotation (_) @function.return.type)?) @function))
+      return_type: (type_annotation (_) @function.return.type)?))) @function

@@ -88,22 +88,11 @@
                 "text": "number"
               },
               "default": "0",
-              "kind": "field",
-              "attribute": "stat"
+              "kind": "field"
             }
           ],
           "kind": "class",
           "tagName": "class-fields",
-          "attributes": [
-            {
-              "name": "stat",
-              "type": {
-                "text": "number"
-              },
-              "default": "0",
-              "fieldName": "stat"
-            }
-          ],
           "customElement": true
         }
       ],

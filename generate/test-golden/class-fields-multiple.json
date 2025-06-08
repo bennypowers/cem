@@ -46,7 +46,8 @@
               },
               "default": "false",
               "kind": "field",
-              "attribute": "dupe"
+              "attribute": "dupe",
+              "reflects": true
             }
           ],
           "kind": "class",

@@ -43,8 +43,7 @@
               "type": {
                 "text": "string"
               },
-              "kind": "field",
-              "attribute": "bfield"
+              "kind": "field"
             },
             {
               "name": "bProp",
@@ -67,13 +66,6 @@
           "kind": "class",
           "tagName": "class-b",
           "attributes": [
-            {
-              "name": "bfield",
-              "type": {
-                "text": "string"
-              },
-              "fieldName": "bField"
-            },
             {
               "name": "bprop",
               "type": {

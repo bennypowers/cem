@@ -16,7 +16,8 @@ func generateClassDeclaration(
 	_, isCustomElement := captures["customElement"]
 	classDeclarationCaptures, hasClassDeclaration := captures["class.declaration"]
 	if (hasClassDeclaration && len(classDeclarationCaptures) > 0) {
-		classDeclarationNode := classDeclarationCaptures[0].Node
+		classDeclarationNodeId := classDeclarationCaptures[0].NodeId
+		classDeclarationNode := GetDescendantById(root, classDeclarationNodeId)
 		if isCustomElement {
 			return generateCustomElementClassDeclaration(captures, root, classDeclarationNode, code)
 		} else {
@@ -105,34 +106,35 @@ func generateCustomElementClassDeclaration(
 	}
 
 	tagNameNodes, ok := captures["tag-name"]
-	if (!ok || len(tagNameNodes) <= 0) {
+	if (!ok || len(tagNameNodes) < 1) {
 		errs = errors.Join(errs, &NoCaptureError{ "tag-name", "customElementDeclaration"  })
-	}
+	} else {
 
-	tagName := tagNameNodes[0].Text
+		tagName := tagNameNodes[0].Text
 
-	if (tagName != "") {
-		declaration.CustomElement = M.CustomElement{
-			CustomElement: true,
-			TagName:       tagName,
-		}
-
-		declaration.CustomElement.Attributes = A.Chain(func(member M.ClassMember) []M.Attribute {
-			field, ok := (member).(M.CustomElementField)
-			if (ok && field.Attribute != "") {
-				return []M.Attribute{{
-					Name:        field.Attribute,
-					Summary:     field.Summary,
-					Description: field.Description,
-					Deprecated:  field.Deprecated,
-					Default:     field.Default,
-					Type:        field.Type,
-					FieldName:   field.Name,
-				}}
-			} else {
-				return []M.Attribute{}
+		if (tagName != "") {
+			declaration.CustomElement = M.CustomElement{
+				CustomElement: true,
+				TagName:       tagName,
 			}
-		})(declaration.Members)
+
+			declaration.CustomElement.Attributes = A.Chain(func(member M.ClassMember) []M.Attribute {
+				field, ok := (member).(M.CustomElementField)
+				if (ok && field.Attribute != "") {
+					return []M.Attribute{{
+						Name:        field.Attribute,
+						Summary:     field.Summary,
+						Description: field.Description,
+						Deprecated:  field.Deprecated,
+						Default:     field.Default,
+						Type:        field.Type,
+						FieldName:   field.Name,
+					}}
+				} else {
+					return []M.Attribute{}
+				}
+			})(declaration.Members)
+		}
 	}
 
 	jsdoc, ok := captures["class.jsdoc"]

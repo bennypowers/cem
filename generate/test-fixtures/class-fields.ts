@@ -9,5 +9,5 @@ export class ClassFields {
   @squishy
   @icky()
   @tickly({ giggly: true })
-  @property({ attribute: 'multi-decorator', reflects: true }) decorated = 0;
+  @property({ attribute: 'multi-decorator', reflect: true }) decorated = 0;
 }

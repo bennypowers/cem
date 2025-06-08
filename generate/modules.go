@@ -26,8 +26,7 @@ func generateModule(file string, code []byte) (errs error, module *M.Module) {
 	queryName := "variableDeclaration"
 	qm, closeQm := NewQueryMatcher(queryName, Languages.Typescript)
 	defer closeQm()
-	for match := range qm.AllQueryMatches(root, code) {
-		captures := qm.GetCapturesFromMatch(match, code)
+	for captures := range qm.ParentCaptures(root, code, "variable") {
 		err, declaration := generateVarDeclaration(captures)
 		if err != nil {
 			errs = errors.Join(errs, err)
@@ -39,8 +38,7 @@ func generateModule(file string, code []byte) (errs error, module *M.Module) {
 	queryName = "classDeclaration"
 	qm, closeQm = NewQueryMatcher(queryName, Languages.Typescript)
 	defer closeQm()
-	for match := range qm.AllQueryMatches(root, code) {
-		captures := qm.GetCapturesFromMatch(match, code)
+	for captures := range qm.ParentCaptures(root, code, "class") {
 		err, d := generateClassDeclaration(captures, root, code)
 		if err != nil {
 			errs = errors.Join(errs, err)
@@ -62,8 +60,7 @@ func generateModule(file string, code []byte) (errs error, module *M.Module) {
 	queryName = "functionDeclaration"
 	qm, closeQm = NewQueryMatcher(queryName, Languages.Typescript)
 	defer closeQm()
-	for match := range qm.AllQueryMatches(root, code) {
-		captures := qm.GetCapturesFromMatch(match, code)
+	for captures := range qm.ParentCaptures(root, code, "function") {
 		err, declaration := generateFunctionDeclaration(captures, root, code)
 		if err != nil {
 			errs = errors.Join(errs, err)
@@ -75,8 +72,7 @@ func generateModule(file string, code []byte) (errs error, module *M.Module) {
 	queryName = "exportStatement"
 	qm, closeQm = NewQueryMatcher(queryName, Languages.Typescript)
 	defer closeQm()
-	for match := range qm.AllQueryMatches(root, code) {
-		captures := qm.GetCapturesFromMatch(match, code)
+	for captures := range qm.ParentCaptures(root, code, "export") {
 		if exportNodes, ok := captures["export"]; (!ok || len(exportNodes) <= 0) {
 			errs = errors.Join(errs, &NoCaptureError{ "export", queryName })
 		} else if declarationNameNodes, ok := captures["declaration.name"]; (!ok || len(declarationNameNodes) <= 0) {

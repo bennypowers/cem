@@ -14,28 +14,23 @@
         function: (identifier) @decorator.name (#eq? @decorator.name "property")
         arguments: (arguments
                      (object [
-                              (pair
-                                key: (property_identifier) @_attribute (#eq? @_attribute "attribute")
-                                value: [
-                                          (true) @field.attr.bool
-                                          (false) @field.attr.bool
-                                          (string (string_fragment) @field.attr.name)
-                                       ])
-                              (pair
-                                key: (property_identifier) @_reflects (#eq? @_reflects "reflects")
-                                value: (_) @field.attr.reflects)
-                              (pair
-                                key: (property_identifier) @_key
-                                value: (_))
-                              ]*)?)?)?)?
+                       (pair
+                         key: (property_identifier) @key1
+                         value: (string (string_fragment) @field.attr.name (#eq? @key1 "attribute")))
+                       (pair
+                         key: (property_identifier) @key1
+                         value: [(true)(false)] @field.attr.bool (#eq? @key1 "attribute"))
+                       (pair
+                         key: (property_identifier) @key2
+                         value: (_) @field.attr.reflect (#eq? @key2 "reflect"))
+                     ]))?))?
     (decorator)*
     (accessibility_modifier)? @field.privacy
     "static"? @field.static
     "readonly"? @field.readonly
     name: (property_identifier) @field.name
     type: (type_annotation (_) @field.type)*
-    value: (_)? @field.initializer)
-  @field)
+    value: (_)? @field.initializer)) @field
 
 (method_definition
   name: (_) @constructor (#match? @constructor "constructor")
@@ -72,17 +67,15 @@
           arguments: (arguments
                        (object [
                          (pair
-                           key: (property_identifier) @_attribute (#eq? @_attribute "attribute")
-                           value: [
-                                    (true) @field.attr.bool
-                                    (false) @field.attr.bool
-                                    (string (string_fragment) @field.attr.name)
-                                  ])
+                           key: (property_identifier) @key1
+                           value: (string (string_fragment) @field.attr.name (#eq? @key1 "attribute")))
                          (pair
-                           key: (property_identifier) @_reflects (#eq? @_reflects "reflects")
-                           value: (_) @field.attr.reflects)
-                         (pair)
-                       ]*)?)?)?)
+                           key: (property_identifier) @key1
+                           value: [(true)(false)] @field.attr.bool (#eq? @key1 "attribute"))
+                         (pair
+                           key: (property_identifier) @key2
+                           value: (_) @field.attr.reflect (#eq? @key2 "reflect"))
+                       ]))?))?
     ] * .
 
     (method_definition
@@ -91,13 +84,9 @@
       ["get" "set"] @field.accessor
       name: (property_identifier) @field.name
       parameters: (formal_parameters (_
-                                       pattern: [
-                                                 (identifier) @param.name
-                                                 (rest_pattern (identifier) @param.name)
-                                                 ]
-                                       type: (type_annotation (_) @param.type))* ) @params
-      return_type: (type_annotation (_) @field.type)?)
-@accessor))
+                                       pattern: (identifier) @param.name
+                                       type: (type_annotation (_) @param.type)))
+      return_type: (type_annotation (_) @field.type)?))) @accessor
 
 
 ( ; class methods
@@ -112,12 +101,13 @@
     ["get" "set"]? @accessor
     (#not-any-of? @accessor "get" "set")
     name: (property_identifier) @method.name
-    parameters: (formal_parameters (_
-                                     pattern: [
-                                               (identifier) @param.name
-                                               (rest_pattern (identifier) @param.name)
-                                               ]
-                                     type: (type_annotation (_) @param.type))* ) @params
+    parameters: (formal_parameters
+                  (_
+                     pattern: [
+                               (identifier) @param.name
+                               (rest_pattern (identifier) @param.name) @param.rest
+                               ]
+                     type: (type_annotation (_) @param.type))) @params
     return_type: (type_annotation (_) @method.returns)?
     (#not-any-of? @method.name
      "constructor"
@@ -129,5 +119,4 @@
      "update"
      "updated"
      "willUpdated"
-     "getUpdateComplete"))
-@method)
+     "getUpdateComplete"))) @method

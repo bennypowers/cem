@@ -14,7 +14,7 @@
       name: (_) @class.name
       (class_heritage
         (extends_clause
-          value: (identifier) @superclass.name))?) @class.declaration))
+          value: (identifier) @superclass.name))?) @class.declaration)) @class
 
 ( ; exported custom element class
   ;
@@ -36,7 +36,7 @@
       name: (type_identifier) @class.name
       (class_heritage
         (extends_clause
-          value: (identifier) @superclass.name))?) @class.declaration)) @customElement
+          value: (identifier) @superclass.name))?) @class.declaration)) @customElement @class
 
 ( ; non-exported custom element class
   ;
@@ -57,5 +57,5 @@
     name: (type_identifier) @class.name
     (class_heritage
       (extends_clause
-        value: (identifier) @superclass.name))?) @class.declaration) @customElement
+        value: (identifier) @superclass.name))?) @class.declaration) @customElement @class
 

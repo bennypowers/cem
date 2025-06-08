@@ -33,7 +33,7 @@ class ClassReactiveProperties extends LitElement {
   @squishy
   @icky()
   @tickly({ giggly: true })
-  @property({ attribute: 'multi-decorator', reflects: true }) multiDecorator = 0;
+  @property({ attribute: 'multi-decorator', reflect: true }) multiDecorator = 0;
 
   /** @type {number} */
   @property() typejsdoc: string;

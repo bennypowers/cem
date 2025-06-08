@@ -38,12 +38,12 @@
               "attribute": "initialized"
             },
             {
-              "name": "reflects",
+              "name": "reflect",
               "type": {
                 "text": "boolean"
               },
               "kind": "field",
-              "attribute": "reflects",
+              "attribute": "reflect",
               "reflects": true
             },
             {
@@ -52,7 +52,8 @@
                 "text": "boolean"
               },
               "kind": "field",
-              "attribute": "attr-reflects"
+              "attribute": "attr-reflects",
+              "reflects": true
             },
             {
               "name": "truetrue",
@@ -60,7 +61,8 @@
                 "text": "string"
               },
               "kind": "field",
-              "attribute": "truetrue"
+              "attribute": "truetrue",
+              "reflects": true
             },
             {
               "name": "nonAttr",
@@ -76,7 +78,8 @@
               },
               "default": "0",
               "kind": "field",
-              "attribute": "multi-decorator"
+              "attribute": "multi-decorator",
+              "reflects": true
             }
           ],
           "kind": "class",
@@ -98,11 +101,11 @@
               "fieldName": "initialized"
             },
             {
-              "name": "reflects",
+              "name": "reflect",
               "type": {
                 "text": "boolean"
               },
-              "fieldName": "reflects"
+              "fieldName": "reflect"
             },
             {
               "name": "attr-reflects",
