@@ -54,16 +54,6 @@ func generateCommonClassDeclaration(
 		declaration.Members = append(declaration.Members, method)
 	}
 
-	jsdoc, ok := captures["jsdoc"]
-	if (ok && len(jsdoc) > 0) {
-		err, info := NewClassInfo(jsdoc[0].Text)
-		if err != nil {
-			errs = errors.Join(errs, err)
-		} else {
-			info.MergeToClassDeclaration(declaration)
-		}
-	}
-
 	superClassName, ok := captures["superclass.name"]
 	if (ok && len(superClassName) > 0) {
 		name := superClassName[0].Text
@@ -84,6 +74,16 @@ func generateCommonClassDeclaration(
 		// default:
 		}
 		declaration.Superclass = M.NewReference(name, pkg, module)
+	}
+
+	jsdoc, ok := captures["class.jsdoc"]
+	if (ok && len(jsdoc) > 0) {
+		err, info := NewClassInfo(jsdoc[0].Text)
+		if err != nil {
+			errs = errors.Join(errs, err)
+		} else {
+			info.MergeToClassDeclaration(declaration)
+		}
 	}
 
 	return nil, declaration
@@ -135,7 +135,7 @@ func generateCustomElementClassDeclaration(
 		})(declaration.Members)
 	}
 
-	jsdoc, ok := captures["jsdoc"]
+	jsdoc, ok := captures["class.jsdoc"]
 	if (ok && len(jsdoc) > 0) {
 		error, classInfo := NewClassInfo(jsdoc[0].Text)
 		if error != nil {

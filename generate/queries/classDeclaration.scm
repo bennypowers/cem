@@ -4,7 +4,7 @@
   ; ```ts
   ; class Whatever extends Thing {}
   ; ```
-  (comment)* @jsdoc . (#match? @jsdoc "^/\\*\\*")
+  (comment)* @class.jsdoc . (#match? @class.jsdoc "^/\\*\\*")
   (export_statement
     (decorator
       (call_expression
@@ -23,7 +23,7 @@
   ; @customElement('custom-element')
   ; export class CustomElement extends LitElement {}
   ; ```
-  (comment)* @jsdoc . (#match? @jsdoc "^/\\*\\*")
+  (comment)* @class.jsdoc . (#match? @class.jsdoc "^/\\*\\*")
   (export_statement
     (decorator) *
     decorator: (decorator
@@ -45,7 +45,7 @@
   ; @customElement('custom-element')
   ; class CustomElement extends LitElement {}
   ; ```
-  (comment)* @jsdoc . (#match? @jsdoc "^/\\*\\*")
+  (comment)* @class.jsdoc . (#match? @class.jsdoc "^/\\*\\*")
   (class_declaration
     (decorator) *
     decorator: (decorator

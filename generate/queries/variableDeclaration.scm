@@ -1,5 +1,5 @@
 (
-  (comment)* @jsdoc .
+  (comment) * @variable.jsdoc (#match? @variable.jsdoc "^/\\*\\*") .
   (export_statement
     declaration: (_
                    (variable_declarator

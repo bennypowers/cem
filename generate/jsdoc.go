@@ -404,7 +404,7 @@ func (info TagInfo) toParameter() (ParameterInfo) {
 	return param
 }
 
-type FieldInfo struct {
+type PropertyInfo struct {
 	source string;
 	Description string;
 	Summary string;
@@ -412,7 +412,7 @@ type FieldInfo struct {
 	Deprecated M.Deprecated
 }
 
-func NewFieldInfo(code string) (error, *FieldInfo) {
+func NewPropertyInfo(code string) (error, *PropertyInfo) {
 	barr := []byte(code)
 	parser := ts.NewParser()
 	defer parser.Close()
@@ -427,7 +427,7 @@ func NewFieldInfo(code string) (error, *FieldInfo) {
   descriptionCaptureIndex, _ := qm.query.CaptureIndexForName("doc.description")
   tagCaptureIndex, _ := qm.query.CaptureIndexForName("doc.tag")
 
-	info := FieldInfo{source: code}
+	info := PropertyInfo{source: code}
 
 	for match := range qm.AllQueryMatches(root, barr) {
 		descriptionNodes := match.NodesForCaptureIndex(descriptionCaptureIndex)
@@ -462,7 +462,15 @@ func NewFieldInfo(code string) (error, *FieldInfo) {
 	return nil, &info
 }
 
-func (info FieldInfo) MergeToFieldDeclaration(declaration *M.ClassField) {
+type FieldInfo struct {
+	source string;
+	Description string;
+	Summary string;
+	Type string;
+	Deprecated M.Deprecated
+}
+
+func (info PropertyInfo) MergeToPropertyLike(declaration *M.PropertyLike) {
 	declaration.Description += info.Description
 	declaration.Summary += info.Summary
 	declaration.Deprecated = info.Deprecated

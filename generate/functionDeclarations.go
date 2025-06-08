@@ -49,7 +49,7 @@ func generateFunctionDeclaration(captures CaptureMap, _ any, code []byte) (err e
 		}
 	}
 
-	jsdoc, ok := captures["jsdoc"]
+	jsdoc, ok := captures["function.jsdoc"]
 	if (ok && len(jsdoc) > 0) {
 		error, info := NewMethodInfo(jsdoc[0].Text)
 		if error != nil {

@@ -113,11 +113,11 @@ func createClassFieldFromAccessorMatch(
 
 	for _, x := range captures["member.jsdoc"] {
 		source := x.Text
-		error, info := NewFieldInfo(source)
+		error, info := NewPropertyInfo(source)
 		if error != nil {
 			err = errors.Join(err, error)
 		} else {
-			info.MergeToFieldDeclaration(&field.ClassField)
+			info.MergeToPropertyLike(&field.ClassField.PropertyLike)
 		}
 	}
 
@@ -188,11 +188,11 @@ func createClassFieldFromFieldMatch(fieldName string, isStatic bool, isCustomEle
 
 	for _, x := range captures["member.jsdoc"] {
 		source := x.Text
-		error, info := NewFieldInfo(source)
+		error, info := NewPropertyInfo(source)
 		if error != nil {
 			err = errors.Join(err, error)
 		} else {
-			info.MergeToFieldDeclaration(&field.ClassField)
+			info.MergeToPropertyLike(&field.ClassField.PropertyLike)
 		}
 	}
 
