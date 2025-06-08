@@ -1,0 +1,122 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "test-fixtures/class-fields-static.js",
+      "declarations": [
+        {
+          "name": "ClassFields",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "rstat",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "readonly": true,
+              "kind": "field",
+              "static": true
+            },
+            {
+              "name": "rstatpub",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "readonly": true,
+              "kind": "field",
+              "static": true
+            },
+            {
+              "name": "rstatpriv",
+              "type": {
+                "text": "Float"
+              },
+              "default": "0.1",
+              "readonly": true,
+              "kind": "field",
+              "static": true,
+              "privacy": "private"
+            },
+            {
+              "name": "rstatprot",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "readonly": true,
+              "kind": "field",
+              "static": true,
+              "privacy": "protected"
+            },
+            {
+              "name": "statpriv",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field",
+              "static": true
+            },
+            {
+              "name": "statprot",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field",
+              "static": true,
+              "privacy": "protected"
+            },
+            {
+              "name": "stat",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field",
+              "static": true
+            },
+            {
+              "name": "stat",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field",
+              "attribute": "stat"
+            }
+          ],
+          "kind": "class",
+          "tagName": "class-fields",
+          "attributes": [
+            {
+              "name": "stat",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "fieldName": "stat"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-fields",
+          "declaration": {
+            "name": "ClassFields",
+            "module": "test-fixtures/class-fields-static.js"
+          }
+        }
+      ]
+    }
+  ]
+}

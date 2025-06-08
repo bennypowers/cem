@@ -53,25 +53,6 @@ func createClassFieldFromAccessorMatch(
 		}
 	}
 
-	for _, x := range captures["member.jsdoc"] {
-		source := x.Text
-		if strings.HasPrefix(source, `/**`) {
-			error, info := NewFieldInfo(source)
-			if error != nil {
-				err = errors.Join(err, error)
-			} else {
-				field.Description += info.Description
-				field.Summary += info.Summary
-				field.Deprecated = info.Deprecated
-				if info.Type != "" {
-					field.Type = &M.Type{
-						Text: info.Type,
-					}
-				}
-			}
-		}
-	}
-
 	for _, x := range captures["field.initializer"] {
 		field.Default = x.Text
 		if field.Type == nil {
@@ -130,6 +111,16 @@ func createClassFieldFromAccessorMatch(
 		}
 	}
 
+	for _, x := range captures["member.jsdoc"] {
+		source := x.Text
+		error, info := NewFieldInfo(source)
+		if error != nil {
+			err = errors.Join(err, error)
+		} else {
+			info.MergeToFieldDeclaration(&field.ClassField)
+		}
+	}
+
 	return err, field
 }
 
@@ -146,24 +137,6 @@ func createClassFieldFromFieldMatch(fieldName string, isStatic bool, isCustomEle
 		if typeText != "" {
 			field.Type = &M.Type{
 				Text: typeText,
-			}
-		}
-	}
-
-	for _, x := range captures["member.jsdoc"] {
-		source := x.Text
-		if strings.HasPrefix(source, `/**`) {
-			error, info := NewFieldInfo(source)
-			if error != nil {
-				err = errors.Join(err, error)
-			}
-			field.Description += info.Description
-			field.Summary += info.Summary
-			field.Deprecated = info.Deprecated
-			if info.Type != "" {
-				field.Type = &M.Type{
-					Text: info.Type,
-				}
 			}
 		}
 	}
@@ -210,6 +183,16 @@ func createClassFieldFromFieldMatch(fieldName string, isStatic bool, isCustomEle
 			} else {
 				field.Attribute = strings.ToLower(field.Name)
 			}
+		}
+	}
+
+	for _, x := range captures["member.jsdoc"] {
+		source := x.Text
+		error, info := NewFieldInfo(source)
+		if error != nil {
+			err = errors.Join(err, error)
+		} else {
+			info.MergeToFieldDeclaration(&field.ClassField)
 		}
 	}
 
@@ -398,43 +381,11 @@ func getClassMembersFromClassDeclarationNode(
 					if merr != nil {
 						errs = errors.Join(merr)
 					} else {
-						method.Description = info.Description
-						method.Deprecated = info.Deprecated
-						method.Summary = info.Summary
-						if (info.Return != nil) {
-							if method.Return == nil {
-								method.Return = &M.Return{}
-							}
-							method.Return.Description = info.Return.Description
-							if info.Return.Type != "" {
-								method.Return.Type = &M.Type{
-									Text: info.Return.Type,
-								}
-							}
-						}
-						if info.Privacy != "" {
-							method.Privacy = info.Privacy
-						}
-						for _, iparam := range info.Parameters {
-							for i, _ := range method.Parameters {
-								if method.Parameters[i].Name == iparam.Name {
-									method.Parameters[i].Description = iparam.Description
-									method.Parameters[i].Deprecated = iparam.Deprecated
-									if iparam.Optional {
-										method.Parameters[i].Optional = true
-									}
-									if iparam.Type != "" {
-										method.Parameters[i].Type.Text = iparam.Type
-									}
-									if iparam.Default != "" {
-										method.Parameters[i].Default = iparam.Default
-									}
-								}
-							}
-						}
+						info.MergeToFunctionLike(&method.FunctionLike)
 					}
 				}
 			}
+
 			members = append(members, method)
 
 		}

@@ -1,0 +1,190 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "test-fixtures/class-reactive-properties-jsdoc.js",
+      "declarations": [
+        {
+          "name": "ClassReactiveProperties",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "stringDescription",
+              "description": "string description field",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "stringdescription"
+            },
+            {
+              "name": "stringMultilineDescription",
+              "description": "multiline\ndescription\nfield",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "stringmultilinedescription"
+            },
+            {
+              "name": "summary",
+              "summary": "summary field",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "summary"
+            },
+            {
+              "name": "multilineSummary",
+              "summary": "multiline\nsummary\nfield",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "multilinesummary"
+            },
+            {
+              "name": "camelCase",
+              "summary": "camelcase field",
+              "description": "camelcase\nmultiline\ndescription\nfield",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "camel-case"
+            },
+            {
+              "name": "multiDecorator",
+              "description": "highly decorated field",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field",
+              "attribute": "multi-decorator"
+            },
+            {
+              "name": "typejsdoc",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "typejsdoc"
+            },
+            {
+              "name": "deprecated",
+              "type": {
+                "text": "string"
+              },
+              "deprecated": true,
+              "kind": "field",
+              "attribute": "deprecated"
+            },
+            {
+              "name": "reason",
+              "type": {
+                "text": "string"
+              },
+              "deprecated": "reason",
+              "kind": "field",
+              "attribute": "reason"
+            }
+          ],
+          "kind": "class",
+          "tagName": "class-reactive-properties",
+          "attributes": [
+            {
+              "name": "stringdescription",
+              "description": "string description field",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "stringDescription"
+            },
+            {
+              "name": "stringmultilinedescription",
+              "description": "multiline\ndescription\nfield",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "stringMultilineDescription"
+            },
+            {
+              "name": "summary",
+              "summary": "summary field",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "summary"
+            },
+            {
+              "name": "multilinesummary",
+              "summary": "multiline\nsummary\nfield",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "multilineSummary"
+            },
+            {
+              "name": "camel-case",
+              "summary": "camelcase field",
+              "description": "camelcase\nmultiline\ndescription\nfield",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "camelCase"
+            },
+            {
+              "name": "multi-decorator",
+              "description": "highly decorated field",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "fieldName": "multiDecorator"
+            },
+            {
+              "name": "typejsdoc",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "typejsdoc"
+            },
+            {
+              "name": "deprecated",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "deprecated",
+              "deprecated": true
+            },
+            {
+              "name": "reason",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "reason",
+              "deprecated": "reason"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-reactive-properties",
+          "declaration": {
+            "name": "ClassReactiveProperties",
+            "module": "test-fixtures/class-reactive-properties-jsdoc.js"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"bennypowers.dev/cem/manifest"
+	M "bennypowers.dev/cem/manifest"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -13,7 +13,7 @@ type ParameterInfo struct {
 	Name        string;
 	Description string;
 	Default     string;
-	Deprecated  manifest.Deprecated;
+	Deprecated  M.Deprecated;
 	Type        string;
 	Optional    bool;
 }
@@ -62,13 +62,13 @@ func FindNamedMatches(regex *regexp.Regexp, str string, includeNotMatchedOptiona
 type ClassInfo struct {
 	Description string;
 	Summary string;
-	Deprecated manifest.Deprecated;
-	Attrs []manifest.Attribute;
-	CssParts []manifest.CssPart;
-	CssProperties []manifest.CssCustomProperty;
-	CssStates []manifest.CssCustomState;
-	Events []manifest.Event;
-	Slots []manifest.Slot;
+	Deprecated M.Deprecated;
+	Attrs []M.Attribute;
+	CssParts []M.CssPart;
+	CssProperties []M.CssCustomProperty;
+	CssStates []M.CssCustomState;
+	Events []M.Event;
+	Slots []M.Slot;
 }
 
 func NewClassInfo(source string) (error, *ClassInfo) {
@@ -109,9 +109,9 @@ func NewClassInfo(source string) (error, *ClassInfo) {
 							info.CssStates = append(info.CssStates, state)
 						case "@deprecated":
 							if tagInfo.Description == "" {
-								info.Deprecated = manifest.DeprecatedFlag(true)
+								info.Deprecated = M.DeprecatedFlag(true)
 							} else {
-								info.Deprecated = manifest.DeprecatedReason(tagInfo.Description)
+								info.Deprecated = M.DeprecatedReason(tagInfo.Description)
 							}
 						case "@event",
 									"@fires":
@@ -129,13 +129,13 @@ func NewClassInfo(source string) (error, *ClassInfo) {
 	return nil, &info
 }
 
-func (info *ClassInfo) MergeToClassDeclaration(declaration *manifest.ClassDeclaration) {
+func (info *ClassInfo) MergeToClassDeclaration(declaration *M.ClassDeclaration) {
 	declaration.ClassLike.Deprecated  = info.Deprecated
 	declaration.ClassLike.Description = info.Description
 	declaration.ClassLike.Summary     = info.Summary
 }
 
-func (info *ClassInfo) MergeToCustomElementDeclaration(declaration *manifest.CustomElementDeclaration) {
+func (info *ClassInfo) MergeToCustomElementDeclaration(declaration *M.CustomElementDeclaration) {
 	info.MergeToClassDeclaration(&declaration.ClassDeclaration)
 	declaration.CustomElement.Attributes    = slices.Concat(info.Attrs, declaration.CustomElement.Attributes)
 	declaration.CustomElement.Slots         = info.Slots
@@ -176,7 +176,7 @@ func NewTagInfo(tag string) TagInfo {
  * @cssproperty [--var=default]
  * @cssproperty [--var=default] - description
  */
-func (info TagInfo) toAttribute() (manifest.Attribute) {
+func (info TagInfo) toAttribute() (M.Attribute) {
 	re := regexp.MustCompile(`(?ms)[\s*]*@attr(ibute)?[\s*]+(\{(?P<type>[^}]+)\}[\s*]+)?(\[(?P<kv>.*)\]|(?P<name>[\w-]+))([\s*]+-[\s*]+(?P<description>.*))?`)
 	matches := FindNamedMatches(re, info.source, true)
 	if matches["kv"] != "" {
@@ -188,7 +188,7 @@ func (info TagInfo) toAttribute() (manifest.Attribute) {
 	} else {
 		info.Name = matches["name"]
 	}
-	attr := manifest.Attribute{
+	attr := M.Attribute{
 		Name: info.Name,
 		Default: info.Value,
 		Description: normalizeJsdocLines(matches["description"]),
@@ -200,7 +200,7 @@ func (info TagInfo) toAttribute() (manifest.Attribute) {
 		// Deprecated: info.Deprecated,
 	}
 	if matches["type"] != "" {
-		attr.Type = &manifest.Type{Text: matches["type"]}
+		attr.Type = &M.Type{Text: matches["type"]}
 	}
 	return attr
 }
@@ -209,10 +209,10 @@ func (info TagInfo) toAttribute() (manifest.Attribute) {
  * @csspart name
  * @csspart name - description
  */
-func (info TagInfo) toCssPart() (manifest.CssPart) {
+func (info TagInfo) toCssPart() (M.CssPart) {
 	re := regexp.MustCompile(`(?ms)[\s*]*@csspart[\s*]+(?P<name>[\w-]+)([\s*]+-[\s*]+(?P<description>.*))?`)
 	matches := FindNamedMatches(re, info.source, true)
-	return manifest.CssPart{
+	return M.CssPart{
 		Name: matches["name"],
 		Description: normalizeJsdocLines(matches["description"]),
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
@@ -255,7 +255,7 @@ func (info TagInfo) toCssPart() (manifest.CssPart) {
  * @cssproperty {<color>} [--property-typed-default-description-multiline=none] - multiline
  *                                                                                property typed default description
  */
-func (info TagInfo) toCssCustomProperty() (manifest.CssCustomProperty) {
+func (info TagInfo) toCssCustomProperty() (M.CssCustomProperty) {
 	re := regexp.MustCompile(`(?ms)[\s*]*@cssprop(erty)?\s*(\{(?P<type>[^}]+)\})?[\s*]*(\[(?P<kv>.*)\]|(?P<name>[\w-]+))([\s*]+-[\s*]+(?P<description>.*)$)?`)
 	matches := FindNamedMatches(re, info.source, true)
 	if matches["kv"] != "" {
@@ -267,7 +267,7 @@ func (info TagInfo) toCssCustomProperty() (manifest.CssCustomProperty) {
 	} else {
 		info.Name = matches["name"]
 	}
-	prop := manifest.CssCustomProperty{
+	prop := M.CssCustomProperty{
 		Syntax: matches["type"],
 		Name: info.Name,
 		Default: info.Value,
@@ -283,10 +283,10 @@ func (info TagInfo) toCssCustomProperty() (manifest.CssCustomProperty) {
  * @cssstate name
  * @cssstate name - description
  */
-func (info TagInfo) toCssCustomState() (manifest.CssCustomState) {
+func (info TagInfo) toCssCustomState() (M.CssCustomState) {
 	re := regexp.MustCompile(`(?ms)[\s*]*@cssstate[\s*]+(?P<name>[\w-]+)([\s*]+-[\s*]+(?P<description>.*))?`)
 	matches := FindNamedMatches(re, info.source, true)
-	return manifest.CssCustomState{
+	return M.CssCustomState{
 		Name: matches["name"],
 		Description: normalizeJsdocLines(matches["description"]),
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
@@ -305,10 +305,10 @@ func (info TagInfo) toCssCustomState() (manifest.CssCustomState) {
  * @event {type} name
  * @event {type} name - description
  */
-func (info TagInfo) toEvent() (manifest.Event) {
+func (info TagInfo) toEvent() (M.Event) {
 	re := regexp.MustCompile(`(?ms)[\s*]*(@fires|@event)\s*(\{(?P<type>[^}]+)\})?[\s*]*(?P<name>[\w-]+)([\s*]+-[\s*]+(?P<description>.*))?`)
 	matches := FindNamedMatches(re, info.source, true)
-	event := manifest.Event{
+	event := M.Event{
 		Name: matches["name"],
 		Description: normalizeJsdocLines(matches["description"]),
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
@@ -316,7 +316,7 @@ func (info TagInfo) toEvent() (manifest.Event) {
 		// Deprecated: info.Deprecated,
 	}
 	if matches["type"] != "" {
-		event.Type = &manifest.Type{
+		event.Type = &M.Type{
 			Text: matches["type"],
 		}
 	}
@@ -327,7 +327,7 @@ func (info TagInfo) toEvent() (manifest.Event) {
  * @slot icon -  Contains the tags's icon, e.g. web-icon-alert-success.
  * @slot      -  Must contain the text for the tag.
  */
-func (info TagInfo) toSlot() (manifest.Slot) {
+func (info TagInfo) toSlot() (M.Slot) {
 	re := regexp.MustCompile(`(?ms)[\s*]*(@slot[\s*]+-[\s*]+(?P<anonDescription>.*))|(@slot[\s*]+(?P<name>[\w-]+)([\s*]+-[\s*]+(?P<description>.*))?)`)
 	matches := FindNamedMatches(re, info.source, true)
 	if matches["description"] != "" {
@@ -336,7 +336,7 @@ func (info TagInfo) toSlot() (manifest.Slot) {
 	if matches["anonDescription"] != "" {
 		info.Description = normalizeJsdocLines(matches["anonDescription"])
 	}
-	return manifest.Slot{
+	return M.Slot{
 		Name: matches["name"],
 		Description: info.Description,
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
@@ -409,7 +409,7 @@ type FieldInfo struct {
 	Description string;
 	Summary string;
 	Type string;
-	Deprecated manifest.Deprecated
+	Deprecated M.Deprecated
 }
 
 func NewFieldInfo(code string) (error, *FieldInfo) {
@@ -451,9 +451,9 @@ func NewFieldInfo(code string) (error, *FieldInfo) {
 					info.Type = tagType
 				case "@deprecated":
 					if content == "" {
-						info.Deprecated = manifest.DeprecatedFlag(true)
+						info.Deprecated = M.DeprecatedFlag(true)
 					} else {
-						info.Deprecated = manifest.DeprecatedReason(content)
+						info.Deprecated = M.DeprecatedReason(content)
 					}
 			}
 		}
@@ -462,13 +462,24 @@ func NewFieldInfo(code string) (error, *FieldInfo) {
 	return nil, &info
 }
 
+func (info FieldInfo) MergeToFieldDeclaration(declaration *M.ClassField) {
+	declaration.Description += info.Description
+	declaration.Summary += info.Summary
+	declaration.Deprecated = info.Deprecated
+	if info.Type != "" {
+		declaration.Type = &M.Type{
+			Text: info.Type,
+		}
+	}
+}
+
 type MethodInfo struct {
 	Description string
 	Summary     string
-	Deprecated  manifest.Deprecated
+	Deprecated  M.Deprecated
 	Parameters  []ParameterInfo
 	Return      *ReturnInfo
-	Privacy     manifest.Privacy
+	Privacy     M.Privacy
 }
 
 func NewMethodInfo(source string) (error, *MethodInfo) {
@@ -506,9 +517,9 @@ func NewMethodInfo(source string) (error, *MethodInfo) {
 							info.Return = &ret
 						case "@deprecated":
 							if tagInfo.Description == "" {
-								info.Deprecated = manifest.DeprecatedFlag(true)
+								info.Deprecated = M.DeprecatedFlag(true)
 							} else {
-								info.Deprecated = manifest.DeprecatedReason(tagInfo.Description)
+								info.Deprecated = M.DeprecatedReason(tagInfo.Description)
 							}
 						case "@summary":
 							info.Summary = normalizeJsdocLines(tagInfo.Description)
@@ -520,17 +531,17 @@ func NewMethodInfo(source string) (error, *MethodInfo) {
 	return nil, &info
 }
 
-func (info *MethodInfo) MergeToFunctionDeclaration(declaration *manifest.FunctionDeclaration) {
+func (info *MethodInfo) MergeToFunctionLike(declaration *M.FunctionLike) {
 	declaration.Description = normalizeJsdocLines(info.Description)
 	declaration.Deprecated = info.Deprecated
 	declaration.Summary = info.Summary
 	if (info.Return != nil) {
 		if declaration.Return == nil {
-			declaration.Return = &manifest.Return{}
+			declaration.Return = &M.Return{}
 		}
 		declaration.Return.Description = info.Return.Description
 		if info.Return.Type != "" {
-			declaration.Return.Type = &manifest.Type{
+			declaration.Return.Type = &M.Type{
 				Text: info.Return.Type,
 			}
 		}
@@ -553,3 +564,4 @@ func (info *MethodInfo) MergeToFunctionDeclaration(declaration *manifest.Functio
 		}
 	}
 }
+

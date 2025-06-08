@@ -6,7 +6,7 @@
   ; protected field: type = 'initializer'
   ; @property() attr
   ; @property({ attribute: 'attr-name' }) attrName
-  (comment) * @member.jsdoc .
+  (comment) * @member.jsdoc (#match? @member.jsdoc "^/\\*\\*") .
   (public_field_definition
     (decorator)*
     (decorator
@@ -40,7 +40,7 @@
 (method_definition
   name: (_) @constructor (#match? @constructor "constructor")
   parameters: (formal_parameters
-    (comment) * @member.jsdoc
+    (comment) * @member.jsdoc (#match? @member.jsdoc "^/\\*\\*") .
     (_
       (accessibility_modifier) @field.privacy
       pattern: (identifier) @field.name

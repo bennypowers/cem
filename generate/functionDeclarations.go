@@ -55,7 +55,7 @@ func generateFunctionDeclaration(captures CaptureMap, _ any, code []byte) (err e
 		if error != nil {
 			return errors.Join(err, error), nil
 		} else {
-			info.MergeToFunctionDeclaration(declaration)
+			info.MergeToFunctionLike(&declaration.FunctionLike)
 		}
 	}
 
