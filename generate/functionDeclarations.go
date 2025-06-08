@@ -25,9 +25,9 @@ func generateFunctionDeclaration(captures CaptureMap, _ any, code []byte) (err e
 	if ok && len(params) > 0 {
 		_, hasName := captures["function.param.name"]
 		if hasName {
-			_, isRest := captures["function.param.rest"]
+			rest, isRest := captures["function.param.rest"]
 			parameter := M.Parameter{
-				Rest: isRest,
+				Rest: isRest && len(rest) > 0,
 				PropertyLike: M.PropertyLike{
 					Name: captures["function.param.name"][0].Text,
 				},

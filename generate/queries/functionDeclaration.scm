@@ -8,10 +8,10 @@
                  parameters: (formal_parameters
                                (_
                                  pattern: [
-                                           (identifier) @function.param.name
-                                           (rest_pattern (identifier) @function.param.name)
-                                           ]
-                                 type: (type_annotation (_) @function.param.type))* ) @function.params
+                                            (identifier) @function.param.name
+                                            (rest_pattern (identifier) @function.param.name) @function.param.rest
+                                          ]
+                                 type: (type_annotation (_) @function.param.type)) @function.params)?
                  return_type: (type_annotation (_) @function.return.type)?))))) @function
 
 ( ; case: export async function *foo(whatev: string): bool { }
@@ -22,8 +22,8 @@
       parameters: (formal_parameters
                     (_
                       pattern: [
-                                (identifier) @function.param.name
-                                (rest_pattern (identifier) @function.param.name)
-                                ]
-                      type: (type_annotation (_) @function.param.type))* ) @function.params
+                                 (identifier) @function.param.name
+                                 (rest_pattern (identifier) @function.param.name) @function.param.rest
+                               ]
+                      type: (type_annotation (_) @function.param.type)) @function.params)?
       return_type: (type_annotation (_) @function.return.type)?))) @function

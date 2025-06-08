@@ -295,22 +295,28 @@ func getClassMembersFromClassDeclarationNode(
 		_, isStatic := captures["method.static"]
 		method.Static = isStatic
 
-		for i, _ := range captures["params"] {
-			_, isRest := captures["param.rest"]
-			parameter := M.Parameter{
-				Rest: isRest,
-				PropertyLike: M.PropertyLike{
-					Name: captures["param.name"][i].Text,
-				},
-			}
-			_, hasType := captures["param.type"]
-			if hasType {
-				parameter.Type = &M.Type{
-					Text: captures["param.type"][i].Text,
+		params, hasParams := captures["params"]
+		if hasParams && len(params) > 0 {
+			for i, _ := range params {
+				_, isRest := captures["param.rest"]
+				_, hasName := captures["param.name"]
+				if hasName {
+					parameter := M.Parameter{
+						Rest: isRest,
+						PropertyLike: M.PropertyLike{
+							Name: captures["param.name"][i].Text,
+						},
+					}
+					_, hasType := captures["param.type"]
+					if hasType {
+						parameter.Type = &M.Type{
+							Text: captures["param.type"][i].Text,
+						}
+					}
+					method.Parameters = append(method.Parameters, parameter)
 				}
 			}
-			method.Parameters = append(method.Parameters, parameter)
-	}
+		}
 
 		returnNodes, ok := captures["method.returns"]
 		if ok && len(returnNodes) > 0 {

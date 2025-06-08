@@ -87,12 +87,15 @@
     return_type: (type_annotation (_) @field.type)?)) @accessor
 
 
+
+
 ( ; class methods
   ; @examples:
   ; onClick() {}
   ; @observes('prop')
   ; onPropChange(prop, old) {}
-  (comment) * @member.jsdoc . (#match? @member.jsdoc "^/\\*\\*")
+  (comment) * @member.jsdoc (#match? @member.jsdoc "^/\\*\\*")
+  (decorator) *
   (method_definition
     (accessibility_modifier)? @method.privacy
     "static"? @method.static
@@ -105,7 +108,7 @@
                                (identifier) @param.name
                                (rest_pattern (identifier) @param.name) @param.rest
                                ]
-                     type: (type_annotation (_) @param.type))) @params
+                     type: (type_annotation (_) @param.type)) @params)?
     return_type: (type_annotation (_) @method.returns)?
     (#not-any-of? @method.name
      "constructor"
@@ -117,4 +120,5 @@
      "update"
      "updated"
      "willUpdated"
-     "getUpdateComplete"))) @method
+     "getUpdateComplete")
+    ) @method)
