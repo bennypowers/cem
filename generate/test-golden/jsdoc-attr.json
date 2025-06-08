@@ -95,16 +95,16 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "jsdoc-attr",
+          "kind": "js",
+          "name": "JsdocAttr",
           "declaration": {
             "name": "JsdocAttr",
             "module": "test-fixtures/jsdoc-attr.js"
           }
         },
         {
-          "kind": "js",
-          "name": "JsdocAttr",
+          "kind": "custom-element-definition",
+          "name": "jsdoc-attr",
           "declaration": {
             "name": "JsdocAttr",
             "module": "test-fixtures/jsdoc-attr.js"

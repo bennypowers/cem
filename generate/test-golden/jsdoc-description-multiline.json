@@ -15,16 +15,16 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "jsdoc-description-multiline",
+          "kind": "js",
+          "name": "JsdocDescriptionMultiline",
           "declaration": {
             "name": "JsdocDescriptionMultiline",
             "module": "test-fixtures/jsdoc-description-multiline.js"
           }
         },
         {
-          "kind": "js",
-          "name": "JsdocDescriptionMultiline",
+          "kind": "custom-element-definition",
+          "name": "jsdoc-description-multiline",
           "declaration": {
             "name": "JsdocDescriptionMultiline",
             "module": "test-fixtures/jsdoc-description-multiline.js"

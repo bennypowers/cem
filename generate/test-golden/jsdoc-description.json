@@ -15,16 +15,16 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "jsdoc-description",
+          "kind": "js",
+          "name": "JsdocDescription",
           "declaration": {
             "name": "JsdocDescription",
             "module": "test-fixtures/jsdoc-description.js"
           }
         },
         {
-          "kind": "js",
-          "name": "JsdocDescription",
+          "kind": "custom-element-definition",
+          "name": "jsdoc-description",
           "declaration": {
             "name": "JsdocDescription",
             "module": "test-fixtures/jsdoc-description.js"

@@ -15,16 +15,16 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "jsdoc-deprecated-reason-multiline",
+          "kind": "js",
+          "name": "JsdocDeprecatedReasonMultiline",
           "declaration": {
             "name": "JsdocDeprecatedReasonMultiline",
             "module": "test-fixtures/jsdoc-deprecated-reason-multiline.js"
           }
         },
         {
-          "kind": "js",
-          "name": "JsdocDeprecatedReasonMultiline",
+          "kind": "custom-element-definition",
+          "name": "jsdoc-deprecated-reason-multiline",
           "declaration": {
             "name": "JsdocDeprecatedReasonMultiline",
             "module": "test-fixtures/jsdoc-deprecated-reason-multiline.js"

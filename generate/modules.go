@@ -2,6 +2,7 @@ package generate
 
 import (
 	"errors"
+	"slices"
 
 	M "bennypowers.dev/cem/manifest"
 	S "bennypowers.dev/cem/set"
@@ -33,12 +34,6 @@ func generateModule(file string, code []byte) (err error, module *M.Module) {
 		} else {
 			classNamesAdded.Add(declaration.Name)
 			module.Declarations = append(module.Declarations, declaration)
-			reference := M.NewReference(declaration.Name, "", file)
-			module.Exports = append(module.Exports, &M.CustomElementExport{
-				Kind: "custom-element-definition",
-				Name: declaration.TagName,
-				Declaration: reference,
-			})
 		}
 	}
 
@@ -99,6 +94,27 @@ func generateModule(file string, code []byte) (err error, module *M.Module) {
 				Declaration: M.NewReference(declaration.Text, "", file),
 			}
 			module.Exports = append(module.Exports, export)
+		}
+	}
+
+	for name := range classNamesAdded {
+		reference := M.NewReference(name, "", file)
+		index := slices.IndexFunc(module.Declarations, func(d M.Declaration) bool {
+			if ce, ok := d.(*M.CustomElementDeclaration); ok {
+				return ce.Name == name
+			} else {
+				return false
+			}
+		})
+		if index >= 0 {
+			d := module.Declarations[index]
+			if declaration, ok := d.(*M.CustomElementDeclaration); ok {
+				module.Exports = append(module.Exports, &M.CustomElementExport{
+					Kind: "custom-element-definition",
+					Name: declaration.TagName,
+					Declaration: reference,
+				})
+			}
 		}
 	}
 

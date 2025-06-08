@@ -78,16 +78,16 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "jsdoc-events",
+          "kind": "js",
+          "name": "JsdocEvents",
           "declaration": {
             "name": "JsdocEvents",
             "module": "test-fixtures/jsdoc-event.js"
           }
         },
         {
-          "kind": "js",
-          "name": "JsdocEvents",
+          "kind": "custom-element-definition",
+          "name": "jsdoc-events",
           "declaration": {
             "name": "JsdocEvents",
             "module": "test-fixtures/jsdoc-event.js"

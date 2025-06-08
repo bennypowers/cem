@@ -186,16 +186,16 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "class-methods",
+          "kind": "js",
+          "name": "ClassMethods",
           "declaration": {
             "name": "ClassMethods",
             "module": "test-fixtures/class-methods.js"
           }
         },
         {
-          "kind": "js",
-          "name": "ClassMethods",
+          "kind": "custom-element-definition",
+          "name": "class-methods",
           "declaration": {
             "name": "ClassMethods",
             "module": "test-fixtures/class-methods.js"

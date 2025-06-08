@@ -27,16 +27,16 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "jsdoc-css-state",
+          "kind": "js",
+          "name": "JsdocCssState",
           "declaration": {
             "name": "JsdocCssState",
             "module": "test-fixtures/jsdoc-css-state.js"
           }
         },
         {
-          "kind": "js",
-          "name": "JsdocCssState",
+          "kind": "custom-element-definition",
+          "name": "jsdoc-css-state",
           "declaration": {
             "name": "JsdocCssState",
             "module": "test-fixtures/jsdoc-css-state.js"

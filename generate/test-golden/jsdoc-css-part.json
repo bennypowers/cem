@@ -27,16 +27,16 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "jsdoc-css-part",
+          "kind": "js",
+          "name": "JsdocCssPart",
           "declaration": {
             "name": "JsdocCssPart",
             "module": "test-fixtures/jsdoc-css-part.js"
           }
         },
         {
-          "kind": "js",
-          "name": "JsdocCssPart",
+          "kind": "custom-element-definition",
+          "name": "jsdoc-css-part",
           "declaration": {
             "name": "JsdocCssPart",
             "module": "test-fixtures/jsdoc-css-part.js"

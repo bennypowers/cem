@@ -15,16 +15,16 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "jsdoc-deprecated-flag",
+          "kind": "js",
+          "name": "JsdocDeprecatedFlag",
           "declaration": {
             "name": "JsdocDeprecatedFlag",
             "module": "test-fixtures/jsdoc-deprecated-flag.js"
           }
         },
         {
-          "kind": "js",
-          "name": "JsdocDeprecatedFlag",
+          "kind": "custom-element-definition",
+          "name": "jsdoc-deprecated-flag",
           "declaration": {
             "name": "JsdocDeprecatedFlag",
             "module": "test-fixtures/jsdoc-deprecated-flag.js"
