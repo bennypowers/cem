@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"fmt"
 	"os"
+	"runtime"
 	"slices"
 	"sync"
 
@@ -38,12 +39,37 @@ func Generate(files []string, exclude []string) (error, *string) {
 	var wg sync.WaitGroup
 
 	modulesChan := make(chan manifest.Module, len(files))
-
+	jobsChan := make (chan string, len(files))
+	// Fill jobs channel with files to process
 	for _, file := range files {
 		if !excludeSet.Has(file) {
-			wg.Add(1)
-			go processFile(file, modulesChan, &wg)
+			jobsChan <- file
 		}
+	}
+	close(jobsChan)
+
+	numWorkers := runtime.NumCPU()
+	wg.Add(numWorkers)
+
+		for i := 0; i < numWorkers; i++ {
+		go func() {
+			defer wg.Done()
+			for file := range jobsChan {
+				code, err := os.ReadFile(file)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "%s", err)
+					continue
+				}
+
+				err, module := generateModule(file, code)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "%s", err)
+				}
+				if module != nil {
+					modulesChan <- *module
+				}
+			}
+		}()
 	}
 
 	wg.Wait()
