@@ -17,4 +17,4 @@ jobs:
       - name: Build
         run: go build -v ./...
       - name: Test
-        run: sh test.sh
+        run: make test
