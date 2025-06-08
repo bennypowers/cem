@@ -3,7 +3,7 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "test-fixtures/jsdoc-deprecated-flag.ts",
+      "path": "test-fixtures/jsdoc-deprecated-flag.js",
       "declarations": [
         {
           "name": "JsdocDeprecatedFlag",
@@ -19,7 +19,7 @@
           "name": "jsdoc-deprecated-flag",
           "declaration": {
             "name": "JsdocDeprecatedFlag",
-            "module": "test-fixtures/jsdoc-deprecated-flag.ts"
+            "module": "test-fixtures/jsdoc-deprecated-flag.js"
           }
         },
         {
@@ -27,7 +27,7 @@
           "name": "JsdocDeprecatedFlag",
           "declaration": {
             "name": "JsdocDeprecatedFlag",
-            "module": "test-fixtures/jsdoc-deprecated-flag.ts"
+            "module": "test-fixtures/jsdoc-deprecated-flag.js"
           }
         }
       ]

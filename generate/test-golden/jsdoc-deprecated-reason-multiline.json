@@ -3,7 +3,7 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "test-fixtures/jsdoc-deprecated-reason-multiline.ts",
+      "path": "test-fixtures/jsdoc-deprecated-reason-multiline.js",
       "declarations": [
         {
           "name": "JsdocDeprecatedReasonMultiline",
@@ -19,7 +19,7 @@
           "name": "jsdoc-deprecated-reason-multiline",
           "declaration": {
             "name": "JsdocDeprecatedReasonMultiline",
-            "module": "test-fixtures/jsdoc-deprecated-reason-multiline.ts"
+            "module": "test-fixtures/jsdoc-deprecated-reason-multiline.js"
           }
         },
         {
@@ -27,7 +27,7 @@
           "name": "JsdocDeprecatedReasonMultiline",
           "declaration": {
             "name": "JsdocDeprecatedReasonMultiline",
-            "module": "test-fixtures/jsdoc-deprecated-reason-multiline.ts"
+            "module": "test-fixtures/jsdoc-deprecated-reason-multiline.js"
           }
         }
       ]

@@ -26,13 +26,13 @@ export class ClassAccessors extends LitElement {
   get propertyPair(): string {}
   set propertyPair(v: string) {}
 
+  /** property pair with description */
   @property({ attribute: 'property-pair-described' })
   get propertyPairDescribed(): string {}
-  /** property pair with description */
   set propertyPairDescribed(v: string) {}
 
-  @property({ reflects: true })
   /** @summary property pair with summary */
+  @property({ reflects: true })
   get propertyPairSummarized(): string {}
   set propertyPairSummarized(v: string) {}
 }

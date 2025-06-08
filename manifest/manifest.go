@@ -2,7 +2,14 @@
 // Generated from schema.d.ts of https://github.com/webcomponents/custom-elements-manifest
 package manifest
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"regexp"
+)
+
+func normalizePath(path string) string {
+	return regexp.MustCompile(`\.ts$`).ReplaceAllString(path, ".js")
+}
 
 // Package is the top-level interface of a custom elements manifest file.
 type Package struct {
@@ -25,7 +32,7 @@ type Module = JavaScriptModule
 func NewModule(file string) (*Module) {
 	return &Module{
 		Kind: "javascript-module",
-		Path: file,
+		Path: normalizePath(file),
 	}
 }
 
@@ -72,6 +79,14 @@ type Reference struct {
 	Name    string `json:"name"`
 	Package string `json:"package,omitempty"`
 	Module  string `json:"module,omitempty"`
+}
+
+func NewReference(name string, pkg string, module string) *Reference {
+	return &Reference{
+		Name: name,
+		Package: pkg,
+		Module: normalizePath(module),
+	}
 }
 
 // SourceReference is a reference to the source of a declaration or member.

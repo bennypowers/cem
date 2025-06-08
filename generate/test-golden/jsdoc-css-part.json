@@ -3,7 +3,7 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "test-fixtures/jsdoc-css-part.ts",
+      "path": "test-fixtures/jsdoc-css-part.js",
       "declarations": [
         {
           "name": "JsdocCssPart",
@@ -31,7 +31,7 @@
           "name": "jsdoc-css-part",
           "declaration": {
             "name": "JsdocCssPart",
-            "module": "test-fixtures/jsdoc-css-part.ts"
+            "module": "test-fixtures/jsdoc-css-part.js"
           }
         },
         {
@@ -39,7 +39,7 @@
           "name": "JsdocCssPart",
           "declaration": {
             "name": "JsdocCssPart",
-            "module": "test-fixtures/jsdoc-css-part.ts"
+            "module": "test-fixtures/jsdoc-css-part.js"
           }
         }
       ]

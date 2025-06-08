@@ -3,7 +3,7 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "test-fixtures/export-var.ts",
+      "path": "test-fixtures/export-var.js",
       "declarations": [
         {
           "name": "$const",
@@ -27,7 +27,7 @@
           "name": "$const",
           "declaration": {
             "name": "$const",
-            "module": "test-fixtures/export-var.ts"
+            "module": "test-fixtures/export-var.js"
           }
         },
         {
@@ -35,7 +35,7 @@
           "name": "$let",
           "declaration": {
             "name": "$let",
-            "module": "test-fixtures/export-var.ts"
+            "module": "test-fixtures/export-var.js"
           }
         }
       ]

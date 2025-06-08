@@ -3,7 +3,7 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "test-fixtures/class-accessors.ts",
+      "path": "test-fixtures/class-accessors.js",
       "declarations": [
         {
           "name": "ClassAccessors",
@@ -121,7 +121,7 @@
           "name": "class-accessors",
           "declaration": {
             "name": "ClassAccessors",
-            "module": "test-fixtures/class-accessors.ts"
+            "module": "test-fixtures/class-accessors.js"
           }
         },
         {
@@ -129,7 +129,7 @@
           "name": "ClassAccessors",
           "declaration": {
             "name": "ClassAccessors",
-            "module": "test-fixtures/class-accessors.ts"
+            "module": "test-fixtures/class-accessors.js"
           }
         }
       ]

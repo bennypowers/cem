@@ -26,7 +26,7 @@
           arguments: (arguments (string (string_fragment) @tag-name)
                                 (#eq? @class.decorator.name "customElement"))))
       declaration: (class_declaration
-        name: (type_identifier) @class.name) @class.declaration) @export
+        name: (type_identifier) @class.name) @class.declaration)
   ]
 )
 

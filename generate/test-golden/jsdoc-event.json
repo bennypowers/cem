@@ -3,7 +3,7 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "test-fixtures/jsdoc-event.ts",
+      "path": "test-fixtures/jsdoc-event.js",
       "declarations": [
         {
           "name": "JsdocEvents",
@@ -82,7 +82,7 @@
           "name": "jsdoc-events",
           "declaration": {
             "name": "JsdocEvents",
-            "module": "test-fixtures/jsdoc-event.ts"
+            "module": "test-fixtures/jsdoc-event.js"
           }
         },
         {
@@ -90,7 +90,7 @@
           "name": "JsdocEvents",
           "declaration": {
             "name": "JsdocEvents",
-            "module": "test-fixtures/jsdoc-event.ts"
+            "module": "test-fixtures/jsdoc-event.js"
           }
         }
       ]

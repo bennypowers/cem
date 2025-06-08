@@ -3,10 +3,20 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "test-fixtures/jsdoc-attr.ts",
+      "path": "test-fixtures/jsdoc-attr.js",
       "declarations": [
         {
           "name": "JsdocAttr",
+          "members": [
+            {
+              "name": "classAttr",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "classattr"
+            }
+          ],
           "kind": "class",
           "tagName": "jsdoc-attr",
           "attributes": [
@@ -71,6 +81,13 @@
               "type": {
                 "text": "number"
               }
+            },
+            {
+              "name": "classattr",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "classAttr"
             }
           ],
           "customElement": true
@@ -82,7 +99,7 @@
           "name": "jsdoc-attr",
           "declaration": {
             "name": "JsdocAttr",
-            "module": "test-fixtures/jsdoc-attr.ts"
+            "module": "test-fixtures/jsdoc-attr.js"
           }
         },
         {
@@ -90,7 +107,7 @@
           "name": "JsdocAttr",
           "declaration": {
             "name": "JsdocAttr",
-            "module": "test-fixtures/jsdoc-attr.ts"
+            "module": "test-fixtures/jsdoc-attr.js"
           }
         }
       ]

@@ -3,7 +3,7 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "test-fixtures/jsdoc-deprecated-reason.ts",
+      "path": "test-fixtures/jsdoc-deprecated-reason.js",
       "declarations": [
         {
           "name": "JsdocDeprecatedReason",
@@ -19,7 +19,7 @@
           "name": "jsdoc-deprecated-reason",
           "declaration": {
             "name": "JsdocDeprecatedReason",
-            "module": "test-fixtures/jsdoc-deprecated-reason.ts"
+            "module": "test-fixtures/jsdoc-deprecated-reason.js"
           }
         },
         {
@@ -27,7 +27,7 @@
           "name": "JsdocDeprecatedReason",
           "declaration": {
             "name": "JsdocDeprecatedReason",
-            "module": "test-fixtures/jsdoc-deprecated-reason.ts"
+            "module": "test-fixtures/jsdoc-deprecated-reason.js"
           }
         }
       ]

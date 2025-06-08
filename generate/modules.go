@@ -3,14 +3,13 @@ package generate
 import (
 	"errors"
 
-	"bennypowers.dev/cem/manifest"
-	"bennypowers.dev/cem/set"
-
+	M "bennypowers.dev/cem/manifest"
+	S "bennypowers.dev/cem/set"
 	ts "github.com/tree-sitter/go-tree-sitter"
 	tsts "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
 )
 
-func generateModule(file string, code []byte) (err error, module *manifest.Module) {
+func generateModule(file string, code []byte) (err error, module *M.Module) {
 	language := ts.NewLanguage(tsts.LanguageTypescript())
 	parser := ts.NewParser()
 	defer parser.Close()
@@ -19,9 +18,9 @@ func generateModule(file string, code []byte) (err error, module *manifest.Modul
 	defer tree.Close()
 	root := tree.RootNode()
 
-	module = manifest.NewModule(file)
+	module = M.NewModule(file)
 
-	classNamesAdded := set.NewSet[string]()
+	classNamesAdded := S.NewSet[string]()
 
 	queryName := "customElementDeclaration"
 	qm, closeQm := NewQueryMatcher(queryName, Languages.Typescript)
@@ -34,11 +33,11 @@ func generateModule(file string, code []byte) (err error, module *manifest.Modul
 		} else {
 			classNamesAdded.Add(declaration.Name)
 			module.Declarations = append(module.Declarations, declaration)
-			reference := manifest.Reference{ Name: declaration.Name, Module: file }
-			module.Exports = append(module.Exports, &manifest.CustomElementExport{
+			reference := M.NewReference(declaration.Name, "", file)
+			module.Exports = append(module.Exports, &M.CustomElementExport{
 				Kind: "custom-element-definition",
 				Name: declaration.TagName,
-				Declaration: &reference,
+				Declaration: reference,
 			})
 		}
 	}
@@ -94,17 +93,14 @@ func generateModule(file string, code []byte) (err error, module *manifest.Modul
 			return errors.Join(err, &NoCaptureError{ "declaration.name", queryName }), nil
 		} else {
 			declaration := declarationNameNodes[0]
-			module.Exports = append(module.Exports, &manifest.JavaScriptExport{
+			export := &M.JavaScriptExport{
 				Kind: "js",
 				Name: declaration.Text,
-				Declaration: &manifest.Reference{
-					Name: declaration.Text,
-					Module: file,
-				},
-			})
+				Declaration: M.NewReference(declaration.Text, "", file),
+			}
+			module.Exports = append(module.Exports, export)
 		}
 	}
-
 
 	return nil, module
 }

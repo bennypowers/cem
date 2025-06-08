@@ -3,7 +3,7 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "test-fixtures/class-fields.ts",
+      "path": "test-fixtures/class-fields.js",
       "declarations": [
         {
           "name": "ClassFields",
@@ -340,7 +340,7 @@
           "name": "class-fields",
           "declaration": {
             "name": "ClassFields",
-            "module": "test-fixtures/class-fields.ts"
+            "module": "test-fixtures/class-fields.js"
           }
         },
         {
@@ -348,7 +348,7 @@
           "name": "ClassFields",
           "declaration": {
             "name": "ClassFields",
-            "module": "test-fixtures/class-fields.ts"
+            "module": "test-fixtures/class-fields.js"
           }
         }
       ]

@@ -3,7 +3,7 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "test-fixtures/jsdoc-slot.ts",
+      "path": "test-fixtures/jsdoc-slot.js",
       "declarations": [
         {
           "name": "JsdocSlot",
@@ -32,7 +32,7 @@
           "name": "jsdoc-slot",
           "declaration": {
             "name": "JsdocSlot",
-            "module": "test-fixtures/jsdoc-slot.ts"
+            "module": "test-fixtures/jsdoc-slot.js"
           }
         },
         {
@@ -40,7 +40,7 @@
           "name": "JsdocSlot",
           "declaration": {
             "name": "JsdocSlot",
-            "module": "test-fixtures/jsdoc-slot.ts"
+            "module": "test-fixtures/jsdoc-slot.js"
           }
         }
       ]

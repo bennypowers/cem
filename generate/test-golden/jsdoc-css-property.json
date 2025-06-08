@@ -3,7 +3,7 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "test-fixtures/jsdoc-css-property.ts",
+      "path": "test-fixtures/jsdoc-css-property.js",
       "declarations": [
         {
           "name": "JsdocCssProp",
@@ -133,7 +133,7 @@
           "name": "jsdoc-css-prop",
           "declaration": {
             "name": "JsdocCssProp",
-            "module": "test-fixtures/jsdoc-css-property.ts"
+            "module": "test-fixtures/jsdoc-css-property.js"
           }
         },
         {
@@ -141,7 +141,7 @@
           "name": "JsdocCssProp",
           "declaration": {
             "name": "JsdocCssProp",
-            "module": "test-fixtures/jsdoc-css-property.ts"
+            "module": "test-fixtures/jsdoc-css-property.js"
           }
         }
       ]

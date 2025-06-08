@@ -3,7 +3,7 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "test-fixtures/jsdoc-description-multiline.ts",
+      "path": "test-fixtures/jsdoc-description-multiline.js",
       "declarations": [
         {
           "name": "JsdocDescriptionMultiline",
@@ -19,7 +19,7 @@
           "name": "jsdoc-description-multiline",
           "declaration": {
             "name": "JsdocDescriptionMultiline",
-            "module": "test-fixtures/jsdoc-description-multiline.ts"
+            "module": "test-fixtures/jsdoc-description-multiline.js"
           }
         },
         {
@@ -27,7 +27,7 @@
           "name": "JsdocDescriptionMultiline",
           "declaration": {
             "name": "JsdocDescriptionMultiline",
-            "module": "test-fixtures/jsdoc-description-multiline.ts"
+            "module": "test-fixtures/jsdoc-description-multiline.js"
           }
         }
       ]

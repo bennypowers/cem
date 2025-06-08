@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"bennypowers.dev/cem/manifest"
+	M "bennypowers.dev/cem/manifest"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -12,8 +12,8 @@ func generateClassDeclaration(
 	captures CaptureMap,
 	root *ts.Node,
 	code []byte,
-) (err error, declaration *manifest.ClassDeclaration) {
-	declaration = &manifest.ClassDeclaration{ Kind: "class" }
+) (err error, declaration *M.ClassDeclaration) {
+	declaration = &M.ClassDeclaration{ Kind: "class" }
 
 	className, ok := captures["class.name"]
 	if (!ok || len(className) <= 0) {
@@ -24,21 +24,12 @@ func generateClassDeclaration(
 
 	declaration.ClassLike.Name = className[0].Text
 
-	error, fields := getClassFieldsFromClassDeclarationNode(code, root)
+	error, members := getClassMembersFromClassDeclarationNode(code, root)
 	if error != nil {
 		return errors.Join(err, error), nil
 	}
 
-	for _, field := range fields {
-		declaration.Members = append(declaration.Members, field)
-	}
-
-	error, methods := getClassMethodsFromClassDeclarationNode(code, root)
-	if error != nil {
-		return errors.Join(err, error), nil
-	}
-
-	for _, method := range methods {
+	for _, method := range members {
 		declaration.Members = append(declaration.Members, method)
 	}
 

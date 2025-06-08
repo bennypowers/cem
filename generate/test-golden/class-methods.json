@@ -3,7 +3,7 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "test-fixtures/class-methods.ts",
+      "path": "test-fixtures/class-methods.js",
       "declarations": [
         {
           "name": "ClassMethods",
@@ -190,7 +190,7 @@
           "name": "class-methods",
           "declaration": {
             "name": "ClassMethods",
-            "module": "test-fixtures/class-methods.ts"
+            "module": "test-fixtures/class-methods.js"
           }
         },
         {
@@ -198,7 +198,7 @@
           "name": "ClassMethods",
           "declaration": {
             "name": "ClassMethods",
-            "module": "test-fixtures/class-methods.ts"
+            "module": "test-fixtures/class-methods.js"
           }
         }
       ]

@@ -3,7 +3,7 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "test-fixtures/jsdoc-css-state.ts",
+      "path": "test-fixtures/jsdoc-css-state.js",
       "declarations": [
         {
           "name": "JsdocCssState",
@@ -31,7 +31,7 @@
           "name": "jsdoc-css-state",
           "declaration": {
             "name": "JsdocCssState",
-            "module": "test-fixtures/jsdoc-css-state.ts"
+            "module": "test-fixtures/jsdoc-css-state.js"
           }
         },
         {
@@ -39,7 +39,7 @@
           "name": "JsdocCssState",
           "declaration": {
             "name": "JsdocCssState",
-            "module": "test-fixtures/jsdoc-css-state.ts"
+            "module": "test-fixtures/jsdoc-css-state.js"
           }
         }
       ]

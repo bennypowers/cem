@@ -3,7 +3,7 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "test-fixtures/jsdoc-summary.ts",
+      "path": "test-fixtures/jsdoc-summary.js",
       "declarations": [
         {
           "name": "JsdocSummary",
@@ -19,7 +19,7 @@
           "name": "jsdoc-summary",
           "declaration": {
             "name": "JsdocSummary",
-            "module": "test-fixtures/jsdoc-summary.ts"
+            "module": "test-fixtures/jsdoc-summary.js"
           }
         },
         {
@@ -27,7 +27,7 @@
           "name": "JsdocSummary",
           "declaration": {
             "name": "JsdocSummary",
-            "module": "test-fixtures/jsdoc-summary.ts"
+            "module": "test-fixtures/jsdoc-summary.js"
           }
         }
       ]

@@ -3,7 +3,7 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "test-fixtures/export-class.ts",
+      "path": "test-fixtures/export-class.js",
       "declarations": [
         {
           "name": "Simple",
@@ -28,7 +28,7 @@
           "name": "Simple",
           "declaration": {
             "name": "Simple",
-            "module": "test-fixtures/export-class.ts"
+            "module": "test-fixtures/export-class.js"
           }
         },
         {
@@ -36,7 +36,7 @@
           "name": "Subclass",
           "declaration": {
             "name": "Subclass",
-            "module": "test-fixtures/export-class.ts"
+            "module": "test-fixtures/export-class.js"
           }
         }
       ]
