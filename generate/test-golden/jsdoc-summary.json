@@ -19,14 +19,6 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "JsdocSummary",
-          "declaration": {
-            "name": "JsdocSummary",
-            "module": "test-fixtures/jsdoc-summary.js"
-          }
-        },
-        {
           "kind": "custom-element-definition",
           "name": "jsdoc-summary",
           "declaration": {

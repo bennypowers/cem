@@ -1,6 +1,3 @@
-import { LitElement } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
-
 /**
  * @event event
  * @event event-description - event description
@@ -20,5 +17,4 @@ import { customElement, property } from 'lit/decorators.js';
  *                                                    fires typed description
  */
 @customElement('jsdoc-events')
-export class JsdocEvents extends LitElement {
-}
+class JsdocEvents extends LitElement { }

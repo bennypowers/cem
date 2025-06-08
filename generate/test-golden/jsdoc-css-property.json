@@ -133,14 +133,6 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "JsdocCssProp",
-          "declaration": {
-            "name": "JsdocCssProp",
-            "module": "test-fixtures/jsdoc-css-property.js"
-          }
-        },
-        {
           "kind": "custom-element-definition",
           "name": "jsdoc-css-prop",
           "declaration": {

@@ -4,7 +4,7 @@ export class DupeEvent extends Event {
 
 @customElement('class-fields-duplicate')
 @themable
-export class ClassFieldsMultiple extends LitElement {
+class ClassFieldsMultiple extends LitElement {
   static dupe = true;
   #dupe = true;
   /** Even though `DupeEvent` has an `dupe` field, this is still tracked */

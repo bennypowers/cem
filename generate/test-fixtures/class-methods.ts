@@ -1,8 +1,5 @@
-import { LitElement } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
-
 @customElement('class-methods')
-export class ClassMethods extends LitElement {
+class ClassMethods extends LitElement {
   method() {}
 
   static $static() {}

@@ -340,14 +340,6 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "ClassFields",
-          "declaration": {
-            "name": "ClassFields",
-            "module": "test-fixtures/class-fields.js"
-          }
-        },
-        {
           "kind": "custom-element-definition",
           "name": "class-fields",
           "declaration": {

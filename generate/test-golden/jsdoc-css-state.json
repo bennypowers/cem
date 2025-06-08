@@ -31,14 +31,6 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "JsdocCssState",
-          "declaration": {
-            "name": "JsdocCssState",
-            "module": "test-fixtures/jsdoc-css-state.js"
-          }
-        },
-        {
           "kind": "custom-element-definition",
           "name": "jsdoc-css-state",
           "declaration": {

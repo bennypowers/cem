@@ -1,6 +1,3 @@
-import { LitElement } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
-
 /**
  * @csspart part
  * @csspart part-description - part description
@@ -8,5 +5,4 @@ import { customElement, property } from 'lit/decorators.js';
  *                                       part with description
  */
 @customElement('jsdoc-css-part')
-export class JsdocCssPart extends LitElement {
-}
+class JsdocCssPart extends LitElement { }

@@ -32,14 +32,6 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "JsdocSlot",
-          "declaration": {
-            "name": "JsdocSlot",
-            "module": "test-fixtures/jsdoc-slot.js"
-          }
-        },
-        {
           "kind": "custom-element-definition",
           "name": "jsdoc-slot",
           "declaration": {

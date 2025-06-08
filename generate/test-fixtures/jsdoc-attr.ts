@@ -1,6 +1,3 @@
-import { LitElement } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
-
 /**
  * @attr attr
  * @attr attr-description - attr description
@@ -20,6 +17,6 @@ import { customElement, property } from 'lit/decorators.js';
  *                                                             attribute typed description
  */
 @customElement('jsdoc-attr')
-export class JsdocAttr extends LitElement {
+class JsdocAttr extends LitElement {
   @property() classAttr: string;
 }

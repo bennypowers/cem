@@ -1,8 +1,5 @@
-import { LitElement } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
-
 @customElement('class-accessors')
-export class ClassAccessors extends LitElement {
+class ClassAccessors extends LitElement {
   get getter(): string { }
 
   /** getter description */

@@ -1,8 +1,5 @@
-import { LitElement } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
-
 @customElement('class-fields')
-export class ClassFields extends LitElement {
+class ClassFields extends LitElement {
   static readonly styles = ["MUST_OMIT"] // must omit
   static formAssociated = "MUST_OMIT";   // must omit
   static #hehe = "MUST_OMIT";            // must omit

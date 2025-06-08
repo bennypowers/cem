@@ -75,14 +75,6 @@
           }
         },
         {
-          "kind": "js",
-          "name": "ClassFieldsMultiple",
-          "declaration": {
-            "name": "ClassFieldsMultiple",
-            "module": "test-fixtures/class-fields-multiple.js"
-          }
-        },
-        {
           "kind": "custom-element-definition",
           "name": "class-fields-duplicate",
           "declaration": {

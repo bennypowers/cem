@@ -190,14 +190,6 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "ClassMethods",
-          "declaration": {
-            "name": "ClassMethods",
-            "module": "test-fixtures/class-methods.js"
-          }
-        },
-        {
           "kind": "custom-element-definition",
           "name": "class-methods",
           "declaration": {

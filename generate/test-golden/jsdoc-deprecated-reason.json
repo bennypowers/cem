@@ -19,14 +19,6 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "JsdocDeprecatedReason",
-          "declaration": {
-            "name": "JsdocDeprecatedReason",
-            "module": "test-fixtures/jsdoc-deprecated-reason.js"
-          }
-        },
-        {
           "kind": "custom-element-definition",
           "name": "jsdoc-deprecated-reason",
           "declaration": {

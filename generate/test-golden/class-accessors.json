@@ -121,14 +121,6 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "ClassAccessors",
-          "declaration": {
-            "name": "ClassAccessors",
-            "module": "test-fixtures/class-accessors.js"
-          }
-        },
-        {
           "kind": "custom-element-definition",
           "name": "class-accessors",
           "declaration": {

@@ -95,14 +95,6 @@
           }
         },
         {
-          "kind": "js",
-          "name": "ClassB",
-          "declaration": {
-            "name": "ClassB",
-            "module": "test-fixtures/class-multiple.js"
-          }
-        },
-        {
           "kind": "custom-element-definition",
           "name": "class-b",
           "declaration": {

@@ -1,6 +1,3 @@
-import { LitElement } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
-
 /**
  * @cssprop --prop
  * @cssprop --prop-description - prop description
@@ -36,5 +33,4 @@ import { customElement, property } from 'lit/decorators.js';
  *                                                                                property typed default description
  */
 @customElement('jsdoc-css-prop')
-export class JsdocCssProp extends LitElement {
-}
+class JsdocCssProp extends LitElement { }

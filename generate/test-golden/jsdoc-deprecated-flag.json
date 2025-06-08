@@ -19,14 +19,6 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "JsdocDeprecatedFlag",
-          "declaration": {
-            "name": "JsdocDeprecatedFlag",
-            "module": "test-fixtures/jsdoc-deprecated-flag.js"
-          }
-        },
-        {
           "kind": "custom-element-definition",
           "name": "jsdoc-deprecated-flag",
           "declaration": {
