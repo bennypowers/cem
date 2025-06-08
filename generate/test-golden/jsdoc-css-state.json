@@ -7,6 +7,10 @@
       "declarations": [
         {
           "name": "JsdocCssState",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
           "kind": "class",
           "tagName": "jsdoc-css-state",
           "cssStates": [

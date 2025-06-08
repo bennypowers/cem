@@ -7,6 +7,10 @@
       "declarations": [
         {
           "name": "ClassMethods",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
           "members": [
             {
               "name": "method",

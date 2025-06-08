@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "test-fixtures/class-ignored-members.js",
+      "declarations": [
+        {
+          "name": "ClassIgnoredMembers",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "class-ignored-members",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-ignored-members",
+          "declaration": {
+            "name": "ClassIgnoredMembers",
+            "module": "test-fixtures/class-ignored-members.js"
+          }
+        }
+      ]
+    }
+  ]
+}

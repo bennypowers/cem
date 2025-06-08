@@ -7,6 +7,10 @@
       "declarations": [
         {
           "name": "JsdocDeprecatedReasonMultiline",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
           "deprecated": "multiline\ndeprecation reason",
           "kind": "class",
           "tagName": "jsdoc-deprecated-reason-multiline",

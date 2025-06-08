@@ -8,6 +8,10 @@
         {
           "name": "JsdocDescriptionMultiline",
           "description": "multiline\ndescription",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
           "kind": "class",
           "tagName": "jsdoc-description-multiline",
           "customElement": true

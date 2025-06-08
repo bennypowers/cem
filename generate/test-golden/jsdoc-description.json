@@ -8,6 +8,10 @@
         {
           "name": "JsdocDescription",
           "description": "description",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
           "kind": "class",
           "tagName": "jsdoc-description",
           "customElement": true

@@ -7,6 +7,10 @@
       "declarations": [
         {
           "name": "JsdocDeprecatedReason",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
           "deprecated": "deprecation reason",
           "kind": "class",
           "tagName": "jsdoc-deprecated-reason",

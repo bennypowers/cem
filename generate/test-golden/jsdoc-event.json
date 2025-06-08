@@ -7,6 +7,10 @@
       "declarations": [
         {
           "name": "JsdocEvents",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
           "kind": "class",
           "tagName": "jsdoc-events",
           "events": [

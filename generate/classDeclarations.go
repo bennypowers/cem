@@ -2,31 +2,50 @@ package generate
 
 import (
 	"errors"
-	"fmt"
 
 	M "bennypowers.dev/cem/manifest"
 	A "github.com/IBM/fp-go/array"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
-func generateCommonClassDeclaration(
+func generateClassDeclaration(
 	captures CaptureMap,
 	root *ts.Node,
 	code []byte,
+) (err error, declaration M.Declaration) {
+	_, isCustomElement := captures["customElement"]
+	classDeclarationCaptures, hasClassDeclaration := captures["class.declaration"]
+	if (hasClassDeclaration && len(classDeclarationCaptures) > 0) {
+		classDeclarationNode := classDeclarationCaptures[0].Node
+		if isCustomElement {
+			return generateCustomElementClassDeclaration(captures, root, classDeclarationNode, code)
+		} else {
+			return generateCommonClassDeclaration(captures, root, classDeclarationNode, code, isCustomElement)
+		}
+	}
+	return errors.New("Could not find class declaration"), nil
+}
+
+func generateCommonClassDeclaration(
+	captures CaptureMap,
+	root *ts.Node,
+	classDeclarationNode *ts.Node,
+	code []byte,
 	isCustomElement bool,
 ) (errs error, declaration *M.ClassDeclaration) {
-	declaration = &M.ClassDeclaration{ Kind: "class" }
-
 	className, ok := captures["class.name"]
 	if (!ok || len(className) <= 0) {
-		str := string(code)
-		fmt.Println(str)
 		return errors.Join(errs, &NoCaptureError{ "class.name", "classDeclaration" }), nil
 	}
 
-	declaration.ClassLike.Name = className[0].Text
+	declaration = &M.ClassDeclaration{
+		Kind: "class",
+		ClassLike: M.ClassLike{
+			Name: className[0].Text,
+		},
+	}
 
-	err, members := getClassMembersFromClassDeclarationNode(code, root, isCustomElement)
+	err, members := getClassMembersFromClassDeclarationNode(code, declaration.ClassLike.Name, root, classDeclarationNode, isCustomElement)
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
@@ -45,15 +64,38 @@ func generateCommonClassDeclaration(
 		}
 	}
 
+	superClassName, ok := captures["superclass.name"]
+	if (ok && len(superClassName) > 0) {
+		name := superClassName[0].Text
+		pkg := ""
+		module := ""
+		switch name {
+		case
+			"Event",
+			"CustomEvent",
+			"ErrorEvent",
+			"HTMLElement":
+		  pkg = "global:"
+		case "LitElement":
+			pkg = "lit"
+		case "ReactiveElement":
+			pkg = "@lit/reactive-element"
+		// TODO: compute package and module
+		// default:
+		}
+		declaration.Superclass = M.NewReference(name, pkg, module)
+	}
+
 	return nil, declaration
 }
 
 func generateCustomElementClassDeclaration(
 	captures CaptureMap,
 	root *ts.Node,
+	classDeclarationNode *ts.Node,
 	code []byte,
 ) (errs error, declaration *M.CustomElementDeclaration) {
-	err, classDeclaration := generateCommonClassDeclaration(captures, root, code, true)
+	err, classDeclaration := generateCommonClassDeclaration(captures, root, classDeclarationNode, code, true)
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
@@ -104,18 +146,5 @@ func generateCustomElementClassDeclaration(
 	}
 
 	return nil, declaration
-}
-
-func generateClassDeclaration(
-	captures CaptureMap,
-	root *ts.Node,
-	code []byte,
-) (err error, declaration M.Declaration) {
-	_, isCustomElement := captures["customElement"]
-	if isCustomElement {
-		return generateCustomElementClassDeclaration(captures, root, code)
-	} else {
-		return generateCommonClassDeclaration(captures, root, code, isCustomElement)
-	}
 }
 

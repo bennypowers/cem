@@ -7,6 +7,10 @@
       "declarations": [
         {
           "name": "JsdocCssPart",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
           "kind": "class",
           "tagName": "jsdoc-css-part",
           "cssParts": [

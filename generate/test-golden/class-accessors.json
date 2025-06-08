@@ -7,6 +7,10 @@
       "declarations": [
         {
           "name": "ClassAccessors",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
           "members": [
             {
               "name": "getter",

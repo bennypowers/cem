@@ -11,14 +11,16 @@
         },
         {
           "name": "Subclass",
+          "superclass": {
+            "name": "Simple"
+          },
           "kind": "class"
         },
         {
           "name": "Decorated",
-          "kind": "class"
-        },
-        {
-          "name": "Foo",
+          "superclass": {
+            "name": "Simple"
+          },
           "kind": "class"
         }
       ],

@@ -17,13 +17,16 @@
                               (pair
                                 key: (property_identifier) @_attribute (#eq? @_attribute "attribute")
                                 value: [
-                                        (true) @field.attr.bool
-                                        (false) @field.attr.bool
-                                        (string (string_fragment) @field.attr.name)
-                                        ])
+                                          (true) @field.attr.bool
+                                          (false) @field.attr.bool
+                                          (string (string_fragment) @field.attr.name)
+                                       ])
                               (pair
                                 key: (property_identifier) @_reflects (#eq? @_reflects "reflects")
                                 value: (_) @field.attr.reflects)
+                              (pair
+                                key: (property_identifier) @_key
+                                value: (_))
                               ]*)?)?)?)?
     (decorator)*
     (accessibility_modifier)? @field.privacy
@@ -78,6 +81,7 @@
                          (pair
                            key: (property_identifier) @_reflects (#eq? @_reflects "reflects")
                            value: (_) @field.attr.reflects)
+                         (pair)
                        ]*)?)?)?)
     ] * .
 

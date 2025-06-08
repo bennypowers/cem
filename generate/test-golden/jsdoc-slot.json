@@ -7,6 +7,10 @@
       "declarations": [
         {
           "name": "JsdocSlot",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
           "kind": "class",
           "tagName": "jsdoc-slot",
           "slots": [

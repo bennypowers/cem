@@ -7,6 +7,10 @@
       "declarations": [
         {
           "name": "Class",
+          "superclass": {
+            "name": "Event",
+            "package": "global:"
+          },
           "members": [
             {
               "name": "priv",

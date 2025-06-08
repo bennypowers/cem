@@ -11,7 +11,26 @@ import (
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
-var ignoredStaticFields = set.NewSet("formAssociated", "styles", "shadowRootOptions")
+var ignoredStaticFields = set.NewSet(
+	"formAssociated",
+	"observedAttributes",
+	"shadowRootOptions",
+	"styles",
+)
+
+var ignoredInstanceMethods = set.NewSet(
+  "adoptedCallback",
+  "connectedCallback",
+  "connectedMoveCallback",
+  "disconnectedCallback",
+  "formDisabledCallback",
+  "formStateRestoreCallback",
+  "render",
+  "update",
+  "getUpdateComplete",
+  "updated",
+  "willUpdate",
+)
 
 func createClassFieldFromAccessorMatch(
 	fieldName string,
@@ -197,9 +216,16 @@ func createClassFieldFromFieldMatch(fieldName string, isStatic bool, isCustomEle
 	return err, field
 }
 
-func getClassMembersFromClassDeclarationNode(code []byte, root *ts.Node, isCustomElement bool) (errs error, members []M.ClassMember) {
+func getClassMembersFromClassDeclarationNode(
+	code []byte,
+	className string,
+	root *ts.Node,
+	classDeclarationNode *ts.Node,
+	isCustomElement bool,
+) (errs error, members []M.ClassMember) {
 	qm, closeQm := NewQueryMatcher("classMemberDeclaration", Languages.Typescript)
 	defer closeQm()
+	qm.cursor.SetByteRange(classDeclarationNode.ByteRange())
 
 	staticsSet := set.NewSet[string]()
 	fieldsSet := set.NewSet[string]()
@@ -220,20 +246,21 @@ func getClassMembersFromClassDeclarationNode(code []byte, root *ts.Node, isCusto
 		switch {
 		case isField:
 			fieldName := captures["field.name"][0].Text
-			if isStatic && ignoredStaticFields.Has(fieldName) {
+			key := className + "." + fieldName
+			if (isStatic && ignoredStaticFields.Has(fieldName)) || (!isStatic && ignoredInstanceMethods.Has(fieldName)) {
 				continue
 			}
 
-			if (isField && isStatic && !staticsSet.Has(fieldName)) {
-				staticsSet.Add(fieldName)
+			if (isField && isStatic && !staticsSet.Has(key)) {
+				staticsSet.Add(key)
 				error, field := createClassFieldFromFieldMatch(fieldName, isStatic, isCustomElement, captures)
 				if error != nil {
 					errs = errors.Join(errs, error)
 				} else {
 					members = append(members, field)
 				}
-			} else if (isField && !isStatic && !fieldsSet.Has(fieldName)) {
-				fieldsSet.Add(fieldName)
+			} else if (isField && !isStatic && !fieldsSet.Has(key)) {
+				fieldsSet.Add(key)
 				error, field := createClassFieldFromFieldMatch(fieldName, isStatic, isCustomElement, captures)
 				if error != nil {
 					errs = errors.Join(errs, error)
@@ -241,36 +268,38 @@ func getClassMembersFromClassDeclarationNode(code []byte, root *ts.Node, isCusto
 					members = append(members, field)
 				}
 			}
+
 		case isAccessor:
 			fieldName := captures["field.name"][0].Text
-			if !gettersSet.Has(fieldName) && !settersSet.Has(fieldName) {
-				accessorIndices[fieldName] = len(members)
+			key := className + "." + fieldName
+			if !gettersSet.Has(key) && !settersSet.Has(key) {
+				accessorIndices[key] = len(members)
 			}
 
-			if gettersSet.Has(fieldName) && settersSet.Has(fieldName) {
+			if gettersSet.Has(key) && settersSet.Has(key) {
 				continue
 			}
 
-			fieldsSet.Add(fieldName)
+			fieldsSet.Add(key)
 			accessorKind := captures["field.accessor"][0].Text
 			var hasPair bool
 			switch accessorKind {
 			case "get":
-				hasPair = settersSet.Has(fieldName)
-				if gettersSet.Has(fieldName) {
+				hasPair = settersSet.Has(key)
+				if gettersSet.Has(key) {
 					continue
 				} else {
-					gettersSet.Add(fieldName)
+					gettersSet.Add(key)
 				}
 			case "set":
-				hasPair = gettersSet.Has(fieldName)
-				if settersSet.Has(fieldName) {
+				hasPair = gettersSet.Has(key)
+				if settersSet.Has(key) {
 					continue
 				} else {
-					settersSet.Add(fieldName)
+					settersSet.Add(key)
 				}
 			}
-			index := accessorIndices[fieldName]
+			index := accessorIndices[key]
 			if hasPair {
 				// field is a *cem.CustomElementField
 				isReadonly := false
