@@ -49,17 +49,17 @@
         },
         {
           "kind": "custom-element-definition",
-          "name": "class-exported-ce",
+          "name": "class-ce",
           "declaration": {
-            "name": "ClassExportedCe",
+            "name": "ClassCe",
             "module": "test-fixtures/class-ce-export-only.js"
           }
         },
         {
           "kind": "custom-element-definition",
-          "name": "class-ce",
+          "name": "class-exported-ce",
           "declaration": {
-            "name": "ClassCe",
+            "name": "ClassExportedCe",
             "module": "test-fixtures/class-ce-export-only.js"
           }
         }
