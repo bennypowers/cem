@@ -39,12 +39,12 @@
 
 (method_definition
   name: (_) @constructor (#match? @constructor "constructor")
-  parameters: (formal_parameters
-    (comment) * @member.jsdoc (#match? @member.jsdoc "^/\\*\\*") .
-    (_
-      (accessibility_modifier) @field.privacy
-      pattern: (identifier) @field.name
-      type: (type_annotation (_) @field.type) + @field)))
+  parameters: (formal_parameters (
+                (comment)? @member.jsdoc (#match? @member.jsdoc "^/\\*\\*")
+                (_
+                  (accessibility_modifier) @field.privacy
+                  pattern: (identifier) @field.name
+                  type: (type_annotation (_) @field.type))) @field))
 
 ( ; accessors and accessor pairs
   ; @examples:

@@ -13,6 +13,20 @@
           },
           "members": [
             {
+              "name": "field",
+              "type": {
+                "text": "boolean"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "thing",
+              "type": {
+                "text": "boolean"
+              },
+              "kind": "field"
+            },
+            {
               "name": "priv",
               "type": {
                 "text": "boolean"
