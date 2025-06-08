@@ -27,7 +27,9 @@
                 "text": "string"
               },
               "readonly": true,
-              "kind": "field"
+              "kind": "field",
+              "attribute": "property-pair-described",
+              "reflects": true
             },
             {
               "name": "getterSummarized",
@@ -36,14 +38,9 @@
                 "text": "string"
               },
               "readonly": true,
-              "kind": "field"
-            },
-            {
-              "name": "pair",
-              "type": {
-                "text": "string"
-              },
-              "kind": "field"
+              "kind": "field",
+              "attribute": "property-pair-described",
+              "reflects": true
             },
             {
               "name": "pairDescribed",
@@ -51,7 +48,10 @@
               "type": {
                 "text": "string"
               },
-              "kind": "field"
+              "readonly": true,
+              "kind": "field",
+              "attribute": "property-pair-described",
+              "reflects": true
             },
             {
               "name": "pairSummarized",
@@ -59,24 +59,20 @@
               "type": {
                 "text": "string"
               },
-              "kind": "field"
-            },
-            {
-              "name": "propertyPair",
-              "type": {
-                "text": "string"
-              },
+              "readonly": true,
               "kind": "field",
-              "attribute": "propertypair"
+              "attribute": "property-pair-described",
+              "reflects": true
             },
             {
               "name": "propertyPairDescribed",
-              "description": "property pair with description",
               "type": {
                 "text": "string"
               },
+              "readonly": true,
               "kind": "field",
-              "attribute": "property-pair-described"
+              "attribute": "property-pair-described",
+              "reflects": true
             },
             {
               "name": "propertyPairSummarized",
@@ -84,6 +80,7 @@
               "type": {
                 "text": "string"
               },
+              "readonly": true,
               "kind": "field",
               "attribute": "propertypairsummarized",
               "reflects": true
@@ -93,15 +90,39 @@
           "tagName": "class-accessors",
           "attributes": [
             {
-              "name": "propertypair",
+              "name": "property-pair-described",
+              "description": "getter description",
               "type": {
                 "text": "string"
               },
-              "fieldName": "propertyPair"
+              "fieldName": "getterDescribed"
             },
             {
               "name": "property-pair-described",
-              "description": "property pair with description",
+              "summary": "getter summary",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "getterSummarized"
+            },
+            {
+              "name": "property-pair-described",
+              "description": "pair with description",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "pairDescribed"
+            },
+            {
+              "name": "property-pair-described",
+              "summary": "pair with summary",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "pairSummarized"
+            },
+            {
+              "name": "property-pair-described",
               "type": {
                 "text": "string"
               },

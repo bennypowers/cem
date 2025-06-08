@@ -57,36 +57,34 @@
   ; @property()
   ; get described() {}
   ; set described() {}
-
   (comment) * @member.jsdoc (#match? @member.jsdoc "^/\\*\\*") .
-  ( [
-      (decorator)
-      (decorator
-        (call_expression
-          function: (identifier) @decorator.name (#eq? @decorator.name "property")
-          arguments: (arguments
-                       (object [
-                         (pair
-                           key: (property_identifier) @key1
-                           value: (string (string_fragment) @field.attr.name (#eq? @key1 "attribute")))
-                         (pair
-                           key: (property_identifier) @key1
-                           value: [(true)(false)] @field.attr.bool (#eq? @key1 "attribute"))
-                         (pair
-                           key: (property_identifier) @key2
-                           value: (_) @field.attr.reflect (#eq? @key2 "reflect"))
-                       ]))?))?
-    ] * .
-
-    (method_definition
-      (accessibility_modifier)? @field.privacy
-      "static"? @field.static
-      ["get" "set"] @field.accessor
-      name: (property_identifier) @field.name
-      parameters: (formal_parameters (_
-                                       pattern: (identifier) @param.name
-                                       type: (type_annotation (_) @param.type)))
-      return_type: (type_annotation (_) @field.type)?))) @accessor
+  (decorator) *
+  (decorator
+    (call_expression
+      function: (identifier) @decorator.name (#eq? @decorator.name "property")
+      arguments: (arguments
+                   (object [
+                     (pair
+                       key: (property_identifier) @key1
+                       value: (string (string_fragment) @field.attr.name (#eq? @key1 "attribute")))
+                     (pair
+                       key: (property_identifier) @key1
+                       value: [(true)(false)] @field.attr.bool (#eq? @key1 "attribute"))
+                     (pair
+                       key: (property_identifier) @key2
+                       value: (_) @field.attr.reflect (#eq? @key2 "reflect"))
+                   ]))?))?
+  (decorator) *
+  (method_definition
+    (accessibility_modifier)? @field.privacy
+    "static"? @field.static
+    "get"? @field.accessor
+    ["get" "set"] @field.accessor
+    name: (property_identifier) @field.name
+    parameters: (formal_parameters (_
+                                     pattern: (identifier) @param.name
+                                     type: (type_annotation (_) @param.type)))?
+    return_type: (type_annotation (_) @field.type)?)) @accessor
 
 
 ( ; class methods

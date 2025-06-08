@@ -155,7 +155,11 @@ func (q *QueryMatcher) ParentCaptures(root *ts.Node, code []byte, parentCaptureN
 			if _, hasMap := parentGroups[pid].capMap[name]; !hasMap {
 				parentGroups[pid].capMap[name] = make([]CaptureInfo, 0)
 			}
-			parentGroups[pid].capMap[name] = append(parentGroups[pid].capMap[name], ci)
+			if !slices.ContainsFunc(parentGroups[pid].capMap[name], func(m CaptureInfo) bool {
+				return m.NodeId == ci.NodeId
+			}) {
+				parentGroups[pid].capMap[name] = append(parentGroups[pid].capMap[name], ci)
+			}
 		}
 	}
 
