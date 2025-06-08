@@ -15,9 +15,9 @@ var ignoredStaticFields = set.NewSet("formAssociated", "styles", "shadowRootOpti
 
 func createClassFieldFromAccessorMatch(
 	fieldName string,
-	accessor string,
 	isStatic bool,
 	isReadonly bool,
+	isCustomElement bool,
 	captures CaptureMap,
 ) (err error, field M.CustomElementField) {
 	field.Kind = "field"
@@ -81,30 +81,32 @@ func createClassFieldFromAccessorMatch(
 		}
 	}
 
-	field.Reflects = !isStatic && len(captures["field.attr.reflects"]) > 0 && captures["field.attr.reflects"][0].Text == "true"
+	if isCustomElement {
+		field.Reflects = !isStatic && len(captures["field.attr.reflects"]) > 0 && captures["field.attr.reflects"][0].Text == "true"
 
-	_, hasDecorators := captures["decorator.name"]
-	var isProperty bool
-	if hasDecorators {
-		for _, deco := range captures["decorator.name"] {
-			if deco.Text == "property" {
-				isProperty = true
-				break
+		_, hasDecorators := captures["decorator.name"]
+		var isProperty bool
+		if hasDecorators {
+			for _, deco := range captures["decorator.name"] {
+				if deco.Text == "property" {
+					isProperty = true
+					break
+				}
 			}
 		}
-	}
 
-	if (isProperty) {
-		attributeBoolNodes := captures["field.attr.bool"]
-		attributeNameNodes := captures["field.attr.name"]
+		if (isProperty) {
+			attributeBoolNodes := captures["field.attr.bool"]
+			attributeNameNodes := captures["field.attr.name"]
 
-		if (!isStatic &&
-				len(attributeBoolNodes) == 0 ||
-				(len(attributeBoolNodes) > 0 && attributeBoolNodes[0].Node.GrammarName() != "false")) {
-			if len(attributeNameNodes) > 0 {
-				field.Attribute = attributeNameNodes[0].Text
-			} else {
-				field.Attribute = strings.ToLower(field.Name)
+			if (!isStatic &&
+					len(attributeBoolNodes) == 0 ||
+					(len(attributeBoolNodes) > 0 && attributeBoolNodes[0].Node.GrammarName() != "false")) {
+				if len(attributeNameNodes) > 0 {
+					field.Attribute = attributeNameNodes[0].Text
+				} else {
+					field.Attribute = strings.ToLower(field.Name)
+				}
 			}
 		}
 	}
@@ -112,7 +114,7 @@ func createClassFieldFromAccessorMatch(
 	return err, field
 }
 
-func createClassFieldFromFieldMatch(fieldName string, isStatic bool, captures CaptureMap) (err error, field M.CustomElementField) {
+func createClassFieldFromFieldMatch(fieldName string, isStatic bool, isCustomElement bool, captures CaptureMap) (err error, field M.CustomElementField) {
 	_, readonly := captures["field.readonly"]
 
 	field.Kind = "field"
@@ -175,25 +177,27 @@ func createClassFieldFromFieldMatch(fieldName string, isStatic bool, captures Ca
 		}
 	}
 
-	field.Reflects = !field.Static && len(captures["field.attr.reflects"]) > 0 && captures["field.attr.reflects"][0].Text == "true"
+	if isCustomElement {
+		field.Reflects = !field.Static && len(captures["field.attr.reflects"]) > 0 && captures["field.attr.reflects"][0].Text == "true"
 
-	attributeBoolNodes := captures["field.attr.bool"]
-	attributeNameNodes := captures["field.attr.name"]
+		attributeBoolNodes := captures["field.attr.bool"]
+		attributeNameNodes := captures["field.attr.name"]
 
-	if (!isStatic &&
-			len(attributeBoolNodes) == 0 ||
-			(len(attributeBoolNodes) > 0 && attributeBoolNodes[0].Node.GrammarName() != "false")) {
-		if len(attributeNameNodes) > 0 {
-			field.Attribute = attributeNameNodes[0].Text
-		} else {
-			field.Attribute = strings.ToLower(field.Name)
+		if (!isStatic &&
+				len(attributeBoolNodes) == 0 ||
+				(len(attributeBoolNodes) > 0 && attributeBoolNodes[0].Node.GrammarName() != "false")) {
+			if len(attributeNameNodes) > 0 {
+				field.Attribute = attributeNameNodes[0].Text
+			} else {
+				field.Attribute = strings.ToLower(field.Name)
+			}
 		}
 	}
 
 	return err, field
 }
 
-func getClassMembersFromClassDeclarationNode(code []byte, root *ts.Node) (errs error, members []M.ClassMember) {
+func getClassMembersFromClassDeclarationNode(code []byte, root *ts.Node, isCustomElement bool) (errs error, members []M.ClassMember) {
 	qm, closeQm := NewQueryMatcher("classMemberDeclaration", Languages.Typescript)
 	defer closeQm()
 
@@ -222,7 +226,7 @@ func getClassMembersFromClassDeclarationNode(code []byte, root *ts.Node) (errs e
 
 			if (isField && isStatic && !staticsSet.Has(fieldName)) {
 				staticsSet.Add(fieldName)
-				error, field := createClassFieldFromFieldMatch(fieldName, isStatic, captures)
+				error, field := createClassFieldFromFieldMatch(fieldName, isStatic, isCustomElement, captures)
 				if error != nil {
 					errs = errors.Join(errs, error)
 				} else {
@@ -230,7 +234,7 @@ func getClassMembersFromClassDeclarationNode(code []byte, root *ts.Node) (errs e
 				}
 			} else if (isField && !isStatic && !fieldsSet.Has(fieldName)) {
 				fieldsSet.Add(fieldName)
-				error, field := createClassFieldFromFieldMatch(fieldName, isStatic, captures)
+				error, field := createClassFieldFromFieldMatch(fieldName, isStatic, isCustomElement, captures)
 				if error != nil {
 					errs = errors.Join(errs, error)
 				} else {
@@ -269,7 +273,8 @@ func getClassMembersFromClassDeclarationNode(code []byte, root *ts.Node) (errs e
 			index := accessorIndices[fieldName]
 			if hasPair {
 				// field is a *cem.CustomElementField
-				error, field := createClassFieldFromAccessorMatch(fieldName, accessorKind, isStatic, false, captures)
+				isReadonly := false
+				error, field := createClassFieldFromAccessorMatch(fieldName, isStatic, isReadonly, isCustomElement, captures)
 				if error != nil {
 					errs = errors.Join(errs, error)
 				} else {
@@ -283,7 +288,8 @@ func getClassMembersFromClassDeclarationNode(code []byte, root *ts.Node) (errs e
 					}
 				}
 			} else {
-				error, field := createClassFieldFromAccessorMatch(fieldName, accessorKind, isStatic, accessorKind == "get", captures)
+				isReadonly := accessorKind == "get"
+				error, field := createClassFieldFromAccessorMatch(fieldName, isStatic, isReadonly, isCustomElement, captures)
 				if error != nil {
 					errs = errors.Join(errs, error)
 				} else {

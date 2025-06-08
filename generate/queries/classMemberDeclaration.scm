@@ -34,6 +34,14 @@
     value: (_)? @field.initializer)
   @field)
 
+(method_definition
+  name: (_) @constructor (#match? @constructor "constructor")
+  parameters: (formal_parameters
+    (comment) * @member.jsdoc
+    (_
+      (accessibility_modifier) @field.privacy
+      pattern: (identifier) @field.name
+      type: (type_annotation (_) @field.type) + @field)))
 
 ( ; accessors and accessor pairs
   ; @examples:
@@ -85,7 +93,7 @@
                                                  ]
                                        type: (type_annotation (_) @param.type))* ) @params
       return_type: (type_annotation (_) @field.type)?)
-    @accessor))
+@accessor))
 
 
 ( ; class methods
