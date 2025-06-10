@@ -39,17 +39,23 @@ jobs:
       - name: Compare benchmark results
         id: diff
         run: |
-          echo '```' > bench_report.md
-          echo "# Benchmark results (base branch):" >> bench_report.md
+          echo "# Benchmark results (base branch):" > bench_report.md
+          echo '```' >> bench_report.md
+          echo >> bench_report.md
           cat base_bench.txt >> bench_report.md
           echo >> bench_report.md
+          echo '```' >> bench_report.md
+          echo >> bench_report.md
           echo "# Benchmark results (PR branch):" >> bench_report.md
+          echo '```' >> bench_report.md
+          echo >> bench_report.md
           cat pr_bench.txt >> bench_report.md
+          echo >> bench_report.md
+          echo '```' >> bench_report.md
           echo >> bench_report.md
           echo "# Benchmark diff:" >> bench_report.md
           go install github.com/cespare/prettybench@latest
           prettybench base_bench.txt pr_bench.txt >> bench_report.md || echo "prettybench failed or no diff"
-          echo '```' >> bench_report.md
 
       - name: Find previous benchmark comment
         id: find-comment
