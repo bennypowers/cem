@@ -9,6 +9,7 @@ import (
 )
 
 func generateClassDeclaration(
+	queryManager *QueryManager,
 	captures CaptureMap,
 	root *ts.Node,
 	code []byte,
@@ -19,15 +20,16 @@ func generateClassDeclaration(
 		classDeclarationNodeId := classDeclarationCaptures[0].NodeId
 		classDeclarationNode := GetDescendantById(root, classDeclarationNodeId)
 		if isCustomElement {
-			return generateCustomElementClassDeclaration(captures, root, classDeclarationNode, code)
+			return generateCustomElementClassDeclaration(queryManager, captures, root, classDeclarationNode, code)
 		} else {
-			return generateCommonClassDeclaration(captures, root, classDeclarationNode, code, isCustomElement)
+			return generateCommonClassDeclaration(queryManager, captures, root, classDeclarationNode, code, isCustomElement)
 		}
 	}
 	return errors.New("Could not find class declaration"), nil
 }
 
 func generateCommonClassDeclaration(
+	queryManager *QueryManager,
 	captures CaptureMap,
 	root *ts.Node,
 	classDeclarationNode *ts.Node,
@@ -46,7 +48,14 @@ func generateCommonClassDeclaration(
 		},
 	}
 
-	err, members := getClassMembersFromClassDeclarationNode(code, declaration.ClassLike.Name, root, classDeclarationNode, isCustomElement)
+	err, members := getClassMembersFromClassDeclarationNode(
+		queryManager,
+		code,
+		declaration.ClassLike.Name,
+		root,
+		classDeclarationNode,
+		isCustomElement,
+	)
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
@@ -79,7 +88,7 @@ func generateCommonClassDeclaration(
 
 	jsdoc, ok := captures["class.jsdoc"]
 	if (ok && len(jsdoc) > 0) {
-		err, info := NewClassInfo(jsdoc[0].Text)
+		err, info := NewClassInfo(jsdoc[0].Text, queryManager)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		} else {
@@ -91,12 +100,20 @@ func generateCommonClassDeclaration(
 }
 
 func generateCustomElementClassDeclaration(
+	queryManager *QueryManager,
 	captures CaptureMap,
 	root *ts.Node,
 	classDeclarationNode *ts.Node,
 	code []byte,
 ) (errs error, declaration *M.CustomElementDeclaration) {
-	err, classDeclaration := generateCommonClassDeclaration(captures, root, classDeclarationNode, code, true)
+	err, classDeclaration := generateCommonClassDeclaration(
+		queryManager,
+		captures,
+		root,
+		classDeclarationNode,
+		code,
+		true,
+	)
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
@@ -139,7 +156,7 @@ func generateCustomElementClassDeclaration(
 
 	jsdoc, ok := captures["class.jsdoc"]
 	if (ok && len(jsdoc) > 0) {
-		error, classInfo := NewClassInfo(jsdoc[0].Text)
+		error, classInfo := NewClassInfo(jsdoc[0].Text, queryManager)
 		if error != nil {
 			errs = errors.Join(errs, error)
 		} else {

@@ -66,10 +66,10 @@ func ammendFieldPrivacyWithCaptures(captures CaptureMap, field *M.ClassField) {
 	}
 }
 
-func ammendFieldWithJsdocCaptures(captures CaptureMap, field *M.ClassField) (error, bool) {
+func ammendFieldWithJsdocCaptures(queryManager *QueryManager, captures CaptureMap, field *M.ClassField) (error, bool) {
 	for _, x := range captures["member.jsdoc"] {
 		source := x.Text
-		error, info := NewPropertyInfo(source)
+		error, info := NewPropertyInfo(source, queryManager)
 		if error != nil {
 			return error, false
 		} else {
@@ -109,6 +109,7 @@ func createClassFieldFromAccessorMatch(
 	isReadonly bool,
 	isCustomElement bool,
 	captures CaptureMap,
+	queryManager *QueryManager,
 ) (err error, field M.CustomElementField) {
 	field.Kind = "field"
 	field.Static = isStatic
@@ -124,12 +125,12 @@ func createClassFieldFromAccessorMatch(
 		ammendFieldWithPropertyConfigCaptures(captures, &field)
 	}
 
-	ammendFieldWithJsdocCaptures(captures, &field.ClassField)
+	ammendFieldWithJsdocCaptures(queryManager, captures, &field.ClassField)
 
 	return err, field
 }
 
-func createClassFieldFromFieldMatch(fieldName string, isStatic bool, isCustomElement bool, captures CaptureMap) (err error, field M.CustomElementField) {
+func createClassFieldFromFieldMatch(fieldName string, isStatic bool, isCustomElement bool, captures CaptureMap, queryManager *QueryManager) (err error, field M.CustomElementField) {
 	_, readonly := captures["field.readonly"]
 
 	field.Kind = "field"
@@ -165,20 +166,24 @@ func createClassFieldFromFieldMatch(fieldName string, isStatic bool, isCustomEle
 		ammendFieldWithPropertyConfigCaptures(captures, &field)
 	}
 
-	ammendFieldWithJsdocCaptures(captures, &field.ClassField)
+	ammendFieldWithJsdocCaptures(queryManager, captures, &field.ClassField)
 
 	return err, field
 }
 
 func getClassMembersFromClassDeclarationNode(
+	queryManager *QueryManager,
 	code []byte,
 	className string,
 	root *ts.Node,
 	classDeclarationNode *ts.Node,
 	isCustomElement bool,
 ) (errs error, members []M.ClassMember) {
-	qm, closeQm := NewQueryMatcher("classMemberDeclaration", Languages.Typescript)
-	defer closeQm()
+	qm, err := NewQueryMatcher(queryManager, "classMemberDeclaration", Languages.Typescript)
+	if err != nil {
+		return errors.Join(errs, err), nil
+	}
+	defer qm.Close()
 	qm.cursor.SetByteRange(classDeclarationNode.ByteRange())
 
 	staticsSet := set.NewSet[string]()
@@ -225,7 +230,7 @@ func getClassMembersFromClassDeclarationNode(
 		if hasPair {
 			// field is a *cem.CustomElementField
 			isReadonly := false
-			error, field := createClassFieldFromAccessorMatch(fieldName, isStatic, isReadonly, isCustomElement, captures)
+			error, field := createClassFieldFromAccessorMatch(fieldName, isStatic, isReadonly, isCustomElement, captures, queryManager)
 			if error != nil {
 				errs = errors.Join(errs, error)
 			} else {
@@ -240,7 +245,7 @@ func getClassMembersFromClassDeclarationNode(
 			}
 		} else {
 			isReadonly := accessorKind == "get"
-			error, field := createClassFieldFromAccessorMatch(fieldName, isStatic, isReadonly, isCustomElement, captures)
+			error, field := createClassFieldFromAccessorMatch(fieldName, isStatic, isReadonly, isCustomElement, captures, queryManager)
 			if error != nil {
 				errs = errors.Join(errs, error)
 			} else {
@@ -259,7 +264,7 @@ func getClassMembersFromClassDeclarationNode(
 
 		if (isStatic && !staticsSet.Has(key)) {
 			staticsSet.Add(key)
-			error, field := createClassFieldFromFieldMatch(fieldName, isStatic, isCustomElement, captures)
+			error, field := createClassFieldFromFieldMatch(fieldName, isStatic, isCustomElement, captures, queryManager)
 			if error != nil {
 				errs = errors.Join(errs, error)
 			} else {
@@ -267,7 +272,7 @@ func getClassMembersFromClassDeclarationNode(
 			}
 		} else if (!isStatic && !fieldsSet.Has(key)) {
 			fieldsSet.Add(key)
-			error, field := createClassFieldFromFieldMatch(fieldName, isStatic, isCustomElement, captures)
+			error, field := createClassFieldFromFieldMatch(fieldName, isStatic, isCustomElement, captures, queryManager)
 			if error != nil {
 				errs = errors.Join(errs, error)
 			} else {
@@ -331,7 +336,7 @@ func getClassMembersFromClassDeclarationNode(
 		jsdocs, ok := captures["member.jsdoc"]
 		if ok {
 			for _, jsdoc := range jsdocs {
-				merr, info := NewMethodInfo(jsdoc.Text)
+				merr, info := NewMethodInfo(jsdoc.Text, queryManager)
 				if merr != nil {
 					errs = errors.Join(merr)
 				} else {

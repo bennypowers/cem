@@ -6,7 +6,7 @@ import (
 	"bennypowers.dev/cem/manifest"
 )
 
-func generateVarDeclaration(captures CaptureMap) (err error, declaration *manifest.VariableDeclaration) {
+func generateVarDeclaration(captures CaptureMap, queryManager *QueryManager) (err error, declaration *manifest.VariableDeclaration) {
 	nameNodes, ok := captures["variable.name"]
 	if (!ok || len(nameNodes) <= 0) {
 		return errors.Join(err, &NoCaptureError{ "variable.name", "variable" }), nil
@@ -30,7 +30,7 @@ func generateVarDeclaration(captures CaptureMap) (err error, declaration *manife
 
 	jsdoc, ok := captures["variable.jsdoc"]
 	if (ok && len(jsdoc) > 0) {
-		error, info := NewPropertyInfo(jsdoc[0].Text)
+		error, info := NewPropertyInfo(jsdoc[0].Text, queryManager)
 		if error != nil {
 			err = errors.Join(err, error)
 		} else {

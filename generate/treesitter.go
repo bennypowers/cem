@@ -2,10 +2,13 @@ package generate
 
 import (
 	"embed"
+	"errors"
 	"fmt"
 	"iter"
 	"log"
+	"path/filepath"
 	"slices"
+	"strings"
 
 	ts "github.com/tree-sitter/go-tree-sitter"
 	tsjsdoc "github.com/tree-sitter/tree-sitter-jsdoc/bindings/go"
@@ -29,6 +32,63 @@ var Languages = struct{Typescript *ts.Language; Jsdoc *ts.Language}{
 //go:embed queries/*.scm
 var queries embed.FS
 
+type QueryManagerI interface {
+	Close()
+	GetQuery(name string) (*ts.Query, error)
+}
+
+type QueryManager struct {
+	qmap map[string]*ts.Query
+}
+
+func NewQueryManager() (*QueryManager, error) {
+	qm := &QueryManager{
+		qmap: make(map[string]*ts.Query),
+	}
+
+	data, err := queries.ReadDir("queries")
+	if err != nil {
+		log.Fatal(err) // it's ok to die here because these queries are compiled in via embed
+	}
+
+	for _, entry := range data {
+		// todo: jsdoc/*.scm, typescript/*.scm, etc
+		if !entry.IsDir() {
+			file := entry.Name()
+			queryName := strings.Split(filepath.Base(file), ".")[0]
+			data, err := queries.ReadFile(filepath.Join("queries", file))
+			if err != nil {
+				log.Fatal(err) // it's ok to die here because these queries are compiled in via embed
+			}
+			queryText := string(data)
+			language := Languages.Typescript
+			if queryName == "jsdoc" {
+				language = Languages.Jsdoc
+			}
+			query, qerr := ts.NewQuery(language, queryText)
+			if qerr != nil {
+				log.Fatal(qerr) // it's ok to die here because these queries are compiled in via embed
+			}
+			qm.qmap[queryName] = query
+		}
+	}
+	return qm, nil
+}
+
+func (qm *QueryManager) Close() {
+	for _, query := range qm.qmap {
+		query.Close()
+	}
+}
+
+func (qm *QueryManager) GetQuery(queryName string) (*ts.Query, error) {
+  q, ok := qm.qmap[queryName]
+	if !ok {
+		return nil, errors.New(fmt.Sprintf("unknown query %s", queryName))
+	}
+	return q, nil
+}
+
 type ParentNodeCaptures struct {
 	NodeId uintptr;
 	Captures CaptureMap
@@ -46,30 +106,19 @@ type QueryMatcher struct {
 	cursor *ts.QueryCursor
 }
 
-func LoadQueryFile(queryName string) (string, error) {
-	path := fmt.Sprintf("queries/%s.scm", queryName)
-	data, err := queries.ReadFile(path)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
+func (qm QueryMatcher) Close() {
+	// qm.query.Close()
+	qm.cursor.Close()
 }
 
-func NewQueryMatcher(queryName string, language *ts.Language) (*QueryMatcher, func()) {
-	queryText, err := LoadQueryFile(queryName)
-	if err != nil {
-		log.Fatal(err) // it's ok to die here because these queries are compiled in via embed
-	}
-	query, qerr := ts.NewQuery(language, queryText)
-	if qerr != nil {
-		log.Fatal(qerr) // it's ok to die here because these queries are compiled in via embed
+func NewQueryMatcher(manager *QueryManager, queryName string, language *ts.Language) (*QueryMatcher, error) {
+	query, error := manager.GetQuery(queryName)
+	if error != nil {
+		return nil, error
 	}
 	cursor := ts.NewQueryCursor()
 	thing := QueryMatcher{ query, cursor }
-	return &thing, func() {
-		thing.query.Close()
-		thing.cursor.Close()
-	}
+	return &thing, nil
 }
 
 func (q QueryMatcher) AllQueryMatches(node *ts.Node, text []byte) iter.Seq[*ts.QueryMatch] {

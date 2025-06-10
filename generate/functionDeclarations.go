@@ -6,7 +6,7 @@ import (
 	M "bennypowers.dev/cem/manifest"
 )
 
-func generateFunctionDeclaration(captures CaptureMap, _ any, code []byte) (err error, declaration *M.FunctionDeclaration) {
+func generateFunctionDeclaration(captures CaptureMap, _ any, code []byte, queryManager *QueryManager) (err error, declaration *M.FunctionDeclaration) {
 	nameNodes, ok := captures["function.name"]
 	if (!ok || len(nameNodes) <= 0) {
 		return errors.Join(err, &NoCaptureError{ "function.name", "functionDeclaration" }), nil
@@ -45,7 +45,7 @@ func generateFunctionDeclaration(captures CaptureMap, _ any, code []byte) (err e
 
 	jsdoc, ok := captures["function.jsdoc"]
 	if (ok && len(jsdoc) > 0) {
-		error, info := NewMethodInfo(jsdoc[0].Text)
+		error, info := NewMethodInfo(jsdoc[0].Text, queryManager)
 		if error != nil {
 			return errors.Join(err, error), nil
 		} else {
