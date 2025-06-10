@@ -88,7 +88,7 @@ func Generate(files []string, exclude []string) (error, *string) {
 
 	pkg := manifest.NewPackage(modules)
 
-	slices.SortFunc(pkg.Modules, func(a, b manifest.Module) int {
+	slices.SortStableFunc(pkg.Modules, func(a, b manifest.Module) int {
 		return cmp.Compare(a.Path, b.Path)
 	})
 
