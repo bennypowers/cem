@@ -1,0 +1,68 @@
+name: Benchmark
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install tparse
+        run: go install github.com/mfridman/tparse@latest
+
+      - name: Run benchmarks on PR
+        run: make bench > pr_bench.txt
+
+      - name: Checkout target branch (base)
+        run: |
+          git fetch origin ${{ github.base_ref }} --depth=1
+          git checkout ${{ github.base_ref }}
+
+      - name: Run benchmarks on base branch
+        run: make bench > base_bench.txt
+
+      - name: Compare benchmark results
+        id: diff
+        run: |
+          echo '```' > bench_report.md
+          echo "# Benchmark results (base branch):" >> bench_report.md
+          cat base_bench.txt >> bench_report.md
+          echo >> bench_report.md
+          echo "# Benchmark results (PR branch):" >> bench_report.md
+          cat pr_bench.txt >> bench_report.md
+          echo >> bench_report.md
+          echo "# Benchmark diff:" >> bench_report.md
+          go install github.com/cespare/prettybench@latest
+          prettybench base_bench.txt pr_bench.txt >> bench_report.md || echo "prettybench failed or no diff"
+          echo '```' >> bench_report.md
+
+      - name: Find previous benchmark comment
+        id: find-comment
+        uses: peter-evans/find-comment@v3
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: "github-actions[bot]"
+          body-includes: "# Benchmark results (base branch):"
+
+      - name: Create or update sticky benchmark comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-file: bench_report.md
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          edit-mode: replace
