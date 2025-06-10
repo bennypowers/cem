@@ -1,2 +1,4 @@
 cem
 __debug*
+*.out
+*.test
