@@ -24,8 +24,11 @@ func generateModule(file string, code []byte) (errs error, module *M.Module) {
 	classNamesAdded := S.NewSet[string]()
 
 	queryName := "variableDeclaration"
-	qm, closeQm := NewQueryMatcher(queryName, Languages.Typescript)
-	defer closeQm()
+	qm, err := NewQueryMatcher(queryName, Languages.Typescript)
+	if err != nil {
+		return errors.Join(errs, err), nil
+	}
+	defer qm.Close()
 	for captures := range qm.ParentCaptures(root, code, "variable") {
 		err, declaration := generateVarDeclaration(captures)
 		if err != nil {
@@ -36,8 +39,11 @@ func generateModule(file string, code []byte) (errs error, module *M.Module) {
 	}
 
 	queryName = "classDeclaration"
-	qm, closeQm = NewQueryMatcher(queryName, Languages.Typescript)
-	defer closeQm()
+	qm, err = NewQueryMatcher(queryName, Languages.Typescript)
+	if err != nil {
+		return errors.Join(errs, err), nil
+	}
+	defer qm.Close()
 	for captures := range qm.ParentCaptures(root, code, "class") {
 		err, d := generateClassDeclaration(captures, root, code)
 		if err != nil {
@@ -58,8 +64,11 @@ func generateModule(file string, code []byte) (errs error, module *M.Module) {
 	}
 
 	queryName = "functionDeclaration"
-	qm, closeQm = NewQueryMatcher(queryName, Languages.Typescript)
-	defer closeQm()
+	qm, err = NewQueryMatcher(queryName, Languages.Typescript)
+	if err != nil {
+		return errors.Join(errs, err), nil
+	}
+	defer qm.Close()
 	for captures := range qm.ParentCaptures(root, code, "function") {
 		err, declaration := generateFunctionDeclaration(captures, root, code)
 		if err != nil {
@@ -70,8 +79,11 @@ func generateModule(file string, code []byte) (errs error, module *M.Module) {
 	}
 
 	queryName = "exportStatement"
-	qm, closeQm = NewQueryMatcher(queryName, Languages.Typescript)
-	defer closeQm()
+	qm, err = NewQueryMatcher(queryName, Languages.Typescript)
+	if err != nil {
+		return errors.Join(errs, err), nil
+	}
+	defer qm.Close()
 	for captures := range qm.ParentCaptures(root, code, "export") {
 		if exportNodes, ok := captures["export"]; (!ok || len(exportNodes) <= 0) {
 			errs = errors.Join(errs, &NoCaptureError{ "export", queryName })

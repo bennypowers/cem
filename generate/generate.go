@@ -51,19 +51,19 @@ func Generate(files []string, exclude []string) (error, *string) {
 	numWorkers := runtime.NumCPU()
 	wg.Add(numWorkers)
 
-		for i := 0; i < numWorkers; i++ {
+	for range numWorkers {
 		go func() {
 			defer wg.Done()
 			for file := range jobsChan {
 				code, err := os.ReadFile(file)
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "%s", err)
+					fmt.Fprintf(os.Stderr, "%s\n", err)
 					continue
 				}
 
 				err, module := generateModule(file, code)
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "%s", err)
+					fmt.Fprintf(os.Stderr, "%s\n", err)
 				}
 				if module != nil {
 					modulesChan <- *module

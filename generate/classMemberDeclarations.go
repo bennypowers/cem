@@ -177,8 +177,11 @@ func getClassMembersFromClassDeclarationNode(
 	classDeclarationNode *ts.Node,
 	isCustomElement bool,
 ) (errs error, members []M.ClassMember) {
-	qm, closeQm := NewQueryMatcher("classMemberDeclaration", Languages.Typescript)
-	defer closeQm()
+	qm, err := NewQueryMatcher("classMemberDeclaration", Languages.Typescript)
+	if err != nil {
+		return errors.Join(errs, err), nil
+	}
+	defer qm.Close()
 	qm.cursor.SetByteRange(classDeclarationNode.ByteRange())
 
 	staticsSet := set.NewSet[string]()

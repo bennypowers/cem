@@ -2,10 +2,13 @@ package generate
 
 import (
 	"embed"
+	"errors"
 	"fmt"
+	"path/filepath"
 	"iter"
 	"log"
 	"slices"
+	"strings"
 
 	ts "github.com/tree-sitter/go-tree-sitter"
 	tsjsdoc "github.com/tree-sitter/tree-sitter-jsdoc/bindings/go"
@@ -46,19 +49,41 @@ type QueryMatcher struct {
 	cursor *ts.QueryCursor
 }
 
-func LoadQueryFile(queryName string) (string, error) {
-	path := fmt.Sprintf("queries/%s.scm", queryName)
-	data, err := queries.ReadFile(path)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
+func (qm QueryMatcher) Close() {
+	qm.query.Close()
+	qm.cursor.Close()
 }
 
-func NewQueryMatcher(queryName string, language *ts.Language) (*QueryMatcher, func()) {
-	queryText, err := LoadQueryFile(queryName)
+var queryMap map[string]string
+
+func preloadQueries() {
+	if len(queryMap) > 0 {
+		return
+	}
+  queryMap = make(map[string]string)
+	data, err := queries.ReadDir("queries")
 	if err != nil {
 		log.Fatal(err) // it's ok to die here because these queries are compiled in via embed
+	}
+	for _, entry := range data {
+		if !entry.IsDir() {
+			file := entry.Name()
+			queryName := strings.Split(filepath.Base(file), ".")[0]
+			data, err := queries.ReadFile(filepath.Join("queries", file))
+			if err != nil {
+				log.Fatal(err) // it's ok to die here because these queries are compiled in via embed
+			}
+			contents := string(data)
+			queryMap[queryName] = contents
+		}
+	}
+}
+
+func NewQueryMatcher(queryName string, language *ts.Language) (*QueryMatcher, error) {
+	preloadQueries()
+	queryText, ok := queryMap[queryName]
+	if !ok {
+		return nil, errors.New(fmt.Sprintf("unknown query %s", queryName))
 	}
 	query, qerr := ts.NewQuery(language, queryText)
 	if qerr != nil {
@@ -66,10 +91,7 @@ func NewQueryMatcher(queryName string, language *ts.Language) (*QueryMatcher, fu
 	}
 	cursor := ts.NewQueryCursor()
 	thing := QueryMatcher{ query, cursor }
-	return &thing, func() {
-		thing.query.Close()
-		thing.cursor.Close()
-	}
+	return &thing, nil
 }
 
 func (q QueryMatcher) AllQueryMatches(node *ts.Node, text []byte) iter.Seq[*ts.QueryMatch] {

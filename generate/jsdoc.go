@@ -74,8 +74,11 @@ type ClassInfo struct {
 func NewClassInfo(source string) (error, *ClassInfo) {
 	info := ClassInfo{}
 	code := []byte(source)
-	qm, closeQm := NewQueryMatcher("jsdoc", Languages.Jsdoc)
-	defer closeQm()
+	qm, err := NewQueryMatcher("jsdoc", Languages.Jsdoc)
+	if err != nil {
+		return err, nil
+	}
+	defer qm.Close()
 
 	parser := ts.NewParser()
 	defer parser.Close()
@@ -421,8 +424,11 @@ func NewPropertyInfo(code string) (error, *PropertyInfo) {
 	defer tree.Close()
 	root := tree.RootNode()
 
-  qm, closeQm := NewQueryMatcher("jsdoc", Languages.Jsdoc)
-	defer closeQm()
+  qm, err := NewQueryMatcher("jsdoc", Languages.Jsdoc)
+	if err != nil {
+		return err, nil
+	}
+	defer qm.Close()
 
   descriptionCaptureIndex, _ := qm.query.CaptureIndexForName("doc.description")
   tagCaptureIndex, _ := qm.query.CaptureIndexForName("doc.tag")
@@ -500,8 +506,11 @@ func NewMethodInfo(source string) (error, *MethodInfo) {
 	defer tree.Close()
 	root := tree.RootNode()
 
-	qm, closeQm := NewQueryMatcher("jsdoc", Languages.Jsdoc)
-	defer closeQm()
+	qm, err := NewQueryMatcher("jsdoc", Languages.Jsdoc)
+	if err != nil {
+		return err, nil
+	}
+	defer qm.Close()
 
 	for match := range qm.AllQueryMatches(root, code) {
 		for _, capture := range match.Captures {
