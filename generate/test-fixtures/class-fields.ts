@@ -10,4 +10,5 @@ export class ClassFields {
   @icky()
   @tickly({ giggly: true })
   @property({ attribute: 'multi-decorator', reflect: true }) decorated = 0;
+  fieldMethod = () => {}
 }

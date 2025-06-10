@@ -181,6 +181,14 @@
                 "description": "foo"
               },
               "kind": "method"
+            },
+            {
+              "name": "fieldMethod",
+              "description": "description",
+              "return": {
+                "description": "foo"
+              },
+              "kind": "method"
             }
           ],
           "kind": "class",

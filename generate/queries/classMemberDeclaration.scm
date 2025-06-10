@@ -30,9 +30,12 @@
     "readonly"? @field.readonly
     name: (property_identifier) @field.name
     type: (type_annotation (_) @field.type)*
-    value: (_)? @field.initializer)) @field
+    ; todo: if the field is initialized it should quit if there's params
+    ; but we've observed that arrow functions are still processed as fields
+    value: (_ !parameters)* @field.initializer) @field)
 
-(method_definition
+(method_definition ; class constructor properties (typescript only)
+  ; example : constructor (publid field: Type) {}
   name: (_) @constructor (#match? @constructor "constructor")
   parameters: (formal_parameters (
                 (comment)? @member.jsdoc (#match? @member.jsdoc "^/\\*\\*")
@@ -86,9 +89,6 @@
                                      type: (type_annotation (_) @param.type)))?
     return_type: (type_annotation (_) @field.type)?)) @accessor
 
-
-
-
 ( ; class methods
   ; @examples:
   ; onClick() {}
@@ -122,3 +122,35 @@
      "willUpdated"
      "getUpdateComplete")
     ) @method)
+
+( ; class arrow function field methods
+  ; @examples:
+  ; onClick = () => {}
+  ; @observes('prop')
+  ; onPropChange = (prop: P, old: P): Ret => {}
+  (comment) * @member.jsdoc (#match? @member.jsdoc "^/\\*\\*")
+  (decorator) *
+  (public_field_definition
+    (accessibility_modifier)? @method.privacy
+    "static"? @method.static
+    name: (property_identifier) @method.name
+    value: (arrow_function
+      parameters: (formal_parameters
+                    (_
+                       pattern: [
+                                 (identifier) @param.name
+                                 (rest_pattern (identifier) @param.name) @param.rest
+                                 ]
+                       type: (type_annotation (_) @param.type)) @params)?
+      return_type: (type_annotation (_) @method.returns)?
+      (#not-any-of? @method.name
+       "render"
+       "connectedCallback"
+       "disconnectedCallback"
+       "attributeChangedCallback"
+       "firstUpdated"
+       "update"
+       "updated"
+       "willUpdated"
+       "getUpdateComplete")) @method))
+

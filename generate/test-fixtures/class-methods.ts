@@ -44,4 +44,6 @@ class ClassMethods extends LitElement {
     typedOptionalDefault: never,
     obj: never,
   ) {}
+
+  fieldMethod = () => {}
 }

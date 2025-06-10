@@ -142,7 +142,7 @@ func createClassFieldFromFieldMatch(fieldName string, isStatic bool, isCustomEle
 	ammendFieldPrivacyWithCaptures(captures, &field.ClassField)
 
 	for _, x := range captures["field.initializer"] {
-		field.Default = x.Text
+		field.Default = strings.ReplaceAll(x.Text, "\n", "\\n")
 		if field.Type == nil {
 			if (field.Default == "true" || field.Default == "false") {
 				field.Type = &M.Type{
@@ -262,6 +262,19 @@ func getClassMembersFromClassDeclarationNode(
 			continue
 		}
 
+		fieldNodes, ok := captures["field"]
+		if ok && len(fieldNodes) > 0  {
+			fieldNodeId := fieldNodes[0].NodeId
+			fieldNode := GetDescendantById(root, fieldNodeId)
+			if fieldNode != nil {
+				valueNode := fieldNode.ChildByFieldName("value")
+				if valueNode != nil {
+					if valueNode.GrammarName() == "arrow_function" {
+						continue
+					}
+				}
+			}
+		}
 		if (isStatic && !staticsSet.Has(key)) {
 			staticsSet.Add(key)
 			error, field := createClassFieldFromFieldMatch(fieldName, isStatic, isCustomElement, captures, queryManager)
