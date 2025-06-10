@@ -26,7 +26,12 @@ jobs:
         run: go install github.com/mfridman/tparse@latest
 
       - name: Run benchmarks on PR
-        run: make bench > pr_bench.txt
+        run: |
+          if ! make bench > pr_bench.txt 2>&1; then
+            cat pr_bench.txt
+            echo "::error::Benchmarking (make bench) failed on PR branch"
+            exit 1
+          fi
 
       - name: Checkout target branch (base)
         run: |
@@ -34,7 +39,12 @@ jobs:
           git checkout ${{ github.base_ref }}
 
       - name: Run benchmarks on base branch
-        run: make bench > base_bench.txt
+        run: |
+          if ! make bench > base_bench.txt 2>&1; then
+            cat base_bench.txt
+            echo "::error::Benchmarking (make bench) failed on PR branch"
+            exit 1
+          fi
 
       - name: Compare benchmark results
         id: diff
