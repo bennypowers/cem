@@ -71,10 +71,10 @@ type ClassInfo struct {
 	Slots []M.Slot;
 }
 
-func NewClassInfo(source string) (error, *ClassInfo) {
+func NewClassInfo(source string, queryManager *QueryManager) (error, *ClassInfo) {
 	info := ClassInfo{}
 	code := []byte(source)
-	qm, err := NewQueryMatcher("jsdoc", Languages.Jsdoc)
+	qm, err := NewQueryMatcher(queryManager, "jsdoc", Languages.Jsdoc)
 	if err != nil {
 		return err, nil
 	}
@@ -415,7 +415,7 @@ type PropertyInfo struct {
 	Deprecated M.Deprecated
 }
 
-func NewPropertyInfo(code string) (error, *PropertyInfo) {
+func NewPropertyInfo(code string, queryManager *QueryManager) (error, *PropertyInfo) {
 	barr := []byte(code)
 	parser := ts.NewParser()
 	defer parser.Close()
@@ -424,7 +424,7 @@ func NewPropertyInfo(code string) (error, *PropertyInfo) {
 	defer tree.Close()
 	root := tree.RootNode()
 
-  qm, err := NewQueryMatcher("jsdoc", Languages.Jsdoc)
+  qm, err := NewQueryMatcher(queryManager, "jsdoc", Languages.Jsdoc)
 	if err != nil {
 		return err, nil
 	}
@@ -496,7 +496,7 @@ type MethodInfo struct {
 	Privacy     M.Privacy
 }
 
-func NewMethodInfo(source string) (error, *MethodInfo) {
+func NewMethodInfo(source string, queryManager *QueryManager) (error, *MethodInfo) {
 	info := MethodInfo{}
 	code := []byte(source)
 	parser := ts.NewParser()
@@ -506,7 +506,7 @@ func NewMethodInfo(source string) (error, *MethodInfo) {
 	defer tree.Close()
 	root := tree.RootNode()
 
-	qm, err := NewQueryMatcher("jsdoc", Languages.Jsdoc)
+	qm, err := NewQueryMatcher(queryManager, "jsdoc", Languages.Jsdoc)
 	if err != nil {
 		return err, nil
 	}

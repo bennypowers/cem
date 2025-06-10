@@ -10,7 +10,7 @@ import (
 	tsts "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
 )
 
-func generateModule(file string, code []byte) (errs error, module *M.Module) {
+func generateModule(file string, code []byte, queryManager *QueryManager) (errs error, module *M.Module) {
 	language := ts.NewLanguage(tsts.LanguageTypescript())
 	parser := ts.NewParser()
 	defer parser.Close()
@@ -24,13 +24,13 @@ func generateModule(file string, code []byte) (errs error, module *M.Module) {
 	classNamesAdded := S.NewSet[string]()
 
 	queryName := "variableDeclaration"
-	qm, err := NewQueryMatcher(queryName, Languages.Typescript)
+	qm, err := NewQueryMatcher(queryManager, queryName, Languages.Typescript)
 	if err != nil {
 		return errors.Join(errs, err), nil
 	}
 	defer qm.Close()
 	for captures := range qm.ParentCaptures(root, code, "variable") {
-		err, declaration := generateVarDeclaration(captures)
+		err, declaration := generateVarDeclaration(captures, queryManager)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		} else {
@@ -39,13 +39,13 @@ func generateModule(file string, code []byte) (errs error, module *M.Module) {
 	}
 
 	queryName = "classDeclaration"
-	qm, err = NewQueryMatcher(queryName, Languages.Typescript)
+	qm, err = NewQueryMatcher(queryManager, queryName, Languages.Typescript)
 	if err != nil {
 		return errors.Join(errs, err), nil
 	}
 	defer qm.Close()
 	for captures := range qm.ParentCaptures(root, code, "class") {
-		err, d := generateClassDeclaration(captures, root, code)
+		err, d := generateClassDeclaration(queryManager, captures, root, code)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		} else {
@@ -64,13 +64,13 @@ func generateModule(file string, code []byte) (errs error, module *M.Module) {
 	}
 
 	queryName = "functionDeclaration"
-	qm, err = NewQueryMatcher(queryName, Languages.Typescript)
+	qm, err = NewQueryMatcher(queryManager, queryName, Languages.Typescript)
 	if err != nil {
 		return errors.Join(errs, err), nil
 	}
 	defer qm.Close()
 	for captures := range qm.ParentCaptures(root, code, "function") {
-		err, declaration := generateFunctionDeclaration(captures, root, code)
+		err, declaration := generateFunctionDeclaration(captures, root, code, queryManager)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		} else {
@@ -79,7 +79,7 @@ func generateModule(file string, code []byte) (errs error, module *M.Module) {
 	}
 
 	queryName = "exportStatement"
-	qm, err = NewQueryMatcher(queryName, Languages.Typescript)
+	qm, err = NewQueryMatcher(queryManager, queryName, Languages.Typescript)
 	if err != nil {
 		return errors.Join(errs, err), nil
 	}
