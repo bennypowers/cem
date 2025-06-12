@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "test-fixtures/static-styles.js",
+      "declarations": [
+        {
+          "name": "StaticStyles",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "static-styles",
+          "cssProperties": [
+            {
+              "name": "--tagged-template-in-style-array",
+              "description": "tagged-template-in-style-array"
+            },
+            {
+              "name": "--only-value-in-styles-value",
+              "description": "only-value-in-styles-value"
+            },
+            {
+              "name": "--in-non-attribute-import",
+              "description": "in-non-attribute-import"
+            },
+            {
+              "name": "--has-default",
+              "default": "0, red, green"
+            },
+            {
+              "name": "--in-attribute-import"
+            },
+            {
+              "name": "--in-attribute-import-description",
+              "summary": "summary",
+              "description": "in-attribute-import-description"
+            },
+            {
+              "name": "--deprecated",
+              "deprecated": "reason"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "static-styles",
+          "declaration": {
+            "name": "StaticStyles",
+            "module": "test-fixtures/static-styles.js"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+:host {
+  color: var(--in-attribute-import);
+  background:
+    /**
+     * in-attribute-import-description
+     * @summary summary
+     */
+    var(--in-attribute-import-description);
+  zoom:
+    /** @deprecated reason */
+    var(--deprecated);
+}

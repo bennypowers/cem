@@ -179,7 +179,7 @@ func getClassMembersFromClassDeclarationNode(
 	classDeclarationNode *ts.Node,
 	isCustomElement bool,
 ) (errs error, members []M.ClassMember) {
-	qm, err := NewQueryMatcher(queryManager, "classMemberDeclaration", Languages.Typescript)
+	qm, err := NewQueryMatcher(queryManager, "classMemberDeclaration", "typescript")
 	if err != nil {
 		return errors.Join(errs, err), nil
 	}
@@ -258,8 +258,11 @@ func getClassMembersFromClassDeclarationNode(
 		_, isStatic := captures["field.static"]
 		fieldName := captures["field.name"][0].Text
 		key := className + "." + fieldName
-		if (isStatic && ignoredStaticFields.Has(fieldName)) || (!isStatic && ignoredInstanceMethods.Has(fieldName)) {
-			continue
+		if (isCustomElement) {
+			if (isStatic && ignoredStaticFields.Has(fieldName)) ||
+					(!isStatic && ignoredInstanceMethods.Has(fieldName)) {
+				continue
+			}
 		}
 
 		fieldNodes, ok := captures["field"]

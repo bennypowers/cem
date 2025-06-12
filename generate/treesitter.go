@@ -6,14 +6,19 @@ import (
 	"fmt"
 	"iter"
 	"log"
+	"path"
 	"path/filepath"
 	"slices"
 	"strings"
 
 	ts "github.com/tree-sitter/go-tree-sitter"
-	tsjsdoc "github.com/tree-sitter/tree-sitter-jsdoc/bindings/go"
-	tsts "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
+	tsCss "github.com/tree-sitter/tree-sitter-css/bindings/go"
+	tsJsdoc "github.com/tree-sitter/tree-sitter-jsdoc/bindings/go"
+	tsTypescript "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
 )
+
+//go:embed queries/*/*.scm
+var queries embed.FS
 
 type NoCaptureError struct {
 	CaptureName string
@@ -24,13 +29,15 @@ func (e *NoCaptureError) Error() string {
   return fmt.Sprintf("No nodes for capture %s in query %s", e.CaptureName, e.QueryName)
 }
 
-var Languages = struct{Typescript *ts.Language; Jsdoc *ts.Language}{
-	Typescript: ts.NewLanguage(tsts.LanguageTypescript()),
-	Jsdoc: ts.NewLanguage(tsjsdoc.Language()),
+var Languages = struct{
+	typescript *ts.Language;
+	jsdoc *ts.Language;
+	css *ts.Language;
+}{
+	ts.NewLanguage(tsTypescript.LanguageTypescript()),
+	ts.NewLanguage(tsJsdoc.Language()),
+	ts.NewLanguage(tsCss.Language()),
 }
-
-//go:embed queries/*.scm
-var queries embed.FS
 
 type QueryManagerI interface {
 	Close()
@@ -38,12 +45,16 @@ type QueryManagerI interface {
 }
 
 type QueryManager struct {
-	qmap map[string]*ts.Query
+	typescript map[string]*ts.Query
+	jsdoc map[string]*ts.Query
+	css map[string]*ts.Query
 }
 
 func NewQueryManager() (*QueryManager, error) {
 	qm := &QueryManager{
-		qmap: make(map[string]*ts.Query),
+		typescript: make(map[string]*ts.Query),
+		jsdoc: make(map[string]*ts.Query),
+		css: make(map[string]*ts.Query),
 	}
 
 	data, err := queries.ReadDir("queries")
@@ -51,38 +62,73 @@ func NewQueryManager() (*QueryManager, error) {
 		log.Fatal(err) // it's ok to die here because these queries are compiled in via embed
 	}
 
-	for _, entry := range data {
-		// todo: jsdoc/*.scm, typescript/*.scm, etc
-		if !entry.IsDir() {
-			file := entry.Name()
-			queryName := strings.Split(filepath.Base(file), ".")[0]
-			data, err := queries.ReadFile(filepath.Join("queries", file))
+	for _, direntry := range data {
+		if direntry.IsDir() {
+			language := direntry.Name()
+			data, err := queries.ReadDir(path.Join("queries", language))
 			if err != nil {
 				log.Fatal(err) // it's ok to die here because these queries are compiled in via embed
 			}
-			queryText := string(data)
-			language := Languages.Typescript
-			if queryName == "jsdoc" {
-				language = Languages.Jsdoc
+			for _, entry := range data {
+				// todo: jsdoc/*.scm, typescript/*.scm, etc
+				if !entry.IsDir() {
+					file := entry.Name()
+					queryName := strings.Split(filepath.Base(file), ".")[0]
+					data, err := queries.ReadFile(filepath.Join("queries", language, file))
+					if err != nil {
+						log.Fatal(err) // it's ok to die here because these queries are compiled in via embed
+					}
+					queryText := string(data)
+					var tsLang *ts.Language
+					switch language {
+					case "typescript": tsLang = Languages.typescript
+					case "jsdoc": tsLang = Languages.jsdoc
+					case "css": tsLang = Languages.css
+					}
+					if tsLang == nil {
+						// it's ok to die here because these queries are compiled in via embed
+						log.Fatalf("unknown language %s", language)
+					}
+					query, qerr := ts.NewQuery(tsLang, queryText)
+					if qerr != nil {
+						log.Fatal(qerr) // it's ok to die here because these queries are compiled in via embed
+					}
+					switch language {
+					case "typescript": qm.typescript[queryName] = query
+					case "jsdoc": qm.jsdoc[queryName] = query
+					case "css": qm.css[queryName] = query
+					}
+				}
 			}
-			query, qerr := ts.NewQuery(language, queryText)
-			if qerr != nil {
-				log.Fatal(qerr) // it's ok to die here because these queries are compiled in via embed
-			}
-			qm.qmap[queryName] = query
 		}
 	}
+
 	return qm, nil
 }
 
 func (qm *QueryManager) Close() {
-	for _, query := range qm.qmap {
+	for _, query := range qm.typescript {
+		query.Close()
+	}
+	for _, query := range qm.jsdoc {
+		query.Close()
+	}
+	for _, query := range qm.css {
 		query.Close()
 	}
 }
 
-func (qm *QueryManager) GetQuery(queryName string) (*ts.Query, error) {
-  q, ok := qm.qmap[queryName]
+func (qm *QueryManager) GetQuery(queryName string, language string) (*ts.Query, error) {
+	var q *ts.Query
+	var ok bool
+	switch language {
+	case "typescript":
+		q, ok = qm.typescript[queryName]
+	case "jsdoc":
+		q, ok = qm.jsdoc[queryName]
+	case "css":
+		q, ok = qm.css[queryName]
+	}
 	if !ok {
 		return nil, errors.New(fmt.Sprintf("unknown query %s", queryName))
 	}
@@ -111,8 +157,8 @@ func (qm QueryMatcher) Close() {
 	qm.cursor.Close()
 }
 
-func NewQueryMatcher(manager *QueryManager, queryName string, language *ts.Language) (*QueryMatcher, error) {
-	query, error := manager.GetQuery(queryName)
+func NewQueryMatcher(manager *QueryManager, queryName string, language string) (*QueryMatcher, error) {
+	query, error := manager.GetQuery(queryName, language)
 	if error != nil {
 		return nil, error
 	}
