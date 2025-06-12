@@ -143,6 +143,8 @@ type ParentNodeCaptures struct {
 type CaptureInfo struct {
 	NodeId int;
 	Text string;
+	StartByte uint;
+	EndByte uint;
 }
 
 type CaptureMap = map[string][]CaptureInfo
@@ -195,6 +197,8 @@ func (q QueryMatcher) GetCapturesFromMatch(match *ts.QueryMatch, code []byte) Ca
 		captures[name] = append(captures[name], CaptureInfo{
 			NodeId: int(capture.Node.Id()),
 			Text: text,
+			StartByte: capture.Node.StartByte(),
+			EndByte: capture.Node.EndByte(),
 		})
 	}
 	return captures
@@ -214,7 +218,7 @@ func (q QueryMatcher) GetCapturesFromMatch(match *ts.QueryMatch, code []byte) Ca
 func (q *QueryMatcher) ParentCaptures(root *ts.Node, code []byte, parentCaptureName string) iter.Seq[CaptureMap] {
 	names := q.query.CaptureNames()
 
-	type pgroup struct { capMap CaptureMap; startByte int }
+	type pgroup struct { capMap CaptureMap; startByte uint }
 
 	// Group matches by parent node id
 	parentGroups := make(map[int]pgroup)
@@ -233,7 +237,7 @@ func (q *QueryMatcher) ParentCaptures(root *ts.Node, code []byte, parentCaptureN
 			continue // skip matches without parent
 		}
 		pid := int(parentNode.Id())
-		startByte := int(parentNode.StartByte())
+		startByte := parentNode.StartByte()
 		_, ok := parentGroups[pid]
 		if !ok {
 			capmap := make(CaptureMap)
@@ -265,7 +269,7 @@ func (q *QueryMatcher) ParentCaptures(root *ts.Node, code []byte, parentCaptureN
 	}
 
 	slices.SortStableFunc(sorted, func(a pgroup, b pgroup) int {
-		return a.startByte - b.startByte
+		return int(a.startByte) - int(b.startByte)
 	})
 
 	// Iterator over aggregated groups

@@ -53,6 +53,7 @@ type Export interface {
 
 // JavaScriptExport represents a JS export.
 type JavaScriptExport struct {
+	StartByte   uint			 `json:"-"`
 	Kind        string     `json:"kind"` // 'js'
 	Name        string     `json:"name"`
 	Declaration *Reference `json:"declaration"`
@@ -62,6 +63,7 @@ func (*JavaScriptExport) isExport() {}
 
 // CustomElementExport represents a custom element definition.
 type CustomElementExport struct {
+	StartByte   uint			 `json:"-"`
 	Kind        string     `json:"kind"` // 'custom-element-definition'
 	Name        string     `json:"name"`
 	Declaration *Reference `json:"declaration"`
@@ -162,6 +164,7 @@ type CssCustomState struct {
 
 // CssCustomProperty describes a CSS custom property.
 type CssCustomProperty struct {
+	StartByte   uint			 `json:"-"`
 	Name        string     `json:"name"`
 	Syntax      string     `json:"syntax,omitempty"`
 	Default     string     `json:"default,omitempty"`

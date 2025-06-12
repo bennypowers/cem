@@ -15,6 +15,15 @@
           "tagName": "static-styles",
           "cssProperties": [
             {
+              "name": "--in-attribute-import-description",
+              "summary": "summary",
+              "description": "in-attribute-import-description"
+            },
+            {
+              "name": "--deprecated",
+              "deprecated": "reason"
+            },
+            {
               "name": "--tagged-template-in-style-array",
               "description": "tagged-template-in-style-array"
             },
@@ -32,15 +41,6 @@
             },
             {
               "name": "--in-attribute-import"
-            },
-            {
-              "name": "--in-attribute-import-description",
-              "summary": "summary",
-              "description": "in-attribute-import-description"
-            },
-            {
-              "name": "--deprecated",
-              "deprecated": "reason"
             }
           ],
           "customElement": true

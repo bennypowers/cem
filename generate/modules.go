@@ -27,15 +27,18 @@ func ammendStylesMapFromSource(
 	root := tree.RootNode()
 	for captures := range queryMatcher.ParentCaptures(root, code, "cssPropertyCallSite") {
 		var name string
-		for _, n := range captures["property"] {
+		properties := captures["property"]
+		for _, n := range properties {
 		  name += n.Text
 		}
+		startByte := properties[len(properties)-1].StartByte
 		p := props[name]
 		p.Name = name
 		_, has := props[name]
 		if !has {
 			props[name] = M.CssCustomProperty{
 				Name: name,
+				StartByte: startByte,
 			}
 		}
 		defaultVals, ok := captures["default"]
@@ -159,6 +162,9 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 					}
 					cssProps := slices.Collect(maps.Values(props))
 					declaration.CssProperties = append(declaration.CssProperties, cssProps...)
+					slices.SortStableFunc(declaration.CssProperties, func(a M.CssCustomProperty, b M.CssCustomProperty) int {
+						return int(a.StartByte) - int(b.StartByte)
+					})
 					// TODO: add css parts by parsing template
 					// TODO: add slots by parsing template. How do do description, etc?
 					module.Declarations = append(module.Declarations, declaration)
@@ -226,6 +232,23 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 		}
 	}
 
+	slices.SortStableFunc(module.Exports, func(a M.Export, b M.Export) int {
+		var c uint
+		var d uint
+		if A, ok := a.(*M.CustomElementExport); ok {
+			c = A.StartByte
+		}
+		if A, ok := a.(*M.JavaScriptExport); ok {
+			c = A.StartByte
+		}
+		if B, ok := b.(*M.CustomElementExport); ok {
+			d = B.StartByte
+		}
+		if B, ok := b.(*M.JavaScriptExport); ok {
+			d = B.StartByte
+		}
+		return int(c) - int(d)
+	})
 	return nil, module
 }
 
