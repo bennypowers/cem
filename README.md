@@ -17,6 +17,24 @@
   - `@event` — Custom events dispatched by the element
   - `@slot` — Named or default slots
   - `@summary` — Short summary for documentation
+- Supports scanning css files and css tagged-template-literals for css custom 
+properties
+  - custom properties beginning with `_` will be ignored (treated as "private")
+  e.g. `var(--_private)`
+  - You can use jsdoc-like comment syntax before each var call to document your 
+    variables
+
+    ```css
+    :host {
+      color:
+        /**
+         * custom color for use in this element
+         * @summary color
+         * @deprecated just use the `color` property
+         */
+        var(--custom-color);
+    }
+    ```
 
 ## Installation
 
@@ -29,7 +47,7 @@ Or clone this repository and build from source:
 ```sh
 git clone https://github.com/bennypowers/cem.git
 cd cem
-go build -o cem .
+make
 ```
 
 ## Usage
