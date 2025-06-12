@@ -189,6 +189,7 @@ type TypeReference struct {
 
 // ClassLike is the common interface of classes and mixins.
 type ClassLike struct {
+	StartByte		uint			`json:"-"`
 	Name        string           `json:"name"`
 	Summary     string           `json:"summary,omitempty"`
 	Description string           `json:"description,omitempty"`
@@ -235,6 +236,7 @@ func (ClassMethod) isClassMember() {}
 
 // PropertyLike is the common interface of variables, class fields, and function parameters.
 type PropertyLike struct {
+	StartByte		uint			`json:"-"`
 	Name        string    `json:"name"`
 	Summary     string   `json:"summary,omitempty"`
 	Description string   `json:"description,omitempty"`
@@ -318,6 +320,7 @@ const (
 
 // FunctionLike is the common interface of functions and mixins.
 type FunctionLike struct {
+	StartByte		uint			`json:"-"`
 	Name        string      `json:"name"`
 	Summary     string     `json:"summary,omitempty"`
 	Description string     `json:"description,omitempty"`

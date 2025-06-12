@@ -26,14 +26,12 @@ func ammendStylesMapFromSource(
 	defer tree.Close()
 	root := tree.RootNode()
 	for captures := range queryMatcher.ParentCaptures(root, code, "cssPropertyCallSite") {
-		var name string
 		properties := captures["property"]
-		for _, n := range properties {
-		  name += n.Text
-		}
+		name := properties[len(properties)-1].Text
 		startByte := properties[len(properties)-1].StartByte
 		p := props[name]
 		p.Name = name
+		p.StartByte = startByte
 		_, has := props[name]
 		if !has {
 			props[name] = M.CssCustomProperty{
@@ -205,6 +203,7 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 				Kind: "js",
 				Name: declaration.Text,
 				Declaration: M.NewReference(declaration.Text, "", file),
+				StartByte: declaration.StartByte,
 			}
 			module.Exports = append(module.Exports, export)
 		}
@@ -227,6 +226,7 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 					Kind: "custom-element-definition",
 					Name: declaration.TagName,
 					Declaration: reference,
+					StartByte: declaration.StartByte,
 				})
 			}
 		}

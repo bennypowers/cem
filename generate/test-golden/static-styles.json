@@ -15,6 +15,17 @@
           "tagName": "static-styles",
           "cssProperties": [
             {
+              "name": "--in-non-attribute-import",
+              "description": "in-non-attribute-import"
+            },
+            {
+              "name": "--has-default",
+              "default": "0, red, green"
+            },
+            {
+              "name": "--in-attribute-import"
+            },
+            {
               "name": "--in-attribute-import-description",
               "summary": "summary",
               "description": "in-attribute-import-description"
@@ -30,17 +41,6 @@
             {
               "name": "--only-value-in-styles-value",
               "description": "only-value-in-styles-value"
-            },
-            {
-              "name": "--in-non-attribute-import",
-              "description": "in-non-attribute-import"
-            },
-            {
-              "name": "--has-default",
-              "default": "0, red, green"
-            },
-            {
-              "name": "--in-attribute-import"
             }
           ],
           "customElement": true
