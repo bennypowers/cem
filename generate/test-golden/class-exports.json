@@ -3,7 +3,7 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "test-fixtures/class-ce-export-only.js",
+      "path": "test-fixtures/class-exports.js",
       "declarations": [
         {
           "name": "ClassCe",
@@ -36,7 +36,7 @@
           "name": "ClassExported",
           "declaration": {
             "name": "ClassExported",
-            "module": "test-fixtures/class-ce-export-only.js"
+            "module": "test-fixtures/class-exports.js"
           }
         },
         {
@@ -44,15 +44,7 @@
           "name": "ClassExportedCe",
           "declaration": {
             "name": "ClassExportedCe",
-            "module": "test-fixtures/class-ce-export-only.js"
-          }
-        },
-        {
-          "kind": "custom-element-definition",
-          "name": "class-exported-ce",
-          "declaration": {
-            "name": "ClassExportedCe",
-            "module": "test-fixtures/class-ce-export-only.js"
+            "module": "test-fixtures/class-exports.js"
           }
         },
         {
@@ -60,7 +52,15 @@
           "name": "class-ce",
           "declaration": {
             "name": "ClassCe",
-            "module": "test-fixtures/class-ce-export-only.js"
+            "module": "test-fixtures/class-exports.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "class-exported-ce",
+          "declaration": {
+            "name": "ClassExportedCe",
+            "module": "test-fixtures/class-exports.js"
           }
         }
       ]

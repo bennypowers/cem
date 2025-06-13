@@ -161,6 +161,9 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 					cssProps := slices.Collect(maps.Values(props))
 					declaration.CssProperties = append(declaration.CssProperties, cssProps...)
 					slices.SortStableFunc(declaration.CssProperties, func(a M.CssCustomProperty, b M.CssCustomProperty) int {
+						if a.StartByte == b.StartByte {
+							return strings.Compare(a.Name, b.Name)
+						}
 						return int(a.StartByte) - int(b.StartByte)
 					})
 					// TODO: add css parts by parsing template

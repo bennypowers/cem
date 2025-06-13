@@ -15,8 +15,8 @@
           "tagName": "static-styles",
           "cssProperties": [
             {
-              "name": "--in-non-attribute-import",
-              "description": "in-non-attribute-import"
+              "name": "--deprecated",
+              "deprecated": "reason"
             },
             {
               "name": "--has-default",
@@ -31,16 +31,16 @@
               "description": "in-attribute-import-description"
             },
             {
-              "name": "--deprecated",
-              "deprecated": "reason"
-            },
-            {
-              "name": "--tagged-template-in-style-array",
-              "description": "tagged-template-in-style-array"
+              "name": "--in-non-attribute-import",
+              "description": "in-non-attribute-import"
             },
             {
               "name": "--only-value-in-styles-value",
               "description": "only-value-in-styles-value"
+            },
+            {
+              "name": "--tagged-template-in-style-array",
+              "description": "tagged-template-in-style-array"
             }
           ],
           "customElement": true

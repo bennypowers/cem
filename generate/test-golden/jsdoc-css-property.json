@@ -18,14 +18,6 @@
               "name": "--prop"
             },
             {
-              "name": "--prop-description",
-              "description": "prop description"
-            },
-            {
-              "name": "--prop-description-multiline",
-              "description": "multiline\nprop description"
-            },
-            {
               "name": "--prop-default",
               "default": "none"
             },
@@ -40,18 +32,16 @@
               "description": "multiline\nprop default description"
             },
             {
+              "name": "--prop-description",
+              "description": "prop description"
+            },
+            {
+              "name": "--prop-description-multiline",
+              "description": "multiline\nprop description"
+            },
+            {
               "name": "--prop-typed",
               "syntax": "\u003ccolor\u003e"
-            },
-            {
-              "name": "--prop-typed-description",
-              "syntax": "\u003ccolor\u003e",
-              "description": "prop typed description"
-            },
-            {
-              "name": "--prop-typed-description-multiline",
-              "syntax": "\u003ccolor\u003e",
-              "description": "multiline\nprop typed description"
             },
             {
               "name": "--prop-typed-default",
@@ -71,15 +61,17 @@
               "description": "multiline\nprop typed default description"
             },
             {
+              "name": "--prop-typed-description",
+              "syntax": "\u003ccolor\u003e",
+              "description": "prop typed description"
+            },
+            {
+              "name": "--prop-typed-description-multiline",
+              "syntax": "\u003ccolor\u003e",
+              "description": "multiline\nprop typed description"
+            },
+            {
               "name": "--property"
-            },
-            {
-              "name": "--property-description",
-              "description": "property description"
-            },
-            {
-              "name": "--property-description-multiline",
-              "description": "multiline\nproperty description"
             },
             {
               "name": "--property-default",
@@ -91,24 +83,16 @@
               "description": "property default description"
             },
             {
-              "name": "--property-typed-default-description-multiline",
-              "syntax": "\u003ccolor\u003e",
-              "default": "none",
-              "description": "multiline\nproperty typed default description"
+              "name": "--property-description",
+              "description": "property description"
+            },
+            {
+              "name": "--property-description-multiline",
+              "description": "multiline\nproperty description"
             },
             {
               "name": "--property-typed",
               "syntax": "\u003ccolor\u003e"
-            },
-            {
-              "name": "--property-typed-description",
-              "syntax": "\u003ccolor\u003e",
-              "description": "property typed description"
-            },
-            {
-              "name": "--property-typed-description-multiline",
-              "syntax": "\u003ccolor\u003e",
-              "description": "multiline\nproperty typed description"
             },
             {
               "name": "--property-typed-default",
@@ -126,6 +110,22 @@
               "syntax": "\u003ccolor\u003e",
               "default": "none",
               "description": "multiline\nproperty typed default description"
+            },
+            {
+              "name": "--property-typed-default-description-multiline",
+              "syntax": "\u003ccolor\u003e",
+              "default": "none",
+              "description": "multiline\nproperty typed default description"
+            },
+            {
+              "name": "--property-typed-description",
+              "syntax": "\u003ccolor\u003e",
+              "description": "property typed description"
+            },
+            {
+              "name": "--property-typed-description-multiline",
+              "syntax": "\u003ccolor\u003e",
+              "description": "multiline\nproperty typed description"
             }
           ],
           "customElement": true
