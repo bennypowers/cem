@@ -134,9 +134,11 @@ type npmSpec struct {
 // parseNpmSpecifier parses possible npm/Deno style specifiers into package and file.
 func parseNpmSpecifier(path string) (npmSpec, bool) {
 	// Remove "npm:" prefix if present
-	if strings.HasPrefix(path, "npm:") {
-		path = path[4:]
+	if !strings.HasPrefix(path, "npm:") {
+		return npmSpec{}, false
 	}
+
+	path = path[4:]
 
 	// regex: ^(@[^/]+/[^/]+|[^/]+)(/.*)$
 	re := regexp.MustCompile(`^(@[^/]+/[^/]+|[^/]+)(/.*)$`)
