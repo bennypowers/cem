@@ -41,6 +41,9 @@
             {
               "name": "--tagged-template-in-style-array",
               "description": "tagged-template-in-style-array"
+            },
+            {
+              "name": "--token-color"
             }
           ],
           "customElement": true

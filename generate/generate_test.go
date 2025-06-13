@@ -2,6 +2,7 @@ package generate
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -34,7 +35,14 @@ func TestGenerate(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err, actual := Generate([]string{filepath.Join("test-fixtures", tc.path)}, []string{})
+			matches := []string{filepath.Join("test-fixtures", tc.path)}
+			excludes := []string{}
+			designTokens := "./" + filepath.Join("test-fixtures", "design-tokens.json")
+			designTokensPrefix := "token"
+
+			fmt.Println(designTokens, designTokensPrefix, excludes, matches)
+
+			err, actual := Generate(matches, excludes, designTokens, designTokensPrefix)
 			if err != nil {
 				t.Error(err)
 			}

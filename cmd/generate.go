@@ -24,6 +24,9 @@ var expand = A.Chain(func (g string) []string {
 })
 
 var excludes []string
+// TODO: make this an array, or use a config file a la dtls
+var designTokensSpec string
+var designTokensPrefix string
 var output string
 
 func init() {
@@ -40,7 +43,7 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			files := expand(args)
 			exclude := expand(excludes)
-			err, manifest := generate.Generate(files, exclude)
+			err, manifest := generate.Generate(files, exclude, designTokensSpec, designTokensPrefix)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error generating manifest: %s", err)
 			}
@@ -58,6 +61,16 @@ func init() {
 																								"e",
 																								make([] string, 0),
 																								"files or glob patterns to exclude")
+	generateCmd.PersistentFlags().StringVarP(&designTokensSpec,
+																								"design-tokens",
+																								"t",
+																								"",
+																								"specifiers (relative paths or npm:@scope/package/path/file.json) to DTCG-format module design tokens")
+	generateCmd.PersistentFlags().StringVarP(&designTokensPrefix,
+																						"design-tokens-prefix",
+																						"p",
+																						"",
+																						"css custom property prefix for design tokens")
 	generateCmd.PersistentFlags().StringVarP(&output,
 																						"output",
 																						"o",

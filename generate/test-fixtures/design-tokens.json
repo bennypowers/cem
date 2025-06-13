@@ -1,0 +1,8 @@
+{
+  "color": {
+    "$value": "red",
+    "$description": "--token-color",
+    "$type": "color",
+    "name": "token-color"
+  }
+}

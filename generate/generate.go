@@ -2,6 +2,7 @@ package generate
 
 import (
 	"cmp"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -9,37 +10,42 @@ import (
 	"slices"
 	"sync"
 
-	"bennypowers.dev/cem/manifest"
-	"bennypowers.dev/cem/set"
+	"bennypowers.dev/cem/designtokens"
+	M "bennypowers.dev/cem/manifest"
+	S "bennypowers.dev/cem/set"
 )
 
-func processFile(file string, channel chan<-manifest.Module, wg *sync.WaitGroup, queryManager *QueryManager) {
-	defer wg.Done()
-
-	code, err := os.ReadFile(file)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s", err)
-		return
-	}
-
-	err, module := generateModule(file, code, queryManager)
-
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s", err)
-	}
-
-	if module != nil {
-		channel <- *module
+func mergeCssPropertyInfoFromDesignTokens(module *M.Module, designTokens designtokens.DesignTokens) {
+	for _, d := range module.Declarations {
+		if d, ok := d.(*M.CustomElementDeclaration); ok {
+			for _, p := range d.CssProperties {
+				if token, ok := designTokens.Get(p.Name); ok {
+					p.Description = token.Description
+					p.Syntax = token.Syntax
+				}
+			}
+		}
 	}
 }
 
 // Generates a custom-elements manifest from a list of typescript files
-func Generate(files []string, exclude []string) (error, *string) {
-	excludeSet := set.NewSet(exclude...)
+func Generate(
+	files []string,
+	exclude []string,
+	designTokensSpec string,
+	designTokensPrefix string,
+) (error, *string) {
+	excludeSet := S.NewSet(exclude...)
 
 	var wg sync.WaitGroup
+	var errs error
 
-	modulesChan := make(chan manifest.Module, len(files))
+	designTokens, err := designtokens.LoadDesignTokens(designTokensSpec, designTokensPrefix)
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
+
+	modulesChan := make(chan *M.Module, len(files))
 	jobsChan := make (chan string, len(files))
 	// Fill jobs channel with files to process
 	for _, file := range files {
@@ -72,7 +78,7 @@ func Generate(files []string, exclude []string) (error, *string) {
 					fmt.Fprintf(os.Stderr, "%s\n", err)
 				}
 				if module != nil {
-					modulesChan <- *module
+					modulesChan <- module
 				}
 			}
 		}()
@@ -81,24 +87,27 @@ func Generate(files []string, exclude []string) (error, *string) {
 	wg.Wait()
 	close(modulesChan)
 
-	modules := make([]manifest.Module, 0)
+	modules := make([]M.Module, 0)
 	for module := range modulesChan {
-		modules = append(modules, module)
+		if designTokens != nil {
+			mergeCssPropertyInfoFromDesignTokens(module, *designTokens)
+		}
+		modules = append(modules, *module)
 	}
 
-	pkg := manifest.NewPackage(modules)
+	pkg := M.NewPackage(modules)
 
-	slices.SortStableFunc(pkg.Modules, func(a, b manifest.Module) int {
+	slices.SortStableFunc(pkg.Modules, func(a, b M.Module) int {
 		return cmp.Compare(a.Path, b.Path)
 	})
 
-	manifest, err := manifest.SerializeToString(&pkg)
+	manifest, err := M.SerializeToString(&pkg)
 
 	queryManager.Close()
 
 	if err != nil {
-		return err, nil
+		return errors.Join(errs, err), nil
 	}
 
-	return nil, &manifest
+	return errs, &manifest
 }

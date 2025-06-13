@@ -9,4 +9,5 @@
   zoom:
     /** @deprecated reason */
     var(--deprecated);
+  border-color: var(--token-color);
 }
