@@ -41,6 +41,11 @@
             {
               "name": "--tagged-template-in-style-array",
               "description": "tagged-template-in-style-array"
+            },
+            {
+              "name": "--token-color",
+              "syntax": "\u003ccolor\u003e",
+              "description": "--token-color"
             }
           ],
           "customElement": true
