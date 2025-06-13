@@ -13,7 +13,7 @@ func generateClassDeclaration(
 	captures CaptureMap,
 	root *ts.Node,
 	code []byte,
-) (err error, declaration M.Declaration) {
+) (declaration M.Declaration, err error) {
 	_, isCustomElement := captures["customElement"]
 	classDeclarationCaptures, hasClassDeclaration := captures["class.declaration"]
 	if (hasClassDeclaration && len(classDeclarationCaptures) > 0) {
@@ -25,7 +25,7 @@ func generateClassDeclaration(
 			return generateCommonClassDeclaration(queryManager, captures, root, classDeclarationNode, code, isCustomElement)
 		}
 	}
-	return errors.New("Could not find class declaration"), nil
+	return nil, errors.New("Could not find class declaration")
 }
 
 func generateCommonClassDeclaration(
@@ -35,10 +35,10 @@ func generateCommonClassDeclaration(
 	classDeclarationNode *ts.Node,
 	code []byte,
 	isCustomElement bool,
-) (errs error, declaration *M.ClassDeclaration) {
+) (declaration *M.ClassDeclaration, errs error) {
 	className, ok := captures["class.name"]
 	if (!ok || len(className) <= 0) {
-		return errors.Join(errs, &NoCaptureError{ "class.name", "classDeclaration" }), nil
+		return nil, errors.Join(errs, &NoCaptureError{ "class.name", "classDeclaration" })
 	}
 
 	declaration = &M.ClassDeclaration{
@@ -96,7 +96,7 @@ func generateCommonClassDeclaration(
 		}
 	}
 
-	return nil, declaration
+	return declaration, nil
 }
 
 func generateCustomElementClassDeclaration(
@@ -105,8 +105,8 @@ func generateCustomElementClassDeclaration(
 	root *ts.Node,
 	classDeclarationNode *ts.Node,
 	code []byte,
-) (errs error, declaration *M.CustomElementDeclaration) {
-	err, classDeclaration := generateCommonClassDeclaration(
+) (declaration *M.CustomElementDeclaration, errs error) {
+	classDeclaration, err := generateCommonClassDeclaration(
 		queryManager,
 		captures,
 		root,
@@ -164,6 +164,6 @@ func generateCustomElementClassDeclaration(
 		}
 	}
 
-	return nil, declaration
+	return declaration, nil
 }
 

@@ -2,13 +2,64 @@ package generate
 
 import (
 	"errors"
+	"maps"
+	"os"
+	"path"
 	"slices"
+	"strings"
 
 	M "bennypowers.dev/cem/manifest"
 	S "bennypowers.dev/cem/set"
 	ts "github.com/tree-sitter/go-tree-sitter"
+	tscss "github.com/tree-sitter/tree-sitter-css/bindings/go"
 	tsts "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
 )
+
+func ammendStylesMapFromSource(
+	props map[string]M.CssCustomProperty,
+	queryManager *QueryManager,
+	queryMatcher *QueryMatcher,
+	parser *ts.Parser,
+	code []byte,
+) (errs error) {
+	tree := parser.Parse(code, nil)
+	defer tree.Close()
+	root := tree.RootNode()
+	for captures := range queryMatcher.ParentCaptures(root, code, "cssPropertyCallSite") {
+		properties := captures["property"]
+		name := properties[len(properties)-1].Text
+		startByte := properties[len(properties)-1].StartByte
+		p := props[name]
+		p.Name = name
+		p.StartByte = startByte
+		_, has := props[name]
+		if !has {
+			props[name] = M.CssCustomProperty{
+				Name: name,
+				StartByte: startByte,
+			}
+		}
+		defaultVals, ok := captures["default"]
+		if ok && len(defaultVals) > 0{
+			startNode := GetDescendantById(root, defaultVals[0].NodeId)
+			endNode := GetDescendantById(root, defaultVals[len(defaultVals) - 1].NodeId)
+			p.Default = string(code[startNode.StartByte():endNode.EndByte()])
+		}
+		comment, ok := captures["comment"]
+		if ok {
+			for _, comment := range comment {
+				info, err := NewCssCustomPropertyInfo(comment.Text, queryManager)
+				if err != nil {
+					errs = errors.Join(errs, err)
+				} else {
+					info.MergeToCssCustomProperty(&p)
+				}
+			}
+		}
+		props[name] = p
+	}
+	return errs
+}
 
 func generateModule(file string, code []byte, queryManager *QueryManager) (errs error, module *M.Module) {
 	language := ts.NewLanguage(tsts.LanguageTypescript())
@@ -24,7 +75,7 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 	classNamesAdded := S.NewSet[string]()
 
 	queryName := "variableDeclaration"
-	qm, err := NewQueryMatcher(queryManager, queryName, Languages.Typescript)
+	qm, err := NewQueryMatcher(queryManager, queryName, "typescript")
 	if err != nil {
 		return errors.Join(errs, err), nil
 	}
@@ -39,13 +90,17 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 	}
 
 	queryName = "classDeclaration"
-	qm, err = NewQueryMatcher(queryManager, queryName, Languages.Typescript)
+	qm, err = NewQueryMatcher(queryManager, queryName, "typescript")
 	if err != nil {
 		return errors.Join(errs, err), nil
 	}
 	defer qm.Close()
+	styleImportsBindingToSpecMap := make(map[string]string)
+	for sImport := range qm.ParentCaptures(root, code, "styleImport.spec") {
+		styleImportsBindingToSpecMap[sImport["styleImport.binding"][0].Text] = sImport["styleImport.spec"][0].Text
+	}
 	for captures := range qm.ParentCaptures(root, code, "class") {
-		err, d := generateClassDeclaration(queryManager, captures, root, code)
+		d, err := generateClassDeclaration(queryManager, captures, root, code)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		} else {
@@ -55,8 +110,64 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 				module.Declarations = append(module.Declarations, declaration)
 			} else {
 				declaration, ok := d.(*M.CustomElementDeclaration)
+				props := make(map[string]M.CssCustomProperty)
 				if ok && !classNamesAdded.Has(declaration.Name) {
 					classNamesAdded.Add(declaration.Name)
+					// get all style array or value bindings
+					bindings, hasBindings := captures["style.binding"]
+					styleStrings, hasStrings := captures["style.string"]
+					if hasBindings || hasStrings {
+						qm, err := NewQueryMatcher(queryManager, "cssCustomProperties", "css")
+						language := ts.NewLanguage(tscss.Language())
+						parser := ts.NewParser()
+						defer parser.Close()
+						parser.SetLanguage(language)
+						if err != nil {
+							return errors.Join(errs, err), nil
+						}
+						if hasBindings {
+							for _, binding := range bindings {
+								spec, ok := styleImportsBindingToSpecMap[binding.Text]
+								if ok && strings.HasPrefix(spec, "."){
+									// i'm proposing to do file io here, read the referenced spec file,
+									// parse it, and add any variables i find to the cssProperties slice.
+									// perhaps a more performant or maintainable alternative is to leave a marker here,
+									// and then do all that work on the back end.
+									content, err := os.ReadFile(path.Join(path.Dir(module.Path), spec))
+									if err != nil {
+										errs = errors.Join(errs, err)
+									} else {
+
+								err := ammendStylesMapFromSource(props, queryManager, qm, parser, content)
+								if err != nil {
+									errs = errors.Join(errs, err)
+								}
+									}
+								}
+								// later on, i could add an else path here which checks to see if
+								// the css declaration is made elsewhere in the same module, then parse it's string content
+								// if the value for that variable declaration is a css template tag
+							}
+						}
+						if hasStrings {
+							for _, styleString := range styleStrings {
+								err := ammendStylesMapFromSource(props, queryManager, qm, parser, []byte(styleString.Text))
+								if err != nil {
+									errs = errors.Join(errs, err)
+								}
+							}
+						}
+					}
+					cssProps := slices.Collect(maps.Values(props))
+					declaration.CssProperties = append(declaration.CssProperties, cssProps...)
+					slices.SortStableFunc(declaration.CssProperties, func(a M.CssCustomProperty, b M.CssCustomProperty) int {
+						if a.StartByte == b.StartByte {
+							return strings.Compare(a.Name, b.Name)
+						}
+						return int(a.StartByte) - int(b.StartByte)
+					})
+					// TODO: add css parts by parsing template
+					// TODO: add slots by parsing template. How do do description, etc?
 					module.Declarations = append(module.Declarations, declaration)
 				}
 			}
@@ -64,7 +175,7 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 	}
 
 	queryName = "functionDeclaration"
-	qm, err = NewQueryMatcher(queryManager, queryName, Languages.Typescript)
+	qm, err = NewQueryMatcher(queryManager, queryName, "typescript")
 	if err != nil {
 		return errors.Join(errs, err), nil
 	}
@@ -79,7 +190,7 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 	}
 
 	queryName = "exportStatement"
-	qm, err = NewQueryMatcher(queryManager, queryName, Languages.Typescript)
+	qm, err = NewQueryMatcher(queryManager, queryName, "typescript")
 	if err != nil {
 		return errors.Join(errs, err), nil
 	}
@@ -95,6 +206,7 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 				Kind: "js",
 				Name: declaration.Text,
 				Declaration: M.NewReference(declaration.Text, "", file),
+				StartByte: declaration.StartByte,
 			}
 			module.Exports = append(module.Exports, export)
 		}
@@ -112,15 +224,34 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 		if index >= 0 {
 			d := module.Declarations[index]
 			if declaration, ok := d.(*M.CustomElementDeclaration); ok {
+				//FIXME: order is not stable here. Try to do this by source order.
 				module.Exports = append(module.Exports, &M.CustomElementExport{
 					Kind: "custom-element-definition",
 					Name: declaration.TagName,
 					Declaration: reference,
+					StartByte: declaration.StartByte,
 				})
 			}
 		}
 	}
 
+	slices.SortStableFunc(module.Exports, func(a M.Export, b M.Export) int {
+		var c uint
+		var d uint
+		if A, ok := a.(*M.CustomElementExport); ok {
+			c = A.StartByte
+		}
+		if A, ok := a.(*M.JavaScriptExport); ok {
+			c = A.StartByte
+		}
+		if B, ok := b.(*M.CustomElementExport); ok {
+			d = B.StartByte
+		}
+		if B, ok := b.(*M.JavaScriptExport); ok {
+			d = B.StartByte
+		}
+		return int(c) - int(d)
+	})
 	return nil, module
 }
 

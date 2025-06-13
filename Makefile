@@ -1,3 +1,6 @@
+build: $(wildcard *.{go,scm})
+	go build
+
 test:
 	go test -json ./... "${@:2}" | go tool tparse -all
 
@@ -10,13 +13,11 @@ update:
 bench:
 	go test -cpuprofile=cpu.out -bench=BenchmarkGenerate ./generate/...
 
-# Benchmarks	go test -bench=. ./...	Find slow tests
-
 # Capture CPU hotspots
 profile:
-	go test -bench=... -cpuprofile=cpu.out
+	go test -bench=... -cpuprofile=cpu.out ./generate/...
 
-flamegraph:
+flamegraph: profile
 	go tool pprof -http=:8080 cpu.out # Visual analysis
 
 coverage:

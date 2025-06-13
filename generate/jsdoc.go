@@ -74,7 +74,7 @@ type ClassInfo struct {
 func NewClassInfo(source string, queryManager *QueryManager) (error, *ClassInfo) {
 	info := ClassInfo{}
 	code := []byte(source)
-	qm, err := NewQueryMatcher(queryManager, "jsdoc", Languages.Jsdoc)
+	qm, err := NewQueryMatcher(queryManager, "jsdoc", "jsdoc")
 	if err != nil {
 		return err, nil
 	}
@@ -82,7 +82,7 @@ func NewClassInfo(source string, queryManager *QueryManager) (error, *ClassInfo)
 
 	parser := ts.NewParser()
 	defer parser.Close()
-	parser.SetLanguage(Languages.Jsdoc)
+	parser.SetLanguage(Languages.jsdoc)
 	tree := parser.Parse([]byte(code), nil)
 	defer tree.Close()
 	root := tree.RootNode()
@@ -95,6 +95,7 @@ func NewClassInfo(source string, queryManager *QueryManager) (error, *ClassInfo)
 					info.Description = normalizeJsdocLines(capture.Node.Utf8Text(code))
 				case "doc.tag":
 					tagInfo := NewTagInfo(capture.Node.Utf8Text(code))
+					tagInfo.startByte = capture.Node.StartByte()
 					switch tagInfo.Tag {
 						case "@attr",
 									"@attribute":
@@ -150,6 +151,7 @@ func (info *ClassInfo) MergeToCustomElementDeclaration(declaration *M.CustomElem
 
 type TagInfo struct {
 	source string
+	startByte uint
 	Tag string
 	Name string
 	Value string
@@ -275,6 +277,7 @@ func (info TagInfo) toCssCustomProperty() (M.CssCustomProperty) {
 		Name: info.Name,
 		Default: info.Value,
 		Description: normalizeJsdocLines(matches["description"]),
+		StartByte: info.startByte,
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
 		// Summary: info.Type,
 		// Deprecated: info.Deprecated,
@@ -419,12 +422,12 @@ func NewPropertyInfo(code string, queryManager *QueryManager) (error, *PropertyI
 	barr := []byte(code)
 	parser := ts.NewParser()
 	defer parser.Close()
-	parser.SetLanguage(Languages.Jsdoc)
+	parser.SetLanguage(Languages.jsdoc)
 	tree := parser.Parse(barr, nil)
 	defer tree.Close()
 	root := tree.RootNode()
 
-  qm, err := NewQueryMatcher(queryManager, "jsdoc", Languages.Jsdoc)
+  qm, err := NewQueryMatcher(queryManager, "jsdoc", "jsdoc")
 	if err != nil {
 		return err, nil
 	}
@@ -443,7 +446,9 @@ func NewPropertyInfo(code string, queryManager *QueryManager) (error, *PropertyI
 		}
 		for _, node := range tagNodes {
 			var tagName, tagType, content string
-			for _, child := range node.NamedChildren(root.Walk()) {
+			cursor := root.Walk()
+			defer cursor.Close()
+			for _, child := range node.NamedChildren(cursor) {
 				switch child.GrammarName() {
 					case "tag_name": tagName = child.Utf8Text(barr)
 					case "type": tagType = child.Utf8Text(barr)
@@ -476,6 +481,78 @@ type FieldInfo struct {
 	Deprecated M.Deprecated
 }
 
+func NewCssCustomPropertyInfo(code string, queryManager *QueryManager) (*CssCustomPropertyInfo, error) {
+	barr := []byte(code)
+	parser := ts.NewParser()
+	defer parser.Close()
+	parser.SetLanguage(Languages.jsdoc)
+	tree := parser.Parse(barr, nil)
+	defer tree.Close()
+	root := tree.RootNode()
+
+  qm, err := NewQueryMatcher(queryManager, "jsdoc", "jsdoc")
+	if err != nil {
+		return nil, err
+	}
+	defer qm.Close()
+
+  descriptionCaptureIndex, _ := qm.query.CaptureIndexForName("doc.description")
+  tagCaptureIndex, _ := qm.query.CaptureIndexForName("doc.tag")
+
+	info := CssCustomPropertyInfo{}
+
+	for match := range qm.AllQueryMatches(root, barr) {
+		descriptionNodes := match.NodesForCaptureIndex(descriptionCaptureIndex)
+		tagNodes := match.NodesForCaptureIndex(tagCaptureIndex)
+		for _, node := range descriptionNodes {
+			info.Description = normalizeJsdocLines(node.Utf8Text(barr))
+		}
+		for _, node := range tagNodes {
+			var tagName, tagType, content string
+			cursor := root.Walk()
+			defer cursor.Close()
+			for _, child := range node.NamedChildren(cursor) {
+				switch child.GrammarName() {
+					case "tag_name": tagName = child.Utf8Text(barr)
+					case "type": tagType = child.Utf8Text(barr)
+					case "description": content = normalizeJsdocLines(child.Utf8Text(barr))
+				}
+			}
+			switch tagName {
+				case "@summary":
+					info.Summary += normalizeJsdocLines(content)
+				case "@syntax":
+					info.Syntax = tagType
+				case "@deprecated":
+					if content == "" {
+						info.Deprecated = M.DeprecatedFlag(true)
+					} else {
+						info.Deprecated = M.DeprecatedReason(content)
+					}
+			}
+		}
+	}
+
+	return &info, nil
+}
+
+type CssCustomPropertyInfo struct {
+	Syntax      string
+	Default     string
+	Summary     string
+	Description string
+	Deprecated  M.Deprecated
+}
+
+func (info CssCustomPropertyInfo) MergeToCssCustomProperty(declaration *M.CssCustomProperty) {
+	declaration.Description += info.Description
+	declaration.Summary += info.Summary
+	declaration.Deprecated = info.Deprecated
+	if info.Syntax != "" {
+		declaration.Syntax = info.Syntax
+	}
+}
+
 func (info PropertyInfo) MergeToPropertyLike(declaration *M.PropertyLike) {
 	declaration.Description += info.Description
 	declaration.Summary += info.Summary
@@ -501,12 +578,12 @@ func NewMethodInfo(source string, queryManager *QueryManager) (error, *MethodInf
 	code := []byte(source)
 	parser := ts.NewParser()
 	defer parser.Close()
-	parser.SetLanguage(Languages.Jsdoc)
+	parser.SetLanguage(Languages.jsdoc)
 	tree := parser.Parse([]byte(code), nil)
 	defer tree.Close()
 	root := tree.RootNode()
 
-	qm, err := NewQueryMatcher(queryManager, "jsdoc", Languages.Jsdoc)
+	qm, err := NewQueryMatcher(queryManager, "jsdoc", "jsdoc")
 	if err != nil {
 		return err, nil
 	}
@@ -520,6 +597,7 @@ func NewMethodInfo(source string, queryManager *QueryManager) (error, *MethodInf
 					info.Description = normalizeJsdocLines(capture.Node.Utf8Text(code))
 				case "doc.tag":
 					tagInfo := NewTagInfo(capture.Node.Utf8Text(code))
+					tagInfo.startByte = capture.Node.StartByte()
 					switch tagInfo.Tag {
 						case "@param",
 									"@parameter":

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "test-fixtures/import-styles-in-static-styles.js",
+      "declarations": [
+        {
+          "name": "ImportStylesInStaticStyles",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "import-styles-in-static-styles",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "import-styles-in-static-styles",
+          "declaration": {
+            "name": "ImportStylesInStaticStyles",
+            "module": "test-fixtures/import-styles-in-static-styles.js"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -23,9 +23,12 @@ func TestGenerate(t *testing.T) {
 
 	for _, fixture := range fixtures {
 		if fixture.Type().IsRegular() {
-			path := fixture.Name()
-			name := strings.Split(fixture.Name(), ".ts")[0]
-			cases = append(cases, struct{name string; path string}{name, path})
+			pathToFile := fixture.Name()
+			ext := filepath.Ext(pathToFile)
+			if ext == ".ts" {
+				name := strings.Split(fixture.Name(), ".ts")[0]
+				cases = append(cases, struct{name string; path string}{name, pathToFile})
+			}
 		}
 	}
 

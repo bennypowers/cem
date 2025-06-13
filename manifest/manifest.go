@@ -53,6 +53,7 @@ type Export interface {
 
 // JavaScriptExport represents a JS export.
 type JavaScriptExport struct {
+	StartByte   uint			 `json:"-"`
 	Kind        string     `json:"kind"` // 'js'
 	Name        string     `json:"name"`
 	Declaration *Reference `json:"declaration"`
@@ -62,6 +63,7 @@ func (*JavaScriptExport) isExport() {}
 
 // CustomElementExport represents a custom element definition.
 type CustomElementExport struct {
+	StartByte   uint			 `json:"-"`
 	Kind        string     `json:"kind"` // 'custom-element-definition'
 	Name        string     `json:"name"`
 	Declaration *Reference `json:"declaration"`
@@ -162,6 +164,7 @@ type CssCustomState struct {
 
 // CssCustomProperty describes a CSS custom property.
 type CssCustomProperty struct {
+	StartByte   uint			 `json:"-"`
 	Name        string     `json:"name"`
 	Syntax      string     `json:"syntax,omitempty"`
 	Default     string     `json:"default,omitempty"`
@@ -186,6 +189,7 @@ type TypeReference struct {
 
 // ClassLike is the common interface of classes and mixins.
 type ClassLike struct {
+	StartByte		uint			`json:"-"`
 	Name        string           `json:"name"`
 	Summary     string           `json:"summary,omitempty"`
 	Description string           `json:"description,omitempty"`
@@ -232,6 +236,7 @@ func (ClassMethod) isClassMember() {}
 
 // PropertyLike is the common interface of variables, class fields, and function parameters.
 type PropertyLike struct {
+	StartByte		uint			`json:"-"`
 	Name        string    `json:"name"`
 	Summary     string   `json:"summary,omitempty"`
 	Description string   `json:"description,omitempty"`
@@ -315,6 +320,7 @@ const (
 
 // FunctionLike is the common interface of functions and mixins.
 type FunctionLike struct {
+	StartByte		uint			`json:"-"`
 	Name        string      `json:"name"`
 	Summary     string     `json:"summary,omitempty"`
 	Description string     `json:"description,omitempty"`

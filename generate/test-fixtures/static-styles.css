@@ -1,0 +1,6 @@
+:host {
+  width:
+    /** in-non-attribute-import */
+    var(--in-non-attribute-import);
+  color: var(--has-default, 0, red, green);
+}
