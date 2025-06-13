@@ -45,6 +45,7 @@ func generateCommonClassDeclaration(
 		Kind: "class",
 		ClassLike: M.ClassLike{
 			Name: className[0].Text,
+			StartByte: classDeclarationNode.StartByte(),
 		},
 	}
 
