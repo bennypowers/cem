@@ -16,15 +16,17 @@ import (
 )
 
 func mergeCssPropertyInfoFromDesignTokens(module *M.Module, designTokens designtokens.DesignTokens) {
-	for _, d := range module.Declarations {
+	for i, d := range module.Declarations {
 		if d, ok := d.(*M.CustomElementDeclaration); ok {
-			for _, p := range d.CssProperties {
+			for i, p := range d.CssProperties {
 				if token, ok := designTokens.Get(p.Name); ok {
 					p.Description = token.Description
 					p.Syntax = token.Syntax
+					d.CssProperties[i] = p
 				}
 			}
 		}
+		module.Declarations[i] = d
 	}
 }
 
