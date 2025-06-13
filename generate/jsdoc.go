@@ -95,6 +95,7 @@ func NewClassInfo(source string, queryManager *QueryManager) (error, *ClassInfo)
 					info.Description = normalizeJsdocLines(capture.Node.Utf8Text(code))
 				case "doc.tag":
 					tagInfo := NewTagInfo(capture.Node.Utf8Text(code))
+					tagInfo.startByte = capture.Node.StartByte()
 					switch tagInfo.Tag {
 						case "@attr",
 									"@attribute":
@@ -150,6 +151,7 @@ func (info *ClassInfo) MergeToCustomElementDeclaration(declaration *M.CustomElem
 
 type TagInfo struct {
 	source string
+	startByte uint
 	Tag string
 	Name string
 	Value string
@@ -275,6 +277,7 @@ func (info TagInfo) toCssCustomProperty() (M.CssCustomProperty) {
 		Name: info.Name,
 		Default: info.Value,
 		Description: normalizeJsdocLines(matches["description"]),
+		StartByte: info.startByte,
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
 		// Summary: info.Type,
 		// Deprecated: info.Deprecated,
@@ -594,6 +597,7 @@ func NewMethodInfo(source string, queryManager *QueryManager) (error, *MethodInf
 					info.Description = normalizeJsdocLines(capture.Node.Utf8Text(code))
 				case "doc.tag":
 					tagInfo := NewTagInfo(capture.Node.Utf8Text(code))
+					tagInfo.startByte = capture.Node.StartByte()
 					switch tagInfo.Tag {
 						case "@param",
 									"@parameter":
