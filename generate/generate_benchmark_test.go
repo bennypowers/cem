@@ -1,7 +1,6 @@
 package generate
 
 import (
-	"fmt"
 	"path/filepath"
 	"testing"
 )
@@ -20,8 +19,6 @@ func BenchmarkGenerate(b *testing.B) {
 	excludes := []string{}
 	designTokens := "./" + filepath.Join("test-fixtures", "design-tokens.json")
 	designTokensPrefix := "token"
-
-	fmt.Println(designTokens, designTokensPrefix, excludes, matches)
 
 	for b.Loop() {
 		// Run the Generate function, measuring its speed.

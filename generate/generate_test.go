@@ -2,7 +2,6 @@ package generate
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -39,8 +38,6 @@ func TestGenerate(t *testing.T) {
 			excludes := []string{}
 			designTokens := "./" + filepath.Join("test-fixtures", "design-tokens.json")
 			designTokensPrefix := "token"
-
-			fmt.Println(designTokens, designTokensPrefix, excludes, matches)
 
 			err, actual := Generate(matches, excludes, designTokens, designTokensPrefix)
 			if err != nil {
