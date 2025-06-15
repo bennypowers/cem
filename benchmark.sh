@@ -55,7 +55,6 @@ done
 # Collect results
 results_array=()
 for i in "${!ids[@]}"; do
-  id="${ids[$i]}"
   name="${names[$i]}"
   id="${ids[$i]}"
   cmd="${cmds[$i]}"
@@ -68,6 +67,7 @@ for i in "${!ids[@]}"; do
   runs_detail=()
   last_json=""
   last_stderr=""
+  printf "\nRunning %s: " "$name"
   for ((r=1; r<=runs; r++)); do
     start=$(date +%s.%N)
     tmp_stdout=$(mktemp)
@@ -80,6 +80,13 @@ for i in "${!ids[@]}"; do
     fi
     end=$(date +%s.%N)
     timeSec=$(awk "BEGIN {printf \"%.4f\", $end - $start}")
+
+    # Progress indicator
+    if [[ "$run_ok" == true ]]; then
+      printf "."
+    else
+      printf "x"
+    fi
 
     if [[ -f "$resultFile" ]]; then
       if stat --version >/dev/null 2>&1; then
@@ -97,7 +104,12 @@ for i in "${!ids[@]}"; do
       runs_detail+=("{\"run\":$r,\"time\":null,\"size\":null,\"error\":\"$last_stderr\"}")
     fi
     rm "$tmp_stdout" "$tmp_stderr"
+    # Optionally show 1/x progress every 10 runs
+    if (( r % 10 == 0 )); then
+      printf " (%d/%d)" "$r" "$runs"
+    fi
   done
+  printf " done [%d/%d successful]\n" "$successful_runs" "$runs"
 
   if [[ $successful_runs -gt 0 ]]; then
     avgTime=$(awk "BEGIN {printf \"%.2f\", $sumTime/$successful_runs}")
@@ -128,4 +140,3 @@ jq -n --argjson results "[$(IFS=,; echo "${results_array[*]}")]" \
 if [[ -n "$CI" ]]; then
   npm run generate-site
 fi
-
