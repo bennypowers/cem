@@ -187,11 +187,11 @@ func generateCustomElementClassDeclaration(
 		}
 	}
 
-	return declaration, nil
+	return declaration, errs
 }
 
 // --- Helper: Analyze HTML for slots/parts using tree-sitter-html and project QueryManager ---
-func analyzeHtmlSlotsAndParts(queryManager *QueryManager, htmlSource string) (slots []M.Slot, parts []M.CssPart, err error) {
+func analyzeHtmlSlotsAndParts(queryManager *QueryManager, htmlSource string) (slots []M.Slot, parts []M.CssPart, errs error) {
 	parser := ts.NewParser()
 	defer parser.Close()
 	parser.SetLanguage(Languages.html)
@@ -212,7 +212,10 @@ func analyzeHtmlSlotsAndParts(queryManager *QueryManager, htmlSource string) (sl
 			for _, partName := range partsList {
 				part := M.CssPart{Name: partName}
 				if comment, ok := captureMap["comment"]; ok && len(comment) > 0 {
-					yamlDoc := parseYamlComment(comment[0].Text, kind)
+					yamlDoc, err := parseYamlComment(comment[0].Text, kind)
+					if err != nil {
+						errs = errors.Join(errs, err)
+					}
 					part.Description = yamlDoc.Description
 					part.Summary = yamlDoc.Summary
 					switch v := yamlDoc.Deprecated.(type) {
@@ -234,7 +237,10 @@ func analyzeHtmlSlotsAndParts(queryManager *QueryManager, htmlSource string) (sl
 			slot.Name = sn[0].Text
 		}
 		if comment, ok := captureMap["comment"]; ok && len(comment) > 0 {
-			yamlDoc := parseYamlComment(comment[0].Text, "slot")
+			yamlDoc, err := parseYamlComment(comment[0].Text, "slot")
+			if err != nil {
+				errs = errors.Join(errs, err)
+			}
 			slot.Description = yamlDoc.Description
 			slot.Summary = yamlDoc.Summary
 			switch v := yamlDoc.Deprecated.(type) {
@@ -252,7 +258,7 @@ func analyzeHtmlSlotsAndParts(queryManager *QueryManager, htmlSource string) (sl
 		handleParts(captureMap, "part")
 	}
 
-	return slots, parts, nil
+	return slots, parts, errs
 }
 
 type HtmlDocYaml struct {
@@ -274,24 +280,24 @@ type NestedHtmlDocYaml struct {
 var htmlCommentStripRE = regexp.MustCompile(`(?s)^\s*<!--(.*?)(?:-->)?\s*$`)
 
 // kind must be "slot" or "part"
-func parseYamlComment(comment string, kind string) HtmlDocYaml {
+func parseYamlComment(comment string, kind string) (HtmlDocYaml, error) {
     inner := comment
     if matches := htmlCommentStripRE.FindStringSubmatch(inner); len(matches) == 2 {
         inner = matches[1]
     }
     inner = dedentYaml(inner)
     raw := NestedHtmlDocYaml{}
-    _ = yaml.Unmarshal([]byte(inner), &raw)
+		err := yaml.Unmarshal([]byte(inner), &raw)
 
     // Prefer nested section if present
     switch kind {
     case "slot":
         if raw.Slot != nil {
-            return *raw.Slot
+            return *raw.Slot, err
         }
     case "part":
         if raw.Part != nil {
-            return *raw.Part
+            return *raw.Part, err
         }
     }
     // Fallback to flat fields
@@ -299,7 +305,7 @@ func parseYamlComment(comment string, kind string) HtmlDocYaml {
         Description: raw.Description,
         Summary:     raw.Summary,
         Deprecated:  raw.Deprecated,
-    }
+    }, err
 }
 // dedentYaml skips the first line for indent calculation, dedents all lines after the first
 func dedentYaml(s string) string {
