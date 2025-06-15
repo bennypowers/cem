@@ -15,7 +15,21 @@
           "tagName": "class-render-parts-docs",
           "cssParts": [
             {
-              "name": "deprecated"
+              "name": "part",
+              "summary": "part summary",
+              "description": "part description\n\nmultiline **markdown**"
+            },
+            {
+              "name": "summary",
+              "summary": "summary part summary"
+            },
+            {
+              "name": "deprecated",
+              "deprecated": true
+            },
+            {
+              "name": "reason",
+              "deprecated": "deprecation reason"
             }
           ],
           "customElement": true
