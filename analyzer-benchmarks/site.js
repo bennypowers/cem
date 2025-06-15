@@ -1,3 +1,5 @@
+import fs from 'node:fs/promises';
+
 import results from './benchmark-results.json' with { type: "json" };
 
 function summaryCard(result) {
