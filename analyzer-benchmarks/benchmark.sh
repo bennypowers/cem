@@ -24,7 +24,7 @@ names=(
 cmds=(
   "npx --yes @lit-labs/cli labs gen --manifest --out lit"
   "npx --yes @custom-elements-manifest/analyzer analyze --outdir cea --globs $file_glob"
-  "./cem/cem generate -o cem/custom-elements.json $file_glob"
+  "../cem generate -o cem/custom-elements.json $file_glob"
 )
 resultFiles=(
   "lit/custom-elements.json"
