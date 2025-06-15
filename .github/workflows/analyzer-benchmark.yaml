@@ -23,11 +23,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-      - run: |
-          cd analyzer-benchmarks
-          npm ci
-          ./benchmark.sh ${{ github.event.inputs.runs || 100 }}
-          npm run generate-site
+      - run: ./benchmark.sh ${{ github.event.inputs.runs || 100 }}
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:

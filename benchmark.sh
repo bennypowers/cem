@@ -8,6 +8,10 @@ if ! [[ "$runs" =~ ^[0-9]+$ ]]; then
   exit 1
 fi
 
+if [[ -n "$CI" ]]; then
+  npm ci
+fi
+
 cd analyzer-benchmarks
 file_glob="src/components/*.ts"
 file_count=$(ls $file_glob 2>/dev/null | wc -l | xargs)
@@ -119,3 +123,8 @@ jq -n --argjson results "[$(IFS=,; echo "${results_array[*]}")]" \
   --arg runs "$runs" \
   --arg file_count "$file_count" \
   '{runs: ($runs|tonumber), file_count: ($file_count|tonumber), results: $results}' > benchmark-results.json
+
+if [[ -n "$CI" ]]; then
+  npm run generate-site
+fi
+
