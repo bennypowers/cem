@@ -73,7 +73,15 @@
                           function: (identifier) @func
                           arguments: (template_string
                             (string_fragment) @style.string (#eq? @func "css")))
-                       ] @customElement.styles (#eq? @_fieldname "styles"))?)
+                       ] @customElement.styles (#eq? @_fieldname "styles"))?
+              (method_definition ; render method
+                name: (_) @_method_name (#eq? @_method_name "render")
+                body: (_
+                  (return_statement
+                    (call_expression
+                      function: (identifier) @_t_tag (#eq? @_t_tag "html")
+                      arguments: (template_string
+                        (string_fragment) @render.template)))))?)
       ) @class.declaration)) @customElement @class
 
 ( ; non-exported custom element class
@@ -97,6 +105,14 @@
       (extends_clause
         value: (identifier) @superclass.name))?
     body: (class_body
+            (method_definition ; render method
+                name: (_) @_method_name (#eq? @_method_name "render")
+                body: (_
+                  (return_statement
+                    (call_expression
+                      function: (identifier) @_t_tag (#eq? @_t_tag "html")
+                      arguments: (template_string
+                        (string_fragment) @render.template)))))?
             (public_field_definition
               "static"
               name: (property_identifier) @_fieldname

@@ -11,8 +11,6 @@ import (
 	M "bennypowers.dev/cem/manifest"
 	S "bennypowers.dev/cem/set"
 	ts "github.com/tree-sitter/go-tree-sitter"
-	tscss "github.com/tree-sitter/tree-sitter-css/bindings/go"
-	tsts "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
 )
 
 func ammendStylesMapFromSource(
@@ -62,10 +60,9 @@ func ammendStylesMapFromSource(
 }
 
 func generateModule(file string, code []byte, queryManager *QueryManager) (errs error, module *M.Module) {
-	language := ts.NewLanguage(tsts.LanguageTypescript())
 	parser := ts.NewParser()
 	defer parser.Close()
-	parser.SetLanguage(language)
+	parser.SetLanguage(Languages.typescript)
 	tree := parser.Parse(code, nil)
 	defer tree.Close()
 	root := tree.RootNode()
@@ -75,7 +72,7 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 	classNamesAdded := S.NewSet[string]()
 
 	queryName := "variableDeclaration"
-	qm, err := NewQueryMatcher(queryManager, queryName, "typescript")
+	qm, err := NewQueryMatcher(queryManager, "typescript", queryName)
 	if err != nil {
 		return errors.Join(errs, err), nil
 	}
@@ -90,7 +87,7 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 	}
 
 	queryName = "classDeclaration"
-	qm, err = NewQueryMatcher(queryManager, queryName, "typescript")
+	qm, err = NewQueryMatcher(queryManager, "typescript", queryName)
 	if err != nil {
 		return errors.Join(errs, err), nil
 	}
@@ -117,11 +114,10 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 					bindings, hasBindings := captures["style.binding"]
 					styleStrings, hasStrings := captures["style.string"]
 					if hasBindings || hasStrings {
-						qm, err := NewQueryMatcher(queryManager, "cssCustomProperties", "css")
-						language := ts.NewLanguage(tscss.Language())
+						qm, err := NewQueryMatcher(queryManager, "css", "cssCustomProperties")
 						parser := ts.NewParser()
 						defer parser.Close()
-						parser.SetLanguage(language)
+						parser.SetLanguage(Languages.css)
 						if err != nil {
 							return errors.Join(errs, err), nil
 						}
@@ -175,7 +171,7 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 	}
 
 	queryName = "functionDeclaration"
-	qm, err = NewQueryMatcher(queryManager, queryName, "typescript")
+	qm, err = NewQueryMatcher(queryManager, "typescript", queryName)
 	if err != nil {
 		return errors.Join(errs, err), nil
 	}
@@ -190,7 +186,7 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 	}
 
 	queryName = "exportStatement"
-	qm, err = NewQueryMatcher(queryManager, queryName, "typescript")
+	qm, err = NewQueryMatcher(queryManager, "typescript", queryName)
 	if err != nil {
 		return errors.Join(errs, err), nil
 	}
@@ -224,7 +220,6 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 		if index >= 0 {
 			d := module.Declarations[index]
 			if declaration, ok := d.(*M.CustomElementDeclaration); ok {
-				//FIXME: order is not stable here. Try to do this by source order.
 				module.Exports = append(module.Exports, &M.CustomElementExport{
 					Kind: "custom-element-definition",
 					Name: declaration.TagName,

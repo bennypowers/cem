@@ -179,7 +179,7 @@ func getClassMembersFromClassDeclarationNode(
 	classDeclarationNode *ts.Node,
 	isCustomElement bool,
 ) (errs error, members []M.ClassMember) {
-	qm, err := NewQueryMatcher(queryManager, "classMemberDeclaration", "typescript")
+	qm, err := NewQueryMatcher(queryManager, "typescript", "classMemberDeclaration")
 	if err != nil {
 		return errors.Join(errs, err), nil
 	}
