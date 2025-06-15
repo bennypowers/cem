@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import results from './benchmark-results.json' with { type: "json" };
 
 function summaryCard(result) {
-  return `
+  return /* html */`
     <sl-card class="analyzer-summary-card" style="margin-bottom: 2rem;">
       <div slot="header" style="display:flex;align-items:center;gap:0.5rem;">
         <sl-icon name="package"></sl-icon>
@@ -50,7 +50,7 @@ function summaryCard(result) {
 }
 
 function detailsCard(result) {
-  return `
+  return /*html*/`
     <sl-card class="analyzer-detail-card" style="margin-bottom: 2rem;">
       <div slot="header" style="display:flex;align-items:center;gap:0.5rem;">
         <sl-icon name="info"></sl-icon>
