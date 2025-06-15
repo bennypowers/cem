@@ -152,5 +152,5 @@ jq -s --arg runs "$runs" --arg file_count "$file_count" \
 rm "$results_tmp"
 
 if [[ -n "$CI" ]]; then
-  npm run generate-site
+  npm run site
 fi
