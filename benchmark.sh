@@ -8,11 +8,12 @@ if ! [[ "$runs" =~ ^[0-9]+$ ]]; then
   exit 1
 fi
 
+cd analyzer-benchmarks
 if [[ -n "$CI" ]]; then
+  pwd
   npm ci
 fi
 
-cd analyzer-benchmarks
 file_glob="src/components/*.ts"
 file_count=$(ls $file_glob 2>/dev/null | wc -l | xargs)
 
