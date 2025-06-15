@@ -1,0 +1,31 @@
+name: Release Go CLI and Publish to npm
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.24.x
+
+      - name: Set up Node.js (from .nvmrc)
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Run GoReleaser (build and publish CLI + npm)
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          version: latest
+          args: release --clean --config .goreleaser-npm.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
