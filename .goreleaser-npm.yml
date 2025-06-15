@@ -1,0 +1,32 @@
+builds:
+  - id: cem
+    binary: cem
+    main: ./cmd/cem
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    hooks:
+      pre: make build-all
+    skip_build: true
+
+npm:
+  - path: ./npm
+    bin: cem
+    files:
+      - ./dist/npm/bin/**
+    scripts:
+      postinstall: node postinstall.js
+
+checksum:
+  name_template: 'checksums.txt'
+
+release:
+  github:
+    owner: bennypowers
+    name: cem
+    draft: false
+    prerelease: false

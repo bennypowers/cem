@@ -1,0 +1,21 @@
+{
+  "name": "@pwrs/cem",
+  "version": "1.0.0",
+  "readme": "../README.md",
+  "description": "CLI tool for generating and working with Custom Elements Manifests",
+  "type": "module",
+  "bin": {
+    "cem": "./cem"
+  },
+  "scripts": {
+    "postinstall": "node postinstall.js"
+  },
+  "os": ["darwin", "linux", "win32"],
+  "cpu": ["x64", "arm64"],
+  "files": [
+    "bin/",
+    "postinstall.js",
+    "cem",
+    "cem.exe"
+  ]
+}
