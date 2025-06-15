@@ -6,7 +6,7 @@
       "path": "test-fixtures/class-render-slots-docs.js",
       "declarations": [
         {
-          "name": "ClassRednerSlotsDocs",
+          "name": "ClassRenderSlotsDocs",
           "superclass": {
             "name": "LitElement",
             "package": "lit"
@@ -45,7 +45,7 @@
           "kind": "custom-element-definition",
           "name": "class-render-slots-docs",
           "declaration": {
-            "name": "ClassRednerSlotsDocs",
+            "name": "ClassRenderSlotsDocs",
             "module": "test-fixtures/class-render-slots-docs.js"
           }
         }

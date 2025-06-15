@@ -6,7 +6,7 @@
       "path": "test-fixtures/class-render-parts.js",
       "declarations": [
         {
-          "name": "ClassMethods",
+          "name": "ClassRenderParts",
           "superclass": {
             "name": "LitElement",
             "package": "lit"
@@ -37,7 +37,7 @@
           "kind": "custom-element-definition",
           "name": "class-render-parts",
           "declaration": {
-            "name": "ClassMethods",
+            "name": "ClassRenderParts",
             "module": "test-fixtures/class-render-parts.js"
           }
         }
