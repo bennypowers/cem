@@ -2,6 +2,7 @@ package generate
 
 import (
 	"errors"
+	"fmt"
 	"maps"
 	"os"
 	"path"
@@ -131,7 +132,7 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 									// and then do all that work on the back end.
 									content, err := os.ReadFile(path.Join(path.Dir(module.Path), spec))
 									if err != nil {
-										errs = errors.Join(errs, err)
+										errs = errors.Join(errs, errors.New(fmt.Sprintf("Could not read tokens spec %s", spec)), err)
 									} else {
 
 								err := ammendStylesMapFromSource(props, queryManager, qm, parser, content)

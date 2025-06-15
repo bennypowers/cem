@@ -41,10 +41,14 @@ func Generate(
 
 	var wg sync.WaitGroup
 	var errs error
+	var designTokens *designtokens.DesignTokens
 
-	designTokens, err := designtokens.LoadDesignTokens(designTokensSpec, designTokensPrefix)
-	if err != nil {
-		errs = errors.Join(errs, err)
+	if designTokensSpec != "" {
+		tokens, err := designtokens.LoadDesignTokens(designTokensSpec, designTokensPrefix)
+		if err != nil {
+			errs = errors.Join(errs, err)
+		}
+		designTokens = tokens
 	}
 
 	modulesChan := make(chan *M.Module, len(files))

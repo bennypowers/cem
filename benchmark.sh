@@ -8,6 +8,7 @@ if ! [[ "$runs" =~ ^[0-9]+$ ]]; then
   exit 1
 fi
 
+cd analyzer-benchmarks
 file_glob="src/components/*.ts"
 file_count=$(ls $file_glob 2>/dev/null | wc -l | xargs)
 
@@ -37,11 +38,10 @@ docsUrls=(
 # Pre-warm commands to avoid first-run hangs on macOS
 for i in "${!cmds[@]}"; do
   id="${ids[$i]}"
-  echo "$id"
   mkdir -p "$id"
   resultFile="${id}/custom-elements.json"
   if [[ -f "$resultFile" ]]; then
-    rm "$resultFile"
+    rm -f "$resultFile"
   fi
   echo "Pre-warming: ${cmds[$i]}"
   eval "${cmds[$i]}"

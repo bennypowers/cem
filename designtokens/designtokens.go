@@ -3,6 +3,7 @@ package designtokens
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"maps"
 	"net/http"
@@ -122,7 +123,11 @@ func readJSONFileOrSpecifier(path string) ([]byte, error) {
 	}
 
 	// Default: treat as local file
-	return os.ReadFile(path)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		fmt.Println("can't read json", path)
+	}
+	return data, err
 }
 
 // npmSpec holds parsed npm package specifier
