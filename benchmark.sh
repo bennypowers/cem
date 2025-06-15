@@ -52,8 +52,10 @@ for i in "${!cmds[@]}"; do
   eval "${cmds[$i]}"
 done
 
+# Prepare a temp file for results to avoid "argument list too long" with jq
+results_tmp=$(mktemp)
+
 # Collect results
-results_array=()
 for i in "${!ids[@]}"; do
   name="${names[$i]}"
   id="${ids[$i]}"
@@ -119,23 +121,35 @@ for i in "${!ids[@]}"; do
     avgSize="0"
   fi
 
-  results_array+=("{
-    \"id\": \"$id\",
-    \"name\": \"$name\",
-    \"docsUrl\": \"$docsUrl\",
-    \"command\": \"$cmd\",
-    \"averageTime\": $avgTime,
-    \"averageSize\": $avgSize,
-    \"runs\": [$(IFS=,; echo "${runs_detail[*]}")],
-    \"lastOutput\": $(echo "$last_json" | jq . 2>/dev/null || echo "null"),
-    \"lastError\": $(jq -Rs . <<<"$last_stderr")
-  }")
+  # Write each tool's result as a single line in the temp file
+  jq -n \
+    --arg id "$id" \
+    --arg name "$name" \
+    --arg docsUrl "$docsUrl" \
+    --arg command "$cmd" \
+    --argjson averageTime "$avgTime" \
+    --argjson averageSize "$avgSize" \
+    --argjson runs "[$(IFS=,; echo "${runs_detail[*]}")]" \
+    --argjson lastOutput "$(echo "$last_json" | jq . 2>/dev/null || echo "null")" \
+    --argjson lastError "$(jq -Rs . <<<"$last_stderr")" \
+    '{
+      id: $id,
+      name: $name,
+      docsUrl: $docsUrl,
+      command: $command,
+      averageTime: $averageTime,
+      averageSize: $averageSize,
+      runs: $runs,
+      lastOutput: $lastOutput,
+      lastError: $lastError
+    }' >> "$results_tmp"
 done
 
-jq -n --argjson results "[$(IFS=,; echo "${results_array[*]}")]" \
-  --arg runs "$runs" \
-  --arg file_count "$file_count" \
-  '{runs: ($runs|tonumber), file_count: ($file_count|tonumber), results: $results}' > benchmark-results.json
+# Combine all tool results into a single JSON array
+jq -s --arg runs "$runs" --arg file_count "$file_count" \
+  '{runs: ($runs|tonumber), file_count: ($file_count|tonumber), results: .}' "$results_tmp" > benchmark-results.json
+
+rm "$results_tmp"
 
 if [[ -n "$CI" ]]; then
   npm run generate-site
