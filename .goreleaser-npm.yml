@@ -12,17 +12,6 @@ builds:
     hooks:
       pre: make build-all
     skip_build: true
-    # Artifacts will be picked up from dist/npm/bin by the npm pipe
-
-archives:
-  - id: cem-npm
-    builds:
-      - cem
-    name_template: "cem-{{ .Os }}-{{ .Arch }}"
-    format: tar.gz
-    files:
-      - LICENSE
-      - README.md
 
 npm:
   - path: ./npm

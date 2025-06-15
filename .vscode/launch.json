@@ -2,6 +2,17 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Test Fixture",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "program": "${workspaceFolder}",
+      "args": [
+        "-run",
+        "TestFixture_${input:fixtureName}"
+      ]
+    },
+    {
       "name": "Debug cem generate",
       "type": "go",
       "request": "launch",
@@ -38,6 +49,11 @@
       "type": "promptString",
       "description": "Arguments...",
       "default": "--exclude '../redhat-ux/red-hat-design-system/elements/*/*.d.ts' ../redhat-ux/red-hat-design-system/elements/*/*.ts"
+    },
+    {
+      "id": "fixtureName",
+      "type": "promptString",
+      "description": "Name of fixture file (without extension, e.g. class-exports)"
     }
   ]
 }
