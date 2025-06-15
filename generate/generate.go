@@ -36,7 +36,7 @@ func Generate(
 	exclude []string,
 	designTokensSpec string,
 	designTokensPrefix string,
-) (error, *string) {
+) (*string, error) {
 	excludeSet := S.NewSet(exclude...)
 
 	var wg sync.WaitGroup
@@ -71,13 +71,14 @@ func Generate(
 			for file := range jobsChan {
 				code, err := os.ReadFile(file)
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "%s\n", err)
+					errs = errors.Join(errs, errors.New(fmt.Sprintf("Could not Read file %s", file)), err)
 					continue
 				}
 
 				err, module := generateModule(file, code, queryManager)
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "%s\n", err)
+					errs = errors.Join(errs, errors.New(fmt.Sprintf("Problem generating module %s", file)), err)
+					continue
 				}
 				if module != nil {
 					modulesChan <- module
@@ -108,8 +109,8 @@ func Generate(
 	queryManager.Close()
 
 	if err != nil {
-		return errors.Join(errs, err), nil
+		return nil, errors.Join(errs, err)
 	}
 
-	return errs, &manifest
+	return &manifest, errs
 }

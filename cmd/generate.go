@@ -43,7 +43,7 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			files := expand(args)
 			exclude := expand(excludes)
-			err, manifest := generate.Generate(files, exclude, designTokensSpec, designTokensPrefix)
+			manifest, err := generate.Generate(files, exclude, designTokensSpec, designTokensPrefix)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error generating manifest: %s", err)
 			}
