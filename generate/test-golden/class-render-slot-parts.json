@@ -6,7 +6,7 @@
       "path": "test-fixtures/class-render-slot-parts.js",
       "declarations": [
         {
-          "name": "ClassRenderPartsDocs",
+          "name": "ClassRenderSlotParts",
           "superclass": {
             "name": "LitElement",
             "package": "lit"
@@ -33,7 +33,7 @@
           "kind": "custom-element-definition",
           "name": "class-render-slot-parts",
           "declaration": {
-            "name": "ClassRenderPartsDocs",
+            "name": "ClassRenderSlotParts",
             "module": "test-fixtures/class-render-slot-parts.js"
           }
         }

@@ -307,7 +307,10 @@ func parseYamlComment(comment string, kind string) (HtmlDocYaml, error) {
         Deprecated:  raw.Deprecated,
     }, err
 }
+
 // dedentYaml skips the first line for indent calculation, dedents all lines after the first
+// this is because we have to strip the html comment tags away, so the intendation on the
+// first line is unreliable as a source of truth for dedenting
 func dedentYaml(s string) string {
 	lines := strings.Split(s, "\n")
 	if len(lines) <= 1 {
