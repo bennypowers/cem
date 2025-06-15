@@ -15,6 +15,11 @@
           "tagName": "class-render-slots-docs",
           "slots": [
             {
+              "name": "",
+              "summary": "default slot summary",
+              "description": "default slot description\n\nmultiline **markdown**"
+            },
+            {
               "name": "named",
               "summary": "named slot summary"
             },

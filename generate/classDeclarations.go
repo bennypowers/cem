@@ -207,13 +207,13 @@ func analyzeHtmlSlotsAndParts(queryManager *QueryManager, htmlSource string) (sl
 	}
 	defer matcher.Close()
 
-	handleParts := func(captureMap CaptureMap) {
+	handleParts := func(captureMap CaptureMap, kind string) {
 		if pn, ok := captureMap["part.name"]; ok && len(pn) > 0 {
 			partsList := strings.Fields(pn[0].Text)
 			for _, partName := range partsList {
 				part := M.CssPart{Name: partName}
 				if comment, ok := captureMap["comment"]; ok && len(comment) > 0 {
-					yamlDoc := parseYamlComment(comment[0].Text)
+					yamlDoc := parseYamlComment(comment[0].Text, kind)
 					part.Description = yamlDoc.Description
 					part.Summary = yamlDoc.Summary
 					switch v := yamlDoc.Deprecated.(type) {
@@ -230,26 +230,27 @@ func analyzeHtmlSlotsAndParts(queryManager *QueryManager, htmlSource string) (sl
 
 	// Use ParentCaptures as in project conventions
 	for captureMap := range matcher.ParentCaptures(root, text, "slot") {
+		slot := M.Slot{Name: ""}
 		if sn, ok := captureMap["slot.name"]; ok && len(sn) > 0 {
-			slot := M.Slot{Name: sn[0].Text}
-			if comment, ok := captureMap["comment"]; ok && len(comment) > 0 {
-				yamlDoc := parseYamlComment(comment[0].Text)
-				slot.Description = yamlDoc.Description
-				slot.Summary = yamlDoc.Summary
-				switch v := yamlDoc.Deprecated.(type) {
-				case bool:
-						slot.Deprecated = M.DeprecatedFlag(v)
-				case string:
-						slot.Deprecated = M.DeprecatedReason(v)
-				}
-			}
-			slots = append(slots, slot)
-			handleParts(captureMap)
+			slot.Name = sn[0].Text
 		}
+		if comment, ok := captureMap["comment"]; ok && len(comment) > 0 {
+			yamlDoc := parseYamlComment(comment[0].Text, "slot")
+			slot.Description = yamlDoc.Description
+			slot.Summary = yamlDoc.Summary
+			switch v := yamlDoc.Deprecated.(type) {
+			case bool:
+					slot.Deprecated = M.DeprecatedFlag(v)
+			case string:
+					slot.Deprecated = M.DeprecatedReason(v)
+			}
+		}
+		slots = append(slots, slot)
+		handleParts(captureMap, "part")
 	}
 
 	for captureMap := range matcher.ParentCaptures(root, text, "part") {
-		handleParts(captureMap)
+		handleParts(captureMap, "part")
 	}
 
 	return slots, parts, nil
@@ -258,26 +259,49 @@ func analyzeHtmlSlotsAndParts(queryManager *QueryManager, htmlSource string) (sl
 type HtmlDocYaml struct {
     Description string      `yaml:"description"`
     Summary     string      `yaml:"summary"`
-    Deprecated  any					`yaml:"deprecated"`
+    Deprecated  any         `yaml:"deprecated"`
 }
 
+type NestedHtmlDocYaml struct {
+    Slot *HtmlDocYaml `yaml:"slot"`
+    Part *HtmlDocYaml `yaml:"part"`
+    // Flat fields for backward compatibility
+    Description string      `yaml:"description"`
+    Summary     string      `yaml:"summary"`
+    Deprecated  any         `yaml:"deprecated"`
+}
+
+// htmlCommentStripRE unchanged
 var htmlCommentStripRE = regexp.MustCompile(`(?s)^\s*<!--(.*?)(?:-->)?\s*$`)
 
-func parseYamlComment(comment string) HtmlDocYaml {
-	// Remove comment tags and leading/trailing whitespace/newlines.
-	inner := comment
-	// Regex approach: non-greedy match between <!-- and -->
-	if matches := htmlCommentStripRE.FindStringSubmatch(inner); len(matches) == 2 {
-		inner = matches[1]
-	}
-	inner = dedentYaml(inner)
+// kind must be "slot" or "part"
+func parseYamlComment(comment string, kind string) HtmlDocYaml {
+    inner := comment
+    if matches := htmlCommentStripRE.FindStringSubmatch(inner); len(matches) == 2 {
+        inner = matches[1]
+    }
+    inner = dedentYaml(inner)
+    raw := NestedHtmlDocYaml{}
+    _ = yaml.Unmarshal([]byte(inner), &raw)
 
-	raw := HtmlDocYaml{}
-	_ = yaml.Unmarshal([]byte(inner), &raw)
-
-	return raw
+    // Prefer nested section if present
+    switch kind {
+    case "slot":
+        if raw.Slot != nil {
+            return *raw.Slot
+        }
+    case "part":
+        if raw.Part != nil {
+            return *raw.Part
+        }
+    }
+    // Fallback to flat fields
+    return HtmlDocYaml{
+        Description: raw.Description,
+        Summary:     raw.Summary,
+        Deprecated:  raw.Deprecated,
+    }
 }
-
 // dedentYaml skips the first line for indent calculation, dedents all lines after the first
 func dedentYaml(s string) string {
 	lines := strings.Split(s, "\n")

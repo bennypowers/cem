@@ -3,7 +3,7 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "test-fixtures/class-render-parts-docs.js",
+      "path": "test-fixtures/class-render-slot-parts.js",
       "declarations": [
         {
           "name": "ClassRenderPartsDocs",
@@ -12,10 +12,17 @@
             "package": "lit"
           },
           "kind": "class",
-          "tagName": "class-render-parts-docs",
+          "tagName": "class-render-slot-parts",
+          "slots": [
+            {
+              "name": "slot-with-part",
+              "summary": "slot summary"
+            }
+          ],
           "cssParts": [
             {
-              "name": "deprecated"
+              "name": "part-with-slot",
+              "summary": "part summary"
             }
           ],
           "customElement": true
@@ -24,10 +31,10 @@
       "exports": [
         {
           "kind": "custom-element-definition",
-          "name": "class-render-parts-docs",
+          "name": "class-render-slot-parts",
           "declaration": {
             "name": "ClassRenderPartsDocs",
-            "module": "test-fixtures/class-render-parts-docs.js"
+            "module": "test-fixtures/class-render-slot-parts.js"
           }
         }
       ]

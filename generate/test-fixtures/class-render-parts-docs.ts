@@ -10,17 +10,8 @@ class ClassRenderPartsDocs extends LitElement {
             multiline **markdown**
       -->
       <div part="part"></slot>
-
       <!-- summary: summary part summary -->
       <div part="summary"></slot>
-
-      <!-- slot:
-            summary: slot summary
-          part:
-            summary: slot-part summary
-      -->
-      <slot name="slot" part="slot-part"></slot>
-
       <!-- deprecated: true -->
       <div part="deprecated"></div>
       <!-- deprecated: deprecation reason -->

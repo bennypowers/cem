@@ -15,6 +15,9 @@
           "tagName": "class-render-slots",
           "slots": [
             {
+              "name": ""
+            },
+            {
               "name": "slot"
             }
           ],
