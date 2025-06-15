@@ -19,25 +19,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
+      - run: make build
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-
-      - name: Install and build analyzers
-        run: |
+      - run: |
           cd analyzer-benchmarks
           npm ci
-          cd .. && go build && cd analyzer-benchmarks
-
-      - name: Run Analyzers and Collect Results
-        id: benchmark
-        run: ./benchmark.sh ${{ github.event.inputs.runs || 25 }}
-
-      - name: Generate static site
-        run: |
-          cd analyzer-benchmarks
+          ./benchmark.sh ${{ github.event.inputs.runs || 100 }}
           npm run generate-site
-
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
