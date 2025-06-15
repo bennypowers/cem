@@ -11,6 +11,8 @@ fi
 file_glob="src/components/*.ts"
 file_count=$(ls $file_glob 2>/dev/null | wc -l | xargs)
 
+echo "$file_glob"
+
 ids=(
   "lit"
   "cea"
@@ -26,11 +28,6 @@ cmds=(
   "npx --yes @custom-elements-manifest/analyzer analyze --outdir cea --globs $file_glob"
   "../cem generate -o cem/custom-elements.json $file_glob"
 )
-resultFiles=(
-  "lit/custom-elements.json"
-  "cea/custom-elements.json"
-  "cem/custom-elements.json"
-)
 docsUrls=(
   "https://github.com/lit/lit/tree/fbda6d7b42b8acd19b388e9de0be3521da6b58bb/packages/labs/cli"
   "https://github.com/open-wc/custom-elements-manifest/tree/master/packages/analyzer"
@@ -39,7 +36,10 @@ docsUrls=(
 
 # Pre-warm commands to avoid first-run hangs on macOS
 for i in "${!cmds[@]}"; do
-  resultFile="${resultFiles[$i]}"
+  id="${ids[$i]}"
+  echo "$id"
+  mkdir -p "$id"
+  resultFile="${id}/custom-elements.json"
   if [[ -f "$resultFile" ]]; then
     rm "$resultFile"
   fi
@@ -50,10 +50,11 @@ done
 # Collect results
 results_array=()
 for i in "${!ids[@]}"; do
+  id="${ids[$i]}"
   name="${names[$i]}"
   id="${ids[$i]}"
   cmd="${cmds[$i]}"
-  resultFile="${resultFiles[$i]}"
+  resultFile="${id}/custom-elements.json"
   docsUrl="${docsUrls[$i]}"
 
   sumTime=0
