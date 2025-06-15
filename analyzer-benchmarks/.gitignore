@@ -1,0 +1,6 @@
+node_modules
+*-result.json
+*-bench.txt
+*-stdout.txt
+custom-elements.json
+**/custom-elements.json

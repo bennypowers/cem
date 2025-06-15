@@ -1,0 +1,51 @@
+name: Benchmark Analyzers
+
+on:
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: 'Number of benchmark runs'
+        required: false
+        default: '100'
+  push:
+    branches: [main]
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.GH_PAT }}
+
+      - uses: actions/setup-go@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install and build analyzers
+        run: |
+          cd analyzer-benchmarks
+          npm ci
+          cd .. && go build && cd analyzer-benchmarks
+
+      - name: Run Analyzers and Collect Results
+        id: benchmark
+        run: ./benchmark.sh ${{ github.event.inputs.runs || 25 }}
+
+      - name: Generate static site
+        run: |
+          cd analyzer-benchmarks
+          npm run generate-site
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: analyzer-benchmarks/site

@@ -1,0 +1,3 @@
+[submodule "cem"]
+	path = cem
+	url = git@github.com:bennypowers/cem.git
