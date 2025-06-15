@@ -2,6 +2,7 @@ package generate
 
 import (
 	"errors"
+	"regexp"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -207,39 +208,44 @@ func analyzeHtmlSlotsAndParts(queryManager *QueryManager, htmlSource string) (sl
 	defer matcher.Close()
 
 	handleParts := func(captureMap CaptureMap) {
-		var partsList []string
 		if pn, ok := captureMap["part.name"]; ok && len(pn) > 0 {
-			partName := pn[0].Text
-			partsList = strings.Fields(partName)
-		}
-
-		for _, partName := range partsList {
-			partDoc := "" // Optionally attach same doc comment
-			if comment, ok := captureMap["comment"]; ok && len(comment) > 0 {
-				yamlDoc := parseYamlComment(comment[0].Text)
-				if yamlDoc.Description != "" {
-					partDoc = yamlDoc.Description
+			partsList := strings.Fields(pn[0].Text)
+			for _, partName := range partsList {
+				part := M.CssPart{Name: partName}
+				if comment, ok := captureMap["comment"]; ok && len(comment) > 0 {
+					yamlDoc := parseYamlComment(comment[0].Text)
+					part.Description = yamlDoc.Description
+					part.Summary = yamlDoc.Summary
+					switch v := yamlDoc.Deprecated.(type) {
+					case bool:
+							part.Deprecated = M.DeprecatedFlag(v)
+					case string:
+							part.Deprecated = M.DeprecatedReason(v)
+					}
 				}
+				parts = append(parts, part)
 			}
-			parts = append(parts, M.CssPart{Name: partName, Description: partDoc})
 		}
 	}
 
 	// Use ParentCaptures as in project conventions
 	for captureMap := range matcher.ParentCaptures(root, text, "slot") {
-		var slotName string
-		var slotDoc string
 		if sn, ok := captureMap["slot.name"]; ok && len(sn) > 0 {
-			slotName = sn[0].Text
-		}
-		if comment, ok := captureMap["comment"]; ok && len(comment) > 0 {
-			yamlDoc := parseYamlComment(comment[0].Text)
-			if yamlDoc.Description != "" {
-				slotDoc = yamlDoc.Description
+			slot := M.Slot{Name: sn[0].Text}
+			if comment, ok := captureMap["comment"]; ok && len(comment) > 0 {
+				yamlDoc := parseYamlComment(comment[0].Text)
+				slot.Description = yamlDoc.Description
+				slot.Summary = yamlDoc.Summary
+				switch v := yamlDoc.Deprecated.(type) {
+				case bool:
+						slot.Deprecated = M.DeprecatedFlag(v)
+				case string:
+						slot.Deprecated = M.DeprecatedReason(v)
+				}
 			}
+			slots = append(slots, slot)
+			handleParts(captureMap)
 		}
-		slots = append(slots, M.Slot{Name: slotName, Description: slotDoc})
-		handleParts(captureMap)
 	}
 
 	for captureMap := range matcher.ParentCaptures(root, text, "part") {
@@ -249,17 +255,57 @@ func analyzeHtmlSlotsAndParts(queryManager *QueryManager, htmlSource string) (sl
 	return slots, parts, nil
 }
 
-// --- Helper: Parse YAML from HTML comment, returns struct with Description field ---
 type HtmlDocYaml struct {
-	Description string `yaml:"description"`
-	Summary			string `yaml:"summary,omitempty"`
-	Deprecated	string `yaml:"deprecated,omitempty"`
+    Description string      `yaml:"description"`
+    Summary     string      `yaml:"summary"`
+    Deprecated  any					`yaml:"deprecated"`
 }
 
+var htmlCommentStripRE = regexp.MustCompile(`(?s)^\s*<!--(.*?)(?:-->)?\s*$`)
+
 func parseYamlComment(comment string) HtmlDocYaml {
-	out := HtmlDocYaml{}
-	_ = yaml.Unmarshal([]byte(comment), &out)
-	return out
+	// Remove comment tags and leading/trailing whitespace/newlines.
+	inner := comment
+	// Regex approach: non-greedy match between <!-- and -->
+	if matches := htmlCommentStripRE.FindStringSubmatch(inner); len(matches) == 2 {
+		inner = matches[1]
+	}
+	inner = dedentYaml(inner)
+
+	raw := HtmlDocYaml{}
+	_ = yaml.Unmarshal([]byte(inner), &raw)
+
+	return raw
+}
+
+// dedentYaml skips the first line for indent calculation, dedents all lines after the first
+func dedentYaml(s string) string {
+	lines := strings.Split(s, "\n")
+	if len(lines) <= 1 {
+		return strings.TrimSpace(s)
+	}
+	// Calculate min indent on lines 2..n (skip blank lines)
+	minIndent := -1
+	for _, line := range lines[1:] {
+		trimmed := strings.TrimLeft(line, " \t")
+		if trimmed == "" {
+			continue
+		}
+		indent := len(line) - len(trimmed)
+		if minIndent == -1 || indent < minIndent {
+			minIndent = indent
+		}
+	}
+	// Remove minIndent spaces/tabs from all lines after the first
+	if minIndent > 0 {
+		for i := 1; i < len(lines); i++ {
+			if len(lines[i]) >= minIndent {
+				lines[i] = lines[i][minIndent:]
+			}
+		}
+	}
+	// Trim leading/trailing blank lines
+	return strings.TrimSpace(strings.Join(lines, "\n"))
 }
 
 // --- Helper: Append slots/parts only if not already present by name ---
