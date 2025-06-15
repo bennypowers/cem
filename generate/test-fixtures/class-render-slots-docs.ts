@@ -1,5 +1,5 @@
 @customElement('class-render-slots-docs')
-class ClassRednerSlotsDocs extends LitElement {
+class ClassRenderSlotsDocs extends LitElement {
   render() {
     return html`
       <!--

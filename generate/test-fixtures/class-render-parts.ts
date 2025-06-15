@@ -1,8 +1,8 @@
 @customElement('class-render-parts')
-class ClassMethods extends LitElement {
+class ClassRenderParts extends LitElement {
   render() {
     return html`
-      <div part="part"></slot>
+      <div part="part"></div>
       <slot name="slot" part="slot slot-part"></slot>
     `;
   }
