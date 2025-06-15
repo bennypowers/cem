@@ -75,7 +75,7 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 	classNamesAdded := S.NewSet[string]()
 
 	queryName := "variableDeclaration"
-	qm, err := NewQueryMatcher(queryManager, queryName, "typescript")
+	qm, err := NewQueryMatcher(queryManager, "typescript", queryName)
 	if err != nil {
 		return errors.Join(errs, err), nil
 	}
@@ -90,7 +90,7 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 	}
 
 	queryName = "classDeclaration"
-	qm, err = NewQueryMatcher(queryManager, queryName, "typescript")
+	qm, err = NewQueryMatcher(queryManager, "typescript", queryName)
 	if err != nil {
 		return errors.Join(errs, err), nil
 	}
@@ -117,7 +117,7 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 					bindings, hasBindings := captures["style.binding"]
 					styleStrings, hasStrings := captures["style.string"]
 					if hasBindings || hasStrings {
-						qm, err := NewQueryMatcher(queryManager, "cssCustomProperties", "css")
+						qm, err := NewQueryMatcher(queryManager, "css", "cssCustomProperties")
 						language := ts.NewLanguage(tscss.Language())
 						parser := ts.NewParser()
 						defer parser.Close()
@@ -175,7 +175,7 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 	}
 
 	queryName = "functionDeclaration"
-	qm, err = NewQueryMatcher(queryManager, queryName, "typescript")
+	qm, err = NewQueryMatcher(queryManager, "typescript", queryName)
 	if err != nil {
 		return errors.Join(errs, err), nil
 	}
@@ -190,7 +190,7 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 	}
 
 	queryName = "exportStatement"
-	qm, err = NewQueryMatcher(queryManager, queryName, "typescript")
+	qm, err = NewQueryMatcher(queryManager, "typescript", queryName)
 	if err != nil {
 		return errors.Join(errs, err), nil
 	}
@@ -224,7 +224,6 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 		if index >= 0 {
 			d := module.Declarations[index]
 			if declaration, ok := d.(*M.CustomElementDeclaration); ok {
-				//FIXME: order is not stable here. Try to do this by source order.
 				module.Exports = append(module.Exports, &M.CustomElementExport{
 					Kind: "custom-element-definition",
 					Name: declaration.TagName,

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "test-fixtures/class-render-parts.js",
+      "declarations": [
+        {
+          "name": "ClassMethods",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "class-render-parts",
+          "slots": [
+            {
+              "name": "slot"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "slot"
+            },
+            {
+              "name": "slot-part"
+            },
+            {
+              "name": "part"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-render-parts",
+          "declaration": {
+            "name": "ClassMethods",
+            "module": "test-fixtures/class-render-parts.js"
+          }
+        }
+      ]
+    }
+  ]
+}

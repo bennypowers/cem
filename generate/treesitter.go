@@ -13,6 +13,7 @@ import (
 
 	ts "github.com/tree-sitter/go-tree-sitter"
 	tsCss "github.com/tree-sitter/tree-sitter-css/bindings/go"
+	tsHtml "github.com/tree-sitter/tree-sitter-html/bindings/go"
 	tsJsdoc "github.com/tree-sitter/tree-sitter-jsdoc/bindings/go"
 	tsTypescript "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
 )
@@ -30,13 +31,15 @@ func (e *NoCaptureError) Error() string {
 }
 
 var Languages = struct{
-	typescript *ts.Language;
-	jsdoc *ts.Language;
-	css *ts.Language;
+	typescript *ts.Language
+	jsdoc *ts.Language
+	css *ts.Language
+	html *ts.Language
 }{
 	ts.NewLanguage(tsTypescript.LanguageTypescript()),
 	ts.NewLanguage(tsJsdoc.Language()),
 	ts.NewLanguage(tsCss.Language()),
+	ts.NewLanguage(tsHtml.Language()),
 }
 
 type QueryManagerI interface {
@@ -48,6 +51,7 @@ type QueryManager struct {
 	typescript map[string]*ts.Query
 	jsdoc map[string]*ts.Query
 	css map[string]*ts.Query
+	html map[string]*ts.Query
 }
 
 func NewQueryManager() (*QueryManager, error) {
@@ -55,6 +59,7 @@ func NewQueryManager() (*QueryManager, error) {
 		typescript: make(map[string]*ts.Query),
 		jsdoc: make(map[string]*ts.Query),
 		css: make(map[string]*ts.Query),
+		html: make(map[string]*ts.Query),
 	}
 
 	data, err := queries.ReadDir("queries")
@@ -81,9 +86,14 @@ func NewQueryManager() (*QueryManager, error) {
 					queryText := string(data)
 					var tsLang *ts.Language
 					switch language {
-					case "typescript": tsLang = Languages.typescript
-					case "jsdoc": tsLang = Languages.jsdoc
-					case "css": tsLang = Languages.css
+					case "typescript":
+						tsLang = Languages.typescript
+					case "jsdoc":
+						tsLang = Languages.jsdoc
+					case "css":
+						tsLang = Languages.css
+					case "html":
+						tsLang = Languages.html
 					}
 					if tsLang == nil {
 						// it's ok to die here because these queries are compiled in via embed
@@ -94,9 +104,14 @@ func NewQueryManager() (*QueryManager, error) {
 						log.Fatal(qerr) // it's ok to die here because these queries are compiled in via embed
 					}
 					switch language {
-					case "typescript": qm.typescript[queryName] = query
-					case "jsdoc": qm.jsdoc[queryName] = query
-					case "css": qm.css[queryName] = query
+					case "typescript":
+						qm.typescript[queryName] = query
+					case "jsdoc":
+						qm.jsdoc[queryName] = query
+					case "css":
+						qm.css[queryName] = query
+					case "html":
+						qm.html[queryName] = query
 					}
 				}
 			}
@@ -116,6 +131,9 @@ func (qm *QueryManager) Close() {
 	for _, query := range qm.css {
 		query.Close()
 	}
+	for _, query := range qm.html {
+		query.Close()
+	}
 }
 
 func (qm *QueryManager) GetQuery(queryName string, language string) (*ts.Query, error) {
@@ -128,6 +146,8 @@ func (qm *QueryManager) GetQuery(queryName string, language string) (*ts.Query, 
 		q, ok = qm.jsdoc[queryName]
 	case "css":
 		q, ok = qm.css[queryName]
+	case "html":
+		q, ok = qm.html[queryName]
 	}
 	if !ok {
 		return nil, errors.New(fmt.Sprintf("unknown query %s", queryName))
@@ -159,7 +179,11 @@ func (qm QueryMatcher) Close() {
 	qm.cursor.Close()
 }
 
-func NewQueryMatcher(manager *QueryManager, queryName string, language string) (*QueryMatcher, error) {
+func NewQueryMatcher(
+	manager *QueryManager,
+	language string,
+	queryName string,
+) (*QueryMatcher, error) {
 	query, error := manager.GetQuery(queryName, language)
 	if error != nil {
 		return nil, error
