@@ -11,8 +11,6 @@ import (
 	M "bennypowers.dev/cem/manifest"
 	S "bennypowers.dev/cem/set"
 	ts "github.com/tree-sitter/go-tree-sitter"
-	tscss "github.com/tree-sitter/tree-sitter-css/bindings/go"
-	tsts "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
 )
 
 func ammendStylesMapFromSource(
@@ -62,10 +60,9 @@ func ammendStylesMapFromSource(
 }
 
 func generateModule(file string, code []byte, queryManager *QueryManager) (errs error, module *M.Module) {
-	language := ts.NewLanguage(tsts.LanguageTypescript())
 	parser := ts.NewParser()
 	defer parser.Close()
-	parser.SetLanguage(language)
+	parser.SetLanguage(Languages.typescript)
 	tree := parser.Parse(code, nil)
 	defer tree.Close()
 	root := tree.RootNode()
@@ -118,10 +115,9 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 					styleStrings, hasStrings := captures["style.string"]
 					if hasBindings || hasStrings {
 						qm, err := NewQueryMatcher(queryManager, "css", "cssCustomProperties")
-						language := ts.NewLanguage(tscss.Language())
 						parser := ts.NewParser()
 						defer parser.Close()
-						parser.SetLanguage(language)
+						parser.SetLanguage(Languages.css)
 						if err != nil {
 							return errors.Join(errs, err), nil
 						}

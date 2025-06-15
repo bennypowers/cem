@@ -10,7 +10,6 @@ import (
 	M "bennypowers.dev/cem/manifest"
 	A "github.com/IBM/fp-go/array"
 	ts "github.com/tree-sitter/go-tree-sitter"
-	tsHtml "github.com/tree-sitter/tree-sitter-html/bindings/go"
 )
 
 func generateClassDeclaration(
@@ -195,7 +194,7 @@ func generateCustomElementClassDeclaration(
 func analyzeHtmlSlotsAndParts(queryManager *QueryManager, htmlSource string) (slots []M.Slot, parts []M.CssPart, err error) {
 	parser := ts.NewParser()
 	defer parser.Close()
-	parser.SetLanguage(ts.NewLanguage(tsHtml.Language()))
+	parser.SetLanguage(Languages.html)
 	tree := parser.Parse([]byte(htmlSource), nil)
 	defer tree.Close()
 	root := tree.RootNode()
