@@ -1,0 +1,17 @@
+{
+  "name": "web-components-analyzers-benchmarks",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "keywords": [],
+  "author": "",
+  "license": "GPL-3.0",
+  "devDependencies": {
+    "@custom-elements-manifest/analyzer": "^0.10.4",
+    "@lit-labs/analyzer": "^0.13.2",
+    "@lit-labs/cli": "^0.6.5",
+    "@lit-labs/gen-manifest": "^0.3.4",
+    "lit-element": "^4.2.0",
+    "web-component-analyzer": "^2.0.0"
+  }
+}

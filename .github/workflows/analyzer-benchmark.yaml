@@ -1,0 +1,65 @@
+name: Benchmark Analyzers
+
+on:
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: 'Number of benchmark runs'
+        required: false
+        default: '100'
+  push:
+    branches: [main]
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.GH_PAT }}
+
+      - uses: actions/setup-go@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install and build analyzers
+        run: |
+          cd analyzer-benchmarks
+          npm ci
+          cd .. && go build && cd analyzer-benchmarks
+
+      - name: Run Analyzers and Collect Results
+        id: benchmark
+        run: ./benchmark.sh ${{ github.event.inputs.runs || 25 }}
+
+      - name: Commit changes to README
+        timeout-minutes: 3   # ADDED: Prevent hanging
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          REPO: bennypowers/analyzer-benchmarks
+          README: README.md
+          RESULTS: results.md
+          DETAILS: details.md
+          HEADING: "## Benchmark Results"
+        run: |
+          set -e
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://${GH_PAT}@github.com/${REPO}.git"
+
+          git add "$README"
+
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: update benchmark results [skip ci]" || echo "No changes to commit"
+            git push --no-verify origin main || echo "Push failed, possibly due to no upstream changes"
+          else
+            echo "No changes to commit"
+          fi
