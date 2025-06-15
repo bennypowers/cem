@@ -22,7 +22,7 @@ func BenchmarkGenerate(b *testing.B) {
 
 	for b.Loop() {
 		// Run the Generate function, measuring its speed.
-		err, _ := Generate(matches, excludes, designTokens, designTokensPrefix)
+		_, err := Generate(matches, excludes, designTokens, designTokensPrefix)
 		if err != nil {
 			b.Errorf("Generate returned error: %v", err)
 		}

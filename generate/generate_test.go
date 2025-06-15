@@ -39,7 +39,7 @@ func TestGenerate(t *testing.T) {
 			designTokens := "./" + filepath.Join("test-fixtures", "design-tokens.json")
 			designTokensPrefix := "token"
 
-			err, actual := Generate(matches, excludes, designTokens, designTokensPrefix)
+			actual, err := Generate(matches, excludes, designTokens, designTokensPrefix)
 			if err != nil {
 				t.Error(err)
 			}
