@@ -39,27 +39,13 @@ jobs:
         id: benchmark
         run: ./benchmark.sh ${{ github.event.inputs.runs || 25 }}
 
-      - name: Commit changes to README
-        timeout-minutes: 3   # ADDED: Prevent hanging
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
-          REPO: bennypowers/analyzer-benchmarks
-          README: README.md
-          RESULTS: results.md
-          DETAILS: details.md
-          HEADING: "## Benchmark Results"
+      - name: Generate static site
         run: |
-          set -e
+          cd analyzer-benchmarks
+          npm run generate-site
 
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin "https://${GH_PAT}@github.com/${REPO}.git"
-
-          git add "$README"
-
-          if ! git diff --cached --quiet; then
-            git commit -m "chore: update benchmark results [skip ci]" || echo "No changes to commit"
-            git push --no-verify origin main || echo "Push failed, possibly due to no upstream changes"
-          else
-            echo "No changes to commit"
-          fi
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: analyzer-benchmarks/site
