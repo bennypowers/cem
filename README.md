@@ -1,6 +1,6 @@
 # cem
 
-**cem** is a command-line tool for generating [Custom Elements Manifest](https://github.com/webcomponents/custom-elements-manifest) (CEM) files from TypeScript sources. It analyzes your codebase and outputs a manifest describing your custom elements, classes, functions, variables, and exports, suitable for documentation tools and web component discovery.
+**cem** is a command-line tool for generating [Custom Elements Manifest](https://github.com/webcomponents/custom-elements-manifest) (CEM) files from TypeScript sources. It analyzes your codebase and generates rich metadata for your custom elements, facilitating documentation, tooling, and integration.
 
 ## Features
 
@@ -9,6 +9,33 @@
 - **Generates CEM files** from source code using syntax analysis powered by [go](https://go.dev) and [tree-sitter](https://tree-sitter.github.io/tree-sitter/).
 - Identifies custom elements, classes, variables, functions, and exports.
 - Supports elements written in idiomatic Lit typescript style, with a `@customElement` decorator, and `@property` decorators on class fields.
+
+#### HTML Template Analysis for Slots and Parts
+
+- **Automatically detects `<slot>` and `part` attributes in your element’s `render()` template.**
+- Extracts slot names and CSS shadow parts directly from HTML templates returned by the `render()` method.
+- **Supports documenting slots and parts inline in your template HTML** using HTML comments with YAML blocks. For example:
+  ```html
+  <!--
+    summary: The main slot for content
+    description: |
+      This slot displays user-provided content.
+      Supports multiline **markdown**.
+    deprecated: true
+  -->
+  <slot></slot>
+  ```
+- You can document named slots, default slots, and CSS parts:
+  ```html
+  <!-- slot:
+        summary: Named slot summary
+     part:
+        summary: Part summary
+  -->
+  <slot name="info" part="info-part"></slot>
+  ```
+- The tool merges slot and part information found in templates with any provided via JSDoc, ensuring comprehensive documentation in the generated manifest.
+- **Deprecation and other metadata** for slots and parts can be specified via YAML in HTML comments.
 
 #### JSDoc
 Use JSDoc comments to add metadata to your element classes, similar to other tools
