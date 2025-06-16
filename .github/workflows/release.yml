@@ -40,6 +40,14 @@ jobs:
           echo "GOOS=${{ matrix.goos }}" >> $GITHUB_ENV
           echo "GOARCH=${{ matrix.goarch }}" >> $GITHUB_ENV
           echo "CGO_ENABLED=1" >> $GITHUB_ENV
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+      - name: Install Go dependencies (optional but recommended)
+        run: go mod download
+      - name: Generate bindings (if needed)
+        run: go generate ./...
+      - name: Build binary
+        run: make build
       - name: Install tree-sitter bindings
         run: make install-bindings
       - name: Build binary
