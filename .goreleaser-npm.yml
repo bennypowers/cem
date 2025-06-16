@@ -11,7 +11,6 @@ builds:
       - arm64
     hooks:
       pre: make build-all
-    skip_build: true
 
 npm:
   - path: ./npm
@@ -28,5 +27,3 @@ release:
   github:
     owner: bennypowers
     name: cem
-    draft: false
-    prerelease: false
