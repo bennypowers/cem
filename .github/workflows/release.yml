@@ -20,7 +20,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           version: v2.8.0
-          args: release --clean --config .goreleaser-npm.yml
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
