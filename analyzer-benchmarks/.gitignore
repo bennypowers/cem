@@ -3,4 +3,5 @@ node_modules
 *-bench.txt
 *-stdout.txt
 custom-elements.json
+site
 **/custom-elements.json
