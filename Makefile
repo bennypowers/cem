@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 .PHONY: build build-all test update watch bench profile flamegraph coverage clean lint format
 
 PLATFORMS = linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64
