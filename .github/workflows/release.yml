@@ -42,6 +42,19 @@ jobs:
           echo "CGO_ENABLED=1" >> $GITHUB_ENV
       - name: Checkout submodules
         run: git submodule update --init --recursive
+      # Generate C sources for all grammars
+      - name: Generate tree-sitter parsers for all grammars
+        run: |
+          set -e
+          for grammar in tree-sitter/*; do
+            if [ -d "$grammar" ] && [ -f "$grammar/package.json" ]; then
+              echo "Generating parser for $grammar"
+              cd "$grammar"
+              npm install
+              npx tree-sitter generate
+              cd -
+            fi
+          done
       - name: Install Go dependencies (optional but recommended)
         run: go mod download
       - name: Generate bindings (if needed)
