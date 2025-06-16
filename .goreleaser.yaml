@@ -1,0 +1,37 @@
+project_name: cem
+
+builds:
+  - id: cem
+    main: .
+    binary: cem
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=1
+    hooks:
+      pre:
+        - go generate ./...
+
+archives:
+  - id: cem-archive
+    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
+    files:
+      - LICENSE*
+      - README*
+      - dist/cem* # GoReleaser builds go into dist/
+    format: tar.gz
+
+checksum:
+  name_template: "checksums.txt"
+
+release:
+  github:
+    owner: bennypowers
+    name: cem
+
+changelog: {}

@@ -4,17 +4,16 @@ SHELL := /bin/bash
 
 BIN_DIR = npm/bin
 
-build: $(wildcard *.{go,scm})
-	go build
+build:
+	go build -o dist/cem .
 
 install-bindings:
-	go generate ./... || true
-	go install ./... || true
+	go generate ./...
 
 prepare-npm:
 	@echo "Preparing npm package"
 	@mkdir -p $(BIN_DIR)
-	@cp artifacts/**/cem-* $(BIN_DIR) 2>/dev/null || true
+	@cp dist/cem* $(BIN_DIR) 2>/dev/null || true
 
 test:
 	go test -json ./... | go tool tparse -all
