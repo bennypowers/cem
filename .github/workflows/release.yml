@@ -19,7 +19,7 @@ jobs:
       - name: Run GoReleaser (build and publish CLI + npm)
         uses: goreleaser/goreleaser-action@v5
         with:
-          version: latest
+          version: v2.8.0
           args: release --clean --config .goreleaser-npm.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -155,12 +155,8 @@
                     </ul>
                   </sl-details>
                   <sl-details summary="Last Output (JSON)">
-                    <sl-copy-button value="{% if result.lastOutput is iterable and result.lastOutput is not string %}{{ result.lastOutput | dump(2) }}{% else %}{{ result.lastOutput or '' }}{% endif %}"></sl-copy-button>
-                    <pre class="analyzer-detail-json">{% if result.lastOutput is iterable and result.lastOutput is not string %}
-{{ result.lastOutput | dump(2) }}
-{% else %}
-{{ result.lastOutput or "No output" }}
-{% endif %}</pre>
+                    <sl-copy-button value="{{ result.lastOutput | dump(2) }}"></sl-copy-button>
+                    {{ result.lastOutput | jsonBlock | safe }}
                   </sl-details>
                   {% if result.lastError and result.lastError != '""' %}
                   <sl-alert variant="danger" open>

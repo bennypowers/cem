@@ -1,6 +1,7 @@
 import nunjucks from 'nunjucks';
 import fs from 'node:fs/promises';
 import MarkdownIt from 'markdown-it';
+import prism from 'markdown-it-prism';
 
 // Load data
 const [readme, resultsJson] = await Promise.all([
@@ -10,6 +11,7 @@ const [readme, resultsJson] = await Promise.all([
 
 // Render README as HTML
 const md = new MarkdownIt();
+md.use(prism)
 const readmeHtml = md.render(readme);
 
 // Parse the benchmark results
@@ -20,6 +22,11 @@ const env = nunjucks.configure('.', { autoescape: true });
 
 // Add a pretty-print filter
 env.addFilter('dump', (obj, spaces = 2) => JSON.stringify(typeof obj == 'string'? JSON.parse(obj) : obj, null, spaces));
+env.addFilter('jsonBlock', (obj) => md.render(`
+\`\`\`json
+${JSON.stringify(obj, null, 2)}
+\`\`\`
+`));
 
 // Render the template
 const html = nunjucks.render('index.html', { readmeHtml, results });

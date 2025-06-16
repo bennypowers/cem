@@ -16,6 +16,7 @@
     "@lit-labs/gen-manifest": "^0.3.4",
     "lit-element": "^4.2.0",
     "markdown-it": "^14.1.0",
+    "markdown-it-prism": "^3.0.0",
     "nunjucks": "^3.2.4",
     "web-component-analyzer": "^2.0.0"
   }
