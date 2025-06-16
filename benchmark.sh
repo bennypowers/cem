@@ -27,7 +27,7 @@ ids=(
 names=(
   "@lit-labs/cli"
   "@custom-elements-manifest/analyzer"
-  "bennypowers/cem generate"
+  "cem generate"
 )
 cmds=(
   "npx --yes @lit-labs/cli labs gen --manifest --out lit"

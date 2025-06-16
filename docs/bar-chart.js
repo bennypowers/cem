@@ -1,0 +1,9 @@
+class BarChart extends HTMLElement {
+  static is = 'bar-chart';
+  static template = document.createElement('template');
+  static { this.template.innerHTML = `<slot></slot>`; }
+  static { customElements.define(this.is, this); }
+  connectedCallback() {
+    this.attachShadow({ mode: 'open' }).append(BarChart.template.content.cloneNode(true));
+  }
+}

@@ -7,19 +7,39 @@
   {% include './header.html' %}
 
   <main>
-    <sl-alert variant="primary" open>
-      <sl-icon slot="icon" name="bar-chart"></sl-icon>
-      <h1>Analyzer Benchmarks</h1>
-      <div slot="description">
-        Automated, reproducible performance and output-size comparisons of leading web components analyzers.<br>
-        Data is updated on every push. Try toggling the theme or exploring the metrics below!
-      </div>
-    </sl-alert>
+
     <sl-card>
-      <div>
-        <strong>Number of runs per tool:</strong> {{ results.runs }}<br>
-        <strong>Number of files analyzed per run:</strong> {{ results.file_count }}
-      </div>
+      <h1 slot="header">
+        <sl-icon slot="icon" name="bar-chart"></sl-icon>
+        Analyzer Benchmarks
+      </h1>
+
+      <figure class="benchmarks-bar-chart" role="group" aria-labelledby="bar-caption">
+        <figcaption id="bar-caption" style="font-weight:bold;margin-bottom:0.5em;">
+          Benchmark results: lower is better (seconds)
+        </figcaption>
+        <bar-chart id="perf-bar-chart">
+          <svg width="100%" height="{{ results.results|length * 44 + 40 }}">
+            {% set max_value = results.results | map('averageTime') | max %}
+            {% for i, result in results.results | enumerate %}
+            {% set bar_length = 480 * result.averageTime / max_value %}
+            <rect x="120"
+                  y="{{ i * 44 + 12 }}"
+                  height="32"
+                  rx="4"
+                  width="{{ bar_length }}"
+                  fill="{{ result.color or '#4e79a7' }}">
+            <title>{{ result.tool }}: {{ result.averageTime }}</title>
+            </rect>
+            <text x="8" y="{{ i * 44 + 32 }}" font-size="16" fill="currentColor">{{ result.name }}</text>
+            <text x="{{ 130 + bar_length }}" y="{{ i * 44 + 32 }}" font-size="16" fill="currentColor">{{ result.averageTime }}</text>
+            {% endfor %}
+          </svg>
+        </bar-chart>
+      </figure>
+
+      <div slot=footer><strong>Number of runs per tool:</strong> {{ results.runs }}</div>
+      <div slot=footer><strong slot=footer>Number of files analyzed per run:</strong> {{ results.file_count }}</div>
     </sl-card>
     <sl-tab-group placement="top" style="margin-bottom:2rem;">
       <sl-tab slot="nav" panel="panel-summary">
@@ -133,6 +153,22 @@
     </sl-tab-group>
   </main>
 
+  <script type="module">
+    import "{{rootUrl}}/bar-chart.js";
+    fetch('{{rootUrl}}/benchmarks-results.json')
+      .then(r => r.json())
+      .then(({ results }) => {
+        // assuming data is an array of objects like: [{ tool: "Tool A", averageTime: 123 }, ...]
+        // or adapt as needed to your actual JSON structure
+        const chartData = results.map(result => ({
+          name: result.name,
+          value: result.averageTime,
+        }));
+        document.getElementById('perf-bar-chart').setAttribute('data', JSON.stringify(chartData));
+      });
+  </script>
+  </script>
+  <script type="module" src="https://unpkg.com/zero-md@3?module"></script>
   {% include './footer.html' %}
 </body>
 </html>

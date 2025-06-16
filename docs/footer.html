@@ -24,14 +24,4 @@
   themeToggle.addEventListener('sl-change', updateTheme);
   updateTheme();
 
-  // Nav drawer
-  const drawer = document.getElementById('nav-drawer');
-  document.getElementById('open-drawer-btn').addEventListener('click', () => drawer.show());
-  drawer.addEventListener('sl-after-hide', () => drawer.hide());
-  const menu = drawer.querySelector('sl-menu');
-  const tabGroup = document.querySelector('sl-tab-group');
-  menu.addEventListener('sl-select', e => {
-    tabGroup.show(e.detail.item.value === 'readme' ? 'panel-readme' : 'panel-benchmarks');
-    drawer.hide();
-  });
 </script>
