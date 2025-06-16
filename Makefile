@@ -1,23 +1,15 @@
-SHELL := /bin/bash
-
-.PHONY: build build-all test update watch bench profile flamegraph coverage clean lint format
+.PHONY: build test update watch bench profile flamegraph coverage clean lint format prepare-npm
 
 PLATFORMS = linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64
+BIN_DIR = npm/bin
 
 build: $(wildcard *.{go,scm})
 	go build
 
-build-all:
-	mkdir -p dist/npm/bin
-	set -euo pipefail; \
-	for platform in $(PLATFORMS); do \
-		GOOS=$${platform%/*}; \
-		GOARCH=$${platform#*/}; \
-		out="dist/npm/bin/cem-$${GOOS}-$${GOARCH}"; \
-		if [ "$${GOOS}" = "windows" ]; then out="$${out}.exe"; fi; \
-		GOOS=$${GOOS} GOARCH=$${GOARCH} CGO_ENABLED=0 go build -o "$${out}" ./cmd/cem; \
-		echo "Built $$out"; \
-	done
+prepare-npm:
+	@echo "Preparing npm package"
+	@mkdir -p $(BIN_DIR)
+	@cp artifacts/**/cem-* $(BIN_DIR) 2>/dev/null || true
 
 test:
 	go test -json ./... | go tool tparse -all
@@ -50,4 +42,4 @@ coverage:
 	go test -coverprofile=cover.out
 
 clean:
-	rm -rf dist/ cpu.out cover.out
+	rm -rf dist/ cpu.out cover.out npm/bin artifacts
