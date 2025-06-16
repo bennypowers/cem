@@ -7,6 +7,11 @@
   <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/shoelace.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/themes/light.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/themes/dark.css">
+
+  <!-- PrismJS stylesheets for light and dark themes -->
+  <link id="prism-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.css" disabled>
+  <link id="prism-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-okaidia.css" disabled>
+
   <link rel="stylesheet" href="site.css">
 </head>
 <body>
@@ -176,9 +181,24 @@
     import { setBasePath } from 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/utilities/base-path.js';
     setBasePath('https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/');
     const themeToggle = document.getElementById('theme-toggle');
+
+    // Prism theme switching
+    const prismLight = document.getElementById('prism-light');
+    const prismDark = document.getElementById('prism-dark');
+    function setPrismTheme(dark) {
+      if (dark) {
+        prismLight.disabled = true;
+        prismDark.disabled = false;
+      } else {
+        prismLight.disabled = false;
+        prismDark.disabled = true;
+      }
+    }
+
     const updateTheme = () => {
       const dark = themeToggle.checked;
       document.body.setAttribute('class', dark ? 'sl-theme-dark' : 'sl-theme-light');
+      setPrismTheme(dark);
     };
     themeToggle.addEventListener('sl-change', updateTheme);
     updateTheme();
