@@ -8,7 +8,7 @@ if ! [[ "$runs" =~ ^[0-9]+$ ]]; then
   exit 1
 fi
 
-cd analyzer-benchmarks
+cd docs
 if [[ -n "$CI" ]]; then
   pwd
   npm ci

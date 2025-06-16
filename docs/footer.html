@@ -1,0 +1,37 @@
+<script type="module">
+  import { setBasePath } from 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/utilities/base-path.js';
+  setBasePath('https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/');
+  const themeToggle = document.getElementById('theme-toggle');
+
+  // Prism theme switching
+  const prismLight = document.getElementById('prism-light');
+  const prismDark = document.getElementById('prism-dark');
+  function setPrismTheme(dark) {
+    if (dark) {
+      prismLight.disabled = true;
+      prismDark.disabled = false;
+    } else {
+      prismLight.disabled = false;
+      prismDark.disabled = true;
+    }
+  }
+
+  const updateTheme = () => {
+    const dark = themeToggle.checked;
+    document.body.setAttribute('class', dark ? 'sl-theme-dark' : 'sl-theme-light');
+    setPrismTheme(dark);
+  };
+  themeToggle.addEventListener('sl-change', updateTheme);
+  updateTheme();
+
+  // Nav drawer
+  const drawer = document.getElementById('nav-drawer');
+  document.getElementById('open-drawer-btn').addEventListener('click', () => drawer.show());
+  drawer.addEventListener('sl-after-hide', () => drawer.hide());
+  const menu = drawer.querySelector('sl-menu');
+  const tabGroup = document.querySelector('sl-tab-group');
+  menu.addEventListener('sl-select', e => {
+    tabGroup.show(e.detail.item.value === 'readme' ? 'panel-readme' : 'panel-benchmarks');
+    drawer.hide();
+  });
+</script>

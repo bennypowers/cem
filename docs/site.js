@@ -21,6 +21,8 @@ const results = JSON.parse(resultsJson);
 const env = nunjucks.configure('.', { autoescape: true });
 
 // Add a pretty-print filter
+env.addFilter('log', (obj) => (console.log(obj), ''));
+env.addFilter('trace', (obj, tag) => (console.log(tag, obj), obj));
 env.addFilter('dump', (obj, spaces = 2) => JSON.stringify(typeof obj == 'string'? JSON.parse(obj) : obj, null, spaces));
 env.addFilter('jsonBlock', (obj) => md.render(`
 \`\`\`json
@@ -28,12 +30,11 @@ ${JSON.stringify(obj, null, 2)}
 \`\`\`
 `));
 
-// Render the template
-const html = nunjucks.render('index.html', { readmeHtml, results });
-
+const rootUrl = process.env.CI ? '/cem' : '';
 // Write the output
-await fs.mkdir('site', { recursive: true });
-await fs.writeFile('site/index.html', html);
+await fs.mkdir('site/benchmarks', { recursive: true });
+await fs.writeFile('site/index.html', nunjucks.render('index.html', { title: 'README', rootUrl, readmeHtml, results }));
+await fs.writeFile('site/benchmarks/index.html', nunjucks.render('benchmarks.html', { title: 'Benchmarks', rootUrl, readmeHtml, results }));
 await fs.copyFile('site.css', 'site/site.css');
 
 console.log('site/index.html generated.');

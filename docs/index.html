@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  {% include './head.html' %}
+</head>
+<body>
+  {% include './header.html' %}
+
+  <main>
+    <article class="readme-content markdown-body">
+      {{ readmeHtml | safe }}
+    </article>
+  </main>
+
+  {% include './footer.html' %}
+</body>
+</html>
