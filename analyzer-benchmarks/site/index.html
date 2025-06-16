@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Analyzer Benchmarks</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/shoelace.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/themes/light.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/themes/dark.css">
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <header>
+    <div class="header-group">
+      <sl-icon-button id="open-drawer-btn" name="list" label="Open navigation"></sl-icon-button>
+      <h1><code>@pwrs/cem</code></h1>
+    </div>
+    <sl-switch id="theme-toggle" checked>Dark Mode</sl-switch>
+  </header>
+
+  <sl-drawer label="Navigation" placement="start" id="nav-drawer">
+    <nav>
+      <sl-menu>
+        <sl-menu-item value="readme"><sl-icon name="house-door"></sl-icon> Home</sl-menu-item>
+        <sl-menu-item value="benchmarks"><sl-icon name="bar-chart"></sl-icon> Benchmarks</sl-menu-item>
+      </sl-menu>
+    </nav>
+  </sl-drawer>
+
+  <main>
+    <sl-tab-group placement="top" style="margin-bottom:2rem;">
+      <sl-tab slot="nav" panel="panel-readme">
+        <sl-icon name="house-door"></sl-icon>README
+      </sl-tab>
+      <sl-tab slot="nav" panel="panel-benchmarks">
+        <sl-icon name="bar-chart"></sl-icon>Benchmarks
+      </sl-tab>
+      <sl-tab-panel name="panel-readme">
+        <article class="readme-content markdown-body">
+          <h1>cem</h1>
+<p><strong>cem</strong> is a command-line tool for generating <a href="https://github.com/webcomponents/custom-elements-manifest">Custom Elements Manifest</a> (CEM) files from TypeScript sources. It analyzes your codebase and generates rich metadata for your custom elements, facilitating documentation, tooling, and integration.</p>
+<h2>Features</h2>
+<h3><code>cem generate</code></h3>
+<ul>
+<li><strong>Generates CEM files</strong> from source code using syntax analysis powered by <a href="https://go.dev">go</a> and <a href="https://tree-sitter.github.io/tree-sitter/">tree-sitter</a>.</li>
+<li>Identifies custom elements, classes, variables, functions, and exports.</li>
+<li>Supports elements written in idiomatic Lit typescript style, with a <code>@customElement</code> decorator, and <code>@property</code> decorators on class fields.</li>
+</ul>
+<h4>HTML Template Analysis for Slots and Parts</h4>
+<ul>
+<li><strong>Automatically detects <code>&lt;slot&gt;</code> and <code>part</code> attributes in your element’s <code>render()</code> template.</strong></li>
+<li>Extracts slot names and CSS shadow parts directly from HTML templates returned by the <code>render()</code> method.</li>
+<li><strong>Supports documenting slots and parts inline in your template HTML</strong> using HTML comments with YAML blocks. For example:<pre><code class="language-html">&lt;!--
+  summary: The main slot for content
+  description: |
+    This slot displays user-provided content.
+    Supports multiline **markdown**.
+  deprecated: true
+--&gt;
+&lt;slot&gt;&lt;/slot&gt;
+</code></pre>
+</li>
+<li>You can document named slots, default slots, and CSS parts:<pre><code class="language-html">&lt;!-- slot:
+      summary: Named slot summary
+   part:
+      summary: Part summary
+--&gt;
+&lt;slot name=&quot;info&quot; part=&quot;info-part&quot;&gt;&lt;/slot&gt;
+</code></pre>
+</li>
+<li>The tool merges slot and part information found in templates with any provided via JSDoc, ensuring comprehensive documentation in the generated manifest.</li>
+<li><strong>Deprecation and other metadata</strong> for slots and parts can be specified via YAML in HTML comments.</li>
+</ul>
+<h4>JSDoc</h4>
+<p>Use JSDoc comments to add metadata to your element classes, similar to other tools</p>
+<ul>
+<li><code>@attr</code> / <code>@attribute</code> — Custom element attributes</li>
+<li><code>@csspart</code> — CSS shadow parts</li>
+<li><code>@cssprop</code> / <code>@cssproperty</code> — Custom CSS properties</li>
+<li><code>@cssstate</code> — Custom CSS states</li>
+<li><code>@deprecated</code> — Marks a feature or member as deprecated</li>
+<li><code>@event</code> — Custom events dispatched by the element</li>
+<li><code>@slot</code> — Named or default slots</li>
+<li><code>@summary</code> — Short summary for documentation</li>
+</ul>
+<h4>CSS Custom Properties</h4>
+<p>Supports CSS Custom Properties by scanning css files and css tagged-template-literals</p>
+<ul>
+<li>Custom properties beginning with <code>_</code> will be ignored (treated as &quot;private&quot;) e.g. <code>var(--_private)</code></li>
+<li>If you provide a <a href="https://tr.designtokens.org/format/">Design Tokens Community
+Group</a> format module (JSON) to <code>cem</code> via the <code>--design-tokens</code> flag,
+<code>cem</code> will add metadata from your design system to any matching css variables it finds in your elements</li>
+<li>You can use jsdoc-like comment syntax before each var call to document your
+variables<pre><code class="language-css">:host {
+  color:
+    /**
+     * custom color for use in this element
+     * @summary color
+     * @deprecated just use the `color` property
+     */
+    var(--custom-color);
+}
+</code></pre>
+</li>
+</ul>
+<h2>Installation</h2>
+<pre><code class="language-sh">go install bennypowers.dev/cem@latest
+</code></pre>
+<p>Or clone this repository and build from source:</p>
+<pre><code class="language-sh">git clone https://github.com/bennypowers/cem.git
+cd cem
+make
+</code></pre>
+<h2>Usage</h2>
+<p>Generate a custom elements manifest from your files:</p>
+<pre><code class="language-sh">cem generate \
+  &quot;src/**/*.ts&quot; \
+  --design-tokens npm:@my-ds/tokens/tokens.json \
+  --exclude &quot;src/**/*.test.ts&quot; \
+  --output custom-elements.json
+</code></pre>
+<ul>
+<li><code>generate</code>: Command to start manifest generation.</li>
+<li>Accepts file paths and glob patterns.</li>
+<li><code>--design-tokens</code>: path to tokens file or npm:package specifier</li>
+<li><code>--exclude</code> / <code>-e</code>: Specify patterns to exclude from the manifest.</li>
+<li><code>--output</code> / <code>-o</code>: Write the manifest to a file instead of stdout.</li>
+</ul>
+<h2>License</h2>
+<p>This program is free software: you can redistribute it and/or modify it under the terms of the <a href="https://www.gnu.org/licenses/gpl-3.0.html">GNU General Public License v3.0</a>.</p>
+<p>© 2025 Benny Powers <a href="mailto:web@bennypowers.com">web@bennypowers.com</a></p>
+
+        </article>
+      </sl-tab-panel>
+      <sl-tab-panel name="panel-benchmarks">
+        <div class="breadcrumb">
+          <sl-breadcrumb>
+            <sl-breadcrumb-item href="/">Home</sl-breadcrumb-item>
+            <sl-breadcrumb-item href="#" aria-current="page">Benchmarks</sl-breadcrumb-item>
+          </sl-breadcrumb>
+        </div>
+        <sl-alert variant="primary" open>
+          <sl-icon slot="icon" name="bar-chart"></sl-icon>
+          <strong>Analyzer Benchmarks</strong>
+          <div slot="description">
+            Automated, reproducible performance and output-size comparisons of leading web components analyzers.<br>
+            Data is updated on every push. Try toggling the theme or exploring the metrics below!
+          </div>
+        </sl-alert>
+        <sl-card>
+          <div>
+            <strong>Number of runs per tool:</strong> 4<br>
+            <strong>Number of files analyzed per run:</strong> 43
+          </div>
+        </sl-card>
+        <sl-tab-group placement="top" style="margin-bottom:2rem;">
+          <sl-tab slot="nav" panel="panel-summary">
+            <sl-icon name="list"></sl-icon>Summary
+          </sl-tab>
+          <sl-tab slot="nav" panel="panel-details">
+            <sl-icon name="file-bar-graph"></sl-icon>Details
+          </sl-tab>
+          <sl-tab-panel name="panel-summary">
+            <div class="summary-cards">
+              
+                <sl-card class="analyzer-summary-card">
+                  <div slot="header" class="analyzer-summary-header">
+                    <sl-icon name="box-seam"></sl-icon>
+                    <span class="analyzer-summary-title">@lit-labs/cli</span>
+                    <sl-badge variant="primary" pill class="analyzer-summary-badge">lit</sl-badge>
+                  </div>
+                  <div class="analyzer-summary-docslink">
+                    <sl-tag size="small" pill>
+                      <sl-icon slot="prefix" name="code"></sl-icon>
+                      <a href="https://github.com/lit/lit/tree/fbda6d7b42b8acd19b388e9de0be3521da6b58bb/packages/labs/cli" target="_blank">
+                        Docs
+                        <sl-icon slot="suffix" name="box-arrow-up-right"></sl-icon>
+                      </a>
+                    </sl-tag>
+                  </div>
+                  <div class="analyzer-summary-stats">
+                    <div>
+                      <sl-badge variant="success" pill>
+                        <sl-icon slot="prefix" name="clock"></sl-icon>
+                        1.91s
+                      </sl-badge>
+                      <div class="analyzer-summary-label">Avg Time</div>
+                    </div>
+                    <div>
+                      <sl-badge variant="neutral" pill>
+                        <sl-icon slot="prefix" name="file-text"></sl-icon>
+                        47.1KB
+                      </sl-badge>
+                      <div class="analyzer-summary-label">Avg Output Size</div>
+                    </div>
+                    <div>
+                      <sl-badge variant="warning" pill>
+                        <sl-icon slot="prefix" name="hash"></sl-icon>
+                        4
+                      </sl-badge>
+                      <div class="analyzer-summary-label">Runs</div>
+                    </div>
+                  </div>
+                  <sl-details summary="Show Command" class="analyzer-summary-command">
+                    <sl-input readonly value="npx --yes @lit-labs/cli labs gen --manifest --out lit"></sl-input>
+                  </sl-details>
+                </sl-card>
+              
+                <sl-card class="analyzer-summary-card">
+                  <div slot="header" class="analyzer-summary-header">
+                    <sl-icon name="box-seam"></sl-icon>
+                    <span class="analyzer-summary-title">@custom-elements-manifest/analyzer</span>
+                    <sl-badge variant="primary" pill class="analyzer-summary-badge">cea</sl-badge>
+                  </div>
+                  <div class="analyzer-summary-docslink">
+                    <sl-tag size="small" pill>
+                      <sl-icon slot="prefix" name="code"></sl-icon>
+                      <a href="https://github.com/open-wc/custom-elements-manifest/tree/master/packages/analyzer" target="_blank">
+                        Docs
+                        <sl-icon slot="suffix" name="box-arrow-up-right"></sl-icon>
+                      </a>
+                    </sl-tag>
+                  </div>
+                  <div class="analyzer-summary-stats">
+                    <div>
+                      <sl-badge variant="success" pill>
+                        <sl-icon slot="prefix" name="clock"></sl-icon>
+                        1.12s
+                      </sl-badge>
+                      <div class="analyzer-summary-label">Avg Time</div>
+                    </div>
+                    <div>
+                      <sl-badge variant="neutral" pill>
+                        <sl-icon slot="prefix" name="file-text"></sl-icon>
+                        58.7KB
+                      </sl-badge>
+                      <div class="analyzer-summary-label">Avg Output Size</div>
+                    </div>
+                    <div>
+                      <sl-badge variant="warning" pill>
+                        <sl-icon slot="prefix" name="hash"></sl-icon>
+                        4
+                      </sl-badge>
+                      <div class="analyzer-summary-label">Runs</div>
+                    </div>
+                  </div>
+                  <sl-details summary="Show Command" class="analyzer-summary-command">
+                    <sl-input readonly value="npx --yes @custom-elements-manifest/analyzer analyze --outdir cea --globs src/components/*.ts"></sl-input>
+                  </sl-details>
+                </sl-card>
+              
+                <sl-card class="analyzer-summary-card">
+                  <div slot="header" class="analyzer-summary-header">
+                    <sl-icon name="box-seam"></sl-icon>
+                    <span class="analyzer-summary-title">bennypowers/cem generate</span>
+                    <sl-badge variant="primary" pill class="analyzer-summary-badge">cem</sl-badge>
+                  </div>
+                  <div class="analyzer-summary-docslink">
+                    <sl-tag size="small" pill>
+                      <sl-icon slot="prefix" name="code"></sl-icon>
+                      <a href="https://github.com/bennypowers/cem" target="_blank">
+                        Docs
+                        <sl-icon slot="suffix" name="box-arrow-up-right"></sl-icon>
+                      </a>
+                    </sl-tag>
+                  </div>
+                  <div class="analyzer-summary-stats">
+                    <div>
+                      <sl-badge variant="success" pill>
+                        <sl-icon slot="prefix" name="clock"></sl-icon>
+                        0.23s
+                      </sl-badge>
+                      <div class="analyzer-summary-label">Avg Time</div>
+                    </div>
+                    <div>
+                      <sl-badge variant="neutral" pill>
+                        <sl-icon slot="prefix" name="file-text"></sl-icon>
+                        44.8KB
+                      </sl-badge>
+                      <div class="analyzer-summary-label">Avg Output Size</div>
+                    </div>
+                    <div>
+                      <sl-badge variant="warning" pill>
+                        <sl-icon slot="prefix" name="hash"></sl-icon>
+                        4
+                      </sl-badge>
+                      <div class="analyzer-summary-label">Runs</div>
+                    </div>
+                  </div>
+                  <sl-details summary="Show Command" class="analyzer-summary-command">
+                    <sl-input readonly value="../cem generate -o cem/custom-elements.json src/components/*.ts"></sl-input>
+                  </sl-details>
+                </sl-card>
+              
+            </div>
+          </sl-tab-panel>
+          <sl-tab-panel name="panel-details">
+            <div class="detail-cards">
+              
+                <sl-card class="analyzer-detail-card">
+                  <div slot="header" class="analyzer-detail-header">
+                    <sl-icon name="info"></sl-icon>
+                    <span>@lit-labs/cli Details</span>
+                  </div>
+                  <sl-details summary="Run Breakdown" open>
+                    <ul class="analyzer-detail-runs">
+                      
+                        
+                          <li>
+                            <sl-badge variant="success" pill>
+                              Run 1
+                            </sl-badge>
+                            <sl-badge variant="primary" pill>
+                              <sl-icon slot="prefix" name="clock"></sl-icon>
+                              2.0676s
+                            </sl-badge>
+                            <sl-badge variant="neutral" pill>
+                              <sl-icon slot="prefix" name="file-text"></sl-icon>
+                              47.1KB
+                            </sl-badge>
+                          </li>
+                        
+                      
+                        
+                          <li>
+                            <sl-badge variant="success" pill>
+                              Run 2
+                            </sl-badge>
+                            <sl-badge variant="primary" pill>
+                              <sl-icon slot="prefix" name="clock"></sl-icon>
+                              1.9448s
+                            </sl-badge>
+                            <sl-badge variant="neutral" pill>
+                              <sl-icon slot="prefix" name="file-text"></sl-icon>
+                              47.1KB
+                            </sl-badge>
+                          </li>
+                        
+                      
+                        
+                          <li>
+                            <sl-badge variant="success" pill>
+                              Run 3
+                            </sl-badge>
+                            <sl-badge variant="primary" pill>
+                              <sl-icon slot="prefix" name="clock"></sl-icon>
+                              1.9445s
+                            </sl-badge>
+                            <sl-badge variant="neutral" pill>
+                              <sl-icon slot="prefix" name="file-text"></sl-icon>
+                              47.1KB
+                            </sl-badge>
+                          </li>
+                        
+                      
+                        
+                          <li>
+                            <sl-badge variant="success" pill>
+                              Run 4
+                            </sl-badge>
+                            <sl-badge variant="primary" pill>
+                              <sl-icon slot="prefix" name="clock"></sl-icon>
+                              1.6856s
+                            </sl-badge>
+                            <sl-badge variant="neutral" pill>
+                              <sl-icon slot="prefix" name="file-text"></sl-icon>
+                              47.1KB
+                            </sl-badge>
+                          </li>
+                        
+                      
+                    </ul>
+                  </sl-details>
+                  <sl-details summary="Last Output (JSON)">
+                    <sl-copy-button value="[object Object]"></sl-copy-button>
+                    <pre class="analyzer-detail-json">
+[object Object]
+</pre>
+                  </sl-details>
+                  
+                  <sl-alert variant="danger" open>
+                    <sl-icon slot="icon" name="exclamation-triangle"></sl-icon>
+                    Last error: <pre>
+</pre>
+                  </sl-alert>
+                  
+                </sl-card>
+              
+                <sl-card class="analyzer-detail-card">
+                  <div slot="header" class="analyzer-detail-header">
+                    <sl-icon name="info"></sl-icon>
+                    <span>@custom-elements-manifest/analyzer Details</span>
+                  </div>
+                  <sl-details summary="Run Breakdown" open>
+                    <ul class="analyzer-detail-runs">
+                      
+                        
+                          <li>
+                            <sl-badge variant="success" pill>
+                              Run 1
+                            </sl-badge>
+                            <sl-badge variant="primary" pill>
+                              <sl-icon slot="prefix" name="clock"></sl-icon>
+                              1.2259s
+                            </sl-badge>
+                            <sl-badge variant="neutral" pill>
+                              <sl-icon slot="prefix" name="file-text"></sl-icon>
+                              58.7KB
+                            </sl-badge>
+                          </li>
+                        
+                      
+                        
+                          <li>
+                            <sl-badge variant="success" pill>
+                              Run 2
+                            </sl-badge>
+                            <sl-badge variant="primary" pill>
+                              <sl-icon slot="prefix" name="clock"></sl-icon>
+                              1.076s
+                            </sl-badge>
+                            <sl-badge variant="neutral" pill>
+                              <sl-icon slot="prefix" name="file-text"></sl-icon>
+                              58.7KB
+                            </sl-badge>
+                          </li>
+                        
+                      
+                        
+                          <li>
+                            <sl-badge variant="success" pill>
+                              Run 3
+                            </sl-badge>
+                            <sl-badge variant="primary" pill>
+                              <sl-icon slot="prefix" name="clock"></sl-icon>
+                              1.1245s
+                            </sl-badge>
+                            <sl-badge variant="neutral" pill>
+                              <sl-icon slot="prefix" name="file-text"></sl-icon>
+                              58.7KB
+                            </sl-badge>
+                          </li>
+                        
+                      
+                        
+                          <li>
+                            <sl-badge variant="success" pill>
+                              Run 4
+                            </sl-badge>
+                            <sl-badge variant="primary" pill>
+                              <sl-icon slot="prefix" name="clock"></sl-icon>
+                              1.0686s
+                            </sl-badge>
+                            <sl-badge variant="neutral" pill>
+                              <sl-icon slot="prefix" name="file-text"></sl-icon>
+                              58.7KB
+                            </sl-badge>
+                          </li>
+                        
+                      
+                    </ul>
+                  </sl-details>
+                  <sl-details summary="Last Output (JSON)">
+                    <sl-copy-button value="[object Object]"></sl-copy-button>
+                    <pre class="analyzer-detail-json">
+[object Object]
+</pre>
+                  </sl-details>
+                  
+                  <sl-alert variant="danger" open>
+                    <sl-icon slot="icon" name="exclamation-triangle"></sl-icon>
+                    Last error: <pre>
+</pre>
+                  </sl-alert>
+                  
+                </sl-card>
+              
+                <sl-card class="analyzer-detail-card">
+                  <div slot="header" class="analyzer-detail-header">
+                    <sl-icon name="info"></sl-icon>
+                    <span>bennypowers/cem generate Details</span>
+                  </div>
+                  <sl-details summary="Run Breakdown" open>
+                    <ul class="analyzer-detail-runs">
+                      
+                        
+                          <li>
+                            <sl-badge variant="success" pill>
+                              Run 1
+                            </sl-badge>
+                            <sl-badge variant="primary" pill>
+                              <sl-icon slot="prefix" name="clock"></sl-icon>
+                              0.2127s
+                            </sl-badge>
+                            <sl-badge variant="neutral" pill>
+                              <sl-icon slot="prefix" name="file-text"></sl-icon>
+                              44.8KB
+                            </sl-badge>
+                          </li>
+                        
+                      
+                        
+                          <li>
+                            <sl-badge variant="success" pill>
+                              Run 2
+                            </sl-badge>
+                            <sl-badge variant="primary" pill>
+                              <sl-icon slot="prefix" name="clock"></sl-icon>
+                              0.2423s
+                            </sl-badge>
+                            <sl-badge variant="neutral" pill>
+                              <sl-icon slot="prefix" name="file-text"></sl-icon>
+                              44.8KB
+                            </sl-badge>
+                          </li>
+                        
+                      
+                        
+                          <li>
+                            <sl-badge variant="success" pill>
+                              Run 3
+                            </sl-badge>
+                            <sl-badge variant="primary" pill>
+                              <sl-icon slot="prefix" name="clock"></sl-icon>
+                              0.2408s
+                            </sl-badge>
+                            <sl-badge variant="neutral" pill>
+                              <sl-icon slot="prefix" name="file-text"></sl-icon>
+                              44.8KB
+                            </sl-badge>
+                          </li>
+                        
+                      
+                        
+                          <li>
+                            <sl-badge variant="success" pill>
+                              Run 4
+                            </sl-badge>
+                            <sl-badge variant="primary" pill>
+                              <sl-icon slot="prefix" name="clock"></sl-icon>
+                              0.2208s
+                            </sl-badge>
+                            <sl-badge variant="neutral" pill>
+                              <sl-icon slot="prefix" name="file-text"></sl-icon>
+                              44.8KB
+                            </sl-badge>
+                          </li>
+                        
+                      
+                    </ul>
+                  </sl-details>
+                  <sl-details summary="Last Output (JSON)">
+                    <sl-copy-button value="[object Object]"></sl-copy-button>
+                    <pre class="analyzer-detail-json">
+[object Object]
+</pre>
+                  </sl-details>
+                  
+                  <sl-alert variant="danger" open>
+                    <sl-icon slot="icon" name="exclamation-triangle"></sl-icon>
+                    Last error: <pre>
+</pre>
+                  </sl-alert>
+                  
+                </sl-card>
+              
+            </div>
+          </sl-tab-panel>
+        </sl-tab-group>
+      </sl-tab-panel>
+    </sl-tab-group>
+  </main>
+  <script type="module">
+    import { setBasePath } from 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/utilities/base-path.js';
+    setBasePath('https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/');
+    const themeToggle = document.getElementById('theme-toggle');
+    const updateTheme = () => {
+      const dark = themeToggle.checked;
+      document.body.setAttribute('class', dark ? 'sl-theme-dark' : 'sl-theme-light');
+    };
+    themeToggle.addEventListener('sl-change', updateTheme);
+    updateTheme();
+
+    // Nav drawer
+    const drawer = document.getElementById('nav-drawer');
+    document.getElementById('open-drawer-btn').addEventListener('click', () => drawer.show());
+    drawer.addEventListener('sl-after-hide', () => drawer.hide());
+    const menu = drawer.querySelector('sl-menu');
+    const tabGroup = document.querySelector('sl-tab-group');
+    menu.addEventListener('sl-select', e => {
+      tabGroup.show(e.detail.item.value === 'readme' ? 'panel-readme' : 'panel-benchmarks');
+      drawer.hide();
+    });
+  </script>
+</body>
+</html>
