@@ -14,14 +14,6 @@ builds:
     hooks:
       pre: make build-all
 
-npm:
-  - path: ./npm
-    bin: cem
-    files:
-      - ./dist/npm/bin/**
-    scripts:
-      postinstall: node postinstall.js
-
 checksum:
   name_template: 'checksums.txt'
 

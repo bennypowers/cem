@@ -16,11 +16,18 @@ jobs:
         with:
           go-version: 1.24.x
 
-      - name: Run GoReleaser (build and publish CLI + npm)
+      - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
         with:
           version: v2.8.0
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to npm
+        run: |
+          cd npm
+          npm ci --prefer-offline
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
