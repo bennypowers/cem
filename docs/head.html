@@ -10,3 +10,46 @@
 <link id="prism-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-okaidia.css" disabled>
 
 <link rel="stylesheet" href="/site.css">
+
+<script type="module">
+  import { setBasePath } from 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/utilities/base-path.js';
+  setBasePath('https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/');
+  const themeToggle = document.getElementById('theme-toggle');
+
+  function setPrismTheme(dark, root = document) {
+    // Prism theme switching
+    const prismLight = root.getElementById('prism-light');
+    const prismDark = root.getElementById('prism-dark');
+    prismLight.disabled = dark;
+    prismDark.disabled = !dark;
+  }
+
+  const updateTheme = () => {
+    const dark = themeToggle.checked;
+    document.body.setAttribute('class', dark ? 'sl-theme-dark' : 'sl-theme-light');
+    setPrismTheme(dark);
+    for (const z of document.querySelectorAll('zero-md')) {
+      if (z.shadowRoot) {
+        setPrismTheme(dark, z?.shadowRoot);
+      }
+    }
+  };
+
+  themeToggle.addEventListener('sl-change', updateTheme);
+
+  document.addEventListener('sl-show', async function(event) {
+    await customElements.whenDefined('zero-md');
+    await customElements.whenDefined('sl-spinner');
+    const zeroMd = event.target.querySelector('zero-md');
+    const spinner = event.target.querySelector('sl-spinner');
+    if (zeroMd && spinner) {
+      zeroMd.render();
+      await new Promise(r => setTimeout(r, 500));
+      await zeroMd.render();
+      spinner.remove();
+      setPrismTheme(themeToggle.checked, zeroMd?.shadowRoot);
+    }
+  });
+
+  updateTheme();
+</script>

@@ -41,134 +41,107 @@
       <div slot=footer><strong>Number of runs per tool:</strong> {{ results.runs }}</div>
       <div slot=footer><strong slot=footer>Number of files analyzed per run:</strong> {{ results.file_count }}</div>
     </sl-card>
-    <sl-tab-group placement="top" style="margin-bottom:2rem;">
-      <sl-tab slot="nav" panel="panel-summary">
-        <sl-icon name="list"></sl-icon>Summary
-      </sl-tab>
-      <sl-tab slot="nav" panel="panel-details">
-        <sl-icon name="file-bar-graph"></sl-icon>Details
-      </sl-tab>
-      <sl-tab-panel name="panel-summary">
-        <div class="summary-cards">
-          {% for result in results.results %}
-            <sl-card class="analyzer-summary-card">
-              <div slot="header" class="analyzer-summary-header">
-                <sl-icon name="box-seam"></sl-icon>
-                <span class="analyzer-summary-title">{{ result.name }}</span>
-                <sl-badge variant="primary" pill class="analyzer-summary-badge">{{ result.id }}</sl-badge>
-              </div>
-              <div class="analyzer-summary-docslink">
-                <sl-tag size="small" pill>
-                  <sl-icon slot="prefix" name="code"></sl-icon>
-                  <a href="{{ result.docsUrl }}" target="_blank">
-                    Docs
-                    <sl-icon slot="suffix" name="box-arrow-up-right"></sl-icon>
-                  </a>
-                </sl-tag>
-              </div>
-              <div class="analyzer-summary-stats">
-                <div>
+    <div class="tool-cards">
+      {% for result in results.results %}
+      <sl-card class="analyzer-tool-card" style="margin-top:2rem;">
+        <div slot="header" class="analyzer-tool-header">
+          <sl-icon name="box-seam"></sl-icon>
+          <span class="analyzer-tool-title">{{ result.name }}</span>
+          <sl-badge variant="primary" pill class="analyzer-tool-badge">{{ result.id }}</sl-badge>
+        </div>
+        <div class="analyzer-tool-docslink">
+          <sl-tag size="small" pill>
+            <sl-icon slot="prefix" name="code"></sl-icon>
+            <a href="{{ result.docsUrl }}" target="_blank">
+              Docs
+              <sl-icon slot="suffix" name="box-arrow-up-right"></sl-icon>
+            </a>
+          </sl-tag>
+        </div>
+        <div class="analyzer-tool-stats" style="display:flex;gap:2em;margin:1em 0;">
+          <div>
+            <sl-badge variant="success" pill>
+              <sl-icon slot="prefix" name="clock"></sl-icon>
+              {{ result.averageTime }}s
+            </sl-badge>
+            <div class="analyzer-tool-label">Avg Time</div>
+          </div>
+          <div>
+            <sl-badge variant="neutral" pill>
+              <sl-icon slot="prefix" name="file-text"></sl-icon>
+              {{ result.averageSize }}KB
+            </sl-badge>
+            <div class="analyzer-tool-label">Avg Output Size</div>
+          </div>
+          <div>
+            <sl-badge variant="warning" pill>
+              <sl-icon slot="prefix" name="hash"></sl-icon>
+              {{ result.runs | length }}
+            </sl-badge>
+            <div class="analyzer-tool-label">Runs</div>
+          </div>
+        </div>
+        <sl-input readonly value="{{ result.command }}" label="Command"></sl-input>
+        <sl-details summary="Run Breakdown">
+          <ul class="analyzer-tool-runs">
+            {% for run in result.runs %}
+              {% if run.time is not none %}
+                <li>
                   <sl-badge variant="success" pill>
-                    <sl-icon slot="prefix" name="clock"></sl-icon>
-                    {{ result.averageTime }}s
+                    Run {{ run.run }}
                   </sl-badge>
-                  <div class="analyzer-summary-label">Avg Time</div>
-                </div>
-                <div>
+                  <sl-badge variant="primary" pill>
+                    <sl-icon slot="prefix" name="clock"></sl-icon>
+                    {{ run.time }}s
+                  </sl-badge>
                   <sl-badge variant="neutral" pill>
                     <sl-icon slot="prefix" name="file-text"></sl-icon>
-                    {{ result.averageSize }}KB
+                    {{ run.size }}KB
                   </sl-badge>
-                  <div class="analyzer-summary-label">Avg Output Size</div>
-                </div>
-                <div>
-                  <sl-badge variant="warning" pill>
-                    <sl-icon slot="prefix" name="hash"></sl-icon>
-                    {{ result.runs | length }}
+                </li>
+              {% else %}
+                <li>
+                  <sl-badge variant="danger" pill>
+                    Run {{ run.run }} FAILED
                   </sl-badge>
-                  <div class="analyzer-summary-label">Runs</div>
-                </div>
-              </div>
-              <sl-details summary="Show Command" class="analyzer-summary-command">
-                <sl-input readonly value="{{ result.command }}"></sl-input>
-              </sl-details>
-            </sl-card>
-          {% endfor %}
-        </div>
-      </sl-tab-panel>
-      <sl-tab-panel name="panel-details">
-        <div class="detail-cards">
-          {% for result in results.results %}
-            <sl-card class="analyzer-detail-card">
-              <div slot="header" class="analyzer-detail-header">
-                <sl-icon name="info"></sl-icon>
-                <span>{{ result.name }} Details</span>
-              </div>
-              <sl-details summary="Run Breakdown" open>
-                <ul class="analyzer-detail-runs">
-                  {% for run in result.runs %}
-                    {% if run.time is not none %}
-                      <li>
-                        <sl-badge variant="success" pill>
-                          Run {{ run.run }}
-                        </sl-badge>
-                        <sl-badge variant="primary" pill>
-                          <sl-icon slot="prefix" name="clock"></sl-icon>
-                          {{ run.time }}s
-                        </sl-badge>
-                        <sl-badge variant="neutral" pill>
-                          <sl-icon slot="prefix" name="file-text"></sl-icon>
-                          {{ run.size }}KB
-                        </sl-badge>
-                      </li>
-                    {% else %}
-                      <li>
-                        <sl-badge variant="danger" pill>
-                          Run {{ run.run }} FAILED
-                        </sl-badge>
-                        {% if run.error %}
-                          <sl-details summary="Show Error"><pre>{{ run.error }}</pre></sl-details>
-                        {% endif %}
-                      </li>
-                    {% endif %}
-                  {% endfor %}
-                </ul>
-              </sl-details>
-              <sl-details summary="Last Output (JSON)">
-                <sl-copy-button value="{{ result.lastOutput | dump(2) }}"></sl-copy-button>
-                {{ result.lastOutput | jsonBlock | safe }}
-              </sl-details>
-              {% if result.lastError and result.lastError != '""' %}
-              <sl-alert variant="danger" open>
-                <sl-icon slot="icon" name="exclamation-triangle"></sl-icon>
-                Last error: <pre>{{ result.lastError }}</pre>
-              </sl-alert>
+                  {% if run.error %}
+                    <sl-details summary="Show Error"><pre>{{ run.error }}</pre></sl-details>
                   {% endif %}
-                </sl-card>
-              {% endfor %}
-            </div>
-          </sl-tab-panel>
-        </sl-tab-group>
-      </sl-tab-panel>
-    </sl-tab-group>
+                </li>
+              {% endif %}
+            {% endfor %}
+          </ul>
+        </sl-details>
+        <sl-details summary="Last Output (JSON)">
+          <sl-spinner style="font-size: 3rem;"></sl-spinner>
+          <zero-md id="last-output-{{ loop.index0 }}" no-auto>
+            <template>
+              <link id="prism-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github.min.css" disabled>
+              <link id="prism-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github-dark.min.css" disabled>
+            </template>
+            <script type="text/markdown">
+```json
+{{ result.lastOutput | dump(2) | safe }}
+```
+            </script>
+          </zero-md>
+        </sl-details>
+        {% if result.lastError and result.lastError.trim() %}
+        <sl-alert variant="danger" open>
+          <sl-icon slot="icon" name="exclamation-triangle"></sl-icon>
+          Last error: <pre>{{ result.lastError }}</pre>
+        </sl-alert>
+        {% endif %}
+      </sl-card>
+      {% endfor %}
+    </div>
   </main>
 
   <script type="module">
     import "{{rootUrl}}/bar-chart.js";
-    fetch('{{rootUrl}}/benchmarks-results.json')
-      .then(r => r.json())
-      .then(({ results }) => {
-        // assuming data is an array of objects like: [{ tool: "Tool A", averageTime: 123 }, ...]
-        // or adapt as needed to your actual JSON structure
-        const chartData = results.map(result => ({
-          name: result.name,
-          value: result.averageTime,
-        }));
-        document.getElementById('perf-bar-chart').setAttribute('data', JSON.stringify(chartData));
-      });
+    import ZeroMd from "https://esm.sh/zero-md@3";
+    customElements.define('zero-md', ZeroMd);
   </script>
-  </script>
-  <script type="module" src="https://unpkg.com/zero-md@3?module"></script>
   {% include './footer.html' %}
 </body>
 </html>
