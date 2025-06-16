@@ -1,10 +1,15 @@
-.PHONY: build test update watch bench profile flamegraph coverage clean lint format prepare-npm
+SHELL := /bin/bash
 
-PLATFORMS = linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64
+.PHONY: build test update watch bench profile flamegraph coverage clean lint format prepare-npm install-bindings
+
 BIN_DIR = npm/bin
 
 build: $(wildcard *.{go,scm})
 	go build
+
+install-bindings:
+	go generate ./... || true
+	go install ./... || true
 
 prepare-npm:
 	@echo "Preparing npm package"
