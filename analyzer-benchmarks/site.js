@@ -19,7 +19,7 @@ const results = JSON.parse(resultsJson);
 const env = nunjucks.configure('.', { autoescape: true });
 
 // Add a pretty-print filter
-env.addFilter('dump', (obj, spaces = 2) => JSON.stringify(obj, null, spaces));
+env.addFilter('dump', (obj, spaces = 2) => JSON.stringify(typeof obj == 'string'? JSON.parse(obj) : obj, null, spaces));
 
 // Render the template
 const html = nunjucks.render('index.html', { readmeHtml, results });
