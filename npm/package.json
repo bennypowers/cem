@@ -5,6 +5,9 @@
   "type": "module",
   "engines": { "node": ">=22.0.0" },
   "bin": { "cem": "bin/cem.js" },
+  "scripts": {
+    "postinstall": "node ./install-platform-binary.js"
+  },
   "optionalDependencies": {
     "@pwrs/cem-linux-x64": "1.0.0",
     "@pwrs/cem-linux-arm64": "1.0.0",
