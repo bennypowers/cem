@@ -84,6 +84,7 @@ jobs:
             echo "release_found=true" >> $GITHUB_OUTPUT
             echo "upload_url=$UPLOAD_URL" >> $GITHUB_OUTPUT
           fi
+          tree dist
 
       - name: Upload all binaries to GitHub Release
         if: steps.get_release.outputs.release_found == 'true'
