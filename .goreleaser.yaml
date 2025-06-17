@@ -1,7 +1,7 @@
 project_name: cem
 
 builds:
-  - id: cem
+  - id: cem-amd64
     main: .
     binary: cem
     goos:
@@ -10,9 +10,24 @@ builds:
       - windows
     goarch:
       - amd64
+    env:
+      - CGO_ENABLED=1
+      - CC=gcc
+    hooks:
+      pre:
+        - go generate ./...
+  - id: cem-arm64
+    main: .
+    binary: cem
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
       - arm64
     env:
       - CGO_ENABLED=1
+      - CC=aarch64-linux-gnu-gcc
     hooks:
       pre:
         - go generate ./...
@@ -23,7 +38,7 @@ archives:
     files:
       - LICENSE*
       - README*
-      - dist/cem* # GoReleaser builds go into dist/
+      - dist/cem*
     format: tar.gz
 
 checksum:

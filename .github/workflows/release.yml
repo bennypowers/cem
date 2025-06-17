@@ -18,6 +18,11 @@ jobs:
         with:
           go-version: '1.24.x'
 
+      - name: Install cross-compilers for CGO
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+
       - name: Run GoReleaser (cross-compile, release, changelog)
         uses: goreleaser/goreleaser-action@v5
         with:
