@@ -1,40 +1,21 @@
 project_name: cem
 
 builds:
-  - id: cem-amd64
-    main: .
+  - main: .
     binary: cem
     goos:
-      - linux
-      - windows
-      - darwin
+      - ${GOOS}
     goarch:
-      - amd64
+      - ${GOARCH}
     env:
       - CGO_ENABLED=1
-      - CC={{ if eq .Os "windows" }}x86_64-w64-mingw32-gcc{{ else if eq .Os "linux" }}gcc{{ else }}clang{{ end }}
-    hooks:
-      pre:
-        - go generate ./...
-  - id: cem-arm64
-    main: .
-    binary: cem
-    goos:
-      - linux
-      - windows
-      - darwin
-    goarch:
-      - arm64
-    env:
-      - CGO_ENABLED=1
-      - CC={{ if and (eq .Os "windows") (eq .Arch "arm64") }}aarch64-w64-mingw32-gcc{{ else if and (eq .Os "linux") (eq .Arch "arm64") }}aarch64-linux-gnu-gcc{{ else }}clang{{ end }}
+      - CC=${CC}
     hooks:
       pre:
         - go generate ./...
 
 archives:
-  - id: cem-archive
-    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
+  - name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
     files:
       - LICENSE*
       - README*

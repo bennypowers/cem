@@ -7,33 +7,32 @@ on:
 
 jobs:
   release:
-    name: Release binaries with GoReleaser
     strategy:
       matrix:
         include:
-          - id: cem-amd64
-            goos: linux
+          - goos: linux
             goarch: amd64
+            cc: gcc
             runner: ubuntu-latest
-          - id: cem-arm64
-            goos: linux
+          - goos: linux
             goarch: arm64
+            cc: aarch64-linux-gnu-gcc
             runner: ubuntu-latest
-          - id: cem-amd64
-            goos: windows
+          - goos: windows
             goarch: amd64
+            cc: x86_64-w64-mingw32-gcc
             runner: ubuntu-latest
-          - id: cem-arm64
-            goos: windows
+          - goos: windows
             goarch: arm64
+            cc: aarch64-w64-mingw32-gcc
             runner: ubuntu-latest
-          - id: cem-amd64
-            goos: darwin
+          - goos: darwin
             goarch: amd64
+            cc: clang
             runner: macos-latest
-          - id: cem-arm64
-            goos: darwin
+          - goos: darwin
             goarch: arm64
+            cc: clang
             runner: macos-latest
     runs-on: ${{ matrix.runner }}
     steps:
@@ -55,8 +54,9 @@ jobs:
         run: |
           echo "GOOS=${{ matrix.goos }}" >> $GITHUB_ENV
           echo "GOARCH=${{ matrix.goarch }}" >> $GITHUB_ENV
+          echo "CC=${{ matrix.cc }}" >> $GITHUB_ENV
 
-      - name: Run GoReleaser for ${{ matrix.goos }}_${{ matrix.goarch }}
+      - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
@@ -65,6 +65,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
+          CC: ${{ matrix.cc }}
 
       - name: Upload Go binaries for npm
         uses: actions/upload-artifact@v4
@@ -79,7 +80,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download Go binaries
+      - name: Download all binaries from matrix jobs
         uses: actions/download-artifact@v4
         with:
           path: dist
