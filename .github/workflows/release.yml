@@ -97,7 +97,7 @@ jobs:
           cd platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}
           echo "!package.json" >> .gitignore
           echo "" > .npmignore
-          npm version from-git
+          npm version from-git --no-git-tag-version
           git add package.json
           npm publish --access public
         env:
