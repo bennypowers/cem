@@ -74,7 +74,6 @@ jobs:
         run: echo "asset_path=$(ls dist/**/cem)" >> $GITHUB_OUTPUT
 
       - name: Upload all binaries to GitHub Release
-        if: steps.get_release.outputs.release_found == 'true'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
