@@ -93,6 +93,7 @@ jobs:
           git config --global user.email "web@bennypowers.com"
           git config --global user.name "Benny Powers"
           cd platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}
+          git add -f package.json  # Force add ignored file
           npm version from-git
           npm publish --access public
         env:
