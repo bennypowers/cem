@@ -4,10 +4,9 @@
 <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/shoelace.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/themes/light.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/themes/dark.css">
+<link id="hljs-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github.min.css" disabled>
+<link id="hljs-dark"  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github-dark.min.css" disabled>
 
-<!-- PrismJS stylesheets for light and dark themes -->
-<link id="prism-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.css" disabled>
-<link id="prism-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-okaidia.css" disabled>
 
 <link rel="stylesheet" href="/site.css">
 
@@ -18,8 +17,8 @@
 
   function setPrismTheme(dark, root = document) {
     // Prism theme switching
-    const prismLight = root.getElementById('prism-light');
-    const prismDark = root.getElementById('prism-dark');
+    const prismLight = root.getElementById('hljs-light');
+    const prismDark = root.getElementById('hljs-dark');
     prismLight.disabled = dark;
     prismDark.disabled = !dark;
   }
@@ -28,26 +27,21 @@
     const dark = themeToggle.checked;
     document.body.setAttribute('class', dark ? 'sl-theme-dark' : 'sl-theme-light');
     setPrismTheme(dark);
-    for (const z of document.querySelectorAll('zero-md')) {
-      if (z.shadowRoot) {
-        setPrismTheme(dark, z?.shadowRoot);
-      }
-    }
   };
 
   themeToggle.addEventListener('sl-change', updateTheme);
 
-  document.addEventListener('sl-show', async function(event) {
+  document.addEventListener('sl-after-show', async function(event) {
     await customElements.whenDefined('zero-md');
     await customElements.whenDefined('sl-spinner');
     const zeroMd = event.target.querySelector('zero-md');
     const spinner = event.target.querySelector('sl-spinner');
-    if (zeroMd && spinner) {
-      zeroMd.render();
-      await new Promise(r => setTimeout(r, 500));
-      await zeroMd.render();
-      spinner.remove();
-      setPrismTheme(themeToggle.checked, zeroMd?.shadowRoot);
+    if (spinner && zeroMd && !zeroMd.src) {
+      zeroMd.src = zeroMd.dataset.src
+      zeroMd.addEventListener('zero-md-rendered', function () {
+        spinner.remove();
+        updateTheme()
+      }, { once: true })
     }
   });
 

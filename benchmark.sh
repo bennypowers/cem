@@ -120,6 +120,7 @@ for i in "${!ids[@]}"; do
     avgTime="0"
     avgSize="0"
   fi
+  lastOutput="$(echo "$last_json" | jq . 2>/dev/null || echo "null")"
 
   # Write each tool's result as a single line in the temp file
   jq -n \
@@ -127,10 +128,11 @@ for i in "${!ids[@]}"; do
     --arg name "$name" \
     --arg docsUrl "$docsUrl" \
     --arg command "$cmd" \
+    --arg lastOutputUrl "$id-last-output.md" \
     --argjson averageTime "$avgTime" \
     --argjson averageSize "$avgSize" \
     --argjson runs "[$(IFS=,; echo "${runs_detail[*]}")]" \
-    --argjson lastOutput "$(echo "$last_json" | jq . 2>/dev/null || echo "null")" \
+    --argjson lastOutput "$lastOutput" \
     --argjson lastError "$(jq -Rs . <<<"$last_stderr")" \
     '{
       id: $id,
@@ -141,8 +143,15 @@ for i in "${!ids[@]}"; do
       averageSize: $averageSize,
       runs: $runs,
       lastOutput: $lastOutput,
+      lastOutputUrl: $lastOutputUrl,
       lastError: $lastError
     }' >> "$results_tmp"
+
+  output_file="site/$id-last-output.md"
+  echo "\`\`\`json" > "$output_file"
+  echo "$lastOutput" >> "$output_file"
+  echo "\`\`\`" >> "$output_file"
+
 done
 
 # Combine all tool results into a single JSON array

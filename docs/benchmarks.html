@@ -114,16 +114,8 @@
         </sl-details>
         <sl-details summary="Last Output (JSON)">
           <sl-spinner style="font-size: 3rem;"></sl-spinner>
-          <zero-md id="last-output-{{ loop.index0 }}" no-auto>
-            <template>
-              <link id="prism-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github.min.css" disabled>
-              <link id="prism-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github-dark.min.css" disabled>
-            </template>
-            <script type="text/markdown">
-```json
-{{ result.lastOutput | dump(2) | safe }}
-```
-            </script>
+          <zero-md id="last-output-{{ loop.index0 }}" data-src="{{ rootUrl }}/{{ result.lastOutputUrl }}" no-shadow>
+            <template></template>
           </zero-md>
         </sl-details>
         {% if result.lastError and result.lastError.trim() %}
