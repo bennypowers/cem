@@ -86,11 +86,6 @@ jobs:
           mkdir -p npm/bin
           cp -r dist/* npm/bin
 
-
-      - name: Install npm dependencies
-        run: npm install
-        working-directory: ./npm
-
       - name: Version npm package
         run: npm version from-git
         working-directory: ./npm
