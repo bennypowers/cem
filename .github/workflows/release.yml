@@ -13,27 +13,39 @@ jobs:
           - goos: linux
             goarch: amd64
             cc: gcc
+            node_platform: linux
+            node_arch: x64
             runner: ubuntu-latest
           - goos: linux
             goarch: arm64
             cc: aarch64-linux-gnu-gcc
+            node_platform: linux
+            node_arch: arm64
             runner: ubuntu-latest
-          # FIXME: if anyone needs this
+          # FIXME: if you need this, fix the build
           # - goos: windows
           #   goarch: amd64
           #   cc: x86_64-w64-mingw32-gcc
+          #   node_platform: win32
+          #   node_arch: x64
           #   runner: ubuntu-latest
           # - goos: windows
           #   goarch: arm64
           #   cc: aarch64-w64-mingw32-gcc
+          #   node_platform: win32
+          #   node_arch: arm64
           #   runner: ubuntu-latest
           - goos: darwin
             goarch: amd64
             cc: clang
+            node_platform: darwin
+            node_arch: x64
             runner: macos-latest
           - goos: darwin
             goarch: arm64
             cc: clang
+            node_platform: darwin
+            node_arch: arm64
             runner: macos-latest
     runs-on: ${{ matrix.runner }}
     steps:
@@ -63,6 +75,29 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           CC: ${{ matrix.cc }}
 
+      - name: Prepare npm platform package
+        run: |
+          mkdir -p platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}
+          cp dist/cem* platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}/
+          node scripts/gen-platform-package-jsons.js
+          cp README.md platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}/README.md
+
+      - name: Set up Node.js for npm publish
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Publish platform package to npm
+        run: |
+          git config --global user.email "web@bennypowers.com"
+          git config --global user.name "Benny Powers"
+          cd platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}
+          npm version from-git
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Upload Go binaries for npm
         uses: actions/upload-artifact@v4
         with:
@@ -71,7 +106,7 @@ jobs:
 
       - name: Get Release Upload URL
         id: get_path
-        run: echo "asset_path=$(ls dist/**/cem)" >> $GITHUB_OUTPUT
+        run: echo "asset_path=$(ls dist/**/cem*)" >> $GITHUB_OUTPUT
 
       - name: Upload all binaries to GitHub Release
         uses: actions/upload-release-asset@v1
@@ -84,31 +119,22 @@ jobs:
           asset_content_type: application/octet-stream
 
   npm:
-    # come back to this down the line
-    #
-    # there aren't great options for multi-arch packages.
-    # we'll probably adopt esbuild's approach, shipping one package per arch/os combo
-    # and listing them as optionalDependencies in the main package
-    if: false
     name: Package and publish npm
     runs-on: ubuntu-latest
     needs: release
     steps:
       - uses: actions/checkout@v4
-
-      - name: Download all binaries from matrix jobs
-        uses: actions/download-artifact@v4
+      - name: Set up Node.js for npm publish
+        uses: actions/setup-node@v4
         with:
-          path: dist
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Prepare npm package
         run: |
-          echo "Preparing npm package"
-          mkdir -p npm/bin
-          cp -r dist/* npm/bin
-
-      - name: Set up Git user identity
-        run: |
+          echo "Copying README"
+          cp README.md npm/README.md
+          echo "Setting up Git ID"
           git config --global user.email "web@bennypowers.com"
           git config --global user.name "Benny Powers"
 

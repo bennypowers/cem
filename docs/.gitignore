@@ -1,7 +1,0 @@
-node_modules
-*-result.json
-*-bench.txt
-*-stdout.txt
-custom-elements.json
-site
-**/custom-elements.json
