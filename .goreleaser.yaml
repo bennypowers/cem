@@ -4,10 +4,6 @@ project_name: cem
 builds:
   - main: .
     binary: cem
-    goos:
-      - '{{.Env.GOOS}}'
-    goarch:
-      - '{{.Env.GOARCH}}'
     env:
       - CGO_ENABLED=1
       - CC={{.Env.CC}}
