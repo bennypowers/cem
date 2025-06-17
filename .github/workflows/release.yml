@@ -123,35 +123,23 @@ jobs:
     needs: release
     steps:
       - uses: actions/checkout@v4
-
-      - name: Download all binaries from matrix jobs
-        uses: actions/download-artifact@v4
+      - name: Set up Node.js for npm publish
+        uses: actions/setup-node@v4
         with:
-          path: dist
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Prepare npm package
         run: |
-          echo "Preparing npm package"
-          mkdir -p npm/bin
-          cp -r dist/* npm/bin
-
-      - name: Copy README.md into npm package
-        run: cp README.md npm/README.md
-
-      - name: Set up Git user identity
-        run: |
+          echo "Copying README"
+          cp README.md npm/README.md
+          echo "Setting up Git ID"
           git config --global user.email "web@bennypowers.com"
           git config --global user.name "Benny Powers"
 
       - name: Version npm package
         run: npm version from-git
         working-directory: ./npm
-
-      - name: Set up Node.js for npm publish
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Publish to npm
         run: npm publish --access public
