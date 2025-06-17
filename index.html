@@ -138,7 +138,11 @@ variables<pre class="language-css"><code class="language-css"><span class="token
 </li>
 </ul>
 <h2>Installation</h2>
+<p>For go binaries:</p>
 <pre class="language-sh"><code class="language-sh">go <span class="token function">install</span> bennypowers.dev/cem@latest
+</code></pre>
+<p>For NPM projects:</p>
+<pre class="language-sh"><code class="language-sh"><span class="token function">npm</span> <span class="token function">install</span> --save-dev @pwrs/cem
 </code></pre>
 <p>Or clone this repository and build from source:</p>
 <pre class="language-sh"><code class="language-sh"><span class="token function">git</span> clone https://github.com/bennypowers/cem.git
@@ -153,6 +157,8 @@ variables<pre class="language-css"><code class="language-css"><span class="token
   <span class="token parameter variable">--exclude</span> <span class="token string">"src/**/*.test.ts"</span> <span class="token punctuation">\</span>
   <span class="token parameter variable">--output</span> custom-elements.json
 </code></pre>
+<p>for npm projects you can use <code>npx @pwrs/cem generate ...</code>, just be sure to
+install the package first.</p>
 <ul>
 <li><code>generate</code>: Command to start manifest generation.</li>
 <li>Accepts file paths and glob patterns.</li>
