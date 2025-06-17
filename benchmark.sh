@@ -9,6 +9,7 @@ if ! [[ "$runs" =~ ^[0-9]+$ ]]; then
 fi
 
 cd docs
+mkdir -p site
 if [[ -n "$CI" ]]; then
   pwd
   npm ci
