@@ -72,8 +72,15 @@ Group](https://tr.designtokens.org/format/) format module (JSON) to `cem` via th
 
 ## Installation
 
+For go binaries:
 ```sh
 go install bennypowers.dev/cem@latest
+```
+
+For NPM projects:
+
+```sh
+npm install --save-dev @pwrs/cem
 ```
 
 Or clone this repository and build from source:
@@ -95,6 +102,9 @@ cem generate \
   --exclude "src/**/*.test.ts" \
   --output custom-elements.json
 ```
+
+for npm projects you can use `npx @pwrs/cem generate ...`, just be sure to
+install the package first.
 
 - `generate`: Command to start manifest generation.
 - Accepts file paths and glob patterns.
