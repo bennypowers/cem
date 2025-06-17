@@ -3,7 +3,8 @@ class BarChart extends HTMLElement {
   static template = document.createElement('template');
   static { this.template.innerHTML = `<slot></slot>`; }
   static { customElements.define(this.is, this); }
-  connectedCallback() {
+  constructor() {
+    super()
     this.attachShadow({ mode: 'open' }).append(BarChart.template.content.cloneNode(true));
   }
 }

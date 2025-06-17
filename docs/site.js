@@ -38,6 +38,10 @@ env.addFilter('max', function(arr) {
   if (!Array.isArray(arr)) return undefined;
   return Math.max(...arr);
 });
+env.addFilter('min', function(arr) {
+  if (!Array.isArray(arr)) return undefined;
+  return Math.min(...arr);
+});
 env.addFilter('enumerate', function(arr) {
   if (!Array.isArray(arr)) return [];
   return arr.map((val, idx) => [idx, val]);
@@ -50,6 +54,7 @@ await fs.writeFile('site/index.html', nunjucks.render('index.html', { title: 'RE
 await fs.writeFile('site/benchmarks/index.html', nunjucks.render('benchmarks.html', { title: 'Benchmarks', rootUrl, readmeHtml, results }));
 await fs.copyFile('site.css', 'site/site.css');
 await fs.copyFile('bar-chart.js', 'site/bar-chart.js');
+await fs.copyFile('line-chart.js', 'site/line-chart.js');
 for await (const md of fs.glob('*.md'))
   await fs.copyFile(md, path.join('site', md))
 
