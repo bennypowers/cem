@@ -1,15 +1,16 @@
+version: 2
 project_name: cem
 
 builds:
   - main: .
     binary: cem
     goos:
-      - ${GOOS}
+      - '{{.Env.GOOS}}'
     goarch:
-      - ${GOARCH}
+      - '{{.Env.GOARCH}}'
     env:
       - CGO_ENABLED=1
-      - CC=${CC}
+      - CC={{.Env.CC}}
     hooks:
       pre:
         - go generate ./...
