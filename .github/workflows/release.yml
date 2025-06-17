@@ -1,9 +1,9 @@
 name: Release Go CLI and Publish to npm
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
+  release:
+    types:
+      - published
 
 jobs:
   release:
