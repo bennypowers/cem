@@ -12,7 +12,7 @@ cd docs
 if [[ -n "$CI" ]]; then
   pwd
   npm ci
-  ls ..
+  cp ../dist/cem ../cem
 fi
 
 file_glob="src/components/*.ts"
