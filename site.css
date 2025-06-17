@@ -5,8 +5,16 @@ body {
   color: var(--sl-color-neutral-900);
   font-family: var(--sl-font-sans, -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji");
 
+  display: grid;
+  grid-template-columns: max-content auto;
+  gap: var(--sl-spacing-large) var(--sl-spacing-x-large);
+  grid-template-areas:
+    'header header '
+    'nav main ';
+
   header {
     display: flex;
+    grid-area: header;
     align-items: center;
     justify-content: space-between;
     padding: 1.5rem 2rem 1rem 2rem;
@@ -21,7 +29,7 @@ body {
       gap: 1rem;
     }
 
-    h1 {
+    h2 {
       margin: 0;
       font-family: var(--sl-font-sans, inherit);
       font-size: var(--sl-font-size-2x-large, 1.6rem);
@@ -38,13 +46,24 @@ body {
       font-weight: var(--sl-font-weight-medium, 500);
     }
   }
-}
 
-main {
-  max-width: 900px;
-  margin: 2rem auto;
-  padding: 2rem;
-  font-family: var(--sl-font-sans, inherit);
+  > aside {
+    grid-area: nav;
+    padding: var(--sl-spacing-large) var(--sl-spacing-x-large);
+    nav {
+      display: flex;
+      flex-flow: column;
+      gap: var(--sl-spacing-small);
+    }
+  }
+
+  main {
+    grid-area: main;
+    max-width: 900px;
+    width: auto;
+    font-family: var(--sl-font-sans, inherit);
+  }
+
 }
 
 sl-card {
@@ -63,59 +82,10 @@ sl-card {
   margin-bottom: 2rem;
 }
 
-.analyzer-summary-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.analyzer-summary-title {
-  font-weight: 600;
-  font-family: var(--sl-font-sans, inherit);
-}
-
-.analyzer-summary-badge {
-  margin-left: auto;
-}
-
-.analyzer-summary-docslink {
-  margin-top: .5rem;
-}
-
-.analyzer-summary-stats {
-  display: flex;
-  gap: 1.5rem;
-  align-items: center;
-  margin-top: 1.2rem;
-}
-
-.analyzer-summary-label {
-  font-size: .9em;
-  opacity: 0.7;
-}
-
-.analyzer-summary-command {
-  margin-top: 1em;
-}
-
-.analyzer-detail-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.analyzer-detail-runs {
-  padding-left: 1.2em;
-}
-
-.analyzer-detail-json {
-  background: #f1f3f7;
-  color: #2d3748;
-  padding: 0.8em 1em;
-  border-radius: 8px;
-  font-size: 0.92em;
-  overflow-x: auto;
-  font-family: var(--sl-font-mono, 'Fira Mono', 'Consolas', 'Menlo', monospace);
+.hljs {
+  &.language-json {
+    background: none;
+  }
 }
 
 @media (max-width: 700px) {
@@ -128,15 +98,11 @@ sl-card {
 }
 
 .readme-content {
-  margin-top: 2rem;
-  margin-bottom: 2rem;
-  max-width: 900px;
   font-size: 1.08em;
   line-height: 1.7;
   color: var(--sl-color-neutral-900);
   background: var(--sl-color-neutral-0);
   border-radius: 8px;
-  padding: 1.5em 1.5em 1.5em 1em;
   box-shadow: 0 1px 6px 0 rgba(20, 20, 40, 0.05);
   font-family: var(--sl-font-sans, inherit);
 
