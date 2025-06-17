@@ -95,6 +95,7 @@ jobs:
           git config --global user.name "Benny Powers"
           git config set advice.addIgnoredFile false
           cd platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}
+          echo "!package.json" >> .gitignore
           echo "" > .npmignore
           npm version from-git
           git add package.json
