@@ -95,7 +95,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./dist/cem-${{ matrix.goos }}-${{ matrix.goarch }}
+          asset_path: ./dist/cem-${{ matrix.goos }}-${{ matrix.goarch }}/cem
           asset_name: cem-${{ matrix.goos }}-${{ matrix.goarch }}
           asset_content_type: application/octet-stream
 
