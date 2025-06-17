@@ -86,6 +86,11 @@ jobs:
           mkdir -p npm/bin
           cp -r dist/* npm/bin
 
+      - name: Set up Git user identity
+        run: |
+          git config --global user.email "web@bennypowers.com"
+          git config --global user.name "Benny Powers"
+
       - name: Version npm package
         run: npm version from-git
         working-directory: ./npm
