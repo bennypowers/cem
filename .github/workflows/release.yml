@@ -78,7 +78,7 @@ jobs:
       - name: Prepare npm platform package
         run: |
           mkdir -p platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}
-          cp dist/cem* platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}/
+          cp dist/*/cem platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}/
           node scripts/gen-platform-package-jsons.js
           cp README.md platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}/README.md
 
