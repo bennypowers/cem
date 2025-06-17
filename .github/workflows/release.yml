@@ -93,6 +93,7 @@ jobs:
           git config --global user.email "web@bennypowers.com"
           git config --global user.name "Benny Powers"
           cd platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}
+          npm version from-git
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
