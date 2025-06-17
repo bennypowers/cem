@@ -18,6 +18,7 @@
   },
   "files": [
     "bin/cem.js",
+    "install-platform-binary.js",
     "README.md"
   ]
 }
