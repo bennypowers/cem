@@ -4,9 +4,6 @@ project_name: cem
 builds:
   - main: .
     binary: cem
-    env:
-      - CGO_ENABLED=1
-      - CC={{.Env.CC}}
     hooks:
       pre:
         - go generate ./...
