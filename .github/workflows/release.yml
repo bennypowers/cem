@@ -93,9 +93,9 @@ jobs:
           git config --global user.email "web@bennypowers.com"
           git config --global user.name "Benny Powers"
           git config set advice.addIgnoredFile false
-          echo "" > .npmignore
           cd platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}
           npm version from-git
+          echo "" > .npmignore
           git add package.json
           npm publish --access public
         env:
