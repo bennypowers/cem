@@ -1,6 +1,9 @@
 name: Release Go CLI and Publish to npm
 
 on:
+  push:
+    tags:
+      - "v*.*.*"
   release:
     types:
       - published
@@ -68,12 +71,30 @@ jobs:
         with:
           name: cem-${{ matrix.goos }}-${{ matrix.goarch }}
           path: dist/cem*
+
+      - name: Get Release Upload URL
+        id: get_release
+        run: |
+          set -e
+          TAG_NAME="${GITHUB_REF##*/}"
+          API_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${TAG_NAME}"
+          RELEASE_DATA=$(curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "$API_URL")
+          UPLOAD_URL=$(echo "$RELEASE_DATA" | jq -r .upload_url)
+          if [ "$UPLOAD_URL" = "null" ]; then
+            echo "No release found for tag $TAG_NAME."
+            echo "release_found=false" >> $GITHUB_OUTPUT
+          else
+            echo "release_found=true" >> $GITHUB_OUTPUT
+            echo "upload_url=$UPLOAD_URL" >> $GITHUB_OUTPUT
+          fi
+
       - name: Upload all binaries to GitHub Release
+        if: steps.get_release.outputs.release_found == 'true'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ github.event.release.upload_url }}
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
           asset_path: ./dist/cem-${{ matrix.goos }}-${{ matrix.goarch }}
           asset_name: cem-${{ matrix.goos }}-${{ matrix.goarch }}
           asset_content_type: application/octet-stream
