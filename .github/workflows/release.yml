@@ -11,22 +11,28 @@ jobs:
     strategy:
       matrix:
         include:
-          - goos: linux
+          - id: cem-amd64
+            goos: linux
             goarch: amd64
             runner: ubuntu-latest
-          - goos: linux
+          - id: cem-arm64
+            goos: linux
             goarch: arm64
             runner: ubuntu-latest
-          - goos: windows
+          - id: cem-amd64
+            goos: windows
             goarch: amd64
             runner: ubuntu-latest
-          - goos: windows
+          - id: cem-arm64
+            goos: windows
             goarch: arm64
             runner: ubuntu-latest
-          - goos: darwin
+          - id: cem-amd64
+            goos: darwin
             goarch: amd64
             runner: macos-latest
-          - goos: darwin
+          - id: cem-arm64
+            goos: darwin
             goarch: arm64
             runner: macos-latest
     runs-on: ${{ matrix.runner }}
@@ -45,16 +51,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gcc-aarch64-linux-gnu gcc-mingw-w64 mingw-w64
 
-      - name: Set up environment for GoReleaser
+      - name: Set environment for GoReleaser
         run: |
           echo "GOOS=${{ matrix.goos }}" >> $GITHUB_ENV
           echo "GOARCH=${{ matrix.goarch }}" >> $GITHUB_ENV
 
-      - name: Run GoReleaser
+      - name: Run GoReleaser for ${{ matrix.goos }}_${{ matrix.goarch }}
         uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
-          args: release --clean --skip-validate --single-target
+          args: release --clean --skip-validate --id ${{ matrix.id }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOOS: ${{ matrix.goos }}
