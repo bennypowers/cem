@@ -2,18 +2,11 @@ SHELL := /bin/bash
 
 .PHONY: build test update watch bench profile flamegraph coverage clean lint format prepare-npm install-bindings
 
-BIN_DIR = npm/bin
-
 build:
 	go build -o dist/cem .
 
 install-bindings:
 	go generate ./...
-
-prepare-npm:
-	@echo "Preparing npm package"
-	@mkdir -p $(BIN_DIR)
-	@cp dist/cem* $(BIN_DIR) 2>/dev/null || true
 
 test:
 	go test -json ./... | go tool tparse -all

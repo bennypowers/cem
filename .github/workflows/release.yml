@@ -81,10 +81,18 @@ jobs:
           path: dist
 
       - name: Prepare npm package
-        run: make prepare-npm
+        run: |
+          echo "Preparing npm package"
+          mkdir -p npm/bin
+          cp -r dist/* npm/bin
+
 
       - name: Install npm dependencies
         run: npm install
+        working-directory: ./npm
+
+      - name: Version npm package
+        run: npm version from-git
         working-directory: ./npm
 
       - name: Publish to npm
