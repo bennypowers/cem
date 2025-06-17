@@ -77,6 +77,7 @@ jobs:
           API_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${TAG_NAME}"
           RELEASE_DATA=$(curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "$API_URL")
           UPLOAD_URL=$(echo "$RELEASE_DATA" | jq -r .upload_url)
+          BIN_PATH=$(ls ./**/cem)
           if [ "$UPLOAD_URL" = "null" ]; then
             echo "No release found for tag $TAG_NAME."
             echo "release_found=false" >> $GITHUB_OUTPUT
@@ -84,6 +85,7 @@ jobs:
             echo "release_found=true" >> $GITHUB_OUTPUT
             echo "upload_url=$UPLOAD_URL" >> $GITHUB_OUTPUT
           fi
+          echo "asset_path=$BIN_PATH" >> $GITHUB_OUTPUT
           ls dist
           ls dist/*
           ls dist/**/*
@@ -95,7 +97,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./dist/cem-${{ matrix.goos }}-${{ matrix.goarch }}/cem
+          asset_path: ${{ steps.get_release.outputs.asset_path }}
           asset_name: cem-${{ matrix.goos }}-${{ matrix.goarch }}
           asset_content_type: application/octet-stream
 
