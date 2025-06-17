@@ -4,3 +4,13 @@ __debug*
 *.test
 benchmark-results.json
 dist
+
+platforms/**/package.json
+
+docs/node_modules
+docs/*-result.json
+docs/*-bench.txt
+docs/*-stdout.txt
+docs/custom-elements.json
+docs/site
+docs/**/custom-elements.json
