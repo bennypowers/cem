@@ -6,13 +6,14 @@ builds:
     binary: cem
     goos:
       - linux
-      - darwin
       - windows
+      - darwin
     goarch:
       - amd64
     env:
       - CGO_ENABLED=1
-      - CC={{ if eq .Os "windows" }}x86_64-w64-mingw32-gcc{{ else }}gcc{{ end }}
+      - >
+        CC={{ if eq .Os "windows" }}x86_64-w64-mingw32-gcc{{ else if eq .Os "linux" }}gcc{{ else }}clang{{ end }}
     hooks:
       pre:
         - go generate ./...
@@ -21,13 +22,14 @@ builds:
     binary: cem
     goos:
       - linux
-      - darwin
       - windows
+      - darwin
     goarch:
       - arm64
     env:
       - CGO_ENABLED=1
-      - CC={{ if and (eq .Os "windows") (eq .Arch "arm64") }}aarch64-w64-mingw32-gcc{{ else }}aarch64-linux-gnu-gcc{{ end }}
+      - >
+        CC={{ if and (eq .Os "windows") (eq .Arch "arm64") }}aarch64-w64-mingw32-gcc{{ else if and (eq .Os "linux") (eq .Arch "arm64") }}aarch64-linux-gnu-gcc{{ else }}clang{{ end }}
     hooks:
       pre:
         - go generate ./...

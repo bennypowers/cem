@@ -8,7 +8,28 @@ on:
 jobs:
   release:
     name: Release binaries with GoReleaser
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            runner: ubuntu-latest
+          - goos: linux
+            goarch: arm64
+            runner: ubuntu-latest
+          - goos: windows
+            goarch: amd64
+            runner: ubuntu-latest
+          - goos: windows
+            goarch: arm64
+            runner: ubuntu-latest
+          - goos: darwin
+            goarch: amd64
+            runner: macos-latest
+          - goos: darwin
+            goarch: arm64
+            runner: macos-latest
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -18,24 +39,32 @@ jobs:
         with:
           go-version: '1.24.x'
 
-      - name: Install cross-compilers for CGO
+      - name: Install cross-compilers for CGO (Linux/Windows only)
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-aarch64-linux-gnu gcc-mingw-w64 mingw-w64
 
-      - name: Run GoReleaser (cross-compile, release, changelog)
+      - name: Set up environment for GoReleaser
+        run: |
+          echo "GOOS=${{ matrix.goos }}" >> $GITHUB_ENV
+          echo "GOARCH=${{ matrix.goarch }}" >> $GITHUB_ENV
+
+      - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
-          args: release --clean
+          args: release --clean --skip-validate --single-target
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
 
       - name: Upload Go binaries for npm
         uses: actions/upload-artifact@v4
         with:
-          name: cem-binaries
-          path: dist/cem* # matches GoReleaser default output
+          name: cem-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/cem*
 
   npm:
     name: Package and publish npm
@@ -47,7 +76,6 @@ jobs:
       - name: Download Go binaries
         uses: actions/download-artifact@v4
         with:
-          name: cem-binaries
           path: dist
 
       - name: Prepare npm package
