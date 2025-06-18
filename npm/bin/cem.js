@@ -22,14 +22,9 @@ if (!supportedTargets.has(target)) {
 
 let binPath;
 try {
-  let pkgPath = `@pwrs/cem-${target}/bin/cem`
-  if (platform() === "win32" ? ".exe" : "") {
-    pkgPath += '.exe'
-  }
-  binPath = require.resolve(pkgPath);
-  console.log(pkgPath);
+  binPath = require.resolve(`@pwrs/cem-${target}/cem${platform() === 'win32' ? '.exe' : ''}`);
 } catch {
-  console.error(`cem: Platform binary package ${subpkg} not installed. Was there an install error?`);
+  console.error(`cem: Platform binary package @pwrs/cem-${target} not installed. Was there an install error?`);
   process.exit(1);
 }
 
