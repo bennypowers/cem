@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import entryPointPkgJson from '../npm/package.json' with { type: 'json' };
 
-import { targets, version } from './targets.js';
+import { targets } from './targets.js';
 
 const out = new URL('../npm/package.json', import.meta.url);
 
