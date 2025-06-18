@@ -28,7 +28,7 @@ jobs:
             cgo_enabled: 1
             node_platform: win32
             node_arch: x64
-            runner: windows-latest
+            runner: ubuntu-latest
           # FIXME: if you need this, fix the build
           # - goos: windows
           #   goarch: arm64
