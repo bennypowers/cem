@@ -16,11 +16,10 @@ for (const t of targets) {
     type: "module",
     os: [t.os],
     cpu: [t.cpu],
-    files: [t.ext === ".exe" ? "cem.exe" : "cem"],
-    bin: { cem: t.ext === ".exe" ? "cem.exe" : "cem" },
+    files: ["cem", "cem.exe"],
     engines: { node: ">=22.0.0" },
     license: "MIT",
-    description: `Platform-specific binary for cem on ${t.name}`
+    description: `${t.name} binary for cem - a Custom Elements Manifest CLI`
   }, null, 2));
 }
 
