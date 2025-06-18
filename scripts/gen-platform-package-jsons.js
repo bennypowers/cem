@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { execSync } from "node:child_process";
 import { join } from "node:path";
+import entryPointPkgJson from '../npm/package.json' with { type: 'json' };
 
 const version = execSync("npm pkg get version", { encoding: "utf8", cwd: 'npm' }).trim().replace(/"/g, "");
 const targets = [
@@ -28,3 +29,8 @@ for (const t of targets) {
     description: `Platform-specific binary for cem on ${t.name}`
   }, null, 2));
 }
+
+await writeFile(new URL('../npm/package.json', import.meta.url), JSON.stringify({
+  ...entryPointPkgJson,
+  optionalDependencies: Object.fromEntries(Object.entries(entryPointPkgJson).map(([k,v]) => [k, version])),
+}), 'utf8');
