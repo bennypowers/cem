@@ -146,7 +146,7 @@ jobs:
       - name: Version npm package
         run: |
           npm version from-git --no-git-tag-version
-          node scripts/update-platform-package-versions.js
+          node ../scripts/update-platform-package-versions.js
         working-directory: ./npm
 
       - name: Publish to npm
