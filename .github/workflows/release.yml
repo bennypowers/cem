@@ -144,7 +144,9 @@ jobs:
           git config --global user.name "Benny Powers"
 
       - name: Version npm package
-        run: npm version from-git --no-git-tag-version
+        run: |
+          npm version from-git --no-git-tag-version
+          node scripts/update-platform-package-versions.js
         working-directory: ./npm
 
       - name: Publish to npm
