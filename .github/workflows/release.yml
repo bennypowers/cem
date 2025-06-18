@@ -22,13 +22,14 @@ jobs:
             node_platform: linux
             node_arch: arm64
             runner: ubuntu-latest
+          - goos: windows
+            goarch: amd64
+            cc: x86_64-w64-mingw32-gcc
+            cgo_enabled: 1
+            node_platform: win32
+            node_arch: x64
+            runner: windows-latest
           # FIXME: if you need this, fix the build
-          # - goos: windows
-          #   goarch: amd64
-          #   cc: x86_64-w64-mingw32-gcc
-          #   node_platform: win32
-          #   node_arch: x64
-          #   runner: ubuntu-latest
           # - goos: windows
           #   goarch: arm64
           #   cc: aarch64-w64-mingw32-gcc

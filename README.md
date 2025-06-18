@@ -112,6 +112,16 @@ install the package first.
 - `--exclude` / `-e`: Specify patterns to exclude from the manifest.
 - `--output` / `-o`: Write the manifest to a file instead of stdout.
 
+
+## Local Windows Build Using Podman
+
+Running podman will output a cem.exe file in the root directory
+
+```sh
+podman build -t cem-windows .
+podman run --rm -v $(pwd):/output:Z cem-windows cp cem.exe /output/
+```
+
 ## License
 
 This program is free software: you can redistribute it and/or modify it under the terms of the [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.html).
