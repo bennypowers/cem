@@ -1,7 +1,11 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { targets, version } from './targets.js';
+import { execSync } from "node:child_process";
+
+import { targets } from './targets.js';
+
+export const version = execSync("npm pkg get version", { encoding: "utf8", cwd: 'npm' }).trim().replace(/"/g, "");
 
 for (const t of targets) {
   const dir = join("platforms", `cem-${t.name}`);
