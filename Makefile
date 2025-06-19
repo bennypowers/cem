@@ -1,9 +1,23 @@
 SHELL := /bin/bash
 
-.PHONY: build test update watch bench profile flamegraph coverage clean lint format prepare-npm install-bindings
+.PHONY: build test update watch bench profile flamegraph coverage clean lint format prepare-npm install-bindings windows windows-x64 windows-arm64
 
 build:
 	go build -o dist/cem .
+
+windows-x64:
+	podman build --build-arg GOARCH=amd64 --build-arg CC=x86_64-w64-mingw32-gcc -t cem-windows-x64 .
+	podman run --rm -v $(pwd):/output:Z cem-windows-x64 cp cem.exe /output/cem-windows-x64.exe
+
+windows-arm64:
+	echo "Note: windows-arm64 builds are not yet supported. Generating a stub script instead"
+	echo '#!/usr/bin/env node\nconsole.error("cem does not yet support Windows on ARM64. Please use x64 or another operating system.");process.exit(1);' > cem.exe
+	chmod +x cem.exe
+	mkdir -p dist/cem-win32-arm64
+	mv cem.exe dist/cem-win32-arm64/
+
+# Convenience target to build both Windows variants
+windows: windows-x64 windows-arm64
 
 install-bindings:
 	go generate ./...
@@ -39,4 +53,4 @@ coverage:
 	go test -coverprofile=cover.out
 
 clean:
-	rm -rf dist/ cpu.out cover.out npm/bin artifacts
+	rm -rf dist/ cpu.out cover.out npm/bin artifacts platforms

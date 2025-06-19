@@ -16,7 +16,9 @@
     "@pwrs/cem-linux-x64": "0.0.3",
     "@pwrs/cem-linux-arm64": "0.0.3",
     "@pwrs/cem-darwin-x64": "0.0.3",
-    "@pwrs/cem-darwin-arm64": "0.0.3"
+    "@pwrs/cem-darwin-arm64": "0.0.3",
+    "@pwrs/cem-win32-x64": "0.0.3",
+    "@pwrs/cem-win32-arm64": "0.0.3"
   },
   "files": [
     "bin/cem.js",

@@ -9,8 +9,8 @@ const supportedTargets = new Set([
   "linux-arm64",
   "darwin-x64",
   "darwin-arm64",
-  // "win32-x64",
-  // "win32-arm64",
+  "win32-x64",
+  "win32-arm64",
 ]);
 
 const target = `${platform()}-${arch()}`

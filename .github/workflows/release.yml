@@ -22,19 +22,18 @@ jobs:
             node_platform: linux
             node_arch: arm64
             runner: ubuntu-latest
-          # FIXME: if you need this, fix the build
-          # - goos: windows
-          #   goarch: amd64
-          #   cc: x86_64-w64-mingw32-gcc
-          #   node_platform: win32
-          #   node_arch: x64
-          #   runner: ubuntu-latest
-          # - goos: windows
-          #   goarch: arm64
-          #   cc: aarch64-w64-mingw32-gcc
-          #   node_platform: win32
-          #   node_arch: arm64
-          #   runner: ubuntu-latest
+          - goos: windows
+            goarch: amd64
+            cc: x86_64-w64-mingw32-gcc
+            node_platform: win32
+            node_arch: x64
+            runner: ubuntu-latest
+          - goos: windows
+            goarch: arm64
+            cc: aarch64-w64-mingw32-gcc
+            node_platform: win32
+            node_arch: arm64
+            runner: ubuntu-latest
           - goos: darwin
             goarch: amd64
             cc: clang
@@ -50,9 +49,6 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
       - uses: actions/setup-go@v5
         with:
           go-version: '1.24.x'
@@ -65,6 +61,7 @@ jobs:
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
+        if: ${{ !(matrix.goos == 'windows' && matrix.goarch == 'arm64') }}
         with:
           version: "~> v2"
           args: build --single-target
@@ -74,6 +71,11 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           CC: ${{ matrix.cc }}
+
+      - name: Fake windows / arm build
+        if: ${{ (matrix.goos == 'windows' && matrix.goarch == 'arm64') }}
+        run: make windows-arm64
+
 
       - name: Prepare npm platform package
         run: |
