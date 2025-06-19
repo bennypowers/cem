@@ -54,7 +54,6 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y tree
           sudo apt-get install -y gcc-aarch64-linux-gnu gcc-mingw-w64 mingw-w64
 
       - name: Run GoReleaser
@@ -79,6 +78,7 @@ jobs:
           mkdir -p platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}
           cp dist/*/cem${{ matrix.goos == 'windows' && '.exe' || '' }} platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}/
           node scripts/gen-platform-package-jsons.js
+          sudo apt-get install -y tree
           tree dist
           tree platforms
 
