@@ -59,7 +59,7 @@ jobs:
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
-        if: not(matrix.goos == 'windows' && matrix.goarch == 'arm64')
+        if: ${{ !(matrix.goos == 'windows' && matrix.goarch == 'arm64') }}
         with:
           version: "~> v2"
           args: build --single-target
@@ -71,6 +71,7 @@ jobs:
           CC: ${{ matrix.cc }}
 
       - name: Fake windows / arm build
+        if: ${{ (matrix.goos == 'windows' && matrix.goarch == 'arm64') }}
         run: make windows-arm64
 
       - name: Prepare npm platform package (dry run)
