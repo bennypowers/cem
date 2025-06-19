@@ -13,8 +13,8 @@ windows-arm64:
 	echo "Note: windows-arm64 builds are not yet supported. Generating a stub script instead"
 	echo '#!/usr/bin/env node\nconsole.error("cem does not yet support Windows on ARM64. Please use x64 or another operating system.");process.exit(1);' > cem.exe
 	chmod +x cem.exe
-	mkdir -p platforms/cem-win32-arm64
-	mv cem.exe platforms/cem-win32-arm64/
+	mkdir -p dist/cem-win32-arm64
+	mv cem.exe dist/cem-win32-arm64/
 
 # Convenience target to build both Windows variants
 windows: windows-x64 windows-arm64
@@ -53,4 +53,4 @@ coverage:
 	go test -coverprofile=cover.out
 
 clean:
-	rm -rf dist/ cpu.out cover.out npm/bin artifacts
+	rm -rf dist/ cpu.out cover.out npm/bin artifacts platforms
