@@ -6,8 +6,8 @@ build:
 	go build -o dist/cem .
 
 windows-x64:
-	podman build --build-arg GOARCH=amd64 --build-arg CC=x86_64-w64-mingw32-gcc -t cem-windows-x64 .
-	podman run --rm -v $(pwd):/output:Z cem-windows-x64 cp cem.exe /output/cem-windows-x64.exe
+	mkdir -p dist/windows-x64
+	podman build -t cem-windows-x64 --build-arg OUTPUT=dist/windows-x64 .
 
 windows-arm64:
 	echo "Note: windows-arm64 builds are not yet supported. Generating a stub script instead"
