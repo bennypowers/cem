@@ -128,14 +128,21 @@ cem generate \
   --output custom-elements.json
 ```
 
-for npm projects you can use `npx @pwrs/cem generate ...`, just be sure to
-install the package first.
+For npm projects you can use `npx @pwrs/cem generate ...`.
+### Arguments
+| Argument                     | Type               | Description                                                                                       |
+| ---------------------------- | ------------------ | ------------------------------------------------------------------------------------------------- |
+| `<files or globs>`           | positional (array) | Files or glob patterns to include                                                                 |
+| `--exclude, -e`              | array              | Files or glob patterns to exclude                                                                 |
+| `--design-tokens, -t`        | string             | Path or npm specifier for DTCG-format design tokens                                               |
+| `--design-tokens-prefix, -p` | string             | CSS custom property prefix for design tokens                                                      |
+| `--output, -o`               | string             | Write the manifest to this file instead of stdout                                                 |
+| `--no-default-excludes`      | bool               | Do not exclude files by default (e.g., `.d.ts` files will be included unless excluded explicitly) |
 
-- `generate`: Command to start manifest generation.
-- Accepts file paths and glob patterns.
-- `--design-tokens`: path to tokens file or npm:package specifier
-- `--exclude` / `-e`: Specify patterns to exclude from the manifest.
-- `--output` / `-o`: Write the manifest to a file instead of stdout.
+By default, some files (like `.d.ts` TypeScript declaration files) are excluded from the manifest.
+Use `--no-default-excludes` if you want to include all matching files and manage excludes yourself.
+
+## Contributing
 
 For information on building and testing, please see
 [CONTRIBUTING.md][contributingmd].

@@ -15,6 +15,24 @@ import (
 	S "bennypowers.dev/cem/set"
 )
 
+// CLI or config arguments passed to the generate command
+type GenerateArgs struct {
+	// List of files or file globs to include in the manifest
+	Files              []string
+	// List of files or file globs to exclude from the manifest
+	Exclude            []string
+	// Path or `npm:@scope/package/path/to/file.json` spec to DTCG format design
+	// tokens json module
+	DesignTokensSpec   string
+	// Prefix those design tokens use in CSS. If the design tokens are generated
+	// by style dictionary and have a `name` field, that will be used instead.
+	DesignTokensPrefix string
+	// Do not exclude files that are excluded by default e.g. *.d.ts files.
+	NoDefaultExcludes  bool
+	// File path to write output to. If omitted, output will be written to stdout.
+	Output             string
+}
+
 func mergeCssPropertyInfoFromDesignTokens(module *M.Module, designTokens designtokens.DesignTokens) {
 	for i, d := range module.Declarations {
 		if d, ok := d.(*M.CustomElementDeclaration); ok {
@@ -31,30 +49,25 @@ func mergeCssPropertyInfoFromDesignTokens(module *M.Module, designTokens designt
 }
 
 // Generates a custom-elements manifest from a list of typescript files
-func Generate(
-	files []string,
-	exclude []string,
-	designTokensSpec string,
-	designTokensPrefix string,
-) (*string, error) {
-	excludeSet := S.NewSet(exclude...)
+func Generate(args GenerateArgs) (*string, error) {
+	excludeSet := S.NewSet(args.Exclude...)
 
 	var wg sync.WaitGroup
 	var errs error
 	var designTokens *designtokens.DesignTokens
 
-	if designTokensSpec != "" {
-		tokens, err := designtokens.LoadDesignTokens(designTokensSpec, designTokensPrefix)
+	if args.DesignTokensSpec != "" {
+		tokens, err := designtokens.LoadDesignTokens(args.DesignTokensSpec, args.DesignTokensPrefix)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
 		designTokens = tokens
 	}
 
-	modulesChan := make(chan *M.Module, len(files))
-	jobsChan := make (chan string, len(files))
+	modulesChan := make(chan *M.Module, len(args.Files))
+	jobsChan := make (chan string, len(args.Files))
 	// Fill jobs channel with files to process
-	for _, file := range files {
+	for _, file := range args.Files {
 		if !excludeSet.Has(file) {
 			jobsChan <- file
 		}
