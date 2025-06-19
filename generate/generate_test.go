@@ -34,12 +34,11 @@ func TestGenerate(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			matches := []string{filepath.Join("test-fixtures", tc.path)}
-			excludes := []string{}
-			designTokens := "./" + filepath.Join("test-fixtures", "design-tokens.json")
-			designTokensPrefix := "token"
-
-			actual, err := Generate(matches, excludes, designTokens, designTokensPrefix)
+			actual, err := Generate(GenerateArgs{
+				Files: []string{filepath.Join("test-fixtures", tc.path)},
+				DesignTokensSpec: "./" + filepath.Join("test-fixtures", "design-tokens.json"),
+				DesignTokensPrefix: "token",
+			})
 			if err != nil {
 				t.Error(err)
 			}

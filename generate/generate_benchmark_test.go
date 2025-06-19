@@ -16,13 +16,13 @@ func BenchmarkGenerate(b *testing.B) {
 		b.Skip("No test fixtures found")
 	}
 
-	excludes := []string{}
-	designTokens := "./" + filepath.Join("test-fixtures", "design-tokens.json")
-	designTokensPrefix := "token"
-
 	for b.Loop() {
 		// Run the Generate function, measuring its speed.
-		_, err := Generate(matches, excludes, designTokens, designTokensPrefix)
+		_, err := Generate(GenerateArgs{
+			Files: matches,
+			DesignTokensSpec: "./" + filepath.Join("test-fixtures", "design-tokens.json"),
+			DesignTokensPrefix: "token",
+		})
 		if err != nil {
 			b.Errorf("Generate returned error: %v", err)
 		}
