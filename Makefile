@@ -10,8 +10,11 @@ windows-x64:
 	podman run --rm -v $(pwd):/output:Z cem-windows-x64 cp cem.exe /output/cem-windows-x64.exe
 
 windows-arm64:
-	podman build --build-arg GOARCH=arm64 --build-arg CC=aarch64-w64-mingw32-gcc -t cem-windows-arm64 .
-	podman run --rm -v $(pwd):/output:Z cem-windows-arm64 cp cem.exe /output/cem-windows-arm64.exe
+	echo "Note: windows-arm64 builds are not yet supported. Generating a stub script instead"
+	echo '#!/usr/bin/env node\nconsole.error("cem does not yet support Windows on ARM64. Please use x64 or another operating system.");process.exit(1);' > cem.exe
+	chmod +x cem.exe
+	mkdir -p platforms/cem-win32-arm64
+	mv cem.exe platforms/cem-win32-arm64/
 
 # Convenience target to build both Windows variants
 windows: windows-x64 windows-arm64
