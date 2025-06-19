@@ -181,15 +181,52 @@ variables</li>
   <span class="token parameter variable">--exclude</span> <span class="token string">"src/**/*.test.ts"</span> <span class="token punctuation">\</span>
   <span class="token parameter variable">--output</span> custom-elements.json
 </code></pre>
-<p>for npm projects you can use <code>npx @pwrs/cem generate ...</code>, just be sure to
-install the package first.</p>
-<ul>
-<li><code>generate</code>: Command to start manifest generation.</li>
-<li>Accepts file paths and glob patterns.</li>
-<li><code>--design-tokens</code>: path to tokens file or npm:package specifier</li>
-<li><code>--exclude</code> / <code>-e</code>: Specify patterns to exclude from the manifest.</li>
-<li><code>--output</code> / <code>-o</code>: Write the manifest to a file instead of stdout.</li>
-</ul>
+<p>For npm projects you can use <code>npx @pwrs/cem generate ...</code>.</p>
+<h3>Arguments</h3>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&lt;files or globs&gt;</code></td>
+<td>positional (array)</td>
+<td>Files or glob patterns to include</td>
+</tr>
+<tr>
+<td><code>--exclude, -e</code></td>
+<td>array</td>
+<td>Files or glob patterns to exclude</td>
+</tr>
+<tr>
+<td><code>--design-tokens, -t</code></td>
+<td>string</td>
+<td>Path or npm specifier for DTCG-format design tokens</td>
+</tr>
+<tr>
+<td><code>--design-tokens-prefix, -p</code></td>
+<td>string</td>
+<td>CSS custom property prefix for design tokens</td>
+</tr>
+<tr>
+<td><code>--output, -o</code></td>
+<td>string</td>
+<td>Write the manifest to this file instead of stdout</td>
+</tr>
+<tr>
+<td><code>--no-default-excludes</code></td>
+<td>bool</td>
+<td>Do not exclude files by default (e.g., <code>.d.ts</code> files will be included unless excluded explicitly)</td>
+</tr>
+</tbody>
+</table>
+<p>By default, some files (like <code>.d.ts</code> TypeScript declaration files) are excluded from the manifest.
+Use <code>--no-default-excludes</code> if you want to include all matching files and manage excludes yourself.</p>
+<h2>Contributing</h2>
 <p>For information on building and testing, please see
 <a href="./CONTRIBUTING.md">CONTRIBUTING.md</a>.</p>
 <h2>License</h2>
