@@ -72,41 +72,28 @@
   <main>
     <article class="readme-content markdown-body">
       <h1>cem</h1>
-<p><strong>cem</strong> is a command-line tool for generating <a href="https://github.com/webcomponents/custom-elements-manifest">Custom Elements Manifest</a> (CEM) files from TypeScript sources. It analyzes your codebase and generates rich metadata for your custom elements, facilitating documentation, tooling, and integration.</p>
+<p><strong>cem</strong> is a command-line tool for generating <a href="https://github.com/webcomponents/custom-elements-manifest">Custom Elements Manifest</a>
+(CEM) files from TypeScript sources. It analyzes your codebase and generates
+rich metadata for your custom elements, facilitating documentation, tooling, and
+integration.</p>
+<blockquote>
+<p>[!NOTE]
+<code>cem</code> currently supports LitElements written in idiomatic style with
+TypeScript decorators. If you need something more specific,
+<a href="https://github.com/bennypowers/cem/issues/new">open an issue</a>.</p>
+</blockquote>
 <h2>Features</h2>
 <h3><code>cem generate</code></h3>
 <ul>
-<li><strong>Generates CEM files</strong> from source code using syntax analysis powered by <a href="https://go.dev">go</a> and <a href="https://tree-sitter.github.io/tree-sitter/">tree-sitter</a>.</li>
+<li><strong>Generates CEM files</strong> from source code using syntax analysis powered by
+<a href="https://go.dev">go</a> and <a href="https://tree-sitter.github.io/tree-sitter/">tree-sitter</a>.</li>
 <li>Identifies custom elements, classes, variables, functions, and exports.</li>
-<li>Supports elements written in idiomatic Lit typescript style, with a <code>@customElement</code> decorator, and <code>@property</code> decorators on class fields.</li>
-</ul>
-<h4>HTML Template Analysis for Slots and Parts</h4>
-<ul>
-<li><strong>Automatically detects <code>&lt;slot&gt;</code> and <code>part</code> attributes in your element’s <code>render()</code> template.</strong></li>
-<li>Extracts slot names and CSS shadow parts directly from HTML templates returned by the <code>render()</code> method.</li>
-<li><strong>Supports documenting slots and parts inline in your template HTML</strong> using HTML comments with YAML blocks. For example:<pre class="language-html"><code class="language-html"><span class="token comment">&lt;!--
-  summary: The main slot for content
-  description: |
-    This slot displays user-provided content.
-    Supports multiline **markdown**.
-  deprecated: true
---></span>
-<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>slot</span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>slot</span><span class="token punctuation">></span></span>
-</code></pre>
-</li>
-<li>You can document named slots, default slots, and CSS parts:<pre class="language-html"><code class="language-html"><span class="token comment">&lt;!-- slot:
-      summary: Named slot summary
-   part:
-      summary: Part summary
---></span>
-<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>slot</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>info<span class="token punctuation">"</span></span> <span class="token attr-name">part</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>info-part<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>slot</span><span class="token punctuation">></span></span>
-</code></pre>
-</li>
-<li>The tool merges slot and part information found in templates with any provided via JSDoc, ensuring comprehensive documentation in the generated manifest.</li>
-<li><strong>Deprecation and other metadata</strong> for slots and parts can be specified via YAML in HTML comments.</li>
+<li>Supports elements written in idiomatic Lit typescript style, with a
+<code>@customElement</code> decorator, and <code>@property</code> decorators on class fields.</li>
 </ul>
 <h4>JSDoc</h4>
-<p>Use JSDoc comments to add metadata to your element classes, similar to other tools</p>
+<p>Use JSDoc comments to add metadata to your element classes, similar to other
+tools.</p>
 <ul>
 <li><code>@attr</code> / <code>@attribute</code> — Custom element attributes</li>
 <li><code>@csspart</code> — CSS shadow parts</li>
@@ -117,15 +104,49 @@
 <li><code>@slot</code> — Named or default slots</li>
 <li><code>@summary</code> — Short summary for documentation</li>
 </ul>
+<h4>HTML Template Analysis for Slots and Parts</h4>
+<ul>
+<li><strong>Automatically detects <code>&lt;slot&gt;</code> elements and <code>part</code> attributes in your element’s
+<code>render()</code> template.</strong></li>
+<li>Merges slot and part information found in templates with any provided
+via JSDoc, ensuring comprehensive documentation in the generated manifest.</li>
+<li><strong>Deprecation and other metadata</strong> for slots and parts can be specified via
+YAML in HTML comments.</li>
+<li><strong>Supports documenting slots and parts inline in your template HTML</strong> using
+HTML comments with YAML blocks.</li>
+<li>YAML comments are not necessary to detect slots and parts, but help in
+documenting them for your users.</li>
+</ul>
+<h5>Examples</h5>
+<pre class="language-html"><code class="language-html"><span class="token comment">&lt;!--
+  summary: The main slot for content
+  description: |
+    This slot displays user-provided content.
+    Supports multiline **markdown**.
+  deprecated: true
+--></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>slot</span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>slot</span><span class="token punctuation">></span></span>
+<span class="token comment">&lt;!-- slot:
+       summary: Named slot summary
+     part:
+       summary: Part summary
+--></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>slot</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>info<span class="token punctuation">"</span></span> <span class="token attr-name">part</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>info-part<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>slot</span><span class="token punctuation">></span></span>
+</code></pre>
 <h4>CSS Custom Properties</h4>
 <p>Supports CSS Custom Properties by scanning css files and css tagged-template-literals</p>
 <ul>
-<li>Custom properties beginning with <code>_</code> will be ignored (treated as &quot;private&quot;) e.g. <code>var(--_private)</code></li>
-<li>If you provide a <a href="https://tr.designtokens.org/format/">Design Tokens Community
-Group</a> format module (JSON) to <code>cem</code> via the <code>--design-tokens</code> flag,
-<code>cem</code> will add metadata from your design system to any matching css variables it finds in your elements</li>
+<li>Custom properties beginning with <code>_</code> will be ignored (treated as &quot;private&quot;)
+e.g. <code>var(--_private)</code></li>
+<li>If you provide a <a href="https://tr.designtokens.org/format/">Design Tokens Community Group</a> format module (JSON) to
+<code>cem</code> via the <code>--design-tokens</code> flag,
+<code>cem</code> will add metadata from your design system to any matching css variables it
+finds in your elements</li>
 <li>You can use jsdoc-like comment syntax before each var call to document your
-variables<pre class="language-css"><code class="language-css"><span class="token selector">:host</span> <span class="token punctuation">{</span>
+variables</li>
+</ul>
+<h5>Example</h5>
+<pre class="language-css"><code class="language-css"><span class="token selector">:host</span> <span class="token punctuation">{</span>
   <span class="token property">color</span><span class="token punctuation">:</span>
     <span class="token comment">/**
      * custom color for use in this element
@@ -133,10 +154,13 @@ variables<pre class="language-css"><code class="language-css"><span class="token
      * @deprecated just use the `color` property
      */</span>
     <span class="token function">var</span><span class="token punctuation">(</span>--custom-color<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token property">border</span><span class="token punctuation">:</span>
+    1px
+    solid
+    <span class="token comment">/** Border color of the element */</span>
+    <span class="token function">var</span><span class="token punctuation">(</span>--border-color<span class="token punctuation">)</span><span class="token punctuation">;</span>
 <span class="token punctuation">}</span>
 </code></pre>
-</li>
-</ul>
 <h2>Installation</h2>
 <p>For go binaries:</p>
 <pre class="language-sh"><code class="language-sh">go <span class="token function">install</span> bennypowers.dev/cem@latest
@@ -166,9 +190,11 @@ install the package first.</p>
 <li><code>--exclude</code> / <code>-e</code>: Specify patterns to exclude from the manifest.</li>
 <li><code>--output</code> / <code>-o</code>: Write the manifest to a file instead of stdout.</li>
 </ul>
-<p>For information on building and testing, please see <a href="./CONTRIBUTING.md">CONTRIBUTING.md</a>.</p>
+<p>For information on building and testing, please see
+<a href="./CONTRIBUTING.md">CONTRIBUTING.md</a>.</p>
 <h2>License</h2>
-<p>This program is free software: you can redistribute it and/or modify it under the terms of the <a href="https://www.gnu.org/licenses/gpl-3.0.html">GNU General Public License v3.0</a>.</p>
+<p>This program is free software: you can redistribute it and/or modify it under
+the terms of the <a href="https://www.gnu.org/licenses/gpl-3.0.html">GNU General Public License v3.0</a>.</p>
 <p>© 2025 Benny Powers <a href="mailto:web@bennypowers.com">web@bennypowers.com</a></p>
 
     </article>
