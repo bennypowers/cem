@@ -86,10 +86,10 @@ jobs:
         run: |
           mkdir -p platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}
           mkdir -p dist
-          tree dist || true
-          tree platforms || true
           cp dist/*/cem${{ matrix.goos == 'windows' && '.exe' || '' }} platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}/
           node scripts/gen-platform-package-jsons.js
+          tree dist || true
+          tree platforms || true
 
       - name: Set up Node.js for package validation
         uses: actions/setup-node@v4
