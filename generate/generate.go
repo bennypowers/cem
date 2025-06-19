@@ -10,12 +10,34 @@ import (
 	"slices"
 	"sync"
 
-	"bennypowers.dev/cem/designtokens"
 	M "bennypowers.dev/cem/manifest"
-	S "bennypowers.dev/cem/set"
+	DT "bennypowers.dev/cem/designtokens"
+	DS "github.com/bmatcuk/doublestar"
 )
 
-func mergeCssPropertyInfoFromDesignTokens(module *M.Module, designTokens designtokens.DesignTokens) {
+var defaultExcludePatterns = []string{
+	"**/*.d.ts",
+}
+
+// CLI or config arguments passed to the generate command
+type GenerateArgs struct {
+	// List of files or file globs to include in the manifest
+	Files              []string
+	// List of files or file globs to exclude from the manifest
+	Exclude            []string
+	// Path or `npm:@scope/package/path/to/file.json` spec to DTCG format design
+	// tokens json module
+	DesignTokensSpec   string
+	// Prefix those design tokens use in CSS. If the design tokens are generated
+	// by style dictionary and have a `name` field, that will be used instead.
+	DesignTokensPrefix string
+	// Do not exclude files that are excluded by default e.g. *.d.ts files.
+	NoDefaultExcludes  bool
+	// File path to write output to. If omitted, output will be written to stdout.
+	Output             string
+}
+
+func mergeCssPropertyInfoFromDesignTokens(module *M.Module, designTokens DT.DesignTokens) {
 	for i, d := range module.Declarations {
 		if d, ok := d.(*M.CustomElementDeclaration); ok {
 			for i, p := range d.CssProperties {
@@ -30,32 +52,42 @@ func mergeCssPropertyInfoFromDesignTokens(module *M.Module, designTokens designt
 	}
 }
 
+// Checks whether a file matches any of the given patterns (with doublestar)
+func matchesAnyPattern(file string, patterns []string) bool {
+	for _, pattern := range patterns {
+		match, err := DS.PathMatch(pattern, file)
+		if err == nil && match {
+			return true
+		}
+	}
+	return false
+}
+
 // Generates a custom-elements manifest from a list of typescript files
-func Generate(
-	files []string,
-	exclude []string,
-	designTokensSpec string,
-	designTokensPrefix string,
-) (*string, error) {
-	excludeSet := S.NewSet(exclude...)
+func Generate(args GenerateArgs) (*string, error) {
+	excludePatterns := make([]string, 0, len(args.Exclude)+len(defaultExcludePatterns))
+	excludePatterns = append(excludePatterns, args.Exclude...)
+	if !args.NoDefaultExcludes {
+		excludePatterns = append(excludePatterns, defaultExcludePatterns...)
+	}
 
 	var wg sync.WaitGroup
 	var errs error
-	var designTokens *designtokens.DesignTokens
+	var designTokens *DT.DesignTokens
 
-	if designTokensSpec != "" {
-		tokens, err := designtokens.LoadDesignTokens(designTokensSpec, designTokensPrefix)
+	if args.DesignTokensSpec != "" {
+		tokens, err := DT.LoadDesignTokens(args.DesignTokensSpec, args.DesignTokensPrefix)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
 		designTokens = tokens
 	}
 
-	modulesChan := make(chan *M.Module, len(files))
-	jobsChan := make (chan string, len(files))
+	modulesChan := make(chan *M.Module, len(args.Files))
+	jobsChan := make (chan string, len(args.Files))
 	// Fill jobs channel with files to process
-	for _, file := range files {
-		if !excludeSet.Has(file) {
+	for _, file := range args.Files {
+		if !matchesAnyPattern(file, excludePatterns) {
 			jobsChan <- file
 		}
 	}
