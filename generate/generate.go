@@ -8,6 +8,7 @@ import (
 	"os"
 	"runtime"
 	"slices"
+	"strings"
 	"sync"
 
 	"bennypowers.dev/cem/designtokens"
@@ -51,6 +52,15 @@ func mergeCssPropertyInfoFromDesignTokens(module *M.Module, designTokens designt
 // Generates a custom-elements manifest from a list of typescript files
 func Generate(args GenerateArgs) (*string, error) {
 	excludeSet := S.NewSet(args.Exclude...)
+
+	// Apply default excludes unless the flag is set
+	if !args.NoDefaultExcludes {
+		for _, f := range args.Files {
+			if strings.HasSuffix(f, ".d.ts") {
+				excludeSet.Add(f)
+			}
+		}
+	}
 
 	var wg sync.WaitGroup
 	var errs error
