@@ -1,9 +1,13 @@
 SHELL := /bin/bash
 
-.PHONY: build test update watch bench profile flamegraph coverage clean lint format prepare-npm install-bindings
+.PHONY: build test update watch bench profile flamegraph coverage clean lint format prepare-npm install-bindings windows
 
 build:
 	go build -o dist/cem .
+
+windows:
+	podman build -t cem-windows .
+	podman run --rm -v $(pwd):/output:Z cem-windows cp cem.exe /output/
 
 install-bindings:
 	go generate ./...

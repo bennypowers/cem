@@ -115,11 +115,12 @@ install the package first.
 
 ## Local Windows Build Using Podman
 
-Running podman will output a cem.exe file in the root directory
+Running podman will output a cem.exe file in the root directory.
+
+First [install podman for windows](https://podman.io/docs/installation#windows), then 
 
 ```sh
-podman build -t cem-windows .
-podman run --rm -v $(pwd):/output:Z cem-windows cp cem.exe /output/
+make windows
 ```
 
 ## License
