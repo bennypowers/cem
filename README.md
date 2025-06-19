@@ -112,16 +112,7 @@ install the package first.
 - `--exclude` / `-e`: Specify patterns to exclude from the manifest.
 - `--output` / `-o`: Write the manifest to a file instead of stdout.
 
-
-## Local Windows Build Using Podman
-
-Running podman will output a cem.exe file in the root directory.
-
-First [install podman for windows](https://podman.io/docs/installation#windows), then 
-
-```sh
-make windows
-```
+For information on building and testing, please see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## License
 

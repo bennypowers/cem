@@ -1,13 +1,20 @@
 FROM golang:1.24-bullseye
 
-# Install mingw-w64 for cross-compilation
-RUN apt-get update && apt-get install -y gcc-mingw-w64-x86-64
+# Set build arguments with defaults
+ARG GOARCH=amd64
+ARG CC=x86_64-w64-mingw32-gcc
 
-# Set environment variables for cross-compilation
+# Install cross-compilers for both x64 and arm64
+RUN apt-get update && \
+    apt-get install -y gcc-mingw-w64-x86-64 aarch64-w64-mingw32-gcc
+
+# Set environment variables based on build args
 ENV GOOS=windows
-ENV GOARCH=amd64
 ENV CGO_ENABLED=1
-ENV CC=x86_64-w64-mingw32-gcc
+
+# Set dynamically from build args
+ENV GOARCH=${GOARCH}
+ENV CC=${CC}
 
 WORKDIR /app
 COPY . .
