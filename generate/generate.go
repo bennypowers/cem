@@ -8,13 +8,16 @@ import (
 	"os"
 	"runtime"
 	"slices"
-	"strings"
 	"sync"
 
-	"bennypowers.dev/cem/designtokens"
 	M "bennypowers.dev/cem/manifest"
-	S "bennypowers.dev/cem/set"
+	DT "bennypowers.dev/cem/designtokens"
+	DS "github.com/bmatcuk/doublestar"
 )
+
+var defaultExcludePatterns = []string{
+	"**/*.d.ts",
+}
 
 // CLI or config arguments passed to the generate command
 type GenerateArgs struct {
@@ -34,7 +37,7 @@ type GenerateArgs struct {
 	Output             string
 }
 
-func mergeCssPropertyInfoFromDesignTokens(module *M.Module, designTokens designtokens.DesignTokens) {
+func mergeCssPropertyInfoFromDesignTokens(module *M.Module, designTokens DT.DesignTokens) {
 	for i, d := range module.Declarations {
 		if d, ok := d.(*M.CustomElementDeclaration); ok {
 			for i, p := range d.CssProperties {
@@ -49,25 +52,31 @@ func mergeCssPropertyInfoFromDesignTokens(module *M.Module, designTokens designt
 	}
 }
 
+// Checks whether a file matches any of the given patterns (with doublestar)
+func matchesAnyPattern(file string, patterns []string) bool {
+	for _, pattern := range patterns {
+		match, err := DS.PathMatch(pattern, file)
+		if err == nil && match {
+			return true
+		}
+	}
+	return false
+}
+
 // Generates a custom-elements manifest from a list of typescript files
 func Generate(args GenerateArgs) (*string, error) {
-	excludeSet := S.NewSet(args.Exclude...)
-
-	// Apply default excludes unless the flag is set
+	excludePatterns := make([]string, 0, len(args.Exclude)+len(defaultExcludePatterns))
+	excludePatterns = append(excludePatterns, args.Exclude...)
 	if !args.NoDefaultExcludes {
-		for _, f := range args.Files {
-			if strings.HasSuffix(f, ".d.ts") {
-				excludeSet.Add(f)
-			}
-		}
+		excludePatterns = append(excludePatterns, defaultExcludePatterns...)
 	}
 
 	var wg sync.WaitGroup
 	var errs error
-	var designTokens *designtokens.DesignTokens
+	var designTokens *DT.DesignTokens
 
 	if args.DesignTokensSpec != "" {
-		tokens, err := designtokens.LoadDesignTokens(args.DesignTokensSpec, args.DesignTokensPrefix)
+		tokens, err := DT.LoadDesignTokens(args.DesignTokensSpec, args.DesignTokensPrefix)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
@@ -78,7 +87,7 @@ func Generate(args GenerateArgs) (*string, error) {
 	jobsChan := make (chan string, len(args.Files))
 	// Fill jobs channel with files to process
 	for _, file := range args.Files {
-		if !excludeSet.Has(file) {
+		if !matchesAnyPattern(file, excludePatterns) {
 			jobsChan <- file
 		}
 	}
