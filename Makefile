@@ -53,4 +53,4 @@ coverage:
 	go test -coverprofile=cover.out
 
 clean:
-	rm -rf dist/ cpu.out cover.out npm/bin artifacts platforms
+	rm -rf dist/ cpu.out cover.out artifacts platforms
