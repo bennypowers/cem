@@ -104,8 +104,11 @@ jobs:
           npm version from-git --no-git-tag-version
           git add package.json
           set -o pipefail
-          result=$(npm publish --access public --json 2>&1 | tee publish.log)
+          npm_output=$(mktemp)
+          npm publish --access public --json > "$npm_output" 2>&1
           status=$?
+          result=$(cat "$npm_output")
+          cat "$npm_output" | jq
           if echo "$result" | grep -qE '"code": ?"E403"|"You cannot publish over the previously published versions"'; then
             echo "::warning::NPM package was already published or forbidden (E403)"
             exit 0
@@ -167,8 +170,11 @@ jobs:
       - name: Publish to npm with warning on already published
         run: |
           set -o pipefail
-          result=$(npm publish --access public --json 2>&1 | tee publish.log)
+          npm_output=$(mktemp)
+          npm publish --access public --json > "$npm_output" 2>&1
           status=$?
+          result=$(cat "$npm_output")
+          cat "$npm_output" | jq
           if echo "$result" | grep -qE '"code": ?"E403"|"You cannot publish over the previously published versions"'; then
             echo "::warning::NPM package was already published or forbidden (E403)"
             exit 0
