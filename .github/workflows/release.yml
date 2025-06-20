@@ -46,6 +46,7 @@ jobs:
             node_platform: darwin
             node_arch: arm64
             runner: macos-latest
+      fail-fast: false
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
@@ -97,6 +98,8 @@ jobs:
           done
 
       - name: Publish platform package to npm with warning on already published
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           echo "" > .npmignore
           git config --global user.email "web@bennypowers.com"
@@ -110,29 +113,21 @@ jobs:
           set -o pipefail
           npm publish --access public 2>&1 | tee publish.log
           status=$?
-          if grep -q "previously published" publish.log; then
-            echo "::warning::NPM package was already published"
+          if grep -E "previously published|You cannot publish over the previously published versions|E403" publish.log; then
+            echo "::warning::NPM package was already published or forbidden (E403)"
             exit 0
           elif [ $status -ne 0 ]; then
             echo "::error::NPM publish failed (not due to already published). See log above."
             exit 1
           fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Upload Go binaries for npm
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: cem-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: dist/cem*
-        continue-on-error: true
 
       - name: Get Release Upload URL
+        if: always()
         id: get_path
         run: echo "asset_path=$(ls dist/**/cem*)" >> $GITHUB_OUTPUT
 
       - name: Upload all binaries to GitHub Release
+        if: always()
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
