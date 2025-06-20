@@ -53,11 +53,12 @@ jobs:
         with:
           go-version: '1.24.x'
 
-      - name: Install cross-compilers for CGO (Linux/Windows only)
+      - name: Install cross-compilers for CGO (Linux/Windows only) with retry
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu gcc-mingw-w64 mingw-w64
+          for i in {1..5}; do
+            sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu gcc-mingw-w64 mingw-w64 && break || sleep 10
+          done
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
@@ -76,7 +77,6 @@ jobs:
         if: ${{ (matrix.goos == 'windows' && matrix.goarch == 'arm64') }}
         run: make windows-arm64
 
-
       - name: Prepare npm platform package
         run: |
           mkdir -p platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}
@@ -90,7 +90,13 @@ jobs:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Publish platform package to npm
+      - name: Install Node dependencies (with retry)
+        run: |
+          for i in {1..5}; do
+            npm ci && break || sleep 10
+          done
+
+      - name: Publish platform package to npm with warning on already published
         run: |
           echo "" > .npmignore
           git config --global user.email "web@bennypowers.com"
@@ -101,15 +107,26 @@ jobs:
           echo "" > .npmignore
           npm version from-git --no-git-tag-version
           git add package.json
-          npm publish --access public
+          set -o pipefail
+          npm publish --access public 2>&1 | tee publish.log
+          status=$?
+          if grep -q "previously published" publish.log; then
+            echo "::warning::NPM package was already published"
+            exit 0
+          elif [ $status -ne 0 ]; then
+            echo "::error::NPM publish failed (not due to already published). See log above."
+            exit 1
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Upload Go binaries for npm
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: cem-${{ matrix.goos }}-${{ matrix.goarch }}
           path: dist/cem*
+        continue-on-error: true
 
       - name: Get Release Upload URL
         id: get_path
@@ -145,14 +162,31 @@ jobs:
           git config --global user.email "web@bennypowers.com"
           git config --global user.name "Benny Powers"
 
+      - name: Install Node dependencies (with retry)
+        run: |
+          for i in {1..5}; do
+            npm ci && break || sleep 10
+          done
+        working-directory: ./npm
+
       - name: Version npm package
         run: |
           npm version from-git --no-git-tag-version
           node ../scripts/update-platform-package-versions.js
         working-directory: ./npm
 
-      - name: Publish to npm
-        run: npm publish --access public
+      - name: Publish to npm with warning on already published
+        run: |
+          set -o pipefail
+          npm publish --access public 2>&1 | tee publish.log
+          status=$?
+          if grep -q "previously published" publish.log; then
+            echo "::warning::NPM package was already published"
+            exit 0
+          elif [ $status -ne 0 ]; then
+            echo "::error::NPM publish failed (not due to already published). See log above."
+            exit 1
+          fi
         working-directory: ./npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
