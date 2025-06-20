@@ -108,28 +108,27 @@ jobs:
           npm version from-git --no-git-tag-version
           git add package.json
 
-      - name: Publish platform package to npm
+      - name: Publish platform package to npm (capture output)
         id: npm_publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          set -o pipefail
           cd platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}
           npm_output=$(mktemp)
-          npm publish --access public --json > "$npm_output" 2>&1 || true
-          cat "$npm_output" | jq
-          echo "npm_output_json<<EOF" >> $GITHUB_OUTPUT
+          npm publish --access public > "$npm_output" 2>&1 || true
+          cat "$npm_output"
+          echo "output<<EOF" >> $GITHUB_OUTPUT
           cat "$npm_output" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Parse npm publish output and set job status
         run: |
-          echo '${{ steps.npm_publish.outputs.npm_output_json }}' | jq
-          if echo '${{ steps.npm_publish.outputs.npm_output_json }}' | jq -e '.. | objects | select(.code? == "E403")' > /dev/null; then
+          echo '${{ steps.npm_publish.outputs.output }}'
+          if echo '${{ steps.npm_publish.outputs.output }}' | grep -qE 'code E403|You cannot publish over the previously published versions'; then
             echo "::warning::NPM package was already published or forbidden (E403)"
             exit 0
-          elif echo '${{ steps.npm_publish.outputs.npm_output_json }}' | jq -e '.. | objects | select(.error?)' > /dev/null; then
-            echo "::error::NPM publish failed (not due to already published). See JSON log above."
+          elif echo '${{ steps.npm_publish.outputs.output }}' | grep -q 'npm ERR!'; then
+            echo "::error::NPM publish failed (not due to already published). See log above."
             exit 1
           fi
 
@@ -175,22 +174,30 @@ jobs:
           node ../scripts/update-platform-package-versions.js
         working-directory: ./npm
 
-      - name: Publish to npm with warning on already published
+      - name: Publish to npm
+        id: npm_publish
         run: |
-          set -o pipefail
+          cd npm
           npm_output=$(mktemp)
-          npm publish --access public --json > "$npm_output" 2>&1
-          status=$?
-          result=$(cat "$npm_output")
-          cat "$npm_output" | jq
-          if echo "$result" | grep -qE '"code": ?"E403"|"You cannot publish over the previously published versions"'; then
+          npm publish --access public > "$npm_output" 2>&1 || true
+          cat "$npm_output"
+          echo "output<<EOF" >> $GITHUB_OUTPUT
+          cat "$npm_output" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Parse npm publish output and set job status
+        run: |
+          echo '${{ steps.npm_publish.outputs.output }}'
+          if echo '${{ steps.npm_publish.outputs.output }}' | grep -qE 'code E403|You cannot publish over the previously published versions'; then
             echo "::warning::NPM package was already published or forbidden (E403)"
             exit 0
-          elif [ $status -ne 0 ]; then
-            echo "::error::NPM publish failed (not due to already published). See JSON log above."
-            echo "$result"
+          elif echo '${{ steps.npm_publish.outputs.output }}' | grep -q 'npm ERR!'; then
+            echo "::error::NPM publish failed (not due to already published). See log above."
             exit 1
           fi
+
         working-directory: ./npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
