@@ -1,6 +1,6 @@
-/*
-Copyright © 2025 Benny Powers <web@bennypowers.com>
-*/
+/**
+ * Copyright © 2025 Benny Powers <web@bennypowers.com>
+ */
 package cmd
 
 import (
@@ -8,15 +8,15 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 
-	"github.com/spf13/cobra"
-	A "github.com/IBM/fp-go/array"
 	G "bennypowers.dev/cem/generate"
+	A "github.com/IBM/fp-go/array"
+	DS "github.com/bmatcuk/doublestar"
+	"github.com/spf13/cobra"
 )
 
 var expand = A.Chain(func (g string) []string {
-	paths, err := filepath.Glob(g)
+	paths, err := DS.Glob(g)
 	if err != nil {
 		log.Fatal(err)
 	}
