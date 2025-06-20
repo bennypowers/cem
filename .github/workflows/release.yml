@@ -91,33 +91,27 @@ jobs:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Install Node dependencies (with retry)
-        run: |
-          for i in {1..5}; do
-            npm ci && break || sleep 10
-          done
-
-      - name: Publish platform package to npm with warning on already published
+      - name: Publish platform package to npm with JSON output and robust E403 handling
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          echo "" > .npmignore
+          cd platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}
           git config --global user.email "web@bennypowers.com"
           git config --global user.name "Benny Powers"
           git config set advice.addIgnoredFile false
-          cd platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}
           echo "!package.json" >> .gitignore
           echo "" > .npmignore
           npm version from-git --no-git-tag-version
           git add package.json
           set -o pipefail
-          npm publish --access public 2>&1 | tee publish.log
+          result=$(npm publish --access public --json 2>&1 | tee publish.log)
           status=$?
-          if grep -E "previously published|You cannot publish over the previously published versions|E403" publish.log; then
+          if echo "$result" | grep -qE '"code": ?"E403"|"You cannot publish over the previously published versions"'; then
             echo "::warning::NPM package was already published or forbidden (E403)"
             exit 0
           elif [ $status -ne 0 ]; then
-            echo "::error::NPM publish failed (not due to already published). See log above."
+            echo "::error::NPM publish failed (not due to already published). See JSON log above."
+            echo "$result"
             exit 1
           fi
 
@@ -173,13 +167,14 @@ jobs:
       - name: Publish to npm with warning on already published
         run: |
           set -o pipefail
-          npm publish --access public 2>&1 | tee publish.log
+          result=$(npm publish --access public --json 2>&1 | tee publish.log)
           status=$?
-          if grep -q "previously published" publish.log; then
-            echo "::warning::NPM package was already published"
+          if echo "$result" | grep -qE '"code": ?"E403"|"You cannot publish over the previously published versions"'; then
+            echo "::warning::NPM package was already published or forbidden (E403)"
             exit 0
           elif [ $status -ne 0 ]; then
-            echo "::error::NPM publish failed (not due to already published). See log above."
+            echo "::error::NPM publish failed (not due to already published). See JSON log above."
+            echo "$result"
             exit 1
           fi
         working-directory: ./npm
