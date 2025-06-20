@@ -91,30 +91,40 @@ jobs:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Publish platform package to npm with JSON output and robust E403 handling
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Set up Git identity
         run: |
-          cd platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}
           git config --global user.email "web@bennypowers.com"
           git config --global user.name "Benny Powers"
           git config set advice.addIgnoredFile false
+
+      - name: Prepare npm version
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -o pipefail
+          cd platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}
           echo "!package.json" >> .gitignore
           echo "" > .npmignore
           npm version from-git --no-git-tag-version
           git add package.json
+
+      - name: Publish platform package to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
           set -o pipefail
           npm_output=$(mktemp)
           npm publish --access public --json > "$npm_output" 2>&1
           status=$?
-          result=$(cat "$npm_output")
           cat "$npm_output" | jq
-          if echo "$result" | grep -qE '"code": ?"E403"|"You cannot publish over the previously published versions"'; then
+
+          # Check for E403 via jq (will return 0 if any "code" field is "E403")
+          if jq -e '.. | objects | select(.code? == "E403")' "$npm_output" > /dev/null; then
             echo "::warning::NPM package was already published or forbidden (E403)"
             exit 0
           elif [ $status -ne 0 ]; then
             echo "::error::NPM publish failed (not due to already published). See JSON log above."
-            echo "$result"
+            cat "$npm_output"
             exit 1
           fi
 
@@ -153,13 +163,6 @@ jobs:
           echo "Setting up Git ID"
           git config --global user.email "web@bennypowers.com"
           git config --global user.name "Benny Powers"
-
-      - name: Install Node dependencies (with retry)
-        run: |
-          for i in {1..5}; do
-            npm ci && break || sleep 10
-          done
-        working-directory: ./npm
 
       - name: Version npm package
         run: |
