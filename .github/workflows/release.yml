@@ -109,22 +109,27 @@ jobs:
           git add package.json
 
       - name: Publish platform package to npm
+        id: npm_publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           set -o pipefail
+          cd platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}
           npm_output=$(mktemp)
-          npm publish --access public --json > "$npm_output" 2>&1
-          status=$?
+          npm publish --access public --json > "$npm_output" 2>&1 || true
           cat "$npm_output" | jq
+          echo "npm_output_json<<EOF" >> $GITHUB_OUTPUT
+          cat "$npm_output" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
-          # Check for E403 via jq (will return 0 if any "code" field is "E403")
-          if jq -e '.. | objects | select(.code? == "E403")' "$npm_output" > /dev/null; then
+      - name: Parse npm publish output and set job status
+        run: |
+          echo '${{ steps.npm_publish.outputs.npm_output_json }}' | jq
+          if echo '${{ steps.npm_publish.outputs.npm_output_json }}' | jq -e '.. | objects | select(.code? == "E403")' > /dev/null; then
             echo "::warning::NPM package was already published or forbidden (E403)"
             exit 0
-          elif [ $status -ne 0 ]; then
+          elif echo '${{ steps.npm_publish.outputs.npm_output_json }}' | jq -e '.. | objects | select(.error?)' > /dev/null; then
             echo "::error::NPM publish failed (not due to already published). See JSON log above."
-            cat "$npm_output"
             exit 1
           fi
 
