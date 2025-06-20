@@ -124,8 +124,8 @@ jobs:
       - name: Parse npm publish output and set job status
         run: |
           echo '${{ steps.npm_publish.outputs.output }}'
-          if echo '${{ steps.npm_publish.outputs.output }}' | grep -qE 'code E403|You cannot publish over the previously published versions'; then
-            echo "::warning::NPM package was already published or forbidden (E403)"
+          if echo '${{ steps.npm_publish.outputs.output }}' | grep -qE 'You cannot publish over the previously published versions'; then
+            echo "::warning::NPM package was already published"
             exit 0
           elif echo '${{ steps.npm_publish.outputs.output }}' | grep -q 'npm ERR!'; then
             echo "::error::NPM publish failed (not due to already published). See log above."
@@ -190,8 +190,8 @@ jobs:
       - name: Parse npm publish output and set job status
         run: |
           echo '${{ steps.npm_publish.outputs.output }}'
-          if echo '${{ steps.npm_publish.outputs.output }}' | grep -qE 'code E403|You cannot publish over the previously published versions'; then
-            echo "::warning::NPM package was already published or forbidden (E403)"
+          if echo '${{ steps.npm_publish.outputs.output }}' | grep -qE 'You cannot publish over the previously published versions'; then
+            echo "::warning::NPM package was already published"
             exit 0
           elif echo '${{ steps.npm_publish.outputs.output }}' | grep -q 'npm ERR!'; then
             echo "::error::NPM publish failed (not due to already published). See log above."
