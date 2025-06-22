@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "test-fixtures/vanilla-declare.js",
+      "declarations": [
+        {
+          "name": "VanillaElement",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "VanillaElement",
+          "declaration": {
+            "name": "VanillaElement",
+            "module": "test-fixtures/vanilla-declare.js"
+          }
+        }
+      ]
+    }
+  ]
+}

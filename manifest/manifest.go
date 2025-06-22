@@ -70,6 +70,20 @@ type CustomElementExport struct {
 	Deprecated  any        `json:"deprecated,omitempty"` // bool or string
 }
 func (*CustomElementExport) isExport() {}
+func NewCustomElementExport(
+	tagName string,
+	declaration *Reference,
+	startByte uint,
+	deprecated *Deprecated,
+) *CustomElementExport {
+	return &CustomElementExport{
+		Kind: "custom-element-definition",
+		StartByte: startByte,
+		Name: tagName,
+		Declaration: declaration,
+		Deprecated: deprecated,
+	}
+}
 
 // Declaration is a union of several types.
 type Declaration interface {

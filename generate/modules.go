@@ -97,6 +97,13 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 	for sImport := range qm.ParentCaptures(root, code, "styleImport.spec") {
 		styleImportsBindingToSpecMap[sImport["styleImport.binding"][0].Text] = sImport["styleImport.spec"][0].Text
 	}
+	importBindingToSpecMap := make(map[string]struct{name string; spec string})
+	for captures := range qm.ParentCaptures(root, code, "import") {
+		original := captures["import.name"][0].Text
+		binding := captures["import.binding"][0].Text
+		spec := captures["import.spec"][0].Text
+		importBindingToSpecMap[binding] = struct{name string; spec string}{original, spec}
+	}
 	for captures := range qm.ParentCaptures(root, code, "class") {
 		d, err := generateClassDeclaration(queryManager, captures, root, code)
 		if err != nil {
@@ -186,10 +193,10 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 		}
 	}
 
-	queryName = "exportStatement"
+	queryName = "exports"
 	qm, err = NewQueryMatcher(queryManager, "typescript", queryName)
 	if err != nil {
-		return errors.Join(errs, err), nil
+		errs = errors.Join(errs, err)
 	}
 	defer qm.Close()
 	for captures := range qm.ParentCaptures(root, code, "export") {
@@ -206,6 +213,44 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 				StartByte: declaration.StartByte,
 			}
 			module.Exports = append(module.Exports, export)
+		}
+	}
+	for captures := range qm.ParentCaptures(root, code, "ce") {
+		if ceNodes, ok := captures["ce"]; (!ok || len(ceNodes) <= 0) {
+			errs = errors.Join(errs, &NoCaptureError{ "ce", queryName })
+		} else if tagNameNodes, ok := captures["ce.tagName"]; (!ok || len(tagNameNodes) <= 0) {
+			errs = errors.Join(errs, &NoCaptureError{ "ce.tagName", queryName })
+		} else if classNameNodes, ok := captures["ce.className"]; (!ok || len(classNameNodes) <= 0) {
+			errs = errors.Join(errs, &NoCaptureError{ "ce.className", queryName })
+		} else {
+			tagName := tagNameNodes[0].Text
+			className := classNameNodes[0].Text
+			idx := slices.IndexFunc(module.Declarations, func(decl M.Declaration) bool {
+				d, ok := decl.(*M.ClassDeclaration)
+				return ok && d.Name == classNameNodes[0].Text
+			})
+			if idx >= 0 {
+				declaration := module.Declarations[idx]
+				if declaration != nil {
+					module.Exports = append(module.Exports, M.NewCustomElementExport(
+						tagName,
+						M.NewReference(declaration.(*M.ClassDeclaration).Name, "", file),
+						ceNodes[0].StartByte,
+						nil, // deprecated
+					))
+				}
+			} else {
+				// get declaration class somehow
+				b, ok := importBindingToSpecMap[className]
+				if ok {
+					module.Exports = append(module.Exports, M.NewCustomElementExport(
+						tagName,
+						M.NewReference(b.name, "", b.spec),
+						ceNodes[0].StartByte,
+						nil, // deprecated
+					))
+				}
+			}
 		}
 	}
 
