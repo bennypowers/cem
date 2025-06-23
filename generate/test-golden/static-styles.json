@@ -15,20 +15,7 @@
           "tagName": "static-styles",
           "cssProperties": [
             {
-              "name": "--deprecated",
-              "deprecated": "reason"
-            },
-            {
-              "name": "--has-default",
-              "default": "0, red, green"
-            },
-            {
               "name": "--in-attribute-import"
-            },
-            {
-              "name": "--in-attribute-import-description",
-              "summary": "summary",
-              "description": "in-attribute-import-description"
             },
             {
               "name": "--in-non-attribute-import",
@@ -41,6 +28,19 @@
             {
               "name": "--tagged-template-in-style-array",
               "description": "tagged-template-in-style-array"
+            },
+            {
+              "name": "--has-default",
+              "default": "0, red, green"
+            },
+            {
+              "name": "--in-attribute-import-description",
+              "summary": "summary",
+              "description": "in-attribute-import-description"
+            },
+            {
+              "name": "--deprecated",
+              "deprecated": "reason"
             },
             {
               "name": "--token-color",

@@ -175,7 +175,7 @@ type QueryMatcher struct {
 }
 
 func (qm QueryMatcher) Close() {
-	// qm.query.Close()
+	// NOTE: we don't close queries here, only at the end of execution in QueryManager.Close
 	qm.cursor.Close()
 }
 
@@ -189,8 +189,8 @@ func NewQueryMatcher(
 		return nil, error
 	}
 	cursor := ts.NewQueryCursor()
-	thing := QueryMatcher{ query, cursor }
-	return &thing, nil
+	qm := QueryMatcher{ query, cursor }
+	return &qm, nil
 }
 
 func (q QueryMatcher) AllQueryMatches(node *ts.Node, text []byte) iter.Seq[*ts.QueryMatch] {
@@ -208,34 +208,14 @@ func (q QueryMatcher) AllQueryMatches(node *ts.Node, text []byte) iter.Seq[*ts.Q
 	}
 }
 
-func (q QueryMatcher) GetCapturesFromMatch(match *ts.QueryMatch, code []byte) CaptureMap {
-	names := q.query.CaptureNames()
-	captures := make(CaptureMap)
-	for _, capture := range match.Captures {
-		name := names[capture.Index]
-		_, ok := captures[name]
-		if !ok {
-			captures[name] = make([]CaptureInfo, 0)
-		}
-		text := capture.Node.Utf8Text(code)
-		captures[name] = append(captures[name], CaptureInfo{
-			NodeId: int(capture.Node.Id()),
-			Text: text,
-			StartByte: capture.Node.StartByte(),
-			EndByte: capture.Node.EndByte(),
-		})
-	}
-	return captures
-}
-
-// ParentIterator returns an iterator over unique parent node captures as identified by the given parent capture name.
+// ParentCaptures returns an iterator over unique parent node captures as identified by the given parent capture name.
 // For each unique parent node (e.g., a field or method), it aggregates all captures from all query matches sharing 
 // that parent node into a single CaptureMap. This allows you to collect all related captures (such as attributes, 
 // decorators, etc.) for each parent node in the source AST.
 //
 // Example usage:
 //
-//   for captures := range matcher.ParentIterator(root, code, "field") {
+//   for captures := range matcher.ParentCaptures(root, code, "field") {
 //     // captures represents the captured nodes for a single field
 //     addFieldToDeclaration(captures, declaration)
 //   }
@@ -274,6 +254,8 @@ func (q *QueryMatcher) ParentCaptures(root *ts.Node, code []byte, parentCaptureN
 			ci := CaptureInfo{
 				NodeId: int(cap.Node.Id()),
 				Text:   text,
+				StartByte: cap.Node.StartByte(),
+				EndByte: cap.Node.EndByte(),
 			}
 			if _, hasMap := parentGroups[pid].capMap[name]; !hasMap {
 				parentGroups[pid].capMap[name] = make([]CaptureInfo, 0)

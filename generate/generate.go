@@ -111,7 +111,9 @@ func Generate(args GenerateArgs) (*string, error) {
 					continue
 				}
 
-				err, module := generateModule(file, code, queryManager)
+				mp := NewModuleProcessor(file, code, queryManager)
+				module, err := mp.Collect()
+				mp.Close()
 				if err != nil {
 					errs = errors.Join(errs, errors.New(fmt.Sprintf("Problem generating module %s", file)), err)
 					continue

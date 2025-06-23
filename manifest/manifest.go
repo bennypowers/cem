@@ -49,6 +49,7 @@ type JavaScriptModule struct {
 // Export is a union type: JavaScriptExport or CustomElementExport.
 type Export interface {
 	isExport()
+	GetStartByte() uint
 }
 
 // JavaScriptExport represents a JS export.
@@ -60,6 +61,9 @@ type JavaScriptExport struct {
 	Deprecated  any        `json:"deprecated,omitempty"` // bool or string
 }
 func (*JavaScriptExport) isExport() {}
+func (e *JavaScriptExport) GetStartByte() uint {
+	return e.StartByte
+}
 
 // CustomElementExport represents a custom element definition.
 type CustomElementExport struct {
@@ -70,6 +74,26 @@ type CustomElementExport struct {
 	Deprecated  any        `json:"deprecated,omitempty"` // bool or string
 }
 func (*CustomElementExport) isExport() {}
+func (e *CustomElementExport) GetStartByte() uint {
+	return e.StartByte
+}
+func NewCustomElementExport(
+	tagName string,
+	declaration *Reference,
+	startByte uint,
+	deprecated *Deprecated,
+) *CustomElementExport {
+	ce := &CustomElementExport{
+		Kind: "custom-element-definition",
+		StartByte: startByte,
+		Name: tagName,
+		Declaration: declaration,
+	}
+	if deprecated != nil {
+		ce.Deprecated = deprecated
+	}
+	return ce
+}
 
 // Declaration is a union of several types.
 type Declaration interface {
@@ -126,6 +150,7 @@ type Attribute struct {
 	Default       string     `json:"default,omitempty"`
 	FieldName     string     `json:"fieldName,omitempty"`
 	Deprecated    Deprecated `json:"deprecated,omitempty"` // bool or string
+	StartByte     uint       `json:"-"`
 }
 
 // Event emitted by a custom element.

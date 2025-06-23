@@ -3,6 +3,7 @@ package generate
 import (
 	"errors"
 	"regexp"
+	"slices"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -12,32 +13,32 @@ import (
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
-func generateClassDeclaration(
-	queryManager *QueryManager,
-	captures CaptureMap,
-	root *ts.Node,
-	code []byte,
-) (declaration M.Declaration, err error) {
-	_, isCustomElement := captures["customElement"]
+func (mp *ModuleProcessor) generateClassDeclaration(captures CaptureMap) (declaration M.Declaration, errs error) {
+	_, hasCustomElementDecorator := captures["customElement"]
+	isHTMLElement := false
+	superClassNameNodes, hasSuperClass := captures["superclass.name"]
+	if hasSuperClass {
+		isHTMLElement = superClassNameNodes[0].Text == "HTMLElement"
+	}
+	isCustomElement := hasCustomElementDecorator || isHTMLElement
 	classDeclarationCaptures, hasClassDeclaration := captures["class.declaration"]
 	if (hasClassDeclaration && len(classDeclarationCaptures) > 0) {
 		classDeclarationNodeId := classDeclarationCaptures[0].NodeId
-		classDeclarationNode := GetDescendantById(root, classDeclarationNodeId)
-		if isCustomElement {
-			return generateCustomElementClassDeclaration(queryManager, captures, root, classDeclarationNode, code)
+		classDeclarationNode := GetDescendantById(mp.root, classDeclarationNodeId)
+		if isHTMLElement {
+			return mp.generateHTMLElementClassDeclaration(captures, classDeclarationNode)
+		} else if isCustomElement {
+			return mp.generateLitElementClassDeclaration(captures, classDeclarationNode)
 		} else {
-			return generateCommonClassDeclaration(queryManager, captures, root, classDeclarationNode, code, isCustomElement)
+			return mp.generateCommonClassDeclaration(captures, classDeclarationNode, isCustomElement)
 		}
 	}
-	return nil, errors.New("Could not find class declaration")
+	return nil, errors.Join(errs, errors.New("Could not find class declaration"))
 }
 
-func generateCommonClassDeclaration(
-	queryManager *QueryManager,
+func (mp *ModuleProcessor) generateCommonClassDeclaration(
 	captures CaptureMap,
-	root *ts.Node,
 	classDeclarationNode *ts.Node,
-	code []byte,
 	isCustomElement bool,
 ) (declaration *M.ClassDeclaration, errs error) {
 	className, ok := captures["class.name"]
@@ -53,14 +54,33 @@ func generateCommonClassDeclaration(
 		},
 	}
 
-	err, members := getClassMembersFromClassDeclarationNode(
-		queryManager,
-		code,
-		declaration.ClassLike.Name,
-		root,
-		classDeclarationNode,
-		isCustomElement,
-	)
+	var superclassName string
+	superClassNameNodes, ok := captures["superclass.name"]
+	if (ok && len(superClassNameNodes) > 0) {
+		superclassName = superClassNameNodes[0].Text
+		pkg := ""
+		module := ""
+		switch superclassName {
+		case
+			"Event",
+			"CustomEvent",
+			"ErrorEvent":
+		  pkg = "global:"
+		case "HTMLElement":
+			pkg = "global:"
+			isCustomElement = true
+		case "LitElement":
+			pkg = "lit"
+		case "ReactiveElement":
+			pkg = "@lit/reactive-element"
+		// TODO: compute package and module
+		// default:
+		}
+		declaration.Superclass = M.NewReference(superclassName, pkg, module)
+	}
+
+	members, err :=
+		mp.getClassMembersFromClassDeclarationNode(declaration.ClassLike.Name, classDeclarationNode, superclassName)
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
@@ -69,33 +89,11 @@ func generateCommonClassDeclaration(
 		declaration.Members = append(declaration.Members, method)
 	}
 
-	superClassName, ok := captures["superclass.name"]
-	if (ok && len(superClassName) > 0) {
-		name := superClassName[0].Text
-		pkg := ""
-		module := ""
-		switch name {
-		case
-			"Event",
-			"CustomEvent",
-			"ErrorEvent",
-			"HTMLElement":
-		  pkg = "global:"
-		case "LitElement":
-			pkg = "lit"
-		case "ReactiveElement":
-			pkg = "@lit/reactive-element"
-		// TODO: compute package and module
-		// default:
-		}
-		declaration.Superclass = M.NewReference(name, pkg, module)
-	}
-
 	jsdoc, ok := captures["class.jsdoc"]
 	if (ok && len(jsdoc) > 0) {
-		err, info := NewClassInfo(jsdoc[0].Text, queryManager)
+		info, err := NewClassInfo(jsdoc[0].Text, mp.queryManager)
 		if err != nil {
-			errs = errors.Join(errs, err)
+			mp.errors = errors.Join(mp.errors, err)
 		} else {
 			info.MergeToClassDeclaration(declaration)
 		}
@@ -104,69 +102,100 @@ func generateCommonClassDeclaration(
 	return declaration, nil
 }
 
-func generateCustomElementClassDeclaration(
-	queryManager *QueryManager,
+func (mp *ModuleProcessor) generateHTMLElementClassDeclaration(
 	captures CaptureMap,
-	root *ts.Node,
 	classDeclarationNode *ts.Node,
-	code []byte,
 ) (declaration *M.CustomElementDeclaration, errs error) {
-	classDeclaration, err := generateCommonClassDeclaration(
-		queryManager,
-		captures,
-		root,
-		classDeclarationNode,
-		code,
-		true,
-	)
+	classDeclaration, err := mp.generateCommonClassDeclaration(captures, classDeclarationNode, true)
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
 
 	declaration = &M.CustomElementDeclaration{
 		ClassDeclaration: *classDeclaration,
+		CustomElement: M.CustomElement{
+			CustomElement: true,
+		},
+	}
+
+	for _, name := range captures["observedAttributes.attributeName"] {
+		declaration.CustomElement.Attributes = append(declaration.CustomElement.Attributes, M.Attribute{
+			Name: name.Text,
+			StartByte: name.StartByte,
+		})
+	}
+
+	jsdoc, ok := captures["class.jsdoc"]
+	if (ok && len(jsdoc) > 0) {
+		info, err := NewClassInfo(jsdoc[0].Text, mp.queryManager)
+		if err != nil {
+			mp.errors = errors.Join(mp.errors, err)
+		} else {
+			info.MergeToCustomElementDeclaration(declaration)
+		}
+	}
+
+	slices.SortStableFunc(declaration.Attributes, func(a M.Attribute, b M.Attribute) int {
+		return int(a.StartByte - b.StartByte)
+	})
+
+	return declaration, errs
+}
+
+
+
+func (mp *ModuleProcessor) generateLitElementClassDeclaration(
+	captures CaptureMap,
+	classDeclarationNode *ts.Node,
+) (declaration *M.CustomElementDeclaration, errs error) {
+	classDeclaration, err := mp.generateCommonClassDeclaration(captures, classDeclarationNode, true)
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
+
+	declaration = &M.CustomElementDeclaration{
+		ClassDeclaration: *classDeclaration,
+		CustomElement: M.CustomElement{
+			CustomElement: true,
+		},
 	}
 
 	tagNameNodes, ok := captures["tag-name"]
-	if (!ok || len(tagNameNodes) < 1) {
-		errs = errors.Join(errs, &NoCaptureError{ "tag-name", "customElementDeclaration"  })
-	} else {
-
+	if (ok && len(tagNameNodes) > 0) {
 		tagName := tagNameNodes[0].Text
-
 		if (tagName != "") {
-			declaration.CustomElement = M.CustomElement{
-				CustomElement: true,
-				TagName:       tagName,
-			}
-
-			declaration.CustomElement.Attributes = A.Chain(func(member M.ClassMember) []M.Attribute {
-				field, ok := (member).(M.CustomElementField)
-				if (ok && field.Attribute != "") {
-					return []M.Attribute{{
-						Name:        field.Attribute,
-						Summary:     field.Summary,
-						Description: field.Description,
-						Deprecated:  field.Deprecated,
-						Default:     field.Default,
-						Type:        field.Type,
-						FieldName:   field.Name,
-					}}
-				} else {
-					return []M.Attribute{}
-				}
-			})(declaration.Members)
+			declaration.CustomElement.TagName = tagName
 		}
+	} else {
+		errs = errors.Join(errs, &NoCaptureError{ "tag-name", "customElementDeclaration"  })
 	}
+
+	declaration.CustomElement.Attributes = A.Chain(func(member M.ClassMember) []M.Attribute {
+		field, ok := (member).(M.CustomElementField)
+		if (ok && field.Attribute != "") {
+			return []M.Attribute{{
+				Name:        field.Attribute,
+				Summary:     field.Summary,
+				Description: field.Description,
+				Deprecated:  field.Deprecated,
+				Default:     field.Default,
+				Type:        field.Type,
+				FieldName:   field.Name,
+				StartByte:   field.StartByte,
+			}}
+		} else {
+			return []M.Attribute{}
+		}
+	})(declaration.Members)
 
 	renderTemplateNodes, hasRenderTemplate := captures["render.template"]
 	if hasRenderTemplate {
 		renderTemplateNodeId := renderTemplateNodes[0].NodeId
-		renderTemplateNode := GetDescendantById(root, renderTemplateNodeId)
+		renderTemplateNode := GetDescendantById(mp.root, renderTemplateNodeId)
 		if renderTemplateNode != nil {
-			htmlSource := renderTemplateNode.Utf8Text(code)
+			htmlSource := renderTemplateNode.Utf8Text(mp.code)
 			if htmlSource != "" {
-				htmlSlots, htmlParts, htmlErr := analyzeHtmlSlotsAndParts(queryManager, htmlSource)
+				htmlSlots, htmlParts, htmlErr := analyzeHtmlSlotsAndParts(mp.queryManager, htmlSource)
 				if htmlErr != nil {
 					errs = errors.Join(errs, htmlErr)
 				}
@@ -179,13 +208,17 @@ func generateCustomElementClassDeclaration(
 
 	jsdoc, ok := captures["class.jsdoc"]
 	if (ok && len(jsdoc) > 0) {
-		error, classInfo := NewClassInfo(jsdoc[0].Text, queryManager)
-		if error != nil {
-			errs = errors.Join(errs, error)
+		classInfo, err := NewClassInfo(jsdoc[0].Text, mp.queryManager)
+		if err != nil {
+			errs = errors.Join(errs, err)
 		} else {
 			classInfo.MergeToCustomElementDeclaration(declaration)
 		}
 	}
+
+	slices.SortStableFunc(declaration.Attributes, func(a M.Attribute, b M.Attribute) int {
+		return int(a.StartByte - b.StartByte)
+	})
 
 	return declaration, errs
 }

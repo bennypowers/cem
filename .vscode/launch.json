@@ -8,6 +8,7 @@
       "mode": "test",
       "program": "${workspaceFolder}",
       "args": [
+        "test",
         "-run",
         "TestFixture_${input:fixtureName}"
       ]
@@ -22,10 +23,9 @@
         "order": 0
       },
       "args": [
+        ".",
         "generate",
-        "--exclude",
-        "'../redhat-ux/red-hat-design-system/elements/*/*.d.ts'",
-        "../redhat-ux/red-hat-design-system/elements/*/*.ts"
+        "generate/test-fixtures/*.ts"
       ]
     },
     {
@@ -38,6 +38,7 @@
         "order": 1
       },
       "args": [
+        ".",
         "generate",
         "${input:generate}"
       ]
@@ -48,7 +49,7 @@
       "id": "generate",
       "type": "promptString",
       "description": "Arguments...",
-      "default": "--exclude '../redhat-ux/red-hat-design-system/elements/*/*.d.ts' ../redhat-ux/red-hat-design-system/elements/*/*.ts"
+      "default": "generate/test-fixtures/*.ts"
     },
     {
       "id": "fixtureName",
