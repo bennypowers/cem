@@ -55,16 +55,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "AlertToast",
+          "kind": "custom-element-definition",
+          "name": "alert-toast",
           "declaration": {
             "name": "AlertToast",
             "module": "src/components/alert-toast.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "alert-toast",
+          "kind": "js",
+          "name": "AlertToast",
           "declaration": {
             "name": "AlertToast",
             "module": "src/components/alert-toast.js"
@@ -104,16 +104,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "AvatarImage",
+          "kind": "custom-element-definition",
+          "name": "avatar-image",
           "declaration": {
             "name": "AvatarImage",
             "module": "src/components/avatar-image.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "avatar-image",
+          "kind": "js",
+          "name": "AvatarImage",
           "declaration": {
             "name": "AvatarImage",
             "module": "src/components/avatar-image.js"
@@ -145,16 +145,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "ButtonElement",
+          "kind": "custom-element-definition",
+          "name": "button-element",
           "declaration": {
             "name": "ButtonElement",
             "module": "src/components/button-element.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "button-element",
+          "kind": "js",
+          "name": "ButtonElement",
           "declaration": {
             "name": "ButtonElement",
             "module": "src/components/button-element.js"
@@ -186,16 +186,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "ClipboardCopy",
+          "kind": "custom-element-definition",
+          "name": "clipboard-copy",
           "declaration": {
             "name": "ClipboardCopy",
             "module": "src/components/clipboard-copy.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "clipboard-copy",
+          "kind": "js",
+          "name": "ClipboardCopy",
           "declaration": {
             "name": "ClipboardCopy",
             "module": "src/components/clipboard-copy.js"
@@ -235,16 +235,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "ColorPicker",
+          "kind": "custom-element-definition",
+          "name": "color-picker",
           "declaration": {
             "name": "ColorPicker",
             "module": "src/components/color-picker.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "color-picker",
+          "kind": "js",
+          "name": "ColorPicker",
           "declaration": {
             "name": "ColorPicker",
             "module": "src/components/color-picker.js"
@@ -269,16 +269,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "ComplexTypes",
+          "kind": "custom-element-definition",
+          "name": "complex-types",
           "declaration": {
             "name": "ComplexTypes",
             "module": "src/components/complex-types.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "complex-types",
+          "kind": "js",
+          "name": "ComplexTypes",
           "declaration": {
             "name": "ComplexTypes",
             "module": "src/components/complex-types.js"
@@ -310,16 +310,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "DarkModeToggle",
+          "kind": "custom-element-definition",
+          "name": "dark-mode-toggle",
           "declaration": {
             "name": "DarkModeToggle",
             "module": "src/components/dark-mode-toggle.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "dark-mode-toggle",
+          "kind": "js",
+          "name": "DarkModeToggle",
           "declaration": {
             "name": "DarkModeToggle",
             "module": "src/components/dark-mode-toggle.js"
@@ -352,16 +352,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "DismissButton",
+          "kind": "custom-element-definition",
+          "name": "dismiss-button",
           "declaration": {
             "name": "DismissButton",
             "module": "src/components/dismiss-button.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "dismiss-button",
+          "kind": "js",
+          "name": "DismissButton",
           "declaration": {
             "name": "DismissButton",
             "module": "src/components/dismiss-button.js"
@@ -402,16 +402,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "EmojiPicker",
+          "kind": "custom-element-definition",
+          "name": "emoji-picker",
           "declaration": {
             "name": "EmojiPicker",
             "module": "src/components/emoji-picker.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "emoji-picker",
+          "kind": "js",
+          "name": "EmojiPicker",
           "declaration": {
             "name": "EmojiPicker",
             "module": "src/components/emoji-picker.js"
@@ -463,16 +463,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "ExpandToggle",
+          "kind": "custom-element-definition",
+          "name": "expand-toggle",
           "declaration": {
             "name": "ExpandToggle",
             "module": "src/components/expand-toggle.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "expand-toggle",
+          "kind": "js",
+          "name": "ExpandToggle",
           "declaration": {
             "name": "ExpandToggle",
             "module": "src/components/expand-toggle.js"
@@ -497,16 +497,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "ExpandablePanel",
+          "kind": "custom-element-definition",
+          "name": "expandable-panel",
           "declaration": {
             "name": "ExpandablePanel",
             "module": "src/components/expandable-panel.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "expandable-panel",
+          "kind": "js",
+          "name": "ExpandablePanel",
           "declaration": {
             "name": "ExpandablePanel",
             "module": "src/components/expandable-panel.js"
@@ -532,16 +532,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "FieldLabel",
+          "kind": "custom-element-definition",
+          "name": "field-label",
           "declaration": {
             "name": "FieldLabel",
             "module": "src/components/field-label.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "field-label",
+          "kind": "js",
+          "name": "FieldLabel",
           "declaration": {
             "name": "FieldLabel",
             "module": "src/components/field-label.js"
@@ -581,16 +581,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "FileUploader",
+          "kind": "custom-element-definition",
+          "name": "file-uploader",
           "declaration": {
             "name": "FileUploader",
             "module": "src/components/file-uploader.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "file-uploader",
+          "kind": "js",
+          "name": "FileUploader",
           "declaration": {
             "name": "FileUploader",
             "module": "src/components/file-uploader.js"
@@ -616,16 +616,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "IconBadge",
+          "kind": "custom-element-definition",
+          "name": "icon-badge",
           "declaration": {
             "name": "IconBadge",
             "module": "src/components/icon-badge.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "icon-badge",
+          "kind": "js",
+          "name": "IconBadge",
           "declaration": {
             "name": "IconBadge",
             "module": "src/components/icon-badge.js"
@@ -660,16 +660,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "ImageGallery",
+          "kind": "custom-element-definition",
+          "name": "image-gallery",
           "declaration": {
             "name": "ImageGallery",
             "module": "src/components/image-gallery.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "image-gallery",
+          "kind": "js",
+          "name": "ImageGallery",
           "declaration": {
             "name": "ImageGallery",
             "module": "src/components/image-gallery.js"
@@ -722,16 +722,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "InlineEdit",
+          "kind": "custom-element-definition",
+          "name": "inline-edit",
           "declaration": {
             "name": "InlineEdit",
             "module": "src/components/inline-edit.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "inline-edit",
+          "kind": "js",
+          "name": "InlineEdit",
           "declaration": {
             "name": "InlineEdit",
             "module": "src/components/inline-edit.js"
@@ -771,16 +771,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "KeyboardShortcut",
+          "kind": "custom-element-definition",
+          "name": "keyboard-shortcut",
           "declaration": {
             "name": "KeyboardShortcut",
             "module": "src/components/keyboard-shortcut.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "keyboard-shortcut",
+          "kind": "js",
+          "name": "KeyboardShortcut",
           "declaration": {
             "name": "KeyboardShortcut",
             "module": "src/components/keyboard-shortcut.js"
@@ -816,16 +816,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "LoadSpinner",
+          "kind": "custom-element-definition",
+          "name": "load-spinner",
           "declaration": {
             "name": "LoadSpinner",
             "module": "src/components/load-spinner.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "load-spinner",
+          "kind": "js",
+          "name": "LoadSpinner",
           "declaration": {
             "name": "LoadSpinner",
             "module": "src/components/load-spinner.js"
@@ -850,16 +850,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "MarkdownViewer",
+          "kind": "custom-element-definition",
+          "name": "markdown-viewer",
           "declaration": {
             "name": "MarkdownViewer",
             "module": "src/components/markdown-viewer.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "markdown-viewer",
+          "kind": "js",
+          "name": "MarkdownViewer",
           "declaration": {
             "name": "MarkdownViewer",
             "module": "src/components/markdown-viewer.js"
@@ -885,16 +885,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "MessageBubble",
+          "kind": "custom-element-definition",
+          "name": "message-bubble",
           "declaration": {
             "name": "MessageBubble",
             "module": "src/components/message-bubble.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "message-bubble",
+          "kind": "js",
+          "name": "MessageBubble",
           "declaration": {
             "name": "MessageBubble",
             "module": "src/components/message-bubble.js"
@@ -930,16 +930,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "MultiSlot",
+          "kind": "custom-element-definition",
+          "name": "multi-slot",
           "declaration": {
             "name": "MultiSlot",
             "module": "src/components/multi-slot.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "multi-slot",
+          "kind": "js",
+          "name": "MultiSlot",
           "declaration": {
             "name": "MultiSlot",
             "module": "src/components/multi-slot.js"
@@ -968,6 +968,14 @@
             "name": "NoDecoratorElement",
             "module": "src/components/no-decorator.js"
           }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "no-decorator-element",
+          "declaration": {
+            "name": "NoDecoratorElement",
+            "module": "src/components/no-decorator.js"
+          }
         }
       ]
     },
@@ -988,16 +996,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "NotificationBanner",
+          "kind": "custom-element-definition",
+          "name": "notification-banner",
           "declaration": {
             "name": "NotificationBanner",
             "module": "src/components/notification-banner.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "notification-banner",
+          "kind": "js",
+          "name": "NotificationBanner",
           "declaration": {
             "name": "NotificationBanner",
             "module": "src/components/notification-banner.js"
@@ -1029,16 +1037,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "ProgressCircle",
+          "kind": "custom-element-definition",
+          "name": "progress-circle",
           "declaration": {
             "name": "ProgressCircle",
             "module": "src/components/progress-circle.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "progress-circle",
+          "kind": "js",
+          "name": "ProgressCircle",
           "declaration": {
             "name": "ProgressCircle",
             "module": "src/components/progress-circle.js"
@@ -1078,16 +1086,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "RangeSlider",
+          "kind": "custom-element-definition",
+          "name": "range-slider",
           "declaration": {
             "name": "RangeSlider",
             "module": "src/components/range-slider.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "range-slider",
+          "kind": "js",
+          "name": "RangeSlider",
           "declaration": {
             "name": "RangeSlider",
             "module": "src/components/range-slider.js"
@@ -1113,16 +1121,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "ResizeHandle",
+          "kind": "custom-element-definition",
+          "name": "resize-handle",
           "declaration": {
             "name": "ResizeHandle",
             "module": "src/components/resize-handle.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "resize-handle",
+          "kind": "js",
+          "name": "ResizeHandle",
           "declaration": {
             "name": "ResizeHandle",
             "module": "src/components/resize-handle.js"
@@ -1162,16 +1170,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "SearchBar",
+          "kind": "custom-element-definition",
+          "name": "search-bar",
           "declaration": {
             "name": "SearchBar",
             "module": "src/components/search-bar.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "search-bar",
+          "kind": "js",
+          "name": "SearchBar",
           "declaration": {
             "name": "SearchBar",
             "module": "src/components/search-bar.js"
@@ -1197,16 +1205,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "SectionHeader",
+          "kind": "custom-element-definition",
+          "name": "section-header",
           "declaration": {
             "name": "SectionHeader",
             "module": "src/components/section-header.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "section-header",
+          "kind": "js",
+          "name": "SectionHeader",
           "declaration": {
             "name": "SectionHeader",
             "module": "src/components/section-header.js"
@@ -1232,16 +1240,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "SkeletonBlock",
+          "kind": "custom-element-definition",
+          "name": "skeleton-block",
           "declaration": {
             "name": "SkeletonBlock",
             "module": "src/components/skeleton-block.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "skeleton-block",
+          "kind": "js",
+          "name": "SkeletonBlock",
           "declaration": {
             "name": "SkeletonBlock",
             "module": "src/components/skeleton-block.js"
@@ -1266,16 +1274,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "SplitPane",
+          "kind": "custom-element-definition",
+          "name": "split-pane",
           "declaration": {
             "name": "SplitPane",
             "module": "src/components/split-pane.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "split-pane",
+          "kind": "js",
+          "name": "SplitPane",
           "declaration": {
             "name": "SplitPane",
             "module": "src/components/split-pane.js"
@@ -1315,16 +1323,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "StarRating",
+          "kind": "custom-element-definition",
+          "name": "star-rating",
           "declaration": {
             "name": "StarRating",
             "module": "src/components/star-rating.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "star-rating",
+          "kind": "js",
+          "name": "StarRating",
           "declaration": {
             "name": "StarRating",
             "module": "src/components/star-rating.js"
@@ -1356,16 +1364,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "StepProgress",
+          "kind": "custom-element-definition",
+          "name": "step-progress",
           "declaration": {
             "name": "StepProgress",
             "module": "src/components/step-progress.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "step-progress",
+          "kind": "js",
+          "name": "StepProgress",
           "declaration": {
             "name": "StepProgress",
             "module": "src/components/step-progress.js"
@@ -1405,16 +1413,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "TabNavigation",
+          "kind": "custom-element-definition",
+          "name": "tab-navigation",
           "declaration": {
             "name": "TabNavigation",
             "module": "src/components/tab-navigation.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "tab-navigation",
+          "kind": "js",
+          "name": "TabNavigation",
           "declaration": {
             "name": "TabNavigation",
             "module": "src/components/tab-navigation.js"
@@ -1466,16 +1474,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "TagList",
+          "kind": "custom-element-definition",
+          "name": "tag-list",
           "declaration": {
             "name": "TagList",
             "module": "src/components/tag-list.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "tag-list",
+          "kind": "js",
+          "name": "TagList",
           "declaration": {
             "name": "TagList",
             "module": "src/components/tag-list.js"
@@ -1500,16 +1508,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "TextTicker",
+          "kind": "custom-element-definition",
+          "name": "text-ticker",
           "declaration": {
             "name": "TextTicker",
             "module": "src/components/text-ticker.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "text-ticker",
+          "kind": "js",
+          "name": "TextTicker",
           "declaration": {
             "name": "TextTicker",
             "module": "src/components/text-ticker.js"
@@ -1566,16 +1574,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "ThemeToggle",
+          "kind": "custom-element-definition",
+          "name": "theme-toggle",
           "declaration": {
             "name": "ThemeToggle",
             "module": "src/components/theme-toggle.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "theme-toggle",
+          "kind": "js",
+          "name": "ThemeToggle",
           "declaration": {
             "name": "ThemeToggle",
             "module": "src/components/theme-toggle.js"
@@ -1611,16 +1619,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "ToastStack",
+          "kind": "custom-element-definition",
+          "name": "toast-stack",
           "declaration": {
             "name": "ToastStack",
             "module": "src/components/toast-stack.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "toast-stack",
+          "kind": "js",
+          "name": "ToastStack",
           "declaration": {
             "name": "ToastStack",
             "module": "src/components/toast-stack.js"
@@ -1680,16 +1688,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "ToggleSwitch",
+          "kind": "custom-element-definition",
+          "name": "toggle-switch",
           "declaration": {
             "name": "ToggleSwitch",
             "module": "src/components/toggle-switch.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "toggle-switch",
+          "kind": "js",
+          "name": "ToggleSwitch",
           "declaration": {
             "name": "ToggleSwitch",
             "module": "src/components/toggle-switch.js"
@@ -1715,16 +1723,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "UserAvatar",
+          "kind": "custom-element-definition",
+          "name": "user-avatar",
           "declaration": {
             "name": "UserAvatar",
             "module": "src/components/user-avatar.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "user-avatar",
+          "kind": "js",
+          "name": "UserAvatar",
           "declaration": {
             "name": "UserAvatar",
             "module": "src/components/user-avatar.js"
@@ -1749,16 +1757,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "UserList",
+          "kind": "custom-element-definition",
+          "name": "user-list",
           "declaration": {
             "name": "UserList",
             "module": "src/components/user-list.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "user-list",
+          "kind": "js",
+          "name": "UserList",
           "declaration": {
             "name": "UserList",
             "module": "src/components/user-list.js"
@@ -1784,16 +1792,16 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "VisuallyHidden",
+          "kind": "custom-element-definition",
+          "name": "visually-hidden",
           "declaration": {
             "name": "VisuallyHidden",
             "module": "src/components/visually-hidden.js"
           }
         },
         {
-          "kind": "custom-element-definition",
-          "name": "visually-hidden",
+          "kind": "js",
+          "name": "VisuallyHidden",
           "declaration": {
             "name": "VisuallyHidden",
             "module": "src/components/visually-hidden.js"
@@ -1806,6 +1814,14 @@
       "path": "src/components/with-inheritance.js",
       "declarations": [
         {
+          "name": "BaseItem",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class"
+        },
+        {
           "name": "SpecialItem",
           "superclass": {
             "name": "BaseItem"
@@ -1817,6 +1833,14 @@
         {
           "kind": "js",
           "name": "SpecialItem",
+          "declaration": {
+            "name": "SpecialItem",
+            "module": "src/components/with-inheritance.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "special-item",
           "declaration": {
             "name": "SpecialItem",
             "module": "src/components/with-inheritance.js"
