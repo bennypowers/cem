@@ -22,6 +22,10 @@
             "name": "Simple"
           },
           "kind": "class"
+        },
+        {
+          "name": "Foo",
+          "kind": "class"
         }
       ],
       "exports": [

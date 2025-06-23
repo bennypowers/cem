@@ -60,108 +60,181 @@ func ammendStylesMapFromSource(
 	return errs
 }
 
-func generateModule(file string, code []byte, queryManager *QueryManager) (errs error, module *M.Module) {
+// ModuleProcessor is responsible for parsing a typescript module (file)
+// and populating it's associated custom element manifest Module object
+// because parsing involves tree sitter objects which are written in C
+// we need to free those resources when finished with them, so ModuleProcessor
+// is also responsible for closing its associated C resources.
+type ModuleProcessor struct {
+	file string
+	code []byte
+	source string
+	queryManager *QueryManager
+	parser *ts.Parser
+	tree *ts.Tree
+	root *ts.Node
+	importBindingToSpecMap map[string]struct{name string; spec string}
+	classNamesAdded S.Set[string]
+	module *M.Module
+	errors error
+}
+
+func NewModuleProcessor(file string, code []byte, queryManager *QueryManager) ModuleProcessor {
 	parser := ts.NewParser()
-	defer parser.Close()
 	parser.SetLanguage(Languages.typescript)
 	tree := parser.Parse(code, nil)
-	defer tree.Close()
 	root := tree.RootNode()
+	module := M.NewModule(file)
+	mp := ModuleProcessor{
+		queryManager: queryManager,
+		file: file,
+		code: code,
+		source: string(code),
+		parser: parser,
+		tree: tree,
+		root: root,
+		module: module,
+		importBindingToSpecMap: make(map[string]struct{name string; spec string}),
+		classNamesAdded: S.NewSet[string](),
+	}
+	mp.processVariables()
+	mp.processClassDeclarations()
+	mp.processFunctions()
+	mp.processExports()
+	return mp
+}
 
-	module = M.NewModule(file)
+func (mp *ModuleProcessor) Close() {
+  mp.parser.Close()
+	mp.tree.Close()
+}
 
-	classNamesAdded := S.NewSet[string]()
+func (mp *ModuleProcessor) Collect() (module *M.Module, errors error) {
+	return mp.module, mp.errors
+}
 
+func (mp *ModuleProcessor) processVariables() {
 	queryName := "variableDeclaration"
-	qm, err := NewQueryMatcher(queryManager, "typescript", queryName)
+	qm, err := NewQueryMatcher(mp.queryManager, "typescript", queryName)
 	if err != nil {
-		return errors.Join(errs, err), nil
+		mp.errors = errors.Join(mp.errors, err)
+		return
 	}
 	defer qm.Close()
-	for captures := range qm.ParentCaptures(root, code, "variable") {
-		err, declaration := generateVarDeclaration(captures, queryManager)
+	for captures := range qm.ParentCaptures(mp.root, mp.code, "variable") {
+		err, declaration := generateVarDeclaration(captures, mp.queryManager)
 		if err != nil {
-			errs = errors.Join(errs, err)
+			mp.errors = errors.Join(mp.errors, err)
 		} else {
-			module.Declarations = append(module.Declarations, declaration)
+			mp.module.Declarations = append(mp.module.Declarations, declaration)
 		}
 	}
+}
 
-	queryName = "classDeclaration"
-	qm, err = NewQueryMatcher(queryManager, "typescript", queryName)
+func (mp *ModuleProcessor) processFunctions() {
+	queryName := "functionDeclaration"
+	qm, err := NewQueryMatcher(mp.queryManager, "typescript", queryName)
 	if err != nil {
-		return errors.Join(errs, err), nil
+		mp.errors = errors.Join(mp.errors, err)
+		return
 	}
 	defer qm.Close()
+	for captures := range qm.ParentCaptures(mp.root, mp.code, "function") {
+		err, declaration := generateFunctionDeclaration(captures, mp.root, mp.code, mp.queryManager)
+		if err != nil {
+			mp.errors = errors.Join(mp.errors, err)
+		} else {
+			mp.module.Declarations = append(mp.module.Declarations, declaration)
+		}
+	}
+}
+
+func (mp *ModuleProcessor) processClassDeclarations() {
+	queryName := "classDeclaration"
+	qm, err := NewQueryMatcher(mp.queryManager, "typescript", queryName)
+	if err != nil {
+		mp.errors = errors.Join(mp.errors, err)
+		return
+	}
+
+	defer qm.Close()
 	styleImportsBindingToSpecMap := make(map[string]string)
-	for sImport := range qm.ParentCaptures(root, code, "styleImport.spec") {
+	for sImport := range qm.ParentCaptures(mp.root, mp.code, "styleImport.spec") {
 		styleImportsBindingToSpecMap[sImport["styleImport.binding"][0].Text] = sImport["styleImport.spec"][0].Text
 	}
-	importBindingToSpecMap := make(map[string]struct{name string; spec string})
-	for captures := range qm.ParentCaptures(root, code, "import") {
+	for captures := range qm.ParentCaptures(mp.root, mp.code, "import") {
 		original := captures["import.name"][0].Text
 		binding := captures["import.binding"][0].Text
 		spec := captures["import.spec"][0].Text
-		importBindingToSpecMap[binding] = struct{name string; spec string}{original, spec}
+		mp.importBindingToSpecMap[binding] = struct{name string; spec string}{original, spec}
 	}
-	for captures := range qm.ParentCaptures(root, code, "class") {
-		d, err := generateClassDeclaration(queryManager, captures, root, code)
+	for captures := range qm.ParentCaptures(mp.root, mp.code, "class") {
+		d, err := mp.generateClassDeclaration(captures)
 		if err != nil {
-			errs = errors.Join(errs, err)
+			mp.errors = errors.Join(mp.errors, err)
 		} else {
 			declaration, ok := d.(*M.ClassDeclaration)
-			if ok && !classNamesAdded.Has(declaration.Name) {
-				classNamesAdded.Add(declaration.Name)
-				module.Declarations = append(module.Declarations, declaration)
+			if ok && !mp.classNamesAdded.Has(declaration.Name) {
+				mp.classNamesAdded.Add(declaration.Name)
+				mp.module.Declarations = append(mp.module.Declarations, declaration)
 			} else {
 				declaration, ok := d.(*M.CustomElementDeclaration)
 				props := make(map[string]M.CssCustomProperty)
-				if ok && !classNamesAdded.Has(declaration.Name) {
-					classNamesAdded.Add(declaration.Name)
+				if ok && !mp.classNamesAdded.Has(declaration.Name) {
+					mp.classNamesAdded.Add(declaration.Name)
 					// get all style array or value bindings
 					bindings, hasBindings := captures["style.binding"]
 					styleStrings, hasStrings := captures["style.string"]
 					if hasBindings || hasStrings {
-						qm, err := NewQueryMatcher(queryManager, "css", "cssCustomProperties")
+						qm, err := NewQueryMatcher(mp.queryManager, "css", "cssCustomProperties")
 						parser := ts.NewParser()
 						defer parser.Close()
 						parser.SetLanguage(Languages.css)
 						if err != nil {
-							return errors.Join(errs, err), nil
+							mp.errors = errors.Join(mp.errors, err)
+							continue
 						}
 						if hasBindings {
 							for _, binding := range bindings {
 								spec, ok := styleImportsBindingToSpecMap[binding.Text]
 								if ok && strings.HasPrefix(spec, "."){
-									// i'm proposing to do file io here, read the referenced spec file,
-									// parse it, and add any variables i find to the cssProperties slice.
+									// NOTE: we're doing file io here, reading the referenced spec file,
+									// parsing it, and adding any variables we find to the cssProperties slice.
 									// perhaps a more performant or maintainable alternative is to leave a marker here,
 									// and then do all that work on the back end.
-									content, err := os.ReadFile(path.Join(path.Dir(module.Path), spec))
+									content, err := os.ReadFile(path.Join(path.Dir(mp.module.Path), spec))
 									if err != nil {
-										errs = errors.Join(errs, errors.New(fmt.Sprintf("Could not read tokens spec %s", spec)), err)
+										mp.errors = errors.Join(mp.errors, errors.New(fmt.Sprintf("Could not read tokens spec %s", spec)), err)
 									} else {
-
-								err := ammendStylesMapFromSource(props, queryManager, qm, parser, content)
-								if err != nil {
-									errs = errors.Join(errs, err)
-								}
+										err := ammendStylesMapFromSource(props, mp.queryManager, qm, parser, content)
+										if err != nil {
+											mp.errors = errors.Join(mp.errors, err)
+										}
 									}
 								}
-								// later on, i could add an else path here which checks to see if
-								// the css declaration is made elsewhere in the same module, then parse it's string content
-								// if the value for that variable declaration is a css template tag
+								// TODO: add an else path here which checks to see if the css declaration is made
+								// elsewhere in the same module, then parse it's string content if the value for
+								// that variable declaration is a css template tag
 							}
 						}
 						if hasStrings {
 							for _, styleString := range styleStrings {
-								err := ammendStylesMapFromSource(props, queryManager, qm, parser, []byte(styleString.Text))
+								err := ammendStylesMapFromSource(props, mp.queryManager, qm, parser, []byte(styleString.Text))
 								if err != nil {
-									errs = errors.Join(errs, err)
+									mp.errors = errors.Join(mp.errors, err)
 								}
 							}
 						}
 					}
+					// TODO: in order to be most correct here,
+					// we need to track not just the node's startbyte
+					// since that can come from multiple files
+					// instead, we need to track the startbyte of the node *in this file*
+					// which imports or declares that node, and group them
+					// such that if you import a style sheet at the top of the file
+					// then declare one with a css tagged literal later on in the file
+					// this list should first list the imported props, in order,
+					// then list those declared in the string, in order.
 					cssProps := slices.Collect(maps.Values(props))
 					declaration.CssProperties = append(declaration.CssProperties, cssProps...)
 					slices.SortStableFunc(declaration.CssProperties, func(a M.CssCustomProperty, b M.CssCustomProperty) int {
@@ -170,80 +243,68 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 						}
 						return int(a.StartByte) - int(b.StartByte)
 					})
-					// TODO: add css parts by parsing template
-					// TODO: add slots by parsing template. How do do description, etc?
-					module.Declarations = append(module.Declarations, declaration)
+					mp.module.Declarations = append(mp.module.Declarations, declaration)
 				}
 			}
 		}
 	}
 
-	queryName = "functionDeclaration"
-	qm, err = NewQueryMatcher(queryManager, "typescript", queryName)
-	if err != nil {
-		return errors.Join(errs, err), nil
-	}
-	defer qm.Close()
-	for captures := range qm.ParentCaptures(root, code, "function") {
-		err, declaration := generateFunctionDeclaration(captures, root, code, queryManager)
-		if err != nil {
-			errs = errors.Join(errs, err)
-		} else {
-			module.Declarations = append(module.Declarations, declaration)
-		}
-	}
+}
 
-	queryName = "exports"
-	qm, err = NewQueryMatcher(queryManager, "typescript", queryName)
+func (mp *ModuleProcessor) processExports() {
+	queryName := "exports"
+	qm, err := NewQueryMatcher(mp.queryManager, "typescript", queryName)
 	if err != nil {
-		errs = errors.Join(errs, err)
+		mp.errors = errors.Join(mp.errors, err)
 	}
 	defer qm.Close()
-	for captures := range qm.ParentCaptures(root, code, "export") {
+	// javascript exports
+	for captures := range qm.ParentCaptures(mp.root, mp.code, "export") {
 		if exportNodes, ok := captures["export"]; (!ok || len(exportNodes) <= 0) {
-			errs = errors.Join(errs, &NoCaptureError{ "export", queryName })
+			mp.errors = errors.Join(mp.errors, &NoCaptureError{ "export", queryName })
 		} else if declarationNameNodes, ok := captures["declaration.name"]; (!ok || len(declarationNameNodes) <= 0) {
-			errs = errors.Join(errs, &NoCaptureError{ "declaration.name", queryName })
+			mp.errors = errors.Join(mp.errors, &NoCaptureError{ "declaration.name", queryName })
 		} else {
 			declaration := declarationNameNodes[0]
 			export := &M.JavaScriptExport{
 				Kind: "js",
 				Name: declaration.Text,
-				Declaration: M.NewReference(declaration.Text, "", file),
+				Declaration: M.NewReference(declaration.Text, "", mp.file),
 				StartByte: declaration.StartByte,
 			}
-			module.Exports = append(module.Exports, export)
+			mp.module.Exports = append(mp.module.Exports, export)
 		}
 	}
-	for captures := range qm.ParentCaptures(root, code, "ce") {
+	// custom element exports
+	for captures := range qm.ParentCaptures(mp.root, mp.code, "ce") {
 		if ceNodes, ok := captures["ce"]; (!ok || len(ceNodes) <= 0) {
-			errs = errors.Join(errs, &NoCaptureError{ "ce", queryName })
+			mp.errors = errors.Join(mp.errors, &NoCaptureError{ "ce", queryName })
 		} else if tagNameNodes, ok := captures["ce.tagName"]; (!ok || len(tagNameNodes) <= 0) {
-			errs = errors.Join(errs, &NoCaptureError{ "ce.tagName", queryName })
+			mp.errors = errors.Join(mp.errors, &NoCaptureError{ "ce.tagName", queryName })
 		} else if classNameNodes, ok := captures["ce.className"]; (!ok || len(classNameNodes) <= 0) {
-			errs = errors.Join(errs, &NoCaptureError{ "ce.className", queryName })
+			mp.errors = errors.Join(mp.errors, &NoCaptureError{ "ce.className", queryName })
 		} else {
 			tagName := tagNameNodes[0].Text
 			className := classNameNodes[0].Text
-			idx := slices.IndexFunc(module.Declarations, func(decl M.Declaration) bool {
+			idx := slices.IndexFunc(mp.module.Declarations, func(decl M.Declaration) bool {
 				d, ok := decl.(*M.ClassDeclaration)
 				return ok && d.Name == classNameNodes[0].Text
 			})
 			if idx >= 0 {
-				declaration := module.Declarations[idx]
+				declaration := mp.module.Declarations[idx]
 				if declaration != nil {
-					module.Exports = append(module.Exports, M.NewCustomElementExport(
+					mp.module.Exports = append(mp.module.Exports, M.NewCustomElementExport(
 						tagName,
-						M.NewReference(declaration.(*M.ClassDeclaration).Name, "", file),
+						M.NewReference(declaration.(*M.ClassDeclaration).Name, "", mp.file),
 						ceNodes[0].StartByte,
 						nil, // deprecated
 					))
 				}
 			} else {
 				// get declaration class somehow
-				b, ok := importBindingToSpecMap[className]
+				b, ok := mp.importBindingToSpecMap[className]
 				if ok {
-					module.Exports = append(module.Exports, M.NewCustomElementExport(
+					mp.module.Exports = append(mp.module.Exports, M.NewCustomElementExport(
 						tagName,
 						M.NewReference(b.name, "", b.spec),
 						ceNodes[0].StartByte,
@@ -254,9 +315,11 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 		}
 	}
 
-	for name := range classNamesAdded {
-		reference := M.NewReference(name, "", file)
-		index := slices.IndexFunc(module.Declarations, func(d M.Declaration) bool {
+	// if the declaration for this export exists in the same module,
+	// append its reference to the export object.
+	for name := range mp.classNamesAdded {
+		reference := M.NewReference(name, "", mp.file)
+		index := slices.IndexFunc(mp.module.Declarations, func(d M.Declaration) bool {
 			if ce, ok := d.(*M.CustomElementDeclaration); ok {
 				return ce.Name == name
 			} else {
@@ -264,35 +327,20 @@ func generateModule(file string, code []byte, queryManager *QueryManager) (errs 
 			}
 		})
 		if index >= 0 {
-			d := module.Declarations[index]
+			d := mp.module.Declarations[index]
 			if declaration, ok := d.(*M.CustomElementDeclaration); ok {
-				module.Exports = append(module.Exports, &M.CustomElementExport{
-					Kind: "custom-element-definition",
-					Name: declaration.TagName,
-					Declaration: reference,
-					StartByte: declaration.StartByte,
-				})
+				mp.module.Exports = append(mp.module.Exports, M.NewCustomElementExport(
+					declaration.TagName,
+					reference,
+					declaration.StartByte,
+					nil,
+				))
 			}
 		}
 	}
 
-	slices.SortStableFunc(module.Exports, func(a M.Export, b M.Export) int {
-		var c uint
-		var d uint
-		if A, ok := a.(*M.CustomElementExport); ok {
-			c = A.StartByte
-		}
-		if A, ok := a.(*M.JavaScriptExport); ok {
-			c = A.StartByte
-		}
-		if B, ok := b.(*M.CustomElementExport); ok {
-			d = B.StartByte
-		}
-		if B, ok := b.(*M.JavaScriptExport); ok {
-			d = B.StartByte
-		}
-		return int(c) - int(d)
+	slices.SortStableFunc(mp.module.Exports, func(a M.Export, b M.Export) int {
+		return int(a.GetStartByte() - b.GetStartByte())
 	})
-	return nil, module
 }
 

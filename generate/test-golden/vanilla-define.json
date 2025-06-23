@@ -11,8 +11,7 @@
           "declaration": {
             "name": "VanillaElement",
             "module": "./vanilla-declare.js"
-          },
-          "deprecated": null
+          }
         },
         {
           "kind": "custom-element-definition",
@@ -20,8 +19,7 @@
           "declaration": {
             "name": "VanillaElement",
             "module": "./vanilla-declare.js"
-          },
-          "deprecated": null
+          }
         },
         {
           "kind": "custom-element-definition",
@@ -29,8 +27,7 @@
           "declaration": {
             "name": "DefaultImportElement",
             "module": "./vanilla-declare.js"
-          },
-          "deprecated": null
+          }
         }
       ]
     }

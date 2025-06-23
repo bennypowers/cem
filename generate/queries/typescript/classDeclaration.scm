@@ -44,25 +44,76 @@
           value: (string
             (string_fragment) @type) (#eq? @type "css"))))))
 
-( ; non-custom element class
+( ; exported non-litelement class
   ;
   ; example:
   ; ```ts
-  ; class Whatever extends Thing {}
+  ; export class Whatever extends Thing {}
   ; ```
   (comment)* @class.jsdoc . (#match? @class.jsdoc "^/\\*\\*")
   (export_statement
-    (decorator
-      (call_expression
-        function: (identifier) @class.decorator.name
-        (#not-eq? @class.decorator.name "customElement"))) *
     declaration: (class_declaration
       name: (_) @class.name
+      (#not-eq? @class.name "LitElement")
       (class_heritage
         (extends_clause
-          value: (identifier) @superclass.name))?) @class.declaration)) @class
+          value: (identifier) @superclass.name))?
+      body: (class_body
+        ; static observedAttributes = ['a', 'b']
+        (public_field_definition
+          "static"
+          name: (property_identifier) @observedAttributes.fieldName (#eq? @observedAttributes.fieldName "observedAttributes")
+          value: (array
+            (string
+              (string_fragment) @observedAttributes.attributeName)))? @observedAttributes
 
-( ; exported custom element class
+        ; static get observedAttributes() { return ['a', 'b']; }
+        (method_definition
+          "static"
+          "get"
+          name: (property_identifier) @observedAttributes.fieldName
+          parameters: (formal_parameters)
+          body: (statement_block
+            (return_statement
+              (array
+                (string
+                  (string_fragment) @observedAttributes.attributeName)))))? @observedAttributes)) @class.declaration)) @class
+
+( ; non-exported non-litelement class
+  ;
+  ; example:
+  ; ```ts
+  ; export class Whatever extends Thing {}
+  ; ```
+  (comment)* @class.jsdoc . (#match? @class.jsdoc "^/\\*\\*")
+  (class_declaration
+    name: (_) @class.name
+    (#not-eq? @class.name "LitElement")
+    (class_heritage
+      (extends_clause
+        value: (identifier) @superclass.name))?
+    body: (class_body
+      ; static observedAttributes = ['a', 'b']
+      (public_field_definition
+        "static"
+        name: (property_identifier) @observedAttributes.fieldName (#eq? @observedAttributes.fieldName "observedAttributes")
+        value: (array
+          (string
+            (string_fragment) @observedAttributes.attributeName)))? @observedAttributes
+
+      ; static get observedAttributes() { return ['a', 'b']; }
+      (method_definition
+        "static"
+        "get"
+        name: (property_identifier) @observedAttributes.fieldName
+        parameters: (formal_parameters)
+        body: (statement_block
+          (return_statement
+            (array
+              (string
+                (string_fragment) @observedAttributes.attributeName)))))? @observedAttributes)) @class.declaration) @class
+
+( ; exported litelement class
   ;
   ; example:
   ; ```ts
@@ -111,7 +162,7 @@
                         (string_fragment) @render.template)))))?)
       ) @class.declaration)) @customElement @class
 
-( ; non-exported custom element class
+( ; non-exported litelement class
   ;
   ; example:
   ; ```ts

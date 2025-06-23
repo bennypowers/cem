@@ -11,10 +11,19 @@
             "name": "HTMLElement",
             "package": "global:"
           },
-          "kind": "class"
+          "kind": "class",
+          "customElement": true
         }
       ],
       "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "",
+          "declaration": {
+            "name": "VanillaElement",
+            "module": "test-fixtures/vanilla-declare.js"
+          }
+        },
         {
           "kind": "js",
           "name": "VanillaElement",

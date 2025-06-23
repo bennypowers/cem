@@ -61,6 +61,7 @@ func FindNamedMatches(regex *regexp.Regexp, str string, includeNotMatchedOptiona
 
 type ClassInfo struct {
 	Description string;
+	TagName string;
 	Summary string;
 	Deprecated M.Deprecated;
 	Attrs []M.Attribute;
@@ -71,12 +72,12 @@ type ClassInfo struct {
 	Slots []M.Slot;
 }
 
-func NewClassInfo(source string, queryManager *QueryManager) (error, *ClassInfo) {
+func NewClassInfo(source string, queryManager *QueryManager) (*ClassInfo, error) {
 	info := ClassInfo{}
 	code := []byte(source)
 	qm, err := NewQueryMatcher(queryManager, "jsdoc", "jsdoc")
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 	defer qm.Close()
 
@@ -101,6 +102,8 @@ func NewClassInfo(source string, queryManager *QueryManager) (error, *ClassInfo)
 									"@attribute":
 							attr := tagInfo.toAttribute()
 							info.Attrs = append(info.Attrs, attr)
+						case "@customElement":
+							info.TagName = tagInfo.Description
 						case "@csspart":
 					    part := tagInfo.toCssPart()
 							info.CssParts = append(info.CssParts, part)
@@ -130,7 +133,7 @@ func NewClassInfo(source string, queryManager *QueryManager) (error, *ClassInfo)
 			}
 		}
 	}
-	return nil, &info
+	return &info, nil
 }
 
 func (info *ClassInfo) MergeToClassDeclaration(declaration *M.ClassDeclaration) {
@@ -147,6 +150,9 @@ func (info *ClassInfo) MergeToCustomElementDeclaration(declaration *M.CustomElem
 	declaration.CustomElement.CssProperties = info.CssProperties
 	declaration.CustomElement.CssParts      = info.CssParts
 	declaration.CustomElement.CssStates     = info.CssStates
+	if info.TagName != "" {
+		declaration.CustomElement.TagName		    = info.TagName
+	}
 }
 
 type TagInfo struct {
@@ -197,6 +203,7 @@ func (info TagInfo) toAttribute() (M.Attribute) {
 		Name: info.Name,
 		Default: info.Value,
 		Description: normalizeJsdocLines(matches["description"]),
+		StartByte: info.startByte,
 		// NB: not applicable to the jsdoc version of this.
 		// field name should be inferred from decorated class fields, or other framework construct
 		// FieldName: NA,

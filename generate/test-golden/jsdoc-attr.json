@@ -25,6 +25,13 @@
           "tagName": "jsdoc-attr",
           "attributes": [
             {
+              "name": "classattr",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "classAttr"
+            },
+            {
               "name": "attr"
             },
             {
@@ -85,13 +92,6 @@
               "type": {
                 "text": "number"
               }
-            },
-            {
-              "name": "classattr",
-              "type": {
-                "text": "string"
-              },
-              "fieldName": "classAttr"
             }
           ],
           "customElement": true

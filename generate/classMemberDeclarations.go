@@ -11,26 +11,52 @@ import (
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
-var ignoredStaticFields = set.NewSet(
+var ignoredStaticFieldsHTML = set.NewSet(
 	"formAssociated",
 	"observedAttributes",
+)
+
+var ignoredStaticFieldsLit = set.NewSet(
 	"shadowRootOptions",
 	"styles",
 )
 
-var ignoredInstanceMethods = set.NewSet(
+var ignoredInstanceMethodsHTML = set.NewSet(
   "adoptedCallback",
   "connectedCallback",
   "connectedMoveCallback",
   "disconnectedCallback",
   "formDisabledCallback",
   "formStateRestoreCallback",
+)
+
+var ignoredInstanceMethodsLit = set.NewSet(
   "render",
   "update",
   "getUpdateComplete",
   "updated",
   "willUpdate",
 )
+
+func isIgnoredMember(memberName string, superclass string, isStatic bool) bool {
+	switch superclass {
+	case "HTMLElement":
+		if ((isStatic && ignoredStaticFieldsHTML.Has(memberName)) ||
+				(!isStatic && ignoredInstanceMethodsHTML.Has(memberName))) {
+			return true
+		}
+	case "LitElement":
+		if ((isStatic && ignoredStaticFieldsHTML.Has(memberName)) ||
+				(!isStatic && ignoredInstanceMethodsHTML.Has(memberName))) {
+			return true
+		}
+		if (isStatic && ignoredStaticFieldsLit.Has(memberName)) ||
+				(!isStatic && ignoredInstanceMethodsLit.Has(memberName)) {
+			return true
+		}
+	}
+	return false
+}
 
 func isPropertyField(captures CaptureMap) bool {
 	_, hasDecorators := captures["decorator.name"]
@@ -107,7 +133,7 @@ func createClassFieldFromAccessorMatch(
 	fieldName string,
 	isStatic bool,
 	isReadonly bool,
-	isCustomElement bool,
+	classType string,
 	captures CaptureMap,
 	queryManager *QueryManager,
 ) (err error, field M.CustomElementField) {
@@ -119,6 +145,7 @@ func createClassFieldFromAccessorMatch(
 	ammendFieldTypeWithCaptures(captures, &field.ClassField)
 	ammendFieldPrivacyWithCaptures(captures, &field.ClassField)
 
+	isCustomElement := classType == "HTMLElement" || classType == "LitElement"
 	isProperty := isCustomElement && !isStatic && isPropertyField(captures)
 
 	if isProperty {
@@ -130,7 +157,13 @@ func createClassFieldFromAccessorMatch(
 	return err, field
 }
 
-func createClassFieldFromFieldMatch(fieldName string, isStatic bool, isCustomElement bool, captures CaptureMap, queryManager *QueryManager) (err error, field M.CustomElementField) {
+func createClassFieldFromFieldMatch(
+	fieldName string,
+	isStatic bool,
+	superclass string,
+	captures CaptureMap,
+	queryManager *QueryManager,
+) (err error, field M.CustomElementField) {
 	_, readonly := captures["field.readonly"]
 
 	field.Kind = "field"
@@ -160,6 +193,7 @@ func createClassFieldFromFieldMatch(fieldName string, isStatic bool, isCustomEle
 		}
 	}
 
+	isCustomElement := superclass == "HTMLElement" || superclass == "LitElement"
 	isProperty := isCustomElement && !isStatic && isPropertyField(captures)
 
 	if isProperty {
@@ -171,17 +205,17 @@ func createClassFieldFromFieldMatch(fieldName string, isStatic bool, isCustomEle
 	return err, field
 }
 
-func getClassMembersFromClassDeclarationNode(
-	queryManager *QueryManager,
-	code []byte,
+func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 	className string,
-	root *ts.Node,
 	classDeclarationNode *ts.Node,
-	isCustomElement bool,
-) (errs error, members []M.ClassMember) {
-	qm, err := NewQueryMatcher(queryManager, "typescript", "classMemberDeclaration")
+	superclass string,
+) (
+	members []M.ClassMember,
+	errs error,
+) {
+	qm, err := NewQueryMatcher(mp.queryManager, "typescript", "classMemberDeclaration")
 	if err != nil {
-		return errors.Join(errs, err), nil
+		return members, errors.Join(errs, err)
 	}
 	defer qm.Close()
 	qm.cursor.SetByteRange(classDeclarationNode.ByteRange())
@@ -195,9 +229,12 @@ func getClassMembersFromClassDeclarationNode(
 	// to collate first instance of accessor pair / accessor
 	accessorIndices := make(map[string]int)
 
-	for captures := range qm.ParentCaptures(root, code, "accessor") {
+	for captures := range qm.ParentCaptures(mp.root, mp.code, "accessor") {
 		_, isStatic := captures["field.static"]
 		fieldName := captures["field.name"][0].Text
+		if (isIgnoredMember(fieldName, superclass, isStatic)) {
+			continue
+		}
 		key := className + "." + fieldName
 		if !gettersSet.Has(key) && !settersSet.Has(key) {
 			accessorIndices[key] = len(members)
@@ -230,7 +267,7 @@ func getClassMembersFromClassDeclarationNode(
 		if hasPair {
 			// field is a *cem.CustomElementField
 			isReadonly := false
-			error, field := createClassFieldFromAccessorMatch(fieldName, isStatic, isReadonly, isCustomElement, captures, queryManager)
+			error, field := createClassFieldFromAccessorMatch(fieldName, isStatic, isReadonly, superclass, captures, mp.queryManager)
 			if error != nil {
 				errs = errors.Join(errs, error)
 			} else {
@@ -245,7 +282,7 @@ func getClassMembersFromClassDeclarationNode(
 			}
 		} else {
 			isReadonly := accessorKind == "get"
-			error, field := createClassFieldFromAccessorMatch(fieldName, isStatic, isReadonly, isCustomElement, captures, queryManager)
+			error, field := createClassFieldFromAccessorMatch(fieldName, isStatic, isReadonly, superclass, captures, mp.queryManager)
 			if error != nil {
 				errs = errors.Join(errs, error)
 			} else {
@@ -254,21 +291,17 @@ func getClassMembersFromClassDeclarationNode(
 		}
 	}
 
-	for captures := range qm.ParentCaptures(root, code, "field") {
+	for captures := range qm.ParentCaptures(mp.root, mp.code, "field") {
 		_, isStatic := captures["field.static"]
 		fieldName := captures["field.name"][0].Text
-		key := className + "." + fieldName
-		if (isCustomElement) {
-			if (isStatic && ignoredStaticFields.Has(fieldName)) ||
-					(!isStatic && ignoredInstanceMethods.Has(fieldName)) {
-				continue
-			}
+		if (isIgnoredMember(fieldName, superclass, isStatic)) {
+			continue
 		}
 
 		fieldNodes, ok := captures["field"]
 		if ok && len(fieldNodes) > 0  {
 			fieldNodeId := fieldNodes[0].NodeId
-			fieldNode := GetDescendantById(root, fieldNodeId)
+			fieldNode := GetDescendantById(mp.root, fieldNodeId)
 			if fieldNode != nil {
 				valueNode := fieldNode.ChildByFieldName("value")
 				if valueNode != nil {
@@ -278,9 +311,11 @@ func getClassMembersFromClassDeclarationNode(
 				}
 			}
 		}
+
+		key := className + "." + fieldName
 		if (isStatic && !staticsSet.Has(key)) {
 			staticsSet.Add(key)
-			error, field := createClassFieldFromFieldMatch(fieldName, isStatic, isCustomElement, captures, queryManager)
+			error, field := createClassFieldFromFieldMatch(fieldName, isStatic, superclass, captures, mp.queryManager)
 			if error != nil {
 				errs = errors.Join(errs, error)
 			} else {
@@ -288,7 +323,7 @@ func getClassMembersFromClassDeclarationNode(
 			}
 		} else if (!isStatic && !fieldsSet.Has(key)) {
 			fieldsSet.Add(key)
-			error, field := createClassFieldFromFieldMatch(fieldName, isStatic, isCustomElement, captures, queryManager)
+			error, field := createClassFieldFromFieldMatch(fieldName, isStatic, superclass, captures, mp.queryManager)
 			if error != nil {
 				errs = errors.Join(errs, error)
 			} else {
@@ -297,7 +332,7 @@ func getClassMembersFromClassDeclarationNode(
 		}
 	}
 
-	for captures := range qm.ParentCaptures(root, code, "method") {
+	for captures := range qm.ParentCaptures(mp.root, mp.code, "method") {
 		method := M.ClassMethod{Kind: "method"}
 		methodNames, ok := captures["method.name"]
 		methodName := methodNames[0]
@@ -352,7 +387,7 @@ func getClassMembersFromClassDeclarationNode(
 		jsdocs, ok := captures["member.jsdoc"]
 		if ok {
 			for _, jsdoc := range jsdocs {
-				merr, info := NewMethodInfo(jsdoc.Text, queryManager)
+				merr, info := NewMethodInfo(jsdoc.Text, mp.queryManager)
 				if merr != nil {
 					errs = errors.Join(merr)
 				} else {
@@ -364,6 +399,6 @@ func getClassMembersFromClassDeclarationNode(
 		members = append(members, method)
 	}
 
-	return errs, members
+	return members, errs
 }
 
