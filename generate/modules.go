@@ -61,7 +61,7 @@ func ammendStylesMapFromSource(
 }
 
 // ModuleProcessor is responsible for parsing a typescript module (file)
-// and populating it's associated custom element manifest Module object
+// and populating its associated custom element manifest Module object
 // because parsing involves tree sitter objects which are written in C
 // we need to free those resources when finished with them, so ModuleProcessor
 // is also responsible for closing its associated C resources.

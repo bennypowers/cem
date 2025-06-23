@@ -208,9 +208,9 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 
 	jsdoc, ok := captures["class.jsdoc"]
 	if (ok && len(jsdoc) > 0) {
-		classInfo, error := NewClassInfo(jsdoc[0].Text, mp.queryManager)
-		if error != nil {
-			errs = errors.Join(errs, error)
+		classInfo, err := NewClassInfo(jsdoc[0].Text, mp.queryManager)
+		if err != nil {
+			errs = errors.Join(errs, err)
 		} else {
 			classInfo.MergeToCustomElementDeclaration(declaration)
 		}

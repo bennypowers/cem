@@ -175,6 +175,7 @@ type QueryMatcher struct {
 }
 
 func (qm QueryMatcher) Close() {
+	// NOTE: we don't close queries here, only at the end of execution in QueryManager.Close
 	qm.cursor.Close()
 }
 
