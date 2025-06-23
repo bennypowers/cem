@@ -114,8 +114,7 @@ func (mp *ModuleProcessor) Collect() (module *M.Module, errors error) {
 }
 
 func (mp *ModuleProcessor) processVariables() {
-	queryName := "variableDeclaration"
-	qm, err := NewQueryMatcher(mp.queryManager, "typescript", queryName)
+	qm, err := NewQueryMatcher(mp.queryManager, "typescript", "variableDeclaration")
 	if err != nil {
 		mp.errors = errors.Join(mp.errors, err)
 		return
@@ -132,8 +131,7 @@ func (mp *ModuleProcessor) processVariables() {
 }
 
 func (mp *ModuleProcessor) processFunctions() {
-	queryName := "functionDeclaration"
-	qm, err := NewQueryMatcher(mp.queryManager, "typescript", queryName)
+	qm, err := NewQueryMatcher(mp.queryManager, "typescript",  "functionDeclaration")
 	if err != nil {
 		mp.errors = errors.Join(mp.errors, err)
 		return
@@ -150,8 +148,7 @@ func (mp *ModuleProcessor) processFunctions() {
 }
 
 func (mp *ModuleProcessor) processClassDeclarations() {
-	queryName := "classDeclaration"
-	qm, err := NewQueryMatcher(mp.queryManager, "typescript", queryName)
+	qm, err := NewQueryMatcher(mp.queryManager, "typescript", "classDeclaration")
 	if err != nil {
 		mp.errors = errors.Join(mp.errors, err)
 		return
