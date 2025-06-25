@@ -1,4 +1,4 @@
-package generate
+package queries
 
 import (
 	"embed"
@@ -18,23 +18,23 @@ import (
 	tsTypescript "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
 )
 
-//go:embed queries/*/*.scm
+//go:embed */*.scm
 var queries embed.FS
 
 type NoCaptureError struct {
-	CaptureName string
-	QueryName string
+	Capture string
+	Query string
 }
 
 func (e *NoCaptureError) Error() string {
-  return fmt.Sprintf("No nodes for capture %s in query %s", e.CaptureName, e.QueryName)
+  return fmt.Sprintf("No nodes for capture %s in query %s", e.Capture, e.Query)
 }
 
 var Languages = struct{
-	typescript *ts.Language
-	jsdoc *ts.Language
-	css *ts.Language
-	html *ts.Language
+	Typescript *ts.Language
+	Jsdoc *ts.Language
+	Css *ts.Language
+	Html *ts.Language
 }{
 	ts.NewLanguage(tsTypescript.LanguageTypescript()),
 	ts.NewLanguage(tsJsdoc.Language()),
@@ -44,7 +44,7 @@ var Languages = struct{
 
 type QueryManagerI interface {
 	Close()
-	GetQuery(name string) (*ts.Query, error)
+	getQuery(name string) (*ts.Query, error)
 }
 
 type QueryManager struct {
@@ -62,7 +62,7 @@ func NewQueryManager() (*QueryManager, error) {
 		html: make(map[string]*ts.Query),
 	}
 
-	data, err := queries.ReadDir("queries")
+	data, err := queries.ReadDir(".")
 	if err != nil {
 		log.Fatal(err) // it's ok to die here because these queries are compiled in via embed
 	}
@@ -70,7 +70,7 @@ func NewQueryManager() (*QueryManager, error) {
 	for _, direntry := range data {
 		if direntry.IsDir() {
 			language := direntry.Name()
-			data, err := queries.ReadDir(path.Join("queries", language))
+			data, err := queries.ReadDir(path.Join(".", language))
 			if err != nil {
 				log.Fatal(err) // it's ok to die here because these queries are compiled in via embed
 			}
@@ -79,7 +79,7 @@ func NewQueryManager() (*QueryManager, error) {
 				if !entry.IsDir() {
 					file := entry.Name()
 					queryName := strings.Split(filepath.Base(file), ".")[0]
-					data, err := queries.ReadFile(filepath.Join("queries", language, file))
+					data, err := queries.ReadFile(filepath.Join(".", language, file))
 					if err != nil {
 						log.Fatal(err) // it's ok to die here because these queries are compiled in via embed
 					}
@@ -87,13 +87,13 @@ func NewQueryManager() (*QueryManager, error) {
 					var tsLang *ts.Language
 					switch language {
 					case "typescript":
-						tsLang = Languages.typescript
+						tsLang = Languages.Typescript
 					case "jsdoc":
-						tsLang = Languages.jsdoc
+						tsLang = Languages.Jsdoc
 					case "css":
-						tsLang = Languages.css
+						tsLang = Languages.Css
 					case "html":
-						tsLang = Languages.html
+						tsLang = Languages.Html
 					}
 					if tsLang == nil {
 						// it's ok to die here because these queries are compiled in via embed
@@ -136,7 +136,7 @@ func (qm *QueryManager) Close() {
 	}
 }
 
-func (qm *QueryManager) GetQuery(queryName string, language string) (*ts.Query, error) {
+func (qm *QueryManager) getQuery(queryName string, language string) (*ts.Query, error) {
 	var q *ts.Query
 	var ok bool
 	switch language {
@@ -179,12 +179,25 @@ func (qm QueryMatcher) Close() {
 	qm.cursor.Close()
 }
 
+func (qm QueryMatcher) GetCaptureNameByIndex(index uint32) string {
+	return qm.query.CaptureNames()[index]
+}
+
+func (qm QueryMatcher) GetCaptureIndexForName(name string) (uint, bool) {
+	return qm.query.CaptureIndexForName(name)
+}
+
+func (qm QueryMatcher) SetByteRange(start uint, end uint) {
+	qm.cursor.SetByteRange(start, end)
+}
+
+
 func NewQueryMatcher(
 	manager *QueryManager,
 	language string,
 	queryName string,
 ) (*QueryMatcher, error) {
-	query, error := manager.GetQuery(queryName, language)
+	query, error := manager.getQuery(queryName, language)
 	if error != nil {
 		return nil, error
 	}

@@ -4,12 +4,21 @@ import (
 	"errors"
 
 	M "bennypowers.dev/cem/manifest"
+	Q "bennypowers.dev/cem/generate/queries"
 )
 
-func generateFunctionDeclaration(captures CaptureMap, _ any, code []byte, queryManager *QueryManager) (err error, declaration *M.FunctionDeclaration) {
+func generateFunctionDeclaration(
+	captures Q.CaptureMap,
+	_ any,
+	_ []byte,
+	queryManager *Q.QueryManager,
+) (err error, declaration *M.FunctionDeclaration) {
 	nameNodes, ok := captures["function.name"]
 	if (!ok || len(nameNodes) <= 0) {
-		return errors.Join(err, &NoCaptureError{ "function.name", "functionDeclaration" }), nil
+		return errors.Join(err, &Q.NoCaptureError{
+			Capture: "function.name",
+			Query: "functionDeclaration",
+		}), nil
 	}
 
 	funcName := nameNodes[0].Text

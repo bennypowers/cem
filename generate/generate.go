@@ -5,51 +5,23 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"maps"
 	"os"
 	"runtime"
 	"slices"
 	"sync"
 
-	M "bennypowers.dev/cem/manifest"
+	C "bennypowers.dev/cem/cmd/config"
+	DD "bennypowers.dev/cem/generate/demodiscovery"
 	DT "bennypowers.dev/cem/designtokens"
+	M "bennypowers.dev/cem/manifest"
+	Q "bennypowers.dev/cem/generate/queries"
+
 	DS "github.com/bmatcuk/doublestar"
 )
 
 var defaultExcludePatterns = []string{
 	"**/*.d.ts",
-}
-
-// CLI or config arguments passed to the generate command
-type GenerateArgs struct {
-	// List of files or file globs to include in the manifest
-	Files              []string
-	// List of files or file globs to exclude from the manifest
-	Exclude            []string
-	// Path or `npm:@scope/package/path/to/file.json` spec to DTCG format design
-	// tokens json module
-	DesignTokensSpec   string
-	// Prefix those design tokens use in CSS. If the design tokens are generated
-	// by style dictionary and have a `name` field, that will be used instead.
-	DesignTokensPrefix string
-	// Do not exclude files that are excluded by default e.g. *.d.ts files.
-	NoDefaultExcludes  bool
-	// File path to write output to. If omitted, output will be written to stdout.
-	Output             string
-}
-
-func mergeCssPropertyInfoFromDesignTokens(module *M.Module, designTokens DT.DesignTokens) {
-	for i, d := range module.Declarations {
-		if d, ok := d.(*M.CustomElementDeclaration); ok {
-			for i, p := range d.CssProperties {
-				if token, ok := designTokens.Get(p.Name); ok {
-					p.Description = token.Description
-					p.Syntax = token.Syntax
-					d.CssProperties[i] = p
-				}
-			}
-		}
-		module.Declarations[i] = d
-	}
 }
 
 // Checks whether a file matches any of the given patterns (with doublestar)
@@ -63,43 +35,49 @@ func matchesAnyPattern(file string, patterns []string) bool {
 	return false
 }
 
-// Generates a custom-elements manifest from a list of typescript files
-func Generate(args GenerateArgs) (*string, error) {
-	excludePatterns := make([]string, 0, len(args.Exclude)+len(defaultExcludePatterns))
-	excludePatterns = append(excludePatterns, args.Exclude...)
-	if !args.NoDefaultExcludes {
-		excludePatterns = append(excludePatterns, defaultExcludePatterns...)
+type preprocessResult struct {
+	demoFiles []string
+	designTokens *DT.DesignTokens
+	excludePatterns []string
+}
+
+func preprocess(cfg *C.CemConfig) (r preprocessResult, errs error) {
+	r.excludePatterns = make([]string, 0, len(cfg.Generate.Exclude)+len(defaultExcludePatterns))
+	r.excludePatterns = append(r.excludePatterns, cfg.Generate.Exclude...)
+	if !cfg.Generate.NoDefaultExcludes {
+		r.excludePatterns = append(r.excludePatterns, defaultExcludePatterns...)
 	}
-
-	var wg sync.WaitGroup
-	var errs error
-	var designTokens *DT.DesignTokens
-
-	if args.DesignTokensSpec != "" {
-		tokens, err := DT.LoadDesignTokens(args.DesignTokensSpec, args.DesignTokensPrefix)
+	if cfg.Generate.DesignTokensSpec != "" {
+		tokens, err := DT.LoadDesignTokens(cfg.Generate.DesignTokensSpec, cfg.Generate.DesignTokensPrefix)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
-		designTokens = tokens
+		r.designTokens = tokens
 	}
+	if cfg.Generate.DemoDiscovery.FilePattern != "" {
+		r.demoFiles, _ = DS.Glob(cfg.Generate.DemoDiscovery.FilePattern)
+	}
+	return r, errs
+}
 
-	modulesChan := make(chan *M.Module, len(args.Files))
-	jobsChan := make (chan string, len(args.Files))
+func process(
+	cfg *C.CemConfig,
+	result preprocessResult,
+	qm *Q.QueryManager,
+) (modules []M.Module, aliases map[string]string, errs error) {
+	numWorkers := runtime.NumCPU()
+	var wg sync.WaitGroup
+	wg.Add(numWorkers)
+
+	modulesChan := make(chan *M.Module, len(cfg.Generate.Files))
+	jobsChan := make (chan string, len(cfg.Generate.Files))
 	// Fill jobs channel with files to process
-	for _, file := range args.Files {
-		if !matchesAnyPattern(file, excludePatterns) {
+	for _, file := range cfg.Generate.Files {
+		if !matchesAnyPattern(file, result.excludePatterns) {
 			jobsChan <- file
 		}
 	}
 	close(jobsChan)
-
-	numWorkers := runtime.NumCPU()
-	wg.Add(numWorkers)
-
-	queryManager, err := NewQueryManager()
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	for range numWorkers {
 		go func() {
@@ -111,13 +89,16 @@ func Generate(args GenerateArgs) (*string, error) {
 					continue
 				}
 
-				mp := NewModuleProcessor(file, code, queryManager)
-				module, err := mp.Collect()
+				mp := NewModuleProcessor(file, code, qm)
+				module, tagAliases, err := mp.Collect()
+				maps.Copy(aliases, tagAliases)
 				mp.Close()
+
 				if err != nil {
 					errs = errors.Join(errs, errors.New(fmt.Sprintf("Problem generating module %s", file)), err)
 					continue
 				}
+
 				if module != nil {
 					modulesChan <- module
 				}
@@ -128,27 +109,69 @@ func Generate(args GenerateArgs) (*string, error) {
 	wg.Wait()
 	close(modulesChan)
 
-	modules := make([]M.Module, 0)
 	for module := range modulesChan {
-		if designTokens != nil {
-			mergeCssPropertyInfoFromDesignTokens(module, *designTokens)
-		}
 		modules = append(modules, *module)
 	}
 
-	pkg := M.NewPackage(modules)
+	return modules, aliases, errs
+}
 
+func postprocess(
+	cfg *C.CemConfig,
+	result preprocessResult,
+	allTagAliases map[string]string,
+	qm *Q.QueryManager,
+	modules []M.Module,
+) (pkg M.Package, errs error) {
+	numWorkers := runtime.NumCPU()
+	var wg sync.WaitGroup
+	wg.Add(numWorkers)
+	modulesChan := make(chan *M.Module, len(modules))
+	for _, module := range modules {
+		go func() {
+			if result.designTokens != nil {
+				DT.MergeDesignTokensToModule(&module, *result.designTokens)
+			}
+			// Discover demos and attach to manifest
+			if len(result.demoFiles) > 0 {
+				err := DD.DiscoverDemos(cfg, allTagAliases, &module, qm, result.demoFiles)
+				if err != nil {
+					errs = errors.Join(errs, err)
+				}
+			}
+		}()
+	}
+	wg.Wait()
+	close(modulesChan)
+	pkg = M.NewPackage(modules)
 	slices.SortStableFunc(pkg.Modules, func(a, b M.Module) int {
 		return cmp.Compare(a.Path, b.Path)
 	})
+	return pkg, errs
+}
 
-	manifest, err := M.SerializeToString(&pkg)
-
-	queryManager.Close()
-
+// Generates a custom-elements manifest from a list of typescript files
+func Generate(cfg *C.CemConfig) (manifest *string, errs error) {
+	qm, err := Q.NewQueryManager()
+	defer qm.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	result, err := preprocess(cfg)
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
+	modules, aliases, err := process(cfg, result, qm)
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
+	pkg, err := postprocess(cfg, result, aliases, qm, modules)
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
+	*manifest, err = M.SerializeToString(&pkg)
 	if err != nil {
 		return nil, errors.Join(errs, err)
 	}
-
-	return &manifest, errs
+	return manifest, errs
 }

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	C "bennypowers.dev/cem/cmd/config"
 	"github.com/nsf/jsondiff"
 )
 
@@ -34,11 +35,14 @@ func TestGenerate(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			actual, err := Generate(GenerateArgs{
-				Files: []string{filepath.Join("test-fixtures", tc.path)},
-				DesignTokensSpec: "./" + filepath.Join("test-fixtures", "design-tokens.json"),
-				DesignTokensPrefix: "token",
-			})
+			cfg := C.CemConfig{
+				Generate: C.GenerateConfig{
+					Files: []string{filepath.Join("test-fixtures", tc.path)},
+					DesignTokensSpec: "./" + filepath.Join("test-fixtures", "design-tokens.json"),
+					DesignTokensPrefix: "token",
+				},
+			}
+			actual, err := Generate(&cfg)
 			if err != nil {
 				t.Error(err)
 			}

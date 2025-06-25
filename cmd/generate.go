@@ -23,8 +23,6 @@ var expand = A.Chain(func (g string) []string {
 	return paths
 })
 
-var generateArgs G.GenerateArgs
-
 func init() {
 	// generateCmd represents the generate command
 	var generateCmd = &cobra.Command{
@@ -37,42 +35,42 @@ func init() {
 				return nil
 			},
 		Run: func(cmd *cobra.Command, args []string) {
-			generateArgs.Files = expand(args)
-			generateArgs.Exclude = expand(generateArgs.Exclude)
-			manifest, err := G.Generate(generateArgs)
+			CemConfig.Generate.Files = expand(args)
+			CemConfig.Generate.Exclude = expand(CemConfig.Generate.Exclude)
+			manifest, err := G.Generate(&CemConfig)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error generating manifest: %s", err)
 			}
-			if generateArgs.Output != "" {
-				os.WriteFile(generateArgs.Output, []byte(*manifest), 0666)
-				fmt.Println("\nWrote manifest to", generateArgs.Output)
+			if CemConfig.Generate.Output != "" {
+				os.WriteFile(CemConfig.Generate.Output, []byte(*manifest), 0666)
+				fmt.Println("\nWrote manifest to", CemConfig.Generate.Output)
 			} else {
 				fmt.Println(*manifest)
 			}
 		},
 	}
 
-	generateCmd.PersistentFlags().StringArrayVarP(&generateArgs.Exclude,
+	generateCmd.PersistentFlags().StringArrayVarP(&CemConfig.Generate.Exclude,
 																								"exclude",
 																								"e",
 																								make([] string, 0),
 																								"files or glob patterns to exclude")
-	generateCmd.PersistentFlags().StringVarP(&generateArgs.DesignTokensSpec,
+	generateCmd.PersistentFlags().StringVarP(&CemConfig.Generate.DesignTokensSpec,
 																								"design-tokens",
 																								"t",
 																								"",
 																								"specifiers (relative paths or npm:@scope/package/path/file.json) to DTCG-format module design tokens")
-	generateCmd.PersistentFlags().StringVarP(&generateArgs.DesignTokensPrefix,
+	generateCmd.PersistentFlags().StringVarP(&CemConfig.Generate.DesignTokensPrefix,
 																						"design-tokens-prefix",
 																						"p",
 																						"",
 																						"css custom property prefix for design tokens")
-	generateCmd.PersistentFlags().StringVarP(&generateArgs.Output,
+	generateCmd.PersistentFlags().StringVarP(&CemConfig.Generate.Output,
 																						"output",
 																						"o",
 																						"",
 																						"write custom elements manifest to this file")
-		generateCmd.PersistentFlags().BoolVar(&generateArgs.NoDefaultExcludes,
+		generateCmd.PersistentFlags().BoolVar(&CemConfig.Generate.NoDefaultExcludes,
 																						"no-default-excludes",
 																						false,
 																						"do not exclude files by default (e.g. .d.ts files are included unless excluded explicitly)",

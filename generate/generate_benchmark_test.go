@@ -3,6 +3,7 @@ package generate
 import (
 	"path/filepath"
 	"testing"
+	C "bennypowers.dev/cem/cmd/config"
 )
 
 // BenchmarkGenerate runs the Generate function on all test fixtures to measure performance.
@@ -18,11 +19,23 @@ func BenchmarkGenerate(b *testing.B) {
 
 	for b.Loop() {
 		// Run the Generate function, measuring its speed.
-		_, err := Generate(GenerateArgs{
-			Files: matches,
-			DesignTokensSpec: "./" + filepath.Join("test-fixtures", "design-tokens.json"),
-			DesignTokensPrefix: "token",
-		})
+		cfg := C.CemConfig{
+			TagPrefix: "demo",
+			Generate: C.GenerateConfig{
+				Files: matches,
+				DesignTokensSpec: "./" + filepath.Join("test-fixtures", "design-tokens.json"),
+				DesignTokensPrefix: "token",
+				DemoDiscovery: C.DemoDiscoveryConfig{
+					FilePattern: "demos/.",
+					// Canonical public source control URL corresponding to project root on primary branch.
+					// e.g. https://github.com/bennypowers/cem/tree/main/
+					SourceControlUrl: "",
+					URLPattern: "",
+					URLTemplate: "",
+				},
+			},
+		}
+		_, err := Generate(&cfg)
 		if err != nil {
 			b.Errorf("Generate returned error: %v", err)
 		}

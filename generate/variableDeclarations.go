@@ -3,27 +3,31 @@ package generate
 import (
 	"errors"
 
-	"bennypowers.dev/cem/manifest"
+	M "bennypowers.dev/cem/manifest"
+	Q "bennypowers.dev/cem/generate/queries"
 )
 
-func generateVarDeclaration(captures CaptureMap, queryManager *QueryManager) (err error, declaration *manifest.VariableDeclaration) {
+func generateVarDeclaration(
+	captures Q.CaptureMap,
+	queryManager *Q.QueryManager,
+) (err error, declaration *M.VariableDeclaration) {
 	nameNodes, ok := captures["variable.name"]
 	if (!ok || len(nameNodes) <= 0) {
-		return errors.Join(err, &NoCaptureError{ "variable.name", "variable" }), nil
+		return errors.Join(err, &Q.NoCaptureError{ Capture: "variable.name", Query: "variable" }), nil
 	}
 
 	varName := nameNodes[0].Text
 
-	declaration = &manifest.VariableDeclaration{
+	declaration = &M.VariableDeclaration{
 		Kind: "variable",
-		PropertyLike: manifest.PropertyLike{
+		PropertyLike: M.PropertyLike{
 			Name: varName,
 		},
 	}
 
 	typeNodes, ok := captures["variable.type"]
 	if (ok && len(typeNodes) > 0) {
-		declaration.Type = &manifest.Type{
+		declaration.Type = &M.Type{
 			Text: typeNodes[0].Text,
 		}
 	}

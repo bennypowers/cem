@@ -11,13 +11,14 @@ import (
 
 	M "bennypowers.dev/cem/manifest"
 	S "bennypowers.dev/cem/set"
+	Q "bennypowers.dev/cem/generate/queries"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
 func ammendStylesMapFromSource(
 	props map[string]M.CssCustomProperty,
-	queryManager *QueryManager,
-	queryMatcher *QueryMatcher,
+	queryManager *Q.QueryManager,
+	queryMatcher *Q.QueryMatcher,
 	parser *ts.Parser,
 	code []byte,
 ) (errs error) {
@@ -40,8 +41,8 @@ func ammendStylesMapFromSource(
 		}
 		defaultVals, ok := captures["default"]
 		if ok && len(defaultVals) > 0{
-			startNode := GetDescendantById(root, defaultVals[0].NodeId)
-			endNode := GetDescendantById(root, defaultVals[len(defaultVals) - 1].NodeId)
+			startNode := Q.GetDescendantById(root, defaultVals[0].NodeId)
+			endNode := Q.GetDescendantById(root, defaultVals[len(defaultVals) - 1].NodeId)
 			p.Default = string(code[startNode.StartByte():endNode.EndByte()])
 		}
 		comment, ok := captures["comment"]
@@ -69,19 +70,20 @@ type ModuleProcessor struct {
 	file string
 	code []byte
 	source string
-	queryManager *QueryManager
+	queryManager *Q.QueryManager
 	parser *ts.Parser
 	tree *ts.Tree
 	root *ts.Node
+	tagAliases map[string]string
 	importBindingToSpecMap map[string]struct{name string; spec string}
 	classNamesAdded S.Set[string]
 	module *M.Module
 	errors error
 }
 
-func NewModuleProcessor(file string, code []byte, queryManager *QueryManager) ModuleProcessor {
+func NewModuleProcessor(file string, code []byte, queryManager *Q.QueryManager) ModuleProcessor {
 	parser := ts.NewParser()
-	parser.SetLanguage(Languages.typescript)
+	parser.SetLanguage(Q.Languages.Typescript)
 	tree := parser.Parse(code, nil)
 	root := tree.RootNode()
 	module := M.NewModule(file)
@@ -109,12 +111,12 @@ func (mp *ModuleProcessor) Close() {
 	mp.tree.Close()
 }
 
-func (mp *ModuleProcessor) Collect() (module *M.Module, errors error) {
-	return mp.module, mp.errors
+func (mp *ModuleProcessor) Collect() (module *M.Module, tagAliases map[string]string, errors error) {
+	return mp.module, mp.tagAliases, mp.errors
 }
 
 func (mp *ModuleProcessor) processVariables() {
-	qm, err := NewQueryMatcher(mp.queryManager, "typescript", "variableDeclaration")
+	qm, err := Q.NewQueryMatcher(mp.queryManager, "typescript", "variableDeclaration")
 	if err != nil {
 		mp.errors = errors.Join(mp.errors, err)
 		return
@@ -131,7 +133,7 @@ func (mp *ModuleProcessor) processVariables() {
 }
 
 func (mp *ModuleProcessor) processFunctions() {
-	qm, err := NewQueryMatcher(mp.queryManager, "typescript",  "functionDeclaration")
+	qm, err := Q.NewQueryMatcher(mp.queryManager, "typescript",  "functionDeclaration")
 	if err != nil {
 		mp.errors = errors.Join(mp.errors, err)
 		return
@@ -148,13 +150,12 @@ func (mp *ModuleProcessor) processFunctions() {
 }
 
 func (mp *ModuleProcessor) processClassDeclarations() {
-	qm, err := NewQueryMatcher(mp.queryManager, "typescript", "classDeclaration")
+	qm, err := Q.NewQueryMatcher(mp.queryManager, "typescript", "classDeclaration")
+	defer qm.Close()
 	if err != nil {
 		mp.errors = errors.Join(mp.errors, err)
 		return
 	}
-
-	defer qm.Close()
 	styleImportsBindingToSpecMap := make(map[string]string)
 	for sImport := range qm.ParentCaptures(mp.root, mp.code, "styleImport.spec") {
 		styleImportsBindingToSpecMap[sImport["styleImport.binding"][0].Text] = sImport["styleImport.spec"][0].Text
@@ -166,7 +167,7 @@ func (mp *ModuleProcessor) processClassDeclarations() {
 		mp.importBindingToSpecMap[binding] = struct{name string; spec string}{original, spec}
 	}
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "class") {
-		d, err := mp.generateClassDeclaration(captures)
+		d, alias, err := mp.generateClassDeclaration(captures)
 		if err != nil {
 			mp.errors = errors.Join(mp.errors, err)
 		} else {
@@ -175,18 +176,21 @@ func (mp *ModuleProcessor) processClassDeclarations() {
 				mp.classNamesAdded.Add(declaration.Name)
 				mp.module.Declarations = append(mp.module.Declarations, declaration)
 			} else {
-				declaration, ok := d.(*M.CustomElementDeclaration)
+				ce, ok := d.(*M.CustomElementDeclaration)
 				props := make(map[string]M.CssCustomProperty)
-				if ok && !mp.classNamesAdded.Has(declaration.Name) {
-					mp.classNamesAdded.Add(declaration.Name)
+				if ok && !mp.classNamesAdded.Has(ce.Name) {
+					mp.classNamesAdded.Add(ce.Name)
+					if alias != "" {
+						mp.tagAliases[ce.TagName] = alias
+					}
 					// get all style array or value bindings
 					bindings, hasBindings := captures["style.binding"]
 					styleStrings, hasStrings := captures["style.string"]
 					if hasBindings || hasStrings {
-						qm, err := NewQueryMatcher(mp.queryManager, "css", "cssCustomProperties")
+						qm, err := Q.NewQueryMatcher(mp.queryManager, "css", "cssCustomProperties")
 						parser := ts.NewParser()
 						defer parser.Close()
-						parser.SetLanguage(Languages.css)
+						parser.SetLanguage(Q.Languages.Css)
 						if err != nil {
 							mp.errors = errors.Join(mp.errors, err)
 							continue
@@ -233,24 +237,24 @@ func (mp *ModuleProcessor) processClassDeclarations() {
 					// this list should first list the imported props, in order,
 					// then list those declared in the string, in order.
 					cssProps := slices.Collect(maps.Values(props))
-					declaration.CssProperties = append(declaration.CssProperties, cssProps...)
-					slices.SortStableFunc(declaration.CssProperties, func(a M.CssCustomProperty, b M.CssCustomProperty) int {
+					ce.CssProperties = append(ce.CssProperties, cssProps...)
+					slices.SortStableFunc(ce.CssProperties, func(a M.CssCustomProperty, b M.CssCustomProperty) int {
 						if a.StartByte == b.StartByte {
 							return strings.Compare(a.Name, b.Name)
+						} else {
+							return int(a.StartByte - b.StartByte)
 						}
-						return int(a.StartByte) - int(b.StartByte)
 					})
-					mp.module.Declarations = append(mp.module.Declarations, declaration)
+					mp.module.Declarations = append(mp.module.Declarations, ce)
 				}
 			}
 		}
 	}
-
 }
 
 func (mp *ModuleProcessor) processExports() {
 	queryName := "exports"
-	qm, err := NewQueryMatcher(mp.queryManager, "typescript", queryName)
+	qm, err := Q.NewQueryMatcher(mp.queryManager, "typescript", queryName)
 	if err != nil {
 		mp.errors = errors.Join(mp.errors, err)
 	}
@@ -258,9 +262,15 @@ func (mp *ModuleProcessor) processExports() {
 	// javascript exports
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "export") {
 		if exportNodes, ok := captures["export"]; (!ok || len(exportNodes) <= 0) {
-			mp.errors = errors.Join(mp.errors, &NoCaptureError{ "export", queryName })
+			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{
+				Capture: "export",
+				Query: queryName,
+			})
 		} else if declarationNameNodes, ok := captures["declaration.name"]; (!ok || len(declarationNameNodes) <= 0) {
-			mp.errors = errors.Join(mp.errors, &NoCaptureError{ "declaration.name", queryName })
+			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{
+				Capture: "declaration.name",
+				Query: queryName,
+			})
 		} else {
 			declaration := declarationNameNodes[0]
 			export := &M.JavaScriptExport{
@@ -275,11 +285,14 @@ func (mp *ModuleProcessor) processExports() {
 	// custom element exports
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "ce") {
 		if ceNodes, ok := captures["ce"]; (!ok || len(ceNodes) <= 0) {
-			mp.errors = errors.Join(mp.errors, &NoCaptureError{ "ce", queryName })
+			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{
+				Capture: "ce",
+				Query: queryName,
+			})
 		} else if tagNameNodes, ok := captures["ce.tagName"]; (!ok || len(tagNameNodes) <= 0) {
-			mp.errors = errors.Join(mp.errors, &NoCaptureError{ "ce.tagName", queryName })
+			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{ Capture: "ce.tagName", Query: queryName })
 		} else if classNameNodes, ok := captures["ce.className"]; (!ok || len(classNameNodes) <= 0) {
-			mp.errors = errors.Join(mp.errors, &NoCaptureError{ "ce.className", queryName })
+			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{ Capture: "ce.className", Query: queryName })
 		} else {
 			tagName := tagNameNodes[0].Text
 			className := classNameNodes[0].Text
