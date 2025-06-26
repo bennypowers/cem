@@ -330,7 +330,7 @@ func (info TagInfo) toCssCustomState() (M.CssCustomState) {
  * @demo url - description
  */
 func (info TagInfo) toDemo() (M.Demo) {
-	re := regexp.MustCompile(`(?ms)[\s*]*@demo[\s*]+(?P<url>.+)([\s*]+-[\s*]+(?P<description>.*))?`)
+	re := regexp.MustCompile(`(?m)@demo\s+(?P<url>\S+)(?:\s*-\s*(?P<description>.*))?`)
 	matches := FindNamedMatches(re, info.source, true)
 	return M.Demo{
 		Description: normalizeJsdocLines(matches["description"]),

@@ -85,7 +85,7 @@ func process(
 	var aliasesMu sync.Mutex
 
 	wg.Add(numWorkers)
-	for i := 0; i < numWorkers; i++ {
+	for range numWorkers {
 		go func() {
 			defer wg.Done()
 			for file := range jobsChan {
@@ -140,6 +140,12 @@ func postprocess(
 	var wg sync.WaitGroup
 	var errsMu sync.Mutex
 
+	// Build the demo map once
+	demoMap, err := DD.NewDemoMap(result.demoFiles)
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
+
 	// Because demo discovery and design tokens may mutate modules, we need to coordinate by pointer
 	for i := range modules {
 		wg.Add(1)
@@ -149,8 +155,8 @@ func postprocess(
 				DT.MergeDesignTokensToModule(module, *result.designTokens)
 			}
 			// Discover demos and attach to manifest
-			if len(result.demoFiles) > 0 {
-				err := DD.DiscoverDemos(cfg, allTagAliases, module, qm, result.demoFiles)
+			if len(demoMap) > 0 {
+				err := DD.DiscoverDemos(cfg, allTagAliases, module, qm, demoMap)
 				if err != nil {
 					errsMu.Lock()
 					errs = errors.Join(errs, err)

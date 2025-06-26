@@ -63,55 +63,53 @@ func demoPathMatchesModulePath(demoPath string, module *M.Module) bool {
 	return !strings.HasPrefix(rel, "..")
 }
 
+// DiscoverDemos attaches demos (indexed by tag name) to custom element declarations.
 func DiscoverDemos(
 	cfg *C.CemConfig,
 	tagAliases map[string]string,
 	module *M.Module,
 	qm *Q.QueryManager,
-	demoFiles []string,
+	demoMap DemoMap,
 ) (errs error) {
-	for _, demoPath := range demoFiles {
-		if demoPathMatchesModulePath(demoPath, module) {
-			for _, decl := range module.Declarations {
-				// Only attach to custom element classes with a tag name
-				ce, ok := decl.(*M.CustomElementDeclaration)
-				if ok && ce.Kind == "class" && ce.TagName != "" {
-					rx := regexp.MustCompile(cfg.Generate.DemoDiscovery.URLPattern)
-					m := rx.FindStringSubmatch(demoPath)
-					if m == nil {
-						continue
-					}
-					groupNames := rx.SubexpNames()
-					params := map[string]string{}
-					for i, name := range groupNames {
-						if i > 0 && name != "" {
-							params[name] = m[i]
-						}
-					}
-					// Build the demo URL
-					url := cfg.Generate.DemoDiscovery.URLTemplate
-					for k, v := range params {
-						if k == "slug" {
-							if alias, ok := tagAliases[ce.TagName]; ok {
-								v = alias
-							}
-						}
-						url = strings.ReplaceAll(url, "{"+k+"}", v)
-					}
-					description, err := extractDemoDescription(demoPath)
-					if err != nil {
-						errs = errors.Join(errs, err)
-					}
-					// Attach demo to declaration
-					ce.Demos = append(ce.Demos, M.Demo{
-						URL: url,
-						Description: description,
-						Source: &M.SourceReference{
-							Href: path.Join(cfg.Generate.DemoDiscovery.SourceControlUrl, demoPath),
-						},
-					})
+	for _, decl := range module.Declarations {
+		// Only attach to custom element classes with a tag name
+		ce, ok := decl.(*M.CustomElementDeclaration)
+		if !ok || ce.Kind != "class" || ce.TagName == "" {
+			continue
+		}
+		tag := ce.TagName
+		if alias, ok := tagAliases[tag]; ok {
+			tag = alias
+		}
+		demoFiles := demoMap[tag]
+		for _, demoPath := range demoFiles {
+			rx := regexp.MustCompile(cfg.Generate.DemoDiscovery.URLPattern)
+			m := rx.FindStringSubmatch(demoPath)
+			if m == nil {
+				continue
+			}
+			groupNames := rx.SubexpNames()
+			params := map[string]string{}
+			for i, name := range groupNames {
+				if i > 0 && name != "" {
+					params[name] = m[i]
 				}
 			}
+			url := cfg.Generate.DemoDiscovery.URLTemplate
+			for k, v := range params {
+				url = strings.ReplaceAll(url, "{"+k+"}", v)
+			}
+			description, err := extractDemoDescription(demoPath)
+			if err != nil {
+				errs = errors.Join(errs, err)
+			}
+			ce.Demos = append(ce.Demos, M.Demo{
+				URL:         url,
+				Description: description,
+				Source: &M.SourceReference{
+					Href: path.Join(cfg.Generate.DemoDiscovery.SourceControlUrl, demoPath),
+				},
+			})
 		}
 	}
 	return errs
