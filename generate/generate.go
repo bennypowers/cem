@@ -36,8 +36,8 @@ func matchesAnyPattern(file string, patterns []string) bool {
 }
 
 type preprocessResult struct {
-	demoFiles []string
-	designTokens *DT.DesignTokens
+	demoFiles      []string
+	designTokens   *DT.DesignTokens
 	excludePatterns []string
 }
 
@@ -67,10 +67,12 @@ func process(
 ) (modules []M.Module, aliases map[string]string, errs error) {
 	numWorkers := runtime.NumCPU()
 	var wg sync.WaitGroup
-	wg.Add(numWorkers)
+
+	aliases = make(map[string]string) // Ensure aliases is initialized
 
 	modulesChan := make(chan *M.Module, len(cfg.Generate.Files))
-	jobsChan := make (chan string, len(cfg.Generate.Files))
+	jobsChan := make(chan string, len(cfg.Generate.Files))
+
 	// Fill jobs channel with files to process
 	for _, file := range cfg.Generate.Files {
 		if !matchesAnyPattern(file, result.excludePatterns) {
@@ -79,25 +81,37 @@ func process(
 	}
 	close(jobsChan)
 
-	for range numWorkers {
+	var errsMu sync.Mutex
+	var aliasesMu sync.Mutex
+
+	wg.Add(numWorkers)
+	for i := 0; i < numWorkers; i++ {
 		go func() {
 			defer wg.Done()
 			for file := range jobsChan {
 				code, err := os.ReadFile(file)
 				if err != nil {
+					errsMu.Lock()
 					errs = errors.Join(errs, errors.New(fmt.Sprintf("Could not Read file %s", file)), err)
+					errsMu.Unlock()
 					continue
 				}
 
 				mp := NewModuleProcessor(file, code, qm)
 				module, tagAliases, err := mp.Collect()
-				maps.Copy(aliases, tagAliases)
 				mp.Close()
 
 				if err != nil {
+					errsMu.Lock()
 					errs = errors.Join(errs, errors.New(fmt.Sprintf("Problem generating module %s", file)), err)
+					errsMu.Unlock()
 					continue
 				}
+
+				// Write to aliases in a threadsafe manner
+				aliasesMu.Lock()
+				maps.Copy(aliases, tagAliases)
+				aliasesMu.Unlock()
 
 				if module != nil {
 					modulesChan <- module
@@ -124,10 +138,13 @@ func postprocess(
 	modules []M.Module,
 ) (pkg M.Package, errs error) {
 	var wg sync.WaitGroup
-	wg.Add(len(modules))
-	modulesChan := make(chan *M.Module, len(modules))
-	for _, module := range modules {
+	var errsMu sync.Mutex
+
+	// Because demo discovery and design tokens may mutate modules, we need to coordinate by pointer
+	for i := range modules {
+		wg.Add(1)
 		go func(module *M.Module) {
+			defer wg.Done()
 			if result.designTokens != nil {
 				DT.MergeDesignTokensToModule(module, *result.designTokens)
 			}
@@ -135,13 +152,15 @@ func postprocess(
 			if len(result.demoFiles) > 0 {
 				err := DD.DiscoverDemos(cfg, allTagAliases, module, qm, result.demoFiles)
 				if err != nil {
+					errsMu.Lock()
 					errs = errors.Join(errs, err)
+					errsMu.Unlock()
 				}
 			}
-		}(&module)
+		}(&modules[i])
 	}
 	wg.Wait()
-	close(modulesChan)
+	// No need to close a channel here, just return
 	pkg = M.NewPackage(modules)
 	slices.SortStableFunc(pkg.Modules, func(a, b M.Module) int {
 		return cmp.Compare(a.Path, b.Path)
@@ -168,9 +187,9 @@ func Generate(cfg *C.CemConfig) (manifest *string, errs error) {
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
-	*manifest, err = M.SerializeToString(&pkg)
+	manifestStr, err := M.SerializeToString(&pkg)
 	if err != nil {
 		return nil, errors.Join(errs, err)
 	}
-	return manifest, errs
+	return &manifestStr, errs
 }
