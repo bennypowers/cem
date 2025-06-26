@@ -123,23 +123,22 @@ func postprocess(
 	qm *Q.QueryManager,
 	modules []M.Module,
 ) (pkg M.Package, errs error) {
-	numWorkers := runtime.NumCPU()
 	var wg sync.WaitGroup
-	wg.Add(numWorkers)
+	wg.Add(len(modules))
 	modulesChan := make(chan *M.Module, len(modules))
 	for _, module := range modules {
-		go func() {
+		go func(module *M.Module) {
 			if result.designTokens != nil {
-				DT.MergeDesignTokensToModule(&module, *result.designTokens)
+				DT.MergeDesignTokensToModule(module, *result.designTokens)
 			}
 			// Discover demos and attach to manifest
 			if len(result.demoFiles) > 0 {
-				err := DD.DiscoverDemos(cfg, allTagAliases, &module, qm, result.demoFiles)
+				err := DD.DiscoverDemos(cfg, allTagAliases, module, qm, result.demoFiles)
 				if err != nil {
 					errs = errors.Join(errs, err)
 				}
 			}
-		}()
+		}(&module)
 	}
 	wg.Wait()
 	close(modulesChan)
