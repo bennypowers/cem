@@ -6,9 +6,10 @@ rich metadata for your custom elements, facilitating documentation, tooling, and
 integration.
 
 > [!NOTE]
-> `cem` currently supports LitElements written in idiomatic style with
-> TypeScript decorators. If you need something more specific,
-> [open an issue][issuenew].
+> `cem` best supports LitElements written in idiomatic style with
+> TypeScript decorators. There is rudimentary support for `extends HTMLElement`,
+> but it is not a high priority for development. If you need something more
+> specific [open an issue][issuenew].
 
 ## Features
 
@@ -94,6 +95,99 @@ variables
     var(--border-color);
 }
 ```
+
+---
+
+## Element Demos
+
+`cem generate` supports documenting your elements' demos by linking directly
+from JSDoc, or by configurable file-system based discovery.
+
+### 1. JSDoc `@demo` Tag
+
+Add demos directly to your element class or members with the `@demo` tag:
+
+```ts
+/**
+ * @demo https://example.com/my-element-plain/
+ * @demo https://example.com/my-element-fancy/ - A fancier demo with description
+ */
+@customElement('my-element')
+class MyElement extends LitElement {
+  // ...
+}
+```
+
+Demos defined this way will always appear in your manifest for the element.
+
+### 2. Demo Discovery
+
+`cem` can automatically discover demos from your codebase based on your
+repository structure and configuration.
+
+#### Demo Discovery Options
+
+Configure demo discovery with the `demoDiscovery` key in your `.config/cem.yaml` file
+
+```yaml
+generate:
+  demoDiscovery:
+    filePattern: "demos/**/*.html"
+    sourceControlUrl: "https://github.com/your/repo/tree/main/"
+    urlPattern: "demos/{tag}.html"
+    urlTemplate: ""
+```
+
+**Demo discovery options:**
+
+| Option              | Type     | Description                                                                                 |
+|---------------------|----------|---------------------------------------------------------------------------------------------|
+| `filePattern`       | string   | Glob pattern for discovering demo files.                                                     |
+| `sourceControlUrl`  | string   | Canonical public source control URL for your repository root (on the main branch).           |
+| `urlPattern`        | string   | Pattern for generating demo URLs, e.g. `"demos/{tag}.html"`. `{tag}` is replaced by tag name.|
+| `urlTemplate`       | string   | (optional) Alternative URL template for demo links.                                         |
+
+---
+
+## Configuration Reference
+
+You can configure CEM via `.config/cem.yaml`, relative to your project root,
+or via CLI flags.
+
+### Example Configuration
+
+```yaml
+generate:
+  files:
+    - "src/**/*.ts"
+  exclude:
+    - "src/**/*.test.ts"
+  designTokensSpec: "npm:@my-ds/tokens/tokens.json"
+  designTokensPrefix: "--my-ds"
+  noDefaultExcludes: false
+  output: "custom-elements.json"
+  demoDiscovery:
+    filePattern: "demos/**/*.html"
+    sourceControlUrl: "https://github.com/your/repo/tree/main/"
+    urlPattern: "demos/{tag}.html"
+    urlTemplate: ""
+tagPrefix: ""
+```
+
+### All Available Flags
+
+| Option                     | Type     | Description                                                                                       |
+|----------------------------|----------|---------------------------------------------------------------------------------------------------|
+| `files`                    | list     | Files or glob patterns to include.                                                                |
+| `exclude`                  | list     | Files or glob patterns to exclude.                                                                |
+| `designTokensSpec`         | string   | Path or npm specifier for DTCG-format design tokens.                                              |
+| `designTokensPrefix`       | string   | CSS custom property prefix for design tokens.                                                     |
+| `noDefaultExcludes`        | bool     | Do not exclude files by default (e.g., `.d.ts` files will be included unless excluded explicitly).|
+| `output`                   | string   | Write the manifest to this file instead of stdout.                                                |
+| `demoDiscovery`            | object   | See above for all demo discovery options.                                                         |
+| `tagPrefix`                | string   | (optional) Prefix all custom element tag names.                                                   |
+
+---
 
 ## Installation
 
