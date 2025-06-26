@@ -96,6 +96,7 @@ func NewModuleProcessor(file string, code []byte, queryManager *Q.QueryManager) 
 		tree: tree,
 		root: root,
 		module: module,
+		tagAliases: make(map[string]string),
 		importBindingToSpecMap: make(map[string]struct{name string; spec string}),
 		classNamesAdded: S.NewSet[string](),
 	}
