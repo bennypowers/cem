@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "test-fixtures/demo-alias.js",
+      "declarations": [
+        {
+          "name": "DemoAlias",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "demo-alias",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-alias",
+          "declaration": {
+            "name": "DemoAlias",
+            "module": "test-fixtures/demo-alias.js"
+          }
+        }
+      ]
+    }
+  ]
+}

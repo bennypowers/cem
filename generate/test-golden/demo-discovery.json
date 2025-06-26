@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "test-fixtures/demo-discovery.js",
+      "declarations": [
+        {
+          "name": "DemoDiscovery",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "demo-discovery",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-discovery",
+          "declaration": {
+            "name": "DemoDiscovery",
+            "module": "test-fixtures/demo-discovery.js"
+          }
+        }
+      ]
+    }
+  ]
+}
