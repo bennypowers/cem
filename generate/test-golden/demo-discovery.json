@@ -13,6 +13,26 @@
           },
           "kind": "class",
           "tagName": "demo-discovery",
+          "demos": [
+            {
+              "url": "https://bennypowers/dev/cem-demos/demo-discovery/demo-discovery",
+              "source": {
+                "href": "https:/github.com/bennypowers/cem/tree/main/test-fixtures/demos/demo-discovery.html"
+              }
+            },
+            {
+              "url": "https://bennypowers/dev/cem-demos/demo-multiple-comment/demo-multiple-comment",
+              "source": {
+                "href": "https:/github.com/bennypowers/cem/tree/main/test-fixtures/demos/demo-multiple-comment.html"
+              }
+            },
+            {
+              "url": "https://bennypowers/dev/cem-demos/demo-multiple/demo-multiple",
+              "source": {
+                "href": "https:/github.com/bennypowers/cem/tree/main/test-fixtures/demos/demo-multiple.html"
+              }
+            }
+          ],
           "customElement": true
         }
       ],

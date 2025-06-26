@@ -29,7 +29,8 @@ func extractDemoDescription(path string) (string, error) {
 		if node.GrammarName() == "comment" {
 			commentText := node.Utf8Text(code)
 			// Accept only leading block comments (<!--- ... -->)
-			if strings.HasPrefix(commentText, "<!--") {
+			// FIXME: quick hack to avoid consuming magic tag names comments.
+			if strings.HasPrefix(commentText, "<!--") && !strings.Contains(commentText, "@tag") {
 				desc := strings.TrimPrefix(commentText, "<!--")
 				desc = strings.TrimSuffix(desc, "-->")
 				return strings.TrimSpace(desc), nil

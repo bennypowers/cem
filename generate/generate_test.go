@@ -41,9 +41,9 @@ func TestGenerate(t *testing.T) {
 					DesignTokensSpec: "./" + filepath.Join("test-fixtures", "design-tokens.json"),
 					DesignTokensPrefix: "token",
 					DemoDiscovery: C.DemoDiscoveryConfig{
-						FilePattern: "generate/test-fixtures/demos/*.html",
+						FilePattern: "test-fixtures/demos/*.html",
 						SourceControlUrl: "https://github.com/bennypowers/cem/tree/main/",
-						URLPattern: "generate/test-fixtures/demos/(?P<tag>(?P<demo>[\\w-]+))\\.html",
+						URLPattern: "test-fixtures/demos/(?P<tag>(?P<demo>[\\w-]+))\\.html",
 						URLTemplate: "https://bennypowers/dev/cem-demos/{tag}/{demo}",
 					},
 				},
