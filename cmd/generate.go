@@ -50,30 +50,54 @@ func init() {
 		},
 	}
 
-	generateCmd.PersistentFlags().StringArrayVarP(&CemConfig.Generate.Exclude,
-																								"exclude",
-																								"e",
-																								make([] string, 0),
-																								"files or glob patterns to exclude")
-	generateCmd.PersistentFlags().StringVarP(&CemConfig.Generate.DesignTokensSpec,
-																								"design-tokens",
-																								"t",
+	generateCmd.PersistentFlags().StringVarP(&CemConfig.SourceControlRootUrl,
+																								"source-control-root-url",
 																								"",
-																								"specifiers (relative paths or npm:@scope/package/path/file.json) to DTCG-format module design tokens")
-	generateCmd.PersistentFlags().StringVarP(&CemConfig.Generate.DesignTokensPrefix,
-																						"design-tokens-prefix",
-																						"p",
-																						"",
-																						"css custom property prefix for design tokens")
+																								"",
+																								"Canonical public source control URL corresponding to project root on primary branch. e.g. https://github.com/bennypowers/cem/tree/main/")
+
 	generateCmd.PersistentFlags().StringVarP(&CemConfig.Generate.Output,
 																						"output",
 																						"o",
 																						"",
 																						"write custom elements manifest to this file")
-		generateCmd.PersistentFlags().BoolVar(&CemConfig.Generate.NoDefaultExcludes,
+
+	generateCmd.PersistentFlags().StringArrayVarP(&CemConfig.Generate.Exclude,
+																								"exclude",
+																								"e",
+																								make([] string, 0),
+																								"files or glob patterns to exclude")
+	generateCmd.PersistentFlags().BoolVar(&CemConfig.Generate.NoDefaultExcludes,
 																						"no-default-excludes",
 																						false,
-																						"do not exclude files by default (e.g. .d.ts files are included unless excluded explicitly)",
-																					)
+																						"do not exclude files by default (e.g. .d.ts files are included unless excluded explicitly)")
+
+	generateCmd.PersistentFlags().StringVarP(&CemConfig.Generate.DesignTokens.Spec,
+																								"design-tokens",
+																								"t",
+																								"",
+																								"specifiers (relative paths or npm:@scope/package/path/file.json) to DTCG-format module design tokens")
+	generateCmd.PersistentFlags().StringVarP(&CemConfig.Generate.DesignTokens.Prefix,
+																						"design-tokens-prefix",
+																						"p",
+																						"",
+																						"css custom property prefix for design tokens")
+
+	generateCmd.PersistentFlags().StringVarP(&CemConfig.Generate.DemoDiscovery.FileGlob,
+																								"demo-discovery-file-glob",
+																								"",
+																								"",
+																								"Glob pattern for discovering demo files")
+	generateCmd.PersistentFlags().StringVarP(&CemConfig.Generate.DemoDiscovery.URLPattern,
+																								"demo-discovery-url-pattern",
+																								"",
+																								"",
+																								"Go Regexp pattern with named capture groups for generating canonical demo urls")
+	generateCmd.PersistentFlags().StringVarP(&CemConfig.Generate.DemoDiscovery.URLTemplate,
+																								"demo-discovery-url-template",
+																								"",
+																								"",
+																								"URL pattern string using {groupName} syntax to interpolate named captures from the URL pattern")
+
 	rootCmd.AddCommand(generateCmd)
 }

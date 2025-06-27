@@ -47,15 +47,15 @@ func preprocess(cfg *C.CemConfig) (r preprocessResult, errs error) {
 	if !cfg.Generate.NoDefaultExcludes {
 		r.excludePatterns = append(r.excludePatterns, defaultExcludePatterns...)
 	}
-	if cfg.Generate.DesignTokensSpec != "" {
-		tokens, err := DT.LoadDesignTokens(cfg.Generate.DesignTokensSpec, cfg.Generate.DesignTokensPrefix)
+	if cfg.Generate.DesignTokens.Spec != "" {
+		tokens, err := DT.LoadDesignTokens(cfg)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
 		r.designTokens = tokens
 	}
-	if cfg.Generate.DemoDiscovery.FilePattern != "" {
-		r.demoFiles, _ = DS.Glob(cfg.Generate.DemoDiscovery.FilePattern)
+	if cfg.Generate.DemoDiscovery.FileGlob != "" {
+		r.demoFiles, _ = DS.Glob(cfg.Generate.DemoDiscovery.FileGlob)
 	}
 	return r, errs
 }

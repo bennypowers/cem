@@ -11,6 +11,27 @@ integration.
 > but it is not a high priority for development. If you need something more
 > specific [open an issue][issuenew].
 
+## Installation
+
+For go binaries:
+```sh
+go install bennypowers.dev/cem@latest
+```
+
+For NPM projects:
+
+```sh
+npm install --save-dev @pwrs/cem
+```
+
+Or clone this repository and build from source:
+
+```sh
+git clone https://github.com/bennypowers/cem.git
+cd cem
+make
+```
+
 ## Features
 
 ### `cem generate`
@@ -23,16 +44,19 @@ integration.
 
 #### JSDoc
 Use JSDoc comments to add metadata to your element classes, similar to other
-tools.
+tools. Add a description by separating the name of the item with ` - `
 
 - `@attr` / `@attribute` — Custom element attributes
 - `@csspart` — CSS shadow parts
 - `@cssprop` / `@cssproperty` — Custom CSS properties
 - `@cssstate` — Custom CSS states
+- `@demo` — Demo URL
 - `@deprecated` — Marks a feature or member as deprecated
 - `@event` — Custom events dispatched by the element
 - `@slot` — Named or default slots
 - `@summary` — Short summary for documentation
+
+See the [test-fixtures](tree/main/generate/test-fixtures/) directory for examples
 
 #### HTML Template Analysis for Slots and Parts
 
@@ -130,22 +154,22 @@ repository structure and configuration.
 Configure demo discovery with the `demoDiscovery` key in your `.config/cem.yaml` file
 
 ```yaml
+sourceControlRootUrl: "https://github.com/your/repo/tree/main/"
 generate:
   demoDiscovery:
-    filePattern: "demos/**/*.html"
-    sourceControlUrl: "https://github.com/your/repo/tree/main/"
-    urlPattern: "demos/{tag}.html"
-    urlTemplate: ""
+    fileGlob: "demos/**/*.html"
+    urlPattern: "demos/(?P<tag>[\w-]+)/(?P<demo>[\w-]+).html"
+    urlTemplate: "https://example.com/elements/{tag}/{demo}/"
 ```
 
 **Demo discovery options:**
 
-| Option              | Type     | Description                                                                                 |
-|---------------------|----------|---------------------------------------------------------------------------------------------|
-| `filePattern`       | string   | Glob pattern for discovering demo files.                                                     |
-| `sourceControlUrl`  | string   | Canonical public source control URL for your repository root (on the main branch).           |
-| `urlPattern`        | string   | Pattern for generating demo URLs, e.g. `"demos/{tag}.html"`. `{tag}` is replaced by tag name.|
-| `urlTemplate`       | string   | (optional) Alternative URL template for demo links.                                         |
+| Option                 | Type   | Description                                                                                  |
+| ---------------------- | ------ | -------------------------------------------------------------------------------------------- |
+| `fileGlob`             | string | Glob pattern for discovering demo files.                                                     |
+| `sourceControlRootUrl` | string | Canonical public source control URL for your repository root (on the main branch).           |
+| `urlPattern`           | string | Pattern for generating demo URLs, e.g. `"demos/{tag}.html"`. `{tag}` is replaced by tag name.|
+| `urlTemplate`          | string | (optional) Alternative URL template for demo links.                                          |
 
 ---
 
@@ -157,58 +181,24 @@ or via CLI flags.
 ### Example Configuration
 
 ```yaml
+sourceControlRootUrl: "https://github.com/your/repo/tree/main/"
 generate:
   files:
     - "src/**/*.ts"
   exclude:
     - "src/**/*.test.ts"
-  designTokensSpec: "npm:@my-ds/tokens/tokens.json"
-  designTokensPrefix: "--my-ds"
-  noDefaultExcludes: false
   output: "custom-elements.json"
+  noDefaultExcludes: false
+  designTokens:
+    spec: "npm:@my-ds/tokens/tokens.json"
+    prefix: "--my-ds"
   demoDiscovery:
-    filePattern: "demos/**/*.html"
-    sourceControlUrl: "https://github.com/your/repo/tree/main/"
-    urlPattern: "demos/{tag}.html"
-    urlTemplate: ""
-tagPrefix: ""
+    fileGlob: "demos/**/*.html"
+    urlPattern: "demos/(?P<tag>[\w-]+)/(?P<demo>[\w-]+).html"
+    urlTemplate: "https://example.com/elements/{tag}/{demo}/"
 ```
-
-### All Available Flags
-
-| Option                     | Type     | Description                                                                                       |
-|----------------------------|----------|---------------------------------------------------------------------------------------------------|
-| `files`                    | list     | Files or glob patterns to include.                                                                |
-| `exclude`                  | list     | Files or glob patterns to exclude.                                                                |
-| `designTokensSpec`         | string   | Path or npm specifier for DTCG-format design tokens.                                              |
-| `designTokensPrefix`       | string   | CSS custom property prefix for design tokens.                                                     |
-| `noDefaultExcludes`        | bool     | Do not exclude files by default (e.g., `.d.ts` files will be included unless excluded explicitly).|
-| `output`                   | string   | Write the manifest to this file instead of stdout.                                                |
-| `demoDiscovery`            | object   | See above for all demo discovery options.                                                         |
-| `tagPrefix`                | string   | (optional) Prefix all custom element tag names.                                                   |
 
 ---
-
-## Installation
-
-For go binaries:
-```sh
-go install bennypowers.dev/cem@latest
-```
-
-For NPM projects:
-
-```sh
-npm install --save-dev @pwrs/cem
-```
-
-Or clone this repository and build from source:
-
-```sh
-git clone https://github.com/bennypowers/cem.git
-cd cem
-make
-```
 
 ## Usage
 
@@ -223,15 +213,22 @@ cem generate \
 ```
 
 For npm projects you can use `npx @pwrs/cem generate ...`.
-### Arguments
-| Argument                     | Type               | Description                                                                                       |
-| ---------------------------- | ------------------ | ------------------------------------------------------------------------------------------------- |
-| `<files or globs>`           | positional (array) | Files or glob patterns to include                                                                 |
-| `--exclude, -e`              | array              | Files or glob patterns to exclude                                                                 |
-| `--design-tokens, -t`        | string             | Path or npm specifier for DTCG-format design tokens                                               |
-| `--design-tokens-prefix, -p` | string             | CSS custom property prefix for design tokens                                                      |
-| `--output, -o`               | string             | Write the manifest to this file instead of stdout                                                 |
-| `--no-default-excludes`      | bool               | Do not exclude files by default (e.g., `.d.ts` files will be included unless excluded explicitly) |
+
+### Command Line Arguments
+
+| Argument                        | Type               | Description                                                                                       |
+| ------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------- |
+| `<files or globs>`              | positional (array) | Files or glob patterns to include                                                                 |
+| `--output, -o`                  | string             | Write the manifest to this file instead of stdout                                                 |
+| `--exclude, -e`                 | array              | Files or glob patterns to exclude                                                                 |
+| `--no-default-excludes`         | bool               | Do not exclude files by default (e.g., `.d.ts` files will be included unless excluded explicitly) |
+| `--design-tokens, -t`           | string             | Path or npm specifier for DTCG-format design tokens                                               |
+| `--design-tokens-prefix, -p`    | string             | CSS custom property prefix for design tokens                                                      |
+| `--demo-discovery-file-glob`    | string             | Glob pattern for discovering demo files                                                           |
+| `--demo-discovery-url-pattern`  | string             | Go Regexp pattern with named capture groups for generating canonical demo urls                    |
+| `--demo-discovery-url-template` | string             | URL pattern string using {groupName} syntax to interpolate named captures from the URL pattern    |
+| `--source-control-root-url`     | string             | Glob pattern for discovering demo files                                                           |
+
 
 By default, some files (like `.d.ts` TypeScript declaration files) are excluded from the manifest.
 Use `--no-default-excludes` if you want to include all matching files and manage excludes yourself.

@@ -20,16 +20,15 @@ func BenchmarkGenerate(b *testing.B) {
 	for b.Loop() {
 		// Run the Generate function, measuring its speed.
 		cfg := C.CemConfig{
-			TagPrefix: "demo",
+			SourceControlRootUrl: "",
 			Generate: C.GenerateConfig{
 				Files: matches,
-				DesignTokensSpec: "./" + filepath.Join("test-fixtures", "design-tokens.json"),
-				DesignTokensPrefix: "token",
+				DesignTokens: C.DesignTokensConfig{
+					Spec: "./" + filepath.Join("test-fixtures", "design-tokens.json"),
+					Prefix: "token",
+				},
 				DemoDiscovery: C.DemoDiscoveryConfig{
-					FilePattern: "demos/.",
-					// Canonical public source control URL corresponding to project root on primary branch.
-					// e.g. https://github.com/bennypowers/cem/tree/main/
-					SourceControlUrl: "",
+					FileGlob: "demos/.",
 					URLPattern: "",
 					URLTemplate: "",
 				},

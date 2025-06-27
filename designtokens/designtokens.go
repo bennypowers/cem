@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strings"
 
+	C "bennypowers.dev/cem/cmd/config"
 	M "bennypowers.dev/cem/manifest"
 )
 
@@ -40,8 +41,9 @@ func (dt *DesignTokens) Get(name string) (TokenResult, bool) {
 
 // LoadDesignTokens loads tokens from a path or Deno-style specifier and returns a DesignTokens struct.
 // The prefix is prepended to all token names on load.
-func LoadDesignTokens(pathOrSpecifier string, prefix ...string) (*DesignTokens, error) {
-	content, err := readJSONFileOrSpecifier(pathOrSpecifier)
+func LoadDesignTokens(cfg *C.CemConfig) (*DesignTokens, error) {
+	prefix := cfg.Generate.DesignTokens.Prefix
+	content, err := readJSONFileOrSpecifier(cfg.Generate.DesignTokens.Spec)
 	if err != nil {
 		return nil, err
 	}
@@ -49,24 +51,20 @@ func LoadDesignTokens(pathOrSpecifier string, prefix ...string) (*DesignTokens, 
 	if err := json.Unmarshal(content, &raw); err != nil {
 		return nil, err
 	}
-	var pref string
-	if len(prefix) > 0 {
-		pref = strings.Trim(prefix[0], "-")
-	}
 	tokens := make(map[string]TokenResult)
 	flat := flattenTokens(raw, "")
 	for name, tok := range flat {
-		fullName := "--" + pref
+		fullName := "--" + prefix
 		styleDictName, ok := tok["name"]
 		if ok {
 			fullName = strings.Replace("--" + styleDictName.(string), "----", "--", 1)
-		} else if pref != "" {
+		} else if prefix != "" {
 			fullName += "--"
 			fullName += strings.TrimPrefix(name, "--")
 		}
 		tokens[fullName] = toTokenResult(tok)
 	}
-	return &DesignTokens{tokens: tokens, prefix: pref}, nil
+	return &DesignTokens{tokens: tokens, prefix: prefix}, nil
 }
 
 func MergeDesignTokensToModule(module *M.Module, designTokens DesignTokens) {

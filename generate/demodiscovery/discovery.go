@@ -4,7 +4,6 @@ import (
 	"errors"
 	"os"
 	"path"
-	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -38,30 +37,6 @@ func extractDemoDescription(path string) (string, error) {
 		}
 	}
 	return "", nil
-}
-
-// demoPathMatchesModulePath returns true if the given demoPath "belongs to" the given module.
-// This is typically true if the demo file is in the same directory tree as the module's source file,
-// or if the demoPath shares a directory prefix with the module.Path.
-//
-// The match is case-insensitive and is normalized for OS-specific path separators.
-func demoPathMatchesModulePath(demoPath string, module *M.Module) bool {
-	if module == nil || module.Path == "" {
-		return false
-	}
-
-	// Normalize both paths to absolute and clean them
-	moduleDir := filepath.Dir(filepath.Clean(module.Path))
-	demoPathClean := filepath.Clean(demoPath)
-
-	// Check if the demo path is under the module's directory
-	rel, err := filepath.Rel(moduleDir, demoPathClean)
-	if err != nil {
-		return false
-	}
-
-	// If rel does not start with "..", then demoPath is in or under moduleDir
-	return !strings.HasPrefix(rel, "..")
 }
 
 // DiscoverDemos attaches demos (indexed by tag name) to custom element declarations.
@@ -108,7 +83,7 @@ func DiscoverDemos(
 				URL:         url,
 				Description: description,
 				Source: &M.SourceReference{
-					Href: path.Join(cfg.Generate.DemoDiscovery.SourceControlUrl, demoPath),
+					Href: path.Join(cfg.SourceControlRootUrl, demoPath),
 				},
 			})
 		}

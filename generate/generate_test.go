@@ -36,13 +36,15 @@ func TestGenerate(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := C.CemConfig{
+				SourceControlRootUrl: "https://github.com/bennypowers/cem/tree/main/",
 				Generate: C.GenerateConfig{
 					Files: []string{filepath.Join("test-fixtures", tc.path)},
-					DesignTokensSpec: "./" + filepath.Join("test-fixtures", "design-tokens.json"),
-					DesignTokensPrefix: "token",
+					DesignTokens: C.DesignTokensConfig{
+						Spec: "./" + filepath.Join("test-fixtures", "design-tokens.json"),
+						Prefix: "token",
+					},
 					DemoDiscovery: C.DemoDiscoveryConfig{
-						FilePattern: "test-fixtures/demos/*.html",
-						SourceControlUrl: "https://github.com/bennypowers/cem/tree/main/",
+						FileGlob: "test-fixtures/demos/*.html",
 						URLPattern: "test-fixtures/demos/(?P<tag>(?P<demo>[\\w-]+))\\.html",
 						URLTemplate: "https://bennypowers/dev/cem-demos/{tag}/{demo}",
 					},
