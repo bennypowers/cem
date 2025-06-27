@@ -1,18 +1,18 @@
 package generate
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 
 	C "bennypowers.dev/cem/cmd/config"
+	DS "github.com/bmatcuk/doublestar"
 )
 
 // BenchmarkGenerate runs the Generate function on all test fixtures to measure performance.
 func BenchmarkGenerate(b *testing.B) {
 	// Gather all .ts files in the test-fixtures directory as input.
-	matches, err := filepath.Glob("../test/fixtures/**/*.ts")
+	matches, err := DS.Glob("../test/fixtures/**/*.ts")
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -50,14 +50,8 @@ func BenchmarkGenerate(b *testing.B) {
 		lastOut = *out
 	}
 
-	fmt.Println(os.Getwd())
 	err = os.WriteFile("../docs/site/benchmark-last-output.json", []byte(lastOut), 0644)
 	if err != nil {
 		b.Errorf("Could not write output: %v", err)
 	}
-	file, err := os.ReadFile("../docs/site/benchmark-last-output.json")
-	if err != nil {
-		b.Errorf("output not read: %v", err)
-	}
-	fmt.Println(file)
 }

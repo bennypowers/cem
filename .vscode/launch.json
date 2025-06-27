@@ -16,6 +16,17 @@
       ]
     },
     {
+      "name": "Benchmark",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "program": "${workspaceFolder}/generate",
+      "args": [
+        "-test.bench=BenchmarkGenerate",
+        "-test.run=^$"
+      ]
+    },
+    {
       "name": "Debug cem generate",
       "type": "go",
       "request": "launch",
