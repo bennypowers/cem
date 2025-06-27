@@ -76,6 +76,7 @@ type ModuleProcessor struct {
 	root *ts.Node
 	tagAliases map[string]string
 	importBindingToSpecMap map[string]struct{name string; spec string}
+	styleImportsBindingToSpecMap map[string]string
 	classNamesAdded S.Set[string]
 	module *M.Module
 	errors error
@@ -98,12 +99,12 @@ func NewModuleProcessor(file string, code []byte, queryManager *Q.QueryManager) 
 		module: module,
 		tagAliases: make(map[string]string),
 		importBindingToSpecMap: make(map[string]struct{name string; spec string}),
+		styleImportsBindingToSpecMap: make(map[string]string),
 		classNamesAdded: S.NewSet[string](),
 	}
-	mp.processVariables()
-	mp.processClassDeclarations()
-	mp.processFunctions()
-	mp.processExports()
+	mp.processImports()
+	mp.processClasses()
+	mp.processDeclarations()
 	return mp
 }
 
@@ -116,57 +117,35 @@ func (mp *ModuleProcessor) Collect() (module *M.Module, tagAliases map[string]st
 	return mp.module, mp.tagAliases, mp.errors
 }
 
-func (mp *ModuleProcessor) processVariables() {
-	qm, err := Q.NewQueryMatcher(mp.queryManager, "typescript", "variableDeclaration")
+func (mp *ModuleProcessor) processImports() {
+	qm, err := Q.NewQueryMatcher(mp.queryManager, "typescript", "imports")
+	defer qm.Close()
 	if err != nil {
 		mp.errors = errors.Join(mp.errors, err)
 		return
 	}
-	defer qm.Close()
-	for captures := range qm.ParentCaptures(mp.root, mp.code, "variable") {
-		err, declaration := generateVarDeclaration(captures, mp.queryManager)
-		if err != nil {
-			mp.errors = errors.Join(mp.errors, err)
-		} else {
-			mp.module.Declarations = append(mp.module.Declarations, declaration)
-		}
-	}
-}
 
-func (mp *ModuleProcessor) processFunctions() {
-	qm, err := Q.NewQueryMatcher(mp.queryManager, "typescript",  "functionDeclaration")
-	if err != nil {
-		mp.errors = errors.Join(mp.errors, err)
-		return
-	}
-	defer qm.Close()
-	for captures := range qm.ParentCaptures(mp.root, mp.code, "function") {
-		declaration, err := generateFunctionDeclaration(captures, mp.root, mp.code, mp.queryManager)
-		if err != nil {
-			mp.errors = errors.Join(mp.errors, err)
-		} else {
-			mp.module.Declarations = append(mp.module.Declarations, declaration)
-		}
-	}
-}
-
-func (mp *ModuleProcessor) processClassDeclarations() {
-	qm, err := Q.NewQueryMatcher(mp.queryManager, "typescript", "classDeclaration")
-	defer qm.Close()
-	if err != nil {
-		mp.errors = errors.Join(mp.errors, err)
-		return
-	}
-	styleImportsBindingToSpecMap := make(map[string]string)
 	for sImport := range qm.ParentCaptures(mp.root, mp.code, "styleImport.spec") {
-		styleImportsBindingToSpecMap[sImport["styleImport.binding"][0].Text] = sImport["styleImport.spec"][0].Text
+		mp.styleImportsBindingToSpecMap[sImport["styleImport.binding"][0].Text] = sImport["styleImport.spec"][0].Text
 	}
+
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "import") {
 		original := captures["import.name"][0].Text
 		binding := captures["import.binding"][0].Text
 		spec := captures["import.spec"][0].Text
 		mp.importBindingToSpecMap[binding] = struct{name string; spec string}{original, spec}
 	}
+}
+
+func (mp *ModuleProcessor) processClasses() {
+	qm, err := Q.NewQueryMatcher(mp.queryManager, "typescript", "classes")
+	defer qm.Close()
+	if err != nil {
+		mp.errors = errors.Join(mp.errors, err)
+		return
+	}
+
+	// class declarations
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "class") {
 		d, alias, err := mp.generateClassDeclaration(captures)
 		if err != nil {
@@ -198,7 +177,7 @@ func (mp *ModuleProcessor) processClassDeclarations() {
 						}
 						if hasBindings {
 							for _, binding := range bindings {
-								spec, ok := styleImportsBindingToSpecMap[binding.Text]
+								spec, ok := mp.styleImportsBindingToSpecMap[binding.Text]
 								if ok && strings.HasPrefix(spec, "."){
 									// NOTE: we're doing file io here, reading the referenced spec file,
 									// parsing it, and adding any variables we find to the cssProperties slice.
@@ -253,24 +232,45 @@ func (mp *ModuleProcessor) processClassDeclarations() {
 	}
 }
 
-func (mp *ModuleProcessor) processExports() {
-	queryName := "exports"
-	qm, err := Q.NewQueryMatcher(mp.queryManager, "typescript", queryName)
+func (mp *ModuleProcessor) processDeclarations() {
+	qm, err := Q.NewQueryMatcher(mp.queryManager, "typescript", "declarations")
+	defer qm.Close()
 	if err != nil {
 		mp.errors = errors.Join(mp.errors, err)
+		return
 	}
-	defer qm.Close()
+
+	// variable declarations
+	for captures := range qm.ParentCaptures(mp.root, mp.code, "variable") {
+		err, declaration := generateVarDeclaration(captures, mp.queryManager)
+		if err != nil {
+			mp.errors = errors.Join(mp.errors, err)
+		} else {
+			mp.module.Declarations = append(mp.module.Declarations, declaration)
+		}
+	}
+
+	// function declarations
+	for captures := range qm.ParentCaptures(mp.root, mp.code, "function") {
+		declaration, err := generateFunctionDeclaration(captures, mp.root, mp.code, mp.queryManager)
+		if err != nil {
+			mp.errors = errors.Join(mp.errors, err)
+		} else {
+			mp.module.Declarations = append(mp.module.Declarations, declaration)
+		}
+	}
+
 	// javascript exports
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "export") {
 		if exportNodes, ok := captures["export"]; (!ok || len(exportNodes) <= 0) {
 			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{
 				Capture: "export",
-				Query: queryName,
+				Query: "declarations",
 			})
 		} else if declarationNameNodes, ok := captures["declaration.name"]; (!ok || len(declarationNameNodes) <= 0) {
 			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{
 				Capture: "declaration.name",
-				Query: queryName,
+				Query: "declarations",
 			})
 		} else {
 			declaration := declarationNameNodes[0]
@@ -283,17 +283,18 @@ func (mp *ModuleProcessor) processExports() {
 			mp.module.Exports = append(mp.module.Exports, export)
 		}
 	}
+
 	// custom element exports
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "ce") {
 		if ceNodes, ok := captures["ce"]; (!ok || len(ceNodes) <= 0) {
 			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{
 				Capture: "ce",
-				Query: queryName,
+				Query: "declarations",
 			})
 		} else if tagNameNodes, ok := captures["ce.tagName"]; (!ok || len(tagNameNodes) <= 0) {
-			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{ Capture: "ce.tagName", Query: queryName })
+			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{ Capture: "ce.tagName", Query: "declarations" })
 		} else if classNameNodes, ok := captures["ce.className"]; (!ok || len(classNameNodes) <= 0) {
-			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{ Capture: "ce.className", Query: queryName })
+			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{ Capture: "ce.className", Query: "declarations" })
 		} else {
 			tagName := tagNameNodes[0].Text
 			className := classNameNodes[0].Text
