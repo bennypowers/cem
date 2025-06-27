@@ -1,5 +1,7 @@
 package config
 
+import "github.com/spf13/viper"
+
 type DemoDiscoveryConfig struct {
 	FileGlob  string               `mapstructure:"fileGlob"`
 	URLPattern   string            `mapstructure:"urlPattern"`
@@ -36,4 +38,20 @@ type CemConfig struct {
 	// Canonical public source control URL corresponding to project root on primary branch.
 	// e.g. https://github.com/bennypowers/cem/tree/main/
 	SourceControlRootUrl string    `mapstructure:"sourceControlRootUrl"`
+}
+
+func LoadConfig(configPath string) (*CemConfig, error) {
+    v := viper.New()
+    v.SetConfigFile(configPath)
+    v.SetConfigType("yaml")
+
+    if err := v.ReadInConfig(); err != nil {
+        return nil, err
+    }
+
+    var config CemConfig
+    if err := v.Unmarshal(&config); err != nil {
+        return nil, err
+    }
+    return &config, nil
 }
