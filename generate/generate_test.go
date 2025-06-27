@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -15,12 +16,23 @@ import (
 var update = flag.Bool("update", false, "update golden files")
 
 func TestGenerate(t *testing.T) {
+	// Accept a flexible pattern for fixture filtering
+	fixturePattern := os.Getenv("FIXTURE_PATTERN")
+	var re *regexp.Regexp
+	var err error
+	if fixturePattern != "" {
+		re, err = regexp.Compile(fixturePattern)
+		if err != nil {
+			t.Fatalf("failed to compile FIXTURE_PATTERN %q: %v", fixturePattern, err)
+		}
+	}
+
 	fixtures, err := os.ReadDir(filepath.Join("test-fixtures"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	cases := []struct{name string; path string}{}
+	cases := []struct{ name string; path string }{}
 
 	for _, fixture := range fixtures {
 		if fixture.Type().IsRegular() {
@@ -28,24 +40,27 @@ func TestGenerate(t *testing.T) {
 			ext := filepath.Ext(pathToFile)
 			if ext == ".ts" {
 				name := strings.Split(fixture.Name(), ".ts")[0]
-				cases = append(cases, struct{name string; path string}{name, pathToFile})
+				if re == nil || re.MatchString(name) {
+					cases = append(cases, struct{ name string; path string }{name, pathToFile})
+				}
 			}
 		}
 	}
 
 	for _, tc := range cases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := C.CemConfig{
 				SourceControlRootUrl: "https://github.com/bennypowers/cem/tree/main/",
 				Generate: C.GenerateConfig{
 					Files: []string{filepath.Join("test-fixtures", tc.path)},
 					DesignTokens: C.DesignTokensConfig{
-						Spec: "./" + filepath.Join("test-fixtures", "design-tokens.json"),
+						Spec:   "./" + filepath.Join("test-fixtures", "design-tokens.json"),
 						Prefix: "token",
 					},
 					DemoDiscovery: C.DemoDiscoveryConfig{
-						FileGlob: "test-fixtures/demos/*.html",
-						URLPattern: "test-fixtures/demos/(?P<tag>(?P<demo>[\\w-]+))\\.html",
+						FileGlob:    "test-fixtures/demos/*.html",
+						URLPattern:  "test-fixtures/demos/(?P<tag>(?P<demo>[\\w-]+))\\.html",
 						URLTemplate: "https://bennypowers/dev/cem-demos/{tag}/{demo}",
 					},
 				},
@@ -54,7 +69,7 @@ func TestGenerate(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			golden := filepath.Join("test-golden", tc.name + ".json")
+			golden := filepath.Join("test-golden", tc.name+".json")
 			if *update {
 				os.WriteFile(golden, []byte(*actual), 0644)
 			}
