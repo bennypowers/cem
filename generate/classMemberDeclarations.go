@@ -73,7 +73,7 @@ func isPropertyField(captures Q.CaptureMap) bool {
 	return false
 }
 
-func ammendFieldTypeWithCaptures(captures Q.CaptureMap, field *M.ClassField) {
+func amendFieldTypeWithCaptures(captures Q.CaptureMap, field *M.ClassField) {
 	for _, capture := range captures["field.type"] {
 		typeText := capture.Text
 		if typeText != "" {
@@ -84,7 +84,7 @@ func ammendFieldTypeWithCaptures(captures Q.CaptureMap, field *M.ClassField) {
 	}
 }
 
-func ammendFieldPrivacyWithCaptures(captures Q.CaptureMap, field *M.ClassField) {
+func amendFieldPrivacyWithCaptures(captures Q.CaptureMap, field *M.ClassField) {
 	for _, capture := range captures["field.privacy"] {
 		switch capture.Text {
 			case "private":
@@ -95,7 +95,7 @@ func ammendFieldPrivacyWithCaptures(captures Q.CaptureMap, field *M.ClassField) 
 	}
 }
 
-func ammendFieldWithJsdocCaptures(queryManager *Q.QueryManager, captures Q.CaptureMap, field *M.ClassField) (error, bool) {
+func amendFieldWithJsdocCaptures(queryManager *Q.QueryManager, captures Q.CaptureMap, field *M.ClassField) (error, bool) {
 	for _, x := range captures["member.jsdoc"] {
 		source := x.Text
 		error, info := NewPropertyInfo(source, queryManager)
@@ -108,7 +108,7 @@ func ammendFieldWithJsdocCaptures(queryManager *Q.QueryManager, captures Q.Captu
 	return nil, true
 }
 
-func ammendFieldWithPropertyConfigCaptures(captures Q.CaptureMap, field *M.CustomElementField) {
+func amendFieldWithPropertyConfigCaptures(captures Q.CaptureMap, field *M.CustomElementField) {
 	field.Attribute = strings.ToLower(field.Name)
 	bool, hasAttrBool := captures["field.attr.bool"]
 	name, hasAttrName := captures["field.attr.name"]
@@ -145,17 +145,17 @@ func createClassFieldFromAccessorMatch(
 	field.Name = fieldName
 	field.Readonly = isReadonly
 
-	ammendFieldTypeWithCaptures(captures, &field.ClassField)
-	ammendFieldPrivacyWithCaptures(captures, &field.ClassField)
+	amendFieldTypeWithCaptures(captures, &field.ClassField)
+	amendFieldPrivacyWithCaptures(captures, &field.ClassField)
 
 	isCustomElement := classType == "HTMLElement" || classType == "LitElement"
 	isProperty := isCustomElement && !isStatic && isPropertyField(captures)
 
 	if isProperty {
-		ammendFieldWithPropertyConfigCaptures(captures, &field)
+		amendFieldWithPropertyConfigCaptures(captures, &field)
 	}
 
-	ammendFieldWithJsdocCaptures(queryManager, captures, &field.ClassField)
+	amendFieldWithJsdocCaptures(queryManager, captures, &field.ClassField)
 
 	return err, field
 }
@@ -174,8 +174,8 @@ func createClassFieldFromFieldMatch(
 	field.Name = fieldName
 	field.Readonly = readonly
 
-	ammendFieldTypeWithCaptures(captures, &field.ClassField)
-	ammendFieldPrivacyWithCaptures(captures, &field.ClassField)
+	amendFieldTypeWithCaptures(captures, &field.ClassField)
+	amendFieldPrivacyWithCaptures(captures, &field.ClassField)
 
 	for _, x := range captures["field.initializer"] {
 		field.Default = strings.ReplaceAll(x.Text, "\n", "\\n")
@@ -200,10 +200,10 @@ func createClassFieldFromFieldMatch(
 	isProperty := isCustomElement && !isStatic && isPropertyField(captures)
 
 	if isProperty {
-		ammendFieldWithPropertyConfigCaptures(captures, &field)
+		amendFieldWithPropertyConfigCaptures(captures, &field)
 	}
 
-	ammendFieldWithJsdocCaptures(queryManager, captures, &field.ClassField)
+	amendFieldWithJsdocCaptures(queryManager, captures, &field.ClassField)
 
 	return err, field
 }

@@ -22,6 +22,7 @@ func extractDemoDescription(path string) (string, error) {
 	defer parser.Close()
 	parser.SetLanguage(Q.Languages.Html)
 	tree := parser.Parse(code, nil)
+	defer tree.Close()
 	root := tree.RootNode()
 	cursor := tree.Walk()
 	for _, node := range root.NamedChildren(cursor) {

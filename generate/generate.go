@@ -55,7 +55,11 @@ func preprocess(cfg *C.CemConfig) (r preprocessResult, errs error) {
 		r.designTokens = tokens
 	}
 	if cfg.Generate.DemoDiscovery.FileGlob != "" {
-		r.demoFiles, _ = DS.Glob(cfg.Generate.DemoDiscovery.FileGlob)
+		demoFiles, err := DS.Glob(cfg.Generate.DemoDiscovery.FileGlob)
+		r.demoFiles = demoFiles
+		if err != nil {
+			errs = errors.Join(errs, err)
+		}
 	}
 	return r, errs
 }

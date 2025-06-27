@@ -12,7 +12,7 @@ func generateVarDeclaration(
 	queryManager *Q.QueryManager,
 ) (err error, declaration *M.VariableDeclaration) {
 	nameNodes, ok := captures["variable.name"]
-	if (!ok || len(nameNodes) <= 0) {
+	if !ok || len(nameNodes) <= 0 {
 		return errors.Join(err, &Q.NoCaptureError{ Capture: "variable.name", Query: "variable" }), nil
 	}
 
@@ -26,14 +26,14 @@ func generateVarDeclaration(
 	}
 
 	typeNodes, ok := captures["variable.type"]
-	if (ok && len(typeNodes) > 0) {
+	if ok && len(typeNodes) > 0 {
 		declaration.Type = &M.Type{
 			Text: typeNodes[0].Text,
 		}
 	}
 
 	jsdoc, ok := captures["variable.jsdoc"]
-	if (ok && len(jsdoc) > 0) {
+	if ok && len(jsdoc) > 0 {
 		error, info := NewPropertyInfo(jsdoc[0].Text, queryManager)
 		if error != nil {
 			err = errors.Join(err, error)

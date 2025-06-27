@@ -15,7 +15,7 @@ import (
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
-func ammendStylesMapFromSource(
+func amendStylesMapFromSource(
 	props map[string]M.CssCustomProperty,
 	queryManager *Q.QueryManager,
 	queryMatcher *Q.QueryMatcher,
@@ -208,7 +208,7 @@ func (mp *ModuleProcessor) processClassDeclarations() {
 									if err != nil {
 										mp.errors = errors.Join(mp.errors, errors.New(fmt.Sprintf("Could not read tokens spec %s", spec)), err)
 									} else {
-										err := ammendStylesMapFromSource(props, mp.queryManager, qm, parser, content)
+										err := amendStylesMapFromSource(props, mp.queryManager, qm, parser, content)
 										if err != nil {
 											mp.errors = errors.Join(mp.errors, err)
 										}
@@ -221,7 +221,7 @@ func (mp *ModuleProcessor) processClassDeclarations() {
 						}
 						if hasStrings {
 							for _, styleString := range styleStrings {
-								err := ammendStylesMapFromSource(props, mp.queryManager, qm, parser, []byte(styleString.Text))
+								err := amendStylesMapFromSource(props, mp.queryManager, qm, parser, []byte(styleString.Text))
 								if err != nil {
 									mp.errors = errors.Join(mp.errors, err)
 								}
