@@ -58,8 +58,10 @@ jobs:
           awk "BEGIN {print $end - $start}" > base_bench_time.txt
           cp docs/site/benchmark-last-output.json base_bench.json
 
-      - name: Checkout target branch (base)
-        run: git checkout ${{ github.head_ref }}
+      - name: Checkout PR branch (base)
+        run: |
+          git fetch origin ${{ github.head_ref }} --depth=1
+          git checkout ${{ github.head_ref }}
 
       - name: Compare benchmark results
         run: scripts/compare-benchmarks.sh
