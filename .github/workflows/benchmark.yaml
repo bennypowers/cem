@@ -59,7 +59,7 @@ jobs:
           cp docs/site/benchmark-last-output.json base_bench.json
 
       - name: Compare benchmark results
-        run: .github/scripts/compare-benchmarks.sh
+        run: scripts/compare-benchmarks.sh
 
       - name: Find previous benchmark comment
         id: find-comment
