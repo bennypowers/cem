@@ -41,7 +41,7 @@ watch:
 	done
 
 bench:
-	go test -cpuprofile=cpu.out -bench=BenchmarkGenerate ./generate/...
+	go test -cpuprofile=cpu.out -bench=BenchmarkGenerate ./generate/
 
 profile:
 	go test -bench=... -cpuprofile=cpu.out ./generate/...
