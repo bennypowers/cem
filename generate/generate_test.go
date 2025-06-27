@@ -61,7 +61,7 @@ func TestGenerate(t *testing.T) {
 					DemoDiscovery: C.DemoDiscoveryConfig{
 						FileGlob:    "test-fixtures/demos/*.html",
 						URLPattern:  "test-fixtures/demos/(?P<tag>(?P<demo>[\\w-]+))\\.html",
-						URLTemplate: "https://bennypowers/dev/cem-demos/{tag}/{demo}",
+						URLTemplate: "https://bennypowers.dev/cem-demos/{tag}/{demo}/",
 					},
 				},
 			}

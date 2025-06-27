@@ -13,6 +13,20 @@
           },
           "kind": "class",
           "tagName": "demo-alias",
+          "demos": [
+            {
+              "url": "https://bennypowers.dev/cem-demos/alias/alias",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/test-fixtures/demos/demo-alias.html"
+              }
+            },
+            {
+              "url": "https://bennypowers.dev/cem-demos/demo-multiple/demo-multiple",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/test-fixtures/demos/demo-multiple.html"
+              }
+            }
+          ],
           "customElement": true
         }
       ],

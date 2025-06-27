@@ -2,8 +2,8 @@ package demodiscovery
 
 import (
 	"errors"
+	"net/url"
 	"os"
-	"path"
 	"regexp"
 	"strings"
 
@@ -54,11 +54,7 @@ func DiscoverDemos(
 		if !ok || ce.Kind != "class" || ce.TagName == "" {
 			continue
 		}
-		tag := ce.TagName
-		if alias, ok := tagAliases[tag]; ok {
-			tag = alias
-		}
-		demoFiles := demoMap[tag]
+		demoFiles := demoMap[ce.CustomElement.TagName]
 		for _, demoPath := range demoFiles {
 			rx := regexp.MustCompile(cfg.Generate.DemoDiscovery.URLPattern)
 			m := rx.FindStringSubmatch(demoPath)
@@ -69,22 +65,33 @@ func DiscoverDemos(
 			params := map[string]string{}
 			for i, name := range groupNames {
 				if i > 0 && name != "" {
-					params[name] = m[i]
+					slug := m[i]
+					// WARN: this is a simple heuristic, but since we provide tremendous flexibility
+					// by allowing users to define capture names i.e. template variables themselves,
+					// we can't use well-known keys.
+					// This might fail if for some reason the user wants to use the aliased tag name
+					// in multiple captures, but only use the alias in one template variable
+					if alias, ok := tagAliases[slug]; ok {
+						slug = alias
+					}
+					params[name] = slug
 				}
 			}
-			url := cfg.Generate.DemoDiscovery.URLTemplate
+			urlTemplate := cfg.Generate.DemoDiscovery.URLTemplate
 			for k, v := range params {
-				url = strings.ReplaceAll(url, "{"+k+"}", v)
+				urlTemplate = strings.ReplaceAll(urlTemplate, "{"+k+"}", v)
 			}
 			description, err := extractDemoDescription(demoPath)
 			if err != nil {
 				errs = errors.Join(errs, err)
 			}
+			base, _ := url.Parse(cfg.SourceControlRootUrl)
+			rel, _ := url.Parse(demoPath)
 			ce.Demos = append(ce.Demos, M.Demo{
-				URL:         url,
+				URL:         urlTemplate,
 				Description: description,
 				Source: &M.SourceReference{
-					Href: path.Join(cfg.SourceControlRootUrl, demoPath),
+					Href: base.ResolveReference(rel).String(),
 				},
 			})
 		}

@@ -1,6 +1,7 @@
 package demodiscovery
 
 import (
+	"errors"
 	"os"
 	"regexp"
 	"strings"
@@ -14,18 +15,19 @@ import (
 type DemoMap map[string][]string
 
 // NewDemoMap builds the index using both magic comments and fallback to tag parsing.
-func NewDemoMap(demoFiles []string) (DemoMap, error) {
-	idx := make(DemoMap)
+func NewDemoMap(demoFiles []string) (demoMap DemoMap, errs error) {
+	demoMap = make(DemoMap)
 	for _, file := range demoFiles {
 		tags, err := extractDemoTags(file)
 		if err != nil {
-			continue // log or collect errors as needed
-		}
-		for _, tag := range tags {
-			idx[tag] = append(idx[tag], file)
+			errs = errors.Join(errs, err)
+		} else {
+			for _, tag := range tags {
+				demoMap[tag] = append(demoMap[tag], file)
+			}
 		}
 	}
-	return idx, nil
+	return demoMap, errs
 }
 
 // extractDemoTags returns all associated custom element tag names for the given demo file.
