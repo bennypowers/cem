@@ -1,0 +1,100 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-multiple.js",
+      "declarations": [
+        {
+          "name": "ClassA",
+          "superclass": {
+            "name": "Event",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "aField",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "aMethod",
+              "return": {
+                "type": {
+                  "text": "string"
+                }
+              },
+              "kind": "method"
+            }
+          ],
+          "kind": "class"
+        },
+        {
+          "name": "ClassB",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "bField",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "bProp",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "bprop"
+            },
+            {
+              "name": "bMethod",
+              "return": {
+                "type": {
+                  "text": "string"
+                }
+              },
+              "kind": "method"
+            }
+          ],
+          "kind": "class",
+          "tagName": "class-b",
+          "attributes": [
+            {
+              "name": "bprop",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "bProp"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "ClassA",
+          "declaration": {
+            "name": "ClassA",
+            "module": "src/class-multiple.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "class-b",
+          "declaration": {
+            "name": "ClassB",
+            "module": "src/class-multiple.js"
+          }
+        }
+      ]
+    }
+  ]
+}

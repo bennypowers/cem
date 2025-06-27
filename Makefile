@@ -41,10 +41,10 @@ watch:
 	done
 
 bench:
-	go test -cpuprofile=cpu.out -bench=BenchmarkGenerate ./generate/...
+	go test -v -cpuprofile=cpu.out -bench=BenchmarkGenerate -run=^$$ ./generate/
 
 profile:
-	go test -bench=... -cpuprofile=cpu.out ./generate/...
+	go test -bench=... -run=^$ -cpuprofile=cpu.out ./generate/
 
 flamegraph: profile
 	go tool pprof -http=:8080 cpu.out # Visual analysis

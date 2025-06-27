@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-css-part.js",
+      "declarations": [
+        {
+          "name": "JsdocCssPart",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-css-part",
+          "cssParts": [
+            {
+              "name": "part"
+            },
+            {
+              "name": "part-description",
+              "description": "part description"
+            },
+            {
+              "name": "part-description-multiline",
+              "description": "multiline\npart with description"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-css-part",
+          "declaration": {
+            "name": "JsdocCssPart",
+            "module": "src/jsdoc-css-part.js"
+          }
+        }
+      ]
+    }
+  ]
+}

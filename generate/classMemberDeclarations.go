@@ -6,22 +6,25 @@ import (
 	"strings"
 
 	M "bennypowers.dev/cem/manifest"
-	"bennypowers.dev/cem/set"
+	Q "bennypowers.dev/cem/generate/queries"
+	S "bennypowers.dev/cem/set"
+
 	"dario.cat/mergo"
+
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
-var ignoredStaticFieldsHTML = set.NewSet(
+var ignoredStaticFieldsHTML = S.NewSet(
 	"formAssociated",
 	"observedAttributes",
 )
 
-var ignoredStaticFieldsLit = set.NewSet(
+var ignoredStaticFieldsLit = S.NewSet(
 	"shadowRootOptions",
 	"styles",
 )
 
-var ignoredInstanceMethodsHTML = set.NewSet(
+var ignoredInstanceMethodsHTML = S.NewSet(
   "adoptedCallback",
   "connectedCallback",
   "connectedMoveCallback",
@@ -30,7 +33,7 @@ var ignoredInstanceMethodsHTML = set.NewSet(
   "formStateRestoreCallback",
 )
 
-var ignoredInstanceMethodsLit = set.NewSet(
+var ignoredInstanceMethodsLit = S.NewSet(
   "render",
   "update",
   "getUpdateComplete",
@@ -58,7 +61,7 @@ func isIgnoredMember(memberName string, superclass string, isStatic bool) bool {
 	return false
 }
 
-func isPropertyField(captures CaptureMap) bool {
+func isPropertyField(captures Q.CaptureMap) bool {
 	_, hasDecorators := captures["decorator.name"]
 	if hasDecorators {
 		for _, name := range captures["decorator.name"] {
@@ -70,7 +73,7 @@ func isPropertyField(captures CaptureMap) bool {
 	return false
 }
 
-func ammendFieldTypeWithCaptures(captures CaptureMap, field *M.ClassField) {
+func amendFieldTypeWithCaptures(captures Q.CaptureMap, field *M.ClassField) {
 	for _, capture := range captures["field.type"] {
 		typeText := capture.Text
 		if typeText != "" {
@@ -81,7 +84,7 @@ func ammendFieldTypeWithCaptures(captures CaptureMap, field *M.ClassField) {
 	}
 }
 
-func ammendFieldPrivacyWithCaptures(captures CaptureMap, field *M.ClassField) {
+func amendFieldPrivacyWithCaptures(captures Q.CaptureMap, field *M.ClassField) {
 	for _, capture := range captures["field.privacy"] {
 		switch capture.Text {
 			case "private":
@@ -92,7 +95,7 @@ func ammendFieldPrivacyWithCaptures(captures CaptureMap, field *M.ClassField) {
 	}
 }
 
-func ammendFieldWithJsdocCaptures(queryManager *QueryManager, captures CaptureMap, field *M.ClassField) (error, bool) {
+func amendFieldWithJsdocCaptures(queryManager *Q.QueryManager, captures Q.CaptureMap, field *M.ClassField) (error, bool) {
 	for _, x := range captures["member.jsdoc"] {
 		source := x.Text
 		error, info := NewPropertyInfo(source, queryManager)
@@ -105,7 +108,7 @@ func ammendFieldWithJsdocCaptures(queryManager *QueryManager, captures CaptureMa
 	return nil, true
 }
 
-func ammendFieldWithPropertyConfigCaptures(captures CaptureMap, field *M.CustomElementField) {
+func amendFieldWithPropertyConfigCaptures(captures Q.CaptureMap, field *M.CustomElementField) {
 	field.Attribute = strings.ToLower(field.Name)
 	bool, hasAttrBool := captures["field.attr.bool"]
 	name, hasAttrName := captures["field.attr.name"]
@@ -134,25 +137,25 @@ func createClassFieldFromAccessorMatch(
 	isStatic bool,
 	isReadonly bool,
 	classType string,
-	captures CaptureMap,
-	queryManager *QueryManager,
+	captures Q.CaptureMap,
+	queryManager *Q.QueryManager,
 ) (err error, field M.CustomElementField) {
 	field.Kind = "field"
 	field.Static = isStatic
 	field.Name = fieldName
 	field.Readonly = isReadonly
 
-	ammendFieldTypeWithCaptures(captures, &field.ClassField)
-	ammendFieldPrivacyWithCaptures(captures, &field.ClassField)
+	amendFieldTypeWithCaptures(captures, &field.ClassField)
+	amendFieldPrivacyWithCaptures(captures, &field.ClassField)
 
 	isCustomElement := classType == "HTMLElement" || classType == "LitElement"
 	isProperty := isCustomElement && !isStatic && isPropertyField(captures)
 
 	if isProperty {
-		ammendFieldWithPropertyConfigCaptures(captures, &field)
+		amendFieldWithPropertyConfigCaptures(captures, &field)
 	}
 
-	ammendFieldWithJsdocCaptures(queryManager, captures, &field.ClassField)
+	amendFieldWithJsdocCaptures(queryManager, captures, &field.ClassField)
 
 	return err, field
 }
@@ -161,8 +164,8 @@ func createClassFieldFromFieldMatch(
 	fieldName string,
 	isStatic bool,
 	superclass string,
-	captures CaptureMap,
-	queryManager *QueryManager,
+	captures Q.CaptureMap,
+	queryManager *Q.QueryManager,
 ) (err error, field M.CustomElementField) {
 	_, readonly := captures["field.readonly"]
 
@@ -171,8 +174,8 @@ func createClassFieldFromFieldMatch(
 	field.Name = fieldName
 	field.Readonly = readonly
 
-	ammendFieldTypeWithCaptures(captures, &field.ClassField)
-	ammendFieldPrivacyWithCaptures(captures, &field.ClassField)
+	amendFieldTypeWithCaptures(captures, &field.ClassField)
+	amendFieldPrivacyWithCaptures(captures, &field.ClassField)
 
 	for _, x := range captures["field.initializer"] {
 		field.Default = strings.ReplaceAll(x.Text, "\n", "\\n")
@@ -197,10 +200,10 @@ func createClassFieldFromFieldMatch(
 	isProperty := isCustomElement && !isStatic && isPropertyField(captures)
 
 	if isProperty {
-		ammendFieldWithPropertyConfigCaptures(captures, &field)
+		amendFieldWithPropertyConfigCaptures(captures, &field)
 	}
 
-	ammendFieldWithJsdocCaptures(queryManager, captures, &field.ClassField)
+	amendFieldWithJsdocCaptures(queryManager, captures, &field.ClassField)
 
 	return err, field
 }
@@ -213,23 +216,23 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 	members []M.ClassMember,
 	errs error,
 ) {
-	qm, err := NewQueryMatcher(mp.queryManager, "typescript", "classMemberDeclaration")
+	matcher, err := Q.NewQueryMatcher(mp.queryManager, "typescript", "classMemberDeclaration")
 	if err != nil {
 		return members, errors.Join(errs, err)
 	}
-	defer qm.Close()
-	qm.cursor.SetByteRange(classDeclarationNode.ByteRange())
+	defer matcher.Close()
+	matcher.SetByteRange(classDeclarationNode.ByteRange())
 
-	staticsSet := set.NewSet[string]()
-	fieldsSet := set.NewSet[string]()
-	gettersSet := set.NewSet[string]()
-	settersSet := set.NewSet[string]()
-	methodsSet := set.NewSet[string]()
+	staticsSet := S.NewSet[string]()
+	fieldsSet := S.NewSet[string]()
+	gettersSet := S.NewSet[string]()
+	settersSet := S.NewSet[string]()
+	methodsSet := S.NewSet[string]()
 
 	// to collate first instance of accessor pair / accessor
 	accessorIndices := make(map[string]int)
 
-	for captures := range qm.ParentCaptures(mp.root, mp.code, "accessor") {
+	for captures := range matcher.ParentCaptures(mp.root, mp.code, "accessor") {
 		_, isStatic := captures["field.static"]
 		fieldName := captures["field.name"][0].Text
 		if (isIgnoredMember(fieldName, superclass, isStatic)) {
@@ -291,7 +294,7 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 		}
 	}
 
-	for captures := range qm.ParentCaptures(mp.root, mp.code, "field") {
+	for captures := range matcher.ParentCaptures(mp.root, mp.code, "field") {
 		_, isStatic := captures["field.static"]
 		fieldName := captures["field.name"][0].Text
 		if (isIgnoredMember(fieldName, superclass, isStatic)) {
@@ -301,7 +304,7 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 		fieldNodes, ok := captures["field"]
 		if ok && len(fieldNodes) > 0  {
 			fieldNodeId := fieldNodes[0].NodeId
-			fieldNode := GetDescendantById(mp.root, fieldNodeId)
+			fieldNode := Q.GetDescendantById(mp.root, fieldNodeId)
 			if fieldNode != nil {
 				valueNode := fieldNode.ChildByFieldName("value")
 				if valueNode != nil {
@@ -332,7 +335,7 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 		}
 	}
 
-	for captures := range qm.ParentCaptures(mp.root, mp.code, "method") {
+	for captures := range matcher.ParentCaptures(mp.root, mp.code, "method") {
 		method := M.ClassMethod{Kind: "method"}
 		methodNames, ok := captures["method.name"]
 		methodName := methodNames[0]
@@ -353,7 +356,7 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 
 		params, hasParams := captures["params"]
 		if hasParams && len(params) > 0 {
-			for i, _ := range params {
+			for i := range params {
 				_, isRest := captures["param.rest"]
 				_, hasName := captures["param.name"]
 				if hasName {

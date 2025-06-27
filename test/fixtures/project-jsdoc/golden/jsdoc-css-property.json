@@ -1,0 +1,146 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-css-property.js",
+      "declarations": [
+        {
+          "name": "JsdocCssProp",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-css-prop",
+          "cssProperties": [
+            {
+              "name": "--prop"
+            },
+            {
+              "name": "--prop-description",
+              "description": "prop description"
+            },
+            {
+              "name": "--prop-description-multiline",
+              "description": "multiline\nprop description"
+            },
+            {
+              "name": "--prop-default",
+              "default": "none"
+            },
+            {
+              "name": "--prop-default-description",
+              "default": "none",
+              "description": "prop default description"
+            },
+            {
+              "name": "--prop-default-description-multiline",
+              "default": "none",
+              "description": "multiline\nprop default description"
+            },
+            {
+              "name": "--prop-typed",
+              "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--prop-typed-description",
+              "syntax": "\u003ccolor\u003e",
+              "description": "prop typed description"
+            },
+            {
+              "name": "--prop-typed-description-multiline",
+              "syntax": "\u003ccolor\u003e",
+              "description": "multiline\nprop typed description"
+            },
+            {
+              "name": "--prop-typed-default",
+              "syntax": "\u003ccolor\u003e",
+              "default": "none"
+            },
+            {
+              "name": "--prop-typed-default-description",
+              "syntax": "\u003ccolor\u003e",
+              "default": "none",
+              "description": "prop typed default description"
+            },
+            {
+              "name": "--prop-typed-default-description-multiline",
+              "syntax": "\u003ccolor\u003e",
+              "default": "none",
+              "description": "multiline\nprop typed default description"
+            },
+            {
+              "name": "--property"
+            },
+            {
+              "name": "--property-description",
+              "description": "property description"
+            },
+            {
+              "name": "--property-description-multiline",
+              "description": "multiline\nproperty description"
+            },
+            {
+              "name": "--property-default",
+              "default": "none"
+            },
+            {
+              "name": "--property-default-description",
+              "default": "none",
+              "description": "property default description"
+            },
+            {
+              "name": "--property-typed-default-description-multiline",
+              "syntax": "\u003ccolor\u003e",
+              "default": "none",
+              "description": "multiline\nproperty typed default description"
+            },
+            {
+              "name": "--property-typed",
+              "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--property-typed-description",
+              "syntax": "\u003ccolor\u003e",
+              "description": "property typed description"
+            },
+            {
+              "name": "--property-typed-description-multiline",
+              "syntax": "\u003ccolor\u003e",
+              "description": "multiline\nproperty typed description"
+            },
+            {
+              "name": "--property-typed-default",
+              "syntax": "\u003ccolor\u003e",
+              "default": "none"
+            },
+            {
+              "name": "--property-typed-default-description",
+              "syntax": "\u003ccolor\u003e",
+              "default": "none",
+              "description": "property typed default description"
+            },
+            {
+              "name": "--property-typed-default-description-multiline",
+              "syntax": "\u003ccolor\u003e",
+              "default": "none",
+              "description": "multiline\nproperty typed default description"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-css-prop",
+          "declaration": {
+            "name": "JsdocCssProp",
+            "module": "src/jsdoc-css-property.js"
+          }
+        }
+      ]
+    }
+  ]
+}

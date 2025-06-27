@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-ignored-members.js",
+      "declarations": [
+        {
+          "name": "ClassIgnoredMembers",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "class-ignored-members",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-ignored-members",
+          "declaration": {
+            "name": "ClassIgnoredMembers",
+            "module": "src/class-ignored-members.js"
+          }
+        }
+      ]
+    }
+  ]
+}

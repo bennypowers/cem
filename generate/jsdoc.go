@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	M "bennypowers.dev/cem/manifest"
+	Q "bennypowers.dev/cem/generate/queries"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -62,35 +63,37 @@ func FindNamedMatches(regex *regexp.Regexp, str string, includeNotMatchedOptiona
 type ClassInfo struct {
 	Description string;
 	TagName string;
+	Alias string;
 	Summary string;
 	Deprecated M.Deprecated;
 	Attrs []M.Attribute;
 	CssParts []M.CssPart;
 	CssProperties []M.CssCustomProperty;
 	CssStates []M.CssCustomState;
+	Demos []M.Demo;
 	Events []M.Event;
 	Slots []M.Slot;
 }
 
-func NewClassInfo(source string, queryManager *QueryManager) (*ClassInfo, error) {
+func NewClassInfo(source string, queryManager *Q.QueryManager) (*ClassInfo, error) {
 	info := ClassInfo{}
 	code := []byte(source)
-	qm, err := NewQueryMatcher(queryManager, "jsdoc", "jsdoc")
+	matcher, err := Q.NewQueryMatcher(queryManager, "jsdoc", "jsdoc")
 	if err != nil {
 		return nil, err
 	}
-	defer qm.Close()
+	defer matcher.Close()
 
 	parser := ts.NewParser()
 	defer parser.Close()
-	parser.SetLanguage(Languages.jsdoc)
+	parser.SetLanguage(Q.Languages.Jsdoc)
 	tree := parser.Parse([]byte(code), nil)
 	defer tree.Close()
 	root := tree.RootNode()
 
-	for match := range qm.AllQueryMatches(root, code) {
+	for match := range matcher.AllQueryMatches(root, code) {
 		for _, capture := range match.Captures {
-			name := qm.query.CaptureNames()[capture.Index]
+			name := matcher.GetCaptureNameByIndex(capture.Index)
 			switch name {
 				case "doc.description":
 					info.Description = normalizeJsdocLines(capture.Node.Utf8Text(code))
@@ -98,6 +101,8 @@ func NewClassInfo(source string, queryManager *QueryManager) (*ClassInfo, error)
 					tagInfo := NewTagInfo(capture.Node.Utf8Text(code))
 					tagInfo.startByte = capture.Node.StartByte()
 					switch tagInfo.Tag {
+						case "@alias":
+							info.Alias = tagInfo.toAlias()
 						case "@attr",
 									"@attribute":
 							attr := tagInfo.toAttribute()
@@ -114,6 +119,8 @@ func NewClassInfo(source string, queryManager *QueryManager) (*ClassInfo, error)
 						case "@cssstate":
 					    state := tagInfo.toCssCustomState()
 							info.CssStates = append(info.CssStates, state)
+						case "@demo":
+							info.Demos = append(info.Demos, tagInfo.toDemo())
 						case "@deprecated":
 							if tagInfo.Description == "" {
 								info.Deprecated = M.DeprecatedFlag(true)
@@ -150,8 +157,9 @@ func (info *ClassInfo) MergeToCustomElementDeclaration(declaration *M.CustomElem
 	declaration.CustomElement.CssProperties = info.CssProperties
 	declaration.CustomElement.CssParts      = info.CssParts
 	declaration.CustomElement.CssStates     = info.CssStates
+	declaration.CustomElement.Demos         = info.Demos
 	if info.TagName != "" {
-		declaration.CustomElement.TagName		    = info.TagName
+		declaration.CustomElement.TagName		  = info.TagName
 	}
 }
 
@@ -175,6 +183,15 @@ func NewTagInfo(tag string) TagInfo {
 		Description: normalizeJsdocLines(matches["description"]),
 	}
 	return info
+}
+
+/**
+ * @alias name
+ */
+func (info TagInfo) toAlias() (string) {
+	re := regexp.MustCompile(`(?ms)[\s*]*@alias[\s*]+(?P<alias>.*)`)
+	matches := FindNamedMatches(re, info.source, true)
+	return matches["alias"]
 }
 
 /**
@@ -309,6 +326,19 @@ func (info TagInfo) toCssCustomState() (M.CssCustomState) {
 }
 
 /**
+ * @demo url
+ * @demo url - description
+ */
+func (info TagInfo) toDemo() (M.Demo) {
+	re := regexp.MustCompile(`(?m)@demo\s+(?P<url>\S+)(?:\s*-\s*(?P<description>.*))?`)
+	matches := FindNamedMatches(re, info.source, true)
+	return M.Demo{
+		Description: normalizeJsdocLines(matches["description"]),
+		URL: matches["url"],
+	}
+}
+
+/**
  * @fires name
  * @fires name - description
  * @fires {type} name
@@ -369,7 +399,7 @@ func (info TagInfo) toReturn() (ReturnInfo) {
 		Description: normalizeJsdocLines(matches["description"]),
 	}
 	if matches["type"] != "" {
-		info.Type = matches["type"]
+		ret.Type = matches["type"]
 	}
 	return ret
 }
@@ -425,23 +455,23 @@ type PropertyInfo struct {
 	Deprecated M.Deprecated
 }
 
-func NewPropertyInfo(code string, queryManager *QueryManager) (error, *PropertyInfo) {
+func NewPropertyInfo(code string, queryManager *Q.QueryManager) (error, *PropertyInfo) {
 	barr := []byte(code)
 	parser := ts.NewParser()
 	defer parser.Close()
-	parser.SetLanguage(Languages.jsdoc)
+	parser.SetLanguage(Q.Languages.Jsdoc)
 	tree := parser.Parse(barr, nil)
 	defer tree.Close()
 	root := tree.RootNode()
 
-  qm, err := NewQueryMatcher(queryManager, "jsdoc", "jsdoc")
+  qm, err := Q.NewQueryMatcher(queryManager, "jsdoc", "jsdoc")
 	if err != nil {
 		return err, nil
 	}
 	defer qm.Close()
 
-  descriptionCaptureIndex, _ := qm.query.CaptureIndexForName("doc.description")
-  tagCaptureIndex, _ := qm.query.CaptureIndexForName("doc.tag")
+  descriptionCaptureIndex, _ := qm.GetCaptureIndexForName("doc.description")
+  tagCaptureIndex, _ := qm.GetCaptureIndexForName("doc.tag")
 
 	info := PropertyInfo{source: code}
 
@@ -488,23 +518,23 @@ type FieldInfo struct {
 	Deprecated M.Deprecated
 }
 
-func NewCssCustomPropertyInfo(code string, queryManager *QueryManager) (*CssCustomPropertyInfo, error) {
+func NewCssCustomPropertyInfo(code string, queryManager *Q.QueryManager) (*CssCustomPropertyInfo, error) {
 	barr := []byte(code)
 	parser := ts.NewParser()
 	defer parser.Close()
-	parser.SetLanguage(Languages.jsdoc)
+	parser.SetLanguage(Q.Languages.Jsdoc)
 	tree := parser.Parse(barr, nil)
 	defer tree.Close()
 	root := tree.RootNode()
 
-  qm, err := NewQueryMatcher(queryManager, "jsdoc", "jsdoc")
+  qm, err := Q.NewQueryMatcher(queryManager, "jsdoc", "jsdoc")
 	if err != nil {
 		return nil, err
 	}
 	defer qm.Close()
 
-  descriptionCaptureIndex, _ := qm.query.CaptureIndexForName("doc.description")
-  tagCaptureIndex, _ := qm.query.CaptureIndexForName("doc.tag")
+  descriptionCaptureIndex, _ := qm.GetCaptureIndexForName("doc.description")
+  tagCaptureIndex, _ := qm.GetCaptureIndexForName("doc.tag")
 
 	info := CssCustomPropertyInfo{}
 
@@ -580,17 +610,17 @@ type MethodInfo struct {
 	Privacy     M.Privacy
 }
 
-func NewMethodInfo(source string, queryManager *QueryManager) (error, *MethodInfo) {
+func NewMethodInfo(source string, queryManager *Q.QueryManager) (error, *MethodInfo) {
 	info := MethodInfo{}
 	code := []byte(source)
 	parser := ts.NewParser()
 	defer parser.Close()
-	parser.SetLanguage(Languages.jsdoc)
+	parser.SetLanguage(Q.Languages.Jsdoc)
 	tree := parser.Parse([]byte(code), nil)
 	defer tree.Close()
 	root := tree.RootNode()
 
-	qm, err := NewQueryMatcher(queryManager, "jsdoc", "jsdoc")
+	qm, err := Q.NewQueryMatcher(queryManager, "jsdoc", "jsdoc")
 	if err != nil {
 		return err, nil
 	}
@@ -598,7 +628,7 @@ func NewMethodInfo(source string, queryManager *QueryManager) (error, *MethodInf
 
 	for match := range qm.AllQueryMatches(root, code) {
 		for _, capture := range match.Captures {
-			name := qm.query.CaptureNames()[capture.Index]
+			name := qm.GetCaptureNameByIndex(capture.Index)
 			switch name {
 				case "doc.description":
 					info.Description = normalizeJsdocLines(capture.Node.Utf8Text(code))
@@ -649,7 +679,7 @@ func (info *MethodInfo) MergeToFunctionLike(declaration *M.FunctionLike) {
 		}
 	}
 	for _, iparam := range info.Parameters {
-		for i, _ := range declaration.Parameters {
+		for i := range declaration.Parameters {
 			if declaration.Parameters[i].Name == iparam.Name {
 				declaration.Parameters[i].Description = iparam.Description
 				declaration.Parameters[i].Deprecated = iparam.Deprecated

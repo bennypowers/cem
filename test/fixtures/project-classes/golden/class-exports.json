@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-exports.js",
+      "declarations": [
+        {
+          "name": "ClassCe",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "class-ce",
+          "customElement": true
+        },
+        {
+          "name": "ClassExported",
+          "kind": "class"
+        },
+        {
+          "name": "ClassExportedCe",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "class-exported-ce",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-ce",
+          "declaration": {
+            "name": "ClassCe",
+            "module": "src/class-exports.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ClassExported",
+          "declaration": {
+            "name": "ClassExported",
+            "module": "src/class-exports.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "class-exported-ce",
+          "declaration": {
+            "name": "ClassExportedCe",
+            "module": "src/class-exports.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ClassExportedCe",
+          "declaration": {
+            "name": "ClassExportedCe",
+            "module": "src/class-exports.js"
+          }
+        }
+      ]
+    }
+  ]
+}

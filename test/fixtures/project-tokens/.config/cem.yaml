@@ -1,0 +1,6 @@
+sourceControlRootUrl: https://github.com/bennypowers/cem/tree/main/test/fixtures/project-tokens/
+generate:
+  output: custom-elements.json
+  designTokens:
+    spec: design-tokens.json
+    prefix: token

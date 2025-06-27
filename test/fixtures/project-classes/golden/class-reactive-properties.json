@@ -1,0 +1,148 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-reactive-properties.js",
+      "declarations": [
+        {
+          "name": "ClassReactiveProperties",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "string",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "string"
+            },
+            {
+              "name": "protected",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "privacy": "protected"
+            },
+            {
+              "name": "initialized",
+              "type": {
+                "text": "string"
+              },
+              "default": "'string'",
+              "kind": "field",
+              "attribute": "initialized"
+            },
+            {
+              "name": "reflect",
+              "type": {
+                "text": "boolean"
+              },
+              "kind": "field",
+              "attribute": "reflect",
+              "reflects": true
+            },
+            {
+              "name": "attrReflects",
+              "type": {
+                "text": "boolean"
+              },
+              "kind": "field",
+              "attribute": "attr-reflects",
+              "reflects": true
+            },
+            {
+              "name": "truetrue",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "truetrue",
+              "reflects": true
+            },
+            {
+              "name": "nonAttr",
+              "type": {
+                "text": "number"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "multiDecorator",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field",
+              "attribute": "multi-decorator",
+              "reflects": true
+            }
+          ],
+          "kind": "class",
+          "tagName": "class-reactive-properties",
+          "attributes": [
+            {
+              "name": "string",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "string"
+            },
+            {
+              "name": "initialized",
+              "type": {
+                "text": "string"
+              },
+              "default": "'string'",
+              "fieldName": "initialized"
+            },
+            {
+              "name": "reflect",
+              "type": {
+                "text": "boolean"
+              },
+              "fieldName": "reflect"
+            },
+            {
+              "name": "attr-reflects",
+              "type": {
+                "text": "boolean"
+              },
+              "fieldName": "attrReflects"
+            },
+            {
+              "name": "truetrue",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "truetrue"
+            },
+            {
+              "name": "multi-decorator",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "fieldName": "multiDecorator"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-reactive-properties",
+          "declaration": {
+            "name": "ClassReactiveProperties",
+            "module": "src/class-reactive-properties.js"
+          }
+        }
+      ]
+    }
+  ]
+}

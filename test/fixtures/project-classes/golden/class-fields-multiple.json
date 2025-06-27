@@ -1,0 +1,89 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-fields-multiple.js",
+      "declarations": [
+        {
+          "name": "DupeEvent",
+          "superclass": {
+            "name": "Event",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "dupe",
+              "type": {
+                "text": "boolean"
+              },
+              "kind": "field"
+            }
+          ],
+          "kind": "class"
+        },
+        {
+          "name": "ClassFieldsMultiple",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "dupe",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "true",
+              "kind": "field",
+              "static": true
+            },
+            {
+              "name": "dupe",
+              "description": "Even though `DupeEvent` has an `dupe` field, this is still tracked",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "dupe",
+              "reflects": true
+            }
+          ],
+          "kind": "class",
+          "tagName": "class-fields-duplicate",
+          "attributes": [
+            {
+              "name": "dupe",
+              "description": "Even though `DupeEvent` has an `dupe` field, this is still tracked",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "dupe"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "DupeEvent",
+          "declaration": {
+            "name": "DupeEvent",
+            "module": "src/class-fields-multiple.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "class-fields-duplicate",
+          "declaration": {
+            "name": "ClassFieldsMultiple",
+            "module": "src/class-fields-multiple.js"
+          }
+        }
+      ]
+    }
+  ]
+}

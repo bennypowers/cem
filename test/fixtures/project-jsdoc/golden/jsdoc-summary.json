@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-summary.js",
+      "declarations": [
+        {
+          "name": "JsdocSummary",
+          "summary": "summary",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-summary",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-summary",
+          "declaration": {
+            "name": "JsdocSummary",
+            "module": "src/jsdoc-summary.js"
+          }
+        }
+      ]
+    }
+  ]
+}

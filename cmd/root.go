@@ -20,13 +20,14 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"path"
 
+	"bennypowers.dev/cem/cmd/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var cfgFile string
+var CemConfig config.CemConfig
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -46,25 +47,16 @@ func Execute() {
 	}
 }
 
-func init() {
-	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $CWD/.config/cem/cem.yaml)")
-}
-
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// Find cwd directory.
-		cwd, err := os.Getwd()
-		cobra.CheckErr(err)
-
-		// Search config in home directory with name ".cem" (without extension).
-		viper.AddConfigPath(path.Join(cwd, ".config"))
+		// Search config in local project .config directory with name "cem.yaml"
+		viper.AddConfigPath("./.config")
 		viper.SetConfigType("yaml")
-		viper.SetConfigName(".cem")
+		viper.SetConfigName("cem.yaml")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
@@ -73,4 +65,14 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
+	// Bind to struct
+	if err := viper.Unmarshal(&CemConfig); err != nil {
+		fmt.Fprintln(os.Stderr, "Unable to decode into CemConfig struct:", err)
+	}
 }
+
+func init() {
+	cobra.OnInitialize(initConfig)
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $CWD/.config/cem.yaml)")
+}
+

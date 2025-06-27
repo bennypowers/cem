@@ -9,11 +9,13 @@ import (
 	"gopkg.in/yaml.v3"
 
 	M "bennypowers.dev/cem/manifest"
+	Q "bennypowers.dev/cem/generate/queries"
+
 	A "github.com/IBM/fp-go/array"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
-func (mp *ModuleProcessor) generateClassDeclaration(captures CaptureMap) (declaration M.Declaration, errs error) {
+func (mp *ModuleProcessor) generateClassDeclaration(captures Q.CaptureMap) (declaration M.Declaration, alias string, errs error) {
 	_, hasCustomElementDecorator := captures["customElement"]
 	isHTMLElement := false
 	superClassNameNodes, hasSuperClass := captures["superclass.name"]
@@ -24,7 +26,7 @@ func (mp *ModuleProcessor) generateClassDeclaration(captures CaptureMap) (declar
 	classDeclarationCaptures, hasClassDeclaration := captures["class.declaration"]
 	if (hasClassDeclaration && len(classDeclarationCaptures) > 0) {
 		classDeclarationNodeId := classDeclarationCaptures[0].NodeId
-		classDeclarationNode := GetDescendantById(mp.root, classDeclarationNodeId)
+		classDeclarationNode := Q.GetDescendantById(mp.root, classDeclarationNodeId)
 		if isHTMLElement {
 			return mp.generateHTMLElementClassDeclaration(captures, classDeclarationNode)
 		} else if isCustomElement {
@@ -33,17 +35,17 @@ func (mp *ModuleProcessor) generateClassDeclaration(captures CaptureMap) (declar
 			return mp.generateCommonClassDeclaration(captures, classDeclarationNode, isCustomElement)
 		}
 	}
-	return nil, errors.Join(errs, errors.New("Could not find class declaration"))
+	return nil, "", errors.Join(errs, errors.New("Could not find class declaration"))
 }
 
 func (mp *ModuleProcessor) generateCommonClassDeclaration(
-	captures CaptureMap,
+	captures Q.CaptureMap,
 	classDeclarationNode *ts.Node,
 	isCustomElement bool,
-) (declaration *M.ClassDeclaration, errs error) {
+) (declaration *M.ClassDeclaration, emptyAlias string, errs error) {
 	className, ok := captures["class.name"]
 	if (!ok || len(className) <= 0) {
-		return nil, errors.Join(errs, &NoCaptureError{ "class.name", "classDeclaration" })
+		return nil, emptyAlias, errors.Join(errs, &Q.NoCaptureError{ Capture: "class.name", Query: "classDeclaration" })
 	}
 
 	declaration = &M.ClassDeclaration{
@@ -79,8 +81,11 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 		declaration.Superclass = M.NewReference(superclassName, pkg, module)
 	}
 
-	members, err :=
-		mp.getClassMembersFromClassDeclarationNode(declaration.ClassLike.Name, classDeclarationNode, superclassName)
+	members, err := mp.getClassMembersFromClassDeclarationNode(
+		declaration.ClassLike.Name,
+		classDeclarationNode,
+		superclassName,
+	)
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
@@ -99,14 +104,14 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 		}
 	}
 
-	return declaration, nil
+	return declaration, emptyAlias, nil
 }
 
 func (mp *ModuleProcessor) generateHTMLElementClassDeclaration(
-	captures CaptureMap,
+	captures Q.CaptureMap,
 	classDeclarationNode *ts.Node,
-) (declaration *M.CustomElementDeclaration, errs error) {
-	classDeclaration, err := mp.generateCommonClassDeclaration(captures, classDeclarationNode, true)
+) (declaration *M.CustomElementDeclaration, alias string, errs error) {
+	classDeclaration, _, err := mp.generateCommonClassDeclaration(captures, classDeclarationNode, true)
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
@@ -132,6 +137,7 @@ func (mp *ModuleProcessor) generateHTMLElementClassDeclaration(
 			mp.errors = errors.Join(mp.errors, err)
 		} else {
 			info.MergeToCustomElementDeclaration(declaration)
+			alias = info.Alias
 		}
 	}
 
@@ -139,16 +145,14 @@ func (mp *ModuleProcessor) generateHTMLElementClassDeclaration(
 		return int(a.StartByte - b.StartByte)
 	})
 
-	return declaration, errs
+	return declaration, alias, errs
 }
 
-
-
 func (mp *ModuleProcessor) generateLitElementClassDeclaration(
-	captures CaptureMap,
+	captures Q.CaptureMap,
 	classDeclarationNode *ts.Node,
-) (declaration *M.CustomElementDeclaration, errs error) {
-	classDeclaration, err := mp.generateCommonClassDeclaration(captures, classDeclarationNode, true)
+) (declaration *M.CustomElementDeclaration, alias string, errs error) {
+	classDeclaration, _, err := mp.generateCommonClassDeclaration(captures, classDeclarationNode, true)
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
@@ -167,7 +171,7 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 			declaration.CustomElement.TagName = tagName
 		}
 	} else {
-		errs = errors.Join(errs, &NoCaptureError{ "tag-name", "customElementDeclaration"  })
+		errs = errors.Join(errs, &Q.NoCaptureError{ Capture: "tag-name", Query: "customElementDeclaration"  })
 	}
 
 	declaration.CustomElement.Attributes = A.Chain(func(member M.ClassMember) []M.Attribute {
@@ -191,7 +195,7 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 	renderTemplateNodes, hasRenderTemplate := captures["render.template"]
 	if hasRenderTemplate {
 		renderTemplateNodeId := renderTemplateNodes[0].NodeId
-		renderTemplateNode := GetDescendantById(mp.root, renderTemplateNodeId)
+		renderTemplateNode := Q.GetDescendantById(mp.root, renderTemplateNodeId)
 		if renderTemplateNode != nil {
 			htmlSource := renderTemplateNode.Utf8Text(mp.code)
 			if htmlSource != "" {
@@ -213,6 +217,7 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 			errs = errors.Join(errs, err)
 		} else {
 			classInfo.MergeToCustomElementDeclaration(declaration)
+			alias = classInfo.Alias
 		}
 	}
 
@@ -220,26 +225,26 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 		return int(a.StartByte - b.StartByte)
 	})
 
-	return declaration, errs
+	return declaration, alias, errs
 }
 
 // --- Helper: Analyze HTML for slots/parts using tree-sitter-html and project QueryManager ---
-func analyzeHtmlSlotsAndParts(queryManager *QueryManager, htmlSource string) (slots []M.Slot, parts []M.CssPart, errs error) {
+func analyzeHtmlSlotsAndParts(queryManager *Q.QueryManager, htmlSource string) (slots []M.Slot, parts []M.CssPart, errs error) {
 	parser := ts.NewParser()
 	defer parser.Close()
-	parser.SetLanguage(Languages.html)
+	parser.SetLanguage(Q.Languages.Html)
 	tree := parser.Parse([]byte(htmlSource), nil)
 	defer tree.Close()
 	root := tree.RootNode()
 	text := []byte(htmlSource)
 
-	matcher, qmErr := NewQueryMatcher(queryManager, "html", "slotsAndParts")
+	matcher, qmErr := Q.NewQueryMatcher(queryManager, "html", "slotsAndParts")
 	if qmErr != nil {
 		return nil, nil, qmErr
 	}
 	defer matcher.Close()
 
-	handleParts := func(captureMap CaptureMap, kind string) {
+	handleParts := func(captureMap Q.CaptureMap, kind string) {
 		if pn, ok := captureMap["part.name"]; ok && len(pn) > 0 {
 			partsList := strings.Fields(pn[0].Text)
 			for _, partName := range partsList {

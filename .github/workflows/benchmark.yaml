@@ -26,12 +26,20 @@ jobs:
         run: go install github.com/mfridman/tparse@latest
 
       - name: Run benchmarks on PR
+        id: bench-pr
         run: |
+          mkdir -p docs/site
+          start=$(date +%s.%N)
           if ! make bench > pr_bench.txt 2>&1; then
             cat pr_bench.txt
             echo "::error::Benchmarking (make bench) failed on PR branch"
             exit 1
           fi
+          cat pr_bench.txt
+          end=$(date +%s.%N)
+          awk "BEGIN {print $end - $start}" > pr_bench_time.txt
+          # Copy output JSON so it doesn't get overwritten
+          cp docs/site/benchmark-last-output.json pr_bench.json
 
       - name: Checkout target branch (base)
         run: |
@@ -39,33 +47,25 @@ jobs:
           git checkout ${{ github.base_ref }}
 
       - name: Run benchmarks on base branch
+        id: bench-base
         run: |
+          start=$(date +%s.%N)
           if ! make bench > base_bench.txt 2>&1; then
             cat base_bench.txt
-            echo "::error::Benchmarking (make bench) failed on PR branch"
+            echo "::error::Benchmarking (make bench) failed on base branch"
             exit 1
           fi
+          end=$(date +%s.%N)
+          awk "BEGIN {print $end - $start}" > base_bench_time.txt
+          cp docs/site/benchmark-last-output.json base_bench.json
+
+      - name: Checkout PR branch (base)
+        run: |
+          git fetch origin ${{ github.head_ref }} --depth=1
+          git checkout ${{ github.head_ref }}
 
       - name: Compare benchmark results
-        id: diff
-        run: |
-          echo "# Benchmark results (base branch):" > bench_report.md
-          echo '```' >> bench_report.md
-          echo >> bench_report.md
-          cat base_bench.txt >> bench_report.md
-          echo >> bench_report.md
-          echo '```' >> bench_report.md
-          echo >> bench_report.md
-          echo "# Benchmark results (PR branch):" >> bench_report.md
-          echo '```' >> bench_report.md
-          echo >> bench_report.md
-          cat pr_bench.txt >> bench_report.md
-          echo >> bench_report.md
-          echo '```' >> bench_report.md
-          echo >> bench_report.md
-          echo "# Benchmark diff:" >> bench_report.md
-          go install github.com/cespare/prettybench@latest
-          prettybench base_bench.txt pr_bench.txt >> bench_report.md || echo "prettybench failed or no diff"
+        run: scripts/compare-benchmarks.sh
 
       - name: Find previous benchmark comment
         id: find-comment
@@ -73,7 +73,7 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: "github-actions[bot]"
-          body-includes: "# Benchmark results (base branch):"
+          body-includes: "### Benchmark Summary"
 
       - name: Create or update sticky benchmark comment
         uses: peter-evans/create-or-update-comment@v4
@@ -82,3 +82,15 @@ jobs:
           body-file: bench_report.md
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           edit-mode: replace
+
+      - name: Upload benchmark artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-artifacts
+          path: |
+            pr_bench.txt
+            base_bench.txt
+            pr_bench_time.txt
+            base_bench_time.txt
+            pr_bench.json
+            base_bench.json
