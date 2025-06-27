@@ -1,6 +1,7 @@
 package generate
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -49,9 +50,14 @@ func BenchmarkGenerate(b *testing.B) {
 		lastOut = *out
 	}
 
+	fmt.Println(os.Getwd())
 	err = os.WriteFile("../docs/site/benchmark-last-output.json", []byte(lastOut), 0644)
-
 	if err != nil {
 		b.Errorf("Could not write output: %v", err)
 	}
+	file, err := os.ReadFile("../docs/site/benchmark-last-output.json")
+	if err != nil {
+		b.Errorf("output not read: %v", err)
+	}
+	fmt.Println(file)
 }
