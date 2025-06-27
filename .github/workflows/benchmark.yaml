@@ -28,6 +28,7 @@ jobs:
       - name: Run benchmarks on PR
         id: bench-pr
         run: |
+          mkdir -p docs/site
           start=$(date +%s.%N)
           if ! make bench > pr_bench.txt 2>&1; then
             cat pr_bench.txt
