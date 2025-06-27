@@ -29,13 +29,17 @@ func init() {
 		Use:   "generate [files or glob patterns]",
 		Short: "Generates a custom elements manifest",
 		Args: func(cmd *cobra.Command, args []string) error {
-				if len(args) < 1 {
-					return errors.New("requires at least one file argument")
-				}
+			// If we have args (i.e. files), that's fine
+			// Or if no args, but files are configured, allow
+			if len(args) > 0 || (len(args) == 0 && len(CemConfig.Generate.Files) > 0) {
 				return nil
-			},
+			}
+			// Otherwise, error
+			return errors.New("requires at least one file argument or a configured `generate.files` list")
+		},
 		Run: func(cmd *cobra.Command, args []string) {
-			CemConfig.Generate.Files = expand(args)
+			CemConfig.Generate.Files = append(CemConfig.Generate.Files, args...)
+			CemConfig.Generate.Files = expand(CemConfig.Generate.Files)
 			CemConfig.Generate.Exclude = expand(CemConfig.Generate.Exclude)
 			manifest, err := G.Generate(&CemConfig)
 			if err != nil {
