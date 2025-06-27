@@ -49,5 +49,9 @@ func BenchmarkGenerate(b *testing.B) {
 		lastOut = *out
 	}
 
-	os.WriteFile("../docs/site/benchmark-last-output.json", []byte(lastOut), 0644)
+	err = os.WriteFile("../docs/site/benchmark-last-output.json", []byte(lastOut), 0644)
+
+	if err != nil {
+		b.Errorf("Could not write output: %v", err)
+	}
 }
