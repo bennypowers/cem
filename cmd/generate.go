@@ -6,22 +6,24 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 
 	G "bennypowers.dev/cem/generate"
-	A "github.com/IBM/fp-go/array"
 	DS "github.com/bmatcuk/doublestar"
 	"github.com/spf13/cobra"
 )
 
-var expand = A.Chain(func (g string) []string {
-	paths, err := DS.Glob(g)
-	if err != nil {
-		log.Fatal(err)
+func expand(globs []string) (files []string, errs error) {
+	for _, pattern := range globs {
+		matches, err := DS.Glob(pattern)
+		if err != nil {
+			errs = errors.Join(errs, err)
+			continue
+		}
+		files = append(files, matches...)
 	}
-	return paths
-})
+	return files, errs
+}
 
 func init() {
 	// generateCmd represents the generate command
@@ -37,20 +39,33 @@ func init() {
 			// Otherwise, error
 			return errors.New("requires at least one file argument or a configured `generate.files` list")
 		},
-		Run: func(cmd *cobra.Command, args []string) {
-			CemConfig.Generate.Files = append(CemConfig.Generate.Files, args...)
-			CemConfig.Generate.Files = expand(CemConfig.Generate.Files)
-			CemConfig.Generate.Exclude = expand(CemConfig.Generate.Exclude)
+		RunE: func(cmd *cobra.Command, args []string) (errs error) {
+			var err error
+			CemConfig.Generate.Files, err = expand(append(CemConfig.Generate.Files, args...))
+			if err != nil {
+				errs = errors.Join(errs, err)
+			}
+			CemConfig.Generate.Exclude, err = expand(CemConfig.Generate.Exclude)
+			if err != nil {
+				errs = errors.Join(errs, err)
+			}
 			manifest, err := G.Generate(&CemConfig)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error generating manifest: %s", err)
+				errs = errors.Join(errs, err)
+			}
+			if manifest == nil {
+				return errors.Join(errs, errors.New("manifest generation returned nil"))
 			}
 			if CemConfig.Generate.Output != "" {
-				os.WriteFile(CemConfig.Generate.Output, []byte(*manifest), 0666)
-				fmt.Println("\nWrote manifest to", CemConfig.Generate.Output)
+				if err = os.WriteFile(CemConfig.Generate.Output, []byte(*manifest + "\n"), 0666); err != nil {
+					errs = errors.Join(errs, err)
+				} else {
+					fmt.Println("\nWrote manifest to", CemConfig.Generate.Output)
+				}
 			} else {
 				fmt.Println(*manifest)
 			}
+			return errs
 		},
 	}
 

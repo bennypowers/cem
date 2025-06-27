@@ -45,7 +45,7 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 ) (declaration *M.ClassDeclaration, emptyAlias string, errs error) {
 	className, ok := captures["class.name"]
 	if (!ok || len(className) <= 0) {
-		return nil, emptyAlias, errors.Join(errs, &Q.NoCaptureError{ Capture: "class.name", Query: "classDeclaration" })
+		return nil, emptyAlias, errors.Join(errs, &Q.NoCaptureError{ Capture: "class.name", Query: "declarations" })
 	}
 
 	declaration = &M.ClassDeclaration{
