@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-slot.js",
+      "declarations": [
+        {
+          "name": "JsdocSlot",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-slot",
+          "slots": [
+            {
+              "name": "",
+              "description": "anon description"
+            },
+            {
+              "name": "slot",
+              "description": "slot"
+            },
+            {
+              "name": "slot-description",
+              "description": "slot description"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-slot",
+          "declaration": {
+            "name": "JsdocSlot",
+            "module": "src/jsdoc-slot.js"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-deprecated-flag.js",
+      "declarations": [
+        {
+          "name": "JsdocDeprecatedFlag",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "deprecated": true,
+          "kind": "class",
+          "tagName": "jsdoc-deprecated-flag",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-deprecated-flag",
+          "declaration": {
+            "name": "JsdocDeprecatedFlag",
+            "module": "src/jsdoc-deprecated-flag.js"
+          }
+        }
+      ]
+    }
+  ]
+}

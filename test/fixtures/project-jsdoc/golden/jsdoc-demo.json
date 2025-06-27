@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-demo.js",
+      "declarations": [
+        {
+          "name": "JsdocDemo",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-demo",
+          "demos": [
+            {
+              "url": "https://example.com/jsdoc-alias"
+            },
+            {
+              "description": "markdown description",
+              "url": "https://example.com/jsdoc-alias-description"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-demo",
+          "declaration": {
+            "name": "JsdocDemo",
+            "module": "src/jsdoc-demo.js"
+          }
+        }
+      ]
+    }
+  ]
+}

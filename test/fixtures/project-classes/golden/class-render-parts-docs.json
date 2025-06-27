@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-render-parts-docs.js",
+      "declarations": [
+        {
+          "name": "ClassRenderPartsDocs",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "class-render-parts-docs",
+          "cssParts": [
+            {
+              "name": "part",
+              "summary": "part summary",
+              "description": "part description\n\nmultiline **markdown**"
+            },
+            {
+              "name": "summary",
+              "summary": "summary part summary"
+            },
+            {
+              "name": "deprecated",
+              "deprecated": true
+            },
+            {
+              "name": "reason",
+              "deprecated": "deprecation reason"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-render-parts-docs",
+          "declaration": {
+            "name": "ClassRenderPartsDocs",
+            "module": "src/class-render-parts-docs.js"
+          }
+        }
+      ]
+    }
+  ]
+}

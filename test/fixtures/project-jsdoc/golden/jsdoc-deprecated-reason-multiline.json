@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-deprecated-reason-multiline.js",
+      "declarations": [
+        {
+          "name": "JsdocDeprecatedReasonMultiline",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "deprecated": "multiline\ndeprecation reason",
+          "kind": "class",
+          "tagName": "jsdoc-deprecated-reason-multiline",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-deprecated-reason-multiline",
+          "declaration": {
+            "name": "JsdocDeprecatedReasonMultiline",
+            "module": "src/jsdoc-deprecated-reason-multiline.js"
+          }
+        }
+      ]
+    }
+  ]
+}

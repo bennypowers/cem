@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-description-multiline.js",
+      "declarations": [
+        {
+          "name": "JsdocDescriptionMultiline",
+          "description": "multiline\ndescription",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-description-multiline",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-description-multiline",
+          "declaration": {
+            "name": "JsdocDescriptionMultiline",
+            "module": "src/jsdoc-description-multiline.js"
+          }
+        }
+      ]
+    }
+  ]
+}

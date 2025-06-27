@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-description.js",
+      "declarations": [
+        {
+          "name": "JsdocDescription",
+          "description": "description",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-description",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-description",
+          "declaration": {
+            "name": "JsdocDescription",
+            "module": "src/jsdoc-description.js"
+          }
+        }
+      ]
+    }
+  ]
+}

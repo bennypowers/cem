@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-render-slot-parts.js",
+      "declarations": [
+        {
+          "name": "ClassRenderSlotParts",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "class-render-slot-parts",
+          "slots": [
+            {
+              "name": "slot-with-part",
+              "summary": "slot summary"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "part-with-slot",
+              "summary": "part summary"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-render-slot-parts",
+          "declaration": {
+            "name": "ClassRenderSlotParts",
+            "module": "src/class-render-slot-parts.js"
+          }
+        }
+      ]
+    }
+  ]
+}

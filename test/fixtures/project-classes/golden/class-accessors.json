@@ -1,0 +1,155 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-accessors.js",
+      "declarations": [
+        {
+          "name": "ClassAccessors",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "getter",
+              "type": {
+                "text": "string"
+              },
+              "readonly": true,
+              "kind": "field"
+            },
+            {
+              "name": "getterDescribed",
+              "description": "getter description",
+              "type": {
+                "text": "string"
+              },
+              "readonly": true,
+              "kind": "field",
+              "attribute": "property-pair-described",
+              "reflects": true
+            },
+            {
+              "name": "getterSummarized",
+              "summary": "getter summary",
+              "type": {
+                "text": "string"
+              },
+              "readonly": true,
+              "kind": "field",
+              "attribute": "property-pair-described",
+              "reflects": true
+            },
+            {
+              "name": "pairDescribed",
+              "description": "pair with description",
+              "type": {
+                "text": "string"
+              },
+              "readonly": true,
+              "kind": "field",
+              "attribute": "property-pair-described",
+              "reflects": true
+            },
+            {
+              "name": "pairSummarized",
+              "summary": "pair with summary",
+              "type": {
+                "text": "string"
+              },
+              "readonly": true,
+              "kind": "field",
+              "attribute": "property-pair-described",
+              "reflects": true
+            },
+            {
+              "name": "propertyPairDescribed",
+              "type": {
+                "text": "string"
+              },
+              "readonly": true,
+              "kind": "field",
+              "attribute": "property-pair-described",
+              "reflects": true
+            },
+            {
+              "name": "propertyPairSummarized",
+              "summary": "property pair with summary",
+              "type": {
+                "text": "string"
+              },
+              "readonly": true,
+              "kind": "field",
+              "attribute": "propertypairsummarized",
+              "reflects": true
+            }
+          ],
+          "kind": "class",
+          "tagName": "class-accessors",
+          "attributes": [
+            {
+              "name": "property-pair-described",
+              "description": "getter description",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "getterDescribed"
+            },
+            {
+              "name": "property-pair-described",
+              "summary": "getter summary",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "getterSummarized"
+            },
+            {
+              "name": "property-pair-described",
+              "description": "pair with description",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "pairDescribed"
+            },
+            {
+              "name": "property-pair-described",
+              "summary": "pair with summary",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "pairSummarized"
+            },
+            {
+              "name": "property-pair-described",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "propertyPairDescribed"
+            },
+            {
+              "name": "propertypairsummarized",
+              "summary": "property pair with summary",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "propertyPairSummarized"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-accessors",
+          "declaration": {
+            "name": "ClassAccessors",
+            "module": "src/class-accessors.js"
+          }
+        }
+      ]
+    }
+  ]
+}

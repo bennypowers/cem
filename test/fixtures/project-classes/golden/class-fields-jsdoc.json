@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-fields-jsdoc.js",
+      "declarations": [
+        {
+          "name": "ClassFieldsJsdoc",
+          "members": [
+            {
+              "name": "description",
+              "description": "string description",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "summary",
+              "summary": "summary",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "type",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "initialized",
+              "summary": "initialized summary",
+              "description": "initialized description",
+              "type": {
+                "text": "Foo"
+              },
+              "default": "'string'",
+              "kind": "field"
+            }
+          ],
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "ClassFieldsJsdoc",
+          "declaration": {
+            "name": "ClassFieldsJsdoc",
+            "module": "src/class-fields-jsdoc.js"
+          }
+        }
+      ]
+    }
+  ]
+}

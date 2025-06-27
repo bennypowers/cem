@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/demo-subset.js",
+      "declarations": [
+        {
+          "name": "DemoSubsetOne",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "demo-subset-one",
+          "customElement": true
+        },
+        {
+          "name": "DemoSubsetTwo",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "demo-subset-two",
+          "customElement": true
+        },
+        {
+          "name": "DemoSubsetThree",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "demo-subset-three",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-subset-one",
+          "declaration": {
+            "name": "DemoSubsetOne",
+            "module": "src/demo-subset.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-subset-two",
+          "declaration": {
+            "name": "DemoSubsetTwo",
+            "module": "src/demo-subset.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-subset-three",
+          "declaration": {
+            "name": "DemoSubsetThree",
+            "module": "src/demo-subset.js"
+          }
+        }
+      ]
+    }
+  ]
+}

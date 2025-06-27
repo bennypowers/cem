@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/export-class.js",
+      "declarations": [
+        {
+          "name": "Simple",
+          "kind": "class"
+        },
+        {
+          "name": "Subclass",
+          "superclass": {
+            "name": "Simple"
+          },
+          "kind": "class"
+        },
+        {
+          "name": "Decorated",
+          "superclass": {
+            "name": "Simple"
+          },
+          "kind": "class"
+        },
+        {
+          "name": "Foo",
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "Simple",
+          "declaration": {
+            "name": "Simple",
+            "module": "src/export-class.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "Subclass",
+          "declaration": {
+            "name": "Subclass",
+            "module": "src/export-class.js"
+          }
+        }
+      ]
+    }
+  ]
+}
