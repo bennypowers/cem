@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "test-fixtures/demo-subset.js",
+      "declarations": [
+        {
+          "name": "DemoSubsetOne",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "demo-subset-one",
+          "demos": [
+            {
+              "url": "https://bennypowers.dev/cem-demos/demo-subset/demo-subset/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/test-fixtures/demos/demo-subset.html"
+              }
+            }
+          ],
+          "customElement": true
+        },
+        {
+          "name": "DemoSubsetTwo",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "demo-subset-two",
+          "demos": [
+            {
+              "url": "https://bennypowers.dev/cem-demos/demo-subset/demo-subset/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/test-fixtures/demos/demo-subset.html"
+              }
+            }
+          ],
+          "customElement": true
+        },
+        {
+          "name": "DemoSubsetThree",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "demo-subset-three",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-subset-one",
+          "declaration": {
+            "name": "DemoSubsetOne",
+            "module": "test-fixtures/demo-subset.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-subset-two",
+          "declaration": {
+            "name": "DemoSubsetTwo",
+            "module": "test-fixtures/demo-subset.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-subset-three",
+          "declaration": {
+            "name": "DemoSubsetThree",
+            "module": "test-fixtures/demo-subset.js"
+          }
+        }
+      ]
+    }
+  ]
+}

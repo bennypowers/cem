@@ -1,3 +1,2 @@
 @customElement('demo-discovery')
-class DemoDiscovery extends LitElement {
-}
+class DemoDiscovery extends LitElement {}
