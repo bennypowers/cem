@@ -35,6 +35,7 @@ jobs:
             echo "::error::Benchmarking (make bench) failed on PR branch"
             exit 1
           fi
+          cat pr_bench.txt
           end=$(date +%s.%N)
           awk "BEGIN {print $end - $start}" > pr_bench_time.txt
           # Copy output JSON so it doesn't get overwritten
