@@ -12,12 +12,13 @@ import (
 	"sync"
 
 	C "bennypowers.dev/cem/cmd/config"
-	DD "bennypowers.dev/cem/generate/demodiscovery"
 	DT "bennypowers.dev/cem/designtokens"
-	M "bennypowers.dev/cem/manifest"
+	DD "bennypowers.dev/cem/generate/demodiscovery"
 	Q "bennypowers.dev/cem/generate/queries"
+	M "bennypowers.dev/cem/manifest"
 
 	DS "github.com/bmatcuk/doublestar"
+	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
 var defaultExcludePatterns = []string{
@@ -101,7 +102,9 @@ func process(
 					continue
 				}
 
-				mp := NewModuleProcessor(file, code, qm)
+				parser := ts.NewParser()
+				parser.SetLanguage(Q.Languages.Typescript)
+				mp := NewModuleProcessor(file, code, parser, qm)
 				module, tagAliases, err := mp.Collect()
 				mp.Close()
 
@@ -181,10 +184,10 @@ func postprocess(
 // Generates a custom-elements manifest from a list of typescript files
 func Generate(cfg *C.CemConfig) (manifest *string, errs error) {
 	qm, err := Q.NewQueryManager()
-	defer qm.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer qm.Close()
 	result, err := preprocess(cfg)
 	if err != nil {
 		errs = errors.Join(errs, err)

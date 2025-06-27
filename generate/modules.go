@@ -82,9 +82,7 @@ type ModuleProcessor struct {
 	errors error
 }
 
-func NewModuleProcessor(file string, code []byte, queryManager *Q.QueryManager) ModuleProcessor {
-	parser := ts.NewParser()
-	parser.SetLanguage(Q.Languages.Typescript)
+func NewModuleProcessor(file string, code []byte, parser *ts.Parser, queryManager *Q.QueryManager) ModuleProcessor {
 	tree := parser.Parse(code, nil)
 	root := tree.RootNode()
 	module := M.NewModule(file)
@@ -109,8 +107,8 @@ func NewModuleProcessor(file string, code []byte, queryManager *Q.QueryManager) 
 }
 
 func (mp *ModuleProcessor) Close() {
-  mp.parser.Close()
 	mp.tree.Close()
+	mp.parser.Close()
 }
 
 func (mp *ModuleProcessor) Collect() (module *M.Module, tagAliases map[string]string, errors error) {
@@ -119,11 +117,11 @@ func (mp *ModuleProcessor) Collect() (module *M.Module, tagAliases map[string]st
 
 func (mp *ModuleProcessor) processImports() {
 	qm, err := Q.NewQueryMatcher(mp.queryManager, "typescript", "imports")
-	defer qm.Close()
 	if err != nil {
 		mp.errors = errors.Join(mp.errors, err)
 		return
 	}
+	defer qm.Close()
 
 	for sImport := range qm.ParentCaptures(mp.root, mp.code, "styleImport.spec") {
 		mp.styleImportsBindingToSpecMap[sImport["styleImport.binding"][0].Text] = sImport["styleImport.spec"][0].Text
@@ -139,11 +137,11 @@ func (mp *ModuleProcessor) processImports() {
 
 func (mp *ModuleProcessor) processClasses() {
 	qm, err := Q.NewQueryMatcher(mp.queryManager, "typescript", "classes")
-	defer qm.Close()
 	if err != nil {
 		mp.errors = errors.Join(mp.errors, err)
 		return
 	}
+	defer qm.Close()
 
 	// class declarations
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "class") {
@@ -234,11 +232,11 @@ func (mp *ModuleProcessor) processClasses() {
 
 func (mp *ModuleProcessor) processDeclarations() {
 	qm, err := Q.NewQueryMatcher(mp.queryManager, "typescript", "declarations")
-	defer qm.Close()
 	if err != nil {
 		mp.errors = errors.Join(mp.errors, err)
 		return
 	}
+	defer qm.Close()
 
 	// variable declarations
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "variable") {
