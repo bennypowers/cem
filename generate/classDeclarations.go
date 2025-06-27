@@ -45,7 +45,7 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 ) (declaration *M.ClassDeclaration, emptyAlias string, errs error) {
 	className, ok := captures["class.name"]
 	if (!ok || len(className) <= 0) {
-		return nil, emptyAlias, errors.Join(errs, &Q.NoCaptureError{ Capture: "class.name", Query: "declarations" })
+		return nil, emptyAlias, errors.Join(errs, &Q.NoCaptureError{ Capture: "class.name", Query: "classes" })
 	}
 
 	declaration = &M.ClassDeclaration{
@@ -171,7 +171,7 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 			declaration.CustomElement.TagName = tagName
 		}
 	} else {
-		errs = errors.Join(errs, &Q.NoCaptureError{ Capture: "tag-name", Query: "customElementDeclaration"  })
+		errs = errors.Join(errs, &Q.NoCaptureError{ Capture: "tag-name", Query: "classes"  })
 	}
 
 	declaration.CustomElement.Attributes = A.Chain(func(member M.ClassMember) []M.Attribute {
