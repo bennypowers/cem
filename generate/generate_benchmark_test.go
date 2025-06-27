@@ -1,8 +1,10 @@
 package generate
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
+
 	C "bennypowers.dev/cem/cmd/config"
 )
 
@@ -16,6 +18,8 @@ func BenchmarkGenerate(b *testing.B) {
 	if len(matches) == 0 {
 		b.Skip("No test fixtures found")
 	}
+
+	var lastOut string
 
 	for b.Loop() {
 		// Run the Generate function, measuring its speed.
@@ -34,9 +38,12 @@ func BenchmarkGenerate(b *testing.B) {
 				},
 			},
 		}
-		_, err := Generate(&cfg)
+		out, err := Generate(&cfg)
 		if err != nil {
 			b.Errorf("Generate returned error: %v", err)
 		}
+		lastOut = *out
 	}
+
+	os.WriteFile("../docs/site/benchmark-last-output.json", []byte(lastOut), 0644)
 }
