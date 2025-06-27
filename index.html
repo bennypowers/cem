@@ -78,10 +78,23 @@ rich metadata for your custom elements, facilitating documentation, tooling, and
 integration.</p>
 <blockquote>
 <p>[!NOTE]
-<code>cem</code> currently supports LitElements written in idiomatic style with
-TypeScript decorators. If you need something more specific,
-<a href="https://github.com/bennypowers/cem/issues/new">open an issue</a>.</p>
+<code>cem</code> best supports LitElements written in idiomatic style with
+TypeScript decorators. There is rudimentary support for <code>extends HTMLElement</code>,
+but it is not a high priority for development. If you need something more
+specific <a href="https://github.com/bennypowers/cem/issues/new">open an issue</a>.</p>
 </blockquote>
+<h2>Installation</h2>
+<p>For go binaries:</p>
+<pre class="language-sh"><code class="language-sh">go <span class="token function">install</span> bennypowers.dev/cem@latest
+</code></pre>
+<p>For NPM projects:</p>
+<pre class="language-sh"><code class="language-sh"><span class="token function">npm</span> <span class="token function">install</span> --save-dev @pwrs/cem
+</code></pre>
+<p>Or clone this repository and build from source:</p>
+<pre class="language-sh"><code class="language-sh"><span class="token function">git</span> clone https://github.com/bennypowers/cem.git
+<span class="token builtin class-name">cd</span> cem
+<span class="token function">make</span>
+</code></pre>
 <h2>Features</h2>
 <h3><code>cem generate</code></h3>
 <ul>
@@ -93,17 +106,19 @@ TypeScript decorators. If you need something more specific,
 </ul>
 <h4>JSDoc</h4>
 <p>Use JSDoc comments to add metadata to your element classes, similar to other
-tools.</p>
+tools. Add a description by separating the name of the item with <code>-</code></p>
 <ul>
 <li><code>@attr</code> / <code>@attribute</code> — Custom element attributes</li>
 <li><code>@csspart</code> — CSS shadow parts</li>
 <li><code>@cssprop</code> / <code>@cssproperty</code> — Custom CSS properties</li>
 <li><code>@cssstate</code> — Custom CSS states</li>
+<li><code>@demo</code> — Demo URL</li>
 <li><code>@deprecated</code> — Marks a feature or member as deprecated</li>
 <li><code>@event</code> — Custom events dispatched by the element</li>
 <li><code>@slot</code> — Named or default slots</li>
 <li><code>@summary</code> — Short summary for documentation</li>
 </ul>
+<p>See the <a href="tree/main/generate/test-fixtures/">test-fixtures</a> directory for examples</p>
 <h4>HTML Template Analysis for Slots and Parts</h4>
 <ul>
 <li><strong>Automatically detects <code>&lt;slot&gt;</code> elements and <code>part</code> attributes in your element’s
@@ -161,18 +176,88 @@ variables</li>
     <span class="token function">var</span><span class="token punctuation">(</span>--border-color<span class="token punctuation">)</span><span class="token punctuation">;</span>
 <span class="token punctuation">}</span>
 </code></pre>
-<h2>Installation</h2>
-<p>For go binaries:</p>
-<pre class="language-sh"><code class="language-sh">go <span class="token function">install</span> bennypowers.dev/cem@latest
+<hr>
+<h2>Element Demos</h2>
+<p><code>cem generate</code> supports documenting your elements' demos by linking directly
+from JSDoc, or by configurable file-system based discovery.</p>
+<h3>1. JSDoc <code>@demo</code> Tag</h3>
+<p>Add demos directly to your element class or members with the <code>@demo</code> tag:</p>
+<pre class="language-ts"><code class="language-ts"><span class="token comment">/**
+ * @demo https://example.com/my-element-plain/
+ * @demo https://example.com/my-element-fancy/ - A fancier demo with description
+ */</span>
+<span class="token decorator"><span class="token at operator">@</span><span class="token function">customElement</span></span><span class="token punctuation">(</span><span class="token string">'my-element'</span><span class="token punctuation">)</span>
+<span class="token keyword">class</span> <span class="token class-name">MyElement</span> <span class="token keyword">extends</span> <span class="token class-name">LitElement</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...</span>
+<span class="token punctuation">}</span>
 </code></pre>
-<p>For NPM projects:</p>
-<pre class="language-sh"><code class="language-sh"><span class="token function">npm</span> <span class="token function">install</span> --save-dev @pwrs/cem
+<p>Demos defined this way will always appear in your manifest for the element.</p>
+<h3>2. Demo Discovery</h3>
+<p><code>cem</code> can automatically discover demos from your codebase based on your
+repository structure and configuration.</p>
+<h4>Demo Discovery Options</h4>
+<p>Configure demo discovery with the <code>demoDiscovery</code> key in your <code>.config/cem.yaml</code> file</p>
+<pre class="language-yaml"><code class="language-yaml"><span class="token key atrule">sourceControlRootUrl</span><span class="token punctuation">:</span> <span class="token string">"https://github.com/your/repo/tree/main/"</span>
+<span class="token key atrule">generate</span><span class="token punctuation">:</span>
+  <span class="token key atrule">demoDiscovery</span><span class="token punctuation">:</span>
+    <span class="token key atrule">fileGlob</span><span class="token punctuation">:</span> <span class="token string">"demos/**/*.html"</span>
+    <span class="token key atrule">urlPattern</span><span class="token punctuation">:</span> <span class="token string">"demos/(?P&lt;tag>[\w-]+)/(?P&lt;demo>[\w-]+).html"</span>
+    <span class="token key atrule">urlTemplate</span><span class="token punctuation">:</span> <span class="token string">"https://example.com/elements/{tag}/{demo}/"</span>
 </code></pre>
-<p>Or clone this repository and build from source:</p>
-<pre class="language-sh"><code class="language-sh"><span class="token function">git</span> clone https://github.com/bennypowers/cem.git
-<span class="token builtin class-name">cd</span> cem
-<span class="token function">make</span>
+<p><strong>Demo discovery options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fileGlob</code></td>
+<td>string</td>
+<td>Glob pattern for discovering demo files.</td>
+</tr>
+<tr>
+<td><code>sourceControlRootUrl</code></td>
+<td>string</td>
+<td>Canonical public source control URL for your repository root (on the main branch).</td>
+</tr>
+<tr>
+<td><code>urlPattern</code></td>
+<td>string</td>
+<td>Pattern for generating demo URLs, e.g. <code>&quot;demos/{tag}.html&quot;</code>. <code>{tag}</code> is replaced by tag name.</td>
+</tr>
+<tr>
+<td><code>urlTemplate</code></td>
+<td>string</td>
+<td>(optional) Alternative URL template for demo links.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>Configuration Reference</h2>
+<p>You can configure CEM via <code>.config/cem.yaml</code>, relative to your project root,
+or via CLI flags.</p>
+<h3>Example Configuration</h3>
+<pre class="language-yaml"><code class="language-yaml"><span class="token key atrule">sourceControlRootUrl</span><span class="token punctuation">:</span> <span class="token string">"https://github.com/your/repo/tree/main/"</span>
+<span class="token key atrule">generate</span><span class="token punctuation">:</span>
+  <span class="token key atrule">files</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> <span class="token string">"src/**/*.ts"</span>
+  <span class="token key atrule">exclude</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> <span class="token string">"src/**/*.test.ts"</span>
+  <span class="token key atrule">output</span><span class="token punctuation">:</span> <span class="token string">"custom-elements.json"</span>
+  <span class="token key atrule">noDefaultExcludes</span><span class="token punctuation">:</span> <span class="token boolean important">false</span>
+  <span class="token key atrule">designTokens</span><span class="token punctuation">:</span>
+    <span class="token key atrule">spec</span><span class="token punctuation">:</span> <span class="token string">"npm:@my-ds/tokens/tokens.json"</span>
+    <span class="token key atrule">prefix</span><span class="token punctuation">:</span> <span class="token string">"--my-ds"</span>
+  <span class="token key atrule">demoDiscovery</span><span class="token punctuation">:</span>
+    <span class="token key atrule">fileGlob</span><span class="token punctuation">:</span> <span class="token string">"demos/**/*.html"</span>
+    <span class="token key atrule">urlPattern</span><span class="token punctuation">:</span> <span class="token string">"demos/(?P&lt;tag>[\w-]+)/(?P&lt;demo>[\w-]+).html"</span>
+    <span class="token key atrule">urlTemplate</span><span class="token punctuation">:</span> <span class="token string">"https://example.com/elements/{tag}/{demo}/"</span>
 </code></pre>
+<hr>
 <h2>Usage</h2>
 <p>Generate a custom elements manifest from your files:</p>
 <pre class="language-sh"><code class="language-sh">cem generate <span class="token punctuation">\</span>
@@ -182,7 +267,7 @@ variables</li>
   <span class="token parameter variable">--output</span> custom-elements.json
 </code></pre>
 <p>For npm projects you can use <code>npx @pwrs/cem generate ...</code>.</p>
-<h3>Arguments</h3>
+<h3>Command Line Arguments</h3>
 <table>
 <thead>
 <tr>
@@ -198,9 +283,19 @@ variables</li>
 <td>Files or glob patterns to include</td>
 </tr>
 <tr>
+<td><code>--output, -o</code></td>
+<td>string</td>
+<td>Write the manifest to this file instead of stdout</td>
+</tr>
+<tr>
 <td><code>--exclude, -e</code></td>
 <td>array</td>
 <td>Files or glob patterns to exclude</td>
+</tr>
+<tr>
+<td><code>--no-default-excludes</code></td>
+<td>bool</td>
+<td>Do not exclude files by default (e.g., <code>.d.ts</code> files will be included unless excluded explicitly)</td>
 </tr>
 <tr>
 <td><code>--design-tokens, -t</code></td>
@@ -213,14 +308,24 @@ variables</li>
 <td>CSS custom property prefix for design tokens</td>
 </tr>
 <tr>
-<td><code>--output, -o</code></td>
+<td><code>--demo-discovery-file-glob</code></td>
 <td>string</td>
-<td>Write the manifest to this file instead of stdout</td>
+<td>Glob pattern for discovering demo files</td>
 </tr>
 <tr>
-<td><code>--no-default-excludes</code></td>
-<td>bool</td>
-<td>Do not exclude files by default (e.g., <code>.d.ts</code> files will be included unless excluded explicitly)</td>
+<td><code>--demo-discovery-url-pattern</code></td>
+<td>string</td>
+<td>Go Regexp pattern with named capture groups for generating canonical demo urls</td>
+</tr>
+<tr>
+<td><code>--demo-discovery-url-template</code></td>
+<td>string</td>
+<td>URL pattern string using {groupName} syntax to interpolate named captures from the URL pattern</td>
+</tr>
+<tr>
+<td><code>--source-control-root-url</code></td>
+<td>string</td>
+<td>Glob pattern for discovering demo files</td>
 </tr>
 </tbody>
 </table>
