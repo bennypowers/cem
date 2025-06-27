@@ -12,13 +12,13 @@ func generateFunctionDeclaration(
 	_ any,
 	_ []byte,
 	queryManager *Q.QueryManager,
-) (err error, declaration *M.FunctionDeclaration) {
+) (declaration *M.FunctionDeclaration, err error) {
 	nameNodes, ok := captures["function.name"]
-	if (!ok || len(nameNodes) <= 0) {
-		return errors.Join(err, &Q.NoCaptureError{
+	if !ok || len(nameNodes) <= 0 {
+		return nil, errors.Join(err, &Q.NoCaptureError{
 			Capture: "function.name",
 			Query: "functionDeclaration",
-		}), nil
+		})
 	}
 
 	funcName := nameNodes[0].Text
@@ -56,11 +56,11 @@ func generateFunctionDeclaration(
 	if (ok && len(jsdoc) > 0) {
 		error, info := NewMethodInfo(jsdoc[0].Text, queryManager)
 		if error != nil {
-			return errors.Join(err, error), nil
+			return nil, errors.Join(err, error)
 		} else {
 			info.MergeToFunctionLike(&declaration.FunctionLike)
 		}
 	}
 
-	return nil, declaration
+	return declaration, nil
 }

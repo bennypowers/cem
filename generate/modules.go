@@ -141,7 +141,7 @@ func (mp *ModuleProcessor) processFunctions() {
 	}
 	defer qm.Close()
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "function") {
-		err, declaration := generateFunctionDeclaration(captures, mp.root, mp.code, mp.queryManager)
+		declaration, err := generateFunctionDeclaration(captures, mp.root, mp.code, mp.queryManager)
 		if err != nil {
 			mp.errors = errors.Join(mp.errors, err)
 		} else {
