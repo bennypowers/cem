@@ -1,6 +1,7 @@
 package queries
 
 import (
+	"context"
 	"embed"
 	"errors"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"log"
 	"path"
 	"path/filepath"
+	"runtime/trace"
 	"slices"
 	"strings"
 	"sync"
@@ -138,14 +140,16 @@ type QueryManagerI interface {
 }
 
 type QueryManager struct {
+	Ctx        context.Context
 	typescript map[string]*ts.Query
 	jsdoc      map[string]*ts.Query
 	css        map[string]*ts.Query
 	html       map[string]*ts.Query
 }
 
-func NewQueryManager() (*QueryManager, error) {
+func NewQueryManager(ctx context.Context) (*QueryManager, error) {
 	qm := &QueryManager{
+		Ctx:        ctx,
 		typescript: make(map[string]*ts.Query),
 		jsdoc:      make(map[string]*ts.Query),
 		css:        make(map[string]*ts.Query),
@@ -258,8 +262,10 @@ type CaptureInfo struct {
 type CaptureMap = map[string][]CaptureInfo
 
 type QueryMatcher struct {
+	ctx context.Context
 	query  *ts.Query
 	cursor *ts.QueryCursor
+	name   string
 }
 
 func (qm QueryMatcher) Close() {
@@ -289,12 +295,15 @@ func NewQueryMatcher(
 		return nil, error
 	}
 	cursor := ts.NewQueryCursor()
-	qm := QueryMatcher{query, cursor}
+	qm := QueryMatcher{manager.Ctx, query, cursor, queryName}
 	return &qm, nil
 }
 
 func (q QueryMatcher) AllQueryMatches(node *ts.Node, text []byte) iter.Seq[*ts.QueryMatch] {
-	qm := q.cursor.Matches(q.query, node, text)
+	var qm ts.QueryMatches
+	trace.WithRegion(q.ctx, "query " + q.name, func() {
+		qm = q.cursor.Matches(q.query, node, text)
+	})
 	return func(yield func(qm *ts.QueryMatch) bool) {
 		for {
 			m := qm.Next()

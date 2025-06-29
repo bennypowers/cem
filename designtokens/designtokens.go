@@ -1,7 +1,7 @@
 package designtokens
 
 import (
-	"encoding/json"
+	json "encoding/json"
 	"errors"
 	"fmt"
 	"io"

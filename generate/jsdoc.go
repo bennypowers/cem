@@ -2,11 +2,13 @@ package generate
 
 import (
 	"regexp"
+	"runtime/trace"
 	"slices"
 	"strings"
 
-	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/generate/queries"
+	M "bennypowers.dev/cem/manifest"
+	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
 type ParameterInfo struct {
@@ -85,7 +87,10 @@ func NewClassInfo(source string, queryManager *Q.QueryManager) (*ClassInfo, erro
 
 	parser := Q.GetJSDocParser()
 	defer Q.PutJSDocParser(parser)
-	tree := parser.Parse([]byte(code), nil)
+	var tree *ts.Tree
+	trace.WithRegion(queryManager.Ctx, "parse jsdoc", func() {
+		tree = parser.Parse([]byte(code), nil)
+	})
 	defer tree.Close()
 	root := tree.RootNode()
 
@@ -457,7 +462,10 @@ func NewPropertyInfo(code string, queryManager *Q.QueryManager) (error, *Propert
 	barr := []byte(code)
 	parser := Q.GetJSDocParser()
 	defer Q.PutJSDocParser(parser)
-	tree := parser.Parse(barr, nil)
+	var tree *ts.Tree
+	trace.WithRegion(queryManager.Ctx, "parse jsdoc", func() {
+		tree = parser.Parse([]byte(code), nil)
+	})
 	defer tree.Close()
 	root := tree.RootNode()
 
@@ -519,7 +527,10 @@ func NewCssCustomPropertyInfo(code string, queryManager *Q.QueryManager) (*CssCu
 	barr := []byte(code)
 	parser := Q.GetJSDocParser()
 	defer Q.PutJSDocParser(parser)
-	tree := parser.Parse(barr, nil)
+	var tree *ts.Tree
+	trace.WithRegion(queryManager.Ctx, "parse jsdoc", func() {
+		tree = parser.Parse([]byte(code), nil)
+	})
 	defer tree.Close()
 	root := tree.RootNode()
 
@@ -611,7 +622,10 @@ func NewMethodInfo(source string, queryManager *Q.QueryManager) (error, *MethodI
 	code := []byte(source)
 	parser := Q.GetJSDocParser()
 	defer Q.PutJSDocParser(parser)
-	tree := parser.Parse([]byte(code), nil)
+	var tree *ts.Tree
+	trace.WithRegion(queryManager.Ctx, "parse jsdoc", func() {
+		tree = parser.Parse([]byte(code), nil)
+	})
 	defer tree.Close()
 	root := tree.RootNode()
 

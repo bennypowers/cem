@@ -2,6 +2,7 @@ package generate
 
 import (
 	"cmp"
+	"context"
 	"errors"
 	"runtime"
 	"slices"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/pterm/pterm"
 
+	"bennypowers.dev/cem/cmd/config"
 	C "bennypowers.dev/cem/cmd/config"
 	DT "bennypowers.dev/cem/designtokens"
 	DD "bennypowers.dev/cem/generate/demodiscovery"
@@ -23,6 +25,18 @@ import (
 
 var defaultExcludePatterns = []string{
 	"**/*.d.ts",
+}
+
+func expand(globs []string) (files []string, errs error) {
+	for _, pattern := range globs {
+		matches, err := DS.Glob(pattern)
+		if err != nil {
+			errs = errors.Join(errs, err)
+			continue
+		}
+		files = append(files, matches...)
+	}
+	return files, errs
 }
 
 // Checks whether a file matches any of the given patterns (with doublestar)
@@ -78,7 +92,6 @@ func process(
 	qm *Q.QueryManager,
 ) (modules []M.Module, logs []*LogCtx, aliases map[string]string, errs error) {
 	numWorkers := runtime.NumCPU()
-	pterm.Info.Printf("Starting Generation with %d workers\n", numWorkers)
 	var wg sync.WaitGroup
 	var aliasesMu sync.Mutex
 	var modulesMu sync.Mutex
@@ -202,9 +215,24 @@ func postprocess(
 	return pkg, errs
 }
 
+func LoadConfig(args []string, cfg config.CemConfig) (config.CemConfig, error) {
+	var err error
+	var errs error
+	cfg.Generate.Files, err = expand(append(cfg.Generate.Files, args...))
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
+	cfg.Generate.Exclude, err = expand(cfg.Generate.Exclude)
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
+	return cfg, errs
+}
+
 // Generates a custom-elements manifest from a list of typescript files
 func Generate(cfg *C.CemConfig) (manifest *string, errs error) {
-	qm, err := Q.NewQueryManager()
+	ctx := context.Background()
+	qm, err := Q.NewQueryManager(ctx)
 	if err != nil {
 		pterm.Fatal.Printfln("Could not create QueryManager: %v", err)
 	}

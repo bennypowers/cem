@@ -3,7 +3,7 @@
 package manifest
 
 import (
-	"encoding/json"
+	json "encoding/json"
 	"regexp"
 )
 

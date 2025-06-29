@@ -6,6 +6,7 @@ import (
 	"maps"
 	"os"
 	"path"
+	"runtime/trace"
 	"slices"
 	"strings"
 	"time"
@@ -25,10 +26,13 @@ func amendStylesMapFromSource(
 	props CssPropsMap,
 	queryManager *Q.QueryManager,
 	queryMatcher *Q.QueryMatcher,
-	parser *ts.Parser,
+	cssParser *ts.Parser,
 	code []byte,
 ) (errs error) {
-	tree := parser.Parse(code, nil)
+	var tree *ts.Tree
+	trace.WithRegion(queryManager.Ctx, "parse css", func() {
+		tree = cssParser.Parse(code, nil)
+	})
 	defer tree.Close()
 	root := tree.RootNode()
 	for captures := range queryMatcher.ParentCaptures(root, code, "cssPropertyCallSite") {
@@ -104,7 +108,10 @@ func NewModuleProcessor(
 		return ModuleProcessor{logger: logger, file: file, module: module, code: code, errors: err}
 	}
 
-	tree := parser.Parse(code, nil)
+	var tree *ts.Tree
+	trace.WithRegion(queryManager.Ctx, "parse typescript", func() {
+		tree = parser.Parse([]byte(code), nil)
+	})
 	root := tree.RootNode()
 
 	return ModuleProcessor{
@@ -265,8 +272,8 @@ func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsM
 		if err != nil {
 			return nil, err
 		}
-		parser := Q.GetCSSParser()
-		defer Q.PutCSSParser(parser)
+		cssParser := Q.GetCSSParser()
+		defer Q.PutCSSParser(cssParser)
 		if hasBindings {
 			for _, binding := range bindings {
 				spec, ok := mp.styleImportsBindingToSpecMap[binding.Text]
@@ -281,7 +288,7 @@ func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsM
 							errs = errors.Join(errs, errors.New(fmt.Sprintf("Could not read tokens spec %s", spec)), err)
 						} else {
 							tmpProps := make(CssPropsMap)
-							err := amendStylesMapFromSource(tmpProps, mp.queryManager, qm, parser, content)
+							err := amendStylesMapFromSource(tmpProps, mp.queryManager, qm, cssParser, content)
 							if err != nil {
 								errs = errors.Join(errs, err)
 							}
@@ -298,7 +305,7 @@ func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsM
 		}
 		if hasStrings {
 			for _, styleString := range styleStrings {
-				err := amendStylesMapFromSource(props, mp.queryManager, qm, parser, []byte(styleString.Text))
+				err := amendStylesMapFromSource(props, mp.queryManager, qm, cssParser, []byte(styleString.Text))
 				if err != nil {
 					errs = errors.Join(errs, err)
 				}

@@ -9,23 +9,11 @@ import (
 	"os"
 	"time"
 
+	"bennypowers.dev/cem/generate"
 	G "bennypowers.dev/cem/generate"
-	DS "github.com/bmatcuk/doublestar"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
-
-func expand(globs []string) (files []string, errs error) {
-	for _, pattern := range globs {
-		matches, err := DS.Glob(pattern)
-		if err != nil {
-			errs = errors.Join(errs, err)
-			continue
-		}
-		files = append(files, matches...)
-	}
-	return files, errs
-}
 
 func init() {
 	// generateCmd represents the generate command
@@ -42,17 +30,13 @@ func init() {
 			return errors.New("requires at least one file argument or a configured `generate.files` list")
 		},
 		RunE: func(cmd *cobra.Command, args []string) (errs error) {
-			var err error
 			start := time.Now()
-			CemConfig.Generate.Files, err = expand(append(CemConfig.Generate.Files, args...))
+			pterm.Info.Printf("Starting Generate\n")
+			cfg, err := generate.LoadConfig(args, CemConfig)
 			if err != nil {
 				errs = errors.Join(errs, err)
 			}
-			CemConfig.Generate.Exclude, err = expand(CemConfig.Generate.Exclude)
-			if err != nil {
-				errs = errors.Join(errs, err)
-			}
-			manifest, err := G.Generate(&CemConfig)
+			manifest, err := G.Generate(&cfg)
 			if err != nil {
 				errs = errors.Join(errs, err)
 			}
@@ -60,11 +44,11 @@ func init() {
 				return errors.Join(errs, errors.New("manifest generation returned nil"))
 			}
 			if CemConfig.Generate.Output != "" {
-				if err = os.WriteFile(CemConfig.Generate.Output, []byte(*manifest + "\n"), 0666); err != nil {
+				if err = os.WriteFile(cfg.Generate.Output, []byte(*manifest + "\n"), 0666); err != nil {
 					errs = errors.Join(errs, err)
 				} else {
 					end := time.Since(start)
-					pterm.Success.Printf("Wrote manifest to %s in %s", CemConfig.Generate.Output, G.ColorizeDuration(end).Sprint(end))
+					pterm.Success.Printf("Wrote manifest to %s in %s", cfg.Generate.Output, G.ColorizeDuration(end).Sprint(end))
 				}
 			} else {
 				fmt.Println(*manifest + "\n")

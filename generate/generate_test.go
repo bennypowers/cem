@@ -1,7 +1,7 @@
 package generate
 
 import (
-	"encoding/json"
+	json "encoding/json"
 	"flag"
 	"log"
 	"os"
