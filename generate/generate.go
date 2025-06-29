@@ -100,8 +100,11 @@ func process(
 	for range numWorkers {
 		go func() {
 			defer wg.Done()
+			parser := ts.NewParser()
+			parser.SetLanguage(Q.Languages.Typescript)
+			defer parser.Close();
 			for file := range jobsChan {
-				module, tagAliases, logger, err := processModule(file, cfg, qm)
+				module, tagAliases, logger, err := processModule(file, cfg, qm, parser)
 
 				// Save log for later bar chart (always save duration for bar chart)
 				logsMu.Lock()
@@ -139,15 +142,15 @@ func processModule(
 	file string,
 	cfg *C.CemConfig,
 	qm *Q.QueryManager,
+	parser *ts.Parser,
 ) (module *M.Module, tagAliases map[string]string, logCtx *LogCtx, errs error) {
-	parser := ts.NewParser()
-	parser.SetLanguage(Q.Languages.Typescript)
 	mp := NewModuleProcessor(file, parser, cfg, qm)
 	if cfg.Verbose {
 		mp.logger.Section.Printf("Module: %s", mp.logger.File)
 	}
 	module, tagAliases, err := mp.Collect()
 	pterm.Print(mp.logger.Buffer.String())
+	parser.Reset()
 	mp.Close()
 	return module, tagAliases, mp.logger, err
 }
