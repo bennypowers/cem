@@ -61,7 +61,8 @@
               },
               "default": "0",
               "kind": "field",
-              "static": true
+              "static": true,
+              "privacy": "private"
             },
             {
               "name": "statprot",

@@ -145,6 +145,9 @@ func (mp *ModuleProcessor) Collect() (module *M.Module, tagAliases map[string]st
 		mp.logger.Info("Module processed successfully")
 	}
 	mp.logger.Info("Total time: %s", ColorizeDuration(mp.logger.Duration).Sprint(mp.logger.Duration))
+	slices.SortStableFunc(mp.module.Declarations, func(a, b M.Declaration) int {
+		return int(a.GetStartByte() - b.GetStartByte())
+	})
 	return mp.module, mp.tagAliases, mp.errors
 }
 

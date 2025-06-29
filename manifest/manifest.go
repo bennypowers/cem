@@ -98,6 +98,7 @@ func NewCustomElementExport(
 // Declaration is a union of several types.
 type Declaration interface {
 	isDeclaration()
+	GetStartByte() uint
 }
 
 // Reference to an export of a module.
@@ -126,6 +127,7 @@ type CustomElementDeclaration struct {
 	CustomElement
 }
 func (*CustomElementDeclaration) isDeclaration() {}
+func (x *CustomElementDeclaration) GetStartByte() uint { return x.StartByte }
 
 // CustomElement adds fields to classes/mixins for custom elements.
 type CustomElement struct {
@@ -231,10 +233,12 @@ type ClassDeclaration struct {
 	Kind string `json:"kind"` // 'class'
 }
 func (*ClassDeclaration) isDeclaration() {}
+func (x *ClassDeclaration) GetStartByte() uint { return x.StartByte }
 
 // Declaration is a union of several types.
 type ClassMember interface {
 	isClassMember()
+	GetStartByte() uint
 }
 
 // ClassField is a class field.
@@ -247,17 +251,19 @@ type ClassField struct {
 	Source        *SourceReference	`json:"source,omitempty"`
 }
 func (ClassField) isClassMember() {}
+func (f ClassField) GetStartByte() uint { return f.StartByte }
 
 // ClassMethod is a method.
 type ClassMethod struct {
 	FunctionLike
-	Kind          string       `json:"kind"` // 'method'
-	Static        bool        `json:"static,omitempty"`
-	Privacy       Privacy      `json:"privacy,omitempty"` // 'public', 'private', 'protected'
-	InheritedFrom *Reference  `json:"inheritedFrom,omitempty"`
+	Kind          string           `json:"kind"` // 'method'
+	Static        bool             `json:"static,omitempty"`
+	Privacy       Privacy          `json:"privacy,omitempty"` // 'public', 'private', 'protected'
+	InheritedFrom *Reference       `json:"inheritedFrom,omitempty"`
 	Source        *SourceReference `json:"source,omitempty"`
 }
 func (ClassMethod) isClassMember() {}
+func (x ClassMethod) GetStartByte() uint { return x.StartByte }
 
 // PropertyLike is the common interface of variables, class fields, and function parameters.
 type PropertyLike struct {
@@ -277,6 +283,7 @@ type CustomElementField struct {
 	Attribute string `json:"attribute,omitempty"`
 	Reflects  bool   `json:"reflects,omitempty"`
 }
+func (x CustomElementField) GetStartByte() uint { return x.ClassField.StartByte }
 
 // MixinDeclaration describes a class mixin.
 type MixinDeclaration struct {
@@ -285,6 +292,7 @@ type MixinDeclaration struct {
 	Kind string `json:"kind"` // 'mixin'
 }
 func (*MixinDeclaration) isDeclaration() {}
+func (x *MixinDeclaration) GetStartByte() uint { return x.FunctionLike.StartByte }
 
 // CustomElementMixinDeclaration extends MixinDeclaration and CustomElement.
 type CustomElementMixinDeclaration struct {
@@ -300,6 +308,7 @@ type VariableDeclaration struct {
 	Source *SourceReference `json:"source,omitempty"`
 }
 func (*VariableDeclaration) isDeclaration() {}
+func (x *VariableDeclaration) GetStartByte() uint { return x.StartByte }
 
 // FunctionDeclaration is a function.
 type FunctionDeclaration struct {
@@ -308,6 +317,7 @@ type FunctionDeclaration struct {
 	Source *SourceReference `json:"source,omitempty"`
 }
 func (*FunctionDeclaration) isDeclaration() {}
+func (x *FunctionDeclaration) GetStartByte() uint { return x.StartByte }
 
 // Parameter is a function parameter.
 type Parameter struct {
@@ -345,10 +355,10 @@ const (
 
 // FunctionLike is the common interface of functions and mixins.
 type FunctionLike struct {
-	StartByte		uint			`json:"-"`
+	StartByte   uint        `json:"-"`
 	Name        string      `json:"name"`
-	Summary     string     `json:"summary,omitempty"`
-	Description string     `json:"description,omitempty"`
+	Summary     string      `json:"summary,omitempty"`
+	Description string      `json:"description,omitempty"`
 	Deprecated  Deprecated  `json:"deprecated,omitempty"` // bool or string
 	Parameters  []Parameter `json:"parameters,omitempty"`
 	Return      *Return     `json:"return,omitempty"`

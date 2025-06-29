@@ -137,6 +137,9 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 			errs = errors.Join(errs, err)
 		}
 		declaration.Members = append(declaration.Members, members...)
+		slices.SortStableFunc(declaration.Members, func(a M.ClassMember, b M.ClassMember) int {
+			return int(a.GetStartByte() - b.GetStartByte())
+		})
 	})
 
 	mp.step("Processing jsdoc", 1, func() {
@@ -175,12 +178,14 @@ func (mp *ModuleProcessor) generateHTMLElementClassDeclaration(
 		},
 	}
 
-	for _, name := range captures["observedAttributes.attributeName"] {
-		declaration.CustomElement.Attributes = append(declaration.CustomElement.Attributes, M.Attribute{
-			Name: name.Text,
-			StartByte: name.StartByte,
-		})
-	}
+	mp.step("Processing observedAttributes", 1, func() {
+		for _, name := range captures["observedAttributes.attributeName"] {
+			declaration.CustomElement.Attributes = append(declaration.CustomElement.Attributes, M.Attribute{
+				Name: name.Text,
+				StartByte: name.StartByte,
+			})
+		}
+	})
 
 	mp.step("Processing class jsdoc", 1, func() {
 		jsdoc, ok := captures["class.jsdoc"]
