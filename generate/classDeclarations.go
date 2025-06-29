@@ -2,35 +2,38 @@ package generate
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"slices"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 
-	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/generate/queries"
+	M "bennypowers.dev/cem/manifest"
 
 	A "github.com/IBM/fp-go/array"
 	ts "github.com/tree-sitter/go-tree-sitter"
+
+	"github.com/pterm/pterm"
 )
 
 type HtmlDocYaml struct {
-    Description string      `yaml:"description"`
-    Summary     string      `yaml:"summary"`
-    Deprecated  any         `yaml:"deprecated"`
+	Description string      `yaml:"description"`
+	Summary     string      `yaml:"summary"`
+	Deprecated  any         `yaml:"deprecated"`
 }
 
 type NestedHtmlDocYaml struct {
-    Slot *HtmlDocYaml `yaml:"slot"`
-    Part *HtmlDocYaml `yaml:"part"`
-    // Flat fields for backward compatibility
-    Description string      `yaml:"description"`
-    Summary     string      `yaml:"summary"`
-    Deprecated  any         `yaml:"deprecated"`
+	Slot *HtmlDocYaml `yaml:"slot"`
+	Part *HtmlDocYaml `yaml:"part"`
+	Description string      `yaml:"description"`
+	Summary     string      `yaml:"summary"`
+	Deprecated  any         `yaml:"deprecated"`
 }
 
-func (mp *ModuleProcessor) generateClassDeclaration(captures Q.CaptureMap) (declaration M.Declaration, alias string, errs error) {
+// --- Main entry: Generate a class declaration as ParsedClass ---
+func (mp *ModuleProcessor) generateClassDeclarationParsed(captures Q.CaptureMap) (*ParsedClass, error) {
 	_, hasCustomElementDecorator := captures["customElement"]
 	isHTMLElement := false
 	superClassNameNodes, hasSuperClass := captures["superclass.name"]
@@ -39,18 +42,52 @@ func (mp *ModuleProcessor) generateClassDeclaration(captures Q.CaptureMap) (decl
 	}
 	isCustomElement := hasCustomElementDecorator || isHTMLElement
 	classDeclarationCaptures, hasClassDeclaration := captures["class.declaration"]
-	if (hasClassDeclaration && len(classDeclarationCaptures) > 0) {
-		classDeclarationNodeId := classDeclarationCaptures[0].NodeId
-		classDeclarationNode := Q.GetDescendantById(mp.root, classDeclarationNodeId)
-		if isHTMLElement {
-			return mp.generateHTMLElementClassDeclaration(captures, classDeclarationNode)
-		} else if isCustomElement {
-			return mp.generateLitElementClassDeclaration(captures, classDeclarationNode)
-		} else {
-			return mp.generateCommonClassDeclaration(captures, classDeclarationNode, isCustomElement)
+	if !(hasClassDeclaration && len(classDeclarationCaptures) > 0) {
+		return nil, errors.New("Could not find class declaration")
+	}
+
+	classDeclarationNodeId := classDeclarationCaptures[0].NodeId
+	classDeclarationNode := Q.GetDescendantById(mp.root, classDeclarationNodeId)
+
+	var decl M.Declaration
+	var alias string
+	var err error
+	if isHTMLElement {
+		decl, alias, err = mp.generateHTMLElementClassDeclaration(captures, classDeclarationNode)
+	} else if isCustomElement {
+		decl, alias, err = mp.generateLitElementClassDeclaration(captures, classDeclarationNode)
+	} else {
+		decl, alias, err = mp.generateCommonClassDeclaration(captures, classDeclarationNode, isCustomElement)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	className := ""
+	if decl != nil {
+		switch d := decl.(type) {
+		case *M.ClassDeclaration:
+			className = d.Name
+		case *M.CustomElementDeclaration:
+			className = d.Name
 		}
 	}
-	return nil, "", errors.Join(errs, errors.New("Could not find class declaration"))
+	parsed := &ParsedClass{
+		Name:           className,
+		Alias:          alias,
+		Captures:       captures,
+		CEMDeclaration: decl,
+	}
+	return parsed, nil
+}
+
+// --- Legacy interface for compatibility with outside calls ---
+func (mp *ModuleProcessor) generateClassDeclaration(captures Q.CaptureMap) (M.Declaration, string, error) {
+	parsed, err := mp.generateClassDeclarationParsed(captures)
+	if err != nil {
+		return nil, "", err
+	}
+	return parsed.CEMDeclaration, parsed.Alias, nil
 }
 
 func (mp *ModuleProcessor) generateCommonClassDeclaration(
@@ -59,20 +96,24 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 	isCustomElement bool,
 ) (declaration *M.ClassDeclaration, emptyAlias string, errs error) {
 	className, ok := captures["class.name"]
+	var classNameStr string
 	if (!ok || len(className) <= 0) {
 		return nil, emptyAlias, errors.Join(errs, &Q.NoCaptureError{ Capture: "class.name", Query: "classes" })
+	} else {
+		classNameStr = className[0].Text
 	}
+	colClassName := ColorizeClassName(classNameStr).Sprint(classNameStr)
 
 	declaration = &M.ClassDeclaration{
 		Kind: "class",
 		ClassLike: M.ClassLike{
-			Name: className[0].Text,
+			Name: classNameStr,
 			StartByte: classDeclarationNode.StartByte(),
 		},
 	}
 
 	var superclassName string
-	mp.step("Processing heritage", 4, func() {
+	mp.step(fmt.Sprintf("%s Processing heritage", colClassName), 4, func() {
 		superClassNameNodes, ok := captures["superclass.name"]
 		if (ok && len(superClassNameNodes) > 0) {
 			superclassName = superClassNameNodes[0].Text
@@ -91,14 +132,12 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 				pkg = "lit"
 			case "ReactiveElement":
 				pkg = "@lit/reactive-element"
-			// TODO: compute package and module
-			// default:
 			}
 			declaration.Superclass = M.NewReference(superclassName, pkg, module)
 		}
 	})
 
-	mp.step("Processing class members", 4, func() {
+	mp.step(fmt.Sprintf("%s Processing class members", colClassName), 4, func() {
 		members, err := mp.getClassMembersFromClassDeclarationNode(
 			declaration.ClassLike.Name,
 			classDeclarationNode,
@@ -107,12 +146,10 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
-		for _, method := range members {
-			declaration.Members = append(declaration.Members, method)
-		}
+		declaration.Members = append(declaration.Members, members...)
 	})
 
-	mp.step("Processing class jsdoc", 4, func() {
+	mp.step(fmt.Sprintf("%s Processing class jsdoc", colClassName), 4, func() {
 		jsdoc, ok := captures["class.jsdoc"]
 		if (ok && len(jsdoc) > 0) {
 			info, err := NewClassInfo(jsdoc[0].Text, mp.queryManager)
@@ -132,6 +169,12 @@ func (mp *ModuleProcessor) generateHTMLElementClassDeclaration(
 	classDeclarationNode *ts.Node,
 ) (declaration *M.CustomElementDeclaration, alias string, errs error) {
 	classDeclaration, _, err := mp.generateCommonClassDeclaration(captures, classDeclarationNode, true)
+	className := ""
+	if classDeclaration != nil {
+		className = classDeclaration.ClassLike.Name
+	}
+	colClassName := ColorizeClassName(className).Sprint(className)
+
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
@@ -150,16 +193,18 @@ func (mp *ModuleProcessor) generateHTMLElementClassDeclaration(
 		})
 	}
 
-	jsdoc, ok := captures["class.jsdoc"]
-	if (ok && len(jsdoc) > 0) {
-		info, err := NewClassInfo(jsdoc[0].Text, mp.queryManager)
-		if err != nil {
-			mp.errors = errors.Join(mp.errors, err)
-		} else {
-			info.MergeToCustomElementDeclaration(declaration)
-			alias = info.Alias
+	mp.step(fmt.Sprintf("%s Processing class jsdoc", colClassName), 4, func() {
+		jsdoc, ok := captures["class.jsdoc"]
+		if (ok && len(jsdoc) > 0) {
+			info, err := NewClassInfo(jsdoc[0].Text, mp.queryManager)
+			if err != nil {
+				mp.errors = errors.Join(mp.errors, err)
+			} else {
+				info.MergeToCustomElementDeclaration(declaration)
+				alias = info.Alias
+			}
 		}
-	}
+	})
 
 	slices.SortStableFunc(declaration.Attributes, func(a M.Attribute, b M.Attribute) int {
 		return int(a.StartByte - b.StartByte)
@@ -173,6 +218,12 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 	classDeclarationNode *ts.Node,
 ) (declaration *M.CustomElementDeclaration, alias string, errs error) {
 	classDeclaration, _, err := mp.generateCommonClassDeclaration(captures, classDeclarationNode, true)
+	className := ""
+	if classDeclaration != nil {
+		className = classDeclaration.ClassLike.Name
+	}
+	colClassName := ColorizeClassName(className).Sprint(className)
+
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
@@ -212,7 +263,7 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 		}
 	})(declaration.Members)
 
-	mp.step("Processing render template", 4, func() {
+	mp.step(fmt.Sprintf("%s Processing render template", colClassName), 4, func() {
 		renderTemplateNodes, hasRenderTemplate := captures["render.template"]
 		if hasRenderTemplate {
 			renderTemplateNodeId := renderTemplateNodes[0].NodeId
@@ -232,7 +283,7 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 		}
 	})
 
-	mp.step("Processing class jsdoc", 4, func() {
+	mp.step(fmt.Sprintf("%s Processing class jsdoc", colClassName), 4, func() {
 		jsdoc, ok := captures["class.jsdoc"]
 		if (ok && len(jsdoc) > 0) {
 			classInfo, err := NewClassInfo(jsdoc[0].Text, mp.queryManager)
@@ -291,7 +342,6 @@ func (mp *ModuleProcessor) processRenderTemplate(htmlSource string) (slots []M.S
 		}
 	}
 
-	// Use ParentCaptures as in project conventions
 	for captureMap := range matcher.ParentCaptures(root, text, "slot") {
 		slot := M.Slot{Name: ""}
 		if sn, ok := captureMap["slot.name"]; ok && len(sn) > 0 {
@@ -322,10 +372,12 @@ func (mp *ModuleProcessor) processRenderTemplate(htmlSource string) (slots []M.S
 	return slots, parts, errs
 }
 
-// htmlCommentStripRE unchanged
 var htmlCommentStripRE = regexp.MustCompile(`(?s)^\s*<!--(.*?)(?:-->)?\s*$`)
 
-// kind must be "slot" or "part"
+func ColorizeClassName(name string) *pterm.Style {
+	return pterm.NewStyle(pterm.FgMagenta, pterm.Bold)
+}
+
 func parseYamlComment(comment string, kind string) (HtmlDocYaml, error) {
     inner := comment
     if matches := htmlCommentStripRE.FindStringSubmatch(inner); len(matches) == 2 {
@@ -333,9 +385,8 @@ func parseYamlComment(comment string, kind string) (HtmlDocYaml, error) {
     }
     inner = dedentYaml(inner)
     raw := NestedHtmlDocYaml{}
-		err := yaml.Unmarshal([]byte(inner), &raw)
+	err := yaml.Unmarshal([]byte(inner), &raw)
 
-    // Prefer nested section if present
     switch kind {
     case "slot":
         if raw.Slot != nil {
@@ -346,7 +397,6 @@ func parseYamlComment(comment string, kind string) (HtmlDocYaml, error) {
             return *raw.Part, err
         }
     }
-    // Fallback to flat fields
     return HtmlDocYaml{
         Description: raw.Description,
         Summary:     raw.Summary,
@@ -354,15 +404,11 @@ func parseYamlComment(comment string, kind string) (HtmlDocYaml, error) {
     }, err
 }
 
-// dedentYaml skips the first line for indent calculation, dedents all lines after the first
-// this is because we have to strip the html comment tags away, so the intendation on the
-// first line is unreliable as a source of truth for dedenting
 func dedentYaml(s string) string {
 	lines := strings.Split(s, "\n")
 	if len(lines) <= 1 {
 		return strings.TrimSpace(s)
 	}
-	// Calculate min indent on lines 2..n (skip blank lines)
 	minIndent := -1
 	for _, line := range lines[1:] {
 		trimmed := strings.TrimLeft(line, " \t")
@@ -374,7 +420,6 @@ func dedentYaml(s string) string {
 			minIndent = indent
 		}
 	}
-	// Remove minIndent spaces/tabs from all lines after the first
 	if minIndent > 0 {
 		for i := 1; i < len(lines); i++ {
 			if len(lines[i]) >= minIndent {
@@ -382,11 +427,9 @@ func dedentYaml(s string) string {
 			}
 		}
 	}
-	// Trim leading/trailing blank lines
 	return strings.TrimSpace(strings.Join(lines, "\n"))
 }
 
-// --- Helper: Append slots/parts only if not already present by name ---
 func appendUniqueSlots(existing []M.Slot, found []M.Slot) []M.Slot {
 	existingNames := make(map[string]struct{})
 	for _, s := range existing {
@@ -412,4 +455,3 @@ func appendUniqueParts(existing []M.CssPart, found []M.CssPart) []M.CssPart {
 	}
 	return existing
 }
-
