@@ -30,9 +30,8 @@
     "readonly"? @field.readonly
     name: (property_identifier) @field.name
     type: (type_annotation (_) @field.type)*
-    ; todo: if the field is initialized it should quit if there's params
-    ; but we've observed that arrow functions are still processed as fields
-    value: (_ !parameters)* @field.initializer) @field) @member
+    value: (_) * @field.initializer
+           (#not-match? @field.initializer "=>")) @field) @member
 
 (method_definition ; class constructor properties (typescript only)
   ; example : constructor (publid field: Type) {}

@@ -311,7 +311,7 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 			method := M.ClassMethod{Kind: "method"}
 			method.Name = memberName
 			method.Static = isStatic
-			method.FunctionLike.StartByte = captures["method"][0].StartByte
+			method.StartByte = captures["method"][0].StartByte
 
 			// Privacy
 			if nodes, ok := captures["method.privacy"]; ok && len(nodes) > 0 {
