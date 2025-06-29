@@ -3,6 +3,7 @@ package generate
 import (
 	"errors"
 	"regexp"
+	"slices"
 	"strings"
 
 	Q "bennypowers.dev/cem/generate/queries"
@@ -244,18 +245,18 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 
 		// Identify kind and key
 		switch {
-		case captures["field"] != nil:
-			kind = "field"
-			memberName = captures["field.name"][0].Text
-			isStatic = len(captures["field.static"]) > 0
-		case captures["accessor"] != nil:
-			kind = "accessor"
-			memberName = captures["field.name"][0].Text
-			isStatic = len(captures["field.static"]) > 0
 		case captures["method"] != nil:
 			kind = "method"
 			memberName = captures["method.name"][0].Text
 			isStatic = len(captures["method.static"]) > 0
+		case captures["accessor"] != nil:
+			kind = "accessor"
+			memberName = captures["field.name"][0].Text
+			isStatic = len(captures["field.static"]) > 0
+		case captures["field"] != nil:
+			kind = "field"
+			memberName = captures["field.name"][0].Text
+			isStatic = len(captures["field.static"]) > 0
 		default:
 			continue
 		}
@@ -267,6 +268,7 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 		switch kind {
 		case "field":
 			error, field := createClassFieldFromFieldMatch(memberName, isStatic, superclass, captures, mp.queryManager)
+			field.ClassField.StartByte = captures["field"][0].StartByte
 			if error != nil {
 				errs = errors.Join(errs, error)
 			} else {
@@ -279,6 +281,7 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 			var isReadonly bool = accessorKind == "get"
 
 			error, field := createClassFieldFromAccessorMatch(memberName, isStatic, isReadonly, superclass, captures, mp.queryManager)
+			field.ClassField.StartByte = captures["accessor"][0].StartByte
 			if error != nil {
 				errs = errors.Join(errs, error)
 				continue
@@ -308,6 +311,7 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 			method := M.ClassMethod{Kind: "method"}
 			method.Name = memberName
 			method.Static = isStatic
+			method.FunctionLike.StartByte = captures["method"][0].StartByte
 
 			// Privacy
 			if nodes, ok := captures["method.privacy"]; ok && len(nodes) > 0 {
@@ -365,6 +369,10 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 	for _, member := range memberMap {
 		members = append(members, member)
 	}
+
+	slices.SortStableFunc(members, func(a, b M.ClassMember) int {
+    return int(a.GetStartByte() - b.GetStartByte())
+})
 
 	return members, errs
 }

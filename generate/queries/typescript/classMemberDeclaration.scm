@@ -152,4 +152,4 @@
        "update"
        "updated"
        "willUpdated"
-       "getUpdateComplete")) @method)) @member
+       "getUpdateComplete")) @method @member))

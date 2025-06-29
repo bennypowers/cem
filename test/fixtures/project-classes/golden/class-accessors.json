@@ -66,10 +66,10 @@
             },
             {
               "name": "propertyPairDescribed",
+              "description": "property pair with description",
               "type": {
                 "text": "string"
               },
-              "readonly": true,
               "kind": "field",
               "attribute": "property-pair-described",
               "reflects": true
@@ -123,6 +123,7 @@
             },
             {
               "name": "property-pair-described",
+              "description": "property pair with description",
               "type": {
                 "text": "string"
               },
