@@ -7,7 +7,6 @@ import (
 
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/generate/queries"
-	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
 type ParameterInfo struct {
@@ -84,9 +83,8 @@ func NewClassInfo(source string, queryManager *Q.QueryManager) (*ClassInfo, erro
 	}
 	defer matcher.Close()
 
-	parser := ts.NewParser()
-	defer parser.Close()
-	parser.SetLanguage(Q.Languages.Jsdoc)
+	parser := Q.GetJSDocParser()
+	defer Q.PutJSDocParser(parser)
 	tree := parser.Parse([]byte(code), nil)
 	defer tree.Close()
 	root := tree.RootNode()
@@ -457,9 +455,8 @@ type PropertyInfo struct {
 
 func NewPropertyInfo(code string, queryManager *Q.QueryManager) (error, *PropertyInfo) {
 	barr := []byte(code)
-	parser := ts.NewParser()
-	defer parser.Close()
-	parser.SetLanguage(Q.Languages.Jsdoc)
+	parser := Q.GetJSDocParser()
+	defer Q.PutJSDocParser(parser)
 	tree := parser.Parse(barr, nil)
 	defer tree.Close()
 	root := tree.RootNode()
@@ -520,9 +517,8 @@ type FieldInfo struct {
 
 func NewCssCustomPropertyInfo(code string, queryManager *Q.QueryManager) (*CssCustomPropertyInfo, error) {
 	barr := []byte(code)
-	parser := ts.NewParser()
-	defer parser.Close()
-	parser.SetLanguage(Q.Languages.Jsdoc)
+	parser := Q.GetJSDocParser()
+	defer Q.PutJSDocParser(parser)
 	tree := parser.Parse(barr, nil)
 	defer tree.Close()
 	root := tree.RootNode()
@@ -613,9 +609,8 @@ type MethodInfo struct {
 func NewMethodInfo(source string, queryManager *Q.QueryManager) (error, *MethodInfo) {
 	info := MethodInfo{}
 	code := []byte(source)
-	parser := ts.NewParser()
-	defer parser.Close()
-	parser.SetLanguage(Q.Languages.Jsdoc)
+	parser := Q.GetJSDocParser()
+	defer Q.PutJSDocParser(parser)
 	tree := parser.Parse([]byte(code), nil)
 	defer tree.Close()
 	root := tree.RootNode()

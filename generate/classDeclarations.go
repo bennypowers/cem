@@ -295,9 +295,8 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 }
 
 func (mp *ModuleProcessor) processRenderTemplate(htmlSource string) (slots []M.Slot, parts []M.CssPart, errs error) {
-	parser := ts.NewParser()
-	defer parser.Close()
-	parser.SetLanguage(Q.Languages.Html)
+	parser := Q.GetHTMLParser()
+	defer Q.PutHTMLParser(parser)
 	tree := parser.Parse([]byte(htmlSource), nil)
 	defer tree.Close()
 	root := tree.RootNode()
