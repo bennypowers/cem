@@ -2,6 +2,7 @@ package generate
 
 import (
 	"flag"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -17,11 +18,23 @@ func TestIntegration_GenerateOnRealProject(t *testing.T) {
 		t.Skip("Skipping integration test; -projectdir not provided")
 	}
 
-	// Assuming you have some function to load and parse the config:
+	projectDir, err := filepath.Abs(*projectDirFlag)
+	t.Log(projectDir)
+	if err != nil {
+		t.Fatalf("could not resolve absolute path for %q: %v", *projectDirFlag, err)
+	}
+
+	oldWd, _ := os.Getwd()
+	if err := os.Chdir(projectDir); err != nil {
+		t.Fatalf("failed to chdir to %s: %v", projectDir, err)
+	}
+	defer os.Chdir(oldWd)
 
 	var cfg config.CemConfig
-	viper.SetConfigFile(filepath.Join(*projectDirFlag, ".config/cem.yaml"))
-	_ = viper.ReadInConfig()
+	viper.SetConfigFile(filepath.Join(".config", "cem.yaml"))
+	if err := viper.ReadInConfig(); err != nil {
+		t.Fatalf("Unable to read config: %v", err)
+	}
 	if err := viper.Unmarshal(&cfg); err != nil {
 		t.Fatal("Unable to decode config:", err)
 	}
