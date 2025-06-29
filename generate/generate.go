@@ -3,19 +3,20 @@ package generate
 import (
 	"cmp"
 	"errors"
-	"fmt"
-	"log"
-	"maps"
-	"os"
+	"path/filepath"
 	"runtime"
 	"slices"
 	"sync"
+
+	"github.com/pterm/pterm"
 
 	C "bennypowers.dev/cem/cmd/config"
 	DT "bennypowers.dev/cem/designtokens"
 	DD "bennypowers.dev/cem/generate/demodiscovery"
 	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
+
+	"maps"
 
 	DS "github.com/bmatcuk/doublestar"
 	ts "github.com/tree-sitter/go-tree-sitter"
@@ -37,13 +38,15 @@ func matchesAnyPattern(file string, patterns []string) bool {
 }
 
 type preprocessResult struct {
-	demoFiles      []string
-	designTokens   *DT.DesignTokens
+	demoFiles       []string
+	designTokens    *DT.DesignTokens
 	excludePatterns []string
+	includedFiles   []string
 }
 
 func preprocess(cfg *C.CemConfig) (r preprocessResult, errs error) {
 	r.excludePatterns = make([]string, 0, len(cfg.Generate.Exclude)+len(defaultExcludePatterns))
+	r.includedFiles = make([]string, 0)
 	r.excludePatterns = append(r.excludePatterns, cfg.Generate.Exclude...)
 	if !cfg.Generate.NoDefaultExcludes {
 		r.excludePatterns = append(r.excludePatterns, defaultExcludePatterns...)
@@ -62,6 +65,11 @@ func preprocess(cfg *C.CemConfig) (r preprocessResult, errs error) {
 			errs = errors.Join(errs, err)
 		}
 	}
+	for _, file := range cfg.Generate.Files {
+		if !matchesAnyPattern(file, r.excludePatterns) {
+			r.includedFiles = append(r.includedFiles, file)
+		}
+	}
 	return r, errs
 }
 
@@ -69,72 +77,80 @@ func process(
 	cfg *C.CemConfig,
 	result preprocessResult,
 	qm *Q.QueryManager,
-) (modules []M.Module, aliases map[string]string, errs error) {
+) (modules []M.Module, logs []*LogCtx, aliases map[string]string, errs error) {
 	numWorkers := runtime.NumCPU()
+	if cfg.Verbose {
+		pterm.Info.Printf("Starting Generation with %d workers\n", numWorkers)
+	}
 	var wg sync.WaitGroup
+	var aliasesMu sync.Mutex
+	var modulesMu sync.Mutex
+	var errsMu sync.Mutex
+	var logsMu sync.Mutex
+	errsList := make([]error, 0)
+	logs = make([]*LogCtx, 0, len(result.includedFiles))
 
 	aliases = make(map[string]string) // Ensure aliases is initialized
-
-	modulesChan := make(chan *M.Module, len(cfg.Generate.Files))
-	jobsChan := make(chan string, len(cfg.Generate.Files))
+	jobsChan := make(chan string, len(result.includedFiles))
 
 	// Fill jobs channel with files to process
-	for _, file := range cfg.Generate.Files {
-		if !matchesAnyPattern(file, result.excludePatterns) {
-			jobsChan <- file
-		}
+	for _, file := range result.includedFiles {
+		jobsChan <- file
 	}
 	close(jobsChan)
-
-	var errsMu sync.Mutex
-	var aliasesMu sync.Mutex
 
 	wg.Add(numWorkers)
 	for range numWorkers {
 		go func() {
 			defer wg.Done()
 			for file := range jobsChan {
-				code, err := os.ReadFile(file)
-				if err != nil {
-					errsMu.Lock()
-					errs = errors.Join(errs, errors.New(fmt.Sprintf("Could not Read file %s", file)), err)
-					errsMu.Unlock()
-					continue
-				}
+				module, tagAliases, logCtx, err := processModule(file, qm)
 
-				parser := ts.NewParser()
-				parser.SetLanguage(Q.Languages.Typescript)
-				mp := NewModuleProcessor(file, code, parser, qm)
-				module, tagAliases, err := mp.Collect()
-				mp.Close()
+				pterm.DefaultSection.WithLevel(2).Println("Module: " + filepath.Base(logCtx.File))
+				pterm.Println(logCtx.Buffer.String())
 
-				if err != nil {
-					errsMu.Lock()
-					errs = errors.Join(errs, errors.New(fmt.Sprintf("Problem generating module %s", file)), err)
-					errsMu.Unlock()
-					continue
-				}
+				// Save log for later bar chart (always save duration for bar chart)
+				logsMu.Lock()
+				logs = append(logs, logCtx)
+				logsMu.Unlock()
 
 				// Write to aliases in a threadsafe manner
 				aliasesMu.Lock()
 				maps.Copy(aliases, tagAliases)
 				aliasesMu.Unlock()
-
+				modulesMu.Lock()
 				if module != nil {
-					modulesChan <- module
+					modules = append(modules, *module)
+				}
+				modulesMu.Unlock()
+				if err != nil {
+					errsMu.Lock()
+					errsList = append(errsList, err)
+					errsMu.Unlock()
 				}
 			}
 		}()
 	}
 
 	wg.Wait()
-	close(modulesChan)
 
-	for module := range modulesChan {
-		modules = append(modules, *module)
+	if len(errsList) > 0 {
+		errs = errors.Join(errsList...)
 	}
 
-	return modules, aliases, errs
+	return modules, logs, aliases, errs
+}
+
+func processModule(
+	file string,
+	qm *Q.QueryManager,
+) (module *M.Module, tagAliases map[string]string, logCtx *LogCtx, errs error) {
+	parser := ts.NewParser()
+	parser.SetLanguage(Q.Languages.Typescript)
+	mp := NewModuleProcessor(file, parser, qm)
+	module, tagAliases, err := mp.Collect()
+	mp.Close()
+	return module, tagAliases, mp.logger, err
 }
 
 func postprocess(
@@ -146,11 +162,12 @@ func postprocess(
 ) (pkg M.Package, errs error) {
 	var wg sync.WaitGroup
 	var errsMu sync.Mutex
+	errsList := make([]error, 0)
 
 	// Build the demo map once
 	demoMap, err := DD.NewDemoMap(result.demoFiles)
 	if err != nil {
-		errs = errors.Join(errs, err)
+		errsList = append(errsList, err)
 	}
 
 	// Because demo discovery and design tokens may mutate modules, we need to coordinate by pointer
@@ -166,7 +183,7 @@ func postprocess(
 				err := DD.DiscoverDemos(cfg, allTagAliases, module, qm, demoMap)
 				if err != nil {
 					errsMu.Lock()
-					errs = errors.Join(errs, err)
+					errsList = append(errsList, err)
 					errsMu.Unlock()
 				}
 			}
@@ -178,6 +195,9 @@ func postprocess(
 	slices.SortStableFunc(pkg.Modules, func(a, b M.Module) int {
 		return cmp.Compare(a.Path, b.Path)
 	})
+	if len(errsList) > 0 {
+		errs = errors.Join(errsList...)
+	}
 	return pkg, errs
 }
 
@@ -185,14 +205,14 @@ func postprocess(
 func Generate(cfg *C.CemConfig) (manifest *string, errs error) {
 	qm, err := Q.NewQueryManager()
 	if err != nil {
-		log.Fatal(err)
+		pterm.Fatal.Printfln("Could not create QueryManager: %v", err)
 	}
 	defer qm.Close()
 	result, err := preprocess(cfg)
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
-	modules, aliases, err := process(cfg, result, qm)
+	modules, logs, aliases, err := process(cfg, result, qm)
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
@@ -200,6 +220,7 @@ func Generate(cfg *C.CemConfig) (manifest *string, errs error) {
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
+	RenderBarChart(logs)
 	manifestStr, err := M.SerializeToString(&pkg)
 	if err != nil {
 		return nil, errors.Join(errs, err)

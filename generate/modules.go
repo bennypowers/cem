@@ -8,15 +8,18 @@ import (
 	"path"
 	"slices"
 	"strings"
+	"time"
 
+	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
 	S "bennypowers.dev/cem/set"
-	Q "bennypowers.dev/cem/generate/queries"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
+type CssPropsMap map[string]M.CssCustomProperty
+
 func amendStylesMapFromSource(
-	props map[string]M.CssCustomProperty,
+	props CssPropsMap,
 	queryManager *Q.QueryManager,
 	queryMatcher *Q.QueryMatcher,
 	parser *ts.Parser,
@@ -67,6 +70,7 @@ func amendStylesMapFromSource(
 // we need to free those resources when finished with them, so ModuleProcessor
 // is also responsible for closing its associated C resources.
 type ModuleProcessor struct {
+	logger *LogCtx
 	file string
 	code []byte
 	source string
@@ -82,13 +86,28 @@ type ModuleProcessor struct {
 	errors error
 }
 
-func NewModuleProcessor(file string, code []byte, parser *ts.Parser, queryManager *Q.QueryManager) ModuleProcessor {
+func NewModuleProcessor(
+	file string,
+	parser *ts.Parser,
+	queryManager *Q.QueryManager,
+) ModuleProcessor {
+	module := M.NewModule(file)
+	logger := NewLogCtx(file)
+	logger.Info("Reading file %s", file)
+	code, err := os.ReadFile(file)
+	if err != nil {
+		logger.Error("ERROR reading file: %v", err)
+		logger.Finish()
+		return ModuleProcessor{logger: logger, file: file, module: module, code: code, errors: err}
+	}
+
 	tree := parser.Parse(code, nil)
 	root := tree.RootNode()
-	module := M.NewModule(file)
-	mp := ModuleProcessor{
+
+	return ModuleProcessor{
 		queryManager: queryManager,
 		file: file,
+		logger: logger,
 		code: code,
 		source: string(code),
 		parser: parser,
@@ -100,10 +119,13 @@ func NewModuleProcessor(file string, code []byte, parser *ts.Parser, queryManage
 		styleImportsBindingToSpecMap: make(map[string]string),
 		classNamesAdded: S.NewSet[string](),
 	}
-	mp.processImports()
-	mp.processClasses()
-	mp.processDeclarations()
-	return mp
+}
+
+func (mp *ModuleProcessor) step(label string, indent int, fn func()) {
+	start := time.Now()
+	fn()
+	duration := time.Since(start)
+	mp.logger.TimedLog(indent, label, duration)
 }
 
 func (mp *ModuleProcessor) Close() {
@@ -112,6 +134,16 @@ func (mp *ModuleProcessor) Close() {
 }
 
 func (mp *ModuleProcessor) Collect() (module *M.Module, tagAliases map[string]string, errors error) {
+	mp.step("Processing imports", 2, mp.processImports)
+	mp.step("Processing classes", 2, mp.processClasses)
+	mp.step("Processing declarations", 2, mp.processDeclarations)
+	mp.logger.Finish()
+	if mp.errors != nil {
+		mp.logger.Error("ERROR processing module: %v", mp.errors)
+	} else {
+		mp.logger.Info("Module processed successfully")
+	}
+	mp.logger.Info("Total time: %s", ColorizeDuration(mp.logger.Duration).Sprint(mp.logger.Duration))
 	return mp.module, mp.tagAliases, mp.errors
 }
 
@@ -155,56 +187,19 @@ func (mp *ModuleProcessor) processClasses() {
 				mp.module.Declarations = append(mp.module.Declarations, declaration)
 			} else {
 				ce, ok := d.(*M.CustomElementDeclaration)
-				props := make(map[string]M.CssCustomProperty)
 				if ok && !mp.classNamesAdded.Has(ce.Name) {
 					mp.classNamesAdded.Add(ce.Name)
 					if alias != "" {
 						mp.tagAliases[ce.TagName] = alias
 					}
+					var props CssPropsMap
 					// get all style array or value bindings
-					bindings, hasBindings := captures["style.binding"]
-					styleStrings, hasStrings := captures["style.string"]
-					if hasBindings || hasStrings {
-						qm, err := Q.NewQueryMatcher(mp.queryManager, "css", "cssCustomProperties")
-						parser := ts.NewParser()
-						defer parser.Close()
-						parser.SetLanguage(Q.Languages.Css)
+					mp.step("Processing styles", 4, func() {
+						props, err = mp.processStyles(captures)
 						if err != nil {
 							mp.errors = errors.Join(mp.errors, err)
-							continue
 						}
-						if hasBindings {
-							for _, binding := range bindings {
-								spec, ok := mp.styleImportsBindingToSpecMap[binding.Text]
-								if ok && strings.HasPrefix(spec, "."){
-									// NOTE: we're doing file io here, reading the referenced spec file,
-									// parsing it, and adding any variables we find to the cssProperties slice.
-									// perhaps a more performant or maintainable alternative is to leave a marker here,
-									// and then do all that work on the back end.
-									content, err := os.ReadFile(path.Join(path.Dir(mp.module.Path), spec))
-									if err != nil {
-										mp.errors = errors.Join(mp.errors, errors.New(fmt.Sprintf("Could not read tokens spec %s", spec)), err)
-									} else {
-										err := amendStylesMapFromSource(props, mp.queryManager, qm, parser, content)
-										if err != nil {
-											mp.errors = errors.Join(mp.errors, err)
-										}
-									}
-								}
-								// TODO: add an else path here which checks to see if the css declaration is made
-								// elsewhere in the same module, then parse it's string content if the value for
-								// that variable declaration is a css template tag
-							}
-						}
-						if hasStrings {
-							for _, styleString := range styleStrings {
-								err := amendStylesMapFromSource(props, mp.queryManager, qm, parser, []byte(styleString.Text))
-								if err != nil {
-									mp.errors = errors.Join(mp.errors, err)
-								}
-							}
-						}
-					}
+					})
 					// TODO: in order to be most correct here,
 					// we need to track not just the node's startbyte
 					// since that can come from multiple files
@@ -214,8 +209,7 @@ func (mp *ModuleProcessor) processClasses() {
 					// then declare one with a css tagged literal later on in the file
 					// this list should first list the imported props, in order,
 					// then list those declared in the string, in order.
-					cssProps := slices.Collect(maps.Values(props))
-					ce.CssProperties = append(ce.CssProperties, cssProps...)
+					ce.CssProperties = append(ce.CssProperties, slices.Collect(maps.Values(props))...)
 					slices.SortStableFunc(ce.CssProperties, func(a M.CssCustomProperty, b M.CssCustomProperty) int {
 						if a.StartByte == b.StartByte {
 							return strings.Compare(a.Name, b.Name)
@@ -228,6 +222,53 @@ func (mp *ModuleProcessor) processClasses() {
 			}
 		}
 	}
+}
+
+func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsMap, errs error) {
+	props = make(map[string]M.CssCustomProperty)
+	bindings, hasBindings := captures["style.binding"]
+	styleStrings, hasStrings := captures["style.string"]
+	if hasBindings || hasStrings {
+		qm, err := Q.NewQueryMatcher(mp.queryManager, "css", "cssCustomProperties")
+		parser := ts.NewParser()
+		defer parser.Close()
+		parser.SetLanguage(Q.Languages.Css)
+		if err != nil {
+			return nil, err
+		}
+		if hasBindings {
+			for _, binding := range bindings {
+				spec, ok := mp.styleImportsBindingToSpecMap[binding.Text]
+				if ok && strings.HasPrefix(spec, "."){
+					// NOTE: we're doing file io here, reading the referenced spec file,
+					// parsing it, and adding any variables we find to the cssProperties slice.
+					// perhaps a more performant or maintainable alternative is to leave a marker here,
+					// and then do all that work on the back end.
+					content, err := os.ReadFile(path.Join(path.Dir(mp.module.Path), spec))
+					if err != nil {
+						errs = errors.Join(errs, errors.New(fmt.Sprintf("Could not read tokens spec %s", spec)), err)
+					} else {
+						err := amendStylesMapFromSource(props, mp.queryManager, qm, parser, content)
+						if err != nil {
+							errs = errors.Join(errs, err)
+						}
+					}
+				}
+				// TODO: add an else path here which checks to see if the css declaration is made
+				// elsewhere in the same module, then parse it's string content if the value for
+				// that variable declaration is a css template tag
+			}
+		}
+		if hasStrings {
+			for _, styleString := range styleStrings {
+				err := amendStylesMapFromSource(props, mp.queryManager, qm, parser, []byte(styleString.Text))
+				if err != nil {
+					errs = errors.Join(errs, err)
+				}
+			}
+		}
+	}
+	return props, errs
 }
 
 func (mp *ModuleProcessor) processDeclarations() {
