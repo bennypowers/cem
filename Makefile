@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: build test update watch bench profile flamegraph coverage clean lint format prepare-npm install-bindings windows windows-x64 windows-arm64
+.PHONY: build test update watch bench benchmem profile flamegraph coverage coverage-html clean lint format prepare-npm install-bindings windows windows-x64 windows-arm64 test-race test-cover
 
 build:
 	go build -o dist/cem .
@@ -16,7 +16,6 @@ windows-arm64:
 	mkdir -p dist/cem-win32-arm64
 	mv cem.exe dist/cem-win32-arm64/
 
-# Convenience target to build both Windows variants
 windows: windows-x64 windows-arm64
 
 install-bindings:
@@ -43,6 +42,9 @@ watch:
 bench:
 	go test -v -cpuprofile=cpu.out -bench=BenchmarkGenerate -run=^$$ ./generate/
 
+benchmem:
+	go test -bench=BenchmarkGenerate -benchmem -run=^$$ ./generate/
+
 profile:
 	go test -bench=... -run=^$ -cpuprofile=cpu.out ./generate/
 
@@ -51,6 +53,15 @@ flamegraph: profile
 
 coverage:
 	go test -coverprofile=cover.out
+
+coverage-html: coverage
+	go tool cover -html=cover.out
+
+test-race:
+	go test -race ./...
+
+test-cover:
+	go test -cover ./...
 
 clean:
 	rm -rf dist/ cpu.out cover.out artifacts platforms

@@ -47,6 +47,30 @@ Run Go tests:
 make test
 ```
 
+### Interpreting Test and Benchmark Results
+
+- **Test Output:**  
+  `make test` uses `go tool tparse` for readable, colorized test output.
+
+- **Benchmark Output:**  
+  `make bench` runs the main generator benchmark and produces a CPU profile (`cpu.out`).  
+  `make benchmem` adds allocation stats (ns/op, B/op, allocs/op).
+
+- **Profile Analysis:**  
+  `make profile` and `make flamegraph` let you visualize CPU usage (`go tool pprof` at http://localhost:8080).
+
+- **Coverage:**  
+  `make coverage` generates a coverage profile;  
+  `make coverage-html` opens a browsable code coverage report.
+
+- **Race Detection:**  
+  `make test-race` runs tests with the race detector enabled (highly recommended when working with concurrency and pooling).
+
+**Tips:**  
+- For benchmarks, look for improvements in `ns/op` (time per operation), `B/op` (bytes allocated), and `allocs/op` (number of allocations).
+- For test coverage, aim for high statement coverage and add more tests for error/edge cases.
+- Use `go tool pprof cpu.out` or the `flamegraph` target to spot performance hot spots.
+
 ## Continuous Integration (CI)
 
 - All PRs are built and tested via GitHub Actions.
