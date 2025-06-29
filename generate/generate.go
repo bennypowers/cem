@@ -100,9 +100,8 @@ func process(
 	for range numWorkers {
 		go func() {
 			defer wg.Done()
-			parser := ts.NewParser()
-			parser.SetLanguage(Q.Languages.Typescript)
-			defer parser.Close();
+			parser := Q.GetTypeScriptParser()
+			defer Q.PutTypeScriptParser(parser)
 			for file := range jobsChan {
 				module, tagAliases, logger, err := processModule(file, cfg, qm, parser)
 

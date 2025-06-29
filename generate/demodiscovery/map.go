@@ -39,8 +39,8 @@ func extractDemoTags(path string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	parser := ts.NewParser()
-	parser.SetLanguage(Q.Languages.Html)
+	parser := Q.GetHTMLParser()
+	defer Q.PutHTMLParser(parser)
 	tree := parser.Parse(code, nil)
 	defer tree.Close()
 	root := tree.RootNode()

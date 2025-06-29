@@ -41,14 +41,14 @@ func amendStylesMapFromSource(
 		_, has := props[name]
 		if !has {
 			props[name] = M.CssCustomProperty{
-				Name: name,
+				Name:      name,
 				StartByte: startByte,
 			}
 		}
 		defaultVals, ok := captures["default"]
-		if ok && len(defaultVals) > 0{
+		if ok && len(defaultVals) > 0 {
 			startNode := Q.GetDescendantById(root, defaultVals[0].NodeId)
-			endNode := Q.GetDescendantById(root, defaultVals[len(defaultVals) - 1].NodeId)
+			endNode := Q.GetDescendantById(root, defaultVals[len(defaultVals)-1].NodeId)
 			p.Default = string(code[startNode.StartByte():endNode.EndByte()])
 		}
 		comment, ok := captures["comment"]
@@ -73,20 +73,20 @@ func amendStylesMapFromSource(
 // we need to free those resources when finished with them, so ModuleProcessor
 // is also responsible for closing its associated C resources.
 type ModuleProcessor struct {
-	logger *LogCtx
-	file string
-	code []byte
-	source string
-	queryManager *Q.QueryManager
-	parser *ts.Parser
-	tree *ts.Tree
-	root *ts.Node
-	tagAliases map[string]string
-	importBindingToSpecMap map[string]struct{name string; spec string}
+	logger                     *LogCtx
+	file                       string
+	code                       []byte
+	source                     string
+	queryManager               *Q.QueryManager
+	parser                     *ts.Parser
+	tree                       *ts.Tree
+	root                       *ts.Node
+	tagAliases                 map[string]string
+	importBindingToSpecMap     map[string]struct{ name string; spec string }
 	styleImportsBindingToSpecMap map[string]string
-	classNamesAdded S.Set[string]
-	module *M.Module
-	errors error
+	classNamesAdded            S.Set[string]
+	module                     *M.Module
+	errors                     error
 }
 
 func NewModuleProcessor(
@@ -108,19 +108,19 @@ func NewModuleProcessor(
 	root := tree.RootNode()
 
 	return ModuleProcessor{
-		queryManager: queryManager,
-		file: file,
-		logger: logger,
-		code: code,
-		source: string(code),
-		parser: parser,
-		tree: tree,
-		root: root,
-		module: module,
-		tagAliases: make(map[string]string),
-		importBindingToSpecMap: make(map[string]struct{name string; spec string}),
+		queryManager:               queryManager,
+		file:                       file,
+		logger:                     logger,
+		code:                       code,
+		source:                     string(code),
+		parser:                     parser,
+		tree:                       tree,
+		root:                       root,
+		module:                     module,
+		tagAliases:                 make(map[string]string),
+		importBindingToSpecMap:     make(map[string]struct{ name string; spec string }),
 		styleImportsBindingToSpecMap: make(map[string]string),
-		classNamesAdded: S.NewSet[string](),
+		classNamesAdded:            S.NewSet[string](),
 	}
 }
 
@@ -128,7 +128,7 @@ func (mp *ModuleProcessor) step(label string, indent int, fn func()) {
 	start := time.Now()
 	fn()
 	duration := time.Since(start)
-	mp.logger.TimedLog(indent * 2, label, duration)
+	mp.logger.TimedLog(indent*2, label, duration)
 }
 
 func (mp *ModuleProcessor) Close() {
@@ -168,7 +168,7 @@ func (mp *ModuleProcessor) processImports() {
 		original := captures["import.name"][0].Text
 		binding := captures["import.binding"][0].Text
 		spec := captures["import.spec"][0].Text
-		mp.importBindingToSpecMap[binding] = struct{name string; spec string}{original, spec}
+		mp.importBindingToSpecMap[binding] = struct{ name string; spec string }{original, spec}
 	}
 }
 
@@ -262,12 +262,11 @@ func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsM
 	styleStrings, hasStrings := captures["style.string"]
 	if hasBindings || hasStrings {
 		qm, err := Q.NewQueryMatcher(mp.queryManager, "css", "cssCustomProperties")
-		parser := ts.NewParser()
-		defer parser.Close()
-		parser.SetLanguage(Q.Languages.Css)
 		if err != nil {
 			return nil, err
 		}
+		parser := Q.GetCSSParser()
+		defer Q.PutCSSParser(parser)
 		if hasBindings {
 			for _, binding := range bindings {
 				spec, ok := mp.styleImportsBindingToSpecMap[binding.Text]
@@ -342,20 +341,20 @@ func (mp *ModuleProcessor) processDeclarations() {
 		if exportNodes, ok := captures["export"]; (!ok || len(exportNodes) <= 0) {
 			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{
 				Capture: "export",
-				Query: "declarations",
+				Query:   "declarations",
 			})
 		} else if declarationNameNodes, ok := captures["declaration.name"]; (!ok || len(declarationNameNodes) <= 0) {
 			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{
 				Capture: "declaration.name",
-				Query: "declarations",
+				Query:   "declarations",
 			})
 		} else {
 			declaration := declarationNameNodes[0]
 			export := &M.JavaScriptExport{
-				Kind: "js",
-				Name: declaration.Text,
+				Kind:        "js",
+				Name:        declaration.Text,
 				Declaration: M.NewReference(declaration.Text, "", mp.file),
-				StartByte: declaration.StartByte,
+				StartByte:   declaration.StartByte,
 			}
 			mp.module.Exports = append(mp.module.Exports, export)
 		}
@@ -366,12 +365,12 @@ func (mp *ModuleProcessor) processDeclarations() {
 		if ceNodes, ok := captures["ce"]; (!ok || len(ceNodes) <= 0) {
 			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{
 				Capture: "ce",
-				Query: "declarations",
+				Query:   "declarations",
 			})
 		} else if tagNameNodes, ok := captures["ce.tagName"]; (!ok || len(tagNameNodes) <= 0) {
-			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{ Capture: "ce.tagName", Query: "declarations" })
+			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{Capture: "ce.tagName", Query: "declarations"})
 		} else if classNameNodes, ok := captures["ce.className"]; (!ok || len(classNameNodes) <= 0) {
-			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{ Capture: "ce.className", Query: "declarations" })
+			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{Capture: "ce.className", Query: "declarations"})
 		} else {
 			tagName := tagNameNodes[0].Text
 			className := classNameNodes[0].Text
@@ -432,4 +431,3 @@ func (mp *ModuleProcessor) processDeclarations() {
 		return int(a.GetStartByte() - b.GetStartByte())
 	})
 }
-

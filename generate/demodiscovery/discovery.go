@@ -10,7 +10,6 @@ import (
 	C "bennypowers.dev/cem/cmd/config"
 	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
-	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
 func extractDemoDescription(path string) (string, error) {
@@ -18,9 +17,8 @@ func extractDemoDescription(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	parser := ts.NewParser()
-	defer parser.Close()
-	parser.SetLanguage(Q.Languages.Html)
+	parser := Q.GetHTMLParser()
+	defer Q.PutHTMLParser(parser)
 	tree := parser.Parse(code, nil)
 	defer tree.Close()
 	root := tree.RootNode()

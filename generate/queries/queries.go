@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 
 	ts "github.com/tree-sitter/go-tree-sitter"
 	tsCss "github.com/tree-sitter/tree-sitter-css/bindings/go"
@@ -23,24 +24,113 @@ var queries embed.FS
 
 type NoCaptureError struct {
 	Capture string
-	Query string
+	Query   string
 }
 
 func (e *NoCaptureError) Error() string {
-  return fmt.Sprintf("No nodes for capture %s in query %s", e.Capture, e.Query)
+	return fmt.Sprintf("No nodes for capture %s in query %s", e.Capture, e.Query)
 }
 
-var Languages = struct{
-	Typescript *ts.Language
-	Jsdoc *ts.Language
-	Css *ts.Language
-	Html *ts.Language
+// ---- Languages struct (now private) ----
+var languages = struct {
+	typescript *ts.Language
+	jsdoc      *ts.Language
+	css        *ts.Language
+	html       *ts.Language
 }{
 	ts.NewLanguage(tsTypescript.LanguageTypescript()),
 	ts.NewLanguage(tsJsdoc.Language()),
 	ts.NewLanguage(tsCss.Language()),
 	ts.NewLanguage(tsHtml.Language()),
 }
+
+// ---- Parser Pooling Section ----
+
+// HTML parser pool
+var htmlParserPool = sync.Pool{
+	New: func() any {
+		parser := ts.NewParser()
+		parser.SetLanguage(languages.html)
+		return parser
+	},
+}
+
+// CSS parser pool
+var cssParserPool = sync.Pool{
+	New: func() any {
+		parser := ts.NewParser()
+		parser.SetLanguage(languages.css)
+		return parser
+	},
+}
+
+// JSDoc parser pool
+var jsdocParserPool = sync.Pool{
+	New: func() any {
+		parser := ts.NewParser()
+		parser.SetLanguage(languages.jsdoc)
+		return parser
+	},
+}
+
+// TypeScript parser pool
+var typescriptParserPool = sync.Pool{
+	New: func() any {
+		parser := ts.NewParser()
+		parser.SetLanguage(languages.typescript)
+		return parser
+	},
+}
+
+// GetHTMLParser returns a pooled HTML parser.
+// Always call PutHTMLParser when done.
+func GetHTMLParser() *ts.Parser {
+	return htmlParserPool.Get().(*ts.Parser)
+}
+
+// PutHTMLParser returns a parser to the HTML pool.
+func PutHTMLParser(parser *ts.Parser) {
+	parser.Reset()
+	htmlParserPool.Put(parser)
+}
+
+// GetCSSParser returns a pooled CSS parser.
+// Always call PutCSSParser when done.
+func GetCSSParser() *ts.Parser {
+	return cssParserPool.Get().(*ts.Parser)
+}
+
+// PutCSSParser returns a parser to the CSS pool.
+func PutCSSParser(parser *ts.Parser) {
+	parser.Reset()
+	cssParserPool.Put(parser)
+}
+
+// GetJSDocParser returns a pooled JSDoc parser.
+// Always call PutJSDocParser when done.
+func GetJSDocParser() *ts.Parser {
+	return jsdocParserPool.Get().(*ts.Parser)
+}
+
+// PutJSDocParser returns a parser to the JSDoc pool.
+func PutJSDocParser(parser *ts.Parser) {
+	parser.Reset()
+	jsdocParserPool.Put(parser)
+}
+
+// GetTypeScriptParser returns a singleton TypeScript parser.
+// Do not Close() this parser.
+func GetTypeScriptParser() *ts.Parser {
+	return typescriptParserPool.Get().(*ts.Parser)
+}
+
+// PutTypeScriptParser returns a parser to the TypeScript pool.
+func PutTypeScriptParser(parser *ts.Parser) {
+	parser.Reset()
+	typescriptParserPool.Put(parser)
+}
+
+// ---- End Parser Pooling Section ----
 
 type QueryManagerI interface {
 	Close()
@@ -49,17 +139,17 @@ type QueryManagerI interface {
 
 type QueryManager struct {
 	typescript map[string]*ts.Query
-	jsdoc map[string]*ts.Query
-	css map[string]*ts.Query
-	html map[string]*ts.Query
+	jsdoc      map[string]*ts.Query
+	css        map[string]*ts.Query
+	html       map[string]*ts.Query
 }
 
 func NewQueryManager() (*QueryManager, error) {
 	qm := &QueryManager{
 		typescript: make(map[string]*ts.Query),
-		jsdoc: make(map[string]*ts.Query),
-		css: make(map[string]*ts.Query),
-		html: make(map[string]*ts.Query),
+		jsdoc:      make(map[string]*ts.Query),
+		css:        make(map[string]*ts.Query),
+		html:       make(map[string]*ts.Query),
 	}
 
 	data, err := queries.ReadDir(".")
@@ -75,7 +165,6 @@ func NewQueryManager() (*QueryManager, error) {
 				log.Fatal(err) // it's ok to die here because these queries are compiled in via embed
 			}
 			for _, entry := range data {
-				// todo: jsdoc/*.scm, typescript/*.scm, etc
 				if !entry.IsDir() {
 					file := entry.Name()
 					queryName := strings.Split(filepath.Base(file), ".")[0]
@@ -87,21 +176,20 @@ func NewQueryManager() (*QueryManager, error) {
 					var tsLang *ts.Language
 					switch language {
 					case "typescript":
-						tsLang = Languages.Typescript
+						tsLang = languages.typescript
 					case "jsdoc":
-						tsLang = Languages.Jsdoc
+						tsLang = languages.jsdoc
 					case "css":
-						tsLang = Languages.Css
+						tsLang = languages.css
 					case "html":
-						tsLang = Languages.Html
+						tsLang = languages.html
 					}
 					if tsLang == nil {
-						// it's ok to die here because these queries are compiled in via embed
 						log.Fatalf("unknown language %s", language)
 					}
 					query, qerr := ts.NewQuery(tsLang, queryText)
 					if qerr != nil {
-						log.Fatal(qerr) // it's ok to die here because these queries are compiled in via embed
+						log.Fatal(qerr)
 					}
 					switch language {
 					case "typescript":
@@ -156,21 +244,21 @@ func (qm *QueryManager) getQuery(queryName string, language string) (*ts.Query, 
 }
 
 type ParentNodeCaptures struct {
-	NodeId uintptr;
+	NodeId   uintptr
 	Captures CaptureMap
 }
 
 type CaptureInfo struct {
-	NodeId int;
-	Text string;
-	StartByte uint;
-	EndByte uint;
+	NodeId    int
+	Text      string
+	StartByte uint
+	EndByte   uint
 }
 
 type CaptureMap = map[string][]CaptureInfo
 
 type QueryMatcher struct {
-	query *ts.Query
+	query  *ts.Query
 	cursor *ts.QueryCursor
 }
 
@@ -191,7 +279,6 @@ func (qm QueryMatcher) SetByteRange(start uint, end uint) {
 	qm.cursor.SetByteRange(start, end)
 }
 
-
 func NewQueryMatcher(
 	manager *QueryManager,
 	language string,
@@ -202,13 +289,13 @@ func NewQueryMatcher(
 		return nil, error
 	}
 	cursor := ts.NewQueryCursor()
-	qm := QueryMatcher{ query, cursor }
+	qm := QueryMatcher{query, cursor}
 	return &qm, nil
 }
 
 func (q QueryMatcher) AllQueryMatches(node *ts.Node, text []byte) iter.Seq[*ts.QueryMatch] {
 	qm := q.cursor.Matches(q.query, node, text)
-	return func(yield func (qm *ts.QueryMatch) bool) {
+	return func(yield func(qm *ts.QueryMatch) bool) {
 		for {
 			m := qm.Next()
 			if m == nil {
@@ -235,12 +322,10 @@ func (q QueryMatcher) AllQueryMatches(node *ts.Node, text []byte) iter.Seq[*ts.Q
 func (q *QueryMatcher) ParentCaptures(root *ts.Node, code []byte, parentCaptureName string) iter.Seq[CaptureMap] {
 	names := q.query.CaptureNames()
 
-	type pgroup struct { capMap CaptureMap; startByte uint }
+	type pgroup struct{ capMap CaptureMap; startByte uint }
 
-	// Group matches by parent node id
 	parentGroups := make(map[int]pgroup)
 
-	// Collect all matches
 	for match := range q.AllQueryMatches(root, code) {
 		var parentNode *ts.Node
 		for _, cap := range match.Captures {
@@ -251,7 +336,7 @@ func (q *QueryMatcher) ParentCaptures(root *ts.Node, code []byte, parentCaptureN
 			}
 		}
 		if parentNode == nil {
-			continue // skip matches without parent
+			continue
 		}
 		pid := int(parentNode.Id())
 		startByte := parentNode.StartByte()
@@ -260,15 +345,14 @@ func (q *QueryMatcher) ParentCaptures(root *ts.Node, code []byte, parentCaptureN
 			capmap := make(CaptureMap)
 			parentGroups[pid] = pgroup{capmap, startByte}
 		}
-		// Collect all captures for this match
 		for _, cap := range match.Captures {
 			name := names[cap.Index]
 			text := cap.Node.Utf8Text(code)
 			ci := CaptureInfo{
-				NodeId: int(cap.Node.Id()),
-				Text:   text,
+				NodeId:    int(cap.Node.Id()),
+				Text:      text,
 				StartByte: cap.Node.StartByte(),
-				EndByte: cap.Node.EndByte(),
+				EndByte:   cap.Node.EndByte(),
 			}
 			if _, hasMap := parentGroups[pid].capMap[name]; !hasMap {
 				parentGroups[pid].capMap[name] = make([]CaptureInfo, 0)
@@ -282,7 +366,6 @@ func (q *QueryMatcher) ParentCaptures(root *ts.Node, code []byte, parentCaptureN
 	}
 
 	sorted := make([]pgroup, 0)
-
 	for _, group := range parentGroups {
 		sorted = append(sorted, group)
 	}
@@ -291,7 +374,6 @@ func (q *QueryMatcher) ParentCaptures(root *ts.Node, code []byte, parentCaptureN
 		return int(a.startByte) - int(b.startByte)
 	})
 
-	// Iterator over aggregated groups
 	return func(yield func(CaptureMap) bool) {
 		for _, group := range sorted {
 			if !yield(group.capMap) {
@@ -301,10 +383,9 @@ func (q *QueryMatcher) ParentCaptures(root *ts.Node, code []byte, parentCaptureN
 	}
 }
 
-func GetDescendantById(root *ts.Node, id int) (*ts.Node) {
+func GetDescendantById(root *ts.Node, id int) *ts.Node {
 	c := root.Walk()
 	defer c.Close()
-	// get the descendant with the id
 	var find func(node *ts.Node) *ts.Node
 	find = func(node *ts.Node) *ts.Node {
 		if int(node.Id()) == id {
