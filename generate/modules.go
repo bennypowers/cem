@@ -131,7 +131,6 @@ func (mp *ModuleProcessor) step(label string, indent int, fn func()) {
 
 func (mp *ModuleProcessor) Close() {
 	mp.tree.Close()
-	mp.parser.Close()
 }
 
 func (mp *ModuleProcessor) Collect() (module *M.Module, tagAliases map[string]string, errors error) {
