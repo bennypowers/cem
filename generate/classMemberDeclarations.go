@@ -5,11 +5,9 @@ import (
 	"regexp"
 	"strings"
 
-	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/generate/queries"
+	M "bennypowers.dev/cem/manifest"
 	S "bennypowers.dev/cem/set"
-
-	"dario.cat/mergo"
 
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
@@ -39,6 +37,11 @@ var ignoredInstanceMethodsLit = S.NewSet(
   "getUpdateComplete",
   "updated",
   "willUpdate",
+)
+
+var (
+	numberLiteralRegexp = regexp.MustCompile(`^[\d._]+$`)
+	stringLiteralRegexp = regexp.MustCompile(`^('|")`)
 )
 
 func isIgnoredMember(memberName string, superclass string, isStatic bool) bool {
@@ -169,10 +172,16 @@ func createClassFieldFromFieldMatch(
 ) (err error, field M.CustomElementField) {
 	_, readonly := captures["field.readonly"]
 
-	field.Kind = "field"
-	field.Static = isStatic
-	field.Name = fieldName
-	field.Readonly = readonly
+	field = M.CustomElementField{
+		ClassField: M.ClassField{
+			Kind:    "field",
+			Static:  isStatic,
+			PropertyLike: M.PropertyLike{
+				Name:    fieldName,
+				Readonly: readonly,
+			},
+		},
+	}
 
 	amendFieldTypeWithCaptures(captures, &field.ClassField)
 	amendFieldPrivacyWithCaptures(captures, &field.ClassField)
@@ -180,18 +189,13 @@ func createClassFieldFromFieldMatch(
 	for _, x := range captures["field.initializer"] {
 		field.Default = strings.ReplaceAll(x.Text, "\n", "\\n")
 		if field.Type == nil {
-			if (field.Default == "true" || field.Default == "false") {
-				field.Type = &M.Type{
-					Text: "boolean",
-				}
-			} else if regexp.MustCompile(`^[\d._]+$`).MatchString(field.Default) {
-				field.Type = &M.Type{
-					Text: "number",
-				}
-			} else if regexp.MustCompile(`^('|")`).MatchString(field.Default) {
-				field.Type = &M.Type{
-					Text: "string",
-				}
+			switch {
+			case field.Default == "true" || field.Default == "false":
+				field.Type = &M.Type{Text: "boolean"}
+			case numberLiteralRegexp.MatchString(field.Default):
+				field.Type = &M.Type{Text: "number"}
+			case stringLiteralRegexp.MatchString(field.Default):
+				field.Type = &M.Type{Text: "string"}
 			}
 		}
 	}
@@ -204,8 +208,7 @@ func createClassFieldFromFieldMatch(
 	}
 
 	amendFieldWithJsdocCaptures(queryManager, captures, &field.ClassField)
-
-	return err, field
+	return nil, field
 }
 
 func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
@@ -223,185 +226,152 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 	defer matcher.Close()
 	matcher.SetByteRange(classDeclarationNode.ByteRange())
 
-	staticsSet := S.NewSet[string]()
-	fieldsSet := S.NewSet[string]()
-	gettersSet := S.NewSet[string]()
-	settersSet := S.NewSet[string]()
-	methodsSet := S.NewSet[string]()
-
-	// to collate first instance of accessor pair / accessor
-	accessorIndices := make(map[string]int)
-
-	for captures := range matcher.ParentCaptures(mp.root, mp.code, "accessor") {
-		_, isStatic := captures["field.static"]
-		fieldName := captures["field.name"][0].Text
-		if (isIgnoredMember(fieldName, superclass, isStatic)) {
-			continue
-		}
-		key := className + "." + fieldName
-		if !gettersSet.Has(key) && !settersSet.Has(key) {
-			accessorIndices[key] = len(members)
-		}
-
-		if gettersSet.Has(key) && settersSet.Has(key) {
-			continue
-		}
-
-		fieldsSet.Add(key)
-		accessorKind := captures["field.accessor"][0].Text
-		var hasPair bool
-		switch accessorKind {
-		case "get":
-			hasPair = settersSet.Has(key)
-			if gettersSet.Has(key) {
-				continue
-			} else {
-				gettersSet.Add(key)
-			}
-		case "set":
-			hasPair = gettersSet.Has(key)
-			if settersSet.Has(key) {
-				continue
-			} else {
-				settersSet.Add(key)
-			}
-		}
-		index := accessorIndices[key]
-		if hasPair {
-			// field is a *cem.CustomElementField
-			isReadonly := false
-			error, field := createClassFieldFromAccessorMatch(fieldName, isStatic, isReadonly, superclass, captures, mp.queryManager)
-			if error != nil {
-				errs = errors.Join(errs, error)
-			} else {
-				item := members[index].(M.CustomElementField)
-				item.Readonly = false
-				err := mergo.Merge(&item, field, mergo.WithOverride)
-				if err != nil {
-					err = errors.Join(err, error)
-				} else {
-					members[index] = item
-				}
-			}
-		} else {
-			isReadonly := accessorKind == "get"
-			error, field := createClassFieldFromAccessorMatch(fieldName, isStatic, isReadonly, superclass, captures, mp.queryManager)
-			if error != nil {
-				errs = errors.Join(errs, error)
-			} else {
-				members = append(members, field)
-			}
-		}
+	// Key: className + "." + fieldName + "." + kind + ".static"
+	type memberKey struct {
+		name     string
+		kind     string // field, accessor, method
+		static   bool
 	}
+	memberMap := make(map[memberKey]M.ClassMember)
+	accessorPairIndices := make(map[string]memberKey) // for merging get/set
 
-	for captures := range matcher.ParentCaptures(mp.root, mp.code, "field") {
-		_, isStatic := captures["field.static"]
-		fieldName := captures["field.name"][0].Text
-		if (isIgnoredMember(fieldName, superclass, isStatic)) {
+	for captures := range matcher.ParentCaptures(mp.root, mp.code, "member") {
+		var (
+			memberName string
+			isStatic   bool
+			kind       string
+		)
+
+		// Identify kind and key
+		switch {
+		case captures["field"] != nil:
+			kind = "field"
+			memberName = captures["field.name"][0].Text
+			isStatic = len(captures["field.static"]) > 0
+		case captures["accessor"] != nil:
+			kind = "accessor"
+			memberName = captures["field.name"][0].Text
+			isStatic = len(captures["field.static"]) > 0
+		case captures["method"] != nil:
+			kind = "method"
+			memberName = captures["method.name"][0].Text
+			isStatic = len(captures["method.static"]) > 0
+		default:
 			continue
 		}
+		if isIgnoredMember(memberName, superclass, isStatic) {
+			continue
+		}
+		key := memberKey{name: memberName, kind: kind, static: isStatic}
 
-		fieldNodes, ok := captures["field"]
-		if ok && len(fieldNodes) > 0  {
-			fieldNodeId := fieldNodes[0].NodeId
-			fieldNode := Q.GetDescendantById(mp.root, fieldNodeId)
-			if fieldNode != nil {
-				valueNode := fieldNode.ChildByFieldName("value")
-				if valueNode != nil {
-					if valueNode.GrammarName() == "arrow_function" {
-						continue
-					}
+		switch kind {
+		case "field":
+			error, field := createClassFieldFromFieldMatch(memberName, isStatic, superclass, captures, mp.queryManager)
+			if error != nil {
+				errs = errors.Join(errs, error)
+			} else {
+				memberMap[key] = field
+			}
+		case "accessor":
+			accessorKind := captures["field.accessor"][0].Text // "get" or "set"
+			// Merge get/set into one field for same name+static
+			pairKeyStr := className + "." + memberName + "." + isStaticToTypeFlag(isStatic)
+			var isReadonly bool = accessorKind == "get"
+
+			error, field := createClassFieldFromAccessorMatch(memberName, isStatic, isReadonly, superclass, captures, mp.queryManager)
+			if error != nil {
+				errs = errors.Join(errs, error)
+				continue
+			}
+
+			// If we've seen the other half of the pair, merge readonly
+			if prevKey, ok := accessorPairIndices[pairKeyStr]; ok {
+				existing := memberMap[prevKey].(M.CustomElementField)
+				existing.Readonly = false // If both get/set, not readonly
+				// Merge doc/types/join
+				if field.Type != nil && (existing.Type == nil || existing.Type.Text == "") {
+					existing.Type = field.Type
 				}
-			}
-		}
-
-		key := className + "." + fieldName
-		if (isStatic && !staticsSet.Has(key)) {
-			staticsSet.Add(key)
-			error, field := createClassFieldFromFieldMatch(fieldName, isStatic, superclass, captures, mp.queryManager)
-			if error != nil {
-				errs = errors.Join(errs, error)
+				if field.Privacy != "" && existing.Privacy == "" {
+					existing.Privacy = field.Privacy
+				}
+				// Merge jsdoc, attribute, etc. as needed
+				if field.PropertyLike.Description != "" && existing.PropertyLike.Description == "" {
+					existing.PropertyLike.Description = field.PropertyLike.Description
+				}
+				memberMap[prevKey] = existing
 			} else {
-				members = append(members, field)
+				memberMap[key] = field
+				accessorPairIndices[pairKeyStr] = key
 			}
-		} else if (!isStatic && !fieldsSet.Has(key)) {
-			fieldsSet.Add(key)
-			error, field := createClassFieldFromFieldMatch(fieldName, isStatic, superclass, captures, mp.queryManager)
-			if error != nil {
-				errs = errors.Join(errs, error)
-			} else {
-				members = append(members, field)
+		case "method":
+			method := M.ClassMethod{Kind: "method"}
+			method.Name = memberName
+			method.Static = isStatic
+
+			// Privacy
+			if nodes, ok := captures["method.privacy"]; ok && len(nodes) > 0 {
+				method.Privacy = M.Privacy(nodes[0].Text)
 			}
-		}
-	}
 
-	for captures := range matcher.ParentCaptures(mp.root, mp.code, "method") {
-		method := M.ClassMethod{Kind: "method"}
-		methodNames, ok := captures["method.name"]
-		methodName := methodNames[0]
-		if ok {
-			method.Name = methodName.Text
-		}
-
-		methodsSet.Add(method.Name)
-
-		privacyNodes, ok := captures["method.privacy"]
-		if ok && len(privacyNodes) > 0 {
-			privacy := privacyNodes[0]
-			method.Privacy = M.Privacy(privacy.Text)
-		}
-
-		_, isStatic := captures["method.static"]
-		method.Static = isStatic
-
-		params, hasParams := captures["params"]
-		if hasParams && len(params) > 0 {
-			for i := range params {
-				_, isRest := captures["param.rest"]
-				_, hasName := captures["param.name"]
-				if hasName {
-					parameter := M.Parameter{
-						Rest: isRest,
-						PropertyLike: M.PropertyLike{
-							Name: captures["param.name"][i].Text,
-						},
+			// Parameters
+			if params, hasParams := captures["params"]; hasParams && len(params) > 0 {
+				for i := range params {
+					var isRest bool
+					if _, ok := captures["param.rest"]; ok {
+						isRest = true
 					}
-					_, hasType := captures["param.type"]
-					if hasType {
-						parameter.Type = &M.Type{
-							Text: captures["param.type"][i].Text,
+					if _, hasName := captures["param.name"]; hasName {
+						parameter := M.Parameter{
+							Rest: isRest,
+							PropertyLike: M.PropertyLike{
+								Name: captures["param.name"][i].Text,
+							},
 						}
+						if _, hasType := captures["param.type"]; hasType {
+							parameter.Type = &M.Type{
+								Text: captures["param.type"][i].Text,
+							}
+						}
+						method.Parameters = append(method.Parameters, parameter)
 					}
-					method.Parameters = append(method.Parameters, parameter)
 				}
 			}
-		}
 
-		returnNodes, ok := captures["method.returns"]
-		if ok && len(returnNodes) > 0 {
-			returns := returnNodes[0]
-			method.Return = &M.Return{
-				Type: &M.Type{
-					Text: returns.Text,
-				},
-			}
-		}
-
-		jsdocs, ok := captures["member.jsdoc"]
-		if ok {
-			for _, jsdoc := range jsdocs {
-				merr, info := NewMethodInfo(jsdoc.Text, mp.queryManager)
-				if merr != nil {
-					errs = errors.Join(merr)
-				} else {
-					info.MergeToFunctionLike(&method.FunctionLike)
+			// Return type
+			if returns, ok := captures["method.returns"]; ok && len(returns) > 0 {
+				method.Return = &M.Return{
+					Type: &M.Type{
+						Text: returns[0].Text,
+					},
 				}
 			}
+			// JSDoc
+			if jsdocs, ok := captures["member.jsdoc"]; ok {
+				for _, jsdoc := range jsdocs {
+					merr, info := NewMethodInfo(jsdoc.Text, mp.queryManager)
+					if merr != nil {
+						errs = errors.Join(merr)
+					} else {
+						info.MergeToFunctionLike(&method.FunctionLike)
+					}
+				}
+			}
+			memberMap[key] = method
 		}
+	}
 
-		members = append(members, method)
+	// Collect in stable order (optional: sort if you want)
+	for _, member := range memberMap {
+		members = append(members, member)
 	}
 
 	return members, errs
 }
 
+func isStaticToTypeFlag(b bool) string {
+	if b {
+		return "static"
+	}
+	return "instance"
+}

@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	C "bennypowers.dev/cem/cmd/config"
 	"github.com/pterm/pterm"
 )
 
@@ -19,24 +20,22 @@ type LogCtx struct {
 	Start    time.Time
 	Duration time.Duration
 	mu       sync.Mutex
+	Section  *pterm.SectionPrinter
 }
 
-func NewLogCtx(file string) *LogCtx {
+func NewLogCtx(file string, cfg *C.CemConfig) *LogCtx {
 	buf := &bytes.Buffer{}
-	// Stream logs both to os.Stdout and to buffer (for later bar chart/log review)
-	logger := pterm.DefaultLogger.
-		WithWriter(buf).
-		WithTime(false).
-		WithLevel(pterm.LogLevelError).
-		WithLevel(pterm.LogLevelWarn).
-		WithLevel(pterm.LogLevelDebug).
-		WithLevel(pterm.LogLevelInfo).
-		WithLevel(pterm.LogLevelTrace)
+	level := pterm.LogLevelWarn
+	if cfg.Verbose {
+		level = pterm.LogLevelTrace
+	}
+	logger := pterm.DefaultLogger.WithWriter(buf).WithTime(false).WithLevel(level)
 	return &LogCtx{
 		File:   file,
 		Buffer: buf,
 		Logger: logger,
 		Start:  time.Now(),
+		Section: pterm.DefaultSection.WithWriter(buf),
 	}
 }
 
@@ -45,9 +44,17 @@ func (lc *LogCtx) Trace(msg string, args ...any)  { lc.Logger.Trace(fmt.Sprintf(
 func (lc *LogCtx) Debug(msg string, args ...any)  { lc.Logger.Debug(fmt.Sprintf(msg, args...)) }
 func (lc *LogCtx) Info(msg string, args ...any)   { lc.Logger.Info(fmt.Sprintf(msg, args...)) }
 func (lc *LogCtx) Error(msg string, args ...any)  { lc.Logger.Error(fmt.Sprintf(msg, args...)) }
-func (lc *LogCtx) Warn(msg string, args ...any)  { lc.Logger.Warn(fmt.Sprintf(msg, args...)) }
+func (lc *LogCtx) Warn(msg string, args ...any)   { lc.Logger.Warn(fmt.Sprintf(msg, args...)) }
+
+// IndentedLog prints a log message with a given indent and label, used for block-style tracing.
+func (lc *LogCtx) IndentedLog(indent int, label string, msg string, args ...any) {
+	prefix := strings.Repeat("  ", indent)
+	lc.Trace("%s%s: %s", prefix, label, fmt.Sprintf(msg, args...))
+}
+
+// TimedLog prints an indented log for a block finished in some duration.
 func (lc *LogCtx) TimedLog(indent int, label string, duration time.Duration) {
-	lc.Trace("%s%s: finished in %s", strings.Repeat("  ", indent), label, ColorizeDuration(duration).Sprint(duration))
+	lc.IndentedLog(indent, label, "finished in %s", ColorizeDuration(duration).Sprint(duration))
 }
 
 // To be called at the end of processing

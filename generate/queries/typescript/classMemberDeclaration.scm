@@ -32,7 +32,7 @@
     type: (type_annotation (_) @field.type)*
     ; todo: if the field is initialized it should quit if there's params
     ; but we've observed that arrow functions are still processed as fields
-    value: (_ !parameters)* @field.initializer) @field)
+    value: (_ !parameters)* @field.initializer) @field) @member
 
 (method_definition ; class constructor properties (typescript only)
   ; example : constructor (publid field: Type) {}
@@ -42,7 +42,7 @@
                 (_
                   (accessibility_modifier) @field.privacy
                   pattern: (identifier) @field.name
-                  type: (type_annotation (_) @field.type))) @field))
+                  type: (type_annotation (_) @field.type))) @field @member))
 
 ( ; accessors and accessor pairs
   ; @examples:
@@ -87,7 +87,7 @@
     parameters: (formal_parameters (_
                                      pattern: (identifier) @param.name
                                      type: (type_annotation (_) @param.type)))?
-    return_type: (type_annotation (_) @field.type)?)) @accessor
+    return_type: (type_annotation (_) @field.type)?)) @accessor @member
 
 ( ; class methods
   ; @examples:
@@ -121,7 +121,7 @@
      "updated"
      "willUpdated"
      "getUpdateComplete")
-    ) @method)
+    ) @method) @member
 
 ( ; class arrow function field methods
   ; @examples:
@@ -152,5 +152,4 @@
        "update"
        "updated"
        "willUpdated"
-       "getUpdateComplete")) @method))
-
+       "getUpdateComplete")) @method)) @member
