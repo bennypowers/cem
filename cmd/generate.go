@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	G "bennypowers.dev/cem/generate"
 	DS "github.com/bmatcuk/doublestar"
@@ -42,6 +43,7 @@ func init() {
 		},
 		RunE: func(cmd *cobra.Command, args []string) (errs error) {
 			var err error
+			start := time.Now()
 			CemConfig.Generate.Files, err = expand(append(CemConfig.Generate.Files, args...))
 			if err != nil {
 				errs = errors.Join(errs, err)
@@ -61,10 +63,11 @@ func init() {
 				if err = os.WriteFile(CemConfig.Generate.Output, []byte(*manifest + "\n"), 0666); err != nil {
 					errs = errors.Join(errs, err)
 				} else {
-					pterm.Success.Print("Wrote manifest to ", CemConfig.Generate.Output)
+					end := time.Since(start)
+					pterm.Success.Printf("Wrote manifest to %s in %s", CemConfig.Generate.Output, G.ColorizeDuration(end).Sprint(end))
 				}
 			} else {
-				fmt.Println(*manifest)
+				fmt.Println(*manifest + "\n")
 			}
 			return errs
 		},

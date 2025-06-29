@@ -3,7 +3,6 @@ package generate
 import (
 	"cmp"
 	"errors"
-	"path/filepath"
 	"runtime"
 	"slices"
 	"sync"
@@ -79,9 +78,7 @@ func process(
 	qm *Q.QueryManager,
 ) (modules []M.Module, logs []*LogCtx, aliases map[string]string, errs error) {
 	numWorkers := runtime.NumCPU()
-	if cfg.Verbose {
-		pterm.Info.Printf("Starting Generation with %d workers\n", numWorkers)
-	}
+	pterm.Info.Printf("Starting Generation with %d workers\n", numWorkers)
 	var wg sync.WaitGroup
 	var aliasesMu sync.Mutex
 	var modulesMu sync.Mutex
@@ -104,14 +101,11 @@ func process(
 		go func() {
 			defer wg.Done()
 			for file := range jobsChan {
-				module, tagAliases, logCtx, err := processModule(file, qm)
-
-				pterm.DefaultSection.WithLevel(2).Println("Module: " + filepath.Base(logCtx.File))
-				pterm.Println(logCtx.Buffer.String())
+				module, tagAliases, logger, err := processModule(file, cfg, qm)
 
 				// Save log for later bar chart (always save duration for bar chart)
 				logsMu.Lock()
-				logs = append(logs, logCtx)
+				logs = append(logs, logger)
 				logsMu.Unlock()
 
 				// Write to aliases in a threadsafe manner
@@ -134,7 +128,7 @@ func process(
 
 	wg.Wait()
 
-	if len(errsList) > 0 {
+if len(errsList) > 0 {
 		errs = errors.Join(errsList...)
 	}
 
@@ -143,12 +137,17 @@ func process(
 
 func processModule(
 	file string,
+	cfg *C.CemConfig,
 	qm *Q.QueryManager,
 ) (module *M.Module, tagAliases map[string]string, logCtx *LogCtx, errs error) {
 	parser := ts.NewParser()
 	parser.SetLanguage(Q.Languages.Typescript)
-	mp := NewModuleProcessor(file, parser, qm)
+	mp := NewModuleProcessor(file, parser, cfg, qm)
+	if cfg.Verbose {
+		mp.logger.Section.Printf("Module: %s", mp.logger.File)
+	}
 	module, tagAliases, err := mp.Collect()
+	pterm.Print(mp.logger.Buffer.String())
 	mp.Close()
 	return module, tagAliases, mp.logger, err
 }
@@ -220,7 +219,9 @@ func Generate(cfg *C.CemConfig) (manifest *string, errs error) {
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
-	RenderBarChart(logs)
+	if cfg.Verbose {
+		RenderBarChart(logs)
+	}
 	manifestStr, err := M.SerializeToString(&pkg)
 	if err != nil {
 		return nil, errors.Join(errs, err)

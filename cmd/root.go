@@ -18,6 +18,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
+	"os"
+	"path/filepath"
+
 	"bennypowers.dev/cem/cmd/config"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -67,11 +70,16 @@ func initConfig() {
 		} else {
 			pterm.DisableDebugMessages()
 		}
-		pterm.Info.Print("Using config file:", viper.ConfigFileUsed(), "\n")
+		cwd, err := os.Getwd()
+		if err != nil {
+			cwd = ""
+		}
+		cfgpath, err := filepath.Rel(cwd, viper.ConfigFileUsed())
+		pterm.Info.Print("Using config file: ", cfgpath, "\n")
 	}
 	// Bind to struct
 	if err := viper.Unmarshal(&CemConfig); err != nil {
-		pterm.Error.Println("Unable to decode into CemConfig struct:", err)
+		pterm.Error.Println("Unable to decode config:", err)
 	}
 }
 

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	C "bennypowers.dev/cem/cmd/config"
 	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
 	S "bennypowers.dev/cem/set"
@@ -89,11 +90,11 @@ type ModuleProcessor struct {
 func NewModuleProcessor(
 	file string,
 	parser *ts.Parser,
+	cfg *C.CemConfig,
 	queryManager *Q.QueryManager,
 ) ModuleProcessor {
 	module := M.NewModule(file)
-	logger := NewLogCtx(file)
-	logger.Info("Reading file %s", file)
+	logger := NewLogCtx(file, cfg)
 	code, err := os.ReadFile(file)
 	if err != nil {
 		logger.Error("ERROR reading file: %v", err)
@@ -125,7 +126,7 @@ func (mp *ModuleProcessor) step(label string, indent int, fn func()) {
 	start := time.Now()
 	fn()
 	duration := time.Since(start)
-	mp.logger.TimedLog(indent, label, duration)
+	mp.logger.TimedLog(indent * 2, label, duration)
 }
 
 func (mp *ModuleProcessor) Close() {
@@ -134,9 +135,9 @@ func (mp *ModuleProcessor) Close() {
 }
 
 func (mp *ModuleProcessor) Collect() (module *M.Module, tagAliases map[string]string, errors error) {
-	mp.step("Processing imports", 2, mp.processImports)
-	mp.step("Processing classes", 2, mp.processClasses)
-	mp.step("Processing declarations", 2, mp.processDeclarations)
+	mp.step("Processing imports", 0, mp.processImports)
+	mp.step("Processing classes", 0, mp.processClasses)
+	mp.step("Processing declarations", 0, mp.processDeclarations)
 	mp.logger.Finish()
 	if mp.errors != nil {
 		mp.logger.Error("ERROR processing module: %v", mp.errors)
@@ -188,12 +189,15 @@ func (mp *ModuleProcessor) processClasses() {
 			continue
 		}
 
+		mp.logger.IndentedLog(1, ColorizeClassName(className).Sprint(className), "")
+
+		// TODO: make a constructor with a reference to mp. call methods on ParsedClass
 		parsed := &ParsedClass{
 			Name:     className,
 			Captures: captures,
 		}
 
-		d, alias, err := mp.generateClassDeclaration(captures)
+		d, alias, err := mp.generateClassDeclaration(captures, className)
 		if err != nil {
 			mp.errors = errors.Join(mp.errors, err)
 			processed[className] = parsed
@@ -205,7 +209,7 @@ func (mp *ModuleProcessor) processClasses() {
 		// If it's a CustomElementDeclaration, handle styles
 		if ce, ok := d.(*M.CustomElementDeclaration); ok {
 			var props CssPropsMap
-			mp.step("Processing styles", 4, func() {
+			mp.step("Processing styles", 2, func() {
 				props, err = mp.processStyles(captures)
 				if err != nil {
 					mp.errors = errors.Join(mp.errors, err)
