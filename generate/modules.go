@@ -175,50 +175,74 @@ func (mp *ModuleProcessor) processClasses() {
 	}
 	defer qm.Close()
 
-	// class declarations
+	processed := make(map[string]*ParsedClass)
+
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "class") {
+		// Get class name up front
+		nameNodes, ok := captures["class.name"]
+		if !ok || len(nameNodes) == 0 {
+			continue
+		}
+		className := nameNodes[0].Text
+		if _, exists := processed[className]; exists {
+			continue
+		}
+
+		parsed := &ParsedClass{
+			Name:     className,
+			Captures: captures,
+		}
+
 		d, alias, err := mp.generateClassDeclaration(captures)
 		if err != nil {
 			mp.errors = errors.Join(mp.errors, err)
-		} else {
-			declaration, ok := d.(*M.ClassDeclaration)
-			if ok && !mp.classNamesAdded.Has(declaration.Name) {
-				mp.classNamesAdded.Add(declaration.Name)
-				mp.module.Declarations = append(mp.module.Declarations, declaration)
-			} else {
-				ce, ok := d.(*M.CustomElementDeclaration)
-				if ok && !mp.classNamesAdded.Has(ce.Name) {
-					mp.classNamesAdded.Add(ce.Name)
-					if alias != "" {
-						mp.tagAliases[ce.TagName] = alias
-					}
-					var props CssPropsMap
-					// get all style array or value bindings
-					mp.step("Processing styles", 4, func() {
-						props, err = mp.processStyles(captures)
-						if err != nil {
-							mp.errors = errors.Join(mp.errors, err)
-						}
-					})
-					// TODO: in order to be most correct here,
-					// we need to track not just the node's startbyte
-					// since that can come from multiple files
-					// instead, we need to track the startbyte of the node *in this file*
-					// which imports or declares that node, and group them
-					// such that if you import a style sheet at the top of the file
-					// then declare one with a css tagged literal later on in the file
-					// this list should first list the imported props, in order,
-					// then list those declared in the string, in order.
-					ce.CssProperties = append(ce.CssProperties, slices.Collect(maps.Values(props))...)
-					slices.SortStableFunc(ce.CssProperties, func(a M.CssCustomProperty, b M.CssCustomProperty) int {
-						if a.StartByte == b.StartByte {
-							return strings.Compare(a.Name, b.Name)
-						} else {
-							return int(a.StartByte - b.StartByte)
-						}
-					})
-					mp.module.Declarations = append(mp.module.Declarations, ce)
+			processed[className] = parsed
+			continue
+		}
+		parsed.CEMDeclaration = d
+		parsed.Alias = alias
+
+		// If it's a CustomElementDeclaration, handle styles
+		if ce, ok := d.(*M.CustomElementDeclaration); ok {
+			var props CssPropsMap
+			mp.step("Processing styles", 4, func() {
+				props, err = mp.processStyles(captures)
+				if err != nil {
+					mp.errors = errors.Join(mp.errors, err)
 				}
+			})
+			parsed.CssProperties = slices.Collect(maps.Values(props))
+			// Sort as before
+			slices.SortStableFunc(parsed.CssProperties, func(a M.CssCustomProperty, b M.CssCustomProperty) int {
+				if a.StartByte == b.StartByte {
+					return strings.Compare(a.Name, b.Name)
+				}
+				return int(a.StartByte - b.StartByte)
+			})
+			ce.CssProperties = append(ce.CssProperties, parsed.CssProperties...)
+		}
+
+		processed[className] = parsed
+	}
+
+	// Downmix: add to declarations/tagAliases/classNamesAdded as needed
+	for _, parsed := range processed {
+		if parsed.CEMDeclaration == nil {
+			continue
+		}
+		switch decl := parsed.CEMDeclaration.(type) {
+		case *M.ClassDeclaration:
+			if !mp.classNamesAdded.Has(parsed.Name) {
+				mp.classNamesAdded.Add(parsed.Name)
+				mp.module.Declarations = append(mp.module.Declarations, decl)
+			}
+		case *M.CustomElementDeclaration:
+			if !mp.classNamesAdded.Has(parsed.Name) {
+				mp.classNamesAdded.Add(parsed.Name)
+				if parsed.Alias != "" {
+					mp.tagAliases[decl.TagName] = parsed.Alias
+				}
+				mp.module.Declarations = append(mp.module.Declarations, decl)
 			}
 		}
 	}
