@@ -10,6 +10,7 @@ import (
 
 	G "bennypowers.dev/cem/generate"
 	DS "github.com/bmatcuk/doublestar"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -60,7 +61,7 @@ func init() {
 				if err = os.WriteFile(CemConfig.Generate.Output, []byte(*manifest + "\n"), 0666); err != nil {
 					errs = errors.Join(errs, err)
 				} else {
-					fmt.Println("\nWrote manifest to", CemConfig.Generate.Output)
+					pterm.Success.Print("Wrote manifest to ", CemConfig.Generate.Output)
 				}
 			} else {
 				fmt.Println(*manifest)

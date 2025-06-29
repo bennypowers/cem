@@ -34,21 +34,22 @@ type GenerateConfig struct {
 }
 
 type CemConfig struct {
-	Generate GenerateConfig `mapstructure:"generate"`
+	// Generate command options
+	Generate GenerateConfig        `mapstructure:"generate"`
 	// Canonical public source control URL corresponding to project root on primary branch.
 	// e.g. https://github.com/bennypowers/cem/tree/main/
 	SourceControlRootUrl string    `mapstructure:"sourceControlRootUrl"`
+	// Verbose logging output
+	Verbose bool                   `mapstructure:"verbose"`
 }
 
 func LoadConfig(configPath string) (*CemConfig, error) {
     v := viper.New()
     v.SetConfigFile(configPath)
     v.SetConfigType("yaml")
-
     if err := v.ReadInConfig(); err != nil {
         return nil, err
     }
-
     var config CemConfig
     if err := v.Unmarshal(&config); err != nil {
         return nil, err

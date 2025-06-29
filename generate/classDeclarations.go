@@ -15,6 +15,21 @@ import (
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
+type HtmlDocYaml struct {
+    Description string      `yaml:"description"`
+    Summary     string      `yaml:"summary"`
+    Deprecated  any         `yaml:"deprecated"`
+}
+
+type NestedHtmlDocYaml struct {
+    Slot *HtmlDocYaml `yaml:"slot"`
+    Part *HtmlDocYaml `yaml:"part"`
+    // Flat fields for backward compatibility
+    Description string      `yaml:"description"`
+    Summary     string      `yaml:"summary"`
+    Deprecated  any         `yaml:"deprecated"`
+}
+
 func (mp *ModuleProcessor) generateClassDeclaration(captures Q.CaptureMap) (declaration M.Declaration, alias string, errs error) {
 	_, hasCustomElementDecorator := captures["customElement"]
 	isHTMLElement := false
@@ -57,52 +72,57 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 	}
 
 	var superclassName string
-	superClassNameNodes, ok := captures["superclass.name"]
-	if (ok && len(superClassNameNodes) > 0) {
-		superclassName = superClassNameNodes[0].Text
-		pkg := ""
-		module := ""
-		switch superclassName {
-		case
-			"Event",
-			"CustomEvent",
-			"ErrorEvent":
-		  pkg = "global:"
-		case "HTMLElement":
-			pkg = "global:"
-			isCustomElement = true
-		case "LitElement":
-			pkg = "lit"
-		case "ReactiveElement":
-			pkg = "@lit/reactive-element"
-		// TODO: compute package and module
-		// default:
+	mp.step("Processing heritage", 4, func() {
+		superClassNameNodes, ok := captures["superclass.name"]
+		if (ok && len(superClassNameNodes) > 0) {
+			superclassName = superClassNameNodes[0].Text
+			pkg := ""
+			module := ""
+			switch superclassName {
+			case
+				"Event",
+				"CustomEvent",
+				"ErrorEvent":
+				pkg = "global:"
+			case "HTMLElement":
+				pkg = "global:"
+				isCustomElement = true
+			case "LitElement":
+				pkg = "lit"
+			case "ReactiveElement":
+				pkg = "@lit/reactive-element"
+			// TODO: compute package and module
+			// default:
+			}
+			declaration.Superclass = M.NewReference(superclassName, pkg, module)
 		}
-		declaration.Superclass = M.NewReference(superclassName, pkg, module)
-	}
+	})
 
-	members, err := mp.getClassMembersFromClassDeclarationNode(
-		declaration.ClassLike.Name,
-		classDeclarationNode,
-		superclassName,
-	)
-	if err != nil {
-		errs = errors.Join(errs, err)
-	}
-
-	for _, method := range members {
-		declaration.Members = append(declaration.Members, method)
-	}
-
-	jsdoc, ok := captures["class.jsdoc"]
-	if (ok && len(jsdoc) > 0) {
-		info, err := NewClassInfo(jsdoc[0].Text, mp.queryManager)
+	mp.step("Processing class members", 4, func() {
+		members, err := mp.getClassMembersFromClassDeclarationNode(
+			declaration.ClassLike.Name,
+			classDeclarationNode,
+			superclassName,
+		)
 		if err != nil {
-			mp.errors = errors.Join(mp.errors, err)
-		} else {
-			info.MergeToClassDeclaration(declaration)
+			errs = errors.Join(errs, err)
 		}
-	}
+		for _, method := range members {
+			declaration.Members = append(declaration.Members, method)
+		}
+	})
+
+	mp.step("Processing class jsdoc", 4, func() {
+		jsdoc, ok := captures["class.jsdoc"]
+		if (ok && len(jsdoc) > 0) {
+			info, err := NewClassInfo(jsdoc[0].Text, mp.queryManager)
+			if err != nil {
+				mp.errors = errors.Join(mp.errors, err)
+			} else {
+				info.MergeToClassDeclaration(declaration)
+			}
+		}
+	})
 
 	return declaration, emptyAlias, nil
 }
@@ -192,34 +212,38 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 		}
 	})(declaration.Members)
 
-	renderTemplateNodes, hasRenderTemplate := captures["render.template"]
-	if hasRenderTemplate {
-		renderTemplateNodeId := renderTemplateNodes[0].NodeId
-		renderTemplateNode := Q.GetDescendantById(mp.root, renderTemplateNodeId)
-		if renderTemplateNode != nil {
-			htmlSource := renderTemplateNode.Utf8Text(mp.code)
-			if htmlSource != "" {
-				htmlSlots, htmlParts, htmlErr := analyzeHtmlSlotsAndParts(mp.queryManager, htmlSource)
-				if htmlErr != nil {
-					errs = errors.Join(errs, htmlErr)
+	mp.step("Processing render template", 4, func() {
+		renderTemplateNodes, hasRenderTemplate := captures["render.template"]
+		if hasRenderTemplate {
+			renderTemplateNodeId := renderTemplateNodes[0].NodeId
+			renderTemplateNode := Q.GetDescendantById(mp.root, renderTemplateNodeId)
+			if renderTemplateNode != nil {
+				htmlSource := renderTemplateNode.Utf8Text(mp.code)
+				if htmlSource != "" {
+					htmlSlots, htmlParts, htmlErr := mp.processRenderTemplate(htmlSource)
+					if htmlErr != nil {
+						errs = errors.Join(errs, htmlErr)
+					}
+					// Merge with any slots/parts already discovered (e.g., via JSDoc)
+					declaration.CustomElement.Slots = appendUniqueSlots(declaration.CustomElement.Slots, htmlSlots)
+					declaration.CustomElement.CssParts = appendUniqueParts(declaration.CustomElement.CssParts, htmlParts)
 				}
-				// Merge with any slots/parts already discovered (e.g., via JSDoc)
-				declaration.CustomElement.Slots = appendUniqueSlots(declaration.CustomElement.Slots, htmlSlots)
-				declaration.CustomElement.CssParts = appendUniqueParts(declaration.CustomElement.CssParts, htmlParts)
 			}
 		}
-	}
+	})
 
-	jsdoc, ok := captures["class.jsdoc"]
-	if (ok && len(jsdoc) > 0) {
-		classInfo, err := NewClassInfo(jsdoc[0].Text, mp.queryManager)
-		if err != nil {
-			errs = errors.Join(errs, err)
-		} else {
-			classInfo.MergeToCustomElementDeclaration(declaration)
-			alias = classInfo.Alias
+	mp.step("Processing class jsdoc", 4, func() {
+		jsdoc, ok := captures["class.jsdoc"]
+		if (ok && len(jsdoc) > 0) {
+			classInfo, err := NewClassInfo(jsdoc[0].Text, mp.queryManager)
+			if err != nil {
+				errs = errors.Join(errs, err)
+			} else {
+				classInfo.MergeToCustomElementDeclaration(declaration)
+				alias = classInfo.Alias
+			}
 		}
-	}
+	})
 
 	slices.SortStableFunc(declaration.Attributes, func(a M.Attribute, b M.Attribute) int {
 		return int(a.StartByte - b.StartByte)
@@ -228,8 +252,7 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 	return declaration, alias, errs
 }
 
-// --- Helper: Analyze HTML for slots/parts using tree-sitter-html and project QueryManager ---
-func analyzeHtmlSlotsAndParts(queryManager *Q.QueryManager, htmlSource string) (slots []M.Slot, parts []M.CssPart, errs error) {
+func (mp *ModuleProcessor) processRenderTemplate(htmlSource string) (slots []M.Slot, parts []M.CssPart, errs error) {
 	parser := ts.NewParser()
 	defer parser.Close()
 	parser.SetLanguage(Q.Languages.Html)
@@ -238,7 +261,7 @@ func analyzeHtmlSlotsAndParts(queryManager *Q.QueryManager, htmlSource string) (
 	root := tree.RootNode()
 	text := []byte(htmlSource)
 
-	matcher, qmErr := Q.NewQueryMatcher(queryManager, "html", "slotsAndParts")
+	matcher, qmErr := Q.NewQueryMatcher(mp.queryManager, "html", "slotsAndParts")
 	if qmErr != nil {
 		return nil, nil, qmErr
 	}
@@ -297,21 +320,6 @@ func analyzeHtmlSlotsAndParts(queryManager *Q.QueryManager, htmlSource string) (
 	}
 
 	return slots, parts, errs
-}
-
-type HtmlDocYaml struct {
-    Description string      `yaml:"description"`
-    Summary     string      `yaml:"summary"`
-    Deprecated  any         `yaml:"deprecated"`
-}
-
-type NestedHtmlDocYaml struct {
-    Slot *HtmlDocYaml `yaml:"slot"`
-    Part *HtmlDocYaml `yaml:"part"`
-    // Flat fields for backward compatibility
-    Description string      `yaml:"description"`
-    Summary     string      `yaml:"summary"`
-    Deprecated  any         `yaml:"deprecated"`
 }
 
 // htmlCommentStripRE unchanged
@@ -391,6 +399,7 @@ func appendUniqueSlots(existing []M.Slot, found []M.Slot) []M.Slot {
 	}
 	return existing
 }
+
 func appendUniqueParts(existing []M.CssPart, found []M.CssPart) []M.CssPart {
 	existingNames := make(map[string]struct{})
 	for _, s := range existing {

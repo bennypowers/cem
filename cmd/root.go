@@ -18,15 +18,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
-	"fmt"
-	"os"
-
 	"bennypowers.dev/cem/cmd/config"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var cfgFile string
+var verbose bool
 var CemConfig config.CemConfig
 
 // rootCmd represents the base command when called without any subcommands
@@ -43,7 +42,7 @@ Supports projects written with Lit`,
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
-		os.Exit(1)
+		pterm.Fatal.Print(err)
 	}
 }
 
@@ -63,16 +62,22 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+		if CemConfig.Verbose {
+			pterm.EnableDebugMessages()
+		} else {
+			pterm.DisableDebugMessages()
+		}
+		pterm.Info.Print("Using config file:", viper.ConfigFileUsed(), "\n")
 	}
 	// Bind to struct
 	if err := viper.Unmarshal(&CemConfig); err != nil {
-		fmt.Fprintln(os.Stderr, "Unable to decode into CemConfig struct:", err)
+		pterm.Error.Println("Unable to decode into CemConfig struct:", err)
 	}
 }
 
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $CWD/.config/cem.yaml)")
+	rootCmd.PersistentFlags().BoolVarP(&CemConfig.Verbose, "verbose", "v", false, "verbose logging output")
 }
 
