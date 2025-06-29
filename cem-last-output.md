@@ -1538,11 +1538,6 @@
           },
           "members": [
             {
-              "name": "icon",
-              "readonly": true,
-              "kind": "field"
-            },
-            {
               "name": "dark",
               "type": {
                 "text": "boolean"
@@ -1551,6 +1546,11 @@
               "kind": "field",
               "attribute": "dark",
               "reflects": true
+            },
+            {
+              "name": "icon",
+              "readonly": true,
+              "kind": "field"
             },
             {
               "name": "toggleTheme",
