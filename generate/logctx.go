@@ -21,40 +21,45 @@ type LogCtx struct {
 	Duration time.Duration
 	mu       sync.Mutex
 	Section  *pterm.SectionPrinter
+	Verbose  bool
 }
 
 func NewLogCtx(file string, cfg *C.CemConfig) *LogCtx {
-	buf := &bytes.Buffer{}
-	level := pterm.LogLevelWarn
-	if cfg.Verbose {
-		level = pterm.LogLevelTrace
-	}
-	logger := pterm.DefaultLogger.WithWriter(buf).WithTime(false).WithLevel(level)
-	return &LogCtx{
-		File:   file,
-		Buffer: buf,
-		Logger: logger,
-		Start:  time.Now(),
-		Section: pterm.DefaultSection.WithWriter(buf),
-	}
+    buf := &bytes.Buffer{}
+    verbose := cfg.Verbose
+    var logger *pterm.Logger
+    var section *pterm.SectionPrinter
+    if verbose {
+        logger = pterm.DefaultLogger.WithWriter(buf).WithTime(false).WithLevel(pterm.LogLevelTrace)
+        section = pterm.DefaultSection.WithWriter(buf)
+    } else {
+        logger = nil
+        section = nil
+    }
+    return &LogCtx{
+        File:    file,
+        Buffer:  buf,
+        Logger:  logger,
+        Start:   time.Now(),
+        Section: section,
+        Verbose: verbose,
+    }
 }
 
 // Log helpers (for convenience)
-func (lc *LogCtx) Trace(msg string, args ...any)  { lc.Logger.Trace(fmt.Sprintf(msg, args...)) }
-func (lc *LogCtx) Debug(msg string, args ...any)  { lc.Logger.Debug(fmt.Sprintf(msg, args...)) }
-func (lc *LogCtx) Info(msg string, args ...any)   { lc.Logger.Info(fmt.Sprintf(msg, args...)) }
-func (lc *LogCtx) Error(msg string, args ...any)  { lc.Logger.Error(fmt.Sprintf(msg, args...)) }
-func (lc *LogCtx) Warn(msg string, args ...any)   { lc.Logger.Warn(fmt.Sprintf(msg, args...)) }
-
-// IndentedLog prints a log message with a given indent and label, used for block-style tracing.
+func (lc *LogCtx) Trace(msg string, args ...any)  { if !lc.Verbose { return }; lc.Logger.Trace(fmt.Sprintf(msg, args...)) }
+func (lc *LogCtx) Debug(msg string, args ...any)  { if !lc.Verbose { return }; lc.Logger.Debug(fmt.Sprintf(msg, args...)) }
+func (lc *LogCtx) Info(msg string, args ...any)   { if !lc.Verbose { return }; lc.Logger.Info(fmt.Sprintf(msg, args...)) }
+func (lc *LogCtx) Error(msg string, args ...any)  { if !lc.Verbose { return }; lc.Logger.Error(fmt.Sprintf(msg, args...)) }
+func (lc *LogCtx) Warn(msg string, args ...any)   { if !lc.Verbose { return }; lc.Logger.Warn(fmt.Sprintf(msg, args...)) }
 func (lc *LogCtx) IndentedLog(indent int, label string, msg string, args ...any) {
-	prefix := strings.Repeat("  ", indent)
-	lc.Trace("%s%s: %s", prefix, label, fmt.Sprintf(msg, args...))
+    if !lc.Verbose { return }
+    prefix := strings.Repeat("  ", indent)
+    lc.Trace("%s%s: %s", prefix, label, fmt.Sprintf(msg, args...))
 }
-
-// TimedLog prints an indented log for a block finished in some duration.
 func (lc *LogCtx) TimedLog(indent int, label string, duration time.Duration) {
-	lc.IndentedLog(indent, label, "finished in %s", ColorizeDuration(duration).Sprint(duration))
+    if !lc.Verbose { return }
+    lc.IndentedLog(indent, label, "finished in %s", ColorizeDuration(duration).Sprint(duration))
 }
 
 // To be called at the end of processing
