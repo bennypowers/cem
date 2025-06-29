@@ -19,6 +19,8 @@ import (
 
 type CssPropsMap map[string]M.CssCustomProperty
 
+var cssParseCache = NewCssParseCache()
+
 func amendStylesMapFromSource(
 	props CssPropsMap,
 	queryManager *Q.QueryManager,
@@ -269,23 +271,29 @@ func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsM
 		if hasBindings {
 			for _, binding := range bindings {
 				spec, ok := mp.styleImportsBindingToSpecMap[binding.Text]
-				if ok && strings.HasPrefix(spec, "."){
-					// NOTE: we're doing file io here, reading the referenced spec file,
-					// parsing it, and adding any variables we find to the cssProperties slice.
-					// perhaps a more performant or maintainable alternative is to leave a marker here,
-					// and then do all that work on the back end.
-					content, err := os.ReadFile(path.Join(path.Dir(mp.module.Path), spec))
-					if err != nil {
-						errs = errors.Join(errs, errors.New(fmt.Sprintf("Could not read tokens spec %s", spec)), err)
+				if ok && strings.HasPrefix(spec, ".") {
+					absPath := path.Join(path.Dir(mp.module.Path), spec)
+					// Try cache first
+					if cached, found := cssParseCache.Get(absPath); found {
+						maps.Copy(props, cached)
 					} else {
-						err := amendStylesMapFromSource(props, mp.queryManager, qm, parser, content)
+						content, err := os.ReadFile(absPath)
 						if err != nil {
-							errs = errors.Join(errs, err)
+							errs = errors.Join(errs, errors.New(fmt.Sprintf("Could not read tokens spec %s", spec)), err)
+						} else {
+							tmpProps := make(CssPropsMap)
+							err := amendStylesMapFromSource(tmpProps, mp.queryManager, qm, parser, content)
+							if err != nil {
+								errs = errors.Join(errs, err)
+							}
+							maps.Copy(props, tmpProps)
+							// Store a copy in cache for this file
+							cssParseCache.Set(absPath, tmpProps)
 						}
 					}
 				}
 				// TODO: add an else path here which checks to see if the css declaration is made
-				// elsewhere in the same module, then parse it's string content if the value for
+				// elsewhere in the same module, then parse its string content if the value for
 				// that variable declaration is a css template tag
 			}
 		}
