@@ -6,7 +6,7 @@ export class ClassFields {
   bool = false;
   num = 0;
   /**
-   * The class is not a custom element, so even thought this field has a @property decorator,
+   * The class is not a custom element, so even though this field has a @property decorator,
    * this member entry mustn't have an attribute
    */
   @squishy
