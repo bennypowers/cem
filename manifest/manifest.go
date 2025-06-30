@@ -283,6 +283,7 @@ type CustomElementField struct {
 	Attribute string `json:"attribute,omitempty"`
 	Reflects  bool   `json:"reflects,omitempty"`
 }
+func (x CustomElementField) isClassMember() {}
 func (x CustomElementField) GetStartByte() uint { return x.ClassField.StartByte }
 
 // MixinDeclaration describes a class mixin.

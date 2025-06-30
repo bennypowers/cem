@@ -123,55 +123,42 @@
               "parameters": [
                 {
                   "name": "name",
-                  "description": "name param",
                   "type": {
                     "text": "never"
                   }
                 },
                 {
                   "name": "optional",
-                  "description": "optional param",
                   "type": {
                     "text": "never"
-                  },
-                  "optional": true
+                  }
                 },
                 {
                   "name": "default",
-                  "description": "default param",
                   "type": {
                     "text": "never"
-                  },
-                  "default": "'default'",
-                  "optional": true
+                  }
                 },
                 {
                   "name": "typed",
-                  "description": "typed param",
                   "type": {
-                    "text": "Type"
+                    "text": "never"
                   }
                 },
                 {
                   "name": "typedOptional",
-                  "description": "typed optional param",
                   "type": {
-                    "text": "Type"
-                  },
-                  "optional": true
+                    "text": "never"
+                  }
                 },
                 {
                   "name": "typedOptionalDefault",
-                  "description": "typed optional param with default",
                   "type": {
-                    "text": "Type"
-                  },
-                  "default": "'default'",
-                  "optional": true
+                    "text": "never"
+                  }
                 },
                 {
                   "name": "obj",
-                  "description": "object param",
                   "type": {
                     "text": "never"
                   }
@@ -184,10 +171,6 @@
             },
             {
               "name": "fieldMethod",
-              "description": "description",
-              "return": {
-                "description": "foo"
-              },
               "kind": "method"
             }
           ],

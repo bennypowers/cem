@@ -36,7 +36,6 @@
         "order": 0
       },
       "args": [
-        ".",
         "generate",
         "generate/test-fixtures/*.ts"
       ]
@@ -51,7 +50,6 @@
         "order": 1
       },
       "args": [
-        ".",
         "generate",
         "${input:generate}"
       ]

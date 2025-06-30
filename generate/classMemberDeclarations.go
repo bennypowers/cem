@@ -89,7 +89,7 @@ func amendFieldTypeWithCaptures(captures Q.CaptureMap, field *M.ClassField) {
 }
 
 func amendFieldPrivacyWithCaptures(captures Q.CaptureMap, field *M.ClassField) {
-	for _, capture := range captures["field.privacy"] {
+	for _, capture := range captures["member.privacy"] {
 		switch capture.Text {
 			case "private":
 				field.Privacy = M.Private
@@ -99,17 +99,33 @@ func amendFieldPrivacyWithCaptures(captures Q.CaptureMap, field *M.ClassField) {
 	}
 }
 
-func amendFieldWithJsdocCaptures(queryManager *Q.QueryManager, captures Q.CaptureMap, field *M.ClassField) (error, bool) {
-	for _, x := range captures["member.jsdoc"] {
-		source := x.Text
-		error, info := NewPropertyInfo(source, queryManager)
-		if error != nil {
-			return error, false
+func (mp ModuleProcessor) amendFieldWithJsdoc(captures Q.CaptureMap, field *M.ClassField) error {
+	for _, x := range captures["member"] {
+		jsdoc := GetJSDocForNode(Q.GetDescendantById(mp.root, x.NodeId), mp.code)
+		info, err := NewPropertyInfo(jsdoc, mp.queryManager)
+		if err != nil {
+			return err
 		} else {
 			info.MergeToPropertyLike(&field.PropertyLike)
 		}
 	}
-	return nil, true
+	return nil
+}
+
+func (mp ModuleProcessor) amendMethodWithJsdoc(captures Q.CaptureMap, method *M.ClassMethod) error {
+	// JSDoc
+	if members, ok := captures["member"]; ok {
+		for _, member := range members {
+			jsdoc := GetJSDocForNode(Q.GetDescendantById(mp.root, member.NodeId), mp.code)
+			err, info := NewMethodInfo(jsdoc, mp.queryManager)
+			if err != nil {
+				return err
+			} else {
+				info.MergeToFunctionLike(&method.FunctionLike)
+			}
+		}
+	}
+	return nil
 }
 
 func amendFieldWithPropertyConfigCaptures(captures Q.CaptureMap, field *M.CustomElementField) {
@@ -136,14 +152,13 @@ func amendFieldWithPropertyConfigCaptures(captures Q.CaptureMap, field *M.Custom
 	}
 }
 
-func createClassFieldFromAccessorMatch(
+func (mp *ModuleProcessor) createClassFieldFromAccessorMatch(
 	fieldName string,
 	isStatic bool,
 	isReadonly bool,
 	classType string,
 	captures Q.CaptureMap,
-	queryManager *Q.QueryManager,
-) (err error, field M.CustomElementField) {
+) (field M.CustomElementField, err error) {
 	field.Kind = "field"
 	field.Static = isStatic
 	field.Name = fieldName
@@ -151,6 +166,7 @@ func createClassFieldFromAccessorMatch(
 
 	amendFieldTypeWithCaptures(captures, &field.ClassField)
 	amendFieldPrivacyWithCaptures(captures, &field.ClassField)
+	mp.amendFieldWithJsdoc(captures, &field.ClassField)
 
 	isCustomElement := classType == "HTMLElement" || classType == "LitElement"
 	isProperty := isCustomElement && !isStatic && isPropertyField(captures)
@@ -159,17 +175,15 @@ func createClassFieldFromAccessorMatch(
 		amendFieldWithPropertyConfigCaptures(captures, &field)
 	}
 
-	amendFieldWithJsdocCaptures(queryManager, captures, &field.ClassField)
-
-	return err, field
+	field.ClassField.StartByte = captures["accessor"][0].StartByte
+	return field, err
 }
 
-func createClassFieldFromFieldMatch(
+func (mp *ModuleProcessor) createClassFieldFromFieldMatch(
 	fieldName string,
 	isStatic bool,
 	superclass string,
 	captures Q.CaptureMap,
-	queryManager *Q.QueryManager,
 ) (err error, field M.CustomElementField) {
 	_, readonly := captures["field.readonly"]
 
@@ -208,8 +222,22 @@ func createClassFieldFromFieldMatch(
 		amendFieldWithPropertyConfigCaptures(captures, &field)
 	}
 
-	amendFieldWithJsdocCaptures(queryManager, captures, &field.ClassField)
+	mp.amendFieldWithJsdoc(captures, &field.ClassField)
 	return nil, field
+}
+
+// Identify kind and key
+func getMemberKindFromCaptures(captures Q.CaptureMap) string {
+	switch {
+	case captures["method"] != nil:
+		return "method"
+	case captures["accessor"] != nil:
+		return "accessor"
+	case captures["field"] != nil:
+		return "field"
+	default:
+		return ""
+	}
 }
 
 func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
@@ -234,40 +262,20 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 		static   bool
 	}
 	memberMap := make(map[memberKey]M.ClassMember)
-	accessorPairIndices := make(map[string]memberKey) // for merging get/set
+	seenAccessors := make(map[string]memberKey) // for merging get/set
 
 	for captures := range matcher.ParentCaptures(mp.root, mp.code, "member") {
-		var (
-			memberName string
-			isStatic   bool
-			kind       string
-		)
-
-		// Identify kind and key
-		switch {
-		case captures["method"] != nil:
-			kind = "method"
-			memberName = captures["method.name"][0].Text
-			isStatic = len(captures["method.static"]) > 0
-		case captures["accessor"] != nil:
-			kind = "accessor"
-			memberName = captures["field.name"][0].Text
-			isStatic = len(captures["field.static"]) > 0
-		case captures["field"] != nil:
-			kind = "field"
-			memberName = captures["field.name"][0].Text
-			isStatic = len(captures["field.static"]) > 0
-		default:
-			continue
-		}
-		if isIgnoredMember(memberName, superclass, isStatic) {
-			continue
-		}
+		memberName := captures["member.name"][0].Text
+		isStatic := len(captures["member.static"]) > 0
+		kind := getMemberKindFromCaptures(captures)
 		key := memberKey{name: memberName, kind: kind, static: isStatic}
+		if kind == "" || isIgnoredMember(memberName, superclass, isStatic) {
+			continue
+		}
 
 		switch kind {
 		case "field":
-			error, field := createClassFieldFromFieldMatch(memberName, isStatic, superclass, captures, mp.queryManager)
+			error, field := mp.createClassFieldFromFieldMatch(memberName, isStatic, superclass, captures)
 			field.ClassField.StartByte = captures["field"][0].StartByte
 			if error != nil {
 				errs = errors.Join(errs, error)
@@ -278,18 +286,18 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 			accessorKind := captures["field.accessor"][0].Text // "get" or "set"
 			// Merge get/set into one field for same name+static
 			pairKeyStr := className + "." + memberName + "." + isStaticToTypeFlag(isStatic)
-			var isReadonly bool = accessorKind == "get"
+			isReadonly := accessorKind == "get"
 
-			error, field := createClassFieldFromAccessorMatch(memberName, isStatic, isReadonly, superclass, captures, mp.queryManager)
-			field.ClassField.StartByte = captures["accessor"][0].StartByte
-			if error != nil {
-				errs = errors.Join(errs, error)
+			field, err := mp.createClassFieldFromAccessorMatch(memberName, isStatic, isReadonly, superclass, captures)
+			if err != nil {
+				errs = errors.Join(errs, err)
 				continue
 			}
 
-			// If we've seen the other half of the pair, merge readonly
-			if prevKey, ok := accessorPairIndices[pairKeyStr]; ok {
-				existing := memberMap[prevKey].(M.CustomElementField)
+			// If we've ok the other half of the pair, merge readonly
+			if prevKey, ok := seenAccessors[pairKeyStr]; ok {
+				needle := memberMap[prevKey]
+				existing := needle.(M.CustomElementField)
 				existing.Readonly = false // If both get/set, not readonly
 				// Merge doc/types/join
 				if field.Type != nil && (existing.Type == nil || existing.Type.Text == "") {
@@ -305,7 +313,7 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 				memberMap[prevKey] = existing
 			} else {
 				memberMap[key] = field
-				accessorPairIndices[pairKeyStr] = key
+				seenAccessors[pairKeyStr] = key
 			}
 		case "method":
 			method := M.ClassMethod{Kind: "method"}
@@ -313,8 +321,13 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 			method.Static = isStatic
 			method.StartByte = captures["method"][0].StartByte
 
+			err := mp.amendMethodWithJsdoc(captures, &method)
+			if err != nil {
+				errs = errors.Join(errs, err)
+			}
+
 			// Privacy
-			if nodes, ok := captures["method.privacy"]; ok && len(nodes) > 0 {
+			if nodes, ok := captures["member.privacy"]; ok && len(nodes) > 0 {
 				method.Privacy = M.Privacy(nodes[0].Text)
 			}
 
@@ -348,17 +361,6 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 					Type: &M.Type{
 						Text: returns[0].Text,
 					},
-				}
-			}
-			// JSDoc
-			if jsdocs, ok := captures["member.jsdoc"]; ok {
-				for _, jsdoc := range jsdocs {
-					merr, info := NewMethodInfo(jsdoc.Text, mp.queryManager)
-					if merr != nil {
-						errs = errors.Join(merr)
-					} else {
-						info.MergeToFunctionLike(&method.FunctionLike)
-					}
 				}
 			}
 			memberMap[key] = method

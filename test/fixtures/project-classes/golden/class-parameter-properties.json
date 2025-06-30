@@ -18,29 +18,6 @@
                 "text": "boolean"
               },
               "kind": "field"
-            },
-            {
-              "name": "thing",
-              "type": {
-                "text": "boolean"
-              },
-              "kind": "field"
-            },
-            {
-              "name": "priv",
-              "type": {
-                "text": "boolean"
-              },
-              "kind": "field",
-              "privacy": "private"
-            },
-            {
-              "name": "pub",
-              "description": "description",
-              "type": {
-                "text": "boolean"
-              },
-              "kind": "field"
             }
           ],
           "kind": "class"

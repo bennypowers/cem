@@ -318,7 +318,7 @@ func (mp *ModuleProcessor) processDeclarations() {
 
 	// variable declarations
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "variable") {
-		err, declaration := generateVarDeclaration(captures, mp.queryManager)
+		declaration, err := generateVarDeclaration(captures, mp.queryManager)
 		if err != nil {
 			mp.errors = errors.Join(mp.errors, err)
 		} else {

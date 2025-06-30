@@ -54,6 +54,18 @@
               },
               "default": "0",
               "kind": "field"
+            },
+            {
+              "name": "decorated",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field"
+            },
+            {
+              "name": "fieldMethod",
+              "kind": "method"
             }
           ],
           "kind": "class"
