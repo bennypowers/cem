@@ -56,7 +56,10 @@ func initConfig() {
 		os.Exit(1)
 	}
 	CemConfig = *cfg
-	os.Chdir(CemConfig.GetProjectDir())
+	if err := os.Chdir(CemConfig.GetProjectDir()); err != nil {
+		pterm.Error.Print("Failed to change into project directory: ", err)
+		os.Exit(1)
+	}
 	pterm.Info.Print("Using project directory: ", CemConfig.GetProjectDir(), "\n")
 	pterm.Info.Print("Using config file: ", cfg.GetConfigFile(), "\n")
 }
