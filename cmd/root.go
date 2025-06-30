@@ -18,6 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
+	"os"
+
 	"bennypowers.dev/cem/cmd/config"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -41,7 +43,8 @@ Supports projects written with Lit`,
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
-		pterm.Fatal.Print(err)
+		pterm.Error.Print(err)
+		os.Exit(1)
 	}
 }
 
@@ -49,9 +52,11 @@ func Execute() {
 func initConfig() {
 	cfg, err := config.LoadConfig(cfgFile, projectDir)
 	if err != nil {
-		pterm.Fatal.Print(err)
+		pterm.Error.Print(err)
+		os.Exit(1)
 	}
 	CemConfig = *cfg
+	os.Chdir(CemConfig.GetProjectDir())
 	pterm.Info.Print("Using project directory: ", CemConfig.GetProjectDir(), "\n")
 	pterm.Info.Print("Using config file: ", cfg.GetConfigFile(), "\n")
 }

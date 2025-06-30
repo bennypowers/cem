@@ -121,7 +121,7 @@ func LoadConfig(cfgFile string, projectDir string) (config *CemConfig, err error
 		if err != nil {
 			return nil, err
 		}
-		v.AddConfigPath(cfgFile)
+		v.AddConfigPath(filepath.Dir(cfgFile))
 		v.SetConfigType("yaml")
 		v.SetConfigName("cem.yaml")
 	}
@@ -142,7 +142,9 @@ func LoadConfig(cfgFile string, projectDir string) (config *CemConfig, err error
 	}
 	config.projectDir = resolveProjectDir(cfgFile, projectDir)
 	config.configFile = cfgFile
-	config.Generate.Output = filepath.Join(projectDir, config.Generate.Output)
+	if !filepath.IsAbs(config.Generate.Output) {
+		config.Generate.Output = filepath.Join(projectDir, config.Generate.Output)
+	}
 	if config.Verbose {
 		pterm.EnableDebugMessages()
 	} else {
