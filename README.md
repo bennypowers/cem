@@ -122,12 +122,12 @@ variables
 
 ---
 
-## Element Demos
+#### Element Demos
 
 `cem generate` supports documenting your elements' demos by linking directly
 from JSDoc, or by configurable file-system based discovery.
 
-### 1. JSDoc `@demo` Tag
+##### 1. JSDoc `@demo` Tag
 
 Add demos directly to your element class or members with the `@demo` tag:
 
@@ -144,7 +144,7 @@ class MyElement extends LitElement {
 
 Demos defined this way will always appear in your manifest for the element.
 
-### 2. Demo Discovery
+##### 2. Demo Discovery
 
 `cem` can automatically discover demos from your codebase based on your
 repository structure and configuration.

@@ -19,6 +19,20 @@ type Package struct {
 	Deprecated    any       `json:"deprecated,omitempty"` // bool or string
 }
 
+func (x *Package) GetAllTagNames() (tags []string) {
+	// Write index.html
+	for _, m := range x.Modules {
+		for _, decl := range m.Declarations {
+			ced, ok := decl.(*CustomElementDeclaration)
+			if !ok || ced.TagName == "" {
+				continue
+			}
+			tags = append(tags, ced.TagName)
+		}
+	}
+	return tags
+}
+
 func NewPackage(modules []Module) Package {
 	return Package{
 		SchemaVersion: "1.0.0",
@@ -267,14 +281,14 @@ func (x ClassMethod) GetStartByte() uint { return x.StartByte }
 
 // PropertyLike is the common interface of variables, class fields, and function parameters.
 type PropertyLike struct {
-	StartByte		uint			`json:"-"`
-	Name        string    `json:"name"`
-	Summary     string   `json:"summary,omitempty"`
-	Description string   `json:"description,omitempty"`
-	Type        *Type     `json:"type,omitempty"`
-	Default     string   `json:"default,omitempty"`
-	Deprecated  Deprecated       `json:"deprecated,omitempty"` // bool or string
-	Readonly    bool     `json:"readonly,omitempty"`
+	StartByte   uint       `json:"-"`
+	Name        string     `json:"name"`
+	Summary     string     `json:"summary,omitempty"`
+	Description string     `json:"description,omitempty"`
+	Type        *Type      `json:"type,omitempty"`
+	Default     string     `json:"default,omitempty"`
+	Deprecated  Deprecated `json:"deprecated,omitempty"`
+	Readonly    bool       `json:"readonly,omitempty"`
 }
 
 // CustomElementField extends ClassField with attribute/reflects.
@@ -290,7 +304,11 @@ func (x CustomElementField) GetStartByte() uint { return x.ClassField.StartByte 
 type MixinDeclaration struct {
 	ClassLike
 	FunctionLike
-	Kind string `json:"kind"` // 'mixin'
+	Name        string     `json:"name"`
+	Summary     string     `json:"summary,omitempty"`
+	Description string     `json:"description,omitempty"`
+	Deprecated  Deprecated `json:"deprecated,omitempty"`
+	Kind string            `json:"kind"` // 'mixin'
 }
 func (*MixinDeclaration) isDeclaration() {}
 func (x *MixinDeclaration) GetStartByte() uint { return x.FunctionLike.StartByte }
@@ -298,9 +316,14 @@ func (x *MixinDeclaration) GetStartByte() uint { return x.FunctionLike.StartByte
 // CustomElementMixinDeclaration extends MixinDeclaration and CustomElement.
 type CustomElementMixinDeclaration struct {
 	MixinDeclaration
-	CustomElement
+	CustomElementDeclaration
+	Name        string     `json:"name"`
+	Summary     string     `json:"summary,omitempty"`
+	Description string     `json:"description,omitempty"`
+	Deprecated  Deprecated `json:"deprecated,omitempty"`
 }
 func (*CustomElementMixinDeclaration) isDeclaration() {}
+func (x *CustomElementMixinDeclaration) GetStartByte() uint { return x.FunctionLike.StartByte }
 
 // VariableDeclaration is a variable.
 type VariableDeclaration struct {

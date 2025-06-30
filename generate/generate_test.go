@@ -57,7 +57,7 @@ func TestGenerate(t *testing.T) {
 			}
 
 			configPath := filepath.Join(".config", "cem.yaml")
-			cfg, err := config.LoadConfig(configPath)
+			cfg, err := config.LoadConfig(configPath, ".")
 			if err != nil {
 				t.Fatalf("failed to load config: %v", err)
 			}
