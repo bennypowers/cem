@@ -19,16 +19,14 @@ package cmd
 
 import (
 	"os"
-	"path/filepath"
 
 	"bennypowers.dev/cem/cmd/config"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var cfgFile string
-var verbose bool
+var projectDir string
 var CemConfig config.CemConfig
 
 // rootCmd represents the base command when called without any subcommands
@@ -45,47 +43,31 @@ Supports projects written with Lit`,
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
-		pterm.Fatal.Print(err)
+		pterm.Error.Print(err)
+		os.Exit(1)
 	}
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	} else {
-		// Search config in local project .config directory with name "cem.yaml"
-		viper.AddConfigPath("./.config")
-		viper.SetConfigType("yaml")
-		viper.SetConfigName("cem.yaml")
+	cfg, err := config.LoadConfig(cfgFile, projectDir)
+	if err != nil {
+		pterm.Error.Print(err)
+		os.Exit(1)
 	}
-
-	viper.AutomaticEnv() // read in environment variables that match
-
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		if CemConfig.Verbose {
-			pterm.EnableDebugMessages()
-		} else {
-			pterm.DisableDebugMessages()
-		}
-		cwd, err := os.Getwd()
-		if err != nil {
-			cwd = ""
-		}
-		cfgpath, err := filepath.Rel(cwd, viper.ConfigFileUsed())
-		pterm.Info.Print("Using config file: ", cfgpath, "\n")
+	CemConfig = *cfg
+	if err := os.Chdir(CemConfig.GetProjectDir()); err != nil {
+		pterm.Error.Print("Failed to change into project directory: ", err)
+		os.Exit(1)
 	}
-	// Bind to struct
-	if err := viper.Unmarshal(&CemConfig); err != nil {
-		pterm.Error.Println("Unable to decode config:", err)
-	}
+	pterm.Info.Print("Using project directory: ", CemConfig.GetProjectDir(), "\n")
+	pterm.Info.Print("Using config file: ", cfg.GetConfigFile(), "\n")
 }
 
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $CWD/.config/cem.yaml)")
+	rootCmd.PersistentFlags().StringVar(&projectDir, "project-dir", "", "Path to project directory (default: parent directory of .config/cem.yaml)")
 	rootCmd.PersistentFlags().BoolVarP(&CemConfig.Verbose, "verbose", "v", false, "verbose logging output")
 }
 

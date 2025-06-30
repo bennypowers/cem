@@ -122,12 +122,12 @@ variables
 
 ---
 
-## Element Demos
+#### Element Demos
 
 `cem generate` supports documenting your elements' demos by linking directly
 from JSDoc, or by configurable file-system based discovery.
 
-### 1. JSDoc `@demo` Tag
+##### 1. JSDoc `@demo` Tag
 
 Add demos directly to your element class or members with the `@demo` tag:
 
@@ -144,7 +144,7 @@ class MyElement extends LitElement {
 
 Demos defined this way will always appear in your manifest for the element.
 
-### 2. Demo Discovery
+##### 2. Demo Discovery
 
 `cem` can automatically discover demos from your codebase based on your
 repository structure and configuration.
@@ -228,6 +228,7 @@ For npm projects you can use `npx @pwrs/cem generate ...`.
 | `--demo-discovery-url-pattern`  | string             | Go Regexp pattern with named capture groups for generating canonical demo urls                    |
 | `--demo-discovery-url-template` | string             | URL pattern string using {groupName} syntax to interpolate named captures from the URL pattern    |
 | `--source-control-root-url`     | string             | Glob pattern for discovering demo files                                                           |
+| `--project-dir`                 | string             | Specify the project root directory to use for resolving relative paths and configuration.         |
 
 
 By default, some files (like `.d.ts` TypeScript declaration files) are excluded from the manifest.

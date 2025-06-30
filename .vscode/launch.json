@@ -63,6 +63,11 @@
       "default": "generate/test-fixtures/*.ts"
     },
     {
+      "id": "projectDir",
+      "type": "promptString",
+      "description": "Project dir"
+    },
+    {
       "id": "fixturePattern",
       "type": "promptString",
       "description": "Pattern of fixtures to match (without extension, e.g. class-exports)"
