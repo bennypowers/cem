@@ -54,6 +54,20 @@
               },
               "default": "0",
               "kind": "field"
+            },
+            {
+              "name": "decorated",
+              "description": "The class is not a custom element, so even though this field has a @property decorator,\nthis member entry mustn't have an attribute",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field"
+            },
+            {
+              "name": "fieldMethod",
+              "description": "must be classified as a method",
+              "kind": "method"
             }
           ],
           "kind": "class"

@@ -1,0 +1,15 @@
+sourceControlRootUrl: https://github.com/realworld-ux/realworld-design-system/tree/main
+generate:
+  files:
+    - src/*.ts
+  output: custom-elements.json
+  noDefaultExcludes: false
+  designTokens:
+    spec: npm:@real-world/tokens/tokens.json
+    prefix: --rw
+  demoDiscovery:
+    fileGlob: src/demo/*.html
+    urlPattern: src/demo/(?P<tag>[\\w-]+(?P<demo>[\\w-]+)).html
+    urlTemplate: https://example.com/elements/{tag}/{demo}/
+
+

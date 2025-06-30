@@ -27,9 +27,7 @@
                 "text": "string"
               },
               "readonly": true,
-              "kind": "field",
-              "attribute": "property-pair-described",
-              "reflects": true
+              "kind": "field"
             },
             {
               "name": "getterSummarized",
@@ -38,9 +36,14 @@
                 "text": "string"
               },
               "readonly": true,
-              "kind": "field",
-              "attribute": "property-pair-described",
-              "reflects": true
+              "kind": "field"
+            },
+            {
+              "name": "pair",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
             },
             {
               "name": "pairDescribed",
@@ -48,10 +51,7 @@
               "type": {
                 "text": "string"
               },
-              "readonly": true,
-              "kind": "field",
-              "attribute": "property-pair-described",
-              "reflects": true
+              "kind": "field"
             },
             {
               "name": "pairSummarized",
@@ -59,10 +59,15 @@
               "type": {
                 "text": "string"
               },
-              "readonly": true,
+              "kind": "field"
+            },
+            {
+              "name": "propertyPair",
+              "type": {
+                "text": "string"
+              },
               "kind": "field",
-              "attribute": "property-pair-described",
-              "reflects": true
+              "attribute": "propertypair"
             },
             {
               "name": "propertyPairDescribed",
@@ -71,8 +76,7 @@
                 "text": "string"
               },
               "kind": "field",
-              "attribute": "property-pair-described",
-              "reflects": true
+              "attribute": "property-pair-described"
             },
             {
               "name": "propertyPairSummarized",
@@ -80,7 +84,6 @@
               "type": {
                 "text": "string"
               },
-              "readonly": true,
               "kind": "field",
               "attribute": "propertypairsummarized",
               "reflects": true
@@ -90,36 +93,11 @@
           "tagName": "class-accessors",
           "attributes": [
             {
-              "name": "property-pair-described",
-              "description": "getter description",
+              "name": "propertypair",
               "type": {
                 "text": "string"
               },
-              "fieldName": "getterDescribed"
-            },
-            {
-              "name": "property-pair-described",
-              "summary": "getter summary",
-              "type": {
-                "text": "string"
-              },
-              "fieldName": "getterSummarized"
-            },
-            {
-              "name": "property-pair-described",
-              "description": "pair with description",
-              "type": {
-                "text": "string"
-              },
-              "fieldName": "pairDescribed"
-            },
-            {
-              "name": "property-pair-described",
-              "summary": "pair with summary",
-              "type": {
-                "text": "string"
-              },
-              "fieldName": "pairSummarized"
+              "fieldName": "propertyPair"
             },
             {
               "name": "property-pair-described",

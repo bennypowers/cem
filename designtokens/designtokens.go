@@ -29,11 +29,12 @@ type DesignTokens struct {
 	tokens map[string]TokenResult
 }
 
-// Get returns the TokenResult for the given name, prepending the prefix.
+// Get returns the TokenResult for the given name, prepending the prefix if it's not present.
 func (dt *DesignTokens) Get(name string) (TokenResult, bool) {
 	fullName := name
-	if dt.prefix != "" && !strings.HasPrefix(name, "--"+dt.prefix+"-") {
-		fullName = "--" + dt.prefix + "-" + strings.TrimPrefix(name, "--")
+	normalPrefix := strings.TrimLeft(dt.prefix, "-")
+	if normalPrefix != "" && !strings.HasPrefix(name, "--"+normalPrefix+"-") {
+		fullName = "--" + normalPrefix + "-" + strings.TrimLeft(name, "-")
 	}
 	tok, ok := dt.tokens[fullName]
 	return tok, ok
@@ -54,13 +55,13 @@ func LoadDesignTokens(cfg *C.CemConfig) (*DesignTokens, error) {
 	tokens := make(map[string]TokenResult)
 	flat := flattenTokens(raw, "")
 	for name, tok := range flat {
-		fullName := "--" + prefix
+		var fullName string
 		styleDictName, ok := tok["name"]
 		if ok {
-			fullName = strings.Replace("--" + styleDictName.(string), "----", "--", 1)
-		} else if prefix != "" {
-			fullName += "--"
-			fullName += strings.TrimPrefix(name, "--")
+			// If you want to handle styleDictName specially, handle here, else you can skip this
+			fullName = "--" + strings.TrimPrefix(styleDictName.(string), "--")
+		} else {
+			fullName = "--" + strings.TrimPrefix(prefix, "--") + "-" + strings.TrimPrefix(name, "--")
 		}
 		tokens[fullName] = toTokenResult(tok)
 	}
@@ -90,7 +91,12 @@ func flattenTokens(data map[string]any, prefix string) map[string]map[string]any
 		if strings.HasPrefix(k, "$") {
 			continue
 		}
-		name := prefix + "-" + kebabCase(k)
+		var name string
+		if prefix == "" {
+			name = kebabCase(k)
+		} else {
+			name = prefix + "-" + kebabCase(k)
+		}
 		switch val := v.(type) {
 		case map[string]any:
 			// if contains $value, it's a leaf token

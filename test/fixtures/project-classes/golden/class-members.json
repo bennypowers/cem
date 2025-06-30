@@ -1,0 +1,113 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-members.js",
+      "declarations": [
+        {
+          "name": "ClassMembers",
+          "description": "Tests that fields, methods, properties, attributes, and arrow methods are picked up",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "attrReflect",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "attr-reflect",
+              "reflects": true
+            },
+            {
+              "name": "reflect",
+              "type": {
+                "text": "'reflect'"
+              },
+              "kind": "field",
+              "attribute": "reflect",
+              "reflects": true
+            },
+            {
+              "name": "attrReflectBool",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "attr-reflect-bool",
+              "reflects": true
+            },
+            {
+              "name": "field",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field"
+            },
+            {
+              "name": "arrow",
+              "kind": "method"
+            },
+            {
+              "name": "method",
+              "kind": "method"
+            }
+          ],
+          "kind": "class",
+          "tagName": "class-members",
+          "attributes": [
+            {
+              "name": "jsdoc-attr"
+            },
+            {
+              "name": "attr-reflect",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "attrReflect"
+            },
+            {
+              "name": "reflect",
+              "type": {
+                "text": "'reflect'"
+              },
+              "fieldName": "reflect"
+            },
+            {
+              "name": "attr-reflect-bool",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "attrReflectBool"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-members",
+          "declaration": {
+            "name": "ClassMembers",
+            "module": "src/class-members.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ClassMembers",
+          "declaration": {
+            "name": "ClassMembers",
+            "module": "src/class-members.js"
+          }
+        }
+      ]
+    }
+  ]
+}

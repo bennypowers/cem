@@ -5,8 +5,9 @@ import (
 	"slices"
 	"strings"
 
-	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/generate/queries"
+	M "bennypowers.dev/cem/manifest"
+	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
 type ParameterInfo struct {
@@ -31,6 +32,34 @@ func normalizeJsdocLines(str string) (string) {
 	re := regexp.MustCompile(`(?m)^\s+\*\s+`)
 	new := re.ReplaceAllString(str, "")
 	return stripTrailingSplat(new)
+}
+
+// GetJSDocForNode returns the immediately preceding JSDoc comment (/** ... */) for the given node,
+// skipping over decorator nodes. If there is no such comment, returns "".
+func GetJSDocForNode(node *ts.Node, source []byte) string {
+	if node == nil {
+		return ""
+	}
+	for prev := node.PrevNamedSibling(); prev != nil; prev = prev.PrevNamedSibling() {
+		kind := prev.GrammarName()
+		switch kind {
+		case "decorator":
+			// skip decorators
+			continue
+		case "comment":
+			text := prev.Utf8Text(source)
+			if strings.HasPrefix(text, "/**") {
+				return text
+			} else {
+				// If it's a non-JSDoc comment, stop searching.
+				return ""
+			}
+		default:
+			// If it's any other kind of node, stop searching.
+			return ""
+		}
+	}
+	return ""
 }
 
 func FindNamedMatches(regex *regexp.Regexp, str string, includeNotMatchedOptional bool) map[string]string {
@@ -453,7 +482,7 @@ type PropertyInfo struct {
 	Deprecated M.Deprecated
 }
 
-func NewPropertyInfo(code string, queryManager *Q.QueryManager) (error, *PropertyInfo) {
+func NewPropertyInfo(code string, queryManager *Q.QueryManager) (*PropertyInfo, error) {
 	barr := []byte(code)
 	parser := Q.GetJSDocParser()
 	defer Q.PutJSDocParser(parser)
@@ -463,7 +492,7 @@ func NewPropertyInfo(code string, queryManager *Q.QueryManager) (error, *Propert
 
   qm, err := Q.NewQueryMatcher(queryManager, "jsdoc", "jsdoc")
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 	defer qm.Close()
 
@@ -504,7 +533,7 @@ func NewPropertyInfo(code string, queryManager *Q.QueryManager) (error, *Propert
 		}
 	}
 
-	return nil, &info
+	return &info, nil
 }
 
 type FieldInfo struct {

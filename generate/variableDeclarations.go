@@ -10,10 +10,10 @@ import (
 func generateVarDeclaration(
 	captures Q.CaptureMap,
 	queryManager *Q.QueryManager,
-) (err error, declaration *M.VariableDeclaration) {
+) (declaration *M.VariableDeclaration, errs error) {
 	nameNodes, ok := captures["variable.name"]
 	if !ok || len(nameNodes) <= 0 {
-		return errors.Join(err, &Q.NoCaptureError{ Capture: "variable.name", Query: "variable" }), nil
+		return nil, errors.Join(errs, &Q.NoCaptureError{ Capture: "variable.name", Query: "variable" })
 	}
 
 	varName := nameNodes[0].Text
@@ -34,14 +34,14 @@ func generateVarDeclaration(
 
 	jsdoc, ok := captures["variable.jsdoc"]
 	if ok && len(jsdoc) > 0 {
-		error, info := NewPropertyInfo(jsdoc[0].Text, queryManager)
-		if error != nil {
-			err = errors.Join(err, error)
+		info, err := NewPropertyInfo(jsdoc[0].Text, queryManager)
+		if err != nil {
+			errs = errors.Join(errs, err)
 		} else {
 			info.MergeToPropertyLike(&declaration.PropertyLike)
 		}
 	}
 
-	return nil, declaration
+	return declaration, errs
 }
 
