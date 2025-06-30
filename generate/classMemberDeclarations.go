@@ -293,7 +293,7 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 				continue
 			}
 
-			// If we've ok the other half of the pair, merge readonly
+			// If we've seen the other half of the pair, merge readonly
 			if prevKey, ok := seenAccessors[pairKeyStr]; ok {
 				needle := memberMap[prevKey]
 				existing := needle.(M.CustomElementField)
