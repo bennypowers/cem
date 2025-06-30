@@ -228,6 +228,7 @@ For npm projects you can use `npx @pwrs/cem generate ...`.
 | `--demo-discovery-url-pattern`  | string             | Go Regexp pattern with named capture groups for generating canonical demo urls                    |
 | `--demo-discovery-url-template` | string             | URL pattern string using {groupName} syntax to interpolate named captures from the URL pattern    |
 | `--source-control-root-url`     | string             | Glob pattern for discovering demo files                                                           |
+| `--project-dir`                 | string             | Specify the project root directory to use for resolving relative paths and configuration.         |
 
 
 By default, some files (like `.d.ts` TypeScript declaration files) are excluded from the manifest.
