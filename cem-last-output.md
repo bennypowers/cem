@@ -27,7 +27,6 @@
             },
             {
               "name": "hide",
-              "description": "Toast visibility",
               "kind": "method"
             }
           ],
@@ -1826,6 +1825,12 @@
           "superclass": {
             "name": "BaseItem"
           },
+          "members": [
+            {
+              "name": "render",
+              "kind": "method"
+            }
+          ],
           "kind": "class"
         }
       ],
