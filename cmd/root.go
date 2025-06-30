@@ -50,6 +50,11 @@ func Execute() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+	// Skip config loading for completion commands
+	if isCompletionCommand() {
+		return
+	}
+	
 	cfg, err := config.LoadConfig(cfgFile, projectDir)
 	if err != nil {
 		pterm.Error.Print(err)
@@ -62,6 +67,17 @@ func initConfig() {
 	}
 	pterm.Info.Print("Using project directory: ", CemConfig.GetProjectDir(), "\n")
 	pterm.Info.Print("Using config file: ", cfg.GetConfigFile(), "\n")
+}
+
+// isCompletionCommand checks if the current command is a completion command
+func isCompletionCommand() bool {
+	if len(os.Args) < 2 {
+		return false
+	}
+	// Check if the command is "completion" or any of its subcommands
+	return os.Args[1] == "completion" || 
+	       (len(os.Args) >= 3 && os.Args[1] == "completion" && 
+	        (os.Args[2] == "bash" || os.Args[2] == "zsh" || os.Args[2] == "fish" || os.Args[2] == "powershell"))
 }
 
 func init() {
