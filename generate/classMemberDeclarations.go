@@ -166,8 +166,6 @@ func (mp *ModuleProcessor) createClassFieldFromAccessorMatch(
 
 	amendFieldTypeWithCaptures(captures, &field.ClassField)
 	amendFieldPrivacyWithCaptures(captures, &field.ClassField)
-	mp.amendFieldWithJsdoc(captures, &field.ClassField)
-
 	isCustomElement := classType == "HTMLElement" || classType == "LitElement"
 	isProperty := isCustomElement && !isStatic && isPropertyField(captures)
 
@@ -176,6 +174,7 @@ func (mp *ModuleProcessor) createClassFieldFromAccessorMatch(
 	}
 
 	field.ClassField.StartByte = captures["accessor"][0].StartByte
+	err = mp.amendFieldWithJsdoc(captures, &field.ClassField)
 	return field, err
 }
 
