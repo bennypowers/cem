@@ -42,8 +42,8 @@ type GenerateConfig struct {
 }
 
 type CemConfig struct {
-	projectDir           string           `mapstructure:"-"`
-	configFile           string           `mapstructure:"-"`
+	ProjectDir           string           `mapstructure:"projectDir"`
+	ConfigFile           string           `mapstructure:"configFile"`
 	// Package name, as would appear in a package.json "name" field
 	PackageName          string           `mapstructure:"packageName"`
 	// Generate command options
@@ -54,9 +54,6 @@ type CemConfig struct {
 	// Verbose logging output
 	Verbose              bool             `mapstructure:"verbose"`
 }
-
-func (cfg *CemConfig) GetProjectDir() string { return cfg.projectDir }
-func (cfg *CemConfig) GetConfigFile() string { return cfg.configFile }
 
 func resolveProjectDir(configPath, projectDirFlag string) string {
 	if projectDirFlag != "" {
@@ -107,8 +104,7 @@ func expandPath(path string) (string, error) {
 	return filepath.Abs(path)
 }
 
-func LoadConfig(cfgFile string, projectDir string) (config *CemConfig, err error) {
-	v := viper.New()
+func LoadConfig(v *viper.Viper, cfgFile string, projectDir string) (config *CemConfig, err error) {
 	if cfgFile != "" {
 		// Use config file from the flag.
 		cfgFile, err = expandPath(cfgFile)
@@ -144,8 +140,8 @@ func LoadConfig(cfgFile string, projectDir string) (config *CemConfig, err error
 			return nil, err
 		}
 	}
-	config.projectDir = resolveProjectDir(cfgFile, projectDir)
-	config.configFile = cfgFile
+	config.ProjectDir = resolveProjectDir(cfgFile, projectDir)
+	config.ConfigFile = cfgFile
 	if !filepath.IsAbs(config.Generate.Output) {
 		config.Generate.Output = filepath.Join(projectDir, config.Generate.Output)
 	}
