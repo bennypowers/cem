@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -127,7 +128,8 @@ func LoadConfig(cfgFile string, projectDir string) (config *CemConfig, err error
 	v.SetConfigName("cem.yaml")
 	v.AutomaticEnv() // read in environment variables that match
 	if err := v.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+		var notFoundErr viper.ConfigFileNotFoundError
+		if errors.As(err, &notFoundErr) {
 			return &CemConfig{}, nil
 		} else {
 			return nil, err

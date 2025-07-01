@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
+	"errors"
 	"os"
 
 	"bennypowers.dev/cem/cmd/config"
@@ -45,8 +46,7 @@ Supports projects written with Lit`,
 		CemConfig = *cfg
 		if CemConfig.GetProjectDir() != "" {
 			if err := os.Chdir(CemConfig.GetProjectDir()); err != nil {
-				pterm.Error.Print("Failed to change into project directory: ", err)
-				os.Exit(1)
+				return errors.Join(err, errors.New("Failed to change into project directory"))
 			}
 			if  cfg.Verbose {
 				pterm.Info.Println("Using project directory: ", CemConfig.GetProjectDir())
