@@ -45,6 +45,7 @@ func (x *Package) GetAllTagNamesWithContext() (tags []CustomElementWithContext) 
 			if cee, ok := e.(*CustomElementExport); ok {
 				r := mrs[cee.Name]
 				r.CustomElementExport = *cee
+				mrs[cee.Name] = r
 			}
 		}
 		for _, r := range mrs {
@@ -57,7 +58,7 @@ func (x *Package) GetTagAttrsWithContext(tagName string) (attrs []AttributeWithC
 	attrMap := make(map[string]AttributeWithContext)
 	var ceName string
   var ceExport CustomElementExport
-	for _, m := range x.Modules {
+	modules: for _, m := range x.Modules {
 		for _, d := range m.Declarations {
 			if ced, ok := d.(*CustomElementDeclaration); ok {
 				if ced.TagName == tagName {
@@ -77,15 +78,15 @@ func (x *Package) GetTagAttrsWithContext(tagName string) (attrs []AttributeWithC
 							CustomElementField: fieldMap[attr.Name],
 						}
 					}
-				}
-				break
-			}
-		}
-		for _, e := range m.Exports {
-			if cee, ok := e.(*CustomElementExport); ok {
-				if cee.Name == ceName {
-					ceExport = *cee
-					break
+					exports: for _, e := range m.Exports {
+						if cee, ok := e.(*CustomElementExport); ok {
+							if cee.Name == ceName {
+								ceExport = *cee
+								break exports
+							}
+						}
+					}
+					break modules
 				}
 			}
 		}

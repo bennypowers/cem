@@ -88,6 +88,8 @@ var listTagsCmd = &cobra.Command{
 				return []string{r.TagName, r.JavaScriptModule.Path}
 			})(tags)...)
 			pterm.DefaultTable.WithHasHeader().WithBoxed(true).WithData(data).Render()
+		default:
+			return errors.New("Unknown format " + format)
 		}
 
 		return nil
@@ -127,6 +129,8 @@ var listAttrsCmd = &cobra.Command{
 				return []string{r.Name, r.FieldName, func() string { if r.CustomElementField.Reflects {return "true" } else {return "false"}}()}
 			})(attrs)...)
 			pterm.DefaultTable.WithHasHeader().WithBoxed(true).WithData(data).Render()
+		default:
+			return errors.New("Unknown format " + format)
 		}
 
 		return nil
