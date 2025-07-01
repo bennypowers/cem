@@ -1,4 +1,5 @@
 /*
+
 Copyright © 2025 Benny Powers <web@bennypowers.com>
 
 This program is free software: you can redistribute it and/or modify
@@ -18,16 +19,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
+	"errors"
 	"os"
+	"path/filepath"
+	"strings"
 
-	"bennypowers.dev/cem/cmd/config"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
-
-var cfgFile string
-var projectDir string
-var CemConfig config.CemConfig
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -48,26 +48,102 @@ func Execute() {
 	}
 }
 
-// initConfig reads in config file and ENV variables if set.
-func initConfig() {
-	cfg, err := config.LoadConfig(cfgFile, projectDir)
+func resolveProjectDir(configPath, projectDirFlag string) string {
+	if projectDirFlag != "" {
+		abs, err := expandPath(projectDirFlag)
+		if err != nil {
+			pterm.Fatal.Printf("Invalid --project-dir: %v", err)
+		}
+		return abs
+	}
+	configAbs, err := filepath.Abs(configPath)
 	if err != nil {
-		pterm.Error.Print(err)
-		os.Exit(1)
+		pterm.Fatal.Printf("Invalid --config: %v", err)
 	}
-	CemConfig = *cfg
-	if err := os.Chdir(CemConfig.GetProjectDir()); err != nil {
-		pterm.Error.Print("Failed to change into project directory: ", err)
-		os.Exit(1)
+	configDir := filepath.Dir(configAbs)
+	base := filepath.Base(configDir)
+	if base == ".config" || base == "config" {
+		return filepath.Dir(configDir)
 	}
-	pterm.Info.Print("Using project directory: ", CemConfig.GetProjectDir(), "\n")
-	pterm.Info.Print("Using config file: ", cfg.GetConfigFile(), "\n")
+	// fallback: use current working directory
+	cwd, err := os.Getwd()
+	if err != nil {
+		pterm.Fatal.Printf("Unable to get current working directory: %v", err)
+	}
+	if !strings.HasPrefix(configAbs, cwd) {
+		pterm.Warning.Printf("Warning: --config is outside of current dir, guessing project root as %s\n", cwd)
+	}
+	return cwd
+}
+
+// expandPath expands ~, handles relative and absolute paths
+func expandPath(path string) (string, error) {
+	if path == "" {
+		return "", nil
+	}
+	if strings.HasPrefix(path, "~") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		// Support ~/ and ~
+		if path == "~" {
+			path = home
+		} else if strings.HasPrefix(path, "~/") {
+			path = filepath.Join(home, path[2:])
+		}
+		// Note: ~user/ is not supported (Go stdlib doesn't provide this)
+	}
+	return filepath.Abs(path)
+}
+
+func initConfig() {
+	var err error
+	projectDir := viper.GetString("projectDir")
+	cfgFile := viper.GetString("configFile")
+	if projectDir != "" {
+		projectDir = resolveProjectDir(cfgFile, projectDir)
+		// Search config in home directory with name ".snakes" (without extension).
+		viper.AddConfigPath(filepath.Join(projectDir, ".config"))
+		viper.SetConfigType("yaml")
+		viper.SetConfigName("cem")
+		if err := os.Chdir(projectDir); err != nil {
+			cobra.CheckErr(errors.Join(err, errors.New("Failed to change into project directory")))
+		}
+		if viper.GetBool("verbose") {
+			pterm.Info.Println("Using project directory: ", projectDir)
+		}
+	}
+	if cfgFile != "" {
+		// Use config file from the flag.
+		cfgFile, err = expandPath(cfgFile)
+		cobra.CheckErr(err)
+	} else {
+		// Search config in local project .config directory with name "cem.yaml"
+		cfgFile, err = expandPath(filepath.Join(projectDir, ".config", "cem.yaml"))
+		cobra.CheckErr(err)
+	}
+	if cfgFile != "" {
+		viper.SetConfigFile(cfgFile)
+		if err := viper.ReadInConfig(); err == nil {
+			if viper.GetBool("verbose") {
+				pterm.Info.Println("Using config file: ", cfgFile)
+			}
+		}
+	}
+
+	viper.AutomaticEnv()
 }
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $CWD/.config/cem.yaml)")
-	rootCmd.PersistentFlags().StringVar(&projectDir, "project-dir", "", "Path to project directory (default: parent directory of .config/cem.yaml)")
-	rootCmd.PersistentFlags().BoolVarP(&CemConfig.Verbose, "verbose", "v", false, "verbose logging output")
+	rootCmd.PersistentFlags().String("source-control-root-url", "",    "Canonical public source control URL corresponding to project root on primary branch. e.g. https://github.com/bennypowers/cem/tree/main/")
+	rootCmd.PersistentFlags().String("config",                  "",    "config file (default is $CWD/.config/cem.yaml)")
+	rootCmd.PersistentFlags().String("project-dir",             "",    "Path to project directory (default: parent directory of .config/cem.yaml)")
+	rootCmd.PersistentFlags().BoolP("verbose", "v",             false, "verbose logging output")
+	viper.BindPFlag("configFile", rootCmd.PersistentFlags().Lookup("config"))
+	viper.BindPFlag("projectDir", rootCmd.PersistentFlags().Lookup("project-dir"))
+	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
+	viper.BindPFlag("sourceControlRootUrl", rootCmd.PersistentFlags().Lookup("source-control-root-url"))
 }
 

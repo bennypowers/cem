@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -41,8 +42,8 @@ type GenerateConfig struct {
 }
 
 type CemConfig struct {
-	projectDir           string           `mapstructure:"-"`
-	configFile           string           `mapstructure:"-"`
+	ProjectDir           string           `mapstructure:"projectDir"`
+	ConfigFile           string           `mapstructure:"configFile"`
 	// Package name, as would appear in a package.json "name" field
 	PackageName          string           `mapstructure:"packageName"`
 	// Generate command options
@@ -53,9 +54,6 @@ type CemConfig struct {
 	// Verbose logging output
 	Verbose              bool             `mapstructure:"verbose"`
 }
-
-func (cfg *CemConfig) GetProjectDir() string { return cfg.projectDir }
-func (cfg *CemConfig) GetConfigFile() string { return cfg.configFile }
 
 func resolveProjectDir(configPath, projectDirFlag string) string {
 	if projectDirFlag != "" {
@@ -106,30 +104,32 @@ func expandPath(path string) (string, error) {
 	return filepath.Abs(path)
 }
 
-func LoadConfig(cfgFile string, projectDir string) (config *CemConfig, err error) {
-	v := viper.New()
+func LoadConfig(v *viper.Viper, cfgFile string, projectDir string) (config *CemConfig, err error) {
 	if cfgFile != "" {
 		// Use config file from the flag.
 		cfgFile, err = expandPath(cfgFile)
 		if err != nil {
 			return nil, err
 		}
-		v.SetConfigFile(cfgFile)
 	} else {
 		// Search config in local project .config directory with name "cem.yaml"
 		cfgFile, err = expandPath(filepath.Join(projectDir, "./.config", "cem.yaml"))
 		if err != nil {
 			return nil, err
 		}
-		v.AddConfigPath(filepath.Dir(cfgFile))
-		v.SetConfigType("yaml")
-		v.SetConfigName("cem.yaml")
 	}
-	v.AutomaticEnv() // read in environment variables that match
+	v.AddConfigPath(filepath.Dir(cfgFile))
 	v.SetConfigFile(cfgFile)
 	v.SetConfigType("yaml")
+	v.SetConfigName("cem.yaml")
+	v.AutomaticEnv() // read in environment variables that match
 	if err := v.ReadInConfig(); err != nil {
-		return nil, err
+		var notFoundErr viper.ConfigFileNotFoundError
+		if errors.As(err, &notFoundErr) {
+			return &CemConfig{}, nil
+		} else {
+			return nil, err
+		}
 	}
 	if err := v.Unmarshal(&config); err != nil {
 		return nil, err
@@ -140,8 +140,8 @@ func LoadConfig(cfgFile string, projectDir string) (config *CemConfig, err error
 			return nil, err
 		}
 	}
-	config.projectDir = resolveProjectDir(cfgFile, projectDir)
-	config.configFile = cfgFile
+	config.ProjectDir = resolveProjectDir(cfgFile, projectDir)
+	config.ConfigFile = cfgFile
 	if !filepath.IsAbs(config.Generate.Output) {
 		config.Generate.Output = filepath.Join(projectDir, config.Generate.Output)
 	}

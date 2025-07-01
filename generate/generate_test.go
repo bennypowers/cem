@@ -12,6 +12,7 @@ import (
 
 	"bennypowers.dev/cem/cmd/config"
 	"github.com/nsf/jsondiff"
+	"github.com/spf13/viper"
 )
 
 var update = flag.Bool("update", false, "update golden files")
@@ -57,7 +58,7 @@ func TestGenerate(t *testing.T) {
 			}
 
 			configPath := filepath.Join(".config", "cem.yaml")
-			cfg, err := config.LoadConfig(configPath, ".")
+			cfg, err := config.LoadConfig(viper.New(), configPath, ".")
 			if err != nil {
 				t.Fatalf("failed to load config: %v", err)
 			}
