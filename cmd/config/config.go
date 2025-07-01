@@ -114,22 +114,24 @@ func LoadConfig(cfgFile string, projectDir string) (config *CemConfig, err error
 		if err != nil {
 			return nil, err
 		}
-		v.SetConfigFile(cfgFile)
 	} else {
 		// Search config in local project .config directory with name "cem.yaml"
 		cfgFile, err = expandPath(filepath.Join(projectDir, "./.config", "cem.yaml"))
 		if err != nil {
 			return nil, err
 		}
-		v.AddConfigPath(filepath.Dir(cfgFile))
-		v.SetConfigType("yaml")
-		v.SetConfigName("cem.yaml")
 	}
-	v.AutomaticEnv() // read in environment variables that match
+	v.AddConfigPath(filepath.Dir(cfgFile))
 	v.SetConfigFile(cfgFile)
 	v.SetConfigType("yaml")
+	v.SetConfigName("cem.yaml")
+	v.AutomaticEnv() // read in environment variables that match
 	if err := v.ReadInConfig(); err != nil {
-		return nil, err
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			return &CemConfig{}, nil
+		} else {
+			return nil, err
+		}
 	}
 	if err := v.Unmarshal(&config); err != nil {
 		return nil, err

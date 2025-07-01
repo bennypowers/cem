@@ -36,6 +36,27 @@ var rootCmd = &cobra.Command{
 	Long: `Scans your projects TypeScript sources and identifies custom elements.
 Generates a custom elements manifest file (custom-elements.json) describing your modules.
 Supports projects written with Lit`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+    _ = cmd.ParseFlags(args)
+		cfg, err := config.LoadConfig(cfgFile, projectDir)
+		if err != nil {
+			return err
+		}
+		CemConfig = *cfg
+		if CemConfig.GetProjectDir() != "" {
+			if err := os.Chdir(CemConfig.GetProjectDir()); err != nil {
+				pterm.Error.Print("Failed to change into project directory: ", err)
+				os.Exit(1)
+			}
+			if  cfg.Verbose {
+				pterm.Info.Println("Using project directory: ", CemConfig.GetProjectDir())
+			}
+		}
+		if cfg.Verbose && cfg.GetConfigFile() != "" {
+			pterm.Info.Println("Using config file: ", cfg.GetConfigFile())
+		}
+		return nil
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -48,24 +69,7 @@ func Execute() {
 	}
 }
 
-// initConfig reads in config file and ENV variables if set.
-func initConfig() {
-	cfg, err := config.LoadConfig(cfgFile, projectDir)
-	if err != nil {
-		pterm.Error.Print(err)
-		os.Exit(1)
-	}
-	CemConfig = *cfg
-	if err := os.Chdir(CemConfig.GetProjectDir()); err != nil {
-		pterm.Error.Print("Failed to change into project directory: ", err)
-		os.Exit(1)
-	}
-	pterm.Info.Print("Using project directory: ", CemConfig.GetProjectDir(), "\n")
-	pterm.Info.Print("Using config file: ", cfg.GetConfigFile(), "\n")
-}
-
 func init() {
-	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $CWD/.config/cem.yaml)")
 	rootCmd.PersistentFlags().StringVar(&projectDir, "project-dir", "", "Path to project directory (default: parent directory of .config/cem.yaml)")
 	rootCmd.PersistentFlags().BoolVarP(&CemConfig.Verbose, "verbose", "v", false, "verbose logging output")
