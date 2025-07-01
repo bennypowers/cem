@@ -82,10 +82,11 @@ modules:
 						}
 					}
 					for _, attr := range ced.Attributes {
-						field := fieldMap[attr.Name]
-						attrMap[attr.Name] = AttributeWithContext{
-							Name:                     attr.Name,
-							Attribute:                &attr,
+						attrCopy := attr // Create a copy of the loop variable
+						field := fieldMap[attrCopy.Name]
+						attrMap[attrCopy.Name] = AttributeWithContext{
+							Name:                     attrCopy.Name,
+							Attribute:                &attrCopy,
 							JavaScriptModule:         &m,
 							CustomElementDeclaration: ced,
 							CustomElementField:       &field,
