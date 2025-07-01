@@ -245,9 +245,21 @@ func unmarshalClassMember(data json.RawMessage) (ClassMember, error) {
 	}
 	switch kindWrap.Kind {
 	case "field":
-		var f ClassField
-		if err := json.Unmarshal(data, &f); err == nil {
-			return &f, nil
+		// Check for attribute
+		var probe struct {
+			Attribute *string `json:"attribute"`
+		}
+		_ = json.Unmarshal(data, &probe)
+		if probe.Attribute != nil {
+			var f CustomElementField
+			if err := json.Unmarshal(data, &f); err == nil {
+				return &f, nil
+			}
+		} else {
+			var f ClassField
+			if err := json.Unmarshal(data, &f); err == nil {
+				return &f, nil
+			}
 		}
 	case "method":
 		var m ClassMethod

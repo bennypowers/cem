@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"regexp"
+
 )
 
 func normalizePath(path string) string {
@@ -38,13 +39,13 @@ func (x *Package) GetAllTagNamesWithContext() (tags []CustomElementWithContext) 
 		mrs := make(map[string]CustomElementWithContext)
 		for _, d := range m.Declarations {
 			if ced, ok := d.(*CustomElementDeclaration); ok {
-				mrs[ced.TagName] = CustomElementWithContext{CustomElementDeclaration: *ced, JavaScriptModule: m, TagName: ced.TagName}
+				mrs[ced.TagName] = CustomElementWithContext{CustomElementDeclaration: ced, Module: &m, TagName: ced.TagName}
 			}
 		}
 		for _, e := range m.Exports {
 			if cee, ok := e.(*CustomElementExport); ok {
 				r := mrs[cee.Name]
-				r.CustomElementExport = *cee
+				r.CustomElementExport = cee
 				mrs[cee.Name] = r
 			}
 		}
@@ -56,34 +57,35 @@ func (x *Package) GetAllTagNamesWithContext() (tags []CustomElementWithContext) 
 }
 func (x *Package) GetTagAttrsWithContext(tagName string) (attrs []AttributeWithContext, err error) {
 	attrMap := make(map[string]AttributeWithContext)
-	var ceName string
-  var ceExport CustomElementExport
 	modules: for _, m := range x.Modules {
 		for _, d := range m.Declarations {
 			if ced, ok := d.(*CustomElementDeclaration); ok {
 				if ced.TagName == tagName {
-					ceName = ced.TagName
 					fieldMap := make(map[string]CustomElementField)
 					for _, member := range ced.Members {
-						if cef, ok := member.(*CustomElementField); ok {
+						switch cef := member.(type) {
+						case *CustomElementField:
 							fieldMap[cef.Attribute] = *cef
 						}
 					}
-					for _, attr := range ced.Attributes {
-						attrMap[attr.Name] = AttributeWithContext{
-							Name: attr.Name,
-							Attribute: attr,
-							JavaScriptModule: m,
-							CustomElementDeclaration: *ced,
-							CustomElementField: fieldMap[attr.Name],
+					var ceExport CustomElementExport
+					for _, e := range m.Exports {
+						if cee, ok := e.(*CustomElementExport); ok {
+							if cee.Name == tagName {
+								ceExport = *cee
+								break
+							}
 						}
 					}
-					exports: for _, e := range m.Exports {
-						if cee, ok := e.(*CustomElementExport); ok {
-							if cee.Name == ceName {
-								ceExport = *cee
-								break exports
-							}
+					for _, attr := range ced.Attributes {
+						field := fieldMap[attr.Name]
+						attrMap[attr.Name] = AttributeWithContext{
+							Name: attr.Name,
+							Attribute: &attr,
+							JavaScriptModule: &m,
+							CustomElementDeclaration: ced,
+							CustomElementField: &field,
+							CustomElementExport: &ceExport,
 						}
 					}
 					break modules
@@ -96,11 +98,8 @@ func (x *Package) GetTagAttrsWithContext(tagName string) (attrs []AttributeWithC
 		return nil, errors.New("Tag not found: " + tagName)
 	}
 	attrs = make([]AttributeWithContext, 0)
-	for name, awc := range attrMap{
-		if name != "" {
-			awc.CustomElementExport = ceExport
-			attrs = append(attrs, awc)
-		}
+	for _, awc := range attrMap{
+		attrs = append(attrs, awc)
 	}
 	return attrs, nil
 }
@@ -217,9 +216,9 @@ func (x *CustomElementDeclaration) GetStartByte() uint { return x.StartByte }
 
 type CustomElementWithContext struct {
 	TagName string
-	CustomElementDeclaration
-	JavaScriptModule
-	CustomElementExport
+	CustomElementDeclaration *CustomElementDeclaration
+	Module *Module
+	CustomElementExport *CustomElementExport
 }
 
 // CustomElement adds fields to classes/mixins for custom elements.
@@ -250,11 +249,11 @@ type Attribute struct {
 
 type AttributeWithContext struct {
 	Name string
-	Attribute
-	CustomElementDeclaration
-	JavaScriptModule
-	CustomElementExport
-  CustomElementField
+	Attribute *Attribute
+	CustomElementDeclaration *CustomElementDeclaration
+	JavaScriptModule *JavaScriptModule
+	CustomElementExport *CustomElementExport
+  CustomElementField *CustomElementField
 }
 
 // Event emitted by a custom element.

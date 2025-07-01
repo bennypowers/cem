@@ -85,7 +85,7 @@ var listTagsCmd = &cobra.Command{
 				{"Tag", "Module"},
 			}
 			data = append(data, A.Map(func(r M.CustomElementWithContext) []string {
-				return []string{r.TagName, r.JavaScriptModule.Path}
+				return []string{r.TagName, r.Module.Path}
 			})(tags)...)
 			pterm.DefaultTable.WithHasHeader().WithBoxed(true).WithData(data).Render()
 		default:
@@ -126,7 +126,10 @@ var listAttrsCmd = &cobra.Command{
 				{"Attribute", "DOM Property", "Reflects"},
 			}
 			data = append(data, A.Map(func(r M.AttributeWithContext) []string {
-				return []string{r.Name, r.FieldName, func() string { if r.CustomElementField.Reflects {return "true" } else {return "false"}}()}
+				return []string{
+					r.Name,
+					r.CustomElementField.Name,
+					func() string { if r.CustomElementField.Reflects {return "✅" } else {return "❌"}}()}
 			})(attrs)...)
 			pterm.DefaultTable.WithHasHeader().WithBoxed(true).WithData(data).Render()
 		default:
@@ -143,5 +146,5 @@ func init() {
 	rootCmd.AddCommand(listCmd)
 
 	listCmd.PersistentFlags().StringP("format", "f", "table", "Output format")
-	listAttrsCmd.Flags().StringP("tag-name", "t", "", "Tag name to list attributes for")			
+	listAttrsCmd.Flags().StringP("tag-name", "t", "", "Tag name to list attributes for")
 }
