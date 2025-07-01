@@ -1,8 +1,8 @@
 package generate
 
 import (
-	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/generate/queries"
+	M "bennypowers.dev/cem/manifest"
 )
 
 // ParsedClass is an intermediate structure for class processing in the generate package.

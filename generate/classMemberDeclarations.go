@@ -24,20 +24,20 @@ var ignoredStaticFieldsLit = S.NewSet(
 )
 
 var ignoredInstanceMethodsHTML = S.NewSet(
-  "adoptedCallback",
-  "connectedCallback",
-  "connectedMoveCallback",
-  "disconnectedCallback",
-  "formDisabledCallback",
-  "formStateRestoreCallback",
+	"adoptedCallback",
+	"connectedCallback",
+	"connectedMoveCallback",
+	"disconnectedCallback",
+	"formDisabledCallback",
+	"formStateRestoreCallback",
 )
 
 var ignoredInstanceMethodsLit = S.NewSet(
-  "render",
-  "update",
-  "getUpdateComplete",
-  "updated",
-  "willUpdate",
+	"render",
+	"update",
+	"getUpdateComplete",
+	"updated",
+	"willUpdate",
 )
 
 var (
@@ -48,17 +48,17 @@ var (
 func isIgnoredMember(memberName string, superclass string, isStatic bool) bool {
 	switch superclass {
 	case "HTMLElement":
-		if ((isStatic && ignoredStaticFieldsHTML.Has(memberName)) ||
-				(!isStatic && ignoredInstanceMethodsHTML.Has(memberName))) {
+		if (isStatic && ignoredStaticFieldsHTML.Has(memberName)) ||
+			(!isStatic && ignoredInstanceMethodsHTML.Has(memberName)) {
 			return true
 		}
 	case "LitElement":
-		if ((isStatic && ignoredStaticFieldsHTML.Has(memberName)) ||
-				(!isStatic && ignoredInstanceMethodsHTML.Has(memberName))) {
+		if (isStatic && ignoredStaticFieldsHTML.Has(memberName)) ||
+			(!isStatic && ignoredInstanceMethodsHTML.Has(memberName)) {
 			return true
 		}
 		if (isStatic && ignoredStaticFieldsLit.Has(memberName)) ||
-				(!isStatic && ignoredInstanceMethodsLit.Has(memberName)) {
+			(!isStatic && ignoredInstanceMethodsLit.Has(memberName)) {
 			return true
 		}
 	}
@@ -91,10 +91,10 @@ func amendFieldTypeWithCaptures(captures Q.CaptureMap, field *M.ClassField) {
 func amendFieldPrivacyWithCaptures(captures Q.CaptureMap, field *M.ClassField) {
 	for _, capture := range captures["member.privacy"] {
 		switch capture.Text {
-			case "private":
-				field.Privacy = M.Private
-			case "protected":
-				field.Privacy = M.Protected
+		case "private":
+			field.Privacy = M.Private
+		case "protected":
+			field.Privacy = M.Protected
 		}
 	}
 }
@@ -188,10 +188,10 @@ func (mp *ModuleProcessor) createClassFieldFromFieldMatch(
 
 	field = M.CustomElementField{
 		ClassField: M.ClassField{
-			Kind:    "field",
-			Static:  isStatic,
+			Kind:   "field",
+			Static: isStatic,
 			PropertyLike: M.PropertyLike{
-				Name:    fieldName,
+				Name:     fieldName,
 				Readonly: readonly,
 			},
 		},
@@ -256,9 +256,9 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 
 	// Key: className + "." + fieldName + "." + kind + ".static"
 	type memberKey struct {
-		name     string
-		kind     string // field, accessor, method
-		static   bool
+		name   string
+		kind   string // field, accessor, method
+		static bool
 	}
 	memberMap := make(map[memberKey]M.ClassMember)
 	seenAccessors := make(map[string]memberKey) // for merging get/set
@@ -372,8 +372,8 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 	}
 
 	slices.SortStableFunc(members, func(a, b M.ClassMember) int {
-    return int(a.GetStartByte() - b.GetStartByte())
-})
+		return int(a.GetStartByte() - b.GetStartByte())
+	})
 
 	return members, errs
 }

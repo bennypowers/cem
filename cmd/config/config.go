@@ -11,9 +11,9 @@ import (
 )
 
 type DemoDiscoveryConfig struct {
-	FileGlob  string               `mapstructure:"fileGlob"`
-	URLPattern   string            `mapstructure:"urlPattern"`
-	URLTemplate  string            `mapstructure:"urlTemplate"`
+	FileGlob    string `mapstructure:"fileGlob"`
+	URLPattern  string `mapstructure:"urlPattern"`
+	URLTemplate string `mapstructure:"urlTemplate"`
 }
 
 type DesignTokensConfig struct {
@@ -28,31 +28,31 @@ type DesignTokensConfig struct {
 // CLI or config arguments passed to the generate command
 type GenerateConfig struct {
 	// List of files or file globs to include in the manifest
-	Files              []string
+	Files []string
 	// List of files or file globs to exclude from the manifest
-	Exclude            []string
+	Exclude []string
 	// Do not exclude files that are excluded by default e.g. *.d.ts files.
-	NoDefaultExcludes  bool
+	NoDefaultExcludes bool
 	// File path to write output to. If omitted, output will be written to stdout.
-	Output             string
+	Output string
 	// Configuration for design tokens discovery
-	DesignTokens       DesignTokensConfig
+	DesignTokens DesignTokensConfig
 	// Configuration for demo file discovery
-	DemoDiscovery      DemoDiscoveryConfig
+	DemoDiscovery DemoDiscoveryConfig
 }
 
 type CemConfig struct {
-	ProjectDir           string           `mapstructure:"projectDir"`
-	ConfigFile           string           `mapstructure:"configFile"`
+	ProjectDir string `mapstructure:"projectDir"`
+	ConfigFile string `mapstructure:"configFile"`
 	// Package name, as would appear in a package.json "name" field
-	PackageName          string           `mapstructure:"packageName"`
+	PackageName string `mapstructure:"packageName"`
 	// Generate command options
-	Generate             GenerateConfig   `mapstructure:"generate"`
+	Generate GenerateConfig `mapstructure:"generate"`
 	// Canonical public source control URL corresponding to project root on primary branch.
 	// e.g. https://github.com/bennypowers/cem/tree/main/
-	SourceControlRootUrl string           `mapstructure:"sourceControlRootUrl"`
+	SourceControlRootUrl string `mapstructure:"sourceControlRootUrl"`
 	// Verbose logging output
-	Verbose              bool             `mapstructure:"verbose"`
+	Verbose bool `mapstructure:"verbose"`
 }
 
 func resolveProjectDir(configPath, projectDirFlag string) string {

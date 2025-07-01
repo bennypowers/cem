@@ -48,7 +48,7 @@ func TestGenerate(t *testing.T) {
 		t.Run(projectEntry.Name(), func(t *testing.T) {
 			oldWd, _ := os.Getwd()
 			if err := os.Chdir(projectDir); err != nil {
-					t.Fatalf("failed to chdir to %s: %v", projectDir, err)
+				t.Fatalf("failed to chdir to %s: %v", projectDir, err)
 			}
 			defer os.Chdir(oldWd)
 

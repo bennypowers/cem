@@ -18,17 +18,17 @@ import (
 )
 
 type HtmlDocYaml struct {
-	Description string      `yaml:"description"`
-	Summary     string      `yaml:"summary"`
-	Deprecated  any         `yaml:"deprecated"`
+	Description string `yaml:"description"`
+	Summary     string `yaml:"summary"`
+	Deprecated  any    `yaml:"deprecated"`
 }
 
 type NestedHtmlDocYaml struct {
-	Slot *HtmlDocYaml `yaml:"slot"`
-	Part *HtmlDocYaml `yaml:"part"`
-	Description string      `yaml:"description"`
-	Summary     string      `yaml:"summary"`
-	Deprecated  any         `yaml:"deprecated"`
+	Slot        *HtmlDocYaml `yaml:"slot"`
+	Part        *HtmlDocYaml `yaml:"part"`
+	Description string       `yaml:"description"`
+	Summary     string       `yaml:"summary"`
+	Deprecated  any          `yaml:"deprecated"`
 }
 
 // --- Main entry: Generate a class declaration as ParsedClass ---
@@ -97,7 +97,7 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 	declaration = &M.ClassDeclaration{
 		Kind: "class",
 		ClassLike: M.ClassLike{
-			Name: className,
+			Name:      className,
 			StartByte: classDeclarationNode.StartByte(),
 		},
 	}
@@ -105,7 +105,7 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 	var superclassName string
 	mp.step("Processing heritage", 1, func() {
 		superClassNameNodes, ok := captures["superclass.name"]
-		if (ok && len(superClassNameNodes) > 0) {
+		if ok && len(superClassNameNodes) > 0 {
 			superclassName = superClassNameNodes[0].Text
 			pkg := ""
 			module := ""
@@ -144,7 +144,7 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 
 	mp.step("Processing jsdoc", 1, func() {
 		jsdoc, ok := captures["class.jsdoc"]
-		if (ok && len(jsdoc) > 0) {
+		if ok && len(jsdoc) > 0 {
 			info, err := NewClassInfo(jsdoc[0].Text, mp.queryManager)
 			if err != nil {
 				mp.errors = errors.Join(mp.errors, err)
@@ -181,7 +181,7 @@ func (mp *ModuleProcessor) generateHTMLElementClassDeclaration(
 	mp.step("Processing observedAttributes", 1, func() {
 		for _, name := range captures["observedAttributes.attributeName"] {
 			declaration.CustomElement.Attributes = append(declaration.CustomElement.Attributes, M.Attribute{
-				Name: name.Text,
+				Name:      name.Text,
 				StartByte: name.StartByte,
 			})
 		}
@@ -189,7 +189,7 @@ func (mp *ModuleProcessor) generateHTMLElementClassDeclaration(
 
 	mp.step("Processing class jsdoc", 1, func() {
 		jsdoc, ok := captures["class.jsdoc"]
-		if (ok && len(jsdoc) > 0) {
+		if ok && len(jsdoc) > 0 {
 			info, err := NewClassInfo(jsdoc[0].Text, mp.queryManager)
 			if err != nil {
 				mp.errors = errors.Join(mp.errors, err)
@@ -228,18 +228,18 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 	}
 
 	tagNameNodes, ok := captures["tag-name"]
-	if (ok && len(tagNameNodes) > 0) {
+	if ok && len(tagNameNodes) > 0 {
 		tagName := tagNameNodes[0].Text
-		if (tagName != "") {
+		if tagName != "" {
 			declaration.CustomElement.TagName = tagName
 		}
 	} else {
-		errs = errors.Join(errs, &Q.NoCaptureError{ Capture: "tag-name", Query: "classes"  })
+		errs = errors.Join(errs, &Q.NoCaptureError{Capture: "tag-name", Query: "classes"})
 	}
 
 	declaration.CustomElement.Attributes = A.Chain(func(member M.ClassMember) []M.Attribute {
 		field, ok := (member).(M.CustomElementField)
-		if (ok && field.Attribute != "") {
+		if ok && field.Attribute != "" {
 			return []M.Attribute{{
 				Name:        field.Attribute,
 				Summary:     field.Summary,
@@ -277,7 +277,7 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 
 	mp.step("Processing class jsdoc", 2, func() {
 		jsdoc, ok := captures["class.jsdoc"]
-		if (ok && len(jsdoc) > 0) {
+		if ok && len(jsdoc) > 0 {
 			classInfo, err := NewClassInfo(jsdoc[0].Text, mp.queryManager)
 			if err != nil {
 				errs = errors.Join(errs, err)
@@ -322,9 +322,9 @@ func (mp *ModuleProcessor) processRenderTemplate(htmlSource string) (slots []M.S
 					part.Summary = yamlDoc.Summary
 					switch v := yamlDoc.Deprecated.(type) {
 					case bool:
-							part.Deprecated = M.DeprecatedFlag(v)
+						part.Deprecated = M.DeprecatedFlag(v)
 					case string:
-							part.Deprecated = M.DeprecatedReason(v)
+						part.Deprecated = M.DeprecatedReason(v)
 					}
 				}
 				parts = append(parts, part)
@@ -346,9 +346,9 @@ func (mp *ModuleProcessor) processRenderTemplate(htmlSource string) (slots []M.S
 			slot.Summary = yamlDoc.Summary
 			switch v := yamlDoc.Deprecated.(type) {
 			case bool:
-					slot.Deprecated = M.DeprecatedFlag(v)
+				slot.Deprecated = M.DeprecatedFlag(v)
 			case string:
-					slot.Deprecated = M.DeprecatedReason(v)
+				slot.Deprecated = M.DeprecatedReason(v)
 			}
 		}
 		slots = append(slots, slot)
@@ -369,29 +369,29 @@ func ColorizeClassName(name string) *pterm.Style {
 }
 
 func parseYamlComment(comment string, kind string) (HtmlDocYaml, error) {
-    inner := comment
-    if matches := htmlCommentStripRE.FindStringSubmatch(inner); len(matches) == 2 {
-        inner = matches[1]
-    }
-    inner = dedentYaml(inner)
-    raw := NestedHtmlDocYaml{}
+	inner := comment
+	if matches := htmlCommentStripRE.FindStringSubmatch(inner); len(matches) == 2 {
+		inner = matches[1]
+	}
+	inner = dedentYaml(inner)
+	raw := NestedHtmlDocYaml{}
 	err := yaml.Unmarshal([]byte(inner), &raw)
 
-    switch kind {
-    case "slot":
-        if raw.Slot != nil {
-            return *raw.Slot, err
-        }
-    case "part":
-        if raw.Part != nil {
-            return *raw.Part, err
-        }
-    }
-    return HtmlDocYaml{
-        Description: raw.Description,
-        Summary:     raw.Summary,
-        Deprecated:  raw.Deprecated,
-    }, err
+	switch kind {
+	case "slot":
+		if raw.Slot != nil {
+			return *raw.Slot, err
+		}
+	case "part":
+		if raw.Part != nil {
+			return *raw.Part, err
+		}
+	}
+	return HtmlDocYaml{
+		Description: raw.Description,
+		Summary:     raw.Summary,
+		Deprecated:  raw.Deprecated,
+	}, err
 }
 
 func dedentYaml(s string) string {

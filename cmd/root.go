@@ -137,13 +137,12 @@ func initConfig() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().String("source-control-root-url", "",    "Canonical public source control URL corresponding to project root on primary branch. e.g. https://github.com/bennypowers/cem/tree/main/")
-	rootCmd.PersistentFlags().String("config",                  "",    "config file (default is $CWD/.config/cem.yaml)")
-	rootCmd.PersistentFlags().String("project-dir",             "",    "Path to project directory (default: parent directory of .config/cem.yaml)")
-	rootCmd.PersistentFlags().BoolP("verbose", "v",             false, "verbose logging output")
+	rootCmd.PersistentFlags().String("source-control-root-url", "", "Canonical public source control URL corresponding to project root on primary branch. e.g. https://github.com/bennypowers/cem/tree/main/")
+	rootCmd.PersistentFlags().String("config", "", "config file (default is $CWD/.config/cem.yaml)")
+	rootCmd.PersistentFlags().String("project-dir", "", "Path to project directory (default: parent directory of .config/cem.yaml)")
+	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "verbose logging output")
 	viper.BindPFlag("configFile", rootCmd.PersistentFlags().Lookup("config"))
 	viper.BindPFlag("projectDir", rootCmd.PersistentFlags().Lookup("project-dir"))
 	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
 	viper.BindPFlag("sourceControlRootUrl", rootCmd.PersistentFlags().Lookup("source-control-root-url"))
 }
-

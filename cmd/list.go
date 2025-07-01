@@ -31,7 +31,10 @@ import (
 
 func readPkg() (*M.Package, error) {
 	cfg := C.CemConfig{}
-	viper.Unmarshal(&cfg)
+	err := viper.Unmarshal(&cfg)
+	if err != nil {
+		return nil, err
+	}
 	path := cfg.Generate.Output
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -49,27 +52,31 @@ func readPkg() (*M.Package, error) {
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List items in the custom elements manifest like tag names, attributes, functions, etc",
-	Long: `TODO: say more`,
+	Long: `List various entities defined in the custom elements manifest (CEM) generated from your project.
+
+This command provides subcommands for listing tag names, attributes, and other elements described in your manifest.
+Use the available subcommands to explore your project's custom elements, their attributes, and more.
+
+Examples:
+
+  cem list tags
+  cem list attrs --tag-name rh-button
+`,
 }
 
 var listTagsCmd = &cobra.Command{
 	Use:   "tags",
 	Short: "List tag names in the custom elements manifest",
-	Long: `TODO: say more`,
+	Long: `List all custom element tag names defined in your project's custom elements manifest (CEM).
+
+This command outputs a table with tag names and their corresponding source modules, allowing you to quickly see which custom elements are available and where they are defined.
+
+Example:
+
+  cem list tags --format table
+`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg := C.CemConfig{}
-		viper.Unmarshal(&cfg)
-		path := cfg.Generate.Output
-		cwd, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		path = filepath.Join(cwd, path)
-		json, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		pkg, err := M.UnmarshalPackage(json)
+		pkg, err := readPkg()
 		if err != nil {
 			return err
 		}
@@ -99,14 +106,23 @@ var listTagsCmd = &cobra.Command{
 var listAttrsCmd = &cobra.Command{
 	Use:   "attrs",
 	Short: "List attributes in the custom elements manifest by tag name",
-	Long: `TODO: say more`,
+	Long: `List all attributes for a given custom element tag as described in the custom elements manifest (CEM).
+
+You must specify the tag name using the --tag-name flag. The output includes each attribute, its corresponding DOM property, and whether it reflects changes to the DOM.
+
+Examples:
+
+  cem list attrs --tag-name rh-dialog --format table
+
+This is useful for understanding the public API surface (attributes/properties) of a custom element in your project.
+`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tagName, err := cmd.Flags().GetString("tag-name")
-		if tagName == "" {
-			return errors.New("cem list attrs: must supply --tag-name")
-		}
 		if err != nil {
 			return err
+		}
+		if tagName == "" {
+			return errors.New("cem list attrs: must supply --tag-name")
 		}
 		pkg, err := readPkg()
 		if err != nil {
@@ -129,7 +145,13 @@ var listAttrsCmd = &cobra.Command{
 				return []string{
 					r.Name,
 					r.CustomElementField.Name,
-					func() string { if r.CustomElementField.Reflects {return "✅" } else {return "❌"}}()}
+					func() string {
+						if r.CustomElementField.Reflects {
+							return "✅"
+						} else {
+							return "❌"
+						}
+					}()}
 			})(attrs)...)
 			pterm.DefaultTable.WithHasHeader().WithBoxed(true).WithData(data).Render()
 		default:

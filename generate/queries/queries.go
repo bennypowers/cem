@@ -309,20 +309,23 @@ func (q QueryMatcher) AllQueryMatches(node *ts.Node, text []byte) iter.Seq[*ts.Q
 }
 
 // ParentCaptures returns an iterator over unique parent node captures as identified by the given parent capture name.
-// For each unique parent node (e.g., a field or method), it aggregates all captures from all query matches sharing 
-// that parent node into a single CaptureMap. This allows you to collect all related captures (such as attributes, 
+// For each unique parent node (e.g., a field or method), it aggregates all captures from all query matches sharing
+// that parent node into a single CaptureMap. This allows you to collect all related captures (such as attributes,
 // decorators, etc.) for each parent node in the source AST.
 //
 // Example usage:
 //
-//   for captures := range matcher.ParentCaptures(root, code, "field") {
-//     // captures represents the captured nodes for a single field
-//     addFieldToDeclaration(captures, declaration)
-//   }
+//	for captures := range matcher.ParentCaptures(root, code, "field") {
+//	  // captures represents the captured nodes for a single field
+//	  addFieldToDeclaration(captures, declaration)
+//	}
 func (q *QueryMatcher) ParentCaptures(root *ts.Node, code []byte, parentCaptureName string) iter.Seq[CaptureMap] {
 	names := q.query.CaptureNames()
 
-	type pgroup struct{ capMap CaptureMap; startByte uint }
+	type pgroup struct {
+		capMap    CaptureMap
+		startByte uint
+	}
 
 	parentGroups := make(map[int]pgroup)
 

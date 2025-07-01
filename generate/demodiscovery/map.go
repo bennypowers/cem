@@ -32,8 +32,8 @@ func NewDemoMap(demoFiles []string) (demoMap DemoMap, errs error) {
 
 // extractDemoTags returns all associated custom element tag names for the given demo file.
 // Priority:
-//   1. Magic comment: <!-- @tag tag-name ... -->
-//   2. Fallback: all custom element tag names found in the file.
+//  1. Magic comment: <!-- @tag tag-name ... -->
+//  2. Fallback: all custom element tag names found in the file.
 func extractDemoTags(path string) ([]string, error) {
 	code, err := os.ReadFile(path)
 	if err != nil {

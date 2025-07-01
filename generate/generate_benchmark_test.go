@@ -33,12 +33,12 @@ func BenchmarkGenerate(b *testing.B) {
 			Generate: C.GenerateConfig{
 				Files: matches,
 				DesignTokens: C.DesignTokensConfig{
-					Spec: specs[0], // todo: should accept a slice
+					Spec:   specs[0], // todo: should accept a slice
 					Prefix: "token",
 				},
 				DemoDiscovery: C.DemoDiscoveryConfig{
-					FileGlob: "demos/.",
-					URLPattern: "",
+					FileGlob:    "demos/.",
+					URLPattern:  "",
 					URLTemplate: "",
 				},
 			},

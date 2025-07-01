@@ -39,7 +39,9 @@ func UnmarshalPackage(data []byte) (*Package, error) {
 		var decls []Declaration
 		for _, declData := range modRaw.Declarations {
 			// Peek at kind
-			var kindWrap struct{ Kind string `json:"kind"` }
+			var kindWrap struct {
+				Kind string `json:"kind"`
+			}
 			if err := json.Unmarshal(declData, &kindWrap); err != nil {
 				continue
 			}
@@ -107,7 +109,9 @@ func UnmarshalPackage(data []byte) (*Package, error) {
 		// --- Exports unmarshalling ---
 		var exports []Export
 		for _, exportData := range modRaw.Exports {
-			var kindWrap struct{ Kind string `json:"kind"` }
+			var kindWrap struct {
+				Kind string `json:"kind"`
+			}
 			if err := json.Unmarshal(exportData, &kindWrap); err != nil {
 				continue
 			}
@@ -239,7 +243,9 @@ func unmarshalCustomElementMixinDeclaration(data []byte, cem *CustomElementMixin
 
 // unmarshalClassMember unmarshals a ClassMember from raw JSON.
 func unmarshalClassMember(data json.RawMessage) (ClassMember, error) {
-	var kindWrap struct{ Kind string `json:"kind"` }
+	var kindWrap struct {
+		Kind string `json:"kind"`
+	}
 	if err := json.Unmarshal(data, &kindWrap); err != nil {
 		return nil, err
 	}
@@ -266,7 +272,7 @@ func unmarshalClassMember(data json.RawMessage) (ClassMember, error) {
 		if err := json.Unmarshal(data, &m); err == nil {
 			return &m, nil
 		}
-	// Add other kinds as needed
+		// Add other kinds as needed
 	}
 	return nil, fmt.Errorf("unknown class member kind: %s", kindWrap.Kind)
 }
