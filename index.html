@@ -95,6 +95,39 @@ specific <a href="https://github.com/bennypowers/cem/issues/new">open an issue</
 <span class="token builtin class-name">cd</span> cem
 <span class="token function">make</span>
 </code></pre>
+<h2>Shell Completion</h2>
+<p><code>cem</code> supports shell completion for Bash, Zsh, Fish, and PowerShell. The completion scripts provide tab completion for commands, flags, and file paths.</p>
+<h3>Bash</h3>
+<p>To load completions in your current shell session:</p>
+<pre class="language-bash"><code class="language-bash"><span class="token builtin class-name">source</span> <span class="token operator">&lt;</span><span class="token punctuation">(</span>cem completion <span class="token function">bash</span><span class="token punctuation">)</span>
+</code></pre>
+<p>To load completions for every new session, execute once:</p>
+<p><strong>Linux:</strong></p>
+<pre class="language-bash"><code class="language-bash">cem completion <span class="token function">bash</span> <span class="token operator">></span> /etc/bash_completion.d/cem
+</code></pre>
+<p><strong>macOS:</strong></p>
+<pre class="language-bash"><code class="language-bash">cem completion <span class="token function">bash</span> <span class="token operator">></span> <span class="token variable"><span class="token variable">$(</span>brew <span class="token parameter variable">--prefix</span><span class="token variable">)</span></span>/etc/bash_completion.d/cem
+</code></pre>
+<h3>Zsh</h3>
+<p>To load completions in your current shell session:</p>
+<pre class="language-zsh"><code class="language-zsh">source &lt;(cem completion zsh)
+</code></pre>
+<p>To load completions for every new session, execute once:</p>
+<pre class="language-zsh"><code class="language-zsh">cem completion zsh &gt; &quot;${fpath[1]}/_cem&quot;
+</code></pre>
+<p>You will need to start a new shell for this setup to take effect.</p>
+<h3>Fish</h3>
+<p>To load completions in your current shell session:</p>
+<pre class="language-fish"><code class="language-fish">cem completion fish | source
+</code></pre>
+<p>To load completions for every new session, execute once:</p>
+<pre class="language-fish"><code class="language-fish">cem completion fish &gt; ~/.config/fish/completions/cem.fish
+</code></pre>
+<h3>PowerShell</h3>
+<p>To load completions in your current shell session:</p>
+<pre class="language-powershell"><code class="language-powershell">cem completion powershell <span class="token punctuation">|</span> <span class="token function">Out-String</span> <span class="token punctuation">|</span> <span class="token function">Invoke-Expression</span>
+</code></pre>
+<p>To load completions for every new session, add the output of the above command to your PowerShell profile.</p>
 <h2>Features</h2>
 <h3><code>cem generate</code></h3>
 <ul>
@@ -177,10 +210,10 @@ variables</li>
 <span class="token punctuation">}</span>
 </code></pre>
 <hr>
-<h2>Element Demos</h2>
+<h4>Element Demos</h4>
 <p><code>cem generate</code> supports documenting your elements' demos by linking directly
 from JSDoc, or by configurable file-system based discovery.</p>
-<h3>1. JSDoc <code>@demo</code> Tag</h3>
+<h5>1. JSDoc <code>@demo</code> Tag</h5>
 <p>Add demos directly to your element class or members with the <code>@demo</code> tag:</p>
 <pre class="language-ts"><code class="language-ts"><span class="token comment">/**
  * @demo https://example.com/my-element-plain/
@@ -192,7 +225,7 @@ from JSDoc, or by configurable file-system based discovery.</p>
 <span class="token punctuation">}</span>
 </code></pre>
 <p>Demos defined this way will always appear in your manifest for the element.</p>
-<h3>2. Demo Discovery</h3>
+<h5>2. Demo Discovery</h5>
 <p><code>cem</code> can automatically discover demos from your codebase based on your
 repository structure and configuration.</p>
 <h4>Demo Discovery Options</h4>
@@ -326,6 +359,11 @@ or via CLI flags.</p>
 <td><code>--source-control-root-url</code></td>
 <td>string</td>
 <td>Glob pattern for discovering demo files</td>
+</tr>
+<tr>
+<td><code>--project-dir</code></td>
+<td>string</td>
+<td>Specify the project root directory to use for resolving relative paths and configuration.</td>
 </tr>
 </tbody>
 </table>
