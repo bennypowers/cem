@@ -66,6 +66,7 @@ Examples:
 
 var listTagsCmd = &cobra.Command{
 	Use:   "tags",
+	Aliases: []string{"elements", "tag-names"},
 	Short: "List tag names in the custom elements manifest",
 	Long: `List all custom element tag names defined in your project's custom elements manifest (CEM).
 
@@ -105,6 +106,7 @@ Example:
 
 var listAttrsCmd = &cobra.Command{
 	Use:   "attrs",
+	Aliases: []string{"attributes"},
 	Short: "List attributes in the custom elements manifest by tag name",
 	Long: `List all attributes for a given custom element tag as described in the custom elements manifest (CEM).
 
