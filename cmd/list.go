@@ -121,13 +121,11 @@ Examples:
 		switch format {
 		case "table":
 			headers := []string{"Attribute", "DOM Property", "Reflects"}
-			rows := MapToTableRows(attrs, headers, columns)
-			RenderTable(headers, rows, columns)
+			rows := MapToTableRows(attrs)
+			return RenderTable(headers, rows, columns)
 		default:
 			return cmd.Usage()
 		}
-
-		return nil
 	},
 }
 
@@ -152,8 +150,8 @@ Examples:
 		switch format {
 		case "table":
 			headers := []string{"Slot", "Summary"}
-			rows := MapToTableRows(slots, headers, columns)
-			RenderTable(headers, rows, columns)
+			rows := MapToTableRows(slots)
+			return RenderTable(headers, rows, columns)
 		}
 
 		return nil
@@ -181,8 +179,8 @@ Examples:
 		switch format {
 		case "table":
 			headers := []string{"CSS Property", "Syntax", "Default", "Summary"}
-			rows := MapToTableRows(props, headers, columns)
-			RenderTable(headers, rows, columns)
+			rows := MapToTableRows(props)
+			return RenderTable(headers, rows, columns)
 		}
 		return nil
 	},
@@ -209,8 +207,8 @@ Examples:
 		switch format {
 		case "table":
 			headers := []string{"CSS State", "Summary"}
-			rows := MapToTableRows(props, headers, columns)
-			RenderTable(headers, rows, columns)
+			rows := MapToTableRows(props)
+			return RenderTable(headers, rows, columns)
 		}
 
 		return nil
@@ -237,8 +235,8 @@ Examples:
 		switch format {
 		case "table":
 			headers := []string{"CSS State", "Summary"}
-			rows := MapToTableRows(parts, headers, columns)
-			RenderTable(headers, rows, columns)
+			rows := MapToTableRows(parts)
+			return RenderTable(headers, rows, columns)
 		}
 		return nil
 	},
@@ -264,8 +262,8 @@ Examples:
 		switch format {
 		case "table":
 			headers := []string{"Event", "Type", "Summary"}
-			rows := MapToTableRows(events, headers, columns)
-			RenderTable(headers, rows, columns)
+			rows := MapToTableRows(events)
+			return RenderTable(headers, rows, columns)
 		}
 		return nil
 	},
@@ -290,8 +288,8 @@ Examples:
 		switch format {
 		case "table":
 			headers := []string{"Method", "Return Type", "Summary"}
-			rows := MapToTableRows(methods, headers, columns)
-			RenderTable(headers, rows, columns)
+			rows := MapToTableRows(methods)
+			return RenderTable(headers, rows, columns)
 		}
 
 		return nil
@@ -328,8 +326,8 @@ Example:
 		switch format {
 		case "table":
 			headers := []string{"Tag", "Module"}
-			rows := MapToTableRows(tags, headers, columns)
-			RenderTable(headers, rows, columns)
+			rows := MapToTableRows(tags)
+			return RenderTable(headers, rows, columns)
 		}
 
 		return nil
