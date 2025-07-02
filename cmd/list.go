@@ -21,8 +21,6 @@ import (
 	"os"
 	"path/filepath"
 
-	A "github.com/IBM/fp-go/array"
-	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -74,17 +72,270 @@ func requireFormat(cmd *cobra.Command) (string, error) {
 	}
 }
 
-func requireTagFormatPkg(cmd *cobra.Command) (tagName string, format string, pkg *M.Package, err error) {
+// validateTagCommandFlags returns the tag name, format, and loaded manifest package.
+// It errors if --columns is passed but format is not "table".
+func validateTagCommandFlags(cmd *cobra.Command) (tagName string, format string, columns []string, pkg *M.Package, err error) {
 	tagName, err = requireTagName(cmd)
-	if err != nil { return "", "", nil, err }
+	if err != nil {
+		return "", "", nil, nil, err
+	}
 	pkg, err = readPkg()
-	if err != nil { return "", "", nil, err }
+	if err != nil {
+		return "", "", nil, nil, err
+	}
 	format, err = requireFormat(cmd)
-	if err != nil { return "", "", nil, err }
-	return tagName, format, pkg, err
+	if err != nil {
+		return "", "", nil, nil, err
+	}
+	columns, err = cmd.Flags().GetStringArray("columns")
+	if err != nil {
+		return "", "", nil, nil, err
+	}
+	if len(columns) > 0 && format != "table" {
+		return "", "", nil, nil, errors.New("--columns flag can only be used with --format table")
+	}
+	return tagName, format, columns, pkg, nil
 }
 
-// listCmd represents the list command
+var listAttrsCmd = &cobra.Command{
+	Use:     "attributes",
+	Aliases: []string{"attrs"},
+	Short:   "List attributes in the custom elements manifest by tag name",
+	Long: `List all attributes for a given custom element tag
+
+You must specify the tag name using the --tag-name flag. The output includes each attribute, its corresponding DOM property, and whether it reflects changes to the DOM.
+
+Examples:
+
+  cem list attributes --tag-name my-button --format table
+`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
+		if err != nil {
+			return err
+		}
+		attrs, err := pkg.GetTagAttrsWithContext(tagName)
+		if err != nil {
+			return err
+		}
+		switch format {
+		case "table":
+			headers := []string{"Attribute", "DOM Property", "Reflects"}
+			rows := MapToTableRows(attrs, headers, columns)
+			RenderTable(headers, rows, columns)
+		default:
+			return cmd.Usage()
+		}
+
+		return nil
+	},
+}
+
+var listSlotsCmd = &cobra.Command{
+	Use:   "slots",
+	Short: "List slots in the custom elements manifest by tag name",
+	Long: `List all slots for a given custom element tag.
+
+You must specify the tag name using the --tag-name flag. The output includes each slot name, and it's summary
+
+Examples:
+
+  cem list slots --tag-name my-button --format table
+`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
+		if err != nil { return err }
+		slots, err := pkg.GetTagSlotsWithContext(tagName)
+		if err != nil {
+			return err
+		}
+		switch format {
+		case "table":
+			headers := []string{"Slot", "Summary"}
+			rows := MapToTableRows(slots, headers, columns)
+			RenderTable(headers, rows, columns)
+		}
+
+		return nil
+	},
+}
+
+var listCssCustomPropertiesCmd = &cobra.Command{
+	Use:   "css-custom-properties",
+	Aliases: []string{"css-properties", "css-props", "css-custom-props"},
+	Short: "List CSS custom properties used in a given tag name",
+	Long: `List CSS custom properties used in a given tag name.
+
+You must specify the tag name using the --tag-name flag. The output may include for each
+css property by name, it's syntax, default value, and summary.
+
+Examples:
+
+  cem list css-custom-properties --tag-name my-button --format table
+`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
+		if err != nil { return err }
+		props, err := pkg.GetTagCssPropertiesWithContext(tagName)
+		if err != nil { return err }
+		switch format {
+		case "table":
+			headers := []string{"CSS Property", "Syntax", "Default", "Summary"}
+			rows := MapToTableRows(props, headers, columns)
+			RenderTable(headers, rows, columns)
+		}
+		return nil
+	},
+}
+
+var listCssCustomStatesCmd = &cobra.Command{
+	Use:   "css-custom-states",
+	Aliases: []string{"css-states"},
+	Short: "List CSS custom states used in a given tag name",
+	Long: `List CSS custom states used in a given tag name.
+
+You must specify the tag name using the --tag-name flag. The output includes each css state by name,
+and a summary
+
+Examples:
+
+  cem list css-custom-states --tag-name my-button --format table
+`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
+		if err != nil { return err }
+		props, err := pkg.GetTagCssPropertiesWithContext(tagName)
+		if err != nil { return err }
+		switch format {
+		case "table":
+			headers := []string{"CSS State", "Summary"}
+			rows := MapToTableRows(props, headers, columns)
+			RenderTable(headers, rows, columns)
+		}
+
+		return nil
+	},
+}
+
+var listCssPartsCmd = &cobra.Command{
+	Use:   "css-parts",
+	Aliases: []string{"css-shadow-parts"},
+	Short: "List CSS shadow parts for a given tag name",
+	Long: `List CSS shadow parts for a given tag name.
+
+You must specify the tag name using the --tag-name flag. The output includes each shadow part by name, and a summary
+
+Examples:
+
+  cem list css-parts --tag-name my-button --format table
+`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
+		if err != nil { return err }
+		parts, err := pkg.GetTagCssPartsWithContext(tagName)
+		if err != nil { return err }
+		switch format {
+		case "table":
+			headers := []string{"CSS State", "Summary"}
+			rows := MapToTableRows(parts, headers, columns)
+			RenderTable(headers, rows, columns)
+		}
+		return nil
+	},
+}
+
+var listEventsCmd = &cobra.Command{
+	Use:   "events",
+	Short: "List events for a given tag name",
+	Long: `List JavaScript events fired by a given element by tag name.
+
+You must specify the tag name using the --tag-name flag. The output includes each event,
+it's type, and a summary
+
+Examples:
+
+  cem list event --tag-name my-button --format table
+`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
+		if err != nil { return err }
+		events, err := pkg.GetTagEventsWithContext(tagName)
+		if err != nil { return err }
+		switch format {
+		case "table":
+			headers := []string{"Event", "Type", "Summary"}
+			rows := MapToTableRows(events, headers, columns)
+			RenderTable(headers, rows, columns)
+		}
+		return nil
+	},
+}
+
+var listMethodsCmd = &cobra.Command{
+	Use:   "methods",
+	Short: "List class methods for a given tag name",
+	Long: `List DOM object methods for the class registered to a given tag name.
+
+You must specify the tag name using the --tag-name flag. The output includes each method, it's return type, and a summary
+
+Examples:
+
+  cem list methods --tag-name my-button --format table
+`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
+		if err != nil { return err }
+		methods, err := pkg.GetTagMethodsWithContext(tagName)
+		if err != nil { return err }
+		switch format {
+		case "table":
+			headers := []string{"Method", "Return Type", "Summary"}
+			rows := MapToTableRows(methods, headers, columns)
+			RenderTable(headers, rows, columns)
+		}
+
+		return nil
+	},
+}
+
+var listTagsCmd = &cobra.Command{
+	Use:   "tags",
+	Aliases: []string{"elements", "tag-names"},
+	Short: "List tag names in the custom elements manifest",
+	Long: `List all custom element tag names
+
+This command outputs a table with tag names and their corresponding source modules,
+allowing you to quickly see which custom elements are available and where they are defined.
+
+Example:
+
+  cem list tags --format table
+`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		pkg, err := readPkg()
+		if err != nil {
+			return err
+		}
+		tags := pkg.GetAllTagNamesWithContext()
+		format, err := cmd.Flags().GetString("format")
+		if err != nil {
+			return err
+		}
+		columns, err := cmd.Flags().GetStringArray("columns")
+		if err != nil {
+			return err
+		}
+		switch format {
+		case "table":
+			headers := []string{"Tag", "Module"}
+			rows := MapToTableRows(tags, headers, columns)
+			RenderTable(headers, rows, columns)
+		}
+
+		return nil
+	},
+}
+
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List items in the custom elements manifest like tag names, attributes, functions, etc",
@@ -106,255 +357,6 @@ Examples:
 `,
 }
 
-var listTagsCmd = &cobra.Command{
-	Use:   "tags",
-	Aliases: []string{"elements", "tag-names"},
-	Short: "List tag names in the custom elements manifest",
-	Long: `List all custom element tag names
-
-This command outputs a table with tag names and their corresponding source modules,
-allowing you to quickly see which custom elements are available and where they are defined.
-
-Example:
-
-  cem list tags --format table
-`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		pkg, err := readPkg()
-		if err != nil {
-			return err
-		}
-
-		tags := pkg.GetAllTagNamesWithContext()
-		format, err := cmd.Flags().GetString("format")
-		if err != nil {
-			return err
-		}
-		switch format {
-		case "table":
-			data := pterm.TableData{
-				{"Tag", "Module"},
-			}
-			data = append(data, A.Map(func(r M.CustomElementWithContext) []string {
-				return []string{r.TagName, r.Module.Path}
-			})(tags)...)
-			pterm.DefaultTable.WithHasHeader().WithBoxed(true).WithData(data).Render()
-		}
-
-		return nil
-	},
-}
-
-var listAttrsCmd = &cobra.Command{
-	Use:   "attrs",
-	Aliases: []string{"attributes"},
-	Short: "List attributes in the custom elements manifest by tag name",
-	Long: `List all attributes for a given custom element tag
-
-You must specify the tag name using the --tag-name flag. The output includes each attribute, its corresponding DOM property, and whether it reflects changes to the DOM.
-
-Examples:
-
-  cem list attrs --tag-name my-button --format table
-`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, pkg, err := requireTagFormatPkg(cmd)
-		if err != nil { return err }
-		attrs, err := pkg.GetTagAttrsWithContext(tagName)
-		if err != nil {
-			return err
-		}
-		switch format {
-		case "table":
-			data := pterm.TableData{
-				{"Attribute", "DOM Property", "Reflects"},
-			}
-			data = append(data, A.Map(func(r M.AttributeWithContext) []string {
-				return []string{
-					r.Name,
-					r.CustomElementField.Name,
-					func() string {
-						if r.CustomElementField.Reflects {
-							return "✅"
-						} else {
-							return "❌"
-						}
-					}()}
-			})(attrs)...)
-			pterm.DefaultTable.WithHasHeader().WithBoxed(true).WithData(data).Render()
-		}
-
-		return nil
-	},
-}
-
-var listSlotsCmd = &cobra.Command{
-	Use:   "slots",
-	Short: "List slots in the custom elements manifest by tag name",
-	Long: `List all slots for a given custom element tag.
-
-You must specify the tag name using the --tag-name flag. The output includes each slot name, and it's summary
-
-Examples:
-
-  cem list slots --tag-name my-button --format table
-`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, pkg, err := requireTagFormatPkg(cmd)
-		if err != nil { return err }
-		slots, err := pkg.GetTagSlotsWithContext(tagName)
-		if err != nil {
-			return err
-		}
-		switch format {
-		case "table":
-			data := pterm.TableData{
-			}
-			pterm.DefaultTable.WithHasHeader().WithBoxed(true).WithData(data).Render()
-		}
-
-		return nil
-	},
-}
-
-var listCssCustomPropertiesCmd = &cobra.Command{
-	Use:   "css-custom-properties",
-	Aliases: []string{"css-properties", "css-props", "css-custom-props"},
-	Short: "List CSS custom properties used in a given tag name",
-	Long: `List CSS custom properties used in a given tag name.
-
-You must specify the tag name using the --tag-name flag. The output includes each css property by name, it's default value, and a summary
-
-Examples:
-
-  cem list css-custom-properties --tag-name my-button --format table
-`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, pkg, err := requireTagFormatPkg(cmd)
-		if err != nil { return err }
-		props, err := pkg.GetTagCssPropertiesWithContext(tagName)
-		if err != nil { return err }
-		switch format {
-		case "table":
-			data := pterm.TableData{
-			}
-			pterm.DefaultTable.WithHasHeader().WithBoxed(true).WithData(data).Render()
-		}
-
-		return nil
-	},
-}
-
-var listCssCustomStatesCmd = &cobra.Command{
-	Use:   "css-custom-states",
-	Aliases: []string{"css-states"},
-	Short: "List CSS custom states used in a given tag name",
-	Long: `List CSS custom states used in a given tag name.
-
-You must specify the tag name using the --tag-name flag. The output includes each css state by name, and a summary
-
-Examples:
-
-  cem list css-custom-states --tag-name my-button --format table
-`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, pkg, err := requireTagFormatPkg(cmd)
-		if err != nil { return err }
-		props, err := pkg.GetTagCssPropertiesWithContext(tagName)
-		if err != nil { return err }
-		switch format {
-		case "table":
-			data := pterm.TableData{
-			}
-			pterm.DefaultTable.WithHasHeader().WithBoxed(true).WithData(data).Render()
-		}
-
-		return nil
-	},
-}
-
-var listCssPartsCmd = &cobra.Command{
-	Use:   "css-parts",
-	Aliases: []string{"css-shadow-parts"},
-	Short: "List CSS shadow parts for a given tag name",
-	Long: `List CSS shadow parts for a given tag name.
-
-You must specify the tag name using the --tag-name flag. The output includes each shadow part by name, and a summary
-
-Examples:
-
-  cem list css-parts --tag-name my-button --format table
-`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, pkg, err := requireTagFormatPkg(cmd)
-		if err != nil { return err }
-		parts, err := pkg.GetTagCssPartsWithContext(tagName)
-		if err != nil { return err }
-		switch format {
-		case "table":
-			data := pterm.TableData{
-			}
-			pterm.DefaultTable.WithHasHeader().WithBoxed(true).WithData(data).Render()
-		}
-
-		return nil
-	},
-}
-
-var listEventsCmd = &cobra.Command{
-	Use:   "events",
-	Short: "List events for a given tag name",
-	Long: `List JavaScript events fired by a given element by tag name.
-
-You must specify the tag name using the --tag-name flag. The output includes each event, it's type, and a summary
-
-Examples:
-
-  cem list event --tag-name my-button --format table
-`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, pkg, err := requireTagFormatPkg(cmd)
-		if err != nil { return err }
-		events, err := pkg.GetTagEventsWithContext(tagName)
-		if err != nil { return err }
-		switch format {
-		case "table":
-			data := pterm.TableData{
-			}
-			pterm.DefaultTable.WithHasHeader().WithBoxed(true).WithData(data).Render()
-		}
-
-		return nil
-	},
-}
-
-var listMethodsCmd = &cobra.Command{
-	Use:   "methods",
-	Short: "List class methods for a given tag name",
-	Long: `List DOM object methods for the class registered to a given tag name.
-
-You must specify the tag name using the --tag-name flag. The output includes each method, it's return type, and a summary
-
-Examples:
-
-  cem list methods --tag-name my-button --format table
-`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, pkg, err := requireTagFormatPkg(cmd)
-		if err != nil { return err }
-		methods, err := pkg.GetTagMethodsWithContext(tagName)
-		if err != nil { return err }
-		switch format {
-		case "table":
-			data := pterm.TableData{
-			}
-			pterm.DefaultTable.WithHasHeader().WithBoxed(true).WithData(data).Render()
-		}
-
-		return nil
-	},
-}
-
 func init() {
 	listCmd.AddCommand(listTagsCmd)
 	listCmd.PersistentFlags().StringP("format", "f", "table", "Output format")
@@ -369,6 +371,7 @@ func init() {
 	} {
 		listCmd.AddCommand(c)
 		c.Flags().StringP("tag-name", "t", "", "Tag name to list attributes for")
+		c.Flags().StringArray("columns", []string{}, "list of columns to display in the table")
 	}
 	rootCmd.AddCommand(listCmd)
 }
