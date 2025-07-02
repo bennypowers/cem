@@ -53,7 +53,7 @@ func BenchmarkGenerate(b *testing.B) {
 	if err := os.MkdirAll("../docs/data/", 0755); err != nil {
 		b.Fatalf("failed to create ../docs/data dir: %v", err)
 	}
-	if err := os.WriteFile("../docs/data/benchmarks.json", []byte(lastOut), 0644); err != nil {
+	if err := os.WriteFile("../docs/data/lastBenchmark.json", []byte(lastOut), 0644); err != nil {
 		b.Fatalf("Could not write output: %v", err)
 	}
 }

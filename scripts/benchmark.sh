@@ -158,7 +158,7 @@ done
 
 # Combine all tool results into a single JSON array
 jq -s --arg runs "$runs" --arg file_count "$file_count" \
-  '{runs: ($runs|tonumber), file_count: ($file_count|tonumber), results: .}' "$results_tmp" > benchmarks.json
+  '{runs: ($runs|tonumber), file_count: ($file_count|tonumber), results: .}' "$results_tmp" > data/benchmarks.json
 
 rm "$results_tmp"
 

@@ -1,8 +1,6 @@
 ---
-title: "Contributing"
-description: "How to contribute to this project."
+title: Contributing
+description: How to contribute to cem cli
 ---
-
-Welcome to the documentation!
 
 {{< include-md "CONTRIBUTING.md" >}}

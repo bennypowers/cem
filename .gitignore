@@ -7,7 +7,9 @@ docs/resources
 
 platforms/**/package.json
 
+.hugo_build.lock
 docs/data/benchmarks.json
+docs/data/lastBenchmark.json
 docs/assets/*-last-output.md
 docs/node_modules
 docs/*-result.json
