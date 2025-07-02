@@ -81,10 +81,10 @@ func ResolveExportPath(packageJsonPath string, relFilePath string) (string, erro
 		return "", errors.New("file not exported in package.json")
 	}
 
-	// Handle object exports.
 	exportsMap, ok := pkg.Exports.(map[string]any)
 	if !ok {
-		return "", errors.New("exports block format not recognized")
+		// gracefully skip, treat as "not exported"
+		return relFilePath, nil
 	}
 
 	for expKey, expVal := range exportsMap {
