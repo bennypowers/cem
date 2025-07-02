@@ -248,56 +248,54 @@ func (x *Package) GetAllTagNamesWithContext() (tags []CustomElementWithContext) 
 	return tags
 }
 
-// GetTagAttrsWithContext returns attributes for a given tag name with context.
-// NB: Only the first matching tag is considered per manifest, as tag names are assumed global.
-// If duplicate attribute names are present, only one will be returned (see generate.go for possible warnings).
-func (x *Package) GetTagAttrsWithContext(tagName string) (attrs []AttributeWithContext, err error) {
-	attrMap := make(map[string]AttributeWithContext)
-	tagFound := false
-modules:
+// findCustomElementContext locates the first CustomElementDeclaration, CustomElementExport, and JavaScriptModule for a given tagName.
+func (x *Package) findCustomElementContext(tagName string) (*CustomElementDeclaration, *CustomElementExport, *JavaScriptModule, error) {
 	for _, m := range x.Modules {
 		for _, d := range m.Declarations {
-			if ced, ok := d.(*CustomElementDeclaration); ok {
-				if tagFound = ced.TagName == tagName; tagFound {
-					fieldMap := make(map[string]CustomElementField)
-					for _, member := range ced.Members {
-						if cef, ok := member.(*CustomElementField); ok {
-							fieldMap[cef.Attribute] = *cef
-						}
+			if ced, ok := d.(*CustomElementDeclaration); ok && ced.TagName == tagName {
+				var ceExport *CustomElementExport
+				for _, e := range m.Exports {
+					if cee, ok := e.(*CustomElementExport); ok && cee.Name == tagName {
+						ceExport = cee
+						break
 					}
-					var ceExport *CustomElementExport
-					for _, e := range m.Exports {
-						if cee, ok := e.(*CustomElementExport); ok {
-							if cee.Name == tagName {
-								ceExport = cee
-								break
-							}
-						}
-					}
-					for _, attr := range ced.Attributes {
-						attrCopy := attr // Create a copy of the loop variable
-						var field *CustomElementField
-						if f, ok := fieldMap[attrCopy.Name]; ok {
-							field = &f
-						}
-						attrMap[attrCopy.Name] = AttributeWithContext{
-							Name:                     attrCopy.Name,
-							Attribute:                &attrCopy,
-							CustomElementDeclaration: ced,
-							CustomElementField:       field,
-							CustomElementExport:      ceExport,
-							JavaScriptModule:         &m,
-						}
-					}
-					break modules // NB: Tag names are assumed global; stop after first found
 				}
+				return ced, ceExport, &m, nil
 			}
 		}
 	}
-	if !tagFound {
-		return nil, errors.New("Tag not found: " + tagName)
+	return nil, nil, nil, errors.New("Tag not found: " + tagName)
+}
+
+// GetTagAttrsWithContext returns attributes for a given tag name with context.
+func (x *Package) GetTagAttrsWithContext(tagName string) ([]AttributeWithContext, error) {
+	ced, ceExport, m, err := x.findCustomElementContext(tagName)
+	if err != nil {
+		return nil, err
 	}
-	attrs = make([]AttributeWithContext, 0, len(attrMap))
+	fieldMap := make(map[string]CustomElementField)
+	for _, member := range ced.Members {
+		if cef, ok := member.(*CustomElementField); ok {
+			fieldMap[cef.Attribute] = *cef
+		}
+	}
+	attrMap := make(map[string]AttributeWithContext)
+	for _, attr := range ced.Attributes {
+		attrCopy := attr // Create a copy of the loop variable
+		var field *CustomElementField
+		if f, ok := fieldMap[attrCopy.Name]; ok {
+			field = &f
+		}
+		attrMap[attrCopy.Name] = AttributeWithContext{
+			Name:                     attrCopy.Name,
+			Attribute:                &attrCopy,
+			CustomElementDeclaration: ced,
+			CustomElementField:       field,
+			CustomElementExport:      ceExport,
+			JavaScriptModule:         m,
+		}
+	}
+	attrs := make([]AttributeWithContext, 0, len(attrMap))
 	for _, awc := range attrMap {
 		attrs = append(attrs, awc)
 	}
@@ -311,218 +309,122 @@ modules:
 }
 
 // GetTagSlotsWithContext returns slots for a given tag name with context.
-func (x *Package) GetTagSlotsWithContext(tagName string) (slots []SlotWithContext, err error) {
-	tagFound := false
-modules:
-	for _, m := range x.Modules {
-		for _, d := range m.Declarations {
-			if ced, ok := d.(*CustomElementDeclaration); ok {
-				if tagFound = ced.TagName == tagName; tagFound {
-					var ceExport *CustomElementExport
-					for _, e := range m.Exports {
-						if cee, ok := e.(*CustomElementExport); ok && cee.Name == tagName {
-							ceExport = cee
-							break
-						}
-					}
-					for i := range ced.Slots {
-						slot := &ced.Slots[i]
-						slots = append(slots, SlotWithContext{
-							Name:                     slot.Name,
-							Slot:                     slot,
-							CustomElementDeclaration: ced,
-							CustomElementExport:      ceExport,
-							JavaScriptModule:         &m,
-						})
-					}
-					break modules // NB: Tag names are assumed global; stop after first found
-				}
-			}
-		}
+func (x *Package) GetTagSlotsWithContext(tagName string) ([]SlotWithContext, error) {
+	ced, ceExport, m, err := x.findCustomElementContext(tagName)
+	if err != nil {
+		return nil, err
 	}
-	if !tagFound {
-		return nil, errors.New("Tag not found: " + tagName)
+	var slots []SlotWithContext
+	for i := range ced.Slots {
+		slot := &ced.Slots[i]
+		slots = append(slots, SlotWithContext{
+			Name:                     slot.Name,
+			Slot:                     slot,
+			CustomElementDeclaration: ced,
+			CustomElementExport:      ceExport,
+			JavaScriptModule:         m,
+		})
 	}
 	return slots, nil
 }
 
 // GetTagCssPropertiesWithContext returns CSS custom properties for a given tag name with context.
-func (x *Package) GetTagCssPropertiesWithContext(tagName string) (props []CssCustomPropertyWithContext, err error) {
-	tagFound := false
-modules:
-	for _, m := range x.Modules {
-		for _, d := range m.Declarations {
-			if ced, ok := d.(*CustomElementDeclaration); ok {
-				if tagFound = ced.TagName == tagName; tagFound {
-					var ceExport *CustomElementExport
-					for _, e := range m.Exports {
-						if cee, ok := e.(*CustomElementExport); ok && cee.Name == tagName {
-							ceExport = cee
-							break
-						}
-					}
-					for i := range ced.CssProperties {
-						prop := &ced.CssProperties[i]
-						props = append(props, CssCustomPropertyWithContext{
-							Name:                     prop.Name,
-							CssCustomProperty:        prop,
-							CustomElementDeclaration: ced,
-							CustomElementExport:      ceExport,
-							JavaScriptModule:         &m,
-						})
-					}
-					break modules // NB: Tag names are assumed global; stop after first found
-				}
-			}
-		}
+func (x *Package) GetTagCssPropertiesWithContext(tagName string) ([]CssCustomPropertyWithContext, error) {
+	ced, ceExport, m, err := x.findCustomElementContext(tagName)
+	if err != nil {
+		return nil, err
 	}
-	if !tagFound {
-		return nil, errors.New("Tag not found: " + tagName)
+	var props []CssCustomPropertyWithContext
+	for i := range ced.CssProperties {
+		prop := &ced.CssProperties[i]
+		props = append(props, CssCustomPropertyWithContext{
+			Name:                     prop.Name,
+			CssCustomProperty:        prop,
+			CustomElementDeclaration: ced,
+			CustomElementExport:      ceExport,
+			JavaScriptModule:         m,
+		})
 	}
 	return props, nil
 }
 
 // GetTagCssStatesWithContext returns CSS custom states for a given tag name with context.
-func (x *Package) GetTagCssStatesWithContext(tagName string) (states []CssCustomStateWithContext, err error) {
-	tagFound := false
-modules:
-	for _, m := range x.Modules {
-		for _, d := range m.Declarations {
-			if ced, ok := d.(*CustomElementDeclaration); ok {
-				if tagFound = ced.TagName == tagName; tagFound {
-					var ceExport *CustomElementExport
-					for _, e := range m.Exports {
-						if cee, ok := e.(*CustomElementExport); ok && cee.Name == tagName {
-							ceExport = cee
-							break
-						}
-					}
-					for i := range ced.CssStates {
-						state := &ced.CssStates[i]
-						states = append(states, CssCustomStateWithContext{
-							Name:                     state.Name,
-							CssCustomState:           state,
-							CustomElementDeclaration: ced,
-							CustomElementExport:      ceExport,
-							JavaScriptModule:         &m,
-						})
-					}
-					break modules // NB: Tag names are assumed global; stop after first found
-				}
-			}
-		}
+func (x *Package) GetTagCssStatesWithContext(tagName string) ([]CssCustomStateWithContext, error) {
+	ced, ceExport, m, err := x.findCustomElementContext(tagName)
+	if err != nil {
+		return nil, err
 	}
-	if !tagFound {
-		return nil, errors.New("Tag not found: " + tagName)
+	var states []CssCustomStateWithContext
+	for i := range ced.CssStates {
+		state := &ced.CssStates[i]
+		states = append(states, CssCustomStateWithContext{
+			Name:                     state.Name,
+			CssCustomState:           state,
+			CustomElementDeclaration: ced,
+			CustomElementExport:      ceExport,
+			JavaScriptModule:         m,
+		})
 	}
 	return states, nil
 }
 
 // GetTagCssPartsWithContext returns CSS shadow parts for a given tag name with context.
-func (x *Package) GetTagCssPartsWithContext(tagName string) (parts []CssPartWithContext, err error) {
-	tagFound := false
-modules:
-	for _, m := range x.Modules {
-		for _, d := range m.Declarations {
-			if ced, ok := d.(*CustomElementDeclaration); ok {
-				if tagFound = ced.TagName == tagName; tagFound {
-					var ceExport *CustomElementExport
-					for _, e := range m.Exports {
-						if cee, ok := e.(*CustomElementExport); ok && cee.Name == tagName {
-							ceExport = cee
-							break
-						}
-					}
-					for i := range ced.CssParts {
-						part := &ced.CssParts[i]
-						parts = append(parts, CssPartWithContext{
-							Name:                     part.Name,
-							CssPart:                  part,
-							CustomElementDeclaration: ced,
-							CustomElementExport:      ceExport,
-							JavaScriptModule:         &m,
-						})
-					}
-					break modules // NB: Tag names are assumed global; stop after first found
-				}
-			}
-		}
+func (x *Package) GetTagCssPartsWithContext(tagName string) ([]CssPartWithContext, error) {
+	ced, ceExport, m, err := x.findCustomElementContext(tagName)
+	if err != nil {
+		return nil, err
 	}
-	if tagFound {
-		return nil, errors.New("Tag not found: " + tagName)
+	var parts []CssPartWithContext
+	for i := range ced.CssParts {
+		part := &ced.CssParts[i]
+		parts = append(parts, CssPartWithContext{
+			Name:                     part.Name,
+			CssPart:                  part,
+			CustomElementDeclaration: ced,
+			CustomElementExport:      ceExport,
+			JavaScriptModule:         m,
+		})
 	}
 	return parts, nil
 }
 
 // GetTagEventsWithContext returns events for a given tag name with context.
-func (x *Package) GetTagEventsWithContext(tagName string) (events []EventWithContext, err error) {
-	tagFound := false
-modules:
-	for _, m := range x.Modules {
-		for _, d := range m.Declarations {
-			if ced, ok := d.(*CustomElementDeclaration); ok {
-				if tagFound = ced.TagName == tagName; tagFound {
-					var ceExport *CustomElementExport
-					for _, e := range m.Exports {
-						if cee, ok := e.(*CustomElementExport); ok && cee.Name == tagName {
-							ceExport = cee
-							break
-						}
-					}
-					for i := range ced.Events {
-						event := &ced.Events[i]
-						events = append(events, EventWithContext{
-							Name:                     event.Name,
-							Event:                    event,
-							CustomElementDeclaration: ced,
-							CustomElementExport:      ceExport,
-							JavaScriptModule:         &m,
-						})
-					}
-					break modules // NB: Tag names are assumed global; stop after first found
-				}
-			}
-		}
+func (x *Package) GetTagEventsWithContext(tagName string) ([]EventWithContext, error) {
+	ced, ceExport, m, err := x.findCustomElementContext(tagName)
+	if err != nil {
+		return nil, err
 	}
-	if !tagFound {
-		return nil, errors.New("Tag not found: " + tagName)
+	var events []EventWithContext
+	for i := range ced.Events {
+		event := &ced.Events[i]
+		events = append(events, EventWithContext{
+			Name:                     event.Name,
+			Event:                    event,
+			CustomElementDeclaration: ced,
+			CustomElementExport:      ceExport,
+			JavaScriptModule:         m,
+		})
 	}
 	return events, nil
 }
 
 // GetTagMethodsWithContext returns methods for a given tag name with context.
-func (x *Package) GetTagMethodsWithContext(tagName string) (methods []MethodWithContext, err error) {
-	tagFound := false
-modules:
-	for _, m := range x.Modules {
-		for _, d := range m.Declarations {
-			if ced, ok := d.(*CustomElementDeclaration); ok {
-				if tagFound = ced.TagName == tagName; tagFound {
-					var ceExport *CustomElementExport
-					for _, e := range m.Exports {
-						if cee, ok := e.(*CustomElementExport); ok && cee.Name == tagName {
-							ceExport = cee
-							break
-						}
-					}
-					for _, member := range ced.Members {
-						if method, ok := member.(*ClassMethod); ok {
-							methods = append(methods, MethodWithContext{
-								Name:                     method.Name,
-								Method:                   method,
-								CustomElementDeclaration: ced,
-								CustomElementExport:      ceExport,
-								JavaScriptModule:         &m,
-							})
-						}
-					}
-					break modules // NB: Tag names are assumed global; stop after first found
-				}
-			}
-		}
+func (x *Package) GetTagMethodsWithContext(tagName string) ([]MethodWithContext, error) {
+	ced, ceExport, m, err := x.findCustomElementContext(tagName)
+	if err != nil {
+		return nil, err
 	}
-	if !tagFound {
-		return nil, errors.New("Tag not found: " + tagName)
+	var methods []MethodWithContext
+	for _, member := range ced.Members {
+		if method, ok := member.(*ClassMethod); ok {
+			methods = append(methods, MethodWithContext{
+				Name:                     method.Name,
+				Method:                   method,
+				CustomElementDeclaration: ced,
+				CustomElementExport:      ceExport,
+				JavaScriptModule:         m,
+			})
+		}
 	}
 	return methods, nil
 }
