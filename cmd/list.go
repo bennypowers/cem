@@ -128,7 +128,8 @@ Examples:
 		case "table":
 			headers := []string{"Name", "DOM Property", "Reflects", "Summary"}
 			rows := MapToTableRows(attrs)
-			return RenderTable(headers, rows, columns)
+			title := "Attributes on " + tagName
+			return RenderTable(title, headers, rows, columns)
 		default:
 			return cmd.Usage()
 		}
@@ -158,7 +159,8 @@ Examples:
 		case "table":
 			headers := []string{"Name", "Summary"}
 			rows := MapToTableRows(slots)
-			return RenderTable(headers, rows, columns)
+			title := "Slots on "+tagName
+			return RenderTable(title, headers, rows, columns)
 		}
 
 		return nil
@@ -190,7 +192,8 @@ Examples:
 		case "table":
 			headers := []string{"Name", "Syntax", "Default", "Summary"}
 			rows := MapToTableRows(props)
-			return RenderTable(headers, rows, columns)
+			title := "CSS Custom Properties for " + tagName
+			return RenderTable(title, headers, rows, columns)
 		}
 		return nil
 	},
@@ -219,7 +222,8 @@ Examples:
 		case "table":
 			headers := []string{"Name", "Summary"}
 			rows := MapToTableRows(props)
-			return RenderTable(headers, rows, columns)
+			title := "CSS Custom States for " + tagName
+			return RenderTable(title, headers, rows, columns)
 		}
 
 		return nil
@@ -247,7 +251,8 @@ Examples:
 		case "table":
 			headers := []string{"Name", "Summary"}
 			rows := MapToTableRows(parts)
-			return RenderTable(headers, rows, columns)
+			title := "CSS Shadow Parts for " + tagName
+			return RenderTable(title, headers, rows, columns)
 		}
 		return nil
 	},
@@ -276,7 +281,8 @@ Examples:
 		case "table":
 			headers := []string{"Name", "Type", "Summary"}
 			rows := MapToTableRows(events)
-			return RenderTable(headers, rows, columns)
+			title := "Events fired by " + tagName
+			return RenderTable(title, headers, rows, columns)
 		}
 		return nil
 	},
@@ -302,7 +308,8 @@ Examples:
 		case "table":
 			headers := []string{"Name", "Return Type", "Privacy", "Static", "Summary"}
 			rows := MapToTableRows(methods)
-			return RenderTable(headers, rows, columns)
+			title := "Methods on " + tagName
+			return RenderTable(title, headers, rows, columns)
 		}
 
 		return nil
@@ -343,7 +350,8 @@ Example:
 		case "table":
 			headers := []string{"Tag", "Class", "Module", "Summary"}
 			rows := MapToTableRows(tags)
-			return RenderTable(headers, rows, columns)
+			title := "Tags"
+			return RenderTable(title, headers, rows, columns)
 		}
 
 		return nil
@@ -374,6 +382,7 @@ Examples:
 func init() {
 	listCmd.AddCommand(listTagsCmd)
 	listCmd.PersistentFlags().StringP("format", "f", "table", "Output format")
+	listTagsCmd.Flags().StringArrayP("columns", "c", []string{}, "list of columns to display in the table")
 	for _, c := range []*cobra.Command{
 		listAttrsCmd,
 		listSlotsCmd,
@@ -385,7 +394,7 @@ func init() {
 	} {
 		listCmd.AddCommand(c)
 		c.Flags().StringP("tag-name", "t", "", "Tag name to list attributes for")
-		c.Flags().StringArray("columns", []string{}, "list of columns to display in the table")
+		c.Flags().StringArrayP("columns", "c", []string{}, "list of columns to display in the table")
 	}
 	rootCmd.AddCommand(listCmd)
 }

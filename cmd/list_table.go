@@ -24,7 +24,7 @@ func MapToTableRows[T M.RenderableMemberWithContext](items []T) [][]string {
 // RenderTable renders a table given headers, rows, and columns to display.
 // If columns is empty, renders all columns. Otherwise, always renders the first column and any columns listed in 'columns' (by header name), without duplicates.
 // Now returns error for error handling.
-func RenderTable(headers []string, rows [][]string, columns []string) error {
+func RenderTable(title string, headers []string, rows [][]string, columns []string) error {
 	if err := checkUnknownColumns(headers, columns); err != nil {
 		return err
 	}
@@ -37,7 +37,13 @@ func RenderTable(headers []string, rows [][]string, columns []string) error {
 	}
 	data := pterm.TableData{finalHeaders}
 	data = append(data, finalRows...)
-	return table.WithData(data).Render()
+	out, err := table.WithData(data).Srender()
+	if err != nil {
+		return err
+	}
+	pterm.DefaultSection.Println(title)
+	pterm.Println(out)
+	return nil
 }
 
 // checkUnknownColumns returns an error if any column name is not in headers, case-insensitive.
