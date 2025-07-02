@@ -11,6 +11,9 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"time"
+
+	"github.com/pterm/pterm"
 
 	ts "github.com/tree-sitter/go-tree-sitter"
 	tsCss "github.com/tree-sitter/tree-sitter-css/bindings/go"
@@ -145,6 +148,7 @@ type QueryManager struct {
 }
 
 func NewQueryManager() (*QueryManager, error) {
+	start := time.Now()
 	qm := &QueryManager{
 		typescript: make(map[string]*ts.Query),
 		jsdoc:      make(map[string]*ts.Query),
@@ -205,7 +209,7 @@ func NewQueryManager() (*QueryManager, error) {
 			}
 		}
 	}
-
+	pterm.Debug.Println("Constructing queries took", time.Since(start))
 	return qm, nil
 }
 
