@@ -8,8 +8,8 @@ if ! [[ "$runs" =~ ^[0-9]+$ ]]; then
   exit 1
 fi
 
+mkdir -p docs/assets
 cd docs
-mkdir -p site
 if [[ -n "$CI" ]]; then
   pwd
   npm ci
@@ -32,9 +32,9 @@ names=(
   "cem generate"
 )
 cmds=(
-  "npx --yes @lit-labs/cli labs gen --manifest --out lit"
-  "npx --yes @custom-elements-manifest/analyzer analyze --outdir cea --globs $file_glob"
-  "../cem generate -o cem/custom-elements.json $file_glob"
+  "npx --yes @lit-labs/cli labs gen --manifest --out data/lit"
+  "npx --yes @custom-elements-manifest/analyzer analyze --outdir data/cea --globs $file_glob"
+  "../cem generate -o data/cem/custom-elements.json $file_glob"
 )
 docsUrls=(
   "https://github.com/lit/lit/tree/fbda6d7b42b8acd19b388e9de0be3521da6b58bb/packages/labs/cli"
@@ -45,8 +45,8 @@ docsUrls=(
 # Pre-warm commands to avoid first-run hangs on macOS
 for i in "${!cmds[@]}"; do
   id="${ids[$i]}"
-  mkdir -p "$id"
-  resultFile="${id}/custom-elements.json"
+  mkdir -p "data/$id"
+  resultFile="data/${id}/custom-elements.json"
   if [[ -f "$resultFile" ]]; then
     rm -f "$resultFile"
   fi
@@ -62,7 +62,7 @@ for i in "${!ids[@]}"; do
   name="${names[$i]}"
   id="${ids[$i]}"
   cmd="${cmds[$i]}"
-  resultFile="${id}/custom-elements.json"
+  resultFile="data/${id}/custom-elements.json"
   docsUrl="${docsUrls[$i]}"
 
   sumTime=0
@@ -149,7 +149,7 @@ for i in "${!ids[@]}"; do
       lastError: $lastError
     }' >> "$results_tmp"
 
-  output_file="docs/assets/$id-last-output.md"
+  output_file="assets/$id-last-output.md"
   echo "\`\`\`json" > "$output_file"
   echo "$lastOutput" >> "$output_file"
   echo "\`\`\`" >> "$output_file"
@@ -158,10 +158,7 @@ done
 
 # Combine all tool results into a single JSON array
 jq -s --arg runs "$runs" --arg file_count "$file_count" \
-  '{runs: ($runs|tonumber), file_count: ($file_count|tonumber), results: .}' "$results_tmp" > benchmark-results.json
+  '{runs: ($runs|tonumber), file_count: ($file_count|tonumber), results: .}' "$results_tmp" > benchmarks.json
 
 rm "$results_tmp"
 
-if [[ -n "$CI" ]]; then
-  npm run site
-fi
