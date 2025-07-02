@@ -26,27 +26,17 @@ import (
 	"github.com/spf13/viper"
 
 	C "bennypowers.dev/cem/cmd/config"
+	"bennypowers.dev/cem/list"
 	M "bennypowers.dev/cem/manifest"
 )
 
-func readPkg() (*M.Package, error) {
+func readCfg() (*C.CemConfig, error) {
 	cfg := C.CemConfig{}
 	err := viper.Unmarshal(&cfg)
 	if err != nil {
 		return nil, err
 	}
-	path := cfg.Generate.Output
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-	path = filepath.Join(cwd, path)
-	json, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	pterm.Debug.Printfln("Loaded manifest from %s", path)
-	return M.UnmarshalPackage(json)
+	return &cfg, nil
 }
 
 func requireTagName(cmd *cobra.Command) (string, error) {
@@ -72,6 +62,25 @@ func requireFormat(cmd *cobra.Command) (string, error) {
 	default:
 		return "", errors.New("unknown format: " + format)
 	}
+}
+
+func readPkg() (*M.Package, error) {
+	cfg, err := readCfg()
+	if err != nil {
+		return nil, err
+	}
+	path := cfg.Generate.Output
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	path = filepath.Join(cwd, path)
+	json, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	pterm.Debug.Printfln("Loaded manifest from %s", path)
+	return M.UnmarshalPackage(json)
 }
 
 // validateTagCommandFlags returns the tag name, format, and loaded manifest package.
@@ -127,12 +136,11 @@ Examples:
 		switch format {
 		case "table":
 			headers := []string{"Name", "DOM Property", "Reflects", "Summary"}
-			rows := MapToTableRows(attrs)
+			rows := list.MapToTableRows(attrs)
 			title := "Attributes on " + tagName
-			return RenderTable(title, headers, rows, columns)
-		default:
-			return cmd.Usage()
+			return list.RenderTable(title, headers, rows, columns)
 		}
+		return nil
 	},
 }
 
@@ -158,9 +166,9 @@ Examples:
 		switch format {
 		case "table":
 			headers := []string{"Name", "Summary"}
-			rows := MapToTableRows(slots)
+			rows := list.MapToTableRows(slots)
 			title := "Slots on "+tagName
-			return RenderTable(title, headers, rows, columns)
+			return list.RenderTable(title, headers, rows, columns)
 		}
 
 		return nil
@@ -191,9 +199,9 @@ Examples:
 		switch format {
 		case "table":
 			headers := []string{"Name", "Syntax", "Default", "Summary"}
-			rows := MapToTableRows(props)
+			rows := list.MapToTableRows(props)
 			title := "CSS Custom Properties for " + tagName
-			return RenderTable(title, headers, rows, columns)
+			return list.RenderTable(title, headers, rows, columns)
 		}
 		return nil
 	},
@@ -221,9 +229,9 @@ Examples:
 		switch format {
 		case "table":
 			headers := []string{"Name", "Summary"}
-			rows := MapToTableRows(props)
+			rows := list.MapToTableRows(props)
 			title := "CSS Custom States for " + tagName
-			return RenderTable(title, headers, rows, columns)
+			return list.RenderTable(title, headers, rows, columns)
 		}
 
 		return nil
@@ -250,9 +258,9 @@ Examples:
 		switch format {
 		case "table":
 			headers := []string{"Name", "Summary"}
-			rows := MapToTableRows(parts)
+			rows := list.MapToTableRows(parts)
 			title := "CSS Shadow Parts for " + tagName
-			return RenderTable(title, headers, rows, columns)
+			return list.RenderTable(title, headers, rows, columns)
 		}
 		return nil
 	},
@@ -280,9 +288,9 @@ Examples:
 		switch format {
 		case "table":
 			headers := []string{"Name", "Type", "Summary"}
-			rows := MapToTableRows(events)
+			rows := list.MapToTableRows(events)
 			title := "Events fired by " + tagName
-			return RenderTable(title, headers, rows, columns)
+			return list.RenderTable(title, headers, rows, columns)
 		}
 		return nil
 	},
@@ -307,9 +315,9 @@ Examples:
 		switch format {
 		case "table":
 			headers := []string{"Name", "Return Type", "Privacy", "Static", "Summary"}
-			rows := MapToTableRows(methods)
+			rows := list.MapToTableRows(methods)
 			title := "Methods on " + tagName
-			return RenderTable(title, headers, rows, columns)
+			return list.RenderTable(title, headers, rows, columns)
 		}
 
 		return nil
@@ -349,11 +357,10 @@ Example:
 		switch format {
 		case "table":
 			headers := []string{"Tag", "Class", "Module", "Summary"}
-			rows := MapToTableRows(tags)
+			rows := list.MapToTableRows(tags)
 			title := "Tags"
-			return RenderTable(title, headers, rows, columns)
+			return list.RenderTable(title, headers, rows, columns)
 		}
-
 		return nil
 	},
 }
