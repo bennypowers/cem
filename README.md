@@ -1,15 +1,9 @@
 # cem
 
-**cem** is a command-line tool for generating [Custom Elements Manifest][cem]
-(CEM) files from TypeScript sources. It analyzes your codebase and generates
+**cem** is a command-line tool for generating and querying
+[Custom Elements Manifest][cem] files. It can analyze your codebase and generate
 rich metadata for your custom elements, facilitating documentation, tooling, and
-integration.
-
-> [!NOTE]
-> `cem` best supports LitElements written in idiomatic style with
-> TypeScript decorators. There is rudimentary support for `extends HTMLElement`,
-> but it is not a high priority for development. If you need something more
-> specific [open an issue][issuenew].
+integration. It can also query that manifest for information about your package
 
 ## Installation
 
@@ -105,6 +99,12 @@ To load completions for every new session, add the output of the above command t
 - Identifies custom elements, classes, variables, functions, and exports.
 - Supports elements written in idiomatic Lit typescript style, with a
 `@customElement` decorator, and `@property` decorators on class fields.
+
+> [!NOTE]
+> `cem generate` best supports LitElements written in idiomatic style with
+> TypeScript decorators. There is rudimentary support for `extends HTMLElement`,
+> but it is not a high priority for development. If you need something more
+> specific [open an issue][issuenew].
 
 #### JSDoc
 Use JSDoc comments to add metadata to your element classes, similar to other
@@ -236,6 +236,38 @@ generate:
 | `urlTemplate`          | string | (optional) Alternative URL template for demo links.                                          |
 
 ---
+
+### `cem list`
+
+The `cem list` command provides a fast, flexible way to inspect custom elements, their features, and their metadata directly from your manifest file.
+With `cem list`, you can quickly explore and audit your custom elements API surface, making it easier to document, test, and share your components.
+
+
+#### Available Subcommands
+
+- `cem list tags` — Lists all custom element tag names in the project.
+- `cem list -t <tag> attrs` — Lists all attributes for a given custom element tag.
+- `cem list -t <tag> slots` — Lists all named and default slots for a tag.
+- `cem list -t <tag> events` — Lists all custom events fired by a tag, including their types and descriptions.
+- `cem list -t <tag> css-properties` — Lists CSS custom properties (CSS variables) for a tag.
+- `cem list -t <tag> css-states` — Lists CSS custom states for a tag.
+- `cem list -t <tag> css-parts` — Lists CSS shadow parts for a tag.
+- `cem list -t <tag> methods` — Lists methods for a tag's DOM object.
+
+#### Column Filtering and Output
+
+- Use the `--columns,-c` flag to specify which columns to include in the output, e.g.:
+
+  ```sh
+  cem list events my-element -c name -c summary -c type
+  cem list attrs my-element -c description --columns default
+  ```
+Note that the name column is always included, and that if a column is specified but contains only empty values for all rows, it is automatically omitted from the output for clarity.
+
+#### Output Formats
+
+- By default, tables are shown in a human-readable table format.
+- [ ] TODO: json, markdown, flat lists, etc
 
 ## Configuration Reference
 
