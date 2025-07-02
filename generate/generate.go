@@ -191,7 +191,7 @@ func postprocess(
 
 	packageJsonDir := cfg.ProjectDir
 	if packageJsonDir == "" {
-		packageJsonDir = filepath.Join(cfg.ConfigFile, "../")
+		packageJsonDir = filepath.Dir(cfg.ConfigFile)
 	}
 	packageJsonPath := filepath.Join(packageJsonDir, "package.json")
 
