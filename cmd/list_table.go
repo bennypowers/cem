@@ -9,6 +9,7 @@ import (
 	"github.com/pterm/pterm"
 
 	M "bennypowers.dev/cem/manifest"
+	"slices"
 )
 
 // MapToTableRows maps a slice of RenderableMemberWithContext to [][]string.
@@ -31,6 +32,9 @@ func RenderTable(headers []string, rows [][]string, columns []string) error {
 		WithHasHeader(true).
 		WithBoxed(false)
 	finalHeaders, finalRows := filterTableColumns(headers, rows, columns)
+	if len(finalRows) == 0 {
+		return nil
+	}
 	data := pterm.TableData{finalHeaders}
 	data = append(data, finalRows...)
 	return table.WithData(data).Render()
@@ -75,32 +79,63 @@ func closestHeader(col string, headers []string) string {
 }
 
 // filterTableColumns filters headers and rows to only include the first column and any named columns in 'columns' (case-insensitive).
+// If the 'Summary' column is present in the filtered set but all its values are empty, it is omitted from the results.
 // Returns new headers and rows in the filtered order.
 func filterTableColumns(headers []string, rows [][]string, columns []string) ([]string, [][]string) {
+	var selectedIdx []int
 	if len(columns) == 0 {
-		return headers, rows
-	}
-	// Always keep the first column.
-	selectedIdx := []int{0}
-	colSet := map[int]struct{}{0: {}}
-	headerLC := make([]string, len(headers))
-	for i, h := range headers {
-		headerLC[i] = strings.ToLower(h)
-	}
-	for _, colName := range columns {
-		colNameLC := strings.ToLower(colName)
-		for idx, hlc := range headerLC {
-			if idx == 0 {
-				continue
-			}
-			if hlc == colNameLC {
-				if _, exists := colSet[idx]; !exists {
-					selectedIdx = append(selectedIdx, idx)
-					colSet[idx] = struct{}{}
+		// Include all columns by default
+		selectedIdx = make([]int, len(headers))
+		for i := range headers {
+			selectedIdx[i] = i
+		}
+	} else {
+		// Always keep the first column.
+		selectedIdx = []int{0}
+		colSet := map[int]struct{}{0: {}}
+		headerLC := make([]string, len(headers))
+		for i, h := range headers {
+			headerLC[i] = strings.ToLower(h)
+		}
+		for _, colName := range columns {
+			colNameLC := strings.ToLower(colName)
+			for idx, hlc := range headerLC {
+				if idx == 0 {
+					continue
+				}
+				if hlc == colNameLC {
+					if _, exists := colSet[idx]; !exists {
+						selectedIdx = append(selectedIdx, idx)
+						colSet[idx] = struct{}{}
+					}
 				}
 			}
 		}
 	}
+
+	// Always check for "Summary" column in the selected set, and remove if all values are empty
+	summaryCol := -1
+	for i, idx := range selectedIdx {
+		if strings.ToLower(headers[idx]) == "summary" {
+			summaryCol = i // position in selectedIdx
+			break
+		}
+	}
+	if summaryCol != -1 {
+		allEmpty := true
+		for _, row := range rows {
+			colIdx := selectedIdx[summaryCol]
+			if colIdx < len(row) && strings.TrimSpace(row[colIdx]) != "" {
+				allEmpty = false
+				break
+			}
+		}
+		if allEmpty {
+			selectedIdx = slices.Delete(selectedIdx, summaryCol, summaryCol+1)
+		}
+	}
+
+	// Build filtered headers and rows as before
 	filteredHeaders := make([]string, len(selectedIdx))
 	for i, idx := range selectedIdx {
 		filteredHeaders[i] = headers[idx]

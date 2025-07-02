@@ -47,12 +47,20 @@ type CustomElementWithContext struct {
 	CustomElementExport      *CustomElementExport
 }
 
+// Renders a CustomElement as a table row.
+// Columns:
+//   Tag (tag name), Class (class name), Module (module path), Summary
 func (c CustomElementWithContext) ToTableRow() []string {
 	modulePath := ""
 	if c.Module != nil {
 		modulePath = c.Module.Path
 	}
-	return []string{c.TagName, modulePath}
+	return []string{
+		c.TagName,
+		c.CustomElementDeclaration.Name,
+		modulePath,
+		c.CustomElementDeclaration.Summary,
+	}
 }
 
 type AttributeWithContext struct {
@@ -64,6 +72,9 @@ type AttributeWithContext struct {
 	CustomElementExport      *CustomElementExport
 }
 
+// Renders a CustomElement as a table row.
+// Columns:
+//   Name, DOM Property, Reflects, Summary
 func (a AttributeWithContext) ToTableRow() []string {
 	domProp := ""
 	reflects := "❌"
@@ -77,6 +88,7 @@ func (a AttributeWithContext) ToTableRow() []string {
 		a.Name,
 		domProp,
 		reflects,
+		a.Attribute.Summary,
 	}
 }
 
@@ -88,9 +100,16 @@ type SlotWithContext struct {
 	CustomElementExport      *CustomElementExport
 }
 
+// Renders a Slot as a table row.
+// Columns:
+//   Name, Summary
 func (s SlotWithContext) ToTableRow() []string {
+	slotName := s.Name
+	if slotName == "" {
+		slotName = "<default>"
+	}
 	return []string{
-		s.Name,
+		slotName,
 		s.Slot.Summary,
 	}
 }
@@ -103,9 +122,13 @@ type CssCustomPropertyWithContext struct {
 	JavaScriptModule         *JavaScriptModule
 }
 
+// Renders a CSS CssCustomProperty as a table row.
+// Columns:
+//   Name, Syntax, Default, Summary
 func (c CssCustomPropertyWithContext) ToTableRow() []string {
 	return []string{
 		c.Name,
+		c.CssCustomProperty.Syntax,
 		c.CssCustomProperty.Default,
 		c.CssCustomProperty.Summary,
 	}
@@ -119,6 +142,9 @@ type CssCustomStateWithContext struct {
 	JavaScriptModule         *JavaScriptModule
 }
 
+// Renders a CssCustomState as a table row.
+// Columns:
+//   Name, Summary
 func (c CssCustomStateWithContext) ToTableRow() []string {
 	return []string{
 		c.Name,
@@ -134,6 +160,9 @@ type CssPartWithContext struct {
 	JavaScriptModule         *JavaScriptModule
 }
 
+// Renders a CssPart as a table row.
+// Columns:
+//   Name, Summary
 func (c CssPartWithContext) ToTableRow() []string {
 	return []string{
 		c.Name,
@@ -149,6 +178,9 @@ type EventWithContext struct {
 	JavaScriptModule         *JavaScriptModule
 }
 
+// Renders an Event as a table row.
+// Columns:
+//   Name, Type, Summary
 func (e EventWithContext) ToTableRow() []string {
 	eventType := ""
 	if e.Event.Type != nil {
@@ -169,14 +201,22 @@ type MethodWithContext struct {
 	JavaScriptModule         *JavaScriptModule
 }
 
+// Renders an Event as a table row.
+// Columns:
+//   Name, Return Type, Privacy, Static, Summary
 func (m MethodWithContext) ToTableRow() []string {
-	methodType := ""
+	returnType := "void"
+	privacy := string(m.Method.Privacy)
+	if privacy == "" {
+		privacy = "public"
+	}
 	if m.Method.Return != nil && m.Method.Return.Type != nil {
-		methodType = m.Method.Return.Type.Text
+		returnType = m.Method.Return.Type.Text
 	}
 	return []string{
 		m.Name,
-		methodType,
+		returnType,
+		privacy,
 		strconv.FormatBool(m.Method.Static),
 		m.Method.Summary,
 	}
@@ -213,11 +253,12 @@ func (x *Package) GetAllTagNamesWithContext() (tags []CustomElementWithContext) 
 // If duplicate attribute names are present, only one will be returned (see generate.go for possible warnings).
 func (x *Package) GetTagAttrsWithContext(tagName string) (attrs []AttributeWithContext, err error) {
 	attrMap := make(map[string]AttributeWithContext)
+	tagFound := false
 modules:
 	for _, m := range x.Modules {
 		for _, d := range m.Declarations {
 			if ced, ok := d.(*CustomElementDeclaration); ok {
-				if ced.TagName == tagName {
+				if tagFound = ced.TagName == tagName; tagFound {
 					fieldMap := make(map[string]CustomElementField)
 					for _, member := range ced.Members {
 						if cef, ok := member.(*CustomElementField); ok {
@@ -253,7 +294,7 @@ modules:
 			}
 		}
 	}
-	if len(attrMap) == 0 {
+	if !tagFound {
 		return nil, errors.New("Tag not found: " + tagName)
 	}
 	attrs = make([]AttributeWithContext, 0, len(attrMap))
@@ -271,11 +312,12 @@ modules:
 
 // GetTagSlotsWithContext returns slots for a given tag name with context.
 func (x *Package) GetTagSlotsWithContext(tagName string) (slots []SlotWithContext, err error) {
+	tagFound := false
 modules:
 	for _, m := range x.Modules {
 		for _, d := range m.Declarations {
 			if ced, ok := d.(*CustomElementDeclaration); ok {
-				if ced.TagName == tagName {
+				if tagFound = ced.TagName == tagName; tagFound {
 					var ceExport *CustomElementExport
 					for _, e := range m.Exports {
 						if cee, ok := e.(*CustomElementExport); ok && cee.Name == tagName {
@@ -298,7 +340,7 @@ modules:
 			}
 		}
 	}
-	if len(slots) == 0 {
+	if !tagFound {
 		return nil, errors.New("Tag not found: " + tagName)
 	}
 	return slots, nil
@@ -306,11 +348,12 @@ modules:
 
 // GetTagCssPropertiesWithContext returns CSS custom properties for a given tag name with context.
 func (x *Package) GetTagCssPropertiesWithContext(tagName string) (props []CssCustomPropertyWithContext, err error) {
+	tagFound := false
 modules:
 	for _, m := range x.Modules {
 		for _, d := range m.Declarations {
 			if ced, ok := d.(*CustomElementDeclaration); ok {
-				if ced.TagName == tagName {
+				if tagFound = ced.TagName == tagName; tagFound {
 					var ceExport *CustomElementExport
 					for _, e := range m.Exports {
 						if cee, ok := e.(*CustomElementExport); ok && cee.Name == tagName {
@@ -333,7 +376,7 @@ modules:
 			}
 		}
 	}
-	if len(props) == 0 {
+	if !tagFound {
 		return nil, errors.New("Tag not found: " + tagName)
 	}
 	return props, nil
@@ -341,11 +384,12 @@ modules:
 
 // GetTagCssStatesWithContext returns CSS custom states for a given tag name with context.
 func (x *Package) GetTagCssStatesWithContext(tagName string) (states []CssCustomStateWithContext, err error) {
+	tagFound := false
 modules:
 	for _, m := range x.Modules {
 		for _, d := range m.Declarations {
 			if ced, ok := d.(*CustomElementDeclaration); ok {
-				if ced.TagName == tagName {
+				if tagFound = ced.TagName == tagName; tagFound {
 					var ceExport *CustomElementExport
 					for _, e := range m.Exports {
 						if cee, ok := e.(*CustomElementExport); ok && cee.Name == tagName {
@@ -368,7 +412,7 @@ modules:
 			}
 		}
 	}
-	if len(states) == 0 {
+	if !tagFound {
 		return nil, errors.New("Tag not found: " + tagName)
 	}
 	return states, nil
@@ -376,11 +420,12 @@ modules:
 
 // GetTagCssPartsWithContext returns CSS shadow parts for a given tag name with context.
 func (x *Package) GetTagCssPartsWithContext(tagName string) (parts []CssPartWithContext, err error) {
+	tagFound := false
 modules:
 	for _, m := range x.Modules {
 		for _, d := range m.Declarations {
 			if ced, ok := d.(*CustomElementDeclaration); ok {
-				if ced.TagName == tagName {
+				if tagFound = ced.TagName == tagName; tagFound {
 					var ceExport *CustomElementExport
 					for _, e := range m.Exports {
 						if cee, ok := e.(*CustomElementExport); ok && cee.Name == tagName {
@@ -403,7 +448,7 @@ modules:
 			}
 		}
 	}
-	if len(parts) == 0 {
+	if tagFound {
 		return nil, errors.New("Tag not found: " + tagName)
 	}
 	return parts, nil
@@ -411,11 +456,12 @@ modules:
 
 // GetTagEventsWithContext returns events for a given tag name with context.
 func (x *Package) GetTagEventsWithContext(tagName string) (events []EventWithContext, err error) {
+	tagFound := false
 modules:
 	for _, m := range x.Modules {
 		for _, d := range m.Declarations {
 			if ced, ok := d.(*CustomElementDeclaration); ok {
-				if ced.TagName == tagName {
+				if tagFound = ced.TagName == tagName; tagFound {
 					var ceExport *CustomElementExport
 					for _, e := range m.Exports {
 						if cee, ok := e.(*CustomElementExport); ok && cee.Name == tagName {
@@ -438,7 +484,7 @@ modules:
 			}
 		}
 	}
-	if len(events) == 0 {
+	if !tagFound {
 		return nil, errors.New("Tag not found: " + tagName)
 	}
 	return events, nil
@@ -446,11 +492,12 @@ modules:
 
 // GetTagMethodsWithContext returns methods for a given tag name with context.
 func (x *Package) GetTagMethodsWithContext(tagName string) (methods []MethodWithContext, err error) {
+	tagFound := false
 modules:
 	for _, m := range x.Modules {
 		for _, d := range m.Declarations {
 			if ced, ok := d.(*CustomElementDeclaration); ok {
-				if ced.TagName == tagName {
+				if tagFound = ced.TagName == tagName; tagFound {
 					var ceExport *CustomElementExport
 					for _, e := range m.Exports {
 						if cee, ok := e.(*CustomElementExport); ok && cee.Name == tagName {
@@ -474,7 +521,7 @@ modules:
 			}
 		}
 	}
-	if len(methods) == 0 {
+	if !tagFound {
 		return nil, errors.New("Tag not found: " + tagName)
 	}
 	return methods, nil

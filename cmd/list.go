@@ -21,6 +21,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -44,6 +45,7 @@ func readPkg() (*M.Package, error) {
 	if err != nil {
 		return nil, err
 	}
+	pterm.Debug.Printfln("Loaded manifest from %s", path)
 	return M.UnmarshalPackage(json)
 }
 
@@ -103,11 +105,15 @@ var listAttrsCmd = &cobra.Command{
 	Short:   "List attributes in the custom elements manifest by tag name",
 	Long: `List all attributes for a given custom element tag
 
-You must specify the tag name using the --tag-name flag. The output includes each attribute, its corresponding DOM property, and whether it reflects changes to the DOM.
+You must specify the tag name using the --tag-name flag. The output includes each attribute,
+its corresponding DOM property, whether it reflects changes to the DOM, and a summary.
 
 Examples:
 
-  cem list attributes --tag-name my-button --format table
+  cem list attributes --tag-name my-button
+  cem list attributes --tag-name my-button --format table --columns "DOM Property"
+  cem list attributes --tag-name my-button --format table --columns "DOM Property" --columns Reflects
+  cem list attributes --tag-name my-button --format table --columns "DOM Property" --columns Reflects --columns Summary
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
@@ -120,7 +126,7 @@ Examples:
 		}
 		switch format {
 		case "table":
-			headers := []string{"Attribute", "DOM Property", "Reflects"}
+			headers := []string{"Name", "DOM Property", "Reflects", "Summary"}
 			rows := MapToTableRows(attrs)
 			return RenderTable(headers, rows, columns)
 		default:
@@ -138,7 +144,8 @@ You must specify the tag name using the --tag-name flag. The output includes eac
 
 Examples:
 
-  cem list slots --tag-name my-button --format table
+  cem list slots --tag-name my-button
+  cem list slots --tag-name my-button --format table --columns Name
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
@@ -149,7 +156,7 @@ Examples:
 		}
 		switch format {
 		case "table":
-			headers := []string{"Slot", "Summary"}
+			headers := []string{"Name", "Summary"}
 			rows := MapToTableRows(slots)
 			return RenderTable(headers, rows, columns)
 		}
@@ -169,7 +176,10 @@ css property by name, it's syntax, default value, and summary.
 
 Examples:
 
-  cem list css-custom-properties --tag-name my-button --format table
+  cem list css-custom-properties --tag-name my-button
+  cem list css-custom-properties --tag-name my-button --format table --columns Syntax
+  cem list css-custom-properties --tag-name my-button --format table --columns Syntax --columns Default
+  cem list css-custom-properties --tag-name my-button --format table --columns Syntax --columns Default --columns Summary
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
@@ -178,7 +188,7 @@ Examples:
 		if err != nil { return err }
 		switch format {
 		case "table":
-			headers := []string{"CSS Property", "Syntax", "Default", "Summary"}
+			headers := []string{"Name", "Syntax", "Default", "Summary"}
 			rows := MapToTableRows(props)
 			return RenderTable(headers, rows, columns)
 		}
@@ -197,16 +207,17 @@ and a summary
 
 Examples:
 
-  cem list css-custom-states --tag-name my-button --format table
+  cem list css-custom-states --tag-name my-button
+  cem list css-custom-states --tag-name my-button --format table --columns Name
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
 		if err != nil { return err }
-		props, err := pkg.GetTagCssPropertiesWithContext(tagName)
+		props, err := pkg.GetTagCssStatesWithContext(tagName)
 		if err != nil { return err }
 		switch format {
 		case "table":
-			headers := []string{"CSS State", "Summary"}
+			headers := []string{"Name", "Summary"}
 			rows := MapToTableRows(props)
 			return RenderTable(headers, rows, columns)
 		}
@@ -217,7 +228,7 @@ Examples:
 
 var listCssPartsCmd = &cobra.Command{
 	Use:   "css-parts",
-	Aliases: []string{"css-shadow-parts"},
+	Aliases: []string{"parts","css-shadow-parts"},
 	Short: "List CSS shadow parts for a given tag name",
 	Long: `List CSS shadow parts for a given tag name.
 
@@ -234,7 +245,7 @@ Examples:
 		if err != nil { return err }
 		switch format {
 		case "table":
-			headers := []string{"CSS State", "Summary"}
+			headers := []string{"Name", "Summary"}
 			rows := MapToTableRows(parts)
 			return RenderTable(headers, rows, columns)
 		}
@@ -252,7 +263,9 @@ it's type, and a summary
 
 Examples:
 
-  cem list event --tag-name my-button --format table
+  cem list event --tag-name my-button
+  cem list event --tag-name my-button --format table --columns Type
+  cem list event --tag-name my-button --format table --columns Type --columns Summary
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
@@ -261,7 +274,7 @@ Examples:
 		if err != nil { return err }
 		switch format {
 		case "table":
-			headers := []string{"Event", "Type", "Summary"}
+			headers := []string{"Name", "Type", "Summary"}
 			rows := MapToTableRows(events)
 			return RenderTable(headers, rows, columns)
 		}
@@ -274,7 +287,7 @@ var listMethodsCmd = &cobra.Command{
 	Short: "List class methods for a given tag name",
 	Long: `List DOM object methods for the class registered to a given tag name.
 
-You must specify the tag name using the --tag-name flag. The output includes each method, it's return type, and a summary
+You must specify the tag name using the --tag-name flag. The output includes each method, it's return type, privacy, and summary
 
 Examples:
 
@@ -287,7 +300,7 @@ Examples:
 		if err != nil { return err }
 		switch format {
 		case "table":
-			headers := []string{"Method", "Return Type", "Summary"}
+			headers := []string{"Name", "Return Type", "Privacy", "Static", "Summary"}
 			rows := MapToTableRows(methods)
 			return RenderTable(headers, rows, columns)
 		}
@@ -307,7 +320,10 @@ allowing you to quickly see which custom elements are available and where they a
 
 Example:
 
-  cem list tags --format table
+  cem list tags
+  cem list tags --format table --columns Class
+  cem list tags --format table --columns Class --columns Module
+  cem list tags --format table --columns Class --columns Module --columns Summary
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		pkg, err := readPkg()
@@ -325,7 +341,7 @@ Example:
 		}
 		switch format {
 		case "table":
-			headers := []string{"Tag", "Module"}
+			headers := []string{"Tag", "Class", "Module", "Summary"}
 			rows := MapToTableRows(tags)
 			return RenderTable(headers, rows, columns)
 		}
