@@ -37,20 +37,30 @@ func MapToTableRows[T M.RenderableMemberWithContext](items []T) [][]string {
 	return rows
 }
 
+// BuildTableData prepares the filtered headers and rows for the table, given column selection.
+// Returns error if unknown columns are requested.
+func BuildTableData(headers []string, rows [][]string, columns []string) ([]string, [][]string, error) {
+	if err := checkUnknownColumns(headers, columns); err != nil {
+		return nil, nil, err
+	}
+	finalHeaders, finalRows := filterTableColumns(headers, rows, columns)
+	return finalHeaders, finalRows, nil
+}
+
 // RenderTable renders a table given headers, rows, and columns to display.
 // If columns is empty, renders all columns. Otherwise, always renders the first column and any columns listed in 'columns' (by header name), without duplicates.
 // Now returns error for error handling.
 func RenderTable(title string, headers []string, rows [][]string, columns []string) error {
-	if err := checkUnknownColumns(headers, columns); err != nil {
+	finalHeaders, finalRows, err := BuildTableData(headers, rows, columns)
+	if err != nil {
 		return err
+	}
+	if len(finalRows) == 0 {
+		return nil
 	}
 	table := pterm.DefaultTable.
 		WithHasHeader(true).
 		WithBoxed(false)
-	finalHeaders, finalRows := filterTableColumns(headers, rows, columns)
-	if len(finalRows) == 0 {
-		return nil
-	}
 	data := pterm.TableData{finalHeaders}
 	data = append(data, finalRows...)
 	out, err := table.WithData(data).Srender()
@@ -61,7 +71,6 @@ func RenderTable(title string, headers []string, rows [][]string, columns []stri
 	pterm.Println(out)
 	return nil
 }
-
 // checkUnknownColumns returns an error if any column name is not in headers, case-insensitive.
 func checkUnknownColumns(headers []string, columns []string) error {
 	headerSet := make(map[string]string, len(headers)) // lower-case -> original
