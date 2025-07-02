@@ -125,7 +125,7 @@
       </figure>
       <sl-details summary="Last Output (JSON)">
         <sl-spinner style="font-size: 3rem;"></sl-spinner>
-        <zero-md id="last-output-{{ $idx }}" data-src="{{ $result.lastOutputUrl }}" no-shadow>
+      <zero-md id="last-output-{{ $idx }}" data-src="{{ .Site.BaseURL }}/{{ $result.lastOutputUrl }}" no-shadow>
           <template></template>
         </zero-md>
       </sl-details>
@@ -140,3 +140,30 @@
     </sl-card>
   {{ end }}
 </div>
+<script type="module" src="{{ .Site.BaseURL }}/line-chart.js"></script>
+<script type="module">
+    import ZeroMd from "https://esm.sh/zero-md@3";
+    customElements.define('zero-md', ZeroMd);
+</script>
+
+<script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/shoelace.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/themes/light.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/themes/dark.css">
+
+<script type="module">
+  import { setBasePath } from 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/utilities/base-path.js';
+  setBasePath('https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/');
+
+  document.addEventListener('sl-after-show', async function(event) {
+    await customElements.whenDefined('zero-md');
+    await customElements.whenDefined('sl-spinner');
+    const zeroMd = event.target.querySelector('zero-md');
+    const spinner = event.target.querySelector('sl-spinner');
+    if (spinner && zeroMd && !zeroMd.src) {
+      zeroMd.src = zeroMd.dataset.src
+      zeroMd.addEventListener('zero-md-rendered', function () {
+        spinner.remove();
+      }, { once: true })
+    }
+  });
+</script>

@@ -125,6 +125,12 @@ for i in "${!ids[@]}"; do
   lastOutput="$(echo "$last_json" | jq . 2>/dev/null || echo "null")"
 
   # Write each tool's result as a single line in the temp file
+  # Sanitize last_stderr as empty string if only whitespace or empty
+  clean_last_stderr="$(echo -n "$last_stderr" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+  if [[ -z "$clean_last_stderr" ]]; then
+    clean_last_stderr=""
+  fi
+
   jq -n \
     --arg id "$id" \
     --arg name "$name" \
@@ -135,7 +141,7 @@ for i in "${!ids[@]}"; do
     --argjson averageSize "$avgSize" \
     --argjson runs "[$(IFS=,; echo "${runs_detail[*]}")]" \
     --argjson lastOutput "$lastOutput" \
-    --argjson lastError "$(jq -Rs . <<<"$last_stderr")" \
+    --arg lastError "$clean_last_stderr" \
     '{
       id: $id,
       name: $name,
