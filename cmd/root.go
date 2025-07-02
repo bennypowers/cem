@@ -129,6 +129,8 @@ func initConfig() {
 			pterm.Debug.Println("Using config file: ", cfgFile)
 		}
 	}
+	viper.Set("projectDir", projectDir)
+	viper.Set("configFile", cfgFile)
 
 	viper.AutomaticEnv()
 }
