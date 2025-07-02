@@ -251,27 +251,33 @@ func unmarshalClassMember(data json.RawMessage) (ClassMember, error) {
 	}
 	switch kindWrap.Kind {
 	case "field":
-		// Check for attribute
+		// Probe for either "attribute" or "reflects"
+		// PERFORMANCE: could be improved perhaps with a custom unmarshaller
 		var probe struct {
 			Attribute *string `json:"attribute"`
+			Reflects  *bool   `json:"reflects"`
 		}
 		_ = json.Unmarshal(data, &probe)
-		if probe.Attribute != nil {
+		if probe.Attribute != nil || probe.Reflects != nil {
 			var f CustomElementField
 			if err := json.Unmarshal(data, &f); err == nil {
 				return &f, nil
 			}
-		} else {
-			var f ClassField
-			if err := json.Unmarshal(data, &f); err == nil {
-				return &f, nil
-			}
+			// If attribute or reflects is present, but not a valid CustomElementField, surface the error.
+			return nil, fmt.Errorf("field has 'attribute' or 'reflects' but cannot unmarshal as CustomElementField")
 		}
+		// No attribute or reflects: try as ClassField
+		var f ClassField
+		if err := json.Unmarshal(data, &f); err == nil {
+			return &f, nil
+		}
+		return nil, fmt.Errorf("field does not have 'attribute' or 'reflects' and cannot unmarshal as ClassField")
 	case "method":
 		var m ClassMethod
 		if err := json.Unmarshal(data, &m); err == nil {
 			return &m, nil
 		}
+		return nil, fmt.Errorf("cannot unmarshal as ClassMethod")
 		// Add other kinds as needed
 	}
 	return nil, fmt.Errorf("unknown class member kind: %s", kindWrap.Kind)
