@@ -4,9 +4,7 @@ package manifest
 
 import (
 	"encoding/json"
-	"errors"
 	"regexp"
-	"slices"
 )
 
 func normalizePath(path string) string {
@@ -19,97 +17,6 @@ type Package struct {
 	Readme        *string  `json:"readme,omitempty"`
 	Modules       []Module `json:"modules"`
 	Deprecated    any      `json:"deprecated,omitempty"` // bool or string
-}
-
-func (x *Package) GetAllTagNames() (tags []string) {
-	// Write index.html
-	for _, m := range x.Modules {
-		for _, decl := range m.Declarations {
-			ced, ok := decl.(*CustomElementDeclaration)
-			if !ok || ced.TagName == "" {
-				continue
-			}
-			tags = append(tags, ced.TagName)
-		}
-	}
-	return tags
-}
-func (x *Package) GetAllTagNamesWithContext() (tags []CustomElementWithContext) {
-	for _, m := range x.Modules {
-		mrs := make(map[string]CustomElementWithContext)
-		for _, d := range m.Declarations {
-			if ced, ok := d.(*CustomElementDeclaration); ok {
-				mrs[ced.TagName] = CustomElementWithContext{CustomElementDeclaration: ced, Module: &m, TagName: ced.TagName}
-			}
-		}
-		for _, e := range m.Exports {
-			if cee, ok := e.(*CustomElementExport); ok {
-				r := mrs[cee.Name]
-				r.CustomElementExport = cee
-				mrs[cee.Name] = r
-			}
-		}
-		for _, r := range mrs {
-			tags = append(tags, r)
-		}
-	}
-	slices.SortStableFunc(tags, func(a CustomElementWithContext, b CustomElementWithContext) int {
-		return int(a.CustomElementDeclaration.StartByte - b.CustomElementDeclaration.StartByte)
-	})
-	return tags
-}
-func (x *Package) GetTagAttrsWithContext(tagName string) (attrs []AttributeWithContext, err error) {
-	attrMap := make(map[string]AttributeWithContext)
-modules:
-	for _, m := range x.Modules {
-		for _, d := range m.Declarations {
-			if ced, ok := d.(*CustomElementDeclaration); ok {
-				if ced.TagName == tagName {
-					fieldMap := make(map[string]CustomElementField)
-					for _, member := range ced.Members {
-						switch cef := member.(type) {
-						case *CustomElementField:
-							fieldMap[cef.Attribute] = *cef
-						}
-					}
-					var ceExport CustomElementExport
-					for _, e := range m.Exports {
-						if cee, ok := e.(*CustomElementExport); ok {
-							if cee.Name == tagName {
-								ceExport = *cee
-								break
-							}
-						}
-					}
-					for _, attr := range ced.Attributes {
-						attrCopy := attr // Create a copy of the loop variable
-						field := fieldMap[attrCopy.Name]
-						attrMap[attrCopy.Name] = AttributeWithContext{
-							Name:                     attrCopy.Name,
-							Attribute:                &attrCopy,
-							JavaScriptModule:         &m,
-							CustomElementDeclaration: ced,
-							CustomElementField:       &field,
-							CustomElementExport:      &ceExport,
-						}
-					}
-					break modules
-				}
-			}
-		}
-	}
-	length := len(attrMap)
-	if length == 0 {
-		return nil, errors.New("Tag not found: " + tagName)
-	}
-	attrs = make([]AttributeWithContext, 0)
-	for _, awc := range attrMap {
-		attrs = append(attrs, awc)
-	}
-	slices.SortStableFunc(attrs, func(a AttributeWithContext, b AttributeWithContext) int {
-		return int(a.Attribute.StartByte - b.Attribute.StartByte)
-	})
-	return attrs, nil
 }
 
 func NewPackage(modules []Module) Package {
@@ -225,13 +132,6 @@ type CustomElementDeclaration struct {
 func (*CustomElementDeclaration) isDeclaration()       {}
 func (x *CustomElementDeclaration) GetStartByte() uint { return x.StartByte }
 
-type CustomElementWithContext struct {
-	TagName                  string
-	CustomElementDeclaration *CustomElementDeclaration
-	Module                   *Module
-	CustomElementExport      *CustomElementExport
-}
-
 // CustomElement adds fields to classes/mixins for custom elements.
 type CustomElement struct {
 	TagName       string              `json:"tagName,omitempty"`
@@ -256,15 +156,6 @@ type Attribute struct {
 	FieldName     string     `json:"fieldName,omitempty"`
 	Deprecated    Deprecated `json:"deprecated,omitempty"` // bool or string
 	StartByte     uint       `json:"-"`
-}
-
-type AttributeWithContext struct {
-	Name                     string
-	Attribute                *Attribute
-	CustomElementDeclaration *CustomElementDeclaration
-	JavaScriptModule         *JavaScriptModule
-	CustomElementExport      *CustomElementExport
-	CustomElementField       *CustomElementField
 }
 
 // Event emitted by a custom element.
@@ -521,3 +412,4 @@ func SerializeToString(pkg *Package) (string, error) {
 	}
 	return string(b), nil
 }
+
