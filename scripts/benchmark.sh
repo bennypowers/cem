@@ -16,7 +16,7 @@ if [[ -n "$CI" ]]; then
   cp ../dist/cem ../cem
 fi
 
-file_glob="src/components/*.ts"
+file_glob="benchmark/components/*.ts"
 file_count=$(ls $file_glob 2>/dev/null | wc -l | xargs)
 
 echo "$file_glob"

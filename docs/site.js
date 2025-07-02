@@ -50,11 +50,10 @@ env.addFilter('enumerate', function(arr) {
 // Write the output
 const rootUrl = process.env.CI ? '/cem' : '';
 await fs.mkdir('site/benchmarks', { recursive: true });
-await fs.writeFile('site/index.html', nunjucks.render('index.html', { title: 'README', rootUrl, readmeHtml, results }));
-await fs.writeFile('site/benchmarks/index.html', nunjucks.render('benchmarks.html', { title: 'Benchmarks', rootUrl, readmeHtml, results }));
-await fs.copyFile('site.css', 'site/site.css');
-await fs.copyFile('bar-chart.js', 'site/bar-chart.js');
-await fs.copyFile('line-chart.js', 'site/line-chart.js');
+await fs.writeFile('site/index.html', nunjucks.render('include/index.html', { title: 'README', rootUrl, readmeHtml, results }));
+await fs.writeFile('site/benchmarks/index.html', nunjucks.render('include/benchmarks.html', { title: 'Benchmarks', rootUrl, readmeHtml, results }));
+for await (const asset of fs.glob('assets'))
+  await fs.copyFile(`assets/${asset}`, `site/${asset}`);
 for await (const md of fs.glob('*.md'))
   await fs.copyFile(md, path.join('site', md))
 
