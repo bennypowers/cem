@@ -235,13 +235,45 @@ generate:
 | `urlPattern`           | string | Pattern for generating demo URLs, e.g. `"demos/{tag}.html"`. `{tag}` is replaced by tag name.|
 | `urlTemplate`          | string | (optional) Alternative URL template for demo links.                                          |
 
+#### Usage
+
+Generate a custom elements manifest from your files:
+
+```sh
+cem generate \
+  "src/**/*.ts" \
+  --design-tokens npm:@my-ds/tokens/tokens.json \
+  --exclude "src/**/*.test.ts" \
+  --output custom-elements.json
+```
+
+For npm projects you can use `npx @pwrs/cem generate ...`.
+
+##### Command Line Arguments
+
+| Argument                        | Type               | Description                                                                                       |
+| ------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------- |
+| `<files or globs>`              | positional (array) | Files or glob patterns to include                                                                 |
+| `--output, -o`                  | string             | Write the manifest to this file instead of stdout                                                 |
+| `--exclude, -e`                 | array              | Files or glob patterns to exclude                                                                 |
+| `--no-default-excludes`         | bool               | Do not exclude files by default (e.g., `.d.ts` files will be included unless excluded explicitly) |
+| `--design-tokens, -t`           | string             | Path or npm specifier for DTCG-format design tokens                                               |
+| `--design-tokens-prefix, -p`    | string             | CSS custom property prefix for design tokens                                                      |
+| `--demo-discovery-file-glob`    | string             | Glob pattern for discovering demo files                                                           |
+| `--demo-discovery-url-pattern`  | string             | Go Regexp pattern with named capture groups for generating canonical demo urls                    |
+| `--demo-discovery-url-template` | string             | URL pattern string using {groupName} syntax to interpolate named captures from the URL pattern    |
+| `--source-control-root-url`     | string             | Glob pattern for discovering demo files                                                           |
+| `--project-dir`                 | string             | Specify the project root directory to use for resolving relative paths and configuration.         |
+
+By default, some files (like `.d.ts` TypeScript declaration files) are excluded from the manifest.
+Use `--no-default-excludes` if you want to include all matching files and manage excludes yourself.
+
 ---
 
 ### `cem list`
 
 The `cem list` command provides a fast, flexible way to inspect custom elements, their features, and their metadata directly from your manifest file.
 With `cem list`, you can quickly explore and audit your custom elements API surface, making it easier to document, test, and share your components.
-
 
 #### Available Subcommands
 
@@ -295,40 +327,6 @@ generate:
 ```
 
 ---
-
-## Usage
-
-Generate a custom elements manifest from your files:
-
-```sh
-cem generate \
-  "src/**/*.ts" \
-  --design-tokens npm:@my-ds/tokens/tokens.json \
-  --exclude "src/**/*.test.ts" \
-  --output custom-elements.json
-```
-
-For npm projects you can use `npx @pwrs/cem generate ...`.
-
-### Command Line Arguments
-
-| Argument                        | Type               | Description                                                                                       |
-| ------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------- |
-| `<files or globs>`              | positional (array) | Files or glob patterns to include                                                                 |
-| `--output, -o`                  | string             | Write the manifest to this file instead of stdout                                                 |
-| `--exclude, -e`                 | array              | Files or glob patterns to exclude                                                                 |
-| `--no-default-excludes`         | bool               | Do not exclude files by default (e.g., `.d.ts` files will be included unless excluded explicitly) |
-| `--design-tokens, -t`           | string             | Path or npm specifier for DTCG-format design tokens                                               |
-| `--design-tokens-prefix, -p`    | string             | CSS custom property prefix for design tokens                                                      |
-| `--demo-discovery-file-glob`    | string             | Glob pattern for discovering demo files                                                           |
-| `--demo-discovery-url-pattern`  | string             | Go Regexp pattern with named capture groups for generating canonical demo urls                    |
-| `--demo-discovery-url-template` | string             | URL pattern string using {groupName} syntax to interpolate named captures from the URL pattern    |
-| `--source-control-root-url`     | string             | Glob pattern for discovering demo files                                                           |
-| `--project-dir`                 | string             | Specify the project root directory to use for resolving relative paths and configuration.         |
-
-
-By default, some files (like `.d.ts` TypeScript declaration files) are excluded from the manifest.
-Use `--no-default-excludes` if you want to include all matching files and manage excludes yourself.
 
 ## Contributing
 
