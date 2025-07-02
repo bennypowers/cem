@@ -39,7 +39,7 @@ jobs:
           end=$(date +%s.%N)
           awk "BEGIN {print $end - $start}" > pr_bench_time.txt
           # Copy output JSON so it doesn't get overwritten
-          cp docs/data/benchmarks.json pr_bench.json
+          cp docs/data/lastBenchmark.json pr_bench.json
 
       - name: Checkout target branch (base)
         run: |
@@ -57,7 +57,7 @@ jobs:
           fi
           end=$(date +%s.%N)
           awk "BEGIN {print $end - $start}" > base_bench_time.txt
-          cp docs/data/benchmarks.json base_bench.json
+          cp docs/data/lastBenchmark.json base_bench.json
 
       - name: Checkout PR branch (base)
         run: |
