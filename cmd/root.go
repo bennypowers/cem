@@ -47,13 +47,13 @@ func Execute() {
 	}
 }
 
-func resolveProjectDir(configPath, projectDirFlag string) string {
+func resolveProjectDir(configPath, projectDirFlag string) (string, bool) {
 	if projectDirFlag != "" {
 		abs, err := expandPath(projectDirFlag)
 		if err != nil {
 			pterm.Fatal.Printf("Invalid --project-dir: %v", err)
 		}
-		return abs
+		return abs, true
 	}
 	configAbs, err := filepath.Abs(configPath)
 	if err != nil {
@@ -62,7 +62,7 @@ func resolveProjectDir(configPath, projectDirFlag string) string {
 	configDir := filepath.Dir(configAbs)
 	base := filepath.Base(configDir)
 	if base == ".config" || base == "config" {
-		return filepath.Dir(configDir)
+		return filepath.Dir(configDir), true
 	}
 	// fallback: use current working directory
 	cwd, err := os.Getwd()
@@ -72,7 +72,7 @@ func resolveProjectDir(configPath, projectDirFlag string) string {
 	if !strings.HasPrefix(configAbs, cwd) {
 		pterm.Warning.Printf("Warning: --config is outside of current dir, guessing project root as %s\n", cwd)
 	}
-	return cwd
+	return cwd, false
 }
 
 // expandPath expands ~, handles relative and absolute paths
@@ -98,22 +98,22 @@ func expandPath(path string) (string, error) {
 
 func initConfig() {
 	var err error
-	projectDir := viper.GetString("projectDir")
 	cfgFile := viper.GetString("configFile")
-	if projectDir != "" {
-		projectDir = resolveProjectDir(cfgFile, projectDir)
+	projectDir, shouldChange := resolveProjectDir(cfgFile, viper.GetString("projectDir"))
+	viper.Set("projectDir", projectDir)
+	viper.AddConfigPath(filepath.Join(projectDir, ".config"))
+	viper.SetConfigType("yaml")
+	viper.SetConfigName("cem")
+	if shouldChange {
 		// Search config in home directory with name ".snakes" (without extension).
-		viper.AddConfigPath(filepath.Join(projectDir, ".config"))
-		viper.SetConfigType("yaml")
-		viper.SetConfigName("cem")
 		if err := os.Chdir(projectDir); err != nil {
 			cobra.CheckErr(errors.Join(err, errors.New("Failed to change into project directory")))
 		}
-		if viper.GetBool("verbose") {
-			pterm.EnableDebugMessages()
-		}
-		pterm.Debug.Println("Using project directory: ", projectDir)
 	}
+	if viper.GetBool("verbose") {
+		pterm.EnableDebugMessages()
+	}
+	pterm.Debug.Println("Using project directory: ", projectDir)
 	if cfgFile != "" {
 		// Use config file from the flag.
 		cfgFile, err = expandPath(cfgFile)
