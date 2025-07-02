@@ -43,7 +43,6 @@ Supports projects written with Lit`,
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
-		pterm.Error.Print(err)
 		os.Exit(1)
 	}
 }
@@ -111,8 +110,9 @@ func initConfig() {
 			cobra.CheckErr(errors.Join(err, errors.New("Failed to change into project directory")))
 		}
 		if viper.GetBool("verbose") {
-			pterm.Info.Println("Using project directory: ", projectDir)
+			pterm.EnableDebugMessages()
 		}
+		pterm.Debug.Println("Using project directory: ", projectDir)
 	}
 	if cfgFile != "" {
 		// Use config file from the flag.
@@ -126,9 +126,7 @@ func initConfig() {
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 		if err := viper.ReadInConfig(); err == nil {
-			if viper.GetBool("verbose") {
-				pterm.Info.Println("Using config file: ", cfgFile)
-			}
+			pterm.Debug.Println("Using config file: ", cfgFile)
 		}
 	}
 
@@ -137,13 +135,12 @@ func initConfig() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().String("source-control-root-url", "",    "Canonical public source control URL corresponding to project root on primary branch. e.g. https://github.com/bennypowers/cem/tree/main/")
-	rootCmd.PersistentFlags().String("config",                  "",    "config file (default is $CWD/.config/cem.yaml)")
-	rootCmd.PersistentFlags().String("project-dir",             "",    "Path to project directory (default: parent directory of .config/cem.yaml)")
-	rootCmd.PersistentFlags().BoolP("verbose", "v",             false, "verbose logging output")
+	rootCmd.PersistentFlags().String("source-control-root-url", "", "Canonical public source control URL corresponding to project root on primary branch. e.g. https://github.com/bennypowers/cem/tree/main/")
+	rootCmd.PersistentFlags().String("config", "", "config file (default is $CWD/.config/cem.yaml)")
+	rootCmd.PersistentFlags().String("project-dir", "", "Path to project directory (default: parent directory of .config/cem.yaml)")
+	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "verbose logging output")
 	viper.BindPFlag("configFile", rootCmd.PersistentFlags().Lookup("config"))
 	viper.BindPFlag("projectDir", rootCmd.PersistentFlags().Lookup("project-dir"))
 	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
 	viper.BindPFlag("sourceControlRootUrl", rootCmd.PersistentFlags().Lookup("source-control-root-url"))
 }
-

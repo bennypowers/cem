@@ -3,8 +3,8 @@ package generate
 import (
 	"errors"
 
-	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/generate/queries"
+	M "bennypowers.dev/cem/manifest"
 )
 
 func generateVarDeclaration(
@@ -13,7 +13,7 @@ func generateVarDeclaration(
 ) (declaration *M.VariableDeclaration, errs error) {
 	nameNodes, ok := captures["variable.name"]
 	if !ok || len(nameNodes) <= 0 {
-		return nil, errors.Join(errs, &Q.NoCaptureError{ Capture: "variable.name", Query: "variable" })
+		return nil, errors.Join(errs, &Q.NoCaptureError{Capture: "variable.name", Query: "variable"})
 	}
 
 	varName := nameNodes[0].Text
@@ -44,4 +44,3 @@ func generateVarDeclaration(
 
 	return declaration, errs
 }
-

@@ -11,24 +11,24 @@ import (
 )
 
 type ParameterInfo struct {
-	Name        string;
-	Description string;
-	Default     string;
-	Deprecated  M.Deprecated;
-	Type        string;
-	Optional    bool;
+	Name        string
+	Description string
+	Default     string
+	Deprecated  M.Deprecated
+	Type        string
+	Optional    bool
 }
 
 type ReturnInfo struct {
-	Type        string;
-	Description string;
+	Type        string
+	Description string
 }
 
-func stripTrailingSplat(str string) (string) {
+func stripTrailingSplat(str string) string {
 	return regexp.MustCompile(" *\\*$").ReplaceAllString(str, "")
 }
 
-func normalizeJsdocLines(str string) (string) {
+func normalizeJsdocLines(str string) string {
 	re := regexp.MustCompile(`(?m)^\s+\*\s+`)
 	new := re.ReplaceAllString(str, "")
 	return stripTrailingSplat(new)
@@ -63,44 +63,44 @@ func GetJSDocForNode(node *ts.Node, source []byte) string {
 }
 
 func FindNamedMatches(regex *regexp.Regexp, str string, includeNotMatchedOptional bool) map[string]string {
-    match := regex.FindStringSubmatchIndex(str)
-    if match == nil {
-        // No matches
-        return nil
-    }
-    subexpNames := regex.SubexpNames()
-    results := make(map[string]string)
-    // Loop thru the subexp names (skipping the first empty one)
-    for i, name := range (subexpNames)[1:] {
-        startIndex := match[i*2+2]
-        endIndex := match[i*2+3]
-        if startIndex == -1 || endIndex == -1 {
-            // No match found
-            if includeNotMatchedOptional {
-                // Add anyways
-                results[name] = ""
-            }
-            continue
-        }
-        // Assign the correct value
-        results[name] = str[startIndex:endIndex]
-    }
-    return results
+	match := regex.FindStringSubmatchIndex(str)
+	if match == nil {
+		// No matches
+		return nil
+	}
+	subexpNames := regex.SubexpNames()
+	results := make(map[string]string)
+	// Loop thru the subexp names (skipping the first empty one)
+	for i, name := range (subexpNames)[1:] {
+		startIndex := match[i*2+2]
+		endIndex := match[i*2+3]
+		if startIndex == -1 || endIndex == -1 {
+			// No match found
+			if includeNotMatchedOptional {
+				// Add anyways
+				results[name] = ""
+			}
+			continue
+		}
+		// Assign the correct value
+		results[name] = str[startIndex:endIndex]
+	}
+	return results
 }
 
 type ClassInfo struct {
-	Description string;
-	TagName string;
-	Alias string;
-	Summary string;
-	Deprecated M.Deprecated;
-	Attrs []M.Attribute;
-	CssParts []M.CssPart;
-	CssProperties []M.CssCustomProperty;
-	CssStates []M.CssCustomState;
-	Demos []M.Demo;
-	Events []M.Event;
-	Slots []M.Slot;
+	Description   string
+	TagName       string
+	Alias         string
+	Summary       string
+	Deprecated    M.Deprecated
+	Attrs         []M.Attribute
+	CssParts      []M.CssPart
+	CssProperties []M.CssCustomProperty
+	CssStates     []M.CssCustomState
+	Demos         []M.Demo
+	Events        []M.Event
+	Slots         []M.Slot
 }
 
 func NewClassInfo(source string, queryManager *Q.QueryManager) (*ClassInfo, error) {
@@ -122,48 +122,48 @@ func NewClassInfo(source string, queryManager *Q.QueryManager) (*ClassInfo, erro
 		for _, capture := range match.Captures {
 			name := matcher.GetCaptureNameByIndex(capture.Index)
 			switch name {
-				case "doc.description":
-					info.Description = normalizeJsdocLines(capture.Node.Utf8Text(code))
-				case "doc.tag":
-					tagInfo := NewTagInfo(capture.Node.Utf8Text(code))
-					tagInfo.startByte = capture.Node.StartByte()
-					switch tagInfo.Tag {
-						case "@alias":
-							info.Alias = tagInfo.toAlias()
-						case "@attr",
-									"@attribute":
-							attr := tagInfo.toAttribute()
-							info.Attrs = append(info.Attrs, attr)
-						case "@customElement":
-							info.TagName = tagInfo.Description
-						case "@csspart":
-					    part := tagInfo.toCssPart()
-							info.CssParts = append(info.CssParts, part)
-						case "@cssprop",
-									"@cssproperty":
-					    prop := tagInfo.toCssCustomProperty()
-							info.CssProperties = append(info.CssProperties, prop)
-						case "@cssstate":
-					    state := tagInfo.toCssCustomState()
-							info.CssStates = append(info.CssStates, state)
-						case "@demo":
-							info.Demos = append(info.Demos, tagInfo.toDemo())
-						case "@deprecated":
-							if tagInfo.Description == "" {
-								info.Deprecated = M.DeprecatedFlag(true)
-							} else {
-								info.Deprecated = M.DeprecatedReason(tagInfo.Description)
-							}
-						case "@event",
-									"@fires":
-							event := tagInfo.toEvent()
-							info.Events = append(info.Events, event)
-						case "@slot":
-							slot := tagInfo.toSlot()
-							info.Slots = append(info.Slots, slot)
-						case "@summary":
-							info.Summary = normalizeJsdocLines(tagInfo.Description)
+			case "doc.description":
+				info.Description = normalizeJsdocLines(capture.Node.Utf8Text(code))
+			case "doc.tag":
+				tagInfo := NewTagInfo(capture.Node.Utf8Text(code))
+				tagInfo.startByte = capture.Node.StartByte()
+				switch tagInfo.Tag {
+				case "@alias":
+					info.Alias = tagInfo.toAlias()
+				case "@attr",
+					"@attribute":
+					attr := tagInfo.toAttribute()
+					info.Attrs = append(info.Attrs, attr)
+				case "@customElement":
+					info.TagName = tagInfo.Description
+				case "@csspart":
+					part := tagInfo.toCssPart()
+					info.CssParts = append(info.CssParts, part)
+				case "@cssprop",
+					"@cssproperty":
+					prop := tagInfo.toCssCustomProperty()
+					info.CssProperties = append(info.CssProperties, prop)
+				case "@cssstate":
+					state := tagInfo.toCssCustomState()
+					info.CssStates = append(info.CssStates, state)
+				case "@demo":
+					info.Demos = append(info.Demos, tagInfo.toDemo())
+				case "@deprecated":
+					if tagInfo.Description == "" {
+						info.Deprecated = M.DeprecatedFlag(true)
+					} else {
+						info.Deprecated = M.DeprecatedReason(tagInfo.Description)
 					}
+				case "@event",
+					"@fires":
+					event := tagInfo.toEvent()
+					info.Events = append(info.Events, event)
+				case "@slot":
+					slot := tagInfo.toSlot()
+					info.Slots = append(info.Slots, slot)
+				case "@summary":
+					info.Summary = normalizeJsdocLines(tagInfo.Description)
+				}
 			}
 		}
 	}
@@ -171,42 +171,42 @@ func NewClassInfo(source string, queryManager *Q.QueryManager) (*ClassInfo, erro
 }
 
 func (info *ClassInfo) MergeToClassDeclaration(declaration *M.ClassDeclaration) {
-	declaration.ClassLike.Deprecated  = info.Deprecated
+	declaration.ClassLike.Deprecated = info.Deprecated
 	declaration.ClassLike.Description = info.Description
-	declaration.ClassLike.Summary     = info.Summary
+	declaration.ClassLike.Summary = info.Summary
 }
 
 func (info *ClassInfo) MergeToCustomElementDeclaration(declaration *M.CustomElementDeclaration) {
 	info.MergeToClassDeclaration(&declaration.ClassDeclaration)
-	declaration.CustomElement.Attributes    = slices.Concat(info.Attrs, declaration.CustomElement.Attributes)
-	declaration.CustomElement.Slots         = info.Slots
-	declaration.CustomElement.Events        = info.Events
+	declaration.CustomElement.Attributes = slices.Concat(info.Attrs, declaration.CustomElement.Attributes)
+	declaration.CustomElement.Slots = info.Slots
+	declaration.CustomElement.Events = info.Events
 	declaration.CustomElement.CssProperties = info.CssProperties
-	declaration.CustomElement.CssParts      = info.CssParts
-	declaration.CustomElement.CssStates     = info.CssStates
-	declaration.CustomElement.Demos         = info.Demos
+	declaration.CustomElement.CssParts = info.CssParts
+	declaration.CustomElement.CssStates = info.CssStates
+	declaration.CustomElement.Demos = info.Demos
 	if info.TagName != "" {
-		declaration.CustomElement.TagName		  = info.TagName
+		declaration.CustomElement.TagName = info.TagName
 	}
 }
 
 type TagInfo struct {
-	source string
-	startByte uint
-	Tag string
-	Name string
-	Value string
-	Type string
+	source      string
+	startByte   uint
+	Tag         string
+	Name        string
+	Value       string
+	Type        string
 	Description string
 }
 
 func NewTagInfo(tag string) TagInfo {
 	// I'd rather use jsdoc parser, but it errors with some of my non-standard syntax,
 	// like @cssprop {<length>} ...
-	matches := FindNamedMatches(regexp.MustCompile(`(?ms)(?P<tag>\@\w+)([\s*]+(?P<description>.*))?`),tag, true)
+	matches := FindNamedMatches(regexp.MustCompile(`(?ms)(?P<tag>\@\w+)([\s*]+(?P<description>.*))?`), tag, true)
 	info := TagInfo{
-		source: tag,
-		Tag: matches["tag"],
+		source:      tag,
+		Tag:         matches["tag"],
 		Description: normalizeJsdocLines(matches["description"]),
 	}
 	return info
@@ -215,7 +215,7 @@ func NewTagInfo(tag string) TagInfo {
 /**
  * @alias name
  */
-func (info TagInfo) toAlias() (string) {
+func (info TagInfo) toAlias() string {
 	re := regexp.MustCompile(`(?ms)[\s*]*@alias[\s*]+(?P<alias>.*)`)
 	matches := FindNamedMatches(re, info.source, true)
 	return matches["alias"]
@@ -231,11 +231,11 @@ func (info TagInfo) toAlias() (string) {
  * @cssproperty [--var=default]
  * @cssproperty [--var=default] - description
  */
-func (info TagInfo) toAttribute() (M.Attribute) {
+func (info TagInfo) toAttribute() M.Attribute {
 	re := regexp.MustCompile(`(?ms)[\s*]*@attr(ibute)?[\s*]+(\{(?P<type>[^}]+)\}[\s*]+)?(\[(?P<kv>.*)\]|(?P<name>[\w-]+))([\s*]+-[\s*]+(?P<description>.*))?`)
 	matches := FindNamedMatches(re, info.source, true)
 	if matches["kv"] != "" {
-		slice := strings.SplitN(matches["kv"], "=", 2);
+		slice := strings.SplitN(matches["kv"], "=", 2)
 		info.Name = slice[0]
 		if len(slice) > 1 {
 			info.Value = slice[1]
@@ -244,10 +244,10 @@ func (info TagInfo) toAttribute() (M.Attribute) {
 		info.Name = matches["name"]
 	}
 	attr := M.Attribute{
-		Name: info.Name,
-		Default: info.Value,
+		Name:        info.Name,
+		Default:     info.Value,
 		Description: normalizeJsdocLines(matches["description"]),
-		StartByte: info.startByte,
+		StartByte:   info.startByte,
 		// NB: not applicable to the jsdoc version of this.
 		// field name should be inferred from decorated class fields, or other framework construct
 		// FieldName: NA,
@@ -265,11 +265,11 @@ func (info TagInfo) toAttribute() (M.Attribute) {
  * @csspart name
  * @csspart name - description
  */
-func (info TagInfo) toCssPart() (M.CssPart) {
+func (info TagInfo) toCssPart() M.CssPart {
 	re := regexp.MustCompile(`(?ms)[\s*]*@csspart[\s*]+(?P<name>[\w-]+)([\s*]+-[\s*]+(?P<description>.*))?`)
 	matches := FindNamedMatches(re, info.source, true)
 	return M.CssPart{
-		Name: matches["name"],
+		Name:        matches["name"],
 		Description: normalizeJsdocLines(matches["description"]),
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
 		// Summary: info.Type,
@@ -311,11 +311,11 @@ func (info TagInfo) toCssPart() (M.CssPart) {
  * @cssproperty {<color>} [--property-typed-default-description-multiline=none] - multiline
  *                                                                                property typed default description
  */
-func (info TagInfo) toCssCustomProperty() (M.CssCustomProperty) {
+func (info TagInfo) toCssCustomProperty() M.CssCustomProperty {
 	re := regexp.MustCompile(`(?ms)[\s*]*@cssprop(erty)?\s*(\{(?P<type>[^}]+)\})?[\s*]*(\[(?P<kv>.*)\]|(?P<name>[\w-]+))([\s*]+-[\s*]+(?P<description>.*)$)?`)
 	matches := FindNamedMatches(re, info.source, true)
 	if matches["kv"] != "" {
-		slice := strings.SplitN(matches["kv"], "=", 2);
+		slice := strings.SplitN(matches["kv"], "=", 2)
 		info.Name = slice[0]
 		if len(slice) > 1 {
 			info.Value = slice[1]
@@ -324,11 +324,11 @@ func (info TagInfo) toCssCustomProperty() (M.CssCustomProperty) {
 		info.Name = matches["name"]
 	}
 	prop := M.CssCustomProperty{
-		Syntax: matches["type"],
-		Name: info.Name,
-		Default: info.Value,
+		Syntax:      matches["type"],
+		Name:        info.Name,
+		Default:     info.Value,
 		Description: normalizeJsdocLines(matches["description"]),
-		StartByte: info.startByte,
+		StartByte:   info.startByte,
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
 		// Summary: info.Type,
 		// Deprecated: info.Deprecated,
@@ -340,11 +340,11 @@ func (info TagInfo) toCssCustomProperty() (M.CssCustomProperty) {
  * @cssstate name
  * @cssstate name - description
  */
-func (info TagInfo) toCssCustomState() (M.CssCustomState) {
+func (info TagInfo) toCssCustomState() M.CssCustomState {
 	re := regexp.MustCompile(`(?ms)[\s*]*@cssstate[\s*]+(?P<name>[\w-]+)([\s*]+-[\s*]+(?P<description>.*))?`)
 	matches := FindNamedMatches(re, info.source, true)
 	return M.CssCustomState{
-		Name: matches["name"],
+		Name:        matches["name"],
 		Description: normalizeJsdocLines(matches["description"]),
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
 		// Summary: info.Type,
@@ -356,12 +356,12 @@ func (info TagInfo) toCssCustomState() (M.CssCustomState) {
  * @demo url
  * @demo url - description
  */
-func (info TagInfo) toDemo() (M.Demo) {
+func (info TagInfo) toDemo() M.Demo {
 	re := regexp.MustCompile(`(?m)@demo\s+(?P<url>\S+)(?:\s*-\s*(?P<description>.*))?`)
 	matches := FindNamedMatches(re, info.source, true)
 	return M.Demo{
 		Description: normalizeJsdocLines(matches["description"]),
-		URL: matches["url"],
+		URL:         matches["url"],
 	}
 }
 
@@ -375,11 +375,11 @@ func (info TagInfo) toDemo() (M.Demo) {
  * @event {type} name
  * @event {type} name - description
  */
-func (info TagInfo) toEvent() (M.Event) {
+func (info TagInfo) toEvent() M.Event {
 	re := regexp.MustCompile(`(?ms)[\s*]*(@fires|@event)\s*(\{(?P<type>[^}]+)\})?[\s*]*(?P<name>[\w-]+)([\s*]+-[\s*]+(?P<description>.*))?`)
 	matches := FindNamedMatches(re, info.source, true)
 	event := M.Event{
-		Name: matches["name"],
+		Name:        matches["name"],
 		Description: normalizeJsdocLines(matches["description"]),
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
 		// Summary: info.Type,
@@ -397,7 +397,7 @@ func (info TagInfo) toEvent() (M.Event) {
  * @slot icon -  Contains the tags's icon, e.g. web-icon-alert-success.
  * @slot      -  Must contain the text for the tag.
  */
-func (info TagInfo) toSlot() (M.Slot) {
+func (info TagInfo) toSlot() M.Slot {
 	re := regexp.MustCompile(`(?ms)[\s*]*(@slot[\s*]+-[\s*]+(?P<anonDescription>.*))|(@slot[\s*]+(?P<name>[\w-]+)([\s*]+-[\s*]+(?P<description>.*))?)`)
 	matches := FindNamedMatches(re, info.source, true)
 	if matches["description"] != "" {
@@ -407,7 +407,7 @@ func (info TagInfo) toSlot() (M.Slot) {
 		info.Description = normalizeJsdocLines(matches["anonDescription"])
 	}
 	return M.Slot{
-		Name: matches["name"],
+		Name:        matches["name"],
 		Description: info.Description,
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
 		// Summary: info.Type,
@@ -419,7 +419,7 @@ func (info TagInfo) toSlot() (M.Slot) {
  * @return {foo} barbarbar
  * @returns {baz} qux
  */
-func (info TagInfo) toReturn() (ReturnInfo) {
+func (info TagInfo) toReturn() ReturnInfo {
 	re := regexp.MustCompile(`(?ms)[\s*]*@return(s)?\s*(\{(?P<type>[^}]+)\})?(([\s*]+-[\s*])*(?P<description>.*))?`)
 	matches := FindNamedMatches(re, info.source, true)
 	ret := ReturnInfo{
@@ -447,11 +447,11 @@ func (info TagInfo) toReturn() (ReturnInfo) {
  * @param {Type} [obj.typedOptional]
  * @param {Type} [obj.typedOptionalDefault='default']
  */
-func (info TagInfo) toParameter() (ParameterInfo) {
+func (info TagInfo) toParameter() ParameterInfo {
 	re := regexp.MustCompile(`(?ms)[\s*]*(\{(?P<type>[^}]+)\}[\s*]+)?(\[(?P<kv>.*)\]|(?P<name>[\w$]+))[\s*]+(([\s*]+-[\s*]+)?(?P<description>.*)$)?`)
 	matches := FindNamedMatches(re, info.Description, true)
 	if matches["kv"] != "" {
-		slice := strings.SplitN(matches["kv"], "=", 2);
+		slice := strings.SplitN(matches["kv"], "=", 2)
 		info.Name = slice[0]
 		if len(slice) > 1 {
 			info.Value = slice[1]
@@ -460,8 +460,8 @@ func (info TagInfo) toParameter() (ParameterInfo) {
 		info.Name = matches["name"]
 	}
 	param := ParameterInfo{
-		Type: matches["type"],
-		Name: info.Name,
+		Type:    matches["type"],
+		Name:    info.Name,
 		Default: info.Value,
 		Description: strings.TrimSpace(
 			normalizeJsdocLines(
@@ -475,11 +475,11 @@ func (info TagInfo) toParameter() (ParameterInfo) {
 }
 
 type PropertyInfo struct {
-	source string;
-	Description string;
-	Summary string;
-	Type string;
-	Deprecated M.Deprecated
+	source      string
+	Description string
+	Summary     string
+	Type        string
+	Deprecated  M.Deprecated
 }
 
 func NewPropertyInfo(code string, queryManager *Q.QueryManager) (*PropertyInfo, error) {
@@ -490,14 +490,14 @@ func NewPropertyInfo(code string, queryManager *Q.QueryManager) (*PropertyInfo, 
 	defer tree.Close()
 	root := tree.RootNode()
 
-  qm, err := Q.NewQueryMatcher(queryManager, "jsdoc", "jsdoc")
+	qm, err := Q.NewQueryMatcher(queryManager, "jsdoc", "jsdoc")
 	if err != nil {
 		return nil, err
 	}
 	defer qm.Close()
 
-  descriptionCaptureIndex, _ := qm.GetCaptureIndexForName("doc.description")
-  tagCaptureIndex, _ := qm.GetCaptureIndexForName("doc.tag")
+	descriptionCaptureIndex, _ := qm.GetCaptureIndexForName("doc.description")
+	tagCaptureIndex, _ := qm.GetCaptureIndexForName("doc.tag")
 
 	info := PropertyInfo{source: code}
 
@@ -513,22 +513,25 @@ func NewPropertyInfo(code string, queryManager *Q.QueryManager) (*PropertyInfo, 
 			defer cursor.Close()
 			for _, child := range node.NamedChildren(cursor) {
 				switch child.GrammarName() {
-					case "tag_name": tagName = child.Utf8Text(barr)
-					case "type": tagType = child.Utf8Text(barr)
-					case "description": content = normalizeJsdocLines(child.Utf8Text(barr))
+				case "tag_name":
+					tagName = child.Utf8Text(barr)
+				case "type":
+					tagType = child.Utf8Text(barr)
+				case "description":
+					content = normalizeJsdocLines(child.Utf8Text(barr))
 				}
 			}
 			switch tagName {
-				case "@summary":
-					info.Summary += normalizeJsdocLines(content)
-				case "@type":
-					info.Type = tagType
-				case "@deprecated":
-					if content == "" {
-						info.Deprecated = M.DeprecatedFlag(true)
-					} else {
-						info.Deprecated = M.DeprecatedReason(content)
-					}
+			case "@summary":
+				info.Summary += normalizeJsdocLines(content)
+			case "@type":
+				info.Type = tagType
+			case "@deprecated":
+				if content == "" {
+					info.Deprecated = M.DeprecatedFlag(true)
+				} else {
+					info.Deprecated = M.DeprecatedReason(content)
+				}
 			}
 		}
 	}
@@ -537,11 +540,11 @@ func NewPropertyInfo(code string, queryManager *Q.QueryManager) (*PropertyInfo, 
 }
 
 type FieldInfo struct {
-	source string;
-	Description string;
-	Summary string;
-	Type string;
-	Deprecated M.Deprecated
+	source      string
+	Description string
+	Summary     string
+	Type        string
+	Deprecated  M.Deprecated
 }
 
 func NewCssCustomPropertyInfo(code string, queryManager *Q.QueryManager) (*CssCustomPropertyInfo, error) {
@@ -552,14 +555,14 @@ func NewCssCustomPropertyInfo(code string, queryManager *Q.QueryManager) (*CssCu
 	defer tree.Close()
 	root := tree.RootNode()
 
-  qm, err := Q.NewQueryMatcher(queryManager, "jsdoc", "jsdoc")
+	qm, err := Q.NewQueryMatcher(queryManager, "jsdoc", "jsdoc")
 	if err != nil {
 		return nil, err
 	}
 	defer qm.Close()
 
-  descriptionCaptureIndex, _ := qm.GetCaptureIndexForName("doc.description")
-  tagCaptureIndex, _ := qm.GetCaptureIndexForName("doc.tag")
+	descriptionCaptureIndex, _ := qm.GetCaptureIndexForName("doc.description")
+	tagCaptureIndex, _ := qm.GetCaptureIndexForName("doc.tag")
 
 	info := CssCustomPropertyInfo{}
 
@@ -575,22 +578,25 @@ func NewCssCustomPropertyInfo(code string, queryManager *Q.QueryManager) (*CssCu
 			defer cursor.Close()
 			for _, child := range node.NamedChildren(cursor) {
 				switch child.GrammarName() {
-					case "tag_name": tagName = child.Utf8Text(barr)
-					case "type": tagType = child.Utf8Text(barr)
-					case "description": content = normalizeJsdocLines(child.Utf8Text(barr))
+				case "tag_name":
+					tagName = child.Utf8Text(barr)
+				case "type":
+					tagType = child.Utf8Text(barr)
+				case "description":
+					content = normalizeJsdocLines(child.Utf8Text(barr))
 				}
 			}
 			switch tagName {
-				case "@summary":
-					info.Summary += normalizeJsdocLines(content)
-				case "@syntax":
-					info.Syntax = tagType
-				case "@deprecated":
-					if content == "" {
-						info.Deprecated = M.DeprecatedFlag(true)
-					} else {
-						info.Deprecated = M.DeprecatedReason(content)
-					}
+			case "@summary":
+				info.Summary += normalizeJsdocLines(content)
+			case "@syntax":
+				info.Syntax = tagType
+			case "@deprecated":
+				if content == "" {
+					info.Deprecated = M.DeprecatedFlag(true)
+				} else {
+					info.Deprecated = M.DeprecatedReason(content)
+				}
 			}
 		}
 	}
@@ -654,32 +660,32 @@ func NewMethodInfo(source string, queryManager *Q.QueryManager) (error, *MethodI
 		for _, capture := range match.Captures {
 			name := qm.GetCaptureNameByIndex(capture.Index)
 			switch name {
-				case "doc.description":
-					info.Description = normalizeJsdocLines(capture.Node.Utf8Text(code))
-				case "doc.tag":
-					tagInfo := NewTagInfo(capture.Node.Utf8Text(code))
-					tagInfo.startByte = capture.Node.StartByte()
-					switch tagInfo.Tag {
-						case "@param",
-									"@parameter":
-							param := tagInfo.toParameter()
-							// for now, let's just skip object param members
-							if !strings.Contains(param.Name, ".") {
-								info.Parameters = append(info.Parameters, param)
-							}
-						case "@return",
-									"@returns":
-					    ret := tagInfo.toReturn()
-							info.Return = &ret
-						case "@deprecated":
-							if tagInfo.Description == "" {
-								info.Deprecated = M.DeprecatedFlag(true)
-							} else {
-								info.Deprecated = M.DeprecatedReason(tagInfo.Description)
-							}
-						case "@summary":
-							info.Summary = normalizeJsdocLines(tagInfo.Description)
+			case "doc.description":
+				info.Description = normalizeJsdocLines(capture.Node.Utf8Text(code))
+			case "doc.tag":
+				tagInfo := NewTagInfo(capture.Node.Utf8Text(code))
+				tagInfo.startByte = capture.Node.StartByte()
+				switch tagInfo.Tag {
+				case "@param",
+					"@parameter":
+					param := tagInfo.toParameter()
+					// for now, let's just skip object param members
+					if !strings.Contains(param.Name, ".") {
+						info.Parameters = append(info.Parameters, param)
 					}
+				case "@return",
+					"@returns":
+					ret := tagInfo.toReturn()
+					info.Return = &ret
+				case "@deprecated":
+					if tagInfo.Description == "" {
+						info.Deprecated = M.DeprecatedFlag(true)
+					} else {
+						info.Deprecated = M.DeprecatedReason(tagInfo.Description)
+					}
+				case "@summary":
+					info.Summary = normalizeJsdocLines(tagInfo.Description)
+				}
 			}
 		}
 	}
@@ -691,7 +697,7 @@ func (info *MethodInfo) MergeToFunctionLike(declaration *M.FunctionLike) {
 	declaration.Description = normalizeJsdocLines(info.Description)
 	declaration.Deprecated = info.Deprecated
 	declaration.Summary = info.Summary
-	if (info.Return != nil) {
+	if info.Return != nil {
 		if declaration.Return == nil {
 			declaration.Return = &M.Return{}
 		}
@@ -720,4 +726,3 @@ func (info *MethodInfo) MergeToFunctionLike(declaration *M.FunctionLike) {
 		}
 	}
 }
-

@@ -130,7 +130,7 @@ func process(
 
 	wg.Wait()
 
-if len(errsList) > 0 {
+	if len(errsList) > 0 {
 		errs = errors.Join(errsList...)
 	}
 

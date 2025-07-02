@@ -11,6 +11,9 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"time"
+
+	"github.com/pterm/pterm"
 
 	ts "github.com/tree-sitter/go-tree-sitter"
 	tsCss "github.com/tree-sitter/tree-sitter-css/bindings/go"
@@ -145,6 +148,7 @@ type QueryManager struct {
 }
 
 func NewQueryManager() (*QueryManager, error) {
+	start := time.Now()
 	qm := &QueryManager{
 		typescript: make(map[string]*ts.Query),
 		jsdoc:      make(map[string]*ts.Query),
@@ -205,7 +209,7 @@ func NewQueryManager() (*QueryManager, error) {
 			}
 		}
 	}
-
+	pterm.Debug.Println("Constructing queries took", time.Since(start))
 	return qm, nil
 }
 
@@ -309,20 +313,23 @@ func (q QueryMatcher) AllQueryMatches(node *ts.Node, text []byte) iter.Seq[*ts.Q
 }
 
 // ParentCaptures returns an iterator over unique parent node captures as identified by the given parent capture name.
-// For each unique parent node (e.g., a field or method), it aggregates all captures from all query matches sharing 
-// that parent node into a single CaptureMap. This allows you to collect all related captures (such as attributes, 
+// For each unique parent node (e.g., a field or method), it aggregates all captures from all query matches sharing
+// that parent node into a single CaptureMap. This allows you to collect all related captures (such as attributes,
 // decorators, etc.) for each parent node in the source AST.
 //
 // Example usage:
 //
-//   for captures := range matcher.ParentCaptures(root, code, "field") {
-//     // captures represents the captured nodes for a single field
-//     addFieldToDeclaration(captures, declaration)
-//   }
+//	for captures := range matcher.ParentCaptures(root, code, "field") {
+//	  // captures represents the captured nodes for a single field
+//	  addFieldToDeclaration(captures, declaration)
+//	}
 func (q *QueryMatcher) ParentCaptures(root *ts.Node, code []byte, parentCaptureName string) iter.Seq[CaptureMap] {
 	names := q.query.CaptureNames()
 
-	type pgroup struct{ capMap CaptureMap; startByte uint }
+	type pgroup struct {
+		capMap    CaptureMap
+		startByte uint
+	}
 
 	parentGroups := make(map[int]pgroup)
 

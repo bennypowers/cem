@@ -13,37 +13,23 @@ func normalizePath(path string) string {
 
 // Package is the top-level interface of a custom elements manifest file.
 type Package struct {
-	SchemaVersion string    `json:"schemaVersion"`
-	Readme        *string   `json:"readme,omitempty"`
-	Modules       []Module  `json:"modules"`
-	Deprecated    any       `json:"deprecated,omitempty"` // bool or string
-}
-
-func (x *Package) GetAllTagNames() (tags []string) {
-	// Write index.html
-	for _, m := range x.Modules {
-		for _, decl := range m.Declarations {
-			ced, ok := decl.(*CustomElementDeclaration)
-			if !ok || ced.TagName == "" {
-				continue
-			}
-			tags = append(tags, ced.TagName)
-		}
-	}
-	return tags
+	SchemaVersion string   `json:"schemaVersion"`
+	Readme        *string  `json:"readme,omitempty"`
+	Modules       []Module `json:"modules"`
+	Deprecated    any      `json:"deprecated,omitempty"` // bool or string
 }
 
 func NewPackage(modules []Module) Package {
 	return Package{
 		SchemaVersion: "1.0.0",
-		Modules: modules,
+		Modules:       modules,
 	}
 }
 
 // Module may expand in future; currently only JavaScriptModule.
 type Module = JavaScriptModule
 
-func NewModule(file string) (*Module) {
+func NewModule(file string) *Module {
 	return &Module{
 		Kind: "javascript-module",
 		Path: normalizePath(file),
@@ -68,12 +54,13 @@ type Export interface {
 
 // JavaScriptExport represents a JS export.
 type JavaScriptExport struct {
-	StartByte   uint			 `json:"-"`
+	StartByte   uint       `json:"-"`
 	Kind        string     `json:"kind"` // 'js'
 	Name        string     `json:"name"`
 	Declaration *Reference `json:"declaration"`
 	Deprecated  any        `json:"deprecated,omitempty"` // bool or string
 }
+
 func (*JavaScriptExport) isExport() {}
 func (e *JavaScriptExport) GetStartByte() uint {
 	return e.StartByte
@@ -81,12 +68,13 @@ func (e *JavaScriptExport) GetStartByte() uint {
 
 // CustomElementExport represents a custom element definition.
 type CustomElementExport struct {
-	StartByte   uint			 `json:"-"`
+	StartByte   uint       `json:"-"`
 	Kind        string     `json:"kind"` // 'custom-element-definition'
 	Name        string     `json:"name"`
 	Declaration *Reference `json:"declaration"`
 	Deprecated  any        `json:"deprecated,omitempty"` // bool or string
 }
+
 func (*CustomElementExport) isExport() {}
 func (e *CustomElementExport) GetStartByte() uint {
 	return e.StartByte
@@ -98,9 +86,9 @@ func NewCustomElementExport(
 	deprecated *Deprecated,
 ) *CustomElementExport {
 	ce := &CustomElementExport{
-		Kind: "custom-element-definition",
-		StartByte: startByte,
-		Name: tagName,
+		Kind:        "custom-element-definition",
+		StartByte:   startByte,
+		Name:        tagName,
 		Declaration: declaration,
 	}
 	if deprecated != nil {
@@ -124,9 +112,9 @@ type Reference struct {
 
 func NewReference(name string, pkg string, module string) *Reference {
 	return &Reference{
-		Name: name,
+		Name:    name,
 		Package: pkg,
-		Module: normalizePath(module),
+		Module:  normalizePath(module),
 	}
 }
 
@@ -140,7 +128,8 @@ type CustomElementDeclaration struct {
 	ClassDeclaration
 	CustomElement
 }
-func (*CustomElementDeclaration) isDeclaration() {}
+
+func (*CustomElementDeclaration) isDeclaration()       {}
 func (x *CustomElementDeclaration) GetStartByte() uint { return x.StartByte }
 
 // CustomElement adds fields to classes/mixins for custom elements.
@@ -205,7 +194,7 @@ type CssCustomState struct {
 
 // CssCustomProperty describes a CSS custom property.
 type CssCustomProperty struct {
-	StartByte   uint			 `json:"-"`
+	StartByte   uint       `json:"-"`
 	Name        string     `json:"name"`
 	Syntax      string     `json:"syntax,omitempty"`
 	Default     string     `json:"default,omitempty"`
@@ -230,7 +219,7 @@ type TypeReference struct {
 
 // ClassLike is the common interface of classes and mixins.
 type ClassLike struct {
-	StartByte		uint			`json:"-"`
+	StartByte   uint             `json:"-"`
 	Name        string           `json:"name"`
 	Summary     string           `json:"summary,omitempty"`
 	Description string           `json:"description,omitempty"`
@@ -238,7 +227,7 @@ type ClassLike struct {
 	Mixins      []Reference      `json:"mixins,omitempty"`
 	Members     []ClassMember    `json:"members,omitempty"`
 	Source      *SourceReference `json:"source,omitempty"`
-	Deprecated  Deprecated        `json:"deprecated,omitempty"` // bool or string
+	Deprecated  Deprecated       `json:"deprecated,omitempty"` // bool or string
 }
 
 // ClassDeclaration is a class.
@@ -246,7 +235,8 @@ type ClassDeclaration struct {
 	ClassLike
 	Kind string `json:"kind"` // 'class'
 }
-func (*ClassDeclaration) isDeclaration() {}
+
+func (*ClassDeclaration) isDeclaration()       {}
 func (x *ClassDeclaration) GetStartByte() uint { return x.StartByte }
 
 // Declaration is a union of several types.
@@ -258,13 +248,14 @@ type ClassMember interface {
 // ClassField is a class field.
 type ClassField struct {
 	PropertyLike
-	Kind          string       			`json:"kind"` // 'field'
-	Static        bool        			`json:"static,omitempty"`
-	Privacy       Privacy      			`json:"privacy,omitempty"` // 'public', 'private', 'protected'
-	InheritedFrom *Reference 				`json:"inheritedFrom,omitempty"`
-	Source        *SourceReference	`json:"source,omitempty"`
+	Kind          string           `json:"kind"` // 'field'
+	Static        bool             `json:"static,omitempty"`
+	Privacy       Privacy          `json:"privacy,omitempty"` // 'public', 'private', 'protected'
+	InheritedFrom *Reference       `json:"inheritedFrom,omitempty"`
+	Source        *SourceReference `json:"source,omitempty"`
 }
-func (ClassField) isClassMember() {}
+
+func (ClassField) isClassMember()       {}
 func (f ClassField) GetStartByte() uint { return f.StartByte }
 
 // ClassMethod is a method.
@@ -276,7 +267,8 @@ type ClassMethod struct {
 	InheritedFrom *Reference       `json:"inheritedFrom,omitempty"`
 	Source        *SourceReference `json:"source,omitempty"`
 }
-func (ClassMethod) isClassMember() {}
+
+func (ClassMethod) isClassMember()       {}
 func (x ClassMethod) GetStartByte() uint { return x.StartByte }
 
 // PropertyLike is the common interface of variables, class fields, and function parameters.
@@ -297,7 +289,8 @@ type CustomElementField struct {
 	Attribute string `json:"attribute,omitempty"`
 	Reflects  bool   `json:"reflects,omitempty"`
 }
-func (x CustomElementField) isClassMember() {}
+
+func (x CustomElementField) isClassMember()     {}
 func (x CustomElementField) GetStartByte() uint { return x.ClassField.StartByte }
 
 // MixinDeclaration describes a class mixin.
@@ -308,9 +301,10 @@ type MixinDeclaration struct {
 	Summary     string     `json:"summary,omitempty"`
 	Description string     `json:"description,omitempty"`
 	Deprecated  Deprecated `json:"deprecated,omitempty"`
-	Kind string            `json:"kind"` // 'mixin'
+	Kind        string     `json:"kind"` // 'mixin'
 }
-func (*MixinDeclaration) isDeclaration() {}
+
+func (*MixinDeclaration) isDeclaration()       {}
 func (x *MixinDeclaration) GetStartByte() uint { return x.FunctionLike.StartByte }
 
 // CustomElementMixinDeclaration extends MixinDeclaration and CustomElement.
@@ -322,7 +316,8 @@ type CustomElementMixinDeclaration struct {
 	Description string     `json:"description,omitempty"`
 	Deprecated  Deprecated `json:"deprecated,omitempty"`
 }
-func (*CustomElementMixinDeclaration) isDeclaration() {}
+
+func (*CustomElementMixinDeclaration) isDeclaration()       {}
 func (x *CustomElementMixinDeclaration) GetStartByte() uint { return x.FunctionLike.StartByte }
 
 // VariableDeclaration is a variable.
@@ -331,7 +326,8 @@ type VariableDeclaration struct {
 	Kind   string           `json:"kind"` // 'variable'
 	Source *SourceReference `json:"source,omitempty"`
 }
-func (*VariableDeclaration) isDeclaration() {}
+
+func (*VariableDeclaration) isDeclaration()       {}
 func (x *VariableDeclaration) GetStartByte() uint { return x.StartByte }
 
 // FunctionDeclaration is a function.
@@ -340,7 +336,8 @@ type FunctionDeclaration struct {
 	Kind   string           `json:"kind"` // 'function'
 	Source *SourceReference `json:"source,omitempty"`
 }
-func (*FunctionDeclaration) isDeclaration() {}
+
+func (*FunctionDeclaration) isDeclaration()       {}
 func (x *FunctionDeclaration) GetStartByte() uint { return x.StartByte }
 
 // Parameter is a function parameter.
@@ -356,15 +353,17 @@ type Deprecated interface {
 }
 
 type DeprecatedFlag bool
+
 func (DeprecatedFlag) isDeprecated() {}
-func (d DeprecatedFlag) Value() any { return bool(d) }
+func (d DeprecatedFlag) Value() any  { return bool(d) }
 func (d DeprecatedFlag) MarshalJSON() ([]byte, error) {
 	return json.Marshal(bool(d))
 }
 
 type DeprecatedReason string
+
 func (DeprecatedReason) isDeprecated() {}
-func (d DeprecatedReason) Value() any { return string(d) }
+func (d DeprecatedReason) Value() any  { return string(d) }
 func (d DeprecatedReason) MarshalJSON() ([]byte, error) {
 	return json.Marshal(string(d))
 }
@@ -390,15 +389,15 @@ type FunctionLike struct {
 
 // Return value for functions.
 type Return struct {
-	Type        *Type   `json:"type,omitempty"`
-	Summary     string  `json:"summary,omitempty"`
-	Description string  `json:"description,omitempty"`
+	Type        *Type  `json:"type,omitempty"`
+	Summary     string `json:"summary,omitempty"`
+	Description string `json:"description,omitempty"`
 }
 
 // Demo for custom elements.
 type Demo struct {
-	Description string         `json:"description,omitempty"`
-	URL         string          `json:"url"`
+	Description string           `json:"description,omitempty"`
+	URL         string           `json:"url"`
 	Source      *SourceReference `json:"source,omitempty"`
 }
 
@@ -413,3 +412,4 @@ func SerializeToString(pkg *Package) (string, error) {
 	}
 	return string(b), nil
 }
+

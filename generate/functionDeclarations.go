@@ -3,8 +3,8 @@ package generate
 import (
 	"errors"
 
-	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/generate/queries"
+	M "bennypowers.dev/cem/manifest"
 )
 
 func generateFunctionDeclaration(
@@ -17,7 +17,7 @@ func generateFunctionDeclaration(
 	if !ok || len(nameNodes) <= 0 {
 		return nil, errors.Join(err, &Q.NoCaptureError{
 			Capture: "function.name",
-			Query: "functionDeclaration",
+			Query:   "functionDeclaration",
 		})
 	}
 
@@ -51,9 +51,8 @@ func generateFunctionDeclaration(
 		}
 	}
 
-
 	jsdoc, ok := captures["function.jsdoc"]
-	if (ok && len(jsdoc) > 0) {
+	if ok && len(jsdoc) > 0 {
 		error, info := NewMethodInfo(jsdoc[0].Text, queryManager)
 		if error != nil {
 			return nil, errors.Join(err, error)

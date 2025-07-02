@@ -39,7 +39,9 @@ func UnmarshalPackage(data []byte) (*Package, error) {
 		var decls []Declaration
 		for _, declData := range modRaw.Declarations {
 			// Peek at kind
-			var kindWrap struct{ Kind string `json:"kind"` }
+			var kindWrap struct {
+				Kind string `json:"kind"`
+			}
 			if err := json.Unmarshal(declData, &kindWrap); err != nil {
 				continue
 			}
@@ -107,7 +109,9 @@ func UnmarshalPackage(data []byte) (*Package, error) {
 		// --- Exports unmarshalling ---
 		var exports []Export
 		for _, exportData := range modRaw.Exports {
-			var kindWrap struct{ Kind string `json:"kind"` }
+			var kindWrap struct {
+				Kind string `json:"kind"`
+			}
 			if err := json.Unmarshal(exportData, &kindWrap); err != nil {
 				continue
 			}
@@ -239,22 +243,42 @@ func unmarshalCustomElementMixinDeclaration(data []byte, cem *CustomElementMixin
 
 // unmarshalClassMember unmarshals a ClassMember from raw JSON.
 func unmarshalClassMember(data json.RawMessage) (ClassMember, error) {
-	var kindWrap struct{ Kind string `json:"kind"` }
+	var kindWrap struct {
+		Kind string `json:"kind"`
+	}
 	if err := json.Unmarshal(data, &kindWrap); err != nil {
 		return nil, err
 	}
 	switch kindWrap.Kind {
 	case "field":
+		// Probe for either "attribute" or "reflects"
+		// PERFORMANCE: could be improved perhaps with a custom unmarshaller
+		var probe struct {
+			Attribute *string `json:"attribute"`
+			Reflects  *bool   `json:"reflects"`
+		}
+		_ = json.Unmarshal(data, &probe)
+		if probe.Attribute != nil || probe.Reflects != nil {
+			var f CustomElementField
+			if err := json.Unmarshal(data, &f); err == nil {
+				return &f, nil
+			}
+			// If attribute or reflects is present, but not a valid CustomElementField, surface the error.
+			return nil, fmt.Errorf("field has 'attribute' or 'reflects' but cannot unmarshal as CustomElementField")
+		}
+		// No attribute or reflects: try as ClassField
 		var f ClassField
 		if err := json.Unmarshal(data, &f); err == nil {
 			return &f, nil
 		}
+		return nil, fmt.Errorf("field does not have 'attribute' or 'reflects' and cannot unmarshal as ClassField")
 	case "method":
 		var m ClassMethod
 		if err := json.Unmarshal(data, &m); err == nil {
 			return &m, nil
 		}
-	// Add other kinds as needed
+		return nil, fmt.Errorf("cannot unmarshal as ClassMethod")
+		// Add other kinds as needed
 	}
 	return nil, fmt.Errorf("unknown class member kind: %s", kindWrap.Kind)
 }

@@ -72,7 +72,7 @@ var generateCmd = &cobra.Command{
 			return errors.Join(errs, errors.New("manifest generation returned nil"))
 		}
 		if cfg.Generate.Output != "" {
-			if err = os.WriteFile(cfg.Generate.Output, []byte(*manifest + "\n"), 0666); err != nil {
+			if err = os.WriteFile(cfg.Generate.Output, []byte(*manifest+"\n"), 0666); err != nil {
 				errs = errors.Join(errs, err)
 			} else {
 				end := time.Since(start)
@@ -88,14 +88,14 @@ var generateCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(generateCmd)
-	generateCmd.Flags().Bool("no-default-excludes",           false,              "do not exclude files by default (e.g. .d.ts files are included unless excluded explicitly)")
-	generateCmd.Flags().StringP("output",               "o",  "",                 "write custom elements manifest to this file")
-	generateCmd.Flags().StringArrayP("exclude",         "e",  make([] string, 0), "files or glob patterns to exclude")
-	generateCmd.Flags().StringP("design-tokens",        "t",  "",                 "specifiers (relative paths or npm:@scope/package/path/file.json) to DTCG-format module design tokens")
-	generateCmd.Flags().StringP("design-tokens-prefix", "p",  "",                 "css custom property prefix for design tokens")
-	generateCmd.Flags().String("demo-discovery-file-glob",    "",                 "Glob pattern for discovering demo files")
-	generateCmd.Flags().String("demo-discovery-url-pattern",  "",                 "Go Regexp pattern with named capture groups for generating canonical demo urls")
-	generateCmd.Flags().String("demo-discovery-url-template", "",                 "URL pattern string using {groupName} syntax to interpolate named captures from the URL pattern")
+	generateCmd.Flags().Bool("no-default-excludes", false, "do not exclude files by default (e.g. .d.ts files are included unless excluded explicitly)")
+	generateCmd.Flags().StringP("output", "o", "", "write custom elements manifest to this file")
+	generateCmd.Flags().StringArrayP("exclude", "e", make([]string, 0), "files or glob patterns to exclude")
+	generateCmd.Flags().StringP("design-tokens", "t", "", "specifiers (relative paths or npm:@scope/package/path/file.json) to DTCG-format module design tokens")
+	generateCmd.Flags().StringP("design-tokens-prefix", "p", "", "css custom property prefix for design tokens")
+	generateCmd.Flags().String("demo-discovery-file-glob", "", "Glob pattern for discovering demo files")
+	generateCmd.Flags().String("demo-discovery-url-pattern", "", "Go Regexp pattern with named capture groups for generating canonical demo urls")
+	generateCmd.Flags().String("demo-discovery-url-template", "", "URL pattern string using {groupName} syntax to interpolate named captures from the URL pattern")
 	viper.BindPFlag("generate.noDefaultExcludes", generateCmd.Flags().Lookup("no-default-excludes"))
 	viper.BindPFlag("generate.output", generateCmd.Flags().Lookup("output"))
 	viper.BindPFlag("generate.exclude", generateCmd.Flags().Lookup("exclude"))

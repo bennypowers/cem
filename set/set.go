@@ -32,4 +32,3 @@ func (s Set[T]) Members() []T {
 func (s Set[T]) String() string {
 	return fmt.Sprintf("%v", s.Members())
 }
-

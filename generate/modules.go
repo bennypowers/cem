@@ -73,20 +73,23 @@ func amendStylesMapFromSource(
 // we need to free those resources when finished with them, so ModuleProcessor
 // is also responsible for closing its associated C resources.
 type ModuleProcessor struct {
-	logger                     *LogCtx
-	file                       string
-	code                       []byte
-	source                     string
-	queryManager               *Q.QueryManager
-	parser                     *ts.Parser
-	tree                       *ts.Tree
-	root                       *ts.Node
-	tagAliases                 map[string]string
-	importBindingToSpecMap     map[string]struct{ name string; spec string }
+	logger                 *LogCtx
+	file                   string
+	code                   []byte
+	source                 string
+	queryManager           *Q.QueryManager
+	parser                 *ts.Parser
+	tree                   *ts.Tree
+	root                   *ts.Node
+	tagAliases             map[string]string
+	importBindingToSpecMap map[string]struct {
+		name string
+		spec string
+	}
 	styleImportsBindingToSpecMap map[string]string
-	classNamesAdded            S.Set[string]
-	module                     *M.Module
-	errors                     error
+	classNamesAdded              S.Set[string]
+	module                       *M.Module
+	errors                       error
 }
 
 func NewModuleProcessor(
@@ -108,19 +111,22 @@ func NewModuleProcessor(
 	root := tree.RootNode()
 
 	return ModuleProcessor{
-		queryManager:               queryManager,
-		file:                       file,
-		logger:                     logger,
-		code:                       code,
-		source:                     string(code),
-		parser:                     parser,
-		tree:                       tree,
-		root:                       root,
-		module:                     module,
-		tagAliases:                 make(map[string]string),
-		importBindingToSpecMap:     make(map[string]struct{ name string; spec string }),
+		queryManager: queryManager,
+		file:         file,
+		logger:       logger,
+		code:         code,
+		source:       string(code),
+		parser:       parser,
+		tree:         tree,
+		root:         root,
+		module:       module,
+		tagAliases:   make(map[string]string),
+		importBindingToSpecMap: make(map[string]struct {
+			name string
+			spec string
+		}),
 		styleImportsBindingToSpecMap: make(map[string]string),
-		classNamesAdded:            S.NewSet[string](),
+		classNamesAdded:              S.NewSet[string](),
 	}
 }
 
@@ -168,7 +174,10 @@ func (mp *ModuleProcessor) processImports() {
 		original := captures["import.name"][0].Text
 		binding := captures["import.binding"][0].Text
 		spec := captures["import.spec"][0].Text
-		mp.importBindingToSpecMap[binding] = struct{ name string; spec string }{original, spec}
+		mp.importBindingToSpecMap[binding] = struct {
+			name string
+			spec string
+		}{original, spec}
 	}
 }
 
@@ -338,12 +347,12 @@ func (mp *ModuleProcessor) processDeclarations() {
 
 	// javascript exports
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "export") {
-		if exportNodes, ok := captures["export"]; (!ok || len(exportNodes) <= 0) {
+		if exportNodes, ok := captures["export"]; !ok || len(exportNodes) <= 0 {
 			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{
 				Capture: "export",
 				Query:   "declarations",
 			})
-		} else if declarationNameNodes, ok := captures["declaration.name"]; (!ok || len(declarationNameNodes) <= 0) {
+		} else if declarationNameNodes, ok := captures["declaration.name"]; !ok || len(declarationNameNodes) <= 0 {
 			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{
 				Capture: "declaration.name",
 				Query:   "declarations",
@@ -362,14 +371,14 @@ func (mp *ModuleProcessor) processDeclarations() {
 
 	// custom element exports
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "ce") {
-		if ceNodes, ok := captures["ce"]; (!ok || len(ceNodes) <= 0) {
+		if ceNodes, ok := captures["ce"]; !ok || len(ceNodes) <= 0 {
 			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{
 				Capture: "ce",
 				Query:   "declarations",
 			})
-		} else if tagNameNodes, ok := captures["ce.tagName"]; (!ok || len(tagNameNodes) <= 0) {
+		} else if tagNameNodes, ok := captures["ce.tagName"]; !ok || len(tagNameNodes) <= 0 {
 			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{Capture: "ce.tagName", Query: "declarations"})
-		} else if classNameNodes, ok := captures["ce.className"]; (!ok || len(classNameNodes) <= 0) {
+		} else if classNameNodes, ok := captures["ce.className"]; !ok || len(classNameNodes) <= 0 {
 			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{Capture: "ce.className", Query: "declarations"})
 		} else {
 			tagName := tagNameNodes[0].Text

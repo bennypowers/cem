@@ -1,15 +1,9 @@
 # cem
 
-**cem** is a command-line tool for generating [Custom Elements Manifest][cem]
-(CEM) files from TypeScript sources. It analyzes your codebase and generates
+**cem** is a command-line tool for generating and querying
+[Custom Elements Manifest][cem] files. It can analyze your codebase and generate
 rich metadata for your custom elements, facilitating documentation, tooling, and
-integration.
-
-> [!NOTE]
-> `cem` best supports LitElements written in idiomatic style with
-> TypeScript decorators. There is rudimentary support for `extends HTMLElement`,
-> but it is not a high priority for development. If you need something more
-> specific [open an issue][issuenew].
+integration. It can also query that manifest for information about your package
 
 ## Installation
 
@@ -105,6 +99,12 @@ To load completions for every new session, add the output of the above command t
 - Identifies custom elements, classes, variables, functions, and exports.
 - Supports elements written in idiomatic Lit typescript style, with a
 `@customElement` decorator, and `@property` decorators on class fields.
+
+> [!NOTE]
+> `cem generate` best supports LitElements written in idiomatic style with
+> TypeScript decorators. There is rudimentary support for `extends HTMLElement`,
+> but it is not a high priority for development. If you need something more
+> specific [open an issue][issuenew].
 
 #### JSDoc
 Use JSDoc comments to add metadata to your element classes, similar to other
@@ -235,7 +235,71 @@ generate:
 | `urlPattern`           | string | Pattern for generating demo URLs, e.g. `"demos/{tag}.html"`. `{tag}` is replaced by tag name.|
 | `urlTemplate`          | string | (optional) Alternative URL template for demo links.                                          |
 
+#### Usage
+
+Generate a custom elements manifest from your files:
+
+```sh
+cem generate \
+  "src/**/*.ts" \
+  --design-tokens npm:@my-ds/tokens/tokens.json \
+  --exclude "src/**/*.test.ts" \
+  --output custom-elements.json
+```
+
+For npm projects you can use `npx @pwrs/cem generate ...`.
+
+##### Command Line Arguments
+
+| Argument                        | Type               | Description                                                                                       |
+| ------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------- |
+| `<files or globs>`              | positional (array) | Files or glob patterns to include                                                                 |
+| `--output, -o`                  | string             | Write the manifest to this file instead of stdout                                                 |
+| `--exclude, -e`                 | array              | Files or glob patterns to exclude                                                                 |
+| `--no-default-excludes`         | bool               | Do not exclude files by default (e.g., `.d.ts` files will be included unless excluded explicitly) |
+| `--design-tokens, -t`           | string             | Path or npm specifier for DTCG-format design tokens                                               |
+| `--design-tokens-prefix, -p`    | string             | CSS custom property prefix for design tokens                                                      |
+| `--demo-discovery-file-glob`    | string             | Glob pattern for discovering demo files                                                           |
+| `--demo-discovery-url-pattern`  | string             | Go Regexp pattern with named capture groups for generating canonical demo urls                    |
+| `--demo-discovery-url-template` | string             | URL pattern string using {groupName} syntax to interpolate named captures from the URL pattern    |
+| `--source-control-root-url`     | string             | Glob pattern for discovering demo files                                                           |
+| `--project-dir`                 | string             | Specify the project root directory to use for resolving relative paths and configuration.         |
+
+By default, some files (like `.d.ts` TypeScript declaration files) are excluded from the manifest.
+Use `--no-default-excludes` if you want to include all matching files and manage excludes yourself.
+
 ---
+
+### `cem list`
+
+The `cem list` command provides a fast, flexible way to inspect custom elements, their features, and their metadata directly from your manifest file.
+With `cem list`, you can quickly explore and audit your custom elements API surface, making it easier to document, test, and share your components.
+
+#### Available Subcommands
+
+- `cem list tags` — Lists all custom element tag names in the project.
+- `cem list -t <tag> attrs` — Lists all attributes for a given custom element tag.
+- `cem list -t <tag> slots` — Lists all named and default slots for a tag.
+- `cem list -t <tag> events` — Lists all custom events fired by a tag, including their types and descriptions.
+- `cem list -t <tag> css-properties` — Lists CSS custom properties (CSS variables) for a tag.
+- `cem list -t <tag> css-states` — Lists CSS custom states for a tag.
+- `cem list -t <tag> css-parts` — Lists CSS shadow parts for a tag.
+- `cem list -t <tag> methods` — Lists methods for a tag's DOM object.
+
+#### Column Filtering and Output
+
+- Use the `--columns,-c` flag to specify which columns to include in the output, e.g.:
+
+  ```sh
+  cem list events my-element -c name -c summary -c type
+  cem list attrs my-element -c description --columns default
+  ```
+Note that the name column is always included, and that if a column is specified but contains only empty values for all rows, it is automatically omitted from the output for clarity.
+
+#### Output Formats
+
+- By default, tables are shown in a human-readable table format.
+- [ ] TODO: json, markdown, flat lists, etc
 
 ## Configuration Reference
 
@@ -263,40 +327,6 @@ generate:
 ```
 
 ---
-
-## Usage
-
-Generate a custom elements manifest from your files:
-
-```sh
-cem generate \
-  "src/**/*.ts" \
-  --design-tokens npm:@my-ds/tokens/tokens.json \
-  --exclude "src/**/*.test.ts" \
-  --output custom-elements.json
-```
-
-For npm projects you can use `npx @pwrs/cem generate ...`.
-
-### Command Line Arguments
-
-| Argument                        | Type               | Description                                                                                       |
-| ------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------- |
-| `<files or globs>`              | positional (array) | Files or glob patterns to include                                                                 |
-| `--output, -o`                  | string             | Write the manifest to this file instead of stdout                                                 |
-| `--exclude, -e`                 | array              | Files or glob patterns to exclude                                                                 |
-| `--no-default-excludes`         | bool               | Do not exclude files by default (e.g., `.d.ts` files will be included unless excluded explicitly) |
-| `--design-tokens, -t`           | string             | Path or npm specifier for DTCG-format design tokens                                               |
-| `--design-tokens-prefix, -p`    | string             | CSS custom property prefix for design tokens                                                      |
-| `--demo-discovery-file-glob`    | string             | Glob pattern for discovering demo files                                                           |
-| `--demo-discovery-url-pattern`  | string             | Go Regexp pattern with named capture groups for generating canonical demo urls                    |
-| `--demo-discovery-url-template` | string             | URL pattern string using {groupName} syntax to interpolate named captures from the URL pattern    |
-| `--source-control-root-url`     | string             | Glob pattern for discovering demo files                                                           |
-| `--project-dir`                 | string             | Specify the project root directory to use for resolving relative paths and configuration.         |
-
-
-By default, some files (like `.d.ts` TypeScript declaration files) are excluded from the manifest.
-Use `--no-default-excludes` if you want to include all matching files and manage excludes yourself.
 
 ## Contributing
 

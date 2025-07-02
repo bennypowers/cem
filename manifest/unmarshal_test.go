@@ -127,6 +127,64 @@ func TestUnmarshalPackage_CustomElement_BasicFields(t *testing.T) {
 	}
 }
 
+func TestUnmarshalPackage_CustomElement_MemberWithAttributeYieldsCustomElementField(t *testing.T) {
+	manifestJSON := []byte(`
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/dialog.js",
+      "declarations": [
+        {
+          "kind": "custom-element",
+          "name": "RhDialog",
+          "tagName": "rh-dialog",
+          "members": [
+            {
+              "kind": "field",
+              "name": "open",
+              "type": { "text": "boolean" },
+              "attribute": "open",
+              "default": "false",
+              "reflects": true
+            },
+            {
+              "kind": "field",
+              "name": "plainField",
+              "type": { "text": "string" }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+`)
+	pkg, err := UnmarshalPackage(manifestJSON)
+	if err != nil {
+		t.Fatalf("UnmarshalPackage failed: %v", err)
+	}
+	ce := pkg.Modules[0].Declarations[0].(*CustomElementDeclaration)
+	if len(ce.Members) != 2 {
+		t.Fatalf("Members = %+v, want 2 items", ce.Members)
+	}
+	cem, ok := ce.Members[0].(*CustomElementField)
+	if !ok {
+		t.Fatalf("First member = %T, want *CustomElementField", ce.Members[0])
+	}
+	if cem.Name != "open" || cem.Attribute != "open" || cem.Type == nil || cem.Type.Text != "boolean" || cem.Default != "false" || !cem.Reflects {
+		t.Errorf("CustomElementField = %+v, want name=open attribute=open type=boolean default=false reflects=true", cem)
+	}
+	plain, ok := ce.Members[1].(*ClassField)
+	if !ok {
+		t.Fatalf("Second member = %T, want *ClassField", ce.Members[1])
+	}
+	if plain.Name != "plainField" || plain.Type == nil || plain.Type.Text != "string" {
+		t.Errorf("ClassField = %+v, want name=plainField type=string", plain)
+	}
+}
+
 func TestUnmarshalPackage_CustomElement_Attributes(t *testing.T) {
 	manifestJSON := []byte(`
 {

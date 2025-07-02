@@ -25,41 +25,70 @@ type LogCtx struct {
 }
 
 func NewLogCtx(file string, cfg *C.CemConfig) *LogCtx {
-    buf := &bytes.Buffer{}
-    verbose := cfg.Verbose
-    var logger *pterm.Logger
-    var section *pterm.SectionPrinter
-    if verbose {
-        logger = pterm.DefaultLogger.WithWriter(buf).WithTime(false).WithLevel(pterm.LogLevelTrace)
-        section = pterm.DefaultSection.WithWriter(buf)
-    } else {
-        logger = nil
-        section = nil
-    }
-    return &LogCtx{
-        File:    file,
-        Buffer:  buf,
-        Logger:  logger,
-        Start:   time.Now(),
-        Section: section,
-        Verbose: verbose,
-    }
+	buf := &bytes.Buffer{}
+	verbose := cfg.Verbose
+	var logger *pterm.Logger
+	var section *pterm.SectionPrinter
+	if verbose {
+		logger = pterm.DefaultLogger.WithWriter(buf).WithTime(false).WithLevel(pterm.LogLevelTrace)
+		section = pterm.DefaultSection.WithWriter(buf)
+	} else {
+		logger = nil
+		section = nil
+	}
+	return &LogCtx{
+		File:    file,
+		Buffer:  buf,
+		Logger:  logger,
+		Start:   time.Now(),
+		Section: section,
+		Verbose: verbose,
+	}
 }
 
 // Log helpers (for convenience)
-func (lc *LogCtx) Trace(msg string, args ...any)  { if !lc.Verbose { return }; lc.Logger.Trace(fmt.Sprintf(msg, args...)) }
-func (lc *LogCtx) Debug(msg string, args ...any)  { if !lc.Verbose { return }; lc.Logger.Debug(fmt.Sprintf(msg, args...)) }
-func (lc *LogCtx) Info(msg string, args ...any)   { if !lc.Verbose { return }; lc.Logger.Info(fmt.Sprintf(msg, args...)) }
-func (lc *LogCtx) Error(msg string, args ...any)  { if !lc.Verbose { return }; lc.Logger.Error(fmt.Sprintf(msg, args...)) }
-func (lc *LogCtx) Warn(msg string, args ...any)   { if !lc.Verbose { return }; lc.Logger.Warn(fmt.Sprintf(msg, args...)) }
+func (lc *LogCtx) Trace(msg string, args ...any) {
+	if !lc.Verbose {
+		return
+	}
+	lc.Logger.Trace(fmt.Sprintf(msg, args...))
+}
+func (lc *LogCtx) Debug(msg string, args ...any) {
+	if !lc.Verbose {
+		return
+	}
+	lc.Logger.Debug(fmt.Sprintf(msg, args...))
+}
+func (lc *LogCtx) Info(msg string, args ...any) {
+	if !lc.Verbose {
+		return
+	}
+	lc.Logger.Info(fmt.Sprintf(msg, args...))
+}
+func (lc *LogCtx) Error(msg string, args ...any) {
+	if !lc.Verbose {
+		return
+	}
+	lc.Logger.Error(fmt.Sprintf(msg, args...))
+}
+func (lc *LogCtx) Warn(msg string, args ...any) {
+	if !lc.Verbose {
+		return
+	}
+	lc.Logger.Warn(fmt.Sprintf(msg, args...))
+}
 func (lc *LogCtx) IndentedLog(indent int, label string, msg string, args ...any) {
-    if !lc.Verbose { return }
-    prefix := strings.Repeat("  ", indent)
-    lc.Trace("%s%s: %s", prefix, label, fmt.Sprintf(msg, args...))
+	if !lc.Verbose {
+		return
+	}
+	prefix := strings.Repeat("  ", indent)
+	lc.Trace("%s%s: %s", prefix, label, fmt.Sprintf(msg, args...))
 }
 func (lc *LogCtx) TimedLog(indent int, label string, duration time.Duration) {
-    if !lc.Verbose { return }
-    lc.IndentedLog(indent, label, "finished in %s", ColorizeDuration(duration).Sprint(duration))
+	if !lc.Verbose {
+		return
+	}
+	lc.IndentedLog(indent, label, "finished in %s", ColorizeDuration(duration).Sprint(duration))
 }
 
 // To be called at the end of processing
