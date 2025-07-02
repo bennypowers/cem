@@ -1,11 +1,12 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/pterm/pterm"
 	"github.com/agext/levenshtein"
+	"github.com/pterm/pterm"
 
 	M "bennypowers.dev/cem/manifest"
 )
@@ -49,7 +50,7 @@ func checkUnknownColumns(headers []string, columns []string) error {
 			if suggestion != "" && !strings.EqualFold(suggestion, col) {
 				msg += fmt.Sprintf(" Did you mean %q?", suggestion)
 			}
-			return fmt.Errorf(msg)
+			return errors.New(msg)
 		}
 	}
 	return nil
