@@ -110,8 +110,9 @@ func initConfig() {
 			cobra.CheckErr(errors.Join(err, errors.New("Failed to change into project directory")))
 		}
 		if viper.GetBool("verbose") {
-			pterm.Info.Println("Using project directory: ", projectDir)
+			pterm.EnableDebugMessages()
 		}
+		pterm.Debug.Println("Using project directory: ", projectDir)
 	}
 	if cfgFile != "" {
 		// Use config file from the flag.
@@ -125,9 +126,7 @@ func initConfig() {
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 		if err := viper.ReadInConfig(); err == nil {
-			if viper.GetBool("verbose") {
-				pterm.Info.Println("Using config file: ", cfgFile)
-			}
+			pterm.Debug.Println("Using config file: ", cfgFile)
 		}
 	}
 
