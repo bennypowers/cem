@@ -1,12 +1,18 @@
 {{ $results := site.Data.benchmarks.results }}
+<style>
+.analyzer-tool-card {
+  margin-block-start: 2em;
+  max-width: min(95vw, 900px);
+}
+</style>
 <div class="tool-cards">
   {{ range $idx, $result := $results }}
-    <sl-card class="analyzer-tool-card" style="margin-top:2rem;">
-      <div slot="header" class="analyzer-tool-header">
+    <section class="analyzer-tool-card">
+      <h3 class="analyzer-tool-header">
         <sl-icon name="box-seam"></sl-icon>
         <span class="analyzer-tool-title">{{ $result.name }}</span>
         <sl-badge variant="primary" pill class="analyzer-tool-badge">{{ $result.id }}</sl-badge>
-      </div>
+      </h3>
       <div class="analyzer-tool-docslink">
         <sl-tag size="small" pill>
           <sl-icon slot="prefix" name="code"></sl-icon>
@@ -125,7 +131,7 @@
       </figure>
       <sl-details summary="Last Output (JSON)">
         <sl-spinner style="font-size: 3rem;"></sl-spinner>
-      <zero-md id="last-output-{{ $idx }}" data-src="{{ .Site.BaseURL }}/{{ $result.lastOutputUrl }}" no-shadow>
+      <zero-md id="last-output-{{ $idx }}" data-src="{{ $result.lastOutputUrl | relURL }}" no-shadow>
           <template></template>
         </zero-md>
       </sl-details>
@@ -137,10 +143,10 @@
           </sl-alert>
         {{ end }}
       {{ end }}
-    </sl-card>
+    </section>
   {{ end }}
 </div>
-<script type="module" src="{{ .Site.BaseURL }}/line-chart.js"></script>
+<script type="module" src="{{ "line-chart.js" | relURL }} "></script>
 <script type="module">
     import ZeroMd from "https://esm.sh/zero-md@3";
     customElements.define('zero-md', ZeroMd);
@@ -149,10 +155,31 @@
 <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/shoelace.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/themes/light.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/themes/dark.css">
+<link id="hljs-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github.min.css" disabled>
+<link id="hljs-dark"  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github-dark.min.css" disabled>
 
 <script type="module">
   import { setBasePath } from 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/utilities/base-path.js';
   setBasePath('https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/');
+  const themeToggle = document.getElementById('mode');
+
+  function setPrismTheme(dark, root = document) {
+    // Prism theme switching
+    const prismLight = root.getElementById('hljs-light');
+    const prismDark = root.getElementById('hljs-dark');
+    prismLight.disabled = dark;
+    prismDark.disabled = !dark;
+  }
+
+  const updateTheme = () => {
+    const dark = themeToggle.value === 'dark';
+    document.body.classList.remove(`sl-theme-light`);
+    document.body.classList.remove(`sl-theme-dark`);
+    document.body.classList.add(`sl-theme-${themeToggle.value}`);
+    setPrismTheme(dark);
+  };
+
+  themeToggle.addEventListener('change', updateTheme);
 
   document.addEventListener('sl-after-show', async function(event) {
     await customElements.whenDefined('zero-md');
@@ -163,7 +190,9 @@
       zeroMd.src = zeroMd.dataset.src
       zeroMd.addEventListener('zero-md-rendered', function () {
         spinner.remove();
+        updateTheme()
       }, { once: true })
     }
   });
-</script>
+
+  updateTheme();</script>
