@@ -50,8 +50,10 @@ func BenchmarkGenerate(b *testing.B) {
 		lastOut = *out
 	}
 
-	err = os.WriteFile("../docs/site/benchmark-last-output.json", []byte(lastOut), 0644)
-	if err != nil {
-		b.Errorf("Could not write output: %v", err)
+	if err := os.MkdirAll("../docs/site/", 0755); err != nil {
+		b.Fatalf("failed to create ../docs/site dir: %v", err)
+	}
+	if err := os.WriteFile("../docs/site/benchmark-last-output.json", []byte(lastOut), 0644); err != nil {
+		b.Fatalf("Could not write output: %v", err)
 	}
 }
