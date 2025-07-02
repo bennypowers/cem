@@ -48,6 +48,7 @@ func loadPackageJson(path string) (*PackageJSON, error) {
 		if err := json.Unmarshal(source, &pkg); err != nil {
 			return nil, err
 		}
+		packageJsonPathMap[path] = pkg
 		return &pkg, nil
 	}
 }
