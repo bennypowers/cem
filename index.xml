@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Home on cem</title><link>https://bennypowers.github.io/cem/</link><description>Recent content in Home on cem</description><generator>Hugo</generator><language>en-us</language><atom:link href="https://bennypowers.github.io/cem/index.xml" rel="self" type="application/rss+xml"/><item><title>Analyzer Benchmarks</title><link>https://bennypowers.github.io/cem/benchmarks/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.github.io/cem/benchmarks/</guid><description>&lt;p>&lt;strong>Number of runs per tool&lt;/strong>: 
+&lt;br>
+&lt;strong>Number of files analyzed per run&lt;/strong>: 
+&lt;/p>
+&lt;figure class="benchmarks-bar-chart" role="group" aria-labelledby="bar-caption">
+ &lt;figcaption id="bar-caption" style="font-weight:bold;margin-bottom:0.5em;">
+ Benchmark results: lower is better (seconds)
+ &lt;/figcaption>
+ 
+ &lt;div class="bar-chart-placeholder">
+ &lt;em>No benchmark results found.&lt;/em>
+ &lt;/div>
+
+&lt;/figure>
+&lt;hr>
+
+&lt;style>
+.analyzer-tool-card {
+ margin-block-start: 2em;
+ max-width: min(95vw, 900px);
+}
+&lt;/style>
+&lt;div class="tool-cards">
+ 
+&lt;/div>
+&lt;script type="module" src="https://bennypowers.github.io/cem/line-chart.js ">&lt;/script>
+&lt;script type="module">
+ import ZeroMd from "https://esm.sh/zero-md@3";
+ customElements.define('zero-md', ZeroMd);
+&lt;/script>
+
+&lt;script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/shoelace.js">&lt;/script>
+&lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/themes/light.css">
+&lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/themes/dark.css">
+&lt;link id="hljs-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github.min.css" disabled>
+&lt;link id="hljs-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github-dark.min.css" disabled>
+
+&lt;script type="module">
+ import { setBasePath } from 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/utilities/base-path.js';
+ setBasePath('https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/');
+ const themeToggle = document.getElementById('mode');
+
+ function setPrismTheme(dark, root = document) {
+ 
+ const prismLight = root.getElementById('hljs-light');
+ const prismDark = root.getElementById('hljs-dark');
+ prismLight.disabled = dark;
+ prismDark.disabled = !dark;
+ }
+
+ const updateTheme = () => {
+ const dark = themeToggle.value === 'dark';
+ document.body.classList.remove(`sl-theme-light`);
+ document.body.classList.remove(`sl-theme-dark`);
+ document.body.classList.add(`sl-theme-${themeToggle.value}`);
+ setPrismTheme(dark);
+ };
+
+ themeToggle.addEventListener('change', updateTheme);
+
+ document.addEventListener('sl-after-show', async function(event) {
+ await customElements.whenDefined('zero-md');
+ await customElements.whenDefined('sl-spinner');
+ const zeroMd = event.target.querySelector('zero-md');
+ const spinner = event.target.querySelector('sl-spinner');
+ if (spinner &amp;&amp; zeroMd &amp;&amp; !zeroMd.src) {
+ zeroMd.src = zeroMd.dataset.src
+ zeroMd.addEventListener('zero-md-rendered', function () {
+ spinner.remove();
+ updateTheme()
+ }, { once: true })
+ }
+ });
+
+ updateTheme();&lt;/script></description></item><item><title>Contributing</title><link>https://bennypowers.github.io/cem/contributing/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.github.io/cem/contributing/</guid><description>&lt;h1 id="contributing-to-cem" class=link_owner>
+ Contributing to cem
+ &lt;a href="#contributing-to-cem" class="link icon">
+ &lt;svg>
+ &lt;use xlink:href="#anchor-link">&lt;/use>
+ &lt;/svg>
+ &lt;/a>
+&lt;/h1>
+&lt;p>Thank you for your interest in contributing to &lt;code>cem&lt;/code>! This guide will help you set up your environment for development, building, and testing. Please read carefully and reach out if you have questions.&lt;/p>
+&lt;h2 id="getting-started" class=link_owner>
+ Getting Started
+ &lt;a href="#getting-started" class="link icon">
+ &lt;svg>
+ &lt;use xlink:href="#anchor-link">&lt;/use>
+ &lt;/svg>
+ &lt;/a>
+&lt;/h2>
+&lt;ul>
+&lt;li>Fork and clone the repo:
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-sh" data-lang="sh">&lt;span style="display:flex;">&lt;span>git clone https://github.com/bennypowers/cem.git
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>cd cem
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>Install &lt;a href="https://golang.org/doc/install">Go&lt;/a> (version 1.24 or newer recommended).&lt;/li>
+&lt;li>Install &lt;a href="https://nodejs.org/">Node.js&lt;/a> (version 22 recommended) and &lt;a href="https://www.npmjs.com/">npm&lt;/a>.&lt;/li>
+&lt;/ul>
+&lt;h2 id="building" class=link_owner>
+ Building
+ &lt;a href="#building" class="link icon">
+ &lt;svg>
+ &lt;use xlink:href="#anchor-link">&lt;/use>
+ &lt;/svg>
+ &lt;/a>
+&lt;/h2>
+&lt;h3 id="native-build-linuxmacos" class=link_owner>
+ Native Build (Linux/macOS)
+ &lt;a href="#native-build-linuxmacos" class="link icon">
+ &lt;svg>
+ &lt;use xlink:href="#anchor-link">&lt;/use>
+ &lt;/svg>
+ &lt;/a>
+&lt;/h3>
+&lt;p>To build the project for your local architecture:&lt;/p></description></item><item><title>Installation</title><link>https://bennypowers.github.io/cem/installation/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.github.io/cem/installation/</guid><description>&lt;p>For go binaries:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-sh" data-lang="sh">&lt;span style="display:flex;">&lt;span>go install bennypowers.dev/cem@latest
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>For NPM projects:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-sh" data-lang="sh">&lt;span style="display:flex;">&lt;span>npm install --save-dev @pwrs/cem
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Or clone this repository and build from source:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-sh" data-lang="sh">&lt;span style="display:flex;">&lt;span>git clone https://github.com/bennypowers/cem.git
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>cd cem
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>make
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="shell-completion" class=link_owner>
+ Shell Completion
+ &lt;a href="#shell-completion" class="link icon">
+ &lt;svg>
+ &lt;use xlink:href="#anchor-link">&lt;/use>
+ &lt;/svg>
+ &lt;/a>
+&lt;/h2>
+&lt;p>&lt;code>cem&lt;/code> supports shell completion for Bash, Zsh, Fish, and PowerShell. The completion scripts provide tab completion for commands, flags, and file paths.&lt;/p>
+&lt;h3 id="bash" class=link_owner>
+ Bash
+ &lt;a href="#bash" class="link icon">
+ &lt;svg>
+ &lt;use xlink:href="#anchor-link">&lt;/use>
+ &lt;/svg>
+ &lt;/a>
+&lt;/h3>
+&lt;p>To load completions in your current shell session:&lt;/p></description></item></channel></rss>

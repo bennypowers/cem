@@ -4,7 +4,7 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "src/components/alert-toast.js",
+      "path": "benchmark/components/alert-toast.js",
       "declarations": [
         {
           "name": "AlertToast",
@@ -27,6 +27,7 @@
             },
             {
               "name": "hide",
+              "description": "Toast visibility",
               "kind": "method"
             }
           ],
@@ -54,26 +55,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "alert-toast",
-          "declaration": {
-            "name": "AlertToast",
-            "module": "src/components/alert-toast.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "AlertToast",
           "declaration": {
             "name": "AlertToast",
-            "module": "src/components/alert-toast.js"
+            "module": "benchmark/components/alert-toast.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "alert-toast",
+          "declaration": {
+            "name": "AlertToast",
+            "module": "benchmark/components/alert-toast.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/avatar-image.js",
+      "path": "benchmark/components/avatar-image.js",
       "declarations": [
         {
           "name": "AvatarImage",
@@ -103,26 +104,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "avatar-image",
-          "declaration": {
-            "name": "AvatarImage",
-            "module": "src/components/avatar-image.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "AvatarImage",
           "declaration": {
             "name": "AvatarImage",
-            "module": "src/components/avatar-image.js"
+            "module": "benchmark/components/avatar-image.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "avatar-image",
+          "declaration": {
+            "name": "AvatarImage",
+            "module": "benchmark/components/avatar-image.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/button-element.js",
+      "path": "benchmark/components/button-element.js",
       "declarations": [
         {
           "name": "ButtonElement",
@@ -144,26 +145,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "button-element",
-          "declaration": {
-            "name": "ButtonElement",
-            "module": "src/components/button-element.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "ButtonElement",
           "declaration": {
             "name": "ButtonElement",
-            "module": "src/components/button-element.js"
+            "module": "benchmark/components/button-element.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "button-element",
+          "declaration": {
+            "name": "ButtonElement",
+            "module": "benchmark/components/button-element.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/clipboard-copy.js",
+      "path": "benchmark/components/clipboard-copy.js",
       "declarations": [
         {
           "name": "ClipboardCopy",
@@ -185,26 +186,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "clipboard-copy",
-          "declaration": {
-            "name": "ClipboardCopy",
-            "module": "src/components/clipboard-copy.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "ClipboardCopy",
           "declaration": {
             "name": "ClipboardCopy",
-            "module": "src/components/clipboard-copy.js"
+            "module": "benchmark/components/clipboard-copy.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "clipboard-copy",
+          "declaration": {
+            "name": "ClipboardCopy",
+            "module": "benchmark/components/clipboard-copy.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/color-picker.js",
+      "path": "benchmark/components/color-picker.js",
       "declarations": [
         {
           "name": "ColorPicker",
@@ -234,26 +235,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "color-picker",
-          "declaration": {
-            "name": "ColorPicker",
-            "module": "src/components/color-picker.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "ColorPicker",
           "declaration": {
             "name": "ColorPicker",
-            "module": "src/components/color-picker.js"
+            "module": "benchmark/components/color-picker.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "color-picker",
+          "declaration": {
+            "name": "ColorPicker",
+            "module": "benchmark/components/color-picker.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/complex-types.js",
+      "path": "benchmark/components/complex-types.js",
       "declarations": [
         {
           "name": "ComplexTypes",
@@ -268,26 +269,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "complex-types",
-          "declaration": {
-            "name": "ComplexTypes",
-            "module": "src/components/complex-types.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "ComplexTypes",
           "declaration": {
             "name": "ComplexTypes",
-            "module": "src/components/complex-types.js"
+            "module": "benchmark/components/complex-types.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "complex-types",
+          "declaration": {
+            "name": "ComplexTypes",
+            "module": "benchmark/components/complex-types.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/dark-mode-toggle.js",
+      "path": "benchmark/components/dark-mode-toggle.js",
       "declarations": [
         {
           "name": "DarkModeToggle",
@@ -309,26 +310,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "dark-mode-toggle",
-          "declaration": {
-            "name": "DarkModeToggle",
-            "module": "src/components/dark-mode-toggle.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "DarkModeToggle",
           "declaration": {
             "name": "DarkModeToggle",
-            "module": "src/components/dark-mode-toggle.js"
+            "module": "benchmark/components/dark-mode-toggle.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "dark-mode-toggle",
+          "declaration": {
+            "name": "DarkModeToggle",
+            "module": "benchmark/components/dark-mode-toggle.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/dismiss-button.js",
+      "path": "benchmark/components/dismiss-button.js",
       "declarations": [
         {
           "name": "DismissButton",
@@ -351,26 +352,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "dismiss-button",
-          "declaration": {
-            "name": "DismissButton",
-            "module": "src/components/dismiss-button.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "DismissButton",
           "declaration": {
             "name": "DismissButton",
-            "module": "src/components/dismiss-button.js"
+            "module": "benchmark/components/dismiss-button.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "dismiss-button",
+          "declaration": {
+            "name": "DismissButton",
+            "module": "benchmark/components/dismiss-button.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/emoji-picker.js",
+      "path": "benchmark/components/emoji-picker.js",
       "declarations": [
         {
           "name": "EmojiPicker",
@@ -401,26 +402,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "emoji-picker",
-          "declaration": {
-            "name": "EmojiPicker",
-            "module": "src/components/emoji-picker.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "EmojiPicker",
           "declaration": {
             "name": "EmojiPicker",
-            "module": "src/components/emoji-picker.js"
+            "module": "benchmark/components/emoji-picker.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "emoji-picker",
+          "declaration": {
+            "name": "EmojiPicker",
+            "module": "benchmark/components/emoji-picker.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/expand-toggle.js",
+      "path": "benchmark/components/expand-toggle.js",
       "declarations": [
         {
           "name": "ExpandToggle",
@@ -462,26 +463,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "expand-toggle",
-          "declaration": {
-            "name": "ExpandToggle",
-            "module": "src/components/expand-toggle.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "ExpandToggle",
           "declaration": {
             "name": "ExpandToggle",
-            "module": "src/components/expand-toggle.js"
+            "module": "benchmark/components/expand-toggle.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "expand-toggle",
+          "declaration": {
+            "name": "ExpandToggle",
+            "module": "benchmark/components/expand-toggle.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/expandable-panel.js",
+      "path": "benchmark/components/expandable-panel.js",
       "declarations": [
         {
           "name": "ExpandablePanel",
@@ -496,26 +497,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "expandable-panel",
-          "declaration": {
-            "name": "ExpandablePanel",
-            "module": "src/components/expandable-panel.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "ExpandablePanel",
           "declaration": {
             "name": "ExpandablePanel",
-            "module": "src/components/expandable-panel.js"
+            "module": "benchmark/components/expandable-panel.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "expandable-panel",
+          "declaration": {
+            "name": "ExpandablePanel",
+            "module": "benchmark/components/expandable-panel.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/field-label.js",
+      "path": "benchmark/components/field-label.js",
       "declarations": [
         {
           "name": "FieldLabel",
@@ -531,26 +532,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "field-label",
-          "declaration": {
-            "name": "FieldLabel",
-            "module": "src/components/field-label.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "FieldLabel",
           "declaration": {
             "name": "FieldLabel",
-            "module": "src/components/field-label.js"
+            "module": "benchmark/components/field-label.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "field-label",
+          "declaration": {
+            "name": "FieldLabel",
+            "module": "benchmark/components/field-label.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/file-uploader.js",
+      "path": "benchmark/components/file-uploader.js",
       "declarations": [
         {
           "name": "FileUploader",
@@ -580,26 +581,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "file-uploader",
-          "declaration": {
-            "name": "FileUploader",
-            "module": "src/components/file-uploader.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "FileUploader",
           "declaration": {
             "name": "FileUploader",
-            "module": "src/components/file-uploader.js"
+            "module": "benchmark/components/file-uploader.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "file-uploader",
+          "declaration": {
+            "name": "FileUploader",
+            "module": "benchmark/components/file-uploader.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/icon-badge.js",
+      "path": "benchmark/components/icon-badge.js",
       "declarations": [
         {
           "name": "IconBadge",
@@ -615,26 +616,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "icon-badge",
-          "declaration": {
-            "name": "IconBadge",
-            "module": "src/components/icon-badge.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "IconBadge",
           "declaration": {
             "name": "IconBadge",
-            "module": "src/components/icon-badge.js"
+            "module": "benchmark/components/icon-badge.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "icon-badge",
+          "declaration": {
+            "name": "IconBadge",
+            "module": "benchmark/components/icon-badge.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/image-gallery.js",
+      "path": "benchmark/components/image-gallery.js",
       "declarations": [
         {
           "name": "ImageGallery",
@@ -659,26 +660,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "image-gallery",
-          "declaration": {
-            "name": "ImageGallery",
-            "module": "src/components/image-gallery.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "ImageGallery",
           "declaration": {
             "name": "ImageGallery",
-            "module": "src/components/image-gallery.js"
+            "module": "benchmark/components/image-gallery.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "image-gallery",
+          "declaration": {
+            "name": "ImageGallery",
+            "module": "benchmark/components/image-gallery.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/inline-edit.js",
+      "path": "benchmark/components/inline-edit.js",
       "declarations": [
         {
           "name": "InlineEdit",
@@ -721,26 +722,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "inline-edit",
-          "declaration": {
-            "name": "InlineEdit",
-            "module": "src/components/inline-edit.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "InlineEdit",
           "declaration": {
             "name": "InlineEdit",
-            "module": "src/components/inline-edit.js"
+            "module": "benchmark/components/inline-edit.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "inline-edit",
+          "declaration": {
+            "name": "InlineEdit",
+            "module": "benchmark/components/inline-edit.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/keyboard-shortcut.js",
+      "path": "benchmark/components/keyboard-shortcut.js",
       "declarations": [
         {
           "name": "KeyboardShortcut",
@@ -770,26 +771,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "keyboard-shortcut",
-          "declaration": {
-            "name": "KeyboardShortcut",
-            "module": "src/components/keyboard-shortcut.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "KeyboardShortcut",
           "declaration": {
             "name": "KeyboardShortcut",
-            "module": "src/components/keyboard-shortcut.js"
+            "module": "benchmark/components/keyboard-shortcut.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "keyboard-shortcut",
+          "declaration": {
+            "name": "KeyboardShortcut",
+            "module": "benchmark/components/keyboard-shortcut.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/load-spinner.js",
+      "path": "benchmark/components/load-spinner.js",
       "declarations": [
         {
           "name": "LoadSpinner",
@@ -815,26 +816,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "load-spinner",
-          "declaration": {
-            "name": "LoadSpinner",
-            "module": "src/components/load-spinner.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "LoadSpinner",
           "declaration": {
             "name": "LoadSpinner",
-            "module": "src/components/load-spinner.js"
+            "module": "benchmark/components/load-spinner.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "load-spinner",
+          "declaration": {
+            "name": "LoadSpinner",
+            "module": "benchmark/components/load-spinner.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/markdown-viewer.js",
+      "path": "benchmark/components/markdown-viewer.js",
       "declarations": [
         {
           "name": "MarkdownViewer",
@@ -849,26 +850,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "markdown-viewer",
-          "declaration": {
-            "name": "MarkdownViewer",
-            "module": "src/components/markdown-viewer.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "MarkdownViewer",
           "declaration": {
             "name": "MarkdownViewer",
-            "module": "src/components/markdown-viewer.js"
+            "module": "benchmark/components/markdown-viewer.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "markdown-viewer",
+          "declaration": {
+            "name": "MarkdownViewer",
+            "module": "benchmark/components/markdown-viewer.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/message-bubble.js",
+      "path": "benchmark/components/message-bubble.js",
       "declarations": [
         {
           "name": "MessageBubble",
@@ -884,26 +885,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "message-bubble",
-          "declaration": {
-            "name": "MessageBubble",
-            "module": "src/components/message-bubble.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "MessageBubble",
           "declaration": {
             "name": "MessageBubble",
-            "module": "src/components/message-bubble.js"
+            "module": "benchmark/components/message-bubble.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "message-bubble",
+          "declaration": {
+            "name": "MessageBubble",
+            "module": "benchmark/components/message-bubble.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/multi-slot.js",
+      "path": "benchmark/components/multi-slot.js",
       "declarations": [
         {
           "name": "MultiSlot",
@@ -929,26 +930,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "multi-slot",
-          "declaration": {
-            "name": "MultiSlot",
-            "module": "src/components/multi-slot.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "MultiSlot",
           "declaration": {
             "name": "MultiSlot",
-            "module": "src/components/multi-slot.js"
+            "module": "benchmark/components/multi-slot.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "multi-slot",
+          "declaration": {
+            "name": "MultiSlot",
+            "module": "benchmark/components/multi-slot.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/no-decorator.js",
+      "path": "benchmark/components/no-decorator.js",
       "declarations": [
         {
           "name": "NoDecoratorElement",
@@ -965,22 +966,14 @@
           "name": "NoDecoratorElement",
           "declaration": {
             "name": "NoDecoratorElement",
-            "module": "src/components/no-decorator.js"
-          }
-        },
-        {
-          "kind": "custom-element-definition",
-          "name": "no-decorator-element",
-          "declaration": {
-            "name": "NoDecoratorElement",
-            "module": "src/components/no-decorator.js"
+            "module": "benchmark/components/no-decorator.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/notification-banner.js",
+      "path": "benchmark/components/notification-banner.js",
       "declarations": [
         {
           "name": "NotificationBanner",
@@ -995,26 +988,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "notification-banner",
-          "declaration": {
-            "name": "NotificationBanner",
-            "module": "src/components/notification-banner.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "NotificationBanner",
           "declaration": {
             "name": "NotificationBanner",
-            "module": "src/components/notification-banner.js"
+            "module": "benchmark/components/notification-banner.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "notification-banner",
+          "declaration": {
+            "name": "NotificationBanner",
+            "module": "benchmark/components/notification-banner.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/progress-circle.js",
+      "path": "benchmark/components/progress-circle.js",
       "declarations": [
         {
           "name": "ProgressCircle",
@@ -1036,26 +1029,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "progress-circle",
-          "declaration": {
-            "name": "ProgressCircle",
-            "module": "src/components/progress-circle.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "ProgressCircle",
           "declaration": {
             "name": "ProgressCircle",
-            "module": "src/components/progress-circle.js"
+            "module": "benchmark/components/progress-circle.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "progress-circle",
+          "declaration": {
+            "name": "ProgressCircle",
+            "module": "benchmark/components/progress-circle.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/range-slider.js",
+      "path": "benchmark/components/range-slider.js",
       "declarations": [
         {
           "name": "RangeSlider",
@@ -1085,26 +1078,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "range-slider",
-          "declaration": {
-            "name": "RangeSlider",
-            "module": "src/components/range-slider.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "RangeSlider",
           "declaration": {
             "name": "RangeSlider",
-            "module": "src/components/range-slider.js"
+            "module": "benchmark/components/range-slider.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "range-slider",
+          "declaration": {
+            "name": "RangeSlider",
+            "module": "benchmark/components/range-slider.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/resize-handle.js",
+      "path": "benchmark/components/resize-handle.js",
       "declarations": [
         {
           "name": "ResizeHandle",
@@ -1120,26 +1113,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "resize-handle",
-          "declaration": {
-            "name": "ResizeHandle",
-            "module": "src/components/resize-handle.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "ResizeHandle",
           "declaration": {
             "name": "ResizeHandle",
-            "module": "src/components/resize-handle.js"
+            "module": "benchmark/components/resize-handle.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "resize-handle",
+          "declaration": {
+            "name": "ResizeHandle",
+            "module": "benchmark/components/resize-handle.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/search-bar.js",
+      "path": "benchmark/components/search-bar.js",
       "declarations": [
         {
           "name": "SearchBar",
@@ -1169,26 +1162,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "search-bar",
-          "declaration": {
-            "name": "SearchBar",
-            "module": "src/components/search-bar.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "SearchBar",
           "declaration": {
             "name": "SearchBar",
-            "module": "src/components/search-bar.js"
+            "module": "benchmark/components/search-bar.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "search-bar",
+          "declaration": {
+            "name": "SearchBar",
+            "module": "benchmark/components/search-bar.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/section-header.js",
+      "path": "benchmark/components/section-header.js",
       "declarations": [
         {
           "name": "SectionHeader",
@@ -1204,26 +1197,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "section-header",
-          "declaration": {
-            "name": "SectionHeader",
-            "module": "src/components/section-header.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "SectionHeader",
           "declaration": {
             "name": "SectionHeader",
-            "module": "src/components/section-header.js"
+            "module": "benchmark/components/section-header.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "section-header",
+          "declaration": {
+            "name": "SectionHeader",
+            "module": "benchmark/components/section-header.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/skeleton-block.js",
+      "path": "benchmark/components/skeleton-block.js",
       "declarations": [
         {
           "name": "SkeletonBlock",
@@ -1239,26 +1232,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "skeleton-block",
-          "declaration": {
-            "name": "SkeletonBlock",
-            "module": "src/components/skeleton-block.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "SkeletonBlock",
           "declaration": {
             "name": "SkeletonBlock",
-            "module": "src/components/skeleton-block.js"
+            "module": "benchmark/components/skeleton-block.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "skeleton-block",
+          "declaration": {
+            "name": "SkeletonBlock",
+            "module": "benchmark/components/skeleton-block.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/split-pane.js",
+      "path": "benchmark/components/split-pane.js",
       "declarations": [
         {
           "name": "SplitPane",
@@ -1273,26 +1266,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "split-pane",
-          "declaration": {
-            "name": "SplitPane",
-            "module": "src/components/split-pane.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "SplitPane",
           "declaration": {
             "name": "SplitPane",
-            "module": "src/components/split-pane.js"
+            "module": "benchmark/components/split-pane.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "split-pane",
+          "declaration": {
+            "name": "SplitPane",
+            "module": "benchmark/components/split-pane.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/star-rating.js",
+      "path": "benchmark/components/star-rating.js",
       "declarations": [
         {
           "name": "StarRating",
@@ -1322,26 +1315,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "star-rating",
-          "declaration": {
-            "name": "StarRating",
-            "module": "src/components/star-rating.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "StarRating",
           "declaration": {
             "name": "StarRating",
-            "module": "src/components/star-rating.js"
+            "module": "benchmark/components/star-rating.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "star-rating",
+          "declaration": {
+            "name": "StarRating",
+            "module": "benchmark/components/star-rating.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/step-progress.js",
+      "path": "benchmark/components/step-progress.js",
       "declarations": [
         {
           "name": "StepProgress",
@@ -1363,26 +1356,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "step-progress",
-          "declaration": {
-            "name": "StepProgress",
-            "module": "src/components/step-progress.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "StepProgress",
           "declaration": {
             "name": "StepProgress",
-            "module": "src/components/step-progress.js"
+            "module": "benchmark/components/step-progress.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "step-progress",
+          "declaration": {
+            "name": "StepProgress",
+            "module": "benchmark/components/step-progress.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/tab-navigation.js",
+      "path": "benchmark/components/tab-navigation.js",
       "declarations": [
         {
           "name": "TabNavigation",
@@ -1412,26 +1405,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "tab-navigation",
-          "declaration": {
-            "name": "TabNavigation",
-            "module": "src/components/tab-navigation.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "TabNavigation",
           "declaration": {
             "name": "TabNavigation",
-            "module": "src/components/tab-navigation.js"
+            "module": "benchmark/components/tab-navigation.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "tab-navigation",
+          "declaration": {
+            "name": "TabNavigation",
+            "module": "benchmark/components/tab-navigation.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/tag-list.js",
+      "path": "benchmark/components/tag-list.js",
       "declarations": [
         {
           "name": "TagList",
@@ -1473,26 +1466,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "tag-list",
-          "declaration": {
-            "name": "TagList",
-            "module": "src/components/tag-list.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "TagList",
           "declaration": {
             "name": "TagList",
-            "module": "src/components/tag-list.js"
+            "module": "benchmark/components/tag-list.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "tag-list",
+          "declaration": {
+            "name": "TagList",
+            "module": "benchmark/components/tag-list.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/text-ticker.js",
+      "path": "benchmark/components/text-ticker.js",
       "declarations": [
         {
           "name": "TextTicker",
@@ -1507,26 +1500,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "text-ticker",
-          "declaration": {
-            "name": "TextTicker",
-            "module": "src/components/text-ticker.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "TextTicker",
           "declaration": {
             "name": "TextTicker",
-            "module": "src/components/text-ticker.js"
+            "module": "benchmark/components/text-ticker.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "text-ticker",
+          "declaration": {
+            "name": "TextTicker",
+            "module": "benchmark/components/text-ticker.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/theme-toggle.js",
+      "path": "benchmark/components/theme-toggle.js",
       "declarations": [
         {
           "name": "ThemeToggle",
@@ -1537,6 +1530,11 @@
           },
           "members": [
             {
+              "name": "icon",
+              "readonly": true,
+              "kind": "field"
+            },
+            {
               "name": "dark",
               "type": {
                 "text": "boolean"
@@ -1545,11 +1543,6 @@
               "kind": "field",
               "attribute": "dark",
               "reflects": true
-            },
-            {
-              "name": "icon",
-              "readonly": true,
-              "kind": "field"
             },
             {
               "name": "toggleTheme",
@@ -1573,30 +1566,30 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "theme-toggle",
-          "declaration": {
-            "name": "ThemeToggle",
-            "module": "src/components/theme-toggle.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "ThemeToggle",
           "declaration": {
             "name": "ThemeToggle",
-            "module": "src/components/theme-toggle.js"
+            "module": "benchmark/components/theme-toggle.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "theme-toggle",
+          "declaration": {
+            "name": "ThemeToggle",
+            "module": "benchmark/components/theme-toggle.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/timer-element.js"
+      "path": "benchmark/components/timer-element.js"
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/toast-stack.js",
+      "path": "benchmark/components/toast-stack.js",
       "declarations": [
         {
           "name": "ToastStack",
@@ -1618,26 +1611,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "toast-stack",
-          "declaration": {
-            "name": "ToastStack",
-            "module": "src/components/toast-stack.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "ToastStack",
           "declaration": {
             "name": "ToastStack",
-            "module": "src/components/toast-stack.js"
+            "module": "benchmark/components/toast-stack.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "toast-stack",
+          "declaration": {
+            "name": "ToastStack",
+            "module": "benchmark/components/toast-stack.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/toggle-switch.js",
+      "path": "benchmark/components/toggle-switch.js",
       "declarations": [
         {
           "name": "ToggleSwitch",
@@ -1687,26 +1680,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "toggle-switch",
-          "declaration": {
-            "name": "ToggleSwitch",
-            "module": "src/components/toggle-switch.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "ToggleSwitch",
           "declaration": {
             "name": "ToggleSwitch",
-            "module": "src/components/toggle-switch.js"
+            "module": "benchmark/components/toggle-switch.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "toggle-switch",
+          "declaration": {
+            "name": "ToggleSwitch",
+            "module": "benchmark/components/toggle-switch.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/user-avatar.js",
+      "path": "benchmark/components/user-avatar.js",
       "declarations": [
         {
           "name": "UserAvatar",
@@ -1722,26 +1715,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "user-avatar",
-          "declaration": {
-            "name": "UserAvatar",
-            "module": "src/components/user-avatar.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "UserAvatar",
           "declaration": {
             "name": "UserAvatar",
-            "module": "src/components/user-avatar.js"
+            "module": "benchmark/components/user-avatar.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "user-avatar",
+          "declaration": {
+            "name": "UserAvatar",
+            "module": "benchmark/components/user-avatar.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/user-list.js",
+      "path": "benchmark/components/user-list.js",
       "declarations": [
         {
           "name": "UserList",
@@ -1756,26 +1749,26 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "user-list",
-          "declaration": {
-            "name": "UserList",
-            "module": "src/components/user-list.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "UserList",
           "declaration": {
             "name": "UserList",
-            "module": "src/components/user-list.js"
+            "module": "benchmark/components/user-list.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "user-list",
+          "declaration": {
+            "name": "UserList",
+            "module": "benchmark/components/user-list.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/visually-hidden.js",
+      "path": "benchmark/components/visually-hidden.js",
       "declarations": [
         {
           "name": "VisuallyHidden",
@@ -1791,46 +1784,32 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "visually-hidden",
-          "declaration": {
-            "name": "VisuallyHidden",
-            "module": "src/components/visually-hidden.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "VisuallyHidden",
           "declaration": {
             "name": "VisuallyHidden",
-            "module": "src/components/visually-hidden.js"
+            "module": "benchmark/components/visually-hidden.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "visually-hidden",
+          "declaration": {
+            "name": "VisuallyHidden",
+            "module": "benchmark/components/visually-hidden.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/with-inheritance.js",
+      "path": "benchmark/components/with-inheritance.js",
       "declarations": [
-        {
-          "name": "BaseItem",
-          "superclass": {
-            "name": "LitElement",
-            "package": "lit"
-          },
-          "kind": "class"
-        },
         {
           "name": "SpecialItem",
           "superclass": {
             "name": "BaseItem"
           },
-          "members": [
-            {
-              "name": "render",
-              "kind": "method"
-            }
-          ],
           "kind": "class"
         }
       ],
@@ -1840,15 +1819,7 @@
           "name": "SpecialItem",
           "declaration": {
             "name": "SpecialItem",
-            "module": "src/components/with-inheritance.js"
-          }
-        },
-        {
-          "kind": "custom-element-definition",
-          "name": "special-item",
-          "declaration": {
-            "name": "SpecialItem",
-            "module": "src/components/with-inheritance.js"
+            "module": "benchmark/components/with-inheritance.js"
           }
         }
       ]

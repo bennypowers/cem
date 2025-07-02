@@ -5,7 +5,7 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "src/components/alert-toast.ts",
+      "path": "benchmark/components/alert-toast.ts",
       "declarations": [
         {
           "kind": "class",
@@ -66,14 +66,14 @@
           "name": "AlertToast",
           "declaration": {
             "name": "AlertToast",
-            "module": "src/components/alert-toast.ts"
+            "module": "benchmark/components/alert-toast.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/avatar-image.ts",
+      "path": "benchmark/components/avatar-image.ts",
       "declarations": [
         {
           "kind": "class",
@@ -132,14 +132,14 @@
           "name": "AvatarImage",
           "declaration": {
             "name": "AvatarImage",
-            "module": "src/components/avatar-image.ts"
+            "module": "benchmark/components/avatar-image.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/button-element.ts",
+      "path": "benchmark/components/button-element.ts",
       "declarations": [
         {
           "kind": "class",
@@ -198,14 +198,14 @@
           "name": "ButtonElement",
           "declaration": {
             "name": "ButtonElement",
-            "module": "src/components/button-element.ts"
+            "module": "benchmark/components/button-element.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/clipboard-copy.ts",
+      "path": "benchmark/components/clipboard-copy.ts",
       "declarations": [
         {
           "kind": "class",
@@ -258,14 +258,14 @@
           "name": "ClipboardCopy",
           "declaration": {
             "name": "ClipboardCopy",
-            "module": "src/components/clipboard-copy.ts"
+            "module": "benchmark/components/clipboard-copy.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/color-picker.ts",
+      "path": "benchmark/components/color-picker.ts",
       "declarations": [
         {
           "kind": "class",
@@ -319,14 +319,14 @@
           "name": "ColorPicker",
           "declaration": {
             "name": "ColorPicker",
-            "module": "src/components/color-picker.ts"
+            "module": "benchmark/components/color-picker.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/complex-types.ts",
+      "path": "benchmark/components/complex-types.ts",
       "declarations": [
         {
           "kind": "class",
@@ -367,14 +367,14 @@
           "name": "ComplexTypes",
           "declaration": {
             "name": "ComplexTypes",
-            "module": "src/components/complex-types.ts"
+            "module": "benchmark/components/complex-types.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/dark-mode-toggle.ts",
+      "path": "benchmark/components/dark-mode-toggle.ts",
       "declarations": [
         {
           "kind": "class",
@@ -420,14 +420,14 @@
           "name": "DarkModeToggle",
           "declaration": {
             "name": "DarkModeToggle",
-            "module": "src/components/dark-mode-toggle.ts"
+            "module": "benchmark/components/dark-mode-toggle.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/dismiss-button.ts",
+      "path": "benchmark/components/dismiss-button.ts",
       "declarations": [
         {
           "kind": "class",
@@ -473,14 +473,14 @@
           "name": "DismissButton",
           "declaration": {
             "name": "DismissButton",
-            "module": "src/components/dismiss-button.ts"
+            "module": "benchmark/components/dismiss-button.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/emoji-picker.ts",
+      "path": "benchmark/components/emoji-picker.ts",
       "declarations": [
         {
           "kind": "class",
@@ -550,14 +550,14 @@
           "name": "EmojiPicker",
           "declaration": {
             "name": "EmojiPicker",
-            "module": "src/components/emoji-picker.ts"
+            "module": "benchmark/components/emoji-picker.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/expand-toggle.ts",
+      "path": "benchmark/components/expand-toggle.ts",
       "declarations": [
         {
           "kind": "class",
@@ -602,14 +602,14 @@
           "name": "ExpandToggle",
           "declaration": {
             "name": "ExpandToggle",
-            "module": "src/components/expand-toggle.ts"
+            "module": "benchmark/components/expand-toggle.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/expandable-panel.ts",
+      "path": "benchmark/components/expandable-panel.ts",
       "declarations": [
         {
           "kind": "class",
@@ -642,14 +642,14 @@
           "name": "ExpandablePanel",
           "declaration": {
             "name": "ExpandablePanel",
-            "module": "src/components/expandable-panel.ts"
+            "module": "benchmark/components/expandable-panel.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/field-label.ts",
+      "path": "benchmark/components/field-label.ts",
       "declarations": [
         {
           "kind": "class",
@@ -698,14 +698,14 @@
           "name": "FieldLabel",
           "declaration": {
             "name": "FieldLabel",
-            "module": "src/components/field-label.ts"
+            "module": "benchmark/components/field-label.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/file-uploader.ts",
+      "path": "benchmark/components/file-uploader.ts",
       "declarations": [
         {
           "kind": "class",
@@ -759,14 +759,14 @@
           "name": "FileUploader",
           "declaration": {
             "name": "FileUploader",
-            "module": "src/components/file-uploader.ts"
+            "module": "benchmark/components/file-uploader.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/icon-badge.ts",
+      "path": "benchmark/components/icon-badge.ts",
       "declarations": [
         {
           "kind": "class",
@@ -815,14 +815,14 @@
           "name": "IconBadge",
           "declaration": {
             "name": "IconBadge",
-            "module": "src/components/icon-badge.ts"
+            "module": "benchmark/components/icon-badge.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/image-gallery.ts",
+      "path": "benchmark/components/image-gallery.ts",
       "declarations": [
         {
           "kind": "class",
@@ -871,14 +871,14 @@
           "name": "ImageGallery",
           "declaration": {
             "name": "ImageGallery",
-            "module": "src/components/image-gallery.ts"
+            "module": "benchmark/components/image-gallery.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/inline-edit.ts",
+      "path": "benchmark/components/inline-edit.ts",
       "declarations": [
         {
           "kind": "class",
@@ -952,14 +952,14 @@
           "name": "InlineEdit",
           "declaration": {
             "name": "InlineEdit",
-            "module": "src/components/inline-edit.ts"
+            "module": "benchmark/components/inline-edit.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/keyboard-shortcut.ts",
+      "path": "benchmark/components/keyboard-shortcut.ts",
       "declarations": [
         {
           "kind": "class",
@@ -1006,14 +1006,14 @@
           "name": "KeyboardShortcut",
           "declaration": {
             "name": "KeyboardShortcut",
-            "module": "src/components/keyboard-shortcut.ts"
+            "module": "benchmark/components/keyboard-shortcut.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/load-spinner.ts",
+      "path": "benchmark/components/load-spinner.ts",
       "declarations": [
         {
           "kind": "class",
@@ -1054,14 +1054,14 @@
           "name": "LoadSpinner",
           "declaration": {
             "name": "LoadSpinner",
-            "module": "src/components/load-spinner.ts"
+            "module": "benchmark/components/load-spinner.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/markdown-viewer.ts",
+      "path": "benchmark/components/markdown-viewer.ts",
       "declarations": [
         {
           "kind": "class",
@@ -1094,14 +1094,14 @@
           "name": "MarkdownViewer",
           "declaration": {
             "name": "MarkdownViewer",
-            "module": "src/components/markdown-viewer.ts"
+            "module": "benchmark/components/markdown-viewer.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/message-bubble.ts",
+      "path": "benchmark/components/message-bubble.ts",
       "declarations": [
         {
           "kind": "class",
@@ -1150,14 +1150,14 @@
           "name": "MessageBubble",
           "declaration": {
             "name": "MessageBubble",
-            "module": "src/components/message-bubble.ts"
+            "module": "benchmark/components/message-bubble.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/multi-slot.ts",
+      "path": "benchmark/components/multi-slot.ts",
       "declarations": [
         {
           "kind": "class",
@@ -1182,14 +1182,14 @@
           "name": "MultiSlot",
           "declaration": {
             "name": "MultiSlot",
-            "module": "src/components/multi-slot.ts"
+            "module": "benchmark/components/multi-slot.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/no-decorator.ts",
+      "path": "benchmark/components/no-decorator.ts",
       "declarations": [
         {
           "kind": "class",
@@ -1215,7 +1215,7 @@
           "name": "NoDecoratorElement",
           "declaration": {
             "name": "NoDecoratorElement",
-            "module": "src/components/no-decorator.ts"
+            "module": "benchmark/components/no-decorator.ts"
           }
         },
         {
@@ -1223,14 +1223,14 @@
           "name": "no-decorator-element",
           "declaration": {
             "name": "NoDecoratorElement",
-            "module": "src/components/no-decorator.ts"
+            "module": "benchmark/components/no-decorator.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/notification-banner.ts",
+      "path": "benchmark/components/notification-banner.ts",
       "declarations": [
         {
           "kind": "class",
@@ -1271,14 +1271,14 @@
           "name": "NotificationBanner",
           "declaration": {
             "name": "NotificationBanner",
-            "module": "src/components/notification-banner.ts"
+            "module": "benchmark/components/notification-banner.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/progress-circle.ts",
+      "path": "benchmark/components/progress-circle.ts",
       "declarations": [
         {
           "kind": "class",
@@ -1322,14 +1322,14 @@
           "name": "ProgressCircle",
           "declaration": {
             "name": "ProgressCircle",
-            "module": "src/components/progress-circle.ts"
+            "module": "benchmark/components/progress-circle.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/range-slider.ts",
+      "path": "benchmark/components/range-slider.ts",
       "declarations": [
         {
           "kind": "class",
@@ -1399,14 +1399,14 @@
           "name": "RangeSlider",
           "declaration": {
             "name": "RangeSlider",
-            "module": "src/components/range-slider.ts"
+            "module": "benchmark/components/range-slider.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/resize-handle.ts",
+      "path": "benchmark/components/resize-handle.ts",
       "declarations": [
         {
           "kind": "class",
@@ -1439,14 +1439,14 @@
           "name": "ResizeHandle",
           "declaration": {
             "name": "ResizeHandle",
-            "module": "src/components/resize-handle.ts"
+            "module": "benchmark/components/resize-handle.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/search-bar.ts",
+      "path": "benchmark/components/search-bar.ts",
       "declarations": [
         {
           "kind": "class",
@@ -1500,14 +1500,14 @@
           "name": "SearchBar",
           "declaration": {
             "name": "SearchBar",
-            "module": "src/components/search-bar.ts"
+            "module": "benchmark/components/search-bar.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/section-header.ts",
+      "path": "benchmark/components/section-header.ts",
       "declarations": [
         {
           "kind": "class",
@@ -1548,14 +1548,14 @@
           "name": "SectionHeader",
           "declaration": {
             "name": "SectionHeader",
-            "module": "src/components/section-header.ts"
+            "module": "benchmark/components/section-header.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/skeleton-block.ts",
+      "path": "benchmark/components/skeleton-block.ts",
       "declarations": [
         {
           "kind": "class",
@@ -1588,14 +1588,14 @@
           "name": "SkeletonBlock",
           "declaration": {
             "name": "SkeletonBlock",
-            "module": "src/components/skeleton-block.ts"
+            "module": "benchmark/components/skeleton-block.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/split-pane.ts",
+      "path": "benchmark/components/split-pane.ts",
       "declarations": [
         {
           "kind": "class",
@@ -1628,14 +1628,14 @@
           "name": "SplitPane",
           "declaration": {
             "name": "SplitPane",
-            "module": "src/components/split-pane.ts"
+            "module": "benchmark/components/split-pane.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/star-rating.ts",
+      "path": "benchmark/components/star-rating.ts",
       "declarations": [
         {
           "kind": "class",
@@ -1689,14 +1689,14 @@
           "name": "StarRating",
           "declaration": {
             "name": "StarRating",
-            "module": "src/components/star-rating.ts"
+            "module": "benchmark/components/star-rating.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/step-progress.ts",
+      "path": "benchmark/components/step-progress.ts",
       "declarations": [
         {
           "kind": "class",
@@ -1749,14 +1749,14 @@
           "name": "StepProgress",
           "declaration": {
             "name": "StepProgress",
-            "module": "src/components/step-progress.ts"
+            "module": "benchmark/components/step-progress.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/tab-navigation.ts",
+      "path": "benchmark/components/tab-navigation.ts",
       "declarations": [
         {
           "kind": "class",
@@ -1818,14 +1818,14 @@
           "name": "TabNavigation",
           "declaration": {
             "name": "TabNavigation",
-            "module": "src/components/tab-navigation.ts"
+            "module": "benchmark/components/tab-navigation.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/tag-list.ts",
+      "path": "benchmark/components/tag-list.ts",
       "declarations": [
         {
           "kind": "class",
@@ -1890,14 +1890,14 @@
           "name": "TagList",
           "declaration": {
             "name": "TagList",
-            "module": "src/components/tag-list.ts"
+            "module": "benchmark/components/tag-list.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/text-ticker.ts",
+      "path": "benchmark/components/text-ticker.ts",
       "declarations": [
         {
           "kind": "class",
@@ -1936,14 +1936,14 @@
           "name": "TextTicker",
           "declaration": {
             "name": "TextTicker",
-            "module": "src/components/text-ticker.ts"
+            "module": "benchmark/components/text-ticker.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/theme-toggle.ts",
+      "path": "benchmark/components/theme-toggle.ts",
       "declarations": [
         {
           "kind": "class",
@@ -2001,20 +2001,20 @@
           "name": "ThemeToggle",
           "declaration": {
             "name": "ThemeToggle",
-            "module": "src/components/theme-toggle.ts"
+            "module": "benchmark/components/theme-toggle.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/timer-element.ts",
+      "path": "benchmark/components/timer-element.ts",
       "declarations": [],
       "exports": []
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/toast-stack.ts",
+      "path": "benchmark/components/toast-stack.ts",
       "declarations": [
         {
           "kind": "class",
@@ -2059,14 +2059,14 @@
           "name": "ToastStack",
           "declaration": {
             "name": "ToastStack",
-            "module": "src/components/toast-stack.ts"
+            "module": "benchmark/components/toast-stack.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/toggle-switch.ts",
+      "path": "benchmark/components/toggle-switch.ts",
       "declarations": [
         {
           "kind": "class",
@@ -2120,14 +2120,14 @@
           "name": "ToggleSwitch",
           "declaration": {
             "name": "ToggleSwitch",
-            "module": "src/components/toggle-switch.ts"
+            "module": "benchmark/components/toggle-switch.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/user-avatar.ts",
+      "path": "benchmark/components/user-avatar.ts",
       "declarations": [
         {
           "kind": "class",
@@ -2176,14 +2176,14 @@
           "name": "UserAvatar",
           "declaration": {
             "name": "UserAvatar",
-            "module": "src/components/user-avatar.ts"
+            "module": "benchmark/components/user-avatar.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/user-list.ts",
+      "path": "benchmark/components/user-list.ts",
       "declarations": [
         {
           "kind": "class",
@@ -2216,14 +2216,14 @@
           "name": "UserList",
           "declaration": {
             "name": "UserList",
-            "module": "src/components/user-list.ts"
+            "module": "benchmark/components/user-list.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/visually-hidden.ts",
+      "path": "benchmark/components/visually-hidden.ts",
       "declarations": [
         {
           "kind": "class",
@@ -2256,14 +2256,14 @@
           "name": "VisuallyHidden",
           "declaration": {
             "name": "VisuallyHidden",
-            "module": "src/components/visually-hidden.ts"
+            "module": "benchmark/components/visually-hidden.ts"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/with-inheritance.ts",
+      "path": "benchmark/components/with-inheritance.ts",
       "declarations": [
         {
           "kind": "class",
@@ -2291,13 +2291,13 @@
               "default": "true",
               "inheritedFrom": {
                 "name": "BaseItem",
-                "module": "src/components/with-inheritance.ts"
+                "module": "benchmark/components/with-inheritance.ts"
               }
             }
           ],
           "superclass": {
             "name": "BaseItem",
-            "module": "src/components/with-inheritance.ts"
+            "module": "benchmark/components/with-inheritance.ts"
           },
           "tagName": "special-item",
           "customElement": true
@@ -2309,7 +2309,7 @@
           "name": "SpecialItem",
           "declaration": {
             "name": "SpecialItem",
-            "module": "src/components/with-inheritance.ts"
+            "module": "benchmark/components/with-inheritance.ts"
           }
         },
         {
@@ -2317,7 +2317,7 @@
           "name": "special-item",
           "declaration": {
             "name": "SpecialItem",
-            "module": "src/components/with-inheritance.ts"
+            "module": "benchmark/components/with-inheritance.ts"
           }
         }
       ]

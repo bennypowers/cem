@@ -4,7 +4,7 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "src/components/alert-toast.js",
+      "path": "benchmark/components/alert-toast.js",
       "declarations": [
         {
           "kind": "class",
@@ -122,7 +122,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/avatar-image.js",
+      "path": "benchmark/components/avatar-image.js",
       "declarations": [
         {
           "kind": "class",
@@ -239,7 +239,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/button-element.js",
+      "path": "benchmark/components/button-element.js",
       "declarations": [
         {
           "kind": "class",
@@ -340,7 +340,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/clipboard-copy.js",
+      "path": "benchmark/components/clipboard-copy.js",
       "declarations": [
         {
           "kind": "class",
@@ -440,7 +440,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/color-picker.js",
+      "path": "benchmark/components/color-picker.js",
       "declarations": [
         {
           "kind": "class",
@@ -528,7 +528,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/complex-types.js",
+      "path": "benchmark/components/complex-types.js",
       "declarations": [
         {
           "kind": "class",
@@ -548,7 +548,7 @@
                   {
                     "name": "User",
                     "package": "web-components-analyzers-benchmarks",
-                    "module": "src/components/complex-types.js",
+                    "module": "benchmark/components/complex-types.js",
                     "start": 0,
                     "end": 4
                   }
@@ -616,7 +616,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/dark-mode-toggle.js",
+      "path": "benchmark/components/dark-mode-toggle.js",
       "declarations": [
         {
           "kind": "class",
@@ -688,7 +688,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/dismiss-button.js",
+      "path": "benchmark/components/dismiss-button.js",
       "declarations": [
         {
           "kind": "class",
@@ -771,7 +771,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/emoji-picker.js",
+      "path": "benchmark/components/emoji-picker.js",
       "declarations": [
         {
           "kind": "class",
@@ -888,7 +888,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/expand-toggle.js",
+      "path": "benchmark/components/expand-toggle.js",
       "declarations": [
         {
           "kind": "class",
@@ -980,7 +980,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/expandable-panel.js",
+      "path": "benchmark/components/expandable-panel.js",
       "declarations": [
         {
           "kind": "class",
@@ -1042,7 +1042,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/field-label.js",
+      "path": "benchmark/components/field-label.js",
       "declarations": [
         {
           "kind": "class",
@@ -1133,7 +1133,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/file-uploader.js",
+      "path": "benchmark/components/file-uploader.js",
       "declarations": [
         {
           "kind": "class",
@@ -1229,7 +1229,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/icon-badge.js",
+      "path": "benchmark/components/icon-badge.js",
       "declarations": [
         {
           "kind": "class",
@@ -1320,7 +1320,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/image-gallery.js",
+      "path": "benchmark/components/image-gallery.js",
       "declarations": [
         {
           "kind": "class",
@@ -1409,7 +1409,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/inline-edit.js",
+      "path": "benchmark/components/inline-edit.js",
       "declarations": [
         {
           "kind": "class",
@@ -1554,7 +1554,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/keyboard-shortcut.js",
+      "path": "benchmark/components/keyboard-shortcut.js",
       "declarations": [
         {
           "kind": "class",
@@ -1663,7 +1663,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/load-spinner.js",
+      "path": "benchmark/components/load-spinner.js",
       "declarations": [
         {
           "kind": "class",
@@ -1764,7 +1764,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/markdown-viewer.js",
+      "path": "benchmark/components/markdown-viewer.js",
       "declarations": [
         {
           "kind": "class",
@@ -1826,7 +1826,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/message-bubble.js",
+      "path": "benchmark/components/message-bubble.js",
       "declarations": [
         {
           "kind": "class",
@@ -1917,7 +1917,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/multi-slot.js",
+      "path": "benchmark/components/multi-slot.js",
       "declarations": [
         {
           "kind": "class",
@@ -1970,7 +1970,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/no-decorator.js",
+      "path": "benchmark/components/no-decorator.js",
       "declarations": [
         {
           "kind": "class",
@@ -2023,7 +2023,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/notification-banner.js",
+      "path": "benchmark/components/notification-banner.js",
       "declarations": [
         {
           "kind": "class",
@@ -2094,7 +2094,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/progress-circle.js",
+      "path": "benchmark/components/progress-circle.js",
       "declarations": [
         {
           "kind": "class",
@@ -2185,7 +2185,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/range-slider.js",
+      "path": "benchmark/components/range-slider.js",
       "declarations": [
         {
           "kind": "class",
@@ -2291,7 +2291,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/resize-handle.js",
+      "path": "benchmark/components/resize-handle.js",
       "declarations": [
         {
           "kind": "class",
@@ -2364,7 +2364,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/search-bar.js",
+      "path": "benchmark/components/search-bar.js",
       "declarations": [
         {
           "kind": "class",
@@ -2452,7 +2452,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/section-header.js",
+      "path": "benchmark/components/section-header.js",
       "declarations": [
         {
           "kind": "class",
@@ -2534,7 +2534,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/skeleton-block.js",
+      "path": "benchmark/components/skeleton-block.js",
       "declarations": [
         {
           "kind": "class",
@@ -2607,7 +2607,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/split-pane.js",
+      "path": "benchmark/components/split-pane.js",
       "declarations": [
         {
           "kind": "class",
@@ -2669,7 +2669,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/star-rating.js",
+      "path": "benchmark/components/star-rating.js",
       "declarations": [
         {
           "kind": "class",
@@ -2749,7 +2749,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/step-progress.js",
+      "path": "benchmark/components/step-progress.js",
       "declarations": [
         {
           "kind": "class",
@@ -2848,7 +2848,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/tab-navigation.js",
+      "path": "benchmark/components/tab-navigation.js",
       "declarations": [
         {
           "kind": "class",
@@ -2937,7 +2937,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/tag-list.js",
+      "path": "benchmark/components/tag-list.js",
       "declarations": [
         {
           "kind": "class",
@@ -3055,7 +3055,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/text-ticker.js",
+      "path": "benchmark/components/text-ticker.js",
       "declarations": [
         {
           "kind": "class",
@@ -3136,7 +3136,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/theme-toggle.js",
+      "path": "benchmark/components/theme-toggle.js",
       "declarations": [
         {
           "kind": "class",
@@ -3236,11 +3236,11 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/timer-element.js"
+      "path": "benchmark/components/timer-element.js"
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/toast-stack.js",
+      "path": "benchmark/components/toast-stack.js",
       "declarations": [
         {
           "kind": "class",
@@ -3332,7 +3332,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/toggle-switch.js",
+      "path": "benchmark/components/toggle-switch.js",
       "declarations": [
         {
           "kind": "class",
@@ -3420,7 +3420,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/user-avatar.js",
+      "path": "benchmark/components/user-avatar.js",
       "declarations": [
         {
           "kind": "class",
@@ -3511,7 +3511,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/user-list.js",
+      "path": "benchmark/components/user-list.js",
       "declarations": [
         {
           "kind": "class",
@@ -3531,7 +3531,7 @@
                   {
                     "name": "User",
                     "package": "web-components-analyzers-benchmarks",
-                    "module": "src/components/user-list.js",
+                    "module": "benchmark/components/user-list.js",
                     "start": 0,
                     "end": 4
                   }
@@ -3582,7 +3582,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/visually-hidden.js",
+      "path": "benchmark/components/visually-hidden.js",
       "declarations": [
         {
           "kind": "class",
@@ -3655,7 +3655,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/components/with-inheritance.js",
+      "path": "benchmark/components/with-inheritance.js",
       "declarations": [
         {
           "kind": "class",
@@ -3683,7 +3683,7 @@
           "superclass": {
             "name": "BaseItem",
             "package": "web-components-analyzers-benchmarks",
-            "module": "src/components/with-inheritance.js"
+            "module": "benchmark/components/with-inheritance.js"
           },
           "members": [
             {
