@@ -43,7 +43,6 @@ Supports projects written with Lit`,
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
-		pterm.Error.Print(err)
 		os.Exit(1)
 	}
 }
