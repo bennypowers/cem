@@ -72,17 +72,10 @@
   <main>
     <article class="readme-content markdown-body">
       <h1>cem</h1>
-<p><strong>cem</strong> is a command-line tool for generating <a href="https://github.com/webcomponents/custom-elements-manifest">Custom Elements Manifest</a>
-(CEM) files from TypeScript sources. It analyzes your codebase and generates
+<p><strong>cem</strong> is a command-line tool for generating and querying
+<a href="https://github.com/webcomponents/custom-elements-manifest">Custom Elements Manifest</a> files. It can analyze your codebase and generate
 rich metadata for your custom elements, facilitating documentation, tooling, and
-integration.</p>
-<blockquote>
-<p>[!NOTE]
-<code>cem</code> best supports LitElements written in idiomatic style with
-TypeScript decorators. There is rudimentary support for <code>extends HTMLElement</code>,
-but it is not a high priority for development. If you need something more
-specific <a href="https://github.com/bennypowers/cem/issues/new">open an issue</a>.</p>
-</blockquote>
+integration. It can also query that manifest for information about your package</p>
 <h2>Installation</h2>
 <p>For go binaries:</p>
 <pre class="language-sh"><code class="language-sh">go <span class="token function">install</span> bennypowers.dev/cem@latest
@@ -137,6 +130,13 @@ specific <a href="https://github.com/bennypowers/cem/issues/new">open an issue</
 <li>Supports elements written in idiomatic Lit typescript style, with a
 <code>@customElement</code> decorator, and <code>@property</code> decorators on class fields.</li>
 </ul>
+<blockquote>
+<p>[!NOTE]
+<code>cem generate</code> best supports LitElements written in idiomatic style with
+TypeScript decorators. There is rudimentary support for <code>extends HTMLElement</code>,
+but it is not a high priority for development. If you need something more
+specific <a href="https://github.com/bennypowers/cem/issues/new">open an issue</a>.</p>
+</blockquote>
 <h4>JSDoc</h4>
 <p>Use JSDoc comments to add metadata to your element classes, similar to other
 tools. Add a description by separating the name of the item with <code>-</code></p>
@@ -269,29 +269,7 @@ repository structure and configuration.</p>
 </tr>
 </tbody>
 </table>
-<hr>
-<h2>Configuration Reference</h2>
-<p>You can configure CEM via <code>.config/cem.yaml</code>, relative to your project root,
-or via CLI flags.</p>
-<h3>Example Configuration</h3>
-<pre class="language-yaml"><code class="language-yaml"><span class="token key atrule">sourceControlRootUrl</span><span class="token punctuation">:</span> <span class="token string">"https://github.com/your/repo/tree/main/"</span>
-<span class="token key atrule">generate</span><span class="token punctuation">:</span>
-  <span class="token key atrule">files</span><span class="token punctuation">:</span>
-    <span class="token punctuation">-</span> <span class="token string">"src/**/*.ts"</span>
-  <span class="token key atrule">exclude</span><span class="token punctuation">:</span>
-    <span class="token punctuation">-</span> <span class="token string">"src/**/*.test.ts"</span>
-  <span class="token key atrule">output</span><span class="token punctuation">:</span> <span class="token string">"custom-elements.json"</span>
-  <span class="token key atrule">noDefaultExcludes</span><span class="token punctuation">:</span> <span class="token boolean important">false</span>
-  <span class="token key atrule">designTokens</span><span class="token punctuation">:</span>
-    <span class="token key atrule">spec</span><span class="token punctuation">:</span> <span class="token string">"npm:@my-ds/tokens/tokens.json"</span>
-    <span class="token key atrule">prefix</span><span class="token punctuation">:</span> <span class="token string">"--my-ds"</span>
-  <span class="token key atrule">demoDiscovery</span><span class="token punctuation">:</span>
-    <span class="token key atrule">fileGlob</span><span class="token punctuation">:</span> <span class="token string">"demos/**/*.html"</span>
-    <span class="token key atrule">urlPattern</span><span class="token punctuation">:</span> <span class="token string">"demos/(?P&lt;tag>[\w-]+)/(?P&lt;demo>[\w-]+).html"</span>
-    <span class="token key atrule">urlTemplate</span><span class="token punctuation">:</span> <span class="token string">"https://example.com/elements/{tag}/{demo}/"</span>
-</code></pre>
-<hr>
-<h2>Usage</h2>
+<h4>Usage</h4>
 <p>Generate a custom elements manifest from your files:</p>
 <pre class="language-sh"><code class="language-sh">cem generate <span class="token punctuation">\</span>
   <span class="token string">"src/**/*.ts"</span> <span class="token punctuation">\</span>
@@ -300,7 +278,7 @@ or via CLI flags.</p>
   <span class="token parameter variable">--output</span> custom-elements.json
 </code></pre>
 <p>For npm projects you can use <code>npx @pwrs/cem generate ...</code>.</p>
-<h3>Command Line Arguments</h3>
+<h5>Command Line Arguments</h5>
 <table>
 <thead>
 <tr>
@@ -369,6 +347,57 @@ or via CLI flags.</p>
 </table>
 <p>By default, some files (like <code>.d.ts</code> TypeScript declaration files) are excluded from the manifest.
 Use <code>--no-default-excludes</code> if you want to include all matching files and manage excludes yourself.</p>
+<hr>
+<h3><code>cem list</code></h3>
+<p>The <code>cem list</code> command provides a fast, flexible way to inspect custom elements, their features, and their metadata directly from your manifest file.
+With <code>cem list</code>, you can quickly explore and audit your custom elements API surface, making it easier to document, test, and share your components.</p>
+<h4>Available Subcommands</h4>
+<ul>
+<li><code>cem list tags</code> — Lists all custom element tag names in the project.</li>
+<li><code>cem list -t &lt;tag&gt; attrs</code> — Lists all attributes for a given custom element tag.</li>
+<li><code>cem list -t &lt;tag&gt; slots</code> — Lists all named and default slots for a tag.</li>
+<li><code>cem list -t &lt;tag&gt; events</code> — Lists all custom events fired by a tag, including their types and descriptions.</li>
+<li><code>cem list -t &lt;tag&gt; css-properties</code> — Lists CSS custom properties (CSS variables) for a tag.</li>
+<li><code>cem list -t &lt;tag&gt; css-states</code> — Lists CSS custom states for a tag.</li>
+<li><code>cem list -t &lt;tag&gt; css-parts</code> — Lists CSS shadow parts for a tag.</li>
+<li><code>cem list -t &lt;tag&gt; methods</code> — Lists methods for a tag's DOM object.</li>
+</ul>
+<h4>Column Filtering and Output</h4>
+<ul>
+<li>
+<p>Use the <code>--columns,-c</code> flag to specify which columns to include in the output, e.g.:</p>
+<pre class="language-sh"><code class="language-sh">cem list events my-element <span class="token parameter variable">-c</span> name <span class="token parameter variable">-c</span> summary <span class="token parameter variable">-c</span> <span class="token builtin class-name">type</span>
+cem list attrs my-element <span class="token parameter variable">-c</span> description <span class="token parameter variable">--columns</span> default
+</code></pre>
+</li>
+</ul>
+<p>Note that the name column is always included, and that if a column is specified but contains only empty values for all rows, it is automatically omitted from the output for clarity.</p>
+<h4>Output Formats</h4>
+<ul>
+<li>By default, tables are shown in a human-readable table format.</li>
+<li>[ ] TODO: json, markdown, flat lists, etc</li>
+</ul>
+<h2>Configuration Reference</h2>
+<p>You can configure CEM via <code>.config/cem.yaml</code>, relative to your project root,
+or via CLI flags.</p>
+<h3>Example Configuration</h3>
+<pre class="language-yaml"><code class="language-yaml"><span class="token key atrule">sourceControlRootUrl</span><span class="token punctuation">:</span> <span class="token string">"https://github.com/your/repo/tree/main/"</span>
+<span class="token key atrule">generate</span><span class="token punctuation">:</span>
+  <span class="token key atrule">files</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> <span class="token string">"src/**/*.ts"</span>
+  <span class="token key atrule">exclude</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> <span class="token string">"src/**/*.test.ts"</span>
+  <span class="token key atrule">output</span><span class="token punctuation">:</span> <span class="token string">"custom-elements.json"</span>
+  <span class="token key atrule">noDefaultExcludes</span><span class="token punctuation">:</span> <span class="token boolean important">false</span>
+  <span class="token key atrule">designTokens</span><span class="token punctuation">:</span>
+    <span class="token key atrule">spec</span><span class="token punctuation">:</span> <span class="token string">"npm:@my-ds/tokens/tokens.json"</span>
+    <span class="token key atrule">prefix</span><span class="token punctuation">:</span> <span class="token string">"--my-ds"</span>
+  <span class="token key atrule">demoDiscovery</span><span class="token punctuation">:</span>
+    <span class="token key atrule">fileGlob</span><span class="token punctuation">:</span> <span class="token string">"demos/**/*.html"</span>
+    <span class="token key atrule">urlPattern</span><span class="token punctuation">:</span> <span class="token string">"demos/(?P&lt;tag>[\w-]+)/(?P&lt;demo>[\w-]+).html"</span>
+    <span class="token key atrule">urlTemplate</span><span class="token punctuation">:</span> <span class="token string">"https://example.com/elements/{tag}/{demo}/"</span>
+</code></pre>
+<hr>
 <h2>Contributing</h2>
 <p>For information on building and testing, please see
 <a href="./CONTRIBUTING.md">CONTRIBUTING.md</a>.</p>
