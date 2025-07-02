@@ -2,15 +2,17 @@ cem
 __debug*
 *.out
 *.test
-benchmark-results.json
 dist
+docs/resources
 
 platforms/**/package.json
 
+docs/data/benchmarks.json
+docs/assets/*-last-output.md
 docs/node_modules
 docs/*-result.json
 docs/*-bench.txt
 docs/*-stdout.txt
 docs/custom-elements.json
-docs/site
+docs/public
 docs/**/custom-elements.json

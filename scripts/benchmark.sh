@@ -149,7 +149,7 @@ for i in "${!ids[@]}"; do
       lastError: $lastError
     }' >> "$results_tmp"
 
-  output_file="site/$id-last-output.md"
+  output_file="docs/assets/$id-last-output.md"
   echo "\`\`\`json" > "$output_file"
   echo "$lastOutput" >> "$output_file"
   echo "\`\`\`" >> "$output_file"

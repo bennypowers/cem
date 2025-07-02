@@ -19,14 +19,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
-      - run: make build
+      - uses: peaceiris/actions-hugo@v2
+        with:
+          hugo-version: 'latest'
+          extended: true
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
+
+      - run: make build
+      - run: hugo --source docs --minify
       - run: ./scripts/benchmark.sh ${{ github.event.inputs.runs || 100 }}
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs/site
+          publish_dir: docs/public
           publish_branch: gh-pages

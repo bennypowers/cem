@@ -28,7 +28,7 @@ jobs:
       - name: Run benchmarks on PR
         id: bench-pr
         run: |
-          mkdir -p docs/site
+          mkdir -p docs/data
           start=$(date +%s.%N)
           if ! make bench > pr_bench.txt 2>&1; then
             cat pr_bench.txt
@@ -39,7 +39,7 @@ jobs:
           end=$(date +%s.%N)
           awk "BEGIN {print $end - $start}" > pr_bench_time.txt
           # Copy output JSON so it doesn't get overwritten
-          cp docs/site/benchmark-last-output.json pr_bench.json
+          cp docs/data/benchmark-last-output.json pr_bench.json
 
       - name: Checkout target branch (base)
         run: |
@@ -57,7 +57,7 @@ jobs:
           fi
           end=$(date +%s.%N)
           awk "BEGIN {print $end - $start}" > base_bench_time.txt
-          cp docs/site/benchmark-last-output.json base_bench.json
+          cp docs/data/benchmark-last-output.json base_bench.json
 
       - name: Checkout PR branch (base)
         run: |
