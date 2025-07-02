@@ -1,5 +1,5 @@
 {
-  "include": ["src/components/*.ts"],
+  "include": ["benchmark/components/*.ts"],
   "exclude": [
     "**/node_modules/**/*",
   ],

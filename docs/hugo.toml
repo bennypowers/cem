@@ -1,0 +1,33 @@
+baseURL = "https://bennypowers.github.io/cem"
+languageCode = 'en-us'
+title = 'cem'
+enableRobotsTXT = true
+# this example loads the theme as hugo module
+# comment out line below, and uncomment the line after it if you prefer to load the theme normally
+theme = [
+  "github.com/onweru/compose",
+] # edit this if you'ld rather use a fork of this repo
+# theme = "compose"
+enableGitInfo = true
+
+[pagination]
+disableAliases = false
+pagerSize = 10
+path = 'page'
+
+# disableKinds = ["taxonomy"]
+
+[outputs]
+home = ["HTML", "RSS", "JSON"]
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+[module]
+  [[module.mounts]]
+    source = "../README.md"
+    target = "assets/README.md"
+  [[module.mounts]]
+    source = "../CONTRIBUTING.md"
+    target = "assets/CONTRIBUTING.md"
+

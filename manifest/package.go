@@ -64,6 +64,10 @@ func loadPackageJson(path string) (*PackageJSON, error) {
 // package path as it would be used in an import.
 // The returned path is always without a leading './'.
 func ResolveExportPath(packageJsonPath string, relFilePath string) (string, error) {
+	if _, err := os.Stat(packageJsonPath); errors.Is(err, os.ErrNotExist) {
+		return relFilePath, nil
+	}
+
 	pkg, err := loadPackageJson(packageJsonPath)
 	if err != nil {
 		return "", err

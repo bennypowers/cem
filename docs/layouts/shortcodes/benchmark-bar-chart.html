@@ -1,0 +1,39 @@
+{{- $results := .Site.Data.benchmarks.results | default (slice) -}}
+{{- $max := 0.0 -}}
+
+{{- if and $results (gt (len $results) 0) -}}
+  {{- range $results }}
+    {{- if gt .averageTime $max }}
+      {{- $max = .averageTime }}
+    {{- end }}
+  {{- end }}
+
+  <bar-chart id="perf-bar-chart">
+    <svg width="100%" height="{{ add (mul (len $results) 44) 40 }}">
+      {{- range $i, $result := $results }}
+        {{- $bar_length := div (mul 480 $result.averageTime) $max }}
+        <rect x="120"
+              y="{{ add (mul $i 44) 12 }}"
+              height="32"
+              rx="4"
+              width="{{ $bar_length }}"
+              fill="{{ or $result.color "#4e79a7" }}">
+          <title>{{ $result.tool }}: {{ $result.averageTime }}</title>
+        </rect>
+        <text x="8"
+              y="{{ add (mul $i 44) 32 }}"
+              font-size="16"
+              fill="currentColor">{{ $result.name }}</text>
+        <text x="{{ add 130 $bar_length }}"
+              y="{{ add (mul $i 44) 32 }}"
+              font-size="16"
+              fill="currentColor">{{ $result.averageTime }}</text>
+      {{- end }}
+    </svg>
+  </bar-chart>
+  <script type="module" src="{{ "bar-chart.js" | relURL }}"></script>
+{{- else }}
+  <div class="bar-chart-placeholder">
+    <em>No benchmark results found.</em>
+  </div>
+{{- end }}
