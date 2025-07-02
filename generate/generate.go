@@ -1,8 +1,25 @@
+/*
+Copyright © 2025 Benny Powers
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
 package generate
 
 import (
 	"cmp"
 	"errors"
+	"path/filepath"
 	"runtime"
 	"slices"
 	"sync"
@@ -96,6 +113,7 @@ func process(
 	}
 	close(jobsChan)
 
+
 	wg.Add(numWorkers)
 	for range numWorkers {
 		go func() {
@@ -171,11 +189,24 @@ func postprocess(
 		errsList = append(errsList, err)
 	}
 
+	packageJsonDir := cfg.ProjectDir
+	if packageJsonDir == "" {
+		packageJsonDir = filepath.Join(cfg.ConfigFile, "../")
+	}
+	packageJsonPath := filepath.Join(packageJsonDir, "package.json")
+
 	// Because demo discovery and design tokens may mutate modules, we need to coordinate by pointer
 	for i := range modules {
 		wg.Add(1)
 		go func(module *M.Module) {
 			defer wg.Done()
+
+			resolvedPath, err := M.ResolveExportPath(packageJsonPath, module.Path)
+			if err != nil {
+				pterm.Error.Println(err)
+			} else {
+				module.Path = resolvedPath
+			}
 			if result.designTokens != nil {
 				DT.MergeDesignTokensToModule(module, *result.designTokens)
 			}
