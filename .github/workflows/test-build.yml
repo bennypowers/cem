@@ -70,8 +70,7 @@ jobs:
         run: |
           make windows-arm64
           mkdir -p dist/windows-arm64
-          tree dist
-          cp dist/*.exe dist/windows-arm64/
+          cp dist/*.exe dist/windows-arm64/cem.exe
         env:
           CGO_CFLAGS: -Wno-dll-attribute-on-redeclaration
 
