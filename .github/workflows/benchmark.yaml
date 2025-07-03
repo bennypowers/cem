@@ -25,10 +25,10 @@ jobs:
       - name: Install tparse
         run: go install github.com/mfridman/tparse@latest
 
-      - name: Prewarm benchmarks
+      - name: Prewarm benchmarks on PR branch
         run: make bench
 
-      - name: Run benchmarks on PR
+      - name: Run benchmarks on PR branch
         id: bench-pr
         run: |
           mkdir -p docs/data
@@ -48,6 +48,9 @@ jobs:
         run: |
           git fetch origin ${{ github.base_ref }} --depth=1
           git checkout ${{ github.base_ref }}
+
+      - name: Prewarm benchmarks on base branch
+        run: make bench
 
       - name: Run benchmarks on base branch
         id: bench-base
