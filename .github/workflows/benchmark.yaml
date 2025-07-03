@@ -25,6 +25,9 @@ jobs:
       - name: Install tparse
         run: go install github.com/mfridman/tparse@latest
 
+      - name: Prewarm benchmarks
+        run: make bench
+
       - name: Run benchmarks on PR
         id: bench-pr
         run: |
