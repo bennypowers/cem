@@ -201,6 +201,7 @@ With `cem list`, you can quickly explore and audit your custom elements API surf
 #### Available Subcommands
 
 - `cem list tags` — Lists all custom element tag names in the project.
+- `cem list modules` — Lists all module paths in the project.
 - `cem list -t <tag> attrs` — Lists all attributes for a given custom element tag.
 - `cem list -t <tag> slots` — Lists all named and default slots for a tag.
 - `cem list -t <tag> events` — Lists all custom events fired by a tag, including their types and descriptions.
