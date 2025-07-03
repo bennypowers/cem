@@ -58,7 +58,10 @@ jobs:
 
       - name: Build with special toolchain for windows/arm
         if: ${{ (matrix.goos == 'windows' && matrix.goarch == 'arm64') }}
-        run: make windows-arm64
+        run: |
+          make windows-arm64
+          mkdir -p dist/windows-arm64
+          cp dist/*.exe dist/windows-arm64/
         env:
           CGO_CFLAGS: -Wno-dll-attribute-on-redeclaration
 
