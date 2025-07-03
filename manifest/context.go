@@ -20,6 +20,7 @@ import (
 	"errors"
 	"slices"
 	"strconv"
+	"strings"
 )
 
 func (x *Package) GetAllTagNames() (tags []string) {
@@ -38,6 +39,22 @@ func (x *Package) GetAllTagNames() (tags []string) {
 
 type RenderableMemberWithContext interface {
 	ToTableRow() []string
+}
+
+type ModuleWithContext struct {
+	Path                     string
+	Module                   *Module
+	CustomElementExports     []CustomElementExport
+}
+func (x ModuleWithContext) ToTableRow() []string {
+	tags := make([]string, 0)
+	for _, cee := range x.CustomElementExports {
+		tags = append(tags, cee.Name)
+	}
+	return []string{
+		x.Path,
+		strings.Join(tags, ", "),
+	}
 }
 
 type CustomElementWithContext struct {
@@ -220,6 +237,29 @@ func (m MethodWithContext) ToTableRow() []string {
 		strconv.FormatBool(m.Method.Static),
 		m.Method.Summary,
 	}
+}
+
+// GetAllModulesWithContext returns a slice of ModuleWithContext for all modules.
+func (x *Package) GetAllModulesWithContext() (modules []ModuleWithContext) {
+	ms := make(map[string]ModuleWithContext)
+	for i := range x.Modules {
+		module := &x.Modules[i]
+		ms[module.Path] = ModuleWithContext{Path: module.Path, Module: module}
+		for _, e := range module.Exports {
+			if cee, ok := e.(*CustomElementExport); ok {
+				c := ms[module.Path]
+				c.CustomElementExports = append(ms[module.Path].CustomElementExports, *cee)
+				ms[module.Path] = c
+			}
+		}
+	}
+	for _, m := range ms {
+		modules = append(modules, m)
+	}
+	slices.SortStableFunc(modules, func(a ModuleWithContext, b ModuleWithContext) int {
+		return strings.Compare(a.Path, b.Path)
+	})
+	return modules
 }
 
 // GetAllTagNamesWithContext returns a slice of CustomElementWithContext for all custom elements in all modules.

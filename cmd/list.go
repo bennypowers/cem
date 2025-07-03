@@ -346,7 +346,7 @@ Example:
 			return err
 		}
 		tags := pkg.GetAllTagNamesWithContext()
-		format, err := cmd.Flags().GetString("format")
+		format, err := requireFormat(cmd)
 		if err != nil {
 			return err
 		}
@@ -365,6 +365,45 @@ Example:
 	},
 }
 
+var listModulesCmd = &cobra.Command{
+	Use:   "modules",
+	Aliases: []string{"files"},
+	Short: "List modules (javascript files) in the custom elements manifest",
+	Long: `Lists all modules
+
+This command outputs a table with module path names and the custom elements they register, if any.
+Allows you to quickly see which modules are available and whether they are pure.
+
+Example:
+
+  cem list modules
+  cem list modules --format table --columns Name
+`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		pkg, err := readPkg()
+		if err != nil {
+			return err
+		}
+		tags := pkg.GetAllModulesWithContext()
+		format, err := requireFormat(cmd)
+		if err != nil {
+			return err
+		}
+		columns, err := cmd.Flags().GetStringArray("columns")
+		if err != nil {
+			return err
+		}
+		switch format {
+		case "table":
+			headers := []string{"Name", "Custom Elements"}
+			rows := list.MapToTableRows(tags)
+			title := "Modules"
+			return list.RenderTable(title, headers, rows, columns)
+		}
+		return nil
+	},
+}
+
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List items in the custom elements manifest like tag names, attributes, functions, etc",
@@ -376,6 +415,7 @@ Use the available subcommands to explore your project's custom elements, their a
 Examples:
 
   cem list tags
+  cem list modules
   cem list attributes --tag-name my-button
   cem list slots --tag-name my-button
   cem list css-custom-properties --tag-name my-button
@@ -388,8 +428,10 @@ Examples:
 
 func init() {
 	listCmd.AddCommand(listTagsCmd)
+	listCmd.AddCommand(listModulesCmd)
 	listCmd.PersistentFlags().StringP("format", "f", "table", "Output format")
 	listTagsCmd.Flags().StringArrayP("columns", "c", []string{}, "list of columns to display in the table")
+	listModulesCmd.Flags().StringArrayP("columns", "c", []string{}, "list of columns to display in the table")
 	for _, c := range []*cobra.Command{
 		listAttrsCmd,
 		listSlotsCmd,
