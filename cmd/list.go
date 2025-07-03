@@ -371,8 +371,8 @@ var listModulesCmd = &cobra.Command{
 	Short: "List modules (javascript files) in the custom elements manifest",
 	Long: `Lists all modules
 
-This command outputs a table with module path names and the custom elements the register, if any.
-custom-element registration. Allows you to quickly see which modules are available and whether they are pure.
+This command outputs a table with module path names and the custom elements they register, if any.
+Allows you to quickly see which modules are available and whether they are pure.
 
 Example:
 

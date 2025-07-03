@@ -239,7 +239,7 @@ func (m MethodWithContext) ToTableRow() []string {
 	}
 }
 
-// GetAllTModulesWithContext returns a slice of JavascriptModuleWithContext for all modules.
+// GetAllModulesWithContext returns a slice of ModuleWithContext for all modules.
 func (x *Package) GetAllModulesWithContext() (modules []ModuleWithContext) {
 	ms := make(map[string]ModuleWithContext)
 	for i := range x.Modules {

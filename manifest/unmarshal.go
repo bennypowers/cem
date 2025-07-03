@@ -144,7 +144,7 @@ func UnmarshalPackage(data []byte) (*Package, error) {
 				if err := json.Unmarshal(exportData, &e); err == nil {
 					exports = append(exports, &e)
 				} else {
-					log.Printf("Failed to unmarshal js export: %v", err)
+					log.Printf("Failed to unmarshal custom element export: %v", err)
 				}
 			default:
 				// fallback: skip unknown kind
