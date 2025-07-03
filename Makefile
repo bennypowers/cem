@@ -1,24 +1,41 @@
 SHELL := /bin/bash
+WINDOWS_CC_IMAGE := cem-windows-cc-image
 
-.PHONY: build test update watch bench profile flamegraph coverage clean lint format prepare-npm install-bindings windows windows-x64 windows-arm64
+.PHONY: build test update watch bench profile flamegraph coverage clean lint format prepare-npm install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image
+
+all: windows
+
+clean:
+	rm -rf dist/ cpu.out cover.out artifacts platforms
 
 build:
 	go build -o dist/cem .
 
-windows-x64:
-	mkdir -p dist/windows-x64
-	podman build -t cem-windows-x64 --build-arg OUTPUT=dist/windows-x64 .
-
-windows-arm64:
-	echo "Note: windows-arm64 builds are not yet supported. Generating a stub script instead"
-	echo '#!/usr/bin/env node\nconsole.error("cem does not yet support Windows on ARM64. Please use x64 or another operating system.");process.exit(1);' > cem.exe
-	chmod +x cem.exe
-	mkdir -p dist/cem-win32-arm64
-	mv cem.exe dist/cem-win32-arm64/
-
 # Convenience target to build both Windows variants
 windows: windows-x64 windows-arm64
 
+# Build the Podman image only if it doesn't exist
+build-windows-cc-image:
+	@if ! podman image exists $(WINDOWS_CC_IMAGE); then \
+		echo "Building image..."; \
+		podman build -t $(WINDOWS_CC_IMAGE) . ; \
+	else \
+		echo "Image $(WINDOWS_CC_IMAGE) already exists, skipping build."; \
+	fi
+
+# Force rebuild of the image
+rebuild-windows-cc-image:
+	podman build --no-cache -t $(WINDOWS_CC_IMAGE) .
+
+windows-x64: build-windows-cc-image
+	mkdir -p dist
+	podman run --rm -v $(PWD):/app:Z -w /app -e GOARCH=amd64 $(WINDOWS_CC_IMAGE)
+
+windows-arm64: build-windows-cc-image
+	mkdir -p dist
+	podman run --rm -v $(PWD):/app:Z -w /app -e GOARCH=arm64 $(WINDOWS_CC_IMAGE)
+
+## Test, lint, etc
 install-bindings:
 	go generate ./...
 
@@ -51,6 +68,3 @@ flamegraph: profile
 
 coverage:
 	go test -coverprofile=cover.out
-
-clean:
-	rm -rf dist/ cpu.out cover.out artifacts platforms

@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"maps"
 	"os"
-	"path"
+	"path/filepath"
 	"slices"
 	"strings"
 	"time"
@@ -296,14 +296,18 @@ func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsM
 			for _, binding := range bindings {
 				spec, ok := mp.styleImportsBindingToSpecMap[binding.Text]
 				if ok && strings.HasPrefix(spec, ".") {
-					absPath := path.Join(path.Dir(mp.module.Path), spec)
+					moduleDir := filepath.Dir(mp.module.Path)
+					absPath := filepath.Join(moduleDir, spec)
 					// Try cache first
 					if cached, found := cssParseCache.Get(absPath); found {
 						maps.Copy(props, cached)
 					} else {
 						content, err := os.ReadFile(absPath)
 						if err != nil {
-							errs = errors.Join(errs, errors.New(fmt.Sprintf("Could not read tokens spec %s", spec)), err)
+							errs = errors.Join(errs, fmt.Errorf(`Could not open css file
+	imported as %s
+	at path %s
+	from module directory %s: %w`, spec, absPath, moduleDir, err))
 						} else {
 							tmpProps := make(CssPropsMap)
 							err := amendStylesMapFromSource(tmpProps, mp.queryManager, qm, parser, content)
