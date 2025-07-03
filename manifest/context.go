@@ -242,13 +242,14 @@ func (m MethodWithContext) ToTableRow() []string {
 // GetAllTModulesWithContext returns a slice of JavascriptModuleWithContext for all modules.
 func (x *Package) GetAllModulesWithContext() (modules []ModuleWithContext) {
 	ms := make(map[string]ModuleWithContext)
-	for _, m := range x.Modules {
-		ms[m.Path] = ModuleWithContext{Path: m.Path, Module: &m}
-		for _, e := range m.Exports {
+	for i := range x.Modules {
+		module := &x.Modules[i]
+		ms[module.Path] = ModuleWithContext{Path: module.Path, Module: module}
+		for _, e := range module.Exports {
 			if cee, ok := e.(*CustomElementExport); ok {
-				c := ms[m.Path]
-				c.CustomElementExports = append(ms[m.Path].CustomElementExports, *cee)
-				ms[m.Path] = c
+				c := ms[module.Path]
+				c.CustomElementExports = append(ms[module.Path].CustomElementExports, *cee)
+				ms[module.Path] = c
 			}
 		}
 	}

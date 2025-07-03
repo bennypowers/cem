@@ -346,7 +346,7 @@ Example:
 			return err
 		}
 		tags := pkg.GetAllTagNamesWithContext()
-		format, err := cmd.Flags().GetString("format")
+		format, err := requireFormat(cmd)
 		if err != nil {
 			return err
 		}
@@ -385,7 +385,7 @@ Example:
 			return err
 		}
 		tags := pkg.GetAllModulesWithContext()
-		format, err := cmd.Flags().GetString("format")
+		format, err := requireFormat(cmd)
 		if err != nil {
 			return err
 		}
