@@ -50,6 +50,15 @@ jobs:
         with:
           go-version: '1.24.x'
 
+      - name: Install tree
+        run: |
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            sudo apt-get update
+            sudo apt-get install -y tree
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            brew install tree
+          fi
+
       - name: Install cross-compilers for CGO (Linux/Windows only)
         if: runner.os == 'Linux'
         run: |
@@ -61,6 +70,7 @@ jobs:
         run: |
           make windows-arm64
           mkdir -p dist/windows-arm64
+          tree dist
           cp dist/*.exe dist/windows-arm64/
         env:
           CGO_CFLAGS: -Wno-dll-attribute-on-redeclaration
@@ -78,19 +88,11 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           CC: ${{ matrix.cc }}
 
-      - name: Install tree
-        run: |
-          if [[ "$RUNNER_OS" == "Linux" ]]; then
-            sudo apt-get update
-            sudo apt-get install -y tree
-          elif [[ "$RUNNER_OS" == "macOS" ]]; then
-            brew install tree
-          fi
-
       - name: Prepare npm platform package (dry run)
         run: |
           mkdir -p platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}
           mkdir -p dist
+          tree dist || true
           cp dist/*/cem${{ matrix.goos == 'windows' && '.exe' || '' }} platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}/
           node scripts/gen-platform-package-jsons.js
           tree dist || true
