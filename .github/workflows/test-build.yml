@@ -69,9 +69,17 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           CC: ${{ matrix.cc }}
 
+      # We have a windows arm cross compiler image which does successfully output a binary
+      # build it with "make windows"
+      # If you need it, test it then open a PR to add it to the goreleaser/gh-actions build
       - name: Fake windows / arm build
         if: ${{ (matrix.goos == 'windows' && matrix.goarch == 'arm64') }}
-        run: make windows-arm64
+        run: |
+          echo "Note: windows-arm64 builds are not yet supported. Generating a stub script instead"
+          echo '#!/usr/bin/env node\nconsole.error("cem does not yet support Windows on ARM64. Please use x64 or another operating system.");process.exit(1);' > cem.exe
+          chmod +x cem.exe
+          mkdir -p dist/cem-windows-arm64
+          mv cem.exe dist/cem-windows-arm64/cem.exe
 
       - name: Install tree
         run: |
