@@ -20,6 +20,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -50,18 +51,15 @@ func requireTagName(cmd *cobra.Command) (string, error) {
 	return tagName, nil
 }
 
-func requireFormat(cmd *cobra.Command) (string, error) {
+func requireFormat(cmd *cobra.Command, supportedFormats []string) (string, error) {
 	format, err := cmd.Flags().GetString("format")
 	if err != nil {
 		return "", err
 	}
-	switch format {
-	case "table":
+	if slices.Contains(supportedFormats, format) {
 		return format, nil
-	// Add more supported formats here as the CLI grows
-	default:
-		return "", errors.New("unknown format: " + format)
 	}
+	return "", errors.New("unknown format: " + format)
 }
 
 func readPkg() (*M.Package, error) {
@@ -94,7 +92,7 @@ func validateTagCommandFlags(cmd *cobra.Command) (tagName string, format string,
 	if err != nil {
 		return "", "", nil, nil, err
 	}
-	format, err = requireFormat(cmd)
+	format, err = requireFormat(cmd, []string{"table"})
 	if err != nil {
 		return "", "", nil, nil, err
 	}
@@ -346,7 +344,7 @@ Example:
 			return err
 		}
 		tags := pkg.GetAllTagNamesWithContext()
-		format, err := requireFormat(cmd)
+		format, err := requireFormat(cmd, []string{"table"})
 		if err != nil {
 			return err
 		}
@@ -385,7 +383,7 @@ Example:
 			return err
 		}
 		tags := pkg.GetAllModulesWithContext()
-		format, err := requireFormat(cmd)
+		format, err := requireFormat(cmd, []string{"table"})
 		if err != nil {
 			return err
 		}
@@ -399,6 +397,35 @@ Example:
 			rows := list.MapToTableRows(tags)
 			title := "Modules"
 			return list.RenderTable(title, headers, rows, columns)
+		}
+		return nil
+	},
+}
+
+var listDeprecationsCmd = &cobra.Command{
+	Use:   "deprecations",
+	Aliases: []string{"deprecated"},
+	Short: "List all deprecations in the custom elements manifest",
+	Long: `Lists all deprecations
+
+This command outputs a tree with module path names, exported declarations,
+custom elements and their APIs, if they are deprecated.
+Allows you to quickly see which features in your manifest should not be used.
+
+Example:
+
+  cem list deprecations
+`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		pkg, err := readPkg()
+		if err != nil { return err }
+		manifest := pkg.GetAllDeprecationsWithContext()
+		format, err := requireFormat(cmd, []string{"tree"})
+		if err != nil { return err }
+		switch format {
+		case "tree":
+			title := "Deprecations"
+			return list.RenderTree(title, M.FilterPackage(manifest, M.IsDeprecated))
 		}
 		return nil
 	},
@@ -429,6 +456,7 @@ Examples:
 func init() {
 	listCmd.AddCommand(listTagsCmd)
 	listCmd.AddCommand(listModulesCmd)
+	listCmd.AddCommand(listDeprecationsCmd)
 	listCmd.PersistentFlags().StringP("format", "f", "table", "Output format")
 	listTagsCmd.Flags().StringArrayP("columns", "c", []string{}, "list of columns to display in the table")
 	listModulesCmd.Flags().StringArrayP("columns", "c", []string{}, "list of columns to display in the table")

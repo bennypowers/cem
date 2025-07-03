@@ -28,8 +28,16 @@ import (
 	"slices"
 )
 
+func ToRenderableSlice[T M.Renderable](items []T) []M.Renderable {
+	renderables := make([]M.Renderable, len(items))
+	for i := range items {
+		renderables[i] = items[i]
+	}
+	return renderables
+}
+
 // MapToTableRows maps a slice of RenderableMemberWithContext to [][]string.
-func MapToTableRows[T M.RenderableMemberWithContext](items []T) [][]string {
+func MapToTableRows[T M.Renderable](items []T) [][]string {
 	rows := make([][]string, 0, len(items))
 	for _, item := range items {
 		rows = append(rows, item.ToTableRow())

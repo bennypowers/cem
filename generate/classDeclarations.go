@@ -238,7 +238,7 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 	}
 
 	declaration.CustomElement.Attributes = A.Chain(func(member M.ClassMember) []M.Attribute {
-		field, ok := (member).(M.CustomElementField)
+		field, ok := (member).(*M.CustomElementField)
 		if ok && field.Attribute != "" {
 			return []M.Attribute{{
 				Name:        field.Attribute,
