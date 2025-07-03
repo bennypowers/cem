@@ -139,7 +139,13 @@ func UnmarshalPackage(data []byte) (*Package, error) {
 				} else {
 					log.Printf("Failed to unmarshal js export: %v", err)
 				}
-			// handle other export kinds as needed
+			case "custom-element-definition":
+				var e CustomElementExport
+				if err := json.Unmarshal(exportData, &e); err == nil {
+					exports = append(exports, &e)
+				} else {
+					log.Printf("Failed to unmarshal js export: %v", err)
+				}
 			default:
 				// fallback: skip unknown kind
 			}
