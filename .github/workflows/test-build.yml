@@ -59,6 +59,8 @@ jobs:
       - name: Build with special toolchain for windows/arm
         if: ${{ (matrix.goos == 'windows' && matrix.goarch == 'arm64') }}
         run: make windows-arm64
+        env:
+          CGO_CFLAGS: -Wno-dll-attribute-on-redeclaration
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
