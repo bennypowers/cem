@@ -7,7 +7,6 @@ import (
 	"iter"
 	"log"
 	"path"
-	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
@@ -164,6 +163,8 @@ func NewQueryManager() (*QueryManager, error) {
 	for _, direntry := range data {
 		if direntry.IsDir() {
 			language := direntry.Name()
+			// embeds must always use /, never \
+			// so we need to use path.Join here, never filepath.Join
 			data, err := queries.ReadDir(path.Join(".", language))
 			if err != nil {
 				log.Fatal(err) // it's ok to die here because these queries are compiled in via embed
@@ -171,8 +172,10 @@ func NewQueryManager() (*QueryManager, error) {
 			for _, entry := range data {
 				if !entry.IsDir() {
 					file := entry.Name()
-					queryName := strings.Split(filepath.Base(file), ".")[0]
-					data, err := queries.ReadFile(filepath.Join(".", language, file))
+					queryName := strings.Split(path.Base(file), ".")[0]
+					// embeds must always use /, never \
+					// so we need to use path.Join here, never filepath.Join
+					data, err := queries.ReadFile(path.Join(".", language, file))
 					if err != nil {
 						log.Fatal(err) // it's ok to die here because these queries are compiled in via embed
 					}
