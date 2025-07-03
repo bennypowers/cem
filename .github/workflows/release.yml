@@ -74,9 +74,14 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           CC: ${{ matrix.cc }}
 
-      - name: Fake windows / arm build
+      - name: Build with special toolchain for windows/arm
         if: ${{ (matrix.goos == 'windows' && matrix.goarch == 'arm64') }}
-        run: make windows-arm64
+        run: |
+          make windows-arm64
+          mkdir -p dist/windows-arm64
+          cp dist/*.exe dist/windows-arm64/cem.exe
+        env:
+          CGO_CFLAGS: -Wno-dll-attribute-on-redeclaration
 
       - name: Prepare npm platform package
         run: |
@@ -85,10 +90,9 @@ jobs:
           node scripts/gen-platform-package-jsons.js
           cp README.md platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}/README.md
 
-      - name: Set up Node.js for npm publish
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: .nvmrc
           registry-url: 'https://registry.npmjs.org'
 
       - name: Set up Git identity
@@ -154,10 +158,9 @@ jobs:
     needs: release
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Node.js for npm publish
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: .nvmrc
           registry-url: 'https://registry.npmjs.org'
 
       - name: Prepare npm package

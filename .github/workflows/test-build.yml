@@ -97,10 +97,9 @@ jobs:
           tree dist || true
           tree platforms || true
 
-      - name: Set up Node.js for package validation
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: .nvmrc
 
       - name: Validate npm package (dry run)
         run: |
