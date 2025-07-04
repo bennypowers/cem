@@ -158,6 +158,16 @@ func unmarshalDeclaration(data []byte) (Declaration, error) {
 	}
 	switch kindWrap.Kind {
 	case "class":
+		// Check if customElement is true; if so, dispatch to unmarshalCustomElementDeclaration
+		var probe struct {
+			CustomElement bool `json:"customElement"`
+		}
+		if err := json.Unmarshal(data, &probe); err != nil {
+			return nil, err
+		}
+		if probe.CustomElement {
+			return unmarshalCustomElementDeclaration(data)
+		}
 		return unmarshalClassDeclaration(data)
 	case "mixin":
 		return unmarshalMixinDeclaration(data)
@@ -170,8 +180,6 @@ func unmarshalDeclaration(data []byte) (Declaration, error) {
 		} else {
 			return nil, err
 		}
-	case "custom-element":
-		return unmarshalCustomElementDeclaration(data)
 	case "custom-element-mixin":
 		return unmarshalCustomElementMixinDeclaration(data)
 	default:

@@ -95,9 +95,10 @@ func TestUnmarshalPackage_CustomElement_BasicFields(t *testing.T) {
       "path": "src/rh-card.js",
       "declarations": [
         {
-          "kind": "custom-element",
+          "kind": "class",
           "name": "RhCard",
           "tagName": "rh-card"
+          "customElement": true
         }
       ]
     }
@@ -137,7 +138,8 @@ func TestUnmarshalPackage_CustomElement_MemberWithAttributeYieldsCustomElementFi
       "path": "src/dialog.js",
       "declarations": [
         {
-          "kind": "custom-element",
+          "kind": "class",
+	        "customElement": true,
           "name": "RhDialog",
           "tagName": "rh-dialog",
           "members": [
@@ -164,6 +166,12 @@ func TestUnmarshalPackage_CustomElement_MemberWithAttributeYieldsCustomElementFi
 	pkg, err := UnmarshalPackage(manifestJSON)
 	if err != nil {
 		t.Fatalf("UnmarshalPackage failed: %v", err)
+	}
+	if len(pkg.Modules) == 0 {
+		t.Fatalf("No modules found in the package")
+	}
+	if len(pkg.Modules[0].Declarations) == 0 {
+		t.Fatalf("No declarations found in the first module")
 	}
 	ce := pkg.Modules[0].Declarations[0].(*CustomElementDeclaration)
 	if len(ce.Members) != 2 {
@@ -195,7 +203,8 @@ func TestUnmarshalPackage_CustomElement_Attributes(t *testing.T) {
       "path": "src/rh-card.js",
       "declarations": [
         {
-          "kind": "custom-element",
+          "kind": "class",
+          "customElement": true,
           "name": "RhCard",
           "tagName": "rh-card",
           "attributes": [
@@ -217,6 +226,12 @@ func TestUnmarshalPackage_CustomElement_Attributes(t *testing.T) {
 	pkg, err := UnmarshalPackage(manifestJSON)
 	if err != nil {
 		t.Fatalf("UnmarshalPackage failed: %v", err)
+	}
+	if len(pkg.Modules) == 0 {
+		t.Fatalf("No modules found in the package")
+	}
+	if len(pkg.Modules[0].Declarations) == 0 {
+		t.Fatalf("No declarations found in the first module")
 	}
 	ce := pkg.Modules[0].Declarations[0].(*CustomElementDeclaration)
 	if len(ce.Attributes) != 2 {
@@ -243,7 +258,8 @@ func TestUnmarshalPackage_CustomElement_Events(t *testing.T) {
       "path": "src/rh-card.js",
       "declarations": [
         {
-          "kind": "custom-element",
+          "kind": "class",
+	        "customElement": true,
           "name": "RhCard",
           "tagName": "rh-card",
           "events": [
@@ -262,6 +278,12 @@ func TestUnmarshalPackage_CustomElement_Events(t *testing.T) {
 	if err != nil {
 		t.Fatalf("UnmarshalPackage failed: %v", err)
 	}
+	if len(pkg.Modules) == 0 {
+		t.Fatalf("No modules found in the package")
+	}
+	if len(pkg.Modules[0].Declarations) == 0 {
+		t.Fatalf("No declarations found in the first module")
+	}
 	ce := pkg.Modules[0].Declarations[0].(*CustomElementDeclaration)
 	if len(ce.Events) != 1 || ce.Events[0].Name != "rh-card-selected" {
 		t.Errorf("Events = %+v, want 1 rh-card-selected", ce.Events)
@@ -278,7 +300,8 @@ func TestUnmarshalPackage_CustomElement_Slots(t *testing.T) {
       "path": "src/rh-card.js",
       "declarations": [
         {
-          "kind": "custom-element",
+          "kind": "class",
+	        "customElement": true,
           "name": "RhCard",
           "tagName": "rh-card",
           "slots": [
@@ -297,6 +320,12 @@ func TestUnmarshalPackage_CustomElement_Slots(t *testing.T) {
 	if err != nil {
 		t.Fatalf("UnmarshalPackage failed: %v", err)
 	}
+	if len(pkg.Modules) == 0 {
+		t.Fatalf("No modules found in the package")
+	}
+	if len(pkg.Modules[0].Declarations) == 0 {
+		t.Fatalf("No declarations found in the first module")
+	}
 	ce := pkg.Modules[0].Declarations[0].(*CustomElementDeclaration)
 	if len(ce.Slots) != 1 || ce.Slots[0].Description != "Default slot" {
 		t.Errorf("Slots = %+v, want 1 Default slot", ce.Slots)
@@ -313,7 +342,8 @@ func TestUnmarshalPackage_CustomElement_CssPartsPropertiesStates(t *testing.T) {
       "path": "src/rh-card.js",
       "declarations": [
         {
-          "kind": "custom-element",
+          "kind": "class",
+	        "customElement": true,
           "name": "RhCard",
           "tagName": "rh-card",
           "cssParts": [
@@ -334,6 +364,12 @@ func TestUnmarshalPackage_CustomElement_CssPartsPropertiesStates(t *testing.T) {
 	pkg, err := UnmarshalPackage(manifestJSON)
 	if err != nil {
 		t.Fatalf("UnmarshalPackage failed: %v", err)
+	}
+	if len(pkg.Modules) == 0 {
+		t.Fatalf("No modules found in the package")
+	}
+	if len(pkg.Modules[0].Declarations) == 0 {
+		t.Fatalf("No declarations found in the first module")
 	}
 	ce := pkg.Modules[0].Declarations[0].(*CustomElementDeclaration)
 	if len(ce.CssParts) != 1 || ce.CssParts[0].Name != "header" {
@@ -357,7 +393,8 @@ func TestUnmarshalPackage_CustomElement_Demos(t *testing.T) {
       "path": "src/rh-card.js",
       "declarations": [
         {
-          "kind": "custom-element",
+          "kind": "class",
+          "customElement": true,
           "name": "RhCard",
           "tagName": "rh-card",
           "demos": [
@@ -372,6 +409,12 @@ func TestUnmarshalPackage_CustomElement_Demos(t *testing.T) {
 	pkg, err := UnmarshalPackage(manifestJSON)
 	if err != nil {
 		t.Fatalf("UnmarshalPackage failed: %v", err)
+	}
+	if len(pkg.Modules) == 0 {
+		t.Fatalf("No modules found in the package")
+	}
+	if len(pkg.Modules[0].Declarations) == 0 {
+		t.Fatalf("No declarations found in the first module")
 	}
 	ce := pkg.Modules[0].Declarations[0].(*CustomElementDeclaration)
 	if len(ce.Demos) != 1 || ce.Demos[0].Description != "Basic demo" || ce.Demos[0].URL != "demo.html" {
@@ -389,7 +432,8 @@ func TestUnmarshalPackage_CustomElement_Mixins(t *testing.T) {
       "path": "src/rh-card.js",
       "declarations": [
         {
-          "kind": "custom-element",
+          "kind": "class",
+          "customElement": true,
           "name": "RhCard",
           "tagName": "rh-card",
           "mixins": [
@@ -404,6 +448,12 @@ func TestUnmarshalPackage_CustomElement_Mixins(t *testing.T) {
 	pkg, err := UnmarshalPackage(manifestJSON)
 	if err != nil {
 		t.Fatalf("UnmarshalPackage failed: %v", err)
+	}
+	if len(pkg.Modules) == 0 {
+		t.Fatalf("No modules found in the package")
+	}
+	if len(pkg.Modules[0].Declarations) == 0 {
+		t.Fatalf("No declarations found in the first module")
 	}
 	ce := pkg.Modules[0].Declarations[0].(*CustomElementDeclaration)
 	if len(ce.Mixins) != 1 || ce.Mixins[0].Name != "RhMixin" {
@@ -421,7 +471,8 @@ func TestUnmarshalPackage_CustomElement_Members(t *testing.T) {
       "path": "src/rh-card.js",
       "declarations": [
         {
-          "kind": "custom-element",
+          "kind": "class",
+          "customElement": true,
           "name": "RhCard",
           "tagName": "rh-card",
           "members": [
@@ -440,6 +491,12 @@ func TestUnmarshalPackage_CustomElement_Members(t *testing.T) {
 	pkg, err := UnmarshalPackage(manifestJSON)
 	if err != nil {
 		t.Fatalf("UnmarshalPackage failed: %v", err)
+	}
+	if len(pkg.Modules) == 0 {
+		t.Fatalf("No modules found in the package")
+	}
+	if len(pkg.Modules[0].Declarations) == 0 {
+		t.Fatalf("No declarations found in the first module")
 	}
 	ce := pkg.Modules[0].Declarations[0].(*CustomElementDeclaration)
 	if len(ce.Members) != 1 {
@@ -464,7 +521,8 @@ func TestUnmarshalPackage_CustomElement_SliceNils(t *testing.T) {
       "path": "src/rh-card.js",
       "declarations": [
         {
-          "kind": "custom-element",
+          "kind": "class",
+          "customElement": true,
           "name": "RhCard",
           "tagName": "rh-card"
         }
@@ -476,6 +534,12 @@ func TestUnmarshalPackage_CustomElement_SliceNils(t *testing.T) {
 	pkg, err := UnmarshalPackage(manifestJSON)
 	if err != nil {
 		t.Fatalf("UnmarshalPackage failed: %v", err)
+	}
+	if len(pkg.Modules) == 0 {
+		t.Fatalf("No modules found in the package")
+	}
+	if len(pkg.Modules[0].Declarations) == 0 {
+		t.Fatalf("No declarations found in the first module")
 	}
 	ce := pkg.Modules[0].Declarations[0].(*CustomElementDeclaration)
 	val := reflect.ValueOf(*ce)
@@ -681,7 +745,8 @@ func TestUnmarshalPackage_CustomElementMixin(t *testing.T) {
       "path": "src/cem.js",
       "declarations": [
         {
-          "kind": "custom-element-mixin",
+          "kind": "mixin",
+          "customElement": true
           "name": "RhCustomElementMixin",
           "members": [
             {
@@ -739,7 +804,8 @@ func TestUnmarshalPackage_EmptySlices(t *testing.T) {
       "path": "src/empty.js",
       "declarations": [
         {
-          "kind": "custom-element",
+          "kind": "class",
+          "customElement": true
           "name": "EmptyElem",
           "tagName": "empty-elem"
         }
@@ -751,6 +817,12 @@ func TestUnmarshalPackage_EmptySlices(t *testing.T) {
 	pkg, err := UnmarshalPackage(manifestJSON)
 	if err != nil {
 		t.Fatalf("UnmarshalPackage failed: %v", err)
+	}
+	if len(pkg.Modules) == 0 {
+		t.Fatalf("No modules found in the package")
+	}
+	if len(pkg.Modules[0].Declarations) == 0 {
+		t.Fatalf("No declarations found in the first module")
 	}
 	mod := pkg.Modules[0]
 	ce, ok := mod.Declarations[0].(*CustomElementDeclaration)
