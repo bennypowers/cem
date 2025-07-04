@@ -458,6 +458,7 @@ func init() {
 	listCmd.AddCommand(listModulesCmd)
 	listCmd.AddCommand(listDeprecationsCmd)
 	listCmd.PersistentFlags().StringP("format", "f", "table", "Output format")
+	listDeprecationsCmd.PersistentFlags().StringP("format", "f", "tree", "Output format")
 	listTagsCmd.Flags().StringArrayP("columns", "c", []string{}, "list of columns to display in the table")
 	listModulesCmd.Flags().StringArrayP("columns", "c", []string{}, "list of columns to display in the table")
 	for _, c := range []*cobra.Command{
