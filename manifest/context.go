@@ -1009,10 +1009,11 @@ func buildCustomElementCtxTree(cedCtx *CustomElementWithContext) *CustomElementC
 	ced := cedCtx.CustomElementDeclaration
 	// Use generic LeafCtxNode for all attribute/event/slot/part/prop/state/member
 	attrNodes := make([]ContextTreeNode, 0, len(ced.Attributes))
-	for _, attr := range ced.Attributes {
+	for i := range ced.Attributes {
+		attr := &ced.Attributes[i]
 		attrCtx := &AttributeWithContext{
 			Name:                     attr.Name,
-			Attribute:                &attr,
+			Attribute:                attr,
 			CustomElementDeclaration: ced,
 			JavaScriptModule:         cedCtx.Module,
 		}
