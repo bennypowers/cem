@@ -419,13 +419,12 @@ Example:
 	RunE: func(cmd *cobra.Command, args []string) error {
 		pkg, err := readPkg()
 		if err != nil { return err }
-		manifest := pkg.GetAllDeprecationsWithContext()
 		format, err := requireFormat(cmd, []string{"tree"})
 		if err != nil { return err }
 		switch format {
 		case "tree":
 			title := "Deprecations"
-			return list.RenderTree(title, manifest, M.IsDeprecated)
+			return list.RenderTree(title, M.NewPackageWithContext(pkg), M.IsDeprecated)
 		}
 		return nil
 	},
