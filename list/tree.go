@@ -23,12 +23,12 @@ import (
 	"github.com/pterm/pterm"
 )
 
-func RenderTree(title string, renderable M.Renderable) error {
+func RenderTree(title string, renderable M.Renderable, pred M.PredicateFunc) error {
 	if renderable == nil || isTypedNil(renderable) {
 		pterm.Println("No deprecations found")
 		return nil
 	}
-	root := renderable.ToTreeNode()
+	root := renderable.ToTreeNode(pred)
 	pterm.DefaultSection.Print(title)
 	return pterm.DefaultTree.WithRoot(root).Render()
 }

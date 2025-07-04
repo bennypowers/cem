@@ -425,7 +425,7 @@ Example:
 		switch format {
 		case "tree":
 			title := "Deprecations"
-			return list.RenderTree(title, M.FilterPackage(manifest, M.IsDeprecated))
+			return list.RenderTree(title, manifest, M.IsDeprecated)
 		}
 		return nil
 	},
