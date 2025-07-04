@@ -457,7 +457,6 @@ func init() {
 	listCmd.AddCommand(listTagsCmd)
 	listCmd.AddCommand(listModulesCmd)
 	listCmd.AddCommand(listDeprecationsCmd)
-	listCmd.PersistentFlags().StringP("format", "f", "table", "Output format")
 	listDeprecationsCmd.PersistentFlags().StringP("format", "f", "tree", "Output format")
 	listTagsCmd.Flags().StringArrayP("columns", "c", []string{}, "list of columns to display in the table")
 	listModulesCmd.Flags().StringArrayP("columns", "c", []string{}, "list of columns to display in the table")
@@ -471,6 +470,7 @@ func init() {
 		listMethodsCmd,
 	} {
 		listCmd.AddCommand(c)
+		c.PersistentFlags().StringP("format", "f", "table", "Output format")
 		c.Flags().StringP("tag-name", "t", "", "Tag name to list attributes for")
 		c.Flags().StringArrayP("columns", "c", []string{}, "list of columns to display in the table")
 	}
