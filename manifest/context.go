@@ -803,8 +803,13 @@ type PackageCtxNode struct {
 	Pkg           *PackageWithContext
 	ChildrenNodes []ContextTreeNode
 }
-func (n *PackageCtxNode) IsDeprecated() bool { return n.Pkg.IsDeprecated() }
-func (n *PackageCtxNode) Children() []ContextTreeNode { return n.ChildrenNodes }
+func (n *PackageCtxNode) IsDeprecated() bool { return n != nil && n.Pkg != nil && n.Pkg.IsDeprecated() }
+func (n *PackageCtxNode) Children() []ContextTreeNode {
+	if n == nil {
+		return nil
+	}
+	return n.ChildrenNodes
+}
 
 type ModuleCtxNode struct {
 	Mod           *ModuleWithContext
