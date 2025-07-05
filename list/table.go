@@ -36,7 +36,7 @@ func ToRenderableSlice[T M.Renderable](items []T) []M.Renderable {
 	return renderables
 }
 
-// MapToTableRows maps a slice of RenderableMemberWithContext to [][]string.
+// MapToTableRows maps a slice of Renderables to [][]string.
 func MapToTableRows[T M.Renderable](items []T) [][]string {
 	rows := make([][]string, 0, len(items))
 	for _, item := range items {

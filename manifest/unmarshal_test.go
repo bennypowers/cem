@@ -173,7 +173,7 @@ func TestUnmarshalPackage_CustomElement_MemberWithAttributeYieldsCustomElementFi
 		t.Errorf("CustomElementField: want attribute=open got '%s'", cem.Attribute)
 	}
 	if cem.Type == nil {
-		t.Errorf("CustomElementField: want type=nil got '%+v'", cem.Type)
+		t.Errorf("CustomElementField: want non-nil type got '%+v'", cem.Type)
 	}
 	if  cem.Type.Text != "boolean" {
 		t.Errorf("CustomElementField: want type.text=boolean got '%s'", cem.Type.Text)
@@ -182,7 +182,7 @@ func TestUnmarshalPackage_CustomElement_MemberWithAttributeYieldsCustomElementFi
 		t.Errorf("CustomElementField: want default=false got '%s'", cem.Default)
 	}
 	if !cem.Reflects {
-		t.Errorf("CustomElementField: want reflacts=true got '%+v'", cem.Reflects)
+		t.Errorf("CustomElementField: want reflects=true got '%+v'", cem.Reflects)
 	}
 	plain := mustClassField(t, ce.Members[1])
 	if plain.Name != "plainField" || plain.Type == nil || plain.Type.Text != "string" {
