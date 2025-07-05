@@ -4,10 +4,26 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"testing"
 )
 
 // DRY Test Helpers
+
+// Helper: Skip test if FIXTURE_PATTERN is set and doesn't match the fixture name.
+func mustRunFixture(t *testing.T) {
+	pattern := os.Getenv("FIXTURE_PATTERN")
+	if pattern == "" {
+		return
+	}
+	matched, err := regexp.MatchString(pattern, t.Name())
+	if err != nil {
+		t.Fatalf("Invalid FIXTURE_PATTERN: %v", err)
+	}
+	if !matched {
+		t.Skipf("Skipping because FIXTURE_PATTERN=%q does not match fixture %q", pattern, t.Name())
+	}
+}
 
 func loadFixture(t *testing.T, name string) []byte {
 	t.Helper()
@@ -117,294 +133,356 @@ func mustCustomElementField(t *testing.T, member any) *CustomElementField {
 
 // --- Tests ---
 
-func TestUnmarshalPackage_ClassWithCustomElementTrue_YieldsCustomElementDeclaration(t *testing.T) {
-	manifestJSON := loadFixture(t, "class_with_custom_element_true.json")
-	pkg := mustUnmarshalPackage(t, manifestJSON)
-	mod := mustFirstModule(t, pkg)
-	decls := mustModuleDecls(t, mod, 2)
+func TestUnmarshalPackage(t *testing.T) {
+	t.Run("CustomElement", func(t *testing.T) {
+		t.Run("ClassWithCustomElementTrueYieldsCustomElementDeclaration", func(t *testing.T) {
+			mustRunFixture(t)
+			manifestJSON := loadFixture(t, "class_with_custom_element_true.json")
+			pkg := mustUnmarshalPackage(t, manifestJSON)
+			mod := mustFirstModule(t, pkg)
+			decls := mustModuleDecls(t, mod, 2)
 
-	ce := mustCustomElementDecl(t, decls[0])
-	if ce.Name != "MyCard" || ce.TagName != "my-card" {
-		t.Errorf("CustomElementDeclaration: got Name=%q, TagName=%q; want 'MyCard', 'my-card'", ce.Name, ce.TagName)
-	}
-	if len(ce.Members) != 1 {
-		t.Errorf("CustomElementDeclaration members = %+v, want 1 member", ce.Members)
-	}
-	field := mustClassField(t, ce.Members[0])
-	if field.Name != "foo" || field.Type == nil || field.Type.Text != "string" {
-		t.Errorf("CustomElementDeclaration first member = %+v, want field named foo of type string", ce.Members[0])
-	}
+			ce := mustCustomElementDecl(t, decls[0])
+			if ce.Name != "MyCard" || ce.TagName != "my-card" {
+				t.Errorf("CustomElementDeclaration: got Name=%q, TagName=%q; want 'MyCard', 'my-card'", ce.Name, ce.TagName)
+			}
+			if len(ce.Members) != 1 {
+				t.Errorf("CustomElementDeclaration members = %+v, want 1 member", ce.Members)
+			}
+			field := mustClassField(t, ce.Members[0])
+			if field.Name != "foo" || field.Type == nil || field.Type.Text != "string" {
+				t.Errorf("CustomElementDeclaration first member = %+v, want field named foo of type string", ce.Members[0])
+			}
 
-	cl := mustClassDecl(t, decls[1])
-	if cl.Name != "CardBase" {
-		t.Errorf("ClassDeclaration: got Name=%q, want 'CardBase'", cl.Name)
-	}
-	field2 := mustClassField(t, cl.Members[0])
-	if field2.Name != "bar" || field2.Type == nil || field2.Type.Text != "number" {
-		t.Errorf("ClassDeclaration first member = %+v, want field named bar of type number", cl.Members[0])
-	}
-}
+			cl := mustClassDecl(t, decls[1])
+			if cl.Name != "CardBase" {
+				t.Errorf("ClassDeclaration: got Name=%q, want 'CardBase'", cl.Name)
+			}
+			field2 := mustClassField(t, cl.Members[0])
+			if field2.Name != "bar" || field2.Type == nil || field2.Type.Text != "number" {
+				t.Errorf("ClassDeclaration first member = %+v, want field named bar of type number", cl.Members[0])
+			}
+		})
 
-func TestUnmarshalPackage_CustomElement_BasicFields(t *testing.T) {
-	manifestJSON := loadFixture(t, "custom_element_basic_fields.json")
-	pkg := mustUnmarshalPackage(t, manifestJSON)
-	mod := mustFirstModule(t, pkg)
-	ce := mustCustomElementDecl(t, mustModuleDecls(t, mod, 1)[0])
-	if ce.TagName != "my-card" {
-		t.Errorf("TagName = %q, want 'my-card'", ce.TagName)
-	}
-	if ce.Name != "MyCard" {
-		t.Errorf("Name = %q, want 'MyCard'", ce.Name)
-	}
-}
+		t.Run("BasicFields", func(t *testing.T) {
+			mustRunFixture(t)
+			manifestJSON := loadFixture(t, "custom_element_basic_fields.json")
+			pkg := mustUnmarshalPackage(t, manifestJSON)
+			mod := mustFirstModule(t, pkg)
+			ce := mustCustomElementDecl(t, mustModuleDecls(t, mod, 1)[0])
+			if ce.TagName != "my-card" {
+				t.Errorf("TagName = %q, want 'my-card'", ce.TagName)
+			}
+			if ce.Name != "MyCard" {
+				t.Errorf("Name = %q, want 'MyCard'", ce.Name)
+			}
+		})
 
-func TestUnmarshalPackage_CustomElement_MemberWithAttributeYieldsCustomElementField(t *testing.T) {
-	manifestJSON := loadFixture(t, "custom_element_member_with_attribute.json")
-	pkg := mustUnmarshalPackage(t, manifestJSON)
-	ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-	if len(ce.Members) != 2 {
-		t.Fatalf("Members = %+v, want 2 items", ce.Members)
-	}
-	cem := mustCustomElementField(t, ce.Members[0])
-	if cem.Name != "open" {
-		t.Errorf("CustomElementField: want name=open got '%s'", cem.Name)
-	}
-	if cem.Attribute != "open" {
-		t.Errorf("CustomElementField: want attribute=open got '%s'", cem.Attribute)
-	}
-	if cem.Type == nil {
-		t.Errorf("CustomElementField: want non-nil type got '%+v'", cem.Type)
-	}
-	if  cem.Type.Text != "boolean" {
-		t.Errorf("CustomElementField: want type.text=boolean got '%s'", cem.Type.Text)
-	}
-	if cem.Default != "false" {
-		t.Errorf("CustomElementField: want default=false got '%s'", cem.Default)
-	}
-	if !cem.Reflects {
-		t.Errorf("CustomElementField: want reflects=true got '%+v'", cem.Reflects)
-	}
-	plain := mustClassField(t, ce.Members[1])
-	if plain.Name != "plainField" || plain.Type == nil || plain.Type.Text != "string" {
-		t.Errorf("ClassField = %+v, want name=plainField type=string", plain)
-	}
-}
+		t.Run("MemberWithAttributeYieldsCustomElementField", func(t *testing.T) {
+			mustRunFixture(t)
+			manifestJSON := loadFixture(t, "custom_element_member_with_attribute.json")
+			pkg := mustUnmarshalPackage(t, manifestJSON)
+			ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
+			if len(ce.Members) != 2 {
+				t.Fatalf("Members = %+v, want 2 items", ce.Members)
+			}
+			cem := mustCustomElementField(t, ce.Members[0])
+			if cem.Name != "open" {
+				t.Errorf("CustomElementField: want name=open got '%s'", cem.Name)
+			}
+			if cem.Attribute != "open" {
+				t.Errorf("CustomElementField: want attribute=open got '%s'", cem.Attribute)
+			}
+			if cem.Type == nil {
+				t.Errorf("CustomElementField: want non-nil type got '%+v'", cem.Type)
+			}
+			if  cem.Type.Text != "boolean" {
+				t.Errorf("CustomElementField: want type.text=boolean got '%s'", cem.Type.Text)
+			}
+			if cem.Default != "false" {
+				t.Errorf("CustomElementField: want default=false got '%s'", cem.Default)
+			}
+			if !cem.Reflects {
+				t.Errorf("CustomElementField: want reflects=true got '%+v'", cem.Reflects)
+			}
+			plain := mustClassField(t, ce.Members[1])
+			if plain.Name != "plainField" || plain.Type == nil || plain.Type.Text != "string" {
+				t.Errorf("ClassField = %+v, want name=plainField type=string", plain)
+			}
+		})
 
-func TestUnmarshalPackage_CustomElement_Attributes(t *testing.T) {
-	manifestJSON := loadFixture(t, "custom_element_attributes.json")
-	pkg := mustUnmarshalPackage(t, manifestJSON)
-	ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-	if len(ce.Attributes) != 2 {
-		t.Errorf("len(Attributes) = %d, want 2", len(ce.Attributes))
-	}
-	if ce.Attributes[0].Name != "variant" || ce.Attributes[1].Name != "elevated" {
-		t.Errorf("Attribute names = %q,%q, want %q,%q", ce.Attributes[0].Name, ce.Attributes[1].Name, "variant", "elevated")
-	}
-	if ce.Attributes[0].Type == nil || ce.Attributes[0].Type.Text != "\"primary\" | \"secondary\"" {
-		t.Errorf("First attribute type = %+v, want union", ce.Attributes[0].Type)
-	}
-	if ce.Attributes[1].Type == nil || ce.Attributes[1].Type.Text != "boolean" {
-		t.Errorf("Second attribute type = %+v, want boolean", ce.Attributes[1].Type)
-	}
-}
+		t.Run("Attributes", func(t *testing.T) {
+			mustRunFixture(t)
+			manifestJSON := loadFixture(t, "custom_element_attributes.json")
+			pkg := mustUnmarshalPackage(t, manifestJSON)
+			ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
+			if len(ce.Attributes) != 2 {
+				t.Errorf("len(Attributes) = %d, want 2", len(ce.Attributes))
+			}
+			if ce.Attributes[0].Name != "variant" || ce.Attributes[1].Name != "elevated" {
+				t.Errorf("Attribute names = %q,%q, want %q,%q", ce.Attributes[0].Name, ce.Attributes[1].Name, "variant", "elevated")
+			}
+			if ce.Attributes[0].Type == nil || ce.Attributes[0].Type.Text != "\"primary\" | \"secondary\"" {
+				t.Errorf("First attribute type = %+v, want union", ce.Attributes[0].Type)
+			}
+			if ce.Attributes[1].Type == nil || ce.Attributes[1].Type.Text != "boolean" {
+				t.Errorf("Second attribute type = %+v, want boolean", ce.Attributes[1].Type)
+			}
+		})
 
-func TestUnmarshalPackage_CustomElement_Events(t *testing.T) {
-	manifestJSON := loadFixture(t, "custom_element_events.json")
-	pkg := mustUnmarshalPackage(t, manifestJSON)
-	ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-	if len(ce.Events) != 1 || ce.Events[0].Name != "my-card-selected" {
-		t.Errorf("Events = %+v, want 1 my-card-selected", ce.Events)
-	}
-}
+		t.Run("AttributeDeprecation", func(t *testing.T) {
+			t.Run("None", func(t *testing.T) {
+				mustRunFixture(t)
+				pkg := mustUnmarshalPackage(t, loadFixture(t, "custom-element-attr-deprecated-none.json"))
+				mod := mustFirstModule(t, pkg)
+				ce := mustCustomElementDecl(t, mustModuleDecls(t, mod, 1)[0])
+				if len(ce.Attributes) != 1 {
+					t.Fatalf("len(Attributes) = %d, want 1", len(ce.Attributes))
+				}
+				if ce.Attributes[0].Deprecated != nil {
+					t.Errorf("Attribute.Deprecated = %v, want nil", ce.Attributes[0].Deprecated)
+				}
+			})
 
-func TestUnmarshalPackage_CustomElement_Slots(t *testing.T) {
-	manifestJSON := loadFixture(t, "custom_element_slots.json")
-	pkg := mustUnmarshalPackage(t, manifestJSON)
-	ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-	if len(ce.Slots) != 1 || ce.Slots[0].Description != "Default slot" {
-		t.Errorf("Slots = %+v, want 1 Default slot", ce.Slots)
-	}
-}
+			t.Run("Bool", func(t *testing.T) {
+				mustRunFixture(t)
+				pkg := mustUnmarshalPackage(t, loadFixture(t, "custom-element-attr-deprecated-bool.json"))
+				mod := mustFirstModule(t, pkg)
+				ce := mustCustomElementDecl(t, mustModuleDecls(t, mod, 1)[0])
+				if len(ce.Attributes) != 1 {
+					t.Fatalf("len(Attributes) = %d, want 1", len(ce.Attributes))
+				}
+				dep := ce.Attributes[0].Deprecated
+				if dep == nil {
+					t.Errorf("Attribute.Deprecated = nil, want non-nil")
+				} else if v, ok := dep.(DeprecatedFlag); !ok || !bool(v) {
+					t.Errorf("Attribute.Deprecated = %#v, want DeprecatedFlag(true)", dep)
+				}
+			})
 
-func TestUnmarshalPackage_CustomElement_CssPartsPropertiesStates(t *testing.T) {
-	manifestJSON := loadFixture(t, "custom_element_css_parts_properties_states.json")
-	pkg := mustUnmarshalPackage(t, manifestJSON)
-	ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-	if len(ce.CssParts) != 1 || ce.CssParts[0].Name != "header" {
-		t.Errorf("CssParts = %+v, want 1 header", ce.CssParts)
-	}
-	if len(ce.CssProperties) != 1 || ce.CssProperties[0].Name != "--my-card-color" {
-		t.Errorf("CssProperties = %+v, want 1 --my-card-color", ce.CssProperties)
-	}
-	if len(ce.CssStates) != 1 || ce.CssStates[0].Name != "--active" {
-		t.Errorf("CssStates = %+v, want 1 --active", ce.CssStates)
-	}
-}
+			t.Run("Reason", func(t *testing.T) {
+				mustRunFixture(t)
+				pkg := mustUnmarshalPackage(t, loadFixture(t, "custom-element-attr-deprecated-reason.json"))
+				mod := mustFirstModule(t, pkg)
+				ce := mustCustomElementDecl(t, mustModuleDecls(t, mod, 1)[0])
+				if len(ce.Attributes) != 1 {
+					t.Fatalf("len(Attributes) = %d, want 1", len(ce.Attributes))
+				}
+				dep := ce.Attributes[0].Deprecated
+				if dep == nil {
+					t.Errorf("Attribute.Deprecated = nil, want non-nil")
+				} else if v, ok := dep.(DeprecatedReason); !ok || string(v) != "use something else" {
+					t.Errorf("Attribute.Deprecated = %#v, want DeprecatedReason(\"use something else\")", dep)
+				}
+			})
+		})
 
-func TestUnmarshalPackage_CustomElement_Demos(t *testing.T) {
-	manifestJSON := loadFixture(t, "custom_element_demos.json")
-	pkg := mustUnmarshalPackage(t, manifestJSON)
-	ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-	if len(ce.Demos) != 1 || ce.Demos[0].Description != "Basic demo" || ce.Demos[0].URL != "demo.html" {
-		t.Errorf("Demos = %+v, want 1 Basic demo with url demo.html", ce.Demos)
-	}
-}
+		t.Run("Events", func(t *testing.T) {
+			mustRunFixture(t)
+			manifestJSON := loadFixture(t, "custom_element_events.json")
+			pkg := mustUnmarshalPackage(t, manifestJSON)
+			ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
+			if len(ce.Events) != 1 || ce.Events[0].Name != "my-card-selected" {
+				t.Errorf("Events = %+v, want 1 my-card-selected", ce.Events)
+			}
+		})
 
-func TestUnmarshalPackage_CustomElement_Mixins(t *testing.T) {
-	manifestJSON := loadFixture(t, "custom_element_mixins.json")
-	pkg := mustUnmarshalPackage(t, manifestJSON)
-	ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-	if len(ce.Mixins) != 1 || ce.Mixins[0].Name != "MyMixin" {
-		t.Errorf("Mixins = %+v, want 1 MyMixin", ce.Mixins)
-	}
-}
+		t.Run("Slots", func(t *testing.T) {
+			mustRunFixture(t)
+			manifestJSON := loadFixture(t, "custom_element_slots.json")
+			pkg := mustUnmarshalPackage(t, manifestJSON)
+			ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
+			if len(ce.Slots) != 1 || ce.Slots[0].Description != "Default slot" {
+				t.Errorf("Slots = %+v, want 1 Default slot", ce.Slots)
+			}
+		})
 
-func TestUnmarshalPackage_CustomElement_Members(t *testing.T) {
-	manifestJSON := loadFixture(t, "custom_element_members.json")
-	pkg := mustUnmarshalPackage(t, manifestJSON)
-	ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-	if len(ce.Members) != 1 {
-		t.Errorf("Members = %+v, want 1 item", ce.Members)
-	}
-	member := mustClassField(t, ce.Members[0])
-	if member.Name != "prop1" || member.Type == nil || member.Type.Text != "string" {
-		t.Errorf("Member = %+v, want prop1: string", member)
-	}
-}
+		t.Run("CssPartsPropertiesStates", func(t *testing.T) {
+			mustRunFixture(t)
+			manifestJSON := loadFixture(t, "custom_element_css_parts_properties_states.json")
+			pkg := mustUnmarshalPackage(t, manifestJSON)
+			ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
+			if len(ce.CssParts) != 1 || ce.CssParts[0].Name != "header" {
+				t.Errorf("CssParts = %+v, want 1 header", ce.CssParts)
+			}
+			if len(ce.CssProperties) != 1 || ce.CssProperties[0].Name != "--my-card-color" {
+				t.Errorf("CssProperties = %+v, want 1 --my-card-color", ce.CssProperties)
+			}
+			if len(ce.CssStates) != 1 || ce.CssStates[0].Name != "--active" {
+				t.Errorf("CssStates = %+v, want 1 --active", ce.CssStates)
+			}
+		})
 
-func TestUnmarshalPackage_CustomElement_SliceNils(t *testing.T) {
-	manifestJSON := loadFixture(t, "custom_element_slice_nils.json")
-	pkg := mustUnmarshalPackage(t, manifestJSON)
-	ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-	val := reflect.ValueOf(*ce)
-	for i := range val.NumField() {
-		field := val.Field(i)
-		ft := val.Type().Field(i)
-		if field.Kind() == reflect.Slice {
-			if field.IsNil() {
-				t.Errorf("Field %s is nil, want empty slice", ft.Name)
+		t.Run("Demos", func(t *testing.T) {
+			mustRunFixture(t)
+			manifestJSON := loadFixture(t, "custom_element_demos.json")
+			pkg := mustUnmarshalPackage(t, manifestJSON)
+			ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
+			if len(ce.Demos) != 1 || ce.Demos[0].Description != "Basic demo" || ce.Demos[0].URL != "demo.html" {
+				t.Errorf("Demos = %+v, want 1 Basic demo with url demo.html", ce.Demos)
+			}
+		})
+
+		t.Run("Mixins", func(t *testing.T) {
+			mustRunFixture(t)
+			manifestJSON := loadFixture(t, "custom_element_mixins.json")
+			pkg := mustUnmarshalPackage(t, manifestJSON)
+			ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
+			if len(ce.Mixins) != 1 || ce.Mixins[0].Name != "MyMixin" {
+				t.Errorf("Mixins = %+v, want 1 MyMixin", ce.Mixins)
+			}
+		})
+
+		t.Run("Members", func(t *testing.T) {
+			mustRunFixture(t)
+			manifestJSON := loadFixture(t, "custom_element_members.json")
+			pkg := mustUnmarshalPackage(t, manifestJSON)
+			ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
+			if len(ce.Members) != 1 {
+				t.Errorf("Members = %+v, want 1 item", ce.Members)
+			}
+			member := mustClassField(t, ce.Members[0])
+			if member.Name != "prop1" || member.Type == nil || member.Type.Text != "string" {
+				t.Errorf("Member = %+v, want prop1: string", member)
+			}
+		})
+
+		t.Run("SliceNils", func(t *testing.T) {
+			mustRunFixture(t)
+			manifestJSON := loadFixture(t, "custom_element_slice_nils.json")
+			pkg := mustUnmarshalPackage(t, manifestJSON)
+			ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
+			val := reflect.ValueOf(*ce)
+			for i := range val.NumField() {
+				field := val.Field(i)
+				ft := val.Type().Field(i)
+				if field.Kind() == reflect.Slice {
+					if field.IsNil() {
+						t.Errorf("Field %s is nil, want empty slice", ft.Name)
+					}
+				}
+			}
+		})
+	})
+
+	t.Run("Class", func(t *testing.T) {
+		manifestJSON := loadFixture(t, "class.json")
+		pkg := mustUnmarshalPackage(t, manifestJSON)
+		mod := mustFirstModule(t, pkg)
+		c := mustClassDecl(t, mustModuleDecls(t, mod, 1)[0])
+		if c.Name != "MyCardBase" {
+			t.Errorf("Name = %q, want 'MyCardBase'", c.Name)
+		}
+		if len(c.Members) != 1 {
+			t.Errorf("Members = %+v, want 1 member", c.Members)
+		}
+		member := mustClassField(t, c.Members[0])
+		if member.Name != "baseProp" || member.Type.Text != "number" {
+			t.Errorf("Member = %+v, want baseProp: number", member)
+		}
+		if c.Members == nil || c.Mixins == nil {
+			t.Errorf("ClassDeclaration slice fields must not be nil")
+		}
+	})
+
+	t.Run("Mixin", func(t *testing.T) {
+		manifestJSON := loadFixture(t, "mixin.json")
+		pkg := mustUnmarshalPackage(t, manifestJSON)
+		mod := mustFirstModule(t, pkg)
+		m := mustMixinDecl(t, mustModuleDecls(t, mod, 1)[0])
+		if m.Name != "MyMixin" {
+			t.Errorf("Name = %+v, want 'MyMixin'", m)
+		}
+		if len(m.Members) != 1 {
+			t.Errorf("Members = %+v, want 1 member", m.Members)
+		}
+		member := mustClassField(t, m.Members[0])
+		if member.Name != "mixinProp" || member.Type == nil || member.Type.Text != "boolean" {
+			t.Errorf("Members = %+v, want 1 mixinProp boolean", m.Members)
+		}
+	})
+
+	t.Run("Function", func(t *testing.T) {
+		manifestJSON := loadFixture(t, "function.json")
+		pkg := mustUnmarshalPackage(t, manifestJSON)
+		mod := mustFirstModule(t, pkg)
+		fn := mustFunctionDecl(t, mustModuleDecls(t, mod, 1)[0])
+		if fn.Name != "helperFn" {
+			t.Errorf("Name = %q, want 'helperFn'", fn.Name)
+		}
+		if len(fn.Parameters) != 1 || fn.Parameters[0].Name != "x" || fn.Parameters[0].Type == nil || fn.Parameters[0].Type.Text != "number" {
+			t.Errorf("Parameters = %+v, want 1 x number", fn.Parameters)
+		}
+		if fn.Parameters == nil {
+			t.Errorf("FunctionDeclaration.Parameters must not be nil")
+		}
+	})
+
+	t.Run("Variable", func(t *testing.T) {
+		manifestJSON := loadFixture(t, "variable.json")
+		pkg := mustUnmarshalPackage(t, manifestJSON)
+		mod := mustFirstModule(t, pkg)
+		v := mustVariableDecl(t, mustModuleDecls(t, mod, 1)[0])
+		if v.Name != "CONST_VAL" {
+			t.Errorf("Name = %q, want 'CONST_VAL'", v.Name)
+		}
+		if v.Type == nil || v.Type.Text != "string" {
+			t.Errorf("Type = %+v, want string", v.Type)
+		}
+	})
+
+	t.Run("CustomElementMixin", func(t *testing.T) {
+		manifestJSON := loadFixture(t, "custom_element_mixin.json")
+		pkg := mustUnmarshalPackage(t, manifestJSON)
+		mod := mustFirstModule(t, pkg)
+		cem := mustCustomElementMixinDecl(t, mustModuleDecls(t, mod, 1)[0])
+		if cem.Name != "MyCustomElementMixin" {
+			t.Errorf("Name = %q, want 'MyCustomElementMixin'", cem.FunctionLike.Name)
+		}
+		if len(cem.Members) != 1 {
+			t.Errorf("Members = %+v, want 1 item", cem.Members)
+		}
+		member := mustClassField(t, cem.Members[0])
+		if member.Name != "cemProp" {
+			t.Errorf("Members = %+v, want 1 cemProp", cem.Members)
+		}
+		if cem.Attributes == nil || cem.Members == nil || cem.Mixins == nil {
+			t.Errorf("CustomElementMixinDeclaration slice fields must not be nil")
+		}
+		if len(cem.Attributes) != 1 || cem.Attributes[0].Name != "cem-attr" {
+			t.Errorf("Attributes = %+v, want 1 cem-attr", cem.Attributes)
+		}
+	})
+
+	t.Run("EmptySlices", func(t *testing.T) {
+		manifestJSON := loadFixture(t, "empty_slices.json")
+		pkg := mustUnmarshalPackage(t, manifestJSON)
+		ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
+		val := reflect.ValueOf(*ce)
+		for i := range val.NumField() {
+			field := val.Field(i)
+			ft := val.Type().Field(i)
+			if field.Kind() == reflect.Slice {
+				if field.IsNil() {
+					t.Errorf("Field %s is nil, want empty slice", ft.Name)
+				}
 			}
 		}
-	}
-}
+	})
 
-func TestUnmarshalPackage_Class(t *testing.T) {
-	manifestJSON := loadFixture(t, "class.json")
-	pkg := mustUnmarshalPackage(t, manifestJSON)
-	mod := mustFirstModule(t, pkg)
-	c := mustClassDecl(t, mustModuleDecls(t, mod, 1)[0])
-	if c.Name != "MyCardBase" {
-		t.Errorf("Name = %q, want 'MyCardBase'", c.Name)
-	}
-	if len(c.Members) != 1 {
-		t.Errorf("Members = %+v, want 1 member", c.Members)
-	}
-	member := mustClassField(t, c.Members[0])
-	if member.Name != "baseProp" || member.Type.Text != "number" {
-		t.Errorf("Member = %+v, want baseProp: number", member)
-	}
-	if c.Members == nil || c.Mixins == nil {
-		t.Errorf("ClassDeclaration slice fields must not be nil")
-	}
-}
-
-func TestUnmarshalPackage_Mixin(t *testing.T) {
-	manifestJSON := loadFixture(t, "mixin.json")
-	pkg := mustUnmarshalPackage(t, manifestJSON)
-	mod := mustFirstModule(t, pkg)
-	m := mustMixinDecl(t, mustModuleDecls(t, mod, 1)[0])
-	if m.Name != "MyMixin" {
-		t.Errorf("Name = %+v, want 'MyMixin'", m)
-	}
-	if len(m.Members) != 1 {
-		t.Errorf("Members = %+v, want 1 member", m.Members)
-	}
-	member := mustClassField(t, m.Members[0])
-	if member.Name != "mixinProp" || member.Type == nil || member.Type.Text != "boolean" {
-		t.Errorf("Members = %+v, want 1 mixinProp boolean", m.Members)
-	}
-}
-
-func TestUnmarshalPackage_Function(t *testing.T) {
-	manifestJSON := loadFixture(t, "function.json")
-	pkg := mustUnmarshalPackage(t, manifestJSON)
-	mod := mustFirstModule(t, pkg)
-	fn := mustFunctionDecl(t, mustModuleDecls(t, mod, 1)[0])
-	if fn.Name != "helperFn" {
-		t.Errorf("Name = %q, want 'helperFn'", fn.Name)
-	}
-	if len(fn.Parameters) != 1 || fn.Parameters[0].Name != "x" || fn.Parameters[0].Type == nil || fn.Parameters[0].Type.Text != "number" {
-		t.Errorf("Parameters = %+v, want 1 x number", fn.Parameters)
-	}
-	if fn.Parameters == nil {
-		t.Errorf("FunctionDeclaration.Parameters must not be nil")
-	}
-}
-
-func TestUnmarshalPackage_Variable(t *testing.T) {
-	manifestJSON := loadFixture(t, "variable.json")
-	pkg := mustUnmarshalPackage(t, manifestJSON)
-	mod := mustFirstModule(t, pkg)
-	v := mustVariableDecl(t, mustModuleDecls(t, mod, 1)[0])
-	if v.Name != "CONST_VAL" {
-		t.Errorf("Name = %q, want 'CONST_VAL'", v.Name)
-	}
-	if v.Type == nil || v.Type.Text != "string" {
-		t.Errorf("Type = %+v, want string", v.Type)
-	}
-}
-
-func TestUnmarshalPackage_CustomElementMixin(t *testing.T) {
-	manifestJSON := loadFixture(t, "custom_element_mixin.json")
-	pkg := mustUnmarshalPackage(t, manifestJSON)
-	mod := mustFirstModule(t, pkg)
-	cem := mustCustomElementMixinDecl(t, mustModuleDecls(t, mod, 1)[0])
-	if cem.Name != "MyCustomElementMixin" {
-		t.Errorf("Name = %q, want 'MyCustomElementMixin'", cem.FunctionLike.Name)
-	}
-	if len(cem.Members) != 1 {
-		t.Errorf("Members = %+v, want 1 item", cem.Members)
-	}
-	member := mustClassField(t, cem.Members[0])
-	if member.Name != "cemProp" {
-		t.Errorf("Members = %+v, want 1 cemProp", cem.Members)
-	}
-	if cem.Attributes == nil || cem.Members == nil || cem.Mixins == nil {
-		t.Errorf("CustomElementMixinDeclaration slice fields must not be nil")
-	}
-	if len(cem.Attributes) != 1 || cem.Attributes[0].Name != "cem-attr" {
-		t.Errorf("Attributes = %+v, want 1 cem-attr", cem.Attributes)
-	}
-}
-
-func TestUnmarshalPackage_EmptySlices(t *testing.T) {
-	manifestJSON := loadFixture(t, "empty_slices.json")
-	pkg := mustUnmarshalPackage(t, manifestJSON)
-	ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-	val := reflect.ValueOf(*ce)
-	for i := range val.NumField() {
-		field := val.Field(i)
-		ft := val.Type().Field(i)
-		if field.Kind() == reflect.Slice {
-			if field.IsNil() {
-				t.Errorf("Field %s is nil, want empty slice", ft.Name)
-			}
+	t.Run("InvalidJSON", func(t *testing.T) {
+		_, err := UnmarshalPackage([]byte(`{invalid}`))
+		if err == nil {
+			t.Fatal("expected error for invalid json, got nil")
 		}
-	}
-}
+	})
 
-func TestUnmarshalPackage_InvalidJSON(t *testing.T) {
-	_, err := UnmarshalPackage([]byte(`{invalid}`))
-	if err == nil {
-		t.Fatal("expected error for invalid json, got nil")
-	}
-}
-
-func TestUnmarshalPackage_UnknownKind(t *testing.T) {
-	manifestJSON := loadFixture(t, "unknown_kind.json")
-	pkg := mustUnmarshalPackage(t, manifestJSON)
-	mod := mustFirstModule(t, pkg)
-	if len(mod.Declarations) != 0 {
-		t.Errorf("len(Declarations) = %d, want 0 for unknown kind", len(mod.Declarations))
-	}
+	t.Run("UnknownKind", func(t *testing.T) {
+		manifestJSON := loadFixture(t, "unknown_kind.json")
+		pkg := mustUnmarshalPackage(t, manifestJSON)
+		mod := mustFirstModule(t, pkg)
+		if len(mod.Declarations) != 0 {
+			t.Errorf("len(Declarations) = %d, want 0 for unknown kind", len(mod.Declarations))
+		}
+	})
 }
