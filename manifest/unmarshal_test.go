@@ -287,6 +287,36 @@ func TestUnmarshalPackage(t *testing.T) {
 			}
 		})
 
+		t.Run("EventDeprecation", func(t *testing.T) {
+			t.Run("Bool", func(t *testing.T) {
+			mustRunFixture(t)
+				manifestJSON := loadFixture(t, "event-deprecated-bool.json")
+				pkg := mustUnmarshalPackage(t, manifestJSON)
+				ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
+				evs := ce.Events
+				if len(evs) != 1 {
+					t.Fatalf("len(Events) = %d, want 1", len(evs))
+				}
+				if got, want := evs[0].Deprecated, DeprecatedFlag(true); got != want {
+					t.Errorf("Deprecated = %#v, want %#v", got, want)
+				}
+			})
+
+			t.Run("Reason", func(t *testing.T) {
+				mustRunFixture(t)
+				manifestJSON := loadFixture(t, "event-deprecated-reason.json")
+				pkg := mustUnmarshalPackage(t, manifestJSON)
+				ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
+				evs := ce.Events
+				if len(evs) != 1 {
+					t.Fatalf("len(Events) = %d, want 1", len(evs))
+				}
+				if got, want := evs[0].Deprecated, DeprecatedReason("use something else"); got != want {
+					t.Errorf("Deprecated = %#v, want %#v", got, want)
+				}
+			})
+		})
+
 		t.Run("Slots", func(t *testing.T) {
 			mustRunFixture(t)
 			manifestJSON := loadFixture(t, "custom_element_slots.json")
@@ -295,6 +325,36 @@ func TestUnmarshalPackage(t *testing.T) {
 			if len(ce.Slots) != 1 || ce.Slots[0].Description != "Default slot" {
 				t.Errorf("Slots = %+v, want 1 Default slot", ce.Slots)
 			}
+		})
+
+		t.Run("SlotDeprecation", func(t *testing.T) {
+			t.Run("Bool", func(t *testing.T) {
+				mustRunFixture(t)
+				manifestJSON := loadFixture(t, "slot-deprecated-bool.json")
+				pkg := mustUnmarshalPackage(t, manifestJSON)
+				ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
+				slots := ce.Slots
+				if len(slots) != 1 {
+					t.Fatalf("len(Slots) = %d, want 1", len(slots))
+				}
+				if got, want := slots[0].Deprecated, DeprecatedFlag(true); got != want {
+					t.Errorf("Deprecated = %#v, want %#v", got, want)
+				}
+			})
+
+			t.Run("Reason", func(t *testing.T) {
+				mustRunFixture(t)
+				manifestJSON := loadFixture(t, "slot-deprecated-reason.json")
+				pkg := mustUnmarshalPackage(t, manifestJSON)
+				ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
+				slots := ce.Slots
+				if len(slots) != 1 {
+					t.Fatalf("len(Slots) = %d, want 1", len(slots))
+				}
+				if got, want := slots[0].Deprecated, DeprecatedReason("use default slot instead"); got != want {
+					t.Errorf("Deprecated = %#v, want %#v", got, want)
+				}
+			})
 		})
 
 		t.Run("CssPartsPropertiesStates", func(t *testing.T) {
@@ -311,6 +371,94 @@ func TestUnmarshalPackage(t *testing.T) {
 			if len(ce.CssStates) != 1 || ce.CssStates[0].Name != "--active" {
 				t.Errorf("CssStates = %+v, want 1 --active", ce.CssStates)
 			}
+		})
+
+		t.Run("CssPartDeprecation", func(t *testing.T) {
+			t.Run("Bool", func(t *testing.T) {
+				mustRunFixture(t)
+				manifestJSON := loadFixture(t, "part-deprecated-bool.json")
+				pkg := mustUnmarshalPackage(t, manifestJSON)
+				ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
+				parts := ce.CssParts
+				if len(parts) != 1 {
+					t.Fatalf("len(CssParts) = %d, want 1", len(parts))
+				}
+				if got, want := parts[0].Deprecated, DeprecatedFlag(true); got != want {
+					t.Errorf("Deprecated = %#v, want %#v", got, want)
+				}
+			})
+
+			t.Run("Reason", func(t *testing.T) {
+				mustRunFixture(t)
+				manifestJSON := loadFixture(t, "part-deprecated-reason.json")
+				pkg := mustUnmarshalPackage(t, manifestJSON)
+				ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
+				parts := ce.CssParts
+				if len(parts) != 1 {
+					t.Fatalf("len(CssParts) = %d, want 1", len(parts))
+				}
+				if got, want := parts[0].Deprecated, DeprecatedReason("use another part"); got != want {
+					t.Errorf("Deprecated = %#v, want %#v", got, want)
+				}
+			})
+		})
+
+		t.Run("CssPropertyDeprecation", func(t *testing.T) {
+			t.Run("Bool", func(t *testing.T) {
+				mustRunFixture(t)
+				manifestJSON := loadFixture(t, "css-property-deprecated-bool.json")
+				pkg := mustUnmarshalPackage(t, manifestJSON)
+				ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
+				props := ce.CssProperties
+				if len(props) != 1 {
+					t.Fatalf("len(CssProperties) = %d, want 1", len(props))
+				}
+				if got, want := props[0].Deprecated, DeprecatedFlag(true); got != want {
+					t.Errorf("Deprecated = %#v, want %#v", got, want)
+				}
+			})
+			t.Run("Reason", func(t *testing.T) {
+				mustRunFixture(t)
+				manifestJSON := loadFixture(t, "css-property-deprecated-reason.json")
+				pkg := mustUnmarshalPackage(t, manifestJSON)
+				ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
+				props := ce.CssProperties
+				if len(props) != 1 {
+					t.Fatalf("len(CssProperties) = %d, want 1", len(props))
+				}
+				if got, want := props[0].Deprecated, DeprecatedReason("use --other instead"); got != want {
+					t.Errorf("Deprecated = %#v, want %#v", got, want)
+				}
+			})
+		})
+
+		t.Run("CssStateDeprecation", func(t *testing.T) {
+			t.Run("Bool", func(t *testing.T) {
+				mustRunFixture(t)
+				manifestJSON := loadFixture(t, "css-state-deprecated-bool.json")
+				pkg := mustUnmarshalPackage(t, manifestJSON)
+				ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
+				states := ce.CssStates
+				if len(states) != 1 {
+					t.Fatalf("len(CssStates) = %d, want 1", len(states))
+				}
+				if got, want := states[0].Deprecated, DeprecatedFlag(true); got != want {
+					t.Errorf("Deprecated = %#v, want %#v", got, want)
+				}
+			})
+			t.Run("Reason", func(t *testing.T) {
+				mustRunFixture(t)
+				manifestJSON := loadFixture(t, "css-state-deprecated-reason.json")
+				pkg := mustUnmarshalPackage(t, manifestJSON)
+				ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
+				states := ce.CssStates
+				if len(states) != 1 {
+					t.Fatalf("len(CssStates) = %d, want 1", len(states))
+				}
+				if got, want := states[0].Deprecated, DeprecatedReason("no longer needed"); got != want {
+					t.Errorf("Deprecated = %#v, want %#v", got, want)
+				}
+			})
 		})
 
 		t.Run("Demos", func(t *testing.T) {
