@@ -18,6 +18,7 @@ package manifest
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 )
@@ -70,6 +71,42 @@ func decodeDeprecatedField(dst *Deprecated, data json.RawMessage) {
 	if err := json.Unmarshal(data, &s); err == nil {
 		*dst = DeprecatedReason(s)
 	}
+}
+
+// DRY helper for types with a Deprecated field. T is the struct type (not pointer).
+func unmarshalWithDeprecated[T any](
+	data json.RawMessage,
+	setDeprecated func(*T, Deprecated),
+) (T, error) {
+	var proxy map[string]json.RawMessage
+	var obj T
+	if err := json.Unmarshal(data, &proxy); err != nil {
+		var zero T
+		return zero, err
+	}
+	// Remove "deprecated" before unmarshalling into T
+	var depRaw json.RawMessage
+	if raw, ok := proxy["deprecated"]; ok {
+		depRaw = raw
+		delete(proxy, "deprecated")
+	}
+	// Marshal the remaining map back to JSON
+	rest, err := json.Marshal(proxy)
+	if err != nil {
+		var zero T
+		return zero, err
+	}
+	if err := json.Unmarshal(rest, &obj); err != nil {
+		var zero T
+		return zero, err
+	}
+	// Now decode the deprecated field
+	if len(depRaw) > 0 && string(depRaw) != "null" {
+		var dep Deprecated
+		decodeDeprecatedField(&dep, depRaw)
+		setDeprecated(&obj, dep)
+	}
+	return obj, nil
 }
 
 // --- Core Package Unmarshalling ---
@@ -295,7 +332,7 @@ func unmarshalMixinDeclaration(data []byte) (*MixinDeclaration, error) {
 
 // --- Custom Element Declarations ---
 
-func unmarshalCustomElementDeclaration(data []byte) (*CustomElementDeclaration, error) {
+func unmarshalCustomElementDeclaration(data []byte) (ce *CustomElementDeclaration, errs error) {
 	var raw struct {
 		Name        string            `json:"name"`
 		Kind        string            `json:"kind"`
@@ -315,7 +352,7 @@ func unmarshalCustomElementDeclaration(data []byte) (*CustomElementDeclaration, 
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return nil, err
 	}
-	ce := &CustomElementDeclaration{
+	ce = &CustomElementDeclaration{
 		CustomElement: CustomElement{
 			Demos:   raw.Demos,
 			TagName: raw.TagName,
@@ -353,7 +390,10 @@ func unmarshalCustomElementDeclaration(data []byte) (*CustomElementDeclaration, 
 		attr, err := unmarshalAttribute(a)
 		if err == nil {
 			ce.Attributes = append(ce.Attributes, attr)
+		} else {
+			errs = errors.Join(errs, err)
 		}
+
 	}
 	for _, e := range raw.Events {
 		ev, err := unmarshalEvent(e)
@@ -413,7 +453,7 @@ func unmarshalCustomElementDeclaration(data []byte) (*CustomElementDeclaration, 
 	if ce.Mixins == nil {
 		ce.Mixins = []Reference{}
 	}
-	return ce, nil
+	return ce, errs
 }
 
 func unmarshalCustomElementMixinDeclaration(data []byte) (*CustomElementMixinDeclaration, error) {
@@ -592,45 +632,22 @@ func unmarshalClassMember(data json.RawMessage) (ClassMember, error) {
 
 // --- Leaf Types ---
 
+
 func unmarshalAttribute(data json.RawMessage) (Attribute, error) {
-	var a Attribute
-	if err := json.Unmarshal(data, &a); err != nil {
-		return a, err
-	}
-	return a, nil
+	return unmarshalWithDeprecated(data, func(x *Attribute, dep Deprecated) { x.Deprecated = dep })
 }
 func unmarshalEvent(data json.RawMessage) (Event, error) {
-	var e Event
-	if err := json.Unmarshal(data, &e); err != nil {
-		return e, err
-	}
-	return e, nil
+	return unmarshalWithDeprecated(data, func(x *Event, dep Deprecated) { x.Deprecated = dep })
 }
 func unmarshalSlot(data json.RawMessage) (Slot, error) {
-	var s Slot
-	if err := json.Unmarshal(data, &s); err != nil {
-		return s, err
-	}
-	return s, nil
+	return unmarshalWithDeprecated(data, func(x *Slot, dep Deprecated) { x.Deprecated = dep })
 }
 func unmarshalCssPart(data json.RawMessage) (CssPart, error) {
-	var cp CssPart
-	if err := json.Unmarshal(data, &cp); err != nil {
-		return cp, err
-	}
-	return cp, nil
+	return unmarshalWithDeprecated(data, func(x *CssPart, dep Deprecated) { x.Deprecated = dep })
 }
 func unmarshalCssCustomProperty(data json.RawMessage) (CssCustomProperty, error) {
-	var cpp CssCustomProperty
-	if err := json.Unmarshal(data, &cpp); err != nil {
-		return cpp, err
-	}
-	return cpp, nil
+	return unmarshalWithDeprecated(data, func(x *CssCustomProperty, dep Deprecated) { x.Deprecated = dep })
 }
 func unmarshalCssCustomState(data json.RawMessage) (CssCustomState, error) {
-	var cs CssCustomState
-	if err := json.Unmarshal(data, &cs); err != nil {
-		return cs, err
-	}
-	return cs, nil
+	return unmarshalWithDeprecated(data, func(x *CssCustomState, dep Deprecated) { x.Deprecated = dep })
 }
