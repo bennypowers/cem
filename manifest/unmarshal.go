@@ -170,6 +170,21 @@ func unmarshalDeclaration(data []byte) (Declaration, error) {
 		}
 		return unmarshalClassDeclaration(data)
 	case "mixin":
+		// Quick raw check for customElement
+		var probe struct {
+			Kind          string          `json:"kind"`
+			CustomElement json.RawMessage `json:"customElement"`
+		}
+		if err := json.Unmarshal(data, &probe); err != nil {
+			return nil, err
+		}
+		// If customElement is present and true, dispatch
+		if probe.Kind == "mixin" && len(probe.CustomElement) > 0 && string(probe.CustomElement) != "null" {
+			var isCE bool
+			if err := json.Unmarshal(probe.CustomElement, &isCE); err == nil && isCE {
+				return unmarshalCustomElementMixinDeclaration(data)
+			}
+		}
 		return unmarshalMixinDeclaration(data)
 	case "function":
 		return unmarshalFunctionDeclaration(data)
@@ -180,8 +195,6 @@ func unmarshalDeclaration(data []byte) (Declaration, error) {
 		} else {
 			return nil, err
 		}
-	case "custom-element-mixin":
-		return unmarshalCustomElementMixinDeclaration(data)
 	default:
 		return nil, fmt.Errorf("unknown declaration kind: %s", kindWrap.Kind)
 	}
@@ -284,9 +297,9 @@ func unmarshalMixinDeclaration(data []byte) (*MixinDeclaration, error) {
 
 func unmarshalCustomElementDeclaration(data []byte) (*CustomElementDeclaration, error) {
 	var raw struct {
-		// flatten ClassDeclaration for embedded struct fields
 		Name        string            `json:"name"`
 		Kind        string            `json:"kind"`
+		TagName     string            `json:"tagName"`
 		Superclass  *Reference        `json:"superclass"`
 		Mixins      []Reference       `json:"mixins"`
 		Members     []json.RawMessage `json:"members"`
@@ -304,10 +317,11 @@ func unmarshalCustomElementDeclaration(data []byte) (*CustomElementDeclaration, 
 	}
 	ce := &CustomElementDeclaration{
 		CustomElement: CustomElement{
-			Demos: raw.Demos,
+			Demos:   raw.Demos,
+			TagName: raw.TagName,
 		},
 		ClassDeclaration: ClassDeclaration{
-			Kind:       raw.Kind,
+			Kind: raw.Kind,
 			ClassLike: ClassLike{
 				Name:       raw.Name,
 				Superclass: raw.Superclass,
@@ -316,12 +330,25 @@ func unmarshalCustomElementDeclaration(data []byte) (*CustomElementDeclaration, 
 		},
 	}
 	decodeDeprecatedField(&ce.Deprecated, raw.Deprecated)
+
+	// Unmarshal members with dispatch
 	for _, mm := range raw.Members {
 		member, err := unmarshalClassMember(mm)
-		if err == nil && member != nil {
-			ce.Members = append(ce.Members, member)
+		if err != nil || member == nil {
+			continue
+		}
+		switch m := member.(type) {
+		case *CustomElementField:
+			ce.Members = append(ce.Members, m)
+		case *ClassField:
+			ce.Members = append(ce.Members, m)
+		case *ClassMethod:
+			ce.Members = append(ce.Members, m)
+		default:
+			// ignore unknown
 		}
 	}
+
 	for _, a := range raw.Attributes {
 		attr, err := unmarshalAttribute(a)
 		if err == nil {
@@ -390,27 +417,111 @@ func unmarshalCustomElementDeclaration(data []byte) (*CustomElementDeclaration, 
 }
 
 func unmarshalCustomElementMixinDeclaration(data []byte) (*CustomElementMixinDeclaration, error) {
-	var raw struct {
-		Name       string            `json:"name"`
-		Kind       string            `json:"kind"`
-		Members    []json.RawMessage `json:"members"`
-		Deprecated json.RawMessage   `json:"deprecated"`
-	}
-	if err := json.Unmarshal(data, &raw); err != nil {
+	base, err := unmarshalMixinDeclaration(data)
+	if err != nil {
 		return nil, err
 	}
-	cem := &CustomElementMixinDeclaration{
-		Name: raw.Name,
-		MixinDeclaration: MixinDeclaration{
-			Kind: raw.Kind,
-		},
+
+	var extra struct {
+		Attributes []json.RawMessage `json:"attributes"`
+		Events     []json.RawMessage `json:"events"`
+		Slots      []json.RawMessage `json:"slots"`
+		CssParts   []json.RawMessage `json:"cssParts"`
+		CssProps   []json.RawMessage `json:"cssProperties"`
+		CssStates  []json.RawMessage `json:"cssStates"`
+		Demos      []Demo            `json:"demos"`
+		Members    []json.RawMessage `json:"members"` // for re-dispatch
 	}
-	decodeDeprecatedField(&cem.Deprecated, raw.Deprecated)
-	for _, mm := range raw.Members {
+	if err := json.Unmarshal(data, &extra); err != nil {
+		return nil, err
+	}
+
+	cem := &CustomElementMixinDeclaration{
+		MixinDeclaration: *base,
+		Name:             base.Name,
+	}
+
+	// Re-dispatch on members for correct types
+	cem.Members = nil
+	for _, mm := range extra.Members {
 		member, err := unmarshalClassMember(mm)
-		if err == nil && member != nil {
-			cem.Members = append(cem.Members, member)
+		if err != nil || member == nil {
+			continue
 		}
+		switch m := member.(type) {
+		case *CustomElementField:
+			cem.Members = append(cem.Members, m)
+		case *ClassField:
+			cem.Members = append(cem.Members, m)
+		case *ClassMethod:
+			cem.Members = append(cem.Members, m)
+		default:
+			// ignore unknown
+		}
+	}
+
+	for _, a := range extra.Attributes {
+		attr, err := unmarshalAttribute(a)
+		if err == nil {
+			cem.Attributes = append(cem.Attributes, attr)
+		}
+	}
+	for _, e := range extra.Events {
+		ev, err := unmarshalEvent(e)
+		if err == nil {
+			cem.Events = append(cem.Events, ev)
+		}
+	}
+	for _, s := range extra.Slots {
+		slot, err := unmarshalSlot(s)
+		if err == nil {
+			cem.Slots = append(cem.Slots, slot)
+		}
+	}
+	for _, cp := range extra.CssParts {
+		part, err := unmarshalCssPart(cp)
+		if err == nil {
+			cem.CssParts = append(cem.CssParts, part)
+		}
+	}
+	for _, cpp := range extra.CssProps {
+		prop, err := unmarshalCssCustomProperty(cpp)
+		if err == nil {
+			cem.CssProperties = append(cem.CssProperties, prop)
+		}
+	}
+	for _, cs := range extra.CssStates {
+		state, err := unmarshalCssCustomState(cs)
+		if err == nil {
+			cem.CssStates = append(cem.CssStates, state)
+		}
+	}
+	cem.Demos = extra.Demos
+
+	// Ensure non-nil slices
+	if cem.Attributes == nil {
+		cem.Attributes = []Attribute{}
+	}
+	if cem.Events == nil {
+		cem.Events = []Event{}
+	}
+	if cem.Slots == nil {
+		cem.Slots = []Slot{}
+	}
+	if cem.CssParts == nil {
+		cem.CssParts = []CssPart{}
+	}
+	if cem.CssProperties == nil {
+		cem.CssProperties = []CssCustomProperty{}
+	}
+	if cem.CssStates == nil {
+		cem.CssStates = []CssCustomState{}
+	}
+	if cem.Demos == nil {
+		cem.Demos = []Demo{}
+	}
+	if cem.Mixins == nil {
+		cem.Mixins = []Reference{}
 	}
 	if cem.Members == nil {
 		cem.Members = []ClassMember{}
@@ -440,17 +551,28 @@ func unmarshalClassMember(data json.RawMessage) (ClassMember, error) {
 	}
 	switch kindWrap.Kind {
 	case "field":
-		var probe struct {
+		// Probe for custom element field properties
+		type probeField struct {
 			Attribute *string `json:"attribute"`
 			Reflects  *bool   `json:"reflects"`
 		}
-		_ = json.Unmarshal(data, &probe)
+		var probe probeField
+		if err := json.Unmarshal(data, &probe); err != nil {
+			return nil, err
+		}
 		if probe.Attribute != nil || probe.Reflects != nil {
 			var f CustomElementField
 			if err := json.Unmarshal(data, &f); err == nil {
+				f.Attribute = *probe.Attribute
+				f.Reflects = *probe.Reflects
 				return &f, nil
 			}
-			return nil, fmt.Errorf("field has 'attribute' or 'reflects' but cannot unmarshal as CustomElementField")
+			// If it fails, fallback to ClassField for robustness
+			var fallback ClassField
+			if err := json.Unmarshal(data, &fallback); err == nil {
+				return &fallback, nil
+			}
+			return nil, fmt.Errorf("cannot unmarshal as CustomElementField or ClassField")
 		}
 		var f ClassField
 		if err := json.Unmarshal(data, &f); err == nil {
