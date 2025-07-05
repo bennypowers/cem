@@ -92,12 +92,12 @@ func TestUnmarshalPackage_CustomElement_BasicFields(t *testing.T) {
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "src/rh-card.js",
+      "path": "src/my-card.js",
       "declarations": [
         {
           "kind": "class",
-          "name": "RhCard",
-          "tagName": "rh-card"
+          "name": "MyCard",
+          "tagName": "my-card",
           "customElement": true
         }
       ]
@@ -120,11 +120,11 @@ func TestUnmarshalPackage_CustomElement_BasicFields(t *testing.T) {
 	if !ok {
 		t.Fatalf("Declaration is not a CustomElementDeclaration")
 	}
-	if ce.TagName != "rh-card" {
-		t.Errorf("TagName = %q, want 'rh-card'", ce.TagName)
+	if ce.TagName != "my-card" {
+		t.Errorf("TagName = %q, want 'my-card'", ce.TagName)
 	}
-	if ce.Name != "RhCard" {
-		t.Errorf("Name = %q, want 'RhCard'", ce.Name)
+	if ce.Name != "MyCard" {
+		t.Errorf("Name = %q, want 'MyCard'", ce.Name)
 	}
 }
 
@@ -140,8 +140,8 @@ func TestUnmarshalPackage_CustomElement_MemberWithAttributeYieldsCustomElementFi
         {
           "kind": "class",
 	        "customElement": true,
-          "name": "RhDialog",
-          "tagName": "rh-dialog",
+          "name": "MyDialog",
+          "tagName": "my-dialog",
           "members": [
             {
               "kind": "field",
@@ -200,13 +200,13 @@ func TestUnmarshalPackage_CustomElement_Attributes(t *testing.T) {
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "src/rh-card.js",
+      "path": "src/my-card.js",
       "declarations": [
         {
           "kind": "class",
           "customElement": true,
-          "name": "RhCard",
-          "tagName": "rh-card",
+          "name": "MyCard",
+          "tagName": "my-card",
           "attributes": [
             {
               "name": "variant",
@@ -255,16 +255,16 @@ func TestUnmarshalPackage_CustomElement_Events(t *testing.T) {
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "src/rh-card.js",
+      "path": "src/my-card.js",
       "declarations": [
         {
           "kind": "class",
 	        "customElement": true,
-          "name": "RhCard",
-          "tagName": "rh-card",
+          "name": "MyCard",
+          "tagName": "my-card",
           "events": [
             {
-              "name": "rh-card-selected",
+              "name": "my-card-selected",
               "type": { "text": "CustomEvent" }
             }
           ]
@@ -285,8 +285,8 @@ func TestUnmarshalPackage_CustomElement_Events(t *testing.T) {
 		t.Fatalf("No declarations found in the first module")
 	}
 	ce := pkg.Modules[0].Declarations[0].(*CustomElementDeclaration)
-	if len(ce.Events) != 1 || ce.Events[0].Name != "rh-card-selected" {
-		t.Errorf("Events = %+v, want 1 rh-card-selected", ce.Events)
+	if len(ce.Events) != 1 || ce.Events[0].Name != "my-card-selected" {
+		t.Errorf("Events = %+v, want 1 my-card-selected", ce.Events)
 	}
 }
 
@@ -297,13 +297,13 @@ func TestUnmarshalPackage_CustomElement_Slots(t *testing.T) {
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "src/rh-card.js",
+      "path": "src/my-card.js",
       "declarations": [
         {
           "kind": "class",
 	        "customElement": true,
-          "name": "RhCard",
-          "tagName": "rh-card",
+          "name": "MyCard",
+          "tagName": "my-card",
           "slots": [
             {
               "name": "",
@@ -339,18 +339,18 @@ func TestUnmarshalPackage_CustomElement_CssPartsPropertiesStates(t *testing.T) {
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "src/rh-card.js",
+      "path": "src/my-card.js",
       "declarations": [
         {
           "kind": "class",
 	        "customElement": true,
-          "name": "RhCard",
-          "tagName": "rh-card",
+          "name": "MyCard",
+          "tagName": "my-card",
           "cssParts": [
             { "name": "header", "description": "Header part" }
           ],
           "cssProperties": [
-            { "name": "--rh-card-color", "description": "Card color" }
+            { "name": "--my-card-color", "description": "Card color" }
           ],
           "cssStates": [
             { "name": "--active", "description": "Active state" }
@@ -375,8 +375,8 @@ func TestUnmarshalPackage_CustomElement_CssPartsPropertiesStates(t *testing.T) {
 	if len(ce.CssParts) != 1 || ce.CssParts[0].Name != "header" {
 		t.Errorf("CssParts = %+v, want 1 header", ce.CssParts)
 	}
-	if len(ce.CssProperties) != 1 || ce.CssProperties[0].Name != "--rh-card-color" {
-		t.Errorf("CssProperties = %+v, want 1 --rh-card-color", ce.CssProperties)
+	if len(ce.CssProperties) != 1 || ce.CssProperties[0].Name != "--my-card-color" {
+		t.Errorf("CssProperties = %+v, want 1 --my-card-color", ce.CssProperties)
 	}
 	if len(ce.CssStates) != 1 || ce.CssStates[0].Name != "--active" {
 		t.Errorf("CssStates = %+v, want 1 --active", ce.CssStates)
@@ -390,13 +390,13 @@ func TestUnmarshalPackage_CustomElement_Demos(t *testing.T) {
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "src/rh-card.js",
+      "path": "src/my-card.js",
       "declarations": [
         {
           "kind": "class",
           "customElement": true,
-          "name": "RhCard",
-          "tagName": "rh-card",
+          "name": "MyCard",
+          "tagName": "my-card",
           "demos": [
             { "description": "Basic demo", "url": "demo.html" }
           ]
@@ -429,15 +429,15 @@ func TestUnmarshalPackage_CustomElement_Mixins(t *testing.T) {
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "src/rh-card.js",
+      "path": "src/my-card.js",
       "declarations": [
         {
           "kind": "class",
           "customElement": true,
-          "name": "RhCard",
-          "tagName": "rh-card",
+          "name": "MyCard",
+          "tagName": "my-card",
           "mixins": [
-            { "name": "RhMixin", "package": "rh-mixins" }
+            { "name": "MyMixin", "package": "my-mixins" }
           ]
         }
       ]
@@ -456,7 +456,7 @@ func TestUnmarshalPackage_CustomElement_Mixins(t *testing.T) {
 		t.Fatalf("No declarations found in the first module")
 	}
 	ce := pkg.Modules[0].Declarations[0].(*CustomElementDeclaration)
-	if len(ce.Mixins) != 1 || ce.Mixins[0].Name != "RhMixin" {
+	if len(ce.Mixins) != 1 || ce.Mixins[0].Name != "MyMixin" {
 		t.Errorf("Mixins = %+v, want 1 RhMixin", ce.Mixins)
 	}
 }
@@ -468,13 +468,13 @@ func TestUnmarshalPackage_CustomElement_Members(t *testing.T) {
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "src/rh-card.js",
+      "path": "src/my-card.js",
       "declarations": [
         {
           "kind": "class",
           "customElement": true,
-          "name": "RhCard",
-          "tagName": "rh-card",
+          "name": "MyCard",
+          "tagName": "my-card",
           "members": [
             {
               "kind": "field",
@@ -518,13 +518,13 @@ func TestUnmarshalPackage_CustomElement_SliceNils(t *testing.T) {
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "src/rh-card.js",
+      "path": "src/my-card.js",
       "declarations": [
         {
           "kind": "class",
           "customElement": true,
-          "name": "RhCard",
-          "tagName": "rh-card"
+          "name": "MyCard",
+          "tagName": "my-card"
         }
       ]
     }
@@ -561,11 +561,11 @@ func TestUnmarshalPackage_Class(t *testing.T) {
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "src/rh-card-base.js",
+      "path": "src/my-card-base.js",
       "declarations": [
         {
           "kind": "class",
-          "name": "RhCardBase",
+          "name": "MyCardBase",
           "members": [
             {
               "kind": "field",
@@ -588,8 +588,8 @@ func TestUnmarshalPackage_Class(t *testing.T) {
 	if !ok {
 		t.Fatalf("Declaration is not a ClassDeclaration")
 	}
-	if c.Name != "RhCardBase" {
-		t.Errorf("Name = %q, want 'RhCardBase'", c.Name)
+	if c.Name != "MyCardBase" {
+		t.Errorf("Name = %q, want 'MyCardBase'", c.Name)
 	}
 	if len(c.Members) != 1 {
 		t.Errorf("Members = %+v, want 1 member", c.Members)
@@ -613,11 +613,11 @@ func TestUnmarshalPackage_Mixin(t *testing.T) {
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "src/rh-mixin.js",
+      "path": "src/my-mixin.js",
       "declarations": [
         {
           "kind": "mixin",
-          "name": "RhMixin",
+          "name": "MyMixin",
           "members": [
             {
               "kind": "field",
@@ -640,8 +640,8 @@ func TestUnmarshalPackage_Mixin(t *testing.T) {
 	if !ok {
 		t.Fatalf("Declaration is not a MixinDeclaration")
 	}
-	if m.Name != "RhMixin" {
-		t.Errorf("Name = %+v, want 'RhMixin'", m)
+	if m.Name != "MyMixin" {
+		t.Errorf("Name = %+v, want 'MyMixin'", m)
 	}
 	if len(m.Members) != 1 {
 		t.Errorf("Members = %+v, want 1 member", m.Members)
@@ -746,8 +746,8 @@ func TestUnmarshalPackage_CustomElementMixin(t *testing.T) {
       "declarations": [
         {
           "kind": "mixin",
-          "customElement": true
-          "name": "RhCustomElementMixin",
+          "customElement": true,
+          "name": "MyCustomElementMixin",
           "members": [
             {
               "kind": "field",
@@ -773,8 +773,8 @@ func TestUnmarshalPackage_CustomElementMixin(t *testing.T) {
 	if !ok {
 		t.Fatalf("Declaration is not a CustomElementMixinDeclaration")
 	}
-	if cem.Name != "RhCustomElementMixin" {
-		t.Errorf("Name = %q, want 'RhCustomElementMixin'", cem.FunctionLike.Name)
+	if cem.Name != "MyCustomElementMixin" {
+		t.Errorf("Name = %q, want 'MyCustomElementMixin'", cem.FunctionLike.Name)
 	}
 	if len(cem.Members) != 1 {
 		t.Errorf("Members = %+v, want 1 item", cem.Members)
@@ -805,7 +805,7 @@ func TestUnmarshalPackage_EmptySlices(t *testing.T) {
       "declarations": [
         {
           "kind": "class",
-          "customElement": true
+          "customElement": true,
           "name": "EmptyElem",
           "tagName": "empty-elem"
         }
