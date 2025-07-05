@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/my-card.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "name": "MyCard",
+          "tagName": "my-card",
+          "attributes": [
+            {
+              "name": "variant",
+              "type": { "text": "\"primary\" | \"secondary\"" }
+            },
+            {
+              "name": "elevated",
+              "type": { "text": "boolean" }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

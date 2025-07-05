@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/my-card.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "name": "MyCard",
+          "tagName": "my-card",
+          "cssParts": [
+            { "name": "header", "description": "Header part" }
+          ],
+          "cssProperties": [
+            { "name": "--my-card-color", "description": "Card color" }
+          ],
+          "cssStates": [
+            { "name": "--active", "description": "Active state" }
+          ]
+        }
+      ]
+    }
+  ]
+}
