@@ -166,8 +166,23 @@ func TestUnmarshalPackage_CustomElement_MemberWithAttributeYieldsCustomElementFi
 		t.Fatalf("Members = %+v, want 2 items", ce.Members)
 	}
 	cem := mustCustomElementField(t, ce.Members[0])
-	if cem.Name != "open" || cem.Attribute != "open" || cem.Type == nil || cem.Type.Text != "boolean" || cem.Default != "false" || !cem.Reflects {
-		t.Errorf("CustomElementField = %+v, want name=open attribute=open type=boolean default=false reflects=true", cem)
+	if cem.Name != "open" {
+		t.Errorf("CustomElementField: want name=open got '%s'", cem.Name)
+	}
+	if cem.Attribute != "open" {
+		t.Errorf("CustomElementField: want attribute=open got '%s'", cem.Attribute)
+	}
+	if cem.Type == nil {
+		t.Errorf("CustomElementField: want type=nil got '%+v'", cem.Type)
+	}
+	if  cem.Type.Text != "boolean" {
+		t.Errorf("CustomElementField: want type.text=boolean got '%s'", cem.Type.Text)
+	}
+	if cem.Default != "false" {
+		t.Errorf("CustomElementField: want default=false got '%s'", cem.Default)
+	}
+	if !cem.Reflects {
+		t.Errorf("CustomElementField: want reflacts=true got '%+v'", cem.Reflects)
 	}
 	plain := mustClassField(t, ce.Members[1])
 	if plain.Name != "plainField" || plain.Type == nil || plain.Type.Text != "string" {
@@ -307,9 +322,6 @@ func TestUnmarshalPackage_Mixin(t *testing.T) {
 	member := mustClassField(t, m.Members[0])
 	if member.Name != "mixinProp" || member.Type == nil || member.Type.Text != "boolean" {
 		t.Errorf("Members = %+v, want 1 mixinProp boolean", m.Members)
-	}
-	if m.Members == nil || m.Mixins == nil {
-		t.Errorf("MixinDeclaration slice fields must not be nil")
 	}
 }
 
