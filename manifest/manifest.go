@@ -7,16 +7,20 @@ import (
 	"regexp"
 )
 
+type Deprecatable interface {
+	IsDeprecated() bool
+}
+
 func normalizePath(path string) string {
 	return regexp.MustCompile(`\.ts$`).ReplaceAllString(path, ".js")
 }
 
 // Package is the top-level interface of a custom elements manifest file.
 type Package struct {
-	SchemaVersion string   `json:"schemaVersion"`
-	Readme        *string  `json:"readme,omitempty"`
-	Modules       []Module `json:"modules"`
-	Deprecated    any      `json:"deprecated,omitempty"` // bool or string
+	SchemaVersion string     `json:"schemaVersion"`
+	Readme        *string    `json:"readme,omitempty"`
+	Modules       []Module   `json:"modules"`
+	Deprecated    Deprecated `json:"deprecated,omitempty"` // bool or string
 }
 
 func NewPackage(modules []Module) Package {
@@ -43,7 +47,7 @@ type JavaScriptModule struct {
 	Description  string        `json:"description,omitempty"`
 	Declarations []Declaration `json:"declarations,omitempty"`
 	Exports      []Export      `json:"exports,omitempty"`
-	Deprecated   any           `json:"deprecated,omitempty"` // bool or string
+	Deprecated   Deprecated    `json:"deprecated,omitempty"` // bool or string
 }
 
 // Export is a union type: JavaScriptExport or CustomElementExport.
@@ -58,13 +62,20 @@ type JavaScriptExport struct {
 	Kind        string     `json:"kind"` // 'js'
 	Name        string     `json:"name"`
 	Declaration *Reference `json:"declaration"`
-	Deprecated  any        `json:"deprecated,omitempty"` // bool or string
+	Deprecated  Deprecated `json:"deprecated,omitempty"` // bool or string
 }
 
 func (*JavaScriptExport) isExport() {}
+func (x *JavaScriptExport) IsDeprecated() bool {
+	if x == nil {
+		return false
+	}
+	return x.Deprecated != nil
+}
 func (e *JavaScriptExport) GetStartByte() uint {
 	return e.StartByte
 }
+var _ Deprecatable = (*JavaScriptExport)(nil)
 
 // CustomElementExport represents a custom element definition.
 type CustomElementExport struct {
@@ -76,9 +87,17 @@ type CustomElementExport struct {
 }
 
 func (*CustomElementExport) isExport() {}
+func (x *CustomElementExport) IsDeprecated() bool {
+	if x == nil {
+		return false
+	}
+	return x.Deprecated != nil
+}
 func (e *CustomElementExport) GetStartByte() uint {
 	return e.StartByte
 }
+var _ Deprecatable = (*CustomElementExport)(nil)
+
 func NewCustomElementExport(
 	tagName string,
 	declaration *Reference,
@@ -99,6 +118,7 @@ func NewCustomElementExport(
 
 // Declaration is a union of several types.
 type Declaration interface {
+	Deprecatable
 	isDeclaration()
 	GetStartByte() uint
 }
@@ -130,6 +150,12 @@ type CustomElementDeclaration struct {
 }
 
 func (*CustomElementDeclaration) isDeclaration()       {}
+func (x *CustomElementDeclaration) IsDeprecated() bool {
+	if x == nil {
+		return false
+	}
+	return x.Deprecated != nil
+}
 func (x *CustomElementDeclaration) GetStartByte() uint { return x.StartByte }
 
 // CustomElement adds fields to classes/mixins for custom elements.
@@ -157,6 +183,13 @@ type Attribute struct {
 	Deprecated    Deprecated `json:"deprecated,omitempty"` // bool or string
 	StartByte     uint       `json:"-"`
 }
+func (x *Attribute) IsDeprecated() bool {
+	if x == nil {
+		return false
+	}
+	return x.Deprecated != nil
+}
+var _ Deprecatable = (*Attribute)(nil)
 
 // Event emitted by a custom element.
 type Event struct {
@@ -167,6 +200,13 @@ type Event struct {
 	InheritedFrom *Reference `json:"inheritedFrom,omitempty"`
 	Deprecated    Deprecated `json:"deprecated,omitempty"` // bool or string
 }
+func (x *Event) IsDeprecated() bool {
+	if x == nil {
+		return false
+	}
+	return x.Deprecated != nil
+}
+var _ Deprecatable = (*Event)(nil)
 
 // Slot in a custom element.
 type Slot struct {
@@ -175,6 +215,13 @@ type Slot struct {
 	Description string     `json:"description,omitempty"`
 	Deprecated  Deprecated `json:"deprecated,omitempty"` // bool or string
 }
+func (x *Slot) IsDeprecated() bool {
+	if x == nil {
+		return false
+	}
+	return x.Deprecated != nil
+}
+var _ Deprecatable = (*Slot)(nil)
 
 // CssPart describes a CSS part.
 type CssPart struct {
@@ -183,6 +230,13 @@ type CssPart struct {
 	Description string     `json:"description,omitempty"`
 	Deprecated  Deprecated `json:"deprecated,omitempty"` // bool or string
 }
+func (x *CssPart) IsDeprecated() bool {
+	if x == nil {
+		return false
+	}
+	return x.Deprecated != nil
+}
+var _ Deprecatable = (*CssPart)(nil)
 
 // CssCustomState describes a CSS custom state.
 type CssCustomState struct {
@@ -191,6 +245,13 @@ type CssCustomState struct {
 	Description string     `json:"description,omitempty"`
 	Deprecated  Deprecated `json:"deprecated,omitempty"` // bool or string
 }
+func (x *CssCustomState) IsDeprecated() bool {
+	if x == nil {
+		return false
+	}
+	return x.Deprecated != nil
+}
+var _ Deprecatable = (*CssCustomState)(nil)
 
 // CssCustomProperty describes a CSS custom property.
 type CssCustomProperty struct {
@@ -202,6 +263,13 @@ type CssCustomProperty struct {
 	Description string     `json:"description,omitempty"`
 	Deprecated  Deprecated `json:"deprecated,omitempty"` // bool or string
 }
+func (x *CssCustomProperty) IsDeprecated() bool {
+	if x == nil {
+		return false
+	}
+	return x.Deprecated != nil
+}
+var _ Deprecatable = (*CssCustomProperty)(nil)
 
 // Type string representation.
 type Type struct {
@@ -229,6 +297,13 @@ type ClassLike struct {
 	Source      *SourceReference `json:"source,omitempty"`
 	Deprecated  Deprecated       `json:"deprecated,omitempty"` // bool or string
 }
+func (x *ClassLike) IsDeprecated() bool {
+	if x == nil {
+		return false
+	}
+	return x.Deprecated != nil
+}
+var _ Deprecatable = (*ClassLike)(nil)
 
 // ClassDeclaration is a class.
 type ClassDeclaration struct {
@@ -237,10 +312,17 @@ type ClassDeclaration struct {
 }
 
 func (*ClassDeclaration) isDeclaration()       {}
+func (x *ClassDeclaration) IsDeprecated() bool {
+	if x == nil {
+		return false
+	}
+	return x.Deprecated != nil
+}
 func (x *ClassDeclaration) GetStartByte() uint { return x.StartByte }
 
 // Declaration is a union of several types.
 type ClassMember interface {
+	Deprecatable
 	isClassMember()
 	GetStartByte() uint
 }
@@ -248,6 +330,7 @@ type ClassMember interface {
 // ClassField is a class field.
 type ClassField struct {
 	PropertyLike
+	Deprecatable                   `json:"-"`
 	Kind          string           `json:"kind"` // 'field'
 	Static        bool             `json:"static,omitempty"`
 	Privacy       Privacy          `json:"privacy,omitempty"` // 'public', 'private', 'protected'
@@ -255,8 +338,12 @@ type ClassField struct {
 	Source        *SourceReference `json:"source,omitempty"`
 }
 
-func (ClassField) isClassMember()       {}
-func (f ClassField) GetStartByte() uint { return f.StartByte }
+func (*ClassField) isClassMember()       {}
+func (x *ClassField) IsDeprecated() bool {
+	return x != nil && x.Deprecated != nil
+}
+func (f *ClassField) GetStartByte() uint { return f.StartByte }
+var _ Deprecatable = (*ClassField)(nil)
 
 // ClassMethod is a method.
 type ClassMethod struct {
@@ -268,8 +355,10 @@ type ClassMethod struct {
 	Source        *SourceReference `json:"source,omitempty"`
 }
 
-func (ClassMethod) isClassMember()       {}
-func (x ClassMethod) GetStartByte() uint { return x.StartByte }
+func (*ClassMethod) isClassMember()       {}
+func (x *ClassMethod) GetStartByte() uint { return x.StartByte }
+func (x *ClassMethod) IsDeprecated() bool { return x.Deprecated != nil }
+var _ Deprecatable = (*ClassMethod)(nil)
 
 // PropertyLike is the common interface of variables, class fields, and function parameters.
 type PropertyLike struct {
@@ -282,6 +371,13 @@ type PropertyLike struct {
 	Deprecated  Deprecated `json:"deprecated,omitempty"`
 	Readonly    bool       `json:"readonly,omitempty"`
 }
+func (x *PropertyLike) IsDeprecated() bool {
+	if x == nil {
+		return false
+	}
+	return x.Deprecated != nil
+}
+var _ Deprecatable = (*PropertyLike)(nil)
 
 // CustomElementField extends ClassField with attribute/reflects.
 type CustomElementField struct {
@@ -290,8 +386,14 @@ type CustomElementField struct {
 	Reflects  bool   `json:"reflects,omitempty"`
 }
 
-func (x CustomElementField) isClassMember()     {}
-func (x CustomElementField) GetStartByte() uint { return x.ClassField.StartByte }
+func (x *CustomElementField) isClassMember()     {}
+func (x *CustomElementField) IsDeprecated() bool {
+	if x == nil {
+		return false
+	}
+	return x.Deprecated != nil
+}
+func (x *CustomElementField) GetStartByte() uint { return x.ClassField.StartByte }
 
 // MixinDeclaration describes a class mixin.
 type MixinDeclaration struct {
@@ -305,6 +407,12 @@ type MixinDeclaration struct {
 }
 
 func (*MixinDeclaration) isDeclaration()       {}
+func (x *MixinDeclaration) IsDeprecated() bool {
+	if x == nil {
+		return false
+	}
+	return x.Deprecated != nil
+}
 func (x *MixinDeclaration) GetStartByte() uint { return x.FunctionLike.StartByte }
 
 // CustomElementMixinDeclaration extends MixinDeclaration and CustomElement.
@@ -318,6 +426,12 @@ type CustomElementMixinDeclaration struct {
 }
 
 func (*CustomElementMixinDeclaration) isDeclaration()       {}
+func (x *CustomElementMixinDeclaration) IsDeprecated() bool {
+	if x == nil {
+		return false
+	}
+	return x.Deprecated != nil
+}
 func (x *CustomElementMixinDeclaration) GetStartByte() uint { return x.FunctionLike.StartByte }
 
 // VariableDeclaration is a variable.
@@ -328,6 +442,12 @@ type VariableDeclaration struct {
 }
 
 func (*VariableDeclaration) isDeclaration()       {}
+func (x *VariableDeclaration) IsDeprecated() bool {
+	if x == nil {
+		return false
+	}
+	return x.Deprecated != nil
+}
 func (x *VariableDeclaration) GetStartByte() uint { return x.StartByte }
 
 // FunctionDeclaration is a function.
@@ -338,6 +458,12 @@ type FunctionDeclaration struct {
 }
 
 func (*FunctionDeclaration) isDeclaration()       {}
+func (x *FunctionDeclaration) IsDeprecated() bool {
+	if x == nil {
+		return false
+	}
+	return x.Deprecated != nil
+}
 func (x *FunctionDeclaration) GetStartByte() uint { return x.StartByte }
 
 // Parameter is a function parameter.

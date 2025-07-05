@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/my-card.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyCard",
+          "tagName": "my-card",
+          "customElement": true
+        }
+      ]
+    }
+  ]
+}

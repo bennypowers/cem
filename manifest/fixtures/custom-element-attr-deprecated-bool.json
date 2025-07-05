@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/card.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "name": "CustomElementAttrDeprecatedBool",
+          "tagName": "custom-element-attr-deprecated-bool",
+          "attributes": [
+            {
+              "name": "flag",
+              "type": {
+                "text": "string"
+              },
+              "deprecated": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

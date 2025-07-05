@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/my-card-base.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyCardBase",
+          "members": [
+            {
+              "kind": "field",
+              "name": "baseProp",
+              "type": { "text": "number" }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

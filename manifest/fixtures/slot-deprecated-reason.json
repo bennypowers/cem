@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "name": "SlotDeprecatedReason",
+          "tagName": "slot-deprecated-reason",
+          "slots": [
+            {
+              "name": "footer",
+              "deprecated": "use default slot instead"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

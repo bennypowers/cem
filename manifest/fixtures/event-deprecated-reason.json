@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "name": "EventDeprecatedReason",
+          "tagName": "event-deprecated-reason",
+          "events": [
+            {
+              "name": "open",
+              "type": { "text": "CustomEvent<void>" },
+              "deprecated": "use something else"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "name": "CssStateDeprecatedBool",
+          "tagName": "css-state-deprecated-bool",
+          "cssStates": [
+            {
+              "name": "active",
+              "deprecated": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

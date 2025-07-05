@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "name": "PartDeprecatedReason",
+          "tagName": "part-deprecated-reason",
+          "cssParts": [
+            {
+              "name": "knob",
+              "deprecated": "use another part"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

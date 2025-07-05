@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Test Fixture",
+      "name": "Test Fixture (generate)",
       "type": "go",
       "request": "launch",
       "mode": "test",
@@ -13,6 +13,20 @@
       "args": [
         "-test.run",
         "TestGenerate"
+      ]
+    },
+    {
+      "name": "Test Fixture (manifest)",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "program": "${workspaceFolder}/manifest",
+      "env": {
+        "FIXTURE_PATTERN": "${input:fixturePattern}"
+      },
+      "args": [
+        "-test.run",
+        "./..."
       ]
     },
     {

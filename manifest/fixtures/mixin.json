@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/my-mixin.js",
+      "declarations": [
+        {
+          "kind": "mixin",
+          "name": "MyMixin",
+          "members": [
+            {
+              "kind": "field",
+              "name": "mixinProp",
+              "type": { "text": "boolean" }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
