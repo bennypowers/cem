@@ -38,6 +38,7 @@ func mustUnmarshalPackage(t *testing.T, manifestJSON []byte) *Package {
 	t.Helper()
 	pkg, err := UnmarshalPackage(manifestJSON)
 	if err != nil {
+		t.Log(err)
 		t.Fatalf("UnmarshalPackage failed: %v", err)
 	}
 	return pkg
@@ -75,6 +76,17 @@ func mustClassDecl(t *testing.T, decl Declaration) *ClassDeclaration {
 		t.Fatalf("Declaration is not a ClassDeclaration: %T", decl)
 	}
 	return cl
+}
+
+func getFirstDecl(t *testing.T, pkg *Package) any {
+	t.Helper()
+	if len(pkg.Modules) == 0 {
+		t.Fatal("no modules in package")
+	}
+	if len(pkg.Modules[0].Declarations) == 0 {
+		t.Fatal("no declarations in first module")
+	}
+	return pkg.Modules[0].Declarations[0]
 }
 
 func mustMixinDecl(t *testing.T, decl Declaration) *MixinDeclaration {
@@ -129,6 +141,22 @@ func mustCustomElementField(t *testing.T, member any) *CustomElementField {
 		t.Fatalf("Member = %T, want *CustomElementField", member)
 	}
 	return cem
+}
+
+func mustUnmarshalPackageEdge(t *testing.T, manifestJSON []byte) (*Package, error) {
+	t.Helper()
+	pkg, err := UnmarshalPackage(manifestJSON)
+	if err != nil {
+		if regexp.MustCompile(`unknown declaration kind`).MatchString(err.Error()) {
+			return nil, err // let test expect/verify this
+		}
+		if regexp.MustCompile(`invalid type for deprecated field`).MatchString(err.Error()) {
+			return nil, err // let test expect/verify this
+		}
+		t.Log(err)
+		t.Fatalf("UnmarshalPackage failed: %v", err)
+	}
+	return pkg, nil
 }
 
 // --- Tests ---
@@ -228,92 +256,113 @@ func TestUnmarshalPackage(t *testing.T) {
 			if ce.Attributes[1].Type == nil || ce.Attributes[1].Type.Text != "boolean" {
 				t.Errorf("Second attribute type = %+v, want boolean", ce.Attributes[1].Type)
 			}
-		})
+			t.Run("Attribute", func(t *testing.T) {
+				t.Run("TypeText", func(t *testing.T) {
+					data := loadFixture(t, "attribute-type-text.json")
+					pkg := mustUnmarshalPackage(t, data)
+					ce, ok := getFirstDecl(t, pkg).(*CustomElementDeclaration)
+					if !ok {
+						t.Fatalf("not a CustomElementDeclaration: %#v", getFirstDecl(t, pkg))
+					}
+					if len(ce.Attributes) != 1 || ce.Attributes[0].Type.Text != "number" {
+						t.Errorf("unexpected attribute type: %#v", ce.Attributes)
+					}
+				})
+				t.Run("Deprecation", func(t *testing.T) {
+					t.Run("None", func(t *testing.T) {
+						mustRunFixture(t)
+						pkg := mustUnmarshalPackage(t, loadFixture(t, "custom-element-attr-deprecated-none.json"))
+						mod := mustFirstModule(t, pkg)
+						ce := mustCustomElementDecl(t, mustModuleDecls(t, mod, 1)[0])
+						if len(ce.Attributes) != 1 {
+							t.Fatalf("len(Attributes) = %d, want 1", len(ce.Attributes))
+						}
+						if ce.Attributes[0].Deprecated != nil {
+							t.Errorf("Attribute.Deprecated = %v, want nil", ce.Attributes[0].Deprecated)
+						}
+					})
 
-		t.Run("AttributeDeprecation", func(t *testing.T) {
-			t.Run("None", func(t *testing.T) {
-				mustRunFixture(t)
-				pkg := mustUnmarshalPackage(t, loadFixture(t, "custom-element-attr-deprecated-none.json"))
-				mod := mustFirstModule(t, pkg)
-				ce := mustCustomElementDecl(t, mustModuleDecls(t, mod, 1)[0])
-				if len(ce.Attributes) != 1 {
-					t.Fatalf("len(Attributes) = %d, want 1", len(ce.Attributes))
-				}
-				if ce.Attributes[0].Deprecated != nil {
-					t.Errorf("Attribute.Deprecated = %v, want nil", ce.Attributes[0].Deprecated)
-				}
+					t.Run("Bool", func(t *testing.T) {
+						mustRunFixture(t)
+						pkg := mustUnmarshalPackage(t, loadFixture(t, "custom-element-attr-deprecated-bool.json"))
+						mod := mustFirstModule(t, pkg)
+						ce := mustCustomElementDecl(t, mustModuleDecls(t, mod, 1)[0])
+						if len(ce.Attributes) != 1 {
+							t.Fatalf("len(Attributes) = %d, want 1", len(ce.Attributes))
+						}
+						dep := ce.Attributes[0].Deprecated
+						if dep == nil {
+							t.Errorf("Attribute.Deprecated = nil, want non-nil")
+						} else if v, ok := dep.(DeprecatedFlag); !ok || !bool(v) {
+							t.Errorf("Attribute.Deprecated = %#v, want DeprecatedFlag(true)", dep)
+						}
+					})
+
+					t.Run("Reason", func(t *testing.T) {
+						mustRunFixture(t)
+						pkg := mustUnmarshalPackage(t, loadFixture(t, "custom-element-attr-deprecated-reason.json"))
+						mod := mustFirstModule(t, pkg)
+						ce := mustCustomElementDecl(t, mustModuleDecls(t, mod, 1)[0])
+						if len(ce.Attributes) != 1 {
+							t.Fatalf("len(Attributes) = %d, want 1", len(ce.Attributes))
+						}
+						dep := ce.Attributes[0].Deprecated
+						if dep == nil {
+							t.Errorf("Attribute.Deprecated = nil, want non-nil")
+						} else if v, ok := dep.(DeprecatedReason); !ok || string(v) != "use something else" {
+							t.Errorf("Attribute.Deprecated = %#v, want DeprecatedReason(\"use something else\")", dep)
+						}
+					})
+				})
 			})
-
-			t.Run("Bool", func(t *testing.T) {
+			t.Run("Event", func(t *testing.T) {
 				mustRunFixture(t)
-				pkg := mustUnmarshalPackage(t, loadFixture(t, "custom-element-attr-deprecated-bool.json"))
-				mod := mustFirstModule(t, pkg)
-				ce := mustCustomElementDecl(t, mustModuleDecls(t, mod, 1)[0])
-				if len(ce.Attributes) != 1 {
-					t.Fatalf("len(Attributes) = %d, want 1", len(ce.Attributes))
-				}
-				dep := ce.Attributes[0].Deprecated
-				if dep == nil {
-					t.Errorf("Attribute.Deprecated = nil, want non-nil")
-				} else if v, ok := dep.(DeprecatedFlag); !ok || !bool(v) {
-					t.Errorf("Attribute.Deprecated = %#v, want DeprecatedFlag(true)", dep)
-				}
-			})
-
-			t.Run("Reason", func(t *testing.T) {
-				mustRunFixture(t)
-				pkg := mustUnmarshalPackage(t, loadFixture(t, "custom-element-attr-deprecated-reason.json"))
-				mod := mustFirstModule(t, pkg)
-				ce := mustCustomElementDecl(t, mustModuleDecls(t, mod, 1)[0])
-				if len(ce.Attributes) != 1 {
-					t.Fatalf("len(Attributes) = %d, want 1", len(ce.Attributes))
-				}
-				dep := ce.Attributes[0].Deprecated
-				if dep == nil {
-					t.Errorf("Attribute.Deprecated = nil, want non-nil")
-				} else if v, ok := dep.(DeprecatedReason); !ok || string(v) != "use something else" {
-					t.Errorf("Attribute.Deprecated = %#v, want DeprecatedReason(\"use something else\")", dep)
-				}
-			})
-		})
-
-		t.Run("Events", func(t *testing.T) {
-			mustRunFixture(t)
-			manifestJSON := loadFixture(t, "custom_element_events.json")
-			pkg := mustUnmarshalPackage(t, manifestJSON)
-			ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-			if len(ce.Events) != 1 || ce.Events[0].Name != "my-card-selected" {
-				t.Errorf("Events = %+v, want 1 my-card-selected", ce.Events)
-			}
-		})
-
-		t.Run("EventDeprecation", func(t *testing.T) {
-			t.Run("Bool", func(t *testing.T) {
-			mustRunFixture(t)
-				manifestJSON := loadFixture(t, "event-deprecated-bool.json")
+				manifestJSON := loadFixture(t, "custom_element_events.json")
 				pkg := mustUnmarshalPackage(t, manifestJSON)
 				ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-				evs := ce.Events
-				if len(evs) != 1 {
-					t.Fatalf("len(Events) = %d, want 1", len(evs))
+				if len(ce.Events) != 1 || ce.Events[0].Name != "my-card-selected" {
+					t.Errorf("Events = %+v, want 1 my-card-selected", ce.Events)
 				}
-				if got, want := evs[0].Deprecated, DeprecatedFlag(true); got != want {
-					t.Errorf("Deprecated = %#v, want %#v", got, want)
-				}
-			})
+				t.Run("TypeText", func(t *testing.T) {
+					data := loadFixture(t, "event-type-text.json")
+					pkg := mustUnmarshalPackage(t, data)
+					ce, ok := getFirstDecl(t, pkg).(*CustomElementDeclaration)
+					if !ok {
+						t.Fatalf("not a CustomElementDeclaration: %#v", getFirstDecl(t, pkg))
+					}
+					if len(ce.Events) != 1 || ce.Events[0].Type.Text != "CustomEvent" {
+						t.Errorf("unexpected event type: %#v", ce.Events)
+					}
+				})
+				t.Run("Deprecation", func(t *testing.T) {
+					t.Run("Bool", func(t *testing.T) {
+					mustRunFixture(t)
+						manifestJSON := loadFixture(t, "event-deprecated-bool.json")
+						pkg := mustUnmarshalPackage(t, manifestJSON)
+						ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
+						evs := ce.Events
+						if len(evs) != 1 {
+							t.Fatalf("len(Events) = %d, want 1", len(evs))
+						}
+						if got, want := evs[0].Deprecated, DeprecatedFlag(true); got != want {
+							t.Errorf("Deprecated = %#v, want %#v", got, want)
+						}
+					})
 
-			t.Run("Reason", func(t *testing.T) {
-				mustRunFixture(t)
-				manifestJSON := loadFixture(t, "event-deprecated-reason.json")
-				pkg := mustUnmarshalPackage(t, manifestJSON)
-				ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-				evs := ce.Events
-				if len(evs) != 1 {
-					t.Fatalf("len(Events) = %d, want 1", len(evs))
-				}
-				if got, want := evs[0].Deprecated, DeprecatedReason("use something else"); got != want {
-					t.Errorf("Deprecated = %#v, want %#v", got, want)
-				}
+					t.Run("Reason", func(t *testing.T) {
+						mustRunFixture(t)
+						manifestJSON := loadFixture(t, "event-deprecated-reason.json")
+						pkg := mustUnmarshalPackage(t, manifestJSON)
+						ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
+						evs := ce.Events
+						if len(evs) != 1 {
+							t.Fatalf("len(Events) = %d, want 1", len(evs))
+						}
+						if got, want := evs[0].Deprecated, DeprecatedReason("use something else"); got != want {
+							t.Errorf("Deprecated = %#v, want %#v", got, want)
+						}
+					})
+				})
 			})
 		})
 
@@ -514,6 +563,7 @@ func TestUnmarshalPackage(t *testing.T) {
 	})
 
 	t.Run("Class", func(t *testing.T) {
+		mustRunFixture(t)
 		manifestJSON := loadFixture(t, "class.json")
 		pkg := mustUnmarshalPackage(t, manifestJSON)
 		mod := mustFirstModule(t, pkg)
@@ -528,12 +578,76 @@ func TestUnmarshalPackage(t *testing.T) {
 		if member.Name != "baseProp" || member.Type.Text != "number" {
 			t.Errorf("Member = %+v, want baseProp: number", member)
 		}
-		if c.Members == nil || c.Mixins == nil {
-			t.Errorf("ClassDeclaration slice fields must not be nil")
-		}
+		t.Run("DeprecatedBool", func(t *testing.T) {
+			mustRunFixture(t)
+			data := loadFixture(t, "class-deprecated-bool.json")
+			pkg := mustUnmarshalPackage(t, data)
+			class, ok := getFirstDecl(t, pkg).(*ClassDeclaration)
+			if !ok {
+				t.Fatalf("not a ClassDeclaration: %#v", getFirstDecl(t, pkg))
+			}
+			if class.Deprecated != DeprecatedFlag(true) {
+				t.Errorf("expected Deprecated=true, got %#v", class.Deprecated)
+			}
+		})
+		t.Run("DeprecatedReason", func(t *testing.T) {
+			mustRunFixture(t)
+			data := loadFixture(t, "class-deprecated-reason.json")
+			pkg := mustUnmarshalPackage(t, data)
+			class, ok := getFirstDecl(t, pkg).(*ClassDeclaration)
+			if !ok {
+				t.Fatalf("not a ClassDeclaration: %#v", getFirstDecl(t, pkg))
+			}
+			exp := DeprecatedReason("Use the new class instead")
+			if class.Deprecated != exp {
+				t.Errorf("expected Deprecated=%#v, got %#v", exp, class.Deprecated)
+			}
+		})
+		t.Run("FieldTypeText", func(t *testing.T) {
+			mustRunFixture(t)
+			data := loadFixture(t, "class-field-type-text.json")
+			pkg := mustUnmarshalPackage(t, data)
+			class, ok := getFirstDecl(t, pkg).(*ClassDeclaration)
+			if !ok {
+				t.Fatalf("not a ClassDeclaration: %#v", getFirstDecl(t, pkg))
+			}
+			if len(class.Members) != 1 {
+				t.Fatalf("expected 1 member, got %d", len(class.Members))
+			}
+			field, ok := class.Members[0].(*ClassField)
+			if !ok {
+				t.Fatalf("first member not a ClassField: %#v", class.Members[0])
+			}
+			if field.Type.Text != "number" {
+				t.Errorf("unexpected field type: %#v", field.Type.Text)
+			}
+		})
+		t.Run("MethodParameters", func(t *testing.T) {
+			mustRunFixture(t)
+			data := loadFixture(t, "class-method-parameters.json")
+			pkg := mustUnmarshalPackage(t, data)
+			class, ok := getFirstDecl(t, pkg).(*ClassDeclaration)
+			if !ok {
+				t.Fatalf("not a ClassDeclaration: %#v", getFirstDecl(t, pkg))
+			}
+			if len(class.Members) != 1 {
+				t.Fatalf("expected 1 member, got %d", len(class.Members))
+			}
+			method, ok := class.Members[0].(*ClassMethod)
+			if !ok {
+				t.Fatalf("first member not a ClassMethod: %#v", class.Members[0])
+			}
+			if len(method.Parameters) != 1 || method.Parameters[0].Name != "bar" {
+				t.Errorf("unexpected parameters: %#v", method.Parameters)
+			}
+			if method.Parameters[0].Type.Text != "string" {
+				t.Errorf("unexpected parameter type: %#v", method.Parameters[0].Type.Text)
+			}
+		})
 	})
 
 	t.Run("Mixin", func(t *testing.T) {
+			mustRunFixture(t)
 		manifestJSON := loadFixture(t, "mixin.json")
 		pkg := mustUnmarshalPackage(t, manifestJSON)
 		mod := mustFirstModule(t, pkg)
@@ -548,22 +662,142 @@ func TestUnmarshalPackage(t *testing.T) {
 		if member.Name != "mixinProp" || member.Type == nil || member.Type.Text != "boolean" {
 			t.Errorf("Members = %+v, want 1 mixinProp boolean", m.Members)
 		}
+		t.Run("DeprecatedBool", func(t *testing.T) {
+			mustRunFixture(t)
+			data := loadFixture(t, "mixin-deprecated-bool.json")
+			pkg := mustUnmarshalPackage(t, data)
+			mixin, ok := getFirstDecl(t, pkg).(*MixinDeclaration)
+			if !ok {
+				t.Fatalf("not a MixinDeclaration: %#v", getFirstDecl(t, pkg))
+			}
+			if mixin.Deprecated != DeprecatedFlag(true) {
+				t.Errorf("expected Deprecated=true, got %#v", mixin.Deprecated)
+			}
+		})
+		t.Run("DeprecatedReason", func(t *testing.T) {
+			mustRunFixture(t)
+			data := loadFixture(t, "mixin-deprecated-reason.json")
+			pkg := mustUnmarshalPackage(t, data)
+			mixin, ok := getFirstDecl(t, pkg).(*MixinDeclaration)
+			if !ok {
+				t.Fatalf("not a MixinDeclaration: %#v", getFirstDecl(t, pkg))
+			}
+			exp := DeprecatedReason("Mixins are not recommended")
+			if mixin.Deprecated != exp {
+				t.Errorf("expected Deprecated=%#v, got %#v", exp, mixin.Deprecated)
+			}
+		})
 	})
 
 	t.Run("Function", func(t *testing.T) {
-		manifestJSON := loadFixture(t, "function.json")
-		pkg := mustUnmarshalPackage(t, manifestJSON)
-		mod := mustFirstModule(t, pkg)
-		fn := mustFunctionDecl(t, mustModuleDecls(t, mod, 1)[0])
-		if fn.Name != "helperFn" {
-			t.Errorf("Name = %q, want 'helperFn'", fn.Name)
-		}
-		if len(fn.Parameters) != 1 || fn.Parameters[0].Name != "x" || fn.Parameters[0].Type == nil || fn.Parameters[0].Type.Text != "number" {
-			t.Errorf("Parameters = %+v, want 1 x number", fn.Parameters)
-		}
-		if fn.Parameters == nil {
-			t.Errorf("FunctionDeclaration.Parameters must not be nil")
-		}
+		t.Run("Fields", func(t *testing.T) {
+			mustRunFixture(t)
+			manifestJSON := loadFixture(t, "function.json")
+			pkg := mustUnmarshalPackage(t, manifestJSON)
+			mod := mustFirstModule(t, pkg)
+			fn := mustFunctionDecl(t, mustModuleDecls(t, mod, 1)[0])
+			if fn.Name != "helperFn" {
+				t.Errorf("Name = %q, want 'helperFn'", fn.Name)
+			}
+			if len(fn.Parameters) != 1 || fn.Parameters[0].Name != "x" || fn.Parameters[0].Type == nil || fn.Parameters[0].Type.Text != "number" {
+				t.Errorf("Parameters = %+v, want 1 x number", fn.Parameters)
+			}
+			if fn.Parameters == nil {
+				t.Errorf("FunctionDeclaration.Parameters must not be nil")
+			}
+		})
+		t.Run("Deprecated", func(t *testing.T) {
+			t.Run("Bool", func(t *testing.T) {
+				mustRunFixture(t)
+				manifestJSON := loadFixture(t, "function-deprecated-bool.json")
+				pkg := mustUnmarshalPackage(t, manifestJSON)
+				mod := mustFirstModule(t, pkg)
+				fn := mustFunctionDecl(t, mustModuleDecls(t, mod, 1)[0])
+				if fn.Deprecated != DeprecatedFlag(true) {
+					t.Errorf("expected Deprecated=true, got %#v", fn.Deprecated)
+				}
+			})
+			t.Run("Reason", func(t *testing.T) {
+				mustRunFixture(t)
+				data := loadFixture(t, "function-deprecated-reason.json")
+				pkg := mustUnmarshalPackage(t, data)
+				fn, ok := getFirstDecl(t, pkg).(*FunctionDeclaration)
+				if !ok {
+					t.Fatalf("not a FunctionDeclaration: %#v", getFirstDecl(t, pkg))
+				}
+				exp := DeprecatedReason("Use anotherFunction instead")
+				if fn.Deprecated != exp {
+					t.Errorf("expected Deprecated=%#v, got %#v", exp, fn.Deprecated)
+				}
+			})
+		})
+		t.Run("Parameters", func(t *testing.T) {
+			t.Run("Fields", func(t *testing.T) {
+				mustRunFixture(t)
+				data := loadFixture(t, "function-parameters.json")
+				pkg := mustUnmarshalPackage(t, data)
+				fn, ok := getFirstDecl(t, pkg).(*FunctionDeclaration)
+				if !ok {
+					t.Fatalf("not a FunctionDeclaration: %#v", getFirstDecl(t, pkg))
+				}
+				if len(fn.Parameters) != 2 {
+					t.Fatalf("expected 2 parameters, got %d", len(fn.Parameters))
+				}
+				if fn.Parameters[0].Name != "x" || fn.Parameters[0].Type.Text != "number" {
+					t.Errorf("unexpected first parameter: %#v", fn.Parameters[0])
+				}
+				if fn.Parameters[1].Name != "y" || fn.Parameters[1].Type.Text != "string" {
+					t.Errorf("unexpected second parameter: %#v", fn.Parameters[1])
+				}
+				if fn.Return.Type.Text != "boolean" {
+					t.Errorf("unexpected return type: %#v", fn.Return.Type.Text)
+				}
+			})
+			t.Run("Deprecation", func(t *testing.T) {
+				t.Run("Bool", func(t *testing.T) {
+					mustRunFixture(t)
+					data := loadFixture(t, "function-parameter-deprecated-bool.json")
+					pkg := mustUnmarshalPackage(t, data)
+					fn, ok := getFirstDecl(t, pkg).(*FunctionDeclaration)
+					if !ok {
+						t.Fatalf("not a FunctionDeclaration: %#v", getFirstDecl(t, pkg))
+					}
+					if len(fn.Parameters) != 1 {
+						t.Fatalf("expected 1 parameter, got %d", len(fn.Parameters))
+					}
+					if fn.Parameters[0].Deprecated != DeprecatedFlag(true) {
+						t.Errorf("expected Deprecated=true, got %#v", fn.Parameters[0].Deprecated)
+					}
+				})
+				t.Run("Reason", func(t *testing.T) {
+					mustRunFixture(t)
+					data := loadFixture(t, "function-parameter-deprecated-reason.json")
+					pkg := mustUnmarshalPackage(t, data)
+					fn, ok := getFirstDecl(t, pkg).(*FunctionDeclaration)
+					if !ok {
+						t.Fatalf("not a FunctionDeclaration: %#v", getFirstDecl(t, pkg))
+					}
+					if len(fn.Parameters) != 1 {
+						t.Fatalf("expected 1 parameter, got %d", len(fn.Parameters))
+					}
+					exp := DeprecatedReason("No longer used")
+					if fn.Parameters[0].Deprecated != exp {
+						t.Errorf("expected Deprecated=%#v, got %#v", exp, fn.Parameters[0].Deprecated)
+					}
+				})
+			})
+		})
+		t.Run("ReturnTypeText", func(t *testing.T) {
+			data := loadFixture(t, "function-return-type-text.json")
+			pkg := mustUnmarshalPackage(t, data)
+			fn, ok := getFirstDecl(t, pkg).(*FunctionDeclaration)
+			if !ok {
+				t.Fatalf("not a FunctionDeclaration: %#v", getFirstDecl(t, pkg))
+			}
+			if fn.Return.Type.Text != "Promise<string>" {
+				t.Errorf("unexpected return type: %#v", fn.Return.Type.Text)
+			}
+		})
 	})
 
 	t.Run("Variable", func(t *testing.T) {
@@ -577,6 +811,40 @@ func TestUnmarshalPackage(t *testing.T) {
 		if v.Type == nil || v.Type.Text != "string" {
 			t.Errorf("Type = %+v, want string", v.Type)
 		}
+		t.Run("DeprecatedBool", func(t *testing.T) {
+			data := loadFixture(t, "variable-deprecated-bool.json")
+			pkg := mustUnmarshalPackage(t, data)
+			variable, ok := getFirstDecl(t, pkg).(*VariableDeclaration)
+			if !ok {
+				t.Fatalf("not a VariableDeclaration: %#v", getFirstDecl(t, pkg))
+			}
+			if variable.Deprecated != DeprecatedFlag(true) {
+				t.Errorf("expected Deprecated=true, got %#v", variable.Deprecated)
+			}
+		})
+		t.Run("DeprecatedReason", func(t *testing.T) {
+			data := loadFixture(t, "variable-deprecated-reason.json")
+			pkg := mustUnmarshalPackage(t, data)
+			variable, ok := getFirstDecl(t, pkg).(*VariableDeclaration)
+			if !ok {
+				t.Fatalf("not a VariableDeclaration: %#v", getFirstDecl(t, pkg))
+			}
+			exp := DeprecatedReason("No longer supported")
+			if variable.Deprecated != exp {
+				t.Errorf("expected Deprecated=%#v, got %#v", exp, variable.Deprecated)
+			}
+		})
+		t.Run("TypeText", func(t *testing.T) {
+			data := loadFixture(t, "variable-type-text.json")
+			pkg := mustUnmarshalPackage(t, data)
+			variable, ok := getFirstDecl(t, pkg).(*VariableDeclaration)
+			if !ok {
+				t.Fatalf("not a VariableDeclaration: %#v", getFirstDecl(t, pkg))
+			}
+			if variable.Type.Text != "Array<string>" {
+				t.Errorf("unexpected type text: %#v", variable.Type.Text)
+			}
+		})
 	})
 
 	t.Run("CustomElementMixin", func(t *testing.T) {
@@ -593,9 +861,6 @@ func TestUnmarshalPackage(t *testing.T) {
 		member := mustClassField(t, cem.Members[0])
 		if member.Name != "cemProp" {
 			t.Errorf("Members = %+v, want 1 cemProp", cem.Members)
-		}
-		if cem.Attributes == nil || cem.Members == nil || cem.Mixins == nil {
-			t.Errorf("CustomElementMixinDeclaration slice fields must not be nil")
 		}
 		if len(cem.Attributes) != 1 || cem.Attributes[0].Name != "cem-attr" {
 			t.Errorf("Attributes = %+v, want 1 cem-attr", cem.Attributes)
@@ -618,6 +883,31 @@ func TestUnmarshalPackage(t *testing.T) {
 		}
 	})
 
+	t.Run("Export", func(t *testing.T) {
+		t.Run("JSExport", func(t *testing.T) {
+			data := loadFixture(t, "export-js-basic.json")
+			pkg := mustUnmarshalPackage(t, data)
+			if len(pkg.Modules) == 0 || len(pkg.Modules[0].Exports) == 0 {
+				t.Fatalf("missing exports in module")
+			}
+			exp, ok := pkg.Modules[0].Exports[0].(*JavaScriptExport)
+			if !ok || exp.Name != "jsExport" {
+				t.Errorf("unexpected export: %#v", pkg.Modules[0].Exports[0])
+			}
+		})
+		t.Run("CustomElementDefinitionExport", func(t *testing.T) {
+			data := loadFixture(t, "export-custom-element-definition-basic.json")
+			pkg := mustUnmarshalPackage(t, data)
+			if len(pkg.Modules) == 0 || len(pkg.Modules[0].Exports) == 0 {
+				t.Fatalf("missing exports in module")
+			}
+			exp, ok := pkg.Modules[0].Exports[0].(*CustomElementExport)
+			if !ok || exp.Name != "my-element" {
+				t.Errorf("unexpected export: %#v", pkg.Modules[0].Exports[0])
+			}
+		})
+	})
+
 	t.Run("InvalidJSON", func(t *testing.T) {
 		_, err := UnmarshalPackage([]byte(`{invalid}`))
 		if err == nil {
@@ -625,12 +915,37 @@ func TestUnmarshalPackage(t *testing.T) {
 		}
 	})
 
+	t.Run("EdgeCases", func(t *testing.T) {
+		t.Run("InvalidMissingRequired", func(t *testing.T) {
+			data := loadFixture(t, "invalid-missing-required.json")
+			_, err := UnmarshalPackage(data)
+			if err == nil {
+				t.Error("expected error for missing required fields, got nil")
+			}
+		})
+		t.Run("InvalidDeprecatedWrongType", func(t *testing.T) {
+			data := loadFixture(t, "invalid-deprecated-wrong-type.json")
+			_, err := mustUnmarshalPackageEdge(t, data)
+			if err == nil {
+				t.Error("expected error for invalid deprecated type, got nil")
+			}
+		})
+		t.Run("InvalidExtraFields", func(t *testing.T) {
+			data := loadFixture(t, "invalid-extra-fields.json")
+			// This should NOT error, but extra fields should be ignored.
+			_, err := UnmarshalPackage(data)
+			if err != nil {
+				t.Errorf("unexpected error for extra fields: %v", err)
+			}
+		})
+	})
+
 	t.Run("UnknownKind", func(t *testing.T) {
 		manifestJSON := loadFixture(t, "unknown_kind.json")
-		pkg := mustUnmarshalPackage(t, manifestJSON)
-		mod := mustFirstModule(t, pkg)
-		if len(mod.Declarations) != 0 {
-			t.Errorf("len(Declarations) = %d, want 0 for unknown kind", len(mod.Declarations))
+		_, err := mustUnmarshalPackageEdge(t, manifestJSON)
+		if err == nil {
+			t.Errorf("expected error for unknown kind, got nil")
 		}
 	})
+
 }

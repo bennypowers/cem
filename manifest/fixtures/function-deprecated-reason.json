@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "fnDeprecatedReason",
+          "deprecated": "Use anotherFunction instead",
+          "parameters": [],
+          "return": {}
+        }
+      ]
+    }
+  ]
+}

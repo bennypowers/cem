@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "ClassWithFieldTypeText",
+          "members": [
+            { "kind": "field", "name": "foo", "type": { "text": "number" } }
+          ]
+        }
+      ]
+    }
+  ]
+}

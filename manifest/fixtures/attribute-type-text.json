@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "name": "ElementWithAttributeType",
+          "tagName": "element-with-attribute-type",
+          "attributes": [
+            { "name": "value", "type": { "text": "number" } }
+          ]
+        }
+      ]
+    }
+  ]
+}

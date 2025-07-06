@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "declarations": [
+        {
+          "kind": "variable",
+          "name": "varTypeText",
+          "type": { "text": "Array<string>" }
+        }
+      ]
+    }
+  ]
+}
