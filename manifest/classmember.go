@@ -35,6 +35,9 @@ func unmarshalClassMember(data json.RawMessage) (ClassMember, error) {
 	if err := json.Unmarshal(data, &kindWrap); err != nil {
 		return nil, err
 	}
+	if kindWrap.Kind == "" {
+		return nil, fmt.Errorf("missing kind in class member")
+	}
 	switch kindWrap.Kind {
 	case "field":
 		// Probe for custom element field properties
@@ -51,8 +54,12 @@ func unmarshalClassMember(data json.RawMessage) (ClassMember, error) {
 			if err := json.Unmarshal(data, &f); err == nil {
 				// NB: it's not clear to me why these assignments are necessary,
 				// but empirically, they are
-				f.Attribute = *probe.Attribute
-				f.Reflects = *probe.Reflects
+				if probe.Attribute != nil {
+					f.Attribute = *probe.Attribute
+				}
+				if probe.Reflects != nil {
+					f.Reflects = *probe.Reflects
+				}
 				return &f, nil
 			} else {
 				// Only fallback if there's a clear reason (e.g., missing required fields for custom element field)

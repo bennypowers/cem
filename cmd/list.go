@@ -428,38 +428,6 @@ Example:
 	},
 }
 
-var listDeprecationsCmd = &cobra.Command{
-	Use:     "deprecations",
-	Aliases: []string{"deprecated"},
-	Short:   "List all deprecations in the custom elements manifest",
-	Long: `Lists all deprecations
-
-This command outputs a tree with module path names, exported declarations,
-custom elements and their APIs, if they are deprecated.
-Allows you to quickly see which features in your manifest should not be used.
-
-Example:
-
-  cem list deprecations
-`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		pkg, err := readPkg()
-		if err != nil {
-			return err
-		}
-		format, err := requireFormat(cmd, []string{"tree"})
-		if err != nil {
-			return err
-		}
-		switch format {
-		case "tree":
-			title := "Deprecations"
-			return list.RenderTree(title, M.NewPackageWithContext(pkg), M.IsDeprecated)
-		}
-		return nil
-	},
-}
-
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List items in the custom elements manifest like tag names, attributes, functions, etc",
@@ -467,9 +435,13 @@ var listCmd = &cobra.Command{
 
 This command provides subcommands for listing tag names, attributes, and other elements described in your manifest.
 Use the available subcommands to explore your project's custom elements, their attributes, and more.
+Without subcommands, lists the entire custom elements manifest. Use the --deprecated flag to filter
+the list, showing only itemas that should not be used.
 
 Examples:
 
+	cem list
+	cem list --deprecated --format tree
   cem list tags
   cem list modules
   cem list attributes --tag-name my-button
@@ -480,13 +452,41 @@ Examples:
   cem list events --tag-name my-button
   cem list methods --tag-name my-button
 `,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		pkg, err := readPkg()
+		if err != nil {
+			return err
+		}
+		format, err := requireFormat(cmd, []string{"table", "tree"})
+		if err != nil {
+			return err
+		}
+		deprecated, err := cmd.Flags().GetBool("deprecated")
+		if err != nil {
+			return err
+		}
+		if deprecated && format != "tree" {
+			return errors.New("--deprecated currently only supported with --format tree")
+		}
+		switch format {
+		case "tree":
+			title := "Manifest"
+			pred := M.True
+			if deprecated {
+				title = "Deprecations"
+				pred = M.IsDeprecated
+			}
+			return list.RenderTree(title, M.NewPackageWithContext(pkg), pred)
+		}
+		return nil
+	},
 }
 
 func init() {
 	listCmd.AddCommand(listTagsCmd)
 	listCmd.AddCommand(listModulesCmd)
-	listCmd.AddCommand(listDeprecationsCmd)
-	listDeprecationsCmd.PersistentFlags().StringP("format", "f", "tree", "Output format")
+	listCmd.PersistentFlags().StringP("format", "f", "table", "Output format")
+	listCmd.PersistentFlags().Bool("deprecated", false, "Filter the results, showing only deprecated items")
 	listTagsCmd.Flags().StringArrayP("columns", "c", []string{}, "list of columns to display in the table")
 	listModulesCmd.Flags().StringArrayP("columns", "c", []string{}, "list of columns to display in the table")
 	for _, c := range []*cobra.Command{
@@ -499,7 +499,6 @@ func init() {
 		listMethodsCmd,
 	} {
 		listCmd.AddCommand(c)
-		c.PersistentFlags().StringP("format", "f", "table", "Output format")
 		c.Flags().StringP("tag-name", "t", "", "Tag name to list attributes for")
 		c.Flags().StringArrayP("columns", "c", []string{}, "list of columns to display in the table")
 	}
