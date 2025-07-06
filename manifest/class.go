@@ -19,10 +19,13 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/pterm/pterm"
 )
 
 var _ Deprecatable = (*ClassLike)(nil)
 var _ Deprecatable = (*ClassDeclaration)(nil)
+var _ Renderable = (*RenderableClassDeclaration)(nil)
 
 // ClassLike is the common interface of classes and mixins.
 type ClassLike struct {
@@ -88,3 +91,94 @@ func (c *ClassDeclaration) UnmarshalJSON(data []byte) error {
 	}
 	return nil
 }
+
+type RenderableClassDeclaration struct {
+	name             string
+	ClassDeclaration *ClassDeclaration
+	JavaScriptExport *JavaScriptExport
+	Module           *Module
+	Package          *Package
+	ChildNodes       []Renderable
+}
+
+func (x *RenderableClassDeclaration) Name() string {
+	return x.ClassDeclaration.Name
+}
+
+func (x *RenderableClassDeclaration) ColumnHeadings() []string {
+  return []string{"Name", "Module Path", "Summary"}
+}
+
+func (x *RenderableClassDeclaration) ToTableRow() []string {
+	modulePath := ""
+	if x.Module != nil {
+		modulePath = x.Module.Path
+	}
+	return []string{
+		x.ClassDeclaration.Name,
+		modulePath,
+		x.ClassDeclaration.Summary,
+	}
+}
+
+func (x *RenderableClassDeclaration) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
+	label := pterm.LightBlue("class") + " " + highlightIfDeprecated(x)
+	ft := filterRenderableTree(x, pred)
+	children := make([]pterm.TreeNode, 0)
+	for _, mem := range ft.Children() {
+		children = append(children, mem.ToTreeNode(pred))
+	}
+	return pterm.TreeNode{
+		Text: label,
+		Children: children,
+	}
+}
+
+func (x *RenderableClassDeclaration) Children() []Renderable {
+	return x.ChildNodes
+}
+
+func (x *RenderableClassDeclaration) IsDeprecated() bool {
+	return x.ClassDeclaration.IsDeprecated()
+}
+
+func (x *RenderableClassDeclaration) Deprecation() Deprecated {
+	return x.ClassDeclaration.Deprecated
+}
+
+func NewRenderableClassDeclaration(
+	class *ClassDeclaration,
+	mod *JavaScriptModule,
+	pkg *Package,
+) *RenderableClassDeclaration {
+	var exp *JavaScriptExport
+	for i := range mod.Exports {
+		exp := mod.Exports[i]
+		if je, ok := exp.(*JavaScriptExport); ok {
+			if je.Declaration.Name == class.Name && (je.Declaration.Module == "" || je.Declaration.Module == mod.Path) {
+				exp = je
+				break;
+			}
+		}
+	}
+	children := make([]Renderable, 0)
+	for i, m := range class.Members {
+		switch m.(type) {
+		case *ClassField:
+			m := class.Members[i].(*ClassField)
+			children = append(children, NewRenderableClassField(m,class,exp,mod,pkg))
+		case *ClassMethod:
+			m := class.Members[i].(*ClassMethod)
+			children = append(children, NewRenderableClassMethod(m,class,exp,mod,pkg))
+		}
+	}
+	return &RenderableClassDeclaration{
+		name: class.Name,
+		ClassDeclaration: class,
+		JavaScriptExport: exp,
+		Module: mod,
+		Package: pkg,
+		ChildNodes: children,
+	}
+}
+

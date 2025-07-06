@@ -19,9 +19,12 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/pterm/pterm"
 )
 
 var _ Deprecatable = (*CssCustomProperty)(nil)
+var _ Renderable = (*RenderableCssCustomProperty)(nil)
 
 // CssCustomProperty describes a CSS custom property.
 type CssCustomProperty struct {
@@ -37,6 +40,10 @@ func (x *CssCustomProperty) IsDeprecated() bool {
 		return false
 	}
 	return x.Deprecated != nil
+}
+
+func (x *CssCustomProperty) Deprecation() Deprecated {
+	return x.Deprecated
 }
 
 func (c *CssCustomProperty) UnmarshalJSON(data []byte) error {
@@ -58,4 +65,62 @@ func (c *CssCustomProperty) UnmarshalJSON(data []byte) error {
 		c.Deprecated = dep
 	}
 	return nil
+}
+
+type RenderableCssCustomProperty struct {
+	name                     string
+	CssCustomProperty        *CssCustomProperty
+	CustomElementDeclaration *CustomElementDeclaration
+	CustomElementExport      *CustomElementExport
+	JavaScriptModule         *JavaScriptModule
+}
+
+func (x *RenderableCssCustomProperty) Name() string {
+	return x.CssCustomProperty.Name
+}
+
+func (x *RenderableCssCustomProperty) ColumnHeadings() []string {
+	return []string{"Name", "Syntax", "Default", "Summary"}
+}
+
+// Renders a CSS CssCustomProperty as a table row.
+func (x *RenderableCssCustomProperty) ToTableRow() []string {
+	return []string{
+		x.name,
+		x.CssCustomProperty.Syntax,
+		x.CssCustomProperty.Default,
+		x.CssCustomProperty.Summary,
+	}
+}
+
+func (x *RenderableCssCustomProperty) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
+	label := highlightIfDeprecated(x)
+	return pterm.TreeNode{Text: label}
+}
+
+func (x *RenderableCssCustomProperty) Children() []Renderable {
+	return nil // it's a leaf node
+}
+
+func (x *RenderableCssCustomProperty) IsDeprecated() bool {
+	return x.CssCustomProperty.Deprecated != nil
+}
+
+func (x *RenderableCssCustomProperty) Deprecation() Deprecated {
+	return x.CssCustomProperty.Deprecated
+}
+
+func NewRenderableCssCustomProperty(
+  prop *CssCustomProperty,
+	ced *CustomElementDeclaration,
+	cee *CustomElementExport,
+	mod *Module,
+) *RenderableCssCustomProperty {
+	return  &RenderableCssCustomProperty{
+		name:                     prop.Name,
+		CssCustomProperty:        prop,
+		CustomElementDeclaration: ced,
+		CustomElementExport:      cee,
+		JavaScriptModule:         mod,
+	}
 }

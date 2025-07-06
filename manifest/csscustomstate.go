@@ -19,9 +19,12 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/pterm/pterm"
 )
 
 var _ Deprecatable = (*CssCustomState)(nil)
+var _ Deprecatable = (*RenderableCssCustomState)(nil)
 
 // CssCustomState describes a CSS custom state.
 type CssCustomState struct {
@@ -55,4 +58,64 @@ func (c *CssCustomState) UnmarshalJSON(data []byte) error {
 		c.Deprecated = dep
 	}
 	return nil
+}
+
+// RenderableCssCustomState adds context and render/traversal methods.
+type RenderableCssCustomState struct {
+	name                     string
+	CssCustomState           *CssCustomState
+	CustomElementDeclaration *CustomElementDeclaration
+	CustomElementExport      *CustomElementExport
+	JavaScriptModule         *JavaScriptModule
+	// Add more context fields as needed
+}
+
+func (x *RenderableCssCustomState) Name() string {
+	return x.CssCustomState.Name
+}
+
+func (x *RenderableCssCustomState) ColumnHeadings() []string {
+	return []string{
+		"Name",
+		"Summary",
+	}
+}
+
+// Renders a CssCustomState as a table row.
+func (x *RenderableCssCustomState) ToTableRow() []string {
+	return []string{
+		highlightIfDeprecated(x),
+		x.CssCustomState.Summary,
+	}
+}
+
+func (x *RenderableCssCustomState) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
+	return pterm.TreeNode{Text: highlightIfDeprecated(x)}
+}
+
+func (x *RenderableCssCustomState) IsDeprecated() bool {
+	return x.CssCustomState != nil && x.CssCustomState.IsDeprecated()
+}
+
+func (x *RenderableCssCustomState) Deprecation() Deprecated {
+	return x.CssCustomState.Deprecated
+}
+
+func (x *RenderableCssCustomState) Children() []Renderable {
+	return nil // It's a leaf node
+}
+
+func NewRenderableCssCustomState(
+  state *CssCustomState,
+	ced *CustomElementDeclaration,
+	cee *CustomElementExport,
+	mod *Module,
+) *RenderableCssCustomState {
+	return  &RenderableCssCustomState{
+		name:                     state.Name,
+		CssCustomState:           state,
+		CustomElementDeclaration: ced,
+		CustomElementExport:      cee,
+		JavaScriptModule:         mod,
+	}
 }

@@ -19,9 +19,12 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/pterm/pterm"
 )
 
 var _ Deprecatable = (*CssPart)(nil)
+var _ Renderable = (*RenderableCssPart)(nil)
 
 // CssPart describes a CSS part.
 type CssPart struct {
@@ -55,4 +58,64 @@ func (c *CssPart) UnmarshalJSON(data []byte) error {
 		c.Deprecated = dep
 	}
 	return nil
+}
+
+// RenderableCssPart adds context and render/traversal methods.
+type RenderableCssPart struct {
+	name                     string
+	CssPart                  *CssPart
+	CustomElementDeclaration *CustomElementDeclaration
+	CustomElementExport      *CustomElementExport
+	JavaScriptModule         *JavaScriptModule
+	// Add more context fields as needed
+}
+
+func (x *RenderableCssPart) Name() string {
+	return x.CssPart.Name
+}
+
+func (x *RenderableCssPart) ColumnHeadings() []string {
+	return []string{
+		"Name",
+		"Summary",
+	}
+}
+
+// Renders a CssPart as a table row.
+func (x *RenderableCssPart) ToTableRow() []string {
+	return []string{
+		highlightIfDeprecated(x),
+		x.CssPart.Summary,
+	}
+}
+
+func (x *RenderableCssPart) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
+	return pterm.TreeNode{Text: highlightIfDeprecated(x) }
+}
+
+func (x *RenderableCssPart) IsDeprecated() bool {
+	return x.CssPart != nil && x.CssPart.IsDeprecated()
+}
+
+func (x *RenderableCssPart) Deprecation() Deprecated {
+	return x.CssPart.Deprecated
+}
+
+func (x *RenderableCssPart) Children() []Renderable {
+	return nil // It's a leaf node
+}
+
+func NewRenderableCssPart(
+  part *CssPart,
+	ced *CustomElementDeclaration,
+	cee *CustomElementExport,
+	mod *Module,
+) *RenderableCssPart {
+	return  &RenderableCssPart{
+		name:                     part.Name,
+		CssPart:                  part,
+		CustomElementDeclaration: ced,
+		CustomElementExport:      cee,
+		JavaScriptModule:         mod,
+	}
 }

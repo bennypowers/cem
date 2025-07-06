@@ -19,7 +19,12 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/pterm/pterm"
 )
+
+var _ Deprecatable = (*VariableDeclaration)(nil)
+var _ Renderable = (*RenderableVariableDeclaration)(nil)
 
 // VariableDeclaration is a variable.
 type VariableDeclaration struct {
@@ -65,4 +70,65 @@ func (v *VariableDeclaration) UnmarshalJSON(data []byte) error {
 		v.Deprecated = dep
 	}
 	return nil
+}
+
+type RenderableVariableDeclaration struct {
+	name string
+	VariableDeclaration *VariableDeclaration
+	Module *Module
+	Package *Package
+	ChildNodes []Renderable
+}
+
+func (x *RenderableVariableDeclaration) Children() []Renderable {
+	return nil // it's a leaf node
+}
+
+func (x *RenderableVariableDeclaration) Name() string {
+	return x.VariableDeclaration.Name
+	// "var " + x.VariableDeclaration.Name
+}
+
+func (x *RenderableVariableDeclaration) ColumnHeadings() []string {
+	return []string{"Name", "Type", "Summary"}
+}
+
+func (x *RenderableVariableDeclaration) ToTableRow() []string {
+	typeText := ""
+	if x.VariableDeclaration.Type != nil {
+		typeText = x.VariableDeclaration.Type.Text
+	}
+  return []string{
+		x.VariableDeclaration.Name,
+		typeText,
+		x.VariableDeclaration.Summary,
+	}
+}
+
+func (x *RenderableVariableDeclaration) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
+	label := highlightIfDeprecated(x)
+	return pterm.TreeNode{
+		Text: label,
+	}
+}
+
+func (x *RenderableVariableDeclaration) IsDeprecated() bool {
+	return x.VariableDeclaration.IsDeprecated()
+}
+
+func (x *RenderableVariableDeclaration) Deprecation() Deprecated {
+	return x.VariableDeclaration.Deprecated
+}
+
+func NewRenderableVariableDeclaration(
+	vd *VariableDeclaration,
+	mod *Module,
+	pkg *Package,
+) *RenderableVariableDeclaration {
+  return &RenderableVariableDeclaration{
+		name: vd.Name,
+		VariableDeclaration: vd,
+		Module: mod,
+		Package: pkg,
+	}
 }

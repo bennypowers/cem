@@ -19,9 +19,12 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/pterm/pterm"
 )
 
 var _ Deprecatable = (*FunctionDeclaration)(nil)
+var _ Renderable = (*RenderableFunctionDeclaration)(nil)
 
 // Return value for functions.
 type Return struct {
@@ -88,4 +91,88 @@ func (f *FunctionDeclaration) UnmarshalJSON(data []byte) error {
 		f.Parameters = append(f.Parameters, param)
 	}
 	return nil
+}
+
+type RenderableFunctionDeclaration struct {
+  name string
+	FunctionDeclaration *FunctionDeclaration
+	JavaScriptExport *JavaScriptExport
+	Module *Module
+	Package *Package
+	ChildNodes []Renderable // parameters and return
+}
+
+func NewRenderableFunctionDeclaration(
+	fd *FunctionDeclaration,
+	mod *Module,
+	pkg *Package,
+) *RenderableFunctionDeclaration {
+	// TODO use a map
+	// TODO get je, cee from other modules
+	var je *JavaScriptExport
+	for i, exp := range mod.Exports {
+		if eje, ok := exp.(*JavaScriptExport); ok {
+			if eje.Declaration.Name == fd.Name && (eje.Declaration.Module == "" || eje.Declaration.Module == mod.Path) {
+				je = mod.Exports[i].(*JavaScriptExport)
+				break
+			}
+		}
+	}
+	// TODO: populate children with params, return
+	children := make([]Renderable, 0)
+  return &RenderableFunctionDeclaration{
+		name: fd.Name,
+		FunctionDeclaration: fd,
+		JavaScriptExport: je,
+		Module: mod,
+		Package: pkg,
+		ChildNodes: children,
+	}
+}
+
+func (x *RenderableFunctionDeclaration) Name() string {
+	return x.FunctionDeclaration.Name
+	// label := pterm.LightBlue("function") + " " + highlightIfDeprecated(x.FunctionDeclaration.Name, x)
+}
+
+func (x *RenderableFunctionDeclaration) Children() []Renderable {
+	return nil // it's a leaf node
+}
+
+func (x *RenderableFunctionDeclaration) ColumnHeadings() []string {
+	return []string{"Name", "Return Type", "Summary"}
+}
+
+func (x *RenderableFunctionDeclaration) ToTableRow() []string {
+	typeText := ""
+	if x.FunctionDeclaration.Return != nil && x.FunctionDeclaration.Return.Type != nil {
+		typeText = x.FunctionDeclaration.Return.Type.Text
+	}
+  return []string{
+		highlightIfDeprecated(x),
+		typeText,
+		x.FunctionDeclaration.Summary,
+	}
+}
+
+func (x *RenderableFunctionDeclaration) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
+	label := pterm.LightBlue("function") + " " + highlightIfDeprecated(x)
+	ft := filterRenderableTree(x, pred)
+	children := make([]pterm.TreeNode, 0)
+	for _, mem := range ft.Children() {
+		children = append(children, mem.ToTreeNode(pred))
+	}
+	return pterm.TreeNode{
+		Text: label,
+		Children: children,
+	}
+}
+
+func (x *RenderableFunctionDeclaration) IsDeprecated() bool {
+  return x.FunctionDeclaration.IsDeprecated()
+}
+
+
+func (x *RenderableFunctionDeclaration) Deprecation() Deprecated {
+  return x.FunctionDeclaration.Deprecated
 }

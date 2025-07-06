@@ -106,13 +106,13 @@ func makeTestPackage() *Package {
 
 func TestGetAllTagNamesWithContext(t *testing.T) {
 	pkg := makeTestPackage()
-	tags := pkg.GetAllTagNamesWithContext()
+	tags := pkg.RenderableCustomElementDeclarations()
 	if len(tags) != 1 {
 		t.Fatalf("expected 1 tag, got %d", len(tags))
 	}
 	tag := tags[0]
-	if tag.TagName != "foo-el" {
-		t.Errorf("expected TagName 'foo-el', got %q", tag.TagName)
+	if tag.Name() != "foo-el" {
+		t.Errorf("expected TagName 'foo-el', got %q", tag.Name())
 	}
 	if tag.Module == nil || tag.Module.Path != "src/foo.js" {
 		t.Errorf("expected Module path src/foo.js, got %+v", tag.Module)
@@ -127,19 +127,19 @@ func TestGetAllTagNamesWithContext(t *testing.T) {
 
 func TestGetTagAttrsWithContext(t *testing.T) {
 	pkg := makeTestPackage()
-	attrs, err := pkg.GetTagAttrsWithContext("foo-el")
+	attrs, err := pkg.TagRenderableAttributes("foo-el")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if len(attrs) != 2 {
 		t.Fatalf("expected 2 attributes, got %d", len(attrs))
 	}
-	attrNames := []string{attrs[0].Name, attrs[1].Name}
+	attrNames := []string{attrs[0].Name(), attrs[1].Name()}
 	if !reflect.DeepEqual(attrNames, []string{"bar", "baz"}) && !reflect.DeepEqual(attrNames, []string{"baz", "bar"}) {
 		t.Errorf("expected attr names [bar baz], got %v", attrNames)
 	}
 	for _, attr := range attrs {
-		if attr.Name == "bar" && (attr.CustomElementField == nil || !attr.CustomElementField.Reflects) {
+		if attr.Name() == "bar" && (attr.CustomElementField == nil || !attr.CustomElementField.Reflects) {
 			t.Errorf("expected bar to have CustomElementField with Reflects=true")
 		}
 	}
@@ -147,7 +147,7 @@ func TestGetTagAttrsWithContext(t *testing.T) {
 
 func TestGetTagSlotsWithContext(t *testing.T) {
 	pkg := makeTestPackage()
-	slots, err := pkg.GetTagSlotsWithContext("foo-el")
+	slots, err := pkg.TagRenderableSlots("foo-el")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -161,66 +161,65 @@ func TestGetTagSlotsWithContext(t *testing.T) {
 
 func TestGetTagCssPropertiesWithContext(t *testing.T) {
 	pkg := makeTestPackage()
-	props, err := pkg.GetTagCssPropertiesWithContext("foo-el")
+	props, err := pkg.TagRenderableCssProperties("foo-el")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if len(props) != 1 {
 		t.Fatalf("expected 1 css property, got %d", len(props))
 	}
-	if props[0].Name != "--foo-bar" {
-		t.Errorf("expected property '--foo-bar', got %q", props[0].Name)
+	if props[0].name != "--foo-bar" {
+		t.Errorf("expected property '--foo-bar', got %q", props[0].name)
 	}
 }
 
 func TestGetTagCssStatesWithContext(t *testing.T) {
 	pkg := makeTestPackage()
-	states, err := pkg.GetTagCssStatesWithContext("foo-el")
+	states, err := pkg.TagRenderableCssStates("foo-el")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(states) != 1 || states[0].Name != "--active" {
+	if len(states) != 1 || states[0].Name() != "--active" {
 		t.Errorf("expected 1 state '--active', got %+v", states)
 	}
 }
 
 func TestGetTagCssPartsWithContext(t *testing.T) {
 	pkg := makeTestPackage()
-	parts, err := pkg.GetTagCssPartsWithContext("foo-el")
+	parts, err := pkg.TagRenderableCssParts("foo-el")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(parts) != 1 || parts[0].Name != "part1" {
+	if len(parts) != 1 || parts[0].Name() != "part1" {
 		t.Errorf("expected 1 part 'part1', got %+v", parts)
 	}
 }
 
 func TestGetTagEventsWithContext(t *testing.T) {
 	pkg := makeTestPackage()
-	events, err := pkg.GetTagEventsWithContext("foo-el")
+	events, err := pkg.TagRenderableEvents("foo-el")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(events) != 1 || events[0].Name != "foo-event" {
+	if len(events) != 1 || events[0].Name() != "foo-event" {
 		t.Errorf("expected 1 event 'foo-event', got %+v", events)
 	}
 }
 
 func TestGetTagMethodsWithContext(t *testing.T) {
 	pkg := makeTestPackage()
-	methods, err := pkg.GetTagMethodsWithContext("foo-el")
+	methods, err := pkg.TagRenderableMethods("foo-el")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(methods) != 1 || methods[0].Name != "doAThing" {
+	if len(methods) != 1 || methods[0].Name() != "doAThing" {
 		t.Errorf("expected 1 method 'doAThing', got %+v", methods)
 	}
 }
 
 func TestContextToTableRow(t *testing.T) {
-	// AttributeWithContext
-	attr := AttributeWithContext{
-		Name: "foo",
+	attr := RenderableAttribute{
+		name: "foo",
 		Attribute: &Attribute{
 			FullyQualified: FullyQualified{
 				Name:    "foo",
@@ -237,9 +236,8 @@ func TestContextToTableRow(t *testing.T) {
 		t.Errorf("unexpected AttributeWithContext ToTableRow: %#v", row)
 	}
 
-	// SlotWithContext
-	slot := SlotWithContext{
-		Name: "",
+	slot := RenderableSlot{
+		name: "",
 		Slot: &Slot{FullyQualified: FullyQualified{Summary: "default"}},
 	}
 	row = slot.ToTableRow()
@@ -247,9 +245,8 @@ func TestContextToTableRow(t *testing.T) {
 		t.Errorf("unexpected SlotWithContext ToTableRow: %#v", row)
 	}
 
-	// CssCustomPropertyWithContext
-	cssProp := CssCustomPropertyWithContext{
-		Name:              "--foo",
+	cssProp := RenderableCssCustomProperty{
+		name:              "--foo",
 		CssCustomProperty: &CssCustomProperty{Syntax: "string", Default: "bar", FullyQualified: FullyQualified{Summary: "baz"}},
 	}
 	row = cssProp.ToTableRow()
@@ -257,9 +254,8 @@ func TestContextToTableRow(t *testing.T) {
 		t.Errorf("unexpected CssCustomPropertyWithContext ToTableRow: %#v", row)
 	}
 
-	// CssCustomStateWithContext
-	state := CssCustomStateWithContext{
-		Name:           "--active",
+	state := RenderableCssCustomState{
+		name:           "--active",
 		CssCustomState: &CssCustomState{FullyQualified: FullyQualified{Summary: "active"}},
 	}
 	row = state.ToTableRow()
@@ -268,8 +264,8 @@ func TestContextToTableRow(t *testing.T) {
 	}
 
 	// CssPartWithContext
-	part := CssPartWithContext{
-		Name:    "part1",
+	part := RenderableCssPart{
+		name:    "part1",
 		CssPart: &CssPart{FullyQualified: FullyQualified{Summary: "part summary"}},
 	}
 	row = part.ToTableRow()
@@ -278,8 +274,8 @@ func TestContextToTableRow(t *testing.T) {
 	}
 
 	// EventWithContext
-	event := EventWithContext{
-		Name:  "evt",
+	event := RenderableEvent{
+		name:  "evt",
 		Event: &Event{Type: &Type{Text: "CustomEvent"}, FullyQualified: FullyQualified{Summary: "summ"}},
 	}
 	row = event.ToTableRow()
@@ -288,8 +284,8 @@ func TestContextToTableRow(t *testing.T) {
 	}
 
 	// MethodWithContext
-	method := MethodWithContext{
-		Name: "doIt",
+	method := RenderableMethod{
+		name: "doIt",
 		Method: &ClassMethod{
 			FunctionLike: FunctionLike{
 				Return: &Return{Type: &Type{Text: "string"}},
@@ -317,7 +313,7 @@ func TestFindCustomElementContext_TagNotFound(t *testing.T) {
 
 func TestGetTagAttrsWithContext_TagNotFound(t *testing.T) {
 	pkg := makeTestPackage()
-	_, err := pkg.GetTagAttrsWithContext("does-not-exist")
+	_, err := pkg.TagRenderableAttributes("does-not-exist")
 	if err == nil {
 		t.Error("expected error for missing tag, got nil")
 	}

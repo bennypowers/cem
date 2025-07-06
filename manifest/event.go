@@ -19,9 +19,12 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/pterm/pterm"
 )
 
 var _ Deprecatable = (*Event)(nil)
+var _ Renderable = (*RenderableEvent)(nil)
 
 // Event emitted by a custom element.
 type Event struct {
@@ -57,4 +60,68 @@ func (e *Event) UnmarshalJSON(data []byte) error {
 		e.Deprecated = dep
 	}
 	return nil
+}
+
+type RenderableEvent struct {
+	name                     string
+	Event                    *Event
+	CustomElementDeclaration *CustomElementDeclaration
+	CustomElementExport      *CustomElementExport
+	JavaScriptModule         *JavaScriptModule
+}
+
+func (x *RenderableEvent) Name() string {
+	return x.Event.Name
+}
+
+func (x *RenderableEvent) ColumnHeadings() []string {
+	return []string{"Name", "Type", "Summary"}
+}
+
+// Renders an Event as a table row.
+func (x *RenderableEvent) ToTableRow() []string {
+	eventType := ""
+	if x.Event.Type != nil {
+		eventType = x.Event.Type.Text
+	}
+	return []string{
+		highlightIfDeprecated(x),
+		eventType,
+		x.Event.Summary,
+	}
+}
+
+func (x *RenderableEvent) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
+	label := highlightIfDeprecated(x)
+	return pterm.TreeNode{Text: label}
+}
+
+func (x *RenderableEvent) Children() []Renderable {
+	return nil // it's a leaf node
+}
+
+func (x *RenderableEvent) IsDeprecated() bool {
+	return x.Event.Deprecated != nil
+}
+
+func (x *RenderableEvent) Deprecation() Deprecated {
+	return x.Event.Deprecated
+}
+
+var _ Renderable = (*RenderableEvent)(nil)
+
+func NewRenderableEvent(
+	ev *Event,
+	ced *CustomElementDeclaration,
+	cee *CustomElementExport,
+	mod *Module,
+
+) *RenderableEvent {
+	return &RenderableEvent{
+		name:                     ev.Name,
+		Event:                    ev,
+		CustomElementDeclaration: ced,
+		CustomElementExport:      cee,
+		JavaScriptModule:         mod,
+	}
 }

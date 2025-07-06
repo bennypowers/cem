@@ -19,9 +19,13 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
+
+	"github.com/pterm/pterm"
 )
 
 var _ Deprecatable = (*ClassMethod)(nil)
+var _ Renderable = (*RenderableMethod)(nil)
 
 // ClassMethod is a method.
 type ClassMethod struct {
@@ -71,4 +75,80 @@ func (m *ClassMethod) UnmarshalJSON(data []byte) error {
 		m.Parameters = append(m.Parameters, param)
 	}
 	return nil
+}
+
+type RenderableMethod struct {
+	name                     string
+	Method                   *ClassMethod
+	CustomElementDeclaration *CustomElementDeclaration
+	CustomElementExport      *CustomElementExport
+	ClassDeclaration *ClassDeclaration
+	JavaScriptExport *JavaScriptExport
+	JavaScriptModule         *JavaScriptModule
+	Package *Package
+	ChildNodes               []Renderable
+}
+
+func (x *RenderableMethod) Name() string {
+	return x.Method.Name
+}
+
+func (x *RenderableMethod) ColumnHeadings() []string {
+	return []string{"Name", "Return Type", "Privacy", "Static", "Summary"}
+}
+
+// Renders an Event as a table row.
+func (x *RenderableMethod) ToTableRow() []string {
+	returnType := "void"
+	privacy := string(x.Method.Privacy)
+	if privacy == "" {
+		privacy = "public"
+	}
+	if x.Method.Return != nil && x.Method.Return.Type != nil {
+		returnType = x.Method.Return.Type.Text
+	}
+	return []string{
+		highlightIfDeprecated(x),
+		returnType,
+		privacy,
+		strconv.FormatBool(x.Method.Static),
+		x.Method.Summary,
+	}
+}
+
+func (x *RenderableMethod) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
+	label := highlightIfDeprecated(x)
+	return pterm.TreeNode{Text: label}
+}
+
+func (x *RenderableMethod) Children() []Renderable {
+	return x.ChildNodes
+}
+
+func (x *RenderableMethod) IsDeprecated() bool {
+	return x.Method.Deprecated != nil
+}
+
+func (x *RenderableMethod) Deprecation() Deprecated {
+	return x.Method.Deprecated
+}
+
+func NewRenderableClassMethod(
+	method *ClassMethod,
+	cd *ClassDeclaration,
+	ce *JavaScriptExport,
+	mod *Module,
+	pkg *Package,
+) *RenderableMethod {
+	children := make([]Renderable, 0)
+	// TODO: params
+	return &RenderableMethod{
+		name: method.Name,
+		Method: method,
+		ClassDeclaration: cd,
+		JavaScriptExport: ce,
+		JavaScriptModule: mod,
+		Package: pkg,
+		ChildNodes: children,
+	}
 }

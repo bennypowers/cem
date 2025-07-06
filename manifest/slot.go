@@ -19,9 +19,12 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/pterm/pterm"
 )
 
 var _ Deprecatable = (*Slot)(nil)
+var _ Renderable = (*RenderableSlot)(nil)
 
 // Slot in a custom element.
 type Slot struct {
@@ -55,4 +58,69 @@ func (s *Slot) UnmarshalJSON(data []byte) error {
 		s.Deprecated = dep
 	}
 	return nil
+}
+
+// RenderableSlot adds context and render/traversal methods.
+type RenderableSlot struct {
+	name                     string
+	Slot                     *Slot
+	CustomElementDeclaration *CustomElementDeclaration
+	CustomElementExport      *CustomElementExport
+	JavaScriptModule         *JavaScriptModule
+	// Add more context fields as needed
+}
+
+func (x *RenderableSlot) Name() string {
+	slotName := x.Slot.Name
+	if slotName == "" {
+		slotName = "<default>"
+	}
+	return slotName
+}
+
+func (x *RenderableSlot) ColumnHeadings() []string {
+	return []string{
+		"Name",
+		"Summary",
+	}
+}
+
+// Renders a Slot as a table row.
+func (x *RenderableSlot) ToTableRow() []string {
+	return []string{
+		highlightIfDeprecated(x),
+		x.Slot.Summary,
+	}
+}
+
+func (x *RenderableSlot) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
+	label := highlightIfDeprecated(x)
+	return pterm.TreeNode{Text: label}
+}
+
+func (x *RenderableSlot) IsDeprecated() bool {
+	return x.Slot != nil && x.Slot.IsDeprecated()
+}
+
+func (x *RenderableSlot) Deprecation() Deprecated {
+	return x.Slot.Deprecated
+}
+
+func (x *RenderableSlot) Children() []Renderable {
+	return nil // It's a leaf node
+}
+
+func NewRenderableSlot(
+  slot *Slot,
+	ced *CustomElementDeclaration,
+	cee *CustomElementExport,
+	mod *Module,
+) *RenderableSlot {
+	return &RenderableSlot{
+		name:                     slot.Name,
+		Slot:                     slot,
+		CustomElementDeclaration: ced,
+		CustomElementExport:      cee,
+		JavaScriptModule:         mod,
+	}
 }

@@ -131,7 +131,7 @@ Examples:
 		if err != nil {
 			return err
 		}
-		attrs, err := pkg.GetTagAttrsWithContext(tagName)
+		attrs, err := pkg.TagRenderableAttributes(tagName)
 		if err != nil {
 			return err
 		}
@@ -163,7 +163,7 @@ Examples:
 		if err != nil {
 			return err
 		}
-		slots, err := pkg.GetTagSlotsWithContext(tagName)
+		slots, err := pkg.TagRenderableSlots(tagName)
 		if err != nil {
 			return err
 		}
@@ -200,7 +200,7 @@ Examples:
 		if err != nil {
 			return err
 		}
-		props, err := pkg.GetTagCssPropertiesWithContext(tagName)
+		props, err := pkg.TagRenderableCssProperties(tagName)
 		if err != nil {
 			return err
 		}
@@ -234,7 +234,7 @@ Examples:
 		if err != nil {
 			return err
 		}
-		props, err := pkg.GetTagCssStatesWithContext(tagName)
+		props, err := pkg.TagRenderableCssStates(tagName)
 		if err != nil {
 			return err
 		}
@@ -267,7 +267,7 @@ Examples:
 		if err != nil {
 			return err
 		}
-		parts, err := pkg.GetTagCssPartsWithContext(tagName)
+		parts, err := pkg.TagRenderableCssParts(tagName)
 		if err != nil {
 			return err
 		}
@@ -301,7 +301,7 @@ Examples:
 		if err != nil {
 			return err
 		}
-		events, err := pkg.GetTagEventsWithContext(tagName)
+		events, err := pkg.TagRenderableEvents(tagName)
 		if err != nil {
 			return err
 		}
@@ -332,7 +332,7 @@ Examples:
 		if err != nil {
 			return err
 		}
-		methods, err := pkg.GetTagMethodsWithContext(tagName)
+		methods, err := pkg.TagRenderableMethods(tagName)
 		if err != nil {
 			return err
 		}
@@ -369,7 +369,7 @@ Example:
 		if err != nil {
 			return err
 		}
-		tags := pkg.GetAllTagNamesWithContext()
+		tags := pkg.RenderableCustomElementDeclarations()
 		format, err := requireFormat(cmd, []string{"table"})
 		if err != nil {
 			return err
@@ -408,7 +408,7 @@ Example:
 		if err != nil {
 			return err
 		}
-		tags := pkg.GetAllModulesWithContext()
+		tags := pkg.RenderableModules()
 		format, err := requireFormat(cmd, []string{"table"})
 		if err != nil {
 			return err
@@ -476,7 +476,7 @@ Examples:
 				title = "Deprecations"
 				pred = M.IsDeprecated
 			}
-			return list.RenderTree(title, M.NewPackageWithContext(pkg), pred)
+			return list.RenderTree(title, M.NewRenderablePackage(pkg), pred)
 		}
 		return nil
 	},

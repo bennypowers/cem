@@ -19,10 +19,14 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/pterm/pterm"
 )
 
 var _ Deprecatable = (*ClassField)(nil)
 var _ Deprecatable = (*CustomElementField)(nil)
+var _ Renderable = (*RenderableClassField)(nil)
+var _ Renderable = (*RenderableCustomElementField)(nil)
 
 // ClassField is a class field.
 type ClassField struct {
@@ -74,6 +78,71 @@ func (f *ClassField) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type RenderableClassField struct {
+  name string
+	ClassField *ClassField
+	ClassDeclaration *ClassDeclaration
+	JavaScriptExport *JavaScriptExport
+	Module *Module
+	Package *Package
+}
+
+func NewRenderableClassField(
+	field *ClassField,
+	cd *ClassDeclaration,
+	ce *JavaScriptExport,
+	mod *Module,
+	pkg *Package,
+) *RenderableClassField {
+	return &RenderableClassField{
+		name: field.Name,
+		ClassField: field,
+		ClassDeclaration: cd,
+		JavaScriptExport: ce,
+		Module: mod,
+		Package: pkg,
+	}
+}
+
+func (x *RenderableClassField) Name() string {
+	return x.ClassField.Name
+	// "class field " + x.Name()
+}
+
+func (x *RenderableClassField) Children() []Renderable {
+	return nil // it's a leaf node
+}
+
+func (x *RenderableClassField) ColumnHeadings() []string {
+	return []string{"Name", "Type", "Summary"}
+}
+
+func (x *RenderableClassField) ToTableRow() []string {
+	typeText := ""
+	if x.ClassField.Type != nil {
+		typeText = x.ClassField.Type.Text
+	}
+  return []string{
+		highlightIfDeprecated(x),
+		typeText,
+		x.ClassField.Summary,
+	}
+}
+
+func (x *RenderableClassField) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
+	return pterm.TreeNode{
+		Text: pterm.LightBlue("field") + " " + highlightIfDeprecated(x),
+	}
+}
+
+func (x *RenderableClassField) IsDeprecated() bool {
+  return x.ClassField.IsDeprecated()
+}
+
+func (x *RenderableClassField) Deprecation() Deprecated {
+  return x.ClassField.Deprecated
+}
+
 // CustomElementField extends ClassField with attribute/reflects.
 type CustomElementField struct {
 	ClassField
@@ -112,3 +181,73 @@ func (f *CustomElementField) UnmarshalJSON(data []byte) error {
 	}
 	return nil
 }
+
+type RenderableCustomElementField struct {
+  name string
+	CustomElementField *CustomElementField
+	CustomElementDeclaration *CustomElementDeclaration
+	JavaScriptExport *JavaScriptExport
+	CustomElementExport *CustomElementExport
+	Module *Module
+	Package *Package
+}
+
+func NewRenderableCustomElementField(
+	field *CustomElementField,
+	ced *CustomElementDeclaration,
+	je *JavaScriptExport,
+	cee *CustomElementExport,
+	mod *Module,
+	pkg *Package,
+) *RenderableCustomElementField {
+	return &RenderableCustomElementField{
+		name: field.Name,
+		CustomElementField: field,
+		CustomElementDeclaration: ced,
+		JavaScriptExport: je,
+		CustomElementExport: cee,
+		Module: mod,
+		Package: pkg,
+	}
+}
+
+func (x *RenderableCustomElementField) Name() string {
+	return x.CustomElementField.Name
+	// return "custom element field " + x.CustomElementField.Name,
+}
+
+func (x *RenderableCustomElementField) Children() []Renderable {
+	return nil // it's a leaf node
+}
+
+func (x *RenderableCustomElementField) ColumnHeadings() []string {
+	return []string{"Name", "Type", "Summary"}
+}
+
+func (x *RenderableCustomElementField) ToTableRow() []string {
+	typeText := ""
+	if x.CustomElementField.Type != nil {
+		typeText = x.CustomElementField.Type.Text
+	}
+  return []string{
+		highlightIfDeprecated(x),
+		typeText,
+		x.CustomElementField.Summary,
+	}
+}
+
+func (x *RenderableCustomElementField) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
+	return pterm.TreeNode{
+		Text: highlightIfDeprecated(x),
+	}
+}
+
+func (x *RenderableCustomElementField) IsDeprecated() bool {
+  return x.CustomElementField.IsDeprecated()
+}
+
+func (x *RenderableCustomElementField) Deprecation() Deprecated {
+  return x.CustomElementField.Deprecated
+}
+
+

@@ -19,9 +19,12 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/pterm/pterm"
 )
 
 var _ Deprecatable = (*Attribute)(nil)
+var _ Renderable = (*RenderableAttribute)(nil)
 
 // Attribute for custom elements.
 type Attribute struct {
@@ -60,4 +63,104 @@ func (a *Attribute) UnmarshalJSON(data []byte) error {
 		a.Deprecated = dep
 	}
 	return nil
+}
+
+// RenderableAttribute adds context and render/traversal methods.
+type RenderableAttribute struct {
+	name                     string
+	Attribute                *Attribute
+	CustomElementField       *CustomElementField
+	CustomElementDeclaration *CustomElementDeclaration
+	CustomElementExport      *CustomElementExport
+	JavaScriptModule         *JavaScriptModule
+	// Add more context fields as needed
+}
+
+func (x *RenderableAttribute) Name() string {
+	return x.Attribute.Name
+}
+
+func (x *RenderableAttribute) ColumnHeadings() []string {
+  return []string{
+		"Name",
+		"DOM Property",
+		"Reflects",
+		"Default",
+		"Type",
+		"Deprecated",
+	}
+}
+
+// Renders an Attribute as a table row.
+func (x *RenderableAttribute) ToTableRow() []string {
+	domProp := ""
+	reflects := "❌"
+	typeText := ""
+	if x.CustomElementField != nil {
+		domProp = x.CustomElementField.Name
+		if x.CustomElementField.Reflects {
+			reflects = "✅"
+		}
+	}
+	if x.Attribute.Type != nil {
+		typeText = x.Attribute.Type.Text
+	}
+	return []string{
+		highlightIfDeprecated(x),
+		domProp,
+		reflects,
+		x.Attribute.Summary,
+		x.Attribute.Default,
+		typeText,
+	}
+}
+
+func (x *RenderableAttribute) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
+	label := x.Name()
+	label = highlightIfDeprecated(x)
+	if x.CustomElementField != nil && x.CustomElementField.Reflects {
+		label += " (reflects)"
+	}
+	return pterm.TreeNode{Text: label}
+}
+
+func (x *RenderableAttribute) IsDeprecated() bool {
+	return x.Attribute != nil && x.Attribute.IsDeprecated()
+}
+
+func (x *RenderableAttribute) Deprecation() Deprecated {
+	return x.Attribute.Deprecated
+}
+
+func (x *RenderableAttribute) Children() []Renderable {
+	return nil // It's a leaf node
+}
+
+func NewRenderableAttribute(
+	attr *Attribute,
+	ced *CustomElementDeclaration,
+	cee *CustomElementExport,
+	mod *Module,
+) *RenderableAttribute {
+
+	var field *CustomElementField
+	// TODO: perf: use a map
+	// reuse the one from TagRenderableAttributes, maybe refactor so it goes 
+	// from Field to Attr or something
+	for _, f := range ced.Members {
+		if cef, ok := f.(*CustomElementField); ok {
+			if cef.Attribute == attr.Name {
+				field = cef;
+				break
+			}
+		}
+	}
+	return &RenderableAttribute{
+		name:                     attr.Name,
+		Attribute:                attr,
+		CustomElementField:       field,
+		CustomElementDeclaration: ced,
+		CustomElementExport:      cee,
+		JavaScriptModule:         mod,
+	}
 }

@@ -19,10 +19,14 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/pterm/pterm"
 )
 
 var _ Deprecatable = (*MixinDeclaration)(nil)
 var _ Deprecatable = (*CustomElementMixinDeclaration)(nil)
+var _ Renderable = (*RenderableMixinDeclaration)(nil)
+var _ Renderable = (*RenderableCustomElementMixinDeclaration)(nil)
 
 // MixinDeclaration describes a class mixin.
 type MixinDeclaration struct {
@@ -85,6 +89,71 @@ func (m *MixinDeclaration) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type RenderableMixinDeclaration struct {
+  name string
+	MixinDeclaration *MixinDeclaration
+	JavaScriptExport *JavaScriptExport
+	Module *Module
+	Package *Package
+	ChildNodes []Renderable
+}
+
+func NewRenderableMixinDeclaration(
+	md *MixinDeclaration,
+	mod *Module,
+	pkg *Package,
+) *RenderableMixinDeclaration {
+	// TODO: calculate export
+	var export *JavaScriptExport
+	// TODO: populate children with params, return
+	children := make([]Renderable, 0)
+  return &RenderableMixinDeclaration{
+		name: md.Name,
+		JavaScriptExport: export,
+		Module: mod,
+		Package: pkg,
+		ChildNodes: children,
+	}
+}
+
+func (x *RenderableMixinDeclaration) Name() string {
+	return x.MixinDeclaration.Name
+}
+
+func (x *RenderableMixinDeclaration) ColumnHeadings() []string {
+	// TODO: elaborate
+	return []string{"Name"}
+}
+
+func (x *RenderableMixinDeclaration) ToTableRow() []string {
+	// TODO: maybe this gets a section, not a row?
+	return []string{
+		highlightIfDeprecated(x),
+	}
+}
+
+func (x *RenderableMixinDeclaration) ToTreeNode(pref PredicateFunc) pterm.TreeNode {
+	label := pterm.LightBlue("mixin") + " " + highlightIfDeprecated(x)
+	children := make([]pterm.TreeNode, 0)
+	// TODO: params, return, class stuff as children
+	return pterm.TreeNode {
+    Text: label,
+		Children: children,
+	}
+}
+
+func (x *RenderableMixinDeclaration) Children() []Renderable {
+	return x.ChildNodes
+}
+
+func (x *RenderableMixinDeclaration) IsDeprecated() bool {
+	return x.MixinDeclaration.IsDeprecated()
+}
+
+func (x *RenderableMixinDeclaration) Deprecation() Deprecated {
+	return x.MixinDeclaration.Deprecated
+}
+
 func (*CustomElementMixinDeclaration) isDeclaration() {}
 
 func (x *CustomElementMixinDeclaration) IsDeprecated() bool {
@@ -116,3 +185,72 @@ func (m *CustomElementMixinDeclaration) UnmarshalJSON(data []byte) error {
 	}
 	return nil
 }
+
+type RenderableCustomElementMixinDeclaration struct {
+  name string
+	TagName string
+	CustomElementMixinDeclaration *CustomElementMixinDeclaration
+	JavaScriptExport *JavaScriptExport
+	Module *Module
+	Package *Package
+	ChildNodes []Renderable
+}
+
+func NewRenderableCustomElementMixinDeclaration(
+	cemd *CustomElementMixinDeclaration,
+	mod *Module,
+	pkg *Package,
+) *RenderableCustomElementMixinDeclaration {
+	// TODO: calculate export
+	var export *JavaScriptExport
+	// TODO: populate children with params, return, class stuff
+	// Preferably reuse stuff from NewRenderableMixinDeclaration
+	children := make([]Renderable, 0)
+  return &RenderableCustomElementMixinDeclaration{
+		name: cemd.Name,
+		TagName: cemd.TagName,
+		JavaScriptExport: export,
+		Module: mod,
+		Package: pkg,
+		ChildNodes: children,
+	}
+}
+
+func (x *RenderableCustomElementMixinDeclaration) IsDeprecated() bool {
+	return x.CustomElementMixinDeclaration.IsDeprecated()
+}
+
+func (x *RenderableCustomElementMixinDeclaration) Deprecation() Deprecated {
+	return x.CustomElementMixinDeclaration.Deprecated
+}
+
+func (x *RenderableCustomElementMixinDeclaration) Children() []Renderable {
+	return x.ChildNodes
+}
+
+func (x *RenderableCustomElementMixinDeclaration) Name() string {
+	return x.CustomElementMixinDeclaration.Name
+}
+
+func (x *RenderableCustomElementMixinDeclaration) ColumnHeadings() []string {
+	// TODO: elaborate
+	return []string{"Name"}
+}
+
+func (x *RenderableCustomElementMixinDeclaration) ToTableRow() []string {
+	// TODO: maybe this gets a section, not a row?
+	return []string{
+		highlightIfDeprecated(x),
+	}
+}
+
+func (x *RenderableCustomElementMixinDeclaration) ToTreeNode(pref PredicateFunc) pterm.TreeNode {
+	label := pterm.LightBlue("custom element mixin") + " " + highlightIfDeprecated(x)
+	children := make([]pterm.TreeNode, 0)
+	// TODO: params, return, class stuff as children
+	return pterm.TreeNode {
+    Text: label,
+		Children: children,
+	}
+}
+

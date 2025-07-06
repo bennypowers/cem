@@ -24,7 +24,12 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/pterm/pterm"
 )
+
+var _ Deprecatable = (*Package)(nil)
+var _ Renderable = (*RenderablePackage)(nil)
 
 // Package is the top-level interface of a custom elements manifest file.
 type Package struct {
@@ -39,6 +44,13 @@ func NewPackage(modules []Module) Package {
 		SchemaVersion: "1.0.0",
 		Modules:       modules,
 	}
+}
+
+func (x *Package) IsDeprecated() bool {
+	if x == nil {
+		return false
+	}
+	return x.Deprecated != nil
 }
 
 func (p *Package) UnmarshalJSON(data []byte) error {
@@ -74,6 +86,66 @@ type PackageJSON struct {
 	Version string `json:"version"`
 	Exports any    `json:"exports"`
 	source  []byte
+}
+
+type RenderablePackage struct {
+	Package *Package
+	ChildNodes []Renderable
+}
+
+func (x *RenderablePackage) Name() string {
+	// TODO: out of band package name
+	return "<root>"
+}
+
+func (x *RenderablePackage) ColumnHeadings() []string {
+	return []string{}
+}
+
+func (x *RenderablePackage) ToTableRow() []string {
+	return []string{}
+}
+
+func (x *RenderablePackage) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
+	label := highlightIfDeprecated(x)
+	ft := filterRenderableTree(x, pred)
+	children := []pterm.TreeNode{}
+	for _, c := range ft.Children() {
+		children = append(children, c.ToTreeNode(pred))
+	}
+	return pterm.TreeNode{
+		Text: label,
+		Children: children,
+	}
+}
+
+func (x *RenderablePackage) IsDeprecated() bool {
+  return x.Package.IsDeprecated()
+}
+
+func (x *RenderablePackage) Deprecation() Deprecated {
+  return x.Package.Deprecated
+}
+
+func (n *RenderablePackage) Children() []Renderable {
+	if n == nil {
+		return nil
+	}
+	return n.ChildNodes
+}
+
+func NewRenderablePackage(pkg *Package) *RenderablePackage {
+	if pkg == nil {
+		return nil
+	}
+	var children []Renderable
+	for i := range pkg.Modules {
+		children = append(children, NewRenderableModule(&pkg.Modules[i], pkg))
+	}
+	return &RenderablePackage{
+		Package: pkg,
+		ChildNodes: children,
+	}
 }
 
 var (

@@ -20,7 +20,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
+	"github.com/pterm/pterm"
 )
+
+var _ Renderable = (*RenderableCustomElementDeclaration)(nil)
+var _ Deprecatable = (*CustomElementDeclaration)(nil)
 
 // Demo for custom elements.
 type Demo struct {
@@ -104,3 +109,129 @@ func (c *CustomElementDeclaration) UnmarshalJSON(data []byte) (errs error) {
 
 	return errs
 }
+
+type RenderableCustomElementDeclaration struct {
+	name                     string // tag name
+	CustomElementDeclaration *CustomElementDeclaration
+	CustomElementExport      *CustomElementExport
+	JavaScriptExport         *JavaScriptExport
+	Module                   *Module
+	Package                  *Package
+	ChildNodes               []Renderable
+}
+
+func (x *RenderableCustomElementDeclaration) Name() string {
+	return x.CustomElementDeclaration.TagName
+	// pterm.LightBlue("<" + x.Name() + ">"),
+}
+
+func (x *RenderableCustomElementDeclaration) ColumnHeadings() []string {
+	return []string{
+		"Tag", // (tag name),
+		"Class", // (class name),
+		"Module", //(module path),
+		"Summary",
+	}
+}
+
+// Renders a CustomElement as a table row.
+func (x *RenderableCustomElementDeclaration) ToTableRow() []string {
+	modulePath := ""
+	if x.Module != nil {
+		modulePath = x.Module.Path
+	}
+	return []string{
+		highlightIfDeprecated(x),
+		x.CustomElementDeclaration.Name,
+		modulePath,
+		x.CustomElementDeclaration.Summary,
+	}
+}
+
+func (x *RenderableCustomElementDeclaration) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
+	// TODO: hmmm
+	label := "<"+highlightIfDeprecated(x)+">"
+	ft := filterRenderableTree(x, pred)
+	children := make([]pterm.TreeNode, 0)
+	for _, mem := range ft.Children() {
+		children = append(children, mem.ToTreeNode(pred))
+	}
+	return pterm.TreeNode{
+		Text: label,
+		Children: children,
+	}
+}
+
+func (x *RenderableCustomElementDeclaration) Children() []Renderable {
+	return x.ChildNodes
+}
+
+func (x *RenderableCustomElementDeclaration) IsDeprecated() bool {
+	return x.CustomElementDeclaration.IsDeprecated()
+}
+
+func (x *RenderableCustomElementDeclaration) Deprecation() Deprecated {
+	return x.CustomElementDeclaration.Deprecated
+}
+
+func NewRenderableCustomElementDeclaration(
+	ced *CustomElementDeclaration,
+	mod *Module,
+	pkg *Package,
+) *RenderableCustomElementDeclaration {
+	// TODO use a map
+	// TODO get je, cee from other modules
+	var cee *CustomElementExport
+	var je *JavaScriptExport
+	for i, exp := range mod.Exports {
+		if ecee, ok := exp.(*CustomElementExport); ok {
+			if ecee.Declaration.Name == ced.Name && (ecee.Declaration.Module == "" || ecee.Declaration.Module == mod.Path) {
+				cee = mod.Exports[i].(*CustomElementExport)
+			}
+		}
+		if eje, ok := exp.(*JavaScriptExport); ok {
+			if eje.Declaration.Name == ced.Name && (eje.Declaration.Module == "" || eje.Declaration.Module == mod.Path) {
+				je = mod.Exports[i].(*JavaScriptExport)
+			}
+		}
+		if je != nil && cee != nil {
+			break
+		}
+	}
+	children := make([]Renderable, 0)
+	for i := range ced.Attributes {
+		children = append(children, NewRenderableAttribute(&ced.Attributes[i], ced, cee, mod))
+	}
+	for i := range ced.Events {
+		children = append(children, NewRenderableEvent(&ced.Events[i], ced, cee, mod))
+	}
+	for i := range ced.Slots {
+		children = append(children, NewRenderableSlot(&ced.Slots[i], ced, cee, mod))
+	}
+	for i := range ced.CssParts {
+		children = append(children, NewRenderableCssPart(&ced.CssParts[i], ced, cee, mod))
+	}
+	for i := range ced.CssProperties {
+		children = append(children, NewRenderableCssCustomProperty(&ced.CssProperties[i], ced, cee, mod))
+	}
+	for i := range ced.CssStates {
+		children = append(children, NewRenderableCssCustomState(&ced.CssStates[i], ced, cee, mod))
+	}
+	for _, m := range ced.Members {
+		if field, ok := m.(*ClassField); ok {
+			children = append(children, NewRenderableClassField(field, &ced.ClassDeclaration, je, mod, pkg))
+		} else if cef, ok := m.(*CustomElementField); ok {
+			children = append(children, NewRenderableCustomElementField(cef, ced, je, cee, mod, pkg))
+		} else if method, ok := m.(*ClassMethod); ok {
+			children = append(children, NewRenderableClassMethod(method, &ced.ClassDeclaration, je, mod, pkg))
+		}
+	}
+	return &RenderableCustomElementDeclaration{
+		name:                   ced.Name,
+		CustomElementDeclaration:  ced,
+		CustomElementExport:       cee,
+		Module:                    mod,
+		ChildNodes:                children,
+	}
+}
+
