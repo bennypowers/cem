@@ -1,6 +1,7 @@
 package manifest
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -34,14 +35,13 @@ func loadFixture(t *testing.T, name string) []byte {
 	return data
 }
 
-func mustUnmarshalPackage(t *testing.T, manifestJSON []byte) *Package {
+func mustUnmarshalPackage(t *testing.T, data []byte) *Package {
 	t.Helper()
-	pkg, err := UnmarshalPackage(manifestJSON)
-	if err != nil {
-		t.Log(err)
+	var pkg Package
+	if err := json.Unmarshal(data, &pkg); err != nil {
 		t.Fatalf("UnmarshalPackage failed: %v", err)
 	}
-	return pkg
+	return &pkg
 }
 
 func mustFirstModule(t *testing.T, pkg *Package) *Module {
@@ -143,10 +143,10 @@ func mustCustomElementField(t *testing.T, member any) *CustomElementField {
 	return cem
 }
 
-func mustUnmarshalPackageEdge(t *testing.T, manifestJSON []byte) (*Package, error) {
+func mustUnmarshalPackageEdge(t *testing.T, data []byte) (*Package, error) {
 	t.Helper()
-	pkg, err := UnmarshalPackage(manifestJSON)
-	if err != nil {
+	var pkg Package
+	if err := json.Unmarshal(data, &pkg); err != nil {
 		if regexp.MustCompile(`unknown declaration kind`).MatchString(err.Error()) {
 			return nil, err // let test expect/verify this
 		}
@@ -156,7 +156,7 @@ func mustUnmarshalPackageEdge(t *testing.T, manifestJSON []byte) (*Package, erro
 		t.Log(err)
 		t.Fatalf("UnmarshalPackage failed: %v", err)
 	}
-	return pkg, nil
+	return &pkg, nil
 }
 
 // --- Tests ---
@@ -165,8 +165,10 @@ func TestUnmarshalPackage(t *testing.T) {
 	t.Run("CustomElement", func(t *testing.T) {
 		t.Run("ClassWithCustomElementTrueYieldsCustomElementDeclaration", func(t *testing.T) {
 			mustRunFixture(t)
-			manifestJSON := loadFixture(t, "class_with_custom_element_true.json")
-			pkg := mustUnmarshalPackage(t, manifestJSON)
+			data := loadFixture(t, "class-with-custom-element-true.json")
+			t.Log(string(data))
+			pkg := mustUnmarshalPackage(t, data)
+			t.Log(pkg.Modules[0].Declarations[0])
 			mod := mustFirstModule(t, pkg)
 			decls := mustModuleDecls(t, mod, 2)
 
@@ -175,7 +177,7 @@ func TestUnmarshalPackage(t *testing.T) {
 				t.Errorf("CustomElementDeclaration: got Name=%q, TagName=%q; want 'MyCard', 'my-card'", ce.Name, ce.TagName)
 			}
 			if len(ce.Members) != 1 {
-				t.Errorf("CustomElementDeclaration members = %+v, want 1 member", ce.Members)
+				t.Fatalf("CustomElementDeclaration members = %+v, want 1 member", ce.Members)
 			}
 			field := mustClassField(t, ce.Members[0])
 			if field.Name != "foo" || field.Type == nil || field.Type.Text != "string" {
@@ -245,7 +247,7 @@ func TestUnmarshalPackage(t *testing.T) {
 			pkg := mustUnmarshalPackage(t, manifestJSON)
 			ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
 			if len(ce.Attributes) != 2 {
-				t.Errorf("len(Attributes) = %d, want 2", len(ce.Attributes))
+				t.Fatalf("len(Attributes) = %d, want 2", len(ce.Attributes))
 			}
 			if ce.Attributes[0].Name != "variant" || ce.Attributes[1].Name != "elevated" {
 				t.Errorf("Attribute names = %q,%q, want %q,%q", ce.Attributes[0].Name, ce.Attributes[1].Name, "variant", "elevated")
@@ -536,7 +538,7 @@ func TestUnmarshalPackage(t *testing.T) {
 			pkg := mustUnmarshalPackage(t, manifestJSON)
 			ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
 			if len(ce.Members) != 1 {
-				t.Errorf("Members = %+v, want 1 item", ce.Members)
+				t.Fatalf("Members = %+v, want 1 item", ce.Members)
 			}
 			member := mustClassField(t, ce.Members[0])
 			if member.Name != "prop1" || member.Type == nil || member.Type.Text != "string" {
@@ -884,9 +886,11 @@ func TestUnmarshalPackage(t *testing.T) {
 	})
 
 	t.Run("Export", func(t *testing.T) {
-		t.Run("JSExport", func(t *testing.T) {
+		t.Run("JavaScriptExport", func(t *testing.T) {
 			data := loadFixture(t, "export-js-basic.json")
+			t.Log(string(data))
 			pkg := mustUnmarshalPackage(t, data)
+			t.Log(pkg)
 			if len(pkg.Modules) == 0 || len(pkg.Modules[0].Exports) == 0 {
 				t.Fatalf("missing exports in module")
 			}
@@ -895,6 +899,7 @@ func TestUnmarshalPackage(t *testing.T) {
 				t.Errorf("unexpected export: %#v", pkg.Modules[0].Exports[0])
 			}
 		})
+
 		t.Run("CustomElementDefinitionExport", func(t *testing.T) {
 			data := loadFixture(t, "export-custom-element-definition-basic.json")
 			pkg := mustUnmarshalPackage(t, data)
@@ -909,8 +914,9 @@ func TestUnmarshalPackage(t *testing.T) {
 	})
 
 	t.Run("InvalidJSON", func(t *testing.T) {
-		_, err := UnmarshalPackage([]byte(`{invalid}`))
-		if err == nil {
+		data := []byte(`{invalid}`)
+		var pkg Package
+		if err := json.Unmarshal(data, &pkg); err == nil {
 			t.Fatal("expected error for invalid json, got nil")
 		}
 	})
@@ -918,8 +924,9 @@ func TestUnmarshalPackage(t *testing.T) {
 	t.Run("EdgeCases", func(t *testing.T) {
 		t.Run("InvalidMissingRequired", func(t *testing.T) {
 			data := loadFixture(t, "invalid-missing-required.json")
-			_, err := UnmarshalPackage(data)
-			if err == nil {
+			t.Log(string(data))
+			var pkg Package
+			if err := json.Unmarshal(data, &pkg); err != nil {
 				t.Error("expected error for missing required fields, got nil")
 			}
 		})
@@ -932,9 +939,8 @@ func TestUnmarshalPackage(t *testing.T) {
 		})
 		t.Run("InvalidExtraFields", func(t *testing.T) {
 			data := loadFixture(t, "invalid-extra-fields.json")
-			// This should NOT error, but extra fields should be ignored.
-			_, err := UnmarshalPackage(data)
-			if err != nil {
+			var pkg Package
+			if err := json.Unmarshal(data, &pkg); err != nil {
 				t.Errorf("unexpected error for extra fields: %v", err)
 			}
 		})
@@ -947,5 +953,4 @@ func TestUnmarshalPackage(t *testing.T) {
 			t.Errorf("expected error for unknown kind, got nil")
 		}
 	})
-
 }

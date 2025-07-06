@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
@@ -62,7 +63,7 @@ func requireFormat(cmd *cobra.Command, supportedFormats []string) (string, error
 	return "", errors.New("unknown format: " + format)
 }
 
-func readPkg() (*M.Package, error) {
+func readPkg() (pkg *M.Package, err error) {
 	cfg, err := readCfg()
 	if err != nil {
 		return nil, err
@@ -73,12 +74,15 @@ func readPkg() (*M.Package, error) {
 		return nil, err
 	}
 	path = filepath.Join(cwd, path)
-	json, err := os.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
+	if err = json.Unmarshal(data, &pkg); err != nil {
+		return pkg, err
+	}
 	pterm.Debug.Printfln("Loaded manifest from %s", path)
-	return M.UnmarshalPackage(json)
+	return pkg, err
 }
 
 // validateTagCommandFlags returns the tag name, format, and loaded manifest package.

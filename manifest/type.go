@@ -16,26 +16,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package manifest
 
-import "encoding/json"
+// Type string representation.
+type Type struct {
+	Text       string           `json:"text,omitempty"`
+	References []TypeReference  `json:"references,omitempty"`
+	Source     *SourceReference `json:"source,omitempty"`
+}
 
-func decodeDeprecatedField(dst *Deprecated, data json.RawMessage) bool {
-	if dst == nil {
-		return true
-	}
-	if len(data) == 0 || string(data) == "null" {
-		*dst = nil
-		return true
-	}
-	var b bool
-	if err := json.Unmarshal(data, &b); err == nil {
-		*dst = DeprecatedFlag(b)
-		return true
-	}
-	var s string
-	if err := json.Unmarshal(data, &s); err == nil {
-		*dst = DeprecatedReason(s)
-		return true
-	}
-	return false // unknown type
+// TypeReference associates with a type string and optionally a range.
+type TypeReference struct {
+	Reference
+	Start int `json:"start,omitempty"`
+	End   int `json:"end,omitempty"`
 }
 

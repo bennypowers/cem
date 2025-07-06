@@ -18,6 +18,7 @@ package manifest
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 var _ Deprecatable = (*ClassField)(nil)
@@ -91,3 +92,23 @@ func (x *CustomElementField) IsDeprecated() bool {
 
 func (x *CustomElementField) GetStartByte() uint { return x.ClassField.StartByte }
 
+func (f *CustomElementField) UnmarshalJSON(data []byte) error {
+	type Alias CustomElementField
+	aux := &struct {
+		Deprecated json.RawMessage `json:"deprecated"`
+		*Alias
+	}{
+		Alias: (*Alias)(f),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	if len(aux.Deprecated) > 0 && string(aux.Deprecated) != "null" {
+		var dep Deprecated
+		if !decodeDeprecatedField(&dep, aux.Deprecated) {
+			return fmt.Errorf("invalid type for deprecated field")
+		}
+		f.Deprecated = dep
+	}
+	return nil
+}

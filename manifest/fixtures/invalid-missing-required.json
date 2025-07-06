@@ -2,8 +2,15 @@
   "schemaVersion": "1.0.0",
   "modules": [
     {
-      "kind": "javascript-module"
-      // missing "declarations" and other required fields
+      "kind": "javascript-module",
+      "declarations": [
+        {
+          "kind": "class",
+          "members": [
+            { }
+          ]
+        }
+      ]
     }
   ]
 }

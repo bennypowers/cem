@@ -3,8 +3,22 @@
   "modules": [
     {
       "kind": "javascript-module",
+      "path": "src/export-js-basic.json",
+      "declarations": [
+        {
+          "kind": "variable",
+          "name": "jsExport"
+        }
+      ],
       "exports": [
-        { "kind": "js", "name": "jsExport" }
+        {
+          "kind": "js",
+          "name": "jsExport",
+          "declaration": {
+            "name": "jsExport",
+            "module": "src/export-js-basic.json"
+          }
+        }
       ]
     }
   ]

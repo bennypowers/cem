@@ -19,6 +19,7 @@ package manifest
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -38,6 +39,33 @@ func NewPackage(modules []Module) Package {
 		SchemaVersion: "1.0.0",
 		Modules:       modules,
 	}
+}
+
+func (p *Package) UnmarshalJSON(data []byte) error {
+	type Alias Package
+	aux := &struct {
+		Modules []json.RawMessage `json:"modules"`
+		*Alias
+	}{
+		Alias: (*Alias)(p),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	p.Modules = nil
+	for _, m := range aux.Modules {
+		var mod Module
+		if err := json.Unmarshal(m, &mod); err == nil {
+			p.Modules = append(p.Modules, mod)
+		} else {
+			return fmt.Errorf("cannot unmarshal module: %w", err)
+		}
+	}
+	if p.Modules == nil {
+		p.Modules = []Module{}
+	}
+	return nil
 }
 
 // PackageJSON represents the subset of package.json we care about.
