@@ -90,7 +90,6 @@ func (m *MixinDeclaration) UnmarshalJSON(data []byte) error {
 }
 
 type RenderableMixinDeclaration struct {
-  name string
 	MixinDeclaration *MixinDeclaration
 	JavaScriptExport *JavaScriptExport
 	Module *Module
@@ -108,7 +107,6 @@ func NewRenderableMixinDeclaration(
 	// TODO: populate children with params, return
 	children := make([]Renderable, 0)
   return &RenderableMixinDeclaration{
-		name: md.Name,
 		JavaScriptExport: export,
 		Module: mod,
 		Package: pkg,
@@ -187,7 +185,6 @@ func (m *CustomElementMixinDeclaration) UnmarshalJSON(data []byte) error {
 }
 
 type RenderableCustomElementMixinDeclaration struct {
-  name string
 	TagName string
 	CustomElementMixinDeclaration *CustomElementMixinDeclaration
 	JavaScriptExport *JavaScriptExport
@@ -207,7 +204,6 @@ func NewRenderableCustomElementMixinDeclaration(
 	// Preferably reuse stuff from NewRenderableMixinDeclaration
 	children := make([]Renderable, 0)
   return &RenderableCustomElementMixinDeclaration{
-		name: cemd.Name,
 		TagName: cemd.TagName,
 		JavaScriptExport: export,
 		Module: mod,

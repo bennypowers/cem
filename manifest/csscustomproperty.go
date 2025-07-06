@@ -68,7 +68,6 @@ func (c *CssCustomProperty) UnmarshalJSON(data []byte) error {
 }
 
 type RenderableCssCustomProperty struct {
-	name                     string
 	CssCustomProperty        *CssCustomProperty
 	CustomElementDeclaration *CustomElementDeclaration
 	CustomElementExport      *CustomElementExport
@@ -86,7 +85,7 @@ func (x *RenderableCssCustomProperty) ColumnHeadings() []string {
 // Renders a CSS CssCustomProperty as a table row.
 func (x *RenderableCssCustomProperty) ToTableRow() []string {
 	return []string{
-		x.name,
+		highlightIfDeprecated(x),
 		x.CssCustomProperty.Syntax,
 		x.CssCustomProperty.Default,
 		x.CssCustomProperty.Summary,
@@ -117,7 +116,6 @@ func NewRenderableCssCustomProperty(
 	mod *Module,
 ) *RenderableCssCustomProperty {
 	return  &RenderableCssCustomProperty{
-		name:                     prop.Name,
 		CssCustomProperty:        prop,
 		CustomElementDeclaration: ced,
 		CustomElementExport:      cee,

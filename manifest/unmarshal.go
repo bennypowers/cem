@@ -16,13 +16,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package manifest
 
-import "encoding/json"
+import (
+	"bytes"
+	"encoding/json"
+)
 
 func decodeDeprecatedField(dst *Deprecated, data json.RawMessage) bool {
 	if dst == nil {
 		return true
 	}
-	if len(data) == 0 || string(data) == "null" {
+	if len(data) == 0 || string(bytes.TrimSpace(data)) == "null" {
 		*dst = nil
 		return true
 	}

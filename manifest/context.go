@@ -105,7 +105,10 @@ func (x *Package) RenderableCustomElementDeclarations() (tags []*RenderableCusto
 		mrs := make(map[string]RenderableCustomElementDeclaration)
 		for _, d := range m.Declarations {
 			if ced, ok := d.(*CustomElementDeclaration); ok {
-				mrs[ced.TagName] = RenderableCustomElementDeclaration{CustomElementDeclaration: ced, Module: &m, name: ced.TagName}
+				mrs[ced.TagName] = RenderableCustomElementDeclaration{
+					CustomElementDeclaration: ced,
+					Module: &m,
+				}
 			}
 		}
 		for _, e := range m.Exports {
@@ -194,7 +197,6 @@ func (x *Package) TagRenderableSlots(tagName string) (slots []*RenderableSlot, e
 	for i := range ced.Slots {
 		slot := &ced.Slots[i]
 		slots = append(slots, &RenderableSlot{
-			name:                     slot.Name,
 			Slot:                     slot,
 			CustomElementDeclaration: ced,
 			CustomElementExport:      ceExport,
@@ -213,7 +215,6 @@ func (x *Package) TagRenderableCssProperties(tagName string) (props []*Renderabl
 	for i := range ced.CssProperties {
 		prop := &ced.CssProperties[i]
 		props = append(props, &RenderableCssCustomProperty{
-			name:                     prop.Name,
 			CssCustomProperty:        prop,
 			CustomElementDeclaration: ced,
 			CustomElementExport:      ceExport,
@@ -232,7 +233,6 @@ func (x *Package) TagRenderableCssStates(tagName string) (states []*RenderableCs
 	for i := range ced.CssStates {
 		state := &ced.CssStates[i]
 		states = append(states, &RenderableCssCustomState{
-			name:                     state.Name,
 			CssCustomState:           state,
 			CustomElementDeclaration: ced,
 			CustomElementExport:      ceExport,
@@ -251,7 +251,6 @@ func (x *Package) TagRenderableCssParts(tagName string) (parts []*RenderableCssP
 	for i := range ced.CssParts {
 		part := &ced.CssParts[i]
 		parts = append(parts, &RenderableCssPart{
-			name:                     part.Name,
 			CssPart:                  part,
 			CustomElementDeclaration: ced,
 			CustomElementExport:      ceExport,
@@ -270,7 +269,6 @@ func (x *Package) TagRenderableEvents(tagName string) (events []*RenderableEvent
 	for i := range ced.Events {
 		event := &ced.Events[i]
 		events = append(events, &RenderableEvent{
-			name:                     event.Name,
 			Event:                    event,
 			CustomElementDeclaration: ced,
 			CustomElementExport:      ceExport,
@@ -289,7 +287,6 @@ func (x *Package) TagRenderableMethods(tagName string) (methods []*RenderableMet
 	for _, member := range ced.Members {
 		if method, ok := member.(*ClassMethod); ok {
 			methods = append(methods, &RenderableMethod{
-				name:                     method.Name,
 				Method:                   method,
 				CustomElementDeclaration: ced,
 				CustomElementExport:      ceExport,
@@ -328,28 +325,23 @@ func filterRenderableTree(node Renderable, pred PredicateFunc) Renderable {
 			}
 		case *RenderableClassDeclaration:
 			return &RenderableClassDeclaration{
-				name: n.name,
 				ClassDeclaration: n.ClassDeclaration,
 				JavaScriptExport: n.JavaScriptExport,
 				Module: n.Module,
 				Package: n.Package,
-				// TODO: recursively filter?
 				ChildNodes: filteredChildren,
 			}
 		case *RenderableCustomElementDeclaration:
 			return &RenderableCustomElementDeclaration{
-				name: n.name,
 				CustomElementDeclaration: n.CustomElementDeclaration,
 				CustomElementExport: n.CustomElementExport,
 				JavaScriptExport: n.JavaScriptExport,
 				Module: n.Module,
 				Package: n.Package,
-				// TODO: recursively filter?
 				ChildNodes: filteredChildren,
 			}
 		case *RenderableFunctionDeclaration:
 			return &RenderableFunctionDeclaration{
-				name: n.name,
 				FunctionDeclaration: n.FunctionDeclaration,
 				JavaScriptExport: n.JavaScriptExport,
 				Module: n.Module,
@@ -358,7 +350,6 @@ func filterRenderableTree(node Renderable, pred PredicateFunc) Renderable {
 			}
 		case *RenderableMixinDeclaration:
 			return &RenderableMixinDeclaration{
-				name: n.name,
 				MixinDeclaration: n.MixinDeclaration,
 				JavaScriptExport: n.JavaScriptExport,
 				Module          : n.Module,
@@ -367,7 +358,6 @@ func filterRenderableTree(node Renderable, pred PredicateFunc) Renderable {
 			}
 		case *RenderableCustomElementMixinDeclaration:
 			return &RenderableCustomElementMixinDeclaration{
-				name: n.name,
 				TagName: n.TagName,
 				CustomElementMixinDeclaration: n.CustomElementMixinDeclaration,
 				JavaScriptExport: n.JavaScriptExport,

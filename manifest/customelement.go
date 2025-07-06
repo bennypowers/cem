@@ -111,7 +111,6 @@ func (c *CustomElementDeclaration) UnmarshalJSON(data []byte) (errs error) {
 }
 
 type RenderableCustomElementDeclaration struct {
-	name                     string // tag name
 	CustomElementDeclaration *CustomElementDeclaration
 	CustomElementExport      *CustomElementExport
 	JavaScriptExport         *JavaScriptExport
@@ -227,7 +226,6 @@ func NewRenderableCustomElementDeclaration(
 		}
 	}
 	return &RenderableCustomElementDeclaration{
-		name:                   ced.Name,
 		CustomElementDeclaration:  ced,
 		CustomElementExport:       cee,
 		Module:                    mod,

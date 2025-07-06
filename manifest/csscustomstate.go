@@ -62,7 +62,6 @@ func (c *CssCustomState) UnmarshalJSON(data []byte) error {
 
 // RenderableCssCustomState adds context and render/traversal methods.
 type RenderableCssCustomState struct {
-	name                     string
 	CssCustomState           *CssCustomState
 	CustomElementDeclaration *CustomElementDeclaration
 	CustomElementExport      *CustomElementExport
@@ -112,7 +111,6 @@ func NewRenderableCssCustomState(
 	mod *Module,
 ) *RenderableCssCustomState {
 	return  &RenderableCssCustomState{
-		name:                     state.Name,
 		CssCustomState:           state,
 		CustomElementDeclaration: ced,
 		CustomElementExport:      cee,

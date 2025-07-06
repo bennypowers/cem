@@ -78,7 +78,6 @@ func (m *ClassMethod) UnmarshalJSON(data []byte) error {
 }
 
 type RenderableMethod struct {
-	name                     string
 	Method                   *ClassMethod
 	CustomElementDeclaration *CustomElementDeclaration
 	CustomElementExport      *CustomElementExport
@@ -143,7 +142,6 @@ func NewRenderableClassMethod(
 	children := make([]Renderable, 0)
 	// TODO: params
 	return &RenderableMethod{
-		name: method.Name,
 		Method: method,
 		ClassDeclaration: cd,
 		JavaScriptExport: ce,

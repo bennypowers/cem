@@ -62,7 +62,6 @@ func (s *Slot) UnmarshalJSON(data []byte) error {
 
 // RenderableSlot adds context and render/traversal methods.
 type RenderableSlot struct {
-	name                     string
 	Slot                     *Slot
 	CustomElementDeclaration *CustomElementDeclaration
 	CustomElementExport      *CustomElementExport
@@ -117,7 +116,6 @@ func NewRenderableSlot(
 	mod *Module,
 ) *RenderableSlot {
 	return &RenderableSlot{
-		name:                     slot.Name,
 		Slot:                     slot,
 		CustomElementDeclaration: ced,
 		CustomElementExport:      cee,

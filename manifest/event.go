@@ -63,7 +63,6 @@ func (e *Event) UnmarshalJSON(data []byte) error {
 }
 
 type RenderableEvent struct {
-	name                     string
 	Event                    *Event
 	CustomElementDeclaration *CustomElementDeclaration
 	CustomElementExport      *CustomElementExport
@@ -118,7 +117,6 @@ func NewRenderableEvent(
 
 ) *RenderableEvent {
 	return &RenderableEvent{
-		name:                     ev.Name,
 		Event:                    ev,
 		CustomElementDeclaration: ced,
 		CustomElementExport:      cee,

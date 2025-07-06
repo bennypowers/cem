@@ -93,7 +93,6 @@ func (c *ClassDeclaration) UnmarshalJSON(data []byte) error {
 }
 
 type RenderableClassDeclaration struct {
-	name             string
 	ClassDeclaration *ClassDeclaration
 	JavaScriptExport *JavaScriptExport
 	Module           *Module
@@ -173,7 +172,6 @@ func NewRenderableClassDeclaration(
 		}
 	}
 	return &RenderableClassDeclaration{
-		name: class.Name,
 		ClassDeclaration: class,
 		JavaScriptExport: exp,
 		Module: mod,

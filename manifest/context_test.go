@@ -104,7 +104,7 @@ func makeTestPackage() *Package {
 	}
 }
 
-func TestGetAllTagNamesWithContext(t *testing.T) {
+func TestRenderableCustomElementDeclarations(t *testing.T) {
 	pkg := makeTestPackage()
 	tags := pkg.RenderableCustomElementDeclarations()
 	if len(tags) != 1 {
@@ -125,7 +125,7 @@ func TestGetAllTagNamesWithContext(t *testing.T) {
 	}
 }
 
-func TestGetTagAttrsWithContext(t *testing.T) {
+func TestTagRenderableAttributes(t *testing.T) {
 	pkg := makeTestPackage()
 	attrs, err := pkg.TagRenderableAttributes("foo-el")
 	if err != nil {
@@ -145,7 +145,7 @@ func TestGetTagAttrsWithContext(t *testing.T) {
 	}
 }
 
-func TestGetTagSlotsWithContext(t *testing.T) {
+func TestTagRenderableSlots(t *testing.T) {
 	pkg := makeTestPackage()
 	slots, err := pkg.TagRenderableSlots("foo-el")
 	if err != nil {
@@ -159,7 +159,7 @@ func TestGetTagSlotsWithContext(t *testing.T) {
 	}
 }
 
-func TestGetTagCssPropertiesWithContext(t *testing.T) {
+func TestTagRenderableCssProperties(t *testing.T) {
 	pkg := makeTestPackage()
 	props, err := pkg.TagRenderableCssProperties("foo-el")
 	if err != nil {
@@ -168,12 +168,12 @@ func TestGetTagCssPropertiesWithContext(t *testing.T) {
 	if len(props) != 1 {
 		t.Fatalf("expected 1 css property, got %d", len(props))
 	}
-	if props[0].name != "--foo-bar" {
-		t.Errorf("expected property '--foo-bar', got %q", props[0].name)
+	if props[0].Name() != "--foo-bar" {
+		t.Errorf("expected property '--foo-bar', got %q", props[0].Name())
 	}
 }
 
-func TestGetTagCssStatesWithContext(t *testing.T) {
+func TestTagRenderableCssStates(t *testing.T) {
 	pkg := makeTestPackage()
 	states, err := pkg.TagRenderableCssStates("foo-el")
 	if err != nil {
@@ -184,7 +184,7 @@ func TestGetTagCssStatesWithContext(t *testing.T) {
 	}
 }
 
-func TestGetTagCssPartsWithContext(t *testing.T) {
+func TestTagRenderableCssParts(t *testing.T) {
 	pkg := makeTestPackage()
 	parts, err := pkg.TagRenderableCssParts("foo-el")
 	if err != nil {
@@ -195,7 +195,7 @@ func TestGetTagCssPartsWithContext(t *testing.T) {
 	}
 }
 
-func TestGetTagEventsWithContext(t *testing.T) {
+func TestTagRenderableEvents(t *testing.T) {
 	pkg := makeTestPackage()
 	events, err := pkg.TagRenderableEvents("foo-el")
 	if err != nil {
@@ -206,7 +206,7 @@ func TestGetTagEventsWithContext(t *testing.T) {
 	}
 }
 
-func TestGetTagMethodsWithContext(t *testing.T) {
+func TestTagRenderableMethods(t *testing.T) {
 	pkg := makeTestPackage()
 	methods, err := pkg.TagRenderableMethods("foo-el")
 	if err != nil {
@@ -217,89 +217,138 @@ func TestGetTagMethodsWithContext(t *testing.T) {
 	}
 }
 
-func TestContextToTableRow(t *testing.T) {
-	attr := RenderableAttribute{
-		name: "foo",
-		Attribute: &Attribute{
+func TestRenderableAttributeToTableRow(t *testing.T) {
+	attr := NewRenderableAttribute(
+		&Attribute{
 			FullyQualified: FullyQualified{
 				Name:    "foo",
 				Summary: "attr summary",
 			},
 		},
-		CustomElementField: &CustomElementField{
-			ClassField: ClassField{PropertyLike: PropertyLike{FullyQualified: FullyQualified{Name: "foo"}}},
-			Reflects:   true,
+		&CustomElementDeclaration{
+			ClassDeclaration: ClassDeclaration{
+				ClassLike: ClassLike{
+					Members: []ClassMember{
+						&CustomElementField{
+							Attribute: "foo",
+							Reflects:   true,
+							ClassField: ClassField{
+								PropertyLike: PropertyLike{
+									FullyQualified: FullyQualified{
+										Name: "foo",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		nil,
+		nil,
+	)
+	row := attr.ToTableRow()
+	if !reflect.DeepEqual(row, []string{"foo", "foo", "✅", "attr summary", "", ""}) {
+		t.Errorf("unexpected RenderableAttribute ToTableRow: %#v", row)
+	}
+}
+
+func TestRenderableSlotToTableRow(t *testing.T) {
+	slot := RenderableSlot{
+		Slot: &Slot{
+			FullyQualified: FullyQualified{
+				Summary: "default",
+			},
 		},
 	}
-	row := attr.ToTableRow()
-	if !reflect.DeepEqual(row, []string{"foo", "foo", "✅", "attr summary"}) {
-		t.Errorf("unexpected AttributeWithContext ToTableRow: %#v", row)
-	}
-
-	slot := RenderableSlot{
-		name: "",
-		Slot: &Slot{FullyQualified: FullyQualified{Summary: "default"}},
-	}
-	row = slot.ToTableRow()
+	row := slot.ToTableRow()
 	if !reflect.DeepEqual(row, []string{"<default>", "default"}) {
-		t.Errorf("unexpected SlotWithContext ToTableRow: %#v", row)
+		t.Errorf("unexpected RenderableSlot ToTableRow: %#v", row)
 	}
+}
 
+func TestRenderableCssCustomPropertyToTableRow(t *testing.T) {
 	cssProp := RenderableCssCustomProperty{
-		name:              "--foo",
-		CssCustomProperty: &CssCustomProperty{Syntax: "string", Default: "bar", FullyQualified: FullyQualified{Summary: "baz"}},
+		CssCustomProperty: &CssCustomProperty{
+			Syntax: "string",
+			Default: "bar",
+			FullyQualified: FullyQualified{
+				Name: "--foo",
+				Summary: "baz",
+			},
+		},
 	}
-	row = cssProp.ToTableRow()
+	row := cssProp.ToTableRow()
 	if !reflect.DeepEqual(row, []string{"--foo", "string", "bar", "baz"}) {
-		t.Errorf("unexpected CssCustomPropertyWithContext ToTableRow: %#v", row)
+		t.Errorf("unexpected RenderableCssCustomProperty ToTableRow: %#v", row)
 	}
+}
 
+func TestRenderableCssCustomStateToTableRow(t *testing.T) {
 	state := RenderableCssCustomState{
-		name:           "--active",
-		CssCustomState: &CssCustomState{FullyQualified: FullyQualified{Summary: "active"}},
+		CssCustomState: &CssCustomState{
+			FullyQualified: FullyQualified{
+				Name: "--active",
+				Summary: "active state",
+			},
+		},
 	}
-	row = state.ToTableRow()
-	if !reflect.DeepEqual(row, []string{"--active", "active"}) {
-		t.Errorf("unexpected CssCustomStateWithContext ToTableRow: %#v", row)
+	row := state.ToTableRow()
+	if !reflect.DeepEqual(row, []string{"--active", "active state"}) {
+		t.Errorf("unexpected RenderableCssCustomState ToTableRow: %#v", row)
 	}
+}
 
-	// CssPartWithContext
+func TestRenderableCssPartToTableRow(t *testing.T) {
 	part := RenderableCssPart{
-		name:    "part1",
-		CssPart: &CssPart{FullyQualified: FullyQualified{Summary: "part summary"}},
+		CssPart: &CssPart{
+			FullyQualified: FullyQualified{
+				Name: "part1",
+				Summary: "part summary",
+			},
+		},
 	}
-	row = part.ToTableRow()
+	row := part.ToTableRow()
 	if !reflect.DeepEqual(row, []string{"part1", "part summary"}) {
-		t.Errorf("unexpected CssPartWithContext ToTableRow: %#v", row)
+		t.Errorf("unexpected RenderableCssPart ToTableRow: %#v", row)
 	}
+}
 
-	// EventWithContext
+func TestRenderableEventToTableRow(t *testing.T) {
 	event := RenderableEvent{
-		name:  "evt",
-		Event: &Event{Type: &Type{Text: "CustomEvent"}, FullyQualified: FullyQualified{Summary: "summ"}},
+		Event: &Event{
+			Type: &Type{
+				Text: "CustomEvent",
+			},
+			FullyQualified: FullyQualified{
+				Name: "evt",
+				Summary: "summ",
+			},
+		},
 	}
-	row = event.ToTableRow()
+	row := event.ToTableRow()
 	if !reflect.DeepEqual(row, []string{"evt", "CustomEvent", "summ"}) {
-		t.Errorf("unexpected EventWithContext ToTableRow: %#v", row)
+		t.Errorf("unexpected RenderableEvent ToTableRow: %#v", row)
 	}
+}
 
-	// MethodWithContext
+func TestRenderableMethodToTableRow(t *testing.T) {
 	method := RenderableMethod{
-		name: "doIt",
 		Method: &ClassMethod{
 			FunctionLike: FunctionLike{
 				Return: &Return{Type: &Type{Text: "string"}},
 			},
 			FullyQualified: FullyQualified{
+				Name: "doIt",
 				Summary: "summ",
 			},
 			Privacy: "private",
 			Static:  false,
 		},
 	}
-	row = method.ToTableRow()
+	row := method.ToTableRow()
 	if !reflect.DeepEqual(row, []string{"doIt", "string", "private", "false", "summ"}) {
-		t.Errorf("unexpected MethodWithContext ToTableRow: %#v", row)
+		t.Errorf("unexpected RenderableMethod ToTableRow: %#v", row)
 	}
 }
 

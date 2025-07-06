@@ -94,7 +94,6 @@ func (f *FunctionDeclaration) UnmarshalJSON(data []byte) error {
 }
 
 type RenderableFunctionDeclaration struct {
-  name string
 	FunctionDeclaration *FunctionDeclaration
 	JavaScriptExport *JavaScriptExport
 	Module *Module
@@ -121,7 +120,6 @@ func NewRenderableFunctionDeclaration(
 	// TODO: populate children with params, return
 	children := make([]Renderable, 0)
   return &RenderableFunctionDeclaration{
-		name: fd.Name,
 		FunctionDeclaration: fd,
 		JavaScriptExport: je,
 		Module: mod,

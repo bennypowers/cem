@@ -85,9 +85,9 @@ func (x *RenderableAttribute) ColumnHeadings() []string {
 		"Name",
 		"DOM Property",
 		"Reflects",
+		"Summary",
 		"Default",
 		"Type",
-		"Deprecated",
 	}
 }
 

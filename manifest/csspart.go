@@ -62,7 +62,6 @@ func (c *CssPart) UnmarshalJSON(data []byte) error {
 
 // RenderableCssPart adds context and render/traversal methods.
 type RenderableCssPart struct {
-	name                     string
 	CssPart                  *CssPart
 	CustomElementDeclaration *CustomElementDeclaration
 	CustomElementExport      *CustomElementExport
@@ -112,7 +111,6 @@ func NewRenderableCssPart(
 	mod *Module,
 ) *RenderableCssPart {
 	return  &RenderableCssPart{
-		name:                     part.Name,
 		CssPart:                  part,
 		CustomElementDeclaration: ced,
 		CustomElementExport:      cee,

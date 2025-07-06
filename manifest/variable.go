@@ -98,7 +98,7 @@ func (x *RenderableVariableDeclaration) ToTableRow() []string {
 	if x.VariableDeclaration.Type != nil {
 		typeText = x.VariableDeclaration.Type.Text
 	}
-  return []string{
+	return []string{
 		x.VariableDeclaration.Name,
 		typeText,
 		x.VariableDeclaration.Summary,
