@@ -71,6 +71,24 @@ func RenderTable(title string, headers []string, rows [][]string, columns []stri
 	pterm.Println(out)
 	return nil
 }
+
+// RenderOutput renders output in the specified format.
+// Supports "table" and "tree" formats.
+func RenderOutput[T M.RenderableMemberWithContext](title string, headers []string, items []T, columns []string, format string, showDeprecated *bool) error {
+	switch format {
+	case "tree":
+		return RenderTree(title, items, showDeprecated)
+	case "table":
+		// Filter by deprecated status if specified for table format
+		if showDeprecated != nil {
+			items = FilterByDeprecated(items, *showDeprecated)
+		}
+		rows := MapToTableRows(items)
+		return RenderTable(title, headers, rows, columns)
+	default:
+		return fmt.Errorf("unknown format: %s", format)
+	}
+}
 // checkUnknownColumns returns an error if any column name is not in headers, case-insensitive.
 func checkUnknownColumns(headers []string, columns []string) error {
 	headerSet := make(map[string]string, len(headers)) // lower-case -> original

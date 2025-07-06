@@ -56,11 +56,11 @@ func requireFormat(cmd *cobra.Command) (string, error) {
 		return "", err
 	}
 	switch format {
-	case "table":
+	case "table", "tree":
 		return format, nil
 	// Add more supported formats here as the CLI grows
 	default:
-		return "", errors.New("unknown format: " + format)
+		return "", errors.New("unknown format: " + format + ". Supported formats: table, tree")
 	}
 }
 
@@ -83,29 +83,48 @@ func readPkg() (*M.Package, error) {
 	return M.UnmarshalPackage(json)
 }
 
-// validateTagCommandFlags returns the tag name, format, and loaded manifest package.
+// validateTagCommandFlags returns the tag name, format, columns, deprecated filter, and loaded manifest package.
 // It errors if --columns is passed but format is not "table".
-func validateTagCommandFlags(cmd *cobra.Command) (tagName string, format string, columns []string, pkg *M.Package, err error) {
+func validateTagCommandFlags(cmd *cobra.Command) (tagName string, format string, columns []string, showDeprecated *bool, pkg *M.Package, err error) {
 	tagName, err = requireTagName(cmd)
 	if err != nil {
-		return "", "", nil, nil, err
+		return "", "", nil, nil, nil, err
 	}
 	pkg, err = readPkg()
 	if err != nil {
-		return "", "", nil, nil, err
+		return "", "", nil, nil, nil, err
 	}
 	format, err = requireFormat(cmd)
 	if err != nil {
-		return "", "", nil, nil, err
+		return "", "", nil, nil, nil, err
 	}
 	columns, err = cmd.Flags().GetStringArray("columns")
 	if err != nil {
-		return "", "", nil, nil, err
+		return "", "", nil, nil, nil, err
 	}
 	if len(columns) > 0 && format != "table" {
-		return "", "", nil, nil, errors.New("--columns flag can only be used with --format table")
+		return "", "", nil, nil, nil, errors.New("--columns flag can only be used with --format table")
 	}
-	return tagName, format, columns, pkg, nil
+
+	// Handle deprecated flag
+	deprecatedFlag, err := cmd.Flags().GetString("deprecated")
+	if err != nil {
+		return "", "", nil, nil, nil, err
+	}
+	if deprecatedFlag != "" {
+		switch deprecatedFlag {
+		case "only":
+			showDeprecated = &[]bool{true}[0]
+		case "exclude":
+			showDeprecated = &[]bool{false}[0]
+		case "all":
+			showDeprecated = nil
+		default:
+			return "", "", nil, nil, nil, errors.New("--deprecated must be one of: only, exclude, all")
+		}
+	}
+
+	return tagName, format, columns, showDeprecated, pkg, nil
 }
 
 var listAttrsCmd = &cobra.Command{
@@ -125,7 +144,7 @@ Examples:
   cem list attributes --tag-name my-button --format table --columns "DOM Property" --columns Reflects --columns Summary
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
+		tagName, format, columns, showDeprecated, pkg, err := validateTagCommandFlags(cmd)
 		if err != nil {
 			return err
 		}
@@ -133,14 +152,9 @@ Examples:
 		if err != nil {
 			return err
 		}
-		switch format {
-		case "table":
-			headers := []string{"Name", "DOM Property", "Reflects", "Summary"}
-			rows := list.MapToTableRows(attrs)
-			title := "Attributes on " + tagName
-			return list.RenderTable(title, headers, rows, columns)
-		}
-		return nil
+		headers := []string{"Name", "DOM Property", "Reflects", "Summary"}
+		title := "Attributes on " + tagName
+		return list.RenderOutput(title, headers, attrs, columns, format, showDeprecated)
 	},
 }
 
@@ -157,21 +171,15 @@ Examples:
   cem list slots --tag-name my-button --format table --columns Name
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
+		tagName, format, columns, showDeprecated, pkg, err := validateTagCommandFlags(cmd)
 		if err != nil { return err }
 		slots, err := pkg.GetTagSlotsWithContext(tagName)
 		if err != nil {
 			return err
 		}
-		switch format {
-		case "table":
-			headers := []string{"Name", "Summary"}
-			rows := list.MapToTableRows(slots)
-			title := "Slots on "+tagName
-			return list.RenderTable(title, headers, rows, columns)
-		}
-
-		return nil
+		headers := []string{"Name", "Summary"}
+		title := "Slots on "+tagName
+		return list.RenderOutput(title, headers, slots, columns, format, showDeprecated)
 	},
 }
 
@@ -192,18 +200,13 @@ Examples:
   cem list css-custom-properties --tag-name my-button --format table --columns Syntax --columns Default --columns Summary
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
+		tagName, format, columns, showDeprecated, pkg, err := validateTagCommandFlags(cmd)
 		if err != nil { return err }
 		props, err := pkg.GetTagCssPropertiesWithContext(tagName)
 		if err != nil { return err }
-		switch format {
-		case "table":
-			headers := []string{"Name", "Syntax", "Default", "Summary"}
-			rows := list.MapToTableRows(props)
-			title := "CSS Custom Properties for " + tagName
-			return list.RenderTable(title, headers, rows, columns)
-		}
-		return nil
+		headers := []string{"Name", "Syntax", "Default", "Summary"}
+		title := "CSS Custom Properties for " + tagName
+		return list.RenderOutput(title, headers, props, columns, format, showDeprecated)
 	},
 }
 
@@ -222,19 +225,13 @@ Examples:
   cem list css-custom-states --tag-name my-button --format table --columns Name
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
+		tagName, format, columns, showDeprecated, pkg, err := validateTagCommandFlags(cmd)
 		if err != nil { return err }
 		props, err := pkg.GetTagCssStatesWithContext(tagName)
 		if err != nil { return err }
-		switch format {
-		case "table":
-			headers := []string{"Name", "Summary"}
-			rows := list.MapToTableRows(props)
-			title := "CSS Custom States for " + tagName
-			return list.RenderTable(title, headers, rows, columns)
-		}
-
-		return nil
+		headers := []string{"Name", "Summary"}
+		title := "CSS Custom States for " + tagName
+		return list.RenderOutput(title, headers, props, columns, format, showDeprecated)
 	},
 }
 
@@ -251,18 +248,13 @@ Examples:
   cem list css-parts --tag-name my-button --format table
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
+		tagName, format, columns, showDeprecated, pkg, err := validateTagCommandFlags(cmd)
 		if err != nil { return err }
 		parts, err := pkg.GetTagCssPartsWithContext(tagName)
 		if err != nil { return err }
-		switch format {
-		case "table":
-			headers := []string{"Name", "Summary"}
-			rows := list.MapToTableRows(parts)
-			title := "CSS Shadow Parts for " + tagName
-			return list.RenderTable(title, headers, rows, columns)
-		}
-		return nil
+		headers := []string{"Name", "Summary"}
+		title := "CSS Shadow Parts for " + tagName
+		return list.RenderOutput(title, headers, parts, columns, format, showDeprecated)
 	},
 }
 
@@ -281,18 +273,13 @@ Examples:
   cem list event --tag-name my-button --format table --columns Type --columns Summary
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
+		tagName, format, columns, showDeprecated, pkg, err := validateTagCommandFlags(cmd)
 		if err != nil { return err }
 		events, err := pkg.GetTagEventsWithContext(tagName)
 		if err != nil { return err }
-		switch format {
-		case "table":
-			headers := []string{"Name", "Type", "Summary"}
-			rows := list.MapToTableRows(events)
-			title := "Events fired by " + tagName
-			return list.RenderTable(title, headers, rows, columns)
-		}
-		return nil
+		headers := []string{"Name", "Type", "Summary"}
+		title := "Events fired by " + tagName
+		return list.RenderOutput(title, headers, events, columns, format, showDeprecated)
 	},
 }
 
@@ -308,19 +295,68 @@ Examples:
   cem list methods --tag-name my-button --format table
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
+		tagName, format, columns, showDeprecated, pkg, err := validateTagCommandFlags(cmd)
 		if err != nil { return err }
 		methods, err := pkg.GetTagMethodsWithContext(tagName)
 		if err != nil { return err }
-		switch format {
-		case "table":
-			headers := []string{"Name", "Return Type", "Privacy", "Static", "Summary"}
-			rows := list.MapToTableRows(methods)
-			title := "Methods on " + tagName
-			return list.RenderTable(title, headers, rows, columns)
+		headers := []string{"Name", "Return Type", "Privacy", "Static", "Summary"}
+		title := "Methods on " + tagName
+		return list.RenderOutput(title, headers, methods, columns, format, showDeprecated)
+	},
+}
+
+var listMembersCmd = &cobra.Command{
+	Use:   "members",
+	Short: "List all class members for a given tag name",
+	Long: `List all class members (attributes, fields, methods, events, slots) for a given tag name grouped by type.
+
+You must specify the tag name using the --tag-name flag. This command is particularly useful with the --tree format
+to see all members organized by type, and with the --deprecated flag to filter deprecated members.
+
+Examples:
+
+  cem list members --tag-name my-button --tree
+  cem list members --tag-name my-button --tree --deprecated only
+  cem list members --tag-name my-button --tree --deprecated exclude
+`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		tagName, format, _, showDeprecated, pkg, err := validateTagCommandFlags(cmd)
+		if err != nil { return err }
+		
+		if format == "table" {
+			return errors.New("members command only supports --tree format. Use individual commands (attributes, methods, etc.) for table format")
 		}
 
-		return nil
+		allMembers, err := pkg.GetTagAllMembersWithContext(tagName)
+		if err != nil { return err }
+		
+		title := "All Members for " + tagName
+		return list.RenderTreeGrouped(title, allMembers, showDeprecated)
+	},
+}
+
+var listFieldsCmd = &cobra.Command{
+	Use:   "fields",
+	Aliases: []string{"properties"},
+	Short: "List class fields for a given tag name",
+	Long: `List class fields (properties) for the class registered to a given tag name.
+
+You must specify the tag name using the --tag-name flag. The output includes each field, 
+its type, privacy, whether it's static, and a summary.
+
+Examples:
+
+  cem list fields --tag-name my-button --format table
+  cem list fields --tag-name my-button --tree
+`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		tagName, format, columns, showDeprecated, pkg, err := validateTagCommandFlags(cmd)
+		if err != nil { return err }
+		fields, err := pkg.GetTagFieldsWithContext(tagName)
+		if err != nil { return err }
+		headers := []string{"Name", "Type", "Privacy", "Static", "Summary"}
+		title := "Fields on " + tagName
+		return list.RenderOutput(title, headers, fields, columns, format, showDeprecated)
 	},
 }
 
@@ -412,38 +448,49 @@ var listCmd = &cobra.Command{
 This command provides subcommands for listing tag names, attributes, and other elements described in your manifest.
 Use the available subcommands to explore your project's custom elements, their attributes, and more.
 
+Use --tree format for a hierarchical view grouped by member type.
+Use --deprecated flag to filter deprecated members (only, exclude, or all).
+
 Examples:
 
   cem list tags
   cem list modules
   cem list attributes --tag-name my-button
+  cem list attributes --tag-name my-button --tree
+  cem list attributes --tag-name my-button --deprecated only
+  cem list members --tag-name my-button --tree
+  cem list members --tag-name my-button --tree --deprecated exclude
   cem list slots --tag-name my-button
   cem list css-custom-properties --tag-name my-button
   cem list css-custom-states --tag-name my-button
   cem list css-parts --tag-name my-button
   cem list events --tag-name my-button
   cem list methods --tag-name my-button
+  cem list fields --tag-name my-button
 `,
 }
 
 func init() {
 	listCmd.AddCommand(listTagsCmd)
 	listCmd.AddCommand(listModulesCmd)
-	listCmd.PersistentFlags().StringP("format", "f", "table", "Output format")
+	listCmd.PersistentFlags().StringP("format", "f", "table", "Output format (table, tree)")
 	listTagsCmd.Flags().StringArrayP("columns", "c", []string{}, "list of columns to display in the table")
 	listModulesCmd.Flags().StringArrayP("columns", "c", []string{}, "list of columns to display in the table")
 	for _, c := range []*cobra.Command{
 		listAttrsCmd,
+		listFieldsCmd,
 		listSlotsCmd,
 		listCssCustomPropertiesCmd,
 		listCssCustomStatesCmd,
 		listCssPartsCmd,
 		listEventsCmd,
 		listMethodsCmd,
+		listMembersCmd,
 	} {
 		listCmd.AddCommand(c)
 		c.Flags().StringP("tag-name", "t", "", "Tag name to list attributes for")
 		c.Flags().StringArrayP("columns", "c", []string{}, "list of columns to display in the table")
+		c.Flags().StringP("deprecated", "d", "", "Filter by deprecated status: 'only', 'exclude', or 'all' (default: all)")
 	}
 	rootCmd.AddCommand(listCmd)
 }

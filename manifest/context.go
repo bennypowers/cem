@@ -39,6 +39,8 @@ func (x *Package) GetAllTagNames() (tags []string) {
 
 type RenderableMemberWithContext interface {
 	ToTableRow() []string
+	IsDeprecated() bool
+	GetMemberType() string
 }
 
 type ModuleWithContext struct {
@@ -57,6 +59,14 @@ func (x ModuleWithContext) ToTableRow() []string {
 	}
 }
 
+func (x ModuleWithContext) IsDeprecated() bool {
+	return x.Module != nil && x.Module.Deprecated != nil
+}
+
+func (x ModuleWithContext) GetMemberType() string {
+	return "module"
+}
+
 type CustomElementWithContext struct {
 	TagName                  string
 	Module                   *Module
@@ -72,12 +82,29 @@ func (c CustomElementWithContext) ToTableRow() []string {
 	if c.Module != nil {
 		modulePath = c.Module.Path
 	}
+	className := ""
+	summary := ""
+	if c.CustomElementDeclaration != nil {
+		className = c.CustomElementDeclaration.Name
+		summary = c.CustomElementDeclaration.Summary
+	}
 	return []string{
 		c.TagName,
-		c.CustomElementDeclaration.Name,
+		className,
 		modulePath,
-		c.CustomElementDeclaration.Summary,
+		summary,
 	}
+}
+
+func (c CustomElementWithContext) IsDeprecated() bool {
+	if c.CustomElementExport != nil && c.CustomElementExport.Deprecated != nil {
+		return true
+	}
+	return c.CustomElementDeclaration != nil && c.CustomElementDeclaration.Deprecated != nil
+}
+
+func (c CustomElementWithContext) GetMemberType() string {
+	return "element"
 }
 
 type AttributeWithContext struct {
@@ -109,6 +136,14 @@ func (a AttributeWithContext) ToTableRow() []string {
 	}
 }
 
+func (a AttributeWithContext) IsDeprecated() bool {
+	return a.Attribute != nil && a.Attribute.Deprecated != nil
+}
+
+func (a AttributeWithContext) GetMemberType() string {
+	return "attribute"
+}
+
 type SlotWithContext struct {
 	Name                     string
 	Slot                     *Slot
@@ -131,6 +166,14 @@ func (s SlotWithContext) ToTableRow() []string {
 	}
 }
 
+func (s SlotWithContext) IsDeprecated() bool {
+	return s.Slot != nil && s.Slot.Deprecated != nil
+}
+
+func (s SlotWithContext) GetMemberType() string {
+	return "slot"
+}
+
 type CssCustomPropertyWithContext struct {
 	Name                     string
 	CssCustomProperty        *CssCustomProperty
@@ -151,6 +194,14 @@ func (c CssCustomPropertyWithContext) ToTableRow() []string {
 	}
 }
 
+func (c CssCustomPropertyWithContext) IsDeprecated() bool {
+	return c.CssCustomProperty != nil && c.CssCustomProperty.Deprecated != nil
+}
+
+func (c CssCustomPropertyWithContext) GetMemberType() string {
+	return "css-property"
+}
+
 type CssCustomStateWithContext struct {
 	Name                     string
 	CssCustomState           *CssCustomState
@@ -169,6 +220,14 @@ func (c CssCustomStateWithContext) ToTableRow() []string {
 	}
 }
 
+func (c CssCustomStateWithContext) IsDeprecated() bool {
+	return c.CssCustomState != nil && c.CssCustomState.Deprecated != nil
+}
+
+func (c CssCustomStateWithContext) GetMemberType() string {
+	return "css-state"
+}
+
 type CssPartWithContext struct {
 	Name                     string
 	CssPart                  *CssPart
@@ -185,6 +244,14 @@ func (c CssPartWithContext) ToTableRow() []string {
 		c.Name,
 		c.CssPart.Summary,
 	}
+}
+
+func (c CssPartWithContext) IsDeprecated() bool {
+	return c.CssPart != nil && c.CssPart.Deprecated != nil
+}
+
+func (c CssPartWithContext) GetMemberType() string {
+	return "css-part"
 }
 
 type EventWithContext struct {
@@ -208,6 +275,14 @@ func (e EventWithContext) ToTableRow() []string {
 		eventType,
 		e.Event.Summary,
 	}
+}
+
+func (e EventWithContext) IsDeprecated() bool {
+	return e.Event != nil && e.Event.Deprecated != nil
+}
+
+func (e EventWithContext) GetMemberType() string {
+	return "event"
 }
 
 type MethodWithContext struct {
@@ -237,6 +312,73 @@ func (m MethodWithContext) ToTableRow() []string {
 		strconv.FormatBool(m.Method.Static),
 		m.Method.Summary,
 	}
+}
+
+func (m MethodWithContext) IsDeprecated() bool {
+	return m.Method != nil && m.Method.Deprecated != nil
+}
+
+func (m MethodWithContext) GetMemberType() string {
+	return "method"
+}
+
+type FieldWithContext struct {
+	Name                     string
+	Field                    ClassMember // Could be ClassField or CustomElementField
+	CustomElementDeclaration *CustomElementDeclaration
+	CustomElementExport      *CustomElementExport
+	JavaScriptModule         *JavaScriptModule
+}
+
+// Renders a Field as a table row.
+// Columns:
+//   Name, Type, Privacy, Static, Summary
+func (f FieldWithContext) ToTableRow() []string {
+	var fieldType, privacy, summary string
+	var static bool
+
+	switch field := f.Field.(type) {
+	case *ClassField:
+		if field.Type != nil {
+			fieldType = field.Type.Text
+		}
+		privacy = string(field.Privacy)
+		static = field.Static
+		summary = field.Summary
+	case *CustomElementField:
+		if field.Type != nil {
+			fieldType = field.Type.Text
+		}
+		privacy = string(field.Privacy)
+		static = field.Static
+		summary = field.Summary
+	}
+
+	if privacy == "" {
+		privacy = "public"
+	}
+
+	return []string{
+		f.Name,
+		fieldType,
+		privacy,
+		strconv.FormatBool(static),
+		summary,
+	}
+}
+
+func (f FieldWithContext) IsDeprecated() bool {
+	switch field := f.Field.(type) {
+	case *ClassField:
+		return field.Deprecated != nil
+	case *CustomElementField:
+		return field.Deprecated != nil
+	}
+	return false
+}
+
+func (f FieldWithContext) GetMemberType() string {
+	return "field"
 }
 
 // GetAllModulesWithContext returns a slice of ModuleWithContext for all modules.
@@ -467,4 +609,96 @@ func (x *Package) GetTagMethodsWithContext(tagName string) ([]MethodWithContext,
 		}
 	}
 	return methods, nil
+}
+
+// GetTagFieldsWithContext returns fields for a given tag name with context.
+func (x *Package) GetTagFieldsWithContext(tagName string) ([]FieldWithContext, error) {
+	ced, ceExport, m, err := x.findCustomElementContext(tagName)
+	if err != nil {
+		return nil, err
+	}
+	var fields []FieldWithContext
+	for _, member := range ced.Members {
+		switch field := member.(type) {
+		case *ClassField:
+			fields = append(fields, FieldWithContext{
+				Name:                     field.Name,
+				Field:                    field,
+				CustomElementDeclaration: ced,
+				CustomElementExport:      ceExport,
+				JavaScriptModule:         m,
+			})
+		case *CustomElementField:
+			fields = append(fields, FieldWithContext{
+				Name:                     field.Name,
+				Field:                    field,
+				CustomElementDeclaration: ced,
+				CustomElementExport:      ceExport,
+				JavaScriptModule:         m,
+			})
+		}
+	}
+	return fields, nil
+}
+
+// GetTagAllMembersWithContext returns all class members grouped by type for a given tag name.
+func (x *Package) GetTagAllMembersWithContext(tagName string) (map[string][]RenderableMemberWithContext, error) {
+	result := make(map[string][]RenderableMemberWithContext)
+
+	// Get attributes
+	if attrs, err := x.GetTagAttrsWithContext(tagName); err == nil {
+		var members []RenderableMemberWithContext
+		for _, attr := range attrs {
+			members = append(members, attr)
+		}
+		if len(members) > 0 {
+			result["attributes"] = members
+		}
+	}
+
+	// Get fields
+	if fields, err := x.GetTagFieldsWithContext(tagName); err == nil {
+		var members []RenderableMemberWithContext
+		for _, field := range fields {
+			members = append(members, field)
+		}
+		if len(members) > 0 {
+			result["fields"] = members
+		}
+	}
+
+	// Get methods
+	if methods, err := x.GetTagMethodsWithContext(tagName); err == nil {
+		var members []RenderableMemberWithContext
+		for _, method := range methods {
+			members = append(members, method)
+		}
+		if len(members) > 0 {
+			result["methods"] = members
+		}
+	}
+
+	// Get events
+	if events, err := x.GetTagEventsWithContext(tagName); err == nil {
+		var members []RenderableMemberWithContext
+		for _, event := range events {
+			members = append(members, event)
+		}
+		if len(members) > 0 {
+			result["events"] = members
+		}
+	}
+
+	// Get slots
+	if slots, err := x.GetTagSlotsWithContext(tagName); err == nil {
+		var members []RenderableMemberWithContext
+		for _, slot := range slots {
+			members = append(members, slot)
+		}
+		if len(members) > 0 {
+			result["slots"] = members
+		}
+	}
+
+	return result, nil
 }
