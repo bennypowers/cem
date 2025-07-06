@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 )
 
 // --- Helpers ---
@@ -54,23 +53,81 @@ func (f *ClassField) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func decodeDeprecatedField(dst *Deprecated, data json.RawMessage) {
+func (p *Parameter) UnmarshalJSON(data []byte) error {
+	var proxy map[string]json.RawMessage
+	if err := json.Unmarshal(data, &proxy); err != nil {
+		return err
+	}
+	var depRaw json.RawMessage
+	if raw, ok := proxy["deprecated"]; ok {
+		depRaw = raw
+		delete(proxy, "deprecated")
+	}
+	rest, err := json.Marshal(proxy)
+	if err != nil {
+		return err
+	}
+	type Alias Parameter
+	if err := json.Unmarshal(rest, (*Alias)(p)); err != nil {
+		return err
+	}
+	if len(depRaw) > 0 && string(depRaw) != "null" {
+		var dep Deprecated
+		if !decodeDeprecatedField(&dep, depRaw) {
+			return fmt.Errorf("invalid type for deprecated field")
+		}
+		p.Deprecated = dep
+	}
+	return nil
+}
+
+func (v *VariableDeclaration) UnmarshalJSON(data []byte) error {
+	var proxy map[string]json.RawMessage
+	if err := json.Unmarshal(data, &proxy); err != nil {
+		return err
+	}
+	var depRaw json.RawMessage
+	if raw, ok := proxy["deprecated"]; ok {
+		depRaw = raw
+		delete(proxy, "deprecated")
+	}
+	rest, err := json.Marshal(proxy)
+	if err != nil {
+		return err
+	}
+	type Alias VariableDeclaration
+	if err := json.Unmarshal(rest, (*Alias)(v)); err != nil {
+		return err
+	}
+	if len(depRaw) > 0 && string(depRaw) != "null" {
+		var dep Deprecated
+		if !decodeDeprecatedField(&dep, depRaw) {
+			return fmt.Errorf("invalid type for deprecated field")
+		}
+		v.Deprecated = dep
+	}
+	return nil
+}
+
+func decodeDeprecatedField(dst *Deprecated, data json.RawMessage) bool {
 	if dst == nil {
-		return
+		return true
 	}
 	if len(data) == 0 || string(data) == "null" {
 		*dst = nil
-		return
+		return true
 	}
 	var b bool
 	if err := json.Unmarshal(data, &b); err == nil {
 		*dst = DeprecatedFlag(b)
-		return
+		return true
 	}
 	var s string
 	if err := json.Unmarshal(data, &s); err == nil {
 		*dst = DeprecatedReason(s)
+		return true
 	}
+	return false // unknown type
 }
 
 // DRY helper for types with a Deprecated field. T is the struct type (not pointer).
@@ -80,30 +137,27 @@ func unmarshalWithDeprecated[T any](
 ) (T, error) {
 	var proxy map[string]json.RawMessage
 	var obj T
+	var zero T
 	if err := json.Unmarshal(data, &proxy); err != nil {
-		var zero T
 		return zero, err
 	}
-	// Remove "deprecated" before unmarshalling into T
 	var depRaw json.RawMessage
 	if raw, ok := proxy["deprecated"]; ok {
 		depRaw = raw
 		delete(proxy, "deprecated")
 	}
-	// Marshal the remaining map back to JSON
 	rest, err := json.Marshal(proxy)
 	if err != nil {
-		var zero T
 		return zero, err
 	}
 	if err := json.Unmarshal(rest, &obj); err != nil {
-		var zero T
 		return zero, err
 	}
-	// Now decode the deprecated field
 	if len(depRaw) > 0 && string(depRaw) != "null" {
 		var dep Deprecated
-		decodeDeprecatedField(&dep, depRaw)
+		if !decodeDeprecatedField(&dep, depRaw) {
+			return zero, fmt.Errorf("invalid type for deprecated field")
+		}
 		setDeprecated(&obj, dep)
 	}
 	return obj, nil
@@ -111,7 +165,7 @@ func unmarshalWithDeprecated[T any](
 
 // --- Core Package Unmarshalling ---
 
-func UnmarshalPackage(data []byte) (*Package, error) {
+func UnmarshalPackage(data []byte) (pkg *Package, errs error) {
 	var raw struct {
 		SchemaVersion string            `json:"schemaVersion"`
 		Readme        *string           `json:"readme,omitempty"`
@@ -121,26 +175,24 @@ func UnmarshalPackage(data []byte) (*Package, error) {
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return nil, fmt.Errorf("unmarshal package prelude: %w", err)
 	}
-	pkg := &Package{
+	pkg = &Package{
 		SchemaVersion: raw.SchemaVersion,
 		Readme:        raw.Readme,
 	}
 	decodeDeprecatedField(&pkg.Deprecated, raw.Deprecated)
 	for _, modData := range raw.Modules {
 		mod, err := unmarshalModule(modData)
-		if err != nil {
-			log.Printf("Failed to unmarshal module: %v", err)
-			continue
+		if mod != nil {
+			pkg.Modules = append(pkg.Modules, *mod)
 		}
-		pkg.Modules = append(pkg.Modules, *mod)
+		if err != nil {
+			errs = errors.Join(errs, err)
+		}
 	}
-	if pkg.Modules == nil {
-		pkg.Modules = []Module{}
-	}
-	return pkg, nil
+	return pkg, errs
 }
 
-func unmarshalModule(data []byte) (*Module, error) {
+func unmarshalModule(data []byte) (mod *Module, errs error) {
 	var raw struct {
 		Kind         string            `json:"kind"`
 		Path         string            `json:"path"`
@@ -155,7 +207,7 @@ func unmarshalModule(data []byte) (*Module, error) {
 	}
 	switch raw.Kind {
 	case "javascript-module":
-		mod := &JavaScriptModule{
+		mod = &JavaScriptModule{
 			Kind:        raw.Kind,
 			Path:        raw.Path,
 			Summary:     raw.Summary,
@@ -164,7 +216,10 @@ func unmarshalModule(data []byte) (*Module, error) {
 		decodeDeprecatedField(&mod.Deprecated, raw.Deprecated)
 		for _, d := range raw.Declarations {
 			decl, err := unmarshalDeclaration(d)
-			if err == nil && decl != nil {
+			if err != nil {
+				errs = errors.Join(errs, err)
+			}
+			if decl != nil {
 				mod.Declarations = append(mod.Declarations, decl)
 			}
 		}
@@ -174,15 +229,9 @@ func unmarshalModule(data []byte) (*Module, error) {
 				mod.Exports = append(mod.Exports, exp)
 			}
 		}
-		if mod.Declarations == nil {
-			mod.Declarations = []Declaration{}
-		}
-		if mod.Exports == nil {
-			mod.Exports = []Export{}
-		}
-		return mod, nil
+		return mod, errs
 	default:
-		return nil, fmt.Errorf("unknown module kind: %s", raw.Kind)
+		return nil, errors.Join(errs, fmt.Errorf("unknown module kind: %s", raw.Kind))
 	}
 }
 
@@ -224,7 +273,8 @@ func unmarshalDeclaration(data []byte) (Declaration, error) {
 		}
 		return unmarshalMixinDeclaration(data)
 	case "function":
-		return unmarshalFunctionDeclaration(data)
+		decl, err := unmarshalFunctionDeclaration(data)
+		return &decl, err
 	case "variable":
 		var v VariableDeclaration
 		if err := json.Unmarshal(data, &v); err == nil {
@@ -262,7 +312,7 @@ func unmarshalExport(data []byte) (Export, error) {
 	}
 }
 
-// --- Class/Mixin Declarations ---
+// --- Classes ---
 
 func unmarshalClassDeclaration(data []byte) (*ClassDeclaration, error) {
 	var raw struct {
@@ -301,36 +351,6 @@ func unmarshalClassDeclaration(data []byte) (*ClassDeclaration, error) {
 	}
 	return c, nil
 }
-
-func unmarshalMixinDeclaration(data []byte) (*MixinDeclaration, error) {
-	var raw struct {
-		Name       string            `json:"name"`
-		Kind       string            `json:"kind"`
-		Members    []json.RawMessage `json:"members"`
-		Deprecated json.RawMessage   `json:"deprecated"`
-		// Add fields as needed
-	}
-	if err := json.Unmarshal(data, &raw); err != nil {
-		return nil, err
-	}
-	m := &MixinDeclaration{
-		Name: raw.Name,
-		Kind: raw.Kind,
-	}
-	decodeDeprecatedField(&m.Deprecated, raw.Deprecated)
-	for _, mm := range raw.Members {
-		member, err := unmarshalClassMember(mm)
-		if err == nil && member != nil {
-			m.Members = append(m.Members, member)
-		}
-	}
-	if m.Members == nil {
-		m.Members = []ClassMember{}
-	}
-	return m, nil
-}
-
-// --- Custom Element Declarations ---
 
 func unmarshalCustomElementDeclaration(data []byte) (ce *CustomElementDeclaration, errs error) {
 	var raw struct {
@@ -425,164 +445,8 @@ func unmarshalCustomElementDeclaration(data []byte) (ce *CustomElementDeclaratio
 			ce.CssStates = append(ce.CssStates, state)
 		}
 	}
-	// Ensure non-nil slices
-	if ce.Members == nil {
-		ce.Members = []ClassMember{}
-	}
-	if ce.Attributes == nil {
-		ce.Attributes = []Attribute{}
-	}
-	if ce.Events == nil {
-		ce.Events = []Event{}
-	}
-	if ce.Slots == nil {
-		ce.Slots = []Slot{}
-	}
-	if ce.CssParts == nil {
-		ce.CssParts = []CssPart{}
-	}
-	if ce.CssProperties == nil {
-		ce.CssProperties = []CssCustomProperty{}
-	}
-	if ce.CssStates == nil {
-		ce.CssStates = []CssCustomState{}
-	}
-	if ce.Demos == nil {
-		ce.Demos = []Demo{}
-	}
-	if ce.Mixins == nil {
-		ce.Mixins = []Reference{}
-	}
 	return ce, errs
 }
-
-func unmarshalCustomElementMixinDeclaration(data []byte) (*CustomElementMixinDeclaration, error) {
-	base, err := unmarshalMixinDeclaration(data)
-	if err != nil {
-		return nil, err
-	}
-
-	var extra struct {
-		Attributes []json.RawMessage `json:"attributes"`
-		Events     []json.RawMessage `json:"events"`
-		Slots      []json.RawMessage `json:"slots"`
-		CssParts   []json.RawMessage `json:"cssParts"`
-		CssProps   []json.RawMessage `json:"cssProperties"`
-		CssStates  []json.RawMessage `json:"cssStates"`
-		Demos      []Demo            `json:"demos"`
-		Members    []json.RawMessage `json:"members"` // for re-dispatch
-	}
-	if err := json.Unmarshal(data, &extra); err != nil {
-		return nil, err
-	}
-
-	cem := &CustomElementMixinDeclaration{
-		MixinDeclaration: *base,
-		Name:             base.Name,
-	}
-
-	// Re-dispatch on members for correct types
-	cem.Members = nil
-	for _, mm := range extra.Members {
-		member, err := unmarshalClassMember(mm)
-		if err != nil || member == nil {
-			continue
-		}
-		switch m := member.(type) {
-		case *CustomElementField:
-			cem.Members = append(cem.Members, m)
-		case *ClassField:
-			cem.Members = append(cem.Members, m)
-		case *ClassMethod:
-			cem.Members = append(cem.Members, m)
-		default:
-			// ignore unknown
-		}
-	}
-
-	for _, a := range extra.Attributes {
-		attr, err := unmarshalAttribute(a)
-		if err == nil {
-			cem.Attributes = append(cem.Attributes, attr)
-		}
-	}
-	for _, e := range extra.Events {
-		ev, err := unmarshalEvent(e)
-		if err == nil {
-			cem.Events = append(cem.Events, ev)
-		}
-	}
-	for _, s := range extra.Slots {
-		slot, err := unmarshalSlot(s)
-		if err == nil {
-			cem.Slots = append(cem.Slots, slot)
-		}
-	}
-	for _, cp := range extra.CssParts {
-		part, err := unmarshalCssPart(cp)
-		if err == nil {
-			cem.CssParts = append(cem.CssParts, part)
-		}
-	}
-	for _, cpp := range extra.CssProps {
-		prop, err := unmarshalCssCustomProperty(cpp)
-		if err == nil {
-			cem.CssProperties = append(cem.CssProperties, prop)
-		}
-	}
-	for _, cs := range extra.CssStates {
-		state, err := unmarshalCssCustomState(cs)
-		if err == nil {
-			cem.CssStates = append(cem.CssStates, state)
-		}
-	}
-	cem.Demos = extra.Demos
-
-	// Ensure non-nil slices
-	if cem.Attributes == nil {
-		cem.Attributes = []Attribute{}
-	}
-	if cem.Events == nil {
-		cem.Events = []Event{}
-	}
-	if cem.Slots == nil {
-		cem.Slots = []Slot{}
-	}
-	if cem.CssParts == nil {
-		cem.CssParts = []CssPart{}
-	}
-	if cem.CssProperties == nil {
-		cem.CssProperties = []CssCustomProperty{}
-	}
-	if cem.CssStates == nil {
-		cem.CssStates = []CssCustomState{}
-	}
-	if cem.Demos == nil {
-		cem.Demos = []Demo{}
-	}
-	if cem.Mixins == nil {
-		cem.Mixins = []Reference{}
-	}
-	if cem.Members == nil {
-		cem.Members = []ClassMember{}
-	}
-	return cem, nil
-}
-
-// --- Function Declaration ---
-
-func unmarshalFunctionDeclaration(data []byte) (*FunctionDeclaration, error) {
-	var f FunctionDeclaration
-	if err := json.Unmarshal(data, &f); err != nil {
-		return nil, err
-	}
-	if f.Parameters == nil {
-		f.Parameters = []Parameter{}
-	}
-	return &f, nil
-}
-
-// --- Class Members ---
 
 func unmarshalClassMember(data json.RawMessage) (ClassMember, error) {
 	var kindWrap struct{ Kind string `json:"kind"` }
@@ -620,34 +484,213 @@ func unmarshalClassMember(data json.RawMessage) (ClassMember, error) {
 		}
 		return nil, fmt.Errorf("cannot unmarshal as ClassField")
 	case "method":
-		var m ClassMethod
-		if err := json.Unmarshal(data, &m); err == nil {
-			return &m, nil
+		// Get parameters as raw and unmarshal the rest with deprecated handled
+		var probe struct {
+			Parameters []json.RawMessage `json:"parameters"`
 		}
-		return nil, fmt.Errorf("cannot unmarshal as ClassMethod")
+		if err := json.Unmarshal(data, &probe); err != nil {
+			return nil, err
+		}
+		m, err := unmarshalWithDeprecated(data, func(x *ClassMethod, dep Deprecated) { x.Deprecated = dep })
+		if err != nil {
+			return nil, err
+		}
+		m.Parameters = nil
+		for _, p := range probe.Parameters {
+			param, err := unmarshalParameter(p)
+			if err == nil {
+				m.Parameters = append(m.Parameters, param)
+			}
+		}
+		if m.Parameters == nil {
+			m.Parameters = []Parameter{}
+		}
+		return &m, nil
 	default:
 		return nil, fmt.Errorf("unknown class member kind: %s", kindWrap.Kind)
 	}
 }
 
-// --- Leaf Types ---
+// --- Mixins ---
 
+func unmarshalMixinDeclaration(data []byte) (*MixinDeclaration, error) {
+	var raw struct {
+		Name       string            `json:"name"`
+		Kind       string            `json:"kind"`
+		Members    []json.RawMessage `json:"members"`
+		Deprecated json.RawMessage   `json:"deprecated"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return nil, err
+	}
+	m := &MixinDeclaration{
+		Name: raw.Name,
+		Kind: raw.Kind,
+	}
+	decodeDeprecatedField(&m.Deprecated, raw.Deprecated)
+	for _, mm := range raw.Members {
+		member, err := unmarshalClassMember(mm)
+		if err == nil && member != nil {
+			m.Members = append(m.Members, member)
+		}
+	}
+	if m.Members == nil {
+		m.Members = []ClassMember{}
+	}
+	return m, nil
+}
+
+func unmarshalCustomElementMixinDeclaration(data []byte) (*CustomElementMixinDeclaration, error) {
+	base, err := unmarshalMixinDeclaration(data)
+	if err != nil {
+		return nil, err
+	}
+
+	var raw struct {
+		Attributes []json.RawMessage `json:"attributes"`
+		Events     []json.RawMessage `json:"events"`
+		Slots      []json.RawMessage `json:"slots"`
+		CssParts   []json.RawMessage `json:"cssParts"`
+		CssProps   []json.RawMessage `json:"cssProperties"`
+		CssStates  []json.RawMessage `json:"cssStates"`
+		Demos      []Demo            `json:"demos"`
+		Members    []json.RawMessage `json:"members"` // for re-dispatch
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return nil, err
+	}
+
+	cem := &CustomElementMixinDeclaration{
+		MixinDeclaration: *base,
+		Name:             base.Name,
+	}
+
+	cem.Members = nil
+	for _, mm := range raw.Members {
+		member, err := unmarshalClassMember(mm)
+		if err != nil || member == nil {
+			continue
+		}
+		cem.Members = append(cem.Members, member)
+	}
+
+	for _, a := range raw.Attributes {
+		attr, err := unmarshalAttribute(a)
+		if err == nil {
+			cem.Attributes = append(cem.Attributes, attr)
+		}
+	}
+	for _, e := range raw.Events {
+		ev, err := unmarshalEvent(e)
+		if err == nil {
+			cem.Events = append(cem.Events, ev)
+		}
+	}
+	for _, s := range raw.Slots {
+		slot, err := unmarshalSlot(s)
+		if err == nil {
+			cem.Slots = append(cem.Slots, slot)
+		}
+	}
+	for _, cp := range raw.CssParts {
+		part, err := unmarshalCssPart(cp)
+		if err == nil {
+			cem.CssParts = append(cem.CssParts, part)
+		}
+	}
+	for _, cpp := range raw.CssProps {
+		prop, err := unmarshalCssCustomProperty(cpp)
+		if err == nil {
+			cem.CssProperties = append(cem.CssProperties, prop)
+		}
+	}
+	for _, cs := range raw.CssStates {
+		state, err := unmarshalCssCustomState(cs)
+		if err == nil {
+			cem.CssStates = append(cem.CssStates, state)
+		}
+	}
+	cem.Demos = raw.Demos
+
+	return cem, nil
+}
+
+// --- Functions Declaration ---
+
+func unmarshalFunctionDeclaration(data []byte) (FunctionDeclaration, error) {
+		// Read parameters as raw first
+	var probe struct {
+		Parameters []json.RawMessage `json:"parameters"`
+	}
+	if err := json.Unmarshal(data, &probe); err != nil {
+		var zero FunctionDeclaration
+		return zero, err
+	}
+	fn, err := unmarshalWithDeprecated(data, func(x *FunctionDeclaration, dep Deprecated) { x.Deprecated = dep })
+	if err != nil {
+		return fn, err
+	}
+	fn.Parameters = nil
+	for _, p := range probe.Parameters {
+		param, err := unmarshalParameter(p)
+		if err == nil {
+			fn.Parameters = append(fn.Parameters, param)
+		}
+	}
+	return fn, nil
+}
+
+func unmarshalParameter(data json.RawMessage) (Parameter, error) {
+	var proxy map[string]json.RawMessage
+	if err := json.Unmarshal(data, &proxy); err != nil {
+		var zero Parameter
+		return zero, err
+	}
+	var depRaw json.RawMessage
+	if raw, ok := proxy["deprecated"]; ok {
+		depRaw = raw
+		delete(proxy, "deprecated")
+	}
+	rest, err := json.Marshal(proxy)
+	if err != nil {
+		var zero Parameter
+		return zero, err
+	}
+	var param Parameter
+	if err := json.Unmarshal(rest, &param); err != nil {
+		var zero Parameter
+		return zero, err
+	}
+	if len(depRaw) > 0 && string(depRaw) != "null" {
+		var dep Deprecated
+		decodeDeprecatedField(&dep, depRaw)
+		param.Deprecated = dep
+	}
+	return param, nil
+}
+
+// --- Leaf Types ---
 
 func unmarshalAttribute(data json.RawMessage) (Attribute, error) {
 	return unmarshalWithDeprecated(data, func(x *Attribute, dep Deprecated) { x.Deprecated = dep })
 }
+
 func unmarshalEvent(data json.RawMessage) (Event, error) {
 	return unmarshalWithDeprecated(data, func(x *Event, dep Deprecated) { x.Deprecated = dep })
 }
+
 func unmarshalSlot(data json.RawMessage) (Slot, error) {
 	return unmarshalWithDeprecated(data, func(x *Slot, dep Deprecated) { x.Deprecated = dep })
 }
+
 func unmarshalCssPart(data json.RawMessage) (CssPart, error) {
 	return unmarshalWithDeprecated(data, func(x *CssPart, dep Deprecated) { x.Deprecated = dep })
 }
+
 func unmarshalCssCustomProperty(data json.RawMessage) (CssCustomProperty, error) {
 	return unmarshalWithDeprecated(data, func(x *CssCustomProperty, dep Deprecated) { x.Deprecated = dep })
 }
+
 func unmarshalCssCustomState(data json.RawMessage) (CssCustomState, error) {
 	return unmarshalWithDeprecated(data, func(x *CssCustomState, dep Deprecated) { x.Deprecated = dep })
 }
