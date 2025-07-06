@@ -25,6 +25,21 @@ import (
 	"sync"
 )
 
+// Package is the top-level interface of a custom elements manifest file.
+type Package struct {
+	SchemaVersion string     `json:"schemaVersion"`
+	Readme        *string    `json:"readme,omitempty"`
+	Modules       []Module   `json:"modules"`
+	Deprecated    Deprecated `json:"deprecated,omitempty"` // bool or string
+}
+
+func NewPackage(modules []Module) Package {
+	return Package{
+		SchemaVersion: "1.0.0",
+		Modules:       modules,
+	}
+}
+
 // PackageJSON represents the subset of package.json we care about.
 type PackageJSON struct {
 	Name    string `json:"name"`
