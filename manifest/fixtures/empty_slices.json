@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/empty.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "name": "EmptyElem",
+          "tagName": "empty-elem"
+        }
+      ]
+    }
+  ]
+}

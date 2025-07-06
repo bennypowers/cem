@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/unknown.js",
+      "declarations": [
+        {
+          "kind": "not-a-real-kind",
+          "foo": "bar"
+        }
+      ]
+    }
+  ]
+}

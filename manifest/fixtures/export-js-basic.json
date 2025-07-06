@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/export-js-basic.json",
+      "declarations": [
+        {
+          "kind": "variable",
+          "name": "jsExport"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "jsExport",
+          "declaration": {
+            "name": "jsExport",
+            "module": "src/export-js-basic.json"
+          }
+        }
+      ]
+    }
+  ]
+}

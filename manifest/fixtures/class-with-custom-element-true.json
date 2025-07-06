@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/card.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyCard",
+          "customElement": true,
+          "tagName": "my-card",
+          "members": [
+            {
+              "kind": "field",
+              "name": "foo",
+              "type": { "text": "string" }
+            }
+          ]
+        },
+        {
+          "kind": "class",
+          "name": "CardBase",
+          "members": [
+            {
+              "kind": "field",
+              "name": "bar",
+              "type": { "text": "number" }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

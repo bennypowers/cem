@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "foo": "bar",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "ClassWithExtraField",
+          "extra": "should be ignored"
+        }
+      ]
+    }
+  ]
+}

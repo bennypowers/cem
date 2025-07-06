@@ -46,7 +46,6 @@
           "kind": "function"
         },
         {
-          "name": "param",
           "parameters": [
             {
               "name": "a",
@@ -55,11 +54,10 @@
               }
             }
           ],
+          "name": "param",
           "kind": "function"
         },
         {
-          "name": "describedparam",
-          "description": "description",
           "parameters": [
             {
               "name": "a",
@@ -72,10 +70,11 @@
           "return": {
             "description": "return description"
           },
+          "name": "describedparam",
+          "description": "description",
           "kind": "function"
         },
         {
-          "name": "rest",
           "parameters": [
             {
               "name": "as",
@@ -85,11 +84,10 @@
               "rest": true
             }
           ],
+          "name": "rest",
           "kind": "function"
         },
         {
-          "name": "describedrest",
-          "description": "description",
           "parameters": [
             {
               "name": "as",
@@ -103,6 +101,8 @@
           "return": {
             "description": "return description"
           },
+          "name": "describedrest",
+          "description": "description",
           "kind": "function"
         }
       ],

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "declarations": [
+        {
+          "kind": "mixin",
+          "name": "MixinDeprecatedBool",
+          "deprecated": true
+        }
+      ]
+    }
+  ]
+}

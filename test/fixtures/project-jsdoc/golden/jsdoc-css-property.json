@@ -31,13 +31,13 @@
             },
             {
               "name": "--prop-default-description",
-              "default": "none",
-              "description": "prop default description"
+              "description": "prop default description",
+              "default": "none"
             },
             {
               "name": "--prop-default-description-multiline",
-              "default": "none",
-              "description": "multiline\nprop default description"
+              "description": "multiline\nprop default description",
+              "default": "none"
             },
             {
               "name": "--prop-typed",
@@ -45,30 +45,30 @@
             },
             {
               "name": "--prop-typed-description",
-              "syntax": "\u003ccolor\u003e",
-              "description": "prop typed description"
+              "description": "prop typed description",
+              "syntax": "\u003ccolor\u003e"
             },
             {
               "name": "--prop-typed-description-multiline",
-              "syntax": "\u003ccolor\u003e",
-              "description": "multiline\nprop typed description"
+              "description": "multiline\nprop typed description",
+              "syntax": "\u003ccolor\u003e"
             },
             {
               "name": "--prop-typed-default",
-              "syntax": "\u003ccolor\u003e",
-              "default": "none"
+              "default": "none",
+              "syntax": "\u003ccolor\u003e"
             },
             {
               "name": "--prop-typed-default-description",
-              "syntax": "\u003ccolor\u003e",
+              "description": "prop typed default description",
               "default": "none",
-              "description": "prop typed default description"
+              "syntax": "\u003ccolor\u003e"
             },
             {
               "name": "--prop-typed-default-description-multiline",
-              "syntax": "\u003ccolor\u003e",
+              "description": "multiline\nprop typed default description",
               "default": "none",
-              "description": "multiline\nprop typed default description"
+              "syntax": "\u003ccolor\u003e"
             },
             {
               "name": "--property"
@@ -87,14 +87,14 @@
             },
             {
               "name": "--property-default-description",
-              "default": "none",
-              "description": "property default description"
+              "description": "property default description",
+              "default": "none"
             },
             {
               "name": "--property-typed-default-description-multiline",
-              "syntax": "\u003ccolor\u003e",
+              "description": "multiline\nproperty typed default description",
               "default": "none",
-              "description": "multiline\nproperty typed default description"
+              "syntax": "\u003ccolor\u003e"
             },
             {
               "name": "--property-typed",
@@ -102,30 +102,30 @@
             },
             {
               "name": "--property-typed-description",
-              "syntax": "\u003ccolor\u003e",
-              "description": "property typed description"
+              "description": "property typed description",
+              "syntax": "\u003ccolor\u003e"
             },
             {
               "name": "--property-typed-description-multiline",
-              "syntax": "\u003ccolor\u003e",
-              "description": "multiline\nproperty typed description"
+              "description": "multiline\nproperty typed description",
+              "syntax": "\u003ccolor\u003e"
             },
             {
               "name": "--property-typed-default",
-              "syntax": "\u003ccolor\u003e",
-              "default": "none"
+              "default": "none",
+              "syntax": "\u003ccolor\u003e"
             },
             {
               "name": "--property-typed-default-description",
-              "syntax": "\u003ccolor\u003e",
+              "description": "property typed default description",
               "default": "none",
-              "description": "property typed default description"
+              "syntax": "\u003ccolor\u003e"
             },
             {
               "name": "--property-typed-default-description-multiline",
-              "syntax": "\u003ccolor\u003e",
+              "description": "multiline\nproperty typed default description",
               "default": "none",
-              "description": "multiline\nproperty typed default description"
+              "syntax": "\u003ccolor\u003e"
             }
           ],
           "customElement": true

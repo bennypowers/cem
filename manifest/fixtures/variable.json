@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/vars.js",
+      "declarations": [
+        {
+          "kind": "variable",
+          "name": "CONST_VAL",
+          "type": { "text": "string" }
+        }
+      ]
+    }
+  ]
+}

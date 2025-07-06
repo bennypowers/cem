@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "ClassWithMethodParameters",
+          "members": [
+            {
+              "kind": "method",
+              "name": "doThing",
+              "parameters": [
+                { "name": "bar", "type": { "text": "string" } }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

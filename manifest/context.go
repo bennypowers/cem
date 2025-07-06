@@ -19,9 +19,47 @@ package manifest
 import (
 	"errors"
 	"slices"
-	"strconv"
 	"strings"
+
+	"github.com/pterm/pterm"
 )
+
+type PredicateFunc func(Renderable) bool
+
+type Renderable interface {
+	Deprecatable
+	Name() string
+	Deprecation() Deprecated
+	ColumnHeadings() []string
+	ToTableRow() []string
+	ToTreeNode(pred PredicateFunc) pterm.TreeNode
+	Children() []Renderable
+}
+
+// Predicate: keep only deprecated nodes
+func IsDeprecated(d Renderable) bool { return d.IsDeprecated() }
+func True(d Renderable) bool         { return true }
+
+func formatDeprecated(deprecated any) (label string) {
+	if deprecated == nil {
+		return ""
+	}
+	switch v := deprecated.(type) {
+	case DeprecatedReason:
+		return "(" + pterm.Red("DEPRECATED") + ": " + pterm.LightRed(v) + ")"
+	default:
+		return "(" + pterm.Red("DEPRECATED") + ")"
+	}
+}
+
+func highlightIfDeprecated(x Renderable) string {
+	name := x.Name()
+	if x == nil || !x.IsDeprecated() {
+		return name
+	}
+	return name + " " + formatDeprecated(x.Deprecation())
+}
+
 
 func (x *Package) GetAllTagNames() (tags []string) {
 	// Write index.html
@@ -37,214 +75,12 @@ func (x *Package) GetAllTagNames() (tags []string) {
 	return tags
 }
 
-type RenderableMemberWithContext interface {
-	ToTableRow() []string
-}
-
-type ModuleWithContext struct {
-	Path                     string
-	Module                   *Module
-	CustomElementExports     []CustomElementExport
-}
-func (x ModuleWithContext) ToTableRow() []string {
-	tags := make([]string, 0)
-	for _, cee := range x.CustomElementExports {
-		tags = append(tags, cee.Name)
-	}
-	return []string{
-		x.Path,
-		strings.Join(tags, ", "),
-	}
-}
-
-type CustomElementWithContext struct {
-	TagName                  string
-	Module                   *Module
-	CustomElementDeclaration *CustomElementDeclaration
-	CustomElementExport      *CustomElementExport
-}
-
-// Renders a CustomElement as a table row.
-// Columns:
-//   Tag (tag name), Class (class name), Module (module path), Summary
-func (c CustomElementWithContext) ToTableRow() []string {
-	modulePath := ""
-	if c.Module != nil {
-		modulePath = c.Module.Path
-	}
-	return []string{
-		c.TagName,
-		c.CustomElementDeclaration.Name,
-		modulePath,
-		c.CustomElementDeclaration.Summary,
-	}
-}
-
-type AttributeWithContext struct {
-	Name                     string
-	Attribute                *Attribute
-	JavaScriptModule         *JavaScriptModule
-	CustomElementField       *CustomElementField
-	CustomElementDeclaration *CustomElementDeclaration
-	CustomElementExport      *CustomElementExport
-}
-
-// Renders a CustomElement as a table row.
-// Columns:
-//   Name, DOM Property, Reflects, Summary
-func (a AttributeWithContext) ToTableRow() []string {
-	domProp := ""
-	reflects := "❌"
-	if a.CustomElementField != nil {
-		domProp = a.CustomElementField.Name
-		if a.CustomElementField.Reflects {
-			reflects = "✅"
-		}
-	}
-	return []string{
-		a.Name,
-		domProp,
-		reflects,
-		a.Attribute.Summary,
-	}
-}
-
-type SlotWithContext struct {
-	Name                     string
-	Slot                     *Slot
-	JavaScriptModule         *JavaScriptModule
-	CustomElementDeclaration *CustomElementDeclaration
-	CustomElementExport      *CustomElementExport
-}
-
-// Renders a Slot as a table row.
-// Columns:
-//   Name, Summary
-func (s SlotWithContext) ToTableRow() []string {
-	slotName := s.Name
-	if slotName == "" {
-		slotName = "<default>"
-	}
-	return []string{
-		slotName,
-		s.Slot.Summary,
-	}
-}
-
-type CssCustomPropertyWithContext struct {
-	Name                     string
-	CssCustomProperty        *CssCustomProperty
-	CustomElementDeclaration *CustomElementDeclaration
-	CustomElementExport      *CustomElementExport
-	JavaScriptModule         *JavaScriptModule
-}
-
-// Renders a CSS CssCustomProperty as a table row.
-// Columns:
-//   Name, Syntax, Default, Summary
-func (c CssCustomPropertyWithContext) ToTableRow() []string {
-	return []string{
-		c.Name,
-		c.CssCustomProperty.Syntax,
-		c.CssCustomProperty.Default,
-		c.CssCustomProperty.Summary,
-	}
-}
-
-type CssCustomStateWithContext struct {
-	Name                     string
-	CssCustomState           *CssCustomState
-	CustomElementDeclaration *CustomElementDeclaration
-	CustomElementExport      *CustomElementExport
-	JavaScriptModule         *JavaScriptModule
-}
-
-// Renders a CssCustomState as a table row.
-// Columns:
-//   Name, Summary
-func (c CssCustomStateWithContext) ToTableRow() []string {
-	return []string{
-		c.Name,
-		c.CssCustomState.Summary,
-	}
-}
-
-type CssPartWithContext struct {
-	Name                     string
-	CssPart                  *CssPart
-	CustomElementDeclaration *CustomElementDeclaration
-	CustomElementExport      *CustomElementExport
-	JavaScriptModule         *JavaScriptModule
-}
-
-// Renders a CssPart as a table row.
-// Columns:
-//   Name, Summary
-func (c CssPartWithContext) ToTableRow() []string {
-	return []string{
-		c.Name,
-		c.CssPart.Summary,
-	}
-}
-
-type EventWithContext struct {
-	Name                     string
-	Event                    *Event
-	CustomElementDeclaration *CustomElementDeclaration
-	CustomElementExport      *CustomElementExport
-	JavaScriptModule         *JavaScriptModule
-}
-
-// Renders an Event as a table row.
-// Columns:
-//   Name, Type, Summary
-func (e EventWithContext) ToTableRow() []string {
-	eventType := ""
-	if e.Event.Type != nil {
-		eventType = e.Event.Type.Text
-	}
-	return []string{
-		e.Name,
-		eventType,
-		e.Event.Summary,
-	}
-}
-
-type MethodWithContext struct {
-	Name                     string
-	Method                   *ClassMethod
-	CustomElementDeclaration *CustomElementDeclaration
-	CustomElementExport      *CustomElementExport
-	JavaScriptModule         *JavaScriptModule
-}
-
-// Renders an Event as a table row.
-// Columns:
-//   Name, Return Type, Privacy, Static, Summary
-func (m MethodWithContext) ToTableRow() []string {
-	returnType := "void"
-	privacy := string(m.Method.Privacy)
-	if privacy == "" {
-		privacy = "public"
-	}
-	if m.Method.Return != nil && m.Method.Return.Type != nil {
-		returnType = m.Method.Return.Type.Text
-	}
-	return []string{
-		m.Name,
-		returnType,
-		privacy,
-		strconv.FormatBool(m.Method.Static),
-		m.Method.Summary,
-	}
-}
-
-// GetAllModulesWithContext returns a slice of ModuleWithContext for all modules.
-func (x *Package) GetAllModulesWithContext() (modules []ModuleWithContext) {
-	ms := make(map[string]ModuleWithContext)
+// RenderableModules returns a slice of RenderableModule for all modules.
+func (x *Package) RenderableModules() (modules []*RenderableModule) {
+	ms := make(map[string]RenderableModule)
 	for i := range x.Modules {
 		module := &x.Modules[i]
-		ms[module.Path] = ModuleWithContext{Path: module.Path, Module: module}
+		ms[module.Path] = RenderableModule{Path: module.Path, Module: module}
 		for _, e := range module.Exports {
 			if cee, ok := e.(*CustomElementExport); ok {
 				c := ms[module.Path]
@@ -253,22 +89,26 @@ func (x *Package) GetAllModulesWithContext() (modules []ModuleWithContext) {
 			}
 		}
 	}
-	for _, m := range ms {
-		modules = append(modules, m)
+	for i := range ms {
+		m := ms[i]
+		modules = append(modules, &m)
 	}
-	slices.SortStableFunc(modules, func(a ModuleWithContext, b ModuleWithContext) int {
+	slices.SortStableFunc(modules, func(a *RenderableModule, b *RenderableModule) int {
 		return strings.Compare(a.Path, b.Path)
 	})
 	return modules
 }
 
-// GetAllTagNamesWithContext returns a slice of CustomElementWithContext for all custom elements in all modules.
-func (x *Package) GetAllTagNamesWithContext() (tags []CustomElementWithContext) {
+// RenderableCustomElementDeclarations returns a slice of RenderableCustomElement for all custom elements in all modules.
+func (x *Package) RenderableCustomElementDeclarations() (tags []*RenderableCustomElementDeclaration) {
 	for _, m := range x.Modules {
-		mrs := make(map[string]CustomElementWithContext)
+		mrs := make(map[string]RenderableCustomElementDeclaration)
 		for _, d := range m.Declarations {
 			if ced, ok := d.(*CustomElementDeclaration); ok {
-				mrs[ced.TagName] = CustomElementWithContext{CustomElementDeclaration: ced, Module: &m, TagName: ced.TagName}
+				mrs[ced.TagName] = RenderableCustomElementDeclaration{
+					CustomElementDeclaration: ced,
+					Module: &m,
+				}
 			}
 		}
 		for _, e := range m.Exports {
@@ -278,11 +118,12 @@ func (x *Package) GetAllTagNamesWithContext() (tags []CustomElementWithContext) 
 				mrs[cee.Name] = r
 			}
 		}
-		for _, r := range mrs {
-			tags = append(tags, r)
+		for i := range mrs {
+			tag := mrs[i]
+			tags = append(tags, &tag)
 		}
 	}
-	slices.SortStableFunc(tags, func(a CustomElementWithContext, b CustomElementWithContext) int {
+	slices.SortStableFunc(tags, func(a *RenderableCustomElementDeclaration, b *RenderableCustomElementDeclaration) int {
 		return int(a.CustomElementDeclaration.StartByte - b.CustomElementDeclaration.StartByte)
 	})
 	return tags
@@ -307,8 +148,8 @@ func (x *Package) findCustomElementContext(tagName string) (*CustomElementDeclar
 	return nil, nil, nil, errors.New("Tag not found: " + tagName)
 }
 
-// GetTagAttrsWithContext returns attributes for a given tag name with context.
-func (x *Package) GetTagAttrsWithContext(tagName string) ([]AttributeWithContext, error) {
+// TagRenderableAttributes returns attributes for a given tag name with context.
+func (x *Package) TagRenderableAttributes(tagName string) (attrs []*RenderableAttribute, err error) {
 	ced, ceExport, m, err := x.findCustomElementContext(tagName)
 	if err != nil {
 		return nil, err
@@ -319,15 +160,15 @@ func (x *Package) GetTagAttrsWithContext(tagName string) ([]AttributeWithContext
 			fieldMap[cef.Attribute] = *cef
 		}
 	}
-	attrMap := make(map[string]AttributeWithContext)
+	attrMap := make(map[string]RenderableAttribute)
 	for _, attr := range ced.Attributes {
 		attrCopy := attr // Create a copy of the loop variable
 		var field *CustomElementField
 		if f, ok := fieldMap[attrCopy.Name]; ok {
 			field = &f
 		}
-		attrMap[attrCopy.Name] = AttributeWithContext{
-			Name:                     attrCopy.Name,
+		attrMap[attrCopy.Name] = RenderableAttribute{
+			name:                     attrCopy.Name,
 			Attribute:                &attrCopy,
 			CustomElementDeclaration: ced,
 			CustomElementField:       field,
@@ -335,11 +176,10 @@ func (x *Package) GetTagAttrsWithContext(tagName string) ([]AttributeWithContext
 			JavaScriptModule:         m,
 		}
 	}
-	attrs := make([]AttributeWithContext, 0, len(attrMap))
 	for _, awc := range attrMap {
-		attrs = append(attrs, awc)
+		attrs = append(attrs, &awc)
 	}
-	slices.SortStableFunc(attrs, func(a AttributeWithContext, b AttributeWithContext) int {
+	slices.SortStableFunc(attrs, func(a *RenderableAttribute, b *RenderableAttribute) int {
 		if a.Attribute != nil && b.Attribute != nil {
 			return int(a.Attribute.StartByte - b.Attribute.StartByte)
 		}
@@ -348,17 +188,15 @@ func (x *Package) GetTagAttrsWithContext(tagName string) ([]AttributeWithContext
 	return attrs, nil
 }
 
-// GetTagSlotsWithContext returns slots for a given tag name with context.
-func (x *Package) GetTagSlotsWithContext(tagName string) ([]SlotWithContext, error) {
+// TagRenderableSlots returns slots for a given tag name with context.
+func (x *Package) TagRenderableSlots(tagName string) (slots []*RenderableSlot, err error) {
 	ced, ceExport, m, err := x.findCustomElementContext(tagName)
 	if err != nil {
 		return nil, err
 	}
-	var slots []SlotWithContext
 	for i := range ced.Slots {
 		slot := &ced.Slots[i]
-		slots = append(slots, SlotWithContext{
-			Name:                     slot.Name,
+		slots = append(slots, &RenderableSlot{
 			Slot:                     slot,
 			CustomElementDeclaration: ced,
 			CustomElementExport:      ceExport,
@@ -368,17 +206,15 @@ func (x *Package) GetTagSlotsWithContext(tagName string) ([]SlotWithContext, err
 	return slots, nil
 }
 
-// GetTagCssPropertiesWithContext returns CSS custom properties for a given tag name with context.
-func (x *Package) GetTagCssPropertiesWithContext(tagName string) ([]CssCustomPropertyWithContext, error) {
+// TagRenderableCssProperties returns CSS custom properties for a given tag name with context.
+func (x *Package) TagRenderableCssProperties(tagName string) (props []*RenderableCssCustomProperty, err error) {
 	ced, ceExport, m, err := x.findCustomElementContext(tagName)
 	if err != nil {
 		return nil, err
 	}
-	var props []CssCustomPropertyWithContext
 	for i := range ced.CssProperties {
 		prop := &ced.CssProperties[i]
-		props = append(props, CssCustomPropertyWithContext{
-			Name:                     prop.Name,
+		props = append(props, &RenderableCssCustomProperty{
 			CssCustomProperty:        prop,
 			CustomElementDeclaration: ced,
 			CustomElementExport:      ceExport,
@@ -388,17 +224,15 @@ func (x *Package) GetTagCssPropertiesWithContext(tagName string) ([]CssCustomPro
 	return props, nil
 }
 
-// GetTagCssStatesWithContext returns CSS custom states for a given tag name with context.
-func (x *Package) GetTagCssStatesWithContext(tagName string) ([]CssCustomStateWithContext, error) {
+// TagRenderableCssStates returns CSS custom states for a given tag name with context.
+func (x *Package) TagRenderableCssStates(tagName string) (states []*RenderableCssCustomState, err error) {
 	ced, ceExport, m, err := x.findCustomElementContext(tagName)
 	if err != nil {
 		return nil, err
 	}
-	var states []CssCustomStateWithContext
 	for i := range ced.CssStates {
 		state := &ced.CssStates[i]
-		states = append(states, CssCustomStateWithContext{
-			Name:                     state.Name,
+		states = append(states, &RenderableCssCustomState{
 			CssCustomState:           state,
 			CustomElementDeclaration: ced,
 			CustomElementExport:      ceExport,
@@ -408,17 +242,15 @@ func (x *Package) GetTagCssStatesWithContext(tagName string) ([]CssCustomStateWi
 	return states, nil
 }
 
-// GetTagCssPartsWithContext returns CSS shadow parts for a given tag name with context.
-func (x *Package) GetTagCssPartsWithContext(tagName string) ([]CssPartWithContext, error) {
+// TagRenderableCssParts returns CSS shadow parts for a given tag name with context.
+func (x *Package) TagRenderableCssParts(tagName string) (parts []*RenderableCssPart, err error) {
 	ced, ceExport, m, err := x.findCustomElementContext(tagName)
 	if err != nil {
 		return nil, err
 	}
-	var parts []CssPartWithContext
 	for i := range ced.CssParts {
 		part := &ced.CssParts[i]
-		parts = append(parts, CssPartWithContext{
-			Name:                     part.Name,
+		parts = append(parts, &RenderableCssPart{
 			CssPart:                  part,
 			CustomElementDeclaration: ced,
 			CustomElementExport:      ceExport,
@@ -428,17 +260,15 @@ func (x *Package) GetTagCssPartsWithContext(tagName string) ([]CssPartWithContex
 	return parts, nil
 }
 
-// GetTagEventsWithContext returns events for a given tag name with context.
-func (x *Package) GetTagEventsWithContext(tagName string) ([]EventWithContext, error) {
+// TagRenderableEvents returns events for a given tag name with context.
+func (x *Package) TagRenderableEvents(tagName string) (events []*RenderableEvent, err error) {
 	ced, ceExport, m, err := x.findCustomElementContext(tagName)
 	if err != nil {
 		return nil, err
 	}
-	var events []EventWithContext
 	for i := range ced.Events {
 		event := &ced.Events[i]
-		events = append(events, EventWithContext{
-			Name:                     event.Name,
+		events = append(events, &RenderableEvent{
 			Event:                    event,
 			CustomElementDeclaration: ced,
 			CustomElementExport:      ceExport,
@@ -448,17 +278,15 @@ func (x *Package) GetTagEventsWithContext(tagName string) ([]EventWithContext, e
 	return events, nil
 }
 
-// GetTagMethodsWithContext returns methods for a given tag name with context.
-func (x *Package) GetTagMethodsWithContext(tagName string) ([]MethodWithContext, error) {
+// TagRenderableMethods returns methods for a given tag name with context.
+func (x *Package) TagRenderableMethods(tagName string) (methods []*RenderableMethod, err error) {
 	ced, ceExport, m, err := x.findCustomElementContext(tagName)
 	if err != nil {
 		return nil, err
 	}
-	var methods []MethodWithContext
 	for _, member := range ced.Members {
 		if method, ok := member.(*ClassMethod); ok {
-			methods = append(methods, MethodWithContext{
-				Name:                     method.Name,
+			methods = append(methods, &RenderableMethod{
 				Method:                   method,
 				CustomElementDeclaration: ced,
 				CustomElementExport:      ceExport,
@@ -467,4 +295,80 @@ func (x *Package) GetTagMethodsWithContext(tagName string) ([]MethodWithContext,
 		}
 	}
 	return methods, nil
+}
+
+// --- FILTER TREE ---
+
+func filterRenderableTree(node Renderable, pred PredicateFunc) Renderable {
+	// I'm not sure how necessary this function even really is, since
+	// we're passing the predicate all the way down in ToTreeNode(pred)
+	// we are using it to alter the label though
+	var filteredChildren []Renderable
+	for _, child := range node.Children() {
+		if filtered := filterRenderableTree(child, pred); filtered != nil {
+			filteredChildren = append(filteredChildren, filtered)
+		}
+	}
+	if pred(node) || len(filteredChildren) > 0 {
+		switch n := node.(type) {
+		case *RenderablePackage:
+			return &RenderablePackage{
+				Package: n.Package,
+				ChildNodes: filteredChildren,
+			}
+		case *RenderableModule:
+			return &RenderableModule{
+				Path: n.Path,
+				Module: n.Module,
+				Package: n.Package,
+				ChildNodes: filteredChildren,
+			}
+		case *RenderableClassDeclaration:
+			return &RenderableClassDeclaration{
+				ClassDeclaration: n.ClassDeclaration,
+				JavaScriptExport: n.JavaScriptExport,
+				Module: n.Module,
+				Package: n.Package,
+				ChildNodes: filteredChildren,
+			}
+		case *RenderableCustomElementDeclaration:
+			return &RenderableCustomElementDeclaration{
+				CustomElementDeclaration: n.CustomElementDeclaration,
+				CustomElementExport: n.CustomElementExport,
+				JavaScriptExport: n.JavaScriptExport,
+				Module: n.Module,
+				Package: n.Package,
+				ChildNodes: filteredChildren,
+			}
+		case *RenderableFunctionDeclaration:
+			return &RenderableFunctionDeclaration{
+				FunctionDeclaration: n.FunctionDeclaration,
+				JavaScriptExport: n.JavaScriptExport,
+				Module: n.Module,
+				Package: n.Package,
+				ChildNodes: filteredChildren,
+			}
+		case *RenderableMixinDeclaration:
+			return &RenderableMixinDeclaration{
+				MixinDeclaration: n.MixinDeclaration,
+				JavaScriptExport: n.JavaScriptExport,
+				Module          : n.Module,
+				Package         : n.Package,
+				ChildNodes:filteredChildren,
+			}
+		case *RenderableCustomElementMixinDeclaration:
+			return &RenderableCustomElementMixinDeclaration{
+				TagName: n.TagName,
+				CustomElementMixinDeclaration: n.CustomElementMixinDeclaration,
+				JavaScriptExport: n.JavaScriptExport,
+				Module          : n.Module,
+				Package         : n.Package,
+				ChildNodes:filteredChildren,
+			}
+		// we can skip leaf nodes, they were filtered out above
+		default:
+			return node
+		}
+	}
+	return nil
 }

@@ -37,7 +37,6 @@
               "privacy": "private"
             },
             {
-              "name": "unary",
               "parameters": [
                 {
                   "name": "unary",
@@ -51,10 +50,10 @@
                   "text": "string"
                 }
               },
+              "name": "unary",
               "kind": "method"
             },
             {
-              "name": "binary",
               "parameters": [
                 {
                   "name": "binary0",
@@ -74,10 +73,10 @@
                   "text": "string"
                 }
               },
+              "name": "binary",
               "kind": "method"
             },
             {
-              "name": "optional",
               "parameters": [
                 {
                   "name": "optional0",
@@ -97,10 +96,10 @@
                   "text": "string"
                 }
               },
+              "name": "optional",
               "kind": "method"
             },
             {
-              "name": "spread",
               "parameters": [
                 {
                   "name": "spreads",
@@ -115,11 +114,10 @@
                   "text": "string"
                 }
               },
+              "name": "spread",
               "kind": "method"
             },
             {
-              "name": "jsdoc",
-              "description": "description",
               "parameters": [
                 {
                   "name": "name",
@@ -167,6 +165,8 @@
               "return": {
                 "description": "foo"
               },
+              "name": "jsdoc",
+              "description": "description",
               "kind": "method"
             },
             {

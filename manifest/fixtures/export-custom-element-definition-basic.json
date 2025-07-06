@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "exports": [
+        { "kind": "custom-element-definition", "name": "my-element" }
+      ]
+    }
+  ]
+}

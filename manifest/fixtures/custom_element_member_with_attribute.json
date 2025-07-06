@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/dialog.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "name": "MyDialog",
+          "tagName": "my-dialog",
+          "members": [
+            {
+              "kind": "field",
+              "name": "open",
+              "type": { "text": "boolean" },
+              "attribute": "open",
+              "default": "false",
+              "reflects": true
+            },
+            {
+              "kind": "field",
+              "name": "plainField",
+              "type": { "text": "string" }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

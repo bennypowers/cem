@@ -25,7 +25,7 @@ func generateFunctionDeclaration(
 
 	declaration = &M.FunctionDeclaration{
 		Kind: "function",
-		FunctionLike: M.FunctionLike{
+		FullyQualified: M.FullyQualified{
 			Name: funcName,
 		},
 	}
@@ -38,7 +38,9 @@ func generateFunctionDeclaration(
 			parameter := M.Parameter{
 				Rest: isRest && len(rest) > 0,
 				PropertyLike: M.PropertyLike{
-					Name: captures["function.param.name"][0].Text,
+					FullyQualified: M.FullyQualified{
+						Name: captures["function.param.name"][0].Text,
+					},
 				},
 			}
 			_, hasType := captures["function.param.type"]
@@ -57,7 +59,7 @@ func generateFunctionDeclaration(
 		if error != nil {
 			return nil, errors.Join(err, error)
 		} else {
-			info.MergeToFunctionLike(&declaration.FunctionLike)
+			info.MergeToFunctionDeclaration(declaration)
 		}
 	}
 

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/cem.js",
+      "declarations": [
+        {
+          "kind": "mixin",
+          "customElement": true,
+          "name": "MyCustomElementMixin",
+          "members": [
+            {
+              "kind": "field",
+              "name": "cemProp",
+              "type": { "text": "boolean" }
+            }
+          ],
+          "attributes": [
+            { "name": "cem-attr", "type": { "text": "string" } }
+          ]
+        }
+      ]
+    }
+  ]
+}

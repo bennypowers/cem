@@ -121,7 +121,7 @@ func (mp ModuleProcessor) amendMethodWithJsdoc(captures Q.CaptureMap, method *M.
 			if err != nil {
 				return err
 			} else {
-				info.MergeToFunctionLike(&method.FunctionLike)
+				info.MergeToMethod(method)
 			}
 		}
 	}
@@ -191,8 +191,10 @@ func (mp *ModuleProcessor) createClassFieldFromFieldMatch(
 			Kind:   "field",
 			Static: isStatic,
 			PropertyLike: M.PropertyLike{
-				Name:     fieldName,
 				Readonly: readonly,
+				FullyQualified: M.FullyQualified{
+					Name: fieldName,
+				},
 			},
 		},
 	}
@@ -279,7 +281,7 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 			if error != nil {
 				errs = errors.Join(errs, error)
 			} else {
-				memberMap[key] = field
+				memberMap[key] = &field
 			}
 		case "accessor":
 			accessorKind := captures["field.accessor"][0].Text // "get" or "set"
@@ -296,7 +298,7 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 			// If we've seen the other half of the pair, merge readonly
 			if prevKey, ok := seenAccessors[pairKeyStr]; ok {
 				needle := memberMap[prevKey]
-				existing := needle.(M.CustomElementField)
+				existing := needle.(*M.CustomElementField)
 				existing.Readonly = false // If both get/set, not readonly
 				// Merge doc/types/join
 				if field.Type != nil && (existing.Type == nil || existing.Type.Text == "") {
@@ -311,7 +313,7 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 				}
 				memberMap[prevKey] = existing
 			} else {
-				memberMap[key] = field
+				memberMap[key] = &field
 				seenAccessors[pairKeyStr] = key
 			}
 		case "method":
@@ -341,7 +343,9 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 						parameter := M.Parameter{
 							Rest: isRest,
 							PropertyLike: M.PropertyLike{
-								Name: captures["param.name"][i].Text,
+								FullyQualified: M.FullyQualified{
+									Name: captures["param.name"][i].Text,
+								},
 							},
 						}
 						if _, hasType := captures["param.type"]; hasType {
@@ -362,7 +366,7 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 					},
 				}
 			}
-			memberMap[key] = method
+			memberMap[key] = &method
 		}
 	}
 

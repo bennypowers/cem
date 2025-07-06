@@ -200,6 +200,7 @@ With `cem list`, you can quickly explore and audit your custom elements API surf
 
 #### Available Subcommands
 
+- `cem list` — Lists all items in the custom elements manifest
 - `cem list tags` — Lists all custom element tag names in the project.
 - `cem list modules` — Lists all module paths in the project.
 - `cem list -t <tag> attrs` — Lists all attributes for a given custom element tag.
@@ -221,6 +222,12 @@ With `cem list`, you can quickly explore and audit your custom elements API surf
 Note that the name column is always included, and that if a column is specified but contains only empty values for all rows, it is automatically omitted from the output for clarity.
 
 #### Output Formats
+
+#### Filters
+
+##### `--deprecated`
+
+Only show deprecated items. Works great with `--format tree`
 
 - By default, tables are shown in a human-readable table format.
 - [ ] TODO: json, markdown, flat lists, etc

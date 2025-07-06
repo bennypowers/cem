@@ -28,8 +28,16 @@ import (
 	"slices"
 )
 
-// MapToTableRows maps a slice of RenderableMemberWithContext to [][]string.
-func MapToTableRows[T M.RenderableMemberWithContext](items []T) [][]string {
+func ToRenderableSlice[T M.Renderable](items []T) []M.Renderable {
+	renderables := make([]M.Renderable, len(items))
+	for i := range items {
+		renderables[i] = items[i]
+	}
+	return renderables
+}
+
+// MapToTableRows maps a slice of Renderables to [][]string.
+func MapToTableRows[T M.Renderable](items []T) [][]string {
 	rows := make([][]string, 0, len(items))
 	for _, item := range items {
 		rows = append(rows, item.ToTableRow())
@@ -71,6 +79,7 @@ func RenderTable(title string, headers []string, rows [][]string, columns []stri
 	pterm.Println(out)
 	return nil
 }
+
 // checkUnknownColumns returns an error if any column name is not in headers, case-insensitive.
 func checkUnknownColumns(headers []string, columns []string) error {
 	headerSet := make(map[string]string, len(headers)) // lower-case -> original
