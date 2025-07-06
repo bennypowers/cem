@@ -59,7 +59,7 @@ func amendStylesMapFromSource(
 			props[name] = M.CssCustomProperty{
 				StartByte: startByte,
 				FullyQualified: M.FullyQualified{
-					Name:      name,
+					Name: name,
 				},
 			}
 		}

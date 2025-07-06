@@ -77,8 +77,8 @@ type PackageJSON struct {
 }
 
 var (
-    packageJsonPathMap = make(map[string]PackageJSON)
-    packageJsonMutex   sync.RWMutex
+	packageJsonPathMap = make(map[string]PackageJSON)
+	packageJsonMutex   sync.RWMutex
 )
 
 func loadPackageJson(path string) (*PackageJSON, error) {

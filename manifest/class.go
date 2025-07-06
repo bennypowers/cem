@@ -27,12 +27,12 @@ var _ Deprecatable = (*ClassDeclaration)(nil)
 // ClassLike is the common interface of classes and mixins.
 type ClassLike struct {
 	FullyQualified
-	StartByte   uint             `json:"-"`
-	Superclass  *Reference       `json:"superclass,omitempty"`
-	Mixins      []Reference      `json:"mixins,omitempty"`
-	Members     []ClassMember    `json:"members,omitempty"`
-	Source      *SourceReference `json:"source,omitempty"`
-	Deprecated  Deprecated       `json:"deprecated,omitempty"` // bool or string
+	StartByte  uint             `json:"-"`
+	Superclass *Reference       `json:"superclass,omitempty"`
+	Mixins     []Reference      `json:"mixins,omitempty"`
+	Members    []ClassMember    `json:"members,omitempty"`
+	Source     *SourceReference `json:"source,omitempty"`
+	Deprecated Deprecated       `json:"deprecated,omitempty"` // bool or string
 }
 
 func (x *ClassLike) IsDeprecated() bool {
@@ -48,7 +48,7 @@ type ClassDeclaration struct {
 	Kind string `json:"kind"` // 'class'
 }
 
-func (*ClassDeclaration) isDeclaration()       {}
+func (*ClassDeclaration) isDeclaration() {}
 
 func (x *ClassDeclaration) IsDeprecated() bool {
 	if x == nil {

@@ -34,11 +34,11 @@ func RenderTree(title string, renderable M.Renderable, pred M.PredicateFunc) err
 }
 
 func isTypedNil(i any) bool {
-    // Use reflection to detect typed nil
-    v := reflect.ValueOf(i)
-    switch v.Kind() {
-    case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
-        return v.IsNil()
-    }
-    return false
+	// Use reflection to detect typed nil
+	v := reflect.ValueOf(i)
+	switch v.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+		return v.IsNil()
+	}
+	return false
 }

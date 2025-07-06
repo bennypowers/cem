@@ -32,10 +32,10 @@ type ClassMethod struct {
 	Privacy       Privacy          `json:"privacy,omitempty"` // 'public', 'private', 'protected'
 	InheritedFrom *Reference       `json:"inheritedFrom,omitempty"`
 	Source        *SourceReference `json:"source,omitempty"`
-	Deprecated    Deprecated  `json:"deprecated,omitempty"` // bool or string
+	Deprecated    Deprecated       `json:"deprecated,omitempty"` // bool or string
 }
 
-func (*ClassMethod) isClassMember()       {}
+func (*ClassMethod) isClassMember() {}
 
 func (x *ClassMethod) GetStartByte() uint { return x.StartByte }
 

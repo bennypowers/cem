@@ -57,4 +57,3 @@ func (p *Parameter) UnmarshalJSON(data []byte) error {
 	}
 	return nil
 }
-

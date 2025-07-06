@@ -17,9 +17,9 @@ func normalizePath(path string) string {
 
 // Embedded type for Types with Name, Summary, and Description
 type FullyQualified struct {
-	Name        string     `json:"name"`
-	Summary     string     `json:"summary,omitempty"`
-	Description string     `json:"description,omitempty"`
+	Name        string `json:"name"`
+	Summary     string `json:"summary,omitempty"`
+	Description string `json:"description,omitempty"`
 }
 
 // Reference to an export of a module.
@@ -45,18 +45,20 @@ type SourceReference struct {
 // PropertyLike is the common interface of variables, class fields, and function parameters.
 type PropertyLike struct {
 	FullyQualified
-	StartByte   uint       `json:"-"`
-	Type        *Type      `json:"type,omitempty"`
-	Default     string     `json:"default,omitempty"`
-	Deprecated  Deprecated `json:"deprecated,omitempty"`
-	Readonly    bool       `json:"readonly,omitempty"`
+	StartByte  uint       `json:"-"`
+	Type       *Type      `json:"type,omitempty"`
+	Default    string     `json:"default,omitempty"`
+	Deprecated Deprecated `json:"deprecated,omitempty"`
+	Readonly   bool       `json:"readonly,omitempty"`
 }
+
 func (x *PropertyLike) IsDeprecated() bool {
 	if x == nil {
 		return false
 	}
 	return x.Deprecated != nil
 }
+
 var _ Deprecatable = (*PropertyLike)(nil)
 
 type Deprecated interface {
@@ -99,4 +101,3 @@ func SerializeToString(pkg *Package) (string, error) {
 	}
 	return string(b), nil
 }
-

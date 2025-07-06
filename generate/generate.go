@@ -113,7 +113,6 @@ func process(
 	}
 	close(jobsChan)
 
-
 	wg.Add(numWorkers)
 	for range numWorkers {
 		go func() {

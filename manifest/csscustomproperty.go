@@ -26,10 +26,10 @@ var _ Deprecatable = (*CssCustomProperty)(nil)
 // CssCustomProperty describes a CSS custom property.
 type CssCustomProperty struct {
 	FullyQualified
-	StartByte   uint       `json:"-"`
-	Default     string     `json:"default,omitempty"`
-	Syntax      string     `json:"syntax,omitempty"`
-	Deprecated  Deprecated `json:"deprecated,omitempty"` // bool or string
+	StartByte  uint       `json:"-"`
+	Default    string     `json:"default,omitempty"`
+	Syntax     string     `json:"syntax,omitempty"`
+	Deprecated Deprecated `json:"deprecated,omitempty"` // bool or string
 }
 
 func (x *CssCustomProperty) IsDeprecated() bool {

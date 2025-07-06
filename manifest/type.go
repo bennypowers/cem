@@ -29,4 +29,3 @@ type TypeReference struct {
 	Start int `json:"start,omitempty"`
 	End   int `json:"end,omitempty"`
 }
-

@@ -26,7 +26,7 @@ var _ Deprecatable = (*CssPart)(nil)
 // CssPart describes a CSS part.
 type CssPart struct {
 	FullyQualified
-	Deprecated  Deprecated `json:"deprecated,omitempty"` // bool or string
+	Deprecated Deprecated `json:"deprecated,omitempty"` // bool or string
 }
 
 func (x *CssPart) IsDeprecated() bool {

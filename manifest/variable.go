@@ -28,7 +28,7 @@ type VariableDeclaration struct {
 	Source *SourceReference `json:"source,omitempty"`
 }
 
-func (*VariableDeclaration) isDeclaration()       {}
+func (*VariableDeclaration) isDeclaration() {}
 
 func (x *VariableDeclaration) IsDeprecated() bool {
 	if x == nil {
@@ -66,4 +66,3 @@ func (v *VariableDeclaration) UnmarshalJSON(data []byte) error {
 	}
 	return nil
 }
-

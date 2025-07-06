@@ -160,7 +160,9 @@ Examples:
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 		slots, err := pkg.GetTagSlotsWithContext(tagName)
 		if err != nil {
 			return err
@@ -169,7 +171,7 @@ Examples:
 		case "table":
 			headers := []string{"Name", "Summary"}
 			rows := list.MapToTableRows(slots)
-			title := "Slots on "+tagName
+			title := "Slots on " + tagName
 			return list.RenderTable(title, headers, rows, columns)
 		}
 
@@ -178,9 +180,9 @@ Examples:
 }
 
 var listCssCustomPropertiesCmd = &cobra.Command{
-	Use:   "css-custom-properties",
+	Use:     "css-custom-properties",
 	Aliases: []string{"css-properties", "css-props", "css-custom-props"},
-	Short: "List CSS custom properties used in a given tag name",
+	Short:   "List CSS custom properties used in a given tag name",
 	Long: `List CSS custom properties used in a given tag name.
 
 You must specify the tag name using the --tag-name flag. The output may include for each
@@ -195,9 +197,13 @@ Examples:
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 		props, err := pkg.GetTagCssPropertiesWithContext(tagName)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 		switch format {
 		case "table":
 			headers := []string{"Name", "Syntax", "Default", "Summary"}
@@ -210,9 +216,9 @@ Examples:
 }
 
 var listCssCustomStatesCmd = &cobra.Command{
-	Use:   "css-custom-states",
+	Use:     "css-custom-states",
 	Aliases: []string{"css-states"},
-	Short: "List CSS custom states used in a given tag name",
+	Short:   "List CSS custom states used in a given tag name",
 	Long: `List CSS custom states used in a given tag name.
 
 You must specify the tag name using the --tag-name flag. The output includes each css state by name,
@@ -225,9 +231,13 @@ Examples:
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 		props, err := pkg.GetTagCssStatesWithContext(tagName)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 		switch format {
 		case "table":
 			headers := []string{"Name", "Summary"}
@@ -241,9 +251,9 @@ Examples:
 }
 
 var listCssPartsCmd = &cobra.Command{
-	Use:   "css-parts",
-	Aliases: []string{"parts","css-shadow-parts"},
-	Short: "List CSS shadow parts for a given tag name",
+	Use:     "css-parts",
+	Aliases: []string{"parts", "css-shadow-parts"},
+	Short:   "List CSS shadow parts for a given tag name",
 	Long: `List CSS shadow parts for a given tag name.
 
 You must specify the tag name using the --tag-name flag. The output includes each shadow part by name, and a summary
@@ -254,9 +264,13 @@ Examples:
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 		parts, err := pkg.GetTagCssPartsWithContext(tagName)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 		switch format {
 		case "table":
 			headers := []string{"Name", "Summary"}
@@ -284,9 +298,13 @@ Examples:
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 		events, err := pkg.GetTagEventsWithContext(tagName)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 		switch format {
 		case "table":
 			headers := []string{"Name", "Type", "Summary"}
@@ -311,9 +329,13 @@ Examples:
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 		methods, err := pkg.GetTagMethodsWithContext(tagName)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 		switch format {
 		case "table":
 			headers := []string{"Name", "Return Type", "Privacy", "Static", "Summary"}
@@ -327,9 +349,9 @@ Examples:
 }
 
 var listTagsCmd = &cobra.Command{
-	Use:   "tags",
+	Use:     "tags",
 	Aliases: []string{"elements", "tag-names"},
-	Short: "List tag names in the custom elements manifest",
+	Short:   "List tag names in the custom elements manifest",
 	Long: `List all custom element tag names
 
 This command outputs a table with tag names and their corresponding source modules,
@@ -368,9 +390,9 @@ Example:
 }
 
 var listModulesCmd = &cobra.Command{
-	Use:   "modules",
+	Use:     "modules",
 	Aliases: []string{"files"},
-	Short: "List modules (javascript files) in the custom elements manifest",
+	Short:   "List modules (javascript files) in the custom elements manifest",
 	Long: `Lists all modules
 
 This command outputs a table with module path names and the custom elements they register, if any.
@@ -407,9 +429,9 @@ Example:
 }
 
 var listDeprecationsCmd = &cobra.Command{
-	Use:   "deprecations",
+	Use:     "deprecations",
 	Aliases: []string{"deprecated"},
-	Short: "List all deprecations in the custom elements manifest",
+	Short:   "List all deprecations in the custom elements manifest",
 	Long: `Lists all deprecations
 
 This command outputs a tree with module path names, exported declarations,
@@ -422,9 +444,13 @@ Example:
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		pkg, err := readPkg()
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 		format, err := requireFormat(cmd, []string{"tree"})
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 		switch format {
 		case "tree":
 			title := "Deprecations"

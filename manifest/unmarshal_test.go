@@ -226,7 +226,7 @@ func TestUnmarshalPackage(t *testing.T) {
 			if cem.Type == nil {
 				t.Errorf("CustomElementField: want non-nil type got '%+v'", cem.Type)
 			}
-			if  cem.Type.Text != "boolean" {
+			if cem.Type.Text != "boolean" {
 				t.Errorf("CustomElementField: want type.text=boolean got '%s'", cem.Type.Text)
 			}
 			if cem.Default != "false" {
@@ -338,7 +338,7 @@ func TestUnmarshalPackage(t *testing.T) {
 				})
 				t.Run("Deprecation", func(t *testing.T) {
 					t.Run("Bool", func(t *testing.T) {
-					mustRunFixture(t)
+						mustRunFixture(t)
 						manifestJSON := loadFixture(t, "event-deprecated-bool.json")
 						pkg := mustUnmarshalPackage(t, manifestJSON)
 						ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
@@ -649,7 +649,7 @@ func TestUnmarshalPackage(t *testing.T) {
 	})
 
 	t.Run("Mixin", func(t *testing.T) {
-			mustRunFixture(t)
+		mustRunFixture(t)
 		manifestJSON := loadFixture(t, "mixin.json")
 		pkg := mustUnmarshalPackage(t, manifestJSON)
 		mod := mustFirstModule(t, pkg)

@@ -29,8 +29,8 @@ type MixinDeclaration struct {
 	ClassLike
 	FunctionLike
 	FullyQualified
-	Deprecated  Deprecated `json:"deprecated,omitempty"`
-	Kind        string     `json:"kind"` // 'mixin'
+	Deprecated Deprecated `json:"deprecated,omitempty"`
+	Kind       string     `json:"kind"` // 'mixin'
 }
 
 // CustomElementMixinDeclaration extends MixinDeclaration and CustomElement.
@@ -40,7 +40,7 @@ type CustomElementMixinDeclaration struct {
 	FullyQualified
 }
 
-func (*MixinDeclaration) isDeclaration()       {}
+func (*MixinDeclaration) isDeclaration() {}
 
 func (x *MixinDeclaration) IsDeprecated() bool {
 	if x == nil {
@@ -85,7 +85,7 @@ func (m *MixinDeclaration) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (*CustomElementMixinDeclaration) isDeclaration()       {}
+func (*CustomElementMixinDeclaration) isDeclaration() {}
 
 func (x *CustomElementMixinDeclaration) IsDeprecated() bool {
 	if x == nil {

@@ -26,7 +26,7 @@ var _ Deprecatable = (*Slot)(nil)
 // Slot in a custom element.
 type Slot struct {
 	FullyQualified
-	Deprecated  Deprecated `json:"deprecated,omitempty"` // bool or string
+	Deprecated Deprecated `json:"deprecated,omitempty"` // bool or string
 }
 
 func (x *Slot) IsDeprecated() bool {

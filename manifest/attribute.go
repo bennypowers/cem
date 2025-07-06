@@ -61,4 +61,3 @@ func (a *Attribute) UnmarshalJSON(data []byte) error {
 	}
 	return nil
 }
-

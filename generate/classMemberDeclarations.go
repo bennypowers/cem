@@ -193,7 +193,7 @@ func (mp *ModuleProcessor) createClassFieldFromFieldMatch(
 			PropertyLike: M.PropertyLike{
 				Readonly: readonly,
 				FullyQualified: M.FullyQualified{
-					Name:     fieldName,
+					Name: fieldName,
 				},
 			},
 		},

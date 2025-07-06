@@ -17,7 +17,7 @@ func makeTestPackage() *Package {
 						ClassDeclaration: ClassDeclaration{
 							ClassLike: ClassLike{
 								FullyQualified: FullyQualified{
-									Name:    "FooElement",
+									Name: "FooElement",
 								},
 								Members: []ClassMember{
 									&CustomElementField{
@@ -38,7 +38,7 @@ func makeTestPackage() *Package {
 											Summary: "does something",
 										},
 										FunctionLike: FunctionLike{
-											Return:  &Return{Type: &Type{Text: "string"}},
+											Return: &Return{Type: &Type{Text: "string"}},
 										},
 										Kind:    "method",
 										Privacy: Public,
@@ -54,14 +54,14 @@ func makeTestPackage() *Package {
 								{
 									StartByte: 5,
 									FullyQualified: FullyQualified{
-										Name: "bar",
+										Name:    "bar",
 										Summary: "bar summary",
 									},
 								},
 								{
 									StartByte: 7,
 									FullyQualified: FullyQualified{
-										Name: "baz",
+										Name:    "baz",
 										Summary: "baz summary",
 									},
 								},
@@ -69,7 +69,7 @@ func makeTestPackage() *Package {
 							Events: []Event{
 								{
 									FullyQualified: FullyQualified{
-										Name: "foo-event",
+										Name:    "foo-event",
 										Summary: "foo event summary",
 									},
 									Type: &Type{Text: "CustomEvent"},
@@ -80,10 +80,10 @@ func makeTestPackage() *Package {
 								{FullyQualified: FullyQualified{Name: "named", Summary: "named slot"}},
 							},
 							CssParts: []CssPart{
-								{FullyQualified:FullyQualified{Name: "part1", Summary: "part1 summary"}},
+								{FullyQualified: FullyQualified{Name: "part1", Summary: "part1 summary"}},
 							},
 							CssProperties: []CssCustomProperty{
-								{FullyQualified:FullyQualified{Name: "--foo-bar", Summary: "foo-bar summary"}, Syntax: "string", Default: "qux", StartByte: 9},
+								{FullyQualified: FullyQualified{Name: "--foo-bar", Summary: "foo-bar summary"}, Syntax: "string", Default: "qux", StartByte: 9},
 							},
 							CssStates: []CssCustomState{
 								{FullyQualified: FullyQualified{Name: "--active", Summary: "active state"}},
@@ -292,7 +292,7 @@ func TestContextToTableRow(t *testing.T) {
 		Name: "doIt",
 		Method: &ClassMethod{
 			FunctionLike: FunctionLike{
-				Return:  &Return{Type: &Type{Text: "string"}},
+				Return: &Return{Type: &Type{Text: "string"}},
 			},
 			FullyQualified: FullyQualified{
 				Summary: "summ",

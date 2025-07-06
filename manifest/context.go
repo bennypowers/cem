@@ -29,8 +29,8 @@ type PredicateFunc func(Renderable) bool
 
 type Renderable interface {
 	Deprecatable
-	ToTableRow()   []string
-	ToTreeNode(pred PredicateFunc)   pterm.TreeNode
+	ToTableRow() []string
+	ToTreeNode(pred PredicateFunc) pterm.TreeNode
 }
 
 type ContextTreeNode interface {
@@ -42,7 +42,7 @@ type ContextTreeNode interface {
 
 // Predicate: keep only deprecated nodes
 func IsDeprecated(d Renderable) bool { return d.IsDeprecated() }
-func True(d Renderable) bool { return true }
+func True(d Renderable) bool         { return true }
 
 func formatDeprecated(deprecated any) (label string) {
 	if deprecated == nil {
@@ -50,9 +50,9 @@ func formatDeprecated(deprecated any) (label string) {
 	}
 	switch v := deprecated.(type) {
 	case DeprecatedReason:
-		return " (" +pterm.Red("DEPRECATED") + ": " + pterm.LightRed(v) + ")"
+		return " (" + pterm.Red("DEPRECATED") + ": " + pterm.LightRed(v) + ")"
 	default:
-		return pterm.Red( "(DEPRECATED)")
+		return pterm.Red("(DEPRECATED)")
 	}
 }
 
@@ -66,6 +66,7 @@ func highlightIfDeprecated(name string, deprecated any) string {
 type PackageWithContext struct {
 	Package *Package
 }
+
 func (x *PackageWithContext) ToTableRow() []string {
 	return []string{}
 }
@@ -78,9 +79,11 @@ func (x *PackageWithContext) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
 	return filteredTree.ToTreeNode(pred)
 }
 func (x *PackageWithContext) IsDeprecated() bool {
-  return false
+	return false
 }
+
 var _ Renderable = (*PackageWithContext)(nil)
+
 func NewPackageWithContext(m *Package) *PackageWithContext {
 	pkg := PackageWithContext{Package: m}
 	pkgCtx := buildContextTree(&pkg)
@@ -88,11 +91,12 @@ func NewPackageWithContext(m *Package) *PackageWithContext {
 }
 
 type ModuleWithContext struct {
-	Path                     string
-	Module                   *Module
-	Package                  *Package
-	CustomElementExports     []CustomElementExport
+	Path                 string
+	Module               *Module
+	Package              *Package
+	CustomElementExports []CustomElementExport
 }
+
 func (x *ModuleWithContext) ToTableRow() []string {
 	tags := make([]string, 0)
 	for _, cee := range x.CustomElementExports {
@@ -114,12 +118,14 @@ func (x *ModuleWithContext) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
 func (x *ModuleWithContext) IsDeprecated() bool {
 	return x.Module.Deprecated != nil
 }
+
 var _ Renderable = (*ModuleWithContext)(nil)
 
 type ClassWithContext struct {
 	ClassDeclaration *ClassDeclaration
 	Module           *Module
 }
+
 func (x *ClassWithContext) ToTableRow() []string {
 	modulePath := ""
 	if x.Module != nil {
@@ -142,6 +148,7 @@ func (x *ClassWithContext) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
 func (x *ClassWithContext) IsDeprecated() bool {
 	return x.ClassDeclaration.Deprecated != nil
 }
+
 var _ Renderable = (*ClassWithContext)(nil)
 
 type CustomElementWithContext struct {
@@ -150,9 +157,11 @@ type CustomElementWithContext struct {
 	CustomElementDeclaration *CustomElementDeclaration
 	CustomElementExport      *CustomElementExport
 }
+
 // Renders a CustomElement as a table row.
 // Columns:
-//   Tag (tag name), Class (class name), Module (module path), Summary
+//
+//	Tag (tag name), Class (class name), Module (module path), Summary
 func (x *CustomElementWithContext) ToTableRow() []string {
 	modulePath := ""
 	if x.Module != nil {
@@ -176,6 +185,7 @@ func (x *CustomElementWithContext) ToTreeNode(pred PredicateFunc) pterm.TreeNode
 func (x *CustomElementWithContext) IsDeprecated() bool {
 	return x.CustomElementDeclaration.Deprecated != nil
 }
+
 var _ Renderable = (*CustomElementWithContext)(nil)
 
 type AttributeWithContext struct {
@@ -186,9 +196,11 @@ type AttributeWithContext struct {
 	CustomElementDeclaration *CustomElementDeclaration
 	CustomElementExport      *CustomElementExport
 }
+
 // Renders a CustomElement as a table row.
 // Columns:
-//   Name, DOM Property, Reflects, Summary
+//
+//	Name, DOM Property, Reflects, Summary
 func (x *AttributeWithContext) ToTableRow() []string {
 	domProp := ""
 	reflects := "❌"
@@ -208,16 +220,17 @@ func (x *AttributeWithContext) ToTableRow() []string {
 func (x *AttributeWithContext) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
 	label := x.Name
 	if x.IsDeprecated() {
-			label = highlightIfDeprecated(label, x.Attribute.Deprecated)
+		label = highlightIfDeprecated(label, x.Attribute.Deprecated)
 	}
 	if x.CustomElementField != nil && x.CustomElementField.Reflects {
-			label += " (reflects)"
+		label += " (reflects)"
 	}
 	return pterm.TreeNode{Text: label}
 }
 func (x *AttributeWithContext) IsDeprecated() bool {
 	return x.Attribute.Deprecated != nil
 }
+
 var _ Renderable = (*AttributeWithContext)(nil)
 
 type SlotWithContext struct {
@@ -227,9 +240,11 @@ type SlotWithContext struct {
 	CustomElementDeclaration *CustomElementDeclaration
 	CustomElementExport      *CustomElementExport
 }
+
 // Renders a Slot as a table row.
 // Columns:
-//   Name, Summary
+//
+//	Name, Summary
 func (x *SlotWithContext) ToTableRow() []string {
 	slotName := x.Name
 	if slotName == "" {
@@ -253,6 +268,7 @@ func (x *SlotWithContext) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
 func (x *SlotWithContext) IsDeprecated() bool {
 	return x.Slot.Deprecated != nil
 }
+
 var _ Renderable = (*SlotWithContext)(nil)
 
 type CssCustomPropertyWithContext struct {
@@ -262,9 +278,11 @@ type CssCustomPropertyWithContext struct {
 	CustomElementExport      *CustomElementExport
 	JavaScriptModule         *JavaScriptModule
 }
+
 // Renders a CSS CssCustomProperty as a table row.
 // Columns:
-//   Name, Syntax, Default, Summary
+//
+//	Name, Syntax, Default, Summary
 func (x *CssCustomPropertyWithContext) ToTableRow() []string {
 	return []string{
 		x.Name,
@@ -283,6 +301,7 @@ func (x *CssCustomPropertyWithContext) ToTreeNode(pred PredicateFunc) pterm.Tree
 func (x *CssCustomPropertyWithContext) IsDeprecated() bool {
 	return x.CssCustomProperty.Deprecated != nil
 }
+
 var _ Renderable = (*CssCustomPropertyWithContext)(nil)
 
 type CssCustomStateWithContext struct {
@@ -292,9 +311,11 @@ type CssCustomStateWithContext struct {
 	CustomElementExport      *CustomElementExport
 	JavaScriptModule         *JavaScriptModule
 }
+
 // Renders a CssCustomState as a table row.
 // Columns:
-//   Name, Summary
+//
+//	Name, Summary
 func (x *CssCustomStateWithContext) ToTableRow() []string {
 	return []string{
 		x.Name,
@@ -311,6 +332,7 @@ func (x *CssCustomStateWithContext) ToTreeNode(pred PredicateFunc) pterm.TreeNod
 func (x *CssCustomStateWithContext) IsDeprecated() bool {
 	return x.CssCustomState.Deprecated != nil
 }
+
 var _ Renderable = (*CssCustomStateWithContext)(nil)
 
 type CssPartWithContext struct {
@@ -320,9 +342,11 @@ type CssPartWithContext struct {
 	CustomElementExport      *CustomElementExport
 	JavaScriptModule         *JavaScriptModule
 }
+
 // Renders a CssPart as a table row.
 // Columns:
-//   Name, Summary
+//
+//	Name, Summary
 func (x *CssPartWithContext) ToTableRow() []string {
 	return []string{
 		x.Name,
@@ -339,6 +363,7 @@ func (x *CssPartWithContext) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
 func (x *CssPartWithContext) IsDeprecated() bool {
 	return x.CssPart.Deprecated != nil
 }
+
 var _ Renderable = (*CssPartWithContext)(nil)
 
 type EventWithContext struct {
@@ -348,9 +373,11 @@ type EventWithContext struct {
 	CustomElementExport      *CustomElementExport
 	JavaScriptModule         *JavaScriptModule
 }
+
 // Renders an Event as a table row.
 // Columns:
-//   Name, Type, Summary
+//
+//	Name, Type, Summary
 func (x *EventWithContext) ToTableRow() []string {
 	eventType := ""
 	if x.Event.Type != nil {
@@ -363,15 +390,16 @@ func (x *EventWithContext) ToTableRow() []string {
 	}
 }
 func (x *EventWithContext) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-    label := x.Name
-    if x.IsDeprecated() {
-        label = highlightIfDeprecated(label, x.Event.Deprecated)
-    }
-    return pterm.TreeNode{Text: label}
+	label := x.Name
+	if x.IsDeprecated() {
+		label = highlightIfDeprecated(label, x.Event.Deprecated)
+	}
+	return pterm.TreeNode{Text: label}
 }
 func (x *EventWithContext) IsDeprecated() bool {
 	return x.Event.Deprecated != nil
 }
+
 var _ Renderable = (*EventWithContext)(nil)
 
 type MethodWithContext struct {
@@ -381,9 +409,11 @@ type MethodWithContext struct {
 	CustomElementExport      *CustomElementExport
 	JavaScriptModule         *JavaScriptModule
 }
+
 // Renders an Event as a table row.
 // Columns:
-//   Name, Return Type, Privacy, Static, Summary
+//
+//	Name, Return Type, Privacy, Static, Summary
 func (x *MethodWithContext) ToTableRow() []string {
 	returnType := "void"
 	privacy := string(x.Method.Privacy)
@@ -403,11 +433,11 @@ func (x *MethodWithContext) ToTableRow() []string {
 }
 
 func (x *MethodWithContext) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-    label := x.Name
-    if x.IsDeprecated() {
-        label = highlightIfDeprecated(label, x.IsDeprecated())
-    }
-    return pterm.TreeNode{Text: label}
+	label := x.Name
+	if x.IsDeprecated() {
+		label = highlightIfDeprecated(label, x.IsDeprecated())
+	}
+	return pterm.TreeNode{Text: label}
 }
 
 func (x *MethodWithContext) IsDeprecated() bool {
@@ -432,29 +462,29 @@ func (x *Package) GetAllTagNames() (tags []string) {
 
 // --- ClassField ---
 func (x *ClassField) ToTreeNode() pterm.TreeNode {
-    label := "field " + x.Name
-    if x.IsDeprecated() {
-        label = highlightIfDeprecated(label, x.Deprecated)
-    }
-    return pterm.TreeNode{Text: label}
+	label := "field " + x.Name
+	if x.IsDeprecated() {
+		label = highlightIfDeprecated(label, x.Deprecated)
+	}
+	return pterm.TreeNode{Text: label}
 }
 
 // --- ClassMethod ---
 func (x *ClassMethod) ToTreeNode() pterm.TreeNode {
-    label := "method " + x.Name
-    if x.IsDeprecated() {
-        label = highlightIfDeprecated(label, x.Deprecated)
-    }
-    return pterm.TreeNode{Text: label}
+	label := "method " + x.Name
+	if x.IsDeprecated() {
+		label = highlightIfDeprecated(label, x.Deprecated)
+	}
+	return pterm.TreeNode{Text: label}
 }
 
 // --- CustomElementField ---
 func (x *CustomElementField) ToTreeNode() pterm.TreeNode {
-    label := "custom field " + x.Name
-    if x.IsDeprecated() {
-        label = highlightIfDeprecated(label, x.Deprecated)
-    }
-    return pterm.TreeNode{Text: label}
+	label := "custom field " + x.Name
+	if x.IsDeprecated() {
+		label = highlightIfDeprecated(label, x.Deprecated)
+	}
+	return pterm.TreeNode{Text: label}
 }
 
 // GetAllModulesWithContext returns a slice of ModuleWithContext for all modules.
@@ -688,39 +718,42 @@ func (x *Package) GetTagMethodsWithContext(tagName string) (methods []*MethodWit
 type LeafCtxNode struct {
 	Item Deprecatable // can be *AttributeWithContext, *EventWithContext, etc.
 }
+
 func (n *LeafCtxNode) IsDeprecated() bool { return n.Item.IsDeprecated() }
 func (n *LeafCtxNode) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-    switch item := n.Item.(type) {
-    case *ClassField:
-        return item.ToTreeNode()
-    case *ClassMethod:
-        return item.ToTreeNode()
-    case *CustomElementField:
-        return item.ToTreeNode()
-    case *AttributeWithContext:
-        return item.ToTreeNode(pred)
-    case *EventWithContext:
-        return item.ToTreeNode(pred)
-    case *SlotWithContext:
-        return item.ToTreeNode(pred)
-    case *CssPartWithContext:
-        return item.ToTreeNode(pred)
-    case *CssCustomPropertyWithContext:
-        return item.ToTreeNode(pred)
-    case *CssCustomStateWithContext:
-        return item.ToTreeNode(pred)
-    default:
-        return pterm.TreeNode{Text: "<unknown leaf type>"}
-    }
+	switch item := n.Item.(type) {
+	case *ClassField:
+		return item.ToTreeNode()
+	case *ClassMethod:
+		return item.ToTreeNode()
+	case *CustomElementField:
+		return item.ToTreeNode()
+	case *AttributeWithContext:
+		return item.ToTreeNode(pred)
+	case *EventWithContext:
+		return item.ToTreeNode(pred)
+	case *SlotWithContext:
+		return item.ToTreeNode(pred)
+	case *CssPartWithContext:
+		return item.ToTreeNode(pred)
+	case *CssCustomPropertyWithContext:
+		return item.ToTreeNode(pred)
+	case *CssCustomStateWithContext:
+		return item.ToTreeNode(pred)
+	default:
+		return pterm.TreeNode{Text: "<unknown leaf type>"}
+	}
 }
 func (n *LeafCtxNode) ToTableRow() (row []string) {
 	return row
 }
 func (n *LeafCtxNode) Children() []ContextTreeNode { return nil }
+
 var _ ContextTreeNode = (*LeafCtxNode)(nil)
 
 // For non-custom-element declarations (corrected to hold Declaration)
 type DeclCtxNode struct{ Decl Declaration }
+
 func (n *DeclCtxNode) IsDeprecated() bool {
 	if d, ok := n.Decl.(Deprecatable); ok {
 		return d.IsDeprecated()
@@ -729,52 +762,54 @@ func (n *DeclCtxNode) IsDeprecated() bool {
 }
 func (n *DeclCtxNode) Children() []ContextTreeNode { return nil }
 func (n *DeclCtxNode) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-    // Try to get name and kind for the node label
-    var label string
-    var deprecated any
-    switch d := n.Decl.(type) {
-    case *FunctionDeclaration:
-        label = "function " + d.Name
-        deprecated = d.Deprecated
-    case *VariableDeclaration:
-        label = "var " + d.Name
-        deprecated = d.Deprecated
-    case *MixinDeclaration:
-        label = "mixin " + d.Name
-        deprecated = d.Deprecated
-    case *CustomElementMixinDeclaration:
-        label = "custom element mixin " + d.Name
-        deprecated = d.Deprecated
-    default:
-        label = "<unknown declaration>"
-    }
-    if deprecated != nil {
-        label = highlightIfDeprecated(label, deprecated)
-    }
-    return pterm.TreeNode{Text: label}
+	// Try to get name and kind for the node label
+	var label string
+	var deprecated any
+	switch d := n.Decl.(type) {
+	case *FunctionDeclaration:
+		label = "function " + d.Name
+		deprecated = d.Deprecated
+	case *VariableDeclaration:
+		label = "var " + d.Name
+		deprecated = d.Deprecated
+	case *MixinDeclaration:
+		label = "mixin " + d.Name
+		deprecated = d.Deprecated
+	case *CustomElementMixinDeclaration:
+		label = "custom element mixin " + d.Name
+		deprecated = d.Deprecated
+	default:
+		label = "<unknown declaration>"
+	}
+	if deprecated != nil {
+		label = highlightIfDeprecated(label, deprecated)
+	}
+	return pterm.TreeNode{Text: label}
 }
 func (n *DeclCtxNode) ToTableRow() (row []string) {
 	return row
 }
+
 var _ ContextTreeNode = (*DeclCtxNode)(nil)
 
 type PackageCtxNode struct {
 	Pkg           *PackageWithContext
 	ChildrenNodes []ContextTreeNode
 }
+
 func (n *PackageCtxNode) IsDeprecated() bool { return n != nil && n.Pkg != nil && n.Pkg.IsDeprecated() }
 func (n *PackageCtxNode) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-    label := "<root>"
-    if n.Pkg.Package.Deprecated != nil {
-        label = highlightIfDeprecated(label, n.Pkg.Package.Deprecated)
-    }
-    node := pterm.TreeNode{Text: label}
-    children := []pterm.TreeNode{}
-    for _, c := range n.ChildrenNodes {
-        children = append(children, c.ToTreeNode(pred))
-    }
-    node.Children = children
-    return node
+	label := "<root>"
+	if n.Pkg.Package.Deprecated != nil {
+		label = highlightIfDeprecated(label, n.Pkg.Package.Deprecated)
+	}
+	node := pterm.TreeNode{Text: label}
+	children := []pterm.TreeNode{}
+	for _, c := range n.ChildrenNodes {
+		children = append(children, c.ToTreeNode(pred))
+	}
+	node.Children = children
+	return node
 }
 func (n *PackageCtxNode) ToTableRow() (row []string) {
 	return row
@@ -785,52 +820,56 @@ func (n *PackageCtxNode) Children() []ContextTreeNode {
 	}
 	return n.ChildrenNodes
 }
+
 var _ ContextTreeNode = (*PackageCtxNode)(nil)
 
 type ModuleCtxNode struct {
 	Mod           *ModuleWithContext
 	ChildrenNodes []ContextTreeNode
 }
+
 func (n *ModuleCtxNode) IsDeprecated() bool { return n.Mod.IsDeprecated() }
 func (n *ModuleCtxNode) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-    label := n.Mod.Path
-    if n.Mod.IsDeprecated() {
-        label = highlightIfDeprecated(label, n.Mod.Module.Deprecated)
-    }
-    node := pterm.TreeNode{Text: label}
-    children := []pterm.TreeNode{}
-    for _, child := range n.ChildrenNodes {
-        children = append(children, child.ToTreeNode(pred))
-    }
-    node.Children = children
-    return node
+	label := n.Mod.Path
+	if n.Mod.IsDeprecated() {
+		label = highlightIfDeprecated(label, n.Mod.Module.Deprecated)
+	}
+	node := pterm.TreeNode{Text: label}
+	children := []pterm.TreeNode{}
+	for _, child := range n.ChildrenNodes {
+		children = append(children, child.ToTreeNode(pred))
+	}
+	node.Children = children
+	return node
 }
 func (n *ModuleCtxNode) ToTableRow() (row []string) {
 	return row
 }
 func (n *ModuleCtxNode) Children() []ContextTreeNode { return n.ChildrenNodes }
+
 var _ ContextTreeNode = (*ModuleCtxNode)(nil)
 
 type ClassCtxNode struct {
 	ClassCtx    *ClassWithContext
 	MemberNodes []ContextTreeNode
 }
+
 func (n *ClassCtxNode) IsDeprecated() bool {
 	return n.ClassCtx.ClassDeclaration.Deprecated != nil
 }
 func (n *ClassCtxNode) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-    class := n.ClassCtx
-    label := "class " + class.ClassDeclaration.Name
-    if class.IsDeprecated() {
-        label = highlightIfDeprecated(label, class.ClassDeclaration.Deprecated)
-    }
-    node := pterm.TreeNode{Text: label}
-    children := []pterm.TreeNode{}
-    for _, mem := range n.MemberNodes {
-			children = append(children, mem.ToTreeNode(pred))
-    }
-    node.Children = children
-    return node
+	class := n.ClassCtx
+	label := "class " + class.ClassDeclaration.Name
+	if class.IsDeprecated() {
+		label = highlightIfDeprecated(label, class.ClassDeclaration.Deprecated)
+	}
+	node := pterm.TreeNode{Text: label}
+	children := []pterm.TreeNode{}
+	for _, mem := range n.MemberNodes {
+		children = append(children, mem.ToTreeNode(pred))
+	}
+	node.Children = children
+	return node
 }
 func (n *ClassCtxNode) ToTableRow() (row []string) {
 	return row
@@ -838,87 +877,89 @@ func (n *ClassCtxNode) ToTableRow() (row []string) {
 func (n *ClassCtxNode) Children() []ContextTreeNode {
 	return n.MemberNodes
 }
+
 var _ ContextTreeNode = (*ClassCtxNode)(nil)
 
 type CustomElementCtxNode struct {
-	CED         *CustomElementWithContext
-	AttrNodes   []ContextTreeNode
-	EventNodes  []ContextTreeNode
-	SlotNodes   []ContextTreeNode
-	CssPartNodes []ContextTreeNode
-	CssPropNodes []ContextTreeNode
+	CED           *CustomElementWithContext
+	AttrNodes     []ContextTreeNode
+	EventNodes    []ContextTreeNode
+	SlotNodes     []ContextTreeNode
+	CssPartNodes  []ContextTreeNode
+	CssPropNodes  []ContextTreeNode
 	CssStateNodes []ContextTreeNode
-	MemberNodes  []ContextTreeNode
+	MemberNodes   []ContextTreeNode
 }
+
 func (n *CustomElementCtxNode) IsDeprecated() bool { return n.CED.IsDeprecated() }
 func (n *CustomElementCtxNode) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-    ced := n.CED
-    label := "<" + ced.TagName + ">"
-    if ced.IsDeprecated() {
-        label = highlightIfDeprecated(label, ced.CustomElementDeclaration.Deprecated)
-    }
-    node := pterm.TreeNode{Text: label}
+	ced := n.CED
+	label := "<" + ced.TagName + ">"
+	if ced.IsDeprecated() {
+		label = highlightIfDeprecated(label, ced.CustomElementDeclaration.Deprecated)
+	}
+	node := pterm.TreeNode{Text: label}
 
-    children := []pterm.TreeNode{}
+	children := []pterm.TreeNode{}
 
-    if len(n.AttrNodes) > 0 {
-        attrChildren := []pterm.TreeNode{}
-        for _, attr := range n.AttrNodes {
-            attrChildren = append(attrChildren, attr.ToTreeNode(pred))
-        }
-        children = append(children, pterm.TreeNode{Text: "attributes", Children: attrChildren})
-    }
+	if len(n.AttrNodes) > 0 {
+		attrChildren := []pterm.TreeNode{}
+		for _, attr := range n.AttrNodes {
+			attrChildren = append(attrChildren, attr.ToTreeNode(pred))
+		}
+		children = append(children, pterm.TreeNode{Text: "attributes", Children: attrChildren})
+	}
 
-    if len(n.EventNodes) > 0 {
-        eventChildren := []pterm.TreeNode{}
-        for _, ev := range n.EventNodes {
-            eventChildren = append(eventChildren, ev.ToTreeNode(pred))
-        }
-        children = append(children, pterm.TreeNode{Text: "events", Children: eventChildren})
-    }
+	if len(n.EventNodes) > 0 {
+		eventChildren := []pterm.TreeNode{}
+		for _, ev := range n.EventNodes {
+			eventChildren = append(eventChildren, ev.ToTreeNode(pred))
+		}
+		children = append(children, pterm.TreeNode{Text: "events", Children: eventChildren})
+	}
 
-    if len(n.SlotNodes) > 0 {
-        slotChildren := []pterm.TreeNode{}
-        for _, slot := range n.SlotNodes {
-            slotChildren = append(slotChildren, slot.ToTreeNode(pred))
-        }
-        children = append(children, pterm.TreeNode{Text: "slots", Children: slotChildren})
-    }
+	if len(n.SlotNodes) > 0 {
+		slotChildren := []pterm.TreeNode{}
+		for _, slot := range n.SlotNodes {
+			slotChildren = append(slotChildren, slot.ToTreeNode(pred))
+		}
+		children = append(children, pterm.TreeNode{Text: "slots", Children: slotChildren})
+	}
 
-    if len(n.CssPartNodes) > 0 {
-        partChildren := []pterm.TreeNode{}
-        for _, part := range n.CssPartNodes {
-            partChildren = append(partChildren, part.ToTreeNode(pred))
-        }
-        children = append(children, pterm.TreeNode{Text: "css parts", Children: partChildren})
-    }
+	if len(n.CssPartNodes) > 0 {
+		partChildren := []pterm.TreeNode{}
+		for _, part := range n.CssPartNodes {
+			partChildren = append(partChildren, part.ToTreeNode(pred))
+		}
+		children = append(children, pterm.TreeNode{Text: "css parts", Children: partChildren})
+	}
 
-    if len(n.CssPropNodes) > 0 {
-        propChildren := []pterm.TreeNode{}
-        for _, prop := range n.CssPropNodes {
-            propChildren = append(propChildren, prop.ToTreeNode(pred))
-        }
-        children = append(children, pterm.TreeNode{Text: "css properties", Children: propChildren})
-    }
+	if len(n.CssPropNodes) > 0 {
+		propChildren := []pterm.TreeNode{}
+		for _, prop := range n.CssPropNodes {
+			propChildren = append(propChildren, prop.ToTreeNode(pred))
+		}
+		children = append(children, pterm.TreeNode{Text: "css properties", Children: propChildren})
+	}
 
-    if len(n.CssStateNodes) > 0 {
-        stateChildren := []pterm.TreeNode{}
-        for _, state := range n.CssStateNodes {
-            stateChildren = append(stateChildren, state.ToTreeNode(pred))
-        }
-        children = append(children, pterm.TreeNode{Text: "css states", Children: stateChildren})
-    }
+	if len(n.CssStateNodes) > 0 {
+		stateChildren := []pterm.TreeNode{}
+		for _, state := range n.CssStateNodes {
+			stateChildren = append(stateChildren, state.ToTreeNode(pred))
+		}
+		children = append(children, pterm.TreeNode{Text: "css states", Children: stateChildren})
+	}
 
-    if len(n.MemberNodes) > 0 {
-        memberChildren := []pterm.TreeNode{}
-        for _, mem := range n.MemberNodes {
-            memberChildren = append(memberChildren, mem.ToTreeNode(pred))
-        }
-        children = append(children, pterm.TreeNode{Text: "members", Children: memberChildren})
-    }
+	if len(n.MemberNodes) > 0 {
+		memberChildren := []pterm.TreeNode{}
+		for _, mem := range n.MemberNodes {
+			memberChildren = append(memberChildren, mem.ToTreeNode(pred))
+		}
+		children = append(children, pterm.TreeNode{Text: "members", Children: memberChildren})
+	}
 
-    node.Children = children
-    return node
+	node.Children = children
+	return node
 }
 func (n *CustomElementCtxNode) ToTableRow() (row []string) {
 	return row
@@ -934,6 +975,7 @@ func (n *CustomElementCtxNode) Children() []ContextTreeNode {
 	out = append(out, n.MemberNodes...)
 	return out
 }
+
 var _ ContextTreeNode = (*CustomElementCtxNode)(nil)
 
 // --- BUILD CONTEXT TREE ---
@@ -1073,14 +1115,14 @@ func buildCustomElementCtxTree(cedCtx *CustomElementWithContext) *CustomElementC
 		}
 	}
 	return &CustomElementCtxNode{
-		CED:          cedCtx,
-		AttrNodes:    attrNodes,
-		EventNodes:   eventNodes,
-		SlotNodes:    slotNodes,
-		CssPartNodes: partNodes,
-		CssPropNodes: propNodes,
+		CED:           cedCtx,
+		AttrNodes:     attrNodes,
+		EventNodes:    eventNodes,
+		SlotNodes:     slotNodes,
+		CssPartNodes:  partNodes,
+		CssPropNodes:  propNodes,
 		CssStateNodes: stateNodes,
-		MemberNodes:  memberNodes,
+		MemberNodes:   memberNodes,
 	}
 }
 
@@ -1111,8 +1153,8 @@ func filterContextTree(node ContextTreeNode, pred PredicateFunc) ContextTreeNode
 				}
 			}
 			return &ClassCtxNode{
-				ClassCtx: n.ClassCtx,
-				MemberNodes:  memberNodes,
+				ClassCtx:    n.ClassCtx,
+				MemberNodes: memberNodes,
 			}
 		case *CustomElementCtxNode:
 			var (
@@ -1146,14 +1188,14 @@ func filterContextTree(node ContextTreeNode, pred PredicateFunc) ContextTreeNode
 				}
 			}
 			return &CustomElementCtxNode{
-				CED:          n.CED,
-				AttrNodes:    attrNodes,
-				EventNodes:   eventNodes,
-				SlotNodes:    slotNodes,
-				CssPartNodes: partNodes,
-				CssPropNodes: propNodes,
+				CED:           n.CED,
+				AttrNodes:     attrNodes,
+				EventNodes:    eventNodes,
+				SlotNodes:     slotNodes,
+				CssPartNodes:  partNodes,
+				CssPropNodes:  propNodes,
 				CssStateNodes: stateNodes,
-				MemberNodes:  memberNodes,
+				MemberNodes:   memberNodes,
 			}
 		default:
 			return node
@@ -1161,4 +1203,3 @@ func filterContextTree(node ContextTreeNode, pred PredicateFunc) ContextTreeNode
 	}
 	return nil
 }
-

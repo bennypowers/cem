@@ -38,4 +38,3 @@ func decodeDeprecatedField(dst *Deprecated, data json.RawMessage) bool {
 	}
 	return false // unknown type
 }
-

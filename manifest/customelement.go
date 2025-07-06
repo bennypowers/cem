@@ -48,7 +48,7 @@ type CustomElement struct {
 	CustomElement bool                `json:"customElement"`
 }
 
-func (*CustomElementDeclaration) isDeclaration()       {}
+func (*CustomElementDeclaration) isDeclaration() {}
 
 func (x *CustomElementDeclaration) IsDeprecated() bool {
 	if x == nil {

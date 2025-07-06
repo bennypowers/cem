@@ -27,7 +27,7 @@ var _ Deprecatable = (*CustomElementField)(nil)
 // ClassField is a class field.
 type ClassField struct {
 	PropertyLike
-	Deprecatable                   `json:"-"`
+	Deprecatable  `json:"-"`
 	Kind          string           `json:"kind"` // 'field'
 	Static        bool             `json:"static,omitempty"`
 	Privacy       Privacy          `json:"privacy,omitempty"` // 'public', 'private', 'protected'
@@ -35,7 +35,7 @@ type ClassField struct {
 	Source        *SourceReference `json:"source,omitempty"`
 }
 
-func (*ClassField) isClassMember()       {}
+func (*ClassField) isClassMember() {}
 
 func (x *ClassField) IsDeprecated() bool {
 	return x != nil && x.Deprecated != nil
@@ -81,7 +81,7 @@ type CustomElementField struct {
 	Reflects  bool   `json:"reflects,omitempty"`
 }
 
-func (x *CustomElementField) isClassMember()     {}
+func (x *CustomElementField) isClassMember() {}
 
 func (x *CustomElementField) IsDeprecated() bool {
 	if x == nil {

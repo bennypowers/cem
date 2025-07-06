@@ -79,6 +79,7 @@ func RenderTable(title string, headers []string, rows [][]string, columns []stri
 	pterm.Println(out)
 	return nil
 }
+
 // checkUnknownColumns returns an error if any column name is not in headers, case-insensitive.
 func checkUnknownColumns(headers []string, columns []string) error {
 	headerSet := make(map[string]string, len(headers)) // lower-case -> original

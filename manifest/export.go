@@ -137,7 +137,9 @@ func (e *CustomElementExport) UnmarshalJSON(data []byte) error {
 }
 
 func unmarshalExport(data json.RawMessage) (Export, error) {
-	var kindWrap struct{ Kind string `json:"kind"` }
+	var kindWrap struct {
+		Kind string `json:"kind"`
+	}
 	if err := json.Unmarshal(data, &kindWrap); err != nil {
 		return nil, err
 	}

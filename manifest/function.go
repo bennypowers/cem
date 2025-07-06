@@ -32,9 +32,9 @@ type Return struct {
 
 // FunctionLike is the common interface of functions and mixins.
 type FunctionLike struct {
-	StartByte   uint        `json:"-"`
-	Parameters  []Parameter `json:"parameters,omitempty"`
-	Return      *Return     `json:"return,omitempty"`
+	StartByte  uint        `json:"-"`
+	Parameters []Parameter `json:"parameters,omitempty"`
+	Return     *Return     `json:"return,omitempty"`
 }
 
 // CssPart describes a CSS part.
@@ -42,12 +42,12 @@ type FunctionLike struct {
 type FunctionDeclaration struct {
 	FunctionLike
 	FullyQualified
-	Deprecated  Deprecated  `json:"deprecated,omitempty"` // bool or string
-	Kind   string           `json:"kind"` // 'function'
-	Source *SourceReference `json:"source,omitempty"`
+	Deprecated Deprecated       `json:"deprecated,omitempty"` // bool or string
+	Kind       string           `json:"kind"`                 // 'function'
+	Source     *SourceReference `json:"source,omitempty"`
 }
 
-func (*FunctionDeclaration) isDeclaration()       {}
+func (*FunctionDeclaration) isDeclaration() {}
 
 func (x *FunctionDeclaration) IsDeprecated() bool {
 	if x == nil {

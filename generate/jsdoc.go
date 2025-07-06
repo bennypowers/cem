@@ -244,8 +244,8 @@ func (info TagInfo) toAttribute() M.Attribute {
 			Name:        info.Name,
 			Description: normalizeJsdocLines(matches["description"]),
 		},
-		Default:     info.Value,
-		StartByte:   info.startByte,
+		Default:   info.Value,
+		StartByte: info.startByte,
 		// NB: not applicable to the jsdoc version of this.
 		// field name should be inferred from decorated class fields, or other framework construct
 		// FieldName: NA,
@@ -328,9 +328,9 @@ func (info TagInfo) toCssCustomProperty() M.CssCustomProperty {
 			Name:        info.Name,
 			Description: normalizeJsdocLines(matches["description"]),
 		},
-		Syntax:      matches["type"],
-		Default:     info.Value,
-		StartByte:   info.startByte,
+		Syntax:    matches["type"],
+		Default:   info.Value,
+		StartByte: info.startByte,
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
 		// Summary: info.Type,
 		// Deprecated: info.Deprecated,
@@ -731,7 +731,6 @@ func (info *MethodInfo) MergeToFunctionLike(declaration *M.FunctionLike) {
 		}
 	}
 }
-
 
 func (info *MethodInfo) MergeToMethod(declaration *M.ClassMethod) {
 	declaration.Description = normalizeJsdocLines(info.Description)

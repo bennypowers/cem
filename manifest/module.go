@@ -45,7 +45,7 @@ func (m *Module) UnmarshalJSON(data []byte) error {
 	type Alias Module
 	aux := &struct {
 		Declarations []json.RawMessage `json:"declarations"`
-		Exports []json.RawMessage `json:"exports"`
+		Exports      []json.RawMessage `json:"exports"`
 		*Alias
 	}{
 		Alias: (*Alias)(m),

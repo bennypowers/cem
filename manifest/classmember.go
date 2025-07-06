@@ -29,7 +29,9 @@ type ClassMember interface {
 }
 
 func unmarshalClassMember(data json.RawMessage) (ClassMember, error) {
-	var kindWrap struct{ Kind string `json:"kind"` }
+	var kindWrap struct {
+		Kind string `json:"kind"`
+	}
 	if err := json.Unmarshal(data, &kindWrap); err != nil {
 		return nil, err
 	}
@@ -72,4 +74,3 @@ func unmarshalClassMember(data json.RawMessage) (ClassMember, error) {
 		return nil, fmt.Errorf("unknown class member kind: %s", kindWrap.Kind)
 	}
 }
-

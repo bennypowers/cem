@@ -99,7 +99,7 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 		ClassLike: M.ClassLike{
 			StartByte: classDeclarationNode.StartByte(),
 			FullyQualified: M.FullyQualified{
-				Name:      className,
+				Name: className,
 			},
 		},
 	}
@@ -245,11 +245,11 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 		field, ok := (member).(*M.CustomElementField)
 		if ok && field.Attribute != "" {
 			return []M.Attribute{{
-				Deprecated:  field.Deprecated,
-				Default:     field.Default,
-				Type:        field.Type,
-				FieldName:   field.Name,
-				StartByte:   field.StartByte,
+				Deprecated: field.Deprecated,
+				Default:    field.Default,
+				Type:       field.Type,
+				FieldName:  field.Name,
+				StartByte:  field.StartByte,
 				FullyQualified: M.FullyQualified{
 					Name:        field.Attribute,
 					Summary:     field.Summary,
