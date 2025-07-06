@@ -25,9 +25,7 @@ var _ Deprecatable = (*Attribute)(nil)
 
 // Attribute for custom elements.
 type Attribute struct {
-	Name          string     `json:"name"`
-	Summary       string     `json:"summary,omitempty"`
-	Description   string     `json:"description,omitempty"`
+	FullyQualified
 	InheritedFrom *Reference `json:"inheritedFrom,omitempty"`
 	Type          *Type      `json:"type,omitempty"`
 	Default       string     `json:"default,omitempty"`

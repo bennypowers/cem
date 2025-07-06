@@ -25,9 +25,7 @@ var _ Deprecatable = (*Event)(nil)
 
 // Event emitted by a custom element.
 type Event struct {
-	Name          string     `json:"name"`
-	Summary       string     `json:"summary,omitempty"`
-	Description   string     `json:"description,omitempty"`
+	FullyQualified
 	Type          *Type      `json:"type,omitempty"`
 	InheritedFrom *Reference `json:"inheritedFrom,omitempty"`
 	Deprecated    Deprecated `json:"deprecated,omitempty"` // bool or string

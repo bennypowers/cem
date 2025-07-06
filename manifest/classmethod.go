@@ -26,11 +26,13 @@ var _ Deprecatable = (*ClassMethod)(nil)
 // ClassMethod is a method.
 type ClassMethod struct {
 	FunctionLike
+	FullyQualified
 	Kind          string           `json:"kind"` // 'method'
 	Static        bool             `json:"static,omitempty"`
 	Privacy       Privacy          `json:"privacy,omitempty"` // 'public', 'private', 'protected'
 	InheritedFrom *Reference       `json:"inheritedFrom,omitempty"`
 	Source        *SourceReference `json:"source,omitempty"`
+	Deprecated    Deprecated  `json:"deprecated,omitempty"` // bool or string
 }
 
 func (*ClassMethod) isClassMember()       {}

@@ -97,8 +97,10 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 	declaration = &M.ClassDeclaration{
 		Kind: "class",
 		ClassLike: M.ClassLike{
-			Name:      className,
 			StartByte: classDeclarationNode.StartByte(),
+			FullyQualified: M.FullyQualified{
+				Name:      className,
+			},
 		},
 	}
 
@@ -181,8 +183,10 @@ func (mp *ModuleProcessor) generateHTMLElementClassDeclaration(
 	mp.step("Processing observedAttributes", 1, func() {
 		for _, name := range captures["observedAttributes.attributeName"] {
 			declaration.CustomElement.Attributes = append(declaration.CustomElement.Attributes, M.Attribute{
-				Name:      name.Text,
 				StartByte: name.StartByte,
+				FullyQualified: M.FullyQualified{
+					Name: name.Text,
+				},
 			})
 		}
 	})
@@ -241,14 +245,16 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 		field, ok := (member).(*M.CustomElementField)
 		if ok && field.Attribute != "" {
 			return []M.Attribute{{
-				Name:        field.Attribute,
-				Summary:     field.Summary,
-				Description: field.Description,
 				Deprecated:  field.Deprecated,
 				Default:     field.Default,
 				Type:        field.Type,
 				FieldName:   field.Name,
 				StartByte:   field.StartByte,
+				FullyQualified: M.FullyQualified{
+					Name:        field.Attribute,
+					Summary:     field.Summary,
+					Description: field.Description,
+				},
 			}}
 		} else {
 			return []M.Attribute{}
@@ -312,7 +318,8 @@ func (mp *ModuleProcessor) processRenderTemplate(htmlSource string) (slots []M.S
 		if pn, ok := captureMap["part.name"]; ok && len(pn) > 0 {
 			partsList := strings.Fields(pn[0].Text)
 			for _, partName := range partsList {
-				part := M.CssPart{Name: partName}
+				part := M.CssPart{}
+				part.Name = partName
 				if comment, ok := captureMap["comment"]; ok && len(comment) > 0 {
 					yamlDoc, err := parseYamlComment(comment[0].Text, kind)
 					if err != nil {
@@ -333,7 +340,7 @@ func (mp *ModuleProcessor) processRenderTemplate(htmlSource string) (slots []M.S
 	}
 
 	for captureMap := range matcher.ParentCaptures(root, text, "slot") {
-		slot := M.Slot{Name: ""}
+		slot := M.Slot{}
 		if sn, ok := captureMap["slot.name"]; ok && len(sn) > 0 {
 			slot.Name = sn[0].Text
 		}

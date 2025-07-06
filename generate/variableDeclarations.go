@@ -21,7 +21,9 @@ func generateVarDeclaration(
 	declaration = &M.VariableDeclaration{
 		Kind: "variable",
 		PropertyLike: M.PropertyLike{
-			Name: varName,
+			FullyQualified: M.FullyQualified{
+				Name: varName,
+			},
 		},
 	}
 

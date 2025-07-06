@@ -44,8 +44,8 @@
             },
             {
               "name": "--token-color",
-              "syntax": "\u003ccolor\u003e",
-              "description": "--token-color"
+              "description": "--token-color",
+              "syntax": "\u003ccolor\u003e"
             }
           ],
           "customElement": true

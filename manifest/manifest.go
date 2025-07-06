@@ -15,6 +15,13 @@ func normalizePath(path string) string {
 	return regexp.MustCompile(`\.ts$`).ReplaceAllString(path, ".js")
 }
 
+// Embedded type for Types with Name, Summary, and Description
+type FullyQualified struct {
+	Name        string     `json:"name"`
+	Summary     string     `json:"summary,omitempty"`
+	Description string     `json:"description,omitempty"`
+}
+
 // Reference to an export of a module.
 type Reference struct {
 	Name    string `json:"name"`
@@ -37,10 +44,8 @@ type SourceReference struct {
 
 // PropertyLike is the common interface of variables, class fields, and function parameters.
 type PropertyLike struct {
+	FullyQualified
 	StartByte   uint       `json:"-"`
-	Name        string     `json:"name"`
-	Summary     string     `json:"summary,omitempty"`
-	Description string     `json:"description,omitempty"`
 	Type        *Type      `json:"type,omitempty"`
 	Default     string     `json:"default,omitempty"`
 	Deprecated  Deprecated `json:"deprecated,omitempty"`

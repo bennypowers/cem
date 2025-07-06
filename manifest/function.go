@@ -33,10 +33,6 @@ type Return struct {
 // FunctionLike is the common interface of functions and mixins.
 type FunctionLike struct {
 	StartByte   uint        `json:"-"`
-	Name        string      `json:"name"`
-	Summary     string      `json:"summary,omitempty"`
-	Description string      `json:"description,omitempty"`
-	Deprecated  Deprecated  `json:"deprecated,omitempty"` // bool or string
 	Parameters  []Parameter `json:"parameters,omitempty"`
 	Return      *Return     `json:"return,omitempty"`
 }
@@ -45,6 +41,8 @@ type FunctionLike struct {
 // FunctionDeclaration is a function.
 type FunctionDeclaration struct {
 	FunctionLike
+	FullyQualified
+	Deprecated  Deprecated  `json:"deprecated,omitempty"` // bool or string
 	Kind   string           `json:"kind"` // 'function'
 	Source *SourceReference `json:"source,omitempty"`
 }

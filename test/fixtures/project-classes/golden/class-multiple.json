@@ -20,12 +20,12 @@
               "kind": "field"
             },
             {
-              "name": "aMethod",
               "return": {
                 "type": {
                   "text": "string"
                 }
               },
+              "name": "aMethod",
               "kind": "method"
             }
           ],
@@ -54,12 +54,12 @@
               "attribute": "bprop"
             },
             {
-              "name": "bMethod",
               "return": {
                 "type": {
                   "text": "string"
                 }
               },
+              "name": "bMethod",
               "kind": "method"
             }
           ],

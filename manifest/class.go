@@ -26,10 +26,8 @@ var _ Deprecatable = (*ClassDeclaration)(nil)
 
 // ClassLike is the common interface of classes and mixins.
 type ClassLike struct {
+	FullyQualified
 	StartByte   uint             `json:"-"`
-	Name        string           `json:"name"`
-	Summary     string           `json:"summary,omitempty"`
-	Description string           `json:"description,omitempty"`
 	Superclass  *Reference       `json:"superclass,omitempty"`
 	Mixins      []Reference      `json:"mixins,omitempty"`
 	Members     []ClassMember    `json:"members,omitempty"`

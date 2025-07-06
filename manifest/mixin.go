@@ -28,9 +28,7 @@ var _ Deprecatable = (*CustomElementMixinDeclaration)(nil)
 type MixinDeclaration struct {
 	ClassLike
 	FunctionLike
-	Name        string     `json:"name"`
-	Summary     string     `json:"summary,omitempty"`
-	Description string     `json:"description,omitempty"`
+	FullyQualified
 	Deprecated  Deprecated `json:"deprecated,omitempty"`
 	Kind        string     `json:"kind"` // 'mixin'
 }
@@ -39,10 +37,7 @@ type MixinDeclaration struct {
 type CustomElementMixinDeclaration struct {
 	MixinDeclaration
 	CustomElementDeclaration
-	Name        string     `json:"name"`
-	Summary     string     `json:"summary,omitempty"`
-	Description string     `json:"description,omitempty"`
-	Deprecated  Deprecated `json:"deprecated,omitempty"`
+	FullyQualified
 }
 
 func (*MixinDeclaration) isDeclaration()       {}

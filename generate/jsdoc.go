@@ -222,14 +222,10 @@ func (info TagInfo) toAlias() string {
 }
 
 /**
- * @cssprop --var
- * @cssprop --var - description
- * @cssprop [--var=default]
- * @cssprop [--var=default] - description
- * @cssproperty --var
- * @cssproperty --var - description
- * @cssproperty [--var=default]
- * @cssproperty [--var=default] - description
+ * @attr name
+ * @attr name - description
+ * @attribute name
+ * @attribute name - description
  */
 func (info TagInfo) toAttribute() M.Attribute {
 	re := regexp.MustCompile(`(?ms)[\s*]*@attr(ibute)?[\s*]+(\{(?P<type>[^}]+)\}[\s*]+)?(\[(?P<kv>.*)\]|(?P<name>[\w-]+))([\s*]+-[\s*]+(?P<description>.*))?`)
@@ -244,9 +240,11 @@ func (info TagInfo) toAttribute() M.Attribute {
 		info.Name = matches["name"]
 	}
 	attr := M.Attribute{
-		Name:        info.Name,
+		FullyQualified: M.FullyQualified{
+			Name:        info.Name,
+			Description: normalizeJsdocLines(matches["description"]),
+		},
 		Default:     info.Value,
-		Description: normalizeJsdocLines(matches["description"]),
 		StartByte:   info.startByte,
 		// NB: not applicable to the jsdoc version of this.
 		// field name should be inferred from decorated class fields, or other framework construct
@@ -269,8 +267,10 @@ func (info TagInfo) toCssPart() M.CssPart {
 	re := regexp.MustCompile(`(?ms)[\s*]*@csspart[\s*]+(?P<name>[\w-]+)([\s*]+-[\s*]+(?P<description>.*))?`)
 	matches := FindNamedMatches(re, info.source, true)
 	return M.CssPart{
-		Name:        matches["name"],
-		Description: normalizeJsdocLines(matches["description"]),
+		FullyQualified: M.FullyQualified{
+			Name:        matches["name"],
+			Description: normalizeJsdocLines(matches["description"]),
+		},
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
 		// Summary: info.Type,
 		// Deprecated: info.Deprecated,
@@ -324,10 +324,12 @@ func (info TagInfo) toCssCustomProperty() M.CssCustomProperty {
 		info.Name = matches["name"]
 	}
 	prop := M.CssCustomProperty{
+		FullyQualified: M.FullyQualified{
+			Name:        info.Name,
+			Description: normalizeJsdocLines(matches["description"]),
+		},
 		Syntax:      matches["type"],
-		Name:        info.Name,
 		Default:     info.Value,
-		Description: normalizeJsdocLines(matches["description"]),
 		StartByte:   info.startByte,
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
 		// Summary: info.Type,
@@ -344,8 +346,10 @@ func (info TagInfo) toCssCustomState() M.CssCustomState {
 	re := regexp.MustCompile(`(?ms)[\s*]*@cssstate[\s*]+(?P<name>[\w-]+)([\s*]+-[\s*]+(?P<description>.*))?`)
 	matches := FindNamedMatches(re, info.source, true)
 	return M.CssCustomState{
-		Name:        matches["name"],
-		Description: normalizeJsdocLines(matches["description"]),
+		FullyQualified: M.FullyQualified{
+			Name:        matches["name"],
+			Description: normalizeJsdocLines(matches["description"]),
+		},
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
 		// Summary: info.Type,
 		// Deprecated: info.Deprecated,
@@ -379,8 +383,10 @@ func (info TagInfo) toEvent() M.Event {
 	re := regexp.MustCompile(`(?ms)[\s*]*(@fires|@event)\s*(\{(?P<type>[^}]+)\})?[\s*]*(?P<name>[\w-]+)([\s*]+-[\s*]+(?P<description>.*))?`)
 	matches := FindNamedMatches(re, info.source, true)
 	event := M.Event{
-		Name:        matches["name"],
-		Description: normalizeJsdocLines(matches["description"]),
+		FullyQualified: M.FullyQualified{
+			Name:        matches["name"],
+			Description: normalizeJsdocLines(matches["description"]),
+		},
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
 		// Summary: info.Type,
 		// Deprecated: info.Deprecated,
@@ -407,8 +413,10 @@ func (info TagInfo) toSlot() M.Slot {
 		info.Description = normalizeJsdocLines(matches["anonDescription"])
 	}
 	return M.Slot{
-		Name:        matches["name"],
-		Description: info.Description,
+		FullyQualified: M.FullyQualified{
+			Name:        matches["name"],
+			Description: info.Description,
+		},
 		// Commenting these out for now because it's not clear that inline {@deprecated reason} tag is great
 		// Summary: info.Type,
 		// Deprecated: info.Deprecated,
@@ -694,9 +702,6 @@ func NewMethodInfo(source string, queryManager *Q.QueryManager) (error, *MethodI
 }
 
 func (info *MethodInfo) MergeToFunctionLike(declaration *M.FunctionLike) {
-	declaration.Description = normalizeJsdocLines(info.Description)
-	declaration.Deprecated = info.Deprecated
-	declaration.Summary = info.Summary
 	if info.Return != nil {
 		if declaration.Return == nil {
 			declaration.Return = &M.Return{}
@@ -725,4 +730,19 @@ func (info *MethodInfo) MergeToFunctionLike(declaration *M.FunctionLike) {
 			}
 		}
 	}
+}
+
+
+func (info *MethodInfo) MergeToMethod(declaration *M.ClassMethod) {
+	declaration.Description = normalizeJsdocLines(info.Description)
+	declaration.Deprecated = info.Deprecated
+	declaration.Summary = info.Summary
+	info.MergeToFunctionLike(&declaration.FunctionLike)
+}
+
+func (info *MethodInfo) MergeToFunctionDeclaration(declaration *M.FunctionDeclaration) {
+	declaration.Description = normalizeJsdocLines(info.Description)
+	declaration.Deprecated = info.Deprecated
+	declaration.Summary = info.Summary
+	info.MergeToFunctionLike(&declaration.FunctionLike)
 }

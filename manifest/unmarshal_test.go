@@ -855,7 +855,7 @@ func TestUnmarshalPackage(t *testing.T) {
 		mod := mustFirstModule(t, pkg)
 		cem := mustCustomElementMixinDecl(t, mustModuleDecls(t, mod, 1)[0])
 		if cem.Name != "MyCustomElementMixin" {
-			t.Errorf("Name = %q, want 'MyCustomElementMixin'", cem.FunctionLike.Name)
+			t.Errorf("Name = %q, want 'MyCustomElementMixin'", cem.Name)
 		}
 		if len(cem.Members) != 1 {
 			t.Errorf("Members = %+v, want 1 item", cem.Members)

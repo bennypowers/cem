@@ -57,8 +57,10 @@ func amendStylesMapFromSource(
 		_, has := props[name]
 		if !has {
 			props[name] = M.CssCustomProperty{
-				Name:      name,
 				StartByte: startByte,
+				FullyQualified: M.FullyQualified{
+					Name:      name,
+				},
 			}
 		}
 		defaultVals, ok := captures["default"]

@@ -25,9 +25,7 @@ var _ Deprecatable = (*CssCustomState)(nil)
 
 // CssCustomState describes a CSS custom state.
 type CssCustomState struct {
-	Name        string     `json:"name"`
-	Summary     string     `json:"summary,omitempty"`
-	Description string     `json:"description,omitempty"`
+	FullyQualified
 	Deprecated  Deprecated `json:"deprecated,omitempty"` // bool or string
 }
 

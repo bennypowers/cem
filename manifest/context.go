@@ -401,16 +401,19 @@ func (x *MethodWithContext) ToTableRow() []string {
 		x.Method.Summary,
 	}
 }
+
 func (x *MethodWithContext) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
     label := x.Name
     if x.IsDeprecated() {
-        label = highlightIfDeprecated(label, x.Method.Deprecated)
+        label = highlightIfDeprecated(label, x.IsDeprecated())
     }
     return pterm.TreeNode{Text: label}
 }
+
 func (x *MethodWithContext) IsDeprecated() bool {
 	return x.Method.Deprecated != nil
 }
+
 var _ Renderable = (*MethodWithContext)(nil)
 
 func (x *Package) GetAllTagNames() (tags []string) {

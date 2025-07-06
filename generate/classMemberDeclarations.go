@@ -121,7 +121,7 @@ func (mp ModuleProcessor) amendMethodWithJsdoc(captures Q.CaptureMap, method *M.
 			if err != nil {
 				return err
 			} else {
-				info.MergeToFunctionLike(&method.FunctionLike)
+				info.MergeToMethod(method)
 			}
 		}
 	}
@@ -191,8 +191,10 @@ func (mp *ModuleProcessor) createClassFieldFromFieldMatch(
 			Kind:   "field",
 			Static: isStatic,
 			PropertyLike: M.PropertyLike{
-				Name:     fieldName,
 				Readonly: readonly,
+				FullyQualified: M.FullyQualified{
+					Name:     fieldName,
+				},
 			},
 		},
 	}
@@ -341,7 +343,9 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 						parameter := M.Parameter{
 							Rest: isRest,
 							PropertyLike: M.PropertyLike{
-								Name: captures["param.name"][i].Text,
+								FullyQualified: M.FullyQualified{
+									Name: captures["param.name"][i].Text,
+								},
 							},
 						}
 						if _, hasType := captures["param.type"]; hasType {

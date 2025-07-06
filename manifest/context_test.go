@@ -16,22 +16,28 @@ func makeTestPackage() *Package {
 					&CustomElementDeclaration{
 						ClassDeclaration: ClassDeclaration{
 							ClassLike: ClassLike{
-								Name:    "FooElement",
+								FullyQualified: FullyQualified{
+									Name:    "FooElement",
+								},
 								Members: []ClassMember{
 									&CustomElementField{
 										ClassField: ClassField{
 											PropertyLike: PropertyLike{
-												Name:    "bar",
-												Summary: "bar summary",
+												FullyQualified: FullyQualified{
+													Name:    "bar",
+													Summary: "bar summary",
+												},
 											},
 										},
 										Attribute: "bar",
 										Reflects:  true,
 									},
 									&ClassMethod{
-										FunctionLike: FunctionLike{
+										FullyQualified: FullyQualified{
 											Name:    "doAThing",
 											Summary: "does something",
+										},
+										FunctionLike: FunctionLike{
 											Return:  &Return{Type: &Type{Text: "string"}},
 										},
 										Kind:    "method",
@@ -45,24 +51,42 @@ func makeTestPackage() *Package {
 						CustomElement: CustomElement{
 							TagName: "foo-el",
 							Attributes: []Attribute{
-								{Name: "bar", Summary: "bar summary", StartByte: 5},
-								{Name: "baz", Summary: "baz summary", StartByte: 7},
+								{
+									StartByte: 5,
+									FullyQualified: FullyQualified{
+										Name: "bar",
+										Summary: "bar summary",
+									},
+								},
+								{
+									StartByte: 7,
+									FullyQualified: FullyQualified{
+										Name: "baz",
+										Summary: "baz summary",
+									},
+								},
 							},
 							Events: []Event{
-								{Name: "foo-event", Summary: "foo event summary", Type: &Type{Text: "CustomEvent"}},
+								{
+									FullyQualified: FullyQualified{
+										Name: "foo-event",
+										Summary: "foo event summary",
+									},
+									Type: &Type{Text: "CustomEvent"},
+								},
 							},
 							Slots: []Slot{
-								{Name: "", Summary: "default slot"},
-								{Name: "named", Summary: "named slot"},
+								{FullyQualified: FullyQualified{Name: "", Summary: "default slot"}},
+								{FullyQualified: FullyQualified{Name: "named", Summary: "named slot"}},
 							},
 							CssParts: []CssPart{
-								{Name: "part1", Summary: "part1 summary"},
+								{FullyQualified:FullyQualified{Name: "part1", Summary: "part1 summary"}},
 							},
 							CssProperties: []CssCustomProperty{
-								{Name: "--foo-bar", Syntax: "string", Default: "qux", Summary: "foo-bar summary", StartByte: 9},
+								{FullyQualified:FullyQualified{Name: "--foo-bar", Summary: "foo-bar summary"}, Syntax: "string", Default: "qux", StartByte: 9},
 							},
 							CssStates: []CssCustomState{
-								{Name: "--active", Summary: "active state"},
+								{FullyQualified: FullyQualified{Name: "--active", Summary: "active state"}},
 							},
 							Demos:         nil,
 							CustomElement: true,
@@ -198,11 +222,13 @@ func TestContextToTableRow(t *testing.T) {
 	attr := AttributeWithContext{
 		Name: "foo",
 		Attribute: &Attribute{
-			Name:    "foo",
-			Summary: "attr summary",
+			FullyQualified: FullyQualified{
+				Name:    "foo",
+				Summary: "attr summary",
+			},
 		},
 		CustomElementField: &CustomElementField{
-			ClassField: ClassField{PropertyLike: PropertyLike{Name: "foo"}},
+			ClassField: ClassField{PropertyLike: PropertyLike{FullyQualified: FullyQualified{Name: "foo"}}},
 			Reflects:   true,
 		},
 	}
@@ -214,7 +240,7 @@ func TestContextToTableRow(t *testing.T) {
 	// SlotWithContext
 	slot := SlotWithContext{
 		Name: "",
-		Slot: &Slot{Summary: "default"},
+		Slot: &Slot{FullyQualified: FullyQualified{Summary: "default"}},
 	}
 	row = slot.ToTableRow()
 	if !reflect.DeepEqual(row, []string{"<default>", "default"}) {
@@ -224,7 +250,7 @@ func TestContextToTableRow(t *testing.T) {
 	// CssCustomPropertyWithContext
 	cssProp := CssCustomPropertyWithContext{
 		Name:              "--foo",
-		CssCustomProperty: &CssCustomProperty{Syntax: "string", Default: "bar", Summary: "baz"},
+		CssCustomProperty: &CssCustomProperty{Syntax: "string", Default: "bar", FullyQualified: FullyQualified{Summary: "baz"}},
 	}
 	row = cssProp.ToTableRow()
 	if !reflect.DeepEqual(row, []string{"--foo", "string", "bar", "baz"}) {
@@ -234,7 +260,7 @@ func TestContextToTableRow(t *testing.T) {
 	// CssCustomStateWithContext
 	state := CssCustomStateWithContext{
 		Name:           "--active",
-		CssCustomState: &CssCustomState{Summary: "active"},
+		CssCustomState: &CssCustomState{FullyQualified: FullyQualified{Summary: "active"}},
 	}
 	row = state.ToTableRow()
 	if !reflect.DeepEqual(row, []string{"--active", "active"}) {
@@ -244,7 +270,7 @@ func TestContextToTableRow(t *testing.T) {
 	// CssPartWithContext
 	part := CssPartWithContext{
 		Name:    "part1",
-		CssPart: &CssPart{Summary: "part summary"},
+		CssPart: &CssPart{FullyQualified: FullyQualified{Summary: "part summary"}},
 	}
 	row = part.ToTableRow()
 	if !reflect.DeepEqual(row, []string{"part1", "part summary"}) {
@@ -254,7 +280,7 @@ func TestContextToTableRow(t *testing.T) {
 	// EventWithContext
 	event := EventWithContext{
 		Name:  "evt",
-		Event: &Event{Type: &Type{Text: "CustomEvent"}, Summary: "summ"},
+		Event: &Event{Type: &Type{Text: "CustomEvent"}, FullyQualified: FullyQualified{Summary: "summ"}},
 	}
 	row = event.ToTableRow()
 	if !reflect.DeepEqual(row, []string{"evt", "CustomEvent", "summ"}) {
@@ -267,6 +293,8 @@ func TestContextToTableRow(t *testing.T) {
 		Method: &ClassMethod{
 			FunctionLike: FunctionLike{
 				Return:  &Return{Type: &Type{Text: "string"}},
+			},
+			FullyQualified: FullyQualified{
 				Summary: "summ",
 			},
 			Privacy: "private",

@@ -25,12 +25,10 @@ var _ Deprecatable = (*CssCustomProperty)(nil)
 
 // CssCustomProperty describes a CSS custom property.
 type CssCustomProperty struct {
+	FullyQualified
 	StartByte   uint       `json:"-"`
-	Name        string     `json:"name"`
-	Syntax      string     `json:"syntax,omitempty"`
 	Default     string     `json:"default,omitempty"`
-	Summary     string     `json:"summary,omitempty"`
-	Description string     `json:"description,omitempty"`
+	Syntax      string     `json:"syntax,omitempty"`
 	Deprecated  Deprecated `json:"deprecated,omitempty"` // bool or string
 }
 
