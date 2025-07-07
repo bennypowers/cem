@@ -19,6 +19,7 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/pterm/pterm"
 )
@@ -26,6 +27,7 @@ import (
 var _ Deprecatable = (*ClassLike)(nil)
 var _ Deprecatable = (*ClassDeclaration)(nil)
 var _ Renderable = (*RenderableClassDeclaration)(nil)
+var _ GroupedRenderable = (*RenderableClassDeclaration)(nil)
 
 // ClassLike is the common interface of classes and mixins.
 type ClassLike struct {
@@ -137,9 +139,6 @@ func NewRenderableClassDeclaration(
 		}
 	}
 
-	if r.Name() == "SlotController" {
-		pterm.Println("Finish constructing RenderableClassDeclaration for SlotController with", len(r.fields), "fields and", len(r.methods), "methods")
-	}
 	return &r
 }
 
@@ -148,12 +147,17 @@ func (x *RenderableClassDeclaration) Name() string {
 }
 
 func (x *RenderableClassDeclaration) Label() string {
-	return "" +
+	sum := ""
+	if x.ClassDeclaration.Summary != "" {
+		sum = pterm.Gray(x.ClassDeclaration.Summary)
+	}
+	return strings.TrimSpace(
 		pterm.LightBlue("class") +
 		" " +
 		highlightIfDeprecated(x) +
 		" " +
-		pterm.Gray(x.ClassDeclaration.Summary)
+		sum,
+	)
 }
 
 func (x *RenderableClassDeclaration) IsDeprecated() bool {
@@ -166,6 +170,19 @@ func (x *RenderableClassDeclaration) Deprecation() Deprecated {
 
 func (x *RenderableClassDeclaration) Children() []Renderable {
 	return x.ChildNodes
+}
+
+func (x *RenderableClassDeclaration) GroupedChildren(p PredicateFunc) []pterm.TreeNode {
+    var nodes []pterm.TreeNode
+    fs := toTreeChildren(x.fields, p)
+    ms := toTreeChildren(x.methods, p)
+    if len(fs) > 0 {
+        nodes = append(nodes, tn("Fields", fs...))
+    }
+    if len(ms) > 0 {
+        nodes = append(nodes, tn("Methods", ms...))
+    }
+    return nodes
 }
 
 func (x *RenderableClassDeclaration) ColumnHeadings() []string {
@@ -185,15 +202,5 @@ func (x *RenderableClassDeclaration) ToTableRow() []string {
 }
 
 func (x *RenderableClassDeclaration) ToTreeNode(p PredicateFunc) pterm.TreeNode {
-	var cs []pterm.TreeNode
-	fs := toTreeChildren(x.fields, p)
-	ms := toTreeChildren(x.methods, p)
-	if len(fs) > 0 {
-		cs = append(cs, tn(pterm.Blue("Fields"), fs...))
-	}
-	if len(ms) > 0 {
-		cs = append(cs, tn(pterm.Blue("Methods"), ms...))
-	}
-	return tn(x.Label(), cs...)
+	return tn(x.Label(), x.GroupedChildren(p)...)
 }
-

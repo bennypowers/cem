@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/pterm/pterm"
 )
@@ -93,7 +94,11 @@ func (x *RenderableClassMethod) Name() string {
 }
 
 func (x *RenderableClassMethod) Label() string {
-	return highlightIfDeprecated(x) + " " + pterm.Gray(x.Method.Summary)
+	sum := ""
+	if x.Method.Summary != "" {
+		sum = pterm.Gray(x.Method.Summary)
+	}
+	return strings.TrimSpace(highlightIfDeprecated(x) + " " + sum)
 }
 
 func (x *RenderableClassMethod) IsDeprecated() bool {

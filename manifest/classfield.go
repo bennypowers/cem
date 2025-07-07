@@ -19,6 +19,7 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/pterm/pterm"
 )
@@ -110,7 +111,11 @@ func (x *RenderableClassField) Name() string {
 }
 
 func (x *RenderableClassField) Label() string {
-	return highlightIfDeprecated(x) + " " + pterm.Gray(x.ClassField.Summary)
+	sum := ""
+	if x.ClassField.Summary != "" {
+		sum = pterm.Gray(x.ClassField.Summary)
+	}
+	return strings.TrimSpace(highlightIfDeprecated(x) + " " + sum)
 }
 
 func (x *RenderableClassField) IsDeprecated() bool {

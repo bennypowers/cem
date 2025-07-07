@@ -51,6 +51,7 @@ func (m *Module) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		Declarations []json.RawMessage `json:"declarations"`
 		Exports      []json.RawMessage `json:"exports"`
+		Deprecated   json.RawMessage   `json:"deprecated"`
 		*Alias
 	}{
 		Alias: (*Alias)(m),
@@ -60,6 +61,14 @@ func (m *Module) UnmarshalJSON(data []byte) error {
 
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
+	}
+
+	if len(aux.Deprecated) > 0 && string(aux.Deprecated) != "null" {
+		var dep Deprecated
+		if !decodeDeprecatedField(&dep, aux.Deprecated) {
+			return fmt.Errorf("invalid type for deprecated field")
+		}
+		m.Deprecated = dep
 	}
 
 	for _, d := range aux.Declarations {

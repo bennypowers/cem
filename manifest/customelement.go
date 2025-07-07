@@ -24,8 +24,9 @@ import (
 	"github.com/pterm/pterm"
 )
 
-var _ Renderable = (*RenderableCustomElementDeclaration)(nil)
 var _ Deprecatable = (*CustomElementDeclaration)(nil)
+var _ Renderable = (*RenderableCustomElementDeclaration)(nil)
+var _ GroupedRenderable = (*RenderableCustomElementDeclaration)(nil)
 
 // Demo for custom elements.
 type Demo struct {
@@ -138,7 +139,7 @@ func NewRenderableCustomElementDeclaration(
 	var je *JavaScriptExport
 	for i, exp := range mod.Exports {
 		if ecee, ok := exp.(*CustomElementExport); ok {
-			if ecee.Declaration.Name == ced.Name && (ecee.Declaration.Module == "" || ecee.Declaration.Module == mod.Path) {
+			if ecee != nil && ecee.Declaration != nil && ecee.Declaration.Name == ced.Name && (ecee.Declaration.Module == "" || ecee.Declaration.Module == mod.Path) {
 				cee = mod.Exports[i].(*CustomElementExport)
 			}
 		}
@@ -224,6 +225,36 @@ func (x *RenderableCustomElementDeclaration) Children() []Renderable {
 	return x.ChildNodes
 }
 
+func (x *RenderableCustomElementDeclaration) GroupedChildren(p PredicateFunc) []pterm.TreeNode {
+	var cs []pterm.TreeNode
+
+	if attrs := toTreeChildren(x.attributes, p); len(attrs) > 0 {
+		cs = append(cs, tn(pterm.Blue("Attributes"), attrs...))
+	}
+	if slots := toTreeChildren(x.slots, p); len(slots) > 0 {
+		cs = append(cs, tn(pterm.Blue("Slots"), slots...))
+	}
+	if events := toTreeChildren(x.events, p); len(events) > 0 {
+		cs = append(cs, tn(pterm.Blue("Events"), events...))
+	}
+	if fields := toTreeChildren(x.fields, p); len(fields) > 0 {
+		cs = append(cs, tn(pterm.Blue("Fields"), fields...))
+	}
+	if methods := toTreeChildren(x.methods, p); len(methods) > 0 {
+		cs = append(cs, tn(pterm.Blue("Methods"), methods...))
+	}
+	if cssprops := toTreeChildren(x.cssprops, p); len(cssprops) > 0 {
+		cs = append(cs, tn(pterm.Blue("CSS Properties"), cssprops...))
+	}
+	if cssparts := toTreeChildren(x.cssparts, p); len(cssparts) > 0 {
+		cs = append(cs, tn(pterm.Blue("Parts"), cssparts...))
+	}
+	if cssstates := toTreeChildren(x.cssstates, p); len(cssstates) > 0 {
+		cs = append(cs, tn(pterm.Blue("States"), cssstates...))
+	}
+
+	return cs
+}
 
 func (x *RenderableCustomElementDeclaration) ColumnHeadings() []string {
 	return []string{
@@ -250,15 +281,5 @@ func (x *RenderableCustomElementDeclaration) ToTableRow() []string {
 }
 
 func (x *RenderableCustomElementDeclaration) ToTreeNode(p PredicateFunc) pterm.TreeNode {
-	var cs []pterm.TreeNode
-	if len(x.attributes) > 0 { cs = append(cs, tn(pterm.Blue("Attributes"), toTreeChildren(x.attributes, p)...)) }
-	if len(x.slots) > 0 { cs = append(cs, tn(pterm.Blue("Slots"), toTreeChildren(x.slots, p)...)) }
-	if len(x.events) > 0 { cs = append(cs, tn(pterm.Blue("Events"), toTreeChildren(x.events, p)...)) }
-	if len(x.fields) > 0 { cs = append(cs, tn(pterm.Blue("Fields"), toTreeChildren(x.fields, p)...)) }
-	if len(x.methods) > 0 { cs = append(cs, tn(pterm.Blue("Methods"), toTreeChildren(x.methods, p)...)) }
-	if len(x.cssprops) > 0 { cs = append(cs, tn(pterm.Blue("CSS Properties"), toTreeChildren(x.cssprops, p)...)) }
-	if len(x.cssparts) > 0 { cs = append(cs, tn(pterm.Blue("Parts"), toTreeChildren(x.cssparts, p)...)) }
-	if len(x.cssstates) > 0 { cs = append(cs, tn(pterm.Blue("States"), toTreeChildren(x.cssstates, p)...)) }
-	return tn(x.Label(), cs...)
+    return tn(x.Label(), x.GroupedChildren(p)...)
 }
-

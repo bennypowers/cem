@@ -18,7 +18,6 @@ package manifest
 
 import (
 	"errors"
-	"fmt"
 	"slices"
 	"strings"
 
@@ -36,6 +35,10 @@ type Renderable interface {
 	ToTableRow() []string
 	ToTreeNode(pred PredicateFunc) pterm.TreeNode
 	Children() []Renderable
+}
+
+type GroupedRenderable interface {
+	GroupedChildren(p PredicateFunc) []pterm.TreeNode
 }
 
 // Predicate: keep only deprecated nodes
@@ -56,10 +59,6 @@ func formatDeprecated(deprecated any) (label string) {
 }
 
 func highlightIfDeprecated(x Renderable, fixes ...string) string {
-	name := x.Name()
-	if x == nil || !x.IsDeprecated() {
-		return name
-	}
 	prefix:=""
 	suffix:=""
 	if len(fixes) > 0 {
@@ -68,9 +67,12 @@ func highlightIfDeprecated(x Renderable, fixes ...string) string {
 	if len(fixes) > 1 {
 		suffix = fixes[1]
 	}
-	return prefix + name + suffix + " " + formatDeprecated(x.Deprecation())
+	name := prefix + x.Name() + suffix
+	if x == nil || !x.IsDeprecated() {
+		return name
+	}
+	return name + " " + formatDeprecated(x.Deprecation())
 }
-
 
 func (x *Package) GetAllTagNames() (tags []string) {
 	// Write index.html
@@ -112,7 +114,6 @@ func (x *Package) RenderableModules() (modules []*RenderableModule) {
 
 // RenderableCustomElementDeclarations returns a slice of RenderableCustomElement for all custom elements in all modules.
 func (x *Package) RenderableCustomElementDeclarations() (tags []*RenderableCustomElementDeclaration) {
-	fmt.Println("RenderableCustomElementDeclarations()")
 	for _, m := range x.Modules {
 		mrs := make(map[string]*RenderableCustomElementDeclaration)
 		for _, d := range m.Declarations {
@@ -306,16 +307,23 @@ func (x *Package) TagRenderableClassMethods(tagName string) (methods []*Renderab
 }
 
 func toTreeChildren(xs []Renderable, p PredicateFunc) (nodes []pterm.TreeNode) {
-    for i := range xs {
-        n := xs[i]
-        children := toTreeChildren(n.Children(), p)
-        if p(n) || len(children) > 0 {
-            node := n.ToTreeNode(p)
-            node.Children = children // Ensure you set the filtered children!
-            nodes = append(nodes, node)
-        }
-    }
-    return nodes
+	for _, n := range xs {
+		var children []pterm.TreeNode
+			// If this Renderable knows how to group its children, use that
+			if gr, ok := n.(GroupedRenderable); ok {
+					children = append(nodes, gr.GroupedChildren(p)...)
+			} else {
+				// Otherwise, use the default recursion+filtering
+				children = toTreeChildren(n.Children(), p)
+			}
+
+			if p(n) || len(children) > 0 {
+					node := n.ToTreeNode(p)
+					node.Children = children
+					nodes = append(nodes, node)
+			}
+	}
+	return nodes
 }
 
 func tn(text string, children... pterm.TreeNode) pterm.TreeNode {

@@ -79,8 +79,7 @@ var generateCmd = &cobra.Command{
 				pterm.Success.Printf("Wrote manifest to %s in %s", cfg.Generate.Output, G.ColorizeDuration(end).Sprint(end))
 			}
 		} else {
-			fmt.Println("printed here not file")
-			// fmt.Println(*manifest + "\n")
+			fmt.Println(*manifest + "\n")
 		}
 		return errs
 	},
