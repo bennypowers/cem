@@ -107,6 +107,7 @@ func NewRenderableMixinDeclaration(
 	// TODO: populate children with params, return
 	children := make([]Renderable, 0)
   return &RenderableMixinDeclaration{
+		MixinDeclaration: md,
 		JavaScriptExport: export,
 		Module: mod,
 		Package: pkg,
