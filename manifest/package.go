@@ -53,29 +53,29 @@ func (x *Package) IsDeprecated() bool {
 	return x.Deprecated != nil
 }
 
-func (p *Package) UnmarshalJSON(data []byte) error {
+func (x *Package) UnmarshalJSON(data []byte) error {
 	type Alias Package
 	aux := &struct {
 		Modules []json.RawMessage `json:"modules"`
 		*Alias
 	}{
-		Alias: (*Alias)(p),
+		Alias: (*Alias)(x),
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
 
-	p.Modules = nil
+	x.Modules = nil
 	for _, m := range aux.Modules {
 		var mod Module
 		if err := json.Unmarshal(m, &mod); err == nil {
-			p.Modules = append(p.Modules, mod)
+			x.Modules = append(x.Modules, mod)
 		} else {
 			return fmt.Errorf("cannot unmarshal module: %w", err)
 		}
 	}
-	if p.Modules == nil {
-		p.Modules = []Module{}
+	if x.Modules == nil {
+		x.Modules = []Module{}
 	}
 	return nil
 }
@@ -124,11 +124,11 @@ func (x *RenderablePackage) Deprecation() Deprecated {
   return x.Package.Deprecated
 }
 
-func (n *RenderablePackage) Children() []Renderable {
-	if n == nil || n.ChildNodes == nil {
+func (x *RenderablePackage) Children() []Renderable {
+	if x == nil || x.ChildNodes == nil {
 		return make([]Renderable, 0)
 	}
-	return n.ChildNodes
+	return x.ChildNodes
 }
 
 func (x *RenderablePackage) ColumnHeadings() []string {
