@@ -92,6 +92,22 @@ func (x *RenderableClassMethod) Name() string {
 	return x.Method.Name
 }
 
+func (x *RenderableClassMethod) Label() string {
+	return highlightIfDeprecated(x) + " " + pterm.Gray(x.Method.Summary)
+}
+
+func (x *RenderableClassMethod) IsDeprecated() bool {
+	return x.Method.Deprecated != nil
+}
+
+func (x *RenderableClassMethod) Deprecation() Deprecated {
+	return x.Method.Deprecated
+}
+
+func (x *RenderableClassMethod) Children() []Renderable {
+	return x.ChildNodes
+}
+
 func (x *RenderableClassMethod) ColumnHeadings() []string {
 	return []string{"Name", "Return Type", "Privacy", "Static", "Summary"}
 }
@@ -116,20 +132,7 @@ func (x *RenderableClassMethod) ToTableRow() []string {
 }
 
 func (x *RenderableClassMethod) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-	label := highlightIfDeprecated(x)
-	return pterm.TreeNode{Text: label}
-}
-
-func (x *RenderableClassMethod) Children() []Renderable {
-	return x.ChildNodes
-}
-
-func (x *RenderableClassMethod) IsDeprecated() bool {
-	return x.Method.Deprecated != nil
-}
-
-func (x *RenderableClassMethod) Deprecation() Deprecated {
-	return x.Method.Deprecated
+	return pterm.TreeNode{Text: x.Label()}
 }
 
 func NewRenderableClassMethod(

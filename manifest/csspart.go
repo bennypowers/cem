@@ -69,8 +69,38 @@ type RenderableCssPart struct {
 	// Add more context fields as needed
 }
 
+func NewRenderableCssPart(
+  part *CssPart,
+	ced *CustomElementDeclaration,
+	cee *CustomElementExport,
+	mod *Module,
+) *RenderableCssPart {
+	return  &RenderableCssPart{
+		CssPart:                  part,
+		CustomElementDeclaration: ced,
+		CustomElementExport:      cee,
+		JavaScriptModule:         mod,
+	}
+}
+
 func (x *RenderableCssPart) Name() string {
 	return x.CssPart.Name
+}
+
+func (x *RenderableCssPart) Label() string {
+	return highlightIfDeprecated(x) + " " + pterm.Gray(x.CssPart.Summary)
+}
+
+func (x *RenderableCssPart) IsDeprecated() bool {
+	return x.CssPart != nil && x.CssPart.IsDeprecated()
+}
+
+func (x *RenderableCssPart) Deprecation() Deprecated {
+	return x.CssPart.Deprecated
+}
+
+func (x *RenderableCssPart) Children() []Renderable {
+	return nil // It's a leaf node
 }
 
 func (x *RenderableCssPart) ColumnHeadings() []string {
@@ -89,31 +119,6 @@ func (x *RenderableCssPart) ToTableRow() []string {
 }
 
 func (x *RenderableCssPart) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-	return pterm.TreeNode{Text: highlightIfDeprecated(x) }
+	return pterm.TreeNode{Text: x.Label() }
 }
 
-func (x *RenderableCssPart) IsDeprecated() bool {
-	return x.CssPart != nil && x.CssPart.IsDeprecated()
-}
-
-func (x *RenderableCssPart) Deprecation() Deprecated {
-	return x.CssPart.Deprecated
-}
-
-func (x *RenderableCssPart) Children() []Renderable {
-	return nil // It's a leaf node
-}
-
-func NewRenderableCssPart(
-  part *CssPart,
-	ced *CustomElementDeclaration,
-	cee *CustomElementExport,
-	mod *Module,
-) *RenderableCssPart {
-	return  &RenderableCssPart{
-		CssPart:                  part,
-		CustomElementDeclaration: ced,
-		CustomElementExport:      cee,
-		JavaScriptModule:         mod,
-	}
-}

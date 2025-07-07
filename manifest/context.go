@@ -18,6 +18,7 @@ package manifest
 
 import (
 	"errors"
+	"fmt"
 	"slices"
 	"strings"
 
@@ -29,6 +30,7 @@ type PredicateFunc func(Renderable) bool
 type Renderable interface {
 	Deprecatable
 	Name() string
+	Label() string
 	Deprecation() Deprecated
 	ColumnHeadings() []string
 	ToTableRow() []string
@@ -38,6 +40,7 @@ type Renderable interface {
 
 // Predicate: keep only deprecated nodes
 func IsDeprecated(d Renderable) bool { return d.IsDeprecated() }
+
 func True(d Renderable) bool         { return true }
 
 func formatDeprecated(deprecated any) (label string) {
@@ -52,12 +55,20 @@ func formatDeprecated(deprecated any) (label string) {
 	}
 }
 
-func highlightIfDeprecated(x Renderable) string {
+func highlightIfDeprecated(x Renderable, fixes ...string) string {
 	name := x.Name()
 	if x == nil || !x.IsDeprecated() {
 		return name
 	}
-	return name + " " + formatDeprecated(x.Deprecation())
+	prefix:=""
+	suffix:=""
+	if len(fixes) > 0 {
+		prefix = fixes[0]
+	}
+	if len(fixes) > 1 {
+		suffix = fixes[1]
+	}
+	return prefix + name + suffix + " " + formatDeprecated(x.Deprecation())
 }
 
 
@@ -101,14 +112,12 @@ func (x *Package) RenderableModules() (modules []*RenderableModule) {
 
 // RenderableCustomElementDeclarations returns a slice of RenderableCustomElement for all custom elements in all modules.
 func (x *Package) RenderableCustomElementDeclarations() (tags []*RenderableCustomElementDeclaration) {
+	fmt.Println("RenderableCustomElementDeclarations()")
 	for _, m := range x.Modules {
-		mrs := make(map[string]RenderableCustomElementDeclaration)
+		mrs := make(map[string]*RenderableCustomElementDeclaration)
 		for _, d := range m.Declarations {
 			if ced, ok := d.(*CustomElementDeclaration); ok {
-				mrs[ced.TagName] = RenderableCustomElementDeclaration{
-					CustomElementDeclaration: ced,
-					Module: &m,
-				}
+				mrs[ced.TagName] = NewRenderableCustomElementDeclaration(ced, &m, x)
 			}
 		}
 		for _, e := range m.Exports {
@@ -120,7 +129,7 @@ func (x *Package) RenderableCustomElementDeclarations() (tags []*RenderableCusto
 		}
 		for i := range mrs {
 			tag := mrs[i]
-			tags = append(tags, &tag)
+			tags = append(tags, tag)
 		}
 	}
 	slices.SortStableFunc(tags, func(a *RenderableCustomElementDeclaration, b *RenderableCustomElementDeclaration) int {
@@ -168,7 +177,6 @@ func (x *Package) TagRenderableAttributes(tagName string) (attrs []*RenderableAt
 			field = &f
 		}
 		attrMap[attrCopy.Name] = RenderableAttribute{
-			name:                     attrCopy.Name,
 			Attribute:                &attrCopy,
 			CustomElementDeclaration: ced,
 			CustomElementField:       field,
@@ -300,75 +308,63 @@ func (x *Package) TagRenderableClassMethods(tagName string) (methods []*Renderab
 // --- FILTER TREE ---
 
 func filterRenderableTree(node Renderable, pred PredicateFunc) Renderable {
-	// I'm not sure how necessary this function even really is, since
-	// we're passing the predicate all the way down in ToTreeNode(pred)
-	// we are using it to alter the label though
 	var filteredChildren []Renderable
 	for _, child := range node.Children() {
 		if filtered := filterRenderableTree(child, pred); filtered != nil {
 			filteredChildren = append(filteredChildren, filtered)
 		}
 	}
-	if pred(node) || len(filteredChildren) > 0 {
+	if pred(node) {
+		// Node passes predicate: return the original pointer, keeping all private data
+		return node
+	}
+	if len(filteredChildren) > 0 {
 		switch n := node.(type) {
 		case *RenderablePackage:
-			return &RenderablePackage{
-				Package: n.Package,
-				ChildNodes: filteredChildren,
-			}
+			clone := *n
+			clone.ChildNodes = filteredChildren
+			return &clone
 		case *RenderableModule:
-			return &RenderableModule{
-				Path: n.Path,
-				Module: n.Module,
-				Package: n.Package,
-				ChildNodes: filteredChildren,
-			}
+			clone := *n
+			clone.ChildNodes = filteredChildren
+			return &clone
 		case *RenderableClassDeclaration:
-			return &RenderableClassDeclaration{
-				ClassDeclaration: n.ClassDeclaration,
-				JavaScriptExport: n.JavaScriptExport,
-				Module: n.Module,
-				Package: n.Package,
-				ChildNodes: filteredChildren,
-			}
+			clone := *n
+			clone.ChildNodes = filteredChildren
+			return &clone
 		case *RenderableCustomElementDeclaration:
-			return &RenderableCustomElementDeclaration{
-				CustomElementDeclaration: n.CustomElementDeclaration,
-				CustomElementExport: n.CustomElementExport,
-				JavaScriptExport: n.JavaScriptExport,
-				Module: n.Module,
-				Package: n.Package,
-				ChildNodes: filteredChildren,
-			}
+			clone := *n
+			clone.ChildNodes = filteredChildren
+			return &clone
 		case *RenderableFunctionDeclaration:
-			return &RenderableFunctionDeclaration{
-				FunctionDeclaration: n.FunctionDeclaration,
-				JavaScriptExport: n.JavaScriptExport,
-				Module: n.Module,
-				Package: n.Package,
-				ChildNodes: filteredChildren,
-			}
+			clone := *n
+			clone.ChildNodes = filteredChildren
+			return &clone
 		case *RenderableMixinDeclaration:
-			return &RenderableMixinDeclaration{
-				MixinDeclaration: n.MixinDeclaration,
-				JavaScriptExport: n.JavaScriptExport,
-				Module          : n.Module,
-				Package         : n.Package,
-				ChildNodes:filteredChildren,
-			}
+			clone := *n
+			clone.ChildNodes = filteredChildren
+			return &clone
 		case *RenderableCustomElementMixinDeclaration:
-			return &RenderableCustomElementMixinDeclaration{
-				TagName: n.TagName,
-				CustomElementMixinDeclaration: n.CustomElementMixinDeclaration,
-				JavaScriptExport: n.JavaScriptExport,
-				Module          : n.Module,
-				Package         : n.Package,
-				ChildNodes:filteredChildren,
-			}
-		// we can skip leaf nodes, they were filtered out above
+			clone := *n
+			clone.ChildNodes = filteredChildren
+			return &clone
 		default:
 			return node
 		}
 	}
 	return nil
+}
+
+func toTreeChildren(xs []Renderable, p PredicateFunc) (nodes []pterm.TreeNode) {
+	for i := range xs {
+		n := xs[i]
+		if p(n) {
+			nodes = append(nodes, n.ToTreeNode(p))
+		}
+	}
+	return nodes
+}
+
+func tn(text string, children... pterm.TreeNode) pterm.TreeNode {
+	return pterm.TreeNode{Text: text, Children: children}
 }

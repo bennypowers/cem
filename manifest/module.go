@@ -99,51 +99,6 @@ type RenderableModule struct {
 	ChildNodes           []Renderable
 }
 
-func (x *RenderableModule) ColumnHeadings() []string {
-	return []string{"Path", "Tag Names"}
-}
-
-func (x *RenderableModule) ToTableRow() []string {
-	tags := make([]string, 0)
-	for _, cee := range x.CustomElementExports {
-		tags = append(tags, cee.Name)
-	}
-	return []string{
-		x.Path,
-		strings.Join(tags, ", "),
-	}
-}
-
-func (x *RenderableModule) Name() string {
-	return x.Module.Path
-	// pterm.LightBlue("module") + " " + x.Path,
-}
-
-func (x *RenderableModule) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-	label := highlightIfDeprecated(x)
-	ft := filterRenderableTree(x, pred)
-	children := make([]pterm.TreeNode, 0)
-	for _, c := range ft.Children() {
-		children = append(children, c.ToTreeNode(pred))
-	}
-	return pterm.TreeNode{
-		Text: label,
-		Children: children,
-	}
-}
-
-func (x *RenderableModule) Children() []Renderable {
-	return x.ChildNodes
-}
-
-func (x *RenderableModule) IsDeprecated() bool {
-	return x.Module.IsDeprecated()
-}
-
-func (x *RenderableModule) Deprecation() Deprecated {
-	return x.Module.Deprecated
-}
-
 func NewRenderableModule(
 	mod *Module,
 	pkg *Package,
@@ -184,3 +139,43 @@ func NewRenderableModule(
 		ChildNodes: children,
 	}
 }
+
+func (x *RenderableModule) Name() string {
+	return x.Module.Path
+}
+
+func (x *RenderableModule) Label() string {
+	return pterm.LightBlue("module") + " " + x.Path
+}
+
+func (x *RenderableModule) IsDeprecated() bool {
+	return x.Module.IsDeprecated()
+}
+
+func (x *RenderableModule) Deprecation() Deprecated {
+	return x.Module.Deprecated
+}
+
+func (x *RenderableModule) Children() []Renderable {
+	return x.ChildNodes
+}
+
+func (x *RenderableModule) ColumnHeadings() []string {
+	return []string{"Path", "Tag Names"}
+}
+
+func (x *RenderableModule) ToTableRow() []string {
+	tags := make([]string, 0)
+	for _, cee := range x.CustomElementExports {
+		tags = append(tags, cee.Name)
+	}
+	return []string{
+		x.Path,
+		strings.Join(tags, ", "),
+	}
+}
+
+func (x *RenderableModule) ToTreeNode(p PredicateFunc) pterm.TreeNode {
+	return tn(x.Label(), toTreeChildren(x.Children(), p)...)
+}
+

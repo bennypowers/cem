@@ -117,87 +117,14 @@ type RenderableCustomElementDeclaration struct {
 	Module                   *Module
 	Package                  *Package
 	ChildNodes               []Renderable
-}
-
-func (x *RenderableCustomElementDeclaration) Name() string {
-	return x.CustomElementDeclaration.TagName
-	// pterm.LightBlue("<" + x.Name() + ">"),
-}
-
-func (x *RenderableCustomElementDeclaration) ColumnHeadings() []string {
-	return []string{
-		"Tag", // (tag name),
-		"Class", // (class name),
-		"Module", //(module path),
-		"Summary",
-	}
-}
-
-// Renders a CustomElement as a table row.
-func (x *RenderableCustomElementDeclaration) ToTableRow() []string {
-	modulePath := ""
-	if x.Module != nil {
-		modulePath = x.Module.Path
-	}
-	return []string{
-		highlightIfDeprecated(x),
-		x.CustomElementDeclaration.Name,
-		modulePath,
-		x.CustomElementDeclaration.Summary,
-	}
-}
-
-func (x *RenderableCustomElementDeclaration) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-	// TODO: hmmm
-	label := "<"+highlightIfDeprecated(x)+">"
-	ft := filterRenderableTree(x, pred)
-	var attributes, slots, events, fields, methods, cssProperties, parts, states []pterm.TreeNode
-		for _, child := range ft.Children() {
-			node := child.ToTreeNode(pred)
-			switch child.(type) {
-			case *RenderableAttribute:
-					attributes = append(attributes, node)
-			case *RenderableSlot:
-					slots = append(slots, node)
-			case *RenderableEvent:
-					events = append(events, node)
-			case *RenderableClassField:
-					fields = append(fields, node)
-			case *RenderableClassMethod:
-					methods = append(methods, node)
-			case *RenderableCssCustomProperty:
-					cssProperties = append(cssProperties, node)
-			case *RenderableCssPart:
-					parts = append(parts, node)
-			case *RenderableCssCustomState:
-					states = append(states, node)
-			}
-	}
-	var children []pterm.TreeNode
-	if len(attributes) > 0 { children = append(children, pterm.TreeNode{Text: "Attributes", Children: attributes}) }
-	if len(slots) > 0 { children = append(children, pterm.TreeNode{Text: "Slots", Children: slots}) }
-	if len(events) > 0 { children = append(children, pterm.TreeNode{Text: "Events", Children: events}) }
-	if len(fields) > 0 { children = append(children, pterm.TreeNode{Text: "Fields", Children: fields}) }
-	if len(methods) > 0 { children = append(children, pterm.TreeNode{Text: "Methods", Children: methods}) }
-	if len(cssProperties) > 0 { children = append(children, pterm.TreeNode{Text: "CSS Properties", Children: cssProperties}) }
-	if len(parts) > 0 { children = append(children, pterm.TreeNode{Text: "Parts", Children: parts}) }
-	if len(states) > 0 { children = append(children, pterm.TreeNode{Text: "States", Children: states}) }
-	return pterm.TreeNode{
-		Text: label,
-		Children: children,
-	}
-}
-
-func (x *RenderableCustomElementDeclaration) Children() []Renderable {
-	return x.ChildNodes
-}
-
-func (x *RenderableCustomElementDeclaration) IsDeprecated() bool {
-	return x.CustomElementDeclaration.IsDeprecated()
-}
-
-func (x *RenderableCustomElementDeclaration) Deprecation() Deprecated {
-	return x.CustomElementDeclaration.Deprecated
+	attributes []Renderable
+	events []Renderable
+	slots []Renderable
+	cssparts []Renderable
+	cssprops []Renderable
+	cssstates []Renderable
+	fields []Renderable
+	methods []Renderable
 }
 
 func NewRenderableCustomElementDeclaration(
@@ -224,39 +151,112 @@ func NewRenderableCustomElementDeclaration(
 			break
 		}
 	}
-	children := make([]Renderable, 0)
-	for i := range ced.Attributes {
-		children = append(children, NewRenderableAttribute(&ced.Attributes[i], ced, cee, mod))
-	}
-	for i := range ced.Events {
-		children = append(children, NewRenderableEvent(&ced.Events[i], ced, cee, mod))
-	}
-	for i := range ced.Slots {
-		children = append(children, NewRenderableSlot(&ced.Slots[i], ced, cee, mod))
-	}
-	for i := range ced.CssParts {
-		children = append(children, NewRenderableCssPart(&ced.CssParts[i], ced, cee, mod))
-	}
-	for i := range ced.CssProperties {
-		children = append(children, NewRenderableCssCustomProperty(&ced.CssProperties[i], ced, cee, mod))
-	}
-	for i := range ced.CssStates {
-		children = append(children, NewRenderableCssCustomState(&ced.CssStates[i], ced, cee, mod))
-	}
-	for _, m := range ced.Members {
-		if field, ok := m.(*ClassField); ok {
-			children = append(children, NewRenderableClassField(field, &ced.ClassDeclaration, je, mod, pkg))
-		} else if cef, ok := m.(*CustomElementField); ok {
-			children = append(children, NewRenderableCustomElementField(cef, ced, je, cee, mod, pkg))
-		} else if method, ok := m.(*ClassMethod); ok {
-			children = append(children, NewRenderableClassMethod(method, &ced.ClassDeclaration, je, mod, pkg))
-		}
-	}
-	return &RenderableCustomElementDeclaration{
+	r := RenderableCustomElementDeclaration{
 		CustomElementDeclaration:  ced,
 		CustomElementExport:       cee,
 		Module:                    mod,
-		ChildNodes:                children,
 	}
+	for i := range ced.Attributes {
+		m := NewRenderableAttribute(&ced.Attributes[i], ced, cee, mod)
+		r.ChildNodes = append(r.ChildNodes, m)
+		r.attributes = append(r.attributes, m)
+	}
+	for i := range ced.Events {
+		m := NewRenderableEvent(&ced.Events[i], ced, cee, mod)
+		r.ChildNodes = append(r.ChildNodes, m)
+		r.events = append(r.events, m)
+	}
+	for i := range ced.Slots {
+		m := NewRenderableSlot(&ced.Slots[i], ced, cee, mod)
+		r.ChildNodes = append(r.ChildNodes, m)
+		r.slots = append(r.slots, m)
+	}
+	for i := range ced.CssParts {
+		m := NewRenderableCssPart(&ced.CssParts[i], ced, cee, mod)
+		r.ChildNodes = append(r.ChildNodes, m)
+		r.cssparts = append(r.cssparts, m)
+	}
+	for i := range ced.CssProperties {
+		m := NewRenderableCssCustomProperty(&ced.CssProperties[i], ced, cee, mod)
+		r.ChildNodes = append(r.ChildNodes, m)
+		r.cssprops = append(r.cssprops, m)
+	}
+	for i := range ced.CssStates {
+		m := NewRenderableCssCustomState(&ced.CssStates[i], ced, cee, mod)
+		r.ChildNodes = append(r.ChildNodes, m)
+		r.cssstates = append(r.cssstates, m)
+	}
+	for _, m := range ced.Members {
+		if field, ok := m.(*ClassField); ok {
+			m := NewRenderableClassField(field, &ced.ClassDeclaration, je, mod, pkg)
+			r.ChildNodes = append(r.ChildNodes, m)
+			r.fields = append(r.fields, m)
+		} else if cef, ok := m.(*CustomElementField); ok {
+			m := NewRenderableCustomElementField(cef, ced, je, cee, mod, pkg)
+			r.ChildNodes = append(r.ChildNodes, m)
+			r.fields = append(r.fields, m)
+		} else if method, ok := m.(*ClassMethod); ok {
+			m := NewRenderableClassMethod(method, &ced.ClassDeclaration, je, mod, pkg)
+			r.ChildNodes = append(r.ChildNodes, m)
+			r.methods = append(r.methods, m)
+		}
+	}
+	return &r
+}
+
+func (x *RenderableCustomElementDeclaration) Name() string {
+	return x.CustomElementDeclaration.TagName
+}
+
+func (x *RenderableCustomElementDeclaration) Label() string {
+	return highlightIfDeprecated(x, "<", ">") + " " + pterm.Gray(x.CustomElementDeclaration.Summary)
+}
+
+func (x *RenderableCustomElementDeclaration) IsDeprecated() bool {
+	return x.CustomElementDeclaration.IsDeprecated()
+}
+
+func (x *RenderableCustomElementDeclaration) Deprecation() Deprecated {
+	return x.CustomElementDeclaration.Deprecated
+}
+
+func (x *RenderableCustomElementDeclaration) Children() []Renderable {
+	return x.ChildNodes
+}
+
+func (x *RenderableCustomElementDeclaration) ColumnHeadings() []string {
+	return []string{
+		"Tag", // (tag name),
+		"Class", // (class name),
+		"Module", //(module path),
+		"Summary",
+	}
+}
+
+// Renders a CustomElement as a table row.
+func (x *RenderableCustomElementDeclaration) ToTableRow() []string {
+	modulePath := ""
+	if x.Module != nil {
+		modulePath = x.Module.Path
+	}
+	return []string{
+		highlightIfDeprecated(x),
+		x.CustomElementDeclaration.Name,
+		modulePath,
+		x.CustomElementDeclaration.Summary,
+	}
+}
+
+func (x *RenderableCustomElementDeclaration) ToTreeNode(p PredicateFunc) pterm.TreeNode {
+	var cs []pterm.TreeNode
+	if len(x.attributes) > 0 { cs = append(cs, tn(pterm.Blue("Attributes"), toTreeChildren(x.attributes, p)...)) }
+	if len(x.slots) > 0 { cs = append(cs, tn(pterm.Blue("Slots"), toTreeChildren(x.slots, p)...)) }
+	if len(x.events) > 0 { cs = append(cs, tn(pterm.Blue("Events"), toTreeChildren(x.events, p)...)) }
+	if len(x.fields) > 0 { cs = append(cs, tn(pterm.Blue("Fields"), toTreeChildren(x.fields, p)...)) }
+	if len(x.methods) > 0 { cs = append(cs, tn(pterm.Blue("Methods"), toTreeChildren(x.methods, p)...)) }
+	if len(x.cssprops) > 0 { cs = append(cs, tn(pterm.Blue("CSS Properties"), toTreeChildren(x.cssprops, p)...)) }
+	if len(x.cssparts) > 0 { cs = append(cs, tn(pterm.Blue("Parts"), toTreeChildren(x.cssparts, p)...)) }
+	if len(x.cssstates) > 0 { cs = append(cs, tn(pterm.Blue("States"), toTreeChildren(x.cssstates, p)...)) }
+	return tn(x.Label(), cs...)
 }
 

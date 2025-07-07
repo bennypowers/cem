@@ -93,9 +93,42 @@ type RenderablePackage struct {
 	ChildNodes []Renderable
 }
 
+func NewRenderablePackage(pkg *Package) *RenderablePackage {
+	if pkg == nil {
+		return nil
+	}
+	var children []Renderable
+	for i := range pkg.Modules {
+		children = append(children, NewRenderableModule(&pkg.Modules[i], pkg))
+	}
+	return &RenderablePackage{
+		Package: pkg,
+		ChildNodes: children,
+	}
+}
+
 func (x *RenderablePackage) Name() string {
 	// TODO: out of band package name
 	return "<root>"
+}
+
+func (x *RenderablePackage) Label() string {
+	return x.Name() // TODO: out of band package name
+}
+
+func (x *RenderablePackage) IsDeprecated() bool {
+  return x.Package.IsDeprecated()
+}
+
+func (x *RenderablePackage) Deprecation() Deprecated {
+  return x.Package.Deprecated
+}
+
+func (n *RenderablePackage) Children() []Renderable {
+	if n == nil || n.ChildNodes == nil {
+		return make([]Renderable, 0)
+	}
+	return n.ChildNodes
 }
 
 func (x *RenderablePackage) ColumnHeadings() []string {
@@ -109,6 +142,9 @@ func (x *RenderablePackage) ToTableRow() []string {
 func (x *RenderablePackage) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
 	label := highlightIfDeprecated(x)
 	ft := filterRenderableTree(x, pred)
+	if ft == nil {
+		return pterm.TreeNode{}
+	}
 	children := []pterm.TreeNode{}
 	for _, c := range ft.Children() {
 		children = append(children, c.ToTreeNode(pred))
@@ -116,35 +152,6 @@ func (x *RenderablePackage) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
 	return pterm.TreeNode{
 		Text: label,
 		Children: children,
-	}
-}
-
-func (x *RenderablePackage) IsDeprecated() bool {
-  return x.Package.IsDeprecated()
-}
-
-func (x *RenderablePackage) Deprecation() Deprecated {
-  return x.Package.Deprecated
-}
-
-func (n *RenderablePackage) Children() []Renderable {
-	if n == nil {
-		return nil
-	}
-	return n.ChildNodes
-}
-
-func NewRenderablePackage(pkg *Package) *RenderablePackage {
-	if pkg == nil {
-		return nil
-	}
-	var children []Renderable
-	for i := range pkg.Modules {
-		children = append(children, NewRenderableModule(&pkg.Modules[i], pkg))
-	}
-	return &RenderablePackage{
-		Package: pkg,
-		ChildNodes: children,
 	}
 }
 

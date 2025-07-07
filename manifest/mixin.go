@@ -114,8 +114,26 @@ func NewRenderableMixinDeclaration(
 	}
 }
 
+func (*CustomElementMixinDeclaration) isDeclaration() {}
+
 func (x *RenderableMixinDeclaration) Name() string {
 	return x.MixinDeclaration.Name
+}
+
+func (x *RenderableMixinDeclaration) Label() string {
+	return pterm.LightBlue("mixin") + " " + highlightIfDeprecated(x)
+}
+
+func (x *RenderableMixinDeclaration) IsDeprecated() bool {
+	return x.MixinDeclaration.IsDeprecated()
+}
+
+func (x *RenderableMixinDeclaration) Deprecation() Deprecated {
+	return x.MixinDeclaration.Deprecated
+}
+
+func (x *RenderableMixinDeclaration) Children() []Renderable {
+	return x.ChildNodes
 }
 
 func (x *RenderableMixinDeclaration) ColumnHeadings() []string {
@@ -130,29 +148,10 @@ func (x *RenderableMixinDeclaration) ToTableRow() []string {
 	}
 }
 
-func (x *RenderableMixinDeclaration) ToTreeNode(pref PredicateFunc) pterm.TreeNode {
-	label := pterm.LightBlue("mixin") + " " + highlightIfDeprecated(x)
-	children := make([]pterm.TreeNode, 0)
-	// TODO: params, return, class stuff as children
-	return pterm.TreeNode {
-    Text: label,
-		Children: children,
-	}
+func (x *RenderableMixinDeclaration) ToTreeNode(p PredicateFunc) pterm.TreeNode {
+	// TODO: grouped params, return, class stuff as children
+	return tn(x.Label(), toTreeChildren(x.Children(), p)...)
 }
-
-func (x *RenderableMixinDeclaration) Children() []Renderable {
-	return x.ChildNodes
-}
-
-func (x *RenderableMixinDeclaration) IsDeprecated() bool {
-	return x.MixinDeclaration.IsDeprecated()
-}
-
-func (x *RenderableMixinDeclaration) Deprecation() Deprecated {
-	return x.MixinDeclaration.Deprecated
-}
-
-func (*CustomElementMixinDeclaration) isDeclaration() {}
 
 func (x *CustomElementMixinDeclaration) IsDeprecated() bool {
 	if x == nil {
@@ -228,6 +227,10 @@ func (x *RenderableCustomElementMixinDeclaration) Name() string {
 	return x.CustomElementMixinDeclaration.Name
 }
 
+func (x *RenderableCustomElementMixinDeclaration) Label() string {
+	return pterm.LightBlue("custom element mixin") + " " + highlightIfDeprecated(x)
+}
+
 func (x *RenderableCustomElementMixinDeclaration) ColumnHeadings() []string {
 	// TODO: elaborate
 	return []string{"Name"}
@@ -240,13 +243,8 @@ func (x *RenderableCustomElementMixinDeclaration) ToTableRow() []string {
 	}
 }
 
-func (x *RenderableCustomElementMixinDeclaration) ToTreeNode(pref PredicateFunc) pterm.TreeNode {
-	label := pterm.LightBlue("custom element mixin") + " " + highlightIfDeprecated(x)
-	children := make([]pterm.TreeNode, 0)
-	// TODO: params, return, class stuff as children
-	return pterm.TreeNode {
-    Text: label,
-		Children: children,
-	}
+func (x *RenderableCustomElementMixinDeclaration) ToTreeNode(p PredicateFunc) pterm.TreeNode {
+	// TODO: group children in constructor
+	return tn(x.Label(), toTreeChildren(x.Children(), p)...)
 }
 

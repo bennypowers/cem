@@ -48,6 +48,24 @@ type CustomElementExport struct {
 	Deprecated  any        `json:"deprecated,omitempty"` // bool or string
 }
 
+func NewCustomElementExport(
+	tagName string,
+	declaration *Reference,
+	startByte uint,
+	deprecated *Deprecated,
+) *CustomElementExport {
+	ce := &CustomElementExport{
+		Kind:        "custom-element-definition",
+		StartByte:   startByte,
+		Name:        tagName,
+		Declaration: declaration,
+	}
+	if deprecated != nil {
+		ce.Deprecated = deprecated
+	}
+	return ce
+}
+
 func (*JavaScriptExport) isExport() {}
 
 func (x *JavaScriptExport) IsDeprecated() bool {
@@ -94,24 +112,6 @@ func (x *CustomElementExport) IsDeprecated() bool {
 
 func (e *CustomElementExport) GetStartByte() uint {
 	return e.StartByte
-}
-
-func NewCustomElementExport(
-	tagName string,
-	declaration *Reference,
-	startByte uint,
-	deprecated *Deprecated,
-) *CustomElementExport {
-	ce := &CustomElementExport{
-		Kind:        "custom-element-definition",
-		StartByte:   startByte,
-		Name:        tagName,
-		Declaration: declaration,
-	}
-	if deprecated != nil {
-		ce.Deprecated = deprecated
-	}
-	return ce
 }
 
 // CustomElementExport implements custom unmarshaling for custom element exports.
