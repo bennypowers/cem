@@ -69,8 +69,38 @@ type RenderableCssCustomState struct {
 	// Add more context fields as needed
 }
 
+func NewRenderableCssCustomState(
+  state *CssCustomState,
+	ced *CustomElementDeclaration,
+	cee *CustomElementExport,
+	mod *Module,
+) *RenderableCssCustomState {
+	return  &RenderableCssCustomState{
+		CssCustomState:           state,
+		CustomElementDeclaration: ced,
+		CustomElementExport:      cee,
+		JavaScriptModule:         mod,
+	}
+}
+
 func (x *RenderableCssCustomState) Name() string {
 	return x.CssCustomState.Name
+}
+
+func (x *RenderableCssCustomState) Label() string {
+	return highlightIfDeprecated(x) + " " + pterm.Gray(x.CssCustomState.Summary)
+}
+
+func (x *RenderableCssCustomState) IsDeprecated() bool {
+	return x.CssCustomState != nil && x.CssCustomState.IsDeprecated()
+}
+
+func (x *RenderableCssCustomState) Deprecation() Deprecated {
+	return x.CssCustomState.Deprecated
+}
+
+func (x *RenderableCssCustomState) Children() []Renderable {
+	return nil // It's a leaf node
 }
 
 func (x *RenderableCssCustomState) ColumnHeadings() []string {
@@ -89,31 +119,5 @@ func (x *RenderableCssCustomState) ToTableRow() []string {
 }
 
 func (x *RenderableCssCustomState) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-	return pterm.TreeNode{Text: highlightIfDeprecated(x)}
-}
-
-func (x *RenderableCssCustomState) IsDeprecated() bool {
-	return x.CssCustomState != nil && x.CssCustomState.IsDeprecated()
-}
-
-func (x *RenderableCssCustomState) Deprecation() Deprecated {
-	return x.CssCustomState.Deprecated
-}
-
-func (x *RenderableCssCustomState) Children() []Renderable {
-	return nil // It's a leaf node
-}
-
-func NewRenderableCssCustomState(
-  state *CssCustomState,
-	ced *CustomElementDeclaration,
-	cee *CustomElementExport,
-	mod *Module,
-) *RenderableCssCustomState {
-	return  &RenderableCssCustomState{
-		CssCustomState:           state,
-		CustomElementDeclaration: ced,
-		CustomElementExport:      cee,
-		JavaScriptModule:         mod,
-	}
+	return pterm.TreeNode{Text: x.Label()}
 }

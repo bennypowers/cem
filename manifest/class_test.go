@@ -19,6 +19,13 @@ func stripANSI(s string) string {
 	return ansiRegexp.ReplaceAllString(s, "")
 }
 
+func dumpTree(t *testing.T, node pterm.TreeNode, depth int) {
+	t.Logf("%s%q\n", strings.Repeat("  ", depth), stripANSI(node.Text))
+	for _, child := range node.Children {
+		dumpTree(t, child, depth+1)
+	}
+}
+
 func TestRenderableClassDeclaration(t *testing.T) {
 	t.Run("ToTreeNode", func(t *testing.T) {
 		manifestJSON, err := os.ReadFile(filepath.Join("fixtures", "class-member-grouping.json"))
@@ -34,11 +41,6 @@ func TestRenderableClassDeclaration(t *testing.T) {
 		renderable := NewRenderablePackage(&pkg)
 		node := renderable.ToTreeNode(True)
 
-		// Print all root children
-		for i, child := range node.Children {
-			t.Logf("Root child[%d]: %q", i, child.Text)
-		}
-
 		// Find the module node by partial match if necessary
 		var moduleNode *pterm.TreeNode
 		for _, child := range node.Children {
@@ -50,11 +52,6 @@ func TestRenderableClassDeclaration(t *testing.T) {
 		if !assert.NotNil(t, moduleNode, "Module node should exist") {
 			t.Logf("Available root children: %#v", node.Children)
 			t.FailNow()
-		}
-
-		// Print all module children
-		for i, child := range moduleNode.Children {
-			t.Logf("Module child[%d]: %q", i, child.Text)
 		}
 
 		// Find the class node, ignoring ANSI color codes
@@ -100,7 +97,8 @@ func TestRenderableClassDeclaration(t *testing.T) {
 				for _, f := range fieldsGroup.Children {
 					fieldNames = append(fieldNames, stripANSI(f.Text))
 				}
-				assert.Subset(t, fieldNames, []string{"field myField1", "field myField2", "field anotherField"})
+				dumpTree(t, node, 0)
+				assert.Subset(t, fieldNames, []string{"myField1", "myField2", "anotherField"})
 			}
 		})
 
@@ -127,3 +125,5 @@ func TestRenderableClassDeclaration(t *testing.T) {
 		})
 	})
 }
+
+

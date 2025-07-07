@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "foo.js",
+      "deprecated": true
+    }
+  ]
+}

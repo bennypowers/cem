@@ -53,29 +53,29 @@ func (x *Package) IsDeprecated() bool {
 	return x.Deprecated != nil
 }
 
-func (p *Package) UnmarshalJSON(data []byte) error {
+func (x *Package) UnmarshalJSON(data []byte) error {
 	type Alias Package
 	aux := &struct {
 		Modules []json.RawMessage `json:"modules"`
 		*Alias
 	}{
-		Alias: (*Alias)(p),
+		Alias: (*Alias)(x),
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
 
-	p.Modules = nil
+	x.Modules = nil
 	for _, m := range aux.Modules {
 		var mod Module
 		if err := json.Unmarshal(m, &mod); err == nil {
-			p.Modules = append(p.Modules, mod)
+			x.Modules = append(x.Modules, mod)
 		} else {
 			return fmt.Errorf("cannot unmarshal module: %w", err)
 		}
 	}
-	if p.Modules == nil {
-		p.Modules = []Module{}
+	if x.Modules == nil {
+		x.Modules = []Module{}
 	}
 	return nil
 }
@@ -93,47 +93,6 @@ type RenderablePackage struct {
 	ChildNodes []Renderable
 }
 
-func (x *RenderablePackage) Name() string {
-	// TODO: out of band package name
-	return "<root>"
-}
-
-func (x *RenderablePackage) ColumnHeadings() []string {
-	return []string{}
-}
-
-func (x *RenderablePackage) ToTableRow() []string {
-	return []string{}
-}
-
-func (x *RenderablePackage) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-	label := highlightIfDeprecated(x)
-	ft := filterRenderableTree(x, pred)
-	children := []pterm.TreeNode{}
-	for _, c := range ft.Children() {
-		children = append(children, c.ToTreeNode(pred))
-	}
-	return pterm.TreeNode{
-		Text: label,
-		Children: children,
-	}
-}
-
-func (x *RenderablePackage) IsDeprecated() bool {
-  return x.Package.IsDeprecated()
-}
-
-func (x *RenderablePackage) Deprecation() Deprecated {
-  return x.Package.Deprecated
-}
-
-func (n *RenderablePackage) Children() []Renderable {
-	if n == nil {
-		return nil
-	}
-	return n.ChildNodes
-}
-
 func NewRenderablePackage(pkg *Package) *RenderablePackage {
 	if pkg == nil {
 		return nil
@@ -146,6 +105,42 @@ func NewRenderablePackage(pkg *Package) *RenderablePackage {
 		Package: pkg,
 		ChildNodes: children,
 	}
+}
+
+func (x *RenderablePackage) Name() string {
+	// TODO: out of band package name
+	return "<root>"
+}
+
+func (x *RenderablePackage) Label() string {
+	return x.Name() // TODO: out of band package name
+}
+
+func (x *RenderablePackage) IsDeprecated() bool {
+  return x.Package.IsDeprecated()
+}
+
+func (x *RenderablePackage) Deprecation() Deprecated {
+  return x.Package.Deprecated
+}
+
+func (x *RenderablePackage) Children() []Renderable {
+	if x == nil || x.ChildNodes == nil {
+		return make([]Renderable, 0)
+	}
+	return x.ChildNodes
+}
+
+func (x *RenderablePackage) ColumnHeadings() []string {
+	return []string{}
+}
+
+func (x *RenderablePackage) ToTableRow() []string {
+	return []string{}
+}
+
+func (x *RenderablePackage) ToTreeNode(p PredicateFunc) pterm.TreeNode {
+	return tn(x.Label(), toTreeChildren(x.Children(), p)...)
 }
 
 var (

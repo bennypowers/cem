@@ -133,6 +133,18 @@ func (x *RenderableFunctionDeclaration) Name() string {
 	// label := pterm.LightBlue("function") + " " + highlightIfDeprecated(x.FunctionDeclaration.Name, x)
 }
 
+func (x *RenderableFunctionDeclaration) Label() string {
+	return pterm.LightBlue("function") + " " + highlightIfDeprecated(x)
+}
+
+func (x *RenderableFunctionDeclaration) IsDeprecated() bool {
+  return x.FunctionDeclaration.IsDeprecated()
+}
+
+func (x *RenderableFunctionDeclaration) Deprecation() Deprecated {
+  return x.FunctionDeclaration.Deprecated
+}
+
 func (x *RenderableFunctionDeclaration) Children() []Renderable {
 	return nil // it's a leaf node
 }
@@ -154,23 +166,6 @@ func (x *RenderableFunctionDeclaration) ToTableRow() []string {
 }
 
 func (x *RenderableFunctionDeclaration) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-	label := pterm.LightBlue("function") + " " + highlightIfDeprecated(x)
-	ft := filterRenderableTree(x, pred)
-	children := make([]pterm.TreeNode, 0)
-	for _, mem := range ft.Children() {
-		children = append(children, mem.ToTreeNode(pred))
-	}
-	return pterm.TreeNode{
-		Text: label,
-		Children: children,
-	}
+	return tn(x.Label(), toTreeChildren(x.Children(), pred)...)
 }
 
-func (x *RenderableFunctionDeclaration) IsDeprecated() bool {
-  return x.FunctionDeclaration.IsDeprecated()
-}
-
-
-func (x *RenderableFunctionDeclaration) Deprecation() Deprecated {
-  return x.FunctionDeclaration.Deprecated
-}

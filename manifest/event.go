@@ -69,8 +69,38 @@ type RenderableEvent struct {
 	JavaScriptModule         *JavaScriptModule
 }
 
+func NewRenderableEvent(
+	ev *Event,
+	ced *CustomElementDeclaration,
+	cee *CustomElementExport,
+	mod *Module,
+
+) *RenderableEvent {
+	return &RenderableEvent{
+		Event:                    ev,
+		CustomElementDeclaration: ced,
+		CustomElementExport:      cee,
+		JavaScriptModule:         mod,
+	}
+}
 func (x *RenderableEvent) Name() string {
 	return x.Event.Name
+}
+
+func (x *RenderableEvent) Label() string {
+	return highlightIfDeprecated(x)
+}
+
+func (x *RenderableEvent) IsDeprecated() bool {
+	return x.Event.Deprecated != nil
+}
+
+func (x *RenderableEvent) Deprecation() Deprecated {
+	return x.Event.Deprecated
+}
+
+func (x *RenderableEvent) Children() []Renderable {
+	return nil // it's a leaf node
 }
 
 func (x *RenderableEvent) ColumnHeadings() []string {
@@ -91,35 +121,6 @@ func (x *RenderableEvent) ToTableRow() []string {
 }
 
 func (x *RenderableEvent) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-	label := highlightIfDeprecated(x)
-	return pterm.TreeNode{Text: label}
+	return tn(x.Label())
 }
 
-func (x *RenderableEvent) Children() []Renderable {
-	return nil // it's a leaf node
-}
-
-func (x *RenderableEvent) IsDeprecated() bool {
-	return x.Event.Deprecated != nil
-}
-
-func (x *RenderableEvent) Deprecation() Deprecated {
-	return x.Event.Deprecated
-}
-
-var _ Renderable = (*RenderableEvent)(nil)
-
-func NewRenderableEvent(
-	ev *Event,
-	ced *CustomElementDeclaration,
-	cee *CustomElementExport,
-	mod *Module,
-
-) *RenderableEvent {
-	return &RenderableEvent{
-		Event:                    ev,
-		CustomElementDeclaration: ced,
-		CustomElementExport:      cee,
-		JavaScriptModule:         mod,
-	}
-}

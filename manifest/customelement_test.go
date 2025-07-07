@@ -29,7 +29,7 @@ func TestRenderableCustomElementDeclaration(t *testing.T) {
 		// Find the module node
 		var moduleNode *pterm.TreeNode
 		for _, child := range node.Children {
-			if stripANSI(child.Text) == "src/my-module.js" {
+			if stripANSI(child.Text) == "module src/my-module.js" {
 				moduleNode = &child
 				break
 			}
@@ -41,7 +41,6 @@ func TestRenderableCustomElementDeclaration(t *testing.T) {
 		// Find the custom element class node
 		var elemNode *pterm.TreeNode
 		for _, child := range moduleNode.Children {
-			t.Log(child.Text)
 			text := stripANSI(child.Text)
 			if strings.Contains(text, "<my-element>") {
 				elemNode = &child
@@ -49,6 +48,7 @@ func TestRenderableCustomElementDeclaration(t *testing.T) {
 			}
 		}
 		if !assert.NotNil(t, elemNode, "Custom element node should exist") {
+			dumpTree(t, node, 0)
 			t.FailNow()
 		}
 

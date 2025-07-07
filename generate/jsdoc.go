@@ -171,9 +171,9 @@ func NewClassInfo(source string, queryManager *Q.QueryManager) (*ClassInfo, erro
 }
 
 func (info *ClassInfo) MergeToClassDeclaration(declaration *M.ClassDeclaration) {
-	declaration.ClassLike.Deprecated = info.Deprecated
-	declaration.ClassLike.Description = info.Description
-	declaration.ClassLike.Summary = info.Summary
+	declaration.Deprecated = info.Deprecated
+	declaration.Description = info.Description
+	declaration.Summary = info.Summary
 }
 
 func (info *ClassInfo) MergeToCustomElementDeclaration(declaration *M.CustomElementDeclaration) {

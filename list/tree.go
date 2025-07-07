@@ -29,6 +29,11 @@ func RenderTree(title string, renderable M.Renderable, pred M.PredicateFunc) err
 		return nil
 	}
 	root := renderable.ToTreeNode(pred)
+
+	if root.Children == nil {
+		return nil
+	}
+
 	pterm.DefaultSection.Print(title)
 	return pterm.DefaultTree.WithRoot(root).Render()
 }

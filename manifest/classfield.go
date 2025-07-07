@@ -19,6 +19,7 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/pterm/pterm"
 )
@@ -109,6 +110,22 @@ func (x *RenderableClassField) Name() string {
 	// "class field " + x.Name()
 }
 
+func (x *RenderableClassField) Label() string {
+	sum := ""
+	if x.ClassField.Summary != "" {
+		sum = pterm.Gray(x.ClassField.Summary)
+	}
+	return strings.TrimSpace(highlightIfDeprecated(x) + " " + sum)
+}
+
+func (x *RenderableClassField) IsDeprecated() bool {
+  return x.ClassField.IsDeprecated()
+}
+
+func (x *RenderableClassField) Deprecation() Deprecated {
+  return x.ClassField.Deprecated
+}
+
 func (x *RenderableClassField) Children() []Renderable {
 	return nil // it's a leaf node
 }
@@ -130,17 +147,7 @@ func (x *RenderableClassField) ToTableRow() []string {
 }
 
 func (x *RenderableClassField) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-	return pterm.TreeNode{
-		Text: pterm.LightBlue("field") + " " + highlightIfDeprecated(x),
-	}
-}
-
-func (x *RenderableClassField) IsDeprecated() bool {
-  return x.ClassField.IsDeprecated()
-}
-
-func (x *RenderableClassField) Deprecation() Deprecated {
-  return x.ClassField.Deprecated
+	return pterm.TreeNode{Text: x.Label()}
 }
 
 // CustomElementField extends ClassField with attribute/reflects.
@@ -216,6 +223,18 @@ func (x *RenderableCustomElementField) Name() string {
 	// return "custom element field " + x.CustomElementField.Name,
 }
 
+func (x *RenderableCustomElementField) Label() string {
+	return highlightIfDeprecated(x) + " " + pterm.Gray(x.CustomElementField.Summary)
+}
+
+func (x *RenderableCustomElementField) IsDeprecated() bool {
+  return x.CustomElementField.IsDeprecated()
+}
+
+func (x *RenderableCustomElementField) Deprecation() Deprecated {
+  return x.CustomElementField.Deprecated
+}
+
 func (x *RenderableCustomElementField) Children() []Renderable {
 	return nil // it's a leaf node
 }
@@ -237,17 +256,6 @@ func (x *RenderableCustomElementField) ToTableRow() []string {
 }
 
 func (x *RenderableCustomElementField) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-	return pterm.TreeNode{
-		Text: highlightIfDeprecated(x),
-	}
+	return pterm.TreeNode{Text: x.Label()}
 }
-
-func (x *RenderableCustomElementField) IsDeprecated() bool {
-  return x.CustomElementField.IsDeprecated()
-}
-
-func (x *RenderableCustomElementField) Deprecation() Deprecated {
-  return x.CustomElementField.Deprecated
-}
-
 

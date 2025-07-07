@@ -51,6 +51,7 @@ func (m *Module) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		Declarations []json.RawMessage `json:"declarations"`
 		Exports      []json.RawMessage `json:"exports"`
+		Deprecated   json.RawMessage   `json:"deprecated"`
 		*Alias
 	}{
 		Alias: (*Alias)(m),
@@ -60,6 +61,14 @@ func (m *Module) UnmarshalJSON(data []byte) error {
 
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
+	}
+
+	if len(aux.Deprecated) > 0 && string(aux.Deprecated) != "null" {
+		var dep Deprecated
+		if !decodeDeprecatedField(&dep, aux.Deprecated) {
+			return fmt.Errorf("invalid type for deprecated field")
+		}
+		m.Deprecated = dep
 	}
 
 	for _, d := range aux.Declarations {
@@ -99,51 +108,6 @@ type RenderableModule struct {
 	ChildNodes           []Renderable
 }
 
-func (x *RenderableModule) ColumnHeadings() []string {
-	return []string{"Path", "Tag Names"}
-}
-
-func (x *RenderableModule) ToTableRow() []string {
-	tags := make([]string, 0)
-	for _, cee := range x.CustomElementExports {
-		tags = append(tags, cee.Name)
-	}
-	return []string{
-		x.Path,
-		strings.Join(tags, ", "),
-	}
-}
-
-func (x *RenderableModule) Name() string {
-	return x.Module.Path
-	// pterm.LightBlue("module") + " " + x.Path,
-}
-
-func (x *RenderableModule) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-	label := highlightIfDeprecated(x)
-	ft := filterRenderableTree(x, pred)
-	children := make([]pterm.TreeNode, 0)
-	for _, c := range ft.Children() {
-		children = append(children, c.ToTreeNode(pred))
-	}
-	return pterm.TreeNode{
-		Text: label,
-		Children: children,
-	}
-}
-
-func (x *RenderableModule) Children() []Renderable {
-	return x.ChildNodes
-}
-
-func (x *RenderableModule) IsDeprecated() bool {
-	return x.Module.IsDeprecated()
-}
-
-func (x *RenderableModule) Deprecation() Deprecated {
-	return x.Module.Deprecated
-}
-
 func NewRenderableModule(
 	mod *Module,
 	pkg *Package,
@@ -152,7 +116,6 @@ func NewRenderableModule(
 	// TODO: populate exports with exports
 	children := make([]Renderable, 0)
 	exports := make([]CustomElementExport, 0)
-
 	for i, decl := range mod.Declarations {
 		switch decl.(type) {
 		case *CustomElementDeclaration:
@@ -175,7 +138,6 @@ func NewRenderableModule(
 			children = append(children, NewRenderableCustomElementMixinDeclaration(cemd, mod, pkg))
 		}
 	}
-
 	return &RenderableModule{
 		Path: mod.Path,
 		Module: mod,
@@ -184,3 +146,43 @@ func NewRenderableModule(
 		ChildNodes: children,
 	}
 }
+
+func (x *RenderableModule) Name() string {
+	return x.Module.Path
+}
+
+func (x *RenderableModule) Label() string {
+	return pterm.LightBlue("module") + " " + highlightIfDeprecated(x)
+}
+
+func (x *RenderableModule) IsDeprecated() bool {
+	return x.Module.IsDeprecated()
+}
+
+func (x *RenderableModule) Deprecation() Deprecated {
+	return x.Module.Deprecated
+}
+
+func (x *RenderableModule) Children() []Renderable {
+	return x.ChildNodes
+}
+
+func (x *RenderableModule) ColumnHeadings() []string {
+	return []string{"Path", "Tag Names"}
+}
+
+func (x *RenderableModule) ToTableRow() []string {
+	tags := make([]string, 0)
+	for _, cee := range x.CustomElementExports {
+		tags = append(tags, cee.Name)
+	}
+	return []string{
+		x.Path,
+		strings.Join(tags, ", "),
+	}
+}
+
+func (x *RenderableModule) ToTreeNode(p PredicateFunc) pterm.TreeNode {
+	return tn(x.Label(), toTreeChildren(x.Children(), p)...)
+}
+

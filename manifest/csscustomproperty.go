@@ -78,6 +78,22 @@ func (x *RenderableCssCustomProperty) Name() string {
 	return x.CssCustomProperty.Name
 }
 
+func (x *RenderableCssCustomProperty) Label() string {
+	return highlightIfDeprecated(x) + " " + pterm.Gray(x.CssCustomProperty.Summary)
+}
+
+func (x *RenderableCssCustomProperty) IsDeprecated() bool {
+	return x.CssCustomProperty.Deprecated != nil
+}
+
+func (x *RenderableCssCustomProperty) Deprecation() Deprecated {
+	return x.CssCustomProperty.Deprecated
+}
+
+func (x *RenderableCssCustomProperty) Children() []Renderable {
+	return nil // it's a leaf node
+}
+
 func (x *RenderableCssCustomProperty) ColumnHeadings() []string {
 	return []string{"Name", "Syntax", "Default", "Summary"}
 }
@@ -93,20 +109,7 @@ func (x *RenderableCssCustomProperty) ToTableRow() []string {
 }
 
 func (x *RenderableCssCustomProperty) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-	label := highlightIfDeprecated(x)
-	return pterm.TreeNode{Text: label}
-}
-
-func (x *RenderableCssCustomProperty) Children() []Renderable {
-	return nil // it's a leaf node
-}
-
-func (x *RenderableCssCustomProperty) IsDeprecated() bool {
-	return x.CssCustomProperty.Deprecated != nil
-}
-
-func (x *RenderableCssCustomProperty) Deprecation() Deprecated {
-	return x.CssCustomProperty.Deprecated
+	return pterm.TreeNode{Text: x.Label()}
 }
 
 func NewRenderableCssCustomProperty(

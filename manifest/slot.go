@@ -69,6 +69,20 @@ type RenderableSlot struct {
 	// Add more context fields as needed
 }
 
+func NewRenderableSlot(
+  slot *Slot,
+	ced *CustomElementDeclaration,
+	cee *CustomElementExport,
+	mod *Module,
+) *RenderableSlot {
+	return &RenderableSlot{
+		Slot:                     slot,
+		CustomElementDeclaration: ced,
+		CustomElementExport:      cee,
+		JavaScriptModule:         mod,
+	}
+}
+
 func (x *RenderableSlot) Name() string {
 	slotName := x.Slot.Name
 	if slotName == "" {
@@ -77,6 +91,21 @@ func (x *RenderableSlot) Name() string {
 	return slotName
 }
 
+func (x *RenderableSlot) Label() string {
+	return highlightIfDeprecated(x)
+}
+
+func (x *RenderableSlot) IsDeprecated() bool {
+	return x.Slot != nil && x.Slot.IsDeprecated()
+}
+
+func (x *RenderableSlot) Deprecation() Deprecated {
+	return x.Slot.Deprecated
+}
+
+func (x *RenderableSlot) Children() []Renderable {
+	return nil // It's a leaf node
+}
 func (x *RenderableSlot) ColumnHeadings() []string {
 	return []string{
 		"Name",
@@ -92,33 +121,7 @@ func (x *RenderableSlot) ToTableRow() []string {
 	}
 }
 
-func (x *RenderableSlot) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-	label := highlightIfDeprecated(x)
-	return pterm.TreeNode{Text: label}
+func (x *RenderableSlot) ToTreeNode(p PredicateFunc) pterm.TreeNode {
+	return tn(x.Label())
 }
 
-func (x *RenderableSlot) IsDeprecated() bool {
-	return x.Slot != nil && x.Slot.IsDeprecated()
-}
-
-func (x *RenderableSlot) Deprecation() Deprecated {
-	return x.Slot.Deprecated
-}
-
-func (x *RenderableSlot) Children() []Renderable {
-	return nil // It's a leaf node
-}
-
-func NewRenderableSlot(
-  slot *Slot,
-	ced *CustomElementDeclaration,
-	cee *CustomElementExport,
-	mod *Module,
-) *RenderableSlot {
-	return &RenderableSlot{
-		Slot:                     slot,
-		CustomElementDeclaration: ced,
-		CustomElementExport:      cee,
-		JavaScriptModule:         mod,
-	}
-}
