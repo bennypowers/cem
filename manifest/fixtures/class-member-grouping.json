@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/my-module.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyClass",
+          "description": "A test class.",
+          "summary": "Summary of MyClass.",
+          "members": [
+            {
+              "kind": "field",
+              "name": "myField1"
+            },
+            {
+              "kind": "method",
+              "name": "myMethod1"
+            },
+            {
+              "kind": "field",
+              "name": "myField2"
+            },
+            {
+              "kind": "method",
+              "name": "myMethod2"
+            },
+            {
+              "kind": "field",
+              "name": "anotherField"
+            }
+          ]
+        }
+      ],
+      "exports": []
+    }
+  ]
+}

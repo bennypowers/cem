@@ -25,7 +25,7 @@ import (
 )
 
 var _ Deprecatable = (*ClassMethod)(nil)
-var _ Renderable = (*RenderableMethod)(nil)
+var _ Renderable = (*RenderableClassMethod)(nil)
 
 // ClassMethod is a method.
 type ClassMethod struct {
@@ -77,7 +77,7 @@ func (m *ClassMethod) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type RenderableMethod struct {
+type RenderableClassMethod struct {
 	Method                   *ClassMethod
 	CustomElementDeclaration *CustomElementDeclaration
 	CustomElementExport      *CustomElementExport
@@ -88,16 +88,16 @@ type RenderableMethod struct {
 	ChildNodes               []Renderable
 }
 
-func (x *RenderableMethod) Name() string {
+func (x *RenderableClassMethod) Name() string {
 	return x.Method.Name
 }
 
-func (x *RenderableMethod) ColumnHeadings() []string {
+func (x *RenderableClassMethod) ColumnHeadings() []string {
 	return []string{"Name", "Return Type", "Privacy", "Static", "Summary"}
 }
 
 // Renders an Event as a table row.
-func (x *RenderableMethod) ToTableRow() []string {
+func (x *RenderableClassMethod) ToTableRow() []string {
 	returnType := "void"
 	privacy := string(x.Method.Privacy)
 	if privacy == "" {
@@ -115,20 +115,20 @@ func (x *RenderableMethod) ToTableRow() []string {
 	}
 }
 
-func (x *RenderableMethod) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
+func (x *RenderableClassMethod) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
 	label := highlightIfDeprecated(x)
 	return pterm.TreeNode{Text: label}
 }
 
-func (x *RenderableMethod) Children() []Renderable {
+func (x *RenderableClassMethod) Children() []Renderable {
 	return x.ChildNodes
 }
 
-func (x *RenderableMethod) IsDeprecated() bool {
+func (x *RenderableClassMethod) IsDeprecated() bool {
 	return x.Method.Deprecated != nil
 }
 
-func (x *RenderableMethod) Deprecation() Deprecated {
+func (x *RenderableClassMethod) Deprecation() Deprecated {
 	return x.Method.Deprecated
 }
 
@@ -138,10 +138,10 @@ func NewRenderableClassMethod(
 	ce *JavaScriptExport,
 	mod *Module,
 	pkg *Package,
-) *RenderableMethod {
+) *RenderableClassMethod {
 	children := make([]Renderable, 0)
 	// TODO: params
-	return &RenderableMethod{
+	return &RenderableClassMethod{
 		Method: method,
 		ClassDeclaration: cd,
 		JavaScriptExport: ce,

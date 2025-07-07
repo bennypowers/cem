@@ -206,9 +206,9 @@ func TestTagRenderableEvents(t *testing.T) {
 	}
 }
 
-func TestTagRenderableMethods(t *testing.T) {
+func TestTagRenderableClassMethods(t *testing.T) {
 	pkg := makeTestPackage()
-	methods, err := pkg.TagRenderableMethods("foo-el")
+	methods, err := pkg.TagRenderableClassMethods("foo-el")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -332,8 +332,8 @@ func TestRenderableEventToTableRow(t *testing.T) {
 	}
 }
 
-func TestRenderableMethodToTableRow(t *testing.T) {
-	method := RenderableMethod{
+func TestRenderableClassMethodToTableRow(t *testing.T) {
+	method := RenderableClassMethod{
 		Method: &ClassMethod{
 			FunctionLike: FunctionLike{
 				Return: &Return{Type: &Type{Text: "string"}},
@@ -348,7 +348,7 @@ func TestRenderableMethodToTableRow(t *testing.T) {
 	}
 	row := method.ToTableRow()
 	if !reflect.DeepEqual(row, []string{"doIt", "string", "private", "false", "summ"}) {
-		t.Errorf("unexpected RenderableMethod ToTableRow: %#v", row)
+		t.Errorf("unexpected RenderableClassMethod ToTableRow: %#v", row)
 	}
 }
 
