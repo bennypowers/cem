@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/my-module.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyElement",
+          "tagName": "my-element",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "my-attr"
+            },
+            {
+              "name": "another-attr"
+            },
+            {
+              "name": "third-attr"
+            }
+          ],
+          "slots": [
+            {
+              "name": "my-slot"
+            },
+            {
+              "name": "secondary-slot"
+            }
+          ],
+          "events": [
+            {
+              "name": "my-event",
+              "type": {
+                "text": "CustomEvent"
+              }
+            },
+            {
+              "name": "custom-event",
+              "type": {
+                "text": "CustomEvent"
+              }
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "color"
+            },
+            {
+              "name": "background"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "button"
+            },
+            {
+              "name": "icon"
+            }
+          ],
+          "cssStates": [
+            {
+              "name": "open"
+            },
+            {
+              "name": "disabled"
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "myField"
+            },
+            {
+              "kind": "method",
+              "name": "myMethod"
+            }
+          ]
+        }
+      ],
+      "exports": []
+    }
+  ]
+}
