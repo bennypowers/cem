@@ -279,14 +279,14 @@ func (x *Package) TagRenderableEvents(tagName string) (events []*RenderableEvent
 }
 
 // TagRenderableMethods returns methods for a given tag name with context.
-func (x *Package) TagRenderableMethods(tagName string) (methods []*RenderableMethod, err error) {
+func (x *Package) TagRenderableMethods(tagName string) (methods []*RenderableClassMethod, err error) {
 	ced, ceExport, m, err := x.findCustomElementContext(tagName)
 	if err != nil {
 		return nil, err
 	}
 	for _, member := range ced.Members {
 		if method, ok := member.(*ClassMethod); ok {
-			methods = append(methods, &RenderableMethod{
+			methods = append(methods, &RenderableClassMethod{
 				Method:                   method,
 				CustomElementDeclaration: ced,
 				CustomElementExport:      ceExport,

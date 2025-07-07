@@ -333,7 +333,7 @@ func TestRenderableEventToTableRow(t *testing.T) {
 }
 
 func TestRenderableMethodToTableRow(t *testing.T) {
-	method := RenderableMethod{
+	method := RenderableClassMethod{
 		Method: &ClassMethod{
 			FunctionLike: FunctionLike{
 				Return: &Return{Type: &Type{Text: "string"}},
