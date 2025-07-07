@@ -323,6 +323,7 @@
         {
           "kind": "class",
           "name": "CEOk",
+          "tagName": "ce-ok",
           "customElement": true,
           "members": [],
           "attributes": [
