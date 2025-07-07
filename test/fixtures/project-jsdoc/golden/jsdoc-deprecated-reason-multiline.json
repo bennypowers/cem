@@ -11,8 +11,8 @@
             "name": "LitElement",
             "package": "lit"
           },
-          "deprecated": "multiline\ndeprecation reason",
           "kind": "class",
+          "deprecated": "multiline\ndeprecation reason",
           "tagName": "jsdoc-deprecated-reason-multiline",
           "customElement": true
         }

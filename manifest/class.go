@@ -24,7 +24,6 @@ import (
 	"github.com/pterm/pterm"
 )
 
-var _ Deprecatable = (*ClassLike)(nil)
 var _ Deprecatable = (*ClassDeclaration)(nil)
 var _ Renderable = (*RenderableClassDeclaration)(nil)
 var _ GroupedRenderable = (*RenderableClassDeclaration)(nil)
@@ -37,20 +36,13 @@ type ClassLike struct {
 	Mixins     []Reference      `json:"mixins,omitempty"`
 	Members    []ClassMember    `json:"members,omitempty"`
 	Source     *SourceReference `json:"source,omitempty"`
-	Deprecated Deprecated       `json:"deprecated,omitempty"` // bool or string
-}
-
-func (x *ClassLike) IsDeprecated() bool {
-	if x == nil {
-		return false
-	}
-	return x.Deprecated != nil
 }
 
 // ClassDeclaration is a class.
 type ClassDeclaration struct {
 	ClassLike
 	Kind string `json:"kind"` // 'class'
+	Deprecated Deprecated       `json:"deprecated,omitempty"` // bool or string
 }
 
 func (*ClassDeclaration) isDeclaration() {}
