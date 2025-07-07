@@ -332,7 +332,7 @@ Examples:
 		if err != nil {
 			return err
 		}
-		methods, err := pkg.TagRenderableMethods(tagName)
+		methods, err := pkg.TagRenderableClassMethods(tagName)
 		if err != nil {
 			return err
 		}

@@ -278,8 +278,8 @@ func (x *Package) TagRenderableEvents(tagName string) (events []*RenderableEvent
 	return events, nil
 }
 
-// TagRenderableMethods returns methods for a given tag name with context.
-func (x *Package) TagRenderableMethods(tagName string) (methods []*RenderableClassMethod, err error) {
+// TagRenderableClassMethods returns methods for a given tag name with context.
+func (x *Package) TagRenderableClassMethods(tagName string) (methods []*RenderableClassMethod, err error) {
 	ced, ceExport, m, err := x.findCustomElementContext(tagName)
 	if err != nil {
 		return nil, err
