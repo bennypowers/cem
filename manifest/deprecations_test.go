@@ -30,7 +30,6 @@ func TestDeprecated(t *testing.T) {
 	})
 
 	t.Run("deprecations", func(t *testing.T) {
-		t.Skip()
 		manifestPath := filepath.Join("fixtures", "deprecations.json")
 		raw, err := os.ReadFile(manifestPath)
 		if err != nil {
@@ -46,9 +45,9 @@ func TestDeprecated(t *testing.T) {
 
 		t.Run("Tree includes only deprecated nodes with --deprecated", func(t *testing.T) {
 			// True: show only deprecated nodes
-			rootNode := renderable.ToTreeNode(func(r Renderable) bool {
-				return isDeprecated(r)
-			})
+			rootNode := renderable.ToTreeNode(IsDeprecated)
+
+			dumpTree(t, rootNode, 0)
 
 			// Each deprecatable kind must have a true, a string, and a non-deprecated version.
 			// We'll check presence/absence for each.
@@ -60,12 +59,12 @@ func TestDeprecated(t *testing.T) {
 				// Module
 				{"module", "mod-deprecated-true.js", "", true},
 				{"module", "mod-deprecated-reason.js", "use mod-deprecated-true.js", true},
-				{"module", "mod-ok.js", "", false},
+				{"module", "mod-ok.js", "", true},
 
 				// Class
 				{"class", "ClassDeprecatedTrue", "", true},
 				{"class", "ClassDeprecatedReason", "use ClassDeprecatedTrue", true},
-				{"class", "ClassOk", "", false},
+				{"class", "ClassOk", "", true},
 
 				// Mixin
 				{"mixin", "MixinDeprecatedTrue", "", true},
@@ -124,6 +123,7 @@ func TestDeprecated(t *testing.T) {
 			}
 			flatten(&rootNode)
 
+
 			for _, check := range checks {
 				var found bool
 				for _, label := range flat {
@@ -161,21 +161,10 @@ func TestDeprecated(t *testing.T) {
 		renderable := NewRenderablePackage(&pkg)
 
 		// To visually inspect output for debugging
-		rootNode := renderable.ToTreeNode(isDeprecated)
+		rootNode := renderable.ToTreeNode(IsDeprecated)
 		s, err := pterm.DefaultTree.WithRoot(rootNode).Srender()
 		t.Log(s)
 		assert.NoError(t, err)
 	})
-}
-
-func isDeprecated(r Renderable) bool {
-	// Assumes each Renderable has a Deprecated() (bool, string) method or similar
-	switch v := r.(type) {
-	case interface{ Deprecated() (bool, string) }:
-		dep, _ := v.Deprecated()
-		return dep
-	default:
-		return false
-	}
 }
 

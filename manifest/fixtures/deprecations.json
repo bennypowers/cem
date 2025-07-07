@@ -54,6 +54,7 @@
         {
           "kind": "class",
           "name": "CETrue",
+          "tagName": "ce-true",
           "customElement": true,
           "deprecated": true,
           "members": [],
@@ -197,6 +198,7 @@
         {
           "kind": "class",
           "name": "CEReason",
+          "tagName": "ce-reason",
           "customElement": true,
           "deprecated": "use CETrue",
           "members": [],
