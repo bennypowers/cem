@@ -1,0 +1,367 @@
+{
+  "schemaVersion": "1.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "mod-deprecated-true.js",
+      "deprecated": true,
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "ClassDeprecatedTrue",
+          "deprecated": true,
+          "members": [
+            {
+              "kind": "field",
+              "name": "fieldDeprecatedTrue",
+              "deprecated": true
+            },
+            {
+              "kind": "field",
+              "name": "fieldDeprecatedReason",
+              "deprecated": "use something else"
+            },
+            {
+              "kind": "field",
+              "name": "fieldOk"
+            },
+            {
+              "kind": "method",
+              "name": "methodDeprecatedTrue",
+              "deprecated": true
+            },
+            {
+              "kind": "method",
+              "name": "methodDeprecatedReason",
+              "deprecated": "do not use"
+            },
+            {
+              "kind": "method",
+              "name": "methodOk"
+            }
+          ]
+        },
+        {
+          "kind": "mixin",
+          "name": "MixinDeprecatedTrue",
+          "deprecated": true
+        },
+        {
+          "kind": "function",
+          "name": "funcDeprecatedTrue",
+          "deprecated": true
+        },
+        {
+          "kind": "class",
+          "name": "CETrue",
+          "customElement": true,
+          "deprecated": true,
+          "members": [],
+          "attributes": [
+            {
+              "name": "attrDeprecatedTrue",
+              "deprecated": true
+            },
+            {
+              "name": "attrDeprecatedReason",
+              "deprecated": "don't use"
+            },
+            {
+              "name": "attrOk"
+            }
+          ],
+          "events": [
+            {
+              "name": "eventDeprecatedTrue",
+              "type": {
+                "text": "Event"
+              },
+              "deprecated": true
+            },
+            {
+              "name": "eventDeprecatedReason",
+              "type": {
+                "text": "Event"
+              },
+              "deprecated": "old"
+            },
+            {
+              "name": "eventOk",
+              "type": {
+                "text": "Event"
+              }
+            }
+          ],
+          "slots": [
+            {
+              "name": "slotDeprecatedTrue",
+              "deprecated": true
+            },
+            {
+              "name": "slotDeprecatedReason",
+              "deprecated": "use slot-new"
+            },
+            {
+              "name": "slotOk"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "partDeprecatedTrue",
+              "deprecated": true
+            },
+            {
+              "name": "partDeprecatedReason",
+              "deprecated": "not recommended"
+            },
+            {
+              "name": "partOk"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--cssDeprecatedTrue",
+              "deprecated": true
+            },
+            {
+              "name": "--cssDeprecatedReason",
+              "deprecated": "renamed"
+            },
+            {
+              "name": "--cssOk"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "ce-true",
+          "declaration": {
+            "name": "CETrue"
+          },
+          "deprecated": true
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "mod-deprecated-reason.js",
+      "deprecated": "use mod-deprecated-true.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "ClassDeprecatedReason",
+          "deprecated": "use ClassDeprecatedTrue",
+          "members": [
+            {
+              "kind": "field",
+              "name": "fieldDeprecatedReason",
+              "deprecated": "use fieldDeprecatedTrue"
+            },
+            {
+              "kind": "field",
+              "name": "fieldDeprecatedTrue",
+              "deprecated": true
+            },
+            {
+              "kind": "field",
+              "name": "fieldOk"
+            },
+            {
+              "kind": "method",
+              "name": "methodDeprecatedReason",
+              "deprecated": "use methodDeprecatedTrue"
+            },
+            {
+              "kind": "method",
+              "name": "methodDeprecatedTrue",
+              "deprecated": true
+            },
+            {
+              "kind": "method",
+              "name": "methodOk"
+            }
+          ]
+        },
+        {
+          "kind": "mixin",
+          "name": "MixinDeprecatedReason",
+          "deprecated": "use MixinDeprecatedTrue"
+        },
+        {
+          "kind": "function",
+          "name": "funcDeprecatedReason",
+          "deprecated": "use funcDeprecatedTrue"
+        },
+        {
+          "kind": "class",
+          "name": "CEReason",
+          "customElement": true,
+          "deprecated": "use CETrue",
+          "members": [],
+          "attributes": [
+            {
+              "name": "attrDeprecatedReason",
+              "deprecated": "use attrDeprecatedTrue"
+            },
+            {
+              "name": "attrDeprecatedTrue",
+              "deprecated": true
+            },
+            {
+              "name": "attrOk"
+            }
+          ],
+          "events": [
+            {
+              "name": "eventDeprecatedReason",
+              "type": {
+                "text": "Event"
+              },
+              "deprecated": "use eventDeprecatedTrue"
+            },
+            {
+              "name": "eventDeprecatedTrue",
+              "type": {
+                "text": "Event"
+              },
+              "deprecated": true
+            },
+            {
+              "name": "eventOk",
+              "type": {
+                "text": "Event"
+              }
+            }
+          ],
+          "slots": [
+            {
+              "name": "slotDeprecatedReason",
+              "deprecated": "use slotDeprecatedTrue"
+            },
+            {
+              "name": "slotDeprecatedTrue",
+              "deprecated": true
+            },
+            {
+              "name": "slotOk"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "partDeprecatedReason",
+              "deprecated": "use partDeprecatedTrue"
+            },
+            {
+              "name": "partDeprecatedTrue",
+              "deprecated": true
+            },
+            {
+              "name": "partOk"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--cssDeprecatedReason",
+              "deprecated": "use --cssDeprecatedTrue"
+            },
+            {
+              "name": "--cssDeprecatedTrue",
+              "deprecated": true
+            },
+            {
+              "name": "--cssOk"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "ce-reason",
+          "declaration": {
+            "name": "CEReason"
+          },
+          "deprecated": "use ce-true"
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "mod-ok.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "ClassOk",
+          "members": [
+            {
+              "kind": "field",
+              "name": "fieldOk"
+            },
+            {
+              "kind": "field",
+              "name": "fieldDeprecatedTrue",
+              "deprecated": true
+            },
+            {
+              "kind": "method",
+              "name": "methodOk"
+            }
+          ]
+        },
+        {
+          "kind": "mixin",
+          "name": "MixinOk"
+        },
+        {
+          "kind": "function",
+          "name": "funcOk"
+        },
+        {
+          "kind": "class",
+          "name": "CEOk",
+          "customElement": true,
+          "members": [],
+          "attributes": [
+            {
+              "name": "attrOk"
+            }
+          ],
+          "events": [
+            {
+              "name": "eventOk",
+              "type": {
+                "text": "Event"
+              }
+            }
+          ],
+          "slots": [
+            {
+              "name": "slotOk"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "partOk"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--cssOk"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "ce-ok",
+          "declaration": {
+            "name": "CEOk"
+          }
+        }
+      ]
+    }
+  ]
+}
