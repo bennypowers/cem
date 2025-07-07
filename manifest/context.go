@@ -311,7 +311,7 @@ func toTreeChildren(xs []Renderable, p PredicateFunc) (nodes []pterm.TreeNode) {
 		var children []pterm.TreeNode
 			// If this Renderable knows how to group its children, use that
 			if gr, ok := n.(GroupedRenderable); ok {
-					children = append(nodes, gr.GroupedChildren(p)...)
+				children = append(children, gr.GroupedChildren(p)...)
 			} else {
 				// Otherwise, use the default recursion+filtering
 				children = toTreeChildren(n.Children(), p)
