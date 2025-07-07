@@ -116,7 +116,6 @@ func NewRenderableModule(
 	// TODO: populate exports with exports
 	children := make([]Renderable, 0)
 	exports := make([]CustomElementExport, 0)
-
 	for i, decl := range mod.Declarations {
 		switch decl.(type) {
 		case *CustomElementDeclaration:
@@ -139,7 +138,6 @@ func NewRenderableModule(
 			children = append(children, NewRenderableCustomElementMixinDeclaration(cemd, mod, pkg))
 		}
 	}
-
 	return &RenderableModule{
 		Path: mod.Path,
 		Module: mod,
@@ -154,7 +152,7 @@ func (x *RenderableModule) Name() string {
 }
 
 func (x *RenderableModule) Label() string {
-	return pterm.LightBlue("module") + " " + x.Path
+	return pterm.LightBlue("module") + " " + highlightIfDeprecated(x)
 }
 
 func (x *RenderableModule) IsDeprecated() bool {
