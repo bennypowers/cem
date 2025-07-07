@@ -76,7 +76,6 @@ func TestRenderableClassDeclaration(t *testing.T) {
 		t.Run("ChildrenAreGroupedByKind", func(t *testing.T) {
 			kinds := []string{"Fields", "Methods"}
 			groupLabels := make([]string, 0)
-			t.Log(classNode)
 			for _, child := range classNode.Children {
 				groupLabels = append(groupLabels, stripANSI(child.Text))
 			}

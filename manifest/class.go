@@ -169,10 +169,10 @@ func (x *RenderableClassDeclaration) GroupedChildren(p PredicateFunc) []pterm.Tr
     fs := toTreeChildren(x.fields, p)
     ms := toTreeChildren(x.methods, p)
     if len(fs) > 0 {
-        nodes = append(nodes, tn("Fields", fs...))
+        nodes = append(nodes, tn(pterm.Blue("Fields"), fs...))
     }
     if len(ms) > 0 {
-        nodes = append(nodes, tn("Methods", ms...))
+        nodes = append(nodes, tn(pterm.Blue("Methods"), ms...))
     }
     return nodes
 }
