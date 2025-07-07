@@ -124,8 +124,22 @@ func (x *RenderableClassDeclaration) ToTreeNode(pred PredicateFunc) pterm.TreeNo
 	label := pterm.LightBlue("class") + " " + highlightIfDeprecated(x)
 	ft := filterRenderableTree(x, pred)
 	children := make([]pterm.TreeNode, 0)
+	fields := make([]pterm.TreeNode, 0)
+	methods := make([]pterm.TreeNode, 0)
 	for _, mem := range ft.Children() {
-		children = append(children, mem.ToTreeNode(pred))
+		node := mem.ToTreeNode(pred)
+		switch mem.(type) {
+		case *RenderableClassField:
+			fields = append(fields, node)
+		case *RenderableClassMethod:
+			methods = append(methods, node)
+		}
+	}
+	if len(fields) > 0 {
+		children = append(children, pterm.TreeNode{Text: "Fields", Children: fields})
+	}
+	if len(methods) > 0 {
+		children = append(children, pterm.TreeNode{Text: "Methods", Children: methods})
 	}
 	return pterm.TreeNode{
 		Text: label,

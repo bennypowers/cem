@@ -151,10 +151,37 @@ func (x *RenderableCustomElementDeclaration) ToTreeNode(pred PredicateFunc) pter
 	// TODO: hmmm
 	label := "<"+highlightIfDeprecated(x)+">"
 	ft := filterRenderableTree(x, pred)
-	children := make([]pterm.TreeNode, 0)
-	for _, mem := range ft.Children() {
-		children = append(children, mem.ToTreeNode(pred))
+	var attributes, slots, events, fields, methods, cssProperties, parts, states []pterm.TreeNode
+		for _, child := range ft.Children() {
+			node := child.ToTreeNode(pred)
+			switch child.(type) {
+			case *RenderableAttribute:
+					attributes = append(attributes, node)
+			case *RenderableSlot:
+					slots = append(slots, node)
+			case *RenderableEvent:
+					events = append(events, node)
+			case *RenderableClassField:
+					fields = append(fields, node)
+			case *RenderableClassMethod:
+					methods = append(methods, node)
+			case *RenderableCssCustomProperty:
+					cssProperties = append(cssProperties, node)
+			case *RenderableCssPart:
+					parts = append(parts, node)
+			case *RenderableCssCustomState:
+					states = append(states, node)
+			}
 	}
+	var children []pterm.TreeNode
+	if len(attributes) > 0 { children = append(children, pterm.TreeNode{Text: "Attributes", Children: attributes}) }
+	if len(slots) > 0 { children = append(children, pterm.TreeNode{Text: "Slots", Children: slots}) }
+	if len(events) > 0 { children = append(children, pterm.TreeNode{Text: "Events", Children: events}) }
+	if len(fields) > 0 { children = append(children, pterm.TreeNode{Text: "Fields", Children: fields}) }
+	if len(methods) > 0 { children = append(children, pterm.TreeNode{Text: "Methods", Children: methods}) }
+	if len(cssProperties) > 0 { children = append(children, pterm.TreeNode{Text: "CSS Properties", Children: cssProperties}) }
+	if len(parts) > 0 { children = append(children, pterm.TreeNode{Text: "Parts", Children: parts}) }
+	if len(states) > 0 { children = append(children, pterm.TreeNode{Text: "States", Children: states}) }
 	return pterm.TreeNode{
 		Text: label,
 		Children: children,
