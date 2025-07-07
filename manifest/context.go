@@ -305,64 +305,17 @@ func (x *Package) TagRenderableClassMethods(tagName string) (methods []*Renderab
 	return methods, nil
 }
 
-// --- FILTER TREE ---
-
-func filterRenderableTree(node Renderable, pred PredicateFunc) Renderable {
-	var filteredChildren []Renderable
-	for _, child := range node.Children() {
-		if filtered := filterRenderableTree(child, pred); filtered != nil {
-			filteredChildren = append(filteredChildren, filtered)
-		}
-	}
-	if pred(node) {
-		// Node passes predicate: return the original pointer, keeping all private data
-		return node
-	}
-	if len(filteredChildren) > 0 {
-		switch n := node.(type) {
-		case *RenderablePackage:
-			clone := *n
-			clone.ChildNodes = filteredChildren
-			return &clone
-		case *RenderableModule:
-			clone := *n
-			clone.ChildNodes = filteredChildren
-			return &clone
-		case *RenderableClassDeclaration:
-			clone := *n
-			clone.ChildNodes = filteredChildren
-			return &clone
-		case *RenderableCustomElementDeclaration:
-			clone := *n
-			clone.ChildNodes = filteredChildren
-			return &clone
-		case *RenderableFunctionDeclaration:
-			clone := *n
-			clone.ChildNodes = filteredChildren
-			return &clone
-		case *RenderableMixinDeclaration:
-			clone := *n
-			clone.ChildNodes = filteredChildren
-			return &clone
-		case *RenderableCustomElementMixinDeclaration:
-			clone := *n
-			clone.ChildNodes = filteredChildren
-			return &clone
-		default:
-			return node
-		}
-	}
-	return nil
-}
-
 func toTreeChildren(xs []Renderable, p PredicateFunc) (nodes []pterm.TreeNode) {
-	for i := range xs {
-		n := xs[i]
-		if p(n) {
-			nodes = append(nodes, n.ToTreeNode(p))
-		}
-	}
-	return nodes
+    for i := range xs {
+        n := xs[i]
+        children := toTreeChildren(n.Children(), p)
+        if p(n) || len(children) > 0 {
+            node := n.ToTreeNode(p)
+            node.Children = children // Ensure you set the filtered children!
+            nodes = append(nodes, node)
+        }
+    }
+    return nodes
 }
 
 func tn(text string, children... pterm.TreeNode) pterm.TreeNode {

@@ -139,20 +139,8 @@ func (x *RenderablePackage) ToTableRow() []string {
 	return []string{}
 }
 
-func (x *RenderablePackage) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-	label := highlightIfDeprecated(x)
-	ft := filterRenderableTree(x, pred)
-	if ft == nil {
-		return pterm.TreeNode{}
-	}
-	children := []pterm.TreeNode{}
-	for _, c := range ft.Children() {
-		children = append(children, c.ToTreeNode(pred))
-	}
-	return pterm.TreeNode{
-		Text: label,
-		Children: children,
-	}
+func (x *RenderablePackage) ToTreeNode(p PredicateFunc) pterm.TreeNode {
+	return tn(x.Label(), toTreeChildren(x.Children(), p)...)
 }
 
 var (

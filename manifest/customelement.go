@@ -224,6 +224,7 @@ func (x *RenderableCustomElementDeclaration) Children() []Renderable {
 	return x.ChildNodes
 }
 
+
 func (x *RenderableCustomElementDeclaration) ColumnHeadings() []string {
 	return []string{
 		"Tag", // (tag name),
@@ -234,6 +235,7 @@ func (x *RenderableCustomElementDeclaration) ColumnHeadings() []string {
 }
 
 // Renders a CustomElement as a table row.
+
 func (x *RenderableCustomElementDeclaration) ToTableRow() []string {
 	modulePath := ""
 	if x.Module != nil {

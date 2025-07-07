@@ -188,9 +188,6 @@ func (x *RenderableClassDeclaration) ToTreeNode(p PredicateFunc) pterm.TreeNode 
 	var cs []pterm.TreeNode
 	fs := toTreeChildren(x.fields, p)
 	ms := toTreeChildren(x.methods, p)
-	if x.Name() == "SlotController" {
-		pterm.Println("ToTreeNode on RenderableClassDeclaration for SlotController with", len(x.fields), "fields and", len(x.methods), "methods")
-	}
 	if len(fs) > 0 {
 		cs = append(cs, tn(pterm.Blue("Fields"), fs...))
 	}
