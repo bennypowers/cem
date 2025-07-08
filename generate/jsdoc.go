@@ -25,7 +25,7 @@ type ReturnInfo struct {
 }
 
 func stripTrailingSplat(str string) string {
-	return regexp.MustCompile(" *\\*$").ReplaceAllString(str, "")
+	return regexp.MustCompile(` *\*$`).ReplaceAllString(str, "")
 }
 
 func normalizeJsdocLines(str string) string {
@@ -62,7 +62,11 @@ func GetJSDocForNode(node *ts.Node, source []byte) string {
 	return ""
 }
 
-func FindNamedMatches(regex *regexp.Regexp, str string, includeNotMatchedOptional bool) map[string]string {
+func FindNamedMatches(
+  regex *regexp.Regexp,
+  str string,
+  includeNotMatchedOptional bool,
+) map[string]string {
 	match := regex.FindStringSubmatchIndex(str)
 	if match == nil {
 		// No matches
@@ -178,7 +182,10 @@ func (info *ClassInfo) MergeToClassDeclaration(declaration *M.ClassDeclaration) 
 
 func (info *ClassInfo) MergeToCustomElementDeclaration(declaration *M.CustomElementDeclaration) {
 	info.MergeToClassDeclaration(&declaration.ClassDeclaration)
-	declaration.CustomElement.Attributes = slices.Concat(info.Attrs, declaration.CustomElement.Attributes)
+	declaration.CustomElement.Attributes = slices.Concat(
+	  info.Attrs,
+	  declaration.CustomElement.Attributes,
+	)
 	declaration.CustomElement.Slots = info.Slots
 	declaration.CustomElement.Events = info.Events
 	declaration.CustomElement.CssProperties = info.CssProperties
@@ -555,7 +562,10 @@ type FieldInfo struct {
 	Deprecated  M.Deprecated
 }
 
-func NewCssCustomPropertyInfo(code string, queryManager *Q.QueryManager) (*CssCustomPropertyInfo, error) {
+func NewCssCustomPropertyInfo(
+  code string,
+  queryManager *Q.QueryManager,
+) (*CssCustomPropertyInfo, error) {
 	barr := []byte(code)
 	parser := Q.GetJSDocParser()
 	defer Q.PutJSDocParser(parser)

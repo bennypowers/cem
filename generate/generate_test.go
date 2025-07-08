@@ -84,7 +84,7 @@ func TestGenerate(t *testing.T) {
 			}
 
 			for _, tc := range cases {
-				tc := tc // capture range variable
+				// capture range variable
 				t.Run(tc.name, func(t *testing.T) {
 					tc.config.Generate.Files = []string{tc.path}
 					actual, err := Generate(tc.config)

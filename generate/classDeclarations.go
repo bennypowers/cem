@@ -88,7 +88,10 @@ func (mp *ModuleProcessor) generateClassDeclarationParsed(
 }
 
 // --- Legacy interface for compatibility with outside calls ---
-func (mp *ModuleProcessor) generateClassDeclaration(captures Q.CaptureMap, className string) (M.Declaration, string, error) {
+func (mp *ModuleProcessor) generateClassDeclaration(
+  captures Q.CaptureMap,
+  className string,
+) (M.Declaration, string, error) {
 	parsed, err := mp.generateClassDeclarationParsed(captures, className)
 	if err != nil {
 		return nil, "", err
@@ -308,7 +311,9 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 	return declaration, alias, errs
 }
 
-func (mp *ModuleProcessor) processRenderTemplate(htmlSource string) (slots []M.Slot, parts []M.CssPart, errs error) {
+func (mp *ModuleProcessor) processRenderTemplate(
+  htmlSource string,
+) (slots []M.Slot, parts []M.CssPart, errs error) {
 	parser := Q.GetHTMLParser()
 	defer Q.PutHTMLParser(parser)
 	tree := parser.Parse([]byte(htmlSource), nil)
@@ -324,8 +329,8 @@ func (mp *ModuleProcessor) processRenderTemplate(htmlSource string) (slots []M.S
 
 	handleParts := func(captureMap Q.CaptureMap, kind string) {
 		if pn, ok := captureMap["part.name"]; ok && len(pn) > 0 {
-			partsList := strings.Fields(pn[0].Text)
-			for _, partName := range partsList {
+			partsList := strings.FieldsSeq(pn[0].Text)
+			for partName := range partsList {
 				part := M.CssPart{}
 				part.Name = partName
 				if comment, ok := captureMap["comment"]; ok && len(comment) > 0 {

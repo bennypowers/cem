@@ -37,6 +37,13 @@ type CssPropsMap map[string]M.CssCustomProperty
 
 var cssParseCache = NewCssParseCache()
 
+func sortCustomProperty(a M.CssCustomProperty, b M.CssCustomProperty) int {
+	if a.StartByte == b.StartByte {
+		return strings.Compare(a.Name, b.Name)
+	}
+	return int(a.StartByte - b.StartByte)
+}
+
 func amendStylesMapFromSource(
 	props CssPropsMap,
 	queryManager *Q.QueryManager,
@@ -159,7 +166,11 @@ func (mp *ModuleProcessor) Close() {
 	mp.tree.Close()
 }
 
-func (mp *ModuleProcessor) Collect() (module *M.Module, tagAliases map[string]string, errors error) {
+func (mp *ModuleProcessor) Collect() (
+  module *M.Module,
+  tagAliases map[string]string,
+  errors error,
+) {
 	mp.step("Processing imports", 0, mp.processImports)
 	mp.step("Processing classes", 0, mp.processClasses)
 	mp.step("Processing declarations", 0, mp.processDeclarations)
@@ -248,12 +259,7 @@ func (mp *ModuleProcessor) processClasses() {
 			})
 			parsed.CssProperties = slices.Collect(maps.Values(props))
 			// Sort as before
-			slices.SortStableFunc(parsed.CssProperties, func(a M.CssCustomProperty, b M.CssCustomProperty) int {
-				if a.StartByte == b.StartByte {
-					return strings.Compare(a.Name, b.Name)
-				}
-				return int(a.StartByte - b.StartByte)
-			})
+			slices.SortStableFunc(parsed.CssProperties, sortCustomProperty)
 			ce.CssProperties = append(ce.CssProperties, parsed.CssProperties...)
 		}
 
