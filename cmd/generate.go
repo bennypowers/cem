@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"time"
 
 	"bennypowers.dev/cem/cmd/config"
@@ -70,22 +69,18 @@ var generateCmd = &cobra.Command{
 			errs = errors.Join(errs, err)
 		}
 		if manifest == nil {
-            return errors.Join(errs, errors.New("manifest generation returned nil"))
-        }
-        if cfg.Generate.Output != "" {
-            path := cfg.Generate.Output
-            if projDir := viper.GetString("project-dir"); projDir != "" {
-                path = filepath.Join(projDir, path)
-            }
-            if err = os.WriteFile(path, []byte(*manifest+"\n"), 0666); err != nil {
-                errs = errors.Join(errs, err)
-            } else {
-                end := time.Since(start)
-                pterm.Success.Printf("Wrote manifest to %s in %s", cfg.Generate.Output, G.ColorizeDuration(end).Sprint(end))
-            }
-        } else {
-            fmt.Println(*manifest + "\n")
-        }
+			return errors.Join(errs, errors.New("manifest generation returned nil"))
+		}
+		if cfg.Generate.Output != "" {
+			if err = os.WriteFile(cfg.Generate.Output, []byte(*manifest+"\n"), 0666); err != nil {
+				errs = errors.Join(errs, err)
+			} else {
+				end := time.Since(start)
+				pterm.Success.Printf("Wrote manifest to %s in %s", cfg.Generate.Output, G.ColorizeDuration(end).Sprint(end))
+			}
+		} else {
+			fmt.Println(*manifest + "\n")
+		}
 		return errs
 	},
 }
