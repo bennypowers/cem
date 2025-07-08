@@ -41,8 +41,8 @@ type ClassLike struct {
 // ClassDeclaration is a class.
 type ClassDeclaration struct {
 	ClassLike
-	Kind string `json:"kind"` // 'class'
-	Deprecated Deprecated       `json:"deprecated,omitempty"` // bool or string
+	Kind       string     `json:"kind"`                 // 'class'
+	Deprecated Deprecated `json:"deprecated,omitempty"` // bool or string
 }
 
 func (*ClassDeclaration) isDeclaration() {}
@@ -92,8 +92,8 @@ type RenderableClassDeclaration struct {
 	Module           *Module
 	Package          *Package
 	ChildNodes       []Renderable
-	fields []Renderable
-	methods []Renderable
+	fields           []Renderable
+	methods          []Renderable
 }
 
 func NewRenderableClassDeclaration(
@@ -108,15 +108,15 @@ func NewRenderableClassDeclaration(
 		if je, ok := exp.(*JavaScriptExport); ok {
 			if je.Declaration.Name == class.Name && (je.Declaration.Module == "" || je.Declaration.Module == mod.Path) {
 				exp = je
-				break;
+				break
 			}
 		}
 	}
 	r := RenderableClassDeclaration{
 		ClassDeclaration: class,
 		JavaScriptExport: je,
-		Module: mod,
-		Package: pkg,
+		Module:           mod,
+		Package:          pkg,
 	}
 
 	for _, m := range class.Members {
@@ -145,10 +145,10 @@ func (x *RenderableClassDeclaration) Label() string {
 	}
 	return strings.TrimSpace(
 		pterm.LightBlue("class") +
-		" " +
-		highlightIfDeprecated(x) +
-		" " +
-		sum,
+			" " +
+			highlightIfDeprecated(x) +
+			" " +
+			sum,
 	)
 }
 
@@ -165,20 +165,20 @@ func (x *RenderableClassDeclaration) Children() []Renderable {
 }
 
 func (x *RenderableClassDeclaration) GroupedChildren(p PredicateFunc) []pterm.TreeNode {
-    var nodes []pterm.TreeNode
-    fs := toTreeChildren(x.fields, p)
-    ms := toTreeChildren(x.methods, p)
-    if len(fs) > 0 {
-        nodes = append(nodes, tn(pterm.Blue("Fields"), fs...))
-    }
-    if len(ms) > 0 {
-        nodes = append(nodes, tn(pterm.Blue("Methods"), ms...))
-    }
-    return nodes
+	var nodes []pterm.TreeNode
+	fs := toTreeChildren(x.fields, p)
+	ms := toTreeChildren(x.methods, p)
+	if len(fs) > 0 {
+		nodes = append(nodes, tn(pterm.Blue("Fields"), fs...))
+	}
+	if len(ms) > 0 {
+		nodes = append(nodes, tn(pterm.Blue("Methods"), ms...))
+	}
+	return nodes
 }
 
 func (x *RenderableClassDeclaration) ColumnHeadings() []string {
-  return []string{"Name", "Module Path", "Summary"}
+	return []string{"Name", "Module Path", "Summary"}
 }
 
 func (x *RenderableClassDeclaration) ToTableRow() []string {

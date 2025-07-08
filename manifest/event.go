@@ -123,4 +123,3 @@ func (x *RenderableEvent) ToTableRow() []string {
 func (x *RenderableEvent) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
 	return tn(x.Label())
 }
-

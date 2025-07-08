@@ -113,12 +113,12 @@ func (x *RenderableCssCustomProperty) ToTreeNode(pred PredicateFunc) pterm.TreeN
 }
 
 func NewRenderableCssCustomProperty(
-  prop *CssCustomProperty,
+	prop *CssCustomProperty,
 	ced *CustomElementDeclaration,
 	cee *CustomElementExport,
 	mod *Module,
 ) *RenderableCssCustomProperty {
-	return  &RenderableCssCustomProperty{
+	return &RenderableCssCustomProperty{
 		CssCustomProperty:        prop,
 		CustomElementDeclaration: ced,
 		CustomElementExport:      cee,

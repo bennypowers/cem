@@ -82,10 +82,10 @@ type RenderableClassMethod struct {
 	Method                   *ClassMethod
 	CustomElementDeclaration *CustomElementDeclaration
 	CustomElementExport      *CustomElementExport
-	ClassDeclaration *ClassDeclaration
-	JavaScriptExport *JavaScriptExport
+	ClassDeclaration         *ClassDeclaration
+	JavaScriptExport         *JavaScriptExport
 	JavaScriptModule         *JavaScriptModule
-	Package *Package
+	Package                  *Package
 	ChildNodes               []Renderable
 }
 
@@ -150,11 +150,11 @@ func NewRenderableClassMethod(
 	children := make([]Renderable, 0)
 	// TODO: params
 	return &RenderableClassMethod{
-		Method: method,
+		Method:           method,
 		ClassDeclaration: cd,
 		JavaScriptExport: ce,
 		JavaScriptModule: mod,
-		Package: pkg,
-		ChildNodes: children,
+		Package:          pkg,
+		ChildNodes:       children,
 	}
 }

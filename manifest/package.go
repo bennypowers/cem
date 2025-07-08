@@ -89,7 +89,7 @@ type PackageJSON struct {
 }
 
 type RenderablePackage struct {
-	Package *Package
+	Package    *Package
 	ChildNodes []Renderable
 }
 
@@ -102,7 +102,7 @@ func NewRenderablePackage(pkg *Package) *RenderablePackage {
 		children = append(children, NewRenderableModule(&pkg.Modules[i], pkg))
 	}
 	return &RenderablePackage{
-		Package: pkg,
+		Package:    pkg,
 		ChildNodes: children,
 	}
 }
@@ -117,11 +117,11 @@ func (x *RenderablePackage) Label() string {
 }
 
 func (x *RenderablePackage) IsDeprecated() bool {
-  return x.Package.IsDeprecated()
+	return x.Package.IsDeprecated()
 }
 
 func (x *RenderablePackage) Deprecation() Deprecated {
-  return x.Package.Deprecated
+	return x.Package.Deprecated
 }
 
 func (x *RenderablePackage) Children() []Renderable {

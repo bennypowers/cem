@@ -26,6 +26,7 @@ import (
 
 // Module may expand in future; currently only JavaScriptModule.
 type Module = JavaScriptModule
+
 var _ Deprecatable = (*Module)(nil)
 var _ Renderable = (*RenderableModule)(nil)
 
@@ -139,11 +140,11 @@ func NewRenderableModule(
 		}
 	}
 	return &RenderableModule{
-		Path: mod.Path,
-		Module: mod,
-		Package: pkg,
+		Path:                 mod.Path,
+		Module:               mod,
+		Package:              pkg,
 		CustomElementExports: exports,
-		ChildNodes: children,
+		ChildNodes:           children,
 	}
 }
 
@@ -185,4 +186,3 @@ func (x *RenderableModule) ToTableRow() []string {
 func (x *RenderableModule) ToTreeNode(p PredicateFunc) pterm.TreeNode {
 	return tn(x.Label(), toTreeChildren(x.Children(), p)...)
 }
-

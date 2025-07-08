@@ -70,12 +70,12 @@ type RenderableCssPart struct {
 }
 
 func NewRenderableCssPart(
-  part *CssPart,
+	part *CssPart,
 	ced *CustomElementDeclaration,
 	cee *CustomElementExport,
 	mod *Module,
 ) *RenderableCssPart {
-	return  &RenderableCssPart{
+	return &RenderableCssPart{
 		CssPart:                  part,
 		CustomElementDeclaration: ced,
 		CustomElementExport:      cee,
@@ -119,6 +119,5 @@ func (x *RenderableCssPart) ToTableRow() []string {
 }
 
 func (x *RenderableCssPart) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-	return pterm.TreeNode{Text: x.Label() }
+	return pterm.TreeNode{Text: x.Label()}
 }
-

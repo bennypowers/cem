@@ -70,12 +70,12 @@ type RenderableCssCustomState struct {
 }
 
 func NewRenderableCssCustomState(
-  state *CssCustomState,
+	state *CssCustomState,
 	ced *CustomElementDeclaration,
 	cee *CustomElementExport,
 	mod *Module,
 ) *RenderableCssCustomState {
-	return  &RenderableCssCustomState{
+	return &RenderableCssCustomState{
 		CssCustomState:           state,
 		CustomElementDeclaration: ced,
 		CustomElementExport:      cee,

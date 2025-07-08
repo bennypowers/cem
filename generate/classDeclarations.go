@@ -32,7 +32,10 @@ type NestedHtmlDocYaml struct {
 }
 
 // --- Main entry: Generate a class declaration as ParsedClass ---
-func (mp *ModuleProcessor) generateClassDeclarationParsed(captures Q.CaptureMap, className string) (*ParsedClass, error) {
+func (mp *ModuleProcessor) generateClassDeclarationParsed(
+	captures Q.CaptureMap,
+	className string,
+) (*ParsedClass, error) {
 	_, hasCustomElementDecorator := captures["customElement"]
 	isHTMLElement := false
 	superClassNameNodes, hasSuperClass := captures["superclass.name"]
@@ -56,7 +59,12 @@ func (mp *ModuleProcessor) generateClassDeclarationParsed(captures Q.CaptureMap,
 	} else if isCustomElement {
 		decl, alias, err = mp.generateLitElementClassDeclaration(captures, className, classDeclarationNode)
 	} else {
-		decl, alias, err = mp.generateCommonClassDeclaration(captures, className, classDeclarationNode, isCustomElement)
+		decl, alias, err = mp.generateCommonClassDeclaration(
+			captures,
+			className,
+			classDeclarationNode,
+			isCustomElement,
+		)
 	}
 	if err != nil {
 		return nil, err

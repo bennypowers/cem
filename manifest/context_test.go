@@ -231,7 +231,7 @@ func TestRenderableAttributeToTableRow(t *testing.T) {
 					Members: []ClassMember{
 						&CustomElementField{
 							Attribute: "foo",
-							Reflects:   true,
+							Reflects:  true,
 							ClassField: ClassField{
 								PropertyLike: PropertyLike{
 									FullyQualified: FullyQualified{
@@ -270,10 +270,10 @@ func TestRenderableSlotToTableRow(t *testing.T) {
 func TestRenderableCssCustomPropertyToTableRow(t *testing.T) {
 	cssProp := RenderableCssCustomProperty{
 		CssCustomProperty: &CssCustomProperty{
-			Syntax: "string",
+			Syntax:  "string",
 			Default: "bar",
 			FullyQualified: FullyQualified{
-				Name: "--foo",
+				Name:    "--foo",
 				Summary: "baz",
 			},
 		},
@@ -288,7 +288,7 @@ func TestRenderableCssCustomStateToTableRow(t *testing.T) {
 	state := RenderableCssCustomState{
 		CssCustomState: &CssCustomState{
 			FullyQualified: FullyQualified{
-				Name: "--active",
+				Name:    "--active",
 				Summary: "active state",
 			},
 		},
@@ -303,7 +303,7 @@ func TestRenderableCssPartToTableRow(t *testing.T) {
 	part := RenderableCssPart{
 		CssPart: &CssPart{
 			FullyQualified: FullyQualified{
-				Name: "part1",
+				Name:    "part1",
 				Summary: "part summary",
 			},
 		},
@@ -321,7 +321,7 @@ func TestRenderableEventToTableRow(t *testing.T) {
 				Text: "CustomEvent",
 			},
 			FullyQualified: FullyQualified{
-				Name: "evt",
+				Name:    "evt",
 				Summary: "summ",
 			},
 		},
@@ -339,7 +339,7 @@ func TestRenderableClassMethodToTableRow(t *testing.T) {
 				Return: &Return{Type: &Type{Text: "string"}},
 			},
 			FullyQualified: FullyQualified{
-				Name: "doIt",
+				Name:    "doIt",
 				Summary: "summ",
 			},
 			Privacy: "private",

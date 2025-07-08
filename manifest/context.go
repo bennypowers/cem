@@ -44,7 +44,7 @@ type GroupedRenderable interface {
 // Predicate: keep only deprecated nodes
 func IsDeprecated(d Renderable) bool { return d.IsDeprecated() }
 
-func True(d Renderable) bool         { return true }
+func True(d Renderable) bool { return true }
 
 func formatDeprecated(deprecated any) (label string) {
 	if deprecated == nil {
@@ -59,8 +59,8 @@ func formatDeprecated(deprecated any) (label string) {
 }
 
 func highlightIfDeprecated(x Renderable, fixes ...string) string {
-	prefix:=""
-	suffix:=""
+	prefix := ""
+	suffix := ""
 	if len(fixes) > 0 {
 		prefix = fixes[0]
 	}
@@ -309,23 +309,23 @@ func (x *Package) TagRenderableClassMethods(tagName string) (methods []*Renderab
 func toTreeChildren(xs []Renderable, p PredicateFunc) (nodes []pterm.TreeNode) {
 	for _, n := range xs {
 		var children []pterm.TreeNode
-			// If this Renderable knows how to group its children, use that
-			if gr, ok := n.(GroupedRenderable); ok {
-				children = append(children, gr.GroupedChildren(p)...)
-			} else {
-				// Otherwise, use the default recursion+filtering
-				children = toTreeChildren(n.Children(), p)
-			}
+		// If this Renderable knows how to group its children, use that
+		if gr, ok := n.(GroupedRenderable); ok {
+			children = append(children, gr.GroupedChildren(p)...)
+		} else {
+			// Otherwise, use the default recursion+filtering
+			children = toTreeChildren(n.Children(), p)
+		}
 
-			if p(n) || len(children) > 0 {
-					node := n.ToTreeNode(p)
-					node.Children = children
-					nodes = append(nodes, node)
-			}
+		if p(n) || len(children) > 0 {
+			node := n.ToTreeNode(p)
+			node.Children = children
+			nodes = append(nodes, node)
+		}
 	}
 	return nodes
 }
 
-func tn(text string, children... pterm.TreeNode) pterm.TreeNode {
+func tn(text string, children ...pterm.TreeNode) pterm.TreeNode {
 	return pterm.TreeNode{Text: text, Children: children}
 }

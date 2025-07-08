@@ -95,10 +95,10 @@ func (f *FunctionDeclaration) UnmarshalJSON(data []byte) error {
 
 type RenderableFunctionDeclaration struct {
 	FunctionDeclaration *FunctionDeclaration
-	JavaScriptExport *JavaScriptExport
-	Module *Module
-	Package *Package
-	ChildNodes []Renderable // parameters and return
+	JavaScriptExport    *JavaScriptExport
+	Module              *Module
+	Package             *Package
+	ChildNodes          []Renderable // parameters and return
 }
 
 func NewRenderableFunctionDeclaration(
@@ -119,12 +119,12 @@ func NewRenderableFunctionDeclaration(
 	}
 	// TODO: populate children with params, return
 	children := make([]Renderable, 0)
-  return &RenderableFunctionDeclaration{
+	return &RenderableFunctionDeclaration{
 		FunctionDeclaration: fd,
-		JavaScriptExport: je,
-		Module: mod,
-		Package: pkg,
-		ChildNodes: children,
+		JavaScriptExport:    je,
+		Module:              mod,
+		Package:             pkg,
+		ChildNodes:          children,
 	}
 }
 
@@ -138,11 +138,11 @@ func (x *RenderableFunctionDeclaration) Label() string {
 }
 
 func (x *RenderableFunctionDeclaration) IsDeprecated() bool {
-  return x.FunctionDeclaration.IsDeprecated()
+	return x.FunctionDeclaration.IsDeprecated()
 }
 
 func (x *RenderableFunctionDeclaration) Deprecation() Deprecated {
-  return x.FunctionDeclaration.Deprecated
+	return x.FunctionDeclaration.Deprecated
 }
 
 func (x *RenderableFunctionDeclaration) Children() []Renderable {
@@ -158,7 +158,7 @@ func (x *RenderableFunctionDeclaration) ToTableRow() []string {
 	if x.FunctionDeclaration.Return != nil && x.FunctionDeclaration.Return.Type != nil {
 		typeText = x.FunctionDeclaration.Return.Type.Text
 	}
-  return []string{
+	return []string{
 		highlightIfDeprecated(x),
 		typeText,
 		x.FunctionDeclaration.Summary,
@@ -168,4 +168,3 @@ func (x *RenderableFunctionDeclaration) ToTableRow() []string {
 func (x *RenderableFunctionDeclaration) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
 	return tn(x.Label(), toTreeChildren(x.Children(), pred)...)
 }
-

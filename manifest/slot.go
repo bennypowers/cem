@@ -70,7 +70,7 @@ type RenderableSlot struct {
 }
 
 func NewRenderableSlot(
-  slot *Slot,
+	slot *Slot,
 	ced *CustomElementDeclaration,
 	cee *CustomElementExport,
 	mod *Module,
@@ -124,4 +124,3 @@ func (x *RenderableSlot) ToTableRow() []string {
 func (x *RenderableSlot) ToTreeNode(p PredicateFunc) pterm.TreeNode {
 	return tn(x.Label())
 }
-

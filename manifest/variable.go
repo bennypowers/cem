@@ -73,11 +73,11 @@ func (v *VariableDeclaration) UnmarshalJSON(data []byte) error {
 }
 
 type RenderableVariableDeclaration struct {
-	name string
+	name                string
 	VariableDeclaration *VariableDeclaration
-	Module *Module
-	Package *Package
-	ChildNodes []Renderable
+	Module              *Module
+	Package             *Package
+	ChildNodes          []Renderable
 }
 
 func NewRenderableVariableDeclaration(
@@ -85,11 +85,11 @@ func NewRenderableVariableDeclaration(
 	mod *Module,
 	pkg *Package,
 ) *RenderableVariableDeclaration {
-  return &RenderableVariableDeclaration{
-		name: vd.Name,
+	return &RenderableVariableDeclaration{
+		name:                vd.Name,
 		VariableDeclaration: vd,
-		Module: mod,
-		Package: pkg,
+		Module:              mod,
+		Package:             pkg,
 	}
 }
 

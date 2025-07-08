@@ -123,7 +123,6 @@ func TestDeprecated(t *testing.T) {
 			}
 			flatten(&rootNode)
 
-
 			for _, check := range checks {
 				var found bool
 				for _, label := range flat {
@@ -167,4 +166,3 @@ func TestDeprecated(t *testing.T) {
 		assert.NoError(t, err)
 	})
 }
-

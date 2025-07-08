@@ -80,12 +80,12 @@ func (f *ClassField) UnmarshalJSON(data []byte) error {
 }
 
 type RenderableClassField struct {
-  name string
-	ClassField *ClassField
+	name             string
+	ClassField       *ClassField
 	ClassDeclaration *ClassDeclaration
 	JavaScriptExport *JavaScriptExport
-	Module *Module
-	Package *Package
+	Module           *Module
+	Package          *Package
 }
 
 func NewRenderableClassField(
@@ -96,12 +96,12 @@ func NewRenderableClassField(
 	pkg *Package,
 ) *RenderableClassField {
 	return &RenderableClassField{
-		name: field.Name,
-		ClassField: field,
+		name:             field.Name,
+		ClassField:       field,
 		ClassDeclaration: cd,
 		JavaScriptExport: ce,
-		Module: mod,
-		Package: pkg,
+		Module:           mod,
+		Package:          pkg,
 	}
 }
 
@@ -119,11 +119,11 @@ func (x *RenderableClassField) Label() string {
 }
 
 func (x *RenderableClassField) IsDeprecated() bool {
-  return x.ClassField.IsDeprecated()
+	return x.ClassField.IsDeprecated()
 }
 
 func (x *RenderableClassField) Deprecation() Deprecated {
-  return x.ClassField.Deprecated
+	return x.ClassField.Deprecated
 }
 
 func (x *RenderableClassField) Children() []Renderable {
@@ -139,7 +139,7 @@ func (x *RenderableClassField) ToTableRow() []string {
 	if x.ClassField.Type != nil {
 		typeText = x.ClassField.Type.Text
 	}
-  return []string{
+	return []string{
 		highlightIfDeprecated(x),
 		typeText,
 		x.ClassField.Summary,
@@ -190,13 +190,13 @@ func (f *CustomElementField) UnmarshalJSON(data []byte) error {
 }
 
 type RenderableCustomElementField struct {
-  name string
-	CustomElementField *CustomElementField
+	name                     string
+	CustomElementField       *CustomElementField
 	CustomElementDeclaration *CustomElementDeclaration
-	JavaScriptExport *JavaScriptExport
-	CustomElementExport *CustomElementExport
-	Module *Module
-	Package *Package
+	JavaScriptExport         *JavaScriptExport
+	CustomElementExport      *CustomElementExport
+	Module                   *Module
+	Package                  *Package
 }
 
 func NewRenderableCustomElementField(
@@ -208,13 +208,13 @@ func NewRenderableCustomElementField(
 	pkg *Package,
 ) *RenderableCustomElementField {
 	return &RenderableCustomElementField{
-		name: field.Name,
-		CustomElementField: field,
+		name:                     field.Name,
+		CustomElementField:       field,
 		CustomElementDeclaration: ced,
-		JavaScriptExport: je,
-		CustomElementExport: cee,
-		Module: mod,
-		Package: pkg,
+		JavaScriptExport:         je,
+		CustomElementExport:      cee,
+		Module:                   mod,
+		Package:                  pkg,
 	}
 }
 
@@ -228,11 +228,11 @@ func (x *RenderableCustomElementField) Label() string {
 }
 
 func (x *RenderableCustomElementField) IsDeprecated() bool {
-  return x.CustomElementField.IsDeprecated()
+	return x.CustomElementField.IsDeprecated()
 }
 
 func (x *RenderableCustomElementField) Deprecation() Deprecated {
-  return x.CustomElementField.Deprecated
+	return x.CustomElementField.Deprecated
 }
 
 func (x *RenderableCustomElementField) Children() []Renderable {
@@ -248,7 +248,7 @@ func (x *RenderableCustomElementField) ToTableRow() []string {
 	if x.CustomElementField.Type != nil {
 		typeText = x.CustomElementField.Type.Text
 	}
-  return []string{
+	return []string{
 		highlightIfDeprecated(x),
 		typeText,
 		x.CustomElementField.Summary,
@@ -258,4 +258,3 @@ func (x *RenderableCustomElementField) ToTableRow() []string {
 func (x *RenderableCustomElementField) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
 	return pterm.TreeNode{Text: x.Label()}
 }
-

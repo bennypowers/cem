@@ -88,7 +88,7 @@ func NewRenderableAttribute(
 	for _, f := range ced.Members {
 		if cef, ok := f.(*CustomElementField); ok {
 			if cef.Attribute == attr.Name {
-				field = cef;
+				field = cef
 				break
 			}
 		}
@@ -111,7 +111,7 @@ func (x *RenderableAttribute) Label() string {
 	if x.CustomElementField != nil && x.CustomElementField.Reflects {
 		label += " (reflects)"
 	}
-	label += pterm.Gray(" "+x.Attribute.Summary)
+	label += pterm.Gray(" " + x.Attribute.Summary)
 	return label
 }
 
@@ -128,7 +128,7 @@ func (x *RenderableAttribute) Children() []Renderable {
 }
 
 func (x *RenderableAttribute) ColumnHeadings() []string {
-  return []string{
+	return []string{
 		"Name",
 		"DOM Property",
 		"Reflects",
@@ -165,4 +165,3 @@ func (x *RenderableAttribute) ToTableRow() []string {
 func (x *RenderableAttribute) ToTreeNode(p PredicateFunc) pterm.TreeNode {
 	return tn(x.Label())
 }
-

@@ -125,5 +125,3 @@ func TestRenderableClassDeclaration(t *testing.T) {
 		})
 	})
 }
-
-

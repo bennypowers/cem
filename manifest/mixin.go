@@ -92,9 +92,9 @@ func (m *MixinDeclaration) UnmarshalJSON(data []byte) error {
 type RenderableMixinDeclaration struct {
 	MixinDeclaration *MixinDeclaration
 	JavaScriptExport *JavaScriptExport
-	Module *Module
-	Package *Package
-	ChildNodes []Renderable
+	Module           *Module
+	Package          *Package
+	ChildNodes       []Renderable
 }
 
 func NewRenderableMixinDeclaration(
@@ -106,12 +106,12 @@ func NewRenderableMixinDeclaration(
 	var export *JavaScriptExport
 	// TODO: populate children with params, return
 	children := make([]Renderable, 0)
-  return &RenderableMixinDeclaration{
+	return &RenderableMixinDeclaration{
 		MixinDeclaration: md,
 		JavaScriptExport: export,
-		Module: mod,
-		Package: pkg,
-		ChildNodes: children,
+		Module:           mod,
+		Package:          pkg,
+		ChildNodes:       children,
 	}
 }
 
@@ -185,12 +185,12 @@ func (m *CustomElementMixinDeclaration) UnmarshalJSON(data []byte) error {
 }
 
 type RenderableCustomElementMixinDeclaration struct {
-	TagName string
+	TagName                       string
 	CustomElementMixinDeclaration *CustomElementMixinDeclaration
-	JavaScriptExport *JavaScriptExport
-	Module *Module
-	Package *Package
-	ChildNodes []Renderable
+	JavaScriptExport              *JavaScriptExport
+	Module                        *Module
+	Package                       *Package
+	ChildNodes                    []Renderable
 }
 
 func NewRenderableCustomElementMixinDeclaration(
@@ -203,12 +203,12 @@ func NewRenderableCustomElementMixinDeclaration(
 	// TODO: populate children with params, return, class stuff
 	// Preferably reuse stuff from NewRenderableMixinDeclaration
 	children := make([]Renderable, 0)
-  return &RenderableCustomElementMixinDeclaration{
-		TagName: cemd.TagName,
+	return &RenderableCustomElementMixinDeclaration{
+		TagName:          cemd.TagName,
 		JavaScriptExport: export,
-		Module: mod,
-		Package: pkg,
-		ChildNodes: children,
+		Module:           mod,
+		Package:          pkg,
+		ChildNodes:       children,
 	}
 }
 
@@ -248,4 +248,3 @@ func (x *RenderableCustomElementMixinDeclaration) ToTreeNode(p PredicateFunc) pt
 	// TODO: group children in constructor
 	return tn(x.Label(), toTreeChildren(x.Children(), p)...)
 }
-

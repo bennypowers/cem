@@ -118,14 +118,14 @@ type RenderableCustomElementDeclaration struct {
 	Module                   *Module
 	Package                  *Package
 	ChildNodes               []Renderable
-	attributes []Renderable
-	events []Renderable
-	slots []Renderable
-	cssparts []Renderable
-	cssprops []Renderable
-	cssstates []Renderable
-	fields []Renderable
-	methods []Renderable
+	attributes               []Renderable
+	events                   []Renderable
+	slots                    []Renderable
+	cssparts                 []Renderable
+	cssprops                 []Renderable
+	cssstates                []Renderable
+	fields                   []Renderable
+	methods                  []Renderable
 }
 
 func NewRenderableCustomElementDeclaration(
@@ -153,9 +153,9 @@ func NewRenderableCustomElementDeclaration(
 		}
 	}
 	r := RenderableCustomElementDeclaration{
-		CustomElementDeclaration:  ced,
-		CustomElementExport:       cee,
-		Module:                    mod,
+		CustomElementDeclaration: ced,
+		CustomElementExport:      cee,
+		Module:                   mod,
 	}
 	for i := range ced.Attributes {
 		m := NewRenderableAttribute(&ced.Attributes[i], ced, cee, mod)
@@ -258,8 +258,8 @@ func (x *RenderableCustomElementDeclaration) GroupedChildren(p PredicateFunc) []
 
 func (x *RenderableCustomElementDeclaration) ColumnHeadings() []string {
 	return []string{
-		"Tag", // (tag name),
-		"Class", // (class name),
+		"Tag",    // (tag name),
+		"Class",  // (class name),
 		"Module", //(module path),
 		"Summary",
 	}
@@ -281,5 +281,5 @@ func (x *RenderableCustomElementDeclaration) ToTableRow() []string {
 }
 
 func (x *RenderableCustomElementDeclaration) ToTreeNode(p PredicateFunc) pterm.TreeNode {
-    return tn(x.Label(), x.GroupedChildren(p)...)
+	return tn(x.Label(), x.GroupedChildren(p)...)
 }
