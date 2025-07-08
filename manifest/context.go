@@ -41,6 +41,15 @@ type GroupedRenderable interface {
 	GroupedChildren(p PredicateFunc) []pterm.TreeNode
 }
 
+type Section struct {
+	Title string
+	Items []Renderable
+}
+
+type SectionDataProvider interface {
+	Sections() []Section
+}
+
 // Predicate: keep only deprecated nodes
 func IsDeprecated(d Renderable) bool { return d.IsDeprecated() }
 
@@ -139,8 +148,8 @@ func (x *Package) RenderableCustomElementDeclarations() (tags []*RenderableCusto
 	return tags
 }
 
-// findCustomElementContext locates the first CustomElementDeclaration, CustomElementExport, and JavaScriptModule for a given tagName.
-func (x *Package) findCustomElementContext(tagName string) (*CustomElementDeclaration, *CustomElementExport, *JavaScriptModule, error) {
+// FindCustomElementContext locates the first CustomElementDeclaration, CustomElementExport, and JavaScriptModule for a given tagName.
+func (x *Package) FindCustomElementContext(tagName string) (*CustomElementDeclaration, *CustomElementExport, *JavaScriptModule, error) {
 	for _, m := range x.Modules {
 		for _, d := range m.Declarations {
 			if ced, ok := d.(*CustomElementDeclaration); ok && ced.TagName == tagName {
@@ -160,7 +169,7 @@ func (x *Package) findCustomElementContext(tagName string) (*CustomElementDeclar
 
 // TagRenderableAttributes returns attributes for a given tag name with context.
 func (x *Package) TagRenderableAttributes(tagName string) (attrs []*RenderableAttribute, err error) {
-	ced, ceExport, m, err := x.findCustomElementContext(tagName)
+	ced, ceExport, m, err := x.FindCustomElementContext(tagName)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +208,7 @@ func (x *Package) TagRenderableAttributes(tagName string) (attrs []*RenderableAt
 
 // TagRenderableSlots returns slots for a given tag name with context.
 func (x *Package) TagRenderableSlots(tagName string) (slots []*RenderableSlot, err error) {
-	ced, ceExport, m, err := x.findCustomElementContext(tagName)
+	ced, ceExport, m, err := x.FindCustomElementContext(tagName)
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +226,7 @@ func (x *Package) TagRenderableSlots(tagName string) (slots []*RenderableSlot, e
 
 // TagRenderableCssProperties returns CSS custom properties for a given tag name with context.
 func (x *Package) TagRenderableCssProperties(tagName string) (props []*RenderableCssCustomProperty, err error) {
-	ced, ceExport, m, err := x.findCustomElementContext(tagName)
+	ced, ceExport, m, err := x.FindCustomElementContext(tagName)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +244,7 @@ func (x *Package) TagRenderableCssProperties(tagName string) (props []*Renderabl
 
 // TagRenderableCssStates returns CSS custom states for a given tag name with context.
 func (x *Package) TagRenderableCssStates(tagName string) (states []*RenderableCssCustomState, err error) {
-	ced, ceExport, m, err := x.findCustomElementContext(tagName)
+	ced, ceExport, m, err := x.FindCustomElementContext(tagName)
 	if err != nil {
 		return nil, err
 	}
@@ -253,7 +262,7 @@ func (x *Package) TagRenderableCssStates(tagName string) (states []*RenderableCs
 
 // TagRenderableCssParts returns CSS shadow parts for a given tag name with context.
 func (x *Package) TagRenderableCssParts(tagName string) (parts []*RenderableCssPart, err error) {
-	ced, ceExport, m, err := x.findCustomElementContext(tagName)
+	ced, ceExport, m, err := x.FindCustomElementContext(tagName)
 	if err != nil {
 		return nil, err
 	}
@@ -271,7 +280,7 @@ func (x *Package) TagRenderableCssParts(tagName string) (parts []*RenderableCssP
 
 // TagRenderableEvents returns events for a given tag name with context.
 func (x *Package) TagRenderableEvents(tagName string) (events []*RenderableEvent, err error) {
-	ced, ceExport, m, err := x.findCustomElementContext(tagName)
+	ced, ceExport, m, err := x.FindCustomElementContext(tagName)
 	if err != nil {
 		return nil, err
 	}
@@ -289,7 +298,7 @@ func (x *Package) TagRenderableEvents(tagName string) (events []*RenderableEvent
 
 // TagRenderableClassMethods returns methods for a given tag name with context.
 func (x *Package) TagRenderableClassMethods(tagName string) (methods []*RenderableClassMethod, err error) {
-	ced, ceExport, m, err := x.findCustomElementContext(tagName)
+	ced, ceExport, m, err := x.FindCustomElementContext(tagName)
 	if err != nil {
 		return nil, err
 	}

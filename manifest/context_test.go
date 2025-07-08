@@ -354,7 +354,7 @@ func TestRenderableClassMethodToTableRow(t *testing.T) {
 
 func TestFindCustomElementContext_TagNotFound(t *testing.T) {
 	pkg := makeTestPackage()
-	_, _, _, err := pkg.findCustomElementContext("does-not-exist")
+	_, _, _, err := pkg.FindCustomElementContext("does-not-exist")
 	if err == nil {
 		t.Error("expected error for missing tag, got nil")
 	}

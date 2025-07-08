@@ -210,7 +210,7 @@ func (x *RenderableCustomElementDeclaration) Name() string {
 }
 
 func (x *RenderableCustomElementDeclaration) Label() string {
-	return highlightIfDeprecated(x, "<", ">") + " " + pterm.Gray(x.CustomElementDeclaration.Summary)
+	return highlightIfDeprecated(x, "<", ">")
 }
 
 func (x *RenderableCustomElementDeclaration) IsDeprecated() bool {
@@ -282,4 +282,25 @@ func (x *RenderableCustomElementDeclaration) ToTableRow() []string {
 
 func (x *RenderableCustomElementDeclaration) ToTreeNode(p PredicateFunc) pterm.TreeNode {
 	return tn(x.Label(), x.GroupedChildren(p)...)
+}
+
+func (x *RenderableCustomElementDeclaration) Sections() []Section {
+	return []Section{
+		{Title: "Attributes", Items: x.attributes},
+		{Title: "Slots", Items: x.slots},
+		{Title: "Events", Items: x.events},
+		{Title: "Fields", Items: x.fields},
+		{Title: "Methods", Items: x.methods},
+		{Title: "CSS Properties", Items: x.cssprops},
+		{Title: "CSS Parts", Items: x.cssparts},
+		{Title: "CSS States", Items: x.cssstates},
+	}
+}
+
+func (x *RenderableCustomElementDeclaration) Summary() string {
+	return x.CustomElementDeclaration.Summary
+}
+
+func (x *RenderableCustomElementDeclaration) Description() string {
+	return x.CustomElementDeclaration.Description
 }

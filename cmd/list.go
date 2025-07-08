@@ -68,12 +68,13 @@ func readPkg() (pkg *M.Package, err error) {
 	if err != nil {
 		return nil, err
 	}
+
 	path := cfg.Generate.Output
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, err
+	// The path to the manifest is relative to the project dir, not the CWD.
+	if projDir := viper.GetString("project-dir"); projDir != "" {
+		path = filepath.Join(projDir, path)
 	}
-	path = filepath.Join(cwd, path)
+
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -83,31 +84,6 @@ func readPkg() (pkg *M.Package, err error) {
 	}
 	pterm.Debug.Printfln("Loaded manifest from %s", path)
 	return pkg, err
-}
-
-// validateTagCommandFlags returns the tag name, format, and loaded manifest package.
-// It errors if --columns is passed but format is not "table".
-func validateTagCommandFlags(cmd *cobra.Command) (tagName string, format string, columns []string, pkg *M.Package, err error) {
-	tagName, err = requireTagName(cmd)
-	if err != nil {
-		return "", "", nil, nil, err
-	}
-	pkg, err = readPkg()
-	if err != nil {
-		return "", "", nil, nil, err
-	}
-	format, err = requireFormat(cmd, []string{"table"})
-	if err != nil {
-		return "", "", nil, nil, err
-	}
-	columns, err = cmd.Flags().GetStringArray("columns")
-	if err != nil {
-		return "", "", nil, nil, err
-	}
-	if len(columns) > 0 && format != "table" {
-		return "", "", nil, nil, errors.New("--columns flag can only be used with --format table")
-	}
-	return tagName, format, columns, pkg, nil
 }
 
 var listAttrsCmd = &cobra.Command{
@@ -127,20 +103,33 @@ Examples:
   cem list attributes --tag-name my-button --format table --columns "DOM Property" --columns Reflects --columns Summary
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
+		tagName, err := requireTagName(cmd)
 		if err != nil {
 			return err
 		}
-		attrs, err := pkg.TagRenderableAttributes(tagName)
+		pkg, err := readPkg()
+		if err != nil {
+			return err
+		}
+		format, err := requireFormat(cmd, []string{"table"})
+		if err != nil {
+			return err
+		}
+		columns, err := cmd.Flags().GetStringArray("columns")
 		if err != nil {
 			return err
 		}
 		switch format {
 		case "table":
-			headers := []string{"Name", "DOM Property", "Reflects", "Summary"}
-			rows := list.MapToTableRows(attrs)
-			title := "Attributes on " + tagName
-			return list.RenderTable(title, headers, rows, columns)
+			ced, _, mod, err := pkg.FindCustomElementContext(tagName)
+			if err != nil {
+				return err
+			}
+			opts := list.RenderOptions{
+				Columns:         columns,
+				IncludeSections: []string{"Attributes"},
+			}
+			return list.Render(M.NewRenderableCustomElementDeclaration(ced, mod, pkg), opts)
 		}
 		return nil
 	},
@@ -159,20 +148,33 @@ Examples:
   cem list slots --tag-name my-button --format table --columns Name
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
+		tagName, err := requireTagName(cmd)
 		if err != nil {
 			return err
 		}
-		slots, err := pkg.TagRenderableSlots(tagName)
+		pkg, err := readPkg()
+		if err != nil {
+			return err
+		}
+		format, err := requireFormat(cmd, []string{"table"})
+		if err != nil {
+			return err
+		}
+		columns, err := cmd.Flags().GetStringArray("columns")
 		if err != nil {
 			return err
 		}
 		switch format {
 		case "table":
-			headers := []string{"Name", "Summary"}
-			rows := list.MapToTableRows(slots)
-			title := "Slots on " + tagName
-			return list.RenderTable(title, headers, rows, columns)
+			ced, _, mod, err := pkg.FindCustomElementContext(tagName)
+			if err != nil {
+				return err
+			}
+			opts := list.RenderOptions{
+				Columns:         columns,
+				IncludeSections: []string{"Slots"},
+			}
+			return list.Render(M.NewRenderableCustomElementDeclaration(ced, mod, pkg), opts)
 		}
 
 		return nil
@@ -196,20 +198,33 @@ Examples:
   cem list css-custom-properties --tag-name my-button --format table --columns Syntax --columns Default --columns Summary
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
+		tagName, err := requireTagName(cmd)
 		if err != nil {
 			return err
 		}
-		props, err := pkg.TagRenderableCssProperties(tagName)
+		pkg, err := readPkg()
+		if err != nil {
+			return err
+		}
+		format, err := requireFormat(cmd, []string{"table"})
+		if err != nil {
+			return err
+		}
+		columns, err := cmd.Flags().GetStringArray("columns")
 		if err != nil {
 			return err
 		}
 		switch format {
 		case "table":
-			headers := []string{"Name", "Syntax", "Default", "Summary"}
-			rows := list.MapToTableRows(props)
-			title := "CSS Custom Properties for " + tagName
-			return list.RenderTable(title, headers, rows, columns)
+			ced, _, mod, err := pkg.FindCustomElementContext(tagName)
+			if err != nil {
+				return err
+			}
+			opts := list.RenderOptions{
+				Columns:         columns,
+				IncludeSections: []string{"CSS Properties"},
+			}
+			return list.Render(M.NewRenderableCustomElementDeclaration(ced, mod, pkg), opts)
 		}
 		return nil
 	},
@@ -230,20 +245,33 @@ Examples:
   cem list css-custom-states --tag-name my-button --format table --columns Name
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
+		tagName, err := requireTagName(cmd)
 		if err != nil {
 			return err
 		}
-		props, err := pkg.TagRenderableCssStates(tagName)
+		pkg, err := readPkg()
+		if err != nil {
+			return err
+		}
+		format, err := requireFormat(cmd, []string{"table"})
+		if err != nil {
+			return err
+		}
+		columns, err := cmd.Flags().GetStringArray("columns")
 		if err != nil {
 			return err
 		}
 		switch format {
 		case "table":
-			headers := []string{"Name", "Summary"}
-			rows := list.MapToTableRows(props)
-			title := "CSS Custom States for " + tagName
-			return list.RenderTable(title, headers, rows, columns)
+			ced, _, mod, err := pkg.FindCustomElementContext(tagName)
+			if err != nil {
+				return err
+			}
+			opts := list.RenderOptions{
+				Columns:         columns,
+				IncludeSections: []string{"CSS States"},
+			}
+			return list.Render(M.NewRenderableCustomElementDeclaration(ced, mod, pkg), opts)
 		}
 
 		return nil
@@ -263,20 +291,33 @@ Examples:
   cem list css-parts --tag-name my-button --format table
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
+		tagName, err := requireTagName(cmd)
 		if err != nil {
 			return err
 		}
-		parts, err := pkg.TagRenderableCssParts(tagName)
+		pkg, err := readPkg()
+		if err != nil {
+			return err
+		}
+		format, err := requireFormat(cmd, []string{"table"})
+		if err != nil {
+			return err
+		}
+		columns, err := cmd.Flags().GetStringArray("columns")
 		if err != nil {
 			return err
 		}
 		switch format {
 		case "table":
-			headers := []string{"Name", "Summary"}
-			rows := list.MapToTableRows(parts)
-			title := "CSS Shadow Parts for " + tagName
-			return list.RenderTable(title, headers, rows, columns)
+			ced, _, mod, err := pkg.FindCustomElementContext(tagName)
+			if err != nil {
+				return err
+			}
+			opts := list.RenderOptions{
+				Columns:         columns,
+				IncludeSections: []string{"CSS Parts"},
+			}
+			return list.Render(M.NewRenderableCustomElementDeclaration(ced, mod, pkg), opts)
 		}
 		return nil
 	},
@@ -297,20 +338,33 @@ Examples:
   cem list event --tag-name my-button --format table --columns Type --columns Summary
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
+		tagName, err := requireTagName(cmd)
 		if err != nil {
 			return err
 		}
-		events, err := pkg.TagRenderableEvents(tagName)
+		pkg, err := readPkg()
+		if err != nil {
+			return err
+		}
+		format, err := requireFormat(cmd, []string{"table"})
+		if err != nil {
+			return err
+		}
+		columns, err := cmd.Flags().GetStringArray("columns")
 		if err != nil {
 			return err
 		}
 		switch format {
 		case "table":
-			headers := []string{"Name", "Type", "Summary"}
-			rows := list.MapToTableRows(events)
-			title := "Events fired by " + tagName
-			return list.RenderTable(title, headers, rows, columns)
+			ced, _, mod, err := pkg.FindCustomElementContext(tagName)
+			if err != nil {
+				return err
+			}
+			opts := list.RenderOptions{
+				Columns:         columns,
+				IncludeSections: []string{"Events"},
+			}
+			return list.Render(M.NewRenderableCustomElementDeclaration(ced, mod, pkg), opts)
 		}
 		return nil
 	},
@@ -328,20 +382,33 @@ Examples:
   cem list methods --tag-name my-button --format table
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
+		tagName, err := requireTagName(cmd)
 		if err != nil {
 			return err
 		}
-		methods, err := pkg.TagRenderableClassMethods(tagName)
+		pkg, err := readPkg()
+		if err != nil {
+			return err
+		}
+		format, err := requireFormat(cmd, []string{"table"})
+		if err != nil {
+			return err
+		}
+		columns, err := cmd.Flags().GetStringArray("columns")
 		if err != nil {
 			return err
 		}
 		switch format {
 		case "table":
-			headers := []string{"Name", "Return Type", "Privacy", "Static", "Summary"}
-			rows := list.MapToTableRows(methods)
-			title := "Methods on " + tagName
-			return list.RenderTable(title, headers, rows, columns)
+			ced, _, mod, err := pkg.FindCustomElementContext(tagName)
+			if err != nil {
+				return err
+			}
+			opts := list.RenderOptions{
+				Columns:         columns,
+				IncludeSections: []string{"Methods"},
+			}
+			return list.Render(M.NewRenderableCustomElementDeclaration(ced, mod, pkg), opts)
 		}
 
 		return nil
@@ -369,7 +436,6 @@ Example:
 		if err != nil {
 			return err
 		}
-		tags := pkg.RenderableCustomElementDeclarations()
 		format, err := requireFormat(cmd, []string{"table"})
 		if err != nil {
 			return err
@@ -380,10 +446,8 @@ Example:
 		}
 		switch format {
 		case "table":
-			headers := []string{"Tag", "Class", "Module", "Summary"}
-			rows := list.MapToTableRows(tags)
-			title := "Tags"
-			return list.RenderTable(title, headers, rows, columns)
+			opts := list.RenderOptions{Columns: columns}
+			return list.Render(M.NewRenderablePackage(pkg), opts)
 		}
 		return nil
 	},
@@ -408,7 +472,6 @@ Example:
 		if err != nil {
 			return err
 		}
-		tags := pkg.RenderableModules()
 		format, err := requireFormat(cmd, []string{"table"})
 		if err != nil {
 			return err
@@ -419,10 +482,8 @@ Example:
 		}
 		switch format {
 		case "table":
-			headers := []string{"Name", "Custom Elements"}
-			rows := list.MapToTableRows(tags)
-			title := "Modules"
-			return list.RenderTable(title, headers, rows, columns)
+			opts := list.RenderOptions{Columns: columns}
+			return list.Render(M.NewRenderablePackage(pkg), opts)
 		}
 		return nil
 	},
@@ -477,6 +538,13 @@ Examples:
 				pred = M.IsDeprecated
 			}
 			return list.RenderTree(title, M.NewRenderablePackage(pkg), pred)
+		case "table":
+			columns, err := cmd.Flags().GetStringArray("columns")
+			if err != nil {
+				return err
+			}
+			opts := list.RenderOptions{Columns: columns}
+			return list.Render(M.NewRenderablePackage(pkg), opts)
 		}
 		return nil
 	},
@@ -487,6 +555,7 @@ func init() {
 	listCmd.AddCommand(listModulesCmd)
 	listCmd.PersistentFlags().StringP("format", "f", "table", "Output format")
 	listCmd.PersistentFlags().Bool("deprecated", false, "Filter the results, showing only deprecated items")
+	listCmd.Flags().StringArrayP("columns", "c", []string{}, "list of columns to display in the table")
 	listTagsCmd.Flags().StringArrayP("columns", "c", []string{}, "list of columns to display in the table")
 	listModulesCmd.Flags().StringArrayP("columns", "c", []string{}, "list of columns to display in the table")
 	for _, c := range []*cobra.Command{

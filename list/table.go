@@ -23,17 +23,74 @@ import (
 
 	"github.com/agext/levenshtein"
 	"github.com/pterm/pterm"
+	"slices"
 
 	M "bennypowers.dev/cem/manifest"
-	"slices"
 )
 
-func ToRenderableSlice[T M.Renderable](items []T) []M.Renderable {
-	renderables := make([]M.Renderable, len(items))
-	for i := range items {
-		renderables[i] = items[i]
+var sectionPrinter = pterm.DefaultSection.Println
+
+// RenderOptions provides options for the Render function.
+type RenderOptions struct {
+	Columns         []string
+	IncludeSections []string
+}
+
+// Render recursively renders a Renderable, creating sectioned tables.
+func Render(r M.Renderable, opts RenderOptions) error {
+	if r == nil {
+		return nil
 	}
-	return renderables
+
+	// Only print the main header if we are not filtering by section.
+	if len(opts.IncludeSections) == 0 {
+		sectionPrinter(r.Label())
+
+		if d, ok := r.(M.Describable); ok {
+			if summary := d.Summary(); summary != "" {
+				pterm.Println(summary)
+			}
+			if description := d.Description(); description != "" {
+				pterm.Println(description)
+			}
+		}
+	}
+
+	if sdp, ok := r.(M.SectionDataProvider); ok {
+		for _, section := range sdp.Sections() {
+			if len(section.Items) == 0 {
+				continue
+			}
+
+			// If IncludeSections is specified, only render those sections.
+			if len(opts.IncludeSections) > 0 && !slices.Contains(opts.IncludeSections, section.Title) {
+				continue
+			}
+
+			// The title for a subsection is smaller
+			pterm.DefaultSection.WithLevel(2).Println(section.Title)
+			headers := section.Items[0].ColumnHeadings()
+			rows := MapToTableRows(section.Items)
+			if err := renderSimpleTable(headers, rows, opts.Columns); err != nil {
+				return err
+			}
+		}
+	} else {
+		for _, child := range r.Children() {
+			// Recursive calls pass the options down.
+			if err := Render(child, opts); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// RenderTable renders a simple table with a title.
+func RenderTable(title string, headers []string, rows [][]string, columns []string) error {
+	pterm.DefaultSection.Println(title)
+	return renderSimpleTable(headers, rows, columns)
 }
 
 // MapToTableRows maps a slice of Renderables to [][]string.
@@ -45,21 +102,9 @@ func MapToTableRows[T M.Renderable](items []T) [][]string {
 	return rows
 }
 
-// BuildTableData prepares the filtered headers and rows for the table, given column selection.
-// Returns error if unknown columns are requested.
-func BuildTableData(headers []string, rows [][]string, columns []string) ([]string, [][]string, error) {
-	if err := checkUnknownColumns(headers, columns); err != nil {
-		return nil, nil, err
-	}
-	finalHeaders, finalRows := filterTableColumns(headers, rows, columns)
-	return finalHeaders, finalRows, nil
-}
-
-// RenderTable renders a table given headers, rows, and columns to display.
-// If columns is empty, renders all columns. Otherwise, always renders the first column and any columns listed in 'columns' (by header name), without duplicates.
-// Now returns error for error handling.
-func RenderTable(title string, headers []string, rows [][]string, columns []string) error {
-	finalHeaders, finalRows, err := BuildTableData(headers, rows, columns)
+// renderSimpleTable renders a basic table, used by the main Render function.
+func renderSimpleTable(headers []string, rows [][]string, columns []string) error {
+	finalHeaders, finalRows, err := buildTableData(headers, rows, columns)
 	if err != nil {
 		return err
 	}
@@ -75,9 +120,18 @@ func RenderTable(title string, headers []string, rows [][]string, columns []stri
 	if err != nil {
 		return err
 	}
-	pterm.DefaultSection.Println(title)
 	pterm.Println(out)
 	return nil
+}
+
+// buildTableData prepares the filtered headers and rows for the table, given column selection.
+// Returns error if unknown columns are requested.
+func buildTableData(headers []string, rows [][]string, columns []string) ([]string, [][]string, error) {
+	if err := checkUnknownColumns(headers, columns); err != nil {
+		return nil, nil, err
+	}
+	finalHeaders, finalRows := filterTableColumns(headers, rows, columns)
+	return finalHeaders, finalRows, nil
 }
 
 // checkUnknownColumns returns an error if any column name is not in headers, case-insensitive.
