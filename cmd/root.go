@@ -29,6 +29,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+var initialCWD string
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "cem",
@@ -98,6 +100,10 @@ func expandPath(path string) (string, error) {
 
 func initConfig() {
 	var err error
+	initialCWD, err = os.Getwd()
+	if err != nil {
+		pterm.Fatal.Printf("Unable to get current working directory: %v", err)
+	}
 	cfgFile := viper.GetString("configFile")
 	projectDir, shouldChange := resolveProjectDir(cfgFile, viper.GetString("projectDir"))
 	viper.Set("projectDir", projectDir)
