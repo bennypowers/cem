@@ -1,39 +1,48 @@
-{{- $results := .Site.Data.benchmarks.results | default (slice) -}}
-{{- $max := 0.0 -}}
-
-{{- if and $results (gt (len $results) 0) -}}
-  {{- range $results }}
-    {{- if gt .averageTime $max }}
-      {{- $max = .averageTime }}
-    {{- end }}
-  {{- end }}
-
-  <bar-chart id="perf-bar-chart">
-    <svg width="100%" height="{{ add (mul (len $results) 44) 40 }}">
-      {{- range $i, $result := $results }}
-        {{- $bar_length := div (mul 480 $result.averageTime) $max }}
-        <rect x="120"
+{{ $results := .Site.Data.benchmarks.results | default (slice) }}
+{{ $max := 0.0 }}
+{{ $min := 0.0 }}
+{{ $min = (index (sort $results "averageTime") 0).averageTime }}
+{{ range $results }}
+  {{ if gt .averageTime $max }}
+    {{ $max = .averageTime }}
+  {{ end }}
+{{ end }}
+{{ $bar_x := 0 }}
+{{ $bar_max_width := 480 }}
+{{ $right_pad := 40 }}
+<bar-chart>
+  <svg width="{{ add $bar_max_width $right_pad }}" height="{{ add (mul (len $results) 44) 40 }}">
+    {{ range $i, $result := $results }}
+      {{ $bar_length := div (mul $bar_max_width $result.averageTime) $max }}
+      {{ $ratio := div (sub $result.averageTime $min) (cond (ne $max $min) (sub $max $min) 1) }}
+      {{ $performance_class := cond (lt $ratio 0.25) "perf-best" (cond (lt $ratio 0.5) "perf-good" (cond (lt $ratio 0.75) "perf-mid" "perf-worst")) }}
+      <g>
+        <rect class="bar {{ $performance_class }}"
+              x="{{ $bar_x }}"
               y="{{ add (mul $i 44) 12 }}"
               height="32"
               rx="4"
               width="{{ $bar_length }}"
-              fill="{{ or $result.color "#4e79a7" }}">
+              fill="var(--bar-fill)">
           <title>{{ $result.tool }}: {{ $result.averageTime }}</title>
         </rect>
-        <text x="8"
+        <text class="bar-label"
+              x="{{ add $bar_x 8 }}"
               y="{{ add (mul $i 44) 32 }}"
               font-size="16"
-              fill="currentColor">{{ $result.name }}</text>
-        <text x="{{ add 130 $bar_length }}"
+              fill="var(--bar-text)"
+              text-anchor="start"
+              alignment-baseline="middle"
+              dominant-baseline="middle">{{ $result.name }}</text>
+        <text class="bar-value"
+              x="{{ add $bar_max_width 8 }}"
               y="{{ add (mul $i 44) 32 }}"
               font-size="16"
-              fill="currentColor">{{ $result.averageTime }}</text>
-      {{- end }}
-    </svg>
-  </bar-chart>
-  <script type="module" src="{{ "bar-chart.js" | relURL }}"></script>
-{{- else }}
-  <div class="bar-chart-placeholder">
-    <em>No benchmark results found.</em>
-  </div>
-{{- end }}
+              fill="var(--bar-label)"
+              text-anchor="end"
+              alignment-baseline="middle"
+              dominant-baseline="middle">{{ printf "%.2f" $result.averageTime }}</text>
+      </g>
+    {{ end }}
+  </svg>
+</bar-chart>

@@ -20,6 +20,10 @@
   }
 }
 
+html { color-scheme: light dark; }
+html.dark { color-scheme: dark only; }
+html.light { color-scheme: light only; }
+
 
 .button {
   color: var(--dark)

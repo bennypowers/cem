@@ -1,4 +1,51 @@
-class LineChart extends HTMLElement {
+import { setBasePath } from 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/utilities/base-path.js';
+setBasePath('https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/');
+const themeToggle = document.getElementById('mode');
+
+function setPrismTheme(dark, root = document) {
+  // Prism theme switching
+  const prismLight = root.getElementById('hljs-light');
+  const prismDark = root.getElementById('hljs-dark');
+  prismLight.disabled = dark;
+  prismDark.disabled = !dark;
+}
+
+const updateTheme = () => {
+  const dark = themeToggle.value === 'dark';
+  document.body.classList.remove(`sl-theme-light`);
+  document.body.classList.remove(`sl-theme-dark`);
+  document.body.classList.add(`sl-theme-${themeToggle.value}`);
+  setPrismTheme(dark);
+};
+
+themeToggle.addEventListener('change', updateTheme);
+
+document.addEventListener('sl-after-show', async function(event) {
+  await customElements.whenDefined('zero-md');
+  await customElements.whenDefined('sl-spinner');
+  const zeroMd = event.target.querySelector('zero-md');
+  const spinner = event.target.querySelector('sl-spinner');
+  if (spinner && zeroMd && !zeroMd.src) {
+    zeroMd.src = zeroMd.dataset.src
+    zeroMd.addEventListener('zero-md-rendered', function () {
+      spinner.remove();
+      updateTheme()
+    }, { once: true })
+  }
+});
+
+export class BarChart extends HTMLElement {
+  static is = 'bar-chart';
+  static template = document.createElement('template');
+  static { this.template.innerHTML = `<slot></slot>`; }
+  static { customElements.define(this.is, this); }
+  constructor() {
+    super()
+    this.attachShadow({ mode: 'open' }).append(BarChart.template.content.cloneNode(true));
+  }
+}
+
+export class LineChart extends HTMLElement {
   static is = 'line-chart';
   static template = document.createElement('template');
   static {
@@ -132,3 +179,6 @@ class LineChart extends HTMLElement {
     this.#hoveredIndex = null;
   }
 }
+
+updateTheme();
+

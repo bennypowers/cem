@@ -17,6 +17,10 @@ weight: 30
 ---
 
 <style>
+line-chart, bar-chart {
+  display: block;
+}
+
 line-chart svg {
   background:var(--sl-panel-background-color);
   overflow:visible;
@@ -33,6 +37,32 @@ line-chart svg {
     margin-bottom: 0.5em;
   }
 }
+
+bar-chart {
+  --bar-fill: light-dark(#e5e7eb, #23272f);
+  --bar-text: light-dark(#222, #eee);
+  --bar-label: light-dark(#555, #bbb);
+
+  .bar {
+    &.perf-best  { --bar-fill: light-dark(#22c55e, #15803d); }
+    &.perf-good  { --bar-fill: light-dark(#a3e635, #65a30d); }
+    &.perf-mid   { --bar-fill: light-dark(#facc15, #ca8a04); }
+    &.perf-worst { --bar-fill: light-dark(#ef4444, #b91c1c); }
+  }
+
+  .bar-label {
+    fill: var(--bar-text);
+    font-weight: 500;
+  }
+  .bar-value {
+    fill: var(--bar-label);
+    font-variant-numeric: tabular-nums;
+  }
+  text {
+    pointer-events: none;
+  }
+}
+
 </style>
 
 <div class="tool-cards">
@@ -97,7 +127,7 @@ line-chart svg {
     {{- $max_time := index $sorted (sub (len $sorted) 1) | default 1 -}}
     {{- $min_time := index $sorted 0 | default 0 -}}
     {{- $y_tick_step := cond (gt (sub $n_ticks 1) 0) (div (sub $max_time $min_time) (sub $n_ticks 1)) 1.0 -}}
-    <svg viewBox="0 0 540 160" width="100%" height="160" data-points='[{{ delimit $times ", " }}]'>
+    <svg viewBox="0 0 540 160" data-points='[{{ delimit $times ", " }}]'>
       <!-- Axes -->
       <line x1="40" y1="120" x2="520" y2="120" stroke="var(--sl-panel-border-color, #888)" stroke-width="1"/>
       <line x1="40" y1="20" x2="40" y2="120" stroke="var(--sl-panel-border-color, #888)" stroke-width="1"/>
@@ -153,7 +183,7 @@ line-chart svg {
 </div>
 
 {{< loadchart.inline >}}
-<script type="module" src="{{ "line-chart.js" | relURL }} "></script>
+<script type="module" src="{{ "charts.js" | relURL }} "></script>
 {{</ loadchart.inline >}}
 <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/shoelace.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/themes/light.css">
@@ -167,41 +197,4 @@ line-chart svg {
 </script>
 
 <script type="module">
-  import { setBasePath } from 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/utilities/base-path.js';
-  setBasePath('https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/');
-  const themeToggle = document.getElementById('mode');
-
-  function setPrismTheme(dark, root = document) {
-    // Prism theme switching
-    const prismLight = root.getElementById('hljs-light');
-    const prismDark = root.getElementById('hljs-dark');
-    prismLight.disabled = dark;
-    prismDark.disabled = !dark;
-  }
-
-  const updateTheme = () => {
-    const dark = themeToggle.value === 'dark';
-    document.body.classList.remove(`sl-theme-light`);
-    document.body.classList.remove(`sl-theme-dark`);
-    document.body.classList.add(`sl-theme-${themeToggle.value}`);
-    setPrismTheme(dark);
-  };
-
-  themeToggle.addEventListener('change', updateTheme);
-
-  document.addEventListener('sl-after-show', async function(event) {
-    await customElements.whenDefined('zero-md');
-    await customElements.whenDefined('sl-spinner');
-    const zeroMd = event.target.querySelector('zero-md');
-    const spinner = event.target.querySelector('sl-spinner');
-    if (spinner && zeroMd && !zeroMd.src) {
-      zeroMd.src = zeroMd.dataset.src
-      zeroMd.addEventListener('zero-md-rendered', function () {
-        spinner.remove();
-        updateTheme()
-      }, { once: true })
-    }
-  });
-
-  updateTheme();
 </script>
