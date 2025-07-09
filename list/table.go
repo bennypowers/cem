@@ -147,18 +147,19 @@ func buildTableData(headers []string, rows [][]string, columns []string) ([]stri
 	if err := checkUnknownColumns(headers, columns); err != nil {
 		return nil, nil, err
 	}
-	finalHeaders, rows := filterTableColumns(headers, rows, columns)
-	rows = backtickCodeColumns(rows, headers)
-	finalRows := insertMarkdownHeaderRow(finalHeaders, rows)
+	finalHeaders, finalRows := insertMarkdownHeaderRow(backtickCodeColumns(filterTableColumns(headers, rows, columns)))
 	return finalHeaders, finalRows, nil
 }
 
 // Wraps the first cell in a row in backticks, for markdown output
-func backtickCodeColumns(rows [][]string, headers []string) [][]string {
-	out := make([][]string, len(rows))
+func backtickCodeColumns(
+  headers []string,
+  rows [][]string,
+) (outheaders []string, outrows [][]string) {
+	outrows = make([][]string, len(rows))
 	for i, row := range rows {
 		if len(row) == 0 {
-			out[i] = nil
+			outrows[i] = nil
 			continue
 		}
 		// Copy the row (so we don't mutate the source)
@@ -171,9 +172,9 @@ func backtickCodeColumns(rows [][]string, headers []string) [][]string {
 				}
 			}
 		}
-		out[i] = newRow
+		outrows[i] = newRow
 	}
-	return out
+	return headers, outrows
 }
 
 func insCopy(dest [][]string, row []string, i int) {
@@ -183,9 +184,9 @@ func insCopy(dest [][]string, row []string, i int) {
 	dest[i] = newRow
 }
 
-func insertMarkdownHeaderRow(headers []string, rows [][]string) [][]string {
+func insertMarkdownHeaderRow(headers []string, rows [][]string) ([]string, [][]string) {
 	if len(rows) == 0 {
-		return rows
+		return headers, rows
 	}
 
 	out := make([][]string, len(rows)+2)
@@ -211,7 +212,7 @@ func insertMarkdownHeaderRow(headers []string, rows [][]string) [][]string {
 	for i, row := range rows {
 		insCopy(out, row, i+2)
 	}
-	return out
+	return headers, out
 }
 
 // checkUnknownColumns returns an error if any column name is not in headers, case-insensitive.
