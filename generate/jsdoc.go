@@ -63,9 +63,9 @@ func GetJSDocForNode(node *ts.Node, source []byte) string {
 }
 
 func FindNamedMatches(
-  regex *regexp.Regexp,
-  str string,
-  includeNotMatchedOptional bool,
+	regex *regexp.Regexp,
+	str string,
+	includeNotMatchedOptional bool,
 ) map[string]string {
 	match := regex.FindStringSubmatchIndex(str)
 	if match == nil {
@@ -183,8 +183,8 @@ func (info *ClassInfo) MergeToClassDeclaration(declaration *M.ClassDeclaration) 
 func (info *ClassInfo) MergeToCustomElementDeclaration(declaration *M.CustomElementDeclaration) {
 	info.MergeToClassDeclaration(&declaration.ClassDeclaration)
 	declaration.CustomElement.Attributes = slices.Concat(
-	  info.Attrs,
-	  declaration.CustomElement.Attributes,
+		info.Attrs,
+		declaration.CustomElement.Attributes,
 	)
 	declaration.CustomElement.Slots = info.Slots
 	declaration.CustomElement.Events = info.Events
@@ -563,8 +563,8 @@ type FieldInfo struct {
 }
 
 func NewCssCustomPropertyInfo(
-  code string,
-  queryManager *Q.QueryManager,
+	code string,
+	queryManager *Q.QueryManager,
 ) (*CssCustomPropertyInfo, error) {
 	barr := []byte(code)
 	parser := Q.GetJSDocParser()

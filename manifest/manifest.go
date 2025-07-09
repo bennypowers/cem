@@ -22,6 +22,11 @@ type FullyQualified struct {
 	Description string `json:"description,omitempty"`
 }
 
+type Describable interface {
+	Summary() string
+	Description() string
+}
+
 // Reference to an export of a module.
 type Reference struct {
 	Name    string `json:"name"`

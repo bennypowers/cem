@@ -89,8 +89,8 @@ func (mp *ModuleProcessor) generateClassDeclarationParsed(
 
 // --- Legacy interface for compatibility with outside calls ---
 func (mp *ModuleProcessor) generateClassDeclaration(
-  captures Q.CaptureMap,
-  className string,
+	captures Q.CaptureMap,
+	className string,
 ) (M.Declaration, string, error) {
 	parsed, err := mp.generateClassDeclarationParsed(captures, className)
 	if err != nil {
@@ -312,7 +312,7 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 }
 
 func (mp *ModuleProcessor) processRenderTemplate(
-  htmlSource string,
+	htmlSource string,
 ) (slots []M.Slot, parts []M.CssPart, errs error) {
 	parser := Q.GetHTMLParser()
 	defer Q.PutHTMLParser(parser)

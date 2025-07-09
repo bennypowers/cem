@@ -19,7 +19,6 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/pterm/pterm"
 )
@@ -139,17 +138,9 @@ func (x *RenderableClassDeclaration) Name() string {
 }
 
 func (x *RenderableClassDeclaration) Label() string {
-	sum := ""
-	if x.ClassDeclaration.Summary != "" {
-		sum = pterm.Gray(x.ClassDeclaration.Summary)
-	}
-	return strings.TrimSpace(
-		pterm.LightBlue("class") +
-			" " +
-			highlightIfDeprecated(x) +
-			" " +
-			sum,
-	)
+	return pterm.LightBlue("class") +
+		" " +
+		highlightIfDeprecated(x)
 }
 
 func (x *RenderableClassDeclaration) IsDeprecated() bool {
@@ -195,4 +186,19 @@ func (x *RenderableClassDeclaration) ToTableRow() []string {
 
 func (x *RenderableClassDeclaration) ToTreeNode(p PredicateFunc) pterm.TreeNode {
 	return tn(x.Label(), x.GroupedChildren(p)...)
+}
+
+func (x *RenderableClassDeclaration) Sections() []Section {
+	return []Section{
+		{Title: "Fields", Items: x.fields},
+		{Title: "Methods", Items: x.methods},
+	}
+}
+
+func (x *RenderableClassDeclaration) Summary() string {
+	return x.ClassDeclaration.Summary
+}
+
+func (x *RenderableClassDeclaration) Description() string {
+	return x.ClassDeclaration.Description
 }

@@ -167,9 +167,9 @@ func (mp *ModuleProcessor) Close() {
 }
 
 func (mp *ModuleProcessor) Collect() (
-  module *M.Module,
-  tagAliases map[string]string,
-  errors error,
+	module *M.Module,
+	tagAliases map[string]string,
+	errors error,
 ) {
 	mp.step("Processing imports", 0, mp.processImports)
 	mp.step("Processing classes", 0, mp.processClasses)

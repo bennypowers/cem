@@ -68,12 +68,13 @@ func readPkg() (pkg *M.Package, err error) {
 	if err != nil {
 		return nil, err
 	}
+
 	path := cfg.Generate.Output
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, err
+	// The path to the manifest is relative to the project dir, not the CWD.
+	if projDir := viper.GetString("project-dir"); projDir != "" {
+		path = filepath.Join(projDir, path)
 	}
-	path = filepath.Join(cwd, path)
+
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -85,36 +86,51 @@ func readPkg() (pkg *M.Package, err error) {
 	return pkg, err
 }
 
-// validateTagCommandFlags returns the tag name, format, and loaded manifest package.
-// It errors if --columns is passed but format is not "table".
-func validateTagCommandFlags(cmd *cobra.Command) (tagName string, format string, columns []string, pkg *M.Package, err error) {
-	tagName, err = requireTagName(cmd)
-	if err != nil {
-		return "", "", nil, nil, err
+// Helper to generate list subcommands for custom elements by section
+func makeListSectionCmd(use, short, long string, includeSection string, aliases ...string) *cobra.Command {
+	return &cobra.Command{
+		Use:     use,
+		Aliases: aliases,
+		Short:   short,
+		Long:    long,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			tagName, err := requireTagName(cmd)
+			if err != nil {
+				return err
+			}
+			pkg, err := readPkg()
+			if err != nil {
+				return err
+			}
+			format, err := requireFormat(cmd, []string{"table"})
+			if err != nil {
+				return err
+			}
+			columns, err := cmd.Flags().GetStringArray("columns")
+			if err != nil {
+				return err
+			}
+			switch format {
+			case "table":
+				ced, _, mod, err := pkg.FindCustomElementContext(tagName)
+				if err != nil {
+					return err
+				}
+				opts := list.RenderOptions{
+					Columns:         columns,
+					IncludeSections: []string{includeSection},
+				}
+				return list.Render(M.NewRenderableCustomElementDeclaration(ced, mod, pkg), opts)
+			}
+			return nil
+		},
 	}
-	pkg, err = readPkg()
-	if err != nil {
-		return "", "", nil, nil, err
-	}
-	format, err = requireFormat(cmd, []string{"table"})
-	if err != nil {
-		return "", "", nil, nil, err
-	}
-	columns, err = cmd.Flags().GetStringArray("columns")
-	if err != nil {
-		return "", "", nil, nil, err
-	}
-	if len(columns) > 0 && format != "table" {
-		return "", "", nil, nil, errors.New("--columns flag can only be used with --format table")
-	}
-	return tagName, format, columns, pkg, nil
 }
 
-var listAttrsCmd = &cobra.Command{
-	Use:     "attributes",
-	Aliases: []string{"attrs"},
-	Short:   "List attributes in the custom elements manifest by tag name",
-	Long: `List all attributes for a given custom element tag
+var listAttrsCmd = makeListSectionCmd(
+	"attributes",
+	"List attributes in the custom elements manifest by tag name",
+	`List all attributes for a given custom element tag
 
 You must specify the tag name using the --tag-name flag. The output includes each attribute,
 its corresponding DOM property, whether it reflects changes to the DOM, and a summary.
@@ -126,30 +142,14 @@ Examples:
   cem list attributes --tag-name my-button --format table --columns "DOM Property" --columns Reflects
   cem list attributes --tag-name my-button --format table --columns "DOM Property" --columns Reflects --columns Summary
 `,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
-		if err != nil {
-			return err
-		}
-		attrs, err := pkg.TagRenderableAttributes(tagName)
-		if err != nil {
-			return err
-		}
-		switch format {
-		case "table":
-			headers := []string{"Name", "DOM Property", "Reflects", "Summary"}
-			rows := list.MapToTableRows(attrs)
-			title := "Attributes on " + tagName
-			return list.RenderTable(title, headers, rows, columns)
-		}
-		return nil
-	},
-}
+	"Attributes",
+	"attrs",
+)
 
-var listSlotsCmd = &cobra.Command{
-	Use:   "slots",
-	Short: "List slots in the custom elements manifest by tag name",
-	Long: `List all slots for a given custom element tag.
+var listSlotsCmd = makeListSectionCmd(
+	"slots",
+	"List slots in the custom elements manifest by tag name",
+	`List all slots for a given custom element tag.
 
 You must specify the tag name using the --tag-name flag. The output includes each slot name, and it's summary
 
@@ -158,32 +158,13 @@ Examples:
   cem list slots --tag-name my-button
   cem list slots --tag-name my-button --format table --columns Name
 `,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
-		if err != nil {
-			return err
-		}
-		slots, err := pkg.TagRenderableSlots(tagName)
-		if err != nil {
-			return err
-		}
-		switch format {
-		case "table":
-			headers := []string{"Name", "Summary"}
-			rows := list.MapToTableRows(slots)
-			title := "Slots on " + tagName
-			return list.RenderTable(title, headers, rows, columns)
-		}
+	"Slots",
+)
 
-		return nil
-	},
-}
-
-var listCssCustomPropertiesCmd = &cobra.Command{
-	Use:     "css-custom-properties",
-	Aliases: []string{"css-properties", "css-props", "css-custom-props"},
-	Short:   "List CSS custom properties used in a given tag name",
-	Long: `List CSS custom properties used in a given tag name.
+var listCssCustomPropertiesCmd = makeListSectionCmd(
+	"css-custom-properties",
+	"List CSS custom properties used in a given tag name",
+	`List CSS custom properties used in a given tag name.
 
 You must specify the tag name using the --tag-name flag. The output may include for each
 css property by name, it's syntax, default value, and summary.
@@ -195,31 +176,14 @@ Examples:
   cem list css-custom-properties --tag-name my-button --format table --columns Syntax --columns Default
   cem list css-custom-properties --tag-name my-button --format table --columns Syntax --columns Default --columns Summary
 `,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
-		if err != nil {
-			return err
-		}
-		props, err := pkg.TagRenderableCssProperties(tagName)
-		if err != nil {
-			return err
-		}
-		switch format {
-		case "table":
-			headers := []string{"Name", "Syntax", "Default", "Summary"}
-			rows := list.MapToTableRows(props)
-			title := "CSS Custom Properties for " + tagName
-			return list.RenderTable(title, headers, rows, columns)
-		}
-		return nil
-	},
-}
+	"CSS Properties",
+	"css-properties", "css-props", "css-custom-props",
+)
 
-var listCssCustomStatesCmd = &cobra.Command{
-	Use:     "css-custom-states",
-	Aliases: []string{"css-states"},
-	Short:   "List CSS custom states used in a given tag name",
-	Long: `List CSS custom states used in a given tag name.
+var listCssCustomStatesCmd = makeListSectionCmd(
+	"css-custom-states",
+	"List CSS custom states used in a given tag name",
+	`List CSS custom states used in a given tag name.
 
 You must specify the tag name using the --tag-name flag. The output includes each css state by name,
 and a summary
@@ -229,32 +193,14 @@ Examples:
   cem list css-custom-states --tag-name my-button
   cem list css-custom-states --tag-name my-button --format table --columns Name
 `,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
-		if err != nil {
-			return err
-		}
-		props, err := pkg.TagRenderableCssStates(tagName)
-		if err != nil {
-			return err
-		}
-		switch format {
-		case "table":
-			headers := []string{"Name", "Summary"}
-			rows := list.MapToTableRows(props)
-			title := "CSS Custom States for " + tagName
-			return list.RenderTable(title, headers, rows, columns)
-		}
+	"CSS States",
+	"css-states",
+)
 
-		return nil
-	},
-}
-
-var listCssPartsCmd = &cobra.Command{
-	Use:     "css-parts",
-	Aliases: []string{"parts", "css-shadow-parts"},
-	Short:   "List CSS shadow parts for a given tag name",
-	Long: `List CSS shadow parts for a given tag name.
+var listCssPartsCmd = makeListSectionCmd(
+	"css-parts",
+	"List CSS shadow parts for a given tag name",
+	`List CSS shadow parts for a given tag name.
 
 You must specify the tag name using the --tag-name flag. The output includes each shadow part by name, and a summary
 
@@ -262,30 +208,14 @@ Examples:
 
   cem list css-parts --tag-name my-button --format table
 `,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
-		if err != nil {
-			return err
-		}
-		parts, err := pkg.TagRenderableCssParts(tagName)
-		if err != nil {
-			return err
-		}
-		switch format {
-		case "table":
-			headers := []string{"Name", "Summary"}
-			rows := list.MapToTableRows(parts)
-			title := "CSS Shadow Parts for " + tagName
-			return list.RenderTable(title, headers, rows, columns)
-		}
-		return nil
-	},
-}
+	"CSS Parts",
+	"parts", "css-shadow-parts",
+)
 
-var listEventsCmd = &cobra.Command{
-	Use:   "events",
-	Short: "List events for a given tag name",
-	Long: `List JavaScript events fired by a given element by tag name.
+var listEventsCmd = makeListSectionCmd(
+	"events",
+	"List events for a given tag name",
+	`List JavaScript events fired by a given element by tag name.
 
 You must specify the tag name using the --tag-name flag. The output includes each event,
 it's type, and a summary
@@ -296,30 +226,13 @@ Examples:
   cem list event --tag-name my-button --format table --columns Type
   cem list event --tag-name my-button --format table --columns Type --columns Summary
 `,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
-		if err != nil {
-			return err
-		}
-		events, err := pkg.TagRenderableEvents(tagName)
-		if err != nil {
-			return err
-		}
-		switch format {
-		case "table":
-			headers := []string{"Name", "Type", "Summary"}
-			rows := list.MapToTableRows(events)
-			title := "Events fired by " + tagName
-			return list.RenderTable(title, headers, rows, columns)
-		}
-		return nil
-	},
-}
+	"Events",
+)
 
-var listMethodsCmd = &cobra.Command{
-	Use:   "methods",
-	Short: "List class methods for a given tag name",
-	Long: `List DOM object methods for the class registered to a given tag name.
+var listMethodsCmd = makeListSectionCmd(
+	"methods",
+	"List class methods for a given tag name",
+	`List DOM object methods for the class registered to a given tag name.
 
 You must specify the tag name using the --tag-name flag. The output includes each method, it's return type, privacy, and summary
 
@@ -327,26 +240,8 @@ Examples:
 
   cem list methods --tag-name my-button --format table
 `,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		tagName, format, columns, pkg, err := validateTagCommandFlags(cmd)
-		if err != nil {
-			return err
-		}
-		methods, err := pkg.TagRenderableClassMethods(tagName)
-		if err != nil {
-			return err
-		}
-		switch format {
-		case "table":
-			headers := []string{"Name", "Return Type", "Privacy", "Static", "Summary"}
-			rows := list.MapToTableRows(methods)
-			title := "Methods on " + tagName
-			return list.RenderTable(title, headers, rows, columns)
-		}
-
-		return nil
-	},
-}
+	"Methods",
+)
 
 var listTagsCmd = &cobra.Command{
 	Use:     "tags",
@@ -369,7 +264,6 @@ Example:
 		if err != nil {
 			return err
 		}
-		tags := pkg.RenderableCustomElementDeclarations()
 		format, err := requireFormat(cmd, []string{"table"})
 		if err != nil {
 			return err
@@ -380,10 +274,8 @@ Example:
 		}
 		switch format {
 		case "table":
-			headers := []string{"Tag", "Class", "Module", "Summary"}
-			rows := list.MapToTableRows(tags)
-			title := "Tags"
-			return list.RenderTable(title, headers, rows, columns)
+			opts := list.RenderOptions{Columns: columns}
+			return list.Render(M.NewRenderablePackage(pkg), opts)
 		}
 		return nil
 	},
@@ -408,7 +300,6 @@ Example:
 		if err != nil {
 			return err
 		}
-		tags := pkg.RenderableModules()
 		format, err := requireFormat(cmd, []string{"table"})
 		if err != nil {
 			return err
@@ -419,10 +310,8 @@ Example:
 		}
 		switch format {
 		case "table":
-			headers := []string{"Name", "Custom Elements"}
-			rows := list.MapToTableRows(tags)
-			title := "Modules"
-			return list.RenderTable(title, headers, rows, columns)
+			opts := list.RenderOptions{Columns: columns}
+			return list.Render(M.NewRenderablePackage(pkg), opts)
 		}
 		return nil
 	},
@@ -477,6 +366,9 @@ Examples:
 				pred = M.IsDeprecated
 			}
 			return list.RenderTree(title, M.NewRenderablePackage(pkg), pred)
+		case "table":
+			opts := list.RenderOptions{}
+			return list.Render(M.NewRenderablePackage(pkg), opts)
 		}
 		return nil
 	},
