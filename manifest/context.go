@@ -42,8 +42,8 @@ type GroupedRenderable interface {
 }
 
 type Section struct {
-	Title   string
-	Items   []Renderable
+	Title string
+	Items []Renderable
 }
 
 type SectionDataProvider interface {

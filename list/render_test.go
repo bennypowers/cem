@@ -41,11 +41,7 @@ func stripANSI(s string) string {
 
 func loadTestFixture(t *testing.T) *manifest.Package {
 	t.Helper()
-	// Fixtures are in the manifest package
-	bytes, err :=
-	os.ReadFile(filepath.Join("fixtures", filepath.Base(t.Name()) + ".json"))
-	str := string(bytes)
-	bytes = []byte(str);
+	bytes, err := os.ReadFile(filepath.Join("fixtures", filepath.Base(t.Name())+".json"))
 	assert.NoError(t, err)
 	var pkg manifest.Package
 	err = json.Unmarshal(bytes, &pkg)
@@ -55,7 +51,7 @@ func loadTestFixture(t *testing.T) *manifest.Package {
 
 func checkGolden(t *testing.T, actual []byte) {
 	t.Helper()
-	goldenPath := filepath.Join("goldens", filepath.Base(t.Name()) + ".md")
+	goldenPath := filepath.Join("goldens", filepath.Base(t.Name())+".md")
 	if *update {
 		err := os.WriteFile(goldenPath, actual, 0644)
 		assert.NoError(t, err, "failed to update golden file")
@@ -73,10 +69,6 @@ func checkGolden(t *testing.T, actual []byte) {
 }
 
 func TestRender(t *testing.T) {
-	// Disable output for testing
-	pterm.DisableOutput()
-	defer pterm.EnableOutput()
-
 	t.Run("custom-element-table-coverage", func(t *testing.T) {
 		pkg := loadTestFixture(t)
 		renderable := manifest.NewRenderablePackage(pkg)

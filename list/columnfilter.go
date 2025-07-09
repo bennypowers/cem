@@ -61,34 +61,34 @@ func RemoveEmptyColumns(headers []string, rows [][]string) ([]string, [][]string
 
 // filterToUserColumns filters headers and rows to requested columns, always retaining the first (identifier) column.
 func filterToUserColumns(headers []string, rows [][]string, columns []string) ([]string, [][]string, error) {
-    headerMap := make(map[string]int)
-    for i, h := range headers {
-        headerMap[h] = i
-    }
-    colIdx := []int{0} // always include first column
-    used := map[int]bool{0: true}
-    for _, c := range columns {
-        if idx, ok := headerMap[c]; ok && !used[idx] {
-            colIdx = append(colIdx, idx)
-            used[idx] = true
-        } else if !ok {
-            return nil, nil, fmt.Errorf("unknown column: %s", c)
-        }
-    }
-    filteredHeaders := make([]string, len(colIdx))
-    for i, idx := range colIdx {
-        filteredHeaders[i] = headers[idx]
-    }
-    filteredRows := make([][]string, len(rows))
-    for i, row := range rows {
-        filteredRows[i] = make([]string, len(colIdx))
-        for j, idx := range colIdx {
-            if idx < len(row) {
-                filteredRows[i][j] = row[idx]
-            } else {
-                filteredRows[i][j] = ""
-            }
-        }
-    }
-    return filteredHeaders, filteredRows, nil
+	headerMap := make(map[string]int)
+	for i, h := range headers {
+		headerMap[h] = i
+	}
+	colIdx := []int{0} // always include first column
+	used := map[int]bool{0: true}
+	for _, c := range columns {
+		if idx, ok := headerMap[c]; ok && !used[idx] {
+			colIdx = append(colIdx, idx)
+			used[idx] = true
+		} else if !ok {
+			return nil, nil, fmt.Errorf("unknown column: %s", c)
+		}
+	}
+	filteredHeaders := make([]string, len(colIdx))
+	for i, idx := range colIdx {
+		filteredHeaders[i] = headers[idx]
+	}
+	filteredRows := make([][]string, len(rows))
+	for i, row := range rows {
+		filteredRows[i] = make([]string, len(colIdx))
+		for j, idx := range colIdx {
+			if idx < len(row) {
+				filteredRows[i][j] = row[idx]
+			} else {
+				filteredRows[i][j] = ""
+			}
+		}
+	}
+	return filteredHeaders, filteredRows, nil
 }

@@ -19,11 +19,13 @@ package list
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
+
+	"slices"
 
 	"github.com/agext/levenshtein"
 	"github.com/pterm/pterm"
-	"slices"
 
 	M "bennypowers.dev/cem/manifest"
 )
@@ -143,8 +145,71 @@ func buildTableData(headers []string, rows [][]string, columns []string) ([]stri
 	if err := checkUnknownColumns(headers, columns); err != nil {
 		return nil, nil, err
 	}
-	finalHeaders, finalRows := filterTableColumns(headers, rows, columns)
+	finalHeaders, rows := filterTableColumns(headers, rows, columns)
+	rows = backtickCodeColumns(rows, headers)
+	finalRows := insertMarkdownHeaderRow(finalHeaders, rows)
 	return finalHeaders, finalRows, nil
+}
+
+// Wraps the first cell in a row in backticks, for markdown output
+func backtickCodeColumns(rows [][]string, headers []string) [][]string {
+	out := make([][]string, len(rows))
+	for i, row := range rows {
+		if len(row) == 0 {
+			out[i] = nil
+			continue
+		}
+		// Copy the row (so we don't mutate the source)
+		newRow := make([]string, len(row))
+		copy(newRow, row)
+		for j := range row {
+			if j == 0 || regexp.MustCompile(`Code|Type|Syntax|Static|Default|DOM Property`).MatchString(headers[j]) {
+				if newRow[j] != "" {
+					newRow[j] = "`" + row[j] + "`"
+				}
+			}
+		}
+		out[i] = newRow
+	}
+	return out
+}
+
+func insCopy(dest [][]string, row []string, i int) {
+	// Copy the row (so we don't mutate the source)
+	newRow := make([]string, len(row))
+	copy(newRow, row)
+	dest[i] = newRow
+}
+
+func insertMarkdownHeaderRow(headers []string, rows [][]string) [][]string {
+	if len(rows) == 0 {
+		return rows
+	}
+
+	out := make([][]string, len(rows)+2)
+
+	longest := 0
+
+	for _, row := range rows {
+		for _, cell := range row {
+			longest = max(longest, len(cell))
+		}
+	}
+	for _, cell := range headers {
+		longest = max(longest, len(cell))
+	}
+
+	// don't insert headers, that happend in renderSimpleTable
+	sep := make([]string, len(rows[0]))
+	for j := range sep {
+		sep[j] = strings.Repeat("-", max(3, longest))
+	}
+	out[1] = sep
+
+	for i, row := range rows {
+		insCopy(out, row, i+2)
+	}
+	return out
 }
 
 // checkUnknownColumns returns an error if any column name is not in headers, case-insensitive.
