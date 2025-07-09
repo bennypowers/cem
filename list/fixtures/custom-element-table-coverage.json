@@ -1,0 +1,122 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/test-elem.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "TestElem",
+          "tagName": "test-elem",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "foo",
+              "summary": "Foo summary",
+              "default": "bar"
+            },
+            {
+              "name": "bar"
+            }
+          ],
+          "events": [
+            {
+              "name": "submitted",
+              "summary": "Fires on submit",
+              "type": {
+                "text": "CustomEvent"
+              }
+            },
+            {
+              "name": "reset",
+              "summary": ""
+            }
+          ],
+          "slots": [
+            {
+              "name": "",
+              "summary": "Default slot"
+            },
+            {
+              "name": "icon",
+              "summary": "Slot for the icon"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--main-color",
+              "summary": "Main color",
+              "syntax": "<color>",
+              "default": "#fff"
+            },
+            {
+              "name": "--unused",
+              "syntax": "",
+              "default": ""
+            }
+          ],
+          "cssStates": [
+            {
+              "name": "--active",
+              "summary": "Active state"
+            },
+            {
+              "name": "--inactive"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "label",
+              "summary": "The label part"
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "foo",
+              "summary": "Foo field summary",
+              "attribute": "foo",
+              "reflects": true
+            },
+            {
+              "kind": "field",
+              "name": "bar",
+              "attribute": "bar",
+              "reflects": false
+            },
+            {
+              "kind": "method",
+              "name": "doThing",
+              "summary": "Does a thing",
+              "privacy": "public",
+              "static": false,
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "privateStuff",
+              "privacy": "private",
+              "static": true,
+              "return": {
+                "type": {
+                  "text": "string"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "test-elem"
+        }
+      ]
+    }
+  ]
+}

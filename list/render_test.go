@@ -1,95 +1,95 @@
-package list
+/*
+Copyright © 2025 Benny Powers
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+package list_test
 
 import (
+	"bytes"
+	"encoding/json"
+	"flag"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/list"
 	"bennypowers.dev/cem/manifest"
 	"github.com/pterm/pterm"
 	"github.com/stretchr/testify/assert"
 )
 
-// Mocks
-type MockRenderable struct {
-	name       string
-	label      string
-	children   []manifest.Renderable
-	sections   []manifest.Section
-	isSdp      bool
-	isDep      bool
-	headings   []string
-	row        []string
+var update = flag.Bool("update", false, "update golden files")
+var ansiRegexp = regexp.MustCompile(`\x1b\[[0-9;]*m`)
+
+func stripANSI(s string) string {
+	return ansiRegexp.ReplaceAllString(s, "")
 }
 
-func (m *MockRenderable) Name() string                                  { return m.name }
-func (m *MockRenderable) Label() string                                 { return m.label }
-func (m *MockRenderable) Children() []manifest.Renderable               { return m.children }
-func (m *MockRenderable) Sections() []manifest.Section                  { return m.sections }
-func (m *MockRenderable) IsDeprecated() bool                            { return m.isDep }
-func (m *MockRenderable) Deprecation() manifest.Deprecated              { return nil }
-func (m *MockRenderable) ColumnHeadings() []string                      { return m.headings }
-func (m *MockRenderable) ToTableRow() []string                          { return m.row }
-func (m *MockRenderable) ToTreeNode(p manifest.PredicateFunc) pterm.TreeNode { return pterm.TreeNode{} }
+func loadTestFixture(t *testing.T) *manifest.Package {
+	t.Helper()
+	// Fixtures are in the manifest package
+	bytes, err :=
+	os.ReadFile(filepath.Join("fixtures", filepath.Base(t.Name()) + ".json"))
+	str := string(bytes)
+	bytes = []byte(str);
+	assert.NoError(t, err)
+	var pkg manifest.Package
+	err = json.Unmarshal(bytes, &pkg)
+	assert.NoError(t, err)
+	return &pkg
+}
+
+func checkGolden(t *testing.T, actual []byte) {
+	t.Helper()
+	goldenPath := filepath.Join("goldens", filepath.Base(t.Name()) + ".md")
+	if *update {
+		err := os.WriteFile(goldenPath, actual, 0644)
+		assert.NoError(t, err, "failed to update golden file")
+		return
+	}
+
+	expected, err := os.ReadFile(goldenPath)
+	assert.NoError(t, err, "failed to read golden file")
+
+	// Normalize line endings for comparison
+	expectedNormalized := strings.ReplaceAll(string(expected), "\r\n", "\n")
+	actualNormalized := strings.ReplaceAll(string(actual), "\r\n", "\n")
+
+	assert.Equal(t, expectedNormalized, actualNormalized)
+}
 
 func TestRender(t *testing.T) {
 	// Disable output for testing
 	pterm.DisableOutput()
 	defer pterm.EnableOutput()
 
-	t.Run("it renders a simple renderable with no children", func(t *testing.T) {
-		r := &MockRenderable{label: "Simple"}
-		err := Render(r, RenderOptions{})
+	t.Run("custom-element-table-coverage", func(t *testing.T) {
+		pkg := loadTestFixture(t)
+		renderable := manifest.NewRenderablePackage(pkg)
+
+		var buf bytes.Buffer
+		pterm.SetDefaultOutput(&buf)
+		defer pterm.SetDefaultOutput(os.Stdout)
+
+		opts := list.RenderOptions{}
+		err := list.Render(renderable, opts)
 		assert.NoError(t, err)
-	})
 
-	t.Run("it recursively renders children", func(t *testing.T) {
-		child := &MockRenderable{label: "Child"}
-		parent := &MockRenderable{label: "Parent", children: []manifest.Renderable{child}}
-		err := Render(parent, RenderOptions{})
-		assert.NoError(t, err)
-	})
-
-	t.Run("it renders sections from a SectionDataProvider", func(t *testing.T) {
-		// Replace pterm's default section printer with a mock to track calls
-		originalSectionPrinter := sectionPrinter
-		var headerPrinted bool
-		sectionPrinter = func(a ...any) *pterm.TextPrinter {
-			// The main header for our mock object is "DataProvider"
-			if a[0] == "DataProvider" {
-				headerPrinted = true
-			}
-			return nil
-		}
-		defer func() { sectionPrinter = originalSectionPrinter }()
-
-		item1 := &MockRenderable{
-			headings: []string{"H1", "H2"},
-			row:      []string{"r1c1", "r1c2"},
-		}
-		section1 := manifest.Section{
-			Title: "Section 1",
-			Items: []manifest.Renderable{item1},
-		}
-		sdp := &MockRenderable{
-			label:    "DataProvider",
-			sections: []manifest.Section{section1},
-		}
-
-		type sdpWrapper struct {
-			*MockRenderable
-			manifest.SectionDataProvider
-		}
-
-		// Test case 1: No section filter, header should be printed
-		headerPrinted = false
-		err := Render(sdpWrapper{MockRenderable: sdp, SectionDataProvider: sdp}, RenderOptions{})
-		assert.NoError(t, err)
-		assert.True(t, headerPrinted, "Expected header to be printed when no section filter is active")
-
-		// Test case 2: With section filter, header should NOT be printed
-		headerPrinted = false
-		opts := RenderOptions{IncludeSections: []string{"Section 1"}}
-		err = Render(sdpWrapper{MockRenderable: sdp, SectionDataProvider: sdp}, opts)
-		assert.NoError(t, err)
-		assert.False(t, headerPrinted, "Expected header to be skipped when a section filter is active")
+		output := stripANSI(buf.String())
+		checkGolden(t, []byte(output))
 	})
 }
