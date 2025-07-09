@@ -53,3 +53,5 @@ home = ["HTML", "RSS", "JSON"]
     source = "../CONTRIBUTING.md"
     target = "assets/CONTRIBUTING.md"
 
+[security]
+enableInlineShortcodes = true
