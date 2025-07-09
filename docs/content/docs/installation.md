@@ -1,5 +1,6 @@
 ---
 title: Installation
+weight: 10
 ---
 
 For go binaries:

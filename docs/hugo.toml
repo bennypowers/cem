@@ -10,6 +10,25 @@ theme = [
 # theme = "compose"
 enableGitInfo = true
 
+[params]
+  uniqueHomePage = true
+  repo = "https://github.com/bennypowers/cem"
+  enableDarkMode = true
+  enableCopyright = true
+
+  [params.logo]
+    lightMode = "images/logo.svg"
+    darkMode = "images/logo.svg"
+
+  [params.author]
+    name = "Benny Powers"
+    url = "https://bennypowers.com"
+
+  [params.source]
+    iconDark = "images/github-dark.svg"
+    iconLight = "images/github-light.svg"
+    url = "https://github.com/bennypowers/cem"
+
 [pagination]
 disableAliases = false
 pagerSize = 10
@@ -25,9 +44,14 @@ home = ["HTML", "RSS", "JSON"]
       unsafe = true
 [module]
   [[module.mounts]]
+    source = "assets"
+    target = "assets"
+  [[module.mounts]]
     source = "../README.md"
     target = "assets/README.md"
   [[module.mounts]]
     source = "../CONTRIBUTING.md"
     target = "assets/CONTRIBUTING.md"
 
+[security]
+enableInlineShortcodes = true
