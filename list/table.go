@@ -32,6 +32,8 @@ import (
 
 var sectionPrinter = pterm.DefaultSection.Println
 
+var isCodeStyleHeader = regexp.MustCompile(`Code|Type|Syntax|Static|Default|DOM Property`)
+
 // RenderOptions provides options for the Render function.
 type RenderOptions struct {
 	Columns         []string
@@ -163,7 +165,7 @@ func backtickCodeColumns(rows [][]string, headers []string) [][]string {
 		newRow := make([]string, len(row))
 		copy(newRow, row)
 		for j := range row {
-			if j == 0 || regexp.MustCompile(`Code|Type|Syntax|Static|Default|DOM Property`).MatchString(headers[j]) {
+			if j == 0 || isCodeStyleHeader.MatchString(headers[j]) {
 				if newRow[j] != "" {
 					newRow[j] = "`" + row[j] + "`"
 				}
@@ -188,21 +190,21 @@ func insertMarkdownHeaderRow(headers []string, rows [][]string) [][]string {
 
 	out := make([][]string, len(rows)+2)
 
-	longest := 0
+	columnWidths := make([]int, len(headers))
 
-	for _, row := range rows {
-		for _, cell := range row {
-			longest = max(longest, len(cell))
-		}
+	for i, header := range headers {
+		columnWidths[i] = len(header)
 	}
-	for _, cell := range headers {
-		longest = max(longest, len(cell))
+	for _, row := range rows {
+		for i, cell := range row {
+			columnWidths[i] = max(columnWidths[i], len(cell))
+		}
 	}
 
 	// don't insert headers, that happend in renderSimpleTable
-	sep := make([]string, len(rows[0]))
-	for j := range sep {
-		sep[j] = strings.Repeat("-", max(3, longest))
+	sep := make([]string, len(headers))
+	for j, width := range columnWidths {
+		sep[j] = strings.Repeat("-", max(3, width))
 	}
 	out[1] = sep
 

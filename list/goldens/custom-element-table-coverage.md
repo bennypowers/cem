@@ -10,57 +10,57 @@
 
 ## Attributes
 
-Name         | DOM Property | Reflects     | Summary      | Default     
------------- | ------------ | ------------ | ------------ | ------------
-`foo`        | `foo`        | ✅           | Foo summary  | `bar`       
-`bar`        | `bar`        |              |              |             
+Name  | DOM Property | Reflects | Summary     | Default
+----- | ------------ | -------- | ----------- | -------
+`foo` | `foo`        | ✅       | Foo summary | `bar`  
+`bar` | `bar`        |          |             |        
 
 
 ## Slots
 
-Name              | Summary          
------------------ | -----------------
-`<default>`       | Default slot     
-`icon`            | Slot for the icon
+Name        | Summary          
+----------- | -----------------
+`<default>` | Default slot     
+`icon`      | Slot for the icon
 
 
 ## Events
 
-Name            | Type            | Summary        
---------------- | --------------- | ---------------
-`submitted`     | `CustomEvent`   | Fires on submit
-`reset`         |                 |                
+Name        | Type          | Summary        
+----------- | ------------- | ---------------
+`submitted` | `CustomEvent` | Fires on submit
+`reset`     |               |                
 
 
 ## Fields
 
-Name              | Summary          
------------------ | -----------------
-`foo`             | Foo field summary
-`bar`             |                  
+Name  | Summary          
+----- | -----------------
+`foo` | Foo field summary
+`bar` |                  
 
 
 ## Methods
 
-Name           | Return Type    | Privacy        | Static         | Summary       
--------------- | -------------- | -------------- | -------------- | --------------
-`doThing`      | `void`         | public         | `false`        | Does a thing  
-`privateStuff` | `string`       | private        | `true`         |               
+Name           | Return Type | Privacy | Static  | Summary     
+-------------- | ----------- | ------- | ------- | ------------
+`doThing`      | `void`      | public  | `false` | Does a thing
+`privateStuff` | `string`    | private | `true`  |             
 
 
 ## CSS Properties
 
-Name           | Syntax         | Default        | Summary       
--------------- | -------------- | -------------- | --------------
-`--main-color` | `<color>`      | `#fff`         | Main color    
-`--unused`     |                |                |               
+Name           | Syntax    | Default | Summary   
+-------------- | --------- | ------- | ----------
+`--main-color` | `<color>` | `#fff`  | Main color
+`--unused`     |           |         |           
 
 
 ## CSS Parts
 
-Name           | Summary       
--------------- | --------------
-`label`        | The label part
+Name    | Summary       
+------- | --------------
+`label` | The label part
 
 
 ## CSS States
