@@ -25,17 +25,15 @@
               "name": "submitted",
               "summary": "Fires on submit",
               "type": {
-                "text": "CustomEvent"
+                "text": "CustomEvent<'a'|'b'|'c'>"
               }
             },
             {
-              "name": "reset",
-              "summary": ""
+              "name": "reset"
             }
           ],
           "slots": [
             {
-              "name": "",
               "summary": "Default slot"
             },
             {
@@ -93,7 +91,7 @@
               "static": false,
               "return": {
                 "type": {
-                  "text": "void"
+                  "text": "void | Promise<void>"
                 }
               }
             },

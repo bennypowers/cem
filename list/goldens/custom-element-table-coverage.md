@@ -26,10 +26,10 @@ Name        | Summary
 
 ## Events
 
-Name        | Type          | Summary        
------------ | ------------- | ---------------
-`submitted` | `CustomEvent` | Fires on submit
-`reset`     |               |                
+Name        | Type                       | Summary        
+----------- | -------------------------- | ---------------
+`submitted` | `CustomEvent<'a'|'b'|'c'>` | Fires on submit
+`reset`     |                            |                
 
 
 ## Fields
@@ -42,10 +42,10 @@ Name  | Summary
 
 ## Methods
 
-Name           | Return Type | Privacy | Static  | Summary     
--------------- | ----------- | ------- | ------- | ------------
-`doThing`      | `void`      | public  | `false` | Does a thing
-`privateStuff` | `string`    | private | `true`  |             
+Name           | Return Type            | Privacy | Static  | Summary     
+-------------- | ---------------------- | ------- | ------- | ------------
+`doThing`      | `void | Promise<void>` | public  | `false` | Does a thing
+`privateStuff` | `string`               | private | `true`  |             
 
 
 ## CSS Properties
