@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"bennypowers.dev/cem/cmd/config"
@@ -72,11 +73,28 @@ var generateCmd = &cobra.Command{
 			return errors.Join(errs, errors.New("manifest generation returned nil"))
 		}
 		if cfg.Generate.Output != "" {
+			outputDir := filepath.Dir(cfg.Generate.Output)
+			if _, err := os.Stat(outputDir); os.IsNotExist(err) {
+				if err = os.MkdirAll(outputDir, 0755); err != nil {
+					errs = errors.Join(errs, err)
+				}
+			}
 			if err = os.WriteFile(cfg.Generate.Output, []byte(*manifest+"\n"), 0666); err != nil {
 				errs = errors.Join(errs, err)
 			} else {
 				end := time.Since(start)
-				pterm.Success.Printf("Wrote manifest to %s in %s", cfg.Generate.Output, G.ColorizeDuration(end).Sprint(end))
+				outputPath, err := filepath.Abs(cfg.Generate.Output)
+				if err != nil {
+					errs = errors.Join(errs, err)
+				}
+
+				displayPath, err := filepath.Rel(initialCWD, outputPath)
+				if err != nil {
+					errs = errors.Join(errs, err)
+					displayPath = outputPath
+				}
+
+				pterm.Success.Printf("Wrote manifest to %s in %s", displayPath, G.ColorizeDuration(end).Sprint(end))
 			}
 		} else {
 			fmt.Println(*manifest + "\n")
