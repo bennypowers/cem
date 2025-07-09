@@ -25,11 +25,13 @@ line-chart svg {
   background:var(--sl-panel-background-color);
   overflow:visible;
 }
+
 .analyzer-tool-stats {
   display:flex;
   gap:2em;
   margin:1em 0;
 }
+
 .run-breakdown-figure {
   margin: 2em 0;
   figcaption {
