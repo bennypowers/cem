@@ -4,10 +4,10 @@
 
 ## Attributes
 
-Name         | DOM Property | Reflects | Default | Type
-my-attr      |              |          |         |     
-another-attr |              |          |         |     
-third-attr   |              |          |         |     
+Name        
+my-attr     
+another-attr
+third-attr  
 
 
 ## Slots
@@ -26,8 +26,8 @@ custom-event | CustomEvent
 
 ## Fields
 
-Name    | Type
-myField |     
+Name   
+myField
 
 
 ## Methods
@@ -38,9 +38,9 @@ myMethod | void        | public  | false
 
 ## CSS Properties
 
-Name       | Syntax | Default
-color      |        |        
-background |        |        
+Name      
+color     
+background
 
 
 ## CSS Parts
