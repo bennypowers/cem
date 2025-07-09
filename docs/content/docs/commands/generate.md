@@ -6,7 +6,7 @@ layout: page
 - **Generates CEM files** from source code using syntax analysis powered by
 [go][go] and [tree-sitter][treesitter].
 - Identifies custom elements, classes, variables, functions, and exports.
-- Supports elements written in idiomatic Lit typescript style, with a
+- Supports elements written in idiomatic style using Lit and TypeScript, with a
 `@customElement` decorator, and `@property` decorators on class fields.
 
 {{<tip "warning">}}
