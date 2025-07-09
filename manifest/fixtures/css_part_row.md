@@ -1,2 +1,2 @@
-Name   | Summary    
-header | Header part
+Name   | Summary
+header |        

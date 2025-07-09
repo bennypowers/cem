@@ -539,11 +539,7 @@ Examples:
 			}
 			return list.RenderTree(title, M.NewRenderablePackage(pkg), pred)
 		case "table":
-			columns, err := cmd.Flags().GetStringArray("columns")
-			if err != nil {
-				return err
-			}
-			opts := list.RenderOptions{Columns: columns}
+			opts := list.RenderOptions{}
 			return list.Render(M.NewRenderablePackage(pkg), opts)
 		}
 		return nil
@@ -555,7 +551,6 @@ func init() {
 	listCmd.AddCommand(listModulesCmd)
 	listCmd.PersistentFlags().StringP("format", "f", "table", "Output format")
 	listCmd.PersistentFlags().Bool("deprecated", false, "Filter the results, showing only deprecated items")
-	listCmd.Flags().StringArrayP("columns", "c", []string{}, "list of columns to display in the table")
 	listTagsCmd.Flags().StringArrayP("columns", "c", []string{}, "list of columns to display in the table")
 	listModulesCmd.Flags().StringArrayP("columns", "c", []string{}, "list of columns to display in the table")
 	for _, c := range []*cobra.Command{

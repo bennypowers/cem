@@ -1,2 +1,2 @@
-Name            | Syntax | Default | Summary   
---my-card-color |        |         | Card color
+Name            | Syntax | Default | Summary
+--my-card-color |        |         |        

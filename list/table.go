@@ -71,6 +71,15 @@ func Render(r M.Renderable, opts RenderOptions) error {
 			pterm.DefaultSection.WithLevel(2).Println(section.Title)
 			headers := section.Items[0].ColumnHeadings()
 			rows := MapToTableRows(section.Items)
+
+			// Only filter empty columns if the user did not specify columns
+			if len(opts.Columns) == 0 {
+				headers, rows = RemoveEmptyColumns(headers, rows)
+			}
+
+			if len(headers) == 0 {
+				continue // all columns empty, nothing to display
+			}
 			if err := renderSimpleTable(headers, rows, opts.Columns); err != nil {
 				return err
 			}
@@ -104,6 +113,10 @@ func MapToTableRows[T M.Renderable](items []T) [][]string {
 
 // renderSimpleTable renders a basic table, used by the main Render function.
 func renderSimpleTable(headers []string, rows [][]string, columns []string) error {
+	// If the user did not specify columns, filter out all-empty columns (except the first column).
+	if len(columns) == 0 {
+		headers, rows = RemoveEmptyColumns(headers, rows)
+	}
 	finalHeaders, finalRows, err := buildTableData(headers, rows, columns)
 	if err != nil {
 		return err

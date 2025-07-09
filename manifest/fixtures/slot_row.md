@@ -1,2 +1,2 @@
-Name      | Summary     
-<default> | Default slot
+Name      | Summary
+<default> |        
