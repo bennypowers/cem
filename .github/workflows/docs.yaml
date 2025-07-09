@@ -28,6 +28,11 @@ jobs:
           node-version-file: .nvmrc
       - run: make build
       - run: ./scripts/benchmark.sh ${{ github.event.inputs.runs || 100 }} 
+      - run: |
+          echo "---" > docs/content/contributing.md
+          echo "title: Contributing" >> docs/content/contributing.md
+          echo "---" >> docs/content/contributing.md
+          cat CONTRIBUTING.md >> docs/content/contributing.md
       - run: hugo mod clean
       - run: hugo --gc --minify --source docs
       - name: Deploy to GitHub Pages
