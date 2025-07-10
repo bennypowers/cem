@@ -1,4 +1,4 @@
-package generate
+package generate_test
 
 import (
 	"encoding/json"
@@ -11,8 +11,9 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/cmd/config"
+	"bennypowers.dev/cem/generate"
+	"bennypowers.dev/cem/manifest"
 	"github.com/nsf/jsondiff"
-	"github.com/spf13/viper"
 )
 
 var update = flag.Bool("update", false, "update golden files")
@@ -57,8 +58,8 @@ func TestGenerate(t *testing.T) {
 				t.Fatalf("failed to create %s: %v", projectGoldenDir, err)
 			}
 
-			configPath := filepath.Join(".config", "cem.yaml")
-			cfg, err := config.LoadConfig(viper.New(), configPath, ".")
+			ctx := manifest.NewLocalFSProjectContext(projectDir)
+			cfg, err := config.LoadConfig(ctx)
 			if err != nil {
 				t.Fatalf("failed to load config: %v", err)
 			}
@@ -87,7 +88,7 @@ func TestGenerate(t *testing.T) {
 				// capture range variable
 				t.Run(tc.name, func(t *testing.T) {
 					tc.config.Generate.Files = []string{tc.path}
-					actual, err := Generate(tc.config)
+					actual, err := generate.Generate(tc.config)
 					if err != nil {
 						t.Fatal(err)
 					}

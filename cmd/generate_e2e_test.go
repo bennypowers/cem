@@ -45,11 +45,12 @@ export class MyElement extends HTMLElement {}
 	rootCmd.SetErr(&out)
 	origOut := pterm.Success.Writer
 	pterm.Success.Writer = &out
-	defer func() {pterm.Success.Writer = origOut}()
+	defer func() { pterm.Success.Writer = origOut }()
 
 	// Execute the generate command
-	rootCmd.SetArgs([]string{"generate", srcFilePath, "-o", outputFile})
-	viper.BindPFlag("generate.output", generateCmd.Flags().Lookup("output"))
+	args := []string{"generate", srcFilePath, "-o", outputFile}
+	rootCmd.SetArgs(args)
+	// viper.BindPFlag("generate.output", generateCmd.Flags().Lookup("output"))
 	err = rootCmd.Execute()
 	if err != nil {
 		t.Fatalf("generate command failed: %v", err)
@@ -124,28 +125,16 @@ generate:
 		t.Fatalf("Failed to write config file: %v", err)
 	}
 
-	// Change the current working directory to the temp directory
-	originalCWD, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("Failed to get current working directory: %v", err)
-	}
-	defer os.Chdir(originalCWD)
-
-	if err := os.Chdir(tmpDir); err != nil {
-		t.Fatalf("Failed to change directory: %v", err)
-	}
-
 	// Capture the output of the command
 	var out bytes.Buffer
 	origOut := pterm.Success.Writer
 	pterm.Success.Writer = &out
-	defer func() {pterm.Success.Writer = origOut}()
+	defer func() { pterm.Success.Writer = origOut }()
 	rootCmd.SetOut(&out)
 	rootCmd.SetErr(&out)
 
-	// Execute the generate command with the --project-dir flag
-	rootCmd.SetArgs([]string{"generate", "--project-dir", "my-project"})
-	viper.BindPFlag("projectDir", rootCmd.PersistentFlags().Lookup("project-dir"))
+	// Execute the generate command with the --package flag
+	rootCmd.SetArgs([]string{"generate", "--package", filepath.Join("./my-project")})
 	err = rootCmd.Execute()
 	if err != nil {
 		t.Fatalf("generate command failed: %v", err)

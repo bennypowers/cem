@@ -38,66 +38,67 @@ var generateCmd = &cobra.Command{
 	Short: "Generates a custom elements manifest",
 	Args: func(cmd *cobra.Command, args []string) error {
 		start = time.Now()
-		if ctx == nil {
-			return errors.New("project context not initialized")
+		if ctx, err := GetProjectContext(cmd); err != nil {
+			return fmt.Errorf("project context not initialized: %w", err)
+		} else {
+			generateFiles, err = expand(ctx, viper.GetStringSlice("generate.files"))
+			if err != nil {
+				return err
+			}
+			if len(args) > 0 || (len(args) == 0 && len(viper.GetStringSlice("generate.files")) > 0) {
+				return nil
+			}
+			return errors.New("requires at least one file argument or a configured `generate.files` list")
 		}
-		var err error
-		generateFiles, err = expand(ctx, viper.GetStringSlice("generate.files"))
-		if err != nil {
-			return err
-		}
-		if len(args) > 0 || (len(args) == 0 && len(viper.GetStringSlice("generate.files")) > 0) {
-			return nil
-		}
-		return errors.New("requires at least one file argument or a configured `generate.files` list")
 	},
 	RunE: func(cmd *cobra.Command, args []string) (errs error) {
-		if ctx == nil {
-			return errors.New("project context not initialized")
-		}
-		files, err := expand(ctx, append(viper.GetStringSlice("generate.files"), args...))
-		if err != nil {
-			errs = errors.Join(errs, err)
-		}
-		exclude, err := expand(ctx, viper.GetStringSlice("generate.exclude"))
-		if err != nil {
-			errs = errors.Join(errs, err)
-		}
-
-		cfg, err := C.LoadConfig(ctx)
-		if err != nil {
-			errs = errors.Join(errs, err)
-			return errs
-		}
-		cfg.Generate.Files = files
-		cfg.Generate.Exclude = exclude
-
-		manifestStr, err := G.Generate(cfg)
-		if err != nil {
-			errs = errors.Join(errs, err)
-		}
-		if manifestStr == nil {
-			return errors.Join(errs, errors.New("manifest generation returned nil"))
-		}
-		if cfg.Generate.Output != "" {
-			writer, err := ctx.OutputWriter(cfg.Generate.Output)
+		if ctx, err := GetProjectContext(cmd); err != nil {
+			return fmt.Errorf("project context not initialized: %w", err)
+		} else {
+			files, err := expand(ctx, append(viper.GetStringSlice("generate.files"), args...))
 			if err != nil {
 				errs = errors.Join(errs, err)
-			} else {
-				defer writer.Close()
-				_, err := writer.Write([]byte(*manifestStr + "\n"))
+			}
+			exclude, err := expand(ctx, viper.GetStringSlice("generate.exclude"))
+			if err != nil {
+				errs = errors.Join(errs, err)
+			}
+
+			cfg, err := C.LoadConfig(ctx)
+			if err != nil {
+				errs = errors.Join(errs, err)
+				return errs
+			}
+			cfg.Generate.Files = files
+			cfg.Generate.Exclude = exclude
+
+			manifestStr, err := G.Generate(cfg)
+			if err != nil {
+				errs = errors.Join(errs, err)
+			}
+			if manifestStr == nil {
+				return errors.Join(errs, errors.New("manifest generation returned nil"))
+			}
+			if cfg.Generate.Output != "" {
+				writer, err := ctx.OutputWriter(cfg.Generate.Output)
 				if err != nil {
 					errs = errors.Join(errs, err)
 				} else {
-					end := time.Since(start)
-					outputPath := cfg.Generate.Output
-					pterm.Success.Printf("Wrote manifest to %s in %s", outputPath, G.ColorizeDuration(end).Sprint(end))
+					defer writer.Close()
+					_, err := writer.Write([]byte(*manifestStr + "\n"))
+					if err != nil {
+						errs = errors.Join(errs, err)
+					} else {
+						end := time.Since(start)
+						outputPath := cfg.Generate.Output
+						pterm.Success.Printf("Wrote manifest to %s in %s", outputPath, G.ColorizeDuration(end).Sprint(end))
+					}
 				}
+			} else {
+				fmt.Println(*manifestStr + "\n")
 			}
-		} else {
-			fmt.Println(*manifestStr + "\n")
+			return errs
 		}
-		return errs
 	},
 }
 

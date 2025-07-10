@@ -18,6 +18,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -29,7 +32,10 @@ import (
 )
 
 var initialCWD string
-var ctx M.ProjectContext
+
+type contextKey string
+
+const projectContextKey = contextKey("projectContext")
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -38,10 +44,63 @@ var rootCmd = &cobra.Command{
 	Long: `Scans your projects TypeScript sources and identifies custom elements.
 Generates a custom elements manifest file (custom-elements.json) describing your modules.
 Supports projects written with Lit`,
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		var err error
+		initialCWD, err = os.Getwd()
+		if err != nil {
+			return fmt.Errorf("Unable to get current working directory: %v", err)
+		}
+
+		cfgFile := viper.GetString("configFile")
+		packageFlag := viper.GetString("package")
+
+		projectCtx, err := resolveProjectContext(cfgFile, packageFlag)
+		if err != nil {
+			return fmt.Errorf("Failed to create project context: %v", err)
+		}
+
+		// Store the project context in the Cobra context
+		ctx := context.WithValue(cmd.Context(), projectContextKey, projectCtx)
+		cmd.SetContext(ctx)
+
+		rootDir := projectCtx.Root()
+		viper.Set("package", rootDir)
+		viper.AddConfigPath(filepath.Join(rootDir, ".config"))
+		viper.SetConfigType("yaml")
+		viper.SetConfigName("cem")
+
+		if viper.GetBool("verbose") {
+			pterm.EnableDebugMessages()
+		}
+		pterm.Debug.Println("Using project directory: ", rootDir)
+
+		if cfgFile, err = projectCtx.ConfigFile(); err != nil {
+			return err
+		}
+
+		if cfgFile != "" {
+			viper.SetConfigFile(cfgFile)
+			viper.Set("configFile", cfgFile)
+			if err := viper.ReadInConfig(); err != nil {
+				return err
+			} else {
+				pterm.Debug.Println("Using config file: ", cfgFile)
+			}
+		}
+		viper.AutomaticEnv()
+		return nil
+	},
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
+// Retrieve the project context from a cobra.Command
+func GetProjectContext(cmd *cobra.Command) (M.ProjectContext, error) {
+	val := cmd.Context().Value(projectContextKey)
+	if val == nil {
+		return nil, errors.New("project context not initialized")
+	}
+	return val.(M.ProjectContext), nil
+}
+
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
@@ -49,7 +108,6 @@ func Execute() {
 	}
 }
 
-// Helper to create the correct ProjectContext
 func resolveProjectContext(configPath, packageFlag string) (M.ProjectContext, error) {
 	var ctx M.ProjectContext
 	if packageFlag != "" {
@@ -63,12 +121,10 @@ func resolveProjectContext(configPath, packageFlag string) (M.ProjectContext, er
 	}
 	if err := ctx.Init(); err != nil {
 		return nil, err
-	} else {
-		return ctx, nil
 	}
+	return ctx, nil
 }
 
-// Simple heuristic: if it starts with ./, ../, /, or ~, or doesn't contain ":" or "@", treat as path
 func isLikelyPath(spec string) bool {
 	return strings.HasPrefix(spec, ".") ||
 		strings.HasPrefix(spec, "/") ||
@@ -76,60 +132,17 @@ func isLikelyPath(spec string) bool {
 		(!strings.Contains(spec, ":") && !strings.Contains(spec, "@"))
 }
 
-func initConfig() {
-	var err error
-	// initialCWD still used for output display
-	initialCWD, err = os.Getwd()
-	if err != nil {
-		pterm.Fatal.Printf("Unable to get current working directory: %v", err)
-	}
-
-	cfgFile := viper.GetString("configFile")
-	packageFlag := viper.GetString("package")
-
-	ctx, err = resolveProjectContext(cfgFile, packageFlag)
-	if err != nil {
-		pterm.Fatal.Printf("Failed to create project context: %v", err)
-	}
-
-	// Use projectContext for config file/dir resolution
-	rootDir := ctx.Root()
-	viper.Set("package", rootDir)
-	viper.AddConfigPath(filepath.Join(rootDir, ".config"))
-	viper.SetConfigType("yaml")
-	viper.SetConfigName("cem")
-
-	// No need for os.Chdir! All path access now through context
-
-	if viper.GetBool("verbose") {
-		pterm.EnableDebugMessages()
-	}
-	pterm.Debug.Println("Using project directory: ", rootDir)
-
-	// Use context for config file existence, reading, etc.
-	cfgFile, err = ctx.ConfigFile()
-	cobra.CheckErr(err)
-
-	if cfgFile != "" {
-		viper.SetConfigFile(cfgFile)
-		viper.Set("configFile", cfgFile)
-		if err := viper.ReadInConfig(); err == nil {
-			pterm.Debug.Println("Using config file: ", cfgFile)
-		}
-	}
-	viper.AutomaticEnv()
-}
-
 func init() {
-	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().String("source-control-root-url", "", "Canonical public source control URL corresponding to project root on primary branch. e.g. https://github.com/bennypowers/cem/tree/main/")
 	rootCmd.PersistentFlags().String("config", "", "config file (default is $CWD/.config/cem.yaml)")
-	rootCmd.PersistentFlags().String("project-dir", "", "Path to project directory (default: parent directory of .config/cem.yaml)")
-	rootCmd.PersistentFlags().MarkDeprecated("project-dir", "Will be removed, use --package instead")
 	rootCmd.PersistentFlags().StringP("package", "p", "", "deno-style package specifier e.g. npm:@scope/package, or path to package directory")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "verbose logging output")
+
 	viper.BindPFlag("configFile", rootCmd.PersistentFlags().Lookup("config"))
-	viper.BindPFlag("projectDir", rootCmd.PersistentFlags().Lookup("project-dir"))
+	viper.BindPFlag("package", rootCmd.PersistentFlags().Lookup("package"))
 	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
 	viper.BindPFlag("sourceControlRootUrl", rootCmd.PersistentFlags().Lookup("source-control-root-url"))
+
+	rootCmd.PersistentFlags().String("project-dir", "", "Path to project directory (default: parent directory of .config/cem.yaml)")
+	rootCmd.PersistentFlags().MarkDeprecated("project-dir", "Will be removed, use --package instead")
 }
