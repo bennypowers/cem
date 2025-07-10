@@ -19,7 +19,6 @@ package generate
 import (
 	"cmp"
 	"errors"
-	"path/filepath"
 	"runtime"
 	"slices"
 	"sync"
@@ -60,10 +59,18 @@ type preprocessResult struct {
 	includedFiles   []string
 }
 
-func preprocess(cfg *C.CemConfig) (r preprocessResult, errs error) {
+func preprocess(ctx M.ProjectContext, cfg *C.CemConfig) (r preprocessResult, errs error) {
 	r.excludePatterns = make([]string, 0, len(cfg.Generate.Exclude)+len(defaultExcludePatterns))
 	r.includedFiles = make([]string, 0)
 	r.excludePatterns = append(r.excludePatterns, cfg.Generate.Exclude...)
+
+	// if generate.output is still unset, try to get it from package.json
+	if cfg.Generate.Output == "" {
+		if pkg, err := ctx.PackageJSON(); err == nil && pkg.CustomElements != "" {
+			cfg.Generate.Output = pkg.CustomElements
+		}
+	}
+
 	if !cfg.Generate.NoDefaultExcludes {
 		r.excludePatterns = append(r.excludePatterns, defaultExcludePatterns...)
 	}
@@ -75,7 +82,7 @@ func preprocess(cfg *C.CemConfig) (r preprocessResult, errs error) {
 		r.designTokens = tokens
 	}
 	if cfg.Generate.DemoDiscovery.FileGlob != "" {
-		demoFiles, err := DS.Glob(cfg.Generate.DemoDiscovery.FileGlob)
+		demoFiles, err := ctx.ListFiles(cfg.Generate.DemoDiscovery.FileGlob)
 		r.demoFiles = demoFiles
 		if err != nil {
 			errs = errors.Join(errs, err)
@@ -89,7 +96,13 @@ func preprocess(cfg *C.CemConfig) (r preprocessResult, errs error) {
 	return r, errs
 }
 
+type processJob struct {
+	file string
+	ctx  M.ProjectContext
+}
+
 func process(
+	ctx M.ProjectContext,
 	cfg *C.CemConfig,
 	result preprocessResult,
 	qm *Q.QueryManager,
@@ -105,11 +118,11 @@ func process(
 	logs = make([]*LogCtx, 0, len(result.includedFiles))
 
 	aliases = make(map[string]string) // Ensure aliases is initialized
-	jobsChan := make(chan string, len(result.includedFiles))
+	jobsChan := make(chan processJob, len(result.includedFiles))
 
 	// Fill jobs channel with files to process
 	for _, file := range result.includedFiles {
-		jobsChan <- file
+		jobsChan <- processJob{file: file, ctx: ctx}
 	}
 	close(jobsChan)
 
@@ -119,8 +132,8 @@ func process(
 			defer wg.Done()
 			parser := Q.GetTypeScriptParser()
 			defer Q.PutTypeScriptParser(parser)
-			for file := range jobsChan {
-				module, tagAliases, logger, err := processModule(file, cfg, qm, parser)
+			for job := range jobsChan {
+				module, tagAliases, logger, err := processModule(job, cfg, qm, parser)
 
 				// Save log for later bar chart (always save duration for bar chart)
 				logsMu.Lock()
@@ -155,12 +168,12 @@ func process(
 }
 
 func processModule(
-	file string,
+	job processJob,
 	cfg *C.CemConfig,
 	qm *Q.QueryManager,
 	parser *ts.Parser,
 ) (module *M.Module, tagAliases map[string]string, logCtx *LogCtx, errs error) {
-	mp := NewModuleProcessor(file, parser, cfg, qm)
+	mp := NewModuleProcessor(job.file, parser, cfg, qm)
 	if cfg.Verbose {
 		mp.logger.Section.Printf("Module: %s", mp.logger.File)
 	}
@@ -172,6 +185,7 @@ func processModule(
 }
 
 func postprocess(
+	ctx M.ProjectContext,
 	cfg *C.CemConfig,
 	result preprocessResult,
 	allTagAliases map[string]string,
@@ -189,19 +203,19 @@ func postprocess(
 		errsList = append(errsList, err)
 	}
 
-	packageJsonDir := cfg.ProjectDir
-	if packageJsonDir == "" {
-		packageJsonDir = filepath.Dir(cfg.ConfigFile)
-	}
-	packageJsonPath := filepath.Join(packageJsonDir, "package.json")
-
 	// Because demo discovery and design tokens may mutate modules, we need to coordinate by pointer
 	for i := range modules {
 		wg.Add(1)
 		go func(module *M.Module) {
 			defer wg.Done()
 
-			resolvedPath, err := M.ResolveExportPath(packageJsonPath, module.Path)
+			packageJson, err := ctx.PackageJSON()
+			if err != nil {
+				errsMu.Lock()
+				errsList = append(errsList, err)
+				errsMu.Unlock()
+			}
+			resolvedPath, err := M.ResolveExportPath(*packageJson, module.Path)
 			if err != nil {
 				pterm.Error.Println(err)
 			} else {
@@ -236,21 +250,21 @@ func postprocess(
 }
 
 // Generates a custom-elements manifest from a list of typescript files
-func Generate(cfg *C.CemConfig) (manifest *string, errs error) {
+func Generate(ctx M.ProjectContext, cfg *C.CemConfig) (manifest *string, errs error) {
 	qm, err := Q.NewQueryManager()
 	if err != nil {
 		pterm.Fatal.Printfln("Could not create QueryManager: %v", err)
 	}
 	defer qm.Close()
-	result, err := preprocess(cfg)
+	result, err := preprocess(ctx, cfg)
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
-	modules, logs, aliases, err := process(cfg, result, qm)
+	modules, logs, aliases, err := process(ctx, cfg, result, qm)
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
-	pkg, err := postprocess(cfg, result, aliases, qm, modules)
+	pkg, err := postprocess(ctx, cfg, result, aliases, qm, modules)
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}

@@ -133,6 +133,7 @@ func isLikelyPath(spec string) bool {
 }
 
 func init() {
+	fmt.Fprintln(os.Stderr, "DEBUG: init() called")
 	rootCmd.PersistentFlags().String("source-control-root-url", "", "Canonical public source control URL corresponding to project root on primary branch. e.g. https://github.com/bennypowers/cem/tree/main/")
 	rootCmd.PersistentFlags().String("config", "", "config file (default is $CWD/.config/cem.yaml)")
 	rootCmd.PersistentFlags().StringP("package", "p", "", "deno-style package specifier e.g. npm:@scope/package, or path to package directory")

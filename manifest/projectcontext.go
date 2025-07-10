@@ -68,9 +68,16 @@ func NewLocalFSProjectContext(root string) *LocalFSProjectContext {
 	return &LocalFSProjectContext{root: root}
 }
 
-// Returns
+// Returns the path to the config file, or an empty string if it does not exist.
 func (c *LocalFSProjectContext) ConfigFile() (string, error) {
-	return filepath.Join(c.root, ".config", "cem.yaml"), nil
+	configFile := filepath.Join(c.root, ".config", "cem.yaml")
+	if _, err := os.Stat(configFile); err == nil {
+		return configFile, nil
+	} else if errors.Is(err, os.ErrNotExist) {
+		return "", nil
+	} else {
+		return "", err
+	}
 }
 
 func (c *LocalFSProjectContext) PackageJSON() (*PackageJSON, error) {

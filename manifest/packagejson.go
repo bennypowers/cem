@@ -17,68 +17,30 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package manifest
 
 import (
-	"encoding/json"
 	"errors"
-	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 )
 
 // PackageJSON represents the subset of package.json we care about.
 type PackageJSON struct {
 	Name           string `json:"name"`
 	Version        string `json:"version"`
-	Exports        any    `json:"exports"`
+	Exports        any    `json:"exports,omitempty"`
 	CustomElements string `json:"customElements"`
 	source         []byte
-}
-
-var (
-	packageJsonPathMap = make(map[string]PackageJSON)
-	packageJsonMutex   sync.RWMutex
-)
-
-func loadPackageJson(path string) (*PackageJSON, error) {
-	packageJsonMutex.RLock()
-	pkg, ok := packageJsonPathMap[path]
-	packageJsonMutex.RUnlock()
-	if ok {
-		return &pkg, nil
-	}
-	source, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	pkg = PackageJSON{source: source}
-	if err := json.Unmarshal(source, &pkg); err != nil {
-		return nil, err
-	}
-	packageJsonMutex.Lock()
-	packageJsonPathMap[path] = pkg
-	packageJsonMutex.Unlock()
-	return &pkg, nil
 }
 
 // ResolveExportPath resolves a file path relative to the package root
 // through the `exports` block in package.json, returning the corresponding
 // package path as it would be used in an import.
 // The returned path is always without a leading './'.
-func ResolveExportPath(packageJsonPath string, relFilePath string) (string, error) {
-	if _, err := os.Stat(packageJsonPath); errors.Is(err, os.ErrNotExist) {
-		return relFilePath, nil
-	}
-
-	pkg, err := loadPackageJson(packageJsonPath)
-	if err != nil {
-		return "", err
-	}
-
+func ResolveExportPath(packageJson PackageJSON, relFilePath string) (string, error) {
 	cleanRel := filepath.ToSlash(relFilePath)
 	cleanRel = strings.TrimPrefix(cleanRel, "./")
 
 	// Handle string exports (single export).
-	if expStr, ok := pkg.Exports.(string); ok {
+	if expStr, ok := packageJson.Exports.(string); ok {
 		exportFile := strings.TrimPrefix(expStr, "./")
 		if cleanRel == exportFile {
 			return "", nil // returns ""
@@ -86,7 +48,7 @@ func ResolveExportPath(packageJsonPath string, relFilePath string) (string, erro
 		return "", errors.New("file not exported in package.json")
 	}
 
-	exportsMap, ok := pkg.Exports.(map[string]any)
+	exportsMap, ok := packageJson.Exports.(map[string]any)
 	if !ok {
 		// gracefully skip, treat as "not exported"
 		return relFilePath, nil
