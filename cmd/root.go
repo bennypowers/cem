@@ -51,10 +51,10 @@ Supports projects written with Lit`,
 			return fmt.Errorf("Unable to get current working directory: %v", err)
 		}
 
-		cfgFile := viper.GetString("configFile")
-		packageFlag := viper.GetString("package")
-
-		projectCtx, err := resolveProjectContext(cfgFile, packageFlag)
+		projectCtx, err := resolveProjectContext(
+			viper.GetString("configFile"),
+			viper.GetString("package"),
+		)
 		if err != nil {
 			return fmt.Errorf("Failed to create project context: %v", err)
 		}
@@ -74,14 +74,11 @@ Supports projects written with Lit`,
 		}
 		pterm.Debug.Println("Using project directory: ", rootDir)
 
-		if cfgFile, err = projectCtx.ConfigFile(); err != nil {
-			return err
-		}
-
+		cfgFile := projectCtx.ConfigFile()
 		if cfgFile != "" {
 			viper.SetConfigFile(cfgFile)
 			viper.Set("configFile", cfgFile)
-			if err := viper.ReadInConfig(); err != nil {
+			if err := viper.ReadInConfig(); err != nil && !errors.Is(err, os.ErrNotExist) {
 				return err
 			} else {
 				pterm.Debug.Println("Using config file: ", cfgFile)
@@ -133,7 +130,6 @@ func isLikelyPath(spec string) bool {
 }
 
 func init() {
-	fmt.Fprintln(os.Stderr, "DEBUG: init() called")
 	rootCmd.PersistentFlags().String("source-control-root-url", "", "Canonical public source control URL corresponding to project root on primary branch. e.g. https://github.com/bennypowers/cem/tree/main/")
 	rootCmd.PersistentFlags().String("config", "", "config file (default is $CWD/.config/cem.yaml)")
 	rootCmd.PersistentFlags().StringP("package", "p", "", "deno-style package specifier e.g. npm:@scope/package, or path to package directory")

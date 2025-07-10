@@ -19,6 +19,7 @@ package generate
 import (
 	"cmp"
 	"errors"
+	"path/filepath"
 	"runtime"
 	"slices"
 	"sync"
@@ -60,7 +61,9 @@ type preprocessResult struct {
 }
 
 func preprocess(ctx M.ProjectContext, cfg *C.CemConfig) (r preprocessResult, errs error) {
+	cfg.Generate.Exclude = append(cfg.Generate.Exclude, []string{}...)
 	r.excludePatterns = make([]string, 0, len(cfg.Generate.Exclude)+len(defaultExcludePatterns))
+
 	r.includedFiles = make([]string, 0)
 	r.excludePatterns = append(r.excludePatterns, cfg.Generate.Exclude...)
 
@@ -203,25 +206,30 @@ func postprocess(
 		errsList = append(errsList, err)
 	}
 
+	packageJson, err := ctx.PackageJSON()
+	if err != nil {
+		errsList = append(errsList, err)
+	}
+
 	// Because demo discovery and design tokens may mutate modules, we need to coordinate by pointer
 	for i := range modules {
 		wg.Add(1)
 		go func(module *M.Module) {
 			defer wg.Done()
 
-			packageJson, err := ctx.PackageJSON()
-			if err != nil {
-				errsMu.Lock()
-				errsList = append(errsList, err)
-				errsMu.Unlock()
-			}
-			resolvedPath, err := M.ResolveExportPath(*packageJson, module.Path)
-			if err != nil {
-				pterm.Error.Println(err)
-			} else {
-				modulesMu.Lock()
-				module.Path = resolvedPath
-				modulesMu.Unlock()
+			if packageJson != nil {
+				relmPath, err := filepath.Rel(ctx.Root(), module.Path)
+				if err != nil {
+					pterm.Error.Println(err)
+				}
+				resolvedPath, err := M.ResolveExportPath(*packageJson, relmPath)
+				if err != nil {
+					pterm.Error.Println(err)
+				} else {
+					modulesMu.Lock()
+					module.Path = resolvedPath
+					modulesMu.Unlock()
+				}
 			}
 			if result.designTokens != nil {
 				DT.MergeDesignTokensToModule(module, *result.designTokens)

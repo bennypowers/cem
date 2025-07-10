@@ -24,6 +24,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/bmatcuk/doublestar"
 )
@@ -33,7 +34,7 @@ type ProjectContext interface {
 	// Performs validation/discovery and caches results as needed.
 	Init() error
 	// Returns the path to the config file
-	ConfigFile() (string, error)
+	ConfigFile() string
 	// Returns the project's parsed PackageJSON.
 	PackageJSON() (*PackageJSON, error)
 	// Manifest returns the project's parsed custom elements manifest.
@@ -69,15 +70,8 @@ func NewLocalFSProjectContext(root string) *LocalFSProjectContext {
 }
 
 // Returns the path to the config file, or an empty string if it does not exist.
-func (c *LocalFSProjectContext) ConfigFile() (string, error) {
-	configFile := filepath.Join(c.root, ".config", "cem.yaml")
-	if _, err := os.Stat(configFile); err == nil {
-		return configFile, nil
-	} else if errors.Is(err, os.ErrNotExist) {
-		return "", nil
-	} else {
-		return "", err
-	}
+func (c *LocalFSProjectContext) ConfigFile() string {
+	return filepath.Join(c.root, ".config", "cem.yaml")
 }
 
 func (c *LocalFSProjectContext) PackageJSON() (*PackageJSON, error) {
@@ -86,7 +80,11 @@ func (c *LocalFSProjectContext) PackageJSON() (*PackageJSON, error) {
 		return nil, err
 	}
 	defer rc.Close()
-	return decodeJSON[PackageJSON](rc)
+	p, err := decodeJSON[PackageJSON](rc)
+	if err == nil && p != nil {
+		c.packageJSON = p
+	}
+	return p, err
 }
 
 func (c *LocalFSProjectContext) Manifest() (*Package, error) {
@@ -126,8 +124,23 @@ func (c *LocalFSProjectContext) SourceFile(path string) (io.ReadCloser, error) {
 	return c.ReadFile(path)
 }
 
+// isGlobPattern checks if a string contains any common glob pattern metacharacters.
+// This is a heuristic and may produce false positives for file paths that
+// legitimately contain one of these characters, but it covers most common cases.
+func isGlobPattern(pattern string) bool {
+	// The set of characters that are special in glob patterns.
+	// We include '*' for wildcards, '?' for single characters,
+	// '[' and ']' for character classes, and '{' and '}' for brace expansion.
+	globChars := "*?[]"
+	return strings.ContainsAny(pattern, globChars)
+}
+
 func (c *LocalFSProjectContext) ListFiles(pattern string) ([]string, error) {
-	return doublestar.Glob(filepath.Join(c.root, pattern))
+	if isGlobPattern(pattern) {
+		return doublestar.Glob(filepath.Join(c.root, pattern))
+	} else {
+		return []string{pattern}, nil
+	}
 }
 
 func (c *LocalFSProjectContext) OutputWriter(path string) (io.WriteCloser, error) {
@@ -169,9 +182,9 @@ func (c *RemoteProjectContext) Init() error {
 	return ErrRemoteUnsupported
 }
 
-func (c *RemoteProjectContext) ConfigFile() (string, error) {
+func (c *RemoteProjectContext) ConfigFile() string {
 	// TODO: Download or extract config file to tempdir, open and return it
-	return "", ErrRemoteUnsupported
+	return ""
 }
 
 func (c *RemoteProjectContext) Manifest() (*Package, error) {

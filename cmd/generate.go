@@ -69,6 +69,11 @@ var generateCmd = &cobra.Command{
 		}
 		cfg.Generate.Files = files
 		cfg.Generate.Exclude = exclude
+		if output, err := cmd.Flags().GetString("output"); err == nil && output != "" {
+			cfg.Generate.Output = output
+		} else if err != nil {
+			return err
+		}
 
 		manifestStr, err := G.Generate(ctx, cfg)
 		if err != nil {

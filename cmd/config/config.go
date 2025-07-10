@@ -71,10 +71,7 @@ type CemConfig struct {
 
 // LoadConfig reads CemConfig from the project context's config file.
 func LoadConfig(ctx manifest.ProjectContext) (*CemConfig, error) {
-	cfgFile, err := ctx.ConfigFile()
-	if err != nil {
-		return nil, err
-	}
+	cfgFile := ctx.ConfigFile()
 	rc, err := ctx.ReadFile(cfgFile)
 	if err != nil {
 		// If config file not found, return default config
