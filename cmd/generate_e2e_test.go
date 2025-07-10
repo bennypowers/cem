@@ -56,6 +56,7 @@ export class MyElement extends HTMLElement {}
 	// Execute the generate command
 	args := []string{"generate", srcFilePath, "-o", outputFile}
 	rootCmd.SetArgs(args)
+	// viper.BindPFlag("generate.output", generateCmd.Flags().Lookup("output"))
 	err = rootCmd.Execute()
 	if err != nil {
 		t.Fatalf("generate command failed: %v", err)
@@ -78,10 +79,15 @@ export class MyElement extends HTMLElement {}
 	}
 
 	// Check the log output
+	cwd, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("could not get cwd: %v", err)
 	}
-	expectedLog := "Wrote manifest to " + outputFile
+	rel, err := filepath.Rel(cwd, outputFile)
+	if err != nil {
+		t.Fatalf("could not get relative path: %v", err)
+	}
+	expectedLog := "Wrote manifest to " + rel
 	if !strings.Contains(pterm.RemoveColorFromString(out.String()), expectedLog) {
 		t.Fatalf("log output does not contain expected string.\nExpected: %s\nGot: %s", expectedLog, out.String())
 	}
@@ -158,6 +164,7 @@ export class MyElement extends HTMLElement {}
 
 	err = rootCmd.Execute()
 	if err != nil {
+		t.Logf("Command stderr:\n%s", out.String())
 		t.Fatalf("generate command failed: %v", err)
 	}
 

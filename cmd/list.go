@@ -21,10 +21,22 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
+	C "bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/list"
 	M "bennypowers.dev/cem/manifest"
-	"github.com/spf13/cobra"
 )
+
+func readCfg() (*C.CemConfig, error) {
+	cfg := C.CemConfig{}
+	err := viper.Unmarshal(&cfg)
+	if err != nil {
+		return nil, err
+	}
+	return &cfg, nil
+}
 
 func requireTagName(cmd *cobra.Command) (string, error) {
 	tagName, err := cmd.Flags().GetString("tag-name")
@@ -56,7 +68,7 @@ func makeListSectionCmd(use, short, long string, includeSection string, aliases 
 		Short:   short,
 		Long:    long,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if ctx, err := GetInitializedProjectContext(cmd); err != nil {
+			if ctx, err := GetProjectContext(cmd); err != nil {
 				return fmt.Errorf("project context not initialized: %w", err)
 			} else {
 				tagName, err := requireTagName(cmd)
@@ -226,7 +238,7 @@ Example:
   cem list tags --format table --columns Class --columns Module --columns Summary
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if ctx, err := GetInitializedProjectContext(cmd); err != nil {
+		if ctx, err := GetProjectContext(cmd); err != nil {
 			return fmt.Errorf("project context not initialized: %w", err)
 		} else {
 			manifest, err := ctx.Manifest()
@@ -266,7 +278,7 @@ Example:
   cem list modules --format table --columns Name
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if ctx, err := GetInitializedProjectContext(cmd); err != nil {
+		if ctx, err := GetProjectContext(cmd); err != nil {
 			return fmt.Errorf("project context not initialized: %w", err)
 		} else {
 			manifest, err := ctx.Manifest()
@@ -316,7 +328,7 @@ Examples:
   cem list methods --tag-name my-button
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if ctx, err := GetInitializedProjectContext(cmd); err != nil {
+		if ctx, err := GetProjectContext(cmd); err != nil {
 			return fmt.Errorf("project context not initialized: %w", err)
 		} else {
 			manifest, err := ctx.Manifest()
