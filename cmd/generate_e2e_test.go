@@ -12,7 +12,6 @@ import (
 )
 
 func TestGenerateE2E(t *testing.T) {
-	t.Skip("Skipping while we debug TestGenerateE2EWithPackageFlag")
 	viper.Reset()
 	// Create a temporary directory for the test
 	tmpDir, err := os.MkdirTemp("", "cem-test-")
@@ -176,7 +175,7 @@ export class MyElement extends HTMLElement {}
 	}
 
 	// Check the log output for the correct relative path
-	expectedLog := "Wrote manifest to my-project/dist/custom-elements.json"
+	expectedLog := "Wrote manifest to dist/custom-elements.json"
 	if !strings.Contains(pterm.RemoveColorFromString(out.String()), expectedLog) {
 		t.Fatalf("log output does not contain expected string.\nExpected: %s\nGot: %s", expectedLog, out.String())
 	}
