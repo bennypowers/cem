@@ -19,9 +19,9 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
-	C "bennypowers.dev/cem/cmd/config"
 	G "bennypowers.dev/cem/generate"
 	M "bennypowers.dev/cem/manifest"
 	"github.com/pterm/pterm"
@@ -38,37 +38,64 @@ var generateCmd = &cobra.Command{
 	Short: "Generates a custom elements manifest",
 	RunE: func(cmd *cobra.Command, args []string) (errs error) {
 		start = time.Now()
-		ctx, err := GetProjectContext(cmd)
+
+		ctx, err := GetInitializedProjectContext(cmd)
 		if err != nil {
 			return fmt.Errorf("project context not initialized: %w", err)
 		}
+		cfg, err := ctx.Config()
+		if err != nil {
+			return fmt.Errorf("config not initialized: %w", err)
+		}
 
-		cfgFiles := viper.GetStringSlice("generate.files")
-		if !(len(args) > 0 || (len(args) == 0 && len(cfgFiles) > 0)) {
+		if noDefaultExcludes, _ := cmd.Flags().GetBool("no-default-excludes"); noDefaultExcludes {
+			cfg.Generate.NoDefaultExcludes = noDefaultExcludes
+		}
+		if output, _ := cmd.Flags().GetString("output"); output != "" {
+			cfg.Generate.Output = output
+		}
+		if exclude, _ := cmd.Flags().GetStringSlice("exclude"); exclude != nil {
+			excludes, err := expand(ctx, exclude)
+			if err != nil {
+				errs = errors.Join(errs, err)
+			} else {
+				cfg.Generate.Exclude = excludes
+			}
+		}
+		if tokens, _ := cmd.Flags().GetString("design-tokens"); tokens != "" {
+			cfg.Generate.DesignTokens.Spec = tokens
+		}
+		if prefix, _ := cmd.Flags().GetString("design-tokens-prefix"); prefix != "" {
+			cfg.Generate.DesignTokens.Prefix = prefix
+		}
+		if glob, _ := cmd.Flags().GetString("demo-discovery-file-glob"); glob != "" {
+			cfg.Generate.DemoDiscovery.FileGlob = glob
+		}
+		if pattern, _ := cmd.Flags().GetString("demo-discovery-url-pattern"); pattern != "" {
+			cfg.Generate.DemoDiscovery.URLPattern = pattern
+		}
+		if template, _ := cmd.Flags().GetString("demo-discovery-url-template"); template != "" {
+			cfg.Generate.DemoDiscovery.URLTemplate = template
+		}
+
+		viperGenerateFiles := viper.GetStringSlice("generate.files")
+
+		combined := append(viperGenerateFiles, args...)
+		files, err := expand(ctx, combined)
+		if err != nil {
+			errs = errors.Join(errs, err)
+		}
+		cfg.Generate.Files = append(cfg.Generate.Files, combined...)
+
+		fmt.Fprintf(
+			os.Stderr,
+			`
+cfg=%+v\n`,
+			cfg,
+		)
+		if len(files) < 1 {
 			return errors.New("requires at least one file argument or a configured `generate.files` list")
 		}
-
-		generateFiles, err = expand(ctx, viper.GetStringSlice("generate.files"))
-		if err != nil {
-			errs = errors.Join(errs, err)
-		}
-
-		files, err := expand(ctx, append(generateFiles, args...))
-		if err != nil {
-			errs = errors.Join(errs, err)
-		}
-		exclude, err := expand(ctx, viper.GetStringSlice("generate.exclude"))
-		if err != nil {
-			errs = errors.Join(errs, err)
-		}
-
-		cfg, err := C.LoadConfig(ctx)
-		if err != nil {
-			errs = errors.Join(errs, err)
-			return errs
-		}
-		cfg.Generate.Files = files
-		cfg.Generate.Exclude = exclude
 
 		manifestStr, err := G.Generate(ctx, cfg)
 		if err != nil {

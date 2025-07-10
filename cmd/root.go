@@ -54,46 +54,28 @@ Supports projects written with Lit`,
 		cfgFile := viper.GetString("configFile")
 		packageFlag := viper.GetString("package")
 
-		projectCtx, err := resolveProjectContext(cfgFile, packageFlag)
+		pctx, err := resolveInitializedProjectContext(cfgFile, packageFlag)
 		if err != nil {
 			return fmt.Errorf("Failed to create project context: %v", err)
 		}
 
 		// Store the project context in the Cobra context
-		ctx := context.WithValue(cmd.Context(), projectContextKey, projectCtx)
+		ctx := context.WithValue(cmd.Context(), projectContextKey, pctx)
 		cmd.SetContext(ctx)
-
-		rootDir := projectCtx.Root()
-		viper.Set("package", rootDir)
-		viper.AddConfigPath(filepath.Join(rootDir, ".config"))
-		viper.SetConfigType("yaml")
-		viper.SetConfigName("cem")
 
 		if viper.GetBool("verbose") {
 			pterm.EnableDebugMessages()
 		}
-		pterm.Debug.Println("Using project directory: ", rootDir)
 
-		if cfgFile, err = projectCtx.ConfigFile(); err != nil {
-			return err
-		}
+		pterm.Debug.Println("Using project directory: ", pctx.Root())
 
-		if cfgFile != "" {
-			viper.SetConfigFile(cfgFile)
-			viper.Set("configFile", cfgFile)
-			if err := viper.ReadInConfig(); err != nil {
-				return err
-			} else {
-				pterm.Debug.Println("Using config file: ", cfgFile)
-			}
-		}
 		viper.AutomaticEnv()
 		return nil
 	},
 }
 
 // Retrieve the project context from a cobra.Command
-func GetProjectContext(cmd *cobra.Command) (M.ProjectContext, error) {
+func GetInitializedProjectContext(cmd *cobra.Command) (M.ProjectContext, error) {
 	val := cmd.Context().Value(projectContextKey)
 	if val == nil {
 		return nil, errors.New("project context not initialized")
@@ -108,7 +90,7 @@ func Execute() {
 	}
 }
 
-func resolveProjectContext(configPath, packageFlag string) (M.ProjectContext, error) {
+func resolveInitializedProjectContext(configPath, packageFlag string) (M.ProjectContext, error) {
 	var ctx M.ProjectContext
 	if packageFlag != "" {
 		if isLikelyPath(packageFlag) {
@@ -116,8 +98,15 @@ func resolveProjectContext(configPath, packageFlag string) (M.ProjectContext, er
 		} else {
 			ctx = M.NewRemoteProjectContext(packageFlag)
 		}
-	} else {
+	} else if configPath != "" {
 		ctx = M.NewLocalFSProjectContext(filepath.Dir(configPath))
+	} else {
+		// Default to the current working directory if no flags are provided
+		cwd, err := os.Getwd()
+		if err != nil {
+			return nil, err
+		}
+		ctx = M.NewLocalFSProjectContext(cwd)
 	}
 	if err := ctx.Init(); err != nil {
 		return nil, err
