@@ -73,7 +73,8 @@
           ],
           "cssProperties": [
             {
-              "name": "--rw-space-7xl"
+              "name": "--rw-space-7xl",
+              "description": "wicked big"
             }
           ],
           "customElement": true

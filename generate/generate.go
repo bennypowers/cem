@@ -78,7 +78,7 @@ func preprocess(ctx M.ProjectContext, cfg *C.CemConfig) (r preprocessResult, err
 		r.excludePatterns = append(r.excludePatterns, defaultExcludePatterns...)
 	}
 	if cfg.Generate.DesignTokens.Spec != "" {
-		tokens, err := DT.LoadDesignTokens(cfg)
+		tokens, err := DT.LoadDesignTokens(ctx, cfg)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
