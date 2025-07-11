@@ -105,13 +105,9 @@ func (c *LocalFSProjectContext) Init() error {
 	packageJSONPath := filepath.Join(c.root, "package.json")
 	if _, err := os.Stat(packageJSONPath); err == nil {
 		c.packageJSONPath = packageJSONPath
-	} else {
-		return errors.New("package.json not found at project root")
-	}
-	if pkg, err := c.PackageJSON(); err != nil {
-		return err
-	} else {
-		c.packageJSON = pkg
+		if pkg, err := c.PackageJSON(); err == nil {
+			c.packageJSON = pkg
+		}
 	}
 	return nil
 }
