@@ -86,7 +86,6 @@ export class MyElement extends HTMLElement {}
 	// Execute the generate command
 	args := []string{"generate", srcFilePath, "-o", outputFile}
 	rootCmd.SetArgs(args)
-	t.Log("Do execute")
 	err = rootCmd.Execute()
 	if err != nil {
 		t.Fatalf("generate command failed: %v", err)
@@ -135,6 +134,7 @@ func TestGenerateE2EWithPackageFlag(t *testing.T) {
 	}
 
 	viper.Set("package", filepath.Join(tmpDir, "my-project"))
+
 	// Set the project directory in viper, so the runtime can find it and the config file.
 	t.Logf("Set viper 'package' key to: %s", viper.GetString("package"))
 

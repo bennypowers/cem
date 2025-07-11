@@ -16,15 +16,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package config
 
-import (
-	"path/filepath"
-
-	"github.com/pterm/pterm"
-	"gopkg.in/yaml.v3"
-
-	"bennypowers.dev/cem/manifest"
-)
-
 type DemoDiscoveryConfig struct {
 	FileGlob    string `mapstructure:"fileGlob" yaml:"fileGlob"`
 	URLPattern  string `mapstructure:"urlPattern" yaml:"urlPattern"`
@@ -67,48 +58,6 @@ type CemConfig struct {
 	SourceControlRootUrl string `mapstructure:"sourceControlRootUrl" yaml:"sourceControlRootUrl"`
 	// Verbose logging output
 	Verbose bool `mapstructure:"verbose" yaml:"verbose"`
-}
-
-// LoadConfig reads CemConfig from the project context's config file.
-func LoadConfig(ctx manifest.WorkspaceContext) (*CemConfig, error) {
-	cfgFile := ctx.ConfigFile()
-	rc, err := ctx.ReadFile(cfgFile)
-	if err != nil {
-		// If config file not found, return default config
-		return &CemConfig{
-			ProjectDir: ctx.Root(),
-			ConfigFile: cfgFile,
-		}, nil
-	}
-	defer rc.Close()
-
-	var config CemConfig
-	if err := yaml.NewDecoder(rc).Decode(&config); err != nil {
-		return nil, err
-	}
-
-	config.ProjectDir = ctx.Root()
-	config.ConfigFile = cfgFile
-
-	// Make output path project-root-relative if needed
-	if config.Generate.Output != "" && !filepath.IsAbs(config.Generate.Output) {
-		config.Generate.Output = filepath.Join(config.ProjectDir, config.Generate.Output)
-	}
-
-	// Set debug verbosity
-	if config.Verbose {
-		pterm.EnableDebugMessages()
-	} else {
-		pterm.DisableDebugMessages()
-	}
-
-	if config.Generate.Files == nil {
-		config.Generate.Files = make([]string, 0)
-	}
-	if config.Generate.Exclude == nil {
-		config.Generate.Exclude = make([]string, 0)
-	}
-	return &config, nil
 }
 
 func (c *CemConfig) Clone() *CemConfig {

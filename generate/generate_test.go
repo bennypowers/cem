@@ -40,32 +40,29 @@ func TestGenerate(t *testing.T) {
 	}
 
 	for _, projectEntry := range projects {
-		if !projectEntry.IsDir() {
+		if !projectEntry.IsDir() || projectEntry.Name() == ".config" {
 			continue
 		}
-		projectDir := filepath.Join("../test/fixtures", projectEntry.Name())
-		absProjectDir, err := filepath.Abs(projectDir)
-		if err != nil {
-			t.Fatalf("failed to get absolute path for %s: %v", projectDir, err)
-		}
+		projectDir := filepath.Join("../test/fixtures/", projectEntry.Name())
+
 		t.Run(projectEntry.Name(), func(t *testing.T) {
 			projectGoldenDir := "golden"
 			if err := os.MkdirAll(filepath.Join(projectDir, projectGoldenDir), 0755); err != nil {
 				t.Fatalf("failed to create %s: %v", projectGoldenDir, err)
 			}
 
-			ctx := manifest.NewLocalFSProjectContext(absProjectDir)
+			ctx := manifest.NewFileSystemWorkspaceContext(projectDir)
 			if err := ctx.Init(); err != nil {
-				t.Fatalf("failed to init context for %s: %v", absProjectDir, err)
+				t.Fatalf("TestGenerate: %v", err)
 			}
 
-			cfg, err := loadConfig(t, ctx)
+			cfg, err := ctx.Config()
 			if err != nil {
-				t.Fatalf("failed to load config: %v", err)
+				t.Fatalf("TestGenerate: %v", err)
 			}
 			fixtures, err := os.ReadDir(filepath.Join(projectDir, "src"))
 			if err != nil {
-				t.Fatalf("cannot read src directory: %v", err)
+				t.Fatalf("TestGenerate: %v", err)
 			}
 
 			var cases []testcase

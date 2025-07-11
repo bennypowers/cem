@@ -51,15 +51,7 @@ Supports projects written with Lit`,
 			return fmt.Errorf("Unable to get current working directory: %v", err)
 		}
 
-		configFile := viper.GetString("configFile")
-		if p, _ := cmd.Flags().GetString("configFile"); p != "" {
-			configFile = p
-		}
-		packageDir := viper.GetString("package")
-		if p, _ := cmd.Flags().GetString("package"); p != "" {
-			packageDir = p
-		}
-		projectCtx, err := resolveProjectContext(configFile, packageDir)
+		projectCtx, err := resolveProjectContext(cmd, *viper.GetViper())
 		if err != nil {
 			return fmt.Errorf("Failed to create project context: %v", err)
 		}
@@ -112,16 +104,24 @@ func Execute() {
 	}
 }
 
-func resolveProjectContext(configPath, packageFlag string) (M.WorkspaceContext, error) {
+func resolveProjectContext(cmd *cobra.Command, viper viper.Viper) (M.WorkspaceContext, error) {
 	var ctx M.WorkspaceContext
+	configPath := viper.GetString("configFile")
+	if p, _ := cmd.Flags().GetString("configFile"); p != "" {
+		configPath = p
+	}
+	packageFlag := viper.GetString("package")
+	if p, _ := cmd.Flags().GetString("package"); p != "" {
+		packageFlag = p
+	}
 	if packageFlag != "" {
 		if isLikelyPath(packageFlag) {
-			ctx = M.NewLocalFSProjectContext(packageFlag)
+			ctx = M.NewFileSystemWorkspaceContext(packageFlag)
 		} else {
 			ctx = M.NewRemoteProjectContext(packageFlag)
 		}
 	} else {
-		ctx = M.NewLocalFSProjectContext(filepath.Dir(configPath))
+		ctx = M.NewFileSystemWorkspaceContext(filepath.Dir(configPath))
 	}
 	if err := ctx.Init(); err != nil {
 		return nil, err

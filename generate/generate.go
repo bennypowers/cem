@@ -60,6 +60,7 @@ type preprocessResult struct {
 	includedFiles   []string
 }
 
+// preprocess handles config merging for generate command
 func preprocess(ctx M.WorkspaceContext, cfg *C.CemConfig) (r preprocessResult, errs error) {
 	cfg.Generate.Exclude = append(cfg.Generate.Exclude, []string{}...)
 	r.excludePatterns = make([]string, 0, len(cfg.Generate.Exclude)+len(defaultExcludePatterns))
@@ -67,16 +68,10 @@ func preprocess(ctx M.WorkspaceContext, cfg *C.CemConfig) (r preprocessResult, e
 	r.includedFiles = make([]string, 0)
 	r.excludePatterns = append(r.excludePatterns, cfg.Generate.Exclude...)
 
-	// if generate.output is still unset, try to get it from package.json
-	if cfg.Generate.Output == "" {
-		if pkg, err := ctx.PackageJSON(); err == nil && pkg.CustomElements != "" {
-			cfg.Generate.Output = pkg.CustomElements
-		}
-	}
-
 	if !cfg.Generate.NoDefaultExcludes {
 		r.excludePatterns = append(r.excludePatterns, defaultExcludePatterns...)
 	}
+
 	if cfg.Generate.DesignTokens.Spec != "" {
 		tokens, err := DT.LoadDesignTokens(ctx, cfg)
 		if err != nil {
@@ -104,6 +99,7 @@ type processJob struct {
 	ctx  M.WorkspaceContext
 }
 
+// process actually processes a module file
 func process(
 	ctx M.WorkspaceContext,
 	cfg *C.CemConfig,
@@ -137,6 +133,11 @@ func process(
 			defer Q.PutTypeScriptParser(parser)
 			for job := range jobsChan {
 				module, tagAliases, logger, err := processModule(job, cfg, qm, parser)
+				if err != nil {
+					errsMu.Lock()
+					errsList = append(errsList, err)
+					errsMu.Unlock()
+				}
 
 				// Save log for later bar chart (always save duration for bar chart)
 				logsMu.Lock()
@@ -152,11 +153,6 @@ func process(
 					modules = append(modules, *module)
 				}
 				modulesMu.Unlock()
-				if err != nil {
-					errsMu.Lock()
-					errsList = append(errsList, err)
-					errsMu.Unlock()
-				}
 			}
 		}()
 	}
@@ -176,14 +172,16 @@ func processModule(
 	qm *Q.QueryManager,
 	parser *ts.Parser,
 ) (module *M.Module, tagAliases map[string]string, logCtx *LogCtx, errs error) {
-	mp := NewModuleProcessor(job.ctx, cfg, job.file, parser, qm)
+	defer parser.Reset()
+	mp, err := NewModuleProcessor(job.ctx, cfg, job.file, parser, qm)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	defer mp.Close()
 	if cfg.Verbose {
 		mp.logger.Section.Printf("Module: %s", mp.logger.File)
 	}
-	module, tagAliases, err := mp.Collect()
-	pterm.Print(mp.logger.Buffer.String())
-	parser.Reset()
-	mp.Close()
+	module, tagAliases, err = mp.Collect()
 	return module, tagAliases, mp.logger, err
 }
 
@@ -240,30 +238,27 @@ func postprocess(
 func Generate(ctx M.WorkspaceContext, cfg *C.CemConfig) (manifest *string, errs error) {
 	qm, err := Q.NewQueryManager()
 	if err != nil {
-		return nil, fmt.Errorf("Could not create QueryManager: %v", err)
+		return nil, err
 	}
 	defer qm.Close()
 	result, err := preprocess(ctx, cfg)
 	if err != nil {
-		errs = errors.Join(errs, err)
-	}
-	if qm == nil {
-		return nil, fmt.Errorf("QueryManager nil")
+		errs = errors.Join(errs, fmt.Errorf("module preprocess failed: %w", err))
 	}
 	modules, logs, aliases, err := process(ctx, cfg, result, qm)
 	if err != nil {
-		errs = errors.Join(errs, err)
+		errs = errors.Join(errs, fmt.Errorf("module process failed: %w", err))
 	}
 	pkg, err := postprocess(ctx, cfg, result, aliases, qm, modules)
 	if err != nil {
-		errs = errors.Join(errs, err)
+		errs = errors.Join(errs, fmt.Errorf("module postprocess failed: %w", err))
 	}
 	if cfg.Verbose {
 		RenderBarChart(logs)
 	}
 	manifestStr, err := M.SerializeToString(&pkg)
 	if err != nil {
-		return nil, errors.Join(errs, err)
+		return nil, errors.Join(errs, fmt.Errorf("module serialize failed: %w", err))
 	}
 	return &manifestStr, errs
 }

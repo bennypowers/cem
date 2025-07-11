@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"time"
 
-	C "bennypowers.dev/cem/cmd/config"
 	G "bennypowers.dev/cem/generate"
 	M "bennypowers.dev/cem/manifest"
 	"github.com/pterm/pterm"
@@ -62,13 +61,15 @@ var generateCmd = &cobra.Command{
 			errs = errors.Join(errs, err)
 		}
 
-		cfg, err := C.LoadConfig(ctx)
+		cfg, err := ctx.Config()
 		if err != nil {
 			errs = errors.Join(errs, err)
 			return errs
 		}
-		cfg.Generate.Files = files
-		cfg.Generate.Exclude = exclude
+
+		cfg.Generate.Files = append(cfg.Generate.Files, files...)
+		cfg.Generate.Exclude = append(cfg.Generate.Exclude, exclude...)
+
 		outputFlag, err := cmd.Flags().GetString("output")
 		if err != nil {
 			return err

@@ -125,54 +125,37 @@ func NewModuleProcessor(
 	file string,
 	parser *ts.Parser,
 	queryManager *Q.QueryManager,
-) ModuleProcessor {
-
-	rootPath := ctx.Root()
-	// no idea why this is necessary, maybe a string pointer somewhere....
-	if !filepath.IsAbs(file) {
-		file = filepath.Join(rootPath, file)
+) (*ModuleProcessor, error) {
+	code, err := os.ReadFile(filepath.Join(ctx.Root(), file))
+	if err != nil {
+		return nil, fmt.Errorf("NewModuleProcessor: %w", err)
 	}
 	module := M.NewModule(file)
 	logger := NewLogCtx(file, cfg)
-	code, err := os.ReadFile(file)
-	if err != nil {
-		nerr := fmt.Errorf("Could not read module in NewModuleProcessor: %w", err)
-		logger.Error("ERROR reading file: %v", nerr)
-		logger.Finish()
-		return ModuleProcessor{logger: logger, file: file, module: module, code: code, errors: nerr}
-	}
 
 	tree := parser.Parse(code, nil)
 	root := tree.RootNode()
 
 	packageJson, err := ctx.PackageJSON()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, fmt.Errorf("NewModuleProcessor couldn't get pkgjson: %w", err))
+		fmt.Fprintln(os.Stderr, fmt.Errorf("NewModuleProcessor: %w", err))
 	}
 
 	if packageJson != nil {
 		relmPath, err := filepath.Rel(ctx.Root(), module.Path)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, fmt.Errorf("NewModuleProcessor couldn't rel path module: %w", err))
+			fmt.Fprintln(os.Stderr, fmt.Errorf("NewModuleProcessor: %w", err))
 		} else {
 			resolvedPath, err := M.ResolveExportPath(*packageJson, relmPath)
 			if err != nil {
-				fmt.Fprintln(os.Stderr, fmt.Errorf("NewModuleProcessor couldn't rel path module: %w", err))
+				fmt.Fprintln(os.Stderr, fmt.Errorf("NewModuleProcessor: %w", err))
 			} else {
 				module.Path = resolvedPath
 			}
 		}
-	} else {
-		// If no package.json, just make the path relative
-		relmPath, err := filepath.Rel(ctx.Root(), module.Path)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, fmt.Errorf("NewModuleProcessor couldn't rel path module: %w", err))
-		} else {
-			module.Path = relmPath
-		}
 	}
 
-	return ModuleProcessor{
+	return &ModuleProcessor{
 		queryManager: queryManager,
 		file:         file,
 		logger:       logger,
@@ -191,28 +174,40 @@ func NewModuleProcessor(
 		classNamesAdded:              S.NewSet[string](),
 		packageJSON:                  packageJson,
 		ctx:                          ctx,
-	}
+	}, nil
 }
 
-func (mp *ModuleProcessor) step(label string, indent int, fn func()) {
+func (mp *ModuleProcessor) step(label string, indent int, fn func() error) error {
 	start := time.Now()
-	fn()
+	err := fn()
 	duration := time.Since(start)
 	mp.logger.TimedLog(indent*2, label, duration)
+	return err
 }
 
 func (mp *ModuleProcessor) Close() {
-	mp.tree.Close()
+	if mp != nil && mp.tree != nil {
+		mp.tree.Close()
+	}
 }
 
 func (mp *ModuleProcessor) Collect() (
 	module *M.Module,
 	tagAliases map[string]string,
-	errors error,
+	errs error,
 ) {
-	mp.step("Processing imports", 0, mp.processImports)
-	mp.step("Processing classes", 0, mp.processClasses)
-	mp.step("Processing declarations", 0, mp.processDeclarations)
+	err := mp.step("Processing imports", 0, mp.processImports)
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
+	err = mp.step("Processing classes", 0, mp.processClasses)
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
+	err = mp.step("Processing declarations", 0, mp.processDeclarations)
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
 	mp.logger.Finish()
 	if mp.errors != nil {
 		mp.logger.Error("ERROR processing module: %v", mp.errors)
@@ -226,12 +221,12 @@ func (mp *ModuleProcessor) Collect() (
 	return mp.module, mp.tagAliases, mp.errors
 }
 
-func (mp *ModuleProcessor) processImports() {
+func (mp *ModuleProcessor) processImports() error {
 	qm, err := Q.NewQueryMatcher(mp.queryManager, "typescript", "imports")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		mp.errors = errors.Join(mp.errors, err)
-		return
+		return err
 	}
 	defer qm.Close()
 
@@ -248,13 +243,15 @@ func (mp *ModuleProcessor) processImports() {
 			spec string
 		}{original, spec}
 	}
+
+	return nil
 }
 
-func (mp *ModuleProcessor) processClasses() {
+func (mp *ModuleProcessor) processClasses() error {
 	qm, err := Q.NewQueryMatcher(mp.queryManager, "typescript", "classes")
 	if err != nil {
 		mp.errors = errors.Join(mp.errors, err)
-		return
+		return err
 	}
 	defer qm.Close()
 
@@ -291,11 +288,13 @@ func (mp *ModuleProcessor) processClasses() {
 		// If it's a CustomElementDeclaration, handle styles
 		if ce, ok := d.(*M.CustomElementDeclaration); ok {
 			var props CssPropsMap
-			mp.step("Processing styles", 2, func() {
+			mp.step("Processing styles", 2, func() error {
 				props, err = mp.processStyles(captures)
 				if err != nil {
 					mp.errors = errors.Join(mp.errors, err)
+					return err
 				}
+				return nil
 			})
 			parsed.CssProperties = slices.Collect(maps.Values(props))
 			// Sort as before
@@ -327,6 +326,7 @@ func (mp *ModuleProcessor) processClasses() {
 			}
 		}
 	}
+	return nil
 }
 
 func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsMap, errs error) {
@@ -385,11 +385,11 @@ func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsM
 	return props, errs
 }
 
-func (mp *ModuleProcessor) processDeclarations() {
+func (mp *ModuleProcessor) processDeclarations() error {
 	qm, err := Q.NewQueryMatcher(mp.queryManager, "typescript", "declarations")
 	if err != nil {
 		mp.errors = errors.Join(mp.errors, err)
-		return
+		return err
 	}
 	defer qm.Close()
 
@@ -511,4 +511,6 @@ func (mp *ModuleProcessor) processDeclarations() {
 	slices.SortStableFunc(mp.module.Exports, func(a M.Export, b M.Export) int {
 		return int(a.GetStartByte() - b.GetStartByte())
 	})
+
+	return err
 }

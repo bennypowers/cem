@@ -26,8 +26,14 @@ import (
 	"path/filepath"
 	"strings"
 
+	"bennypowers.dev/cem/cmd/config"
 	"github.com/bmatcuk/doublestar"
+	"github.com/pterm/pterm"
+	"gopkg.in/yaml.v3"
 )
+
+var ErrNoManifest = errors.New("no package.json found, could not derive custom-elements.json")
+var ErrNoPackageCustomElements = errors.New("package does not specify a custom elements manifest")
 
 // isGlobPattern checks if a string contains any common glob pattern metacharacters.
 // This is a heuristic and may produce false positives for file paths that
@@ -44,16 +50,16 @@ func isGlobPattern(pattern string) bool {
 type WorkspaceContext interface {
 	// Performs validation/discovery and caches results as needed.
 	Init() error
-	// Returns the path to the config file
+	// ConfigFile Returns the path to the config file
 	ConfigFile() string
+	// Config returns the parsed and initialized config
+	Config() (*config.CemConfig, error)
 	// Returns the project's parsed PackageJSON.
 	PackageJSON() (*PackageJSON, error)
 	// Manifest returns the project's parsed custom elements manifest.
 	Manifest() (*Package, error)
-	// SourceFile returns an io.ReadCloser for a file within the project.
+	// ReadFile returns an io.ReadCloser for a file within the project.
 	ReadFile(path string) (io.ReadCloser, error)
-	// SourceFile returns an io.ReadCloser for a TypeScript source file within the project.
-	SourceFile(path string) (io.ReadCloser, error)
 	// Glob returns a list of file paths matching the given pattern (e.g., *.ts).
 	Glob(pattern string) ([]string, error)
 	// Writes outputs to paths
@@ -64,11 +70,12 @@ type WorkspaceContext interface {
 	Cleanup() error
 }
 
-var _ WorkspaceContext = (*LocalFSProjectContext)(nil)
+var _ WorkspaceContext = (*FileSystemWorkspaceContext)(nil)
 
-// LocalFSProjectContext implements ProjectContext for a local filesystem project.
-type LocalFSProjectContext struct {
+// FileSystemWorkspaceContext implements ProjectContext for a local filesystem project.
+type FileSystemWorkspaceContext struct {
 	root            string
+	config          *config.CemConfig
 	manifestPath    string
 	packageJSONPath string
 	// Cache parsed results if desired
@@ -76,34 +83,81 @@ type LocalFSProjectContext struct {
 	packageJSON *PackageJSON
 }
 
-func NewLocalFSProjectContext(root string) *LocalFSProjectContext {
-	return &LocalFSProjectContext{root: root}
-}
+func (c *FileSystemWorkspaceContext) initConfig() (*config.CemConfig, error) {
+	var config config.CemConfig
+	config.ProjectDir = c.Root()
+	config.ConfigFile = c.ConfigFile()
 
-// ConfigFile Returns the path to the config file, or an empty string if it does not exist.
-func (c *LocalFSProjectContext) ConfigFile() string {
-	return filepath.Join(c.root, ".config", "cem.yaml")
-}
-
-func (c *LocalFSProjectContext) PackageJSON() (*PackageJSON, error) {
-	rc, err := c.ReadFile("package.json")
+	rc, err := c.ReadFile(config.ConfigFile)
 	if err != nil {
 		return nil, err
 	}
 	defer rc.Close()
-	p, err := decodeJSON[PackageJSON](rc)
-	if err == nil && p != nil {
-		c.packageJSON = p
+	if err := yaml.NewDecoder(rc).Decode(&config); err != nil {
+		return nil, err
 	}
+	// Make output path project-root-relative if needed
+	if config.Generate.Output != "" && !filepath.IsAbs(config.Generate.Output) {
+		config.Generate.Output = filepath.Join(config.ProjectDir, config.Generate.Output)
+	}
+	if config.Generate.Files == nil {
+		config.Generate.Files = make([]string, 0)
+	}
+	if config.Generate.Exclude == nil {
+		config.Generate.Exclude = make([]string, 0)
+	}
+	// Set debug verbosity
+	if config.Verbose {
+		pterm.EnableDebugMessages()
+	} else {
+		pterm.DisableDebugMessages()
+	}
+
+	return &config, nil
+}
+
+func NewFileSystemWorkspaceContext(root string) *FileSystemWorkspaceContext {
+	return &FileSystemWorkspaceContext{root: root}
+}
+
+// ConfigFile Returns the path to the config file, or an empty string if it does not exist.
+func (c *FileSystemWorkspaceContext) ConfigFile() string {
+	return filepath.Join(c.root, ".config", "cem.yaml")
+}
+
+func (c *FileSystemWorkspaceContext) PackageJSON() (*PackageJSON, error) {
+	if c.packageJSON != nil {
+		return c.packageJSON, nil
+	}
+	rc, err := c.ReadFile(filepath.Join(c.root, "package.json"))
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+	defer rc.Close()
+	p, err := decodeJSON[PackageJSON](rc)
+	if err != nil {
+		return nil, err
+	}
+	c.packageJSON = p
 	return p, err
 }
 
-func (c *LocalFSProjectContext) Manifest() (*Package, error) {
+func (c *FileSystemWorkspaceContext) Config() (*config.CemConfig, error) {
+	return c.config, nil
+}
+
+func (c *FileSystemWorkspaceContext) Manifest() (*Package, error) {
 	if pkg, err := c.PackageJSON(); err != nil {
 		return nil, err
+	} else if pkg == nil {
+		// TODO: an input flag?
+		// TODO: fall back to `custom-elements.json`?
+		return nil, ErrNoManifest
 	} else if pkg.CustomElements == "" {
-		return nil, errors.New("package does not specify a custom elements manifest")
-	} else if rc, err := c.ReadFile(pkg.CustomElements); err != nil {
+		return nil, ErrNoPackageCustomElements
+	} else if rc, err := c.ReadFile(filepath.Join(c.root, pkg.CustomElements)); err != nil {
 		return nil, err
 	} else {
 		return decodeJSON[Package](rc)
@@ -111,37 +165,33 @@ func (c *LocalFSProjectContext) Manifest() (*Package, error) {
 }
 
 // Init discovers package.json file, caches paths/parsed results.
-func (c *LocalFSProjectContext) Init() error {
+func (c *FileSystemWorkspaceContext) Init() error {
+	var err error
+	c.config, err = c.initConfig()
+	if err != nil {
+		return err
+	}
 	// Discover package.json
-	packageJSONPath := filepath.Join(c.root, "package.json")
-	if _, err := os.Stat(packageJSONPath); err == nil {
-		c.packageJSONPath = packageJSONPath
-		if pkg, err := c.PackageJSON(); err == nil {
-			c.packageJSON = pkg
-		}
+	_, err = c.PackageJSON()
+	if !errors.Is(err, ErrNoPackageCustomElements) {
+		return err
+	}
+	_, err = c.Manifest()
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
-func (c *LocalFSProjectContext) ReadFile(path string) (io.ReadCloser, error) {
-	abs := ""
-	if filepath.IsAbs(path) {
-		abs = path
-	} else {
-		abs = filepath.Join(c.root, path)
-	}
-	rc, err := os.Open(abs)
+func (c *FileSystemWorkspaceContext) ReadFile(path string) (io.ReadCloser, error) {
+	rc, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("LocalFSProjectContext could not open: %w", err)
+		return nil, fmt.Errorf("FileSystemWorkspaceContext could not open: %w", err)
 	}
 	return rc, nil
 }
 
-func (c *LocalFSProjectContext) SourceFile(path string) (io.ReadCloser, error) {
-	return c.ReadFile(path)
-}
-
-func (c *LocalFSProjectContext) Glob(pattern string) ([]string, error) {
+func (c *FileSystemWorkspaceContext) Glob(pattern string) ([]string, error) {
 	if isGlobPattern(pattern) {
 		return doublestar.Glob(filepath.Join(c.root, pattern))
 	} else {
@@ -149,7 +199,7 @@ func (c *LocalFSProjectContext) Glob(pattern string) ([]string, error) {
 	}
 }
 
-func (c *LocalFSProjectContext) OutputWriter(path string) (io.WriteCloser, error) {
+func (c *FileSystemWorkspaceContext) OutputWriter(path string) (io.WriteCloser, error) {
 	absPath := path
 	if !filepath.IsAbs(path) {
 		absPath = filepath.Join(c.root, path)
@@ -161,71 +211,72 @@ func (c *LocalFSProjectContext) OutputWriter(path string) (io.WriteCloser, error
 	return os.Create(absPath)
 }
 
-func (c *LocalFSProjectContext) Root() string {
+func (c *FileSystemWorkspaceContext) Root() string {
 	return c.root
 }
 
-func (c *LocalFSProjectContext) Cleanup() error {
+func (c *FileSystemWorkspaceContext) Cleanup() error {
 	// Nothing to clean up for local projects
 	return nil
 }
 
-var _ WorkspaceContext = (*RemoteProjectContext)(nil)
+var _ WorkspaceContext = (*RemoteWorkspaceContext)(nil)
 
-// RemoteProjectContext implements ProjectContext for remote/package-based projects.
-type RemoteProjectContext struct {
+// RemoteWorkspaceContext implements ProjectContext for remote/package-based projects.
+type RemoteWorkspaceContext struct {
 	tempdir string
 	// Add fields for cached files, manifest URL, etc.
 }
 
 var ErrRemoteUnsupported = fmt.Errorf("Remote project context is not yet supported: %w", errors.ErrUnsupported)
 
-func NewRemoteProjectContext(tempdir string) *RemoteProjectContext {
-	return &RemoteProjectContext{tempdir: tempdir}
+func NewRemoteProjectContext(tempdir string) *RemoteWorkspaceContext {
+	return &RemoteWorkspaceContext{tempdir: tempdir}
 }
 
-func (c *RemoteProjectContext) Init() error {
+func (c *RemoteWorkspaceContext) Init() error {
 	return ErrRemoteUnsupported
 }
 
-func (c *RemoteProjectContext) ConfigFile() string {
+func (c *RemoteWorkspaceContext) ConfigFile() string {
 	// TODO: Download or extract config file to tempdir, open and return it
 	return ""
 }
 
-func (c *RemoteProjectContext) Manifest() (*Package, error) {
+func (c *RemoteWorkspaceContext) Config() (*config.CemConfig, error) {
+	// TODO: Download or extract config file to tempdir, open and return it
+	return nil, ErrRemoteUnsupported
+}
+
+func (c *RemoteWorkspaceContext) Manifest() (*Package, error) {
 	// TODO: Download or extract manifest file to tempdir, open and return it
 	return nil, ErrRemoteUnsupported
 }
 
-func (c *RemoteProjectContext) PackageJSON() (*PackageJSON, error) {
+func (c *RemoteWorkspaceContext) PackageJSON() (*PackageJSON, error) {
 	// TODO: Download or extract package.json file to tempdir, open and return it
 	return nil, ErrRemoteUnsupported
 }
 
-func (c *RemoteProjectContext) ReadFile(path string) (io.ReadCloser, error) {
+func (c *RemoteWorkspaceContext) ReadFile(path string) (io.ReadCloser, error) {
 	// TODO: Download or extract file to tempdir, open and return it
 	return nil, ErrRemoteUnsupported
 }
 
-func (c *RemoteProjectContext) SourceFile(path string) (io.ReadCloser, error) {
-	return c.ReadFile(path)
-}
-
-func (c *RemoteProjectContext) Glob(pattern string) ([]string, error) {
+func (c *RemoteWorkspaceContext) Glob(pattern string) ([]string, error) {
 	// TODO: List files in the tempdir matching pattern
 	return nil, ErrRemoteUnsupported
 }
 
-func (c *RemoteProjectContext) OutputWriter(path string) (io.WriteCloser, error) {
+func (c *RemoteWorkspaceContext) OutputWriter(path string) (io.WriteCloser, error) {
 	return nil, ErrRemoteUnsupported
 }
 
-func (c *RemoteProjectContext) Root() string {
+func (c *RemoteWorkspaceContext) Root() string {
 	return c.tempdir
 }
 
-func (c *RemoteProjectContext) Cleanup() error {
+func (c *RemoteWorkspaceContext) Cleanup() error {
 	// TODO: Remove tempdir and any downloaded files
 	return nil
 }
