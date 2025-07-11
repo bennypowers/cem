@@ -115,14 +115,23 @@ type ModuleProcessor struct {
 	classNamesAdded              S.Set[string]
 	module                       *M.Module
 	errors                       error
+	packageJSON                  *M.PackageJSON
+	ctx                          M.ProjectContext
 }
 
 func NewModuleProcessor(
+	ctx M.ProjectContext,
+	cfg *C.CemConfig,
 	file string,
 	parser *ts.Parser,
-	cfg *C.CemConfig,
 	queryManager *Q.QueryManager,
 ) ModuleProcessor {
+
+	rootPath := ctx.Root()
+	// no idea why this is necessary, maybe a string pointer somewhere....
+	if !filepath.IsAbs(file) {
+		file = filepath.Join(rootPath, file)
+	}
 	module := M.NewModule(file)
 	logger := NewLogCtx(file, cfg)
 	code, err := os.ReadFile(file)
@@ -135,6 +144,33 @@ func NewModuleProcessor(
 
 	tree := parser.Parse(code, nil)
 	root := tree.RootNode()
+
+	packageJson, err := ctx.PackageJSON()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, fmt.Errorf("NewModuleProcessor couldn't get pkgjson: %w", err))
+	}
+
+	if packageJson != nil {
+		relmPath, err := filepath.Rel(ctx.Root(), module.Path)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, fmt.Errorf("NewModuleProcessor couldn't rel path module: %w", err))
+		} else {
+			resolvedPath, err := M.ResolveExportPath(*packageJson, relmPath)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, fmt.Errorf("NewModuleProcessor couldn't rel path module: %w", err))
+			} else {
+				module.Path = resolvedPath
+			}
+		}
+	} else {
+		// If no package.json, just make the path relative
+		relmPath, err := filepath.Rel(ctx.Root(), module.Path)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, fmt.Errorf("NewModuleProcessor couldn't rel path module: %w", err))
+		} else {
+			module.Path = relmPath
+		}
+	}
 
 	return ModuleProcessor{
 		queryManager: queryManager,
@@ -153,6 +189,8 @@ func NewModuleProcessor(
 		}),
 		styleImportsBindingToSpecMap: make(map[string]string),
 		classNamesAdded:              S.NewSet[string](),
+		packageJSON:                  packageJson,
+		ctx:                          ctx,
 	}
 }
 
@@ -389,9 +427,7 @@ func (mp *ModuleProcessor) processDeclarations() {
 			})
 		} else {
 			declaration := declarationNameNodes[0]
-			reference := M.NewReference(declaration.Text, "", mp.file)
-			fmt.Fprintf(os.Stderr, `JavaScriptExport built reference %+v\n`, reference)
-			// relmPath, err := filepath.Rel(ctx.Root(), module.Path)
+			reference := M.NewReference(declaration.Text, "", mp.module.Path)
 			export := &M.JavaScriptExport{
 				Kind:        "js",
 				Name:        declaration.Text,
@@ -424,9 +460,7 @@ func (mp *ModuleProcessor) processDeclarations() {
 			if idx >= 0 {
 				declaration := mp.module.Declarations[idx]
 				if declaration != nil {
-					reference := M.NewReference(declaration.(*M.CustomElementDeclaration).Name, "", mp.file)
-					fmt.Fprintf(os.Stderr, `CustomElementExport built reference %+v\n`, reference)
-					// relmPath, err := filepath.Rel(ctx.Root(), module.Path)
+					reference := M.NewReference(declaration.(*M.CustomElementDeclaration).Name, "", mp.module.Path)
 					mp.module.Exports = append(mp.module.Exports, M.NewCustomElementExport(
 						tagName,
 						reference,
@@ -439,8 +473,6 @@ func (mp *ModuleProcessor) processDeclarations() {
 				b, ok := mp.importBindingToSpecMap[className]
 				if ok {
 					reference := M.NewReference(b.name, "", b.spec)
-					fmt.Fprintf(os.Stderr, `CustomElementExport built reference %+v\n`, reference)
-					// relmPath, err := filepath.Rel(ctx.Root(), module.Path)
 					mp.module.Exports = append(mp.module.Exports, M.NewCustomElementExport(
 						tagName,
 						reference,
@@ -455,7 +487,7 @@ func (mp *ModuleProcessor) processDeclarations() {
 	// if the declaration for this export exists in the same module,
 	// append its reference to the export object.
 	for name := range mp.classNamesAdded {
-		reference := M.NewReference(name, "", mp.file)
+		reference := M.NewReference(name, "", mp.module.Path)
 		index := slices.IndexFunc(mp.module.Declarations, func(d M.Declaration) bool {
 			if ce, ok := d.(*M.CustomElementDeclaration); ok {
 				return ce.Name == name

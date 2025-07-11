@@ -20,8 +20,6 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"runtime"
 	"slices"
 	"sync"
@@ -178,13 +176,7 @@ func processModule(
 	qm *Q.QueryManager,
 	parser *ts.Parser,
 ) (module *M.Module, tagAliases map[string]string, logCtx *LogCtx, errs error) {
-	root := job.ctx.Root()
-	joined := job.file
-	// no idea why this is necessary, maybe a string pointer somewhere....
-	if !filepath.IsAbs(joined) {
-		joined = filepath.Join(root, joined)
-	}
-	mp := NewModuleProcessor(joined, parser, cfg, qm)
+	mp := NewModuleProcessor(job.ctx, cfg, job.file, parser, qm)
 	if cfg.Verbose {
 		mp.logger.Section.Printf("Module: %s", mp.logger.File)
 	}
@@ -196,7 +188,7 @@ func processModule(
 }
 
 func postprocess(
-	ctx M.ProjectContext,
+	_ M.ProjectContext,
 	cfg *C.CemConfig,
 	result preprocessResult,
 	allTagAliases map[string]string,
@@ -205,7 +197,7 @@ func postprocess(
 ) (pkg M.Package, errs error) {
 	var wg sync.WaitGroup
 	var errsMu sync.Mutex
-	var modulesMu sync.Mutex
+	var _ sync.Mutex
 	errsList := make([]error, 0)
 
 	// Build the demo map once
@@ -214,52 +206,13 @@ func postprocess(
 		errsList = append(errsList, err)
 	}
 
-	packageJson, _ := ctx.PackageJSON()
+	// packageJson, _ := ctx.PackageJSON()
 
 	// Because demo discovery and design tokens may mutate modules, we need to coordinate by pointer
 	for i := range modules {
 		wg.Add(1)
 		go func(module *M.Module) {
 			defer wg.Done()
-
-			if packageJson != nil {
-				relmPath, err := filepath.Rel(ctx.Root(), module.Path)
-				if err != nil {
-					pterm.Error.Println(err)
-				} else {
-					resolvedPath, err := M.ResolveExportPath(*packageJson, relmPath)
-					if err != nil {
-						pterm.Error.Println(err)
-					} else {
-						modulesMu.Lock()
-						module.Path = resolvedPath
-						modulesMu.Unlock()
-					}
-				}
-			} else {
-				// If no package.json, just make the path relative
-				relmPath, err := filepath.Rel(ctx.Root(), module.Path)
-				if err != nil {
-					pterm.Error.Println(err)
-				} else {
-					modulesMu.Lock()
-					module.Path = relmPath
-					fmt.Fprintf(os.Stderr, "relmPath=%q\n", relmPath)
-					fmt.Fprintf(os.Stderr, "module.Exports before=%v\n", module.Exports)
-					for i, export := range module.Exports {
-						switch export.(type) {
-						case *M.JavaScriptExport:
-							fmt.Fprintf(os.Stderr, "module.Exports[i]=%p\n", module.Exports[i])
-							module.Exports[i].(*M.JavaScriptExport).Declaration.Module = relmPath
-						case *M.CustomElementExport:
-							fmt.Fprintf(os.Stderr, "module.Exports[i]=%p\n", module.Exports[i])
-							module.Exports[i].(*M.CustomElementExport).Declaration.Module = relmPath
-						}
-					}
-					fmt.Fprintf(os.Stderr, "module.Exports after=%v\n", module.Exports)
-					modulesMu.Unlock()
-				}
-			}
 			if result.designTokens != nil {
 				DT.MergeDesignTokensToModule(module, *result.designTokens)
 			}
