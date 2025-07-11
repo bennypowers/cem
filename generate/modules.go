@@ -389,12 +389,16 @@ func (mp *ModuleProcessor) processDeclarations() {
 			})
 		} else {
 			declaration := declarationNameNodes[0]
+			reference := M.NewReference(declaration.Text, "", mp.file)
+			fmt.Fprintf(os.Stderr, `JavaScriptExport built reference %+v\n`, reference)
+			// relmPath, err := filepath.Rel(ctx.Root(), module.Path)
 			export := &M.JavaScriptExport{
 				Kind:        "js",
 				Name:        declaration.Text,
-				Declaration: M.NewReference(declaration.Text, "", mp.file),
+				Declaration: reference,
 				StartByte:   declaration.StartByte,
 			}
+
 			mp.module.Exports = append(mp.module.Exports, export)
 		}
 	}
@@ -420,9 +424,12 @@ func (mp *ModuleProcessor) processDeclarations() {
 			if idx >= 0 {
 				declaration := mp.module.Declarations[idx]
 				if declaration != nil {
+					reference := M.NewReference(declaration.(*M.CustomElementDeclaration).Name, "", mp.file)
+					fmt.Fprintf(os.Stderr, `CustomElementExport built reference %+v\n`, reference)
+					// relmPath, err := filepath.Rel(ctx.Root(), module.Path)
 					mp.module.Exports = append(mp.module.Exports, M.NewCustomElementExport(
 						tagName,
-						M.NewReference(declaration.(*M.ClassDeclaration).Name, "", mp.file),
+						reference,
 						ceNodes[0].StartByte,
 						nil, // deprecated
 					))
@@ -431,9 +438,12 @@ func (mp *ModuleProcessor) processDeclarations() {
 				// get declaration class somehow
 				b, ok := mp.importBindingToSpecMap[className]
 				if ok {
+					reference := M.NewReference(b.name, "", b.spec)
+					fmt.Fprintf(os.Stderr, `CustomElementExport built reference %+v\n`, reference)
+					// relmPath, err := filepath.Rel(ctx.Root(), module.Path)
 					mp.module.Exports = append(mp.module.Exports, M.NewCustomElementExport(
 						tagName,
-						M.NewReference(b.name, "", b.spec),
+						reference,
 						ceNodes[0].StartByte,
 						nil, // deprecated
 					))

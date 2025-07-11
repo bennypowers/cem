@@ -20,6 +20,7 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"runtime"
 	"slices"
@@ -213,10 +214,7 @@ func postprocess(
 		errsList = append(errsList, err)
 	}
 
-	packageJson, err := ctx.PackageJSON()
-	if err != nil {
-		errsList = append(errsList, err)
-	}
+	packageJson, _ := ctx.PackageJSON()
 
 	// Because demo discovery and design tokens may mutate modules, we need to coordinate by pointer
 	for i := range modules {
@@ -228,13 +226,37 @@ func postprocess(
 				relmPath, err := filepath.Rel(ctx.Root(), module.Path)
 				if err != nil {
 					pterm.Error.Println(err)
+				} else {
+					resolvedPath, err := M.ResolveExportPath(*packageJson, relmPath)
+					if err != nil {
+						pterm.Error.Println(err)
+					} else {
+						modulesMu.Lock()
+						module.Path = resolvedPath
+						modulesMu.Unlock()
+					}
 				}
-				resolvedPath, err := M.ResolveExportPath(*packageJson, relmPath)
+			} else {
+				// If no package.json, just make the path relative
+				relmPath, err := filepath.Rel(ctx.Root(), module.Path)
 				if err != nil {
 					pterm.Error.Println(err)
 				} else {
 					modulesMu.Lock()
-					module.Path = resolvedPath
+					module.Path = relmPath
+					fmt.Fprintf(os.Stderr, "relmPath=%q\n", relmPath)
+					fmt.Fprintf(os.Stderr, "module.Exports before=%v\n", module.Exports)
+					for i, export := range module.Exports {
+						switch export.(type) {
+						case *M.JavaScriptExport:
+							fmt.Fprintf(os.Stderr, "module.Exports[i]=%p\n", module.Exports[i])
+							module.Exports[i].(*M.JavaScriptExport).Declaration.Module = relmPath
+						case *M.CustomElementExport:
+							fmt.Fprintf(os.Stderr, "module.Exports[i]=%p\n", module.Exports[i])
+							module.Exports[i].(*M.CustomElementExport).Declaration.Module = relmPath
+						}
+					}
+					fmt.Fprintf(os.Stderr, "module.Exports after=%v\n", module.Exports)
 					modulesMu.Unlock()
 				}
 			}
