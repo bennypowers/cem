@@ -96,7 +96,7 @@
           "name": "class-members",
           "declaration": {
             "name": "ClassMembers",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/class-members.js"
+            "module": "src/class-members.js"
           }
         },
         {
@@ -104,7 +104,7 @@
           "name": "ClassMembers",
           "declaration": {
             "name": "ClassMembers",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/class-members.js"
+            "module": "src/class-members.js"
           }
         }
       ]

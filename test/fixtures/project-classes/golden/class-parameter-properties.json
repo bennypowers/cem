@@ -29,7 +29,7 @@
           "name": "Class",
           "declaration": {
             "name": "Class",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/class-parameter-properties.js"
+            "module": "src/class-parameter-properties.js"
           }
         }
       ]

@@ -72,7 +72,7 @@
           "name": "DupeEvent",
           "declaration": {
             "name": "DupeEvent",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/class-fields-multiple.js"
+            "module": "src/class-fields-multiple.js"
           }
         },
         {
@@ -80,7 +80,7 @@
           "name": "class-fields-duplicate",
           "declaration": {
             "name": "ClassFieldsMultiple",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/class-fields-multiple.js"
+            "module": "src/class-fields-multiple.js"
           }
         }
       ]

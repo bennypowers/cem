@@ -103,7 +103,7 @@
           "name": "jsdoc-attr",
           "declaration": {
             "name": "JsdocAttr",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-jsdoc/src/jsdoc-attr.js"
+            "module": "src/jsdoc-attr.js"
           }
         }
       ]

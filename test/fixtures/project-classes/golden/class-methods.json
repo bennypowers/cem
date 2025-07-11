@@ -185,7 +185,7 @@
           "name": "class-methods",
           "declaration": {
             "name": "ClassMethods",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/class-methods.js"
+            "module": "src/class-methods.js"
           }
         }
       ]

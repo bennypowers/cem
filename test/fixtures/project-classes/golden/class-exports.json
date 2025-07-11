@@ -36,7 +36,7 @@
           "name": "class-ce",
           "declaration": {
             "name": "ClassCe",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/class-exports.js"
+            "module": "src/class-exports.js"
           }
         },
         {
@@ -44,7 +44,7 @@
           "name": "ClassExported",
           "declaration": {
             "name": "ClassExported",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/class-exports.js"
+            "module": "src/class-exports.js"
           }
         },
         {
@@ -52,7 +52,7 @@
           "name": "class-exported-ce",
           "declaration": {
             "name": "ClassExportedCe",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/class-exports.js"
+            "module": "src/class-exports.js"
           }
         },
         {
@@ -60,7 +60,7 @@
           "name": "ClassExportedCe",
           "declaration": {
             "name": "ClassExportedCe",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/class-exports.js"
+            "module": "src/class-exports.js"
           }
         }
       ]

@@ -41,7 +41,7 @@
           "name": "class-render-parts-docs",
           "declaration": {
             "name": "ClassRenderPartsDocs",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/class-render-parts-docs.js"
+            "module": "src/class-render-parts-docs.js"
           }
         }
       ]

@@ -23,7 +23,7 @@
           "name": "jsdoc-description",
           "declaration": {
             "name": "JsdocDescription",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-jsdoc/src/jsdoc-description.js"
+            "module": "src/jsdoc-description.js"
           }
         }
       ]

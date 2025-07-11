@@ -34,7 +34,7 @@
           "name": "Simple",
           "declaration": {
             "name": "Simple",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/export-class.js"
+            "module": "src/export-class.js"
           }
         },
         {
@@ -42,7 +42,7 @@
           "name": "Subclass",
           "declaration": {
             "name": "Subclass",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/export-class.js"
+            "module": "src/export-class.js"
           }
         }
       ]

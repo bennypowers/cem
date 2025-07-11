@@ -112,7 +112,7 @@
           "name": "simple",
           "declaration": {
             "name": "simple",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/export-function.js"
+            "module": "src/export-function.js"
           }
         },
         {
@@ -120,7 +120,7 @@
           "name": "described",
           "declaration": {
             "name": "described",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/export-function.js"
+            "module": "src/export-function.js"
           }
         },
         {
@@ -128,7 +128,7 @@
           "name": "summarized",
           "declaration": {
             "name": "summarized",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/export-function.js"
+            "module": "src/export-function.js"
           }
         },
         {
@@ -136,7 +136,7 @@
           "name": "async",
           "declaration": {
             "name": "async",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/export-function.js"
+            "module": "src/export-function.js"
           }
         },
         {
@@ -144,7 +144,7 @@
           "name": "generator",
           "declaration": {
             "name": "generator",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/export-function.js"
+            "module": "src/export-function.js"
           }
         },
         {
@@ -152,7 +152,7 @@
           "name": "arrowsimple",
           "declaration": {
             "name": "arrowsimple",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/export-function.js"
+            "module": "src/export-function.js"
           }
         },
         {
@@ -160,7 +160,7 @@
           "name": "arrowdescribed",
           "declaration": {
             "name": "arrowdescribed",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/export-function.js"
+            "module": "src/export-function.js"
           }
         },
         {
@@ -168,7 +168,7 @@
           "name": "arrowsummarized",
           "declaration": {
             "name": "arrowsummarized",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/export-function.js"
+            "module": "src/export-function.js"
           }
         },
         {
@@ -176,7 +176,7 @@
           "name": "arrowasync",
           "declaration": {
             "name": "arrowasync",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/export-function.js"
+            "module": "src/export-function.js"
           }
         },
         {
@@ -184,7 +184,7 @@
           "name": "param",
           "declaration": {
             "name": "param",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/export-function.js"
+            "module": "src/export-function.js"
           }
         },
         {
@@ -192,7 +192,7 @@
           "name": "describedparam",
           "declaration": {
             "name": "describedparam",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/export-function.js"
+            "module": "src/export-function.js"
           }
         },
         {
@@ -200,7 +200,7 @@
           "name": "rest",
           "declaration": {
             "name": "rest",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/export-function.js"
+            "module": "src/export-function.js"
           }
         },
         {
@@ -208,7 +208,7 @@
           "name": "describedrest",
           "declaration": {
             "name": "describedrest",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/export-function.js"
+            "module": "src/export-function.js"
           }
         }
       ]

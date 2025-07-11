@@ -23,7 +23,7 @@
           "name": "jsdoc-deprecated-reason",
           "declaration": {
             "name": "JsdocDeprecatedReason",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-jsdoc/src/jsdoc-deprecated-reason.js"
+            "module": "src/jsdoc-deprecated-reason.js"
           }
         }
       ]

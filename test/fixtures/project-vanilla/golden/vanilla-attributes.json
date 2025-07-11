@@ -33,7 +33,7 @@
           "name": "vanilla-attributes",
           "declaration": {
             "name": "VanillaAttributes",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-vanilla/src/vanilla-attributes.js"
+            "module": "src/vanilla-attributes.js"
           }
         }
       ]

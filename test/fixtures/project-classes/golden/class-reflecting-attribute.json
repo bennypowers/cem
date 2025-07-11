@@ -44,7 +44,7 @@
           "name": "class-reflecting-attr",
           "declaration": {
             "name": "ClassReflectingAttr",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/class-reflecting-attribute.js"
+            "module": "src/class-reflecting-attribute.js"
           }
         }
       ]

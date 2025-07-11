@@ -137,7 +137,7 @@
           "name": "jsdoc-css-prop",
           "declaration": {
             "name": "JsdocCssProp",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-jsdoc/src/jsdoc-css-property.js"
+            "module": "src/jsdoc-css-property.js"
           }
         }
       ]

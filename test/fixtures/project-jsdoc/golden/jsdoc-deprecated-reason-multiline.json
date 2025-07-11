@@ -23,7 +23,7 @@
           "name": "jsdoc-deprecated-reason-multiline",
           "declaration": {
             "name": "JsdocDeprecatedReasonMultiline",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-jsdoc/src/jsdoc-deprecated-reason-multiline.js"
+            "module": "src/jsdoc-deprecated-reason-multiline.js"
           }
         }
       ]

@@ -22,7 +22,7 @@
           "name": "class-ignored-members",
           "declaration": {
             "name": "ClassIgnoredMembers",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/class-ignored-members.js"
+            "module": "src/class-ignored-members.js"
           }
         }
       ]
