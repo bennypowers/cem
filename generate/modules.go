@@ -344,7 +344,7 @@ func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsM
 			for _, binding := range bindings {
 				spec, ok := mp.styleImportsBindingToSpecMap[binding.Text]
 				if ok && strings.HasPrefix(spec, ".") {
-					moduleDir := filepath.Dir(mp.module.Path)
+					moduleDir := filepath.Dir(mp.file)
 					absPath := filepath.Join(moduleDir, spec)
 					// Try cache first
 					if cached, found := cssParseCache.Get(absPath); found {

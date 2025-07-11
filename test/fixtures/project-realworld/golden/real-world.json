@@ -85,7 +85,7 @@
           "name": "real-world",
           "declaration": {
             "name": "RealWorld",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-realworld/src/real-world.js"
+            "module": "src/real-world.js"
           }
         },
         {
@@ -93,7 +93,7 @@
           "name": "RealWorld",
           "declaration": {
             "name": "RealWorld",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-realworld/src/real-world.js"
+            "module": "src/real-world.js"
           }
         }
       ]

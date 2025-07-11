@@ -55,7 +55,7 @@
           "name": "static-styles",
           "declaration": {
             "name": "StaticStyles",
-            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-tokens/src/static-styles.js"
+            "module": "src/static-styles.js"
           }
         }
       ]
