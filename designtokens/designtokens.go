@@ -42,7 +42,7 @@ func (dt *DesignTokens) Get(name string) (TokenResult, bool) {
 
 // LoadDesignTokens loads tokens from a path or Deno-style specifier and returns a DesignTokens struct.
 // The prefix is prepended to all token names on load.
-func LoadDesignTokens(ctx M.ProjectContext, cfg *C.CemConfig) (*DesignTokens, error) {
+func LoadDesignTokens(ctx M.WorkspaceContext, cfg *C.CemConfig) (*DesignTokens, error) {
 	prefix := cfg.Generate.DesignTokens.Prefix
 	content, err := readJSONFileOrSpecifier(ctx, cfg.Generate.DesignTokens.Spec)
 	if err != nil {
@@ -120,7 +120,7 @@ func kebabCase(s string) string {
 // readJSONFileOrSpecifier loads a JSON file from a regular path or a Deno-style specifier.
 // If the specifier is an npm: spec, it first checks node_modules in the current working directory.
 // If not found locally, it falls back to fetching from the network.
-func readJSONFileOrSpecifier(ctx M.ProjectContext, path string) ([]byte, error) {
+func readJSONFileOrSpecifier(ctx M.WorkspaceContext, path string) ([]byte, error) {
 	if !strings.HasPrefix(path, ".") {
 		// Try npm/Deno specifier and @scope/pkg/file.json style
 		if spec, ok := parseNpmSpecifier(path); ok {

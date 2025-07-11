@@ -70,7 +70,7 @@ type CemConfig struct {
 }
 
 // LoadConfig reads CemConfig from the project context's config file.
-func LoadConfig(ctx manifest.ProjectContext) (*CemConfig, error) {
+func LoadConfig(ctx manifest.WorkspaceContext) (*CemConfig, error) {
 	cfgFile := ctx.ConfigFile()
 	rc, err := ctx.ReadFile(cfgFile)
 	if err != nil {
@@ -102,5 +102,28 @@ func LoadConfig(ctx manifest.ProjectContext) (*CemConfig, error) {
 		pterm.DisableDebugMessages()
 	}
 
+	if config.Generate.Files == nil {
+		config.Generate.Files = make([]string, 0)
+	}
+	if config.Generate.Exclude == nil {
+		config.Generate.Exclude = make([]string, 0)
+	}
 	return &config, nil
+}
+
+func (c *CemConfig) Clone() *CemConfig {
+	if c == nil {
+		return nil
+	}
+	clone := *c
+	// Deep copy slices
+	if c.Generate.Files != nil {
+		clone.Generate.Files = make([]string, len(c.Generate.Files))
+		copy(clone.Generate.Files, c.Generate.Files)
+	}
+	if c.Generate.Exclude != nil {
+		clone.Generate.Exclude = make([]string, len(c.Generate.Exclude))
+		copy(clone.Generate.Exclude, c.Generate.Exclude)
+	}
+	return &clone
 }

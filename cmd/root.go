@@ -45,7 +45,6 @@ var rootCmd = &cobra.Command{
 Generates a custom elements manifest file (custom-elements.json) describing your modules.
 Supports projects written with Lit`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Fprintln(os.Stderr, "rootCmd.PersistentPreRunE")
 		var err error
 		initialCWD, err = os.Getwd()
 		if err != nil {
@@ -98,12 +97,12 @@ Supports projects written with Lit`,
 }
 
 // Retrieve the project context from a cobra.Command
-func GetProjectContext(cmd *cobra.Command) (M.ProjectContext, error) {
+func GetProjectContext(cmd *cobra.Command) (M.WorkspaceContext, error) {
 	val := cmd.Context().Value(projectContextKey)
 	if val == nil {
 		return nil, errors.New("project context not initialized")
 	}
-	return val.(M.ProjectContext), nil
+	return val.(M.WorkspaceContext), nil
 }
 
 func Execute() {
@@ -113,8 +112,8 @@ func Execute() {
 	}
 }
 
-func resolveProjectContext(configPath, packageFlag string) (M.ProjectContext, error) {
-	var ctx M.ProjectContext
+func resolveProjectContext(configPath, packageFlag string) (M.WorkspaceContext, error) {
+	var ctx M.WorkspaceContext
 	if packageFlag != "" {
 		if isLikelyPath(packageFlag) {
 			ctx = M.NewLocalFSProjectContext(packageFlag)

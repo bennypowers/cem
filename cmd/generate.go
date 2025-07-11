@@ -19,7 +19,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	C "bennypowers.dev/cem/cmd/config"
@@ -84,7 +83,6 @@ var generateCmd = &cobra.Command{
 			return errors.Join(errs, errors.New("manifest generation returned nil"))
 		}
 		if cfg.Generate.Output != "" {
-			fmt.Fprintf(os.Stderr, `Will try to write to %q`, cfg.Generate.Output)
 			writer, err := ctx.OutputWriter(cfg.Generate.Output)
 			if err != nil {
 				errs = errors.Join(errs, err)
@@ -107,9 +105,9 @@ var generateCmd = &cobra.Command{
 }
 
 // Use ProjectContext to expand globs
-func expand(ctx M.ProjectContext, globs []string) (files []string, errs error) {
+func expand(ctx M.WorkspaceContext, globs []string) (files []string, errs error) {
 	for _, pattern := range globs {
-		matches, err := ctx.ListFiles(pattern)
+		matches, err := ctx.Glob(pattern)
 		if err != nil {
 			errs = errors.Join(errs, err)
 			continue

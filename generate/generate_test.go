@@ -10,11 +10,9 @@ import (
 	"strings"
 	"testing"
 
-	"bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/generate"
 	"bennypowers.dev/cem/manifest"
 	"github.com/nsf/jsondiff"
-	"gopkg.in/yaml.v3"
 )
 
 var update = flag.Bool("update", false, "update golden files")
@@ -22,29 +20,6 @@ var update = flag.Bool("update", false, "update golden files")
 type testcase struct {
 	name string
 	path string
-}
-
-func loadConfig(t *testing.T, ctx manifest.ProjectContext) (*config.CemConfig, error) {
-	var config config.CemConfig
-	config.ProjectDir = ctx.Root()
-	cfgFile := ctx.ConfigFile()
-	rc, err := ctx.ReadFile(cfgFile)
-	if err != nil {
-		t.Log(err)
-	} else {
-		defer rc.Close()
-		if err := yaml.NewDecoder(rc).Decode(&config); err != nil {
-			return nil, err
-		}
-		config.ProjectDir = ctx.Root()
-		config.ConfigFile = cfgFile
-		// Make output path project-root-relative if needed
-		if config.Generate.Output != "" && !filepath.IsAbs(config.Generate.Output) {
-			config.Generate.Output = filepath.Join(config.ProjectDir, config.Generate.Output)
-		}
-	}
-	t.Logf("%+v", config)
-	return &config, nil
 }
 
 func TestGenerate(t *testing.T) {

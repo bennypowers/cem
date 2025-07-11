@@ -29,8 +29,19 @@ import (
 	"github.com/bmatcuk/doublestar"
 )
 
-// ProjectContext abstracts access to project resources, regardless of source (local or remote).
-type ProjectContext interface {
+// isGlobPattern checks if a string contains any common glob pattern metacharacters.
+// This is a heuristic and may produce false positives for file paths that
+// legitimately contain one of these characters, but it covers most common cases.
+func isGlobPattern(pattern string) bool {
+	// The set of characters that are special in glob patterns.
+	// We include '*' for wildcards, '?' for single characters,
+	// '[' and ']' for character classes, and '{' and '}' for brace expansion.
+	globChars := "*?[]"
+	return strings.ContainsAny(pattern, globChars)
+}
+
+// WorkspaceContext abstracts access to project resources, regardless of source (local or remote).
+type WorkspaceContext interface {
 	// Performs validation/discovery and caches results as needed.
 	Init() error
 	// Returns the path to the config file
@@ -43,8 +54,8 @@ type ProjectContext interface {
 	ReadFile(path string) (io.ReadCloser, error)
 	// SourceFile returns an io.ReadCloser for a TypeScript source file within the project.
 	SourceFile(path string) (io.ReadCloser, error)
-	// ListFiles returns a list of file paths matching the given pattern (e.g., *.ts).
-	ListFiles(pattern string) ([]string, error)
+	// Glob returns a list of file paths matching the given pattern (e.g., *.ts).
+	Glob(pattern string) ([]string, error)
 	// Writes outputs to paths
 	OutputWriter(path string) (io.WriteCloser, error)
 	// Root returns the canonical root path or name for the project.
@@ -53,7 +64,7 @@ type ProjectContext interface {
 	Cleanup() error
 }
 
-var _ ProjectContext = (*LocalFSProjectContext)(nil)
+var _ WorkspaceContext = (*LocalFSProjectContext)(nil)
 
 // LocalFSProjectContext implements ProjectContext for a local filesystem project.
 type LocalFSProjectContext struct {
@@ -69,7 +80,7 @@ func NewLocalFSProjectContext(root string) *LocalFSProjectContext {
 	return &LocalFSProjectContext{root: root}
 }
 
-// Returns the path to the config file, or an empty string if it does not exist.
+// ConfigFile Returns the path to the config file, or an empty string if it does not exist.
 func (c *LocalFSProjectContext) ConfigFile() string {
 	return filepath.Join(c.root, ".config", "cem.yaml")
 }
@@ -130,18 +141,7 @@ func (c *LocalFSProjectContext) SourceFile(path string) (io.ReadCloser, error) {
 	return c.ReadFile(path)
 }
 
-// isGlobPattern checks if a string contains any common glob pattern metacharacters.
-// This is a heuristic and may produce false positives for file paths that
-// legitimately contain one of these characters, but it covers most common cases.
-func isGlobPattern(pattern string) bool {
-	// The set of characters that are special in glob patterns.
-	// We include '*' for wildcards, '?' for single characters,
-	// '[' and ']' for character classes, and '{' and '}' for brace expansion.
-	globChars := "*?[]"
-	return strings.ContainsAny(pattern, globChars)
-}
-
-func (c *LocalFSProjectContext) ListFiles(pattern string) ([]string, error) {
+func (c *LocalFSProjectContext) Glob(pattern string) ([]string, error) {
 	if isGlobPattern(pattern) {
 		return doublestar.Glob(filepath.Join(c.root, pattern))
 	} else {
@@ -170,7 +170,7 @@ func (c *LocalFSProjectContext) Cleanup() error {
 	return nil
 }
 
-var _ ProjectContext = (*RemoteProjectContext)(nil)
+var _ WorkspaceContext = (*RemoteProjectContext)(nil)
 
 // RemoteProjectContext implements ProjectContext for remote/package-based projects.
 type RemoteProjectContext struct {
@@ -212,7 +212,7 @@ func (c *RemoteProjectContext) SourceFile(path string) (io.ReadCloser, error) {
 	return c.ReadFile(path)
 }
 
-func (c *RemoteProjectContext) ListFiles(pattern string) ([]string, error) {
+func (c *RemoteProjectContext) Glob(pattern string) ([]string, error) {
 	// TODO: List files in the tempdir matching pattern
 	return nil, ErrRemoteUnsupported
 }

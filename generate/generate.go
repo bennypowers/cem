@@ -60,7 +60,7 @@ type preprocessResult struct {
 	includedFiles   []string
 }
 
-func preprocess(ctx M.ProjectContext, cfg *C.CemConfig) (r preprocessResult, errs error) {
+func preprocess(ctx M.WorkspaceContext, cfg *C.CemConfig) (r preprocessResult, errs error) {
 	cfg.Generate.Exclude = append(cfg.Generate.Exclude, []string{}...)
 	r.excludePatterns = make([]string, 0, len(cfg.Generate.Exclude)+len(defaultExcludePatterns))
 
@@ -85,7 +85,7 @@ func preprocess(ctx M.ProjectContext, cfg *C.CemConfig) (r preprocessResult, err
 		r.designTokens = tokens
 	}
 	if cfg.Generate.DemoDiscovery.FileGlob != "" {
-		demoFiles, err := ctx.ListFiles(cfg.Generate.DemoDiscovery.FileGlob)
+		demoFiles, err := ctx.Glob(cfg.Generate.DemoDiscovery.FileGlob)
 		r.demoFiles = demoFiles
 		if err != nil {
 			errs = errors.Join(errs, err)
@@ -101,11 +101,11 @@ func preprocess(ctx M.ProjectContext, cfg *C.CemConfig) (r preprocessResult, err
 
 type processJob struct {
 	file string
-	ctx  M.ProjectContext
+	ctx  M.WorkspaceContext
 }
 
 func process(
-	ctx M.ProjectContext,
+	ctx M.WorkspaceContext,
 	cfg *C.CemConfig,
 	result preprocessResult,
 	qm *Q.QueryManager,
@@ -188,7 +188,7 @@ func processModule(
 }
 
 func postprocess(
-	_ M.ProjectContext,
+	_ M.WorkspaceContext,
 	cfg *C.CemConfig,
 	result preprocessResult,
 	allTagAliases map[string]string,
@@ -197,7 +197,6 @@ func postprocess(
 ) (pkg M.Package, errs error) {
 	var wg sync.WaitGroup
 	var errsMu sync.Mutex
-	var _ sync.Mutex
 	errsList := make([]error, 0)
 
 	// Build the demo map once
@@ -205,8 +204,6 @@ func postprocess(
 	if err != nil {
 		errsList = append(errsList, err)
 	}
-
-	// packageJson, _ := ctx.PackageJSON()
 
 	// Because demo discovery and design tokens may mutate modules, we need to coordinate by pointer
 	for i := range modules {
@@ -240,10 +237,9 @@ func postprocess(
 }
 
 // Generates a custom-elements manifest from a list of typescript files
-func Generate(ctx M.ProjectContext, cfg *C.CemConfig) (manifest *string, errs error) {
+func Generate(ctx M.WorkspaceContext, cfg *C.CemConfig) (manifest *string, errs error) {
 	qm, err := Q.NewQueryManager()
 	if err != nil {
-		qm.Close()
 		return nil, fmt.Errorf("Could not create QueryManager: %v", err)
 	}
 	defer qm.Close()

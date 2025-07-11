@@ -116,11 +116,11 @@ type ModuleProcessor struct {
 	module                       *M.Module
 	errors                       error
 	packageJSON                  *M.PackageJSON
-	ctx                          M.ProjectContext
+	ctx                          M.WorkspaceContext
 }
 
 func NewModuleProcessor(
-	ctx M.ProjectContext,
+	ctx M.WorkspaceContext,
 	cfg *C.CemConfig,
 	file string,
 	parser *ts.Parser,
