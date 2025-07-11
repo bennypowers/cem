@@ -19,9 +19,8 @@ import (
 var update = flag.Bool("update", false, "update golden files")
 
 type testcase struct {
-	name   string
-	path   string
-	config *config.CemConfig
+	name string
+	path string
 }
 
 func TestGenerate(t *testing.T) {
@@ -46,24 +45,26 @@ func TestGenerate(t *testing.T) {
 			continue
 		}
 		projectDir := filepath.Join("../test/fixtures", projectEntry.Name())
+		absProjectDir, err := filepath.Abs(projectDir)
+		if err != nil {
+			t.Fatalf("failed to get absolute path for %s: %v", projectDir, err)
+		}
 		t.Run(projectEntry.Name(), func(t *testing.T) {
-			oldWd, _ := os.Getwd()
-			if err := os.Chdir(projectDir); err != nil {
-				t.Fatalf("failed to chdir to %s: %v", projectDir, err)
-			}
-			defer os.Chdir(oldWd)
-
 			projectGoldenDir := "golden"
-			if err := os.MkdirAll(projectGoldenDir, 0755); err != nil {
+			if err := os.MkdirAll(filepath.Join(projectDir, projectGoldenDir), 0755); err != nil {
 				t.Fatalf("failed to create %s: %v", projectGoldenDir, err)
 			}
 
-			ctx := manifest.NewLocalFSProjectContext(projectDir)
+			ctx := manifest.NewLocalFSProjectContext(absProjectDir)
+			if err := ctx.Init(); err != nil {
+				t.Fatalf("failed to init context for %s: %v", absProjectDir, err)
+			}
+
 			cfg, err := config.LoadConfig(ctx)
 			if err != nil {
 				t.Fatalf("failed to load config: %v", err)
 			}
-			fixtures, err := os.ReadDir("src")
+			fixtures, err := os.ReadDir(filepath.Join(projectDir, "src"))
 			if err != nil {
 				t.Fatalf("cannot read src directory: %v", err)
 			}
@@ -78,21 +79,20 @@ func TestGenerate(t *testing.T) {
 					continue
 				}
 				cases = append(cases, testcase{
-					name:   name,
-					path:   filepath.Join("src", fixture.Name()),
-					config: cfg,
+					name: name,
+					path: filepath.Join("src", fixture.Name()),
 				})
 			}
 
 			for _, tc := range cases {
 				// capture range variable
 				t.Run(tc.name, func(t *testing.T) {
-					tc.config.Generate.Files = []string{tc.path}
-					actual, err := generate.Generate(tc.config)
+					cfg.Generate.Files = []string{tc.path}
+					actual, err := generate.Generate(ctx, cfg)
 					if err != nil {
 						t.Fatal(err)
 					}
-					golden := filepath.Join(projectGoldenDir, tc.name+".json")
+					golden := filepath.Join(projectDir, projectGoldenDir, tc.name+".json")
 					if *update {
 						if err := os.WriteFile(golden, []byte(*actual), 0644); err != nil {
 							t.Fatalf("failed to write golden file: %v", err)

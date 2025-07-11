@@ -5,7 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	C "bennypowers.dev/cem/cmd/config"
+	"bennypowers.dev/cem/cmd/config"
+	"bennypowers.dev/cem/manifest"
 	DS "github.com/bmatcuk/doublestar"
 )
 
@@ -22,28 +23,31 @@ func BenchmarkGenerate(b *testing.B) {
 
 	var lastOut string
 
+	ctx := manifest.NewLocalFSProjectContext("../test/fixtures")
+	if err := ctx.Init(); err != nil {
+		b.Fatalf("Failed to init context: %v", err)
+	}
+
 	for b.Loop() {
 		// Run the Generate function, measuring its speed.
 		specs, err := filepath.Glob("../test/fixtures/*/design-tokens.json")
 		if err != nil {
 			b.Errorf("Failed to load design tokens: %v", err)
 		}
-		cfg := C.CemConfig{
-			SourceControlRootUrl: "",
-			Generate: C.GenerateConfig{
-				Files: matches,
-				DesignTokens: C.DesignTokensConfig{
-					Spec:   specs[0], // todo: should accept a slice
-					Prefix: "token",
-				},
-				DemoDiscovery: C.DemoDiscoveryConfig{
-					FileGlob:    "demos/.",
-					URLPattern:  "",
-					URLTemplate: "",
-				},
-			},
+		cfg, err := config.LoadConfig(ctx)
+		if err != nil {
+			b.Fatalf("failed to load config: %v", err)
 		}
-		out, err := Generate(&cfg)
+		if err != nil {
+			b.Fatalf("Failed to get config: %v", err)
+		}
+
+		cfg.Generate.Files = matches
+		cfg.Generate.DesignTokens.Spec = specs[0]
+		cfg.Generate.DesignTokens.Prefix = "token"
+		cfg.Generate.DemoDiscovery.FileGlob = "demos/."
+
+		out, err := Generate(ctx, cfg)
 		if err != nil {
 			b.Errorf("Generate returned error: %v", err)
 		}
