@@ -83,7 +83,7 @@
           "name": "ClassA",
           "declaration": {
             "name": "ClassA",
-            "module": "src/class-multiple.js"
+            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/class-multiple.js"
           }
         },
         {
@@ -91,7 +91,7 @@
           "name": "class-b",
           "declaration": {
             "name": "ClassB",
-            "module": "src/class-multiple.js"
+            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/class-multiple.js"
           }
         }
       ]

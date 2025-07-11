@@ -73,8 +73,7 @@
           ],
           "cssProperties": [
             {
-              "name": "--rw-space-7xl",
-              "description": "wicked big"
+              "name": "--rw-space-7xl"
             }
           ],
           "customElement": true
@@ -86,7 +85,7 @@
           "name": "real-world",
           "declaration": {
             "name": "RealWorld",
-            "module": "src/real-world.js"
+            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-realworld/src/real-world.js"
           }
         },
         {
@@ -94,7 +93,7 @@
           "name": "RealWorld",
           "declaration": {
             "name": "RealWorld",
-            "module": "src/real-world.js"
+            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-realworld/src/real-world.js"
           }
         }
       ]

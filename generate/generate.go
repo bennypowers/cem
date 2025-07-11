@@ -225,7 +225,7 @@ func postprocess(
 			defer wg.Done()
 
 			if packageJson != nil {
-				relmPath := filepath.Join(ctx.Root(), module.Path)
+				relmPath, err := filepath.Rel(ctx.Root(), module.Path)
 				if err != nil {
 					pterm.Error.Println(err)
 				}

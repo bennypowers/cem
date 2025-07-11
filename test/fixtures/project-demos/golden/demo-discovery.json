@@ -22,7 +22,7 @@
           "name": "demo-discovery",
           "declaration": {
             "name": "DemoDiscovery",
-            "module": "src/demo-discovery.js"
+            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-demos/src/demo-discovery.js"
           }
         }
       ]

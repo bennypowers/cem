@@ -86,7 +86,7 @@
           "name": "jsdoc-events",
           "declaration": {
             "name": "JsdocEvents",
-            "module": "src/jsdoc-event.js"
+            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-jsdoc/src/jsdoc-event.js"
           }
         }
       ]

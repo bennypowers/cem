@@ -36,7 +36,7 @@
           "name": "jsdoc-slot",
           "declaration": {
             "name": "JsdocSlot",
-            "module": "src/jsdoc-slot.js"
+            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-jsdoc/src/jsdoc-slot.js"
           }
         }
       ]

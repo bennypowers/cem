@@ -79,7 +79,7 @@
           "name": "ClassFields",
           "declaration": {
             "name": "ClassFields",
-            "module": "src/class-fields.js"
+            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/class-fields.js"
           }
         }
       ]

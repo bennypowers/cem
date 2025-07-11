@@ -34,7 +34,7 @@
           "name": "class-render-slot-parts",
           "declaration": {
             "name": "ClassRenderSlotParts",
-            "module": "src/class-render-slot-parts.js"
+            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/class-render-slot-parts.js"
           }
         }
       ]

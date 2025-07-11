@@ -139,7 +139,7 @@
           "name": "class-reactive-properties",
           "declaration": {
             "name": "ClassReactiveProperties",
-            "module": "src/class-reactive-properties.js"
+            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/class-reactive-properties.js"
           }
         }
       ]

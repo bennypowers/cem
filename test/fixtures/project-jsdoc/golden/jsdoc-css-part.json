@@ -35,7 +35,7 @@
           "name": "jsdoc-css-part",
           "declaration": {
             "name": "JsdocCssPart",
-            "module": "src/jsdoc-css-part.js"
+            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-jsdoc/src/jsdoc-css-part.js"
           }
         }
       ]

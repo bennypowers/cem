@@ -22,7 +22,7 @@
           "name": "demo-alias",
           "declaration": {
             "name": "DemoAlias",
-            "module": "src/demo-alias.js"
+            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-demos/src/demo-alias.js"
           }
         }
       ]

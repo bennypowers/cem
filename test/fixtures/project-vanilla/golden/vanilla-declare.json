@@ -21,7 +21,7 @@
           "name": "",
           "declaration": {
             "name": "VanillaElement",
-            "module": "src/vanilla-declare.js"
+            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-vanilla/src/vanilla-declare.js"
           }
         },
         {
@@ -29,7 +29,7 @@
           "name": "VanillaElement",
           "declaration": {
             "name": "VanillaElement",
-            "module": "src/vanilla-declare.js"
+            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-vanilla/src/vanilla-declare.js"
           }
         }
       ]

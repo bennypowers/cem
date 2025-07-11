@@ -23,7 +23,7 @@
           "name": "jsdoc-description-multiline",
           "declaration": {
             "name": "JsdocDescriptionMultiline",
-            "module": "src/jsdoc-description-multiline.js"
+            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-jsdoc/src/jsdoc-description-multiline.js"
           }
         }
       ]

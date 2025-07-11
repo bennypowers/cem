@@ -27,7 +27,7 @@
           "name": "$const",
           "declaration": {
             "name": "$const",
-            "module": "src/export-var.js"
+            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/export-var.js"
           }
         },
         {
@@ -35,7 +35,7 @@
           "name": "$let",
           "declaration": {
             "name": "$let",
-            "module": "src/export-var.js"
+            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-classes/src/export-var.js"
           }
         }
       ]

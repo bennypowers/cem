@@ -31,7 +31,7 @@
           "name": "jsdoc-demo",
           "declaration": {
             "name": "JsdocDemo",
-            "module": "src/jsdoc-demo.js"
+            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-jsdoc/src/jsdoc-demo.js"
           }
         }
       ]

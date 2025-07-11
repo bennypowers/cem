@@ -43,9 +43,7 @@
               "deprecated": "reason"
             },
             {
-              "name": "--token-color",
-              "description": "--token-color",
-              "syntax": "\u003ccolor\u003e"
+              "name": "--token-color"
             }
           ],
           "customElement": true
@@ -57,7 +55,7 @@
           "name": "static-styles",
           "declaration": {
             "name": "StaticStyles",
-            "module": "src/static-styles.js"
+            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-tokens/src/static-styles.js"
           }
         }
       ]

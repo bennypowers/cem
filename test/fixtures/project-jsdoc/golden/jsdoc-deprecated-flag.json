@@ -23,7 +23,7 @@
           "name": "jsdoc-deprecated-flag",
           "declaration": {
             "name": "JsdocDeprecatedFlag",
-            "module": "src/jsdoc-deprecated-flag.js"
+            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-jsdoc/src/jsdoc-deprecated-flag.js"
           }
         }
       ]

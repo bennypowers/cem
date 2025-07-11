@@ -42,7 +42,7 @@
           "name": "demo-subset-one",
           "declaration": {
             "name": "DemoSubsetOne",
-            "module": "src/demo-subset.js"
+            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-demos/src/demo-subset.js"
           }
         },
         {
@@ -50,7 +50,7 @@
           "name": "demo-subset-two",
           "declaration": {
             "name": "DemoSubsetTwo",
-            "module": "src/demo-subset.js"
+            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-demos/src/demo-subset.js"
           }
         },
         {
@@ -58,7 +58,7 @@
           "name": "demo-subset-three",
           "declaration": {
             "name": "DemoSubsetThree",
-            "module": "src/demo-subset.js"
+            "module": "/var/home/bennyp/Developer/cem/test/fixtures/project-demos/src/demo-subset.js"
           }
         }
       ]
