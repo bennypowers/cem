@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/vanilla-attributes.js",
+      "declarations": [
+        {
+          "name": "VanillaAttributes",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "kind": "class",
+          "tagName": "vanilla-attributes",
+          "attributes": [
+            {
+              "name": "a"
+            },
+            {
+              "name": "b"
+            },
+            {
+              "name": "c"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "vanilla-attributes",
+          "declaration": {
+            "name": "VanillaAttributes",
+            "module": "src/vanilla-attributes.js"
+          }
+        }
+      ]
+    }
+  ]
+}

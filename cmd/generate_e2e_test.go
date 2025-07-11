@@ -6,19 +6,55 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
+func resetFlags(cmd *cobra.Command) {
+	cmd.Flags().VisitAll(func(f *pflag.Flag) {
+		f.Value.Set(f.DefValue)
+	})
+	for _, c := range cmd.Commands() {
+		resetFlags(c)
+	}
+}
+
+func resetCobraAndViper(t *testing.T) {
+	t.Helper()
+	rootCmd.Flags().VisitAll(func(f *pflag.Flag) {
+		f.Value.Set(f.DefValue) // Reset flag to default (if possible)
+	})
+
+	// Optionally reset persistent flags if you use them
+	resetFlags(rootCmd)
+
+	// If you set up PersistentPreRunE, consider resetting side effects (like global context)
+	// e.g., ctx = nil
+	initialCWD = ""
+	generateFiles = nil
+	start = time.Time{}
+
+	viper.Reset() // Reset config state
+}
+
 func TestGenerateE2E(t *testing.T) {
-	viper.Reset()
+	resetCobraAndViper(t)
 	// Create a temporary directory for the test
 	tmpDir, err := os.MkdirTemp("", "cem-test-")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
 	defer os.RemoveAll(tmpDir)
+
+	if err := os.WriteFile(filepath.Join(tmpDir, "package.json"), []byte(`{"name":"test-pkg"}`), 0644); err != nil {
+		t.Fatalf("Failed to write dummy package.json: %v", err)
+	}
+
+	viper.Set("package", tmpDir)
 
 	// Create a dummy source file to be processed by the generate command
 	srcFilePath := filepath.Join(tmpDir, "my-element.js")
@@ -45,11 +81,11 @@ export class MyElement extends HTMLElement {}
 	rootCmd.SetErr(&out)
 	origOut := pterm.Success.Writer
 	pterm.Success.Writer = &out
-	defer func() {pterm.Success.Writer = origOut}()
+	defer func() { pterm.Success.Writer = origOut }()
 
 	// Execute the generate command
-	rootCmd.SetArgs([]string{"generate", srcFilePath, "-o", outputFile})
-	viper.BindPFlag("generate.output", generateCmd.Flags().Lookup("output"))
+	args := []string{"generate", srcFilePath, "-o", outputFile}
+	rootCmd.SetArgs(args)
 	err = rootCmd.Execute()
 	if err != nil {
 		t.Fatalf("generate command failed: %v", err)
@@ -71,23 +107,15 @@ export class MyElement extends HTMLElement {}
 		t.Fatalf("output file does not contain expected content.\nExpected: %s\nGot: %s", expected, content)
 	}
 
-	// Check the log output
-	cwd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("could not get cwd: %v", err)
-	}
-	rel, err := filepath.Rel(cwd, outputFile)
-	if err != nil {
-		t.Fatalf("could not get relative path: %v", err)
-	}
-	expectedLog := "Wrote manifest to " + rel
+	expectedLog := "Wrote manifest to " + outputFile
 	if !strings.Contains(pterm.RemoveColorFromString(out.String()), expectedLog) {
 		t.Fatalf("log output does not contain expected string.\nExpected: %s\nGot: %s", expectedLog, out.String())
 	}
 }
 
-func TestGenerateE2EWithProjectDir(t *testing.T) {
-	viper.Reset()
+func TestGenerateE2EWithPackageFlag(t *testing.T) {
+	resetCobraAndViper(t)
+	t.Log("TestGenerateE2EWithPackageFlag")
 	// Create a temporary directory for the test
 	tmpDir, err := os.MkdirTemp("", "cem-test-")
 	if err != nil {
@@ -95,70 +123,46 @@ func TestGenerateE2EWithProjectDir(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
+	if err := os.WriteFile(filepath.Join(tmpDir, "package.json"), []byte(`{"name":"test-pkg"}`), 0644); err != nil {
+		t.Fatalf("Failed to write dummy package.json: %v", err)
+	}
+
 	// Create a project directory within the temp directory
-	projectDir := filepath.Join(tmpDir, "my-project")
-	configDir := filepath.Join(projectDir, ".config")
-	if err := os.MkdirAll(configDir, 0755); err != nil {
-		t.Fatalf("Failed to create config dir: %v", err)
-	}
-
-	// Create a dummy source file to be processed by the generate command
-	srcFilePath := filepath.Join(projectDir, "my-element.js")
-	if err := os.WriteFile(srcFilePath, []byte(`
-/**
- * @customElement my-element
- */
-export class MyElement extends HTMLElement {}
-`), 0644); err != nil {
-		t.Fatalf("Failed to write dummy source file: %v", err)
-	}
-
-	// Create a config file in the project directory
-	configFile := filepath.Join(configDir, "cem.yaml")
-	if err := os.WriteFile(configFile, []byte(`
-generate:
-  files:
-    - my-element.js
-  output: dist/custom-elements.json
-`), 0644); err != nil {
-		t.Fatalf("Failed to write config file: %v", err)
-	}
-
-	// Change the current working directory to the temp directory
-	originalCWD, err := os.Getwd()
+	err = os.CopyFS(tmpDir, os.DirFS(filepath.Clean("./fixture")))
 	if err != nil {
-		t.Fatalf("Failed to get current working directory: %v", err)
+		t.Fatalf("%s", err)
 	}
-	defer os.Chdir(originalCWD)
 
-	if err := os.Chdir(tmpDir); err != nil {
-		t.Fatalf("Failed to change directory: %v", err)
-	}
+	viper.Set("package", filepath.Join(tmpDir, "my-project"))
+
+	// Set the project directory in viper, so the runtime can find it and the config file.
+	t.Logf("Set viper 'package' key to: %s", viper.GetString("package"))
 
 	// Capture the output of the command
 	var out bytes.Buffer
 	origOut := pterm.Success.Writer
 	pterm.Success.Writer = &out
-	defer func() {pterm.Success.Writer = origOut}()
+	defer func() { pterm.Success.Writer = origOut }()
 	rootCmd.SetOut(&out)
 	rootCmd.SetErr(&out)
 
-	// Execute the generate command with the --project-dir flag
-	rootCmd.SetArgs([]string{"generate", "--project-dir", "my-project"})
-	viper.BindPFlag("projectDir", rootCmd.PersistentFlags().Lookup("project-dir"))
+	// We don't need to pass command-line args if viper is set directly
+	// and the config file is being read.
+	rootCmd.SetArgs([]string{"generate"})
+
 	err = rootCmd.Execute()
 	if err != nil {
 		t.Fatalf("generate command failed: %v", err)
 	}
 
 	// Check if the output file was created in the correct location
-	outputFile := filepath.Join(projectDir, "dist", "custom-elements.json")
+	outputFile := filepath.Join(tmpDir, "my-project", "dist", "custom-elements.json")
 	if _, err := os.Stat(outputFile); os.IsNotExist(err) {
 		t.Fatalf("output file was not created: %s", outputFile)
 	}
 
 	// Check the log output for the correct relative path
-	expectedLog := "Wrote manifest to my-project/dist/custom-elements.json"
+	expectedLog := "Wrote manifest to dist/custom-elements.json"
 	if !strings.Contains(pterm.RemoveColorFromString(out.String()), expectedLog) {
 		t.Fatalf("log output does not contain expected string.\nExpected: %s\nGot: %s", expectedLog, out.String())
 	}

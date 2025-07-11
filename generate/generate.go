@@ -19,7 +19,7 @@ package generate
 import (
 	"cmp"
 	"errors"
-	"path/filepath"
+	"fmt"
 	"runtime"
 	"slices"
 	"sync"
@@ -60,22 +60,27 @@ type preprocessResult struct {
 	includedFiles   []string
 }
 
-func preprocess(cfg *C.CemConfig) (r preprocessResult, errs error) {
+// preprocess handles config merging for generate command
+func preprocess(ctx M.WorkspaceContext, cfg *C.CemConfig) (r preprocessResult, errs error) {
+	cfg.Generate.Exclude = append(cfg.Generate.Exclude, []string{}...)
 	r.excludePatterns = make([]string, 0, len(cfg.Generate.Exclude)+len(defaultExcludePatterns))
+
 	r.includedFiles = make([]string, 0)
 	r.excludePatterns = append(r.excludePatterns, cfg.Generate.Exclude...)
+
 	if !cfg.Generate.NoDefaultExcludes {
 		r.excludePatterns = append(r.excludePatterns, defaultExcludePatterns...)
 	}
+
 	if cfg.Generate.DesignTokens.Spec != "" {
-		tokens, err := DT.LoadDesignTokens(cfg)
+		tokens, err := DT.LoadDesignTokens(ctx, cfg)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
 		r.designTokens = tokens
 	}
 	if cfg.Generate.DemoDiscovery.FileGlob != "" {
-		demoFiles, err := DS.Glob(cfg.Generate.DemoDiscovery.FileGlob)
+		demoFiles, err := ctx.Glob(cfg.Generate.DemoDiscovery.FileGlob)
 		r.demoFiles = demoFiles
 		if err != nil {
 			errs = errors.Join(errs, err)
@@ -89,7 +94,14 @@ func preprocess(cfg *C.CemConfig) (r preprocessResult, errs error) {
 	return r, errs
 }
 
+type processJob struct {
+	file string
+	ctx  M.WorkspaceContext
+}
+
+// process actually processes a module file
 func process(
+	ctx M.WorkspaceContext,
 	cfg *C.CemConfig,
 	result preprocessResult,
 	qm *Q.QueryManager,
@@ -105,11 +117,11 @@ func process(
 	logs = make([]*LogCtx, 0, len(result.includedFiles))
 
 	aliases = make(map[string]string) // Ensure aliases is initialized
-	jobsChan := make(chan string, len(result.includedFiles))
+	jobsChan := make(chan processJob, len(result.includedFiles))
 
 	// Fill jobs channel with files to process
 	for _, file := range result.includedFiles {
-		jobsChan <- file
+		jobsChan <- processJob{file: file, ctx: ctx}
 	}
 	close(jobsChan)
 
@@ -119,8 +131,13 @@ func process(
 			defer wg.Done()
 			parser := Q.GetTypeScriptParser()
 			defer Q.PutTypeScriptParser(parser)
-			for file := range jobsChan {
-				module, tagAliases, logger, err := processModule(file, cfg, qm, parser)
+			for job := range jobsChan {
+				module, tagAliases, logger, err := processModule(job, cfg, qm, parser)
+				if err != nil {
+					errsMu.Lock()
+					errsList = append(errsList, err)
+					errsMu.Unlock()
+				}
 
 				// Save log for later bar chart (always save duration for bar chart)
 				logsMu.Lock()
@@ -136,11 +153,6 @@ func process(
 					modules = append(modules, *module)
 				}
 				modulesMu.Unlock()
-				if err != nil {
-					errsMu.Lock()
-					errsList = append(errsList, err)
-					errsMu.Unlock()
-				}
 			}
 		}()
 	}
@@ -155,23 +167,26 @@ func process(
 }
 
 func processModule(
-	file string,
+	job processJob,
 	cfg *C.CemConfig,
 	qm *Q.QueryManager,
 	parser *ts.Parser,
 ) (module *M.Module, tagAliases map[string]string, logCtx *LogCtx, errs error) {
-	mp := NewModuleProcessor(file, parser, cfg, qm)
+	defer parser.Reset()
+	mp, err := NewModuleProcessor(job.ctx, cfg, job.file, parser, qm)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	defer mp.Close()
 	if cfg.Verbose {
 		mp.logger.Section.Printf("Module: %s", mp.logger.File)
 	}
-	module, tagAliases, err := mp.Collect()
-	pterm.Print(mp.logger.Buffer.String())
-	parser.Reset()
-	mp.Close()
+	module, tagAliases, err = mp.Collect()
 	return module, tagAliases, mp.logger, err
 }
 
 func postprocess(
+	_ M.WorkspaceContext,
 	cfg *C.CemConfig,
 	result preprocessResult,
 	allTagAliases map[string]string,
@@ -180,7 +195,6 @@ func postprocess(
 ) (pkg M.Package, errs error) {
 	var wg sync.WaitGroup
 	var errsMu sync.Mutex
-	var modulesMu sync.Mutex
 	errsList := make([]error, 0)
 
 	// Build the demo map once
@@ -189,26 +203,11 @@ func postprocess(
 		errsList = append(errsList, err)
 	}
 
-	packageJsonDir := cfg.ProjectDir
-	if packageJsonDir == "" {
-		packageJsonDir = filepath.Dir(cfg.ConfigFile)
-	}
-	packageJsonPath := filepath.Join(packageJsonDir, "package.json")
-
 	// Because demo discovery and design tokens may mutate modules, we need to coordinate by pointer
 	for i := range modules {
 		wg.Add(1)
 		go func(module *M.Module) {
 			defer wg.Done()
-
-			resolvedPath, err := M.ResolveExportPath(packageJsonPath, module.Path)
-			if err != nil {
-				pterm.Error.Println(err)
-			} else {
-				modulesMu.Lock()
-				module.Path = resolvedPath
-				modulesMu.Unlock()
-			}
 			if result.designTokens != nil {
 				DT.MergeDesignTokensToModule(module, *result.designTokens)
 			}
@@ -236,30 +235,30 @@ func postprocess(
 }
 
 // Generates a custom-elements manifest from a list of typescript files
-func Generate(cfg *C.CemConfig) (manifest *string, errs error) {
+func Generate(ctx M.WorkspaceContext, cfg *C.CemConfig) (manifest *string, errs error) {
 	qm, err := Q.NewQueryManager()
 	if err != nil {
-		pterm.Fatal.Printfln("Could not create QueryManager: %v", err)
+		return nil, err
 	}
 	defer qm.Close()
-	result, err := preprocess(cfg)
+	result, err := preprocess(ctx, cfg)
 	if err != nil {
-		errs = errors.Join(errs, err)
+		errs = errors.Join(errs, fmt.Errorf("module preprocess failed: %w", err))
 	}
-	modules, logs, aliases, err := process(cfg, result, qm)
+	modules, logs, aliases, err := process(ctx, cfg, result, qm)
 	if err != nil {
-		errs = errors.Join(errs, err)
+		errs = errors.Join(errs, fmt.Errorf("module process failed: %w", err))
 	}
-	pkg, err := postprocess(cfg, result, aliases, qm, modules)
+	pkg, err := postprocess(ctx, cfg, result, aliases, qm, modules)
 	if err != nil {
-		errs = errors.Join(errs, err)
+		errs = errors.Join(errs, fmt.Errorf("module postprocess failed: %w", err))
 	}
 	if cfg.Verbose {
 		RenderBarChart(logs)
 	}
 	manifestStr, err := M.SerializeToString(&pkg)
 	if err != nil {
-		return nil, errors.Join(errs, err)
+		return nil, errors.Join(errs, fmt.Errorf("module serialize failed: %w", err))
 	}
 	return &manifestStr, errs
 }
