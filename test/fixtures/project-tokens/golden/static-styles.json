@@ -43,7 +43,9 @@
               "deprecated": "reason"
             },
             {
-              "name": "--token-color"
+              "name": "--token-color",
+              "description": "--token-color",
+              "syntax": "\u003ccolor\u003e"
             }
           ],
           "customElement": true
