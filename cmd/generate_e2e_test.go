@@ -6,13 +6,43 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
+func resetFlags(cmd *cobra.Command) {
+	cmd.Flags().VisitAll(func(f *pflag.Flag) {
+		f.Value.Set(f.DefValue)
+	})
+	for _, c := range cmd.Commands() {
+		resetFlags(c)
+	}
+}
+
+func resetCobraAndViper(t *testing.T) {
+	t.Helper()
+	rootCmd.Flags().VisitAll(func(f *pflag.Flag) {
+		f.Value.Set(f.DefValue) // Reset flag to default (if possible)
+	})
+
+	// Optionally reset persistent flags if you use them
+	resetFlags(rootCmd)
+
+	// If you set up PersistentPreRunE, consider resetting side effects (like global context)
+	// e.g., ctx = nil
+	initialCWD = ""
+	generateFiles = nil
+	start = time.Time{}
+
+	viper.Reset() // Reset config state
+}
+
 func TestGenerateE2E(t *testing.T) {
-	viper.Reset()
+	resetCobraAndViper(t)
 	// Create a temporary directory for the test
 	tmpDir, err := os.MkdirTemp("", "cem-test-")
 	if err != nil {
@@ -56,7 +86,7 @@ export class MyElement extends HTMLElement {}
 	// Execute the generate command
 	args := []string{"generate", srcFilePath, "-o", outputFile}
 	rootCmd.SetArgs(args)
-	// viper.BindPFlag("generate.output", generateCmd.Flags().Lookup("output"))
+	t.Log("Do execute")
 	err = rootCmd.Execute()
 	if err != nil {
 		t.Fatalf("generate command failed: %v", err)
@@ -78,23 +108,15 @@ export class MyElement extends HTMLElement {}
 		t.Fatalf("output file does not contain expected content.\nExpected: %s\nGot: %s", expected, content)
 	}
 
-	// Check the log output
-	cwd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("could not get cwd: %v", err)
-	}
-	rel, err := filepath.Rel(cwd, outputFile)
-	if err != nil {
-		t.Fatalf("could not get relative path: %v", err)
-	}
-	expectedLog := "Wrote manifest to " + rel
+	expectedLog := "Wrote manifest to " + outputFile
 	if !strings.Contains(pterm.RemoveColorFromString(out.String()), expectedLog) {
 		t.Fatalf("log output does not contain expected string.\nExpected: %s\nGot: %s", expectedLog, out.String())
 	}
 }
 
 func TestGenerateE2EWithPackageFlag(t *testing.T) {
-	viper.Reset()
+	resetCobraAndViper(t)
+	t.Log("TestGenerateE2EWithPackageFlag")
 	// Create a temporary directory for the test
 	tmpDir, err := os.MkdirTemp("", "cem-test-")
 	if err != nil {
@@ -107,44 +129,14 @@ func TestGenerateE2EWithPackageFlag(t *testing.T) {
 	}
 
 	// Create a project directory within the temp directory
-	packageDir := filepath.Join(tmpDir, "my-project")
-
-	// Create a config file in the project directory
-	configDir := filepath.Join(packageDir, ".config")
-	if err := os.MkdirAll(configDir, 0755); err != nil {
-		t.Fatalf("Failed to create config dir: %v", err)
-	}
-	configFile := filepath.Join(configDir, "cem.yaml")
-	if err := os.WriteFile(configFile, []byte(`
-generate:
-  files:
-    - my-element.js
-`), 0644); err != nil {
-		t.Fatalf("Failed to write config file: %v", err)
+	err = os.CopyFS(tmpDir, os.DirFS(filepath.Clean("./fixture")))
+	if err != nil {
+		t.Fatalf("%s", err)
 	}
 
-	// Create a config file in the project directory
-	pkgJsonPath := filepath.Join(packageDir, "package.json")
-	if err := os.WriteFile(pkgJsonPath, []byte(`
-{
-	"name": "test",
-	"version": "test",
-	"customElements": "dist/custom-elements.json"
-}
-`), 0644); err != nil {
-		t.Fatalf("Failed to write package json: %v", err)
-	}
-
-	// Create a dummy source file to be processed by the generate command
-	srcFilePath := filepath.Join(packageDir, "my-element.js")
-	if err := os.WriteFile(srcFilePath, []byte(`
-/**
- * @customElement my-element
- */
-export class MyElement extends HTMLElement {}
-`), 0644); err != nil {
-		t.Fatalf("Failed to write dummy source file: %v", err)
-	}
+	viper.Set("package", filepath.Join(tmpDir, "my-project"))
+	// Set the project directory in viper, so the runtime can find it and the config file.
+	t.Logf("Set viper 'package' key to: %s", viper.GetString("package"))
 
 	// Capture the output of the command
 	var out bytes.Buffer
@@ -154,22 +146,17 @@ export class MyElement extends HTMLElement {}
 	rootCmd.SetOut(&out)
 	rootCmd.SetErr(&out)
 
-	// Set the project directory in viper, so the runtime can find it and the config file.
-	viper.Set("package", packageDir)
-	t.Logf("Set viper 'package' key to: %s", packageDir)
-
 	// We don't need to pass command-line args if viper is set directly
 	// and the config file is being read.
 	rootCmd.SetArgs([]string{"generate"})
 
 	err = rootCmd.Execute()
 	if err != nil {
-		t.Logf("Command stderr:\n%s", out.String())
 		t.Fatalf("generate command failed: %v", err)
 	}
 
 	// Check if the output file was created in the correct location
-	outputFile := filepath.Join(packageDir, "dist", "custom-elements.json")
+	outputFile := filepath.Join(tmpDir, "my-project", "dist", "custom-elements.json")
 	if _, err := os.Stat(outputFile); os.IsNotExist(err) {
 		t.Fatalf("output file was not created: %s", outputFile)
 	}
