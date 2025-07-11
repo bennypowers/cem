@@ -45,16 +45,22 @@ var rootCmd = &cobra.Command{
 Generates a custom elements manifest file (custom-elements.json) describing your modules.
 Supports projects written with Lit`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		fmt.Fprintln(os.Stderr, "rootCmd.PersistentPreRunE")
 		var err error
 		initialCWD, err = os.Getwd()
 		if err != nil {
 			return fmt.Errorf("Unable to get current working directory: %v", err)
 		}
 
-		projectCtx, err := resolveProjectContext(
-			viper.GetString("configFile"),
-			viper.GetString("package"),
-		)
+		configFile := viper.GetString("configFile")
+		if p, _ := cmd.Flags().GetString("configFile"); p != "" {
+			configFile = p
+		}
+		packageDir := viper.GetString("package")
+		if p, _ := cmd.Flags().GetString("package"); p != "" {
+			packageDir = p
+		}
+		projectCtx, err := resolveProjectContext(configFile, packageDir)
 		if err != nil {
 			return fmt.Errorf("Failed to create project context: %v", err)
 		}
@@ -64,7 +70,9 @@ Supports projects written with Lit`,
 		cmd.SetContext(ctx)
 
 		rootDir := projectCtx.Root()
-		viper.Set("package", rootDir)
+		if p, _ := cmd.Flags().GetString("package"); p == "" {
+			viper.Set("package", rootDir)
+		}
 		viper.AddConfigPath(filepath.Join(rootDir, ".config"))
 		viper.SetConfigType("yaml")
 		viper.SetConfigName("cem")

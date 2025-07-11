@@ -19,6 +19,7 @@ package generate
 import (
 	"cmp"
 	"errors"
+	"fmt"
 	"path/filepath"
 	"runtime"
 	"slices"
@@ -176,7 +177,13 @@ func processModule(
 	qm *Q.QueryManager,
 	parser *ts.Parser,
 ) (module *M.Module, tagAliases map[string]string, logCtx *LogCtx, errs error) {
-	mp := NewModuleProcessor(job.file, parser, cfg, qm)
+	root := job.ctx.Root()
+	joined := job.file
+	// no idea why this is necessary, maybe a string pointer somewhere....
+	if !filepath.IsAbs(joined) {
+		joined = filepath.Join(root, joined)
+	}
+	mp := NewModuleProcessor(joined, parser, cfg, qm)
 	if cfg.Verbose {
 		mp.logger.Section.Printf("Module: %s", mp.logger.File)
 	}
@@ -218,7 +225,7 @@ func postprocess(
 			defer wg.Done()
 
 			if packageJson != nil {
-				relmPath, err := filepath.Rel(ctx.Root(), module.Path)
+				relmPath := filepath.Join(ctx.Root(), module.Path)
 				if err != nil {
 					pterm.Error.Println(err)
 				}
@@ -261,12 +268,16 @@ func postprocess(
 func Generate(ctx M.ProjectContext, cfg *C.CemConfig) (manifest *string, errs error) {
 	qm, err := Q.NewQueryManager()
 	if err != nil {
-		pterm.Fatal.Printfln("Could not create QueryManager: %v", err)
+		qm.Close()
+		return nil, fmt.Errorf("Could not create QueryManager: %v", err)
 	}
 	defer qm.Close()
 	result, err := preprocess(ctx, cfg)
 	if err != nil {
 		errs = errors.Join(errs, err)
+	}
+	if qm == nil {
+		return nil, fmt.Errorf("QueryManager nil")
 	}
 	modules, logs, aliases, err := process(ctx, cfg, result, qm)
 	if err != nil {

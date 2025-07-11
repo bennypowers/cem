@@ -127,9 +127,10 @@ func NewModuleProcessor(
 	logger := NewLogCtx(file, cfg)
 	code, err := os.ReadFile(file)
 	if err != nil {
-		logger.Error("ERROR reading file: %v", err)
+		nerr := fmt.Errorf("Could not read module in NewModuleProcessor: %w", err)
+		logger.Error("ERROR reading file: %v", nerr)
 		logger.Finish()
-		return ModuleProcessor{logger: logger, file: file, module: module, code: code, errors: err}
+		return ModuleProcessor{logger: logger, file: file, module: module, code: code, errors: nerr}
 	}
 
 	tree := parser.Parse(code, nil)
@@ -190,6 +191,7 @@ func (mp *ModuleProcessor) Collect() (
 func (mp *ModuleProcessor) processImports() {
 	qm, err := Q.NewQueryMatcher(mp.queryManager, "typescript", "imports")
 	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		mp.errors = errors.Join(mp.errors, err)
 		return
 	}

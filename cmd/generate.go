@@ -19,6 +19,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	C "bennypowers.dev/cem/cmd/config"
@@ -69,11 +70,11 @@ var generateCmd = &cobra.Command{
 		}
 		cfg.Generate.Files = files
 		cfg.Generate.Exclude = exclude
-		if output, err := cmd.Flags().GetString("output"); err == nil && output != "" {
-			cfg.Generate.Output = output
-		} else if err != nil {
+		outputFlag, err := cmd.Flags().GetString("output")
+		if err != nil {
 			return err
 		}
+		cfg.Generate.Output = outputFlag
 
 		manifestStr, err := G.Generate(ctx, cfg)
 		if err != nil {
@@ -83,6 +84,7 @@ var generateCmd = &cobra.Command{
 			return errors.Join(errs, errors.New("manifest generation returned nil"))
 		}
 		if cfg.Generate.Output != "" {
+			fmt.Fprintf(os.Stderr, `Will try to write to %q`, cfg.Generate.Output)
 			writer, err := ctx.OutputWriter(cfg.Generate.Output)
 			if err != nil {
 				errs = errors.Join(errs, err)

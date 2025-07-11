@@ -117,7 +117,11 @@ func (c *LocalFSProjectContext) Init() error {
 }
 
 func (c *LocalFSProjectContext) ReadFile(path string) (io.ReadCloser, error) {
-	return os.Open(filepath.Join(c.root, path))
+	rc, err := os.Open(filepath.Join(c.root, path))
+	if err != nil {
+		return nil, fmt.Errorf("LocalFSProjectContext could not open: %w", err)
+	}
+	return rc, nil
 }
 
 func (c *LocalFSProjectContext) SourceFile(path string) (io.ReadCloser, error) {
