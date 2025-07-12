@@ -14,72 +14,81 @@ import (
 )
 
 func TestGenerateE2E(t *testing.T) {
-	t.Run("WithOutputFlag", func(t *testing.T) {
-		projectDir := setupTest(t, "my-project")
+	testCases := []struct {
+		name            string
+		fixture         string
+		command         []string
+		outputFile      string
+		expectedLog     string
+		expectedContent string
+		workDir         string
+	}{
+		{
+			name:            "WithOutputFlag",
+			fixture:         "generate-project",
+			command:         []string{"generate", "my-element.js", "--output", "dist/custom-elements.json"},
+			outputFile:      "dist/custom-elements.json",
+			expectedLog:     "Wrote manifest to %s",
+			expectedContent: `"tagName": "my-element"`,
+		},
+		{
+			name:            "InPackageDir",
+			fixture:         "generate-project",
+			command:         []string{"generate"},
+			outputFile:      "dist/custom-elements.json",
+			expectedLog:     "Wrote manifest to dist/custom-elements.json",
+			expectedContent: `"tagName": "my-element"`,
+		},
+		{
+			name:            "WithPackageFlag",
+			fixture:         "generate-project",
+			command:         []string{"generate", "--package"},
+			outputFile:      "dist/custom-elements.json",
+			expectedLog:     "Wrote manifest to dist/custom-elements.json",
+			expectedContent: `"tagName": "my-element"`,
+			workDir:         ".",
+		},
+	}
 
-		// Define paths
-		srcFilePath := filepath.Join(projectDir, "my-element.js")
-		outputFilePath := filepath.Join(projectDir, "dist", "custom-elements.json")
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			projectDir := setupTest(t, tc.fixture)
+			outputFilePath := filepath.Join(projectDir, tc.outputFile)
 
-		// Execute the generate command
-		stdout, _ := runCemCommand(t, projectDir, "generate", srcFilePath, "--output", outputFilePath)
+			command := tc.command
+			if tc.name == "WithPackageFlag" {
+				command = append(command, projectDir)
+			}
 
-		// Check if the output file was created
-		if _, err := os.Stat(outputFilePath); os.IsNotExist(err) {
-			t.Fatalf("output file was not created: %s", outputFilePath)
-		}
+			workDir := projectDir
+			if tc.workDir != "" {
+				workDir = tc.workDir
+			}
 
-		// Check if the output file contains the expected content
-		content, err := os.ReadFile(outputFilePath)
-		if err != nil {
-			t.Fatalf("Failed to read output file: %v", err)
-		}
+			stdout, _ := runCemCommand(t, workDir, command...)
 
-		expected := `"tagName": "my-element"`
-		if !bytes.Contains(content, []byte(expected)) {
-			t.Fatalf("output file does not contain expected content.\nExpected: %s\nGot: %s", expected, content)
-		}
+			if _, err := os.Stat(outputFilePath); os.IsNotExist(err) {
+				t.Fatalf("output file was not created: %s", outputFilePath)
+			}
 
-		// Check the log output for the correct relative path
-		expectedLog := fmt.Sprintf("Wrote manifest to %s", outputFilePath)
-		if !strings.Contains(pterm.RemoveColorFromString(stdout), expectedLog) {
-			t.Fatalf("log output does not contain expected string.\nExpected: %s\nGot: %s", expectedLog, stdout)
-		}
-	})
-	t.Run("InPackageDir", func(t *testing.T) {
-		projectDir := setupTest(t, "package-flag")
-		outputFilePath := filepath.Join(projectDir, "dist", "custom-elements.json")
+			content, err := os.ReadFile(outputFilePath)
+			if err != nil {
+				t.Fatalf("Failed to read output file: %v", err)
+			}
 
-		// Execute the generate command
-		stdout, _ := runCemCommand(t, projectDir, "generate")
+			if !bytes.Contains(content, []byte(tc.expectedContent)) {
+				t.Fatalf("output file does not contain expected content.\nExpected: %s\nGot: %s", tc.expectedContent, content)
+			}
 
-		// Check if the output file was created in the correct location
-		if _, err := os.Stat(outputFilePath); os.IsNotExist(err) {
-			t.Fatalf("output file was not created: %s", outputFilePath)
-		}
+			expectedLog := tc.expectedLog
+			if tc.name == "WithOutputFlag" {
+				expectedLog = fmt.Sprintf(expectedLog, tc.outputFile)
+			}
 
-		// Check the log output for the correct relative path
-		expectedLog := "Wrote manifest to dist/custom-elements.json"
-		if !strings.Contains(pterm.RemoveColorFromString(stdout), expectedLog) {
-			t.Fatalf("log output does not contain expected string.\nExpected: %s\nGot: %s", expectedLog, stdout)
-		}
-	})
-	t.Run("WithPackageFlag", func(t *testing.T) {
-		projectDir := setupTest(t, "package-flag")
-		outputFilePath := filepath.Join(projectDir, "dist", "custom-elements.json")
-
-		// Execute the generate command
-		stdout, _ := runCemCommand(t, ".", "generate", "--package", projectDir)
-
-		// Check if the output file was created in the correct location
-		if _, err := os.Stat(outputFilePath); os.IsNotExist(err) {
-			t.Fatalf("output file was not created: %s", outputFilePath)
-		}
-
-		// Check the log output for the correct relative path
-		expectedLog := "Wrote manifest to dist/custom-elements.json"
-		if !strings.Contains(pterm.RemoveColorFromString(stdout), expectedLog) {
-			t.Fatalf("log output does not contain expected string.\nExpected: %s\nGot: %s", expectedLog, stdout)
-		}
-	})
+			if !strings.Contains(pterm.RemoveColorFromString(stdout), expectedLog) {
+				t.Fatalf("log output does not contain expected string.\nExpected: %s\nGot: %s", expectedLog, stdout)
+			}
+		})
+	}
 }
+
