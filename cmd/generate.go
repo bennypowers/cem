@@ -111,7 +111,7 @@ var generateCmd = &cobra.Command{
 					end := time.Since(start)
 					reloutputpath, err := filepath.Rel(ctx.Root(), outputPath)
 					if err != nil {
-						errs = errors.Join(errs, err)
+						reloutputpath = outputPath
 					}
 					pterm.Success.Printf(
 						"Wrote manifest to %s in %s",

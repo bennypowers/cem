@@ -88,13 +88,19 @@ func (c *FileSystemWorkspaceContext) initConfig() (*config.CemConfig, error) {
 	config.ProjectDir = c.Root()
 	config.ConfigFile = c.ConfigFile()
 
-	rc, err := c.ReadFile(config.ConfigFile)
-	if err != nil {
+	if _, err := os.Stat(config.ConfigFile); os.IsNotExist(err) {
+		pterm.Debug.Println("no config file found")
+	} else if err != nil {
 		return nil, err
-	}
-	defer rc.Close()
-	if err := yaml.NewDecoder(rc).Decode(&config); err != nil {
-		return nil, err
+	} else {
+		rc, err := c.ReadFile(config.ConfigFile)
+		if err != nil {
+			return nil, err
+		}
+		defer rc.Close()
+		if err := yaml.NewDecoder(rc).Decode(&config); err != nil {
+			return nil, err
+		}
 	}
 	// Make output path project-root-relative if needed
 	if config.Generate.Output != "" && !filepath.IsAbs(config.Generate.Output) {
