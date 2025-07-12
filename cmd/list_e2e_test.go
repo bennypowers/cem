@@ -18,7 +18,11 @@ func TestListE2E(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:    "Default",
+			name:    "All",
+			command: []string{"list"},
+		},
+		{
+			name:    "Tags",
 			command: []string{"list", "tags"},
 		},
 		{
@@ -91,4 +95,3 @@ func TestListE2E(t *testing.T) {
 		})
 	}
 }
-
