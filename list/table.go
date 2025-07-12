@@ -84,8 +84,10 @@ func Render(r M.Renderable, opts RenderOptions) error {
 			if len(headers) == 0 {
 				continue // all columns empty, nothing to display
 			}
-			if err := renderSimpleTable(headers, rows, opts.Columns); err != nil {
+			if str, err := formatTable(headers, rows, opts.Columns); err != nil {
 				return err
+			} else {
+				fmt.Println(str)
 			}
 		}
 	} else {
@@ -103,7 +105,36 @@ func Render(r M.Renderable, opts RenderOptions) error {
 // RenderTable renders a simple table with a title.
 func RenderTable(title string, headers []string, rows [][]string, columns []string) error {
 	pterm.DefaultSection.Println(title)
-	return renderSimpleTable(headers, rows, columns)
+	str, err := formatTable(headers, rows, columns)
+	if err != nil {
+		return err
+	} else {
+		fmt.Println(str)
+	}
+	return nil
+}
+
+func RenderModulesTable(manifest *M.Package, opts RenderOptions) error {
+	headers := []string{"Module path", "Custom Elements"}
+	rows := make([][]string, 0)
+
+	for _, mod := range manifest.Modules {
+		customElements := make([]string, 0)
+		for _, decl := range mod.Declarations {
+			if ce, ok := decl.(*M.CustomElementDeclaration); ok {
+				customElements = append(customElements, fmt.Sprintf("`<%s>`", ce.TagName))
+			}
+		}
+		rows = append(rows, []string{mod.Path, strings.Join(customElements, ", ")})
+	}
+
+	str, err := formatTable(headers, rows, opts.Columns)
+	if err != nil {
+		return err
+	} else {
+		fmt.Printf("## Modules\n\n%s", str)
+	}
+	return nil
 }
 
 // MapToTableRows maps a slice of Renderables to [][]string.
@@ -115,30 +146,25 @@ func MapToTableRows[T M.Renderable](items []T) [][]string {
 	return rows
 }
 
-// renderSimpleTable renders a basic table, used by the main Render function.
-func renderSimpleTable(headers []string, rows [][]string, columns []string) error {
+// formatTable renders a basic table, used by the main Render function.
+func formatTable(headers []string, rows [][]string, columns []string) (string, error) {
 	// If the user did not specify columns, filter out all-empty columns (except the first column).
 	if len(columns) == 0 {
 		headers, rows = RemoveEmptyColumns(headers, rows)
 	}
 	finalHeaders, finalRows, err := buildTableData(headers, rows, columns)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if len(finalRows) == 0 {
-		return nil
+		return "", nil
 	}
 	table := pterm.DefaultTable.
 		WithHasHeader(true).
 		WithBoxed(false)
 	data := pterm.TableData{finalHeaders}
 	data = append(data, finalRows...)
-	out, err := table.WithData(data).Srender()
-	if err != nil {
-		return err
-	}
-	pterm.Println(out)
-	return nil
+	return table.WithData(data).Srender()
 }
 
 // buildTableData prepares the filtered headers and rows for the table, given column selection.
@@ -153,8 +179,8 @@ func buildTableData(headers []string, rows [][]string, columns []string) ([]stri
 
 // Wraps the first cell in a row in backticks, for markdown output
 func backtickCodeColumns(
-  headers []string,
-  rows [][]string,
+	headers []string,
+	rows [][]string,
 ) (outheaders []string, outrows [][]string) {
 	outrows = make([][]string, len(rows))
 	for i, row := range rows {
@@ -202,7 +228,7 @@ func insertMarkdownHeaderRow(headers []string, rows [][]string) ([]string, [][]s
 		}
 	}
 
-	// don't insert headers, that happend in renderSimpleTable
+	// don't insert headers, that happened in renderSimpleTable
 	sep := make([]string, len(headers))
 	for j, width := range columnWidths {
 		sep[j] = strings.Repeat("-", max(3, width))

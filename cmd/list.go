@@ -285,7 +285,7 @@ Example:
 			switch format {
 			case "table":
 				opts := list.RenderOptions{Columns: columns}
-				return list.Render(M.NewRenderablePackage(manifest), opts)
+				return list.RenderModulesTable(manifest, opts)
 			}
 			return nil
 		}
