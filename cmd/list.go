@@ -22,21 +22,10 @@ import (
 	"slices"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
-	C "bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/list"
 	M "bennypowers.dev/cem/manifest"
 )
-
-func readCfg() (*C.CemConfig, error) {
-	cfg := C.CemConfig{}
-	err := viper.Unmarshal(&cfg)
-	if err != nil {
-		return nil, err
-	}
-	return &cfg, nil
-}
 
 func requireTagName(cmd *cobra.Command) (string, error) {
 	tagName, err := cmd.Flags().GetString("tag-name")
