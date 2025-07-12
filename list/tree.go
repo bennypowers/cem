@@ -18,24 +18,30 @@ package list
 
 import (
 	"reflect"
+	"strings"
 
 	M "bennypowers.dev/cem/manifest"
 	"github.com/pterm/pterm"
 )
 
-func RenderTree(title string, renderable M.Renderable, pred M.PredicateFunc) error {
+func RenderTree(title string, renderable M.Renderable, pred M.PredicateFunc) (string, error) {
 	if renderable == nil || isTypedNil(renderable) {
-		pterm.Println("No deprecations found")
-		return nil
+		return "No deprecations found", nil
 	}
 	root := renderable.ToTreeNode(pred)
 
 	if root.Children == nil {
-		return nil
+		return "", nil
 	}
 
-	pterm.DefaultSection.Print(title)
-	return pterm.DefaultTree.WithRoot(root).Render()
+	var builder strings.Builder
+	builder.WriteString(pterm.DefaultSection.Sprintf("%s", title))
+	s, err := pterm.DefaultTree.WithRoot(root).Srender()
+	if err != nil {
+		return "", err
+	}
+	builder.WriteString(s)
+	return builder.String(), nil
 }
 
 func isTypedNil(i any) bool {

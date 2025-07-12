@@ -86,7 +86,11 @@ func makeListSectionCmd(use, short, long string, includeSection string, aliases 
 						Columns:         columns,
 						IncludeSections: []string{includeSection},
 					}
-					return list.Render(M.NewRenderableCustomElementDeclaration(ced, mod, manifest), opts)
+					if s, err := list.Render(M.NewRenderableCustomElementDeclaration(ced, mod, manifest), opts); err != nil {
+						return err
+					} else {
+						fmt.Println(s)
+					}
 				}
 				return nil
 			}
@@ -245,7 +249,11 @@ Example:
 			switch format {
 			case "table":
 				opts := list.RenderOptions{Columns: columns}
-				return list.Render(M.NewRenderablePackage(manifest), opts)
+				if s, err := list.Render(M.NewRenderablePackage(manifest), opts); err != nil {
+					return err
+				} else {
+					fmt.Println(s)
+				}
 			}
 			return nil
 		}
@@ -285,7 +293,11 @@ Example:
 			switch format {
 			case "table":
 				opts := list.RenderOptions{Columns: columns}
-				return list.RenderModulesTable(manifest, opts)
+				if s, err := list.RenderModulesTable(manifest, opts); err != nil {
+					return err
+				} else {
+					fmt.Println(s)
+				}
 			}
 			return nil
 		}
@@ -343,10 +355,18 @@ Examples:
 					title = "Deprecations"
 					pred = M.IsDeprecated
 				}
-				return list.RenderTree(title, M.NewRenderablePackage(manifest), pred)
+				if s, err := list.RenderTree(title, M.NewRenderablePackage(manifest), pred); err != nil {
+					return err
+				} else {
+					fmt.Println(s)
+				}
 			case "table":
 				opts := list.RenderOptions{}
-				return list.Render(M.NewRenderablePackage(manifest), opts)
+				if s, err := list.Render(M.NewRenderablePackage(manifest), opts); err != nil {
+					return err
+				} else {
+					fmt.Println(s)
+				}
 			}
 			return nil
 		}
