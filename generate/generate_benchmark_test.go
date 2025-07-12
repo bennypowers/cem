@@ -12,24 +12,24 @@ import (
 
 // BenchmarkGenerate runs the Generate function on all test fixtures to measure performance.
 func BenchmarkGenerate(b *testing.B) {
-	// Gather all .ts files in the test-fixtures directory as input.
-	matches, err := DS.Glob("../test/fixtures/**/*.ts")
-	if err != nil {
-		b.Fatal(err)
-	}
-	if len(matches) == 0 {
-		b.Skip("No test fixtures found")
-	}
-
-	var lastOut string
-
 	path, err := filepath.Abs("../test/fixtures/")
 	if err != nil {
 		b.Fatalf("BenchmarkGenerate failed to resolve project dir: %v", err)
 	}
+
 	ctx := manifest.NewFileSystemWorkspaceContext(path)
 	if err := ctx.Init(); err != nil {
 		b.Fatalf("BenchmarkGenerate failed to init context: %v", err)
+	}
+
+	// Gather all .ts files in the test-fixtures directory as input.
+	matches, err := DS.Glob(filepath.Join(path, "**/*.ts"))
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	if len(matches) == 0 {
+		b.Skip("No test fixtures found")
 	}
 
 	// Run the Generate function, measuring its speed.
@@ -39,6 +39,8 @@ func BenchmarkGenerate(b *testing.B) {
 	}
 
 	cfg.Generate.Files = matches
+
+	var lastOut string
 
 	for b.Loop() {
 		out, err := generate.Generate(ctx, cfg)

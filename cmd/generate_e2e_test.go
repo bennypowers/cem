@@ -50,30 +50,18 @@ func TestGenerateE2E(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	if err := os.WriteFile(filepath.Join(tmpDir, "package.json"), []byte(`{"name":"test-pkg"}`), 0644); err != nil {
-		t.Fatalf("Failed to write dummy package.json: %v", err)
+	// Create a project directory within the temp directory
+	err = os.CopyFS(tmpDir, os.DirFS(filepath.Clean("./fixture/package-flag")))
+	if err != nil {
+		t.Fatalf("%s", err)
 	}
 
 	viper.Set("package", tmpDir)
 
 	// Create a dummy source file to be processed by the generate command
 	srcFilePath := filepath.Join(tmpDir, "my-element.js")
-	srcFileContent := `
-/**
- * @customElement my-element
- */
-export class MyElement extends HTMLElement {}
-`
-	if err := os.WriteFile(srcFilePath, []byte(srcFileContent), 0644); err != nil {
-		t.Fatalf("Failed to write dummy source file: %v", err)
-	}
-
-	// Define the output path in a subdirectory that doesn't exist yet
 	outputDir := filepath.Join(tmpDir, "dist")
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		t.Fatalf("Failed to create output dir: %v", err)
-	}
-	outputFile := filepath.Join(outputDir, "custom-elements.json")
+	outputFilePath := filepath.Join(outputDir, "custom-elements.json")
 
 	// Capture the output of the command
 	var out bytes.Buffer
@@ -84,7 +72,7 @@ export class MyElement extends HTMLElement {}
 	defer func() { pterm.Success.Writer = origOut }()
 
 	// Execute the generate command
-	args := []string{"generate", srcFilePath, "-o", outputFile}
+	args := []string{"generate", srcFilePath, "-o", outputFilePath}
 	rootCmd.SetArgs(args)
 	err = rootCmd.Execute()
 	if err != nil {
@@ -92,12 +80,12 @@ export class MyElement extends HTMLElement {}
 	}
 
 	// Check if the output file was created
-	if _, err := os.Stat(outputFile); os.IsNotExist(err) {
-		t.Fatalf("output file was not created: %s", outputFile)
+	if _, err := os.Stat(outputFilePath); os.IsNotExist(err) {
+		t.Fatalf("output file was not created: %s", outputFilePath)
 	}
 
 	// Check if the output file contains the expected content
-	content, err := os.ReadFile(outputFile)
+	content, err := os.ReadFile(outputFilePath)
 	if err != nil {
 		t.Fatalf("Failed to read output file: %v", err)
 	}
@@ -107,15 +95,17 @@ export class MyElement extends HTMLElement {}
 		t.Fatalf("output file does not contain expected content.\nExpected: %s\nGot: %s", expected, content)
 	}
 
-	expectedLog := "Wrote manifest to " + outputFile
-	if !strings.Contains(pterm.RemoveColorFromString(out.String()), expectedLog) {
-		t.Fatalf("log output does not contain expected string.\nExpected: %s\nGot: %s", expectedLog, out.String())
+	// Check the log output for the correct relative path
+	expectedLog := "Wrote manifest to dist/custom-elements.json"
+	actualLog := out.String()
+	t.Log(actualLog)
+	if !strings.Contains(pterm.RemoveColorFromString(actualLog), expectedLog) {
+		t.Fatalf("log output does not contain expected string.\nExpected: %s\nGot: %s", expectedLog, actualLog)
 	}
 }
 
 func TestGenerateE2EWithPackageFlag(t *testing.T) {
 	resetCobraAndViper(t)
-	t.Log("TestGenerateE2EWithPackageFlag")
 	// Create a temporary directory for the test
 	tmpDir, err := os.MkdirTemp("", "cem-test-")
 	if err != nil {
@@ -123,17 +113,15 @@ func TestGenerateE2EWithPackageFlag(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	if err := os.WriteFile(filepath.Join(tmpDir, "package.json"), []byte(`{"name":"test-pkg"}`), 0644); err != nil {
-		t.Fatalf("Failed to write dummy package.json: %v", err)
-	}
-
 	// Create a project directory within the temp directory
 	err = os.CopyFS(tmpDir, os.DirFS(filepath.Clean("./fixture")))
 	if err != nil {
 		t.Fatalf("%s", err)
 	}
 
-	viper.Set("package", filepath.Join(tmpDir, "my-project"))
+	packageDir := filepath.Join(tmpDir, "package-flag")
+	outputFilePath := filepath.Join(packageDir, "dist", "custom-elements.json")
+	viper.Set("package", packageDir)
 
 	// Set the project directory in viper, so the runtime can find it and the config file.
 	t.Logf("Set viper 'package' key to: %s", viper.GetString("package"))
@@ -156,14 +144,15 @@ func TestGenerateE2EWithPackageFlag(t *testing.T) {
 	}
 
 	// Check if the output file was created in the correct location
-	outputFile := filepath.Join(tmpDir, "my-project", "dist", "custom-elements.json")
-	if _, err := os.Stat(outputFile); os.IsNotExist(err) {
-		t.Fatalf("output file was not created: %s", outputFile)
+	if _, err := os.Stat(outputFilePath); os.IsNotExist(err) {
+		t.Fatalf("output file was not created: %s", outputFilePath)
 	}
 
 	// Check the log output for the correct relative path
 	expectedLog := "Wrote manifest to dist/custom-elements.json"
-	if !strings.Contains(pterm.RemoveColorFromString(out.String()), expectedLog) {
-		t.Fatalf("log output does not contain expected string.\nExpected: %s\nGot: %s", expectedLog, out.String())
+	actualLog := out.String()
+	t.Log(actualLog)
+	if !strings.Contains(pterm.RemoveColorFromString(actualLog), expectedLog) {
+		t.Fatalf("log output does not contain expected string.\nExpected: %s\nGot: %s", expectedLog, actualLog)
 	}
 }
