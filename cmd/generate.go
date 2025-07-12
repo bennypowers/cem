@@ -19,6 +19,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 	"time"
 
 	G "bennypowers.dev/cem/generate"
@@ -70,21 +71,35 @@ var generateCmd = &cobra.Command{
 		cfg.Generate.Files = append(cfg.Generate.Files, files...)
 		cfg.Generate.Exclude = append(cfg.Generate.Exclude, exclude...)
 
-		outputFlag, err := cmd.Flags().GetString("output")
+		// compute path to write custom elements manifest to
+		// consider moving this to the context struct
+		// if this is empty, we'll print to stdout instead
+		outputPath, err := cmd.Flags().GetString("output")
 		if err != nil {
 			return err
 		}
-		cfg.Generate.Output = outputFlag
 
+		if outputPath == "" {
+			outputPath = cfg.Generate.Output
+		}
+		if outputPath == "" {
+			pkgjson, err := ctx.PackageJSON()
+			if err != nil {
+				return err
+			}
+			if pkgjson != nil {
+				outputPath = filepath.Join(ctx.Root(), pkgjson.CustomElements)
+			}
+		}
+
+		// generate the manifest
 		manifestStr, err := G.Generate(ctx, cfg)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
-		if manifestStr == nil {
-			return errors.Join(errs, errors.New("manifest generation returned nil"))
-		}
-		if cfg.Generate.Output != "" {
-			writer, err := ctx.OutputWriter(cfg.Generate.Output)
+
+		if outputPath != "" {
+			writer, err := ctx.OutputWriter(outputPath)
 			if err != nil {
 				errs = errors.Join(errs, err)
 			} else {
@@ -94,8 +109,15 @@ var generateCmd = &cobra.Command{
 					errs = errors.Join(errs, err)
 				} else {
 					end := time.Since(start)
-					outputPath := cfg.Generate.Output
-					pterm.Success.Printf("Wrote manifest to %s in %s", outputPath, G.ColorizeDuration(end).Sprint(end))
+					reloutputpath, err := filepath.Rel(ctx.Root(), outputPath)
+					if err != nil {
+						errs = errors.Join(errs, err)
+					}
+					pterm.Success.Printf(
+						"Wrote manifest to %s in %s",
+						reloutputpath,
+						G.ColorizeDuration(end).Sprint(end),
+					)
 				}
 			}
 		} else {

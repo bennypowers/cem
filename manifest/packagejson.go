@@ -35,7 +35,10 @@ type PackageJSON struct {
 // through the `exports` block in package.json, returning the corresponding
 // package path as it would be used in an import.
 // The returned path is always without a leading './'.
-func ResolveExportPath(packageJson PackageJSON, relFilePath string) (string, error) {
+func ResolveExportPath(packageJson *PackageJSON, relFilePath string) (string, error) {
+	if packageJson == nil {
+		return relFilePath, nil
+	}
 	cleanRel := filepath.ToSlash(relFilePath)
 	cleanRel = strings.TrimPrefix(cleanRel, "./")
 

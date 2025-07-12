@@ -3,7 +3,6 @@ package designtokens
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"maps"
 	"net/http"
@@ -121,7 +120,7 @@ func kebabCase(s string) string {
 // If the specifier is an npm: spec, it first checks node_modules in the current working directory.
 // If not found locally, it falls back to fetching from the network.
 func readJSONFileOrSpecifier(ctx M.WorkspaceContext, path string) ([]byte, error) {
-	if !strings.HasPrefix(path, ".") {
+	if strings.HasPrefix(path, "npm:") {
 		// Try npm/Deno specifier and @scope/pkg/file.json style
 		if spec, ok := parseNpmSpecifier(path); ok {
 			// Try node_modules first
@@ -144,11 +143,7 @@ func readJSONFileOrSpecifier(ctx M.WorkspaceContext, path string) ([]byte, error
 	}
 
 	// Default: treat as local file
-	data, err := os.ReadFile(filepath.Join(ctx.Root(), path))
-	if err != nil {
-		fmt.Println("can't read json", path)
-	}
-	return data, err
+	return os.ReadFile(filepath.Join(ctx.Root(), path))
 }
 
 // npmSpec holds parsed npm package specifier

@@ -100,6 +100,7 @@ func amendStylesMapFromSource(
 type ModuleProcessor struct {
 	logger                 *LogCtx
 	file                   string
+	absPath                string
 	code                   []byte
 	source                 string
 	queryManager           *Q.QueryManager
@@ -126,7 +127,11 @@ func NewModuleProcessor(
 	parser *ts.Parser,
 	queryManager *Q.QueryManager,
 ) (*ModuleProcessor, error) {
-	code, err := os.ReadFile(filepath.Join(ctx.Root(), file))
+	path := file
+	if !filepath.IsAbs(path) {
+		path = filepath.Join(ctx.Root(), file)
+	}
+	code, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("NewModuleProcessor: %w", err)
 	}
@@ -141,23 +146,19 @@ func NewModuleProcessor(
 		fmt.Fprintln(os.Stderr, fmt.Errorf("NewModuleProcessor: %w", err))
 	}
 
-	if packageJson != nil {
-		relmPath, err := filepath.Rel(ctx.Root(), module.Path)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, fmt.Errorf("NewModuleProcessor: %w", err))
-		} else {
-			resolvedPath, err := M.ResolveExportPath(*packageJson, relmPath)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, fmt.Errorf("NewModuleProcessor: %w", err))
-			} else {
-				module.Path = resolvedPath
-			}
-		}
+	// Resolve the resulting Module entry's Path field, according
+	// to package.json exports block, if it exists
+	resolvedPath, err := M.ResolveExportPath(packageJson, module.Path)
+	if err != nil {
+		return nil, err
+	} else {
+		module.Path = resolvedPath
 	}
 
 	return &ModuleProcessor{
 		queryManager: queryManager,
 		file:         file,
+		absPath:      path,
 		logger:       logger,
 		code:         code,
 		source:       string(code),
@@ -344,7 +345,7 @@ func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsM
 			for _, binding := range bindings {
 				spec, ok := mp.styleImportsBindingToSpecMap[binding.Text]
 				if ok && strings.HasPrefix(spec, ".") {
-					moduleDir := filepath.Dir(mp.file)
+					moduleDir := filepath.Dir(mp.absPath)
 					absPath := filepath.Join(moduleDir, spec)
 					// Try cache first
 					if cached, found := cssParseCache.Get(absPath); found {
