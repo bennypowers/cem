@@ -42,7 +42,7 @@ func isGlobPattern(pattern string) bool {
 	// The set of characters that are special in glob patterns.
 	// We include '*' for wildcards, '?' for single characters,
 	// '[' and ']' for character classes, and '{' and '}' for brace expansion.
-	globChars := "*?[]"
+	globChars := "*?[]{}"
 	return strings.ContainsAny(pattern, globChars)
 }
 
