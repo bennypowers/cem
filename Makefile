@@ -39,8 +39,13 @@ windows-arm64: build-windows-cc-image
 install-bindings:
 	go generate ./...
 
-test:
+test-unit:
 	go test -json ./... | go tool tparse -all
+
+test-e2e:
+	go test -json -tags=e2e ./cmd/ | go tool tparse -all
+
+test: test-unit test-e2e
 
 update:
 	go test -json ./... --update | go tool tparse -all

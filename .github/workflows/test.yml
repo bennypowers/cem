@@ -16,5 +16,7 @@ jobs:
         run: go get .
       - name: Build
         run: go build -v ./...
-      - name: Test
+      - name: Run unit tests
         run: make test
+      - name: Run E2E tests
+        run: make test-e2e
