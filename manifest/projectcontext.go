@@ -155,19 +155,31 @@ func (c *FileSystemWorkspaceContext) Config() (*config.CemConfig, error) {
 }
 
 func (c *FileSystemWorkspaceContext) Manifest() (*Package, error) {
-	if pkg, err := c.PackageJSON(); err != nil {
+	pkg, err := c.PackageJSON()
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return nil, err
-	} else if pkg == nil {
-		// TODO: an input flag?
-		// TODO: fall back to `custom-elements.json`?
-		return nil, ErrNoManifest
-	} else if pkg.CustomElements == "" {
-		return nil, ErrNoPackageCustomElements
-	} else if rc, err := c.ReadFile(filepath.Join(c.root, pkg.CustomElements)); err != nil {
-		return nil, err
-	} else {
-		return decodeJSON[Package](rc)
 	}
+
+	// Try to get the manifest path from package.json first
+	if pkg != nil && pkg.CustomElements != "" {
+		if rc, err := c.ReadFile(filepath.Join(c.root, pkg.CustomElements)); err == nil {
+			return decodeJSON[Package](rc)
+		}
+	}
+
+	// If that fails, try to get it from the config
+	if c.config != nil && c.config.Generate.Output != "" {
+		if rc, err := c.ReadFile(c.config.Generate.Output); err == nil {
+			return decodeJSON[Package](rc)
+		}
+	}
+
+	if pkg != nil {
+		return nil, ErrNoPackageCustomElements
+	}
+
+	// If all else fails, return an error
+	return nil, ErrNoManifest
 }
 
 // Init discovers package.json file, caches paths/parsed results.
