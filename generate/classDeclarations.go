@@ -178,9 +178,8 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
-	mp.errors = errors.Join(mp.errors, errs)
 
-	return declaration, emptyAlias, nil
+	return declaration, emptyAlias, errs
 }
 
 func (mp *ModuleProcessor) generateHTMLElementClassDeclaration(
