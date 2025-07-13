@@ -15,12 +15,14 @@ cem list
 
 | Flag         | Description                                                  |
 | ------------ | ------------------------------------------------------------ |
+| `--package, -p`| Deno-style package specifier (e.g., `npm:@scope/package@^1.2.3`) or path to a package directory. |
 | `--format`   | Set the output format. Can be `table` or `tree`. Default: `table`. |
 | `--deprecated` | Only show deprecated items. |
 
 **Example:**
 ```sh
 cem list --deprecated --format tree
+cem list --package npm:@vaadin/button@24.3.5
 ```
 
 ## Subcommands
