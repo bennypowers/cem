@@ -53,7 +53,9 @@ func Render(r M.Renderable, opts RenderOptions) (string, error) {
 		label := r.Label()
 		switch r.(type) {
 		case *M.RenderableCustomElementDeclaration:
-			label = "`" + label + "`"
+			if strings.HasPrefix(label, "<") {
+				label = "`" + label + "`"
+			}
 		}
 		formatted := pterm.DefaultSection.WithLevel(1).Sprint(label)
 		builder.WriteString(strings.TrimSpace(formatted) + "\n\n")
@@ -147,6 +149,26 @@ func RenderModulesTable(manifest *M.Package, opts RenderOptions) (string, error)
 	}
 
 	return fmt.Sprintf("## Modules\n\n%s", str), nil
+}
+
+func RenderTagsTable(manifest *M.Package, opts RenderOptions) (string, error) {
+	headers := []string{"Tag Name", "Class", "Module", "Summary"}
+	rows := make([][]string, 0)
+
+	for _, mod := range manifest.Modules {
+		for _, decl := range mod.Declarations {
+			if ce, ok := decl.(*M.CustomElementDeclaration); ok {
+				rows = append(rows, []string{
+					"<" + ce.TagName + ">",
+					ce.Name,
+					mod.Path,
+					ce.Summary,
+				})
+			}
+		}
+	}
+
+	return formatTable(headers, rows, opts.Columns)
 }
 
 // MapToTableRows maps a slice of Renderables to [][]string.

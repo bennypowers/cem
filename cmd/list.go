@@ -249,7 +249,7 @@ Example:
 			switch format {
 			case "table":
 				opts := list.RenderOptions{Columns: columns}
-				if s, err := list.Render(M.NewRenderablePackage(manifest), opts); err != nil {
+				if s, err := list.RenderTagsTable(manifest, opts); err != nil {
 					return err
 				} else {
 					fmt.Println(s)
