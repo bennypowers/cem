@@ -46,7 +46,7 @@ func isGlobPattern(pattern string) bool {
 	return strings.ContainsAny(pattern, globChars)
 }
 
-// WorkspaceContext abstracts access to project resources, regardless of source (local or remote).
+// WorkspaceContext abstracts access to package resources, regardless of source (local or remote).
 type WorkspaceContext interface {
 	// Performs validation/discovery and caches results as needed.
 	Init() error
@@ -54,17 +54,17 @@ type WorkspaceContext interface {
 	ConfigFile() string
 	// Config returns the parsed and initialized config
 	Config() (*config.CemConfig, error)
-	// Returns the project's parsed PackageJSON.
+	// Returns the package's parsed PackageJSON.
 	PackageJSON() (*PackageJSON, error)
-	// Manifest returns the project's parsed custom elements manifest.
+	// Manifest returns the package's parsed custom elements manifest.
 	Manifest() (*Package, error)
-	// ReadFile returns an io.ReadCloser for a file within the project.
+	// ReadFile returns an io.ReadCloser for a file within the package.
 	ReadFile(path string) (io.ReadCloser, error)
 	// Glob returns a list of file paths matching the given pattern (e.g., *.ts).
 	Glob(pattern string) ([]string, error)
 	// Writes outputs to paths
 	OutputWriter(path string) (io.WriteCloser, error)
-	// Root returns the canonical root path or name for the project.
+	// Root returns the canonical root path or name for the package.
 	Root() string
 	// Cleanup releases any resources (e.g., tempdirs) held by the context.
 	Cleanup() error
@@ -72,7 +72,8 @@ type WorkspaceContext interface {
 
 var _ WorkspaceContext = (*FileSystemWorkspaceContext)(nil)
 
-// FileSystemWorkspaceContext implements ProjectContext for a local filesystem project.
+// FileSystemWorkspaceContext implements WorkspaceContext for a local filesystem
+// package.
 type FileSystemWorkspaceContext struct {
 	root            string
 	config          *config.CemConfig
@@ -102,7 +103,7 @@ func (c *FileSystemWorkspaceContext) initConfig() (*config.CemConfig, error) {
 			return nil, err
 		}
 	}
-	// Make output path project-root-relative if needed
+	// Make output path package-root-relative if needed
 	if config.Generate.Output != "" && !filepath.IsAbs(config.Generate.Output) {
 		config.Generate.Output = filepath.Join(config.ProjectDir, config.Generate.Output)
 	}
@@ -234,21 +235,21 @@ func (c *FileSystemWorkspaceContext) Root() string {
 }
 
 func (c *FileSystemWorkspaceContext) Cleanup() error {
-	// Nothing to clean up for local projects
+	// Nothing to clean up for local packages
 	return nil
 }
 
 var _ WorkspaceContext = (*RemoteWorkspaceContext)(nil)
 
-// RemoteWorkspaceContext implements ProjectContext for remote/package-based projects.
+// RemoteWorkspaceContext implements WorkspaceContext for remote packages.
 type RemoteWorkspaceContext struct {
 	tempdir string
 	// Add fields for cached files, manifest URL, etc.
 }
 
-var ErrRemoteUnsupported = fmt.Errorf("Remote project context is not yet supported: %w", errors.ErrUnsupported)
+var ErrRemoteUnsupported = fmt.Errorf("Remote workspace context is not yet supported: %w", errors.ErrUnsupported)
 
-func NewRemoteProjectContext(tempdir string) *RemoteWorkspaceContext {
+func NewRemoteWorkspaceContext(tempdir string) *RemoteWorkspaceContext {
 	return &RemoteWorkspaceContext{tempdir: tempdir}
 }
 

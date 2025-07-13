@@ -38,7 +38,7 @@ var generateCmd = &cobra.Command{
 	Short: "Generates a custom elements manifest",
 	RunE: func(cmd *cobra.Command, args []string) (errs error) {
 		start = time.Now()
-		ctx, err := GetProjectContext(cmd)
+		ctx, err := GetWorkspaceContext(cmd)
 		if err != nil {
 			return fmt.Errorf("project context not initialized: %w", err)
 		}
@@ -127,7 +127,7 @@ var generateCmd = &cobra.Command{
 	},
 }
 
-// Use ProjectContext to expand globs
+// Use WorkspaceContext to expand globs
 func expand(ctx M.WorkspaceContext, globs []string) (files []string, errs error) {
 	for _, pattern := range globs {
 		matches, err := ctx.Glob(pattern)

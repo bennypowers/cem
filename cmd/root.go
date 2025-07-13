@@ -35,7 +35,7 @@ var initialCWD string
 
 type contextKey string
 
-const projectContextKey = contextKey("projectContext")
+const workspaceContextKey = contextKey("workspaceContext")
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -51,13 +51,13 @@ Supports projects written with Lit`,
 			return fmt.Errorf("Unable to get current working directory: %v", err)
 		}
 
-		projectCtx, err := resolveProjectContext(cmd, *viper.GetViper())
+		projectCtx, err := resolveWorkspaceContext(cmd, *viper.GetViper())
 		if err != nil {
 			return fmt.Errorf("Failed to create project context: %v", err)
 		}
 
 		// Store the project context in the Cobra context
-		ctx := context.WithValue(cmd.Context(), projectContextKey, projectCtx)
+		ctx := context.WithValue(cmd.Context(), workspaceContextKey, projectCtx)
 		cmd.SetContext(ctx)
 
 		rootDir := projectCtx.Root()
@@ -89,8 +89,8 @@ Supports projects written with Lit`,
 }
 
 // Retrieve the project context from a cobra.Command
-func GetProjectContext(cmd *cobra.Command) (M.WorkspaceContext, error) {
-	val := cmd.Context().Value(projectContextKey)
+func GetWorkspaceContext(cmd *cobra.Command) (M.WorkspaceContext, error) {
+	val := cmd.Context().Value(workspaceContextKey)
 	if val == nil {
 		return nil, errors.New("project context not initialized")
 	}
@@ -104,7 +104,7 @@ func Execute() {
 	}
 }
 
-func resolveProjectContext(cmd *cobra.Command, viper viper.Viper) (M.WorkspaceContext, error) {
+func resolveWorkspaceContext(cmd *cobra.Command, viper viper.Viper) (M.WorkspaceContext, error) {
 	var ctx M.WorkspaceContext
 	configPath := viper.GetString("configFile")
 	if p, _ := cmd.Flags().GetString("configFile"); p != "" {
@@ -118,7 +118,7 @@ func resolveProjectContext(cmd *cobra.Command, viper viper.Viper) (M.WorkspaceCo
 		if isLikelyPath(packageFlag) {
 			ctx = M.NewFileSystemWorkspaceContext(packageFlag)
 		} else {
-			ctx = M.NewRemoteProjectContext(packageFlag)
+			ctx = M.NewRemoteWorkspaceContext(packageFlag)
 		}
 	} else {
 		ctx = M.NewFileSystemWorkspaceContext(filepath.Dir(configPath))
