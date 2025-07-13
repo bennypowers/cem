@@ -26,7 +26,6 @@ import (
 	"strings"
 	"time"
 
-	C "bennypowers.dev/cem/cmd/config"
 	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
 	S "bennypowers.dev/cem/set"
@@ -122,11 +121,14 @@ type ModuleProcessor struct {
 
 func NewModuleProcessor(
 	ctx M.WorkspaceContext,
-	cfg *C.CemConfig,
 	file string,
 	parser *ts.Parser,
 	queryManager *Q.QueryManager,
 ) (*ModuleProcessor, error) {
+	cfg, err := ctx.Config()
+	if err != nil {
+		return nil, err
+	}
 	path := file
 	if !filepath.IsAbs(path) {
 		path = filepath.Join(ctx.Root(), file)

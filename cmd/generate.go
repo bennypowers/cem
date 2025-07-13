@@ -93,7 +93,7 @@ var generateCmd = &cobra.Command{
 		}
 
 		// generate the manifest
-		manifestStr, err := G.Generate(ctx, cfg)
+		manifestStr, err := G.Generate(ctx)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}

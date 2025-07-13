@@ -26,7 +26,6 @@ import (
 
 	"github.com/pterm/pterm"
 
-	C "bennypowers.dev/cem/cmd/config"
 	DT "bennypowers.dev/cem/designtokens"
 	DD "bennypowers.dev/cem/generate/demodiscovery"
 	Q "bennypowers.dev/cem/generate/queries"
@@ -61,7 +60,11 @@ type preprocessResult struct {
 }
 
 // preprocess handles config merging for generate command
-func preprocess(ctx M.WorkspaceContext, cfg *C.CemConfig) (r preprocessResult, errs error) {
+func preprocess(ctx M.WorkspaceContext) (r preprocessResult, errs error) {
+	cfg, err := ctx.Config()
+	if err != nil {
+		return r, err
+	}
 	cfg.Generate.Exclude = append(cfg.Generate.Exclude, []string{}...)
 	r.excludePatterns = make([]string, 0, len(cfg.Generate.Exclude)+len(defaultExcludePatterns))
 
@@ -73,7 +76,7 @@ func preprocess(ctx M.WorkspaceContext, cfg *C.CemConfig) (r preprocessResult, e
 	}
 
 	if cfg.Generate.DesignTokens.Spec != "" {
-		tokens, err := DT.LoadDesignTokens(ctx, cfg)
+		tokens, err := DT.LoadDesignTokens(ctx)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
@@ -102,12 +105,12 @@ type processJob struct {
 // process actually processes a module file
 func process(
 	ctx M.WorkspaceContext,
-	cfg *C.CemConfig,
 	result preprocessResult,
 	qm *Q.QueryManager,
 ) (modules []M.Module, logs []*LogCtx, aliases map[string]string, errs error) {
 	numWorkers := runtime.NumCPU()
 	pterm.Info.Printf("Starting Generation with %d workers\n", numWorkers)
+
 	var wg sync.WaitGroup
 	var aliasesMu sync.Mutex
 	var modulesMu sync.Mutex
@@ -132,7 +135,7 @@ func process(
 			parser := Q.GetTypeScriptParser()
 			defer Q.PutTypeScriptParser(parser)
 			for job := range jobsChan {
-				module, tagAliases, logger, err := processModule(job, cfg, qm, parser)
+				module, tagAliases, logger, err := processModule(job, qm, parser)
 				if err != nil {
 					errsMu.Lock()
 					errsList = append(errsList, err)
@@ -168,16 +171,19 @@ func process(
 
 func processModule(
 	job processJob,
-	cfg *C.CemConfig,
 	qm *Q.QueryManager,
 	parser *ts.Parser,
 ) (module *M.Module, tagAliases map[string]string, logCtx *LogCtx, errs error) {
 	defer parser.Reset()
-	mp, err := NewModuleProcessor(job.ctx, cfg, job.file, parser, qm)
+	mp, err := NewModuleProcessor(job.ctx, job.file, parser, qm)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 	defer mp.Close()
+	cfg, err := job.ctx.Config()
+	if err != nil {
+		return nil, nil, nil, err
+	}
 	if cfg.Verbose {
 		mp.logger.Section.Printf("Module: %s", mp.logger.File)
 	}
@@ -186,13 +192,16 @@ func processModule(
 }
 
 func postprocess(
-	_ M.WorkspaceContext,
-	cfg *C.CemConfig,
+	ctx M.WorkspaceContext,
 	result preprocessResult,
 	allTagAliases map[string]string,
 	qm *Q.QueryManager,
 	modules []M.Module,
 ) (pkg M.Package, errs error) {
+	cfg, err := ctx.Config()
+	if err != nil {
+		return pkg, err
+	}
 	var wg sync.WaitGroup
 	var errsMu sync.Mutex
 	errsList := make([]error, 0)
@@ -235,21 +244,25 @@ func postprocess(
 }
 
 // Generates a custom-elements manifest from a list of typescript files
-func Generate(ctx M.WorkspaceContext, cfg *C.CemConfig) (manifest *string, errs error) {
+func Generate(ctx M.WorkspaceContext) (manifest *string, errs error) {
+	cfg, err := ctx.Config()
+	if err != nil {
+		return nil, err
+	}
 	qm, err := Q.NewQueryManager()
 	if err != nil {
 		return nil, err
 	}
 	defer qm.Close()
-	result, err := preprocess(ctx, cfg)
+	result, err := preprocess(ctx)
 	if err != nil {
 		errs = errors.Join(errs, fmt.Errorf("module preprocess failed: %w", err))
 	}
-	modules, logs, aliases, err := process(ctx, cfg, result, qm)
+	modules, logs, aliases, err := process(ctx, result, qm)
 	if err != nil {
 		errs = errors.Join(errs, fmt.Errorf("module process failed: %w", err))
 	}
-	pkg, err := postprocess(ctx, cfg, result, aliases, qm, modules)
+	pkg, err := postprocess(ctx, result, aliases, qm, modules)
 	if err != nil {
 		errs = errors.Join(errs, fmt.Errorf("module postprocess failed: %w", err))
 	}

@@ -41,7 +41,11 @@ func (dt *DesignTokens) Get(name string) (TokenResult, bool) {
 
 // LoadDesignTokens loads tokens from a path or Deno-style specifier and returns a DesignTokens struct.
 // The prefix is prepended to all token names on load.
-func LoadDesignTokens(ctx M.WorkspaceContext, cfg *C.CemConfig) (*DesignTokens, error) {
+func LoadDesignTokens(ctx M.WorkspaceContext) (*DesignTokens, error) {
+	cfg, err := ctx.Config()
+	if err != nil {
+		return nil, err
+	}
 	prefix := cfg.Generate.DesignTokens.Prefix
 	content, err := readJSONFileOrSpecifier(ctx, cfg.Generate.DesignTokens.Spec)
 	if err != nil {

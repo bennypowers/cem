@@ -84,7 +84,7 @@ func TestGenerate(t *testing.T) {
 				// capture range variable
 				t.Run(tc.name, func(t *testing.T) {
 					cfg.Generate.Files = []string{tc.path}
-					actual, err := generate.Generate(ctx, cfg)
+					actual, err := generate.Generate(ctx)
 					if err != nil {
 						t.Fatal(err)
 					}

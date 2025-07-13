@@ -43,7 +43,7 @@ func BenchmarkGenerate(b *testing.B) {
 	var lastOut string
 
 	for b.Loop() {
-		out, err := generate.Generate(ctx, cfg)
+		out, err := generate.Generate(ctx)
 		if err != nil {
 			b.Errorf("BenchmarkGenerate generate returned error: %v", err)
 		}
