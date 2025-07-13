@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/generate"
-	"bennypowers.dev/cem/manifest"
+	W "bennypowers.dev/cem/workspace"
 	"github.com/nsf/jsondiff"
 )
 
@@ -51,7 +51,7 @@ func TestGenerate(t *testing.T) {
 				t.Fatalf("failed to create %s: %v", projectGoldenDir, err)
 			}
 
-			ctx := manifest.NewFileSystemWorkspaceContext(projectDir)
+			ctx := W.NewFileSystemWorkspaceContext(projectDir)
 			if err := ctx.Init(); err != nil {
 				t.Fatalf("TestGenerate: %v", err)
 			}

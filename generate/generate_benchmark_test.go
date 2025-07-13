@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/generate"
-	"bennypowers.dev/cem/manifest"
+	W "bennypowers.dev/cem/workspace"
 	DS "github.com/bmatcuk/doublestar"
 )
 
@@ -17,7 +17,7 @@ func BenchmarkGenerate(b *testing.B) {
 		b.Fatalf("BenchmarkGenerate failed to resolve project dir: %v", err)
 	}
 
-	ctx := manifest.NewFileSystemWorkspaceContext(path)
+	ctx := W.NewFileSystemWorkspaceContext(path)
 	if err := ctx.Init(); err != nil {
 		b.Fatalf("BenchmarkGenerate failed to init context: %v", err)
 	}
