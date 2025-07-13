@@ -296,9 +296,9 @@ func NewQueryMatcher(
 	if manager == nil {
 		return nil, ErrNoQueryManager
 	}
-	query, error := manager.getQuery(queryName, language)
-	if error != nil {
-		return nil, error
+	query, err := manager.getQuery(queryName, language)
+	if err != nil {
+		return nil, err
 	}
 	cursor := ts.NewQueryCursor()
 	qm := QueryMatcher{query, cursor}
