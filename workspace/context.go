@@ -30,10 +30,8 @@ import (
 
 type contextKey string
 
-const workspaceContextKey = contextKey("workspaceContext")
-
 func GetWorkspaceContext(cmd *cobra.Command) (WorkspaceContext, error) {
-	val := cmd.Context().Value(workspaceContextKey)
+	val := cmd.Context().Value(WorkspaceContextKey)
 	if val != nil {
 		return val.(WorkspaceContext), nil
 	}
@@ -58,7 +56,7 @@ func GetWorkspaceContext(cmd *cobra.Command) (WorkspaceContext, error) {
 		return nil, err
 	} else {
 		// Store in cmd.Context for future calls
-		newCtx := context.WithValue(cmd.Context(), workspaceContextKey, ctx)
+		newCtx := context.WithValue(cmd.Context(), WorkspaceContextKey, ctx)
 		cmd.SetContext(newCtx)
 		return ctx, nil
 	}

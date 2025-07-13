@@ -33,8 +33,6 @@ var initialCWD string
 
 type contextKey string
 
-const workspaceContextKey = contextKey("workspaceContext")
-
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "cem",
@@ -52,7 +50,7 @@ var rootCmd = &cobra.Command{
 		}
 
 		// Store the project context in the Cobra context
-		ctx := context.WithValue(cmd.Context(), workspaceContextKey, wctx)
+		ctx := context.WithValue(cmd.Context(), W.WorkspaceContextKey, wctx)
 		cmd.SetContext(ctx)
 
 		rootDir := wctx.Root()
@@ -104,4 +102,3 @@ func init() {
 	rootCmd.PersistentFlags().String("project-dir", "", "Path to project directory (default: parent directory of .config/cem.yaml)")
 	rootCmd.PersistentFlags().MarkDeprecated("project-dir", "Will be removed, use --package instead")
 }
-
