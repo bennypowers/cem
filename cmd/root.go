@@ -14,7 +14,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
-
 package cmd
 
 import (
@@ -47,7 +46,7 @@ var rootCmd = &cobra.Command{
 			return fmt.Errorf("Unable to get current working directory: %v", err)
 		}
 
-		wctx, err := resolveWorkspaceContext(cmd, *viper.GetViper())
+		wctx, err := W.GetWorkspaceContext(cmd)
 		if err != nil {
 			return fmt.Errorf("Failed to create project context: %v", err)
 		}
@@ -91,33 +90,6 @@ func Execute() {
 	}
 }
 
-func resolveWorkspaceContext(cmd *cobra.Command, viper viper.Viper) (W.WorkspaceContext, error) {
-	var ctx W.WorkspaceContext
-	configPath := viper.GetString("configFile")
-	if p, _ := cmd.Flags().GetString("configFile"); p != "" {
-		configPath = p
-	}
-	packageFlag := viper.GetString("package")
-	if p, _ := cmd.Flags().GetString("package"); p != "" {
-		packageFlag = p
-	}
-	if packageFlag != "" {
-		if !W.IsPackageSpecifier(packageFlag) {
-			ctx = W.NewFileSystemWorkspaceContext(packageFlag)
-		} else {
-			// TODO: handle if this is in local node_modules already
-			// It might be a symlink (pnpm)
-			ctx = W.NewRemoteWorkspaceContext(packageFlag)
-		}
-	} else {
-		ctx = W.NewFileSystemWorkspaceContext(filepath.Dir(configPath))
-	}
-	if err := ctx.Init(); err != nil {
-		return nil, err
-	}
-	return ctx, nil
-}
-
 func init() {
 	rootCmd.PersistentFlags().String("source-control-root-url", "", "Canonical public source control URL corresponding to project root on primary branch. e.g. https://github.com/bennypowers/cem/tree/main/")
 	rootCmd.PersistentFlags().String("config", "", "config file (default is $CWD/.config/cem.yaml)")
@@ -132,3 +104,4 @@ func init() {
 	rootCmd.PersistentFlags().String("project-dir", "", "Path to project directory (default: parent directory of .config/cem.yaml)")
 	rootCmd.PersistentFlags().MarkDeprecated("project-dir", "Will be removed, use --package instead")
 }
+
