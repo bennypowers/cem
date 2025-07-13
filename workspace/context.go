@@ -28,8 +28,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-type contextKey string
-
 func GetWorkspaceContext(cmd *cobra.Command) (WorkspaceContext, error) {
 	val := cmd.Context().Value(WorkspaceContextKey)
 	if val != nil {
