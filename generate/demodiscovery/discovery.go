@@ -2,6 +2,7 @@ package demodiscovery
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"os"
 	"regexp"
@@ -15,7 +16,7 @@ import (
 func extractDemoDescription(path string) (string, error) {
 	code, err := os.ReadFile(path)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("could not read demo file: %w", err)
 	}
 	parser := Q.GetHTMLParser()
 	defer Q.PutHTMLParser(parser)

@@ -1,165 +1,123 @@
-package cmd
+//go:build e2e
+
+package cmd_test
 
 import (
 	"bytes"
+	"encoding/json"
+	"flag"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/nsf/jsondiff"
 	"github.com/pterm/pterm"
-	"github.com/spf13/viper"
 )
 
+var update = flag.Bool("update", false, "update golden files")
+
 func TestGenerateE2E(t *testing.T) {
-	viper.Reset()
-	// Create a temporary directory for the test
-	tmpDir, err := os.MkdirTemp("", "cem-test-")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tmpDir)
-
-	// Create a dummy source file to be processed by the generate command
-	srcFilePath := filepath.Join(tmpDir, "my-element.js")
-	srcFileContent := `
-/**
- * @customElement my-element
- */
-export class MyElement extends HTMLElement {}
-`
-	if err := os.WriteFile(srcFilePath, []byte(srcFileContent), 0644); err != nil {
-		t.Fatalf("Failed to write dummy source file: %v", err)
-	}
-
-	// Define the output path in a subdirectory that doesn't exist yet
-	outputDir := filepath.Join(tmpDir, "dist")
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		t.Fatalf("Failed to create output dir: %v", err)
-	}
-	outputFile := filepath.Join(outputDir, "custom-elements.json")
-
-	// Capture the output of the command
-	var out bytes.Buffer
-	rootCmd.SetOut(&out)
-	rootCmd.SetErr(&out)
-	origOut := pterm.Success.Writer
-	pterm.Success.Writer = &out
-	defer func() {pterm.Success.Writer = origOut}()
-
-	// Execute the generate command
-	rootCmd.SetArgs([]string{"generate", srcFilePath, "-o", outputFile})
-	viper.BindPFlag("generate.output", generateCmd.Flags().Lookup("output"))
-	err = rootCmd.Execute()
-	if err != nil {
-		t.Fatalf("generate command failed: %v", err)
+	testCases := []struct {
+		name        string
+		fixture     string
+		command     []string
+		outputFile  string
+		expectedLog string
+		workDir     string
+	}{
+		{
+			name:        "WithOutputFlag",
+			fixture:     "generate-project",
+			command:     []string{"generate", "my-element.js", "--output", "dist/custom-elements.json"},
+			outputFile:  "dist/custom-elements.json",
+			expectedLog: "Wrote manifest to %s",
+		},
+		{
+			name:        "InPackageDir",
+			fixture:     "generate-project",
+			command:     []string{"generate"},
+			outputFile:  "dist/custom-elements.json",
+			expectedLog: "Wrote manifest to dist/custom-elements.json",
+		},
+		{
+			name:        "WithPackageFlag",
+			fixture:     "generate-project",
+			command:     []string{"generate", "--package"},
+			outputFile:  "dist/custom-elements.json",
+			expectedLog: "Wrote manifest to dist/custom-elements.json",
+			workDir:     ".",
+		},
+		{
+			name:        "WithExcludeFlag",
+			fixture:     "generate-project",
+			command:     []string{"generate", "--exclude", "my-element.js"},
+			outputFile:  "dist/custom-elements.json",
+			expectedLog: "Wrote manifest to dist/custom-elements.json",
+		},
 	}
 
-	// Check if the output file was created
-	if _, err := os.Stat(outputFile); os.IsNotExist(err) {
-		t.Fatalf("output file was not created: %s", outputFile)
-	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			projectDir := setupTest(t, tc.fixture)
+			outputFilePath := filepath.Join(projectDir, tc.outputFile)
+			goldenPath := filepath.Join("goldens", tc.name+".json")
 
-	// Check if the output file contains the expected content
-	content, err := os.ReadFile(outputFile)
-	if err != nil {
-		t.Fatalf("Failed to read output file: %v", err)
-	}
+			command := tc.command
+			if len(command) > 0 && command[len(command)-1] == "--package" {
+				command = append(command, projectDir)
+			}
 
-	expected := `"tagName": "my-element"`
-	if !bytes.Contains(content, []byte(expected)) {
-		t.Fatalf("output file does not contain expected content.\nExpected: %s\nGot: %s", expected, content)
-	}
+			workDir := projectDir
+			if tc.workDir != "" {
+				workDir = tc.workDir
+			}
 
-	// Check the log output
-	cwd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("could not get cwd: %v", err)
-	}
-	rel, err := filepath.Rel(cwd, outputFile)
-	if err != nil {
-		t.Fatalf("could not get relative path: %v", err)
-	}
-	expectedLog := "Wrote manifest to " + rel
-	if !strings.Contains(pterm.RemoveColorFromString(out.String()), expectedLog) {
-		t.Fatalf("log output does not contain expected string.\nExpected: %s\nGot: %s", expectedLog, out.String())
-	}
-}
+			stdout, _ := runCemCommand(t, workDir, command...)
 
-func TestGenerateE2EWithProjectDir(t *testing.T) {
-	viper.Reset()
-	// Create a temporary directory for the test
-	tmpDir, err := os.MkdirTemp("", "cem-test-")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tmpDir)
+			if _, err := os.Stat(outputFilePath); os.IsNotExist(err) {
+				t.Fatalf("output file was not created: %s", outputFilePath)
+			}
 
-	// Create a project directory within the temp directory
-	projectDir := filepath.Join(tmpDir, "my-project")
-	configDir := filepath.Join(projectDir, ".config")
-	if err := os.MkdirAll(configDir, 0755); err != nil {
-		t.Fatalf("Failed to create config dir: %v", err)
-	}
+			content, err := os.ReadFile(outputFilePath)
+			if err != nil {
+				t.Fatalf("Failed to read output file: %v", err)
+			}
 
-	// Create a dummy source file to be processed by the generate command
-	srcFilePath := filepath.Join(projectDir, "my-element.js")
-	if err := os.WriteFile(srcFilePath, []byte(`
-/**
- * @customElement my-element
- */
-export class MyElement extends HTMLElement {}
-`), 0644); err != nil {
-		t.Fatalf("Failed to write dummy source file: %v", err)
-	}
+			if *update {
+				if err := os.WriteFile(goldenPath, content, 0644); err != nil {
+					t.Fatalf("failed to write golden file: %v", err)
+				}
+			}
 
-	// Create a config file in the project directory
-	configFile := filepath.Join(configDir, "cem.yaml")
-	if err := os.WriteFile(configFile, []byte(`
-generate:
-  files:
-    - my-element.js
-  output: dist/custom-elements.json
-`), 0644); err != nil {
-		t.Fatalf("Failed to write config file: %v", err)
-	}
+			expected, err := os.ReadFile(goldenPath)
+			if err != nil {
+				t.Fatalf("golden file missing: %s (have you run with -update?)\nerror: %v", goldenPath, err)
+			}
 
-	// Change the current working directory to the temp directory
-	originalCWD, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("Failed to get current working directory: %v", err)
-	}
-	defer os.Chdir(originalCWD)
+			// Validate JSON
+			var jsExpected, jsActual any
+			if err := json.Unmarshal(expected, &jsExpected); err != nil {
+				t.Fatalf("expected golden file is invalid JSON: %v", err)
+			}
+			if err := json.Unmarshal(content, &jsActual); err != nil {
+				t.Fatalf("actual output is invalid JSON: %v\noutput:\n%s", err, content)
+			}
 
-	if err := os.Chdir(tmpDir); err != nil {
-		t.Fatalf("Failed to change directory: %v", err)
-	}
+			if !bytes.Equal(expected, content) {
+				options := jsondiff.DefaultConsoleOptions()
+				t.Error(jsondiff.Compare(expected, content, &options))
+			}
 
-	// Capture the output of the command
-	var out bytes.Buffer
-	origOut := pterm.Success.Writer
-	pterm.Success.Writer = &out
-	defer func() {pterm.Success.Writer = origOut}()
-	rootCmd.SetOut(&out)
-	rootCmd.SetErr(&out)
+			expectedLog := tc.expectedLog
+			if tc.name == "WithOutputFlag" {
+				expectedLog = fmt.Sprintf(expectedLog, tc.outputFile)
+			}
 
-	// Execute the generate command with the --project-dir flag
-	rootCmd.SetArgs([]string{"generate", "--project-dir", "my-project"})
-	viper.BindPFlag("projectDir", rootCmd.PersistentFlags().Lookup("project-dir"))
-	err = rootCmd.Execute()
-	if err != nil {
-		t.Fatalf("generate command failed: %v", err)
-	}
-
-	// Check if the output file was created in the correct location
-	outputFile := filepath.Join(projectDir, "dist", "custom-elements.json")
-	if _, err := os.Stat(outputFile); os.IsNotExist(err) {
-		t.Fatalf("output file was not created: %s", outputFile)
-	}
-
-	// Check the log output for the correct relative path
-	expectedLog := "Wrote manifest to my-project/dist/custom-elements.json"
-	if !strings.Contains(pterm.RemoveColorFromString(out.String()), expectedLog) {
-		t.Fatalf("log output does not contain expected string.\nExpected: %s\nGot: %s", expectedLog, out.String())
+			if !strings.Contains(pterm.RemoveColorFromString(stdout), expectedLog) {
+				t.Fatalf("log output does not contain expected string.\nExpected: %s\nGot: %s", expectedLog, stdout)
+			}
+		})
 	}
 }

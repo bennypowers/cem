@@ -17,7 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package list_test
 
 import (
-	"bytes"
 	"encoding/json"
 	"flag"
 	"os"
@@ -28,7 +27,6 @@ import (
 
 	"bennypowers.dev/cem/list"
 	"bennypowers.dev/cem/manifest"
-	"github.com/pterm/pterm"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -73,15 +71,10 @@ func TestRender(t *testing.T) {
 		pkg := loadTestFixture(t)
 		renderable := manifest.NewRenderablePackage(pkg)
 
-		var buf bytes.Buffer
-		pterm.SetDefaultOutput(&buf)
-		defer pterm.SetDefaultOutput(os.Stdout)
-
 		opts := list.RenderOptions{}
-		err := list.Render(renderable, opts)
+		output, err := list.Render(renderable, opts)
 		assert.NoError(t, err)
 
-		output := stripANSI(buf.String())
-		checkGolden(t, []byte(output))
+		checkGolden(t, []byte(stripANSI(output)))
 	})
 }

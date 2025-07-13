@@ -1,59 +1,59 @@
-package generate
+package generate_test
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
 
-	C "bennypowers.dev/cem/cmd/config"
+	"bennypowers.dev/cem/generate"
+	W "bennypowers.dev/cem/workspace"
 	DS "github.com/bmatcuk/doublestar"
 )
 
 // BenchmarkGenerate runs the Generate function on all test fixtures to measure performance.
 func BenchmarkGenerate(b *testing.B) {
+	path, err := filepath.Abs("../test/fixtures/")
+	if err != nil {
+		b.Fatalf("BenchmarkGenerate failed to resolve project dir: %v", err)
+	}
+
+	ctx := W.NewFileSystemWorkspaceContext(path)
+	if err := ctx.Init(); err != nil {
+		b.Fatalf("BenchmarkGenerate failed to init context: %v", err)
+	}
+
 	// Gather all .ts files in the test-fixtures directory as input.
-	matches, err := DS.Glob("../test/fixtures/**/*.ts")
+	matches, err := DS.Glob(filepath.Join(path, "**/*.ts"))
 	if err != nil {
 		b.Fatal(err)
 	}
+
 	if len(matches) == 0 {
 		b.Skip("No test fixtures found")
 	}
 
+	// Run the Generate function, measuring its speed.
+	cfg, err := ctx.Config()
+	if err != nil {
+		b.Fatalf("BenchmarkGenerate failed to load config: %v", err)
+	}
+
+	cfg.Generate.Files = matches
+
 	var lastOut string
 
 	for b.Loop() {
-		// Run the Generate function, measuring its speed.
-		specs, err := filepath.Glob("../test/fixtures/*/design-tokens.json")
+		out, err := generate.Generate(ctx)
 		if err != nil {
-			b.Errorf("Failed to load design tokens: %v", err)
-		}
-		cfg := C.CemConfig{
-			SourceControlRootUrl: "",
-			Generate: C.GenerateConfig{
-				Files: matches,
-				DesignTokens: C.DesignTokensConfig{
-					Spec:   specs[0], // todo: should accept a slice
-					Prefix: "token",
-				},
-				DemoDiscovery: C.DemoDiscoveryConfig{
-					FileGlob:    "demos/.",
-					URLPattern:  "",
-					URLTemplate: "",
-				},
-			},
-		}
-		out, err := Generate(&cfg)
-		if err != nil {
-			b.Errorf("Generate returned error: %v", err)
+			b.Errorf("BenchmarkGenerate generate returned error: %v", err)
 		}
 		lastOut = *out
 	}
 
 	if err := os.MkdirAll("../docs/data/", 0755); err != nil {
-		b.Fatalf("failed to create ../docs/data dir: %v", err)
+		b.Fatalf("BenchmarkGenerate failed to create ../docs/data dir: %v", err)
 	}
 	if err := os.WriteFile("../docs/data/lastBenchmark.json", []byte(lastOut), 0644); err != nil {
-		b.Fatalf("Could not write output: %v", err)
+		b.Fatalf("BenchmarkGenerate could not write output: %v", err)
 	}
 }

@@ -17,29 +17,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
-	"encoding/json"
 	"errors"
-	"os"
-	"path/filepath"
+	"fmt"
 	"slices"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
-	C "bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/list"
 	M "bennypowers.dev/cem/manifest"
+	W "bennypowers.dev/cem/workspace"
 )
-
-func readCfg() (*C.CemConfig, error) {
-	cfg := C.CemConfig{}
-	err := viper.Unmarshal(&cfg)
-	if err != nil {
-		return nil, err
-	}
-	return &cfg, nil
-}
 
 func requireTagName(cmd *cobra.Command) (string, error) {
 	tagName, err := cmd.Flags().GetString("tag-name")
@@ -63,29 +51,6 @@ func requireFormat(cmd *cobra.Command, supportedFormats []string) (string, error
 	return "", errors.New("unknown format: " + format)
 }
 
-func readPkg() (pkg *M.Package, err error) {
-	cfg, err := readCfg()
-	if err != nil {
-		return nil, err
-	}
-
-	path := cfg.Generate.Output
-	// The path to the manifest is relative to the project dir, not the CWD.
-	if projDir := viper.GetString("project-dir"); projDir != "" {
-		path = filepath.Join(projDir, path)
-	}
-
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	if err = json.Unmarshal(data, &pkg); err != nil {
-		return pkg, err
-	}
-	pterm.Debug.Printfln("Loaded manifest from %s", path)
-	return pkg, err
-}
-
 // Helper to generate list subcommands for custom elements by section
 func makeListSectionCmd(use, short, long string, includeSection string, aliases ...string) *cobra.Command {
 	return &cobra.Command{
@@ -94,35 +59,43 @@ func makeListSectionCmd(use, short, long string, includeSection string, aliases 
 		Short:   short,
 		Long:    long,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			tagName, err := requireTagName(cmd)
-			if err != nil {
-				return err
-			}
-			pkg, err := readPkg()
-			if err != nil {
-				return err
-			}
-			format, err := requireFormat(cmd, []string{"table"})
-			if err != nil {
-				return err
-			}
-			columns, err := cmd.Flags().GetStringArray("columns")
-			if err != nil {
-				return err
-			}
-			switch format {
-			case "table":
-				ced, _, mod, err := pkg.FindCustomElementContext(tagName)
+			if ctx, err := W.GetWorkspaceContext(cmd); err != nil {
+				return fmt.Errorf("project context not initialized: %w", err)
+			} else {
+				tagName, err := requireTagName(cmd)
 				if err != nil {
 					return err
 				}
-				opts := list.RenderOptions{
-					Columns:         columns,
-					IncludeSections: []string{includeSection},
+				manifest, err := ctx.Manifest()
+				if err != nil {
+					return err
 				}
-				return list.Render(M.NewRenderableCustomElementDeclaration(ced, mod, pkg), opts)
+				format, err := requireFormat(cmd, []string{"table"})
+				if err != nil {
+					return err
+				}
+				columns, err := cmd.Flags().GetStringArray("columns")
+				if err != nil {
+					return err
+				}
+				switch format {
+				case "table":
+					ced, _, mod, err := manifest.FindCustomElementContext(tagName)
+					if err != nil {
+						return err
+					}
+					opts := list.RenderOptions{
+						Columns:         columns,
+						IncludeSections: []string{includeSection},
+					}
+					if s, err := list.Render(M.NewRenderableCustomElementDeclaration(ced, mod, manifest), opts); err != nil {
+						return err
+					} else {
+						fmt.Println(s)
+					}
+				}
+				return nil
 			}
-			return nil
 		},
 	}
 }
@@ -260,24 +233,32 @@ Example:
   cem list tags --format table --columns Class --columns Module --columns Summary
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		pkg, err := readPkg()
-		if err != nil {
-			return err
+		if ctx, err := W.GetWorkspaceContext(cmd); err != nil {
+			return fmt.Errorf("project context not initialized: %w", err)
+		} else {
+			manifest, err := ctx.Manifest()
+			if err != nil {
+				return err
+			}
+			format, err := requireFormat(cmd, []string{"table"})
+			if err != nil {
+				return err
+			}
+			columns, err := cmd.Flags().GetStringArray("columns")
+			if err != nil {
+				return err
+			}
+			switch format {
+			case "table":
+				opts := list.RenderOptions{Columns: columns}
+				if s, err := list.RenderTagsTable(manifest, opts); err != nil {
+					return err
+				} else {
+					fmt.Println(s)
+				}
+			}
+			return nil
 		}
-		format, err := requireFormat(cmd, []string{"table"})
-		if err != nil {
-			return err
-		}
-		columns, err := cmd.Flags().GetStringArray("columns")
-		if err != nil {
-			return err
-		}
-		switch format {
-		case "table":
-			opts := list.RenderOptions{Columns: columns}
-			return list.Render(M.NewRenderablePackage(pkg), opts)
-		}
-		return nil
 	},
 }
 
@@ -296,24 +277,32 @@ Example:
   cem list modules --format table --columns Name
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		pkg, err := readPkg()
-		if err != nil {
-			return err
+		if ctx, err := W.GetWorkspaceContext(cmd); err != nil {
+			return fmt.Errorf("project context not initialized: %w", err)
+		} else {
+			manifest, err := ctx.Manifest()
+			if err != nil {
+				return err
+			}
+			format, err := requireFormat(cmd, []string{"table"})
+			if err != nil {
+				return err
+			}
+			columns, err := cmd.Flags().GetStringArray("columns")
+			if err != nil {
+				return err
+			}
+			switch format {
+			case "table":
+				opts := list.RenderOptions{Columns: columns}
+				if s, err := list.RenderModulesTable(manifest, opts); err != nil {
+					return err
+				} else {
+					fmt.Println(s)
+				}
+			}
+			return nil
 		}
-		format, err := requireFormat(cmd, []string{"table"})
-		if err != nil {
-			return err
-		}
-		columns, err := cmd.Flags().GetStringArray("columns")
-		if err != nil {
-			return err
-		}
-		switch format {
-		case "table":
-			opts := list.RenderOptions{Columns: columns}
-			return list.Render(M.NewRenderablePackage(pkg), opts)
-		}
-		return nil
 	},
 }
 
@@ -342,35 +331,48 @@ Examples:
   cem list methods --tag-name my-button
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		pkg, err := readPkg()
-		if err != nil {
-			return err
-		}
-		format, err := requireFormat(cmd, []string{"table", "tree"})
-		if err != nil {
-			return err
-		}
-		deprecated, err := cmd.Flags().GetBool("deprecated")
-		if err != nil {
-			return err
-		}
-		if deprecated && format != "tree" {
-			return errors.New("--deprecated currently only supported with --format tree")
-		}
-		switch format {
-		case "tree":
-			title := "Manifest"
-			pred := M.True
-			if deprecated {
-				title = "Deprecations"
-				pred = M.IsDeprecated
+		if ctx, err := W.GetWorkspaceContext(cmd); err != nil {
+			pterm.Warning.Println(err)
+			return fmt.Errorf("project context not initialized: %w", err)
+		} else {
+			manifest, err := ctx.Manifest()
+			if err != nil {
+				return err
 			}
-			return list.RenderTree(title, M.NewRenderablePackage(pkg), pred)
-		case "table":
-			opts := list.RenderOptions{}
-			return list.Render(M.NewRenderablePackage(pkg), opts)
+			format, err := requireFormat(cmd, []string{"table", "tree"})
+			if err != nil {
+				return err
+			}
+			deprecated, err := cmd.Flags().GetBool("deprecated")
+			if err != nil {
+				return err
+			}
+			if deprecated && format != "tree" {
+				return errors.New("--deprecated currently only supported with --format tree")
+			}
+			switch format {
+			case "tree":
+				title := "Manifest"
+				pred := M.True
+				if deprecated {
+					title = "Deprecations"
+					pred = M.IsDeprecated
+				}
+				if s, err := list.RenderTree(title, M.NewRenderablePackage(manifest), pred); err != nil {
+					return err
+				} else {
+					fmt.Println(s)
+				}
+			case "table":
+				opts := list.RenderOptions{}
+				if s, err := list.Render(M.NewRenderablePackage(manifest), opts); err != nil {
+					return err
+				} else {
+					fmt.Println(s)
+				}
+			}
+			return nil
 		}
-		return nil
 	},
 }
 

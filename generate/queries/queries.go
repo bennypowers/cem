@@ -24,6 +24,8 @@ import (
 //go:embed */*.scm
 var queries embed.FS
 
+var ErrNoQueryManager = errors.New("QueryManager is nil")
+
 type NoCaptureError struct {
 	Capture string
 	Query   string
@@ -157,7 +159,7 @@ func NewQueryManager() (*QueryManager, error) {
 
 	data, err := queries.ReadDir(".")
 	if err != nil {
-		log.Fatal(err) // it's ok to die here because these queries are compiled in via embed
+		return nil, err
 	}
 
 	for _, direntry := range data {
@@ -167,7 +169,7 @@ func NewQueryManager() (*QueryManager, error) {
 			// so we need to use path.Join here, never filepath.Join
 			data, err := queries.ReadDir(path.Join(".", language))
 			if err != nil {
-				log.Fatal(err) // it's ok to die here because these queries are compiled in via embed
+				return nil, err
 			}
 			for _, entry := range data {
 				if !entry.IsDir() {
@@ -177,7 +179,7 @@ func NewQueryManager() (*QueryManager, error) {
 					// so we need to use path.Join here, never filepath.Join
 					data, err := queries.ReadFile(path.Join(".", language, file))
 					if err != nil {
-						log.Fatal(err) // it's ok to die here because these queries are compiled in via embed
+						return nil, err
 					}
 					queryText := string(data)
 					var tsLang *ts.Language
@@ -245,7 +247,7 @@ func (qm *QueryManager) getQuery(queryName string, language string) (*ts.Query, 
 		q, ok = qm.html[queryName]
 	}
 	if !ok {
-		return nil, errors.New(fmt.Sprintf("unknown query %s", queryName))
+		return nil, fmt.Errorf("unknown query %s", queryName)
 	}
 	return q, nil
 }
@@ -291,9 +293,12 @@ func NewQueryMatcher(
 	language string,
 	queryName string,
 ) (*QueryMatcher, error) {
-	query, error := manager.getQuery(queryName, language)
-	if error != nil {
-		return nil, error
+	if manager == nil {
+		return nil, ErrNoQueryManager
+	}
+	query, err := manager.getQuery(queryName, language)
+	if err != nil {
+		return nil, err
 	}
 	cursor := ts.NewQueryCursor()
 	qm := QueryMatcher{query, cursor}

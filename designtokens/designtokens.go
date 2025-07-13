@@ -3,7 +3,6 @@ package designtokens
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"maps"
 	"net/http"
@@ -12,8 +11,8 @@ import (
 	"regexp"
 	"strings"
 
-	C "bennypowers.dev/cem/cmd/config"
 	M "bennypowers.dev/cem/manifest"
+	W "bennypowers.dev/cem/workspace"
 )
 
 // TokenResult represents the exported structure with CSS type mapping.
@@ -42,9 +41,13 @@ func (dt *DesignTokens) Get(name string) (TokenResult, bool) {
 
 // LoadDesignTokens loads tokens from a path or Deno-style specifier and returns a DesignTokens struct.
 // The prefix is prepended to all token names on load.
-func LoadDesignTokens(cfg *C.CemConfig) (*DesignTokens, error) {
+func LoadDesignTokens(ctx W.WorkspaceContext) (*DesignTokens, error) {
+	cfg, err := ctx.Config()
+	if err != nil {
+		return nil, err
+	}
 	prefix := cfg.Generate.DesignTokens.Prefix
-	content, err := readJSONFileOrSpecifier(cfg.Generate.DesignTokens.Spec)
+	content, err := readJSONFileOrSpecifier(ctx, cfg.Generate.DesignTokens.Spec)
 	if err != nil {
 		return nil, err
 	}
@@ -120,12 +123,12 @@ func kebabCase(s string) string {
 // readJSONFileOrSpecifier loads a JSON file from a regular path or a Deno-style specifier.
 // If the specifier is an npm: spec, it first checks node_modules in the current working directory.
 // If not found locally, it falls back to fetching from the network.
-func readJSONFileOrSpecifier(path string) ([]byte, error) {
-	if !strings.HasPrefix(path, ".") {
+func readJSONFileOrSpecifier(ctx W.WorkspaceContext, path string) ([]byte, error) {
+	if W.IsPackageSpecifier(path) {
 		// Try npm/Deno specifier and @scope/pkg/file.json style
 		if spec, ok := parseNpmSpecifier(path); ok {
 			// Try node_modules first
-			nodeModulesPath := filepath.Join("node_modules", spec.Package, filepath.FromSlash(spec.File))
+			nodeModulesPath := filepath.Join(ctx.Root(), "node_modules", spec.Package, filepath.FromSlash(spec.File))
 			if data, err := os.ReadFile(nodeModulesPath); err == nil {
 				return data, nil
 			}
@@ -144,11 +147,7 @@ func readJSONFileOrSpecifier(path string) ([]byte, error) {
 	}
 
 	// Default: treat as local file
-	data, err := os.ReadFile(path)
-	if err != nil {
-		fmt.Println("can't read json", path)
-	}
-	return data, err
+	return os.ReadFile(filepath.Join(ctx.Root(), path))
 }
 
 // npmSpec holds parsed npm package specifier

@@ -67,6 +67,20 @@
         "generate",
         "${input:generate}"
       ]
+    },
+    {
+      "name": "Debug cem list (args)",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/main.go",
+      "presentation": {
+        "order": 1
+      },
+      "args": [
+        "list",
+        "${input:generate}"
+      ]
     }
   ],
   "inputs": [

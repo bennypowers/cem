@@ -2,6 +2,7 @@ package demodiscovery
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"regexp"
 	"strings"
@@ -37,7 +38,7 @@ func NewDemoMap(demoFiles []string) (demoMap DemoMap, errs error) {
 func extractDemoTags(path string) ([]string, error) {
 	code, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not extract demo tags from file: %w", err)
 	}
 	parser := Q.GetHTMLParser()
 	defer Q.PutHTMLParser(parser)

@@ -116,7 +116,7 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 	}
 
 	var superclassName string
-	mp.step("Processing heritage", 1, func() {
+	err := mp.step("Processing heritage", 1, func() error {
 		superClassNameNodes, ok := captures["superclass.name"]
 		if ok && len(superClassNameNodes) > 0 {
 			superclassName = superClassNameNodes[0].Text
@@ -138,36 +138,48 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 			}
 			declaration.Superclass = M.NewReference(superclassName, pkg, module)
 		}
+		return nil
 	})
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
 
-	mp.step("Processing members", 1, func() {
+	err = mp.step("Processing members", 1, func() error {
 		members, err := mp.getClassMembersFromClassDeclarationNode(
 			declaration.ClassLike.Name,
 			classDeclarationNode,
 			superclassName,
 		)
 		if err != nil {
-			errs = errors.Join(errs, err)
+			return err
 		}
 		declaration.Members = append(declaration.Members, members...)
 		slices.SortStableFunc(declaration.Members, func(a M.ClassMember, b M.ClassMember) int {
 			return int(a.GetStartByte() - b.GetStartByte())
 		})
+		return nil
 	})
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
 
-	mp.step("Processing jsdoc", 1, func() {
+	err = mp.step("Processing jsdoc", 1, func() error {
 		jsdoc, ok := captures["class.jsdoc"]
 		if ok && len(jsdoc) > 0 {
 			info, err := NewClassInfo(jsdoc[0].Text, mp.queryManager)
 			if err != nil {
-				mp.errors = errors.Join(mp.errors, err)
+				return err
 			} else {
 				info.MergeToClassDeclaration(declaration)
 			}
 		}
+		return nil
 	})
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
 
-	return declaration, emptyAlias, nil
+	return declaration, emptyAlias, errs
 }
 
 func (mp *ModuleProcessor) generateHTMLElementClassDeclaration(
@@ -191,7 +203,7 @@ func (mp *ModuleProcessor) generateHTMLElementClassDeclaration(
 		},
 	}
 
-	mp.step("Processing observedAttributes", 1, func() {
+	err = mp.step("Processing observedAttributes", 1, func() error {
 		for _, name := range captures["observedAttributes.attributeName"] {
 			declaration.CustomElement.Attributes = append(declaration.CustomElement.Attributes, M.Attribute{
 				StartByte: name.StartByte,
@@ -200,14 +212,18 @@ func (mp *ModuleProcessor) generateHTMLElementClassDeclaration(
 				},
 			})
 		}
+		return nil
 	})
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
 
-	mp.step("Processing class jsdoc", 1, func() {
+	err = mp.step("Processing class jsdoc", 1, func() error {
 		jsdoc, ok := captures["class.jsdoc"]
 		if ok && len(jsdoc) > 0 {
 			info, err := NewClassInfo(jsdoc[0].Text, mp.queryManager)
 			if err != nil {
-				mp.errors = errors.Join(mp.errors, err)
+				return err
 			} else {
 				info.MergeToCustomElementDeclaration(declaration)
 				alias = info.Alias
@@ -216,7 +232,11 @@ func (mp *ModuleProcessor) generateHTMLElementClassDeclaration(
 		slices.SortStableFunc(declaration.Attributes, func(a M.Attribute, b M.Attribute) int {
 			return int(a.StartByte - b.StartByte)
 		})
+		return nil
 	})
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
 
 	return declaration, alias, errs
 }
@@ -272,7 +292,7 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 		}
 	})(declaration.Members)
 
-	mp.step("Processing render template", 2, func() {
+	err = mp.step("Processing render template", 2, func() error {
 		renderTemplateNodes, hasRenderTemplate := captures["render.template"]
 		if hasRenderTemplate {
 			renderTemplateNodeId := renderTemplateNodes[0].NodeId
@@ -290,14 +310,18 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 				}
 			}
 		}
+		return nil
 	})
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
 
-	mp.step("Processing class jsdoc", 2, func() {
+	err = mp.step("Processing class jsdoc", 2, func() error {
 		jsdoc, ok := captures["class.jsdoc"]
 		if ok && len(jsdoc) > 0 {
 			classInfo, err := NewClassInfo(jsdoc[0].Text, mp.queryManager)
 			if err != nil {
-				errs = errors.Join(errs, err)
+				return err
 			} else {
 				classInfo.MergeToCustomElementDeclaration(declaration)
 				alias = classInfo.Alias
@@ -306,7 +330,11 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 		slices.SortStableFunc(declaration.Attributes, func(a M.Attribute, b M.Attribute) int {
 			return int(a.StartByte - b.StartByte)
 		})
+		return nil
 	})
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
 
 	return declaration, alias, errs
 }

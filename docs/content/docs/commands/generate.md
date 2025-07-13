@@ -161,21 +161,26 @@ cem generate \
 
 For npm projects you can use `npx @pwrs/cem generate ...`.
 
+{{<tip "note">}}
+The `generate` command does not support remote packages. To inspect a remote package's manifest, use the `cem list` command.
+{{</tip>}}
+
 ### Command Line Arguments
 
 | Argument                        | Type               | Description                                                                                       |
 | ------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------- |
 | `<files or globs>`              | positional (array) | Files or glob patterns to include                                                                 |
+| `--package, -p`                 | string             | Path to a package directory.                                                                      |
 | `--output, -o`                  | string             | Write the manifest to this file instead of stdout                                                 |
 | `--exclude, -e`                 | array              | Files or glob patterns to exclude                                                                 |
 | `--no-default-excludes`         | bool               | Do not exclude files by default (e.g., `.d.ts` files will be included unless excluded explicitly) |
-| `--design-tokens, -t`           | string             | Path or npm specifier for DTCG-format design tokens                                               |
-| `--design-tokens-prefix, -p`    | string             | CSS custom property prefix for design tokens                                                      |
+| `--design-tokens`               | string             | Path or npm specifier for DTCG-format design tokens                                               |
+| `--design-tokens-prefix`        | string             | CSS custom property prefix for design tokens                                                      |
 | `--demo-discovery-file-glob`    | string             | Glob pattern for discovering demo files                                                           |
 | `--demo-discovery-url-pattern`  | string             | Go Regexp pattern with named capture groups for generating canonical demo urls                    |
 | `--demo-discovery-url-template` | string             | URL pattern string using {groupName} syntax to interpolate named captures from the URL pattern    |
 | `--source-control-root-url`     | string             | Glob pattern for discovering demo files                                                           |
-| `--project-dir`                 | string             | Specify the project root directory to use for resolving relative paths and configuration.         |
+| `--project-dir`                 | string             | **Deprecated:** Use `--package` instead.                                                          |
 
 By default, some files (like `.d.ts` TypeScript declaration files) are excluded from the manifest.
 Use `--no-default-excludes` if you want to include all matching files and manage excludes yourself.

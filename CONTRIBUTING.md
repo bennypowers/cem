@@ -40,12 +40,27 @@ You can build a specific Windows architecture:
 
 > Note: These builds are cross-compiled and cannot be run directly on macOS or Linux. Test on a Windows machine or VM if needed.
 
+## Workspace Package
+
+The `workspace` package provides a consistent interface for working with local and remote packages. It abstracts away the details of whether files are on the local filesystem or need to be fetched from a remote source like the npm registry. This allows the `list` command to work with both local and remote packages seamlessly.
+
 ## Testing
 
-Run Go tests:
+This project includes both unit tests and end-to-end (E2E) tests.
+
+- Run unit tests: `make test-unit`
+- Run E2E tests: `make test-e2e`
+- Run all tests: `make test`
+
+### Code Coverage
+
+To view the test coverage report, run:
+
 ```sh
-make test
+make show-coverage
 ```
+
+This will open an HTML report in your browser.
 
 ## Continuous Integration (CI)
 

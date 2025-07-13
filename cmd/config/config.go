@@ -1,154 +1,78 @@
+/*
+Copyright © 2025 Benny Powers <web@bennypowers.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
 package config
 
-import (
-	"errors"
-	"os"
-	"path/filepath"
-	"strings"
-
-	"github.com/pterm/pterm"
-	"github.com/spf13/viper"
-)
-
 type DemoDiscoveryConfig struct {
-	FileGlob    string `mapstructure:"fileGlob"`
-	URLPattern  string `mapstructure:"urlPattern"`
-	URLTemplate string `mapstructure:"urlTemplate"`
+	FileGlob    string `mapstructure:"fileGlob" yaml:"fileGlob"`
+	URLPattern  string `mapstructure:"urlPattern" yaml:"urlPattern"`
+	URLTemplate string `mapstructure:"urlTemplate" yaml:"urlTemplate"`
 }
 
 type DesignTokensConfig struct {
-	// Path or `npm:@scope/package/path/to/file.json` spec to DTCG format design
-	// tokens json module
-	Spec string
+	// Path or `npm:@scope/package/path/to/file.json` spec to DTCG format design tokens json module
+	Spec string `mapstructure:"spec" yaml:"spec"`
 	// Prefix those design tokens use in CSS. If the design tokens are generated
 	// by style dictionary and have a `name` field, that will be used instead.
-	Prefix string
+	Prefix string `mapstructure:"prefix" yaml:"prefix"`
 }
 
 // CLI or config arguments passed to the generate command
 type GenerateConfig struct {
 	// List of files or file globs to include in the manifest
-	Files []string
+	Files []string `mapstructure:"files" yaml:"files"`
 	// List of files or file globs to exclude from the manifest
-	Exclude []string
+	Exclude []string `mapstructure:"exclude" yaml:"exclude"`
 	// Do not exclude files that are excluded by default e.g. *.d.ts files.
-	NoDefaultExcludes bool
+	NoDefaultExcludes bool `mapstructure:"noDefaultExcludes" yaml:"noDefaultExcludes"`
 	// File path to write output to. If omitted, output will be written to stdout.
-	Output string
+	Output string `mapstructure:"output" yaml:"output"`
 	// Configuration for design tokens discovery
-	DesignTokens DesignTokensConfig
+	DesignTokens DesignTokensConfig `mapstructure:"designTokens" yaml:"designTokens"`
 	// Configuration for demo file discovery
-	DemoDiscovery DemoDiscoveryConfig
+	DemoDiscovery DemoDiscoveryConfig `mapstructure:"demoDiscovery" yaml:"demoDiscovery"`
 }
 
 type CemConfig struct {
-	ProjectDir string `mapstructure:"projectDir"`
-	ConfigFile string `mapstructure:"configFile"`
+	ProjectDir string `mapstructure:"projectDir" yaml:"projectDir"`
+	ConfigFile string `mapstructure:"configFile" yaml:"configFile"`
 	// Package name, as would appear in a package.json "name" field
-	PackageName string `mapstructure:"packageName"`
+	PackageName string `mapstructure:"packageName" yaml:"packageName"`
 	// Generate command options
-	Generate GenerateConfig `mapstructure:"generate"`
+	Generate GenerateConfig `mapstructure:"generate" yaml:"generate"`
 	// Canonical public source control URL corresponding to project root on primary branch.
 	// e.g. https://github.com/bennypowers/cem/tree/main/
-	SourceControlRootUrl string `mapstructure:"sourceControlRootUrl"`
+	SourceControlRootUrl string `mapstructure:"sourceControlRootUrl" yaml:"sourceControlRootUrl"`
 	// Verbose logging output
-	Verbose bool `mapstructure:"verbose"`
+	Verbose bool `mapstructure:"verbose" yaml:"verbose"`
 }
 
-func resolveProjectDir(configPath, projectDirFlag string) string {
-	if projectDirFlag != "" {
-		abs, err := expandPath(projectDirFlag)
-		if err != nil {
-			pterm.Fatal.Printf("Invalid --project-dir: %v", err)
-		}
-		return abs
+func (c *CemConfig) Clone() *CemConfig {
+	if c == nil {
+		return nil
 	}
-	configAbs, err := filepath.Abs(configPath)
-	if err != nil {
-		pterm.Fatal.Printf("Invalid --config: %v", err)
+	clone := *c
+	// Deep copy slices
+	if c.Generate.Files != nil {
+		clone.Generate.Files = make([]string, len(c.Generate.Files))
+		copy(clone.Generate.Files, c.Generate.Files)
 	}
-	configDir := filepath.Dir(configAbs)
-	base := filepath.Base(configDir)
-	if base == ".config" || base == "config" {
-		return filepath.Dir(configDir)
+	if c.Generate.Exclude != nil {
+		clone.Generate.Exclude = make([]string, len(c.Generate.Exclude))
+		copy(clone.Generate.Exclude, c.Generate.Exclude)
 	}
-	// fallback: use current working directory
-	cwd, err := os.Getwd()
-	if err != nil {
-		pterm.Fatal.Printf("Unable to get current working directory: %v", err)
-	}
-	if !strings.HasPrefix(configAbs, cwd) {
-		pterm.Warning.Printf("Warning: --config is outside of current dir, guessing project root as %s\n", cwd)
-	}
-	return cwd
-}
-
-// expandPath expands ~, handles relative and absolute paths
-func expandPath(path string) (string, error) {
-	if path == "" {
-		return "", nil
-	}
-	if strings.HasPrefix(path, "~") {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return "", err
-		}
-		// Support ~/ and ~
-		if path == "~" {
-			path = home
-		} else if strings.HasPrefix(path, "~/") {
-			path = filepath.Join(home, path[2:])
-		}
-		// Note: ~user/ is not supported (Go stdlib doesn't provide this)
-	}
-	return filepath.Abs(path)
-}
-
-func LoadConfig(v *viper.Viper, cfgFile string, projectDir string) (config *CemConfig, err error) {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		cfgFile, err = expandPath(cfgFile)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		// Search config in local project .config directory with name "cem.yaml"
-		cfgFile, err = expandPath(filepath.Join(projectDir, "./.config", "cem.yaml"))
-		if err != nil {
-			return nil, err
-		}
-	}
-	v.AddConfigPath(filepath.Dir(cfgFile))
-	v.SetConfigFile(cfgFile)
-	v.SetConfigType("yaml")
-	v.SetConfigName("cem.yaml")
-	v.AutomaticEnv() // read in environment variables that match
-	if err := v.ReadInConfig(); err != nil {
-		var notFoundErr viper.ConfigFileNotFoundError
-		if errors.As(err, &notFoundErr) {
-			return &CemConfig{}, nil
-		} else {
-			return nil, err
-		}
-	}
-	if err := v.Unmarshal(&config); err != nil {
-		return nil, err
-	}
-	if projectDir != "" {
-		projectDir, err = expandPath(projectDir)
-		if err != nil {
-			return nil, err
-		}
-	}
-	config.ProjectDir = resolveProjectDir(cfgFile, projectDir)
-	config.ConfigFile = cfgFile
-	if !filepath.IsAbs(config.Generate.Output) {
-		config.Generate.Output = filepath.Join(projectDir, config.Generate.Output)
-	}
-	if config.Verbose {
-		pterm.EnableDebugMessages()
-	} else {
-		pterm.DisableDebugMessages()
-	}
-	return config, nil
+	return &clone
 }

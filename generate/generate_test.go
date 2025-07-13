@@ -1,4 +1,4 @@
-package generate
+package generate_test
 
 import (
 	"encoding/json"
@@ -10,17 +10,16 @@ import (
 	"strings"
 	"testing"
 
-	"bennypowers.dev/cem/cmd/config"
+	"bennypowers.dev/cem/generate"
+	W "bennypowers.dev/cem/workspace"
 	"github.com/nsf/jsondiff"
-	"github.com/spf13/viper"
 )
 
 var update = flag.Bool("update", false, "update golden files")
 
 type testcase struct {
-	name   string
-	path   string
-	config *config.CemConfig
+	name string
+	path string
 }
 
 func TestGenerate(t *testing.T) {
@@ -41,30 +40,29 @@ func TestGenerate(t *testing.T) {
 	}
 
 	for _, projectEntry := range projects {
-		if !projectEntry.IsDir() {
+		if !projectEntry.IsDir() || projectEntry.Name() == ".config" {
 			continue
 		}
-		projectDir := filepath.Join("../test/fixtures", projectEntry.Name())
-		t.Run(projectEntry.Name(), func(t *testing.T) {
-			oldWd, _ := os.Getwd()
-			if err := os.Chdir(projectDir); err != nil {
-				t.Fatalf("failed to chdir to %s: %v", projectDir, err)
-			}
-			defer os.Chdir(oldWd)
+		projectDir := filepath.Join("../test/fixtures/", projectEntry.Name())
 
+		t.Run(projectEntry.Name(), func(t *testing.T) {
 			projectGoldenDir := "golden"
-			if err := os.MkdirAll(projectGoldenDir, 0755); err != nil {
+			if err := os.MkdirAll(filepath.Join(projectDir, projectGoldenDir), 0755); err != nil {
 				t.Fatalf("failed to create %s: %v", projectGoldenDir, err)
 			}
 
-			configPath := filepath.Join(".config", "cem.yaml")
-			cfg, err := config.LoadConfig(viper.New(), configPath, ".")
-			if err != nil {
-				t.Fatalf("failed to load config: %v", err)
+			ctx := W.NewFileSystemWorkspaceContext(projectDir)
+			if err := ctx.Init(); err != nil {
+				t.Fatalf("TestGenerate: %v", err)
 			}
-			fixtures, err := os.ReadDir("src")
+
+			cfg, err := ctx.Config()
 			if err != nil {
-				t.Fatalf("cannot read src directory: %v", err)
+				t.Fatalf("TestGenerate: %v", err)
+			}
+			fixtures, err := os.ReadDir(filepath.Join(projectDir, "src"))
+			if err != nil {
+				t.Fatalf("TestGenerate: %v", err)
 			}
 
 			var cases []testcase
@@ -77,21 +75,20 @@ func TestGenerate(t *testing.T) {
 					continue
 				}
 				cases = append(cases, testcase{
-					name:   name,
-					path:   filepath.Join("src", fixture.Name()),
-					config: cfg,
+					name: name,
+					path: filepath.Join("src", fixture.Name()),
 				})
 			}
 
 			for _, tc := range cases {
 				// capture range variable
 				t.Run(tc.name, func(t *testing.T) {
-					tc.config.Generate.Files = []string{tc.path}
-					actual, err := Generate(tc.config)
+					cfg.Generate.Files = []string{tc.path}
+					actual, err := generate.Generate(ctx)
 					if err != nil {
 						t.Fatal(err)
 					}
-					golden := filepath.Join(projectGoldenDir, tc.name+".json")
+					golden := filepath.Join(projectDir, projectGoldenDir, tc.name+".json")
 					if *update {
 						if err := os.WriteFile(golden, []byte(*actual), 0644); err != nil {
 							t.Fatalf("failed to write golden file: %v", err)

@@ -1,0 +1,5 @@
+{
+  "name": "test",
+  "version": "test",
+  "customElements": "dist/custom-elements.json"
+}
