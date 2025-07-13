@@ -32,6 +32,7 @@ var ErrNoManifest = errors.New("no package.json found, could not derive custom-e
 var ErrRemoteUnsupported = fmt.Errorf("Remote workspace context is not yet supported: %w", errors.ErrUnsupported)
 var ErrNoPackageCustomElements = errors.New("package does not specify a custom elements manifest")
 var ErrManifestNotFound = errors.New("manifest not found")
+var ErrPackageNotFound = errors.New("package not found")
 
 // isGlobPattern checks if a string contains any common glob pattern metacharacters.
 // This is a heuristic and may produce false positives for file paths that

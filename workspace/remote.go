@@ -97,6 +97,11 @@ func (c *RemoteWorkspaceContext) Init() error {
 			return nil // Success
 		}
 
+		if errors.Is(err, ErrPackageNotFound) {
+			pterm.Debug.Println("Package not found on CDN, stopping.")
+			return err // The package doesn't exist, no point in trying others.
+		}
+
 		lastCdnError = err // Store the error to return later if all fallbacks fail
 
 		// If we successfully got package.json but failed to get the manifest,
@@ -135,11 +140,11 @@ func (c *RemoteWorkspaceContext) readInPackageJSON() error {
 	return nil
 }
 
-func (c *RemoteWorkspaceContext) fetchFromUnpkg(name, version string) error {
-	c.spinner.UpdateText("Fetching package from unpkg")
-	base := fmt.Sprintf("https://unpkg.com/%s@%s/", name, version)
+func (c *RemoteWorkspaceContext) fetchFromCDN(name, version, cdnName, baseUrlPattern string) error {
+	c.spinner.UpdateText(fmt.Sprintf("Fetching package from %s", cdnName))
+	base := fmt.Sprintf(baseUrlPattern, name, version)
 	if err := c.fetch(base+"package.json", c.packageJSONPath); err != nil {
-		c.spinner.Warning("Failed to load package.json from unpkg")
+		c.spinner.Warning(fmt.Sprintf("Failed to load package.json from %s", cdnName))
 		return err
 	}
 	if err := c.readInPackageJSON(); err != nil {
@@ -147,28 +152,18 @@ func (c *RemoteWorkspaceContext) fetchFromUnpkg(name, version string) error {
 	}
 	c.customElementsPath = filepath.Join(c.cacheDir, c.packageJSON.CustomElements)
 	if err := c.fetch(base+c.packageJSON.CustomElements, c.customElementsPath); err != nil {
-		c.spinner.Warning("Failed to load " + c.packageJSON.CustomElements + " from unpkg")
+		c.spinner.Warning(fmt.Sprintf("Failed to load %s from %s", c.packageJSON.CustomElements, cdnName))
 		return err
 	}
 	return nil
 }
 
+func (c *RemoteWorkspaceContext) fetchFromUnpkg(name, version string) error {
+	return c.fetchFromCDN(name, version, "unpkg", "https://unpkg.com/%s@%s/")
+}
+
 func (c *RemoteWorkspaceContext) fetchFromEsmsh(name, version string) error {
-	c.spinner.UpdateText("Fetching package from esm.sh")
-	base := fmt.Sprintf("https://esm.sh/%s@%s/", name, version)
-	if err := c.fetch(base+"package.json", c.packageJSONPath); err != nil {
-		c.spinner.Warning("Failed to load package.json from esm.sh")
-		return err
-	}
-	if err := c.readInPackageJSON(); err != nil {
-		return err
-	}
-	c.customElementsPath = filepath.Join(c.cacheDir, c.packageJSON.CustomElements)
-	if err := c.fetch(base+c.packageJSON.CustomElements, c.customElementsPath); err != nil {
-		c.spinner.Warning("Failed to load " + c.packageJSON.CustomElements + " from esm.sh")
-		return err
-	}
-	return nil
+	return c.fetchFromCDN(name, version, "esm.sh", "https://esm.sh/%s@%s/")
 }
 
 func (c *RemoteWorkspaceContext) fetchFromNpm(name, version string) error {
@@ -311,6 +306,9 @@ func (c *RemoteWorkspaceContext) fetch(url, dest string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusNotFound {
+		if strings.HasSuffix(url, "package.json") {
+			return fmt.Errorf("%w: %s", ErrPackageNotFound, c.name)
+		}
 		return fmt.Errorf("%w: %s", ErrManifestNotFound, url)
 	}
 
