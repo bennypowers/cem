@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 WINDOWS_CC_IMAGE := cem-windows-cc-image
 
-.PHONY: build test update watch bench profile flamegraph coverage clean lint format prepare-npm install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image
+.PHONY: build test update watch bench profile flamegraph coverage show-coverage clean lint format prepare-npm install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image
 
 all: windows
 
@@ -72,4 +72,17 @@ flamegraph: profile
 	go tool pprof -http=:8080 cpu.out # Visual analysis
 
 coverage:
-	go test -coverprofile=cover.out
+	@echo "Running unit tests with coverage..."
+	go test -coverprofile=cover.unit.out -covermode=atomic ./...
+	@echo "Running e2e tests with coverage..."
+	go test -count=1 -tags=e2e ./cmd/
+	@echo "Merging coverage profiles..."
+	@echo "mode: atomic" > cover.out
+	@grep -h -v "^mode:" cover.unit.out cmd/coverage.e2e.out >> cover.out
+	@rm cover.unit.out cmd/coverage.e2e.out
+	@echo "Coverage report:"
+	@go tool cover -func=cover.out
+	@echo "To view the full report, run 'make show-coverage'"
+
+show-coverage:
+	go tool cover -html=cover.out

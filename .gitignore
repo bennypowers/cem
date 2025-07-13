@@ -1,6 +1,8 @@
 cem
 __debug*
 *.out
+cover.*.out
+coverage.html
 *.test
 dist
 docs/resources

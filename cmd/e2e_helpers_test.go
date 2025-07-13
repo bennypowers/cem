@@ -5,6 +5,7 @@ package cmd_test
 import (
 	"bytes"
 	"fmt"
+
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -39,24 +40,54 @@ func TestMain(m *testing.M) {
 	}
 	defer os.RemoveAll(coverDir)
 
-	cemBinary = filepath.Join(binaryDir, "cem")
-
 	// Build the binary with coverage instrumentation from the project root
-	buildCmd := exec.Command("go", "build", "-o", cemBinary, "-cover", "..")
+	buildCmd := exec.Command(
+		"go",
+		"build",
+		"-o",
+		binaryDir,
+		"-cover",
+		"-coverpkg",
+		"./...",
+		"./...",
+	)
+	buildCmd.Dir = ".."
 	buildCmd.Stderr = os.Stderr
 	if err := buildCmd.Run(); err != nil {
 		panic("Failed to build cem binary: " + err.Error())
 	}
+
+	cemBinary = filepath.Join(binaryDir, "cem")
 
 	// Run the tests
 	code := m.Run()
 
 	// Merge coverage data from the E2E tests into a single profile.
 	// This file is placed in the `cmd` directory where `go test` is run.
-	mergeCmd := exec.Command("go", "tool", "covdata", "merge", "-i", coverDir, "-o", "coverage.e2e.out")
+	cwd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
+	e2eCoverDir := filepath.Join(cwd, "coverage.e2e")
+	e2eCoverOut := filepath.Join(cwd, "coverage.e2e.out")
+
+	defer os.RemoveAll(e2eCoverDir)
+
+	mergeCmd := exec.Command("go", "tool", "covdata", "merge", "-i", coverDir, "-o", e2eCoverDir)
+	mergeCmd.Stdout = os.Stdout
 	mergeCmd.Stderr = os.Stderr
 	if err := mergeCmd.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to merge coverage data: %v\n", err)
+	}
+
+	// Convert the merged data to the legacy text format
+	// so it can be read by `go tool cover`
+	textCmd := exec.Command("go", "tool", "covdata", "textfmt", "-i", e2eCoverDir, "-o", e2eCoverOut)
+	textCmd.Stdout = os.Stdout
+	textCmd.Stderr = os.Stderr
+	if err := textCmd.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to convert coverage data: %v\n", err)
 	}
 
 	os.Exit(code)
@@ -87,6 +118,7 @@ func runCemCommand(t *testing.T, workDir string, args ...string) (stdout, stderr
 	cmd.Dir = workDir
 	cmd.Env = append(os.Environ(), "GOCOVERDIR="+coverDir)
 	var out, errOut bytes.Buffer
+	fmt.Fprintf(&out, "coverDir=%q", coverDir)
 	cmd.Stdout = &out
 	cmd.Stderr = &errOut
 
