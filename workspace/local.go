@@ -137,7 +137,7 @@ func (c *FileSystemWorkspaceContext) Manifest() (*M.Package, error) {
 	}
 
 	if pkg != nil {
-		return nil, ErrNoPackageCustomElements
+		return nil, ErrManifestNotFound
 	}
 
 	// If all else fails, return an error

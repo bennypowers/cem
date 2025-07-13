@@ -57,42 +57,67 @@ func NewRemoteWorkspaceContext(spec string) *RemoteWorkspaceContext {
 }
 
 func (c *RemoteWorkspaceContext) Init() error {
-	var errs error
 	name, version, err := parseNpmSpecifier(c.spec)
 	if err != nil {
 		return err
 	}
+	c.name = name
+	c.version = version
 	c.cacheDir = filepath.Join(xdg.CacheHome, "cem", "packages", pkgCacheDirName(name, version))
 	c.packageJSONPath = filepath.Join(c.cacheDir, "package.json")
-	// If already cached, return
-	if fileExists(c.packageJSONPath) && fileExists(c.customElementsPath) {
-		return nil
-	}
-	os.MkdirAll(c.cacheDir, 0755)
-	c.spinner, err = pterm.SpinnerPrinter.Start(*pterm.DefaultSpinner.WithRemoveWhenDone())
-	if err != nil {
-		return err
-	}
-	defer c.spinner.Stop()
-	// Try unpkg
-	if err := c.fetchFromUnpkg(name, version); err == nil {
-		return errs
-	} else {
-		errs = errors.Join(errs, err)
-	}
-	// Try esm.sh
-	if err := c.fetchFromEsmsh(name, version); err == nil {
-		return errs
-	} else {
-		errs = errors.Join(errs, err)
+
+	// Check cache first
+	if fileExists(c.packageJSONPath) {
+		if err := c.readInPackageJSON(); err == nil {
+			c.customElementsPath = filepath.Join(c.cacheDir, c.packageJSON.CustomElements)
+			if fileExists(c.customElementsPath) {
+				pterm.Debug.Printf("Using cached remote package %s\n", c.spec)
+				return nil // Fully cached
+			}
+		}
 	}
 
-	// Try npm tarball
-	err = c.fetchFromNpm(name, version)
-	if err != nil {
-		errs = errors.Join(errs, err)
+	if err := os.MkdirAll(c.cacheDir, 0755); err != nil {
+		return fmt.Errorf("failed to create cache directory: %w", err)
 	}
-	return errs
+
+	c.spinner, _ = pterm.SpinnerPrinter.Start(*pterm.DefaultSpinner.WithRemoveWhenDone())
+	defer c.spinner.Stop()
+
+	// Try fetching from CDNs first
+	cdnFetchers := []func(string, string) error{
+		c.fetchFromUnpkg,
+		c.fetchFromEsmsh,
+	}
+
+	var lastCdnError error
+	for _, fetcher := range cdnFetchers {
+		err := fetcher(name, version)
+		if err == nil {
+			return nil // Success
+		}
+
+		lastCdnError = err // Store the error to return later if all fallbacks fail
+
+		// If we successfully got package.json but failed to get the manifest,
+		// then the manifest is confirmed to be missing. No need to try other sources.
+		if c.packageJSON != nil && errors.Is(err, ErrManifestNotFound) {
+			pterm.Debug.Println("Found package.json but manifest is missing. Stopping.")
+			return ErrManifestNotFound
+		}
+
+		pterm.Debug.Printf("CDN fetcher failed, trying next source: %v\n", err)
+	}
+
+	// If we're here, it means we couldn't even get package.json from any CDN.
+	// Fallback to the npm tarball.
+	pterm.Debug.Println("All CDN fetchers failed. Falling back to npm tarball.")
+	if err := c.fetchFromNpm(name, version); err != nil {
+		// Join the npm error with the last CDN error for a more complete picture.
+		return errors.Join(lastCdnError, err)
+	}
+
+	return nil // Success from npm tarball
 }
 
 func (c *RemoteWorkspaceContext) readInPackageJSON() error {
@@ -113,15 +138,16 @@ func (c *RemoteWorkspaceContext) readInPackageJSON() error {
 func (c *RemoteWorkspaceContext) fetchFromUnpkg(name, version string) error {
 	c.spinner.UpdateText("Fetching package from unpkg")
 	base := fmt.Sprintf("https://unpkg.com/%s@%s/", name, version)
-	if err := c.fetch(base + "package.json"); err != nil {
-		c.spinner.Warning("Failed to load package.json", err)
+	if err := c.fetch(base+"package.json", c.packageJSONPath); err != nil {
+		c.spinner.Warning("Failed to load package.json from unpkg")
 		return err
 	}
 	if err := c.readInPackageJSON(); err != nil {
 		return err
 	}
-	if err := c.fetch(base + c.packageJSON.CustomElements); err != nil {
-		c.spinner.Warning("Failed to load "+c.packageJSON.CustomElements, err)
+	c.customElementsPath = filepath.Join(c.cacheDir, c.packageJSON.CustomElements)
+	if err := c.fetch(base+c.packageJSON.CustomElements, c.customElementsPath); err != nil {
+		c.spinner.Warning("Failed to load " + c.packageJSON.CustomElements + " from unpkg")
 		return err
 	}
 	return nil
@@ -130,16 +156,16 @@ func (c *RemoteWorkspaceContext) fetchFromUnpkg(name, version string) error {
 func (c *RemoteWorkspaceContext) fetchFromEsmsh(name, version string) error {
 	c.spinner.UpdateText("Fetching package from esm.sh")
 	base := fmt.Sprintf("https://esm.sh/%s@%s/", name, version)
-	if err := c.fetch(base + "package.json"); err != nil {
-		c.spinner.Warning("Failed to load package.json", err)
+	if err := c.fetch(base+"package.json", c.packageJSONPath); err != nil {
+		c.spinner.Warning("Failed to load package.json from esm.sh")
 		return err
 	}
 	if err := c.readInPackageJSON(); err != nil {
 		return err
 	}
-	c.spinner.UpdateText("Fetching package from esm.sh (" + c.packageJSON.CustomElements + ")")
-	if err := c.fetch(base + c.packageJSON.CustomElements); err != nil {
-		c.spinner.Warning("Failed to load "+c.packageJSON.CustomElements, err)
+	c.customElementsPath = filepath.Join(c.cacheDir, c.packageJSON.CustomElements)
+	if err := c.fetch(base+c.packageJSON.CustomElements, c.customElementsPath); err != nil {
+		c.spinner.Warning("Failed to load " + c.packageJSON.CustomElements + " from esm.sh")
 		return err
 	}
 	return nil
@@ -276,18 +302,26 @@ func setupTempdirFromCache(cacheDir string) (string, error) {
 	return tempdir, nil
 }
 
-func (c *RemoteWorkspaceContext) fetch(url string, dirs ...string) error {
+func (c *RemoteWorkspaceContext) fetch(url, dest string) error {
 	c.spinner.UpdateText("Fetching " + url)
-	base := path.Base(url)
-	parts := []string{c.cacheDir}
-	parts = append(parts, dirs...)
-	parts = append(parts, base)
-	dest := filepath.Join(parts...)
 	resp, err := http.Get(url)
-	if err != nil || resp.StatusCode != 200 {
-		return fmt.Errorf("failed to fetch %s", url)
+	if err != nil {
+		return err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return fmt.Errorf("%w: %s", ErrManifestNotFound, url)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to fetch %s: status %s", url, resp.Status)
+	}
+
+	if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
+		return err
+	}
+
 	out, err := os.Create(dest)
 	if err != nil {
 		return err

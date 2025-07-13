@@ -31,6 +31,7 @@ import (
 var ErrNoManifest = errors.New("no package.json found, could not derive custom-elements.json")
 var ErrRemoteUnsupported = fmt.Errorf("Remote workspace context is not yet supported: %w", errors.ErrUnsupported)
 var ErrNoPackageCustomElements = errors.New("package does not specify a custom elements manifest")
+var ErrManifestNotFound = errors.New("manifest not found")
 
 // isGlobPattern checks if a string contains any common glob pattern metacharacters.
 // This is a heuristic and may produce false positives for file paths that
@@ -46,13 +47,25 @@ func isGlobPattern(pattern string) bool {
 // parseNpmSpecifier parses a spec like "@scope/pkg@1.2.3" or "pkg@1.2.3"
 func parseNpmSpecifier(spec string) (name, version string, err error) {
 	spec = strings.TrimPrefix(spec, "npm:")
-	parts := strings.Split(spec, "@")
-	if len(parts) < 2 {
-		return "", "", errors.New("invalid npm specifier")
+	atIndex := strings.LastIndex(spec, "@")
+
+	if atIndex <= 0 { // <= 0 to handle scoped packages like @foo/bar
+		name = spec
+		version = "latest"
+	} else {
+		name = spec[:atIndex]
+		version = spec[atIndex+1:]
 	}
-	name = strings.Join(parts[:len(parts)-1], "@")
-	version = parts[len(parts)-1]
-	return
+
+	if name == "" {
+		return "", "", errors.New("invalid npm specifier: missing package name")
+	}
+
+	if version == "" {
+		version = "latest"
+	}
+
+	return name, version, nil
 }
 
 // decodeJSON parses a JSON stream into a struct of type T.
