@@ -50,14 +50,20 @@ func Render(r M.Renderable, opts RenderOptions) (string, error) {
 
 	// Only print the main header if we are not filtering by section.
 	if len(opts.IncludeSections) == 0 {
-		builder.WriteString(pterm.DefaultSection.WithLevel(1).Sprintf("%s", r.Label()))
+		label := r.Label()
+		switch r.(type) {
+		case *M.RenderableCustomElementDeclaration:
+			label = "`" + label + "`"
+		}
+		formatted := pterm.DefaultSection.WithLevel(1).Sprint(label)
+		builder.WriteString(strings.TrimSpace(formatted) + "\n\n")
 
 		if d, ok := r.(M.Describable); ok {
 			if summary := d.Summary(); summary != "" {
-				builder.WriteString(pterm.Sprintf("%s\n", summary))
+				builder.WriteString(summary + "\n")
 			}
 			if description := d.Description(); description != "" {
-				builder.WriteString(pterm.Sprintf("%s\n", description))
+				builder.WriteString(description + "\n")
 			}
 		}
 	}
@@ -74,7 +80,8 @@ func Render(r M.Renderable, opts RenderOptions) (string, error) {
 			}
 
 			// The title for a subsection is smaller
-			builder.WriteString(pterm.DefaultSection.WithLevel(2).Sprintf("%s", section.Title))
+			formatted := pterm.DefaultSection.WithLevel(2).Sprint(section.Title)
+			builder.WriteString(strings.TrimSpace(formatted) + "\n\n")
 			headers := section.Items[0].ColumnHeadings()
 			rows := MapToTableRows(section.Items)
 
@@ -98,18 +105,20 @@ func Render(r M.Renderable, opts RenderOptions) (string, error) {
 			if s, err := Render(child, opts); err != nil {
 				return "", err
 			} else {
-				builder.WriteString(s)
+				builder.WriteString(s + "\n")
 			}
 		}
 	}
 
-	return builder.String(), nil
+	return strings.TrimRight(builder.String(), "\n") + "\n\n", nil
 }
 
 // RenderTable renders a simple table with a title.
 func RenderTable(title string, headers []string, rows [][]string, columns []string) (string, error) {
 	var builder strings.Builder
-	builder.WriteString(pterm.DefaultSection.Sprintf("%s", title))
+
+	formatted := pterm.DefaultSection.Sprint(title)
+	builder.WriteString(strings.TrimSpace(formatted) + "\n\n")
 	str, err := formatTable(headers, rows, columns)
 	if err != nil {
 		return "", err
