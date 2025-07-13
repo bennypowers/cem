@@ -18,12 +18,12 @@ package workspace
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 
-	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -42,50 +42,49 @@ func GetWorkspaceContext(cmd *cobra.Command) (WorkspaceContext, error) {
 	if p, _ := cmd.Flags().GetString("configFile"); p != "" {
 		configPath = p
 	}
-	packageFlag := viper.GetString("package")
+	spec := viper.GetString("package")
 	if p, _ := cmd.Flags().GetString("package"); p != "" {
-		packageFlag = p
+		spec = p
 	}
 
-	var ctx WorkspaceContext
-	var err error
-
-	if packageFlag != "" {
-		if !IsPackageSpecifier(packageFlag) {
-			ctx = NewFileSystemWorkspaceContext(packageFlag)
-		} else {
-			ctx, err = GetPackageWorkspaceContext(packageFlag)
-			pterm.Debug.Println("GetPackageWorkspaceContext(packageFlag)", packageFlag, ctx)
-			if err != nil {
-				return nil, err
-			}
-		}
-	} else {
-		ctx = NewFileSystemWorkspaceContext(filepath.Dir(configPath))
+	// fall back to previous behavior: use the directory above .config
+	if spec == "" {
+		spec = filepath.Dir(configPath)
 	}
 
-	if err := ctx.Init(); err != nil {
+	if ctx, err := getAppropriateContextForSpec(spec, cmd.Name()); err != nil {
 		return nil, err
+	} else if err := ctx.Init(); err != nil {
+		return nil, err
+	} else {
+		// Store in cmd.Context for future calls
+		newCtx := context.WithValue(cmd.Context(), workspaceContextKey, ctx)
+		cmd.SetContext(newCtx)
+		return ctx, nil
 	}
-
-	// Store in cmd.Context for future calls
-	newCtx := context.WithValue(cmd.Context(), workspaceContextKey, ctx)
-	cmd.SetContext(newCtx)
-	return ctx, nil
 }
 
-// GetPackageWorkspaceContext should implement the local/remote npm package logic.
-func GetPackageWorkspaceContext(spec string) (WorkspaceContext, error) {
-	name, _, err := parseNpmSpecifier(spec)
-	if err != nil {
-		return nil, err
+func getAppropriateContextForSpec(spec, cmdName string) (ctx WorkspaceContext, err error) {
+	if !IsPackageSpecifier(spec) {
+		// if it's a file path, use it
+		return NewFileSystemWorkspaceContext(spec), nil
+	} else {
+		// if it's a specifier, try to get it from node_modules
+		name, _, err := parseNpmSpecifier(spec)
+		if err != nil {
+			return nil, err
+		}
+		localPath := filepath.Join("node_modules", name)
+		if stat, err := os.Stat(localPath); err == nil && stat.IsDir() {
+			return NewFileSystemWorkspaceContext(localPath), nil
+		}
+		// finally, we fetch from the network
+		if cmdName == "generate" {
+			return nil, errors.New("generate command cannot be used with a remote package specifier")
+		}
+		ctx := NewRemoteWorkspaceContext(spec)
+		return ctx, nil
 	}
-	localPath := filepath.Join("node_modules", name)
-	if stat, err := os.Stat(localPath); err == nil && stat.IsDir() {
-		return NewFileSystemWorkspaceContext(localPath), nil
-	}
-	ctx := NewRemoteWorkspaceContext(spec)
-	return ctx, err
 }
 
 func fileExists(path string) bool {
