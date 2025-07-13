@@ -23,8 +23,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
+	"bennypowers.dev/cem/cmd/config"
 	M "bennypowers.dev/cem/manifest"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -40,10 +40,7 @@ const workspaceContextKey = contextKey("workspaceContext")
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "cem",
-	Short: "Generate a custom elements manifest",
-	Long: `Scans your projects TypeScript sources and identifies custom elements.
-Generates a custom elements manifest file (custom-elements.json) describing your modules.
-Supports projects written with Lit`,
+	Short: "Tool for generating and querying custom-elements manifests",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		var err error
 		initialCWD, err = os.Getwd()
@@ -51,16 +48,16 @@ Supports projects written with Lit`,
 			return fmt.Errorf("Unable to get current working directory: %v", err)
 		}
 
-		projectCtx, err := resolveWorkspaceContext(cmd, *viper.GetViper())
+		wctx, err := resolveWorkspaceContext(cmd, *viper.GetViper())
 		if err != nil {
 			return fmt.Errorf("Failed to create project context: %v", err)
 		}
 
 		// Store the project context in the Cobra context
-		ctx := context.WithValue(cmd.Context(), workspaceContextKey, projectCtx)
+		ctx := context.WithValue(cmd.Context(), workspaceContextKey, wctx)
 		cmd.SetContext(ctx)
 
-		rootDir := projectCtx.Root()
+		rootDir := wctx.Root()
 		if p, _ := cmd.Flags().GetString("package"); p == "" {
 			viper.Set("package", rootDir)
 		}
@@ -73,7 +70,7 @@ Supports projects written with Lit`,
 		}
 		pterm.Debug.Println("Using project directory: ", rootDir)
 
-		cfgFile := projectCtx.ConfigFile()
+		cfgFile := wctx.ConfigFile()
 		if cfgFile != "" {
 			viper.SetConfigFile(cfgFile)
 			viper.Set("configFile", cfgFile)
@@ -115,9 +112,11 @@ func resolveWorkspaceContext(cmd *cobra.Command, viper viper.Viper) (M.Workspace
 		packageFlag = p
 	}
 	if packageFlag != "" {
-		if isLikelyPath(packageFlag) {
+		if !config.IsPackageSpecifier(packageFlag) {
 			ctx = M.NewFileSystemWorkspaceContext(packageFlag)
 		} else {
+			// TODO: handle if this is in local node_modules already
+			// It might be a symlink (pnpm)
 			ctx = M.NewRemoteWorkspaceContext(packageFlag)
 		}
 	} else {
@@ -127,13 +126,6 @@ func resolveWorkspaceContext(cmd *cobra.Command, viper viper.Viper) (M.Workspace
 		return nil, err
 	}
 	return ctx, nil
-}
-
-func isLikelyPath(spec string) bool {
-	return strings.HasPrefix(spec, ".") ||
-		strings.HasPrefix(spec, "/") ||
-		strings.HasPrefix(spec, "~") ||
-		(!strings.Contains(spec, ":") && !strings.Contains(spec, "@"))
 }
 
 func init() {

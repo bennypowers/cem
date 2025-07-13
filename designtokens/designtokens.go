@@ -120,7 +120,7 @@ func kebabCase(s string) string {
 // If the specifier is an npm: spec, it first checks node_modules in the current working directory.
 // If not found locally, it falls back to fetching from the network.
 func readJSONFileOrSpecifier(ctx M.WorkspaceContext, path string) ([]byte, error) {
-	if strings.HasPrefix(path, "npm:") {
+	if C.IsPackageSpecifier(path) {
 		// Try npm/Deno specifier and @scope/pkg/file.json style
 		if spec, ok := parseNpmSpecifier(path); ok {
 			// Try node_modules first
