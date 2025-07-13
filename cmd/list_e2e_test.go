@@ -3,6 +3,7 @@
 package cmd_test
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -83,13 +84,23 @@ func TestListE2E(t *testing.T) {
 					t.Fatal(stderr)
 				}
 
-				expected, err := os.ReadFile(filepath.Join("goldens", "list."+strings.ReplaceAll(strings.ToLower(tc.name), " ", "-")+".golden.md"))
+				golden := filepath.Join(
+					"goldens",
+					fmt.Sprintf(
+						"list.%s.golden.md",
+						strings.ReplaceAll(strings.ToLower(tc.name), " ", "-"),
+					),
+				)
+				expected, err := os.ReadFile(golden)
 				if err != nil {
 					t.Fatalf("failed to read golden file: %v", err)
 				}
 
-				if !strings.Contains(pterm.RemoveColorFromString(stdout), strings.TrimSpace(string(expected))) {
-					t.Fatalf("expected output to contain table:\n%s\n\nGot:\n%s", expected, stdout)
+				cleanedStdout := pterm.RemoveColorFromString(stdout)
+				cleanedExpected := strings.TrimSpace(string(expected))
+
+				if !strings.Contains(cleanedStdout, cleanedExpected) {
+					t.Fatalf("expected output to contain table:\n%s\n\nGot:\n%s", cleanedExpected, cleanedStdout)
 				}
 			}
 		})
