@@ -262,7 +262,7 @@ func insertMarkdownHeaderRow(headers []string, rows [][]string) ([]string, [][]s
 		}
 	}
 
-	// don't insert headers, that happened in renderSimpleTable
+	// don't insert headers, that happened in formatTable
 	sep := make([]string, len(headers))
 	for j, width := range columnWidths {
 		sep[j] = strings.Repeat("-", max(3, width))
