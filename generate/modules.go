@@ -29,6 +29,7 @@ import (
 	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
 	S "bennypowers.dev/cem/set"
+	W "bennypowers.dev/cem/workspace"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -116,11 +117,11 @@ type ModuleProcessor struct {
 	module                       *M.Module
 	errors                       error
 	packageJSON                  *M.PackageJSON
-	ctx                          M.WorkspaceContext
+	ctx                          W.WorkspaceContext
 }
 
 func NewModuleProcessor(
-	ctx M.WorkspaceContext,
+	ctx W.WorkspaceContext,
 	file string,
 	parser *ts.Parser,
 	queryManager *Q.QueryManager,

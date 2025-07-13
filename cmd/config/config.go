@@ -16,8 +16,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package config
 
-import "strings"
-
 type DemoDiscoveryConfig struct {
 	FileGlob    string `mapstructure:"fileGlob" yaml:"fileGlob"`
 	URLPattern  string `mapstructure:"urlPattern" yaml:"urlPattern"`
@@ -77,8 +75,4 @@ func (c *CemConfig) Clone() *CemConfig {
 		copy(clone.Generate.Exclude, c.Generate.Exclude)
 	}
 	return &clone
-}
-
-func IsPackageSpecifier(spec string) bool {
-	return strings.HasPrefix(spec, "npm:")
 }

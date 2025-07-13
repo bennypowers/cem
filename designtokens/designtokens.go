@@ -11,8 +11,8 @@ import (
 	"regexp"
 	"strings"
 
-	C "bennypowers.dev/cem/cmd/config"
 	M "bennypowers.dev/cem/manifest"
+	W "bennypowers.dev/cem/workspace"
 )
 
 // TokenResult represents the exported structure with CSS type mapping.
@@ -41,7 +41,7 @@ func (dt *DesignTokens) Get(name string) (TokenResult, bool) {
 
 // LoadDesignTokens loads tokens from a path or Deno-style specifier and returns a DesignTokens struct.
 // The prefix is prepended to all token names on load.
-func LoadDesignTokens(ctx M.WorkspaceContext) (*DesignTokens, error) {
+func LoadDesignTokens(ctx W.WorkspaceContext) (*DesignTokens, error) {
 	cfg, err := ctx.Config()
 	if err != nil {
 		return nil, err
@@ -123,8 +123,8 @@ func kebabCase(s string) string {
 // readJSONFileOrSpecifier loads a JSON file from a regular path or a Deno-style specifier.
 // If the specifier is an npm: spec, it first checks node_modules in the current working directory.
 // If not found locally, it falls back to fetching from the network.
-func readJSONFileOrSpecifier(ctx M.WorkspaceContext, path string) ([]byte, error) {
-	if C.IsPackageSpecifier(path) {
+func readJSONFileOrSpecifier(ctx W.WorkspaceContext, path string) ([]byte, error) {
+	if W.IsPackageSpecifier(path) {
 		// Try npm/Deno specifier and @scope/pkg/file.json style
 		if spec, ok := parseNpmSpecifier(path); ok {
 			// Try node_modules first

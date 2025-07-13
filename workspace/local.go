@@ -15,60 +15,21 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package manifest
+package workspace
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 
-	"bennypowers.dev/cem/cmd/config"
+	C "bennypowers.dev/cem/cmd/config"
+	M "bennypowers.dev/cem/manifest"
 	"github.com/bmatcuk/doublestar"
 	"github.com/pterm/pterm"
 	"gopkg.in/yaml.v3"
 )
-
-var ErrNoManifest = errors.New("no package.json found, could not derive custom-elements.json")
-var ErrNoPackageCustomElements = errors.New("package does not specify a custom elements manifest")
-
-// isGlobPattern checks if a string contains any common glob pattern metacharacters.
-// This is a heuristic and may produce false positives for file paths that
-// legitimately contain one of these characters, but it covers most common cases.
-func isGlobPattern(pattern string) bool {
-	// The set of characters that are special in glob patterns.
-	// We include '*' for wildcards, '?' for single characters,
-	// '[' and ']' for character classes, and '{' and '}' for brace expansion.
-	globChars := "*?[]{}"
-	return strings.ContainsAny(pattern, globChars)
-}
-
-// WorkspaceContext abstracts access to package resources, regardless of source (local or remote).
-type WorkspaceContext interface {
-	// Performs validation/discovery and caches results as needed.
-	Init() error
-	// ConfigFile Returns the path to the config file
-	ConfigFile() string
-	// Config returns the parsed and initialized config
-	Config() (*config.CemConfig, error)
-	// Returns the package's parsed PackageJSON.
-	PackageJSON() (*PackageJSON, error)
-	// Manifest returns the package's parsed custom elements manifest.
-	Manifest() (*Package, error)
-	// ReadFile returns an io.ReadCloser for a file within the package.
-	ReadFile(path string) (io.ReadCloser, error)
-	// Glob returns a list of file paths matching the given pattern (e.g., *.ts).
-	Glob(pattern string) ([]string, error)
-	// Writes outputs to paths
-	OutputWriter(path string) (io.WriteCloser, error)
-	// Root returns the canonical root path or name for the package.
-	Root() string
-	// Cleanup releases any resources (e.g., tempdirs) held by the context.
-	Cleanup() error
-}
 
 var _ WorkspaceContext = (*FileSystemWorkspaceContext)(nil)
 
@@ -76,16 +37,16 @@ var _ WorkspaceContext = (*FileSystemWorkspaceContext)(nil)
 // package.
 type FileSystemWorkspaceContext struct {
 	root            string
-	config          *config.CemConfig
+	config          *C.CemConfig
 	manifestPath    string
 	packageJSONPath string
 	// Cache parsed results if desired
-	manifest    *Package
-	packageJSON *PackageJSON
+	manifest    *M.Package
+	packageJSON *M.PackageJSON
 }
 
-func (c *FileSystemWorkspaceContext) initConfig() (*config.CemConfig, error) {
-	var config config.CemConfig
+func (c *FileSystemWorkspaceContext) initConfig() (*C.CemConfig, error) {
+	var config C.CemConfig
 	config.ProjectDir = c.Root()
 	config.ConfigFile = c.ConfigFile()
 
@@ -132,7 +93,7 @@ func (c *FileSystemWorkspaceContext) ConfigFile() string {
 	return filepath.Join(c.root, ".config", "cem.yaml")
 }
 
-func (c *FileSystemWorkspaceContext) PackageJSON() (*PackageJSON, error) {
+func (c *FileSystemWorkspaceContext) PackageJSON() (*M.PackageJSON, error) {
 	if c.packageJSON != nil {
 		return c.packageJSON, nil
 	}
@@ -143,7 +104,7 @@ func (c *FileSystemWorkspaceContext) PackageJSON() (*PackageJSON, error) {
 		return nil, err
 	}
 	defer rc.Close()
-	p, err := decodeJSON[PackageJSON](rc)
+	p, err := decodeJSON[M.PackageJSON](rc)
 	if err != nil {
 		return nil, err
 	}
@@ -151,11 +112,11 @@ func (c *FileSystemWorkspaceContext) PackageJSON() (*PackageJSON, error) {
 	return p, err
 }
 
-func (c *FileSystemWorkspaceContext) Config() (*config.CemConfig, error) {
+func (c *FileSystemWorkspaceContext) Config() (*C.CemConfig, error) {
 	return c.config, nil
 }
 
-func (c *FileSystemWorkspaceContext) Manifest() (*Package, error) {
+func (c *FileSystemWorkspaceContext) Manifest() (*M.Package, error) {
 	pkg, err := c.PackageJSON()
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return nil, err
@@ -164,14 +125,14 @@ func (c *FileSystemWorkspaceContext) Manifest() (*Package, error) {
 	// Try to get the manifest path from package.json first
 	if pkg != nil && pkg.CustomElements != "" {
 		if rc, err := c.ReadFile(filepath.Join(c.root, pkg.CustomElements)); err == nil {
-			return decodeJSON[Package](rc)
+			return decodeJSON[M.Package](rc)
 		}
 	}
 
 	// If that fails, try to get it from the config
 	if c.config != nil && c.config.Generate.Output != "" {
 		if rc, err := c.ReadFile(c.config.Generate.Output); err == nil {
-			return decodeJSON[Package](rc)
+			return decodeJSON[M.Package](rc)
 		}
 	}
 
@@ -237,74 +198,4 @@ func (c *FileSystemWorkspaceContext) Root() string {
 func (c *FileSystemWorkspaceContext) Cleanup() error {
 	// Nothing to clean up for local packages
 	return nil
-}
-
-var _ WorkspaceContext = (*RemoteWorkspaceContext)(nil)
-
-// RemoteWorkspaceContext implements WorkspaceContext for remote packages.
-type RemoteWorkspaceContext struct {
-	tempdir string
-	// Add fields for cached files, manifest URL, etc.
-}
-
-var ErrRemoteUnsupported = fmt.Errorf("Remote workspace context is not yet supported: %w", errors.ErrUnsupported)
-
-func NewRemoteWorkspaceContext(tempdir string) *RemoteWorkspaceContext {
-	return &RemoteWorkspaceContext{tempdir: tempdir}
-}
-
-func (c *RemoteWorkspaceContext) Init() error {
-	return ErrRemoteUnsupported
-}
-
-func (c *RemoteWorkspaceContext) ConfigFile() string {
-	// TODO: Download or extract config file to tempdir, open and return it
-	return ""
-}
-
-func (c *RemoteWorkspaceContext) Config() (*config.CemConfig, error) {
-	// TODO: Download or extract config file to tempdir, open and return it
-	return nil, ErrRemoteUnsupported
-}
-
-func (c *RemoteWorkspaceContext) Manifest() (*Package, error) {
-	// TODO: Download or extract manifest file to tempdir, open and return it
-	return nil, ErrRemoteUnsupported
-}
-
-func (c *RemoteWorkspaceContext) PackageJSON() (*PackageJSON, error) {
-	// TODO: Download or extract package.json file to tempdir, open and return it
-	return nil, ErrRemoteUnsupported
-}
-
-func (c *RemoteWorkspaceContext) ReadFile(path string) (io.ReadCloser, error) {
-	// TODO: Download or extract file to tempdir, open and return it
-	return nil, ErrRemoteUnsupported
-}
-
-func (c *RemoteWorkspaceContext) Glob(pattern string) ([]string, error) {
-	// TODO: List files in the tempdir matching pattern
-	return nil, ErrRemoteUnsupported
-}
-
-func (c *RemoteWorkspaceContext) OutputWriter(path string) (io.WriteCloser, error) {
-	return nil, ErrRemoteUnsupported
-}
-
-func (c *RemoteWorkspaceContext) Root() string {
-	return c.tempdir
-}
-
-func (c *RemoteWorkspaceContext) Cleanup() error {
-	// TODO: Remove tempdir and any downloaded files
-	return nil
-}
-
-func decodeJSON[T any](rc io.ReadCloser) (*T, error) {
-	defer rc.Close()
-	var out T
-	if err := json.NewDecoder(rc).Decode(&out); err != nil {
-		return nil, err
-	}
-	return &out, nil
 }

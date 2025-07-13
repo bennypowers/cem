@@ -23,7 +23,7 @@ import (
 	"time"
 
 	G "bennypowers.dev/cem/generate"
-	M "bennypowers.dev/cem/manifest"
+	W "bennypowers.dev/cem/workspace"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -38,7 +38,7 @@ var generateCmd = &cobra.Command{
 	Short: "Generates a custom elements manifest",
 	RunE: func(cmd *cobra.Command, args []string) (errs error) {
 		start = time.Now()
-		ctx, err := GetWorkspaceContext(cmd)
+		ctx, err := W.GetWorkspaceContext(cmd)
 		if err != nil {
 			return fmt.Errorf("project context not initialized: %w", err)
 		}
@@ -128,7 +128,7 @@ var generateCmd = &cobra.Command{
 }
 
 // Use WorkspaceContext to expand globs
-func expand(ctx M.WorkspaceContext, globs []string) (files []string, errs error) {
+func expand(ctx W.WorkspaceContext, globs []string) (files []string, errs error) {
 	for _, pattern := range globs {
 		matches, err := ctx.Glob(pattern)
 		if err != nil {

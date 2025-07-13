@@ -30,6 +30,7 @@ import (
 	DD "bennypowers.dev/cem/generate/demodiscovery"
 	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
+	W "bennypowers.dev/cem/workspace"
 
 	"maps"
 
@@ -60,7 +61,7 @@ type preprocessResult struct {
 }
 
 // preprocess handles config merging for generate command
-func preprocess(ctx M.WorkspaceContext) (r preprocessResult, errs error) {
+func preprocess(ctx W.WorkspaceContext) (r preprocessResult, errs error) {
 	cfg, err := ctx.Config()
 	if err != nil {
 		return r, err
@@ -99,12 +100,12 @@ func preprocess(ctx M.WorkspaceContext) (r preprocessResult, errs error) {
 
 type processJob struct {
 	file string
-	ctx  M.WorkspaceContext
+	ctx  W.WorkspaceContext
 }
 
 // process actually processes a module file
 func process(
-	ctx M.WorkspaceContext,
+	ctx W.WorkspaceContext,
 	result preprocessResult,
 	qm *Q.QueryManager,
 ) (modules []M.Module, logs []*LogCtx, aliases map[string]string, errs error) {
@@ -192,7 +193,7 @@ func processModule(
 }
 
 func postprocess(
-	ctx M.WorkspaceContext,
+	ctx W.WorkspaceContext,
 	result preprocessResult,
 	allTagAliases map[string]string,
 	qm *Q.QueryManager,
@@ -244,7 +245,7 @@ func postprocess(
 }
 
 // Generates a custom-elements manifest from a list of typescript files
-func Generate(ctx M.WorkspaceContext) (manifest *string, errs error) {
+func Generate(ctx W.WorkspaceContext) (manifest *string, errs error) {
 	cfg, err := ctx.Config()
 	if err != nil {
 		return nil, err

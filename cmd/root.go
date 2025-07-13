@@ -24,8 +24,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"bennypowers.dev/cem/cmd/config"
-	M "bennypowers.dev/cem/manifest"
+	W "bennypowers.dev/cem/workspace"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -85,15 +84,6 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-// Retrieve the project context from a cobra.Command
-func GetWorkspaceContext(cmd *cobra.Command) (M.WorkspaceContext, error) {
-	val := cmd.Context().Value(workspaceContextKey)
-	if val == nil {
-		return nil, errors.New("project context not initialized")
-	}
-	return val.(M.WorkspaceContext), nil
-}
-
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
@@ -101,8 +91,8 @@ func Execute() {
 	}
 }
 
-func resolveWorkspaceContext(cmd *cobra.Command, viper viper.Viper) (M.WorkspaceContext, error) {
-	var ctx M.WorkspaceContext
+func resolveWorkspaceContext(cmd *cobra.Command, viper viper.Viper) (W.WorkspaceContext, error) {
+	var ctx W.WorkspaceContext
 	configPath := viper.GetString("configFile")
 	if p, _ := cmd.Flags().GetString("configFile"); p != "" {
 		configPath = p
@@ -112,15 +102,15 @@ func resolveWorkspaceContext(cmd *cobra.Command, viper viper.Viper) (M.Workspace
 		packageFlag = p
 	}
 	if packageFlag != "" {
-		if !config.IsPackageSpecifier(packageFlag) {
-			ctx = M.NewFileSystemWorkspaceContext(packageFlag)
+		if !W.IsPackageSpecifier(packageFlag) {
+			ctx = W.NewFileSystemWorkspaceContext(packageFlag)
 		} else {
 			// TODO: handle if this is in local node_modules already
 			// It might be a symlink (pnpm)
-			ctx = M.NewRemoteWorkspaceContext(packageFlag)
+			ctx = W.NewRemoteWorkspaceContext(packageFlag)
 		}
 	} else {
-		ctx = M.NewFileSystemWorkspaceContext(filepath.Dir(configPath))
+		ctx = W.NewFileSystemWorkspaceContext(filepath.Dir(configPath))
 	}
 	if err := ctx.Init(); err != nil {
 		return nil, err

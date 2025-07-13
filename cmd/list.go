@@ -21,10 +21,12 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
 	"bennypowers.dev/cem/list"
 	M "bennypowers.dev/cem/manifest"
+	W "bennypowers.dev/cem/workspace"
 )
 
 func requireTagName(cmd *cobra.Command) (string, error) {
@@ -57,7 +59,7 @@ func makeListSectionCmd(use, short, long string, includeSection string, aliases 
 		Short:   short,
 		Long:    long,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if ctx, err := GetWorkspaceContext(cmd); err != nil {
+			if ctx, err := W.GetWorkspaceContext(cmd); err != nil {
 				return fmt.Errorf("project context not initialized: %w", err)
 			} else {
 				tagName, err := requireTagName(cmd)
@@ -231,7 +233,7 @@ Example:
   cem list tags --format table --columns Class --columns Module --columns Summary
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if ctx, err := GetWorkspaceContext(cmd); err != nil {
+		if ctx, err := W.GetWorkspaceContext(cmd); err != nil {
 			return fmt.Errorf("project context not initialized: %w", err)
 		} else {
 			manifest, err := ctx.Manifest()
@@ -275,7 +277,7 @@ Example:
   cem list modules --format table --columns Name
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if ctx, err := GetWorkspaceContext(cmd); err != nil {
+		if ctx, err := W.GetWorkspaceContext(cmd); err != nil {
 			return fmt.Errorf("project context not initialized: %w", err)
 		} else {
 			manifest, err := ctx.Manifest()
@@ -329,7 +331,8 @@ Examples:
   cem list methods --tag-name my-button
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if ctx, err := GetWorkspaceContext(cmd); err != nil {
+		if ctx, err := W.GetWorkspaceContext(cmd); err != nil {
+			pterm.Warning.Println(err)
 			return fmt.Errorf("project context not initialized: %w", err)
 		} else {
 			manifest, err := ctx.Manifest()
