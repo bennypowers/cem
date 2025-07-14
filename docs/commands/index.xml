@@ -42,6 +42,10 @@ tools. Add a description by separating the name of the item with &lt;code>-&lt;/
  &lt;/thead>
  &lt;tbody>
  &lt;tr>
+ &lt;td>&lt;code>--package, -p&lt;/code>&lt;/td>
+ &lt;td>Deno-style package specifier (e.g., &lt;code>npm:@scope/package@^1.2.3&lt;/code>) or path to a package directory.&lt;/td>
+ &lt;/tr>
+ &lt;tr>
  &lt;td>&lt;code>--format&lt;/code>&lt;/td>
  &lt;td>Set the output format. Can be &lt;code>table&lt;/code> or &lt;code>tree&lt;/code>. Default: &lt;code>table&lt;/code>.&lt;/td>
  &lt;/tr>
@@ -51,22 +55,4 @@ tools. Add a description by separating the name of the item with &lt;code>-&lt;/
  &lt;/tr>
  &lt;/tbody>
 &lt;/table>
-&lt;p>&lt;strong>Example:&lt;/strong>&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-sh" data-lang="sh">&lt;span style="display:flex;">&lt;span>cem list --deprecated --format tree
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="subcommands" class=link_owner>
- Subcommands
- &lt;a href="#subcommands" class="link icon">
- &lt;svg>
- &lt;use xlink:href="#anchor-link">&lt;/use>
- &lt;/svg>
- &lt;/a>
-&lt;/h2>
-&lt;h3 id="tags" class=link_owner>
- &lt;code>tags&lt;/code>
- &lt;a href="#tags" class="link icon">
- &lt;svg>
- &lt;use xlink:href="#anchor-link">&lt;/use>
- &lt;/svg>
- &lt;/a>
-&lt;/h3>
-&lt;p>Lists all custom element tag names in the project.&lt;/p></description></item></channel></rss>
+&lt;p>&lt;strong>Example:&lt;/strong>&lt;/p></description></item></channel></rss>
