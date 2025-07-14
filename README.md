@@ -48,16 +48,16 @@ For information on building and testing, please see
 This program is free software: you can redistribute it and/or modify it under
 the terms of the [GNU General Public License v3.0][gpl3].
 
-&copy; 2025 Benny Powers <web@bennypowers.com>
+&copy; 2025 Benny Powers
 
 [cem]: https://github.com/webcomponents/custom-elements-manifest
 [dtcg]: https://tr.designtokens.org/format/
 [go]: https://go.dev
 [treesitter]: https://tree-sitter.github.io/tree-sitter/
 [gpl3]: https://www.gnu.org/licenses/gpl-3.0.html
-[contributingmd]: ./CONTRIBUTING.md
+[contributingmd]: https://bennypowers.github.io/cem/docs/contributing/
 [issuenew]: https://github.com/bennypowers/cem/issues/new
-[installationdocs]: https://bennypowers.github.io/cem/installation/
-[generatedocs]: https://bennypowers.github.io/cem/commands/generate/
-[listdocs]: https://bennypowers.github.io/cem/commands/list/
-[configdocs]: https://bennypowers.github.io/cem/configuration/
+[installationdocs]: https://bennypowers.github.io/cem/docs/installation/
+[generatedocs]: https://bennypowers.github.io/cem/docs/commands/generate/
+[listdocs]: https://bennypowers.github.io/cem/docs/commands/list/
+[configdocs]: https://bennypowers.github.io/cem/docs/configuration/
