@@ -2,6 +2,7 @@ baseURL: https://bennypowers.dev/cem
 languageCode: en-us
 title: cem
 enableRobotsTXT: true
+relativeURLs: true
 theme:
   - github.com/onweru/compose
 enableGitInfo: true
