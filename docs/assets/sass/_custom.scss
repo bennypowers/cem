@@ -21,14 +21,26 @@
 }
 
 html { color-scheme: light dark; }
-html.dark { color-scheme: dark only; }
-html.light { color-scheme: light only; }
-
+html[data-mode="dark"] { color-scheme: dark only; }
+html[data-mode="light"] { color-scheme: light only; }
 
 .button {
   color: var(--dark)
 }
 
+thead {
+  color: light-dark(var(--dark), var(--light)) !important;
+  background: light-dark(
+    oklch(from var(--accent) calc(l * (1 - 0.1613)) c h),
+    oklch(from var(--accent) calc(l * 1.613) c h)
+  );
+}
+
 .highlight pre {
   background-color:  transparent !important;
+}
+
+.pager_link::before,
+.pager_link::after {
+  filter: invert(100%);
 }
