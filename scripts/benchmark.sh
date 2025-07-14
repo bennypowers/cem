@@ -13,11 +13,12 @@ cd docs
 if [[ -n "$CI" ]]; then
   pwd
   npm ci
-  cp ../dist/cem ../cem
 fi
 
 file_glob="benchmark/components/*.ts"
 file_count=$(ls $file_glob 2>/dev/null | wc -l | xargs)
+
+export PATH="../dist:$PATH"
 
 echo "$file_glob"
 
@@ -34,7 +35,7 @@ names=(
 cmds=(
   "npx --yes @lit-labs/cli labs gen --manifest --out data/lit"
   "npx --yes @custom-elements-manifest/analyzer analyze --outdir data/cea --globs $file_glob"
-  "../cem generate -o data/cem/custom-elements.json $file_glob"
+  "cem generate -o data/cem/custom-elements.json $file_glob"
 )
 docsUrls=(
   "https://github.com/lit/lit/tree/fbda6d7b42b8acd19b388e9de0be3521da6b58bb/packages/labs/cli"
