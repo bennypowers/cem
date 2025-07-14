@@ -55,12 +55,12 @@ generate:
 
 These flags can be used with any `cem` command.
 
-| Flag            | Description                                                                          |
-| --------------- | ------------------------------------------------------------------------------------ |
-| `--config`      | Path to a custom config file.                                                        |
-| `--project-dir` | Path to the project directory. Overrides the directory of the config file.           |
-| `--verbose`, -v | Enable verbose logging output.                                                       |
-| `--help`, -h    | Show help for a command.                                                             |
+| Flag            | Description                                                           |
+| --------------- | --------------------------------------------------------------------- |
+| `--config`      | Path to a custom config file.                                         |
+| `--package`     | deno-style package specifier, or path to the local package directory. |
+| `--verbose`, -v | Enable verbose logging output.                                        |
+| `--help`, -h    | Show help for a command.                                              |
 
 ## Command-Line Flags
 

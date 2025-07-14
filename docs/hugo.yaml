@@ -1,0 +1,46 @@
+baseURL: https://bennypowers.dev/cem/
+languageCode: en-us
+title: cem
+enableRobotsTXT: true
+relativeURLs: true
+canonifyURLs: true
+theme:
+  - github.com/onweru/compose
+enableGitInfo: true
+params:
+  uniqueHomePage: true
+  repo: https://github.com/bennypowers/cem
+  enableDarkMode: true
+  enableCopyright: true
+  keywords: []
+  logo:
+    lightMode: images/logo.svg
+    darkMode: images/logo.svg
+  author:
+    name: Benny Powers
+    url: https://bennypowers.com
+  source:
+    iconDark: images/github-dark.svg
+    iconLight: images/github-light.svg
+    url: https://github.com/bennypowers/cem
+pagination:
+  disableAliases: false
+  pagerSize: 10
+  path: page
+outputs:
+  home:
+    - HTML
+    - RSS
+    - JSON
+markup:
+  goldmark:
+    renderer:
+      unsafe: true
+module:
+  mounts:
+    - source: assets
+      target: assets
+    - source: ../assets
+      target: assets
+security:
+  enableInlineShortcodes: true

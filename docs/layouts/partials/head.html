@@ -1,0 +1,44 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/svg" href='{{ absURL "images/logo.svg" }}'>
+<link rel="manifest" href='{{ absURL "favicons/site.webmanifest" }}'>
+<link rel="mask-icon" href='{{ absURL "favicons/safari-pinned-tab.svg" }}' color="#004750">
+{{- $t := .Title }}
+{{- $s := site.Title }}
+{{- if in (lower $s) (lower $t) }}
+{{- $t = false }}
+{{- end }}
+<title>{{ if and $t (ne (trim (lower $s) "") (trim (lower $t) "")) }}{{ $t }} | {{ end }}{{ $s }}</title>
+
+{{- partial "opengraph.html" . }}
+{{- partial "schema.html" . }}
+{{- partial "twitter_cards.html" . }}
+{{- if hugo.IsProduction }}
+{{- partial "google_analytics.html" . }}
+{{- end }}
+
+{{- $options := (dict "targetPath" "css/styles.css" "outputStyle" "compressed" "enableSourceMap" "true") -}}
+{{- $styles := resources.Get "sass/main.sass" | resources.ExecuteAsTemplate "main.sass" . |
+css.Sass $options | fingerprint "sha512" }}
+<link rel="stylesheet" href="{{ $styles.Permalink }}" integrity="{{ $styles.Data.Integrity }}">
+
+{{- $config := site.Params }}
+{{- with $config.customCSS }}
+{{- range . -}}
+<link rel="stylesheet" href="{{ . }}">
+{{- end }}
+{{- end }}
+
+{{- with $config.metaThemeColor }}
+<meta name="theme-color" content="{{ . }}">
+{{- end }}
+
+{{- if .Description }}
+<meta name="description" content="{{ .Description }}">
+{{- else if .IsPage }}
+<meta name="description" content="{{ plainify .Summary }}">
+{{- else if $config.Description }}
+<meta name="descripion" content="{{ $config.Description }}">
+{{- end }}
+{{- partial "head/liteyoutube" . }}
+{{- partialCached "hooks/head" . -}}

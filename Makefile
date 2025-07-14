@@ -1,4 +1,6 @@
+RUNS ?= 4
 SHELL := /bin/bash
+CONTRIBUTING_PATH = docs/content/docs/contributing.md
 WINDOWS_CC_IMAGE := cem-windows-cc-image
 
 .PHONY: build test update watch bench profile flamegraph coverage show-coverage clean lint format prepare-npm install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image
@@ -86,3 +88,13 @@ coverage:
 
 show-coverage:
 	go tool cover -html=cover.out
+
+docs-ci:
+	make build
+	@echo "Running benchmarks with $(RUNS) runs"
+	./scripts/benchmark.sh $(RUNS)
+	cp -f "$(CONTRIBUTING_PATH)" /tmp/cem-contributing.md
+	cat CONTRIBUTING.md >> "$(CONTRIBUTING_PATH)"
+	hugo mod clean
+	hugo --gc --minify --source docs
+	mv /tmp/cem-contributing.md "$(CONTRIBUTING_PATH)"
