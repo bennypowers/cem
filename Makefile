@@ -96,5 +96,5 @@ docs-ci:
 	cp -f "$(CONTRIBUTING_PATH)" /tmp/cem-contributing.md
 	cat CONTRIBUTING.md >> "$(CONTRIBUTING_PATH)"
 	hugo mod clean
-	hugo --gc --minify --source docs --environment production
+	hugo --gc --minify --source docs
 	mv /tmp/cem-contributing.md "$(CONTRIBUTING_PATH)"
