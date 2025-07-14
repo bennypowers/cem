@@ -19,4 +19,5 @@ docs/*-bench.txt
 docs/*-stdout.txt
 docs/custom-elements.json
 docs/public
+docs/static/*-last-output.md
 docs/**/custom-elements.json
