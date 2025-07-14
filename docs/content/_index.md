@@ -2,7 +2,6 @@
 title: cem
 layout: home
 ---
-
 # cem
 The blazing-fast **CLI** tool for generating and working with **Custom Elements Manifests**.
 
