@@ -180,15 +180,12 @@ func (c *FileSystemWorkspaceContext) Glob(pattern string) ([]string, error) {
 }
 
 func (c *FileSystemWorkspaceContext) OutputWriter(path string) (io.WriteCloser, error) {
-	absPath := path
-	if !filepath.IsAbs(path) {
-		absPath = filepath.Join(c.root, path)
-	}
-	dir := filepath.Dir(absPath)
+	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, err
 	}
-	return os.Create(absPath)
+	pterm.Debug.Println("Actual output path", path)
+	return os.Create(path)
 }
 
 func (c *FileSystemWorkspaceContext) Root() string {

@@ -257,22 +257,22 @@ func Generate(ctx W.WorkspaceContext) (manifest *string, errs error) {
 	defer qm.Close()
 	result, err := preprocess(ctx)
 	if err != nil {
-		errs = errors.Join(errs, fmt.Errorf("module preprocess failed: %w", err))
+		errs = errors.Join(errs, fmt.Errorf("module preprocess failed:\n%w", err))
 	}
 	modules, logs, aliases, err := process(ctx, result, qm)
 	if err != nil {
-		errs = errors.Join(errs, fmt.Errorf("module process failed: %w", err))
+		errs = errors.Join(errs, fmt.Errorf("module process failed:\n%w", err))
 	}
 	pkg, err := postprocess(ctx, result, aliases, qm, modules)
 	if err != nil {
-		errs = errors.Join(errs, fmt.Errorf("module postprocess failed: %w", err))
+		errs = errors.Join(errs, fmt.Errorf("module postprocess failed:\n%w", err))
 	}
 	if cfg.Verbose {
 		RenderBarChart(logs)
 	}
 	manifestStr, err := M.SerializeToString(&pkg)
 	if err != nil {
-		return nil, errors.Join(errs, fmt.Errorf("module serialize failed: %w", err))
+		return nil, errors.Join(errs, fmt.Errorf("module serialize failed:\n%w", err))
 	}
 	return &manifestStr, errs
 }

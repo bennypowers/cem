@@ -44,7 +44,9 @@ var generateCmd = &cobra.Command{
 		}
 
 		cfgFiles := viper.GetStringSlice("generate.files")
-		if !(len(args) > 0 || (len(args) == 0 && len(cfgFiles) > 0)) {
+
+		// assume no ctx.Root() implies no package
+		if ctx.Root() == "" && len(args) == 0 && len(cfgFiles) == 0 {
 			return errors.New("requires at least one file argument or a configured `generate.files` list")
 		}
 
@@ -54,6 +56,7 @@ var generateCmd = &cobra.Command{
 		}
 
 		files, err := expand(ctx, append(generateFiles, args...))
+
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
@@ -68,8 +71,10 @@ var generateCmd = &cobra.Command{
 			return errs
 		}
 
-		cfg.Generate.Files = append(cfg.Generate.Files, files...)
-		cfg.Generate.Exclude = append(cfg.Generate.Exclude, exclude...)
+		cfg.Generate.Files = files
+		cfg.Generate.Exclude = exclude
+
+		pterm.Debug.Println(files)
 
 		// compute path to write custom elements manifest to
 		// consider moving this to the context struct
@@ -109,15 +114,13 @@ var generateCmd = &cobra.Command{
 					errs = errors.Join(errs, err)
 				} else {
 					end := time.Since(start)
-					reloutputpath, err := filepath.Rel(ctx.Root(), outputPath)
-					if err != nil {
-						reloutputpath = outputPath
+					fmtstr := "Wrote manifest to %s in %s\n"
+					args := []any{ outputPath, G.ColorizeDuration(end).Sprint(end) }
+					if errs != nil {
+						pterm.Warning.Printf(fmtstr, args...)
+					} else {
+						pterm.Success.Printf(fmtstr, args...)
 					}
-					pterm.Success.Printf(
-						"Wrote manifest to %s in %s",
-						reloutputpath,
-						G.ColorizeDuration(end).Sprint(end),
-					)
 				}
 			}
 		} else {

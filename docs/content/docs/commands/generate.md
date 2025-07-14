@@ -147,6 +147,60 @@ generate:
 | `urlPattern`           | string | Pattern for generating demo URLs, e.g. `"demos/{tag}.html"`. `{tag}` is replaced by tag name.|
 | `urlTemplate`          | string | (optional) Alternative URL template for demo links.                                          |
 
+## Monorepos
+
+If you are planning to use `cem` in an npm or yarn monorepo, the best way for now
+is to create a new `.config/cem.yaml` file for each package you want to generate 
+for, instead of using a top-level config file.
+
+### Example
+
+Root package.json:
+```json
+{
+  "scripts": {
+    "generate": "npm run generate --workspaces"
+  },
+  "workspaces": [
+    "./core",
+    "./elements"
+  ]
+}
+```
+
+core/.config/cem.yaml:
+```yaml
+generate:
+  files:
+    - './**/*.ts'
+```
+
+core/package.json
+```json
+{
+  "scripts": {
+    "generate": "cem generate"
+  }
+}
+```
+
+elements/.config/cem.yaml:
+```yaml
+generate:
+  files:
+    - './**/*.ts'
+```
+
+elements/package.json
+```json
+{
+  "scripts": {
+    "generate": "cem generate"
+  }
+}
+```
+
+
 ## Usage
 
 Generate a custom elements manifest from your files:
