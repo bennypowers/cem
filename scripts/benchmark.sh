@@ -123,7 +123,7 @@ for i in "${!ids[@]}"; do
     avgTime="0"
     avgSize="0"
   fi
-  lastOutput="$(echo "$last_json" | jq . 2>/dev/null || echo "null")"
+  lastOutput="$(echo "$last_json" | jq .)"
 
   # Write each tool's result as a single line in the temp file
   # Sanitize last_stderr as empty string if only whitespace or empty

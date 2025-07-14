@@ -1,3 +1,4 @@
+RUNS ?= 4
 SHELL := /bin/bash
 WINDOWS_CC_IMAGE := cem-windows-cc-image
 
@@ -86,3 +87,13 @@ coverage:
 
 show-coverage:
 	go tool cover -html=cover.out
+
+docs-ci:
+	make build
+	@echo "Running benchmarks with $(RUNS) runs"
+	./scripts/benchmark.sh $(RUNS)
+	cp -f docs/content/docs/contributing.md /tmp/cem-contributing.md
+	cat CONTRIBUTING.md >> docs/content/contributing.md
+	hugo mod clean
+	hugo --gc --minify --source docs
+	mv /tmp/cem-contributing.md docs/content/docs/contributing.md

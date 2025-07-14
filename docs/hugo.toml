@@ -46,12 +46,6 @@ home = ["HTML", "RSS", "JSON"]
   [[module.mounts]]
     source = "assets"
     target = "assets"
-  [[module.mounts]]
-    source = "../README.md"
-    target = "assets/README.md"
-  [[module.mounts]]
-    source = "../CONTRIBUTING.md"
-    target = "assets/CONTRIBUTING.md"
 
 [security]
 enableInlineShortcodes = true
