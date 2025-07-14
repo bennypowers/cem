@@ -464,7 +464,7 @@ func (mp *ModuleProcessor) processDeclarations() error {
 			if idx >= 0 {
 				declaration := mp.module.Declarations[idx]
 				if declaration != nil {
-					reference := M.NewReference(declaration.(*M.CustomElementDeclaration).Name, "", mp.module.Path)
+					reference := M.NewReference(declaration.(*M.ClassDeclaration).Name, "", mp.module.Path)
 					mp.module.Exports = append(mp.module.Exports, M.NewCustomElementExport(
 						tagName,
 						reference,
