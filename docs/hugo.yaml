@@ -1,4 +1,4 @@
-baseURL: /cem/
+baseURL: /
 languageCode: en-us
 title: cem
 enableRobotsTXT: true
@@ -11,6 +11,7 @@ params:
   repo: https://github.com/bennypowers/cem
   enableDarkMode: true
   enableCopyright: true
+  keywords: []
   logo:
     lightMode: images/logo.svg
     darkMode: images/logo.svg
