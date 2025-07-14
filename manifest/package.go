@@ -36,7 +36,7 @@ type Package struct {
 
 func NewPackage(modules []Module) Package {
 	return Package{
-		SchemaVersion: "2.1.0",
+		SchemaVersion: "2.1.1",
 		Modules:       modules,
 	}
 }

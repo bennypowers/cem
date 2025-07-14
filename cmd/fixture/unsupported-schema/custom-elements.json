@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "unsupported-schema.js",
+      "declarations": [
+        {
+          "kind": "variable"
+        }
+      ]
+    }
+  ]
+}
