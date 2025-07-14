@@ -12,6 +12,6 @@ npm install --save-dev @pwrs/cem
 ```
 
 <div class="mt-3 grid-2">
-  {{<button "/cem/docs/installation" "Get Started">}}
-  {{<button "/cem/docs" "Read the Docs">}}
+  {{<button "docs/installation" "Get Started">}}
+  {{<button "docs" "Read the Docs">}}
 </div>
