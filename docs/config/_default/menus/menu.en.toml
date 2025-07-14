@@ -1,24 +1,13 @@
 [[main]]
   name = "Installation"
-  pageRef = "docs/installation"
+  pageRef = "/docs/installation"
 [[main]]
   name = "Commands"
-  pageRef = "docs/commands"
+  pageRef = "/docs/commands/"
   identifier = "commands"
 [[main]]
-  name = "generate"
-  pageRef = "docs/commands/generate"
-  parent = "commands"
-[[main]]
-  name = "list"
-  pageRef = "docs/commands/list"
-  parent = "commands"
-[[main]]
   name = "Configuration"
-  pageRef = "docs/configuration"
+  pageRef = "/docs/configuration"
 [[main]]
   name = "Benchmarks"
-  pageRef = "docs/benchmarks"
-[[main]]
-  name = "Contributing"
-  pageRef = "docs/contributing"
+  pageRef = "/docs/benchmarks"
