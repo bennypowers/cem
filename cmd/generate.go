@@ -29,7 +29,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-var generateFiles []string
 var start time.Time
 
 // Uses the global ctx from root.go
@@ -40,23 +39,29 @@ var generateCmd = &cobra.Command{
 		start = time.Now()
 		ctx, err := W.GetWorkspaceContext(cmd)
 		if err != nil {
-			return fmt.Errorf("project context not initialized: %w", err)
+            return fmt.Errorf("project context not initialized: %w", err)
+        }
+
+        // de-dupe globs
+		allGlobs := append(args, viper.GetStringSlice("generate.files")...)
+		seen := make(map[string]bool)
+		uniqueGlobs := []string{}
+		for _, glob := range allGlobs {
+			if !seen[glob] {
+				seen[glob] = true
+				uniqueGlobs = append(uniqueGlobs, glob)
+			}
 		}
 
-		cfgFiles := viper.GetStringSlice("generate.files")
-		if !(len(args) > 0 || (len(args) == 0 && len(cfgFiles) > 0)) {
-			return errors.New("requires at least one file argument or a configured `generate.files` list")
-		}
-
-		generateFiles, err = expand(ctx, viper.GetStringSlice("generate.files"))
+		files, err := expand(ctx, uniqueGlobs)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
 
-		files, err := expand(ctx, append(generateFiles, args...))
-		if err != nil {
-			errs = errors.Join(errs, err)
+		if len(files) == 0 {
+			return errors.New("pass at least one file to generate")
 		}
+
 		exclude, err := expand(ctx, viper.GetStringSlice("generate.exclude"))
 		if err != nil {
 			errs = errors.Join(errs, err)
@@ -68,8 +73,10 @@ var generateCmd = &cobra.Command{
 			return errs
 		}
 
-		cfg.Generate.Files = append(cfg.Generate.Files, files...)
-		cfg.Generate.Exclude = append(cfg.Generate.Exclude, exclude...)
+		cfg.Generate.Files = files
+		cfg.Generate.Exclude = exclude
+
+		pterm.Debug.Println(files)
 
 		// compute path to write custom elements manifest to
 		// consider moving this to the context struct
@@ -109,15 +116,17 @@ var generateCmd = &cobra.Command{
 					errs = errors.Join(errs, err)
 				} else {
 					end := time.Since(start)
-					reloutputpath, err := filepath.Rel(ctx.Root(), outputPath)
-					if err != nil {
-						reloutputpath = outputPath
-					}
-					pterm.Success.Printf(
-						"Wrote manifest to %s in %s",
-						reloutputpath,
-						G.ColorizeDuration(end).Sprint(end),
-					)
+                    reloutputpath, err := filepath.Rel(ctx.Root(), outputPath)
+                    if err != nil {
+                        reloutputpath = outputPath
+                    }
+                    fmtstr := "Wrote manifest to %s in %s\n"
+                    args := []any{reloutputpath, G.ColorizeDuration(end).Sprint(end)}
+                    if errs != nil {
+                        pterm.Warning.Printf(fmtstr, args...)
+                    } else {
+                        pterm.Success.Printf(fmtstr, args...)
+                    }
 				}
 			}
 		} else {

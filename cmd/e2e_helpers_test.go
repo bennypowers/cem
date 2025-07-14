@@ -118,13 +118,13 @@ func runCemCommand(t *testing.T, workDir string, args ...string) (stdout, stderr
 	cmd.Dir = workDir
 	cmd.Env = append(os.Environ(), "GOCOVERDIR="+coverDir)
 	var out, errOut bytes.Buffer
-	fmt.Fprintf(&out, "coverDir=%q", coverDir)
+	t.Logf("coverDir=%q\n", coverDir)
 	cmd.Stdout = &out
 	cmd.Stderr = &errOut
 
 	err := cmd.Run()
 	if err != nil {
-		t.Logf("cem command failed: %v", err)
+		t.Logf("cem command failed: %v\n", err)
 	}
 
 	return out.String(), errOut.String()

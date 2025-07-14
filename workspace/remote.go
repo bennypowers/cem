@@ -265,7 +265,7 @@ func (c *RemoteWorkspaceContext) Glob(pattern string) ([]string, error) {
 
 func (c *RemoteWorkspaceContext) OutputWriter(path string) (io.WriteCloser, error) {
 	absPath := filepath.Join(c.cacheDir, path)
-	dir := filepath.Dir(absPath)
+	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, err
 	}

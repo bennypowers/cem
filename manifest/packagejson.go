@@ -18,9 +18,12 @@ package manifest
 
 import (
 	"errors"
+	"fmt"
 	"path/filepath"
 	"strings"
 )
+
+var ErrNotExported = errors.New("not exported by package.json")
 
 // PackageJSON represents the subset of package.json we care about.
 type PackageJSON struct {
@@ -48,7 +51,7 @@ func ResolveExportPath(packageJson *PackageJSON, relFilePath string) (string, er
 		if cleanRel == exportFile {
 			return "", nil // returns ""
 		}
-		return "", errors.New("file not exported in package.json")
+		return "", fmt.Errorf("%s: %w", relFilePath, ErrNotExported)
 	}
 
 	exportsMap, ok := packageJson.Exports.(map[string]any)
@@ -117,5 +120,5 @@ func ResolveExportPath(packageJson *PackageJSON, relFilePath string) (string, er
 		}
 	}
 
-	return "", errors.New("file not exported in package.json exports block")
+	return "", fmt.Errorf("%s: %w", relFilePath, ErrNotExported)
 }
