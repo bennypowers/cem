@@ -39,5 +39,7 @@ module:
   mounts:
     - source: assets
       target: assets
+    - source: ../assets
+      target: assets
 security:
   enableInlineShortcodes: true
