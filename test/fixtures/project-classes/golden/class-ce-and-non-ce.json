@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-ce-and-non-ce.js",
+      "declarations": [
+        {
+          "name": "NonCe",
+          "summary": "NOT a custom element",
+          "kind": "class"
+        },
+        {
+          "name": "CustomElement",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "custom-element",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "custom-element",
+          "declaration": {
+            "name": "CustomElement",
+            "module": "src/class-ce-and-non-ce.js"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -17,12 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package generate
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"maps"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
+	"sort"
 	"strings"
 	"time"
 
@@ -261,8 +264,15 @@ func (mp *ModuleProcessor) processClasses() error {
 
 	processed := make(map[string]*ParsedClass)
 
-	for captures := range qm.ParentCaptures(mp.root, mp.code, "class") {
-		// Get class name up front
+	// Collect all JSdoc captures once, outside the loop
+	allJsdocs := []Q.CaptureInfo{}
+	for captures := range qm.ParentCaptures(mp.root, mp.code, "class.jsdoc") {
+		if jsdocCaps, ok := captures["class.jsdoc"]; ok {
+			allJsdocs = append(allJsdocs, jsdocCaps...)
+		}
+	}
+
+	for captures := range qm.ParentCaptures(mp.root, mp.code, "class.declaration") {
 		nameNodes, ok := captures["class.name"]
 		if !ok || len(nameNodes) == 0 {
 			continue
@@ -272,9 +282,13 @@ func (mp *ModuleProcessor) processClasses() error {
 			continue
 		}
 
-		mp.logger.IndentedLog(1, ColorizeClassName(className).Sprint(className), "")
+		// Use only the jsdoc attached by the query engine
+		if jsdocCaps, ok := captures["class.jsdoc"]; ok && len(jsdocCaps) > 0 {
+			fmt.Printf("Class: %s, attached jsdoc summary: %s\n", className, jsdocCaps[0].Text)
+		} else {
+			fmt.Printf("Class: %s, attached jsdoc: none\n", className)
+		}
 
-		// TODO: make a constructor with a reference to mp. call methods on ParsedClass
 		parsed := &ParsedClass{
 			Name:     className,
 			Captures: captures,
@@ -301,7 +315,6 @@ func (mp *ModuleProcessor) processClasses() error {
 				return nil
 			})
 			parsed.CssProperties = slices.Collect(maps.Values(props))
-			// Sort as before
 			slices.SortStableFunc(parsed.CssProperties, sortCustomProperty)
 			ce.CssProperties = append(ce.CssProperties, parsed.CssProperties...)
 		}
@@ -517,4 +530,56 @@ func (mp *ModuleProcessor) processDeclarations() error {
 	})
 
 	return err
+}
+
+func findJsdocForClass(classStartByte uint, jsdocs []Q.CaptureInfo) *Q.CaptureInfo {
+	var candidates []Q.CaptureInfo
+	for _, jsdoc := range jsdocs {
+		if jsdoc.EndByte <= classStartByte {
+			candidates = append(candidates, jsdoc)
+		}
+	}
+	if len(candidates) == 0 {
+		return nil
+	}
+	// Sort by EndByte descending so closest is first
+	sort.Slice(candidates, func(i, j int) bool {
+		return candidates[i].EndByte > candidates[j].EndByte
+	})
+	return &candidates[0]
+}
+
+var commentOrWhitespaceRE = regexp.MustCompile(`(?m)^(?:\s*|//.*|/\*[\s\S]*?\*/|@\w.*)*$`)
+
+// Returns true if jsdoc ends on the line directly before class declaration (allowing whitespace and decorators, but not code)
+func isStrictlyAdjacent(jsdocEnd, classStart uint, code []byte) bool {
+	if jsdocEnd > classStart || int(classStart) > len(code) {
+		return false
+	}
+	between := code[jsdocEnd:classStart]
+
+	// Remove leading/trailing whitespace
+	between = bytes.TrimSpace(between)
+	if len(between) == 0 {
+		return true // Only whitespace between
+	}
+
+	// Allow decorators (lines that start with "@")
+	lines := bytes.SplitSeq(between, []byte("\n"))
+	for line := range lines {
+		line = bytes.TrimSpace(line)
+		if len(line) == 0 {
+			continue
+		}
+		if line[0] == '@' {
+			continue // decorator
+		}
+		// If line starts with "//" or "/*" allow it
+		if bytes.HasPrefix(line, []byte("//")) || bytes.HasPrefix(line, []byte("/*")) {
+			continue
+		}
+		// Disallow anything else (code, class, export, etc)
+		return false
+	}
+	return true
 }
