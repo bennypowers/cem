@@ -39,10 +39,10 @@ var generateCmd = &cobra.Command{
 		start = time.Now()
 		ctx, err := W.GetWorkspaceContext(cmd)
 		if err != nil {
-            return fmt.Errorf("project context not initialized: %w", err)
-        }
+			return fmt.Errorf("project context not initialized: %w", err)
+		}
 
-        // de-dupe globs
+		// de-dupe globs
 		allGlobs := append(args, viper.GetStringSlice("generate.files")...)
 		seen := make(map[string]bool)
 		uniqueGlobs := []string{}
@@ -75,8 +75,6 @@ var generateCmd = &cobra.Command{
 
 		cfg.Generate.Files = files
 		cfg.Generate.Exclude = exclude
-
-		pterm.Debug.Println(files)
 
 		// compute path to write custom elements manifest to
 		// consider moving this to the context struct
@@ -116,17 +114,17 @@ var generateCmd = &cobra.Command{
 					errs = errors.Join(errs, err)
 				} else {
 					end := time.Since(start)
-                    reloutputpath, err := filepath.Rel(ctx.Root(), outputPath)
-                    if err != nil {
-                        reloutputpath = outputPath
-                    }
-                    fmtstr := "Wrote manifest to %s in %s\n"
-                    args := []any{reloutputpath, G.ColorizeDuration(end).Sprint(end)}
-                    if errs != nil {
-                        pterm.Warning.Printf(fmtstr, args...)
-                    } else {
-                        pterm.Success.Printf(fmtstr, args...)
-                    }
+					reloutputpath, err := filepath.Rel(ctx.Root(), outputPath)
+					if err != nil {
+						reloutputpath = outputPath
+					}
+					fmtstr := "Wrote manifest to %s in %s\n"
+					args := []any{reloutputpath, G.ColorizeDuration(end).Sprint(end)}
+					if errs != nil {
+						pterm.Warning.Printf(fmtstr, args...)
+					} else {
+						pterm.Success.Printf(fmtstr, args...)
+					}
 				}
 			}
 		} else {

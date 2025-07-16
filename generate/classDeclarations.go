@@ -55,9 +55,17 @@ func (mp *ModuleProcessor) generateClassDeclarationParsed(
 	var alias string
 	var err error
 	if isHTMLElement {
-		decl, alias, err = mp.generateHTMLElementClassDeclaration(captures, className, classDeclarationNode)
+		decl, alias, err = mp.generateHTMLElementClassDeclaration(
+			captures,
+			className,
+			classDeclarationNode,
+		)
 	} else if isCustomElement {
-		decl, alias, err = mp.generateLitElementClassDeclaration(captures, className, classDeclarationNode)
+		decl, alias, err = mp.generateLitElementClassDeclaration(
+			captures,
+			className,
+			classDeclarationNode,
+		)
 	} else {
 		decl, alias, err = mp.generateCommonClassDeclaration(
 			captures,

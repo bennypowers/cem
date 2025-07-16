@@ -11,6 +11,7 @@ import (
 	C "bennypowers.dev/cem/cmd/config"
 	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
+	"github.com/pterm/pterm"
 )
 
 func extractDemoDescription(path string) (string, error) {
@@ -47,17 +48,26 @@ func DiscoverDemos(
 	qm *Q.QueryManager,
 	demoMap DemoMap,
 ) (errs error) {
+	urlPattern := cfg.Generate.DemoDiscovery.URLPattern
+	if urlPattern == "" {
+		return nil
+	}
+	rx, err := regexp.Compile(urlPattern)
+	if err != nil {
+		return err
+	}
 	for _, decl := range module.Declarations {
 		// Only attach to custom element classes with a tag name
 		ce, ok := decl.(*M.CustomElementDeclaration)
+		tagName := ce.CustomElement.TagName
 		if !ok || ce.Kind != "class" || ce.TagName == "" {
 			continue
 		}
-		demoFiles := demoMap[ce.CustomElement.TagName]
+		demoFiles := demoMap[tagName]
 		for _, demoPath := range demoFiles {
-			rx := regexp.MustCompile(cfg.Generate.DemoDiscovery.URLPattern)
 			m := rx.FindStringSubmatch(demoPath)
 			if m == nil {
+				pterm.Warning.Printfln("Demo path %q did not match URLPattern %q for tagName %q", demoPath, urlPattern, tagName)
 				continue
 			}
 			groupNames := rx.SubexpNames()
@@ -76,9 +86,9 @@ func DiscoverDemos(
 					params[name] = slug
 				}
 			}
-			urlTemplate := cfg.Generate.DemoDiscovery.URLTemplate
+			demoUrl := strings.Clone(cfg.Generate.DemoDiscovery.URLTemplate)
 			for k, v := range params {
-				urlTemplate = strings.ReplaceAll(urlTemplate, "{"+k+"}", v)
+				demoUrl = strings.ReplaceAll(demoUrl, "{"+k+"}", v)
 			}
 			description, err := extractDemoDescription(demoPath)
 			if err != nil {
@@ -86,13 +96,14 @@ func DiscoverDemos(
 			}
 			base, _ := url.Parse(cfg.SourceControlRootUrl)
 			rel, _ := url.Parse(demoPath)
-			ce.Demos = append(ce.Demos, M.Demo{
-				URL:         urlTemplate,
+			demo := M.Demo{
+				URL:         demoUrl,
 				Description: description,
 				Source: &M.SourceReference{
 					Href: base.ResolveReference(rel).String(),
 				},
-			})
+			}
+			ce.Demos = append(ce.Demos, demo)
 		}
 	}
 	return errs
