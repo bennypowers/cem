@@ -200,6 +200,10 @@ func (c *RemoteWorkspaceContext) fetchFromNpm(name, version string) error {
 	return nil
 }
 
+func (c *RemoteWorkspaceContext) CustomElementsManifestPath() string {
+	return c.customElementsPath
+}
+
 func (c *RemoteWorkspaceContext) ConfigFile() string {
 	configPath := filepath.Join(c.cacheDir, ".config", "cem.yaml")
 	if _, err := os.Stat(configPath); err == nil {

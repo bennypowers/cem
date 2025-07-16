@@ -36,10 +36,11 @@ var _ WorkspaceContext = (*FileSystemWorkspaceContext)(nil)
 // FileSystemWorkspaceContext implements WorkspaceContext for a local filesystem
 // package.
 type FileSystemWorkspaceContext struct {
-	root            string
-	config          *C.CemConfig
-	manifestPath    string
-	packageJSONPath string
+	root                       string
+	config                     *C.CemConfig
+	manifestPath               string
+	packageJSONPath            string
+	customElementsManifestPath string
 	// Cache parsed results if desired
 	manifest    *M.Package
 	packageJSON *M.PackageJSON
@@ -116,32 +117,32 @@ func (c *FileSystemWorkspaceContext) Config() (*C.CemConfig, error) {
 	return c.config, nil
 }
 
+func (c *FileSystemWorkspaceContext) CustomElementsManifestPath() string {
+	return c.customElementsManifestPath
+}
+
 func (c *FileSystemWorkspaceContext) Manifest() (*M.Package, error) {
-	pkg, err := c.PackageJSON()
-	if err != nil && !errors.Is(err, os.ErrNotExist) {
+	if c.manifest != nil {
+		return c.manifest, nil
+	}
+
+	if c.customElementsManifestPath == "" {
+		return nil, ErrNoManifest
+	}
+
+	rc, err := c.ReadFile(c.customElementsManifestPath)
+	if err != nil {
+		return nil, err
+	}
+	defer rc.Close()
+
+	m, err := decodeJSON[M.Package](rc)
+	if err != nil {
 		return nil, err
 	}
 
-	// Try to get the manifest path from package.json first
-	if pkg != nil && pkg.CustomElements != "" {
-		if rc, err := c.ReadFile(filepath.Join(c.root, pkg.CustomElements)); err == nil {
-			return decodeJSON[M.Package](rc)
-		}
-	}
-
-	// If that fails, try to get it from the config
-	if c.config != nil && c.config.Generate.Output != "" {
-		if rc, err := c.ReadFile(c.config.Generate.Output); err == nil {
-			return decodeJSON[M.Package](rc)
-		}
-	}
-
-	if pkg != nil {
-		return nil, ErrManifestNotFound
-	}
-
-	// If all else fails, return an error
-	return nil, ErrNoManifest
+	c.manifest = m
+	return m, nil
 }
 
 // Init discovers package.json file, caches paths/parsed results.
@@ -151,15 +152,24 @@ func (c *FileSystemWorkspaceContext) Init() error {
 	if err != nil {
 		return err
 	}
+
 	// Discover package.json
-	_, err = c.PackageJSON()
-	if !errors.Is(err, ErrNoPackageCustomElements) {
+	pkg, err := c.PackageJSON()
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
-	_, err = c.Manifest()
-	if err != nil {
-		return err
+
+	// Try to get the manifest path from package.json first
+	if pkg != nil && pkg.CustomElements != "" {
+		c.customElementsManifestPath = filepath.Join(c.root, pkg.CustomElements)
+	} else if c.config != nil && c.config.Generate.Output != "" {
+		// If that fails, try to get it from the config
+		c.customElementsManifestPath = c.config.Generate.Output
+	} else {
+		// Fallback to default
+		c.customElementsManifestPath = filepath.Join(c.root, "custom-elements.json")
 	}
+
 	return nil
 }
 

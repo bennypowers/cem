@@ -100,6 +100,8 @@ type WorkspaceContext interface {
 	PackageJSON() (*M.PackageJSON, error)
 	// Manifest returns the package's parsed custom elements manifest.
 	Manifest() (*M.Package, error)
+	// CustomElementsManifestPath returns the path to the manifest file.
+	CustomElementsManifestPath() string
 	// ReadFile returns an io.ReadCloser for a file within the package.
 	ReadFile(path string) (io.ReadCloser, error)
 	// Glob returns a list of file paths matching the given pattern (e.g., *.ts).
