@@ -88,7 +88,8 @@ func makeListSectionCmd(use, short, long string, includeSection string, aliases 
 						Columns:         columns,
 						IncludeSections: []string{includeSection},
 					}
-					if s, err := list.Render(M.NewRenderableCustomElementDeclaration(ced, mod, manifest), opts); err != nil {
+					renderable := M.NewRenderableCustomElementDeclaration(ced, mod, manifest)
+					if s, err := list.Render(renderable, opts); err != nil {
 						return err
 					} else {
 						fmt.Println(s)
@@ -195,9 +196,9 @@ it's type, and a summary
 
 Examples:
 
-  cem list event --tag-name my-button
-  cem list event --tag-name my-button --format table --columns Type
-  cem list event --tag-name my-button --format table --columns Type --columns Summary
+  cem list events --tag-name my-button
+  cem list events --tag-name my-button --format table --columns Type
+  cem list events --tag-name my-button --format table --columns Type --columns Summary
 `,
 	"Events",
 )
