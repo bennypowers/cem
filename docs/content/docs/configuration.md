@@ -43,13 +43,12 @@ generate:
   # Configuration for discovering element demos.
   demoDiscovery:
     # A glob pattern to find demo files.
-    fileGlob: "demos/**/*.html"
+    fileGlob: "src/**/demos/*.html"
     # A Go regexp with named capture groups to extract information from demo file paths.
-    urlPattern: "demos/(?P<tag>[\\w-]+)/(?P<demo>[\\w-]+).html"
+    urlPattern: "src/(?P<tag>[\w-]+)/demos/(?P<demo>[\w-]+).html"
     # A template to construct the canonical URL for a demo.
     # Uses `{groupName}` syntax to interpolate captures from `urlPattern`.
     urlTemplate: "https://example.com/elements/{tag}/{demo}/"
-```
 
 ## Global Flags
 
