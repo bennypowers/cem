@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/demo-alias.js",
+      "declarations": [
+        {
+          "name": "DemoAlias",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "demo-alias",
+          "customElement": true,
+          "demos": [
+            {
+              "url": "https://bennypowers.dev/cem-demos/alias/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/test/fixtures/project-demos/demos/demo-alias.html"
+              }
+            },
+            {
+              "url": "https://bennypowers.dev/cem-demos/multiple/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/test/fixtures/project-demos/demos/demo-multiple.html"
+              }
+            }
+          ]
+        },
+        {
+          "name": "DemoSlugifyAlias",
+          "summary": "demo urls must not contain spaces or parens",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "demo-slugify-alias",
+          "customElement": true,
+          "demos": [
+            {
+              "url": "https://bennypowers.dev/cem-demos/slugify-alias/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/test/fixtures/project-demos/demos/demo-slugify-alias.html"
+              }
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-alias",
+          "declaration": {
+            "name": "DemoAlias",
+            "module": "src/demo-alias.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-slugify-alias",
+          "declaration": {
+            "name": "DemoSlugifyAlias",
+            "module": "src/demo-alias.js"
+          }
+        }
+      ]
+    }
+  ]
+}

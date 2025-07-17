@@ -12,7 +12,7 @@ import (
 
 // BenchmarkGenerate runs the Generate function on all test fixtures to measure performance.
 func BenchmarkGenerate(b *testing.B) {
-	path, err := filepath.Abs("../test/fixtures/")
+	path, err := filepath.Abs("test/fixtures/")
 	if err != nil {
 		b.Fatalf("BenchmarkGenerate failed to resolve project dir: %v", err)
 	}

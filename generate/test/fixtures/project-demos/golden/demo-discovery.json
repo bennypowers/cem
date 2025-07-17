@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/demo-discovery.js",
+      "declarations": [
+        {
+          "name": "DemoDiscovery",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "demo-discovery",
+          "customElement": true,
+          "demos": [
+            {
+              "url": "https://bennypowers.dev/cem-demos/demo-discovery.html",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/test/fixtures/project-demos/demos/discovery/"
+              }
+            },
+            {
+              "url": "https://bennypowers.dev/cem-demos/multiple-comment/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/test/fixtures/project-demos/demos/demo-multiple-comment.html"
+              }
+            },
+            {
+              "url": "https://bennypowers.dev/cem-demos/multiple/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/test/fixtures/project-demos/demos/demo-multiple.html"
+              }
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-discovery",
+          "declaration": {
+            "name": "DemoDiscovery",
+            "module": "src/demo-discovery.js"
+          }
+        }
+      ]
+    }
+  ]
+}
