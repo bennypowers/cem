@@ -186,10 +186,58 @@ func (info *ClassInfo) MergeToCustomElementDeclaration(declaration *M.CustomElem
 		info.Attrs,
 		declaration.CustomElement.Attributes,
 	)
-	declaration.CustomElement.Slots = info.Slots
+
+	jsdocSlots := make(map[string]M.Slot)
+	for _, jsdocSlot := range info.Slots {
+		jsdocSlots[jsdocSlot.Name] = jsdocSlot
+	}
+
+	for i := range declaration.CustomElement.Slots {
+		if jsdocSlot, ok := jsdocSlots[declaration.CustomElement.Slots[i].Name]; ok {
+			if declaration.CustomElement.Slots[i].Description == "" {
+				declaration.CustomElement.Slots[i].Description = jsdocSlot.Description
+			}
+			if declaration.CustomElement.Slots[i].Summary == "" {
+				declaration.CustomElement.Slots[i].Summary = jsdocSlot.Summary
+			}
+			if declaration.CustomElement.Slots[i].Deprecated == nil {
+				declaration.CustomElement.Slots[i].Deprecated = jsdocSlot.Deprecated
+			}
+			delete(jsdocSlots, jsdocSlot.Name)
+		}
+	}
+
+	for _, jsdocSlot := range jsdocSlots {
+		declaration.CustomElement.Slots = append(declaration.CustomElement.Slots, jsdocSlot)
+	}
+
 	declaration.CustomElement.Events = info.Events
 	declaration.CustomElement.CssProperties = info.CssProperties
-	declaration.CustomElement.CssParts = info.CssParts
+
+	jsdocParts := make(map[string]M.CssPart)
+	for _, jsdocPart := range info.CssParts {
+		jsdocParts[jsdocPart.Name] = jsdocPart
+	}
+
+	for i := range declaration.CustomElement.CssParts {
+		if jsdocPart, ok := jsdocParts[declaration.CustomElement.CssParts[i].Name]; ok {
+			if declaration.CustomElement.CssParts[i].Description == "" {
+				declaration.CustomElement.CssParts[i].Description = jsdocPart.Description
+			}
+			if declaration.CustomElement.CssParts[i].Summary == "" {
+				declaration.CustomElement.CssParts[i].Summary = jsdocPart.Summary
+			}
+			if declaration.CustomElement.CssParts[i].Deprecated == nil {
+				declaration.CustomElement.CssParts[i].Deprecated = jsdocPart.Deprecated
+			}
+			delete(jsdocParts, jsdocPart.Name)
+		}
+	}
+
+	for _, jsdocPart := range jsdocParts {
+		declaration.CustomElement.CssParts = append(declaration.CustomElement.CssParts, jsdocPart)
+	}
+
 	declaration.CustomElement.CssStates = info.CssStates
 	declaration.CustomElement.Demos = info.Demos
 	if info.TagName != "" {
@@ -274,6 +322,7 @@ func (info TagInfo) toCssPart() M.CssPart {
 	re := regexp.MustCompile(`(?ms)[\s*]*@csspart[\s*]+(?P<name>[\w-]+)([\s*]+-[\s*]+(?P<description>.*))?`)
 	matches := FindNamedMatches(re, info.source, true)
 	return M.CssPart{
+		StartByte: info.startByte,
 		FullyQualified: M.FullyQualified{
 			Name:        matches["name"],
 			Description: normalizeJsdocLines(matches["description"]),
@@ -420,6 +469,7 @@ func (info TagInfo) toSlot() M.Slot {
 		info.Description = normalizeJsdocLines(matches["anonDescription"])
 	}
 	return M.Slot{
+		StartByte: info.startByte,
 		FullyQualified: M.FullyQualified{
 			Name:        matches["name"],
 			Description: info.Description,

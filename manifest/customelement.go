@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/pterm/pterm"
 )
@@ -48,6 +49,42 @@ type CustomElement struct {
 }
 
 func (*CustomElementDeclaration) isDeclaration() {}
+
+func (d *CustomElementDeclaration) AddOrUpdatePart(part CssPart) {
+	i := slices.IndexFunc(d.CssParts, func(p CssPart) bool { return p.Name == part.Name })
+	if i >= 0 {
+		if part.Description != "" {
+			d.CssParts[i].Description = part.Description
+		}
+		if part.Summary != "" {
+			d.CssParts[i].Summary = part.Summary
+		}
+		if part.Deprecated != nil {
+			d.CssParts[i].Deprecated = part.Deprecated
+		}
+		d.CssParts[i].StartByte = part.StartByte
+	} else {
+		d.CssParts = append(d.CssParts, part)
+	}
+}
+
+func (d *CustomElementDeclaration) AddOrUpdateSlot(slot Slot) {
+	i := slices.IndexFunc(d.Slots, func(p Slot) bool { return p.Name == slot.Name })
+	if i >= 0 {
+		if slot.Description != "" {
+			d.Slots[i].Description = slot.Description
+		}
+		if slot.Summary != "" {
+			d.Slots[i].Summary = slot.Summary
+		}
+		if slot.Deprecated != nil {
+			d.Slots[i].Deprecated = slot.Deprecated
+		}
+		d.Slots[i].StartByte = slot.StartByte
+	} else {
+		d.Slots = append(d.Slots, slot)
+	}
+}
 
 func (x *CustomElementDeclaration) IsDeprecated() bool {
 	if x == nil {

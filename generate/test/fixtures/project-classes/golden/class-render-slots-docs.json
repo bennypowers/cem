@@ -24,7 +24,7 @@
               "summary": "named slot summary"
             },
             {
-              "name": "named",
+              "name": "named-described",
               "summary": "named slot summary",
               "description": "named slot multiline description\n\n**with markdown**"
             },
