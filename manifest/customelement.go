@@ -62,6 +62,7 @@ func (d *CustomElementDeclaration) AddOrUpdatePart(part CssPart) {
 		if part.Deprecated != nil {
 			d.CssParts[i].Deprecated = part.Deprecated
 		}
+		d.CssParts[i].StartByte = part.StartByte
 	} else {
 		d.CssParts = append(d.CssParts, part)
 	}
@@ -79,6 +80,7 @@ func (d *CustomElementDeclaration) AddOrUpdateSlot(slot Slot) {
 		if slot.Deprecated != nil {
 			d.Slots[i].Deprecated = slot.Deprecated
 		}
+		d.Slots[i].StartByte = slot.StartByte
 	} else {
 		d.Slots = append(d.Slots, slot)
 	}

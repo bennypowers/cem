@@ -111,7 +111,6 @@ func TestGenerate(t *testing.T) {
 					}
 					if string(expected) != *actual {
 						options := jsondiff.DefaultConsoleOptions()
-						// options := jsondiff.DefaultHTMLOptions()
 						diff, str := jsondiff.Compare(expected, []byte(*actual), &options)
 						if diff == jsondiff.FullMatch {
 							t.Logf("Semantic match, string mismatch: %s", str)

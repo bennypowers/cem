@@ -16,14 +16,14 @@
           "description": "class description",
           "cssParts": [
             {
-              "name": "summary",
-              "summary": "summary part summary",
-              "description": "jsdoc part description"
-            },
-            {
               "name": "part",
               "summary": "part summary",
               "description": "part description\n\nmultiline **markdown**"
+            },
+            {
+              "name": "summary",
+              "summary": "summary part summary",
+              "description": "jsdoc part description"
             },
             {
               "name": "deprecated",

@@ -496,26 +496,3 @@ func dedentYaml(s string) string {
 	}
 	return strings.TrimSpace(strings.Join(lines, "\n"))
 }
-
-func appendUniqueSlots(jsdocSlots []M.Slot, templateSlots []M.Slot) []M.Slot {
-	jsdocNames := make(map[string]*M.Slot)
-	for _, s := range jsdocSlots {
-		jsdocNames[s.Name] = &s
-	}
-	for _, s := range templateSlots {
-		if p, ok := jsdocNames[s.Name]; !ok {
-			jsdocSlots = append(jsdocSlots, s)
-		} else {
-			if s.Description != "" {
-				p.Description = s.Description
-			}
-			if s.Summary != "" {
-				p.Summary = s.Summary
-			}
-			if s.Deprecated != nil {
-				p.Deprecated = s.Deprecated
-			}
-		}
-	}
-	return jsdocSlots
-}
