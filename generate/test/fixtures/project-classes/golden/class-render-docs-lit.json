@@ -16,13 +16,25 @@
           "slots": [
             {
               "name": "",
-              "summary": "anonymous slot inside root part"
+              "summary": "anonymous slot child of part:root"
+            },
+            {
+              "name": "inside-part",
+              "summary": "named slot child of part:inside"
             }
           ],
           "cssParts": [
             {
               "name": "root",
-              "summary": "root level part"
+              "summary": "part:root"
+            },
+            {
+              "name": "inside",
+              "summary": "part child of element with @click"
+            },
+            {
+              "name": "after",
+              "summary": "after element with @click"
             }
           ],
           "customElement": true

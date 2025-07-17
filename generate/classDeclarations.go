@@ -352,10 +352,12 @@ func (mp *ModuleProcessor) processRenderTemplate(
 ) (slots []M.Slot, parts []M.CssPart, errs error) {
 	parser := Q.GetHTMLParser()
 	defer Q.PutHTMLParser(parser)
-	tree := parser.Parse([]byte(htmlSource), nil)
+
+	text := []byte(htmlSource)
+	tree := parser.Parse(text, nil)
+
 	defer tree.Close()
 	root := tree.RootNode()
-	text := []byte(htmlSource)
 
 	matcher, qmErr := Q.NewQueryMatcher(mp.queryManager, "html", "slotsAndParts")
 	if qmErr != nil {
