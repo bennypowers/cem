@@ -35,7 +35,7 @@ func (e *NoCaptureError) Error() string {
 	return fmt.Sprintf("No nodes for capture %s in query %s", e.Capture, e.Query)
 }
 
-// ---- Languages struct (now private) ----
+// ---- Languages struct holds pre-initialized language grammars ----
 var languages = struct {
 	typescript *ts.Language
 	jsdoc      *ts.Language

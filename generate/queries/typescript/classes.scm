@@ -112,8 +112,7 @@
                   (return_statement
                     (call_expression
                       function: (identifier) @_t_tag (#eq? @_t_tag "html")
-                      arguments: (template_string
-                        (string_fragment) @render.template)))))?)
+                      arguments: (template_string) @render.template))))?)
       ) @class.declaration)) @customElement @class
 
 ( ; non-exported litelement class
@@ -143,8 +142,7 @@
                   (return_statement
                     (call_expression
                       function: (identifier) @_t_tag (#eq? @_t_tag "html")
-                      arguments: (template_string
-                        (string_fragment) @render.template)))))?
+                      arguments: (template_string) @render.template))))?
             (public_field_definition
               "static"
               name: (property_identifier) @_fieldname
