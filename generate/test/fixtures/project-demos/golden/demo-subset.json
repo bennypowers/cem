@@ -3,7 +3,7 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "src/demo-subset.js",
+      "path": "src/demo-subset/demo-subset.js",
       "declarations": [
         {
           "name": "DemoSubsetOne",
@@ -13,15 +13,15 @@
           },
           "kind": "class",
           "tagName": "demo-subset-one",
-          "customElement": true,
           "demos": [
             {
-              "url": "https://bennypowers.dev/cem-demos/subset/",
+              "url": "https://bennypowers.dev/cem-demos/demo-subset/subset/",
               "source": {
-                "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-demos/demos/demo-subset.html"
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-demos/src/demo-subset/demos/subset.html"
               }
             }
-          ]
+          ],
+          "customElement": true
         },
         {
           "name": "DemoSubsetTwo",
@@ -31,15 +31,15 @@
           },
           "kind": "class",
           "tagName": "demo-subset-two",
-          "customElement": true,
           "demos": [
             {
-              "url": "https://bennypowers.dev/cem-demos/subset/",
+              "url": "https://bennypowers.dev/cem-demos/demo-subset/subset/",
               "source": {
-                "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-demos/demos/demo-subset.html"
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-demos/src/demo-subset/demos/subset.html"
               }
             }
-          ]
+          ],
+          "customElement": true
         },
         {
           "name": "DemoSubsetThree",
@@ -58,7 +58,7 @@
           "name": "demo-subset-one",
           "declaration": {
             "name": "DemoSubsetOne",
-            "module": "src/demo-subset.js"
+            "module": "src/demo-subset/demo-subset.js"
           }
         },
         {
@@ -66,7 +66,7 @@
           "name": "demo-subset-two",
           "declaration": {
             "name": "DemoSubsetTwo",
-            "module": "src/demo-subset.js"
+            "module": "src/demo-subset/demo-subset.js"
           }
         },
         {
@@ -74,7 +74,7 @@
           "name": "demo-subset-three",
           "declaration": {
             "name": "DemoSubsetThree",
-            "module": "src/demo-subset.js"
+            "module": "src/demo-subset/demo-subset.js"
           }
         }
       ]

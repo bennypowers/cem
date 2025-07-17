@@ -3,7 +3,7 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "src/demo-discovery.js",
+      "path": "src/demo-discovery/demo-discovery.js",
       "declarations": [
         {
           "name": "DemoDiscovery",
@@ -13,27 +13,27 @@
           },
           "kind": "class",
           "tagName": "demo-discovery",
-          "customElement": true,
           "demos": [
             {
-              "url": "https://bennypowers.dev/cem-demos/demo-discovery.html",
+              "url": "https://bennypowers.dev/cem-demos/demo-discovery/discovery/",
               "source": {
-                "href": "https://github.com/bennypowers/cem/tree/main/test/fixtures/project-demos/demos/discovery/"
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-demos/src/demo-discovery/demos/discovery.html"
               }
             },
             {
-              "url": "https://bennypowers.dev/cem-demos/multiple-comment/",
+              "url": "https://bennypowers.dev/cem-demos/demo-alias/multiple-comment/",
               "source": {
-                "href": "https://github.com/bennypowers/cem/tree/main/test/fixtures/project-demos/demos/demo-multiple-comment.html"
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-demos/src/demo-alias/demos/multiple-comment.html"
               }
             },
             {
-              "url": "https://bennypowers.dev/cem-demos/multiple/",
+              "url": "https://bennypowers.dev/cem-demos/demo-alias/multiple/",
               "source": {
-                "href": "https://github.com/bennypowers/cem/tree/main/test/fixtures/project-demos/demos/demo-multiple.html"
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-demos/src/demo-alias/demos/multiple.html"
               }
             }
-          ]
+          ],
+          "customElement": true
         }
       ],
       "exports": [
@@ -42,7 +42,7 @@
           "name": "demo-discovery",
           "declaration": {
             "name": "DemoDiscovery",
-            "module": "src/demo-discovery.js"
+            "module": "src/demo-discovery/demo-discovery.js"
           }
         }
       ]

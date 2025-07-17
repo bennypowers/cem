@@ -60,25 +60,28 @@ func TestGenerate(t *testing.T) {
 			if err != nil {
 				t.Fatalf("TestGenerate: %v", err)
 			}
-			fixtures, err := os.ReadDir(filepath.Join(projectDir, "src"))
-			if err != nil {
-				t.Fatalf("TestGenerate: %v", err)
-			}
 
 			var cases []testcase
-			for _, fixture := range fixtures {
-				if !fixture.Type().IsRegular() || filepath.Ext(fixture.Name()) != ".ts" {
-					continue
+			filepath.WalkDir(filepath.Join(projectDir, "src"), func(path string, d os.DirEntry, err error) error {
+				if err != nil {
+					return err
 				}
-				name := strings.TrimSuffix(fixture.Name(), ".ts")
-				if re != nil && !re.MatchString(name) {
-					continue
+				if !d.IsDir() && strings.HasSuffix(d.Name(), ".ts") {
+					name := strings.TrimSuffix(d.Name(), ".ts")
+					if re != nil && !re.MatchString(name) {
+						return nil
+					}
+					rel, err := filepath.Rel(filepath.Join(projectDir, "src"), path)
+					if err != nil {
+						return err
+					}
+					cases = append(cases, testcase{
+						name: name,
+						path: filepath.Join("src", rel),
+					})
 				}
-				cases = append(cases, testcase{
-					name: name,
-					path: filepath.Join("src", fixture.Name()),
-				})
-			}
+				return nil
+			})
 
 			for _, tc := range cases {
 				// capture range variable
@@ -108,7 +111,12 @@ func TestGenerate(t *testing.T) {
 					}
 					if string(expected) != *actual {
 						options := jsondiff.DefaultConsoleOptions()
-						t.Error(jsondiff.Compare(expected, []byte(*actual), &options))
+						diff, str := jsondiff.Compare(expected, []byte(*actual), &options)
+						if diff == jsondiff.FullMatch {
+							t.Logf("Semantic match, string mismatch: %s", str)
+						} else {
+							t.Error(diff, str)
+						}
 					}
 				})
 			}

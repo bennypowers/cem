@@ -3,7 +3,7 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "src/demo-alias.js",
+      "path": "src/demo-alias/demo-alias.js",
       "declarations": [
         {
           "name": "DemoAlias",
@@ -13,21 +13,21 @@
           },
           "kind": "class",
           "tagName": "demo-alias",
-          "customElement": true,
           "demos": [
             {
-              "url": "https://bennypowers.dev/cem-demos/alias/",
+              "url": "https://bennypowers.dev/cem-demos/aliased/alias/",
               "source": {
-                "href": "https://github.com/bennypowers/cem/tree/main/test/fixtures/project-demos/demos/demo-alias.html"
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-demos/src/demo-alias/demos/alias.html"
               }
             },
             {
-              "url": "https://bennypowers.dev/cem-demos/multiple/",
+              "url": "https://bennypowers.dev/cem-demos/aliased/multiple/",
               "source": {
-                "href": "https://github.com/bennypowers/cem/tree/main/test/fixtures/project-demos/demos/demo-multiple.html"
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-demos/src/demo-alias/demos/multiple.html"
               }
             }
-          ]
+          ],
+          "customElement": true
         },
         {
           "name": "DemoSlugifyAlias",
@@ -38,15 +38,15 @@
           },
           "kind": "class",
           "tagName": "demo-slugify-alias",
-          "customElement": true,
           "demos": [
             {
-              "url": "https://bennypowers.dev/cem-demos/slugify-alias/",
+              "url": "https://bennypowers.dev/cem-demos/aliased/slugified/",
               "source": {
-                "href": "https://github.com/bennypowers/cem/tree/main/test/fixtures/project-demos/demos/demo-slugify-alias.html"
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-demos/src/demo-alias/demos/slugified.html"
               }
             }
-          ]
+          ],
+          "customElement": true
         }
       ],
       "exports": [
@@ -55,7 +55,7 @@
           "name": "demo-alias",
           "declaration": {
             "name": "DemoAlias",
-            "module": "src/demo-alias.js"
+            "module": "src/demo-alias/demo-alias.js"
           }
         },
         {
@@ -63,7 +63,7 @@
           "name": "demo-slugify-alias",
           "declaration": {
             "name": "DemoSlugifyAlias",
-            "module": "src/demo-alias.js"
+            "module": "src/demo-alias/demo-alias.js"
           }
         }
       ]
