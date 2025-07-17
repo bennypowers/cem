@@ -56,13 +56,13 @@ func (x *MixinDeclaration) IsDeprecated() bool {
 func (x *MixinDeclaration) GetStartByte() uint { return x.FunctionLike.StartByte }
 
 func (m *MixinDeclaration) UnmarshalJSON(data []byte) error {
-	type Alias MixinDeclaration
+	type Rest MixinDeclaration
 	aux := &struct {
 		Deprecated json.RawMessage   `json:"deprecated"`
 		Members    []json.RawMessage `json:"members"`
-		*Alias
+		*Rest
 	}{
-		Alias: (*Alias)(m),
+		Rest: (*Rest)(m),
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
@@ -164,11 +164,13 @@ func (x *CustomElementMixinDeclaration) IsDeprecated() bool {
 func (x *CustomElementMixinDeclaration) GetStartByte() uint { return x.FunctionLike.StartByte }
 
 func (m *CustomElementMixinDeclaration) UnmarshalJSON(data []byte) error {
-	type Alias CustomElementMixinDeclaration
+	type Rest CustomElementMixinDeclaration
 	aux := &struct {
 		Members []json.RawMessage `json:"members"`
-		*Alias
-	}{Alias: (*Alias)(m)}
+		*Rest
+	}{
+		Rest: (*Rest)(m),
+	}
 
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err

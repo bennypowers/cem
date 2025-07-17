@@ -49,12 +49,12 @@ func (x *Package) IsDeprecated() bool {
 }
 
 func (x *Package) UnmarshalJSON(data []byte) error {
-	type Alias Package
+	type Rest Package
 	aux := &struct {
 		Modules []json.RawMessage `json:"modules"`
-		*Alias
+		*Rest
 	}{
-		Alias: (*Alias)(x),
+		Rest: (*Rest)(x),
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
@@ -129,4 +129,3 @@ func (x *RenderablePackage) ToTableRow() []string {
 func (x *RenderablePackage) ToTreeNode(p PredicateFunc) pterm.TreeNode {
 	return tn(x.Label(), toTreeChildren(x.Children(), p)...)
 }
-

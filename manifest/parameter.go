@@ -44,8 +44,8 @@ func (p *Parameter) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	type Alias Parameter
-	if err := json.Unmarshal(rest, (*Alias)(p)); err != nil {
+	type Rest Parameter
+	if err := json.Unmarshal(rest, (*Rest)(p)); err != nil {
 		return err
 	}
 	if len(depRaw) > 0 && string(depRaw) != "null" {

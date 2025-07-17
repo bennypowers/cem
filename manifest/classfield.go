@@ -49,12 +49,12 @@ func (x *ClassField) IsDeprecated() bool {
 func (f *ClassField) GetStartByte() uint { return f.StartByte }
 
 func (f *ClassField) UnmarshalJSON(data []byte) error {
-	type Alias ClassField
+	type Rest ClassField
 	aux := &struct {
 		Deprecated json.RawMessage `json:"deprecated"`
-		*Alias
+		*Rest
 	}{
-		Alias: (*Alias)(f),
+		Rest: (*Rest)(f),
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
@@ -169,12 +169,12 @@ func (x *CustomElementField) IsDeprecated() bool {
 func (x *CustomElementField) GetStartByte() uint { return x.ClassField.StartByte }
 
 func (f *CustomElementField) UnmarshalJSON(data []byte) error {
-	type Alias CustomElementField
+	type Rest CustomElementField
 	aux := &struct {
 		Deprecated json.RawMessage `json:"deprecated"`
-		*Alias
+		*Rest
 	}{
-		Alias: (*Alias)(f),
+		Rest: (*Rest)(f),
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err

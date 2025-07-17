@@ -40,12 +40,12 @@ func (x *CssCustomState) IsDeprecated() bool {
 }
 
 func (c *CssCustomState) UnmarshalJSON(data []byte) error {
-	type Alias CssCustomState
+	type Rest CssCustomState
 	aux := &struct {
 		Deprecated json.RawMessage `json:"deprecated"`
-		*Alias
+		*Rest
 	}{
-		Alias: (*Alias)(c),
+		Rest: (*Rest)(c),
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err

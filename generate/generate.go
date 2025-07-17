@@ -199,10 +199,6 @@ func postprocess(
 	qm *Q.QueryManager,
 	modules []M.Module,
 ) (pkg M.Package, errs error) {
-	cfg, err := ctx.Config()
-	if err != nil {
-		return pkg, err
-	}
 	var wg sync.WaitGroup
 	var errsMu sync.Mutex
 	errsList := make([]error, 0)
@@ -223,7 +219,7 @@ func postprocess(
 			}
 			// Discover demos and attach to manifest
 			if len(demoMap) > 0 {
-				err := DD.DiscoverDemos(cfg, allTagAliases, module, qm, demoMap)
+				err := DD.DiscoverDemos(ctx, allTagAliases, module, qm, demoMap)
 				if err != nil {
 					errsMu.Lock()
 					errsList = append(errsList, err)

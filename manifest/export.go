@@ -81,12 +81,12 @@ func (e *JavaScriptExport) GetStartByte() uint {
 
 // JavaScriptExport implements custom unmarshaling for standard JS exports.
 func (e *JavaScriptExport) UnmarshalJSON(data []byte) error {
-	type Alias JavaScriptExport
+	type Rest JavaScriptExport
 	aux := &struct {
 		Deprecated json.RawMessage `json:"deprecated"`
-		*Alias
+		*Rest
 	}{
-		Alias: (*Alias)(e),
+		Rest: (*Rest)(e),
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
@@ -116,12 +116,12 @@ func (e *CustomElementExport) GetStartByte() uint {
 
 // CustomElementExport implements custom unmarshaling for custom element exports.
 func (e *CustomElementExport) UnmarshalJSON(data []byte) error {
-	type Alias CustomElementExport
+	type Rest CustomElementExport
 	aux := &struct {
 		Deprecated json.RawMessage `json:"deprecated"`
-		*Alias
+		*Rest
 	}{
-		Alias: (*Alias)(e),
+		Rest: (*Rest)(e),
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err

@@ -1,6 +1,7 @@
-sourceControlRootUrl: https://github.com/bennypowers/cem/tree/main/test/fixtures/project-demos/
+sourceControlRootUrl: https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/
+files:
+  - src/*.ts
 generate:
-  output: custom-elements.json
   demoDiscovery:
     fileGlob: demos/*.html
     urlPattern: demos/(?P<tag>(?P<demo>[\\w-]+))\\.html

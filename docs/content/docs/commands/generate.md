@@ -120,21 +120,30 @@ class MyElement extends LitElement {
 
 Demos defined this way will always appear in your manifest for the element.
 
+When using `@alias` tags, the alias will be [slugified](https://www.npmjs.com/package/slug)
+for use in the URL.
+
 ### 2. Demo Discovery
 
 `cem` can automatically discover demos from your codebase based on your
-repository structure and configuration.
+repository structure and configuration. Demos that are co-located with their
+component's source module will be prioritized in the generated manifest.
 
 ## Demo Discovery Options
 
-Configure demo discovery with the `demoDiscovery` key in your `.config/cem.yaml` file
+The `urlPattern` is a flexible Go regular expression with named capture groups.
+You can use it to match complex file paths and extract the parts you need to
+build your demo URLs.
+
+For example, if your demos are in subdirectories like `src/my-element/demos/foo.html`,
+you could use a pattern like this:
 
 ```yaml
 sourceControlRootUrl: "https://github.com/your/repo/tree/main/"
 generate:
   demoDiscovery:
-    fileGlob: "demos/**/*.html"
-    urlPattern: "demos/(?P<tag>[\w-]+)/(?P<demo>[\w-]+).html"
+    fileGlob: "src/**/demos/*.html"
+    urlPattern: "src/(?P<tag>[\w-]+)/demos/(?P<demo>[\w-]+).html"
     urlTemplate: "https://example.com/elements/{tag}/{demo}/"
 ```
 
@@ -144,7 +153,7 @@ generate:
 | ---------------------- | ------ | -------------------------------------------------------------------------------------------- |
 | `fileGlob`             | string | Glob pattern for discovering demo files.                                                     |
 | `sourceControlRootUrl` | string | Canonical public source control URL for your repository root (on the main branch).           |
-| `urlPattern`           | string | Pattern for generating demo URLs, e.g. `"demos/{tag}.html"`. `{tag}` is replaced by tag name.|
+| `urlPattern`           | string | Go Regexp pattern with named capture groups for generating canonical demo urls.              |
 | `urlTemplate`          | string | (optional) Alternative URL template for demo links.                                          |
 
 ## Monorepos
