@@ -203,6 +203,23 @@ Examples:
 	"Events",
 )
 
+var listDemosCmd = makeListSectionCmd(
+	"demos",
+	"List demos in the custom elements manifest by tag name",
+	`List all demos for a given custom element tag
+
+You must specify the tag name using the --tag-name flag. The output includes each demo,
+its url and source url.
+
+Examples:
+
+  cem list demos --tag-name my-button
+  cem list demos --tag-name my-button --format table --columns URL
+  cem list demos --tag-name my-button --format table --columns URL --columns Source
+`,
+	"Demos",
+)
+
 var listMethodsCmd = makeListSectionCmd(
 	"methods",
 	"List class methods for a given tag name",
@@ -392,6 +409,7 @@ func init() {
 		listCssPartsCmd,
 		listEventsCmd,
 		listMethodsCmd,
+		listDemosCmd,
 	} {
 		listCmd.AddCommand(c)
 		c.Flags().StringP("tag-name", "t", "", "Tag name to list attributes for")

@@ -168,3 +168,19 @@ Lists methods for a tag's class.
 ```sh
 cem list methods -t my-element
 ```
+
+### `demos`
+Lists all demos for a given custom element.
+
+**Flags:**
+| Flag | Description |
+|---|---|
+| `--tag-name`, `-t` | **(Required)** The tag name of the element to inspect. |
+| `--columns`, `-c` | Specify which columns to include. |
+
+**Available Columns:** `URL`, `Description`
+
+**Example:**
+```sh
+cem list demos -t my-element
+```

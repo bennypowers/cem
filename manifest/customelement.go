@@ -28,13 +28,6 @@ var _ Deprecatable = (*CustomElementDeclaration)(nil)
 var _ Renderable = (*RenderableCustomElementDeclaration)(nil)
 var _ GroupedRenderable = (*RenderableCustomElementDeclaration)(nil)
 
-// Demo for custom elements.
-type Demo struct {
-	Description string           `json:"description,omitempty"`
-	URL         string           `json:"url"`
-	Source      *SourceReference `json:"source,omitempty"`
-}
-
 // CustomElementDeclaration extends ClassDeclaration and CustomElement.
 type CustomElementDeclaration struct {
 	ClassDeclaration
@@ -119,6 +112,7 @@ type RenderableCustomElementDeclaration struct {
 	Package                  *Package
 	ChildNodes               []Renderable
 	attributes               []Renderable
+	demos                    []Renderable
 	events                   []Renderable
 	slots                    []Renderable
 	cssparts                 []Renderable
@@ -161,6 +155,11 @@ func NewRenderableCustomElementDeclaration(
 		m := NewRenderableAttribute(&ced.Attributes[i], ced, cee, mod)
 		r.ChildNodes = append(r.ChildNodes, m)
 		r.attributes = append(r.attributes, m)
+	}
+	for i := range ced.Demos {
+		m := NewRenderableDemo(&ced.Demos[i], ced, mod, pkg)
+		r.ChildNodes = append(r.ChildNodes, m)
+		r.demos = append(r.demos, m)
 	}
 	for i := range ced.Events {
 		m := NewRenderableEvent(&ced.Events[i], ced, cee, mod)
@@ -289,6 +288,7 @@ func (x *RenderableCustomElementDeclaration) Sections() []Section {
 		{Title: "Attributes", Items: x.attributes},
 		{Title: "Slots", Items: x.slots},
 		{Title: "Events", Items: x.events},
+		{Title: "Demos", Items: x.demos},
 		{Title: "Fields", Items: x.fields},
 		{Title: "Methods", Items: x.methods},
 		{Title: "CSS Properties", Items: x.cssprops},
