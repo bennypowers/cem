@@ -300,30 +300,6 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 		}
 	})(declaration.Members)
 
-	err = mp.step("Processing render template", 2, func() error {
-		renderTemplateNodes, hasRenderTemplate := captures["render.template"]
-		if hasRenderTemplate {
-			renderTemplateNodeId := renderTemplateNodes[0].NodeId
-			renderTemplateNode := Q.GetDescendantById(mp.root, renderTemplateNodeId)
-			if renderTemplateNode != nil {
-				htmlSource := renderTemplateNode.Utf8Text(mp.code)
-				if htmlSource != "" {
-					htmlSlots, htmlParts, htmlErr := mp.processRenderTemplate(htmlSource)
-					if htmlErr != nil {
-						errs = errors.Join(errs, htmlErr)
-					}
-					// Merge with any slots/parts already discovered (e.g., via JSDoc)
-					declaration.CustomElement.Slots = appendUniqueSlots(declaration.CustomElement.Slots, htmlSlots)
-					declaration.CustomElement.CssParts = appendUniqueParts(declaration.CustomElement.CssParts, htmlParts)
-				}
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		errs = errors.Join(errs, err)
-	}
-
 	err = mp.step("Processing class jsdoc", 2, func() error {
 		jsdoc, ok := captures["class.jsdoc"]
 		if ok && len(jsdoc) > 0 {
@@ -344,11 +320,51 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 		errs = errors.Join(errs, err)
 	}
 
+	err = mp.step("Processing render template", 2, func() error {
+		renderTemplateNodes, hasRenderTemplate := captures["render.template"]
+		if hasRenderTemplate {
+			renderTemplateNodeId := renderTemplateNodes[0].NodeId
+			renderTemplateNode := Q.GetDescendantById(mp.root, renderTemplateNodeId)
+			if renderTemplateNode != nil {
+				offset := renderTemplateNode.StartByte() + 1
+				htmlSource := renderTemplateNode.Utf8Text(mp.code)
+				if len(htmlSource) > 1 && htmlSource[0] == '`' && htmlSource[len(htmlSource)-1] == '`' {
+					htmlSource = htmlSource[1 : len(htmlSource)-1]
+				}
+
+				if htmlSource != "" {
+					htmlSlots, htmlParts, htmlErr := mp.processRenderTemplate(htmlSource, uint(offset))
+					if htmlErr != nil {
+						errs = errors.Join(errs, htmlErr)
+					}
+					for _, slot := range htmlSlots {
+						declaration.AddOrUpdateSlot(slot)
+					}
+					for _, part := range htmlParts {
+						declaration.AddOrUpdatePart(part)
+					}
+				}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
+
+	slices.SortStableFunc(declaration.Slots, func(a M.Slot, b M.Slot) int {
+		return int(a.StartByte - b.StartByte)
+	})
+	slices.SortStableFunc(declaration.CssParts, func(a M.CssPart, b M.CssPart) int {
+		return int(a.StartByte - b.StartByte)
+	})
+
 	return declaration, alias, errs
 }
 
 func (mp *ModuleProcessor) processRenderTemplate(
 	htmlSource string,
+	offset uint,
 ) (slots []M.Slot, parts []M.CssPart, errs error) {
 	parser := Q.GetHTMLParser()
 	defer Q.PutHTMLParser(parser)
@@ -367,10 +383,10 @@ func (mp *ModuleProcessor) processRenderTemplate(
 
 	handleParts := func(captureMap Q.CaptureMap, kind string) {
 		if pn, ok := captureMap["part.name"]; ok && len(pn) > 0 {
-			partsList := strings.FieldsSeq(pn[0].Text)
-			for partName := range partsList {
+			for partName := range strings.FieldsSeq(pn[0].Text) {
 				part := M.CssPart{}
 				part.Name = partName
+				part.StartByte = uint(pn[0].StartByte) + uint(offset)
 				if comment, ok := captureMap["comment"]; ok && len(comment) > 0 {
 					yamlDoc, err := parseYamlComment(comment[0].Text, kind)
 					if err != nil {
@@ -392,6 +408,9 @@ func (mp *ModuleProcessor) processRenderTemplate(
 
 	for captureMap := range matcher.ParentCaptures(root, text, "slot") {
 		slot := M.Slot{}
+		if s, ok := captureMap["slot"]; ok && len(s) > 0 {
+			slot.StartByte = uint(s[0].StartByte) + uint(offset)
+		}
 		if sn, ok := captureMap["slot.name"]; ok && len(sn) > 0 {
 			slot.Name = sn[0].Text
 		}
@@ -478,28 +497,25 @@ func dedentYaml(s string) string {
 	return strings.TrimSpace(strings.Join(lines, "\n"))
 }
 
-func appendUniqueSlots(existing []M.Slot, found []M.Slot) []M.Slot {
-	existingNames := make(map[string]struct{})
-	for _, s := range existing {
-		existingNames[s.Name] = struct{}{}
+func appendUniqueSlots(jsdocSlots []M.Slot, templateSlots []M.Slot) []M.Slot {
+	jsdocNames := make(map[string]*M.Slot)
+	for _, s := range jsdocSlots {
+		jsdocNames[s.Name] = &s
 	}
-	for _, s := range found {
-		if _, ok := existingNames[s.Name]; !ok {
-			existing = append(existing, s)
+	for _, s := range templateSlots {
+		if p, ok := jsdocNames[s.Name]; !ok {
+			jsdocSlots = append(jsdocSlots, s)
+		} else {
+			if s.Description != "" {
+				p.Description = s.Description
+			}
+			if s.Summary != "" {
+				p.Summary = s.Summary
+			}
+			if s.Deprecated != nil {
+				p.Deprecated = s.Deprecated
+			}
 		}
 	}
-	return existing
-}
-
-func appendUniqueParts(existing []M.CssPart, found []M.CssPart) []M.CssPart {
-	existingNames := make(map[string]struct{})
-	for _, s := range existing {
-		existingNames[s.Name] = struct{}{}
-	}
-	for _, s := range found {
-		if _, ok := existingNames[s.Name]; !ok {
-			existing = append(existing, s)
-		}
-	}
-	return existing
+	return jsdocSlots
 }
