@@ -47,13 +47,13 @@ func (x *ClassMethod) GetStartByte() uint { return x.StartByte }
 func (x *ClassMethod) IsDeprecated() bool { return x.Deprecated != nil }
 
 func (m *ClassMethod) UnmarshalJSON(data []byte) error {
-	type Alias ClassMethod
+	type Rest ClassMethod
 	aux := &struct {
 		Deprecated json.RawMessage   `json:"deprecated"`
 		Parameters []json.RawMessage `json:"parameters"`
-		*Alias
+		*Rest
 	}{
-		Alias: (*Alias)(m),
+		Rest: (*Rest)(m),
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err

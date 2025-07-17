@@ -68,16 +68,16 @@ func (x *CustomElementDeclaration) GetStartByte() uint {
 }
 
 func (c *CustomElementDeclaration) UnmarshalJSON(data []byte) (errs error) {
-	type Alias CustomElementDeclaration
+	type Rest CustomElementDeclaration
 	aux := &struct {
 		Deprecated json.RawMessage   `json:"deprecated"`
 		Members    []json.RawMessage `json:"members"`
-		*Alias
+		*Rest
 	}{
-		Alias: (*Alias)(c),
+		Rest: (*Rest)(c),
 	}
 
-	// First, unmarshal into the alias (fills ClassDeclaration and CustomElement)
+	// First, unmarshal into the "rest" (fills ClassDeclaration and CustomElement)
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}

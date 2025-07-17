@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-render-docs-lit.js",
+      "declarations": [
+        {
+          "name": "LitTemplate",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "lit-template",
+          "slots": [
+            {
+              "name": "",
+              "summary": "anonymous slot inside root part"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "root",
+              "summary": "root level part"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "lit-template",
+          "declaration": {
+            "name": "LitTemplate",
+            "module": "src/class-render-docs-lit.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "LitTemplate",
+          "declaration": {
+            "name": "LitTemplate",
+            "module": "src/class-render-docs-lit.js"
+          }
+        }
+      ]
+    }
+  ]
+}

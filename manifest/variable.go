@@ -58,8 +58,8 @@ func (v *VariableDeclaration) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	type Alias VariableDeclaration
-	if err := json.Unmarshal(rest, (*Alias)(v)); err != nil {
+	type Rest VariableDeclaration
+	if err := json.Unmarshal(rest, (*Rest)(v)); err != nil {
 		return err
 	}
 	if len(depRaw) > 0 && string(depRaw) != "null" {

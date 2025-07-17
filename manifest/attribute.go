@@ -45,12 +45,12 @@ func (x *Attribute) IsDeprecated() bool {
 }
 
 func (a *Attribute) UnmarshalJSON(data []byte) error {
-	type Alias Attribute
+	type Rest Attribute
 	aux := &struct {
 		Deprecated json.RawMessage `json:"deprecated"`
-		*Alias
+		*Rest
 	}{
-		Alias: (*Alias)(a),
+		Rest: (*Rest)(a),
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err

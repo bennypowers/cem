@@ -48,14 +48,14 @@ func NewModule(file string) *Module {
 }
 
 func (m *Module) UnmarshalJSON(data []byte) error {
-	type Alias Module
+	type Rest Module
 	aux := &struct {
 		Declarations []json.RawMessage `json:"declarations"`
 		Exports      []json.RawMessage `json:"exports"`
 		Deprecated   json.RawMessage   `json:"deprecated"`
-		*Alias
+		*Rest
 	}{
-		Alias: (*Alias)(m),
+		Rest: (*Rest)(m),
 	}
 	// Remove m.Declarations before unmarshaling so we control its population
 	m.Declarations = nil

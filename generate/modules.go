@@ -282,13 +282,6 @@ func (mp *ModuleProcessor) processClasses() error {
 			continue
 		}
 
-		// Use only the jsdoc attached by the query engine
-		if jsdocCaps, ok := captures["class.jsdoc"]; ok && len(jsdocCaps) > 0 {
-			fmt.Printf("Class: %s, attached jsdoc summary: %s\n", className, jsdocCaps[0].Text)
-		} else {
-			fmt.Printf("Class: %s, attached jsdoc: none\n", className)
-		}
-
 		parsed := &ParsedClass{
 			Name:     className,
 			Captures: captures,
