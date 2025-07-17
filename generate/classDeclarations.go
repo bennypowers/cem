@@ -420,7 +420,7 @@ func (mp *ModuleProcessor) processRenderTemplate(
 	return slots, parts, errs
 }
 
-var htmlCommentStripRE = regexp.MustCompile(`(?s)<!--(.*?)-->`)
+var htmlCommentStripRE = regexp.MustCompile(`(?s)^\s*<!--(.*?)(?:-->)?\s*$`)
 
 func ColorizeClassName(name string) *pterm.Style {
 	return pterm.NewStyle(pterm.FgMagenta, pterm.Bold)
