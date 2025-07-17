@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "invalid-variable.js",
+      "declarations": [
+        {
+          "kind": "variable"
+        }
+      ]
+    }
+  ]
+}

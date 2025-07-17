@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "my-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyElement",
+          "tagName": "my-element",
+          "customElement": true,
+          "members": [
+            {
+              "kind": "field",
+              "name": "myField"
+            },
+            {
+              "kind": "method",
+              "name": "myMethod"
+            }
+          ],
+          "events": [
+            {
+              "type": {
+                "text": "Event"
+              },
+              "name": "my-event"
+            }
+          ],
+          "attributes": [
+            {
+              "name": "my-attr"
+            }
+          ],
+          "slots": [
+            {
+              "name": "my-slot"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "my-css-part"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--my-css-prop"
+            }
+          ]
+        },
+        {
+          "kind": "mixin",
+          "name": "MyMixin"
+        },
+        {
+          "kind": "variable",
+          "name": "myVar"
+        },
+        {
+          "kind": "function",
+          "name": "myFunction"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "MyElement",
+          "declaration": {
+            "name": "MyElement",
+            "module": "my-element.js"
+          }
+        }
+      ]
+    }
+  ]
+}
