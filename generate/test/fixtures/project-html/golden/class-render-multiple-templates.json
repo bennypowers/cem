@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-render-multiple-templates.js",
+      "declarations": [
+        {
+          "name": "ClassRenderMultipleTemplates",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "class-render-multiple-templates",
+          "slots": [
+            {
+              "name": "first",
+              "description": "First Slot"
+            },
+            {
+              "name": "second",
+              "description": "Second Slot"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "one",
+              "description": "Part One"
+            },
+            {
+              "name": "two",
+              "description": "Part Two"
+            }
+          ],
+          "customElement": true
+        },
+        {
+          "name": "ClassRenderComposedTemplates",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "class-render-composed-templates",
+          "slots": [
+            {
+              "name": "composed",
+              "description": "Composed Slot"
+            },
+            {
+              "name": "main",
+              "description": "Main Slot"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-render-multiple-templates",
+          "declaration": {
+            "name": "ClassRenderMultipleTemplates",
+            "module": "src/class-render-multiple-templates.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "class-render-composed-templates",
+          "declaration": {
+            "name": "ClassRenderComposedTemplates",
+            "module": "src/class-render-multiple-templates.js"
+          }
+        }
+      ]
+    }
+  ]
+}
