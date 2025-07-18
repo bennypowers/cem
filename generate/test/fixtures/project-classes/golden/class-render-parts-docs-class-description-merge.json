@@ -7,13 +7,13 @@
       "declarations": [
         {
           "name": "ClassRenderPartsDocsClassDescriptionMerge",
+          "description": "class description",
           "superclass": {
             "name": "LitElement",
             "package": "lit"
           },
           "kind": "class",
           "tagName": "class-render-parts-docs-class-description-merge",
-          "description": "class description",
           "cssParts": [
             {
               "name": "part",
