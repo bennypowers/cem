@@ -3,16 +3,17 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "src/class-render-parts-docs.js",
+      "path": "src/class-render-parts-docs-class-description.js",
       "declarations": [
         {
-          "name": "ClassRenderPartsDocs",
+          "name": "ClassRenderPartsDocsClassDescription",
+          "description": "class description",
           "superclass": {
             "name": "LitElement",
             "package": "lit"
           },
           "kind": "class",
-          "tagName": "class-render-parts-docs",
+          "tagName": "class-render-parts-docs-class-description",
           "cssParts": [
             {
               "name": "part",
@@ -38,10 +39,10 @@
       "exports": [
         {
           "kind": "custom-element-definition",
-          "name": "class-render-parts-docs",
+          "name": "class-render-parts-docs-class-description",
           "declaration": {
-            "name": "ClassRenderPartsDocs",
-            "module": "src/class-render-parts-docs.js"
+            "name": "ClassRenderPartsDocsClassDescription",
+            "module": "src/class-render-parts-docs-class-description.js"
           }
         }
       ]

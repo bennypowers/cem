@@ -3,17 +3,16 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "src/class-render-parts-docs-class-description-merge.js",
+      "path": "src/class-render-parts-docs.js",
       "declarations": [
         {
-          "name": "ClassRenderPartsDocsClassDescriptionMerge",
+          "name": "ClassRenderPartsDocs",
           "superclass": {
             "name": "LitElement",
             "package": "lit"
           },
           "kind": "class",
-          "tagName": "class-render-parts-docs-class-description-merge",
-          "description": "class description",
+          "tagName": "class-render-parts-docs",
           "cssParts": [
             {
               "name": "part",
@@ -22,8 +21,7 @@
             },
             {
               "name": "summary",
-              "summary": "summary part summary",
-              "description": "jsdoc part description"
+              "summary": "summary part summary"
             },
             {
               "name": "deprecated",
@@ -40,10 +38,10 @@
       "exports": [
         {
           "kind": "custom-element-definition",
-          "name": "class-render-parts-docs-class-description-merge",
+          "name": "class-render-parts-docs",
           "declaration": {
-            "name": "ClassRenderPartsDocsClassDescriptionMerge",
-            "module": "src/class-render-parts-docs-class-description-merge.js"
+            "name": "ClassRenderPartsDocs",
+            "module": "src/class-render-parts-docs.js"
           }
         }
       ]
