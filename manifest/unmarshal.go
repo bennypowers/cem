@@ -31,12 +31,12 @@ func decodeDeprecatedField(dst *Deprecated, data json.RawMessage) bool {
 	}
 	var b bool
 	if err := json.Unmarshal(data, &b); err == nil {
-		*dst = DeprecatedFlag(b)
+		*dst = NewDeprecated(b)
 		return true
 	}
 	var s string
 	if err := json.Unmarshal(data, &s); err == nil {
-		*dst = DeprecatedReason(s)
+		*dst = NewDeprecated(s)
 		return true
 	}
 	return false // unknown type

@@ -33,6 +33,21 @@ type CssPart struct {
 	Deprecated Deprecated `json:"deprecated,omitempty"` // bool or string
 }
 
+func NewCssPart(
+	startByte uint,
+	name, description, summary string,
+	deprecated Deprecated,
+) CssPart {
+	part := CssPart{
+		StartByte:  startByte,
+		Deprecated: deprecated,
+	}
+	part.Name = name
+	part.Description = description
+	part.Summary = summary
+	return part
+}
+
 func (x *CssPart) IsDeprecated() bool {
 	if x == nil {
 		return false

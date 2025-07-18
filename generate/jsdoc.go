@@ -170,9 +170,9 @@ func NewClassInfo(source string, queryManager *Q.QueryManager) (*ClassInfo, erro
 					info.Demos = append(info.Demos, tagInfo.toDemo())
 				case "@deprecated":
 					if tagInfo.Description == "" {
-						info.Deprecated = M.DeprecatedFlag(true)
+						info.Deprecated = M.NewDeprecated(true)
 					} else {
-						info.Deprecated = M.DeprecatedReason(tagInfo.Description)
+						info.Deprecated = M.NewDeprecated(tagInfo.Description)
 					}
 				case "@event",
 					"@fires":
@@ -609,9 +609,9 @@ func NewPropertyInfo(code string, queryManager *Q.QueryManager) (*PropertyInfo, 
 				info.Type = tagType
 			case "@deprecated":
 				if content == "" {
-					info.Deprecated = M.DeprecatedFlag(true)
+					info.Deprecated = M.NewDeprecated(true)
 				} else {
-					info.Deprecated = M.DeprecatedReason(content)
+					info.Deprecated = M.NewDeprecated(content)
 				}
 			}
 		}
@@ -677,9 +677,9 @@ func NewCssCustomPropertyInfo(
 				info.Syntax = tagType
 			case "@deprecated":
 				if content == "" {
-					info.Deprecated = M.DeprecatedFlag(true)
+					info.Deprecated = M.NewDeprecated(true)
 				} else {
-					info.Deprecated = M.DeprecatedReason(content)
+					info.Deprecated = M.NewDeprecated(content)
 				}
 			}
 		}
@@ -763,9 +763,9 @@ func NewMethodInfo(source string, queryManager *Q.QueryManager) (error, *MethodI
 					info.Return = &ret
 				case "@deprecated":
 					if tagInfo.Description == "" {
-						info.Deprecated = M.DeprecatedFlag(true)
+						info.Deprecated = M.NewDeprecated(true)
 					} else {
-						info.Deprecated = M.DeprecatedReason(tagInfo.Description)
+						info.Deprecated = M.NewDeprecated(tagInfo.Description)
 					}
 				case "@summary":
 					info.Summary = normalizeJsdocLines(tagInfo.Description)

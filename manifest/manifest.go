@@ -87,6 +87,17 @@ func (d DeprecatedReason) MarshalJSON() ([]byte, error) {
 	return json.Marshal(string(d))
 }
 
+func NewDeprecated(x any) Deprecated {
+	switch v := x.(type) {
+	case bool:
+		return DeprecatedFlag(v)
+	case string:
+		return DeprecatedReason(v)
+	default:
+		return nil
+	}
+}
+
 type Privacy string
 
 const (
