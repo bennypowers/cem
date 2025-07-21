@@ -176,7 +176,20 @@ func getInnerComment(comment string) string {
 }
 
 func isYamlComment(comment string) bool {
-	return strings.Contains(comment, ":")
+	var m map[string]any
+	err := yaml.Unmarshal([]byte(comment), &m)
+	if err != nil || len(m) == 0 {
+		return false
+	}
+
+	for k := range m {
+		switch k {
+		case "description", "summary", "deprecated", "slot", "part":
+			return true
+		}
+	}
+
+	return false
 }
 
 func parseYamlComment(comment string, kind string) (HtmlDocYaml, error) {
