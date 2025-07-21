@@ -18,6 +18,7 @@ package generate
 
 import (
 	"errors"
+	"fmt"
 	"slices"
 
 	Q "bennypowers.dev/cem/generate/queries"
@@ -332,7 +333,7 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 					if htmlSource != "" {
 						htmlSlots, htmlParts, htmlErr := mp.processRenderTemplate(htmlSource, uint(offset))
 						if htmlErr != nil {
-							errs = errors.Join(errs, htmlErr)
+							errs = errors.Join(errs, fmt.Errorf("module %q: %w", mp.file, htmlErr))
 						}
 						for _, slot := range htmlSlots {
 							declaration.AddOrUpdateSlot(slot)

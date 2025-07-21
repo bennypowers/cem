@@ -18,6 +18,7 @@ package generate
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -86,14 +87,14 @@ func (mp *ModuleProcessor) processRenderTemplate(
 				// YAML comment: parse for both slot and part documentation
 				slotDoc, err := parseYamlComment(commentText, "slot")
 				if err != nil {
-					errs = errors.Join(errs, err)
+					errs = errors.Join(errs, fmt.Errorf("slot %q: %w", slot.Name, err))
 				}
 				slot.Description = slotDoc.Description
 				slot.Summary = slotDoc.Summary
 				slot.Deprecated = M.NewDeprecated(slotDoc.Deprecated)
 				partDoc, err := parseYamlComment(commentText, "part")
 				if err != nil {
-					errs = errors.Join(errs, err)
+					errs = errors.Join(errs, fmt.Errorf("part %v: %w", partNames, err))
 				}
 				for _, partName := range partNames {
 					part := M.NewCssPart(
@@ -145,7 +146,7 @@ func (mp *ModuleProcessor) processRenderTemplate(
 				if comment, ok := captureMap["comment"]; ok && len(comment) > 0 {
 					yamlDoc, err := parseYamlComment(comment[0].Text, "part")
 					if err != nil {
-						errs = errors.Join(errs, err)
+						errs = errors.Join(errs, fmt.Errorf("part %q: %w", partName, err))
 					}
 					part := M.NewCssPart(
 						partNameNode.StartByte+offset,
@@ -173,8 +174,22 @@ func getInnerComment(comment string) string {
 	}
 	return dedentYaml(inner)
 }
+
 func isYamlComment(comment string) bool {
-	return strings.Contains(comment, ":")
+	var m map[string]any
+	err := yaml.Unmarshal([]byte(comment), &m)
+	if err != nil || len(m) == 0 {
+		return false
+	}
+
+	for k := range m {
+		switch k {
+		case "description", "summary", "deprecated", "slot", "part":
+			return true
+		}
+	}
+
+	return false
 }
 
 func parseYamlComment(comment string, kind string) (HtmlDocYaml, error) {
