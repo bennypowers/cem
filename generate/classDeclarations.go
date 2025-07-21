@@ -317,27 +317,29 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 	}
 
 	err = mp.step("Processing render template", 2, func() error {
-		renderTemplateNodes, hasRenderTemplate := captures["render.template"]
-		if hasRenderTemplate {
-			renderTemplateNodeId := renderTemplateNodes[0].NodeId
-			renderTemplateNode := Q.GetDescendantById(mp.root, renderTemplateNodeId)
-			if renderTemplateNode != nil {
-				offset := renderTemplateNode.StartByte() + 1
-				htmlSource := renderTemplateNode.Utf8Text(mp.code)
-				if len(htmlSource) > 1 && htmlSource[0] == '`' && htmlSource[len(htmlSource)-1] == '`' {
-					htmlSource = htmlSource[1 : len(htmlSource)-1]
-				}
+		capinfos, ok := captures["render.template"]
+		if ok {
+			for _, capinfo := range capinfos {
+				nodeId := capinfo.NodeId
+				htmlSource := capinfo.Text
+				node := Q.GetDescendantById(mp.root, nodeId)
+				if node != nil {
+					offset := node.StartByte() + 1
+					if len(htmlSource) > 1 && htmlSource[0] == '`' && htmlSource[len(htmlSource)-1] == '`' {
+						htmlSource = htmlSource[1 : len(htmlSource)-1]
+					}
 
-				if htmlSource != "" {
-					htmlSlots, htmlParts, htmlErr := mp.processRenderTemplate(htmlSource, uint(offset))
-					if htmlErr != nil {
-						errs = errors.Join(errs, htmlErr)
-					}
-					for _, slot := range htmlSlots {
-						declaration.AddOrUpdateSlot(slot)
-					}
-					for _, part := range htmlParts {
-						declaration.AddOrUpdatePart(part)
+					if htmlSource != "" {
+						htmlSlots, htmlParts, htmlErr := mp.processRenderTemplate(htmlSource, uint(offset))
+						if htmlErr != nil {
+							errs = errors.Join(errs, htmlErr)
+						}
+						for _, slot := range htmlSlots {
+							declaration.AddOrUpdateSlot(slot)
+						}
+						for _, part := range htmlParts {
+							declaration.AddOrUpdatePart(part)
+						}
 					}
 				}
 			}
