@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-css-host-props.js",
+      "declarations": [
+        {
+          "name": "ClassCssHostProps",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "class-css-host-props",
+          "cssProperties": [
+            {
+              "name": "--defined-on-host",
+              "description": "defined on host",
+              "default": "blue"
+            },
+            {
+              "name": "--defined-on-host-call",
+              "description": "defined on host()",
+              "default": "blue"
+            },
+            {
+              "name": "--defined-in-var-call",
+              "description": "defined in var call"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-css-host-props",
+          "declaration": {
+            "name": "ClassCssHostProps",
+            "module": "src/class-css-host-props.js"
+          }
+        }
+      ]
+    }
+  ]
+}

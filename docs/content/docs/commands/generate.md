@@ -83,7 +83,7 @@ you will need to escape the backticks in the comment.
 {{</tip>}}
 
 ## CSS Custom Properties
-Supports CSS Custom Properties by scanning css files and css tagged-template-literals
+Supports CSS Custom Properties by scanning css files and css tagged-template-literals. `cem` also discovers properties defined in `:host` rules.
 
 - Custom properties beginning with `_` will be ignored (treated as "private")
 e.g. `var(--_private)`
@@ -98,6 +98,12 @@ variables
 
 ```css
 :host {
+  /**
+   * A property defined on the host
+   * @summary The host's custom property
+   */
+  --host-property: red;
+
   color:
     /**
      * custom color for use in this element
