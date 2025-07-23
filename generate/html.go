@@ -72,15 +72,27 @@ func (mp *ModuleProcessor) processRenderTemplate(
 		if s, ok := captureMap["slot"]; ok && len(s) > 0 {
 			slot.StartByte = uint(s[0].StartByte) + uint(offset)
 		}
-		if sn, ok := captureMap["slot.name"]; ok && len(sn) > 0 {
-			slot.Name = sn[0].Text
-		}
 
-		partNames := []string{}
+		var partNames []string
 		var partNameNode Q.CaptureInfo
-		if pn, ok := captureMap["part.name"]; ok && len(pn) > 0 {
-			partNames = strings.Fields(pn[0].Text)
-			partNameNode = pn[0]
+
+		if attrNames, ok := captureMap["attr.name"]; ok {
+			attrValues, ok := captureMap["attr.value"]
+			if !ok || len(attrValues) != len(attrNames) {
+				// This should not happen if the query is correct
+				continue
+			}
+
+			for i, attrName := range attrNames {
+				attrValue := attrValues[i]
+				switch attrName.Text {
+				case "name":
+					slot.Name = attrValue.Text
+				case "part":
+					partNames = strings.Fields(attrValue.Text)
+					partNameNode = attrValue
+				}
+			}
 		}
 
 		if comment, ok := captureMap["comment"]; ok && len(comment) > 0 {

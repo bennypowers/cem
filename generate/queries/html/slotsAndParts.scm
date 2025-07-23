@@ -1,5 +1,6 @@
-( ; <slot name="foo"></slot>
-  ; <slot></slot>
+( ; <slot></slot>
+  ; <slot name="foo"></slot>
+  ; <slot class="foo"></slot>
   ; <--
   ;  description: foo slot
   ;  summary: foo slot
@@ -9,18 +10,11 @@
   .
   (element
     (start_tag
-      (tag_name) @tag.name
-      (#eq? @tag.name "slot")
+      (tag_name) @tag.name (#eq? @tag.name "slot")
       (attribute
-        (attribute_name) @slot.attr.name
-        (#eq? @slot.attr.name "name")
+        (attribute_name) @attr.name
         (quoted_attribute_value
-          (attribute_value) @slot.name))?
-      (attribute
-        (attribute_name) @part.attr.name
-        (#eq? @part.attr.name "part")
-        (quoted_attribute_value
-          (attribute_value) @part.name))?))) @slot
+          (attribute_value) @attr.value))?))) @slot
 
 ( ; <div part="foo"></div>
   ; <--
