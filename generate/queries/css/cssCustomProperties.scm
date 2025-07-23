@@ -47,5 +47,5 @@
       (plain_value) @property (#match? @property "^--[^_]")
       ("," [_(_)]* @default)?
       .
-      ")"))) @cssProperty;
+      ")"))) @cssProperty
 
