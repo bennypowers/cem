@@ -6,10 +6,10 @@
   --also-defined-on-host: blue;
 
   /** defined on host with var call */
-  --defined-on-host-with-var: var(--defined-on-host);
+  --defined-on-host-with-var: var(--expect-this-to-not-have-description);
 
   /** defined on host with light-dark call */
-  --defined-on-host-with-var: light-dark(blue, red);
+  --defined-on-host-with-light-dark: light-dark(blue, red);
 }
 
 :host(.blue) {

@@ -27,10 +27,13 @@
             {
               "name": "--defined-on-host-with-var",
               "description": "defined on host with var call",
-              "default": "var(--defined-on-host)"
+              "default": "var(--expect-this-to-not-have-description)"
             },
             {
-              "name": "--defined-on-host-with-var",
+              "name": "--expect-this-to-not-have-description"
+            },
+            {
+              "name": "--defined-on-host-with-light-dark",
               "description": "defined on host with light-dark call",
               "default": "light-dark(blue, red)"
             },
