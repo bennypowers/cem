@@ -1,3 +1,4 @@
 sourceControlRootUrl: https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-css/
-files:
-  - src/*.ts
+generate:
+  files:
+    - src/*.ts
