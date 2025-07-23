@@ -107,6 +107,10 @@ func amendStylesMapFromSource(
 		}
 		comment, ok := captures["comment"]
 		if ok {
+			// If there are multiple properties in the declaration (len(properties) > 1),
+			// it is ambiguous which property a comment refers to. In such cases, comments
+			// are ignored to avoid associating them with the wrong property. A warning
+			// is issued to inform the user about this ambiguity.
 			if len(properties) > 1 {
 				commentNode := Q.GetDescendantById(root, comment[0].NodeId)
 				line := lineOffset + int(commentNode.StartPosition().Row) + 1
