@@ -1,0 +1,15 @@
+:host {
+  /** defined on host */
+  --defined-on-host: blue
+}
+
+:host(.blue) {
+  /** defined on host() */
+  --defined-on-host-call: blue
+}
+
+p {
+  color:
+    /** defined in var call */
+    var(--defined-in-var-call);
+}
