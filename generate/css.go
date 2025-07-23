@@ -98,7 +98,8 @@ func amendStylesMapFromSource(
 		if ok && len(defaultVals) > 0 {
 			startNode := Q.GetDescendantById(root, defaultVals[0].NodeId)
 			endNode := Q.GetDescendantById(root, defaultVals[len(defaultVals)-1].NodeId)
-			p.Default = string(code[startNode.StartByte():endNode.EndByte()])
+			defaultVal := string(code[startNode.StartByte():endNode.EndByte()])
+			p.Default = defaultVal
 		}
 		comment, ok := captures["comment"]
 		if ok {
