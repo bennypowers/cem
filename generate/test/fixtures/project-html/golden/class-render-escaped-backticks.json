@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-render-escaped-backticks.js",
+      "declarations": [
+        {
+          "name": "ClassRenderEscapedBackticks",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "class-render-escaped-backticks",
+          "slots": [
+            {
+              "name": "",
+              "description": "`<slot>`"
+            },
+            {
+              "name": "slot",
+              "summary": "`<slot>`"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "part",
+              "description": "`<p>`"
+            },
+            {
+              "name": "summary",
+              "summary": "`<p>`"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-render-escaped-backticks",
+          "declaration": {
+            "name": "ClassRenderEscapedBackticks",
+            "module": "src/class-render-escaped-backticks.js"
+          }
+        }
+      ]
+    }
+  ]
+}

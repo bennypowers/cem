@@ -46,7 +46,11 @@ type NestedHtmlDocYaml struct {
 func (mp *ModuleProcessor) processRenderTemplate(
 	htmlSource string,
 	offset uint,
-) (slots []M.Slot, parts []M.CssPart, errs error) {
+) (
+	slots []M.Slot,
+	parts []M.CssPart,
+	errs error,
+) {
 	parser := Q.GetHTMLParser()
 	defer Q.PutHTMLParser(parser)
 
@@ -81,44 +85,27 @@ func (mp *ModuleProcessor) processRenderTemplate(
 
 		if comment, ok := captureMap["comment"]; ok && len(comment) > 0 {
 			commentText := comment[0].Text
-			innerComment := getInnerComment(commentText)
-
-			if isYamlComment(innerComment) {
-				// YAML comment: parse for both slot and part documentation
-				slotDoc, err := parseYamlComment(commentText, "slot")
-				if err != nil {
-					errs = errors.Join(errs, fmt.Errorf("slot %q: %w", slot.Name, err))
-				}
-				slot.Description = slotDoc.Description
-				slot.Summary = slotDoc.Summary
-				slot.Deprecated = M.NewDeprecated(slotDoc.Deprecated)
-				partDoc, err := parseYamlComment(commentText, "part")
-				if err != nil {
-					errs = errors.Join(errs, fmt.Errorf("part %v: %w", partNames, err))
-				}
-				for _, partName := range partNames {
-					part := M.NewCssPart(
-						partNameNode.StartByte+offset,
-						partName,
-						partDoc.Description,
-						partDoc.Summary,
-						M.NewDeprecated(partDoc.Deprecated),
-					)
-					parts = append(parts, part)
-				}
-			} else {
-				// Plain string comment: applies to slot only
-				slot.Description = strings.TrimSpace(innerComment)
-				for _, partName := range partNames {
-					part := M.NewCssPart(
-						partNameNode.StartByte+offset,
-						partName,
-						"",
-						"",
-						nil,
-					)
-					parts = append(parts, part)
-				}
+			// YAML comment: parse for both slot and part documentation
+			slotDoc, err := parseYamlComment(commentText, "slot")
+			if err != nil {
+				errs = errors.Join(errs, fmt.Errorf("slot %q: %w", slot.Name, err))
+			}
+			slot.Description = slotDoc.Description
+			slot.Summary = slotDoc.Summary
+			slot.Deprecated = M.NewDeprecated(slotDoc.Deprecated)
+			partDoc, err := parseYamlComment(commentText, "part")
+			if err != nil {
+				errs = errors.Join(errs, fmt.Errorf("part %v: %w", partNames, err))
+			}
+			for _, partName := range partNames {
+				part := M.NewCssPart(
+					partNameNode.StartByte+offset,
+					partName,
+					partDoc.Description,
+					partDoc.Summary,
+					M.NewDeprecated(partDoc.Deprecated),
+				)
+				parts = append(parts, part)
 			}
 		} else if len(partNames) > 0 {
 			// No comment, but has part(s)
@@ -192,13 +179,23 @@ func isYamlComment(comment string) bool {
 	return false
 }
 
+func unescapeBackticks(str string) string {
+	return strings.ReplaceAll(str, "\\`", "`")
+}
+
 func parseYamlComment(comment string, kind string) (HtmlDocYaml, error) {
 	inner := getInnerComment(comment)
-	raw := NestedHtmlDocYaml{}
-	err := yaml.Unmarshal([]byte(inner), &raw)
+	unescaped := unescapeBackticks(inner)
 
-	if err != nil && !isYamlComment(inner) {
-		return HtmlDocYaml{Description: strings.TrimSpace(inner)}, nil
+	if !isYamlComment(unescaped) {
+		description := strings.TrimSpace(unescaped)
+		return HtmlDocYaml{Description: description}, nil
+	}
+
+	raw := NestedHtmlDocYaml{}
+	err := yaml.Unmarshal([]byte(unescaped), &raw)
+	if err != nil {
+		return HtmlDocYaml{}, err
 	}
 
 	switch kind {
@@ -212,8 +209,10 @@ func parseYamlComment(comment string, kind string) (HtmlDocYaml, error) {
 		}
 	}
 
+	description := unescapeBackticks(strings.TrimSpace(raw.Description))
+
 	return HtmlDocYaml{
-		Description: raw.Description,
+		Description: description,
 		Summary:     raw.Summary,
 		Deprecated:  raw.Deprecated,
 	}, err

@@ -37,23 +37,18 @@ See the [generate test fixtures](https://github.com/bennypowers/cem/tree/main/ge
 <a id="html-template-analysis-for-slots-and-parts"></a>
 ## Slots and Parts
 
-- **Automatically detects `<slot>` elements and `part` attributes in your element’s
-`render()` template.**
-- Merges slot and part information found in templates with any provided
-via JSDoc, ensuring comprehensive documentation in the generated manifest.
-- **Supports documenting slots and parts inline in your template HTML** using
-HTML comments.
+`cem` automatically detects `<slot>` elements and `part` attributes in your element’s `render()` template, merging them with any information provided via JSDoc. You can also document slots and parts inline in your template HTML using HTML comments. This helps in documenting them for your users, but is not required to detect them.
+
 - If the comment is a plain string, it will be used as the `description` for the element. In cases where an element is both a slot and a part, the description will only be applied to the slot.
 - For more detailed documentation, you can use YAML inside the comment.
-- Comments are not necessary to detect slots and parts, but help in
-documenting them for your users.
+- Markdown is supported in all HTML comment documentation. Use a backslash (`\`) to escape backticks.
 
 ### Examples
 
 #### Plain String Comment
-A simple comment will be treated as the description.
+A simple comment will be treated as the description. Markdown content is supported and encouraged.
 ```html
-<!-- This is the default slot. -->
+<!-- This is the **default** `slot`. -->
 <slot></slot>
 ```
 
@@ -65,6 +60,7 @@ For more complex metadata, use YAML syntax.
   description: |
     This slot displays user-provided content.
     Supports multiline **markdown**.
+    e.g. `code`
   deprecated: true
 -->
 <slot></slot>
@@ -74,12 +70,17 @@ For more complex metadata, use YAML syntax.
 When an element is both a slot and a part, you can document both in a single comment.
 ```html
 <!-- slot:
-       summary: Named slot summary
+       summary: The `info` slot
      part:
-       summary: Part summary
+       summary: The `info-part` part
 -->
 <slot name="info" part="info-part"></slot>
 ```
+
+{{<tip "warning">}}
+When including inline markdown <code>\`code\`</code> in your comments in lit-html templates, 
+you will need to escape the backticks in the comment.
+{{</tip>}}
 
 ## CSS Custom Properties
 Supports CSS Custom Properties by scanning css files and css tagged-template-literals
