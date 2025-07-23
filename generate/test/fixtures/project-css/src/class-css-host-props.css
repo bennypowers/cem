@@ -1,15 +1,23 @@
 :host {
   /** defined on host */
-  --defined-on-host: blue
+  --defined-on-host: blue;
+
+  /** also defined on host */
+  --also-defined-on-host: blue;
 }
 
 :host(.blue) {
   /** defined on host() */
-  --defined-on-host-call: blue
+  --defined-on-host-call: blue;
+
+  /** also defined on host() */
+  --also-defined-on-host-call: blue;
 }
 
 p {
-  color:
+  border:
     /** defined in var call */
-    var(--defined-in-var-call);
+    var(--defined-in-var-call)
+    /** also defined in var call */
+    var(--also-defined-in-var-call);
 }

@@ -20,13 +20,27 @@
               "default": "blue"
             },
             {
+              "name": "--also-defined-on-host",
+              "description": "also defined on host",
+              "default": "blue"
+            },
+            {
               "name": "--defined-on-host-call",
               "description": "defined on host()",
               "default": "blue"
             },
             {
+              "name": "--also-defined-on-host-call",
+              "description": "also defined on host()",
+              "default": "blue"
+            },
+            {
               "name": "--defined-in-var-call",
               "description": "defined in var call"
+            },
+            {
+              "name": "--also-defined-in-var-call",
+              "description": "also defined in var call"
             }
           ],
           "customElement": true
