@@ -25,6 +25,16 @@
               "default": "blue"
             },
             {
+              "name": "--defined-on-host-with-var",
+              "description": "defined on host with var call",
+              "default": "var(--defined-on-host)"
+            },
+            {
+              "name": "--defined-on-host-with-var",
+              "description": "defined on host with light-dark call",
+              "default": "light-dark(blue, red)"
+            },
+            {
               "name": "--defined-on-host-call",
               "description": "defined on host()",
               "default": "blue"
