@@ -25,6 +25,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/pterm/pterm"
+
 	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
 	ts "github.com/tree-sitter/go-tree-sitter"
@@ -69,6 +71,8 @@ func sortCustomProperty(a M.CssCustomProperty, b M.CssCustomProperty) int {
 }
 
 func amendStylesMapFromSource(
+	path string,
+	lineOffset int,
 	props CssPropsMap,
 	queryManager *Q.QueryManager,
 	queryMatcher *Q.QueryMatcher,
@@ -103,12 +107,22 @@ func amendStylesMapFromSource(
 		}
 		comment, ok := captures["comment"]
 		if ok {
-			for _, comment := range comment {
-				info, err := NewCssCustomPropertyInfo(comment.Text, queryManager)
-				if err != nil {
-					errs = errors.Join(errs, err)
-				} else {
-					info.MergeToCssCustomProperty(&p)
+			// If there are multiple properties in the declaration (len(properties) > 1),
+			// it is ambiguous which property a comment refers to. In such cases, comments
+			// are ignored to avoid associating them with the wrong property. A warning
+			// is issued to inform the user about this ambiguity.
+			if len(properties) > 1 {
+				commentNode := Q.GetDescendantById(root, comment[0].NodeId)
+				line := lineOffset + int(commentNode.StartPosition().Row) + 1
+				pterm.Warning.Printf("%s:%d: Ambiguous comment ignored: more than one var() call in declaration.\n", path, line)
+			} else {
+				for _, comment := range comment {
+					info, err := NewCssCustomPropertyInfo(comment.Text, queryManager)
+					if err != nil {
+						errs = errors.Join(errs, err)
+					} else {
+						info.MergeToCssCustomProperty(&p)
+					}
 				}
 			}
 		}
@@ -146,7 +160,7 @@ func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsM
 	from module directory %s: %w`, spec, absPath, moduleDir, err))
 						} else {
 							tmpProps := make(CssPropsMap)
-							err := amendStylesMapFromSource(tmpProps, mp.queryManager, qm, parser, content)
+							err := amendStylesMapFromSource(absPath, 0, tmpProps, mp.queryManager, qm, parser, content)
 							if err != nil {
 								errs = errors.Join(errs, err)
 							}
@@ -163,7 +177,9 @@ func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsM
 		}
 		if hasStrings {
 			for _, styleString := range styleStrings {
-				err := amendStylesMapFromSource(props, mp.queryManager, qm, parser, []byte(styleString.Text))
+				tsNode := Q.GetDescendantById(mp.root, styleString.NodeId)
+				lineOffset := int(tsNode.StartPosition().Row)
+				err := amendStylesMapFromSource(mp.absPath, lineOffset, props, mp.queryManager, qm, parser, []byte(styleString.Text))
 				if err != nil {
 					errs = errors.Join(errs, err)
 				}

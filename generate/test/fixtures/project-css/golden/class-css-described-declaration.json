@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-css-described-declaration.js",
+      "declarations": [
+        {
+          "name": "ClassCssDescribedDeclaration",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "class-css-described-declaration",
+          "cssProperties": [
+            {
+              "name": "--single-call",
+              "description": "single var call in declaration"
+            },
+            {
+              "name": "--another-call",
+              "description": "another var call in declaration"
+            },
+            {
+              "name": "--a"
+            },
+            {
+              "name": "--b"
+            },
+            {
+              "name": "--c"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-css-described-declaration",
+          "declaration": {
+            "name": "ClassCssDescribedDeclaration",
+            "module": "src/class-css-described-declaration.js"
+          }
+        }
+      ]
+    }
+  ]
+}

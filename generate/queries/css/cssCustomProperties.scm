@@ -28,3 +28,22 @@
         (property_name) @property (#match? @property "^--[^_]")
         ":"
         (_)* @default) @cssProperty)))
+
+( ; /** single var call in declaration */
+  ; color: var(--blue);
+  (rule_set
+    (block
+      (comment)? @comment (#match? @comment "^/\\*\\*")
+      .
+      (declaration
+        (property_name)
+        ":"
+        (call_expression
+          (function_name) @fn (#eq? @fn "var")
+          (arguments
+            "("
+            .
+            (plain_value) @property (#match? @property "^--[^_]")
+            ("," [_(_)]* @default)?
+            .
+            ")"))) @cssProperty)))

@@ -1,0 +1,8 @@
+p {
+  /** single var call in declaration */
+  color: var(--single-call);
+  /** another var call in declaration */
+  color: var(--another-call);
+  /** multiple */
+  border: var(--a) var(--b) var(--c);
+}
