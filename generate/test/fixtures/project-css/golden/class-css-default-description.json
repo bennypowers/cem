@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-css-default-description.js",
+      "declarations": [
+        {
+          "name": "ClassCssDefaultDescription",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "class-css-default-description",
+          "cssProperties": [
+            {
+              "name": "--a",
+              "default": "var(--b) var(--c) var(--d) var(--e)",
+              "description": "a"
+            },
+            {
+              "name": "--b",
+              "description": "b"
+            },
+            {
+              "name": "--c",
+              "description": "c"
+            },
+            {
+              "name": "--d",
+              "description": "d",
+              "deprecated": true
+            },
+            {
+              "name": "--e",
+              "description": "e",
+              "deprecated": "use --a"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-css-default-description",
+          "declaration": {
+            "name": "ClassCssDefaultDescription",
+            "module": "src/class-css-default-description.js"
+          }
+        }
+      ]
+    }
+  ]
+}
