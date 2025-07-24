@@ -1,5 +1,5 @@
 @customElement('class-render-slots')
-class ClassMethods extends LitElement {
+class ClassRenderSlots extends LitElement {
   render() {
     return html`
       <slot></slot>
