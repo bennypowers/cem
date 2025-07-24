@@ -214,6 +214,18 @@
                         function: (identifier) @_t_tag (#eq? @_t_tag "html")
                         arguments: (template_string) @render.template)))
 
+                  ; const composedSlot = tern ? html`
+                  ;   <slot name="a"></slot>
+                  ; ` : html`
+                  ;   <slot name="b"></slot>
+                  ; `;
+                  (lexical_declaration
+                    (variable_declarator
+                      (ternary_expression
+                        (call_expression
+                          function: (identifier) @_t_tag (#eq? @_t_tag "html")
+                          arguments: (template_string) @render.template))))
+
                 ]))?
             (public_field_definition
               "static"
