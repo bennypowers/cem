@@ -70,6 +70,30 @@ func sortCustomProperty(a M.CssCustomProperty, b M.CssCustomProperty) int {
 	return int(a.StartByte - b.StartByte)
 }
 
+// Normalizes a css value by stripping comments and replacing newlines with spaces
+func normalizeCssVal(nodes []*ts.Node, code []byte) string {
+	var sb strings.Builder
+	var lastNode *ts.Node
+
+	for _, node := range nodes {
+		if node.GrammarName() == "comment" {
+			continue
+		}
+
+		if lastNode != nil && node.StartByte() > lastNode.EndByte() {
+			// There was a gap between the last node and this one.
+			// This gap contains whitespace and/or comments.
+			// We add a single space to normalize it.
+			sb.WriteRune(' ')
+		}
+
+		sb.WriteString(node.Utf8Text(code))
+		lastNode = node
+	}
+
+	return sb.String()
+}
+
 func amendStylesMapFromSource(
 	path string,
 	lineOffset int,
@@ -100,10 +124,11 @@ func amendStylesMapFromSource(
 		}
 		defaultVals, ok := captures["default"]
 		if ok && len(defaultVals) > 0 {
-			startNode := Q.GetDescendantById(root, defaultVals[0].NodeId)
-			endNode := Q.GetDescendantById(root, defaultVals[len(defaultVals)-1].NodeId)
-			defaultVal := string(code[startNode.StartByte():endNode.EndByte()])
-			p.Default = defaultVal
+			valueNodes := make([]*ts.Node, len(defaultVals))
+			for i, n := range defaultVals {
+				valueNodes[i] = Q.GetDescendantById(root, n.NodeId)
+			}
+			p.Default = normalizeCssVal(valueNodes, code)
 		}
 		comment, ok := captures["comment"]
 		if ok {

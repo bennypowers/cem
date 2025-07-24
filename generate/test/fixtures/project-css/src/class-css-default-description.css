@@ -1,0 +1,18 @@
+:host {
+  /** a */
+  --a:
+    /** b */
+    var(--b)
+    /** c */
+    var(--c)
+    /**
+     * d
+     * @deprecated
+     */
+    var(--d)
+    /**
+     * e
+     * @deprecated use --a
+     */
+    var(--e);
+}
