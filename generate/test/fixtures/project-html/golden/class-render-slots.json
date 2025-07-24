@@ -6,7 +6,7 @@
       "path": "src/class-render-slots.js",
       "declarations": [
         {
-          "name": "ClassMethods",
+          "name": "ClassRenderSlots",
           "superclass": {
             "name": "LitElement",
             "package": "lit"
@@ -29,7 +29,7 @@
           "kind": "custom-element-definition",
           "name": "class-render-slots",
           "declaration": {
-            "name": "ClassMethods",
+            "name": "ClassRenderSlots",
             "module": "src/class-render-slots.js"
           }
         }

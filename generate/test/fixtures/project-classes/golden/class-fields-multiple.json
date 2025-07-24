@@ -23,7 +23,7 @@
           "kind": "class"
         },
         {
-          "name": "ClassFieldsMultiple",
+          "name": "ClassFieldsDuplicate",
           "superclass": {
             "name": "LitElement",
             "package": "lit"
@@ -79,7 +79,7 @@
           "kind": "custom-element-definition",
           "name": "class-fields-duplicate",
           "declaration": {
-            "name": "ClassFieldsMultiple",
+            "name": "ClassFieldsDuplicate",
             "module": "src/class-fields-multiple.js"
           }
         }
