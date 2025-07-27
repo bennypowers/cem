@@ -1,0 +1,14 @@
+{
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "missing-schema.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MissingSchemaVersion"
+        }
+      ]
+    }
+  ]
+}

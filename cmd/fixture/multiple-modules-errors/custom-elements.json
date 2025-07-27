@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "first-module.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "FirstClass",
+          "customElement": true,
+          "tagName": "first-element",
+          "attributes": [
+            {
+              "summary": "Missing name attribute"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module", 
+      "path": "second-module.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "SecondClass",
+          "customElement": true,
+          "tagName": "second-element",
+          "events": [
+            {
+              "summary": "Missing name and type"
+            }
+          ],
+          "slots": [
+            {
+              "summary": "Missing name slot"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

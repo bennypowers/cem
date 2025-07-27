@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "css-states.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "CssStatesElement",
+          "customElement": true,
+          "tagName": "css-states-element",
+          "cssStates": [
+            {
+              "summary": "Missing name"
+            },
+            {
+              "name": "valid-state",
+              "summary": "This one is valid"
+            },
+            {
+              "summary": "Another missing name"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

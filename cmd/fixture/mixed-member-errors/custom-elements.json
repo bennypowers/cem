@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "mixed-members.js",
+      "declarations": [
+        {
+          "kind": "class", 
+          "name": "MixedMemberErrors",
+          "customElement": true,
+          "tagName": "mixed-members",
+          "members": [
+            {
+              "kind": "field",
+              "name": "validField"
+            },
+            {
+              "kind": "field"
+            },
+            {
+              "kind": "method",
+              "name": "validMethod"
+            },
+            {
+              "kind": "method"
+            },
+            {
+              "kind": "accessor",
+              "name": "validAccessor"
+            },
+            {
+              "kind": "accessor"
+            }
+          ],
+          "attributes": [
+            {
+              "name": "valid-attr"
+            },
+            {
+              "summary": "Missing name"
+            }
+          ],
+          "events": [
+            {
+              "name": "valid-event",
+              "type": { "text": "CustomEvent" }
+            },
+            {
+              "summary": "Missing name and type"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

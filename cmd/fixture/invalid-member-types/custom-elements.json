@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "invalid-member-types.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "InvalidMemberTypes",
+          "customElement": true,
+          "tagName": "invalid-members",
+          "members": [
+            {
+              "kind": "field",
+              "name": "validField"
+            },
+            {
+              "kind": "invalid-member-kind",
+              "name": "invalidMemberKind"
+            },
+            {
+              "kind": "method",
+              "name": "validMethod"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
