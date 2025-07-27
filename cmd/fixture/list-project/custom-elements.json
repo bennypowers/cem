@@ -29,7 +29,10 @@
               }
             },
             {
-              "name": "reset"
+              "name": "reset",
+              "type": {
+                "text": "Event"
+              }
             }
           ],
           "slots": [

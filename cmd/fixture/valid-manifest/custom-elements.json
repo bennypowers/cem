@@ -16,8 +16,32 @@
               "name": "myField"
             },
             {
+              "kind": "field",
+              "name": "myAttr",
+              "attribute": "my-attr",
+              "reflects": true
+            },
+            {
               "kind": "method",
               "name": "myMethod"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "my-css-part"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--my-css-prop"
+            }
+          ],
+          "demos": [
+            {
+              "url": "https://example.com/demo/",
+              "source": {
+                "href": "https://example.com/demo/src.html"
+              }
             }
           ],
           "events": [
@@ -37,21 +61,16 @@
             {
               "name": "my-slot"
             }
-          ],
-          "cssParts": [
-            {
-              "name": "my-css-part"
-            }
-          ],
-          "cssProperties": [
-            {
-              "name": "--my-css-prop"
-            }
           ]
         },
         {
           "kind": "mixin",
           "name": "MyMixin"
+        },
+        {
+          "kind": "mixin",
+          "name": "MyCustomElementMixin",
+          "customElement": true
         },
         {
           "kind": "variable",

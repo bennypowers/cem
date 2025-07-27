@@ -10,7 +10,7 @@
           "name": "InvalidCssCustomProperty",
           "tagName": "invalid-css-custom-property",
           "customElement": true,
-          "cssCustomProperties": [
+          "cssProperties": [
             {
               "summary": "no name"
             }
