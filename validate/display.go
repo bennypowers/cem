@@ -17,7 +17,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package validate
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/pterm/pterm"
@@ -37,16 +39,59 @@ type GroupedWarnings struct {
 
 type DisplayOptions struct {
 	Verbose bool
+	Format  string
+}
+
+// JSONValidationResult represents the validation result in JSON format
+type JSONValidationResult struct {
+	Valid         bool              `json:"valid"`
+	Path          string            `json:"path"`
+	SchemaVersion string            `json:"schemaVersion,omitempty"`
+	Errors        []ValidationIssue `json:"errors"`
+	Warnings      []Warning         `json:"warnings"`
 }
 
 // PrintValidationResult prints the validation result with appropriate formatting
 func PrintValidationResult(manifestPath string, result *ValidationResult, options DisplayOptions) {
-	if result.IsValid && len(result.Warnings) == 0 {
-		printValidationSuccess(manifestPath, result.SchemaVersion, options.Verbose)
-	} else if result.IsValid && len(result.Warnings) > 0 {
-		printValidationWarnings(manifestPath, result.Warnings, options.Verbose)
-	} else {
-		printValidationErrors(manifestPath, result.SchemaVersion, result.Issues, options.Verbose)
+	switch options.Format {
+	case "json":
+		printValidationResultJSON(manifestPath, result)
+	case "text", "":
+		if result.IsValid && len(result.Warnings) == 0 {
+			printValidationSuccess(manifestPath, result.SchemaVersion, options.Verbose)
+		} else if result.IsValid && len(result.Warnings) > 0 {
+			printValidationWarnings(manifestPath, result.Warnings, options.Verbose)
+		} else {
+			printValidationErrors(manifestPath, result.SchemaVersion, result.Issues, options.Verbose)
+		}
+	default:
+		fmt.Fprintf(os.Stderr, "Invalid format: %s. Use 'text' or 'json'\n", options.Format)
+		os.Exit(1)
+	}
+}
+
+func printValidationResultJSON(manifestPath string, result *ValidationResult) {
+	jsonResult := JSONValidationResult{
+		Valid:         result.IsValid,
+		Path:          manifestPath,
+		SchemaVersion: result.SchemaVersion,
+		Errors:        result.Issues,
+		Warnings:      result.Warnings,
+	}
+
+	// Ensure arrays are never null in JSON
+	if jsonResult.Errors == nil {
+		jsonResult.Errors = []ValidationIssue{}
+	}
+	if jsonResult.Warnings == nil {
+		jsonResult.Warnings = []Warning{}
+	}
+
+	encoder := json.NewEncoder(os.Stdout)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(jsonResult); err != nil {
+		fmt.Fprintf(os.Stderr, "Error encoding JSON: %v\n", err)
+		os.Exit(1)
 	}
 }
 

@@ -28,7 +28,8 @@ import (
 
 func init() {
 	validateCmd.Flags().BoolP("verbose", "v", false, "Show detailed information including schema version")
-	validateCmd.Flags().Bool("no-warnings", false, "Suppress validation warnings")
+	validateCmd.Flags().StringArray("disable", []string{}, "Disable specific warning rules or categories")
+	validateCmd.Flags().String("format", "text", "Output format: text or json")
 	rootCmd.AddCommand(validateCmd)
 }
 
@@ -56,12 +57,17 @@ var validateCmd = &cobra.Command{
 
 		// Get flags
 		verbose, _ := cmd.Flags().GetBool("verbose")
-		noWarnings, _ := cmd.Flags().GetBool("no-warnings")
+		disableFlags, _ := cmd.Flags().GetStringArray("disable")
+		format, _ := cmd.Flags().GetString("format")
+
+		// Merge config and flag disabled rules
+		configDisabled := viper.GetStringSlice("warnings.disable")
+		allDisabled := append(configDisabled, disableFlags...)
 
 		// Set up validation options
 		options := V.ValidationOptions{
-			IncludeWarnings: !noWarnings,
-			DisabledRules:   viper.GetStringSlice("warnings.disable"),
+			IncludeWarnings: true, // Always include warnings, but filter them
+			DisabledRules:   allDisabled,
 		}
 
 		// Validate the manifest
@@ -74,6 +80,7 @@ var validateCmd = &cobra.Command{
 		// Print the results
 		displayOptions := V.DisplayOptions{
 			Verbose: verbose,
+			Format:  format,
 		}
 		V.PrintValidationResult(manifestPath, result, displayOptions)
 
