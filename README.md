@@ -38,7 +38,7 @@ See more in the [List docs][listdocs]
 
 ### `cem validate`
 
-The `cem validate` command validates your `custom-elements.json` file against the official JSON schema. This is useful for ensuring your manifest is compliant with the specification.
+The `cem validate` command validates your `custom-elements.json` file against the official JSON schema and provides intelligent warnings for potentially inappropriate manifest content. Beyond basic schema validation, it analyzes your manifest for lifecycle methods, private implementations, and other patterns that shouldn't be part of your public API documentation.
 
 See more in the [Validate docs][validatedocs]
 
