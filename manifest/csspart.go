@@ -29,7 +29,23 @@ var _ Renderable = (*RenderableCssPart)(nil)
 // CssPart describes a CSS part.
 type CssPart struct {
 	FullyQualified
+	StartByte  uint       `json:"-" yaml:"-"`
 	Deprecated Deprecated `json:"deprecated,omitempty"` // bool or string
+}
+
+func NewCssPart(
+	startByte uint,
+	name, description, summary string,
+	deprecated Deprecated,
+) CssPart {
+	part := CssPart{
+		StartByte:  startByte,
+		Deprecated: deprecated,
+	}
+	part.Name = name
+	part.Description = description
+	part.Summary = summary
+	return part
 }
 
 func (x *CssPart) IsDeprecated() bool {

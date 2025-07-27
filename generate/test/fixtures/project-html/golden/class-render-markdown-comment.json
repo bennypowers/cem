@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-render-markdown-comment.js",
+      "declarations": [
+        {
+          "name": "ClassRenderMarkdownComment",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "class-render-markdown-comment",
+          "slots": [
+            {
+              "name": "",
+              "description": "this comment contains a colon: it could easily break naive parsing"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-render-markdown-comment",
+          "declaration": {
+            "name": "ClassRenderMarkdownComment",
+            "module": "src/class-render-markdown-comment.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ClassRenderMarkdownComment",
+          "declaration": {
+            "name": "ClassRenderMarkdownComment",
+            "module": "src/class-render-markdown-comment.js"
+          }
+        }
+      ]
+    }
+  ]
+}

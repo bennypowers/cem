@@ -108,11 +108,47 @@
                        ] @customElement.styles (#eq? @_fieldname "styles"))?
               (method_definition ; render method
                 name: (_) @_method_name (#eq? @_method_name "render")
-                body: (_
+                body: (_ [
+
+                  ; return html`
+                  ;   <slot name="main"></slot>
+                  ; `;
                   (return_statement
                     (call_expression
                       function: (identifier) @_t_tag (#eq? @_t_tag "html")
-                      arguments: (template_string) @render.template))))?)
+                      arguments: (template_string) @render.template))
+
+                  ; return awesome ? html`
+                  ;   <slot name="awesome">
+                  ; ` : html`
+                  ;   <slot name="main"></slot>
+                  ; `;
+                  (return_statement
+                    (ternary_expression
+                      (call_expression
+                        function: (identifier) @_t_tag (#eq? @_t_tag "html")
+                        arguments: (template_string) @render.template)))
+
+                  ; return [
+                  ;   html`<slot name="first"></slot>`,
+                  ;   html`<slot name="second"></slot>`
+                  ; ]
+                  (return_statement
+                    (array
+                      (call_expression
+                        function: (identifier) @_t_tag (#eq? @_t_tag "html")
+                        arguments: (template_string) @render.template)))
+
+                  ; const composedSlot = html`
+                  ;   <slot name="composed"></slot>
+                  ; `;
+                  (lexical_declaration
+                    (variable_declarator
+                      (call_expression
+                        function: (identifier) @_t_tag (#eq? @_t_tag "html")
+                        arguments: (template_string) @render.template)))
+
+                ]))?)
       ) @class.declaration)) @customElement @class
 
 ( ; non-exported litelement class
@@ -138,11 +174,59 @@
     body: (class_body
             (method_definition ; render method
                 name: (_) @_method_name (#eq? @_method_name "render")
-                body: (_
+                body: (_ [
+
+                  ; return html`
+                  ;   <slot name="main"></slot>
+                  ; `;
                   (return_statement
                     (call_expression
                       function: (identifier) @_t_tag (#eq? @_t_tag "html")
-                      arguments: (template_string) @render.template))))?
+                      arguments: (template_string) @render.template))
+
+                  ; return awesome ? html`
+                  ;   <slot name="awesome">
+                  ; ` : html`
+                  ;   <slot name="main"></slot>
+                  ; `;
+                  (return_statement
+                    (ternary_expression
+                      (call_expression
+                        function: (identifier) @_t_tag (#eq? @_t_tag "html")
+                        arguments: (template_string) @render.template)))
+
+                  ; return [
+                  ;   html`<slot name="first"></slot>`,
+                  ;   html`<slot name="second"></slot>`
+                  ; ]
+                  (return_statement
+                    (array
+                      (call_expression
+                        function: (identifier) @_t_tag (#eq? @_t_tag "html")
+                        arguments: (template_string) @render.template)))
+
+                  ; const composedSlot = html`
+                  ;   <slot name="composed"></slot>
+                  ; `;
+                  (lexical_declaration
+                    (variable_declarator
+                      (call_expression
+                        function: (identifier) @_t_tag (#eq? @_t_tag "html")
+                        arguments: (template_string) @render.template)))
+
+                  ; const composedSlot = tern ? html`
+                  ;   <slot name="a"></slot>
+                  ; ` : html`
+                  ;   <slot name="b"></slot>
+                  ; `;
+                  (lexical_declaration
+                    (variable_declarator
+                      (ternary_expression
+                        (call_expression
+                          function: (identifier) @_t_tag (#eq? @_t_tag "html")
+                          arguments: (template_string) @render.template))))
+
+                ]))?
             (public_field_definition
               "static"
               name: (property_identifier) @_fieldname

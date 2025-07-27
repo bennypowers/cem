@@ -63,13 +63,13 @@ func (f *ClassField) UnmarshalJSON(data []byte) error {
 		// Try bool
 		var b bool
 		if err := json.Unmarshal(aux.Deprecated, &b); err == nil {
-			f.Deprecated = DeprecatedFlag(b)
+			f.Deprecated = NewDeprecated(b)
 			return nil
 		}
 		// Try string
 		var s string
 		if err := json.Unmarshal(aux.Deprecated, &s); err == nil {
-			f.Deprecated = DeprecatedReason(s)
+			f.Deprecated = NewDeprecated(s)
 			return nil
 		} else {
 			return err

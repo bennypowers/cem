@@ -17,7 +17,7 @@ class ClassRenderSlotsDocs extends LitElement {
              named slot multiline description
 
              **with markdown** -->
-      <slot name="named"></slot>
+      <slot name="named-described"></slot>
       <!-- deprecated: true -->
       <slot name="deprecated"></slot>
       <!-- deprecated: deprecation reason -->

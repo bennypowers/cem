@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-render-slot-anon-attributes.js",
+      "declarations": [
+        {
+          "name": "ClassRenderSlotAnonAttributes",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "class-render-slot-anon-attributes",
+          "customElement": true,
+          "slots": [
+            {
+              "name": "",
+              "summary": "summary",
+              "description": "`<slot>`"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-render-slot-anon-attributes",
+          "declaration": {
+            "name": "ClassRenderSlotAnonAttributes",
+            "module": "src/class-render-slot-anon-attributes.js"
+          }
+        }
+      ]
+    }
+  ]
+}

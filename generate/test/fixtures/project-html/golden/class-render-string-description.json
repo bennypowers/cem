@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-render-string-description.js",
+      "declarations": [
+        {
+          "name": "ClassRenderStringDescription",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "class-render-string-description",
+          "slots": [
+            {
+              "name": "",
+              "description": "anonymous"
+            },
+            {
+              "name": "slot",
+              "description": "name=\"slot\""
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "part",
+              "description": "name=\"part\""
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-render-string-description",
+          "declaration": {
+            "name": "ClassRenderStringDescription",
+            "module": "src/class-render-string-description.js"
+          }
+        }
+      ]
+    }
+  ]
+}

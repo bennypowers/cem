@@ -1,35 +1,32 @@
+/*
+Copyright © 2025 Benny Powers
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
 package generate
 
 import (
 	"errors"
-	"regexp"
+	"fmt"
 	"slices"
-	"strings"
-
-	"gopkg.in/yaml.v3"
 
 	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
 
 	A "github.com/IBM/fp-go/array"
 	ts "github.com/tree-sitter/go-tree-sitter"
-
-	"github.com/pterm/pterm"
 )
-
-type HtmlDocYaml struct {
-	Description string `yaml:"description"`
-	Summary     string `yaml:"summary"`
-	Deprecated  any    `yaml:"deprecated"`
-}
-
-type NestedHtmlDocYaml struct {
-	Slot        *HtmlDocYaml `yaml:"slot"`
-	Part        *HtmlDocYaml `yaml:"part"`
-	Description string       `yaml:"description"`
-	Summary     string       `yaml:"summary"`
-	Deprecated  any          `yaml:"deprecated"`
-}
 
 // --- Main entry: Generate a class declaration as ParsedClass ---
 func (mp *ModuleProcessor) generateClassDeclarationParsed(
@@ -300,30 +297,6 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 		}
 	})(declaration.Members)
 
-	err = mp.step("Processing render template", 2, func() error {
-		renderTemplateNodes, hasRenderTemplate := captures["render.template"]
-		if hasRenderTemplate {
-			renderTemplateNodeId := renderTemplateNodes[0].NodeId
-			renderTemplateNode := Q.GetDescendantById(mp.root, renderTemplateNodeId)
-			if renderTemplateNode != nil {
-				htmlSource := renderTemplateNode.Utf8Text(mp.code)
-				if htmlSource != "" {
-					htmlSlots, htmlParts, htmlErr := mp.processRenderTemplate(htmlSource)
-					if htmlErr != nil {
-						errs = errors.Join(errs, htmlErr)
-					}
-					// Merge with any slots/parts already discovered (e.g., via JSDoc)
-					declaration.CustomElement.Slots = appendUniqueSlots(declaration.CustomElement.Slots, htmlSlots)
-					declaration.CustomElement.CssParts = appendUniqueParts(declaration.CustomElement.CssParts, htmlParts)
-				}
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		errs = errors.Join(errs, err)
-	}
-
 	err = mp.step("Processing class jsdoc", 2, func() error {
 		jsdoc, ok := captures["class.jsdoc"]
 		if ok && len(jsdoc) > 0 {
@@ -344,162 +317,46 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 		errs = errors.Join(errs, err)
 	}
 
-	return declaration, alias, errs
-}
-
-func (mp *ModuleProcessor) processRenderTemplate(
-	htmlSource string,
-) (slots []M.Slot, parts []M.CssPart, errs error) {
-	parser := Q.GetHTMLParser()
-	defer Q.PutHTMLParser(parser)
-
-	text := []byte(htmlSource)
-	tree := parser.Parse(text, nil)
-
-	defer tree.Close()
-	root := tree.RootNode()
-
-	matcher, qmErr := Q.NewQueryMatcher(mp.queryManager, "html", "slotsAndParts")
-	if qmErr != nil {
-		return nil, nil, qmErr
-	}
-	defer matcher.Close()
-
-	handleParts := func(captureMap Q.CaptureMap, kind string) {
-		if pn, ok := captureMap["part.name"]; ok && len(pn) > 0 {
-			partsList := strings.FieldsSeq(pn[0].Text)
-			for partName := range partsList {
-				part := M.CssPart{}
-				part.Name = partName
-				if comment, ok := captureMap["comment"]; ok && len(comment) > 0 {
-					yamlDoc, err := parseYamlComment(comment[0].Text, kind)
-					if err != nil {
-						errs = errors.Join(errs, err)
+	err = mp.step("Processing render template", 2, func() error {
+		capinfos, ok := captures["render.template"]
+		if ok {
+			for _, capinfo := range capinfos {
+				nodeId := capinfo.NodeId
+				htmlSource := capinfo.Text
+				node := Q.GetDescendantById(mp.root, nodeId)
+				if node != nil {
+					offset := node.StartByte() + 1
+					if len(htmlSource) > 1 && htmlSource[0] == '`' && htmlSource[len(htmlSource)-1] == '`' {
+						htmlSource = htmlSource[1 : len(htmlSource)-1]
 					}
-					part.Description = yamlDoc.Description
-					part.Summary = yamlDoc.Summary
-					switch v := yamlDoc.Deprecated.(type) {
-					case bool:
-						part.Deprecated = M.DeprecatedFlag(v)
-					case string:
-						part.Deprecated = M.DeprecatedReason(v)
+
+					if htmlSource != "" {
+						htmlSlots, htmlParts, htmlErr := mp.processRenderTemplate(htmlSource, uint(offset))
+						if htmlErr != nil {
+							errs = errors.Join(errs, fmt.Errorf("module %q: %w", mp.file, htmlErr))
+						}
+						for _, slot := range htmlSlots {
+							declaration.AddOrUpdateSlot(slot)
+						}
+						for _, part := range htmlParts {
+							declaration.AddOrUpdatePart(part)
+						}
 					}
 				}
-				parts = append(parts, part)
 			}
 		}
+		return nil
+	})
+	if err != nil {
+		errs = errors.Join(errs, err)
 	}
 
-	for captureMap := range matcher.ParentCaptures(root, text, "slot") {
-		slot := M.Slot{}
-		if sn, ok := captureMap["slot.name"]; ok && len(sn) > 0 {
-			slot.Name = sn[0].Text
-		}
-		if comment, ok := captureMap["comment"]; ok && len(comment) > 0 {
-			yamlDoc, err := parseYamlComment(comment[0].Text, "slot")
-			if err != nil {
-				errs = errors.Join(errs, err)
-			}
-			slot.Description = yamlDoc.Description
-			slot.Summary = yamlDoc.Summary
-			switch v := yamlDoc.Deprecated.(type) {
-			case bool:
-				slot.Deprecated = M.DeprecatedFlag(v)
-			case string:
-				slot.Deprecated = M.DeprecatedReason(v)
-			}
-		}
-		slots = append(slots, slot)
-		handleParts(captureMap, "part")
-	}
+	slices.SortStableFunc(declaration.Slots, func(a M.Slot, b M.Slot) int {
+		return int(a.StartByte - b.StartByte)
+	})
+	slices.SortStableFunc(declaration.CssParts, func(a M.CssPart, b M.CssPart) int {
+		return int(a.StartByte - b.StartByte)
+	})
 
-	for captureMap := range matcher.ParentCaptures(root, text, "part") {
-		handleParts(captureMap, "part")
-	}
-
-	return slots, parts, errs
-}
-
-var htmlCommentStripRE = regexp.MustCompile(`(?s)^\s*<!--(.*?)(?:-->)?\s*$`)
-
-func ColorizeClassName(name string) *pterm.Style {
-	return pterm.NewStyle(pterm.FgMagenta, pterm.Bold)
-}
-
-func parseYamlComment(comment string, kind string) (HtmlDocYaml, error) {
-	inner := comment
-	if matches := htmlCommentStripRE.FindStringSubmatch(inner); len(matches) == 2 {
-		inner = matches[1]
-	}
-	inner = dedentYaml(inner)
-	raw := NestedHtmlDocYaml{}
-	err := yaml.Unmarshal([]byte(inner), &raw)
-
-	switch kind {
-	case "slot":
-		if raw.Slot != nil {
-			return *raw.Slot, err
-		}
-	case "part":
-		if raw.Part != nil {
-			return *raw.Part, err
-		}
-	}
-	return HtmlDocYaml{
-		Description: raw.Description,
-		Summary:     raw.Summary,
-		Deprecated:  raw.Deprecated,
-	}, err
-}
-
-func dedentYaml(s string) string {
-	lines := strings.Split(s, "\n")
-	if len(lines) <= 1 {
-		return strings.TrimSpace(s)
-	}
-	minIndent := -1
-	for _, line := range lines[1:] {
-		trimmed := strings.TrimLeft(line, " \t")
-		if trimmed == "" {
-			continue
-		}
-		indent := len(line) - len(trimmed)
-		if minIndent == -1 || indent < minIndent {
-			minIndent = indent
-		}
-	}
-	if minIndent > 0 {
-		for i := 1; i < len(lines); i++ {
-			if len(lines[i]) >= minIndent {
-				lines[i] = lines[i][minIndent:]
-			}
-		}
-	}
-	return strings.TrimSpace(strings.Join(lines, "\n"))
-}
-
-func appendUniqueSlots(existing []M.Slot, found []M.Slot) []M.Slot {
-	existingNames := make(map[string]struct{})
-	for _, s := range existing {
-		existingNames[s.Name] = struct{}{}
-	}
-	for _, s := range found {
-		if _, ok := existingNames[s.Name]; !ok {
-			existing = append(existing, s)
-		}
-	}
-	return existing
-}
-
-func appendUniqueParts(existing []M.CssPart, found []M.CssPart) []M.CssPart {
-	existingNames := make(map[string]struct{})
-	for _, s := range existing {
-		existingNames[s.Name] = struct{}{}
-	}
-	for _, s := range found {
-		if _, ok := existingNames[s.Name]; !ok {
-			existing = append(existing, s)
-		}
-	}
-	return existing
+	return declaration, alias, errs
 }

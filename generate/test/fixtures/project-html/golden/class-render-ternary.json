@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-render-ternary.js",
+      "declarations": [
+        {
+          "name": "ClassRenderTernary",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "class-render-ternary",
+          "cssParts": [
+            {
+              "name": "true"
+            },
+            {
+              "name": "false"
+            }
+          ],
+          "slots": [
+            {
+              "name": "",
+              "description": "default slot (if you're lucky)"
+            },
+            {
+              "name": "slot",
+              "description": "named slot (if you're less lucky)"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-render-ternary",
+          "declaration": {
+            "name": "ClassRenderTernary",
+            "module": "src/class-render-ternary.js"
+          }
+        }
+      ]
+    }
+  ]
+}

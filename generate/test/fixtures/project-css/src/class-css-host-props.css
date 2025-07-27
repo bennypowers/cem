@@ -1,0 +1,29 @@
+:host {
+  /** defined on host */
+  --defined-on-host: blue;
+
+  /** also defined on host */
+  --also-defined-on-host: blue;
+
+  /** defined on host with var call */
+  --defined-on-host-with-var: var(--expect-this-to-not-have-description);
+
+  /** defined on host with light-dark call */
+  --defined-on-host-with-light-dark: light-dark(blue, red);
+}
+
+:host(.blue) {
+  /** defined on host() */
+  --defined-on-host-call: blue;
+
+  /** also defined on host() */
+  --also-defined-on-host-call: blue;
+}
+
+p {
+  border:
+    /** defined in var call */
+    var(--defined-in-var-call)
+    /** also defined in var call */
+    var(--also-defined-in-var-call);
+}

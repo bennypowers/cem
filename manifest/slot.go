@@ -29,6 +29,7 @@ var _ Renderable = (*RenderableSlot)(nil)
 // Slot in a custom element.
 type Slot struct {
 	FullyQualified
+	StartByte  uint       `json:"-" yaml:"-"`
 	Deprecated Deprecated `json:"deprecated,omitempty"` // bool or string
 }
 
