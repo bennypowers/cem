@@ -52,10 +52,10 @@ type JSONValidationResult struct {
 }
 
 // PrintValidationResult prints the validation result with appropriate formatting
-func PrintValidationResult(manifestPath string, result *ValidationResult, options DisplayOptions) {
+func PrintValidationResult(manifestPath string, result *ValidationResult, options DisplayOptions) error {
 	switch options.Format {
 	case "json":
-		printValidationResultJSON(manifestPath, result)
+		return printValidationResultJSON(manifestPath, result)
 	case "text", "":
 		if result.IsValid && len(result.Warnings) == 0 {
 			printValidationSuccess(manifestPath, result.SchemaVersion, options.Verbose)
@@ -64,13 +64,13 @@ func PrintValidationResult(manifestPath string, result *ValidationResult, option
 		} else {
 			printValidationErrors(manifestPath, result.SchemaVersion, result.Issues, options.Verbose)
 		}
+		return nil
 	default:
-		fmt.Fprintf(os.Stderr, "Invalid format: %s. Use 'text' or 'json'\n", options.Format)
-		os.Exit(1)
+		return fmt.Errorf("invalid format: %s. Use 'text' or 'json'", options.Format)
 	}
 }
 
-func printValidationResultJSON(manifestPath string, result *ValidationResult) {
+func printValidationResultJSON(manifestPath string, result *ValidationResult) error {
 	jsonResult := JSONValidationResult{
 		Valid:         result.IsValid,
 		Path:          manifestPath,
@@ -89,10 +89,7 @@ func printValidationResultJSON(manifestPath string, result *ValidationResult) {
 
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(jsonResult); err != nil {
-		fmt.Fprintf(os.Stderr, "Error encoding JSON: %v\n", err)
-		os.Exit(1)
-	}
+	return encoder.Encode(jsonResult)
 }
 
 func printValidationSuccess(manifestPath, schemaVersion string, verbose bool) {

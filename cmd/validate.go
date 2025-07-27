@@ -82,7 +82,10 @@ var validateCmd = &cobra.Command{
 			Verbose: verbose,
 			Format:  format,
 		}
-		V.PrintValidationResult(manifestPath, result, displayOptions)
+		if err := V.PrintValidationResult(manifestPath, result, displayOptions); err != nil {
+			fmt.Fprintf(os.Stderr, "Error displaying validation results: %v\n", err)
+			os.Exit(1)
+		}
 
 		// Exit with error code if validation failed
 		if !result.IsValid {

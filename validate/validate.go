@@ -24,9 +24,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
-	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/adrg/xdg"
@@ -75,322 +72,168 @@ func Validate(manifestPath string, options ValidationOptions) (*ValidationResult
 		return nil, fmt.Errorf("error reading manifest file: %w", err)
 	}
 
-	var manifest struct {
+	pipeline, err := NewValidationPipeline(manifestData)
+	if err != nil {
+		return nil, err
+	}
+
+	return pipeline.Validate(options)
+}
+
+// ValidationPipeline orchestrates the validation process
+type ValidationPipeline struct {
+	manifestData   []byte
+	schemaVersion  string
+	navigator      *ManifestNavigator
+	warningEngine  *WarningEngine
+	issueProcessor *IssueProcessor
+}
+
+// NewValidationPipeline creates a new validation pipeline
+func NewValidationPipeline(manifestData []byte) (*ValidationPipeline, error) {
+	// Parse manifest once for efficiency
+	var manifestJSON map[string]any
+	if err := json.Unmarshal(manifestData, &manifestJSON); err != nil {
+		return nil, fmt.Errorf("error parsing manifest: %w", err)
+	}
+
+	// Extract schema version
+	var versionStruct struct {
 		SchemaVersion string `json:"schemaVersion"`
 	}
-	if err := json.Unmarshal(manifestData, &manifest); err != nil {
+	if err := json.Unmarshal(manifestData, &versionStruct); err != nil {
 		return nil, fmt.Errorf("error parsing manifest to find schemaVersion: %w", err)
 	}
 
-	if manifest.SchemaVersion == "" {
+	if versionStruct.SchemaVersion == "" {
 		return nil, fmt.Errorf("schemaVersion not found in manifest")
 	}
 
-	schemaData, err := getSchema(manifest.SchemaVersion)
-	if err != nil {
-		return nil, fmt.Errorf("error getting schema: %w", err)
-	}
+	// Create navigator and engines
+	navigator := NewManifestNavigator(manifestJSON)
+	warningEngine := NewWarningEngine()
+	issueProcessor := NewIssueProcessor(navigator)
 
-	compiler := jsonschema.NewCompiler()
-	if err := compiler.AddResource("schema.json", bytes.NewReader(schemaData)); err != nil {
-		return nil, fmt.Errorf("error adding schema resource: %w", err)
-	}
-	schema, err := compiler.Compile("schema.json")
-	if err != nil {
-		return nil, fmt.Errorf("error compiling schema: %w", err)
-	}
+	return &ValidationPipeline{
+		manifestData:   manifestData,
+		schemaVersion:  versionStruct.SchemaVersion,
+		navigator:      navigator,
+		warningEngine:  warningEngine,
+		issueProcessor: issueProcessor,
+	}, nil
+}
 
-	var v any
-	if err := json.Unmarshal(manifestData, &v); err != nil {
-		return nil, fmt.Errorf("error unmarshaling manifest for validation: %w", err)
-	}
-
+// Validate performs the complete validation process
+func (p *ValidationPipeline) Validate(options ValidationOptions) (*ValidationResult, error) {
 	result := &ValidationResult{
-		SchemaVersion: manifest.SchemaVersion,
+		SchemaVersion: p.schemaVersion,
 		Issues:        []ValidationIssue{},
 		Warnings:      []Warning{},
 	}
 
-	// Check if schema version is too old
-	if semver.Compare(
-		semver.Canonical("v"+manifest.SchemaVersion),
-		semver.Canonical("v2.1.1"),
-	) < 0 {
-		// This is a warning about schema version, not a validation error
-		result.Warnings = append(result.Warnings, Warning{
-			ID:       "schema-version-old",
-			Message:  fmt.Sprintf("validation for manifests with schemaVersion <= 2.1.0 may not produce accurate results (version: %s)", manifest.SchemaVersion),
-			Category: "schema",
-		})
+	// Add schema version warning if needed
+	if err := p.checkSchemaVersion(result); err != nil {
+		return nil, err
 	}
 
-	if err := schema.Validate(v); err != nil {
-		validationError := err.(*jsonschema.ValidationError)
-		var manifestJSON map[string]any
-		json.Unmarshal(manifestData, &manifestJSON)
-
-		issues := extractValidationIssues(validationError, manifestJSON)
-		result.Issues = deduplicateIssues(issues)
-		result.IsValid = false
-	} else {
-		result.IsValid = true
+	// Perform JSON schema validation
+	if err := p.validateSchema(result); err != nil {
+		return nil, err
 	}
 
-	// Check for warnings on manifests (valid or invalid)
+	// Process warnings if requested
 	if options.IncludeWarnings {
-		warnings := detectWarnings(manifestData)
-		result.Warnings = append(result.Warnings, filterWarningsByConfig(warnings, options.DisabledRules)...)
+		warnings := p.warningEngine.ProcessWarnings(p.navigator)
+		filtered := filterWarningsByConfig(warnings, options.DisabledRules)
+		result.Warnings = append(result.Warnings, filtered...)
 	}
 
 	return result, nil
 }
 
-func extractValidationIssues(err *jsonschema.ValidationError, manifest map[string]any) []ValidationIssue {
+func (p *ValidationPipeline) checkSchemaVersion(result *ValidationResult) error {
+	if semver.Compare(
+		semver.Canonical("v"+p.schemaVersion),
+		semver.Canonical("v2.1.1"),
+	) < 0 {
+		result.Warnings = append(result.Warnings, Warning{
+			ID:       "schema-version-old",
+			Message:  fmt.Sprintf("validation for manifests with schemaVersion <= 2.1.0 may not produce accurate results (version: %s)", p.schemaVersion),
+			Category: "schema",
+		})
+	}
+	return nil
+}
+
+func (p *ValidationPipeline) validateSchema(result *ValidationResult) error {
+	schemaData, err := getSchema(p.schemaVersion)
+	if err != nil {
+		return fmt.Errorf("error getting schema: %w", err)
+	}
+
+	compiler := jsonschema.NewCompiler()
+	if err := compiler.AddResource("schema.json", bytes.NewReader(schemaData)); err != nil {
+		return fmt.Errorf("error adding schema resource: %w", err)
+	}
+
+	schema, err := compiler.Compile("schema.json")
+	if err != nil {
+		return fmt.Errorf("error compiling schema: %w", err)
+	}
+
+	var v any
+	if err := json.Unmarshal(p.manifestData, &v); err != nil {
+		return fmt.Errorf("error unmarshaling manifest for validation: %w", err)
+	}
+
+	if err := schema.Validate(v); err != nil {
+		validationError := err.(*jsonschema.ValidationError)
+		issues := p.extractValidationIssues(validationError)
+		result.Issues = p.deduplicateIssues(issues)
+		result.IsValid = false
+	} else {
+		result.IsValid = true
+	}
+
+	return nil
+}
+
+func (p *ValidationPipeline) extractValidationIssues(err *jsonschema.ValidationError) []ValidationIssue {
 	var issues []ValidationIssue
-	collectIssues(err, manifest, &issues)
+	p.collectIssues(err, &issues)
 	return issues
 }
 
-func collectIssues(err *jsonschema.ValidationError, manifest map[string]any, issues *[]ValidationIssue) {
+func (p *ValidationPipeline) collectIssues(err *jsonschema.ValidationError, issues *[]ValidationIssue) {
 	for _, cause := range err.Causes {
 		if len(cause.Causes) == 0 {
-			issue := parseValidationIssue(cause, manifest)
+			// Convert to our internal error type
+			validationErr := &ValidationError{
+				Message:  cause.Message,
+				Location: cause.InstanceLocation,
+			}
+			issue := p.issueProcessor.ProcessValidationError(validationErr, cause.InstanceLocation)
 			if issue.Message != "" {
 				*issues = append(*issues, issue)
 			}
 		} else {
-			collectIssues(cause, manifest, issues)
+			p.collectIssues(cause, issues)
 		}
 	}
 }
 
-func assignErrorID(message, location string) string {
-	// Assign IDs based on error type
-	switch {
-	case strings.Contains(message, "required property"):
-		return "schema-required-property"
-	case strings.Contains(message, "additionalProperties"):
-		return "schema-additional-properties"
-	case strings.Contains(message, "value must be"):
-		if strings.Contains(location, "kind") {
-			return "schema-invalid-kind"
-		}
-		return "schema-invalid-enum"
-	case strings.Contains(message, "type"):
-		return "schema-invalid-type"
-	case strings.Contains(message, "format"):
-		return "schema-invalid-format"
-	case strings.Contains(message, "pattern"):
-		return "schema-invalid-pattern"
-	case strings.Contains(message, "minimum"):
-		return "schema-value-too-small"
-	case strings.Contains(message, "maximum"):
-		return "schema-value-too-large"
-	case strings.Contains(message, "minLength"):
-		return "schema-string-too-short"
-	case strings.Contains(message, "maxLength"):
-		return "schema-string-too-long"
-	case strings.Contains(message, "minItems"):
-		return "schema-array-too-short"
-	case strings.Contains(message, "maxItems"):
-		return "schema-array-too-long"
-	case strings.Contains(message, "uniqueItems"):
-		return "schema-duplicate-items"
-	default:
-		return "schema-validation-error"
-	}
-}
-
-func parseValidationIssue(cause *jsonschema.ValidationError, manifest map[string]any) ValidationIssue {
-	location := cause.InstanceLocation
-	if location == "" {
-		location = "root"
-	}
-
-	issue := ValidationIssue{
-		ID:       assignErrorID(cause.Message, location),
-		Message:  cause.Message,
-		Location: location,
-		Index:    -1, // Default to -1 for non-array items
-	}
-
-	// Parse JSON path to extract meaningful context
-	parts := strings.Split(strings.TrimPrefix(location, "/"), "/")
-	if len(parts) == 0 || parts[0] == "" {
-		return issue
-	}
-
-	// Navigate through the JSON structure to build context
-	for i, part := range parts {
-		// Handle array indices
-		if matched, _ := regexp.MatchString(`^\d+$`, part); matched {
-			index, _ := strconv.Atoi(part)
-
-			if i > 0 {
-				parentKey := parts[i-1]
-				switch parentKey {
-				case "modules":
-					// Extract module path
-					if modules, ok := manifest["modules"].([]any); ok && index < len(modules) {
-						if module, ok := modules[index].(map[string]any); ok {
-							if path, ok := module["path"].(string); ok {
-								issue.Module = path
-							}
-						}
-					}
-				case "declarations":
-					// Extract declaration info - need to find the right module first
-					moduleIndex := -1
-					for j := i - 2; j >= 0; j-- {
-						if parts[j] == "modules" && j+1 < len(parts) {
-							if matched, _ := regexp.MatchString(`^\d+$`, parts[j+1]); matched {
-								moduleIndex, _ = strconv.Atoi(parts[j+1])
-								break
-							}
-						}
-					}
-					if moduleIndex >= 0 {
-						if modules, ok := manifest["modules"].([]any); ok && moduleIndex < len(modules) {
-							if module, ok := modules[moduleIndex].(map[string]any); ok {
-								if declarations, ok := module["declarations"].([]any); ok && index < len(declarations) {
-									if decl, ok := declarations[index].(map[string]any); ok {
-										if name, ok := decl["name"].(string); ok {
-											if kind, ok := decl["kind"].(string); ok {
-												issue.Declaration = fmt.Sprintf("%s %s", kind, name)
-											} else {
-												issue.Declaration = name
-											}
-										} else {
-											if kind, ok := decl["kind"].(string); ok {
-												issue.Declaration = fmt.Sprintf("%s[%d]", kind, index)
-											} else {
-												issue.Declaration = fmt.Sprintf("declaration[%d]", index)
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				case "members":
-					// Extract member info - need to find declaration
-					moduleIndex, declIndex := -1, -1
-					for j := i - 2; j >= 0; j-- {
-						if parts[j] == "declarations" && j+1 < len(parts) {
-							if matched, _ := regexp.MatchString(`^\d+$`, parts[j+1]); matched {
-								declIndex, _ = strconv.Atoi(parts[j+1])
-								break
-							}
-						}
-					}
-					for j := i - 4; j >= 0; j-- {
-						if parts[j] == "modules" && j+1 < len(parts) {
-							if matched, _ := regexp.MatchString(`^\d+$`, parts[j+1]); matched {
-								moduleIndex, _ = strconv.Atoi(parts[j+1])
-								break
-							}
-						}
-					}
-					if moduleIndex >= 0 && declIndex >= 0 {
-						if modules, ok := manifest["modules"].([]any); ok && moduleIndex < len(modules) {
-							if module, ok := modules[moduleIndex].(map[string]any); ok {
-								if declarations, ok := module["declarations"].([]any); ok && declIndex < len(declarations) {
-									if decl, ok := declarations[declIndex].(map[string]any); ok {
-										if members, ok := decl["members"].([]any); ok && index < len(members) {
-											issue.Index = index
-											if member, ok := members[index].(map[string]any); ok {
-												if name, ok := member["name"].(string); ok {
-													if kind, ok := member["kind"].(string); ok {
-														issue.Member = fmt.Sprintf("%s %s", kind, name)
-													} else {
-														issue.Member = name
-													}
-												} else {
-													// For members without names, show the index and any available kind
-													if kind, ok := member["kind"].(string); ok {
-														issue.Member = fmt.Sprintf("%s[%d]", kind, index)
-													} else {
-														issue.Member = fmt.Sprintf("member[%d]", index)
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				case "attributes", "events", "slots", "cssProperties", "cssParts", "cssStates":
-					// Extract property info
-					singularName := strings.TrimSuffix(parentKey, "s")
-					switch parentKey {
-					case "cssProperties":
-						singularName = "CSS property"
-					case "cssParts":
-						singularName = "CSS part"
-					case "cssStates":
-						singularName = "CSS state"
-					}
-
-					// Find the declaration this property belongs to
-					moduleIndex, declIndex := -1, -1
-					for j := i - 2; j >= 0; j-- {
-						if parts[j] == "declarations" && j+1 < len(parts) {
-							if matched, _ := regexp.MatchString(`^\d+$`, parts[j+1]); matched {
-								declIndex, _ = strconv.Atoi(parts[j+1])
-								break
-							}
-						}
-					}
-					for j := i - 4; j >= 0; j-- {
-						if parts[j] == "modules" && j+1 < len(parts) {
-							if matched, _ := regexp.MatchString(`^\d+$`, parts[j+1]); matched {
-								moduleIndex, _ = strconv.Atoi(parts[j+1])
-								break
-							}
-						}
-					}
-					if moduleIndex >= 0 && declIndex >= 0 {
-						if modules, ok := manifest["modules"].([]any); ok && moduleIndex < len(modules) {
-							if module, ok := modules[moduleIndex].(map[string]any); ok {
-								if declarations, ok := module["declarations"].([]any); ok && declIndex < len(declarations) {
-									if decl, ok := declarations[declIndex].(map[string]any); ok {
-										if arr, ok := decl[parentKey].([]any); ok && index < len(arr) {
-											issue.Index = index
-											if item, ok := arr[index].(map[string]any); ok {
-												if name, ok := item["name"].(string); ok {
-													issue.Property = fmt.Sprintf("%s %s", singularName, name)
-												} else {
-													issue.Property = fmt.Sprintf("%s[%d]", singularName, index)
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	return issue
-}
-
-func deduplicateIssues(issues []ValidationIssue) []ValidationIssue {
+func (p *ValidationPipeline) deduplicateIssues(issues []ValidationIssue) []ValidationIssue {
 	seen := make(map[string]bool)
 	enumGroups := make(map[string][]string)
 	var deduplicated []ValidationIssue
 
 	for _, issue := range issues {
-		// For enum validation errors, collect all valid values
+		// Handle enum validation errors specially
 		if strings.Contains(issue.Message, "value must be") {
-			// Create a key that groups enum errors by context
 			contextKey := fmt.Sprintf("%s::%s::%s::%s",
 				issue.Module, issue.Declaration, issue.Member, issue.Property)
 
-			// Extract the valid value from the message
+			// Extract valid value from message
 			if strings.Contains(issue.Message, "value must be \"") {
 				start := strings.Index(issue.Message, "value must be \"") + len("value must be \"")
 				end := strings.Index(issue.Message[start:], "\"")
@@ -399,39 +242,34 @@ func deduplicateIssues(issues []ValidationIssue) []ValidationIssue {
 					enumGroups[contextKey] = append(enumGroups[contextKey], validValue)
 				}
 			}
-
-			// Skip adding individual enum errors for now
 			continue
-		} else {
-			// Clean up additionalProperties messages
-			if strings.Contains(issue.Message, "additionalProperties") {
-				// Extract the property names from the message
-				if strings.Contains(issue.Message, "not allowed") {
-					start := strings.Index(issue.Message, "'")
-					end := strings.LastIndex(issue.Message, "'")
-					if start >= 0 && end > start {
-						props := issue.Message[start+1 : end]
-						issue.Message = fmt.Sprintf("property '%s' not allowed", props)
-					}
-				}
-			}
+		}
 
-			// Create a key that represents the unique context and message
-			key := fmt.Sprintf("%s::%s::%s::%s::%s",
-				issue.Module, issue.Declaration, issue.Member, issue.Property, issue.Message)
-
-			if !seen[key] {
-				seen[key] = true
-				deduplicated = append(deduplicated, issue)
+		// Clean up additionalProperties messages
+		if strings.Contains(issue.Message, "additionalProperties") && strings.Contains(issue.Message, "not allowed") {
+			start := strings.Index(issue.Message, "'")
+			end := strings.LastIndex(issue.Message, "'")
+			if start >= 0 && end > start {
+				props := issue.Message[start+1 : end]
+				issue.Message = fmt.Sprintf("property '%s' not allowed", props)
 			}
+		}
+
+		// Deduplicate based on context and message
+		key := fmt.Sprintf("%s::%s::%s::%s::%s",
+			issue.Module, issue.Declaration, issue.Member, issue.Property, issue.Message)
+
+		if !seen[key] {
+			seen[key] = true
+			deduplicated = append(deduplicated, issue)
 		}
 	}
 
-	// Now add consolidated enum errors
+	// Add consolidated enum errors
 	for contextKey, validValues := range enumGroups {
 		parts := strings.Split(contextKey, "::")
 		if len(parts) == 4 {
-			// Deduplicate valid values using a map
+			// Deduplicate values
 			uniqueValues := make(map[string]bool)
 			for _, val := range validValues {
 				uniqueValues[val] = true
@@ -442,23 +280,15 @@ func deduplicateIssues(issues []ValidationIssue) []ValidationIssue {
 				deduped = append(deduped, val)
 			}
 
-			// Check if this is a "kind" field with unknown values
-			memberPart := parts[2]
+			// Determine message and ID
 			isKindError := strings.Contains(contextKey, "kind")
+			var message, id string
 
-			var message string
-			if isKindError && (strings.Contains(memberPart, "invalid-") || strings.Contains(memberPart, "accessor")) {
-				// For unknown kinds, just say it's invalid
+			if isKindError && (strings.Contains(parts[2], "invalid-") || strings.Contains(parts[2], "accessor")) {
 				message = "invalid kind"
-			} else {
-				// For valid enum violations, show the options
-				message = fmt.Sprintf("invalid value, must be one of: %s", strings.Join(deduped, ", "))
-			}
-
-			var id string
-			if isKindError {
 				id = "schema-invalid-kind"
 			} else {
+				message = fmt.Sprintf("invalid value, must be one of: %s", strings.Join(deduped, ", "))
 				id = "schema-invalid-enum"
 			}
 
@@ -475,79 +305,6 @@ func deduplicateIssues(issues []ValidationIssue) []ValidationIssue {
 	}
 
 	return deduplicated
-}
-
-func detectWarnings(manifestData []byte) []Warning {
-	var manifest map[string]any
-	json.Unmarshal(manifestData, &manifest)
-
-	var warnings []Warning
-
-	if modules, ok := manifest["modules"].([]any); ok {
-		for _, moduleInterface := range modules {
-			if module, ok := moduleInterface.(map[string]any); ok {
-				modulePath := ""
-				if path, ok := module["path"].(string); ok {
-					modulePath = path
-				}
-
-				if declarations, ok := module["declarations"].([]any); ok {
-					for _, declInterface := range declarations {
-						if decl, ok := declInterface.(map[string]any); ok {
-							declName := ""
-							declKind := ""
-							if name, ok := decl["name"].(string); ok {
-								declName = name
-							}
-							if kind, ok := decl["kind"].(string); ok {
-								declKind = kind
-							}
-
-							// Check superclass warnings
-							if superclass, ok := decl["superclass"].(map[string]any); ok {
-								superclassWarnings := checkSuperclassWarnings(superclass, modulePath, declName, declKind)
-								warnings = append(warnings, superclassWarnings...)
-							}
-
-							// Check members for warnings
-							if members, ok := decl["members"].([]any); ok {
-								// Check if this extends LitElement
-								isLitElement := false
-								if superclass, ok := decl["superclass"].(map[string]any); ok {
-									if name, ok := superclass["name"].(string); ok {
-										isLitElement = strings.Contains(name, "LitElement")
-									}
-								}
-
-								for memberIndex, memberInterface := range members {
-									if member, ok := memberInterface.(map[string]any); ok {
-										memberWarnings := checkMemberWarnings(member, modulePath, declName, declKind, memberIndex, isLitElement)
-										warnings = append(warnings, memberWarnings...)
-									}
-								}
-							}
-
-							// Check CSS properties for large defaults
-							if cssProps, ok := decl["cssProperties"].([]any); ok {
-								for propIndex, propInterface := range cssProps {
-									if prop, ok := propInterface.(map[string]any); ok {
-										propWarnings := checkCSSPropertyWarnings(prop, modulePath, declName, propIndex)
-										warnings = append(warnings, propWarnings...)
-									}
-								}
-							}
-
-							// Check for implementation detail fields that shouldn't be documented
-							implWarnings := checkImplementationDetailWarnings(decl, modulePath, declName, declKind)
-							warnings = append(warnings, implWarnings...)
-						}
-					}
-				}
-			}
-		}
-	}
-
-	return warnings
 }
 
 func filterWarningsByConfig(warnings []Warning, disabledRules []string) []Warning {
@@ -569,264 +326,12 @@ func isWarningDisabled(warning Warning, disabledRules []string) bool {
 
 	// Check if this specific warning ID or its category is disabled
 	for _, rule := range allDisabledRules {
-		// Check for exact ID match first
-		if rule == warning.ID {
-			return true
-		}
-
-		// Check for category match
-		if rule == warning.Category {
+		if rule == warning.ID || rule == warning.Category {
 			return true
 		}
 	}
 
 	return false
-}
-
-func checkSuperclassWarnings(superclass map[string]any, modulePath, declName, declKind string) []Warning {
-	var warnings []Warning
-
-	name := ""
-	if superclassName, ok := superclass["name"].(string); ok {
-		name = superclassName
-	}
-
-	module := ""
-	if superclassModule, ok := superclass["module"].(string); ok {
-		module = superclassModule
-	}
-
-	// List of built-in types that should have "module": "global:"
-	builtInTypes := []string{
-		// DOM APIs
-		"HTMLElement", "Element", "Node", "EventTarget", "Document", "Window",
-		// Events
-		"Event", "CustomEvent", "MouseEvent", "KeyboardEvent", "FocusEvent", "TouchEvent",
-		// Other Web APIs
-		"AbortController", "AbortSignal", "Blob", "File", "FormData", "Headers",
-		"Request", "Response", "URL", "URLSearchParams", "WebSocket",
-		// JavaScript built-ins
-		"Object", "Array", "Map", "Set", "WeakMap", "WeakSet", "Promise",
-		"Error", "TypeError", "ReferenceError", "SyntaxError",
-	}
-
-	for _, builtIn := range builtInTypes {
-		if name == builtIn && module != "global:" {
-			var moduleInfo string
-			if module == "" {
-				moduleInfo = "missing module field"
-			} else {
-				moduleInfo = fmt.Sprintf("module is %q", module)
-			}
-
-			warnings = append(warnings, Warning{
-				ID:          "superclass-builtin-modules",
-				Module:      modulePath,
-				Declaration: fmt.Sprintf("%s %s", declKind, declName),
-				Message:     fmt.Sprintf("superclass %s is a built-in type but %s, should be \"module\": \"global:\"", name, moduleInfo),
-				Category:    "superclass",
-			})
-			break
-		}
-	}
-
-	return warnings
-}
-
-func checkMemberWarnings(member map[string]any, modulePath, declName, declKind string, _ int, isLitElement bool) []Warning {
-	var warnings []Warning
-
-	memberName := ""
-	if name, ok := member["name"].(string); ok {
-		memberName = name
-	}
-
-	memberKind := ""
-	if kind, ok := member["kind"].(string); ok {
-		memberKind = kind
-	}
-
-	// Skip if not a method
-	if memberKind != "method" {
-		return warnings
-	}
-
-	// Always warn about these lifecycle methods
-	alwaysPrivateLifecycleMethods := []string{
-		// HTMLElement / Web Components
-		"connectedCallback", "disconnectedCallback", "attributeChangedCallback", "adoptedCallback",
-		// Lit Element lifecycle (excluding render which depends on context)
-		"firstUpdated", "updated", "willUpdate", "getUpdateComplete", "performUpdate",
-		"scheduleUpdate", "requestUpdate", "createRenderRoot",
-		// Common framework methods that shouldn't be public
-		"constructor",
-	}
-
-	if slices.Contains(alwaysPrivateLifecycleMethods, memberName) {
-		var id string
-		// Determine specific ID based on the method
-		switch memberName {
-		case "connectedCallback", "disconnectedCallback", "attributeChangedCallback", "adoptedCallback":
-			id = "lifecycle-web-components"
-		case "firstUpdated", "updated", "willUpdate", "getUpdateComplete", "performUpdate", "scheduleUpdate", "requestUpdate", "createRenderRoot":
-			id = "lifecycle-lit-methods"
-		case "constructor":
-			id = "lifecycle-constructor"
-		default:
-			id = "lifecycle-other"
-		}
-
-		warnings = append(warnings, Warning{
-			ID:          id,
-			Module:      modulePath,
-			Declaration: fmt.Sprintf("%s %s", declKind, declName),
-			Member:      fmt.Sprintf("%s %s", memberKind, memberName),
-			Message:     "lifecycle method should not be documented in public API",
-			Category:    "lifecycle",
-		})
-	}
-
-	// Special case: warn about render method only in Lit elements
-	if memberName == "render" && isLitElement {
-		warnings = append(warnings, Warning{
-			ID:          "lifecycle-lit-render",
-			Module:      modulePath,
-			Declaration: fmt.Sprintf("%s %s", declKind, declName),
-			Member:      fmt.Sprintf("%s %s", memberKind, memberName),
-			Message:     "render method in Lit element should not be documented in public API",
-			Category:    "lifecycle",
-		})
-	}
-
-	// Check for private methods (starting with _ or #)
-	if strings.HasPrefix(memberName, "_") || strings.HasPrefix(memberName, "#") {
-		var id string
-		if strings.HasPrefix(memberName, "_") {
-			id = "private-underscore-methods"
-		} else {
-			id = "private-hash-methods"
-		}
-
-		warnings = append(warnings, Warning{
-			ID:          id,
-			Module:      modulePath,
-			Declaration: fmt.Sprintf("%s %s", declKind, declName),
-			Member:      fmt.Sprintf("%s %s", memberKind, memberName),
-			Message:     "private method should not be documented in public API",
-			Category:    "private",
-		})
-	}
-
-	// Check for internal/debug methods
-	internalMethods := []string{"init", "destroy", "dispose", "cleanup", "debug", "log"}
-	if slices.Contains(internalMethods, memberName) {
-		warnings = append(warnings, Warning{
-			ID:          "internal-utility-methods",
-			Module:      modulePath,
-			Declaration: fmt.Sprintf("%s %s", declKind, declName),
-			Member:      fmt.Sprintf("%s %s", memberKind, memberName),
-			Message:     "internal/utility method may not belong in public API",
-			Category:    "internal",
-		})
-	}
-
-	return warnings
-}
-
-func checkCSSPropertyWarnings(prop map[string]any, modulePath, declName string, _ int) []Warning {
-	var warnings []Warning
-
-	propName := ""
-	if name, ok := prop["name"].(string); ok {
-		propName = name
-	}
-
-	// Check for overly long default values (likely CSS template literals)
-	if defaultVal, ok := prop["default"].(string); ok {
-		if len(defaultVal) > 200 {
-			warnings = append(warnings, Warning{
-				ID:          "verbose-css-defaults",
-				Module:      modulePath,
-				Declaration: fmt.Sprintf("class %s", declName),
-				Property:    fmt.Sprintf("CSS property %s", propName),
-				Message:     "default value is very long, consider using external CSS file",
-				Category:    "verbose",
-			})
-		}
-	}
-
-	return warnings
-}
-
-func checkImplementationDetailWarnings(decl map[string]any, modulePath, declName, declKind string) []Warning {
-	var warnings []Warning
-
-	// Check static fields and methods that are implementation details
-	if members, ok := decl["members"].([]any); ok {
-		for _, memberInterface := range members {
-			if member, ok := memberInterface.(map[string]any); ok {
-				if memberName, nameOk := member["name"].(string); nameOk {
-					if memberKind, kindOk := member["kind"].(string); kindOk {
-						// Check for static fields that are implementation details
-						if memberKind == "field" {
-							if isStatic, staticOk := member["static"].(bool); staticOk && isStatic {
-								// List of static fields that shouldn't be documented
-								implementationFields := map[string]string{
-									"styles":             "static styles field is implementation detail, should not be documented in public API",
-									"shadowRootOptions":  "shadowRootOptions is implementation detail, should not be documented in public API",
-									"formAssociated":     "formAssociated is implementation detail, should not be documented in public API",
-									"observedAttributes": "observedAttributes is implementation detail, should not be documented in public API",
-								}
-
-								if message, isImplementationDetail := implementationFields[memberName]; isImplementationDetail {
-									var id string
-									switch memberName {
-									case "styles":
-										id = "implementation-static-styles"
-									case "shadowRootOptions":
-										id = "implementation-shadow-root-options"
-									case "formAssociated":
-										id = "implementation-form-associated"
-									case "observedAttributes":
-										id = "implementation-observed-attributes"
-									}
-
-									warnings = append(warnings, Warning{
-										ID:          id,
-										Module:      modulePath,
-										Declaration: fmt.Sprintf("%s %s", declKind, declName),
-										Member:      fmt.Sprintf("static field %s", memberName),
-										Message:     message,
-										Category:    "implementation",
-									})
-								}
-							}
-						}
-
-						// Check for form*Callback methods (form-associated element lifecycle)
-						if memberKind == "method" {
-							formCallbacks := []string{
-								"formAssociatedCallback", "formDisabledCallback",
-								"formResetCallback", "formStateRestoreCallback",
-							}
-							if slices.Contains(formCallbacks, memberName) {
-								warnings = append(warnings, Warning{
-									ID:          "lifecycle-form-callbacks",
-									Module:      modulePath,
-									Declaration: fmt.Sprintf("%s %s", declKind, declName),
-									Member:      fmt.Sprintf("method %s", memberName),
-									Message:     "form lifecycle callback should not be documented in public API",
-									Category:    "lifecycle",
-								})
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	return warnings
 }
 
 func getSchema(version string) ([]byte, error) {
