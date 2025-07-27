@@ -24,15 +24,15 @@ import (
 )
 
 type GroupedIssues struct {
-	Module       string
-	Declaration  string
-	Issues       []ValidationIssue
+	Module      string
+	Declaration string
+	Issues      []ValidationIssue
 }
 
 type GroupedWarnings struct {
-	Module       string
-	Declaration  string
-	Warnings     []Warning
+	Module      string
+	Declaration string
+	Warnings    []Warning
 }
 
 type DisplayOptions struct {
@@ -59,7 +59,7 @@ func printValidationSuccess(manifestPath, schemaVersion string, verbose bool) {
 
 func printValidationErrors(manifestPath, schemaVersion string, issues []ValidationIssue, verbose bool) {
 	groupedIssues := groupIssuesByContext(issues)
-	
+
 	// Always use consistent format
 	pterm.Error.Printf("✗ Validation failed with %d issue%s (%s)\n", len(issues), func() string {
 		if len(issues) == 1 {
@@ -68,9 +68,9 @@ func printValidationErrors(manifestPath, schemaVersion string, issues []Validati
 		return "s"
 	}(), manifestPath)
 	pterm.Println()
-	
+
 	printGroupedIssues(groupedIssues)
-	
+
 	if verbose {
 		pterm.Info.Printf("Schema version: %s\n", schemaVersion)
 	}
@@ -78,7 +78,7 @@ func printValidationErrors(manifestPath, schemaVersion string, issues []Validati
 
 func printValidationWarnings(manifestPath string, warnings []Warning, verbose bool) {
 	groupedWarnings := groupWarningsByContext(warnings)
-	
+
 	pterm.Warning.Printf("⚠ Manifest valid with %d warning%s (%s)\n", len(warnings), func() string {
 		if len(warnings) == 1 {
 			return ""
@@ -86,9 +86,9 @@ func printValidationWarnings(manifestPath string, warnings []Warning, verbose bo
 		return "s"
 	}(), manifestPath)
 	pterm.Println()
-	
+
 	printGroupedWarnings(groupedWarnings)
-	
+
 	if verbose {
 		pterm.Info.Println("Use --no-warnings to suppress warnings")
 	}
@@ -96,12 +96,12 @@ func printValidationWarnings(manifestPath string, warnings []Warning, verbose bo
 
 func groupIssuesByContext(issues []ValidationIssue) []GroupedIssues {
 	contextMap := make(map[string][]ValidationIssue)
-	
+
 	for _, issue := range issues {
 		key := fmt.Sprintf("%s::%s", issue.Module, issue.Declaration)
 		contextMap[key] = append(contextMap[key], issue)
 	}
-	
+
 	var grouped []GroupedIssues
 	for key, issueList := range contextMap {
 		parts := strings.Split(key, "::")
@@ -112,18 +112,18 @@ func groupIssuesByContext(issues []ValidationIssue) []GroupedIssues {
 		}
 		grouped = append(grouped, group)
 	}
-	
+
 	return grouped
 }
 
 func groupWarningsByContext(warnings []Warning) []GroupedWarnings {
 	contextMap := make(map[string][]Warning)
-	
+
 	for _, warning := range warnings {
 		key := fmt.Sprintf("%s::%s", warning.Module, warning.Declaration)
 		contextMap[key] = append(contextMap[key], warning)
 	}
-	
+
 	var grouped []GroupedWarnings
 	for key, warningList := range contextMap {
 		parts := strings.Split(key, "::")
@@ -134,7 +134,7 @@ func groupWarningsByContext(warnings []Warning) []GroupedWarnings {
 		}
 		grouped = append(grouped, group)
 	}
-	
+
 	return grouped
 }
 
@@ -142,38 +142,38 @@ func printGroupedWarnings(groupedWarnings []GroupedWarnings) {
 	for _, group := range groupedWarnings {
 		// Print group header
 		if group.Module != "" && group.Declaration != "" {
-			pterm.Printf("%s %s %s %s\n", 
-				pterm.LightCyan("📁"), 
+			pterm.Printf("%s %s %s %s\n",
+				pterm.LightCyan("📁"),
 				pterm.FgLightBlue.Sprint(group.Module),
 				pterm.FgGray.Sprint("→"),
 				pterm.FgYellow.Sprint(group.Declaration))
 		} else if group.Module != "" {
-			pterm.Printf("%s %s\n", 
-				pterm.LightCyan("📁"), 
+			pterm.Printf("%s %s\n",
+				pterm.LightCyan("📁"),
 				pterm.FgLightBlue.Sprint(group.Module))
 		}
-		
+
 		// Print warnings in this group
 		for _, warning := range group.Warnings {
 			if warning.Member != "" && warning.Property != "" {
-				pterm.Printf("  %s %s → %s: %s\n", 
-					pterm.LightYellow("⚠"), 
+				pterm.Printf("  %s %s → %s: %s\n",
+					pterm.LightYellow("⚠"),
 					warning.Member,
 					warning.Property,
 					warning.Message)
 			} else if warning.Member != "" {
-				pterm.Printf("  %s %s: %s\n", 
-					pterm.LightYellow("⚠"), 
+				pterm.Printf("  %s %s: %s\n",
+					pterm.LightYellow("⚠"),
 					warning.Member,
 					warning.Message)
 			} else if warning.Property != "" {
-				pterm.Printf("  %s %s: %s\n", 
-					pterm.LightYellow("⚠"), 
+				pterm.Printf("  %s %s: %s\n",
+					pterm.LightYellow("⚠"),
 					warning.Property,
 					warning.Message)
 			} else {
-				pterm.Printf("  %s %s\n", 
-					pterm.LightYellow("⚠"), 
+				pterm.Printf("  %s %s\n",
+					pterm.LightYellow("⚠"),
 					warning.Message)
 			}
 		}
@@ -185,42 +185,42 @@ func printGroupedIssues(groupedIssues []GroupedIssues) {
 	for _, group := range groupedIssues {
 		// Print group header
 		if group.Module != "" && group.Declaration != "" {
-			pterm.Printf("%s %s %s %s\n", 
-				pterm.LightCyan("📁"), 
+			pterm.Printf("%s %s %s %s\n",
+				pterm.LightCyan("📁"),
 				pterm.FgLightBlue.Sprint(group.Module),
 				pterm.FgGray.Sprint("→"),
 				pterm.FgYellow.Sprint(group.Declaration))
 		} else if group.Module != "" {
-			pterm.Printf("%s %s\n", 
-				pterm.LightCyan("📁"), 
+			pterm.Printf("%s %s\n",
+				pterm.LightCyan("📁"),
 				pterm.FgLightBlue.Sprint(group.Module))
 		} else {
-			pterm.Printf("%s %s\n", 
-				pterm.LightRed("⚠"), 
+			pterm.Printf("%s %s\n",
+				pterm.LightRed("⚠"),
 				pterm.FgYellow.Sprint("Root level issues"))
 		}
-		
+
 		// Print issues in this group
 		for _, issue := range group.Issues {
 			if issue.Member != "" && issue.Property != "" {
-				pterm.Printf("  %s %s → %s: %s\n", 
-					pterm.LightRed("●"), 
+				pterm.Printf("  %s %s → %s: %s\n",
+					pterm.LightRed("●"),
 					issue.Member,
 					issue.Property,
 					issue.Message)
 			} else if issue.Member != "" {
-				pterm.Printf("  %s %s: %s\n", 
-					pterm.LightRed("●"), 
+				pterm.Printf("  %s %s: %s\n",
+					pterm.LightRed("●"),
 					issue.Member,
 					issue.Message)
 			} else if issue.Property != "" {
-				pterm.Printf("  %s %s: %s\n", 
-					pterm.LightRed("●"), 
+				pterm.Printf("  %s %s: %s\n",
+					pterm.LightRed("●"),
 					issue.Property,
 					issue.Message)
 			} else {
-				pterm.Printf("  %s %s\n", 
-					pterm.LightRed("●"), 
+				pterm.Printf("  %s %s\n",
+					pterm.LightRed("●"),
 					issue.Message)
 			}
 		}
