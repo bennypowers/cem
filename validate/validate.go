@@ -200,9 +200,17 @@ func (p *ValidationPipeline) collectErrors(err *jsonschema.ValidationError, issu
 func (p *ValidationPipeline) deduplicateErrors(issues []ValidationError) []ValidationError {
 	seen := make(map[string]bool)
 	enumGroups := make(map[string][]string)
+	missingPropertyContexts := make(map[string]bool)
 	var deduplicated []ValidationError
 
 	for _, issue := range issues {
+		// Track contexts that have missing property errors
+		if strings.Contains(issue.Message, "missing properties") {
+			contextKey := fmt.Sprintf("%s::%s::%s::%s",
+				issue.Module, issue.Declaration, issue.Member, issue.Property)
+			missingPropertyContexts[contextKey] = true
+		}
+
 		// Handle enum validation errors specially
 		if strings.Contains(issue.Message, "value must be") {
 			contextKey := fmt.Sprintf("%s::%s::%s::%s",
@@ -240,8 +248,13 @@ func (p *ValidationPipeline) deduplicateErrors(issues []ValidationError) []Valid
 		}
 	}
 
-	// Add consolidated enum errors
+	// Add consolidated enum errors, but only if there's no missing property error for the same context
 	for contextKey, validValues := range enumGroups {
+		// Skip enum errors if we already have a missing property error for this context
+		if missingPropertyContexts[contextKey] {
+			continue
+		}
+
 		parts := strings.Split(contextKey, "::")
 		if len(parts) == 4 {
 			// Deduplicate values

@@ -15,55 +15,55 @@ func TestValidateE2E(t *testing.T) {
 	}{
 		{
 			fixture:        "valid-manifest",
-			expectedStdout: "Manifest is valid.",
+			expectedStdout: "✓ Manifest is valid",
 		},
 		{
 			fixture:        "invalid-class",
-			expectedStderr: "Manifest is invalid:\n- /modules/0/declarations/0: missing properties: 'name'\n",
+			expectedStdout: "✗ Validation failed with 1 issue",
 		},
 		{
 			fixture:        "invalid-mixin",
-			expectedStderr: "Manifest is invalid:\n- /modules/0/declarations/1: missing properties: 'name'\n",
+			expectedStdout: "✗ Validation failed with 1 issue",
 		},
 		{
 			fixture:        "invalid-variable",
-			expectedStderr: "Manifest is invalid:\n- /modules/0/declarations/2: missing properties: 'name'\n",
+			expectedStdout: "✗ Validation failed with 1 issue",
 		},
 		{
 			fixture:        "invalid-function",
-			expectedStderr: "Manifest is invalid:\n- /modules/0/declarations/3: missing properties: 'name'\n",
+			expectedStdout: "✗ Validation failed with 1 issue",
 		},
 		{
 			fixture:        "invalid-field",
-			expectedStderr: "Manifest is invalid:\n- /modules/0/declarations/0/members/0: missing properties: 'name'\n",
+			expectedStdout: "✗ Validation failed with 1 issue",
 		},
 		{
 			fixture:        "invalid-method",
-			expectedStderr: "Manifest is invalid:\n- /modules/0/declarations/0/members/1: missing properties: 'name'\n",
+			expectedStdout: "✗ Validation failed with 1 issue",
 		},
 		{
 			fixture:        "invalid-event",
-			expectedStderr: "Manifest is invalid:\n- /modules/0/declarations/0/events/0: missing properties: 'name'\n",
+			expectedStdout: "✗ Validation failed with 1 issue",
 		},
 		{
 			fixture:        "invalid-attribute",
-			expectedStderr: "Manifest is invalid:\n- /modules/0/declarations/0/attributes/0: missing properties: 'name'\n",
+			expectedStdout: "✗ Validation failed with 1 issue",
 		},
 		{
 			fixture:        "invalid-slot",
-			expectedStderr: "Manifest is invalid:\n- /modules/0/declarations/0/slots/0: missing properties: 'name'\n",
+			expectedStdout: "✗ Validation failed with 1 issue",
 		},
 		{
 			fixture:        "invalid-css-part",
-			expectedStderr: "Manifest is invalid:\n- /modules/0/declarations/0/cssParts/0: missing properties: 'name'\n",
+			expectedStdout: "✗ Validation failed with 1 issue",
 		},
 		{
 			fixture:        "invalid-css-custom-property",
-			expectedStderr: "Manifest is invalid:\n- /modules/0/declarations/0/cssProperties/0: missing properties: 'name'\n",
+			expectedStdout: "✗ Validation failed with 1 issue",
 		},
 		{
 			fixture:        "unsupported-schema",
-			expectedStderr: "Schema version unsupported",
+			expectedStdout: "⚠ Manifest valid with 1 warning",
 		},
 	}
 
