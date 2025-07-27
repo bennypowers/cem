@@ -130,11 +130,24 @@ for i in "${!ids[@]}"; do
   validation_result="{}"
   if [[ $successful_runs -gt 0 && -f "$resultFile" ]]; then
     validation_tmp=$(mktemp)
-    if go run . validate --format=json "$resultFile" >"$validation_tmp" 2>/dev/null; then
+    # Run validation and capture output regardless of exit code
+    validation_stderr=$(mktemp)
+    (cd .. && go run . validate --format json "docs/$resultFile") >"$validation_tmp" 2>"$validation_stderr" || true
+    
+    # Try to extract valid JSON from output
+    if [[ -s "$validation_tmp" ]] && jq . "$validation_tmp" >/dev/null 2>&1; then
       validation_result=$(cat "$validation_tmp")
+    elif [[ -s "$validation_stderr" ]]; then
+      # Log what we got for debugging
+      echo "Validation output:" >&2
+      cat "$validation_tmp" >&2
+      echo "Validation stderr:" >&2  
+      cat "$validation_stderr" >&2
+      validation_result='{"valid":false,"errors":[],"warnings":[],"message":"Validation failed"}'
     else
       validation_result='{"valid":false,"errors":[],"warnings":[],"message":"Validation failed"}'
     fi
+    rm -f "$validation_stderr"
     rm -f "$validation_tmp"
   fi
 

@@ -65,6 +65,22 @@ bar-chart {
   }
 }
 
+zero-md {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+zero-md pre {
+  white-space: pre;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+zero-md code {
+  white-space: pre;
+  word-wrap: normal;
+}
+
 </style>
 
 <div class="tool-cards">
@@ -206,15 +222,48 @@ bar-chart {
 {{- end -}}
 
 {{- if gt (len $result.validation.warnings) 0 -}}
-<sl-alert variant="warning" open>
-  <sl-icon slot="icon" name="exclamation-triangle"></sl-icon>
-  <strong>{{ len $result.validation.warnings }} Warning{{ if ne (len $result.validation.warnings) 1 }}s{{ end }}</strong>
-  <ul style="margin-top: 0.5em; padding-left: 1.5em;">
-  {{- range $result.validation.warnings }}
-    <li><strong>{{ .id }}:</strong> {{ .message }}{{ if .location }} <em>({{ .location }})</em>{{ end }}</li>
-  {{- end }}
-  </ul>
-</sl-alert>
+<sl-details summary="⚠️ {{ len $result.validation.warnings }} Warning{{ if ne (len $result.validation.warnings) 1 }}s{{ end }} Found">
+  {{- $moduleNames := slice -}}
+  {{- $warningsByModule := dict -}}
+  {{- range $result.validation.warnings -}}
+    {{- $module := .module | default "Global" -}}
+    {{- if not (in $moduleNames $module) -}}
+      {{- $moduleNames = $moduleNames | append $module -}}
+    {{- end -}}
+    {{- $existing := index $warningsByModule $module | default slice -}}
+    {{- $warningsByModule = $warningsByModule | merge (dict $module ($existing | append .)) -}}
+  {{- end -}}
+  {{- range $module := sort $moduleNames -}}
+    {{- $warnings := index $warningsByModule $module -}}
+    <h5 style="margin-top: 1em; margin-bottom: 0.5em; color: var(--sl-color-orange-600);">
+      📄 {{ $module }}
+    </h5>
+    {{- $categoryNames := slice -}}
+    {{- $warningsByCategory := dict -}}
+    {{- range $warnings -}}
+      {{- $category := .category | default "other" -}}
+      {{- if not (in $categoryNames $category) -}}
+        {{- $categoryNames = $categoryNames | append $category -}}
+      {{- end -}}
+      {{- $existing := index $warningsByCategory $category | default slice -}}
+      {{- $warningsByCategory = $warningsByCategory | merge (dict $category ($existing | append .)) -}}
+    {{- end -}}
+    {{- range $category := sort $categoryNames -}}
+      {{- $categoryWarnings := index $warningsByCategory $category -}}
+      <h6 style="margin: 0.5em 0 0.25em 1em; font-size: 0.9em; color: var(--sl-color-orange-500); text-transform: capitalize;">
+        {{ $category }}
+      </h6>
+      <ul style="margin: 0 0 0.5em 2em; padding: 0;">
+        {{- range $categoryWarnings }}
+          <li style="margin-bottom: 0.25em;">
+            <strong>{{ .id }}:</strong> {{ .message }}
+            {{- if .declaration }}<br><em>{{ .declaration }}{{ if .member }} → {{ .member }}{{ end }}</em>{{ end -}}
+          </li>
+        {{- end }}
+      </ul>
+    {{- end -}}
+  {{- end -}}
+</sl-details>
 {{- end -}}
 
 {{- if and (eq (len $result.validation.errors) 0) (eq (len $result.validation.warnings) 0) -}}
