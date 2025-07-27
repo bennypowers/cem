@@ -1,0 +1,15 @@
+{
+  "valid": false,
+  "schemaVersion": "2.1.1",
+  "errors": [
+    {
+      "id": "schema-validation-error",
+      "module": "invalid-css-custom-property.js",
+      "declaration": "class InvalidCssCustomProperty",
+      "property": "CSS property[0]",
+      "message": "missing properties: 'name'",
+      "location": "/modules/0/declarations/0/cssProperties/0"
+    }
+  ],
+  "warnings": []
+}

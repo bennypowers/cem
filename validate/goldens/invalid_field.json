@@ -1,0 +1,15 @@
+{
+  "valid": false,
+  "schemaVersion": "2.1.1",
+  "errors": [
+    {
+      "id": "schema-validation-error",
+      "module": "invalid-field.js",
+      "declaration": "class InvalidField",
+      "member": "field[0]",
+      "message": "missing properties: 'name'",
+      "location": "/modules/0/declarations/0/members/0"
+    }
+  ],
+  "warnings": []
+}

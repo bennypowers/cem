@@ -1,0 +1,15 @@
+{
+  "valid": false,
+  "schemaVersion": "2.1.1",
+  "errors": [
+    {
+      "id": "schema-validation-error",
+      "module": "invalid-css-part.js",
+      "declaration": "class InvalidCssPart",
+      "property": "CSS part[0]",
+      "message": "missing properties: 'name'",
+      "location": "/modules/0/declarations/0/cssParts/0"
+    }
+  ],
+  "warnings": []
+}

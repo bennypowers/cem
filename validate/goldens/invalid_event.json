@@ -1,0 +1,15 @@
+{
+  "valid": false,
+  "schemaVersion": "2.1.1",
+  "errors": [
+    {
+      "id": "schema-invalid-type",
+      "module": "invalid-event.js",
+      "declaration": "class InvalidEvent",
+      "property": "event[0]",
+      "message": "missing properties: 'name', 'type'",
+      "location": "/modules/0/declarations/0/events/0"
+    }
+  ],
+  "warnings": []
+}

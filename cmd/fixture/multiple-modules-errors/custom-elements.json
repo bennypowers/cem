@@ -3,39 +3,29 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "first-module.js",
+      "path": "src/components.js",
       "declarations": [
         {
           "kind": "class",
-          "name": "FirstClass",
-          "customElement": true,
-          "tagName": "first-element",
-          "attributes": [
+          "name": "Button",
+          "members": [
             {
-              "summary": "Missing name attribute"
+              "kind": "field"
+            },
+            {
+              "kind": "method"
             }
           ]
-        }
-      ]
-    },
-    {
-      "kind": "javascript-module", 
-      "path": "second-module.js",
-      "declarations": [
+        },
         {
           "kind": "class",
-          "name": "SecondClass",
           "customElement": true,
-          "tagName": "second-element",
-          "events": [
-            {
-              "summary": "Missing name and type"
-            }
+          "tagName": "input-field",
+          "attributes": [
+            {}
           ],
           "slots": [
-            {
-              "summary": "Missing name slot"
-            }
+            {}
           ]
         }
       ]

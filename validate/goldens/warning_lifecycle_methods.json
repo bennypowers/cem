@@ -1,0 +1,54 @@
+{
+  "valid": true,
+  "schemaVersion": "2.1.1",
+  "errors": [],
+  "warnings": [
+    {
+      "id": "lifecycle-web-components",
+      "module": "lifecycle-warnings.js",
+      "declaration": "class LitLifecycleElement",
+      "member": "method connectedCallback",
+      "message": "lifecycle method should not be documented in public API",
+      "category": "lifecycle"
+    },
+    {
+      "id": "lifecycle-lit-methods",
+      "module": "lifecycle-warnings.js",
+      "declaration": "class LitLifecycleElement",
+      "member": "method firstUpdated",
+      "message": "lifecycle method should not be documented in public API",
+      "category": "lifecycle"
+    },
+    {
+      "id": "lifecycle-lit-render",
+      "module": "lifecycle-warnings.js",
+      "declaration": "class LitLifecycleElement",
+      "member": "method render",
+      "message": "render method in Lit element should not be documented in public API",
+      "category": "lifecycle"
+    },
+    {
+      "id": "private-underscore-methods",
+      "module": "lifecycle-warnings.js",
+      "declaration": "class LitLifecycleElement",
+      "member": "method _privateHelper",
+      "message": "private method should not be documented in public API",
+      "category": "private"
+    },
+    {
+      "id": "lifecycle-web-components",
+      "module": "lifecycle-warnings.js",
+      "declaration": "class VanillaElement",
+      "member": "method connectedCallback",
+      "message": "lifecycle method should not be documented in public API",
+      "category": "lifecycle"
+    },
+    {
+      "id": "superclass-builtin-modules",
+      "module": "lifecycle-warnings.js",
+      "declaration": "class VanillaElement",
+      "message": "superclass HTMLElement is a built-in type but missing module field, should be \"module\": \"global:\"",
+      "category": "superclass"
+    }
+  ]
+}

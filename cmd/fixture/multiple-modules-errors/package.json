@@ -1,4 +1,4 @@
 {
   "name": "multiple-modules-errors",
-  "version": "1.0.0"
+  "customElementsManifest": "custom-elements.json"
 }
