@@ -130,7 +130,7 @@ for i in "${!ids[@]}"; do
   validation_result="{}"
   if [[ $successful_runs -gt 0 && -f "$resultFile" ]]; then
     validation_tmp=$(mktemp)
-    if cem validate --format=json "$resultFile" >"$validation_tmp" 2>/dev/null; then
+    if go run . validate --format=json "$resultFile" >"$validation_tmp" 2>/dev/null; then
       validation_result=$(cat "$validation_tmp")
     else
       validation_result='{"valid":false,"errors":[],"warnings":[],"message":"Validation failed"}'
