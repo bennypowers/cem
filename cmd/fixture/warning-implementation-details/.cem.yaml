@@ -1,0 +1,4 @@
+warnings:
+  disable:
+    - static-styles
+    - shadow-root-options

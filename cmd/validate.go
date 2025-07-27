@@ -17,12 +17,14 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"golang.org/x/mod/semver"
 )
 
 func init() {
 	validateCmd.Flags().BoolP("verbose", "v", false, "Show detailed information including schema version")
+	validateCmd.Flags().Bool("no-warnings", false, "Suppress validation warnings")
 	rootCmd.AddCommand(validateCmd)
 }
 
@@ -98,6 +100,7 @@ var validateCmd = &cobra.Command{
 		}
 
 		verbose, _ := cmd.Flags().GetBool("verbose")
+		noWarnings, _ := cmd.Flags().GetBool("no-warnings")
 		
 		if err := schema.Validate(v); err != nil {
 			validationError := err.(*jsonschema.ValidationError)
@@ -105,7 +108,18 @@ var validateCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		printValidationSuccess(manifestPath, manifest.SchemaVersion, verbose)
+		// Check for warnings on valid manifests
+		if !noWarnings {
+			warnings := detectWarnings(manifestData)
+			filteredWarnings := filterWarningsByConfig(warnings)
+			if len(filteredWarnings) > 0 {
+				printValidationWarnings(manifestPath, filteredWarnings, verbose)
+			} else {
+				printValidationSuccess(manifestPath, manifest.SchemaVersion, verbose)
+			}
+		} else {
+			printValidationSuccess(manifestPath, manifest.SchemaVersion, verbose)
+		}
 	},
 }
 
@@ -157,6 +171,22 @@ type GroupedIssues struct {
 	Module       string
 	Declaration  string
 	Issues       []ValidationIssue
+}
+
+type Warning struct {
+	ID           string // Unique identifier for this warning rule
+	Module       string
+	Declaration  string
+	Member       string
+	Property     string
+	Message      string
+	Category     string // "lifecycle", "private", "verbose", etc.
+}
+
+type GroupedWarnings struct {
+	Module       string
+	Declaration  string
+	Warnings     []Warning
 }
 
 func extractValidationIssues(err *jsonschema.ValidationError, manifest map[string]interface{}) []ValidationIssue {
@@ -464,6 +494,449 @@ func groupIssuesByContext(issues []ValidationIssue) []GroupedIssues {
 	}
 	
 	return grouped
+}
+
+func detectWarnings(manifestData []byte) []Warning {
+	var manifest map[string]interface{}
+	json.Unmarshal(manifestData, &manifest)
+	
+	var warnings []Warning
+	
+	if modules, ok := manifest["modules"].([]interface{}); ok {
+		for _, moduleInterface := range modules {
+			if module, ok := moduleInterface.(map[string]interface{}); ok {
+				modulePath := ""
+				if path, ok := module["path"].(string); ok {
+					modulePath = path
+				}
+				
+				if declarations, ok := module["declarations"].([]interface{}); ok {
+					for _, declInterface := range declarations {
+						if decl, ok := declInterface.(map[string]interface{}); ok {
+							declName := ""
+							declKind := ""
+							if name, ok := decl["name"].(string); ok {
+								declName = name
+							}
+							if kind, ok := decl["kind"].(string); ok {
+								declKind = kind
+							}
+							
+							// Check superclass warnings
+							if superclass, ok := decl["superclass"].(map[string]interface{}); ok {
+								superclassWarnings := checkSuperclassWarnings(superclass, modulePath, declName, declKind)
+								warnings = append(warnings, superclassWarnings...)
+							}
+							
+							// Check members for warnings
+							if members, ok := decl["members"].([]interface{}); ok {
+								// Check if this extends LitElement
+								isLitElement := false
+								if superclass, ok := decl["superclass"].(map[string]interface{}); ok {
+									if name, ok := superclass["name"].(string); ok {
+										isLitElement = strings.Contains(name, "LitElement")
+									}
+								}
+								
+								for memberIndex, memberInterface := range members {
+									if member, ok := memberInterface.(map[string]interface{}); ok {
+										memberWarnings := checkMemberWarnings(member, modulePath, declName, declKind, memberIndex, isLitElement)
+										warnings = append(warnings, memberWarnings...)
+									}
+								}
+							}
+							
+							// Check CSS properties for large defaults
+							if cssProps, ok := decl["cssProperties"].([]interface{}); ok {
+								for propIndex, propInterface := range cssProps {
+									if prop, ok := propInterface.(map[string]interface{}); ok {
+										propWarnings := checkCSSPropertyWarnings(prop, modulePath, declName, propIndex)
+										warnings = append(warnings, propWarnings...)
+									}
+								}
+							}
+							
+							// Check for implementation detail fields that shouldn't be documented
+							implWarnings := checkImplementationDetailWarnings(decl, modulePath, declName, declKind)
+							warnings = append(warnings, implWarnings...)
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	return warnings
+}
+
+func checkImplementationDetailWarnings(decl map[string]interface{}, modulePath, declName, declKind string) []Warning {
+	var warnings []Warning
+	
+	// Check static fields and methods that are implementation details
+	if members, ok := decl["members"].([]interface{}); ok {
+		for _, memberInterface := range members {
+			if member, ok := memberInterface.(map[string]interface{}); ok {
+				if memberName, nameOk := member["name"].(string); nameOk {
+					if memberKind, kindOk := member["kind"].(string); kindOk {
+						// Check for static fields that are implementation details
+						if memberKind == "field" {
+							if isStatic, staticOk := member["static"].(bool); staticOk && isStatic {
+								// List of static fields that shouldn't be documented
+								implementationFields := map[string]string{
+									"styles":             "static styles field is implementation detail, should not be documented in public API",
+									"shadowRootOptions":  "shadowRootOptions is implementation detail, should not be documented in public API", 
+									"formAssociated":     "formAssociated is implementation detail, should not be documented in public API",
+									"observedAttributes": "observedAttributes is implementation detail, should not be documented in public API",
+								}
+								
+								if message, isImplementationDetail := implementationFields[memberName]; isImplementationDetail {
+									var id string
+									switch memberName {
+									case "styles":
+										id = "implementation-static-styles"
+									case "shadowRootOptions":
+										id = "implementation-shadow-root-options"
+									case "formAssociated":
+										id = "implementation-form-associated"
+									case "observedAttributes":
+										id = "implementation-observed-attributes"
+									}
+									
+									warnings = append(warnings, Warning{
+										ID:          id,
+										Module:      modulePath,
+										Declaration: fmt.Sprintf("%s %s", declKind, declName),
+										Member:      fmt.Sprintf("static field %s", memberName),
+										Message:     message,
+										Category:    "implementation",
+									})
+								}
+							}
+						}
+						
+						// Check for form*Callback methods (form-associated element lifecycle)
+						if memberKind == "method" {
+							formCallbacks := []string{
+								"formAssociatedCallback", "formDisabledCallback", 
+								"formResetCallback", "formStateRestoreCallback",
+							}
+							for _, callback := range formCallbacks {
+								if memberName == callback {
+									warnings = append(warnings, Warning{
+										ID:          "lifecycle-form-callbacks",
+										Module:      modulePath,
+										Declaration: fmt.Sprintf("%s %s", declKind, declName),
+										Member:      fmt.Sprintf("method %s", memberName),
+										Message:     "form lifecycle callback should not be documented in public API",
+										Category:    "lifecycle",
+									})
+									break
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	return warnings
+}
+
+func filterWarningsByConfig(warnings []Warning) []Warning {
+	var filtered []Warning
+	
+	for _, warning := range warnings {
+		if !isWarningDisabled(warning) {
+			filtered = append(filtered, warning)
+		}
+	}
+	
+	return filtered
+}
+
+func isWarningDisabled(warning Warning) bool {
+	// Check global rule disabling
+	disabledRules := viper.GetStringSlice("warnings.disable")
+	
+	// Check if this specific warning ID or its category is disabled
+	for _, rule := range disabledRules {
+		// Check for exact ID match first
+		if rule == warning.ID {
+			return true
+		}
+		
+		// Check for category match
+		if rule == warning.Category {
+			return true
+		}
+	}
+	
+	return false
+}
+
+func checkSuperclassWarnings(superclass map[string]interface{}, modulePath, declName, declKind string) []Warning {
+	var warnings []Warning
+	
+	name := ""
+	if superclassName, ok := superclass["name"].(string); ok {
+		name = superclassName
+	}
+	
+	module := ""
+	if superclassModule, ok := superclass["module"].(string); ok {
+		module = superclassModule
+	}
+	
+	// List of built-in types that should have "module": "global:"
+	builtInTypes := []string{
+		// DOM APIs
+		"HTMLElement", "Element", "Node", "EventTarget", "Document", "Window",
+		// Events
+		"Event", "CustomEvent", "MouseEvent", "KeyboardEvent", "FocusEvent", "TouchEvent",
+		// Other Web APIs
+		"AbortController", "AbortSignal", "Blob", "File", "FormData", "Headers",
+		"Request", "Response", "URL", "URLSearchParams", "WebSocket",
+		// JavaScript built-ins
+		"Object", "Array", "Map", "Set", "WeakMap", "WeakSet", "Promise",
+		"Error", "TypeError", "ReferenceError", "SyntaxError",
+	}
+	
+	for _, builtIn := range builtInTypes {
+		if name == builtIn && module != "global:" {
+			var moduleInfo string
+			if module == "" {
+				moduleInfo = "missing module field"
+			} else {
+				moduleInfo = fmt.Sprintf("module is %q", module)
+			}
+			
+			warnings = append(warnings, Warning{
+				ID:          "superclass-builtin-modules",
+				Module:      modulePath,
+				Declaration: fmt.Sprintf("%s %s", declKind, declName),
+				Message:     fmt.Sprintf("superclass %s is a built-in type but %s, should be \"module\": \"global:\"", name, moduleInfo),
+				Category:    "superclass",
+			})
+			break
+		}
+	}
+	
+	return warnings
+}
+
+func checkMemberWarnings(member map[string]interface{}, modulePath, declName, declKind string, memberIndex int, isLitElement bool) []Warning {
+	var warnings []Warning
+	
+	memberName := ""
+	if name, ok := member["name"].(string); ok {
+		memberName = name
+	}
+	
+	memberKind := ""
+	if kind, ok := member["kind"].(string); ok {
+		memberKind = kind
+	}
+	
+	// Skip if not a method
+	if memberKind != "method" {
+		return warnings
+	}
+	
+	// Always warn about these lifecycle methods
+	alwaysPrivateLifecycleMethods := []string{
+		// HTMLElement / Web Components
+		"connectedCallback", "disconnectedCallback", "attributeChangedCallback", "adoptedCallback",
+		// Lit Element lifecycle (excluding render which depends on context)
+		"firstUpdated", "updated", "willUpdate", "getUpdateComplete", "performUpdate",
+		"scheduleUpdate", "requestUpdate", "createRenderRoot",
+		// Common framework methods that shouldn't be public
+		"constructor",
+	}
+	
+	for _, lifecycle := range alwaysPrivateLifecycleMethods {
+		if memberName == lifecycle {
+			var id string
+			// Determine specific ID based on the method
+			switch memberName {
+			case "connectedCallback", "disconnectedCallback", "attributeChangedCallback", "adoptedCallback":
+				id = "lifecycle-web-components"
+			case "firstUpdated", "updated", "willUpdate", "getUpdateComplete", "performUpdate", "scheduleUpdate", "requestUpdate", "createRenderRoot":
+				id = "lifecycle-lit-methods"
+			case "constructor":
+				id = "lifecycle-constructor"
+			default:
+				id = "lifecycle-other"
+			}
+			
+			warnings = append(warnings, Warning{
+				ID:          id,
+				Module:      modulePath,
+				Declaration: fmt.Sprintf("%s %s", declKind, declName),
+				Member:      fmt.Sprintf("%s %s", memberKind, memberName),
+				Message:     "lifecycle method should not be documented in public API",
+				Category:    "lifecycle",
+			})
+			break
+		}
+	}
+	
+	// Special case: warn about render method only in Lit elements
+	if memberName == "render" && isLitElement {
+		warnings = append(warnings, Warning{
+			ID:          "lifecycle-lit-render",
+			Module:      modulePath,
+			Declaration: fmt.Sprintf("%s %s", declKind, declName),
+			Member:      fmt.Sprintf("%s %s", memberKind, memberName),
+			Message:     "render method in Lit element should not be documented in public API",
+			Category:    "lifecycle",
+		})
+	}
+	
+	// Check for private methods (starting with _ or #)
+	if strings.HasPrefix(memberName, "_") || strings.HasPrefix(memberName, "#") {
+		var id string
+		if strings.HasPrefix(memberName, "_") {
+			id = "private-underscore-methods"
+		} else {
+			id = "private-hash-methods"
+		}
+		
+		warnings = append(warnings, Warning{
+			ID:          id,
+			Module:      modulePath,
+			Declaration: fmt.Sprintf("%s %s", declKind, declName),
+			Member:      fmt.Sprintf("%s %s", memberKind, memberName),
+			Message:     "private method should not be documented in public API",
+			Category:    "private",
+		})
+	}
+	
+	// Check for internal/debug methods
+	internalMethods := []string{"init", "destroy", "dispose", "cleanup", "debug", "log"}
+	for _, internal := range internalMethods {
+		if memberName == internal {
+			warnings = append(warnings, Warning{
+				ID:          "internal-utility-methods",
+				Module:      modulePath,
+				Declaration: fmt.Sprintf("%s %s", declKind, declName),
+				Member:      fmt.Sprintf("%s %s", memberKind, memberName),
+				Message:     "internal/utility method may not belong in public API",
+				Category:    "internal",
+			})
+			break
+		}
+	}
+	
+	return warnings
+}
+
+func checkCSSPropertyWarnings(prop map[string]interface{}, modulePath, declName string, propIndex int) []Warning {
+	var warnings []Warning
+	
+	propName := ""
+	if name, ok := prop["name"].(string); ok {
+		propName = name
+	}
+	
+	// Check for overly long default values (likely CSS template literals)
+	if defaultVal, ok := prop["default"].(string); ok {
+		if len(defaultVal) > 200 {
+			warnings = append(warnings, Warning{
+				ID:          "verbose-css-defaults",
+				Module:      modulePath,
+				Declaration: fmt.Sprintf("class %s", declName),
+				Property:    fmt.Sprintf("CSS property %s", propName),
+				Message:     "default value is very long, consider using external CSS file",
+				Category:    "verbose",
+			})
+		}
+	}
+	
+	return warnings
+}
+
+func printValidationWarnings(manifestPath string, warnings []Warning, verbose bool) {
+	groupedWarnings := groupWarningsByContext(warnings)
+	
+	pterm.Warning.Printf("⚠ Manifest valid with %d warning%s (%s)\n", len(warnings), func() string {
+		if len(warnings) == 1 {
+			return ""
+		}
+		return "s"
+	}(), manifestPath)
+	pterm.Println()
+	
+	printGroupedWarnings(groupedWarnings)
+	
+	if verbose {
+		pterm.Info.Println("Use --no-warnings to suppress warnings")
+	}
+}
+
+func groupWarningsByContext(warnings []Warning) []GroupedWarnings {
+	contextMap := make(map[string][]Warning)
+	
+	for _, warning := range warnings {
+		key := fmt.Sprintf("%s::%s", warning.Module, warning.Declaration)
+		contextMap[key] = append(contextMap[key], warning)
+	}
+	
+	var grouped []GroupedWarnings
+	for key, warningList := range contextMap {
+		parts := strings.Split(key, "::")
+		group := GroupedWarnings{
+			Module:      parts[0],
+			Declaration: parts[1],
+			Warnings:    warningList,
+		}
+		grouped = append(grouped, group)
+	}
+	
+	return grouped
+}
+
+func printGroupedWarnings(groupedWarnings []GroupedWarnings) {
+	for _, group := range groupedWarnings {
+		// Print group header
+		if group.Module != "" && group.Declaration != "" {
+			pterm.Printf("%s %s %s %s\n", 
+				pterm.LightCyan("📁"), 
+				pterm.FgLightBlue.Sprint(group.Module),
+				pterm.FgGray.Sprint("→"),
+				pterm.FgYellow.Sprint(group.Declaration))
+		} else if group.Module != "" {
+			pterm.Printf("%s %s\n", 
+				pterm.LightCyan("📁"), 
+				pterm.FgLightBlue.Sprint(group.Module))
+		}
+		
+		// Print warnings in this group
+		for _, warning := range group.Warnings {
+			if warning.Member != "" && warning.Property != "" {
+				pterm.Printf("  %s %s → %s: %s\n", 
+					pterm.LightYellow("⚠"), 
+					warning.Member,
+					warning.Property,
+					warning.Message)
+			} else if warning.Member != "" {
+				pterm.Printf("  %s %s: %s\n", 
+					pterm.LightYellow("⚠"), 
+					warning.Member,
+					warning.Message)
+			} else if warning.Property != "" {
+				pterm.Printf("  %s %s: %s\n", 
+					pterm.LightYellow("⚠"), 
+					warning.Property,
+					warning.Message)
+			} else {
+				pterm.Printf("  %s %s\n", 
+					pterm.LightYellow("⚠"), 
+					warning.Message)
+			}
+		}
+		pterm.Println()
+	}
 }
 
 func printGroupedIssues(groupedIssues []GroupedIssues) {

@@ -1,0 +1,113 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "implementation-details.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "LitElementWithDetails",
+          "customElement": true,
+          "tagName": "lit-element-details",
+          "summary": "Lit element with implementation details that shouldn't be documented",
+          "superclass": {
+            "name": "LitElement",
+            "module": "lit"
+          },
+          "members": [
+            {
+              "kind": "field",
+              "name": "shadowRootOptions",
+              "static": true,
+              "summary": "Shadow root configuration - implementation detail"
+            },
+            {
+              "kind": "field",
+              "name": "styles",
+              "static": true,
+              "summary": "Static styles - implementation detail"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "summary": "Render method"
+            },
+            {
+              "kind": "method",
+              "name": "doSomething",
+              "summary": "Public API method - this is fine"
+            }
+          ]
+        },
+        {
+          "kind": "class",
+          "name": "FormAssociatedElement",
+          "customElement": true,
+          "tagName": "form-associated-element", 
+          "summary": "Form-associated element with implementation details",
+          "superclass": {
+            "name": "HTMLElement",
+            "module": "global:"
+          },
+          "members": [
+            {
+              "kind": "field",
+              "name": "formAssociated",
+              "static": true,
+              "summary": "Form association flag - implementation detail"
+            },
+            {
+              "kind": "method",
+              "name": "formAssociatedCallback",
+              "summary": "Called when form association changes"
+            },
+            {
+              "kind": "method",
+              "name": "formResetCallback",
+              "summary": "Called when form is reset"
+            },
+            {
+              "kind": "method",
+              "name": "formDisabledCallback",
+              "summary": "Called when form is disabled"
+            },
+            {
+              "kind": "method",
+              "name": "formStateRestoreCallback",
+              "summary": "Called when form state is restored"
+            },
+            {
+              "kind": "method",
+              "name": "checkValidity",
+              "summary": "Public form validation method - this is fine"
+            }
+          ]
+        },
+        {
+          "kind": "class",
+          "name": "CleanElement",
+          "customElement": true,
+          "tagName": "clean-element",
+          "summary": "Well-documented element without implementation details",
+          "superclass": {
+            "name": "HTMLElement", 
+            "module": "global:"
+          },
+          "members": [
+            {
+              "kind": "method",
+              "name": "doSomething",
+              "summary": "Public API method"
+            },
+            {
+              "kind": "field",
+              "name": "value",
+              "summary": "Public property"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
