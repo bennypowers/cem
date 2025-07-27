@@ -22,9 +22,19 @@ import (
 	"strings"
 )
 
+type ValidationWarning struct {
+	ID          string `json:"id"` // Unique identifier for this warning rule
+	Module      string `json:"module,omitempty"`
+	Declaration string `json:"declaration,omitempty"`
+	Member      string `json:"member,omitempty"`
+	Property    string `json:"property,omitempty"`
+	Message     string `json:"message"`
+	Category    string `json:"category"` // "lifecycle", "private", "verbose", etc.
+}
+
 // WarningRule interface for all warning rules
 type WarningRule interface {
-	Check(ctx *WarningContext) []Warning
+	Check(ctx *WarningContext) []ValidationWarning
 	ID() string
 	Category() string
 }
@@ -42,52 +52,52 @@ type WarningContext struct {
 	IsLitElement bool
 }
 
-// WarningEngine processes warnings using registered rules
-type WarningEngine struct {
+// WarningProcessor processes warnings using registered rules
+type WarningProcessor struct {
 	rules []WarningRule
 }
 
-// NewWarningEngine creates a new warning engine with default rules
-func NewWarningEngine() *WarningEngine {
-	engine := &WarningEngine{}
-	
+// NewWarningProcessor creates a new warning processor with default rules
+func NewWarningProcessor() *WarningProcessor {
+	processor := &WarningProcessor{}
+
 	// Register all default warning rules
-	engine.RegisterRule(&LifecycleMethodsRule{})
-	engine.RegisterRule(&PrivateMethodsRule{})
-	engine.RegisterRule(&InternalMethodsRule{})
-	engine.RegisterRule(&SuperclassRule{})
-	engine.RegisterRule(&ImplementationDetailsRule{})
-	engine.RegisterRule(&CSSPropertyRule{})
-	
-	return engine
+	processor.RegisterRule(&LifecycleMethodsRule{})
+	processor.RegisterRule(&PrivateMethodsRule{})
+	processor.RegisterRule(&InternalMethodsRule{})
+	processor.RegisterRule(&SuperclassRule{})
+	processor.RegisterRule(&ImplementationDetailsRule{})
+	processor.RegisterRule(&CSSPropertyRule{})
+
+	return processor
 }
 
-// RegisterRule adds a warning rule to the engine
-func (e *WarningEngine) RegisterRule(rule WarningRule) {
-	e.rules = append(e.rules, rule)
+// RegisterRule adds a warning rule to the processor
+func (p *WarningProcessor) RegisterRule(rule WarningRule) {
+	p.rules = append(p.rules, rule)
 }
 
 // ProcessWarnings processes all warnings for a manifest
-func (e *WarningEngine) ProcessWarnings(navigator *ManifestNavigator) []Warning {
-	var warnings []Warning
-	
+func (p *WarningProcessor) ProcessWarnings(navigator *ManifestNavigator) []ValidationWarning {
+	var warnings []ValidationWarning
+
 	modules, ok := navigator.manifest.GetModules()
 	if !ok {
 		return warnings
 	}
-	
+
 	for _, module := range modules {
 		modulePath := module.GetPath()
 		declarations, ok := module.GetDeclarations()
 		if !ok {
 			continue
 		}
-		
+
 		for _, decl := range declarations {
 			declName := decl.GetName()
 			declKind := decl.GetKind()
-			isLitElement := e.isLitElement(decl)
-			
+			isLitElement := p.isLitElement(decl)
+
 			ctx := &WarningContext{
 				Navigator:    navigator,
 				Module:       module,
@@ -97,19 +107,19 @@ func (e *WarningEngine) ProcessWarnings(navigator *ManifestNavigator) []Warning 
 				DeclKind:     declKind,
 				IsLitElement: isLitElement,
 			}
-			
+
 			// Run all rules against this declaration
-			for _, rule := range e.rules {
+			for _, rule := range p.rules {
 				ruleWarnings := rule.Check(ctx)
 				warnings = append(warnings, ruleWarnings...)
 			}
 		}
 	}
-	
+
 	return warnings
 }
 
-func (e *WarningEngine) isLitElement(decl RawDeclaration) bool {
+func (p *WarningProcessor) isLitElement(decl RawDeclaration) bool {
 	if superclass, ok := decl.GetSuperclass(); ok {
 		return strings.Contains(superclass.GetName(), "LitElement")
 	}
@@ -119,42 +129,42 @@ func (e *WarningEngine) isLitElement(decl RawDeclaration) bool {
 // LifecycleMethodsRule checks for documented lifecycle methods
 type LifecycleMethodsRule struct{}
 
-func (r *LifecycleMethodsRule) ID() string     { return "lifecycle-methods" }
+func (r *LifecycleMethodsRule) ID() string       { return "lifecycle-methods" }
 func (r *LifecycleMethodsRule) Category() string { return "lifecycle" }
 
-func (r *LifecycleMethodsRule) Check(ctx *WarningContext) []Warning {
-	var warnings []Warning
-	
+func (r *LifecycleMethodsRule) Check(ctx *WarningContext) []ValidationWarning {
+	var warnings []ValidationWarning
+
 	members, ok := ctx.Declaration.GetMembers()
 	if !ok {
 		return warnings
 	}
-	
+
 	for _, member := range members {
 		if member.GetKind() != "method" {
 			continue
 		}
-		
+
 		memberName := member.GetName()
 		warnings = append(warnings, r.checkLifecycleMethods(ctx, member, memberName)...)
 	}
-	
+
 	return warnings
 }
 
-func (r *LifecycleMethodsRule) checkLifecycleMethods(ctx *WarningContext, member RawMember, memberName string) []Warning {
-	var warnings []Warning
-	
+func (r *LifecycleMethodsRule) checkLifecycleMethods(ctx *WarningContext, _ RawMember, memberName string) []ValidationWarning {
+	var warnings []ValidationWarning
+
 	// Always private lifecycle methods
 	alwaysPrivate := []string{
 		"connectedCallback", "disconnectedCallback", "attributeChangedCallback", "adoptedCallback",
 		"firstUpdated", "updated", "willUpdate", "getUpdateComplete", "performUpdate",
 		"scheduleUpdate", "requestUpdate", "createRenderRoot", "constructor",
 	}
-	
+
 	if slices.Contains(alwaysPrivate, memberName) {
 		id := r.getSpecificID(memberName)
-		warnings = append(warnings, Warning{
+		warnings = append(warnings, ValidationWarning{
 			ID:          id,
 			Module:      ctx.ModulePath,
 			Declaration: fmt.Sprintf("%s %s", ctx.DeclKind, ctx.DeclName),
@@ -163,10 +173,10 @@ func (r *LifecycleMethodsRule) checkLifecycleMethods(ctx *WarningContext, member
 			Category:    r.Category(),
 		})
 	}
-	
+
 	// Special case: render method only in Lit elements
 	if memberName == "render" && ctx.IsLitElement {
-		warnings = append(warnings, Warning{
+		warnings = append(warnings, ValidationWarning{
 			ID:          "lifecycle-lit-render",
 			Module:      ctx.ModulePath,
 			Declaration: fmt.Sprintf("%s %s", ctx.DeclKind, ctx.DeclName),
@@ -175,15 +185,15 @@ func (r *LifecycleMethodsRule) checkLifecycleMethods(ctx *WarningContext, member
 			Category:    r.Category(),
 		})
 	}
-	
+
 	// Form callbacks
 	formCallbacks := []string{
 		"formAssociatedCallback", "formDisabledCallback",
 		"formResetCallback", "formStateRestoreCallback",
 	}
-	
+
 	if slices.Contains(formCallbacks, memberName) {
-		warnings = append(warnings, Warning{
+		warnings = append(warnings, ValidationWarning{
 			ID:          "lifecycle-form-callbacks",
 			Module:      ctx.ModulePath,
 			Declaration: fmt.Sprintf("%s %s", ctx.DeclKind, ctx.DeclName),
@@ -192,14 +202,14 @@ func (r *LifecycleMethodsRule) checkLifecycleMethods(ctx *WarningContext, member
 			Category:    r.Category(),
 		})
 	}
-	
+
 	return warnings
 }
 
 func (r *LifecycleMethodsRule) getSpecificID(methodName string) string {
 	webComponentMethods := []string{"connectedCallback", "disconnectedCallback", "attributeChangedCallback", "adoptedCallback"}
 	litMethods := []string{"firstUpdated", "updated", "willUpdate", "getUpdateComplete", "performUpdate", "scheduleUpdate", "requestUpdate", "createRenderRoot"}
-	
+
 	if slices.Contains(webComponentMethods, methodName) {
 		return "lifecycle-web-components"
 	}
@@ -215,30 +225,30 @@ func (r *LifecycleMethodsRule) getSpecificID(methodName string) string {
 // PrivateMethodsRule checks for private methods
 type PrivateMethodsRule struct{}
 
-func (r *PrivateMethodsRule) ID() string     { return "private-methods" }
+func (r *PrivateMethodsRule) ID() string       { return "private-methods" }
 func (r *PrivateMethodsRule) Category() string { return "private" }
 
-func (r *PrivateMethodsRule) Check(ctx *WarningContext) []Warning {
-	var warnings []Warning
-	
+func (r *PrivateMethodsRule) Check(ctx *WarningContext) []ValidationWarning {
+	var warnings []ValidationWarning
+
 	members, ok := ctx.Declaration.GetMembers()
 	if !ok {
 		return warnings
 	}
-	
+
 	for _, member := range members {
 		if member.GetKind() != "method" {
 			continue
 		}
-		
+
 		memberName := member.GetName()
 		if strings.HasPrefix(memberName, "_") || strings.HasPrefix(memberName, "#") {
 			id := "private-underscore-methods"
 			if strings.HasPrefix(memberName, "#") {
 				id = "private-hash-methods"
 			}
-			
-			warnings = append(warnings, Warning{
+
+			warnings = append(warnings, ValidationWarning{
 				ID:          id,
 				Module:      ctx.ModulePath,
 				Declaration: fmt.Sprintf("%s %s", ctx.DeclKind, ctx.DeclName),
@@ -248,34 +258,34 @@ func (r *PrivateMethodsRule) Check(ctx *WarningContext) []Warning {
 			})
 		}
 	}
-	
+
 	return warnings
 }
 
 // InternalMethodsRule checks for internal utility methods
 type InternalMethodsRule struct{}
 
-func (r *InternalMethodsRule) ID() string     { return "internal-methods" }
+func (r *InternalMethodsRule) ID() string       { return "internal-methods" }
 func (r *InternalMethodsRule) Category() string { return "internal" }
 
-func (r *InternalMethodsRule) Check(ctx *WarningContext) []Warning {
-	var warnings []Warning
-	
+func (r *InternalMethodsRule) Check(ctx *WarningContext) []ValidationWarning {
+	var warnings []ValidationWarning
+
 	members, ok := ctx.Declaration.GetMembers()
 	if !ok {
 		return warnings
 	}
-	
+
 	internalMethods := []string{"init", "destroy", "dispose", "cleanup", "debug", "log"}
-	
+
 	for _, member := range members {
 		if member.GetKind() != "method" {
 			continue
 		}
-		
+
 		memberName := member.GetName()
 		if slices.Contains(internalMethods, memberName) {
-			warnings = append(warnings, Warning{
+			warnings = append(warnings, ValidationWarning{
 				ID:          "internal-utility-methods",
 				Module:      ctx.ModulePath,
 				Declaration: fmt.Sprintf("%s %s", ctx.DeclKind, ctx.DeclName),
@@ -285,27 +295,27 @@ func (r *InternalMethodsRule) Check(ctx *WarningContext) []Warning {
 			})
 		}
 	}
-	
+
 	return warnings
 }
 
 // SuperclassRule checks for superclass attribution warnings
 type SuperclassRule struct{}
 
-func (r *SuperclassRule) ID() string     { return "superclass-builtin" }
+func (r *SuperclassRule) ID() string       { return "superclass-builtin" }
 func (r *SuperclassRule) Category() string { return "superclass" }
 
-func (r *SuperclassRule) Check(ctx *WarningContext) []Warning {
-	var warnings []Warning
-	
+func (r *SuperclassRule) Check(ctx *WarningContext) []ValidationWarning {
+	var warnings []ValidationWarning
+
 	superclass, ok := ctx.Declaration.GetSuperclass()
 	if !ok {
 		return warnings
 	}
-	
+
 	name := superclass.GetName()
 	module := superclass.GetModule()
-	
+
 	builtInTypes := []string{
 		"HTMLElement", "Element", "Node", "EventTarget", "Document", "Window",
 		"Event", "CustomEvent", "MouseEvent", "KeyboardEvent", "FocusEvent", "TouchEvent",
@@ -314,14 +324,14 @@ func (r *SuperclassRule) Check(ctx *WarningContext) []Warning {
 		"Object", "Array", "Map", "Set", "WeakMap", "WeakSet", "Promise",
 		"Error", "TypeError", "ReferenceError", "SyntaxError",
 	}
-	
+
 	if slices.Contains(builtInTypes, name) && module != "global:" {
 		moduleInfo := "missing module field"
 		if module != "" {
 			moduleInfo = fmt.Sprintf("module is %q", module)
 		}
-		
-		warnings = append(warnings, Warning{
+
+		warnings = append(warnings, ValidationWarning{
 			ID:          "superclass-builtin-modules",
 			Module:      ctx.ModulePath,
 			Declaration: fmt.Sprintf("%s %s", ctx.DeclKind, ctx.DeclName),
@@ -329,39 +339,39 @@ func (r *SuperclassRule) Check(ctx *WarningContext) []Warning {
 			Category:    r.Category(),
 		})
 	}
-	
+
 	return warnings
 }
 
 // ImplementationDetailsRule checks for implementation details in public API
 type ImplementationDetailsRule struct{}
 
-func (r *ImplementationDetailsRule) ID() string     { return "implementation-details" }
+func (r *ImplementationDetailsRule) ID() string       { return "implementation-details" }
 func (r *ImplementationDetailsRule) Category() string { return "implementation" }
 
-func (r *ImplementationDetailsRule) Check(ctx *WarningContext) []Warning {
-	var warnings []Warning
-	
+func (r *ImplementationDetailsRule) Check(ctx *WarningContext) []ValidationWarning {
+	var warnings []ValidationWarning
+
 	members, ok := ctx.Declaration.GetMembers()
 	if !ok {
 		return warnings
 	}
-	
+
 	implementationFields := map[string]string{
 		"styles":             "static styles field is implementation detail, should not be documented in public API",
 		"shadowRootOptions":  "shadowRootOptions is implementation detail, should not be documented in public API",
 		"formAssociated":     "formAssociated is implementation detail, should not be documented in public API",
 		"observedAttributes": "observedAttributes is implementation detail, should not be documented in public API",
 	}
-	
+
 	for _, member := range members {
 		memberName := member.GetName()
 		memberKind := member.GetKind()
-		
+
 		if memberKind == "field" && member.IsStatic() {
 			if message, isImpl := implementationFields[memberName]; isImpl {
 				id := r.getFieldID(memberName)
-				warnings = append(warnings, Warning{
+				warnings = append(warnings, ValidationWarning{
 					ID:          id,
 					Module:      ctx.ModulePath,
 					Declaration: fmt.Sprintf("%s %s", ctx.DeclKind, ctx.DeclName),
@@ -372,7 +382,7 @@ func (r *ImplementationDetailsRule) Check(ctx *WarningContext) []Warning {
 			}
 		}
 	}
-	
+
 	return warnings
 }
 
@@ -394,22 +404,22 @@ func (r *ImplementationDetailsRule) getFieldID(memberName string) string {
 // CSSPropertyRule checks for overly verbose CSS properties
 type CSSPropertyRule struct{}
 
-func (r *CSSPropertyRule) ID() string     { return "css-verbose" }
+func (r *CSSPropertyRule) ID() string       { return "css-verbose" }
 func (r *CSSPropertyRule) Category() string { return "verbose" }
 
-func (r *CSSPropertyRule) Check(ctx *WarningContext) []Warning {
-	var warnings []Warning
-	
+func (r *CSSPropertyRule) Check(ctx *WarningContext) []ValidationWarning {
+	var warnings []ValidationWarning
+
 	cssProps, ok := ctx.Declaration.GetCSSProperties()
 	if !ok {
 		return warnings
 	}
-	
+
 	for _, prop := range cssProps {
 		defaultVal := prop.GetDefault()
 		if len(defaultVal) > CSSDefaultLengthThreshold {
 			propName := prop.GetName()
-			warnings = append(warnings, Warning{
+			warnings = append(warnings, ValidationWarning{
 				ID:          "verbose-css-defaults",
 				Module:      ctx.ModulePath,
 				Declaration: fmt.Sprintf("class %s", ctx.DeclName),
@@ -419,6 +429,7 @@ func (r *CSSPropertyRule) Check(ctx *WarningContext) []Warning {
 			})
 		}
 	}
-	
+
 	return warnings
 }
+

@@ -19,7 +19,20 @@ package validate
 import (
 	"regexp"
 	"strings"
+
+	"github.com/santhosh-tekuri/jsonschema/v5"
 )
+
+type ValidationError struct {
+	ID          string `json:"id"` // Unique identifier for this error type
+	Module      string `json:"module,omitempty"`
+	Declaration string `json:"declaration,omitempty"`
+	Member      string `json:"member,omitempty"`
+	Property    string `json:"property,omitempty"`
+	Message     string `json:"message"`
+	Location    string `json:"location,omitempty"`
+	Index       int    `json:"index,omitempty"` // For array items
+}
 
 // ErrorIDRegistry provides centralized error ID assignment
 type ErrorIDRegistry struct {
@@ -31,7 +44,7 @@ func NewErrorIDRegistry() *ErrorIDRegistry {
 	registry := &ErrorIDRegistry{
 		patterns: make(map[*regexp.Regexp]string),
 	}
-	
+
 	// Register error patterns
 	registry.registerPattern(`required property`, "schema-required-property")
 	registry.registerPattern(`additionalProperties`, "schema-additional-properties")
@@ -46,7 +59,7 @@ func NewErrorIDRegistry() *ErrorIDRegistry {
 	registry.registerPattern(`minItems`, "schema-array-too-short")
 	registry.registerPattern(`maxItems`, "schema-array-too-long")
 	registry.registerPattern(`uniqueItems`, "schema-duplicate-items")
-	
+
 	return registry
 }
 
@@ -61,37 +74,37 @@ func (r *ErrorIDRegistry) AssignID(message, location string) string {
 	if strings.Contains(message, "value must be") && strings.Contains(location, "kind") {
 		return "schema-invalid-kind"
 	}
-	
+
 	// Check registered patterns
 	for regex, id := range r.patterns {
 		if regex.MatchString(message) {
 			return id
 		}
 	}
-	
+
 	return "schema-validation-error"
 }
 
-// IssueProcessor handles the parsing and processing of validation issues
-type IssueProcessor struct {
+// ErrorProcessor handles the parsing and processing of validation errors
+type ErrorProcessor struct {
 	navigator *ManifestNavigator
 	registry  *ErrorIDRegistry
 }
 
-// NewIssueProcessor creates a new issue processor
-func NewIssueProcessor(navigator *ManifestNavigator) *IssueProcessor {
-	return &IssueProcessor{
+// NewErrorProcessor creates a new error processor
+func NewErrorProcessor(navigator *ManifestNavigator) *ErrorProcessor {
+	return &ErrorProcessor{
 		navigator: navigator,
 		registry:  NewErrorIDRegistry(),
 	}
 }
 
-// ProcessValidationError processes a JSON schema validation error into structured issues
-func (p *IssueProcessor) ProcessValidationError(cause *ValidationError, location string) ValidationIssue {
+// ProcessValidationError processes a JSON schema validation error into structured errors
+func (p *ErrorProcessor) ProcessValidationError(cause *jsonschema.ValidationError, location string) ValidationError {
 	ctx := ParseContext(location)
 	module, declaration, member, property := p.navigator.BuildContextualNames(ctx)
-	
-	issue := ValidationIssue{
+
+	error := ValidationError{
 		ID:          p.registry.AssignID(cause.Message, location),
 		Module:      module,
 		Declaration: declaration,
@@ -101,26 +114,18 @@ func (p *IssueProcessor) ProcessValidationError(cause *ValidationError, location
 		Location:    location,
 		Index:       -1,
 	}
-	
+
 	// Set index for array items
 	switch ctx.Type {
 	case "member":
 		if ctx.MemberIndex >= 0 {
-			issue.Index = ctx.MemberIndex
+			error.Index = ctx.MemberIndex
 		}
 	case "property":
 		if ctx.PropertyIndex >= 0 {
-			issue.Index = ctx.PropertyIndex
+			error.Index = ctx.PropertyIndex
 		}
 	}
-	
-	return issue
-}
 
-// ValidationError represents a JSON schema validation error
-// This mirrors the jsonschema.ValidationError structure we need
-type ValidationError struct {
-	Message  string
-	Location string
-	Causes   []*ValidationError
+	return error
 }

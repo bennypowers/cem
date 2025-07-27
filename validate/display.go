@@ -28,13 +28,13 @@ import (
 type GroupedIssues struct {
 	Module      string
 	Declaration string
-	Issues      []ValidationIssue
+	Issues      []ValidationError
 }
 
 type GroupedWarnings struct {
 	Module      string
 	Declaration string
-	Warnings    []Warning
+	Warnings    []ValidationWarning
 }
 
 type DisplayOptions struct {
@@ -42,14 +42,6 @@ type DisplayOptions struct {
 	Format  string
 }
 
-// JSONValidationResult represents the validation result in JSON format
-type JSONValidationResult struct {
-	Valid         bool              `json:"valid"`
-	Path          string            `json:"path"`
-	SchemaVersion string            `json:"schemaVersion,omitempty"`
-	Errors        []ValidationIssue `json:"errors"`
-	Warnings      []Warning         `json:"warnings"`
-}
 
 // PrintValidationResult prints the validation result with appropriate formatting
 func PrintValidationResult(manifestPath string, result *ValidationResult, options DisplayOptions) error {
@@ -62,7 +54,7 @@ func PrintValidationResult(manifestPath string, result *ValidationResult, option
 		} else if result.IsValid && len(result.Warnings) > 0 {
 			printValidationWarnings(manifestPath, result.Warnings, options.Verbose)
 		} else {
-			printValidationErrors(manifestPath, result.SchemaVersion, result.Issues, options.Verbose)
+			printValidationErrors(manifestPath, result.SchemaVersion, result.Errors, options.Verbose)
 		}
 		return nil
 	default:
@@ -71,25 +63,20 @@ func PrintValidationResult(manifestPath string, result *ValidationResult, option
 }
 
 func printValidationResultJSON(manifestPath string, result *ValidationResult) error {
-	jsonResult := JSONValidationResult{
-		Valid:         result.IsValid,
-		Path:          manifestPath,
-		SchemaVersion: result.SchemaVersion,
-		Errors:        result.Issues,
-		Warnings:      result.Warnings,
-	}
+	// Set the path for JSON output
+	result.Path = manifestPath
 
 	// Ensure arrays are never null in JSON
-	if jsonResult.Errors == nil {
-		jsonResult.Errors = []ValidationIssue{}
+	if result.Errors == nil {
+		result.Errors = []ValidationError{}
 	}
-	if jsonResult.Warnings == nil {
-		jsonResult.Warnings = []Warning{}
+	if result.Warnings == nil {
+		result.Warnings = []ValidationWarning{}
 	}
 
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "  ")
-	return encoder.Encode(jsonResult)
+	return encoder.Encode(result)
 }
 
 func printValidationSuccess(manifestPath, schemaVersion string, verbose bool) {
@@ -99,7 +86,7 @@ func printValidationSuccess(manifestPath, schemaVersion string, verbose bool) {
 	}
 }
 
-func printValidationErrors(manifestPath, schemaVersion string, issues []ValidationIssue, verbose bool) {
+func printValidationErrors(manifestPath, schemaVersion string, issues []ValidationError, verbose bool) {
 	groupedIssues := groupIssuesByContext(issues)
 
 	// Always use consistent format
@@ -118,7 +105,7 @@ func printValidationErrors(manifestPath, schemaVersion string, issues []Validati
 	}
 }
 
-func printValidationWarnings(manifestPath string, warnings []Warning, verbose bool) {
+func printValidationWarnings(manifestPath string, warnings []ValidationWarning, verbose bool) {
 	groupedWarnings := groupWarningsByContext(warnings)
 
 	pterm.Warning.Printf("⚠ Manifest valid with %d warning%s (%s)\n", len(warnings), func() string {
@@ -136,8 +123,8 @@ func printValidationWarnings(manifestPath string, warnings []Warning, verbose bo
 	}
 }
 
-func groupIssuesByContext(issues []ValidationIssue) []GroupedIssues {
-	contextMap := make(map[string][]ValidationIssue)
+func groupIssuesByContext(issues []ValidationError) []GroupedIssues {
+	contextMap := make(map[string][]ValidationError)
 
 	for _, issue := range issues {
 		key := fmt.Sprintf("%s::%s", issue.Module, issue.Declaration)
@@ -158,8 +145,8 @@ func groupIssuesByContext(issues []ValidationIssue) []GroupedIssues {
 	return grouped
 }
 
-func groupWarningsByContext(warnings []Warning) []GroupedWarnings {
-	contextMap := make(map[string][]Warning)
+func groupWarningsByContext(warnings []ValidationWarning) []GroupedWarnings {
+	contextMap := make(map[string][]ValidationWarning)
 
 	for _, warning := range warnings {
 		key := fmt.Sprintf("%s::%s", warning.Module, warning.Declaration)

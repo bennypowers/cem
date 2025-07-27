@@ -33,31 +33,11 @@ import (
 )
 
 type ValidationResult struct {
-	IsValid       bool
-	SchemaVersion string
-	Issues        []ValidationIssue
-	Warnings      []Warning
-}
-
-type ValidationIssue struct {
-	ID          string `json:"id"` // Unique identifier for this error type
-	Module      string `json:"module,omitempty"`
-	Declaration string `json:"declaration,omitempty"`
-	Member      string `json:"member,omitempty"`
-	Property    string `json:"property,omitempty"`
-	Message     string `json:"message"`
-	Location    string `json:"location,omitempty"`
-	Index       int    `json:"index,omitempty"` // For array items
-}
-
-type Warning struct {
-	ID          string `json:"id"` // Unique identifier for this warning rule
-	Module      string `json:"module,omitempty"`
-	Declaration string `json:"declaration,omitempty"`
-	Member      string `json:"member,omitempty"`
-	Property    string `json:"property,omitempty"`
-	Message     string `json:"message"`
-	Category    string `json:"category"` // "lifecycle", "private", "verbose", etc.
+	IsValid       bool                `json:"valid"`
+	Path          string              `json:"path,omitempty"`
+	SchemaVersion string              `json:"schemaVersion,omitempty"`
+	Errors        []ValidationError   `json:"errors"`
+	Warnings      []ValidationWarning `json:"warnings"`
 }
 
 type ValidationOptions struct {
@@ -82,11 +62,11 @@ func Validate(manifestPath string, options ValidationOptions) (*ValidationResult
 
 // ValidationPipeline orchestrates the validation process
 type ValidationPipeline struct {
-	manifestData   []byte
-	schemaVersion  string
-	navigator      *ManifestNavigator
-	warningEngine  *WarningEngine
-	issueProcessor *IssueProcessor
+	manifestData      []byte
+	schemaVersion     string
+	navigator         *ManifestNavigator
+	warningProcessor  *WarningProcessor
+	errorProcessor    *ErrorProcessor
 }
 
 // NewValidationPipeline creates a new validation pipeline
@@ -109,17 +89,17 @@ func NewValidationPipeline(manifestData []byte) (*ValidationPipeline, error) {
 		return nil, fmt.Errorf("schemaVersion not found in manifest")
 	}
 
-	// Create navigator and engines
+	// Create navigator and processors
 	navigator := NewManifestNavigator(manifestJSON)
-	warningEngine := NewWarningEngine()
-	issueProcessor := NewIssueProcessor(navigator)
+	warningProcessor := NewWarningProcessor()
+	errorProcessor := NewErrorProcessor(navigator)
 
 	return &ValidationPipeline{
-		manifestData:   manifestData,
-		schemaVersion:  versionStruct.SchemaVersion,
-		navigator:      navigator,
-		warningEngine:  warningEngine,
-		issueProcessor: issueProcessor,
+		manifestData:     manifestData,
+		schemaVersion:    versionStruct.SchemaVersion,
+		navigator:        navigator,
+		warningProcessor: warningProcessor,
+		errorProcessor:   errorProcessor,
 	}, nil
 }
 
@@ -127,8 +107,8 @@ func NewValidationPipeline(manifestData []byte) (*ValidationPipeline, error) {
 func (p *ValidationPipeline) Validate(options ValidationOptions) (*ValidationResult, error) {
 	result := &ValidationResult{
 		SchemaVersion: p.schemaVersion,
-		Issues:        []ValidationIssue{},
-		Warnings:      []Warning{},
+		Errors:        []ValidationError{},
+		Warnings:      []ValidationWarning{},
 	}
 
 	// Add schema version warning if needed
@@ -143,7 +123,7 @@ func (p *ValidationPipeline) Validate(options ValidationOptions) (*ValidationRes
 
 	// Process warnings if requested
 	if options.IncludeWarnings {
-		warnings := p.warningEngine.ProcessWarnings(p.navigator)
+		warnings := p.warningProcessor.ProcessWarnings(p.navigator)
 		filtered := filterWarningsByConfig(warnings, options.DisabledRules)
 		result.Warnings = append(result.Warnings, filtered...)
 	}
@@ -156,7 +136,7 @@ func (p *ValidationPipeline) checkSchemaVersion(result *ValidationResult) error 
 		semver.Canonical("v"+p.schemaVersion),
 		semver.Canonical("v2.1.1"),
 	) < 0 {
-		result.Warnings = append(result.Warnings, Warning{
+		result.Warnings = append(result.Warnings, ValidationWarning{
 			ID:       "schema-version-old",
 			Message:  fmt.Sprintf("validation for manifests with schemaVersion <= 2.1.0 may not produce accurate results (version: %s)", p.schemaVersion),
 			Category: "schema",
@@ -188,8 +168,8 @@ func (p *ValidationPipeline) validateSchema(result *ValidationResult) error {
 
 	if err := schema.Validate(v); err != nil {
 		validationError := err.(*jsonschema.ValidationError)
-		issues := p.extractValidationIssues(validationError)
-		result.Issues = p.deduplicateIssues(issues)
+		issues := p.extractValidationErrors(validationError)
+		result.Errors = p.deduplicateErrors(issues)
 		result.IsValid = false
 	} else {
 		result.IsValid = true
@@ -198,34 +178,29 @@ func (p *ValidationPipeline) validateSchema(result *ValidationResult) error {
 	return nil
 }
 
-func (p *ValidationPipeline) extractValidationIssues(err *jsonschema.ValidationError) []ValidationIssue {
-	var issues []ValidationIssue
-	p.collectIssues(err, &issues)
+func (p *ValidationPipeline) extractValidationErrors(err *jsonschema.ValidationError) []ValidationError {
+	var issues []ValidationError
+	p.collectErrors(err, &issues)
 	return issues
 }
 
-func (p *ValidationPipeline) collectIssues(err *jsonschema.ValidationError, issues *[]ValidationIssue) {
+func (p *ValidationPipeline) collectErrors(err *jsonschema.ValidationError, issues *[]ValidationError) {
 	for _, cause := range err.Causes {
 		if len(cause.Causes) == 0 {
-			// Convert to our internal error type
-			validationErr := &ValidationError{
-				Message:  cause.Message,
-				Location: cause.InstanceLocation,
-			}
-			issue := p.issueProcessor.ProcessValidationError(validationErr, cause.InstanceLocation)
+			issue := p.errorProcessor.ProcessValidationError(cause, cause.InstanceLocation)
 			if issue.Message != "" {
 				*issues = append(*issues, issue)
 			}
 		} else {
-			p.collectIssues(cause, issues)
+			p.collectErrors(cause, issues)
 		}
 	}
 }
 
-func (p *ValidationPipeline) deduplicateIssues(issues []ValidationIssue) []ValidationIssue {
+func (p *ValidationPipeline) deduplicateErrors(issues []ValidationError) []ValidationError {
 	seen := make(map[string]bool)
 	enumGroups := make(map[string][]string)
-	var deduplicated []ValidationIssue
+	var deduplicated []ValidationError
 
 	for _, issue := range issues {
 		// Handle enum validation errors specially
@@ -292,7 +267,7 @@ func (p *ValidationPipeline) deduplicateIssues(issues []ValidationIssue) []Valid
 				id = "schema-invalid-enum"
 			}
 
-			issue := ValidationIssue{
+			issue := ValidationError{
 				ID:          id,
 				Module:      parts[0],
 				Declaration: parts[1],
@@ -307,8 +282,8 @@ func (p *ValidationPipeline) deduplicateIssues(issues []ValidationIssue) []Valid
 	return deduplicated
 }
 
-func filterWarningsByConfig(warnings []Warning, disabledRules []string) []Warning {
-	var filtered []Warning
+func filterWarningsByConfig(warnings []ValidationWarning, disabledRules []string) []ValidationWarning {
+	var filtered []ValidationWarning
 
 	for _, warning := range warnings {
 		if !isWarningDisabled(warning, disabledRules) {
@@ -319,7 +294,7 @@ func filterWarningsByConfig(warnings []Warning, disabledRules []string) []Warnin
 	return filtered
 }
 
-func isWarningDisabled(warning Warning, disabledRules []string) bool {
+func isWarningDisabled(warning ValidationWarning, disabledRules []string) bool {
 	// Also check Viper config for backwards compatibility
 	viperDisabledRules := viper.GetStringSlice("warnings.disable")
 	allDisabledRules := append(disabledRules, viperDisabledRules...)
