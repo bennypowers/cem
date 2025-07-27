@@ -105,6 +105,29 @@ bar-chart {
     </sl-badge>
     <div class="analyzer-tool-label">Runs</div>
   </div>
+  {{- if $result.validation -}}
+  <div>
+    {{- $errorCount := len $result.validation.errors -}}
+    {{- $warningCount := len $result.validation.warnings -}}
+    {{- $variant := "success" -}}
+    {{- $icon := "check-circle" -}}
+    {{- $text := "Valid" -}}
+    {{- if gt $errorCount 0 -}}
+      {{- $variant = "danger" -}}
+      {{- $icon = "x-circle" -}}
+      {{- $text = "Invalid" -}}
+    {{- else if gt $warningCount 0 -}}
+      {{- $variant = "warning" -}}
+      {{- $icon = "exclamation-triangle" -}}
+      {{- $text = "Warnings" -}}
+    {{- end -}}
+    <sl-badge variant="{{ $variant }}" pill>
+      <sl-icon slot="prefix" name="{{ $icon }}"></sl-icon>
+      {{ $text }}
+    </sl-badge>
+    <div class="analyzer-tool-label">Validation</div>
+  </div>
+  {{- end -}}
 </div>
 
 
@@ -165,6 +188,44 @@ bar-chart {
     </svg>
   </line-chart>
 </figure>
+
+{{- if $result.validation -}}
+
+<h4>Validation Results</h4>
+
+{{- if gt (len $result.validation.errors) 0 -}}
+<sl-alert variant="danger" open>
+  <sl-icon slot="icon" name="exclamation-triangle"></sl-icon>
+  <strong>{{ len $result.validation.errors }} Error{{ if ne (len $result.validation.errors) 1 }}s{{ end }}</strong>
+  <ul style="margin-top: 0.5em; padding-left: 1.5em;">
+  {{- range $result.validation.errors }}
+    <li><strong>{{ .id }}:</strong> {{ .message }}{{ if .location }} <em>({{ .location }})</em>{{ end }}</li>
+  {{- end }}
+  </ul>
+</sl-alert>
+{{- end -}}
+
+{{- if gt (len $result.validation.warnings) 0 -}}
+<sl-alert variant="warning" open>
+  <sl-icon slot="icon" name="exclamation-triangle"></sl-icon>
+  <strong>{{ len $result.validation.warnings }} Warning{{ if ne (len $result.validation.warnings) 1 }}s{{ end }}</strong>
+  <ul style="margin-top: 0.5em; padding-left: 1.5em;">
+  {{- range $result.validation.warnings }}
+    <li><strong>{{ .id }}:</strong> {{ .message }}{{ if .location }} <em>({{ .location }})</em>{{ end }}</li>
+  {{- end }}
+  </ul>
+</sl-alert>
+{{- end -}}
+
+{{- if and (eq (len $result.validation.errors) 0) (eq (len $result.validation.warnings) 0) -}}
+<sl-alert variant="success" open>
+  <sl-icon slot="icon" name="check-circle"></sl-icon>
+  <strong>No validation issues found</strong> - The generated manifest is valid and follows all best practices.
+</sl-alert>
+{{- end -}}
+
+{{- end -}}
+
 <sl-details summary="Last Output (JSON)">
 <sl-spinner style="font-size: 3rem;"></sl-spinner>
 <zero-md id="last-output-{{ $idx }}" data-src="{{ $result.lastOutputUrl | relURL }}" no-shadow><template></template></zero-md>

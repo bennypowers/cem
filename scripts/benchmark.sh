@@ -100,6 +100,7 @@ for i in "${!ids[@]}"; do
         file_size=$(stat -f%z "$resultFile")
       fi
       size=$(awk "BEGIN {printf \"%.1f\", $file_size / 1024 }")
+      
       sumTime=$(awk "BEGIN {print $sumTime + $timeSec}")
       sumSize=$(awk "BEGIN {print $sumSize + $size}")
       successful_runs=$((successful_runs+1))
@@ -125,6 +126,18 @@ for i in "${!ids[@]}"; do
   fi
   lastOutput="$(echo "$last_json" | jq .)"
 
+  # Validate the final manifest once (only if we have successful runs)
+  validation_result="{}"
+  if [[ $successful_runs -gt 0 && -f "$resultFile" ]]; then
+    validation_tmp=$(mktemp)
+    if cem validate --format=json "$resultFile" >"$validation_tmp" 2>/dev/null; then
+      validation_result=$(cat "$validation_tmp")
+    else
+      validation_result='{"valid":false,"errors":[],"warnings":[],"message":"Validation failed"}'
+    fi
+    rm -f "$validation_tmp"
+  fi
+
   # Write each tool's result as a single line in the temp file
   # Sanitize last_stderr as empty string if only whitespace or empty
   clean_last_stderr="$(echo -n "$last_stderr" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
@@ -143,6 +156,7 @@ for i in "${!ids[@]}"; do
     --argjson runs "[$(IFS=,; echo "${runs_detail[*]}")]" \
     --argjson lastOutput "$lastOutput" \
     --arg lastError "$clean_last_stderr" \
+    --argjson validation "$validation_result" \
     '{
       id: $id,
       name: $name,
@@ -153,7 +167,8 @@ for i in "${!ids[@]}"; do
       runs: $runs,
       lastOutput: $lastOutput,
       lastOutputUrl: $lastOutputUrl,
-      lastError: $lastError
+      lastError: $lastError,
+      validation: $validation
     }' >> "$results_tmp"
 
   output_file="assets/$id-last-output.md"
