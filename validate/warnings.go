@@ -245,21 +245,29 @@ func (r *PrivateMethodsRule) Check(ctx *WarningContext) []ValidationWarning {
 			continue
 		}
 
-		if strings.HasPrefix(memberName, "_") || strings.HasPrefix(memberName, "#") {
+		if strings.HasPrefix(memberName, "#") {
+			// ECMAScript private members should NEVER be documented
+			id := "private-hash-methods"
+			if memberKind == "field" {
+				id = "private-hash-fields"
+			}
+
+			warnings = append(warnings, ValidationWarning{
+				ID:          id,
+				Module:      ctx.ModulePath,
+				Declaration: fmt.Sprintf("%s %s", ctx.DeclKind, ctx.DeclName),
+				Member:      fmt.Sprintf("%s %s", memberKind, memberName),
+				Message:     fmt.Sprintf("ECMAScript private %s should never be documented in public API", memberKind),
+				Category:    r.Category(),
+			})
+		} else if strings.HasPrefix(memberName, "_") {
 			privacy := member.GetPrivacy()
 			
-			// Only warn if member starts with _ or # but is NOT marked as private or protected
+			// Only warn if member starts with _ but is NOT marked as private or protected
 			if privacy != "private" && privacy != "protected" {
 				id := "private-underscore-methods"
-				if strings.HasPrefix(memberName, "#") {
-					id = "private-hash-methods"
-				}
 				if memberKind == "field" {
-					if strings.HasPrefix(memberName, "_") {
-						id = "private-underscore-fields"
-					} else {
-						id = "private-hash-fields"
-					}
+					id = "private-underscore-fields"
 				}
 
 				warnings = append(warnings, ValidationWarning{
@@ -267,7 +275,7 @@ func (r *PrivateMethodsRule) Check(ctx *WarningContext) []ValidationWarning {
 					Module:      ctx.ModulePath,
 					Declaration: fmt.Sprintf("%s %s", ctx.DeclKind, ctx.DeclName),
 					Member:      fmt.Sprintf("%s %s", memberKind, memberName),
-					Message:     fmt.Sprintf("private %s should not be documented in public API", memberKind),
+					Message:     fmt.Sprintf("underscore-prefixed %s should be marked as private or protected, or should not be documented in public API", memberKind),
 					Category:    r.Category(),
 				})
 			}
