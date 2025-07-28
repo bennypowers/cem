@@ -66,19 +66,19 @@ bar-chart {
 }
 
 zero-md {
-  max-width: 100%;
-  overflow-x: auto;
-}
+  &, & pre {
+    max-width: 100%;
+    overflow-x: auto;
+  }
 
-zero-md pre {
-  white-space: pre;
-  overflow-x: auto;
-  max-width: 100%;
-}
-
-zero-md code {
-  white-space: pre;
-  word-wrap: normal;
+  pre, code { white-space: pre; }
+  code {
+    word-wrap: normal;
+    max-width: 60vw;
+    @media (max-width: 800px) {
+      max-width: 80vw;
+    }
+  }
 }
 
 </style>
@@ -223,45 +223,37 @@ zero-md code {
 
 {{- if gt (len $result.validation.warnings) 0 -}}
 <sl-details summary="⚠️ {{ len $result.validation.warnings }} Warning{{ if ne (len $result.validation.warnings) 1 }}s{{ end }} Found">
-  {{- $moduleNames := slice -}}
-  {{- $warningsByModule := dict -}}
-  {{- range $result.validation.warnings -}}
+  {{- $sortedWarnings := sort $result.validation.warnings "module" "category" "id" -}}
+  {{- $currentModule := "" -}}
+  {{- $currentCategory := "" -}}
+  {{- range $sortedWarnings -}}
     {{- $module := .module | default "Global" -}}
-    {{- if not (in $moduleNames $module) -}}
-      {{- $moduleNames = $moduleNames | append $module -}}
-    {{- end -}}
-    {{- $existing := index $warningsByModule $module | default slice -}}
-    {{- $warningsByModule = $warningsByModule | merge (dict $module ($existing | append .)) -}}
-  {{- end -}}
-  {{- range $module := sort $moduleNames -}}
-    {{- $warnings := index $warningsByModule $module -}}
-    <h5 style="margin-top: 1em; margin-bottom: 0.5em; color: var(--sl-color-orange-600);">
-      📄 {{ $module }}
-    </h5>
-    {{- $categoryNames := slice -}}
-    {{- $warningsByCategory := dict -}}
-    {{- range $warnings -}}
-      {{- $category := .category | default "other" -}}
-      {{- if not (in $categoryNames $category) -}}
-        {{- $categoryNames = $categoryNames | append $category -}}
+    {{- $category := .category | default "other" -}}
+    {{- if ne $module $currentModule -}}
+      {{- if ne $currentModule "" -}}
+        {{- if ne $currentCategory "" }}</ul>{{- end -}}
       {{- end -}}
-      {{- $existing := index $warningsByCategory $category | default slice -}}
-      {{- $warningsByCategory = $warningsByCategory | merge (dict $category ($existing | append .)) -}}
+      {{- $currentModule = $module -}}
+      <h5 style="margin-top: 1em; margin-bottom: 0.5em; color: var(--sl-color-orange-600);">
+        📄 {{ $module }}
+      </h5>
+      {{- $currentCategory = "" -}}
     {{- end -}}
-    {{- range $category := sort $categoryNames -}}
-      {{- $categoryWarnings := index $warningsByCategory $category -}}
+    {{- if ne $category $currentCategory -}}
+      {{- if ne $currentCategory "" }}</ul>{{- end -}}
+      {{- $currentCategory = $category -}}
       <h6 style="margin: 0.5em 0 0.25em 1em; font-size: 0.9em; color: var(--sl-color-orange-500); text-transform: capitalize;">
         {{ $category }}
       </h6>
       <ul style="margin: 0 0 0.5em 2em; padding: 0;">
-        {{- range $categoryWarnings }}
-          <li style="margin-bottom: 0.25em;">
-            <strong>{{ .id }}:</strong> {{ .message }}
-            {{- if .declaration }}<br><em>{{ .declaration }}{{ if .member }} → {{ .member }}{{ end }}</em>{{ end -}}
-          </li>
-        {{- end }}
-      </ul>
     {{- end -}}
+    <li style="margin-bottom: 0.25em;">
+      <strong>{{ .id }}:</strong> {{ .message }}
+      {{- if .declaration }}<br><em>{{ .declaration }}{{ if .member }} → {{ .member }}{{ end }}</em>{{ end -}}
+    </li>
+  {{- end -}}
+  {{- if gt (len $sortedWarnings) 0 -}}
+    {{- if ne $currentCategory "" }}</ul>{{- end -}}
   {{- end -}}
 </sl-details>
 {{- end -}}
