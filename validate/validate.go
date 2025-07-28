@@ -37,6 +37,7 @@ import (
 // Includes a speculative 2.1.1 schema to work around issues in 2.1.0
 // See: https://github.com/webcomponents/custom-elements-manifest/issues/138
 // See: https://github.com/vega/ts-json-schema-generator/pull/2323
+//
 //go:embed schemas/*.json
 var embeddedSchemas embed.FS
 
@@ -70,11 +71,11 @@ func Validate(manifestPath string, options ValidationOptions) (*ValidationResult
 
 // ValidationPipeline orchestrates the validation process
 type ValidationPipeline struct {
-	manifestData      []byte
-	schemaVersion     string
-	navigator         *ManifestNavigator
-	warningProcessor  *WarningProcessor
-	errorProcessor    *ErrorProcessor
+	manifestData     []byte
+	schemaVersion    string
+	navigator        *ManifestNavigator
+	warningProcessor *WarningProcessor
+	errorProcessor   *ErrorProcessor
 }
 
 // NewValidationPipeline creates a new validation pipeline
@@ -140,6 +141,15 @@ func (p *ValidationPipeline) Validate(options ValidationOptions) (*ValidationRes
 }
 
 func (p *ValidationPipeline) checkSchemaVersion(result *ValidationResult) error {
+	// Validate schema version format
+	if !semver.IsValid("v" + p.schemaVersion) {
+		result.Warnings = append(result.Warnings, ValidationWarning{
+			ID:       "schema-version-invalid",
+			Message:  fmt.Sprintf("schemaVersion is not a valid semantic version: %s", p.schemaVersion),
+			Category: "schema",
+		})
+		return nil
+	}
 	// Only warn for versions < 2.1.0, since we handle 2.1.0 with our speculative schema
 	if isSemverLessThan(p.schemaVersion, "2.1.0") {
 		result.Warnings = append(result.Warnings, ValidationWarning{
