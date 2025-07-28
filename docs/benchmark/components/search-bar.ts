@@ -9,13 +9,13 @@ export class SearchBar extends LitElement {
       <input
         type="search"
         .value=${this.query}
-        @input=${e => this._onInput(e)}
+        @input=${e => this.#onInput(e)}
         placeholder="Search..."
       />
     `;
   }
 
-  private _onInput(e: Event) {
+  #onInput(e: Event) {
     this.query = (e.target as HTMLInputElement).value;
     this.dispatchEvent(new CustomEvent('search', { detail: this.query }));
   }

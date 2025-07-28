@@ -6,14 +6,14 @@ export class FileUploader extends LitElement {
 
   render() {
     return html`
-      <input type="file" multiple @change=${this._onChange} />
+      <input type="file" multiple @change=${this.#onChange} />
       <ul>
         ${this.files.map(f => html`<li>${f.name}</li>`)}
       </ul>
     `;
   }
 
-  private _onChange(event: Event) {
+  #onChange(event: Event) {
     const input = event.target as HTMLInputElement;
     this.files = input.files ? Array.from(input.files) : [];
     this.dispatchEvent(new CustomEvent('files-selected', { detail: this.files }));

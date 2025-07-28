@@ -13,13 +13,13 @@ export class RangeSlider extends LitElement {
         .value=${this.value}
         min=${this.min}
         max=${this.max}
-        @input=${this._onInput}
+        @input=${this.#onInput}
       />
       <span>${this.value}</span>
     `;
   }
 
-  private _onInput(e: Event) {
+  #onInput(e: Event) {
     this.value = Number((e.target as HTMLInputElement).value);
     this.dispatchEvent(new CustomEvent('range-changed', { detail: this.value }));
   }

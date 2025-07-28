@@ -20,12 +20,12 @@ export class ProgressCircle extends LitElement {
 
   render() {
     return html`
-      <div class="circle" style="border-top-color: ${this._color()}"></div>
+      <div class="circle" style="border-top-color: ${this.#color()}"></div>
       <span>${this.progress}%</span>
     `;
   }
 
-  private _color() {
+  #color() {
     return this.progress > 50 ? '#4caf50' : '#2196f3';
   }
 }

@@ -12,7 +12,7 @@ export class TabNavigation extends LitElement {
           (t, i) => html`
             <button
               ?disabled=${i === this.selected}
-              @click=${() => this._select(i)}
+              @click=${() => this.#select(i)}
             >
               ${t}
             </button>
@@ -25,7 +25,7 @@ export class TabNavigation extends LitElement {
     `;
   }
 
-  private _select(i: number) {
+  #select(i: number) {
     this.selected = i;
     this.dispatchEvent(new CustomEvent('tab-selected', { detail: i }));
   }

@@ -237,25 +237,40 @@ func (r *PrivateMethodsRule) Check(ctx *WarningContext) []ValidationWarning {
 	}
 
 	for _, member := range members {
-		if member.GetKind() != "method" {
+		memberName := member.GetName()
+		memberKind := member.GetKind()
+		
+		// Check both methods and fields
+		if memberKind != "method" && memberKind != "field" {
 			continue
 		}
 
-		memberName := member.GetName()
 		if strings.HasPrefix(memberName, "_") || strings.HasPrefix(memberName, "#") {
-			id := "private-underscore-methods"
-			if strings.HasPrefix(memberName, "#") {
-				id = "private-hash-methods"
-			}
+			privacy := member.GetPrivacy()
+			
+			// Only warn if member starts with _ or # but is NOT marked as private or protected
+			if privacy != "private" && privacy != "protected" {
+				id := "private-underscore-methods"
+				if strings.HasPrefix(memberName, "#") {
+					id = "private-hash-methods"
+				}
+				if memberKind == "field" {
+					if strings.HasPrefix(memberName, "_") {
+						id = "private-underscore-fields"
+					} else {
+						id = "private-hash-fields"
+					}
+				}
 
-			warnings = append(warnings, ValidationWarning{
-				ID:          id,
-				Module:      ctx.ModulePath,
-				Declaration: fmt.Sprintf("%s %s", ctx.DeclKind, ctx.DeclName),
-				Member:      fmt.Sprintf("method %s", memberName),
-				Message:     "private method should not be documented in public API",
-				Category:    r.Category(),
-			})
+				warnings = append(warnings, ValidationWarning{
+					ID:          id,
+					Module:      ctx.ModulePath,
+					Declaration: fmt.Sprintf("%s %s", ctx.DeclKind, ctx.DeclName),
+					Member:      fmt.Sprintf("%s %s", memberKind, memberName),
+					Message:     fmt.Sprintf("private %s should not be documented in public API", memberKind),
+					Category:    r.Category(),
+				})
+			}
 		}
 	}
 

@@ -143,6 +143,13 @@ func (m RawMember) IsStatic() bool {
 	return false
 }
 
+func (m RawMember) GetPrivacy() string {
+	if privacy, ok := m["privacy"].(string); ok {
+		return privacy
+	}
+	return ""
+}
+
 func (p RawProperty) GetName() string {
 	if name, ok := p["name"].(string); ok {
 		return name

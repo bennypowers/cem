@@ -18,15 +18,15 @@ export class InlineEdit extends LitElement {
     return this.value || '(empty)';
   }
 
-  _startEdit() { this.editing = true; }
-  _onInput(e: Event) {
+  #startEdit() { this.editing = true; }
+  #onInput(e: Event) {
     this.value = (e.target as HTMLInputElement).value;
   }
-  _onBlur() { this.editing = false; }
+  #onBlur() { this.editing = false; }
 
   render() {
     return this.editing
-      ? html`<input class="edit" .value=${this.value} @input=${this._onInput} @blur=${this._onBlur}>`
-      : html`<span @click=${this._startEdit}>${this.displayValue}</span>`;
+      ? html`<input class="edit" .value=${this.value} @input=${this.#onInput} @blur=${this.#onBlur}>`
+      : html`<span @click=${this.#startEdit}>${this.displayValue}</span>`;
   }
 }

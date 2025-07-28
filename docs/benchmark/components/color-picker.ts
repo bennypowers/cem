@@ -6,12 +6,12 @@ export class ColorPicker extends LitElement {
 
   render() {
     return html`
-      <input type="color" .value=${this.selected} @input=${this._onInput} />
+      <input type="color" .value=${this.selected} @input=${this.#onInput} />
       <span>Selected: ${this.selected}</span>
     `;
   }
 
-  private _onInput(e: Event) {
+  #onInput(e: Event) {
     this.selected = (e.target as HTMLInputElement).value;
     this.dispatchEvent(new CustomEvent('color-changed', { detail: this.selected }));
   }
