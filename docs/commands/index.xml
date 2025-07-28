@@ -55,4 +55,28 @@ tools. Add a description by separating the name of the item with &lt;code>-&lt;/
  &lt;/tr>
  &lt;/tbody>
 &lt;/table>
-&lt;p>&lt;strong>Example:&lt;/strong>&lt;/p></description></item></channel></rss>
+&lt;p>&lt;strong>Example:&lt;/strong>&lt;/p></description></item><item><title>Validate</title><link>https://bennypowers.dev/cem/docs/commands/validate/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/commands/validate/</guid><description>&lt;p>The &lt;code>cem validate&lt;/code> command validates your &lt;code>custom-elements.json&lt;/code> file against its corresponding JSON schema and provides intelligent warnings for potentially inappropriate manifest content.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>cem validate &lt;span style="color:#f92672">[&lt;/span>path/to/custom-elements.json&lt;span style="color:#f92672">]&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>By default, &lt;code>cem validate&lt;/code> will look for a &lt;code>custom-elements.json&lt;/code> file in the current directory. You can also provide a path to a different file.&lt;/p>
+&lt;h2 id="options" class=link_owner>
+ Options
+ &lt;a href="#options" class="link icon">
+ &lt;svg>
+ &lt;use xlink:href="#anchor-link">&lt;/use>
+ &lt;/svg>
+ &lt;/a>
+&lt;/h2>
+&lt;ul>
+&lt;li>&lt;code>--verbose&lt;/code>, &lt;code>-v&lt;/code>: Show detailed information including schema version&lt;/li>
+&lt;li>&lt;code>--disable&lt;/code>: Disable specific warning rules or categories (can be used multiple times)&lt;/li>
+&lt;li>&lt;code>--format&lt;/code>: Output format, either &lt;code>text&lt;/code> (default) or &lt;code>json&lt;/code>&lt;/li>
+&lt;/ul>
+&lt;h2 id="how-it-works" class=link_owner>
+ How it Works
+ &lt;a href="#how-it-works" class="link icon">
+ &lt;svg>
+ &lt;use xlink:href="#anchor-link">&lt;/use>
+ &lt;/svg>
+ &lt;/a>
+&lt;/h2>
+&lt;p>The &lt;code>validate&lt;/code> command reads the &lt;code>schemaVersion&lt;/code> field from your manifest and fetches the corresponding schema from &lt;code>https://unpkg.com/custom-elements-manifest@&amp;lt;version&amp;gt;/schema.json&lt;/code>. Schemas are cached locally for performance.&lt;/p></description></item></channel></rss>
