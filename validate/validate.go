@@ -18,6 +18,7 @@ package validate
 
 import (
 	"bytes"
+	"embed"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -31,6 +32,13 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/mod/semver"
 )
+
+// Embedded schemas for all custom-elements-manifest versions
+// Includes a speculative 2.1.1 schema to work around issues in 2.1.0
+// See: https://github.com/webcomponents/custom-elements-manifest/issues/138
+// See: https://github.com/vega/ts-json-schema-generator/pull/2323
+//go:embed schemas/*.json
+var embeddedSchemas embed.FS
 
 type ValidationResult struct {
 	IsValid       bool                `json:"valid"`
@@ -132,13 +140,14 @@ func (p *ValidationPipeline) Validate(options ValidationOptions) (*ValidationRes
 }
 
 func (p *ValidationPipeline) checkSchemaVersion(result *ValidationResult) error {
+	// Only warn for versions < 2.1.0, since we handle 2.1.0 with our speculative schema
 	if semver.Compare(
 		semver.Canonical("v"+p.schemaVersion),
-		semver.Canonical("v2.1.1"),
+		semver.Canonical("v2.1.0"),
 	) < 0 {
 		result.Warnings = append(result.Warnings, ValidationWarning{
 			ID:       "schema-version-old",
-			Message:  fmt.Sprintf("validation for manifests with schemaVersion <= 2.1.0 may not produce accurate results (version: %s)", p.schemaVersion),
+			Message:  fmt.Sprintf("validation for manifests with schemaVersion < 2.1.0 may not produce accurate results (version: %s)", p.schemaVersion),
 			Category: "schema",
 		})
 	}
@@ -323,6 +332,27 @@ func isWarningDisabled(warning ValidationWarning, disabledRules []string) bool {
 }
 
 func getSchema(version string) ([]byte, error) {
+	// First try to use embedded schema
+	if schemaData, err := getEmbeddedSchema(version); err == nil {
+		return schemaData, nil
+	}
+
+	// If embedded schema loading fails, apply fallback logic
+	if version == "2.1.0" || version == "2.1.1" {
+		// Use speculative fallback for known problematic versions
+		return getEmbeddedSchema("2.1.1-speculative")
+	}
+
+	// For other versions, try fetching from CDN
+	return tryFetchSchema(version)
+}
+
+func getEmbeddedSchema(version string) ([]byte, error) {
+	schemaPath := fmt.Sprintf("schemas/%s.json", version)
+	return embeddedSchemas.ReadFile(schemaPath)
+}
+
+func tryFetchSchema(version string) ([]byte, error) {
 	cacheDir, err := xdg.CacheFile(filepath.Join("cem", "schemas"))
 	if err != nil {
 		return nil, fmt.Errorf("could not get cache directory: %w", err)
