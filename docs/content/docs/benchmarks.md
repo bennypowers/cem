@@ -65,20 +65,8 @@ bar-chart {
   }
 }
 
-zero-md {
-  &, & pre {
-    max-width: 100%;
-    overflow-x: auto;
-  }
-
-  pre, code { white-space: pre; }
-  code {
-    word-wrap: normal;
-    max-width: 60vw;
-    @media (max-width: 800px) {
-      max-width: 80vw;
-    }
-  }
+json-viewer {
+  --background-color: transparent; 
 }
 
 </style>
@@ -267,9 +255,9 @@ zero-md {
 
 {{- end -}}
 
-<sl-details summary="Last Output (JSON)">
+<sl-details summary="Last Output (JSON)" class="json-disclosure" data-json-url="{{ $result.lastOutputUrl | relURL }}" data-idx="{{ $idx }}">
 <sl-spinner style="font-size: 3rem;"></sl-spinner>
-<zero-md id="last-output-{{ $idx }}" data-src="{{ $result.lastOutputUrl | relURL }}" no-shadow><template></template></zero-md>
+<json-viewer id="json-viewer-{{ $idx }}" style="display: none;"></json-viewer>
 </sl-details>
 {{- with $result.lastError -}}
   {{- $trimmed := trim . " \n\r\t" -}}
@@ -296,9 +284,36 @@ zero-md {
 <link id="hljs-dark"  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github-dark.min.css" disabled>
 
 <script type="module">
-    import ZeroMd from "https://esm.sh/zero-md@3";
-    customElements.define('zero-md', ZeroMd);
-</script>
+// Import json-viewer and set up lazy loading
+import 'https://unpkg.com/@alenaksu/json-viewer@2.0.1/dist/json-viewer.bundle.js';
 
-<script type="module">
+// Set up lazy loading for JSON viewers when disclosure opens
+document.addEventListener('DOMContentLoaded', () => {
+  const disclosures = document.querySelectorAll('.json-disclosure');
+  
+  disclosures.forEach(disclosure => {
+    const details = disclosure;
+    const spinner = details.querySelector('sl-spinner');
+    const viewer = details.querySelector('json-viewer');
+    const jsonUrl = details.dataset.jsonUrl;
+    let loaded = false;
+    
+    details.addEventListener('sl-show', async () => {
+      if (loaded) return;
+      
+      try {
+        const response = await fetch(jsonUrl);
+        const jsonData = await response.json();
+        
+        viewer.data = jsonData;
+        viewer.style.display = 'block';
+        spinner.style.display = 'none';
+        loaded = true;
+      } catch (error) {
+        console.error('Failed to load JSON:', error);
+        spinner.innerHTML = 'Failed to load JSON data';
+      }
+    });
+  });
+});
 </script>

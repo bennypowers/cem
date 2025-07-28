@@ -8,7 +8,7 @@ if ! [[ "$runs" =~ ^[0-9]+$ ]]; then
   exit 1
 fi
 
-mkdir -p docs/assets
+mkdir -p docs/static
 cd docs
 if [[ -n "$CI" ]]; then
   pwd
@@ -124,7 +124,7 @@ for i in "${!ids[@]}"; do
     avgTime="0"
     avgSize="0"
   fi
-  lastOutput="$(echo "$last_json" | jq .)"
+  lastOutput="$last_json"
 
   # Validate the final manifest once (only if we have successful runs)
   validation_result="{}"
@@ -163,7 +163,7 @@ for i in "${!ids[@]}"; do
     --arg name "$name" \
     --arg docsUrl "$docsUrl" \
     --arg command "$cmd" \
-    --arg lastOutputUrl "$id-last-output.md" \
+    --arg lastOutputUrl "$id-last-output.json" \
     --argjson averageTime "$avgTime" \
     --argjson averageSize "$avgSize" \
     --argjson runs "[$(IFS=,; echo "${runs_detail[*]}")]" \
@@ -184,10 +184,8 @@ for i in "${!ids[@]}"; do
       validation: $validation
     }' >> "$results_tmp"
 
-  output_file="assets/$id-last-output.md"
-  echo "\`\`\`json" > "$output_file"
-  echo "$lastOutput" >> "$output_file"
-  echo "\`\`\`" >> "$output_file"
+  output_file="static/$id-last-output.json"
+  echo "$lastOutput" | jq . > "$output_file"
 
 done
 
