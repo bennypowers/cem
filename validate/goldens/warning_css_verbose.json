@@ -4,11 +4,11 @@
   "errors": [],
   "warnings": [
     {
-      "id": "verbose-css-defaults",
+      "id": "verbose-defaults",
       "module": "css-verbose.js",
       "declaration": "class VerboseCssElement",
       "property": "CSS property --large-styles",
-      "message": "default value is very long, consider using external CSS file",
+      "message": "default value is very long, consider simplifying or moving to external configuration",
       "category": "verbose"
     }
   ]
