@@ -141,10 +141,7 @@ func (p *ValidationPipeline) Validate(options ValidationOptions) (*ValidationRes
 
 func (p *ValidationPipeline) checkSchemaVersion(result *ValidationResult) error {
 	// Only warn for versions < 2.1.0, since we handle 2.1.0 with our speculative schema
-	if semver.Compare(
-		semver.Canonical("v"+p.schemaVersion),
-		semver.Canonical("v2.1.0"),
-	) < 0 {
+	if isSemverLessThan(p.schemaVersion, "2.1.0") {
 		result.Warnings = append(result.Warnings, ValidationWarning{
 			ID:       "schema-version-old",
 			Message:  fmt.Sprintf("validation for manifests with schemaVersion < 2.1.0 may not produce accurate results (version: %s)", p.schemaVersion),
@@ -152,6 +149,14 @@ func (p *ValidationPipeline) checkSchemaVersion(result *ValidationResult) error 
 		})
 	}
 	return nil
+}
+
+// isSemverLessThan compares two semantic version strings
+func isSemverLessThan(version1, version2 string) bool {
+	return semver.Compare(
+		semver.Canonical("v"+version1),
+		semver.Canonical("v"+version2),
+	) < 0
 }
 
 func (p *ValidationPipeline) validateSchema(result *ValidationResult) error {

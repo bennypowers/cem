@@ -29,8 +29,8 @@ type RawMember map[string]any
 type RawProperty map[string]any
 type RawSuperclass map[string]any
 
-// CSS property length threshold for warnings
-const CSSDefaultLengthThreshold = 200
+// Default value length threshold for warnings (applies to all default values)
+const DefaultLengthThreshold = 200
 
 // Helper methods for type-safe access to manifest data
 
@@ -108,6 +108,26 @@ func (d RawDeclaration) GetCSSProperties() ([]RawProperty, bool) {
 	return d.getPropertyArray("cssProperties")
 }
 
+func (d RawDeclaration) GetCSSParts() ([]RawProperty, bool) {
+	return d.getPropertyArray("cssParts")
+}
+
+func (d RawDeclaration) GetCSSStates() ([]RawProperty, bool) {
+	return d.getPropertyArray("cssStates")
+}
+
+func (d RawDeclaration) GetAttributes() ([]RawProperty, bool) {
+	return d.getPropertyArray("attributes")
+}
+
+func (d RawDeclaration) GetEvents() ([]RawProperty, bool) {
+	return d.getPropertyArray("events")
+}
+
+func (d RawDeclaration) GetSlots() ([]RawProperty, bool) {
+	return d.getPropertyArray("slots")
+}
+
 func (d RawDeclaration) getPropertyArray(key string) ([]RawProperty, bool) {
 	props, ok := d[key].([]any)
 	if !ok {
@@ -146,6 +166,13 @@ func (m RawMember) IsStatic() bool {
 func (m RawMember) GetPrivacy() string {
 	if privacy, ok := m["privacy"].(string); ok {
 		return privacy
+	}
+	return ""
+}
+
+func (m RawMember) GetDefault() string {
+	if defaultVal, ok := m["default"].(string); ok {
+		return defaultVal
 	}
 	return ""
 }

@@ -67,7 +67,7 @@ func NewWarningProcessor() *WarningProcessor {
 	processor.RegisterRule(&InternalMethodsRule{})
 	processor.RegisterRule(&SuperclassRule{})
 	processor.RegisterRule(&ImplementationDetailsRule{})
-	processor.RegisterRule(&CSSPropertyRule{})
+	processor.RegisterRule(&VerboseDefaultsRule{})
 
 	return processor
 }
@@ -424,32 +424,69 @@ func (r *ImplementationDetailsRule) getFieldID(memberName string) string {
 	}
 }
 
-// CSSPropertyRule checks for overly verbose CSS properties
-type CSSPropertyRule struct{}
+// VerboseDefaultsRule checks for overly verbose default values in all property types
+type VerboseDefaultsRule struct{}
 
-func (r *CSSPropertyRule) ID() string       { return "css-verbose" }
-func (r *CSSPropertyRule) Category() string { return "verbose" }
+func (r *VerboseDefaultsRule) ID() string       { return "verbose-defaults" }
+func (r *VerboseDefaultsRule) Category() string { return "verbose" }
 
-func (r *CSSPropertyRule) Check(ctx *WarningContext) []ValidationWarning {
+func (r *VerboseDefaultsRule) Check(ctx *WarningContext) []ValidationWarning {
 	var warnings []ValidationWarning
 
-	cssProps, ok := ctx.Declaration.GetCSSProperties()
-	if !ok {
-		return warnings
+	// Check member defaults first
+	if members, ok := ctx.Declaration.GetMembers(); ok {
+		for _, member := range members {
+			defaultVal := member.GetDefault()
+			if len(defaultVal) > DefaultLengthThreshold {
+				memberName := member.GetName()
+				memberKind := member.GetKind()
+
+				warnings = append(warnings, ValidationWarning{
+					ID:          "verbose-defaults",
+					Module:      ctx.ModulePath,
+					Declaration: fmt.Sprintf("class %s", ctx.DeclName),
+					Member:      fmt.Sprintf("%s %s", memberKind, memberName),
+					Message:     "default value is very long, consider simplifying or moving to external configuration",
+					Category:    r.Category(),
+				})
+			}
+		}
 	}
 
-	for _, prop := range cssProps {
-		defaultVal := prop.GetDefault()
-		if len(defaultVal) > CSSDefaultLengthThreshold {
-			propName := prop.GetName()
-			warnings = append(warnings, ValidationWarning{
-				ID:          "verbose-css-defaults",
-				Module:      ctx.ModulePath,
-				Declaration: fmt.Sprintf("class %s", ctx.DeclName),
-				Property:    fmt.Sprintf("CSS property %s", propName),
-				Message:     "default value is very long, consider using external CSS file",
-				Category:    r.Category(),
-			})
+	// Check all property types that can have default values
+	propertyTypes := []struct {
+		name   string
+		getter func() ([]RawProperty, bool)
+		label  string
+	}{
+		{"cssProperties", ctx.Declaration.GetCSSProperties, "CSS property"},
+		{"cssParts", ctx.Declaration.GetCSSParts, "CSS part"},
+		{"cssStates", ctx.Declaration.GetCSSStates, "CSS state"},
+		{"attributes", ctx.Declaration.GetAttributes, "attribute"},
+		{"events", ctx.Declaration.GetEvents, "event"},
+		{"slots", ctx.Declaration.GetSlots, "slot"},
+	}
+
+	for _, propType := range propertyTypes {
+		props, ok := propType.getter()
+		if !ok {
+			continue
+		}
+
+		for _, prop := range props {
+			defaultVal := prop.GetDefault()
+			if len(defaultVal) > DefaultLengthThreshold {
+				propName := prop.GetName()
+
+				warnings = append(warnings, ValidationWarning{
+					ID:          "verbose-defaults",
+					Module:      ctx.ModulePath,
+					Declaration: fmt.Sprintf("class %s", ctx.DeclName),
+					Property:    fmt.Sprintf("%s %s", propType.label, propName),
+					Message:     "default value is very long, consider simplifying or moving to external configuration",
+					Category:    r.Category(),
+				})
+			}
 		}
 	}
 
