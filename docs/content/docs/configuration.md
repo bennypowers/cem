@@ -50,6 +50,17 @@ generate:
     # Uses `{groupName}` syntax to interpolate captures from `urlPattern`.
     urlTemplate: "https://example.com/elements/{tag}/{demo}/"
 
+# Configuration for validation warnings.
+warnings:
+  disable:
+    # Disable entire categories
+    - "lifecycle"
+    - "private"
+    # Or disable specific warning rules
+    - "lifecycle-lit-render"
+    - "implementation-static-styles"
+```
+
 ## Global Flags
 
 These flags can be used with any `cem` command.
@@ -69,5 +80,20 @@ For example, to override the `output` and `exclude` options for the `generate` c
 
 ```sh
 cem generate --output my-manifest.json --exclude "src/legacy/**"
+```
+
+### Validate Command Flags
+
+The `validate` command supports additional flags:
+
+| Flag                      | Description                                                    |
+| ------------------------- | -------------------------------------------------------------- |
+| `--disable`               | Disable specific warning rules or categories (repeatable).     |
+| `--format`                | Output format: `text` (default) or `json`.                    |
+
+For example, to validate with disabled warnings and JSON output:
+
+```sh
+cem validate --disable lifecycle --disable private --format json
 ```
 
