@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "2.1.1",
+  "schemaVersion": "2.1.0",
   "invalidRootProperty": "This should not be here",
   "modules": [
     {

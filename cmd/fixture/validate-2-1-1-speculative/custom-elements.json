@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "2.1.0",
+  "schemaVersion": "2.1.1",
   "modules": [
     {
       "kind": "javascript-module",
@@ -62,23 +62,6 @@
               "name": "my-slot"
             }
           ]
-        },
-        {
-          "kind": "mixin",
-          "name": "MyMixin"
-        },
-        {
-          "kind": "mixin",
-          "name": "MyCustomElementMixin",
-          "customElement": true
-        },
-        {
-          "kind": "variable",
-          "name": "myVar"
-        },
-        {
-          "kind": "function",
-          "name": "myFunction"
         }
       ],
       "exports": [
