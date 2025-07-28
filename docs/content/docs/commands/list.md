@@ -1,6 +1,6 @@
 ---
-title: "List"
-layout: "docs"
+title: List
+layout: docs
 ---
 
 The `cem list` command provides a fast, flexible way to inspect your custom elements manifest.

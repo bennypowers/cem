@@ -1,6 +1,6 @@
 ---
-title: "cem validate"
-description: "Validate your custom-elements.json against the official schema"
+title: Validate
+description: Validate your custom-elements.json against the official schema
 ---
 
 The `cem validate` command validates your `custom-elements.json` file against its corresponding JSON schema and provides intelligent warnings for potentially inappropriate manifest content.
