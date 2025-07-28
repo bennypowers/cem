@@ -65,6 +65,10 @@ bar-chart {
   }
 }
 
+json-viewer {
+  --background-color: transparent; 
+}
+
 </style>
 
 <div class="tool-cards">
@@ -105,6 +109,29 @@ bar-chart {
     </sl-badge>
     <div class="analyzer-tool-label">Runs</div>
   </div>
+  {{- if $result.validation -}}
+  <div>
+    {{- $errorCount := len $result.validation.errors -}}
+    {{- $warningCount := len $result.validation.warnings -}}
+    {{- $variant := "success" -}}
+    {{- $icon := "check-circle" -}}
+    {{- $text := "Valid" -}}
+    {{- if gt $errorCount 0 -}}
+      {{- $variant = "danger" -}}
+      {{- $icon = "x-circle" -}}
+      {{- $text = "Invalid" -}}
+    {{- else if gt $warningCount 0 -}}
+      {{- $variant = "warning" -}}
+      {{- $icon = "exclamation-triangle" -}}
+      {{- $text = "Warnings" -}}
+    {{- end -}}
+    <sl-badge variant="{{ $variant }}" pill>
+      <sl-icon slot="prefix" name="{{ $icon }}"></sl-icon>
+      {{ $text }}
+    </sl-badge>
+    <div class="analyzer-tool-label">Validation</div>
+  </div>
+  {{- end -}}
 </div>
 
 
@@ -165,9 +192,72 @@ bar-chart {
     </svg>
   </line-chart>
 </figure>
-<sl-details summary="Last Output (JSON)">
+
+{{- if $result.validation -}}
+
+<h4>Validation Results</h4>
+
+{{- if gt (len $result.validation.errors) 0 -}}
+<sl-alert variant="danger" open>
+  <sl-icon slot="icon" name="exclamation-triangle"></sl-icon>
+  <strong>{{ len $result.validation.errors }} Error{{ if ne (len $result.validation.errors) 1 }}s{{ end }}</strong>
+  <ul style="margin-top: 0.5em; padding-left: 1.5em;">
+  {{- range $result.validation.errors }}
+    <li><strong>{{ .id }}:</strong> {{ .message }}{{ if .location }} <em>({{ .location }})</em>{{ end }}</li>
+  {{- end }}
+  </ul>
+</sl-alert>
+{{- end -}}
+
+{{- if gt (len $result.validation.warnings) 0 -}}
+<sl-details summary="⚠️ {{ len $result.validation.warnings }} Warning{{ if ne (len $result.validation.warnings) 1 }}s{{ end }} Found">
+  {{- $sortedWarnings := sort $result.validation.warnings "module" "category" "id" -}}
+  {{- $currentModule := "" -}}
+  {{- $currentCategory := "" -}}
+  {{- range $sortedWarnings -}}
+    {{- $module := .module | default "Global" -}}
+    {{- $category := .category | default "other" -}}
+    {{- if ne $module $currentModule -}}
+      {{- if ne $currentModule "" -}}
+        {{- if ne $currentCategory "" }}</ul>{{- end -}}
+      {{- end -}}
+      {{- $currentModule = $module -}}
+      <h5 style="margin-top: 1em; margin-bottom: 0.5em; color: var(--sl-color-orange-600);">
+        📄 {{ $module }}
+      </h5>
+      {{- $currentCategory = "" -}}
+    {{- end -}}
+    {{- if ne $category $currentCategory -}}
+      {{- if ne $currentCategory "" }}</ul>{{- end -}}
+      {{- $currentCategory = $category -}}
+      <h6 style="margin: 0.5em 0 0.25em 1em; font-size: 0.9em; color: var(--sl-color-orange-500); text-transform: capitalize;">
+        {{ $category }}
+      </h6>
+      <ul style="margin: 0 0 0.5em 2em; padding: 0;">
+    {{- end -}}
+    <li style="margin-bottom: 0.25em;">
+      <strong>{{ .id }}:</strong> {{ .message }}
+      {{- if .declaration }}<br><em>{{ .declaration }}{{ if .member }} → {{ .member }}{{ end }}</em>{{ end -}}
+    </li>
+  {{- end -}}
+  {{- if gt (len $sortedWarnings) 0 -}}
+    {{- if ne $currentCategory "" }}</ul>{{- end -}}
+  {{- end -}}
+</sl-details>
+{{- end -}}
+
+{{- if and (eq (len $result.validation.errors) 0) (eq (len $result.validation.warnings) 0) -}}
+<sl-alert variant="success" open>
+  <sl-icon slot="icon" name="check-circle"></sl-icon>
+  <strong>No validation issues found</strong> - The generated manifest is valid and follows all best practices.
+</sl-alert>
+{{- end -}}
+
+{{- end -}}
+
+<sl-details summary="Last Output (JSON)" class="json-disclosure" data-json-url="{{ $result.lastOutputUrl | relURL }}" data-idx="{{ $idx }}">
 <sl-spinner style="font-size: 3rem;"></sl-spinner>
-<zero-md id="last-output-{{ $idx }}" data-src="{{ $result.lastOutputUrl | relURL }}" no-shadow><template></template></zero-md>
+<json-viewer id="json-viewer-{{ $idx }}" style="display: none;"></json-viewer>
 </sl-details>
 {{- with $result.lastError -}}
   {{- $trimmed := trim . " \n\r\t" -}}
@@ -194,9 +284,36 @@ bar-chart {
 <link id="hljs-dark"  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github-dark.min.css" disabled>
 
 <script type="module">
-    import ZeroMd from "https://esm.sh/zero-md@3";
-    customElements.define('zero-md', ZeroMd);
-</script>
+// Import json-viewer and set up lazy loading
+import 'https://unpkg.com/@alenaksu/json-viewer@2.0.1/dist/json-viewer.bundle.js';
 
-<script type="module">
+// Set up lazy loading for JSON viewers when disclosure opens
+document.addEventListener('DOMContentLoaded', () => {
+  const disclosures = document.querySelectorAll('.json-disclosure');
+  
+  disclosures.forEach(disclosure => {
+    const details = disclosure;
+    const spinner = details.querySelector('sl-spinner');
+    const viewer = details.querySelector('json-viewer');
+    const jsonUrl = details.dataset.jsonUrl;
+    let loaded = false;
+    
+    details.addEventListener('sl-show', async () => {
+      if (loaded) return;
+      
+      try {
+        const response = await fetch(jsonUrl);
+        const jsonData = await response.json();
+        
+        viewer.data = jsonData;
+        viewer.style.display = 'block';
+        spinner.style.display = 'none';
+        loaded = true;
+      } catch (error) {
+        console.error('Failed to load JSON:', error);
+        spinner.innerHTML = 'Failed to load JSON data';
+      }
+    });
+  });
+});
 </script>

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "2.1.1",
   "modules": [
     {
       "kind": "javascript-module",
@@ -29,7 +29,10 @@
               }
             },
             {
-              "name": "reset"
+              "name": "reset",
+              "type": {
+                "text": "Event"
+              }
             }
           ],
           "slots": [

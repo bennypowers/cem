@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "lifecycle-warnings.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "LitLifecycleElement",
+          "customElement": true,
+          "tagName": "lit-lifecycle-element",
+          "summary": "A Lit element with problematic lifecycle methods",
+          "superclass": {
+            "name": "LitElement",
+            "module": "lit"
+          },
+          "members": [
+            {
+              "kind": "method",
+              "name": "connectedCallback",
+              "summary": "Called when element is connected to DOM"
+            },
+            {
+              "kind": "method", 
+              "name": "firstUpdated",
+              "summary": "Called after first render"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "summary": "Renders the element - should warn in Lit element"
+            },
+            {
+              "kind": "method",
+              "name": "_privateHelper",
+              "summary": "Private helper method"
+            },
+            {
+              "kind": "method",
+              "name": "doSomething",
+              "summary": "Public API method - this is fine"
+            }
+          ]
+        },
+        {
+          "kind": "class",
+          "name": "VanillaElement",
+          "customElement": true,
+          "tagName": "vanilla-element",
+          "summary": "A vanilla HTMLElement with legitimate render method",
+          "superclass": {
+            "name": "HTMLElement"
+          },
+          "members": [
+            {
+              "kind": "method",
+              "name": "render",
+              "summary": "Public render method - legitimate for vanilla element"
+            },
+            {
+              "kind": "method",
+              "name": "connectedCallback",
+              "summary": "Still a lifecycle method"
+            },
+            {
+              "kind": "method",
+              "name": "update",
+              "summary": "Public update method"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

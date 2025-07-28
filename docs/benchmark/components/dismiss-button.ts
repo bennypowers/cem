@@ -17,10 +17,10 @@ export class DismissButton extends LitElement {
   `;
 
   render() {
-    return html`<button aria-label="Dismiss" @click=${this._dismiss}>&times;</button>`;
+    return html`<button aria-label="Dismiss" @click=${this.#dismiss}>&times;</button>`;
   }
 
-  private _dismiss() {
+  #dismiss() {
     this.dispatchEvent(new CustomEvent('dismiss'));
   }
 }

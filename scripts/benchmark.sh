@@ -8,7 +8,7 @@ if ! [[ "$runs" =~ ^[0-9]+$ ]]; then
   exit 1
 fi
 
-mkdir -p docs/assets
+mkdir -p docs/static
 cd docs
 if [[ -n "$CI" ]]; then
   pwd
@@ -100,6 +100,7 @@ for i in "${!ids[@]}"; do
         file_size=$(stat -f%z "$resultFile")
       fi
       size=$(awk "BEGIN {printf \"%.1f\", $file_size / 1024 }")
+      
       sumTime=$(awk "BEGIN {print $sumTime + $timeSec}")
       sumSize=$(awk "BEGIN {print $sumSize + $size}")
       successful_runs=$((successful_runs+1))
@@ -123,7 +124,32 @@ for i in "${!ids[@]}"; do
     avgTime="0"
     avgSize="0"
   fi
-  lastOutput="$(echo "$last_json" | jq .)"
+  lastOutput="$last_json"
+
+  # Validate the final manifest once (only if we have successful runs)
+  validation_result="{}"
+  if [[ $successful_runs -gt 0 && -f "$resultFile" ]]; then
+    validation_tmp=$(mktemp)
+    # Run validation and capture output regardless of exit code
+    validation_stderr=$(mktemp)
+    (cd .. && go run . validate --format json "docs/$resultFile") >"$validation_tmp" 2>"$validation_stderr" || true
+    
+    # Try to extract valid JSON from output
+    if [[ -s "$validation_tmp" ]] && jq . "$validation_tmp" >/dev/null 2>&1; then
+      validation_result=$(cat "$validation_tmp")
+    elif [[ -s "$validation_stderr" ]]; then
+      # Log what we got for debugging
+      echo "Validation output:" >&2
+      cat "$validation_tmp" >&2
+      echo "Validation stderr:" >&2  
+      cat "$validation_stderr" >&2
+      validation_result='{"valid":false,"errors":[],"warnings":[],"message":"Validation failed"}'
+    else
+      validation_result='{"valid":false,"errors":[],"warnings":[],"message":"Validation failed"}'
+    fi
+    rm -f "$validation_stderr"
+    rm -f "$validation_tmp"
+  fi
 
   # Write each tool's result as a single line in the temp file
   # Sanitize last_stderr as empty string if only whitespace or empty
@@ -137,12 +163,13 @@ for i in "${!ids[@]}"; do
     --arg name "$name" \
     --arg docsUrl "$docsUrl" \
     --arg command "$cmd" \
-    --arg lastOutputUrl "$id-last-output.md" \
+    --arg lastOutputUrl "$id-last-output.json" \
     --argjson averageTime "$avgTime" \
     --argjson averageSize "$avgSize" \
     --argjson runs "[$(IFS=,; echo "${runs_detail[*]}")]" \
     --argjson lastOutput "$lastOutput" \
     --arg lastError "$clean_last_stderr" \
+    --argjson validation "$validation_result" \
     '{
       id: $id,
       name: $name,
@@ -153,13 +180,12 @@ for i in "${!ids[@]}"; do
       runs: $runs,
       lastOutput: $lastOutput,
       lastOutputUrl: $lastOutputUrl,
-      lastError: $lastError
+      lastError: $lastError,
+      validation: $validation
     }' >> "$results_tmp"
 
-  output_file="assets/$id-last-output.md"
-  echo "\`\`\`json" > "$output_file"
-  echo "$lastOutput" >> "$output_file"
-  echo "\`\`\`" >> "$output_file"
+  output_file="static/$id-last-output.json"
+  echo "$lastOutput" | jq . > "$output_file"
 
 done
 

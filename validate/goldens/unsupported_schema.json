@@ -1,0 +1,12 @@
+{
+  "valid": true,
+  "schemaVersion": "1.0.0",
+  "errors": [],
+  "warnings": [
+    {
+      "id": "schema-version-old",
+      "message": "validation for manifests with schemaVersion < 2.1.0 may not produce accurate results (version: 1.0.0)",
+      "category": "schema"
+    }
+  ]
+}

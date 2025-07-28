@@ -7,13 +7,13 @@ export class ToggleSwitch extends LitElement {
   render() {
     return html`
       <label>
-        <input type="checkbox" .checked=${this.checked} @change=${this._onToggle} />
+        <input type="checkbox" .checked=${this.checked} @change=${this.#onToggle} />
         <span><slot></slot></span>
       </label>
     `;
   }
 
-  private _onToggle(e: Event) {
+  #onToggle(e: Event) {
     this.checked = (e.target as HTMLInputElement).checked;
     this.dispatchEvent(new CustomEvent('toggle-changed', { detail: this.checked }));
   }

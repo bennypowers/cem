@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "superclass-warnings.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MissingGlobalModule",
+          "customElement": true,
+          "tagName": "missing-global-module",
+          "summary": "HTMLElement without proper module field",
+          "superclass": {
+            "name": "HTMLElement"
+          },
+          "members": [
+            {
+              "kind": "method",
+              "name": "doSomething",
+              "summary": "Public method"
+            }
+          ]
+        },
+        {
+          "kind": "class", 
+          "name": "WrongModule",
+          "customElement": true,
+          "tagName": "wrong-module",
+          "summary": "Event with incorrect module field",
+          "superclass": {
+            "name": "Event",
+            "module": "dom"
+          },
+          "members": [
+            {
+              "kind": "method",
+              "name": "dispatch",
+              "summary": "Dispatch method"
+            }
+          ]
+        },
+        {
+          "kind": "class",
+          "name": "CorrectGlobalModule", 
+          "customElement": true,
+          "tagName": "correct-global-module",
+          "summary": "HTMLElement with correct module field",
+          "superclass": {
+            "name": "HTMLElement",
+            "module": "global:"
+          },
+          "members": [
+            {
+              "kind": "method",
+              "name": "doSomething",
+              "summary": "This should not warn"
+            }
+          ]
+        },
+        {
+          "kind": "class",
+          "name": "CustomSuperclass",
+          "customElement": true, 
+          "tagName": "custom-superclass",
+          "summary": "Custom superclass should not warn",
+          "superclass": {
+            "name": "MyCustomBase",
+            "module": "./my-base.js"
+          },
+          "members": [
+            {
+              "kind": "method",
+              "name": "doSomething",
+              "summary": "This should not warn either"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

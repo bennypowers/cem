@@ -1,0 +1,15 @@
+{
+  "valid": false,
+  "schemaVersion": "2.1.1",
+  "errors": [
+    {
+      "id": "schema-validation-error",
+      "module": "invalid-attribute.js",
+      "declaration": "class InvalidAttribute",
+      "property": "attribute[0]",
+      "message": "missing properties: 'name'",
+      "location": "/modules/0/declarations/0/attributes/0"
+    }
+  ],
+  "warnings": []
+}

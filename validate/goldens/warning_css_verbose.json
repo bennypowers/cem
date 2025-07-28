@@ -1,0 +1,15 @@
+{
+  "valid": true,
+  "schemaVersion": "2.1.1",
+  "errors": [],
+  "warnings": [
+    {
+      "id": "verbose-defaults",
+      "module": "css-verbose.js",
+      "declaration": "class VerboseCssElement",
+      "property": "CSS property --large-styles",
+      "message": "default value is very long, consider simplifying or moving to external configuration",
+      "category": "verbose"
+    }
+  ]
+}

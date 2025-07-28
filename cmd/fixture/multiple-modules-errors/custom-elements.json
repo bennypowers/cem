@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/components.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "Button",
+          "members": [
+            {
+              "kind": "field"
+            },
+            {
+              "kind": "method"
+            }
+          ]
+        },
+        {
+          "kind": "class",
+          "customElement": true,
+          "tagName": "input-field",
+          "attributes": [
+            {}
+          ],
+          "slots": [
+            {}
+          ]
+        }
+      ]
+    }
+  ]
+}

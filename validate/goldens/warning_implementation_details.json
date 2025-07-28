@@ -1,0 +1,71 @@
+{
+  "valid": true,
+  "schemaVersion": "2.1.1",
+  "errors": [],
+  "warnings": [
+    {
+      "id": "lifecycle-lit-render",
+      "module": "implementation-details.js",
+      "declaration": "class LitElementWithDetails",
+      "member": "method render",
+      "message": "render method in Lit element should not be documented in public API",
+      "category": "lifecycle"
+    },
+    {
+      "id": "implementation-shadow-root-options",
+      "module": "implementation-details.js",
+      "declaration": "class LitElementWithDetails",
+      "member": "static field shadowRootOptions",
+      "message": "shadowRootOptions is implementation detail, should not be documented in public API",
+      "category": "implementation"
+    },
+    {
+      "id": "implementation-static-styles",
+      "module": "implementation-details.js",
+      "declaration": "class LitElementWithDetails",
+      "member": "static field styles",
+      "message": "static styles field is implementation detail, should not be documented in public API",
+      "category": "implementation"
+    },
+    {
+      "id": "lifecycle-form-callbacks",
+      "module": "implementation-details.js",
+      "declaration": "class FormAssociatedElement",
+      "member": "method formAssociatedCallback",
+      "message": "form lifecycle callback should not be documented in public API",
+      "category": "lifecycle"
+    },
+    {
+      "id": "lifecycle-form-callbacks",
+      "module": "implementation-details.js",
+      "declaration": "class FormAssociatedElement",
+      "member": "method formResetCallback",
+      "message": "form lifecycle callback should not be documented in public API",
+      "category": "lifecycle"
+    },
+    {
+      "id": "lifecycle-form-callbacks",
+      "module": "implementation-details.js",
+      "declaration": "class FormAssociatedElement",
+      "member": "method formDisabledCallback",
+      "message": "form lifecycle callback should not be documented in public API",
+      "category": "lifecycle"
+    },
+    {
+      "id": "lifecycle-form-callbacks",
+      "module": "implementation-details.js",
+      "declaration": "class FormAssociatedElement",
+      "member": "method formStateRestoreCallback",
+      "message": "form lifecycle callback should not be documented in public API",
+      "category": "lifecycle"
+    },
+    {
+      "id": "implementation-form-associated",
+      "module": "implementation-details.js",
+      "declaration": "class FormAssociatedElement",
+      "member": "static field formAssociated",
+      "message": "formAssociated is implementation detail, should not be documented in public API",
+      "category": "implementation"
+    }
+  ]
+}

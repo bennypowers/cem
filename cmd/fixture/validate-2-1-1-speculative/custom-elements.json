@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "my-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyElement",
+          "tagName": "my-element",
+          "customElement": true,
+          "members": [
+            {
+              "kind": "field",
+              "name": "myField"
+            },
+            {
+              "kind": "field",
+              "name": "myAttr",
+              "attribute": "my-attr",
+              "reflects": true
+            },
+            {
+              "kind": "method",
+              "name": "myMethod"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "my-css-part"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--my-css-prop"
+            }
+          ],
+          "demos": [
+            {
+              "url": "https://example.com/demo/",
+              "source": {
+                "href": "https://example.com/demo/src.html"
+              }
+            }
+          ],
+          "events": [
+            {
+              "type": {
+                "text": "Event"
+              },
+              "name": "my-event"
+            }
+          ],
+          "attributes": [
+            {
+              "name": "my-attr"
+            }
+          ],
+          "slots": [
+            {
+              "name": "my-slot"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "MyElement",
+          "declaration": {
+            "name": "MyElement",
+            "module": "my-element.js"
+          }
+        }
+      ]
+    }
+  ]
+}

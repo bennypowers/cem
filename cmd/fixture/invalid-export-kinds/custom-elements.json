@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "exports.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "ExportedClass",
+          "customElement": true,
+          "tagName": "exported-element"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "invalid-export-kind",
+          "name": "ExportedClass",
+          "declaration": {
+            "name": "ExportedClass",
+            "module": "exports.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "exported-element"
+        },
+        {
+          "kind": "js",
+          "name": "MissingDeclaration"
+        }
+      ]
+    }
+  ]
+}

@@ -1,4 +1,5 @@
-import { LitElement, html, css, property, customElement } from 'lit-element';
+import { LitElement, html, css } from 'lit';
+import { property, customElement } from 'lit/decorators.js';
 
 /**
  * Shows an avatar image with fallback.
@@ -13,10 +14,10 @@ export class AvatarImage extends LitElement {
   `;
 
   render() {
-    return html`<img src="${this.src}" alt="${this.alt}" @error="${this._onError}" />`;
+    return html`<img src="${this.src}" alt="${this.alt}" @error="${this.#onError}" />`;
   }
 
-  _onError(e: Event) {
+  #onError(e: Event) {
     (e.target as HTMLImageElement).src = 'default-avatar.png';
   }
 }

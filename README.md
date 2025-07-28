@@ -34,6 +34,14 @@ With `cem list`, you can quickly explore and audit your custom elements API surf
 
 See more in the [List docs][listdocs]
 
+---
+
+### `cem validate`
+
+The `cem validate` command validates your `custom-elements.json` file against the official JSON schema and provides intelligent warnings for potentially inappropriate manifest content. Beyond basic schema validation, it analyzes your manifest for lifecycle methods, private implementations, and other patterns that shouldn't be part of your public API documentation.
+
+See more in the [Validate docs][validatedocs]
+
 See the [Configuration Reference][configdocs] for more information.
 
 ---
@@ -57,7 +65,8 @@ the terms of the [GNU General Public License v3.0][gpl3].
 [gpl3]: https://www.gnu.org/licenses/gpl-3.0.html
 [contributingmd]: https://bennypowers.github.io/cem/docs/contributing/
 [issuenew]: https://github.com/bennypowers/cem/issues/new
-[installationdocs]: https://bennypowers.github.io/cem/docs/installation/
-[generatedocs]: https://bennypowers.github.io/cem/docs/commands/generate/
-[listdocs]: https://bennypowers.github.io/cem/docs/commands/list/
-[configdocs]: https://bennypowers.github.io/cem/docs/configuration/
+[installationdocs]: https://bennypowers.github.io/cem/installation/
+[generatedocs]: https://bennypowers.github.io/cem/commands/generate/
+[listdocs]: https://bennypowers.github.io/cem/commands/list/
+[validatedocs]: https://bennypowers.github.io/cem/commands/validate/
+[configdocs]: https://bennypowers.github.io/cem/configuration/

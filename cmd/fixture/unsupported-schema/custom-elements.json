@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "unsupported-schema.js",
+      "declarations": [
+        {
+          "kind": "variable",
+          "name": "myVar"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "invalid-slot.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "InvalidSlot",
+          "tagName": "invalid-slot",
+          "customElement": true,
+          "slots": [
+            {
+              "summary": "no name"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -6,13 +6,13 @@ export class DarkModeToggle extends LitElement {
 
   render() {
     return html`
-      <button @click=${this._toggle}>
+      <button @click=${this.#toggle}>
         ${this.dark ? '🌙' : '☀️'} Toggle Dark Mode
       </button>
     `;
   }
 
-  private _toggle() {
+  #toggle() {
     this.dark = !this.dark;
     this.dispatchEvent(new CustomEvent('dark-mode', { detail: this.dark }));
   }

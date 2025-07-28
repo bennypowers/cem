@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "css-verbose.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "VerboseCssElement",
+          "customElement": true,
+          "tagName": "verbose-css-element",
+          "cssProperties": [
+            {
+              "name": "--small-prop",
+              "default": "#fff",
+              "summary": "A simple color property"
+            },
+            {
+              "name": "--large-styles",
+              "default": "/* This is a very long CSS default value that includes entire style blocks which should probably be in an external CSS file instead of being inlined in the manifest as it makes the manifest unnecessarily verbose and hard to read */ :host { display: block; padding: 1rem; margin: 0; border: 1px solid var(--border-color, #ccc); background: linear-gradient(45deg, #f0f0f0, #ffffff); box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 4px; }",
+              "summary": "Complex styles that should be external"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

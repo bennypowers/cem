@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "2.1.1",
+  "invalidRootProperty": "This should not be here",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "root-errors.js", 
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "RootErrors"
+        }
+      ]
+    }
+  ]
+}
