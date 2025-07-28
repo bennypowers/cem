@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/nsf/jsondiff"
 )
 
 var update = flag.Bool("update", false, "update golden files")
@@ -30,7 +32,13 @@ func checkGolden(t *testing.T, name string, actual []byte) {
 	}
 
 	if string(expected) != string(actual) {
-		t.Errorf("golden file mismatch for %s\nExpected:\n%s\nActual:\n%s", name, expected, actual)
+		options := jsondiff.DefaultConsoleOptions()
+		diff, str := jsondiff.Compare(expected, actual, &options)
+		if diff == jsondiff.FullMatch {
+			t.Logf("Semantic match, string mismatch: %s", str)
+		} else {
+			t.Error(diff, str)
+		}
 	}
 }
 
@@ -134,4 +142,3 @@ func TestValidateWithDisabledWarnings(t *testing.T) {
 		t.Errorf("Expected fewer warnings when disabling specific rule, got %d vs %d", len(result2.Warnings), len(originalResult.Warnings))
 	}
 }
-

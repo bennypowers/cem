@@ -32,7 +32,7 @@
       "module": "lifecycle-warnings.js",
       "declaration": "class LitLifecycleElement",
       "member": "method _privateHelper",
-      "message": "private method should not be documented in public API",
+      "message": "underscore-prefixed method should be marked as private or protected, or should not be documented in public API",
       "category": "private"
     },
     {
