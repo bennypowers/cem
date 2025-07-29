@@ -61,6 +61,15 @@ func (c *CssParseCache) Set(path string, props CssPropsMap) {
 	c.cache[path] = props
 }
 
+// Invalidate removes cached entries for the given paths
+func (c *CssParseCache) Invalidate(paths []string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for _, path := range paths {
+		delete(c.cache, path)
+	}
+}
+
 var cssParseCache = NewCssParseCache()
 
 func sortCustomProperty(a M.CssCustomProperty, b M.CssCustomProperty) int {

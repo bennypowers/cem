@@ -16,3 +16,5 @@ export class ClassFields {
   /** must be classified as a method */
   fieldMethod = () => {}
 }
+// test change
+// another change

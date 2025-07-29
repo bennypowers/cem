@@ -76,6 +76,16 @@ var generateCmd = &cobra.Command{
 		cfg.Generate.Files = files
 		cfg.Generate.Exclude = exclude
 
+		// Check if watch mode is enabled
+		watch, err := cmd.Flags().GetBool("watch")
+		if err != nil {
+			return err
+		}
+
+		if watch {
+			return runWatchMode(ctx, uniqueGlobs)
+		}
+
 		// compute path to write custom elements manifest to
 		// consider moving this to the context struct
 		// if this is empty, we'll print to stdout instead
@@ -157,6 +167,7 @@ func init() {
 	generateCmd.Flags().String("demo-discovery-file-glob", "", "Glob pattern for discovering demo files")
 	generateCmd.Flags().String("demo-discovery-url-pattern", "", "Go Regexp pattern with named capture groups for generating canonical demo urls")
 	generateCmd.Flags().String("demo-discovery-url-template", "", "URL pattern string using {groupName} syntax to interpolate named captures from the URL pattern")
+	generateCmd.Flags().BoolP("watch", "w", false, "watch files for changes and regenerate")
 	viper.BindPFlag("generate.noDefaultExcludes", generateCmd.Flags().Lookup("no-default-excludes"))
 	viper.BindPFlag("generate.output", generateCmd.Flags().Lookup("output"))
 	viper.BindPFlag("generate.exclude", generateCmd.Flags().Lookup("exclude"))
@@ -165,4 +176,15 @@ func init() {
 	viper.BindPFlag("generate.demoDiscovery.fileGlob", generateCmd.Flags().Lookup("demo-discovery-file-glob"))
 	viper.BindPFlag("generate.demoDiscovery.urlPattern", generateCmd.Flags().Lookup("demo-discovery-url-pattern"))
 	viper.BindPFlag("generate.demoDiscovery.urlTemplate", generateCmd.Flags().Lookup("demo-discovery-url-template"))
+}
+
+// runWatchMode starts the file watching mode - delegates to generate package
+func runWatchMode(ctx W.WorkspaceContext, globs []string) error {
+	session, err := G.NewWatchSession(ctx, globs)
+	if err != nil {
+		return err
+	}
+	defer session.Close()
+
+	return session.RunWatch()
 }

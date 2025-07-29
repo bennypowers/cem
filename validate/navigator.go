@@ -32,11 +32,11 @@ func NewManifestNavigator(manifest map[string]any) *ManifestNavigator {
 	nav := &ManifestNavigator{
 		manifest: RawManifest(manifest),
 	}
-	
+
 	if modules, ok := nav.manifest.GetModules(); ok {
 		nav.modules = modules
 	}
-	
+
 	return nav
 }
 
@@ -54,12 +54,12 @@ func (n *ManifestNavigator) GetDeclaration(moduleIndex, declIndex int) (RawDecla
 	if !ok {
 		return nil, false
 	}
-	
+
 	declarations, ok := module.GetDeclarations()
 	if !ok || declIndex < 0 || declIndex >= len(declarations) {
 		return nil, false
 	}
-	
+
 	return declarations[declIndex], true
 }
 
@@ -69,12 +69,12 @@ func (n *ManifestNavigator) GetMember(moduleIndex, declIndex, memberIndex int) (
 	if !ok {
 		return nil, false
 	}
-	
+
 	members, ok := decl.GetMembers()
 	if !ok || memberIndex < 0 || memberIndex >= len(members) {
 		return nil, false
 	}
-	
+
 	return members[memberIndex], true
 }
 
@@ -84,12 +84,12 @@ func (n *ManifestNavigator) GetProperty(moduleIndex, declIndex, propIndex int, p
 	if !ok {
 		return nil, false
 	}
-	
+
 	properties, ok := decl.getPropertyArray(propType)
 	if !ok || propIndex < 0 || propIndex >= len(properties) {
 		return nil, false
 	}
-	
+
 	return properties[propIndex], true
 }
 
@@ -100,72 +100,72 @@ func (n *ManifestNavigator) BuildContextualNames(ctx Context) (module, declarati
 			module = mod.GetPath()
 		}
 	}
-	
+
 	if ctx.DeclIndex >= 0 {
 		if decl, ok := n.GetDeclaration(ctx.ModuleIndex, ctx.DeclIndex); ok {
 			declaration = formatDeclaration(decl, ctx.DeclIndex)
 		}
 	}
-	
+
 	if ctx.MemberIndex >= 0 {
 		if mem, ok := n.GetMember(ctx.ModuleIndex, ctx.DeclIndex, ctx.MemberIndex); ok {
 			member = formatMember(mem, ctx.MemberIndex)
 		}
 	}
-	
+
 	if ctx.PropertyIndex >= 0 && ctx.PropertyType != "" {
 		if prop, ok := n.GetProperty(ctx.ModuleIndex, ctx.DeclIndex, ctx.PropertyIndex, ctx.PropertyType); ok {
 			property = formatProperty(prop, ctx.PropertyType, ctx.PropertyIndex)
 		}
 	}
-	
+
 	return
 }
 
 func formatDeclaration(decl RawDeclaration, index int) string {
 	name := decl.GetName()
 	kind := decl.GetKind()
-	
+
 	if name != "" {
 		if kind != "" {
 			return fmt.Sprintf("%s %s", kind, name)
 		}
 		return name
 	}
-	
+
 	if kind != "" {
 		return fmt.Sprintf("%s[%d]", kind, index)
 	}
-	
+
 	return fmt.Sprintf("declaration[%d]", index)
 }
 
 func formatMember(member RawMember, index int) string {
 	name := member.GetName()
 	kind := member.GetKind()
-	
+
 	if name != "" {
 		if kind != "" {
 			return fmt.Sprintf("%s %s", kind, name)
 		}
 		return name
 	}
-	
+
 	if kind != "" {
 		return fmt.Sprintf("%s[%d]", kind, index)
 	}
-	
+
 	return fmt.Sprintf("member[%d]", index)
 }
 
 func formatProperty(prop RawProperty, propType string, index int) string {
 	name := prop.GetName()
 	singularName := getSingularPropertyName(propType)
-	
+
 	if name != "" {
 		return fmt.Sprintf("%s %s", singularName, name)
 	}
-	
+
 	return fmt.Sprintf("%s[%d]", singularName, index)
 }
 

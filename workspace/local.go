@@ -206,3 +206,32 @@ func (c *FileSystemWorkspaceContext) Cleanup() error {
 	// Nothing to clean up for local packages
 	return nil
 }
+
+// ModulePathToFS converts a module path to filesystem path for watching
+func (c *FileSystemWorkspaceContext) ModulePathToFS(modulePath string) string {
+	if filepath.IsAbs(modulePath) {
+		return modulePath
+	}
+	return filepath.Join(c.root, modulePath)
+}
+
+// FSPathToModule converts a filesystem path to module path for manifest lookup
+func (c *FileSystemWorkspaceContext) FSPathToModule(fsPath string) (string, error) {
+	return filepath.Rel(c.root, fsPath)
+}
+
+// ResolveModuleDependency resolves a dependency path relative to a module
+func (c *FileSystemWorkspaceContext) ResolveModuleDependency(modulePath, dependencyPath string) string {
+	if filepath.IsAbs(dependencyPath) {
+		// Convert to module-relative path
+		if rel, err := filepath.Rel(c.root, dependencyPath); err == nil {
+			return rel
+		}
+		return dependencyPath
+	}
+
+	// Resolve relative to module's directory
+	moduleDir := filepath.Dir(modulePath)
+	resolved := filepath.Join(moduleDir, dependencyPath)
+	return filepath.Clean(resolved)
+}

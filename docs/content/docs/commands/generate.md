@@ -261,6 +261,7 @@ The `generate` command does not support remote packages. To inspect a remote pac
 | `<files or globs>`              | positional (array) | Files or glob patterns to include                                                                 |
 | `--package, -p`                 | string             | Path to a package directory.                                                                      |
 | `--output, -o`                  | string             | Write the manifest to this file instead of stdout                                                 |
+| `--watch, -w`                   | bool               | Watch files for changes and regenerate automatically                                              |
 | `--exclude, -e`                 | array              | Files or glob patterns to exclude                                                                 |
 | `--no-default-excludes`         | bool               | Do not exclude files by default (e.g., `.d.ts` files will be included unless excluded explicitly) |
 | `--design-tokens`               | string             | Path or npm specifier for DTCG-format design tokens                                               |

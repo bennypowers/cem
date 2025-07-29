@@ -239,7 +239,7 @@ func (r *PrivateMethodsRule) Check(ctx *WarningContext) []ValidationWarning {
 	for _, member := range members {
 		memberName := member.GetName()
 		memberKind := member.GetKind()
-		
+
 		// Check both methods and fields
 		if memberKind != "method" && memberKind != "field" {
 			continue
@@ -262,7 +262,7 @@ func (r *PrivateMethodsRule) Check(ctx *WarningContext) []ValidationWarning {
 			})
 		} else if strings.HasPrefix(memberName, "_") {
 			privacy := member.GetPrivacy()
-			
+
 			// Only warn if member starts with _ but is NOT marked as private or protected
 			if privacy != "private" && privacy != "protected" {
 				id := "private-underscore-methods"
@@ -492,4 +492,3 @@ func (r *VerboseDefaultsRule) Check(ctx *WarningContext) []ValidationWarning {
 
 	return warnings
 }
-

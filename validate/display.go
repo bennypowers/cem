@@ -42,7 +42,6 @@ type DisplayOptions struct {
 	Format  string
 }
 
-
 // PrintValidationResult prints the validation result with appropriate formatting
 func PrintValidationResult(manifestPath string, result *ValidationResult, options DisplayOptions) error {
 	switch options.Format {

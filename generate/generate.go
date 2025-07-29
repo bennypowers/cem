@@ -18,6 +18,7 @@ package generate
 
 import (
 	"cmp"
+	"context"
 	"errors"
 	"fmt"
 	"runtime"
@@ -192,6 +193,45 @@ func processModule(
 	return module, tagAliases, mp.logger, err
 }
 
+func processModuleWithDeps(
+	job processJob,
+	qm *Q.QueryManager,
+	parser *ts.Parser,
+	depTracker *FileDependencyTracker,
+) (module *M.Module, tagAliases map[string]string, logCtx *LogCtx, errs error) {
+	defer parser.Reset()
+	mp, err := NewModuleProcessor(job.ctx, job.file, parser, qm)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	defer mp.Close()
+	cfg, err := job.ctx.Config()
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	if cfg.Verbose {
+		mp.logger.Section.Printf("Module: %s", mp.logger.File)
+	}
+	module, tagAliases, err = mp.Collect()
+
+	// Record dependencies for incremental rebuilds
+	if depTracker != nil && module != nil {
+		styleImports := make([]string, 0, len(mp.styleImportsBindingToSpecMap))
+		for _, spec := range mp.styleImportsBindingToSpecMap {
+			styleImports = append(styleImports, spec)
+		}
+
+		importedFiles := make([]string, 0, len(mp.importBindingToSpecMap))
+		for _, imp := range mp.importBindingToSpecMap {
+			importedFiles = append(importedFiles, imp.spec)
+		}
+
+		depTracker.RecordModuleDependencies(job.file, styleImports, importedFiles)
+	}
+
+	return module, tagAliases, mp.logger, err
+}
+
 func postprocess(
 	ctx W.WorkspaceContext,
 	result preprocessResult,
@@ -242,33 +282,20 @@ func postprocess(
 
 // Generates a custom-elements manifest from a list of typescript files
 func Generate(ctx W.WorkspaceContext) (manifest *string, errs error) {
-	cfg, err := ctx.Config()
+	session, err := NewGenerateSession(ctx)
 	if err != nil {
 		return nil, err
 	}
-	qm, err := Q.NewQueryManager()
+	defer session.Close()
+
+	pkg, err := session.GenerateFullManifest(context.Background())
 	if err != nil {
 		return nil, err
 	}
-	defer qm.Close()
-	result, err := preprocess(ctx)
+
+	manifestStr, err := M.SerializeToString(pkg)
 	if err != nil {
-		errs = errors.Join(errs, fmt.Errorf("module preprocess failed:\n%w", err))
+		return nil, fmt.Errorf("module serialize failed: %w", err)
 	}
-	modules, logs, aliases, err := process(ctx, result, qm)
-	if err != nil {
-		errs = errors.Join(errs, fmt.Errorf("module process failed:\n%w", err))
-	}
-	pkg, err := postprocess(ctx, result, aliases, qm, modules)
-	if err != nil {
-		errs = errors.Join(errs, fmt.Errorf("module postprocess failed:\n%w", err))
-	}
-	if cfg.Verbose {
-		RenderBarChart(logs)
-	}
-	manifestStr, err := M.SerializeToString(&pkg)
-	if err != nil {
-		return nil, errors.Join(errs, fmt.Errorf("module serialize failed:\n%w", err))
-	}
-	return &manifestStr, errs
+	return &manifestStr, nil
 }
