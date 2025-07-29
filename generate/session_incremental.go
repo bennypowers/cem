@@ -140,7 +140,7 @@ func (gs *GenerateSession) processSpecificModules(ctx context.Context, result pr
 	}
 
 	// Use parallel processor with dependency tracking and optimized worker count
-	processor := NewParallelModuleProcessor(gs.queryManager, gs.depTracker, gs.cssCache)
+	processor := NewModuleBatchProcessor(gs.queryManager, gs.depTracker, gs.cssCache)
 	processor.SetWorkerCount(len(validJobs)) // Optimize for small incremental builds
 
 	pterm.Debug.Printf("Starting incremental processing with optimized workers for %d modules\n", len(validJobs))

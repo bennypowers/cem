@@ -112,7 +112,7 @@ func process(
 	}
 
 	// Use parallel processor
-	processor := NewParallelModuleProcessor(qm, nil, cssParseCache) // No dependency tracker for simple processing, use global cache
+	processor := NewModuleBatchProcessor(qm, nil, cssParseCache) // No dependency tracker for simple processing, use global cache
 	processingResult := processor.ProcessModulesSimple(context.Background(), jobs, ModuleProcessorSimpleFunc(processModule))
 
 	return processingResult.Modules, processingResult.Logs, processingResult.Aliases, processingResult.Errors

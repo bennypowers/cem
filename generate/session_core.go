@@ -30,6 +30,13 @@ import (
 // GenerateSession holds reusable state for efficient generation cycles.
 // The QueryManager is expensive to initialize (loads all tree-sitter queries),
 // so we reuse it across multiple generation runs in watch mode.
+//
+// Callsites:
+// - cmd/generate.go: NewGenerateSession() for watch mode initialization
+// - generate/generate.go: NewGenerateSession() for single generation runs
+// - generate/session_watch.go: Used throughout watch session lifecycle
+//
+// Thread Safety: Protected by sync.RWMutex for concurrent access to manifest and index
 type GenerateSession struct {
 	ctx              W.WorkspaceContext
 	queryManager     *Q.QueryManager
@@ -43,6 +50,12 @@ type GenerateSession struct {
 // NewGenerateSession creates a new session with initialized QueryManager.
 // This is expensive (tree-sitter query loading) and should be done once
 // per watch session or single generation run.
+//
+// Callsites:
+// - cmd/generate.go:123 (watch mode initialization)
+// - generate/generate.go:234 (single generation)
+//
+// Performance: Expensive operation (~10-50ms) due to tree-sitter query compilation
 func NewGenerateSession(ctx W.WorkspaceContext) (*GenerateSession, error) {
 	qm, err := Q.NewQueryManager()
 	if err != nil {
@@ -120,6 +133,12 @@ func (gs *GenerateSession) GenerateFullManifest(ctx context.Context) (*M.Package
 // GetInMemoryManifest returns a copy of the current in-memory manifest.
 // For performance, this returns a shallow copy by default. Use GetInMemoryManifestDeep()
 // when true isolation is needed (e.g., for LSP integration).
+//
+// Callsites:
+// - session_incremental.go:58,62,100,279 (incremental processing)
+// - cmd/generate_watch.go (watch mode manifest access)
+//
+// Performance: Optimized shallow copy (~microseconds) vs deep copy (~1-5ms)
 func (gs *GenerateSession) GetInMemoryManifest() *M.Package {
 	gs.mu.RLock()
 	defer gs.mu.RUnlock()
@@ -136,6 +155,10 @@ func (gs *GenerateSession) GetInMemoryManifest() *M.Package {
 // GetInMemoryManifestDeep returns a deep copy of the current in-memory manifest.
 // This is safe for concurrent access and intended for LSP integration.
 // Uses JSON serialization/deserialization for reliable deep copying.
+//
+// Callsites:
+// - Future LSP integration (when implemented)
+// - Concurrent processing requiring full data isolation
 //
 // Performance Note: Deep copying has overhead (~1-5ms for typical manifests).
 // Only use this when true isolation is required.
@@ -248,7 +271,7 @@ func (gs *GenerateSession) processWithDeps(ctx context.Context, result preproces
 	}
 
 	// Use parallel processor with dependency tracking
-	processor := NewParallelModuleProcessor(gs.queryManager, gs.depTracker, gs.cssCache)
+	processor := NewModuleBatchProcessor(gs.queryManager, gs.depTracker, gs.cssCache)
 	processingResult := processor.ProcessModules(ctx, jobs, ModuleProcessorFunc(processModuleWithDeps))
 
 	return processingResult.Modules, processingResult.Logs, processingResult.Aliases, processingResult.Errors

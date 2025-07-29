@@ -31,7 +31,16 @@ type FileHashMap map[string][32]byte
 type ModuleDependencyMap map[string]*ModuleDependencies
 type CssReverseDepMap map[string][]string
 
-// FileDependencyTracker tracks file dependencies and content hashes for incremental updates
+// FileDependencyTracker tracks file dependencies and content hashes for incremental updates.
+// Maintains file hashes, module dependencies, and CSS reverse dependencies
+// for efficient change detection and incremental processing.
+//
+// Callsites:
+// - session_core.go:55 (NewGenerateSession creation)
+// - session_core.go:251 (dependency tracking in processing)
+// - session_incremental.go:53,178 (incremental rebuild logic)
+//
+// Thread Safety: Protected by sync.RWMutex for concurrent read/write access
 type FileDependencyTracker struct {
 	mu            sync.RWMutex
 	fileHashes    FileHashMap         // FS path -> hash
@@ -49,7 +58,12 @@ type ModuleDependencies struct {
 	LastModified  time.Time
 }
 
-// NewFileDependencyTracker creates a new dependency tracker
+// NewFileDependencyTracker creates a new dependency tracker.
+//
+// Callsites:
+// - session_core.go:55 (GenerateSession initialization)
+//
+// Returns: Initialized tracker with empty dependency maps
 func NewFileDependencyTracker(ctx W.WorkspaceContext) *FileDependencyTracker {
 	return &FileDependencyTracker{
 		fileHashes:    make(FileHashMap),
@@ -98,8 +112,14 @@ func (fdt *FileDependencyTracker) HasFileChanged(fsPath string) (bool, error) {
 	return currentHash != lastHash, nil
 }
 
-// GetModulesAffectedByFiles returns modules that need rebuilding due to file changes
-// Expects module paths as input, returns module paths
+// GetModulesAffectedByFiles returns modules that need rebuilding due to file changes.
+// Expects module paths as input, returns module paths.
+//
+// Callsites:
+// - session_incremental.go:53 (ProcessChangedFiles)
+// - session_incremental.go:275 (ProcessChangedFilesIncremental)
+//
+// Algorithm: Direct module changes + CSS reverse dependency lookup
 func (fdt *FileDependencyTracker) GetModulesAffectedByFiles(changedModulePaths []string) []string {
 	fdt.mu.RLock()
 	defer fdt.mu.RUnlock()
@@ -128,7 +148,12 @@ func (fdt *FileDependencyTracker) GetModulesAffectedByFiles(changedModulePaths [
 	return result
 }
 
-// RecordModuleDependencies stores dependencies for a module
+// RecordModuleDependencies stores dependencies for a module.
+//
+// Callsites:
+// - generate.go:178 (processModuleWithDeps)
+//
+// Purpose: Records style imports and file imports to enable incremental rebuilds
 func (fdt *FileDependencyTracker) RecordModuleDependencies(modulePath string, styleImports, importedFiles []string) {
 	fdt.mu.Lock()
 	defer fdt.mu.Unlock()

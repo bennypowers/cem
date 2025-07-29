@@ -38,15 +38,27 @@ type ModuleProcessorFunc func(job processJob, qm *Q.QueryManager, parser *ts.Par
 // ModuleProcessorSimpleFunc represents a function that processes a single module (without dependency tracking)
 type ModuleProcessorSimpleFunc func(job processJob, qm *Q.QueryManager, parser *ts.Parser, cssCache CssCache) (*M.Module, map[string]string, *LogCtx, error)
 
-// ParallelModuleProcessor handles parallel processing of modules with common patterns
-type ParallelModuleProcessor struct {
+// ModuleBatchProcessor handles batch/parallel processing of modules with common patterns.
+// Abstracts the worker pool pattern used throughout the codebase for module processing.
+// Supports both dependency-tracking and simple processing modes.
+//
+// Callsites:
+// - session_core.go:251 (NewModuleBatchProcessor for full generation)
+// - generate.go:115 (NewModuleBatchProcessor for simple processing)
+// - session_incremental.go:143 (NewModuleBatchProcessor for incremental processing)
+//
+// Worker Management: Optimizes worker count based on job size (avoids over-allocation)
+type ModuleBatchProcessor struct {
 	numWorkers   int
 	queryManager *Q.QueryManager
 	depTracker   *FileDependencyTracker
 	cssCache     CssCache
 }
 
-// ProcessingResult holds the results of parallel module processing
+// ProcessingResult holds the results of parallel module processing.
+// Aggregates modules, logs, aliases, and errors from all worker threads.
+//
+// Usage: Returned by all ModuleBatchProcessor.Process* methods
 type ProcessingResult struct {
 	Modules []M.Module
 	Logs    []*LogCtx
@@ -54,9 +66,19 @@ type ProcessingResult struct {
 	Errors  error
 }
 
-// NewParallelModuleProcessor creates a new parallel processor
-func NewParallelModuleProcessor(queryManager *Q.QueryManager, depTracker *FileDependencyTracker, cssCache CssCache) *ParallelModuleProcessor {
-	return &ParallelModuleProcessor{
+// NewModuleBatchProcessor creates a new batch/parallel processor.
+//
+// Callsites:
+// - session_core.go:251 (with dependency tracking)
+// - generate.go:115 (without dependency tracking, depTracker=nil)
+// - session_incremental.go:143 (with dependency tracking)
+//
+// Parameters:
+// - queryManager: Shared tree-sitter queries (expensive to create)
+// - depTracker: Optional dependency tracker (nil for simple processing)
+// - cssCache: CSS parsing cache for performance
+func NewModuleBatchProcessor(queryManager *Q.QueryManager, depTracker *FileDependencyTracker, cssCache CssCache) *ModuleBatchProcessor {
+	return &ModuleBatchProcessor{
 		numWorkers:   runtime.NumCPU(),
 		queryManager: queryManager,
 		depTracker:   depTracker,
@@ -65,36 +87,36 @@ func NewParallelModuleProcessor(queryManager *Q.QueryManager, depTracker *FileDe
 }
 
 // SetWorkerCount allows overriding the number of workers
-func (pmp *ParallelModuleProcessor) SetWorkerCount(count int) {
+func (mbp *ModuleBatchProcessor) SetWorkerCount(count int) {
 	if count > 0 {
-		pmp.numWorkers = count
+		mbp.numWorkers = count
 	}
 }
 
 // ProcessModules processes modules in parallel using the provided processor function
-func (pmp *ParallelModuleProcessor) ProcessModules(
+func (mbp *ModuleBatchProcessor) ProcessModules(
 	ctx context.Context,
 	jobs []processJob,
 	processor ModuleProcessorFunc,
 ) ProcessingResult {
-	return pmp.processModulesInternal(ctx, jobs, func(job processJob, qm *Q.QueryManager, parser *ts.Parser) (*M.Module, map[string]string, *LogCtx, error) {
-		return processor(job, qm, parser, pmp.depTracker, pmp.cssCache)
+	return mbp.processModulesInternal(ctx, jobs, func(job processJob, qm *Q.QueryManager, parser *ts.Parser) (*M.Module, map[string]string, *LogCtx, error) {
+		return processor(job, qm, parser, mbp.depTracker, mbp.cssCache)
 	})
 }
 
 // ProcessModulesSimple processes modules in parallel without dependency tracking
-func (pmp *ParallelModuleProcessor) ProcessModulesSimple(
+func (mbp *ModuleBatchProcessor) ProcessModulesSimple(
 	ctx context.Context,
 	jobs []processJob,
 	processor ModuleProcessorSimpleFunc,
 ) ProcessingResult {
-	return pmp.processModulesInternal(ctx, jobs, func(job processJob, qm *Q.QueryManager, parser *ts.Parser) (*M.Module, map[string]string, *LogCtx, error) {
-		return processor(job, qm, parser, pmp.cssCache)
+	return mbp.processModulesInternal(ctx, jobs, func(job processJob, qm *Q.QueryManager, parser *ts.Parser) (*M.Module, map[string]string, *LogCtx, error) {
+		return processor(job, qm, parser, mbp.cssCache)
 	})
 }
 
 // processModulesInternal handles the common parallel processing logic
-func (pmp *ParallelModuleProcessor) processModulesInternal(
+func (mbp *ModuleBatchProcessor) processModulesInternal(
 	ctx context.Context,
 	jobs []processJob,
 	processor func(processJob, *Q.QueryManager, *ts.Parser) (*M.Module, map[string]string, *LogCtx, error),
@@ -115,7 +137,7 @@ func (pmp *ParallelModuleProcessor) processModulesInternal(
 	}
 
 	// Optimize worker count for small job sets
-	numWorkers := pmp.numWorkers
+	numWorkers := mbp.numWorkers
 	if len(jobs) < numWorkers {
 		numWorkers = len(jobs)
 	}
@@ -158,7 +180,7 @@ func (pmp *ParallelModuleProcessor) processModulesInternal(
 				default:
 				}
 
-				module, tagAliases, logger, err := processor(job, pmp.queryManager, parser)
+				module, tagAliases, logger, err := processor(job, mbp.queryManager, parser)
 				
 				// Handle errors
 				if err != nil {
