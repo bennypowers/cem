@@ -21,19 +21,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"runtime"
 	"slices"
 	"sync"
-
-	"github.com/pterm/pterm"
 
 	DT "bennypowers.dev/cem/designtokens"
 	DD "bennypowers.dev/cem/generate/demodiscovery"
 	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
 	W "bennypowers.dev/cem/workspace"
-
-	"maps"
 
 	DS "github.com/bmatcuk/doublestar"
 	ts "github.com/tree-sitter/go-tree-sitter"
@@ -110,74 +105,27 @@ func process(
 	result preprocessResult,
 	qm *Q.QueryManager,
 ) (modules []M.Module, logs []*LogCtx, aliases map[string]string, errs error) {
-	numWorkers := runtime.NumCPU()
-	pterm.Info.Printf("Starting Generation with %d workers\n", numWorkers)
-
-	var wg sync.WaitGroup
-	var aliasesMu sync.Mutex
-	var modulesMu sync.Mutex
-	var errsMu sync.Mutex
-	var logsMu sync.Mutex
-	errsList := make([]error, 0)
-	logs = make([]*LogCtx, 0, len(result.includedFiles))
-
-	aliases = make(map[string]string) // Ensure aliases is initialized
-	jobsChan := make(chan processJob, len(result.includedFiles))
-
-	// Fill jobs channel with files to process
+	// Create jobs for all included files
+	jobs := make([]processJob, 0, len(result.includedFiles))
 	for _, file := range result.includedFiles {
-		jobsChan <- processJob{file: file, ctx: ctx}
-	}
-	close(jobsChan)
-
-	wg.Add(numWorkers)
-	for range numWorkers {
-		go func() {
-			defer wg.Done()
-			parser := Q.GetTypeScriptParser()
-			defer Q.PutTypeScriptParser(parser)
-			for job := range jobsChan {
-				module, tagAliases, logger, err := processModule(job, qm, parser)
-				if err != nil {
-					errsMu.Lock()
-					errsList = append(errsList, err)
-					errsMu.Unlock()
-				}
-
-				// Save log for later bar chart (always save duration for bar chart)
-				logsMu.Lock()
-				logs = append(logs, logger)
-				logsMu.Unlock()
-
-				// Write to aliases in a threadsafe manner
-				aliasesMu.Lock()
-				maps.Copy(aliases, tagAliases)
-				aliasesMu.Unlock()
-				modulesMu.Lock()
-				if module != nil {
-					modules = append(modules, *module)
-				}
-				modulesMu.Unlock()
-			}
-		}()
+		jobs = append(jobs, processJob{file: file, ctx: ctx})
 	}
 
-	wg.Wait()
+	// Use parallel processor
+	processor := NewParallelModuleProcessor(qm, nil, cssParseCache) // No dependency tracker for simple processing, use global cache
+	processingResult := processor.ProcessModulesSimple(context.Background(), jobs, ModuleProcessorSimpleFunc(processModule))
 
-	if len(errsList) > 0 {
-		errs = errors.Join(errsList...)
-	}
-
-	return modules, logs, aliases, errs
+	return processingResult.Modules, processingResult.Logs, processingResult.Aliases, processingResult.Errors
 }
 
 func processModule(
 	job processJob,
 	qm *Q.QueryManager,
 	parser *ts.Parser,
+	cssCache CssCache,
 ) (module *M.Module, tagAliases map[string]string, logCtx *LogCtx, errs error) {
 	defer parser.Reset()
-	mp, err := NewModuleProcessor(job.ctx, job.file, parser, qm)
+	mp, err := NewModuleProcessor(job.ctx, job.file, parser, qm, cssCache)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -198,9 +146,10 @@ func processModuleWithDeps(
 	qm *Q.QueryManager,
 	parser *ts.Parser,
 	depTracker *FileDependencyTracker,
+	cssCache CssCache,
 ) (module *M.Module, tagAliases map[string]string, logCtx *LogCtx, errs error) {
 	defer parser.Reset()
-	mp, err := NewModuleProcessor(job.ctx, job.file, parser, qm)
+	mp, err := NewModuleProcessor(job.ctx, job.file, parser, qm, cssCache)
 	if err != nil {
 		return nil, nil, nil, err
 	}
