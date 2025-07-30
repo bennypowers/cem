@@ -89,6 +89,20 @@ func NewFileDependencyTracker(ctx W.WorkspaceContext) *FileDependencyTracker {
 
 // UpdateFileHash computes and stores the hash for a file (expects FS path)
 func (fdt *FileDependencyTracker) UpdateFileHash(fsPath string) ([32]byte, error) {
+	// Check the file's modification time
+	fileInfo, err := os.Stat(fsPath)
+	if err != nil {
+		return [32]byte{}, err
+	}
+	// Acquire read lock to check if the file hash is up-to-date
+	fdt.mu.RLock()
+	lastHash, exists := fdt.fileHashes[fsPath]
+	fdt.mu.RUnlock()
+	if exists && fileInfo.ModTime().Before(fdt.lastScanTime) {
+		// File hasn't changed since the last scan; return the existing hash
+		return lastHash, nil
+	}
+	// Compute the new hash
 	fdt.mu.Lock()
 	defer fdt.mu.Unlock()
 

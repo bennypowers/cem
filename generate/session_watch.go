@@ -42,8 +42,9 @@ type WatchSession struct {
 	debounceTimer   *time.Timer
 	mu              sync.Mutex
 	cancelCurrent   context.CancelFunc
-	lastWrittenHash map[string][32]byte // file path -> SHA256 hash of content we wrote
-	pendingChanges  map[string]bool     // files that have changed and are pending processing
+	lastWrittenHash map[string][32]byte  // file path -> SHA256 hash of content we wrote
+	lastWrittenTime map[string]time.Time // file path -> modification time when we wrote it
+	pendingChanges  map[string]bool      // files that have changed and are pending processing
 }
 
 // NewWatchSession creates a new watch session with the given workspace context and globs
@@ -58,6 +59,7 @@ func NewWatchSession(ctx W.WorkspaceContext, globs []string) (*WatchSession, err
 		globs:           globs,
 		generateSession: generateSession,
 		lastWrittenHash: make(map[string][32]byte),
+		lastWrittenTime: make(map[string]time.Time),
 		pendingChanges:  make(map[string]bool),
 	}, nil
 }
@@ -74,7 +76,8 @@ func (ws *WatchSession) RunWatch() error {
 	pterm.Info.Println("Starting watch mode...")
 
 	// Do initial generation
-	pterm.Info.Println("Starting Generation with 4 workers")
+	numWorkers := ws.generateSession.WorkerCount()
+	pterm.Info.Printf("Starting Generation with %d workers\n", numWorkers)
 	start := time.Now()
 
 	if err := ws.generateOnce(context.Background()); err != nil {
@@ -199,14 +202,45 @@ func (ws *WatchSession) handleFileChange(event fsnotify.Event) {
 	}
 
 	// Start a new debounce timer (100ms delay)
-	ws.debounceTimer = time.AfterFunc(100*time.Millisecond, func() {
+	// Later, we can make this configurable, but for now, it's ok
+	// to hard code the value, for simplicity's sake
+	debounceDelay := 100 * time.Millisecond
+	ws.debounceTimer = time.AfterFunc(debounceDelay, func() {
 		ws.processChanges()
 	})
 }
 
 // isOurWrite checks if the file change was caused by our own write operation
 func (ws *WatchSession) isOurWrite(filePath string) bool {
-	// Read the current file content and compute its hash
+	cleanPath := filepath.Clean(filePath)
+
+	// Fast path: Check filesystem stat first (much faster than hash computation)
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		return false // If we can't stat it, assume it's not our write
+	}
+
+	ws.mu.Lock()
+	lastWriteTime, timeExists := ws.lastWrittenTime[cleanPath]
+	lastHash, hashExists := ws.lastWrittenHash[cleanPath]
+	ws.mu.Unlock()
+
+	// If we have both time and hash records, use time as fast check
+	if timeExists && hashExists {
+		// If file modification time matches when we wrote it, likely our write
+		// Allow small tolerance for filesystem time precision issues
+		timeDiff := fileInfo.ModTime().Sub(lastWriteTime)
+		if timeDiff >= 0 && timeDiff < time.Second {
+			return true
+		}
+
+		// If time doesn't match, it's definitely not our write
+		if fileInfo.ModTime().After(lastWriteTime.Add(time.Second)) {
+			return false
+		}
+	}
+
+	// Fallback: Compute hash for definitive answer (expensive but reliable)
 	file, err := os.Open(filePath)
 	if err != nil {
 		return false // If we can't read it, assume it's not our write
@@ -219,13 +253,7 @@ func (ws *WatchSession) isOurWrite(filePath string) bool {
 	}
 
 	currentHash := [32]byte(hasher.Sum(nil))
-
-	// Check if this hash matches what we last wrote to this file
-	ws.mu.Lock()
-	lastHash, exists := ws.lastWrittenHash[filepath.Clean(filePath)]
-	ws.mu.Unlock()
-
-	return exists && currentHash == lastHash
+	return hashExists && currentHash == lastHash
 }
 
 // matchesInputGlobs checks if a file path matches any of our input globs
@@ -382,11 +410,24 @@ func (ws *WatchSession) writeManifest(manifestStr string) error {
 		return err
 	}
 
-	// Record the hash of what we just wrote to prevent infinite loops
+	// Record the hash and modification time of what we just wrote to prevent infinite loops
 	// We do this AFTER closing to ensure the file is fully written
 	hash := sha256.Sum256(contentBytes)
+
+	// Get the file's modification time after writing
+	fileInfo, err := os.Stat(outputPath)
+	var modTime time.Time
+	if err == nil {
+		modTime = fileInfo.ModTime()
+	} else {
+		// Fallback to current time if we can't stat the file
+		modTime = time.Now()
+	}
+
+	cleanPath := filepath.Clean(outputPath)
 	ws.mu.Lock()
-	ws.lastWrittenHash[filepath.Clean(outputPath)] = hash
+	ws.lastWrittenHash[cleanPath] = hash
+	ws.lastWrittenTime[cleanPath] = modTime
 	ws.mu.Unlock()
 
 	return nil
