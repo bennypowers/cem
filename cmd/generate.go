@@ -111,6 +111,8 @@ var generateCmd = &cobra.Command{
 		manifestStr, err := G.Generate(ctx)
 		if err != nil {
 			errs = errors.Join(errs, err)
+			// Print warnings for non-fatal errors
+			printErrorsAsWarnings(err)
 		}
 
 		if outputPath != "" {
@@ -155,6 +157,37 @@ func expand(ctx W.WorkspaceContext, globs []string) (files []string, errs error)
 		files = append(files, matches...)
 	}
 	return files, errs
+}
+
+// printErrorsAsWarnings displays errors as warnings, showing specific error details
+func printErrorsAsWarnings(err error) {
+	if err == nil {
+		return
+	}
+
+	// Split the error into individual components for better display
+	errList := flattenErrors(err)
+	for _, e := range errList {
+		pterm.Warning.Printf("Warning: %v\n", e)
+	}
+}
+
+// flattenErrors recursively flattens joined errors into a slice
+func flattenErrors(err error) []error {
+	if err == nil {
+		return nil
+	}
+
+	// Try to unwrap as joined error
+	if joinedErr, ok := err.(interface{ Unwrap() []error }); ok {
+		var result []error
+		for _, e := range joinedErr.Unwrap() {
+			result = append(result, flattenErrors(e)...)
+		}
+		return result
+	}
+
+	return []error{err}
 }
 
 func init() {

@@ -364,6 +364,8 @@ func (ws *WatchSession) processChanges() {
 				pterm.Warning.Println("Generation cancelled due to new file changes")
 			} else {
 				pterm.Error.Printf("Generation failed: %v\n", err)
+				// Also show individual warnings for dependency issues
+				ws.printGenerationWarnings(err)
 			}
 			return
 		}
@@ -391,6 +393,8 @@ func (ws *WatchSession) processChanges() {
 				pterm.Warning.Println("Generation cancelled due to new file changes")
 			} else {
 				pterm.Error.Printf("Generation failed: %v\n", err)
+				// Also show individual warnings for dependency issues
+				ws.printGenerationWarnings(err)
 			}
 			return
 		}
@@ -526,4 +530,35 @@ func (ws *WatchSession) updateDemoDiscoveryState() {
 	ws.lastDemoConfig = cfg.Generate.DemoDiscovery
 	ws.demoFilesChanged = false // Reset flag
 	ws.mu.Unlock()
+}
+
+// printGenerationWarnings displays errors as warnings, showing specific error details for watch mode
+func (ws *WatchSession) printGenerationWarnings(err error) {
+	if err == nil {
+		return
+	}
+
+	// Split the error into individual components for better display
+	errList := ws.flattenErrors(err)
+	for _, e := range errList {
+		pterm.Warning.Printf("Warning: %v\n", e)
+	}
+}
+
+// flattenErrors recursively flattens joined errors into a slice
+func (ws *WatchSession) flattenErrors(err error) []error {
+	if err == nil {
+		return nil
+	}
+
+	// Try to unwrap as joined error
+	if joinedErr, ok := err.(interface{ Unwrap() []error }); ok {
+		var result []error
+		for _, e := range joinedErr.Unwrap() {
+			result = append(result, ws.flattenErrors(e)...)
+		}
+		return result
+	}
+
+	return []error{err}
 }

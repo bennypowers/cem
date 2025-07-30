@@ -18,6 +18,8 @@ package generate
 
 import (
 	"crypto/sha256"
+	"errors"
+	"fmt"
 	"io"
 	"os"
 	"slices"
@@ -120,6 +122,10 @@ func (fdt *FileDependencyTracker) UpdateFileHash(fsPath string) ([32]byte, error
 
 	hash := [32]byte(hasher.Sum(nil))
 	fdt.fileHashes[fsPath] = hash
+
+	// Update last scan time to now for future optimization
+	fdt.lastScanTime = time.Now()
+
 	return hash, nil
 }
 
@@ -183,7 +189,8 @@ func (fdt *FileDependencyTracker) GetModulesAffectedByFiles(changedModulePaths [
 // - generate.go:178 (processModuleWithDeps)
 //
 // Purpose: Records style imports and file imports to enable incremental rebuilds
-func (fdt *FileDependencyTracker) RecordModuleDependencies(modulePath string, styleImports, importedFiles []string) {
+// Returns error if any dependency paths cannot be resolved
+func (fdt *FileDependencyTracker) RecordModuleDependencies(modulePath string, styleImports, importedFiles []string) error {
 	fdt.mu.Lock()
 	defer fdt.mu.Unlock()
 
@@ -191,13 +198,23 @@ func (fdt *FileDependencyTracker) RecordModuleDependencies(modulePath string, st
 	resolvedStyleImports := make([]string, 0, len(styleImports))
 	resolvedImportedFiles := make([]string, 0, len(importedFiles))
 
+	var resolveErrors []error
+
 	for _, styleImport := range styleImports {
-		resolved := fdt.ctx.ResolveModuleDependency(modulePath, styleImport)
+		resolved, err := fdt.ctx.ResolveModuleDependency(modulePath, styleImport)
+		if err != nil {
+			resolveErrors = append(resolveErrors, fmt.Errorf("failed to resolve style import %s for module %s: %w", styleImport, modulePath, err))
+			continue
+		}
 		resolvedStyleImports = append(resolvedStyleImports, resolved)
 	}
 
 	for _, importFile := range importedFiles {
-		resolved := fdt.ctx.ResolveModuleDependency(modulePath, importFile)
+		resolved, err := fdt.ctx.ResolveModuleDependency(modulePath, importFile)
+		if err != nil {
+			resolveErrors = append(resolveErrors, fmt.Errorf("failed to resolve import file %s for module %s: %w", importFile, modulePath, err))
+			continue
+		}
 		resolvedImportedFiles = append(resolvedImportedFiles, resolved)
 	}
 
@@ -222,4 +239,10 @@ func (fdt *FileDependencyTracker) RecordModuleDependencies(modulePath string, st
 			fdt.cssDepReverse[cssFS] = append(fdt.cssDepReverse[cssFS], modulePath)
 		}
 	}
+
+	// Return joined errors if any occurred during resolution
+	if len(resolveErrors) > 0 {
+		return errors.Join(resolveErrors...)
+	}
+	return nil
 }

@@ -175,7 +175,10 @@ func processModuleWithDeps(
 			importedFiles = append(importedFiles, imp.spec)
 		}
 
-		depTracker.RecordModuleDependencies(job.file, styleImports, importedFiles)
+		if depErr := depTracker.RecordModuleDependencies(job.file, styleImports, importedFiles); depErr != nil {
+			// Join dependency resolution errors with any existing processing errors
+			err = errors.Join(err, depErr)
+		}
 	}
 
 	return module, tagAliases, mp.logger, err

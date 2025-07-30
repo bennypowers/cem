@@ -225,20 +225,18 @@ func (c *FileSystemWorkspaceContext) FSPathToModule(fsPath string) (string, erro
 }
 
 // ResolveModuleDependency resolves a dependency path relative to a module
-func (c *FileSystemWorkspaceContext) ResolveModuleDependency(modulePath, dependencyPath string) string {
+func (c *FileSystemWorkspaceContext) ResolveModuleDependency(modulePath, dependencyPath string) (string, error) {
 	if filepath.IsAbs(dependencyPath) {
 		// Convert to module-relative path
 		rel, err := filepath.Rel(c.root, dependencyPath)
 		if err != nil {
-			// Log the error but still return a usable path
-			pterm.Warning.Printf("Failed to compute relative path from %s to %s: %v\n", c.root, dependencyPath, err)
-			return dependencyPath
+			return "", fmt.Errorf("failed to resolve absolute dependency path %s relative to %s: %w", dependencyPath, c.root, err)
 		}
-		return rel
+		return rel, nil
 	}
 
 	// Resolve relative to module's directory
 	moduleDir := filepath.Dir(modulePath)
 	resolved := filepath.Join(moduleDir, dependencyPath)
-	return filepath.Clean(resolved)
+	return filepath.Clean(resolved), nil
 }

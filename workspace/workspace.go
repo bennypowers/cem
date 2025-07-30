@@ -119,5 +119,5 @@ type WorkspaceContext interface {
 	// FSPathToModule converts a filesystem path to module path for manifest lookup
 	FSPathToModule(fsPath string) (string, error)
 	// ResolveModuleDependency resolves a dependency path relative to a module
-	ResolveModuleDependency(modulePath, dependencyPath string) string
+	ResolveModuleDependency(modulePath, dependencyPath string) (string, error)
 }
