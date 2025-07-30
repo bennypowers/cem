@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "path": "src/class-constructor-properties.js",
+      "kind": "javascript-module",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "ClassConstructorProperties",
+          "members": [
+            {
+              "kind": "field",
+              "name": "pub"
+            },
+            {
+              "kind": "field",
+              "name": "priv",
+              "privacy": "private"
+            },
+            {
+              "kind": "field",
+              "name": "prot",
+              "privacy": "protected"
+            },
+            {
+              "kind": "field",
+              "name": "documented",
+              "description": "JSDoc description"
+            },
+            {
+              "kind": "field",
+              "name": "deprecated",
+              "deprecated": "Use something else"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ClassConstructorProperties",
+          "declaration": "ClassConstructorProperties"
+        }
+      ]
+    }
+  ]
+}
