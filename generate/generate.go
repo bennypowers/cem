@@ -18,21 +18,17 @@ package generate
 
 import (
 	"cmp"
+	"context"
 	"errors"
 	"fmt"
-	"runtime"
 	"slices"
 	"sync"
-
-	"github.com/pterm/pterm"
 
 	DT "bennypowers.dev/cem/designtokens"
 	DD "bennypowers.dev/cem/generate/demodiscovery"
 	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
 	W "bennypowers.dev/cem/workspace"
-
-	"maps"
 
 	DS "github.com/bmatcuk/doublestar"
 	ts "github.com/tree-sitter/go-tree-sitter"
@@ -109,74 +105,27 @@ func process(
 	result preprocessResult,
 	qm *Q.QueryManager,
 ) (modules []M.Module, logs []*LogCtx, aliases map[string]string, errs error) {
-	numWorkers := runtime.NumCPU()
-	pterm.Info.Printf("Starting Generation with %d workers\n", numWorkers)
-
-	var wg sync.WaitGroup
-	var aliasesMu sync.Mutex
-	var modulesMu sync.Mutex
-	var errsMu sync.Mutex
-	var logsMu sync.Mutex
-	errsList := make([]error, 0)
-	logs = make([]*LogCtx, 0, len(result.includedFiles))
-
-	aliases = make(map[string]string) // Ensure aliases is initialized
-	jobsChan := make(chan processJob, len(result.includedFiles))
-
-	// Fill jobs channel with files to process
+	// Create jobs for all included files
+	jobs := make([]processJob, 0, len(result.includedFiles))
 	for _, file := range result.includedFiles {
-		jobsChan <- processJob{file: file, ctx: ctx}
-	}
-	close(jobsChan)
-
-	wg.Add(numWorkers)
-	for range numWorkers {
-		go func() {
-			defer wg.Done()
-			parser := Q.GetTypeScriptParser()
-			defer Q.PutTypeScriptParser(parser)
-			for job := range jobsChan {
-				module, tagAliases, logger, err := processModule(job, qm, parser)
-				if err != nil {
-					errsMu.Lock()
-					errsList = append(errsList, err)
-					errsMu.Unlock()
-				}
-
-				// Save log for later bar chart (always save duration for bar chart)
-				logsMu.Lock()
-				logs = append(logs, logger)
-				logsMu.Unlock()
-
-				// Write to aliases in a threadsafe manner
-				aliasesMu.Lock()
-				maps.Copy(aliases, tagAliases)
-				aliasesMu.Unlock()
-				modulesMu.Lock()
-				if module != nil {
-					modules = append(modules, *module)
-				}
-				modulesMu.Unlock()
-			}
-		}()
+		jobs = append(jobs, processJob{file: file, ctx: ctx})
 	}
 
-	wg.Wait()
+	// Use parallel processor
+	processor := NewModuleBatchProcessor(qm, nil, cssParseCache) // No dependency tracker for simple processing, use global cache
+	processingResult := processor.ProcessModulesSimple(context.Background(), jobs, ModuleProcessorSimpleFunc(processModule))
 
-	if len(errsList) > 0 {
-		errs = errors.Join(errsList...)
-	}
-
-	return modules, logs, aliases, errs
+	return processingResult.Modules, processingResult.Logs, processingResult.Aliases, processingResult.Errors
 }
 
 func processModule(
 	job processJob,
 	qm *Q.QueryManager,
 	parser *ts.Parser,
+	cssCache CssCache,
 ) (module *M.Module, tagAliases map[string]string, logCtx *LogCtx, errs error) {
 	defer parser.Reset()
-	mp, err := NewModuleProcessor(job.ctx, job.file, parser, qm)
+	mp, err := NewModuleProcessor(job.ctx, job.file, parser, qm, cssCache)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -189,6 +138,49 @@ func processModule(
 		mp.logger.Section.Printf("Module: %s", mp.logger.File)
 	}
 	module, tagAliases, err = mp.Collect()
+	return module, tagAliases, mp.logger, err
+}
+
+func processModuleWithDeps(
+	job processJob,
+	qm *Q.QueryManager,
+	parser *ts.Parser,
+	depTracker *FileDependencyTracker,
+	cssCache CssCache,
+) (module *M.Module, tagAliases map[string]string, logCtx *LogCtx, errs error) {
+	defer parser.Reset()
+	mp, err := NewModuleProcessor(job.ctx, job.file, parser, qm, cssCache)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	defer mp.Close()
+	cfg, err := job.ctx.Config()
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	if cfg.Verbose {
+		mp.logger.Section.Printf("Module: %s", mp.logger.File)
+	}
+	module, tagAliases, err = mp.Collect()
+
+	// Record dependencies for incremental rebuilds
+	if depTracker != nil && module != nil {
+		styleImports := make([]string, 0, len(mp.styleImportsBindingToSpecMap))
+		for _, spec := range mp.styleImportsBindingToSpecMap {
+			styleImports = append(styleImports, spec)
+		}
+
+		importedFiles := make([]string, 0, len(mp.importBindingToSpecMap))
+		for _, imp := range mp.importBindingToSpecMap {
+			importedFiles = append(importedFiles, imp.spec)
+		}
+
+		if depErr := depTracker.RecordModuleDependencies(job.file, styleImports, importedFiles); depErr != nil {
+			// Join dependency resolution errors with any existing processing errors
+			err = errors.Join(err, depErr)
+		}
+	}
+
 	return module, tagAliases, mp.logger, err
 }
 
@@ -242,33 +234,20 @@ func postprocess(
 
 // Generates a custom-elements manifest from a list of typescript files
 func Generate(ctx W.WorkspaceContext) (manifest *string, errs error) {
-	cfg, err := ctx.Config()
+	session, err := NewGenerateSession(ctx)
 	if err != nil {
 		return nil, err
 	}
-	qm, err := Q.NewQueryManager()
+	defer session.Close()
+
+	pkg, err := session.GenerateFullManifest(context.Background())
 	if err != nil {
 		return nil, err
 	}
-	defer qm.Close()
-	result, err := preprocess(ctx)
+
+	manifestStr, err := M.SerializeToString(pkg)
 	if err != nil {
-		errs = errors.Join(errs, fmt.Errorf("module preprocess failed:\n%w", err))
+		return nil, fmt.Errorf("module serialize failed: %w", err)
 	}
-	modules, logs, aliases, err := process(ctx, result, qm)
-	if err != nil {
-		errs = errors.Join(errs, fmt.Errorf("module process failed:\n%w", err))
-	}
-	pkg, err := postprocess(ctx, result, aliases, qm, modules)
-	if err != nil {
-		errs = errors.Join(errs, fmt.Errorf("module postprocess failed:\n%w", err))
-	}
-	if cfg.Verbose {
-		RenderBarChart(logs)
-	}
-	manifestStr, err := M.SerializeToString(&pkg)
-	if err != nil {
-		return nil, errors.Join(errs, fmt.Errorf("module serialize failed:\n%w", err))
-	}
-	return &manifestStr, errs
+	return &manifestStr, nil
 }

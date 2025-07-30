@@ -76,6 +76,26 @@ func (c *CssPart) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Clone creates a deep copy of the CssPart.
+// Handles the embedded FullyQualified structure and startByte.
+//
+// Performance: Efficient deep copying without JSON serialization overhead
+// Thread Safety: Safe for concurrent use (creates new instance)
+func (c CssPart) Clone() CssPart {
+	cloned := CssPart{
+		StartByte: c.StartByte,
+	}
+
+	// Clone the embedded FullyQualified
+	cloned.FullyQualified = c.FullyQualified.Clone()
+
+	if c.Deprecated != nil {
+		cloned.Deprecated = c.Deprecated.Clone()
+	}
+
+	return cloned
+}
+
 // RenderableCssPart adds context and render/traversal methods.
 type RenderableCssPart struct {
 	CssPart                  *CssPart

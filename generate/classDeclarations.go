@@ -42,7 +42,7 @@ func (mp *ModuleProcessor) generateClassDeclarationParsed(
 	isCustomElement := hasCustomElementDecorator || isHTMLElement
 	classDeclarationCaptures, hasClassDeclaration := captures["class.declaration"]
 	if !(hasClassDeclaration && len(classDeclarationCaptures) > 0) {
-		return nil, errors.New("Could not find class declaration")
+		return nil, NewError("could not find class declaration")
 	}
 
 	classDeclarationNodeId := classDeclarationCaptures[0].NodeId

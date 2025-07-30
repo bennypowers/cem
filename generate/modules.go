@@ -58,6 +58,7 @@ type ModuleProcessor struct {
 	errors                       error
 	packageJSON                  *M.PackageJSON
 	ctx                          W.WorkspaceContext
+	cssCache                     CssCache // CSS parsing cache for performance
 }
 
 func NewModuleProcessor(
@@ -65,6 +66,7 @@ func NewModuleProcessor(
 	file string,
 	parser *ts.Parser,
 	queryManager *Q.QueryManager,
+	cssCache CssCache,
 ) (*ModuleProcessor, error) {
 	cfg, err := ctx.Config()
 	if err != nil {
@@ -118,6 +120,7 @@ func NewModuleProcessor(
 		classNamesAdded:              S.NewSet[string](),
 		packageJSON:                  packageJson,
 		ctx:                          ctx,
+		cssCache:                     cssCache,
 	}, nil
 }
 

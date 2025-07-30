@@ -1,0 +1,1683 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-accessors.js",
+      "declarations": [
+        {
+          "name": "ClassAccessors",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "getter",
+              "type": {
+                "text": "string"
+              },
+              "readonly": true,
+              "kind": "field"
+            },
+            {
+              "name": "getterDescribed",
+              "description": "getter description",
+              "type": {
+                "text": "string"
+              },
+              "readonly": true,
+              "kind": "field"
+            },
+            {
+              "name": "getterSummarized",
+              "summary": "getter summary",
+              "type": {
+                "text": "string"
+              },
+              "readonly": true,
+              "kind": "field"
+            },
+            {
+              "name": "pair",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "pairDescribed",
+              "description": "pair with description",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "pairSummarized",
+              "summary": "pair with summary",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "propertyPair",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "propertypair"
+            },
+            {
+              "name": "propertyPairDescribed",
+              "description": "property pair with description",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "property-pair-described"
+            },
+            {
+              "name": "propertyPairSummarized",
+              "summary": "property pair with summary",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "propertypairsummarized",
+              "reflects": true
+            }
+          ],
+          "kind": "class",
+          "tagName": "class-accessors",
+          "attributes": [
+            {
+              "name": "propertypair",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "propertyPair"
+            },
+            {
+              "name": "property-pair-described",
+              "description": "property pair with description",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "propertyPairDescribed"
+            },
+            {
+              "name": "propertypairsummarized",
+              "summary": "property pair with summary",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "propertyPairSummarized"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-accessors",
+          "declaration": {
+            "name": "ClassAccessors",
+            "module": "src/class-accessors.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/class-ce-and-non-ce.js",
+      "declarations": [
+        {
+          "name": "NonCe",
+          "summary": "NOT a custom element",
+          "kind": "class"
+        },
+        {
+          "name": "CustomElement",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "custom-element",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "custom-element",
+          "declaration": {
+            "name": "CustomElement",
+            "module": "src/class-ce-and-non-ce.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/class-exports.js",
+      "declarations": [
+        {
+          "name": "ClassCe",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "class-ce",
+          "customElement": true
+        },
+        {
+          "name": "ClassExported",
+          "kind": "class"
+        },
+        {
+          "name": "ClassExportedCe",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "class-exported-ce",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-ce",
+          "declaration": {
+            "name": "ClassCe",
+            "module": "src/class-exports.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ClassExported",
+          "declaration": {
+            "name": "ClassExported",
+            "module": "src/class-exports.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "class-exported-ce",
+          "declaration": {
+            "name": "ClassExportedCe",
+            "module": "src/class-exports.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ClassExportedCe",
+          "declaration": {
+            "name": "ClassExportedCe",
+            "module": "src/class-exports.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/class-fields-jsdoc.js",
+      "declarations": [
+        {
+          "name": "ClassFieldsJsdoc",
+          "members": [
+            {
+              "name": "description",
+              "description": "string description",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "summary",
+              "summary": "summary",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "type",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "initialized",
+              "summary": "initialized summary",
+              "description": "initialized description",
+              "type": {
+                "text": "Foo"
+              },
+              "default": "'string'",
+              "kind": "field"
+            }
+          ],
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "ClassFieldsJsdoc",
+          "declaration": {
+            "name": "ClassFieldsJsdoc",
+            "module": "src/class-fields-jsdoc.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/class-fields-multiple.js",
+      "declarations": [
+        {
+          "name": "DupeEvent",
+          "superclass": {
+            "name": "Event",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "dupe",
+              "type": {
+                "text": "boolean"
+              },
+              "kind": "field"
+            }
+          ],
+          "kind": "class"
+        },
+        {
+          "name": "ClassFieldsDuplicate",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "dupe",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "true",
+              "kind": "field",
+              "static": true
+            },
+            {
+              "name": "dupe",
+              "description": "Even though `DupeEvent` has an `dupe` field, this is still tracked",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "dupe",
+              "reflects": true
+            }
+          ],
+          "kind": "class",
+          "tagName": "class-fields-duplicate",
+          "attributes": [
+            {
+              "name": "dupe",
+              "description": "Even though `DupeEvent` has an `dupe` field, this is still tracked",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "dupe"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "DupeEvent",
+          "declaration": {
+            "name": "DupeEvent",
+            "module": "src/class-fields-multiple.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "class-fields-duplicate",
+          "declaration": {
+            "name": "ClassFieldsDuplicate",
+            "module": "src/class-fields-multiple.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/class-fields-static.js",
+      "declarations": [
+        {
+          "name": "ClassFields",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "rstat",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "readonly": true,
+              "kind": "field",
+              "static": true
+            },
+            {
+              "name": "rstatpub",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "readonly": true,
+              "kind": "field",
+              "static": true
+            },
+            {
+              "name": "rstatpriv",
+              "type": {
+                "text": "Float"
+              },
+              "default": "0.1",
+              "readonly": true,
+              "kind": "field",
+              "static": true,
+              "privacy": "private"
+            },
+            {
+              "name": "rstatprot",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "readonly": true,
+              "kind": "field",
+              "static": true,
+              "privacy": "protected"
+            },
+            {
+              "name": "statpriv",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field",
+              "static": true,
+              "privacy": "private"
+            },
+            {
+              "name": "statprot",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field",
+              "static": true,
+              "privacy": "protected"
+            },
+            {
+              "name": "stat",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field",
+              "static": true
+            },
+            {
+              "name": "stat",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field"
+            }
+          ],
+          "kind": "class",
+          "tagName": "class-fields",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-fields",
+          "declaration": {
+            "name": "ClassFields",
+            "module": "src/class-fields-static.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/class-fields.js",
+      "declarations": [
+        {
+          "name": "ClassFields",
+          "members": [
+            {
+              "name": "string",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "protected",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "privacy": "protected"
+            },
+            {
+              "name": "private",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "privacy": "private"
+            },
+            {
+              "name": "initialized",
+              "type": {
+                "text": "string"
+              },
+              "default": "'string'",
+              "kind": "field"
+            },
+            {
+              "name": "bool",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field"
+            },
+            {
+              "name": "num",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field"
+            },
+            {
+              "name": "decorated",
+              "description": "The class is not a custom element, so even though this field has a @property decorator,\nthis member entry mustn't have an attribute",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field"
+            },
+            {
+              "name": "fieldMethod",
+              "description": "must be classified as a method",
+              "kind": "method"
+            }
+          ],
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "ClassFields",
+          "declaration": {
+            "name": "ClassFields",
+            "module": "src/class-fields.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/class-ignored-members.js",
+      "declarations": [
+        {
+          "name": "ClassIgnoredMembers",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "class-ignored-members",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-ignored-members",
+          "declaration": {
+            "name": "ClassIgnoredMembers",
+            "module": "src/class-ignored-members.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/class-members.js",
+      "declarations": [
+        {
+          "name": "ClassMembers",
+          "description": "Tests that fields, methods, properties, attributes, and arrow methods are picked up",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "attrReflect",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "attr-reflect",
+              "reflects": true
+            },
+            {
+              "name": "reflect",
+              "type": {
+                "text": "'reflect'"
+              },
+              "kind": "field",
+              "attribute": "reflect",
+              "reflects": true
+            },
+            {
+              "name": "attrReflectBool",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "attr-reflect-bool",
+              "reflects": true
+            },
+            {
+              "name": "field",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field"
+            },
+            {
+              "name": "arrow",
+              "kind": "method"
+            },
+            {
+              "name": "method",
+              "kind": "method"
+            }
+          ],
+          "kind": "class",
+          "tagName": "class-members",
+          "attributes": [
+            {
+              "name": "jsdoc-attr"
+            },
+            {
+              "name": "attr-reflect",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "attrReflect"
+            },
+            {
+              "name": "reflect",
+              "type": {
+                "text": "'reflect'"
+              },
+              "fieldName": "reflect"
+            },
+            {
+              "name": "attr-reflect-bool",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "attrReflectBool"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-members",
+          "declaration": {
+            "name": "ClassMembers",
+            "module": "src/class-members.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ClassMembers",
+          "declaration": {
+            "name": "ClassMembers",
+            "module": "src/class-members.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/class-methods.js",
+      "declarations": [
+        {
+          "name": "ClassMethods",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "method",
+              "kind": "method"
+            },
+            {
+              "name": "$static",
+              "kind": "method",
+              "static": true
+            },
+            {
+              "name": "$public",
+              "kind": "method",
+              "privacy": "public"
+            },
+            {
+              "name": "$protected",
+              "kind": "method",
+              "privacy": "protected"
+            },
+            {
+              "name": "$private",
+              "kind": "method",
+              "privacy": "private"
+            },
+            {
+              "parameters": [
+                {
+                  "name": "unary",
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ],
+              "return": {
+                "type": {
+                  "text": "string"
+                }
+              },
+              "name": "unary",
+              "kind": "method"
+            },
+            {
+              "parameters": [
+                {
+                  "name": "binary0",
+                  "type": {
+                    "text": "string"
+                  }
+                },
+                {
+                  "name": "binary1",
+                  "type": {
+                    "text": "number"
+                  }
+                }
+              ],
+              "return": {
+                "type": {
+                  "text": "string"
+                }
+              },
+              "name": "binary",
+              "kind": "method"
+            },
+            {
+              "parameters": [
+                {
+                  "name": "optional0",
+                  "type": {
+                    "text": "string"
+                  }
+                },
+                {
+                  "name": "optional1",
+                  "type": {
+                    "text": "number"
+                  }
+                }
+              ],
+              "return": {
+                "type": {
+                  "text": "string"
+                }
+              },
+              "name": "optional",
+              "kind": "method"
+            },
+            {
+              "parameters": [
+                {
+                  "name": "spreads",
+                  "type": {
+                    "text": "number[]"
+                  },
+                  "rest": true
+                }
+              ],
+              "return": {
+                "type": {
+                  "text": "string"
+                }
+              },
+              "name": "spread",
+              "kind": "method"
+            },
+            {
+              "parameters": [
+                {
+                  "name": "name",
+                  "type": {
+                    "text": "never"
+                  }
+                },
+                {
+                  "name": "optional",
+                  "type": {
+                    "text": "never"
+                  }
+                },
+                {
+                  "name": "default",
+                  "type": {
+                    "text": "never"
+                  }
+                },
+                {
+                  "name": "typed",
+                  "type": {
+                    "text": "never"
+                  }
+                },
+                {
+                  "name": "typedOptional",
+                  "type": {
+                    "text": "never"
+                  }
+                },
+                {
+                  "name": "typedOptionalDefault",
+                  "type": {
+                    "text": "never"
+                  }
+                },
+                {
+                  "name": "obj",
+                  "type": {
+                    "text": "never"
+                  }
+                }
+              ],
+              "return": {
+                "description": "foo"
+              },
+              "name": "jsdoc",
+              "description": "description",
+              "kind": "method"
+            },
+            {
+              "name": "fieldMethod",
+              "kind": "method"
+            }
+          ],
+          "kind": "class",
+          "tagName": "class-methods",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-methods",
+          "declaration": {
+            "name": "ClassMethods",
+            "module": "src/class-methods.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/class-multiple.js",
+      "declarations": [
+        {
+          "name": "ClassA",
+          "superclass": {
+            "name": "Event",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "aField",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "return": {
+                "type": {
+                  "text": "string"
+                }
+              },
+              "name": "aMethod",
+              "kind": "method"
+            }
+          ],
+          "kind": "class"
+        },
+        {
+          "name": "ClassB",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "bField",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "bProp",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "bprop"
+            },
+            {
+              "return": {
+                "type": {
+                  "text": "string"
+                }
+              },
+              "name": "bMethod",
+              "kind": "method"
+            }
+          ],
+          "kind": "class",
+          "tagName": "class-b",
+          "attributes": [
+            {
+              "name": "bprop",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "bProp"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "ClassA",
+          "declaration": {
+            "name": "ClassA",
+            "module": "src/class-multiple.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "class-b",
+          "declaration": {
+            "name": "ClassB",
+            "module": "src/class-multiple.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/class-parameter-properties.js",
+      "declarations": [
+        {
+          "name": "Class",
+          "superclass": {
+            "name": "Event",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "field",
+              "type": {
+                "text": "boolean"
+              },
+              "kind": "field"
+            }
+          ],
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "Class",
+          "declaration": {
+            "name": "Class",
+            "module": "src/class-parameter-properties.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/class-reactive-properties-jsdoc.js",
+      "declarations": [
+        {
+          "name": "ClassReactiveProperties",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "stringDescription",
+              "description": "string description field",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "stringdescription"
+            },
+            {
+              "name": "stringMultilineDescription",
+              "description": "multiline\ndescription\nfield",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "stringmultilinedescription"
+            },
+            {
+              "name": "summary",
+              "summary": "summary field",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "summary"
+            },
+            {
+              "name": "multilineSummary",
+              "summary": "multiline\nsummary\nfield",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "multilinesummary"
+            },
+            {
+              "name": "camelCase",
+              "summary": "camelcase field",
+              "description": "camelcase\nmultiline\ndescription\nfield",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "camel-case"
+            },
+            {
+              "name": "multiDecorator",
+              "description": "highly decorated field",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field",
+              "attribute": "multi-decorator",
+              "reflects": true
+            },
+            {
+              "name": "typejsdoc",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "typejsdoc"
+            },
+            {
+              "name": "deprecated",
+              "type": {
+                "text": "string"
+              },
+              "deprecated": true,
+              "kind": "field",
+              "attribute": "deprecated"
+            },
+            {
+              "name": "reason",
+              "type": {
+                "text": "string"
+              },
+              "deprecated": "reason",
+              "kind": "field",
+              "attribute": "reason"
+            }
+          ],
+          "kind": "class",
+          "tagName": "class-reactive-properties",
+          "attributes": [
+            {
+              "name": "stringdescription",
+              "description": "string description field",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "stringDescription"
+            },
+            {
+              "name": "stringmultilinedescription",
+              "description": "multiline\ndescription\nfield",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "stringMultilineDescription"
+            },
+            {
+              "name": "summary",
+              "summary": "summary field",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "summary"
+            },
+            {
+              "name": "multilinesummary",
+              "summary": "multiline\nsummary\nfield",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "multilineSummary"
+            },
+            {
+              "name": "camel-case",
+              "summary": "camelcase field",
+              "description": "camelcase\nmultiline\ndescription\nfield",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "camelCase"
+            },
+            {
+              "name": "multi-decorator",
+              "description": "highly decorated field",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "fieldName": "multiDecorator"
+            },
+            {
+              "name": "typejsdoc",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "typejsdoc"
+            },
+            {
+              "name": "deprecated",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "deprecated",
+              "deprecated": true
+            },
+            {
+              "name": "reason",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "reason",
+              "deprecated": "reason"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-reactive-properties",
+          "declaration": {
+            "name": "ClassReactiveProperties",
+            "module": "src/class-reactive-properties-jsdoc.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/class-reactive-properties.js",
+      "declarations": [
+        {
+          "name": "ClassReactiveProperties",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "string",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "string"
+            },
+            {
+              "name": "protected",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "privacy": "protected"
+            },
+            {
+              "name": "initialized",
+              "type": {
+                "text": "string"
+              },
+              "default": "'string'",
+              "kind": "field",
+              "attribute": "initialized"
+            },
+            {
+              "name": "reflect",
+              "type": {
+                "text": "boolean"
+              },
+              "kind": "field",
+              "attribute": "reflect",
+              "reflects": true
+            },
+            {
+              "name": "attrReflects",
+              "type": {
+                "text": "boolean"
+              },
+              "kind": "field",
+              "attribute": "attr-reflects",
+              "reflects": true
+            },
+            {
+              "name": "truetrue",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "truetrue",
+              "reflects": true
+            },
+            {
+              "name": "nonAttr",
+              "type": {
+                "text": "number"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "multiDecorator",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field",
+              "attribute": "multi-decorator",
+              "reflects": true
+            }
+          ],
+          "kind": "class",
+          "tagName": "class-reactive-properties",
+          "attributes": [
+            {
+              "name": "string",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "string"
+            },
+            {
+              "name": "initialized",
+              "type": {
+                "text": "string"
+              },
+              "default": "'string'",
+              "fieldName": "initialized"
+            },
+            {
+              "name": "reflect",
+              "type": {
+                "text": "boolean"
+              },
+              "fieldName": "reflect"
+            },
+            {
+              "name": "attr-reflects",
+              "type": {
+                "text": "boolean"
+              },
+              "fieldName": "attrReflects"
+            },
+            {
+              "name": "truetrue",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "truetrue"
+            },
+            {
+              "name": "multi-decorator",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "fieldName": "multiDecorator"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-reactive-properties",
+          "declaration": {
+            "name": "ClassReactiveProperties",
+            "module": "src/class-reactive-properties.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/class-reflecting-attribute.js",
+      "declarations": [
+        {
+          "name": "ClassReflectingAttr",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "reflectingAttribute",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "reflecting-attribute",
+              "reflects": true
+            }
+          ],
+          "kind": "class",
+          "tagName": "class-reflecting-attr",
+          "attributes": [
+            {
+              "name": "reflecting-attribute",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "reflectingAttribute"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-reflecting-attr",
+          "declaration": {
+            "name": "ClassReflectingAttr",
+            "module": "src/class-reflecting-attribute.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/export-class.js",
+      "declarations": [
+        {
+          "name": "Simple",
+          "kind": "class"
+        },
+        {
+          "name": "Subclass",
+          "superclass": {
+            "name": "Simple"
+          },
+          "kind": "class"
+        },
+        {
+          "name": "Decorated",
+          "superclass": {
+            "name": "Simple"
+          },
+          "kind": "class"
+        },
+        {
+          "name": "Foo",
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "Simple",
+          "declaration": {
+            "name": "Simple",
+            "module": "src/export-class.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "Subclass",
+          "declaration": {
+            "name": "Subclass",
+            "module": "src/export-class.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/export-function.js",
+      "declarations": [
+        {
+          "name": "simple",
+          "kind": "function"
+        },
+        {
+          "name": "described",
+          "description": "description",
+          "kind": "function"
+        },
+        {
+          "name": "summarized",
+          "summary": "summary",
+          "kind": "function"
+        },
+        {
+          "name": "async",
+          "kind": "function"
+        },
+        {
+          "name": "generator",
+          "kind": "function"
+        },
+        {
+          "name": "arrowsimple",
+          "kind": "function"
+        },
+        {
+          "name": "arrowdescribed",
+          "description": "arrow description",
+          "kind": "function"
+        },
+        {
+          "name": "arrowsummarized",
+          "summary": "arrow summary",
+          "kind": "function"
+        },
+        {
+          "name": "arrowasync",
+          "kind": "function"
+        },
+        {
+          "parameters": [
+            {
+              "name": "a",
+              "type": {
+                "text": "string"
+              }
+            }
+          ],
+          "name": "param",
+          "kind": "function"
+        },
+        {
+          "parameters": [
+            {
+              "name": "a",
+              "description": "param description",
+              "type": {
+                "text": "string"
+              }
+            }
+          ],
+          "return": {
+            "description": "return description"
+          },
+          "name": "describedparam",
+          "description": "description",
+          "kind": "function"
+        },
+        {
+          "parameters": [
+            {
+              "name": "as",
+              "type": {
+                "text": "string[]"
+              },
+              "rest": true
+            }
+          ],
+          "name": "rest",
+          "kind": "function"
+        },
+        {
+          "parameters": [
+            {
+              "name": "as",
+              "description": "rest description",
+              "type": {
+                "text": "string[]"
+              },
+              "rest": true
+            }
+          ],
+          "return": {
+            "description": "return description"
+          },
+          "name": "describedrest",
+          "description": "description",
+          "kind": "function"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "simple",
+          "declaration": {
+            "name": "simple",
+            "module": "src/export-function.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "described",
+          "declaration": {
+            "name": "described",
+            "module": "src/export-function.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "summarized",
+          "declaration": {
+            "name": "summarized",
+            "module": "src/export-function.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "async",
+          "declaration": {
+            "name": "async",
+            "module": "src/export-function.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "generator",
+          "declaration": {
+            "name": "generator",
+            "module": "src/export-function.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "arrowsimple",
+          "declaration": {
+            "name": "arrowsimple",
+            "module": "src/export-function.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "arrowdescribed",
+          "declaration": {
+            "name": "arrowdescribed",
+            "module": "src/export-function.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "arrowsummarized",
+          "declaration": {
+            "name": "arrowsummarized",
+            "module": "src/export-function.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "arrowasync",
+          "declaration": {
+            "name": "arrowasync",
+            "module": "src/export-function.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "param",
+          "declaration": {
+            "name": "param",
+            "module": "src/export-function.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "describedparam",
+          "declaration": {
+            "name": "describedparam",
+            "module": "src/export-function.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "rest",
+          "declaration": {
+            "name": "rest",
+            "module": "src/export-function.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "describedrest",
+          "declaration": {
+            "name": "describedrest",
+            "module": "src/export-function.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/export-var.js",
+      "declarations": [
+        {
+          "name": "$const",
+          "type": {
+            "text": ": string"
+          },
+          "kind": "variable"
+        },
+        {
+          "name": "$let",
+          "kind": "variable"
+        },
+        {
+          "name": "$var",
+          "kind": "variable"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "$const",
+          "declaration": {
+            "name": "$const",
+            "module": "src/export-var.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "$let",
+          "declaration": {
+            "name": "$let",
+            "module": "src/export-var.js"
+          }
+        }
+      ]
+    }
+  ]
+}

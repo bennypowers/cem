@@ -100,14 +100,14 @@ func (mp *ModuleProcessor) processRenderTemplate(
 			// YAML comment: parse for both slot and part documentation
 			slotDoc, err := parseYamlComment(commentText, "slot")
 			if err != nil {
-				errs = errors.Join(errs, fmt.Errorf("slot %q: %w", slot.Name, err))
+				errs = errors.Join(errs, WrapComponentError("slot", slot.Name, err))
 			}
 			slot.Description = slotDoc.Description
 			slot.Summary = slotDoc.Summary
 			slot.Deprecated = M.NewDeprecated(slotDoc.Deprecated)
 			partDoc, err := parseYamlComment(commentText, "part")
 			if err != nil {
-				errs = errors.Join(errs, fmt.Errorf("part %v: %w", partNames, err))
+				errs = errors.Join(errs, WrapComponentError("part", fmt.Sprintf("%v", partNames), err))
 			}
 			for _, partName := range partNames {
 				part := M.NewCssPart(
@@ -145,7 +145,7 @@ func (mp *ModuleProcessor) processRenderTemplate(
 				if comment, ok := captureMap["comment"]; ok && len(comment) > 0 {
 					yamlDoc, err := parseYamlComment(comment[0].Text, "part")
 					if err != nil {
-						errs = errors.Join(errs, fmt.Errorf("part %q: %w", partName, err))
+						errs = errors.Join(errs, WrapComponentError("part", partName, err))
 					}
 					part := M.NewCssPart(
 						partNameNode.StartByte+offset,

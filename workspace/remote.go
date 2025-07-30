@@ -284,6 +284,40 @@ func (c *RemoteWorkspaceContext) Root() string {
 	return c.cacheDir
 }
 
+// ModulePathToFS converts a module path to filesystem path for watching
+func (c *RemoteWorkspaceContext) ModulePathToFS(modulePath string) string {
+	if filepath.IsAbs(modulePath) {
+		return modulePath
+	}
+	return filepath.Join(c.cacheDir, modulePath)
+}
+
+// FSPathToModule converts a filesystem path to module path for manifest lookup
+func (c *RemoteWorkspaceContext) FSPathToModule(fsPath string) (string, error) {
+	rel, err := filepath.Rel(c.cacheDir, fsPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to compute relative path from %s to %s: %w", c.cacheDir, fsPath, err)
+	}
+	return rel, nil
+}
+
+// ResolveModuleDependency resolves a dependency path relative to a module
+func (c *RemoteWorkspaceContext) ResolveModuleDependency(modulePath, dependencyPath string) (string, error) {
+	if filepath.IsAbs(dependencyPath) {
+		// Convert to module-relative path
+		rel, err := filepath.Rel(c.cacheDir, dependencyPath)
+		if err != nil {
+			return "", fmt.Errorf("failed to resolve absolute dependency path %s relative to %s: %w", dependencyPath, c.cacheDir, err)
+		}
+		return rel, nil
+	}
+
+	// Resolve relative to module's directory
+	moduleDir := filepath.Dir(modulePath)
+	resolved := filepath.Join(moduleDir, dependencyPath)
+	return filepath.Clean(resolved), nil
+}
+
 func setupTempdirFromCache(cacheDir string) (string, error) {
 	tempdir, err := os.MkdirTemp("", "cem-remote-*")
 	if err != nil {

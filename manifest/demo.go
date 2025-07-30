@@ -29,6 +29,25 @@ type Demo struct {
 	Source      *SourceReference `json:"source,omitempty"`
 }
 
+// Clone creates a deep copy of the Demo.
+// Handles the source reference with proper deep copying.
+//
+// Performance: Efficient deep copying without JSON serialization overhead
+// Thread Safety: Safe for concurrent use (creates new instance)
+func (d Demo) Clone() Demo {
+	cloned := Demo{
+		Description: d.Description,
+		URL:         d.URL,
+	}
+
+	if d.Source != nil {
+		source := d.Source.Clone()
+		cloned.Source = &source
+	}
+
+	return cloned
+}
+
 type RenderableDemo struct {
 	Demo                     *Demo
 	CustomElementDeclaration *CustomElementDeclaration

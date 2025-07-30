@@ -61,6 +61,26 @@ func (s *Slot) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Clone creates a deep copy of the Slot.
+// Handles the embedded FullyQualified structure and startByte.
+//
+// Performance: Efficient deep copying without JSON serialization overhead
+// Thread Safety: Safe for concurrent use (creates new instance)
+func (s Slot) Clone() Slot {
+	cloned := Slot{
+		StartByte: s.StartByte,
+	}
+
+	// Clone the embedded FullyQualified
+	cloned.FullyQualified = s.FullyQualified.Clone()
+
+	if s.Deprecated != nil {
+		cloned.Deprecated = s.Deprecated.Clone()
+	}
+
+	return cloned
+}
+
 // RenderableSlot adds context and render/traversal methods.
 type RenderableSlot struct {
 	Slot                     *Slot

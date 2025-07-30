@@ -112,4 +112,12 @@ type WorkspaceContext interface {
 	Root() string
 	// Cleanup releases any resources (e.g., tempdirs) held by the context.
 	Cleanup() error
+
+	// Path resolution utilities for consistent module/filesystem path mapping
+	// ModulePathToFS converts a module path to filesystem path for watching
+	ModulePathToFS(modulePath string) string
+	// FSPathToModule converts a filesystem path to module path for manifest lookup
+	FSPathToModule(fsPath string) (string, error)
+	// ResolveModuleDependency resolves a dependency path relative to a module
+	ResolveModuleDependency(modulePath, dependencyPath string) (string, error)
 }

@@ -62,6 +62,33 @@ func (e *Event) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Clone creates a deep copy of the Event.
+// Handles all embedded structures and references with proper deep copying.
+//
+// Performance: Efficient deep copying without JSON serialization overhead
+// Thread Safety: Safe for concurrent use (creates new instance)
+func (e Event) Clone() Event {
+	cloned := Event{}
+
+	// Clone the embedded FullyQualified
+	cloned.FullyQualified = e.FullyQualified.Clone()
+
+	if e.Deprecated != nil {
+		cloned.Deprecated = e.Deprecated.Clone()
+	}
+
+	if e.InheritedFrom != nil {
+		inheritedFrom := e.InheritedFrom.Clone()
+		cloned.InheritedFrom = &inheritedFrom
+	}
+
+	if e.Type != nil {
+		cloned.Type = e.Type.Clone()
+	}
+
+	return cloned
+}
+
 type RenderableEvent struct {
 	Event                    *Event
 	CustomElementDeclaration *CustomElementDeclaration

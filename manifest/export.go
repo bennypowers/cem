@@ -28,6 +28,7 @@ var _ Deprecatable = (*CustomElementExport)(nil)
 type Export interface {
 	isExport()
 	GetStartByte() uint
+	Clone() Export
 }
 
 // JavaScriptExport represents a JS export.
@@ -45,7 +46,7 @@ type CustomElementExport struct {
 	Kind        string     `json:"kind"` // 'custom-element-definition'
 	Name        string     `json:"name"`
 	Declaration *Reference `json:"declaration"`
-	Deprecated  any        `json:"deprecated,omitempty"` // bool or string
+	Deprecated  Deprecated `json:"deprecated,omitempty"` // bool or string
 }
 
 func NewCustomElementExport(
@@ -61,7 +62,7 @@ func NewCustomElementExport(
 		Declaration: declaration,
 	}
 	if deprecated != nil {
-		ce.Deprecated = deprecated
+		ce.Deprecated = *deprecated
 	}
 	return ce
 }
@@ -73,6 +74,32 @@ func (x *JavaScriptExport) IsDeprecated() bool {
 		return false
 	}
 	return x.Deprecated != nil
+}
+
+// Clone creates a deep copy of the JavaScriptExport.
+func (j *JavaScriptExport) Clone() Export {
+	if j == nil {
+		return nil
+	}
+
+	cloned := &JavaScriptExport{
+		StartByte: j.StartByte,
+		Kind:      j.Kind,
+		Name:      j.Name,
+	}
+
+	if j.Deprecated != nil {
+		if deprecatedClone := j.Deprecated.Clone(); deprecatedClone != nil {
+			cloned.Deprecated = deprecatedClone
+		}
+	}
+
+	if j.Declaration != nil {
+		declaration := j.Declaration.Clone()
+		cloned.Declaration = &declaration
+	}
+
+	return cloned
 }
 
 func (e *JavaScriptExport) GetStartByte() uint {
@@ -108,6 +135,32 @@ func (x *CustomElementExport) IsDeprecated() bool {
 		return false
 	}
 	return x.Deprecated != nil
+}
+
+// Clone creates a deep copy of the CustomElementExport.
+func (c *CustomElementExport) Clone() Export {
+	if c == nil {
+		return nil
+	}
+
+	cloned := &CustomElementExport{
+		StartByte: c.StartByte,
+		Kind:      c.Kind,
+		Name:      c.Name,
+	}
+
+	if c.Deprecated != nil {
+		if deprecatedClone := c.Deprecated.Clone(); deprecatedClone != nil {
+			cloned.Deprecated = deprecatedClone
+		}
+	}
+
+	if c.Declaration != nil {
+		declaration := c.Declaration.Clone()
+		cloned.Declaration = &declaration
+	}
+
+	return cloned
 }
 
 func (e *CustomElementExport) GetStartByte() uint {

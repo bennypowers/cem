@@ -32,14 +32,50 @@ import (
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
+// CssPropsMap maps CSS property names to their parsed values.
+//
+// Usage: Return type for CssCache.Get(), input for CssCache.Set()
 type CssPropsMap map[string]M.CssCustomProperty
 
+// CssCache defines the interface for CSS parsing cache operations.
+// This abstraction allows for different cache implementations and easier testing.
+// Provides abstraction over CSS parsing cache to enable dependency injection
+// and testing isolation. Implementations should be thread-safe.
+//
+// Callsites:
+// - session_core.go:39,57,216 (GenerateSession integration)
+// - modules.go:NewModuleProcessor (dependency injection)
+// - parallel.go:ModuleBatchProcessor (worker thread access)
+//
+// Implementations:
+// - CssParseCache: Default implementation with sync.RWMutex protection
+type CssCache interface {
+	// Get retrieves cached CSS properties for a file path
+	Get(path string) (CssPropsMap, bool)
+	// Set stores CSS properties for a file path
+	Set(path string, props CssPropsMap)
+	// Invalidate removes cached entries for the given paths
+	Invalidate(paths []string)
+	// Clear removes all cached entries
+	Clear()
+}
+
 // CssParseCache caches parsed CSS files by absolute path.
+// Implements the CssCache interface with thread-safe operations.
+//
+// Usage: Created by NewCssParseCache(), injected into ModuleProcessor
 type CssParseCache struct {
 	mu    sync.RWMutex
 	cache map[string]CssPropsMap
 }
 
+// NewCssParseCache creates a new CSS parse cache.
+//
+// Callsites:
+// - session_core.go:57 (GenerateSession initialization)
+// - generate.go:96 (global cssParseCache initialization)
+//
+// Returns: Thread-safe CSS cache implementation
 func NewCssParseCache() *CssParseCache {
 	return &CssParseCache{
 		cache: make(map[string]CssPropsMap),
@@ -61,6 +97,23 @@ func (c *CssParseCache) Set(path string, props CssPropsMap) {
 	c.cache[path] = props
 }
 
+// Invalidate removes cached entries for the given paths
+func (c *CssParseCache) Invalidate(paths []string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for _, path := range paths {
+		delete(c.cache, path)
+	}
+}
+
+// Clear removes all cached entries
+func (c *CssParseCache) Clear() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.cache = make(map[string]CssPropsMap)
+}
+
+// Global cache instance - will be phased out in favor of dependency injection
 var cssParseCache = NewCssParseCache()
 
 func sortCustomProperty(a M.CssCustomProperty, b M.CssCustomProperty) int {
@@ -174,7 +227,7 @@ func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsM
 					moduleDir := filepath.Dir(mp.absPath)
 					absPath := filepath.Join(moduleDir, spec)
 					// Try cache first
-					if cached, found := cssParseCache.Get(absPath); found {
+					if cached, found := mp.cssCache.Get(absPath); found {
 						maps.Copy(props, cached)
 					} else {
 						content, err := os.ReadFile(absPath)
@@ -191,7 +244,7 @@ func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsM
 							}
 							maps.Copy(props, tmpProps)
 							// Store a copy in cache for this file
-							cssParseCache.Set(absPath, tmpProps)
+							mp.cssCache.Set(absPath, tmpProps)
 						}
 					}
 				}

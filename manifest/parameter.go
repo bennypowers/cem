@@ -57,3 +57,20 @@ func (p *Parameter) UnmarshalJSON(data []byte) error {
 	}
 	return nil
 }
+
+// Clone creates a deep copy of the Parameter.
+// Handles the embedded PropertyLike structure and boolean fields.
+//
+// Performance: Efficient deep copying without JSON serialization overhead
+// Thread Safety: Safe for concurrent use (creates new instance)
+func (p Parameter) Clone() Parameter {
+	cloned := Parameter{
+		Optional: p.Optional,
+		Rest:     p.Rest,
+	}
+
+	// Clone the embedded PropertyLike
+	cloned.PropertyLike = p.PropertyLike.Clone()
+
+	return cloned
+}

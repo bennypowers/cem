@@ -94,6 +94,54 @@ func (m *Module) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Clone creates a deep copy of the JavaScriptModule.
+// Handles all nested declarations and exports with proper deep copying.
+//
+// Usage:
+//
+//	cloned := original.Clone()
+//
+// Performance: Significantly faster than JSON serialization for complex modules
+// Thread Safety: Safe for concurrent use (creates new instance)
+func (m *JavaScriptModule) Clone() *JavaScriptModule {
+	if m == nil {
+		return nil
+	}
+
+	cloned := &JavaScriptModule{
+		Kind:        m.Kind,
+		Path:        m.Path,
+		Summary:     m.Summary,
+		Description: m.Description,
+	}
+
+	if m.Deprecated != nil {
+		cloned.Deprecated = m.Deprecated.Clone()
+	}
+
+	// Clone declarations
+	if len(m.Declarations) > 0 {
+		cloned.Declarations = make([]Declaration, len(m.Declarations))
+		for i, decl := range m.Declarations {
+			cloned.Declarations[i] = decl.Clone()
+		}
+	} else {
+		cloned.Declarations = []Declaration{} // Maintain consistency with unmarshal
+	}
+
+	// Clone exports
+	if len(m.Exports) > 0 {
+		cloned.Exports = make([]Export, len(m.Exports))
+		for i, export := range m.Exports {
+			cloned.Exports[i] = export.Clone()
+		}
+	} else {
+		cloned.Exports = []Export{} // Maintain consistency
+	}
+
+	return cloned
+}
+
 func (x *Module) IsDeprecated() bool {
 	if x == nil {
 		return false

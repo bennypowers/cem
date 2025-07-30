@@ -26,6 +26,7 @@ type Declaration interface {
 	Deprecatable
 	isDeclaration()
 	GetStartByte() uint
+	Clone() Declaration
 }
 
 func unmarshalDeclaration(data json.RawMessage) (Declaration, error) {

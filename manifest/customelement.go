@@ -48,7 +48,92 @@ type CustomElement struct {
 	CustomElement bool                `json:"customElement"`
 }
 
+// Clone creates a deep copy of the CustomElement structure.
+// Handles all nested slices of custom element-specific types.
+func (c CustomElement) Clone() CustomElement {
+	cloned := CustomElement{
+		TagName:       c.TagName,
+		CustomElement: c.CustomElement,
+	}
+
+	if len(c.Attributes) > 0 {
+		cloned.Attributes = make([]Attribute, len(c.Attributes))
+		for i, attr := range c.Attributes {
+			cloned.Attributes[i] = attr.Clone()
+		}
+	}
+
+	if len(c.Events) > 0 {
+		cloned.Events = make([]Event, len(c.Events))
+		for i, event := range c.Events {
+			cloned.Events[i] = event.Clone()
+		}
+	}
+
+	if len(c.Slots) > 0 {
+		cloned.Slots = make([]Slot, len(c.Slots))
+		for i, slot := range c.Slots {
+			cloned.Slots[i] = slot.Clone()
+		}
+	}
+
+	if len(c.CssParts) > 0 {
+		cloned.CssParts = make([]CssPart, len(c.CssParts))
+		for i, part := range c.CssParts {
+			cloned.CssParts[i] = part.Clone()
+		}
+	}
+
+	if len(c.CssProperties) > 0 {
+		cloned.CssProperties = make([]CssCustomProperty, len(c.CssProperties))
+		for i, prop := range c.CssProperties {
+			cloned.CssProperties[i] = prop.Clone()
+		}
+	}
+
+	if len(c.CssStates) > 0 {
+		cloned.CssStates = make([]CssCustomState, len(c.CssStates))
+		for i, state := range c.CssStates {
+			cloned.CssStates[i] = state.Clone()
+		}
+	}
+
+	if len(c.Demos) > 0 {
+		cloned.Demos = make([]Demo, len(c.Demos))
+		for i, demo := range c.Demos {
+			cloned.Demos[i] = demo.Clone()
+		}
+	}
+
+	return cloned
+}
+
 func (*CustomElementDeclaration) isDeclaration() {}
+
+// Clone creates a deep copy of the CustomElementDeclaration.
+// Handles both embedded ClassDeclaration and CustomElement structures with all their nested types.
+//
+// Performance: Efficient deep copying without JSON serialization overhead
+// Thread Safety: Safe for concurrent use (creates new instance)
+func (c *CustomElementDeclaration) Clone() Declaration {
+	if c == nil {
+		return nil
+	}
+
+	cloned := &CustomElementDeclaration{}
+
+	// Clone the embedded ClassDeclaration
+	if classDecl := c.ClassDeclaration.Clone(); classDecl != nil {
+		if cd, ok := classDecl.(*ClassDeclaration); ok {
+			cloned.ClassDeclaration = *cd
+		}
+	}
+
+	// Clone the embedded CustomElement
+	cloned.CustomElement = c.CustomElement.Clone()
+
+	return cloned
+}
 
 func (d *CustomElementDeclaration) AddOrUpdatePart(part CssPart) {
 	i := slices.IndexFunc(d.CssParts, func(p CssPart) bool { return p.Name == part.Name })

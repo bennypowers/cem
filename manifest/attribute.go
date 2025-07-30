@@ -65,6 +65,37 @@ func (a *Attribute) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Clone creates a deep copy of the Attribute.
+// Handles all embedded structures and references with proper deep copying.
+//
+// Performance: Efficient deep copying without JSON serialization overhead
+// Thread Safety: Safe for concurrent use (creates new instance)
+func (a Attribute) Clone() Attribute {
+	cloned := Attribute{
+		Default:   a.Default,
+		FieldName: a.FieldName,
+		StartByte: a.StartByte,
+	}
+
+	// Clone the embedded FullyQualified
+	cloned.FullyQualified = a.FullyQualified.Clone()
+
+	if a.Deprecated != nil {
+		cloned.Deprecated = a.Deprecated.Clone()
+	}
+
+	if a.InheritedFrom != nil {
+		inheritedFrom := a.InheritedFrom.Clone()
+		cloned.InheritedFrom = &inheritedFrom
+	}
+
+	if a.Type != nil {
+		cloned.Type = a.Type.Clone()
+	}
+
+	return cloned
+}
+
 // RenderableAttribute adds context and render/traversal methods.
 type RenderableAttribute struct {
 	Attribute                *Attribute

@@ -42,6 +42,42 @@ type ClassField struct {
 
 func (*ClassField) isClassMember() {}
 
+// Clone creates a deep copy of the ClassField.
+// Handles the embedded PropertyLike and all class field specific fields.
+//
+// Performance: Efficient deep copying without JSON serialization overhead
+// Thread Safety: Safe for concurrent use (creates new instance)
+func (c *ClassField) Clone() ClassMember {
+	if c == nil {
+		return nil
+	}
+
+	cloned := &ClassField{
+		Kind:    c.Kind,
+		Static:  c.Static,
+		Privacy: c.Privacy,
+	}
+
+	// Clone the embedded PropertyLike
+	cloned.PropertyLike = c.PropertyLike.Clone()
+
+	if c.Deprecated != nil {
+		cloned.Deprecated = c.Deprecated.Clone()
+	}
+
+	if c.InheritedFrom != nil {
+		inheritedFrom := c.InheritedFrom.Clone()
+		cloned.InheritedFrom = &inheritedFrom
+	}
+
+	if c.Source != nil {
+		source := c.Source.Clone()
+		cloned.Source = &source
+	}
+
+	return cloned
+}
+
 func (x *ClassField) IsDeprecated() bool {
 	return x != nil && x.Deprecated != nil
 }
@@ -158,6 +194,31 @@ type CustomElementField struct {
 }
 
 func (x *CustomElementField) isClassMember() {}
+
+// Clone creates a deep copy of the CustomElementField.
+// Handles the embedded ClassField and custom element specific fields.
+//
+// Performance: Efficient deep copying without JSON serialization overhead
+// Thread Safety: Safe for concurrent use (creates new instance)
+func (c *CustomElementField) Clone() ClassMember {
+	if c == nil {
+		return nil
+	}
+
+	cloned := &CustomElementField{
+		Attribute: c.Attribute,
+		Reflects:  c.Reflects,
+	}
+
+	// Clone the embedded ClassField
+	if classField := c.ClassField.Clone(); classField != nil {
+		if cf, ok := classField.(*ClassField); ok {
+			cloned.ClassField = *cf
+		}
+	}
+
+	return cloned
+}
 
 func (x *CustomElementField) IsDeprecated() bool {
 	if x == nil {

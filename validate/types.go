@@ -34,7 +34,7 @@ const DefaultLengthThreshold = 200
 
 // Helper methods for type-safe access to manifest data
 
-func (m RawManifest) GetModules() ([]RawModule, bool) {
+func (m RawManifest) Modules() ([]RawModule, bool) {
 	modules, ok := m["modules"].([]any)
 	if !ok {
 		return nil, false
@@ -48,14 +48,14 @@ func (m RawManifest) GetModules() ([]RawModule, bool) {
 	return result, true
 }
 
-func (m RawModule) GetPath() string {
+func (m RawModule) Path() string {
 	if path, ok := m["path"].(string); ok {
 		return path
 	}
 	return ""
 }
 
-func (m RawModule) GetDeclarations() ([]RawDeclaration, bool) {
+func (m RawModule) Declarations() ([]RawDeclaration, bool) {
 	declarations, ok := m["declarations"].([]any)
 	if !ok {
 		return nil, false
@@ -69,21 +69,21 @@ func (m RawModule) GetDeclarations() ([]RawDeclaration, bool) {
 	return result, true
 }
 
-func (d RawDeclaration) GetName() string {
+func (d RawDeclaration) Name() string {
 	if name, ok := d["name"].(string); ok {
 		return name
 	}
 	return ""
 }
 
-func (d RawDeclaration) GetKind() string {
+func (d RawDeclaration) Kind() string {
 	if kind, ok := d["kind"].(string); ok {
 		return kind
 	}
 	return ""
 }
 
-func (d RawDeclaration) GetMembers() ([]RawMember, bool) {
+func (d RawDeclaration) Members() ([]RawMember, bool) {
 	members, ok := d["members"].([]any)
 	if !ok {
 		return nil, false
@@ -97,34 +97,34 @@ func (d RawDeclaration) GetMembers() ([]RawMember, bool) {
 	return result, true
 }
 
-func (d RawDeclaration) GetSuperclass() (RawSuperclass, bool) {
+func (d RawDeclaration) Superclass() (RawSuperclass, bool) {
 	if superclass, ok := d["superclass"].(map[string]any); ok {
 		return RawSuperclass(superclass), true
 	}
 	return nil, false
 }
 
-func (d RawDeclaration) GetCSSProperties() ([]RawProperty, bool) {
+func (d RawDeclaration) CSSProperties() ([]RawProperty, bool) {
 	return d.getPropertyArray("cssProperties")
 }
 
-func (d RawDeclaration) GetCSSParts() ([]RawProperty, bool) {
+func (d RawDeclaration) CSSParts() ([]RawProperty, bool) {
 	return d.getPropertyArray("cssParts")
 }
 
-func (d RawDeclaration) GetCSSStates() ([]RawProperty, bool) {
+func (d RawDeclaration) CSSStates() ([]RawProperty, bool) {
 	return d.getPropertyArray("cssStates")
 }
 
-func (d RawDeclaration) GetAttributes() ([]RawProperty, bool) {
+func (d RawDeclaration) Attributes() ([]RawProperty, bool) {
 	return d.getPropertyArray("attributes")
 }
 
-func (d RawDeclaration) GetEvents() ([]RawProperty, bool) {
+func (d RawDeclaration) Events() ([]RawProperty, bool) {
 	return d.getPropertyArray("events")
 }
 
-func (d RawDeclaration) GetSlots() ([]RawProperty, bool) {
+func (d RawDeclaration) Slots() ([]RawProperty, bool) {
 	return d.getPropertyArray("slots")
 }
 
@@ -142,14 +142,14 @@ func (d RawDeclaration) getPropertyArray(key string) ([]RawProperty, bool) {
 	return result, true
 }
 
-func (m RawMember) GetName() string {
+func (m RawMember) Name() string {
 	if name, ok := m["name"].(string); ok {
 		return name
 	}
 	return ""
 }
 
-func (m RawMember) GetKind() string {
+func (m RawMember) Kind() string {
 	if kind, ok := m["kind"].(string); ok {
 		return kind
 	}
@@ -163,42 +163,42 @@ func (m RawMember) IsStatic() bool {
 	return false
 }
 
-func (m RawMember) GetPrivacy() string {
+func (m RawMember) Privacy() string {
 	if privacy, ok := m["privacy"].(string); ok {
 		return privacy
 	}
 	return ""
 }
 
-func (m RawMember) GetDefault() string {
+func (m RawMember) Default() string {
 	if defaultVal, ok := m["default"].(string); ok {
 		return defaultVal
 	}
 	return ""
 }
 
-func (p RawProperty) GetName() string {
+func (p RawProperty) Name() string {
 	if name, ok := p["name"].(string); ok {
 		return name
 	}
 	return ""
 }
 
-func (p RawProperty) GetDefault() string {
+func (p RawProperty) Default() string {
 	if defaultVal, ok := p["default"].(string); ok {
 		return defaultVal
 	}
 	return ""
 }
 
-func (s RawSuperclass) GetName() string {
+func (s RawSuperclass) Name() string {
 	if name, ok := s["name"].(string); ok {
 		return name
 	}
 	return ""
 }
 
-func (s RawSuperclass) GetModule() string {
+func (s RawSuperclass) Module() string {
 	if module, ok := s["module"].(string); ok {
 		return module
 	}
