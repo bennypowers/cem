@@ -294,7 +294,11 @@ func (c *RemoteWorkspaceContext) ModulePathToFS(modulePath string) string {
 
 // FSPathToModule converts a filesystem path to module path for manifest lookup
 func (c *RemoteWorkspaceContext) FSPathToModule(fsPath string) (string, error) {
-	return filepath.Rel(c.cacheDir, fsPath)
+	rel, err := filepath.Rel(c.cacheDir, fsPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to compute relative path from %s to %s: %w", c.cacheDir, fsPath, err)
+	}
+	return rel, nil
 }
 
 // ResolveModuleDependency resolves a dependency path relative to a module
@@ -304,6 +308,7 @@ func (c *RemoteWorkspaceContext) ResolveModuleDependency(modulePath, dependencyP
 		if rel, err := filepath.Rel(c.cacheDir, dependencyPath); err == nil {
 			return rel
 		}
+		// If filepath.Rel fails, return the original path as fallback
 		return dependencyPath
 	}
 

@@ -217,7 +217,11 @@ func (c *FileSystemWorkspaceContext) ModulePathToFS(modulePath string) string {
 
 // FSPathToModule converts a filesystem path to module path for manifest lookup
 func (c *FileSystemWorkspaceContext) FSPathToModule(fsPath string) (string, error) {
-	return filepath.Rel(c.root, fsPath)
+	rel, err := filepath.Rel(c.root, fsPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to compute relative path from %s to %s: %w", c.root, fsPath, err)
+	}
+	return rel, nil
 }
 
 // ResolveModuleDependency resolves a dependency path relative to a module
@@ -227,6 +231,7 @@ func (c *FileSystemWorkspaceContext) ResolveModuleDependency(modulePath, depende
 		if rel, err := filepath.Rel(c.root, dependencyPath); err == nil {
 			return rel
 		}
+		// If filepath.Rel fails, return the original path as fallback
 		return dependencyPath
 	}
 

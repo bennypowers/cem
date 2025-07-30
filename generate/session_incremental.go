@@ -40,17 +40,17 @@ func (gs *GenerateSession) ProcessChangedFiles(ctx context.Context, changedFiles
 	cssFiles := make([]string, 0)
 	for _, modulePath := range changedFiles {
 		if filepath.Ext(modulePath) == ".css" {
-			fsPath := gs.ctx.ModulePathToFS(modulePath)
+			fsPath := gs.setupCtx.ModulePathToFS(modulePath)
 			cssFiles = append(cssFiles, fsPath)
 		}
 	}
 	if len(cssFiles) > 0 {
-		gs.cssCache.Invalidate(cssFiles)
+		gs.setupCtx.GetCssCache().Invalidate(cssFiles)
 		pterm.Debug.Printf("Invalidated CSS cache for files: %v\n", cssFiles)
 	}
 
 	// Determine which modules are affected by the changes
-	affectedModules := gs.depTracker.GetModulesAffectedByFiles(changedFiles)
+	affectedModules := gs.setupCtx.GetDependencyTracker().GetModulesAffectedByFiles(changedFiles)
 
 	if len(affectedModules) == 0 {
 		// No modules affected, return current manifest
@@ -109,7 +109,7 @@ func (gs *GenerateSession) ProcessModulesIncremental(ctx context.Context, module
 	}
 
 	// Log performance info
-	cfg, _ := gs.ctx.Config()
+	cfg, _ := gs.setupCtx.Config()
 	if cfg != nil && cfg.Verbose {
 		pterm.Debug.Printf("Processed %d modules incrementally\n", len(logs))
 	}
@@ -129,7 +129,7 @@ func (gs *GenerateSession) processSpecificModules(ctx context.Context, result pr
 	validJobs := make([]processJob, 0, len(modulePaths))
 	for _, modulePath := range modulePaths {
 		if includedSet[modulePath] {
-			validJobs = append(validJobs, processJob{file: modulePath, ctx: gs.ctx})
+			validJobs = append(validJobs, processJob{file: modulePath, ctx: gs.setupCtx.WorkspaceContext})
 		} else {
 			pterm.Debug.Printf("Skipping module not in included files: %s\n", modulePath)
 		}
@@ -140,7 +140,7 @@ func (gs *GenerateSession) processSpecificModules(ctx context.Context, result pr
 	}
 
 	// Use parallel processor with dependency tracking and optimized worker count
-	processor := NewModuleBatchProcessor(gs.queryManager, gs.depTracker, gs.cssCache)
+	processor := NewModuleBatchProcessor(gs.setupCtx.GetQueryManager(), gs.setupCtx.GetDependencyTracker(), gs.setupCtx.GetCssCache())
 	processor.SetWorkerCount(len(validJobs)) // Optimize for small incremental builds
 
 	pterm.Debug.Printf("Starting incremental processing with optimized workers for %d modules\n", len(validJobs))
@@ -218,7 +218,7 @@ func (gs *GenerateSession) applyPostProcessingToModules(ctx context.Context, res
 
 			// Discover demos and attach to module if available
 			if len(demoMap) > 0 {
-				err := DD.DiscoverDemos(gs.ctx, allTagAliases, module, gs.queryManager, demoMap)
+				err := DD.DiscoverDemos(gs.setupCtx.WorkspaceContext, allTagAliases, module, gs.setupCtx.GetQueryManager(), demoMap)
 				if err != nil {
 					errsMu.Lock()
 					errsList = append(errsList, err)
@@ -272,7 +272,7 @@ func (gs *GenerateSession) ProcessChangedFilesIncremental(ctx context.Context, c
 	}
 
 	// Determine which modules are affected by the changes
-	affectedModules := gs.depTracker.GetModulesAffectedByFiles(changedFiles)
+	affectedModules := gs.setupCtx.GetDependencyTracker().GetModulesAffectedByFiles(changedFiles)
 
 	if len(affectedModules) == 0 {
 		// No modules affected, return current manifest

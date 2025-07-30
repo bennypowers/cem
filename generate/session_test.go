@@ -64,9 +64,10 @@ func TestNewGenerateSession(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, session)
 
-				// Verify QueryManager is initialized
-				assert.NotNil(t, session.queryManager)
-				assert.Equal(t, ctx, session.ctx)
+				// Verify setup context is initialized
+				assert.NotNil(t, session.setupCtx)
+				assert.NotNil(t, session.setupCtx.GetQueryManager())
+				assert.Equal(t, ctx, session.setupCtx.WorkspaceContext)
 
 				// Test cleanup
 				session.Close()

@@ -22,32 +22,27 @@ import (
 	"fmt"
 	"sync"
 
-	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
 	W "bennypowers.dev/cem/workspace"
 )
 
 // GenerateSession holds reusable state for efficient generation cycles.
-// The QueryManager is expensive to initialize (loads all tree-sitter queries),
-// so we reuse it across multiple generation runs in watch mode.
+// Uses the GenerateSetupContext wrapper for clean setup object management.
 //
 // Callsites:
 // - cmd/generate.go: NewGenerateSession() for watch mode initialization
 // - generate/generate.go: NewGenerateSession() for single generation runs
 // - generate/session_watch.go: Used throughout watch session lifecycle
 //
-// Thread Safety: Protected by sync.RWMutex for concurrent access to manifest and index
+// Thread Safety: sync.RWMutex protects inMemoryManifest and moduleIndex fields for concurrent access
 type GenerateSession struct {
-	ctx              W.WorkspaceContext
-	queryManager     *Q.QueryManager
-	inMemoryManifest *M.Package
-	depTracker       *FileDependencyTracker
-	moduleIndex      map[string]*M.Module // path -> module for O(1) lookups
-	cssCache         CssCache             // CSS parsing cache for performance
+	setupCtx         *GenerateContext
+	inMemoryManifest *M.Package           // protected by mu
+	moduleIndex      map[string]*M.Module // path -> module for O(1) lookups, protected by mu
 	mu               sync.RWMutex         // protects inMemoryManifest and moduleIndex
 }
 
-// NewGenerateSession creates a new session with initialized QueryManager.
+// NewGenerateSession creates a new session with initialized setup context.
 // This is expensive (tree-sitter query loading) and should be done once
 // per watch session or single generation run.
 //
@@ -57,24 +52,21 @@ type GenerateSession struct {
 //
 // Performance: Expensive operation (~10-50ms) due to tree-sitter query compilation
 func NewGenerateSession(ctx W.WorkspaceContext) (*GenerateSession, error) {
-	qm, err := Q.NewQueryManager()
+	setupCtx, err := NewGenerateContext(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("initialize QueryManager: %w", err)
+		return nil, fmt.Errorf("initialize setup context: %w", err)
 	}
 
 	return &GenerateSession{
-		ctx:          ctx,
-		queryManager: qm,
-		depTracker:   NewFileDependencyTracker(ctx),
-		moduleIndex:  make(map[string]*M.Module),
-		cssCache:     NewCssParseCache(),
+		setupCtx:    setupCtx,
+		moduleIndex: make(map[string]*M.Module),
 	}, nil
 }
 
 // Close releases resources held by the session
 func (gs *GenerateSession) Close() {
-	if gs.queryManager != nil {
-		gs.queryManager.Close()
+	if gs.setupCtx != nil {
+		gs.setupCtx.Close()
 	}
 }
 
@@ -122,7 +114,7 @@ func (gs *GenerateSession) GenerateFullManifest(ctx context.Context) (*M.Package
 	gs.rebuildModuleIndex()
 	gs.mu.Unlock()
 
-	cfg, _ := gs.ctx.Config()
+	cfg, _ := gs.setupCtx.Config()
 	if cfg != nil && cfg.Verbose {
 		RenderBarChart(logs)
 	}
@@ -221,7 +213,7 @@ func (gs *GenerateSession) rebuildModuleIndex() {
 func (gs *GenerateSession) GetModuleByPath(path string) *M.Module {
 	gs.mu.RLock()
 	defer gs.mu.RUnlock()
-	
+
 	return gs.moduleIndex[path]
 }
 
@@ -236,7 +228,7 @@ func (gs *GenerateSession) updateModuleIndex(module *M.Module) {
 // GetCssCache returns the CSS cache for this session.
 // This provides controlled access to the cache for dependency injection.
 func (gs *GenerateSession) GetCssCache() CssCache {
-	return gs.cssCache
+	return gs.setupCtx.GetCssCache()
 }
 
 // preprocessWithContext is the existing preprocess logic with cancellation support
@@ -247,7 +239,7 @@ func (gs *GenerateSession) preprocessWithContext(ctx context.Context) (preproces
 	default:
 	}
 
-	return preprocess(gs.ctx)
+	return preprocess(gs.setupCtx.WorkspaceContext)
 }
 
 // processWithContext is the existing process logic with cancellation support
@@ -267,11 +259,11 @@ func (gs *GenerateSession) processWithDeps(ctx context.Context, result preproces
 	// Create jobs for all included files
 	jobs := make([]processJob, 0, len(result.includedFiles))
 	for _, file := range result.includedFiles {
-		jobs = append(jobs, processJob{file: file, ctx: gs.ctx})
+		jobs = append(jobs, processJob{file: file, ctx: gs.setupCtx.WorkspaceContext})
 	}
 
 	// Use parallel processor with dependency tracking
-	processor := NewModuleBatchProcessor(gs.queryManager, gs.depTracker, gs.cssCache)
+	processor := NewModuleBatchProcessor(gs.setupCtx.GetQueryManager(), gs.setupCtx.GetDependencyTracker(), gs.setupCtx.GetCssCache())
 	processingResult := processor.ProcessModules(ctx, jobs, ModuleProcessorFunc(processModuleWithDeps))
 
 	return processingResult.Modules, processingResult.Logs, processingResult.Aliases, processingResult.Errors
@@ -287,5 +279,6 @@ func (gs *GenerateSession) postprocessWithContext(ctx context.Context, result pr
 
 	// TODO: Add cancellation points within the postprocess function
 	// For now, we'll use the existing postprocess function
-	return postprocess(gs.ctx, result, aliases, gs.queryManager, modules)
+	return postprocess(gs.setupCtx.WorkspaceContext, result, aliases, gs.setupCtx.GetQueryManager(), modules)
 }
+

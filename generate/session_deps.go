@@ -32,8 +32,22 @@ type ModuleDependencyMap map[string]*ModuleDependencies
 type CssReverseDepMap map[string][]string
 
 // FileDependencyTracker tracks file dependencies and content hashes for incremental updates.
-// Maintains file hashes, module dependencies, and CSS reverse dependencies
-// for efficient change detection and incremental processing.
+// Maintains three interconnected dependency maps for efficient change detection:
+//
+// Dependency Relationships:
+// - fileHashes: Maps filesystem paths to SHA256 hashes for change detection
+// - moduleDeps: Maps module paths to their ModuleDependencies (what each module imports)
+// - cssDepReverse: Reverse mapping from CSS filesystem paths to modules that depend on them
+//
+// Data Flow:
+// 1. RecordModuleDependencies() populates moduleDeps and builds cssDepReverse
+// 2. UpdateFileHash() and HasFileChanged() use fileHashes for change detection
+// 3. GetModulesAffectedByFiles() uses both moduleDeps and cssDepReverse to find rebuild targets
+//
+// Path Conventions:
+// - fileHashes and cssDepReverse use filesystem paths (absolute)
+// - moduleDeps uses module paths (relative to workspace root)
+// - Workspace context handles conversions between path types
 //
 // Callsites:
 // - session_core.go:55 (NewGenerateSession creation)
@@ -43,9 +57,9 @@ type CssReverseDepMap map[string][]string
 // Thread Safety: Protected by sync.RWMutex for concurrent read/write access
 type FileDependencyTracker struct {
 	mu            sync.RWMutex
-	fileHashes    FileHashMap         // FS path -> hash
-	moduleDeps    ModuleDependencyMap // Module path -> dependencies
-	cssDepReverse CssReverseDepMap    // FS path -> module paths that depend on it
+	fileHashes    FileHashMap         // FS path -> SHA256 hash for change detection
+	moduleDeps    ModuleDependencyMap // Module path -> dependencies (forward mapping)
+	cssDepReverse CssReverseDepMap    // CSS FS path -> module paths that depend on it (reverse mapping)
 	lastScanTime  time.Time
 	ctx           W.WorkspaceContext
 }
