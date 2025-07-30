@@ -42,15 +42,15 @@ install-bindings:
 	go generate ./...
 
 test-unit:
-	go test -json ./... | go tool tparse -all
+	go test -race -json ./... | go tool tparse -all
 
 test-e2e:
-	go test -json -tags=e2e ./cmd/ | go tool tparse -all
+	go test -race -json -tags=e2e ./cmd/ | go tool tparse -all
 
 test: test-unit test-e2e
 
 update:
-	go test -json ./... --update | go tool tparse -all
+	go test -race -json ./... --update | go tool tparse -all
 
 lint:
 	golangci-lint run
