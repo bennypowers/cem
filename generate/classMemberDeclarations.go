@@ -198,7 +198,7 @@ func (mp *ModuleProcessor) createClassFieldFromConstructorParameterMatch(
 	fieldName string,
 	superclass string,
 	captures Q.CaptureMap,
-) (err error, field M.CustomElementField) {
+) (field M.CustomElementField, err error) {
 	// Constructor parameters are never static
 	isStatic := false
 
@@ -226,8 +226,8 @@ func (mp *ModuleProcessor) createClassFieldFromConstructorParameterMatch(
 		amendFieldWithPropertyConfigCaptures(captures, &field)
 	}
 
-	mp.amendFieldWithJsdoc(captures, &field.ClassField)
-	return nil, field
+	err = mp.amendFieldWithJsdoc(captures, &field.ClassField)
+	return field, err
 }
 
 func (mp *ModuleProcessor) createClassFieldFromFieldMatch(
@@ -338,10 +338,10 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 				memberMap[key] = &field
 			}
 		case "constructor-parameter":
-			error, field := mp.createClassFieldFromConstructorParameterMatch(memberName, superclass, captures)
+			field, err := mp.createClassFieldFromConstructorParameterMatch(memberName, superclass, captures)
 			field.ClassField.StartByte = captures["constructor.parameter"][0].StartByte
-			if error != nil {
-				errs = errors.Join(errs, error)
+			if err != nil {
+				errs = errors.Join(errs, err)
 			} else {
 				memberMap[key] = &field
 			}
