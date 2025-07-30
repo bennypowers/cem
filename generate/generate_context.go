@@ -71,18 +71,18 @@ func (gsc *GenerateContext) Close() {
 	}
 }
 
-// GetCssCache returns the CSS cache for dependency injection
-func (gsc *GenerateContext) GetCssCache() CssCache {
+// CssCache returns the CSS cache for dependency injection
+func (gsc *GenerateContext) CssCache() CssCache {
 	return gsc.cssCache
 }
 
-// GetQueryManager returns the query manager for tree-sitter operations
-func (gsc *GenerateContext) GetQueryManager() *Q.QueryManager {
+// QueryManager returns the query manager for tree-sitter operations
+func (gsc *GenerateContext) QueryManager() *Q.QueryManager {
 	return gsc.queryManager
 }
 
-// GetDependencyTracker returns the file dependency tracker for incremental builds
-func (gsc *GenerateContext) GetDependencyTracker() *FileDependencyTracker {
+// DependencyTracker returns the file dependency tracker for incremental builds
+func (gsc *GenerateContext) DependencyTracker() *FileDependencyTracker {
 	return gsc.depTracker
 }
 

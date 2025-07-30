@@ -66,7 +66,7 @@ func TestNewGenerateSession(t *testing.T) {
 
 				// Verify setup context is initialized
 				assert.NotNil(t, session.setupCtx)
-				assert.NotNil(t, session.setupCtx.GetQueryManager())
+				assert.NotNil(t, session.setupCtx.QueryManager())
 				assert.Equal(t, ctx, session.setupCtx.WorkspaceContext)
 
 				// Test cleanup
@@ -157,7 +157,7 @@ func TestGenerateSession_GenerateFullManifest(t *testing.T) {
 				}
 
 				// Test in-memory manifest is updated
-				inMemory := session.GetInMemoryManifest()
+				inMemory := session.InMemoryManifest()
 				require.NotNil(t, inMemory)
 				assert.Equal(t, pkg.SchemaVersion, inMemory.SchemaVersion)
 				assert.Equal(t, len(pkg.Modules), len(inMemory.Modules))
@@ -231,7 +231,7 @@ func TestGenerateSession_GetInMemoryManifest(t *testing.T) {
 				go func() {
 					// Wait a bit, then try to read
 					time.Sleep(10 * time.Millisecond)
-					manifest := session.GetInMemoryManifest()
+					manifest := session.InMemoryManifest()
 					// Should not panic or cause race condition
 					_ = manifest
 					done <- true
@@ -241,7 +241,7 @@ func TestGenerateSession_GetInMemoryManifest(t *testing.T) {
 				<-done
 				<-done
 			} else {
-				manifest := session.GetInMemoryManifest()
+				manifest := session.InMemoryManifest()
 
 				if tt.expectNil {
 					assert.Nil(t, manifest)

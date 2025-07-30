@@ -81,21 +81,21 @@ func (p *WarningProcessor) RegisterRule(rule WarningRule) {
 func (p *WarningProcessor) ProcessWarnings(navigator *ManifestNavigator) []ValidationWarning {
 	var warnings []ValidationWarning
 
-	modules, ok := navigator.manifest.GetModules()
+	modules, ok := navigator.manifest.Modules()
 	if !ok {
 		return warnings
 	}
 
 	for _, module := range modules {
-		modulePath := module.GetPath()
-		declarations, ok := module.GetDeclarations()
+		modulePath := module.Path()
+		declarations, ok := module.Declarations()
 		if !ok {
 			continue
 		}
 
 		for _, decl := range declarations {
-			declName := decl.GetName()
-			declKind := decl.GetKind()
+			declName := decl.Name()
+			declKind := decl.Kind()
 			isLitElement := p.isLitElement(decl)
 
 			ctx := &WarningContext{
@@ -120,8 +120,8 @@ func (p *WarningProcessor) ProcessWarnings(navigator *ManifestNavigator) []Valid
 }
 
 func (p *WarningProcessor) isLitElement(decl RawDeclaration) bool {
-	if superclass, ok := decl.GetSuperclass(); ok {
-		return strings.Contains(superclass.GetName(), "LitElement")
+	if superclass, ok := decl.Superclass(); ok {
+		return strings.Contains(superclass.Name(), "LitElement")
 	}
 	return false
 }
@@ -135,17 +135,17 @@ func (r *LifecycleMethodsRule) Category() string { return "lifecycle" }
 func (r *LifecycleMethodsRule) Check(ctx *WarningContext) []ValidationWarning {
 	var warnings []ValidationWarning
 
-	members, ok := ctx.Declaration.GetMembers()
+	members, ok := ctx.Declaration.Members()
 	if !ok {
 		return warnings
 	}
 
 	for _, member := range members {
-		if member.GetKind() != "method" {
+		if member.Kind() != "method" {
 			continue
 		}
 
-		memberName := member.GetName()
+		memberName := member.Name()
 		warnings = append(warnings, r.checkLifecycleMethods(ctx, member, memberName)...)
 	}
 
@@ -231,14 +231,14 @@ func (r *PrivateMethodsRule) Category() string { return "private" }
 func (r *PrivateMethodsRule) Check(ctx *WarningContext) []ValidationWarning {
 	var warnings []ValidationWarning
 
-	members, ok := ctx.Declaration.GetMembers()
+	members, ok := ctx.Declaration.Members()
 	if !ok {
 		return warnings
 	}
 
 	for _, member := range members {
-		memberName := member.GetName()
-		memberKind := member.GetKind()
+		memberName := member.Name()
+		memberKind := member.Kind()
 
 		// Check both methods and fields
 		if memberKind != "method" && memberKind != "field" {
@@ -261,7 +261,7 @@ func (r *PrivateMethodsRule) Check(ctx *WarningContext) []ValidationWarning {
 				Category:    r.Category(),
 			})
 		} else if strings.HasPrefix(memberName, "_") {
-			privacy := member.GetPrivacy()
+			privacy := member.Privacy()
 
 			// Only warn if member starts with _ but is NOT marked as private or protected
 			if privacy != "private" && privacy != "protected" {
@@ -294,7 +294,7 @@ func (r *InternalMethodsRule) Category() string { return "internal" }
 func (r *InternalMethodsRule) Check(ctx *WarningContext) []ValidationWarning {
 	var warnings []ValidationWarning
 
-	members, ok := ctx.Declaration.GetMembers()
+	members, ok := ctx.Declaration.Members()
 	if !ok {
 		return warnings
 	}
@@ -302,11 +302,11 @@ func (r *InternalMethodsRule) Check(ctx *WarningContext) []ValidationWarning {
 	internalMethods := []string{"init", "destroy", "dispose", "cleanup", "debug", "log"}
 
 	for _, member := range members {
-		if member.GetKind() != "method" {
+		if member.Kind() != "method" {
 			continue
 		}
 
-		memberName := member.GetName()
+		memberName := member.Name()
 		if slices.Contains(internalMethods, memberName) {
 			warnings = append(warnings, ValidationWarning{
 				ID:          "internal-utility-methods",
@@ -331,13 +331,13 @@ func (r *SuperclassRule) Category() string { return "superclass" }
 func (r *SuperclassRule) Check(ctx *WarningContext) []ValidationWarning {
 	var warnings []ValidationWarning
 
-	superclass, ok := ctx.Declaration.GetSuperclass()
+	superclass, ok := ctx.Declaration.Superclass()
 	if !ok {
 		return warnings
 	}
 
-	name := superclass.GetName()
-	module := superclass.GetModule()
+	name := superclass.Name()
+	module := superclass.Module()
 
 	builtInTypes := []string{
 		"HTMLElement", "Element", "Node", "EventTarget", "Document", "Window",
@@ -375,7 +375,7 @@ func (r *ImplementationDetailsRule) Category() string { return "implementation" 
 func (r *ImplementationDetailsRule) Check(ctx *WarningContext) []ValidationWarning {
 	var warnings []ValidationWarning
 
-	members, ok := ctx.Declaration.GetMembers()
+	members, ok := ctx.Declaration.Members()
 	if !ok {
 		return warnings
 	}
@@ -388,8 +388,8 @@ func (r *ImplementationDetailsRule) Check(ctx *WarningContext) []ValidationWarni
 	}
 
 	for _, member := range members {
-		memberName := member.GetName()
-		memberKind := member.GetKind()
+		memberName := member.Name()
+		memberKind := member.Kind()
 
 		if memberKind == "field" && member.IsStatic() {
 			if message, isImpl := implementationFields[memberName]; isImpl {
@@ -434,12 +434,12 @@ func (r *VerboseDefaultsRule) Check(ctx *WarningContext) []ValidationWarning {
 	var warnings []ValidationWarning
 
 	// Check member defaults first
-	if members, ok := ctx.Declaration.GetMembers(); ok {
+	if members, ok := ctx.Declaration.Members(); ok {
 		for _, member := range members {
-			defaultVal := member.GetDefault()
+			defaultVal := member.Default()
 			if len(defaultVal) > DefaultLengthThreshold {
-				memberName := member.GetName()
-				memberKind := member.GetKind()
+				memberName := member.Name()
+				memberKind := member.Kind()
 
 				warnings = append(warnings, ValidationWarning{
 					ID:          "verbose-defaults",
@@ -459,12 +459,12 @@ func (r *VerboseDefaultsRule) Check(ctx *WarningContext) []ValidationWarning {
 		getter func() ([]RawProperty, bool)
 		label  string
 	}{
-		{"cssProperties", ctx.Declaration.GetCSSProperties, "CSS property"},
-		{"cssParts", ctx.Declaration.GetCSSParts, "CSS part"},
-		{"cssStates", ctx.Declaration.GetCSSStates, "CSS state"},
-		{"attributes", ctx.Declaration.GetAttributes, "attribute"},
-		{"events", ctx.Declaration.GetEvents, "event"},
-		{"slots", ctx.Declaration.GetSlots, "slot"},
+		{"cssProperties", ctx.Declaration.CSSProperties, "CSS property"},
+		{"cssParts", ctx.Declaration.CSSParts, "CSS part"},
+		{"cssStates", ctx.Declaration.CSSStates, "CSS state"},
+		{"attributes", ctx.Declaration.Attributes, "attribute"},
+		{"events", ctx.Declaration.Events, "event"},
+		{"slots", ctx.Declaration.Slots, "slot"},
 	}
 
 	for _, propType := range propertyTypes {
@@ -474,9 +474,9 @@ func (r *VerboseDefaultsRule) Check(ctx *WarningContext) []ValidationWarning {
 		}
 
 		for _, prop := range props {
-			defaultVal := prop.GetDefault()
+			defaultVal := prop.Default()
 			if len(defaultVal) > DefaultLengthThreshold {
-				propName := prop.GetName()
+				propName := prop.Name()
 
 				warnings = append(warnings, ValidationWarning{
 					ID:          "verbose-defaults",

@@ -26,9 +26,7 @@ import (
 	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
 	"github.com/pterm/pterm"
-)
 
-import (
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -93,6 +91,11 @@ func (mbp *ModuleBatchProcessor) SetWorkerCount(count int) {
 	}
 }
 
+// WorkerCount returns the configured number of workers
+func (mbp *ModuleBatchProcessor) WorkerCount() int {
+	return mbp.numWorkers
+}
+
 // ProcessModules processes modules in parallel using the provided processor function
 func (mbp *ModuleBatchProcessor) ProcessModules(
 	ctx context.Context,
@@ -137,10 +140,7 @@ func (mbp *ModuleBatchProcessor) processModulesInternal(
 	}
 
 	// Optimize worker count for small job sets
-	numWorkers := mbp.numWorkers
-	if len(jobs) < numWorkers {
-		numWorkers = len(jobs)
-	}
+	numWorkers := min(len(jobs), mbp.numWorkers)
 
 	pterm.Info.Printf("Starting Generation with %d workers\n", numWorkers)
 
@@ -169,7 +169,7 @@ func (mbp *ModuleBatchProcessor) processModulesInternal(
 	for range numWorkers {
 		go func() {
 			defer wg.Done()
-			parser := Q.GetTypeScriptParser()
+			parser := Q.RetrieveTypeScriptParser()
 			defer Q.PutTypeScriptParser(parser)
 
 			for job := range jobsChan {

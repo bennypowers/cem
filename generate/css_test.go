@@ -116,7 +116,7 @@ func TestGenerateSession_CssCache_Integration(t *testing.T) {
 		setupCtx: setupCtx,
 	}
 
-	cache := gs.GetCssCache()
+	cache := gs.CssCache()
 	if cache == nil {
 		t.Fatal("CSS cache should be available from GenerateSession")
 	}

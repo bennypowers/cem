@@ -122,8 +122,8 @@ func (gs *GenerateSession) GenerateFullManifest(ctx context.Context) (*M.Package
 	return &pkg, nil
 }
 
-// GetInMemoryManifest returns a copy of the current in-memory manifest.
-// For performance, this returns a shallow copy by default. Use GetInMemoryManifestDeep()
+// InMemoryManifest returns a copy of the current in-memory manifest.
+// For performance, this returns a shallow copy by default. Use InMemoryManifestDeep()
 // when true isolation is needed (e.g., for LSP integration).
 //
 // Callsites:
@@ -131,7 +131,7 @@ func (gs *GenerateSession) GenerateFullManifest(ctx context.Context) (*M.Package
 // - cmd/generate_watch.go (watch mode manifest access)
 //
 // Performance: Optimized shallow copy (~microseconds) vs deep copy (~1-5ms)
-func (gs *GenerateSession) GetInMemoryManifest() *M.Package {
+func (gs *GenerateSession) InMemoryManifest() *M.Package {
 	gs.mu.RLock()
 	defer gs.mu.RUnlock()
 
@@ -144,7 +144,7 @@ func (gs *GenerateSession) GetInMemoryManifest() *M.Package {
 	return &manifest
 }
 
-// GetInMemoryManifestDeep returns a deep copy of the current in-memory manifest.
+// InMemoryManifestDeep returns a deep copy of the current in-memory manifest.
 // This is safe for concurrent access and intended for LSP integration.
 // Uses JSON serialization/deserialization for reliable deep copying.
 //
@@ -154,7 +154,7 @@ func (gs *GenerateSession) GetInMemoryManifest() *M.Package {
 //
 // Performance Note: Deep copying has overhead (~1-5ms for typical manifests).
 // Only use this when true isolation is required.
-func (gs *GenerateSession) GetInMemoryManifestDeep() *M.Package {
+func (gs *GenerateSession) InMemoryManifestDeep() *M.Package {
 	gs.mu.RLock()
 	defer gs.mu.RUnlock()
 
@@ -207,10 +207,10 @@ func (gs *GenerateSession) rebuildModuleIndex() {
 	}
 }
 
-// GetModuleByPath returns a module by its path using O(1) lookup.
+// ModuleByPath returns a module by its path using O(1) lookup.
 // Returns nil if the module is not found.
 // This is safe for concurrent access.
-func (gs *GenerateSession) GetModuleByPath(path string) *M.Module {
+func (gs *GenerateSession) ModuleByPath(path string) *M.Module {
 	gs.mu.RLock()
 	defer gs.mu.RUnlock()
 
@@ -225,10 +225,17 @@ func (gs *GenerateSession) updateModuleIndex(module *M.Module) {
 	}
 }
 
-// GetCssCache returns the CSS cache for this session.
+// CssCache returns the CSS cache for this session.
 // This provides controlled access to the cache for dependency injection.
-func (gs *GenerateSession) GetCssCache() CssCache {
-	return gs.setupCtx.GetCssCache()
+func (gs *GenerateSession) CssCache() CssCache {
+	return gs.setupCtx.CssCache()
+}
+
+// WorkerCount returns the number of workers that would be used for parallel processing.
+// This creates a temporary processor to get the actual configured worker count.
+func (gs *GenerateSession) WorkerCount() int {
+	processor := NewModuleBatchProcessor(gs.setupCtx.QueryManager(), gs.setupCtx.DependencyTracker(), gs.setupCtx.CssCache())
+	return processor.WorkerCount()
 }
 
 // preprocessWithContext is the existing preprocess logic with cancellation support
@@ -263,7 +270,7 @@ func (gs *GenerateSession) processWithDeps(ctx context.Context, result preproces
 	}
 
 	// Use parallel processor with dependency tracking
-	processor := NewModuleBatchProcessor(gs.setupCtx.GetQueryManager(), gs.setupCtx.GetDependencyTracker(), gs.setupCtx.GetCssCache())
+	processor := NewModuleBatchProcessor(gs.setupCtx.QueryManager(), gs.setupCtx.DependencyTracker(), gs.setupCtx.CssCache())
 	processingResult := processor.ProcessModules(ctx, jobs, ModuleProcessorFunc(processModuleWithDeps))
 
 	return processingResult.Modules, processingResult.Logs, processingResult.Aliases, processingResult.Errors
@@ -279,5 +286,5 @@ func (gs *GenerateSession) postprocessWithContext(ctx context.Context, result pr
 
 	// TODO: Add cancellation points within the postprocess function
 	// For now, we'll use the existing postprocess function
-	return postprocess(gs.setupCtx.WorkspaceContext, result, aliases, gs.setupCtx.GetQueryManager(), modules)
+	return postprocess(gs.setupCtx.WorkspaceContext, result, aliases, gs.setupCtx.QueryManager(), modules)
 }

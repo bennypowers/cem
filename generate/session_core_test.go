@@ -88,7 +88,7 @@ func TestGetInMemoryManifest_Performance(t *testing.T) {
 	gs := &GenerateSession{}
 
 	// Test nil manifest
-	if result := gs.GetInMemoryManifest(); result != nil {
+	if result := gs.InMemoryManifest(); result != nil {
 		t.Error("GetInMemoryManifest should return nil when no manifest is set")
 	}
 
@@ -109,7 +109,7 @@ func TestGetInMemoryManifest_Performance(t *testing.T) {
 	gs.mu.Unlock()
 
 	// Get a copy (shallow for performance)
-	copy := gs.GetInMemoryManifest()
+	copy := gs.InMemoryManifest()
 	if copy == nil {
 		t.Fatal("GetInMemoryManifest should return a copy of the manifest")
 	}
@@ -129,7 +129,7 @@ func TestGetInMemoryManifestDeep_ThreadSafety(t *testing.T) {
 	gs := &GenerateSession{}
 
 	// Test nil manifest
-	if result := gs.GetInMemoryManifestDeep(); result != nil {
+	if result := gs.InMemoryManifestDeep(); result != nil {
 		t.Error("GetInMemoryManifestDeep should return nil when no manifest is set")
 	}
 
@@ -150,7 +150,7 @@ func TestGetInMemoryManifestDeep_ThreadSafety(t *testing.T) {
 	gs.mu.Unlock()
 
 	// Get a deep copy
-	copy := gs.GetInMemoryManifestDeep()
+	copy := gs.InMemoryManifestDeep()
 	if copy == nil {
 		t.Fatal("GetInMemoryManifestDeep should return a copy of the manifest")
 	}
@@ -194,7 +194,7 @@ func TestModuleIndex_Performance(t *testing.T) {
 	gs.mu.Unlock()
 
 	// Test O(1) lookup
-	module := gs.GetModuleByPath("test/module2.js")
+	module := gs.ModuleByPath("test/module2.js")
 	if module == nil {
 		t.Fatal("GetModuleByPath should find existing module")
 	}
@@ -204,7 +204,7 @@ func TestModuleIndex_Performance(t *testing.T) {
 	}
 
 	// Test non-existent module
-	module = gs.GetModuleByPath("test/nonexistent.js")
+	module = gs.ModuleByPath("test/nonexistent.js")
 	if module != nil {
 		t.Error("GetModuleByPath should return nil for non-existent module")
 	}
@@ -231,7 +231,7 @@ func TestMergeModulesIntoManifest_WithIndex(t *testing.T) {
 	}
 
 	// Verify index was built
-	module := gs.GetModuleByPath("test/new.js")
+	module := gs.ModuleByPath("test/new.js")
 	if module == nil {
 		t.Error("Module should be findable in index")
 	}
@@ -255,7 +255,7 @@ func TestMergeModulesIntoManifest_WithIndex(t *testing.T) {
 	gs.MergeModulesIntoManifest(updatedModules)
 
 	// Verify update worked
-	module = gs.GetModuleByPath("test/existing.js")
+	module = gs.ModuleByPath("test/existing.js")
 	if module == nil {
 		t.Fatal("Updated module should be findable")
 	}

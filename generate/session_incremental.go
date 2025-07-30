@@ -49,26 +49,28 @@ func (gs *GenerateSession) ProcessChangedFiles(ctx context.Context, changedFiles
 		}
 	}
 	if len(cssFiles) > 0 {
-		gs.setupCtx.GetCssCache().Invalidate(cssFiles)
+		gs.setupCtx.CssCache().Invalidate(cssFiles)
 		if verbose {
 			pterm.Debug.Printf("Invalidated CSS cache for files: %v\n", cssFiles)
 		}
 	}
 
 	// Determine which modules are affected by the changes
-	affectedModules := gs.setupCtx.GetDependencyTracker().GetModulesAffectedByFiles(changedFiles)
+	affectedModules := gs.setupCtx.DependencyTracker().GetModulesAffectedByFiles(changedFiles)
 
 	if len(affectedModules) == 0 {
 		// No modules affected, return current manifest
 		if verbose {
 			pterm.Debug.Printf("No modules affected by changes: %v\n", changedFiles)
 		}
-		return gs.GetInMemoryManifest(), nil
+		return gs.InMemoryManifest(), nil
 	}
 
+	// later on we can make this configurable, but for simplicity's sake, it's ok to hard code now
+	maxAffectedModulesBeforeFullRebuild := 3
 	// Check if we have a base manifest to work with
-	currentManifest := gs.GetInMemoryManifest()
-	if currentManifest == nil || len(affectedModules) > 3 {
+	currentManifest := gs.InMemoryManifest()
+	if currentManifest == nil || len(affectedModules) > maxAffectedModulesBeforeFullRebuild {
 		// No base manifest or too many affected modules - do full rebuild
 		if verbose {
 			pterm.Debug.Printf("Files changed: %v, affected modules: %v - performing full rebuild (no base or too many changes)\n", changedFiles, affectedModules)
@@ -115,7 +117,7 @@ func (gs *GenerateSession) ProcessModulesIncremental(ctx context.Context, module
 	gs.MergeModulesIntoManifest(updatedModules)
 
 	// Get the updated manifest
-	updatedManifest := gs.GetInMemoryManifest()
+	updatedManifest := gs.InMemoryManifest()
 	if updatedManifest == nil {
 		return nil, NewError("updated manifest is nil after incremental processing")
 	}
@@ -163,7 +165,7 @@ func (gs *GenerateSession) processSpecificModules(ctx context.Context, result pr
 	}
 
 	// Use parallel processor with dependency tracking and optimized worker count
-	processor := NewModuleBatchProcessor(gs.setupCtx.GetQueryManager(), gs.setupCtx.GetDependencyTracker(), gs.setupCtx.GetCssCache())
+	processor := NewModuleBatchProcessor(gs.setupCtx.QueryManager(), gs.setupCtx.DependencyTracker(), gs.setupCtx.CssCache())
 	processor.SetWorkerCount(len(validJobs)) // Optimize for small incremental builds
 
 	if verbose {
@@ -243,7 +245,7 @@ func (gs *GenerateSession) applyPostProcessingToModules(ctx context.Context, res
 
 			// Discover demos and attach to module if available
 			if len(demoMap) > 0 {
-				err := DD.DiscoverDemos(gs.setupCtx.WorkspaceContext, allTagAliases, module, gs.setupCtx.GetQueryManager(), demoMap)
+				err := DD.DiscoverDemos(gs.setupCtx.WorkspaceContext, allTagAliases, module, gs.setupCtx.QueryManager(), demoMap)
 				if err != nil {
 					errsMu.Lock()
 					errsList = append(errsList, err)
@@ -297,11 +299,11 @@ func (gs *GenerateSession) ProcessChangedFilesIncremental(ctx context.Context, c
 	}
 
 	// Determine which modules are affected by the changes
-	affectedModules := gs.setupCtx.GetDependencyTracker().GetModulesAffectedByFiles(changedFiles)
+	affectedModules := gs.setupCtx.DependencyTracker().GetModulesAffectedByFiles(changedFiles)
 
 	if len(affectedModules) == 0 {
 		// No modules affected, return current manifest
-		return gs.GetInMemoryManifest(), nil
+		return gs.InMemoryManifest(), nil
 	}
 
 	return gs.ProcessModulesIncremental(ctx, affectedModules)

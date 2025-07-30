@@ -224,8 +224,8 @@ All components are designed for concurrent access:
 ### Manifest Access Patterns
 The system implements dual manifest access patterns to balance performance and thread safety:
 
-- **`GetInMemoryManifest()`**: Shallow copy (~microseconds) for watch mode and hot paths
-- **`GetInMemoryManifestDeep()`**: Deep copy (~1-5ms) for future features requiring full isolation
+- **`InMemoryManifest()`**: Shallow copy (~microseconds) for watch mode and hot paths
+- **`InMemoryManifestDeep()`**: Deep copy (~1-5ms) for future features requiring full isolation
 
 ### Module Indexing
 O(1) module lookup via persistent module index, replacing O(n) linear searches for better performance in incremental scenarios.

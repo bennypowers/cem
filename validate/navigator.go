@@ -33,29 +33,29 @@ func NewManifestNavigator(manifest map[string]any) *ManifestNavigator {
 		manifest: RawManifest(manifest),
 	}
 
-	if modules, ok := nav.manifest.GetModules(); ok {
+	if modules, ok := nav.manifest.Modules(); ok {
 		nav.modules = modules
 	}
 
 	return nav
 }
 
-// GetModule returns the module at the given index
-func (n *ManifestNavigator) GetModule(index int) (RawModule, bool) {
+// ModuleAtIndex returns the module at the given index
+func (n *ManifestNavigator) ModuleAtIndex(index int) (RawModule, bool) {
 	if index < 0 || index >= len(n.modules) {
 		return nil, false
 	}
 	return n.modules[index], true
 }
 
-// GetDeclaration returns the declaration at the given module and declaration indices
-func (n *ManifestNavigator) GetDeclaration(moduleIndex, declIndex int) (RawDeclaration, bool) {
-	module, ok := n.GetModule(moduleIndex)
+// ModuleDeclarationAtIndex returns the declaration at the given module and declaration indices
+func (n *ManifestNavigator) ModuleDeclarationAtIndex(moduleIndex, declIndex int) (RawDeclaration, bool) {
+	module, ok := n.ModuleAtIndex(moduleIndex)
 	if !ok {
 		return nil, false
 	}
 
-	declarations, ok := module.GetDeclarations()
+	declarations, ok := module.Declarations()
 	if !ok || declIndex < 0 || declIndex >= len(declarations) {
 		return nil, false
 	}
@@ -63,14 +63,14 @@ func (n *ManifestNavigator) GetDeclaration(moduleIndex, declIndex int) (RawDecla
 	return declarations[declIndex], true
 }
 
-// GetMember returns the member at the given indices
-func (n *ManifestNavigator) GetMember(moduleIndex, declIndex, memberIndex int) (RawMember, bool) {
-	decl, ok := n.GetDeclaration(moduleIndex, declIndex)
+// DeclMemberAtIndex returns the member at the given indices
+func (n *ManifestNavigator) DeclMemberAtIndex(moduleIndex, declIndex, memberIndex int) (RawMember, bool) {
+	decl, ok := n.ModuleDeclarationAtIndex(moduleIndex, declIndex)
 	if !ok {
 		return nil, false
 	}
 
-	members, ok := decl.GetMembers()
+	members, ok := decl.Members()
 	if !ok || memberIndex < 0 || memberIndex >= len(members) {
 		return nil, false
 	}
@@ -78,9 +78,9 @@ func (n *ManifestNavigator) GetMember(moduleIndex, declIndex, memberIndex int) (
 	return members[memberIndex], true
 }
 
-// GetProperty returns the property at the given indices for the specified property type
-func (n *ManifestNavigator) GetProperty(moduleIndex, declIndex, propIndex int, propType string) (RawProperty, bool) {
-	decl, ok := n.GetDeclaration(moduleIndex, declIndex)
+// DeclPropertyAtIndex returns the property at the given indices for the specified property type
+func (n *ManifestNavigator) DeclPropertyAtIndex(moduleIndex, declIndex, propIndex int, propType string) (RawProperty, bool) {
+	decl, ok := n.ModuleDeclarationAtIndex(moduleIndex, declIndex)
 	if !ok {
 		return nil, false
 	}
@@ -96,25 +96,25 @@ func (n *ManifestNavigator) GetProperty(moduleIndex, declIndex, propIndex int, p
 // BuildContextualNames builds human-readable names for validation issues
 func (n *ManifestNavigator) BuildContextualNames(ctx Context) (module, declaration, member, property string) {
 	if ctx.ModuleIndex >= 0 {
-		if mod, ok := n.GetModule(ctx.ModuleIndex); ok {
-			module = mod.GetPath()
+		if mod, ok := n.ModuleAtIndex(ctx.ModuleIndex); ok {
+			module = mod.Path()
 		}
 	}
 
 	if ctx.DeclIndex >= 0 {
-		if decl, ok := n.GetDeclaration(ctx.ModuleIndex, ctx.DeclIndex); ok {
+		if decl, ok := n.ModuleDeclarationAtIndex(ctx.ModuleIndex, ctx.DeclIndex); ok {
 			declaration = formatDeclaration(decl, ctx.DeclIndex)
 		}
 	}
 
 	if ctx.MemberIndex >= 0 {
-		if mem, ok := n.GetMember(ctx.ModuleIndex, ctx.DeclIndex, ctx.MemberIndex); ok {
+		if mem, ok := n.DeclMemberAtIndex(ctx.ModuleIndex, ctx.DeclIndex, ctx.MemberIndex); ok {
 			member = formatMember(mem, ctx.MemberIndex)
 		}
 	}
 
 	if ctx.PropertyIndex >= 0 && ctx.PropertyType != "" {
-		if prop, ok := n.GetProperty(ctx.ModuleIndex, ctx.DeclIndex, ctx.PropertyIndex, ctx.PropertyType); ok {
+		if prop, ok := n.DeclPropertyAtIndex(ctx.ModuleIndex, ctx.DeclIndex, ctx.PropertyIndex, ctx.PropertyType); ok {
 			property = formatProperty(prop, ctx.PropertyType, ctx.PropertyIndex)
 		}
 	}
@@ -123,8 +123,8 @@ func (n *ManifestNavigator) BuildContextualNames(ctx Context) (module, declarati
 }
 
 func formatDeclaration(decl RawDeclaration, index int) string {
-	name := decl.GetName()
-	kind := decl.GetKind()
+	name := decl.Name()
+	kind := decl.Kind()
 
 	if name != "" {
 		if kind != "" {
@@ -141,8 +141,8 @@ func formatDeclaration(decl RawDeclaration, index int) string {
 }
 
 func formatMember(member RawMember, index int) string {
-	name := member.GetName()
-	kind := member.GetKind()
+	name := member.Name()
+	kind := member.Kind()
 
 	if name != "" {
 		if kind != "" {
@@ -159,7 +159,7 @@ func formatMember(member RawMember, index int) string {
 }
 
 func formatProperty(prop RawProperty, propType string, index int) string {
-	name := prop.GetName()
+	name := prop.Name()
 	singularName := getSingularPropertyName(propType)
 
 	if name != "" {

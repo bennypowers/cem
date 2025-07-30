@@ -122,9 +122,9 @@ func PutJSDocParser(parser *ts.Parser) {
 	jsdocParserPool.Put(parser)
 }
 
-// GetTypeScriptParser returns a singleton TypeScript parser.
+// RetrieveTypeScriptParser returns a singleton TypeScript parser.
 // Do not Close() this parser.
-func GetTypeScriptParser() *ts.Parser {
+func RetrieveTypeScriptParser() *ts.Parser {
 	return typescriptParserPool.Get().(*ts.Parser)
 }
 
