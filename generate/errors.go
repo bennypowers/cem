@@ -27,10 +27,10 @@ import (
 var (
 	// ErrModuleNotFound is returned when a requested module cannot be found
 	ErrModuleNotFound = errors.New("module not found")
-	
+
 	// ErrInvalidManifest is returned when manifest data is invalid
 	ErrInvalidManifest = errors.New("invalid manifest")
-	
+
 	// ErrProcessingCancelled is returned when processing is cancelled
 	ErrProcessingCancelled = errors.New("processing cancelled")
 )

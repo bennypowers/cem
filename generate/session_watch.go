@@ -19,6 +19,7 @@ package generate
 import (
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -283,7 +284,7 @@ func (ws *WatchSession) processChanges() {
 		pterm.Debug.Printf("Changed files: %v\n", changedFiles)
 		pkg, err := ws.generateSession.ProcessChangedFiles(ctx, changedFiles)
 		if err != nil {
-			if ctx.Err() == context.Canceled {
+			if errors.Is(err, context.Canceled) {
 				pterm.Warning.Println("Generation cancelled due to new file changes")
 			} else {
 				pterm.Error.Printf("Generation failed: %v\n", err)
@@ -305,7 +306,7 @@ func (ws *WatchSession) processChanges() {
 	} else {
 		// Fallback to full rebuild if no specific files tracked
 		if err := ws.generateOnce(ctx); err != nil {
-			if ctx.Err() == context.Canceled {
+			if errors.Is(err, context.Canceled) {
 				pterm.Warning.Println("Generation cancelled due to new file changes")
 			} else {
 				pterm.Error.Printf("Generation failed: %v\n", err)

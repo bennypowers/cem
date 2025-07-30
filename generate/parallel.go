@@ -150,7 +150,7 @@ func (mbp *ModuleBatchProcessor) processModulesInternal(
 	var modulesMu sync.Mutex
 	var errsMu sync.Mutex
 	var logsMu sync.Mutex
-	
+
 	errsList := make([]error, 0)
 	logs := make([]*LogCtx, 0, len(jobs))
 	aliases := make(map[string]string)
@@ -171,7 +171,7 @@ func (mbp *ModuleBatchProcessor) processModulesInternal(
 			defer wg.Done()
 			parser := Q.GetTypeScriptParser()
 			defer Q.PutTypeScriptParser(parser)
-			
+
 			for job := range jobsChan {
 				// Check for cancellation
 				select {
@@ -181,7 +181,7 @@ func (mbp *ModuleBatchProcessor) processModulesInternal(
 				}
 
 				module, tagAliases, logger, err := processor(job, mbp.queryManager, parser)
-				
+
 				// Handle errors
 				if err != nil {
 					errsMu.Lock()

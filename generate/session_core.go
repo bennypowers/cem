@@ -281,4 +281,3 @@ func (gs *GenerateSession) postprocessWithContext(ctx context.Context, result pr
 	// For now, we'll use the existing postprocess function
 	return postprocess(gs.setupCtx.WorkspaceContext, result, aliases, gs.setupCtx.GetQueryManager(), modules)
 }
-

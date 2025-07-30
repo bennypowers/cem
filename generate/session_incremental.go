@@ -36,6 +36,10 @@ func (gs *GenerateSession) ProcessChangedFiles(ctx context.Context, changedFiles
 	default:
 	}
 
+	// Check verbose flag once
+	cfg, _ := gs.setupCtx.Config()
+	verbose := cfg != nil && cfg.Verbose
+
 	// Invalidate CSS cache for any changed CSS files (convert module paths to FS paths)
 	cssFiles := make([]string, 0)
 	for _, modulePath := range changedFiles {
@@ -46,7 +50,9 @@ func (gs *GenerateSession) ProcessChangedFiles(ctx context.Context, changedFiles
 	}
 	if len(cssFiles) > 0 {
 		gs.setupCtx.GetCssCache().Invalidate(cssFiles)
-		pterm.Debug.Printf("Invalidated CSS cache for files: %v\n", cssFiles)
+		if verbose {
+			pterm.Debug.Printf("Invalidated CSS cache for files: %v\n", cssFiles)
+		}
 	}
 
 	// Determine which modules are affected by the changes
@@ -54,7 +60,9 @@ func (gs *GenerateSession) ProcessChangedFiles(ctx context.Context, changedFiles
 
 	if len(affectedModules) == 0 {
 		// No modules affected, return current manifest
-		pterm.Debug.Printf("No modules affected by changes: %v\n", changedFiles)
+		if verbose {
+			pterm.Debug.Printf("No modules affected by changes: %v\n", changedFiles)
+		}
 		return gs.GetInMemoryManifest(), nil
 	}
 
@@ -62,12 +70,16 @@ func (gs *GenerateSession) ProcessChangedFiles(ctx context.Context, changedFiles
 	currentManifest := gs.GetInMemoryManifest()
 	if currentManifest == nil || len(affectedModules) > 3 {
 		// No base manifest or too many affected modules - do full rebuild
-		pterm.Debug.Printf("Files changed: %v, affected modules: %v - performing full rebuild (no base or too many changes)\n", changedFiles, affectedModules)
+		if verbose {
+			pterm.Debug.Printf("Files changed: %v, affected modules: %v - performing full rebuild (no base or too many changes)\n", changedFiles, affectedModules)
+		}
 		return gs.GenerateFullManifest(ctx)
 	}
 
 	// Try incremental processing
-	pterm.Debug.Printf("Files changed: %v, affected modules: %v - attempting incremental rebuild\n", changedFiles, affectedModules)
+	if verbose {
+		pterm.Debug.Printf("Files changed: %v, affected modules: %v - attempting incremental rebuild\n", changedFiles, affectedModules)
+	}
 	return gs.ProcessModulesIncremental(ctx, affectedModules)
 }
 
@@ -79,7 +91,13 @@ func (gs *GenerateSession) ProcessModulesIncremental(ctx context.Context, module
 	default:
 	}
 
-	pterm.Debug.Printf("Processing %d modules incrementally: %v\n", len(modulePaths), modulePaths)
+	// Check verbose flag once
+	cfg, _ := gs.setupCtx.Config()
+	verbose := cfg != nil && cfg.Verbose
+
+	if verbose {
+		pterm.Debug.Printf("Processing %d modules incrementally: %v\n", len(modulePaths), modulePaths)
+	}
 
 	// Get the preprocessing result (we need some global context)
 	result, err := gs.preprocessWithContext(ctx)
@@ -109,8 +127,7 @@ func (gs *GenerateSession) ProcessModulesIncremental(ctx context.Context, module
 	}
 
 	// Log performance info
-	cfg, _ := gs.setupCtx.Config()
-	if cfg != nil && cfg.Verbose {
+	if verbose {
 		pterm.Debug.Printf("Processed %d modules incrementally\n", len(logs))
 	}
 
@@ -119,6 +136,10 @@ func (gs *GenerateSession) ProcessModulesIncremental(ctx context.Context, module
 
 // processSpecificModules processes only the specified module files
 func (gs *GenerateSession) processSpecificModules(ctx context.Context, result preprocessResult, modulePaths []string) ([]M.Module, []*LogCtx, map[string]string, error) {
+	// Check verbose flag once
+	cfg, _ := gs.setupCtx.Config()
+	verbose := cfg != nil && cfg.Verbose
+
 	// Filter to only process modules that are in the included files list
 	includedSet := make(map[string]bool)
 	for _, file := range result.includedFiles {
@@ -131,7 +152,9 @@ func (gs *GenerateSession) processSpecificModules(ctx context.Context, result pr
 		if includedSet[modulePath] {
 			validJobs = append(validJobs, processJob{file: modulePath, ctx: gs.setupCtx.WorkspaceContext})
 		} else {
-			pterm.Debug.Printf("Skipping module not in included files: %s\n", modulePath)
+			if verbose {
+				pterm.Debug.Printf("Skipping module not in included files: %s\n", modulePath)
+			}
 		}
 	}
 
@@ -143,7 +166,9 @@ func (gs *GenerateSession) processSpecificModules(ctx context.Context, result pr
 	processor := NewModuleBatchProcessor(gs.setupCtx.GetQueryManager(), gs.setupCtx.GetDependencyTracker(), gs.setupCtx.GetCssCache())
 	processor.SetWorkerCount(len(validJobs)) // Optimize for small incremental builds
 
-	pterm.Debug.Printf("Starting incremental processing with optimized workers for %d modules\n", len(validJobs))
+	if verbose {
+		pterm.Debug.Printf("Starting incremental processing with optimized workers for %d modules\n", len(validJobs))
+	}
 	processingResult := processor.ProcessModules(ctx, validJobs, ModuleProcessorFunc(processModuleWithDeps))
 
 	return processingResult.Modules, processingResult.Logs, processingResult.Aliases, processingResult.Errors

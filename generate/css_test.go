@@ -172,4 +172,3 @@ func TestCssCache_FullIntegration(t *testing.T) {
 	// This verifies that the CSS cache abstraction allows for proper isolation
 	// between different sessions, which is essential for LSP integration
 }
-

@@ -107,4 +107,3 @@ func (gsc *GenerateContext) WithDependencyTracker(tracker *FileDependencyTracker
 		depTracker:       tracker,
 	}
 }
-

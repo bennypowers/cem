@@ -36,7 +36,7 @@ func TestErrorStandardization(t *testing.T) {
 			expected: "preprocess failed: base error",
 		},
 		{
-			name:     "WrapProcessError", 
+			name:     "WrapProcessError",
 			errFunc:  func() error { return WrapProcessError(baseErr) },
 			expected: "process failed: base error",
 		},
@@ -119,7 +119,7 @@ func TestErrorConventions(t *testing.T) {
 	for _, errFunc := range testCases {
 		err := errFunc()
 		msg := err.Error()
-		
+
 		// Error messages should start with lowercase (Go convention)
 		if len(msg) > 0 && strings.ToUpper(string(msg[0])) == string(msg[0]) {
 			// Allow exceptions for proper nouns or acronyms

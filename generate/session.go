@@ -18,6 +18,6 @@ package generate
 
 // This file has been split into focused modules:
 // - session_core.go: Core GenerateSession functionality
-// - session_deps.go: Dependency tracking functionality  
+// - session_deps.go: Dependency tracking functionality
 // - session_incremental.go: Incremental processing methods
 // - session_watch.go: Watch session functionality

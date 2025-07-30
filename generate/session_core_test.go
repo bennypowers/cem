@@ -36,9 +36,9 @@ func TestDeepCopyManifest(t *testing.T) {
 		SchemaVersion: "2.1.0",
 		Modules: []M.Module{
 			{
-				Kind: "javascript-module",
-				Path: "test/module.js",
-				Summary: "Test module",
+				Kind:        "javascript-module",
+				Path:        "test/module.js",
+				Summary:     "Test module",
 				Description: "A test module for deep copy verification",
 			},
 		},
@@ -97,8 +97,8 @@ func TestGetInMemoryManifest_Performance(t *testing.T) {
 		SchemaVersion: "2.1.0",
 		Modules: []M.Module{
 			{
-				Kind: "javascript-module",
-				Path: "test/module.js",
+				Kind:    "javascript-module",
+				Path:    "test/module.js",
 				Summary: "Test module",
 			},
 		},
@@ -138,8 +138,8 @@ func TestGetInMemoryManifestDeep_ThreadSafety(t *testing.T) {
 		SchemaVersion: "2.1.0",
 		Modules: []M.Module{
 			{
-				Kind: "javascript-module",
-				Path: "test/module.js",
+				Kind:    "javascript-module",
+				Path:    "test/module.js",
 				Summary: "Test module",
 			},
 		},
@@ -176,33 +176,33 @@ func TestGetInMemoryManifestDeep_ThreadSafety(t *testing.T) {
 
 func TestModuleIndex_Performance(t *testing.T) {
 	gs := &GenerateSession{}
-	
+
 	// Create test modules
 	modules := []M.Module{
 		{Kind: "javascript-module", Path: "test/module1.js"},
 		{Kind: "javascript-module", Path: "test/module2.js"},
 		{Kind: "javascript-module", Path: "test/module3.js"},
 	}
-	
+
 	pkg := M.NewPackage(modules)
-	
+
 	// Set manifest and build index
 	gs.mu.Lock()
 	gs.inMemoryManifest = &pkg
 	gs.moduleIndex = make(map[string]*M.Module)
 	gs.rebuildModuleIndex()
 	gs.mu.Unlock()
-	
+
 	// Test O(1) lookup
 	module := gs.GetModuleByPath("test/module2.js")
 	if module == nil {
 		t.Fatal("GetModuleByPath should find existing module")
 	}
-	
+
 	if module.Path != "test/module2.js" {
 		t.Errorf("Wrong module returned: got %s, want test/module2.js", module.Path)
 	}
-	
+
 	// Test non-existent module
 	module = gs.GetModuleByPath("test/nonexistent.js")
 	if module != nil {
@@ -214,56 +214,56 @@ func TestMergeModulesIntoManifest_WithIndex(t *testing.T) {
 	gs := &GenerateSession{
 		moduleIndex: make(map[string]*M.Module),
 	}
-	
+
 	// Test with empty manifest
 	updatedModules := []M.Module{
 		{Kind: "javascript-module", Path: "test/new.js", Summary: "New module"},
 	}
-	
+
 	gs.MergeModulesIntoManifest(updatedModules)
-	
+
 	if gs.inMemoryManifest == nil {
 		t.Fatal("Manifest should be created")
 	}
-	
+
 	if len(gs.inMemoryManifest.Modules) != 1 {
 		t.Errorf("Expected 1 module, got %d", len(gs.inMemoryManifest.Modules))
 	}
-	
+
 	// Verify index was built
 	module := gs.GetModuleByPath("test/new.js")
 	if module == nil {
 		t.Error("Module should be findable in index")
 	}
-	
+
 	// Test updating existing module
 	existingModules := []M.Module{
 		{Kind: "javascript-module", Path: "test/existing.js", Summary: "Original"},
 	}
-	
+
 	pkg := M.NewPackage(existingModules)
 	gs.mu.Lock()
 	gs.inMemoryManifest = &pkg
 	gs.rebuildModuleIndex()
 	gs.mu.Unlock()
-	
+
 	// Update the module
 	updatedModules = []M.Module{
 		{Kind: "javascript-module", Path: "test/existing.js", Summary: "Updated"},
 	}
-	
+
 	gs.MergeModulesIntoManifest(updatedModules)
-	
+
 	// Verify update worked
 	module = gs.GetModuleByPath("test/existing.js")
 	if module == nil {
 		t.Fatal("Updated module should be findable")
 	}
-	
+
 	if module.Summary != "Updated" {
 		t.Errorf("Module summary should be updated: got %s, want Updated", module.Summary)
 	}
-	
+
 	// Should still only have one module
 	if len(gs.inMemoryManifest.Modules) != 1 {
 		t.Errorf("Should still have 1 module after update, got %d", len(gs.inMemoryManifest.Modules))
