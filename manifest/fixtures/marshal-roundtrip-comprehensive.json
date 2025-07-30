@@ -1,0 +1,249 @@
+{
+  "schemaVersion": "2.1.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "test.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "description": "A test custom element",
+          "name": "TestElement",
+          "tagName": "test-element",
+          "members": [
+            {
+              "kind": "field",
+              "name": "testField",
+              "type": {
+                "text": "string"
+              },
+              "attribute": "test-field",
+              "reflects": true
+            }
+          ],
+          "attributes": [
+            {
+              "name": "disabled",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false"
+            }
+          ],
+          "events": [
+            {
+              "name": "test-event",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "Fired when test occurs"
+            }
+          ],
+          "slots": [
+            {
+              "name": "",
+              "description": "Default slot content"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "button",
+              "description": "The button part"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--test-color",
+              "description": "Main color",
+              "default": "blue"
+            }
+          ],
+          "cssStates": [
+            {
+              "name": "--active",
+              "description": "When element is active"
+            }
+          ]
+        },
+        {
+          "kind": "class",
+          "customElement": true,
+          "description": "A deprecated custom element",
+          "name": "DeprecatedElement",
+          "tagName": "deprecated-element",
+          "deprecated": "Use TestElement instead",
+          "members": []
+        },
+        {
+          "kind": "class",
+          "description": "A test class",
+          "name": "TestClass",
+          "members": [
+            {
+              "kind": "field",
+              "name": "testField",
+              "type": {
+                "text": "string"
+              }
+            }
+          ]
+        },
+        {
+          "kind": "mixin",
+          "description": "A test mixin",
+          "name": "TestMixin",
+          "members": [
+            {
+              "kind": "field",
+              "name": "mixinField",
+              "type": {
+                "text": "number"
+              }
+            }
+          ]
+        },
+        {
+          "kind": "mixin",
+          "description": "A deprecated mixin",
+          "name": "DeprecatedMixin",
+          "deprecated": true,
+          "members": []
+        },
+        {
+          "kind": "mixin",
+          "description": "A mixin deprecated with reason",
+          "name": "DeprecatedReasonMixin",
+          "deprecated": "Use NewMixin instead",
+          "members": []
+        },
+        {
+          "kind": "mixin",
+          "customElement": true,
+          "description": "A custom element mixin",
+          "name": "TestCustomElementMixin",
+          "members": []
+        },
+        {
+          "kind": "mixin",
+          "customElement": true,
+          "description": "A deprecated custom element mixin",
+          "name": "DeprecatedCustomElementMixin",
+          "deprecated": true,
+          "members": []
+        },
+        {
+          "kind": "mixin",
+          "customElement": true,
+          "description": "A custom element mixin deprecated with reason",
+          "name": "DeprecatedReasonCustomElementMixin",
+          "deprecated": "Custom element mixins are deprecated",
+          "members": []
+        },
+        {
+          "kind": "function",
+          "description": "A test function",
+          "name": "testFunction",
+          "parameters": [
+            {
+              "name": "param1",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "param2",
+              "type": {
+                "text": "number"
+              },
+              "optional": true
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "boolean"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "description": "A deprecated function",
+          "name": "deprecatedFunction",
+          "deprecated": true,
+          "parameters": [],
+          "return": {
+            "type": {
+              "text": "void"
+            }
+          }
+        },
+        {
+          "kind": "function",
+          "description": "A function deprecated with reason",
+          "name": "deprecatedReasonFunction",
+          "deprecated": "Use newFunction instead",
+          "parameters": [
+            {
+              "name": "deprecatedParam",
+              "type": {
+                "text": "string"
+              },
+              "deprecated": true
+            },
+            {
+              "name": "deprecatedReasonParam",
+              "type": {
+                "text": "number"
+              },
+              "deprecated": "No longer used"
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "void"
+            }
+          }
+        },
+        {
+          "kind": "variable",
+          "description": "A test variable",
+          "name": "testVariable",
+          "type": {
+            "text": "Array<string>"
+          },
+          "default": "[\"default\", \"values\"]"
+        },
+        {
+          "kind": "variable",
+          "description": "A deprecated variable",
+          "name": "deprecatedVariable",
+          "deprecated": true,
+          "type": {
+            "text": "string"
+          }
+        },
+        {
+          "kind": "variable",
+          "description": "A variable deprecated with reason",
+          "name": "deprecatedReasonVariable",
+          "deprecated": "No longer supported",
+          "type": {
+            "text": "string"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "testExport",
+          "declaration": {
+            "name": "testFunction",
+            "module": "test.js"
+          }
+        }
+      ]
+    }
+  ],
+  "deprecated": "Package is deprecated, use new-package instead"
+}

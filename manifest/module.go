@@ -90,6 +90,9 @@ func (m *Module) UnmarshalJSON(data []byte) error {
 		}
 		m.Exports = append(m.Exports, export)
 	}
+	if m.Exports == nil {
+		m.Exports = []Export{}
+	}
 
 	return nil
 }

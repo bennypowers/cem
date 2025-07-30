@@ -87,13 +87,23 @@ func (p *Package) Clone() *Package {
 func (x *Package) UnmarshalJSON(data []byte) error {
 	type Rest Package
 	aux := &struct {
-		Modules []json.RawMessage `json:"modules"`
+		Modules    []json.RawMessage `json:"modules"`
+		Deprecated json.RawMessage   `json:"deprecated"`
 		*Rest
 	}{
 		Rest: (*Rest)(x),
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
+	}
+
+	// Handle deprecated field
+	if len(aux.Deprecated) > 0 && string(aux.Deprecated) != "null" {
+		var dep Deprecated
+		if !decodeDeprecatedField(&dep, aux.Deprecated) {
+			return fmt.Errorf("invalid type for deprecated field")
+		}
+		x.Deprecated = dep
 	}
 
 	x.Modules = nil
