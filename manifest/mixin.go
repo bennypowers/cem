@@ -157,12 +157,16 @@ func (c *CustomElementMixinDeclaration) Clone() Declaration {
 
 	// Clone the embedded MixinDeclaration
 	if mixinDecl := c.MixinDeclaration.Clone(); mixinDecl != nil {
-		cloned.MixinDeclaration = *mixinDecl.(*MixinDeclaration)
+		if md, ok := mixinDecl.(*MixinDeclaration); ok {
+			cloned.MixinDeclaration = *md
+		}
 	}
 
 	// Clone the embedded CustomElementDeclaration
 	if customElementDecl := c.CustomElementDeclaration.Clone(); customElementDecl != nil {
-		cloned.CustomElementDeclaration = *customElementDecl.(*CustomElementDeclaration)
+		if ced, ok := customElementDecl.(*CustomElementDeclaration); ok {
+			cloned.CustomElementDeclaration = *ced
+		}
 	}
 
 	// Clone the embedded FullyQualified

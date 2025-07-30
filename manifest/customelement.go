@@ -124,7 +124,9 @@ func (c *CustomElementDeclaration) Clone() Declaration {
 
 	// Clone the embedded ClassDeclaration
 	if classDecl := c.ClassDeclaration.Clone(); classDecl != nil {
-		cloned.ClassDeclaration = *classDecl.(*ClassDeclaration)
+		if cd, ok := classDecl.(*ClassDeclaration); ok {
+			cloned.ClassDeclaration = *cd
+		}
 	}
 
 	// Clone the embedded CustomElement

@@ -228,11 +228,13 @@ func (c *FileSystemWorkspaceContext) FSPathToModule(fsPath string) (string, erro
 func (c *FileSystemWorkspaceContext) ResolveModuleDependency(modulePath, dependencyPath string) string {
 	if filepath.IsAbs(dependencyPath) {
 		// Convert to module-relative path
-		if rel, err := filepath.Rel(c.root, dependencyPath); err == nil {
-			return rel
+		rel, err := filepath.Rel(c.root, dependencyPath)
+		if err != nil {
+			// Log the error but still return a usable path
+			pterm.Warning.Printf("Failed to compute relative path from %s to %s: %v\n", c.root, dependencyPath, err)
+			return dependencyPath
 		}
-		// If filepath.Rel fails, return the original path as fallback
-		return dependencyPath
+		return rel
 	}
 
 	// Resolve relative to module's directory

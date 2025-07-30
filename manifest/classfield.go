@@ -212,7 +212,9 @@ func (c *CustomElementField) Clone() ClassMember {
 
 	// Clone the embedded ClassField
 	if classField := c.ClassField.Clone(); classField != nil {
-		cloned.ClassField = *classField.(*ClassField)
+		if cf, ok := classField.(*ClassField); ok {
+			cloned.ClassField = *cf
+		}
 	}
 
 	return cloned

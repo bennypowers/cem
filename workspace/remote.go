@@ -305,11 +305,13 @@ func (c *RemoteWorkspaceContext) FSPathToModule(fsPath string) (string, error) {
 func (c *RemoteWorkspaceContext) ResolveModuleDependency(modulePath, dependencyPath string) string {
 	if filepath.IsAbs(dependencyPath) {
 		// Convert to module-relative path
-		if rel, err := filepath.Rel(c.cacheDir, dependencyPath); err == nil {
-			return rel
+		rel, err := filepath.Rel(c.cacheDir, dependencyPath)
+		if err != nil {
+			// Log the error but still return a usable path
+			pterm.Warning.Printf("Failed to compute relative path from %s to %s: %v\n", c.cacheDir, dependencyPath, err)
+			return dependencyPath
 		}
-		// If filepath.Rel fails, return the original path as fallback
-		return dependencyPath
+		return rel
 	}
 
 	// Resolve relative to module's directory
