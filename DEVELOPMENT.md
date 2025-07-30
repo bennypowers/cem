@@ -299,3 +299,73 @@ This provides:
 - **Documentation**: Well-documented APIs and architecture decisions
 
 This architecture balances performance, maintainability, and extensibility while providing a solid foundation for web component tooling and future language server features.
+
+## Development Conventions
+
+### Commit Message Format
+
+This project follows [Conventional Commits](https://www.conventionalcommits.org/) with scopes based on top-level commands:
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer]
+```
+
+**Types:**
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation changes
+- `style`: Code style changes (formatting, etc.)
+- `refactor`: Code refactoring
+- `test`: Adding or modifying tests
+- `chore`: Maintenance tasks
+
+**Scopes:**
+- `generate`: Manifest generation functionality
+- `list`: Querying and display functionality  
+- `validate`: Validation functionality
+- `manifest`: Core manifest types and serialization
+- `workspace`: Workspace abstraction layer
+- `cmd`: CLI command definitions
+- `deps`: Dependencies and build system
+
+**Examples:**
+```
+feat(generate): add --watch flag for incremental rebuilds
+fix(manifest): handle deprecated field unmarshaling
+docs(validate): update schema validation examples
+test(generate): add comprehensive round-trip tests
+```
+
+### Branch Naming Convention
+
+**Format:** `<type>/<description-with-hyphens>`
+
+**Examples:**
+- `feat/watch-mode-implementation`
+- `fix/manifest-serialization-bug`
+- `test/marshal-unmarshal-coverage`
+- `docs/architecture-documentation`
+- `refactor/generate-session-cleanup`
+
+### Pull Request Guidelines
+
+1. **Create PRs for all non-trivial changes**
+2. **Use descriptive titles** matching commit message format
+3. **Include comprehensive description** with:
+   - Summary of changes
+   - Test plan or coverage
+   - Breaking changes (if any)
+4. **Ensure all tests pass** before requesting review
+5. **Add `🤖 Generated with [Claude Code](https://claude.ai/code)` footer when AI-assisted**
+
+### Code Quality Standards
+
+- **Run tests**: `make test` before committing
+- **Format code**: Pre-commit hooks handle `go fmt`
+- **Race detection**: Tests run with `-race` flag in CI
+- **Linting**: `golangci-lint` provides PR feedback
+- **Documentation**: Update relevant docs with functional changes
