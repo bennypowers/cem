@@ -3,7 +3,7 @@ SHELL := /bin/bash
 CONTRIBUTING_PATH = docs/content/docs/contributing.md
 WINDOWS_CC_IMAGE := cem-windows-cc-image
 
-.PHONY: build test update watch bench profile flamegraph coverage show-coverage clean lint format prepare-npm install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image
+.PHONY: build test update watch bench profile flamegraph coverage show-coverage clean lint format prepare-npm install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks
 
 all: windows
 
@@ -88,6 +88,14 @@ coverage:
 
 show-coverage:
 	go tool cover -html=cover.out
+
+install-git-hooks:
+	@echo "Installing git hooks..."
+	@mkdir -p .git/hooks
+	@cp scripts/pre-commit .git/hooks/pre-commit
+	@chmod +x .git/hooks/pre-commit
+	@echo "Git hooks installed successfully!"
+	@echo "The pre-commit hook will run 'go fmt' on staged .go files."
 
 docs-ci:
 	make build

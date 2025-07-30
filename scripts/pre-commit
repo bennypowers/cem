@@ -1,0 +1,56 @@
+#!/bin/bash
+#
+# Pre-commit hook that runs go fmt on all staged .go files
+# To install: make install-git-hooks
+#
+
+set -e
+
+# Check if this is an initial commit
+if git rev-parse --verify HEAD >/dev/null 2>&1; then
+    against=HEAD
+else
+    # Initial commit: diff against an empty tree object
+    against=$(git hash-object -t tree /dev/null)
+fi
+
+# Get list of staged .go files
+staged_go_files=$(git diff --cached --name-only --diff-filter=ACM "$against" | grep '\.go$' || true)
+
+if [ -z "$staged_go_files" ]; then
+    # No .go files staged, exit successfully
+    exit 0
+fi
+
+echo "Running go fmt on staged .go files..."
+
+# Check if any files need formatting
+unformatted_files=""
+for file in $staged_go_files; do
+    if [ -f "$file" ]; then
+        # Check if file needs formatting
+        if ! gofmt -l "$file" | grep -q "^$"; then
+            unformatted_files="$unformatted_files $file"
+        fi
+    fi
+done
+
+if [ -n "$unformatted_files" ]; then
+    echo "The following files need formatting:"
+    for file in $unformatted_files; do
+        echo "  $file"
+    done
+    
+    echo ""
+    echo "Running 'go fmt' on these files..."
+    gofmt -w $unformatted_files
+    
+    echo ""
+    echo "Files have been formatted. Please stage the changes and commit again:"
+    echo "  git add $unformatted_files"
+    echo "  git commit"
+    
+    exit 1
+fi
+
+echo "All staged .go files are properly formatted."
