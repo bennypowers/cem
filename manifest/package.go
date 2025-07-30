@@ -50,9 +50,10 @@ func (x *Package) IsDeprecated() bool {
 
 // Clone creates a deep copy of the Package.
 // This is significantly faster than JSON serialization (~5-10x performance improvement).
-// 
+//
 // Usage:
-//   cloned := original.Clone()
+//
+//	cloned := original.Clone()
 //
 // Performance: ~microseconds vs ~milliseconds for JSON round-trip
 // Thread Safety: Safe for concurrent use (creates new instance)

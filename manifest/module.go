@@ -98,7 +98,8 @@ func (m *Module) UnmarshalJSON(data []byte) error {
 // Handles all nested declarations and exports with proper deep copying.
 //
 // Usage:
-//   cloned := original.Clone()
+//
+//	cloned := original.Clone()
 //
 // Performance: Significantly faster than JSON serialization for complex modules
 // Thread Safety: Safe for concurrent use (creates new instance)

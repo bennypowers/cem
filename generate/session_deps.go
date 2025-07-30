@@ -20,6 +20,7 @@ import (
 	"crypto/sha256"
 	"io"
 	"os"
+	"slices"
 	"sync"
 	"time"
 
@@ -216,13 +217,7 @@ func (fdt *FileDependencyTracker) RecordModuleDependencies(modulePath string, st
 			fdt.cssDepReverse[cssFS] = make([]string, 0)
 		}
 		// Avoid duplicates
-		found := false
-		for _, existing := range fdt.cssDepReverse[cssFS] {
-			if existing == modulePath {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(fdt.cssDepReverse[cssFS], modulePath)
 		if !found {
 			fdt.cssDepReverse[cssFS] = append(fdt.cssDepReverse[cssFS], modulePath)
 		}

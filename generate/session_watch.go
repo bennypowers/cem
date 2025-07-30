@@ -27,6 +27,7 @@ import (
 	"sync"
 	"time"
 
+	C "bennypowers.dev/cem/cmd/config"
 	M "bennypowers.dev/cem/manifest"
 	W "bennypowers.dev/cem/workspace"
 	DS "github.com/bmatcuk/doublestar"
@@ -45,6 +46,9 @@ type WatchSession struct {
 	lastWrittenHash map[string][32]byte  // file path -> SHA256 hash of content we wrote
 	lastWrittenTime map[string]time.Time // file path -> modification time when we wrote it
 	pendingChanges  map[string]bool      // files that have changed and are pending processing
+	// Demo discovery optimization
+	demoFilesChanged bool                  // flag set when demo files change (event-driven)
+	lastDemoConfig   C.DemoDiscoveryConfig // stored config copy for change detection
 }
 
 // NewWatchSession creates a new watch session with the given workspace context and globs
@@ -84,6 +88,9 @@ func (ws *WatchSession) RunWatch() error {
 		pterm.Error.Printf("Initial generation failed: %v\n", err)
 		return err
 	}
+	// Update demo discovery state after initial generation
+	ws.updateDemoDiscoveryState()
+
 	duration := time.Since(start)
 	pterm.Success.Printf("Generated in %s\n", ColorizeDuration(duration).Sprint(duration))
 
@@ -177,9 +184,18 @@ func (ws *WatchSession) handleFileChange(event fsnotify.Event) {
 		return
 	}
 
-	// Only process files that match our input globs
-	if !ws.matchesInputGlobs(event.Name) {
-		pterm.Debug.Printf("Ignoring file not matching input globs: %s\n", event.Name)
+	// Check if this is a demo file that affects demo discovery
+	isDemoFile := ws.matchesDemoGlobs(event.Name)
+	if isDemoFile {
+		ws.mu.Lock()
+		ws.demoFilesChanged = true
+		ws.mu.Unlock()
+		pterm.Debug.Printf("Demo file changed: %s\n", event.Name)
+	}
+
+	// Only process files that match our input globs or are demo files
+	if !ws.matchesInputGlobs(event.Name) && !isDemoFile {
+		pterm.Debug.Printf("Ignoring file not matching input or demo globs: %s\n", event.Name)
 		return
 	}
 
@@ -282,6 +298,31 @@ func (ws *WatchSession) matchesInputGlobs(filePath string) bool {
 	return false
 }
 
+// matchesDemoGlobs checks if a file path matches the demo discovery glob pattern
+func (ws *WatchSession) matchesDemoGlobs(filePath string) bool {
+	cfg, err := ws.ctx.Config()
+	if err != nil || cfg.Generate.DemoDiscovery.FileGlob == "" {
+		return false
+	}
+
+	// Convert absolute path to relative path from workspace root
+	relPath, err := filepath.Rel(ws.ctx.Root(), filePath)
+	if err != nil {
+		// If we can't get relative path, try with the original path
+		relPath = filePath
+	}
+
+	// Check against demo discovery glob pattern
+	matched, err := filepath.Match(cfg.Generate.DemoDiscovery.FileGlob, relPath)
+	if err == nil && matched {
+		return true
+	}
+
+	// Also try with doublestar for more complex patterns like **/*.html
+	matched, err = DS.PathMatch(cfg.Generate.DemoDiscovery.FileGlob, relPath)
+	return err == nil && matched
+}
+
 // processChanges handles the actual regeneration after debouncing
 func (ws *WatchSession) processChanges() {
 	ws.mu.Lock()
@@ -310,7 +351,14 @@ func (ws *WatchSession) processChanges() {
 	// Try incremental processing first
 	if len(changedFiles) > 0 {
 		pterm.Debug.Printf("Changed files: %v\n", changedFiles)
-		pkg, err := ws.generateSession.ProcessChangedFiles(ctx, changedFiles)
+
+		// Check if we can skip demo discovery for this generation cycle
+		skipDemoDiscovery := ws.shouldSkipDemoDiscovery()
+		if skipDemoDiscovery {
+			pterm.Debug.Println("Skipping demo discovery - config and demo files unchanged")
+		}
+
+		pkg, err := ws.generateSession.ProcessChangedFilesWithSkip(ctx, changedFiles, skipDemoDiscovery)
 		if err != nil {
 			if errors.Is(err, context.Canceled) {
 				pterm.Warning.Println("Generation cancelled due to new file changes")
@@ -331,6 +379,11 @@ func (ws *WatchSession) processChanges() {
 			pterm.Error.Printf("Failed to write manifest: %v\n", err)
 			return
 		}
+
+		// Update demo discovery state after successful generation
+		if !skipDemoDiscovery {
+			ws.updateDemoDiscoveryState()
+		}
 	} else {
 		// Fallback to full rebuild if no specific files tracked
 		if err := ws.generateOnce(ctx); err != nil {
@@ -341,6 +394,8 @@ func (ws *WatchSession) processChanges() {
 			}
 			return
 		}
+		// Update demo discovery state after full rebuild
+		ws.updateDemoDiscoveryState()
 	}
 
 	duration := time.Since(start)
@@ -431,4 +486,44 @@ func (ws *WatchSession) writeManifest(manifestStr string) error {
 	ws.mu.Unlock()
 
 	return nil
+}
+
+// shouldSkipDemoDiscovery checks if demo discovery can be skipped
+func (ws *WatchSession) shouldSkipDemoDiscovery() bool {
+	cfg, err := ws.ctx.Config()
+	if err != nil || cfg.Generate.DemoDiscovery.FileGlob == "" {
+		return true // Skip if no demo discovery configured
+	}
+
+	ws.mu.Lock()
+	// Make copies to avoid holding lock during comparison
+	lastConfig := ws.lastDemoConfig
+	demoFilesChanged := ws.demoFilesChanged
+	// Check if this is the first run
+	isFirstRun := ws.lastDemoConfig == (C.DemoDiscoveryConfig{})
+	ws.mu.Unlock()
+
+	if isFirstRun {
+		return false // Need to run discovery on first run
+	}
+
+	// Safe comparison outside the lock (both are value types)
+	configChanged := lastConfig != cfg.Generate.DemoDiscovery
+
+	// Skip only if: no config changes AND no demo file changes
+	return !configChanged && !demoFilesChanged
+}
+
+// updateDemoDiscoveryState updates the tracked state after demo discovery
+func (ws *WatchSession) updateDemoDiscoveryState() {
+	cfg, err := ws.ctx.Config()
+	if err != nil {
+		return
+	}
+
+	ws.mu.Lock()
+	// Store value copy, not pointer - safe for concurrent access
+	ws.lastDemoConfig = cfg.Generate.DemoDiscovery
+	ws.demoFilesChanged = false // Reset flag
+	ws.mu.Unlock()
 }

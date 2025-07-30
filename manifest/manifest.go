@@ -146,7 +146,6 @@ func NewDeprecated(x any) Deprecated {
 	}
 }
 
-
 type Privacy string
 
 const (

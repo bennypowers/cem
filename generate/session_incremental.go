@@ -30,6 +30,11 @@ import (
 
 // ProcessChangedFiles performs incremental processing for a set of changed files
 func (gs *GenerateSession) ProcessChangedFiles(ctx context.Context, changedFiles []string) (*M.Package, error) {
+	return gs.ProcessChangedFilesWithSkip(ctx, changedFiles, false)
+}
+
+// ProcessChangedFilesWithSkip performs incremental processing for a set of changed files with optional demo discovery skipping
+func (gs *GenerateSession) ProcessChangedFilesWithSkip(ctx context.Context, changedFiles []string, skipDemoDiscovery bool) (*M.Package, error) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
@@ -82,11 +87,16 @@ func (gs *GenerateSession) ProcessChangedFiles(ctx context.Context, changedFiles
 	if verbose {
 		pterm.Debug.Printf("Files changed: %v, affected modules: %v - attempting incremental rebuild\n", changedFiles, affectedModules)
 	}
-	return gs.ProcessModulesIncremental(ctx, affectedModules)
+	return gs.ProcessModulesIncrementalWithSkip(ctx, affectedModules, skipDemoDiscovery)
 }
 
 // ProcessModulesIncremental processes only the specified modules incrementally
 func (gs *GenerateSession) ProcessModulesIncremental(ctx context.Context, modulePaths []string) (*M.Package, error) {
+	return gs.ProcessModulesIncrementalWithSkip(ctx, modulePaths, false)
+}
+
+// ProcessModulesIncrementalWithSkip processes only the specified modules incrementally with optional demo discovery skipping
+func (gs *GenerateSession) ProcessModulesIncrementalWithSkip(ctx context.Context, modulePaths []string, skipDemoDiscovery bool) (*M.Package, error) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
@@ -123,7 +133,7 @@ func (gs *GenerateSession) ProcessModulesIncremental(ctx context.Context, module
 	}
 
 	// Apply demo discovery and design tokens to affected modules only
-	if err := gs.applyPostProcessingToModules(ctx, result, aliases, updatedModules); err != nil {
+	if err := gs.applyPostProcessingToModules(ctx, result, aliases, updatedModules, skipDemoDiscovery); err != nil {
 		pterm.Warning.Printf("Incremental post-processing failed: %v\n", err)
 		// Don't fail the entire build for post-processing issues
 	}
@@ -206,8 +216,8 @@ func (gs *GenerateSession) MergeModulesIntoManifest(updatedModules []M.Module) {
 	}
 }
 
-// applyPostProcessingToModules applies demo discovery and design tokens to specific modules only
-func (gs *GenerateSession) applyPostProcessingToModules(ctx context.Context, result preprocessResult, allTagAliases map[string]string, modules []M.Module) error {
+// applyPostProcessingToModules applies demo discovery and design tokens to specific modules only, with optional demo discovery skipping
+func (gs *GenerateSession) applyPostProcessingToModules(ctx context.Context, result preprocessResult, allTagAliases map[string]string, modules []M.Module, skipDemoDiscovery bool) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -222,9 +232,9 @@ func (gs *GenerateSession) applyPostProcessingToModules(ctx context.Context, res
 	var errsMu sync.Mutex
 	errsList := make([]error, 0)
 
-	// Build the demo map once if needed
+	// Build the demo map once if needed and not skipped
 	var demoMap map[string][]string
-	if len(result.demoFiles) > 0 {
+	if !skipDemoDiscovery && len(result.demoFiles) > 0 {
 		var err error
 		demoMap, err = DD.NewDemoMap(result.demoFiles)
 		if err != nil {

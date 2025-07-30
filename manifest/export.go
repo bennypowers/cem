@@ -46,7 +46,7 @@ type CustomElementExport struct {
 	Kind        string     `json:"kind"` // 'custom-element-definition'
 	Name        string     `json:"name"`
 	Declaration *Reference `json:"declaration"`
-	Deprecated  any        `json:"deprecated,omitempty"` // bool or string
+	Deprecated  Deprecated `json:"deprecated,omitempty"` // bool or string
 }
 
 func NewCustomElementExport(
@@ -62,7 +62,7 @@ func NewCustomElementExport(
 		Declaration: declaration,
 	}
 	if deprecated != nil {
-		ce.Deprecated = deprecated
+		ce.Deprecated = *deprecated
 	}
 	return ce
 }
@@ -142,10 +142,13 @@ func (c *CustomElementExport) Clone() Export {
 	}
 
 	cloned := &CustomElementExport{
-		StartByte:  c.StartByte,
-		Kind:       c.Kind,
-		Name:       c.Name,
-		Deprecated: c.Deprecated, // any type - shallow copy should be safe
+		StartByte: c.StartByte,
+		Kind:      c.Kind,
+		Name:      c.Name,
+	}
+
+	if c.Deprecated != nil {
+		cloned.Deprecated = c.Deprecated.Clone()
 	}
 
 	if c.Declaration != nil {
