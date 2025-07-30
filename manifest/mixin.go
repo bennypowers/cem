@@ -224,7 +224,8 @@ func (x *CustomElementMixinDeclaration) GetStartByte() uint { return x.FunctionL
 func (m *CustomElementMixinDeclaration) UnmarshalJSON(data []byte) error {
 	type Rest CustomElementMixinDeclaration
 	aux := &struct {
-		Members []json.RawMessage `json:"members"`
+		Members    []json.RawMessage `json:"members"`
+		Deprecated json.RawMessage   `json:"deprecated"`
 		*Rest
 	}{
 		Rest: (*Rest)(m),
@@ -233,6 +234,16 @@ func (m *CustomElementMixinDeclaration) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
+
+	// Handle deprecated field
+	if len(aux.Deprecated) > 0 && string(aux.Deprecated) != "null" {
+		var dep Deprecated
+		if !decodeDeprecatedField(&dep, aux.Deprecated) {
+			return fmt.Errorf("invalid type for deprecated field")
+		}
+		m.Deprecated = dep
+	}
+
 	m.Members = nil
 	for _, mem := range aux.Members {
 		member, err := unmarshalClassMember(mem)
