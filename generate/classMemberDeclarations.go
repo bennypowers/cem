@@ -194,6 +194,42 @@ func (mp *ModuleProcessor) createClassFieldFromAccessorMatch(
 	return field, err
 }
 
+func (mp *ModuleProcessor) createClassFieldFromConstructorParameterMatch(
+	fieldName string,
+	superclass string,
+	captures Q.CaptureMap,
+) (err error, field M.CustomElementField) {
+	// Constructor parameters are never static
+	isStatic := false
+
+	field = M.CustomElementField{
+		ClassField: M.ClassField{
+			Kind:   "field",
+			Static: isStatic,
+			PropertyLike: M.PropertyLike{
+				FullyQualified: M.FullyQualified{
+					Name: fieldName,
+				},
+			},
+		},
+	}
+
+	amendFieldTypeWithCaptures(captures, &field.ClassField)
+	amendFieldPrivacyWithCaptures(captures, &field.ClassField)
+
+	// Constructor parameters on non-CE classes typically don't have @property decorators
+	// but we'll keep the logic for completeness
+	isCustomElement := superclass == "HTMLElement" || superclass == "LitElement"
+	isProperty := isCustomElement && !isStatic && isPropertyField(captures)
+
+	if isProperty {
+		amendFieldWithPropertyConfigCaptures(captures, &field)
+	}
+
+	mp.amendFieldWithJsdoc(captures, &field.ClassField)
+	return nil, field
+}
+
 func (mp *ModuleProcessor) createClassFieldFromFieldMatch(
 	fieldName string,
 	isStatic bool,
@@ -252,6 +288,8 @@ func getMemberKindFromCaptures(captures Q.CaptureMap) string {
 		return "accessor"
 	case captures["field"] != nil:
 		return "field"
+	case captures["constructor.parameter"] != nil:
+		return "constructor-parameter"
 	default:
 		return ""
 	}
@@ -294,6 +332,14 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 		case "field":
 			error, field := mp.createClassFieldFromFieldMatch(memberName, isStatic, superclass, captures)
 			field.ClassField.StartByte = captures["field"][0].StartByte
+			if error != nil {
+				errs = errors.Join(errs, error)
+			} else {
+				memberMap[key] = &field
+			}
+		case "constructor-parameter":
+			error, field := mp.createClassFieldFromConstructorParameterMatch(memberName, superclass, captures)
+			field.ClassField.StartByte = captures["constructor.parameter"][0].StartByte
 			if error != nil {
 				errs = errors.Join(errs, error)
 			} else {

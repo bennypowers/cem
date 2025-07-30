@@ -68,13 +68,13 @@
 
 ; class constructor properties (typescript only)
 (method_definition
-  ; example : constructor (publid field: Type) {}
-  name: (_) @member.name (#eq? @member.name "constructor")
-  parameters: (formal_parameters (
-                (_
-                  (accessibility_modifier) @member.privacy
-                  pattern: (identifier) @member.name
-                  type: (type_annotation (_) @field.type))) @field @member))
+  ; example : constructor (public field: Type) {}
+  name: (_) @constructor.name (#eq? @constructor.name "constructor")
+  parameters: (formal_parameters
+    (_
+      (accessibility_modifier) @member.privacy
+      pattern: (identifier) @member.name
+      type: (type_annotation (_) @field.type)?) @constructor.parameter @member))
 
 ( ; accessors and accessor pairs
   ; @examples:
