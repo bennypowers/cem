@@ -3,14 +3,10 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "src/class-parameter-properties.js",
+      "path": "src/class-constructor-properties.js",
       "declarations": [
         {
-          "name": "Class",
-          "superclass": {
-            "name": "Event",
-            "package": "global:"
-          },
+          "name": "ClassConstructorProperties",
           "members": [
             {
               "name": "field",
@@ -20,7 +16,7 @@
               "kind": "field"
             },
             {
-              "name": "thing",
+              "name": "pub",
               "type": {
                 "text": "boolean"
               },
@@ -29,17 +25,33 @@
             {
               "name": "priv",
               "type": {
-                "text": "boolean"
+                "text": "string"
               },
               "kind": "field",
               "privacy": "private"
             },
             {
-              "name": "pub",
-              "description": "description",
+              "name": "prot",
+              "type": {
+                "text": "number"
+              },
+              "kind": "field",
+              "privacy": "protected"
+            },
+            {
+              "name": "documented",
+              "description": "JSDoc description",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "deprecated",
               "type": {
                 "text": "boolean"
               },
+              "deprecated": "Use something else",
               "kind": "field"
             }
           ],
@@ -49,10 +61,10 @@
       "exports": [
         {
           "kind": "js",
-          "name": "Class",
+          "name": "ClassConstructorProperties",
           "declaration": {
-            "name": "Class",
-            "module": "src/class-parameter-properties.js"
+            "name": "ClassConstructorProperties",
+            "module": "src/class-constructor-properties.js"
           }
         }
       ]

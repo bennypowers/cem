@@ -13,14 +13,6 @@
           },
           "kind": "class",
           "tagName": "class-render-ternary",
-          "cssParts": [
-            {
-              "name": "true"
-            },
-            {
-              "name": "false"
-            }
-          ],
           "slots": [
             {
               "name": "",
@@ -29,6 +21,14 @@
             {
               "name": "slot",
               "description": "named slot (if you're less lucky)"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "true"
+            },
+            {
+              "name": "false"
             }
           ],
           "customElement": true
