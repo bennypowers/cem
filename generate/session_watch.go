@@ -80,8 +80,6 @@ func (ws *WatchSession) RunWatch() error {
 	pterm.Info.Println("Starting watch mode...")
 
 	// Do initial generation
-	numWorkers := ws.generateSession.WorkerCount()
-	pterm.Info.Printf("Starting Generation with %d workers\n", numWorkers)
 	start := time.Now()
 
 	if err := ws.generateOnce(context.Background()); err != nil {
