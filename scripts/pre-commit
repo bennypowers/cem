@@ -24,33 +24,23 @@ fi
 
 echo "Running go fmt on staged .go files..."
 
-# Check if any files need formatting and collect them in an array
-unformatted_files=()
-while IFS= read -r file; do
-    if [ -f "$file" ]; then
-        # Check if file needs formatting
-        if gofmt -l "$file" | grep -q "."; then
-            unformatted_files+=("$file")
-        fi
-    fi
-done <<< "$staged_go_files"
-
-if [ ${#unformatted_files[@]} -gt 0 ]; then
-    echo "Formatting ${#unformatted_files[@]} files..."
-
+# Check for unformatted files
+unformatted_files=$(gofmt -l $staged_go_files)
+if [ -n "$unformatted_files" ]; then
+    unformatted_files_array=($unformatted_files)
+if [ ${#unformatted_files_array[@]} -gt 0 ]; then
+    echo "Formatting ${#unformatted_files_array[@]} files..."
     # Format the files
-    if ! gofmt -w "${unformatted_files[@]}"; then
+    if ! gofmt -w "${unformatted_files_array[@]}"; then
         echo "Error: Failed to format files"
         exit 1
     fi
-
     # Stage the formatted files
-    if ! git add "${unformatted_files[@]}"; then
+    if ! git add "${unformatted_files_array[@]}"; then
         echo "Error: Failed to stage formatted files"
         exit 1
     fi
-
-    echo "Formatted and staged ${#unformatted_files[@]} files"
+    echo "Formatted and staged ${#unformatted_files_array[@]} files"
 fi
 
 echo "All staged .go files are properly formatted."
