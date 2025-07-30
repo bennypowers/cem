@@ -8,6 +8,76 @@
       "declarations": [
         {
           "kind": "class",
+          "customElement": true,
+          "description": "A test custom element",
+          "name": "TestElement",
+          "tagName": "test-element",
+          "members": [
+            {
+              "kind": "field",
+              "name": "testField",
+              "type": {
+                "text": "string"
+              },
+              "attribute": "test-field",
+              "reflects": true
+            }
+          ],
+          "attributes": [
+            {
+              "name": "disabled",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false"
+            }
+          ],
+          "events": [
+            {
+              "name": "test-event",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "Fired when test occurs"
+            }
+          ],
+          "slots": [
+            {
+              "name": "",
+              "description": "Default slot content"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "button",
+              "description": "The button part"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--test-color",
+              "description": "Main color",
+              "default": "blue"
+            }
+          ],
+          "cssStates": [
+            {
+              "name": "--active",
+              "description": "When element is active"
+            }
+          ]
+        },
+        {
+          "kind": "class",
+          "customElement": true,
+          "description": "A deprecated custom element",
+          "name": "DeprecatedElement",
+          "tagName": "deprecated-element",
+          "deprecated": "Use TestElement instead",
+          "members": []
+        },
+        {
+          "kind": "class",
           "description": "A test class",
           "name": "TestClass",
           "members": [
