@@ -2,44 +2,70 @@
   "schemaVersion": "2.1.0",
   "modules": [
     {
-      "path": "src/class-constructor-properties.js",
       "kind": "javascript-module",
+      "path": "src/class-constructor-properties.js",
       "declarations": [
         {
-          "kind": "class",
           "name": "ClassConstructorProperties",
           "members": [
             {
-              "kind": "field",
-              "name": "pub"
+              "name": "field",
+              "type": {
+                "text": "boolean"
+              },
+              "kind": "field"
             },
             {
-              "kind": "field",
+              "name": "pub",
+              "type": {
+                "text": "boolean"
+              },
+              "kind": "field"
+            },
+            {
               "name": "priv",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
               "privacy": "private"
             },
             {
-              "kind": "field",
               "name": "prot",
+              "type": {
+                "text": "number"
+              },
+              "kind": "field",
               "privacy": "protected"
             },
             {
-              "kind": "field",
               "name": "documented",
-              "description": "JSDoc description"
+              "description": "JSDoc description",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
             },
             {
-              "kind": "field",
               "name": "deprecated",
-              "deprecated": "Use something else"
+              "type": {
+                "text": "boolean"
+              },
+              "deprecated": "Use something else",
+              "kind": "field"
             }
-          ]
+          ],
+          "kind": "class"
         }
       ],
       "exports": [
         {
+          "kind": "js",
           "name": "ClassConstructorProperties",
-          "declaration": "ClassConstructorProperties"
+          "declaration": {
+            "name": "ClassConstructorProperties",
+            "module": "src/class-constructor-properties.js"
+          }
         }
       ]
     }

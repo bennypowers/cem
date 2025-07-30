@@ -16,8 +16,8 @@
           "cssProperties": [
             {
               "name": "--a",
-              "default": "var(--b) var(--c) var(--d) var(--e)",
-              "description": "a"
+              "description": "a",
+              "default": "var(--b) var(--c) var(--d) var(--e)"
             },
             {
               "name": "--b",

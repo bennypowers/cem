@@ -13,14 +13,14 @@
           },
           "kind": "class",
           "tagName": "class-render-slot-anon-attributes",
-          "customElement": true,
           "slots": [
             {
               "name": "",
               "summary": "summary",
-              "description": "`<slot>`"
+              "description": "`\u003cslot\u003e`"
             }
-          ]
+          ],
+          "customElement": true
         }
       ],
       "exports": [

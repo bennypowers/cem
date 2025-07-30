@@ -16,21 +16,21 @@
           "slots": [
             {
               "name": "",
-              "description": "`<slot>`"
+              "description": "`\u003cslot\u003e`"
             },
             {
               "name": "slot",
-              "summary": "`<slot>`"
+              "summary": "`\u003cslot\u003e`"
             }
           ],
           "cssParts": [
             {
               "name": "part",
-              "description": "`<p>`"
+              "description": "`\u003cp\u003e`"
             },
             {
               "name": "summary",
-              "summary": "`<p>`"
+              "summary": "`\u003cp\u003e`"
             }
           ],
           "customElement": true
