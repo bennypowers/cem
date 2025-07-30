@@ -89,7 +89,9 @@ func (j *JavaScriptExport) Clone() Export {
 	}
 
 	if j.Deprecated != nil {
-		cloned.Deprecated = j.Deprecated.Clone()
+		if deprecatedClone := j.Deprecated.Clone(); deprecatedClone != nil {
+			cloned.Deprecated = deprecatedClone
+		}
 	}
 
 	if j.Declaration != nil {
@@ -148,7 +150,9 @@ func (c *CustomElementExport) Clone() Export {
 	}
 
 	if c.Deprecated != nil {
-		cloned.Deprecated = c.Deprecated.Clone()
+		if deprecatedClone := c.Deprecated.Clone(); deprecatedClone != nil {
+			cloned.Deprecated = deprecatedClone
+		}
 	}
 
 	if c.Declaration != nil {
