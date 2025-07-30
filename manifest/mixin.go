@@ -46,6 +46,32 @@ type CustomElementMixinDeclaration struct {
 
 func (*MixinDeclaration) isDeclaration() {}
 
+// Clone creates a deep copy of the MixinDeclaration.
+// Handles all embedded structures including ClassLike, FunctionLike, and FullyQualified.
+//
+// Performance: Efficient deep copying without JSON serialization overhead
+// Thread Safety: Safe for concurrent use (creates new instance)
+func (m *MixinDeclaration) Clone() Declaration {
+	if m == nil {
+		return nil
+	}
+
+	cloned := &MixinDeclaration{
+		Kind: m.Kind,
+	}
+
+	if m.Deprecated != nil {
+		cloned.Deprecated = m.Deprecated.Clone()
+	}
+
+	// Clone embedded structures
+	cloned.ClassLike = m.ClassLike.Clone()
+	cloned.FunctionLike = m.FunctionLike.Clone()
+	cloned.FullyQualified = m.FullyQualified.Clone()
+
+	return cloned
+}
+
 func (x *MixinDeclaration) IsDeprecated() bool {
 	if x == nil {
 		return false
@@ -116,6 +142,34 @@ func NewRenderableMixinDeclaration(
 }
 
 func (*CustomElementMixinDeclaration) isDeclaration() {}
+
+// Clone creates a deep copy of the CustomElementMixinDeclaration.
+// Handles all embedded structures including MixinDeclaration, CustomElementDeclaration, and FullyQualified.
+//
+// Performance: Efficient deep copying without JSON serialization overhead
+// Thread Safety: Safe for concurrent use (creates new instance)
+func (c *CustomElementMixinDeclaration) Clone() Declaration {
+	if c == nil {
+		return nil
+	}
+
+	cloned := &CustomElementMixinDeclaration{}
+
+	// Clone the embedded MixinDeclaration
+	if mixinDecl := c.MixinDeclaration.Clone(); mixinDecl != nil {
+		cloned.MixinDeclaration = *mixinDecl.(*MixinDeclaration)
+	}
+
+	// Clone the embedded CustomElementDeclaration
+	if customElementDecl := c.CustomElementDeclaration.Clone(); customElementDecl != nil {
+		cloned.CustomElementDeclaration = *customElementDecl.(*CustomElementDeclaration)
+	}
+
+	// Clone the embedded FullyQualified
+	cloned.FullyQualified = c.FullyQualified.Clone()
+
+	return cloned
+}
 
 func (x *RenderableMixinDeclaration) Name() string {
 	return x.MixinDeclaration.Name

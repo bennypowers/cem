@@ -1,0 +1,341 @@
+{
+  "schemaVersion": "2.1.0",
+  "readme": "README.md",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/comprehensive.js",
+      "summary": "Comprehensive module for testing",
+      "description": "A module that contains all possible manifest types for clone testing",
+      "deprecated": "Use new-comprehensive.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "RegularClass",
+          "summary": "A regular class",
+          "description": "A class without custom element functionality",
+          "deprecated": true,
+          "superclass": {
+            "name": "BaseClass",
+            "module": "base-module.js"
+          },
+          "mixins": [
+            {
+              "name": "MixinA",
+              "module": "mixins.js"
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "regularField",
+              "type": { "text": "string" },
+              "summary": "A regular field",
+              "description": "Field description",
+              "deprecated": "Use newField instead",
+              "static": false,
+              "privacy": "public"
+            },
+            {
+              "kind": "method",
+              "name": "regularMethod",
+              "summary": "A regular method",
+              "description": "Method description",
+              "deprecated": true,
+              "static": true,
+              "privacy": "private",
+              "parameters": [
+                {
+                  "name": "param1",
+                  "type": { "text": "number" },
+                  "summary": "First parameter",
+                  "description": "Parameter description",
+                  "deprecated": false,
+                  "optional": false,
+                  "rest": false
+                },
+                {
+                  "name": "param2",
+                  "type": { "text": "string" },
+                  "optional": true,
+                  "rest": false,
+                  "deprecated": "Use newParam instead"
+                }
+              ],
+              "return": {
+                "type": { "text": "boolean" },
+                "summary": "Return value",
+                "description": "Returns true on success"
+              }
+            }
+          ],
+          "source": {
+            "href": "src/comprehensive.js#L10"
+          }
+        },
+        {
+          "kind": "class",
+          "customElement": true,
+          "name": "CustomElementClass",
+          "tagName": "custom-element",
+          "summary": "A custom element",
+          "description": "A class with custom element functionality",
+          "deprecated": false,
+          "attributes": [
+            {
+              "name": "attr1",
+              "type": { "text": "string" },
+              "summary": "First attribute",
+              "description": "Attribute description",
+              "deprecated": true,
+              "default": "default-value",
+              "fieldName": "attr1Property"
+            },
+            {
+              "name": "attr2",
+              "type": { "text": "number" },
+              "deprecated": "Use attr3 instead",
+              "inheritedFrom": {
+                "name": "BaseElement",
+                "module": "base.js"
+              }
+            }
+          ],
+          "events": [
+            {
+              "name": "custom-event",
+              "type": { "text": "CustomEvent" },
+              "summary": "Custom event",
+              "description": "Fired when something happens",
+              "deprecated": false
+            },
+            {
+              "name": "deprecated-event",
+              "type": { "text": "Event" },
+              "deprecated": "Use custom-event instead",
+              "inheritedFrom": {
+                "name": "BaseElement",
+                "module": "base.js"
+              }
+            }
+          ],
+          "slots": [
+            {
+              "name": "content",
+              "summary": "Content slot",
+              "description": "Main content area",
+              "deprecated": false
+            },
+            {
+              "name": "header",
+              "summary": "Header slot",
+              "deprecated": "Use title slot instead"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "container",
+              "summary": "Container part",
+              "description": "Main container element",
+              "deprecated": false
+            },
+            {
+              "name": "legacy-part",
+              "deprecated": "Use container instead"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--primary-color",
+              "summary": "Primary color",
+              "description": "The main theme color",
+              "deprecated": false,
+              "default": "#0066cc",
+              "syntax": "<color>"
+            },
+            {
+              "name": "--old-color",
+              "deprecated": "Use --primary-color instead",
+              "default": "#000000"
+            }
+          ],
+          "cssStates": [
+            {
+              "name": "--active",
+              "summary": "Active state",
+              "description": "When the element is active",
+              "deprecated": false
+            },
+            {
+              "name": "--old-state",
+              "deprecated": "Use --active instead"
+            }
+          ],
+          "demos": [
+            {
+              "description": "Basic usage demo",
+              "url": "demo/basic.html",
+              "source": {
+                "href": "demo/basic.html"
+              }
+            },
+            {
+              "description": "Advanced demo",
+              "url": "demo/advanced.html"
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "customElementField",
+              "type": { "text": "string" },
+              "attribute": "attr1",
+              "reflects": true,
+              "summary": "Custom element field",
+              "deprecated": false
+            }
+          ]
+        },
+        {
+          "kind": "mixin",
+          "name": "RegularMixin",
+          "summary": "A regular mixin",
+          "description": "Mixin without custom element features",
+          "deprecated": "Use ModernMixin instead",
+          "parameters": [
+            {
+              "name": "Base",
+              "type": { "text": "Constructor" },
+              "summary": "Base class",
+              "deprecated": false
+            }
+          ],
+          "return": {
+            "type": { "text": "Constructor" },
+            "summary": "Enhanced class"
+          },
+          "members": [
+            {
+              "kind": "method",
+              "name": "mixinMethod",
+              "deprecated": true
+            }
+          ]
+        },
+        {
+          "kind": "mixin",
+          "customElement": true,
+          "name": "CustomElementMixin",
+          "summary": "Custom element mixin",
+          "description": "Mixin with custom element features",
+          "parameters": [
+            {
+              "name": "Base",
+              "type": { "text": "Constructor" },
+              "summary": "Base class"
+            }
+          ],
+          "return": {
+            "type": { "text": "Constructor" },
+            "summary": "Enhanced class"
+          },
+          "members": [
+            {
+              "kind": "method",
+              "name": "mixinMethod",
+              "summary": "Method from mixin"
+            }
+          ],
+          "attributes": [
+            {
+              "name": "mixin-attr",
+              "type": { "text": "boolean" }
+            }
+          ],
+          "events": [
+            {
+              "name": "mixin-event",
+              "type": { "text": "Event" }
+            }
+          ]
+        },
+        {
+          "kind": "function",
+          "name": "utilityFunction",
+          "summary": "A utility function",
+          "description": "Function description",
+          "deprecated": "Use modernFunction instead",
+          "parameters": [
+            {
+              "name": "input",
+              "type": { "text": "string" },
+              "summary": "Input parameter",
+              "deprecated": false,
+              "optional": false,
+              "rest": false
+            },
+            {
+              "name": "options",
+              "type": { "text": "object" },
+              "optional": true,
+              "deprecated": "Use config instead"
+            },
+            {
+              "name": "args",
+              "type": { "text": "any[]" },
+              "rest": true,
+              "deprecated": false
+            }
+          ],
+          "return": {
+            "type": { "text": "Promise<string>" },
+            "summary": "Result promise",
+            "description": "Returns a promise that resolves to a string"
+          },
+          "source": {
+            "href": "src/comprehensive.js#L100"
+          }
+        },
+        {
+          "kind": "variable",
+          "name": "globalVariable",
+          "type": { "text": "string" },
+          "summary": "A global variable",
+          "description": "Variable description",
+          "deprecated": true,
+          "source": {
+            "href": "src/comprehensive.js#L5"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "CustomElementClass",
+          "declaration": {
+            "name": "CustomElementClass",
+            "module": "src/comprehensive.js"
+          },
+          "deprecated": false
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "custom-element",
+          "declaration": {
+            "name": "CustomElementClass",
+            "module": "src/comprehensive.js"
+          },
+          "deprecated": "Use new-custom-element instead"
+        },
+        {
+          "kind": "js",
+          "name": "utilityFunction",
+          "declaration": {
+            "name": "utilityFunction"
+          },
+          "deprecated": true
+        }
+      ]
+    }
+  ]
+}

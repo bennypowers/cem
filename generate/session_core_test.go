@@ -22,74 +22,12 @@ import (
 	M "bennypowers.dev/cem/manifest"
 )
 
-func TestDeepCopyManifest(t *testing.T) {
-	// Create a test GenerateSession (just for the deepCopyManifest method)
-	gs := &GenerateSession{}
-
-	// Test nil case
-	if result := gs.deepCopyManifest(nil); result != nil {
-		t.Error("deepCopyManifest should return nil for nil input")
-	}
-
-	// Create a test manifest with nested data
-	original := &M.Package{
-		SchemaVersion: "2.1.0",
-		Modules: []M.Module{
-			{
-				Kind:        "javascript-module",
-				Path:        "test/module.js",
-				Summary:     "Test module",
-				Description: "A test module for deep copy verification",
-			},
-		},
-	}
-
-	// Test deep copy
-	copy := gs.deepCopyManifest(original)
-	if copy == nil {
-		t.Fatal("deepCopyManifest should not return nil for valid input")
-	}
-
-	// Verify the copy has the same content
-	if copy.SchemaVersion != original.SchemaVersion {
-		t.Errorf("SchemaVersion mismatch: got %s, want %s", copy.SchemaVersion, original.SchemaVersion)
-	}
-
-	if len(copy.Modules) != len(original.Modules) {
-		t.Errorf("Modules length mismatch: got %d, want %d", len(copy.Modules), len(original.Modules))
-	}
-
-	if len(copy.Modules) > 0 && len(original.Modules) > 0 {
-		if copy.Modules[0].Path != original.Modules[0].Path {
-			t.Errorf("Module path mismatch: got %s, want %s", copy.Modules[0].Path, original.Modules[0].Path)
-		}
-	}
-
-	// Verify it's actually a deep copy (different memory addresses)
-	if copy == original {
-		t.Error("deepCopyManifest should return a different instance")
-	}
-
-	if len(copy.Modules) > 0 && len(original.Modules) > 0 {
-		// Note: We can't easily test slice element address differences due to how Go handles slice copying,
-		// but the JSON round-trip ensures deep copying of all nested structures
-	}
-
-	// Test that modifying the copy doesn't affect the original
-	if len(copy.Modules) > 0 {
-		copy.Modules[0].Summary = "Modified summary"
-		if original.Modules[0].Summary == "Modified summary" {
-			t.Error("Modifying copy should not affect original (not properly deep copied)")
-		}
-	}
-}
-
-func TestGetInMemoryManifest_Performance(t *testing.T) {
+func TestInMemoryManifest_Performance(t *testing.T) {
 	gs := &GenerateSession{}
 
 	// Test nil manifest
 	if result := gs.InMemoryManifest(); result != nil {
-		t.Error("GetInMemoryManifest should return nil when no manifest is set")
+		t.Error("InMemoryManifest should return nil when no manifest is set")
 	}
 
 	// Set a test manifest
@@ -111,12 +49,12 @@ func TestGetInMemoryManifest_Performance(t *testing.T) {
 	// Get a copy (shallow for performance)
 	copy := gs.InMemoryManifest()
 	if copy == nil {
-		t.Fatal("GetInMemoryManifest should return a copy of the manifest")
+		t.Fatal("InMemoryManifest should return a copy of the manifest")
 	}
 
 	// Verify it's a different instance (thread-safe at the package level)
 	if copy == original {
-		t.Error("GetInMemoryManifest should return a different instance")
+		t.Error("InMemoryManifest should return a different instance")
 	}
 
 	// Verify content is preserved
@@ -125,12 +63,12 @@ func TestGetInMemoryManifest_Performance(t *testing.T) {
 	}
 }
 
-func TestGetInMemoryManifestDeep_ThreadSafety(t *testing.T) {
+func TestInMemoryManifestDeep_ThreadSafety(t *testing.T) {
 	gs := &GenerateSession{}
 
 	// Test nil manifest
 	if result := gs.InMemoryManifestDeep(); result != nil {
-		t.Error("GetInMemoryManifestDeep should return nil when no manifest is set")
+		t.Error("InMemoryManifestDeep should return nil when no manifest is set")
 	}
 
 	// Set a test manifest
@@ -152,12 +90,12 @@ func TestGetInMemoryManifestDeep_ThreadSafety(t *testing.T) {
 	// Get a deep copy
 	copy := gs.InMemoryManifestDeep()
 	if copy == nil {
-		t.Fatal("GetInMemoryManifestDeep should return a copy of the manifest")
+		t.Fatal("InMemoryManifestDeep should return a copy of the manifest")
 	}
 
 	// Verify it's a different instance (thread-safe)
 	if copy == original {
-		t.Error("GetInMemoryManifestDeep should return a different instance for thread safety")
+		t.Error("InMemoryManifestDeep should return a different instance for thread safety")
 	}
 
 	// Verify content is preserved
@@ -196,7 +134,7 @@ func TestModuleIndex_Performance(t *testing.T) {
 	// Test O(1) lookup
 	module := gs.ModuleByPath("test/module2.js")
 	if module == nil {
-		t.Fatal("GetModuleByPath should find existing module")
+		t.Fatal("ModuleByPath should find existing module")
 	}
 
 	if module.Path != "test/module2.js" {
@@ -206,7 +144,7 @@ func TestModuleIndex_Performance(t *testing.T) {
 	// Test non-existent module
 	module = gs.ModuleByPath("test/nonexistent.js")
 	if module != nil {
-		t.Error("GetModuleByPath should return nil for non-existent module")
+		t.Error("ModuleByPath should return nil for non-existent module")
 	}
 }
 

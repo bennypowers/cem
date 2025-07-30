@@ -60,6 +60,24 @@ func (c *CssCustomState) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Clone creates a deep copy of the CssCustomState.
+// Handles the embedded FullyQualified structure.
+//
+// Performance: Efficient deep copying without JSON serialization overhead
+// Thread Safety: Safe for concurrent use (creates new instance)
+func (c CssCustomState) Clone() CssCustomState {
+	cloned := CssCustomState{}
+
+	// Clone the embedded FullyQualified
+	cloned.FullyQualified = c.FullyQualified.Clone()
+
+	if c.Deprecated != nil {
+		cloned.Deprecated = c.Deprecated.Clone()
+	}
+
+	return cloned
+}
+
 // RenderableCssCustomState adds context and render/traversal methods.
 type RenderableCssCustomState struct {
 	CssCustomState           *CssCustomState

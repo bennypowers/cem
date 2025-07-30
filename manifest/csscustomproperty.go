@@ -67,6 +67,28 @@ func (c *CssCustomProperty) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Clone creates a deep copy of the CssCustomProperty.
+// Handles the embedded FullyQualified structure and all custom property fields.
+//
+// Performance: Efficient deep copying without JSON serialization overhead
+// Thread Safety: Safe for concurrent use (creates new instance)
+func (c CssCustomProperty) Clone() CssCustomProperty {
+	cloned := CssCustomProperty{
+		StartByte: c.StartByte,
+		Default:   c.Default,
+		Syntax:    c.Syntax,
+	}
+
+	// Clone the embedded FullyQualified
+	cloned.FullyQualified = c.FullyQualified.Clone()
+
+	if c.Deprecated != nil {
+		cloned.Deprecated = c.Deprecated.Clone()
+	}
+
+	return cloned
+}
+
 type RenderableCssCustomProperty struct {
 	CssCustomProperty        *CssCustomProperty
 	CustomElementDeclaration *CustomElementDeclaration

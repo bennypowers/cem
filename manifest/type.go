@@ -29,3 +29,39 @@ type TypeReference struct {
 	Start int `json:"start,omitempty"`
 	End   int `json:"end,omitempty"`
 }
+
+// Clone creates a deep copy of the Type.
+func (t *Type) Clone() *Type {
+	if t == nil {
+		return nil
+	}
+
+	cloned := &Type{
+		Text: t.Text,
+	}
+
+	// Clone references
+	if len(t.References) > 0 {
+		cloned.References = make([]TypeReference, len(t.References))
+		for i, ref := range t.References {
+			cloned.References[i] = ref.Clone()
+		}
+	}
+
+	// Clone source
+	if t.Source != nil {
+		source := t.Source.Clone()
+		cloned.Source = &source
+	}
+
+	return cloned
+}
+
+// Clone creates a deep copy of the TypeReference.
+func (tr TypeReference) Clone() TypeReference {
+	return TypeReference{
+		Reference: tr.Reference.Clone(),
+		Start:     tr.Start,
+		End:       tr.End,
+	}
+}

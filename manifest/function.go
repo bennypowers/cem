@@ -33,11 +33,47 @@ type Return struct {
 	Description string `json:"description,omitempty"`
 }
 
+// Clone creates a deep copy of the Return structure.
+func (r Return) Clone() Return {
+	cloned := Return{
+		Summary:     r.Summary,
+		Description: r.Description,
+	}
+
+	if r.Type != nil {
+		cloned.Type = r.Type.Clone()
+	}
+
+	return cloned
+}
+
 // FunctionLike is the common interface of functions and mixins.
 type FunctionLike struct {
 	StartByte  uint        `json:"-"`
 	Parameters []Parameter `json:"parameters,omitempty"`
 	Return     *Return     `json:"return,omitempty"`
+}
+
+// Clone creates a deep copy of the FunctionLike structure.
+// Handles all parameters and return type with proper deep copying.
+func (f FunctionLike) Clone() FunctionLike {
+	cloned := FunctionLike{
+		StartByte: f.StartByte,
+	}
+
+	if len(f.Parameters) > 0 {
+		cloned.Parameters = make([]Parameter, len(f.Parameters))
+		for i, param := range f.Parameters {
+			cloned.Parameters[i] = param.Clone()
+		}
+	}
+
+	if f.Return != nil {
+		returnClone := f.Return.Clone()
+		cloned.Return = &returnClone
+	}
+
+	return cloned
 }
 
 // CssPart describes a CSS part.
@@ -51,6 +87,38 @@ type FunctionDeclaration struct {
 }
 
 func (*FunctionDeclaration) isDeclaration() {}
+
+// Clone creates a deep copy of the FunctionDeclaration.
+// Handles the embedded FunctionLike and FullyQualified structures with parameters and return type.
+//
+// Performance: Efficient deep copying without JSON serialization overhead
+// Thread Safety: Safe for concurrent use (creates new instance)
+func (f *FunctionDeclaration) Clone() Declaration {
+	if f == nil {
+		return nil
+	}
+
+	cloned := &FunctionDeclaration{
+		Kind: f.Kind,
+	}
+
+	if f.Deprecated != nil {
+		cloned.Deprecated = f.Deprecated.Clone()
+	}
+
+	// Clone the embedded FunctionLike
+	cloned.FunctionLike = f.FunctionLike.Clone()
+
+	// Clone the embedded FullyQualified
+	cloned.FullyQualified = f.FullyQualified.Clone()
+
+	if f.Source != nil {
+		source := f.Source.Clone()
+		cloned.Source = &source
+	}
+
+	return cloned
+}
 
 func (x *FunctionDeclaration) IsDeprecated() bool {
 	if x == nil {

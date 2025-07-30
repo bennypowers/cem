@@ -42,6 +42,43 @@ type ClassMethod struct {
 
 func (*ClassMethod) isClassMember() {}
 
+// Clone creates a deep copy of the ClassMethod.
+// Handles all embedded structures including FunctionLike and FullyQualified.
+//
+// Performance: Efficient deep copying without JSON serialization overhead
+// Thread Safety: Safe for concurrent use (creates new instance)
+func (c *ClassMethod) Clone() ClassMember {
+	if c == nil {
+		return nil
+	}
+
+	cloned := &ClassMethod{
+		Kind:    c.Kind,
+		Static:  c.Static,
+		Privacy: c.Privacy,
+	}
+
+	if c.Deprecated != nil {
+		cloned.Deprecated = c.Deprecated.Clone()
+	}
+
+	// Clone embedded structures
+	cloned.FunctionLike = c.FunctionLike.Clone()
+	cloned.FullyQualified = c.FullyQualified.Clone()
+
+	if c.InheritedFrom != nil {
+		inheritedFrom := c.InheritedFrom.Clone()
+		cloned.InheritedFrom = &inheritedFrom
+	}
+
+	if c.Source != nil {
+		source := c.Source.Clone()
+		cloned.Source = &source
+	}
+
+	return cloned
+}
+
 func (x *ClassMethod) GetStartByte() uint { return x.StartByte }
 
 func (x *ClassMethod) IsDeprecated() bool { return x.Deprecated != nil }

@@ -26,6 +26,7 @@ type ClassMember interface {
 	Deprecatable
 	isClassMember()
 	GetStartByte() uint
+	Clone() ClassMember
 }
 
 func unmarshalClassMember(data json.RawMessage) (ClassMember, error) {

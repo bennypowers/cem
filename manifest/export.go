@@ -28,6 +28,7 @@ var _ Deprecatable = (*CustomElementExport)(nil)
 type Export interface {
 	isExport()
 	GetStartByte() uint
+	Clone() Export
 }
 
 // JavaScriptExport represents a JS export.
@@ -75,6 +76,30 @@ func (x *JavaScriptExport) IsDeprecated() bool {
 	return x.Deprecated != nil
 }
 
+// Clone creates a deep copy of the JavaScriptExport.
+func (j *JavaScriptExport) Clone() Export {
+	if j == nil {
+		return nil
+	}
+
+	cloned := &JavaScriptExport{
+		StartByte: j.StartByte,
+		Kind:      j.Kind,
+		Name:      j.Name,
+	}
+
+	if j.Deprecated != nil {
+		cloned.Deprecated = j.Deprecated.Clone()
+	}
+
+	if j.Declaration != nil {
+		declaration := j.Declaration.Clone()
+		cloned.Declaration = &declaration
+	}
+
+	return cloned
+}
+
 func (e *JavaScriptExport) GetStartByte() uint {
 	return e.StartByte
 }
@@ -108,6 +133,27 @@ func (x *CustomElementExport) IsDeprecated() bool {
 		return false
 	}
 	return x.Deprecated != nil
+}
+
+// Clone creates a deep copy of the CustomElementExport.
+func (c *CustomElementExport) Clone() Export {
+	if c == nil {
+		return nil
+	}
+
+	cloned := &CustomElementExport{
+		StartByte:  c.StartByte,
+		Kind:       c.Kind,
+		Name:       c.Name,
+		Deprecated: c.Deprecated, // any type - shallow copy should be safe
+	}
+
+	if c.Declaration != nil {
+		declaration := c.Declaration.Clone()
+		cloned.Declaration = &declaration
+	}
+
+	return cloned
 }
 
 func (e *CustomElementExport) GetStartByte() uint {

@@ -37,6 +37,41 @@ type ClassLike struct {
 	Source     *SourceReference `json:"source,omitempty"`
 }
 
+// Clone creates a deep copy of the ClassLike structure.
+// Handles all nested references, mixins, and class members.
+func (c ClassLike) Clone() ClassLike {
+	cloned := ClassLike{
+		FullyQualified: c.FullyQualified.Clone(),
+		StartByte:      c.StartByte,
+	}
+
+	if c.Superclass != nil {
+		superclass := c.Superclass.Clone()
+		cloned.Superclass = &superclass
+	}
+
+	if len(c.Mixins) > 0 {
+		cloned.Mixins = make([]Reference, len(c.Mixins))
+		for i, mixin := range c.Mixins {
+			cloned.Mixins[i] = mixin.Clone()
+		}
+	}
+
+	if len(c.Members) > 0 {
+		cloned.Members = make([]ClassMember, len(c.Members))
+		for i, member := range c.Members {
+			cloned.Members[i] = member.Clone()
+		}
+	}
+
+	if c.Source != nil {
+		source := c.Source.Clone()
+		cloned.Source = &source
+	}
+
+	return cloned
+}
+
 // ClassDeclaration is a class.
 type ClassDeclaration struct {
 	ClassLike
@@ -45,6 +80,30 @@ type ClassDeclaration struct {
 }
 
 func (*ClassDeclaration) isDeclaration() {}
+
+// Clone creates a deep copy of the ClassDeclaration.
+// Handles all nested ClassMembers and properly clones the embedded ClassLike structure.
+//
+// Performance: Efficient deep copying without JSON serialization overhead
+// Thread Safety: Safe for concurrent use (creates new instance)
+func (c *ClassDeclaration) Clone() Declaration {
+	if c == nil {
+		return nil
+	}
+
+	cloned := &ClassDeclaration{
+		Kind: c.Kind,
+	}
+
+	if c.Deprecated != nil {
+		cloned.Deprecated = c.Deprecated.Clone()
+	}
+
+	// Clone the embedded ClassLike
+	cloned.ClassLike = c.ClassLike.Clone()
+
+	return cloned
+}
 
 func (x *ClassDeclaration) IsDeprecated() bool {
 	if x == nil {

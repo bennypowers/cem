@@ -35,6 +35,31 @@ type VariableDeclaration struct {
 
 func (*VariableDeclaration) isDeclaration() {}
 
+// Clone creates a deep copy of the VariableDeclaration.
+// Handles the embedded PropertyLike structure and source reference.
+//
+// Performance: Efficient deep copying without JSON serialization overhead
+// Thread Safety: Safe for concurrent use (creates new instance)
+func (v *VariableDeclaration) Clone() Declaration {
+	if v == nil {
+		return nil
+	}
+
+	cloned := &VariableDeclaration{
+		Kind: v.Kind,
+	}
+
+	// Clone the embedded PropertyLike
+	cloned.PropertyLike = v.PropertyLike.Clone()
+
+	if v.Source != nil {
+		source := v.Source.Clone()
+		cloned.Source = &source
+	}
+
+	return cloned
+}
+
 func (x *VariableDeclaration) IsDeprecated() bool {
 	if x == nil {
 		return false
