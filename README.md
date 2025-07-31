@@ -36,6 +36,14 @@ See more in the [List docs][listdocs]
 
 ---
 
+### `cem search`
+
+The `cem search` command allows you to search through your custom elements manifest for any element by keyword or regex pattern. Search through names, descriptions, summaries, and labels of all manifest items including tags, modules, attributes, slots, CSS properties, CSS states, CSS parts, events, methods, demos, functions, variables, and more.
+
+See more in the [Search docs][searchdocs]
+
+---
+
 ### `cem validate`
 
 The `cem validate` command validates your `custom-elements.json` file against the official JSON schema and provides intelligent warnings for potentially inappropriate manifest content. Beyond basic schema validation, it analyzes your manifest for lifecycle methods, private implementations, and other patterns that shouldn't be part of your public API documentation.
@@ -68,5 +76,6 @@ the terms of the [GNU General Public License v3.0][gpl3].
 [installationdocs]: https://bennypowers.github.io/cem/installation/
 [generatedocs]: https://bennypowers.github.io/cem/commands/generate/
 [listdocs]: https://bennypowers.github.io/cem/commands/list/
+[searchdocs]: https://bennypowers.github.io/cem/commands/search/
 [validatedocs]: https://bennypowers.github.io/cem/commands/validate/
 [configdocs]: https://bennypowers.github.io/cem/configuration/

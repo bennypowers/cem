@@ -7,6 +7,7 @@ The `cem` command-line tool has several commands to help you generate and query 
 
 - **`generate`**: Analyzes your source code to generate a `custom-elements.json` manifest file.
 - **`list`**: Lets you query the manifest to inspect your custom elements API.
+- **`search`**: Search through the manifest for any element by keyword or regex pattern.
   - **`attributes`**: Lists all attributes for a given custom element.
   - **`css-parts`**: Lists CSS shadow parts for a tag.
   - **`css-properties`**: Lists CSS custom properties for a tag.
@@ -17,3 +18,4 @@ The `cem` command-line tool has several commands to help you generate and query 
   - **`modules`**: Lists all module paths in the project.
   - **`slots`**: Lists all named and default slots for a tag.
   - **`tags`**: Lists all custom element tag names in the project.
+- **`validate`**: Validates custom elements manifest files against the schema.
