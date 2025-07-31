@@ -89,7 +89,7 @@ func makeListSectionCmd(use, short, long string, includeSection string, aliases 
 						IncludeSections: []string{includeSection},
 					}
 					renderable := M.NewRenderableCustomElementDeclaration(ced, mod, manifest)
-					if s, err := list.Render(renderable, opts); err != nil {
+					if s, err := list.Render(renderable, opts, M.True); err != nil {
 						return err
 					} else {
 						fmt.Println(s)
@@ -383,7 +383,7 @@ Examples:
 				}
 			case "table":
 				opts := list.RenderOptions{}
-				if s, err := list.Render(M.NewRenderablePackage(manifest), opts); err != nil {
+				if s, err := list.Render(M.NewRenderablePackage(manifest), opts, M.True); err != nil {
 					return err
 				} else {
 					fmt.Println(s)
