@@ -4,8 +4,6 @@ title: cem
 enableRobotsTXT: true
 relativeURLs: true
 canonifyURLs: true
-theme:
-  - compose
 enableGitInfo: true
 params:
   uniqueHomePage: true
@@ -44,3 +42,6 @@ module:
       target: assets
 security:
   enableInlineShortcodes: true
+search:
+  on: true
+  global: true
