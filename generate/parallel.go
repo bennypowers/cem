@@ -141,7 +141,6 @@ func (mbp *ModuleBatchProcessor) processModulesInternal(
 
 	// Optimize worker count for small job sets
 	numWorkers := min(len(jobs), mbp.numWorkers)
-
 	pterm.Info.Printf("Starting Generation with %d workers\n", numWorkers)
 
 	// Initialize result collection

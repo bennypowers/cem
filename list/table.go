@@ -41,7 +41,7 @@ type RenderOptions struct {
 }
 
 // Render recursively renders a Renderable, creating sectioned tables.
-func Render(r M.Renderable, opts RenderOptions) (string, error) {
+func Render(r M.Renderable, opts RenderOptions, pred M.PredicateFunc) (string, error) {
 	if r == nil {
 		return "", nil
 	}
@@ -81,11 +81,23 @@ func Render(r M.Renderable, opts RenderOptions) (string, error) {
 				continue
 			}
 
+			// Filter items by predicate
+			var filteredItems []M.Renderable
+			for _, item := range section.Items {
+				if pred(item) {
+					filteredItems = append(filteredItems, item)
+				}
+			}
+
+			if len(filteredItems) == 0 {
+				continue // no items match predicate
+			}
+
 			// The title for a subsection is smaller
 			formatted := pterm.DefaultSection.WithLevel(2).Sprint(section.Title)
 			builder.WriteString(strings.TrimSpace(formatted) + "\n\n")
-			headers := section.Items[0].ColumnHeadings()
-			rows := MapToTableRows(section.Items)
+			headers := filteredItems[0].ColumnHeadings()
+			rows := MapToTableRows(filteredItems)
 
 			// Only filter empty columns if the user did not specify columns
 			if len(opts.Columns) == 0 {
@@ -103,16 +115,40 @@ func Render(r M.Renderable, opts RenderOptions) (string, error) {
 		}
 	} else {
 		for _, child := range r.Children() {
-			// Recursive calls pass the options down.
-			if s, err := Render(child, opts); err != nil {
-				return "", err
-			} else {
-				builder.WriteString(s + "\n")
+			// Only render children that match the predicate or have matching descendants
+			if pred(child) || hasMatchingDescendants(child, pred) {
+				// Recursive calls pass the options and predicate down.
+				if s, err := Render(child, opts, pred); err != nil {
+					return "", err
+				} else {
+					if strings.TrimSpace(s) != "" {
+						builder.WriteString(s + "\n")
+					}
+				}
 			}
 		}
 	}
 
 	return strings.TrimRight(builder.String(), "\n") + "\n\n", nil
+}
+
+// hasMatchingDescendants checks if a renderable has any descendants that match the predicate
+func hasMatchingDescendants(r M.Renderable, pred M.PredicateFunc) bool {
+	if sdp, ok := r.(M.SectionDataProvider); ok {
+		for _, section := range sdp.Sections() {
+			for _, item := range section.Items {
+				if pred(item) {
+					return true
+				}
+			}
+		}
+	}
+	for _, child := range r.Children() {
+		if pred(child) || hasMatchingDescendants(child, pred) {
+			return true
+		}
+	}
+	return false
 }
 
 // RenderTable renders a simple table with a title.

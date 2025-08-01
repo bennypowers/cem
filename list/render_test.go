@@ -27,6 +27,7 @@ import (
 
 	"bennypowers.dev/cem/list"
 	"bennypowers.dev/cem/manifest"
+	M "bennypowers.dev/cem/manifest"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -72,7 +73,7 @@ func TestRender(t *testing.T) {
 		renderable := manifest.NewRenderablePackage(pkg)
 
 		opts := list.RenderOptions{}
-		output, err := list.Render(renderable, opts)
+		output, err := list.Render(renderable, opts, M.True)
 		assert.NoError(t, err)
 
 		checkGolden(t, []byte(stripANSI(output)))

@@ -194,7 +194,7 @@ func (c *FileSystemWorkspaceContext) OutputWriter(path string) (io.WriteCloser, 
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, err
 	}
-	pterm.Debug.Println("Actual output path", path)
+	pterm.Debug.Printfln("Output: %q", path)
 	return os.Create(path)
 }
 

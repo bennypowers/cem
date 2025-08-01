@@ -62,7 +62,7 @@ var rootCmd = &cobra.Command{
 		if viper.GetBool("verbose") {
 			pterm.EnableDebugMessages()
 		}
-		pterm.Debug.Println("Using project directory: ", rootDir)
+		pterm.Debug.Printfln("Project directory: %q", rootDir)
 
 		cfgFile := wctx.ConfigFile()
 		if cfgFile != "" {
@@ -71,7 +71,7 @@ var rootCmd = &cobra.Command{
 			if err := viper.ReadInConfig(); err != nil && !errors.Is(err, os.ErrNotExist) {
 				return err
 			} else {
-				pterm.Debug.Println("Using config file: ", cfgFile)
+				pterm.Debug.Printfln("Config file: %q", cfgFile)
 			}
 		}
 		viper.AutomaticEnv()
