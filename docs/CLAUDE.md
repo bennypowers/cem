@@ -29,16 +29,42 @@
   - ✅ Fixed Hugo syntax highlighting to use CSS classes instead of inline styles
   - ✅ Consolidated all theme switching logic in color-mode-toggle component
 
-### Components to Refactor
-- **liteyoutube**: Convert the current Hugo shortcode + external scripts to a modern web component
-  - Replace `lite-yt-embed.js` with a custom element
-  - Use declarative shadow DOM for better performance
-  - Eliminate need for runtime shortcode detection in head
+### Components Removed ✅
+- **liteyoutube**: Removed completely - shortcode, scripts, and CSS files deleted
 
 ### Legacy Theme Cleanup ✅
 - **hooks/head**: Ejected - removed hooks system completely
   - Replaced with direct component registration via import maps
   - Modern declarative JavaScript modules approach
+
+### DSD Component Migration Plan
+
+#### Components for DSD Conversion 🚧
+**High Priority - Enhanced functionality:**
+- **`<tip>`** → `<info-callout>` web component
+  - Expandable/collapsible behavior
+  - Icon variants (info, warning, success, error)
+  - Animation states
+  - Encapsulated styling prevents conflicts
+
+**Keep as Hugo shortcodes (SSR preferred):**
+- **`<cta>`** (renamed from `<button>`) - Simple styled links
+- **`<icon>`** - Static SVG inclusion via Hugo asset pipeline
+- **`<image>`/`<picture>`** - Static media with Hugo's image processing
+- **`<mermaid>`** - SSR'd SVG diagrams, no JS interaction needed
+- **`<youtube>`** - Simple iframe embed
+
+**Remove completely (not needed):**
+- **`<tabs>/<tab>`** - Complex interactions not required
+- **`<gallery>`** - Lightbox functionality not needed
+- **`<chart>`** - Prefer SSR'd SVG charts over Chart.js
+- **`<grid>/<column>`** - CSS Grid/Flexbox sufficient
+- **Utility classes** - Prefer semantic CSS over utility classes (future cleanup)
+
+#### Light DOM Components (No DSD needed)
+- **Navigation links** - Complex semantic structure better in light DOM
+- **Breadcrumbs** - SEO and accessibility benefit from light DOM
+- **Basic text formatting** (`<block>`, `<partial>`)
 
 ### Modern Web Components Architecture
 - **Approach**: 
@@ -48,3 +74,33 @@
   - Reference CSS custom properties from host document for theming
   - Progressive enhancement pattern: fallback functionality, upgrade with JavaScript
   - ESM imports with import maps for external dependencies
+
+#### Shadow-Class Pattern ✨
+**Pattern**: Use component attributes to set classes on shadow DOM containers for styling.
+
+**Implementation**: 
+```html
+<info-callout type="warning">
+  <template shadowrootmode="open">
+    <style>
+      #content {
+        &.info { --callout-color: var(--color-theme); }
+        &.warning { --callout-color: #fbbf24; }
+        &.error { --callout-color: #ef4444; }
+      }
+    </style>
+    <div id="content" class="{{ $type }}">
+```
+
+**Benefits**:
+- Clean CSS nesting instead of complex `:host([attr])` selectors
+- Easier to read and maintain than attribute-based styling
+- Leverages familiar class-based CSS patterns
+- Works well with CSS preprocessing and nesting
+
+**Tradeoffs**:
+- Requires template logic to map attributes to classes
+- Less semantic than pure attribute-based styling
+- Can blur the line between component API and implementation
+
+**Best for**: Complex styling variations, theme systems, and cases where CSS nesting significantly improves readability.

@@ -1,4 +1,4 @@
-{{- $type := .Get 0 | default "info" }}
+{{- $type := .type | default "info" }}
 
 <info-callout type="{{ $type }}">
   <template shadowrootmode="open">
@@ -38,7 +38,5 @@
     </div>
   </template>
 
-  {{ markdownify .Inner }}
+  {{ markdownify .inner }}
 </info-callout>
-
-<script type="module" src="/assets/js/info-callout.js"></script>

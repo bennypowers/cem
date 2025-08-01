@@ -69,7 +69,7 @@
 
   &.show .nav_body {
     transform: translateX(0);
-    box-shadow: 0 1rem 4rem rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1rem 4rem var(--color-shadow-nav);
     background: var(--color-bg);
     overflow-y: auto;
 

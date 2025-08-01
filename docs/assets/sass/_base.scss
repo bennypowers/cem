@@ -258,7 +258,7 @@ tbody {
   tr {
     &:nth-child(even) {
       background-color: var(--color-accent) !important;
-      box-shadow: 0 1rem 0.75rem -0.75rem rgba(0, 0, 0, 0.07);
+      box-shadow: 0 1rem 0.75rem -0.75rem var(--color-shadow-subtle);
     }
   }
 }

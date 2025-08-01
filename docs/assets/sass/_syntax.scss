@@ -72,7 +72,7 @@ code {
         width: 2.5rem !important;
         padding-left: 0;
         padding-right: 0;
-        color: rgba(255, 255, 255, 0.5);
+        color: var(--color-syntax-line-number);
         user-select: none;
       }
 
@@ -129,7 +129,7 @@ code {
 
 // Syntax highlighting error styles
 .err {
-  color: #a61717;
+  color: var(--color-syntax-error);
 }
 
 .hl {
@@ -151,7 +151,7 @@ code {
 
 // Keywords
 .k, .kc, .kd, .kn, .kp, .kr, .kt, .nt {
-  color: light-dark(#1e8449, #6ab825);
+  color: var(--color-syntax-keyword);
   font-weight: 500;
 }
 
@@ -161,49 +161,49 @@ code {
 
 // Names
 .nb, .no, .nv {
-  color: light-dark(#1a73e8, #24909d);
+  color: var(--color-syntax-name);
 }
 
 .nc, .nf, .nn {
-  color: light-dark(#1a73e8, #447fcf);
+  color: var(--color-syntax-name-alt);
 }
 
 // Strings
 .s, .sa, .sb, .sc, .dl, .sd, .s2, .se, .sh, .si, .sx, .sr, .s1, .ss {
-  color: light-dark(#e67e22, #ed9d13);
+  color: var(--color-syntax-string);
 }
 
 // Numbers
 .m, .mb, .mf, .mh, .mi, .il, .mo {
-  color: light-dark(#6f42c1, #3677a9);
+  color: var(--color-syntax-number);
 }
 
 // Operators
 .ow {
-  color: light-dark(#1e8449, #6ab825);
+  color: var(--color-syntax-keyword);
   font-weight: 500;
 }
 
 // Comments
 .c, .ch, .cm, .c1 {
-  color: light-dark(#6c757d, #999999);
+  color: var(--color-syntax-comment);
   font-style: italic;
 }
 
 .cs {
-  color: light-dark(#dc3545, #e50808);
+  color: var(--color-syntax-comment-special);
   background-color: light-dark(rgba(220, 53, 69, 0.1), #520000);
   font-weight: 500;
 }
 
 .cp, .cpf {
-  color: light-dark(#dc3545, #cd2828);
+  color: var(--color-syntax-comment-special);
   font-weight: 500;
 }
 
 // Git diff styles
 .gd, .gr {
-  color: light-dark(#dc3545, #d22323);
+  color: var(--color-syntax-diff-removed);
 }
 
 .ge {
@@ -216,7 +216,7 @@ code {
 }
 
 .gi {
-  color: light-dark(#28a745, #589819);
+  color: var(--color-syntax-diff-added);
 }
 
 .go {
@@ -232,7 +232,7 @@ code {
 }
 
 .gt {
-  color: light-dark(#dc3545, #d22323);
+  color: var(--color-syntax-diff-removed);
 }
 
 .w {
@@ -242,11 +242,11 @@ code {
 // Highlight.js specific
 .hljs {
   &-string {
-    color: light-dark(#1e8449, #6ab825);
+    color: var(--color-syntax-keyword);
   }
 
   &-attr {
-    color: light-dark(#e67e22, #ed9d13);
+    color: var(--color-syntax-string);
   }
 
   .p &-attr {

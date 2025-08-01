@@ -24,6 +24,27 @@
   // Scrollbar colors
   --color-scroll-thumb: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.06));
   
+  // Shadow colors
+  --color-shadow-subtle: light-dark(rgba(0, 0, 0, 0.07), rgba(0, 0, 0, 0.15));
+  --color-shadow-light: light-dark(rgba(0, 0, 0, 0.17), rgba(0, 0, 0, 0.4));
+  --color-shadow-medium: light-dark(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.5));
+  --color-shadow-heavy: light-dark(rgba(0, 0, 0, 0.255), rgba(0, 0, 0, 0.6));
+  --color-shadow-nav: light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3));
+  
+  // Syntax highlighting colors
+  --color-syntax-line-number: light-dark(rgba(0, 0, 0, 0.5), rgba(255, 255, 255, 0.5));
+  --color-syntax-error: light-dark(#a61717, #ff6b6b);
+  --color-syntax-keyword: light-dark(#1e8449, #6ab825);
+  --color-syntax-name: light-dark(#1a73e8, #24909d);
+  --color-syntax-name-alt: light-dark(#1a73e8, #447fcf);
+  --color-syntax-string: light-dark(#e67e22, #ed9d13);
+  --color-syntax-number: light-dark(#6f42c1, #3677a9);
+  --color-syntax-comment: light-dark(#6c757d, #999999);
+  --color-syntax-comment-special: light-dark(#dc3545, #e50808);
+  --color-syntax-diff-removed: light-dark(#dc3545, #d22323);
+  --color-syntax-diff-added: light-dark(#28a745, #589819);
+  --color-text-muted: light-dark(#666666, #aaaaaa);
+  
   // Typography
   --font-family: 'Metropolis', sans-serif;
   
