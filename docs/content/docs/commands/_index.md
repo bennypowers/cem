@@ -5,17 +5,34 @@ weight: 40
 
 The `cem` command-line tool has several commands to help you generate and query Custom Elements Manifests.
 
-- **`generate`**: Analyzes your source code to generate a `custom-elements.json` manifest file.
-- **`list`**: Lets you query the manifest to inspect your custom elements API.
-- **`search`**: Search through the manifest for any element by keyword or regex pattern.
-  - **`attributes`**: Lists all attributes for a given custom element.
-  - **`css-parts`**: Lists CSS shadow parts for a tag.
-  - **`css-properties`**: Lists CSS custom properties for a tag.
-  - **`css-states`**: Lists CSS custom states for a tag.
-  - **`demos`**: Lists all demos for a given custom element.
-  - **`events`**: Lists all custom events fired by a tag.
-  - **`methods`**: Lists methods for a tag's class.
-  - **`modules`**: Lists all module paths in the project.
-  - **`slots`**: Lists all named and default slots for a tag.
-  - **`tags`**: Lists all custom element tag names in the project.
-- **`validate`**: Validates custom elements manifest files against the schema.
+<div class="grid grid-2">
+
+  <div>
+    <h2>
+      <a href="generate" class="text-blue-600 hover:text-blue-800 no-underline">Generate</a>
+    </h2>
+    <p>Analyze your source code and automatically create a comprehensive custom-elements.json manifest file that documents all your custom elements and their APIs.</p>
+  </div>
+
+  <div>
+    <h2>
+      <a href="list" class="text-blue-600 hover:text-blue-800 no-underline">List</a>
+    </h2>
+    <p>Query and inspect your custom elements manifest with powerful filtering and display options to explore your component APIs interactively.</p>
+  </div>
+
+  <div>
+    <h2>
+      <a href="search" class="text-blue-600 hover:text-blue-800 no-underline">Search</a>
+    </h2>
+    <p>Find elements, attributes, methods, and other API features across your entire project using flexible keyword and regex pattern matching.</p>
+  </div>
+
+  <div>
+    <h2>
+      <a href="validate" class="text-blue-600 hover:text-blue-800 no-underline">Validate</a>
+    </h2>
+    <p>Ensure your custom elements manifest files conform to the official schema and catch potential issues before publishing.</p>
+  </div>
+
+</div>

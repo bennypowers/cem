@@ -40,7 +40,7 @@ methods, demos, functions, variables, and more.
 
 Examples:
 
-  cem search button                    # Find anything containing "button"  
+  cem search button                    # Find anything containing "button"
   cem search "^my-.*button$"           # Regex: elements starting with "my-" and ending with "button"
   cem search "click|hover"             # Regex: elements containing "click" OR "hover"
   cem search --format tree deprecated  # Search for "deprecated" and show as tree
