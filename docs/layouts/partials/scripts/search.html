@@ -1,8 +1,0 @@
-{{- $searchEnabled := partialCached "functions/getSearchConfig" . }}
-{{ if $searchEnabled }}
-  {{- $fuse := partial "functions/getScript" (dict "slug" "search/fuse") }}
-  {{- $variables := partial "functions/getScript" (dict "slug" "search/variables") }}
-  {{- $search := partial "functions/getScript" (dict "slug" "search/index") }}
-
-  {{- partial "scripts/getJsBundle" (dict "scripts" (slice $fuse $variables $search) "slug" "search") }}
-{{ end }}
