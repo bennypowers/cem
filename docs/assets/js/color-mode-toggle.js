@@ -78,6 +78,9 @@ export class ColorModeToggle extends HTMLElement {
 
     // Update pictures for current mode
     this.#updatePictures(this.#getEffectiveMode(mode));
+    
+    // Update external library themes
+    this.#updateExternalThemes(this.#getEffectiveMode(mode));
   }
 
   #getEffectiveMode(mode) {
@@ -103,6 +106,35 @@ export class ColorModeToggle extends HTMLElement {
     radios.forEach(radio => {
       radio.checked = radio.value === this.#currentMode;
     });
+  }
+
+  #updateExternalThemes(effectiveMode) {
+    // Update highlight.js themes
+    const hljsLight = document.getElementById('hljs-light');
+    const hljsDark = document.getElementById('hljs-dark');
+    
+    if (hljsLight) hljsLight.disabled = effectiveMode === 'dark';
+    if (hljsDark) hljsDark.disabled = effectiveMode !== 'dark';
+    
+    // Update Shoelace themes (for pages that use Shoelace)
+    const shoelaceLight = document.getElementById('shoelace-light');
+    const shoelaceDark = document.getElementById('shoelace-dark');
+    
+    if (shoelaceLight || shoelaceDark) {
+      if (effectiveMode === 'dark') {
+        if (shoelaceLight) shoelaceLight.disabled = true;
+        if (shoelaceDark) shoelaceDark.disabled = false;
+        // Add Shoelace dark theme class to html
+        document.documentElement.classList.remove('sl-theme-light');
+        document.documentElement.classList.add('sl-theme-dark');
+      } else {
+        if (shoelaceLight) shoelaceLight.disabled = false;
+        if (shoelaceDark) shoelaceDark.disabled = true;
+        // Add Shoelace light theme class to html
+        document.documentElement.classList.remove('sl-theme-dark');
+        document.documentElement.classList.add('sl-theme-light');
+      }
+    }
   }
 
 }

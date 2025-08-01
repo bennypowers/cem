@@ -1,0 +1,85 @@
+:root {
+  color-scheme: light dark;
+  
+  // Core color primitives
+  --color-light: #ffffff;
+  --color-dark: rgb(28, 28, 30);
+  --color-haze: #f2f5f7;
+  --color-bubble: rgb(36, 36, 38);
+  
+  // Theme-aware color system using light-dark()
+  --color-bg: light-dark(var(--color-light), var(--color-dark));
+  --color-text: light-dark(#141010, #eeeeee);
+  --color-text-light: light-dark(#141010, #ffffff);
+  --color-accent: light-dark(var(--color-haze), var(--color-bubble));
+  --color-overlay: light-dark(var(--color-light), var(--color-bubble));
+  --color-border: light-dark(#eeeeee, transparent);
+  --color-theme: light-dark(rgb(52, 199, 89), rgb(48, 209, 88));
+  --color-inline: light-dark(darkgoldenrod, #fbbf24);
+  
+  // Search-specific colors
+  --color-search-bg: var(--color-accent);
+  --color-search-border: light-dark(transparent, var(--color-accent));
+  
+  // Scrollbar colors
+  --color-scroll-thumb: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.06));
+  
+  // Typography
+  --font-family: 'Metropolis', sans-serif;
+  
+  // Animation
+  --timing-ease: ease;
+  
+  // Icons
+  --icon-next: url(../images/icons/double-arrow.svg);
+  --icon-never: url(../images/sitting.svg);
+  
+  // Legacy aliases for backward compatibility
+  --light: var(--color-light);
+  --dark: var(--color-dark);
+  --haze: var(--color-haze);
+  --bubble: var(--color-bubble);
+  --bg: var(--color-bg);
+  --text: var(--color-text);
+  --accent: var(--color-accent);
+  --overlay: var(--color-overlay);
+  --border-color: var(--color-border);
+  --theme: var(--color-theme);
+  --inline-color: var(--color-inline);
+  --font: var(--font-family);
+  --ease: var(--timing-ease);
+  --scroll-thumb: var(--color-scroll-thumb);
+  --search-border-color: var(--color-search-border);
+  --next-icon-path: var(--icon-next);
+  --never-icon-path: var(--icon-never);
+}
+
+// Legacy dark mode support for components that still need it
+html {
+  &[data-mode="dark"] {
+    * {
+      box-shadow: none !important;
+    }
+  }
+  
+  &[data-mode="auto"] {
+    @media (prefers-color-scheme: dark) {
+      * {
+        box-shadow: none !important;
+      }
+    }
+  }
+}
+
+// Utility classes
+.narrow {
+  max-width: 750px;
+  margin: 0 auto;
+}
+
+// Layout utilities
+blockquote {
+  + .highlight_wrap {
+    margin-top: 2.25rem;
+  }
+}

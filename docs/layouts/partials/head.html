@@ -21,7 +21,7 @@
 {{- end }}
 
 {{- $options := (dict "targetPath" "css/styles.css" "outputStyle" "compressed" "enableSourceMap" "true") -}}
-{{- $styles := resources.Get "sass/main.sass" | resources.ExecuteAsTemplate "main.sass" . |
+{{- $styles := resources.Get "sass/main.scss" | resources.ExecuteAsTemplate "main.scss" . |
 css.Sass $options | fingerprint "sha512" }}
 <link rel="stylesheet" href="{{ $styles.Permalink }}" integrity="{{ $styles.Data.Integrity }}">
 
@@ -44,6 +44,10 @@ css.Sass $options | fingerprint "sha512" }}
 <meta name="descripion" content="{{ $config.Description }}">
 {{- end }}
 <script type="importmap">{{ site.Data.importmap | jsonify }}</script>
+
+<!-- Highlight.js themes -->
+<link id="hljs-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github.min.css">
+<link id="hljs-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github-dark.min.css" disabled>
 
 {{- partial "head/liteyoutube" . }}
 {{- partialCached "hooks/head" . -}}

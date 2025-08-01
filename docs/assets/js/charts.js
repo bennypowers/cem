@@ -1,61 +1,7 @@
 import { setBasePath } from 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/utilities/base-path.js';
 setBasePath('https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/');
 
-// Function to update themes based on effective color mode
-function updateThemes(effectiveMode) {
-  const shoelaceLight = document.getElementById('shoelace-light');
-  const shoelaceDark = document.getElementById('shoelace-dark');
-  const hljsLight = document.getElementById('hljs-light');
-  const hljsDark = document.getElementById('hljs-dark');
-  
-  // Update Shoelace themes
-  if (effectiveMode === 'dark') {
-    if (shoelaceLight) shoelaceLight.disabled = true;
-    if (shoelaceDark) shoelaceDark.disabled = false;
-    // Add Shoelace dark theme class to html
-    document.documentElement.classList.remove('sl-theme-light');
-    document.documentElement.classList.add('sl-theme-dark');
-  } else {
-    if (shoelaceLight) shoelaceLight.disabled = false;
-    if (shoelaceDark) shoelaceDark.disabled = true;
-    // Add Shoelace light theme class to html
-    document.documentElement.classList.remove('sl-theme-dark');
-    document.documentElement.classList.add('sl-theme-light');
-  }
-  
-  // Update highlight.js themes
-  if (hljsLight) hljsLight.disabled = effectiveMode === 'dark';
-  if (hljsDark) hljsDark.disabled = effectiveMode !== 'dark';
-}
-
-// Function to get effective color mode
-function getEffectiveMode() {
-  const html = document.documentElement;
-  const mode = html.getAttribute('data-mode') || 'auto';
-  
-  if (mode === 'auto') {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  }
-  return mode;
-}
-
-// Set up theme switching
-document.addEventListener('DOMContentLoaded', () => {
-  // Set initial theme
-  updateThemes(getEffectiveMode());
-  
-  // Listen for color mode changes from the toggle
-  document.addEventListener('color-mode-change', (event) => {
-    updateThemes(getEffectiveMode());
-  });
-  
-  // Listen for system color scheme changes
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    if (document.documentElement.getAttribute('data-mode') === 'auto') {
-      updateThemes(getEffectiveMode());
-    }
-  });
-});
+// Theme switching is now handled by the color-mode-toggle web component
 
 // JSON viewer lazy loading setup
 document.addEventListener('DOMContentLoaded', () => {

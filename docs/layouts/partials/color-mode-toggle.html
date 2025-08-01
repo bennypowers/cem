@@ -6,10 +6,10 @@
       :host {
         display: inline-flex;
         border-radius: 0.375rem;
-        background: var(--accent);
+        background: var(--color-accent);
         padding: 0.125rem;
         margin-left: 0.5rem;
-        border: 1px solid var(--border-color);
+        border: 1px solid var(--color-border);
       }
 
       div[role="radiogroup"] {
@@ -24,8 +24,8 @@
         pointer-events: none;
 
         &:checked + label {
-          background: var(--bg);
-          color: var(--text);
+          background: var(--color-bg);
+          color: var(--color-text);
           box-shadow: 0 1px 3px rgba(0,0,0,0.1);
           transform: none;
 
@@ -35,7 +35,7 @@
         }
 
         &:focus + label {
-          outline: 2px solid var(--theme);
+          outline: 2px solid var(--color-theme);
           outline-offset: 2px;
           z-index: 1;
         }
@@ -47,7 +47,7 @@
         justify-content: center;
         padding: 0.375rem;
         background: transparent;
-        color: var(--text);
+        color: var(--color-text);
         cursor: pointer;
         transition: all 0.2s ease;
         position: relative;
@@ -55,7 +55,7 @@
         border: none;
 
         &:hover {
-          background: var(--overlay);
+          background: var(--color-overlay);
           transform: translateY(-1px);
         }
 

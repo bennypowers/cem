@@ -1,0 +1,10 @@
+.mermaid {
+  --theme: light-dark(darkgoldenrod, darkgoldenrod);
+  background-color: transparent !important;
+  margin-bottom: 2.5rem;
+
+  svg {
+    margin: 0 auto;
+    display: block;
+  }
+}
