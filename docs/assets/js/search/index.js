@@ -14,15 +14,13 @@ function search(index, scope = null, passive = false) {
   scope = search_scope_global ? null : scope;
   if(search_term.length) {
     let raw_results = index;
-    if(!algolia_config.on) {
-      raw_results = index.search(search_term);
-      raw_results = raw_results.map(function(result){
-        const score = result.score;
-        const result_item = result.item;
-        result_item.score = (parseFloat(score) * 50).toFixed(0);
-        return result_item;
-      })
-    }
+    raw_results = index.search(search_term);
+    raw_results = raw_results.map(function(result){
+      const score = result.score;
+      const result_item = result.item;
+      result_item.score = (parseFloat(score) * 50).toFixed(0);
+      return result_item;
+    })
 
     if(scope) {
       raw_results = raw_results.filter(result_item => {
@@ -150,7 +148,8 @@ function onEscape(fn){
 
 function initFuseSearch(manual = true) {
   const page_language = document.documentElement.lang;
-  const search_index = `${ page_language === 'en' ? empty_string : page_language}/index.json`;
+  const search_index = `${ page_language === 'en' ? empty_string : page_language}/cem/index.json`;
+
   fetch(new URL(search_index, root_url).href)
   .then(response => response.json())
   .then(function(search_data) {
@@ -161,16 +160,6 @@ function initFuseSearch(manual = true) {
   .catch((error) => console.error(error));
 }
 
-function initAlgoliaSearch(manual = true) {
-  const algolia_client = algoliasearch(algolia_config.id, algolia_config.key);
-  const algolia_index = algolia_client.initIndex(algolia_config.index);
-  algolia_index.search(search_term, {
-    attributesToRetrieve: search_keys.slice(0,5),
-    hitsPerPage: 12,
-  }).then(({ hits }) => {
-    manual ? liveSearch(hits) : passiveSearch(hits);
-  });
-}
 
 function tabOverSearchResults() {
   search_field.addEventListener('keydown', function (e) {
@@ -232,11 +221,11 @@ function initializeSearch() {
 
   search_field.addEventListener('input', function() {
     search_term = search_field.value.trim().toLowerCase();
-    algolia_config.on ? initAlgoliaSearch() : initFuseSearch();
+    initFuseSearch();
   });
 
   if (search_page_element) {
-    algolia_config.on ? initAlgoliaSearch(false) : initFuseSearch(false);
+    initFuseSearch(false);
   }
 
   wrapText(findQuery(), main);

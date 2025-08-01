@@ -33,5 +33,3 @@ const search_options = {
   threshold: 0.1
 };
 
-// Algolia specific
-const algolia_config = JSON.parse(`{{ partialCached "functions/getAlgoliaConfig" . }}`);
