@@ -1,11 +1,12 @@
 ---
-title: search
-summary: Search through custom elements manifests for any element by keyword or regex pattern
+title: Search
+summary: |
+  Search through custom elements manifests for any element by keyword
+  or regex pattern
 ---
 
-# `cem search`
-
-Search through the custom elements manifest for any element matching the given pattern.
+The `cem search` command lets you search through the custom elements manifest 
+for any element matching the given pattern.
 
 ## Usage
 
@@ -15,10 +16,12 @@ cem search [pattern] [flags]
 
 ## Description
 
-The `search` command allows you to find any element in your custom elements manifest by searching through names, descriptions, summaries, and labels. This includes:
+The `search` command allows you to find any element in your custom elements 
+manifest by searching through names, descriptions, summaries, and labels. This 
+includes:
 
 - Custom element tags
-- Modules and files  
+- Modules and files
 - Attributes
 - Slots
 - CSS properties, parts, and states
@@ -27,7 +30,9 @@ The `search` command allows you to find any element in your custom elements mani
 - Functions and variables
 - Demos
 
-The search pattern is treated as a **regular expression by default**, allowing for powerful and flexible searches. If the regex is invalid, it automatically falls back to literal string matching.
+The search pattern is treated as a **regular expression by default**, allowing 
+for powerful and flexible searches. If the regex is invalid, it automatically 
+falls back to literal string matching.
 
 All searches are **case-insensitive**.
 
@@ -91,7 +96,7 @@ cem search deprecated --format tree
 
 The table format shows detailed information organized by sections:
 
-```
+```markdown
 # <root>
 
 # module rh-button/rh-button.js
@@ -117,7 +122,7 @@ Name
 
 The tree format shows a hierarchical view of matching elements:
 
-```
+```text
 Search Results for: button
 <root>
 ├─┬ module rh-button/rh-button.js
@@ -131,13 +136,14 @@ Search Results for: button
 Since patterns are treated as regular expressions, you can use:
 
 - `^` - Start of string anchor
-- `$` - End of string anchor  
+- `$` - End of string anchor
 - `.*` - Match any characters
 - `|` - OR operator
 - `[abc]` - Character class
 - `\d`, `\w`, `\s` - Character shortcuts
 
-If your regex is invalid, the search automatically falls back to literal string matching.
+If your regex is invalid, the search automatically falls back to literal string 
+matching.
 
 ## Global Options
 
