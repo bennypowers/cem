@@ -1,37 +1,90 @@
 import { setBasePath } from 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/utilities/base-path.js';
 setBasePath('https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/');
-const themeToggle = document.getElementById('mode');
 
-function setPrismTheme(dark, root = document) {
-  // Prism theme switching
-  const prismLight = root.getElementById('hljs-light');
-  const prismDark = root.getElementById('hljs-dark');
-  prismLight.disabled = dark;
-  prismDark.disabled = !dark;
+// Function to update themes based on effective color mode
+function updateThemes(effectiveMode) {
+  const shoelaceLight = document.getElementById('shoelace-light');
+  const shoelaceDark = document.getElementById('shoelace-dark');
+  const hljsLight = document.getElementById('hljs-light');
+  const hljsDark = document.getElementById('hljs-dark');
+  
+  // Update Shoelace themes
+  if (effectiveMode === 'dark') {
+    if (shoelaceLight) shoelaceLight.disabled = true;
+    if (shoelaceDark) shoelaceDark.disabled = false;
+    // Add Shoelace dark theme class to html
+    document.documentElement.classList.remove('sl-theme-light');
+    document.documentElement.classList.add('sl-theme-dark');
+  } else {
+    if (shoelaceLight) shoelaceLight.disabled = false;
+    if (shoelaceDark) shoelaceDark.disabled = true;
+    // Add Shoelace light theme class to html
+    document.documentElement.classList.remove('sl-theme-dark');
+    document.documentElement.classList.add('sl-theme-light');
+  }
+  
+  // Update highlight.js themes
+  if (hljsLight) hljsLight.disabled = effectiveMode === 'dark';
+  if (hljsDark) hljsDark.disabled = effectiveMode !== 'dark';
 }
 
-const updateTheme = () => {
-  const dark = themeToggle.value === 'dark';
-  document.body.classList.remove(`sl-theme-light`);
-  document.body.classList.remove(`sl-theme-dark`);
-  document.body.classList.add(`sl-theme-${themeToggle.value}`);
-  setPrismTheme(dark);
-};
-
-themeToggle.addEventListener('change', updateTheme);
-
-document.addEventListener('sl-after-show', async function(event) {
-  await customElements.whenDefined('zero-md');
-  await customElements.whenDefined('sl-spinner');
-  const zeroMd = event.target.querySelector('zero-md');
-  const spinner = event.target.querySelector('sl-spinner');
-  if (spinner && zeroMd && !zeroMd.src) {
-    zeroMd.src = zeroMd.dataset.src
-    zeroMd.addEventListener('zero-md-rendered', function () {
-      spinner.remove();
-      updateTheme()
-    }, { once: true })
+// Function to get effective color mode
+function getEffectiveMode() {
+  const html = document.documentElement;
+  const mode = html.getAttribute('data-mode') || 'auto';
+  
+  if (mode === 'auto') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
+  return mode;
+}
+
+// Set up theme switching
+document.addEventListener('DOMContentLoaded', () => {
+  // Set initial theme
+  updateThemes(getEffectiveMode());
+  
+  // Listen for color mode changes from the toggle
+  document.addEventListener('color-mode-change', (event) => {
+    updateThemes(getEffectiveMode());
+  });
+  
+  // Listen for system color scheme changes
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (document.documentElement.getAttribute('data-mode') === 'auto') {
+      updateThemes(getEffectiveMode());
+    }
+  });
+});
+
+// JSON viewer lazy loading setup
+document.addEventListener('DOMContentLoaded', () => {
+  const disclosures = document.querySelectorAll('.json-disclosure');
+  
+  disclosures.forEach(disclosure => {
+    const details = disclosure;
+    const spinner = details.querySelector('sl-spinner');
+    const viewer = details.querySelector('json-viewer');
+    const jsonUrl = details.dataset.jsonUrl;
+    let loaded = false;
+    
+    details.addEventListener('sl-show', async () => {
+      if (loaded) return;
+      
+      try {
+        const response = await fetch(jsonUrl);
+        const jsonData = await response.json();
+        
+        viewer.data = jsonData;
+        viewer.style.display = 'block';
+        spinner.style.display = 'none';
+        loaded = true;
+      } catch (error) {
+        console.error('Failed to load JSON:', error);
+        spinner.innerHTML = 'Failed to load JSON data';
+      }
+    });
+  });
 });
 
 export class BarChart extends HTMLElement {
@@ -179,6 +232,3 @@ export class LineChart extends HTMLElement {
     this.#hoveredIndex = null;
   }
 }
-
-updateTheme();
-

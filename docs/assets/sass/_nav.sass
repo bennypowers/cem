@@ -32,6 +32,7 @@
       display: none
   &_body
     display: flex
+    align-items: center;
     flex-direction: column
     background: var(--accent)
     position: fixed
@@ -48,6 +49,7 @@
       justify-content: flex-end
       background: transparent
       flex-direction: row
+      gap: 1rem
   &.show &_body
     transform: translateX(0)
     box-shadow: 0 1rem 4rem rgba(0,0,0,0.1)
@@ -61,8 +63,7 @@
     display: inline-flex
     padding: 0.5rem 1rem
   &-item
-    display: grid
-    align-items: center
+    display: contents
     fuse-search
       @media screen and (min-width: 992px)
         margin-right: 1.5rem

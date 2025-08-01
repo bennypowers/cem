@@ -38,10 +38,6 @@ html
 
   &[data-mode="dark"]
     @include darkmode
-    .color
-      &_choice
-        &::after
-          background-image: var(--moon-icon)
 
   &[data-mode="auto"]
     @media (prefers-color-scheme: dark)

@@ -8,6 +8,3 @@
 [[main]]
   name = "Configuration"
   pageRef = "/docs/configuration"
-[[main]]
-  name = "Benchmarks"
-  pageRef = "/docs/benchmarks"

@@ -1,7 +1,6 @@
 {{- $variables := partial "functions/getScript" (dict "slug" "variables") }}
 {{- $functions := partial "functions/getScript" (dict "slug" "functions") }}
 {{- $code := partial "functions/getScript" (dict "slug" "code") }}
-{{- $mode := partial "functions/getScript" (dict "slug" "mode") }}
 {{- $main := partial "functions/getScript" (dict "slug" "index") }}
 
 {{- $customScriptPath := "js/custom.js" }}
@@ -11,7 +10,7 @@
 {{- end }}
 {{- $custom := resources.Get $customScriptPath | resources.ExecuteAsTemplate $customScriptPath . }}
 
-{{- partial "scripts/getJsBundle" (dict "scripts" (slice $variables $functions $code $mode $main $custom) "slug" "bundle" "inline" true) }}
+{{- partial "scripts/getJsBundle" (dict "scripts" (slice $variables $functions $code $main $custom) "slug" "bundle" "inline" true) }}
 
 {{- partialCached "hooks/scripts" . -}}
 

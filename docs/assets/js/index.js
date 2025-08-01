@@ -133,9 +133,11 @@ function markExternalLinks() {
   if(links) {
     Array.from(links).forEach(function(link){
       let target, rel, blank, noopener, attr1, attr2, url, is_external;
-      url = new URL(link.href);
-      // definition of same origin: RFC 6454, section 4 (https://tools.ietf.org/html/rfc6454#section-4)
-      is_external = url.host !== location.host || url.protocol !== location.protocol || url.port !== location.port;
+      try {
+        url = new URL(link.href);
+        // definition of same origin: RFC 6454, section 4 (https://tools.ietf.org/html/rfc6454#section-4)
+        is_external = url.host !== location.host || url.protocol !== location.protocol || url.port !== location.port;
+      } catch {}
       if(is_external) {
         target = 'target';
         rel = 'rel';
