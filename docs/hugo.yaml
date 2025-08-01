@@ -5,7 +5,7 @@ enableRobotsTXT: true
 relativeURLs: true
 canonifyURLs: true
 theme:
-  - github.com/onweru/compose
+  - compose
 enableGitInfo: true
 params:
   uniqueHomePage: true
