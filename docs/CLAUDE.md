@@ -35,10 +35,10 @@
   - Use declarative shadow DOM for better performance
   - Eliminate need for runtime shortcode detection in head
 
-### Legacy Theme Cleanup
-- **hooks/head**: Currently restored for compatibility, plan to replace with modern component system
-  - Will replace with explicit import map management and component registration
-  - Move from Hugo partials to declarative JavaScript modules
+### Legacy Theme Cleanup ✅
+- **hooks/head**: Ejected - removed hooks system completely
+  - Replaced with direct component registration via import maps
+  - Modern declarative JavaScript modules approach
 
 ### Modern Web Components Architecture
 - **Approach**: 
