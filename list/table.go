@@ -136,10 +136,8 @@ func Render(r M.Renderable, opts RenderOptions, pred M.PredicateFunc) (string, e
 func hasMatchingDescendants(r M.Renderable, pred M.PredicateFunc) bool {
 	if sdp, ok := r.(M.SectionDataProvider); ok {
 		for _, section := range sdp.Sections() {
-			for _, item := range section.Items {
-				if pred(item) {
-					return true
-				}
+			if slices.ContainsFunc(section.Items, pred) {
+				return true
 			}
 		}
 	}

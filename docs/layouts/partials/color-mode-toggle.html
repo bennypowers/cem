@@ -1,0 +1,115 @@
+<script type="module" src="{{ absURL "js/color-mode-toggle.js" }}"></script>
+<color-mode-toggle>
+  <template shadowrootmode="open">
+    <style>
+      :host {
+        display: inline-flex;
+        border-radius: 0.375rem;
+        background: var(--color-accent);
+        padding: 0.125rem;
+        margin-left: 0.5rem;
+        border: 1px solid var(--color-border);
+      }
+
+      div[role="radiogroup"] {
+        display: flex;
+        border-radius: 0.375rem;
+        overflow: hidden;
+      }
+
+      input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+
+        &:checked + label {
+          background: var(--color-bg);
+          color: var(--color-text);
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          transform: none;
+
+          svg {
+            transform: scale(1.1);
+          }
+        }
+
+        &:focus + label {
+          outline: 2px solid var(--color-theme);
+          outline-offset: 2px;
+          z-index: 1;
+        }
+      }
+
+      label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.375rem;
+        background: transparent;
+        color: var(--color-text);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+        min-width: 2rem;
+        border: none;
+
+        &:hover {
+          background: var(--color-overlay);
+          transform: translateY(-1px);
+        }
+
+        &:first-of-type {
+          border-radius: 0.25rem 0 0 0.25rem;
+        }
+
+        &:last-of-type {
+          border-radius: 0 0.25rem 0.25rem 0;
+        }
+
+        &:not(:first-of-type):not(:last-of-type) {
+          border-radius: 0;
+        }
+
+        svg {
+          width: 1rem;
+          height: 1rem;
+          fill: currentColor;
+          transition: transform 0.2s ease;
+        }
+      }
+    </style>
+    
+    <div role="radiogroup" aria-label="Color scheme">
+      <input type="radio" id="auto-mode" name="color-mode" value="auto" checked>
+      <label for="auto-mode" aria-label="Auto mode" title="Auto mode">
+        <svg viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r="50"/>
+          <path d="m100 10 10 40-10-40z"/>
+          <path d="m100 190 10-40-10 40z"/>
+          <path d="m190 100-40 10 40-10z"/>
+          <path d="m10 100 40 10-40-10z"/>
+          <path d="m157 157-28-28 28 28z"/>
+          <path d="m43 43 28 28-28-28z"/>
+          <path d="m43 157 28-28-28 28z"/>
+          <path d="m157 43-28 28 28-28z"/>
+        </svg>
+      </label>
+      <input type="radio" id="light-mode" name="color-mode" value="light">
+      <label for="light-mode" aria-label="Light mode" title="Light mode">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2.25a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-1.5 0V3a.75.75 0 0 1 .75-.75ZM7.5 12a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM18.894 6.166a.75.75 0 0 0-1.06-1.06l-1.591 1.59a.75.75 0 1 0 1.06 1.061l1.591-1.59ZM21.75 12a.75.75 0 0 1-.75.75h-2.25a.75.75 0 0 1 0-1.5H21a.75.75 0 0 1 .75.75ZM17.834 18.894a.75.75 0 0 0 1.06-1.06l-1.59-1.591a.75.75 0 1 0-1.061 1.06l1.59 1.591ZM12 18a.75.75 0 0 1 .75.75V21a.75.75 0 0 1-1.5 0v-2.25A.75.75 0 0 1 12 18ZM7.758 17.303a.75.75 0 0 0-1.061-1.06l-1.591 1.59a.75.75 0 0 0 1.06 1.061l1.591-1.59ZM6 12a.75.75 0 0 1-.75.75H3a.75.75 0 0 1 0-1.5h2.25A.75.75 0 0 1 6 12ZM6.697 7.757a.75.75 0 0 0 1.06-1.06l-1.59-1.591a.75.75 0 0 0-1.061 1.06l1.59 1.591Z"/>
+          <path d="M9 16.5c0 .828.448 1.5 1 1.5s1-.672 1-1.5c0-.828-.448-1.5-1-1.5s-1 .672-1 1.5Z" opacity="0.5"/>
+        </svg>
+      </label>
+      <input type="radio" id="dark-mode" name="color-mode" value="dark">
+      <label for="dark-mode" aria-label="Dark mode" title="Dark mode">
+        <svg viewBox="0 0 111 123">
+          <path d="m54.06 11c-24.72 10.72-36.06 39.39-25.3 64.05 10.75 24.65 39.51 35.95 64.24 25.23-19.39-3.34-35.79-16.18-43.64-34.17-7.84-17.98-6.08-38.7 4.7-55.11z"/>
+          <path d="m45.5 31 8-2 2-8 2 8 8 2-8 2-2 8-2-8z"/>
+          <path d="m62 61 6-1.5 1.5-6 1.5 6 6 1.5-6 1.5-1.5 6-1.5-6z"/>
+          <path d="m77 41 8-2 2-8 2 8 8 2-8 2-2 8-2-8z"/>
+        </svg>
+      </label>
+    </div>
+  </template>
+</color-mode-toggle>

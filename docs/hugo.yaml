@@ -4,8 +4,6 @@ title: cem
 enableRobotsTXT: true
 relativeURLs: true
 canonifyURLs: true
-theme:
-  - github.com/onweru/compose
 enableGitInfo: true
 params:
   uniqueHomePage: true
@@ -36,6 +34,12 @@ markup:
   goldmark:
     renderer:
       unsafe: true
+  highlight:
+    noClasses: false
+    lineNos: false
+    lineNumbersInTable: false
+    style: github
+    tabWidth: 2
 module:
   mounts:
     - source: assets
@@ -44,3 +48,6 @@ module:
       target: assets
 security:
   enableInlineShortcodes: true
+search:
+  on: true
+  global: true

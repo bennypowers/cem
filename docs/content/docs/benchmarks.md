@@ -1,5 +1,5 @@
 ---
-title: Analyzer Benchmarks
+title: Benchmarks
 description: Performance benchmarks of analyzers, generated from scripts/benchmark.sh.
 weight: 30
 ---
@@ -17,23 +17,28 @@ weight: 30
 ---
 
 <style>
+:root {
+  color-scheme: light dark;
+}
+
 line-chart, bar-chart {
   display: block;
 }
 
 line-chart svg {
-  background:var(--sl-panel-background-color);
-  overflow:visible;
+  background: light-dark(var(--sl-panel-background-color, #ffffff), var(--sl-panel-background-color, #1a1a1a));
+  overflow: visible;
 }
 
 .analyzer-tool-stats {
-  display:flex;
-  gap:2em;
-  margin:1em 0;
+  display: flex;
+  gap: 2em;
+  margin: 1em 0;
 }
 
 .run-breakdown-figure {
   margin: 2em 0;
+  
   figcaption {
     font-weight: bold;
     margin-bottom: 0.5em;
@@ -56,10 +61,12 @@ bar-chart {
     fill: var(--bar-text);
     font-weight: 500;
   }
+  
   .bar-value {
     fill: var(--bar-label);
     font-variant-numeric: tabular-nums;
   }
+  
   text {
     pointer-events: none;
   }
@@ -68,7 +75,6 @@ bar-chart {
 json-viewer {
   --background-color: transparent; 
 }
-
 </style>
 
 <div class="tool-cards">
@@ -275,45 +281,15 @@ json-viewer {
 </div>
 
 {{< loadchart.inline >}}
-<script type="module" src="{{ "charts.js" | relURL }} "></script>
+<script type="module" src="{{ absURL "js/charts.js" }}"></script>
 {{</ loadchart.inline >}}
 <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/shoelace.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/themes/light.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/themes/dark.css">
-<link id="hljs-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github.min.css" disabled>
-<link id="hljs-dark"  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github-dark.min.css" disabled>
+<link id="shoelace-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/themes/light.css">
+<link id="shoelace-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/themes/dark.css" disabled>
+<link id="hljs-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github.min.css">
+<link id="hljs-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github-dark.min.css" disabled>
 
 <script type="module">
-// Import json-viewer and set up lazy loading
+// Import json-viewer for the page
 import 'https://unpkg.com/@alenaksu/json-viewer@2.0.1/dist/json-viewer.bundle.js';
-
-// Set up lazy loading for JSON viewers when disclosure opens
-document.addEventListener('DOMContentLoaded', () => {
-  const disclosures = document.querySelectorAll('.json-disclosure');
-  
-  disclosures.forEach(disclosure => {
-    const details = disclosure;
-    const spinner = details.querySelector('sl-spinner');
-    const viewer = details.querySelector('json-viewer');
-    const jsonUrl = details.dataset.jsonUrl;
-    let loaded = false;
-    
-    details.addEventListener('sl-show', async () => {
-      if (loaded) return;
-      
-      try {
-        const response = await fetch(jsonUrl);
-        const jsonData = await response.json();
-        
-        viewer.data = jsonData;
-        viewer.style.display = 'block';
-        spinner.style.display = 'none';
-        loaded = true;
-      } catch (error) {
-        console.error('Failed to load JSON:', error);
-        spinner.innerHTML = 'Failed to load JSON data';
-      }
-    });
-  });
-});
 </script>

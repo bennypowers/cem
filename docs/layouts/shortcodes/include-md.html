@@ -1,4 +1,0 @@
-{{- $file := .Get 0 -}}
-{{- with readFile (printf "assets/%s" $file) }}
-{{ . | markdownify }}
-{{- end }}

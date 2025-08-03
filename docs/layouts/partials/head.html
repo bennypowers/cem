@@ -1,8 +1,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+{{- hugo.Generator }}
+{{- $iconsPath := "favicons/" }}
 <link rel="shortcut icon" type="image/svg" href='{{ absURL "images/logo.svg" }}'>
 <link rel="manifest" href='{{ absURL "favicons/site.webmanifest" }}'>
 <link rel="mask-icon" href='{{ absURL "favicons/safari-pinned-tab.svg" }}' color="#004750">
+<meta name="msapplication-config" content='{{ absURL (printf "%sbrowserconfig.xml" $iconsPath) }}'>
 {{- $t := .Title }}
 {{- $s := site.Title }}
 {{- if in (lower $s) (lower $t) }}
@@ -17,10 +20,7 @@
 {{- partial "google_analytics.html" . }}
 {{- end }}
 
-{{- $options := (dict "targetPath" "css/styles.css" "outputStyle" "compressed" "enableSourceMap" "true") -}}
-{{- $styles := resources.Get "sass/main.sass" | resources.ExecuteAsTemplate "main.sass" . |
-css.Sass $options | fingerprint "sha512" }}
-<link rel="stylesheet" href="{{ $styles.Permalink }}" integrity="{{ $styles.Data.Integrity }}">
+<link rel="stylesheet" href="{{ absURL "css/styles.css" }}">
 
 {{- $config := site.Params }}
 {{- with $config.customCSS }}
@@ -40,5 +40,9 @@ css.Sass $options | fingerprint "sha512" }}
 {{- else if $config.Description }}
 <meta name="descripion" content="{{ $config.Description }}">
 {{- end }}
-{{- partial "head/liteyoutube" . }}
-{{- partialCached "hooks/head" . -}}
+<script type="importmap">{{ site.Data.importmap | jsonify }}</script>
+
+<!-- Highlight.js themes -->
+<link id="hljs-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github.min.css">
+<link id="hljs-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github-dark.min.css" disabled>
+

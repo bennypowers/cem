@@ -1,0 +1,9 @@
+<!-- ESM Module Loader - loads individual modules without bundling -->
+
+<!-- Load the config module first (contains Hugo templating) -->
+<script type="module" src="{{ absURL "js/config.js" }}"></script>
+
+<!-- Load pure ESM modules directly -->
+<script type="module" src="{{ absURL "js/code-highlighter.js" }}"></script>
+<script type="module" src="{{ absURL "js/docs-sidebar.js" }}"></script>
+<script type="module" src="{{ absURL "js/index.js" }}"></script>

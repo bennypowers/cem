@@ -1,0 +1,7 @@
+{{- $lang := .Type | default "text" }}
+{{- $code := .Inner }}
+{{- $highlighted := highlight $code $lang "style=github,noclasses=false,hl_lines=,linenostart=1" }}
+{{- $cleanHighlighted := $highlighted | replaceRE `<div class="highlight">(.+?)</div>` "$1" }}
+<code-highlighter>
+  {{ $cleanHighlighted | safeHTML }}
+</code-highlighter>
