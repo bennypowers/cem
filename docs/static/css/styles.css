@@ -19,7 +19,9 @@
   --color-overlay: light-dark(var(--color-light), var(--color-bubble));
   --color-border: light-dark(#eeeeee, transparent);
   --color-theme: light-dark(#06f, #aecfff);
-  --color-inline: light-dark(darkgoldenrod, #fbbf24);
+  --color-inline: light-dark(#0ea5e9, #38bdf8);
+  --color-success: light-dark(#059669, #34d399);
+  --color-warning: light-dark(#d97706, #fbbf24);
 
   /* Search-specific colors */
   --color-search-bg: var(--color-accent);
@@ -36,18 +38,18 @@
   --color-shadow-nav: light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3));
 
   /* Syntax highlighting colors */
-  --color-syntax-line-number: light-dark(rgba(0, 0, 0, 0.5), rgba(255, 255, 255, 0.5));
-  --color-syntax-error: light-dark(#a61717, #ff6b6b);
-  --color-syntax-keyword: light-dark(#1e8449, #6ab825);
-  --color-syntax-name: light-dark(#1a73e8, #24909d);
-  --color-syntax-name-alt: light-dark(#1a73e8, #447fcf);
-  --color-syntax-string: light-dark(#e67e22, #ed9d13);
-  --color-syntax-number: light-dark(#6f42c1, #3677a9);
-  --color-syntax-comment: light-dark(#6c757d, #999999);
-  --color-syntax-comment-special: light-dark(#dc3545, #e50808);
-  --color-syntax-diff-removed: light-dark(#dc3545, #d22323);
-  --color-syntax-diff-added: light-dark(#28a745, #589819);
-  --color-text-muted: light-dark(#666666, #aaaaaa);
+  --color-syntax-line-number: light-dark(rgba(0, 0, 0, 0.4), rgba(255, 255, 255, 0.4));
+  --color-syntax-error: light-dark(#dc2626, #f87171);
+  --color-syntax-keyword: light-dark(#7c3aed, #a78bfa);
+  --color-syntax-name: light-dark(#0ea5e9, #38bdf8);
+  --color-syntax-name-alt: light-dark(#0284c7, #0ea5e9);
+  --color-syntax-string: light-dark(#059669, #34d399);
+  --color-syntax-number: light-dark(#dc2626, #f87171);
+  --color-syntax-comment: light-dark(#64748b, #94a3b8);
+  --color-syntax-comment-special: light-dark(#d97706, #fbbf24);
+  --color-syntax-diff-removed: light-dark(#dc2626, #f87171);
+  --color-syntax-diff-added: light-dark(#059669, #34d399);
+  --color-text-muted: light-dark(#64748b, #94a3b8);
 
   /* Code block panel variables */
   --code-panel-timeout: 2250ms;
@@ -56,7 +58,7 @@
   --code-observer-margin: 50px;
 
   /* Focus management */
-  --focus-ring-color: light-dark(#0066cc, #4d94ff);
+  --focus-ring-color: light-dark(#0ea5e9, #38bdf8);
   --focus-ring-width: 2px;
   --focus-ring-offset: 2px;
 
@@ -215,6 +217,19 @@ body {
 
 /* Typography */
 a {
+  text-decoration: underline;
+  text-decoration-color: var(--color-theme);
+  text-underline-offset: 2px;
+  color: var(--color-theme);
+}
+
+/* Remove underlines from navigation links */
+nav a,
+.nav a,
+.nav-link,
+.pager_link,
+docs-sidebar a,
+.sidebar-link a {
   text-decoration: none;
   color: inherit;
 }
@@ -399,7 +414,12 @@ table {
   ul, ol { padding-left: 1.1rem; }
   ul { list-style: initial; }
   ol { list-style: decimal; }
-  a { color: var(--color-theme); }
+  a { 
+    color: var(--color-theme);
+    text-decoration: underline;
+    text-decoration-color: var(--color-theme);
+    text-underline-offset: 2px;
+  }
 }
 
 /* Form elements */
@@ -890,13 +910,13 @@ code-highlighter {
     .ge { font-style: italic; }
 
     .gh, .gu, .nd, .na, .ne {
-      color: light-dark(#fd7e14, #ffa500);
+      color: var(--color-warning);
       font-weight: 500;
     }
 
     .gi { color: var(--color-syntax-diff-added); }
-    .go { color: light-dark(#6c757d, #cccccc); }
-    .gp { color: light-dark(#6c757d, #aaaaaa); }
+    .go { color: var(--color-text-muted); }
+    .gp { color: var(--color-text-muted); }
     .gs { font-weight: 500; }
     .gt { color: var(--color-syntax-diff-removed); }
     .w { color: light-dark(#6c757d, #666666); }
