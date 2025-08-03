@@ -1,37 +1,28 @@
 import { setBasePath } from 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/utilities/base-path.js';
 setBasePath('https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/');
-const themeToggle = document.getElementById('mode');
 
-function setPrismTheme(dark, root = document) {
-  // Prism theme switching
-  const prismLight = root.getElementById('hljs-light');
-  const prismDark = root.getElementById('hljs-dark');
-  prismLight.disabled = dark;
-  prismDark.disabled = !dark;
-}
-
-const updateTheme = () => {
-  const dark = themeToggle.value === 'dark';
-  document.body.classList.remove(`sl-theme-light`);
-  document.body.classList.remove(`sl-theme-dark`);
-  document.body.classList.add(`sl-theme-${themeToggle.value}`);
-  setPrismTheme(dark);
-};
-
-themeToggle.addEventListener('change', updateTheme);
-
-document.addEventListener('sl-after-show', async function(event) {
-  await customElements.whenDefined('zero-md');
-  await customElements.whenDefined('sl-spinner');
-  const zeroMd = event.target.querySelector('zero-md');
-  const spinner = event.target.querySelector('sl-spinner');
-  if (spinner && zeroMd && !zeroMd.src) {
-    zeroMd.src = zeroMd.dataset.src
-    zeroMd.addEventListener('zero-md-rendered', function () {
-      spinner.remove();
-      updateTheme()
-    }, { once: true })
-  }
+// Theme switching is now handled by the color-mode-toggle web component
+// JSON viewer lazy loading setup
+document.querySelectorAll('.json-disclosure')?.forEach(disclosure => {
+  const details = disclosure;
+  const spinner = details.querySelector('sl-spinner');
+  const viewer = details.querySelector('json-viewer');
+  const jsonUrl = details.dataset.jsonUrl;
+  let loaded = false;
+  details.addEventListener('sl-show', async () => {
+    if (loaded) return;
+    try {
+      const response = await fetch(jsonUrl);
+      const jsonData = await response.json();
+      viewer.data = jsonData;
+      viewer.style.display = 'block';
+      spinner.style.display = 'none';
+      loaded = true;
+    } catch (error) {
+      console.error('Failed to load JSON:', error);
+      spinner.innerHTML = 'Failed to load JSON data';
+    }
+  });
 });
 
 export class BarChart extends HTMLElement {
@@ -179,6 +170,3 @@ export class LineChart extends HTMLElement {
     this.#hoveredIndex = null;
   }
 }
-
-updateTheme();
-
