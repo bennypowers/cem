@@ -20,14 +20,6 @@
   }
 }
 
-html { color-scheme: light dark; }
-html[data-mode="dark"] { color-scheme: dark only; }
-html[data-mode="light"] { color-scheme: light only; }
-
-.cta {
-  color: var(--dark)
-}
-
 thead {
   color: light-dark(var(--dark), var(--light)) !important;
   background: light-dark(
@@ -38,9 +30,4 @@ thead {
 
 .highlight pre {
   background-color:  transparent !important;
-}
-
-.pager_link::before,
-.pager_link::after {
-  filter: invert(100%);
 }

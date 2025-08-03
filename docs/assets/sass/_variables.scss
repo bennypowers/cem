@@ -56,19 +56,18 @@
   --icon-never: url(../images/sitting.svg);
 }
 
-// Legacy dark mode support for components that still need it
 html {
+ color-scheme: light dark;
   &[data-mode="dark"] {
-    * {
-      box-shadow: none !important;
-    }
+    color-scheme: dark only;
+    * { box-shadow: none !important; }
   }
-
+  &[data-mode="light"] {
+   color-scheme: light only;
+  }
   &[data-mode="auto"] {
     @media (prefers-color-scheme: dark) {
-      * {
-        box-shadow: none !important;
-      }
+      * { box-shadow: none !important; }
     }
   }
 }

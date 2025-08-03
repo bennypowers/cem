@@ -3,7 +3,7 @@
   {{ with .NextInSection }}
     {{ if and (ne .RelPermalink $searchURL) (.InSection .) }}
     <div class="pager_item prev">
-      <a href="{{ .Permalink }}" class="pager_link button" title="{{ .Title }}" rel="prev">
+      <a href="{{ .Permalink }}" class="pager_link cta primary" title="{{ .Title }}" rel="prev">
         <span class="pager_label">{{ .Title }}</span>
       </a>
     </div>
@@ -13,7 +13,7 @@
   {{ with .PrevInSection  }}
     {{ if and (ne .RelPermalink $searchURL) (.InSection .) }}
     <div class="pager_item next">
-      <a href="{{ .Permalink }}" class="pager_link button" title="{{ .Title }}" rel="next">
+      <a href="{{ .Permalink }}" class="pager_link cta primary" title="{{ .Title }}" rel="next">
         <span class="pager_label">{{ .Title }}</span>
       </a>
     </div>

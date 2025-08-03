@@ -1,0 +1,94 @@
+// Pagination
+.pager {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 2rem;
+  margin: 2rem 0;
+  max-width: 100vw;
+  overflow: hidden;
+
+  svg {
+    filter: opacity(0.75);
+    width: 1.25rem;
+    height: 1rem;
+    transform-origin: 50% 50%;
+  }
+
+}
+
+.pager_lean {
+  justify-content: flex-end;
+}
+
+.pager_label {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.pager_link {
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  width: 12.5rem;
+  max-width: 40vw;
+  position: relative;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+
+  &::before, &::after {
+    background-image: var(--icon-next);
+    height: 0.8rem;
+    width: 0.8rem;
+    background-size: 100%;
+    background-repeat: no-repeat;
+    transform-origin: 50% 50%;
+  }
+}
+
+.pager_item {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  max-width: 48%;
+
+  &.prev {
+    align-items: flex-start;
+
+    .pager_link::before {
+      content: "";
+      transform: rotate(180deg);
+      margin-right: 0.67rem;
+    }
+  }
+
+  &.next {
+    align-items: flex-end;
+
+    &::after {
+      content: "";
+    }
+
+    .pager_link {
+      &::after {
+        content: "";
+        margin-left: 0.67rem;
+      }
+
+      grid-template-columns: 1fr 1.5rem;
+    }
+  }
+}
+
+.pager_meta {
+  margin: 0.5rem 0;
+}
+
+
+.pager_link::before,
+.pager_link::after {
+  filter: invert(100%);
+}
