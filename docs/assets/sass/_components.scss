@@ -31,37 +31,6 @@
   height: initial;
 }
 
-// Buttons
-.button {
-  background-color: var(--color-theme);
-  color: var(--color-light);
-  border-radius: 0.25rem;
-  display: inline-block;
-  padding: 0.75rem 1.25rem;
-  text-align: center;
-
-  &:hover {
-    opacity: 0.84;
-  }
-
-  & + & {
-    background-color: var(--color-haze);
-    color: var(--color-dark);
-  }
-
-}
-
-.button_grid {
-  display: grid;
-  max-width: 15rem;
-  grid-gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-
-  @media screen and (min-width: 557px) {
-    max-width: 25rem;
-  }
-}
-
 // Video container
 .video {
   overflow: hidden;

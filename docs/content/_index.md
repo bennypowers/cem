@@ -13,5 +13,5 @@ npm install --save-dev @pwrs/cem
 
 <div class="mt-3 grid-2">
   {{< cta link="/docs/installation" text="Get Started" >}}
-  {{< cta link="/docs" text="Read the Docs" >}}
+  {{< cta link="/docs" type="secondary" text="Read the Docs" >}}
 </div>

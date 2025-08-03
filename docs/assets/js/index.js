@@ -121,11 +121,6 @@ function customizeSidebar() {
       });
     }
   }
-
-  elems('p').forEach(function(p){
-    const buttons = elems('.button', p);
-    buttons.length > 1 ? pushClass(p, 'button_grid') : false;
-  });
 }
 
 function markExternalLinks() {

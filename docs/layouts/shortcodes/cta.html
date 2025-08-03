@@ -1,4 +1,4 @@
 {{- $link := .Get "link" -}}
 {{- $text := .Get "text" -}}
 {{- $type := .Get "type" | default "primary" -}}
-<a class="button button-{{ $type }} stretched-link" href="{{ $link | relURL }}/">{{ $text }}</a>
+<a class="cta {{ $type }}" href="{{ $link | relURL }}/">{{ $text }}</a>

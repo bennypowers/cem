@@ -1,12 +1,12 @@
 :root {
   color-scheme: light dark;
-  
-  // Core color primitives
+
+  /* Core color primitives */
   --color-light: #ffffff;
   --color-dark: rgb(28, 28, 30);
   --color-haze: #f2f5f7;
   --color-bubble: rgb(36, 36, 38);
-  
+
   // Theme-aware color system using light-dark()
   --color-bg: light-dark(var(--color-light), var(--color-dark));
   --color-text: light-dark(#141010, #eeeeee);
@@ -14,23 +14,23 @@
   --color-accent: light-dark(var(--color-haze), var(--color-bubble));
   --color-overlay: light-dark(var(--color-light), var(--color-bubble));
   --color-border: light-dark(#eeeeee, transparent);
-  --color-theme: light-dark(rgb(52, 199, 89), rgb(48, 209, 88));
+  --color-theme: light-dark(#06f, #aecfff);
   --color-inline: light-dark(darkgoldenrod, #fbbf24);
-  
+
   // Search-specific colors
   --color-search-bg: var(--color-accent);
   --color-search-border: light-dark(transparent, var(--color-accent));
-  
+
   // Scrollbar colors
   --color-scroll-thumb: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.06));
-  
+
   // Shadow colors
   --color-shadow-subtle: light-dark(rgba(0, 0, 0, 0.07), rgba(0, 0, 0, 0.15));
   --color-shadow-light: light-dark(rgba(0, 0, 0, 0.17), rgba(0, 0, 0, 0.4));
   --color-shadow-medium: light-dark(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.5));
   --color-shadow-heavy: light-dark(rgba(0, 0, 0, 0.255), rgba(0, 0, 0, 0.6));
   --color-shadow-nav: light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3));
-  
+
   // Syntax highlighting colors
   --color-syntax-line-number: light-dark(rgba(0, 0, 0, 0.5), rgba(255, 255, 255, 0.5));
   --color-syntax-error: light-dark(#a61717, #ff6b6b);
@@ -44,35 +44,16 @@
   --color-syntax-diff-removed: light-dark(#dc3545, #d22323);
   --color-syntax-diff-added: light-dark(#28a745, #589819);
   --color-text-muted: light-dark(#666666, #aaaaaa);
-  
+
   // Typography
   --font-family: 'Metropolis', sans-serif;
-  
+
   // Animation
   --timing-ease: ease;
-  
+
   // Icons
   --icon-next: url(../images/icons/double-arrow.svg);
   --icon-never: url(../images/sitting.svg);
-  
-  // Legacy aliases for backward compatibility
-  --light: var(--color-light);
-  --dark: var(--color-dark);
-  --haze: var(--color-haze);
-  --bubble: var(--color-bubble);
-  --bg: var(--color-bg);
-  --text: var(--color-text);
-  --accent: var(--color-accent);
-  --overlay: var(--color-overlay);
-  --border-color: var(--color-border);
-  --theme: var(--color-theme);
-  --inline-color: var(--color-inline);
-  --font: var(--font-family);
-  --ease: var(--timing-ease);
-  --scroll-thumb: var(--color-scroll-thumb);
-  --search-border-color: var(--color-search-border);
-  --next-icon-path: var(--icon-next);
-  --never-icon-path: var(--icon-never);
 }
 
 // Legacy dark mode support for components that still need it
@@ -82,7 +63,7 @@ html {
       box-shadow: none !important;
     }
   }
-  
+
   &[data-mode="auto"] {
     @media (prefers-color-scheme: dark) {
       * {
