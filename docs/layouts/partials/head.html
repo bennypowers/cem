@@ -20,10 +20,7 @@
 {{- partial "google_analytics.html" . }}
 {{- end }}
 
-{{- $options := (dict "targetPath" "css/styles.css" "outputStyle" "compressed" "enableSourceMap" "true") -}}
-{{- $styles := resources.Get "sass/main.scss" | resources.ExecuteAsTemplate "main.scss" . |
-css.Sass $options | fingerprint "sha512" }}
-<link rel="stylesheet" href="{{ $styles.Permalink }}" integrity="{{ $styles.Data.Integrity }}">
+<link rel="stylesheet" href="{{ absURL "css/styles.css" }}">
 
 {{- $config := site.Params }}
 {{- with $config.customCSS }}

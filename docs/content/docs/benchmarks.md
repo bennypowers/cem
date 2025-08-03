@@ -1,5 +1,5 @@
 ---
-title: Analyzer Benchmarks
+title: Benchmarks
 description: Performance benchmarks of analyzers, generated from scripts/benchmark.sh.
 weight: 30
 ---

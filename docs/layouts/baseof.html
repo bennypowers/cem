@@ -13,7 +13,7 @@
   {{- end }}
 </head>
 <body class="page-{{ .Kind }}" id="pagetop">
-  <header class="nav_header">
+  <header id="header">
     {{- partial "nav" . }}
   </header>
   {{- if or (eq .Section $config.blogDir) (eq .Type "search" ) }}

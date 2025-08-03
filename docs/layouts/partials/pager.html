@@ -4,6 +4,9 @@
     {{ if and (ne .RelPermalink $searchURL) (.InSection .) }}
     <div class="pager_item prev">
       <a href="{{ .Permalink }}" class="pager_link cta primary" title="{{ .Title }}" rel="prev">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+        </svg>
         <span class="pager_label">{{ .Title }}</span>
       </a>
     </div>
@@ -15,6 +18,9 @@
     <div class="pager_item next">
       <a href="{{ .Permalink }}" class="pager_link cta primary" title="{{ .Title }}" rel="next">
         <span class="pager_label">{{ .Title }}</span>
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
+        </svg>
       </a>
     </div>
     {{ end }}
