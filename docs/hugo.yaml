@@ -36,6 +36,10 @@ markup:
       unsafe: true
   highlight:
     noClasses: false
+    lineNos: false
+    lineNumbersInTable: false
+    style: github
+    tabWidth: 2
 module:
   mounts:
     - source: assets

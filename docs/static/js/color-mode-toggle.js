@@ -22,7 +22,6 @@ export class ColorModeToggle extends HTMLElement {
 
   #setupEventListeners() {
     this.shadowRoot.addEventListener('change', this.#onChange.bind(this));
-    
     // Listen for system color scheme changes
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     mediaQuery.addEventListener('change', () => {
@@ -46,7 +45,6 @@ export class ColorModeToggle extends HTMLElement {
     localStorage.setItem(this.#storageKey, mode);
     this.#applyMode(mode);
     this.#updateButtons();
-    
     // Dispatch custom event for other components
     this.dispatchEvent(new CustomEvent('color-mode-change', {
       detail: { mode },
@@ -56,11 +54,9 @@ export class ColorModeToggle extends HTMLElement {
 
   #applyMode(mode) {
     const html = document.documentElement;
-    
     // Remove existing mode classes/attributes
     html.removeAttribute('data-mode');
     html.classList.remove('light', 'dark');
-    
     switch (mode) {
       case 'light':
         html.setAttribute('data-mode', 'light');
@@ -78,7 +74,6 @@ export class ColorModeToggle extends HTMLElement {
 
     // Update pictures for current mode
     this.#updatePictures(this.#getEffectiveMode(mode));
-    
     // Update external library themes
     this.#updateExternalThemes(this.#getEffectiveMode(mode));
   }
@@ -112,14 +107,11 @@ export class ColorModeToggle extends HTMLElement {
     // Update highlight.js themes
     const hljsLight = document.getElementById('hljs-light');
     const hljsDark = document.getElementById('hljs-dark');
-    
     if (hljsLight) hljsLight.disabled = effectiveMode === 'dark';
     if (hljsDark) hljsDark.disabled = effectiveMode !== 'dark';
-    
     // Update Shoelace themes (for pages that use Shoelace)
     const shoelaceLight = document.getElementById('shoelace-light');
     const shoelaceDark = document.getElementById('shoelace-dark');
-    
     if (shoelaceLight || shoelaceDark) {
       if (effectiveMode === 'dark') {
         if (shoelaceLight) shoelaceLight.disabled = true;
@@ -136,5 +128,4 @@ export class ColorModeToggle extends HTMLElement {
       }
     }
   }
-
 }

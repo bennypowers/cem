@@ -49,6 +49,17 @@
   --color-syntax-diff-added: light-dark(#28a745, #589819);
   --color-text-muted: light-dark(#666666, #aaaaaa);
 
+  /* Code block panel variables */
+  --code-panel-timeout: 2250ms;
+  --code-panel-animation-delay: 50ms;
+  --code-max-height: initial;
+  --code-observer-margin: 50px;
+
+  /* Focus management */
+  --focus-ring-color: light-dark(#0066cc, #4d94ff);
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+
   /* Typography */
   --font-family: 'Metropolis', sans-serif;
 
@@ -82,7 +93,7 @@
 }
 
 /* Layout utilities */
-blockquote + .highlight_wrap {
+blockquote + code-highlighter {
   margin-top: 2.25rem;
 }
 
@@ -727,26 +738,26 @@ code:not([class]) {
   line-break: anywhere;
 }
 
-.windows .highlight {
+.windows code-highlighter pre {
   overflow-x: hidden;
 }
 
-.windows .highlight:hover {
+.windows code-highlighter:hover pre {
   overflow-x: auto;
 }
 
-.highlight_wrap {
+code-highlighter {
   display: grid;
   background: var(--color-accent) !important;
   border-radius: 0.5rem;
   position: relative;
   padding: 0 1rem;
   margin: 1.5rem auto 1rem auto;
-  .highlight_wrap {
+  code-highlighter {
     margin: 0;
     padding: 0;
   }
-  + .highlight_wrap {
+  + code-highlighter {
     margin-top: 2.25rem;
   }
   &:hover > div { opacity: 1; }
@@ -764,17 +775,16 @@ code:not([class]) {
     opacity: 0.5;
     color: var(--color-text);
   }
-  .highlight {
+  pre {
     display: grid;
     width: 100%;
     border-radius: 0 0.2rem 0.2rem 0;
     overflow-x: auto;
     position: relative;
-    .highlight { margin: 0; }
-    pre {
-      color: var(--color-text) !important;
-      border-radius: 4px;
-      font-family: 'Monaco', monospace;
+    margin: 0;
+    color: var(--color-text) !important;
+    border-radius: 4px;
+    font-family: 'Monaco', monospace;
       background-color: transparent !important;
       padding-top: 1.5rem;
       padding-bottom: 2rem;
@@ -1224,4 +1234,54 @@ code:not([class]) {
   @media screen and (min-width: 557px) {
     max-width: 25rem;
   }
+}
+
+/* Modern focus management with :focus-visible */
+*:focus {
+  outline: none; /* Remove default focus outline */
+}
+
+*:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: 3px;
+}
+
+/* Interactive elements focus states */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+  transition: outline-color 0.15s ease;
+}
+
+/* Code block panel buttons focus */
+.panel_icon:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: 4px;
+}
+
+/* Search component focus */
+fuse-search input:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* Navigation focus */
+nav a:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: 2px;
+}
+
+/* Shell prompt styling - only show $ on first line */
+code-highlighter .language-shell .line:first-of-type .cl::before {
+  content: "$ ";
+  color: var(--color-text-muted);
+  user-select: none;
 }

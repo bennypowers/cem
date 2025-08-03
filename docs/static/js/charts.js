@@ -2,34 +2,26 @@ import { setBasePath } from 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoela
 setBasePath('https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/');
 
 // Theme switching is now handled by the color-mode-toggle web component
-
 // JSON viewer lazy loading setup
-document.addEventListener('DOMContentLoaded', () => {
-  const disclosures = document.querySelectorAll('.json-disclosure');
-  
-  disclosures.forEach(disclosure => {
-    const details = disclosure;
-    const spinner = details.querySelector('sl-spinner');
-    const viewer = details.querySelector('json-viewer');
-    const jsonUrl = details.dataset.jsonUrl;
-    let loaded = false;
-    
-    details.addEventListener('sl-show', async () => {
-      if (loaded) return;
-      
-      try {
-        const response = await fetch(jsonUrl);
-        const jsonData = await response.json();
-        
-        viewer.data = jsonData;
-        viewer.style.display = 'block';
-        spinner.style.display = 'none';
-        loaded = true;
-      } catch (error) {
-        console.error('Failed to load JSON:', error);
-        spinner.innerHTML = 'Failed to load JSON data';
-      }
-    });
+document.querySelectorAll('.json-disclosure')?.forEach(disclosure => {
+  const details = disclosure;
+  const spinner = details.querySelector('sl-spinner');
+  const viewer = details.querySelector('json-viewer');
+  const jsonUrl = details.dataset.jsonUrl;
+  let loaded = false;
+  details.addEventListener('sl-show', async () => {
+    if (loaded) return;
+    try {
+      const response = await fetch(jsonUrl);
+      const jsonData = await response.json();
+      viewer.data = jsonData;
+      viewer.style.display = 'block';
+      spinner.style.display = 'none';
+      loaded = true;
+    } catch (error) {
+      console.error('Failed to load JSON:', error);
+      spinner.innerHTML = 'Failed to load JSON data';
+    }
   });
 });
 

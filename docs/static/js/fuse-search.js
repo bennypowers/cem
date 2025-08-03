@@ -36,7 +36,6 @@ export class FuseSearch extends HTMLElement {
     this.#searchInput.setAttribute('aria-expanded', 'false');
     this.#searchInput.setAttribute('aria-haspopup', 'listbox');
     this.#searchInput.setAttribute('aria-autocomplete', 'list');
-    
     // Generate unique ID for the listbox
     const listboxId = `search-listbox-${Math.random().toString(36).substr(2, 9)}`;
     this.#resultsContainer.id = listboxId;
@@ -44,17 +43,10 @@ export class FuseSearch extends HTMLElement {
   }
 
   #setupEventListeners() {
-    // Prevent form submission and use Fuse search instead
-    this.#form.addEventListener('submit', this.#handleFormSubmit.bind(this));
-
-    // Handle search input
-    this.#searchInput.addEventListener('input', this.#handleSearchInput.bind(this));
-
-    // Handle keyboard navigation
-    this.#searchInput.addEventListener('keydown', this.#handleKeyDown.bind(this));
-
-    // Clear results when clicking outside
-    document.addEventListener('click', this.#handleDocumentClick.bind(this));
+    this.#form.addEventListener('submit', this.#onFormSubmit);
+    this.#searchInput.addEventListener('input', this.#onSearchInput);
+    this.#searchInput.addEventListener('keydown', this.#onKeyDown);
+    document.addEventListener('click', this.#onDocumentClick);
 
     // Clear results on escape
     document.addEventListener('keydown', (event) => {
@@ -65,7 +57,7 @@ export class FuseSearch extends HTMLElement {
     });
   }
 
-  #handleFormSubmit(event) {
+  #onFormSubmit = (event) => {
     if (this.#fuse && this.#searchInput.value.trim()) {
       // Prevent default form submission if Fuse is available
       event.preventDefault();
@@ -74,7 +66,7 @@ export class FuseSearch extends HTMLElement {
     // Allow default form submission to DuckDuckGo if Fuse not available
   }
 
-  #handleSearchInput(event) {
+  #onSearchInput = (event) => {
     const query = event.target.value.trim();
 
     // Clear existing debounce timer
@@ -88,9 +80,8 @@ export class FuseSearch extends HTMLElement {
     }, 150);
   }
 
-  #handleKeyDown(event) {
+  #onKeyDown = (event) => {
     const results = this.#resultsContainer.querySelectorAll('a[role="option"]');
-    
     // Only handle navigation if there are results
     if (results.length === 0) return;
 
@@ -132,7 +123,7 @@ export class FuseSearch extends HTMLElement {
     }
   }
 
-  #handleDocumentClick(event) {
+  #onDocumentClick = (event) => {
     if (!this.contains(event.target)) {
       this.#clearResults();
     }
@@ -141,12 +132,10 @@ export class FuseSearch extends HTMLElement {
   #updateSelection(results) {
     // Remove previous active descendant
     this.#searchInput.removeAttribute('aria-activedescendant');
-    
     results.forEach((result, index) => {
       const isSelected = index === this.#selectedIndex;
       result.classList.toggle('active', isSelected);
       result.setAttribute('aria-selected', isSelected.toString());
-      
       // Set active descendant
       if (isSelected) {
         this.#searchInput.setAttribute('aria-activedescendant', result.id);
@@ -221,7 +210,7 @@ export class FuseSearch extends HTMLElement {
     this.#searchInput.setAttribute('aria-expanded', 'true');
   }
 
-  #createResultElement(item, query, score, index) {
+  #createResultElement(item, query, _score, index) {
     const link = document.createElement('a');
     link.href = `${item.link}?query=${encodeURIComponent(query)}`;
     

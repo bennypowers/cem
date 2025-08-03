@@ -1,3 +1,4 @@
+
 export class DocsSidebar extends HTMLElement {
   static is = 'docs-sidebar';
   static { customElements.define(this.is, this); }
@@ -65,7 +66,8 @@ export class DocsSidebar extends HTMLElement {
           this.#updateActiveHeading(activeIndex, pageInternalLinks);
         };
 
-        window.addEventListener('scroll', scrollHandler);
+        // Use passive listener for better scroll performance
+        window.addEventListener('scroll', scrollHandler, { passive: true });
 
         // Trigger initial active heading setup
         scrollHandler();

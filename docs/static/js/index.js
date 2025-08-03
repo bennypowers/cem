@@ -2,44 +2,25 @@ import {
   translations
 } from './config.js';
 
-import {
-  elem,
-  elems,
-  pushClass,
-  deleteClass,
-  containsClass,
-  elemAttribute,
-  createEl,
-  wrapEl,
-  copyToClipboard
-} from './functions.js';
-
-import { initializeCodeBlocks } from './code.js';
-
 // Navigation toggle
 function initializeNavigation() {
   const navToggle = document.getElementById('nav-toggle');
-  if (navToggle) {
-    navToggle.addEventListener('click', function() {
-      this.parentElement.querySelector('nav').classList.toggle('show');
-    });
-  }
+  navToggle?.addEventListener('click', function() {
+    this.parentElement?.querySelector('nav')?.classList.toggle('show');
+  });
 }
-
-
 
 function updateDate() {
   const date = new Date();
   const year = date.getFullYear().toString();
-  const year_el = elem('.year');
+  const year_el = document.querySelector('.year');
   if (year_el) {
     year_el.textContent = year;
   }
 }
 
-
 function markExternalLinks() {
-  let links = elems('a');
+  let links = document.querySelectorAll('a');
   if(links) {
     Array.from(links).forEach(function(link){
       let target, rel, blank, noopener, attr1, attr2, url, is_external;
@@ -53,24 +34,14 @@ function markExternalLinks() {
         rel = 'rel';
         blank = '_blank';
         noopener = 'noopener';
-        attr1 = elemAttribute(link, target);
-        attr2 = elemAttribute(link, noopener);
+        attr1 = link.getAttribute(target);
+        attr2 = link.getAttribute(rel);
 
-        attr1 ? false : elemAttribute(link, target, blank);
-        attr2 ? false : elemAttribute(link, rel, noopener);
+        attr1 ? false : link.setAttribute(target, blank);
+        attr2 ? false : link.setAttribute(rel, noopener);
       }
     });
   }
-}
-
-function sanitizeURL(url) {
-  // removes any existing id on url
-  const position_of_hash = url.indexOf('#');
-  if(position_of_hash > -1 ) {
-    const id = url.substr(position_of_hash, url.length - 1);
-    url = url.replace(id, '');
-  }
-  return url
 }
 
 function copyFeedback(parent) {
@@ -78,8 +49,8 @@ function copyFeedback(parent) {
   const yanked = 'link_yanked';
   copy_txt.classList.add(yanked);
   copy_txt.innerText = translations.copied_text;
-  if(!elem(`.${yanked}`, parent)) {
-    const icon = parent.getElementsByTagName('svg')[0];
+  if(!parent.querySelector(`.${yanked}`)) {
+    const icon = parent.getElementsByTagName('svg')?.[0];
     if (icon) {
       const original_src = icon.src;
       icon.src = '/icons/check.svg';
@@ -95,16 +66,16 @@ function copyFeedback(parent) {
 function copyHeadingLink() {
   let deeplink, deeplinks, new_link, parent, target;
   deeplink = 'link';
-  deeplinks = elems(`.${deeplink}`);
+  deeplinks = document.querySelectorAll(`.${deeplink}`);
   if(deeplinks) {
     document.addEventListener('click', function(event)
     {
       target = event.target;
       parent = target.parentNode;
-      if (target && containsClass(target, deeplink) || containsClass(parent, deeplink)) {
+      if (target && target.classList.contains(deeplink) || parent.classList.contains(deeplink)) {
         event.preventDefault();
         new_link = target.href != undefined ? target.href : target.parentNode.href;
-        copyToClipboard(new_link);
+        navigator.clipboard.writeText(new_link);
         target.href != undefined ?  copyFeedback(target) : copyFeedback(target.parentNode);
       }
     });
@@ -112,26 +83,28 @@ function copyHeadingLink() {
 }
 
 function makeTablesResponsive() {
-  const tables = elems('table');
+  const tables = document.querySelectorAll('table');
   if (tables) {
     tables.forEach(function(table){
-      const table_wrapper = createEl();
-      pushClass(table_wrapper, 'scrollable');
-      wrapEl(table, table_wrapper);
+      const table_wrapper = document.createElement('div');
+      table_wrapper.classList.add('scrollable');
+      // Wrap table with table_wrapper
+      table.parentNode.insertBefore(table_wrapper, table);
+      table_wrapper.appendChild(table);
     });
   }
 }
 
 function backToTop(){
-  const toTop = elem("#toTop");
+  const toTop = document.querySelector("#toTop");
   if (toTop) {
     window.addEventListener("scroll", () => {
       const last_known_scroll_pos = window.scrollY;
       if(last_known_scroll_pos >= 200) {
         toTop.style.display = "flex";
-        pushClass(toTop, 'active');
+        toTop.classList.add('active');
       } else {
-        deleteClass(toTop, 'active');
+        toTop.classList.remove('active');
       }
     });
   }
@@ -139,7 +112,7 @@ function backToTop(){
 
 function lazyLoadMedia(elements = []) {
   elements.forEach(element => {
-    let media_items = elems(element);
+    let media_items = document.querySelectorAll(element);
     if(media_items) {
       Array.from(media_items).forEach(function(item) {
         item.loading = "lazy";
@@ -157,17 +130,16 @@ function loadActions() {
   lazyLoadMedia(['iframe', 'img']);
 }
 
-// Main initialization function
-export function initializeApp() {
-  initializeNavigation();
-  initializeCodeBlocks();
-  loadActions();
-  
-}
-
-// Auto-initialize when DOM is loaded
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initializeApp);
+// Critical path - initialize immediately
+initializeNavigation();
+// Use requestIdleCallback for non-critical tasks
+if ('requestIdleCallback' in window) {
+  requestIdleCallback(() => {
+    loadActions();
+  }, { timeout: 1000 });
 } else {
-  initializeApp();
+  // Fallback for browsers without requestIdleCallback
+  setTimeout(() => {
+    loadActions();
+  }, 0);
 }
