@@ -1,9 +1,4 @@
 import {
-  hash,
-  active
-} from './variables.js';
-
-import {
   translations
 } from './config.js';
 
@@ -31,37 +26,7 @@ function initializeNavigation() {
   }
 }
 
-function featureHeading(){
-  // show active heading at top.
-  const link_class = "section_link";
-  const title_class = "section_title";
-  const parent = elem(".aside");
-  if(parent) {
-    let active_heading = elem(`.${link_class}.active`);
-    active_heading = active_heading ? active_heading : elem(`.${title_class}.active}`);
-    if (active_heading) {
-      parent.scroll({
-        top: active_heading.offsetTop,
-        left: 0,
-        // behavior: 'smooth'
-      });
-    }
-  }
-}
 
-function activeHeading(index, list_links) {
-  let links_to_modify = Object.create(null);
-  links_to_modify.active = list_links.filter(function(link) {
-    return containsClass(link, active);
-  })[0];
-
-  links_to_modify.new = list_links[index]
-
-  if (links_to_modify.active != links_to_modify.new) {
-    links_to_modify.active ? deleteClass(links_to_modify.active, active): false;
-    pushClass(links_to_modify.new, active);
-  }
-}
 
 function updateDate() {
   const date = new Date();
@@ -72,49 +37,6 @@ function updateDate() {
   }
 }
 
-function customizeSidebar() {
-  const tocActive = 'toc_active';
-  const aside = elem('aside');
-  const tocs = elems('nav', aside);
-  if(tocs) {
-    tocs.forEach(function(toc){
-      toc.id = "";
-      pushClass(toc, 'toc');
-      if(toc.children.length >= 1) {
-        const toc_items = Array.from(toc.children[0].children);
-
-        const previous_heading = toc.previousElementSibling;
-        previous_heading.matches('.active') ? pushClass(toc, tocActive) : false;
-
-        toc_items.forEach(function(item){
-          pushClass(item, 'toc_item');
-          pushClass(item.firstElementChild, 'toc_link');
-        });
-      }
-    });
-
-    const current_toc = elem(`.${tocActive}`);
-
-    if(current_toc) {
-      const page_internal_links = Array.from(elems('a', current_toc));
-
-      const page_links = page_internal_links.map(function(link){
-        return document.getElementById(decodeURIComponent(link.hash.replace('#','')));
-      });
-
-      window.addEventListener('scroll', function() {
-        let position = window.scrollY + window.innerHeight/2;
-        let active_index = 0;
-        for (const [index, element] of page_links.entries()) {
-          if(element && element.offsetTop < position && element.offsetTop > page_links[active_index].offsetTop) {
-            active_index = index;
-          }
-        }
-        activeHeading(active_index, page_internal_links);
-      });
-    }
-  }
-}
 
 function markExternalLinks() {
   let links = elems('a');
@@ -143,7 +65,7 @@ function markExternalLinks() {
 
 function sanitizeURL(url) {
   // removes any existing id on url
-  const position_of_hash = url.indexOf(hash);
+  const position_of_hash = url.indexOf('#');
   if(position_of_hash > -1 ) {
     const id = url.substr(position_of_hash, url.length - 1);
     url = url.replace(id, '');
@@ -207,9 +129,9 @@ function backToTop(){
       const last_known_scroll_pos = window.scrollY;
       if(last_known_scroll_pos >= 200) {
         toTop.style.display = "flex";
-        pushClass(toTop, active);
+        pushClass(toTop, 'active');
       } else {
-        deleteClass(toTop, active);
+        deleteClass(toTop, 'active');
       }
     });
   }
@@ -228,7 +150,6 @@ function lazyLoadMedia(elements = []) {
 
 function loadActions() {
   updateDate();
-  customizeSidebar();
   markExternalLinks();
   copyHeadingLink();
   makeTablesResponsive();
@@ -242,10 +163,6 @@ export function initializeApp() {
   initializeCodeBlocks();
   loadActions();
   
-  // Feature heading with delay
-  setTimeout(() => {
-    featureHeading();
-  }, 50);
 }
 
 // Auto-initialize when DOM is loaded

@@ -12,7 +12,6 @@ import {
   highlight,
   highlight_wrap,
   line_class,
-  active
 } from './variables.js';
 
 import {
@@ -273,9 +272,9 @@ export function initializeCodeBlocks() {
   function showActive(target, targetClass) {
     const target_element = target.matches(`.${targetClass}`) ? target : target.closest(`.${targetClass}`);
 
-    deleteClass(target_element, active);
+    deleteClass(target_element, 'active');
     setTimeout(function() {
-      modifyClass(target_element, active)
+      modifyClass(target_element, 'active')
     }, 50)
   }
 

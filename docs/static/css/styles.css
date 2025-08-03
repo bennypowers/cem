@@ -493,7 +493,7 @@ del {
   font-size: 0.9rem;
 }
 
-.toc_active {
+.toc:has(.active) {
   height: initial;
 }
 
