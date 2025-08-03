@@ -527,6 +527,7 @@ del {
   justify-content: center;
   align-items: center;
   margin: 0 0.5rem;
+  fill: currentcolor;
 }
 
 /* Links */
@@ -720,7 +721,7 @@ code {
   word-break: break-all;
 }
 
-code.noClass {
+code:not([class]) {
   color: var(--color-inline);
   display: inline;
   line-break: anywhere;
@@ -1027,11 +1028,14 @@ code.noClass {
   width: 100%;
   background-color: var(--color-bg);
   z-index: 999999;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 1.5rem !important;
 
   .nav {
     display: grid;
     grid-gap: 1rem;
-    padding: 0 1.5rem !important;
     align-items: center;
     background-color: var(--color-bg);
     @media screen and (min-width: 992px) {
@@ -1041,22 +1045,6 @@ code.noClass {
       position: relative;
       picture, img {
         max-width: 10rem;
-      }
-    }
-
-    .nav_toggle {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 3rem;
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      text-align: center;
-      right: 0;
-      color: var(--color-text);
-      @media screen and (min-width: 992px) {
-        display: none;
       }
     }
 
@@ -1094,9 +1082,27 @@ code.noClass {
     }
   }
 
+  #nav-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    text-align: center;
+    right: 0;
+    color: var(--color-text);
+    flex-shrink: 0;
+    padding: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    @media screen and (min-width: 992px) {
+      display: none;
+    }
+    svg { margin: 0; }
+  }
+
   .nav-link {
     display: inline-flex;
-    padding: 0.5rem 1rem;
+    padding-block: 0.5rem;
   }
 
   .nav-item {
@@ -1109,8 +1115,10 @@ code.noClass {
     }
   }
 
-  .nav_repo picture, .nav_repo img {
+  #repository picture,
+  #repository img {
     max-width: 1.25rem;
+    margin-block: 0;
   }
 }
 

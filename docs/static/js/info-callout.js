@@ -1,4 +1,7 @@
-class InfoCallout extends HTMLElement {
+export class InfoCallout extends HTMLElement {
+  static is = 'info-callout';
+  static { customElements.define(this.is, this); }
+
   constructor() {
     super();
     this.setupTitle();
@@ -23,8 +26,4 @@ class InfoCallout extends HTMLElement {
       this.setAttribute('expanded', '');
     }
   }
-}
-
-if (!customElements.get('info-callout')) {
-  customElements.define('info-callout', InfoCallout);
 }

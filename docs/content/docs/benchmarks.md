@@ -281,8 +281,7 @@ json-viewer {
 </div>
 
 {{< loadchart.inline >}}
-{{- $chartsScript := resources.Get "js/charts.js" | resources.ExecuteAsTemplate "js/charts.js" . }}
-<script type="module" src="{{ $chartsScript.Permalink }}"></script>
+<script type="module" src="{{ absURL "js/charts.js" }}"></script>
 {{</ loadchart.inline >}}
 <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/shoelace.js"></script>
 <link id="shoelace-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/themes/light.css">

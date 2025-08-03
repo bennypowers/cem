@@ -1,5 +1,4 @@
-{{- $fuseSearchScript := resources.Get "js/fuse-search.js" | resources.ExecuteAsTemplate "js/fuse-search.js" . }}
-<script type="module" src="{{ $fuseSearchScript.Permalink }}"></script>
+<script type="module" src="{{ absURL "js/fuse-search.js" }}"></script>
 <fuse-search base-url="{{ site.BaseURL }}">
   <template shadowrootmode="open">
     <style>

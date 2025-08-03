@@ -8,9 +8,6 @@
          height="48"
          src="{{ $litPath }}"
          alt="{{ site.Title }} Logo">
-		<div class="nav_toggle toggle" title='{{ T "site_menu" }}'>
-			{{- partial "sprite" (dict "icon" "harmburger") }}
-		</div>
 	</a>
 	<ul>
 		<li class="nav-item">
@@ -26,21 +23,24 @@
 			<a class="nav-link{{if $active }} active{{end}}" href="{{ .URL }}"><span{{if $active }} class="active"{{end}}>{{ T .Identifier | default .Name }}</span></a>
 		</li>
 		{{- end }}
-		{{- $repo := $config.source }}
-		{{- with $config.source }}
-		<li class="nav-item nav_repo">
-			<a class="nav-link" href="{{ .url }}" target="_blank">
-				{{- if .iconLight }}
-					{{- $litPath := absURL .iconLight }}
-					{{- $darkPath := absURL .iconDark }}
-					<picture data-lit="{{ $litPath }}" data-dark="{{ $darkPath }}">
-						<img src="{{ $litPath }}" alt="{{ .name }} Repo">
-					</picture>
-				{{- else }}{{ .name }}{{ end }}
-			</a>
-		</li>
-		{{- end }}
-		<li class="nav-item">{{ partial "color-mode-toggle" . }}</li>
 	</ul>
 </nav>
 
+{{- $repo := $config.source }}
+{{- with $config.source }}
+<a id="repository" href="{{ .url }}" target="_blank">
+  {{- if .iconLight }}
+    {{- $litPath := absURL .iconLight }}
+    {{- $darkPath := absURL .iconDark }}
+    <picture data-lit="{{ $litPath }}" data-dark="{{ $darkPath }}">
+      <img src="{{ $litPath }}" alt="{{ .name }} Repo">
+    </picture>
+  {{- else }}{{ .name }}{{ end }}
+</a>
+{{- end }}
+
+{{ partial "color-mode-toggle" . }}
+
+<button id="nav-toggle" title='{{ T "site_menu" }}'>
+  {{- partial "sprite" (dict "icon" "harmburger") }}
+</button>

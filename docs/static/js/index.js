@@ -1,40 +1,35 @@
-(function calcNavHeight(){
-  return (elem('.nav_header').offsetHeight + 25);
-})();
+import {
+  hash,
+  active
+} from './variables.js';
 
-function toggleMenu(event) {
-  const target = event.target;
-  const is_toggle_control = target.matches(`.${toggle_id}`);
-  const is_with_toggle_control = target.closest(`.${toggle_id}`);
-  const show_instances = elems(`.${show_id}`) ? Array.from(elems(`.${show_id}`)) : [];
-  const menu_instance = target.closest(`.${menu}`);
+import {
+  translations
+} from './config.js';
 
-  function showOff(target, self = false) {
-    show_instances.forEach(function(show_instance){
-      !self ? deleteClass(show_instance, show_id) : false;
-      show_instance !== target.closest(`.${menu}`) ? deleteClass(show_instance, show_id) : false;
+import {
+  elem,
+  elems,
+  pushClass,
+  deleteClass,
+  containsClass,
+  elemAttribute,
+  createEl,
+  wrapEl,
+  copyToClipboard
+} from './functions.js';
+
+import { initializeCodeBlocks } from './code.js';
+
+// Navigation toggle
+function initializeNavigation() {
+  const navToggle = document.getElementById('nav-toggle');
+  if (navToggle) {
+    navToggle.addEventListener('click', function() {
+      this.parentElement.querySelector('nav').classList.toggle('show');
     });
-  }
-
-  if(is_toggle_control || is_with_toggle_control) {
-    const menu = is_with_toggle_control ? is_with_toggle_control.parentNode.parentNode : target.parentNode.parentNode;
-    event.preventDefault();
-    modifyClass(menu, show_id);
-  } else {
-    !menu_instance ? showOff(target) : showOff(target, true);
   }
 }
-
-(function markInlineCodeTags(){
-  const code_blocks = elems('code');
-  if(code_blocks) {
-    code_blocks.forEach(function(code_block){
-      if(!hasClasses(code_block)) {
-        code_block.children.length ? false : pushClass(code_block, 'noClass');
-      }
-    });
-  }
-})();
 
 function featureHeading(){
   // show active heading at top.
@@ -42,13 +37,15 @@ function featureHeading(){
   const title_class = "section_title";
   const parent = elem(".aside");
   if(parent) {
-    let active_heading = elem(`.${link_class}.${active}`);
-    active_heading = active_heading ? active_heading : elem(`.${title_class}.${active}`);
-    parent.scroll({
-      top: active_heading.offsetTop,
-      left: 0,
-      // behavior: 'smooth'
-    });
+    let active_heading = elem(`.${link_class}.active`);
+    active_heading = active_heading ? active_heading : elem(`.${title_class}.active}`);
+    if (active_heading) {
+      parent.scroll({
+        top: active_heading.offsetTop,
+        left: 0,
+        // behavior: 'smooth'
+      });
+    }
   }
 }
 
@@ -58,25 +55,21 @@ function activeHeading(index, list_links) {
     return containsClass(link, active);
   })[0];
 
-  // activeTocLink ? deleteClass
-
   links_to_modify.new = list_links[index]
 
   if (links_to_modify.active != links_to_modify.new) {
     links_to_modify.active ? deleteClass(links_to_modify.active, active): false;
     pushClass(links_to_modify.new, active);
   }
-};
-
-setTimeout(() => {
-  featureHeading();
-}, 50);
+}
 
 function updateDate() {
   const date = new Date();
-  const year = date.getFullYear().toString;
+  const year = date.getFullYear().toString();
   const year_el = elem('.year');
-  year_el ? year.textContent = year : false;
+  if (year_el) {
+    year_el.textContent = year;
+  }
 }
 
 function customizeSidebar() {
@@ -91,7 +84,7 @@ function customizeSidebar() {
         const toc_items = Array.from(toc.children[0].children);
 
         const previous_heading = toc.previousElementSibling;
-        previous_heading.matches(`.${active}`) ? pushClass(toc, tocActive) : false;
+        previous_heading.matches('.active') ? pushClass(toc, tocActive) : false;
 
         toc_items.forEach(function(item){
           pushClass(item, 'toc_item');
@@ -109,11 +102,11 @@ function customizeSidebar() {
         return document.getElementById(decodeURIComponent(link.hash.replace('#','')));
       });
 
-      window.addEventListener('scroll', function(e) {
+      window.addEventListener('scroll', function() {
         let position = window.scrollY + window.innerHeight/2;
         let active_index = 0;
         for (const [index, element] of page_links.entries()) {
-          if(element.offsetTop < position && element.offsetTop > page_links[active_index].offsetTop) {
+          if(element && element.offsetTop < position && element.offsetTop > page_links[active_index].offsetTop) {
             active_index = index;
           }
         }
@@ -162,16 +155,18 @@ function copyFeedback(parent) {
   const copy_txt = document.createElement('div');
   const yanked = 'link_yanked';
   copy_txt.classList.add(yanked);
-  copy_txt.innerText = copied_text;
+  copy_txt.innerText = translations.copied_text;
   if(!elem(`.${yanked}`, parent)) {
     const icon = parent.getElementsByTagName('svg')[0];
-    const original_src = icon.src;
-    icon.src = '{{ absURL "icons/check.svg" }}';
-    parent.appendChild(copy_txt);
-    setTimeout(function() {
-      parent.removeChild(copy_txt)
-      icon.src = original_src;
-    }, 2250);
+    if (icon) {
+      const original_src = icon.src;
+      icon.src = '/icons/check.svg';
+      parent.appendChild(copy_txt);
+      setTimeout(function() {
+        parent.removeChild(copy_txt)
+        icon.src = original_src;
+      }, 2250);
+    }
   }
 }
 
@@ -207,15 +202,17 @@ function makeTablesResponsive() {
 
 function backToTop(){
   const toTop = elem("#toTop");
-  window.addEventListener("scroll", () => {
-    const last_known_scroll_pos = window.scrollY;
-    if(last_known_scroll_pos >= 200) {
-      toTop.style.display = "flex";
-      pushClass(toTop, active);
-    } else {
-      deleteClass(toTop, active);
-    }
-  });
+  if (toTop) {
+    window.addEventListener("scroll", () => {
+      const last_known_scroll_pos = window.scrollY;
+      if(last_known_scroll_pos >= 200) {
+        toTop.style.display = "flex";
+        pushClass(toTop, active);
+      } else {
+        deleteClass(toTop, active);
+      }
+    });
+  }
 }
 
 function lazyLoadMedia(elements = []) {
@@ -236,16 +233,24 @@ function loadActions() {
   copyHeadingLink();
   makeTablesResponsive();
   backToTop();
-
   lazyLoadMedia(['iframe', 'img']);
-
-  doc.addEventListener('click', event => {
-    let target = event.target;
-    let mode_class = 'color_choice';
-    let is_mode_toggle = containsClass(target, mode_class);
-    is_mode_toggle ? setUserColorMode(true) : false;
-    toggleMenu(event);
-  });
 }
 
-window.addEventListener('load', loadActions());
+// Main initialization function
+export function initializeApp() {
+  initializeNavigation();
+  initializeCodeBlocks();
+  loadActions();
+  
+  // Feature heading with delay
+  setTimeout(() => {
+    featureHeading();
+  }, 50);
+}
+
+// Auto-initialize when DOM is loaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+  initializeApp();
+}

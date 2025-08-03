@@ -1,70 +1,23 @@
 # Claude Development Notes
 
-## Docs Layout Refactoring
+## General rules
+- Never leave meaningless whitespace at the end of a line
+- HTML start tags that have one attribute should occupy one line
+- if they have two attributes, one line or two lines, depending on the content 
+length
+- if there are more than two attributes, then the first attribute (id, class, 
+name, part) on the start tag line, all subsequent attributes on a new line, with
+the start of the attribute aligned with the first line's attribute:
 
-### Completed Work ✅
-- **Search Component**: Refactored as modern `<fuse-search>` web component with declarative shadow DOM
-  - Removed Algolia integration, kept Fuse.js only
-  - Implemented proper ARIA accessibility patterns
-  - Added DuckDuckGo fallback form
-  - Uses import maps and ESM for dependencies
+```html
+<some-tag id="whatever"
+          aligned-attrs="true"
+          max-single-line-attrs="2">
+```
 
-- **Color Mode Toggle**: Refactored as modern `<color-mode-toggle>` web component
-  - Three-way toggle (light/auto/dark) using actual radio inputs
-  - Proper accessibility with keyboard navigation
-  - localStorage persistence and system preference detection
-  - Icon-only design with custom SVG icons
-  - Integrates with Shoelace theme switching
+## Docs / HTML
 
-### Theme System Migration ✅
-- **Goal**: Replace SCSS/Sass with vanilla CSS using CSS custom properties
-- **Status**: Completed - fully modernized CSS architecture
-- **Completed**:
-  - ✅ Implemented `color-scheme: light dark` CSS property
-  - ✅ Added `light-dark()` CSS function usage throughout
-  - ✅ Created centralized CSS custom properties system
-  - ✅ Converted all SASS files to modern CSS with nesting
-  - ✅ Updated web components to use semantic color variables
-  - ✅ Integrated theme switching for external libraries (Shoelace, highlight.js)
-  - ✅ Fixed Hugo syntax highlighting to use CSS classes instead of inline styles
-  - ✅ Consolidated all theme switching logic in color-mode-toggle component
-
-### Components Removed ✅
-- **liteyoutube**: Removed completely - shortcode, scripts, and CSS files deleted
-
-### Legacy Theme Cleanup ✅
-- **hooks/head**: Ejected - removed hooks system completely
-  - Replaced with direct component registration via import maps
-  - Modern declarative JavaScript modules approach
-
-### DSD Component Migration Plan
-
-#### Components for DSD Conversion 🚧
-**High Priority - Enhanced functionality:**
-- **`<tip>`** → `<info-callout>` web component
-  - Expandable/collapsible behavior
-  - Icon variants (info, warning, success, error)
-  - Animation states
-  - Encapsulated styling prevents conflicts
-
-**Keep as Hugo shortcodes (SSR preferred):**
-- **`<cta>`** (renamed from `<button>`) - Simple styled links
-- **`<icon>`** - Static SVG inclusion via Hugo asset pipeline
-- **`<image>`/`<picture>`** - Static media with Hugo's image processing
-- **`<mermaid>`** - SSR'd SVG diagrams, no JS interaction needed
-- **`<youtube>`** - Simple iframe embed
-
-**Remove completely (not needed):**
-- **`<tabs>/<tab>`** - Complex interactions not required
-- **`<gallery>`** - Lightbox functionality not needed
-- **`<chart>`** - Prefer SSR'd SVG charts over Chart.js
-- **`<grid>/<column>`** - CSS Grid/Flexbox sufficient
-- **Utility classes** - Prefer semantic CSS over utility classes (future cleanup)
-
-#### Light DOM Components (No DSD needed)
-- **Navigation links** - Complex semantic structure better in light DOM
-- **Breadcrumbs** - SEO and accessibility benefit from light DOM
-- **Basic text formatting** (`<block>`, `<partial>`)
+- Use server-rendered web components (DSD) where appropriate
 
 ### Modern Web Components Architecture
 - **Approach**: 

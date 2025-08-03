@@ -1,5 +1,4 @@
-{{- $colorModeScript := resources.Get "js/color-mode-toggle.js" | resources.ExecuteAsTemplate "js/color-mode-toggle.js" . }}
-<script type="module" src="{{ $colorModeScript.Permalink }}"></script>
+<script type="module" src="{{ absURL "js/color-mode-toggle.js" }}"></script>
 <color-mode-toggle>
   <template shadowrootmode="open">
     <style>

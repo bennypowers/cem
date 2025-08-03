@@ -1,31 +1,67 @@
+import {
+  shell_based,
+  copy_id,
+  wrap_id,
+  lines_id,
+  panel_expand,
+  panel_expanded,
+  panel_box,
+  panel_hide,
+  panel_from,
+  full_height,
+  highlight,
+  highlight_wrap,
+  line_class,
+  active
+} from './variables.js';
+
+import {
+  translations,
+  max_lines,
+  show_lines
+} from './config.js';
+
+import {
+  createEl,
+  elem,
+  elems,
+  pushClass,
+  deleteClass,
+  modifyClass,
+  containsClass,
+  wrapEl,
+  loadSvg,
+  copyToClipboard
+} from './functions.js';
+
 const snippet_actions = [
   {
     icon: 'copy',
     id: 'copy',
-    title: copy_text,
+    title: translations.copy_text,
     show: true
   },
   {
     icon: 'order',
     id: 'lines',
-    title: toggle_line_numbers_text,
+    title: translations.toggle_line_numbers_text,
     show: true
   },
   {
     icon: 'carly',
     id: 'wrap',
-    title: toggle_line_wrap_text,
+    title: translations.toggle_line_wrap_text,
     show: false
   },
   {
     icon: 'expand',
     id: 'expand',
-    title: resize_snippet,
+    title: translations.resize_snippet,
     show: false
   }
 ];
 
-function addLines(block) {
+export function addLines(block) {
   let text = block.textContent;
   const snippet_fragment = [];
   if (text.includes('\n') && block.closest('pre') && !block.children.length) {
@@ -41,7 +77,7 @@ function addLines(block) {
         snippet_fragment.push(new_node);
         block.closest('pre').className = 'chroma';
         pushClass(block, 'language-unknown');
-        block.dataset.lang = not_set;
+        block.dataset.lang = translations.not_set;
       }
     });
 
@@ -49,7 +85,7 @@ function addLines(block) {
   }
 }
 
-function wrapOrphanedPreElements() {
+export function wrapOrphanedPreElements() {
   const pres = elems('pre');
   Array.from(pres).forEach(function(pre){
     const parent = pre.parentNode;
@@ -69,9 +105,7 @@ function wrapOrphanedPreElements() {
   */
 }
 
-wrapOrphanedPreElements();
-
-function codeBlocks() {
+export function codeBlocks() {
   const marked_code_blocks = elems('code');
   const blocks = Array.from(marked_code_blocks).filter(function(block){
     addLines(block);
@@ -82,19 +116,19 @@ function codeBlocks() {
   return blocks;
 }
 
-function codeBlockFits(block) {
+export function codeBlockFits(block) {
   // return false if codeblock overflows
   const block_width = block.offsetWidth;
   const highlight_block_width = block.closest(`.${highlight}`).offsetWidth;
   return block_width <= highlight_block_width ? true : false;
 }
 
-function maxHeightIsSet(elem) {
+export function maxHeightIsSet(elem) {
   let max_height = elem.style.maxHeight;
   return max_height.includes('px')
 }
 
-function restrainCodeBlockHeight(lines) {
+export function restrainCodeBlockHeight(lines) {
   const last_line = lines[max_lines-1];
   let max_code_block_height = full_height;
   if(last_line) {
@@ -112,9 +146,7 @@ function restrainCodeBlockHeight(lines) {
   }
 }
 
-const blocks = codeBlocks();
-
-function collapseCodeBlock(block) {
+export function collapseCodeBlock(block) {
   const lines = elems(line_class, block);
   const code_lines = lines.length;
   if (code_lines > max_lines) {
@@ -135,11 +167,7 @@ function collapseCodeBlock(block) {
   }
 }
 
-blocks.forEach(function(block){
-  collapseCodeBlock(block);
-})
-
-function actionPanel() {
+export function actionPanel() {
   const panel = createEl();
   panel.className = panel_box;
 
@@ -159,7 +187,7 @@ function actionPanel() {
   return panel;
 }
 
-function toggleLineNumbers(elems) {
+export function toggleLineNumbers(elems) {
   if(elems) {
     // mark the code element when there are no lines
     elems.forEach(elem => modifyClass(elem, 'pre_nolines'));
@@ -167,19 +195,19 @@ function toggleLineNumbers(elems) {
   }
 }
 
-function toggleLineWrap(elem) {
+export function toggleLineWrap(elem) {
   modifyClass(elem, 'pre_wrap');
   // retain max number of code lines on line wrap
   const lines = elems('.ln', elem);
   restrainCodeBlockHeight(lines);
 }
 
-function copyCode(code_element) {
+export function copyCode(code_element) {
 
   const copy_btn = code_element.parentNode.parentNode.querySelector(`.${copy_id}`);
   const original_title = copy_btn.title;
   loadSvg('check', copy_btn);
-  copy_btn.title = copied_text;
+  copy_btn.title = translations.copied_text;
 
   // remove line numbers before copying
   code_element = code_element.cloneNode(true);
@@ -204,7 +232,18 @@ function copyCode(code_element) {
   }, 2250);
 }
 
-(function codeActions(){
+export function initializeCodeBlocks() {
+  // Wrap orphaned pre elements first
+  wrapOrphanedPreElements();
+  
+  // Get all code blocks
+  const blocks = codeBlocks();
+  
+  // Collapse code blocks that exceed max lines
+  blocks.forEach(function(block){
+    collapseCodeBlock(block);
+  });
+
   const highlight_wrap_id = highlight_wrap;
   blocks.forEach(function(block){
     // disable line numbers if disabled globally
@@ -240,7 +279,7 @@ function copyCode(code_element) {
     }, 50)
   }
 
-  doc.addEventListener('click', function(event){
+  document.addEventListener('click', function(event){
     // copy code block
     const target = event.target;
     const is_copy_icon = isItem(target, copy_id);
@@ -276,26 +315,25 @@ function copyCode(code_element) {
     }
   });
 
-  (function addLangLabel() {
-    blocks.forEach(block => {
-      let label = block.dataset.lang;
-      const is_shell_based = shell_based.includes(label);
-      if(is_shell_based) {
-        const lines = elems(line_class, block);
-        Array.from(lines).forEach(line => {
-          line = line.lastElementChild;
-          let line_contents = line.textContent.trim(' ');
-          line_contents.indexOf('$') !== 0 && line_contents.trim(' ').length ? pushClass(line, 'shell') : false;
-        });
-      }
+  // Add language labels
+  blocks.forEach(block => {
+    let label = block.dataset.lang;
+    const is_shell_based = shell_based.includes(label);
+    if(is_shell_based) {
+      const lines = elems(line_class, block);
+      Array.from(lines).forEach(line => {
+        line = line.lastElementChild;
+        let line_contents = line.textContent.trim(' ');
+        line_contents.indexOf('$') !== 0 && line_contents.trim(' ').length ? pushClass(line, 'shell') : false;
+      });
+    }
 
-      label = label === 'sh' ? 'shell' : label;
-      if(label !== "fallback") {
-        const label_el = createEl();
-        label_el.textContent = label;
-        pushClass(label_el, 'lang');
-        block.closest(`.${highlight_wrap}`).appendChild(label_el);
-      }
-    });
-  })();
-})();
+    label = label === 'sh' ? 'shell' : label;
+    if(label !== "fallback") {
+      const label_el = createEl();
+      label_el.textContent = label;
+      pushClass(label_el, 'lang');
+      block.closest(`.${highlight_wrap}`).appendChild(label_el);
+    }
+  });
+}
