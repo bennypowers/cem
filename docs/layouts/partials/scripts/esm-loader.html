@@ -7,17 +7,3 @@
 <script type="module" src="{{ absURL "js/code-highlighter.js" }}"></script>
 <script type="module" src="{{ absURL "js/docs-sidebar.js" }}"></script>
 <script type="module" src="{{ absURL "js/index.js" }}"></script>
-
-<!-- Load custom JS if it exists -->
-{{- $customScriptPath := "js/custom.js" }}
-{{- $customScriptRelPath := "../../assets/js/custom.js" }}
-{{- if (fileExists $customScriptRelPath) }}
-<script type="module" src="{{ absURL "js/custom.js" }}"></script>
-{{- end }}
-
-<!-- Load any additional custom JS modules -->
-{{- with site.Params.customJS }}
-  {{- range . -}}
-    <script type="module" src="{{ . }}"></script>
-  {{- end }}
-{{- end }}

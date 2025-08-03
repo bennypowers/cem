@@ -1285,3 +1285,16 @@ code-highlighter .language-shell .line:first-of-type .cl::before {
   color: var(--color-text-muted);
   user-select: none;
 }
+
+/* Responsive tables - replace JavaScript solution */
+table {
+  width: 100%;
+  overflow-x: auto;
+  display: block;
+  white-space: nowrap;
+}
+
+table tbody {
+  display: table;
+  width: 100%;
+}

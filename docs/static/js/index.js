@@ -1,6 +1,4 @@
-import {
-  translations
-} from './config.js';
+import { translations } from './config.js';
 
 // Navigation toggle
 function initializeNavigation() {
@@ -8,40 +6,6 @@ function initializeNavigation() {
   navToggle?.addEventListener('click', function() {
     this.parentElement?.querySelector('nav')?.classList.toggle('show');
   });
-}
-
-function updateDate() {
-  const date = new Date();
-  const year = date.getFullYear().toString();
-  const year_el = document.querySelector('.year');
-  if (year_el) {
-    year_el.textContent = year;
-  }
-}
-
-function markExternalLinks() {
-  let links = document.querySelectorAll('a');
-  if(links) {
-    Array.from(links).forEach(function(link){
-      let target, rel, blank, noopener, attr1, attr2, url, is_external;
-      try {
-        url = new URL(link.href);
-        // definition of same origin: RFC 6454, section 4 (https://tools.ietf.org/html/rfc6454#section-4)
-        is_external = url.host !== location.host || url.protocol !== location.protocol || url.port !== location.port;
-      } catch {}
-      if(is_external) {
-        target = 'target';
-        rel = 'rel';
-        blank = '_blank';
-        noopener = 'noopener';
-        attr1 = link.getAttribute(target);
-        attr2 = link.getAttribute(rel);
-
-        attr1 ? false : link.setAttribute(target, blank);
-        attr2 ? false : link.setAttribute(rel, noopener);
-      }
-    });
-  }
 }
 
 function copyFeedback(parent) {
@@ -82,52 +46,22 @@ function copyHeadingLink() {
   }
 }
 
-function makeTablesResponsive() {
-  const tables = document.querySelectorAll('table');
-  if (tables) {
-    tables.forEach(function(table){
-      const table_wrapper = document.createElement('div');
-      table_wrapper.classList.add('scrollable');
-      // Wrap table with table_wrapper
-      table.parentNode.insertBefore(table_wrapper, table);
-      table_wrapper.appendChild(table);
-    });
-  }
-}
+// Tables made responsive with CSS: table { overflow-x: auto; }
 
 function backToTop(){
   const toTop = document.querySelector("#toTop");
   if (toTop) {
     window.addEventListener("scroll", () => {
-      const last_known_scroll_pos = window.scrollY;
-      if(last_known_scroll_pos >= 200) {
-        toTop.style.display = "flex";
-        toTop.classList.add('active');
-      } else {
-        toTop.classList.remove('active');
-      }
-    });
+      toTop.classList.toggle('active', window.scrollY >= 200);
+    }, { passive: true });
   }
 }
 
-function lazyLoadMedia(elements = []) {
-  elements.forEach(element => {
-    let media_items = document.querySelectorAll(element);
-    if(media_items) {
-      Array.from(media_items).forEach(function(item) {
-        item.loading = "lazy";
-      });
-    }
-  })
-}
+// Lazy loading handled by native HTML loading="lazy" attribute
 
 function loadActions() {
-  updateDate();
-  markExternalLinks();
   copyHeadingLink();
-  makeTablesResponsive();
   backToTop();
-  lazyLoadMedia(['iframe', 'img']);
 }
 
 // Critical path - initialize immediately
