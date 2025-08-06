@@ -1,9 +1,9 @@
 <docs-sidebar class="aside menu"
               role="complementary"
-              link-class="section_link"
-              title-class="section_title">
+              link-class="section-link"
+              title-class="section-title">
   <div>
-    <label class="toggle" title='{{ T "docs_menu" }}' role="button">{{ T "docs_menu" }} {{ partial "sprite" (dict "icon" "carly") }}</label>
+    <label class="toggle" title="Docs menu" role="button">Docs menu {{ partial "sprite" (dict "icon" "carly") }}</label>
   </div>
   {{- template "tree" (dict "page" . "section" .FirstSection)  }}
   {{- define "tree" }}
@@ -11,13 +11,13 @@
   {{- $page := .page }}
   {{- $permalink := $page.RelPermalink }}
   <section class="section inner">
-    <h2 class="section_title{{ if eq $section.RelPermalink $permalink }} active{{ end }}"><a  href="{{ $section.Permalink }}" class="group">{{ $section.Title }}</a></h2>
+    <h2 class="section-title{{ if eq $section.RelPermalink $permalink }} active{{ end }}"><a  href="{{ $section.Permalink }}" class="group">{{ $section.Title }}</a></h2>
       {{- $pages := $section.Pages }}
       {{- with $pages }}
       <section class="" id="docs-{{ anchorize $section.Title }}">
         {{- range . }}
         {{- if .IsPage }}
-        <h3 class="section_link{{ if eq .RelPermalink $permalink }} active{{ end }}"><a id="docs-{{ anchorize .Title }}" href="{{ .Permalink }}">{{ .Title }}</a></h3>
+        <h3 class="section-link{{ if eq .RelPermalink $permalink }} active{{ end }}"><a id="docs-{{ anchorize .Title }}" href="{{ .Permalink }}">{{ .Title }}</a></h3>
         {{ $toc_id := printf "toc-%s" (replace (urlize .Title) "." "-") }}
         {{- if ne (print .TableOfContents) ""}}
           {{-  safeHTML (replace .TableOfContents "TableOfContents" $toc_id) }}

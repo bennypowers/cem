@@ -1,13 +1,13 @@
-<div class="pager{{ if .Next }}{{ else }} pager_lean{{ end }}">
+<div class="pager{{ if .Next }}{{ else }} pager-lean{{ end }}">
   {{- $searchURL := "/search/" }}
   {{ with .NextInSection }}
     {{ if and (ne .RelPermalink $searchURL) (.InSection .) }}
-    <div class="pager_item prev">
-      <a href="{{ .Permalink }}" class="pager_link cta primary" title="{{ .Title }}" rel="prev">
-        <svg viewBox="0 0 24 24" fill="currentColor">
+    <div class="pager-item prev">
+      <a href="{{ .Permalink }}" class="pager-link cta primary" title="{{ .Title }}" rel="prev">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-label="Previous">
           <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
         </svg>
-        <span class="pager_label">{{ .Title }}</span>
+        <span class="pager-label">{{ .Title }}</span>
       </a>
     </div>
     {{ end }}
@@ -15,10 +15,10 @@
 
   {{ with .PrevInSection  }}
     {{ if and (ne .RelPermalink $searchURL) (.InSection .) }}
-    <div class="pager_item next">
-      <a href="{{ .Permalink }}" class="pager_link cta primary" title="{{ .Title }}" rel="next">
-        <span class="pager_label">{{ .Title }}</span>
-        <svg viewBox="0 0 24 24" fill="currentColor">
+    <div class="pager-item next">
+      <a href="{{ .Permalink }}" class="pager-link cta primary" title="{{ .Title }}" rel="next">
+        <span class="pager-label">{{ .Title }}</span>
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-label="Next">
           <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
         </svg>
       </a>
