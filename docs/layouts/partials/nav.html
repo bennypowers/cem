@@ -9,37 +9,35 @@
          src="{{ $litPath }}"
          alt="{{ site.Title }} Logo">
 	</a>
-	<ul>
-		<li class="nav-item">
-			{{- partial "search" . }}
-		</li>
-		{{- $p := . }}
-		{{- range site.Menus.main }}
-		<li class="nav-item">
-			{{- $active := or ($p.IsMenuCurrent "main" .) ($p.HasMenuCurrent "main" .) }}
-			{{- with .Page }}
-			{{- $active = or $active ( $.IsDescendant .)  }}
+	<div class="nav-collapsible">
+		{{- partial "search" . }}
+		<ul>
+			{{- $p := . }}
+			{{- range site.Menus.main }}
+			<li class="nav-item">
+				{{- $active := or ($p.IsMenuCurrent "main" .) ($p.HasMenuCurrent "main" .) }}
+				{{- with .Page }}
+				{{- $active = or $active ( $.IsDescendant .)  }}
+				{{- end }}
+				<a class="nav-link{{if $active }} active{{end}}" href="{{ .URL }}"><span{{if $active }} class="active"{{end}}>{{ T .Identifier | default .Name }}</span></a>
+			</li>
 			{{- end }}
-			<a class="nav-link{{if $active }} active{{end}}" href="{{ .URL }}"><span{{if $active }} class="active"{{end}}>{{ T .Identifier | default .Name }}</span></a>
-		</li>
+		</ul>
+		{{- $repo := $config.source }}
+		{{- with $config.source }}
+		<a id="repository" href="{{ .url }}" target="_blank">
+			{{- if .iconLight }}
+				{{- $litPath := absURL .iconLight }}
+				{{- $darkPath := absURL .iconDark }}
+				<picture data-lit="{{ $litPath }}" data-dark="{{ $darkPath }}">
+					<img src="{{ $litPath }}" alt="{{ .name }} Repo">
+				</picture>
+			{{- else }}{{ .name }}{{ end }}
+		</a>
 		{{- end }}
-	</ul>
+		{{ partial "color-mode-toggle" . }}
+	</div>
 </nav>
-
-{{- $repo := $config.source }}
-{{- with $config.source }}
-<a id="repository" href="{{ .url }}" target="_blank">
-  {{- if .iconLight }}
-    {{- $litPath := absURL .iconLight }}
-    {{- $darkPath := absURL .iconDark }}
-    <picture data-lit="{{ $litPath }}" data-dark="{{ $darkPath }}">
-      <img src="{{ $litPath }}" alt="{{ .name }} Repo">
-    </picture>
-  {{- else }}{{ .name }}{{ end }}
-</a>
-{{- end }}
-
-{{ partial "color-mode-toggle" . }}
 
 <button id="nav-toggle" title='{{ T "site_menu" }}'>
   {{- partial "sprite" (dict "icon" "harmburger") }}

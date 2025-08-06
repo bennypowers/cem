@@ -1092,7 +1092,10 @@ code-highlighter {
     align-items: center;
     background-color: var(--color-bg);
     @media screen and (min-width: 992px) {
-      grid-template-columns: 10rem 1fr;
+      grid-template-columns: 3rem 1fr;
+    }
+    @media screen and (min-width: 1171px) {
+      grid-template-columns: 3rem 1fr auto auto;
     }
     #logo {
       position: relative;
@@ -1101,7 +1104,7 @@ code-highlighter {
       }
     }
 
-    > ul {
+    .nav-collapsible {
       display: flex;
       align-items: center;
       flex-direction: column;
@@ -1111,27 +1114,42 @@ code-highlighter {
       top: 0;
       bottom: 0;
       height: 100vh;
+      width: 100vw;
+      padding: 2rem;
       transition: transform 0.25s var(--timing-ease);
       transform: translateX(-101vw);
-      @media screen and (min-width: 992px) {
+      gap: 2rem;
+
+      @media screen and (min-width: 1171px) {
         transform: translateX(0);
         position: relative;
         height: initial;
+        width: auto;
+        padding: 0;
         justify-content: flex-end;
         background: transparent;
         flex-direction: row;
         gap: 1rem;
+        fuse-search {
+          margin-inline-end: auto;
+        }
+      }
+
+      ul {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        @media screen and (min-width: 1171px) {
+          flex-direction: row;
+        }
       }
     }
 
-    &.show > ul {
+    &.show .nav-collapsible {
       transform: translateX(0);
       box-shadow: 0 1rem 4rem var(--color-shadow-nav);
       background: var(--color-bg);
       overflow-y: auto;
-      li:first-child {
-        margin: 1.5rem 1rem 0.5rem 1rem;
-      }
     }
   }
 
@@ -1147,10 +1165,11 @@ code-highlighter {
     border: none;
     outline: none;
     background: transparent;
-    @media screen and (min-width: 992px) {
+    @media screen and (min-width: 1171px) {
       display: none;
     }
     svg { margin: 0; }
+    z-index: 1;
   }
 
   .nav-link {
@@ -1173,6 +1192,7 @@ code-highlighter {
     max-width: 1.25rem;
     margin-block: 0;
   }
+
 }
 
 /* Pager Styles */
