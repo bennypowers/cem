@@ -236,7 +236,7 @@ func (gs *GenerateSession) applyPostProcessingToModules(ctx context.Context, res
 	var demoMap map[string][]string
 	if !skipDemoDiscovery && len(result.demoFiles) > 0 {
 		var err error
-		demoMap, err = DD.NewDemoMap(result.demoFiles)
+		demoMap, err = DD.NewDemoMap(result.demoFiles, allTagAliases)
 		if err != nil {
 			errsList = append(errsList, err)
 		}

@@ -196,7 +196,7 @@ func postprocess(
 	errsList := make([]error, 0)
 
 	// Build the demo map once
-	demoMap, err := DD.NewDemoMap(result.demoFiles)
+	demoMap, err := DD.NewDemoMap(result.demoFiles, allTagAliases)
 	if err != nil {
 		errsList = append(errsList, err)
 	}
