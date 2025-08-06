@@ -53,17 +53,23 @@ func TestExtractDemoMetadata(t *testing.T) {
 			},
 		},
 		{
-			name: "fallback to comment description",
+			name: "script tag with markdown description",
 			html: `<!DOCTYPE html>
-<!-- Primary button demo -->
 <html>
+<head>
+<meta itemprop="demo-url" content="/elements/card/demo/">
+<script type="text/markdown" itemprop="description">
+# Card Demo
+Showcases different card variants with accessibility features.
+</script>
+</head>
 <body>
-<rh-button variant="primary">Click me</rh-button>
+<rh-card>Content</rh-card>
 </body>
 </html>`,
 			expected: DemoMetadata{
-				URL:         "",
-				Description: "Primary button demo",
+				URL:         "/elements/card/demo/",
+				Description: "# Card Demo\nShowcases different card variants with accessibility features.",
 				DemoFor:     nil,
 			},
 		},
@@ -218,19 +224,6 @@ func TestExtractDemoTags(t *testing.T) {
 			expected:       []string{"rh-button", "pf-button"},
 		},
 		{
-			name: "magic comment association",
-			html: `<!DOCTYPE html>
-<!-- @tag rh-cta rh-button -->
-<html>
-<body>
-<rh-card>Should be ignored</rh-card>
-</body>
-</html>`,
-			elementAliases: map[string]string{},
-			demoPath:       "/components/cta/demo/primary.html",
-			expected:       []string{"rh-cta", "rh-button"},
-		},
-		{
 			name: "path-based association",
 			html: `<!DOCTYPE html>
 <html>
@@ -368,10 +361,9 @@ func TestNewDemoMap(t *testing.T) {
 		t.Fatalf("Failed to write demo1: %v", err)
 	}
 
-	// Demo 2: Magic comment
+	// Demo 2: Content-based discovery
 	demo2Path := filepath.Join(tmpDir, "demo2.html")
 	demo2Content := `<!DOCTYPE html>
-<!-- @tag rh-card -->
 <html>
 <body><rh-card>Content</rh-card></body>
 </html>`
@@ -436,5 +428,45 @@ func TestMicrodataExtraction(t *testing.T) {
 
 	if demoFor != "rh-button pf-button" {
 		t.Errorf("Expected 'rh-button pf-button', got %q", demoFor)
+	}
+}
+
+func TestScriptMarkdownExtraction(t *testing.T) {
+	html := `<!DOCTYPE html>
+<html>
+<head>
+<script type="text/markdown" itemprop="description">
+# Card Demo
+Showcases different card variants with accessibility features.
+</script>
+</head>
+<body>
+<rh-card>Content</rh-card>
+</body>
+</html>`
+
+	tmpDir := t.TempDir()
+	filePath := filepath.Join(tmpDir, "test.html")
+	err := os.WriteFile(filePath, []byte(html), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write test file: %v", err)
+	}
+
+	code, err := os.ReadFile(filePath)
+	if err != nil {
+		t.Fatalf("Failed to read test file: %v", err)
+	}
+
+	parser := Q.GetHTMLParser()
+	defer Q.PutHTMLParser(parser)
+	tree := parser.Parse(code, nil)
+	defer tree.Close()
+	root := tree.RootNode()
+
+	description := extractMicrodataFromTree(root, code, "description")
+	expected := "# Card Demo\nShowcases different card variants with accessibility features."
+
+	if description != expected {
+		t.Errorf("Expected %q, got %q", expected, description)
 	}
 }

@@ -34,77 +34,28 @@ func extractMicrodata(root *ts.Node, code []byte, property string) string {
 			return ""
 		}
 
-		// Check if this is an element
-		if node.GrammarName() == "element" {
-			tagName := ""
-			itemProp := ""
-			content := ""
-			scriptType := ""
+		// Check if this is an element or script_element
+		if node.GrammarName() == "element" || node.GrammarName() == "script_element" {
+			var attrs elementAttributes
 
-			// Look for start_tag to get tag name and attributes
+			// Parse start tag to get element attributes
 			for i := range int(node.ChildCount()) {
 				child := node.Child(uint(i))
-				if child == nil {
-					continue
-				}
-
-				if child.GrammarName() == "start_tag" {
-					// Extract tag name and attributes from start_tag
-					for j := range int(child.ChildCount()) {
-						grandChild := child.Child(uint(j))
-						if grandChild == nil {
-							continue
-						}
-
-						if grandChild.GrammarName() == "tag_name" {
-							tagName = grandChild.Utf8Text(code)
-						} else if grandChild.GrammarName() == "attribute" {
-							// Parse attribute
-							attrName := ""
-							attrValue := ""
-							for k := range int(grandChild.ChildCount()) {
-								attrChild := grandChild.Child(uint(k))
-								if attrChild == nil {
-									continue
-								}
-								if attrChild.GrammarName() == "attribute_name" {
-									attrName = attrChild.Utf8Text(code)
-								} else if attrChild.GrammarName() == "quoted_attribute_value" {
-									// Extract the actual value from quoted_attribute_value
-									for l := range int(attrChild.ChildCount()) {
-										valueChild := attrChild.Child(uint(l))
-										if valueChild != nil && valueChild.GrammarName() == "attribute_value" {
-											attrValue = valueChild.Utf8Text(code)
-											break
-										}
-									}
-								}
-							}
-
-							if attrName == "itemprop" {
-								itemProp = attrValue
-							} else if attrName == "content" {
-								content = attrValue
-							} else if attrName == "type" {
-								scriptType = attrValue
-							}
-						}
-					}
-
-					// If this is a meta tag with the right itemprop, return the content
-					if tagName == "meta" && itemProp == property && content != "" {
-						return content
-					}
+				if child != nil && child.GrammarName() == "start_tag" {
+					attrs = parseStartTag(child, code)
+					break
 				}
 			}
 
-			// Handle script content for markdown descriptions
-			if tagName == "script" && itemProp == property && scriptType == "text/markdown" {
-				for i := range int(node.ChildCount()) {
-					child := node.Child(uint(i))
-					if child != nil && child.GrammarName() == "text" {
-						return strings.TrimSpace(child.Utf8Text(code))
-					}
+			// Handle meta tags with microdata
+			if attrs.tagName == "meta" && attrs.itemProp == property && attrs.content != "" {
+				return attrs.content
+			}
+
+			// Handle script tags with markdown content
+			if attrs.tagName == "script" && attrs.itemProp == property && attrs.scriptType == "text/markdown" {
+				if textContent := extractTextContent(node, code); textContent != "" {
+					return textContent
 				}
 			}
 		}
@@ -142,14 +93,9 @@ func extractDemoMetadata(path string) (DemoMetadata, error) {
 		metadata.URL = url
 	}
 
-	// Extract description (try microdata first, fall back to comment)
+	// Extract description from microdata
 	if desc := extractMicrodata(root, code, "description"); desc != "" {
 		metadata.Description = desc
-	} else {
-		// Fallback to existing comment-based description
-		if desc, err := extractDemoDescription(path); err == nil {
-			metadata.Description = desc
-		}
 	}
 
 	// Extract demo-for associations
@@ -201,32 +147,6 @@ func generateFallbackURL(cfg *C.CemConfig, demoPath string, tagAliases map[strin
 	}
 
 	return demoUrl, nil
-}
-
-func extractDemoDescription(path string) (string, error) {
-	code, err := os.ReadFile(path)
-	if err != nil {
-		return "", fmt.Errorf("could not read demo file: %w", err)
-	}
-	parser := Q.GetHTMLParser()
-	defer Q.PutHTMLParser(parser)
-	tree := parser.Parse(code, nil)
-	defer tree.Close()
-	root := tree.RootNode()
-	cursor := tree.Walk()
-	for _, node := range root.NamedChildren(cursor) {
-		if node.GrammarName() == "comment" {
-			commentText := node.Utf8Text(code)
-			// Accept only leading block comments (<!--- ... -->)
-			// FIXME: quick hack to avoid consuming magic tag names comments.
-			if strings.HasPrefix(commentText, "<!--") && !strings.Contains(commentText, "@tag") {
-				desc := strings.TrimPrefix(commentText, "<!--")
-				desc = strings.TrimSuffix(desc, "-->")
-				return strings.TrimSpace(desc), nil
-			}
-		}
-	}
-	return "", nil
 }
 
 func resolveDemoSourceURL(cfg *C.CemConfig, demoPath string) (string, error) {

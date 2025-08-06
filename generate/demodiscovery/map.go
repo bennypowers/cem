@@ -36,9 +36,8 @@ func NewDemoMap(demoFiles []string, elementAliases map[string]string) (demoMap D
 // extractDemoTags returns all associated custom element tag names for the given demo file.
 // Priority:
 //  1. Explicit microdata: <meta itemprop="demo-for" content="element-name" />
-//  2. Magic comment: <!-- @tag tag-name ... -->
-//  3. Path-based: Elements whose aliases appear in URL paths
-//  4. Fallback: all custom element tag names found in the file.
+//  2. Path-based: Elements whose aliases appear in URL paths
+//  3. Content-based: All custom element tag names found in the file.
 func extractDemoTags(path string, elementAliases map[string]string) ([]string, error) {
 	code, err := os.ReadFile(path)
 	if err != nil {
@@ -56,37 +55,13 @@ func extractDemoTags(path string, elementAliases map[string]string) ([]string, e
 		return fields, nil
 	}
 
-	// Priority 2: Magic comment association
-	var tags []string
-	commentFound := false
-	cursor := root.Walk()
-	defer cursor.Close()
-	for _, node := range root.NamedChildren(cursor) {
-		if node.GrammarName() == "comment" {
-			commentText := node.Utf8Text(code)
-			if strings.HasPrefix(commentText, "<!--") && strings.Contains(commentText, "@tag") {
-				tagIdx := strings.Index(commentText, "@tag")
-				if tagIdx != -1 {
-					tagstr := commentText[tagIdx+len("@tag"):]
-					tagstr = strings.Trim(tagstr, "- >")
-					tags = strings.Fields(tagstr)
-					commentFound = true
-					break
-				}
-			}
-		}
-	}
-	if commentFound && len(tags) > 0 {
-		return tags, nil
-	}
-
-	// Priority 3: Path-based association
+	// Priority 2: Path-based association
 	pathBasedTags := extractPathBasedTags(path, elementAliases)
 	if len(pathBasedTags) > 0 {
 		return pathBasedTags, nil
 	}
 
-	// Priority 4: Fallback to content-based discovery
+	// Priority 3: Content-based discovery
 	tagNameSet := S.NewSet[string]()
 	var walk func(node *ts.Node)
 	walk = func(node *ts.Node) {
@@ -174,6 +149,7 @@ func pathContainsElementAlias(demoPath, tagName string, elementAliases map[strin
 }
 
 // extractMicrodataFromTree extracts a specific microdata property from an HTML document tree
+// This is a simplified version that reuses the parsing logic from discovery.go
 func extractMicrodataFromTree(root *ts.Node, code []byte, property string) string {
 	var walk func(node *ts.Node) string
 	walk = func(node *ts.Node) string {
@@ -181,64 +157,28 @@ func extractMicrodataFromTree(root *ts.Node, code []byte, property string) strin
 			return ""
 		}
 
-		// Check if this is an element
-		if node.GrammarName() == "element" {
-			tagName := ""
-			itemProp := ""
-			content := ""
+		// Check if this is an element or script_element
+		if node.GrammarName() == "element" || node.GrammarName() == "script_element" {
+			var attrs elementAttributes
 
-			// Look for start_tag to get tag name and attributes
+			// Parse start tag to get element attributes
 			for i := range int(node.ChildCount()) {
 				child := node.Child(uint(i))
-				if child == nil {
-					continue
+				if child != nil && child.GrammarName() == "start_tag" {
+					attrs = parseStartTag(child, code)
+					break
 				}
+			}
 
-				if child.GrammarName() == "start_tag" {
-					// Extract tag name and attributes from start_tag
-					for j := range int(child.ChildCount()) {
-						grandChild := child.Child(uint(j))
-						if grandChild == nil {
-							continue
-						}
+			// Handle meta tags with microdata
+			if attrs.tagName == "meta" && attrs.itemProp == property && attrs.content != "" {
+				return attrs.content
+			}
 
-						if grandChild.GrammarName() == "tag_name" {
-							tagName = grandChild.Utf8Text(code)
-						} else if grandChild.GrammarName() == "attribute" {
-							// Parse attribute
-							attrName := ""
-							attrValue := ""
-							for k := range int(grandChild.ChildCount()) {
-								attrChild := grandChild.Child(uint(k))
-								if attrChild == nil {
-									continue
-								}
-								if attrChild.GrammarName() == "attribute_name" {
-									attrName = attrChild.Utf8Text(code)
-								} else if attrChild.GrammarName() == "quoted_attribute_value" {
-									// Extract the actual value from quoted_attribute_value
-									for l := range int(attrChild.ChildCount()) {
-										valueChild := attrChild.Child(uint(l))
-										if valueChild != nil && valueChild.GrammarName() == "attribute_value" {
-											attrValue = valueChild.Utf8Text(code)
-											break
-										}
-									}
-								}
-							}
-
-							if attrName == "itemprop" {
-								itemProp = attrValue
-							} else if attrName == "content" {
-								content = attrValue
-							}
-						}
-					}
-
-					// If this is a meta tag with the right itemprop, return the content
-					if tagName == "meta" && itemProp == property && content != "" {
-						return content
-					}
+			// Handle script tags with markdown content
+			if attrs.tagName == "script" && attrs.itemProp == property && attrs.scriptType == "text/markdown" {
+				if textContent := extractTextContent(node, code); textContent != "" {
+					return textContent
 				}
 			}
 		}
@@ -257,6 +197,96 @@ func extractMicrodataFromTree(root *ts.Node, code []byte, property string) strin
 }
 
 var customElementTagNameRe = regexp.MustCompile(`^[a-z][.0-9_a-z]*-[\-.0-9_a-z]*$`)
+
+// elementAttributes represents parsed attributes from an HTML element
+type elementAttributes struct {
+	tagName    string
+	itemProp   string
+	content    string
+	scriptType string
+}
+
+// parseAttributeValue extracts the actual value from a quoted_attribute_value node
+func parseAttributeValue(attrNode *ts.Node, code []byte) string {
+	for i := range int(attrNode.ChildCount()) {
+		child := attrNode.Child(uint(i))
+		if child != nil && child.GrammarName() == "attribute_value" {
+			return child.Utf8Text(code)
+		}
+	}
+	return ""
+}
+
+// parseAttribute extracts attribute name and value from an attribute node
+func parseAttribute(attrNode *ts.Node, code []byte) (string, string) {
+	var name, value string
+
+	for i := range int(attrNode.ChildCount()) {
+		child := attrNode.Child(uint(i))
+		if child == nil {
+			continue
+		}
+
+		switch child.GrammarName() {
+		case "attribute_name":
+			name = child.Utf8Text(code)
+		case "quoted_attribute_value":
+			value = parseAttributeValue(child, code)
+		}
+	}
+
+	return name, value
+}
+
+// parseStartTag extracts tag name and attributes from a start_tag node
+func parseStartTag(startTagNode *ts.Node, code []byte) elementAttributes {
+	attrs := elementAttributes{}
+
+	for i := range int(startTagNode.ChildCount()) {
+		child := startTagNode.Child(uint(i))
+		if child == nil {
+			continue
+		}
+
+		switch child.GrammarName() {
+		case "tag_name":
+			attrs.tagName = child.Utf8Text(code)
+		case "attribute":
+			name, value := parseAttribute(child, code)
+			switch name {
+			case "itemprop":
+				attrs.itemProp = value
+			case "content":
+				attrs.content = value
+			case "type":
+				attrs.scriptType = value
+			}
+		}
+	}
+
+	return attrs
+}
+
+// extractTextContent finds and returns text content from an element node
+func extractTextContent(elementNode *ts.Node, code []byte) string {
+	for i := range int(elementNode.ChildCount()) {
+		child := elementNode.Child(uint(i))
+		if child == nil {
+			continue
+		}
+
+		// Handle regular text content
+		if child.GrammarName() == "text" {
+			return strings.TrimSpace(child.Utf8Text(code))
+		}
+
+		// Handle raw_text for script elements
+		if child.GrammarName() == "raw_text" {
+			return strings.TrimSpace(child.Utf8Text(code))
+		}
+	}
+	return ""
+}
 
 // isCustomElementTagName returns true if the string is a valid custom element tag name.
 func isCustomElementTagName(name string) bool {

@@ -46,10 +46,10 @@ generate:
     fileGlob: "src/**/demos/*.html"
     # URLPattern for extracting parameters from demo file paths.
     # Uses standard URLPattern syntax with named parameters.
-    urlPattern: "/components/:element/demo/:demo.html"
+    urlPattern: "/src/:component/demos/:demo.html"
     # A template to construct the canonical URL for a demo.
     # Uses {{.param}} syntax to interpolate URLPattern parameters.
-    urlTemplate: "https://example.com/components/{{.element}}/demo/{{.demo}}/"
+    urlTemplate: "https://example.com/components/{{.component}}/demo/{{.demo}}/"
 
 # Configuration for validation warnings.
 warnings:
@@ -75,6 +75,12 @@ Demos can use HTML5 microdata to explicitly declare their URLs and associations:
 <meta itemprop="demo-url" content="/elements/call-to-action/demo/">
 <meta itemprop="description" content="Primary variant demonstration">
 
+<!-- Rich markdown description -->
+<script type="text/markdown" itemprop="description">
+# Call to Action Demo
+Showcases primary variant with styling, accessibility, and interaction states.
+</script>
+
 <!-- Explicit element association -->
 <meta itemprop="demo-for" content="rh-button pf-button">
 ```
@@ -84,9 +90,15 @@ Demos can use HTML5 microdata to explicitly declare their URLs and associations:
 The system uses the following priority order to associate demos with elements:
 
 1. **Explicit microdata**: `<meta itemprop="demo-for" content="element-name">`
-2. **Magic comments**: `<!-- @tag element-name -->`
-3. **Path-based**: Elements whose aliases appear in demo file paths
-4. **Content-based**: Custom elements found in the demo HTML
+2. **Path-based**: Elements whose aliases appear in demo file paths
+3. **Content-based**: Custom elements found in the demo HTML
+
+### Description Sources
+
+Demo descriptions are extracted exclusively from microdata:
+
+- **Meta tags**: `<meta itemprop="description" content="Simple description">`
+- **Script tags**: `<script type="text/markdown" itemprop="description">Rich **markdown** content</script>`
 
 ### URL Generation Priority
 
