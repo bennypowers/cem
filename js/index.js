@@ -1,5 +1,3 @@
-import { translations } from './config.js';
-
 // Navigation toggle
 function initializeNavigation() {
   const navToggle = document.getElementById('nav-toggle');
@@ -12,7 +10,7 @@ function copyFeedback(parent) {
   const copy_txt = document.createElement('div');
   const yanked = 'link_yanked';
   copy_txt.classList.add(yanked);
-  copy_txt.innerText = translations.copied_text;
+  copy_txt.innerText = 'Copied'
   if(!parent.querySelector(`.${yanked}`)) {
     const icon = parent.getElementsByTagName('svg')?.[0];
     if (icon) {
