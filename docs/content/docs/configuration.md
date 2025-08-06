@@ -93,6 +93,38 @@ The system uses the following priority order to associate demos with elements:
 2. **Path-based**: Elements whose aliases appear in demo file paths
 3. **Content-based**: Custom elements found in the demo HTML
 
+#### Path-Based Association with URLPattern
+
+When a `urlPattern` is configured, path-based association becomes **parameter-position aware**. Element aliases only match when they appear in path positions that correspond to URLPattern parameters.
+
+**Example Configuration:**
+```yaml
+demoDiscovery:
+  fileGlob: "shop/**/demos/*.html"
+  urlPattern: "/shop/:element/:demo.html"
+  urlTemplate: "https://mysite.com/shop/{{.element}}/{{.demo}}/"
+```
+
+**Element Aliases:**
+```yaml
+aliases:
+  my-shop-button: "shop-button"
+  my-accordion: "accordion"
+  my-accordion-header: "accordion-header"
+```
+
+**Path Matching Behavior:**
+
+- ✅ `/shop/shop-button/basic.html` → matches `my-shop-button` (alias "shop-button" in `:element` position)
+- ❌ `/shop/my-shop-button/basic.html` → no match (alias "shop-button" ≠ "my-shop-button")
+- ✅ `/shop/accordion-header/demo.html` → matches `my-accordion-header` only
+- ❌ `/shop/accordion-header/demo.html` → does NOT match `my-accordion` (prevents false positives)
+
+This precision matching prevents issues where shorter aliases (like "accordion") incorrectly match longer path segments (like "my-accordion-header").
+
+**Legacy Behavior (no URLPattern):**
+When `urlPattern` is not configured, the system falls back to compatibility mode with improved substring matching that prioritizes longer, more specific aliases over shorter ones.
+
 ### Description Sources
 
 Demo descriptions are extracted exclusively from microdata:

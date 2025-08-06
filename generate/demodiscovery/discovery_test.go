@@ -176,6 +176,20 @@ func TestGenerateFallbackURL(t *testing.T) {
 			tagAliases:  map[string]string{},
 			expectError: true,
 		},
+		{
+			name: "accordion edge case in URLPattern",
+			config: &C.CemConfig{
+				Generate: C.GenerateConfig{
+					DemoDiscovery: C.DemoDiscoveryConfig{
+						URLPattern:  "/components/:element/demo/:demo.html",
+						URLTemplate: "https://site.com/components/{{.element}}/demo/{{.demo}}/",
+					},
+				},
+			},
+			demoPath:   "/components/my-accordion-header/demo/primary.html",
+			tagAliases: map[string]string{"my-accordion-header": "accordion-header"},
+			expected:   "https://site.com/components/accordion-header/demo/primary/",
+		},
 	}
 
 	for _, tt := range tests {
@@ -288,6 +302,125 @@ func TestExtractDemoTags(t *testing.T) {
 	}
 }
 
+func TestExtractParameterPositions(t *testing.T) {
+	tests := []struct {
+		name     string
+		pattern  string
+		expected []int
+	}{
+		{
+			name:     "single parameter",
+			pattern:  "/components/:element/demo/",
+			expected: []int{1},
+		},
+		{
+			name:     "multiple parameters",
+			pattern:  "/shop/:element/:demo.html",
+			expected: []int{1, 2},
+		},
+		{
+			name:     "no parameters",
+			pattern:  "/static/demo/page.html",
+			expected: []int{},
+		},
+		{
+			name:     "parameter with extension",
+			pattern:  "/docs/:page.html",
+			expected: []int{1},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := extractParameterPositions(tt.pattern)
+			if err != nil {
+				t.Fatalf("extractParameterPositions failed: %v", err)
+			}
+
+			if len(result) != len(tt.expected) {
+				t.Errorf("Position count mismatch: got %v, want %v", result, tt.expected)
+				return
+			}
+
+			for i, pos := range result {
+				if pos != tt.expected[i] {
+					t.Errorf("Position[%d] mismatch: got %d, want %d", i, pos, tt.expected[i])
+				}
+			}
+		})
+	}
+}
+
+func TestExtractPathBasedTagsWithPattern(t *testing.T) {
+	tests := []struct {
+		name           string
+		demoPath       string
+		urlPattern     string
+		elementAliases map[string]string
+		expected       []string
+	}{
+		{
+			name:       "accordion exact match in parameter position",
+			demoPath:   "/components/my-accordion/demo/basic.html",
+			urlPattern: "/components/:element/demo/:demo.html",
+			elementAliases: map[string]string{
+				"my-accordion":        "accordion",
+				"my-accordion-header": "accordion-header",
+			},
+			expected: []string{}, // "accordion" doesn't match "my-accordion" exactly
+		},
+		{
+			name:       "alias matches parameter position",
+			demoPath:   "/components/accordion/demo/basic.html",
+			urlPattern: "/components/:element/demo/:demo.html",
+			elementAliases: map[string]string{
+				"my-accordion":        "accordion",
+				"my-accordion-header": "accordion-header",
+			},
+			expected: []string{"my-accordion"},
+		},
+		{
+			name:       "shop example - my-shop should not match shop",
+			demoPath:   "/shop/my-shop/demo.html",
+			urlPattern: "/shop/:element/:demo.html",
+			elementAliases: map[string]string{
+				"my-shop": "shop",
+			},
+			expected: []string{}, // "shop" doesn't match "my-shop"
+		},
+		{
+			name:       "shop example - shop matches exactly",
+			demoPath:   "/shop/shop/demo.html",
+			urlPattern: "/shop/:element/:demo.html",
+			elementAliases: map[string]string{
+				"my-shop": "shop",
+			},
+			expected: []string{"my-shop"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := extractPathBasedTagsWithPattern(tt.demoPath, tt.urlPattern, tt.elementAliases)
+			if err != nil {
+				t.Fatalf("extractPathBasedTagsWithPattern failed: %v", err)
+			}
+
+			if len(result) != len(tt.expected) {
+				t.Errorf("Tag count mismatch: got %d (%v), want %d (%v)",
+					len(result), result, len(tt.expected), tt.expected)
+				return
+			}
+
+			for i, tag := range result {
+				if tag != tt.expected[i] {
+					t.Errorf("Tag[%d] mismatch: got %q, want %q", i, tag, tt.expected[i])
+				}
+			}
+		})
+	}
+}
+
 func TestExtractPathBasedTags(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -321,6 +454,24 @@ func TestExtractPathBasedTags(t *testing.T) {
 				"rh-card":   "card",
 			},
 			expected: []string{},
+		},
+		{
+			name:     "accordion edge case - exact match",
+			demoPath: "/components/my-accordion/demo/basic.html",
+			elementAliases: map[string]string{
+				"my-accordion":        "accordion",
+				"my-accordion-header": "accordion-header",
+			},
+			expected: []string{"my-accordion"},
+		},
+		{
+			name:     "accordion edge case - header should not match accordion",
+			demoPath: "/components/my-accordion-header/demo/basic.html",
+			elementAliases: map[string]string{
+				"my-accordion":        "accordion",
+				"my-accordion-header": "accordion-header",
+			},
+			expected: []string{"my-accordion-header"},
 		},
 	}
 

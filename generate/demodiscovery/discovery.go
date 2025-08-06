@@ -106,6 +106,14 @@ func extractDemoMetadata(path string) (DemoMetadata, error) {
 	return metadata, nil
 }
 
+// getURLPatternBaseURL returns the base URL required by the URLPattern constructor.
+// According to the WHATWG URLPattern specification, a base URL is required for resolving
+// relative patterns. We use the RFC-defined example domain as a standard placeholder
+// since we only need the pattern matching functionality, not actual URL resolution.
+func getURLPatternBaseURL() string {
+	return "https://example.com"
+}
+
 // generateFallbackURL creates a URL using URLPattern-based configuration
 func generateFallbackURL(cfg *C.CemConfig, demoPath string, tagAliases map[string]string) (string, error) {
 	urlPattern := cfg.Generate.DemoDiscovery.URLPattern
@@ -116,8 +124,8 @@ func generateFallbackURL(cfg *C.CemConfig, demoPath string, tagAliases map[strin
 		return "", nil
 	}
 
-	// Create URLPattern
-	pattern, err := urlpattern.New(urlPattern, "https://example.com", nil)
+	// Create URLPattern using the standard base URL
+	pattern, err := urlpattern.New(urlPattern, getURLPatternBaseURL(), nil)
 	if err != nil {
 		return "", fmt.Errorf("invalid URLPattern %q: %w", urlPattern, err)
 	}
@@ -129,8 +137,8 @@ func generateFallbackURL(cfg *C.CemConfig, demoPath string, tagAliases map[strin
 		urlPath = "/" + urlPath
 	}
 
-	// Create a test URL for matching
-	testURL := "https://example.com" + urlPath
+	// Create a test URL for matching using the same base URL
+	testURL := getURLPatternBaseURL() + urlPath
 	result := pattern.Exec(testURL, "")
 	if result == nil {
 		return "", nil // No match
