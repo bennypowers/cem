@@ -199,6 +199,7 @@ func extractPathBasedTags(demoPath string, elementAliases map[string]string) []s
 
 // extractPathBasedTagsWithPattern finds elements whose aliases appear in parameter positions
 // of the demo path according to the given URLPattern.
+// See docs/content/docs/configuration.md for detailed documentation on path-based association.
 func extractPathBasedTagsWithPattern(demoPath, urlPattern string, elementAliases map[string]string) ([]string, error) {
 	if urlPattern == "" {
 		return []string{}, nil
