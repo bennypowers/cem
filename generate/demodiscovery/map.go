@@ -10,7 +10,6 @@ import (
 
 	Q "bennypowers.dev/cem/generate/queries"
 	S "bennypowers.dev/cem/set"
-	"github.com/dunglas/go-urlpattern"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -134,7 +133,7 @@ func extractTagsFromURLPatternParameters(demoPath, urlPattern string) ([]string,
 // The function executes the URLPattern against the demo path and extracts the captured parameter values
 // from the Groups map, providing much more reliable parameter detection than simple ":" prefix checks.
 func extractParameterValues(demoPath, urlPattern string) ([]string, error) {
-	pattern, err := urlpattern.New(urlPattern, urlPatternBaseURL, nil)
+	pattern, err := cache.getOrCreatePattern(urlPattern)
 	if err != nil {
 		return nil, fmt.Errorf("invalid URLPattern %q: %w", urlPattern, err)
 	}

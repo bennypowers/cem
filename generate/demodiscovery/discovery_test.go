@@ -549,3 +549,85 @@ Showcases different card variants with accessibility features.
 		t.Errorf("Expected %q, got %q", expected, description)
 	}
 }
+
+func TestValidateDemoDiscoveryConfig(t *testing.T) {
+	tests := []struct {
+		name          string
+		config        *C.CemConfig
+		tagAliases    map[string]string
+		expectError   bool
+		errorContains string
+	}{
+		{
+			name: "valid URLPattern and template",
+			config: &C.CemConfig{
+				Generate: C.GenerateConfig{
+					DemoDiscovery: C.DemoDiscoveryConfig{
+						URLPattern:  "/elements/:tag/demo/:demo.html",
+						URLTemplate: "https://site.com/{{.tag | alias}}/{{.demo}}/",
+					},
+				},
+			},
+			tagAliases:  map[string]string{"my-element": "element-alias"},
+			expectError: false,
+		},
+		{
+			name: "invalid URLPattern - regex syntax",
+			config: &C.CemConfig{
+				Generate: C.GenerateConfig{
+					DemoDiscovery: C.DemoDiscoveryConfig{
+						URLPattern:  "elements/(?P<tag>[\\w-]+)/demo/(?P<demo>[\\w-]+).html",
+						URLTemplate: "https://site.com/{{.tag}}/{{.demo}}/",
+					},
+				},
+			},
+			tagAliases:    map[string]string{},
+			expectError:   true,
+			errorContains: "Invalid demo discovery urlPattern",
+		},
+		{
+			name: "invalid template syntax",
+			config: &C.CemConfig{
+				Generate: C.GenerateConfig{
+					DemoDiscovery: C.DemoDiscoveryConfig{
+						URLPattern:  "/elements/:tag/demo/:demo.html",
+						URLTemplate: "https://site.com/{{.tag | badfunction}}/{{.demo}}/",
+					},
+				},
+			},
+			tagAliases:    map[string]string{},
+			expectError:   true,
+			errorContains: "invalid demo discovery URLTemplate",
+		},
+		{
+			name: "no demo discovery config",
+			config: &C.CemConfig{
+				Generate: C.GenerateConfig{
+					DemoDiscovery: C.DemoDiscoveryConfig{},
+				},
+			},
+			tagAliases:  map[string]string{},
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateDemoDiscoveryConfig(tt.config, tt.tagAliases)
+
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("Expected error but got none")
+					return
+				}
+				if !strings.Contains(err.Error(), tt.errorContains) {
+					t.Errorf("Expected error to contain %q, got: %v", tt.errorContains, err)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Expected no error but got: %v", err)
+				}
+			}
+		})
+	}
+}

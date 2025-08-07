@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"text/template"
 
 	C "bennypowers.dev/cem/cmd/config"
@@ -115,6 +116,95 @@ func extractDemoMetadata(path string) (DemoMetadata, error) {
 // non-resolvable URL. The actual value does not matter as long as it is a valid absolute URL.
 const urlPatternBaseURL = "https://example.com"
 
+// templateCache holds compiled templates and URLPatterns to avoid re-parsing
+type templateCache struct {
+	mu        sync.RWMutex
+	templates map[string]*template.Template
+	patterns  map[string]*urlpattern.URLPattern
+}
+
+var cache = &templateCache{
+	templates: make(map[string]*template.Template),
+	patterns:  make(map[string]*urlpattern.URLPattern),
+}
+
+// getOrCreateTemplate returns a cached template or creates and caches a new one
+func (c *templateCache) getOrCreateTemplate(templateStr string, tagAliases map[string]string) (*template.Template, error) {
+	// Create a cache key that includes the template string and tag aliases
+	// Since tag aliases affect the function map, we need to include them in the key
+	cacheKey := fmt.Sprintf("%s|%v", templateStr, tagAliases)
+
+	c.mu.RLock()
+	if tmpl, exists := c.templates[cacheKey]; exists {
+		c.mu.RUnlock()
+		return tmpl, nil
+	}
+	c.mu.RUnlock()
+
+	// Create new template
+	funcMap := createTemplateFuncMap(tagAliases)
+	tmpl, err := template.New("urlTemplate").Funcs(funcMap).Parse(templateStr)
+	if err != nil {
+		return nil, err
+	}
+
+	c.mu.Lock()
+	c.templates[cacheKey] = tmpl
+	c.mu.Unlock()
+
+	return tmpl, nil
+}
+
+// getOrCreatePattern returns a cached URLPattern or creates and caches a new one
+func (c *templateCache) getOrCreatePattern(patternStr string) (*urlpattern.URLPattern, error) {
+	c.mu.RLock()
+	if pattern, exists := c.patterns[patternStr]; exists {
+		c.mu.RUnlock()
+		return pattern, nil
+	}
+	c.mu.RUnlock()
+
+	// Create new pattern
+	pattern, err := urlpattern.New(patternStr, urlPatternBaseURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	c.mu.Lock()
+	c.patterns[patternStr] = pattern
+	c.mu.Unlock()
+
+	return pattern, nil
+}
+
+// ValidateDemoDiscoveryConfig validates URLPattern and template syntax early to fail fast
+func ValidateDemoDiscoveryConfig(cfg *C.CemConfig, tagAliases map[string]string) error {
+	demoConfig := cfg.Generate.DemoDiscovery
+
+	// Skip validation if demo discovery is not configured
+	if demoConfig.URLPattern == "" && demoConfig.URLTemplate == "" {
+		return nil
+	}
+
+	// Validate URLPattern syntax
+	if demoConfig.URLPattern != "" {
+		_, err := cache.getOrCreatePattern(demoConfig.URLPattern)
+		if err != nil {
+			return fmt.Errorf("Invalid demo discovery urlPattern %q\n\nMust use URLPattern syntax, example: \"/elements/:tag/demo/:demo.html\"\n", demoConfig.URLPattern)
+		}
+	}
+
+	// Validate template syntax
+	if demoConfig.URLTemplate != "" {
+		_, err := cache.getOrCreateTemplate(demoConfig.URLTemplate, tagAliases)
+		if err != nil {
+			return fmt.Errorf("invalid demo discovery URLTemplate %q\n\nTemplate should use Go template syntax with allowed functions: alias, slug, lower, upper. Example: \"https://site.com/{{.tag | alias}}/{{.demo}}/\"", demoConfig.URLTemplate)
+		}
+	}
+
+	return nil
+}
+
 // createTemplateFuncMap creates the allowlisted template functions
 func createTemplateFuncMap(tagAliases map[string]string) template.FuncMap {
 	return template.FuncMap{
@@ -146,8 +236,8 @@ func generateFallbackURL(ctx W.WorkspaceContext, cfg *C.CemConfig, demoPath stri
 		return "", nil
 	}
 
-	// Create URLPattern using the standard base URL
-	pattern, err := urlpattern.New(urlPattern, urlPatternBaseURL, nil)
+	// Get cached URLPattern
+	pattern, err := cache.getOrCreatePattern(urlPattern)
 	if err != nil {
 		return "", fmt.Errorf("invalid URLPattern %q: %w", urlPattern, err)
 	}
@@ -173,9 +263,8 @@ func generateFallbackURL(ctx W.WorkspaceContext, cfg *C.CemConfig, demoPath stri
 		return "", nil // No match
 	}
 
-	// Build URL from template using Go text/template
-	funcMap := createTemplateFuncMap(tagAliases)
-	tmpl, err := template.New("urlTemplate").Funcs(funcMap).Parse(urlTemplate)
+	// Get cached template
+	tmpl, err := cache.getOrCreateTemplate(urlTemplate, tagAliases)
 	if err != nil {
 		return "", fmt.Errorf("invalid URL template %q: %w", urlTemplate, err)
 	}
