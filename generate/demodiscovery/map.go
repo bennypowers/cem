@@ -11,6 +11,7 @@ import (
 
 	Q "bennypowers.dev/cem/generate/queries"
 	S "bennypowers.dev/cem/set"
+	"github.com/dunglas/go-urlpattern"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -141,10 +142,36 @@ func extractPathBasedTagsWithPattern(demoPath, urlPattern string, elementAliases
 		return extractPathBasedTagsFallback(demoPath, elementAliases), nil
 	}
 
-	// Parse the URLPattern to identify parameter positions
-	paramPositions, err := extractParameterPositions(urlPattern)
+	// Extract parameter values from the path using URLPattern matching
+	paramValues, err := extractParameterValues(demoPath, urlPattern)
 	if err != nil {
 		return nil, err
+	}
+
+	var matchedTags []string
+
+	// Check each alias against the extracted parameter values
+	for tag, alias := range elementAliases {
+		for _, paramValue := range paramValues {
+			// Only exact matches in parameter positions
+			if paramValue == alias {
+				matchedTags = append(matchedTags, tag)
+				break // Found a match for this tag, no need to check other parameters
+			}
+		}
+	}
+
+	return matchedTags, nil
+}
+
+// extractParameterValues uses URLPattern to extract parameter values from a demo path.
+// This leverages the go-urlpattern library's robust parsing instead of manual string manipulation.
+// The function executes the URLPattern against the demo path and extracts the captured parameter values
+// from the Groups map, providing much more reliable parameter detection than simple ":" prefix checks.
+func extractParameterValues(demoPath, urlPattern string) ([]string, error) {
+	pattern, err := urlpattern.New(urlPattern, urlPatternBaseURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("invalid URLPattern %q: %w", urlPattern, err)
 	}
 
 	// Convert file path to URL-like path for matching
@@ -153,48 +180,23 @@ func extractPathBasedTagsWithPattern(demoPath, urlPattern string, elementAliases
 		urlPath = "/" + urlPath
 	}
 
-	pathParts := strings.Split(strings.Trim(urlPath, "/"), "/")
-	var matchedTags []string
+	// Create a test URL for matching
+	testURL := urlPatternBaseURL + urlPath
+	result := pattern.Exec(testURL, "")
+	if result == nil {
+		// Path doesn't match the pattern, return empty slice
+		return []string{}, nil
+	}
 
-	// Check each alias against parameter positions only
-	for tag, alias := range elementAliases {
-		for _, paramPos := range paramPositions {
-			if paramPos < len(pathParts) {
-				pathPart := pathParts[paramPos]
-				// Only exact matches or word-boundary matches in parameter positions
-				if pathPart == alias {
-					matchedTags = append(matchedTags, tag)
-					break // Found a match for this tag, no need to check other positions
-				}
-			}
+	// Extract parameter values from the pathname groups
+	var paramValues []string
+	for _, value := range result.Pathname.Groups {
+		if value != "" {
+			paramValues = append(paramValues, value)
 		}
 	}
 
-	return matchedTags, nil
-}
-
-// extractParameterPositions parses a URLPattern and returns the positions (0-indexed)
-// of path segments that contain parameters (e.g., :element, :demo)
-func extractParameterPositions(pattern string) ([]int, error) {
-	// Remove query and hash parts, focus on pathname
-	if idx := strings.Index(pattern, "?"); idx != -1 {
-		pattern = pattern[:idx]
-	}
-	if idx := strings.Index(pattern, "#"); idx != -1 {
-		pattern = pattern[:idx]
-	}
-
-	parts := strings.Split(strings.Trim(pattern, "/"), "/")
-	var positions []int
-
-	for i, part := range parts {
-		// Check if this part contains a parameter (starts with :)
-		if strings.HasPrefix(part, ":") {
-			positions = append(positions, i)
-		}
-	}
-
-	return positions, nil
+	return paramValues, nil
 }
 
 // extractPathBasedTagsFallback provides fallback path matching when no URLPattern is configured

@@ -302,49 +302,60 @@ func TestExtractDemoTags(t *testing.T) {
 	}
 }
 
-func TestExtractParameterPositions(t *testing.T) {
+func TestExtractParameterValues(t *testing.T) {
 	tests := []struct {
 		name     string
+		demoPath string
 		pattern  string
-		expected []int
+		expected []string
 	}{
 		{
 			name:     "single parameter",
-			pattern:  "/components/:element/demo/",
-			expected: []int{1},
+			demoPath: "/components/button/demo/basic.html",
+			pattern:  "/components/:element/demo/:demo.html",
+			expected: []string{"button", "basic"},
 		},
 		{
-			name:     "multiple parameters",
+			name:     "shop example - exact match",
+			demoPath: "/shop/shop/primary.html",
 			pattern:  "/shop/:element/:demo.html",
-			expected: []int{1, 2},
+			expected: []string{"shop", "primary"},
 		},
 		{
-			name:     "no parameters",
-			pattern:  "/static/demo/page.html",
-			expected: []int{},
+			name:     "shop example - my-shop",
+			demoPath: "/shop/my-shop/demo.html",
+			pattern:  "/shop/:element/:demo.html",
+			expected: []string{"my-shop", "demo"},
 		},
 		{
-			name:     "parameter with extension",
-			pattern:  "/docs/:page.html",
-			expected: []int{1},
+			name:     "no match - path doesn't match pattern",
+			demoPath: "/different/path/structure.html",
+			pattern:  "/shop/:element/:demo.html",
+			expected: []string{},
+		},
+		{
+			name:     "accordion edge case",
+			demoPath: "/components/my-accordion-header/demo/basic.html",
+			pattern:  "/components/:element/demo/:demo.html",
+			expected: []string{"my-accordion-header", "basic"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := extractParameterPositions(tt.pattern)
+			result, err := extractParameterValues(tt.demoPath, tt.pattern)
 			if err != nil {
-				t.Fatalf("extractParameterPositions failed: %v", err)
+				t.Fatalf("extractParameterValues failed: %v", err)
 			}
 
 			if len(result) != len(tt.expected) {
-				t.Errorf("Position count mismatch: got %v, want %v", result, tt.expected)
+				t.Errorf("Value count mismatch: got %v, want %v", result, tt.expected)
 				return
 			}
 
-			for i, pos := range result {
-				if pos != tt.expected[i] {
-					t.Errorf("Position[%d] mismatch: got %d, want %d", i, pos, tt.expected[i])
+			for i, value := range result {
+				if value != tt.expected[i] {
+					t.Errorf("Value[%d] mismatch: got %q, want %q", i, value, tt.expected[i])
 				}
 			}
 		})

@@ -106,10 +106,11 @@ func extractDemoMetadata(path string) (DemoMetadata, error) {
 	return metadata, nil
 }
 
-// urlPatternBaseURL is the base URL required by the URLPattern constructor.
-// According to the WHATWG URLPattern specification, a base URL is required for resolving
-// relative patterns. We use the RFC-defined example domain as a standard placeholder
-// since we only need the pattern matching functionality, not actual URL resolution.
+// According to the WHATWG URLPattern specification, the URLPattern constructor requires
+// a valid absolute base URL to resolve relative patterns, even if only pattern matching
+// (and not actual URL resolution) is needed. We use the RFC-defined example domain
+// "https://example.com" as a standard placeholder, since it is guaranteed to be a valid,
+// non-resolvable URL. The actual value does not matter as long as it is a valid absolute URL.
 const urlPatternBaseURL = "https://example.com"
 
 // generateFallbackURL creates a URL using URLPattern-based configuration
