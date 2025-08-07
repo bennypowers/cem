@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
 
 	Q "bennypowers.dev/cem/generate/queries"
@@ -43,13 +42,16 @@ func NewDemoMapWithPattern(demoFiles []string, urlPattern string, elementAliases
 // extractDemoTags returns all associated custom element tag names for the given demo file.
 // Priority:
 //  1. Explicit microdata: <meta itemprop="demo-for" content="element-name" />
-//  2. Path-based: Elements whose aliases appear in URL paths
-//  3. Content-based: All custom element tag names found in the file.
+//  2. Content-based: All custom element tag names found in the file.
 func extractDemoTags(path string, elementAliases map[string]string) ([]string, error) {
 	return extractDemoTagsWithPattern(path, "", elementAliases)
 }
 
-// extractDemoTagsWithPattern is like extractDemoTags but uses URLPattern for more precise path matching
+// extractDemoTagsWithPattern extracts element associations using explicit methods only.
+// Priority:
+//  1. Explicit microdata: <meta itemprop="demo-for" content="element-name" />
+//  2. URLPattern parameter matching: Extract parameters and match against element tagNames
+//  3. Content-based: All custom element tag names found in the file.
 func extractDemoTagsWithPattern(path, urlPattern string, elementAliases map[string]string) ([]string, error) {
 	code, err := os.ReadFile(path)
 	if err != nil {
@@ -67,20 +69,15 @@ func extractDemoTagsWithPattern(path, urlPattern string, elementAliases map[stri
 		return fields, nil
 	}
 
-	// Priority 2: Path-based association
-	var pathBasedTags []string
+	// Priority 2: URLPattern parameter matching
 	if urlPattern != "" {
-		// Use pattern-aware matching when URLPattern is available
-		pathBasedTags, err = extractPathBasedTagsWithPattern(path, urlPattern, elementAliases)
+		parameterTags, err := extractTagsFromURLPatternParameters(path, urlPattern)
 		if err != nil {
-			return nil, fmt.Errorf("path-based tag extraction failed: %w", err)
+			return nil, fmt.Errorf("URLPattern parameter extraction failed: %w", err)
 		}
-	} else {
-		// Fallback to compatibility mode
-		pathBasedTags = extractPathBasedTags(path, elementAliases)
-	}
-	if len(pathBasedTags) > 0 {
-		return pathBasedTags, nil
+		if len(parameterTags) > 0 {
+			return parameterTags, nil
+		}
 	}
 
 	// Priority 3: Content-based discovery
@@ -107,61 +104,29 @@ func extractDemoTagsWithPattern(path, urlPattern string, elementAliases map[stri
 	}
 	walk(root)
 
-	foundTags := tagNameSet.Members()
-
-	// Sort by path preference if multiple tags found
-	if len(foundTags) > 1 {
-		sort.SliceStable(foundTags, func(i, j int) bool {
-			return pathContainsElementAlias(path, foundTags[i], elementAliases) &&
-				!pathContainsElementAlias(path, foundTags[j], elementAliases)
-		})
-	}
-
-	return foundTags, nil
+	return tagNameSet.Members(), nil
 }
 
-// extractPathBasedTags finds elements whose aliases appear in the demo path.
-// This function now delegates to extractPathBasedTagsWithPattern for consistent behavior.
-func extractPathBasedTags(demoPath string, elementAliases map[string]string) []string {
-	// Always use the pattern-aware logic for consistency, but with empty pattern
-	// which triggers the fallback behavior in extractPathBasedTagsWithPattern
-	tags, err := extractPathBasedTagsWithPattern(demoPath, "", elementAliases)
-	if err != nil {
-		// If pattern-aware logic fails, return empty slice
-		return []string{}
-	}
-	return tags
-}
-
-// extractPathBasedTagsWithPattern finds elements whose aliases appear in parameter positions
-// of the demo path according to the given URLPattern.
-// See docs/content/docs/configuration.md for detailed documentation on path-based association.
-func extractPathBasedTagsWithPattern(demoPath, urlPattern string, elementAliases map[string]string) ([]string, error) {
-	if urlPattern == "" {
-		// Fallback to legacy behavior for backward compatibility
-		return extractPathBasedTagsFallback(demoPath, elementAliases), nil
-	}
-
+// extractTagsFromURLPatternParameters extracts tagNames from URLPattern parameters.
+// This replaces the complex heuristic system with simple direct matching:
+// If URLPattern extracts parameter value "my-button", look for element with tagName "my-button".
+func extractTagsFromURLPatternParameters(demoPath, urlPattern string) ([]string, error) {
 	// Extract parameter values from the path using URLPattern matching
 	paramValues, err := extractParameterValues(demoPath, urlPattern)
 	if err != nil {
 		return nil, err
 	}
 
-	var matchedTags []string
-
-	// Check each alias against the extracted parameter values
-	for tag, alias := range elementAliases {
-		for _, paramValue := range paramValues {
-			// Only exact matches in parameter positions
-			if paramValue == alias {
-				matchedTags = append(matchedTags, tag)
-				break // Found a match for this tag, no need to check other parameters
-			}
+	// Return parameter values as potential tagNames
+	// The calling code should match these against actual element tagNames
+	var candidateTags []string
+	for _, paramValue := range paramValues {
+		if paramValue != "" && isCustomElementTagName(paramValue) {
+			candidateTags = append(candidateTags, paramValue)
 		}
 	}
 
-	return matchedTags, nil
+	return candidateTags, nil
 }
 
 // extractParameterValues uses URLPattern to extract parameter values from a demo path.
@@ -197,118 +162,6 @@ func extractParameterValues(demoPath, urlPattern string) ([]string, error) {
 	}
 
 	return paramValues, nil
-}
-
-// extractPathBasedTagsFallback provides fallback path matching when no URLPattern is configured
-func extractPathBasedTagsFallback(demoPath string, elementAliases map[string]string) []string {
-	if len(elementAliases) == 0 {
-		return []string{}
-	}
-
-	pathParts := strings.Split(filepath.ToSlash(demoPath), "/")
-
-	// Pre-compute alias metadata to avoid repeated operations
-	type aliasInfo struct {
-		tag      string
-		alias    string
-		aliasLen int
-		score    int
-	}
-
-	// Pre-allocate with known capacity
-	aliasInfos := make([]aliasInfo, 0, len(elementAliases))
-
-	// Pre-compute scores and alias lengths
-	for tag, alias := range elementAliases {
-		info := aliasInfo{
-			tag:      tag,
-			alias:    alias,
-			aliasLen: len(alias),
-			score:    0,
-		}
-
-		// Check if alias appears in path parts with exact or substring matching
-		for _, part := range pathParts {
-			if part == alias {
-				// Exact match gets highest score
-				info.score += 15
-			} else if strings.Contains(part, alias) {
-				// Substring match gets lower score
-				info.score += 5
-			}
-		}
-
-		// Only include aliases that match
-		if info.score > 0 {
-			aliasInfos = append(aliasInfos, info)
-		}
-	}
-
-	if len(aliasInfos) == 0 {
-		return []string{}
-	}
-
-	// Sort by score (highest first), then by alias length (longer first for specificity)
-	sort.Slice(aliasInfos, func(i, j int) bool {
-		if aliasInfos[i].score == aliasInfos[j].score {
-			// If scores are equal, prefer longer aliases (more specific)
-			return aliasInfos[i].aliasLen > aliasInfos[j].aliasLen
-		}
-		return aliasInfos[i].score > aliasInfos[j].score
-	})
-
-	// Optimized overlapping match detection
-	// Build result incrementally, avoiding expensive duplicate operations
-	var finalTags []string
-	var includedAliases []string
-
-	for _, info := range aliasInfos {
-		shouldInclude := true
-		conflictIndex := -1
-
-		// Check against already included aliases
-		for i, includedAlias := range includedAliases {
-			if info.alias == includedAlias {
-				// Exact duplicate, skip
-				shouldInclude = false
-				break
-			} else if strings.Contains(info.alias, includedAlias) {
-				// Current alias contains an included one, remove the included one
-				conflictIndex = i
-				break
-			} else if strings.Contains(includedAlias, info.alias) {
-				// An included alias contains this one, don't include this
-				shouldInclude = false
-				break
-			}
-		}
-
-		if shouldInclude {
-			// If we found a conflict, remove the conflicting entry
-			if conflictIndex >= 0 {
-				// Remove from both slices efficiently (swap with last element)
-				lastIdx := len(includedAliases) - 1
-				includedAliases[conflictIndex] = includedAliases[lastIdx]
-				includedAliases = includedAliases[:lastIdx]
-
-				finalTags[conflictIndex] = finalTags[lastIdx]
-				finalTags = finalTags[:lastIdx]
-			}
-
-			finalTags = append(finalTags, info.tag)
-			includedAliases = append(includedAliases, info.alias)
-		}
-	}
-
-	return finalTags
-}
-
-// pathContainsElementAlias checks if the path contains an element's alias
-func pathContainsElementAlias(demoPath, tagName string, elementAliases map[string]string) bool {
-	if alias, ok := elementAliases[tagName]; ok {
-		return strings.Contains(demoPath, alias)
-	}
-	return strings.Contains(demoPath, tagName)
 }
 
 var customElementTagNameRe = regexp.MustCompile(`^[a-z][.0-9_a-z]*-[\-.0-9_a-z]*$`)
