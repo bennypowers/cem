@@ -5,5 +5,5 @@ sourceControlRootUrl: https://github.com/bennypowers/cem/tree/main/generate/
 generate:
   demoDiscovery:
     fileGlob: src/*/demos/*.html
-    urlPattern: src/(?P<tag>[\w-]+)/demos/(?P<demo>[\w-]+)\.html
-    urlTemplate: https://bennypowers.dev/cem-demos/{tag}/{demo}/
+    urlPattern: src/:tag/demos/:demo.html
+    urlTemplate: https://bennypowers.dev/cem-demos/{{.tag}}/{{.demo}}/
