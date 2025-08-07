@@ -114,7 +114,7 @@ func extractDemoMetadata(path string) (DemoMetadata, error) {
 const urlPatternBaseURL = "https://example.com"
 
 // generateFallbackURL creates a URL using URLPattern-based configuration
-func generateFallbackURL(cfg *C.CemConfig, demoPath string, tagAliases map[string]string) (string, error) {
+func generateFallbackURL(ctx W.WorkspaceContext, cfg *C.CemConfig, demoPath string, tagAliases map[string]string) (string, error) {
 	urlPattern := cfg.Generate.DemoDiscovery.URLPattern
 	urlTemplate := cfg.Generate.DemoDiscovery.URLTemplate
 
@@ -131,7 +131,14 @@ func generateFallbackURL(cfg *C.CemConfig, demoPath string, tagAliases map[strin
 
 	// Extract path components for matching
 	// Convert file path to URL-like path for matching
-	urlPath := strings.ReplaceAll(demoPath, string(filepath.Separator), "/")
+	// The demo path is absolute, but the pattern is relative to the project root,
+	// so we need to trim the prefix.
+	processedPath := demoPath
+	if root := ctx.Root(); root != "" {
+		processedPath = strings.TrimPrefix(demoPath, root)
+	}
+
+	urlPath := strings.ReplaceAll(processedPath, string(filepath.Separator), "/")
 	if !strings.HasPrefix(urlPath, "/") {
 		urlPath = "/" + urlPath
 	}
@@ -146,10 +153,15 @@ func generateFallbackURL(cfg *C.CemConfig, demoPath string, tagAliases map[strin
 	// Build URL from template using captured groups
 	demoUrl := urlTemplate
 	for key, value := range result.Pathname.Groups {
-		// Apply alias transformation if available
-		if alias, ok := tagAliases[value]; ok {
-			value = slug.Make(alias)
+		// Apply alias transformation only to the 'tag' or 'element' parameter
+		// These parameter names typically represent element names that should use aliases
+		if key == "tag" || key == "element" {
+			if alias, ok := tagAliases[value]; ok {
+				value = slug.Make(alias)
+			}
 		}
+		// Support both {key} and {{.key}} template formats
+		demoUrl = strings.ReplaceAll(demoUrl, "{"+key+"}", value)
 		demoUrl = strings.ReplaceAll(demoUrl, "{{."+key+"}}", value)
 	}
 
@@ -214,7 +226,7 @@ func DiscoverDemos(
 				demoUrl = metadata.URL
 			} else {
 				// Generate fallback URL using URLPattern configuration
-				fallbackUrl, err := generateFallbackURL(cfg, demoPath, tagAliases)
+				fallbackUrl, err := generateFallbackURL(ctx, cfg, demoPath, tagAliases)
 				if err != nil {
 					errs = errors.Join(errs, err)
 					continue

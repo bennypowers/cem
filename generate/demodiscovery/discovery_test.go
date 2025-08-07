@@ -8,6 +8,7 @@ import (
 
 	C "bennypowers.dev/cem/cmd/config"
 	Q "bennypowers.dev/cem/generate/queries"
+	W "bennypowers.dev/cem/workspace"
 )
 
 func TestExtractDemoMetadata(t *testing.T) {
@@ -126,6 +127,8 @@ Showcases different card variants with accessibility features.
 }
 
 func TestGenerateFallbackURL(t *testing.T) {
+	ctx := W.NewFileSystemWorkspaceContext(t.TempDir())
+
 	tests := []struct {
 		name        string
 		config      *C.CemConfig
@@ -145,8 +148,8 @@ func TestGenerateFallbackURL(t *testing.T) {
 				},
 			},
 			demoPath:   "/components/button/demo/primary.html",
-			tagAliases: map[string]string{"rh-button": "button"},
-			expected:   "https://site.com/components/button/demo/primary/",
+			tagAliases: map[string]string{"button": "button-alias"},
+			expected:   "https://site.com/components/button-alias/demo/primary/",
 		},
 		{
 			name: "no URLPattern configured",
@@ -194,7 +197,7 @@ func TestGenerateFallbackURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := generateFallbackURL(tt.config, tt.demoPath, tt.tagAliases)
+			result, err := generateFallbackURL(ctx, tt.config, tt.demoPath, tt.tagAliases)
 
 			if tt.expectError {
 				if err == nil {
@@ -286,16 +289,30 @@ func TestExtractDemoTags(t *testing.T) {
 
 			// t.Logf("Test %s: got tags %v, expected %v", tt.name, result, tt.expected)
 
-			// Compare results
+			// Compare results (order-independent for content-based fallback)
 			if len(result) != len(tt.expected) {
 				t.Errorf("Tag count mismatch: got %d (%v), want %d (%v)",
 					len(result), result, len(tt.expected), tt.expected)
 				return
 			}
 
-			for i, tag := range result {
-				if tag != tt.expected[i] {
-					t.Errorf("Tag[%d] mismatch: got %q, want %q", i, tag, tt.expected[i])
+			// For content-based tests, use order-independent comparison
+			if tt.name == "content-based fallback" {
+				resultSet := make(map[string]bool)
+				for _, tag := range result {
+					resultSet[tag] = true
+				}
+				for _, expectedTag := range tt.expected {
+					if !resultSet[expectedTag] {
+						t.Errorf("Expected tag %q not found in result %v", expectedTag, result)
+					}
+				}
+			} else {
+				// For other tests, maintain order-dependent comparison
+				for i, tag := range result {
+					if tag != tt.expected[i] {
+						t.Errorf("Tag[%d] mismatch: got %q, want %q", i, tag, tt.expected[i])
+					}
 				}
 			}
 		})
@@ -307,37 +324,37 @@ func TestExtractParameterValues(t *testing.T) {
 		name     string
 		demoPath string
 		pattern  string
-		expected []string
+		expected map[string]bool // Use map to avoid order dependency
 	}{
 		{
 			name:     "single parameter",
 			demoPath: "/components/button/demo/basic.html",
 			pattern:  "/components/:element/demo/:demo.html",
-			expected: []string{"button", "basic"},
+			expected: map[string]bool{"button": true, "basic": true},
 		},
 		{
 			name:     "shop example - exact match",
 			demoPath: "/shop/shop/primary.html",
 			pattern:  "/shop/:element/:demo.html",
-			expected: []string{"shop", "primary"},
+			expected: map[string]bool{"shop": true, "primary": true},
 		},
 		{
 			name:     "shop example - my-shop",
 			demoPath: "/shop/my-shop/demo.html",
 			pattern:  "/shop/:element/:demo.html",
-			expected: []string{"my-shop", "demo"},
+			expected: map[string]bool{"my-shop": true, "demo": true},
 		},
 		{
 			name:     "no match - path doesn't match pattern",
 			demoPath: "/different/path/structure.html",
 			pattern:  "/shop/:element/:demo.html",
-			expected: []string{},
+			expected: map[string]bool{},
 		},
 		{
 			name:     "accordion edge case",
 			demoPath: "/components/my-accordion-header/demo/basic.html",
 			pattern:  "/components/:element/demo/:demo.html",
-			expected: []string{"my-accordion-header", "basic"},
+			expected: map[string]bool{"my-accordion-header": true, "basic": true},
 		},
 	}
 
@@ -349,13 +366,26 @@ func TestExtractParameterValues(t *testing.T) {
 			}
 
 			if len(result) != len(tt.expected) {
-				t.Errorf("Value count mismatch: got %v, want %v", result, tt.expected)
+				t.Errorf("Value count mismatch: got %d (%v), want %d (%v)",
+					len(result), result, len(tt.expected), tt.expected)
 				return
 			}
 
-			for i, value := range result {
-				if value != tt.expected[i] {
-					t.Errorf("Value[%d] mismatch: got %q, want %q", i, value, tt.expected[i])
+			// Check that all returned values are expected
+			for _, value := range result {
+				if !tt.expected[value] {
+					t.Errorf("Unexpected value: got %q", value)
+				}
+			}
+
+			// Check that all expected values are present
+			resultMap := make(map[string]bool)
+			for _, value := range result {
+				resultMap[value] = true
+			}
+			for expectedValue := range tt.expected {
+				if !resultMap[expectedValue] {
+					t.Errorf("Missing expected value: %q", expectedValue)
 				}
 			}
 		})

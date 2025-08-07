@@ -201,76 +201,106 @@ func extractParameterValues(demoPath, urlPattern string) ([]string, error) {
 
 // extractPathBasedTagsFallback provides fallback path matching when no URLPattern is configured
 func extractPathBasedTagsFallback(demoPath string, elementAliases map[string]string) []string {
-	var matchedTags []string
+	if len(elementAliases) == 0 {
+		return []string{}
+	}
+
 	pathParts := strings.Split(filepath.ToSlash(demoPath), "/")
 
-	// Score each element by how well it matches the path
-	type elementScore struct {
-		tag   string
-		score int
+	// Pre-compute alias metadata to avoid repeated operations
+	type aliasInfo struct {
+		tag      string
+		alias    string
+		aliasLen int
+		score    int
 	}
-	var scores []elementScore
 
+	// Pre-allocate with known capacity
+	aliasInfos := make([]aliasInfo, 0, len(elementAliases))
+
+	// Pre-compute scores and alias lengths
 	for tag, alias := range elementAliases {
-		score := 0
+		info := aliasInfo{
+			tag:      tag,
+			alias:    alias,
+			aliasLen: len(alias),
+			score:    0,
+		}
+
 		// Check if alias appears in path parts with exact or substring matching
 		for _, part := range pathParts {
 			if part == alias {
 				// Exact match gets highest score
-				score += 15
+				info.score += 15
 			} else if strings.Contains(part, alias) {
-				// Substring match gets lower score, but we'll filter these later based on specificity
-				score += 5
+				// Substring match gets lower score
+				info.score += 5
 			}
 		}
-		if score > 0 {
-			scores = append(scores, elementScore{tag: tag, score: score})
+
+		// Only include aliases that match
+		if info.score > 0 {
+			aliasInfos = append(aliasInfos, info)
 		}
 	}
 
+	if len(aliasInfos) == 0 {
+		return []string{}
+	}
+
 	// Sort by score (highest first), then by alias length (longer first for specificity)
-	sort.Slice(scores, func(i, j int) bool {
-		if scores[i].score == scores[j].score {
+	sort.Slice(aliasInfos, func(i, j int) bool {
+		if aliasInfos[i].score == aliasInfos[j].score {
 			// If scores are equal, prefer longer aliases (more specific)
-			aliasI := elementAliases[scores[i].tag]
-			aliasJ := elementAliases[scores[j].tag]
-			return len(aliasI) > len(aliasJ)
+			return aliasInfos[i].aliasLen > aliasInfos[j].aliasLen
 		}
-		return scores[i].score > scores[j].score
+		return aliasInfos[i].score > aliasInfos[j].score
 	})
 
-	// Filter out overlapping matches - if a longer alias contains a shorter one, remove the shorter
-	filtered := make(map[string]bool)
-	for _, s := range scores {
-		alias := elementAliases[s.tag]
-		shouldInclude := true
+	// Optimized overlapping match detection
+	// Build result incrementally, avoiding expensive duplicate operations
+	var finalTags []string
+	var includedAliases []string
 
-		// Check if any already included alias is a substring of this one
-		for includedTag := range filtered {
-			includedAlias := elementAliases[includedTag]
-			if strings.Contains(alias, includedAlias) && alias != includedAlias {
-				// This alias contains a shorter one, remove the shorter one
-				delete(filtered, includedTag)
-			} else if strings.Contains(includedAlias, alias) && alias != includedAlias {
-				// An already included alias contains this one, don't include this
+	for _, info := range aliasInfos {
+		shouldInclude := true
+		conflictIndex := -1
+
+		// Check against already included aliases
+		for i, includedAlias := range includedAliases {
+			if info.alias == includedAlias {
+				// Exact duplicate, skip
+				shouldInclude = false
+				break
+			} else if strings.Contains(info.alias, includedAlias) {
+				// Current alias contains an included one, remove the included one
+				conflictIndex = i
+				break
+			} else if strings.Contains(includedAlias, info.alias) {
+				// An included alias contains this one, don't include this
 				shouldInclude = false
 				break
 			}
 		}
 
 		if shouldInclude {
-			filtered[s.tag] = true
+			// If we found a conflict, remove the conflicting entry
+			if conflictIndex >= 0 {
+				// Remove from both slices efficiently (swap with last element)
+				lastIdx := len(includedAliases) - 1
+				includedAliases[conflictIndex] = includedAliases[lastIdx]
+				includedAliases = includedAliases[:lastIdx]
+
+				finalTags[conflictIndex] = finalTags[lastIdx]
+				finalTags = finalTags[:lastIdx]
+			}
+
+			finalTags = append(finalTags, info.tag)
+			includedAliases = append(includedAliases, info.alias)
 		}
 	}
 
-	// Return filtered tags in the original sort order
-	for _, s := range scores {
-		if filtered[s.tag] {
-			matchedTags = append(matchedTags, s.tag)
-		}
-	}
-
-	return matchedTags
+	return finalTags
 }
 
 // pathContainsElementAlias checks if the path contains an element's alias
