@@ -1,6 +1,7 @@
 package demodiscovery
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"net/url"
@@ -8,6 +9,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"text/template"
 
 	C "bennypowers.dev/cem/cmd/config"
 	Q "bennypowers.dev/cem/generate/queries"
@@ -113,6 +115,27 @@ func extractDemoMetadata(path string) (DemoMetadata, error) {
 // non-resolvable URL. The actual value does not matter as long as it is a valid absolute URL.
 const urlPatternBaseURL = "https://example.com"
 
+// createTemplateFuncMap creates the allowlisted template functions
+func createTemplateFuncMap(tagAliases map[string]string) template.FuncMap {
+	return template.FuncMap{
+		"alias": func(value string) string {
+			if alias, ok := tagAliases[value]; ok {
+				return alias
+			}
+			return value
+		},
+		"slug": func(value string) string {
+			return slug.Make(value)
+		},
+		"lower": func(value string) string {
+			return strings.ToLower(value)
+		},
+		"upper": func(value string) string {
+			return strings.ToUpper(value)
+		},
+	}
+}
+
 // generateFallbackURL creates a URL using URLPattern-based configuration
 func generateFallbackURL(ctx W.WorkspaceContext, cfg *C.CemConfig, demoPath string, tagAliases map[string]string) (string, error) {
 	urlPattern := cfg.Generate.DemoDiscovery.URLPattern
@@ -150,22 +173,25 @@ func generateFallbackURL(ctx W.WorkspaceContext, cfg *C.CemConfig, demoPath stri
 		return "", nil // No match
 	}
 
-	// Build URL from template using captured groups
-	demoUrl := urlTemplate
-	for key, value := range result.Pathname.Groups {
-		// Apply alias transformation only to the 'tag' or 'element' parameter
-		// These parameter names typically represent element names that should use aliases
-		if key == "tag" || key == "element" {
-			if alias, ok := tagAliases[value]; ok {
-				value = slug.Make(alias)
-			}
-		}
-		// Support both {key} and {{.key}} template formats
-		demoUrl = strings.ReplaceAll(demoUrl, "{"+key+"}", value)
-		demoUrl = strings.ReplaceAll(demoUrl, "{{."+key+"}}", value)
+	// Build URL from template using Go text/template
+	funcMap := createTemplateFuncMap(tagAliases)
+	tmpl, err := template.New("urlTemplate").Funcs(funcMap).Parse(urlTemplate)
+	if err != nil {
+		return "", fmt.Errorf("invalid URL template %q: %w", urlTemplate, err)
 	}
 
-	return demoUrl, nil
+	// Create template data from captured groups
+	templateData := make(map[string]interface{})
+	for key, value := range result.Pathname.Groups {
+		templateData[key] = value
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, templateData); err != nil {
+		return "", fmt.Errorf("failed to execute URL template: %w", err)
+	}
+
+	return buf.String(), nil
 }
 
 func resolveDemoSourceURL(cfg *C.CemConfig, demoPath string) (string, error) {

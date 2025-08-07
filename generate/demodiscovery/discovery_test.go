@@ -138,12 +138,12 @@ func TestGenerateFallbackURL(t *testing.T) {
 		expectError bool
 	}{
 		{
-			name: "URLPattern syntax",
+			name: "URLPattern syntax with explicit aliasing",
 			config: &C.CemConfig{
 				Generate: C.GenerateConfig{
 					DemoDiscovery: C.DemoDiscoveryConfig{
 						URLPattern:  "/components/:element/demo/:demo.html",
-						URLTemplate: "https://site.com/components/{{.element}}/demo/{{.demo}}/",
+						URLTemplate: "https://site.com/components/{{.element | alias}}/demo/{{.demo}}/",
 					},
 				},
 			},
@@ -180,7 +180,21 @@ func TestGenerateFallbackURL(t *testing.T) {
 			expectError: true,
 		},
 		{
-			name: "accordion edge case in URLPattern",
+			name: "accordion edge case in URLPattern with explicit aliasing",
+			config: &C.CemConfig{
+				Generate: C.GenerateConfig{
+					DemoDiscovery: C.DemoDiscoveryConfig{
+						URLPattern:  "/components/:element/demo/:demo.html",
+						URLTemplate: "https://site.com/components/{{.element | alias}}/demo/{{.demo}}/",
+					},
+				},
+			},
+			demoPath:   "/components/my-accordion-header/demo/primary.html",
+			tagAliases: map[string]string{"my-accordion-header": "accordion-header"},
+			expected:   "https://site.com/components/accordion-header/demo/primary/",
+		},
+		{
+			name: "template without aliasing uses original values",
 			config: &C.CemConfig{
 				Generate: C.GenerateConfig{
 					DemoDiscovery: C.DemoDiscoveryConfig{
@@ -189,9 +203,37 @@ func TestGenerateFallbackURL(t *testing.T) {
 					},
 				},
 			},
-			demoPath:   "/components/my-accordion-header/demo/primary.html",
-			tagAliases: map[string]string{"my-accordion-header": "accordion-header"},
-			expected:   "https://site.com/components/accordion-header/demo/primary/",
+			demoPath:   "/components/my-element/demo/primary.html",
+			tagAliases: map[string]string{"my-element": "element-alias"},
+			expected:   "https://site.com/components/my-element/demo/primary/", // No aliasing applied
+		},
+		{
+			name: "template with slug and upper functions",
+			config: &C.CemConfig{
+				Generate: C.GenerateConfig{
+					DemoDiscovery: C.DemoDiscoveryConfig{
+						URLPattern:  "/components/:element/demo/:demo.html",
+						URLTemplate: "https://site.com/components/{{.element | slug}}/demo/{{.demo | upper}}/",
+					},
+				},
+			},
+			demoPath:   "/components/my-element/demo/primary-demo.html",
+			tagAliases: map[string]string{},
+			expected:   "https://site.com/components/my-element/demo/PRIMARY-DEMO/",
+		},
+		{
+			name: "template with chained functions",
+			config: &C.CemConfig{
+				Generate: C.GenerateConfig{
+					DemoDiscovery: C.DemoDiscoveryConfig{
+						URLPattern:  "/components/:element/demo/:demo.html",
+						URLTemplate: "https://site.com/components/{{.element | alias | slug}}/demo/{{.demo | lower}}/",
+					},
+				},
+			},
+			demoPath:   "/components/MyElement/demo/Primary-Demo.html",
+			tagAliases: map[string]string{"MyElement": "My Custom Element"},
+			expected:   "https://site.com/components/my-custom-element/demo/primary-demo/",
 		},
 	}
 

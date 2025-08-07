@@ -47,9 +47,10 @@ generate:
     # URLPattern for extracting parameters from demo file paths.
     # Uses standard URLPattern syntax with named parameters.
     urlPattern: "/src/:component/demos/:demo.html"
-    # A template to construct the canonical URL for a demo.
-    # Uses {{.param}} syntax to interpolate URLPattern parameters.
-    urlTemplate: "https://example.com/components/{{.component}}/demo/{{.demo}}/"
+    # Go template to construct the canonical URL for a demo.
+    # Uses {{.param}} syntax with optional template functions.
+    # Available functions: alias, slug, lower, upper
+    urlTemplate: "https://example.com/components/{{.component | alias}}/demo/{{.demo | slug}}/"
 
 # Configuration for validation warnings.
 warnings:
@@ -102,7 +103,7 @@ When a `urlPattern` is configured, path-based association becomes **parameter-po
 demoDiscovery:
   fileGlob: "shop/**/demos/*.html"
   urlPattern: "/shop/:element/:demo.html"
-  urlTemplate: "https://mysite.com/shop/{{.element}}/{{.demo}}/"
+  urlTemplate: "https://mysite.com/shop/{{.element | alias}}/{{.demo}}/"
 ```
 
 **Element Aliases:**
@@ -140,6 +141,35 @@ URLs are generated using the following priority:
 2. **URLPattern fallback**: Using `urlPattern` and `urlTemplate` configuration
 3. **No URL**: Demo is skipped if no pattern matches
 
+### URL Template Functions
+
+The `urlTemplate` uses Go template syntax with a set of built-in functions for transforming URLPattern parameters:
+
+| Function | Description | Example |
+|----------|-------------|---------|
+| `alias` | Apply element alias mapping from configuration | `{{.tag \| alias}}` |
+| `slug` | Convert to URL-friendly slug format | `{{.demo \| slug}}` |
+| `lower` | Convert to lowercase | `{{.component \| lower}}` |
+| `upper` | Convert to uppercase | `{{.section \| upper}}` |
+
+**Template Examples:**
+
+```yaml
+# Basic parameter interpolation
+urlTemplate: "https://example.com/{{.component}}/{{.demo}}/"
+
+# Apply alias transformation
+urlTemplate: "https://example.com/{{.component | alias}}/{{.demo}}/"
+
+# Chain multiple functions
+urlTemplate: "https://example.com/{{.component | alias | slug}}/{{.demo | lower}}/"
+
+# Function call syntax (alternative)
+urlTemplate: "https://example.com/{{alias .component}}/{{slug .demo}}/"
+```
+
+**Important:** All transformations must be explicitly specified. Unlike previous versions, no automatic aliasing or slugification is applied unless explicitly requested in the template.
+
 ### Configuration Examples
 
 **Minimal (microdata-driven):**
@@ -153,7 +183,7 @@ demoDiscovery:
 demoDiscovery:
   fileGlob: elements/**/demo/*.html
   urlPattern: "/elements/:element/demo/:demo.html"
-  urlTemplate: "https://site.com/components/{{.element}}/demo/{{.demo}}/"
+  urlTemplate: "https://site.com/components/{{.element | alias}}/demo/{{.demo | slug}}/"
 ```
 
 **Complex multi-site example:**
@@ -161,7 +191,7 @@ demoDiscovery:
 demoDiscovery:
   fileGlob: src/components/**/demos/*.html  
   urlPattern: "/src/components/:component/demos/:variant.html"
-  urlTemplate: "https://{{.component}}.examples.com/{{.variant}}/"
+  urlTemplate: "https://{{.component | alias | lower}}.examples.com/{{.variant | slug}}/"
 ```
 
 ## Global Flags

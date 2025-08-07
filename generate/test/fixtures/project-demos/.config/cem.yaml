@@ -8,4 +8,4 @@ generate:
   demoDiscovery:
     fileGlob: src/*/demos/*.html
     urlPattern: src/:tag/demos/:demo.html
-    urlTemplate: https://bennypowers.dev/cem-demos/{{.tag}}/{{.demo}}/
+    urlTemplate: https://bennypowers.dev/cem-demos/{{.tag | alias}}/{{.demo}}/
