@@ -128,11 +128,37 @@ var cache = &templateCache{
 	patterns:  make(map[string]*urlpattern.URLPattern),
 }
 
+// serializeTagAliases creates a deterministic string representation of tagAliases map
+func serializeTagAliases(tagAliases map[string]string) string {
+	if len(tagAliases) == 0 {
+		return "{}"
+	}
+
+	keys := make([]string, 0, len(tagAliases))
+	for k := range tagAliases {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	var buf strings.Builder
+	buf.WriteString("{")
+	for i, k := range keys {
+		if i > 0 {
+			buf.WriteString(" ")
+		}
+		buf.WriteString(k)
+		buf.WriteString(":")
+		buf.WriteString(tagAliases[k])
+	}
+	buf.WriteString("}")
+	return buf.String()
+}
+
 // getOrCreateTemplate returns a cached template or creates and caches a new one
 func (c *templateCache) getOrCreateTemplate(templateStr string, tagAliases map[string]string) (*template.Template, error) {
 	// Create a cache key that includes the template string and tag aliases
 	// Since tag aliases affect the function map, we need to include them in the key
-	cacheKey := fmt.Sprintf("%s|%v", templateStr, tagAliases)
+	cacheKey := fmt.Sprintf("%s|%s", templateStr, serializeTagAliases(tagAliases))
 
 	c.mu.RLock()
 	if tmpl, exists := c.templates[cacheKey]; exists {
