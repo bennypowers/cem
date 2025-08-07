@@ -575,7 +575,7 @@ func TestMicrodataExtraction(t *testing.T) {
 	defer tree.Close()
 	root := tree.RootNode()
 
-	demoFor := extractMicrodataFromTree(root, code, "demo-for")
+	demoFor := extractMicrodata(root, code, "demo-for")
 
 	if demoFor != "rh-button pf-button" {
 		t.Errorf("Expected 'rh-button pf-button', got %q", demoFor)
@@ -614,7 +614,7 @@ Showcases different card variants with accessibility features.
 	defer tree.Close()
 	root := tree.RootNode()
 
-	description := extractMicrodataFromTree(root, code, "description")
+	description := extractMicrodata(root, code, "description")
 	expected := "# Card Demo\nShowcases different card variants with accessibility features."
 
 	if description != expected {

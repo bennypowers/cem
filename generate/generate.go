@@ -196,7 +196,15 @@ func postprocess(
 	errsList := make([]error, 0)
 
 	// Build the demo map once
-	demoMap, err := DD.NewDemoMap(result.demoFiles, allTagAliases)
+	cfg, cfgErr := ctx.Config()
+	if cfgErr != nil {
+		errsList = append(errsList, cfgErr)
+	}
+	var urlPattern string
+	if cfgErr == nil {
+		urlPattern = cfg.Generate.DemoDiscovery.URLPattern
+	}
+	demoMap, err := DD.NewDemoMapWithPattern(result.demoFiles, urlPattern, allTagAliases)
 	if err != nil {
 		errsList = append(errsList, err)
 	}

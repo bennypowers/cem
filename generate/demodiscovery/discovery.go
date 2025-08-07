@@ -106,13 +106,11 @@ func extractDemoMetadata(path string) (DemoMetadata, error) {
 	return metadata, nil
 }
 
-// getURLPatternBaseURL returns the base URL required by the URLPattern constructor.
+// urlPatternBaseURL is the base URL required by the URLPattern constructor.
 // According to the WHATWG URLPattern specification, a base URL is required for resolving
 // relative patterns. We use the RFC-defined example domain as a standard placeholder
 // since we only need the pattern matching functionality, not actual URL resolution.
-func getURLPatternBaseURL() string {
-	return "https://example.com"
-}
+const urlPatternBaseURL = "https://example.com"
 
 // generateFallbackURL creates a URL using URLPattern-based configuration
 func generateFallbackURL(cfg *C.CemConfig, demoPath string, tagAliases map[string]string) (string, error) {
@@ -125,7 +123,7 @@ func generateFallbackURL(cfg *C.CemConfig, demoPath string, tagAliases map[strin
 	}
 
 	// Create URLPattern using the standard base URL
-	pattern, err := urlpattern.New(urlPattern, getURLPatternBaseURL(), nil)
+	pattern, err := urlpattern.New(urlPattern, urlPatternBaseURL, nil)
 	if err != nil {
 		return "", fmt.Errorf("invalid URLPattern %q: %w", urlPattern, err)
 	}
@@ -138,7 +136,7 @@ func generateFallbackURL(cfg *C.CemConfig, demoPath string, tagAliases map[strin
 	}
 
 	// Create a test URL for matching using the same base URL
-	testURL := getURLPatternBaseURL() + urlPath
+	testURL := urlPatternBaseURL + urlPath
 	result := pattern.Exec(testURL, "")
 	if result == nil {
 		return "", nil // No match
@@ -247,4 +245,94 @@ func DiscoverDemos(
 		}
 	}
 	return errs
+}
+
+// elementAttributes represents parsed attributes from an HTML element
+type elementAttributes struct {
+	tagName    string
+	itemProp   string
+	content    string
+	scriptType string
+}
+
+// parseAttributeValue extracts the actual value from a quoted_attribute_value node
+func parseAttributeValue(attrNode *ts.Node, code []byte) string {
+	for i := range int(attrNode.ChildCount()) {
+		child := attrNode.Child(uint(i))
+		if child != nil && child.GrammarName() == "attribute_value" {
+			return child.Utf8Text(code)
+		}
+	}
+	return ""
+}
+
+// parseAttribute extracts attribute name and value from an attribute node
+func parseAttribute(attrNode *ts.Node, code []byte) (string, string) {
+	var name, value string
+
+	for i := range int(attrNode.ChildCount()) {
+		child := attrNode.Child(uint(i))
+		if child == nil {
+			continue
+		}
+
+		switch child.GrammarName() {
+		case "attribute_name":
+			name = child.Utf8Text(code)
+		case "quoted_attribute_value":
+			value = parseAttributeValue(child, code)
+		}
+	}
+
+	return name, value
+}
+
+// parseStartTag extracts tag name and attributes from a start_tag node
+func parseStartTag(startTagNode *ts.Node, code []byte) elementAttributes {
+	attrs := elementAttributes{}
+
+	for i := range int(startTagNode.ChildCount()) {
+		child := startTagNode.Child(uint(i))
+		if child == nil {
+			continue
+		}
+
+		switch child.GrammarName() {
+		case "tag_name":
+			attrs.tagName = child.Utf8Text(code)
+		case "attribute":
+			name, value := parseAttribute(child, code)
+			switch name {
+			case "itemprop":
+				attrs.itemProp = value
+			case "content":
+				attrs.content = value
+			case "type":
+				attrs.scriptType = value
+			}
+		}
+	}
+
+	return attrs
+}
+
+// extractTextContent finds and returns text content from an element node
+func extractTextContent(elementNode *ts.Node, code []byte) string {
+	for i := range int(elementNode.ChildCount()) {
+		child := elementNode.Child(uint(i))
+		if child == nil {
+			continue
+		}
+
+		// Handle regular text content
+		if child.GrammarName() == "text" {
+			return strings.TrimSpace(child.Utf8Text(code))
+		}
+
+		// Handle raw_text for script elements
+		if child.GrammarName() == "raw_text" {
+			return strings.TrimSpace(child.Utf8Text(code))
+		}
+	}
+	return ""
 }

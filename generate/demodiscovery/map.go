@@ -18,6 +18,7 @@ import (
 type DemoMap map[string][]string
 
 // NewDemoMap builds the index using microdata, magic comments, and fallback to tag parsing.
+// Uses URLPattern-aware precise matching when urlPattern is provided.
 func NewDemoMap(demoFiles []string, elementAliases map[string]string) (demoMap DemoMap, errs error) {
 	return NewDemoMapWithPattern(demoFiles, "", elementAliases)
 }
@@ -60,7 +61,7 @@ func extractDemoTagsWithPattern(path, urlPattern string, elementAliases map[stri
 	root := tree.RootNode()
 
 	// Priority 1: Explicit microdata association
-	if demoFor := extractMicrodataFromTree(root, code, "demo-for"); demoFor != "" {
+	if demoFor := extractMicrodata(root, code, "demo-for"); demoFor != "" {
 		fields := strings.Fields(demoFor)
 		return fields, nil
 	}
@@ -119,12 +120,85 @@ func extractDemoTagsWithPattern(path, urlPattern string, elementAliases map[stri
 }
 
 // extractPathBasedTags finds elements whose aliases appear in the demo path.
-// This function requires a URLPattern configuration to determine which path positions
-// correspond to parameters, ensuring aliases only match in parameterized positions.
-// Without URLPattern configuration, it returns an empty slice.
+// This function now delegates to extractPathBasedTagsWithPattern for consistent behavior.
 func extractPathBasedTags(demoPath string, elementAliases map[string]string) []string {
-	// Note: This function currently returns all potential matches for compatibility.
-	// For accurate parameter-position matching, use extractPathBasedTagsWithPattern instead.
+	// Always use the pattern-aware logic for consistency, but with empty pattern
+	// which triggers the fallback behavior in extractPathBasedTagsWithPattern
+	tags, err := extractPathBasedTagsWithPattern(demoPath, "", elementAliases)
+	if err != nil {
+		// If pattern-aware logic fails, return empty slice
+		return []string{}
+	}
+	return tags
+}
+
+// extractPathBasedTagsWithPattern finds elements whose aliases appear in parameter positions
+// of the demo path according to the given URLPattern.
+// See docs/content/docs/configuration.md for detailed documentation on path-based association.
+func extractPathBasedTagsWithPattern(demoPath, urlPattern string, elementAliases map[string]string) ([]string, error) {
+	if urlPattern == "" {
+		// Fallback to legacy behavior for backward compatibility
+		return extractPathBasedTagsFallback(demoPath, elementAliases), nil
+	}
+
+	// Parse the URLPattern to identify parameter positions
+	paramPositions, err := extractParameterPositions(urlPattern)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert file path to URL-like path for matching
+	urlPath := strings.ReplaceAll(demoPath, string(filepath.Separator), "/")
+	if !strings.HasPrefix(urlPath, "/") {
+		urlPath = "/" + urlPath
+	}
+
+	pathParts := strings.Split(strings.Trim(urlPath, "/"), "/")
+	var matchedTags []string
+
+	// Check each alias against parameter positions only
+	for tag, alias := range elementAliases {
+		for _, paramPos := range paramPositions {
+			if paramPos < len(pathParts) {
+				pathPart := pathParts[paramPos]
+				// Only exact matches or word-boundary matches in parameter positions
+				if pathPart == alias {
+					matchedTags = append(matchedTags, tag)
+					break // Found a match for this tag, no need to check other positions
+				}
+			}
+		}
+	}
+
+	return matchedTags, nil
+}
+
+// extractParameterPositions parses a URLPattern and returns the positions (0-indexed)
+// of path segments that contain parameters (e.g., :element, :demo)
+func extractParameterPositions(pattern string) ([]int, error) {
+	// Remove query and hash parts, focus on pathname
+	if idx := strings.Index(pattern, "?"); idx != -1 {
+		pattern = pattern[:idx]
+	}
+	if idx := strings.Index(pattern, "#"); idx != -1 {
+		pattern = pattern[:idx]
+	}
+
+	parts := strings.Split(strings.Trim(pattern, "/"), "/")
+	var positions []int
+
+	for i, part := range parts {
+		// Check if this part contains a parameter (starts with :)
+		if strings.HasPrefix(part, ":") {
+			positions = append(positions, i)
+		}
+	}
+
+	return positions, nil
+}
+
+// extractPathBasedTagsFallback provides fallback path matching when no URLPattern is configured
+func extractPathBasedTagsFallback(demoPath string, elementAliases map[string]string) []string {
 	var matchedTags []string
 	pathParts := strings.Split(filepath.ToSlash(demoPath), "/")
 
@@ -197,70 +271,6 @@ func extractPathBasedTags(demoPath string, elementAliases map[string]string) []s
 	return matchedTags
 }
 
-// extractPathBasedTagsWithPattern finds elements whose aliases appear in parameter positions
-// of the demo path according to the given URLPattern.
-// See docs/content/docs/configuration.md for detailed documentation on path-based association.
-func extractPathBasedTagsWithPattern(demoPath, urlPattern string, elementAliases map[string]string) ([]string, error) {
-	if urlPattern == "" {
-		return []string{}, nil
-	}
-
-	// Parse the URLPattern to identify parameter positions
-	paramPositions, err := extractParameterPositions(urlPattern)
-	if err != nil {
-		return nil, err
-	}
-
-	// Convert file path to URL-like path for matching
-	urlPath := strings.ReplaceAll(demoPath, string(filepath.Separator), "/")
-	if !strings.HasPrefix(urlPath, "/") {
-		urlPath = "/" + urlPath
-	}
-
-	pathParts := strings.Split(strings.Trim(urlPath, "/"), "/")
-	var matchedTags []string
-
-	// Check each alias against parameter positions only
-	for tag, alias := range elementAliases {
-		for _, paramPos := range paramPositions {
-			if paramPos < len(pathParts) {
-				pathPart := pathParts[paramPos]
-				// Only exact matches or word-boundary matches in parameter positions
-				if pathPart == alias {
-					matchedTags = append(matchedTags, tag)
-					break // Found a match for this tag, no need to check other positions
-				}
-			}
-		}
-	}
-
-	return matchedTags, nil
-}
-
-// extractParameterPositions parses a URLPattern and returns the positions (0-indexed)
-// of path segments that contain parameters (e.g., :element, :demo)
-func extractParameterPositions(pattern string) ([]int, error) {
-	// Remove query and hash parts, focus on pathname
-	if idx := strings.Index(pattern, "?"); idx != -1 {
-		pattern = pattern[:idx]
-	}
-	if idx := strings.Index(pattern, "#"); idx != -1 {
-		pattern = pattern[:idx]
-	}
-
-	parts := strings.Split(strings.Trim(pattern, "/"), "/")
-	var positions []int
-
-	for i, part := range parts {
-		// Check if this part contains a parameter (starts with :)
-		if strings.HasPrefix(part, ":") {
-			positions = append(positions, i)
-		}
-	}
-
-	return positions, nil
-}
-
 // pathContainsElementAlias checks if the path contains an element's alias
 func pathContainsElementAlias(demoPath, tagName string, elementAliases map[string]string) bool {
 	if alias, ok := elementAliases[tagName]; ok {
@@ -269,145 +279,7 @@ func pathContainsElementAlias(demoPath, tagName string, elementAliases map[strin
 	return strings.Contains(demoPath, tagName)
 }
 
-// extractMicrodataFromTree extracts a specific microdata property from an HTML document tree
-// This is a simplified version that reuses the parsing logic from discovery.go
-func extractMicrodataFromTree(root *ts.Node, code []byte, property string) string {
-	var walk func(node *ts.Node) string
-	walk = func(node *ts.Node) string {
-		if node == nil {
-			return ""
-		}
-
-		// Check if this is an element or script_element
-		if node.GrammarName() == "element" || node.GrammarName() == "script_element" {
-			var attrs elementAttributes
-
-			// Parse start tag to get element attributes
-			for i := range int(node.ChildCount()) {
-				child := node.Child(uint(i))
-				if child != nil && child.GrammarName() == "start_tag" {
-					attrs = parseStartTag(child, code)
-					break
-				}
-			}
-
-			// Handle meta tags with microdata
-			if attrs.tagName == "meta" && attrs.itemProp == property && attrs.content != "" {
-				return attrs.content
-			}
-
-			// Handle script tags with markdown content
-			if attrs.tagName == "script" && attrs.itemProp == property && attrs.scriptType == "text/markdown" {
-				if textContent := extractTextContent(node, code); textContent != "" {
-					return textContent
-				}
-			}
-		}
-
-		// Recursively search children
-		for i := range int(node.ChildCount()) {
-			if result := walk(node.Child(uint(i))); result != "" {
-				return result
-			}
-		}
-
-		return ""
-	}
-
-	return walk(root)
-}
-
 var customElementTagNameRe = regexp.MustCompile(`^[a-z][.0-9_a-z]*-[\-.0-9_a-z]*$`)
-
-// elementAttributes represents parsed attributes from an HTML element
-type elementAttributes struct {
-	tagName    string
-	itemProp   string
-	content    string
-	scriptType string
-}
-
-// parseAttributeValue extracts the actual value from a quoted_attribute_value node
-func parseAttributeValue(attrNode *ts.Node, code []byte) string {
-	for i := range int(attrNode.ChildCount()) {
-		child := attrNode.Child(uint(i))
-		if child != nil && child.GrammarName() == "attribute_value" {
-			return child.Utf8Text(code)
-		}
-	}
-	return ""
-}
-
-// parseAttribute extracts attribute name and value from an attribute node
-func parseAttribute(attrNode *ts.Node, code []byte) (string, string) {
-	var name, value string
-
-	for i := range int(attrNode.ChildCount()) {
-		child := attrNode.Child(uint(i))
-		if child == nil {
-			continue
-		}
-
-		switch child.GrammarName() {
-		case "attribute_name":
-			name = child.Utf8Text(code)
-		case "quoted_attribute_value":
-			value = parseAttributeValue(child, code)
-		}
-	}
-
-	return name, value
-}
-
-// parseStartTag extracts tag name and attributes from a start_tag node
-func parseStartTag(startTagNode *ts.Node, code []byte) elementAttributes {
-	attrs := elementAttributes{}
-
-	for i := range int(startTagNode.ChildCount()) {
-		child := startTagNode.Child(uint(i))
-		if child == nil {
-			continue
-		}
-
-		switch child.GrammarName() {
-		case "tag_name":
-			attrs.tagName = child.Utf8Text(code)
-		case "attribute":
-			name, value := parseAttribute(child, code)
-			switch name {
-			case "itemprop":
-				attrs.itemProp = value
-			case "content":
-				attrs.content = value
-			case "type":
-				attrs.scriptType = value
-			}
-		}
-	}
-
-	return attrs
-}
-
-// extractTextContent finds and returns text content from an element node
-func extractTextContent(elementNode *ts.Node, code []byte) string {
-	for i := range int(elementNode.ChildCount()) {
-		child := elementNode.Child(uint(i))
-		if child == nil {
-			continue
-		}
-
-		// Handle regular text content
-		if child.GrammarName() == "text" {
-			return strings.TrimSpace(child.Utf8Text(code))
-		}
-
-		// Handle raw_text for script elements
-		if child.GrammarName() == "raw_text" {
-			return strings.TrimSpace(child.Utf8Text(code))
-		}
-	}
-	return ""
-}
 
 // isCustomElementTagName returns true if the string is a valid custom element tag name.
 func isCustomElementTagName(name string) bool {
