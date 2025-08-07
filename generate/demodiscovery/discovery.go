@@ -306,7 +306,15 @@ func generateFallbackURL(ctx W.WorkspaceContext, cfg *C.CemConfig, demoPath stri
 		return "", fmt.Errorf("failed to execute URL template: %w", err)
 	}
 
-	return buf.String(), nil
+	generatedURL := buf.String()
+
+	// Implement SSG-like routing: if the source file is index.html and the URL ends with /index/,
+	// replace that with just / to follow static site generator conventions
+	if filepath.Base(urlPath) == "index.html" && strings.HasSuffix(generatedURL, "/index/") {
+		generatedURL = strings.TrimSuffix(generatedURL, "index/")
+	}
+
+	return generatedURL, nil
 }
 
 func resolveDemoSourceURL(cfg *C.CemConfig, demoPath string) (string, error) {
@@ -350,7 +358,20 @@ func DiscoverDemos(
 			// so we need to account for that
 			iMatch := strings.HasPrefix(iDir, filepath.Join(ctx.Root(), moduleDir))
 			jMatch := strings.HasPrefix(jDir, filepath.Join(ctx.Root(), moduleDir))
-			return iMatch && !jMatch
+
+			// First sort by module directory preference
+			if iMatch != jMatch {
+				return iMatch && !jMatch
+			}
+
+			// Within the same priority group, index.html files should come first
+			iIsIndex := filepath.Base(demoFiles[i]) == "index.html"
+			jIsIndex := filepath.Base(demoFiles[j]) == "index.html"
+			if iIsIndex != jIsIndex {
+				return iIsIndex // index.html files come first within the same group
+			}
+
+			return false // maintain stable sort for equal items
 		})
 		for _, demoPath := range demoFiles {
 			// Extract metadata (microdata first, then fallbacks)

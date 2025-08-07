@@ -235,6 +235,48 @@ func TestGenerateFallbackURL(t *testing.T) {
 			tagAliases: map[string]string{"MyElement": "My Custom Element"},
 			expected:   "https://site.com/components/my-custom-element/demo/primary-demo/",
 		},
+		{
+			name: "SSG-like routing: index.html should map to root path",
+			config: &C.CemConfig{
+				Generate: C.GenerateConfig{
+					DemoDiscovery: C.DemoDiscoveryConfig{
+						URLPattern:  "/elements/:tag/demo/:demo.html",
+						URLTemplate: "https://ux.redhat.com/elements/{{.tag | alias | slug}}/demo/{{.demo}}/",
+					},
+				},
+			},
+			demoPath:   "/elements/accordion/demo/index.html",
+			tagAliases: map[string]string{"accordion": "rh-accordion"},
+			expected:   "https://ux.redhat.com/elements/rh-accordion/demo/",
+		},
+		{
+			name: "SSG-like routing: index.html with path containing 'index' directory",
+			config: &C.CemConfig{
+				Generate: C.GenerateConfig{
+					DemoDiscovery: C.DemoDiscoveryConfig{
+						URLPattern:  "/elements/:tag/demo/:demo.html",
+						URLTemplate: "https://site.com/elements/{{.tag}}/demo/{{.demo}}/",
+					},
+				},
+			},
+			demoPath:   "/elements/index/demo/index.html",
+			tagAliases: map[string]string{},
+			expected:   "https://site.com/elements/index/demo/",
+		},
+		{
+			name: "SSG-like routing: regular demo file should not be affected",
+			config: &C.CemConfig{
+				Generate: C.GenerateConfig{
+					DemoDiscovery: C.DemoDiscoveryConfig{
+						URLPattern:  "/elements/:tag/demo/:demo.html",
+						URLTemplate: "https://site.com/elements/{{.tag}}/demo/{{.demo}}/",
+					},
+				},
+			},
+			demoPath:   "/elements/button/demo/primary.html",
+			tagAliases: map[string]string{},
+			expected:   "https://site.com/elements/button/demo/primary/",
+		},
 	}
 
 	for _, tt := range tests {
