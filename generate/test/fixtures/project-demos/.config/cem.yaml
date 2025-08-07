@@ -3,6 +3,8 @@
 # This is not recommended for real-world use, except in the case of monorepos
 sourceControlRootUrl: https://github.com/bennypowers/cem/tree/main/generate/
 generate:
+  files:
+    - src/*/*.ts
   demoDiscovery:
     fileGlob: src/*/demos/*.html
     urlPattern: src/:tag/demos/:demo.html
