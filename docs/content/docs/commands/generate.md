@@ -119,6 +119,28 @@ variables
 }
 ```
 
+When you have a declaration where the LHS and RHS both contain CSS custom properties, 
+you have to position your comments so that they target the correct variable:
+
+Good:
+
+```css
+/** comment for --a */
+color: var(--a);
+/** comment for --b */
+--b: blue;
+/** comment for --c */
+--c:
+  /** comment for --d */
+  var(--d);
+```
+
+Bad:
+```css
+/** comment for --d */
+--c: var(--d);
+```
+
 ---
 
 <a id="element-demos"></a>
