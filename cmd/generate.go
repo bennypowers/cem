@@ -23,6 +23,7 @@ import (
 	"time"
 
 	G "bennypowers.dev/cem/generate"
+	DD "bennypowers.dev/cem/generate/demodiscovery"
 	W "bennypowers.dev/cem/workspace"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -71,6 +72,12 @@ var generateCmd = &cobra.Command{
 		if err != nil {
 			errs = errors.Join(errs, err)
 			return errs
+		}
+
+		// Validate demo discovery configuration at startup to fail fast
+		// Use empty aliases map since aliases are discovered during module processing
+		if err := DD.ValidateDemoDiscoveryConfig(cfg, map[string]string{}); err != nil {
+			return err
 		}
 
 		cfg.Generate.Files = files

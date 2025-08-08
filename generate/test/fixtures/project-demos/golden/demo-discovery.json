@@ -21,6 +21,13 @@
               }
             },
             {
+              "description": "A complete HTML document demonstrating demo-discovery element",
+              "url": "https://bennypowers.dev/cem-demos/demo-discovery/full-document/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-demos/src/demo-discovery/demos/full-document.html"
+              }
+            },
+            {
               "url": "https://bennypowers.dev/cem-demos/demo-alias/multiple-comment/",
               "source": {
                 "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-demos/src/demo-alias/demos/multiple-comment.html"

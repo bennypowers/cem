@@ -17,8 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package config
 
 type DemoDiscoveryConfig struct {
-	FileGlob    string `mapstructure:"fileGlob" yaml:"fileGlob"`
-	URLPattern  string `mapstructure:"urlPattern" yaml:"urlPattern"`
+	FileGlob string `mapstructure:"fileGlob" yaml:"fileGlob"`
+	// URLPattern uses standard URLPattern syntax (e.g., "/components/:element/demo/:demo.html")
+	URLPattern string `mapstructure:"urlPattern" yaml:"urlPattern"`
+	// URLTemplate defines how to generate URLs from captured parameters
+	// Uses {{.param}} syntax to interpolate URLPattern parameters
 	URLTemplate string `mapstructure:"urlTemplate" yaml:"urlTemplate"`
 }
 

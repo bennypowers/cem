@@ -4,5 +4,5 @@ files:
 generate:
   demoDiscovery:
     fileGlob: demos/*.html
-    urlPattern: demos/(?P<tag>(?P<demo>[\\w-]+))\\.html
-    urlTemplate: https://bennypowers.dev/cem-demos/{tag}/{demo}/
+    urlPattern: demos/:tag/:demo.html
+    urlTemplate: https://bennypowers.dev/cem-demos/{{.tag}}/{{.demo}}/

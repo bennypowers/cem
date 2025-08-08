@@ -6,6 +6,7 @@ coverage.html
 *.test
 dist
 docs/resources
+.claude/*.local.json
 
 platforms/**/package.json
 

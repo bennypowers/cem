@@ -9,7 +9,7 @@ generate:
     prefix: --rw
   demoDiscovery:
     fileGlob: src/demo/*.html
-    urlPattern: src/demo/(?P<tag>[\\w-]+(?P<demo>[\\w-]+)).html
-    urlTemplate: https://example.com/elements/{tag}/{demo}/
+    urlPattern: src/demo/:tag/:demo.html
+    urlTemplate: https://example.com/elements/{{.tag}}/{{.demo}}/
 
 

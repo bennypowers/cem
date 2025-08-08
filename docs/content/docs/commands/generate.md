@@ -119,6 +119,28 @@ variables
 }
 ```
 
+When you have a declaration where the LHS and RHS both contain CSS custom properties, 
+you have to position your comments so that they target the correct variable:
+
+Good:
+
+```css
+/** comment for --a */
+color: var(--a);
+/** comment for --b */
+--b: blue;
+/** comment for --c */
+--c:
+  /** comment for --d */
+  var(--d);
+```
+
+Bad:
+```css
+/** comment for --d */
+--c: var(--d);
+```
+
 ---
 
 <a id="element-demos"></a>
@@ -144,9 +166,6 @@ class MyElement extends LitElement {
 
 Demos defined this way will always appear in your manifest for the element.
 
-When using `@alias` tags, the alias will be [slugified](https://www.npmjs.com/package/slug)
-for use in the URL.
-
 ### Automatic Demo Discovery
 
 `cem` can automatically discover demos from your codebase based on your
@@ -156,9 +175,8 @@ component's source module will be prioritized in the generated manifest.
 <a id="demo-discovery-options"></a>
 ## Demo Discovery
 
-The `urlPattern` is a flexible Go regular expression with named capture groups.
-You can use it to match complex file paths and extract the parts you need to
-build your demo URLs.
+The `urlPattern` uses the standard URLPattern syntax with named parameters (`:paramName`).
+You can use it to match file paths and extract parameters to build your demo URLs.
 
 For example, if your demos are in subdirectories like `src/my-element/demos/foo.html`,
 you could use a pattern like this:
@@ -168,9 +186,20 @@ sourceControlRootUrl: "https://github.com/your/repo/tree/main/"
 generate:
   demoDiscovery:
     fileGlob: "src/**/demos/*.html"
-    urlPattern: "src/(?P<tag>[\w-]+)/demos/(?P<demo>[\w-]+).html"
-    urlTemplate: "https://example.com/elements/{tag}/{demo}/"
+    urlPattern: "/src/:tag/demos/:demo.html"
+    urlTemplate: "https://example.com/elements/{{.tag | alias}}/{{.demo | slug}}/"
 ```
+
+### URL Template Functions
+
+The `urlTemplate` supports Go template syntax with built-in functions:
+
+- `alias` - Apply element alias mapping
+- `slug` - Convert to URL-friendly format  
+- `lower` - Convert to lowercase
+- `upper` - Convert to uppercase
+
+Use pipeline syntax (`{{.param | function}}`) or function calls (`{{function .param}}`).
 
 **Demo discovery options:**
 
@@ -178,8 +207,8 @@ generate:
 | ---------------------- | ------ | -------------------------------------------------------------------------------------------- |
 | `fileGlob`             | string | Glob pattern for discovering demo files.                                                     |
 | `sourceControlRootUrl` | string | Canonical public source control URL for your repository root (on the main branch).           |
-| `urlPattern`           | string | Go Regexp pattern with named capture groups for generating canonical demo urls.              |
-| `urlTemplate`          | string | (optional) Alternative URL template for demo links.                                          |
+| `urlPattern`           | string | URLPattern with named parameters (`:param`) for matching demo file paths.                   |
+| `urlTemplate`          | string | Go template with functions for generating canonical demo URLs.                               |
 
 ## Monorepos
 
@@ -267,8 +296,8 @@ The `generate` command does not support remote packages. To inspect a remote pac
 | `--design-tokens`               | string             | Path or npm specifier for DTCG-format design tokens                                               |
 | `--design-tokens-prefix`        | string             | CSS custom property prefix for design tokens                                                      |
 | `--demo-discovery-file-glob`    | string             | Glob pattern for discovering demo files                                                           |
-| `--demo-discovery-url-pattern`  | string             | Go Regexp pattern with named capture groups for generating canonical demo urls                    |
-| `--demo-discovery-url-template` | string             | URL pattern string using {groupName} syntax to interpolate named captures from the URL pattern    |
+| `--demo-discovery-url-pattern`  | string             | URLPattern with named parameters for matching demo file paths                                     |
+| `--demo-discovery-url-template` | string             | Go template with functions for generating canonical demo URLs                                      |
 | `--source-control-root-url`     | string             | Glob pattern for discovering demo files                                                           |
 | `--project-dir`                 | string             | **Deprecated:** Use `--package` instead.                                                          |
 

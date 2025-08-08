@@ -236,7 +236,15 @@ func (gs *GenerateSession) applyPostProcessingToModules(ctx context.Context, res
 	var demoMap map[string][]string
 	if !skipDemoDiscovery && len(result.demoFiles) > 0 {
 		var err error
-		demoMap, err = DD.NewDemoMap(result.demoFiles)
+		cfg, cfgErr := gs.setupCtx.Config()
+		if cfgErr != nil {
+			errsList = append(errsList, cfgErr)
+		}
+		var urlPattern string
+		if cfgErr == nil {
+			urlPattern = cfg.Generate.DemoDiscovery.URLPattern
+		}
+		demoMap, err = DD.NewDemoMapWithPattern(result.demoFiles, urlPattern, allTagAliases)
 		if err != nil {
 			errsList = append(errsList, err)
 		}
