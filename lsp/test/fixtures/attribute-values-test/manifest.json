@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "test-component.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "TestComponent",
+          "tagName": "test-component",
+          "customElement": true,
+          "description": "A test component with various attribute types",
+          "attributes": [
+            {
+              "name": "color",
+              "type": {
+                "text": "string"
+              },
+              "description": "Color attribute for testing context-aware completions"
+            },
+            {
+              "name": "theme",
+              "type": {
+                "text": "\"light\" | \"dark\" | \"auto\""
+              },
+              "description": "Theme attribute with union type"
+            },
+            {
+              "name": "disabled",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Boolean disabled attribute"
+            },
+            {
+              "name": "count",
+              "type": {
+                "text": "number"
+              },
+              "description": "Number attribute"
+            },
+            {
+              "name": "size",
+              "type": {
+                "text": "string"
+              },
+              "default": "medium",
+              "description": "Size attribute with default value"
+            },
+            {
+              "name": "variant",
+              "type": {
+                "text": "string"
+              },
+              "description": "Variant attribute for testing context-aware completions"
+            },
+            {
+              "name": "items",
+              "type": {
+                "text": "string[]"
+              },
+              "description": "Array type attribute"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "test-component",
+          "declaration": {
+            "name": "TestComponent",
+            "module": "test-component.js"
+          }
+        }
+      ]
+    }
+  ]
+}

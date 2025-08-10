@@ -5,10 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"iter"
-	"log"
 	"path"
 	"slices"
-	"strings"
 	"sync"
 	"time"
 
@@ -136,6 +134,44 @@ func PutTypeScriptParser(parser *ts.Parser) {
 
 // ---- End Parser Pooling Section ----
 
+// QuerySelector defines which queries to load for performance
+type QuerySelector struct {
+	HTML       []string // HTML query names to load
+	TypeScript []string // TypeScript query names to load
+	CSS        []string // CSS query names to load
+	JSDoc      []string // JSDoc query names to load
+}
+
+// AllQueries returns a selector that loads all available queries
+func AllQueries() QuerySelector {
+	return QuerySelector{
+		HTML:       []string{"slotsAndParts", "customElements", "completionContext"},
+		TypeScript: []string{"classMemberDeclaration", "classes", "declarations", "imports", "htmlTemplates", "completionContext"},
+		CSS:        []string{"cssCustomProperties"},
+		JSDoc:      []string{"jsdoc"},
+	}
+}
+
+// LSPQueries returns a selector that loads only queries needed for LSP
+func LSPQueries() QuerySelector {
+	return QuerySelector{
+		HTML:       []string{"customElements", "completionContext"},
+		TypeScript: []string{"htmlTemplates", "completionContext"},
+		CSS:        []string{},
+		JSDoc:      []string{},
+	}
+}
+
+// GenerateQueries returns a selector that loads only queries needed for generate
+func GenerateQueries() QuerySelector {
+	return QuerySelector{
+		HTML:       []string{"slotsAndParts"},
+		TypeScript: []string{"classMemberDeclaration", "classes", "declarations", "imports"},
+		CSS:        []string{"cssCustomProperties"},
+		JSDoc:      []string{"jsdoc"},
+	}
+}
+
 type QueryManagerI interface {
 	Close()
 	getQuery(name string) (*ts.Query, error)
@@ -148,7 +184,7 @@ type QueryManager struct {
 	html       map[string]*ts.Query
 }
 
-func NewQueryManager() (*QueryManager, error) {
+func NewQueryManager(selector QuerySelector) (*QueryManager, error) {
 	start := time.Now()
 	qm := &QueryManager{
 		typescript: make(map[string]*ts.Query),
@@ -157,65 +193,79 @@ func NewQueryManager() (*QueryManager, error) {
 		html:       make(map[string]*ts.Query),
 	}
 
-	data, err := queries.ReadDir(".")
-	if err != nil {
-		return nil, err
-	}
-
-	for _, direntry := range data {
-		if direntry.IsDir() {
-			language := direntry.Name()
-			// embeds must always use /, never \
-			// so we need to use path.Join here, never filepath.Join
-			data, err := queries.ReadDir(path.Join(".", language))
-			if err != nil {
-				return nil, err
-			}
-			for _, entry := range data {
-				if !entry.IsDir() {
-					file := entry.Name()
-					queryName := strings.Split(path.Base(file), ".")[0]
-					// embeds must always use /, never \
-					// so we need to use path.Join here, never filepath.Join
-					data, err := queries.ReadFile(path.Join(".", language, file))
-					if err != nil {
-						return nil, err
-					}
-					queryText := string(data)
-					var tsLang *ts.Language
-					switch language {
-					case "typescript":
-						tsLang = languages.typescript
-					case "jsdoc":
-						tsLang = languages.jsdoc
-					case "css":
-						tsLang = languages.css
-					case "html":
-						tsLang = languages.html
-					}
-					if tsLang == nil {
-						log.Fatalf("unknown language %s", language)
-					}
-					query, qerr := ts.NewQuery(tsLang, queryText)
-					if qerr != nil {
-						log.Fatal(qerr)
-					}
-					switch language {
-					case "typescript":
-						qm.typescript[queryName] = query
-					case "jsdoc":
-						qm.jsdoc[queryName] = query
-					case "css":
-						qm.css[queryName] = query
-					case "html":
-						qm.html[queryName] = query
-					}
-				}
-			}
+	// Load only the requested queries
+	for _, queryName := range selector.HTML {
+		if err := qm.loadQuery("html", queryName); err != nil {
+			qm.Close()
+			return nil, fmt.Errorf("failed to load HTML query %s: %w", queryName, err)
 		}
 	}
-	pterm.Debug.Println("Constructing queries took", time.Since(start))
+
+	for _, queryName := range selector.TypeScript {
+		if err := qm.loadQuery("typescript", queryName); err != nil {
+			qm.Close()
+			return nil, fmt.Errorf("failed to load TypeScript query %s: %w", queryName, err)
+		}
+	}
+
+	for _, queryName := range selector.CSS {
+		if err := qm.loadQuery("css", queryName); err != nil {
+			qm.Close()
+			return nil, fmt.Errorf("failed to load CSS query %s: %w", queryName, err)
+		}
+	}
+
+	for _, queryName := range selector.JSDoc {
+		if err := qm.loadQuery("jsdoc", queryName); err != nil {
+			qm.Close()
+			return nil, fmt.Errorf("failed to load JSDoc query %s: %w", queryName, err)
+		}
+	}
+
+	pterm.Debug.Println("Constructing selected queries took", time.Since(start))
 	return qm, nil
+}
+
+func (qm *QueryManager) loadQuery(language, queryName string) error {
+	// Read the query file
+	queryPath := path.Join(language, queryName+".scm")
+	data, err := queries.ReadFile(queryPath)
+	if err != nil {
+		return fmt.Errorf("failed to read query file %s: %w", queryPath, err)
+	}
+
+	queryText := string(data)
+	var tsLang *ts.Language
+	switch language {
+	case "typescript":
+		tsLang = languages.typescript
+	case "jsdoc":
+		tsLang = languages.jsdoc
+	case "css":
+		tsLang = languages.css
+	case "html":
+		tsLang = languages.html
+	default:
+		return fmt.Errorf("unknown language %s", language)
+	}
+
+	query, qerr := ts.NewQuery(tsLang, queryText)
+	if qerr != nil {
+		return fmt.Errorf("failed to parse query %s: %w", queryName, qerr)
+	}
+
+	switch language {
+	case "typescript":
+		qm.typescript[queryName] = query
+	case "jsdoc":
+		qm.jsdoc[queryName] = query
+	case "css":
+		qm.css[queryName] = query
+	case "html":
+		qm.html[queryName] = query
+	}
+
+	return nil
 }
 
 func (qm *QueryManager) Close() {

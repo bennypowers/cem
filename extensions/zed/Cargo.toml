@@ -1,0 +1,13 @@
+[package]
+name = "cem-zed-extension"
+version = "0.1.0"
+edition = "2021"
+authors = ["Benny Powers <web@bennypowers.com>"]
+license = "GPL-3.0-or-later"
+repository = "https://github.com/bennypowers/cem"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+zed_extension_api = "0.0.6"

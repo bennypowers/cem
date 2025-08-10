@@ -26,8 +26,8 @@ import (
 
 	DT "bennypowers.dev/cem/designtokens"
 	DD "bennypowers.dev/cem/generate/demodiscovery"
-	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
+	Q "bennypowers.dev/cem/queries"
 	W "bennypowers.dev/cem/workspace"
 
 	DS "github.com/bmatcuk/doublestar"
@@ -86,9 +86,19 @@ func preprocess(ctx W.WorkspaceContext) (r preprocessResult, errs error) {
 			errs = errors.Join(errs, err)
 		}
 	}
-	for _, file := range cfg.Generate.Files {
-		if !matchesAnyPattern(file, r.excludePatterns) {
-			r.includedFiles = append(r.includedFiles, file)
+	for _, filePattern := range cfg.Generate.Files {
+		// Expand glob patterns to actual file paths
+		expandedFiles, err := ctx.Glob(filePattern)
+		if err != nil {
+			errs = errors.Join(errs, fmt.Errorf("failed to expand glob pattern %s: %w", filePattern, err))
+			continue
+		}
+
+		// Add expanded files that don't match exclude patterns
+		for _, file := range expandedFiles {
+			if !matchesAnyPattern(file, r.excludePatterns) {
+				r.includedFiles = append(r.includedFiles, file)
+			}
 		}
 	}
 	return r, errs

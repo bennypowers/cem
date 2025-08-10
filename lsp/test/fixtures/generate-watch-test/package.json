@@ -1,0 +1,8 @@
+{
+  "name": "test-project",
+  "version": "1.0.0",
+  "customElements": "custom-elements.json",
+  "dependencies": {
+    "lit": "^3.0.0"
+  }
+}

@@ -19,8 +19,8 @@ package generate
 import (
 	"errors"
 
-	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
+	Q "bennypowers.dev/cem/queries"
 )
 
 func generateVarDeclaration(

@@ -19,7 +19,7 @@ package generate
 import (
 	"fmt"
 
-	Q "bennypowers.dev/cem/generate/queries"
+	Q "bennypowers.dev/cem/queries"
 	W "bennypowers.dev/cem/workspace"
 )
 
@@ -51,7 +51,7 @@ type GenerateContext struct {
 //
 // Performance: Expensive operation (~10-50ms) due to tree-sitter query compilation
 func NewGenerateContext(ctx W.WorkspaceContext) (*GenerateContext, error) {
-	qm, err := Q.NewQueryManager()
+	qm, err := Q.NewQueryManager(Q.GenerateQueries())
 	if err != nil {
 		return nil, fmt.Errorf("initialize QueryManager: %w", err)
 	}

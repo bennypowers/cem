@@ -27,8 +27,8 @@ import (
 
 	"github.com/pterm/pterm"
 
-	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
+	Q "bennypowers.dev/cem/queries"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 

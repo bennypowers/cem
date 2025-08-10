@@ -1,10 +1,13 @@
 [[main]]
   name = "Installation"
-  pageRef = "/docs/installation"
+  pageRef = "/docs/installation/"
 [[main]]
   name = "Commands"
   pageRef = "/docs/commands/"
   identifier = "commands"
 [[main]]
+  name = "LSP"
+  pageRef = "/docs/lsp/"
+[[main]]
   name = "Configuration"
-  pageRef = "/docs/configuration"
+  pageRef = "/docs/configuration/"

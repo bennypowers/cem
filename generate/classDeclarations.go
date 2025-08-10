@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"slices"
 
-	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
+	Q "bennypowers.dev/cem/queries"
 
 	A "github.com/IBM/fp-go/array"
 	ts "github.com/tree-sitter/go-tree-sitter"

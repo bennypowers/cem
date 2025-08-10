@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: extensions/vscode/package-lock.json
+
+      - name: Install dependencies
+        working-directory: extensions/vscode
+        run: npm ci
+
+      - name: Update version from release tag
+        working-directory: extensions/vscode
+        run: |
+          # Extract version from release tag (e.g., v1.0.0 -> 1.0.0)
+          VERSION=$(echo ${{ github.event.release.tag_name }} | sed 's/^v//')
+          npm version $VERSION --no-git-tag-version
+
+      - name: Build extension
+        working-directory: extensions/vscode
+        run: npm run build
+
+      - name: Publish to VS Code Marketplace
+        working-directory: extensions/vscode
+        run: npm run publish
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+      - name: Upload VSIX to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: extensions/vscode/@pwrs-cem-vscode-extension-${{ github.event.release.tag_name }}.vsix
+          asset_name: cem-vscode-${{ github.event.release.tag_name }}.vsix
+          asset_content_type: application/zip

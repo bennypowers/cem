@@ -5,10 +5,11 @@ WINDOWS_CC_IMAGE := cem-windows-cc-image
 
 .PHONY: build test update watch bench profile flamegraph coverage show-coverage clean lint format prepare-npm install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks
 
-# FYI this is mostly for local dev. will work for you if this is on your PATH,
-# but this is kind of a non-traditional install step
+# NOTE: this is a non-traditional install target, which installs to ~/.local/bin/
+# It's mostly intended for local development, not for distribution
 install: build
-	cp dist/cem ~/.local/bin/cem
+	mkdir -p ~/.local/bin/
+	cp dist/cem ~/.local/bin/
 
 all: windows
 
@@ -18,12 +19,6 @@ clean:
 build:
 	@mkdir -p dist
 	go build -ldflags="$(shell ./scripts/ldflags.sh)" -o dist/cem .
-
-# NOTE: this is a non-traditional install target, which installs to ~/.local/bin/
-# It's mostly intended for local development, not for distribution
-install: build
-	mkdir -p ~/.local/bin/
-	cp dist/cem ~/.local/bin/
 
 # Convenience target to build both Windows variants
 windows: windows-x64 windows-arm64

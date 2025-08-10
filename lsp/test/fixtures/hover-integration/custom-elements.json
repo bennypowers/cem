@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "test-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "TestElement",
+          "tagName": "test-element",
+          "customElement": true,
+          "description": "A test custom element for LSP hover functionality",
+          "members": [
+            {
+              "kind": "field",
+              "name": "testAttr",
+              "attribute": "test-attr",
+              "reflects": true,
+              "type": {
+                "text": "string"
+              },
+              "description": "A test attribute for the element"
+            }
+          ],
+          "attributes": [
+            {
+              "name": "test-attr",
+              "type": {
+                "text": "string"
+              },
+              "description": "A test attribute for the element"
+            }
+          ],
+          "events": [
+            {
+              "type": {
+                "text": "CustomEvent"
+              },
+              "name": "test-event",
+              "description": "A test event fired by the element"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "TestElement",
+          "declaration": {
+            "name": "TestElement",
+            "module": "test-element.js"
+          }
+        }
+      ]
+    }
+  ]
+}

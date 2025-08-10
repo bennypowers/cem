@@ -23,8 +23,8 @@ import (
 	"runtime"
 	"sync"
 
-	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
+	Q "bennypowers.dev/cem/queries"
 	"github.com/pterm/pterm"
 
 	ts "github.com/tree-sitter/go-tree-sitter"

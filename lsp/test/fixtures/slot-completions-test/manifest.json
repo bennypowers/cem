@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "card-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "CardElement",
+          "tagName": "card-element",
+          "customElement": true,
+          "description": "A card element with header, footer, and default slots",
+          "slots": [
+            {
+              "name": "",
+              "description": "Default slot for main content"
+            },
+            {
+              "name": "header",
+              "description": "Slot for header content"
+            },
+            {
+              "name": "footer",
+              "description": "Slot for footer content"
+            },
+            {
+              "name": "actions",
+              "description": "Slot for action buttons"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "card-element",
+          "declaration": {
+            "name": "CardElement",
+            "module": "card-element.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module", 
+      "path": "dialog-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "DialogElement",
+          "tagName": "dialog-element", 
+          "customElement": true,
+          "description": "A dialog element with title and content slots",
+          "slots": [
+            {
+              "name": "title",
+              "description": "Slot for dialog title"
+            },
+            {
+              "name": "content",
+              "description": "Slot for dialog content"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition", 
+          "name": "dialog-element",
+          "declaration": {
+            "name": "DialogElement",
+            "module": "dialog-element.js"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -22,8 +22,8 @@ import (
 	"slices"
 	"strings"
 
-	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
+	Q "bennypowers.dev/cem/queries"
 	S "bennypowers.dev/cem/set"
 
 	ts "github.com/tree-sitter/go-tree-sitter"

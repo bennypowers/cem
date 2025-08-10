@@ -1,0 +1,13 @@
+{
+  "name": "test-package",
+  "version": "1.0.0",
+  "description": "Test package for file watching",
+  "customElements": "custom-elements.json",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["custom-elements", "web-components"],
+  "author": "Test Author",
+  "license": "MIT"
+}

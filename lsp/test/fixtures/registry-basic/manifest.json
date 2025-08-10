@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "my-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyElement",
+          "tagName": "my-element",
+          "customElement": true,
+          "description": "A simple test element for registry tests",
+          "attributes": [
+            {
+              "name": "label",
+              "type": {
+                "text": "string"
+              },
+              "description": "Label attribute"
+            },
+            {
+              "name": "count",
+              "type": {
+                "text": "number"
+              },
+              "description": "Count attribute"
+            }
+          ],
+          "events": [
+            {
+              "name": "my-event",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "Custom event"
+            }
+          ],
+          "slots": [
+            {
+              "name": "default",
+              "description": "Default slot"
+            },
+            {
+              "name": "header",
+              "description": "Header slot"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "my-element",
+          "declaration": {
+            "name": "MyElement",
+            "module": "my-element.js"
+          }
+        }
+      ]
+    }
+  ]
+}

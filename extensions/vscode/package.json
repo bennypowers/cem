@@ -1,0 +1,104 @@
+{
+  "name": "@pwrs/cem-vscode-extension",
+  "displayName": "Custom Elements Manifest Language Server",
+  "description": "IDE features for custom elements with intelligent autocomplete and hover documentation",
+  "version": "0.1.0",
+  "publisher": "pwrs",
+  "license": "GPL-3.0-or-later",
+  "author": "Benny Powers <web@bennypowers.com>",
+  "icon": "logo.svg",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bennypowers/cem.git",
+    "directory": "extensions/vscode"
+  },
+  "bugs": {
+    "url": "https://github.com/bennypowers/cem/issues"
+  },
+  "homepage": "https://cem.bennypowers.dev/",
+  "keywords": [
+    "custom elements",
+    "web components",
+    "html",
+    "typescript",
+    "lit",
+    "lsp",
+    "language server"
+  ],
+  "categories": [
+    "Programming Languages",
+    "Snippets",
+    "Other"
+  ],
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "activationEvents": [
+    "onLanguage:html",
+    "onLanguage:typescript",
+    "onLanguage:javascript"
+  ],
+  "main": "./out/client/extension.js",
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "CEM Language Server",
+      "properties": {
+        "cem.lsp.debugLogging": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable debug logging for CEM Language Server"
+        },
+        "cem.lsp.executable": {
+          "type": "string",
+          "default": "",
+          "description": "Custom path to the CEM executable. Leave empty to use the bundled version or PATH lookup."
+        },
+        "cem.lsp.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Traces the communication between VS Code and the CEM language server."
+        }
+      }
+    },
+    "languages": [
+      {
+        "id": "html",
+        "extensions": [".html", ".htm"]
+      },
+      {
+        "id": "typescript",
+        "extensions": [".ts"]
+      },
+      {
+        "id": "javascript", 
+        "extensions": [".js", ".mjs"]
+      }
+    ],
+    "commands": [
+      {
+        "command": "cem.restartServer",
+        "title": "Restart CEM Language Server"
+      },
+      {
+        "command": "cem.showOutputChannel",
+        "title": "Show CEM Language Server Output"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "node build.js",
+    "build": "node build.js && vsce package",
+    "publish": "vsce publish",
+    "postinstall": "cd client && npm install"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^2.15.0",
+    "esbuild": "^0.23.0"
+  }
+}
