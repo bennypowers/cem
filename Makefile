@@ -5,6 +5,11 @@ WINDOWS_CC_IMAGE := cem-windows-cc-image
 
 .PHONY: build test update watch bench profile flamegraph coverage show-coverage clean lint format prepare-npm install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks
 
+# FYI this is mostly for local dev. will work for you if this is on your PATH,
+# but this is kind of a non-traditional install step
+install: build
+	cp dist/cem ~/.local/bin/cem
+
 all: windows
 
 clean:
