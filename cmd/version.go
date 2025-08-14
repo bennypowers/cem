@@ -52,7 +52,7 @@ func printVersionJSON() {
 	buildInfo := version.GetBuildInfo()
 	output, err := json.MarshalIndent(buildInfo, "", "  ")
 	if err != nil {
-		fmt.Printf("Error marshaling version info: %v\n", err)
+		fmt.Printf("error marshaling version info: %v\n", err)
 		return
 	}
 	fmt.Println(string(output))
