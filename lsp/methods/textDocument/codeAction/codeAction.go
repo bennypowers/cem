@@ -17,8 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package codeAction
 
 import (
-	"fmt"
-
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	"github.com/tliron/glsp"
@@ -40,12 +38,27 @@ func CodeAction(ctx CodeActionContext, context *glsp.Context, params *protocol.C
 	for _, diagnostic := range params.Context.Diagnostics {
 		if diagnostic.Source != nil && *diagnostic.Source == "cem-lsp" {
 			if diagnostic.Data != nil {
-				if dataMap, ok := diagnostic.Data.(map[string]interface{}); ok {
-					if actionType, exists := dataMap["type"]; exists && actionType == "slot-suggestion" {
-						action := createSlotAutofixAction(&diagnostic, dataMap, params.TextDocument.URI)
-						if action != nil {
-							actions = append(actions, *action)
-							helpers.SafeDebugLog("[CODE_ACTION] Created slot autofix action")
+				if dataMap, ok := diagnostic.Data.(map[string]any); ok {
+					if actionType, exists := dataMap["type"]; exists {
+						switch actionType {
+						case "slot-suggestion":
+							action := createSlotAutofixAction(&diagnostic, dataMap, params.TextDocument.URI)
+							if action != nil {
+								actions = append(actions, *action)
+								helpers.SafeDebugLog("[CODE_ACTION] Created slot autofix action")
+							}
+						case "tag-suggestion":
+							action := createTagAutofixAction(&diagnostic, dataMap, params.TextDocument.URI)
+							if action != nil {
+								actions = append(actions, *action)
+								helpers.SafeDebugLog("[CODE_ACTION] Created tag autofix action")
+							}
+						case "missing-import":
+							action := createMissingImportAction(&diagnostic, dataMap, params.TextDocument.URI)
+							if action != nil {
+								actions = append(actions, *action)
+								helpers.SafeDebugLog("[CODE_ACTION] Created missing import action")
+							}
 						}
 					}
 				}
@@ -55,60 +68,4 @@ func CodeAction(ctx CodeActionContext, context *glsp.Context, params *protocol.C
 
 	helpers.SafeDebugLog("[CODE_ACTION] Returning %d code actions", len(actions))
 	return actions, nil
-}
-
-// createSlotAutofixAction creates a code action to fix an invalid slot name
-func createSlotAutofixAction(diagnostic *protocol.Diagnostic, data map[string]interface{}, documentURI string) *protocol.CodeAction {
-	original, originalOk := data["original"].(string)
-	suggestion, suggestionOk := data["suggestion"].(string)
-	rangeData, rangeOk := data["range"]
-
-	if !originalOk || !suggestionOk || !rangeOk {
-		return nil
-	}
-
-	// Convert range data back to protocol.Range
-	var fixRange protocol.Range
-	if rangeMap, ok := rangeData.(map[string]interface{}); ok {
-		if start, startOk := rangeMap["start"].(map[string]interface{}); startOk {
-			if line, lineOk := start["line"].(float64); lineOk {
-				fixRange.Start.Line = uint32(line)
-			}
-			if char, charOk := start["character"].(float64); charOk {
-				fixRange.Start.Character = uint32(char)
-			}
-		}
-		if end, endOk := rangeMap["end"].(map[string]interface{}); endOk {
-			if line, lineOk := end["line"].(float64); lineOk {
-				fixRange.End.Line = uint32(line)
-			}
-			if char, charOk := end["character"].(float64); charOk {
-				fixRange.End.Character = uint32(char)
-			}
-		}
-	} else {
-		// Fallback: use diagnostic range if data range parsing fails
-		fixRange = diagnostic.Range
-	}
-
-	title := fmt.Sprintf("Change '%s' to '%s'", original, suggestion)
-	kind := protocol.CodeActionKindQuickFix
-
-	action := protocol.CodeAction{
-		Title: title,
-		Kind:  &kind,
-		Edit: &protocol.WorkspaceEdit{
-			Changes: map[string][]protocol.TextEdit{
-				documentURI: {
-					{
-						Range:   fixRange,
-						NewText: suggestion,
-					},
-				},
-			},
-		},
-		Diagnostics: []protocol.Diagnostic{*diagnostic},
-	}
-
-	return &action
 }

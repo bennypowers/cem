@@ -41,8 +41,12 @@ Quickly jump to your element, attribute, event, etc. definitions.
 Real-time validation with intelligent error correction.
 
 - **Slot validation**: Detects invalid slot attribute values with smart suggestions
-- **One-click autofixes**: Automatically correct typos using your editor's quick fix feature
-- **Intelligent suggestions**: Uses fuzzy matching to suggest the closest valid slot names
+- **Tag name validation**: Validates custom element tag names with two intelligent error classes:
+  - **Typo detection**: Suggests corrections for misspelled tag names (e.g., "my-buttom" → "my-button")
+  - **Missing imports**: Detects elements that exist but aren't imported, with package-aware import suggestions
+- **One-click autofixes**: Automatically correct typos and add missing imports using your editor's quick fix feature
+- **Smart import suggestions**: Resolves proper package names from package.json for npm packages vs. local modules
+- **Intelligent error messaging**: Helpful guidance instead of overwhelming lists for large projects
 
 ## Quick Start
 

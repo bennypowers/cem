@@ -112,14 +112,15 @@ Detailed architectural information is available in [ARCHITECTURE.md](./ARCHITECT
   - **Nil pointer dereference protection**: Added safe handling for attributes without type information in manifest reload debug logging
   - **Registry thread safety**: Added comprehensive mutex protection for concurrent access to registry data structures
   - **Regression test coverage**: Added comprehensive regression tests for all fixed issues
-- [ ] **Diagnostics for unknown elements/attributes** - Validation with error reporting
 - [x] **Slot name validation diagnostics** - Validate slot attribute values with autofixes (e.g., "foofer" → "footer") ✅ COMPLETED
-- [ ] **Type checking for attribute values** - Validate attribute values against manifest types
+- [x] **Tag name validation diagnostics** - Validate custom element tag names with intelligent error handling ✅ COMPLETED
 - [x] **Replace shell-based generate watcher with in-process implementation** ✅ COMPLETED - Fixed hanging process issues:
   - Created InProcessGenerateWatcher using existing generate.WatchSession
   - Implemented context-based cancellation for clean shutdown
   - Eliminated subprocess dependency and improved resource management
   - All integration tests passing with no hanging processes
+- [ ] **Diagnostics for unknown elements/attributes** - Validation with error reporting
+- [ ] **Type checking for attribute values** - Validate attribute values against manifest types
 - [ ] **Enhanced go-to-definition preferences** - User configurable definition targets:
   - Go to class declaration
   - Go to custom element tag name definition (default)
@@ -146,7 +147,8 @@ lsp/
 ├── types/                 # Shared type definitions
 │   ├── completion.go      # Completion-related types
 │   ├── context.go         # Context interfaces (HoverContext, DefinitionContext, etc.)
-│   └── document.go        # Document interface and types
+│   ├── document.go        # Document interface and types
+│   └── diagnostics.go     # Diagnostics types (AutofixData, DiagnosticType)
 ├── helpers/               # Utility functions
 │   └── debug.go           # Debug logging utilities
 ├── methods/               # Organized LSP method implementations
@@ -166,9 +168,16 @@ lsp/
 │       │   └── test/fixtures/          # Test fixtures
 │       ├── publishDiagnostics/   # Diagnostics feature package
 │       │   ├── publishDiagnostics.go   # Main diagnostics implementation
+│       │   ├── slotDiagnostics.go      # Slot validation diagnostics
+│       │   ├── tagDiagnostics.go       # Tag validation diagnostics
+│       │   ├── tagDiagnostics_test.go  # Tag diagnostics tests
 │       │   └── publishDiagnostics_test.go # Diagnostics tests
 │       ├── codeAction/    # Code actions feature package
-│       │   ├── codeAction.go           # Autofix implementations
+│       │   ├── codeAction.go           # Main autofix implementations
+│       │   ├── slotCodeActions.go      # Slot autofix actions
+│       │   ├── tagCodeActions.go       # Tag autofix actions
+│       │   ├── missingImportCodeActions.go # Missing import autofix actions
+│       │   ├── missingImportCodeActions_test.go # Missing import tests
 │       │   └── codeAction_test.go      # Code action tests
 │       ├── context.go     # Cursor position analysis for smart completions
 │       ├── document.go    # Document interface for textDocument operations
@@ -235,6 +244,7 @@ queries/ (shared root)     # Unified query management package
 - ✅ **Slot attribute value completions** - Intelligent slot name suggestions for direct children of slotted elements
 - ✅ **Go-to-definition support** - Jump to custom element source definitions with TypeScript source preference
 - ✅ **Slot validation diagnostics with autofixes** - Real-time error detection and one-click fixes for invalid slot names
+- ✅ **Tag name validation diagnostics with missing import detection** - Intelligent validation of custom element tag names with package-aware import suggestions
 
 ### Current Test Status ✅ PERFECT SCORES
 - **Completion Tests**: All 30+ completion tests passing (100% success rate) ✅
@@ -328,9 +338,9 @@ Example VS Code configuration:
 4. ✅ **Context Interface Standardization**: COMPLETED - Consistent context interfaces across all LSP methods
 5. ✅ **Refactoring Bug Fixes**: COMPLETED - Fixed type mismatches and DocumentManager threading
 
-### Phase 6: Next Generation Features 🚧 UPCOMING
+### Phase 6: Next Generation Features 🚧 IN PROGRESS
 1. ✅ **Slot name validation diagnostics**: COMPLETED - Validate slot attribute values with autofixes (e.g., "foofer" → "footer")
-2. **Advanced diagnostics**: Validate unknown elements/attributes with error reporting
+2. ✅ **Tag name validation diagnostics**: COMPLETED - Validate custom element tag names with intelligent autofixes and missing import detection
 3. **Type validation**: Validate attribute values against manifest types
 4. **Enhanced Lit completions**: Look up global properties from MDN/web platform APIs
 5. **Workspace symbols**: Search and navigate custom elements across workspace
@@ -481,3 +491,41 @@ func analyzeDocument(dm *DocumentManager) {
 - **Levenshtein Matching**: Finds closest slot name suggestions with configurable distance thresholds
 - **Nil Pointer Safety**: Robust error handling prevents crashes during document analysis
 - **Integration Points**: Diagnostics trigger on document open/change, autofixes available via code actions
+
+### Tag Name Validation Diagnostics with Missing Import Detection ✅ COMPLETED (2025-08-14)
+- **Two-Class Error Detection**: Intelligent validation of custom element tag names with distinct error handling:
+  - **Unknown Tag Names**: Levenshtein distance suggestions for typos (e.g., "my-buttom" → "my-button")
+  - **Missing Import Elements**: Detection of elements that exist in registry but aren't imported
+- **Package-Aware Import Resolution**: Resolves proper package names from package.json for intelligent import suggestions
+  - **Package Imports**: `import "@my-org/components"` for npm packages
+  - **Local Imports**: `import "./my-element.js"` for workspace elements
+  - **HTML Support**: Appropriate script tags with import map guidance
+- **Smart Distance Handling**: Prevents overwhelming users with irrelevant suggestions
+  - **Close Matches**: "Did you mean?" suggestions for small edit distances
+  - **Large Distances**: Helpful documentation guidance instead of random element lists
+  - **Many Elements**: Shows documentation message for projects with >5 available elements
+- **Type-Safe Implementation**: Replaced `map[string]any` with structured `AutofixData` types
+  - **Compile-Time Safety**: Strong typing prevents runtime errors
+  - **LSP Protocol Compliance**: Clean serialization/deserialization for diagnostic data
+  - **Extensible Design**: Easy to add new diagnostic types and autofix actions
+- **Modular Architecture**: Clean separation following "Diagnostics + Code Actions Pattern"
+  - **`tagDiagnostics.go`**: Tag validation logic with custom element name validation
+  - **`tagCodeActions.go`**: Tag autofix actions for typo corrections
+  - **`missingImportCodeActions.go`**: Missing import autofix actions with package awareness
+- **Comprehensive Testing**: Full test coverage with realistic scenarios
+  - **Multiple error classes**: Tests for typos, missing imports, and large distances
+  - **Package vs local imports**: Verification of correct import suggestion logic
+  - **Edge cases**: Empty manifests, no available elements, validation edge cases
+
+**User Experience**:
+- **Typo Detection**: Red squiggles under tag typos like `<my-buttom>` with suggestion "Did you mean 'my-button'?"
+- **Missing Import Detection**: Clear errors for `<ui-button>` with autofix "Add import for 'ui-button'"
+- **One-Click Fixes**: Lightbulb menu provides instant correction with proper import statements
+- **Smart Messaging**: Helpful guidance instead of overwhelming element lists for large projects
+
+**Technical Implementation**:
+- **Registry Enhancement**: Extended `ElementDefinition` to track package names from package.json
+- **Package Resolution**: `GetElementSource()` prefers package names over module paths for better suggestions
+- **Import Intelligence**: Differentiates between package imports and local module imports
+- **HTML/TypeScript Support**: Context-aware import statements for different file types
+- **Custom Element Validation**: Follows web standards for custom element naming rules

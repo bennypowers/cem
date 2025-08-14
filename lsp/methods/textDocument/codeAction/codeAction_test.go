@@ -43,16 +43,16 @@ func TestCodeActionSlotSuggestion(t *testing.T) {
 		Severity: &severity,
 		Source:   &source,
 		Message:  "Unknown slot 'heade' for element 'my-element'. Did you mean 'header'?",
-		Data: map[string]interface{}{
+		Data: map[string]any{
 			"type":       "slot-suggestion",
 			"original":   "heade",
 			"suggestion": "header",
-			"range": map[string]interface{}{
-				"start": map[string]interface{}{
+			"range": map[string]any{
+				"start": map[string]any{
 					"line":      float64(0),
 					"character": float64(25),
 				},
-				"end": map[string]interface{}{
+				"end": map[string]any{
 					"line":      float64(0),
 					"character": float64(30),
 				},

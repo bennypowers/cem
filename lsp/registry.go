@@ -32,14 +32,20 @@ import (
 
 // ElementDefinition stores a custom element with its source information
 type ElementDefinition struct {
-	Element    *M.CustomElement
-	ModulePath string             // Path from the manifest module
-	Source     *M.SourceReference // Source reference if available
+	Element     *M.CustomElement
+	ModulePath  string             // Path from the manifest module
+	Source      *M.SourceReference // Source reference if available
+	PackageName string             // Package name from package.json (if loaded from a package)
 }
 
 // GetModulePath returns the module path for this element definition
 func (ed *ElementDefinition) GetModulePath() string {
 	return ed.ModulePath
+}
+
+// GetPackageName returns the package name for this element definition
+func (ed *ElementDefinition) GetPackageName() string {
+	return ed.PackageName
 }
 
 // GetSourceHref returns the source href for this element definition
@@ -235,7 +241,7 @@ func (r *Registry) loadPackageManifest(packagePath string) {
 
 	// Load the manifest
 	if pkg, err := r.loadManifestFile(manifestPath); err == nil {
-		r.addManifest(pkg)
+		r.addManifestWithPackageName(pkg, packageJSON.Name)
 		helpers.SafeDebugLog("Loaded manifest from %s (%s)", packageJSON.Name, manifestPath)
 	}
 }
@@ -287,6 +293,11 @@ func (r *Registry) loadManifestFile(path string) (*M.Package, error) {
 
 // addManifest adds a manifest package to the registry and indexes its elements
 func (r *Registry) addManifest(pkg *M.Package) {
+	r.addManifestWithPackageName(pkg, "")
+}
+
+// addManifestWithPackageName adds a manifest package to the registry with package name context
+func (r *Registry) addManifestWithPackageName(pkg *M.Package, packageName string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -304,9 +315,10 @@ func (r *Registry) addManifest(pkg *M.Package) {
 
 					// Store the element definition with source information
 					r.ElementDefinitions[element.TagName] = &ElementDefinition{
-						Element:    element,
-						ModulePath: module.Path,
-						Source:     customElementDecl.Source,
+						Element:     element,
+						ModulePath:  module.Path,
+						Source:      customElementDecl.Source,
+						PackageName: packageName,
 					}
 
 					// Index attributes for this element

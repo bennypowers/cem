@@ -100,6 +100,29 @@ func (s *ServerAdapter) GetElementDefinition(tagName string) (types.ElementDefin
 	return s.server.registry.GetElementDefinition(tagName)
 }
 
+func (s *ServerAdapter) GetElementSource(tagName string) (string, bool) {
+	// Get the element definition which contains source information
+	definition, exists := s.server.registry.GetElementDefinition(tagName)
+	if !exists {
+		return "", false
+	}
+
+	// Prefer package name over module path for better import suggestions
+	packageName := definition.GetPackageName()
+	if packageName != "" {
+		// Return the package name for npm package imports
+		return packageName, true
+	}
+
+	// Fallback to module path for local/workspace elements
+	modulePath := definition.GetModulePath()
+	if modulePath != "" {
+		return modulePath, true
+	}
+
+	return "", false
+}
+
 func (s *ServerAdapter) GetWorkspaceRoot() string {
 	if s.server.workspace != nil {
 		return s.server.workspace.Root()
