@@ -277,7 +277,7 @@ export class TestButton extends LitElement {
 
 	// Wait for the generate watcher to detect the TypeScript change and regenerate the manifest
 	// We need to wait for the file watcher to trigger a reload multiple times
-	time.Sleep(3 * time.Second)
+	time.Sleep(200 * time.Millisecond)
 
 	// Debug: Read the manifest file directly to see what was generated
 	manifestContent, err := os.ReadFile(manifestPath)
