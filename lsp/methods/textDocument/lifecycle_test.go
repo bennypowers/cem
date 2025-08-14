@@ -91,3 +91,47 @@ func TestDocumentChangeHandling(t *testing.T) {
 		t.Errorf("Found wrong element. Expected: my-element, Got: %s", foundElement.TagName)
 	}
 }
+
+// TestNilDocumentManagerHandling tests the regression fix for nil pointer dereference
+// when AnalyzeCompletionContextTS is called with nil document manager (e.g., from diagnostics)
+func TestNilDocumentManagerHandling(t *testing.T) {
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create document manager: %v", err)
+	}
+	defer dm.Close()
+
+	// Test HTML content that could trigger completion context analysis
+	uri := "file:///test.html"
+	htmlContent := `<my-element><div slot="header">Content</div></my-element>`
+
+	// Open document
+	doc := dm.OpenDocument(uri, htmlContent, 1)
+	if doc == nil {
+		t.Fatal("Failed to open document")
+	}
+
+	// Test that AnalyzeCompletionContextTS doesn't crash when called with nil document manager
+	// This simulates what happens when diagnostics or other non-completion contexts call the function
+	pos := protocol.Position{Line: 0, Character: 20} // Position in the slot attribute
+
+	// This should not panic - previously would cause: panic: runtime error: invalid memory address or nil pointer dereference
+	result := doc.AnalyzeCompletionContextTS(pos, nil)
+
+	// The result might be nil or have minimal analysis, but it shouldn't crash
+	// The important thing is that it doesn't panic
+	if result != nil {
+		t.Logf("Analysis result with nil dm: Type=%v, TagName=%s", result.Type, result.TagName)
+	} else {
+		t.Log("Analysis returned nil with nil dm (acceptable)")
+	}
+
+	// Verify the same call works fine with a proper document manager
+	resultWithDM := doc.AnalyzeCompletionContextTS(pos, dm)
+	if resultWithDM != nil {
+		t.Logf("Analysis result with proper dm: Type=%v, TagName=%s", resultWithDM.Type, resultWithDM.TagName)
+	}
+
+	// The key assertion: no panic occurred during the nil dm call
+	// If we reach this point, the test passes
+}

@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"bennypowers.dev/cem/lsp/helpers"
+	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
 	"bennypowers.dev/cem/lsp/types"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
@@ -28,6 +29,7 @@ import (
 // LifecycleContext provides the dependencies needed for document lifecycle
 type LifecycleContext interface {
 	GetTextDocumentManager() DocumentManager
+	publishDiagnostics.DiagnosticsContext
 }
 
 // DocumentManager interface for document lifecycle operations
@@ -52,6 +54,11 @@ func DidOpen(ctx LifecycleContext, context *glsp.Context, params *protocol.DidOp
 
 	if doc != nil {
 		helpers.SafeDebugLog("[LIFECYCLE] Successfully opened document: %s", params.TextDocument.URI)
+
+		// Trigger diagnostics for the newly opened document
+		if err := publishDiagnostics.PublishDiagnostics(ctx, context, params.TextDocument.URI); err != nil {
+			helpers.SafeDebugLog("[LIFECYCLE] Failed to publish diagnostics for %s: %v", params.TextDocument.URI, err)
+		}
 	} else {
 		helpers.SafeDebugLog("[LIFECYCLE] Failed to open document: %s", params.TextDocument.URI)
 	}
@@ -114,6 +121,11 @@ func DidChange(ctx LifecycleContext, context *glsp.Context, params *protocol.Did
 
 	if updatedDoc != nil {
 		helpers.SafeDebugLog("[LIFECYCLE] Successfully updated document: %s", params.TextDocument.URI)
+
+		// Trigger diagnostics for the updated document
+		if err := publishDiagnostics.PublishDiagnostics(ctx, context, params.TextDocument.URI); err != nil {
+			helpers.SafeDebugLog("[LIFECYCLE] Failed to publish diagnostics for %s: %v", params.TextDocument.URI, err)
+		}
 	} else {
 		helpers.SafeDebugLog("[LIFECYCLE] Failed to update document: %s", params.TextDocument.URI)
 	}

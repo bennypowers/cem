@@ -852,6 +852,11 @@ func (d *Document) analyzeCompletionContextTSInternal(position protocol.Position
 
 // analyzeHTMLCompletionContext analyzes completion context in HTML documents
 func (d *Document) analyzeHTMLCompletionContext(byteOffset uint, analysis *types.CompletionAnalysis, dm *DocumentManager) *types.CompletionAnalysis {
+	// Check for nil document manager - can happen when called from diagnostics or other contexts
+	if dm == nil {
+		return analysis
+	}
+
 	root := d.Tree.RootNode()
 	content := []byte(d.Content)
 
@@ -1205,6 +1210,11 @@ func (d *Document) analyzeHTMLCompletionContext(byteOffset uint, analysis *types
 
 // analyzeTypeScriptCompletionContext analyzes completion context in TypeScript template literals
 func (d *Document) analyzeTypeScriptCompletionContext(byteOffset uint, analysis *types.CompletionAnalysis, dm *DocumentManager) *types.CompletionAnalysis {
+	// Check for nil document manager - can happen when called from diagnostics or other contexts
+	if dm == nil {
+		return analysis
+	}
+
 	root := d.Tree.RootNode()
 	content := []byte(d.Content)
 
