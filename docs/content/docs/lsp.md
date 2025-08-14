@@ -36,6 +36,14 @@ Quickly jump to your element, attribute, event, etc. definitions.
 - Jump to custom element source definitions
 - Support for tag names and attributes (extensible for slots and events)
 
+**Error Detection & Autofixes**
+
+Real-time validation with intelligent error correction.
+
+- **Slot validation**: Detects invalid slot attribute values with smart suggestions
+- **One-click autofixes**: Automatically correct typos using your editor's quick fix feature
+- **Intelligent suggestions**: Uses fuzzy matching to suggest the closest valid slot names
+
 ## Quick Start
 
 Install using Go:
@@ -138,6 +146,9 @@ Debug logging is controlled via the LSP standard `$/setTrace` notification. Most
 **Text Document Features**
 - `textDocument/hover` - Show element and attribute documentation on hover
 - `textDocument/completion` - Provide tag and attribute completion suggestions
+- `textDocument/definition` - Jump to custom element source definitions
+- `textDocument/publishDiagnostics` - Report validation errors with intelligent suggestions
+- `textDocument/codeAction` - Provide one-click autofixes for validation errors
 - `textDocument/didOpen` - Track when documents are opened in the editor
 - `textDocument/didChange` - Handle incremental document changes
 - `textDocument/didClose` - Clean up resources when documents are closed
@@ -146,6 +157,27 @@ Debug logging is controlled via the LSP standard `$/setTrace` notification. Most
 - `initialize` - Establish server capabilities and workspace configuration
 - `shutdown` - Gracefully terminate the language server
 - `$/setTrace` - Control debug logging verbosity (LSP standard)
+
+## Example: Slot Validation
+
+The language server provides real-time validation for slot attributes with intelligent autofixes:
+
+```html
+<!-- ❌ Invalid slot name -->
+<my-card>
+  <div slot="heade">Title</div>  <!-- Red squiggles appear -->
+</my-card>
+
+<!-- ✅ After autofix (Ctrl+. → "Change 'heade' to 'header'") -->
+<my-card>
+  <div slot="header">Title</div>  <!-- Automatically corrected -->
+</my-card>
+```
+
+When you type an invalid slot name, the language server:
+1. **Detects the error** and shows red squiggles
+2. **Suggests corrections** based on available slots from your manifest
+3. **Provides one-click fixes** through your editor's quick fix menu
 
 ## Architecture
 The server uses tree-sitter for robust parsing and maintains an in-memory index

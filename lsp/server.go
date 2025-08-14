@@ -22,6 +22,7 @@ import (
 	"bennypowers.dev/cem/lsp/helpers"
 	serverMethods "bennypowers.dev/cem/lsp/methods/server"
 	"bennypowers.dev/cem/lsp/methods/textDocument"
+	"bennypowers.dev/cem/lsp/methods/textDocument/codeAction"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/methods/textDocument/definition"
 	"bennypowers.dev/cem/lsp/methods/textDocument/hover"
@@ -65,6 +66,7 @@ func NewServer(workspace W.WorkspaceContext) (*Server, error) {
 		TextDocumentHover:      s.hover,
 		TextDocumentCompletion: s.completion,
 		TextDocumentDefinition: s.definition,
+		TextDocumentCodeAction: s.codeAction,
 		TextDocumentDidOpen:    s.didOpen,
 		TextDocumentDidChange:  s.didChange,
 		TextDocumentDidClose:   s.didClose,
@@ -217,6 +219,11 @@ func (s *Server) completion(context *glsp.Context, params *protocol.CompletionPa
 // definition handles textDocument/definition requests
 func (s *Server) definition(context *glsp.Context, params *protocol.DefinitionParams) (any, error) {
 	return definition.Definition(s.adapter, context, params)
+}
+
+// codeAction handles textDocument/codeAction requests
+func (s *Server) codeAction(context *glsp.Context, params *protocol.CodeActionParams) (any, error) {
+	return codeAction.CodeAction(s.adapter, context, params)
 }
 
 // didOpen handles textDocument/didOpen notifications

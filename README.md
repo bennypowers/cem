@@ -62,6 +62,8 @@ The `cem lsp` command starts a Language Server Protocol (LSP) server that provid
 - Tag name and attribute completion for custom elements
 - Slot attribute value completion for direct children of slotted elements  
 - Hover documentation with type information
+- **Error detection with autofixes** - Real-time slot validation with one-click corrections
+- Go-to-definition support for jumping to element source code
 - Support for HTML files and TypeScript template literals
 - Automatic manifest discovery and live reloading
 

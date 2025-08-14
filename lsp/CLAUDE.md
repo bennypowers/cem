@@ -49,6 +49,7 @@
 - Diagnostics + Code Actions: Always implement together for complete autofix workflows
 - Document lifecycle integration: Hook diagnostics into didOpen/didChange events
 - Capability declaration: Update server capabilities when adding new method support
+
 ## Overview
 Implementation of `cem lsp` - a Language Server Protocol (LSP) server for custom elements manifests. This LSP server will provide IDE features for HTML files and TypeScript template literals containing custom elements.
 
@@ -112,7 +113,7 @@ Detailed architectural information is available in [ARCHITECTURE.md](./ARCHITECT
   - **Registry thread safety**: Added comprehensive mutex protection for concurrent access to registry data structures
   - **Regression test coverage**: Added comprehensive regression tests for all fixed issues
 - [ ] **Diagnostics for unknown elements/attributes** - Validation with error reporting
-- [ ] **Slot name validation diagnostics** - Validate slot attribute values with autofixes (e.g., "foofer" → "footer")
+- [x] **Slot name validation diagnostics** - Validate slot attribute values with autofixes (e.g., "foofer" → "footer") ✅ COMPLETED
 - [ ] **Type checking for attribute values** - Validate attribute values against manifest types
 - [x] **Replace shell-based generate watcher with in-process implementation** ✅ COMPLETED - Fixed hanging process issues:
   - Created InProcessGenerateWatcher using existing generate.WatchSession
@@ -163,6 +164,12 @@ lsp/
 │       │   ├── hover.go                # Hover implementation
 │       │   ├── hover_test.go           # Hover tests
 │       │   └── test/fixtures/          # Test fixtures
+│       ├── publishDiagnostics/   # Diagnostics feature package
+│       │   ├── publishDiagnostics.go   # Main diagnostics implementation
+│       │   └── publishDiagnostics_test.go # Diagnostics tests
+│       ├── codeAction/    # Code actions feature package
+│       │   ├── codeAction.go           # Autofix implementations
+│       │   └── codeAction_test.go      # Code action tests
 │       ├── context.go     # Cursor position analysis for smart completions
 │       ├── document.go    # Document interface for textDocument operations
 │       ├── lifecycle.go   # Document lifecycle (didOpen, didChange, didClose)
@@ -227,6 +234,7 @@ queries/ (shared root)     # Unified query management package
 - ✅ **Boolean attribute semantics** - Proper HTML boolean attribute handling (presence=true, no value completions)
 - ✅ **Slot attribute value completions** - Intelligent slot name suggestions for direct children of slotted elements
 - ✅ **Go-to-definition support** - Jump to custom element source definitions with TypeScript source preference
+- ✅ **Slot validation diagnostics with autofixes** - Real-time error detection and one-click fixes for invalid slot names
 
 ### Current Test Status ✅ PERFECT SCORES
 - **Completion Tests**: All 30+ completion tests passing (100% success rate) ✅
@@ -321,11 +329,39 @@ Example VS Code configuration:
 5. ✅ **Refactoring Bug Fixes**: COMPLETED - Fixed type mismatches and DocumentManager threading
 
 ### Phase 6: Next Generation Features 🚧 UPCOMING
-1. **Slot name validation diagnostics**: Validate slot attribute values with autofixes (e.g., "foofer" → "footer")
+1. ✅ **Slot name validation diagnostics**: COMPLETED - Validate slot attribute values with autofixes (e.g., "foofer" → "footer")
 2. **Advanced diagnostics**: Validate unknown elements/attributes with error reporting
 3. **Type validation**: Validate attribute values against manifest types
 4. **Enhanced Lit completions**: Look up global properties from MDN/web platform APIs
 5. **Workspace symbols**: Search and navigate custom elements across workspace
+
+## Recommended Next Tasks (Ordered by Impact/Effort)
+
+### 🔥 High Impact, Low Effort
+1. **Advanced diagnostics for unknown elements/attributes** - Extends existing diagnostics architecture
+   - Reuses `publishDiagnostics/` and `codeAction/` packages
+   - Similar validation pattern to slot diagnostics
+   - High user value for catching typos in element/attribute names
+
+### ⚡ High Impact, Medium Effort  
+2. **Workspace symbol provider** - New LSP method for element discovery
+   - Requires new `workspace/symbol` method package
+   - Leverages existing manifest registry for data
+   - Significant UX improvement for large codebases
+
+### 🛠️ Medium Impact, Low Effort
+3. **Type validation for attribute values** - Extends diagnostics further
+   - Builds on existing diagnostics infrastructure
+   - Validates attribute values against manifest types (string, number, union, etc.)
+   - Moderate complexity in type checking logic
+
+### 🚀 High Impact, High Effort
+4. **Enhanced Lit completions with MDN integration** - Advanced completion features
+   - Requires external API integration or bundled MDN data
+   - Complex caching and performance considerations
+   - Significant implementation effort but high developer value
+
+**Recommended Starting Point**: Advanced diagnostics for unknown elements (#1) - leverages recent diagnostics work and provides immediate user value.
 
 ### Architecture Notes
 
@@ -338,6 +374,39 @@ Successfully unified query management between `generate` and `lsp` packages:
   - `AllQueries()`: Loads all available queries for comprehensive analysis
 - **Reduced maintenance**: Single codebase for query management and parser pools
 - **Embedded queries**: All `.scm` files embedded with `//go:embed */*.scm`
+
+## LSP Integration Patterns
+
+### Diagnostics + Code Actions Pattern
+**When**: Implementing validation features (like slot validation, unknown elements, type checking)
+**How**: Always implement both `textDocument/publishDiagnostics` AND `textDocument/codeAction` together
+**Benefits**: Complete autofix workflow - users get red squiggles AND one-click fixes
+**Implementation**: Store suggestion data in diagnostic.Data for code action retrieval
+
+### Method Package Architecture Pattern  
+**Structure**: Each LSP method gets its own package under `methods/textDocument/methodName/`
+**Files**: `methodName.go` (implementation) + `methodName_test.go` (tests)
+**Context**: Create method-specific context interface for dependency injection
+**Testing**: Use `package methodName_test` for public API testing only
+
+### Document Analysis Safety Pattern
+**Problem**: Document analysis functions called from multiple contexts (completion, diagnostics, etc.)
+**Solution**: Always accept DocumentManager as parameter and check for nil
+**Implementation**:
+```go
+func analyzeDocument(dm *DocumentManager) {
+    if dm == nil {
+        return safely  // Don't crash
+    }
+    // Safe to use dm.htmlCompletionContext etc.
+}
+```
+
+### Server Capability Declaration Pattern
+**When**: Adding any new LSP method support
+**Required**: Update `methods/server/initialize.go` ServerCapabilities
+**Example**: Adding `CodeActionProvider` when implementing `textDocument/codeAction`
+**Testing**: Verify capabilities are declared in initialization response
 
 
 ## Recent Major Accomplishments ✅
@@ -389,3 +458,26 @@ Successfully unified query management between `generate` and `lsp` packages:
 - **Public API Focus**: Tests only use public interfaces, avoiding implementation details
 - **Realistic Scenarios**: Tests use fixture files and proper workspace structures
 - **Better Coverage**: Added file watching integration tests and error handling tests
+
+### Slot Validation Diagnostics with Autofixes ✅ COMPLETED (2025-08-14)
+- **Real-time Error Detection**: Validates slot attribute values against manifest slot definitions
+- **Intelligent Suggestions**: Uses Levenshtein distance to suggest closest matching slot names
+- **LSP Standards Compliance**: Implements standard `textDocument/publishDiagnostics` and `textDocument/codeAction` protocols
+- **One-Click Autofixes**: Code actions provide instant correction with workspace text edits
+- **Method Package Architecture**: Clean separation into `publishDiagnostics/` and `codeAction/` packages
+- **Comprehensive Testing**: Unit tests for diagnostics generation and code action creation
+- **Performance Optimized**: Efficient text parsing and parent element detection
+- **IDE Integration**: Works seamlessly with VS Code, Neovim, and other LSP clients
+
+**User Experience**:
+- Red squiggles appear under invalid slot names (e.g., `slot="heade"`)
+- Error messages suggest corrections: `"Unknown slot 'heade' for element 'my-element'. Did you mean 'header'?"`
+- Lightbulb/quick fix menu shows: `"Change 'heade' to 'header'"`
+- One click applies the fix automatically
+
+**Technical Implementation**:
+- **Diagnostics Engine**: Parses HTML content, identifies slot attributes, validates against manifests
+- **Autofix System**: Creates workspace edits with precise text ranges for seamless IDE integration
+- **Levenshtein Matching**: Finds closest slot name suggestions with configurable distance thresholds
+- **Nil Pointer Safety**: Robust error handling prevents crashes during document analysis
+- **Integration Points**: Diagnostics trigger on document open/change, autofixes available via code actions
