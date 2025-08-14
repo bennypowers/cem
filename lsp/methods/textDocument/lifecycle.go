@@ -28,7 +28,7 @@ import (
 
 // LifecycleContext provides the dependencies needed for document lifecycle
 type LifecycleContext interface {
-	GetTextDocumentManager() DocumentManager
+	TextDocumentManager() DocumentManager
 	publishDiagnostics.DiagnosticsContext
 }
 
@@ -37,7 +37,7 @@ type DocumentManager interface {
 	OpenDocument(uri, content string, version int32) types.Document
 	UpdateDocument(uri, content string, version int32) types.Document
 	CloseDocument(uri string)
-	GetDocument(uri string) types.Document
+	Document(uri string) types.Document
 }
 
 // DidOpen handles textDocument/didOpen notifications
@@ -45,7 +45,7 @@ func DidOpen(ctx LifecycleContext, context *glsp.Context, params *protocol.DidOp
 	helpers.SafeDebugLog("[LIFECYCLE] DidOpen: URI=%s, Version=%d, ContentLength=%d",
 		params.TextDocument.URI, params.TextDocument.Version, len(params.TextDocument.Text))
 
-	dm := ctx.GetTextDocumentManager()
+	dm := ctx.TextDocumentManager()
 	doc := dm.OpenDocument(
 		params.TextDocument.URI,
 		params.TextDocument.Text,
@@ -71,10 +71,10 @@ func DidChange(ctx LifecycleContext, context *glsp.Context, params *protocol.Did
 	helpers.SafeDebugLog("[LIFECYCLE] DidChange: URI=%s, Version=%d, Changes=%d",
 		params.TextDocument.URI, params.TextDocument.Version, len(params.ContentChanges))
 
-	dm := ctx.GetTextDocumentManager()
+	dm := ctx.TextDocumentManager()
 
 	// Handle incremental changes
-	doc := dm.GetDocument(params.TextDocument.URI)
+	doc := dm.Document(params.TextDocument.URI)
 	if doc == nil {
 		helpers.SafeDebugLog("[LIFECYCLE] No existing document found for URI: %s", params.TextDocument.URI)
 		return nil
@@ -83,11 +83,11 @@ func DidChange(ctx LifecycleContext, context *glsp.Context, params *protocol.Did
 
 	// Get current document content
 	var currentContent string
-	if docWithContent, ok := doc.(interface{ GetContent() string }); ok {
-		currentContent = docWithContent.GetContent()
+	if docWithContent, ok := doc.(interface{ Content() string }); ok {
+		currentContent = docWithContent.Content()
 		helpers.SafeDebugLog("[LIFECYCLE] Current document content length: %d", len(currentContent))
 	} else {
-		helpers.SafeDebugLog("[LIFECYCLE] Document doesn't implement GetContent interface")
+		helpers.SafeDebugLog("[LIFECYCLE] Document doesn't implement Content interface")
 		return nil
 	}
 
@@ -135,7 +135,7 @@ func DidChange(ctx LifecycleContext, context *glsp.Context, params *protocol.Did
 
 // DidClose handles textDocument/didClose notifications
 func DidClose(ctx LifecycleContext, context *glsp.Context, params *protocol.DidCloseTextDocumentParams) error {
-	dm := ctx.GetTextDocumentManager()
+	dm := ctx.TextDocumentManager()
 	dm.CloseDocument(params.TextDocument.URI)
 	return nil
 }

@@ -31,11 +31,11 @@ import (
 
 // CompletionContext provides the dependencies needed for completion functionality
 type CompletionContext interface {
-	GetDocument(uri string) types.Document
-	GetAllTagNames() []string
-	GetElement(tagName string) (*M.CustomElement, bool)
-	GetAttributes(tagName string) (map[string]*M.Attribute, bool)
-	GetSlots(tagName string) ([]M.Slot, bool)
+	Document(uri string) types.Document
+	AllTagNames() []string
+	Element(tagName string) (*M.CustomElement, bool)
+	Attributes(tagName string) (map[string]*M.Attribute, bool)
+	Slots(tagName string) ([]M.Slot, bool)
 }
 
 // Completion handles textDocument/completion requests
@@ -44,7 +44,7 @@ func Completion(ctx CompletionContext, context *glsp.Context, params *protocol.C
 	helpers.SafeDebugLog("[COMPLETION] Request for URI: %s, Position: line=%d, char=%d", uri, params.Position.Line, params.Position.Character)
 
 	// Get the tracked document
-	doc := ctx.GetDocument(uri)
+	doc := ctx.Document(uri)
 	if doc == nil {
 		helpers.SafeDebugLog("[COMPLETION] No document found for URI: %s, returning default completions", uri)
 		return getDefaultCompletions(ctx), nil
@@ -96,8 +96,8 @@ func getDefaultCompletions(ctx CompletionContext) []protocol.CompletionItem {
 	var items []protocol.CompletionItem
 
 	// Add all registered custom elements
-	for _, tagName := range ctx.GetAllTagNames() {
-		if element, exists := ctx.GetElement(tagName); exists {
+	for _, tagName := range ctx.AllTagNames() {
+		if element, exists := ctx.Element(tagName); exists {
 			description := fmt.Sprintf("Custom element: %s", tagName)
 			if len(element.Attributes) > 0 {
 				description += fmt.Sprintf(" (%d attributes)", len(element.Attributes))
@@ -123,8 +123,8 @@ func getDefaultCompletions(ctx CompletionContext) []protocol.CompletionItem {
 func getCustomElementCompletions(ctx CompletionContext) []protocol.CompletionItem {
 	var items []protocol.CompletionItem
 
-	for _, tagName := range ctx.GetAllTagNames() {
-		if element, exists := ctx.GetElement(tagName); exists {
+	for _, tagName := range ctx.AllTagNames() {
+		if element, exists := ctx.Element(tagName); exists {
 			// Create a snippet that includes the opening and closing tags
 			snippet := fmt.Sprintf("%s>$0</%s", tagName, tagName)
 			description := fmt.Sprintf("Custom element: %s", tagName)
@@ -157,13 +157,13 @@ func getTagNameCompletions(ctx CompletionContext, analysis *types.CompletionAnal
 	// Get completion prefix to filter results
 	prefix := textDocument.GetCompletionPrefix(analysis.LineContent[:len(analysis.LineContent)], analysis)
 
-	for _, tagName := range ctx.GetAllTagNames() {
+	for _, tagName := range ctx.AllTagNames() {
 		// Filter by prefix if provided
 		if prefix != "" && !startsWithIgnoreCase(tagName, prefix) {
 			continue
 		}
 
-		if element, exists := ctx.GetElement(tagName); exists {
+		if element, exists := ctx.Element(tagName); exists {
 			// Create a snippet that includes the opening tag with placeholder for content
 			snippet := fmt.Sprintf("%s>$0</%s>", tagName, tagName)
 			description := fmt.Sprintf("Custom element: %s", tagName)
@@ -201,7 +201,7 @@ func GetAttributeCompletions(ctx CompletionContext, tagName string) []protocol.C
 		return items
 	}
 
-	if attrs, exists := ctx.GetAttributes(tagName); exists {
+	if attrs, exists := ctx.Attributes(tagName); exists {
 		helpers.SafeDebugLog("[COMPLETION] Found %d attributes for element '%s'", len(attrs), tagName)
 		for attrName, attr := range attrs {
 			var snippet string
@@ -270,7 +270,7 @@ func GetAttributeValueCompletionsWithContext(ctx CompletionContext, doc types.Do
 	}
 
 	// Get the attribute definition
-	if attrs, exists := ctx.GetAttributes(tagName); exists {
+	if attrs, exists := ctx.Attributes(tagName); exists {
 		if attr, attrExists := attrs[attributeName]; attrExists {
 			// For boolean attributes, don't provide value completions
 			// Their presence means true, absence means false
@@ -465,8 +465,7 @@ func parseUnionType(typeText string) []protocol.CompletionItem {
 	valueKind := protocol.CompletionItemKindValue
 
 	// Split by | and clean up quotes
-	parts := strings.Split(typeText, "|")
-	for _, part := range parts {
+	for part := range strings.SplitSeq(typeText, "|") {
 		part = strings.TrimSpace(part)
 		part = strings.Trim(part, `"'`) // Remove quotes
 
@@ -492,7 +491,7 @@ func getLitEventCompletions(ctx CompletionContext, tagName string) []protocol.Co
 		return items
 	}
 
-	if element, exists := ctx.GetElement(tagName); exists {
+	if element, exists := ctx.Element(tagName); exists {
 		for _, event := range element.Events {
 			description := fmt.Sprintf("Event from <%s>", tagName)
 			if event.Type != nil && event.Type.Text != "" {
@@ -524,7 +523,7 @@ func getLitPropertyCompletions(ctx CompletionContext, tagName string) []protocol
 		return items
 	}
 
-	if attrs, exists := ctx.GetAttributes(tagName); exists {
+	if attrs, exists := ctx.Attributes(tagName); exists {
 		for attrName, attr := range attrs {
 			// Only show properties (attributes that can be bound to properties)
 			description := fmt.Sprintf("Property binding for <%s>", tagName)
@@ -557,7 +556,7 @@ func getLitBooleanAttributeCompletions(ctx CompletionContext, tagName string) []
 		return items
 	}
 
-	if attrs, exists := ctx.GetAttributes(tagName); exists {
+	if attrs, exists := ctx.Attributes(tagName); exists {
 		for attrName, attr := range attrs {
 			// Only show boolean attributes
 			if attr.Type != nil && attr.Type.Text == "boolean" {
@@ -611,7 +610,7 @@ func getSlotAttributeCompletions(ctx CompletionContext, doc types.Document, posi
 	}
 
 	// Get slots for the parent element
-	slots, exists := ctx.GetSlots(parentTagName)
+	slots, exists := ctx.Slots(parentTagName)
 	if !exists || len(slots) == 0 {
 		helpers.SafeDebugLog("[COMPLETION] Parent element %s has no slots", parentTagName)
 		return items
@@ -648,8 +647,8 @@ func getSlotAttributeCompletions(ctx CompletionContext, doc types.Document, posi
 func findParentElementTag(doc types.Document, position protocol.Position) string {
 	// Get document content
 	content := ""
-	if docWithContent, ok := doc.(interface{ GetContent() string }); ok {
-		content = docWithContent.GetContent()
+	if docWithContent, ok := doc.(interface{ Content() string }); ok {
+		content = docWithContent.Content()
 	} else {
 		return ""
 	}

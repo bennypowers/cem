@@ -119,8 +119,10 @@ Detailed architectural information is available in [ARCHITECTURE.md](./ARCHITECT
   - Implemented context-based cancellation for clean shutdown
   - Eliminated subprocess dependency and improved resource management
   - All integration tests passing with no hanging processes
-- [ ] **Diagnostics for unknown elements/attributes** - Validation with error reporting
-- [ ] **Type checking for attribute values** - Validate attribute values against manifest types
+- [ ] **Diagnostics for unknown attributes** - Validation with error reporting - 
+  allowlist based on global attributes (try to find a go package which provides an up to date list). Allow users to config globally permitted attributes.
+- [ ] **Type checking for attribute values** - Validate attribute values against 
+manifest types. investigate if this can be done in a lightweight but correct manner. I'd like to avoid importing the entire typescript compiler.
 - [ ] **Enhanced go-to-definition preferences** - User configurable definition targets:
   - Go to class declaration
   - Go to custom element tag name definition (default)

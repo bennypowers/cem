@@ -42,8 +42,8 @@ func TestDocumentChangeHandling(t *testing.T) {
 	}
 
 	// Verify initial document
-	if doc.GetContent() != initialContent {
-		t.Errorf("Initial content mismatch. Expected: %s, Got: %s", initialContent, doc.GetContent())
+	if doc.Content() != initialContent {
+		t.Errorf("Initial content mismatch. Expected: %s, Got: %s", initialContent, doc.Content())
 	}
 
 	// Update document directly - simulating content change
@@ -53,11 +53,11 @@ func TestDocumentChangeHandling(t *testing.T) {
 	}
 
 	// Verify document was updated
-	if updatedDoc.GetContent() != updatedContent {
-		t.Errorf("Updated content mismatch. Expected: %s, Got: %s", updatedContent, updatedDoc.GetContent())
+	if updatedDoc.Content() != updatedContent {
+		t.Errorf("Updated content mismatch. Expected: %s, Got: %s", updatedContent, updatedDoc.Content())
 	}
-	if updatedDoc.GetVersion() != 2 {
-		t.Errorf("Version mismatch. Expected: 2, Got: %d", updatedDoc.GetVersion())
+	if updatedDoc.Version() != 2 {
+		t.Errorf("Version mismatch. Expected: 2, Got: %d", updatedDoc.Version())
 	}
 
 	// Verify that tree parsing still works after update

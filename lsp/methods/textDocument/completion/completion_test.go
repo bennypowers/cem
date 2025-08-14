@@ -151,7 +151,7 @@ export class TestAlert extends LitElement {
 
 	// Set up the server context adapter with document manager
 	ctx := &testCompletionContextWithDM{
-		registry: server.GetRegistry(), // We need to expose this for testing
+		registry: server.Registry(), // We need to expose this for testing
 		docMgr:   dm,
 	}
 
@@ -249,7 +249,7 @@ export class TestAlert extends LitElement {
 		t.Errorf("Updated completions missing 'error' value. Got: %v", getCompletionLabels(updatedItems))
 
 		// Debug: Check what's in the registry
-		if attrs, exists := ctx.GetAttributes("test-alert"); exists {
+		if attrs, exists := ctx.Attributes("test-alert"); exists {
 			if stateAttr, hasState := attrs["state"]; hasState {
 				t.Logf("Registry shows state attribute type: %s", stateAttr.Type.Text)
 			}

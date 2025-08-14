@@ -33,8 +33,8 @@ func analyzeSlotDiagnostics(ctx DiagnosticsContext, doc types.Document) []protoc
 
 	// Get document content to search for slot attributes
 	content := ""
-	if docWithContent, ok := doc.(interface{ GetContent() string }); ok {
-		content = docWithContent.GetContent()
+	if docWithContent, ok := doc.(interface{ Content() string }); ok {
+		content = docWithContent.Content()
 	} else {
 		return diagnostics
 	}
@@ -56,7 +56,7 @@ func analyzeSlotDiagnostics(ctx DiagnosticsContext, doc types.Document) []protoc
 		helpers.SafeDebugLog("[DIAGNOSTICS] Found slot '%s' with parent element '%s'", match.Value, parentElement)
 
 		// Get available slots for the parent element
-		availableSlots, exists := ctx.GetSlots(parentElement)
+		availableSlots, exists := ctx.Slots(parentElement)
 		if !exists || len(availableSlots) == 0 {
 			helpers.SafeDebugLog("[DIAGNOSTICS] No slots available for element '%s'", parentElement)
 			continue

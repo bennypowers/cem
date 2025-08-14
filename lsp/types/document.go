@@ -24,9 +24,9 @@ import (
 type Document interface {
 	FindElementAtPosition(position protocol.Position, dm any) *CustomElementMatch
 	FindAttributeAtPosition(position protocol.Position, dm any) (*AttributeMatch, string)
-	GetContent() string
-	GetVersion() int32
-	GetURI() string
+	Content() string
+	Version() int32
+	URI() string
 	FindCustomElements(dm any) ([]CustomElementMatch, error)
 	AnalyzeCompletionContextTS(position protocol.Position, dm any) *CompletionAnalysis
 }
@@ -47,6 +47,6 @@ type AttributeMatch struct {
 
 // ElementDefinition represents a custom element with its source information
 type ElementDefinition interface {
-	GetModulePath() string
-	GetSourceHref() string
+	ModulePath() string
+	SourceHref() string
 }

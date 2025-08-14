@@ -18,8 +18,8 @@ package server
 
 // ServerContext provides the dependencies needed for server lifecycle
 type ServerContext interface {
-	GetDocumentManager() DocumentManager
-	GetWorkspace() Workspace
+	DocumentManager() DocumentManager
+	Workspace() Workspace
 	DebugLog(format string, args ...any)
 	InitializeManifests() error
 }
@@ -33,4 +33,3 @@ type DocumentManager interface {
 type Workspace interface {
 	Cleanup() error
 }
-

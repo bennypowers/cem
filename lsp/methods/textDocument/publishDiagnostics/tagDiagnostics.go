@@ -32,8 +32,8 @@ func analyzeTagNameDiagnostics(ctx DiagnosticsContext, doc types.Document) []pro
 
 	// Get document content to search for custom element tags
 	content := ""
-	if docWithContent, ok := doc.(interface{ GetContent() string }); ok {
-		content = docWithContent.GetContent()
+	if docWithContent, ok := doc.(interface{ Content() string }); ok {
+		content = docWithContent.Content()
 	} else {
 		return diagnostics
 	}
@@ -45,7 +45,7 @@ func analyzeTagNameDiagnostics(ctx DiagnosticsContext, doc types.Document) []pro
 	helpers.SafeDebugLog("[DIAGNOSTICS] Found %d custom element tags", len(tagMatches))
 
 	// Get all available tag names from manifest
-	availableTagNames := ctx.GetAllTagNames()
+	availableTagNames := ctx.AllTagNames()
 	helpers.SafeDebugLog("[DIAGNOSTICS] Available tag names: %v", availableTagNames)
 
 	for _, match := range tagMatches {
@@ -57,8 +57,8 @@ func analyzeTagNameDiagnostics(ctx DiagnosticsContext, doc types.Document) []pro
 
 		if !isValid {
 			// Check if this element exists but might need an import
-			if _, exists := ctx.GetElementDefinition(tagName); exists {
-				if importPath, hasSource := ctx.GetElementSource(tagName); hasSource {
+			if _, exists := ctx.ElementDefinition(tagName); exists {
+				if importPath, hasSource := ctx.ElementSource(tagName); hasSource {
 					// Element exists but may need import - create missing import diagnostic
 					// Note: importPath currently contains module path, needs package.json resolution
 					helpers.SafeDebugLog("[DIAGNOSTICS] Element '%s' exists but may need import from '%s'", tagName, importPath)

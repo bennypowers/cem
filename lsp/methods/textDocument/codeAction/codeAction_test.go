@@ -173,7 +173,7 @@ type mockCodeActionContext struct {
 	documents map[string]types.Document
 }
 
-func (m *mockCodeActionContext) GetDocument(uri string) types.Document {
+func (m *mockCodeActionContext) Document(uri string) types.Document {
 	return m.documents[uri]
 }
 
@@ -181,7 +181,7 @@ type mockDocument struct {
 	content string
 }
 
-func (m *mockDocument) GetContent() string {
+func (m *mockDocument) Content() string {
 	return m.content
 }
 
@@ -201,10 +201,10 @@ func (m *mockDocument) FindCustomElements(dm any) ([]types.CustomElementMatch, e
 	return nil, nil
 }
 
-func (m *mockDocument) GetVersion() int32 {
+func (m *mockDocument) Version() int32 {
 	return 1
 }
 
-func (m *mockDocument) GetURI() string {
+func (m *mockDocument) URI() string {
 	return "test://test.html"
 }

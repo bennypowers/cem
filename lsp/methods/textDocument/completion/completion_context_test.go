@@ -32,24 +32,24 @@ type MockCompletionContext struct {
 	documents map[string]types.Document
 }
 
-func (m *MockCompletionContext) GetDocument(uri string) types.Document {
+func (m *MockCompletionContext) Document(uri string) types.Document {
 	return m.documents[uri]
 }
 
-func (m *MockCompletionContext) GetAllTagNames() []string {
-	return m.registry.GetAllTagNames()
+func (m *MockCompletionContext) AllTagNames() []string {
+	return m.registry.AllTagNames()
 }
 
-func (m *MockCompletionContext) GetElement(tagName string) (*M.CustomElement, bool) {
-	return m.registry.GetElement(tagName)
+func (m *MockCompletionContext) Element(tagName string) (*M.CustomElement, bool) {
+	return m.registry.Element(tagName)
 }
 
-func (m *MockCompletionContext) GetAttributes(tagName string) (map[string]*M.Attribute, bool) {
-	return m.registry.GetAttributes(tagName)
+func (m *MockCompletionContext) Attributes(tagName string) (map[string]*M.Attribute, bool) {
+	return m.registry.Attributes(tagName)
 }
 
-func (m *MockCompletionContext) GetSlots(tagName string) ([]M.Slot, bool) {
-	return m.registry.GetSlots(tagName)
+func (m *MockCompletionContext) Slots(tagName string) ([]M.Slot, bool) {
+	return m.registry.Slots(tagName)
 }
 
 // TestCompletionContextAnalysis tests cursor position analysis for different completion scenarios
@@ -379,7 +379,7 @@ type MockDocument struct {
 	content string
 }
 
-func (m *MockDocument) GetContent() string {
+func (m *MockDocument) Content() string {
 	return m.content
 }
 
@@ -394,17 +394,17 @@ func (m *MockDocument) FindAttributeAtPosition(position protocol.Position, dm an
 }
 
 // GetTemplateContext returns empty string for HTML documents (not a template)
-func (m *MockDocument) GetTemplateContext(position protocol.Position) string {
+func (m *MockDocument) TemplateContext(position protocol.Position) string {
 	return ""
 }
 
-// GetVersion returns the document version
-func (m *MockDocument) GetVersion() int32 {
+// Version returns the document version
+func (m *MockDocument) Version() int32 {
 	return 1
 }
 
 // GetURI returns the document URI
-func (m *MockDocument) GetURI() string {
+func (m *MockDocument) URI() string {
 	return "test://mock"
 }
 
@@ -422,12 +422,12 @@ type MockRegistry struct {
 	elements map[string]*M.CustomElement
 }
 
-func (m *MockRegistry) GetElement(tagName string) (*M.CustomElement, bool) {
+func (m *MockRegistry) Element(tagName string) (*M.CustomElement, bool) {
 	elem, exists := m.elements[tagName]
 	return elem, exists
 }
 
-func (m *MockRegistry) GetAttributes(tagName string) (map[string]*M.Attribute, bool) {
+func (m *MockRegistry) Attributes(tagName string) (map[string]*M.Attribute, bool) {
 	elem, exists := m.elements[tagName]
 	if !exists {
 		return nil, false
@@ -441,7 +441,7 @@ func (m *MockRegistry) GetAttributes(tagName string) (map[string]*M.Attribute, b
 	return attrs, true
 }
 
-func (m *MockRegistry) GetAllTagNames() []string {
+func (m *MockRegistry) AllTagNames() []string {
 	names := make([]string, 0, len(m.elements))
 	for name := range m.elements {
 		names = append(names, name)
@@ -449,7 +449,7 @@ func (m *MockRegistry) GetAllTagNames() []string {
 	return names
 }
 
-func (m *MockRegistry) GetSlots(tagName string) ([]M.Slot, bool) {
+func (m *MockRegistry) Slots(tagName string) ([]M.Slot, bool) {
 	elem, exists := m.elements[tagName]
 	if !exists {
 		return nil, false
@@ -820,7 +820,7 @@ type MockTemplateDocument struct {
 	isLitTemplate bool
 }
 
-func (m *MockTemplateDocument) GetContent() string {
+func (m *MockTemplateDocument) Content() string {
 	return m.content
 }
 
@@ -832,20 +832,20 @@ func (m *MockTemplateDocument) FindAttributeAtPosition(position protocol.Positio
 	return nil, ""
 }
 
-func (m *MockTemplateDocument) GetTemplateContext(position protocol.Position) string {
+func (m *MockTemplateDocument) TemplateContext(position protocol.Position) string {
 	if m.isLitTemplate {
 		return "html"
 	}
 	return "innerHTML"
 }
 
-// GetVersion returns the document version
-func (m *MockTemplateDocument) GetVersion() int32 {
+// Version returns the document version
+func (m *MockTemplateDocument) Version() int32 {
 	return 1
 }
 
 // GetURI returns the document URI
-func (m *MockTemplateDocument) GetURI() string {
+func (m *MockTemplateDocument) URI() string {
 	return "test://mock-template"
 }
 

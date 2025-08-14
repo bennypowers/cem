@@ -190,22 +190,22 @@ type testSlotCompletionContext struct {
 	registry *lsp.Registry
 }
 
-func (ctx *testSlotCompletionContext) GetDocument(uri string) types.Document {
+func (ctx *testSlotCompletionContext) Document(uri string) types.Document {
 	return nil // Not needed for these tests
 }
 
-func (ctx *testSlotCompletionContext) GetAllTagNames() []string {
-	return ctx.registry.GetAllTagNames()
+func (ctx *testSlotCompletionContext) AllTagNames() []string {
+	return ctx.registry.AllTagNames()
 }
 
-func (ctx *testSlotCompletionContext) GetElement(tagName string) (*M.CustomElement, bool) {
-	return ctx.registry.GetElement(tagName)
+func (ctx *testSlotCompletionContext) Element(tagName string) (*M.CustomElement, bool) {
+	return ctx.registry.Element(tagName)
 }
 
-func (ctx *testSlotCompletionContext) GetAttributes(tagName string) (map[string]*M.Attribute, bool) {
-	return ctx.registry.GetAttributes(tagName)
+func (ctx *testSlotCompletionContext) Attributes(tagName string) (map[string]*M.Attribute, bool) {
+	return ctx.registry.Attributes(tagName)
 }
 
-func (ctx *testSlotCompletionContext) GetSlots(tagName string) ([]M.Slot, bool) {
-	return ctx.registry.GetSlots(tagName)
+func (ctx *testSlotCompletionContext) Slots(tagName string) ([]M.Slot, bool) {
+	return ctx.registry.Slots(tagName)
 }

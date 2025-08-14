@@ -309,7 +309,7 @@ export class TestButton extends LitElement {
 	}
 
 	// Debug: Check what's in the registry after reload
-	if attrs, exists := ctx.GetAttributes("test-button"); exists {
+	if attrs, exists := ctx.Attributes("test-button"); exists {
 		if variantAttr, hasVariant := attrs["variant"]; hasVariant {
 			t.Logf("After reload - variant attribute type: %s", variantAttr.Type.Text)
 		} else {
@@ -580,24 +580,24 @@ type testCompletionContextWithDM struct {
 	docMgr   *lsp.DocumentManager
 }
 
-func (ctx *testCompletionContextWithDM) GetDocument(uri string) types.Document {
-	return ctx.docMgr.GetDocument(uri)
+func (ctx *testCompletionContextWithDM) Document(uri string) types.Document {
+	return ctx.docMgr.Document(uri)
 }
 
-func (ctx *testCompletionContextWithDM) GetAllTagNames() []string {
-	return ctx.registry.GetAllTagNames()
+func (ctx *testCompletionContextWithDM) AllTagNames() []string {
+	return ctx.registry.AllTagNames()
 }
 
-func (ctx *testCompletionContextWithDM) GetElement(tagName string) (*M.CustomElement, bool) {
-	return ctx.registry.GetElement(tagName)
+func (ctx *testCompletionContextWithDM) Element(tagName string) (*M.CustomElement, bool) {
+	return ctx.registry.Element(tagName)
 }
 
-func (ctx *testCompletionContextWithDM) GetAttributes(tagName string) (map[string]*M.Attribute, bool) {
-	return ctx.registry.GetAttributes(tagName)
+func (ctx *testCompletionContextWithDM) Attributes(tagName string) (map[string]*M.Attribute, bool) {
+	return ctx.registry.Attributes(tagName)
 }
 
-func (ctx *testCompletionContextWithDM) GetSlots(tagName string) ([]M.Slot, bool) {
-	return ctx.registry.GetSlots(tagName)
+func (ctx *testCompletionContextWithDM) Slots(tagName string) ([]M.Slot, bool) {
+	return ctx.registry.Slots(tagName)
 }
 
 // Helper function to get attribute names for debugging

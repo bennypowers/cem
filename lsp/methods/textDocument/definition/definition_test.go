@@ -146,15 +146,15 @@ type testDefinitionContext struct {
 	dm       *lsp.DocumentManager
 }
 
-func (ctx *testDefinitionContext) GetDocument(uri string) types.Document {
-	return ctx.dm.GetDocument(uri)
+func (ctx *testDefinitionContext) Document(uri string) types.Document {
+	return ctx.dm.Document(uri)
 }
 
-func (ctx *testDefinitionContext) GetElementDefinition(tagName string) (types.ElementDefinition, bool) {
-	return ctx.registry.GetElementDefinition(tagName)
+func (ctx *testDefinitionContext) ElementDefinition(tagName string) (types.ElementDefinition, bool) {
+	return ctx.registry.ElementDefinition(tagName)
 }
 
-func (ctx *testDefinitionContext) GetWorkspaceRoot() string {
+func (ctx *testDefinitionContext) WorkspaceRoot() string {
 	// Return current directory for tests
 	if wd, err := os.Getwd(); err == nil {
 		return wd
@@ -162,7 +162,7 @@ func (ctx *testDefinitionContext) GetWorkspaceRoot() string {
 	return ""
 }
 
-func (ctx *testDefinitionContext) GetRawDocumentManager() interface{} {
+func (ctx *testDefinitionContext) RawDocumentManager() interface{} {
 	return ctx.dm
 }
 
@@ -171,11 +171,11 @@ type MockElementDefinition struct {
 	def *lsp.ElementDefinition
 }
 
-func (m *MockElementDefinition) GetModulePath() string {
-	return m.def.ModulePath
+func (m *MockElementDefinition) ModulePath() string {
+	return m.def.ModulePath()
 }
 
-func (m *MockElementDefinition) GetSourceHref() string {
+func (m *MockElementDefinition) SourceHref() string {
 	if m.def.Source != nil {
 		return m.def.Source.Href
 	}
@@ -224,8 +224,8 @@ func (m *MockDocumentAdapter) FindAttributeAtPosition(position protocol.Position
 	}, tagName
 }
 
-func (m *MockDocumentAdapter) GetContent() string {
-	return m.doc.Content
+func (m *MockDocumentAdapter) Content() string {
+	return m.doc.Content()
 }
 
 func (m *MockDocumentAdapter) AnalyzeCompletionContextTS(position protocol.Position, dm any) *types.CompletionAnalysis {
@@ -236,14 +236,14 @@ func (m *MockDocumentAdapter) GetTemplateContext(position protocol.Position) str
 	return ""
 }
 
-// GetVersion returns the document version
-func (m *MockDocumentAdapter) GetVersion() int32 {
-	return m.doc.GetVersion()
+// Version returns the document version
+func (m *MockDocumentAdapter) Version() int32 {
+	return m.doc.Version()
 }
 
-// GetURI returns the document URI
-func (m *MockDocumentAdapter) GetURI() string {
-	return m.doc.GetURI()
+// URI returns the document URI
+func (m *MockDocumentAdapter) URI() string {
+	return m.doc.URI()
 }
 
 // FindCustomElements returns custom elements

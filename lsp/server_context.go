@@ -38,16 +38,16 @@ func NewServerAdapter(server *Server) *ServerAdapter {
 
 // Server Context implementations
 
-func (s *ServerAdapter) GetDocumentManager() serverMethods.DocumentManager {
+func (s *ServerAdapter) DocumentManager() serverMethods.DocumentManager {
 	return s.server.documents
 }
 
-// GetTextDocumentManager returns the document manager for text document methods
-func (s *ServerAdapter) GetTextDocumentManager() textDocument.DocumentManager {
+// TextDocumentManager returns the document manager for text document methods
+func (s *ServerAdapter) TextDocumentManager() textDocument.DocumentManager {
 	return s.server.documents
 }
 
-func (s *ServerAdapter) GetWorkspace() serverMethods.Workspace {
+func (s *ServerAdapter) Workspace() serverMethods.Workspace {
 	return s.server.workspace
 }
 
@@ -78,44 +78,44 @@ func (s *ServerAdapter) InitializeManifests() error {
 
 // Hover Context implementations
 
-func (s *ServerAdapter) GetDocument(uri string) types.Document {
-	return s.server.documents.GetDocument(uri)
+func (s *ServerAdapter) Document(uri string) types.Document {
+	return s.server.documents.Document(uri)
 }
 
-func (s *ServerAdapter) GetElement(tagName string) (*M.CustomElement, bool) {
-	return s.server.registry.GetElement(tagName)
+func (s *ServerAdapter) Element(tagName string) (*M.CustomElement, bool) {
+	return s.server.registry.Element(tagName)
 }
 
-func (s *ServerAdapter) GetAttributes(tagName string) (map[string]*M.Attribute, bool) {
-	return s.server.registry.GetAttributes(tagName)
+func (s *ServerAdapter) Attributes(tagName string) (map[string]*M.Attribute, bool) {
+	return s.server.registry.Attributes(tagName)
 }
 
-func (s *ServerAdapter) GetSlots(tagName string) ([]M.Slot, bool) {
-	return s.server.registry.GetSlots(tagName)
+func (s *ServerAdapter) Slots(tagName string) ([]M.Slot, bool) {
+	return s.server.registry.Slots(tagName)
 }
 
 // Definition Context implementations
 
-func (s *ServerAdapter) GetElementDefinition(tagName string) (types.ElementDefinition, bool) {
-	return s.server.registry.GetElementDefinition(tagName)
+func (s *ServerAdapter) ElementDefinition(tagName string) (types.ElementDefinition, bool) {
+	return s.server.registry.ElementDefinition(tagName)
 }
 
-func (s *ServerAdapter) GetElementSource(tagName string) (string, bool) {
+func (s *ServerAdapter) ElementSource(tagName string) (string, bool) {
 	// Get the element definition which contains source information
-	definition, exists := s.server.registry.GetElementDefinition(tagName)
+	definition, exists := s.server.registry.ElementDefinition(tagName)
 	if !exists {
 		return "", false
 	}
 
 	// Prefer package name over module path for better import suggestions
-	packageName := definition.GetPackageName()
+	packageName := definition.PackageName()
 	if packageName != "" {
 		// Return the package name for npm package imports
 		return packageName, true
 	}
 
 	// Fallback to module path for local/workspace elements
-	modulePath := definition.GetModulePath()
+	modulePath := definition.ModulePath()
 	if modulePath != "" {
 		return modulePath, true
 	}
@@ -123,19 +123,19 @@ func (s *ServerAdapter) GetElementSource(tagName string) (string, bool) {
 	return "", false
 }
 
-func (s *ServerAdapter) GetWorkspaceRoot() string {
+func (s *ServerAdapter) WorkspaceRoot() string {
 	if s.server.workspace != nil {
 		return s.server.workspace.Root()
 	}
 	return ""
 }
 
-func (s *ServerAdapter) GetRawDocumentManager() interface{} {
+func (s *ServerAdapter) RawDocumentManager() interface{} {
 	return s.server.documents
 }
 
 // Completion Context implementations
 
-func (s *ServerAdapter) GetAllTagNames() []string {
-	return s.server.registry.GetAllTagNames()
+func (s *ServerAdapter) AllTagNames() []string {
+	return s.server.registry.AllTagNames()
 }

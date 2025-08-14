@@ -39,7 +39,7 @@ func TestRegistryElementLookup(t *testing.T) {
 	registry.AddManifest(manifest)
 
 	t.Run("Get existing element", func(t *testing.T) {
-		element, exists := registry.GetElement("my-element")
+		element, exists := registry.Element("my-element")
 		if !exists {
 			t.Fatal("Expected to find my-element")
 		}
@@ -58,14 +58,14 @@ func TestRegistryElementLookup(t *testing.T) {
 	})
 
 	t.Run("Get non-existent element", func(t *testing.T) {
-		_, exists := registry.GetElement("non-existent")
+		_, exists := registry.Element("non-existent")
 		if exists {
 			t.Error("Expected not to find non-existent element")
 		}
 	})
 
 	t.Run("Get all tag names", func(t *testing.T) {
-		tagNames := registry.GetAllTagNames()
+		tagNames := registry.AllTagNames()
 		if len(tagNames) != 1 {
 			t.Errorf("Expected 1 tag name, got %d", len(tagNames))
 		}
@@ -75,7 +75,7 @@ func TestRegistryElementLookup(t *testing.T) {
 	})
 
 	t.Run("Get element attributes", func(t *testing.T) {
-		attrs, exists := registry.GetAttributes("my-element")
+		attrs, exists := registry.Attributes("my-element")
 		if !exists {
 			t.Fatal("Expected to find attributes for my-element")
 		}
@@ -102,14 +102,14 @@ func TestRegistryElementLookup(t *testing.T) {
 	})
 
 	t.Run("Get attributes for non-existent element", func(t *testing.T) {
-		_, exists := registry.GetAttributes("non-existent")
+		_, exists := registry.Attributes("non-existent")
 		if exists {
 			t.Error("Expected not to find attributes for non-existent element")
 		}
 	})
 
 	t.Run("Get element slots", func(t *testing.T) {
-		slots, exists := registry.GetSlots("my-element")
+		slots, exists := registry.Slots("my-element")
 		if !exists {
 			t.Fatal("Expected to find slots for my-element")
 		}
@@ -131,15 +131,15 @@ func TestRegistryElementLookup(t *testing.T) {
 	})
 
 	t.Run("Get element definition", func(t *testing.T) {
-		definition, exists := registry.GetElementDefinition("my-element")
+		definition, exists := registry.ElementDefinition("my-element")
 		if !exists {
 			t.Fatal("Expected to find element definition for my-element")
 		}
 		if definition.Element.TagName != "my-element" {
 			t.Errorf("Expected element tag name 'my-element', got %q", definition.Element.TagName)
 		}
-		if definition.ModulePath != "my-element.js" {
-			t.Errorf("Expected module path 'my-element.js', got %q", definition.ModulePath)
+		if definition.ModulePath() != "my-element.js" {
+			t.Errorf("Expected module path 'my-element.js', got %q", definition.ModulePath())
 		}
 	})
 }
@@ -157,26 +157,26 @@ func TestRegistryMultipleManifests(t *testing.T) {
 	registry.AddManifest(manifest2)
 
 	// Verify both elements are available
-	tagNames := registry.GetAllTagNames()
+	tagNames := registry.AllTagNames()
 	if len(tagNames) != 2 {
 		t.Errorf("Expected 2 tag names after adding multiple manifests, got %d", len(tagNames))
 	}
 
-	if _, exists := registry.GetElement("first-element"); !exists {
+	if _, exists := registry.Element("first-element"); !exists {
 		t.Error("Expected to find first-element after adding manifests")
 	}
 
-	if _, exists := registry.GetElement("second-element"); !exists {
+	if _, exists := registry.Element("second-element"); !exists {
 		t.Error("Expected to find second-element after adding manifests")
 	}
 
 	// Verify attributes for each element
-	firstAttrs, exists := registry.GetAttributes("first-element")
+	firstAttrs, exists := registry.Attributes("first-element")
 	if !exists || len(firstAttrs) != 1 {
 		t.Error("Expected to find attributes for first-element")
 	}
 
-	secondAttrs, exists := registry.GetAttributes("second-element")
+	secondAttrs, exists := registry.Attributes("second-element")
 	if !exists || len(secondAttrs) != 1 {
 		t.Error("Expected to find attributes for second-element")
 	}
@@ -194,7 +194,7 @@ func TestRegistryEmptyManifest(t *testing.T) {
 
 	registry.AddManifest(emptyManifest)
 
-	tagNames := registry.GetAllTagNames()
+	tagNames := registry.AllTagNames()
 	if len(tagNames) != 0 {
 		t.Errorf("Expected 0 tag names for empty manifest, got %d", len(tagNames))
 	}
@@ -244,7 +244,7 @@ func TestNilTypeAttributeHandling(t *testing.T) {
 	registry.AddManifest(pkg)
 
 	// This should not panic when accessing attributes with nil types
-	attrs, exists := registry.GetAttributes("test-element")
+	attrs, exists := registry.Attributes("test-element")
 	require.True(t, exists, "Element should exist in registry")
 	require.Len(t, attrs, 2, "Should have two attributes")
 
@@ -294,12 +294,12 @@ func TestHandleManifestReloadWithNilTypes(t *testing.T) {
 	registry.AddManifest(pkg)
 
 	// Verify the registry has the element
-	element, exists := registry.GetElement("test-element")
+	element, exists := registry.Element("test-element")
 	require.True(t, exists, "Element should exist")
 	assert.Equal(t, "test-element", element.TagName)
 
 	// Getting attributes should work without panic, even with nil types
-	attrs, exists := registry.GetAttributes("test-element")
+	attrs, exists := registry.Attributes("test-element")
 	require.True(t, exists, "Should have attributes")
 	require.Len(t, attrs, 1, "Should have one attribute")
 

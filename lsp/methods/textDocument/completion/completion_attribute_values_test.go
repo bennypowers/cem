@@ -352,24 +352,24 @@ type testCompletionContext struct {
 	registry *lsp.Registry
 }
 
-func (ctx *testCompletionContext) GetDocument(uri string) types.Document {
+func (ctx *testCompletionContext) Document(uri string) types.Document {
 	return nil // Not needed for these tests
 }
 
-func (ctx *testCompletionContext) GetAllTagNames() []string {
-	return ctx.registry.GetAllTagNames()
+func (ctx *testCompletionContext) AllTagNames() []string {
+	return ctx.registry.AllTagNames()
 }
 
-func (ctx *testCompletionContext) GetElement(tagName string) (*M.CustomElement, bool) {
-	return ctx.registry.GetElement(tagName)
+func (ctx *testCompletionContext) Element(tagName string) (*M.CustomElement, bool) {
+	return ctx.registry.Element(tagName)
 }
 
-func (ctx *testCompletionContext) GetAttributes(tagName string) (map[string]*M.Attribute, bool) {
-	return ctx.registry.GetAttributes(tagName)
+func (ctx *testCompletionContext) Attributes(tagName string) (map[string]*M.Attribute, bool) {
+	return ctx.registry.Attributes(tagName)
 }
 
-func (ctx *testCompletionContext) GetSlots(tagName string) ([]M.Slot, bool) {
-	return ctx.registry.GetSlots(tagName)
+func (ctx *testCompletionContext) Slots(tagName string) ([]M.Slot, bool) {
+	return ctx.registry.Slots(tagName)
 }
 
 // TestAttributeValueCompletionTreeSitterRegression is a regression test for the tree-sitter

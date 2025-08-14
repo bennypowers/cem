@@ -29,15 +29,15 @@ type mockDocument struct {
 	content string
 }
 
-func (m *mockDocument) GetContent() string {
+func (m *mockDocument) Content() string {
 	return m.content
 }
 
-func (m *mockDocument) GetVersion() int32 {
+func (m *mockDocument) Version() int32 {
 	return 1
 }
 
-func (m *mockDocument) GetURI() string {
+func (m *mockDocument) URI() string {
 	return "file:///test.html"
 }
 
@@ -62,15 +62,15 @@ type mockTagDiagnosticsContext struct {
 	elementSources    map[string]string
 }
 
-func (m *mockTagDiagnosticsContext) GetDocument(uri string) types.Document {
+func (m *mockTagDiagnosticsContext) Document(uri string) types.Document {
 	return &mockDocument{content: "<my-button>Test</my-button><my-buttom>Test</my-buttom><missing-import-element>Test</missing-import-element><completely-different-element>Test</completely-different-element>"}
 }
 
-func (m *mockTagDiagnosticsContext) GetSlots(tagName string) ([]M.Slot, bool) {
+func (m *mockTagDiagnosticsContext) Slots(tagName string) ([]M.Slot, bool) {
 	return nil, false
 }
 
-func (m *mockTagDiagnosticsContext) GetAllTagNames() []string {
+func (m *mockTagDiagnosticsContext) AllTagNames() []string {
 	var result []string
 	for tag := range m.availableElements {
 		if m.availableElements[tag] {
@@ -80,7 +80,7 @@ func (m *mockTagDiagnosticsContext) GetAllTagNames() []string {
 	return result
 }
 
-func (m *mockTagDiagnosticsContext) GetElementDefinition(tagName string) (types.ElementDefinition, bool) {
+func (m *mockTagDiagnosticsContext) ElementDefinition(tagName string) (types.ElementDefinition, bool) {
 	// Elements that exist in registry but are not in the available list (not imported)
 	if tagName == "missing-import-element" {
 		// Only return definition if element is NOT in available elements (simulating not imported)
@@ -91,7 +91,7 @@ func (m *mockTagDiagnosticsContext) GetElementDefinition(tagName string) (types.
 	return nil, false
 }
 
-func (m *mockTagDiagnosticsContext) GetElementSource(tagName string) (string, bool) {
+func (m *mockTagDiagnosticsContext) ElementSource(tagName string) (string, bool) {
 	// Only return source if element is NOT in available elements (simulating not imported)
 	if !m.availableElements[tagName] {
 		source, exists := m.elementSources[tagName]
@@ -104,11 +104,11 @@ type mockElementDefinition struct {
 	modulePath string
 }
 
-func (m *mockElementDefinition) GetModulePath() string {
+func (m *mockElementDefinition) ModulePath() string {
 	return m.modulePath
 }
 
-func (m *mockElementDefinition) GetSourceHref() string {
+func (m *mockElementDefinition) SourceHref() string {
 	return ""
 }
 
@@ -228,7 +228,7 @@ func TestTagNameDiagnostics(t *testing.T) {
 				elementSources:    tt.elementSources,
 			}
 
-			diagnostics := analyzeTagNameDiagnostics(ctx, ctx.GetDocument(""))
+			diagnostics := analyzeTagNameDiagnostics(ctx, ctx.Document(""))
 
 			if len(diagnostics) != tt.expectedDiagnosticsCount {
 				t.Errorf("Expected %d diagnostics, got %d", tt.expectedDiagnosticsCount, len(diagnostics))

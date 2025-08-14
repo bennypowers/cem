@@ -18,8 +18,8 @@ package types
 
 // DefinitionContext provides the dependencies needed for go-to-definition functionality
 type DefinitionContext interface {
-	GetDocument(uri string) Document
-	GetElementDefinition(tagName string) (ElementDefinition, bool)
-	GetWorkspaceRoot() string
-	GetRawDocumentManager() interface{} // For passing to FindElementAtPosition and FindAttributeAtPosition
+	Document(uri string) Document
+	ElementDefinition(tagName string) (ElementDefinition, bool)
+	WorkspaceRoot() string
+	RawDocumentManager() any // For passing to FindElementAtPosition and FindAttributeAtPosition
 }

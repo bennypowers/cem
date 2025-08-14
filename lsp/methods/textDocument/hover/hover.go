@@ -20,20 +20,19 @@ import (
 	"fmt"
 	"strings"
 
-	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
+	M "bennypowers.dev/cem/manifest"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-
 // HoverContext provides the dependencies needed for hover functionality
 type HoverContext interface {
-	GetDocument(uri string) types.Document
-	GetElement(tagName string) (*M.CustomElement, bool)
-	GetAttributes(tagName string) (map[string]*M.Attribute, bool)
-	GetRawDocumentManager() interface{} // For passing to FindElementAtPosition and FindAttributeAtPosition
+	Document(uri string) types.Document
+	Element(tagName string) (*M.CustomElement, bool)
+	Attributes(tagName string) (map[string]*M.Attribute, bool)
+	RawDocumentManager() interface{} // For passing to FindElementAtPosition and FindAttributeAtPosition
 }
 
 // Hover handles textDocument/hover requests
@@ -42,7 +41,7 @@ func Hover(ctx HoverContext, context *glsp.Context, params *protocol.HoverParams
 	helpers.SafeDebugLog("[HOVER] Request for URI: %s, Position: line=%d, char=%d", uri, params.Position.Line, params.Position.Character)
 
 	// Get the tracked document
-	doc := ctx.GetDocument(uri)
+	doc := ctx.Document(uri)
 	if doc == nil {
 		helpers.SafeDebugLog("[HOVER] No document found for URI: %s", uri)
 		return nil, nil
@@ -50,12 +49,12 @@ func Hover(ctx HoverContext, context *glsp.Context, params *protocol.HoverParams
 	helpers.SafeDebugLog("[HOVER] Found document for URI: %s", uri)
 
 	// Find the element at the cursor position
-	element := doc.FindElementAtPosition(params.Position, ctx.GetRawDocumentManager())
+	element := doc.FindElementAtPosition(params.Position, ctx.RawDocumentManager())
 	if element != nil {
 		helpers.SafeDebugLog("[HOVER] Found element at position: tagName=%s, range=%+v\n", element.TagName, element.Range)
 
 		// Look up the element in our registry
-		if customElement, exists := ctx.GetElement(element.TagName); exists {
+		if customElement, exists := ctx.Element(element.TagName); exists {
 			helpers.SafeDebugLog("[HOVER] Found custom element in registry: %s\n", element.TagName)
 
 			// Create hover content with element information
@@ -77,11 +76,11 @@ func Hover(ctx HoverContext, context *glsp.Context, params *protocol.HoverParams
 	}
 
 	// Check if cursor is over an attribute
-	attribute, tagName := doc.FindAttributeAtPosition(params.Position, ctx.GetRawDocumentManager())
+	attribute, tagName := doc.FindAttributeAtPosition(params.Position, ctx.RawDocumentManager())
 	if attribute != nil && tagName != "" {
 		helpers.SafeDebugLog("[HOVER] Found attribute at position: name=%s, tagName=%s, range=%+v\n", attribute.Name, tagName, attribute.Range)
 
-		if attrs, exists := ctx.GetAttributes(tagName); exists {
+		if attrs, exists := ctx.Attributes(tagName); exists {
 			helpers.SafeDebugLog("[HOVER] Found %d attributes for element %s\n", len(attrs), tagName)
 
 			if attr, exists := attrs[attribute.Name]; exists {

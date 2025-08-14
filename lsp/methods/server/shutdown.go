@@ -26,11 +26,11 @@ import (
 func Shutdown(ctx ServerContext, context *glsp.Context) error {
 	log.Printf("CEM LSP Server shutting down...")
 
-	if dm := ctx.GetDocumentManager(); dm != nil {
+	if dm := ctx.DocumentManager(); dm != nil {
 		dm.Close()
 	}
 
-	if ws := ctx.GetWorkspace(); ws != nil {
+	if ws := ctx.Workspace(); ws != nil {
 		ws.Cleanup()
 	}
 

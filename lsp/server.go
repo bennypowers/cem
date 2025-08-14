@@ -115,7 +115,7 @@ func (s *Server) handleManifestReload() {
 	helpers.SafeDebugLog("Before reload: %d elements in registry", len(s.registry.Elements))
 	for tagName := range s.registry.Elements {
 		helpers.SafeDebugLog("  - Element: %s", tagName)
-		if attrs, exists := s.registry.GetAttributes(tagName); exists {
+		if attrs, exists := s.registry.Attributes(tagName); exists {
 			for attrName, attr := range attrs {
 				typeText := ""
 				if attr.Type != nil {
@@ -139,7 +139,7 @@ func (s *Server) handleManifestReload() {
 	helpers.SafeDebugLog("After reload: %d elements in registry", len(s.registry.Elements))
 	for tagName := range s.registry.Elements {
 		helpers.SafeDebugLog("  - Element: %s", tagName)
-		if attrs, exists := s.registry.GetAttributes(tagName); exists {
+		if attrs, exists := s.registry.Attributes(tagName); exists {
 			for attrName, attr := range attrs {
 				typeText := ""
 				if attr.Type != nil {
@@ -159,8 +159,8 @@ func (s *Server) reloadManifestsDirectly() error {
 	return s.registry.ReloadManifestsDirectly()
 }
 
-// GetRegistry returns the registry for testing purposes
-func (s *Server) GetRegistry() *Registry {
+// Registry returns the registry for testing purposes
+func (s *Server) Registry() *Registry {
 	return s.registry
 }
 

@@ -245,7 +245,7 @@ func TestCompletionUpdateCycle(t *testing.T) {
 			t.Errorf("Updated completions missing '%s'. Got: %v", expected, getCompletionLabels(updatedItems))
 
 			// Debug: Check what's in the registry
-			if attrs, exists := ctx.GetAttributes("test-element"); exists {
+			if attrs, exists := ctx.Attributes("test-element"); exists {
 				if propAttr, hasProp := attrs["prop"]; hasProp {
 					t.Logf("Registry shows prop attribute type: %s", propAttr.Type.Text)
 				}

@@ -25,7 +25,7 @@ import (
 
 // CodeActionContext provides the dependencies needed for code actions
 type CodeActionContext interface {
-	GetDocument(uri string) types.Document
+	Document(uri string) types.Document
 }
 
 // CodeAction handles textDocument/codeAction requests

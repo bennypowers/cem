@@ -26,19 +26,19 @@ import (
 
 // DiagnosticsContext provides the dependencies needed for diagnostics
 type DiagnosticsContext interface {
-	GetDocument(uri string) types.Document
-	GetSlots(tagName string) ([]M.Slot, bool)
-	GetAllTagNames() []string
+	Document(uri string) types.Document
+	Slots(tagName string) ([]M.Slot, bool)
+	AllTagNames() []string
 	// For missing import diagnostics
-	GetElementDefinition(tagName string) (types.ElementDefinition, bool)
-	GetElementSource(tagName string) (string, bool) // Returns import path/package name
+	ElementDefinition(tagName string) (types.ElementDefinition, bool)
+	ElementSource(tagName string) (string, bool) // Returns import path/package name
 }
 
 // PublishDiagnostics analyzes the document and publishes diagnostics
 func PublishDiagnostics(ctx DiagnosticsContext, glspContext *glsp.Context, uri string) error {
 	helpers.SafeDebugLog("[DIAGNOSTICS] Starting diagnostics for %s", uri)
 
-	doc := ctx.GetDocument(uri)
+	doc := ctx.Document(uri)
 	if doc == nil {
 		helpers.SafeDebugLog("[DIAGNOSTICS] No document found for %s", uri)
 		return nil

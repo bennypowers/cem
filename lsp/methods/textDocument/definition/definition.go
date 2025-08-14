@@ -74,14 +74,14 @@ func Definition(ctx types.DefinitionContext, context *glsp.Context, params *prot
 	helpers.SafeDebugLog("[DEFINITION] Request for URI: %s, Position: line=%d, char=%d", uri, params.Position.Line, params.Position.Character)
 
 	// Get the tracked document
-	doc := ctx.GetDocument(uri)
+	doc := ctx.Document(uri)
 	if doc == nil {
 		helpers.SafeDebugLog("[DEFINITION] No document found for URI: %s", uri)
 		return nil, nil
 	}
 
 	// Analyze what's at the cursor position to determine definition request
-	request := analyzeDefinitionTarget(doc, params.Position, ctx.GetRawDocumentManager())
+	request := analyzeDefinitionTarget(doc, params.Position, ctx.RawDocumentManager())
 	if request == nil {
 		helpers.SafeDebugLog("[DEFINITION] No definition target found at position")
 		return nil, nil
@@ -97,7 +97,7 @@ func Definition(ctx types.DefinitionContext, context *glsp.Context, params *prot
 	}
 
 	// Get the element definition with source information
-	definition, exists := ctx.GetElementDefinition(request.ElementName)
+	definition, exists := ctx.ElementDefinition(request.ElementName)
 	if !exists {
 		helpers.SafeDebugLog("[DEFINITION] No definition found for element: %s", request.ElementName)
 		return nil, nil
@@ -105,8 +105,8 @@ func Definition(ctx types.DefinitionContext, context *glsp.Context, params *prot
 
 	// Resolve the source file path with TypeScript preference
 	helpers.SafeDebugLog("[DEFINITION] Module path: %s, Source href: %s, Workspace root: %s",
-		definition.GetModulePath(), definition.GetSourceHref(), ctx.GetWorkspaceRoot())
-	sourceFile := resolveSourcePath(definition, ctx.GetWorkspaceRoot())
+		definition.ModulePath(), definition.SourceHref(), ctx.WorkspaceRoot())
+	sourceFile := resolveSourcePath(definition, ctx.WorkspaceRoot())
 	if sourceFile == "" {
 		helpers.SafeDebugLog("[DEFINITION] Could not resolve source path for element: %s", request.ElementName)
 		return nil, nil
@@ -194,8 +194,8 @@ func findDefinitionLocation(sourceFile string, request *DefinitionRequest) *prot
 
 // resolveSourcePath resolves the source file path, preferring TypeScript files over JavaScript
 func resolveSourcePath(definition types.ElementDefinition, workspaceRoot string) string {
-	modulePath := definition.GetModulePath()
-	sourceHref := definition.GetSourceHref()
+	modulePath := definition.ModulePath()
+	sourceHref := definition.SourceHref()
 
 	// Determine the base path to resolve against
 	var basePath string

@@ -321,29 +321,29 @@ type testHoverContext struct {
 	registry        *lsp.Registry
 }
 
-func (ctx *testHoverContext) GetDocument(uri string) types.Document {
-	doc := ctx.documentManager.GetDocument(uri)
+func (ctx *testHoverContext) Document(uri string) types.Document {
+	doc := ctx.documentManager.Document(uri)
 	if doc == nil {
 		return nil
 	}
 	return doc
 }
 
-func (ctx *testHoverContext) GetElement(tagName string) (*M.CustomElement, bool) {
+func (ctx *testHoverContext) Element(tagName string) (*M.CustomElement, bool) {
 	element, exists := ctx.registry.Elements[tagName]
 	return element, exists
 }
 
-func (ctx *testHoverContext) GetAttributes(tagName string) (map[string]*M.Attribute, bool) {
-	attrs, exists := ctx.registry.Attributes[tagName]
+func (ctx *testHoverContext) Attributes(tagName string) (map[string]*M.Attribute, bool) {
+	attrs, exists := ctx.registry.Attributes(tagName)
 	return attrs, exists
 }
 
-func (ctx *testHoverContext) GetSlots(tagName string) ([]M.Slot, bool) {
-	return ctx.registry.GetSlots(tagName)
+func (ctx *testHoverContext) Slots(tagName string) ([]M.Slot, bool) {
+	return ctx.registry.Slots(tagName)
 }
 
-func (ctx *testHoverContext) GetRawDocumentManager() any {
+func (ctx *testHoverContext) RawDocumentManager() any {
 	return ctx.documentManager
 }
 
@@ -371,19 +371,19 @@ func (d *documentAdapter) FindAttributeAtPosition(position protocol.Position, dm
 	return attr, tagName
 }
 
-// GetContent returns the document content
-func (d *documentAdapter) GetContent() string {
-	return d.doc.GetContent()
+// Content returns the document content
+func (d *documentAdapter) Content() string {
+	return d.doc.Content()
 }
 
-// GetVersion returns the document version
-func (d *documentAdapter) GetVersion() int32 {
-	return d.doc.GetVersion()
+// Version returns the document version
+func (d *documentAdapter) Version() int32 {
+	return d.doc.Version()
 }
 
-// GetURI returns the document URI
-func (d *documentAdapter) GetURI() string {
-	return d.doc.GetURI()
+// URI returns the document URI
+func (d *documentAdapter) URI() string {
+	return d.doc.URI()
 }
 
 // FindCustomElements returns custom elements

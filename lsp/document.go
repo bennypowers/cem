@@ -43,9 +43,9 @@ type DocumentManager struct {
 
 // Document represents a tracked document with its parsed tree
 type Document struct {
-	URI      string
-	Content  string
-	Version  int32
+	uri      string
+	content  string
+	version  int32
 	Language string
 	Tree     *ts.Tree
 	Parser   *ts.Parser
@@ -69,8 +69,13 @@ type AttributeMatch struct {
 // TemplateContext represents an HTML template context in TypeScript
 type TemplateContext struct {
 	Range   protocol.Range
-	Content string
+	content string
 	Type    string // "html", "innerHTML", "outerHTML"
+}
+
+// Content returns the template content
+func (tc *TemplateContext) Content() string {
+	return tc.content
 }
 
 // NewDocumentManager creates a new document manager
@@ -162,9 +167,9 @@ func (dm *DocumentManager) OpenDocument(uri, content string, version int32) type
 
 	language := dm.getLanguageFromURI(uri)
 	doc := &Document{
-		URI:      uri,
-		Content:  content,
-		Version:  version,
+		uri:      uri,
+		content:  content,
+		version:  version,
 		Language: language,
 	}
 
@@ -192,9 +197,9 @@ func (dm *DocumentManager) UpdateDocument(uri, content string, version int32) ty
 	doc.mu.Lock()
 	defer doc.mu.Unlock()
 
-	oldContentLength := len(doc.Content)
-	doc.Content = content
-	doc.Version = version
+	oldContentLength := len(doc.content)
+	doc.content = content
+	doc.version = version
 	helpers.SafeDebugLog("[DOCUMENT] Updated content: old=%d, new=%d\n", oldContentLength, len(content))
 
 	// For now, always do a full reparse to avoid incremental parsing issues
@@ -206,8 +211,8 @@ func (dm *DocumentManager) UpdateDocument(uri, content string, version int32) ty
 	return doc
 }
 
-// GetDocument retrieves a tracked document
-func (dm *DocumentManager) GetDocument(uri string) types.Document {
+// Document retrieves a tracked document
+func (dm *DocumentManager) Document(uri string) types.Document {
 	dm.mu.RLock()
 	defer dm.mu.RUnlock()
 
@@ -292,7 +297,7 @@ func (d *Document) parse() {
 	}
 
 	// Parse the content
-	d.Tree = d.Parser.Parse([]byte(d.Content), nil)
+	d.Tree = d.Parser.Parse([]byte(d.content), nil)
 }
 
 // incrementalParse performs incremental parsing when content changes
@@ -306,7 +311,7 @@ func (d *Document) incrementalParse(_ string) {
 	oldTree := d.Tree
 
 	// Parse with the old tree for incremental parsing
-	d.Tree = d.Parser.Parse([]byte(d.Content), oldTree)
+	d.Tree = d.Parser.Parse([]byte(d.content), oldTree)
 
 	// Now we can safely close the old tree
 	if oldTree != nil {
@@ -356,7 +361,7 @@ func (d *Document) findHTMLCustomElements(dm *DocumentManager) ([]CustomElementM
 	}
 
 	root := d.Tree.RootNode()
-	content := []byte(d.Content)
+	content := []byte(d.content)
 
 	// Ensure tree size doesn't exceed content length
 	if root.EndByte() > uint(len(content)) {
@@ -435,7 +440,7 @@ func (d *Document) findHTMLTemplates(dm *DocumentManager) ([]TemplateContext, er
 	}
 
 	root := d.Tree.RootNode()
-	content := []byte(d.Content)
+	content := []byte(d.content)
 
 	// Ensure tree size doesn't exceed content length
 	if root.EndByte() > uint(len(content)) {
@@ -472,7 +477,7 @@ func (d *Document) findHTMLTemplates(dm *DocumentManager) ([]TemplateContext, er
 
 				templates = append(templates, TemplateContext{
 					Range:   d.nodeToProtocolRange(templateNode),
-					Content: templateContent,
+					content: templateContent,
 					Type:    templateType,
 				})
 			}
@@ -488,7 +493,7 @@ func (d *Document) parseHTMLInTemplate(template TemplateContext, dm *DocumentMan
 	parser := Q.GetHTMLParser()
 	defer Q.PutHTMLParser(parser)
 
-	content := []byte(template.Content)
+	content := []byte(template.Content())
 	tree := parser.Parse(content, nil)
 	defer tree.Close()
 
@@ -504,7 +509,7 @@ func (d *Document) parseHTMLInTemplate(template TemplateContext, dm *DocumentMan
 
 			// Convert byte ranges relative to template content, not the full document
 			innerRange := d.templateByteRangeToProtocolRange(
-				template.Content,
+				template.Content(),
 				tagNames[0].StartByte,
 				tagNames[0].EndByte,
 			)
@@ -517,7 +522,7 @@ func (d *Document) parseHTMLInTemplate(template TemplateContext, dm *DocumentMan
 			if attrNames, ok := captureMap["attr.name"]; ok {
 				for i, attrName := range attrNames {
 					attrInnerRange := d.templateByteRangeToProtocolRange(
-						template.Content,
+						template.Content(),
 						attrName.StartByte,
 						attrName.EndByte,
 					)
@@ -570,7 +575,7 @@ func (d *Document) byteOffsetToPosition(offset uint) protocol.Position {
 	line := uint32(0)
 	char := uint32(0)
 
-	for i, r := range d.Content {
+	for i, r := range d.content {
 		if uint(i) >= offset {
 			break
 		}
@@ -654,7 +659,7 @@ func (d *Document) adjustRangeForTemplate(innerRange protocol.Range, templateRan
 
 // FindElementAtPosition finds a custom element at the given position
 func (d *Document) FindElementAtPosition(position protocol.Position, dm any) *types.CustomElementMatch {
-	helpers.SafeDebugLog("[DOCUMENT] FindElementAtPosition: URI=%s, Position=line:%d,char:%d\n", d.URI, position.Line, position.Character)
+	helpers.SafeDebugLog("[DOCUMENT] FindElementAtPosition: URI=%s, Position=line:%d,char:%d\n", d.uri, position.Line, position.Character)
 
 	// Cast dm back to DocumentManager
 	var docMgr *DocumentManager
@@ -728,25 +733,25 @@ func (d *Document) FindAttributeAtPosition(position protocol.Position, dm any) (
 	return nil, ""
 }
 
-// GetContent returns the document content
-func (d *Document) GetContent() string {
+// Content returns the document content
+func (d *Document) Content() string {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
-	return d.Content
+	return d.content
 }
 
-// GetVersion returns the document version
-func (d *Document) GetVersion() int32 {
+// Version returns the document version
+func (d *Document) Version() int32 {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
-	return d.Version
+	return d.version
 }
 
-// GetURI returns the document URI
-func (d *Document) GetURI() string {
+// URI returns the document URI
+func (d *Document) URI() string {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
-	return d.URI
+	return d.uri
 }
 
 // FindCustomElements finds all custom elements in the document (public interface method)
@@ -858,7 +863,7 @@ func (d *Document) analyzeHTMLCompletionContext(byteOffset uint, analysis *types
 	}
 
 	root := d.Tree.RootNode()
-	content := []byte(d.Content)
+	content := []byte(d.content)
 
 	// Use completion context query to find what we're completing at this position
 	matcher := dm.htmlCompletionContext
@@ -915,7 +920,7 @@ func (d *Document) analyzeHTMLCompletionContext(byteOffset uint, analysis *types
 				if strings.Contains(tagName, "-") && len(tagName) > 3 {
 					// Additional check: make sure we're not in a multi-line context
 					// where this might be a partial tag name
-					content := string([]byte(d.Content))
+					content := string([]byte(d.content))
 					lines := strings.Split(content, "\n")
 					position := d.byteOffsetToPosition(byteOffset)
 					if int(position.Line) < len(lines) {
@@ -1216,7 +1221,7 @@ func (d *Document) analyzeTypeScriptCompletionContext(byteOffset uint, analysis 
 	}
 
 	root := d.Tree.RootNode()
-	content := []byte(d.Content)
+	content := []byte(d.content)
 
 	// Use the TypeScript completion context matcher to check both templates and interpolations
 	tsCompletionMatcher := dm.tsCompletionContext
@@ -1362,7 +1367,7 @@ func (d *Document) analyzeTemplateContentAsHTML(templateContent string, relative
 
 // Helper methods for position conversion
 func (d *Document) getLineContent(position protocol.Position) string {
-	lines := strings.Split(d.Content, "\n")
+	lines := strings.Split(d.content, "\n")
 	if int(position.Line) < len(lines) {
 		return lines[position.Line]
 	}
@@ -1370,7 +1375,7 @@ func (d *Document) getLineContent(position protocol.Position) string {
 }
 
 func (d *Document) positionToByteOffset(position protocol.Position) uint {
-	lines := strings.Split(d.Content, "\n")
+	lines := strings.Split(d.content, "\n")
 	offset := 0
 
 	for i := 0; i < int(position.Line) && i < len(lines); i++ {
@@ -1389,7 +1394,7 @@ type simpleDocument struct {
 	content string
 }
 
-func (s *simpleDocument) GetContent() string {
+func (s *simpleDocument) Content() string {
 	return s.content
 }
 
@@ -1399,6 +1404,22 @@ func (s *simpleDocument) FindElementAtPosition(position protocol.Position, dm an
 
 func (s *simpleDocument) FindAttributeAtPosition(position protocol.Position, dm any) (*types.AttributeMatch, string) {
 	return nil, "" // Not needed for text-based analysis
+}
+
+func (s *simpleDocument) Version() int32 {
+	return 0 // Stub implementation
+}
+
+func (s *simpleDocument) URI() string {
+	return "" // Stub implementation
+}
+
+func (s *simpleDocument) FindCustomElements(dm any) ([]types.CustomElementMatch, error) {
+	return nil, nil // Stub implementation
+}
+
+func (s *simpleDocument) AnalyzeCompletionContextTS(position protocol.Position, dm any) *types.CompletionAnalysis {
+	return nil // Stub implementation
 }
 
 func (s *simpleDocument) GetTemplateContext(position protocol.Position) string {

@@ -47,7 +47,7 @@ func TestSlotDiagnosticsBasic(t *testing.T) {
 		t.Fatal("Expected document to be found")
 	}
 
-	content := doc.GetContent()
+	content := doc.Content()
 	if content != `<my-element><div slot="heade">Content</div></my-element>` {
 		t.Errorf("Expected content to match, got: %s", content)
 	}
@@ -83,7 +83,7 @@ func (m *mockDiagnosticsContext) GetSlots(tagName string) ([]manifest.Slot, bool
 	return slots, exists
 }
 
-func (m *mockDiagnosticsContext) GetAllTagNames() []string {
+func (m *mockDiagnosticsContext) AllTagNames() []string {
 	return m.tagNames
 }
 
@@ -91,7 +91,7 @@ type mockDocument struct {
 	content string
 }
 
-func (m *mockDocument) GetContent() string {
+func (m *mockDocument) Content() string {
 	return m.content
 }
 
@@ -111,10 +111,10 @@ func (m *mockDocument) FindCustomElements(dm any) ([]types.CustomElementMatch, e
 	return nil, nil
 }
 
-func (m *mockDocument) GetVersion() int32 {
+func (m *mockDocument) Version() int32 {
 	return 1
 }
 
-func (m *mockDocument) GetURI() string {
+func (m *mockDocument) URI() string {
 	return "test://test.html"
 }

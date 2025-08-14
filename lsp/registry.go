@@ -33,23 +33,23 @@ import (
 // ElementDefinition stores a custom element with its source information
 type ElementDefinition struct {
 	Element     *M.CustomElement
-	ModulePath  string             // Path from the manifest module
+	modulePath  string             // Path from the manifest module
 	Source      *M.SourceReference // Source reference if available
-	PackageName string             // Package name from package.json (if loaded from a package)
+	packageName string             // Package name from package.json (if loaded from a package)
 }
 
-// GetModulePath returns the module path for this element definition
-func (ed *ElementDefinition) GetModulePath() string {
-	return ed.ModulePath
+// ModulePath returns the module path for this element definition
+func (ed *ElementDefinition) ModulePath() string {
+	return ed.modulePath
 }
 
-// GetPackageName returns the package name for this element definition
-func (ed *ElementDefinition) GetPackageName() string {
-	return ed.PackageName
+// PackageName returns the package name for this element definition
+func (ed *ElementDefinition) PackageName() string {
+	return ed.packageName
 }
 
-// GetSourceHref returns the source href for this element definition
-func (ed *ElementDefinition) GetSourceHref() string {
+// SourceHref returns the source href for this element definition
+func (ed *ElementDefinition) SourceHref() string {
 	if ed.Source != nil {
 		return ed.Source.Href
 	}
@@ -66,7 +66,7 @@ type Registry struct {
 	// ElementDefinitions maps tag names to their definitions with source information
 	ElementDefinitions map[string]*ElementDefinition
 	// Attributes maps element tag names to their available attributes
-	Attributes map[string]map[string]*M.Attribute
+	attributes map[string]map[string]*M.Attribute
 	// Manifests stores all loaded manifest packages
 	Manifests []*M.Package
 	// ManifestPaths tracks the file paths of loaded manifests for file watching
@@ -86,7 +86,7 @@ func NewRegistry() *Registry {
 	return &Registry{
 		Elements:           make(map[string]*M.CustomElement),
 		ElementDefinitions: make(map[string]*ElementDefinition),
-		Attributes:         make(map[string]map[string]*M.Attribute),
+		attributes:         make(map[string]map[string]*M.Attribute),
 		Manifests:          make([]*M.Package, 0),
 		ManifestPaths:      make([]string, 0),
 	}
@@ -123,7 +123,7 @@ func (r *Registry) LoadFromWorkspace(workspace W.WorkspaceContext) error {
 func (r *Registry) clear() {
 	r.Elements = make(map[string]*M.CustomElement)
 	r.ElementDefinitions = make(map[string]*ElementDefinition)
-	r.Attributes = make(map[string]map[string]*M.Attribute)
+	r.attributes = make(map[string]map[string]*M.Attribute)
 	r.Manifests = r.Manifests[:0]
 	r.ManifestPaths = r.ManifestPaths[:0]
 }
@@ -135,7 +135,7 @@ func (r *Registry) clearDataOnly() {
 
 	r.Elements = make(map[string]*M.CustomElement)
 	r.ElementDefinitions = make(map[string]*ElementDefinition)
-	r.Attributes = make(map[string]map[string]*M.Attribute)
+	r.attributes = make(map[string]map[string]*M.Attribute)
 	r.Manifests = r.Manifests[:0]
 	// Note: ManifestPaths are preserved for file watching
 }
@@ -316,9 +316,9 @@ func (r *Registry) addManifestWithPackageName(pkg *M.Package, packageName string
 					// Store the element definition with source information
 					r.ElementDefinitions[element.TagName] = &ElementDefinition{
 						Element:     element,
-						ModulePath:  module.Path,
+						modulePath:  module.Path,
 						Source:      customElementDecl.Source,
-						PackageName: packageName,
+						packageName: packageName,
 					}
 
 					// Index attributes for this element
@@ -328,7 +328,7 @@ func (r *Registry) addManifestWithPackageName(pkg *M.Package, packageName string
 							attr := &element.Attributes[i]
 							attrMap[attr.Name] = attr
 						}
-						r.Attributes[element.TagName] = attrMap
+						r.attributes[element.TagName] = attrMap
 					}
 				}
 			}
@@ -336,8 +336,8 @@ func (r *Registry) addManifestWithPackageName(pkg *M.Package, packageName string
 	}
 }
 
-// GetElement returns the custom element definition for a tag name
-func (r *Registry) GetElement(tagName string) (*M.CustomElement, bool) {
+// Element returns the custom element definition for a tag name
+func (r *Registry) Element(tagName string) (*M.CustomElement, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -349,13 +349,13 @@ func (r *Registry) GetElement(tagName string) (*M.CustomElement, bool) {
 	return element, exists
 }
 
-// GetAttributes returns the available attributes for a custom element tag
-func (r *Registry) GetAttributes(tagName string) (map[string]*M.Attribute, bool) {
+// Attributes returns the available attributes for a custom element tag
+func (r *Registry) Attributes(tagName string) (map[string]*M.Attribute, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	attrs, exists := r.Attributes[tagName]
-	helpers.SafeDebugLog("[REGISTRY] GetAttributes('%s'): exists=%t", tagName, exists)
+	attrs, exists := r.attributes[tagName]
+	helpers.SafeDebugLog("[REGISTRY] Attributes('%s'): exists=%t", tagName, exists)
 	if exists {
 		helpers.SafeDebugLog("[REGISTRY] Element '%s' has %d attributes", tagName, len(attrs))
 		for attrName := range attrs {
@@ -365,8 +365,8 @@ func (r *Registry) GetAttributes(tagName string) (map[string]*M.Attribute, bool)
 	return attrs, exists
 }
 
-// GetSlots returns the available slots for a custom element tag
-func (r *Registry) GetSlots(tagName string) ([]M.Slot, bool) {
+// Slots returns the available slots for a custom element tag
+func (r *Registry) Slots(tagName string) ([]M.Slot, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -384,15 +384,15 @@ func (r *Registry) GetSlots(tagName string) ([]M.Slot, bool) {
 	return element.Slots, true
 }
 
-// GetElementDefinition returns the element definition with source information for a tag name
-func (r *Registry) GetElementDefinition(tagName string) (*ElementDefinition, bool) {
+// ElementDefinition returns the element definition with source information for a tag name
+func (r *Registry) ElementDefinition(tagName string) (*ElementDefinition, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
 	definition, exists := r.ElementDefinitions[tagName]
 	helpers.SafeDebugLog("[REGISTRY] GetElementDefinition('%s'): exists=%t", tagName, exists)
 	if exists {
-		helpers.SafeDebugLog("[REGISTRY] Element '%s' module path: %s", tagName, definition.ModulePath)
+		helpers.SafeDebugLog("[REGISTRY] Element '%s' module path: %s", tagName, definition.modulePath)
 		if definition.Source != nil {
 			helpers.SafeDebugLog("[REGISTRY] Element '%s' source href: %s", tagName, definition.Source.Href)
 		}
@@ -400,8 +400,8 @@ func (r *Registry) GetElementDefinition(tagName string) (*ElementDefinition, boo
 	return definition, exists
 }
 
-// GetAllTagNames returns all registered custom element tag names
-func (r *Registry) GetAllTagNames() []string {
+// AllTagNames returns all registered custom element tag names
+func (r *Registry) AllTagNames() []string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
