@@ -32,7 +32,7 @@ var versionCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		output, err := cmd.Flags().GetString("output")
 		if err != nil {
-			return fmt.Errorf("Error reading output flag: %v\n", err)
+			return fmt.Errorf("error reading output flag: %v", err)
 		}
 		switch output {
 		case "json":
