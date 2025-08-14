@@ -11,7 +11,14 @@ clean:
 	rm -rf dist/ cpu.out cover.out artifacts platforms
 
 build:
-	go build -o dist/cem .
+	@mkdir -p dist
+	go build -ldflags="$(shell ./scripts/ldflags.sh)" -o dist/cem .
+
+# NOTE: this is a non-traditional install target, which installs to ~/.local/bin/
+# It's mostly intended for local development, not for distribution
+install: build
+	mkdir -p ~/.local/bin/
+	cp dist/cem ~/.local/bin/
 
 # Convenience target to build both Windows variants
 windows: windows-x64 windows-arm64

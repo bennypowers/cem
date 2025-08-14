@@ -4,6 +4,12 @@ project_name: cem
 builds:
   - main: .
     binary: cem
+    ldflags:
+      - -X 'bennypowers.dev/cem/internal/version.Version={{.Version}}'
+      - -X 'bennypowers.dev/cem/internal/version.GitCommit={{.Commit}}'
+      - -X 'bennypowers.dev/cem/internal/version.GitTag={{.Tag}}'
+      - -X 'bennypowers.dev/cem/internal/version.BuildTime={{.Date}}'
+      - -X 'bennypowers.dev/cem/internal/version.GitDirty={{if .IsGitDirty}}dirty{{end}}'
     hooks:
       pre:
         - go generate ./...
