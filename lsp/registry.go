@@ -24,10 +24,10 @@ import (
 	"strings"
 	"sync"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp/helpers"
 	M "bennypowers.dev/cem/manifest"
 	W "bennypowers.dev/cem/workspace"
-	"github.com/fsnotify/fsnotify"
 )
 
 // ElementDefinition stores a custom element with its source information
@@ -72,24 +72,37 @@ type Registry struct {
 	// ManifestPaths tracks the file paths of loaded manifests for file watching
 	ManifestPaths []string
 	// File watching
-	watcher   *fsnotify.Watcher
-	watcherMu sync.RWMutex
-	onReload  func() // Callback when manifests are reloaded
+	fileWatcher platform.FileWatcher
+	watcherMu   sync.RWMutex
+	onReload    func() // Callback when manifests are reloaded
 	// Generate watching for local project
 	generateWatcher *InProcessGenerateWatcher
 	generateMu      sync.RWMutex
 	localWorkspace  W.WorkspaceContext // Track the local workspace for generate watching
 }
 
-// NewRegistry creates a new empty registry
-func NewRegistry() *Registry {
+// NewRegistry creates a new empty registry with the given file watcher.
+// For production use, pass platform.NewFSNotifyFileWatcher().
+// For testing, pass platform.NewMockFileWatcher().
+func NewRegistry(fileWatcher platform.FileWatcher) *Registry {
 	return &Registry{
 		Elements:           make(map[string]*M.CustomElement),
 		ElementDefinitions: make(map[string]*ElementDefinition),
 		attributes:         make(map[string]map[string]*M.Attribute),
 		Manifests:          make([]*M.Package, 0),
 		ManifestPaths:      make([]string, 0),
+		fileWatcher:        fileWatcher,
 	}
+}
+
+// NewRegistryWithDefaults creates a registry with production defaults.
+// This is a convenience constructor for production use.
+func NewRegistryWithDefaults() (*Registry, error) {
+	fileWatcher, err := platform.NewFSNotifyFileWatcher()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create file watcher: %w", err)
+	}
+	return NewRegistry(fileWatcher), nil
 }
 
 // LoadFromWorkspace loads all available custom elements manifests from
@@ -423,22 +436,15 @@ func (r *Registry) StartFileWatching(onReload func()) error {
 	r.watcherMu.Lock()
 	defer r.watcherMu.Unlock()
 
-	if r.watcher != nil {
-		// Already watching
-		return nil
+	if r.fileWatcher == nil {
+		return fmt.Errorf("no file watcher configured")
 	}
 
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		return fmt.Errorf("failed to create file watcher: %w", err)
-	}
-
-	r.watcher = watcher
 	r.onReload = onReload
 
 	// Add all known manifest paths to the watcher
 	for _, path := range r.ManifestPaths {
-		if err := r.watcher.Add(path); err != nil {
+		if err := r.fileWatcher.Add(path); err != nil {
 			helpers.SafeDebugLog("Warning: Could not watch manifest file %s: %v", path, err)
 		} else {
 			helpers.SafeDebugLog("Watching manifest file: %s", path)
@@ -456,12 +462,11 @@ func (r *Registry) StopFileWatching() error {
 	r.watcherMu.Lock()
 	defer r.watcherMu.Unlock()
 
-	if r.watcher == nil {
+	if r.fileWatcher == nil {
 		return nil
 	}
 
-	err := r.watcher.Close()
-	r.watcher = nil
+	err := r.fileWatcher.Close()
 	r.onReload = nil
 	return err
 }
@@ -470,12 +475,12 @@ func (r *Registry) StopFileWatching() error {
 func (r *Registry) watchFiles() {
 	// Get channel references under lock to avoid race condition
 	r.watcherMu.RLock()
-	if r.watcher == nil {
+	if r.fileWatcher == nil {
 		r.watcherMu.RUnlock()
 		return
 	}
-	events := r.watcher.Events
-	errors := r.watcher.Errors
+	events := r.fileWatcher.Events()
+	errors := r.fileWatcher.Errors()
 	r.watcherMu.RUnlock()
 
 	for {
@@ -495,9 +500,9 @@ func (r *Registry) watchFiles() {
 }
 
 // handleFileChange processes a file system change event
-func (r *Registry) handleFileChange(event fsnotify.Event) {
+func (r *Registry) handleFileChange(event platform.FileWatchEvent) {
 	// Only handle write and create events (ignores temporary files, etc.)
-	if event.Op&fsnotify.Write == 0 && event.Op&fsnotify.Create == 0 {
+	if event.Op&platform.Write == 0 && event.Op&platform.Create == 0 {
 		return
 	}
 
@@ -655,8 +660,8 @@ func (r *Registry) addManifestPath(path string) {
 
 	// If watcher is active, add this path
 	r.watcherMu.RLock()
-	if r.watcher != nil {
-		if err := r.watcher.Add(absPath); err != nil {
+	if r.fileWatcher != nil {
+		if err := r.fileWatcher.Add(absPath); err != nil {
 			helpers.SafeDebugLog("Warning: Could not watch manifest file %s: %v", absPath, err)
 		} else {
 			helpers.SafeDebugLog("Now watching manifest file: %s", absPath)

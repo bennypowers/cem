@@ -28,6 +28,7 @@ import (
 type DiagnosticsContext interface {
 	Document(uri string) types.Document
 	Slots(tagName string) ([]M.Slot, bool)
+	Attributes(tagName string) (map[string]*M.Attribute, bool)
 	AllTagNames() []string
 	// For missing import diagnostics
 	ElementDefinition(tagName string) (types.ElementDefinition, bool)
@@ -53,6 +54,10 @@ func PublishDiagnostics(ctx DiagnosticsContext, glspContext *glsp.Context, uri s
 	// Analyze custom element tag name diagnostics
 	tagDiagnostics := analyzeTagNameDiagnostics(ctx, doc)
 	diagnostics = append(diagnostics, tagDiagnostics...)
+
+	// Analyze attribute diagnostics
+	attributeDiagnostics := analyzeAttributeDiagnostics(ctx, doc)
+	diagnostics = append(diagnostics, attributeDiagnostics...)
 
 	helpers.SafeDebugLog("[DIAGNOSTICS] Found %d diagnostics for %s", len(diagnostics), uri)
 

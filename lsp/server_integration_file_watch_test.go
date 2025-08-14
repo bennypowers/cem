@@ -35,7 +35,10 @@ func TestManifestFileWatchingIntegration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to initialize workspace: %v", err)
 	}
-	registry := lsp.NewRegistry()
+	registry, err := lsp.NewRegistryWithDefaults()
+	if err != nil {
+		t.Fatalf("Failed to create registry: %v", err)
+	}
 
 	t.Run("file watching setup and initial load", func(t *testing.T) {
 		// Load from workspace (simulating server startup)
@@ -60,8 +63,11 @@ func TestManifestFileWatchingIntegration(t *testing.T) {
 
 	t.Run("file watching triggers reload", func(t *testing.T) {
 		// Create fresh registry for this test
-		testRegistry := lsp.NewRegistry()
-		err := testRegistry.LoadFromWorkspace(workspace)
+		testRegistry, err := lsp.NewRegistryWithDefaults()
+		if err != nil {
+			t.Fatalf("Failed to create registry: %v", err)
+		}
+		err = testRegistry.LoadFromWorkspace(workspace)
 		if err != nil {
 			t.Fatalf("Failed to load from workspace: %v", err)
 		}
@@ -123,8 +129,11 @@ func TestManifestFileWatchingIntegration(t *testing.T) {
 
 	t.Run("multiple file changes", func(t *testing.T) {
 		// Create fresh registry for this test
-		testRegistry := lsp.NewRegistry()
-		err := testRegistry.LoadFromWorkspace(workspace)
+		testRegistry, err := lsp.NewRegistryWithDefaults()
+		if err != nil {
+			t.Fatalf("Failed to create registry: %v", err)
+		}
+		err = testRegistry.LoadFromWorkspace(workspace)
 		if err != nil {
 			t.Fatalf("Failed to load from workspace: %v", err)
 		}
@@ -214,7 +223,10 @@ func TestPackageJSONWatching(t *testing.T) {
 		t.Fatalf("Failed to copy manifest to package location: %v", err)
 	}
 
-	registry := lsp.NewRegistry()
+	registry, err := lsp.NewRegistryWithDefaults()
+	if err != nil {
+		t.Fatalf("Failed to create registry: %v", err)
+	}
 
 	t.Run("package.json with customElements tracked", func(t *testing.T) {
 		// Create workspace and load manifests to trigger package.json discovery
@@ -297,7 +309,10 @@ func TestPackageJSONWatching(t *testing.T) {
 }
 
 func TestFileWatchingErrorHandling(t *testing.T) {
-	registry := lsp.NewRegistry()
+	registry, err := lsp.NewRegistryWithDefaults()
+	if err != nil {
+		t.Fatalf("Failed to create registry: %v", err)
+	}
 
 	t.Run("start watching without files", func(t *testing.T) {
 		// Should succeed even with no files to watch
@@ -332,11 +347,14 @@ func TestFileWatchingErrorHandling(t *testing.T) {
 
 	t.Run("watch nonexistent file", func(t *testing.T) {
 		// Create a registry and add a path that doesn't exist
-		testRegistry := lsp.NewRegistry()
+		testRegistry, err := lsp.NewRegistryWithDefaults()
+		if err != nil {
+			t.Fatalf("Failed to create registry: %v", err)
+		}
 		testRegistry.AddManifestPath("/nonexistent/path/manifest.json")
 
 		// Starting the watcher should not fail due to one bad path
-		err := testRegistry.StartFileWatching(func() {})
+		err = testRegistry.StartFileWatching(func() {})
 		if err != nil {
 			t.Errorf("Expected StartFileWatching to handle nonexistent files gracefully, got error: %v", err)
 		}

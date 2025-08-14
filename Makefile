@@ -3,7 +3,7 @@ SHELL := /bin/bash
 CONTRIBUTING_PATH = docs/content/docs/contributing.md
 WINDOWS_CC_IMAGE := cem-windows-cc-image
 
-.PHONY: build test update watch bench profile flamegraph coverage show-coverage clean lint format prepare-npm install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks
+.PHONY: build test update watch bench profile flamegraph coverage show-coverage clean lint format prepare-npm install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes
 
 # NOTE: this is a non-traditional install target, which installs to ~/.local/bin/
 # It's mostly intended for local development, not for distribution
@@ -104,7 +104,13 @@ install-git-hooks:
 	@echo "Git hooks installed successfully!"
 	@echo "The pre-commit hook will run 'go fmt' on staged .go files."
 
-docs-ci:
+update-html-attributes:
+	@echo "Updating HTML global attributes from MDN browser-compat-data..."
+	@mkdir -p lsp/methods/textDocument/publishDiagnostics/data
+	@curl -s "https://raw.githubusercontent.com/mdn/browser-compat-data/main/html/global_attributes.json" -o lsp/methods/textDocument/publishDiagnostics/data/global_attributes.json
+	@echo "HTML global attributes updated successfully!"
+
+docs-ci: update-html-attributes
 	make build
 	@echo "Running benchmarks with $(RUNS) runs"
 	./scripts/benchmark.sh $(RUNS)

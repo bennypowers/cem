@@ -31,7 +31,7 @@ func TestDefinition(t *testing.T) {
 	}
 
 	// Create registry and add the test manifest
-	registry := lsp.NewRegistry()
+	registry := lsp.NewTestRegistry()
 	registry.AddManifest(&pkg)
 
 	// Create a mock document manager

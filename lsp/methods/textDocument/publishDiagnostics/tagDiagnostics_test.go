@@ -70,6 +70,10 @@ func (m *mockTagDiagnosticsContext) Slots(tagName string) ([]M.Slot, bool) {
 	return nil, false
 }
 
+func (m *mockTagDiagnosticsContext) Attributes(tagName string) (map[string]*M.Attribute, bool) {
+	return nil, false
+}
+
 func (m *mockTagDiagnosticsContext) AllTagNames() []string {
 	var result []string
 	for tag := range m.availableElements {

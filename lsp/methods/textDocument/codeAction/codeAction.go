@@ -59,6 +59,12 @@ func CodeAction(ctx CodeActionContext, context *glsp.Context, params *protocol.C
 								actions = append(actions, *action)
 								helpers.SafeDebugLog("[CODE_ACTION] Created missing import action")
 							}
+						case "attribute-suggestion":
+							action := createAttributeAutofixAction(&diagnostic, dataMap, params.TextDocument.URI)
+							if action != nil {
+								actions = append(actions, *action)
+								helpers.SafeDebugLog("[CODE_ACTION] Created attribute autofix action")
+							}
 						}
 					}
 				}

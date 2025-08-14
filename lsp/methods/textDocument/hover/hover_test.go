@@ -22,7 +22,7 @@ func TestHoverIntegrationWithDocumentChanges(t *testing.T) {
 	}
 	defer dm.Close()
 
-	registry := lsp.NewRegistry()
+	registry := lsp.NewTestRegistry()
 
 	// Load the manifest manually for testing
 	manifestPath := filepath.Join(fixturePath, "custom-elements.json")
@@ -222,7 +222,7 @@ func TestHoverWithTypeScriptTemplates(t *testing.T) {
 	}
 	defer dm.Close()
 
-	registry := lsp.NewRegistry()
+	registry := lsp.NewTestRegistry()
 
 	// Load the manifest manually for testing
 	manifestPath := filepath.Join(fixturePath, "manifest.json")

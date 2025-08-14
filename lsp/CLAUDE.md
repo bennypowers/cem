@@ -114,13 +114,18 @@ Detailed architectural information is available in [ARCHITECTURE.md](./ARCHITECT
   - **Regression test coverage**: Added comprehensive regression tests for all fixed issues
 - [x] **Slot name validation diagnostics** - Validate slot attribute values with autofixes (e.g., "foofer" → "footer") ✅ COMPLETED
 - [x] **Tag name validation diagnostics** - Validate custom element tag names with intelligent error handling ✅ COMPLETED
+- [x] **Attribute validation diagnostics** - Validate HTML attributes using authoritative MDN browser-compat-data ✅ COMPLETED:
+  - **MDN global attributes**: Embedded JSON from official MDN browser-compat-data
+  - **Custom element attributes**: Validated against manifest schemas with typo suggestions
+  - **Automated updates**: `make update-html-attributes` target updates MDN data
+  - **CI/CD integration**: Automatic updates in docs-ci pipeline
+  - **Standards-based**: No external Go dependencies, pure JSON approach
+  - **Comprehensive testing**: Full test coverage for global and custom element attributes
 - [x] **Replace shell-based generate watcher with in-process implementation** ✅ COMPLETED - Fixed hanging process issues:
   - Created InProcessGenerateWatcher using existing generate.WatchSession
   - Implemented context-based cancellation for clean shutdown
   - Eliminated subprocess dependency and improved resource management
   - All integration tests passing with no hanging processes
-- [ ] **Diagnostics for unknown attributes** - Validation with error reporting - 
-  allowlist based on global attributes (try to find a go package which provides an up to date list). Allow users to config globally permitted attributes.
 - [ ] **Type checking for attribute values** - Validate attribute values against 
 manifest types. investigate if this can be done in a lightweight but correct manner. I'd like to avoid importing the entire typescript compiler.
 - [ ] **Enhanced go-to-definition preferences** - User configurable definition targets:
@@ -172,12 +177,17 @@ lsp/
 │       │   ├── publishDiagnostics.go   # Main diagnostics implementation
 │       │   ├── slotDiagnostics.go      # Slot validation diagnostics
 │       │   ├── tagDiagnostics.go       # Tag validation diagnostics
+│       │   ├── attributeDiagnostics.go # Attribute validation diagnostics
 │       │   ├── tagDiagnostics_test.go  # Tag diagnostics tests
-│       │   └── publishDiagnostics_test.go # Diagnostics tests
+│       │   ├── attributeDiagnostics_test.go # Attribute diagnostics tests
+│       │   ├── publishDiagnostics_test.go # Diagnostics tests
+│       │   └── data/                   # Embedded data files
+│       │       └── global_attributes.json # MDN browser-compat-data
 │       ├── codeAction/    # Code actions feature package
 │       │   ├── codeAction.go           # Main autofix implementations
 │       │   ├── slotCodeActions.go      # Slot autofix actions
 │       │   ├── tagCodeActions.go       # Tag autofix actions
+│       │   ├── attributeCodeActions.go # Attribute autofix actions
 │       │   ├── missingImportCodeActions.go # Missing import autofix actions
 │       │   ├── missingImportCodeActions_test.go # Missing import tests
 │       │   └── codeAction_test.go      # Code action tests
@@ -247,6 +257,8 @@ queries/ (shared root)     # Unified query management package
 - ✅ **Go-to-definition support** - Jump to custom element source definitions with TypeScript source preference
 - ✅ **Slot validation diagnostics with autofixes** - Real-time error detection and one-click fixes for invalid slot names
 - ✅ **Tag name validation diagnostics with missing import detection** - Intelligent validation of custom element tag names with package-aware import suggestions
+- ✅ **Platform abstractions layer** - Created `internal/platform` package for filesystem, time, and file watching abstractions
+- ✅ **Registry dependency injection** - Registry uses injectable FileWatcher interface for enhanced testability and future portability
 
 ### Current Test Status ✅ PERFECT SCORES
 - **Completion Tests**: All 30+ completion tests passing (100% success rate) ✅
@@ -340,9 +352,16 @@ Example VS Code configuration:
 4. ✅ **Context Interface Standardization**: COMPLETED - Consistent context interfaces across all LSP methods
 5. ✅ **Refactoring Bug Fixes**: COMPLETED - Fixed type mismatches and DocumentManager threading
 
-### Phase 6: Next Generation Features 🚧 IN PROGRESS
+### Phase 6: Platform Abstractions & Testing Modernization ✅ COMPLETED
 1. ✅ **Slot name validation diagnostics**: COMPLETED - Validate slot attribute values with autofixes (e.g., "foofer" → "footer")
 2. ✅ **Tag name validation diagnostics**: COMPLETED - Validate custom element tag names with intelligent autofixes and missing import detection
+3. ✅ **Platform abstractions layer**: COMPLETED - Created `internal/platform` package with abstractions for filesystem, time, and file watching
+4. ✅ **Registry dependency injection**: COMPLETED - Registry now uses injectable FileWatcher interface for testability
+5. ✅ **E2E test backup**: COMPLETED - Preserved existing integration tests as `*_e2e_test.go` with `//go:build e2e` tags
+
+### Phase 7: Next Generation Features (Awaiting Go 1.25) 🔄 PLANNED
+1. **Integration test modernization**: Replace `time.Sleep()` with virtual time using `testing/synctest`
+2. **Mock filesystem integration**: Replace file I/O with `testing/fstest.MapFS` for instant tests
 3. **Type validation**: Validate attribute values against manifest types
 4. **Enhanced Lit completions**: Look up global properties from MDN/web platform APIs
 5. **Workspace symbols**: Search and navigate custom elements across workspace
@@ -386,6 +405,14 @@ Successfully unified query management between `generate` and `lsp` packages:
   - `AllQueries()`: Loads all available queries for comprehensive analysis
 - **Reduced maintenance**: Single codebase for query management and parser pools
 - **Embedded queries**: All `.scm` files embedded with `//go:embed */*.scm`
+
+#### MDN Data Integration ✅ COMPLETED
+Embedded official MDN browser-compat-data for HTML attribute validation:
+- **Authoritative source**: Uses official MDN browser-compat-data JSON directly
+- **Build-time embedding**: JSON embedded via `//go:embed` for zero runtime dependencies
+- **Automated updates**: `make update-html-attributes` downloads latest MDN data
+- **CI/CD integration**: Updates automatically in documentation builds via `docs-ci` target
+- **Standards compliance**: Validates against exact same data browsers use
 
 ## LSP Integration Patterns
 
@@ -531,3 +558,41 @@ func analyzeDocument(dm *DocumentManager) {
 - **Import Intelligence**: Differentiates between package imports and local module imports
 - **HTML/TypeScript Support**: Context-aware import statements for different file types
 - **Custom Element Validation**: Follows web standards for custom element naming rules
+
+### Platform Abstractions & Testing Architecture ✅ COMPLETED (2025-08-14)
+- **Platform Abstraction Layer**: Created `internal/platform` package with filesystem, time, and file watching interfaces
+  - **FileSystem Interface**: Abstracts `os.WriteFile`, `os.ReadFile`, `os.MkdirAll` for testability and portability
+  - **TimeProvider Interface**: Abstracts `time.Sleep`, `time.Now`, `time.After` for controllable testing
+  - **FileWatcher Interface**: Abstracts `fsnotify.Watcher` for mockable file watching
+- **Registry Dependency Injection**: Refactored Registry to use injectable FileWatcher interface
+  - **Production**: `NewRegistryWithDefaults()` uses real `fsnotify.Watcher`
+  - **Testing**: `NewTestRegistry()` uses controllable mock file watcher
+  - **Custom**: `NewRegistry(watcher)` accepts any FileWatcher implementation
+- **Test Infrastructure**: Created test helpers and mock implementations
+  - **MockFileWatcher**: Trigger file events instantly for deterministic tests
+  - **MockTimeProvider**: Control time advancement without real delays
+  - **TempDirFileSystem**: Isolated filesystem operations for integration tests
+- **E2E Test Preservation**: Backed up slow integration tests with `//go:build e2e` tags
+  - **Fast Tests**: Run by default using mocks and abstractions
+  - **E2E Tests**: Run with `-tags=e2e` for real-world validation
+- **Future-Ready Architecture**: Prepared for WASM, cloud functions, and embedded systems
+  - **WASM Support**: FileSystem interface can use browser APIs instead of `os` package
+  - **Cloud Functions**: Custom implementations for remote storage (S3, GCS, etc.)
+  - **Embedded Systems**: Platform-specific filesystem and timing implementations
+
+**Benefits Achieved**:
+- **Testability**: Registry tests now use mock file watchers instead of real file I/O
+- **Maintainability**: Clean interface separation between platform concerns and business logic
+- **Portability**: Abstract layer ready for deployment to different environments
+- **Performance Preparation**: Foundation ready for Go 1.25's `testing/synctest` and enhanced `testing/fstest`
+
+**Current Limitations with Go 1.24**:
+- **Time Mocking**: Cannot effectively mock `time.Sleep()` in integration tests (requires Go 1.25 `testing/synctest`)
+- **Filesystem Mocking**: Limited in-memory filesystem support (requires Go 1.25 enhanced `testing/fstest.MapFS`)
+- **Integration Test Speed**: Still requires real delays and file I/O for comprehensive file watching tests
+
+**Ready for Go 1.25 Upgrade**:
+- ✅ Platform interfaces designed for Go 1.25 virtual time and filesystem
+- ✅ Mock implementations ready to be replaced with standard library equivalents
+- ✅ E2E tests preserved for validation during migration
+- ✅ Dependency injection architecture enables seamless upgrade to new testing APIs

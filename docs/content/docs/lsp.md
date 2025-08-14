@@ -12,31 +12,33 @@ to keep an in-memory version of your local element manifest up to date.
 
 ## Features
 
-**Autocomplete**
+### Autocomplete
 
 Get up-to-date HTML element API completions in HTML files and Lit template
 literals.
+
 - **Tag name** completion for custom elements
 - **Attribute** name completion based on element schemas
 - **Attribute value** completion for known value sets i.e. TypeScript unions
 - **Slot attribute** value completion for direct children of elements with slots
 - **Event**, **DOM property**, and **Boolean attribute** support in lit templates.
 
-**Hover Documentation**
+### Hover Documentation
+
 Get element API documentation close to where you use them with Hover docs.
 
 - Element descriptions, properties, and usage examples
 - Attribute documentation with type information
 - Links to source code and external documentation
 
-**Go-to-Definition**
+### Go-to-Definition
 
 Quickly jump to your element, attribute, event, etc. definitions.
 
 - Jump to custom element source definitions
 - Support for tag names and attributes (extensible for slots and events)
 
-**Error Detection & Autofixes**
+### Error Detection & Autofixes
 
 Real-time validation with intelligent error correction.
 
@@ -44,6 +46,10 @@ Real-time validation with intelligent error correction.
 - **Tag name validation**: Validates custom element tag names with two intelligent error classes:
   - **Typo detection**: Suggests corrections for misspelled tag names (e.g., "my-buttom" → "my-button")
   - **Missing imports**: Detects elements that exist but aren't imported, with package-aware import suggestions
+- **Attribute validation**: Validates HTML attributes using authoritative MDN browser-compat-data:
+  - **Global attributes**: Validates against official HTML global attributes (class, id, data-*, aria-*, event handlers)
+  - **Custom element attributes**: Validates against custom element manifest schemas with typo suggestions
+  - **Standards-based**: Uses MDN browser-compat-data, automatically updated in CI/CD
 - **One-click autofixes**: Automatically correct typos and add missing imports using your editor's quick fix feature
 - **Smart import suggestions**: Resolves proper package names from package.json for npm packages vs. local modules
 - **Intelligent error messaging**: Helpful guidance instead of overwhelming lists for large projects

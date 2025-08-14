@@ -43,7 +43,10 @@ func TestGenerateWatcherIntegration(t *testing.T) {
 			t.Fatalf("Failed to initialize workspace: %v", err)
 		}
 
-		registry := lsp.NewRegistry()
+		registry, err := lsp.NewRegistryWithDefaults()
+		if err != nil {
+			t.Fatalf("Failed to create registry: %v", err)
+		}
 
 		// Load from workspace (this should detect it as a local project)
 		err = registry.LoadFromWorkspace(workspace)
@@ -68,12 +71,15 @@ func TestGenerateWatcherIntegration(t *testing.T) {
 
 	t.Run("generate watcher stops cleanly", func(t *testing.T) {
 		workspace := W.NewFileSystemWorkspaceContext(tempDir)
-		err := workspace.Init()
+		err = workspace.Init()
 		if err != nil {
 			t.Fatalf("Failed to initialize workspace: %v", err)
 		}
 
-		registry := lsp.NewRegistry()
+		registry, err := lsp.NewRegistryWithDefaults()
+		if err != nil {
+			t.Fatalf("Failed to create registry: %v", err)
+		}
 		err = registry.LoadFromWorkspace(workspace)
 		if err != nil {
 			t.Fatalf("Failed to load from workspace: %v", err)
@@ -95,10 +101,13 @@ func TestGenerateWatcherIntegration(t *testing.T) {
 
 	t.Run("generate watcher handles no local workspace", func(t *testing.T) {
 		// Create a registry without loading a local workspace
-		registry := lsp.NewRegistry()
+		registry, err := lsp.NewRegistryWithDefaults()
+		if err != nil {
+			t.Fatalf("Failed to create registry: %v", err)
+		}
 
 		// Should not error but also should not start a watcher
-		err := registry.StartGenerateWatcher()
+		err = registry.StartGenerateWatcher()
 		if err != nil {
 			t.Errorf("StartGenerateWatcher should handle no local workspace gracefully, got error: %v", err)
 		}
@@ -112,12 +121,15 @@ func TestGenerateWatcherIntegration(t *testing.T) {
 
 	t.Run("generate watcher prevents double start", func(t *testing.T) {
 		workspace := W.NewFileSystemWorkspaceContext(tempDir)
-		err := workspace.Init()
+		err = workspace.Init()
 		if err != nil {
 			t.Fatalf("Failed to initialize workspace: %v", err)
 		}
 
-		registry := lsp.NewRegistry()
+		registry, err := lsp.NewRegistryWithDefaults()
+		if err != nil {
+			t.Fatalf("Failed to create registry: %v", err)
+		}
 		err = registry.LoadFromWorkspace(workspace)
 		if err != nil {
 			t.Fatalf("Failed to load from workspace: %v", err)

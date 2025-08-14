@@ -1,3 +1,5 @@
+//go:build e2e
+
 /*
 Copyright © 2025 Benny Powers <web@bennypowers.com>
 
@@ -175,10 +177,7 @@ export class TestButton extends LitElement {
 		t.Fatalf("Failed to initialize workspace: %v", err)
 	}
 
-	registry, err := lsp.NewRegistryWithDefaults()
-	if err != nil {
-		t.Fatalf("Failed to create registry: %v", err)
-	}
+	registry := lsp.NewTestRegistry()
 
 	// Load initial manifests
 	err = registry.LoadFromWorkspace(workspace)
@@ -449,10 +448,7 @@ export class MyApp extends LitElement {
 		t.Fatalf("Failed to initialize workspace: %v", err)
 	}
 
-	registry, err := lsp.NewRegistryWithDefaults()
-	if err != nil {
-		t.Fatalf("Failed to create registry: %v", err)
-	}
+	registry := lsp.NewTestRegistry()
 
 	// Load initial manifests
 	err = registry.LoadFromWorkspace(workspace)

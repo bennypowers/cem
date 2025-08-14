@@ -1,3 +1,5 @@
+//go:build e2e
+
 /*
 Copyright © 2025 Benny Powers <web@bennypowers.com>
 
@@ -103,10 +105,7 @@ func TestCompletionUpdateCycle(t *testing.T) {
 	}
 
 	// Create registry and load manifests
-	registry, err := lsp.NewRegistryWithDefaults()
-	if err != nil {
-		t.Fatalf("Failed to create registry: %v", err)
-	}
+	registry := lsp.NewTestRegistry()
 	if err := registry.LoadFromWorkspace(workspace); err != nil {
 		t.Fatalf("Failed to load workspace manifests: %v", err)
 	}

@@ -223,6 +223,12 @@ a {
   color: var(--color-theme);
 }
 
+docs-sidebar {
+  li ul {
+    margin-inline-start: .5em;
+  }
+}
+
 /* Remove underlines from navigation links */
 nav a,
 .nav a,

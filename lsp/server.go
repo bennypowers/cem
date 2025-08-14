@@ -48,9 +48,15 @@ func NewServer(workspace W.WorkspaceContext) (*Server, error) {
 		return nil, fmt.Errorf("failed to create document manager: %w", err)
 	}
 
+	// Create registry with production defaults
+	registry, err := NewRegistryWithDefaults()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create registry: %w", err)
+	}
+
 	s := &Server{
 		workspace: workspace,
-		registry:  NewRegistry(),
+		registry:  registry,
 		documents: documents,
 	}
 

@@ -32,7 +32,7 @@ func TestAttributeValueCompletions(t *testing.T) {
 	}
 
 	// Create registry and add the test manifest
-	registry := lsp.NewRegistry()
+	registry := lsp.NewTestRegistry()
 	registry.AddManifest(&pkg)
 
 	// Create a mock document manager
@@ -235,7 +235,7 @@ func TestAttributeCompletionAfterSpaces(t *testing.T) {
 	}
 
 	// Create registry and add the test manifest
-	registry := lsp.NewRegistry()
+	registry := lsp.NewTestRegistry()
 	registry.AddManifest(&pkg)
 
 	// Create a mock document manager
@@ -408,7 +408,7 @@ func TestAttributeValueCompletionTreeSitterRegression(t *testing.T) {
 	}
 
 	// Create registry and add the test manifest
-	registry := lsp.NewRegistry()
+	registry := lsp.NewTestRegistry()
 	registry.AddManifest(pkg)
 
 	// Create context using the testCompletionContext with registry

@@ -30,7 +30,7 @@ func TestSlotAttributeCompletions(t *testing.T) {
 	}
 
 	// Create registry and add the test manifest
-	registry := lsp.NewRegistry()
+	registry := lsp.NewTestRegistry()
 	registry.AddManifest(&pkg)
 
 	// Create a mock document manager
@@ -142,7 +142,7 @@ func TestSlotCompletionDetails(t *testing.T) {
 		t.Fatalf("Failed to parse manifest: %v", err)
 	}
 
-	registry := lsp.NewRegistry()
+	registry := lsp.NewTestRegistry()
 	registry.AddManifest(&pkg)
 
 	ctx := &testSlotCompletionContext{
