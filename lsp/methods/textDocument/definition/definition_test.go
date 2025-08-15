@@ -175,6 +175,10 @@ func (m *MockElementDefinition) ModulePath() string {
 	return m.def.ModulePath()
 }
 
+func (m *MockElementDefinition) PackageName() string {
+	return m.def.PackageName()
+}
+
 func (m *MockElementDefinition) SourceHref() string {
 	if m.def.Source != nil {
 		return m.def.Source.Href

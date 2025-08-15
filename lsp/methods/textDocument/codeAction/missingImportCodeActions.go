@@ -25,42 +25,41 @@ import (
 )
 
 // createMissingImportAction creates a code action to add missing imports
-func createMissingImportAction(diagnostic *protocol.Diagnostic, data map[string]any, documentURI string) *protocol.CodeAction {
+func createMissingImportAction(ctx CodeActionContext, diagnostic *protocol.Diagnostic, data map[string]any, documentURI string) *protocol.CodeAction {
 	// Parse the autofix data using type-safe approach
 	autofixData, ok := types.AutofixDataFromMap(data)
 	if !ok || autofixData.Type != types.DiagnosticTypeMissingImport {
 		return nil
 	}
 
+	// Get the document to analyze existing script tags
+	doc := ctx.Document(documentURI)
+	if doc == nil {
+		return nil
+	}
+
 	var importStatement string
 	var insertPosition protocol.Position
 
-	// Determine if this is a package import or local module import
-	isPackageImport := !strings.HasPrefix(autofixData.ImportPath, "./") &&
-		!strings.HasPrefix(autofixData.ImportPath, "../") &&
-		!strings.HasPrefix(autofixData.ImportPath, "/")
-
 	if strings.HasSuffix(documentURI, ".html") {
-		if isPackageImport {
-			// HTML: Add script tag for package import - use CDN or importmap
-			// For packages, suggest using import maps or CDN
-			importStatement = fmt.Sprintf(`<!-- Add to import map: "%s": "path/to/%s" -->
-<script type="module" src="%s"></script>`, autofixData.ImportPath, autofixData.ImportPath, autofixData.ImportPath)
+		// For HTML files, try to amend existing script type="module" tags
+		scriptPosition, hasExistingScript := doc.FindModuleScript()
+
+		if hasExistingScript {
+			// Amend existing script tag by adding import statement inside it
+			importStatement = fmt.Sprintf(`	import '%s';`, autofixData.ImportPath)
+			insertPosition = scriptPosition
 		} else {
-			// HTML: Add script tag for local module
-			importStatement = fmt.Sprintf(`<script type="module" src="%s"></script>`, autofixData.ImportPath)
+			// Create new script tag if no existing one found
+			importStatement = fmt.Sprintf(`<script type="module">
+	import '%s';
+</script>`, autofixData.ImportPath)
+			// TODO: Find proper position in HTML head section using tree-sitter parsing
+			insertPosition = protocol.Position{Line: 0, Character: 0}
 		}
-		// TODO: Find proper position in HTML head section using tree-sitter parsing
-		insertPosition = protocol.Position{Line: 0, Character: 0}
 	} else {
 		// TypeScript/JavaScript: Create appropriate import statement
-		if isPackageImport {
-			// Package import: import "package-name"
-			importStatement = fmt.Sprintf(`import "%s";`, autofixData.ImportPath)
-		} else {
-			// Local module import: import "./local-element.js"
-			importStatement = fmt.Sprintf(`import "%s";`, autofixData.ImportPath)
-		}
+		importStatement = fmt.Sprintf(`import '%s';`, autofixData.ImportPath)
 		// TODO: Find proper position with other imports using tree-sitter
 		insertPosition = protocol.Position{Line: 0, Character: 0}
 	}

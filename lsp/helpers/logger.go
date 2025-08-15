@@ -159,7 +159,7 @@ func SafeDebugLog(format string, args ...any) {
 	enabled := debugLogEnabled
 	logFn := debugLog
 	debugLogMutex.RUnlock()
-	
+
 	if enabled && logFn != nil {
 		logFn(format, args...)
 	}

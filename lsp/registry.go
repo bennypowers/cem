@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 
@@ -71,6 +72,8 @@ type Registry struct {
 	Manifests []*M.Package
 	// ManifestPaths tracks the file paths of loaded manifests for file watching
 	ManifestPaths []string
+	// ManifestPackageNames tracks the package name for each manifest path
+	ManifestPackageNames map[string]string
 	// File watching
 	fileWatcher platform.FileWatcher
 	watcherMu   sync.RWMutex
@@ -86,12 +89,13 @@ type Registry struct {
 // For testing, pass platform.NewMockFileWatcher().
 func NewRegistry(fileWatcher platform.FileWatcher) *Registry {
 	return &Registry{
-		Elements:           make(map[string]*M.CustomElement),
-		ElementDefinitions: make(map[string]*ElementDefinition),
-		attributes:         make(map[string]map[string]*M.Attribute),
-		Manifests:          make([]*M.Package, 0),
-		ManifestPaths:      make([]string, 0),
-		fileWatcher:        fileWatcher,
+		Elements:             make(map[string]*M.CustomElement),
+		ElementDefinitions:   make(map[string]*ElementDefinition),
+		attributes:           make(map[string]map[string]*M.Attribute),
+		Manifests:            make([]*M.Package, 0),
+		ManifestPaths:        make([]string, 0),
+		ManifestPackageNames: make(map[string]string),
+		fileWatcher:          fileWatcher,
 	}
 }
 
@@ -139,6 +143,7 @@ func (r *Registry) clear() {
 	r.attributes = make(map[string]map[string]*M.Attribute)
 	r.Manifests = r.Manifests[:0]
 	r.ManifestPaths = r.ManifestPaths[:0]
+	r.ManifestPackageNames = make(map[string]string)
 }
 
 // clearDataOnly resets the registry data but preserves manifest paths for watching
@@ -176,12 +181,21 @@ func (r *Registry) loadWorkspaceManifest(workspace W.WorkspaceContext) error {
 			}
 		}
 
-		r.addManifest(pkg)
+		// Try to get package name from workspace package.json
+		var packageName string
+		if packageJSON, err := workspace.PackageJSON(); err == nil && packageJSON != nil {
+			packageName = packageJSON.Name
+			helpers.SafeDebugLog("Package name from workspace package.json: '%s'", packageName)
+		} else {
+			helpers.SafeDebugLog("Could not read workspace package.json: %v", err)
+		}
+
+		r.addManifest(pkg, packageName)
 		// Track the manifest file path for watching
 		manifestPath := workspace.CustomElementsManifestPath()
 		if manifestPath != "" {
 			helpers.SafeDebugLog("Tracking workspace manifest path: %s", manifestPath)
-			r.addManifestPath(manifestPath)
+			r.addManifestPathWithPackageName(manifestPath, packageName)
 		} else {
 			helpers.SafeDebugLog("Warning: No manifest path returned from workspace")
 		}
@@ -253,8 +267,8 @@ func (r *Registry) loadPackageManifest(packagePath string) {
 	}
 
 	// Load the manifest
-	if pkg, err := r.loadManifestFile(manifestPath); err == nil {
-		r.addManifestWithPackageName(pkg, packageJSON.Name)
+	if pkg, err := r.loadManifestFileWithPackageName(manifestPath, packageJSON.Name); err == nil {
+		r.addManifest(pkg, packageJSON.Name)
 		helpers.SafeDebugLog("Loaded manifest from %s (%s)", packageJSON.Name, manifestPath)
 	}
 }
@@ -286,6 +300,24 @@ func (r *Registry) readPackageJSON(path string) (*M.PackageJSON, error) {
 	return &pkg, nil
 }
 
+// loadManifestFileWithPackageName loads a custom elements manifest from a file with package name
+func (r *Registry) loadManifestFileWithPackageName(path string, packageName string) (*M.Package, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var pkg M.Package
+	if err := json.Unmarshal(data, &pkg); err != nil {
+		return nil, err
+	}
+
+	// Track this file path for watching with package name
+	r.addManifestPathWithPackageName(path, packageName)
+
+	return &pkg, nil
+}
+
 // loadManifestFile loads a custom elements manifest from a file
 func (r *Registry) loadManifestFile(path string) (*M.Package, error) {
 	data, err := os.ReadFile(path)
@@ -304,20 +336,15 @@ func (r *Registry) loadManifestFile(path string) (*M.Package, error) {
 	return &pkg, nil
 }
 
-// addManifest adds a manifest package to the registry and indexes its elements
-func (r *Registry) addManifest(pkg *M.Package) {
-	r.addManifestWithPackageName(pkg, "")
-}
-
-// addManifestWithPackageName adds a manifest package to the registry with package name context
-func (r *Registry) addManifestWithPackageName(pkg *M.Package, packageName string) {
+// addManifest adds a manifest package to the registry with package name context
+func (r *Registry) addManifest(manifest *M.Package, packageName string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.Manifests = append(r.Manifests, pkg)
+	r.Manifests = append(r.Manifests, manifest)
 
 	// Index all custom elements from all modules
-	for _, module := range pkg.Modules {
+	for _, module := range manifest.Modules {
 		for _, decl := range module.Declarations {
 			// Check if this is a custom element declaration
 			if customElementDecl, ok := decl.(*M.CustomElementDeclaration); ok {
@@ -327,12 +354,18 @@ func (r *Registry) addManifestWithPackageName(pkg *M.Package, packageName string
 					r.Elements[element.TagName] = element
 
 					// Store the element definition with source information
-					r.ElementDefinitions[element.TagName] = &ElementDefinition{
+					elementDef := &ElementDefinition{
 						Element:     element,
 						modulePath:  module.Path,
 						Source:      customElementDecl.Source,
 						packageName: packageName,
 					}
+					// Check if element already exists
+					if existing, exists := r.ElementDefinitions[element.TagName]; exists {
+						helpers.SafeDebugLog("[REGISTRY] WARNING: Overriding existing element '%s' (old packageName='%s', new packageName='%s')", element.TagName, existing.PackageName(), packageName)
+					}
+					helpers.SafeDebugLog("[REGISTRY] Registering element '%s' with packageName='%s', modulePath='%s'", element.TagName, packageName, module.Path)
+					r.ElementDefinitions[element.TagName] = elementDef
 
 					// Index attributes for this element
 					if element.Attributes != nil {
@@ -428,7 +461,8 @@ func (r *Registry) AllTagNames() []string {
 // AddManifest adds a custom elements manifest to the registry
 // This allows programmatic addition of manifests from various sources
 func (r *Registry) AddManifest(pkg *M.Package) {
-	r.addManifest(pkg)
+	// Fallback to empty string when package name is not available
+	r.addManifest(pkg, "")
 }
 
 // StartFileWatching initializes file watching for manifest changes
@@ -507,13 +541,7 @@ func (r *Registry) handleFileChange(event platform.FileWatchEvent) {
 	}
 
 	// Check if this is a manifest file we care about
-	isManifestFile := false
-	for _, path := range r.ManifestPaths {
-		if event.Name == path {
-			isManifestFile = true
-			break
-		}
-	}
+	isManifestFile := slices.Contains(r.ManifestPaths, event.Name)
 
 	if !isManifestFile {
 		return
@@ -554,8 +582,12 @@ func (r *Registry) ReloadManifestsDirectly() error {
 			continue
 		}
 
-		// Add to registry
-		r.addManifest(pkg)
+		// Get the associated package name for this manifest path
+		packageName := r.ManifestPackageNames[manifestPath]
+		helpers.SafeDebugLog("Reloading manifest %s with package name: %s", manifestPath, packageName)
+
+		// Add to registry with the preserved package name
+		r.addManifest(pkg, packageName)
 		helpers.SafeDebugLog("Reloaded manifest: %s with %d modules", manifestPath, len(pkg.Modules))
 	}
 
@@ -639,6 +671,38 @@ func (r *Registry) StopGenerateWatcher() error {
 	return nil
 }
 
+// addManifestPathWithPackageName tracks a manifest file path with its package name for watching
+func (r *Registry) addManifestPathWithPackageName(path string, packageName string) {
+	// Resolve to absolute path
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		helpers.SafeDebugLog("Warning: Could not resolve manifest path %s: %v", path, err)
+		return
+	}
+
+	// Check if already tracked
+	if slices.Contains(r.ManifestPaths, absPath) {
+		// Update package name if already exists
+		r.ManifestPackageNames[absPath] = packageName
+		return
+	}
+
+	r.ManifestPaths = append(r.ManifestPaths, absPath)
+	r.ManifestPackageNames[absPath] = packageName
+	helpers.SafeDebugLog("Tracking manifest file: %s with package: %s", absPath, packageName)
+
+	// If watcher is active, add this path
+	r.watcherMu.RLock()
+	if r.fileWatcher != nil {
+		if err := r.fileWatcher.Add(absPath); err != nil {
+			helpers.SafeDebugLog("Warning: Could not watch manifest file %s: %v", absPath, err)
+		} else {
+			helpers.SafeDebugLog("Now watching manifest file: %s", absPath)
+		}
+	}
+	r.watcherMu.RUnlock()
+}
+
 // addManifestPath tracks a manifest file path for watching
 func (r *Registry) addManifestPath(path string) {
 	// Resolve to absolute path
@@ -649,10 +713,8 @@ func (r *Registry) addManifestPath(path string) {
 	}
 
 	// Check if already tracked
-	for _, existing := range r.ManifestPaths {
-		if existing == absPath {
-			return
-		}
+	if slices.Contains(r.ManifestPaths, absPath) {
+		return
 	}
 
 	r.ManifestPaths = append(r.ManifestPaths, absPath)

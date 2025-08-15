@@ -18,6 +18,7 @@ package lsp
 
 import (
 	"fmt"
+	"path"
 
 	"bennypowers.dev/cem/lsp/helpers"
 	serverMethods "bennypowers.dev/cem/lsp/methods/server"
@@ -51,7 +52,7 @@ func (s *ServerAdapter) Workspace() serverMethods.Workspace {
 	return s.server.workspace
 }
 
-func (s *ServerAdapter) DebugLog(format string, args ...interface{}) {
+func (s *ServerAdapter) DebugLog(format string, args ...any) {
 	helpers.SafeDebugLog(format, args...)
 }
 
@@ -104,22 +105,33 @@ func (s *ServerAdapter) ElementSource(tagName string) (string, bool) {
 	// Get the element definition which contains source information
 	definition, exists := s.server.registry.ElementDefinition(tagName)
 	if !exists {
+		helpers.SafeDebugLog("[ELEMENT_SOURCE] No definition found for tag '%s'", tagName)
 		return "", false
 	}
 
 	// Prefer package name over module path for better import suggestions
 	packageName := definition.PackageName()
-	if packageName != "" {
-		// Return the package name for npm package imports
-		return packageName, true
-	}
-
-	// Fallback to module path for local/workspace elements
 	modulePath := definition.ModulePath()
-	if modulePath != "" {
+
+	helpers.SafeDebugLog("[ELEMENT_SOURCE] Tag '%s': packageName='%s', modulePath='%s'", tagName, packageName, modulePath)
+
+	if packageName != "" && modulePath != "" {
+		// For npm packages, combine package name with module path
+		// e.g. "@rhds/elements" + "rh-card/rh-card.js" = "@rhds/elements/rh-card/rh-card.js"
+		result := path.Join(packageName, modulePath)
+		helpers.SafeDebugLog("[ELEMENT_SOURCE] Returning combined path: '%s'", result)
+		return result, true
+	} else if packageName != "" {
+		// Just package name (fallback)
+		helpers.SafeDebugLog("[ELEMENT_SOURCE] Returning package name only: '%s'", packageName)
+		return packageName, true
+	} else if modulePath != "" {
+		// Fallback to module path for local/workspace elements
+		helpers.SafeDebugLog("[ELEMENT_SOURCE] Returning module path only: '%s'", modulePath)
 		return modulePath, true
 	}
 
+	helpers.SafeDebugLog("[ELEMENT_SOURCE] No source available for tag '%s'", tagName)
 	return "", false
 }
 

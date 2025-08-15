@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/my-button.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "",
+          "name": "MyButton",
+          "customElement": true,
+          "tagName": "my-button"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button",
+          "declaration": {
+            "name": "MyButton",
+            "module": "src/my-button.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "./dist/missing-import-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "",
+          "name": "MissingImportElement",
+          "customElement": true,
+          "tagName": "missing-import-element"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "missing-import-element",
+          "declaration": {
+            "name": "MissingImportElement",
+            "module": "./dist/missing-import-element.js"
+          }
+        }
+      ]
+    }
+  ]
+}

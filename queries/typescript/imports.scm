@@ -43,3 +43,10 @@
           key: (property_identifier) @key (#eq? @key "type")
           value: (string
             (string_fragment) @type) (#eq? @type "css"))))))
+
+( ; dynamic imports: import('path')
+  (call_expression
+    function: (import)
+    arguments: (arguments
+      (string
+        (string_fragment) @dynamicImport.spec))) @dynamicImport)

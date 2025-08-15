@@ -91,6 +91,18 @@ func (m *mockAttributeDocument) AnalyzeCompletionContextTS(position protocol.Pos
 	return nil
 }
 
+func (m *mockAttributeDocument) GetTemplateContext(position protocol.Position) string {
+	return ""
+}
+
+func (m *mockAttributeDocument) GetScriptTags() []types.ScriptTag {
+	return nil
+}
+
+func (m *mockAttributeDocument) FindModuleScript() (protocol.Position, bool) {
+	return protocol.Position{}, false
+}
+
 func TestAttributeDiagnostics_GlobalAttributes(t *testing.T) {
 	ctx := &mockAttributeDiagnosticsContext{
 		content:    `<div class="test" id="main" data-value="42">Hello</div>`,
