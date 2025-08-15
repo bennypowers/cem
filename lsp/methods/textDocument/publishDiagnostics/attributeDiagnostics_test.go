@@ -154,17 +154,39 @@ func TestAttributeDiagnostics_CustomElementInvalidAttribute(t *testing.T) {
 	}
 }
 
-func TestAttributeDiagnostics_GlobalAttributeTypo(t *testing.T) {
+func TestAttributeDiagnostics_ScriptTypeModule(t *testing.T) {
 	ctx := &mockAttributeDiagnosticsContext{
-		content:    `<div clas="test" titl="tooltip">Hello</div>`,
+		content:    `<script type="module">import './my-element.js';</script>`,
 		attributes: map[string]map[string]*M.Attribute{},
 	}
 
 	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, ctx.Document("test.html"))
 
-	// Should have 2 diagnostics for global attribute typos
+	// Should have 0 diagnostics - script[type] is outside CEM scope
+	if len(diagnostics) != 0 {
+		t.Errorf("Expected 0 diagnostics for script[type] (outside CEM scope), got %d", len(diagnostics))
+		for _, diag := range diagnostics {
+			t.Errorf("Unexpected diagnostic: %s", diag.Message)
+		}
+	}
+}
+
+func TestAttributeDiagnostics_GlobalAttributeTypoOnCustomElement(t *testing.T) {
+	ctx := &mockAttributeDiagnosticsContext{
+		content: `<my-custom-element clas="test" titl="tooltip">Hello</my-custom-element>`,
+		attributes: map[string]map[string]*M.Attribute{
+			"my-custom-element": {}, // Custom element with no defined attributes
+		},
+	}
+
+	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, ctx.Document("test.html"))
+
+	// Should have 2 diagnostics for global attribute typos on custom elements
 	if len(diagnostics) != 2 {
-		t.Errorf("Expected 2 diagnostics for global attribute typos, got %d", len(diagnostics))
+		t.Errorf("Expected 2 diagnostics for global attribute typos on custom element, got %d", len(diagnostics))
+		for i, diag := range diagnostics {
+			t.Errorf("Diagnostic %d: %s", i, diag.Message)
+		}
 		return
 	}
 
@@ -182,6 +204,23 @@ func TestAttributeDiagnostics_GlobalAttributeTypo(t *testing.T) {
 	for _, exp := range expected {
 		if !found[exp] {
 			t.Errorf("Expected diagnostic message not found: %s", exp)
+		}
+	}
+}
+
+func TestAttributeDiagnostics_StandardElementIgnored(t *testing.T) {
+	ctx := &mockAttributeDiagnosticsContext{
+		content:    `<div clas="test" titl="tooltip">Hello</div>`,
+		attributes: map[string]map[string]*M.Attribute{},
+	}
+
+	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, ctx.Document("test.html"))
+
+	// Should have 0 diagnostics - standard HTML elements are outside CEM scope (except slot)
+	if len(diagnostics) != 0 {
+		t.Errorf("Expected 0 diagnostics for standard HTML elements (outside CEM scope), got %d", len(diagnostics))
+		for _, diag := range diagnostics {
+			t.Errorf("Unexpected diagnostic: %s", diag.Message)
 		}
 	}
 }

@@ -94,13 +94,13 @@ func AnalyzeAttributeDiagnosticsForTest(ctx DiagnosticsContext, doc types.Docume
 	helpers.SafeDebugLog("[DIAGNOSTICS] Found %d attributes", len(attributeMatches))
 
 	for _, match := range attributeMatches {
-		// Skip if it's a global HTML attribute
-		if isGlobalAttribute(match.Name) {
-			continue
-		}
-
-		// For custom elements, check if the attribute is defined in the manifest
+		// For custom elements, validate all their attributes
 		if isCustomElement(match.TagName) {
+			// Skip if it's a global HTML attribute (valid on all elements)
+			if isGlobalAttribute(match.Name) {
+				continue
+			}
+
 			// Get attributes for this custom element
 			if attrs := getCustomElementAttributes(ctx, match.TagName); attrs != nil {
 				// Check if this attribute is defined for this custom element
@@ -120,20 +120,27 @@ func AnalyzeAttributeDiagnosticsForTest(ctx DiagnosticsContext, doc types.Docume
 				if suggestion != "" {
 					diagnostics = append(diagnostics, createAttributeDiagnostic(match, suggestion))
 				} else {
-					diagnostics = append(diagnostics, createUnknownAttributeDiagnostic(match))
+					// Check for global attribute typos as fallback
+					globalSuggestion := findClosestGlobalAttribute(match.Name)
+					if globalSuggestion != "" {
+						diagnostics = append(diagnostics, createAttributeDiagnostic(match, globalSuggestion))
+					} else {
+						diagnostics = append(diagnostics, createUnknownAttributeDiagnostic(match))
+					}
 				}
 			} else {
 				// No manifest found for this custom element, warn about unknown attribute
 				diagnostics = append(diagnostics, createUnknownAttributeDiagnostic(match))
 			}
 		} else {
-			// For standard HTML elements, only suggest if it might be a typo of a global attribute
-			suggestion := findClosestGlobalAttribute(match.Name)
-			if suggestion != "" {
-				diagnostics = append(diagnostics, createAttributeDiagnostic(match, suggestion))
+			// For standard HTML elements, CEM-LSP ONLY validates slot attributes
+			// All other attributes (type, class, id, etc.) are outside CEM's scope
+			if match.Name == "slot" {
+				// Slot attribute validation is handled by slotDiagnostics.go
+				// We don't process slot attributes here to avoid duplication
+				continue
 			}
-			// Don't warn about unknown attributes on standard elements -
-			// there are too many element-specific attributes to track
+			// Ignore ALL other attributes on standard HTML elements
 		}
 	}
 

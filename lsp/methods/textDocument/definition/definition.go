@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package definition
 
 import (
-	"os"
-	"path/filepath"
 	"strings"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/methods/textDocument"
 	"bennypowers.dev/cem/lsp/types"
+	Q "bennypowers.dev/cem/queries"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
@@ -52,20 +52,6 @@ type DefinitionRequest struct {
 	AttributeName string
 	SlotName      string
 	EventName     string
-}
-
-// SourceParser handles parsing source files for precise definition locations
-type SourceParser interface {
-	// FindClassDeclaration finds the class declaration position
-	FindClassDeclaration(filePath string, className string) (*protocol.Range, error)
-	// FindTagNameDefinition finds where the tag name is defined (e.g., @customElement decorator)
-	FindTagNameDefinition(filePath string, tagName string) (*protocol.Range, error)
-	// FindAttributeDeclaration finds the attribute/property declaration
-	FindAttributeDeclaration(filePath string, attributeName string) (*protocol.Range, error)
-	// FindSlotDefinition finds the slot definition in template
-	FindSlotDefinition(filePath string, slotName string) (*protocol.Range, error)
-	// FindEventDeclaration finds the event declaration
-	FindEventDeclaration(filePath string, eventName string) (*protocol.Range, error)
 }
 
 // Definition handles textDocument/definition requests
@@ -139,6 +125,27 @@ func analyzeDefinitionTarget(doc types.Document, position protocol.Position, dm 
 		// Check if we're on an attribute
 		attr, _ := doc.FindAttributeAtPosition(position, dm)
 		if attr != nil {
+			// Special handling for slot attributes
+			if attr.Name == "slot" && attr.Value != "" {
+				return &DefinitionRequest{
+					Position:    position,
+					TargetType:  DefinitionTargetSlot,
+					ElementName: element.TagName,
+					SlotName:    attr.Value,
+				}
+			}
+
+			// Check for event bindings in Lit templates (e.g., @click, @input)
+			if strings.HasPrefix(attr.Name, "@") && len(attr.Name) > 1 {
+				return &DefinitionRequest{
+					Position:    position,
+					TargetType:  DefinitionTargetEvent,
+					ElementName: element.TagName,
+					EventName:   attr.Name[1:], // Remove @ prefix
+				}
+			}
+
+			// Regular attribute definition
 			return &DefinitionRequest{
 				Position:      position,
 				TargetType:    DefinitionTargetAttribute,
@@ -155,34 +162,125 @@ func analyzeDefinitionTarget(doc types.Document, position protocol.Position, dm 
 		}
 	}
 
-	// TODO: Add support for slot and event detection in templates
-	// This would require more sophisticated parsing of the document content
-
+	// No element found at position
 	return nil
+}
+
+// Global query manager instance - lazily initialized and reused
+var globalQueryManager *Q.QueryManager
+
+// getQueryManager returns the global query manager, creating it if necessary
+func getQueryManager() *Q.QueryManager {
+	if globalQueryManager == nil {
+		// Create a query manager with the queries we need for source parsing
+		selector := Q.QuerySelector{
+			HTML:       []string{"slotsAndParts"},
+			TypeScript: []string{"classes", "classMemberDeclaration"},
+			CSS:        []string{},
+			JSDoc:      []string{},
+		}
+		qm, err := Q.NewQueryManager(selector)
+		if err != nil {
+			helpers.SafeDebugLog("[DEFINITION] Failed to create query manager: %v", err)
+			return nil
+		}
+		globalQueryManager = qm
+	}
+	return globalQueryManager
 }
 
 // findDefinitionLocation finds the precise location of the definition in the source file
 func findDefinitionLocation(sourceFile string, request *DefinitionRequest) *protocol.Location {
-	// For now, return basic file location
-	// TODO: Implement source parsing for precise locations based on TargetType
-
 	// Convert file:// URI back to file path for processing
 	filePath := strings.TrimPrefix(sourceFile, "file://")
 
-	// Basic existence check
-	if _, err := os.Stat(filePath); err != nil {
+	// Basic existence check using platform abstraction
+	fs := platform.NewOSFileSystem()
+	if _, err := fs.Stat(filePath); err != nil {
 		helpers.SafeDebugLog("[DEFINITION] Source file does not exist: %s", filePath)
 		return nil
 	}
 
-	// TODO: Implement SourceParser interface and use it here
-	// For different target types:
-	// - DefinitionTargetTagName: Look for @customElement decorator or customElements.define call
-	// - DefinitionTargetClass: Look for class declaration
-	// - DefinitionTargetAttribute: Look for @property decorator or field declaration
-	// - DefinitionTargetSlot: Look for <slot> tag in template
-	// - DefinitionTargetEvent: Look for event declaration in JSDoc or class
+	// Get the query manager
+	queryManager := getQueryManager()
+	if queryManager == nil {
+		helpers.SafeDebugLog("[DEFINITION] Query manager not available, falling back to file start")
+		return &protocol.Location{
+			URI: sourceFile,
+			Range: protocol.Range{
+				Start: protocol.Position{Line: 0, Character: 0},
+				End:   protocol.Position{Line: 0, Character: 0},
+			},
+		}
+	}
 
+	// Find precise location based on target type
+	var targetRange *Q.Range
+	var err error
+
+	// Read the source file content using platform abstraction
+	content, err := fs.ReadFile(filePath)
+	if err != nil {
+		helpers.SafeDebugLog("[DEFINITION] Failed to read source file: %v", err)
+		return nil
+	}
+
+	switch request.TargetType {
+	case DefinitionTargetTagName:
+		// Look for @customElement decorator
+		targetRange, err = Q.FindTagNameDefinitionInSource(content, request.ElementName, queryManager)
+		if err != nil || targetRange == nil {
+			helpers.SafeDebugLog("[DEFINITION] Tag name definition not found, trying class declaration")
+			// Fallback to class declaration
+			targetRange, err = Q.FindClassDeclarationInSource(content, request.ElementName, queryManager)
+		}
+
+	case DefinitionTargetClass:
+		// Look for class declaration
+		targetRange, err = Q.FindClassDeclarationInSource(content, request.ElementName, queryManager)
+
+	case DefinitionTargetAttribute:
+		// Look for @property decorator or field declaration
+		targetRange, err = Q.FindAttributeDeclarationInSource(content, request.AttributeName, queryManager)
+
+	case DefinitionTargetSlot:
+		// Look for <slot name="..."> in template
+		targetRange, err = Q.FindSlotDefinitionInSource(content, request.SlotName, queryManager)
+
+	case DefinitionTargetEvent:
+		// Look for event declaration (placeholder for now)
+		helpers.SafeDebugLog("[DEFINITION] Event declaration finding not yet implemented")
+		targetRange = nil
+
+	default:
+		helpers.SafeDebugLog("[DEFINITION] Unknown target type: %d", request.TargetType)
+	}
+
+	if err != nil {
+		helpers.SafeDebugLog("[DEFINITION] Error finding precise location: %v", err)
+	}
+
+	// If we found a precise location, use it
+	if targetRange != nil {
+		helpers.SafeDebugLog("[DEFINITION] Found precise location at line %d, char %d",
+			targetRange.Start.Line, targetRange.Start.Character)
+		return &protocol.Location{
+			URI: sourceFile,
+			Range: protocol.Range{
+				Start: protocol.Position{
+					Line:      targetRange.Start.Line,
+					Character: targetRange.Start.Character,
+				},
+				End: protocol.Position{
+					Line:      targetRange.End.Line,
+					Character: targetRange.End.Character,
+				},
+			},
+		}
+	}
+
+	// Fallback to file start if precise location not found
+	helpers.SafeDebugLog("[DEFINITION] Precise location not found, falling back to file start")
 	return &protocol.Location{
 		URI: sourceFile,
 		Range: protocol.Range{
@@ -194,74 +292,42 @@ func findDefinitionLocation(sourceFile string, request *DefinitionRequest) *prot
 
 // resolveSourcePath resolves the source file path, preferring TypeScript files over JavaScript
 func resolveSourcePath(definition types.ElementDefinition, workspaceRoot string) string {
+	// Get the module path from the definition
 	modulePath := definition.ModulePath()
-	sourceHref := definition.SourceHref()
+	if modulePath == "" {
+		return ""
+	}
 
-	// Determine the base path to resolve against
-	var basePath string
-	if workspaceRoot != "" {
-		basePath = workspaceRoot
-	} else {
-		// Fallback to current working directory
-		cwd, err := os.Getwd()
-		if err != nil {
-			helpers.SafeDebugLog("[DEFINITION] Could not get current working directory: %v", err)
-			return ""
+	// Convert to file:// URI if not already
+	if !strings.HasPrefix(modulePath, "file://") {
+		if strings.HasPrefix(modulePath, "/") {
+			modulePath = "file://" + modulePath
+		} else {
+			// Relative path - resolve against workspace root
+			modulePath = "file://" + workspaceRoot + "/" + modulePath
 		}
-		basePath = cwd
 	}
 
-	// Prefer source href if available, otherwise use module path
-	targetPath := sourceHref
-	if targetPath == "" {
-		targetPath = modulePath
+	// Convert file:// URI to local path
+	localPath := strings.TrimPrefix(modulePath, "file://")
+
+	// Try TypeScript source first (.ts), then declaration (.d.ts), then JavaScript (.js)
+	fs := platform.NewOSFileSystem()
+
+	if strings.HasSuffix(localPath, ".js") {
+		// Try .ts first
+		tsPath := strings.TrimSuffix(localPath, ".js") + ".ts"
+		if _, err := fs.Stat(tsPath); err == nil {
+			return "file://" + tsPath
+		}
+
+		// Try .d.ts
+		dtsPath := strings.TrimSuffix(localPath, ".js") + ".d.ts"
+		if _, err := fs.Stat(dtsPath); err == nil {
+			return "file://" + dtsPath
+		}
 	}
 
-	if targetPath == "" {
-		helpers.SafeDebugLog("[DEFINITION] No source path available")
-		return ""
-	}
-
-	// Resolve the absolute path
-	var resolvedPath string
-	if filepath.IsAbs(targetPath) {
-		resolvedPath = targetPath
-	} else {
-		resolvedPath = filepath.Join(basePath, targetPath)
-	}
-
-	// Check for TypeScript source preference
-	tsPath := preferTypeScriptSource(resolvedPath)
-	if tsPath != "" {
-		helpers.SafeDebugLog("[DEFINITION] Using TypeScript source: %s", tsPath)
-		return "file://" + tsPath
-	}
-
-	// Check if the original file exists
-	if _, err := os.Stat(resolvedPath); err == nil {
-		helpers.SafeDebugLog("[DEFINITION] Using original source: %s", resolvedPath)
-		return "file://" + resolvedPath
-	}
-
-	// For testing purposes, we still return the path even if file doesn't exist
-	// Real editors can handle non-existent files gracefully
-	helpers.SafeDebugLog("[DEFINITION] Source file not found but returning path: %s", resolvedPath)
-	return "file://" + resolvedPath
-}
-
-// preferTypeScriptSource checks if a TypeScript version of the file exists
-// Returns the TypeScript path if found, empty string otherwise
-func preferTypeScriptSource(jsPath string) string {
-	// Only check for TypeScript version if the original is a JavaScript file
-	if !strings.HasSuffix(jsPath, ".js") {
-		return ""
-	}
-
-	// Try replacing .js with .ts
-	tsPath := strings.TrimSuffix(jsPath, ".js") + ".ts"
-	if _, err := os.Stat(tsPath); err == nil {
-		return tsPath
-	}
-
-	return ""
+	// Return original path if no alternatives found
+	return modulePath
 }

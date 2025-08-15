@@ -7,6 +7,7 @@ import (
 	"iter"
 	"path"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -469,4 +470,298 @@ func GetDescendantById(root *ts.Node, id int) *ts.Node {
 	}
 
 	return find(root)
+}
+
+// Position represents a line/character position
+type Position struct {
+	Line      uint32
+	Character uint32
+}
+
+// Range represents a start/end range
+type Range struct {
+	Start Position
+	End   Position
+}
+
+// byteOffsetToPosition converts a byte offset to line/character position
+func byteOffsetToPosition(content []byte, offset uint) Position {
+	line := uint32(0)
+	char := uint32(0)
+
+	for i, b := range content {
+		if uint(i) >= offset {
+			break
+		}
+
+		if b == '\n' {
+			line++
+			char = 0
+		} else {
+			char++
+		}
+	}
+
+	return Position{
+		Line:      line,
+		Character: char,
+	}
+}
+
+// NodeToRange converts a tree-sitter node to a Range using byte-to-position conversion
+func NodeToRange(node *ts.Node, content []byte) Range {
+	start := byteOffsetToPosition(content, node.StartByte())
+	end := byteOffsetToPosition(content, node.EndByte())
+	return Range{
+		Start: start,
+		End:   end,
+	}
+}
+
+// FindClassDeclarationInSource finds the class declaration position in TypeScript source content
+func FindClassDeclarationInSource(content []byte, className string, queryManager *QueryManager) (*Range, error) {
+	// Get TypeScript parser and parse
+	parser := RetrieveTypeScriptParser()
+	defer PutTypeScriptParser(parser)
+
+	tree := parser.Parse(content, nil)
+	if tree == nil {
+		return nil, nil
+	}
+	defer tree.Close()
+
+	// Get class queries
+	classQueries, err := NewQueryMatcher(queryManager, "typescript", "classes")
+	if err != nil {
+		return nil, err
+	}
+	defer classQueries.Close()
+
+	// Find class declaration using ParentCaptures pattern
+	for captureMap := range classQueries.ParentCaptures(tree.RootNode(), content, "class") {
+		if classNames, ok := captureMap["class.name"]; ok {
+			for _, classNameCapture := range classNames {
+				if classNameCapture.Text == className {
+					node := GetDescendantById(tree.RootNode(), classNameCapture.NodeId)
+					if node != nil {
+						r := NodeToRange(node, content)
+						return &r, nil
+					}
+				}
+			}
+		}
+	}
+
+	return nil, nil
+}
+
+// FindTagNameDefinitionInSource finds where the tag name is defined (e.g., @customElement decorator)
+func FindTagNameDefinitionInSource(content []byte, tagName string, queryManager *QueryManager) (*Range, error) {
+	// Get TypeScript parser and parse
+	parser := RetrieveTypeScriptParser()
+	defer PutTypeScriptParser(parser)
+
+	tree := parser.Parse(content, nil)
+	if tree == nil {
+		return nil, nil
+	}
+	defer tree.Close()
+
+	// Get class queries
+	classQueries, err := NewQueryMatcher(queryManager, "typescript", "classes")
+	if err != nil {
+		return nil, err
+	}
+	defer classQueries.Close()
+
+	// Find tag name in decorator using ParentCaptures pattern
+	for captureMap := range classQueries.ParentCaptures(tree.RootNode(), content, "class") {
+		if tagNames, ok := captureMap["tag-name"]; ok {
+			for _, tagNameCapture := range tagNames {
+				if tagNameCapture.Text == tagName {
+					node := GetDescendantById(tree.RootNode(), tagNameCapture.NodeId)
+					if node != nil {
+						r := NodeToRange(node, content)
+						return &r, nil
+					}
+				}
+			}
+		}
+	}
+
+	return nil, nil
+}
+
+// FindAttributeDeclarationInSource finds the attribute/property declaration in source content
+func FindAttributeDeclarationInSource(content []byte, attributeName string, queryManager *QueryManager) (*Range, error) {
+	// Get TypeScript parser and parse
+	parser := RetrieveTypeScriptParser()
+	defer PutTypeScriptParser(parser)
+
+	tree := parser.Parse(content, nil)
+	if tree == nil {
+		return nil, nil
+	}
+	defer tree.Close()
+
+	// Get member queries
+	memberQueries, err := NewQueryMatcher(queryManager, "typescript", "classMemberDeclaration")
+	if err != nil {
+		return nil, err
+	}
+	defer memberQueries.Close()
+
+	// Find attribute declaration using ParentCaptures pattern
+	for captureMap := range memberQueries.ParentCaptures(tree.RootNode(), content, "field") {
+		var memberName string
+		var attributeNameInDecorator string
+		var memberNodeId int
+
+		// Collect information from this field
+		if memberNames, ok := captureMap["member.name"]; ok && len(memberNames) > 0 {
+			memberName = memberNames[0].Text
+			memberNodeId = memberNames[0].NodeId
+		}
+		if attrNames, ok := captureMap["field.attr.name"]; ok && len(attrNames) > 0 {
+			attributeNameInDecorator = attrNames[0].Text
+		}
+
+		// Check if this member matches our target attribute
+		if matchesAttribute(memberName, attributeNameInDecorator, attributeName) {
+			node := GetDescendantById(tree.RootNode(), memberNodeId)
+			if node != nil {
+				r := NodeToRange(node, content)
+				return &r, nil
+			}
+		}
+	}
+
+	return nil, nil
+}
+
+// FindSlotDefinitionInSource finds the slot definition in template within source content
+func FindSlotDefinitionInSource(content []byte, slotName string, queryManager *QueryManager) (*Range, error) {
+	// Get TypeScript parser and parse
+	parser := RetrieveTypeScriptParser()
+	defer PutTypeScriptParser(parser)
+
+	tree := parser.Parse(content, nil)
+	if tree == nil {
+		return nil, nil
+	}
+	defer tree.Close()
+
+	// Get class queries to find render templates
+	classQueries, err := NewQueryMatcher(queryManager, "typescript", "classes")
+	if err != nil {
+		return nil, err
+	}
+	defer classQueries.Close()
+
+	// Find HTML template strings in render methods
+	for captureMap := range classQueries.ParentCaptures(tree.RootNode(), content, "class") {
+		if templates, ok := captureMap["render.template"]; ok {
+			for _, template := range templates {
+				templateContent := template.Text
+				// Remove template literal backticks
+				if len(templateContent) >= 2 && templateContent[0] == '`' && templateContent[len(templateContent)-1] == '`' {
+					templateContent = templateContent[1 : len(templateContent)-1]
+				}
+
+				slotRange := findSlotInTemplate(templateContent, slotName, queryManager)
+				if slotRange != nil {
+					// Adjust range to account for position within the TypeScript file
+					templateNode := GetDescendantById(tree.RootNode(), template.NodeId)
+					if templateNode != nil {
+						adjustedRange := adjustTemplateRange(slotRange, templateNode, content)
+						return adjustedRange, nil
+					}
+				}
+			}
+		}
+	}
+
+	return nil, nil
+}
+
+// Helper functions
+
+func matchesAttribute(memberName, decoratorAttrName, targetAttr string) bool {
+	// If decorator explicitly sets attribute name, use that
+	if decoratorAttrName != "" {
+		return decoratorAttrName == targetAttr
+	}
+
+	// Otherwise, check if member name matches (camelCase property → kebab-case attribute)
+	if memberName == targetAttr {
+		return true
+	}
+
+	// Convert camelCase to kebab-case for comparison
+	kebabCase := camelToKebab(memberName)
+	return kebabCase == targetAttr
+}
+
+func camelToKebab(camelCase string) string {
+	var result strings.Builder
+	for i, r := range camelCase {
+		if i > 0 && r >= 'A' && r <= 'Z' {
+			result.WriteByte('-')
+		}
+		result.WriteRune(r - ('A' - 'a'))
+	}
+	return result.String()
+}
+
+func findSlotInTemplate(htmlContent string, slotName string, queryManager *QueryManager) *Range {
+	// Parse the HTML template content
+	parser := GetHTMLParser()
+	defer PutHTMLParser(parser)
+
+	tree := parser.Parse([]byte(htmlContent), nil)
+	if tree == nil {
+		return nil
+	}
+	defer tree.Close()
+
+	// Get HTML slot queries
+	templateQueries, err := NewQueryMatcher(queryManager, "html", "slotsAndParts")
+	if err != nil {
+		return nil
+	}
+	defer templateQueries.Close()
+
+	htmlBytes := []byte(htmlContent)
+	// Find slot with matching name
+	for captureMap := range templateQueries.ParentCaptures(tree.RootNode(), htmlBytes, "slot") {
+		if attrValues, ok := captureMap["attr.value"]; ok {
+			for _, attrValue := range attrValues {
+				if attrValue.Text == slotName {
+					node := GetDescendantById(tree.RootNode(), attrValue.NodeId)
+					if node != nil {
+						r := NodeToRange(node, htmlBytes)
+						return &r
+					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func adjustTemplateRange(templateRange *Range, templateNode *ts.Node, content []byte) *Range {
+	// Convert the template node's position to line/character
+	templateStart := byteOffsetToPosition(content, templateNode.StartByte())
+
+	return &Range{
+		Start: Position{
+			Line:      templateStart.Line + templateRange.Start.Line,
+			Character: templateStart.Character + templateRange.Start.Character,
+		},
+		End: Position{
+			Line:      templateStart.Line + templateRange.End.Line,
+			Character: templateStart.Character + templateRange.End.Character,
+		},
+	}
 }
