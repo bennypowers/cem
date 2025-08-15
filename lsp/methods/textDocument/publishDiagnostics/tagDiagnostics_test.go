@@ -38,7 +38,7 @@ func (m *mockDocument) Version() int32 {
 }
 
 func (m *mockDocument) URI() string {
-	return "file:///test.html"
+	return "test://test.html"
 }
 
 func (m *mockDocument) FindElementAtPosition(position protocol.Position, dm any) *types.CustomElementMatch {
@@ -57,6 +57,18 @@ func (m *mockDocument) AnalyzeCompletionContextTS(position protocol.Position, dm
 	return nil
 }
 
+func (m *mockDocument) GetTemplateContext(position protocol.Position) string {
+	return ""
+}
+
+func (m *mockDocument) GetScriptTags() []types.ScriptTag {
+	return nil
+}
+
+func (m *mockDocument) FindModuleScript() (protocol.Position, bool) {
+	return protocol.Position{}, false
+}
+
 type mockTagDiagnosticsContext struct {
 	availableElements map[string]bool
 	elementSources    map[string]string
@@ -64,6 +76,47 @@ type mockTagDiagnosticsContext struct {
 
 func (m *mockTagDiagnosticsContext) Document(uri string) types.Document {
 	return &mockDocument{content: "<my-button>Test</my-button><my-buttom>Test</my-buttom><missing-import-element>Test</missing-import-element><completely-different-element>Test</completely-different-element>"}
+}
+
+// customMockContext allows custom content for testing script import parsing
+type customMockContext struct {
+	content           string
+	availableElements map[string]bool
+	elementSources    map[string]string
+	allTagNames       []string
+}
+
+func (m *customMockContext) Document(uri string) types.Document {
+	return &mockDocument{content: m.content}
+}
+
+func (m *customMockContext) Slots(tagName string) ([]M.Slot, bool) {
+	return nil, false
+}
+
+func (m *customMockContext) Attributes(tagName string) (map[string]*M.Attribute, bool) {
+	return nil, false
+}
+
+func (m *customMockContext) AllTagNames() []string {
+	return m.allTagNames
+}
+
+func (m *customMockContext) ElementDefinition(tagName string) (types.ElementDefinition, bool) {
+	// Only return definition if element is NOT in available elements (simulating not imported)
+	if !m.availableElements[tagName] {
+		return &mockElementDefinition{modulePath: "./missing-import-element.js"}, true
+	}
+	return nil, false
+}
+
+func (m *customMockContext) ElementSource(tagName string) (string, bool) {
+	// Only return source if element is NOT in available elements (simulating not imported)
+	if !m.availableElements[tagName] {
+		source, exists := m.elementSources[tagName]
+		return source, exists
+	}
+	return "", false
 }
 
 func (m *mockTagDiagnosticsContext) Slots(tagName string) ([]M.Slot, bool) {
@@ -110,6 +163,10 @@ type mockElementDefinition struct {
 
 func (m *mockElementDefinition) ModulePath() string {
 	return m.modulePath
+}
+
+func (m *mockElementDefinition) PackageName() string {
+	return ""
 }
 
 func (m *mockElementDefinition) SourceHref() string {
@@ -321,6 +378,134 @@ func TestFindCustomElementTags(t *testing.T) {
 			if match.Value != expectedTags[i] {
 				t.Errorf("Expected tag '%s', got '%s'", expectedTags[i], match.Value)
 			}
+		}
+	}
+}
+
+func TestTagDiagnostics_MissingImportDetection(t *testing.T) {
+	// Create a custom mock with content containing rh-card and rh-cta
+	ctx := &customMockContext{
+		content: `<rh-card>
+			<h2 slot="header">Card</h2>
+			<rh-cta>Call to action</rh-cta>
+		</rh-card>`,
+		availableElements: map[string]bool{
+			// Note: These elements are NOT in availableElements, simulating they need imports
+		},
+		elementSources: map[string]string{
+			"rh-card": "@rhds/elements/rh-card/rh-card.js",
+			"rh-cta":  "@rhds/elements/rh-cta/rh-cta.js",
+		},
+		allTagNames: []string{"rh-card", "rh-cta", "other-element"},
+	}
+
+	diagnostics := AnalyzeTagNameDiagnosticsForTest(ctx, ctx.Document("test.html"))
+
+	// Should have 2 diagnostics for missing imports
+	if len(diagnostics) != 2 {
+		t.Errorf("Expected 2 diagnostics for missing imports, got %d", len(diagnostics))
+		for i, diag := range diagnostics {
+			t.Errorf("Diagnostic %d: %s", i, diag.Message)
+		}
+		return
+	}
+
+	// Check diagnostic messages
+	found := make(map[string]bool)
+	for _, diag := range diagnostics {
+		found[diag.Message] = true
+	}
+
+	expected := []string{
+		"Custom element 'rh-card' is not imported. Add import from '@rhds/elements/rh-card/rh-card.js'",
+		"Custom element 'rh-cta' is not imported. Add import from '@rhds/elements/rh-cta/rh-cta.js'",
+	}
+
+	for _, expectedMsg := range expected {
+		if !found[expectedMsg] {
+			t.Errorf("Expected diagnostic message not found: %s", expectedMsg)
+		}
+	}
+}
+
+func TestTagDiagnostics_WithImports(t *testing.T) {
+	ctx := &customMockContext{
+		content: `<rh-card>
+			<h2 slot="header">Card</h2>
+			<rh-cta>Call to action</rh-cta>
+		</rh-card>
+		
+		<script type="module">
+			import '@rhds/elements/rh-card/rh-card.js';
+			import '@rhds/elements/rh-cta/rh-cta.js';
+		</script>`,
+		availableElements: map[string]bool{
+			// Note: These elements are NOT in availableElements but should be detected as imported
+		},
+		elementSources: map[string]string{
+			"rh-card": "@rhds/elements/rh-card/rh-card.js",
+			"rh-cta":  "@rhds/elements/rh-cta/rh-cta.js",
+		},
+		allTagNames: []string{"rh-card", "rh-cta", "other-element"},
+	}
+
+	diagnostics := AnalyzeTagNameDiagnosticsForTest(ctx, ctx.Document("test.html"))
+
+	// Should have 0 diagnostics when imports are present
+	if len(diagnostics) != 0 {
+		t.Errorf("Expected 0 diagnostics when imports are present, got %d", len(diagnostics))
+		for i, diag := range diagnostics {
+			t.Errorf("Unexpected diagnostic %d: %s", i, diag.Message)
+		}
+	}
+}
+
+func TestTagDiagnostics_IgnoreComment(t *testing.T) {
+	ctx := &customMockContext{
+		content: `<!-- cem-lsp ignore missing-import -->
+		<rh-card>
+			<h2 slot="header">Card</h2>
+			<rh-cta>Call to action</rh-cta>
+		</rh-card>`,
+		allTagNames: []string{"rh-card", "rh-cta", "other-element"},
+		elementSources: map[string]string{
+			"rh-card": "@rhds/elements/rh-card/rh-card.js",
+			"rh-cta":  "@rhds/elements/rh-cta/rh-cta.js",
+		},
+		availableElements: map[string]bool{}, // None are available, but ignore comment should prevent diagnostics
+	}
+
+	diagnostics := AnalyzeTagNameDiagnosticsForTest(ctx, ctx.Document("test.html"))
+
+	// Should have 0 diagnostics when ignore comment is present
+	if len(diagnostics) != 0 {
+		t.Errorf("Expected 0 diagnostics when ignore comment is present, got %d", len(diagnostics))
+		for i, diag := range diagnostics {
+			t.Errorf("Unexpected diagnostic %d: %s", i, diag.Message)
+		}
+	}
+}
+
+func TestTagDiagnostics_TypeScriptImports(t *testing.T) {
+	ctx := &customMockContext{
+		content: `import '@rhds/elements/rh-icon/rh-icon.js';
+
+// Template content with rh-icon element
+const template = html` + "`<rh-icon icon=\"heart\"></rh-icon>`" + `;`,
+		availableElements: map[string]bool{}, // No elements marked as available initially
+		elementSources: map[string]string{
+			"rh-icon": "@rhds/elements/rh-icon/rh-icon.js",
+		},
+		allTagNames: []string{"rh-icon"},
+	}
+
+	diagnostics := analyzeTagNameDiagnostics(ctx, ctx.Document("test.ts"))
+
+	// Should have no diagnostics because rh-icon is imported
+	if len(diagnostics) != 0 {
+		t.Errorf("Expected 0 diagnostics for TypeScript file with imports, got %d", len(diagnostics))
+		for _, d := range diagnostics {
+			t.Logf("Diagnostic: %s", d.Message)
 		}
 	}
 }

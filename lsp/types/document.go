@@ -29,6 +29,8 @@ type Document interface {
 	URI() string
 	FindCustomElements(dm any) ([]CustomElementMatch, error)
 	AnalyzeCompletionContextTS(position protocol.Position, dm any) *CompletionAnalysis
+	GetScriptTags() []ScriptTag                  // Get parsed script tags
+	FindModuleScript() (protocol.Position, bool) // Find insertion point in module script
 }
 
 // CustomElementMatch represents a found custom element
@@ -48,5 +50,23 @@ type AttributeMatch struct {
 // ElementDefinition represents a custom element with its source information
 type ElementDefinition interface {
 	ModulePath() string
+	PackageName() string
 	SourceHref() string
+}
+
+// ScriptTag represents a tracked script tag in HTML documents
+type ScriptTag struct {
+	Range        protocol.Range    // Range of the entire script tag
+	ContentRange protocol.Range    // Range of the script content (inside the tag)
+	Type         string            // "module", "classic", or empty
+	Src          string            // src attribute value (if any)
+	IsModule     bool              // true if type="module"
+	Imports      []ImportStatement // Parsed import statements
+}
+
+// ImportStatement represents an import statement within a script tag
+type ImportStatement struct {
+	Range      protocol.Range // Range of the import statement
+	ImportPath string         // The imported path/module
+	Type       string         // "static" or "dynamic"
 }

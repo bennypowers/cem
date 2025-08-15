@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package server
 
 import (
+	"fmt"
 	"log"
 
 	"bennypowers.dev/cem/internal/version"
@@ -31,8 +32,17 @@ func Initialize(ctx ServerContext, context *glsp.Context, params *protocol.Initi
 
 	// Set up debug logging (disabled by default, enabled via $/setTrace)
 	helpers.SetDebugLogger(func(format string, args ...any) {
-		ctx.DebugLog(format, args...)
+		// Call LSP protocol directly to avoid infinite recursion
+		go func() {
+			context.Notify(protocol.ServerWindowLogMessage, &protocol.LogMessageParams{
+				Type:    protocol.MessageTypeLog,
+				Message: fmt.Sprintf(format, args...),
+			})
+		}()
 	})
+
+	// Temporarily enable debug logging for investigation
+	helpers.SetDebugLoggingEnabled(true)
 
 	// Define server capabilities
 	openClose := true

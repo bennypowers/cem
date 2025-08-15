@@ -38,18 +38,20 @@ type DocumentManager struct {
 	tsHtmlTemplates       *Q.QueryMatcher // Cached TypeScript HTML templates query
 	htmlCompletionContext *Q.QueryMatcher // Cached HTML completion context query
 	tsCompletionContext   *Q.QueryMatcher // Cached TypeScript completion context query
+	htmlScriptTags        *Q.QueryMatcher // Cached HTML script tags query
 	mu                    sync.RWMutex
 }
 
 // Document represents a tracked document with its parsed tree
 type Document struct {
-	uri      string
-	content  string
-	version  int32
-	Language string
-	Tree     *ts.Tree
-	Parser   *ts.Parser
-	mu       sync.RWMutex
+	uri        string
+	content    string
+	version    int32
+	Language   string
+	Tree       *ts.Tree
+	Parser     *ts.Parser
+	ScriptTags []types.ScriptTag // Tracked script tags with incremental updates
+	mu         sync.RWMutex
 }
 
 // CustomElementMatch represents a found custom element
@@ -117,6 +119,16 @@ func NewDocumentManager() (*DocumentManager, error) {
 		return nil, fmt.Errorf("failed to create TypeScript completion context query: %w", err)
 	}
 
+	htmlScriptTags, err := Q.NewQueryMatcher(queryManager, "html", "scriptTags")
+	if err != nil {
+		htmlCustomElements.Close()
+		tsHtmlTemplates.Close()
+		htmlCompletionContext.Close()
+		tsCompletionContext.Close()
+		queryManager.Close()
+		return nil, fmt.Errorf("failed to create HTML script tags query: %w", err)
+	}
+
 	return &DocumentManager{
 		documents:             make(map[string]*Document),
 		queryManager:          queryManager,
@@ -124,6 +136,7 @@ func NewDocumentManager() (*DocumentManager, error) {
 		tsHtmlTemplates:       tsHtmlTemplates,
 		htmlCompletionContext: htmlCompletionContext,
 		tsCompletionContext:   tsCompletionContext,
+		htmlScriptTags:        htmlScriptTags,
 	}, nil
 }
 
@@ -148,6 +161,9 @@ func (dm *DocumentManager) Close() {
 	}
 	if dm.tsCompletionContext != nil {
 		dm.tsCompletionContext.Close()
+	}
+	if dm.htmlScriptTags != nil {
+		dm.htmlScriptTags.Close()
 	}
 
 	if dm.queryManager != nil {
@@ -175,6 +191,11 @@ func (dm *DocumentManager) OpenDocument(uri, content string, version int32) type
 
 	// Parse the document
 	doc.parse()
+
+	// Parse script tags for HTML documents using the cached query matcher
+	if language == "html" && dm.htmlScriptTags != nil {
+		doc.parseScriptTags(dm.htmlScriptTags)
+	}
 
 	dm.documents[uri] = doc
 	return doc
@@ -207,6 +228,12 @@ func (dm *DocumentManager) UpdateDocument(uri, content string, version int32) ty
 	helpers.SafeDebugLog("[DOCUMENT] Starting parse for: %s\n", uri)
 	doc.parse()
 	helpers.SafeDebugLog("[DOCUMENT] Completed parse for: %s\n", uri)
+
+	// Parse script tags for HTML documents using the cached query matcher
+	if doc.Language == "html" && dm.htmlScriptTags != nil {
+		doc.parseScriptTags(dm.htmlScriptTags)
+		helpers.SafeDebugLog("[DOCUMENT] Parsed script tags for: %s\n", uri)
+	}
 
 	return doc
 }
@@ -298,6 +325,8 @@ func (d *Document) parse() {
 
 	// Parse the content
 	d.Tree = d.Parser.Parse([]byte(d.content), nil)
+
+	// Script tag parsing will be handled by DocumentManager after document creation
 }
 
 // incrementalParse performs incremental parsing when content changes
@@ -1424,4 +1453,221 @@ func (s *simpleDocument) AnalyzeCompletionContextTS(position protocol.Position, 
 
 func (s *simpleDocument) GetTemplateContext(position protocol.Position) string {
 	return "" // Not a template literal, so no template context
+}
+
+func (s *simpleDocument) GetScriptTags() []types.ScriptTag {
+	return nil // Simple documents don't track script tags
+}
+
+func (s *simpleDocument) FindModuleScript() (protocol.Position, bool) {
+	return protocol.Position{}, false // Simple documents don't track script tags
+}
+
+// GetScriptTags returns the parsed script tags for HTML documents
+func (d *Document) GetScriptTags() []types.ScriptTag {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.ScriptTags
+}
+
+// FindModuleScript finds the first module script tag and returns insertion position
+func (d *Document) FindModuleScript() (protocol.Position, bool) {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+
+	for _, script := range d.ScriptTags {
+		if script.IsModule {
+			// Return position at the end of the script content for insertion
+			return protocol.Position{
+				Line:      script.ContentRange.End.Line,
+				Character: 0, // Start of line for clean insertion
+			}, true
+		}
+	}
+
+	return protocol.Position{}, false
+}
+
+// parseScriptTags analyzes script tags in HTML documents using tree-sitter
+func (d *Document) parseScriptTags(scriptTagsMatcher *Q.QueryMatcher) {
+	if d.Tree == nil || scriptTagsMatcher == nil {
+		helpers.SafeDebugLog("[DOCUMENT] parseScriptTags: Tree or matcher is nil")
+		return
+	}
+
+	// Clear existing script tags
+	d.ScriptTags = d.ScriptTags[:0]
+
+	// Process matches using QueryMatcher interface
+	root := d.Tree.RootNode()
+	docContent := []byte(d.content)
+
+	for match := range scriptTagsMatcher.AllQueryMatches(root, docContent) {
+
+		// Check if this is a script element
+		var scriptType string
+		var src string
+		var startTag *ts.Node
+		var scriptContent *ts.Node
+
+		// Process all captures to build attribute map and find key nodes
+		attrMap := make(map[string]string)
+		var currentAttrName string
+
+		for _, capture := range match.Captures {
+			captureNode := &capture.Node
+			captureName := scriptTagsMatcher.GetCaptureNameByIndex(capture.Index)
+
+			switch captureName {
+			case "attr.name":
+				currentAttrName = captureNode.Utf8Text(docContent)
+			case "attr.value":
+				// This captures both quoted and unquoted values now
+				if currentAttrName != "" {
+					attrMap[currentAttrName] = captureNode.Utf8Text(docContent)
+					currentAttrName = "" // Reset
+				}
+			case "start.tag":
+				startTag = captureNode
+			case "content":
+				scriptContent = captureNode
+			}
+		}
+
+		// Extract script type and src from attribute map
+		scriptType = attrMap["type"]
+		src = attrMap["src"]
+
+		// Create ScriptTag struct
+		scriptTag := types.ScriptTag{
+			Type:     scriptType,
+			Src:      src,
+			IsModule: scriptType == "module",
+		}
+
+		// Set element range
+		if startTag != nil {
+			startPos := d.byteOffsetToPosition(startTag.StartByte())
+			endPos := d.byteOffsetToPosition(startTag.EndByte())
+			scriptTag.Range = protocol.Range{
+				Start: startPos,
+				End:   endPos,
+			}
+		}
+
+		// Set content range and parse imports
+		if scriptContent != nil {
+			startPos := d.byteOffsetToPosition(scriptContent.StartByte())
+			endPos := d.byteOffsetToPosition(scriptContent.EndByte())
+			scriptTag.ContentRange = protocol.Range{
+				Start: startPos,
+				End:   endPos,
+			}
+
+			// Parse imports from the script content (both module and non-module scripts can have dynamic imports)
+			scriptTag.Imports = d.parseImportsFromScriptContent(scriptContent.Utf8Text(docContent), scriptContent.StartByte())
+		}
+
+		d.ScriptTags = append(d.ScriptTags, scriptTag)
+	}
+}
+
+// parseImportsFromScriptContent parses import statements from script content using tree-sitter
+func (d *Document) parseImportsFromScriptContent(content string, startByte uint) []types.ImportStatement {
+	return d.parseImportsWithTreeSitter(content, startByte)
+}
+
+// parseImportsWithTreeSitter parses import statements using tree-sitter for better accuracy
+func (d *Document) parseImportsWithTreeSitter(content string, startByte uint) []types.ImportStatement {
+	var imports []types.ImportStatement
+
+	// Get TypeScript parser from pool
+	parser := Q.RetrieveTypeScriptParser()
+	defer Q.PutTypeScriptParser(parser)
+
+	// Parse the script content as TypeScript/JavaScript
+	tree := parser.Parse([]byte(content), nil)
+	if tree == nil {
+		return imports // Return empty if parsing fails
+	}
+	defer tree.Close()
+
+	// Create a simple query for import statements
+	query := `
+		; Static import statements
+		(import_statement
+			source: (string
+				(string_fragment) @import.path)) @import.statement
+
+		; Dynamic import calls
+		(call_expression
+			function: (identifier) @func (#eq? @func "import")
+			arguments: (arguments
+				(string
+					(string_fragment) @import.path))) @import.statement
+	`
+
+	// Create query matcher
+	queryObj, err := ts.NewQuery(tree.Language(), query)
+	if err != nil {
+		return imports // Return empty if query creation fails
+	}
+	defer queryObj.Close()
+
+	// Execute query
+	cursor := ts.NewQueryCursor()
+	defer cursor.Close()
+
+	names := queryObj.CaptureNames()
+	qm := cursor.Matches(queryObj, tree.RootNode(), []byte(content))
+
+	for {
+		match := qm.Next()
+		if match == nil {
+			break
+		}
+
+		var importPath string
+		var importType string = "static" // Default to static
+
+		for _, capture := range match.Captures {
+			captureName := names[capture.Index]
+			if captureName == "import.path" {
+				importPath = capture.Node.Utf8Text([]byte(content))
+			}
+			if captureName == "func" && capture.Node.Utf8Text([]byte(content)) == "import" {
+				importType = "dynamic"
+			}
+		}
+
+		if importPath != "" {
+			// Find the range of the entire import statement
+			var importRange protocol.Range
+			for _, capture := range match.Captures {
+				captureName := names[capture.Index]
+				if captureName == "import.statement" {
+					// Convert byte offsets to positions
+					importStartByte := startByte + capture.Node.StartByte()
+					importEndByte := startByte + capture.Node.EndByte()
+
+					startPos := d.byteOffsetToPosition(importStartByte)
+					endPos := d.byteOffsetToPosition(importEndByte)
+
+					importRange = protocol.Range{
+						Start: startPos,
+						End:   endPos,
+					}
+					break
+				}
+			}
+
+			imports = append(imports, types.ImportStatement{
+				ImportPath: importPath,
+				Type:       importType,
+				Range:      importRange,
+			})
+		}
+	}
+
+	return imports
 }

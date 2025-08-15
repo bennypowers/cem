@@ -1,0 +1,7 @@
+<script type="module">
+  const card = await import('@scope/package/my-card.js');
+  const button = await import('./components/my-button.js');
+  import('@scope/package/my-icon.js').then(module => {
+    console.log('Loaded icon component');
+  });
+</script>

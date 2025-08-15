@@ -28,28 +28,28 @@ type LogMessageContext interface {
 }
 
 // LogInfo logs an info message using the context logger
-func LogInfo(ctx LogMessageContext, context *glsp.Context, format string, args ...interface{}) {
+func LogInfo(ctx LogMessageContext, context *glsp.Context, format string, args ...any) {
 	if logger := ctx.GetLogger(); logger != nil {
 		logger.Info(format, args...)
 	}
 }
 
 // LogWarning logs a warning message using the context logger
-func LogWarning(ctx LogMessageContext, context *glsp.Context, format string, args ...interface{}) {
+func LogWarning(ctx LogMessageContext, context *glsp.Context, format string, args ...any) {
 	if logger := ctx.GetLogger(); logger != nil {
 		logger.Warning(format, args...)
 	}
 }
 
 // LogError logs an error message using the context logger
-func LogError(ctx LogMessageContext, context *glsp.Context, format string, args ...interface{}) {
+func LogError(ctx LogMessageContext, context *glsp.Context, format string, args ...any) {
 	if logger := ctx.GetLogger(); logger != nil {
 		logger.Error(format, args...)
 	}
 }
 
 // LogDebug logs a debug message using the context logger
-func LogDebug(ctx LogMessageContext, context *glsp.Context, format string, args ...interface{}) {
+func LogDebug(ctx LogMessageContext, context *glsp.Context, format string, args ...any) {
 	if logger := ctx.GetLogger(); logger != nil {
 		logger.Log(format, args...)
 	}

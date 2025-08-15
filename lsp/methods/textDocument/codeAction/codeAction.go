@@ -54,7 +54,7 @@ func CodeAction(ctx CodeActionContext, context *glsp.Context, params *protocol.C
 								helpers.SafeDebugLog("[CODE_ACTION] Created tag autofix action")
 							}
 						case "missing-import":
-							action := createMissingImportAction(&diagnostic, dataMap, params.TextDocument.URI)
+							action := createMissingImportAction(ctx, &diagnostic, dataMap, params.TextDocument.URI)
 							if action != nil {
 								actions = append(actions, *action)
 								helpers.SafeDebugLog("[CODE_ACTION] Created missing import action")

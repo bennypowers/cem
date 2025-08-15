@@ -1,0 +1,10 @@
+<script>
+  // Non-module scripts can also use dynamic imports
+  import('@scope/package/my-card.js').then(module => {
+    console.log('Loaded card component');
+  });
+  const loadButton = async () => {
+    const button = await import('./components/my-button.js');
+    return button;
+  };
+</script>
