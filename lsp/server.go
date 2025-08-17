@@ -26,6 +26,7 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/methods/textDocument/definition"
 	"bennypowers.dev/cem/lsp/methods/textDocument/hover"
+	"bennypowers.dev/cem/lsp/methods/workspace/symbol"
 	W "bennypowers.dev/cem/workspace"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
@@ -76,6 +77,7 @@ func NewServer(workspace W.WorkspaceContext) (*Server, error) {
 		TextDocumentDidOpen:    s.didOpen,
 		TextDocumentDidChange:  s.didChange,
 		TextDocumentDidClose:   s.didClose,
+		WorkspaceSymbol:        s.workspaceSymbol,
 	}
 
 	s.server = server.NewServer(&handler, "cem-lsp", false)
@@ -230,6 +232,11 @@ func (s *Server) definition(context *glsp.Context, params *protocol.DefinitionPa
 // codeAction handles textDocument/codeAction requests
 func (s *Server) codeAction(context *glsp.Context, params *protocol.CodeActionParams) (any, error) {
 	return codeAction.CodeAction(s.adapter, context, params)
+}
+
+// workspaceSymbol handles workspace/symbol requests
+func (s *Server) workspaceSymbol(context *glsp.Context, params *protocol.WorkspaceSymbolParams) ([]protocol.SymbolInformation, error) {
+	return symbol.Symbol(s.adapter, context, params)
 }
 
 // didOpen handles textDocument/didOpen notifications

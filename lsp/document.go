@@ -35,11 +35,12 @@ import (
 type DocumentManager struct {
 	documents             map[string]*Document
 	queryManager          *Q.QueryManager
-	htmlCustomElements    *Q.QueryMatcher // Cached HTML custom elements query
-	tsHtmlTemplates       *Q.QueryMatcher // Cached TypeScript HTML templates query
-	htmlCompletionContext *Q.QueryMatcher // Cached HTML completion context query
-	tsCompletionContext   *Q.QueryMatcher // Cached TypeScript completion context query
-	htmlScriptTags        *Q.QueryMatcher // Cached HTML script tags query
+	htmlCustomElements    *Q.QueryMatcher    // Cached HTML custom elements query
+	tsHtmlTemplates       *Q.QueryMatcher    // Cached TypeScript HTML templates query
+	htmlCompletionContext *Q.QueryMatcher    // Cached HTML completion context query
+	tsCompletionContext   *Q.QueryMatcher    // Cached TypeScript completion context query
+	htmlScriptTags        *Q.QueryMatcher    // Cached HTML script tags query
+	incrementalParser     *IncrementalParser // Incremental parsing engine
 	mu                    sync.RWMutex
 }
 
@@ -138,6 +139,7 @@ func NewDocumentManager() (*DocumentManager, error) {
 		htmlCompletionContext: htmlCompletionContext,
 		tsCompletionContext:   tsCompletionContext,
 		htmlScriptTags:        htmlScriptTags,
+		incrementalParser:     NewIncrementalParser(ParseStrategyAuto),
 	}, nil
 }
 
@@ -204,7 +206,15 @@ func (dm *DocumentManager) OpenDocument(uri, content string, version int32) type
 
 // UpdateDocument updates an existing document with incremental parsing
 func (dm *DocumentManager) UpdateDocument(uri, content string, version int32) types.Document {
-	helpers.SafeDebugLog("[DOCUMENT] UpdateDocument: URI=%s, Version=%d, ContentLength=%d\n", uri, version, len(content))
+	// This method maintains compatibility with simple content updates
+	// For full incremental parsing, use UpdateDocumentWithChanges
+	return dm.UpdateDocumentWithChanges(uri, content, version, nil)
+}
+
+// UpdateDocumentWithChanges updates an existing document using incremental parsing when possible
+func (dm *DocumentManager) UpdateDocumentWithChanges(uri, content string, version int32, changes []protocol.TextDocumentContentChangeEvent) types.Document {
+	helpers.SafeDebugLog("[DOCUMENT] UpdateDocumentWithChanges: URI=%s, Version=%d, ContentLength=%d, Changes=%d\n",
+		uri, version, len(content), len(changes))
 
 	dm.mu.Lock()
 	defer dm.mu.Unlock()
@@ -219,16 +229,38 @@ func (dm *DocumentManager) UpdateDocument(uri, content string, version int32) ty
 	doc.mu.Lock()
 	defer doc.mu.Unlock()
 
-	oldContentLength := len(doc.content)
-	doc.content = content
+	oldContent := doc.content
+	oldContentLength := len(oldContent)
 	doc.version = version
 	helpers.SafeDebugLog("[DOCUMENT] Updated content: old=%d, new=%d\n", oldContentLength, len(content))
 
-	// For now, always do a full reparse to avoid incremental parsing issues
-	// TODO: Re-enable incremental parsing once we ensure it works correctly
-	helpers.SafeDebugLog("[DOCUMENT] Starting parse for: %s\n", uri)
-	doc.parse()
-	helpers.SafeDebugLog("[DOCUMENT] Completed parse for: %s\n", uri)
+	// Use incremental parsing when changes are provided
+	if changes != nil && len(changes) > 0 {
+		helpers.SafeDebugLog("[DOCUMENT] Attempting incremental parse for: %s\n", uri)
+		result := dm.incrementalParser.ParseWithStrategy(doc, content, changes)
+
+		if result.Success {
+			// Apply the parse result
+			doc.content = content
+			if result.OldTree != nil {
+				result.OldTree.Close()
+			}
+			doc.Tree = result.NewTree
+
+			helpers.SafeDebugLog("[DOCUMENT] Parse completed (incremental=%t) for: %s\n", result.UsedIncremental, uri)
+		} else {
+			// Fallback failed, handle error
+			helpers.SafeDebugLog("[DOCUMENT] Parse failed for: %s, error: %v\n", uri, result.Error)
+			// Fallback to simple update
+			doc.content = content
+			doc.parse()
+		}
+	} else {
+		// No change information available, do full reparse
+		helpers.SafeDebugLog("[DOCUMENT] No change info, performing full parse for: %s\n", uri)
+		doc.content = content
+		doc.parse()
+	}
 
 	// Parse script tags for HTML documents using the cached query matcher
 	if doc.Language == "html" && dm.htmlScriptTags != nil {

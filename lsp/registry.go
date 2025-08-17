@@ -631,7 +631,18 @@ func (r *Registry) StartGenerateWatcher() error {
 	// Create callback that updates the registry with generated manifests
 	callback := func(pkg *M.Package) error {
 		helpers.SafeDebugLog("Received generated manifest with %d modules", len(pkg.Modules))
-		r.AddManifest(pkg)
+
+		// Get package name from workspace package.json to preserve package scope
+		var packageName string
+		if packageJSON, err := r.localWorkspace.PackageJSON(); err == nil && packageJSON != nil {
+			packageName = packageJSON.Name
+			helpers.SafeDebugLog("[GENERATE_WATCHER] Using package name from workspace package.json: '%s'", packageName)
+		} else {
+			helpers.SafeDebugLog("[GENERATE_WATCHER] Could not read workspace package.json: %v", err)
+		}
+
+		// Add manifest with proper package name instead of empty string
+		r.addManifest(pkg, packageName)
 		return nil
 	}
 
