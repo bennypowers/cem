@@ -36,6 +36,7 @@ type LifecycleContext interface {
 type DocumentManager interface {
 	OpenDocument(uri, content string, version int32) types.Document
 	UpdateDocument(uri, content string, version int32) types.Document
+	UpdateDocumentWithChanges(uri, content string, version int32, changes []protocol.TextDocumentContentChangeEvent) types.Document
 	CloseDocument(uri string)
 	Document(uri string) types.Document
 }
@@ -113,10 +114,20 @@ func DidChange(ctx LifecycleContext, context *glsp.Context, params *protocol.Did
 	}
 
 	helpers.SafeDebugLog("[LIFECYCLE] Updating document with content (length=%d)", len(newContent))
-	updatedDoc := dm.UpdateDocument(
+
+	// Extract content change events for incremental parsing
+	var changeEvents []protocol.TextDocumentContentChangeEvent
+	for _, change := range params.ContentChanges {
+		if changeEvent, ok := change.(protocol.TextDocumentContentChangeEvent); ok {
+			changeEvents = append(changeEvents, changeEvent)
+		}
+	}
+
+	updatedDoc := dm.UpdateDocumentWithChanges(
 		params.TextDocument.URI,
 		newContent,
 		params.TextDocument.Version,
+		changeEvents,
 	)
 
 	if updatedDoc != nil {

@@ -254,3 +254,77 @@ func (m *MockDocumentAdapter) URI() string {
 func (m *MockDocumentAdapter) FindCustomElements(dm any) ([]types.CustomElementMatch, error) {
 	return m.doc.FindCustomElements(dm)
 }
+
+// TestResolveSourcePath tests the path resolution logic specifically
+func TestResolveSourcePath(t *testing.T) {
+	tests := []struct {
+		name          string
+		modulePath    string
+		workspaceRoot string
+		expected      string
+	}{
+		{
+			name:          "Relative path with ./ prefix",
+			modulePath:    "./rh-card/rh-card.js",
+			workspaceRoot: "/workspace/project",
+			expected:      "file:///workspace/project/rh-card/rh-card.js",
+		},
+		{
+			name:          "Relative path without ./ prefix",
+			modulePath:    "components/my-button.js",
+			workspaceRoot: "/workspace/project",
+			expected:      "file:///workspace/project/components/my-button.js",
+		},
+		{
+			name:          "Absolute path",
+			modulePath:    "/absolute/path/to/element.js",
+			workspaceRoot: "/workspace/project",
+			expected:      "file:///absolute/path/to/element.js",
+		},
+		{
+			name:          "Already file:// URI",
+			modulePath:    "file:///already/a/uri.js",
+			workspaceRoot: "/workspace/project",
+			expected:      "file:///already/a/uri.js",
+		},
+		{
+			name:          "Empty module path",
+			modulePath:    "",
+			workspaceRoot: "/workspace/project",
+			expected:      "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a test-specific implementation
+			testDef := &testElementDefinition{
+				modulePath: tt.modulePath,
+			}
+
+			result := definition.ResolveSourcePathForTesting(testDef, tt.workspaceRoot)
+
+			if result != tt.expected {
+				t.Errorf("Expected '%s', got '%s'", tt.expected, result)
+			}
+		})
+	}
+}
+
+// testElementDefinition is a test-only implementation of types.ElementDefinition
+type testElementDefinition struct {
+	modulePath string
+	sourceHref string
+}
+
+func (t *testElementDefinition) ModulePath() string {
+	return t.modulePath
+}
+
+func (t *testElementDefinition) SourceHref() string {
+	return t.sourceHref
+}
+
+func (t *testElementDefinition) PackageName() string {
+	return ""
+}
