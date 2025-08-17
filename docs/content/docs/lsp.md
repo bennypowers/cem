@@ -38,6 +38,15 @@ Quickly jump to your element, attribute, event, etc. definitions.
 - Jump to custom element source definitions
 - Support for tag names and attributes (extensible for slots and events)
 
+### Workspace Symbol Search
+
+Search and navigate custom elements across your entire workspace.
+
+- **Global element search**: Use your IDE's symbol search (Ctrl+T in VS Code) to find custom elements
+- **Fuzzy matching**: Quickly locate elements with partial names and case-insensitive search
+- **Direct navigation**: Click search results to jump immediately to element source files
+- **Workspace-wide coverage**: Searches all custom elements from your manifests and dependencies
+
 ### Error Detection & Autofixes
 
 Real-time validation with intelligent error correction.
@@ -162,6 +171,9 @@ Debug logging is controlled via the LSP standard `$/setTrace` notification. Most
 - `textDocument/didOpen` - Track when documents are opened in the editor
 - `textDocument/didChange` - Handle incremental document changes
 - `textDocument/didClose` - Clean up resources when documents are closed
+
+**Workspace Features**
+- `workspace/symbol` - Search and navigate custom elements across the entire workspace
 
 **Server Lifecycle**
 - `initialize` - Establish server capabilities and workspace configuration

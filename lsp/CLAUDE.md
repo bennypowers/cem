@@ -135,7 +135,7 @@ manifest types. investigate if this can be done in a lightweight but correct man
   - Go to attribute declaration (from HTML attr to Lit @property decorator or @attribute JSDoc)
   - Go to slot in template (from slot attribute value to slot definition in template)
   - Go to event declaration (from @event Lit binding syntax to JSDoc or class field source)
-- [ ] **Workspace symbol provider** - Search and navigate custom elements
+- [x] **Workspace symbol provider** - Search and navigate custom elements ✅ COMPLETED
 
 ## File Structure
 ```
@@ -195,6 +195,10 @@ lsp/
 │       ├── document.go    # Document interface for textDocument operations
 │       ├── lifecycle.go   # Document lifecycle (didOpen, didChange, didClose)
 │       └── lifecycle_test.go # Lifecycle tests
+├── methods/workspace/     # Workspace methods
+│   └── symbol/            # Workspace symbol provider package
+│       ├── symbol.go      # Workspace symbol implementation
+│       └── symbol_test.go # Workspace symbol tests
 ├── test/fixtures/         # Integration test fixtures
 │   ├── completion-*/      # Completion test scenarios
 │   ├── definition-*/      # Definition test scenarios
@@ -236,7 +240,7 @@ queries/ (shared root)     # Unified query management package
 - ✅ Basic LSP server with initialize/shutdown
 - ✅ Manifest discovery from workspace, node_modules, and config
 - ✅ In-memory indexing of custom elements and attributes
-- ✅ **Tree-sitter powered parsing with incremental updates**
+- ✅ **Tree-sitter powered parsing with intelligent incremental updates**
 - ✅ **Document tracking system for performance**
 - ✅ **HTML parsing with proper AST analysis**
 - ✅ **TypeScript template literal parsing** (`html```, `html<T>```, `html(options)```, `innerHTML`, `outerHTML`)
@@ -257,7 +261,9 @@ queries/ (shared root)     # Unified query management package
 - ✅ **Go-to-definition support** - Jump to custom element source definitions with TypeScript source preference
 - ✅ **Slot validation diagnostics with autofixes** - Real-time error detection and one-click fixes for invalid slot names
 - ✅ **Tag name validation diagnostics with missing import detection** - Intelligent validation of custom element tag names with package-aware import suggestions
-- ✅ **Platform abstractions layer** - Created `internal/platform` package for filesystem, time, and file watching abstractions
+- ✅ **Workspace symbol provider** - Search and navigate custom elements across entire workspace with fuzzy matching
+- ✅ **Incremental parsing abstractions** - Comprehensive incremental parsing system with change analysis, validation, and intelligent fallback strategies
+- ✅ **Platform abstractions layer** - Created `internal/platform` package for filesystem, time, and file watching abstractions  
 - ✅ **Registry dependency injection** - Registry uses injectable FileWatcher interface for enhanced testability and future portability
 
 ### Current Test Status ✅ PERFECT SCORES
@@ -276,6 +282,14 @@ queries/ (shared root)     # Unified query management package
   - Custom element tag name definitions ✅
   - TypeScript source preference ✅
   - Element position detection ✅
+- **Workspace Symbol Tests**: All passing with comprehensive search functionality ✅
+  - Case-insensitive fuzzy matching ✅
+  - Source file location resolution ✅
+  - Element description support ✅
+- **Incremental Parsing Tests**: All passing with comprehensive change analysis ✅
+  - Change strategy selection (small vs large changes) ✅
+  - Full document vs incremental change detection ✅
+  - Position-to-byte offset calculations ✅
 - **File Watching Tests**: All passing for manifest and package.json watching ✅
 - **Generate Watcher Tests**: All passing for local project auto-detection ✅
 - **Race Condition Tests**: All tests pass with `-race` flag enabled ✅

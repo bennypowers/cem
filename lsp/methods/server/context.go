@@ -16,12 +16,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package server
 
+import (
+	protocol "github.com/tliron/glsp/protocol_3_16"
+)
+
 // ServerContext provides the dependencies needed for server lifecycle
 type ServerContext interface {
 	DocumentManager() DocumentManager
 	Workspace() Workspace
 	DebugLog(format string, args ...any)
 	InitializeManifests() error
+	UpdateWorkspaceFromLSP(rootURI *string, workspaceFolders []protocol.WorkspaceFolder) error
 }
 
 // DocumentManager interface for cleanup

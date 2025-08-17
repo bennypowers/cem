@@ -44,6 +44,22 @@ func Initialize(ctx ServerContext, context *glsp.Context, params *protocol.Initi
 	// Temporarily enable debug logging for investigation
 	helpers.SetDebugLoggingEnabled(true)
 
+	// Log workspace information from LSP client
+	if params.RootURI != nil {
+		helpers.SafeDebugLog("[INITIALIZE] LSP client provided root URI: %s", *params.RootURI)
+	}
+	if len(params.WorkspaceFolders) > 0 {
+		for i, folder := range params.WorkspaceFolders {
+			helpers.SafeDebugLog("[INITIALIZE] LSP client workspace folder %d: %s (%s)", i, folder.URI, folder.Name)
+		}
+	}
+
+	// Update workspace context with information from LSP client
+	if err := ctx.UpdateWorkspaceFromLSP(params.RootURI, params.WorkspaceFolders); err != nil {
+		helpers.SafeDebugLog("[INITIALIZE] Warning: Failed to update workspace from LSP parameters: %v", err)
+		// Don't fail initialization, just log the warning
+	}
+
 	// Define server capabilities
 	openClose := true
 	changeKind := protocol.TextDocumentSyncKindIncremental
@@ -68,6 +84,7 @@ func Initialize(ctx ServerContext, context *glsp.Context, params *protocol.Initi
 				protocol.CodeActionKindQuickFix,
 			},
 		},
+		WorkspaceSymbolProvider: &protocol.WorkspaceSymbolOptions{},
 		TextDocumentSync: &protocol.TextDocumentSyncOptions{
 			OpenClose: &openClose,
 			Change:    &changeKind,
