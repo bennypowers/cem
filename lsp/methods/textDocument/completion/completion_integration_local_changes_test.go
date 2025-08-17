@@ -168,23 +168,27 @@ export class TestButton extends LitElement {
 		t.Fatalf("Failed to create HTML file: %v", err)
 	}
 
-	// Create workspace and registry
+	// Create workspace
 	workspace := W.NewFileSystemWorkspaceContext(tempDir)
 	err = workspace.Init()
 	if err != nil {
 		t.Fatalf("Failed to initialize workspace: %v", err)
 	}
 
-	registry, err := lsp.NewRegistryWithDefaults()
+	// Create a full LSP server instance like TestServerLevelIntegration
+	server, err := lsp.NewServer(workspace)
 	if err != nil {
-		t.Fatalf("Failed to create registry: %v", err)
+		t.Fatalf("Failed to create LSP server: %v", err)
+	}
+	defer server.Close()
+
+	// Initialize the server (this loads manifests and starts file watching AND generate watcher)
+	err = server.InitializeForTesting()
+	if err != nil {
+		t.Fatalf("Failed to initialize server: %v", err)
 	}
 
-	// Load initial manifests
-	err = registry.LoadFromWorkspace(workspace)
-	if err != nil {
-		t.Fatalf("Failed to load workspace manifests: %v", err)
-	}
+	registry := server.Registry()
 
 	// Create document manager
 	dm, err := lsp.NewDocumentManager()
@@ -228,29 +232,7 @@ export class TestButton extends LitElement {
 
 	t.Logf("Initial completions found: %v", getCompletionLabels(initialItems))
 
-	// Start file watching and generate watcher
-	var reloadCalled bool
-	var reloadMutex sync.Mutex
-	registry.StartFileWatching(func() {
-		reloadMutex.Lock()
-		reloadCalled = true
-		reloadMutex.Unlock()
-		t.Logf("Manifest reload triggered")
-		// Use the same direct loading approach as the server
-		if err := registry.ReloadManifestsDirectly(); err != nil {
-			t.Logf("Error reloading manifests directly: %v", err)
-		} else {
-			t.Logf("Successfully reloaded manifests directly")
-		}
-	})
-	defer registry.StopFileWatching()
-
-	// Also try to start the generate watcher for automated regeneration
-	err = registry.StartGenerateWatcher()
-	if err != nil {
-		t.Logf("Warning: Could not start generate watcher: %v", err)
-	}
-	defer registry.StopGenerateWatcher()
+	// The server has already started file watching and generate watcher via InitializeForTesting()
 
 	// Modify the TypeScript source to add a new variant option
 	updatedTSContent := strings.Replace(initialTSContent,
@@ -262,6 +244,15 @@ export class TestButton extends LitElement {
 	if err != nil {
 		t.Fatalf("Failed to update TypeScript file: %v", err)
 	}
+
+	// Ensure file is synced to disk before generate process reads it
+	if file, err := os.OpenFile(tsFilePath, os.O_RDONLY, 0); err == nil {
+		file.Sync()
+		file.Close()
+	}
+
+	// Additional delay to ensure file watcher has time to process
+	time.Sleep(100 * time.Millisecond)
 
 	// Debug: Check if the TypeScript file exists and has the right content
 	if updatedContent, err := os.ReadFile(tsFilePath); err == nil {
@@ -280,7 +271,7 @@ export class TestButton extends LitElement {
 
 	// Wait for the generate watcher to detect the TypeScript change and regenerate the manifest
 	// We need to wait for the file watcher to trigger a reload multiple times
-	time.Sleep(200 * time.Millisecond)
+	time.Sleep(5 * time.Second)
 
 	// Debug: Read the manifest file directly to see what was generated
 	manifestContent, err := os.ReadFile(manifestPath)
@@ -290,26 +281,15 @@ export class TestButton extends LitElement {
 		t.Logf("Could not read manifest after change: %v", err)
 	}
 
-	// Wait for file watcher to detect the change and reload
-	timeout := time.NewTimer(5 * time.Second)
-	defer timeout.Stop()
-
-	for {
-		reloadMutex.Lock()
-		called := reloadCalled
-		reloadMutex.Unlock()
-
-		if called {
-			break
-		}
-
-		select {
-		case <-timeout.C:
-			t.Fatalf("Timeout waiting for manifest reload")
-		case <-time.After(100 * time.Millisecond):
-			// Keep checking
-		}
+	// Debug: Check workspace configuration and paths
+	if cfg, err := workspace.Config(); err == nil {
+		t.Logf("Workspace root: %s", workspace.Root())
+		t.Logf("Generate files config: %v", cfg.Generate.Files)
+		t.Logf("Absolute TypeScript file path: %s", tsFilePath)
 	}
+
+	// NOTE: Don't call ReloadManifestsDirectly() here as it overwrites the in-memory
+	// updates from the generate watcher with old file content
 
 	// Debug: Check what's in the registry after reload
 	if attrs, exists := ctx.Attributes("test-button"); exists {

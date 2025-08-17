@@ -157,7 +157,7 @@ func AllQueries() QuerySelector {
 func LSPQueries() QuerySelector {
 	return QuerySelector{
 		HTML:       []string{"customElements", "completionContext", "scriptTags"},
-		TypeScript: []string{"htmlTemplates", "completionContext"},
+		TypeScript: []string{"htmlTemplates", "completionContext", "imports"},
 		CSS:        []string{},
 		JSDoc:      []string{},
 	}

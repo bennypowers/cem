@@ -375,49 +375,6 @@ func TestCompletionIntegration(t *testing.T) {
 
 // Mock implementations for testing
 
-type MockDocument struct {
-	content string
-}
-
-func (m *MockDocument) Content() string {
-	return m.content
-}
-
-func (m *MockDocument) FindElementAtPosition(position protocol.Position, dm any) *types.CustomElementMatch {
-	// Simple mock implementation - not used in these tests
-	return nil
-}
-
-func (m *MockDocument) FindAttributeAtPosition(position protocol.Position, dm any) (*types.AttributeMatch, string) {
-	// Simple mock implementation - not used in these tests
-	return nil, ""
-}
-
-// GetTemplateContext returns empty string for HTML documents (not a template)
-func (m *MockDocument) TemplateContext(position protocol.Position) string {
-	return ""
-}
-
-// Version returns the document version
-func (m *MockDocument) Version() int32 {
-	return 1
-}
-
-// GetURI returns the document URI
-func (m *MockDocument) URI() string {
-	return "test://mock"
-}
-
-// FindCustomElements returns empty list for mock
-func (m *MockDocument) FindCustomElements(dm any) ([]types.CustomElementMatch, error) {
-	return nil, nil
-}
-
-// AnalyzeCompletionContextTS returns nil for mock
-func (m *MockDocument) AnalyzeCompletionContextTS(position protocol.Position, dm any) *types.CompletionAnalysis {
-	return nil
-}
-
 type MockRegistry struct {
 	elements map[string]*M.CustomElement
 }
@@ -811,72 +768,5 @@ func TestTemplateContextBehavior(t *testing.T) {
 				t.Errorf("Expected attribute name %q, got %q", tt.wantAttr, analysis.AttributeName)
 			}
 		})
-	}
-}
-
-// MockTemplateDocument extends MockDocument with template context support
-type MockTemplateDocument struct {
-	content       string
-	isLitTemplate bool
-}
-
-func (m *MockTemplateDocument) Content() string {
-	return m.content
-}
-
-func (m *MockTemplateDocument) FindElementAtPosition(position protocol.Position, dm any) *types.CustomElementMatch {
-	return nil
-}
-
-func (m *MockTemplateDocument) FindAttributeAtPosition(position protocol.Position, dm any) (*types.AttributeMatch, string) {
-	return nil, ""
-}
-
-func (m *MockTemplateDocument) TemplateContext(position protocol.Position) string {
-	if m.isLitTemplate {
-		return "html"
-	}
-	return "innerHTML"
-}
-
-// Version returns the document version
-func (m *MockTemplateDocument) Version() int32 {
-	return 1
-}
-
-// GetURI returns the document URI
-func (m *MockTemplateDocument) URI() string {
-	return "test://mock-template"
-}
-
-// FindCustomElements returns empty list for mock
-func (m *MockTemplateDocument) FindCustomElements(dm any) ([]types.CustomElementMatch, error) {
-	return nil, nil
-}
-
-// AnalyzeCompletionContextTS returns nil for mock
-func (m *MockTemplateDocument) AnalyzeCompletionContextTS(position protocol.Position, dm any) *types.CompletionAnalysis {
-	return nil
-}
-
-// Helper function to convert completion type to string for better error messages
-func completionTypeString(t types.CompletionContextType) string {
-	switch t {
-	case types.CompletionUnknown:
-		return "Unknown"
-	case types.CompletionTagName:
-		return "TagName"
-	case types.CompletionAttributeName:
-		return "AttributeName"
-	case types.CompletionAttributeValue:
-		return "AttributeValue"
-	case types.CompletionLitEventBinding:
-		return "LitEventBinding"
-	case types.CompletionLitPropertyBinding:
-		return "LitPropertyBinding"
-	case types.CompletionLitBooleanAttribute:
-		return "LitBooleanAttribute"
-	default:
-		return "Invalid"
 	}
 }

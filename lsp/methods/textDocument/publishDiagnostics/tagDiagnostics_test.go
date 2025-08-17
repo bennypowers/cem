@@ -106,7 +106,28 @@ func TestTagDiagnostics_WithImports(t *testing.T) {
 	// Analyze tag diagnostics
 	diagnostics := publishDiagnostics.AnalyzeTagNameDiagnosticsForTest(adapter, doc)
 
+	// Debug: check element sources
+	allTagNames := adapter.AllTagNames()
+	t.Logf("Available elements: %v", allTagNames)
+	for _, tagName := range allTagNames {
+		if source, hasSource := adapter.ElementSource(tagName); hasSource {
+			t.Logf("Element '%s' has source: '%s'", tagName, source)
+		}
+	}
+
 	// Should have 0 diagnostics when imports are present
+	// Debug: Check if script tags are being parsed
+	if doc != nil {
+		scriptTags := doc.GetScriptTags()
+		t.Logf("Document has %d script tags parsed", len(scriptTags))
+		for i, tag := range scriptTags {
+			t.Logf("Script %d: IsModule=%t, %d imports", i, tag.IsModule, len(tag.Imports))
+			for j, imp := range tag.Imports {
+				t.Logf("  Import %d: %s (%s)", j, imp.ImportPath, imp.Type)
+			}
+		}
+	}
+
 	if len(diagnostics) != 0 {
 		t.Errorf("Expected 0 diagnostics when imports are present, got %d", len(diagnostics))
 		for i, diag := range diagnostics {
@@ -167,6 +188,15 @@ func TestTagDiagnostics_TypeScriptImports(t *testing.T) {
 	doc := dm.OpenDocument(uri, string(content), 1)
 	if doc == nil {
 		t.Fatal("Failed to open document")
+	}
+
+	// Debug: check element sources
+	allTagNames := adapter.AllTagNames()
+	t.Logf("Available elements: %v", allTagNames)
+	for _, tagName := range allTagNames {
+		if source, hasSource := adapter.ElementSource(tagName); hasSource {
+			t.Logf("Element '%s' has source: '%s'", tagName, source)
+		}
 	}
 
 	// Analyze tag diagnostics

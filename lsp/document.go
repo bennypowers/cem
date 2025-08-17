@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 
@@ -1001,11 +1002,8 @@ func (d *Document) analyzeHTMLCompletionContext(byteOffset uint, analysis *types
 
 				if !hasAttrValueAtSamePos {
 					// Extract and clean up the tag name
-					tagText := tagName.Text
 					// Remove leading < if present
-					if strings.HasPrefix(tagText, "<") {
-						tagText = tagText[1:]
-					}
+					tagText := strings.TrimPrefix(tagName.Text, "<")
 					// Extract just the tag name part (before any space/attributes)
 					parts := strings.Fields(tagText)
 
@@ -1028,13 +1026,7 @@ func (d *Document) analyzeHTMLCompletionContext(byteOffset uint, analysis *types
 						}
 						// For longer names without hyphens, check if they're standard HTML elements
 						standardElements := []string{"div", "span", "section", "article", "header", "footer", "nav", "main", "aside"}
-						isStandard := false
-						for _, std := range standardElements {
-							if actualTagName == std {
-								isStandard = true
-								break
-							}
-						}
+						isStandard := slices.Contains(standardElements, actualTagName)
 						if !isStandard {
 							// Not a known standard element, might be a custom element being typed
 							analysis.Type = types.CompletionTagName
@@ -1592,72 +1584,59 @@ func (d *Document) parseImportsWithTreeSitter(content string, startByte uint) []
 	}
 	defer tree.Close()
 
-	// Create a simple query for import statements
-	query := `
-		; Static import statements
-		(import_statement
-			source: (string
-				(string_fragment) @import.path)) @import.statement
-
-		; Dynamic import calls
-		(call_expression
-			function: (identifier) @func (#eq? @func "import")
-			arguments: (arguments
-				(string
-					(string_fragment) @import.path))) @import.statement
-	`
-
-	// Create query matcher
-	queryObj, err := ts.NewQuery(tree.Language(), query)
+	// Get query manager for imports
+	queryManager, err := Q.NewQueryManager(Q.LSPQueries())
 	if err != nil {
-		return imports // Return empty if query creation fails
+		helpers.SafeDebugLog("[DOCUMENT] Failed to create query manager: %v", err)
+		return imports
 	}
-	defer queryObj.Close()
+	defer queryManager.Close()
 
-	// Execute query
-	cursor := ts.NewQueryCursor()
-	defer cursor.Close()
+	// Create import matcher using external query
+	importMatcher, err := Q.NewQueryMatcher(queryManager, "typescript", "imports")
+	if err != nil {
+		helpers.SafeDebugLog("[DOCUMENT] Failed to create import matcher: %v", err)
+		return imports
+	}
+	defer importMatcher.Close()
 
-	names := queryObj.CaptureNames()
-	qm := cursor.Matches(queryObj, tree.RootNode(), []byte(content))
-
-	for {
-		match := qm.Next()
-		if match == nil {
-			break
-		}
-
+	// Execute query using the shared query system
+	contentBytes := []byte(content)
+	for match := range importMatcher.AllQueryMatches(tree.RootNode(), contentBytes) {
 		var importPath string
 		var importType string = "static" // Default to static
 
 		for _, capture := range match.Captures {
-			captureName := names[capture.Index]
-			if captureName == "import.path" {
-				importPath = capture.Node.Utf8Text([]byte(content))
-			}
-			if captureName == "func" && capture.Node.Utf8Text([]byte(content)) == "import" {
+			captureName := importMatcher.GetCaptureNameByIndex(capture.Index)
+
+			// Handle all import path capture types from external queries
+			switch captureName {
+			case "import.spec", "staticImport.spec":
+				importPath = capture.Node.Utf8Text(contentBytes)
+				importType = "static"
+			case "dynamicImport.spec":
+				importPath = capture.Node.Utf8Text(contentBytes)
 				importType = "dynamic"
 			}
 		}
 
 		if importPath != "" {
-			// Find the range of the entire import statement
+			// Strip quotes from import path
+			importPath = strings.Trim(importPath, `"'`)
+
+			// Find the range of the import statement (use first capture as approximation)
 			var importRange protocol.Range
-			for _, capture := range match.Captures {
-				captureName := names[capture.Index]
-				if captureName == "import.statement" {
-					// Convert byte offsets to positions
-					importStartByte := startByte + capture.Node.StartByte()
-					importEndByte := startByte + capture.Node.EndByte()
+			if len(match.Captures) > 0 {
+				capture := match.Captures[0]
+				importStartByte := startByte + capture.Node.StartByte()
+				importEndByte := startByte + capture.Node.EndByte()
 
-					startPos := d.byteOffsetToPosition(importStartByte)
-					endPos := d.byteOffsetToPosition(importEndByte)
+				startPos := d.byteOffsetToPosition(importStartByte)
+				endPos := d.byteOffsetToPosition(importEndByte)
 
-					importRange = protocol.Range{
-						Start: startPos,
-						End:   endPos,
-					}
-					break
+				importRange = protocol.Range{
+					Start: startPos,
+					End:   endPos,
 				}
 			}
 

@@ -628,9 +628,16 @@ func (r *Registry) StartGenerateWatcher() error {
 		globs = []string{"src/**/*.{ts,js}"}
 	}
 
+	// Create callback that updates the registry with generated manifests
+	callback := func(pkg *M.Package) error {
+		helpers.SafeDebugLog("Received generated manifest with %d modules", len(pkg.Modules))
+		r.AddManifest(pkg)
+		return nil
+	}
+
 	// Create and start the in-process generate watcher
 	helpers.SafeDebugLog("About to create InProcessGenerateWatcher with globs: %v", globs)
-	watcher, err := NewInProcessGenerateWatcher(r.localWorkspace, globs)
+	watcher, err := NewInProcessGenerateWatcher(r.localWorkspace, globs, callback)
 	if err != nil {
 		helpers.SafeDebugLog("Failed to create InProcessGenerateWatcher: %v", err)
 		return fmt.Errorf("failed to create generate watcher: %w", err)

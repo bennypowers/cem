@@ -208,3 +208,11 @@ func (m *mockDocument) Version() int32 {
 func (m *mockDocument) URI() string {
 	return "test://test.html"
 }
+
+func (m *mockDocument) GetScriptTags() []types.ScriptTag {
+	return nil
+}
+
+func (m *mockDocument) FindModuleScript() (protocol.Position, bool) {
+	return protocol.Position{}, false
+}

@@ -47,6 +47,13 @@ func AnalyzeTagNameDiagnosticsForTest(ctx DiagnosticsContext, doc types.Document
 
 	helpers.SafeDebugLog("[DIAGNOSTICS] Analyzing custom element tag names in document (length=%d)", len(content))
 
+	// Check for ignore comment - if present, skip all tag diagnostics
+	if strings.Contains(content, "// cem-lsp ignore missing-import") ||
+		strings.Contains(content, "<!-- cem-lsp ignore missing-import -->") {
+		helpers.SafeDebugLog("[DIAGNOSTICS] Found ignore comment, skipping all tag diagnostics")
+		return diagnostics // Return empty diagnostics array
+	}
+
 	// Find all custom element tag names in the document
 	tagMatches := findCustomElementTags(content)
 	helpers.SafeDebugLog("[DIAGNOSTICS] Found %d custom element tags", len(tagMatches))
@@ -182,15 +189,19 @@ func parseScriptImports(content string, ctx DiagnosticsContext, doc types.Docume
 	var importedElements []string
 
 	// Check for ignore comment first
+	helpers.SafeDebugLog("[DIAGNOSTICS] Checking for ignore comment in content (length=%d)", len(content))
 	if strings.Contains(content, "// cem-lsp ignore missing-import") ||
 		strings.Contains(content, "<!-- cem-lsp ignore missing-import -->") {
 		helpers.SafeDebugLog("[DIAGNOSTICS] Found ignore comment, skipping import parsing")
 		// Return all available elements to effectively disable missing import checks
 		return ctx.AllTagNames()
 	}
+	helpers.SafeDebugLog("[DIAGNOSTICS] No ignore comment found, proceeding with import parsing")
 
 	// Parse TypeScript imports directly (for .ts files)
-	importedElements = append(importedElements, parseTypeScriptImports(content, ctx)...)
+	tsImports := parseTypeScriptImports(content, ctx)
+	helpers.SafeDebugLog("[DIAGNOSTICS] TypeScript parsing returned %d elements: %v", len(tsImports), tsImports)
+	importedElements = append(importedElements, tsImports...)
 
 	// Parse module scripts for static and dynamic imports (for HTML files)
 	importedElements = append(importedElements, parseModuleScriptImports(ctx, doc)...)
@@ -214,6 +225,8 @@ func parseScriptImports(content string, ctx DiagnosticsContext, doc types.Docume
 // parseTypeScriptImports parses TypeScript import statements using tree-sitter
 func parseTypeScriptImports(content string, ctx DiagnosticsContext) []string {
 	var importedElements []string
+
+	helpers.SafeDebugLog("[DIAGNOSTICS] Parsing TypeScript imports from content (length=%d)", len(content))
 
 	// Get TypeScript parser from pool
 	parser := queries.RetrieveTypeScriptParser()
@@ -249,12 +262,17 @@ func parseTypeScriptImports(content string, ctx DiagnosticsContext) []string {
 		for _, capture := range match.Captures {
 			captureName := importMatcher.GetCaptureNameByIndex(capture.Index)
 
-			// Handle both static and dynamic imports
-			if captureName == "import.spec" || captureName == "dynamicImport.spec" {
+			// Handle static, dynamic, and legacy import patterns
+			if captureName == "import.spec" || captureName == "dynamicImport.spec" || captureName == "staticImport.spec" {
 				importPath := capture.Node.Utf8Text(contentBytes)
+				// Remove quotes from import path
+				importPath = strings.Trim(importPath, `"'`)
+				helpers.SafeDebugLog("[DIAGNOSTICS] Found TypeScript import path: '%s'", importPath)
 				elements := resolveImportPathToElements(importPath, ctx)
 				importedElements = append(importedElements, elements...)
 				helpers.SafeDebugLog("[DIAGNOSTICS] TypeScript import '%s' resolved to elements: %v", importPath, elements)
+			} else {
+				helpers.SafeDebugLog("[DIAGNOSTICS] TypeScript capture '%s' ignored", captureName)
 			}
 		}
 	}
@@ -438,33 +456,45 @@ func resolveImportPathToElements(importPath string, ctx DiagnosticsContext) []st
 
 	// Get all available elements and their sources
 	allTagNames := ctx.AllTagNames()
+	helpers.SafeDebugLog("[DIAGNOSTICS] Found %d elements to check against import path", len(allTagNames))
 
 	for _, tagName := range allTagNames {
 		if elementSource, hasSource := ctx.ElementSource(tagName); hasSource {
+			helpers.SafeDebugLog("[DIAGNOSTICS] Checking element '%s' with source '%s' against import '%s'", tagName, elementSource, importPath)
 			// Check if the import path matches this element's source
 			if pathsMatch(importPath, elementSource) {
 				elements = append(elements, tagName)
-				helpers.SafeDebugLog("[DIAGNOSTICS] Import '%s' provides element '%s'", importPath, tagName)
+				helpers.SafeDebugLog("[DIAGNOSTICS] MATCH: Import '%s' provides element '%s'", importPath, tagName)
+			} else {
+				helpers.SafeDebugLog("[DIAGNOSTICS] NO MATCH: Import '%s' vs element source '%s'", importPath, elementSource)
 			}
+		} else {
+			helpers.SafeDebugLog("[DIAGNOSTICS] Element '%s' has no source information", tagName)
 		}
 	}
 
+	helpers.SafeDebugLog("[DIAGNOSTICS] Import '%s' resolved to %d elements: %v", importPath, len(elements), elements)
 	return elements
 }
 
 // pathsMatch checks if an import path matches an element source path
 func pathsMatch(importPath, elementSource string) bool {
+	helpers.SafeDebugLog("[DIAGNOSTICS] Comparing import '%s' vs element source '%s'", importPath, elementSource)
+
 	// Direct match first (for exact package imports)
 	if importPath == elementSource {
+		helpers.SafeDebugLog("[DIAGNOSTICS] Direct match")
 		return true
 	}
 
 	// Normalize paths for comparison
 	normalizedImport := normalizePath(importPath)
 	normalizedSource := normalizePath(elementSource)
+	helpers.SafeDebugLog("[DIAGNOSTICS] Normalized: import='%s' vs source='%s'", normalizedImport, normalizedSource)
 
 	// Direct match on normalized paths
 	if normalizedImport == normalizedSource {
+		helpers.SafeDebugLog("[DIAGNOSTICS] Normalized match")
 		return true
 	}
 

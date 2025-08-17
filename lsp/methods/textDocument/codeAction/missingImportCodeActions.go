@@ -32,34 +32,37 @@ func createMissingImportAction(ctx CodeActionContext, diagnostic *protocol.Diagn
 		return nil
 	}
 
-	// Get the document to analyze existing script tags
+	// Get the document to analyze existing script tags (optional)
 	doc := ctx.Document(documentURI)
-	if doc == nil {
-		return nil
-	}
 
 	var importStatement string
 	var insertPosition protocol.Position
 
 	if strings.HasSuffix(documentURI, ".html") {
-		// For HTML files, try to amend existing script type="module" tags
-		scriptPosition, hasExistingScript := doc.FindModuleScript()
+		// For HTML files, try to amend existing script type="module" tags if document is available
+		if doc != nil {
+			scriptPosition, hasExistingScript := doc.FindModuleScript()
 
-		if hasExistingScript {
-			// Amend existing script tag by adding import statement inside it
-			importStatement = fmt.Sprintf(`	import '%s';`, autofixData.ImportPath)
-			insertPosition = scriptPosition
-		} else {
-			// Create new script tag if no existing one found
-			importStatement = fmt.Sprintf(`<script type="module">
-	import '%s';
+			if hasExistingScript {
+				// Amend existing script tag by adding import statement inside it
+				importStatement = fmt.Sprintf(`	import "%s";`, autofixData.ImportPath)
+				insertPosition = scriptPosition
+			} else {
+				// Create new script tag if no existing one found
+				importStatement = fmt.Sprintf(`<script type="module">
+	import "%s";
 </script>`, autofixData.ImportPath)
-			// TODO: Find proper position in HTML head section using tree-sitter parsing
+				// TODO: Find proper position in HTML head section using tree-sitter parsing
+				insertPosition = protocol.Position{Line: 0, Character: 0}
+			}
+		} else {
+			// Fallback: Create new script tag when document is not available (src attribute approach)
+			importStatement = fmt.Sprintf(`<script type="module" src="%s"></script>`, autofixData.ImportPath)
 			insertPosition = protocol.Position{Line: 0, Character: 0}
 		}
 	} else {
 		// TypeScript/JavaScript: Create appropriate import statement
-		importStatement = fmt.Sprintf(`import '%s';`, autofixData.ImportPath)
+		importStatement = fmt.Sprintf(`import "%s";`, autofixData.ImportPath)
 		// TODO: Find proper position with other imports using tree-sitter
 		insertPosition = protocol.Position{Line: 0, Character: 0}
 	}

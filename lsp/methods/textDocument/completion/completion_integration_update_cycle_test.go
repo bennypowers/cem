@@ -102,14 +102,20 @@ func TestCompletionUpdateCycle(t *testing.T) {
 		t.Fatalf("Failed to write manifest: %v", err)
 	}
 
-	// Create registry and load manifests
-	registry, err := lsp.NewRegistryWithDefaults()
+	// Create a full LSP server instance like TestServerLevelIntegration
+	server, err := lsp.NewServer(workspace)
 	if err != nil {
-		t.Fatalf("Failed to create registry: %v", err)
+		t.Fatalf("Failed to create LSP server: %v", err)
 	}
-	if err := registry.LoadFromWorkspace(workspace); err != nil {
-		t.Fatalf("Failed to load workspace manifests: %v", err)
+	defer server.Close()
+
+	// Initialize the server (this loads manifests and starts file watching AND generate watcher)
+	err = server.InitializeForTesting()
+	if err != nil {
+		t.Fatalf("Failed to initialize server: %v", err)
 	}
+
+	registry := server.Registry()
 
 	// Create document manager
 	dm, err := lsp.NewDocumentManager()
@@ -166,31 +172,7 @@ func TestCompletionUpdateCycle(t *testing.T) {
 		}
 	}
 
-	// Create a channel to signal when manifest reload completes
-	reloadComplete := make(chan bool, 1)
-
-	// Start file watching with proper event coordination
-	registry.StartFileWatching(func() {
-		t.Logf("Manifest reload triggered")
-		if err := registry.ReloadManifestsDirectly(); err != nil {
-			t.Logf("Error reloading manifests directly: %v", err)
-		} else {
-			t.Logf("Successfully reloaded manifests directly")
-			// Signal that reload is complete
-			select {
-			case reloadComplete <- true:
-			default:
-				// Channel full, reload already signaled
-			}
-		}
-	})
-	defer registry.StopFileWatching()
-
-	// Start generate watcher
-	if err := registry.StartGenerateWatcher(); err != nil {
-		t.Logf("Warning: Could not start generate watcher: %v", err)
-	}
-	defer registry.StopGenerateWatcher()
+	// The server has already started file watching and generate watcher via InitializeForTesting()
 
 	// Now simulate editing the source file to add 'four'
 	t.Logf("=== User edits test-element.ts to add 'four' ===")
@@ -213,13 +195,11 @@ func TestCompletionUpdateCycle(t *testing.T) {
 
 	t.Logf("File updated, waiting for generate watcher to process changes...")
 
-	// Wait for the reload to complete (with timeout)
-	select {
-	case <-reloadComplete:
-		t.Logf("Manifest reload completed successfully")
-	case <-time.After(15 * time.Second):
-		t.Fatalf("Timeout waiting for manifest reload to complete")
-	}
+	// Wait for the generate watcher to detect changes and regenerate
+	time.Sleep(5 * time.Second)
+
+	// NOTE: Don't call ReloadManifestsDirectly() here as it overwrites the in-memory
+	// updates from the generate watcher with old file content
 
 	// Give a small buffer for any remaining async operations
 	time.Sleep(100 * time.Millisecond)

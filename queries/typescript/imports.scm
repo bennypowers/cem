@@ -44,9 +44,23 @@
           value: (string
             (string_fragment) @type) (#eq? @type "css"))))))
 
+( ; static imports
+  ; import '@scope/package/my-element.js';
+  (import_statement
+    source: (string
+      (string_fragment) @staticImport.spec) @staticImport))
+
 ( ; dynamic imports: import('path')
   (call_expression
     function: (import)
     arguments: (arguments
       (string
         (string_fragment) @dynamicImport.spec))) @dynamicImport)
+
+( ; async dynamic imports: await import('path')
+  (await_expression
+    (call_expression
+      function: (import)
+      arguments: (arguments
+        (string
+          (string_fragment) @dynamicImport.spec)))) @dynamicImport)

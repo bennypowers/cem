@@ -23,6 +23,13 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
+// mockCodeActionContext implements CodeActionContext for testing
+type mockCodeActionContext struct{}
+
+func (m *mockCodeActionContext) Document(uri string) types.Document {
+	return nil // Not needed for this test
+}
+
 func TestCreateMissingImportAction(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -122,7 +129,10 @@ func TestCreateMissingImportAction(t *testing.T) {
 				Message: "Test diagnostic",
 			}
 
-			action := createMissingImportAction(diagnostic, tt.data, tt.documentURI)
+			// Create a mock context
+			mockCtx := &mockCodeActionContext{}
+
+			action := createMissingImportAction(mockCtx, diagnostic, tt.data, tt.documentURI)
 
 			if tt.expectAction {
 				if action == nil {
