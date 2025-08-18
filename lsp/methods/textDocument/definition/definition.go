@@ -156,26 +156,27 @@ func analyzeDefinitionTarget(doc types.Document, position protocol.Position, dm 
 	return nil
 }
 
-// Global query manager instance - lazily initialized and reused
-var globalQueryManager *Q.QueryManager
-
-// getQueryManager returns the global query manager, creating it if necessary
-func getQueryManager() *Q.QueryManager {
-	if globalQueryManager == nil {
-		// Create a query manager with the queries we need for source parsing
-		selector := Q.QuerySelector{
-			HTML:       []string{"slotsAndParts"},
-			TypeScript: []string{"classes", "classMemberDeclaration"},
-			CSS:        []string{},
-			JSDoc:      []string{},
+// getQueryManagerFromContext retrieves the query manager from the context,
+// falling back to creating a new one if needed (for backwards compatibility)
+func getQueryManagerFromContext(ctx types.DefinitionContext) *Q.QueryManager {
+	if qm := ctx.QueryManager(); qm != nil {
+		if queryManager, ok := qm.(*Q.QueryManager); ok {
+			return queryManager
 		}
-		qm, err := Q.NewQueryManager(selector)
-		if err != nil {
-			return nil
-		}
-		globalQueryManager = qm
 	}
-	return globalQueryManager
+
+	// Fallback: create a new query manager (for testing or edge cases)
+	selector := Q.QuerySelector{
+		HTML:       []string{"slotsAndParts"},
+		TypeScript: []string{"classes", "classMemberDeclaration"},
+		CSS:        []string{},
+		JSDoc:      []string{},
+	}
+	qm, err := Q.NewQueryManager(selector)
+	if err != nil {
+		return nil
+	}
+	return qm
 }
 
 // findDefinitionLocation finds the precise location of the definition in the source file
@@ -214,7 +215,7 @@ func findDefinitionLocation(sourceFile string, request *DefinitionRequest, ctx t
 	}
 
 	// Get the query manager
-	queryManager := getQueryManager()
+	queryManager := getQueryManagerFromContext(ctx)
 	if queryManager == nil {
 		return &protocol.Location{
 			URI: sourceFile,
@@ -481,14 +482,20 @@ func resolveExportPattern(modulePath, exportKey, exportValue, workspaceRoot stri
 // Returns the content and a success flag. If a panic occurs, it logs the error
 // and returns false to indicate fallback should be used.
 func safeGetDocumentContent(doc types.Document, sourceFile string) (content string, success bool) {
+	return withPanicRecovery(func() (string, bool) {
+		return doc.Content(), true
+	}, sourceFile, "Document.Content()")
+}
+
+// withPanicRecovery is a generic helper for executing functions with panic recovery.
+// It logs any panics that occur and returns safe defaults.
+func withPanicRecovery[T any](fn func() (T, bool), context, operation string) (result T, success bool) {
 	defer func() {
 		if r := recover(); r != nil {
-			helpers.SafeDebugLog("[DEFINITION] Document.Content() panic recovered for %s: %v", sourceFile, r)
+			helpers.SafeDebugLog("[DEFINITION] %s panic recovered for %s: %v", operation, context, r)
 			success = false
 		}
 	}()
 
-	content = doc.Content()
-	success = true
-	return
+	return fn()
 }

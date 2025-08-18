@@ -24,6 +24,13 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
+// Pre-compiled regex patterns for performance
+var (
+	quotePattern = regexp.MustCompile(`(?s)[\w-]+\s*=\s*["'][^"']*$|[\w-]+\s*=\s*$`)
+	attrPattern  = regexp.MustCompile(`([\w-]+)\s*=\s*["'][^"']*$|([\w-]+)\s*=\s*$`)
+	valuePattern = regexp.MustCompile(`["']([^"']*)$`)
+)
+
 // CompletionContext represents what the user is trying to complete
 type CompletionContextType int
 
@@ -275,7 +282,6 @@ func isInAttributeValue(tagContent string) bool {
 	// Updated pattern to handle tag names with hyphens and attributes with hyphens
 	// This matches when we have an attribute followed by = (cursor right after = or inside quotes)
 	// Updated to handle multi-line cases with (?s) flag to make . match newlines
-	quotePattern := regexp.MustCompile(`(?s)[\w-]+\s*=\s*["'][^"']*$|[\w-]+\s*=\s*$`)
 	return quotePattern.MatchString(tagContent)
 }
 
@@ -317,7 +323,6 @@ func extractTagAndAttribute(tagContent string) (string, string) {
 	// Find the last attribute name before the cursor
 	// Pattern: attr="value or attr='value or attr=
 	// Updated pattern to handle attributes with hyphens and missing quotes
-	attrPattern := regexp.MustCompile(`([\w-]+)\s*=\s*["'][^"']*$|([\w-]+)\s*=\s*$`)
 	matches := attrPattern.FindStringSubmatch(tagContent)
 	if len(matches) >= 2 {
 		// First capture group (with quotes)
@@ -388,8 +393,7 @@ func GetCompletionPrefix(beforeCursor string, analysis *types.CompletionAnalysis
 
 	case types.CompletionAttributeValue:
 		// Extract partial value inside quotes
-		quotePattern := regexp.MustCompile(`["']([^"']*)$`)
-		matches := quotePattern.FindStringSubmatch(beforeCursor)
+		matches := valuePattern.FindStringSubmatch(beforeCursor)
 		if len(matches) >= 2 {
 			return matches[1]
 		}

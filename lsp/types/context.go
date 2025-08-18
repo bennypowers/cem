@@ -22,6 +22,7 @@ type DefinitionContext interface {
 	ElementDefinition(tagName string) (ElementDefinition, bool)
 	WorkspaceRoot() string
 	RawDocumentManager() any // For passing to FindElementAtPosition and FindAttributeAtPosition
+	QueryManager() any       // For accessing tree-sitter queries
 }
 
 // ReferencesContext provides the dependencies needed for go-to-references functionality

@@ -72,12 +72,11 @@ func TestDocument_ScriptTagParsing_ModuleStaticImports(t *testing.T) {
 	}
 
 	// Test FindModuleScript functionality
-	pos, found := doc.FindModuleScript()
+	_, found := doc.FindModuleScript()
 	if !found {
 		t.Error("Expected to find module script insertion point")
 	}
 
-	// Should return a valid position (pos.Line is uint32, always >= 0)
 }
 
 func TestDocument_ScriptTagParsing_ModuleDynamicImports(t *testing.T) {
@@ -265,12 +264,11 @@ func TestDocument_ScriptTagParsing_SimpleModuleScript(t *testing.T) {
 	}
 
 	// Test FindModuleScript functionality
-	pos, found := doc.FindModuleScript()
+	_, found := doc.FindModuleScript()
 	if !found {
 		t.Error("Expected to find module script insertion point")
 	}
 
-	// Should return a valid position (pos.Line is uint32, always >= 0)
 }
 
 func TestDocument_ScriptTagParsing_FullHtmlWithModule(t *testing.T) {

@@ -166,6 +166,13 @@ func (ctx *testDefinitionContext) RawDocumentManager() interface{} {
 	return ctx.dm
 }
 
+func (ctx *testDefinitionContext) QueryManager() interface{} {
+	if ctx.dm != nil {
+		return ctx.dm.QueryManager()
+	}
+	return nil
+}
+
 // MockElementDefinition implements textDocument.ElementDefinition
 type MockElementDefinition struct {
 	def *lsp.ElementDefinition

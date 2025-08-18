@@ -146,6 +146,13 @@ func (s *ServerAdapter) RawDocumentManager() interface{} {
 	return s.server.documents
 }
 
+func (s *ServerAdapter) QueryManager() interface{} {
+	if s.server.documents != nil {
+		return s.server.documents.QueryManager()
+	}
+	return nil
+}
+
 // UpdateWorkspaceFromLSP updates the workspace context based on LSP initialize parameters
 func (s *ServerAdapter) UpdateWorkspaceFromLSP(rootURI *string, workspaceFolders []protocol.WorkspaceFolder) error {
 	helpers.SafeDebugLog("[UPDATE_WORKSPACE] Starting workspace context update")

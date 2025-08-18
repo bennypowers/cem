@@ -305,6 +305,11 @@ func (dm *DocumentManager) CloseDocument(uri string) {
 	}
 }
 
+// QueryManager returns the query manager for tree-sitter queries
+func (dm *DocumentManager) QueryManager() *Q.QueryManager {
+	return dm.queryManager
+}
+
 // getLanguageFromURI determines the language from file extension
 func (dm *DocumentManager) getLanguageFromURI(uri string) string {
 	ext := strings.ToLower(filepath.Ext(uri))
