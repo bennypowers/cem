@@ -103,14 +103,3 @@ func cloneStringPtr(s *string) *string {
 	cloned := *s
 	return &cloned
 }
-
-// cloneStringSlice creates a deep copy of a string slice.
-// Returns nil if the input is nil, otherwise returns a new slice with copied strings.
-func cloneStringSlice(s []string) []string {
-	if s == nil {
-		return nil
-	}
-	cloned := make([]string, len(s))
-	copy(cloned, s)
-	return cloned
-}

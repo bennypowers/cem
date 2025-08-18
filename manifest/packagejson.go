@@ -31,7 +31,6 @@ type PackageJSON struct {
 	Version        string `json:"version"`
 	Exports        any    `json:"exports,omitempty"`
 	CustomElements string `json:"customElements"`
-	source         []byte
 }
 
 // ResolveExportPath resolves a file path relative to the package root

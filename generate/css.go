@@ -113,9 +113,6 @@ func (c *CssParseCache) Clear() {
 	c.cache = make(map[string]CssPropsMap)
 }
 
-// Global cache instance - will be phased out in favor of dependency injection
-var cssParseCache = NewCssParseCache()
-
 func sortCustomProperty(a M.CssCustomProperty, b M.CssCustomProperty) int {
 	if a.StartByte == b.StartByte {
 		return strings.Compare(a.Name, b.Name)

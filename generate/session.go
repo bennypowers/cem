@@ -233,7 +233,7 @@ func (gs *GenerateSession) processWithDeps(ctx context.Context, result preproces
 
 	// Use parallel processor with dependency tracking
 	processor := NewModuleBatchProcessor(gs.setupCtx.QueryManager(), gs.setupCtx.DependencyTracker(), gs.setupCtx.CssCache())
-	processingResult := processor.ProcessModules(ctx, jobs, ModuleProcessorFunc(processModuleWithDeps))
+	processingResult := processor.ProcessModules(ctx, jobs, ModuleProcessorFunc(processModule))
 
 	return processingResult.Modules, processingResult.Logs, processingResult.Aliases, processingResult.Errors
 }

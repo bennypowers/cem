@@ -109,49 +109,7 @@ type processJob struct {
 	ctx  W.WorkspaceContext
 }
 
-// process actually processes a module file
-func process(
-	ctx W.WorkspaceContext,
-	result preprocessResult,
-	qm *Q.QueryManager,
-) (modules []M.Module, logs []*LogCtx, aliases map[string]string, errs error) {
-	// Create jobs for all included files
-	jobs := make([]processJob, 0, len(result.includedFiles))
-	for _, file := range result.includedFiles {
-		jobs = append(jobs, processJob{file: file, ctx: ctx})
-	}
-
-	// Use parallel processor
-	processor := NewModuleBatchProcessor(qm, nil, cssParseCache) // No dependency tracker for simple processing, use global cache
-	processingResult := processor.ProcessModulesSimple(context.Background(), jobs, ModuleProcessorSimpleFunc(processModule))
-
-	return processingResult.Modules, processingResult.Logs, processingResult.Aliases, processingResult.Errors
-}
-
 func processModule(
-	job processJob,
-	qm *Q.QueryManager,
-	parser *ts.Parser,
-	cssCache CssCache,
-) (module *M.Module, tagAliases map[string]string, logCtx *LogCtx, errs error) {
-	defer parser.Reset()
-	mp, err := NewModuleProcessor(job.ctx, job.file, parser, qm, cssCache)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	defer mp.Close()
-	cfg, err := job.ctx.Config()
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	if cfg.Verbose {
-		mp.logger.Section.Printf("Module: %s", mp.logger.File)
-	}
-	module, tagAliases, err = mp.Collect()
-	return module, tagAliases, mp.logger, err
-}
-
-func processModuleWithDeps(
 	job processJob,
 	qm *Q.QueryManager,
 	parser *ts.Parser,

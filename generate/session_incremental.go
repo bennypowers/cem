@@ -181,7 +181,7 @@ func (gs *GenerateSession) processSpecificModules(ctx context.Context, result pr
 	if verbose {
 		pterm.Debug.Printf("Starting incremental processing with optimized workers for %d modules\n", len(validJobs))
 	}
-	processingResult := processor.ProcessModules(ctx, validJobs, ModuleProcessorFunc(processModuleWithDeps))
+	processingResult := processor.ProcessModules(ctx, validJobs, ModuleProcessorFunc(processModule))
 
 	return processingResult.Modules, processingResult.Logs, processingResult.Aliases, processingResult.Errors
 }

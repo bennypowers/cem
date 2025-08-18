@@ -621,7 +621,6 @@ func NewPropertyInfo(code string, queryManager *Q.QueryManager) (*PropertyInfo, 
 }
 
 type FieldInfo struct {
-	source      string
 	Description string
 	Summary     string
 	Type        string
