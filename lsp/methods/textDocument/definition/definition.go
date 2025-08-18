@@ -60,54 +60,40 @@ type DefinitionRequest struct {
 // Definition handles textDocument/definition requests
 func Definition(ctx types.DefinitionContext, context *glsp.Context, params *protocol.DefinitionParams) (any, error) {
 	uri := params.TextDocument.URI
-	helpers.SafeDebugLog("[DEFINITION] Request for URI: %s, Position: line=%d, char=%d", uri, params.Position.Line, params.Position.Character)
 
 	// Get the tracked document
 	doc := ctx.Document(uri)
 	if doc == nil {
-		helpers.SafeDebugLog("[DEFINITION] No document found for URI: %s", uri)
 		return nil, nil
 	}
 
 	// Analyze what's at the cursor position to determine definition request
 	request := analyzeDefinitionTarget(doc, params.Position, ctx.RawDocumentManager())
 	if request == nil {
-		helpers.SafeDebugLog("[DEFINITION] No definition target found at position")
 		return nil, nil
 	}
 
-	helpers.SafeDebugLog("[DEFINITION] Definition request: type=%d, element=%s, attr=%s",
-		request.TargetType, request.ElementName, request.AttributeName)
-
 	// Only provide definitions for custom elements
 	if !textDocument.IsCustomElementTag(request.ElementName) {
-		helpers.SafeDebugLog("[DEFINITION] Element %s is not a custom element", request.ElementName)
 		return nil, nil
 	}
 
 	// Get the element definition with source information
 	definition, exists := ctx.ElementDefinition(request.ElementName)
 	if !exists {
-		helpers.SafeDebugLog("[DEFINITION] No definition found for element: %s", request.ElementName)
 		return nil, nil
 	}
 
 	// Resolve the source file path with TypeScript preference
 	workspaceRoot := ctx.WorkspaceRoot()
-	helpers.SafeDebugLog("[DEFINITION] Module path: %s, Source href: %s, Workspace root: '%s' (len=%d)",
-		definition.ModulePath(), definition.SourceHref(), workspaceRoot, len(workspaceRoot))
 	sourceFile := resolveSourcePath(definition, workspaceRoot)
 	if sourceFile == "" {
-		helpers.SafeDebugLog("[DEFINITION] Could not resolve source path for element: %s", request.ElementName)
 		return nil, nil
 	}
 
-	helpers.SafeDebugLog("[DEFINITION] Resolved source file: %s", sourceFile)
-
 	// Find the precise location within the source file
-	location := findDefinitionLocation(sourceFile, request)
+	location := findDefinitionLocation(sourceFile, request, ctx)
 	if location == nil {
-		helpers.SafeDebugLog("[DEFINITION] Could not find precise location in source file")
 		// Fallback to file start
 		location = &protocol.Location{
 			URI: sourceFile,
@@ -185,7 +171,6 @@ func getQueryManager() *Q.QueryManager {
 		}
 		qm, err := Q.NewQueryManager(selector)
 		if err != nil {
-			helpers.SafeDebugLog("[DEFINITION] Failed to create query manager: %v", err)
 			return nil
 		}
 		globalQueryManager = qm
@@ -194,21 +179,52 @@ func getQueryManager() *Q.QueryManager {
 }
 
 // findDefinitionLocation finds the precise location of the definition in the source file
-func findDefinitionLocation(sourceFile string, request *DefinitionRequest) *protocol.Location {
-	// Convert file:// URI back to file path for processing
-	filePath := strings.TrimPrefix(sourceFile, "file://")
+func findDefinitionLocation(sourceFile string, request *DefinitionRequest, ctx types.DefinitionContext) *protocol.Location {
+	// Try to get cached document content first
+	doc := ctx.Document(sourceFile)
+	var content []byte
 
-	// Basic existence check using platform abstraction
-	fs := platform.NewOSFileSystem()
-	if _, err := fs.Stat(filePath); err != nil {
-		helpers.SafeDebugLog("[DEFINITION] Source file does not exist: %s", filePath)
-		return nil
+	// Use cached document content if available and valid
+	if doc != nil {
+		// Add safety check to prevent segfault on corrupted document pointers
+		var docContent string
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					helpers.SafeDebugLog("[DEFINITION] Document.Content() panic recovered for %s: %v", sourceFile, r)
+					doc = nil // Force fallback to disk read
+				}
+			}()
+			docContent = doc.Content()
+		}()
+
+		if doc != nil {
+			content = []byte(docContent)
+			helpers.SafeDebugLog("[DEFINITION] Using cached document content for %s (%d bytes)", sourceFile, len(content))
+		}
+	}
+
+	if doc == nil {
+		// Fallback to reading from disk if not in document manager
+		filePath := strings.TrimPrefix(sourceFile, "file://")
+		fs := platform.NewOSFileSystem()
+
+		// Basic existence check
+		if _, err := fs.Stat(filePath); err != nil {
+			return nil
+		}
+
+		// Read from disk as fallback
+		var err error
+		content, err = fs.ReadFile(filePath)
+		if err != nil {
+			return nil
+		}
 	}
 
 	// Get the query manager
 	queryManager := getQueryManager()
 	if queryManager == nil {
-		helpers.SafeDebugLog("[DEFINITION] Query manager not available, falling back to file start")
 		return &protocol.Location{
 			URI: sourceFile,
 			Range: protocol.Range{
@@ -221,13 +237,6 @@ func findDefinitionLocation(sourceFile string, request *DefinitionRequest) *prot
 	// Find precise location based on target type
 	var targetRange *Q.Range
 	var err error
-
-	// Read the source file content using platform abstraction
-	content, err := fs.ReadFile(filePath)
-	if err != nil {
-		helpers.SafeDebugLog("[DEFINITION] Failed to read source file: %v", err)
-		return nil
-	}
 
 	switch request.TargetType {
 	case DefinitionTargetTagName:
@@ -253,21 +262,15 @@ func findDefinitionLocation(sourceFile string, request *DefinitionRequest) *prot
 
 	case DefinitionTargetEvent:
 		// Look for event declaration (placeholder for now)
-		helpers.SafeDebugLog("[DEFINITION] Event declaration finding not yet implemented")
 		targetRange = nil
 
 	default:
-		helpers.SafeDebugLog("[DEFINITION] Unknown target type: %d", request.TargetType)
-	}
-
-	if err != nil {
-		helpers.SafeDebugLog("[DEFINITION] Error finding precise location: %v", err)
+		// Unknown target type
+		targetRange = nil
 	}
 
 	// If we found a precise location, use it
 	if targetRange != nil {
-		helpers.SafeDebugLog("[DEFINITION] Found precise location at line %d, char %d",
-			targetRange.Start.Line, targetRange.Start.Character)
 		return &protocol.Location{
 			URI: sourceFile,
 			Range: protocol.Range{
@@ -284,7 +287,6 @@ func findDefinitionLocation(sourceFile string, request *DefinitionRequest) *prot
 	}
 
 	// Fallback to file start if precise location not found
-	helpers.SafeDebugLog("[DEFINITION] Precise location not found, falling back to file start")
 	return &protocol.Location{
 		URI: sourceFile,
 		Range: protocol.Range{
@@ -299,11 +301,8 @@ func resolveSourcePath(definition types.ElementDefinition, workspaceRoot string)
 	// Get the module path from the definition
 	modulePath := definition.ModulePath()
 	if modulePath == "" {
-		helpers.SafeDebugLog("[DEFINITION] No module path found in definition")
 		return ""
 	}
-
-	helpers.SafeDebugLog("[DEFINITION] Resolving path: modulePath='%s', workspaceRoot='%s'", modulePath, workspaceRoot)
 
 	// Convert to file:// URI if not already
 	if !strings.HasPrefix(modulePath, "file://") {
@@ -319,7 +318,6 @@ func resolveSourcePath(definition types.ElementDefinition, workspaceRoot string)
 
 			// Check if workspace root is available
 			if workspaceRoot == "" {
-				helpers.SafeDebugLog("[DEFINITION] Warning: No workspace root available, cannot resolve relative path '%s'", cleanPath)
 				return ""
 			}
 
@@ -328,9 +326,6 @@ func resolveSourcePath(definition types.ElementDefinition, workspaceRoot string)
 			if resolvedPath == "" {
 				// Fallback to simple concatenation
 				resolvedPath = filepath.Join(workspaceRoot, cleanPath)
-				helpers.SafeDebugLog("[DEFINITION] Fallback path resolution: '%s' + '%s' = '%s'", workspaceRoot, cleanPath, resolvedPath)
-			} else {
-				helpers.SafeDebugLog("[DEFINITION] Package exports resolution: '%s' -> '%s'", cleanPath, resolvedPath)
 			}
 
 			modulePath = "file://" + resolvedPath
