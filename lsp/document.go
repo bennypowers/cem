@@ -31,6 +31,9 @@ import (
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
+// Compiled regex patterns for performance
+var tagLinePattern = regexp.MustCompile(`^\s*<.*`)
+
 // DocumentManager tracks opened documents and provides incremental parsing
 type DocumentManager struct {
 	documents             map[string]*Document
@@ -235,7 +238,7 @@ func (dm *DocumentManager) UpdateDocumentWithChanges(uri, content string, versio
 	helpers.SafeDebugLog("[DOCUMENT] Updated content: old=%d, new=%d\n", oldContentLength, len(content))
 
 	// Use incremental parsing when changes are provided
-	if changes != nil && len(changes) > 0 {
+	if len(changes) > 0 {
 		helpers.SafeDebugLog("[DOCUMENT] Attempting incremental parse for: %s\n", uri)
 		result := dm.incrementalParser.ParseWithStrategy(doc, content, changes)
 
@@ -372,25 +375,6 @@ func (d *Document) parse() {
 	d.Tree = d.Parser.Parse([]byte(d.content), nil)
 
 	// Script tag parsing will be handled by DocumentManager after document creation
-}
-
-// incrementalParse performs incremental parsing when content changes
-func (d *Document) incrementalParse(_ string) {
-	if d.Parser == nil {
-		d.parse()
-		return
-	}
-
-	// Keep the old tree for incremental parsing
-	oldTree := d.Tree
-
-	// Parse with the old tree for incremental parsing
-	d.Tree = d.Parser.Parse([]byte(d.content), oldTree)
-
-	// Now we can safely close the old tree
-	if oldTree != nil {
-		oldTree.Close()
-	}
 }
 
 // FindCustomElements finds all custom elements in the document (internal method)
@@ -1013,7 +997,7 @@ func (d *Document) analyzeHTMLCompletionContext(byteOffset uint, analysis *types
 						lineContent := lines[position.Line]
 						// If the line starts with whitespace followed by <,
 						// this is likely a new tag, not attribute completion
-						if matched, _ := regexp.MatchString("^\\s*<.*", lineContent); matched {
+						if tagLinePattern.MatchString(lineContent) {
 							continue // Skip this, let tag completion handle it
 						}
 					}

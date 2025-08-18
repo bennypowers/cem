@@ -21,6 +21,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 )
@@ -158,7 +159,7 @@ func (m *MockFileWatcher) TriggerEvent(name string, op WatchOp) {
 	// Check if path is being watched
 	watched := false
 	for watchedPath := range m.watchedPaths {
-		if name == watchedPath || filepath.HasPrefix(name, watchedPath) {
+		if name == watchedPath || strings.HasPrefix(name, watchedPath+string(filepath.Separator)) {
 			watched = true
 			break
 		}

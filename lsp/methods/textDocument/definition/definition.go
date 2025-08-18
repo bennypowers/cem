@@ -186,21 +186,12 @@ func findDefinitionLocation(sourceFile string, request *DefinitionRequest, ctx t
 
 	// Use cached document content if available and valid
 	if doc != nil {
-		// Add safety check to prevent segfault on corrupted document pointers
-		var docContent string
-		func() {
-			defer func() {
-				if r := recover(); r != nil {
-					helpers.SafeDebugLog("[DEFINITION] Document.Content() panic recovered for %s: %v", sourceFile, r)
-					doc = nil // Force fallback to disk read
-				}
-			}()
-			docContent = doc.Content()
-		}()
-
-		if doc != nil {
+		docContent, success := safeGetDocumentContent(doc, sourceFile)
+		if success {
 			content = []byte(docContent)
 			helpers.SafeDebugLog("[DEFINITION] Using cached document content for %s (%d bytes)", sourceFile, len(content))
+		} else {
+			doc = nil // Force fallback to disk read
 		}
 	}
 
@@ -245,16 +236,16 @@ func findDefinitionLocation(sourceFile string, request *DefinitionRequest, ctx t
 		if err != nil || targetRange == nil {
 			helpers.SafeDebugLog("[DEFINITION] Tag name definition not found, trying class declaration")
 			// Fallback to class declaration
-			targetRange, err = Q.FindClassDeclarationInSource(content, request.ElementName, queryManager)
+			targetRange, _ = Q.FindClassDeclarationInSource(content, request.ElementName, queryManager)
 		}
 
 	case DefinitionTargetClass:
 		// Look for class declaration
-		targetRange, err = Q.FindClassDeclarationInSource(content, request.ElementName, queryManager)
+		targetRange, _ = Q.FindClassDeclarationInSource(content, request.ElementName, queryManager)
 
 	case DefinitionTargetAttribute:
 		// Look for @property decorator or field declaration
-		targetRange, err = Q.FindAttributeDeclarationInSource(content, request.AttributeName, queryManager)
+		targetRange, _ = Q.FindAttributeDeclarationInSource(content, request.AttributeName, queryManager)
 
 	case DefinitionTargetSlot:
 		// Look for <slot name="..."> in template
@@ -311,10 +302,7 @@ func resolveSourcePath(definition types.ElementDefinition, workspaceRoot string)
 			modulePath = "file://" + modulePath
 		} else {
 			// Relative path - resolve using package exports if available
-			cleanPath := modulePath
-			if strings.HasPrefix(cleanPath, "./") {
-				cleanPath = cleanPath[2:] // Remove "./"
-			}
+			cleanPath := strings.TrimPrefix(modulePath, "./")
 
 			// Check if workspace root is available
 			if workspaceRoot == "" {
@@ -487,4 +475,20 @@ func resolveExportPattern(modulePath, exportKey, exportValue, workspaceRoot stri
 	}
 
 	return ""
+}
+
+// safeGetDocumentContent safely retrieves document content with panic recovery.
+// Returns the content and a success flag. If a panic occurs, it logs the error
+// and returns false to indicate fallback should be used.
+func safeGetDocumentContent(doc types.Document, sourceFile string) (content string, success bool) {
+	defer func() {
+		if r := recover(); r != nil {
+			helpers.SafeDebugLog("[DEFINITION] Document.Content() panic recovered for %s: %v", sourceFile, r)
+			success = false
+		}
+	}()
+
+	content = doc.Content()
+	success = true
+	return
 }

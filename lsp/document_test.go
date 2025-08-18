@@ -77,10 +77,7 @@ func TestDocument_ScriptTagParsing_ModuleStaticImports(t *testing.T) {
 		t.Error("Expected to find module script insertion point")
 	}
 
-	// Should return a valid position
-	if pos.Line < 0 {
-		t.Errorf("Expected valid line position, got %d", pos.Line)
-	}
+	// Should return a valid position (pos.Line is uint32, always >= 0)
 }
 
 func TestDocument_ScriptTagParsing_ModuleDynamicImports(t *testing.T) {
@@ -273,10 +270,7 @@ func TestDocument_ScriptTagParsing_SimpleModuleScript(t *testing.T) {
 		t.Error("Expected to find module script insertion point")
 	}
 
-	// Should return a valid position
-	if pos.Line < 0 {
-		t.Errorf("Expected valid line position, got %d", pos.Line)
-	}
+	// Should return a valid position (pos.Line is uint32, always >= 0)
 }
 
 func TestDocument_ScriptTagParsing_FullHtmlWithModule(t *testing.T) {

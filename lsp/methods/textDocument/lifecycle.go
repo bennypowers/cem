@@ -159,94 +159,136 @@ func applyIncrementalChange(content string, change protocol.TextDocumentContentC
 	}
 
 	lines := strings.Split(content, "\n")
-
-	startLine := int(change.Range.Start.Line)
-	startChar := int(change.Range.Start.Character)
-	endLine := int(change.Range.End.Line)
-	endChar := int(change.Range.End.Character)
+	changeParams := extractChangeParameters(change, lines)
 
 	helpers.SafeDebugLog("[LIFECYCLE] Applying incremental change: range=start(%d,%d) end(%d,%d), text='%s'",
-		startLine, startChar, endLine, endChar, change.Text)
+		changeParams.startLine, changeParams.startChar, changeParams.endLine, changeParams.endChar, change.Text)
 
-	// Handle out-of-bounds cases safely
-	if startLine >= len(lines) {
-		helpers.SafeDebugLog("[LIFECYCLE] Start line %d beyond document end (%d lines), appending", startLine, len(lines))
-		// Pad with empty lines if needed
-		for len(lines) <= startLine {
-			lines = append(lines, "")
-		}
-		lines[startLine] = change.Text
-		return strings.Join(lines, "\n")
+	// Handle out-of-bounds start line
+	if changeParams.startLine >= len(lines) {
+		return handleOutOfBoundsChange(lines, changeParams.startLine, change.Text)
 	}
 
-	if endLine >= len(lines) {
-		helpers.SafeDebugLog("[LIFECYCLE] End line %d beyond document end (%d lines), adjusting", endLine, len(lines))
-		endLine = len(lines) - 1
-		endChar = len(lines[endLine])
+	// Adjust end line if out of bounds
+	changeParams = adjustEndLineIfNeeded(changeParams, lines)
+
+	// Apply the change based on whether it's single or multi-line
+	if changeParams.startLine == changeParams.endLine {
+		return applySingleLineChange(lines, changeParams, change.Text)
 	}
 
-	// Handle single line change
-	if startLine == endLine {
-		line := lines[startLine]
-		if startChar > len(line) {
-			startChar = len(line)
-		}
-		if endChar > len(line) {
-			endChar = len(line)
-		}
+	return applyMultiLineChange(lines, changeParams, change.Text)
+}
 
-		// Replace the range in the line
-		newLine := line[:startChar] + change.Text + line[endChar:]
-		lines[startLine] = newLine
-		helpers.SafeDebugLog("[LIFECYCLE] Single line change: '%s' -> '%s'", line, newLine)
-	} else {
-		// Multi-line change
-		var newLines []string
+// changeParameters holds the extracted and validated change parameters
+type changeParameters struct {
+	startLine int
+	startChar int
+	endLine   int
+	endChar   int
+}
 
-		// Add lines before the change
-		newLines = append(newLines, lines[:startLine]...)
-
-		// Add the first line with the change
-		startLineContent := lines[startLine]
-		if startChar > len(startLineContent) {
-			startChar = len(startLineContent)
-		}
-
-		// Add the last line after the change
-		endLineContent := ""
-		if endLine < len(lines) {
-			endLineContent = lines[endLine]
-			if endChar > len(endLineContent) {
-				endChar = len(endLineContent)
-			} else {
-				endLineContent = endLineContent[endChar:]
-			}
-		}
-
-		// Combine the change text with surrounding content
-		changeLines := strings.Split(change.Text, "\n")
-		if len(changeLines) == 1 {
-			// Single line replacement
-			newLine := startLineContent[:startChar] + change.Text + endLineContent
-			newLines = append(newLines, newLine)
-		} else {
-			// Multi-line replacement
-			// First line of change
-			newLines = append(newLines, startLineContent[:startChar]+changeLines[0])
-			// Middle lines of change
-			newLines = append(newLines, changeLines[1:len(changeLines)-1]...)
-			// Last line of change
-			newLines = append(newLines, changeLines[len(changeLines)-1]+endLineContent)
-		}
-
-		// Add remaining lines after the change
-		if endLine+1 < len(lines) {
-			newLines = append(newLines, lines[endLine+1:]...)
-		}
-
-		lines = newLines
-		helpers.SafeDebugLog("[LIFECYCLE] Multi-line change: %d lines -> %d lines", len(strings.Split(content, "\n")), len(lines))
+// extractChangeParameters extracts and validates change parameters from the LSP change event
+func extractChangeParameters(change protocol.TextDocumentContentChangeEvent, lines []string) changeParameters {
+	return changeParameters{
+		startLine: int(change.Range.Start.Line),
+		startChar: int(change.Range.Start.Character),
+		endLine:   int(change.Range.End.Line),
+		endChar:   int(change.Range.End.Character),
 	}
+}
+
+// handleOutOfBoundsChange handles changes where the start line is beyond the document end
+func handleOutOfBoundsChange(lines []string, startLine int, text string) string {
+	helpers.SafeDebugLog("[LIFECYCLE] Start line %d beyond document end (%d lines), appending", startLine, len(lines))
+	// Pad with empty lines if needed
+	for len(lines) <= startLine {
+		lines = append(lines, "")
+	}
+	lines[startLine] = text
+	return strings.Join(lines, "\n")
+}
+
+// adjustEndLineIfNeeded adjusts the end line and character if they're beyond the document bounds
+func adjustEndLineIfNeeded(params changeParameters, lines []string) changeParameters {
+	if params.endLine >= len(lines) {
+		helpers.SafeDebugLog("[LIFECYCLE] End line %d beyond document end (%d lines), adjusting", params.endLine, len(lines))
+		params.endLine = len(lines) - 1
+		params.endChar = len(lines[params.endLine])
+	}
+	return params
+}
+
+// applySingleLineChange applies a change that occurs within a single line
+func applySingleLineChange(lines []string, params changeParameters, text string) string {
+	line := lines[params.startLine]
+
+	// Clamp character positions to line bounds
+	if params.startChar > len(line) {
+		params.startChar = len(line)
+	}
+	if params.endChar > len(line) {
+		params.endChar = len(line)
+	}
+
+	// Replace the range in the line
+	newLine := line[:params.startChar] + text + line[params.endChar:]
+	lines[params.startLine] = newLine
+	helpers.SafeDebugLog("[LIFECYCLE] Single line change: '%s' -> '%s'", line, newLine)
 
 	return strings.Join(lines, "\n")
+}
+
+// applyMultiLineChange applies a change that spans multiple lines
+func applyMultiLineChange(lines []string, params changeParameters, text string) string {
+	var newLines []string
+
+	// Add lines before the change
+	newLines = append(newLines, lines[:params.startLine]...)
+
+	// Get start and end line content
+	startLineContent := lines[params.startLine]
+	if params.startChar > len(startLineContent) {
+		params.startChar = len(startLineContent)
+	}
+
+	endLineContent := ""
+	if params.endLine < len(lines) {
+		endLineContent = lines[params.endLine]
+		if params.endChar <= len(endLineContent) {
+			endLineContent = endLineContent[params.endChar:]
+		}
+	}
+
+	// Apply the change text
+	newLines = appendChangeText(newLines, startLineContent, endLineContent, params.startChar, text)
+
+	// Add remaining lines after the change
+	if params.endLine+1 < len(lines) {
+		newLines = append(newLines, lines[params.endLine+1:]...)
+	}
+
+	helpers.SafeDebugLog("[LIFECYCLE] Multi-line change: %d lines -> %d lines", len(lines), len(newLines))
+	return strings.Join(newLines, "\n")
+}
+
+// appendChangeText adds the change text to the new lines, handling single and multi-line replacements
+func appendChangeText(newLines []string, startLineContent, endLineContent string, startChar int, text string) []string {
+	changeLines := strings.Split(text, "\n")
+
+	if len(changeLines) == 1 {
+		// Single line replacement
+		newLine := startLineContent[:startChar] + text + endLineContent
+		newLines = append(newLines, newLine)
+	} else {
+		// Multi-line replacement
+		// First line of change
+		newLines = append(newLines, startLineContent[:startChar]+changeLines[0])
+		// Middle lines of change
+		newLines = append(newLines, changeLines[1:len(changeLines)-1]...)
+		// Last line of change
+		newLines = append(newLines, changeLines[len(changeLines)-1]+endLineContent)
+	}
+
+	return newLines
 }

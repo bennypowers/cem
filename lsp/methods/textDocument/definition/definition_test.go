@@ -201,11 +201,7 @@ func (m *MockDocumentAdapter) FindElementAtPosition(position protocol.Position, 
 	// Convert attributes
 	attrs := make(map[string]textDocument.AttributeMatch)
 	for k, v := range element.Attributes {
-		attrs[k] = textDocument.AttributeMatch{
-			Name:  v.Name,
-			Value: v.Value,
-			Range: v.Range,
-		}
+		attrs[k] = textDocument.AttributeMatch(v)
 	}
 
 	return &textDocument.CustomElementMatch{

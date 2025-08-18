@@ -82,7 +82,7 @@ func (op WatchOp) String() string {
 	if len(names) == 0 {
 		return ""
 	}
-	return fmt.Sprintf("%s", names[0])
+	return names[0]
 }
 
 // FSNotifyFileWatcher implements FileWatcher using fsnotify.

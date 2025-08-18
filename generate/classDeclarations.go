@@ -193,9 +193,6 @@ func (mp *ModuleProcessor) generateHTMLElementClassDeclaration(
 	classDeclarationNode *ts.Node,
 ) (declaration *M.CustomElementDeclaration, alias string, errs error) {
 	classDeclaration, _, err := mp.generateCommonClassDeclaration(captures, className, classDeclarationNode, true)
-	if classDeclaration != nil {
-		className = classDeclaration.ClassLike.Name
-	}
 
 	if err != nil {
 		errs = errors.Join(errs, err)
@@ -252,9 +249,6 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 	classDeclarationNode *ts.Node,
 ) (declaration *M.CustomElementDeclaration, alias string, errs error) {
 	classDeclaration, _, err := mp.generateCommonClassDeclaration(captures, className, classDeclarationNode, true)
-	if classDeclaration != nil {
-		className = classDeclaration.ClassLike.Name
-	}
 
 	if err != nil {
 		errs = errors.Join(errs, err)

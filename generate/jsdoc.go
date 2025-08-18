@@ -556,7 +556,6 @@ func (info TagInfo) toParameter() ParameterInfo {
 }
 
 type PropertyInfo struct {
-	source      string
 	Description string
 	Summary     string
 	Type        string
@@ -580,7 +579,7 @@ func NewPropertyInfo(code string, queryManager *Q.QueryManager) (*PropertyInfo, 
 	descriptionCaptureIndex, _ := qm.GetCaptureIndexForName("doc.description")
 	tagCaptureIndex, _ := qm.GetCaptureIndexForName("doc.tag")
 
-	info := PropertyInfo{source: code}
+	info := PropertyInfo{}
 
 	for match := range qm.AllQueryMatches(root, barr) {
 		descriptionNodes := match.NodesForCaptureIndex(descriptionCaptureIndex)
