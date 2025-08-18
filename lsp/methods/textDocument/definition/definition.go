@@ -250,7 +250,7 @@ func findDefinitionLocation(sourceFile string, request *DefinitionRequest, ctx t
 
 	case DefinitionTargetSlot:
 		// Look for <slot name="..."> in template
-		targetRange, err = Q.FindSlotDefinitionInSource(content, request.SlotName, queryManager)
+		targetRange, _ = Q.FindSlotDefinitionInSource(content, request.SlotName, queryManager)
 
 	case DefinitionTargetEvent:
 		// Look for event declaration (placeholder for now)
