@@ -19,9 +19,9 @@ package publishDiagnostics_test
 import (
 	"testing"
 
+	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/lsp/types"
 	"bennypowers.dev/cem/manifest"
-	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 func TestSlotDiagnosticsBasic(t *testing.T) {
@@ -31,7 +31,7 @@ func TestSlotDiagnosticsBasic(t *testing.T) {
 	// Test that our mock implementations work
 	ctx := &mockDiagnosticsContext{
 		documents: map[string]types.Document{
-			"test://test.html": &mockDocument{content: `<my-element><div slot="heade">Content</div></my-element>`},
+			"test://test.html": testhelpers.NewMockDocument(`<my-element><div slot="heade">Content</div></my-element>`),
 		},
 		slots: map[string][]manifest.Slot{
 			"my-element": {
@@ -85,48 +85,4 @@ func (m *mockDiagnosticsContext) GetSlots(tagName string) ([]manifest.Slot, bool
 
 func (m *mockDiagnosticsContext) AllTagNames() []string {
 	return m.tagNames
-}
-
-type mockDocument struct {
-	content string
-}
-
-func (m *mockDocument) Content() string {
-	return m.content
-}
-
-func (m *mockDocument) FindElementAtPosition(position protocol.Position, dm any) *types.CustomElementMatch {
-	return nil
-}
-
-func (m *mockDocument) FindAttributeAtPosition(position protocol.Position, dm any) (*types.AttributeMatch, string) {
-	return nil, ""
-}
-
-func (m *mockDocument) AnalyzeCompletionContextTS(position protocol.Position, dm any) *types.CompletionAnalysis {
-	return nil
-}
-
-func (m *mockDocument) FindCustomElements(dm any) ([]types.CustomElementMatch, error) {
-	return nil, nil
-}
-
-func (m *mockDocument) Version() int32 {
-	return 1
-}
-
-func (m *mockDocument) URI() string {
-	return "test://test.html"
-}
-
-func (m *mockDocument) GetTemplateContext(position protocol.Position) string {
-	return ""
-}
-
-func (m *mockDocument) GetScriptTags() []types.ScriptTag {
-	return nil
-}
-
-func (m *mockDocument) FindModuleScript() (protocol.Position, bool) {
-	return protocol.Position{}, false
 }

@@ -20,9 +20,9 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
+	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
-	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 type mockAttributeDiagnosticsContext struct {
@@ -31,7 +31,7 @@ type mockAttributeDiagnosticsContext struct {
 }
 
 func (m *mockAttributeDiagnosticsContext) Document(uri string) types.Document {
-	return &mockAttributeDocument{content: m.content}
+	return testhelpers.NewMockDocument(m.content)
 }
 
 func (m *mockAttributeDiagnosticsContext) Slots(tagName string) ([]M.Slot, bool) {
@@ -57,50 +57,6 @@ func (m *mockAttributeDiagnosticsContext) ElementDefinition(tagName string) (typ
 
 func (m *mockAttributeDiagnosticsContext) ElementSource(tagName string) (string, bool) {
 	return "", false
-}
-
-type mockAttributeDocument struct {
-	content string
-}
-
-func (m *mockAttributeDocument) Content() string {
-	return m.content
-}
-
-func (m *mockAttributeDocument) Version() int32 {
-	return 0
-}
-
-func (m *mockAttributeDocument) URI() string {
-	return "test://test.html"
-}
-
-func (m *mockAttributeDocument) FindElementAtPosition(position protocol.Position, dm any) *types.CustomElementMatch {
-	return nil
-}
-
-func (m *mockAttributeDocument) FindAttributeAtPosition(position protocol.Position, dm any) (*types.AttributeMatch, string) {
-	return nil, ""
-}
-
-func (m *mockAttributeDocument) FindCustomElements(dm any) ([]types.CustomElementMatch, error) {
-	return nil, nil
-}
-
-func (m *mockAttributeDocument) AnalyzeCompletionContextTS(position protocol.Position, dm any) *types.CompletionAnalysis {
-	return nil
-}
-
-func (m *mockAttributeDocument) GetTemplateContext(position protocol.Position) string {
-	return ""
-}
-
-func (m *mockAttributeDocument) GetScriptTags() []types.ScriptTag {
-	return nil
-}
-
-func (m *mockAttributeDocument) FindModuleScript() (protocol.Position, bool) {
-	return protocol.Position{}, false
 }
 
 func TestAttributeDiagnostics_GlobalAttributes(t *testing.T) {

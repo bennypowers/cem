@@ -26,6 +26,7 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/methods/textDocument/definition"
 	"bennypowers.dev/cem/lsp/methods/textDocument/hover"
+	"bennypowers.dev/cem/lsp/methods/textDocument/references"
 	"bennypowers.dev/cem/lsp/methods/workspace/symbol"
 	W "bennypowers.dev/cem/workspace"
 	"github.com/tliron/glsp"
@@ -73,6 +74,7 @@ func NewServer(workspace W.WorkspaceContext) (*Server, error) {
 		TextDocumentHover:      s.hover,
 		TextDocumentCompletion: s.completion,
 		TextDocumentDefinition: s.definition,
+		TextDocumentReferences: s.references,
 		TextDocumentCodeAction: s.codeAction,
 		TextDocumentDidOpen:    s.didOpen,
 		TextDocumentDidChange:  s.didChange,
@@ -227,6 +229,11 @@ func (s *Server) completion(context *glsp.Context, params *protocol.CompletionPa
 // definition handles textDocument/definition requests
 func (s *Server) definition(context *glsp.Context, params *protocol.DefinitionParams) (any, error) {
 	return definition.Definition(s.adapter, context, params)
+}
+
+// references handles textDocument/references requests
+func (s *Server) references(context *glsp.Context, params *protocol.ReferenceParams) ([]protocol.Location, error) {
+	return references.References(s.adapter, context, params)
 }
 
 // codeAction handles textDocument/codeAction requests

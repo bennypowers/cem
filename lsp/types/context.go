@@ -23,3 +23,11 @@ type DefinitionContext interface {
 	WorkspaceRoot() string
 	RawDocumentManager() any // For passing to FindElementAtPosition and FindAttributeAtPosition
 }
+
+// ReferencesContext provides the dependencies needed for go-to-references functionality
+type ReferencesContext interface {
+	Document(uri string) Document
+	AllDocuments() []Document
+	ElementDefinition(tagName string) (ElementDefinition, bool)
+	WorkspaceRoot() string
+}

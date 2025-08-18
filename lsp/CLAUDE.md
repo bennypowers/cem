@@ -136,6 +136,7 @@ manifest types. investigate if this can be done in a lightweight but correct man
   - Go to slot in template (from slot attribute value to slot definition in template)
   - Go to event declaration (from @event Lit binding syntax to JSDoc or class field source)
 - [x] **Workspace symbol provider** - Search and navigate custom elements ✅ COMPLETED
+- [x] **Go-to-references support** - Find all usages of custom elements across workspace with gitignore filtering and start-tag-only results ✅ COMPLETED
 
 ## File Structure
 ```
@@ -191,6 +192,9 @@ lsp/
 │       │   ├── missingImportCodeActions.go # Missing import autofix actions
 │       │   ├── missingImportCodeActions_test.go # Missing import tests
 │       │   └── codeAction_test.go      # Code action tests
+│       ├── references/    # Go-to-references feature package
+│       │   ├── references.go           # Main references implementation
+│       │   └── references_test.go      # References tests
 │       ├── context.go     # Cursor position analysis for smart completions
 │       ├── document.go    # Document interface for textDocument operations
 │       ├── lifecycle.go   # Document lifecycle (didOpen, didChange, didClose)
@@ -262,6 +266,7 @@ queries/ (shared root)     # Unified query management package
 - ✅ **Slot validation diagnostics with autofixes** - Real-time error detection and one-click fixes for invalid slot names
 - ✅ **Tag name validation diagnostics with missing import detection** - Intelligent validation of custom element tag names with package-aware import suggestions
 - ✅ **Workspace symbol provider** - Search and navigate custom elements across entire workspace with fuzzy matching
+- ✅ **Go-to-references support** - Find all usages of custom elements across workspace with gitignore filtering and start-tag-only results
 - ✅ **Incremental parsing abstractions** - Comprehensive incremental parsing system with change analysis, validation, and intelligent fallback strategies
 - ✅ **Platform abstractions layer** - Created `internal/platform` package for filesystem, time, and file watching abstractions  
 - ✅ **Registry dependency injection** - Registry uses injectable FileWatcher interface for enhanced testability and future portability
@@ -286,6 +291,10 @@ queries/ (shared root)     # Unified query management package
   - Case-insensitive fuzzy matching ✅
   - Source file location resolution ✅
   - Element description support ✅
+- **References Tests**: All passing with workspace search and filtering ✅
+  - Element detection at cursor position ✅
+  - Gitignore-aware workspace traversal ✅
+  - Start-tag-only filtering ✅
 - **Incremental Parsing Tests**: All passing with comprehensive change analysis ✅
   - Change strategy selection (small vs large changes) ✅
   - Full document vs incremental change detection ✅
@@ -702,8 +711,58 @@ All tree-sitter HTML script tag parsing and import detection functionality is no
 - **Extensibility**: Easy to add new import detection patterns with tree-sitter queries
 - **Reliability**: Comprehensive test coverage ensures stability across all scenarios
 
+### 🎉 **MAJOR MILESTONE COMPLETED: Go-to-References Implementation** ✅
+
+All go-to-references LSP functionality is now working with intelligent filtering and performance optimizations!
+
+#### ✅ **Go-to-References Core Implementation** - COMPLETED 
+- **Complete LSP method implementation** - Full `textDocument/references` support with workspace-wide search
+- **Tree-sitter element detection** - Proper AST-based element detection at cursor position using tree-sitter queries
+- **Workspace-wide search** - Searches all relevant files across the entire workspace for element references
+- **Open document integration** - Leverages already-parsed documents for performance, searches disk files for comprehensive coverage
+- **Multiple file type support** - Works in HTML files and TypeScript template literals seamlessly
+
+#### ✅ **Gitignore Filtering Integration** - COMPLETED
+- **Proper .gitignore support** - Uses `github.com/sabhiram/go-gitignore` library for accurate gitignore pattern matching
+- **Performance optimization** - Automatically skips `node_modules/`, `.git/`, `dist/`, `build/` and other gitignored directories
+- **Respects project structure** - Only searches files that developers actually care about, eliminating noise
+- **Smart directory traversal** - Uses `filepath.SkipDir` for efficient directory skipping during workspace walks
+
+#### ✅ **Start Tags Only Filtering** - COMPLETED  
+- **Eliminates duplicate references** - Only shows start tags (`<rh-card>`) and self-closing tags, not end tags (`</rh-card>`)
+- **Cleaner results** - Each element usage appears only once instead of twice in the references list
+- **Better UX** - References popup is more concise and useful with 50% fewer entries
+- **Query-level filtering** - Uses capture name filtering (`@tag.name` only) for accurate start tag detection
+
+#### ✅ **Integration and Testing** - COMPLETED  
+- **Comprehensive test coverage** - Unit tests for references detection and workspace search functionality
+- **Server capability declaration** - Added `ReferencesProvider` capability in LSP initialization
+- **Context interface** - Clean `ReferencesContext` interface for dependency injection and testability
+- **Segmentation fault fixes** - Added nil pointer protection in `findHTMLCustomElements()` and related functions
+
+### 🧪 **Test Status - ALL PASSING** ✅
+- ✅ **References Detection**: Proper element detection at cursor position using tree-sitter
+- ✅ **Workspace Search**: Gitignore-aware file traversal with proper filtering  
+- ✅ **Start Tag Filtering**: Only start tags included in results, no duplicate end tag entries
+- ✅ **Segmentation Protection**: Nil pointer safety prevents crashes during document analysis
+- ✅ **All LSP Features**: Completion, hover, definition, diagnostics, workspace symbols, references tests all passing
+
+### 📝 **User Experience - FULLY FUNCTIONAL** ✅
+- ✅ **Place cursor on custom element** - Works in both HTML files and TypeScript template literals
+- ✅ **Press go-to-references keybinding** - Standard LSP `textDocument/references` support
+- ✅ **Get clean, focused results** - Gitignore filtering eliminates noise, start-tag filtering eliminates duplicates
+- ✅ **Navigate across workspace** - Find all usages of custom elements across entire project
+- ✅ **Performance optimized** - Fast search that respects project structure and avoids irrelevant files
+
+### 🚀 **Performance & Architecture Benefits**
+- **Gitignore Integration**: Respects developer workflow and project structure
+- **Query-based Filtering**: Leverages tree-sitter capture names for accurate element type detection  
+- **Workspace Efficiency**: Intelligent file traversal with proper directory skipping
+- **Memory Optimized**: Reuses existing parsed documents, only parses new files as needed
+- **LSP Standards Compliance**: Full `textDocument/references` protocol implementation
+
 ### 📋 **Next Steps - Lower Priority Tasks**
 
-1. **Workspace Symbol Provider** - Search and navigate custom elements across workspace
-2. **Config Support for Additional Manifest Paths** - Extend registry with user-configurable manifest paths  
-3. **Re-enable Incremental Parsing** - Enable incremental parsing optimizations after stability verification
+1. **Config Support for Additional Manifest Paths** - Extend registry with user-configurable manifest paths  
+2. **Re-enable Incremental Parsing** - Enable incremental parsing optimizations after stability verification
+3. **Enhanced Reference Filtering** - Add options for filtering by reference type (declarations vs usages)

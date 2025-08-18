@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/lsp/methods/textDocument/codeAction"
+	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/lsp/types"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
@@ -28,7 +29,7 @@ func TestCodeActionSlotSuggestion(t *testing.T) {
 	// Create mock context
 	ctx := &mockCodeActionContext{
 		documents: map[string]types.Document{
-			"test://test.html": &mockDocument{content: `<my-element><div slot="heade">Content</div></my-element>`},
+			"test://test.html": testhelpers.NewMockDocument(`<my-element><div slot="heade">Content</div></my-element>`),
 		},
 	}
 
@@ -136,7 +137,7 @@ func TestCodeActionNoDiagnostics(t *testing.T) {
 	// Create mock context
 	ctx := &mockCodeActionContext{
 		documents: map[string]types.Document{
-			"test://test.html": &mockDocument{content: `<my-element><div slot="header">Content</div></my-element>`},
+			"test://test.html": testhelpers.NewMockDocument(`<my-element><div slot="header">Content</div></my-element>`),
 		},
 	}
 
@@ -175,44 +176,4 @@ type mockCodeActionContext struct {
 
 func (m *mockCodeActionContext) Document(uri string) types.Document {
 	return m.documents[uri]
-}
-
-type mockDocument struct {
-	content string
-}
-
-func (m *mockDocument) Content() string {
-	return m.content
-}
-
-func (m *mockDocument) FindElementAtPosition(position protocol.Position, dm any) *types.CustomElementMatch {
-	return nil
-}
-
-func (m *mockDocument) FindAttributeAtPosition(position protocol.Position, dm any) (*types.AttributeMatch, string) {
-	return nil, ""
-}
-
-func (m *mockDocument) AnalyzeCompletionContextTS(position protocol.Position, dm any) *types.CompletionAnalysis {
-	return nil
-}
-
-func (m *mockDocument) FindCustomElements(dm any) ([]types.CustomElementMatch, error) {
-	return nil, nil
-}
-
-func (m *mockDocument) Version() int32 {
-	return 1
-}
-
-func (m *mockDocument) URI() string {
-	return "test://test.html"
-}
-
-func (m *mockDocument) GetScriptTags() []types.ScriptTag {
-	return nil
-}
-
-func (m *mockDocument) FindModuleScript() (protocol.Position, bool) {
-	return protocol.Position{}, false
 }

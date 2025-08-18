@@ -86,6 +86,10 @@ func (s *ServerAdapter) Document(uri string) types.Document {
 	return s.server.documents.Document(uri)
 }
 
+func (s *ServerAdapter) AllDocuments() []types.Document {
+	return s.server.documents.AllDocuments()
+}
+
 func (s *ServerAdapter) Element(tagName string) (*M.CustomElement, bool) {
 	return s.server.registry.Element(tagName)
 }
@@ -108,7 +112,6 @@ func (s *ServerAdapter) ElementSource(tagName string) (string, bool) {
 	// Get the element definition which contains source information
 	definition, exists := s.server.registry.ElementDefinition(tagName)
 	if !exists {
-		helpers.SafeDebugLog("[ELEMENT_SOURCE] No definition found for tag '%s'", tagName)
 		return "", false
 	}
 
@@ -116,36 +119,26 @@ func (s *ServerAdapter) ElementSource(tagName string) (string, bool) {
 	packageName := definition.PackageName()
 	modulePath := definition.ModulePath()
 
-	helpers.SafeDebugLog("[ELEMENT_SOURCE] Tag '%s': packageName='%s' (len=%d), modulePath='%s' (len=%d)",
-		tagName, packageName, len(packageName), modulePath, len(modulePath))
-
 	if packageName != "" && modulePath != "" {
 		// For npm packages, combine package name with module path
 		// e.g. "@rhds/elements" + "rh-card/rh-card.js" = "@rhds/elements/rh-card/rh-card.js"
 		result := path.Join(packageName, modulePath)
-		helpers.SafeDebugLog("[ELEMENT_SOURCE] Returning combined path: '%s'", result)
 		return result, true
 	} else if packageName != "" {
 		// Just package name (fallback)
-		helpers.SafeDebugLog("[ELEMENT_SOURCE] Returning package name only: '%s'", packageName)
 		return packageName, true
 	} else if modulePath != "" {
 		// Fallback to module path for local/workspace elements
-		helpers.SafeDebugLog("[ELEMENT_SOURCE] Returning module path only: '%s'", modulePath)
 		return modulePath, true
 	}
 
-	helpers.SafeDebugLog("[ELEMENT_SOURCE] No source available for tag '%s'", tagName)
 	return "", false
 }
 
 func (s *ServerAdapter) WorkspaceRoot() string {
 	if s.server.workspace != nil {
-		root := s.server.workspace.Root()
-		helpers.SafeDebugLog("[WORKSPACE_ROOT] Returning workspace root: '%s' (len=%d)", root, len(root))
-		return root
+		return s.server.workspace.Root()
 	}
-	helpers.SafeDebugLog("[WORKSPACE_ROOT] No workspace context available")
 	return ""
 }
 

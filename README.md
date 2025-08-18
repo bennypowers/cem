@@ -67,6 +67,7 @@ The `cem lsp` command starts a Language Server Protocol (LSP) server that provid
   - Tag name validation with typo detection and missing import suggestions
   - Attribute validation against HTML global attributes and custom element schemas
 - Go-to-definition support for jumping to element source code
+- Go-to-references to find all usages of custom elements across your workspace
 - Support for HTML files and TypeScript template literals
 - Automatic manifest discovery and live reloading
 

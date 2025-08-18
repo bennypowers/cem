@@ -79,6 +79,7 @@ func Initialize(ctx ServerContext, context *glsp.Context, params *protocol.Initi
 			},
 		},
 		DefinitionProvider: &protocol.DefinitionOptions{},
+		ReferencesProvider: &protocol.ReferenceOptions{},
 		CodeActionProvider: &protocol.CodeActionOptions{
 			CodeActionKinds: []protocol.CodeActionKind{
 				protocol.CodeActionKindQuickFix,

@@ -283,7 +283,7 @@ func TestAttributeCompletionAfterSpaces(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock document for this test case
-			mockDoc := &MockDocument{content: tt.html}
+			mockDoc := NewMockDocument(tt.html)
 
 			// Analyze completion context
 			analysis := textDocument.AnalyzeCompletionContext(mockDoc, tt.position, "")

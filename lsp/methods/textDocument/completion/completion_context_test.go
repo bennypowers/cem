@@ -121,7 +121,7 @@ func TestCompletionContextAnalysis(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock document
-			doc := &MockDocument{content: tt.content}
+			doc := NewMockDocument(tt.content)
 
 			position := protocol.Position{
 				Line:      tt.line,
@@ -249,7 +249,7 @@ func TestCompletionIntegration(t *testing.T) {
 	ctx := &MockCompletionContext{
 		registry: registry,
 		documents: map[string]types.Document{
-			"test://test.html": &MockDocument{content: "<my-"},
+			"test://test.html": NewMockDocument("<my-"),
 		},
 	}
 
@@ -300,7 +300,7 @@ func TestCompletionIntegration(t *testing.T) {
 
 	// Test attribute completion
 	t.Run("Attribute completion", func(t *testing.T) {
-		ctx.documents["test://test.html"] = &MockDocument{content: "<my-button "}
+		ctx.documents["test://test.html"] = NewMockDocument("<my-button ")
 
 		params := &protocol.CompletionParams{
 			TextDocumentPositionParams: protocol.TextDocumentPositionParams{
@@ -346,7 +346,7 @@ func TestCompletionIntegration(t *testing.T) {
 
 	// Test boolean attribute value completion
 	t.Run("Boolean attribute value completion", func(t *testing.T) {
-		ctx.documents["test://test.html"] = &MockDocument{content: "<my-button disabled=\""}
+		ctx.documents["test://test.html"] = NewMockDocument("<my-button disabled=\"")
 
 		params := &protocol.CompletionParams{
 			TextDocumentPositionParams: protocol.TextDocumentPositionParams{
@@ -734,10 +734,11 @@ func TestTemplateContextBehavior(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mock document that reports template context
-			doc := &MockTemplateDocument{
-				content:       tt.content,
-				isLitTemplate: tt.wantLitTemplate,
+			templateContext := ""
+			if tt.wantLitTemplate {
+				templateContext = "html"
 			}
+			doc := NewMockTemplateDocument(tt.content, templateContext)
 
 			// Analyze context
 			analysis := textDocument.AnalyzeCompletionContext(doc, tt.position, "")

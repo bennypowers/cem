@@ -279,6 +279,18 @@ func (dm *DocumentManager) Document(uri string) types.Document {
 	return dm.documents[uri]
 }
 
+// AllDocuments returns all tracked documents
+func (dm *DocumentManager) AllDocuments() []types.Document {
+	dm.mu.RLock()
+	defer dm.mu.RUnlock()
+
+	documents := make([]types.Document, 0, len(dm.documents))
+	for _, doc := range dm.documents {
+		documents = append(documents, doc)
+	}
+	return documents
+}
+
 // CloseDocument removes a document from tracking
 func (dm *DocumentManager) CloseDocument(uri string) {
 	dm.mu.Lock()
@@ -412,15 +424,20 @@ func (d *Document) findCustomElementsInternal(dm *DocumentManager) ([]CustomElem
 
 // findHTMLCustomElements finds custom elements in HTML content
 func (d *Document) findHTMLCustomElements(dm *DocumentManager) ([]CustomElementMatch, error) {
-	// Use the cached query matcher
-	matcher := dm.htmlCustomElements
-
 	var elements []CustomElementMatch
 
 	// Safety checks
+	if dm == nil {
+		helpers.SafeDebugLog("[DOCUMENT] DocumentManager is nil in findHTMLCustomElements")
+		return elements, nil
+	}
+
 	if d.Tree == nil {
 		return elements, nil
 	}
+
+	// Use the cached query matcher
+	matcher := dm.htmlCustomElements
 
 	root := d.Tree.RootNode()
 	content := []byte(d.content)
@@ -620,6 +637,13 @@ func (d *Document) byteRangeToProtocolRange(startByte, endByte uint) protocol.Ra
 		Start: d.byteOffsetToPosition(startByte),
 		End:   d.byteOffsetToPosition(endByte),
 	}
+}
+
+// ByteRangeToProtocolRange converts byte range to protocol range (public interface method)
+func (d *Document) ByteRangeToProtocolRange(content string, startByte, endByte uint) protocol.Range {
+	// For simplicity, use the main document content-based conversion
+	// The content parameter is provided for compatibility but not currently used
+	return d.byteRangeToProtocolRange(startByte, endByte)
 }
 
 func (d *Document) templateByteRangeToProtocolRange(templateContent string, startByte, endByte uint) protocol.Range {

@@ -29,8 +29,9 @@ type Document interface {
 	URI() string
 	FindCustomElements(dm any) ([]CustomElementMatch, error)
 	AnalyzeCompletionContextTS(position protocol.Position, dm any) *CompletionAnalysis
-	GetScriptTags() []ScriptTag                  // Get parsed script tags
-	FindModuleScript() (protocol.Position, bool) // Find insertion point in module script
+	GetScriptTags() []ScriptTag                                                      // Get parsed script tags
+	FindModuleScript() (protocol.Position, bool)                                     // Find insertion point in module script
+	ByteRangeToProtocolRange(content string, startByte, endByte uint) protocol.Range // Convert byte range to protocol range
 }
 
 // CustomElementMatch represents a found custom element

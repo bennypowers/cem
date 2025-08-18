@@ -92,7 +92,7 @@ func TestSlotAttributeCompletions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock document for this test case
-			mockDoc := &MockDocument{content: tt.html}
+			mockDoc := NewMockDocument(tt.html)
 
 			// Call the slot completion function directly
 			completions := completion.GetAttributeValueCompletionsWithContext(ctx, mockDoc, tt.position, "", "slot")
@@ -150,7 +150,7 @@ func TestSlotCompletionDetails(t *testing.T) {
 	}
 
 	// Test specific completion details
-	mockDoc := &MockDocument{content: `<card-element><button slot="`}
+	mockDoc := NewMockDocument(`<card-element><button slot="`)
 	position := protocol.Position{Line: 0, Character: 28}
 
 	completions := completion.GetAttributeValueCompletionsWithContext(ctx, mockDoc, position, "", "slot")

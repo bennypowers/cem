@@ -38,6 +38,16 @@ Quickly jump to your element, attribute, event, etc. definitions.
 - Jump to custom element source definitions
 - Support for tag names and attributes (extensible for slots and events)
 
+### Go-to-References
+
+Find all usages of custom elements across your entire workspace.
+
+- **Place cursor on element**: Position cursor anywhere within a custom element tag name
+- **Workspace-wide search**: Finds all references across HTML, TypeScript, and JavaScript files
+- **Gitignore filtering**: Respects your project's `.gitignore` file to exclude irrelevant files like `node_modules/`
+- **Clean results**: Shows only start tags to avoid duplicate entries for opening and closing tags
+- **Template literal support**: Works within TypeScript `html` template literals and similar constructs
+
 ### Workspace Symbol Search
 
 Search and navigate custom elements across your entire workspace.
