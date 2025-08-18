@@ -151,8 +151,8 @@ func (fdt *FileDependencyTracker) HasFileChanged(fsPath string) (bool, error) {
 // Expects module paths as input, returns module paths.
 //
 // Callsites:
-// - session_incremental.go:53 (ProcessChangedFiles)
-// - session_incremental.go:275 (ProcessChangedFilesIncremental)
+// - session_incremental.go:64 (ProcessChangedFiles)
+// - session_incremental.go:326 (ProcessChangedFilesIncremental)
 //
 // Algorithm: Direct module changes + CSS reverse dependency lookup
 func (fdt *FileDependencyTracker) GetModulesAffectedByFiles(changedModulePaths []string) []string {

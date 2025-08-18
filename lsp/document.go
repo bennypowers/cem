@@ -1466,51 +1466,6 @@ func (d *Document) positionToByteOffset(position protocol.Position) uint {
 	return uint(offset)
 }
 
-// simpleDocument implements the minimum interface needed for text-based completion analysis
-type simpleDocument struct {
-	content string
-}
-
-func (s *simpleDocument) Content() string {
-	return s.content
-}
-
-func (s *simpleDocument) FindElementAtPosition(position protocol.Position, dm any) *types.CustomElementMatch {
-	return nil // Not needed for text-based analysis
-}
-
-func (s *simpleDocument) FindAttributeAtPosition(position protocol.Position, dm any) (*types.AttributeMatch, string) {
-	return nil, "" // Not needed for text-based analysis
-}
-
-func (s *simpleDocument) Version() int32 {
-	return 0 // Stub implementation
-}
-
-func (s *simpleDocument) URI() string {
-	return "" // Stub implementation
-}
-
-func (s *simpleDocument) FindCustomElements(dm any) ([]types.CustomElementMatch, error) {
-	return nil, nil // Stub implementation
-}
-
-func (s *simpleDocument) AnalyzeCompletionContextTS(position protocol.Position, dm any) *types.CompletionAnalysis {
-	return nil // Stub implementation
-}
-
-func (s *simpleDocument) GetTemplateContext(position protocol.Position) string {
-	return "" // Not a template literal, so no template context
-}
-
-func (s *simpleDocument) GetScriptTags() []types.ScriptTag {
-	return nil // Simple documents don't track script tags
-}
-
-func (s *simpleDocument) FindModuleScript() (protocol.Position, bool) {
-	return protocol.Position{}, false // Simple documents don't track script tags
-}
-
 // GetScriptTags returns the parsed script tags for HTML documents
 func (d *Document) GetScriptTags() []types.ScriptTag {
 	d.mu.RLock()
