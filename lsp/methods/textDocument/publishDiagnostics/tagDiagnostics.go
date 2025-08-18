@@ -511,11 +511,7 @@ func pathsMatch(importPath, elementSource string) bool {
 	// Extract just the filename and compare
 	importFile := filepath.Base(importPath)
 	elementFile := filepath.Base(elementSource)
-	if importFile == elementFile {
-		return true
-	}
-
-	return false
+	return importFile == elementFile
 }
 
 // normalizePath normalizes a file path for comparison

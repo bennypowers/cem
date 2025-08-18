@@ -53,7 +53,9 @@ var languages = struct {
 var htmlParserPool = sync.Pool{
 	New: func() any {
 		parser := ts.NewParser()
-		parser.SetLanguage(languages.html)
+		if err := parser.SetLanguage(languages.html); err != nil {
+			panic(fmt.Sprintf("failed to set HTML language: %v", err))
+		}
 		return parser
 	},
 }
@@ -62,7 +64,9 @@ var htmlParserPool = sync.Pool{
 var cssParserPool = sync.Pool{
 	New: func() any {
 		parser := ts.NewParser()
-		parser.SetLanguage(languages.css)
+		if err := parser.SetLanguage(languages.css); err != nil {
+			panic(fmt.Sprintf("failed to set CSS language: %v", err))
+		}
 		return parser
 	},
 }
@@ -71,7 +75,9 @@ var cssParserPool = sync.Pool{
 var jsdocParserPool = sync.Pool{
 	New: func() any {
 		parser := ts.NewParser()
-		parser.SetLanguage(languages.jsdoc)
+		if err := parser.SetLanguage(languages.jsdoc); err != nil {
+			panic(fmt.Sprintf("failed to set JSDoc language: %v", err))
+		}
 		return parser
 	},
 }
@@ -80,7 +86,9 @@ var jsdocParserPool = sync.Pool{
 var typescriptParserPool = sync.Pool{
 	New: func() any {
 		parser := ts.NewParser()
-		parser.SetLanguage(languages.typescript)
+		if err := parser.SetLanguage(languages.typescript); err != nil {
+			panic(fmt.Sprintf("failed to set TypeScript language: %v", err))
+		}
 		return parser
 	},
 }

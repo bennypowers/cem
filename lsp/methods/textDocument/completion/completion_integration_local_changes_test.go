@@ -247,7 +247,9 @@ export class TestButton extends LitElement {
 
 	// Ensure file is synced to disk before generate process reads it
 	if file, err := os.OpenFile(tsFilePath, os.O_RDONLY, 0); err == nil {
-		file.Sync()
+		if err := file.Sync(); err != nil {
+			t.Logf("Warning: error syncing file: %v", err)
+		}
 		file.Close()
 	}
 

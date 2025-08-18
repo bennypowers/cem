@@ -78,7 +78,7 @@ func TestGenerate(t *testing.T) {
 			}
 
 			var cases []testcase
-			filepath.WalkDir(filepath.Join(projectDir, "src"), func(path string, d os.DirEntry, err error) error {
+			if err := filepath.WalkDir(filepath.Join(projectDir, "src"), func(path string, d os.DirEntry, err error) error {
 				if err != nil {
 					return err
 				}
@@ -97,7 +97,9 @@ func TestGenerate(t *testing.T) {
 					})
 				}
 				return nil
-			})
+			}); err != nil {
+				t.Fatalf("Error walking directory: %v", err)
+			}
 
 			for _, tc := range cases {
 				// capture range variable

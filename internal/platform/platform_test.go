@@ -106,7 +106,11 @@ func TestTempDirFileSystem(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir filesystem: %v", err)
 	}
-	defer fs.Cleanup()
+	defer func() {
+		if err := fs.Cleanup(); err != nil {
+			t.Logf("Warning: error during filesystem cleanup: %v", err)
+		}
+	}()
 
 	// Test file operations
 	testData := []byte("hello world")

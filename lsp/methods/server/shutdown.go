@@ -31,7 +31,9 @@ func Shutdown(ctx ServerContext, context *glsp.Context) error {
 	}
 
 	if ws := ctx.Workspace(); ws != nil {
-		ws.Cleanup()
+		if err := ws.Cleanup(); err != nil {
+			log.Printf("Warning: error during workspace cleanup: %v", err)
+		}
 	}
 
 	return nil
