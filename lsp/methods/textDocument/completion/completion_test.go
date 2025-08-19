@@ -94,7 +94,7 @@ func TestServerLevelIntegration(t *testing.T) {
 
 	// Copy fixture files to temporary directory
 	fixtureDir := filepath.Join("test-fixtures", "server-integration")
-	copyFixtureFiles(t, fixtureDir, tempDir)
+	CopyFixtureFiles(t, fixtureDir, tempDir)
 
 	// Create dist directory
 	distDir := filepath.Join(tempDir, "dist")

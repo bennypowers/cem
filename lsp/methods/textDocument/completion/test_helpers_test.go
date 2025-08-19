@@ -2,6 +2,11 @@ package completion_test
 
 import (
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
 
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
@@ -121,5 +126,89 @@ func completionTypeString(t types.CompletionContextType) string {
 		return "LitBooleanAttribute"
 	default:
 		return "Invalid"
+	}
+}
+
+// CopyFixtureFiles copies files from the fixture directory to the target directory,
+// preserving directory structure
+func CopyFixtureFiles(t *testing.T, fixtureDir, targetDir string) {
+	t.Helper()
+
+	err := filepath.Walk(fixtureDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Skip README files
+		if strings.HasSuffix(path, "README.md") {
+			return nil
+		}
+
+		// Get relative path from fixture directory
+		relPath, err := filepath.Rel(fixtureDir, path)
+		if err != nil {
+			return err
+		}
+
+		targetPath := filepath.Join(targetDir, relPath)
+
+		if info.IsDir() {
+			return os.MkdirAll(targetPath, info.Mode())
+		}
+
+		// Copy file
+		src, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer src.Close()
+
+		err = os.MkdirAll(filepath.Dir(targetPath), 0755)
+		if err != nil {
+			return err
+		}
+
+		dst, err := os.Create(targetPath)
+		if err != nil {
+			return err
+		}
+		defer dst.Close()
+
+		_, err = io.Copy(dst, src)
+		return err
+	})
+
+	if err != nil {
+		t.Fatalf("Failed to copy fixture files: %v", err)
+	}
+}
+
+// CopyFixtureFile copies a single file from the fixture directory to the target location
+func CopyFixtureFile(t *testing.T, fixtureDir, filename, targetDir, targetFilename string) {
+	t.Helper()
+
+	src := filepath.Join(fixtureDir, filename)
+	dst := filepath.Join(targetDir, targetFilename)
+
+	srcFile, err := os.Open(src)
+	if err != nil {
+		t.Fatalf("Failed to open source file %s: %v", src, err)
+	}
+	defer srcFile.Close()
+
+	err = os.MkdirAll(filepath.Dir(dst), 0755)
+	if err != nil {
+		t.Fatalf("Failed to create target directory: %v", err)
+	}
+
+	dstFile, err := os.Create(dst)
+	if err != nil {
+		t.Fatalf("Failed to create target file %s: %v", dst, err)
+	}
+	defer dstFile.Close()
+
+	_, err = io.Copy(dstFile, srcFile)
+	if err != nil {
+		t.Fatalf("Failed to copy file content: %v", err)
 	}
 }

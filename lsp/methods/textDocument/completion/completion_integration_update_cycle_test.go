@@ -18,7 +18,6 @@ package completion_test
 
 import (
 	"context"
-	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -43,18 +42,14 @@ func TestCompletionUpdateCycle(t *testing.T) {
 	fixtureDir := filepath.Join("..", "..", "..", "test", "fixtures", "completion-update-cycle")
 
 	// Copy fixture files to temp directory
-	if err := copyFixtureFile(fixtureDir, "package.json", tempDir, "package.json"); err != nil {
-		t.Fatalf("Failed to copy package.json: %v", err)
-	}
+	CopyFixtureFile(t, fixtureDir, "package.json", tempDir, "package.json")
 
 	// Create .config directory and copy cem.yaml
 	configDir := filepath.Join(tempDir, ".config")
 	if err := os.MkdirAll(configDir, 0755); err != nil {
 		t.Fatalf("Failed to create config directory: %v", err)
 	}
-	if err := copyFixtureFile(fixtureDir, "cem.yaml", configDir, "cem.yaml"); err != nil {
-		t.Fatalf("Failed to copy cem.yaml: %v", err)
-	}
+	CopyFixtureFile(t, fixtureDir, "cem.yaml", configDir, "cem.yaml")
 
 	// Create elements directory structure
 	elementsDir := filepath.Join(tempDir, "elements", "test-element")
@@ -63,9 +58,7 @@ func TestCompletionUpdateCycle(t *testing.T) {
 	}
 
 	// Copy initial TypeScript element file
-	if err := copyFixtureFile(fixtureDir, "initial-element.ts", elementsDir, "test-element.ts"); err != nil {
-		t.Fatalf("Failed to copy initial element: %v", err)
-	}
+	CopyFixtureFile(t, fixtureDir, "initial-element.ts", elementsDir, "test-element.ts")
 
 	// Create dist directory
 	distDir := filepath.Join(tempDir, "dist")
@@ -137,9 +130,7 @@ func TestCompletionUpdateCycle(t *testing.T) {
 	}
 
 	htmlFilePath := filepath.Join(demoDir, "index.html")
-	if err := copyFixtureFile(fixtureDir, "demo.html", demoDir, "index.html"); err != nil {
-		t.Fatalf("Failed to copy demo HTML: %v", err)
-	}
+	CopyFixtureFile(t, fixtureDir, "demo.html", demoDir, "index.html")
 
 	// Load HTML content and open document
 	htmlContent, err := os.ReadFile(htmlFilePath)
@@ -177,9 +168,7 @@ func TestCompletionUpdateCycle(t *testing.T) {
 	// Now simulate editing the source file to add 'four'
 	t.Logf("=== User edits test-element.ts to add 'four' ===")
 
-	if err := copyFixtureFile(fixtureDir, "updated-element.ts", elementsDir, "test-element.ts"); err != nil {
-		t.Fatalf("Failed to update element file: %v", err)
-	}
+	CopyFixtureFile(t, fixtureDir, "updated-element.ts", elementsDir, "test-element.ts")
 
 	// Ensure the file is synced to disk
 	if err := syncFile(filepath.Join(elementsDir, "test-element.ts")); err != nil {
@@ -258,30 +247,6 @@ func TestCompletionUpdateCycle(t *testing.T) {
 }
 
 // copyFixtureFile copies a file from the fixture directory to the target location
-func copyFixtureFile(fixtureDir, filename, targetDir, targetFilename string) error {
-	src := filepath.Join(fixtureDir, filename)
-	dst := filepath.Join(targetDir, targetFilename)
-
-	srcFile, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer srcFile.Close()
-
-	dstFile, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer dstFile.Close()
-
-	_, err = io.Copy(dstFile, srcFile)
-	if err != nil {
-		return err
-	}
-
-	// Ensure the file is properly flushed to disk
-	return dstFile.Sync()
-}
 
 // syncFile ensures a file is synced to disk
 func syncFile(path string) error {
