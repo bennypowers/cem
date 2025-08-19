@@ -18,6 +18,7 @@ package completion
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"bennypowers.dev/cem/lsp/helpers"
@@ -58,8 +59,14 @@ func Completion(ctx CompletionContext, context *glsp.Context, params *protocol.C
 	}
 	helpers.SafeDebugLog("[COMPLETION] Trigger character: '%s'", triggerChar)
 
+	// Try to get DocumentManager from context for enhanced tree-sitter analysis
+	var documentManager any
+	if contextWithDM, ok := ctx.(interface{ GetDocumentManager() any }); ok {
+		documentManager = contextWithDM.GetDocumentManager()
+	}
+
 	// Analyze the completion context
-	analysis := textDocument.AnalyzeCompletionContext(doc, params.Position, triggerChar)
+	analysis := textDocument.AnalyzeCompletionContextWithDM(doc, params.Position, triggerChar, documentManager)
 	helpers.SafeDebugLog("[COMPLETION] Analysis result: Type=%d, TagName='%s', AttributeName='%s'",
 		analysis.Type, analysis.TagName, analysis.AttributeName)
 
@@ -70,7 +77,7 @@ func Completion(ctx CompletionContext, context *glsp.Context, params *protocol.C
 		return getTagNameCompletions(ctx, analysis), nil
 	case types.CompletionAttributeName:
 		helpers.SafeDebugLog("[COMPLETION] Providing attribute completions for element: %s", analysis.TagName)
-		return GetAttributeCompletions(ctx, analysis.TagName), nil
+		return GetAttributeCompletionsWithContext(ctx, doc, params.Position, analysis.TagName), nil
 	case types.CompletionAttributeValue:
 		helpers.SafeDebugLog("[COMPLETION] Providing attribute value completions for %s.%s", analysis.TagName, analysis.AttributeName)
 		completions := GetAttributeValueCompletionsWithContext(ctx, doc, params.Position, analysis.TagName, analysis.AttributeName)
@@ -86,8 +93,50 @@ func Completion(ctx CompletionContext, context *glsp.Context, params *protocol.C
 		helpers.SafeDebugLog("[COMPLETION] Providing Lit boolean attribute completions for element: %s", analysis.TagName)
 		return getLitBooleanAttributeCompletions(ctx, analysis.TagName), nil
 	default:
-		helpers.SafeDebugLog("[COMPLETION] Using fallback: showing all custom elements")
-		return getCustomElementCompletions(ctx), nil
+		helpers.SafeDebugLog("[COMPLETION] Unknown completion context, checking for text-based attribute completion fallback")
+		
+		// Try text-based analysis as fallback for attribute completions
+		content, err := doc.Content()
+		if err != nil {
+			helpers.SafeDebugLog("[COMPLETION] Cannot get document content for fallback analysis")
+			return []protocol.CompletionItem{}, nil
+		}
+		
+		lines := strings.Split(content, "\n")
+		if int(params.Position.Line) >= len(lines) {
+			helpers.SafeDebugLog("[COMPLETION] Position out of bounds for fallback analysis")
+			return []protocol.CompletionItem{}, nil
+		}
+		
+		lineContent := lines[params.Position.Line]
+		charPos := int(params.Position.Character)
+		if charPos > len(lineContent) {
+			charPos = len(lineContent)
+		}
+		beforeCursor := lineContent[:charPos]
+		
+		// Check if we're in a potential attribute context using text analysis
+		if fallbackAnalysis := analyzeFallbackAttributeContext(beforeCursor); fallbackAnalysis != nil {
+			helpers.SafeDebugLog("[COMPLETION] Fallback detected %s completion for tag: %s", 
+				fallbackAnalysis.contextType, fallbackAnalysis.tagName)
+			
+			switch fallbackAnalysis.contextType {
+			case "attribute-name":
+				return GetAttributeCompletionsWithContext(ctx, doc, params.Position, fallbackAnalysis.tagName), nil
+			case "attribute-value":
+				completions := GetAttributeValueCompletionsWithContext(ctx, doc, params.Position, fallbackAnalysis.tagName, fallbackAnalysis.attributeName)
+				helpers.SafeDebugLog("[COMPLETION] Fallback returning %d attribute value completions", len(completions))
+				return completions, nil
+			case "slot-value":
+				// Handle slot attribute completion specially
+				completions := getSlotAttributeCompletions(ctx, doc, params.Position)
+				helpers.SafeDebugLog("[COMPLETION] Fallback returning %d slot completions", len(completions))
+				return completions, nil
+			}
+		}
+		
+		helpers.SafeDebugLog("[COMPLETION] No fallback context detected, returning empty completions")
+		return []protocol.CompletionItem{}, nil
 	}
 }
 
@@ -126,7 +175,7 @@ func getCustomElementCompletions(ctx CompletionContext) []protocol.CompletionIte
 	for _, tagName := range ctx.AllTagNames() {
 		if element, exists := ctx.Element(tagName); exists {
 			// Create a snippet that includes the opening and closing tags
-			snippet := fmt.Sprintf("%s>$0</%s", tagName, tagName)
+			snippet := fmt.Sprintf("<%s>$0</%s>", tagName, tagName)
 			description := fmt.Sprintf("Custom element: %s", tagName)
 
 			if len(element.Attributes) > 0 {
@@ -165,7 +214,7 @@ func getTagNameCompletions(ctx CompletionContext, analysis *types.CompletionAnal
 
 		if element, exists := ctx.Element(tagName); exists {
 			// Create a snippet that includes the opening tag with placeholder for content
-			snippet := fmt.Sprintf("%s>$0</%s>", tagName, tagName)
+			snippet := fmt.Sprintf("<%s>$0</%s>", tagName, tagName)
 			description := fmt.Sprintf("Custom element: %s", tagName)
 
 			if len(element.Attributes) > 0 {
@@ -191,6 +240,11 @@ func getTagNameCompletions(ctx CompletionContext, analysis *types.CompletionAnal
 
 // GetAttributeCompletions returns completions for attributes of a specific element
 func GetAttributeCompletions(ctx CompletionContext, tagName string) []protocol.CompletionItem {
+	return GetAttributeCompletionsWithContext(ctx, nil, protocol.Position{}, tagName)
+}
+
+// GetAttributeCompletionsWithContext returns completions for attributes with document context for slot detection
+func GetAttributeCompletionsWithContext(ctx CompletionContext, doc types.Document, position protocol.Position, tagName string) []protocol.CompletionItem {
 	var items []protocol.CompletionItem
 	helpers.SafeDebugLog("[COMPLETION] getAttributeCompletions called for tagName: '%s'", tagName)
 
@@ -198,6 +252,14 @@ func GetAttributeCompletions(ctx CompletionContext, tagName string) []protocol.C
 	if tagName == "" || !textDocument.IsCustomElementTag(tagName) {
 		helpers.SafeDebugLog("[COMPLETION] Skipping attribute completions - tagName empty (%t) or not custom element (%t)",
 			tagName == "", !textDocument.IsCustomElementTag(tagName))
+		
+		// However, we should still check for slot attribute if we have document context
+		// and this element is a child of a custom element with slots
+		if doc != nil && shouldSuggestSlotAttribute(ctx, doc, position) {
+			helpers.SafeDebugLog("[COMPLETION] Adding slot attribute suggestion for non-custom element")
+			items = append(items, createSlotAttributeCompletion())
+		}
+		
 		return items
 	}
 
@@ -244,6 +306,12 @@ func GetAttributeCompletions(ctx CompletionContext, tagName string) []protocol.C
 		}
 	} else {
 		helpers.SafeDebugLog("[COMPLETION] No attributes found for element '%s' in registry", tagName)
+	}
+
+	// Add slot attribute suggestion if this element is a child of a custom element with slots
+	if doc != nil && shouldSuggestSlotAttribute(ctx, doc, position) {
+		helpers.SafeDebugLog("[COMPLETION] Adding slot attribute suggestion for custom element")
+		items = append(items, createSlotAttributeCompletion())
 	}
 
 	helpers.SafeDebugLog("[COMPLETION] Returning %d attribute completions for '%s'", len(items), tagName)
@@ -584,6 +652,84 @@ func startsWithIgnoreCase(s, prefix string) bool {
 	return len(s) >= len(prefix) && strings.EqualFold(s[:len(prefix)], prefix)
 }
 
+// fallbackAnalysis represents the result of text-based completion context analysis
+type fallbackAnalysis struct {
+	contextType   string // "attribute-name" or "attribute-value"
+	tagName       string
+	attributeName string
+}
+
+// analyzeFallbackAttributeContext analyzes completion context using simple text patterns as fallback
+func analyzeFallbackAttributeContext(beforeCursor string) *fallbackAnalysis {
+	// Find the last opening tag
+	lastLT := strings.LastIndex(beforeCursor, "<")
+	if lastLT == -1 {
+		return nil // Not in a tag
+	}
+	
+	// Check if there's a closing > after the last <
+	if strings.LastIndex(beforeCursor, ">") > lastLT {
+		return nil // We're outside of any tag
+	}
+	
+	tagContent := beforeCursor[lastLT:]
+	
+	// Extract tag name
+	tagParts := strings.Fields(strings.TrimPrefix(tagContent, "<"))
+	if len(tagParts) == 0 {
+		return nil // No tag name
+	}
+	
+	tagName := tagParts[0]
+	
+	// Only provide completions for custom elements
+	if !textDocument.IsCustomElementTag(tagName) {
+		return nil
+	}
+	
+	// Check if we're in an attribute value (inside quotes)
+	if strings.Count(tagContent, `"`)%2 == 1 || strings.Count(tagContent, `'`)%2 == 1 {
+		// We're inside quotes, look for the attribute name
+		
+		// Find the last attribute before the quotes
+		var attrName string
+		
+		// Look for pattern: attr-name="
+		if matches := regexp.MustCompile(`(\w[\w-]*)\s*=\s*["'][^"']*$`).FindStringSubmatch(tagContent); len(matches) > 1 {
+			attrName = matches[1]
+		}
+		
+		if attrName != "" {
+			// Special handling for slot attribute
+			if attrName == "slot" {
+				return &fallbackAnalysis{
+					contextType:   "slot-value",
+					tagName:       tagName,
+					attributeName: attrName,
+				}
+			}
+			
+			return &fallbackAnalysis{
+				contextType:   "attribute-value",
+				tagName:       tagName,
+				attributeName: attrName,
+			}
+		}
+	}
+	
+	// Check if we're positioned for attribute name completion
+	// Pattern: <tag-name space or <tag-name attr="value" space
+	if len(tagParts) > 1 || strings.HasSuffix(tagContent, " ") {
+		// We have space after tag name or after attributes
+		return &fallbackAnalysis{
+			contextType: "attribute-name",
+			tagName:     tagName,
+		}
+	}
+	
+	return nil
+}
+
 // getSlotAttributeCompletions returns completions for slot attribute values based on parent element slots
 func getSlotAttributeCompletions(ctx CompletionContext, doc types.Document, position protocol.Position) []protocol.CompletionItem {
 	var items []protocol.CompletionItem
@@ -663,6 +809,9 @@ func findParentElementTag(doc types.Document, position protocol.Position) string
 	}
 	offset += int(position.Character)
 
+	// Track if we've found any element to determine if we should skip or return
+	foundAnyElement := false
+
 	// Look backwards from the current position to find the nearest opening tag
 	for i := offset - 1; i >= 0; i-- {
 		if content[i] == '<' {
@@ -675,9 +824,32 @@ func findParentElementTag(doc types.Document, position protocol.Position) string
 			if endIdx > i+1 {
 				tagName := content[i+1 : endIdx]
 				// Skip closing tags
-				if !strings.HasPrefix(tagName, "/") && textDocument.IsCustomElementTag(tagName) {
-					helpers.SafeDebugLog("[COMPLETION] Found parent tag: %s", tagName)
-					return tagName
+				if !strings.HasPrefix(tagName, "/") {
+					// If this is a custom element
+					if textDocument.IsCustomElementTag(tagName) {
+						// If this is the first element we found (any element), it's likely the current element
+						// Skip it and continue looking for the parent
+						if !foundAnyElement {
+							foundAnyElement = true
+							helpers.SafeDebugLog("[COMPLETION] Skipping current element: %s", tagName)
+							continue
+						}
+						
+						// This should be the parent element
+						helpers.SafeDebugLog("[COMPLETION] Found parent tag: %s", tagName)
+						return tagName
+					} else {
+						// This is a non-custom element (like button, span, div)
+						// If we haven't found any element yet, this is the current element - skip it
+						if !foundAnyElement {
+							foundAnyElement = true
+							helpers.SafeDebugLog("[COMPLETION] Skipping current non-custom element: %s", tagName)
+							continue
+						}
+						// If we already skipped the current element, this non-custom element 
+						// can't be a parent for slot suggestions (only custom elements have slots)
+						continue
+					}
 				}
 			}
 		}
@@ -698,4 +870,47 @@ func findParentElementTag(doc types.Document, position protocol.Position) string
 	}
 
 	return ""
+}
+
+// shouldSuggestSlotAttribute checks if we should suggest slot attribute for the current element
+func shouldSuggestSlotAttribute(ctx CompletionContext, doc types.Document, position protocol.Position) bool {
+	// Find the parent element
+	parentTagName := findParentElementTag(doc, position)
+	if parentTagName == "" {
+		return false
+	}
+
+	// Check if the parent element is a custom element
+	if !textDocument.IsCustomElementTag(parentTagName) {
+		return false
+	}
+
+	// Check if the parent element has non-anonymous slots
+	if slots, exists := ctx.Slots(parentTagName); exists {
+		for _, slot := range slots {
+			if slot.Name != "" { // Non-anonymous slot
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// createSlotAttributeCompletion creates a completion item for the slot attribute
+func createSlotAttributeCompletion() protocol.CompletionItem {
+	snippet := `slot="$0"`
+	insertTextFormat := protocol.InsertTextFormatSnippet
+	
+	return protocol.CompletionItem{
+		Label:  "slot",
+		Kind:   &[]protocol.CompletionItemKind{protocol.CompletionItemKindProperty}[0],
+		Detail: &[]string{"HTML slot attribute"}[0],
+		Documentation: &protocol.MarkupContent{
+			Kind:  protocol.MarkupKindMarkdown,
+			Value: "Assigns this element to a named slot in the parent custom element",
+		},
+		InsertText:       &snippet,
+		InsertTextFormat: &insertTextFormat,
+	}
 }

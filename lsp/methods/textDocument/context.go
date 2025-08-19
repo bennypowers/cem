@@ -57,6 +57,11 @@ type CompletionAnalysis struct {
 
 // AnalyzeCompletionContext determines what completion should be provided using tree-sitter
 func AnalyzeCompletionContext(doc types.Document, position protocol.Position, triggerChar string) *types.CompletionAnalysis {
+	return AnalyzeCompletionContextWithDM(doc, position, triggerChar, nil)
+}
+
+// AnalyzeCompletionContextWithDM determines what completion should be provided using tree-sitter with DocumentManager
+func AnalyzeCompletionContextWithDM(doc types.Document, position protocol.Position, triggerChar string, dm any) *types.CompletionAnalysis {
 	// Get the line content for fallback analysis
 	content, err := doc.Content()
 	if err != nil {
@@ -79,7 +84,7 @@ func AnalyzeCompletionContext(doc types.Document, position protocol.Position, tr
 	if docWithTreeSitter, ok := doc.(interface {
 		AnalyzeCompletionContextTS(position protocol.Position, dm any) *types.CompletionAnalysis
 	}); ok {
-		if tsAnalysis := docWithTreeSitter.AnalyzeCompletionContextTS(position, nil); tsAnalysis != nil {
+		if tsAnalysis := docWithTreeSitter.AnalyzeCompletionContextTS(position, dm); tsAnalysis != nil {
 			// Convert from types.CompletionAnalysis to types.CompletionAnalysis
 			return &types.CompletionAnalysis{
 				Type:          types.CompletionContextType(tsAnalysis.Type),
@@ -325,17 +330,36 @@ func extractTagAndAttribute(tagContent string) (string, string) {
 	// Updated pattern to handle attributes with hyphens and missing quotes
 	matches := attrPattern.FindStringSubmatch(tagContent)
 	if len(matches) >= 2 {
+		var attrName string
 		// First capture group (with quotes)
 		if matches[1] != "" {
-			return tagName, matches[1]
+			attrName = matches[1]
+		} else if matches[2] != "" {
+			// Second capture group (without quotes)
+			attrName = matches[2]
 		}
-		// Second capture group (without quotes)
-		if matches[2] != "" {
-			return tagName, matches[2]
+
+		// Special case for slot attribute: allow any tag name, not just custom elements
+		if attrName == "slot" {
+			// Extract any tag name (not just custom elements) for slot attributes
+			tagName = extractAnyTagName(tagContent)
 		}
+
+		return tagName, attrName
 	}
 
 	return tagName, ""
+}
+
+// extractAnyTagName extracts any tag name, including standard HTML elements
+func extractAnyTagName(tagContent string) string {
+	// Remove < and extract first word
+	content := strings.TrimPrefix(tagContent, "<")
+	parts := strings.Fields(content)
+	if len(parts) > 0 {
+		return parts[0]
+	}
+	return ""
 }
 
 // extractTagName extracts the tag name from tag content

@@ -30,6 +30,10 @@ func (m *mockCodeActionContext) Document(uri string) types.Document {
 	return nil // Not needed for this test
 }
 
+func (m *mockCodeActionContext) RawDocumentManager() any {
+	return nil // Mock implementation
+}
+
 func TestCreateMissingImportAction(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -73,7 +77,9 @@ func TestCreateMissingImportAction(t *testing.T) {
 			documentURI:    "file:///test.html",
 			expectAction:   true,
 			expectedTitle:  "Add import for 'my-element'",
-			expectedImport: `<script type="module" src="./my-element.js"></script>`, // Local module import
+			expectedImport: `<script type="module">
+	import "./my-element.js";
+</script>`, // Local module import as inline script
 		},
 		{
 			name: "Package import for TypeScript",

@@ -74,6 +74,38 @@
           }
         }
       ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "my-custom-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyCustomElement",
+          "tagName": "my-custom-element",
+          "customElement": true,
+          "description": "A simple custom element for testing",
+          "attributes": [
+            {
+              "name": "variant",
+              "type": {
+                "text": "string"
+              },
+              "description": "Element variant"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "my-custom-element",
+          "declaration": {
+            "name": "MyCustomElement",
+            "module": "my-custom-element.js"
+          }
+        }
+      ]
     }
   ]
 }

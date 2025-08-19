@@ -39,25 +39,36 @@ func createMissingImportAction(ctx CodeActionContext, diagnostic *protocol.Diagn
 	var insertPosition protocol.Position
 
 	if strings.HasSuffix(documentURI, ".html") {
-		// For HTML files, try to amend existing script type="module" tags if document is available
+		// For HTML files, prioritize inline module scripts and head placement
 		if doc != nil {
-			scriptPosition, hasExistingScript := doc.FindModuleScript()
-
-			if hasExistingScript {
-				// Amend existing script tag by adding import statement inside it
+			// 1. Try to find existing inline module script (not external src)
+			scriptPosition, hasInlineScript := doc.FindInlineModuleScript()
+			if hasInlineScript {
+				// Amend existing inline script tag by adding import statement inside it
 				importStatement = fmt.Sprintf(`	import "%s";`, autofixData.ImportPath)
 				insertPosition = scriptPosition
 			} else {
-				// Create new script tag if no existing one found
-				importStatement = fmt.Sprintf(`<script type="module">
+				// 2. Try to find head section for new script placement  
+				headPosition, hasHead := doc.FindHeadInsertionPoint(ctx.RawDocumentManager())
+				if hasHead {
+					// Create new script tag inside head section
+					importStatement = fmt.Sprintf(`	<script type="module">
+		import "%s";
+	</script>`, autofixData.ImportPath)
+					insertPosition = headPosition
+				} else {
+					// 3. Fallback: Create new script tag at beginning of document
+					importStatement = fmt.Sprintf(`<script type="module">
 	import "%s";
 </script>`, autofixData.ImportPath)
-				// TODO: Find proper position in HTML head section using tree-sitter parsing
-				insertPosition = protocol.Position{Line: 0, Character: 0}
+					insertPosition = protocol.Position{Line: 0, Character: 0}
+				}
 			}
 		} else {
-			// Fallback: Create new script tag when document is not available (src attribute approach)
-			importStatement = fmt.Sprintf(`<script type="module" src="%s"></script>`, autofixData.ImportPath)
+			// Fallback: Create new script tag when document is not available
+			importStatement = fmt.Sprintf(`<script type="module">
+	import "%s";
+</script>`, autofixData.ImportPath)
 			insertPosition = protocol.Position{Line: 0, Character: 0}
 		}
 	} else {

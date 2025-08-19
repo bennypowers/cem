@@ -209,3 +209,128 @@ func (ctx *testSlotCompletionContext) Attributes(tagName string) (map[string]*M.
 func (ctx *testSlotCompletionContext) Slots(tagName string) ([]M.Slot, bool) {
 	return ctx.registry.Slots(tagName)
 }
+
+// createSlotTestContext creates a test context with slot definitions for testing
+func createSlotTestContext() *testSlotCompletionContext {
+	// Load test manifest with slot definitions
+	fixtureDir := filepath.Join("slot-completions-test")
+	manifestPath := filepath.Join(fixtureDir, "manifest.json")
+
+	manifestBytes, err := os.ReadFile(manifestPath)
+	if err != nil {
+		panic("Failed to read test manifest: " + err.Error())
+	}
+
+	var pkg M.Package
+	err = json.Unmarshal(manifestBytes, &pkg)
+	if err != nil {
+		panic("Failed to parse manifest: " + err.Error())
+	}
+
+	// Create registry and add the test manifest
+	registry := lsp.NewTestRegistry()
+	registry.AddManifest(&pkg)
+
+	return &testSlotCompletionContext{
+		registry: registry,
+	}
+}
+
+// TestSlotAttributeNameSuggestion tests basic slot attribute name suggestions functionality
+// For comprehensive regression testing, see TestSlotAttributeNameSuggestionRegression
+func TestSlotAttributeNameSuggestion(t *testing.T) {
+	ctx := createSlotTestContext()
+
+	tests := []struct {
+		name                string
+		html                string
+		position            protocol.Position
+		tagName             string
+		shouldSuggestSlot   bool
+		description         string
+	}{
+		{
+			name:              "Slot attribute suggested for button inside card-element",
+			html:              `<card-element><button `,
+			position:          protocol.Position{Line: 0, Character: 22},
+			tagName:           "button",
+			shouldSuggestSlot: true,
+			description:       "Should suggest slot attribute for button inside card-element with named slots",
+		},
+		{
+			name:              "Slot attribute suggested for span inside dialog-element",
+			html:              `<dialog-element><span `,
+			position:          protocol.Position{Line: 0, Character: 22},
+			tagName:           "span",
+			shouldSuggestSlot: true,
+			description:       "Should suggest slot attribute for span inside dialog-element with named slots",
+		},
+		{
+			name:              "Slot attribute suggested for custom element inside card-element",
+			html:              `<card-element><my-custom-element `,
+			position:          protocol.Position{Line: 0, Character: 33},
+			tagName:           "my-custom-element",
+			shouldSuggestSlot: true,
+			description:       "Should suggest slot attribute for custom element inside card-element",
+		},
+		{
+			name:              "No slot attribute for element not inside custom element",
+			html:              `<div><button `,
+			position:          protocol.Position{Line: 0, Character: 13},
+			tagName:           "button",
+			shouldSuggestSlot: false,
+			description:       "Should not suggest slot attribute when not inside custom element",
+		},
+		{
+			name:              "No slot attribute for top-level element",
+			html:              `<button `,
+			position:          protocol.Position{Line: 0, Character: 8},
+			tagName:           "button",
+			shouldSuggestSlot: false,
+			description:       "Should not suggest slot attribute for top-level element",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock document for this test case
+			mockDoc := NewMockDocument(tt.html)
+
+			
+			// Call the attribute completion function with context
+			completions := completion.GetAttributeCompletionsWithContext(ctx, mockDoc, tt.position, tt.tagName)
+
+			// Check if slot attribute is suggested
+			foundSlot := false
+			for _, completion := range completions {
+				if completion.Label == "slot" {
+					foundSlot = true
+					
+					// Verify the completion has proper structure
+					if completion.InsertText == nil || *completion.InsertText != `slot="$0"` {
+						t.Errorf("Expected slot completion to have snippet insert text 'slot=\"$0\"', got: %v", completion.InsertText)
+					}
+					
+					if completion.Kind == nil || *completion.Kind != protocol.CompletionItemKindProperty {
+						t.Errorf("Expected slot completion to have Property kind")
+					}
+					
+					break
+				}
+			}
+
+			if tt.shouldSuggestSlot && !foundSlot {
+				t.Errorf("Expected slot attribute to be suggested but it wasn't. Got completions: %v", 
+					getSlotCompletionLabels(completions))
+			}
+
+			if !tt.shouldSuggestSlot && foundSlot {
+				t.Errorf("Expected slot attribute NOT to be suggested but it was. Got completions: %v", 
+					getSlotCompletionLabels(completions))
+			}
+
+			t.Logf("Test: %s", tt.description)
+			t.Logf("Found %d completions: %v", len(completions), getSlotCompletionLabels(completions))
+		})
+	}
+}

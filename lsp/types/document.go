@@ -31,6 +31,8 @@ type Document interface {
 	AnalyzeCompletionContextTS(position protocol.Position, dm any) *CompletionAnalysis
 	GetScriptTags() []ScriptTag                                                      // Get parsed script tags
 	FindModuleScript() (protocol.Position, bool)                                     // Find insertion point in module script
+	FindInlineModuleScript() (protocol.Position, bool)                               // Find insertion point in inline module script (no src)
+	FindHeadInsertionPoint(dm any) (protocol.Position, bool)                         // Find insertion point in <head> section
 	ByteRangeToProtocolRange(content string, startByte, endByte uint) protocol.Range // Convert byte range to protocol range
 }
 

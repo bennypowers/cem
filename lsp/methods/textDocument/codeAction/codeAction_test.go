@@ -177,3 +177,7 @@ type mockCodeActionContext struct {
 func (m *mockCodeActionContext) Document(uri string) types.Document {
 	return m.documents[uri]
 }
+
+func (m *mockCodeActionContext) RawDocumentManager() any {
+	return nil // Mock implementation
+}

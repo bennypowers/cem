@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/lsp/methods/textDocument/references"
+	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/lsp/types"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
@@ -35,69 +36,12 @@ func (m *MockReferencesContext) WorkspaceRoot() string {
 	return "/test/workspace"
 }
 
-// MockDocument implements types.Document for testing
-type MockDocument struct {
-	uri      string
-	content  string
-	elements []types.CustomElementMatch
-}
-
-func (m *MockDocument) FindElementAtPosition(position protocol.Position, dm any) *types.CustomElementMatch {
-	return nil
-}
-
-func (m *MockDocument) FindAttributeAtPosition(position protocol.Position, dm any) (*types.AttributeMatch, string) {
-	return nil, ""
-}
-
-func (m *MockDocument) Content() (string, error) {
-	return m.content, nil
-}
-
-func (m *MockDocument) Version() int32 {
-	return 1
-}
-
-func (m *MockDocument) URI() string {
-	return m.uri
-}
-
-func (m *MockDocument) FindCustomElements(dm any) ([]types.CustomElementMatch, error) {
-	return m.elements, nil
-}
-
-func (m *MockDocument) AnalyzeCompletionContextTS(position protocol.Position, dm any) *types.CompletionAnalysis {
-	// Mock implementation that recognizes when position is inside rh-card
-	if position.Line == 0 && position.Character >= 1 && position.Character <= 8 {
-		return &types.CompletionAnalysis{
-			Type:    types.CompletionTagName,
-			TagName: "rh-card",
-		}
-	}
-	return nil
-}
-
-func (m *MockDocument) GetScriptTags() []types.ScriptTag {
-	return nil
-}
-
-func (m *MockDocument) FindModuleScript() (protocol.Position, bool) {
-	return protocol.Position{}, false
-}
-
-func (m *MockDocument) ByteRangeToProtocolRange(content string, startByte, endByte uint) protocol.Range {
-	return protocol.Range{
-		Start: protocol.Position{Line: 0, Character: 0},
-		End:   protocol.Position{Line: 0, Character: 10},
-	}
-}
 
 func TestReferences(t *testing.T) {
 	// Create mock documents with rh-card elements
-	doc1 := &MockDocument{
-		uri:     "file:///test1.html",
-		content: `<rh-card>content</rh-card>`,
-		elements: []types.CustomElementMatch{
+	doc1 := testhelpers.NewMockDocumentWithElements(
+		`<rh-card>content</rh-card>`,
+		[]types.CustomElementMatch{
 			{
 				TagName: "rh-card",
 				Range: protocol.Range{
@@ -106,12 +50,12 @@ func TestReferences(t *testing.T) {
 				},
 			},
 		},
-	}
+	)
+	doc1.URIStr = "file:///test1.html"
 
-	doc2 := &MockDocument{
-		uri:     "file:///test2.ts",
-		content: "html`<rh-card variant=\"primary\"></rh-card>`",
-		elements: []types.CustomElementMatch{
+	doc2 := testhelpers.NewMockDocumentWithElements(
+		"html`<rh-card variant=\"primary\"></rh-card>`",
+		[]types.CustomElementMatch{
 			{
 				TagName: "rh-card",
 				Range: protocol.Range{
@@ -120,7 +64,8 @@ func TestReferences(t *testing.T) {
 				},
 			},
 		},
-	}
+	)
+	doc2.URIStr = "file:///test2.ts"
 
 	ctx := &MockReferencesContext{
 		documents: []types.Document{doc1, doc2},

@@ -148,6 +148,28 @@ func (m *MockDocument) FindModuleScript() (protocol.Position, bool) {
 	return protocol.Position{}, false
 }
 
+func (m *MockDocument) FindInlineModuleScript() (protocol.Position, bool) {
+	for _, script := range m.ScriptTagsList {
+		if script.IsModule && script.Src == "" {
+			return script.ContentRange.End, true
+		}
+	}
+	return protocol.Position{}, false
+}
+
+func (m *MockDocument) FindHeadInsertionPoint(dm any) (protocol.Position, bool) {
+	// Simple mock: if content contains <head>, return position after it
+	if strings.Contains(m.ContentStr, "<head>") {
+		lines := strings.Split(m.ContentStr, "\n")
+		for i, line := range lines {
+			if strings.Contains(line, "<head>") {
+				return protocol.Position{Line: uint32(i + 1), Character: 0}, true
+			}
+		}
+	}
+	return protocol.Position{}, false
+}
+
 func (m *MockDocument) ByteRangeToProtocolRange(content string, startByte, endByte uint) protocol.Range {
 	return protocol.Range{
 		Start: protocol.Position{Line: 0, Character: uint32(startByte)},

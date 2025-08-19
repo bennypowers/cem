@@ -17,6 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package completion_test
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"bennypowers.dev/cem/lsp"
@@ -296,6 +298,25 @@ func TestCompletionIntegration(t *testing.T) {
 				t.Errorf("Expected to find %q in completion items %v", expected, labels)
 			}
 		}
+
+		// Verify that snippets include proper < and > characters
+		for _, item := range items {
+			if item.InsertText != nil {
+				insertText := *item.InsertText
+				// Should start with < and include closing >
+				if !strings.HasPrefix(insertText, "<") {
+					t.Errorf("Expected InsertText to start with '<', got %q for %s", insertText, item.Label)
+				}
+				if !strings.Contains(insertText, ">") {
+					t.Errorf("Expected InsertText to contain '>', got %q for %s", insertText, item.Label)
+				}
+				// Should be a complete snippet with opening and closing tags
+				expectedSnippet := fmt.Sprintf("<%s>$0</%s>", item.Label, item.Label)
+				if insertText != expectedSnippet {
+					t.Errorf("Expected InsertText %q, got %q for %s", expectedSnippet, insertText, item.Label)
+				}
+			}
+		}
 	})
 
 	// Test attribute completion
@@ -369,6 +390,52 @@ func TestCompletionIntegration(t *testing.T) {
 		// (presence = true, absence = false)
 		if len(items) != 0 {
 			t.Errorf("Expected 0 boolean value completion items (presence=true), got %d", len(items))
+		}
+	})
+
+	// Test trigger character handling
+	t.Run("Trigger character handling", func(t *testing.T) {
+		ctx.documents["test://test.html"] = NewMockDocument("<")
+		
+		params := &protocol.CompletionParams{
+			TextDocumentPositionParams: protocol.TextDocumentPositionParams{
+				TextDocument: protocol.TextDocumentIdentifier{URI: "test://test.html"},
+				Position:     protocol.Position{Line: 0, Character: 1},
+			},
+			Context: &protocol.CompletionContext{
+				TriggerCharacter: &[]string{"<"}[0], // Triggered by <
+			},
+		}
+
+		result, err := completion.Completion(ctx, nil, params)
+		if err != nil {
+			t.Fatalf("Completion failed: %v", err)
+		}
+
+		items, ok := result.([]protocol.CompletionItem)
+		if !ok {
+			t.Fatalf("Expected []CompletionItem, got %T", result)
+		}
+
+		// Should contain both custom elements
+		if len(items) != 2 {
+			t.Errorf("Expected 2 completion items, got %d", len(items))
+		}
+
+		// Verify that when trigger character is <, we don't get <<tag-name
+		for _, item := range items {
+			if item.InsertText != nil {
+				insertText := *item.InsertText
+				// Should not start with << (double <)
+				if strings.HasPrefix(insertText, "<<") {
+					t.Errorf("Expected InsertText not to start with '<<' when trigger char is '<', got %q for %s", insertText, item.Label)
+				}
+				// Should still be a proper snippet
+				expectedSnippet := fmt.Sprintf("<%s>$0</%s>", item.Label, item.Label)
+				if insertText != expectedSnippet {
+					t.Errorf("Expected InsertText %q, got %q for %s", expectedSnippet, insertText, item.Label)
+				}
+			}
 		}
 	})
 }

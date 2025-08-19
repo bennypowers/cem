@@ -90,6 +90,10 @@ func (s *ServerAdapter) AllDocuments() []types.Document {
 	return s.server.documents.AllDocuments()
 }
 
+func (s *ServerAdapter) GetDocumentManager() *DocumentManager {
+	return s.server.documents
+}
+
 func (s *ServerAdapter) Element(tagName string) (*M.CustomElement, bool) {
 	return s.server.registry.Element(tagName)
 }
@@ -115,20 +119,36 @@ func (s *ServerAdapter) ElementSource(tagName string) (string, bool) {
 		return "", false
 	}
 
-	// Prefer package name over module path for better import suggestions
 	packageName := definition.PackageName()
 	modulePath := definition.ModulePath()
 
+	// Always use bare specifiers - they work for both npm packages and local modules
+	// when configured with import maps or package.json exports
+	
 	if packageName != "" && modulePath != "" {
-		// For npm packages, combine package name with module path
+		// Ensure we use relative module path, not absolute
+		// If modulePath is absolute (starts with /), extract the relative part
+		relativeModulePath := modulePath
+		if strings.HasPrefix(modulePath, "/") {
+			// Extract relative path from workspace root
+			workspaceRoot := s.WorkspaceRoot()
+			if workspaceRoot != "" && strings.HasPrefix(modulePath, workspaceRoot) {
+				// Remove workspace root prefix to get relative path
+				relativeModulePath = strings.TrimPrefix(modulePath, workspaceRoot)
+				relativeModulePath = strings.TrimPrefix(relativeModulePath, "/")
+			}
+		}
+		
+		// Combine package name with relative module path for bare specifier
+		// e.g. "cem-lsp-demo" + "components/button-element.js" = "cem-lsp-demo/components/button-element.js"
 		// e.g. "@rhds/elements" + "rh-card/rh-card.js" = "@rhds/elements/rh-card/rh-card.js"
-		result := path.Join(packageName, modulePath)
+		result := path.Join(packageName, relativeModulePath)
 		return result, true
 	} else if packageName != "" {
 		// Just package name (fallback)
 		return packageName, true
 	} else if modulePath != "" {
-		// Fallback to module path for local/workspace elements
+		// Just module path for elements without package info
 		return modulePath, true
 	}
 

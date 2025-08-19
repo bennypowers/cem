@@ -43,6 +43,7 @@ type DocumentManager struct {
 	htmlCompletionContext *Q.QueryMatcher    // Cached HTML completion context query
 	tsCompletionContext   *Q.QueryMatcher    // Cached TypeScript completion context query
 	htmlScriptTags        *Q.QueryMatcher    // Cached HTML script tags query
+	htmlHeadElements      *Q.QueryMatcher    // Cached HTML head elements query
 	incrementalParser     *IncrementalParser // Incremental parsing engine
 	mu                    sync.RWMutex
 }
@@ -134,6 +135,17 @@ func NewDocumentManager() (*DocumentManager, error) {
 		return nil, fmt.Errorf("failed to create HTML script tags query: %w", err)
 	}
 
+	htmlHeadElements, err := Q.NewQueryMatcher(queryManager, "html", "headElements")
+	if err != nil {
+		htmlCustomElements.Close()
+		tsHtmlTemplates.Close()
+		htmlCompletionContext.Close()
+		tsCompletionContext.Close()
+		htmlScriptTags.Close()
+		queryManager.Close()
+		return nil, fmt.Errorf("failed to create HTML head elements query: %w", err)
+	}
+
 	return &DocumentManager{
 		documents:             make(map[string]*Document),
 		queryManager:          queryManager,
@@ -142,6 +154,7 @@ func NewDocumentManager() (*DocumentManager, error) {
 		htmlCompletionContext: htmlCompletionContext,
 		tsCompletionContext:   tsCompletionContext,
 		htmlScriptTags:        htmlScriptTags,
+		htmlHeadElements:      htmlHeadElements,
 		incrementalParser:     NewIncrementalParser(ParseStrategyAuto),
 	}, nil
 }
@@ -170,6 +183,9 @@ func (dm *DocumentManager) Close() {
 	}
 	if dm.htmlScriptTags != nil {
 		dm.htmlScriptTags.Close()
+	}
+	if dm.htmlHeadElements != nil {
+		dm.htmlHeadElements.Close()
 	}
 
 	if dm.queryManager != nil {
@@ -938,11 +954,14 @@ func (d *Document) analyzeCompletionContextTSInternal(position protocol.Position
 func (d *Document) analyzeHTMLCompletionContext(byteOffset uint, analysis *types.CompletionAnalysis, dm *DocumentManager) *types.CompletionAnalysis {
 	// Check for nil document manager - can happen when called from diagnostics or other contexts
 	if dm == nil {
+		helpers.SafeDebugLog("[COMPLETION] DocumentManager is nil, returning basic analysis")
 		return analysis
 	}
 
 	root := d.Tree.RootNode()
 	content := []byte(d.content)
+
+	helpers.SafeDebugLog("[COMPLETION] Analyzing HTML completion context at byte offset %d in content: '%s'", byteOffset, string(content))
 
 	// Use completion context query to find what we're completing at this position
 	matcher := dm.htmlCompletionContext
@@ -961,6 +980,8 @@ func (d *Document) analyzeHTMLCompletionContext(byteOffset uint, analysis *types
 				StartByte: capture.Node.StartByte(),
 				EndByte:   capture.Node.EndByte(),
 			}
+			
+			helpers.SafeDebugLog("[COMPLETION] Found capture '%s' at %d-%d: '%s'", captureName, ci.StartByte, ci.EndByte, text)
 
 			// Check if cursor is inside or immediately after any tag-related node
 			// For tag completion contexts, use exact range matching to avoid false positives
@@ -1061,6 +1082,7 @@ func (d *Document) analyzeHTMLCompletionContext(byteOffset uint, analysis *types
 					// 2. Complete custom element names (containing hyphen)
 					if len(parts) == 0 {
 						// Empty after removing <, this is start of tag typing
+						helpers.SafeDebugLog("[COMPLETION] Detected tag name completion (empty): '%s'", tagText)
 						analysis.Type = types.CompletionTagName
 						analysis.TagName = tagText // Will be empty, which is fine for completion
 						return analysis
@@ -1069,6 +1091,7 @@ func (d *Document) analyzeHTMLCompletionContext(byteOffset uint, analysis *types
 						// Only provide completion for custom elements or partial names
 						// If it looks like a complete standard HTML element, skip it
 						if strings.Contains(actualTagName, "-") || len(actualTagName) < 4 {
+							helpers.SafeDebugLog("[COMPLETION] Detected tag name completion: '%s'", actualTagName)
 							analysis.Type = types.CompletionTagName
 							analysis.TagName = actualTagName
 							return analysis
@@ -1268,6 +1291,7 @@ func (d *Document) analyzeHTMLCompletionContext(byteOffset uint, analysis *types
 
 				// Only provide attribute completion for custom elements (containing hyphen)
 				if strings.Contains(tagName, "-") {
+					helpers.SafeDebugLog("[COMPLETION] Detected attribute name completion for tag: '%s'", tagName)
 					analysis.Type = types.CompletionAttributeName
 					analysis.TagName = tagName
 					return analysis
@@ -1279,6 +1303,7 @@ func (d *Document) analyzeHTMLCompletionContext(byteOffset uint, analysis *types
 	}
 
 	// If no specific completion context found, return unknown
+	helpers.SafeDebugLog("[COMPLETION] No specific completion context found at byte offset %d, returning CompletionUnknown", byteOffset)
 	analysis.Type = types.CompletionUnknown
 	return analysis
 }
@@ -1478,6 +1503,73 @@ func (d *Document) FindModuleScript() (protocol.Position, bool) {
 				Line:      script.ContentRange.End.Line,
 				Character: 0, // Start of line for clean insertion
 			}, true
+		}
+	}
+
+	return protocol.Position{}, false
+}
+
+// FindInlineModuleScript finds the first inline module script (no src) and returns insertion position
+func (d *Document) FindInlineModuleScript() (protocol.Position, bool) {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+
+	for _, script := range d.ScriptTags {
+		if script.IsModule && script.Src == "" {
+			// Return position at the end of the script content for insertion
+			return protocol.Position{
+				Line:      script.ContentRange.End.Line,
+				Character: 0, // Start of line for clean insertion
+			}, true
+		}
+	}
+
+	return protocol.Position{}, false
+}
+
+// FindHeadInsertionPoint finds insertion point in <head> section
+func (d *Document) FindHeadInsertionPoint(dm any) (protocol.Position, bool) {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+
+	if d.Tree == nil {
+		return protocol.Position{}, false
+	}
+
+	// Cast dm back to DocumentManager
+	var docMgr *DocumentManager
+	if dm != nil {
+		docMgr = dm.(*DocumentManager)
+	}
+
+	// If no DocumentManager provided, can't use query matcher
+	if docMgr == nil || docMgr.htmlHeadElements == nil {
+		return protocol.Position{}, false
+	}
+
+	content, err := d.Content()
+	if err != nil {
+		return protocol.Position{}, false
+	}
+
+	root := d.Tree.RootNode()
+	docContent := []byte(content)
+
+	// Use the head elements query matcher to find head elements
+	for match := range docMgr.htmlHeadElements.AllQueryMatches(root, docContent) {
+		for _, capture := range match.Captures {
+			captureName := docMgr.htmlHeadElements.GetCaptureNameByIndex(capture.Index)
+			
+			if captureName == "start.tag" {
+				// Found a head start tag - insert right after it
+				captureNode := &capture.Node
+				endByte := captureNode.EndByte()
+				position := d.byteOffsetToPosition(uint(endByte))
+				return protocol.Position{
+					Line:      position.Line + 1, // Next line for clean insertion
+					Character: 0,
+				}, true
+			}
 		}
 	}
 
