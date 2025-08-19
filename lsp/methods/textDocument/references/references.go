@@ -26,7 +26,7 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument"
 	"bennypowers.dev/cem/lsp/types"
 	Q "bennypowers.dev/cem/queries"
-	"github.com/sabhiram/go-gitignore"
+	ignore "github.com/sabhiram/go-gitignore"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
@@ -59,7 +59,7 @@ func References(ctx types.ReferencesContext, context *glsp.Context, params *prot
 	helpers.SafeDebugLog("[REFERENCES] Found element: %s", request.ElementName)
 
 	// Search for all references across all documents
-	return findAllReferences(ctx, request, params.Context.IncludeDeclaration), nil
+	return findAllReferences(ctx, request), nil
 }
 
 // ReferenceRequest contains information about what to search for
@@ -213,7 +213,7 @@ func containsHyphen(s string) bool {
 }
 
 // findAllReferences searches for all occurrences of the element across workspace
-func findAllReferences(ctx types.ReferencesContext, request *ReferenceRequest, includeDeclaration bool) []protocol.Location {
+func findAllReferences(ctx types.ReferencesContext, request *ReferenceRequest) []protocol.Location {
 	var locations []protocol.Location
 
 	// First, search in all tracked (open) documents
@@ -357,9 +357,10 @@ func findReferencesInFile(filePath string, fileURI string, elementName string) [
 	ext := filepath.Ext(filePath)
 
 	// Use tree-sitter to parse the file based on its extension
-	if ext == ".html" || ext == ".htm" {
+	switch ext {
+	case ".html", ".htm":
 		locations = findHTMLReferencesInContent(contentBytes, fileURI, elementName)
-	} else if ext == ".ts" || ext == ".js" {
+	case ".ts", ".js":
 		locations = findTypeScriptReferencesInContent(contentBytes, fileURI, elementName)
 	}
 
@@ -515,8 +516,8 @@ func findHTMLReferencesInTemplate(templateContent []byte, templateOffset uint, f
 
 				// For simplicity, use positions within the template
 				// TODO: Properly adjust for template offset in the main document
-				startPos := byteOffsetToPosition(templateContent, templateStartByte)
-				endPos := byteOffsetToPosition(templateContent, templateEndByte)
+				startPos := byteOffsetToPosition(templateContent, templateStartByte+templateOffset)
+				endPos := byteOffsetToPosition(templateContent, templateEndByte+templateOffset)
 
 				location := protocol.Location{
 					URI: fileURI,
