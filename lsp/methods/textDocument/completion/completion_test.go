@@ -18,6 +18,7 @@ package completion_test
 
 import (
 	"context"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,72 +32,79 @@ import (
 	W "bennypowers.dev/cem/workspace"
 )
 
+// copyFixtureFiles copies files from the fixture directory to the target directory,
+// preserving directory structure
+func copyFixtureFiles(t *testing.T, fixtureDir, targetDir string) {
+	t.Helper()
+
+	err := filepath.Walk(fixtureDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Skip README files
+		if strings.HasSuffix(path, "README.md") {
+			return nil
+		}
+
+		// Get relative path from fixture directory
+		relPath, err := filepath.Rel(fixtureDir, path)
+		if err != nil {
+			return err
+		}
+
+		targetPath := filepath.Join(targetDir, relPath)
+
+		if info.IsDir() {
+			return os.MkdirAll(targetPath, info.Mode())
+		}
+
+		// Copy file
+		src, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer src.Close()
+
+		err = os.MkdirAll(filepath.Dir(targetPath), 0755)
+		if err != nil {
+			return err
+		}
+
+		dst, err := os.Create(targetPath)
+		if err != nil {
+			return err
+		}
+		defer dst.Close()
+
+		_, err = io.Copy(dst, src)
+		return err
+	})
+
+	if err != nil {
+		t.Fatalf("Failed to copy fixture files: %v", err)
+	}
+}
+
 // TestServerLevelIntegration tests the complete server integration including
 // manifest reloading behavior exactly as it would work in real usage
 func TestServerLevelIntegration(t *testing.T) {
 	// Create a temporary workspace directory that mimics a real project
 	tempDir := t.TempDir()
 
-	// Create package.json
-	packageJSON := `{
-  "name": "test-project", 
-  "customElements": "dist/custom-elements.json"
-}`
-
-	err := os.WriteFile(filepath.Join(tempDir, "package.json"), []byte(packageJSON), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create package.json: %v", err)
-	}
-
-	// Create source directory and TypeScript file
-	srcDir := filepath.Join(tempDir, "src")
-	err = os.MkdirAll(srcDir, 0755)
-	if err != nil {
-		t.Fatalf("Failed to create src directory: %v", err)
-	}
-
-	initialTSContent := `import { LitElement, html } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
-
-@customElement('test-alert')
-export class TestAlert extends LitElement {
-  /** The state of the alert */
-  @property() state: 'info' | 'success' | 'warning' = 'info';
-
-  render() {
-    return html` + "`<div class=\"alert alert-${this.state}\"><slot></slot></div>`" + `;
-  }
-}`
-
-	tsFilePath := filepath.Join(srcDir, "test-alert.ts")
-	err = os.WriteFile(tsFilePath, []byte(initialTSContent), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create TypeScript file: %v", err)
-	}
+	// Copy fixture files to temporary directory
+	fixtureDir := filepath.Join("test-fixtures", "server-integration")
+	copyFixtureFiles(t, fixtureDir, tempDir)
 
 	// Create dist directory
 	distDir := filepath.Join(tempDir, "dist")
-	err = os.MkdirAll(distDir, 0755)
+	err := os.MkdirAll(distDir, 0755)
 	if err != nil {
 		t.Fatalf("Failed to create dist directory: %v", err)
 	}
 
-	// Create .config directory and cem.yaml configuration
-	configDir := filepath.Join(tempDir, ".config")
-	err = os.MkdirAll(configDir, 0755)
-	if err != nil {
-		t.Fatalf("Failed to create config directory: %v", err)
-	}
-
-	cemConfig := `generate:
-  files:
-    - src/test-alert.ts
-`
-
-	err = os.WriteFile(filepath.Join(configDir, "cem.yaml"), []byte(cemConfig), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create cem.yaml: %v", err)
-	}
+	// Get paths for later use
+	tsFilePath := filepath.Join(tempDir, "src", "test-alert.ts")
 
 	// Create initial manifest by running generate manually
 	workspace := W.NewFileSystemWorkspaceContext(tempDir)
@@ -155,19 +163,15 @@ export class TestAlert extends LitElement {
 		docMgr:   dm,
 	}
 
-	// Create HTML file that uses the element
-	htmlContent := `<!DOCTYPE html>
-<html>
-<body>
-  <test-alert state=""></test-alert>
-</body>
-</html>`
-
+	// Get paths for HTML file (already copied from fixtures)
 	htmlFilePath := filepath.Join(tempDir, "index.html")
-	err = os.WriteFile(htmlFilePath, []byte(htmlContent), 0644)
+
+	// Read the HTML content
+	htmlContentBytes, err := os.ReadFile(htmlFilePath)
 	if err != nil {
-		t.Fatalf("Failed to create HTML file: %v", err)
+		t.Fatalf("Failed to read HTML file: %v", err)
 	}
+	htmlContent := string(htmlContentBytes)
 
 	// Open the HTML document in document manager
 	htmlURI := "file://" + htmlFilePath
@@ -203,12 +207,14 @@ export class TestAlert extends LitElement {
 	// Now simulate the user editing the TypeScript file to add 'error'
 	t.Logf("=== User edits test-alert.ts to add 'error' ===")
 
-	updatedTSContent := strings.Replace(initialTSContent,
-		`state: 'info' | 'success' | 'warning' = 'info'`,
-		`state: 'info' | 'success' | 'warning' | 'error' = 'info'`,
-		1)
+	// Copy the updated version from fixtures
+	updatedTSPath := filepath.Join(fixtureDir, "src", "test-alert-updated.ts")
+	updatedTSContent, err := os.ReadFile(updatedTSPath)
+	if err != nil {
+		t.Fatalf("Failed to read updated TypeScript file: %v", err)
+	}
 
-	err = os.WriteFile(tsFilePath, []byte(updatedTSContent), 0644)
+	err = os.WriteFile(tsFilePath, updatedTSContent, 0644)
 	if err != nil {
 		t.Fatalf("Failed to update TypeScript file: %v", err)
 	}
