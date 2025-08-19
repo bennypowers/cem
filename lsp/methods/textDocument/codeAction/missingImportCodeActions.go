@@ -18,6 +18,7 @@ package codeAction
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"bennypowers.dev/cem/lsp/types"
@@ -41,33 +42,38 @@ func createMissingImportAction(ctx CodeActionContext, diagnostic *protocol.Diagn
 	if strings.HasSuffix(documentURI, ".html") {
 		// For HTML files, prioritize inline module scripts and head placement
 		if doc != nil {
+			// Detect the document's indentation pattern
+			baseIndent, scriptIndent := detectIndentation(doc)
+			
 			// 1. Try to find existing inline module script (not external src)
 			scriptPosition, hasInlineScript := doc.FindInlineModuleScript()
 			if hasInlineScript {
 				// Amend existing inline script tag by adding import statement inside it
-				importStatement = fmt.Sprintf(`	import "%s";`, autofixData.ImportPath)
+				// Use the indentation detected from the specific script tag location
+				scriptContentIndent := detectScriptTagIndentation(doc, scriptPosition)
+				importStatement = fmt.Sprintf(`%simport "%s";`, scriptContentIndent, autofixData.ImportPath)
 				insertPosition = scriptPosition
 			} else {
 				// 2. Try to find head section for new script placement  
 				headPosition, hasHead := doc.FindHeadInsertionPoint(ctx.RawDocumentManager())
 				if hasHead {
-					// Create new script tag inside head section
-					importStatement = fmt.Sprintf(`	<script type="module">
-		import "%s";
-	</script>`, autofixData.ImportPath)
+					// Create new script tag inside head section with proper indentation
+					importStatement = fmt.Sprintf(`%s<script type="module">
+%simport "%s";
+%s</script>`, baseIndent, scriptIndent, autofixData.ImportPath, baseIndent)
 					insertPosition = headPosition
 				} else {
 					// 3. Fallback: Create new script tag at beginning of document
 					importStatement = fmt.Sprintf(`<script type="module">
-	import "%s";
-</script>`, autofixData.ImportPath)
+%simport "%s";
+</script>`, scriptIndent, autofixData.ImportPath)
 					insertPosition = protocol.Position{Line: 0, Character: 0}
 				}
 			}
 		} else {
 			// Fallback: Create new script tag when document is not available
 			importStatement = fmt.Sprintf(`<script type="module">
-	import "%s";
+  import "%s";
 </script>`, autofixData.ImportPath)
 			insertPosition = protocol.Position{Line: 0, Character: 0}
 		}
@@ -101,4 +107,135 @@ func createMissingImportAction(ctx CodeActionContext, diagnostic *protocol.Diagn
 	}
 
 	return &action
+}
+
+// detectIndentation analyzes the document content to determine the indentation pattern
+func detectIndentation(doc types.Document) (baseIndent string, scriptIndent string) {
+	if doc == nil {
+		// Default to 2 spaces (common in HTML)
+		return "  ", "  "
+	}
+
+	content, err := doc.Content()
+	if err != nil {
+		// Default to 2 spaces (common in HTML)
+		return "  ", "  "
+	}
+
+	lines := strings.Split(content, "\n")
+	
+	// Collect indentation samples from non-empty lines
+	var indentLevels []int
+	var hasTab bool
+	
+	// Regex to capture leading whitespace
+	indentRegex := regexp.MustCompile(`^(\s+)`)
+	
+	for _, line := range lines {
+		if strings.TrimSpace(line) == "" {
+			continue // Skip empty lines
+		}
+		
+		matches := indentRegex.FindStringSubmatch(line)
+		if len(matches) > 1 && matches[1] != "" {
+			indent := matches[1]
+			
+			// Check if file uses tabs
+			if strings.Contains(indent, "\t") {
+				hasTab = true
+				indentLevels = append(indentLevels, strings.Count(indent, "\t"))
+			} else {
+				// Count spaces
+				spaceCount := len(indent)
+				if spaceCount > 0 {
+					indentLevels = append(indentLevels, spaceCount)
+				}
+			}
+		}
+	}
+	
+	if hasTab {
+		// File uses tabs
+		return "\t", "\t\t"
+	}
+	
+	if len(indentLevels) > 0 {
+		// Find the smallest non-zero indentation (likely base indentation unit)
+		minIndent := indentLevels[0]
+		for _, level := range indentLevels {
+			if level > 0 && level < minIndent {
+				minIndent = level
+			}
+		}
+		
+		// Use the detected minimum indentation as the base unit
+		baseIndentStr := strings.Repeat(" ", minIndent)
+		scriptIndentStr := strings.Repeat(" ", minIndent*2) // Double for script content
+		
+		return baseIndentStr, scriptIndentStr
+	}
+	
+	// No indentation found, default to 2 spaces (common in HTML)
+	return "  ", "  "
+}
+
+// detectScriptTagIndentation finds the indentation level for content inside an existing script tag
+func detectScriptTagIndentation(doc types.Document, scriptPosition protocol.Position) string {
+	if doc == nil {
+		return "  " // Default to 2 spaces
+	}
+
+	content, err := doc.Content()
+	if err != nil {
+		return "  " // Default to 2 spaces
+	}
+
+	lines := strings.Split(content, "\n")
+	
+	// Collect indentation from all existing import statements to find the most consistent pattern
+	var importIndents []string
+	scriptStartLine := int(scriptPosition.Line)
+	indentRegex := regexp.MustCompile(`^(\s*)`)
+	
+	for i := scriptStartLine; i < len(lines); i++ {
+		line := lines[i]
+		
+		// Stop if we hit the closing script tag
+		if strings.Contains(line, "</script>") {
+			break
+		}
+		
+		// Look for existing import statements
+		trimmedLine := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmedLine, "import ") {
+			// Extract the indentation from this import line
+			matches := indentRegex.FindStringSubmatch(line)
+			if len(matches) > 1 && matches[1] != "" {
+				importIndents = append(importIndents, matches[1])
+			}
+		}
+	}
+	
+	// If we found import statements, check if they're consistent
+	if len(importIndents) > 0 {
+		// Count occurrences of each indentation pattern
+		indentCounts := make(map[string]int)
+		for _, indent := range importIndents {
+			indentCounts[indent]++
+		}
+		
+		// If all imports use the same indentation, use it
+		if len(indentCounts) == 1 {
+			for indent := range indentCounts {
+				return indent
+			}
+		}
+		
+		// If imports are inconsistent, prefer file's general indentation for consistency
+		// This standardizes mixed indentation rather than perpetuating it
+	}
+	
+	// If no existing imports found or no consistent pattern, use the file's general indentation pattern
+	_, scriptIndent := detectIndentation(doc)
+	return scriptIndent
 }
