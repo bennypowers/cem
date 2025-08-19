@@ -42,8 +42,12 @@ func TestDocumentChangeHandling(t *testing.T) {
 	}
 
 	// Verify initial document
-	if doc.Content() != initialContent {
-		t.Errorf("Initial content mismatch. Expected: %s, Got: %s", initialContent, doc.Content())
+	docContent, err := doc.Content()
+	if err != nil {
+		t.Fatalf("Failed to get document content: %v", err)
+	}
+	if docContent != initialContent {
+		t.Errorf("Initial content mismatch. Expected: %s, Got: %s", initialContent, docContent)
 	}
 
 	// Update document directly - simulating content change
@@ -53,8 +57,12 @@ func TestDocumentChangeHandling(t *testing.T) {
 	}
 
 	// Verify document was updated
-	if updatedDoc.Content() != updatedContent {
-		t.Errorf("Updated content mismatch. Expected: %s, Got: %s", updatedContent, updatedDoc.Content())
+	updatedDocContent, err := updatedDoc.Content()
+	if err != nil {
+		t.Fatalf("Failed to get updated document content: %v", err)
+	}
+	if updatedDocContent != updatedContent {
+		t.Errorf("Updated content mismatch. Expected: %s, Got: %s", updatedContent, updatedDocContent)
 	}
 	if updatedDoc.Version() != 2 {
 		t.Errorf("Version mismatch. Expected: 2, Got: %d", updatedDoc.Version())

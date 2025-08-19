@@ -24,7 +24,7 @@ import (
 type Document interface {
 	FindElementAtPosition(position protocol.Position, dm any) *CustomElementMatch
 	FindAttributeAtPosition(position protocol.Position, dm any) (*AttributeMatch, string)
-	Content() string
+	Content() (string, error) // Returns content with proper error handling
 	Version() int32
 	URI() string
 	FindCustomElements(dm any) ([]CustomElementMatch, error)

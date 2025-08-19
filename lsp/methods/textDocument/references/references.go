@@ -47,7 +47,11 @@ func References(ctx types.ReferencesContext, context *glsp.Context, params *prot
 	request := analyzeReferenceRequest(doc, params.Position)
 	if request == nil {
 		helpers.SafeDebugLog("[REFERENCES] No element found at position %d:%d", params.Position.Line, params.Position.Character)
-		content := doc.Content()
+		content, err := doc.Content()
+		if err != nil {
+			helpers.SafeDebugLog("[REFERENCES] Error getting document content: %v", err)
+			return nil, nil
+		}
 		preview := content
 		if len(content) > 100 {
 			preview = content[:100]
@@ -105,7 +109,11 @@ func analyzeReferenceRequest(doc types.Document, position protocol.Position) *Re
 
 // findElementAtCursor uses tree-sitter to find the element tag name at the cursor position
 func findElementAtCursor(doc types.Document, position protocol.Position) string {
-	content := doc.Content()
+	content, err := doc.Content()
+	if err != nil {
+		helpers.SafeDebugLog("[REFERENCES] Error getting document content: %v", err)
+		return ""
+	}
 
 	// Convert position to byte offset
 	byteOffset := positionToByteOffset([]byte(content), position)

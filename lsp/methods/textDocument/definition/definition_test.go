@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument"
 	"bennypowers.dev/cem/lsp/methods/textDocument/definition"
+	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
 	protocol "github.com/tliron/glsp/protocol_3_16"
@@ -147,7 +149,28 @@ type testDefinitionContext struct {
 }
 
 func (ctx *testDefinitionContext) Document(uri string) types.Document {
-	return ctx.dm.Document(uri)
+	doc := ctx.dm.Document(uri)
+	// Handle typed nil from DocumentManager
+	if doc == nil || doc == (*lsp.Document)(nil) {
+		// For testing, load fixture files for source documents
+		if strings.Contains(uri, "card-element") {
+			return ctx.loadFixtureDocument("slot-completions-test/src/card-element.ts")
+		}
+		if strings.Contains(uri, "dialog-element") {
+			return ctx.loadFixtureDocument("slot-completions-test/src/dialog-element.ts")
+		}
+		return nil
+	}
+	return doc
+}
+
+func (ctx *testDefinitionContext) loadFixtureDocument(relativePath string) types.Document {
+	content, err := os.ReadFile(relativePath)
+	if err != nil {
+		// Return empty document if fixture not found
+		return testhelpers.NewMockDocument("")
+	}
+	return testhelpers.NewMockDocument(string(content))
 }
 
 func (ctx *testDefinitionContext) ElementDefinition(tagName string) (types.ElementDefinition, bool) {
@@ -231,7 +254,7 @@ func (m *MockDocumentAdapter) FindAttributeAtPosition(position protocol.Position
 	}, tagName
 }
 
-func (m *MockDocumentAdapter) Content() string {
+func (m *MockDocumentAdapter) Content() (string, error) {
 	return m.doc.Content()
 }
 

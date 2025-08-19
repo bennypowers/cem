@@ -38,10 +38,8 @@ func AnalyzeTagNameDiagnosticsForTest(ctx DiagnosticsContext, doc types.Document
 	var diagnostics []protocol.Diagnostic
 
 	// Get document content to search for custom element tags
-	content := ""
-	if docWithContent, ok := doc.(interface{ Content() string }); ok {
-		content = docWithContent.Content()
-	} else {
+	content, err := doc.Content()
+	if err != nil {
 		return diagnostics
 	}
 
@@ -303,10 +301,8 @@ func parseModuleScriptImports(ctx DiagnosticsContext, doc types.Document) []stri
 
 	// Fallback: parse content directly with tree-sitter.
 	// TODO: this was only added for testing and should likely be removed
-	var content string
-	if docWithContent, ok := doc.(interface{ Content() string }); ok {
-		content = docWithContent.Content()
-	} else {
+	content, err := doc.Content()
+	if err != nil {
 		return importedElements
 	}
 

@@ -83,14 +83,12 @@ func DidChange(ctx LifecycleContext, context *glsp.Context, params *protocol.Did
 	helpers.SafeDebugLog("[LIFECYCLE] Found existing document for URI: %s", params.TextDocument.URI)
 
 	// Get current document content
-	var currentContent string
-	if docWithContent, ok := doc.(interface{ Content() string }); ok {
-		currentContent = docWithContent.Content()
-		helpers.SafeDebugLog("[LIFECYCLE] Current document content length: %d", len(currentContent))
-	} else {
-		helpers.SafeDebugLog("[LIFECYCLE] Document doesn't implement Content interface")
+	currentContent, err := doc.Content()
+	if err != nil {
+		helpers.SafeDebugLog("[LIFECYCLE] Error getting document content: %v", err)
 		return nil
 	}
+	helpers.SafeDebugLog("[LIFECYCLE] Current document content length: %d", len(currentContent))
 
 	// Apply content changes (can be incremental or full document)
 	newContent := currentContent

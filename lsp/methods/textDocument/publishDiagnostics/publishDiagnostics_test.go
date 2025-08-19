@@ -47,7 +47,10 @@ func TestSlotDiagnosticsBasic(t *testing.T) {
 		t.Fatal("Expected document to be found")
 	}
 
-	content := doc.Content()
+	content, err := doc.Content()
+	if err != nil {
+		t.Fatalf("Failed to get document content: %v", err)
+	}
 	if content != `<my-element><div slot="heade">Content</div></my-element>` {
 		t.Errorf("Expected content to match, got: %s", content)
 	}

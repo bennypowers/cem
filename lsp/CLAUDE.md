@@ -27,6 +27,8 @@
   - **PUBLIC API TESTING**: All tests MUST use `package lsp_test` to ensure only public APIs are tested
   - **NO PRIVATE METHOD TESTING**: Do not test private methods directly - test behavior through public interfaces
   - **AVOID MAKING METHODS PUBLIC FOR TESTS**: Only make methods public if they have genuine API value, not just for testing. e.g. When testing LSP methods like textDocument/completion - only the public method should be tested.
+  - **USE FIXTURE FILES**: Always use fixture files instead of inline content. Store test fixtures in organized directories like `test-fixtures/` or `slot-completions-test/`
+  - **USE CANONICAL TEST HELPERS**: Always use the canonical MockDocument from `lsp/testhelpers` package instead of creating new mock implementations. Use `testhelpers.NewMockDocument(content)` for mock documents.
 
 ## Common LSP Implementation Pitfalls
 

@@ -58,9 +58,9 @@ type CompletionAnalysis struct {
 // AnalyzeCompletionContext determines what completion should be provided using tree-sitter
 func AnalyzeCompletionContext(doc types.Document, position protocol.Position, triggerChar string) *types.CompletionAnalysis {
 	// Get the line content for fallback analysis
-	content := ""
-	if docWithContent, ok := doc.(interface{ Content() string }); ok {
-		content = docWithContent.Content()
+	content, err := doc.Content()
+	if err != nil {
+		content = ""
 	}
 
 	lines := strings.Split(content, "\n")
@@ -123,9 +123,9 @@ func getTemplateContext(doc types.Document, position protocol.Position) string {
 	}
 
 	// Fallback: Use simple heuristic based on content analysis
-	content := ""
-	if docWithContent, ok := doc.(interface{ Content() string }); ok {
-		content = docWithContent.Content()
+	content, err := doc.Content()
+	if err != nil {
+		content = ""
 	}
 
 	// If this looks like a TypeScript file, use template literal detection

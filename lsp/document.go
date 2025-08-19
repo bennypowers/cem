@@ -81,8 +81,8 @@ type TemplateContext struct {
 }
 
 // Content returns the template content
-func (tc *TemplateContext) Content() string {
-	return tc.content
+func (tc *TemplateContext) Content() (string, error) {
+	return tc.content, nil
 }
 
 // NewDocumentManager creates a new document manager
@@ -561,7 +561,11 @@ func (d *Document) parseHTMLInTemplate(template TemplateContext, dm *DocumentMan
 	parser := Q.GetHTMLParser()
 	defer Q.PutHTMLParser(parser)
 
-	content := []byte(template.Content())
+	templateContent, err := template.Content()
+	if err != nil {
+		return nil, err
+	}
+	content := []byte(templateContent)
 	tree := parser.Parse(content, nil)
 	defer tree.Close()
 
@@ -577,7 +581,7 @@ func (d *Document) parseHTMLInTemplate(template TemplateContext, dm *DocumentMan
 
 			// Convert byte ranges relative to template content, not the full document
 			innerRange := d.templateByteRangeToProtocolRange(
-				template.Content(),
+				templateContent,
 				tagNames[0].StartByte,
 				tagNames[0].EndByte,
 			)
@@ -590,7 +594,7 @@ func (d *Document) parseHTMLInTemplate(template TemplateContext, dm *DocumentMan
 			if attrNames, ok := captureMap["attr.name"]; ok {
 				for i, attrName := range attrNames {
 					attrInnerRange := d.templateByteRangeToProtocolRange(
-						template.Content(),
+						templateContent,
 						attrName.StartByte,
 						attrName.EndByte,
 					)
@@ -809,10 +813,10 @@ func (d *Document) FindAttributeAtPosition(position protocol.Position, dm any) (
 }
 
 // Content returns the document content
-func (d *Document) Content() string {
+func (d *Document) Content() (string, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
-	return d.content
+	return d.content, nil
 }
 
 // Version returns the document version

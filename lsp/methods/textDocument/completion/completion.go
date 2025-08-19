@@ -646,10 +646,8 @@ func getSlotAttributeCompletions(ctx CompletionContext, doc types.Document, posi
 // findParentElementTag attempts to find the parent element tag name containing the current position
 func findParentElementTag(doc types.Document, position protocol.Position) string {
 	// Get document content
-	content := ""
-	if docWithContent, ok := doc.(interface{ Content() string }); ok {
-		content = docWithContent.Content()
-	} else {
+	content, err := doc.Content()
+	if err != nil {
 		return ""
 	}
 

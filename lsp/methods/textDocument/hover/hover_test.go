@@ -372,7 +372,7 @@ func (d *documentAdapter) FindAttributeAtPosition(position protocol.Position, dm
 }
 
 // Content returns the document content
-func (d *documentAdapter) Content() string {
+func (d *documentAdapter) Content() (string, error) {
 	return d.doc.Content()
 }
 

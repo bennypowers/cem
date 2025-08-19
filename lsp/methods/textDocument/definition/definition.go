@@ -108,7 +108,7 @@ func Definition(ctx types.DefinitionContext, context *glsp.Context, params *prot
 }
 
 // analyzeDefinitionTarget analyzes the cursor position to determine what definition is being requested
-func analyzeDefinitionTarget(doc types.Document, position protocol.Position, dm interface{}) *DefinitionRequest {
+func analyzeDefinitionTarget(doc types.Document, position protocol.Position, dm any) *DefinitionRequest {
 	// Find if we're on an element
 	element := doc.FindElementAtPosition(position, dm)
 	if element != nil {
@@ -187,12 +187,13 @@ func findDefinitionLocation(sourceFile string, request *DefinitionRequest, ctx t
 
 	// Use cached document content if available and valid
 	if doc != nil {
-		docContent, success := safeGetDocumentContent(doc, sourceFile)
-		if success {
+		docContent, err := doc.Content()
+		if err != nil {
+			helpers.SafeDebugLog("[DEFINITION] Error getting document content for %s: %v", sourceFile, err)
+			doc = nil // Force fallback to disk read
+		} else {
 			content = []byte(docContent)
 			helpers.SafeDebugLog("[DEFINITION] Using cached document content for %s (%d bytes)", sourceFile, len(content))
-		} else {
-			doc = nil // Force fallback to disk read
 		}
 	}
 
@@ -452,8 +453,8 @@ func resolveExportPattern(modulePath, exportKey, exportValue, workspaceRoot stri
 			wildcardPart = modulePath
 		} else {
 			// "./lib/*" pattern - remove the lib/ prefix
-			if strings.HasPrefix(modulePath, keyPrefix+"/") {
-				wildcardPart = strings.TrimPrefix(modulePath, keyPrefix+"/")
+			if after, ok := strings.CutPrefix(modulePath, keyPrefix+"/"); ok {
+				wildcardPart = after
 			} else {
 				return ""
 			}
@@ -476,26 +477,4 @@ func resolveExportPattern(modulePath, exportKey, exportValue, workspaceRoot stri
 	}
 
 	return ""
-}
-
-// safeGetDocumentContent safely retrieves document content with panic recovery.
-// Returns the content and a success flag. If a panic occurs, it logs the error
-// and returns false to indicate fallback should be used.
-func safeGetDocumentContent(doc types.Document, sourceFile string) (content string, success bool) {
-	return withPanicRecovery(func() (string, bool) {
-		return doc.Content(), true
-	}, sourceFile, "Document.Content()")
-}
-
-// withPanicRecovery is a generic helper for executing functions with panic recovery.
-// It logs any panics that occur and returns safe defaults.
-func withPanicRecovery[T any](fn func() (T, bool), context, operation string) (result T, success bool) {
-	defer func() {
-		if r := recover(); r != nil {
-			helpers.SafeDebugLog("[DEFINITION] %s panic recovered for %s: %v", operation, context, r)
-			success = false
-		}
-	}()
-
-	return fn()
 }

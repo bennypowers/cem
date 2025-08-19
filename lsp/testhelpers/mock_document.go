@@ -34,8 +34,8 @@ type MockDocument struct {
 	TemplateContext string
 }
 
-func (m *MockDocument) Content() string {
-	return m.ContentStr
+func (m *MockDocument) Content() (string, error) {
+	return m.ContentStr, nil
 }
 
 func (m *MockDocument) URI() string {

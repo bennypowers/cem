@@ -50,8 +50,8 @@ func (m *MockDocument) FindAttributeAtPosition(position protocol.Position, dm an
 	return nil, ""
 }
 
-func (m *MockDocument) Content() string {
-	return m.content
+func (m *MockDocument) Content() (string, error) {
+	return m.content, nil
 }
 
 func (m *MockDocument) Version() int32 {

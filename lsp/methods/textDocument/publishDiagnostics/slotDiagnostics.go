@@ -32,10 +32,8 @@ func analyzeSlotDiagnostics(ctx DiagnosticsContext, doc types.Document) []protoc
 	var diagnostics []protocol.Diagnostic
 
 	// Get document content to search for slot attributes
-	content := ""
-	if docWithContent, ok := doc.(interface{ Content() string }); ok {
-		content = docWithContent.Content()
-	} else {
+	content, err := doc.Content()
+	if err != nil {
 		return diagnostics
 	}
 

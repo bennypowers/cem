@@ -80,10 +80,8 @@ func AnalyzeAttributeDiagnosticsForTest(ctx DiagnosticsContext, doc types.Docume
 	var diagnostics []protocol.Diagnostic
 
 	// Get document content to search for attributes
-	content := ""
-	if docWithContent, ok := doc.(interface{ Content() string }); ok {
-		content = docWithContent.Content()
-	} else {
+	content, err := doc.Content()
+	if err != nil {
 		return diagnostics
 	}
 
