@@ -88,17 +88,6 @@
   }
 }
 
-/* Utility classes */
-.narrow {
-  max-width: 750px;
-  margin: 0 auto;
-}
-
-/* Layout utilities */
-blockquote + code-highlighter {
-  margin-top: 2.25rem;
-}
-
 /* Font Face Declarations */
 @font-face {
   font-family: 'Metropolis';
@@ -158,6 +147,17 @@ blockquote + code-highlighter {
        url('../fonts/cookie-v10-latin-regular.woff2') format('woff2'), 
        url('../fonts/cookie-v10-latin-regular.woff') format('woff');
   font-display: swap;
+}
+
+/* Utility classes */
+.narrow {
+  max-width: 750px;
+  margin: 0 auto;
+}
+
+/* Layout utilities */
+blockquote + code-highlighter {
+  margin-top: 2.25rem;
 }
 
 /* Reset and Base Styles */
@@ -221,6 +221,12 @@ a {
   text-decoration-color: var(--color-theme);
   text-underline-offset: 2px;
   color: var(--color-theme);
+}
+
+docs-sidebar {
+  li ul {
+    margin-inline-start: .5em;
+  }
 }
 
 /* Remove underlines from navigation links */
@@ -1060,16 +1066,19 @@ code-highlighter {
     h1 {
       font-weight: 300;
       font-size: 4.5rem;
-      margin-bottom: 0.5rem;
     }
     p {
       font-size: 1.5rem;
       color: var(--color-text-muted);
+      &.subheading {
+        font-size: 1.75rem;
+        font-weight: 700;
+      }
     }
     img {
       max-width: 200px;
       margin: auto;
-      margin-block-start: 3rem;
+      margin-block: 1rem;
     }
   }
 }
