@@ -233,7 +233,7 @@ func findAllReferences(ctx types.ServerContext, request *ReferenceRequest) []pro
 	helpers.SafeDebugLog("[REFERENCES] Searching %d open documents for element: %s", len(allDocuments), request.ElementName)
 
 	for _, doc := range allDocuments {
-		docLocations := findReferencesInDocument(doc, request.ElementName)
+		docLocations := findReferencesInDocument(ctx, doc, request.ElementName)
 		locations = append(locations, docLocations...)
 	}
 
@@ -249,14 +249,21 @@ func findAllReferences(ctx types.ServerContext, request *ReferenceRequest) []pro
 }
 
 // findReferencesInDocument finds all references to an element in a single document
-func findReferencesInDocument(doc types.Document, elementName string) []protocol.Location {
+func findReferencesInDocument(ctx types.ServerContext, doc types.Document, elementName string) []protocol.Location {
 	var locations []protocol.Location
 
 	uri := doc.URI()
 	helpers.SafeDebugLog("[REFERENCES] Searching document: %s", uri)
 
+	// Get DocumentManager from context for tree-sitter queries
+	dm, err := ctx.DocumentManager()
+	if err != nil {
+		helpers.SafeDebugLog("[REFERENCES] Failed to get DocumentManager: %v", err)
+		return locations
+	}
+
 	// Use Document's built-in FindCustomElements method to find all custom elements
-	elements, err := doc.FindCustomElements(nil)
+	elements, err := doc.FindCustomElements(dm)
 	if err != nil {
 		helpers.SafeDebugLog("[REFERENCES] Failed to find custom elements in %s: %v", uri, err)
 		return locations

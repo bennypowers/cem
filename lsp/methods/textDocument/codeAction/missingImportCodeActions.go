@@ -217,10 +217,19 @@ func detectScriptTagIndentation(doc types.Document, scriptPosition protocol.Posi
 
 	// Collect indentation from all existing import statements to find the most consistent pattern
 	var importIndents []string
-	scriptStartLine := int(scriptPosition.Line)
+	scriptEndLine := int(scriptPosition.Line)
 	indentRegex := regexp.MustCompile(`^(\s*)`)
 
-	for i := scriptStartLine; i < len(lines); i++ {
+	// Find the actual script start by searching backwards for the opening script tag
+	scriptStartLine := 0
+	for i := scriptEndLine; i >= 0; i-- {
+		if strings.Contains(lines[i], "<script") {
+			scriptStartLine = i
+			break
+		}
+	}
+
+	for i := scriptStartLine; i <= scriptEndLine; i++ {
 		line := lines[i]
 
 		// Stop if we hit the closing script tag

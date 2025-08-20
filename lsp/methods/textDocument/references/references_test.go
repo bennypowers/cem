@@ -57,13 +57,24 @@ func TestReferences(t *testing.T) {
 		t.Fatalf("Expected 2 locations, got %d", len(locations))
 	}
 
-	// Check first location (from test1.html)
-	if locations[0].URI != "file:///test1.html" {
-		t.Errorf("Expected URI file:///test1.html, got %s", locations[0].URI)
+	// Check that both expected URIs are present (order doesn't matter)
+	expectedURIs := map[string]bool{
+		"file:///test1.html": false,
+		"file:///test2.ts":   false,
 	}
 
-	// Check second location (from test2.ts)
-	if locations[1].URI != "file:///test2.ts" {
-		t.Errorf("Expected URI file:///test2.ts, got %s", locations[1].URI)
+	for _, location := range locations {
+		if _, exists := expectedURIs[location.URI]; exists {
+			expectedURIs[location.URI] = true
+		} else {
+			t.Errorf("Unexpected URI: %s", location.URI)
+		}
+	}
+
+	// Verify all expected URIs were found
+	for uri, found := range expectedURIs {
+		if !found {
+			t.Errorf("Expected URI %s not found in results", uri)
+		}
 	}
 }

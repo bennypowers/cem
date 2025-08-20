@@ -84,6 +84,21 @@
 (attribute_name) @attr.name.lit.boolean
   (#match? @attr.name.lit.boolean "^\\?[^@.].*|^\\?$")
 
+;; Lit-specific syntax in ERROR nodes (for incomplete attributes)
+;; These patterns need to be very specific to avoid false matches
+
+;; Event bindings (@) in ERROR nodes - match @attribute at end
+(ERROR) @attr.name.lit.event
+  (#match? @attr.name.lit.event ".*\\s@[a-zA-Z][a-zA-Z0-9]*$")
+
+;; Property bindings (.) in ERROR nodes - match .property at end  
+(ERROR) @attr.name.lit.property
+  (#match? @attr.name.lit.property ".*\\s\\.[a-zA-Z][a-zA-Z0-9]*$")
+
+;; Boolean attributes (?) in ERROR nodes - match ?attribute at end
+(ERROR) @attr.name.lit.boolean
+  (#match? @attr.name.lit.boolean ".*\\s\\?[a-zA-Z][a-zA-Z0-9]*$")
+
 ;; Standalone attribute names (for incomplete attributes)
 (attribute_name) @attribute.context
 

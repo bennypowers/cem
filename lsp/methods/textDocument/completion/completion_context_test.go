@@ -795,8 +795,8 @@ func TestTemplateContextBehavior(t *testing.T) {
 			
 			doc := dm.OpenDocument(uri, tt.content, 1)
 
-			// Analyze context
-			analysis, err := textDocument.AnalyzeCompletionContext(doc, tt.position, "")
+			// Analyze context - pass DocumentManager for tree-sitter queries
+			analysis, err := textDocument.AnalyzeCompletionContextWithDM(doc, tt.position, "", dm)
 			if err != nil {
 				t.Fatalf("Failed to analyze completion context: %v", err)
 			}
