@@ -49,10 +49,10 @@ install-bindings:
 	go generate ./...
 
 test-unit:
-	go test -race -json ./... | go tool tparse -all
+	gotestsum -- -race
 
 test-e2e:
-	go test -race -json -tags=e2e ./cmd/ | go tool tparse -all
+	gotestsum -- -race -tags=e2e ./cmd/
 
 test: test-unit test-e2e
 
