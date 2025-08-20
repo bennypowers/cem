@@ -36,7 +36,7 @@ func TestDefinition_GoesToActualDefinitionNotTopOfFile(t *testing.T) {
 	// decorator location, not the top of the file (line 0, character 0)
 
 	ctx := testhelpers.NewMockServerContext()
-	ctx.SetWorkspaceRoot("/home/bennyp/Developer/cem/lsp/methods/textDocument/definition/definition-test-fixtures")
+	ctx.SetWorkspaceRoot("definition-test-fixtures")
 
 	// Create a real DocumentManager with LSP queries (includes classes)
 	dm, err := lsp.NewDocumentManager()
@@ -91,7 +91,7 @@ func TestDefinition_GoesToActualDefinitionNotTopOfFile(t *testing.T) {
 	}
 
 	// Should resolve to TypeScript file (path resolution working)
-	expectedURI := "file:///home/bennyp/Developer/cem/lsp/methods/textDocument/definition/definition-test-fixtures/components/card-element.ts"
+	expectedURI := "file://definition-test-fixtures/components/card-element.ts"
 	if location.URI != expectedURI {
 		t.Errorf("Expected URI %s, got %s", expectedURI, location.URI)
 	}

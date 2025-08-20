@@ -325,7 +325,6 @@ func findDefinitionLocation(sourceFile string, request *DefinitionRequest, ctx t
 func resolveSourcePath(definition types.ElementDefinition, workspaceRoot string) string {
 	// Get the module path from the definition
 	modulePath := definition.ModulePath()
-	helpers.SafeDebugLog("[DEFINITION] Starting path resolution - modulePath: '%s', workspaceRoot: '%s'", modulePath, workspaceRoot)
 	if modulePath == "" {
 		return ""
 	}
@@ -357,7 +356,6 @@ func resolveSourcePath(definition types.ElementDefinition, workspaceRoot string)
 
 	// Convert file:// URI to local path
 	localPath := strings.TrimPrefix(modulePath, "file://")
-	helpers.SafeDebugLog("[DEFINITION] Converted to local path: '%s'", localPath)
 
 	// Try TypeScript source first (.ts), then declaration (.d.ts), then JavaScript (.js)
 	fs := platform.NewOSFileSystem()
@@ -365,27 +363,18 @@ func resolveSourcePath(definition types.ElementDefinition, workspaceRoot string)
 	if strings.HasSuffix(localPath, ".js") {
 		// Try .ts first
 		tsPath := strings.TrimSuffix(localPath, ".js") + ".ts"
-		helpers.SafeDebugLog("[DEFINITION] Trying TypeScript file: %s", tsPath)
 		if _, err := fs.Stat(tsPath); err == nil {
-			helpers.SafeDebugLog("[DEFINITION] Found TypeScript file: %s", tsPath)
 			return "file://" + tsPath
-		} else {
-			helpers.SafeDebugLog("[DEFINITION] TypeScript file not found: %v", err)
 		}
 
 		// Try .d.ts
 		dtsPath := strings.TrimSuffix(localPath, ".js") + ".d.ts"
-		helpers.SafeDebugLog("[DEFINITION] Trying declaration file: %s", dtsPath)
 		if _, err := fs.Stat(dtsPath); err == nil {
-			helpers.SafeDebugLog("[DEFINITION] Found declaration file: %s", dtsPath)
 			return "file://" + dtsPath
-		} else {
-			helpers.SafeDebugLog("[DEFINITION] Declaration file not found: %v", err)
 		}
 	}
 
 	// Return original path if no alternatives found
-	helpers.SafeDebugLog("[DEFINITION] Final resolved path: '%s'", modulePath)
 	return modulePath
 }
 

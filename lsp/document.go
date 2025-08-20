@@ -1570,7 +1570,6 @@ func (d *Document) analyzeTemplateContentAsHTML(templateContent string, relative
 		}
 	}
 
-
 	// For Lit templates, always try position-based detection for more accuracy
 	// This works even when tree-sitter queries don't match incomplete attributes
 	if analysis.IsLitTemplate {
