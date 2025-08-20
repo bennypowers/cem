@@ -325,6 +325,7 @@ func findDefinitionLocation(sourceFile string, request *DefinitionRequest, ctx t
 func resolveSourcePath(definition types.ElementDefinition, workspaceRoot string) string {
 	// Get the module path from the definition
 	modulePath := definition.ModulePath()
+	helpers.SafeDebugLog("[DEFINITION] Starting path resolution - modulePath: '%s', workspaceRoot: '%s'", modulePath, workspaceRoot)
 	if modulePath == "" {
 		return ""
 	}
@@ -356,6 +357,7 @@ func resolveSourcePath(definition types.ElementDefinition, workspaceRoot string)
 
 	// Convert file:// URI to local path
 	localPath := strings.TrimPrefix(modulePath, "file://")
+	helpers.SafeDebugLog("[DEFINITION] Converted to local path: '%s'", localPath)
 
 	// Try TypeScript source first (.ts), then declaration (.d.ts), then JavaScript (.js)
 	fs := platform.NewOSFileSystem()
