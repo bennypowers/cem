@@ -1,0 +1,62 @@
+[
+  {
+    "name": "html-local-import",
+    "description": "HTML file with local import (new script tag)",
+    "inputFile": "html-local-import.html",
+    "goldenFile": "html-local-import.golden.html",
+    "documentURI": "file:///test.html",
+    "importPath": "./my-element.js",
+    "tagName": "my-element",
+    "expectAction": true
+  },
+  {
+    "name": "html-existing-script",
+    "description": "HTML file with existing script tag (amend existing)",
+    "inputFile": "html-existing-script.html",
+    "goldenFile": "html-existing-script.golden.html",
+    "documentURI": "file:///test.html",
+    "importPath": "./my-element.js",
+    "tagName": "my-element",
+    "expectAction": true
+  },
+  {
+    "name": "html-local-import-partial",
+    "description": "HTML partial with local import (new script tag)",
+    "inputFile": "html-local-import-partial.html",
+    "goldenFile": "html-local-import-partial.golden.html",
+    "documentURI": "file:///test.html",
+    "importPath": "./my-element.js",
+    "tagName": "my-element",
+    "expectAction": true
+  },
+  {
+    "name": "html-existing-script-partial",
+    "description": "HTML partial with existing script tag (amend existing)",
+    "inputFile": "html-existing-script-partial.html",
+    "goldenFile": "html-existing-script-partial.golden.html",
+    "documentURI": "file:///test.html",
+    "importPath": "./my-element.js",
+    "tagName": "my-element",
+    "expectAction": true
+  },
+  {
+    "name": "typescript-local-import",
+    "description": "TypeScript file with local import",
+    "inputFile": "typescript-local-import.ts",
+    "goldenFile": "typescript-local-import.golden.ts",
+    "documentURI": "file:///test.ts",
+    "importPath": "./my-element.js",
+    "tagName": "my-element",
+    "expectAction": true
+  },
+  {
+    "name": "typescript-package-import",
+    "description": "TypeScript file with package import",
+    "inputFile": "typescript-package-import.ts",
+    "goldenFile": "typescript-package-import.golden.ts",
+    "documentURI": "file:///test.ts",
+    "importPath": "@my-org/components",
+    "tagName": "ui-button",
+    "expectAction": true
+  }
+]

@@ -22,7 +22,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/lsp/types"
@@ -49,12 +48,11 @@ func TestStartTagCompletionRegression(t *testing.T) {
 	}
 
 	// Create registry and add the test manifest
-	registry := lsp.NewTestRegistry()
+	registry := testhelpers.NewMockRegistry()
 	registry.AddManifest(&pkg)
 
-	ctx := &startTagTestContext{
-		registry: registry,
-	}
+	ctx := testhelpers.NewMockServerContext()
+	ctx.SetRegistry(registry)
 
 	// Test cases for start tag completions using the context analysis
 	tests := []struct {
@@ -98,7 +96,9 @@ func TestStartTagCompletionRegression(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock document for this test case
+			uri := "test://test.html"
 			mockDoc := testhelpers.NewMockDocument(tt.html)
+			ctx.AddDocument(uri, mockDoc)
 
 			// Test the completion context analysis first
 			analysis := textDocument.AnalyzeCompletionContext(mockDoc, tt.position, "")
@@ -137,30 +137,6 @@ func TestStartTagCompletionRegression(t *testing.T) {
 	}
 }
 
-// startTagTestContext implements CompletionContext for testing start tag completions
-type startTagTestContext struct {
-	registry *lsp.Registry
-}
-
-func (ctx *startTagTestContext) Document(uri string) types.Document {
-	return testhelpers.NewMockDocument("") // Return mock document for start tag tests
-}
-
-func (ctx *startTagTestContext) AllTagNames() []string {
-	return ctx.registry.AllTagNames()
-}
-
-func (ctx *startTagTestContext) Element(tagName string) (*M.CustomElement, bool) {
-	return ctx.registry.Element(tagName)
-}
-
-func (ctx *startTagTestContext) Attributes(tagName string) (map[string]*M.Attribute, bool) {
-	return ctx.registry.Attributes(tagName)
-}
-
-func (ctx *startTagTestContext) Slots(tagName string) ([]M.Slot, bool) {
-	return ctx.registry.Slots(tagName)
-}
 
 // extractCompletionLabels extracts labels from completion items for debugging
 func extractCompletionLabels(completions []protocol.CompletionItem) []string {

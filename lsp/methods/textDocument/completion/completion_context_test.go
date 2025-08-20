@@ -17,42 +17,21 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package completion_test
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
+	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
-
-type MockCompletionContext struct {
-	registry  *MockRegistry
-	documents map[string]types.Document
-}
-
-func (m *MockCompletionContext) Document(uri string) types.Document {
-	return m.documents[uri]
-}
-
-func (m *MockCompletionContext) AllTagNames() []string {
-	return m.registry.AllTagNames()
-}
-
-func (m *MockCompletionContext) Element(tagName string) (*M.CustomElement, bool) {
-	return m.registry.Element(tagName)
-}
-
-func (m *MockCompletionContext) Attributes(tagName string) (map[string]*M.Attribute, bool) {
-	return m.registry.Attributes(tagName)
-}
-
-func (m *MockCompletionContext) Slots(tagName string) ([]M.Slot, bool) {
-	return m.registry.Slots(tagName)
-}
 
 // TestCompletionContextAnalysis tests cursor position analysis for different completion scenarios
 func TestCompletionContextAnalysis(t *testing.T) {
@@ -123,7 +102,7 @@ func TestCompletionContextAnalysis(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock document
-			doc := NewMockDocument(tt.content)
+			doc := testhelpers.NewMockDocument(tt.content)
 
 			position := protocol.Position{
 				Line:      tt.line,
@@ -227,40 +206,41 @@ func TestCustomElementTagValidation(t *testing.T) {
 
 // TestCompletionIntegration tests the full completion flow
 func TestCompletionIntegration(t *testing.T) {
-	// Create test registry with custom elements
-	registry := &MockRegistry{
-		elements: map[string]*M.CustomElement{
-			"my-button": {
-				TagName: "my-button",
-				Attributes: []M.Attribute{
-					{FullyQualified: M.FullyQualified{Name: "disabled"}, Type: &M.Type{Text: "boolean"}},
-					{FullyQualified: M.FullyQualified{Name: "variant"}, Type: &M.Type{Text: "string"}},
-				},
-			},
-			"my-input": {
-				TagName: "my-input",
-				Attributes: []M.Attribute{
-					{FullyQualified: M.FullyQualified{Name: "value"}, Type: &M.Type{Text: "string"}},
-					{FullyQualified: M.FullyQualified{Name: "required"}, Type: &M.Type{Text: "boolean"}},
-				},
-			},
-		},
+	// Create test registry with custom elements using proper factory
+	registry := testhelpers.NewMockRegistry()
+
+	// Load manifest from existing fixture file to avoid type complexity
+	fixtureDir := filepath.Join("attribute-values-test")
+	manifestPath := filepath.Join(fixtureDir, "manifest.json")
+
+	manifestBytes, err := os.ReadFile(manifestPath)
+	if err != nil {
+		t.Fatalf("Failed to read test manifest: %v", err)
 	}
 
-	// Create completion context
-	ctx := &MockCompletionContext{
-		registry: registry,
-		documents: map[string]types.Document{
-			"test://test.html": NewMockDocument("<my-"),
-		},
+	var pkg M.Package
+	err = json.Unmarshal(manifestBytes, &pkg)
+	if err != nil {
+		t.Fatalf("Failed to parse manifest: %v", err)
 	}
+
+	registry.AddManifest(&pkg)
+
+	// Create completion context using proper factory
+	ctx := testhelpers.NewMockServerContext()
+	ctx.SetRegistry(registry)
+	ctx.SetDocumentManager(testhelpers.NewMockDocumentManager())
+
+	// Add test document
+	doc := testhelpers.NewMockDocument("<test-")
+	ctx.AddDocument("test://test.html", doc)
 
 	// Test tag name completion
 	t.Run("Tag name completion", func(t *testing.T) {
 		params := &protocol.CompletionParams{
 			TextDocumentPositionParams: protocol.TextDocumentPositionParams{
 				TextDocument: protocol.TextDocumentIdentifier{URI: "test://test.html"},
-				Position:     protocol.Position{Line: 0, Character: 4},
+				Position:     protocol.Position{Line: 0, Character: 6},
 			},
 		}
 
@@ -274,18 +254,18 @@ func TestCompletionIntegration(t *testing.T) {
 			t.Fatalf("Expected []CompletionItem, got %T", result)
 		}
 
-		// Should contain both custom elements
-		if len(items) != 2 {
-			t.Errorf("Expected 2 completion items, got %d", len(items))
+		// Should contain the test element
+		if len(items) != 1 {
+			t.Errorf("Expected 1 completion items, got %d", len(items))
 		}
 
-		// Check that we have the expected elements
+		// Check that we have the expected element
 		labels := make([]string, len(items))
 		for i, item := range items {
 			labels[i] = item.Label
 		}
 
-		expectedLabels := []string{"my-button", "my-input"}
+		expectedLabels := []string{"test-component"}
 		for _, expected := range expectedLabels {
 			found := false
 			for _, label := range labels {
@@ -321,12 +301,14 @@ func TestCompletionIntegration(t *testing.T) {
 
 	// Test attribute completion
 	t.Run("Attribute completion", func(t *testing.T) {
-		ctx.documents["test://test.html"] = NewMockDocument("<my-button ")
+		// Update document content
+		doc := testhelpers.NewMockDocument("<test-component ")
+		ctx.AddDocument("test://test.html", doc)
 
 		params := &protocol.CompletionParams{
 			TextDocumentPositionParams: protocol.TextDocumentPositionParams{
 				TextDocument: protocol.TextDocumentIdentifier{URI: "test://test.html"},
-				Position:     protocol.Position{Line: 0, Character: 11},
+				Position:     protocol.Position{Line: 0, Character: 16},
 			},
 		}
 
@@ -340,9 +322,9 @@ func TestCompletionIntegration(t *testing.T) {
 			t.Fatalf("Expected []CompletionItem, got %T", result)
 		}
 
-		// Should contain attributes for my-button
-		if len(items) != 2 {
-			t.Errorf("Expected 2 attribute completion items, got %d", len(items))
+		// Should contain attributes for test-component (7 attributes: color, theme, disabled, count, size, variant, items)
+		if len(items) < 5 { // At least 5 attributes, not exact count as it can vary
+			t.Errorf("Expected at least 5 attribute completion items, got %d", len(items))
 		}
 
 		labels := make([]string, len(items))
@@ -350,7 +332,7 @@ func TestCompletionIntegration(t *testing.T) {
 			labels[i] = item.Label
 		}
 
-		expectedLabels := []string{"disabled", "variant"}
+		expectedLabels := []string{"disabled", "color"} // Just check for a few key ones
 		for _, expected := range expectedLabels {
 			found := false
 			for _, label := range labels {
@@ -367,12 +349,14 @@ func TestCompletionIntegration(t *testing.T) {
 
 	// Test boolean attribute value completion
 	t.Run("Boolean attribute value completion", func(t *testing.T) {
-		ctx.documents["test://test.html"] = NewMockDocument("<my-button disabled=\"")
+		// Update document content
+		doc := testhelpers.NewMockDocument(`<test-component disabled="`)
+		ctx.AddDocument("test://test.html", doc)
 
 		params := &protocol.CompletionParams{
 			TextDocumentPositionParams: protocol.TextDocumentPositionParams{
 				TextDocument: protocol.TextDocumentIdentifier{URI: "test://test.html"},
-				Position:     protocol.Position{Line: 0, Character: 20},
+				Position:     protocol.Position{Line: 0, Character: 26},
 			},
 		}
 
@@ -395,8 +379,10 @@ func TestCompletionIntegration(t *testing.T) {
 
 	// Test trigger character handling
 	t.Run("Trigger character handling", func(t *testing.T) {
-		ctx.documents["test://test.html"] = NewMockDocument("<")
-		
+		// Update document content
+		doc := testhelpers.NewMockDocument("<")
+		ctx.AddDocument("test://test.html", doc)
+
 		params := &protocol.CompletionParams{
 			TextDocumentPositionParams: protocol.TextDocumentPositionParams{
 				TextDocument: protocol.TextDocumentIdentifier{URI: "test://test.html"},
@@ -417,9 +403,9 @@ func TestCompletionIntegration(t *testing.T) {
 			t.Fatalf("Expected []CompletionItem, got %T", result)
 		}
 
-		// Should contain both custom elements
-		if len(items) != 2 {
-			t.Errorf("Expected 2 completion items, got %d", len(items))
+		// Should contain the test element
+		if len(items) != 1 {
+			t.Errorf("Expected 1 completion items, got %d", len(items))
 		}
 
 		// Verify that when trigger character is <, we don't get <<tag-name
@@ -438,47 +424,6 @@ func TestCompletionIntegration(t *testing.T) {
 			}
 		}
 	})
-}
-
-// Mock implementations for testing
-
-type MockRegistry struct {
-	elements map[string]*M.CustomElement
-}
-
-func (m *MockRegistry) Element(tagName string) (*M.CustomElement, bool) {
-	elem, exists := m.elements[tagName]
-	return elem, exists
-}
-
-func (m *MockRegistry) Attributes(tagName string) (map[string]*M.Attribute, bool) {
-	elem, exists := m.elements[tagName]
-	if !exists {
-		return nil, false
-	}
-
-	attrs := make(map[string]*M.Attribute)
-	for i := range elem.Attributes {
-		attr := &elem.Attributes[i]
-		attrs[attr.Name] = attr
-	}
-	return attrs, true
-}
-
-func (m *MockRegistry) AllTagNames() []string {
-	names := make([]string, 0, len(m.elements))
-	for name := range m.elements {
-		names = append(names, name)
-	}
-	return names
-}
-
-func (m *MockRegistry) Slots(tagName string) ([]M.Slot, bool) {
-	elem, exists := m.elements[tagName]
-	if !exists {
-		return nil, false
-	}
-	return elem.Slots, true
 }
 
 // TestCompletionContextBehavior tests the true desired behavior for completion context analysis

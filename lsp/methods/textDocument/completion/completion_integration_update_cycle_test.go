@@ -26,6 +26,7 @@ import (
 	G "bennypowers.dev/cem/generate"
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
+	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
 	W "bennypowers.dev/cem/workspace"
 )
@@ -146,7 +147,7 @@ func TestCompletionUpdateCycle(t *testing.T) {
 
 	// Test initial completions - should have one, two, three
 	initialItems := completion.GetAttributeValueCompletions(ctx, "test-element", "prop")
-	t.Logf("Initial completions: %v", getCompletionLabels(initialItems))
+	t.Logf("Initial completions: %v", testhelpers.GetCompletionLabels(initialItems))
 
 	// Verify initial completions contain expected values
 	expectedInitial := []string{"one", "two", "three"}
@@ -159,7 +160,7 @@ func TestCompletionUpdateCycle(t *testing.T) {
 			}
 		}
 		if !found {
-			t.Fatalf("Initial completions missing '%s'. Got: %v", expected, getCompletionLabels(initialItems))
+			t.Fatalf("Initial completions missing '%s'. Got: %v", expected, testhelpers.GetCompletionLabels(initialItems))
 		}
 	}
 
@@ -201,7 +202,7 @@ func TestCompletionUpdateCycle(t *testing.T) {
 
 	// Test updated completions - should now include 'four'
 	updatedItems := completion.GetAttributeValueCompletions(ctx, "test-element", "prop")
-	t.Logf("Updated completions: %v", getCompletionLabels(updatedItems))
+	t.Logf("Updated completions: %v", testhelpers.GetCompletionLabels(updatedItems))
 
 	// Verify updated completions contain all original values plus 'four'
 	expectedUpdated := []string{"one", "two", "three", "four"}
@@ -214,7 +215,7 @@ func TestCompletionUpdateCycle(t *testing.T) {
 			}
 		}
 		if !found {
-			t.Errorf("Updated completions missing '%s'. Got: %v", expected, getCompletionLabels(updatedItems))
+			t.Errorf("Updated completions missing '%s'. Got: %v", expected, testhelpers.GetCompletionLabels(updatedItems))
 
 			// Debug: Check what's in the registry
 			if attrs, exists := ctx.Attributes("test-element"); exists {

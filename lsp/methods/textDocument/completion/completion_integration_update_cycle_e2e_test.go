@@ -105,7 +105,7 @@ func TestCompletionUpdateCycle(t *testing.T) {
 	}
 
 	// Create registry and load manifests
-	registry := lsp.NewTestRegistry()
+	registry := testhelpers.NewMockRegistry()
 	if err := registry.LoadFromWorkspace(workspace); err != nil {
 		t.Fatalf("Failed to load workspace manifests: %v", err)
 	}

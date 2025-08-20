@@ -33,10 +33,10 @@ import (
 
 // ElementDefinition stores a custom element with its source information
 type ElementDefinition struct {
-	Element     *M.CustomElement
-	modulePath  string             // Path from the manifest module
-	Source      *M.SourceReference // Source reference if available
-	packageName string             // Package name from package.json (if loaded from a package)
+	CustomElement *M.CustomElement
+	modulePath    string             // Path from the manifest module
+	Source        *M.SourceReference // Source reference if available
+	packageName   string             // Package name from package.json (if loaded from a package)
 }
 
 // ModulePath returns the module path for this element definition
@@ -55,6 +55,11 @@ func (ed *ElementDefinition) SourceHref() string {
 		return ed.Source.Href
 	}
 	return ""
+}
+
+// Element returns the custom element for this definition
+func (ed *ElementDefinition) Element() *M.CustomElement {
+	return ed.CustomElement
 }
 
 // Registry manages all loaded custom elements manifests and provides
@@ -355,7 +360,7 @@ func (r *Registry) addManifest(manifest *M.Package, packageName string) {
 
 					// Store the element definition with source information
 					elementDef := &ElementDefinition{
-						Element:     element,
+						CustomElement: element,
 						modulePath:  module.Path,
 						Source:      customElementDecl.Source,
 						packageName: packageName,

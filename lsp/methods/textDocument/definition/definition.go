@@ -58,7 +58,7 @@ type DefinitionRequest struct {
 }
 
 // Definition handles textDocument/definition requests
-func Definition(ctx types.DefinitionContext, context *glsp.Context, params *protocol.DefinitionParams) (any, error) {
+func Definition(ctx types.ServerContext, context *glsp.Context, params *protocol.DefinitionParams) (any, error) {
 	uri := params.TextDocument.URI
 
 	// Get the tracked document
@@ -68,7 +68,11 @@ func Definition(ctx types.DefinitionContext, context *glsp.Context, params *prot
 	}
 
 	// Analyze what's at the cursor position to determine definition request
-	request := analyzeDefinitionTarget(doc, params.Position, ctx.RawDocumentManager())
+	dm, err := ctx.DocumentManager()
+	if err != nil {
+		return nil, err
+	}
+	request := analyzeDefinitionTarget(doc, params.Position, dm)
 	if request == nil {
 		return nil, nil
 	}
@@ -158,11 +162,9 @@ func analyzeDefinitionTarget(doc types.Document, position protocol.Position, dm 
 
 // getQueryManagerFromContext retrieves the query manager from the context,
 // falling back to creating a new one if needed (for backwards compatibility)
-func getQueryManagerFromContext(ctx types.DefinitionContext) *Q.QueryManager {
-	if qm := ctx.QueryManager(); qm != nil {
-		if queryManager, ok := qm.(*Q.QueryManager); ok {
-			return queryManager
-		}
+func getQueryManagerFromContext(ctx types.ServerContext) *Q.QueryManager {
+	if qm, err := ctx.QueryManager(); err == nil && qm != nil {
+		return qm
 	}
 
 	// Fallback: create a new query manager (for testing or edge cases)
@@ -180,7 +182,7 @@ func getQueryManagerFromContext(ctx types.DefinitionContext) *Q.QueryManager {
 }
 
 // findDefinitionLocation finds the precise location of the definition in the source file
-func findDefinitionLocation(sourceFile string, request *DefinitionRequest, ctx types.DefinitionContext) *protocol.Location {
+func findDefinitionLocation(sourceFile string, request *DefinitionRequest, ctx types.ServerContext) *protocol.Location {
 	// Try to get cached document content first
 	doc := ctx.Document(sourceFile)
 	var content []byte

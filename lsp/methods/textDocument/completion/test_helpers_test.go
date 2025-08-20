@@ -21,16 +21,8 @@ type TestHelpers struct{}
 // MockDocument is an alias to the unified mock document
 type MockDocument = testhelpers.MockDocument
 
-// NewMockDocument creates a new MockDocument with the given content
-func NewMockDocument(content string) *MockDocument {
-	return testhelpers.NewMockDocument(content)
-}
-
-// MockTemplateDocument is an alias to the unified mock document with template support
-type MockTemplateDocument = testhelpers.MockDocument
-
-// NewMockTemplateDocument creates a new MockTemplateDocument with template context
-func NewMockTemplateDocument(content, templateContext string) *MockTemplateDocument {
+// NewMockTemplateDocument creates a new MockDocument with template context
+func NewMockTemplateDocument(content, templateContext string) *testhelpers.MockDocument {
 	doc := testhelpers.NewMockDocument(content)
 	doc.TemplateContext = templateContext
 	return doc
@@ -84,7 +76,7 @@ func (h *TestHelpers) CreateAttributeCompletionParams(uri, tagName string) *prot
 // and extracts attribute value completions for the specified tag and attribute.
 // This replaces direct calls to GetAttributeValueCompletions in tests.
 func (h *TestHelpers) GetAttributeValueCompletionsUsingMainEntry(
-	ctx completion.CompletionContext,
+	ctx types.ServerContext,
 	uri, tagName, attributeName string,
 ) ([]protocol.CompletionItem, error) {
 	// For now, fall back to the legacy function until we have a working main entry point approach
@@ -94,10 +86,16 @@ func (h *TestHelpers) GetAttributeValueCompletionsUsingMainEntry(
 
 // getDocumentManagerFromContext extracts DocumentManager from a completion context
 // This uses type assertion to check if the context has a document manager
-func getDocumentManagerFromContext(ctx completion.CompletionContext) *lsp.DocumentManager {
-	// Try to extract document manager using type assertion
-	if contextWithDM, ok := ctx.(interface{ GetDocumentManager() *lsp.DocumentManager }); ok {
-		return contextWithDM.GetDocumentManager()
+func getDocumentManagerFromContext(ctx types.ServerContext) *lsp.DocumentManager {
+	// Try to extract document manager using the ServerContext interface
+	dm, err := ctx.DocumentManager()
+	if err != nil {
+		return nil
+	}
+
+	// Type assert to concrete DocumentManager type
+	if lspDM, ok := dm.(*lsp.DocumentManager); ok {
+		return lspDM
 	}
 	return nil
 }

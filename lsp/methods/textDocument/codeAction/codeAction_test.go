@@ -21,17 +21,13 @@ import (
 
 	"bennypowers.dev/cem/lsp/methods/textDocument/codeAction"
 	"bennypowers.dev/cem/lsp/testhelpers"
-	"bennypowers.dev/cem/lsp/types"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 func TestCodeActionSlotSuggestion(t *testing.T) {
 	// Create mock context
-	ctx := &mockCodeActionContext{
-		documents: map[string]types.Document{
-			"test://test.html": testhelpers.NewMockDocument(`<my-element><div slot="heade">Content</div></my-element>`),
-		},
-	}
+	ctx := testhelpers.NewMockServerContext()
+	ctx.AddDocument("test://test.html", testhelpers.NewMockDocument(`<my-element><div slot="heade">Content</div></my-element>`))
 
 	// Create mock diagnostic with slot suggestion data
 	severity := protocol.DiagnosticSeverityError
@@ -135,11 +131,8 @@ func TestCodeActionSlotSuggestion(t *testing.T) {
 
 func TestCodeActionNoDiagnostics(t *testing.T) {
 	// Create mock context
-	ctx := &mockCodeActionContext{
-		documents: map[string]types.Document{
-			"test://test.html": testhelpers.NewMockDocument(`<my-element><div slot="header">Content</div></my-element>`),
-		},
-	}
+	ctx := testhelpers.NewMockServerContext()
+	ctx.AddDocument("test://test.html", testhelpers.NewMockDocument(`<my-element><div slot="header">Content</div></my-element>`))
 
 	// Create code action request with no diagnostics
 	params := &protocol.CodeActionParams{
@@ -169,15 +162,3 @@ func TestCodeActionNoDiagnostics(t *testing.T) {
 }
 
 // Mock implementations for testing
-
-type mockCodeActionContext struct {
-	documents map[string]types.Document
-}
-
-func (m *mockCodeActionContext) Document(uri string) types.Document {
-	return m.documents[uri]
-}
-
-func (m *mockCodeActionContext) RawDocumentManager() any {
-	return nil // Mock implementation
-}

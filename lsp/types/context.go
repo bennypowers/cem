@@ -16,19 +16,65 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package types
 
-// DefinitionContext provides the dependencies needed for go-to-definition functionality
-type DefinitionContext interface {
-	Document(uri string) Document
-	ElementDefinition(tagName string) (ElementDefinition, bool)
-	WorkspaceRoot() string
-	RawDocumentManager() any // For passing to FindElementAtPosition and FindAttributeAtPosition
-	QueryManager() any       // For accessing tree-sitter queries
-}
+import (
+	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/queries"
+	protocol "github.com/tliron/glsp/protocol_3_16"
+)
 
-// ReferencesContext provides the dependencies needed for go-to-references functionality
-type ReferencesContext interface {
+// DocumentManager interface for document operations
+type DocumentManager interface {
+	OpenDocument(uri, content string, version int32) Document
+	UpdateDocument(uri, content string, version int32) Document
+	UpdateDocumentWithChanges(uri, content string, version int32, changes []protocol.TextDocumentContentChangeEvent) Document
+	CloseDocument(uri string)
 	Document(uri string) Document
 	AllDocuments() []Document
+	Close()
+}
+
+// Workspace interface for workspace operations
+type Workspace interface {
+	Root() string
+	Cleanup() error
+}
+
+// Registry interface for manifest operations
+type Registry interface {
+	AddManifest(manifest *M.Package)
+	AllTagNames() []string
+	Element(tagName string) (*M.CustomElement, bool)
+	Attributes(tagName string) (map[string]*M.Attribute, bool)
+	Slots(tagName string) ([]M.Slot, bool)
 	ElementDefinition(tagName string) (ElementDefinition, bool)
+}
+
+// ServerContext provides all dependencies needed for LSP methods
+// This unified context eliminates the need for method-specific context interfaces
+type ServerContext interface {
+	// Server lifecycle
+	InitializeManifests() error
+	UpdateWorkspaceFromLSP(rootURI *string, workspaceFolders []protocol.WorkspaceFolder) error
+
+	// Document operations
+	DocumentManager() (DocumentManager, error)
+	Document(uri string) Document
+	AllDocuments() []Document
+
+	// Workspace operations
+	Workspace() Workspace
 	WorkspaceRoot() string
+
+	// Logging
+	DebugLog(format string, args ...any)
+
+	// Registry operations (embedded Registry interface)
+	Registry
+
+	// Element operations for advanced features
+	ElementSource(tagName string) (string, bool)
+	ElementDescription(tagName string) (string, bool)
+
+	// Query operations for tree-sitter
+	QueryManager() (*queries.QueryManager, error)
 }

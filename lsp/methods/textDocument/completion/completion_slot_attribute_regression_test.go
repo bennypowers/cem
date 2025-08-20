@@ -22,8 +22,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
+	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
@@ -47,12 +47,11 @@ func TestSlotAttributeNameSuggestionRegression(t *testing.T) {
 	}
 
 	// Create registry and add the test manifest
-	registry := lsp.NewTestRegistry()
+	registry := testhelpers.NewMockRegistry()
 	registry.AddManifest(&pkg)
 
-	ctx := &testSlotCompletionContext{
-		registry: registry,
-	}
+	ctx := testhelpers.NewMockServerContext()
+	ctx.SetRegistry(registry)
 
 	// Regression test cases covering all scenarios where slot attribute should/shouldn't be suggested
 	tests := []struct {
@@ -187,7 +186,7 @@ func TestSlotAttributeNameSuggestionRegression(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock document for this test case
-			mockDoc := NewMockDocument(tt.html)
+			mockDoc := testhelpers.NewMockDocument(tt.html)
 
 			// Call the attribute completion function with context
 			completions := completion.GetAttributeCompletionsWithContext(ctx, mockDoc, tt.position, tt.tagName)
@@ -276,12 +275,11 @@ func TestSlotAttributeParentDetectionRegression(t *testing.T) {
 		t.Fatalf("Failed to parse regression test manifest: %v", err)
 	}
 
-	registry := lsp.NewTestRegistry()
+	registry := testhelpers.NewMockRegistry()
 	registry.AddManifest(&pkg)
 
-	ctx := &testSlotCompletionContext{
-		registry: registry,
-	}
+	ctx := testhelpers.NewMockServerContext()
+	ctx.SetRegistry(registry)
 
 	// Test cases specifically for the parent detection bug
 	parentDetectionTests := []struct {
@@ -328,7 +326,7 @@ func TestSlotAttributeParentDetectionRegression(t *testing.T) {
 
 	for _, tt := range parentDetectionTests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockDoc := NewMockDocument(tt.html)
+			mockDoc := testhelpers.NewMockDocument(tt.html)
 			completions := completion.GetAttributeCompletionsWithContext(ctx, mockDoc, tt.position, tt.tagName)
 
 			foundSlot := false
@@ -370,15 +368,14 @@ func TestSlotAttributeCompletionStructureRegression(t *testing.T) {
 		t.Fatalf("Failed to parse regression test manifest: %v", err)
 	}
 
-	registry := lsp.NewTestRegistry()
+	registry := testhelpers.NewMockRegistry()
 	registry.AddManifest(&pkg)
 
-	ctx := &testSlotCompletionContext{
-		registry: registry,
-	}
+	ctx := testhelpers.NewMockServerContext()
+	ctx.SetRegistry(registry)
 
 	// Test that slot completion has proper LSP protocol structure
-	mockDoc := NewMockDocument(`<card-layout><button `)
+	mockDoc := testhelpers.NewMockDocument(`<card-layout><button `)
 	position := protocol.Position{Line: 0, Character: 20}
 	completions := completion.GetAttributeCompletionsWithContext(ctx, mockDoc, position, "button")
 

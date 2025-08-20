@@ -29,12 +29,12 @@ import (
 )
 
 // analyzeTagNameDiagnostics finds invalid custom element tag names and suggests corrections
-func analyzeTagNameDiagnostics(ctx DiagnosticsContext, doc types.Document) []protocol.Diagnostic {
+func analyzeTagNameDiagnostics(ctx types.ServerContext, doc types.Document) []protocol.Diagnostic {
 	return AnalyzeTagNameDiagnosticsForTest(ctx, doc)
 }
 
 // AnalyzeTagNameDiagnosticsForTest is the exported version for testing
-func AnalyzeTagNameDiagnosticsForTest(ctx DiagnosticsContext, doc types.Document) []protocol.Diagnostic {
+func AnalyzeTagNameDiagnosticsForTest(ctx types.ServerContext, doc types.Document) []protocol.Diagnostic {
 	var diagnostics []protocol.Diagnostic
 
 	// Get document content to search for custom element tags
@@ -183,7 +183,7 @@ func AnalyzeTagNameDiagnosticsForTest(ctx DiagnosticsContext, doc types.Document
 }
 
 // parseScriptImports parses HTML script tags and TypeScript imports and returns custom element tag names that are imported
-func parseScriptImports(content string, ctx DiagnosticsContext, doc types.Document) []string {
+func parseScriptImports(content string, ctx types.ServerContext, doc types.Document) []string {
 	var importedElements []string
 
 	// Check for ignore comment first
@@ -221,7 +221,7 @@ func parseScriptImports(content string, ctx DiagnosticsContext, doc types.Docume
 }
 
 // parseTypeScriptImports parses TypeScript import statements using tree-sitter
-func parseTypeScriptImports(content string, ctx DiagnosticsContext) []string {
+func parseTypeScriptImports(content string, ctx types.ServerContext) []string {
 	var importedElements []string
 
 	helpers.SafeDebugLog("[DIAGNOSTICS] Parsing TypeScript imports from content (length=%d)", len(content))
@@ -279,7 +279,7 @@ func parseTypeScriptImports(content string, ctx DiagnosticsContext) []string {
 }
 
 // parseModuleScriptImports parses <script type="module"> tags for imports using tree-sitter
-func parseModuleScriptImports(ctx DiagnosticsContext, doc types.Document) []string {
+func parseModuleScriptImports(ctx types.ServerContext, doc types.Document) []string {
 	var importedElements []string
 
 	// First try to use tree-sitter parsed script tags from document for performance
@@ -375,7 +375,7 @@ func parseModuleScriptImports(ctx DiagnosticsContext, doc types.Document) []stri
 }
 
 // parseNonModuleScriptImports parses regular <script src="..."> tags using tree-sitter
-func parseNonModuleScriptImports(content string, ctx DiagnosticsContext) []string {
+func parseNonModuleScriptImports(content string, ctx types.ServerContext) []string {
 	var importedElements []string
 
 	// Get HTML parser from pool
@@ -445,7 +445,7 @@ func parseNonModuleScriptImports(content string, ctx DiagnosticsContext) []strin
 }
 
 // resolveImportPathToElements resolves an import path to custom element tag names
-func resolveImportPathToElements(importPath string, ctx DiagnosticsContext) []string {
+func resolveImportPathToElements(importPath string, ctx types.ServerContext) []string {
 	var elements []string
 
 	helpers.SafeDebugLog("[DIAGNOSTICS] Resolving import path '%s' to elements", importPath)

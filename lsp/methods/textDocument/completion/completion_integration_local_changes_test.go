@@ -26,9 +26,12 @@ import (
 
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
+	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/queries"
 	W "bennypowers.dev/cem/workspace"
+	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 func TestLocalElementChangesUpdateCompletions(t *testing.T) {
@@ -227,10 +230,10 @@ export class TestButton extends LitElement {
 	}
 
 	if !hasInitialPrimary || !hasInitialSecondary {
-		t.Fatalf("Initial completions missing expected values. Got labels: %v", getCompletionLabels(initialItems))
+		t.Fatalf("Initial completions missing expected values. Got labels: %v", testhelpers.GetCompletionLabels(initialItems))
 	}
 
-	t.Logf("Initial completions found: %v", getCompletionLabels(initialItems))
+	t.Logf("Initial completions found: %v", testhelpers.GetCompletionLabels(initialItems))
 
 	// The server has already started file watching and generate watcher via InitializeForTesting()
 
@@ -323,14 +326,14 @@ export class TestButton extends LitElement {
 	}
 
 	if !hasUpdatedPrimary || !hasUpdatedSecondary {
-		t.Errorf("Updated completions missing original values. Got labels: %v", getCompletionLabels(updatedItems))
+		t.Errorf("Updated completions missing original values. Got labels: %v", testhelpers.GetCompletionLabels(updatedItems))
 	}
 
 	if !hasUpdatedDanger {
-		t.Errorf("Updated completions missing new 'danger' value. Got labels: %v", getCompletionLabels(updatedItems))
+		t.Errorf("Updated completions missing new 'danger' value. Got labels: %v", testhelpers.GetCompletionLabels(updatedItems))
 	}
 
-	t.Logf("Updated completions found: %v", getCompletionLabels(updatedItems))
+	t.Logf("Updated completions found: %v", testhelpers.GetCompletionLabels(updatedItems))
 	t.Logf("Test passed: Local element changes successfully updated HTML completions")
 }
 
@@ -431,16 +434,20 @@ export class MyApp extends LitElement {
 		t.Fatalf("Failed to initialize workspace: %v", err)
 	}
 
-	registry, err := lsp.NewRegistryWithDefaults()
+	// Create a full LSP server instance like TestServerLevelIntegration
+	server, err := lsp.NewServer(workspace)
 	if err != nil {
-		t.Fatalf("Failed to create registry: %v", err)
+		t.Fatalf("Failed to create LSP server: %v", err)
+	}
+	defer server.Close()
+
+	// Initialize the server (this loads manifests and starts file watching AND generate watcher)
+	err = server.InitializeForTesting()
+	if err != nil {
+		t.Fatalf("Failed to initialize server: %v", err)
 	}
 
-	// Load initial manifests
-	err = registry.LoadFromWorkspace(workspace)
-	if err != nil {
-		t.Fatalf("Failed to load workspace manifests: %v", err)
-	}
+	registry := server.Registry()
 
 	// Create document manager
 	dm, err := lsp.NewDocumentManager()
@@ -478,10 +485,10 @@ export class MyApp extends LitElement {
 	}
 
 	if !hasInitialSmall || !hasInitialMedium {
-		t.Fatalf("Initial completions missing expected values. Got labels: %v", getCompletionLabels(initialItems))
+		t.Fatalf("Initial completions missing expected values. Got labels: %v", testhelpers.GetCompletionLabels(initialItems))
 	}
 
-	t.Logf("Initial Lit template completions found: %v", getCompletionLabels(initialItems))
+	t.Logf("Initial Lit template completions found: %v", testhelpers.GetCompletionLabels(initialItems))
 
 	// Start file watching
 	var reloadCalled2 bool
@@ -551,14 +558,14 @@ export class MyApp extends LitElement {
 	}
 
 	if !hasUpdatedSmall || !hasUpdatedMedium {
-		t.Errorf("Updated completions missing original values. Got labels: %v", getCompletionLabels(updatedItems))
+		t.Errorf("Updated completions missing original values. Got labels: %v", testhelpers.GetCompletionLabels(updatedItems))
 	}
 
 	if !hasUpdatedLarge {
-		t.Errorf("Updated completions missing new 'large' value. Got labels: %v", getCompletionLabels(updatedItems))
+		t.Errorf("Updated completions missing new 'large' value. Got labels: %v", testhelpers.GetCompletionLabels(updatedItems))
 	}
 
-	t.Logf("Updated Lit template completions found: %v", getCompletionLabels(updatedItems))
+	t.Logf("Updated Lit template completions found: %v", testhelpers.GetCompletionLabels(updatedItems))
 	t.Logf("Test passed: Local element changes successfully updated Lit template completions")
 }
 
@@ -586,6 +593,61 @@ func (ctx *testCompletionContextWithDM) Attributes(tagName string) (map[string]*
 
 func (ctx *testCompletionContextWithDM) Slots(tagName string) ([]M.Slot, bool) {
 	return ctx.registry.Slots(tagName)
+}
+
+func (ctx *testCompletionContextWithDM) AddManifest(manifest *M.Package) {
+	ctx.registry.AddManifest(manifest)
+}
+
+func (ctx *testCompletionContextWithDM) AllDocuments() []types.Document {
+	return ctx.docMgr.AllDocuments()
+}
+
+func (ctx *testCompletionContextWithDM) DebugLog(format string, args ...any) {
+	// No-op for test context
+}
+
+func (ctx *testCompletionContextWithDM) DocumentManager() (types.DocumentManager, error) {
+	return ctx.docMgr, nil
+}
+
+func (ctx *testCompletionContextWithDM) ElementDefinition(tagName string) (types.ElementDefinition, bool) {
+	return ctx.registry.ElementDefinition(tagName)
+}
+
+// Server lifecycle methods (not used in these tests)
+func (ctx *testCompletionContextWithDM) InitializeManifests() error {
+	return nil
+}
+
+func (ctx *testCompletionContextWithDM) UpdateWorkspaceFromLSP(rootURI *string, workspaceFolders []protocol.WorkspaceFolder) error {
+	return nil
+}
+
+// Workspace operations (not used in these tests)
+func (ctx *testCompletionContextWithDM) Workspace() types.Workspace {
+	return nil
+}
+
+func (ctx *testCompletionContextWithDM) WorkspaceRoot() string {
+	return ""
+}
+
+// Element operations
+func (ctx *testCompletionContextWithDM) ElementSource(tagName string) (string, bool) {
+	// Not implemented for test context
+	return "", false
+}
+
+func (ctx *testCompletionContextWithDM) ElementDescription(tagName string) (string, bool) {
+	// Not implemented for test context
+	return "", false
+}
+
+// Query operations
+func (ctx *testCompletionContextWithDM) QueryManager() (*queries.QueryManager, error) {
+	// Not implemented for test context
+	return nil, nil
 }
 
 // Helper function to get attribute names for debugging

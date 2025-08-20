@@ -32,7 +32,7 @@ import (
 )
 
 // References handles textDocument/references requests
-func References(ctx types.ReferencesContext, context *glsp.Context, params *protocol.ReferenceParams) ([]protocol.Location, error) {
+func References(ctx types.ServerContext, context *glsp.Context, params *protocol.ReferenceParams) ([]protocol.Location, error) {
 	uri := params.TextDocument.URI
 	helpers.SafeDebugLog("[REFERENCES] Request for %s at position %d:%d", uri, params.Position.Line, params.Position.Character)
 
@@ -221,7 +221,7 @@ func containsHyphen(s string) bool {
 }
 
 // findAllReferences searches for all occurrences of the element across workspace
-func findAllReferences(ctx types.ReferencesContext, request *ReferenceRequest) []protocol.Location {
+func findAllReferences(ctx types.ServerContext, request *ReferenceRequest) []protocol.Location {
 	var locations []protocol.Location
 
 	// First, search in all tracked (open) documents

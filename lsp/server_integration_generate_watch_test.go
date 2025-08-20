@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/testhelpers"
 	W "bennypowers.dev/cem/workspace"
 )
 
@@ -23,14 +24,14 @@ func TestGenerateWatcherIntegration(t *testing.T) {
 
 	sourceFixture := filepath.Join(fixtureDir, "test-element.ts")
 	sourceFile := filepath.Join(tempDir, "test-element.ts")
-	err = copyFile(sourceFixture, sourceFile)
+	err = testhelpers.CopyFile(sourceFixture, sourceFile)
 	if err != nil {
 		t.Fatalf("Failed to copy source fixture: %v", err)
 	}
 
 	packageFixture := filepath.Join(fixtureDir, "package.json")
 	packageJSON := filepath.Join(tempDir, "package.json")
-	err = copyFile(packageFixture, packageJSON)
+	err = testhelpers.CopyFile(packageFixture, packageJSON)
 	if err != nil {
 		t.Fatalf("Failed to copy package.json fixture: %v", err)
 	}

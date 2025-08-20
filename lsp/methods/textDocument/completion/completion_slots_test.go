@@ -8,7 +8,7 @@ import (
 
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
-	"bennypowers.dev/cem/lsp/types"
+	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
@@ -30,7 +30,7 @@ func TestSlotAttributeCompletions(t *testing.T) {
 	}
 
 	// Create registry and add the test manifest
-	registry := lsp.NewTestRegistry()
+	registry := testhelpers.NewMockRegistry()
 	registry.AddManifest(&pkg)
 
 	// Create a mock document manager
@@ -41,9 +41,9 @@ func TestSlotAttributeCompletions(t *testing.T) {
 	defer dm.Close()
 
 	// Test context that provides the registry data
-	ctx := &testSlotCompletionContext{
-		registry: registry,
-	}
+	ctx := testhelpers.NewMockServerContext()
+	ctx.SetRegistry(registry)
+	ctx.SetDocumentManager(dm)
 
 	tests := []struct {
 		name          string
@@ -92,7 +92,7 @@ func TestSlotAttributeCompletions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock document for this test case
-			mockDoc := NewMockDocument(tt.html)
+			mockDoc := testhelpers.NewMockDocument(tt.html)
 
 			// Call the slot completion function directly
 			completions := completion.GetAttributeValueCompletionsWithContext(ctx, mockDoc, tt.position, "", "slot")
@@ -142,15 +142,14 @@ func TestSlotCompletionDetails(t *testing.T) {
 		t.Fatalf("Failed to parse manifest: %v", err)
 	}
 
-	registry := lsp.NewTestRegistry()
+	registry := testhelpers.NewMockRegistry()
 	registry.AddManifest(&pkg)
 
-	ctx := &testSlotCompletionContext{
-		registry: registry,
-	}
+	ctx := testhelpers.NewMockServerContext()
+	ctx.SetRegistry(registry)
 
 	// Test specific completion details
-	mockDoc := NewMockDocument(`<card-element><button slot="`)
+	mockDoc := testhelpers.NewMockDocument(`<card-element><button slot="`)
 	position := protocol.Position{Line: 0, Character: 28}
 
 	completions := completion.GetAttributeValueCompletionsWithContext(ctx, mockDoc, position, "", "slot")
@@ -185,61 +184,31 @@ func getSlotCompletionLabels(completions []protocol.CompletionItem) []string {
 	return labels
 }
 
-// testSlotCompletionContext implements CompletionContext for testing slot completions
-type testSlotCompletionContext struct {
-	registry *lsp.Registry
-}
 
-func (ctx *testSlotCompletionContext) Document(uri string) types.Document {
-	return nil // Not needed for these tests
-}
-
-func (ctx *testSlotCompletionContext) AllTagNames() []string {
-	return ctx.registry.AllTagNames()
-}
-
-func (ctx *testSlotCompletionContext) Element(tagName string) (*M.CustomElement, bool) {
-	return ctx.registry.Element(tagName)
-}
-
-func (ctx *testSlotCompletionContext) Attributes(tagName string) (map[string]*M.Attribute, bool) {
-	return ctx.registry.Attributes(tagName)
-}
-
-func (ctx *testSlotCompletionContext) Slots(tagName string) ([]M.Slot, bool) {
-	return ctx.registry.Slots(tagName)
-}
-
-// createSlotTestContext creates a test context with slot definitions for testing
-func createSlotTestContext() *testSlotCompletionContext {
+// TestSlotAttributeNameSuggestion tests basic slot attribute name suggestions functionality
+// For comprehensive regression testing, see TestSlotAttributeNameSuggestionRegression
+func TestSlotAttributeNameSuggestion(t *testing.T) {
 	// Load test manifest with slot definitions
 	fixtureDir := filepath.Join("slot-completions-test")
 	manifestPath := filepath.Join(fixtureDir, "manifest.json")
 
 	manifestBytes, err := os.ReadFile(manifestPath)
 	if err != nil {
-		panic("Failed to read test manifest: " + err.Error())
+		t.Fatalf("Failed to read test manifest: %v", err)
 	}
 
 	var pkg M.Package
 	err = json.Unmarshal(manifestBytes, &pkg)
 	if err != nil {
-		panic("Failed to parse manifest: " + err.Error())
+		t.Fatalf("Failed to parse manifest: %v", err)
 	}
 
 	// Create registry and add the test manifest
-	registry := lsp.NewTestRegistry()
+	registry := testhelpers.NewMockRegistry()
 	registry.AddManifest(&pkg)
 
-	return &testSlotCompletionContext{
-		registry: registry,
-	}
-}
-
-// TestSlotAttributeNameSuggestion tests basic slot attribute name suggestions functionality
-// For comprehensive regression testing, see TestSlotAttributeNameSuggestionRegression
-func TestSlotAttributeNameSuggestion(t *testing.T) {
-	ctx := createSlotTestContext()
+	ctx := testhelpers.NewMockServerContext()
+	ctx.SetRegistry(registry)
 
 	tests := []struct {
 		name                string
@@ -294,7 +263,7 @@ func TestSlotAttributeNameSuggestion(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock document for this test case
-			mockDoc := NewMockDocument(tt.html)
+			mockDoc := testhelpers.NewMockDocument(tt.html)
 
 			
 			// Call the attribute completion function with context

@@ -19,24 +19,12 @@ package publishDiagnostics
 import (
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
-	M "bennypowers.dev/cem/manifest"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-// DiagnosticsContext provides the dependencies needed for diagnostics
-type DiagnosticsContext interface {
-	Document(uri string) types.Document
-	Slots(tagName string) ([]M.Slot, bool)
-	Attributes(tagName string) (map[string]*M.Attribute, bool)
-	AllTagNames() []string
-	// For missing import diagnostics
-	ElementDefinition(tagName string) (types.ElementDefinition, bool)
-	ElementSource(tagName string) (string, bool) // Returns import path/package name
-}
-
 // PublishDiagnostics analyzes the document and publishes diagnostics
-func PublishDiagnostics(ctx DiagnosticsContext, glspContext *glsp.Context, uri string) error {
+func PublishDiagnostics(ctx types.ServerContext, glspContext *glsp.Context, uri string) error {
 	helpers.SafeDebugLog("[DIAGNOSTICS] Starting diagnostics for %s", uri)
 
 	doc := ctx.Document(uri)

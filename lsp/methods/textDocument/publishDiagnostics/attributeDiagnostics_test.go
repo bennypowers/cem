@@ -21,51 +21,17 @@ import (
 
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
 	"bennypowers.dev/cem/lsp/testhelpers"
-	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
 )
 
-type mockAttributeDiagnosticsContext struct {
-	content    string
-	attributes map[string]map[string]*M.Attribute
-}
-
-func (m *mockAttributeDiagnosticsContext) Document(uri string) types.Document {
-	return testhelpers.NewMockDocument(m.content)
-}
-
-func (m *mockAttributeDiagnosticsContext) Slots(tagName string) ([]M.Slot, bool) {
-	return nil, false
-}
-
-func (m *mockAttributeDiagnosticsContext) Attributes(tagName string) (map[string]*M.Attribute, bool) {
-	attrs, exists := m.attributes[tagName]
-	return attrs, exists
-}
-
-func (m *mockAttributeDiagnosticsContext) AllTagNames() []string {
-	tags := make([]string, 0, len(m.attributes))
-	for tag := range m.attributes {
-		tags = append(tags, tag)
-	}
-	return tags
-}
-
-func (m *mockAttributeDiagnosticsContext) ElementDefinition(tagName string) (types.ElementDefinition, bool) {
-	return nil, false
-}
-
-func (m *mockAttributeDiagnosticsContext) ElementSource(tagName string) (string, bool) {
-	return "", false
-}
 
 func TestAttributeDiagnostics_GlobalAttributes(t *testing.T) {
-	ctx := &mockAttributeDiagnosticsContext{
-		content:    `<div class="test" id="main" data-value="42">Hello</div>`,
-		attributes: map[string]map[string]*M.Attribute{},
-	}
+	ctx := testhelpers.NewMockServerContext()
+	content := `<div class="test" id="main" data-value="42">Hello</div>`
+	doc := testhelpers.NewMockDocument(content)
+	ctx.AddDocument("test.html", doc)
 
-	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, ctx.Document("test.html"))
+	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
 
 	// Should have no diagnostics for global attributes
 	if len(diagnostics) != 0 {
@@ -74,17 +40,18 @@ func TestAttributeDiagnostics_GlobalAttributes(t *testing.T) {
 }
 
 func TestAttributeDiagnostics_CustomElementValidAttribute(t *testing.T) {
-	ctx := &mockAttributeDiagnosticsContext{
-		content: `<my-element size="large" color="red">Content</my-element>`,
-		attributes: map[string]map[string]*M.Attribute{
-			"my-element": {
-				"size":  &M.Attribute{FullyQualified: M.FullyQualified{Name: "size"}},
-				"color": &M.Attribute{FullyQualified: M.FullyQualified{Name: "color"}},
-			},
-		},
-	}
+	ctx := testhelpers.NewMockServerContext()
+	content := `<my-element size="large" color="red">Content</my-element>`
+	doc := testhelpers.NewMockDocument(content)
+	ctx.AddDocument("test.html", doc)
+	
+	// Set up attributes for my-element
+	ctx.AddAttributes("my-element", map[string]*M.Attribute{
+		"size":  &M.Attribute{FullyQualified: M.FullyQualified{Name: "size"}},
+		"color": &M.Attribute{FullyQualified: M.FullyQualified{Name: "color"}},
+	})
 
-	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, ctx.Document("test.html"))
+	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
 
 	// Should have no diagnostics for valid custom element attributes
 	if len(diagnostics) != 0 {
@@ -93,17 +60,18 @@ func TestAttributeDiagnostics_CustomElementValidAttribute(t *testing.T) {
 }
 
 func TestAttributeDiagnostics_CustomElementInvalidAttribute(t *testing.T) {
-	ctx := &mockAttributeDiagnosticsContext{
-		content: `<my-element siz="large" colour="red">Content</my-element>`,
-		attributes: map[string]map[string]*M.Attribute{
-			"my-element": {
-				"size":  &M.Attribute{FullyQualified: M.FullyQualified{Name: "size"}},
-				"color": &M.Attribute{FullyQualified: M.FullyQualified{Name: "color"}},
-			},
-		},
-	}
+	ctx := testhelpers.NewMockServerContext()
+	content := `<my-element siz="large" colour="red">Content</my-element>`
+	doc := testhelpers.NewMockDocument(content)
+	ctx.AddDocument("test.html", doc)
+	
+	// Set up attributes for my-element
+	ctx.AddAttributes("my-element", map[string]*M.Attribute{
+		"size":  &M.Attribute{FullyQualified: M.FullyQualified{Name: "size"}},
+		"color": &M.Attribute{FullyQualified: M.FullyQualified{Name: "color"}},
+	})
 
-	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, ctx.Document("test.html"))
+	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
 
 	// Should have 2 diagnostics for invalid attributes
 	if len(diagnostics) != 2 {
@@ -123,12 +91,12 @@ func TestAttributeDiagnostics_CustomElementInvalidAttribute(t *testing.T) {
 }
 
 func TestAttributeDiagnostics_ScriptTypeModule(t *testing.T) {
-	ctx := &mockAttributeDiagnosticsContext{
-		content:    `<script type="module">import './my-element.js';</script>`,
-		attributes: map[string]map[string]*M.Attribute{},
-	}
+	ctx := testhelpers.NewMockServerContext()
+	content := `<script type="module">import './my-element.js';</script>`
+	doc := testhelpers.NewMockDocument(content)
+	ctx.AddDocument("test.html", doc)
 
-	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, ctx.Document("test.html"))
+	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
 
 	// Should have 0 diagnostics - script[type] is outside CEM scope
 	if len(diagnostics) != 0 {
@@ -140,14 +108,15 @@ func TestAttributeDiagnostics_ScriptTypeModule(t *testing.T) {
 }
 
 func TestAttributeDiagnostics_GlobalAttributeTypoOnCustomElement(t *testing.T) {
-	ctx := &mockAttributeDiagnosticsContext{
-		content: `<my-custom-element clas="test" titl="tooltip">Hello</my-custom-element>`,
-		attributes: map[string]map[string]*M.Attribute{
-			"my-custom-element": {}, // Custom element with no defined attributes
-		},
-	}
+	ctx := testhelpers.NewMockServerContext()
+	content := `<my-custom-element clas="test" titl="tooltip">Hello</my-custom-element>`
+	doc := testhelpers.NewMockDocument(content)
+	ctx.AddDocument("test.html", doc)
+	
+	// Custom element with no defined attributes
+	ctx.AddAttributes("my-custom-element", map[string]*M.Attribute{})
 
-	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, ctx.Document("test.html"))
+	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
 
 	// Should have 2 diagnostics for global attribute typos on custom elements
 	if len(diagnostics) != 2 {
@@ -177,12 +146,12 @@ func TestAttributeDiagnostics_GlobalAttributeTypoOnCustomElement(t *testing.T) {
 }
 
 func TestAttributeDiagnostics_StandardElementIgnored(t *testing.T) {
-	ctx := &mockAttributeDiagnosticsContext{
-		content:    `<div clas="test" titl="tooltip">Hello</div>`,
-		attributes: map[string]map[string]*M.Attribute{},
-	}
+	ctx := testhelpers.NewMockServerContext()
+	content := `<div clas="test" titl="tooltip">Hello</div>`
+	doc := testhelpers.NewMockDocument(content)
+	ctx.AddDocument("test.html", doc)
 
-	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, ctx.Document("test.html"))
+	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
 
 	// Should have 0 diagnostics - standard HTML elements are outside CEM scope (except slot)
 	if len(diagnostics) != 0 {

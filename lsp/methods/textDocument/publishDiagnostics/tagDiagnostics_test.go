@@ -1,53 +1,18 @@
 package publishDiagnostics_test
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
-	"bennypowers.dev/cem/lsp/types"
+	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
 	W "bennypowers.dev/cem/workspace"
 )
 
-// testAdapter implements the context interfaces needed for diagnostics testing
-type testAdapter struct {
-	registry *lsp.Registry
-	docMgr   *lsp.DocumentManager
-}
-
-func (t *testAdapter) Document(uri string) types.Document {
-	return t.docMgr.Document(uri)
-}
-
-func (t *testAdapter) AllTagNames() []string {
-	return t.registry.AllTagNames()
-}
-
-func (t *testAdapter) ElementDefinition(tagName string) (types.ElementDefinition, bool) {
-	return t.registry.ElementDefinition(tagName)
-}
-
-func (t *testAdapter) ElementSource(tagName string) (string, bool) {
-	if def, exists := t.registry.ElementDefinition(tagName); exists {
-		// Try package name first, then fall back to module path
-		if packageName := def.PackageName(); packageName != "" {
-			return packageName + "/" + def.ModulePath(), true
-		}
-		return def.ModulePath(), true
-	}
-	return "", false
-}
-
-func (t *testAdapter) Slots(tagName string) ([]M.Slot, bool) {
-	return t.registry.Slots(tagName)
-}
-
-func (t *testAdapter) Attributes(tagName string) (map[string]*M.Attribute, bool) {
-	return t.registry.Attributes(tagName)
-}
 
 func TestTagDiagnostics_WithImports(t *testing.T) {
 	// Setup fixture workspace
@@ -83,11 +48,23 @@ func TestTagDiagnostics_WithImports(t *testing.T) {
 	}
 	defer dm.Close()
 
-	// Create adapter (simplified context for diagnostics)
-	adapter := &testAdapter{
-		registry: server.Registry(),
-		docMgr:   dm,
+	// Load manifests manually like other successful tests
+	registry := testhelpers.NewMockRegistry()
+	
+	// Load manifest from node_modules (where the actual test data is)
+	manifestPath := filepath.Join(fixtureDir, "node_modules", "@scope", "package", "custom-elements.json")
+	if manifestBytes, err := os.ReadFile(manifestPath); err == nil {
+		var pkg M.Package
+		if err := json.Unmarshal(manifestBytes, &pkg); err == nil {
+			registry.AddManifest(&pkg)
+			t.Logf("Loaded manifest with %d elements", len(registry.AllTagNames()))
+		}
 	}
+
+	// Create context using testhelpers
+	ctx := testhelpers.NewMockServerContext()
+	ctx.SetRegistry(registry)
+	ctx.SetDocumentManager(dm)
 
 	// Read the HTML file content from disk
 	htmlPath := filepath.Join(fixtureDir, "with-imports.html")
@@ -103,15 +80,23 @@ func TestTagDiagnostics_WithImports(t *testing.T) {
 		t.Fatal("Failed to open document")
 	}
 
+	// Add document to the mock context
+	ctx.AddDocument(uri, doc)
+
 	// Analyze tag diagnostics
-	diagnostics := publishDiagnostics.AnalyzeTagNameDiagnosticsForTest(adapter, doc)
+	diagnostics := publishDiagnostics.AnalyzeTagNameDiagnosticsForTest(ctx, doc)
 
 	// Debug: check element sources
-	allTagNames := adapter.AllTagNames()
+	allTagNames := ctx.AllTagNames()
 	t.Logf("Available elements: %v", allTagNames)
 	for _, tagName := range allTagNames {
-		if source, hasSource := adapter.ElementSource(tagName); hasSource {
-			t.Logf("Element '%s' has source: '%s'", tagName, source)
+		if def, exists := ctx.ElementDefinition(tagName); exists {
+			// Try package name first, then fall back to module path
+			if packageName := def.PackageName(); packageName != "" {
+				t.Logf("Element '%s' has source: '%s'", tagName, packageName+"/"+def.ModulePath())
+			} else {
+				t.Logf("Element '%s' has source: '%s'", tagName, def.ModulePath())
+			}
 		}
 	}
 
@@ -170,11 +155,23 @@ func TestTagDiagnostics_TypeScriptImports(t *testing.T) {
 	}
 	defer dm.Close()
 
-	// Create adapter
-	adapter := &testAdapter{
-		registry: server.Registry(),
-		docMgr:   dm,
+	// Load manifests manually like other successful tests
+	registry := testhelpers.NewMockRegistry()
+	
+	// Load manifest from node_modules (where the actual test data is)
+	manifestPath := filepath.Join(fixtureDir, "node_modules", "@scope", "package", "custom-elements.json")
+	if manifestBytes, err := os.ReadFile(manifestPath); err == nil {
+		var pkg M.Package
+		if err := json.Unmarshal(manifestBytes, &pkg); err == nil {
+			registry.AddManifest(&pkg)
+			t.Logf("Loaded manifest with %d elements", len(registry.AllTagNames()))
+		}
 	}
+
+	// Create context using testhelpers
+	ctx := testhelpers.NewMockServerContext()
+	ctx.SetRegistry(registry)
+	ctx.SetDocumentManager(dm)
 
 	// Read the TypeScript file content from disk
 	tsPath := filepath.Join(fixtureDir, "typescript-imports.ts")
@@ -190,17 +187,25 @@ func TestTagDiagnostics_TypeScriptImports(t *testing.T) {
 		t.Fatal("Failed to open document")
 	}
 
+	// Add document to the mock context
+	ctx.AddDocument(uri, doc)
+
 	// Debug: check element sources
-	allTagNames := adapter.AllTagNames()
+	allTagNames := ctx.AllTagNames()
 	t.Logf("Available elements: %v", allTagNames)
 	for _, tagName := range allTagNames {
-		if source, hasSource := adapter.ElementSource(tagName); hasSource {
-			t.Logf("Element '%s' has source: '%s'", tagName, source)
+		if def, exists := ctx.ElementDefinition(tagName); exists {
+			// Try package name first, then fall back to module path
+			if packageName := def.PackageName(); packageName != "" {
+				t.Logf("Element '%s' has source: '%s'", tagName, packageName+"/"+def.ModulePath())
+			} else {
+				t.Logf("Element '%s' has source: '%s'", tagName, def.ModulePath())
+			}
 		}
 	}
 
 	// Analyze tag diagnostics
-	diagnostics := publishDiagnostics.AnalyzeTagNameDiagnosticsForTest(adapter, doc)
+	diagnostics := publishDiagnostics.AnalyzeTagNameDiagnosticsForTest(ctx, doc)
 
 	// Should have 0 diagnostics for TypeScript file with imports
 	if len(diagnostics) != 0 {
@@ -245,11 +250,23 @@ func TestTagDiagnostics_MissingImports(t *testing.T) {
 	}
 	defer dm.Close()
 
-	// Create adapter
-	adapter := &testAdapter{
-		registry: server.Registry(),
-		docMgr:   dm,
+	// Load manifests manually like other successful tests
+	registry := testhelpers.NewMockRegistry()
+	
+	// Load manifest from node_modules (where the actual test data is)
+	manifestPath := filepath.Join(fixtureDir, "node_modules", "@scope", "package", "custom-elements.json")
+	if manifestBytes, err := os.ReadFile(manifestPath); err == nil {
+		var pkg M.Package
+		if err := json.Unmarshal(manifestBytes, &pkg); err == nil {
+			registry.AddManifest(&pkg)
+			t.Logf("Loaded manifest with %d elements", len(registry.AllTagNames()))
+		}
 	}
+
+	// Create context using testhelpers
+	ctx := testhelpers.NewMockServerContext()
+	ctx.SetRegistry(registry)
+	ctx.SetDocumentManager(dm)
 
 	// Read the HTML file content from disk
 	htmlPath := filepath.Join(fixtureDir, "missing-imports.html")
@@ -265,8 +282,11 @@ func TestTagDiagnostics_MissingImports(t *testing.T) {
 		t.Fatal("Failed to open document")
 	}
 
+	// Add document to the mock context
+	ctx.AddDocument(uri, doc)
+
 	// Analyze tag diagnostics
-	diagnostics := publishDiagnostics.AnalyzeTagNameDiagnosticsForTest(adapter, doc)
+	diagnostics := publishDiagnostics.AnalyzeTagNameDiagnosticsForTest(ctx, doc)
 
 	// Should have diagnostics for missing imports and typos
 	if len(diagnostics) == 0 {
@@ -340,11 +360,23 @@ func TestTagDiagnostics_IgnoreComment(t *testing.T) {
 	}
 	defer dm.Close()
 
-	// Create adapter
-	adapter := &testAdapter{
-		registry: server.Registry(),
-		docMgr:   dm,
+	// Load manifests manually like other successful tests
+	registry := testhelpers.NewMockRegistry()
+	
+	// Load manifest from node_modules (where the actual test data is)
+	manifestPath := filepath.Join(fixtureDir, "node_modules", "@scope", "package", "custom-elements.json")
+	if manifestBytes, err := os.ReadFile(manifestPath); err == nil {
+		var pkg M.Package
+		if err := json.Unmarshal(manifestBytes, &pkg); err == nil {
+			registry.AddManifest(&pkg)
+			t.Logf("Loaded manifest with %d elements", len(registry.AllTagNames()))
+		}
 	}
+
+	// Create context using testhelpers
+	ctx := testhelpers.NewMockServerContext()
+	ctx.SetRegistry(registry)
+	ctx.SetDocumentManager(dm)
 
 	// Open document with ignore comment
 	uri := "file://" + ignoreFile
@@ -353,8 +385,11 @@ func TestTagDiagnostics_IgnoreComment(t *testing.T) {
 		t.Fatal("Failed to open document")
 	}
 
+	// Add document to the mock context
+	ctx.AddDocument(uri, doc)
+
 	// Analyze tag diagnostics
-	diagnostics := publishDiagnostics.AnalyzeTagNameDiagnosticsForTest(adapter, doc)
+	diagnostics := publishDiagnostics.AnalyzeTagNameDiagnosticsForTest(ctx, doc)
 
 	// Should have 0 diagnostics when ignore comment is present
 	if len(diagnostics) != 0 {

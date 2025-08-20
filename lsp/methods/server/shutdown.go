@@ -19,14 +19,16 @@ package server
 import (
 	"log"
 
+	"bennypowers.dev/cem/lsp/types"
 	"github.com/tliron/glsp"
 )
 
 // Shutdown handles the LSP shutdown request
-func Shutdown(ctx ServerContext, context *glsp.Context) error {
+func Shutdown(ctx types.ServerContext, context *glsp.Context) error {
 	log.Printf("CEM LSP Server shutting down...")
 
-	if dm := ctx.DocumentManager(); dm != nil {
+	dm, _ := ctx.DocumentManager()
+	if dm != nil {
 		dm.Close()
 	}
 

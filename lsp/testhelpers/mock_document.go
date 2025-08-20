@@ -149,24 +149,64 @@ func (m *MockDocument) FindModuleScript() (protocol.Position, bool) {
 }
 
 func (m *MockDocument) FindInlineModuleScript() (protocol.Position, bool) {
+	// First try the ScriptTagsList if populated
 	for _, script := range m.ScriptTagsList {
 		if script.IsModule && script.Src == "" {
 			return script.ContentRange.End, true
 		}
 	}
-	return protocol.Position{}, false
-}
-
-func (m *MockDocument) FindHeadInsertionPoint(dm any) (protocol.Position, bool) {
-	// Simple mock: if content contains <head>, return position after it
-	if strings.Contains(m.ContentStr, "<head>") {
+	
+	// Fallback to parsing content if ScriptTagsList is empty
+	if len(m.ScriptTagsList) == 0 {
 		lines := strings.Split(m.ContentStr, "\n")
 		for i, line := range lines {
-			if strings.Contains(line, "<head>") {
+			// Look for inline module script tags (no src attribute)
+			if strings.Contains(line, `<script type="module">`) {
+				// Return the position at the end of the opening script tag line
+				// This is where we would insert the import statement
 				return protocol.Position{Line: uint32(i + 1), Character: 0}, true
 			}
 		}
 	}
+	
+	return protocol.Position{}, false
+}
+
+func (m *MockDocument) FindHeadInsertionPoint(dm any) (protocol.Position, bool) {
+	if !strings.Contains(m.ContentStr, "<head>") {
+		return protocol.Position{}, false
+	}
+	
+	lines := strings.Split(m.ContentStr, "\n")
+	inHead := false
+	lastMetaLine := -1
+	
+	for i, line := range lines {
+		if strings.Contains(line, "<head>") {
+			inHead = true
+			continue
+		}
+		if strings.Contains(line, "</head>") {
+			inHead = false
+			// If we found meta tags, insert after the last one
+			if lastMetaLine >= 0 {
+				return protocol.Position{Line: uint32(lastMetaLine + 1), Character: 0}, true
+			}
+			// Otherwise insert right before </head>
+			return protocol.Position{Line: uint32(i), Character: 0}, true
+		}
+		if inHead {
+			// Look for meta tags, title, or other head elements
+			trimmed := strings.TrimSpace(line)
+			if strings.HasPrefix(trimmed, "<meta") || 
+			   strings.HasPrefix(trimmed, "<title") ||
+			   strings.Contains(trimmed, "charset") ||
+			   strings.Contains(trimmed, "viewport") {
+				lastMetaLine = i
+			}
+		}
+	}
+	
 	return protocol.Position{}, false
 }
 

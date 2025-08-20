@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package types
 
 import (
+	M "bennypowers.dev/cem/manifest"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
@@ -55,6 +56,7 @@ type ElementDefinition interface {
 	ModulePath() string
 	PackageName() string
 	SourceHref() string
+	Element() *M.CustomElement
 }
 
 // ScriptTag represents a tracked script tag in HTML documents

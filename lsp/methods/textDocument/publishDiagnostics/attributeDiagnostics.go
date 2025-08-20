@@ -71,12 +71,12 @@ type AttributeMatch struct {
 }
 
 // analyzeAttributeDiagnostics finds unknown attributes and suggests corrections
-func analyzeAttributeDiagnostics(ctx DiagnosticsContext, doc types.Document) []protocol.Diagnostic {
+func analyzeAttributeDiagnostics(ctx types.ServerContext, doc types.Document) []protocol.Diagnostic {
 	return AnalyzeAttributeDiagnosticsForTest(ctx, doc)
 }
 
 // AnalyzeAttributeDiagnosticsForTest is the exported version for testing
-func AnalyzeAttributeDiagnosticsForTest(ctx DiagnosticsContext, doc types.Document) []protocol.Diagnostic {
+func AnalyzeAttributeDiagnosticsForTest(ctx types.ServerContext, doc types.Document) []protocol.Diagnostic {
 	var diagnostics []protocol.Diagnostic
 
 	// Get document content to search for attributes
@@ -297,7 +297,7 @@ func isCustomElement(tagName string) bool {
 }
 
 // getCustomElementAttributes gets the attributes for a custom element from the manifest
-func getCustomElementAttributes(ctx DiagnosticsContext, tagName string) []M.Attribute {
+func getCustomElementAttributes(ctx types.ServerContext, tagName string) []M.Attribute {
 	// Use the Attributes method from DiagnosticsContext
 	if attrMap, exists := ctx.Attributes(tagName); exists {
 		// Convert map to slice

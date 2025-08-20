@@ -28,7 +28,7 @@ import (
 )
 
 // analyzeSlotDiagnostics finds invalid slot attribute values and suggests corrections
-func analyzeSlotDiagnostics(ctx DiagnosticsContext, doc types.Document) []protocol.Diagnostic {
+func analyzeSlotDiagnostics(ctx types.ServerContext, doc types.Document) []protocol.Diagnostic {
 	var diagnostics []protocol.Diagnostic
 
 	// Get document content to search for slot attributes

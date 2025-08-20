@@ -20,7 +20,6 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/lsp/testhelpers"
-	"bennypowers.dev/cem/lsp/types"
 	"bennypowers.dev/cem/manifest"
 )
 
@@ -28,26 +27,28 @@ func TestSlotDiagnosticsBasic(t *testing.T) {
 	// This is a placeholder test to demonstrate the slot diagnostics structure
 	// Full integration testing should be done at the LSP server level
 
-	// Test that our mock implementations work
-	ctx := &mockDiagnosticsContext{
-		documents: map[string]types.Document{
-			"test://test.html": testhelpers.NewMockDocument(`<my-element><div slot="heade">Content</div></my-element>`),
-		},
-		slots: map[string][]manifest.Slot{
-			"my-element": {
-				{FullyQualified: manifest.FullyQualified{Name: "header"}},
-				{FullyQualified: manifest.FullyQualified{Name: "footer"}},
-			},
-		},
-	}
+	// Create test context using MockServerContext
+	ctx := testhelpers.NewMockServerContext()
+	
+	// Add test document
+	doc := testhelpers.NewMockDocument(`<my-element><div slot="heade">Content</div></my-element>`)
+	ctx.AddDocument("test://test.html", doc)
+	
+	// Create registry with test slots
+	registry := testhelpers.NewMockRegistry()
+	registry.AddSlots("my-element", []manifest.Slot{
+		{FullyQualified: manifest.FullyQualified{Name: "header"}},
+		{FullyQualified: manifest.FullyQualified{Name: "footer"}},
+	})
+	ctx.SetRegistry(registry)
 
 	// Verify mock context works
-	doc := ctx.GetDocument("test://test.html")
-	if doc == nil {
+	retrievedDoc := ctx.Document("test://test.html")
+	if retrievedDoc == nil {
 		t.Fatal("Expected document to be found")
 	}
 
-	content, err := doc.Content()
+	content, err := retrievedDoc.Content()
 	if err != nil {
 		t.Fatalf("Failed to get document content: %v", err)
 	}
@@ -55,7 +56,7 @@ func TestSlotDiagnosticsBasic(t *testing.T) {
 		t.Errorf("Expected content to match, got: %s", content)
 	}
 
-	slots, exists := ctx.GetSlots("my-element")
+	slots, exists := ctx.Slots("my-element")
 	if !exists {
 		t.Fatal("Expected slots to exist for my-element")
 	}
@@ -69,23 +70,3 @@ func TestSlotDiagnosticsBasic(t *testing.T) {
 	}
 }
 
-// Mock implementations for testing
-
-type mockDiagnosticsContext struct {
-	documents map[string]types.Document
-	slots     map[string][]manifest.Slot
-	tagNames  []string
-}
-
-func (m *mockDiagnosticsContext) GetDocument(uri string) types.Document {
-	return m.documents[uri]
-}
-
-func (m *mockDiagnosticsContext) GetSlots(tagName string) ([]manifest.Slot, bool) {
-	slots, exists := m.slots[tagName]
-	return slots, exists
-}
-
-func (m *mockDiagnosticsContext) AllTagNames() []string {
-	return m.tagNames
-}

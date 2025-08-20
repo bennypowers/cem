@@ -28,6 +28,7 @@ import (
 	G "bennypowers.dev/cem/generate"
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
+	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
 	W "bennypowers.dev/cem/workspace"
 )
@@ -183,7 +184,7 @@ func TestServerLevelIntegration(t *testing.T) {
 	// Test initial completions - should have info, success, warning
 	initialItems := completion.GetAttributeValueCompletions(ctx, "test-alert", "state")
 
-	t.Logf("Initial completions: %v", getCompletionLabels(initialItems))
+	t.Logf("Initial completions: %v", testhelpers.GetCompletionLabels(initialItems))
 
 	// Verify initial completions contain expected values
 	hasInfo := false
@@ -201,7 +202,7 @@ func TestServerLevelIntegration(t *testing.T) {
 	}
 
 	if !hasInfo || !hasSuccess || !hasWarning {
-		t.Fatalf("Initial completions missing expected values. Got: %v", getCompletionLabels(initialItems))
+		t.Fatalf("Initial completions missing expected values. Got: %v", testhelpers.GetCompletionLabels(initialItems))
 	}
 
 	// Now simulate the user editing the TypeScript file to add 'error'
@@ -227,7 +228,7 @@ func TestServerLevelIntegration(t *testing.T) {
 	// Test updated completions - should now include 'error'
 	updatedItems := completion.GetAttributeValueCompletions(ctx, "test-alert", "state")
 
-	t.Logf("Updated completions: %v", getCompletionLabels(updatedItems))
+	t.Logf("Updated completions: %v", testhelpers.GetCompletionLabels(updatedItems))
 
 	// Verify updated completions contain 'error'
 	hasUpdatedInfo := false
@@ -248,11 +249,11 @@ func TestServerLevelIntegration(t *testing.T) {
 	}
 
 	if !hasUpdatedInfo || !hasUpdatedSuccess || !hasUpdatedWarning {
-		t.Errorf("Updated completions missing original values. Got: %v", getCompletionLabels(updatedItems))
+		t.Errorf("Updated completions missing original values. Got: %v", testhelpers.GetCompletionLabels(updatedItems))
 	}
 
 	if !hasError {
-		t.Errorf("Updated completions missing 'error' value. Got: %v", getCompletionLabels(updatedItems))
+		t.Errorf("Updated completions missing 'error' value. Got: %v", testhelpers.GetCompletionLabels(updatedItems))
 
 		// Debug: Check what's in the registry
 		if attrs, exists := ctx.Attributes("test-alert"); exists {

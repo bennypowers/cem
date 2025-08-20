@@ -39,7 +39,6 @@ type Server struct {
 	workspace W.WorkspaceContext
 	registry  *Registry
 	documents *DocumentManager
-	adapter   *ServerAdapter
 	server    *server.Server
 }
 
@@ -62,8 +61,7 @@ func NewServer(workspace W.WorkspaceContext) (*Server, error) {
 		documents: documents,
 	}
 
-	// Create adapter for method contexts
-	s.adapter = NewServerAdapter(s)
+	// Server now directly implements all context interfaces
 
 	// Create the GLSP server with our handler
 	handler := protocol.Handler{
@@ -198,65 +196,65 @@ func (s *Server) InitializeForTesting() error {
 
 // initialize handles the LSP initialize request
 func (s *Server) initialize(context *glsp.Context, params *protocol.InitializeParams) (any, error) {
-	return serverMethods.Initialize(s.adapter, context, params)
+	return serverMethods.Initialize(s, context, params)
 }
 
 // initialized handles the LSP initialized notification
 func (s *Server) initialized(context *glsp.Context, params *protocol.InitializedParams) error {
-	return serverMethods.Initialized(s.adapter, context, params)
+	return serverMethods.Initialized(s, context, params)
 }
 
 // shutdown handles the LSP shutdown request
 func (s *Server) shutdown(context *glsp.Context) error {
-	return serverMethods.Shutdown(s.adapter, context)
+	return serverMethods.Shutdown(s, context)
 }
 
 // setTrace handles the $/setTrace notification
 func (s *Server) setTrace(context *glsp.Context, params *protocol.SetTraceParams) error {
-	return serverMethods.SetTrace(s.adapter, context, params)
+	return serverMethods.SetTrace(s, context, params)
 }
 
 // hover handles textDocument/hover requests
 func (s *Server) hover(context *glsp.Context, params *protocol.HoverParams) (*protocol.Hover, error) {
-	return hover.Hover(s.adapter, context, params)
+	return hover.Hover(s, context, params)
 }
 
 // completion handles textDocument/completion requests
 func (s *Server) completion(context *glsp.Context, params *protocol.CompletionParams) (any, error) {
-	return completion.Completion(s.adapter, context, params)
+	return completion.Completion(s, context, params)
 }
 
 // definition handles textDocument/definition requests
 func (s *Server) definition(context *glsp.Context, params *protocol.DefinitionParams) (any, error) {
-	return definition.Definition(s.adapter, context, params)
+	return definition.Definition(s, context, params)
 }
 
 // references handles textDocument/references requests
 func (s *Server) references(context *glsp.Context, params *protocol.ReferenceParams) ([]protocol.Location, error) {
-	return references.References(s.adapter, context, params)
+	return references.References(s, context, params)
 }
 
 // codeAction handles textDocument/codeAction requests
 func (s *Server) codeAction(context *glsp.Context, params *protocol.CodeActionParams) (any, error) {
-	return codeAction.CodeAction(s.adapter, context, params)
+	return codeAction.CodeAction(s, context, params)
 }
 
 // workspaceSymbol handles workspace/symbol requests
 func (s *Server) workspaceSymbol(context *glsp.Context, params *protocol.WorkspaceSymbolParams) ([]protocol.SymbolInformation, error) {
-	return symbol.Symbol(s.adapter, context, params)
+	return symbol.Symbol(s, context, params)
 }
 
 // didOpen handles textDocument/didOpen notifications
 func (s *Server) didOpen(context *glsp.Context, params *protocol.DidOpenTextDocumentParams) error {
-	return textDocument.DidOpen(s.adapter, context, params)
+	return textDocument.DidOpen(s, context, params)
 }
 
 // didChange handles textDocument/didChange notifications
 func (s *Server) didChange(context *glsp.Context, params *protocol.DidChangeTextDocumentParams) error {
-	return textDocument.DidChange(s.adapter, context, params)
+	return textDocument.DidChange(s, context, params)
 }
 
 // didClose handles textDocument/didClose notifications
 func (s *Server) didClose(context *glsp.Context, params *protocol.DidCloseTextDocumentParams) error {
-	return textDocument.DidClose(s.adapter, context, params)
+	return textDocument.DidClose(s, context, params)
 }

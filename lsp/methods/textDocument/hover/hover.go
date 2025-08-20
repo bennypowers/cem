@@ -27,16 +27,8 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-// HoverContext provides the dependencies needed for hover functionality
-type HoverContext interface {
-	Document(uri string) types.Document
-	Element(tagName string) (*M.CustomElement, bool)
-	Attributes(tagName string) (map[string]*M.Attribute, bool)
-	RawDocumentManager() interface{} // For passing to FindElementAtPosition and FindAttributeAtPosition
-}
-
 // Hover handles textDocument/hover requests
-func Hover(ctx HoverContext, context *glsp.Context, params *protocol.HoverParams) (*protocol.Hover, error) {
+func Hover(ctx types.ServerContext, context *glsp.Context, params *protocol.HoverParams) (*protocol.Hover, error) {
 	uri := params.TextDocument.URI
 	helpers.SafeDebugLog("[HOVER] Request for URI: %s, Position: line=%d, char=%d", uri, params.Position.Line, params.Position.Character)
 
@@ -48,8 +40,14 @@ func Hover(ctx HoverContext, context *glsp.Context, params *protocol.HoverParams
 	}
 	helpers.SafeDebugLog("[HOVER] Found document for URI: %s", uri)
 
+	dm, err := ctx.DocumentManager()
+	if err != nil {
+		helpers.SafeDebugLog("[COMPLETION] Failed to get DocumentManager: %v", err)
+		return nil, err
+	}
+
 	// Find the element at the cursor position
-	element := doc.FindElementAtPosition(params.Position, ctx.RawDocumentManager())
+	element := doc.FindElementAtPosition(params.Position, dm)
 	if element != nil {
 		helpers.SafeDebugLog("[HOVER] Found element at position: tagName=%s, range=%+v\n", element.TagName, element.Range)
 
@@ -76,7 +74,8 @@ func Hover(ctx HoverContext, context *glsp.Context, params *protocol.HoverParams
 	}
 
 	// Check if cursor is over an attribute
-	attribute, tagName := doc.FindAttributeAtPosition(params.Position, ctx.RawDocumentManager())
+
+	attribute, tagName := doc.FindAttributeAtPosition(params.Position, dm)
 	if attribute != nil && tagName != "" {
 		helpers.SafeDebugLog("[HOVER] Found attribute at position: name=%s, tagName=%s, range=%+v\n", attribute.Name, tagName, attribute.Range)
 

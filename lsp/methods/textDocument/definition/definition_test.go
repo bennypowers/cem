@@ -8,10 +8,8 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/lsp"
-	"bennypowers.dev/cem/lsp/methods/textDocument"
 	"bennypowers.dev/cem/lsp/methods/textDocument/definition"
 	"bennypowers.dev/cem/lsp/testhelpers"
-	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
@@ -33,7 +31,7 @@ func TestDefinition(t *testing.T) {
 	}
 
 	// Create registry and add the test manifest
-	registry := lsp.NewTestRegistry()
+	registry := testhelpers.NewMockRegistry()
 	registry.AddManifest(&pkg)
 
 	// Create a mock document manager
@@ -44,10 +42,9 @@ func TestDefinition(t *testing.T) {
 	defer dm.Close()
 
 	// Test context that provides the registry data
-	ctx := &testDefinitionContext{
-		registry: registry,
-		dm:       dm,
-	}
+	ctx := testhelpers.NewMockServerContext()
+	ctx.SetDocumentManager(dm)
+	ctx.SetRegistry(registry)
 
 	tests := []struct {
 		name           string
@@ -89,6 +86,9 @@ func TestDefinition(t *testing.T) {
 			if doc == nil {
 				t.Fatal("Failed to open test document")
 			}
+			
+			// Also add document to the mock context for Document() lookup
+			ctx.AddDocument(uri, doc)
 
 			// Create definition params
 			params := &protocol.DefinitionParams{
@@ -117,7 +117,7 @@ func TestDefinition(t *testing.T) {
 				}
 
 				// Check that URI contains the expected path
-				if tt.expectedPath != "" && !contains(location.URI, tt.expectedPath) {
+				if tt.expectedPath != "" && !strings.Contains(location.URI, tt.expectedPath) {
 					t.Errorf("Expected URI to contain '%s', got '%s'", tt.expectedPath, location.URI)
 				}
 
@@ -132,154 +132,7 @@ func TestDefinition(t *testing.T) {
 	}
 }
 
-// contains is a helper function to check if a string contains a substring
-func contains(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
-}
 
-// testDefinitionContext implements DefinitionContext for testing
-type testDefinitionContext struct {
-	registry *lsp.Registry
-	dm       *lsp.DocumentManager
-}
-
-func (ctx *testDefinitionContext) Document(uri string) types.Document {
-	doc := ctx.dm.Document(uri)
-	// Handle typed nil from DocumentManager
-	if doc == nil || doc == (*lsp.Document)(nil) {
-		// For testing, load fixture files for source documents
-		if strings.Contains(uri, "card-element") {
-			return ctx.loadFixtureDocument("slot-completions-test/src/card-element.ts")
-		}
-		if strings.Contains(uri, "dialog-element") {
-			return ctx.loadFixtureDocument("slot-completions-test/src/dialog-element.ts")
-		}
-		return nil
-	}
-	return doc
-}
-
-func (ctx *testDefinitionContext) loadFixtureDocument(relativePath string) types.Document {
-	content, err := os.ReadFile(relativePath)
-	if err != nil {
-		// Return empty document if fixture not found
-		return testhelpers.NewMockDocument("")
-	}
-	return testhelpers.NewMockDocument(string(content))
-}
-
-func (ctx *testDefinitionContext) ElementDefinition(tagName string) (types.ElementDefinition, bool) {
-	return ctx.registry.ElementDefinition(tagName)
-}
-
-func (ctx *testDefinitionContext) WorkspaceRoot() string {
-	// Return current directory for tests
-	if wd, err := os.Getwd(); err == nil {
-		return wd
-	}
-	return ""
-}
-
-func (ctx *testDefinitionContext) RawDocumentManager() interface{} {
-	return ctx.dm
-}
-
-func (ctx *testDefinitionContext) QueryManager() interface{} {
-	if ctx.dm != nil {
-		return ctx.dm.QueryManager()
-	}
-	return nil
-}
-
-// MockElementDefinition implements textDocument.ElementDefinition
-type MockElementDefinition struct {
-	def *lsp.ElementDefinition
-}
-
-func (m *MockElementDefinition) ModulePath() string {
-	return m.def.ModulePath()
-}
-
-func (m *MockElementDefinition) PackageName() string {
-	return m.def.PackageName()
-}
-
-func (m *MockElementDefinition) SourceHref() string {
-	if m.def.Source != nil {
-		return m.def.Source.Href
-	}
-	return ""
-}
-
-// MockDocumentAdapter adapts lsp.Document to textDocument.Document
-type MockDocumentAdapter struct {
-	doc *lsp.Document
-	dm  *lsp.DocumentManager
-}
-
-func (m *MockDocumentAdapter) FindElementAtPosition(position protocol.Position, dm interface{}) *textDocument.CustomElementMatch {
-	element := m.doc.FindElementAtPosition(position, m.dm)
-	if element == nil {
-		return nil
-	}
-
-	// Convert attributes
-	attrs := make(map[string]textDocument.AttributeMatch)
-	for k, v := range element.Attributes {
-		attrs[k] = textDocument.AttributeMatch(v)
-	}
-
-	return &textDocument.CustomElementMatch{
-		TagName:    element.TagName,
-		Range:      element.Range,
-		Attributes: attrs,
-	}
-}
-
-func (m *MockDocumentAdapter) FindAttributeAtPosition(position protocol.Position, dm interface{}) (*types.AttributeMatch, string) {
-	attr, tagName := m.doc.FindAttributeAtPosition(position, m.dm)
-	if attr == nil {
-		return nil, ""
-	}
-
-	return &types.AttributeMatch{
-		Name:  attr.Name,
-		Value: attr.Value,
-		Range: attr.Range,
-	}, tagName
-}
-
-func (m *MockDocumentAdapter) Content() (string, error) {
-	return m.doc.Content()
-}
-
-func (m *MockDocumentAdapter) AnalyzeCompletionContextTS(position protocol.Position, dm any) *types.CompletionAnalysis {
-	return m.doc.AnalyzeCompletionContextTS(position, m.dm)
-}
-
-func (m *MockDocumentAdapter) GetTemplateContext(position protocol.Position) string {
-	return ""
-}
-
-// Version returns the document version
-func (m *MockDocumentAdapter) Version() int32 {
-	return m.doc.Version()
-}
-
-// URI returns the document URI
-func (m *MockDocumentAdapter) URI() string {
-	return m.doc.URI()
-}
-
-// FindCustomElements returns custom elements
-func (m *MockDocumentAdapter) FindCustomElements(dm any) ([]types.CustomElementMatch, error) {
-	return m.doc.FindCustomElements(dm)
-}
 
 // TestResolveSourcePath tests the path resolution logic specifically
 func TestResolveSourcePath(t *testing.T) {
@@ -353,4 +206,8 @@ func (t *testElementDefinition) SourceHref() string {
 
 func (t *testElementDefinition) PackageName() string {
 	return ""
+}
+
+func (t *testElementDefinition) Element() *M.CustomElement {
+	return nil // For testing path resolution, we don't need the actual element
 }

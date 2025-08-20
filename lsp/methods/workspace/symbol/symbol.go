@@ -22,21 +22,14 @@ import (
 	"strings"
 
 	"bennypowers.dev/cem/lsp/helpers"
+	"bennypowers.dev/cem/lsp/types"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-// SymbolContext provides the dependencies needed for workspace symbol functionality
-type SymbolContext interface {
-	AllTagNames() []string
-	ElementSource(tagName string) (string, bool)
-	ElementDescription(tagName string) (string, bool)
-	WorkspaceRoot() string
-}
-
 // Symbol handles workspace/symbol requests
 // Allows users to search for custom elements across the entire workspace
-func Symbol(ctx SymbolContext, context *glsp.Context, params *protocol.WorkspaceSymbolParams) ([]protocol.SymbolInformation, error) {
+func Symbol(ctx types.ServerContext, context *glsp.Context, params *protocol.WorkspaceSymbolParams) ([]protocol.SymbolInformation, error) {
 	helpers.SafeDebugLog("[WORKSPACE_SYMBOL] Request for query: '%s'", params.Query)
 
 	var symbols []protocol.SymbolInformation
@@ -63,7 +56,7 @@ func Symbol(ctx SymbolContext, context *glsp.Context, params *protocol.Workspace
 }
 
 // createSymbolInformation creates a SymbolInformation for a custom element
-func createSymbolInformation(ctx SymbolContext, tagName string) *protocol.SymbolInformation {
+func createSymbolInformation(ctx types.ServerContext, tagName string) *protocol.SymbolInformation {
 	// Get source location
 	source, hasSource := ctx.ElementSource(tagName)
 	if !hasSource {

@@ -20,59 +20,45 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/lsp/methods/workspace/symbol"
+	"bennypowers.dev/cem/lsp/testhelpers"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-// mockSymbolContext implements SymbolContext for testing
-type mockSymbolContext struct {
-	tagNames      []string
-	sources       map[string]string
-	descriptions  map[string]string
-	workspaceRoot string
-}
-
-func (m *mockSymbolContext) AllTagNames() []string {
-	return m.tagNames
-}
-
-func (m *mockSymbolContext) ElementSource(tagName string) (string, bool) {
-	source, exists := m.sources[tagName]
-	return source, exists
-}
-
-func (m *mockSymbolContext) ElementDescription(tagName string) (string, bool) {
-	desc, exists := m.descriptions[tagName]
-	return desc, exists
-}
-
-func (m *mockSymbolContext) WorkspaceRoot() string {
-	return m.workspaceRoot
-}
-
 func TestWorkspaceSymbol(t *testing.T) {
 	// Set up mock context
-	ctx := &mockSymbolContext{
-		tagNames: []string{
-			"my-button",
-			"my-card",
-			"my-dialog",
-			"ui-icon",
-			"ui-table",
-		},
-		sources: map[string]string{
-			"my-button": "src/components/my-button.ts",
-			"my-card":   "src/components/my-card.ts",
-			"my-dialog": "src/dialogs/my-dialog.ts",
-			"ui-icon":   "/absolute/path/to/ui-icon.ts",
-			"ui-table":  "components/ui-table.js",
-		},
-		descriptions: map[string]string{
-			"my-button": "A reusable button component",
-			"my-card":   "Card layout component",
-			"ui-icon":   "Icon display component",
-		},
-		workspaceRoot: "/workspace",
+	ctx := testhelpers.NewMockServerContext()
+	ctx.TagNames = []string{
+		"my-button",
+		"my-card",
+		"my-dialog",
+		"ui-icon",
+		"ui-table",
+	}
+	ctx.SetWorkspaceRoot("/workspace")
+	
+	// Set up element sources
+	sources := map[string]string{
+		"my-button": "src/components/my-button.ts",
+		"my-card":   "src/components/my-card.ts",
+		"my-dialog": "src/dialogs/my-dialog.ts",
+		"ui-icon":   "/absolute/path/to/ui-icon.ts",
+		"ui-table":  "components/ui-table.js",
+	}
+	for tagName, source := range sources {
+		ctx.AddElementDefinition(tagName, &testhelpers.MockElementDefinition{
+			ModulePathStr: source,
+		})
+	}
+	
+	// Set up descriptions
+	descriptions := map[string]string{
+		"my-button": "A reusable button component",
+		"my-card":   "Card layout component", 
+		"ui-icon":   "Icon display component",
+	}
+	for tagName, desc := range descriptions {
+		ctx.AddElementDescription(tagName, desc)
 	}
 
 	mockGlspContext := &glsp.Context{}
@@ -162,16 +148,14 @@ func TestWorkspaceSymbol(t *testing.T) {
 
 func TestWorkspaceSymbolProperties(t *testing.T) {
 	// Test symbol properties like kind, location, etc.
-	ctx := &mockSymbolContext{
-		tagNames: []string{"test-element"},
-		sources: map[string]string{
-			"test-element": "src/test-element.ts",
-		},
-		descriptions: map[string]string{
-			"test-element": "Test element for verification",
-		},
-		workspaceRoot: "/workspace",
-	}
+	ctx := testhelpers.NewMockServerContext()
+	ctx.TagNames = []string{"test-element"}
+	ctx.SetWorkspaceRoot("/workspace")
+	ctx.AddElementDefinition("test-element", &testhelpers.MockElementDefinition{
+		ModulePathStr: "src/test-element.ts",
+		SourceHrefStr: "src/test-element.ts",
+	})
+	ctx.AddElementDescription("test-element", "Test element for verification")
 
 	mockGlspContext := &glsp.Context{}
 	params := &protocol.WorkspaceSymbolParams{Query: "test"}
@@ -217,14 +201,12 @@ func TestWorkspaceSymbolProperties(t *testing.T) {
 
 func TestWorkspaceSymbolAbsolutePaths(t *testing.T) {
 	// Test handling of absolute paths
-	ctx := &mockSymbolContext{
-		tagNames: []string{"abs-element"},
-		sources: map[string]string{
-			"abs-element": "/absolute/path/to/element.ts",
-		},
-		descriptions:  map[string]string{},
-		workspaceRoot: "/workspace",
-	}
+	ctx := testhelpers.NewMockServerContext()
+	ctx.TagNames = []string{"abs-element"}
+	ctx.SetWorkspaceRoot("/workspace")
+	ctx.AddElementDefinition("abs-element", &testhelpers.MockElementDefinition{
+		ModulePathStr: "/absolute/path/to/element.ts",
+	})
 
 	mockGlspContext := &glsp.Context{}
 	params := &protocol.WorkspaceSymbolParams{Query: "abs"}
@@ -249,14 +231,10 @@ func TestWorkspaceSymbolAbsolutePaths(t *testing.T) {
 
 func TestWorkspaceSymbolNoSource(t *testing.T) {
 	// Test elements without source information
-	ctx := &mockSymbolContext{
-		tagNames: []string{"no-source-element"},
-		sources:  map[string]string{
-			// Intentionally empty - no source for this element
-		},
-		descriptions:  map[string]string{},
-		workspaceRoot: "/workspace",
-	}
+	ctx := testhelpers.NewMockServerContext()
+	ctx.TagNames = []string{"no-source-element"}
+	ctx.SetWorkspaceRoot("/workspace")
+	// Intentionally not adding element definition - no source for this element
 
 	mockGlspContext := &glsp.Context{}
 	params := &protocol.WorkspaceSymbolParams{Query: "no-source"}

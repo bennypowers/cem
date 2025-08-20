@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -32,7 +32,7 @@ func loadTestManifest(t *testing.T, fixturePath string) *M.Package {
 
 // TestRegistryElementLookup tests registry's ability to store and retrieve custom elements
 func TestRegistryElementLookup(t *testing.T) {
-	registry := lsp.NewTestRegistry()
+	registry := testhelpers.NewMockRegistry()
 
 	// Load the basic test manifest
 	manifest := loadTestManifest(t, filepath.Join("test", "fixtures", "registry-basic", "manifest.json"))
@@ -135,8 +135,8 @@ func TestRegistryElementLookup(t *testing.T) {
 		if !exists {
 			t.Fatal("Expected to find element definition for my-element")
 		}
-		if definition.Element.TagName != "my-element" {
-			t.Errorf("Expected element tag name 'my-element', got %q", definition.Element.TagName)
+		if definition.Element().TagName != "my-element" {
+			t.Errorf("Expected element tag name 'my-element', got %q", definition.Element().TagName)
 		}
 		if definition.ModulePath() != "my-element.js" {
 			t.Errorf("Expected module path 'my-element.js', got %q", definition.ModulePath())
@@ -146,7 +146,7 @@ func TestRegistryElementLookup(t *testing.T) {
 
 // TestRegistryMultipleManifests tests adding multiple manifests to the same registry
 func TestRegistryMultipleManifests(t *testing.T) {
-	registry := lsp.NewTestRegistry()
+	registry := testhelpers.NewMockRegistry()
 
 	// Load two different manifests
 	manifest1 := loadTestManifest(t, filepath.Join("test", "fixtures", "registry-multiple", "manifest-1.json"))
@@ -184,7 +184,7 @@ func TestRegistryMultipleManifests(t *testing.T) {
 
 // TestRegistryEmptyManifest tests registry behavior with empty manifests
 func TestRegistryEmptyManifest(t *testing.T) {
-	registry := lsp.NewTestRegistry()
+	registry := testhelpers.NewMockRegistry()
 
 	// Empty manifest
 	emptyManifest := &M.Package{
@@ -240,7 +240,7 @@ func TestNilTypeAttributeHandling(t *testing.T) {
 	}
 
 	// Create registry and add the manifest with nil type
-	registry := lsp.NewTestRegistry()
+	registry := testhelpers.NewMockRegistry()
 	registry.AddManifest(pkg)
 
 	// This should not panic when accessing attributes with nil types
@@ -290,7 +290,7 @@ func TestHandleManifestReloadWithNilTypes(t *testing.T) {
 		},
 	}
 
-	registry := lsp.NewTestRegistry()
+	registry := testhelpers.NewMockRegistry()
 	registry.AddManifest(pkg)
 
 	// Verify the registry has the element

@@ -10,31 +10,6 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-// MockReferencesContext implements types.ReferencesContext for testing
-type MockReferencesContext struct {
-	documents []types.Document
-}
-
-func (m *MockReferencesContext) Document(uri string) types.Document {
-	for _, doc := range m.documents {
-		if doc.URI() == uri {
-			return doc
-		}
-	}
-	return nil
-}
-
-func (m *MockReferencesContext) AllDocuments() []types.Document {
-	return m.documents
-}
-
-func (m *MockReferencesContext) ElementDefinition(tagName string) (types.ElementDefinition, bool) {
-	return nil, false
-}
-
-func (m *MockReferencesContext) WorkspaceRoot() string {
-	return "/test/workspace"
-}
 
 
 func TestReferences(t *testing.T) {
@@ -67,9 +42,10 @@ func TestReferences(t *testing.T) {
 	)
 	doc2.URIStr = "file:///test2.ts"
 
-	ctx := &MockReferencesContext{
-		documents: []types.Document{doc1, doc2},
-	}
+	ctx := testhelpers.NewMockServerContext()
+	ctx.AddDocument("file:///test1.html", doc1)
+	ctx.AddDocument("file:///test2.ts", doc2)
+	ctx.SetWorkspaceRoot("/test/workspace")
 
 	// Create request for references to rh-card
 	params := &protocol.ReferenceParams{

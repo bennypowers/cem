@@ -14,27 +14,28 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
-package server
+package testhelpers
 
 import (
+	"os"
+
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-// ServerContext provides the dependencies needed for server lifecycle
-type ServerContext interface {
-	DocumentManager() DocumentManager
-	Workspace() Workspace
-	DebugLog(format string, args ...any)
-	InitializeManifests() error
-	UpdateWorkspaceFromLSP(rootURI *string, workspaceFolders []protocol.WorkspaceFolder) error
+// GetCompletionLabels extracts labels from completion items for easy testing
+func GetCompletionLabels(completions []protocol.CompletionItem) []string {
+	labels := make([]string, len(completions))
+	for i, completion := range completions {
+		labels[i] = completion.Label
+	}
+	return labels
 }
 
-// DocumentManager interface for cleanup
-type DocumentManager interface {
-	Close()
-}
-
-// Workspace interface for cleanup
-type Workspace interface {
-	Cleanup() error
+// CopyFile copies a file from src to dst
+func CopyFile(src, dst string) error {
+	data, err := os.ReadFile(src)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(dst, data, 0644)
 }

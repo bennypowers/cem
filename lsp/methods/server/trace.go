@@ -18,12 +18,13 @@ package server
 
 import (
 	"bennypowers.dev/cem/lsp/helpers"
+	"bennypowers.dev/cem/lsp/types"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 // SetTrace handles the $/setTrace notification
-func SetTrace(ctx ServerContext, context *glsp.Context, params *protocol.SetTraceParams) error {
+func SetTrace(ctx types.ServerContext, context *glsp.Context, params *protocol.SetTraceParams) error {
 	// Use LSP standard trace levels to control debug logging
 	switch params.Value {
 	case protocol.TraceValueOff:

@@ -22,57 +22,47 @@ import (
 	"strings"
 
 	"bennypowers.dev/cem/lsp/helpers"
-	serverMethods "bennypowers.dev/cem/lsp/methods/server"
-	"bennypowers.dev/cem/lsp/methods/textDocument"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/queries"
 	W "bennypowers.dev/cem/workspace"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-// ServerAdapter adapts the Server to the various method contexts
-type ServerAdapter struct {
-	server *Server
+// Verify Server implements all context interfaces
+var _ types.ServerContext = (*Server)(nil)
+
+// Server Context implementations - Server directly implements all context interfaces
+
+func (s *Server) DocumentManager() (types.DocumentManager, error) {
+	if s.documents == nil {
+		return nil, fmt.Errorf("document manager not initialized")
+	}
+	return s.documents, nil
 }
 
-// NewServerAdapter creates a new adapter for the server
-func NewServerAdapter(server *Server) *ServerAdapter {
-	return &ServerAdapter{server: server}
+func (s *Server) Workspace() types.Workspace {
+	return s.workspace
 }
 
-// Server Context implementations
-
-func (s *ServerAdapter) DocumentManager() serverMethods.DocumentManager {
-	return s.server.documents
-}
-
-// TextDocumentManager returns the document manager for text document methods
-func (s *ServerAdapter) TextDocumentManager() textDocument.DocumentManager {
-	return s.server.documents
-}
-
-func (s *ServerAdapter) Workspace() serverMethods.Workspace {
-	return s.server.workspace
-}
-
-func (s *ServerAdapter) DebugLog(format string, args ...any) {
+func (s *Server) DebugLog(format string, args ...any) {
 	helpers.SafeDebugLog(format, args...)
 }
 
-func (s *ServerAdapter) InitializeManifests() error {
+func (s *Server) InitializeManifests() error {
 	// Initialize the manifest registry
-	if err := s.server.registry.LoadFromWorkspace(s.server.workspace); err != nil {
+	if err := s.registry.LoadFromWorkspace(s.workspace); err != nil {
 		return fmt.Errorf("failed to load manifests: %w", err)
 	}
 
 	// Start file watching for manifest changes
-	if err := s.server.registry.StartFileWatching(s.server.handleManifestReload); err != nil {
+	if err := s.registry.StartFileWatching(s.handleManifestReload); err != nil {
 		helpers.SafeDebugLog("Warning: Could not start file watching: %v", err)
 		// Don't fail startup if file watching fails
 	}
 
 	// Start generate watcher for local project source file changes
-	if err := s.server.registry.StartGenerateWatcher(); err != nil {
+	if err := s.registry.StartGenerateWatcher(); err != nil {
 		helpers.SafeDebugLog("Warning: Could not start generate watcher: %v", err)
 		// Don't fail startup if generate watcher fails
 	}
@@ -80,41 +70,45 @@ func (s *ServerAdapter) InitializeManifests() error {
 	return nil
 }
 
-// Hover Context implementations
+// Document operations
 
-func (s *ServerAdapter) Document(uri string) types.Document {
-	return s.server.documents.Document(uri)
+func (s *Server) Document(uri string) types.Document {
+	return s.documents.Document(uri)
 }
 
-func (s *ServerAdapter) AllDocuments() []types.Document {
-	return s.server.documents.AllDocuments()
+func (s *Server) AllDocuments() []types.Document {
+	return s.documents.AllDocuments()
 }
 
-func (s *ServerAdapter) GetDocumentManager() *DocumentManager {
-	return s.server.documents
+// Registry operations
+
+func (s *Server) AllTagNames() []string {
+	return s.registry.AllTagNames()
 }
 
-func (s *ServerAdapter) Element(tagName string) (*M.CustomElement, bool) {
-	return s.server.registry.Element(tagName)
+func (s *Server) Element(tagName string) (*M.CustomElement, bool) {
+	return s.registry.Element(tagName)
 }
 
-func (s *ServerAdapter) Attributes(tagName string) (map[string]*M.Attribute, bool) {
-	return s.server.registry.Attributes(tagName)
+func (s *Server) Attributes(tagName string) (map[string]*M.Attribute, bool) {
+	return s.registry.Attributes(tagName)
 }
 
-func (s *ServerAdapter) Slots(tagName string) ([]M.Slot, bool) {
-	return s.server.registry.Slots(tagName)
+func (s *Server) Slots(tagName string) ([]M.Slot, bool) {
+	return s.registry.Slots(tagName)
 }
 
-// Definition Context implementations
-
-func (s *ServerAdapter) ElementDefinition(tagName string) (types.ElementDefinition, bool) {
-	return s.server.registry.ElementDefinition(tagName)
+func (s *Server) ElementDefinition(tagName string) (types.ElementDefinition, bool) {
+	return s.registry.ElementDefinition(tagName)
 }
 
-func (s *ServerAdapter) ElementSource(tagName string) (string, bool) {
+func (s *Server) AddManifest(manifest *M.Package) {
+	s.registry.AddManifest(manifest)
+}
+
+func (s *Server) ElementSource(tagName string) (string, bool) {
 	// Get the element definition which contains source information
-	definition, exists := s.server.registry.ElementDefinition(tagName)
+	definition, exists := s.registry.ElementDefinition(tagName)
 	if !exists {
 		return "", false
 	}
@@ -124,7 +118,7 @@ func (s *ServerAdapter) ElementSource(tagName string) (string, bool) {
 
 	// Always use bare specifiers - they work for both npm packages and local modules
 	// when configured with import maps or package.json exports
-	
+
 	if packageName != "" && modulePath != "" {
 		// Ensure we use relative module path, not absolute
 		// If modulePath is absolute (starts with /), extract the relative part
@@ -138,7 +132,7 @@ func (s *ServerAdapter) ElementSource(tagName string) (string, bool) {
 				relativeModulePath = strings.TrimPrefix(relativeModulePath, "/")
 			}
 		}
-		
+
 		// Combine package name with relative module path for bare specifier
 		// e.g. "cem-lsp-demo" + "components/button-element.js" = "cem-lsp-demo/components/button-element.js"
 		// e.g. "@rhds/elements" + "rh-card/rh-card.js" = "@rhds/elements/rh-card/rh-card.js"
@@ -155,28 +149,24 @@ func (s *ServerAdapter) ElementSource(tagName string) (string, bool) {
 	return "", false
 }
 
-func (s *ServerAdapter) WorkspaceRoot() string {
-	if s.server.workspace != nil {
-		return s.server.workspace.Root()
+func (s *Server) WorkspaceRoot() string {
+	if s.workspace != nil {
+		return s.workspace.Root()
 	}
 	return ""
 }
 
-func (s *ServerAdapter) RawDocumentManager() interface{} {
-	return s.server.documents
-}
-
-func (s *ServerAdapter) QueryManager() interface{} {
-	if s.server.documents != nil {
-		return s.server.documents.QueryManager()
+func (s *Server) QueryManager() (*queries.QueryManager, error) {
+	if s.documents == nil {
+		return nil, fmt.Errorf("document manager not initialized")
 	}
-	return nil
+	return s.documents.QueryManager(), nil
 }
 
 // UpdateWorkspaceFromLSP updates the workspace context based on LSP initialize parameters
-func (s *ServerAdapter) UpdateWorkspaceFromLSP(rootURI *string, workspaceFolders []protocol.WorkspaceFolder) error {
+func (s *Server) UpdateWorkspaceFromLSP(rootURI *string, workspaceFolders []protocol.WorkspaceFolder) error {
 	helpers.SafeDebugLog("[UPDATE_WORKSPACE] Starting workspace context update")
-	helpers.SafeDebugLog("[UPDATE_WORKSPACE] Current workspace root before update: '%s'", s.server.workspace.Root())
+	helpers.SafeDebugLog("[UPDATE_WORKSPACE] Current workspace root before update: '%s'", s.workspace.Root())
 
 	var newRoot string
 
@@ -208,25 +198,19 @@ func (s *ServerAdapter) UpdateWorkspaceFromLSP(rootURI *string, workspaceFolders
 	}
 
 	// Update server's workspace
-	oldRoot := s.server.workspace.Root()
-	s.server.workspace = newWorkspace
-	newActualRoot := s.server.workspace.Root()
+	oldRoot := s.workspace.Root()
+	s.workspace = newWorkspace
+	newActualRoot := s.workspace.Root()
 	helpers.SafeDebugLog("[UPDATE_WORKSPACE] Successfully updated workspace context")
 	helpers.SafeDebugLog("[UPDATE_WORKSPACE] Old root: '%s' -> New root: '%s'", oldRoot, newActualRoot)
 
 	return nil
 }
 
-// Completion Context implementations
-
-func (s *ServerAdapter) AllTagNames() []string {
-	return s.server.registry.AllTagNames()
-}
-
-func (s *ServerAdapter) ElementDescription(tagName string) (string, bool) {
+func (s *Server) ElementDescription(tagName string) (string, bool) {
 	// For now, use a simple approach to get basic element info
 	// This can be enhanced later to pull from the full declaration data
-	element, exists := s.server.registry.Element(tagName)
+	element, exists := s.registry.Element(tagName)
 	if !exists {
 		return "", false
 	}

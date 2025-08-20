@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/testhelpers"
 	W "bennypowers.dev/cem/workspace"
 )
 
@@ -24,7 +25,7 @@ func TestManifestFileWatchingIntegration(t *testing.T) {
 	fixturePath := filepath.Join("test", "fixtures", "file-watch-integration", "initial-manifest.json")
 	manifestPath := filepath.Join(tempDir, "custom-elements.json")
 
-	err = copyFile(fixturePath, manifestPath)
+	err = testhelpers.CopyFile(fixturePath, manifestPath)
 	if err != nil {
 		t.Fatalf("Failed to copy initial manifest fixture: %v", err)
 	}
@@ -98,7 +99,7 @@ func TestManifestFileWatchingIntegration(t *testing.T) {
 
 		// Copy updated manifest fixture to trigger file change
 		updatedFixturePath := filepath.Join("test", "fixtures", "file-watch-integration", "updated-manifest.json")
-		err = copyFile(updatedFixturePath, manifestPath)
+		err = testhelpers.CopyFile(updatedFixturePath, manifestPath)
 		if err != nil {
 			t.Fatalf("Failed to copy updated manifest fixture: %v", err)
 		}
@@ -165,7 +166,7 @@ func TestManifestFileWatchingIntegration(t *testing.T) {
 		for i := 0; i < 3; i++ {
 			fixtureName := fixtures[i%2]
 			fixturePath := filepath.Join("test", "fixtures", "file-watch-integration", fixtureName)
-			err = copyFile(fixturePath, manifestPath)
+			err = testhelpers.CopyFile(fixturePath, manifestPath)
 			if err != nil {
 				t.Fatalf("Failed to copy manifest fixture %s: %v", fixtureName, err)
 			}
@@ -196,7 +197,7 @@ func TestPackageJSONWatching(t *testing.T) {
 	// Copy manifest to the referenced location
 	manifestPath := filepath.Join(tempDir, "custom-elements.json")
 	fixturePath := filepath.Join("test", "fixtures", "file-watch-integration", "initial-manifest.json")
-	err = copyFile(fixturePath, manifestPath)
+	err = testhelpers.CopyFile(fixturePath, manifestPath)
 	if err != nil {
 		t.Fatalf("Failed to copy manifest fixture: %v", err)
 	}
@@ -211,14 +212,14 @@ func TestPackageJSONWatching(t *testing.T) {
 	// Copy package.json fixture to the mock package
 	packagePath := filepath.Join(nodeModulesPath, "package.json")
 	packageFixturePath := filepath.Join("test", "fixtures", "file-watch-integration", "package.json")
-	err = copyFile(packageFixturePath, packagePath)
+	err = testhelpers.CopyFile(packageFixturePath, packagePath)
 	if err != nil {
 		t.Fatalf("Failed to copy package.json fixture: %v", err)
 	}
 
 	// Copy the manifest to the location referenced by package.json
 	manifestInPackagePath := filepath.Join(nodeModulesPath, "custom-elements.json")
-	err = copyFile(fixturePath, manifestInPackagePath)
+	err = testhelpers.CopyFile(fixturePath, manifestInPackagePath)
 	if err != nil {
 		t.Fatalf("Failed to copy manifest to package location: %v", err)
 	}
@@ -360,13 +361,4 @@ func TestFileWatchingErrorHandling(t *testing.T) {
 		}
 		defer testRegistry.StopFileWatching()
 	})
-}
-
-// copyFile copies a file from src to dst
-func copyFile(src, dst string) error {
-	data, err := os.ReadFile(src)
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(dst, data, 0644)
 }

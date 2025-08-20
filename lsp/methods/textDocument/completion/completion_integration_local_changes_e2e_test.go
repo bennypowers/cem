@@ -177,7 +177,7 @@ export class TestButton extends LitElement {
 		t.Fatalf("Failed to initialize workspace: %v", err)
 	}
 
-	registry := lsp.NewTestRegistry()
+	registry := testhelpers.NewMockRegistry()
 
 	// Load initial manifests
 	err = registry.LoadFromWorkspace(workspace)
@@ -448,7 +448,7 @@ export class MyApp extends LitElement {
 		t.Fatalf("Failed to initialize workspace: %v", err)
 	}
 
-	registry := lsp.NewTestRegistry()
+	registry := testhelpers.NewMockRegistry()
 
 	// Load initial manifests
 	err = registry.LoadFromWorkspace(workspace)

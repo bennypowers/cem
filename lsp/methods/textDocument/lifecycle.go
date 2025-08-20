@@ -26,12 +26,6 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-// LifecycleContext provides the dependencies needed for document lifecycle
-type LifecycleContext interface {
-	TextDocumentManager() DocumentManager
-	publishDiagnostics.DiagnosticsContext
-}
-
 // DocumentManager interface for document lifecycle operations
 type DocumentManager interface {
 	OpenDocument(uri, content string, version int32) types.Document
@@ -42,11 +36,15 @@ type DocumentManager interface {
 }
 
 // DidOpen handles textDocument/didOpen notifications
-func DidOpen(ctx LifecycleContext, context *glsp.Context, params *protocol.DidOpenTextDocumentParams) error {
+func DidOpen(ctx types.ServerContext, context *glsp.Context, params *protocol.DidOpenTextDocumentParams) error {
 	helpers.SafeDebugLog("[LIFECYCLE] DidOpen: URI=%s, Version=%d, ContentLength=%d",
 		params.TextDocument.URI, params.TextDocument.Version, len(params.TextDocument.Text))
 
-	dm := ctx.TextDocumentManager()
+	dm, err := ctx.DocumentManager()
+	if err != nil {
+		return err
+	}
+
 	doc := dm.OpenDocument(
 		params.TextDocument.URI,
 		params.TextDocument.Text,
@@ -68,11 +66,14 @@ func DidOpen(ctx LifecycleContext, context *glsp.Context, params *protocol.DidOp
 }
 
 // DidChange handles textDocument/didChange notifications
-func DidChange(ctx LifecycleContext, context *glsp.Context, params *protocol.DidChangeTextDocumentParams) error {
+func DidChange(ctx types.ServerContext, context *glsp.Context, params *protocol.DidChangeTextDocumentParams) error {
 	helpers.SafeDebugLog("[LIFECYCLE] DidChange: URI=%s, Version=%d, Changes=%d",
 		params.TextDocument.URI, params.TextDocument.Version, len(params.ContentChanges))
 
-	dm := ctx.TextDocumentManager()
+	dm, err := ctx.DocumentManager()
+	if err != nil {
+		return err
+	}
 
 	// Handle incremental changes
 	doc := dm.Document(params.TextDocument.URI)
@@ -143,8 +144,11 @@ func DidChange(ctx LifecycleContext, context *glsp.Context, params *protocol.Did
 }
 
 // DidClose handles textDocument/didClose notifications
-func DidClose(ctx LifecycleContext, context *glsp.Context, params *protocol.DidCloseTextDocumentParams) error {
-	dm := ctx.TextDocumentManager()
+func DidClose(ctx types.ServerContext, context *glsp.Context, params *protocol.DidCloseTextDocumentParams) error {
+	dm, err := ctx.DocumentManager()
+	if err != nil {
+		return err
+	}
 	dm.CloseDocument(params.TextDocument.URI)
 	return nil
 }

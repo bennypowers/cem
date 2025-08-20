@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
+	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
 	protocol "github.com/tliron/glsp/protocol_3_16"
@@ -32,20 +32,16 @@ func TestAttributeValueCompletions(t *testing.T) {
 	}
 
 	// Create registry and add the test manifest
-	registry := lsp.NewTestRegistry()
+	registry := testhelpers.NewMockRegistry()
 	registry.AddManifest(&pkg)
 
-	// Create a mock document manager
-	dm, err := lsp.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create document manager: %v", err)
-	}
-	defer dm.Close()
+	// Create a completion context using MockServerContext
+	ctx := testhelpers.NewMockServerContext()
+	ctx.SetRegistry(registry)
 
-	// Test context that provides the registry data
-	ctx := &testCompletionContext{
-		registry: registry,
-	}
+	// Create and set a document manager
+	dm := testhelpers.NewMockDocumentManager()
+	ctx.SetDocumentManager(dm)
 
 	tests := []struct {
 		name           string
@@ -142,13 +138,13 @@ func TestAttributeValueCompletions(t *testing.T) {
 			for _, expectedLabel := range tt.expectedLabels {
 				if !foundLabels[expectedLabel] {
 					t.Errorf("Expected completion label '%s' not found. Got labels: %v",
-						expectedLabel, getCompletionLabels(completions))
+						expectedLabel, testhelpers.GetCompletionLabels(completions))
 				}
 			}
 
 			// Log completion details for debugging
 			t.Logf("Test: %s", tt.description)
-			t.Logf("Found %d completions: %v", len(completions), getCompletionLabels(completions))
+			t.Logf("Found %d completions: %v", len(completions), testhelpers.GetCompletionLabels(completions))
 		})
 	}
 }
@@ -202,21 +198,13 @@ func TestUnionTypeParser(t *testing.T) {
 			for _, expectedLabel := range tt.expectedLabels {
 				if !foundLabels[expectedLabel] {
 					t.Errorf("Expected union type label '%s' not found. Got labels: %v",
-						expectedLabel, getCompletionLabels(completions))
+						expectedLabel, testhelpers.GetCompletionLabels(completions))
 				}
 			}
 		})
 	}
 }
 
-// Helper function to extract labels from completion items
-func getCompletionLabels(completions []protocol.CompletionItem) []string {
-	labels := make([]string, len(completions))
-	for i, completion := range completions {
-		labels[i] = completion.Label
-	}
-	return labels
-}
 
 func TestAttributeCompletionAfterSpaces(t *testing.T) {
 	// Load test manifest
@@ -235,20 +223,16 @@ func TestAttributeCompletionAfterSpaces(t *testing.T) {
 	}
 
 	// Create registry and add the test manifest
-	registry := lsp.NewTestRegistry()
+	registry := testhelpers.NewMockRegistry()
 	registry.AddManifest(&pkg)
 
-	// Create a mock document manager
-	dm, err := lsp.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create document manager: %v", err)
-	}
-	defer dm.Close()
+	// Create a completion context using MockServerContext
+	ctx := testhelpers.NewMockServerContext()
+	ctx.SetRegistry(registry)
 
-	// Test context that provides the registry data
-	ctx := &testCompletionContext{
-		registry: registry,
-	}
+	// Create and set a document manager
+	dm := testhelpers.NewMockDocumentManager()
+	ctx.SetDocumentManager(dm)
 
 	tests := []struct {
 		name          string
@@ -283,7 +267,7 @@ func TestAttributeCompletionAfterSpaces(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock document for this test case
-			mockDoc := NewMockDocument(tt.html)
+			mockDoc := testhelpers.NewMockDocument(tt.html)
 
 			// Analyze completion context
 			analysis := textDocument.AnalyzeCompletionContext(mockDoc, tt.position, "")
@@ -319,7 +303,7 @@ func TestAttributeCompletionAfterSpaces(t *testing.T) {
 
 			if foundCount == 0 {
 				t.Errorf("Expected some of %v in completions, but found none. Got: %v",
-					tt.expectedAttrs, getCompletionLabels(completions))
+					tt.expectedAttrs, testhelpers.GetCompletionLabels(completions))
 			}
 
 			// For boolean attributes, verify they complete without value syntax
@@ -342,35 +326,11 @@ func TestAttributeCompletionAfterSpaces(t *testing.T) {
 			}
 
 			t.Logf("Test: %s", tt.description)
-			t.Logf("Found %d completions: %v", len(completions), getCompletionLabels(completions))
+			t.Logf("Found %d completions: %v", len(completions), testhelpers.GetCompletionLabels(completions))
 		})
 	}
 }
 
-// testCompletionContext implements CompletionContext for testing
-type testCompletionContext struct {
-	registry *lsp.Registry
-}
-
-func (ctx *testCompletionContext) Document(uri string) types.Document {
-	return nil // Not needed for these tests
-}
-
-func (ctx *testCompletionContext) AllTagNames() []string {
-	return ctx.registry.AllTagNames()
-}
-
-func (ctx *testCompletionContext) Element(tagName string) (*M.CustomElement, bool) {
-	return ctx.registry.Element(tagName)
-}
-
-func (ctx *testCompletionContext) Attributes(tagName string) (map[string]*M.Attribute, bool) {
-	return ctx.registry.Attributes(tagName)
-}
-
-func (ctx *testCompletionContext) Slots(tagName string) ([]M.Slot, bool) {
-	return ctx.registry.Slots(tagName)
-}
 
 // TestAttributeValueCompletionTreeSitterRegression is a regression test for the tree-sitter
 // tag name extraction issue that was preventing attribute value completions from working
@@ -408,13 +368,12 @@ func TestAttributeValueCompletionTreeSitterRegression(t *testing.T) {
 	}
 
 	// Create registry and add the test manifest
-	registry := lsp.NewTestRegistry()
+	registry := testhelpers.NewMockRegistry()
 	registry.AddManifest(pkg)
 
-	// Create context using the testCompletionContext with registry
-	ctx := &testCompletionContext{
-		registry: registry,
-	}
+	// Create context using MockServerContext with registry
+	ctx := testhelpers.NewMockServerContext()
+	ctx.SetRegistry(registry)
 
 	// Test union type attribute
 	stateCompletions := completion.GetAttributeValueCompletions(ctx, "regression-element", "state")

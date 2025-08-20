@@ -19,12 +19,13 @@ package server
 import (
 	"log"
 
+	"bennypowers.dev/cem/lsp/types"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 // Initialized handles the LSP initialized notification
-func Initialized(ctx ServerContext, context *glsp.Context, params *protocol.InitializedParams) error {
+func Initialized(ctx types.ServerContext, context *glsp.Context, params *protocol.InitializedParams) error {
 	log.Printf("CEM LSP Server initialized")
 
 	// Initialize manifests and start watching after successful LSP initialization

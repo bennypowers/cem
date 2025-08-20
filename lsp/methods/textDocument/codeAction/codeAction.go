@@ -23,14 +23,8 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-// CodeActionContext provides the dependencies needed for code actions
-type CodeActionContext interface {
-	Document(uri string) types.Document
-	RawDocumentManager() any // For accessing DocumentManager queries
-}
-
 // CodeAction handles textDocument/codeAction requests
-func CodeAction(ctx CodeActionContext, context *glsp.Context, params *protocol.CodeActionParams) (any, error) {
+func CodeAction(ctx types.ServerContext, context *glsp.Context, params *protocol.CodeActionParams) (any, error) {
 	helpers.SafeDebugLog("[CODE_ACTION] Starting code action for %s", params.TextDocument.URI)
 
 	var actions []protocol.CodeAction
@@ -55,7 +49,10 @@ func CodeAction(ctx CodeActionContext, context *glsp.Context, params *protocol.C
 								helpers.SafeDebugLog("[CODE_ACTION] Created tag autofix action")
 							}
 						case "missing-import":
-							action := createMissingImportAction(ctx, &diagnostic, dataMap, params.TextDocument.URI)
+							action, err := CreateMissingImportAction(ctx, &diagnostic, dataMap, params.TextDocument.URI)
+							if err != nil {
+								return nil, err
+							}
 							if action != nil {
 								actions = append(actions, *action)
 								helpers.SafeDebugLog("[CODE_ACTION] Created missing import action")

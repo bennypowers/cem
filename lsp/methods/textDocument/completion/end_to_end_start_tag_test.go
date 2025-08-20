@@ -22,10 +22,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/testhelpers"
-	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
@@ -49,51 +47,57 @@ func TestEndToEndStartTagCompletion(t *testing.T) {
 	}
 
 	// Create registry and add the test manifest
-	registry := lsp.NewTestRegistry()
+	registry := testhelpers.NewMockRegistry()
 	registry.AddManifest(&pkg)
+	
+	// Debug: Check what tags were loaded
+	allTags := registry.AllTagNames()
+	t.Logf("Loaded %d tags: %v", len(allTags), allTags)
 
 	// Create a completion context that returns documents
-	ctx := &endToEndCompletionContext{
-		registry: registry,
-		documents: make(map[string]types.Document),
-	}
+	ctx := testhelpers.NewMockServerContext()
+	ctx.SetRegistry(registry)
+	
+	// Create and set a document manager
+	dm := testhelpers.NewMockDocumentManager()
+	ctx.SetDocumentManager(dm)
 
 	// Test scenarios that reproduce the user's issue
 	tests := []struct {
-		name                string
-		documentContent     string
-		position            protocol.Position
-		triggerChar         *string
-		expectedMinResults  int
-		expectedTags        []string
-		description         string
+		name               string
+		documentContent    string
+		position           protocol.Position
+		triggerChar        *string
+		expectedMinResults int
+		expectedTags       []string
+		description        string
 	}{
 		{
-			name:            "Start tag completion after typing <",
-			documentContent: "<",
-			position:        protocol.Position{Line: 0, Character: 1},
-			triggerChar:     stringPtr("<"),
+			name:               "Start tag completion after typing <",
+			documentContent:    "<",
+			position:           protocol.Position{Line: 0, Character: 1},
+			triggerChar:        stringPtr("<"),
 			expectedMinResults: 3,
-			expectedTags:    []string{"card-element", "dialog-element", "my-custom-element"},
-			description:     "Should provide start tag completions when user types <",
+			expectedTags:       []string{"card-element", "dialog-element", "my-custom-element"},
+			description:        "Should provide start tag completions when user types <",
 		},
 		{
-			name:            "Start tag completion in existing HTML",
-			documentContent: "<div>\n  <",
-			position:        protocol.Position{Line: 1, Character: 3},
-			triggerChar:     stringPtr("<"),
+			name:               "Start tag completion in existing HTML",
+			documentContent:    "<div>\n  <",
+			position:           protocol.Position{Line: 1, Character: 3},
+			triggerChar:        stringPtr("<"),
 			expectedMinResults: 3,
-			expectedTags:    []string{"card-element", "dialog-element", "my-custom-element"},
-			description:     "Should provide start tag completions in existing HTML context",
+			expectedTags:       []string{"card-element", "dialog-element", "my-custom-element"},
+			description:        "Should provide start tag completions in existing HTML context",
 		},
 		{
-			name:            "Start tag completion with partial content",
-			documentContent: "<card",
-			position:        protocol.Position{Line: 0, Character: 5},
-			triggerChar:     nil,
+			name:               "Start tag completion with partial content",
+			documentContent:    "<card",
+			position:           protocol.Position{Line: 0, Character: 5},
+			triggerChar:        nil,
 			expectedMinResults: 1,
-			expectedTags:    []string{"card-element"},
-			description:     "Should provide filtered start tag completions with partial typing",
+			expectedTags:       []string{"card-element"},
+			description:        "Should provide filtered start tag completions with partial typing",
 		},
 	}
 
@@ -102,7 +106,7 @@ func TestEndToEndStartTagCompletion(t *testing.T) {
 			// Set up the document for this test
 			uri := "test://test.html"
 			doc := testhelpers.NewMockDocument(tt.documentContent)
-			ctx.documents[uri] = doc
+			ctx.AddDocument(uri, doc)
 
 			// Create completion parameters
 			params := &protocol.CompletionParams{
@@ -156,34 +160,6 @@ func TestEndToEndStartTagCompletion(t *testing.T) {
 	}
 }
 
-// endToEndCompletionContext implements CompletionContext for end-to-end testing
-type endToEndCompletionContext struct {
-	registry  *lsp.Registry
-	documents map[string]types.Document
-}
-
-func (ctx *endToEndCompletionContext) Document(uri string) types.Document {
-	if doc, exists := ctx.documents[uri]; exists {
-		return doc
-	}
-	return nil
-}
-
-func (ctx *endToEndCompletionContext) AllTagNames() []string {
-	return ctx.registry.AllTagNames()
-}
-
-func (ctx *endToEndCompletionContext) Element(tagName string) (*M.CustomElement, bool) {
-	return ctx.registry.Element(tagName)
-}
-
-func (ctx *endToEndCompletionContext) Attributes(tagName string) (map[string]*M.Attribute, bool) {
-	return ctx.registry.Attributes(tagName)
-}
-
-func (ctx *endToEndCompletionContext) Slots(tagName string) ([]M.Slot, bool) {
-	return ctx.registry.Slots(tagName)
-}
 
 // Helper functions
 func stringPtr(s string) *string {
@@ -197,3 +173,4 @@ func extractLabels(items []protocol.CompletionItem) []string {
 	}
 	return labels
 }
+

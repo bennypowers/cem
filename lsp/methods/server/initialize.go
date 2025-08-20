@@ -22,12 +22,13 @@ import (
 
 	"bennypowers.dev/cem/internal/version"
 	"bennypowers.dev/cem/lsp/helpers"
+	"bennypowers.dev/cem/lsp/types"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 // Initialize handles the LSP initialize request
-func Initialize(ctx ServerContext, context *glsp.Context, params *protocol.InitializeParams) (any, error) {
+func Initialize(ctx types.ServerContext, context *glsp.Context, params *protocol.InitializeParams) (any, error) {
 	log.Printf("CEM LSP Server initializing...")
 
 	// Set up debug logging (disabled by default, enabled via $/setTrace)
