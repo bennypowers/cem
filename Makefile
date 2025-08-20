@@ -49,7 +49,7 @@ install-bindings:
 	go generate ./...
 
 test-unit:
-	gotestsum -- -race
+	gotestsum -- -race ./...
 
 test-e2e:
 	gotestsum -- -race -tags=e2e ./cmd/
