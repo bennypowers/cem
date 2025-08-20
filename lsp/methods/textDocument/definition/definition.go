@@ -363,14 +363,22 @@ func resolveSourcePath(definition types.ElementDefinition, workspaceRoot string)
 	if strings.HasSuffix(localPath, ".js") {
 		// Try .ts first
 		tsPath := strings.TrimSuffix(localPath, ".js") + ".ts"
+		helpers.SafeDebugLog("[DEFINITION] Trying TypeScript file: %s", tsPath)
 		if _, err := fs.Stat(tsPath); err == nil {
+			helpers.SafeDebugLog("[DEFINITION] Found TypeScript file: %s", tsPath)
 			return "file://" + tsPath
+		} else {
+			helpers.SafeDebugLog("[DEFINITION] TypeScript file not found: %v", err)
 		}
 
 		// Try .d.ts
 		dtsPath := strings.TrimSuffix(localPath, ".js") + ".d.ts"
+		helpers.SafeDebugLog("[DEFINITION] Trying declaration file: %s", dtsPath)
 		if _, err := fs.Stat(dtsPath); err == nil {
+			helpers.SafeDebugLog("[DEFINITION] Found declaration file: %s", dtsPath)
 			return "file://" + dtsPath
+		} else {
+			helpers.SafeDebugLog("[DEFINITION] Declaration file not found: %v", err)
 		}
 	}
 
