@@ -17,7 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package testhelpers
 
 import (
-	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/types"
 )
 
@@ -33,36 +32,3 @@ func CreateTestDocumentWithURI(dm types.DocumentManager, uri, content string) ty
 }
 
 // Legacy compatibility functions - these will be removed in favor of direct dm.OpenDocument() calls
-
-// NewMockDocument creates a real document using a new DocumentManager
-// DEPRECATED: Tests should create their own DocumentManager and call dm.OpenDocument()
-func NewMockDocument(content string) types.Document {
-	dm, err := lsp.NewDocumentManager()
-	if err != nil {
-		panic("Failed to create DocumentManager for test: " + err.Error())
-	}
-	defer dm.Close()
-	
-	// Call OpenDocument on the DocumentManager as requested
-	return dm.OpenDocument("test://mock.html", content, 1)
-}
-
-// NewMockDocumentWithElements creates a real document using a new DocumentManager
-// DEPRECATED: Tests should create their own DocumentManager and call dm.OpenDocument()
-func NewMockDocumentWithElements(content string, elements []types.CustomElementMatch) types.Document {
-	// Ignore the elements parameter - real Documents use tree-sitter to find elements
-	dm, err := lsp.NewDocumentManager()
-	if err != nil {
-		panic("Failed to create DocumentManager for test: " + err.Error())
-	}
-	defer dm.Close()
-	
-	// Call OpenDocument on the DocumentManager as requested
-	return dm.OpenDocument("test://mock.html", content, 1)
-}
-
-
-
-// MockDocument represents a document type for testing
-// DEPRECATED: Tests should use real Documents via dm.OpenDocument()
-type MockDocument = types.Document

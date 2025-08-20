@@ -74,9 +74,6 @@ func TestCreateMissingImportAction(t *testing.T) {
 				t.Fatalf("Failed to read golden file %s: %v", goldenPath, err)
 			}
 
-			// Create mock document from input content
-			doc := testhelpers.NewMockDocument(string(inputContent))
-
 			// Create mock context with the document
 			mockCtx := testhelpers.NewMockServerContext()
 			dm, err := lsp.NewDocumentManager()
@@ -85,6 +82,9 @@ func TestCreateMissingImportAction(t *testing.T) {
 			}
 			defer dm.Close()
 			mockCtx.SetDocumentManager(dm)
+			
+			// Create document from input content using DocumentManager
+			doc := dm.OpenDocument(config.DocumentURI, string(inputContent), 1)
 			mockCtx.AddDocument(config.DocumentURI, doc)
 
 			// Create diagnostic data for missing import

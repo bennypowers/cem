@@ -19,6 +19,7 @@ package codeAction_test
 import (
 	"testing"
 
+	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/codeAction"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	protocol "github.com/tliron/glsp/protocol_3_16"
@@ -27,7 +28,17 @@ import (
 func TestCodeActionSlotSuggestion(t *testing.T) {
 	// Create mock context
 	ctx := testhelpers.NewMockServerContext()
-	ctx.AddDocument("test://test.html", testhelpers.NewMockDocument(`<my-element><div slot="heade">Content</div></my-element>`))
+	
+	// Create DocumentManager and add document
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
+	
+	doc := dm.OpenDocument("test://test.html", `<my-element><div slot="heade">Content</div></my-element>`, 1)
+	ctx.AddDocument("test://test.html", doc)
 
 	// Create mock diagnostic with slot suggestion data
 	severity := protocol.DiagnosticSeverityError
@@ -132,7 +143,17 @@ func TestCodeActionSlotSuggestion(t *testing.T) {
 func TestCodeActionNoDiagnostics(t *testing.T) {
 	// Create mock context
 	ctx := testhelpers.NewMockServerContext()
-	ctx.AddDocument("test://test.html", testhelpers.NewMockDocument(`<my-element><div slot="header">Content</div></my-element>`))
+	
+	// Create DocumentManager and add document
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
+	
+	doc := dm.OpenDocument("test://test.html", `<my-element><div slot="header">Content</div></my-element>`, 1)
+	ctx.AddDocument("test://test.html", doc)
 
 	// Create code action request with no diagnostics
 	params := &protocol.CodeActionParams{

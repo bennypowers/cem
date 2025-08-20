@@ -88,10 +88,10 @@ func TestSlotAttributeCompletions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock document for this test case
-			mockDoc := testhelpers.NewMockDocument(tt.html)
+			doc := dm.OpenDocument("test://test.html", tt.html, 1)
 
 			// Call the slot completion function directly
-			completions := completion.GetAttributeValueCompletionsWithContext(ctx, mockDoc, tt.position, "", "slot")
+			completions := completion.GetAttributeValueCompletionsWithContext(ctx, doc, tt.position, "", "slot")
 
 			// Check if we got the expected completions
 			if len(tt.expectedSlots) == 0 {
@@ -141,11 +141,19 @@ func TestSlotCompletionDetails(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 	ctx.AddManifest(&pkg)
 
+	// Create and set a real DocumentManager
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
+
 	// Test specific completion details
-	mockDoc := testhelpers.NewMockDocument(`<card-element><button slot="`)
+	doc := dm.OpenDocument("test://test.html", `<card-element><button slot="`, 1)
 	position := protocol.Position{Line: 0, Character: 28}
 
-	completions := completion.GetAttributeValueCompletionsWithContext(ctx, mockDoc, position, "", "slot")
+	completions := completion.GetAttributeValueCompletionsWithContext(ctx, doc, position, "", "slot")
 
 	// Should have 3 completions: header, footer, actions (no default slot)
 	if len(completions) != 3 {
@@ -200,6 +208,14 @@ func TestSlotAttributeNameSuggestion(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 	ctx.AddManifest(&pkg)
 
+	// Create and set a real DocumentManager
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
+
 	tests := []struct {
 		name                string
 		html                string
@@ -253,11 +269,11 @@ func TestSlotAttributeNameSuggestion(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock document for this test case
-			mockDoc := testhelpers.NewMockDocument(tt.html)
+			doc := dm.OpenDocument("test://test.html", tt.html, 1)
 
 			
 			// Call the attribute completion function with context
-			completions := completion.GetAttributeCompletionsWithContext(ctx, mockDoc, tt.position, tt.tagName)
+			completions := completion.GetAttributeCompletionsWithContext(ctx, doc, tt.position, tt.tagName)
 
 			// Check if slot attribute is suggested
 			foundSlot := false

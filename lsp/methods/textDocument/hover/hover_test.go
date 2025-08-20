@@ -145,8 +145,15 @@ func TestHoverIntegrationWithDocumentChanges(t *testing.T) {
 				}
 			}
 
-			// Add document to the mock context
-			doc := testhelpers.NewMockDocumentWithElements(string(content), []types.CustomElementMatch{elementMatch})
+			// Add document to the mock context using DocumentManager
+			dm, err := lsp.NewDocumentManager()
+			if err != nil {
+				t.Fatalf("Failed to create DocumentManager: %v", err)
+			}
+			defer dm.Close()
+			ctx.SetDocumentManager(dm)
+			
+			doc := dm.OpenDocument(uri, string(content), 1)
 			ctx.AddDocument(uri, doc)
 
 			// Test element hover
@@ -266,23 +273,15 @@ func TestHoverWithTypeScriptTemplates(t *testing.T) {
 
 			uri := "file:///test.ts"
 
-			// Create element match from config
-			elementMatch := types.CustomElementMatch{
-				TagName: testCase.ElementMatch.TagName,
-				Range: protocol.Range{
-					Start: protocol.Position{
-						Line:      testCase.ElementMatch.Range.Start.Line,
-						Character: testCase.ElementMatch.Range.Start.Character,
-					},
-					End: protocol.Position{
-						Line:      testCase.ElementMatch.Range.End.Line,
-						Character: testCase.ElementMatch.Range.End.Character,
-					},
-				},
+			// Add document to the mock context using DocumentManager
+			dm, err := lsp.NewDocumentManager()
+			if err != nil {
+				t.Fatalf("Failed to create DocumentManager: %v", err)
 			}
-
-			// Add document to the mock context
-			doc := testhelpers.NewMockDocumentWithElements(string(content), []types.CustomElementMatch{elementMatch})
+			defer dm.Close()
+			ctx.SetDocumentManager(dm)
+			
+			doc := dm.OpenDocument(uri, string(content), 1)
 			ctx.AddDocument(uri, doc)
 
 			// Test hover

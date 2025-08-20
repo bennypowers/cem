@@ -10,7 +10,6 @@ import (
 
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
-	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/lsp/types"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
@@ -18,11 +17,19 @@ import (
 // TestHelpers provides utilities for completion testing
 type TestHelpers struct{}
 
-// NewMockTemplateDocument creates a real Document for testing
+// NewMockTemplateDocument creates a real Document for testing using a DocumentManager
 // The templateContext parameter is ignored since real Documents don't need mock template context
+// DEPRECATED: Tests should use dm.OpenDocument() directly
 func NewMockTemplateDocument(content, templateContext string) types.Document {
+	// Create a DocumentManager and use it to open the document
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		panic("Failed to create DocumentManager for test: " + err.Error())
+	}
+	defer dm.Close()
+	
 	// Real Documents handle template context automatically through tree-sitter parsing
-	return testhelpers.NewMockDocument(content)
+	return dm.OpenDocument("test://template.html", content, 1)
 }
 
 // CreateAttributeValueCompletionParams creates LSP completion parameters for testing attribute value completions

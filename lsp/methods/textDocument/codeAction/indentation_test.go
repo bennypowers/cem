@@ -23,7 +23,9 @@ import (
 	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/testhelpers"
+	"bennypowers.dev/cem/lsp/types"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
@@ -61,8 +63,19 @@ func TestIndentationDetection(t *testing.T) {
 			// Parse expected values from golden file
 			expected := parseGoldenFile(string(goldenContent))
 
-			// Create mock document
-			doc := testhelpers.NewMockDocument(string(htmlContent))
+			// Create mock server context and add document
+			ctx := testhelpers.NewMockServerContext()
+			
+			// Create DocumentManager and add document
+			dm, err := lsp.NewDocumentManager()
+			if err != nil {
+				t.Fatalf("Failed to create DocumentManager: %v", err)
+			}
+			defer dm.Close()
+			ctx.SetDocumentManager(dm)
+			
+			doc := dm.OpenDocument("test://fixture.html", string(htmlContent), 1)
+			ctx.AddDocument("test://fixture.html", doc)
 
 			// Test base and script indentation detection
 			baseIndent, scriptIndent := detectIndentation(doc)
@@ -165,7 +178,7 @@ func findScriptPosition(content string) *protocol.Position {
 // Test helper functions that mirror the private functions from missingImportCodeActions.go
 
 // detectIndentation mimics the private detectIndentation function
-func detectIndentation(doc *testhelpers.MockDocument) (string, string) {
+func detectIndentation(doc types.Document) (string, string) {
 	if doc == nil {
 		return "  ", "  "
 	}
@@ -233,7 +246,7 @@ func detectIndentation(doc *testhelpers.MockDocument) (string, string) {
 }
 
 // detectScriptTagIndentation mimics the private detectScriptTagIndentation function
-func detectScriptTagIndentation(doc *testhelpers.MockDocument, scriptPosition protocol.Position) string {
+func detectScriptTagIndentation(doc types.Document, scriptPosition protocol.Position) string {
 	if doc == nil {
 		return "  " // Default to 2 spaces
 	}

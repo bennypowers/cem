@@ -151,6 +151,7 @@ func TestCompletionPrefixExtraction(t *testing.T) {
 		beforeCursor   string
 		completionType types.CompletionContextType
 		tagName        string
+		attributeName  string
 		expectedPrefix string
 	}{
 		{
@@ -175,6 +176,7 @@ func TestCompletionPrefixExtraction(t *testing.T) {
 			name:           "Attribute value prefix",
 			beforeCursor:   "<my-element disabled=\"tr",
 			completionType: types.CompletionAttributeValue,
+			attributeName:  "disabled",
 			expectedPrefix: "tr",
 		},
 	}
@@ -182,8 +184,10 @@ func TestCompletionPrefixExtraction(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			analysis := &types.CompletionAnalysis{
-				Type:    tt.completionType,
-				TagName: tt.tagName,
+				Type:          tt.completionType,
+				TagName:       tt.tagName,
+				AttributeName: tt.attributeName,
+				LineContent:   tt.beforeCursor, // Include line content for prefix extraction
 			}
 
 			// Create a document using DocumentManager to test completion prefix
@@ -774,12 +778,22 @@ func TestTemplateContextBehavior(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create mock document that reports template context
-			templateContext := ""
-			if tt.wantLitTemplate {
-				templateContext = "html"
+			// Create a real document using DocumentManager
+			dm, err := lsp.NewDocumentManager()
+			if err != nil {
+				t.Fatalf("Failed to create DocumentManager: %v", err)
 			}
-			doc := NewMockTemplateDocument(tt.content, templateContext)
+			defer dm.Close()
+			
+			// For template literals, use .ts extension so it gets parsed as TypeScript
+			var uri string
+			if tt.wantLitTemplate {
+				uri = "test://template.ts"
+			} else {
+				uri = "test://template.html"
+			}
+			
+			doc := dm.OpenDocument(uri, tt.content, 1)
 
 			// Analyze context
 			analysis, err := textDocument.AnalyzeCompletionContext(doc, tt.position, "")

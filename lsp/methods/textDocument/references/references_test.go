@@ -13,21 +13,21 @@ import (
 
 
 func TestReferences(t *testing.T) {
-	// Create DocumentManager for real document parsing
+	// Create MockServerContext with proper DocumentManager
+	ctx := testhelpers.NewMockServerContext()
+	
+	// Create DocumentManager and add documents
 	dm, err := lsp.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}
 	defer dm.Close()
-
-	// Create real documents with specific URIs
-	doc1 := testhelpers.CreateTestDocumentWithURI(dm, "file:///test1.html", 
-		`<rh-card>content</rh-card>`)
-
-	doc2 := testhelpers.CreateTestDocumentWithURI(dm, "file:///test2.ts",
-		"html`<rh-card variant=\"primary\"></rh-card>`")
-
-	ctx := testhelpers.NewMockServerContext()
+	ctx.SetDocumentManager(dm)
+	
+	// Add documents using real DocumentManager
+	doc1 := dm.OpenDocument("file:///test1.html", `<rh-card>content</rh-card>`, 1)
+	doc2 := dm.OpenDocument("file:///test2.ts", "html`<rh-card variant=\"primary\"></rh-card>`", 1)
+	
 	ctx.AddDocument("file:///test1.html", doc1)
 	ctx.AddDocument("file:///test2.ts", doc2)
 	ctx.SetWorkspaceRoot("/test/workspace")

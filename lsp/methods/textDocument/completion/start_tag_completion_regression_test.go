@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/lsp/types"
@@ -50,6 +51,14 @@ func TestStartTagCompletionRegression(t *testing.T) {
 	// Create context and add the test manifest
 	ctx := testhelpers.NewMockServerContext()
 	ctx.AddManifest(&pkg)
+
+	// Create and set a real DocumentManager
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
 
 	// Test cases for start tag completions using the context analysis
 	tests := []struct {
@@ -92,13 +101,13 @@ func TestStartTagCompletionRegression(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create a mock document for this test case
+			// Create a real document using the DocumentManager
 			uri := "test://test.html"
-			mockDoc := testhelpers.NewMockDocument(tt.html)
-			ctx.AddDocument(uri, mockDoc)
+			doc := dm.OpenDocument(uri, tt.html, 1)
+			ctx.AddDocument(uri, doc)
 
-			// Test the completion context analysis first
-			analysis, err := textDocument.AnalyzeCompletionContext(mockDoc, tt.position, "")
+			// Test the completion context analysis first with DocumentManager
+			analysis, err := textDocument.AnalyzeCompletionContextWithDM(doc, tt.position, "", dm)
 			if err != nil {
 				t.Fatalf("Failed to analyze completion context: %v", err)
 			}

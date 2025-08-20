@@ -19,6 +19,7 @@ package publishDiagnostics_test
 import (
 	"testing"
 
+	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/manifest"
 )
@@ -30,17 +31,22 @@ func TestSlotDiagnosticsBasic(t *testing.T) {
 	// Create test context using MockServerContext
 	ctx := testhelpers.NewMockServerContext()
 	
-	// Add test document
-	doc := testhelpers.NewMockDocument(`<my-element><div slot="heade">Content</div></my-element>`)
+	// Add test document using DocumentManager
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
+	
+	doc := dm.OpenDocument("test://test.html", `<my-element><div slot="heade">Content</div></my-element>`, 1)
 	ctx.AddDocument("test://test.html", doc)
 	
-	// Create registry with test slots
-	ctx := testhelpers.NewMockServerContext()
+	// Add test slots to the context
 	ctx.AddSlots("my-element", []manifest.Slot{
 		{FullyQualified: manifest.FullyQualified{Name: "header"}},
 		{FullyQualified: manifest.FullyQualified{Name: "footer"}},
 	})
-	ctx.SetRegistry(registry)
 
 	// Verify mock context works
 	retrievedDoc := ctx.Document("test://test.html")

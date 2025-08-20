@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
@@ -49,6 +50,14 @@ func TestSlotAttributeNameSuggestionRegression(t *testing.T) {
 	// Create context and add the test manifest
 	ctx := testhelpers.NewMockServerContext()
 	ctx.AddManifest(&pkg)
+
+	// Create and set a real DocumentManager
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
 
 	// Regression test cases covering all scenarios where slot attribute should/shouldn't be suggested
 	tests := []struct {
@@ -182,11 +191,11 @@ func TestSlotAttributeNameSuggestionRegression(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create a mock document for this test case
-			mockDoc := testhelpers.NewMockDocument(tt.html)
+			// Create a real document using the DocumentManager
+			doc := dm.OpenDocument("test://test.html", tt.html, 1)
 
 			// Call the attribute completion function with context
-			completions := completion.GetAttributeCompletionsWithContext(ctx, mockDoc, tt.position, tt.tagName)
+			completions := completion.GetAttributeCompletionsWithContext(ctx, doc, tt.position, tt.tagName)
 
 			// Check if slot attribute is suggested
 			foundSlot := false
@@ -275,6 +284,14 @@ func TestSlotAttributeParentDetectionRegression(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 	ctx.AddManifest(&pkg)
 
+	// Create and set a real DocumentManager
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
+
 	// Test cases specifically for the parent detection bug
 	parentDetectionTests := []struct {
 		name        string
@@ -320,8 +337,8 @@ func TestSlotAttributeParentDetectionRegression(t *testing.T) {
 
 	for _, tt := range parentDetectionTests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockDoc := testhelpers.NewMockDocument(tt.html)
-			completions := completion.GetAttributeCompletionsWithContext(ctx, mockDoc, tt.position, tt.tagName)
+			doc := dm.OpenDocument("test://test.html", tt.html, 1)
+			completions := completion.GetAttributeCompletionsWithContext(ctx, doc, tt.position, tt.tagName)
 
 			foundSlot := false
 			for _, completion := range completions {
@@ -365,10 +382,18 @@ func TestSlotAttributeCompletionStructureRegression(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 	ctx.AddManifest(&pkg)
 
+	// Create and set a real DocumentManager
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
+
 	// Test that slot completion has proper LSP protocol structure
-	mockDoc := testhelpers.NewMockDocument(`<card-layout><button `)
+	doc := dm.OpenDocument("test://test.html", `<card-layout><button `, 1)
 	position := protocol.Position{Line: 0, Character: 20}
-	completions := completion.GetAttributeCompletionsWithContext(ctx, mockDoc, position, "button")
+	completions := completion.GetAttributeCompletionsWithContext(ctx, doc, position, "button")
 
 	var slotCompletion *protocol.CompletionItem
 	for _, completion := range completions {

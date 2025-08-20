@@ -19,6 +19,7 @@ package publishDiagnostics_test
 import (
 	"testing"
 
+	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
@@ -28,7 +29,14 @@ import (
 func TestAttributeDiagnostics_GlobalAttributes(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 	content := `<div class="test" id="main" data-value="42">Hello</div>`
-	doc := testhelpers.NewMockDocument(content)
+	// Create DocumentManager and document
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
+	doc := dm.OpenDocument("test.html", content, 1)
 	ctx.AddDocument("test.html", doc)
 
 	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
@@ -42,7 +50,14 @@ func TestAttributeDiagnostics_GlobalAttributes(t *testing.T) {
 func TestAttributeDiagnostics_CustomElementValidAttribute(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 	content := `<my-element size="large" color="red">Content</my-element>`
-	doc := testhelpers.NewMockDocument(content)
+	// Create DocumentManager and document
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
+	doc := dm.OpenDocument("test.html", content, 1)
 	ctx.AddDocument("test.html", doc)
 	
 	// Set up attributes for my-element
@@ -62,7 +77,14 @@ func TestAttributeDiagnostics_CustomElementValidAttribute(t *testing.T) {
 func TestAttributeDiagnostics_CustomElementInvalidAttribute(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 	content := `<my-element siz="large" colour="red">Content</my-element>`
-	doc := testhelpers.NewMockDocument(content)
+	// Create DocumentManager and document
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
+	doc := dm.OpenDocument("test.html", content, 1)
 	ctx.AddDocument("test.html", doc)
 	
 	// Set up attributes for my-element
@@ -93,7 +115,14 @@ func TestAttributeDiagnostics_CustomElementInvalidAttribute(t *testing.T) {
 func TestAttributeDiagnostics_ScriptTypeModule(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 	content := `<script type="module">import './my-element.js';</script>`
-	doc := testhelpers.NewMockDocument(content)
+	// Create DocumentManager and document
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
+	doc := dm.OpenDocument("test.html", content, 1)
 	ctx.AddDocument("test.html", doc)
 
 	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
@@ -110,7 +139,14 @@ func TestAttributeDiagnostics_ScriptTypeModule(t *testing.T) {
 func TestAttributeDiagnostics_GlobalAttributeTypoOnCustomElement(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 	content := `<my-custom-element clas="test" titl="tooltip">Hello</my-custom-element>`
-	doc := testhelpers.NewMockDocument(content)
+	// Create DocumentManager and document
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
+	doc := dm.OpenDocument("test.html", content, 1)
 	ctx.AddDocument("test.html", doc)
 	
 	// Custom element with no defined attributes
@@ -148,7 +184,14 @@ func TestAttributeDiagnostics_GlobalAttributeTypoOnCustomElement(t *testing.T) {
 func TestAttributeDiagnostics_StandardElementIgnored(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 	content := `<div clas="test" titl="tooltip">Hello</div>`
-	doc := testhelpers.NewMockDocument(content)
+	// Create DocumentManager and document
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
+	doc := dm.OpenDocument("test.html", content, 1)
 	ctx.AddDocument("test.html", doc)
 
 	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
