@@ -169,6 +169,7 @@ func (m *MockFileWatcher) TriggerEvent(name string, op WatchOp) {
 	if watched {
 		// Event is acknowledged but not delivered via channels to avoid race detector issues
 		// Tests should use alternative synchronization mechanisms for verifying events
+		_ = watched // Acknowledge the event was processed
 	}
 }
 
@@ -181,6 +182,7 @@ func (m *MockFileWatcher) TriggerError(err error) {
 	if !m.closed {
 		// Error is acknowledged but not delivered via channels to avoid race detector issues
 		// Tests should use alternative synchronization mechanisms for verifying errors
+		_ = err // Acknowledge the error was processed
 	}
 }
 
