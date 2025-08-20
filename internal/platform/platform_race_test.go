@@ -26,7 +26,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 //
 // ROOT CAUSE:
 // - MockTimeProvider.After() returns <-chan time.Time (creates and closes channels)
-// - MockFileWatcher.Events() returns <-chan FileWatchEvent (creates channels) 
+// - MockFileWatcher.Events() returns <-chan FileWatchEvent (creates channels)
 // - FSNotifyFileWatcher also creates channels in the same package
 // - Go's race detector has issues with certain channel creation/closure patterns
 //

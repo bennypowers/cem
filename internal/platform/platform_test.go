@@ -42,7 +42,7 @@ import (
 func TestFileSystemIsolationEffects(t *testing.T) {
 	// Test that TempDirFileSystem enables isolated filesystem testing
 	// by providing real filesystem operations within a controlled, isolated environment
-	
+
 	fs, err := platform.NewTempDirFileSystem()
 	if err != nil {
 		t.Fatalf("Failed to create isolated filesystem: %v", err)
@@ -92,7 +92,7 @@ func TestFileSystemIsolationEffects(t *testing.T) {
 	if realPath == "manifest.json" {
 		t.Error("TempDirFileSystem should resolve paths within isolation boundary")
 	}
-	
+
 	// The key effect: enables testing with real filesystem semantics
 	// but without polluting the actual filesystem or interfering with other tests
 }

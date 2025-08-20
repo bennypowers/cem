@@ -61,7 +61,7 @@ func (m *MockTimeProvider) Now() time.Time {
 func (m *MockTimeProvider) After(d time.Duration) <-chan time.Time {
 	// For testing, advance time instantly and return the result immediately
 	m.Sleep(d) // Advance time instantly
-	
+
 	ch := make(chan time.Time, 1)
 	ch <- m.Now()
 	close(ch)
