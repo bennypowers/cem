@@ -121,10 +121,37 @@ These interfaces prepare the codebase for future deployment scenarios:
 - **Embedded Systems**: Custom storage and timing implementations
 - **Testing**: Hermetic, fast, deterministic test environments
 
+## Race Detector Issue
+
+This package has a known issue with Go's race detector called "hole in findfunctab" that occurs with channel operations. This is a limitation of the Go toolchain, not our code.
+
+**Root Cause:**
+- `FSNotifyFileWatcher` creates channels for event handling
+- `MockFileWatcher` creates channels to satisfy the interface
+- `MockTimeProvider` creates channels in `After()` method
+- Go's race detector has issues with certain channel patterns
+
+**Testing Strategy:**
+
+1. **Normal CI/testing** (race detection excluded):
+   ```bash
+   make test-unit    # Excludes internal/platform from race testing
+   go test ./internal/platform/   # Tests without race detection
+   ```
+
+2. **Manual verification** (with build tags):
+   ```bash
+   go test -tags=race_unsafe ./internal/platform/   # Full mock tests
+   ```
+
+3. **Integration testing**: Mock behavior verified through usage in `lsp/` package tests
+
+**Status**: Known Go limitation, no timeline for fix. Mocks work correctly in production.
+
 ## Migration Strategy
 
 1. **Add interface parameters** to components that use filesystem, time, or file watching
-2. **Use production implementations** by default (no behavior change)
+2. **Use production implementations** by default (no behavior change)  
 3. **Switch to test implementations** in test files for speed and isolation
 4. **Future-proof** for other deployment targets
 
