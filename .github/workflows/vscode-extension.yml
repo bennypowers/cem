@@ -1,8 +1,8 @@
-name: Release
+name: Release VS Code Extension
 
 on:
   release:
-    types: [created]
+    types: [published]  # Run after npm packages are published by release.yml
 
 jobs:
   deploy:
@@ -39,12 +39,21 @@ jobs:
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
+      - name: Find VSIX file
+        id: find_vsix
+        working-directory: extensions/vscode
+        run: |
+          # Find the generated VSIX file (vsce package creates it in current directory)
+          VSIX_FILE=$(ls *.vsix | head -1)
+          echo "vsix_file=$VSIX_FILE" >> $GITHUB_OUTPUT
+          echo "Found VSIX file: $VSIX_FILE"
+
       - name: Upload VSIX to release
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: extensions/vscode/@pwrs-cem-vscode-extension-${{ github.event.release.tag_name }}.vsix
+          asset_path: extensions/vscode/${{ steps.find_vsix.outputs.vsix_file }}
           asset_name: cem-vscode-${{ github.event.release.tag_name }}.vsix
           asset_content_type: application/zip
