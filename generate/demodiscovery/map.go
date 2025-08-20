@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	Q "bennypowers.dev/cem/generate/queries"
+	Q "bennypowers.dev/cem/queries"
 	S "bennypowers.dev/cem/set"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )

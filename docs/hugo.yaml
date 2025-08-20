@@ -32,6 +32,11 @@ outputs:
     - JSON
 markup:
   goldmark:
+    parser:
+      wrapStandAloneImageWithinParagraph: false
+      attribute:
+        block: true
+        title: true
     renderer:
       unsafe: true
   highlight:

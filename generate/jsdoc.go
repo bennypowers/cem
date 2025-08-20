@@ -21,8 +21,8 @@ import (
 	"slices"
 	"strings"
 
-	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
+	Q "bennypowers.dev/cem/queries"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -556,7 +556,6 @@ func (info TagInfo) toParameter() ParameterInfo {
 }
 
 type PropertyInfo struct {
-	source      string
 	Description string
 	Summary     string
 	Type        string
@@ -580,7 +579,7 @@ func NewPropertyInfo(code string, queryManager *Q.QueryManager) (*PropertyInfo, 
 	descriptionCaptureIndex, _ := qm.GetCaptureIndexForName("doc.description")
 	tagCaptureIndex, _ := qm.GetCaptureIndexForName("doc.tag")
 
-	info := PropertyInfo{source: code}
+	info := PropertyInfo{}
 
 	for match := range qm.AllQueryMatches(root, barr) {
 		descriptionNodes := match.NodesForCaptureIndex(descriptionCaptureIndex)
@@ -621,7 +620,6 @@ func NewPropertyInfo(code string, queryManager *Q.QueryManager) (*PropertyInfo, 
 }
 
 type FieldInfo struct {
-	source      string
 	Description string
 	Summary     string
 	Type        string

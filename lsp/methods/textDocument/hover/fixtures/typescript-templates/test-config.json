@@ -1,0 +1,30 @@
+{
+  "tests": [
+    {
+      "name": "initial_typescript",
+      "description": "Hover works on tag in template literal",
+      "inputFile": "initial.ts",
+      "elementPosition": {"line": 5, "character": 10},
+      "elementMatch": {
+        "tagName": "test-component",
+        "range": {
+          "start": {"line": 5, "character": 6},
+          "end": {"line": 5, "character": 20}
+        }
+      }
+    },
+    {
+      "name": "typescript_with_newline",
+      "description": "Hover still works after adding new line in template",
+      "inputFile": "with-newline.ts",
+      "elementPosition": {"line": 6, "character": 10},
+      "elementMatch": {
+        "tagName": "test-component",
+        "range": {
+          "start": {"line": 6, "character": 6},
+          "end": {"line": 6, "character": 20}
+        }
+      }
+    }
+  ]
+}

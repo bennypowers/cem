@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	C "bennypowers.dev/cem/cmd/config"
-	Q "bennypowers.dev/cem/generate/queries"
+	Q "bennypowers.dev/cem/queries"
 	W "bennypowers.dev/cem/workspace"
 )
 

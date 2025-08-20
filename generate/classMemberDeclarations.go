@@ -18,12 +18,13 @@ package generate
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"slices"
 	"strings"
 
-	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
+	Q "bennypowers.dev/cem/queries"
 	S "bennypowers.dev/cem/set"
 
 	ts "github.com/tree-sitter/go-tree-sitter"
@@ -97,6 +98,10 @@ func amendFieldTypeWithCaptures(captures Q.CaptureMap, field *M.ClassField) {
 	for _, capture := range captures["field.type"] {
 		typeText := capture.Text
 		if typeText != "" {
+			// Debug: log type extraction for variant property
+			if field.Name == "variant" {
+				fmt.Printf("[DEBUG] Extracted type for variant property: '%s'\n", typeText)
+			}
 			field.Type = &M.Type{
 				Text: typeText,
 			}
@@ -326,6 +331,11 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 		key := memberKey{name: memberName, kind: kind, static: isStatic}
 		if kind == "" || isIgnoredMember(memberName, superclass, isStatic) {
 			continue
+		}
+
+		// Debug: log all variant property processing
+		if memberName == "variant" {
+			fmt.Printf("[DEBUG] Processing variant member: kind=%s, static=%v\n", kind, isStatic)
 		}
 
 		switch kind {

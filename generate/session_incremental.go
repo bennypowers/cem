@@ -181,7 +181,7 @@ func (gs *GenerateSession) processSpecificModules(ctx context.Context, result pr
 	if verbose {
 		pterm.Debug.Printf("Starting incremental processing with optimized workers for %d modules\n", len(validJobs))
 	}
-	processingResult := processor.ProcessModules(ctx, validJobs, ModuleProcessorFunc(processModuleWithDeps))
+	processingResult := processor.ProcessModules(ctx, validJobs, ModuleProcessorFunc(processModule))
 
 	return processingResult.Modules, processingResult.Logs, processingResult.Aliases, processingResult.Errors
 }
@@ -283,6 +283,7 @@ func (gs *GenerateSession) applyPostProcessingToModules(ctx context.Context, res
 }
 
 // UpdateDemoDiscovery re-runs demo discovery when new demo files appear
+// This currently requires a full rebuild since demo discovery works on the complete manifest
 func (gs *GenerateSession) UpdateDemoDiscovery(ctx context.Context) error {
 	select {
 	case <-ctx.Done():
@@ -290,12 +291,14 @@ func (gs *GenerateSession) UpdateDemoDiscovery(ctx context.Context) error {
 	default:
 	}
 
-	// TODO: Implement incremental demo discovery
-	// For now, this would require a full rebuild to re-associate demos
-	return nil
+	// Demo discovery currently requires a full rebuild to re-associate demos across all modules
+	// This is because demo files can reference any custom element in the manifest
+	_, err := gs.GenerateFullManifest(ctx)
+	return err
 }
 
 // UpdateDesignTokens reloads and re-applies design tokens when token files change
+// This currently requires a full rebuild since design tokens can affect any module
 func (gs *GenerateSession) UpdateDesignTokens(ctx context.Context) error {
 	select {
 	case <-ctx.Done():
@@ -303,12 +306,15 @@ func (gs *GenerateSession) UpdateDesignTokens(ctx context.Context) error {
 	default:
 	}
 
-	// TODO: Implement incremental design token updates
-	// For now, this would require a full rebuild to re-apply tokens
-	return nil
+	// Design token updates currently require a full rebuild to re-apply tokens across all modules
+	// This is because design tokens can reference any custom element in the manifest
+	_, err := gs.GenerateFullManifest(ctx)
+	return err
 }
 
-// ProcessChangedFilesIncremental performs true incremental processing (work in progress)
+// ProcessChangedFilesIncremental performs incremental processing without configuration options
+// This is a simpler alternative to ProcessChangedFiles for cases where you don't need
+// to skip demo discovery or other advanced options.
 func (gs *GenerateSession) ProcessChangedFilesIncremental(ctx context.Context, changedFiles []string) (*M.Package, error) {
 	select {
 	case <-ctx.Done():

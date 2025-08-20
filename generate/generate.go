@@ -26,8 +26,8 @@ import (
 
 	DT "bennypowers.dev/cem/designtokens"
 	DD "bennypowers.dev/cem/generate/demodiscovery"
-	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
+	Q "bennypowers.dev/cem/queries"
 	W "bennypowers.dev/cem/workspace"
 
 	DS "github.com/bmatcuk/doublestar"
@@ -86,9 +86,19 @@ func preprocess(ctx W.WorkspaceContext) (r preprocessResult, errs error) {
 			errs = errors.Join(errs, err)
 		}
 	}
-	for _, file := range cfg.Generate.Files {
-		if !matchesAnyPattern(file, r.excludePatterns) {
-			r.includedFiles = append(r.includedFiles, file)
+	for _, filePattern := range cfg.Generate.Files {
+		// Expand glob patterns to actual file paths
+		expandedFiles, err := ctx.Glob(filePattern)
+		if err != nil {
+			errs = errors.Join(errs, fmt.Errorf("failed to expand glob pattern %s: %w", filePattern, err))
+			continue
+		}
+
+		// Add expanded files that don't match exclude patterns
+		for _, file := range expandedFiles {
+			if !matchesAnyPattern(file, r.excludePatterns) {
+				r.includedFiles = append(r.includedFiles, file)
+			}
 		}
 	}
 	return r, errs
@@ -99,49 +109,7 @@ type processJob struct {
 	ctx  W.WorkspaceContext
 }
 
-// process actually processes a module file
-func process(
-	ctx W.WorkspaceContext,
-	result preprocessResult,
-	qm *Q.QueryManager,
-) (modules []M.Module, logs []*LogCtx, aliases map[string]string, errs error) {
-	// Create jobs for all included files
-	jobs := make([]processJob, 0, len(result.includedFiles))
-	for _, file := range result.includedFiles {
-		jobs = append(jobs, processJob{file: file, ctx: ctx})
-	}
-
-	// Use parallel processor
-	processor := NewModuleBatchProcessor(qm, nil, cssParseCache) // No dependency tracker for simple processing, use global cache
-	processingResult := processor.ProcessModulesSimple(context.Background(), jobs, ModuleProcessorSimpleFunc(processModule))
-
-	return processingResult.Modules, processingResult.Logs, processingResult.Aliases, processingResult.Errors
-}
-
 func processModule(
-	job processJob,
-	qm *Q.QueryManager,
-	parser *ts.Parser,
-	cssCache CssCache,
-) (module *M.Module, tagAliases map[string]string, logCtx *LogCtx, errs error) {
-	defer parser.Reset()
-	mp, err := NewModuleProcessor(job.ctx, job.file, parser, qm, cssCache)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	defer mp.Close()
-	cfg, err := job.ctx.Config()
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	if cfg.Verbose {
-		mp.logger.Section.Printf("Module: %s", mp.logger.File)
-	}
-	module, tagAliases, err = mp.Collect()
-	return module, tagAliases, mp.logger, err
-}
-
-func processModuleWithDeps(
 	job processJob,
 	qm *Q.QueryManager,
 	parser *ts.Parser,

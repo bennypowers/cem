@@ -1,0 +1,30 @@
+{
+  "name": "cem-monorepo",
+  "version": "1.0.0", 
+  "private": true,
+  "description": "Custom Elements Manifest tools and extensions",
+  "workspaces": [
+    "extensions/vscode",
+    "extensions/vscode/client"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "clean": "npm run clean --workspaces --if-present",
+    "ext:build": "npm run build --workspace=extensions/vscode",
+    "ext:package": "npm run build --workspace=extensions/vscode",
+    "ext:publish": "npm run publish --workspace=extensions/vscode"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
+    "eslint": "^8.28.0",
+    "typescript": "^4.9.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bennypowers/cem.git"
+  },
+  "license": "GPL-3.0-or-later"
+}

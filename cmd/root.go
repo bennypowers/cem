@@ -29,15 +29,12 @@ import (
 	"github.com/spf13/viper"
 )
 
-var initialCWD string
-
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "cem",
 	Short: "Tool for generating and querying custom-elements manifests",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		var err error
-		initialCWD, err = os.Getwd()
+		_, err := os.Getwd()
 		if err != nil {
 			return fmt.Errorf("Unable to get current working directory: %v", err)
 		}

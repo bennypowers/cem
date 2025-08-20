@@ -1,0 +1,298 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "card-layout.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "CardLayout",
+          "tagName": "card-layout",
+          "customElement": true,
+          "description": "A layout component with header, body, and footer slots",
+          "slots": [
+            {
+              "name": "",
+              "description": "Default slot for main content"
+            },
+            {
+              "name": "header",
+              "description": "Slot for card header content"
+            },
+            {
+              "name": "body", 
+              "description": "Slot for card body content"
+            },
+            {
+              "name": "footer",
+              "description": "Slot for card footer content"
+            },
+            {
+              "name": "actions",
+              "description": "Slot for action buttons"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "card-layout",
+          "declaration": {
+            "name": "CardLayout",
+            "module": "card-layout.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "nav-menu.js", 
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "NavMenu",
+          "tagName": "nav-menu",
+          "customElement": true,
+          "description": "A navigation menu with start and end slots",
+          "slots": [
+            {
+              "name": "start",
+              "description": "Slot for start content (typically logo)"
+            },
+            {
+              "name": "end",
+              "description": "Slot for end content (typically user menu)"
+            },
+            {
+              "name": "items",
+              "description": "Slot for navigation items"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "nav-menu",
+          "declaration": {
+            "name": "NavMenu",
+            "module": "nav-menu.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "modal-dialog.js",
+      "declarations": [
+        {
+          "kind": "class", 
+          "name": "ModalDialog",
+          "tagName": "modal-dialog",
+          "customElement": true,
+          "description": "A modal dialog with header, content, and footer slots",
+          "slots": [
+            {
+              "name": "header",
+              "description": "Slot for modal header"
+            },
+            {
+              "name": "content",
+              "description": "Slot for modal content"
+            },
+            {
+              "name": "footer",
+              "description": "Slot for modal footer"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "modal-dialog",
+          "declaration": {
+            "name": "ModalDialog",
+            "module": "modal-dialog.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "page-layout.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "PageLayout", 
+          "tagName": "page-layout",
+          "customElement": true,
+          "description": "A full page layout with sidebar and main content slots",
+          "slots": [
+            {
+              "name": "sidebar",
+              "description": "Slot for sidebar content"
+            },
+            {
+              "name": "main",
+              "description": "Slot for main page content"
+            },
+            {
+              "name": "toolbar",
+              "description": "Slot for page toolbar"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "page-layout",
+          "declaration": {
+            "name": "PageLayout",
+            "module": "page-layout.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "icon-button.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "IconButton",
+          "tagName": "icon-button", 
+          "customElement": true,
+          "description": "A button with icon support",
+          "attributes": [
+            {
+              "name": "variant",
+              "type": {
+                "text": "\"primary\" | \"secondary\" | \"danger\""
+              },
+              "description": "Button variant style"
+            },
+            {
+              "name": "disabled", 
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Whether button is disabled"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "icon-button",
+          "declaration": {
+            "name": "IconButton",
+            "module": "icon-button.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "complex-layout.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "ComplexLayout",
+          "tagName": "complex-layout",
+          "customElement": true,
+          "description": "A complex layout with mixed slot types",
+          "slots": [
+            {
+              "name": "",
+              "description": "Default slot for general content"
+            },
+            {
+              "name": "primary",
+              "description": "Primary content slot"
+            },
+            {
+              "name": "secondary", 
+              "description": "Secondary content slot"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "complex-layout",
+          "declaration": {
+            "name": "ComplexLayout",
+            "module": "complex-layout.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "simple-wrapper.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "SimpleWrapper",
+          "tagName": "simple-wrapper",
+          "customElement": true,
+          "description": "A simple wrapper with only default slot",
+          "slots": [
+            {
+              "name": "",
+              "description": "Default slot only"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "simple-wrapper",
+          "declaration": {
+            "name": "SimpleWrapper",
+            "module": "simple-wrapper.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "data-provider.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "DataProvider",
+          "tagName": "data-provider",
+          "customElement": true,
+          "description": "A data provider component with no slots",
+          "attributes": [
+            {
+              "name": "url",
+              "type": {
+                "text": "string"
+              },
+              "description": "Data source URL"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "data-provider",
+          "declaration": {
+            "name": "DataProvider",
+            "module": "data-provider.js"
+          }
+        }
+      ]
+    }
+  ]
+}

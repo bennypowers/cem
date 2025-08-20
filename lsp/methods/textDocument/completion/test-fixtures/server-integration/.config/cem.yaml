@@ -1,0 +1,3 @@
+generate:
+  files:
+    - src/test-alert.ts

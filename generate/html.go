@@ -22,8 +22,8 @@ import (
 	"regexp"
 	"strings"
 
-	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
+	Q "bennypowers.dev/cem/queries"
 	"gopkg.in/yaml.v3"
 )
 

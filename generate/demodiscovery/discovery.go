@@ -13,8 +13,8 @@ import (
 	"text/template"
 
 	C "bennypowers.dev/cem/cmd/config"
-	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
+	Q "bennypowers.dev/cem/queries"
 	W "bennypowers.dev/cem/workspace"
 	"github.com/dunglas/go-urlpattern"
 	"github.com/gosimple/slug"

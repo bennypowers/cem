@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
-	"sync"
 	"time"
 
 	C "bennypowers.dev/cem/cmd/config"
@@ -35,7 +34,6 @@ type LogCtx struct {
 	Logger   *pterm.Logger
 	Start    time.Time
 	Duration time.Duration
-	mu       sync.Mutex
 	Section  *pterm.SectionPrinter
 	Verbose  bool
 }

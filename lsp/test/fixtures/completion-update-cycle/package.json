@@ -1,0 +1,4 @@
+{
+  "name": "test-project", 
+  "customElements": "dist/custom-elements.json"
+}

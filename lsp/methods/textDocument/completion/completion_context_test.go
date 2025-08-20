@@ -1,0 +1,831 @@
+/*
+Copyright © 2025 Benny Powers <web@bennypowers.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+package completion_test
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/methods/textDocument"
+	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
+	"bennypowers.dev/cem/lsp/testhelpers"
+	"bennypowers.dev/cem/lsp/types"
+	M "bennypowers.dev/cem/manifest"
+	protocol "github.com/tliron/glsp/protocol_3_16"
+)
+
+// TestCompletionContextAnalysis tests cursor position analysis for different completion scenarios
+func TestCompletionContextAnalysis(t *testing.T) {
+	tests := []struct {
+		name         string
+		content      string
+		line         uint32
+		character    uint32
+		triggerChar  string
+		expectedType types.CompletionContextType
+		expectedTag  string
+		expectedAttr string
+	}{
+		{
+			name:         "Tag name completion after <",
+			content:      "<my-",
+			line:         0,
+			character:    4,
+			triggerChar:  "",
+			expectedType: types.CompletionTagName,
+		},
+		{
+			name:         "Tag name completion with trigger char",
+			content:      "<",
+			line:         0,
+			character:    1,
+			triggerChar:  "<",
+			expectedType: types.CompletionTagName,
+		},
+		{
+			name:         "Attribute name completion",
+			content:      "<my-element ",
+			line:         0,
+			character:    12,
+			triggerChar:  " ",
+			expectedType: types.CompletionAttributeName,
+			expectedTag:  "my-element",
+		},
+		{
+			name:         "Attribute value completion",
+			content:      "<my-element disabled=\"here\">",
+			line:         0,
+			character:    22, // Inside the attribute value (at 'h')
+			triggerChar:  "",
+			expectedType: types.CompletionAttributeValue,
+			expectedTag:  "my-element",
+			expectedAttr: "disabled",
+		},
+		{
+			name:         "Template literal tag completion",
+			content:      "const html = html`<my-",
+			line:         0,
+			character:    22,
+			triggerChar:  "",
+			expectedType: types.CompletionTagName,
+		},
+		{
+			name:         "Template literal attribute completion",
+			content:      "element.innerHTML = `<my-element ",
+			line:         0,
+			character:    33,
+			triggerChar:  " ",
+			expectedType: types.CompletionAttributeName,
+			expectedTag:  "my-element",
+		},
+	}
+
+	// Create real DocumentManager for tree-sitter parsing
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Use real Document parsing via DocumentManager.OpenDocument
+			testURI := "test://context-analysis.html"
+			doc := dm.OpenDocument(testURI, tt.content, 1)
+
+			position := protocol.Position{
+				Line:      tt.line,
+				Character: tt.character,
+			}
+
+			// Use tree-sitter analysis instead of regex-based
+			analysis := doc.AnalyzeCompletionContextTS(position, dm)
+			if analysis == nil {
+				analysis = &types.CompletionAnalysis{Type: types.CompletionUnknown}
+			}
+
+			// Debug output for failing tests
+			if tt.name == "Attribute value completion" {
+				t.Logf("DEBUG: Content='%s', Position=%+v", tt.content, position)
+				t.Logf("DEBUG: Analysis=%+v", analysis)
+			}
+
+			if analysis.Type != tt.expectedType {
+				t.Errorf("Expected completion type %d, got %d", tt.expectedType, analysis.Type)
+			}
+
+			if tt.expectedTag != "" && analysis.TagName != tt.expectedTag {
+				t.Errorf("Expected tag name %q, got %q", tt.expectedTag, analysis.TagName)
+			}
+
+			if tt.expectedAttr != "" && analysis.AttributeName != tt.expectedAttr {
+				t.Errorf("Expected attribute name %q, got %q", tt.expectedAttr, analysis.AttributeName)
+			}
+		})
+	}
+}
+
+// TestCompletionPrefixExtraction tests prefix extraction for filtering completions
+func TestCompletionPrefixExtraction(t *testing.T) {
+	tests := []struct {
+		name           string
+		beforeCursor   string
+		completionType types.CompletionContextType
+		tagName        string
+		attributeName  string
+		expectedPrefix string
+	}{
+		{
+			name:           "Tag name prefix",
+			beforeCursor:   "<my-",
+			completionType: types.CompletionTagName,
+			expectedPrefix: "my-",
+		},
+		{
+			name:           "Attribute name prefix",
+			beforeCursor:   "<my-element dis",
+			completionType: types.CompletionAttributeName,
+			expectedPrefix: "dis",
+		},
+		{
+			name:           "No prefix",
+			beforeCursor:   "<",
+			completionType: types.CompletionTagName,
+			expectedPrefix: "",
+		},
+		{
+			name:           "Attribute value prefix",
+			beforeCursor:   "<my-element disabled=\"tr",
+			completionType: types.CompletionAttributeValue,
+			attributeName:  "disabled",
+			expectedPrefix: "tr",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			analysis := &types.CompletionAnalysis{
+				Type:          tt.completionType,
+				TagName:       tt.tagName,
+				AttributeName: tt.attributeName,
+				LineContent:   tt.beforeCursor, // Include line content for prefix extraction
+			}
+
+			// Create a document using DocumentManager to test completion prefix
+			dm, err := lsp.NewDocumentManager()
+			if err != nil {
+				t.Fatalf("Failed to create DocumentManager: %v", err)
+			}
+			defer dm.Close()
+
+			doc := dm.OpenDocument("test://prefix.html", tt.beforeCursor, 1)
+			prefix := doc.CompletionPrefix(analysis)
+
+			if prefix != tt.expectedPrefix {
+				t.Errorf("Expected prefix %q, got %q", tt.expectedPrefix, prefix)
+			}
+		})
+	}
+}
+
+// TestCustomElementTagValidation tests custom element tag name validation
+func TestCustomElementTagValidation(t *testing.T) {
+	tests := []struct {
+		name     string
+		tagName  string
+		expected bool
+	}{
+		{"Valid custom element", "my-element", true},
+		{"Valid with numbers", "my-element2", true},
+		{"Valid with multiple hyphens", "my-custom-element", true},
+		{"Invalid no hyphen", "div", false},
+		{"Invalid starts with uppercase", "My-element", false},
+		{"Invalid empty", "", false},
+		{"Invalid only hyphen", "-", false},
+		{"Invalid starts with hyphen", "-element", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := textDocument.IsCustomElementTag(tt.tagName)
+			if result != tt.expected {
+				t.Errorf("Expected %v for tag %q, got %v", tt.expected, tt.tagName, result)
+			}
+		})
+	}
+}
+
+// TestCompletionIntegration tests the full completion flow
+func TestCompletionIntegration(t *testing.T) {
+	// Create test registry with custom elements using proper factory
+	// Load manifest from existing fixture file to avoid type complexity
+	fixtureDir := filepath.Join("attribute-values-test")
+	manifestPath := filepath.Join(fixtureDir, "manifest.json")
+
+	manifestBytes, err := os.ReadFile(manifestPath)
+	if err != nil {
+		t.Fatalf("Failed to read test manifest: %v", err)
+	}
+
+	var pkg M.Package
+	err = json.Unmarshal(manifestBytes, &pkg)
+	if err != nil {
+		t.Fatalf("Failed to parse manifest: %v", err)
+	}
+
+	// Create completion context using MockServerContext and add manifest
+	ctx := testhelpers.NewMockServerContext()
+	ctx.AddManifest(&pkg)
+
+	// Create real DocumentManager for tree-sitter parsing
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
+
+	// Add test document using real DocumentManager
+	doc := dm.OpenDocument("test://test.html", "<test-", 1)
+	ctx.AddDocument("test://test.html", doc)
+
+	// Test tag name completion
+	t.Run("Tag name completion", func(t *testing.T) {
+		params := &protocol.CompletionParams{
+			TextDocumentPositionParams: protocol.TextDocumentPositionParams{
+				TextDocument: protocol.TextDocumentIdentifier{URI: "test://test.html"},
+				Position:     protocol.Position{Line: 0, Character: 6},
+			},
+		}
+
+		result, err := completion.Completion(ctx, nil, params)
+		if err != nil {
+			t.Fatalf("Completion failed: %v", err)
+		}
+
+		items, ok := result.([]protocol.CompletionItem)
+		if !ok {
+			t.Fatalf("Expected []CompletionItem, got %T", result)
+		}
+
+		// Should contain the test element
+		if len(items) != 1 {
+			t.Errorf("Expected 1 completion items, got %d", len(items))
+		}
+
+		// Check that we have the expected element
+		labels := make([]string, len(items))
+		for i, item := range items {
+			labels[i] = item.Label
+		}
+
+		expectedLabels := []string{"test-component"}
+		for _, expected := range expectedLabels {
+			found := false
+			for _, label := range labels {
+				if label == expected {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Errorf("Expected to find %q in completion items %v", expected, labels)
+			}
+		}
+
+		// Verify that snippets include proper < and > characters
+		for _, item := range items {
+			if item.InsertText != nil {
+				insertText := *item.InsertText
+				// Should start with < and include closing >
+				if !strings.HasPrefix(insertText, "<") {
+					t.Errorf("Expected InsertText to start with '<', got %q for %s", insertText, item.Label)
+				}
+				if !strings.Contains(insertText, ">") {
+					t.Errorf("Expected InsertText to contain '>', got %q for %s", insertText, item.Label)
+				}
+				// Should be a complete snippet with opening and closing tags
+				expectedSnippet := fmt.Sprintf("<%s>$0</%s>", item.Label, item.Label)
+				if insertText != expectedSnippet {
+					t.Errorf("Expected InsertText %q, got %q for %s", expectedSnippet, insertText, item.Label)
+				}
+			}
+		}
+	})
+
+	// Test attribute completion
+	t.Run("Attribute completion", func(t *testing.T) {
+		// Update document content using DocumentManager
+		doc := dm.UpdateDocument("test://test.html", "<test-component ", 2)
+		ctx.AddDocument("test://test.html", doc)
+
+		params := &protocol.CompletionParams{
+			TextDocumentPositionParams: protocol.TextDocumentPositionParams{
+				TextDocument: protocol.TextDocumentIdentifier{URI: "test://test.html"},
+				Position:     protocol.Position{Line: 0, Character: 16},
+			},
+		}
+
+		result, err := completion.Completion(ctx, nil, params)
+		if err != nil {
+			t.Fatalf("Completion failed: %v", err)
+		}
+
+		items, ok := result.([]protocol.CompletionItem)
+		if !ok {
+			t.Fatalf("Expected []CompletionItem, got %T", result)
+		}
+
+		// Should contain attributes for test-component (7 attributes: color, theme, disabled, count, size, variant, items)
+		if len(items) < 5 { // At least 5 attributes, not exact count as it can vary
+			t.Errorf("Expected at least 5 attribute completion items, got %d", len(items))
+		}
+
+		labels := make([]string, len(items))
+		for i, item := range items {
+			labels[i] = item.Label
+		}
+
+		expectedLabels := []string{"disabled", "color"} // Just check for a few key ones
+		for _, expected := range expectedLabels {
+			found := false
+			for _, label := range labels {
+				if label == expected {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Errorf("Expected to find %q in attribute completion items %v", expected, labels)
+			}
+		}
+	})
+
+	// Test boolean attribute value completion
+	t.Run("Boolean attribute value completion", func(t *testing.T) {
+		// Update document content
+		doc := dm.UpdateDocument("test://test.html", `<test-component disabled="`, 3)
+		ctx.AddDocument("test://test.html", doc)
+
+		params := &protocol.CompletionParams{
+			TextDocumentPositionParams: protocol.TextDocumentPositionParams{
+				TextDocument: protocol.TextDocumentIdentifier{URI: "test://test.html"},
+				Position:     protocol.Position{Line: 0, Character: 26},
+			},
+		}
+
+		result, err := completion.Completion(ctx, nil, params)
+		if err != nil {
+			t.Fatalf("Completion failed: %v", err)
+		}
+
+		items, ok := result.([]protocol.CompletionItem)
+		if !ok {
+			t.Fatalf("Expected []CompletionItem, got %T", result)
+		}
+
+		// Boolean attributes should not provide value completions
+		// (presence = true, absence = false)
+		if len(items) != 0 {
+			t.Errorf("Expected 0 boolean value completion items (presence=true), got %d", len(items))
+		}
+	})
+
+	// Test trigger character handling
+	t.Run("Trigger character handling", func(t *testing.T) {
+		// Update document content
+		doc := dm.UpdateDocument("test://test.html", "<", 4)
+		ctx.AddDocument("test://test.html", doc)
+
+		params := &protocol.CompletionParams{
+			TextDocumentPositionParams: protocol.TextDocumentPositionParams{
+				TextDocument: protocol.TextDocumentIdentifier{URI: "test://test.html"},
+				Position:     protocol.Position{Line: 0, Character: 1},
+			},
+			Context: &protocol.CompletionContext{
+				TriggerCharacter: &[]string{"<"}[0], // Triggered by <
+			},
+		}
+
+		result, err := completion.Completion(ctx, nil, params)
+		if err != nil {
+			t.Fatalf("Completion failed: %v", err)
+		}
+
+		items, ok := result.([]protocol.CompletionItem)
+		if !ok {
+			t.Fatalf("Expected []CompletionItem, got %T", result)
+		}
+
+		// Should contain the test element
+		if len(items) != 1 {
+			t.Errorf("Expected 1 completion items, got %d", len(items))
+		}
+
+		// Verify that when trigger character is <, we don't get <<tag-name
+		for _, item := range items {
+			if item.InsertText != nil {
+				insertText := *item.InsertText
+				// Should not start with << (double <)
+				if strings.HasPrefix(insertText, "<<") {
+					t.Errorf("Expected InsertText not to start with '<<' when trigger char is '<', got %q for %s", insertText, item.Label)
+				}
+				// Should still be a proper snippet
+				expectedSnippet := fmt.Sprintf("<%s>$0</%s>", item.Label, item.Label)
+				if insertText != expectedSnippet {
+					t.Errorf("Expected InsertText %q, got %q for %s", expectedSnippet, insertText, item.Label)
+				}
+			}
+		}
+	})
+}
+
+// TestCompletionContextBehavior tests the true desired behavior for completion context analysis
+// This represents what the system should do, regardless of implementation (regex vs tree-sitter)
+func TestCompletionContextBehavior(t *testing.T) {
+	tests := []struct {
+		name     string
+		content  string
+		position protocol.Position
+		want     types.CompletionContextType
+		wantTag  string
+		wantAttr string
+	}{
+		// HTML Tag Name Completion
+		{
+			name:     "Tag name after opening bracket",
+			content:  "<",
+			position: protocol.Position{Line: 0, Character: 1},
+			want:     types.CompletionTagName,
+		},
+		{
+			name:     "Partial tag name",
+			content:  "<my-el",
+			position: protocol.Position{Line: 0, Character: 6},
+			want:     types.CompletionTagName,
+		},
+		{
+			name:     "Tag name with hyphen",
+			content:  "<custom-element",
+			position: protocol.Position{Line: 0, Character: 15},
+			want:     types.CompletionTagName,
+		},
+
+		// HTML Attribute Name Completion
+		{
+			name:     "Attribute name after space",
+			content:  "<my-element ",
+			position: protocol.Position{Line: 0, Character: 12},
+			want:     types.CompletionAttributeName,
+			wantTag:  "my-element",
+		},
+		{
+			name:     "Partial attribute name",
+			content:  "<my-element dis",
+			position: protocol.Position{Line: 0, Character: 15},
+			want:     types.CompletionAttributeName,
+			wantTag:  "my-element",
+		},
+		{
+			name:     "Attribute name after other attributes",
+			content:  "<my-element class=\"foo\" ",
+			position: protocol.Position{Line: 0, Character: 24},
+			want:     types.CompletionAttributeName,
+			wantTag:  "my-element",
+		},
+		{
+			name:     "Attribute name with hyphens",
+			content:  "<my-element data-test",
+			position: protocol.Position{Line: 0, Character: 21},
+			want:     types.CompletionAttributeName,
+			wantTag:  "my-element",
+		},
+
+		// HTML Attribute Value Completion
+		{
+			name:     "Attribute value in double quotes",
+			content:  "<my-element disabled=\"",
+			position: protocol.Position{Line: 0, Character: 21},
+			want:     types.CompletionAttributeValue,
+			wantTag:  "my-element",
+			wantAttr: "disabled",
+		},
+		{
+			name:     "Attribute value in single quotes",
+			content:  "<my-element type='",
+			position: protocol.Position{Line: 0, Character: 18},
+			want:     types.CompletionAttributeValue,
+			wantTag:  "my-element",
+			wantAttr: "type",
+		},
+		{
+			name:     "Partial attribute value",
+			content:  "<my-element variant=\"prim",
+			position: protocol.Position{Line: 0, Character: 25},
+			want:     types.CompletionAttributeValue,
+			wantTag:  "my-element",
+			wantAttr: "variant",
+		},
+		{
+			name:     "Attribute value with hyphens",
+			content:  "<my-element data-test=\"some-val",
+			position: protocol.Position{Line: 0, Character: 31},
+			want:     types.CompletionAttributeValue,
+			wantTag:  "my-element",
+			wantAttr: "data-test",
+		},
+
+		// Invalid HTML attributes (Lit syntax is only valid in template literals)
+		{
+			name:     "Invalid attribute with @ (should be treated as attribute name)",
+			content:  "<my-element @",
+			position: protocol.Position{Line: 0, Character: 13},
+			want:     types.CompletionAttributeName,
+			wantTag:  "my-element",
+		},
+		{
+			name:     "Invalid attribute with @ partial (should be treated as attribute name)",
+			content:  "<my-element @cli",
+			position: protocol.Position{Line: 0, Character: 16},
+			want:     types.CompletionAttributeName,
+			wantTag:  "my-element",
+		},
+		{
+			name:     "Invalid attribute with dot (should be treated as attribute name)",
+			content:  "<my-element .",
+			position: protocol.Position{Line: 0, Character: 13},
+			want:     types.CompletionAttributeName,
+			wantTag:  "my-element",
+		},
+		{
+			name:     "Invalid attribute with dot partial (should be treated as attribute name)",
+			content:  "<my-element .val",
+			position: protocol.Position{Line: 0, Character: 16},
+			want:     types.CompletionAttributeName,
+			wantTag:  "my-element",
+		},
+		{
+			name:     "Invalid attribute with question mark (should be treated as attribute name)",
+			content:  "<my-element ?",
+			position: protocol.Position{Line: 0, Character: 13},
+			want:     types.CompletionAttributeName,
+			wantTag:  "my-element",
+		},
+		{
+			name:     "Invalid attribute with question mark partial (should be treated as attribute name)",
+			content:  "<my-element ?disab",
+			position: protocol.Position{Line: 0, Character: 18},
+			want:     types.CompletionAttributeName,
+			wantTag:  "my-element",
+		},
+
+		// Multi-line scenarios
+		{
+			name: "Tag name on new line",
+			content: `<div>
+  <my-el`,
+			position: protocol.Position{Line: 1, Character: 8},
+			want:     types.CompletionTagName,
+		},
+		{
+			name: "Attribute on new line",
+			content: `<my-element
+  dis`,
+			position: protocol.Position{Line: 1, Character: 5},
+			want:     types.CompletionAttributeName,
+			wantTag:  "my-element",
+		},
+		{
+			name: "Attribute value on new line",
+			content: `<my-element
+  variant="`,
+			position: protocol.Position{Line: 1, Character: 11},
+			want:     types.CompletionAttributeValue,
+			wantTag:  "my-element",
+			wantAttr: "variant",
+		},
+
+		// Edge cases and negative scenarios
+		{
+			name:     "Inside tag content (no completion)",
+			content:  "<my-element>content",
+			position: protocol.Position{Line: 0, Character: 15},
+			want:     types.CompletionUnknown,
+		},
+		{
+			name:     "After closing tag",
+			content:  "<my-element></my-element>",
+			position: protocol.Position{Line: 0, Character: 25},
+			want:     types.CompletionUnknown,
+		},
+		{
+			name:     "Not in a tag context",
+			content:  "Some text content",
+			position: protocol.Position{Line: 0, Character: 10},
+			want:     types.CompletionUnknown,
+		},
+		{
+			name:     "Standard HTML element (no completion)",
+			content:  "<div ",
+			position: protocol.Position{Line: 0, Character: 5},
+			want:     types.CompletionUnknown, // Only custom elements
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create document manager for tree-sitter analysis
+			dm, err := lsp.NewDocumentManager()
+			if err != nil {
+				t.Fatalf("Failed to create document manager: %v", err)
+			}
+			defer dm.Close()
+
+			// Create real document with tree-sitter parsing
+			doc := dm.OpenDocument("test://test.html", tt.content, 1)
+
+			// Analyze context using tree-sitter implementation
+			analysis := doc.AnalyzeCompletionContextTS(tt.position, dm)
+			if analysis == nil {
+				analysis = &types.CompletionAnalysis{Type: types.CompletionUnknown}
+			}
+
+			// Verify completion type
+			if analysis.Type != tt.want {
+				t.Errorf("Expected completion type %d (%s), got %d",
+					tt.want, completionTypeString(tt.want), analysis.Type)
+			}
+
+			// Verify tag name if expected
+			if tt.wantTag != "" && analysis.TagName != tt.wantTag {
+				t.Errorf("Expected tag name %q, got %q", tt.wantTag, analysis.TagName)
+			}
+
+			// Verify attribute name if expected
+			if tt.wantAttr != "" && analysis.AttributeName != tt.wantAttr {
+				t.Errorf("Expected attribute name %q, got %q", tt.wantAttr, analysis.AttributeName)
+			}
+		})
+	}
+}
+
+// TestTemplateContextBehavior tests completion context in TypeScript template literals
+func TestTemplateContextBehavior(t *testing.T) {
+	tests := []struct {
+		name            string
+		content         string
+		position        protocol.Position
+		want            types.CompletionContextType
+		wantTag         string
+		wantAttr        string
+		wantLitTemplate bool
+		wantLitSyntax   string
+	}{
+		// Template literal contexts
+		{
+			name: "Tag completion in html`` template",
+			content: `const template = html` + "`" + `
+  <my-el
+` + "`" + `;`,
+			position:        protocol.Position{Line: 1, Character: 8},
+			want:            types.CompletionTagName,
+			wantLitTemplate: true,
+		},
+		{
+			name: "Attribute completion in html`` template",
+			content: `const template = html` + "`" + `
+  <my-element dis
+` + "`" + `;`,
+			position:        protocol.Position{Line: 1, Character: 15},
+			want:            types.CompletionAttributeName,
+			wantTag:         "my-element",
+			wantLitTemplate: true,
+		},
+		{
+			name: "Lit event binding in template",
+			content: `const template = html` + "`" + `
+  <my-element @cli
+` + "`" + `;`,
+			position:        protocol.Position{Line: 1, Character: 16},
+			want:            types.CompletionLitEventBinding,
+			wantTag:         "my-element",
+			wantLitTemplate: true,
+			wantLitSyntax:   "@",
+		},
+		{
+			name: "Lit property binding in template",
+			content: `const template = html` + "`" + `
+  <my-element .prop
+` + "`" + `;`,
+			position:        protocol.Position{Line: 1, Character: 17},
+			want:            types.CompletionLitPropertyBinding,
+			wantTag:         "my-element",
+			wantLitTemplate: true,
+			wantLitSyntax:   ".",
+		},
+		{
+			name: "Lit boolean attribute in template",
+			content: `const template = html` + "`" + `
+  <my-element ?disab
+` + "`" + `;`,
+			position:        protocol.Position{Line: 1, Character: 18},
+			want:            types.CompletionLitBooleanAttribute,
+			wantTag:         "my-element",
+			wantLitTemplate: true,
+			wantLitSyntax:   "?",
+		},
+
+		// innerHTML context (not Lit template, no special syntax)
+		{
+			name: "Tag completion in innerHTML",
+			content: `element.innerHTML = ` + "`" + `
+  <my-el
+` + "`" + `;`,
+			position:        protocol.Position{Line: 1, Character: 8},
+			want:            types.CompletionTagName,
+			wantLitTemplate: false,
+		},
+		{
+			name: "Regular attribute in innerHTML (no Lit syntax)",
+			content: `element.innerHTML = ` + "`" + `
+  <my-element @cli
+` + "`" + `;`,
+			position:        protocol.Position{Line: 1, Character: 16},
+			want:            types.CompletionAttributeName,
+			wantTag:         "my-element",
+			wantLitTemplate: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a real document using DocumentManager
+			dm, err := lsp.NewDocumentManager()
+			if err != nil {
+				t.Fatalf("Failed to create DocumentManager: %v", err)
+			}
+			defer dm.Close()
+
+			// For template literals, use .ts extension so it gets parsed as TypeScript
+			var uri string
+			if tt.wantLitTemplate {
+				uri = "test://template.ts"
+			} else {
+				uri = "test://template.html"
+			}
+
+			doc := dm.OpenDocument(uri, tt.content, 1)
+
+			// Analyze context - pass DocumentManager for tree-sitter queries
+			analysis, err := textDocument.AnalyzeCompletionContextWithDM(doc, tt.position, "", dm)
+			if err != nil {
+				t.Fatalf("Failed to analyze completion context: %v", err)
+			}
+
+			// Verify completion type
+			if analysis.Type != tt.want {
+				t.Errorf("Expected completion type %d (%s), got %d",
+					tt.want, completionTypeString(tt.want), analysis.Type)
+			}
+
+			// Verify template context
+			if analysis.IsLitTemplate != tt.wantLitTemplate {
+				t.Errorf("Expected IsLitTemplate %t, got %t", tt.wantLitTemplate, analysis.IsLitTemplate)
+			}
+
+			// Verify Lit syntax if expected
+			if tt.wantLitSyntax != "" && analysis.LitSyntax != tt.wantLitSyntax {
+				t.Errorf("Expected LitSyntax %q, got %q", tt.wantLitSyntax, analysis.LitSyntax)
+			}
+
+			// Verify tag name if expected
+			if tt.wantTag != "" && analysis.TagName != tt.wantTag {
+				t.Errorf("Expected tag name %q, got %q", tt.wantTag, analysis.TagName)
+			}
+
+			// Verify attribute name if expected
+			if tt.wantAttr != "" && analysis.AttributeName != tt.wantAttr {
+				t.Errorf("Expected attribute name %q, got %q", tt.wantAttr, analysis.AttributeName)
+			}
+		})
+	}
+}

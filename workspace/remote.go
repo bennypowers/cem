@@ -82,7 +82,12 @@ func (c *RemoteWorkspaceContext) Init() error {
 	}
 
 	c.spinner, _ = pterm.SpinnerPrinter.Start(*pterm.DefaultSpinner.WithRemoveWhenDone())
-	defer c.spinner.Stop()
+	defer func() {
+		if err := c.spinner.Stop(); err != nil {
+			// Spinner stop errors are not critical, just log them
+			fmt.Printf("Warning: error stopping spinner: %v\n", err)
+		}
+	}()
 
 	// Try fetching from CDNs first
 	cdnFetchers := []func(string, string) error{

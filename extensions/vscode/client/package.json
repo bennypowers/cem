@@ -1,0 +1,23 @@
+{
+  "name": "cem-vscode-client",
+  "description": "VS Code client for CEM Language Server",
+  "version": "0.1.0",
+  "author": "Benny Powers <web@bennypowers.com>",
+  "license": "GPL-3.0-or-later",
+  "private": true,
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1",
+    "@pwrs/cem": "latest"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "typescript": "^5.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "watch": "tsc -watch -p ."
+  }
+}

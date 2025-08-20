@@ -38,8 +38,6 @@ var _ WorkspaceContext = (*FileSystemWorkspaceContext)(nil)
 type FileSystemWorkspaceContext struct {
 	root                       string
 	config                     *C.CemConfig
-	manifestPath               string
-	packageJSONPath            string
 	customElementsManifestPath string
 	// Cache parsed results if desired
 	manifest    *M.Package

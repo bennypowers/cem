@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "first-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "FirstElement",
+          "tagName": "first-element",
+          "customElement": true,
+          "description": "First test element",
+          "attributes": [
+            {
+              "name": "value",
+              "type": {
+                "text": "string"
+              },
+              "description": "Value attribute"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "first-element",
+          "declaration": {
+            "name": "FirstElement",
+            "module": "first-element.js"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "second-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "SecondElement",
+          "tagName": "second-element",
+          "customElement": true,
+          "description": "Second test element",
+          "attributes": [
+            {
+              "name": "data",
+              "type": {
+                "text": "number"
+              },
+              "description": "Data attribute"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "second-element",
+          "declaration": {
+            "name": "SecondElement",
+            "module": "second-element.js"
+          }
+        }
+      ]
+    }
+  ]
+}

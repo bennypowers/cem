@@ -25,8 +25,8 @@ import (
 	"slices"
 	"time"
 
-	Q "bennypowers.dev/cem/generate/queries"
 	M "bennypowers.dev/cem/manifest"
+	Q "bennypowers.dev/cem/queries"
 	S "bennypowers.dev/cem/set"
 	W "bennypowers.dev/cem/workspace"
 	ts "github.com/tree-sitter/go-tree-sitter"
@@ -82,6 +82,9 @@ func NewModuleProcessor(
 	}
 	module := M.NewModule(file)
 	logger := NewLogCtx(file, cfg)
+
+	// Debug: log module creation/reuse
+	fmt.Printf("[DEBUG] Processing module: %s (address: %p)\n", file, module)
 
 	tree := parser.Parse(code, nil)
 	root := tree.RootNode()
@@ -156,8 +159,12 @@ func (mp *ModuleProcessor) Collect() (
 		errs = errors.Join(errs, err)
 	}
 	mp.logger.Finish()
-	if mp.errors != nil {
-		mp.logger.Error("ERROR processing module: %v", mp.errors)
+
+	// Combine local errors with mp.errors
+	allErrors := errors.Join(errs, mp.errors)
+
+	if allErrors != nil {
+		mp.logger.Error("ERROR processing module: %v", allErrors)
 	} else {
 		mp.logger.Info("Module processed successfully")
 	}
@@ -165,7 +172,7 @@ func (mp *ModuleProcessor) Collect() (
 	slices.SortStableFunc(mp.module.Declarations, func(a, b M.Declaration) int {
 		return int(a.GetStartByte() - b.GetStartByte())
 	})
-	return mp.module, mp.tagAliases, mp.errors
+	return mp.module, mp.tagAliases, allErrors
 }
 
 func (mp *ModuleProcessor) processImports() error {

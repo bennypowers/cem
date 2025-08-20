@@ -30,8 +30,6 @@ import (
 	M "bennypowers.dev/cem/manifest"
 )
 
-var sectionPrinter = pterm.DefaultSection.Println
-
 var isCodeStyleHeader = regexp.MustCompile(`Code|Type|Syntax|Static|Default|DOM Property`)
 
 // RenderOptions provides options for the Render function.

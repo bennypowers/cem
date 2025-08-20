@@ -54,6 +54,27 @@ See the [Configuration Reference][configdocs] for more information.
 
 ---
 
+### `cem lsp`
+
+The `cem lsp` command starts a Language Server Protocol (LSP) server that provides intelligent IDE features for custom elements in HTML and TypeScript files. It offers contextual autocomplete, hover documentation, and other editor enhancements by analyzing your custom elements manifests.
+
+**Features:**
+- Tag name and attribute completion for custom elements
+- Slot attribute value completion for direct children of slotted elements  
+- Hover documentation with type information
+- **Error detection with autofixes** - Real-time validation with one-click corrections:
+  - Slot validation with smart suggestions
+  - Tag name validation with typo detection and missing import suggestions
+  - Attribute validation against HTML global attributes and custom element schemas
+- Go-to-definition support for jumping to element source code
+- Go-to-references to find all usages of custom elements across your workspace
+- Support for HTML files and TypeScript template literals
+- Automatic manifest discovery and live reloading
+
+See more in the [LSP docs][lspdocs]
+
+---
+
 ## Contributing
 
 For information on building and testing, please see
@@ -78,4 +99,5 @@ the terms of the [GNU General Public License v3.0][gpl3].
 [listdocs]: https://bennypowers.github.io/cem/commands/list/
 [searchdocs]: https://bennypowers.github.io/cem/commands/search/
 [validatedocs]: https://bennypowers.github.io/cem/commands/validate/
+[lspdocs]: https://bennypowers.github.io/cem/docs/lsp/
 [configdocs]: https://bennypowers.github.io/cem/configuration/

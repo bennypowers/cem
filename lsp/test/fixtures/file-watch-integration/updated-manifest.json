@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "2.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "./test-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "A test custom element",
+          "name": "TestElement",
+          "customElement": true,
+          "tagName": "test-element",
+          "attributes": [
+            {
+              "name": "test-attr",
+              "type": {
+                "text": "string"
+              },
+              "description": "A test attribute"
+            }
+          ],
+          "events": [
+            {
+              "name": "test-event",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "A test event"
+            }
+          ]
+        },
+        {
+          "kind": "class",
+          "description": "A new custom element",
+          "name": "NewElement",
+          "customElement": true,
+          "tagName": "new-element",
+          "attributes": [
+            {
+              "name": "new-attr",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "A new attribute"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "test-element",
+          "declaration": {
+            "name": "TestElement",
+            "module": "./test-element.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "new-element",
+          "declaration": {
+            "name": "NewElement",
+            "module": "./test-element.js"
+          }
+        }
+      ]
+    }
+  ]
+}
