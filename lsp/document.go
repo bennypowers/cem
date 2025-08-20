@@ -294,18 +294,18 @@ func (dm *DocumentManager) UpdateDocumentWithChanges(uri, content string, versio
 			helpers.SafeDebugLog("[DOCUMENT] Parse failed for: %s, error: %v\n", uri, result.Error)
 			// Fallback to simple update
 			doc.content = content
-			doc.parse()
+			doc.parseInternal()
 		}
 	} else {
 		// No change information available, do full reparse
 		helpers.SafeDebugLog("[DOCUMENT] No change info, performing full parse for: %s\n", uri)
 		doc.content = content
-		doc.parse()
+		doc.parseInternal()
 	}
 
 	// Parse script tags for HTML documents using the cached query matcher
 	if doc.Language == "html" && dm.htmlScriptTags != nil {
-		doc.parseScriptTags(dm.htmlScriptTags)
+		doc.parseScriptTagsInternal(dm.htmlScriptTags)
 		helpers.SafeDebugLog("[DOCUMENT] Parsed script tags for: %s\n", uri)
 	}
 
@@ -387,6 +387,13 @@ func (d *Document) Close() {
 
 // parse performs initial parsing of the document
 func (d *Document) parse() {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.parseInternal()
+}
+
+// parseInternal performs parsing without acquiring the mutex (assumes caller has the lock)
+func (d *Document) parseInternal() {
 	// Clean up existing tree if it exists
 	if d.Tree != nil {
 		d.Tree.Close()
@@ -1791,6 +1798,13 @@ func (d *Document) FindHeadInsertionPoint(dm any) (protocol.Position, bool) {
 
 // parseScriptTags analyzes script tags in HTML documents using tree-sitter
 func (d *Document) parseScriptTags(scriptTagsMatcher *Q.QueryMatcher) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.parseScriptTagsInternal(scriptTagsMatcher)
+}
+
+// parseScriptTagsInternal analyzes script tags without acquiring the mutex (assumes caller has the lock)
+func (d *Document) parseScriptTagsInternal(scriptTagsMatcher *Q.QueryMatcher) {
 	if d.Tree == nil || scriptTagsMatcher == nil {
 		helpers.SafeDebugLog("[DOCUMENT] parseScriptTags: Tree or matcher is nil")
 		return

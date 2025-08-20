@@ -19,6 +19,7 @@ package testhelpers
 import (
 	"fmt"
 	"slices"
+	"sync"
 
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
@@ -28,6 +29,7 @@ import (
 
 // MockServerContext provides a unified mock implementation of ServerContext for all tests
 type MockServerContext struct {
+	mu               sync.RWMutex
 	Documents        map[string]types.Document
 	TagNames         []string
 	Elements         map[string]*M.CustomElement
@@ -104,10 +106,14 @@ func (m *MockServerContext) DocumentManager() (types.DocumentManager, error) {
 }
 
 func (m *MockServerContext) Document(uri string) types.Document {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	return m.Documents[uri]
 }
 
 func (m *MockServerContext) AllDocuments() []types.Document {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	docs := make([]types.Document, 0, len(m.Documents))
 	for _, doc := range m.Documents {
 		docs = append(docs, doc)
@@ -134,6 +140,8 @@ func (m *MockServerContext) AllTagNames() []string {
 	if m.Registry != nil {
 		return m.Registry.AllTagNames()
 	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	return m.TagNames
 }
 
@@ -141,6 +149,8 @@ func (m *MockServerContext) Element(tagName string) (*M.CustomElement, bool) {
 	if m.Registry != nil {
 		return m.Registry.Element(tagName)
 	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	element, exists := m.Elements[tagName]
 	return element, exists
 }
@@ -149,6 +159,8 @@ func (m *MockServerContext) Attributes(tagName string) (map[string]*M.Attribute,
 	if m.Registry != nil {
 		return m.Registry.Attributes(tagName)
 	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	attrs, exists := m.AttributesMap[tagName]
 	return attrs, exists
 }
@@ -157,6 +169,8 @@ func (m *MockServerContext) Slots(tagName string) ([]M.Slot, bool) {
 	if m.Registry != nil {
 		return m.Registry.Slots(tagName)
 	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	slots, exists := m.SlotsMap[tagName]
 	return slots, exists
 }
@@ -165,6 +179,8 @@ func (m *MockServerContext) ElementDefinition(tagName string) (types.ElementDefi
 	if m.Registry != nil {
 		return m.Registry.ElementDefinition(tagName)
 	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	def, exists := m.ElementDefsMap[tagName]
 	return def, exists
 }
@@ -220,6 +236,8 @@ func (m *MockServerContext) AddManifest(manifest *M.Package) {
 
 // Element operations for advanced features
 func (m *MockServerContext) ElementSource(tagName string) (string, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	if def, exists := m.ElementDefsMap[tagName]; exists {
 		return def.ModulePath(), true
 	}
@@ -227,6 +245,8 @@ func (m *MockServerContext) ElementSource(tagName string) (string, bool) {
 }
 
 func (m *MockServerContext) ElementDescription(tagName string) (string, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	desc, exists := m.DescriptionsMap[tagName]
 	return desc, exists
 }
@@ -243,11 +263,15 @@ func (m *MockServerContext) QueryManager() (*queries.QueryManager, error) {
 
 // AddDocument adds a document to the mock context
 func (m *MockServerContext) AddDocument(uri string, doc types.Document) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.Documents[uri] = doc
 }
 
 // AddElement adds a custom element to the mock context
 func (m *MockServerContext) AddElement(tagName string, element *M.CustomElement) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.Elements[tagName] = element
 	// Also add to tag names if not already present
 	if !slices.Contains(m.TagNames, tagName) {
@@ -257,16 +281,22 @@ func (m *MockServerContext) AddElement(tagName string, element *M.CustomElement)
 
 // AddAttributes adds attributes for a tag name
 func (m *MockServerContext) AddAttributes(tagName string, attrs map[string]*M.Attribute) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.AttributesMap[tagName] = attrs
 }
 
 // AddSlots adds slots for a tag name
 func (m *MockServerContext) AddSlots(tagName string, slots []M.Slot) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.SlotsMap[tagName] = slots
 }
 
 // AddElementDefinition adds an element definition
 func (m *MockServerContext) AddElementDefinition(tagName string, def types.ElementDefinition) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.ElementDefsMap[tagName] = def
 }
 
@@ -292,6 +322,8 @@ func (m *MockServerContext) SetQueryManager(qm *queries.QueryManager) {
 
 // AddElementDescription adds a description for an element
 func (m *MockServerContext) AddElementDescription(tagName string, description string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.DescriptionsMap[tagName] = description
 }
 
