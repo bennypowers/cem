@@ -1570,55 +1570,6 @@ func (d *Document) analyzeTemplateContentAsHTML(templateContent string, relative
 		}
 	}
 
-	// Find all matching Lit syntax captures and choose the most specific one
-	type litMatch struct {
-		captureType    string
-		syntax         string
-		completionType types.CompletionContextType
-		capture        Q.CaptureInfo
-	}
-
-	var litMatches []litMatch
-
-	// Collect all Lit syntax matches
-	if litEvents, ok := allTemplateCaptures["attr.name.lit.event"]; ok {
-		for _, litEvent := range litEvents {
-			if relativeOffset >= litEvent.StartByte && relativeOffset <= litEvent.EndByte {
-				litMatches = append(litMatches, litMatch{
-					captureType:    "event",
-					syntax:         "@",
-					completionType: types.CompletionLitEventBinding,
-					capture:        litEvent,
-				})
-			}
-		}
-	}
-
-	if litProps, ok := allTemplateCaptures["attr.name.lit.property"]; ok {
-		for _, litProp := range litProps {
-			if relativeOffset >= litProp.StartByte && relativeOffset <= litProp.EndByte {
-				litMatches = append(litMatches, litMatch{
-					captureType:    "property",
-					syntax:         ".",
-					completionType: types.CompletionLitPropertyBinding,
-					capture:        litProp,
-				})
-			}
-		}
-	}
-
-	if litBools, ok := allTemplateCaptures["attr.name.lit.boolean"]; ok {
-		for _, litBool := range litBools {
-			if relativeOffset >= litBool.StartByte && relativeOffset <= litBool.EndByte {
-				litMatches = append(litMatches, litMatch{
-					captureType:    "boolean",
-					syntax:         "?",
-					completionType: types.CompletionLitBooleanAttribute,
-					capture:        litBool,
-				})
-			}
-		}
-	}
 
 	// For Lit templates, always try position-based detection for more accuracy
 	// This works even when tree-sitter queries don't match incomplete attributes
