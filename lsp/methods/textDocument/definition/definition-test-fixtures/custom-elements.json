@@ -1,0 +1,268 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "components/button-element.js",
+      "declarations": [
+        {
+          "name": "ButtonElement",
+          "description": "A customizable button component with multiple variants and states.",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "variant",
+              "description": "The button variant style",
+              "type": {
+                "text": "'primary' | 'secondary' | 'success' | 'danger' | 'warning'"
+              },
+              "default": "'primary'",
+              "kind": "field",
+              "attribute": "variant"
+            },
+            {
+              "name": "size",
+              "description": "The button size",
+              "type": {
+                "text": "'small' | 'medium' | 'large'"
+              },
+              "default": "'medium'",
+              "kind": "field",
+              "attribute": "size"
+            },
+            {
+              "name": "fullWidth",
+              "description": "Whether the button should take full width",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "full-width"
+            }
+          ],
+          "kind": "class",
+          "tagName": "button-element",
+          "attributes": [
+            {
+              "name": "variant",
+              "description": "The button variant style",
+              "type": {
+                "text": "'primary' | 'secondary' | 'success' | 'danger' | 'warning'"
+              },
+              "default": "'primary'",
+              "fieldName": "variant"
+            },
+            {
+              "name": "size",
+              "description": "The button size",
+              "type": {
+                "text": "'small' | 'medium' | 'large'"
+              },
+              "default": "'medium'",
+              "fieldName": "size"
+            },
+            {
+              "name": "full-width",
+              "description": "Whether the button should take full width",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "fullWidth"
+            }
+          ],
+          "events": [
+            {
+              "name": "click",
+              "description": "Fired when the button is clicked"
+            },
+            {
+              "name": "focus",
+              "description": "Fired when the button receives focus"
+            },
+            {
+              "name": "blur",
+              "description": "Fired when the button loses focus"
+            }
+          ],
+          "slots": [
+            {
+              "name": "icon",
+              "description": "Icon slot positioned before text"
+            },
+            {
+              "name": "",
+              "description": "Button content (text, icons, etc.)"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "button",
+              "description": "The button element"
+            },
+            {
+              "name": "icon",
+              "description": "The icon container"
+            },
+            {
+              "name": "text",
+              "description": "The text content"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--button-padding",
+              "description": "Internal padding",
+              "default": "8px 16px"
+            },
+            {
+              "name": "--button-border-radius",
+              "description": "Border radius",
+              "default": "4px"
+            },
+            {
+              "name": "--button-background",
+              "description": "Background color",
+              "default": "#007bff"
+            },
+            {
+              "name": "--button-color",
+              "description": "Text color",
+              "default": "white"
+            },
+            {
+              "name": "--button-font-size",
+              "description": "Font size",
+              "default": "14px"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "button-element",
+          "declaration": {
+            "name": "ButtonElement",
+            "module": "components/button-element.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ButtonElement",
+          "declaration": {
+            "name": "ButtonElement",
+            "module": "components/button-element.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "components/card-element.js",
+      "declarations": [
+        {
+          "name": "CardElement",
+          "description": "A versatile card component with header, footer, and content slots.\nPerfect for displaying structured content with optional theming.",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "card-element",
+          "events": [
+            {
+              "name": "expand",
+              "description": "Fired when the card is expanded"
+            },
+            {
+              "name": "collapse",
+              "description": "Fired when the card is collapsed"
+            }
+          ],
+          "slots": [
+            {
+              "name": "header",
+              "description": "Header content area"
+            },
+            {
+              "name": "",
+              "description": "Default slot for main content"
+            },
+            {
+              "name": "footer",
+              "description": "Footer content area"
+            },
+            {
+              "name": "actions"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "card",
+              "description": "The main card container"
+            },
+            {
+              "name": "header",
+              "description": "The header section"
+            },
+            {
+              "name": "content",
+              "description": "The main content area"
+            },
+            {
+              "name": "footer",
+              "description": "The footer section"
+            },
+            {
+              "name": "actions",
+              "description": "Action buttons area"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--card-background",
+              "default": "#ffffff"
+            },
+            {
+              "name": "--card-border-radius",
+              "default": "8px"
+            },
+            {
+              "name": "--card-padding",
+              "default": "16px"
+            },
+            {
+              "name": "--card-shadow",
+              "default": "0 2px 8px rgba(0,0,0,0.1)"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "card-element",
+          "declaration": {
+            "name": "CardElement",
+            "module": "components/card-element.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "CardElement",
+          "declaration": {
+            "name": "CardElement",
+            "module": "components/card-element.js"
+          }
+        }
+      ]
+    }
+  ]
+}
