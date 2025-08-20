@@ -82,7 +82,7 @@ func TestCreateMissingImportAction(t *testing.T) {
 			}
 			defer dm.Close()
 			mockCtx.SetDocumentManager(dm)
-			
+
 			// Create document from input content using DocumentManager
 			doc := dm.OpenDocument(config.DocumentURI, string(inputContent), 1)
 			mockCtx.AddDocument(config.DocumentURI, doc)
@@ -258,4 +258,3 @@ func applyTextEdit(content string, edit protocol.TextEdit) string {
 
 	return strings.Join(lines, "\n")
 }
-

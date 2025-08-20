@@ -200,7 +200,7 @@ func findDefinitionLocation(sourceFile string, request *DefinitionRequest, ctx t
 					doc = nil // Force fallback to disk read
 				}
 			}()
-			
+
 			docContent, err := doc.Content()
 			if err != nil {
 				helpers.SafeDebugLog("[DEFINITION] Error getting document content for %s: %v", sourceFile, err)

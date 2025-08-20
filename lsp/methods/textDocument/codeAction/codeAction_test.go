@@ -28,7 +28,7 @@ import (
 func TestCodeActionSlotSuggestion(t *testing.T) {
 	// Create mock context
 	ctx := testhelpers.NewMockServerContext()
-	
+
 	// Create DocumentManager and add document
 	dm, err := lsp.NewDocumentManager()
 	if err != nil {
@@ -36,7 +36,7 @@ func TestCodeActionSlotSuggestion(t *testing.T) {
 	}
 	defer dm.Close()
 	ctx.SetDocumentManager(dm)
-	
+
 	doc := dm.OpenDocument("test://test.html", `<my-element><div slot="heade">Content</div></my-element>`, 1)
 	ctx.AddDocument("test://test.html", doc)
 
@@ -143,7 +143,7 @@ func TestCodeActionSlotSuggestion(t *testing.T) {
 func TestCodeActionNoDiagnostics(t *testing.T) {
 	// Create mock context
 	ctx := testhelpers.NewMockServerContext()
-	
+
 	// Create DocumentManager and add document
 	dm, err := lsp.NewDocumentManager()
 	if err != nil {
@@ -151,7 +151,7 @@ func TestCodeActionNoDiagnostics(t *testing.T) {
 	}
 	defer dm.Close()
 	ctx.SetDocumentManager(dm)
-	
+
 	doc := dm.OpenDocument("test://test.html", `<my-element><div slot="header">Content</div></my-element>`, 1)
 	ctx.AddDocument("test://test.html", doc)
 

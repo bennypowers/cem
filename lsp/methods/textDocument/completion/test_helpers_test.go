@@ -27,7 +27,7 @@ func NewMockTemplateDocument(content, templateContext string) types.Document {
 		panic("Failed to create DocumentManager for test: " + err.Error())
 	}
 	defer dm.Close()
-	
+
 	// Real Documents handle template context automatically through tree-sitter parsing
 	return dm.OpenDocument("test://template.html", content, 1)
 }

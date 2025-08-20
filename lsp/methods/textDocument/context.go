@@ -24,7 +24,6 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-
 // AnalyzeCompletionContext determines what completion should be provided using tree-sitter
 func AnalyzeCompletionContext(doc types.Document, position protocol.Position, triggerChar string) (*types.CompletionAnalysis, error) {
 	return AnalyzeCompletionContextWithDM(doc, position, triggerChar, nil)

@@ -37,17 +37,17 @@ func extractDocumentManager(dm any) *DocumentManager {
 	if dm == nil {
 		return nil
 	}
-	
+
 	// Try direct cast first
 	if directDM, ok := dm.(*DocumentManager); ok {
 		return directDM
 	}
-	
+
 	// Try to extract from MockDocumentManager
 	if mockDM, ok := dm.(interface{ GetRealDocumentManager() *DocumentManager }); ok {
 		return mockDM.GetRealDocumentManager()
 	}
-	
+
 	// Last resort: handle other types
 	helpers.SafeDebugLog("[DOCUMENT] Warning: DocumentManager type %T not recognized, using nil", dm)
 	return nil
@@ -855,7 +855,7 @@ func (d *Document) Content() (string, error) {
 	if d == nil {
 		return "", fmt.Errorf("document is nil")
 	}
-	
+
 	// Additional safety check - ensure the mutex is properly initialized
 	// This is a workaround for potential concurrent access issues
 	defer func() {
@@ -865,7 +865,7 @@ func (d *Document) Content() (string, error) {
 			helpers.SafeDebugLog("[DOCUMENT] Document state: uri=%s, content_len=%d", d.uri, len(d.content))
 		}
 	}()
-	
+
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	return d.content, nil
@@ -876,13 +876,13 @@ func (d *Document) Version() int32 {
 	if d == nil {
 		return 0
 	}
-	
+
 	defer func() {
 		if r := recover(); r != nil {
 			helpers.SafeDebugLog("[DOCUMENT] PANIC in Version(): %v", r)
 		}
 	}()
-	
+
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	return d.version
@@ -893,13 +893,13 @@ func (d *Document) URI() string {
 	if d == nil {
 		return ""
 	}
-	
+
 	defer func() {
 		if r := recover(); r != nil {
 			helpers.SafeDebugLog("[DOCUMENT] PANIC in URI(): %v", r)
 		}
 	}()
-	
+
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	return d.uri
@@ -981,7 +981,7 @@ func (d *Document) CompletionPrefix(analysis *types.CompletionAnalysis) string {
 			return remaining
 		}
 		return ""
-		
+
 	case types.CompletionAttributeName:
 		// For attribute completion, extract the partial attribute name
 		// Tree-sitter provides accurate context, so use simple extraction
@@ -993,7 +993,7 @@ func (d *Document) CompletionPrefix(analysis *types.CompletionAnalysis) string {
 			}
 		}
 		return ""
-		
+
 	case types.CompletionAttributeValue:
 		// For attribute value completion, tree-sitter should provide the context
 		// Extract partial value if we're in quotes
@@ -1012,7 +1012,7 @@ func (d *Document) CompletionPrefix(analysis *types.CompletionAnalysis) string {
 			}
 		}
 		return ""
-		
+
 	default:
 		return ""
 	}
@@ -1093,7 +1093,7 @@ func (d *Document) analyzeHTMLCompletionContext(byteOffset uint, analysis *types
 				StartByte: capture.Node.StartByte(),
 				EndByte:   capture.Node.EndByte(),
 			}
-			
+
 			helpers.SafeDebugLog("[COMPLETION] Found capture '%s' at %d-%d: '%s'", captureName, ci.StartByte, ci.EndByte, text)
 
 			// Check if cursor is inside or immediately after any tag-related node
@@ -1353,11 +1353,11 @@ func (d *Document) analyzeHTMLCompletionContext(byteOffset uint, analysis *types
 					helpers.SafeDebugLog("[COMPLETION] DEBUG: Looking for tag.name.context captures for attribute value completion")
 					if tagContexts, ok := allCaptures["tag.name.context"]; ok {
 						helpers.SafeDebugLog("[COMPLETION] DEBUG: Found %d tag.name.context captures", len(tagContexts))
-						
+
 						// Find the most specific (closest) tag context to the cursor
 						var bestTagContext *Q.CaptureInfo
 						var bestDistance uint = ^uint(0) // Max uint value
-						
+
 						for _, tagContext := range tagContexts {
 							helpers.SafeDebugLog("[COMPLETION] DEBUG: Tag context %d-%d: '%s'", tagContext.StartByte, tagContext.EndByte, tagContext.Text)
 							// If this tag context contains our cursor position, use its tag name
@@ -1366,7 +1366,7 @@ func (d *Document) analyzeHTMLCompletionContext(byteOffset uint, analysis *types
 								// Calculate distance from start of tag to cursor - closer is better
 								distance := byteOffset - tagContext.StartByte
 								helpers.SafeDebugLog("[COMPLETION] DEBUG: Cursor position %d is within range %d-%d, distance=%d", byteOffset, tagContext.StartByte, tagContext.EndByte+50, distance)
-								
+
 								if distance < bestDistance {
 									bestTagContext = &tagContext
 									bestDistance = distance
@@ -1376,7 +1376,7 @@ func (d *Document) analyzeHTMLCompletionContext(byteOffset uint, analysis *types
 								helpers.SafeDebugLog("[COMPLETION] DEBUG: Cursor position %d is outside range %d-%d", byteOffset, tagContext.StartByte, tagContext.EndByte+50)
 							}
 						}
-						
+
 						// Use the best (closest) tag context
 						if bestTagContext != nil {
 							// Extract tag name from the best context
@@ -1565,23 +1565,23 @@ func (d *Document) analyzeTemplateContentAsHTML(templateContent string, relative
 
 	// Find all matching Lit syntax captures and choose the most specific one
 	type litMatch struct {
-		captureType string
-		syntax      string
+		captureType    string
+		syntax         string
 		completionType types.CompletionContextType
-		capture     Q.CaptureInfo
+		capture        Q.CaptureInfo
 	}
-	
+
 	var litMatches []litMatch
-	
+
 	// Collect all Lit syntax matches
 	if litEvents, ok := allTemplateCaptures["attr.name.lit.event"]; ok {
 		for _, litEvent := range litEvents {
 			if relativeOffset >= litEvent.StartByte && relativeOffset <= litEvent.EndByte {
 				litMatches = append(litMatches, litMatch{
-					captureType: "event",
-					syntax: "@",
+					captureType:    "event",
+					syntax:         "@",
 					completionType: types.CompletionLitEventBinding,
-					capture: litEvent,
+					capture:        litEvent,
 				})
 			}
 		}
@@ -1591,10 +1591,10 @@ func (d *Document) analyzeTemplateContentAsHTML(templateContent string, relative
 		for _, litProp := range litProps {
 			if relativeOffset >= litProp.StartByte && relativeOffset <= litProp.EndByte {
 				litMatches = append(litMatches, litMatch{
-					captureType: "property", 
-					syntax: ".",
+					captureType:    "property",
+					syntax:         ".",
 					completionType: types.CompletionLitPropertyBinding,
-					capture: litProp,
+					capture:        litProp,
 				})
 			}
 		}
@@ -1604,15 +1604,15 @@ func (d *Document) analyzeTemplateContentAsHTML(templateContent string, relative
 		for _, litBool := range litBools {
 			if relativeOffset >= litBool.StartByte && relativeOffset <= litBool.EndByte {
 				litMatches = append(litMatches, litMatch{
-					captureType: "boolean",
-					syntax: "?", 
+					captureType:    "boolean",
+					syntax:         "?",
 					completionType: types.CompletionLitBooleanAttribute,
-					capture: litBool,
+					capture:        litBool,
 				})
 			}
 		}
 	}
-	
+
 	// For Lit templates, always try position-based detection for more accuracy
 	// This works even when tree-sitter queries don't match incomplete attributes
 	if analysis.IsLitTemplate {
@@ -1642,7 +1642,7 @@ func (d *Document) analyzeTemplateContentAsHTML(templateContent string, relative
 				}
 			}
 		}
-		
+
 		// Find the tag name context for this Lit attribute
 		if tagContexts, ok := allTemplateCaptures["tag.name.context"]; ok {
 			for _, tagContext := range tagContexts {
@@ -1650,7 +1650,7 @@ func (d *Document) analyzeTemplateContentAsHTML(templateContent string, relative
 				break // Use first matching tag context
 			}
 		}
-		
+
 		// If we set a type above, return it
 		if analysis.Type != types.CompletionUnknown {
 			return analysis
@@ -1772,7 +1772,7 @@ func (d *Document) FindHeadInsertionPoint(dm any) (protocol.Position, bool) {
 	for match := range docMgr.htmlHeadElements.AllQueryMatches(root, docContent) {
 		for _, capture := range match.Captures {
 			captureName := docMgr.htmlHeadElements.GetCaptureNameByIndex(capture.Index)
-			
+
 			if captureName == "end.tag" {
 				// Found the closing </head> tag - insert right before it
 				captureNode := &capture.Node

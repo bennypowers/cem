@@ -206,7 +206,6 @@ func TestUnionTypeParser(t *testing.T) {
 	}
 }
 
-
 func TestAttributeCompletionAfterSpaces(t *testing.T) {
 	// Load test manifest
 	fixtureDir := filepath.Join("attribute-values-test")
@@ -334,7 +333,6 @@ func TestAttributeCompletionAfterSpaces(t *testing.T) {
 		})
 	}
 }
-
 
 // TestAttributeValueCompletionTreeSitterRegression is a regression test for the tree-sitter
 // tag name extraction issue that was preventing attribute value completions from working

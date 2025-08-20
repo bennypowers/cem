@@ -116,15 +116,15 @@ func TestStartTagCompletionRegression(t *testing.T) {
 				return
 			}
 
-			// If we correctly detected tag name completion context, 
+			// If we correctly detected tag name completion context,
 			// then the start tag completion issue is not in the context analysis
 			if analysis.Type == types.CompletionTagName {
 				t.Logf("✓ %s - Context analysis correctly detected TagName completion", tt.description)
-				
+
 				// Verify that the registry has the expected elements
 				allTagNames := ctx.AllTagNames()
 				t.Logf("  Available tag names: %v", allTagNames)
-				
+
 				for _, expectedTag := range tt.expectedCompletions {
 					found := false
 					for _, tagName := range allTagNames {
@@ -145,7 +145,6 @@ func TestStartTagCompletionRegression(t *testing.T) {
 		})
 	}
 }
-
 
 // extractCompletionLabels extracts labels from completion items for debugging
 func extractCompletionLabels(completions []protocol.CompletionItem) []string {

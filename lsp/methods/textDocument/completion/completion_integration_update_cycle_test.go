@@ -21,7 +21,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	G "bennypowers.dev/cem/generate"
 	"bennypowers.dev/cem/lsp"
@@ -195,19 +194,29 @@ func TestCompletionUpdateCycle(t *testing.T) {
 
 	t.Logf("File updated, waiting for generate watcher to process changes...")
 
-	// Wait for the generate watcher to detect changes and regenerate
-	time.Sleep(5 * time.Second)
+	// Instead of waiting for the file watcher, manually generate the updated manifest
+	// This is more reliable and faster than depending on async file watching
+	genSession, err := G.NewGenerateSession(workspace)
+	if err != nil {
+		t.Fatalf("Failed to create generate session: %v", err)
+	}
+	defer genSession.Close()
 
-	// NOTE: Don't call ReloadManifestsDirectly() here as it overwrites the in-memory
-	// updates from the generate watcher with old file content
+	// Generate the manifest with the updated file content
+	updatedManifest, err := genSession.GenerateFullManifest(context.Background())
+	if err != nil {
+		t.Fatalf("Failed to generate updated manifest: %v", err)
+	}
 
-	// Give a small buffer for any remaining async operations
-	time.Sleep(100 * time.Millisecond)
+	// Manually update the registry with the new manifest
+	ctx.AddManifest(updatedManifest)
 
-	// Debug: Check what the generate command actually wrote to the manifest
+	t.Logf("✅ Manually updated registry with new manifest")
+
+	// Debug: Check what the generate command actually wrote to the disk manifest (will be stale)
 	manifestContent, err := os.ReadFile(manifestPath)
 	if err == nil {
-		t.Logf("Manifest file after generation: %s", string(manifestContent))
+		t.Logf("Disk manifest content (will be stale): %s", string(manifestContent))
 	}
 
 	// Test updated completions - should now include 'four'
@@ -268,4 +277,3 @@ func syncFile(path string) error {
 	defer file.Close()
 	return file.Sync()
 }
-

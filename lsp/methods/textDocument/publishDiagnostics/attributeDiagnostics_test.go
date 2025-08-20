@@ -25,7 +25,6 @@ import (
 	M "bennypowers.dev/cem/manifest"
 )
 
-
 func TestAttributeDiagnostics_GlobalAttributes(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 	content := `<div class="test" id="main" data-value="42">Hello</div>`
@@ -59,11 +58,11 @@ func TestAttributeDiagnostics_CustomElementValidAttribute(t *testing.T) {
 	ctx.SetDocumentManager(dm)
 	doc := dm.OpenDocument("test.html", content, 1)
 	ctx.AddDocument("test.html", doc)
-	
+
 	// Set up attributes for my-element
 	ctx.AddAttributes("my-element", map[string]*M.Attribute{
-		"size":  &M.Attribute{FullyQualified: M.FullyQualified{Name: "size"}},
-		"color": &M.Attribute{FullyQualified: M.FullyQualified{Name: "color"}},
+		"size":  {FullyQualified: M.FullyQualified{Name: "size"}},
+		"color": {FullyQualified: M.FullyQualified{Name: "color"}},
 	})
 
 	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
@@ -86,11 +85,11 @@ func TestAttributeDiagnostics_CustomElementInvalidAttribute(t *testing.T) {
 	ctx.SetDocumentManager(dm)
 	doc := dm.OpenDocument("test.html", content, 1)
 	ctx.AddDocument("test.html", doc)
-	
+
 	// Set up attributes for my-element
 	ctx.AddAttributes("my-element", map[string]*M.Attribute{
-		"size":  &M.Attribute{FullyQualified: M.FullyQualified{Name: "size"}},
-		"color": &M.Attribute{FullyQualified: M.FullyQualified{Name: "color"}},
+		"size":  {FullyQualified: M.FullyQualified{Name: "size"}},
+		"color": {FullyQualified: M.FullyQualified{Name: "color"}},
 	})
 
 	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
@@ -148,7 +147,7 @@ func TestAttributeDiagnostics_GlobalAttributeTypoOnCustomElement(t *testing.T) {
 	ctx.SetDocumentManager(dm)
 	doc := dm.OpenDocument("test.html", content, 1)
 	ctx.AddDocument("test.html", doc)
-	
+
 	// Custom element with no defined attributes
 	ctx.AddAttributes("my-custom-element", map[string]*M.Attribute{})
 

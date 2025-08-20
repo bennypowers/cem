@@ -82,7 +82,7 @@ func TestDefinition(t *testing.T) {
 			if doc == nil {
 				t.Fatal("Failed to open test document")
 			}
-			
+
 			// Also add document to the mock context for Document() lookup
 			ctx.AddDocument(uri, doc)
 
@@ -127,8 +127,6 @@ func TestDefinition(t *testing.T) {
 		})
 	}
 }
-
-
 
 // TestResolveSourcePath tests the path resolution logic specifically
 func TestResolveSourcePath(t *testing.T) {

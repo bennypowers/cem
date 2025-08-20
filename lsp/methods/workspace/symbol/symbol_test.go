@@ -36,7 +36,7 @@ func TestWorkspaceSymbol(t *testing.T) {
 		"ui-table",
 	}
 	ctx.SetWorkspaceRoot("/workspace")
-	
+
 	// Set up element sources
 	sources := map[string]string{
 		"my-button": "src/components/my-button.ts",
@@ -50,11 +50,11 @@ func TestWorkspaceSymbol(t *testing.T) {
 			ModulePathStr: source,
 		})
 	}
-	
+
 	// Set up descriptions
 	descriptions := map[string]string{
 		"my-button": "A reusable button component",
-		"my-card":   "Card layout component", 
+		"my-card":   "Card layout component",
 		"ui-icon":   "Icon display component",
 	}
 	for tagName, desc := range descriptions {

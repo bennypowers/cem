@@ -95,13 +95,13 @@ func TestSlotAttributeNameSuggestionRegression(t *testing.T) {
 			description:       "span inside modal-dialog should suggest slot attribute",
 		},
 		{
-			name:              "Custom element inside another custom element with slots",
-			html:              `<card-layout><icon-button `,
-			position:          protocol.Position{Line: 0, Character: 26},
-			tagName:           "icon-button",
-			shouldSuggestSlot: true,
+			name:                "Custom element inside another custom element with slots",
+			html:                `<card-layout><icon-button `,
+			position:            protocol.Position{Line: 0, Character: 26},
+			tagName:             "icon-button",
+			shouldSuggestSlot:   true,
 			expectedCompletions: []string{"variant", "disabled"}, // icon-button's own attributes
-			description:       "icon-button inside card-layout should suggest both slot and its own attributes",
+			description:         "icon-button inside card-layout should suggest both slot and its own attributes",
 		},
 		{
 			name:              "Nested structure - grandchild of slotted element",
@@ -201,7 +201,7 @@ func TestSlotAttributeNameSuggestionRegression(t *testing.T) {
 			foundSlot := false
 			slotCompletion := protocol.CompletionItem{}
 			allLabels := make([]string, len(completions))
-			
+
 			for i, completion := range completions {
 				allLabels[i] = completion.Label
 				if completion.Label == "slot" {
@@ -212,12 +212,12 @@ func TestSlotAttributeNameSuggestionRegression(t *testing.T) {
 
 			// Verify slot suggestion expectation
 			if tt.shouldSuggestSlot && !foundSlot {
-				t.Errorf("REGRESSION: Expected slot attribute to be suggested but it wasn't.\nHTML: %s\nPosition: line=%d, char=%d\nTag: %s\nGot completions: %v", 
+				t.Errorf("REGRESSION: Expected slot attribute to be suggested but it wasn't.\nHTML: %s\nPosition: line=%d, char=%d\nTag: %s\nGot completions: %v",
 					tt.html, tt.position.Line, tt.position.Character, tt.tagName, allLabels)
 			}
 
 			if !tt.shouldSuggestSlot && foundSlot {
-				t.Errorf("REGRESSION: Expected slot attribute NOT to be suggested but it was.\nHTML: %s\nPosition: line=%d, char=%d\nTag: %s\nGot completions: %v", 
+				t.Errorf("REGRESSION: Expected slot attribute NOT to be suggested but it was.\nHTML: %s\nPosition: line=%d, char=%d\nTag: %s\nGot completions: %v",
 					tt.html, tt.position.Line, tt.position.Character, tt.tagName, allLabels)
 			}
 
@@ -227,7 +227,7 @@ func TestSlotAttributeNameSuggestionRegression(t *testing.T) {
 				if slotCompletion.InsertText == nil || *slotCompletion.InsertText != `slot="$0"` {
 					t.Errorf("REGRESSION: slot completion should have snippet insert text 'slot=\"$0\"', got: %v", slotCompletion.InsertText)
 				}
-				
+
 				if slotCompletion.Kind == nil || *slotCompletion.Kind != protocol.CompletionItemKindProperty {
 					t.Errorf("REGRESSION: slot completion should have Property kind, got: %v", slotCompletion.Kind)
 				}
@@ -266,7 +266,7 @@ func TestSlotAttributeNameSuggestionRegression(t *testing.T) {
 func TestSlotAttributeParentDetectionRegression(t *testing.T) {
 	// This is a focused regression test for the specific bug that was fixed:
 	// findParentElementTag was returning the current element instead of parent element
-	
+
 	fixtureDir := filepath.Join("slot-attribute-regression-test")
 	manifestPath := filepath.Join(fixtureDir, "manifest.json")
 
@@ -349,12 +349,12 @@ func TestSlotAttributeParentDetectionRegression(t *testing.T) {
 			}
 
 			if tt.shouldFind && !foundSlot {
-				t.Errorf("PARENT DETECTION REGRESSION: Expected to find slot attribute (parent detection failed).\nHTML: %s\nPosition: line=%d, char=%d\nTag: %s", 
+				t.Errorf("PARENT DETECTION REGRESSION: Expected to find slot attribute (parent detection failed).\nHTML: %s\nPosition: line=%d, char=%d\nTag: %s",
 					tt.html, tt.position.Line, tt.position.Character, tt.tagName)
 			}
 
 			if !tt.shouldFind && foundSlot {
-				t.Errorf("PARENT DETECTION REGRESSION: Expected NOT to find slot attribute (false positive parent detection).\nHTML: %s\nPosition: line=%d, char=%d\nTag: %s", 
+				t.Errorf("PARENT DETECTION REGRESSION: Expected NOT to find slot attribute (false positive parent detection).\nHTML: %s\nPosition: line=%d, char=%d\nTag: %s",
 					tt.html, tt.position.Line, tt.position.Character, tt.tagName)
 			}
 
@@ -415,15 +415,15 @@ func TestSlotAttributeCompletionStructureRegression(t *testing.T) {
 		actual   string
 	}{
 		{
-			name: "Label should be 'slot'",
-			test: func() bool { return slotCompletion.Label == "slot" },
+			name:     "Label should be 'slot'",
+			test:     func() bool { return slotCompletion.Label == "slot" },
 			expected: "slot",
-			actual: slotCompletion.Label,
+			actual:   slotCompletion.Label,
 		},
 		{
 			name: "Kind should be Property",
-			test: func() bool { 
-				return slotCompletion.Kind != nil && *slotCompletion.Kind == protocol.CompletionItemKindProperty 
+			test: func() bool {
+				return slotCompletion.Kind != nil && *slotCompletion.Kind == protocol.CompletionItemKindProperty
 			},
 			expected: "Property",
 			actual: func() string {
@@ -435,8 +435,8 @@ func TestSlotAttributeCompletionStructureRegression(t *testing.T) {
 		},
 		{
 			name: "Detail should be 'HTML slot attribute'",
-			test: func() bool { 
-				return slotCompletion.Detail != nil && *slotCompletion.Detail == "HTML slot attribute" 
+			test: func() bool {
+				return slotCompletion.Detail != nil && *slotCompletion.Detail == "HTML slot attribute"
 			},
 			expected: "HTML slot attribute",
 			actual: func() string {
@@ -448,8 +448,8 @@ func TestSlotAttributeCompletionStructureRegression(t *testing.T) {
 		},
 		{
 			name: "InsertText should be snippet 'slot=\"$0\"'",
-			test: func() bool { 
-				return slotCompletion.InsertText != nil && *slotCompletion.InsertText == `slot="$0"` 
+			test: func() bool {
+				return slotCompletion.InsertText != nil && *slotCompletion.InsertText == `slot="$0"`
 			},
 			expected: `slot="$0"`,
 			actual: func() string {
@@ -461,8 +461,8 @@ func TestSlotAttributeCompletionStructureRegression(t *testing.T) {
 		},
 		{
 			name: "InsertTextFormat should be Snippet",
-			test: func() bool { 
-				return slotCompletion.InsertTextFormat != nil && *slotCompletion.InsertTextFormat == protocol.InsertTextFormatSnippet 
+			test: func() bool {
+				return slotCompletion.InsertTextFormat != nil && *slotCompletion.InsertTextFormat == protocol.InsertTextFormatSnippet
 			},
 			expected: "Snippet",
 			actual: func() string {
@@ -474,8 +474,8 @@ func TestSlotAttributeCompletionStructureRegression(t *testing.T) {
 		},
 		{
 			name: "Documentation should be present",
-			test: func() bool { 
-				return slotCompletion.Documentation != nil 
+			test: func() bool {
+				return slotCompletion.Documentation != nil
 			},
 			expected: "present",
 			actual: func() string {

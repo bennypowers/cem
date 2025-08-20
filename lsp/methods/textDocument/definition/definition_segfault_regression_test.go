@@ -16,7 +16,7 @@ import (
 func TestDefinitionNilPointerRegression(t *testing.T) {
 	// Create a mock server context
 	ctx := testhelpers.NewMockServerContext()
-	
+
 	// Create a real DocumentManager
 	dm, err := lsp.NewDocumentManager()
 	if err != nil {
@@ -45,7 +45,7 @@ func TestDefinitionNilPointerRegression(t *testing.T) {
 	if err != nil {
 		t.Errorf("Definition call failed: %v", err)
 	}
-	
+
 	// Result should be nil since button-element is not in registry, but no crash
 	if result != nil {
 		t.Logf("Definition result: %v", result)
@@ -57,7 +57,7 @@ func TestDefinitionNilPointerRegression(t *testing.T) {
 func TestDefinitionConcurrentAccess(t *testing.T) {
 	// Create a mock server context
 	ctx := testhelpers.NewMockServerContext()
-	
+
 	// Create a real DocumentManager
 	dm, err := lsp.NewDocumentManager()
 	if err != nil {
@@ -74,13 +74,13 @@ func TestDefinitionConcurrentAccess(t *testing.T) {
 	var wg sync.WaitGroup
 	var errCount int
 	var mu sync.Mutex
-	
+
 	// Start multiple goroutines that try to access the document concurrently
 	for i := 0; i < 5; i++ {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
-			
+
 			// Simulate concurrent access to documents
 			for j := 0; j < 10; j++ {
 				// Try to get document content
@@ -93,7 +93,7 @@ func TestDefinitionConcurrentAccess(t *testing.T) {
 						mu.Unlock()
 					}
 				}
-				
+
 				// Small delay to increase chance of race conditions
 				time.Sleep(time.Microsecond * 10)
 			}
@@ -104,17 +104,17 @@ func TestDefinitionConcurrentAccess(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		
+
 		for i := 0; i < 5; i++ {
 			// Open a new document
 			newDoc := dm.OpenDocument("file:///test.html", content, int32(i+2))
 			ctx.AddDocument("file:///test.html", newDoc)
-			
+
 			time.Sleep(time.Microsecond * 50)
-			
+
 			// Close the document
 			dm.CloseDocument("file:///test.html")
-			
+
 			time.Sleep(time.Microsecond * 50)
 		}
 	}()
@@ -123,7 +123,7 @@ func TestDefinitionConcurrentAccess(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		
+
 		for i := 0; i < 3; i++ {
 			params := &protocol.DefinitionParams{
 				TextDocumentPositionParams: protocol.TextDocumentPositionParams{
@@ -140,14 +140,14 @@ func TestDefinitionConcurrentAccess(t *testing.T) {
 				errCount++
 				mu.Unlock()
 			}
-			
+
 			time.Sleep(time.Millisecond * 50)
 		}
 	}()
 
 	// Wait for all goroutines to complete
 	wg.Wait()
-	
+
 	// The test passes if we reach here without a segfault
 	// Some errors are expected due to document lifecycle, but no crashes
 	t.Logf("Test completed with %d errors (expected in concurrent access)", errCount)

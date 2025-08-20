@@ -30,7 +30,7 @@ func TestSlotDiagnosticsBasic(t *testing.T) {
 
 	// Create test context using MockServerContext
 	ctx := testhelpers.NewMockServerContext()
-	
+
 	// Add test document using DocumentManager
 	dm, err := lsp.NewDocumentManager()
 	if err != nil {
@@ -38,10 +38,10 @@ func TestSlotDiagnosticsBasic(t *testing.T) {
 	}
 	defer dm.Close()
 	ctx.SetDocumentManager(dm)
-	
+
 	doc := dm.OpenDocument("test://test.html", `<my-element><div slot="heade">Content</div></my-element>`, 1)
 	ctx.AddDocument("test://test.html", doc)
-	
+
 	// Add test slots to the context
 	ctx.AddSlots("my-element", []manifest.Slot{
 		{FullyQualified: manifest.FullyQualified{Name: "header"}},
@@ -75,4 +75,3 @@ func TestSlotDiagnosticsBasic(t *testing.T) {
 		t.Errorf("Expected first slot to be 'header', got: %s", slots[0].Name)
 	}
 }
-

@@ -19,7 +19,7 @@ import (
 func TestButtonElementAttributeValueRegression(t *testing.T) {
 	// Load the demo-project manifest to test with real data
 	manifestPath := filepath.Join("..", "..", "..", "..", "demo-project", "custom-elements.json")
-	
+
 	manifestBytes, err := os.ReadFile(manifestPath)
 	if err != nil {
 		t.Skipf("Demo project manifest not found: %v", err)
@@ -44,19 +44,19 @@ func TestButtonElementAttributeValueRegression(t *testing.T) {
 	ctx.SetDocumentManager(dm)
 
 	tests := []struct {
-		name            string
-		html            string
-		position        protocol.Position
-		expectedValues  []string
-		description     string
+		name           string
+		html           string
+		position       protocol.Position
+		expectedValues []string
+		description    string
 	}{
 		{
 			name:     "button-element variant attribute values",
 			html:     `<button-element variant="">`,
 			position: protocol.Position{Line: 0, Character: 25}, // Inside the empty quotes
 			expectedValues: []string{
-				"primary",   // from manifest union type
-				"secondary", 
+				"primary", // from manifest union type
+				"secondary",
 				"success",
 				"danger",
 				"warning",
@@ -64,12 +64,12 @@ func TestButtonElementAttributeValueRegression(t *testing.T) {
 			description: "Should provide variant completions for button-element from demo-project manifest",
 		},
 		{
-			name:     "button-element size attribute values", 
+			name:     "button-element size attribute values",
 			html:     `<button-element size="">`,
 			position: protocol.Position{Line: 0, Character: 22}, // Inside the empty quotes
 			expectedValues: []string{
 				"small",
-				"medium", 
+				"medium",
 				"large",
 			},
 			description: "Should provide size completions for button-element from demo-project manifest",
@@ -101,13 +101,12 @@ func TestButtonElementAttributeValueRegression(t *testing.T) {
 				return
 			}
 
-
 			// Get attribute value completions using the completion system
 			completions := completion.GetAttributeValueCompletions(ctx, analysis.TagName, analysis.AttributeName)
 
 			// Check that we got some completions
 			if len(completions) == 0 {
-				t.Errorf("❌ REGRESSION: Expected attribute value completions for %s %s, got none", 
+				t.Errorf("❌ REGRESSION: Expected attribute value completions for %s %s, got none",
 					analysis.TagName, analysis.AttributeName)
 				return
 			}
@@ -136,7 +135,7 @@ func TestButtonElementAttributeValueRegression(t *testing.T) {
 func TestButtonElementIntegrationContext(t *testing.T) {
 	// Load the demo-project manifest
 	manifestPath := filepath.Join("..", "..", "..", "..", "demo-project", "custom-elements.json")
-	
+
 	manifestBytes, err := os.ReadFile(manifestPath)
 	if err != nil {
 		t.Skipf("Demo project manifest not found: %v", err)
@@ -234,6 +233,6 @@ func TestButtonElementIntegrationContext(t *testing.T) {
 		}
 	}
 
-	t.Logf("✅ Integration test passed with %d completions: %v", 
+	t.Logf("✅ Integration test passed with %d completions: %v",
 		len(completions), testhelpers.GetCompletionLabels(completions))
 }

@@ -361,9 +361,9 @@ func (r *Registry) addManifest(manifest *M.Package, packageName string) {
 					// Store the element definition with source information
 					elementDef := &ElementDefinition{
 						CustomElement: element,
-						modulePath:  module.Path,
-						Source:      customElementDecl.Source,
-						packageName: packageName,
+						modulePath:    module.Path,
+						Source:        customElementDecl.Source,
+						packageName:   packageName,
 					}
 					// Check if element already exists
 					if existing, exists := r.ElementDefinitions[element.TagName]; exists {
@@ -636,6 +636,21 @@ func (r *Registry) StartGenerateWatcher() error {
 	// Create callback that updates the registry with generated manifests
 	callback := func(pkg *M.Package) error {
 		helpers.SafeDebugLog("Received generated manifest with %d modules", len(pkg.Modules))
+
+		// Debug: check the variant attribute type in the received manifest
+		for _, module := range pkg.Modules {
+			for _, decl := range module.Declarations {
+				if customElement, ok := decl.(*M.CustomElementDeclaration); ok {
+					if customElement.CustomElement.TagName == "test-button" {
+						for _, attr := range customElement.CustomElement.Attributes {
+							if attr.Name == "variant" && attr.Type != nil {
+								fmt.Printf("[DEBUG] Received manifest - variant type: '%s'\n", attr.Type.Text)
+							}
+						}
+					}
+				}
+			}
+		}
 
 		// Get package name from workspace package.json to preserve package scope
 		var packageName string

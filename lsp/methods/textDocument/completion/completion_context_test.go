@@ -196,7 +196,7 @@ func TestCompletionPrefixExtraction(t *testing.T) {
 				t.Fatalf("Failed to create DocumentManager: %v", err)
 			}
 			defer dm.Close()
-			
+
 			doc := dm.OpenDocument("test://prefix.html", tt.beforeCursor, 1)
 			prefix := doc.CompletionPrefix(analysis)
 
@@ -255,7 +255,7 @@ func TestCompletionIntegration(t *testing.T) {
 	// Create completion context using MockServerContext and add manifest
 	ctx := testhelpers.NewMockServerContext()
 	ctx.AddManifest(&pkg)
-	
+
 	// Create real DocumentManager for tree-sitter parsing
 	dm, err := lsp.NewDocumentManager()
 	if err != nil {
@@ -784,7 +784,7 @@ func TestTemplateContextBehavior(t *testing.T) {
 				t.Fatalf("Failed to create DocumentManager: %v", err)
 			}
 			defer dm.Close()
-			
+
 			// For template literals, use .ts extension so it gets parsed as TypeScript
 			var uri string
 			if tt.wantLitTemplate {
@@ -792,7 +792,7 @@ func TestTemplateContextBehavior(t *testing.T) {
 			} else {
 				uri = "test://template.html"
 			}
-			
+
 			doc := dm.OpenDocument(uri, tt.content, 1)
 
 			// Analyze context - pass DocumentManager for tree-sitter queries

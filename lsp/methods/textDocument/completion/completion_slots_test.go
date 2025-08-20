@@ -185,7 +185,6 @@ func getSlotCompletionLabels(completions []protocol.CompletionItem) []string {
 	return labels
 }
 
-
 // TestSlotAttributeNameSuggestion tests basic slot attribute name suggestions functionality
 // For comprehensive regression testing, see TestSlotAttributeNameSuggestionRegression
 func TestSlotAttributeNameSuggestion(t *testing.T) {
@@ -217,12 +216,12 @@ func TestSlotAttributeNameSuggestion(t *testing.T) {
 	ctx.SetDocumentManager(dm)
 
 	tests := []struct {
-		name                string
-		html                string
-		position            protocol.Position
-		tagName             string
-		shouldSuggestSlot   bool
-		description         string
+		name              string
+		html              string
+		position          protocol.Position
+		tagName           string
+		shouldSuggestSlot bool
+		description       string
 	}{
 		{
 			name:              "Slot attribute suggested for button inside card-element",
@@ -271,7 +270,6 @@ func TestSlotAttributeNameSuggestion(t *testing.T) {
 			// Create a mock document for this test case
 			doc := dm.OpenDocument("test://test.html", tt.html, 1)
 
-			
 			// Call the attribute completion function with context
 			completions := completion.GetAttributeCompletionsWithContext(ctx, doc, tt.position, tt.tagName)
 
@@ -280,27 +278,27 @@ func TestSlotAttributeNameSuggestion(t *testing.T) {
 			for _, completion := range completions {
 				if completion.Label == "slot" {
 					foundSlot = true
-					
+
 					// Verify the completion has proper structure
 					if completion.InsertText == nil || *completion.InsertText != `slot="$0"` {
 						t.Errorf("Expected slot completion to have snippet insert text 'slot=\"$0\"', got: %v", completion.InsertText)
 					}
-					
+
 					if completion.Kind == nil || *completion.Kind != protocol.CompletionItemKindProperty {
 						t.Errorf("Expected slot completion to have Property kind")
 					}
-					
+
 					break
 				}
 			}
 
 			if tt.shouldSuggestSlot && !foundSlot {
-				t.Errorf("Expected slot attribute to be suggested but it wasn't. Got completions: %v", 
+				t.Errorf("Expected slot attribute to be suggested but it wasn't. Got completions: %v",
 					getSlotCompletionLabels(completions))
 			}
 
 			if !tt.shouldSuggestSlot && foundSlot {
-				t.Errorf("Expected slot attribute NOT to be suggested but it was. Got completions: %v", 
+				t.Errorf("Expected slot attribute NOT to be suggested but it was. Got completions: %v",
 					getSlotCompletionLabels(completions))
 			}
 

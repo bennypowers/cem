@@ -272,7 +272,7 @@ func detectScriptTagIndentation(doc types.Document, scriptPosition protocol.Posi
 		baseIndent, _ := detectIndentation(doc)
 		return baseIndent
 	}
-	
+
 	// If no existing imports found, use the file's script indentation pattern
 	_, scriptIndent := detectIndentation(doc)
 	return scriptIndent
@@ -286,7 +286,7 @@ func findImportInsertionPosition(doc types.Document) protocol.Position {
 	}
 
 	lines := strings.Split(content, "\n")
-	
+
 	// Find the last import statement
 	lastImportLine := -1
 	for i, line := range lines {
@@ -296,22 +296,22 @@ func findImportInsertionPosition(doc types.Document) protocol.Position {
 			lastImportLine = i
 		}
 		// Stop scanning when we hit the first non-import, non-comment, non-empty line
-		if trimmedLine != "" && 
-		   !strings.HasPrefix(trimmedLine, "import ") && 
-		   !strings.HasPrefix(trimmedLine, "from ") &&
-		   !strings.HasPrefix(trimmedLine, "//") &&
-		   !strings.HasPrefix(trimmedLine, "/*") &&
-		   !strings.HasPrefix(trimmedLine, "*") &&
-		   !strings.HasPrefix(trimmedLine, "*/") {
+		if trimmedLine != "" &&
+			!strings.HasPrefix(trimmedLine, "import ") &&
+			!strings.HasPrefix(trimmedLine, "from ") &&
+			!strings.HasPrefix(trimmedLine, "//") &&
+			!strings.HasPrefix(trimmedLine, "/*") &&
+			!strings.HasPrefix(trimmedLine, "*") &&
+			!strings.HasPrefix(trimmedLine, "*/") {
 			break
 		}
 	}
-	
+
 	if lastImportLine >= 0 {
 		// Insert after the last import, with a blank line
 		return protocol.Position{Line: uint32(lastImportLine + 1), Character: 0}
 	}
-	
+
 	// No imports found, insert at the beginning
 	return protocol.Position{Line: 0, Character: 0}
 }

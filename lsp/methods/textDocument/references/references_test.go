@@ -10,12 +10,10 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-
-
 func TestReferences(t *testing.T) {
 	// Create MockServerContext with proper DocumentManager
 	ctx := testhelpers.NewMockServerContext()
-	
+
 	// Create DocumentManager and add documents
 	dm, err := lsp.NewDocumentManager()
 	if err != nil {
@@ -23,11 +21,11 @@ func TestReferences(t *testing.T) {
 	}
 	defer dm.Close()
 	ctx.SetDocumentManager(dm)
-	
+
 	// Add documents using real DocumentManager
 	doc1 := dm.OpenDocument("file:///test1.html", `<rh-card>content</rh-card>`, 1)
 	doc2 := dm.OpenDocument("file:///test2.ts", "html`<rh-card variant=\"primary\"></rh-card>`", 1)
-	
+
 	ctx.AddDocument("file:///test1.html", doc1)
 	ctx.AddDocument("file:///test2.ts", doc2)
 	ctx.SetWorkspaceRoot("/test/workspace")

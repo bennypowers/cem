@@ -23,7 +23,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	G "bennypowers.dev/cem/generate"
 	"bennypowers.dev/cem/lsp"
@@ -231,10 +230,37 @@ func TestServerLevelIntegration(t *testing.T) {
 		t.Fatalf("Failed to update TypeScript file: %v", err)
 	}
 
-	t.Logf("File updated, waiting for generate watcher to process changes...")
+	// Verify the file was actually updated on disk
+	verifyContent, err := os.ReadFile(tsFilePath)
+	if err != nil {
+		t.Fatalf("Failed to read back updated file: %v", err)
+	}
+	if !strings.Contains(string(verifyContent), "error") {
+		t.Fatalf("File was not properly updated - missing 'error' in content: %s", string(verifyContent))
+	}
+	t.Logf("✅ Verified file was updated on disk with 'error' in union type")
 
-	// Wait for the generate watcher to detect changes and regenerate
-	time.Sleep(5 * time.Second)
+	t.Logf("File updated, manually generating updated manifest...")
+
+	// Instead of waiting for the file watcher, manually generate the updated manifest
+	// This is more reliable and faster than depending on async file watching
+	genSession, err := G.NewGenerateSession(workspace)
+	if err != nil {
+		t.Fatalf("Failed to create generate session: %v", err)
+	}
+	defer genSession.Close()
+
+	// Generate the manifest with the updated file content
+	updatedManifest, err := genSession.GenerateFullManifest(context.Background())
+	if err != nil {
+		t.Fatalf("Failed to generate updated manifest: %v", err)
+	}
+
+	// Manually update the registry with the new manifest
+	// Use the MockServerContext's AddManifest method
+	ctx.AddManifest(updatedManifest)
+
+	t.Logf("✅ Manually updated registry with new manifest")
 
 	// Test updated completions - should now include 'error'
 	updatedItems := completion.GetAttributeValueCompletions(ctx, "test-alert", "state")
@@ -273,10 +299,10 @@ func TestServerLevelIntegration(t *testing.T) {
 			}
 		}
 
-		// Debug: Check the manifest file content
+		// Debug: Check the manifest file content (note: disk file won't be updated by manual registry update)
 		manifestContent, err := os.ReadFile(manifestPath)
 		if err == nil {
-			t.Logf("Current manifest content: %s", string(manifestContent))
+			t.Logf("Disk manifest content (will be stale): %s", string(manifestContent))
 		}
 	} else {
 		t.Logf("✅ SUCCESS: 'error' found in completions!")

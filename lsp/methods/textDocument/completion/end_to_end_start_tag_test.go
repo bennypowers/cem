@@ -50,11 +50,11 @@ func TestEndToEndStartTagCompletion(t *testing.T) {
 	// Create a completion context and add the test manifest
 	ctx := testhelpers.NewMockServerContext()
 	ctx.AddManifest(&pkg)
-	
+
 	// Debug: Check what tags were loaded
 	allTags := ctx.AllTagNames()
 	t.Logf("Loaded %d tags: %v", len(allTags), allTags)
-	
+
 	// Create and set a real DocumentManager
 	dm, err := lsp.NewDocumentManager()
 	if err != nil {
@@ -161,7 +161,6 @@ func TestEndToEndStartTagCompletion(t *testing.T) {
 	}
 }
 
-
 // Helper functions
 func stringPtr(s string) *string {
 	return &s
@@ -174,4 +173,3 @@ func extractLabels(items []protocol.CompletionItem) []string {
 	}
 	return labels
 }
-

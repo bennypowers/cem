@@ -195,8 +195,16 @@ func (w *InProcessGenerateWatcher) shouldProcessFile(filename string) bool {
 func (w *InProcessGenerateWatcher) generateAndCallback() error {
 	helpers.SafeDebugLog("Generating manifest in-memory for LSP...")
 
-	// Generate manifest in-memory (no file writes)
-	pkg, err := w.generateSession.GenerateFullManifest(w.ctx)
+	// Create a fresh GenerateSession to avoid any caching issues
+	// that might prevent updated file content from being parsed correctly
+	freshSession, err := G.NewGenerateSession(w.workspace)
+	if err != nil {
+		return fmt.Errorf("create fresh generate session: %w", err)
+	}
+	defer freshSession.Close()
+
+	// Generate manifest in-memory with fresh session (no file writes)
+	pkg, err := freshSession.GenerateFullManifest(w.ctx)
 	if err != nil {
 		return fmt.Errorf("generate manifest: %w", err)
 	}

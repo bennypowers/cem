@@ -65,7 +65,7 @@ func TestIndentationDetection(t *testing.T) {
 
 			// Create mock server context and add document
 			ctx := testhelpers.NewMockServerContext()
-			
+
 			// Create DocumentManager and add document
 			dm, err := lsp.NewDocumentManager()
 			if err != nil {
@@ -73,7 +73,7 @@ func TestIndentationDetection(t *testing.T) {
 			}
 			defer dm.Close()
 			ctx.SetDocumentManager(dm)
-			
+
 			doc := dm.OpenDocument("test://fixture.html", string(htmlContent), 1)
 			ctx.AddDocument("test://fixture.html", doc)
 

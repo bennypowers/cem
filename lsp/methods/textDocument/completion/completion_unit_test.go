@@ -10,7 +10,6 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-
 func TestBasicAttributeValueCompletions(t *testing.T) {
 	// Setup fixture workspace
 	fixtureDir, err := filepath.Abs("test-fixtures/completion-basic")
@@ -47,7 +46,7 @@ func TestBasicAttributeValueCompletions(t *testing.T) {
 	}
 	defer dm.Close()
 
-	// Create adapter using centralized MockServerContext  
+	// Create adapter using centralized MockServerContext
 	adapter := testhelpers.NewMockServerContext()
 	// Copy registry data to mock context for interface compatibility
 	registry := server.Registry()

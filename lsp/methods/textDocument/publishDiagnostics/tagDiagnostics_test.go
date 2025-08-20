@@ -13,7 +13,6 @@ import (
 	W "bennypowers.dev/cem/workspace"
 )
 
-
 func TestTagDiagnostics_WithImports(t *testing.T) {
 	// Setup fixture workspace
 	fixtureDir, err := filepath.Abs("test-fixtures/tag-diagnostics")
@@ -50,7 +49,7 @@ func TestTagDiagnostics_WithImports(t *testing.T) {
 
 	// Load manifests manually like other successful tests
 	ctx := testhelpers.NewMockServerContext()
-	
+
 	// Load manifest from node_modules (where the actual test data is)
 	manifestPath := filepath.Join(fixtureDir, "node_modules", "@scope", "package", "custom-elements.json")
 	if manifestBytes, err := os.ReadFile(manifestPath); err == nil {
@@ -60,7 +59,6 @@ func TestTagDiagnostics_WithImports(t *testing.T) {
 			ctx.SetDocumentManager(dm)
 		}
 	}
-
 
 	// Read the HTML file content from disk
 	htmlPath := filepath.Join(fixtureDir, "with-imports.html")
@@ -153,7 +151,7 @@ func TestTagDiagnostics_TypeScriptImports(t *testing.T) {
 
 	// Load manifests manually like other successful tests
 	ctx := testhelpers.NewMockServerContext()
-	
+
 	// Load manifest from node_modules (where the actual test data is)
 	manifestPath := filepath.Join(fixtureDir, "node_modules", "@scope", "package", "custom-elements.json")
 	if manifestBytes, err := os.ReadFile(manifestPath); err == nil {
@@ -163,7 +161,6 @@ func TestTagDiagnostics_TypeScriptImports(t *testing.T) {
 			ctx.SetDocumentManager(dm)
 		}
 	}
-
 
 	// Read the TypeScript file content from disk
 	tsPath := filepath.Join(fixtureDir, "typescript-imports.ts")
@@ -244,7 +241,7 @@ func TestTagDiagnostics_MissingImports(t *testing.T) {
 
 	// Load manifests manually like other successful tests
 	ctx := testhelpers.NewMockServerContext()
-	
+
 	// Load manifest from node_modules (where the actual test data is)
 	manifestPath := filepath.Join(fixtureDir, "node_modules", "@scope", "package", "custom-elements.json")
 	if manifestBytes, err := os.ReadFile(manifestPath); err == nil {
@@ -254,7 +251,6 @@ func TestTagDiagnostics_MissingImports(t *testing.T) {
 			ctx.SetDocumentManager(dm)
 		}
 	}
-
 
 	// Read the HTML file content from disk
 	htmlPath := filepath.Join(fixtureDir, "missing-imports.html")
@@ -350,7 +346,7 @@ func TestTagDiagnostics_IgnoreComment(t *testing.T) {
 
 	// Load manifests manually like other successful tests
 	ctx := testhelpers.NewMockServerContext()
-	
+
 	// Load manifest from node_modules (where the actual test data is)
 	manifestPath := filepath.Join(fixtureDir, "node_modules", "@scope", "package", "custom-elements.json")
 	if manifestBytes, err := os.ReadFile(manifestPath); err == nil {
@@ -360,7 +356,6 @@ func TestTagDiagnostics_IgnoreComment(t *testing.T) {
 			ctx.SetDocumentManager(dm)
 		}
 	}
-
 
 	// Open document with ignore comment
 	uri := "file://" + ignoreFile

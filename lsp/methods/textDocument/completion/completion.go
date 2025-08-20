@@ -475,7 +475,7 @@ func parseUnionType(typeText string) []protocol.CompletionItem {
 	return items
 }
 
-// deduplicateCompletionItems removes duplicate completion items by label, 
+// deduplicateCompletionItems removes duplicate completion items by label,
 // preferring type-based completions over context-based ones
 func deduplicateCompletionItems(items []protocol.CompletionItem) []protocol.CompletionItem {
 	seen := make(map[string]int) // label -> index of item to keep
@@ -483,11 +483,11 @@ func deduplicateCompletionItems(items []protocol.CompletionItem) []protocol.Comp
 
 	for i, item := range items {
 		label := item.Label
-		
+
 		if existingIdx, exists := seen[label]; exists {
 			// Duplicate found - decide which one to keep
 			existing := items[existingIdx]
-			
+
 			// Prefer type-based completions (union type, literal type) over context-based (variant value)
 			// This ensures more accurate completions based on actual TypeScript types
 			if shouldPreferItem(item, existing) {
@@ -515,19 +515,19 @@ func deduplicateCompletionItems(items []protocol.CompletionItem) []protocol.Comp
 func shouldPreferItem(newItem, existingItem protocol.CompletionItem) bool {
 	newDetail := ""
 	existingDetail := ""
-	
+
 	if newItem.Detail != nil {
 		newDetail = *newItem.Detail
 	}
 	if existingItem.Detail != nil {
 		existingDetail = *existingItem.Detail
 	}
-	
+
 	// Preference order (higher priority wins):
 	// 1. Default value (has "(default)" in label)
 	// 2. Union type value, Literal type value (from actual TypeScript types)
 	// 3. Variant value, Size value, Boolean value (from context patterns)
-	
+
 	// Default values always win
 	if strings.Contains(newItem.Label, "(default)") {
 		return true
@@ -535,18 +535,18 @@ func shouldPreferItem(newItem, existingItem protocol.CompletionItem) bool {
 	if strings.Contains(existingItem.Label, "(default)") {
 		return false
 	}
-	
+
 	// Type-based completions win over context-based ones
 	isNewTypeBased := strings.Contains(newDetail, "Union type") || strings.Contains(newDetail, "Literal type")
 	isExistingTypeBased := strings.Contains(existingDetail, "Union type") || strings.Contains(existingDetail, "Literal type")
-	
+
 	if isNewTypeBased && !isExistingTypeBased {
 		return true
 	}
 	if !isNewTypeBased && isExistingTypeBased {
 		return false
 	}
-	
+
 	// If both are type-based or both are context-based, keep the existing one
 	return false
 }

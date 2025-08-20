@@ -152,7 +152,7 @@ func TestHoverIntegrationWithDocumentChanges(t *testing.T) {
 			}
 			defer dm.Close()
 			ctx.SetDocumentManager(dm)
-			
+
 			doc := dm.OpenDocument(uri, string(content), 1)
 			ctx.AddDocument(uri, doc)
 
@@ -280,7 +280,7 @@ func TestHoverWithTypeScriptTemplates(t *testing.T) {
 			}
 			defer dm.Close()
 			ctx.SetDocumentManager(dm)
-			
+
 			doc := dm.OpenDocument(uri, string(content), 1)
 			ctx.AddDocument(uri, doc)
 
@@ -312,4 +312,3 @@ func TestHoverWithTypeScriptTemplates(t *testing.T) {
 		})
 	}
 }
-

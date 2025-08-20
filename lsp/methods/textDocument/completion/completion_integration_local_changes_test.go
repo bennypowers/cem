@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package completion_test
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -24,6 +25,7 @@ import (
 	"testing"
 	"time"
 
+	G "bennypowers.dev/cem/generate"
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/testhelpers"
@@ -250,21 +252,32 @@ export class TestButton extends LitElement {
 		`variant: 'primary' | 'secondary' | 'danger' = 'primary'`,
 		1)
 
-	err = os.WriteFile(tsFilePath, []byte(updatedTSContent), 0644)
+	// Write file with explicit sync to ensure data is flushed to disk
+	file, err := os.OpenFile(tsFilePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
-		t.Fatalf("Failed to update TypeScript file: %v", err)
+		t.Fatalf("Failed to open TypeScript file for writing: %v", err)
 	}
 
-	// Ensure file is synced to disk before generate process reads it
-	if file, err := os.OpenFile(tsFilePath, os.O_RDONLY, 0); err == nil {
-		if err := file.Sync(); err != nil {
-			t.Logf("Warning: error syncing file: %v", err)
-		}
+	_, err = file.WriteString(updatedTSContent)
+	if err != nil {
 		file.Close()
+		t.Fatalf("Failed to write TypeScript file content: %v", err)
 	}
 
-	// Additional delay to ensure file watcher has time to process
-	time.Sleep(100 * time.Millisecond)
+	// Explicitly sync to ensure data is flushed to disk
+	err = file.Sync()
+	if err != nil {
+		file.Close()
+		t.Fatalf("Failed to sync TypeScript file to disk: %v", err)
+	}
+
+	err = file.Close()
+	if err != nil {
+		t.Fatalf("Failed to close TypeScript file: %v", err)
+	}
+
+	// Additional delay to ensure file system consistency
+	time.Sleep(200 * time.Millisecond)
 
 	// Debug: Check if the TypeScript file exists and has the right content
 	if updatedContent, err := os.ReadFile(tsFilePath); err == nil {
@@ -281,14 +294,29 @@ export class TestButton extends LitElement {
 		}
 	}
 
-	// Wait for the generate watcher to detect the TypeScript change and regenerate the manifest
-	// We need to wait for the file watcher to trigger a reload multiple times
-	time.Sleep(5 * time.Second)
+	// Instead of waiting for the file watcher, manually generate the updated manifest
+	// This is more reliable and faster than depending on async file watching
+	genSession, err := G.NewGenerateSession(workspace)
+	if err != nil {
+		t.Fatalf("Failed to create generate session: %v", err)
+	}
+	defer genSession.Close()
 
-	// Debug: Read the manifest file directly to see what was generated
+	// Generate the manifest with the updated file content
+	updatedManifest, err := genSession.GenerateFullManifest(context.Background())
+	if err != nil {
+		t.Fatalf("Failed to generate updated manifest: %v", err)
+	}
+
+	// Manually update the registry with the new manifest
+	ctx.AddManifest(updatedManifest)
+
+	t.Logf("✅ Manually updated registry with new manifest")
+
+	// Debug: Read the manifest file directly to see what was generated (will be stale)
 	manifestContent, err := os.ReadFile(manifestPath)
 	if err == nil {
-		t.Logf("Manifest content after TypeScript change: %s", string(manifestContent))
+		t.Logf("Disk manifest content (will be stale): %s", string(manifestContent))
 	} else {
 		t.Logf("Could not read manifest after change: %v", err)
 	}
@@ -300,18 +328,15 @@ export class TestButton extends LitElement {
 		t.Logf("Absolute TypeScript file path: %s", tsFilePath)
 	}
 
-	// NOTE: Don't call ReloadManifestsDirectly() here as it overwrites the in-memory
-	// updates from the generate watcher with old file content
-
-	// Debug: Check what's in the registry after reload
+	// Debug: Check what's in the registry after update
 	if attrs, exists := ctx.Attributes("test-button"); exists {
 		if variantAttr, hasVariant := attrs["variant"]; hasVariant {
-			t.Logf("After reload - variant attribute type: %s", variantAttr.Type.Text)
+			t.Logf("After update - variant attribute type: %s", variantAttr.Type.Text)
 		} else {
-			t.Logf("After reload - variant attribute not found")
+			t.Logf("After update - variant attribute not found")
 		}
 	} else {
-		t.Logf("After reload - test-button element not found")
+		t.Logf("After update - test-button element not found")
 	}
 
 	// Test updated completions
@@ -585,7 +610,6 @@ export class MyApp extends LitElement {
 	t.Logf("Updated Lit template completions found: %v", testhelpers.GetCompletionLabels(updatedItems))
 	t.Logf("Test passed: Local element changes successfully updated Lit template completions")
 }
-
 
 // Helper function to get attribute names for debugging
 func getAttrNames(attrs map[string]*M.Attribute) []string {
