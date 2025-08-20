@@ -29,20 +29,16 @@ func TestSlotAttributeCompletions(t *testing.T) {
 		t.Fatalf("Failed to parse manifest: %v", err)
 	}
 
-	// Create registry and add the test manifest
-	registry := testhelpers.NewMockRegistry()
-	registry.AddManifest(&pkg)
+	// Create context and add the test manifest
+	ctx := testhelpers.NewMockServerContext()
+	ctx.AddManifest(&pkg)
 
-	// Create a mock document manager
+	// Create a real document manager
 	dm, err := lsp.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create document manager: %v", err)
 	}
 	defer dm.Close()
-
-	// Test context that provides the registry data
-	ctx := testhelpers.NewMockServerContext()
-	ctx.SetRegistry(registry)
 	ctx.SetDocumentManager(dm)
 
 	tests := []struct {
@@ -142,11 +138,8 @@ func TestSlotCompletionDetails(t *testing.T) {
 		t.Fatalf("Failed to parse manifest: %v", err)
 	}
 
-	registry := testhelpers.NewMockRegistry()
-	registry.AddManifest(&pkg)
-
 	ctx := testhelpers.NewMockServerContext()
-	ctx.SetRegistry(registry)
+	ctx.AddManifest(&pkg)
 
 	// Test specific completion details
 	mockDoc := testhelpers.NewMockDocument(`<card-element><button slot="`)
@@ -203,12 +196,9 @@ func TestSlotAttributeNameSuggestion(t *testing.T) {
 		t.Fatalf("Failed to parse manifest: %v", err)
 	}
 
-	// Create registry and add the test manifest
-	registry := testhelpers.NewMockRegistry()
-	registry.AddManifest(&pkg)
-
+	// Create context and add the test manifest
 	ctx := testhelpers.NewMockServerContext()
-	ctx.SetRegistry(registry)
+	ctx.AddManifest(&pkg)
 
 	tests := []struct {
 		name                string

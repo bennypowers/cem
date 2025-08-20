@@ -32,14 +32,14 @@ func loadTestManifest(t *testing.T, fixturePath string) *M.Package {
 
 // TestRegistryElementLookup tests registry's ability to store and retrieve custom elements
 func TestRegistryElementLookup(t *testing.T) {
-	registry := testhelpers.NewMockRegistry()
+	ctx := testhelpers.NewMockServerContext()
 
 	// Load the basic test manifest
 	manifest := loadTestManifest(t, filepath.Join("test", "fixtures", "registry-basic", "manifest.json"))
-	registry.AddManifest(manifest)
+	ctx.AddManifest(manifest)
 
 	t.Run("Get existing element", func(t *testing.T) {
-		element, exists := registry.Element("my-element")
+		element, exists := ctx.Element("my-element")
 		if !exists {
 			t.Fatal("Expected to find my-element")
 		}
@@ -58,14 +58,14 @@ func TestRegistryElementLookup(t *testing.T) {
 	})
 
 	t.Run("Get non-existent element", func(t *testing.T) {
-		_, exists := registry.Element("non-existent")
+		_, exists := ctx.Element("non-existent")
 		if exists {
 			t.Error("Expected not to find non-existent element")
 		}
 	})
 
 	t.Run("Get all tag names", func(t *testing.T) {
-		tagNames := registry.AllTagNames()
+		tagNames := ctx.AllTagNames()
 		if len(tagNames) != 1 {
 			t.Errorf("Expected 1 tag name, got %d", len(tagNames))
 		}
@@ -75,7 +75,7 @@ func TestRegistryElementLookup(t *testing.T) {
 	})
 
 	t.Run("Get element attributes", func(t *testing.T) {
-		attrs, exists := registry.Attributes("my-element")
+		attrs, exists := ctx.Attributes("my-element")
 		if !exists {
 			t.Fatal("Expected to find attributes for my-element")
 		}
@@ -102,14 +102,14 @@ func TestRegistryElementLookup(t *testing.T) {
 	})
 
 	t.Run("Get attributes for non-existent element", func(t *testing.T) {
-		_, exists := registry.Attributes("non-existent")
+		_, exists := ctx.Attributes("non-existent")
 		if exists {
 			t.Error("Expected not to find attributes for non-existent element")
 		}
 	})
 
 	t.Run("Get element slots", func(t *testing.T) {
-		slots, exists := registry.Slots("my-element")
+		slots, exists := ctx.Slots("my-element")
 		if !exists {
 			t.Fatal("Expected to find slots for my-element")
 		}
@@ -131,7 +131,7 @@ func TestRegistryElementLookup(t *testing.T) {
 	})
 
 	t.Run("Get element definition", func(t *testing.T) {
-		definition, exists := registry.ElementDefinition("my-element")
+		definition, exists := ctx.ElementDefinition("my-element")
 		if !exists {
 			t.Fatal("Expected to find element definition for my-element")
 		}
@@ -146,37 +146,37 @@ func TestRegistryElementLookup(t *testing.T) {
 
 // TestRegistryMultipleManifests tests adding multiple manifests to the same registry
 func TestRegistryMultipleManifests(t *testing.T) {
-	registry := testhelpers.NewMockRegistry()
+	ctx := testhelpers.NewMockServerContext()
 
 	// Load two different manifests
 	manifest1 := loadTestManifest(t, filepath.Join("test", "fixtures", "registry-multiple", "manifest-1.json"))
 	manifest2 := loadTestManifest(t, filepath.Join("test", "fixtures", "registry-multiple", "manifest-2.json"))
 
 	// Add both manifests
-	registry.AddManifest(manifest1)
-	registry.AddManifest(manifest2)
+	ctx.AddManifest(manifest1)
+	ctx.AddManifest(manifest2)
 
 	// Verify both elements are available
-	tagNames := registry.AllTagNames()
+	tagNames := ctx.AllTagNames()
 	if len(tagNames) != 2 {
 		t.Errorf("Expected 2 tag names after adding multiple manifests, got %d", len(tagNames))
 	}
 
-	if _, exists := registry.Element("first-element"); !exists {
+	if _, exists := ctx.Element("first-element"); !exists {
 		t.Error("Expected to find first-element after adding manifests")
 	}
 
-	if _, exists := registry.Element("second-element"); !exists {
+	if _, exists := ctx.Element("second-element"); !exists {
 		t.Error("Expected to find second-element after adding manifests")
 	}
 
 	// Verify attributes for each element
-	firstAttrs, exists := registry.Attributes("first-element")
+	firstAttrs, exists := ctx.Attributes("first-element")
 	if !exists || len(firstAttrs) != 1 {
 		t.Error("Expected to find attributes for first-element")
 	}
 
-	secondAttrs, exists := registry.Attributes("second-element")
+	secondAttrs, exists := ctx.Attributes("second-element")
 	if !exists || len(secondAttrs) != 1 {
 		t.Error("Expected to find attributes for second-element")
 	}
@@ -184,7 +184,7 @@ func TestRegistryMultipleManifests(t *testing.T) {
 
 // TestRegistryEmptyManifest tests registry behavior with empty manifests
 func TestRegistryEmptyManifest(t *testing.T) {
-	registry := testhelpers.NewMockRegistry()
+	ctx := testhelpers.NewMockServerContext()
 
 	// Empty manifest
 	emptyManifest := &M.Package{
@@ -192,9 +192,9 @@ func TestRegistryEmptyManifest(t *testing.T) {
 		Modules:       []M.Module{},
 	}
 
-	registry.AddManifest(emptyManifest)
+	ctx.AddManifest(emptyManifest)
 
-	tagNames := registry.AllTagNames()
+	tagNames := ctx.AllTagNames()
 	if len(tagNames) != 0 {
 		t.Errorf("Expected 0 tag names for empty manifest, got %d", len(tagNames))
 	}
@@ -240,11 +240,11 @@ func TestNilTypeAttributeHandling(t *testing.T) {
 	}
 
 	// Create registry and add the manifest with nil type
-	registry := testhelpers.NewMockRegistry()
-	registry.AddManifest(pkg)
+	ctx := testhelpers.NewMockServerContext()
+	ctx.AddManifest(pkg)
 
 	// This should not panic when accessing attributes with nil types
-	attrs, exists := registry.Attributes("test-element")
+	attrs, exists := ctx.Attributes("test-element")
 	require.True(t, exists, "Element should exist in registry")
 	require.Len(t, attrs, 2, "Should have two attributes")
 
@@ -290,16 +290,16 @@ func TestHandleManifestReloadWithNilTypes(t *testing.T) {
 		},
 	}
 
-	registry := testhelpers.NewMockRegistry()
-	registry.AddManifest(pkg)
+	ctx := testhelpers.NewMockServerContext()
+	ctx.AddManifest(pkg)
 
 	// Verify the registry has the element
-	element, exists := registry.Element("test-element")
+	element, exists := ctx.Element("test-element")
 	require.True(t, exists, "Element should exist")
 	assert.Equal(t, "test-element", element.TagName)
 
 	// Getting attributes should work without panic, even with nil types
-	attrs, exists := registry.Attributes("test-element")
+	attrs, exists := ctx.Attributes("test-element")
 	require.True(t, exists, "Should have attributes")
 	require.Len(t, attrs, 1, "Should have one attribute")
 

@@ -46,12 +46,9 @@ func TestSlotAttributeNameSuggestionRegression(t *testing.T) {
 		t.Fatalf("Failed to parse regression test manifest: %v", err)
 	}
 
-	// Create registry and add the test manifest
-	registry := testhelpers.NewMockRegistry()
-	registry.AddManifest(&pkg)
-
+	// Create context and add the test manifest
 	ctx := testhelpers.NewMockServerContext()
-	ctx.SetRegistry(registry)
+	ctx.AddManifest(&pkg)
 
 	// Regression test cases covering all scenarios where slot attribute should/shouldn't be suggested
 	tests := []struct {
@@ -275,11 +272,8 @@ func TestSlotAttributeParentDetectionRegression(t *testing.T) {
 		t.Fatalf("Failed to parse regression test manifest: %v", err)
 	}
 
-	registry := testhelpers.NewMockRegistry()
-	registry.AddManifest(&pkg)
-
 	ctx := testhelpers.NewMockServerContext()
-	ctx.SetRegistry(registry)
+	ctx.AddManifest(&pkg)
 
 	// Test cases specifically for the parent detection bug
 	parentDetectionTests := []struct {
@@ -368,11 +362,8 @@ func TestSlotAttributeCompletionStructureRegression(t *testing.T) {
 		t.Fatalf("Failed to parse regression test manifest: %v", err)
 	}
 
-	registry := testhelpers.NewMockRegistry()
-	registry.AddManifest(&pkg)
-
 	ctx := testhelpers.NewMockServerContext()
-	ctx.SetRegistry(registry)
+	ctx.AddManifest(&pkg)
 
 	// Test that slot completion has proper LSP protocol structure
 	mockDoc := testhelpers.NewMockDocument(`<card-layout><button `)

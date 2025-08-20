@@ -35,8 +35,8 @@ func TestSlotDiagnosticsBasic(t *testing.T) {
 	ctx.AddDocument("test://test.html", doc)
 	
 	// Create registry with test slots
-	registry := testhelpers.NewMockRegistry()
-	registry.AddSlots("my-element", []manifest.Slot{
+	ctx := testhelpers.NewMockServerContext()
+	ctx.AddSlots("my-element", []manifest.Slot{
 		{FullyQualified: manifest.FullyQualified{Name: "header"}},
 		{FullyQualified: manifest.FullyQualified{Name: "footer"}},
 	})

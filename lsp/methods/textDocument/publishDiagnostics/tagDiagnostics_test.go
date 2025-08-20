@@ -49,22 +49,18 @@ func TestTagDiagnostics_WithImports(t *testing.T) {
 	defer dm.Close()
 
 	// Load manifests manually like other successful tests
-	registry := testhelpers.NewMockRegistry()
+	ctx := testhelpers.NewMockServerContext()
 	
 	// Load manifest from node_modules (where the actual test data is)
 	manifestPath := filepath.Join(fixtureDir, "node_modules", "@scope", "package", "custom-elements.json")
 	if manifestBytes, err := os.ReadFile(manifestPath); err == nil {
 		var pkg M.Package
 		if err := json.Unmarshal(manifestBytes, &pkg); err == nil {
-			registry.AddManifest(&pkg)
-			t.Logf("Loaded manifest with %d elements", len(registry.AllTagNames()))
+			ctx.AddManifest(&pkg)
+			ctx.SetDocumentManager(dm)
 		}
 	}
 
-	// Create context using testhelpers
-	ctx := testhelpers.NewMockServerContext()
-	ctx.SetRegistry(registry)
-	ctx.SetDocumentManager(dm)
 
 	// Read the HTML file content from disk
 	htmlPath := filepath.Join(fixtureDir, "with-imports.html")
@@ -156,22 +152,18 @@ func TestTagDiagnostics_TypeScriptImports(t *testing.T) {
 	defer dm.Close()
 
 	// Load manifests manually like other successful tests
-	registry := testhelpers.NewMockRegistry()
+	ctx := testhelpers.NewMockServerContext()
 	
 	// Load manifest from node_modules (where the actual test data is)
 	manifestPath := filepath.Join(fixtureDir, "node_modules", "@scope", "package", "custom-elements.json")
 	if manifestBytes, err := os.ReadFile(manifestPath); err == nil {
 		var pkg M.Package
 		if err := json.Unmarshal(manifestBytes, &pkg); err == nil {
-			registry.AddManifest(&pkg)
-			t.Logf("Loaded manifest with %d elements", len(registry.AllTagNames()))
+			ctx.AddManifest(&pkg)
+			ctx.SetDocumentManager(dm)
 		}
 	}
 
-	// Create context using testhelpers
-	ctx := testhelpers.NewMockServerContext()
-	ctx.SetRegistry(registry)
-	ctx.SetDocumentManager(dm)
 
 	// Read the TypeScript file content from disk
 	tsPath := filepath.Join(fixtureDir, "typescript-imports.ts")
@@ -251,22 +243,18 @@ func TestTagDiagnostics_MissingImports(t *testing.T) {
 	defer dm.Close()
 
 	// Load manifests manually like other successful tests
-	registry := testhelpers.NewMockRegistry()
+	ctx := testhelpers.NewMockServerContext()
 	
 	// Load manifest from node_modules (where the actual test data is)
 	manifestPath := filepath.Join(fixtureDir, "node_modules", "@scope", "package", "custom-elements.json")
 	if manifestBytes, err := os.ReadFile(manifestPath); err == nil {
 		var pkg M.Package
 		if err := json.Unmarshal(manifestBytes, &pkg); err == nil {
-			registry.AddManifest(&pkg)
-			t.Logf("Loaded manifest with %d elements", len(registry.AllTagNames()))
+			ctx.AddManifest(&pkg)
+			ctx.SetDocumentManager(dm)
 		}
 	}
 
-	// Create context using testhelpers
-	ctx := testhelpers.NewMockServerContext()
-	ctx.SetRegistry(registry)
-	ctx.SetDocumentManager(dm)
 
 	// Read the HTML file content from disk
 	htmlPath := filepath.Join(fixtureDir, "missing-imports.html")
@@ -361,22 +349,18 @@ func TestTagDiagnostics_IgnoreComment(t *testing.T) {
 	defer dm.Close()
 
 	// Load manifests manually like other successful tests
-	registry := testhelpers.NewMockRegistry()
+	ctx := testhelpers.NewMockServerContext()
 	
 	// Load manifest from node_modules (where the actual test data is)
 	manifestPath := filepath.Join(fixtureDir, "node_modules", "@scope", "package", "custom-elements.json")
 	if manifestBytes, err := os.ReadFile(manifestPath); err == nil {
 		var pkg M.Package
 		if err := json.Unmarshal(manifestBytes, &pkg); err == nil {
-			registry.AddManifest(&pkg)
-			t.Logf("Loaded manifest with %d elements", len(registry.AllTagNames()))
+			ctx.AddManifest(&pkg)
+			ctx.SetDocumentManager(dm)
 		}
 	}
 
-	// Create context using testhelpers
-	ctx := testhelpers.NewMockServerContext()
-	ctx.SetRegistry(registry)
-	ctx.SetDocumentManager(dm)
 
 	// Open document with ignore comment
 	uri := "file://" + ignoreFile

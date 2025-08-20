@@ -27,11 +27,8 @@ import (
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/testhelpers"
-	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
-	"bennypowers.dev/cem/queries"
 	W "bennypowers.dev/cem/workspace"
-	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 func TestLocalElementChangesUpdateCompletions(t *testing.T) {
@@ -200,11 +197,21 @@ export class TestButton extends LitElement {
 	}
 	defer dm.Close()
 
-	// Set up the server context adapter with document manager
-	ctx := &testCompletionContextWithDM{
-		registry: registry,
-		docMgr:   dm,
+	// Set up the server context using centralized MockServerContext
+	ctx := testhelpers.NewMockServerContext()
+	// Copy registry data to mock context for interface compatibility
+	for _, tagName := range registry.AllTagNames() {
+		if element, exists := registry.Element(tagName); exists {
+			ctx.AddElement(tagName, element)
+		}
+		if attrs, exists := registry.Attributes(tagName); exists {
+			ctx.AddAttributes(tagName, attrs)
+		}
+		if slots, exists := registry.Slots(tagName); exists {
+			ctx.AddSlots(tagName, slots)
+		}
 	}
+	ctx.SetDocumentManager(dm)
 
 	// Open the HTML document
 	htmlURI := "file://" + htmlFilePath
@@ -456,11 +463,21 @@ export class MyApp extends LitElement {
 	}
 	defer dm.Close()
 
-	// Set up the server context adapter with document manager
-	ctx := &testCompletionContextWithDM{
-		registry: registry,
-		docMgr:   dm,
+	// Set up the server context using centralized MockServerContext
+	ctx := testhelpers.NewMockServerContext()
+	// Copy registry data to mock context for interface compatibility
+	for _, tagName := range registry.AllTagNames() {
+		if element, exists := registry.Element(tagName); exists {
+			ctx.AddElement(tagName, element)
+		}
+		if attrs, exists := registry.Attributes(tagName); exists {
+			ctx.AddAttributes(tagName, attrs)
+		}
+		if slots, exists := registry.Slots(tagName); exists {
+			ctx.AddSlots(tagName, slots)
+		}
 	}
+	ctx.SetDocumentManager(dm)
 
 	// Open the TypeScript document
 	tsURI := "file://" + tsFilePath
@@ -569,86 +586,6 @@ export class MyApp extends LitElement {
 	t.Logf("Test passed: Local element changes successfully updated Lit template completions")
 }
 
-// testCompletionContextWithDM implements CompletionContext for testing with document manager
-type testCompletionContextWithDM struct {
-	registry *lsp.Registry
-	docMgr   *lsp.DocumentManager
-}
-
-func (ctx *testCompletionContextWithDM) Document(uri string) types.Document {
-	return ctx.docMgr.Document(uri)
-}
-
-func (ctx *testCompletionContextWithDM) AllTagNames() []string {
-	return ctx.registry.AllTagNames()
-}
-
-func (ctx *testCompletionContextWithDM) Element(tagName string) (*M.CustomElement, bool) {
-	return ctx.registry.Element(tagName)
-}
-
-func (ctx *testCompletionContextWithDM) Attributes(tagName string) (map[string]*M.Attribute, bool) {
-	return ctx.registry.Attributes(tagName)
-}
-
-func (ctx *testCompletionContextWithDM) Slots(tagName string) ([]M.Slot, bool) {
-	return ctx.registry.Slots(tagName)
-}
-
-func (ctx *testCompletionContextWithDM) AddManifest(manifest *M.Package) {
-	ctx.registry.AddManifest(manifest)
-}
-
-func (ctx *testCompletionContextWithDM) AllDocuments() []types.Document {
-	return ctx.docMgr.AllDocuments()
-}
-
-func (ctx *testCompletionContextWithDM) DebugLog(format string, args ...any) {
-	// No-op for test context
-}
-
-func (ctx *testCompletionContextWithDM) DocumentManager() (types.DocumentManager, error) {
-	return ctx.docMgr, nil
-}
-
-func (ctx *testCompletionContextWithDM) ElementDefinition(tagName string) (types.ElementDefinition, bool) {
-	return ctx.registry.ElementDefinition(tagName)
-}
-
-// Server lifecycle methods (not used in these tests)
-func (ctx *testCompletionContextWithDM) InitializeManifests() error {
-	return nil
-}
-
-func (ctx *testCompletionContextWithDM) UpdateWorkspaceFromLSP(rootURI *string, workspaceFolders []protocol.WorkspaceFolder) error {
-	return nil
-}
-
-// Workspace operations (not used in these tests)
-func (ctx *testCompletionContextWithDM) Workspace() types.Workspace {
-	return nil
-}
-
-func (ctx *testCompletionContextWithDM) WorkspaceRoot() string {
-	return ""
-}
-
-// Element operations
-func (ctx *testCompletionContextWithDM) ElementSource(tagName string) (string, bool) {
-	// Not implemented for test context
-	return "", false
-}
-
-func (ctx *testCompletionContextWithDM) ElementDescription(tagName string) (string, bool) {
-	// Not implemented for test context
-	return "", false
-}
-
-// Query operations
-func (ctx *testCompletionContextWithDM) QueryManager() (*queries.QueryManager, error) {
-	// Not implemented for test context
-	return nil, nil
-}
 
 // Helper function to get attribute names for debugging
 func getAttrNames(attrs map[string]*M.Attribute) []string {

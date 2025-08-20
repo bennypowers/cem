@@ -41,8 +41,33 @@ type MockServerContext struct {
 	types.Registry
 }
 
+// MockElementDefinition implements types.ElementDefinition for testing
+type MockElementDefinition struct {
+	ModulePathStr  string
+	PackageNameStr string
+	SourceHrefStr  string
+	ElementPtr     *M.CustomElement
+}
+
+func (m *MockElementDefinition) ModulePath() string {
+	return m.ModulePathStr
+}
+
+func (m *MockElementDefinition) PackageName() string {
+	return m.PackageNameStr
+}
+
+func (m *MockElementDefinition) SourceHref() string {
+	return m.SourceHrefStr
+}
+
+func (m *MockElementDefinition) Element() *M.CustomElement {
+	return m.ElementPtr
+}
+
 // Verify MockServerContext implements ServerContext
 var _ types.ServerContext = (*MockServerContext)(nil)
+var _ types.ElementDefinition = (*MockElementDefinition)(nil)
 
 // NewMockServerContext creates a new mock server context
 func NewMockServerContext() *MockServerContext {
@@ -147,6 +172,49 @@ func (m *MockServerContext) ElementDefinition(tagName string) (types.ElementDefi
 func (m *MockServerContext) AddManifest(manifest *M.Package) {
 	if m.Registry != nil {
 		m.Registry.AddManifest(manifest)
+		return
+	}
+
+	// If no Registry is set, populate the internal maps directly
+	for _, module := range manifest.Modules {
+		for _, decl := range module.Declarations {
+			if customElement, ok := decl.(*M.CustomElementDeclaration); ok {
+				element := &customElement.CustomElement
+				tagName := element.TagName
+
+				// Add to tag names if not already present
+				if !slices.Contains(m.TagNames, tagName) {
+					m.TagNames = append(m.TagNames, tagName)
+				}
+
+				// Add element
+				m.Elements[tagName] = element
+
+				// Add attributes
+				if len(element.Attributes) > 0 {
+					attrMap := make(map[string]*M.Attribute)
+					for i := range element.Attributes {
+						attr := &element.Attributes[i]
+						attrMap[attr.Name] = attr
+					}
+					m.AttributesMap[tagName] = attrMap
+				}
+
+				// Add slots
+				if len(element.Slots) > 0 {
+					m.SlotsMap[tagName] = element.Slots
+				}
+
+				// Add element definition
+				elementDef := &MockElementDefinition{
+					ModulePathStr:  module.Path,
+					PackageNameStr: "", // Could be extracted from package.json if needed
+					SourceHrefStr:  "", // Could be computed if needed
+					ElementPtr:     element,
+				}
+				m.ElementDefsMap[tagName] = elementDef
+			}
+		}
 	}
 }
 

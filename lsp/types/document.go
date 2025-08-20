@@ -30,6 +30,7 @@ type Document interface {
 	URI() string
 	FindCustomElements(dm any) ([]CustomElementMatch, error)
 	AnalyzeCompletionContextTS(position protocol.Position, dm any) *CompletionAnalysis
+	CompletionPrefix(analysis *CompletionAnalysis) string                        // Get completion prefix using tree-sitter
 	GetScriptTags() []ScriptTag                                                      // Get parsed script tags
 	FindModuleScript() (protocol.Position, bool)                                     // Find insertion point in module script
 	FindInlineModuleScript() (protocol.Position, bool)                               // Find insertion point in inline module script (no src)

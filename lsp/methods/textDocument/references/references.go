@@ -76,7 +76,11 @@ type ReferenceRequest struct {
 // analyzeReferenceRequest determines what element is at the cursor position
 func analyzeReferenceRequest(doc types.Document, position protocol.Position) *ReferenceRequest {
 	// First try using the existing completion context analysis
-	analysis := textDocument.AnalyzeCompletionContext(doc, position, "")
+	analysis, err := textDocument.AnalyzeCompletionContext(doc, position, "")
+	if err != nil {
+		helpers.SafeDebugLog("[REFERENCES] Failed to analyze completion context: %v", err)
+		return nil
+	}
 	if analysis != nil {
 		helpers.SafeDebugLog("[REFERENCES] Analysis result - Type: %d, TagName: '%s'", analysis.Type, analysis.TagName)
 

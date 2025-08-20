@@ -18,7 +18,6 @@ package completion
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 
 	"bennypowers.dev/cem/lsp/helpers"
@@ -58,7 +57,11 @@ func Completion(ctx types.ServerContext, context *glsp.Context, params *protocol
 	}
 
 	// Analyze the completion context
-	analysis := textDocument.AnalyzeCompletionContextWithDM(doc, params.Position, triggerChar, documentManager)
+	analysis, err := textDocument.AnalyzeCompletionContextWithDM(doc, params.Position, triggerChar, documentManager)
+	if err != nil {
+		helpers.SafeDebugLog("[COMPLETION] Failed to analyze completion context: %v", err)
+		return nil, fmt.Errorf("completion context analysis failed: %w", err)
+	}
 	helpers.SafeDebugLog("[COMPLETION] Analysis result: Type=%d, TagName='%s', AttributeName='%s'",
 		analysis.Type, analysis.TagName, analysis.AttributeName)
 
@@ -66,7 +69,7 @@ func Completion(ctx types.ServerContext, context *glsp.Context, params *protocol
 	switch analysis.Type {
 	case types.CompletionTagName:
 		helpers.SafeDebugLog("[COMPLETION] Providing tag name completions")
-		return getTagNameCompletions(ctx, analysis), nil
+		return getTagNameCompletions(ctx, doc, analysis), nil
 	case types.CompletionAttributeName:
 		helpers.SafeDebugLog("[COMPLETION] Providing attribute completions for element: %s", analysis.TagName)
 		return GetAttributeCompletionsWithContext(ctx, doc, params.Position, analysis.TagName), nil
@@ -85,46 +88,7 @@ func Completion(ctx types.ServerContext, context *glsp.Context, params *protocol
 		helpers.SafeDebugLog("[COMPLETION] Providing Lit boolean attribute completions for element: %s", analysis.TagName)
 		return getLitBooleanAttributeCompletions(ctx, analysis.TagName), nil
 	default:
-		helpers.SafeDebugLog("[COMPLETION] Unknown completion context, checking for text-based attribute completion fallback")
-
-		// Try text-based analysis as fallback for attribute completions
-		content, err := doc.Content()
-		if err != nil {
-			helpers.SafeDebugLog("[COMPLETION] Cannot get document content for fallback analysis")
-			return []protocol.CompletionItem{}, nil
-		}
-
-		lines := strings.Split(content, "\n")
-		if int(params.Position.Line) >= len(lines) {
-			helpers.SafeDebugLog("[COMPLETION] Position out of bounds for fallback analysis")
-			return []protocol.CompletionItem{}, nil
-		}
-
-		lineContent := lines[params.Position.Line]
-		charPos := min(int(params.Position.Character), len(lineContent))
-		beforeCursor := lineContent[:charPos]
-
-		// Check if we're in a potential attribute context using text analysis
-		if fallbackAnalysis := analyzeFallbackAttributeContext(beforeCursor); fallbackAnalysis != nil {
-			helpers.SafeDebugLog("[COMPLETION] Fallback detected %s completion for tag: %s",
-				fallbackAnalysis.contextType, fallbackAnalysis.tagName)
-
-			switch fallbackAnalysis.contextType {
-			case "attribute-name":
-				return GetAttributeCompletionsWithContext(ctx, doc, params.Position, fallbackAnalysis.tagName), nil
-			case "attribute-value":
-				completions := GetAttributeValueCompletionsWithContext(ctx, doc, params.Position, fallbackAnalysis.tagName, fallbackAnalysis.attributeName)
-				helpers.SafeDebugLog("[COMPLETION] Fallback returning %d attribute value completions", len(completions))
-				return completions, nil
-			case "slot-value":
-				// Handle slot attribute completion specially
-				completions := getSlotAttributeCompletions(ctx, doc, params.Position)
-				helpers.SafeDebugLog("[COMPLETION] Fallback returning %d slot completions", len(completions))
-				return completions, nil
-			}
-		}
-
-		helpers.SafeDebugLog("[COMPLETION] No fallback context detected, returning empty completions")
+		helpers.SafeDebugLog("[COMPLETION] Unknown completion context type: %d", analysis.Type)
 		return []protocol.CompletionItem{}, nil
 	}
 }
@@ -158,11 +122,11 @@ func getDefaultCompletions(ctx types.ServerContext) []protocol.CompletionItem {
 }
 
 // getTagNameCompletions returns completions for custom element tag names
-func getTagNameCompletions(ctx types.ServerContext, analysis *types.CompletionAnalysis) []protocol.CompletionItem {
+func getTagNameCompletions(ctx types.ServerContext, doc types.Document, analysis *types.CompletionAnalysis) []protocol.CompletionItem {
 	var items []protocol.CompletionItem
 
 	// Get completion prefix to filter results
-	prefix := textDocument.GetCompletionPrefix(analysis.LineContent[:len(analysis.LineContent)], analysis)
+	prefix := doc.CompletionPrefix(analysis)
 
 	for _, tagName := range ctx.AllTagNames() {
 		// Filter by prefix if provided
@@ -314,6 +278,9 @@ func GetAttributeValueCompletionsWithContext(ctx types.ServerContext, doc types.
 			if defaultItem := getDefaultValueCompletion(attr); defaultItem != nil {
 				items = append(items, *defaultItem)
 			}
+
+			// Deduplicate completion items by label, preferring type-based over context-based
+			items = deduplicateCompletionItems(items)
 		}
 	}
 
@@ -508,6 +475,82 @@ func parseUnionType(typeText string) []protocol.CompletionItem {
 	return items
 }
 
+// deduplicateCompletionItems removes duplicate completion items by label, 
+// preferring type-based completions over context-based ones
+func deduplicateCompletionItems(items []protocol.CompletionItem) []protocol.CompletionItem {
+	seen := make(map[string]int) // label -> index of item to keep
+	var result []protocol.CompletionItem
+
+	for i, item := range items {
+		label := item.Label
+		
+		if existingIdx, exists := seen[label]; exists {
+			// Duplicate found - decide which one to keep
+			existing := items[existingIdx]
+			
+			// Prefer type-based completions (union type, literal type) over context-based (variant value)
+			// This ensures more accurate completions based on actual TypeScript types
+			if shouldPreferItem(item, existing) {
+				// Replace the existing item with the current one
+				for j := range result {
+					if result[j].Label == label {
+						result[j] = item
+						break
+					}
+				}
+				seen[label] = i
+			}
+			// Otherwise keep the existing item
+		} else {
+			// First occurrence of this label
+			result = append(result, item)
+			seen[label] = i
+		}
+	}
+
+	return result
+}
+
+// shouldPreferItem determines which completion item to prefer when there are duplicates
+func shouldPreferItem(newItem, existingItem protocol.CompletionItem) bool {
+	newDetail := ""
+	existingDetail := ""
+	
+	if newItem.Detail != nil {
+		newDetail = *newItem.Detail
+	}
+	if existingItem.Detail != nil {
+		existingDetail = *existingItem.Detail
+	}
+	
+	// Preference order (higher priority wins):
+	// 1. Default value (has "(default)" in label)
+	// 2. Union type value, Literal type value (from actual TypeScript types)
+	// 3. Variant value, Size value, Boolean value (from context patterns)
+	
+	// Default values always win
+	if strings.Contains(newItem.Label, "(default)") {
+		return true
+	}
+	if strings.Contains(existingItem.Label, "(default)") {
+		return false
+	}
+	
+	// Type-based completions win over context-based ones
+	isNewTypeBased := strings.Contains(newDetail, "Union type") || strings.Contains(newDetail, "Literal type")
+	isExistingTypeBased := strings.Contains(existingDetail, "Union type") || strings.Contains(existingDetail, "Literal type")
+	
+	if isNewTypeBased && !isExistingTypeBased {
+		return true
+	}
+	if !isNewTypeBased && isExistingTypeBased {
+		return false
+	}
+	
+	// If both are type-based or both are context-based, keep the existing one
+	return false
+}
+
 // getLitEventCompletions returns completions for Lit event bindings (@event-name)
 func getLitEventCompletions(ctx types.ServerContext, tagName string) []protocol.CompletionItem {
 	var items []protocol.CompletionItem
@@ -608,84 +651,6 @@ func getLitBooleanAttributeCompletions(ctx types.ServerContext, tagName string) 
 // startsWithIgnoreCase checks if a string starts with a prefix, ignoring case
 func startsWithIgnoreCase(s, prefix string) bool {
 	return len(s) >= len(prefix) && strings.EqualFold(s[:len(prefix)], prefix)
-}
-
-// fallbackAnalysis represents the result of text-based completion context analysis
-type fallbackAnalysis struct {
-	contextType   string // "attribute-name" or "attribute-value"
-	tagName       string
-	attributeName string
-}
-
-// analyzeFallbackAttributeContext analyzes completion context using simple text patterns as fallback
-func analyzeFallbackAttributeContext(beforeCursor string) *fallbackAnalysis {
-	// Find the last opening tag
-	lastLT := strings.LastIndex(beforeCursor, "<")
-	if lastLT == -1 {
-		return nil // Not in a tag
-	}
-
-	// Check if there's a closing > after the last <
-	if strings.LastIndex(beforeCursor, ">") > lastLT {
-		return nil // We're outside of any tag
-	}
-
-	tagContent := beforeCursor[lastLT:]
-
-	// Extract tag name
-	tagParts := strings.Fields(strings.TrimPrefix(tagContent, "<"))
-	if len(tagParts) == 0 {
-		return nil // No tag name
-	}
-
-	tagName := tagParts[0]
-
-	// Only provide completions for custom elements
-	if !textDocument.IsCustomElementTag(tagName) {
-		return nil
-	}
-
-	// Check if we're in an attribute value (inside quotes)
-	if strings.Count(tagContent, `"`)%2 == 1 || strings.Count(tagContent, `'`)%2 == 1 {
-		// We're inside quotes, look for the attribute name
-
-		// Find the last attribute before the quotes
-		var attrName string
-
-		// Look for pattern: attr-name="
-		if matches := regexp.MustCompile(`(\w[\w-]*)\s*=\s*["'][^"']*$`).FindStringSubmatch(tagContent); len(matches) > 1 {
-			attrName = matches[1]
-		}
-
-		if attrName != "" {
-			// Special handling for slot attribute
-			if attrName == "slot" {
-				return &fallbackAnalysis{
-					contextType:   "slot-value",
-					tagName:       tagName,
-					attributeName: attrName,
-				}
-			}
-
-			return &fallbackAnalysis{
-				contextType:   "attribute-value",
-				tagName:       tagName,
-				attributeName: attrName,
-			}
-		}
-	}
-
-	// Check if we're positioned for attribute name completion
-	// Pattern: <tag-name space or <tag-name attr="value" space
-	if len(tagParts) > 1 || strings.HasSuffix(tagContent, " ") {
-		// We have space after tag name or after attributes
-		return &fallbackAnalysis{
-			contextType: "attribute-name",
-			tagName:     tagName,
-		}
-	}
-
-	return nil
 }
 
 // getSlotAttributeCompletions returns completions for slot attribute values based on parent element slots

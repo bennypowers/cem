@@ -30,10 +30,6 @@ func TestDefinition(t *testing.T) {
 		t.Fatalf("Failed to parse manifest: %v", err)
 	}
 
-	// Create registry and add the test manifest
-	registry := testhelpers.NewMockRegistry()
-	registry.AddManifest(&pkg)
-
 	// Create a mock document manager
 	dm, err := lsp.NewDocumentManager()
 	if err != nil {
@@ -44,7 +40,7 @@ func TestDefinition(t *testing.T) {
 	// Test context that provides the registry data
 	ctx := testhelpers.NewMockServerContext()
 	ctx.SetDocumentManager(dm)
-	ctx.SetRegistry(registry)
+	ctx.AddManifest(&pkg)
 
 	tests := []struct {
 		name           string

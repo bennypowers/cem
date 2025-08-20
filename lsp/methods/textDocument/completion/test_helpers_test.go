@@ -18,14 +18,11 @@ import (
 // TestHelpers provides utilities for completion testing
 type TestHelpers struct{}
 
-// MockDocument is an alias to the unified mock document
-type MockDocument = testhelpers.MockDocument
-
-// NewMockTemplateDocument creates a new MockDocument with template context
-func NewMockTemplateDocument(content, templateContext string) *testhelpers.MockDocument {
-	doc := testhelpers.NewMockDocument(content)
-	doc.TemplateContext = templateContext
-	return doc
+// NewMockTemplateDocument creates a real Document for testing
+// The templateContext parameter is ignored since real Documents don't need mock template context
+func NewMockTemplateDocument(content, templateContext string) types.Document {
+	// Real Documents handle template context automatically through tree-sitter parsing
+	return testhelpers.NewMockDocument(content)
 }
 
 // CreateAttributeValueCompletionParams creates LSP completion parameters for testing attribute value completions

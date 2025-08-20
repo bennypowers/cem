@@ -118,11 +118,21 @@ func TestCompletionUpdateCycle(t *testing.T) {
 	}
 	defer dm.Close()
 
-	// Set up completion context
-	ctx := &testCompletionContextWithDM{
-		registry: registry,
-		docMgr:   dm,
+	// Set up completion context using centralized MockServerContext
+	ctx := testhelpers.NewMockServerContext()
+	// Copy registry data to mock context for interface compatibility
+	for _, tagName := range registry.AllTagNames() {
+		if element, exists := registry.Element(tagName); exists {
+			ctx.AddElement(tagName, element)
+		}
+		if attrs, exists := registry.Attributes(tagName); exists {
+			ctx.AddAttributes(tagName, attrs)
+		}
+		if slots, exists := registry.Slots(tagName); exists {
+			ctx.AddSlots(tagName, slots)
+		}
 	}
+	ctx.SetDocumentManager(dm)
 
 	// Create HTML demo file
 	demoDir := filepath.Join(tempDir, "demo")
@@ -259,4 +269,3 @@ func syncFile(path string) error {
 	return file.Sync()
 }
 
-// Note: testCompletionContextWithDM and documentAdapter are defined in other test files

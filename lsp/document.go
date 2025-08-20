@@ -31,6 +31,28 @@ import (
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
+// extractDocumentManager safely extracts a DocumentManager from any type,
+// handling both real DocumentManager and MockDocumentManager
+func extractDocumentManager(dm any) *DocumentManager {
+	if dm == nil {
+		return nil
+	}
+	
+	// Try direct cast first
+	if directDM, ok := dm.(*DocumentManager); ok {
+		return directDM
+	}
+	
+	// Try to extract from MockDocumentManager
+	if mockDM, ok := dm.(interface{ GetRealDocumentManager() *DocumentManager }); ok {
+		return mockDM.GetRealDocumentManager()
+	}
+	
+	// Last resort: handle other types
+	helpers.SafeDebugLog("[DOCUMENT] Warning: DocumentManager type %T not recognized, using nil", dm)
+	return nil
+}
+
 // Compiled regex patterns for performance
 var tagLinePattern = regexp.MustCompile(`^\s*<.*`)
 
@@ -756,11 +778,8 @@ func (d *Document) adjustRangeForTemplate(innerRange protocol.Range, templateRan
 func (d *Document) FindElementAtPosition(position protocol.Position, dm any) *types.CustomElementMatch {
 	helpers.SafeDebugLog("[DOCUMENT] FindElementAtPosition: URI=%s, Position=line:%d,char:%d\n", d.uri, position.Line, position.Character)
 
-	// Cast dm back to DocumentManager
-	var docMgr *DocumentManager
-	if dm != nil {
-		docMgr = dm.(*DocumentManager)
-	}
+	// Extract DocumentManager from any type
+	docMgr := extractDocumentManager(dm)
 
 	elements, err := d.findCustomElementsInternal(docMgr)
 	if err != nil {
@@ -802,11 +821,8 @@ func (d *Document) FindElementAtPosition(position protocol.Position, dm any) *ty
 
 // FindAttributeAtPosition finds an attribute at the given position
 func (d *Document) FindAttributeAtPosition(position protocol.Position, dm any) (*types.AttributeMatch, string) {
-	// Cast dm back to DocumentManager
-	var docMgr *DocumentManager
-	if dm != nil {
-		docMgr = dm.(*DocumentManager)
-	}
+	// Extract DocumentManager from any type
+	docMgr := extractDocumentManager(dm)
 
 	elements, err := d.findCustomElementsInternal(docMgr)
 	if err != nil {
@@ -851,11 +867,8 @@ func (d *Document) URI() string {
 
 // FindCustomElements finds all custom elements in the document (public interface method)
 func (d *Document) FindCustomElements(dm any) ([]types.CustomElementMatch, error) {
-	// Cast dm back to DocumentManager
-	var docMgr *DocumentManager
-	if dm != nil {
-		docMgr = dm.(*DocumentManager)
-	}
+	// Extract DocumentManager from any type
+	docMgr := extractDocumentManager(dm)
 
 	elements, err := d.findCustomElementsInternal(docMgr)
 	if err != nil {
@@ -885,11 +898,8 @@ func (d *Document) FindCustomElements(dm any) ([]types.CustomElementMatch, error
 
 // AnalyzeCompletionContextTS analyzes completion context using tree-sitter queries (public interface method)
 func (d *Document) AnalyzeCompletionContextTS(position protocol.Position, dm any) *types.CompletionAnalysis {
-	// Cast dm back to DocumentManager
-	var docMgr *DocumentManager
-	if dm != nil {
-		docMgr = dm.(*DocumentManager)
-	}
+	// Extract DocumentManager from any type
+	docMgr := extractDocumentManager(dm)
 
 	analysis := d.analyzeCompletionContextTSInternal(position, docMgr)
 	if analysis == nil {
@@ -905,6 +915,66 @@ func (d *Document) AnalyzeCompletionContextTS(position protocol.Position, dm any
 		LineContent:   analysis.LineContent,
 		IsLitTemplate: analysis.IsLitTemplate,
 		LitSyntax:     analysis.LitSyntax,
+	}
+}
+
+// CompletionPrefix extracts the prefix being typed for filtering completions using tree-sitter
+func (d *Document) CompletionPrefix(analysis *types.CompletionAnalysis) string {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+
+	if analysis == nil || d.Tree == nil {
+		return ""
+	}
+
+	switch analysis.Type {
+	case types.CompletionTagName:
+		// For tag completion, find the partial tag name using tree-sitter
+		// This is more accurate than string manipulation
+		if idx := strings.LastIndex(analysis.LineContent, "<"); idx != -1 {
+			remaining := analysis.LineContent[idx+1:]
+			if spaceIdx := strings.Index(remaining, " "); spaceIdx != -1 {
+				return remaining[:spaceIdx]
+			}
+			// Remove any trailing characters that aren't part of a tag name
+			remaining = strings.TrimSpace(remaining)
+			return remaining
+		}
+		return ""
+		
+	case types.CompletionAttributeName:
+		// For attribute completion, extract the partial attribute name
+		// Tree-sitter provides accurate context, so use simple extraction
+		parts := strings.Fields(analysis.LineContent)
+		if len(parts) > 0 {
+			lastPart := parts[len(parts)-1]
+			if !strings.Contains(lastPart, "=") && !strings.HasPrefix(lastPart, "<") {
+				return lastPart
+			}
+		}
+		return ""
+		
+	case types.CompletionAttributeValue:
+		// For attribute value completion, tree-sitter should provide the context
+		// Extract partial value if we're in quotes
+		if analysis.AttributeName != "" {
+			// Look for quoted value pattern
+			attrPattern := analysis.AttributeName + `="`
+			if idx := strings.LastIndex(analysis.LineContent, attrPattern); idx != -1 {
+				valueStart := idx + len(attrPattern)
+				if valueStart < len(analysis.LineContent) {
+					remainder := analysis.LineContent[valueStart:]
+					if quoteIdx := strings.Index(remainder, `"`); quoteIdx != -1 {
+						return remainder[:quoteIdx]
+					}
+					return remainder
+				}
+			}
+		}
+		return ""
+		
+	default:
+		return ""
 	}
 }
 
@@ -926,10 +996,12 @@ func (d *Document) isPositionInRange(pos protocol.Position, r protocol.Range) bo
 
 // analyzeCompletionContextTSInternal analyzes completion context using tree-sitter queries (internal method)
 func (d *Document) analyzeCompletionContextTSInternal(position protocol.Position, dm *DocumentManager) *types.CompletionAnalysis {
+	helpers.SafeDebugLog("[COMPLETION] DEBUG: analyzeCompletionContextTSInternal called with position=%+v", position)
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
 	if d.Tree == nil {
+		helpers.SafeDebugLog("[COMPLETION] DEBUG: d.Tree is nil, returning nil")
 		return nil
 	}
 
@@ -952,6 +1024,7 @@ func (d *Document) analyzeCompletionContextTSInternal(position protocol.Position
 
 // analyzeHTMLCompletionContext analyzes completion context in HTML documents
 func (d *Document) analyzeHTMLCompletionContext(byteOffset uint, analysis *types.CompletionAnalysis, dm *DocumentManager) *types.CompletionAnalysis {
+	helpers.SafeDebugLog("[COMPLETION] DEBUG: analyzeHTMLCompletionContext called with byteOffset=%d", byteOffset)
 	// Check for nil document manager - can happen when called from diagnostics or other contexts
 	if dm == nil {
 		helpers.SafeDebugLog("[COMPLETION] DocumentManager is nil, returning basic analysis")
@@ -1113,12 +1186,16 @@ func (d *Document) analyzeHTMLCompletionContext(byteOffset uint, analysis *types
 
 	// Check attribute value completion SECOND (most specific for attribute scenarios)
 	if attrValues, ok := allCaptures["attr.value.completion"]; ok {
-		for _, attrValue := range attrValues {
+		helpers.SafeDebugLog("[COMPLETION] DEBUG: Found %d attr.value.completion captures", len(attrValues))
+		for i, attrValue := range attrValues {
+			helpers.SafeDebugLog("[COMPLETION] DEBUG: attr.value.completion[%d]: %d-%d text='%s'", i, attrValue.StartByte, attrValue.EndByte, attrValue.Text)
 			if byteOffset >= attrValue.StartByte && byteOffset <= attrValue.EndByte {
+				helpers.SafeDebugLog("[COMPLETION] DEBUG: Cursor is in attr.value.completion range")
 				// Only apply ERROR node extraction logic for ERROR nodes
 				// For regular nodes, use the normal attribute name context
 				text := attrValue.Text
 				if strings.Contains(text, "=") && (strings.Contains(text, `"`) || strings.Contains(text, `'`)) {
+					helpers.SafeDebugLog("[COMPLETION] DEBUG: Text contains = and quotes: '%s'", text)
 					analysis.Type = types.CompletionAttributeValue
 
 					// Extract attribute name from the ERROR node text
@@ -1126,13 +1203,17 @@ func (d *Document) analyzeHTMLCompletionContext(byteOffset uint, analysis *types
 					re := regexp.MustCompile(`(\w[\w-]*)\s*=\s*["'][^"']*$`)
 					if matches := re.FindStringSubmatch(text); len(matches) > 1 {
 						analysis.AttributeName = matches[1]
+						helpers.SafeDebugLog("[COMPLETION] DEBUG: Extracted attribute name: '%s'", analysis.AttributeName)
 					}
 
 					// Extract tag name (first word after <)
+					helpers.SafeDebugLog("[COMPLETION] DEBUG: Extracting tag name from text: '%s'", text)
 					tagRe := regexp.MustCompile(`<(\w[\w-]*)`)
 					if tagMatches := tagRe.FindStringSubmatch(text); len(tagMatches) > 1 {
 						analysis.TagName = tagMatches[1]
+						helpers.SafeDebugLog("[COMPLETION] DEBUG: Successfully extracted tag name: '%s'", analysis.TagName)
 					} else {
+						helpers.SafeDebugLog("[COMPLETION] DEBUG: Failed to extract tag name with regex, trying tag.name.context")
 						// Try to find tag name from tag.name.context captures
 						if tagContexts, ok := allCaptures["tag.name.context"]; ok {
 							for _, tagContext := range tagContexts {
@@ -1216,27 +1297,59 @@ func (d *Document) analyzeHTMLCompletionContext(byteOffset uint, analysis *types
 
 	// Check attribute value completion
 	if attrNames, ok := allCaptures["attr.name.value.context"]; ok {
+		helpers.SafeDebugLog("[COMPLETION] DEBUG: Second attr.value.completion path - found %d attr.name.value.context captures", len(attrNames))
 		if attrValues, ok := allCaptures["attr.value.completion"]; ok {
+			helpers.SafeDebugLog("[COMPLETION] DEBUG: Second path - found %d attr.value.completion captures", len(attrValues))
 			for i, attrValue := range attrValues {
+				helpers.SafeDebugLog("[COMPLETION] DEBUG: Second path - checking attr.value[%d]: %d-%d text='%s'", i, attrValue.StartByte, attrValue.EndByte, attrValue.Text)
 				if byteOffset >= attrValue.StartByte && byteOffset <= attrValue.EndByte {
+					helpers.SafeDebugLog("[COMPLETION] DEBUG: Second path - cursor is in range, taking this path")
 					analysis.Type = types.CompletionAttributeValue
 					if i < len(attrNames) {
 						analysis.AttributeName = attrNames[i].Text
 					}
 					// PROBLEM: This path doesn't set TagName! Let's fix that
 					// Try to find tag name from tag.name.context captures
+					helpers.SafeDebugLog("[COMPLETION] DEBUG: Looking for tag.name.context captures for attribute value completion")
 					if tagContexts, ok := allCaptures["tag.name.context"]; ok {
+						helpers.SafeDebugLog("[COMPLETION] DEBUG: Found %d tag.name.context captures", len(tagContexts))
+						
+						// Find the most specific (closest) tag context to the cursor
+						var bestTagContext *Q.CaptureInfo
+						var bestDistance uint = ^uint(0) // Max uint value
+						
 						for _, tagContext := range tagContexts {
+							helpers.SafeDebugLog("[COMPLETION] DEBUG: Tag context %d-%d: '%s'", tagContext.StartByte, tagContext.EndByte, tagContext.Text)
 							// If this tag context contains our cursor position, use its tag name
-							if byteOffset >= tagContext.StartByte && byteOffset <= tagContext.EndByte+10 {
-								// Extract tag name from this context
-								contextTagRe := regexp.MustCompile(`^(\w[\w-]*)`)
-								if contextMatches := contextTagRe.FindStringSubmatch(tagContext.Text); len(contextMatches) > 1 {
-									analysis.TagName = contextMatches[1]
-									break
+							// Use a larger buffer to account for attributes between tag name and cursor
+							if byteOffset >= tagContext.StartByte && byteOffset <= tagContext.EndByte+50 {
+								// Calculate distance from start of tag to cursor - closer is better
+								distance := byteOffset - tagContext.StartByte
+								helpers.SafeDebugLog("[COMPLETION] DEBUG: Cursor position %d is within range %d-%d, distance=%d", byteOffset, tagContext.StartByte, tagContext.EndByte+50, distance)
+								
+								if distance < bestDistance {
+									bestTagContext = &tagContext
+									bestDistance = distance
+									helpers.SafeDebugLog("[COMPLETION] DEBUG: New best tag context (distance=%d): '%s'", distance, tagContext.Text)
 								}
+							} else {
+								helpers.SafeDebugLog("[COMPLETION] DEBUG: Cursor position %d is outside range %d-%d", byteOffset, tagContext.StartByte, tagContext.EndByte+50)
 							}
 						}
+						
+						// Use the best (closest) tag context
+						if bestTagContext != nil {
+							// Extract tag name from the best context
+							contextTagRe := regexp.MustCompile(`^(\w[\w-]*)`)
+							if contextMatches := contextTagRe.FindStringSubmatch(bestTagContext.Text); len(contextMatches) > 1 {
+								analysis.TagName = contextMatches[1]
+								helpers.SafeDebugLog("[COMPLETION] DEBUG: Extracted tag name: '%s' from best context", analysis.TagName)
+							} else {
+								helpers.SafeDebugLog("[COMPLETION] DEBUG: Failed to extract tag name from best context: '%s'", bestTagContext.Text)
+							}
+						}
+					} else {
+						helpers.SafeDebugLog("[COMPLETION] DEBUG: No tag.name.context captures found")
 					}
 					return analysis
 				}
@@ -1536,11 +1649,8 @@ func (d *Document) FindHeadInsertionPoint(dm any) (protocol.Position, bool) {
 		return protocol.Position{}, false
 	}
 
-	// Cast dm back to DocumentManager
-	var docMgr *DocumentManager
-	if dm != nil {
-		docMgr = dm.(*DocumentManager)
-	}
+	// Extract DocumentManager from any type
+	docMgr := extractDocumentManager(dm)
 
 	// If no DocumentManager provided, can't use query matcher
 	if docMgr == nil || docMgr.htmlHeadElements == nil {

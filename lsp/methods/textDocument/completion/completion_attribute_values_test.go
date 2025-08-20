@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/testhelpers"
@@ -31,16 +32,16 @@ func TestAttributeValueCompletions(t *testing.T) {
 		t.Fatalf("Failed to parse manifest: %v", err)
 	}
 
-	// Create registry and add the test manifest
-	registry := testhelpers.NewMockRegistry()
-	registry.AddManifest(&pkg)
-
-	// Create a completion context using MockServerContext
+	// Create a completion context using MockServerContext and add the test manifest
 	ctx := testhelpers.NewMockServerContext()
-	ctx.SetRegistry(registry)
+	ctx.AddManifest(&pkg)
 
-	// Create and set a document manager
-	dm := testhelpers.NewMockDocumentManager()
+	// Create and set a real DocumentManager
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
 	ctx.SetDocumentManager(dm)
 
 	tests := []struct {
@@ -222,16 +223,16 @@ func TestAttributeCompletionAfterSpaces(t *testing.T) {
 		t.Fatalf("Failed to parse manifest: %v", err)
 	}
 
-	// Create registry and add the test manifest
-	registry := testhelpers.NewMockRegistry()
-	registry.AddManifest(&pkg)
-
-	// Create a completion context using MockServerContext
+	// Create a completion context using MockServerContext and add the test manifest
 	ctx := testhelpers.NewMockServerContext()
-	ctx.SetRegistry(registry)
+	ctx.AddManifest(&pkg)
 
-	// Create and set a document manager
-	dm := testhelpers.NewMockDocumentManager()
+	// Create and set a real DocumentManager
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
 	ctx.SetDocumentManager(dm)
 
 	tests := []struct {
@@ -270,7 +271,10 @@ func TestAttributeCompletionAfterSpaces(t *testing.T) {
 			mockDoc := testhelpers.NewMockDocument(tt.html)
 
 			// Analyze completion context
-			analysis := textDocument.AnalyzeCompletionContext(mockDoc, tt.position, "")
+			analysis, err := textDocument.AnalyzeCompletionContext(mockDoc, tt.position, "")
+			if err != nil {
+				t.Fatalf("Failed to analyze completion context: %v", err)
+			}
 
 			// Should detect attribute name completion
 			if analysis.Type != types.CompletionAttributeName {
@@ -367,13 +371,9 @@ func TestAttributeValueCompletionTreeSitterRegression(t *testing.T) {
 		},
 	}
 
-	// Create registry and add the test manifest
-	registry := testhelpers.NewMockRegistry()
-	registry.AddManifest(pkg)
-
-	// Create context using MockServerContext with registry
+	// Create context using MockServerContext and add the test manifest
 	ctx := testhelpers.NewMockServerContext()
-	ctx.SetRegistry(registry)
+	ctx.AddManifest(pkg)
 
 	// Test union type attribute
 	stateCompletions := completion.GetAttributeValueCompletions(ctx, "regression-element", "state")

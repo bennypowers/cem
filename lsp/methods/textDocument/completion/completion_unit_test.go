@@ -5,99 +5,11 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/lsp"
-	"bennypowers.dev/cem/lsp/types"
-	M "bennypowers.dev/cem/manifest"
-	"bennypowers.dev/cem/queries"
+	"bennypowers.dev/cem/lsp/testhelpers"
 	W "bennypowers.dev/cem/workspace"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-// testCompletionAdapter implements the context interfaces needed for completion testing
-type testCompletionAdapter struct {
-	registry *lsp.Registry
-	docMgr   *lsp.DocumentManager
-}
-
-func (t *testCompletionAdapter) Document(uri string) types.Document {
-	return t.docMgr.Document(uri)
-}
-
-func (t *testCompletionAdapter) AllTagNames() []string {
-	return t.registry.AllTagNames()
-}
-
-func (t *testCompletionAdapter) ElementDefinition(tagName string) (types.ElementDefinition, bool) {
-	return t.registry.ElementDefinition(tagName)
-}
-
-func (t *testCompletionAdapter) Attributes(tagName string) (map[string]*M.Attribute, bool) {
-	return t.registry.Attributes(tagName)
-}
-
-func (t *testCompletionAdapter) Slots(tagName string) ([]M.Slot, bool) {
-	return t.registry.Slots(tagName)
-}
-
-func (t *testCompletionAdapter) Element(tagName string) (*M.CustomElement, bool) {
-	return t.registry.Element(tagName)
-}
-
-func (t *testCompletionAdapter) GetDocumentManager() *lsp.DocumentManager {
-	return t.docMgr
-}
-
-func (t *testCompletionAdapter) AddManifest(manifest *M.Package) {
-	t.registry.AddManifest(manifest)
-}
-
-func (t *testCompletionAdapter) AllDocuments() []types.Document {
-	return t.docMgr.AllDocuments()
-}
-
-// Server lifecycle methods (not used in these tests)
-func (t *testCompletionAdapter) InitializeManifests() error {
-	return nil
-}
-
-func (t *testCompletionAdapter) UpdateWorkspaceFromLSP(rootURI *string, workspaceFolders []protocol.WorkspaceFolder) error {
-	return nil
-}
-
-// Document manager
-func (t *testCompletionAdapter) DocumentManager() (types.DocumentManager, error) {
-	return t.docMgr, nil
-}
-
-// Workspace operations (not used in these tests)
-func (t *testCompletionAdapter) Workspace() types.Workspace {
-	return nil
-}
-
-func (t *testCompletionAdapter) WorkspaceRoot() string {
-	return ""
-}
-
-// Debug logging
-func (t *testCompletionAdapter) DebugLog(format string, args ...any) {
-	// No-op for test context
-}
-
-// Element operations
-func (t *testCompletionAdapter) ElementSource(tagName string) (string, bool) {
-	// Not implemented for test context
-	return "", false
-}
-
-func (t *testCompletionAdapter) ElementDescription(tagName string) (string, bool) {
-	// Not implemented for test context
-	return "", false
-}
-
-// Query operations
-func (t *testCompletionAdapter) QueryManager() (*queries.QueryManager, error) {
-	// Not implemented for test context
-	return nil, nil
-}
 
 func TestBasicAttributeValueCompletions(t *testing.T) {
 	// Setup fixture workspace
@@ -135,11 +47,22 @@ func TestBasicAttributeValueCompletions(t *testing.T) {
 	}
 	defer dm.Close()
 
-	// Create adapter
-	adapter := &testCompletionAdapter{
-		registry: server.Registry(),
-		docMgr:   dm,
+	// Create adapter using centralized MockServerContext  
+	adapter := testhelpers.NewMockServerContext()
+	// Copy registry data to mock context for interface compatibility
+	registry := server.Registry()
+	for _, tagName := range registry.AllTagNames() {
+		if element, exists := registry.Element(tagName); exists {
+			adapter.AddElement(tagName, element)
+		}
+		if attrs, exists := registry.Attributes(tagName); exists {
+			adapter.AddAttributes(tagName, attrs)
+		}
+		if slots, exists := registry.Slots(tagName); exists {
+			adapter.AddSlots(tagName, slots)
+		}
 	}
+	adapter.SetDocumentManager(dm)
 
 	// Debug: Check what elements are loaded
 	allTags := adapter.AllTagNames()

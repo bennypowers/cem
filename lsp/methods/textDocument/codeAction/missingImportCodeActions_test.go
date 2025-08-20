@@ -23,6 +23,7 @@ import (
 	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/codeAction"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/lsp/types"
@@ -78,7 +79,12 @@ func TestCreateMissingImportAction(t *testing.T) {
 
 			// Create mock context with the document
 			mockCtx := testhelpers.NewMockServerContext()
-			mockCtx.SetDocumentManager(testhelpers.NewMockDocumentManager())
+			dm, err := lsp.NewDocumentManager()
+			if err != nil {
+				t.Fatalf("Failed to create DocumentManager: %v", err)
+			}
+			defer dm.Close()
+			mockCtx.SetDocumentManager(dm)
 			mockCtx.AddDocument(config.DocumentURI, doc)
 
 			// Create diagnostic data for missing import

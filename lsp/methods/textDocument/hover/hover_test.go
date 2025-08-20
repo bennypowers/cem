@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/hover"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/lsp/types"
@@ -60,7 +61,7 @@ type HoverTestConfig struct {
 func TestHoverIntegrationWithDocumentChanges(t *testing.T) {
 	fixturePath := filepath.Join("fixtures", "hover-integration")
 
-	registry := testhelpers.NewMockRegistry()
+	ctx := testhelpers.NewMockServerContext()
 
 	// Load the manifest manually for testing
 	manifestPath := filepath.Join("..", "..", "..", "test", "fixtures", "hover-integration", "custom-elements.json")
@@ -75,11 +76,14 @@ func TestHoverIntegrationWithDocumentChanges(t *testing.T) {
 		t.Fatalf("Failed to parse manifest: %v", err)
 	}
 
-	registry.AddManifest(&pkg)
+	ctx.AddManifest(&pkg)
 
-	ctx := testhelpers.NewMockServerContext()
-	ctx.SetRegistry(registry)
-	ctx.SetDocumentManager(testhelpers.NewMockDocumentManager())
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
 
 	// Load test configuration
 	configPath := filepath.Join(fixturePath, "test-config.json")
@@ -214,7 +218,7 @@ func TestHoverIntegrationWithDocumentChanges(t *testing.T) {
 func TestHoverWithTypeScriptTemplates(t *testing.T) {
 	fixturePath := filepath.Join("fixtures", "typescript-templates")
 
-	registry := testhelpers.NewMockRegistry()
+	ctx := testhelpers.NewMockServerContext()
 
 	// Load the manifest manually for testing
 	manifestPath := filepath.Join("test", "fixtures", "typescript-templates", "manifest.json")
@@ -229,11 +233,14 @@ func TestHoverWithTypeScriptTemplates(t *testing.T) {
 		t.Fatalf("Failed to parse manifest: %v", err)
 	}
 
-	registry.AddManifest(&pkg)
+	ctx.AddManifest(&pkg)
 
-	ctx := testhelpers.NewMockServerContext()
-	ctx.SetRegistry(registry)
-	ctx.SetDocumentManager(testhelpers.NewMockDocumentManager())
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
 
 	// Load test configuration
 	configPath := filepath.Join(fixturePath, "test-config.json")

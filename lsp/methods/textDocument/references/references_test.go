@@ -3,9 +3,9 @@ package references_test
 import (
 	"testing"
 
+	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/references"
 	"bennypowers.dev/cem/lsp/testhelpers"
-	"bennypowers.dev/cem/lsp/types"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
@@ -13,34 +13,19 @@ import (
 
 
 func TestReferences(t *testing.T) {
-	// Create mock documents with rh-card elements
-	doc1 := testhelpers.NewMockDocumentWithElements(
-		`<rh-card>content</rh-card>`,
-		[]types.CustomElementMatch{
-			{
-				TagName: "rh-card",
-				Range: protocol.Range{
-					Start: protocol.Position{Line: 0, Character: 1},
-					End:   protocol.Position{Line: 0, Character: 8},
-				},
-			},
-		},
-	)
-	doc1.URIStr = "file:///test1.html"
+	// Create DocumentManager for real document parsing
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
 
-	doc2 := testhelpers.NewMockDocumentWithElements(
-		"html`<rh-card variant=\"primary\"></rh-card>`",
-		[]types.CustomElementMatch{
-			{
-				TagName: "rh-card",
-				Range: protocol.Range{
-					Start: protocol.Position{Line: 0, Character: 6},
-					End:   protocol.Position{Line: 0, Character: 13},
-				},
-			},
-		},
-	)
-	doc2.URIStr = "file:///test2.ts"
+	// Create real documents with specific URIs
+	doc1 := testhelpers.CreateTestDocumentWithURI(dm, "file:///test1.html", 
+		`<rh-card>content</rh-card>`)
+
+	doc2 := testhelpers.CreateTestDocumentWithURI(dm, "file:///test2.ts",
+		"html`<rh-card variant=\"primary\"></rh-card>`")
 
 	ctx := testhelpers.NewMockServerContext()
 	ctx.AddDocument("file:///test1.html", doc1)

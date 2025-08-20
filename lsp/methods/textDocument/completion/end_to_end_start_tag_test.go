@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
@@ -46,20 +47,20 @@ func TestEndToEndStartTagCompletion(t *testing.T) {
 		t.Fatalf("Failed to parse manifest: %v", err)
 	}
 
-	// Create registry and add the test manifest
-	registry := testhelpers.NewMockRegistry()
-	registry.AddManifest(&pkg)
+	// Create a completion context and add the test manifest
+	ctx := testhelpers.NewMockServerContext()
+	ctx.AddManifest(&pkg)
 	
 	// Debug: Check what tags were loaded
-	allTags := registry.AllTagNames()
+	allTags := ctx.AllTagNames()
 	t.Logf("Loaded %d tags: %v", len(allTags), allTags)
-
-	// Create a completion context that returns documents
-	ctx := testhelpers.NewMockServerContext()
-	ctx.SetRegistry(registry)
 	
-	// Create and set a document manager
-	dm := testhelpers.NewMockDocumentManager()
+	// Create and set a real DocumentManager
+	dm, err := lsp.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
 	ctx.SetDocumentManager(dm)
 
 	// Test scenarios that reproduce the user's issue
@@ -103,9 +104,9 @@ func TestEndToEndStartTagCompletion(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Set up the document for this test
+			// Set up the document for this test using real DocumentManager
 			uri := "test://test.html"
-			doc := testhelpers.NewMockDocument(tt.documentContent)
+			doc := dm.OpenDocument(uri, tt.documentContent, 1)
 			ctx.AddDocument(uri, doc)
 
 			// Create completion parameters

@@ -47,12 +47,9 @@ func TestStartTagCompletionRegression(t *testing.T) {
 		t.Fatalf("Failed to parse regression test manifest: %v", err)
 	}
 
-	// Create registry and add the test manifest
-	registry := testhelpers.NewMockRegistry()
-	registry.AddManifest(&pkg)
-
+	// Create context and add the test manifest
 	ctx := testhelpers.NewMockServerContext()
-	ctx.SetRegistry(registry)
+	ctx.AddManifest(&pkg)
 
 	// Test cases for start tag completions using the context analysis
 	tests := []struct {
@@ -101,7 +98,10 @@ func TestStartTagCompletionRegression(t *testing.T) {
 			ctx.AddDocument(uri, mockDoc)
 
 			// Test the completion context analysis first
-			analysis := textDocument.AnalyzeCompletionContext(mockDoc, tt.position, "")
+			analysis, err := textDocument.AnalyzeCompletionContext(mockDoc, tt.position, "")
+			if err != nil {
+				t.Fatalf("Failed to analyze completion context: %v", err)
+			}
 			if analysis.Type != tt.expectedType {
 				t.Errorf("Expected completion type %v, got %v", tt.expectedType, analysis.Type)
 				return

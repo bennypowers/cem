@@ -158,11 +158,22 @@ func TestServerLevelIntegration(t *testing.T) {
 	}
 	defer dm.Close()
 
-	// Set up the server context adapter with document manager
-	ctx := &testCompletionContextWithDM{
-		registry: server.Registry(), // We need to expose this for testing
-		docMgr:   dm,
+	// Set up the server context using centralized MockServerContext
+	ctx := testhelpers.NewMockServerContext()
+	// Copy registry data to mock context for interface compatibility
+	registry := server.Registry()
+	for _, tagName := range registry.AllTagNames() {
+		if element, exists := registry.Element(tagName); exists {
+			ctx.AddElement(tagName, element)
+		}
+		if attrs, exists := registry.Attributes(tagName); exists {
+			ctx.AddAttributes(tagName, attrs)
+		}
+		if slots, exists := registry.Slots(tagName); exists {
+			ctx.AddSlots(tagName, slots)
+		}
 	}
+	ctx.SetDocumentManager(dm)
 
 	// Get paths for HTML file (already copied from fixtures)
 	htmlFilePath := filepath.Join(tempDir, "index.html")
