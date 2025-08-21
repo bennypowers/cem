@@ -6,15 +6,14 @@ import {
   LanguageClient,
   LanguageClientOptions,
   ServerOptions,
-  TransportKind,
-} from 'vscode-languageclient/node';
+  TransportKind, } from 'vscode-languageclient/node';
 
 let client: LanguageClient;
 
 function getBinaryName(): string {
   const platform = os.platform();
   const arch = os.arch();
-  
+
   // For now, use 'cem' since we're bundling the npm package
   // In future, could support platform-specific binaries like design tokens does
   return 'cem';
@@ -30,7 +29,7 @@ function findCemExecutable(context: vscode.ExtensionContext): string {
   // Fallback to user configuration or PATH
   const config = vscode.workspace.getConfiguration('cem.lsp');
   const configuredExecutable = config.get<string>('executable', '');
-  
+
   if (configuredExecutable) {
     return configuredExecutable;
   }
@@ -72,7 +71,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Create and start the language client
     client = new LanguageClient(
-      'cem-lsp',
+      'cem-language-server',
       'CEM Language Server',
       serverOptions,
       clientOptions

@@ -217,4 +217,4 @@ of custom elements for fast completion and hover responses. LSP methods are
 arranged into dedicated go packages for ease of maintenance.
 
 [manifest]: https://github.com/webcomponents/custom-elements-manifest/
-[vscode]: https://marketplace.visualstudio.com/items?itemName=pwrs.custom-elements-language-server
+[vscode]: https://marketplace.visualstudio.com/items?itemName=pwrs.cem-language-server-vscode

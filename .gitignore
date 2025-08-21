@@ -7,6 +7,7 @@ coverage.html
 dist
 docs/resources
 .claude/*.local.json
+node_modules
 
 platforms/**/package.json
 

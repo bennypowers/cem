@@ -5,6 +5,7 @@
     "outDir": "../out/client",
     "lib": ["ES2022"],
     "sourceMap": true,
+    "skipLibCheck": true,
     "rootDir": "src",
     "strict": true,
     "moduleResolution": "node"

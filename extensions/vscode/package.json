@@ -1,12 +1,12 @@
 {
-  "name": "@pwrs/cem-vscode-extension",
+  "name": "cem-language-server-vscode",
   "displayName": "Custom Elements Manifest Language Server",
   "description": "IDE features for custom elements with intelligent autocomplete and hover documentation",
-  "version": "0.1.0",
+  "version": "0.4.0",
   "publisher": "pwrs",
   "license": "GPL-3.0-or-later",
   "author": "Benny Powers <web@bennypowers.com>",
-  "icon": "logo.svg",
+  "icon": "logo.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/bennypowers/cem.git",
@@ -69,15 +69,23 @@
     "languages": [
       {
         "id": "html",
-        "extensions": [".html", ".htm"]
+        "extensions": [
+          ".html",
+          ".htm"
+        ]
       },
       {
         "id": "typescript",
-        "extensions": [".ts"]
+        "extensions": [
+          ".ts"
+        ]
       },
       {
-        "id": "javascript", 
-        "extensions": [".js", ".mjs"]
+        "id": "javascript",
+        "extensions": [
+          ".js",
+          ".mjs"
+        ]
       }
     ],
     "commands": [
