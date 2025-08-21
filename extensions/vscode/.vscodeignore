@@ -1,6 +1,8 @@
 **/node_modules/**
 !client/node_modules/@pwrs/cem/**
 !dist/bin/**
+../
+../../
 src/
 tsconfig.json
 build.js

@@ -148,6 +148,6 @@ vscode-extension-manual:
 	rm -rf temp-binaries && \
 	cd extensions/vscode && \
 	VERSION=$$(echo $$LATEST_TAG | sed 's/^v//') && \
-	npm version $$VERSION --no-git-tag-version && \
+	npm version $$VERSION --no-git-tag-version --allow-same-version && \
 	npm run build && \
 	npm run publish

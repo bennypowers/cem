@@ -10,6 +10,9 @@ docs/resources
 node_modules
 
 platforms/**/package.json
+temp-binaries
+extensions/vscode/out/
+*.vsix
 
 .hugo_build.lock
 docs/data/benchmarks.json
