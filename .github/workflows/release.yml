@@ -204,3 +204,84 @@ jobs:
         working-directory: ./npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  vscode-extension:
+    name: Build and publish VSCode extension
+    runs-on: ubuntu-latest
+    needs: npm  # Wait for npm packages to be published
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: extensions/vscode/.nvmrc
+          cache: npm
+          cache-dependency-path: extensions/vscode/package-lock.json
+
+      - name: Install dependencies
+        working-directory: extensions/vscode
+        run: npm ci
+
+      - name: Download release binaries
+        run: |
+          mkdir -p extensions/vscode/dist/bin
+          
+          # Download all platform binaries from the GitHub release
+          gh release download ${{ github.event.release.tag_name }} \
+            --pattern "cem-linux-amd64" \
+            --pattern "cem-linux-arm64" \
+            --pattern "cem-darwin-amd64" \
+            --pattern "cem-darwin-arm64" \
+            --pattern "cem-windows-amd64" \
+            --pattern "cem-windows-arm64" \
+            --dir temp-binaries
+          
+          # Rename to match VSCode extension naming convention
+          mv temp-binaries/cem-linux-amd64 extensions/vscode/dist/bin/cem-x86_64-unknown-linux-gnu
+          mv temp-binaries/cem-linux-arm64 extensions/vscode/dist/bin/cem-aarch64-unknown-linux-gnu
+          mv temp-binaries/cem-darwin-amd64 extensions/vscode/dist/bin/cem-x86_64-apple-darwin
+          mv temp-binaries/cem-darwin-arm64 extensions/vscode/dist/bin/cem-aarch64-apple-darwin
+          mv temp-binaries/cem-windows-amd64 extensions/vscode/dist/bin/cem-x86_64-pc-windows-msvc.exe
+          mv temp-binaries/cem-windows-arm64 extensions/vscode/dist/bin/cem-aarch64-pc-windows-msvc.exe
+          
+          chmod +x extensions/vscode/dist/bin/cem-*
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update version from release tag
+        working-directory: extensions/vscode
+        run: |
+          # Extract version from release tag (e.g., v1.0.0 -> 1.0.0)
+          VERSION=$(echo ${{ github.event.release.tag_name }} | sed 's/^v//')
+          npm version $VERSION --no-git-tag-version
+
+      - name: Build extension
+        working-directory: extensions/vscode
+        run: npm run build
+
+      - name: Publish to VS Code Marketplace
+        working-directory: extensions/vscode
+        run: npm run publish
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+      - name: Find VSIX file
+        id: find_vsix
+        working-directory: extensions/vscode
+        run: |
+          # Find the generated VSIX file (vsce package creates it in current directory)
+          VSIX_FILE=$(ls *.vsix | head -1)
+          echo "vsix_file=$VSIX_FILE" >> $GITHUB_OUTPUT
+          echo "Found VSIX file: $VSIX_FILE"
+
+      - name: Upload VSIX to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: extensions/vscode/${{ steps.find_vsix.outputs.vsix_file }}
+          asset_name: cem-vscode-${{ github.event.release.tag_name }}.vsix
+          asset_content_type: application/zip

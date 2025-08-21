@@ -1,11 +1,7 @@
-**/.vscode/**
 **/node_modules/**
-.gitignore
-.yarnrc
-vsc-extension-quickstart.md
-**/tsconfig.json
-**/.eslintrc.json
-**/*.map
-src/**
-**/npm-debug.log
-**/*.vsix
+!client/node_modules/@pwrs/cem/**
+!dist/bin/**
+src/
+tsconfig.json
+build.js
+logo.svg

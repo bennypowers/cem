@@ -14,16 +14,42 @@ function getBinaryName(): string {
   const platform = os.platform();
   const arch = os.arch();
 
-  // For now, use 'cem' since we're bundling the npm package
-  // In future, could support platform-specific binaries like design tokens does
-  return 'cem';
+  // Determine the OS-specific binary name
+  const archMapping: Record<string, string> = {
+    arm64: "aarch64",
+    x64: "x86_64",
+  };
+
+  const osMapping: Record<string, string> = {
+    darwin: "apple-darwin",
+    linux: "unknown-linux-gnu",
+    win32: "pc-windows-msvc.exe",
+  };
+
+  const architecture = archMapping[arch];
+  const operatingSystem = osMapping[platform];
+
+  if (!architecture || !operatingSystem) {
+    throw new Error(
+      `Unsupported platform or architecture: ${platform}-${arch}`,
+    );
+  }
+
+  return `cem-${architecture}-${operatingSystem}`;
 }
 
 function findCemExecutable(context: vscode.ExtensionContext): string {
-  // First, try the bundled version from client dependencies
-  const bundledCem = path.join(context.extensionPath, 'client', 'node_modules', '@pwrs', 'cem', 'bin', 'cem');
+  // First, try the bundled platform-specific binary
+  const binaryName = getBinaryName();
+  const bundledCem = path.join(context.extensionPath, 'dist', 'bin', binaryName);
   if (fs.existsSync(bundledCem)) {
     return bundledCem;
+  }
+
+  // Fallback to npm package version
+  const npmCem = path.join(context.extensionPath, 'client', 'node_modules', '@pwrs', 'cem', 'bin', 'cem');
+  if (fs.existsSync(npmCem)) {
+    return npmCem;
   }
 
   // Fallback to user configuration or PATH
@@ -34,8 +60,8 @@ function findCemExecutable(context: vscode.ExtensionContext): string {
     return configuredExecutable;
   }
 
-  // Default to binary name in PATH as last resort
-  return getBinaryName();
+  // Default to 'cem' in PATH as last resort
+  return 'cem';
 }
 
 export function activate(context: vscode.ExtensionContext) {

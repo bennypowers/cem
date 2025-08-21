@@ -122,3 +122,32 @@ docs-ci: update-html-attributes
 	hugo mod clean
 	hugo --gc --minify --source docs
 	mv /tmp/cem-contributing.md "$(CONTRIBUTING_PATH)"
+
+vscode-extension-manual:
+	@echo "Manually building and publishing VSCode extension for latest tag..."
+	@LATEST_TAG=$$(git describe --tags --abbrev=0) && \
+	echo "Using tag: $$LATEST_TAG" && \
+	mkdir -p extensions/vscode/dist/bin && \
+	echo "Downloading binaries from GitHub release..." && \
+	gh release download $$LATEST_TAG \
+		--pattern "cem-linux-amd64" \
+		--pattern "cem-linux-arm64" \
+		--pattern "cem-darwin-amd64" \
+		--pattern "cem-darwin-arm64" \
+		--pattern "cem-windows-amd64" \
+		--pattern "cem-windows-arm64" \
+		--dir temp-binaries && \
+	echo "Renaming binaries..." && \
+	mv temp-binaries/cem-linux-amd64 extensions/vscode/dist/bin/cem-x86_64-unknown-linux-gnu && \
+	mv temp-binaries/cem-linux-arm64 extensions/vscode/dist/bin/cem-aarch64-unknown-linux-gnu && \
+	mv temp-binaries/cem-darwin-amd64 extensions/vscode/dist/bin/cem-x86_64-apple-darwin && \
+	mv temp-binaries/cem-darwin-arm64 extensions/vscode/dist/bin/cem-aarch64-apple-darwin && \
+	mv temp-binaries/cem-windows-amd64 extensions/vscode/dist/bin/cem-x86_64-pc-windows-msvc.exe && \
+	mv temp-binaries/cem-windows-arm64 extensions/vscode/dist/bin/cem-aarch64-pc-windows-msvc.exe && \
+	chmod +x extensions/vscode/dist/bin/cem-* && \
+	rm -rf temp-binaries && \
+	cd extensions/vscode && \
+	VERSION=$$(echo $$LATEST_TAG | sed 's/^v//') && \
+	npm version $$VERSION --no-git-tag-version && \
+	npm run build && \
+	npm run publish
