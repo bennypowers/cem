@@ -69,6 +69,12 @@ Real-time validation with intelligent error correction.
   - **Global attributes**: Validates against official HTML global attributes (class, id, data-*, aria-*, event handlers)
   - **Custom element attributes**: Validates against custom element manifest schemas with typo suggestions
   - **Standards-based**: Uses MDN browser-compat-data, automatically updated in CI/CD
+- **Attribute value validation**: Validates attribute values against their manifest type definitions:
+  - **Union types**: Validates against available options with typo suggestions (e.g., `"red" | "green" | "blue"`)
+  - **Literal types**: Exact string matching with case correction (e.g., `"primary"`)
+  - **Number types**: Numeric format validation for number attributes
+  - **Boolean types**: Validates HTML boolean attribute semantics (presence = true, absence = false)
+  - **Array types**: Informational guidance about format diversity (JSON, comma-separated, space-separated)
 - **One-click autofixes**: Automatically correct typos and add missing imports using your editor's quick fix feature
 - **Smart import suggestions**: Resolves proper package names from package.json for npm packages vs. local modules
 - **Intelligent error messaging**: Helpful guidance instead of overwhelming lists for large projects

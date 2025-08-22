@@ -51,3 +51,33 @@ func createAttributeAutofixAction(diagnostic *protocol.Diagnostic, dataMap map[s
 		Diagnostics: []protocol.Diagnostic{*diagnostic},
 	}
 }
+
+// createAttributeValueAutofixAction creates a code action to fix an attribute value typo or case mismatch
+// This follows the same pattern as other autofix actions in this package
+func createAttributeValueAutofixAction(diagnostic *protocol.Diagnostic, dataMap map[string]any, uri string) *protocol.CodeAction {
+	// Extract the suggestion data
+	original, originalOk := dataMap["original"].(string)
+	suggestion, suggestionOk := dataMap["suggestion"].(string)
+
+	if !originalOk || !suggestionOk {
+		return nil
+	}
+
+	title := fmt.Sprintf("Change '%s' to '%s'", original, suggestion)
+
+	return &protocol.CodeAction{
+		Title: title,
+		Kind:  &[]protocol.CodeActionKind{protocol.CodeActionKindQuickFix}[0],
+		Edit: &protocol.WorkspaceEdit{
+			Changes: map[string][]protocol.TextEdit{
+				uri: {
+					{
+						Range:   diagnostic.Range,
+						NewText: suggestion,
+					},
+				},
+			},
+		},
+		Diagnostics: []protocol.Diagnostic{*diagnostic},
+	}
+}
