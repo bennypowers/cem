@@ -10,4 +10,4 @@ repository = "https://github.com/bennypowers/cem"
 crate-type = ["cdylib"]
 
 [dependencies]
-zed_extension_api = "0.0.6"
+zed_extension_api = "0.6.0"
