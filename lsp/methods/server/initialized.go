@@ -18,7 +18,6 @@ package server
 
 import (
 	"fmt"
-	"os"
 
 	"bennypowers.dev/cem/lsp/types"
 	"github.com/tliron/glsp"
@@ -27,11 +26,18 @@ import (
 
 // Initialized handles the LSP initialized notification
 func Initialized(ctx types.ServerContext, context *glsp.Context, params *protocol.InitializedParams) error {
-	fmt.Fprintf(os.Stderr, "CEM LSP Server initialized\n")
+	// Send initialization complete message via LSP protocol
+	context.Notify(protocol.ServerWindowShowMessage, &protocol.ShowMessageParams{
+		Type:    protocol.MessageTypeInfo,
+		Message: "CEM LSP Server initialized",
+	})
 
 	// Initialize manifests and start watching after successful LSP initialization
 	if err := ctx.InitializeManifests(); err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: Failed to initialize manifests: %v\n", err)
+		context.Notify(protocol.ServerWindowShowMessage, &protocol.ShowMessageParams{
+			Type:    protocol.MessageTypeWarning,
+			Message: fmt.Sprintf("Warning: Failed to initialize manifests: %v", err),
+		})
 		// Don't fail the LSP initialization if manifest loading fails
 	}
 

@@ -18,15 +18,19 @@ package server
 
 import (
 	"fmt"
-	"os"
 
 	"bennypowers.dev/cem/lsp/types"
 	"github.com/tliron/glsp"
+	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 // Shutdown handles the LSP shutdown request
 func Shutdown(ctx types.ServerContext, context *glsp.Context) error {
-	fmt.Fprintf(os.Stderr, "CEM LSP Server shutting down...\n")
+	// Send shutdown message via LSP protocol
+	context.Notify(protocol.ServerWindowShowMessage, &protocol.ShowMessageParams{
+		Type:    protocol.MessageTypeInfo,
+		Message: "CEM LSP Server shutting down...",
+	})
 
 	dm, _ := ctx.DocumentManager()
 	if dm != nil {
@@ -35,7 +39,10 @@ func Shutdown(ctx types.ServerContext, context *glsp.Context) error {
 
 	if ws := ctx.Workspace(); ws != nil {
 		if err := ws.Cleanup(); err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: error during workspace cleanup: %v\n", err)
+			context.Notify(protocol.ServerWindowShowMessage, &protocol.ShowMessageParams{
+				Type:    protocol.MessageTypeWarning,
+				Message: fmt.Sprintf("Warning: error during workspace cleanup: %v", err),
+			})
 		}
 	}
 

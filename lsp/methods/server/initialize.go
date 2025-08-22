@@ -18,7 +18,6 @@ package server
 
 import (
 	"fmt"
-	"os"
 
 	"bennypowers.dev/cem/internal/version"
 	"bennypowers.dev/cem/lsp/helpers"
@@ -29,21 +28,25 @@ import (
 
 // Initialize handles the LSP initialize request
 func Initialize(ctx types.ServerContext, context *glsp.Context, params *protocol.InitializeParams) (any, error) {
-	fmt.Fprintf(os.Stderr, "CEM LSP Server initializing...\n")
+	// Send initialization message via LSP protocol (allowed before initialized)
+	context.Notify(protocol.ServerWindowShowMessage, &protocol.ShowMessageParams{
+		Type:    protocol.MessageTypeInfo,
+		Message: "CEM LSP Server initializing...",
+	})
 
-	// Set up debug logging (disabled by default, enabled via $/setTrace)
+	// Set up debug logging using LSP window/showMessage (allowed before initialized)
 	helpers.SetDebugLogger(func(format string, args ...any) {
-		// Call LSP protocol directly to avoid infinite recursion
+		// Use window/showMessage which is allowed before initialized notification
 		go func() {
-			context.Notify(protocol.ServerWindowLogMessage, &protocol.LogMessageParams{
-				Type:    protocol.MessageTypeLog,
+			context.Notify(protocol.ServerWindowShowMessage, &protocol.ShowMessageParams{
+				Type:    protocol.MessageTypeInfo,
 				Message: fmt.Sprintf(format, args...),
 			})
 		}()
 	})
 
-	// Disable debug logging to prevent LSP protocol contamination
-	helpers.SetDebugLoggingEnabled(false)
+	// Enable debug logging using proper LSP protocol
+	helpers.SetDebugLoggingEnabled(true)
 
 	// Log workspace information from LSP client
 	if params.RootURI != nil {
