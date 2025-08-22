@@ -39,6 +39,12 @@ The CEM LSP server provides Language Server Protocol support for custom elements
     - `completion/` - Complete completion feature with tests and fixtures
     - `definition/` - Go-to-definition implementation with tests
     - `hover/` - Hover functionality with TypeScript template support
+    - `publishDiagnostics/` - Real-time validation with comprehensive error detection:
+      - `slotDiagnostics.go` - Slot attribute validation with smart suggestions
+      - `tagDiagnostics.go` - Custom element tag name validation with typo detection
+      - `attributeDiagnostics.go` - HTML attribute validation using MDN browser-compat-data
+      - `attributeValueDiagnostics.go` - Attribute value validation against manifest types
+    - `codeAction/` - Autofix actions for diagnostics with one-click corrections
     - `lifecycle.go` - Document lifecycle (didOpen, didChange, didClose)
     - `context.go` - Cursor position analysis utilities
 - **Pattern**: Context interfaces for dependency injection and clean testing
@@ -52,6 +58,43 @@ The CEM LSP server provides Language Server Protocol support for custom elements
 - **HTML Parsing**: Direct parsing of HTML files for custom elements
 - **TypeScript Parsing**: Extract HTML template literals then parse as HTML
 - **Performance**: Shared parser pools between `generate` and `lsp` packages
+
+## Diagnostics and Validation System
+
+The LSP implements comprehensive real-time validation with autofix capabilities following the "Diagnostics + Code Actions Pattern":
+
+### Validation Engine (`publishDiagnostics/`)
+- **Slot Validation**: Validates slot attribute values against manifest slot definitions
+  - Uses Levenshtein distance for intelligent typo suggestions
+  - Detects parent-child relationships for slot context validation
+- **Tag Name Validation**: Validates custom element tag names with two error classes:
+  - **Typo Detection**: Suggests corrections for misspelled tag names
+  - **Missing Import Detection**: Identifies elements that exist but aren't imported
+- **Attribute Validation**: Validates HTML attributes using authoritative data sources:
+  - **Global Attributes**: Uses embedded MDN browser-compat-data (automatically updated)
+  - **Custom Element Attributes**: Validates against manifest schemas
+- **Attribute Value Validation**: Validates values against manifest type definitions:
+  - **Union Types**: Validates against available options with typo suggestions (`"red" | "green" | "blue"`)
+  - **Literal Types**: Exact string matching with case correction (`"primary"`)
+  - **Number Types**: Numeric format validation
+  - **Boolean Types**: HTML boolean attribute semantics (presence = true, absence = false)
+  - **Array Types**: Informational guidance about format diversity
+
+### HTML Parsing Enhancement
+- **Enhanced AttributeMatch**: Extended to include value extraction (`Value`, `HasValue` fields)
+- **Regex-based Value Parsing**: Handles quoted/unquoted values, empty values, boolean attributes
+- **Position Tracking**: Precise line/column information for accurate diagnostics
+
+### Autofix System (`codeAction/`)
+- **Structured AutofixData**: Type-safe diagnostic data using `types.AutofixData`
+- **One-click Corrections**: Workspace text edits for instant fixes
+- **Multiple Fix Types**: Supports slot, tag, attribute, and attribute value corrections
+- **LSP Protocol Compliance**: Standard `textDocument/codeAction` implementation
+
+### Type System Integration
+- **DiagnosticType Constants**: Structured type system for different validation categories
+- **AutofixData Serialization**: Safe conversion to/from LSP protocol map format
+- **Extensible Design**: Easy to add new diagnostic types and autofix behaviors
 
 ### Template Literal Support
 Detects and parses:

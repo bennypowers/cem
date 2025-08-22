@@ -65,6 +65,8 @@ func init() {
 type AttributeMatch struct {
 	Name     string
 	TagName  string // The tag this attribute belongs to
+	Value    string // The attribute value (empty if no value)
+	HasValue bool   // Whether attribute has an explicit value
 	Line     uint32
 	StartCol uint32
 	EndCol   uint32
@@ -228,7 +230,7 @@ func findAttributes(content string) []AttributeMatch {
 func findAttributesInSection(section string, tagName string, line uint32, startOffset uint32) []AttributeMatch {
 	var matches []AttributeMatch
 
-	// Simple regex-like parsing for attribute names
+	// Parse attribute names and values
 	i := 0
 	for i < len(section) {
 		// Skip whitespace
@@ -253,38 +255,54 @@ func findAttributesInSection(section string, tagName string, line uint32, startO
 				continue
 			}
 
-			matches = append(matches, AttributeMatch{
+			// Initialize attribute match
+			attrMatch := AttributeMatch{
 				Name:     attrName,
 				TagName:  tagName,
+				Value:    "",
+				HasValue: false,
 				Line:     line,
 				StartCol: startOffset + uint32(nameStart),
 				EndCol:   startOffset + uint32(i),
-			})
-		}
+			}
 
-		// Skip the value if present
-		if i < len(section) && section[i] == '=' {
-			i++ // skip =
-			// Skip whitespace
-			for i < len(section) && (section[i] == ' ' || section[i] == '\t') {
-				i++
-			}
-			// Skip quoted value
-			if i < len(section) && (section[i] == '"' || section[i] == '\'') {
-				quote := section[i]
-				i++ // skip opening quote
-				for i < len(section) && section[i] != quote {
+			// Check if there's a value
+			if i < len(section) && section[i] == '=' {
+				i++ // skip =
+				// Skip whitespace
+				for i < len(section) && (section[i] == ' ' || section[i] == '\t') {
 					i++
 				}
-				if i < len(section) {
-					i++ // skip closing quote
-				}
-			} else {
-				// Skip unquoted value
-				for i < len(section) && section[i] != ' ' && section[i] != '\t' && section[i] != '\n' && section[i] != '\r' {
-					i++
+
+				valueStart := i
+				attrMatch.HasValue = true
+
+				// Extract quoted value
+				if i < len(section) && (section[i] == '"' || section[i] == '\'') {
+					quote := section[i]
+					i++ // skip opening quote
+					valueStart = i
+					for i < len(section) && section[i] != quote {
+						i++
+					}
+					if valueStart < i {
+						attrMatch.Value = section[valueStart:i]
+					}
+					if i < len(section) {
+						i++ // skip closing quote
+					}
+				} else {
+					// Extract unquoted value
+					for i < len(section) && section[i] != ' ' && section[i] != '\t' && section[i] != '\n' && section[i] != '\r' {
+						i++
+					}
+					if valueStart < i {
+						attrMatch.Value = section[valueStart:i]
+					}
 				}
 			}
+
+			matches = append(matches, attrMatch)
 		}
 	}
 

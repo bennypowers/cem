@@ -22,10 +22,11 @@ import protocol "github.com/tliron/glsp/protocol_3_16"
 type DiagnosticType string
 
 const (
-	DiagnosticTypeSlotSuggestion      DiagnosticType = "slot-suggestion"
-	DiagnosticTypeTagSuggestion       DiagnosticType = "tag-suggestion"
-	DiagnosticTypeMissingImport       DiagnosticType = "missing-import"
-	DiagnosticTypeAttributeSuggestion DiagnosticType = "attribute-suggestion"
+	DiagnosticTypeSlotSuggestion           DiagnosticType = "slot-suggestion"
+	DiagnosticTypeTagSuggestion            DiagnosticType = "tag-suggestion"
+	DiagnosticTypeMissingImport            DiagnosticType = "missing-import"
+	DiagnosticTypeAttributeSuggestion      DiagnosticType = "attribute-suggestion"
+	DiagnosticTypeAttributeValueSuggestion DiagnosticType = "attribute-value-suggestion"
 )
 
 // AutofixData contains the data needed for creating autofix code actions

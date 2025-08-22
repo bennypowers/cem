@@ -63,6 +63,12 @@ func CodeAction(ctx types.ServerContext, context *glsp.Context, params *protocol
 								actions = append(actions, *action)
 								helpers.SafeDebugLog("[CODE_ACTION] Created attribute autofix action")
 							}
+						case "attribute-value-suggestion":
+							action := createAttributeValueAutofixAction(&diagnostic, dataMap, params.TextDocument.URI)
+							if action != nil {
+								actions = append(actions, *action)
+								helpers.SafeDebugLog("[CODE_ACTION] Created attribute value autofix action")
+							}
 						}
 					}
 				}
