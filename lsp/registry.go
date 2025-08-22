@@ -554,9 +554,13 @@ func (r *Registry) handleFileChange(event platform.FileWatchEvent) {
 
 	helpers.SafeDebugLog("Manifest file changed: %s", event.Name)
 
-	// Trigger reload callback if available
-	if r.onReload != nil {
-		r.onReload()
+	// Trigger reload callback if available (with proper synchronization)
+	r.watcherMu.RLock()
+	callback := r.onReload
+	r.watcherMu.RUnlock()
+	
+	if callback != nil {
+		callback()
 	}
 }
 
