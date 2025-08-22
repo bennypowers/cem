@@ -39,14 +39,8 @@ func Initialized(ctx types.ServerContext, context *glsp.Context, params *protoco
 		logging.Info("CEM LSP loaded %d elements from %d manifests", elementCount, manifestCount)
 	}
 
-	// Show early software notice with actionable links
-	logging.NotifyWithActions(
-		"CEM LSP is early software.\n\nHelp us improve by reporting issues.",
-		[]logging.MessageAction{
-			{Title: "📖 Docs", URL: "https://bennypowers.dev/cem/docs/commands/lsp/"},
-			{Title: "🐛 Issues", URL: "https://github.com/bennypowers/cem/issues/new"},
-		},
-	)
+	// Show early software notice
+	logging.Info("CEM LSP is early software. Report issues at: https://github.com/bennypowers/cem/issues")
 
 	return nil
 }
