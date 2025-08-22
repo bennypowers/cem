@@ -18,6 +18,7 @@ package lsp
 
 import (
 	"fmt"
+	"os"
 
 	"bennypowers.dev/cem/lsp/helpers"
 	serverMethods "bennypowers.dev/cem/lsp/methods/server"
@@ -29,6 +30,7 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/references"
 	"bennypowers.dev/cem/lsp/methods/workspace/symbol"
 	W "bennypowers.dev/cem/workspace"
+	"github.com/pterm/pterm"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 	"github.com/tliron/glsp/server"
@@ -55,6 +57,9 @@ type Server struct {
 
 // NewServer creates a new CEM LSP server
 func NewServer(workspace W.WorkspaceContext, transport TransportKind) (*Server, error) {
+	// Configure pterm to output to stderr to avoid contaminating LSP stdout stream
+	pterm.SetDefaultOutput(os.Stderr)
+	
 	documents, err := NewDocumentManager()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create document manager: %w", err)
@@ -92,8 +97,8 @@ func NewServer(workspace W.WorkspaceContext, transport TransportKind) (*Server, 
 		WorkspaceSymbol:        s.workspaceSymbol,
 	}
 
-	// Enable debug mode for non-stdio transports to help with troubleshooting
-	debug := transport != TransportStdio
+	// Enable debug mode when using stdio to help with VSCode troubleshooting
+	debug := transport == TransportStdio
 	s.server = server.NewServer(&handler, "cem-lsp", debug)
 
 	return s, nil

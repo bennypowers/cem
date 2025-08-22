@@ -18,9 +18,11 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	LSP "bennypowers.dev/cem/lsp"
 	W "bennypowers.dev/cem/workspace"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -43,6 +45,9 @@ Features provided:
 - Go-to-definition for custom elements
 - Diagnostics for unknown elements and invalid attributes`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// CRITICAL: Redirect all pterm output to stderr immediately to prevent LSP stdout contamination
+		pterm.SetDefaultOutput(os.Stderr)
+		
 		ctx := cmd.Context()
 		wctx := ctx.Value(W.WorkspaceContextKey).(W.WorkspaceContext)
 
@@ -78,7 +83,7 @@ Features provided:
 			return fmt.Errorf("only one transport flag may be specified")
 		}
 
-		// Create and run the LSP server
+		// Create and run the LSP server with debug mode enabled for stdio transport
 		server, err := LSP.NewServer(wctx, transport)
 		if err != nil {
 			return err

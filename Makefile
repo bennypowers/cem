@@ -129,8 +129,23 @@ vscode-build:
 	@cd extensions/vscode && node build.js
 	@echo "VSCode extension built successfully"
 
-vscode-package:
+vscode-package: build
 	@echo "Packaging VSCode extension..."
+	@echo "Copying CEM binary for current platform..."
+	@mkdir -p extensions/vscode/dist/bin
+	@if [ "$$(uname -s)" = "Linux" ] && [ "$$(uname -m)" = "x86_64" ]; then \
+		cp dist/cem extensions/vscode/dist/bin/cem-x86_64-unknown-linux-gnu; \
+	elif [ "$$(uname -s)" = "Linux" ] && [ "$$(uname -m)" = "aarch64" ]; then \
+		cp dist/cem extensions/vscode/dist/bin/cem-aarch64-unknown-linux-gnu; \
+	elif [ "$$(uname -s)" = "Darwin" ] && [ "$$(uname -m)" = "x86_64" ]; then \
+		cp dist/cem extensions/vscode/dist/bin/cem-x86_64-apple-darwin; \
+	elif [ "$$(uname -s)" = "Darwin" ] && [ "$$(uname -m)" = "arm64" ]; then \
+		cp dist/cem extensions/vscode/dist/bin/cem-aarch64-apple-darwin; \
+	else \
+		echo "Warning: Unsupported platform $$(uname -s)-$$(uname -m), copying as generic binary"; \
+		cp dist/cem extensions/vscode/dist/bin/cem-$$(uname -m)-unknown-$$(uname -s | tr '[:upper:]' '[:lower:]')-gnu; \
+	fi
+	@chmod +x extensions/vscode/dist/bin/cem-*
 	@cd extensions/vscode && npm run build
 	@echo "VSCode extension packaged successfully"
 

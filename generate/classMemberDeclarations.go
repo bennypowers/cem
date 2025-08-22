@@ -19,6 +19,7 @@ package generate
 import (
 	"errors"
 	"fmt"
+	"os"
 	"regexp"
 	"slices"
 	"strings"
@@ -100,7 +101,7 @@ func amendFieldTypeWithCaptures(captures Q.CaptureMap, field *M.ClassField) {
 		if typeText != "" {
 			// Debug: log type extraction for variant property
 			if field.Name == "variant" {
-				fmt.Printf("[DEBUG] Extracted type for variant property: '%s'\n", typeText)
+				fmt.Fprintf(os.Stderr, "[DEBUG] Extracted type for variant property: '%s'\n", typeText)
 			}
 			field.Type = &M.Type{
 				Text: typeText,
@@ -335,7 +336,7 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 
 		// Debug: log all variant property processing
 		if memberName == "variant" {
-			fmt.Printf("[DEBUG] Processing variant member: kind=%s, static=%v\n", kind, isStatic)
+			fmt.Fprintf(os.Stderr, "[DEBUG] Processing variant member: kind=%s, static=%v\n", kind, isStatic)
 		}
 
 		switch kind {

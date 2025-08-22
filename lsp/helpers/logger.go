@@ -70,27 +70,27 @@ func (l *Logger) SetEnabled(enabled bool) {
 }
 
 // Info logs an info message
-func (l *Logger) Info(format string, args ...interface{}) {
+func (l *Logger) Info(format string, args ...any) {
 	l.log(protocol.MessageTypeInfo, format, args...)
 }
 
 // Warning logs a warning message
-func (l *Logger) Warning(format string, args ...interface{}) {
+func (l *Logger) Warning(format string, args ...any) {
 	l.log(protocol.MessageTypeWarning, format, args...)
 }
 
 // Error logs an error message
-func (l *Logger) Error(format string, args ...interface{}) {
+func (l *Logger) Error(format string, args ...any) {
 	l.log(protocol.MessageTypeError, format, args...)
 }
 
 // Log logs a debug message (same as Info for LSP)
-func (l *Logger) Log(format string, args ...interface{}) {
+func (l *Logger) Log(format string, args ...any) {
 	l.log(protocol.MessageTypeLog, format, args...)
 }
 
 // log sends a log message through the LSP protocol
-func (l *Logger) log(messageType protocol.MessageType, format string, args ...interface{}) {
+func (l *Logger) log(messageType protocol.MessageType, format string, args ...any) {
 	l.mu.RLock()
 	enabled := l.enabled
 	context := l.context

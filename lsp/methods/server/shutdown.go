@@ -17,7 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package server
 
 import (
-	"log"
+	"fmt"
+	"os"
 
 	"bennypowers.dev/cem/lsp/types"
 	"github.com/tliron/glsp"
@@ -25,7 +26,7 @@ import (
 
 // Shutdown handles the LSP shutdown request
 func Shutdown(ctx types.ServerContext, context *glsp.Context) error {
-	log.Printf("CEM LSP Server shutting down...")
+	fmt.Fprintf(os.Stderr, "CEM LSP Server shutting down...\n")
 
 	dm, _ := ctx.DocumentManager()
 	if dm != nil {
@@ -34,7 +35,7 @@ func Shutdown(ctx types.ServerContext, context *glsp.Context) error {
 
 	if ws := ctx.Workspace(); ws != nil {
 		if err := ws.Cleanup(); err != nil {
-			log.Printf("Warning: error during workspace cleanup: %v", err)
+			fmt.Fprintf(os.Stderr, "Warning: error during workspace cleanup: %v\n", err)
 		}
 	}
 

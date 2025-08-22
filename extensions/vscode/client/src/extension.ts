@@ -92,10 +92,10 @@ export function activate(context: vscode.ExtensionContext) {
     const executable = findCemExecutable(context);
     console.log(`CEM: Using executable: ${executable}`);
 
-    // Create server options
+    // Create server options - use custom DirectServer with --stdio
     const serverOptions: ServerOptions = {
       command: executable,
-      args: ['lsp', '--stdio'],
+      args: ['lsp', '--stdio'],  // Use DirectServer implementation
       options: {
         stdio: 'pipe'
       }

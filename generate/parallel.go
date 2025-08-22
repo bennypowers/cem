@@ -19,13 +19,14 @@ package generate
 import (
 	"context"
 	"errors"
+	"fmt"
 	"maps"
+	"os"
 	"runtime"
 	"sync"
 
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
-	"github.com/pterm/pterm"
 
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
@@ -141,7 +142,7 @@ func (mbp *ModuleBatchProcessor) processModulesInternal(
 
 	// Optimize worker count for small job sets
 	numWorkers := min(len(jobs), mbp.numWorkers)
-	pterm.Info.Printf("Starting Generation with %d workers\n", numWorkers)
+	fmt.Fprintf(os.Stderr, "Starting generation with %d workers\n", numWorkers)
 
 	// Initialize result collection
 	var wg sync.WaitGroup
