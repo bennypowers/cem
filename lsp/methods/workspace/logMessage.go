@@ -17,46 +17,33 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package workspace
 
 import (
-	"bennypowers.dev/cem/lsp/helpers"
+	"bennypowers.dev/cem/internal/logging"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-// LogMessageContext provides the dependencies needed for logging functionality
-type LogMessageContext interface {
-	GetLogger() *helpers.Logger
+// LogInfo logs an info message using the centralized logger
+func LogInfo(context *glsp.Context, format string, args ...any) {
+	logging.Info(format, args...)
 }
 
-// LogInfo logs an info message using the context logger
-func LogInfo(ctx LogMessageContext, context *glsp.Context, format string, args ...any) {
-	if logger := ctx.GetLogger(); logger != nil {
-		logger.Info(format, args...)
-	}
+// LogWarning logs a warning message using the centralized logger
+func LogWarning(context *glsp.Context, format string, args ...any) {
+	logging.Warning(format, args...)
 }
 
-// LogWarning logs a warning message using the context logger
-func LogWarning(ctx LogMessageContext, context *glsp.Context, format string, args ...any) {
-	if logger := ctx.GetLogger(); logger != nil {
-		logger.Warning(format, args...)
-	}
+// LogError logs an error message using the centralized logger
+func LogError(context *glsp.Context, format string, args ...any) {
+	logging.Error(format, args...)
 }
 
-// LogError logs an error message using the context logger
-func LogError(ctx LogMessageContext, context *glsp.Context, format string, args ...any) {
-	if logger := ctx.GetLogger(); logger != nil {
-		logger.Error(format, args...)
-	}
-}
-
-// LogDebug logs a debug message using the context logger
-func LogDebug(ctx LogMessageContext, context *glsp.Context, format string, args ...any) {
-	if logger := ctx.GetLogger(); logger != nil {
-		logger.Log(format, args...)
-	}
+// LogDebug logs a debug message using the centralized logger
+func LogDebug(context *glsp.Context, format string, args ...any) {
+	logging.Debug(format, args...)
 }
 
 // ShowMessage sends a message to be displayed to the user
-func ShowMessage(ctx LogMessageContext, context *glsp.Context, messageType protocol.MessageType, message string) {
+func ShowMessage(context *glsp.Context, messageType protocol.MessageType, message string) {
 	if context != nil {
 		go func() {
 			context.Notify(protocol.ServerWindowShowMessage, &protocol.ShowMessageParams{

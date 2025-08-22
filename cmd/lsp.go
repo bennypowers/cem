@@ -47,7 +47,7 @@ Features provided:
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// CRITICAL: Redirect all pterm output to stderr immediately to prevent LSP stdout contamination
 		pterm.SetDefaultOutput(os.Stderr)
-		
+
 		ctx := cmd.Context()
 		wctx := ctx.Value(W.WorkspaceContextKey).(W.WorkspaceContext)
 

@@ -17,8 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package server
 
 import (
-	"fmt"
-
+	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/lsp/types"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
@@ -26,20 +25,28 @@ import (
 
 // Initialized handles the LSP initialized notification
 func Initialized(ctx types.ServerContext, context *glsp.Context, params *protocol.InitializedParams) error {
-	// Send initialization complete message via LSP protocol
-	context.Notify(protocol.ServerWindowShowMessage, &protocol.ShowMessageParams{
-		Type:    protocol.MessageTypeInfo,
-		Message: "CEM LSP Server initialized",
-	})
-
 	// Initialize manifests and start watching after successful LSP initialization
 	if err := ctx.InitializeManifests(); err != nil {
-		context.Notify(protocol.ServerWindowShowMessage, &protocol.ShowMessageParams{
-			Type:    protocol.MessageTypeWarning,
-			Message: fmt.Sprintf("Warning: Failed to initialize manifests: %v", err),
-		})
+		logging.Warning("Failed to initialize manifests: %v", err)
 		// Don't fail the LSP initialization if manifest loading fails
+		logging.Info("CEM LSP Server initialized (no manifests loaded)")
+	} else {
+		// Get manifest statistics using the embedded Registry interface methods
+		manifestCount := ctx.ManifestCount()
+		elementCount := ctx.ElementCount()
+
+		// Send informative initialization complete message
+		logging.Info("CEM LSP loaded %d elements from %d manifests", elementCount, manifestCount)
 	}
+
+	// Show early software notice with actionable links
+	logging.NotifyWithActions(
+		"CEM LSP is early software.\n\nHelp us improve by reporting issues.",
+		[]logging.MessageAction{
+			{Title: "📖 Docs", URL: "https://bennypowers.dev/cem/docs/commands/lsp/"},
+			{Title: "🐛 Issues", URL: "https://github.com/bennypowers/cem/issues/new"},
+		},
+	)
 
 	return nil
 }

@@ -17,20 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package server
 
 import (
-	"fmt"
-
+	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/lsp/types"
 	"github.com/tliron/glsp"
-	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 // Shutdown handles the LSP shutdown request
 func Shutdown(ctx types.ServerContext, context *glsp.Context) error {
-	// Send shutdown message via LSP protocol
-	context.Notify(protocol.ServerWindowShowMessage, &protocol.ShowMessageParams{
-		Type:    protocol.MessageTypeInfo,
-		Message: "CEM LSP Server shutting down...",
-	})
+	// Send shutdown message
+	logging.Info("CEM LSP Server shutting down...")
 
 	dm, _ := ctx.DocumentManager()
 	if dm != nil {
@@ -39,10 +34,7 @@ func Shutdown(ctx types.ServerContext, context *glsp.Context) error {
 
 	if ws := ctx.Workspace(); ws != nil {
 		if err := ws.Cleanup(); err != nil {
-			context.Notify(protocol.ServerWindowShowMessage, &protocol.ShowMessageParams{
-				Type:    protocol.MessageTypeWarning,
-				Message: fmt.Sprintf("Warning: error during workspace cleanup: %v", err),
-			})
+			logging.Warning("Error during workspace cleanup: %v", err)
 		}
 	}
 

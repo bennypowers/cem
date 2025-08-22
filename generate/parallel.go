@@ -19,12 +19,11 @@ package generate
 import (
 	"context"
 	"errors"
-	"fmt"
 	"maps"
-	"os"
 	"runtime"
 	"sync"
 
+	"bennypowers.dev/cem/internal/logging"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
 
@@ -142,7 +141,7 @@ func (mbp *ModuleBatchProcessor) processModulesInternal(
 
 	// Optimize worker count for small job sets
 	numWorkers := min(len(jobs), mbp.numWorkers)
-	fmt.Fprintf(os.Stderr, "Starting generation with %d workers\n", numWorkers)
+	logging.Info("Starting generation with %d workers", numWorkers)
 
 	// Initialize result collection
 	var wg sync.WaitGroup

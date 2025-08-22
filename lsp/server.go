@@ -59,7 +59,7 @@ type Server struct {
 func NewServer(workspace W.WorkspaceContext, transport TransportKind) (*Server, error) {
 	// Configure pterm to output to stderr to avoid contaminating LSP stdout stream
 	pterm.SetDefaultOutput(os.Stderr)
-	
+
 	documents, err := NewDocumentManager()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create document manager: %w", err)

@@ -17,8 +17,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package server
 
 import (
-	"fmt"
+	"os"
 
+	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/internal/version"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
@@ -28,24 +29,19 @@ import (
 
 // Initialize handles the LSP initialize request
 func Initialize(ctx types.ServerContext, context *glsp.Context, params *protocol.InitializeParams) (any, error) {
-	// Send initialization message via LSP protocol (allowed before initialized)
-	context.Notify(protocol.ServerWindowShowMessage, &protocol.ShowMessageParams{
-		Type:    protocol.MessageTypeInfo,
-		Message: "CEM LSP Server initializing...",
-	})
+	// Configure centralized logger for LSP mode
+	logging.SetLSPContext(context)
+	logging.SetDebugEnabled(true)
 
-	// Set up debug logging using LSP window/showMessage (allowed before initialized)
-	helpers.SetDebugLogger(func(format string, args ...any) {
-		// Use window/showMessage which is allowed before initialized notification
-		go func() {
-			context.Notify(protocol.ServerWindowShowMessage, &protocol.ShowMessageParams{
-				Type:    protocol.MessageTypeInfo,
-				Message: fmt.Sprintf(format, args...),
-			})
-		}()
-	})
+	// Send initialization message (non-intrusive)
+	logging.Info("CEM LSP Server initializing...")
 
-	// Enable debug logging using proper LSP protocol
+	// Debug info about binary location
+	if executable, err := os.Executable(); err == nil {
+		logging.Debug("LSP server binary: %s", executable)
+	}
+
+	// Enable debug logging for LSP helpers
 	helpers.SetDebugLoggingEnabled(true)
 
 	// Log workspace information from LSP client

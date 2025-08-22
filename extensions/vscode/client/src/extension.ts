@@ -132,9 +132,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Start the client and server
     client.start().then(() => {
       console.log(`CEM: Language Server started successfully using: ${executable}`);
-      if (debugLogging) {
-        vscode.window.showInformationMessage(`CEM LSP started with executable: ${executable}`);
-      }
+      console.log(`CEM: Binary path: ${executable}`);
     }).catch((error) => {
       console.error('CEM: Failed to start Language Server:', error);
       console.error('CEM: Error details:', {

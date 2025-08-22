@@ -28,6 +28,7 @@ import (
 	"time"
 
 	C "bennypowers.dev/cem/cmd/config"
+	"bennypowers.dev/cem/internal/logging"
 	M "bennypowers.dev/cem/manifest"
 	W "bennypowers.dev/cem/workspace"
 	DS "github.com/bmatcuk/doublestar"
@@ -77,20 +78,20 @@ func (ws *WatchSession) Close() {
 
 // RunWatch starts the file watching mode with initial generation
 func (ws *WatchSession) RunWatch() error {
-	pterm.Info.Println("Starting watch mode...")
+	logging.Info("Starting watch mode...")
 
 	// Do initial generation
 	start := time.Now()
 
 	if err := ws.generateOnce(context.Background()); err != nil {
-		pterm.Error.Printf("Initial generation failed: %v\n", err)
+		logging.Error("Initial generation failed: %v", err)
 		return err
 	}
 	// Update demo discovery state after initial generation
 	ws.updateDemoDiscoveryState()
 
 	duration := time.Since(start)
-	pterm.Success.Printf("Generated in %s\n", ColorizeDuration(duration).Sprint(duration))
+	logging.Success("Generated in %s", ColorizeDuration(duration).Sprint(duration))
 
 	// Set up file watcher
 	watcher, err := ws.setupWatcher()
@@ -99,7 +100,7 @@ func (ws *WatchSession) RunWatch() error {
 	}
 	defer watcher.Close()
 
-	pterm.Info.Println("Watching for file changes... (Ctrl+C to stop)")
+	logging.Info("Watching for file changes... (Ctrl+C to stop)")
 
 	// Watch for changes
 	for {
@@ -113,7 +114,7 @@ func (ws *WatchSession) RunWatch() error {
 			if !ok {
 				return nil
 			}
-			pterm.Warning.Printf("File watcher error: %v\n", err)
+			logging.Warning("File watcher error: %v", err)
 		}
 	}
 }

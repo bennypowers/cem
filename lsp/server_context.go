@@ -102,6 +102,20 @@ func (s *Server) ElementDefinition(tagName string) (types.ElementDefinition, boo
 	return s.registry.ElementDefinition(tagName)
 }
 
+// ManifestCount returns the number of loaded manifests
+func (s *Server) ManifestCount() int {
+	s.registry.mu.RLock()
+	defer s.registry.mu.RUnlock()
+	return len(s.registry.Manifests)
+}
+
+// ElementCount returns the number of loaded elements
+func (s *Server) ElementCount() int {
+	s.registry.mu.RLock()
+	defer s.registry.mu.RUnlock()
+	return len(s.registry.Elements)
+}
+
 func (s *Server) AddManifest(manifest *M.Package) {
 	s.registry.AddManifest(manifest)
 }

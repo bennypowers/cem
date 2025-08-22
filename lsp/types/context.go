@@ -47,6 +47,8 @@ type Registry interface {
 	Attributes(tagName string) (map[string]*M.Attribute, bool)
 	Slots(tagName string) ([]M.Slot, bool)
 	ElementDefinition(tagName string) (ElementDefinition, bool)
+	ManifestCount() int
+	ElementCount() int
 }
 
 // ServerContext provides all dependencies needed for LSP methods
