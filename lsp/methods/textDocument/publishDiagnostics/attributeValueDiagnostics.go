@@ -28,6 +28,10 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
+// attributeRegex parses attribute name-value pairs
+// Matches: name="value", name='value', name=value, or just name
+var attributeRegex = regexp.MustCompile(`(\w+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?`)
+
 // analyzeAttributeValueDiagnostics validates attribute values against their type definitions
 func analyzeAttributeValueDiagnostics(ctx types.ServerContext, doc types.Document) []protocol.Diagnostic {
 	return AnalyzeAttributeValueDiagnosticsForTest(ctx, doc)
@@ -90,7 +94,11 @@ func validateAttributeValue(attr *M.Attribute, match AttributeMatch) []protocol.
 	case lowerTypeText == "number":
 		diagnostics = append(diagnostics, validateNumberAttribute(match)...)
 	case lowerTypeText == "string":
-		diagnostics = append(diagnostics, validateStringAttribute(match)...)
+		// String attributes are very permissive - almost any value is valid
+		// Generic string validation is not generalizable due to wide variety of use cases:
+		// - URLs, file paths, CSS selectors, arbitrary text, IDs, JSON strings, etc.
+		// - Each string attribute type would need domain-specific validation rules
+		// - Better to provide no validation than incorrect validation
 	case strings.Contains(typeText, "|"):
 		diagnostics = append(diagnostics, validateUnionType(typeText, match)...)
 	case isLiteralType(typeText):
@@ -187,12 +195,6 @@ func validateNumberAttribute(match AttributeMatch) []protocol.Diagnostic {
 	return diagnostics
 }
 
-// validateStringAttribute validates string attribute values (minimal validation)
-func validateStringAttribute(match AttributeMatch) []protocol.Diagnostic {
-	// String attributes are very permissive - almost any value is valid
-	// We could add basic checks here in the future (length, format patterns, etc.)
-	return []protocol.Diagnostic{}
-}
 
 // validateUnionType validates attribute values against union type definitions
 func validateUnionType(typeText string, match AttributeMatch) []protocol.Diagnostic {
@@ -465,10 +467,8 @@ func findAttributesWithValues(content string) []AttributeMatch {
 func findAttributesWithValuesInSection(section string, tagName string, line uint32, startOffset uint32) []AttributeMatch {
 	var matches []AttributeMatch
 
-	// Use regex to parse attribute name-value pairs
-	// This regex matches: name="value", name='value', name=value, or just name
-	attrRegex := regexp.MustCompile(`(\w+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?`)
-	attrMatches := attrRegex.FindAllStringSubmatch(section, -1)
+	// Use pre-compiled regex to parse attribute name-value pairs
+	attrMatches := attributeRegex.FindAllStringSubmatch(section, -1)
 
 	for _, attrMatch := range attrMatches {
 		if len(attrMatch) < 2 {
