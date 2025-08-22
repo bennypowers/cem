@@ -3,7 +3,7 @@ SHELL := /bin/bash
 CONTRIBUTING_PATH = docs/content/docs/contributing.md
 WINDOWS_CC_IMAGE := cem-windows-cc-image
 
-.PHONY: build test test-unit test-e2e update watch bench profile flamegraph coverage show-coverage clean lint format prepare-npm install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes
+.PHONY: build test test-unit test-e2e update watch bench profile flamegraph coverage show-coverage clean lint format prepare-npm install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package
 
 # NOTE: this is a non-traditional install target, which installs to ~/.local/bin/
 # It's mostly intended for local development, not for distribution
@@ -123,7 +123,18 @@ docs-ci: update-html-attributes
 	hugo --gc --minify --source docs
 	mv /tmp/cem-contributing.md "$(CONTRIBUTING_PATH)"
 
-vscode-extension-manual:
+vscode-build:
+	@echo "Building VSCode extension..."
+	@cd extensions/vscode/client && npm install
+	@cd extensions/vscode && node build.js
+	@echo "VSCode extension built successfully"
+
+vscode-package:
+	@echo "Packaging VSCode extension..."
+	@cd extensions/vscode && npm run build
+	@echo "VSCode extension packaged successfully"
+
+vscode-publish:
 	@echo "Manually building and publishing VSCode extension for latest tag..."
 	@LATEST_TAG=$$(git describe --tags --abbrev=0) && \
 	echo "Using tag: $$LATEST_TAG" && \

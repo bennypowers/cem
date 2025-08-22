@@ -96,7 +96,7 @@ func TestCompletionUpdateCycle(t *testing.T) {
 	}
 
 	// Create a full LSP server instance like TestServerLevelIntegration
-	server, err := lsp.NewServer(workspace)
+	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
 	if err != nil {
 		t.Fatalf("Failed to create LSP server: %v", err)
 	}

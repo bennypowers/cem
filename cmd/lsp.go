@@ -17,6 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
+	"fmt"
+
 	LSP "bennypowers.dev/cem/lsp"
 	W "bennypowers.dev/cem/workspace"
 	"github.com/spf13/cobra"
@@ -44,8 +46,40 @@ Features provided:
 		ctx := cmd.Context()
 		wctx := ctx.Value(W.WorkspaceContextKey).(W.WorkspaceContext)
 
+		// Determine transport based on boolean flags
+		var transport LSP.TransportKind = LSP.TransportStdio // default
+
+		stdioFlag, _ := cmd.Flags().GetBool("stdio")
+		tcpFlag, _ := cmd.Flags().GetBool("tcp")
+		websocketFlag, _ := cmd.Flags().GetBool("websocket")
+		nodejsFlag, _ := cmd.Flags().GetBool("nodejs")
+
+		// Check which transport flag is set
+		flagCount := 0
+		if stdioFlag {
+			transport = LSP.TransportStdio
+			flagCount++
+		}
+		if tcpFlag {
+			transport = LSP.TransportTCP
+			flagCount++
+		}
+		if websocketFlag {
+			transport = LSP.TransportWebSocket
+			flagCount++
+		}
+		if nodejsFlag {
+			transport = LSP.TransportNodeJS
+			flagCount++
+		}
+
+		// Ensure only one transport flag is set
+		if flagCount > 1 {
+			return fmt.Errorf("only one transport flag may be specified")
+		}
+
 		// Create and run the LSP server
-		server, err := LSP.NewServer(wctx)
+		server, err := LSP.NewServer(wctx, transport)
 		if err != nil {
 			return err
 		}
@@ -55,4 +89,8 @@ Features provided:
 
 func init() {
 	rootCmd.AddCommand(lspCmd)
+	lspCmd.Flags().Bool("stdio", false, "Use stdio transport (default)")
+	lspCmd.Flags().Bool("tcp", false, "Use TCP transport")
+	lspCmd.Flags().Bool("websocket", false, "Use WebSocket transport")
+	lspCmd.Flags().Bool("nodejs", false, "Use Node.js transport")
 }

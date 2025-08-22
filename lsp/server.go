@@ -34,16 +34,27 @@ import (
 	"github.com/tliron/glsp/server"
 )
 
+// TransportKind represents different LSP transport methods
+type TransportKind string
+
+const (
+	TransportStdio     TransportKind = "stdio"
+	TransportTCP       TransportKind = "tcp"
+	TransportWebSocket TransportKind = "websocket"
+	TransportNodeJS    TransportKind = "nodejs"
+)
+
 // Server represents the CEM LSP server
 type Server struct {
 	workspace W.WorkspaceContext
 	registry  *Registry
 	documents *DocumentManager
 	server    *server.Server
+	transport TransportKind
 }
 
 // NewServer creates a new CEM LSP server
-func NewServer(workspace W.WorkspaceContext) (*Server, error) {
+func NewServer(workspace W.WorkspaceContext, transport TransportKind) (*Server, error) {
 	documents, err := NewDocumentManager()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create document manager: %w", err)
@@ -59,6 +70,7 @@ func NewServer(workspace W.WorkspaceContext) (*Server, error) {
 		workspace: workspace,
 		registry:  registry,
 		documents: documents,
+		transport: transport,
 	}
 
 	// Server now directly implements all context interfaces
@@ -80,18 +92,35 @@ func NewServer(workspace W.WorkspaceContext) (*Server, error) {
 		WorkspaceSymbol:        s.workspaceSymbol,
 	}
 
-	s.server = server.NewServer(&handler, "cem-lsp", false)
+	// Enable debug mode for non-stdio transports to help with troubleshooting
+	debug := transport != TransportStdio
+	s.server = server.NewServer(&handler, "cem-lsp", debug)
 
 	return s, nil
 }
 
-// Run starts the LSP server using stdio
+// Run starts the LSP server using the configured transport
 func (s *Server) Run() error {
 	// Manifest initialization now happens in the LSP Initialized method
 	// This ensures proper LSP protocol compliance and debug logging visibility
 
-	// Run the server on stdio
-	return s.server.RunStdio()
+	helpers.SafeDebugLog("LSP: Running with transport: %s", s.transport)
+
+	// Run the server with the appropriate transport
+	switch s.transport {
+	case TransportStdio:
+		return s.server.RunStdio()
+	case TransportTCP:
+		// For now, use a default TCP address - this could be made configurable
+		return s.server.RunTCP("localhost:8080")
+	case TransportWebSocket:
+		// For now, use a default WebSocket address - this could be made configurable
+		return s.server.RunWebSocket("localhost:8081")
+	case TransportNodeJS:
+		return s.server.RunNodeJs()
+	default:
+		return fmt.Errorf("unsupported transport kind: %s", s.transport)
+	}
 }
 
 // Close cleans up server resources

@@ -132,7 +132,7 @@ export class TestAlert extends LitElement {
 	}
 
 	// Now create a full LSP server instance - this simulates real usage
-	server, err := lsp.NewServer(workspace)
+	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
 	if err != nil {
 		t.Fatalf("Failed to create LSP server: %v", err)
 	}

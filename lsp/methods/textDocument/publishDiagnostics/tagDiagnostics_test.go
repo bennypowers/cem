@@ -28,7 +28,7 @@ func TestTagDiagnostics_WithImports(t *testing.T) {
 	}
 
 	// Create server (this loads manifests automatically)
-	server, err := lsp.NewServer(workspace)
+	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
@@ -130,7 +130,7 @@ func TestTagDiagnostics_TypeScriptImports(t *testing.T) {
 	}
 
 	// Create server (this loads manifests automatically)
-	server, err := lsp.NewServer(workspace)
+	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
@@ -220,7 +220,7 @@ func TestTagDiagnostics_MissingImports(t *testing.T) {
 	}
 
 	// Create server (this loads manifests automatically)
-	server, err := lsp.NewServer(workspace)
+	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
@@ -325,7 +325,7 @@ func TestTagDiagnostics_IgnoreComment(t *testing.T) {
 	}
 
 	// Create server (this loads manifests automatically)
-	server, err := lsp.NewServer(workspace)
+	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}

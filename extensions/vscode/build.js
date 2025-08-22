@@ -1,11 +1,27 @@
 import { build } from 'esbuild';
-import { execSync } from 'child_process';
 
 async function buildExtension() {
   try {
-    // Build the client TypeScript code
-    console.log('Building client...');
-    execSync('cd client && npm run build', { stdio: 'inherit' });
+    console.log('Building extension...');
+
+    await build({
+      entryPoints: ['client/src/extension.ts'],
+      bundle: true,
+      outfile: 'out/client/extension.js',
+      external: ['vscode'],
+      format: 'esm',
+      platform: 'node',
+      sourcemap: true,
+      minify: false,
+      target: 'es2022',
+      legalComments: 'none',
+      banner: {
+        js: `import { createRequire } from 'module'; const require = createRequire(import.meta.url);`
+      },
+      define: {
+        'global': 'globalThis'
+      }
+    });
 
     console.log('✓ Extension built successfully');
   } catch (error) {
