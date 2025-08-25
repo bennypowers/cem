@@ -18,7 +18,16 @@ local attribute_hover_benchmark = require('modules.attribute_hover_benchmark')
 local edit_cycles_benchmark = require('modules.edit_cycles_benchmark')
 local lit_template_benchmark = require('modules.lit_template_benchmark')
 
+-- Import enhanced benchmark modules
+local multi_buffer_benchmark = require('modules.multi_buffer_benchmark')
+local neovim_workflow_benchmark = require('modules.neovim_workflow_benchmark')
+local incremental_parsing_benchmark = require('modules.incremental_parsing_benchmark')
+local large_project_benchmark = require('modules.large_project_benchmark')
+
 local function run_all_benchmarks()
+  local overall_start_time = vim.fn.reltime()
+  local max_total_time_seconds = 300 -- 5 minutes total limit for CI safety
+  
   local server_name = _G.BENCHMARK_LSP_NAME or "unknown"
   local config = _G.BENCHMARK_LSP_CONFIG
   
@@ -29,7 +38,7 @@ local function run_all_benchmarks()
     return
   end
   
-  print(string.format("Running modular benchmarks for %s LSP server", server_name))
+  print(string.format("Running modular benchmarks for %s LSP server (max %ds)", server_name, max_total_time_seconds))
   print("=" .. string.rep("=", 50))
   
   -- Use large project fixture for expanded features
@@ -58,11 +67,23 @@ local function run_all_benchmarks()
     {name = "stress_test", module = stress_test_benchmark},
     {name = "attribute_hover", module = attribute_hover_benchmark},
     {name = "edit_cycles", module = edit_cycles_benchmark},
-    {name = "lit_template", module = lit_template_benchmark}
+    {name = "lit_template", module = lit_template_benchmark},
+    -- Enhanced benchmarks for real-world performance testing (120s total time limit)
+    {name = "multi_buffer", module = multi_buffer_benchmark},
+    {name = "neovim_workflow", module = neovim_workflow_benchmark},
+    {name = "incremental_parsing", module = incremental_parsing_benchmark},
+    {name = "large_project", module = large_project_benchmark}
   }
   
   for _, benchmark in ipairs(benchmarks) do
-    print(string.format("\n--- Running %s benchmark ---", benchmark.name))
+    -- Check total time limit
+    local elapsed_time = vim.fn.reltime(overall_start_time)[1]
+    if elapsed_time >= max_total_time_seconds then
+      print(string.format("\n⏰ Time limit reached (%ds), stopping remaining benchmarks", max_total_time_seconds))
+      break
+    end
+    
+    print(string.format("\n--- Running %s benchmark (%.0fs elapsed) ---", benchmark.name, elapsed_time))
     
     local success, result = pcall(function()
       return benchmark.module['run_' .. benchmark.name .. '_benchmark'](config, fixture_dir)
@@ -87,6 +108,26 @@ local function run_all_benchmarks()
             result.success_rate * 100, 
             result.successful_runs or result.successful_hovers or result.successful_completions or 0,
             result.iterations or result.total_attempts or 1))
+        end
+        
+        -- Enhanced benchmark specific reporting
+        if result.total_buffers_opened then
+          print(string.format("   Buffers opened: %d, Concurrent requests: %d", 
+            result.total_buffers_opened, result.concurrent_requests_completed or 0))
+        end
+        
+        if result.total_operations then
+          print(string.format("   Total operations: %d", result.total_operations))
+        end
+        
+        if result.total_edits then
+          print(string.format("   Total edits: %d, Parsing responses: %d", 
+            result.total_edits, result.parsing_responses or 0))
+        end
+        
+        if result.files_opened then
+          print(string.format("   Files opened: %d, Symbols found: %d", 
+            result.files_opened, result.symbols_found or 0))
         end
         
         if result.memory_usage_bytes and result.memory_usage_bytes > 0 then
@@ -159,6 +200,11 @@ local function run_all_benchmarks()
   vim.fn.writefile({json_content}, script_dir .. '/' .. results_file)
   
   print(string.format("\nResults saved to: %s", results_file))
+  
+  -- Final timing report
+  local total_elapsed_time = vim.fn.reltime(overall_start_time)[1]
+  print(string.format("Total benchmark time: %.1fs / %.0fs limit", total_elapsed_time, max_total_time_seconds))
+  
   print(string.rep("=", 50))
 end
 

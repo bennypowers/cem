@@ -56,10 +56,17 @@ benchmark/
 ### Run Benchmarks
 
 ```bash
-# Full comparison (recommended)
+# Enhanced real-world performance comparison (recommended for CI/development)
+./run_enhanced_comparison.sh
+
+# Full comprehensive comparison (all benchmarks)
 ./run_comparison.sh
 
-# Individual servers
+# Individual servers - enhanced benchmarks only (120s limit)
+nvim --headless --clean -u configs/cem-minimal.lua -l run_enhanced_benchmarks.lua
+nvim --headless --clean -u configs/wc-toolkit-minimal.lua -l run_enhanced_benchmarks.lua
+
+# Individual servers - all benchmarks
 nvim --headless --clean -u configs/cem-minimal.lua -l run_modular_benchmark.lua
 nvim --headless --clean -u configs/wc-toolkit-minimal.lua -l run_modular_benchmark.lua
 
@@ -97,7 +104,46 @@ Overall Success Rate: 100.0% (6/6)
 🎉 Server performance is GOOD
 ```
 
-## 🧪 Test Scenarios
+## 🚀 Enhanced Real-World Benchmarks (NEW)
+
+The enhanced benchmarks focus on revealing architectural performance differences between Go/tree-sitter (cem) and TypeScript/Volar (wc-toolkit) through realistic usage scenarios.
+
+### Enhanced Benchmark Modules (120s total time limit)
+
+#### 1. Multi-Buffer Benchmark (30s)
+- **Purpose**: Test Go's concurrency advantages vs TypeScript single-threading
+- **Scenarios**: Opens 5 documents simultaneously, rapid buffer switching, concurrent LSP requests
+- **Metrics**: Buffer switch times, concurrent request latency, throughput measurements
+- **Expected Difference**: Go should handle multiple documents more efficiently
+
+#### 2. Neovim Workflow Benchmark (40s)  
+- **Purpose**: Test real user experience with editor-driven commands vs direct LSP calls
+- **Scenarios**: `:e` file opening, `:b` buffer navigation, `<C-x><C-o>` completion, hover actions
+- **Metrics**: End-to-end command latency, user experience timing
+- **Expected Difference**: Reveals real-world responsiveness differences
+
+#### 3. Incremental Parsing Benchmark (30s)
+- **Purpose**: Stress tree-sitter's incremental parsing advantages during active editing
+- **Scenarios**: Character-by-character typing, element insertion/removal, attribute edits, large paste operations
+- **Metrics**: Parsing response time after each edit, edit session performance
+- **Expected Difference**: Tree-sitter should excel with frequent document changes
+
+#### 4. Large Project Benchmark (20s)
+- **Purpose**: Test workspace navigation and symbol search at scale
+- **Scenarios**: Multi-file opening, workspace symbol search, navigation operations
+- **Metrics**: File opening speed, symbol search performance, workspace operations
+- **Expected Difference**: Go's memory management and concurrency should scale better
+
+### Why Enhanced Benchmarks Matter
+
+The original benchmarks showed both servers at 100% reliability with similar performance (1.98ms vs 2.01ms startup). Enhanced benchmarks reveal architectural differences by testing:
+
+- **Concurrent operations** (Go's goroutines vs Node.js single-threading)  
+- **Incremental parsing** (tree-sitter's advantages vs traditional parsing)
+- **Real user workflows** (editor integration vs synthetic LSP calls)
+- **Large project handling** (memory efficiency and workspace operations)
+
+## 🧪 Original Test Scenarios
 
 ### 1. Startup Benchmark
 - **Iterations**: 20

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Medium Page - Component Examples</title>
+  <script type="module" src="./components.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 2rem; }
+    .container { max-width: 800px; margin: 0 auto; }
+    .section { margin-bottom: 2rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="section">
+      <my-header variant="primary" size="large">
+        <h1>Medium Page Example</h1>
+        <p>Testing medium-sized document with various components</p>
+      </my-header>
+    </header>
+
+    <main class="section">
+      <my-card variant="outlined" size="medium">
+        <h2 slot="header">Content Card</h2>
+        <p>This is a content card with various nested elements for testing purposes.</p>
+        
+        <my-button-group orientation="horizontal">
+          <my-button variant="primary" size="medium">Action 1</my-button>
+          <my-button variant="secondary" size="medium">Action 2</my-button>
+        </my-button-group>
+      </my-card>
+
+      <my-form class="section">
+        <my-form-group>
+          <my-label for="input1">Sample Input</my-label>
+          <my-input id="input1" type="text" size="medium" placeholder="Enter text"></my-input>
+        </my-form-group>
+        
+        <my-form-group>
+          <my-label for="select1">Sample Select</my-label>
+          <my-select id="select1" size="medium">
+            <option value="opt1">Option 1</option>
+            <option value="opt2">Option 2</option>
+          </my-select>
+        </my-form-group>
+      </my-form>
+
+      <my-table size="medium">
+        <my-table-header>
+          <my-table-cell type="header">Name</my-table-cell>
+          <my-table-cell type="header">Value</my-table-cell>
+        </my-table-header>
+        <my-table-row>
+          <my-table-cell>Item 1</my-table-cell>
+          <my-table-cell>Value 1</my-table-cell>
+        </my-table-row>
+        <my-table-row>
+          <my-table-cell>Item 2</my-table-cell>
+          <my-table-cell>Value 2</my-table-cell>
+        </my-table-row>
+      </my-table>
+    </main>
+
+    <footer class="section">
+      <my-divider></my-divider>
+      <my-container-footer>
+        <p>Footer content with custom elements</p>
+      </my-container-footer>
+    </footer>
+  </div>
+</body>
+</html>

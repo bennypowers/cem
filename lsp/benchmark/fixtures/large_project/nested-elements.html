@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nested Elements - Deep Nesting Test</title>
+  <script type="module" src="./components.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 1rem; }
+    .deeply-nested { margin-left: 1rem; }
+  </style>
+</head>
+<body>
+  <my-container-panel variant="bordered" size="large">
+    <h1>Deeply Nested Elements Test</h1>
+    
+    <my-card variant="outlined" size="large">
+      <h2 slot="header">Level 1 Container</h2>
+      
+      <my-accordion size="large">
+        <my-accordion-item>
+          <h3 slot="header">Level 2 - Accordion Item</h3>
+          
+          <my-tabs size="medium" orientation="horizontal">
+            <my-tab-panel label="Tab 1">
+              <my-card variant="filled" size="medium">
+                <h4 slot="header">Level 3 - Tab Content Card</h4>
+                
+                <my-form>
+                  <my-form-group>
+                    <my-label for="nested-input-1">Level 4 - Form Input</my-label>
+                    <my-input id="nested-input-1" type="text" size="medium">
+                      <my-tooltip slot="help" content="This is a deeply nested tooltip" position="top">
+                        <my-icon name="help" size="small"></my-icon>
+                      </my-tooltip>
+                    </my-input>
+                  </my-form-group>
+                  
+                  <my-form-group>
+                    <my-button-group orientation="horizontal">
+                      <my-button variant="primary" size="small">
+                        <my-icon slot="prefix" name="save" size="small"></my-icon>
+                        Save Level 5
+                      </my-button>
+                      <my-button variant="secondary" size="small">
+                        <my-icon slot="prefix" name="cancel" size="small"></my-icon>
+                        Cancel
+                      </my-button>
+                    </my-button-group>
+                  </my-form-group>
+                </my-form>
+              </my-card>
+            </my-tab-panel>
+            
+            <my-tab-panel label="Tab 2">
+              <my-table size="medium" sortable="true">
+                <my-table-header>
+                  <my-table-cell type="header">
+                    <my-button variant="ghost" size="small">
+                      Name
+                      <my-icon slot="suffix" name="sort" size="small"></my-icon>
+                    </my-button>
+                  </my-table-cell>
+                  <my-table-cell type="header">Actions</my-table-cell>
+                </my-table-header>
+                
+                <my-table-row>
+                  <my-table-cell>
+                    <my-card variant="minimal" size="small">
+                      <my-avatar size="small" src="user1.jpg"></my-avatar>
+                      <span>John Doe</span>
+                    </my-card>
+                  </my-table-cell>
+                  <my-table-cell>
+                    <my-dropdown size="small">
+                      <my-button slot="trigger" variant="ghost" size="small">
+                        <my-icon name="menu" size="small"></my-icon>
+                      </my-button>
+                      <my-dropdown-item>
+                        <my-icon slot="prefix" name="edit" size="small"></my-icon>
+                        Edit User
+                      </my-dropdown-item>
+                      <my-dropdown-item>
+                        <my-icon slot="prefix" name="delete" size="small"></my-icon>
+                        Delete User
+                      </my-dropdown-item>
+                    </my-dropdown>
+                  </my-table-cell>
+                </my-table-row>
+              </my-table>
+            </my-tab-panel>
+            
+            <my-tab-panel label="Tab 3">
+              <my-card variant="elevated" size="medium">
+                <h4 slot="header">Nested Chart Container</h4>
+                
+                <my-chart type="bar" size="medium" data-source="nested-data.json">
+                  <my-chart-legend position="bottom">
+                    <my-chart-legend-item color="blue" label="Series 1">
+                      <my-tooltip content="Primary data series" position="top">
+                        <my-icon name="info" size="small"></my-icon>
+                      </my-tooltip>
+                    </my-chart-legend-item>
+                    <my-chart-legend-item color="red" label="Series 2">
+                      <my-tooltip content="Secondary data series" position="top">
+                        <my-icon name="info" size="small"></my-icon>
+                      </my-tooltip>
+                    </my-chart-legend-item>
+                  </my-chart-legend>
+                </my-chart>
+                
+                <my-button-group slot="footer" orientation="horizontal">
+                  <my-button variant="outline" size="small">
+                    <my-icon slot="prefix" name="download" size="small"></my-icon>
+                    Export Data
+                  </my-button>
+                  <my-button variant="outline" size="small">
+                    <my-icon slot="prefix" name="refresh" size="small"></my-icon>
+                    Refresh
+                  </my-button>
+                </my-button-group>
+              </my-card>
+            </my-tab-panel>
+          </my-tabs>
+        </my-accordion-item>
+        
+        <my-accordion-item>
+          <h3 slot="header">Level 2 - Complex Form Section</h3>
+          
+          <my-container-panel variant="filled" size="large">
+            <my-form method="post" action="/nested-form">
+              <my-form-section>
+                <h4>Personal Information</h4>
+                
+                <my-form-group>
+                  <my-label for="personal-name">Full Name</my-label>
+                  <my-input id="personal-name" type="text" size="large" required>
+                    <my-validation-message slot="error">
+                      <my-icon slot="prefix" name="error" size="small"></my-icon>
+                      Name is required
+                    </my-validation-message>
+                  </my-input>
+                </my-form-group>
+                
+                <my-form-group>
+                  <my-label for="personal-email">Email Address</my-label>
+                  <my-input id="personal-email" type="email" size="large" required>
+                    <my-button slot="suffix" variant="ghost" size="small">
+                      <my-icon name="verify" size="small"></my-icon>
+                    </my-button>
+                  </my-input>
+                </my-form-group>
+              </my-form-section>
+              
+              <my-form-section>
+                <h4>Address Information</h4>
+                
+                <my-form-group>
+                  <my-label for="address-street">Street Address</my-label>
+                  <my-textarea id="address-street" rows="2" size="large">
+                    <my-character-counter slot="footer" max="100"></my-character-counter>
+                  </my-textarea>
+                </my-form-group>
+                
+                <my-form-row>
+                  <my-form-group>
+                    <my-label for="address-city">City</my-label>
+                    <my-input id="address-city" type="text" size="medium"></my-input>
+                  </my-form-group>
+                  
+                  <my-form-group>
+                    <my-label for="address-state">State</my-label>
+                    <my-select id="address-state" size="medium">
+                      <option value="">Select State</option>
+                      <option value="CA">California</option>
+                      <option value="NY">New York</option>
+                      <option value="TX">Texas</option>
+                    </my-select>
+                  </my-form-group>
+                  
+                  <my-form-group>
+                    <my-label for="address-zip">ZIP Code</my-label>
+                    <my-input id="address-zip" type="text" size="small" pattern="[0-9]{5}">
+                      <my-input-mask slot="mask" pattern="00000"></my-input-mask>
+                    </my-input>
+                  </my-form-group>
+                </my-form-row>
+              </my-form-section>
+              
+              <my-form-section>
+                <h4>Preferences</h4>
+                
+                <my-form-group>
+                  <my-checkbox-group label="Notification Preferences">
+                    <my-checkbox value="email">
+                      <my-icon slot="prefix" name="email" size="small"></my-icon>
+                      Email Notifications
+                    </my-checkbox>
+                    <my-checkbox value="sms">
+                      <my-icon slot="prefix" name="phone" size="small"></my-icon>
+                      SMS Notifications
+                    </my-checkbox>
+                    <my-checkbox value="push">
+                      <my-icon slot="prefix" name="bell" size="small"></my-icon>
+                      Push Notifications
+                    </my-checkbox>
+                  </my-checkbox-group>
+                </my-form-group>
+                
+                <my-form-group>
+                  <my-radio-group label="Theme Preference" name="theme">
+                    <my-radio value="light">
+                      <my-icon slot="prefix" name="sun" size="small"></my-icon>
+                      Light Theme
+                    </my-radio>
+                    <my-radio value="dark">
+                      <my-icon slot="prefix" name="moon" size="small"></my-icon>
+                      Dark Theme
+                    </my-radio>
+                    <my-radio value="auto">
+                      <my-icon slot="prefix" name="auto" size="small"></my-icon>
+                      Auto Theme
+                    </my-radio>
+                  </my-radio-group>
+                </my-form-group>
+              </my-form-section>
+              
+              <my-form-actions>
+                <my-button-group orientation="horizontal">
+                  <my-button type="submit" variant="primary" size="large">
+                    <my-icon slot="prefix" name="save" size="small"></my-icon>
+                    Submit Form
+                    <my-spinner slot="suffix" size="small" style="display: none;"></my-spinner>
+                  </my-button>
+                  
+                  <my-button type="button" variant="secondary" size="large">
+                    <my-icon slot="prefix" name="preview" size="small"></my-icon>
+                    Preview
+                  </my-button>
+                  
+                  <my-button type="reset" variant="outline" size="large">
+                    <my-icon slot="prefix" name="reset" size="small"></my-icon>
+                    Reset Form
+                  </my-button>
+                </my-button-group>
+              </my-form-actions>
+            </my-form>
+          </my-container-panel>
+        </my-accordion-item>
+      </my-accordion>
+    </my-card>
+    
+    <!-- Additional deeply nested structure -->
+    <my-card variant="outlined" size="large" class="deeply-nested">
+      <h2 slot="header">Alternative Deep Nesting Pattern</h2>
+      
+      <my-layout-grid cols="2" gap="medium">
+        <my-layout-cell>
+          <my-card variant="filled" size="medium">
+            <h3 slot="header">Grid Cell 1</h3>
+            
+            <my-list size="medium">
+              <my-list-item>
+                <my-avatar slot="prefix" size="small" src="user1.jpg"></my-avatar>
+                <my-text variant="body">List Item 1</my-text>
+                <my-dropdown slot="suffix" size="small">
+                  <my-button slot="trigger" variant="ghost" size="small">
+                    <my-icon name="menu" size="small"></my-icon>
+                  </my-button>
+                  <my-dropdown-menu>
+                    <my-dropdown-item>Action 1</my-dropdown-item>
+                    <my-dropdown-item>Action 2</my-dropdown-item>
+                  </my-dropdown-menu>
+                </my-dropdown>
+              </my-list-item>
+              
+              <my-list-item>
+                <my-icon slot="prefix" name="document" size="small"></my-icon>
+                <my-text variant="body">List Item 2</my-text>
+                <my-badge slot="suffix" variant="info" size="small">New</my-badge>
+              </my-list-item>
+            </my-list>
+          </my-card>
+        </my-layout-cell>
+        
+        <my-layout-cell>
+          <my-card variant="elevated" size="medium">
+            <h3 slot="header">Grid Cell 2</h3>
+            
+            <my-progress-group>
+              <my-progress label="Task 1" value="80" max="100" size="small">
+                <my-tooltip slot="help" content="80% complete" position="top">
+                  <my-icon name="info" size="small"></my-icon>
+                </my-tooltip>
+              </my-progress>
+              
+              <my-progress label="Task 2" value="45" max="100" size="small">
+                <my-tooltip slot="help" content="45% complete" position="top">
+                  <my-icon name="info" size="small"></my-icon>
+                </my-tooltip>
+              </my-progress>
+              
+              <my-progress label="Task 3" value="90" max="100" size="small">
+                <my-tooltip slot="help" content="90% complete" position="top">
+                  <my-icon name="info" size="small"></my-icon>
+                </my-tooltip>
+              </my-progress>
+            </my-progress-group>
+          </my-card>
+        </my-layout-cell>
+      </my-layout-grid>
+    </my-card>
+  </my-container-panel>
+</body>
+</html>

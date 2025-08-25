@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Medium HTML Document - Editing Test</title>
+  <script type="module" src="./components.js"></script>
+  <style>
+    body { margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    .section { margin-bottom: 2rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header Section -->
+    <header class="section">
+      <my-header size="large" variant="primary">
+        <h1>Medium Document for Editing Tests</h1>
+        <p>This document contains various custom elements for incremental parsing tests</p>
+      </my-header>
+    </header>
+
+    <!-- Navigation Section -->
+    <nav class="section">
+      <my-nav variant="horizontal" orientation="top">
+        <my-nav-item href="#overview">Overview</my-nav-item>
+        <my-nav-item href="#components">Components</my-nav-item>
+        <my-nav-item href="#forms">Forms</my-nav-item>
+        <my-nav-item href="#data">Data</my-nav-item>
+      </my-nav>
+    </nav>
+
+    <!-- Overview Section -->
+    <section id="overview" class="section">
+      <my-card variant="outlined" size="large">
+        <h2 slot="header">Overview</h2>
+        <p>This section provides an overview of the available components and their usage.</p>
+        <my-button size="medium" variant="primary">Learn More</my-button>
+      </my-card>
+    </section>
+
+    <!-- Components Grid -->
+    <section id="components" class="section">
+      <h2>Component Showcase</h2>
+      <div class="grid">
+        <my-card size="small" variant="filled">
+          <h3 slot="header">Buttons</h3>
+          <my-button-group orientation="horizontal">
+            <my-button size="small" variant="primary">Primary</my-button>
+            <my-button size="small" variant="secondary">Secondary</my-button>
+            <my-button size="small" variant="danger">Danger</my-button>
+          </my-button-group>
+        </my-card>
+
+        <my-card size="small" variant="outlined">
+          <h3 slot="header">Input Controls</h3>
+          <my-form-group>
+            <my-input type="text" placeholder="Enter text" size="medium"></my-input>
+            <my-select size="medium">
+              <option value="option1">Option 1</option>
+              <option value="option2">Option 2</option>
+            </my-select>
+          </my-form-group>
+        </my-card>
+
+        <my-card size="small" variant="elevated">
+          <h3 slot="header">Media</h3>
+          <my-image src="placeholder.jpg" alt="Placeholder" size="medium"></my-image>
+          <my-video-player controls size="small"></my-video-player>
+        </my-card>
+      </div>
+    </section>
+
+    <!-- Forms Section -->
+    <section id="forms" class="section">
+      <my-container-panel variant="bordered">
+        <h2>Form Example</h2>
+        <my-form method="post" action="/submit">
+          <my-form-group>
+            <my-label for="name">Name</my-label>
+            <my-input id="name" type="text" required size="large"></my-input>
+          </my-form-group>
+
+          <my-form-group>
+            <my-label for="email">Email</my-label>
+            <my-input id="email" type="email" required size="large"></my-input>
+          </my-form-group>
+
+          <my-form-group>
+            <my-label for="category">Category</my-label>
+            <my-select id="category" size="large">
+              <option value="general">General</option>
+              <option value="technical">Technical</option>
+              <option value="support">Support</option>
+            </my-select>
+          </my-form-group>
+
+          <my-form-group>
+            <my-label for="message">Message</my-label>
+            <my-textarea id="message" rows="4" size="large"></my-textarea>
+          </my-form-group>
+
+          <my-button-group orientation="horizontal">
+            <my-button type="submit" variant="primary" size="large">Submit</my-button>
+            <my-button type="reset" variant="secondary" size="large">Reset</my-button>
+          </my-button-group>
+        </my-form>
+      </my-container-panel>
+    </section>
+
+    <!-- Data Display Section -->
+    <section id="data" class="section">
+      <h2>Data Components</h2>
+      
+      <my-table size="large" sortable="true" filterable="true">
+        <my-table-header>
+          <my-table-cell type="header">Name</my-table-cell>
+          <my-table-cell type="header">Type</my-table-cell>
+          <my-table-cell type="header">Size</my-table-cell>
+          <my-table-cell type="header">Actions</my-table-cell>
+        </my-table-header>
+        <my-table-row>
+          <my-table-cell>Button Component</my-table-cell>
+          <my-table-cell>UI Element</my-table-cell>
+          <my-table-cell>Small</my-table-cell>
+          <my-table-cell>
+            <my-button size="small" variant="primary">Edit</my-button>
+            <my-button size="small" variant="danger">Delete</my-button>
+          </my-table-cell>
+        </my-table-row>
+        <my-table-row>
+          <my-table-cell>Card Component</my-table-cell>
+          <my-table-cell>Container</my-table-cell>
+          <my-table-cell>Medium</my-table-cell>
+          <my-table-cell>
+            <my-button size="small" variant="primary">Edit</my-button>
+            <my-button size="small" variant="danger">Delete</my-button>
+          </my-table-cell>
+        </my-table-row>
+      </my-table>
+
+      <my-chart type="bar" data-source="sample-data.json" size="large"></my-chart>
+    </section>
+
+    <!-- Interactive Elements -->
+    <section class="section">
+      <h2>Interactive Elements</h2>
+      
+      <my-accordion size="large">
+        <my-accordion-item>
+          <h3 slot="header">Getting Started</h3>
+          <p>This section covers the basics of using our component library.</p>
+          <my-button variant="primary">View Documentation</my-button>
+        </my-accordion-item>
+        <my-accordion-item>
+          <h3 slot="header">Advanced Features</h3>
+          <p>Learn about advanced configuration options and customization.</p>
+          <my-button variant="secondary">Advanced Guide</my-button>
+        </my-accordion-item>
+      </my-accordion>
+
+      <my-tabs size="large" orientation="horizontal">
+        <my-tab-panel label="Overview">
+          <p>General information about the component system.</p>
+          <my-progress value="75" max="100" size="medium"></my-progress>
+        </my-tab-panel>
+        <my-tab-panel label="Examples">
+          <p>Code examples and usage patterns.</p>
+          <my-code-block language="html" size="medium">
+            &lt;my-button variant="primary"&gt;Click me&lt;/my-button&gt;
+          </my-code-block>
+        </my-tab-panel>
+        <my-tab-panel label="API">
+          <p>Complete API reference and documentation.</p>
+          <my-link href="/api-docs" size="medium">View API Docs</my-link>
+        </my-tab-panel>
+      </my-tabs>
+    </section>
+
+    <!-- Feedback Components -->
+    <section class="section">
+      <h2>Feedback & Status</h2>
+      
+      <div class="grid">
+        <my-alert variant="info" size="medium">
+          <strong>Info:</strong> This is an informational alert message.
+        </my-alert>
+        
+        <my-alert variant="success" size="medium">
+          <strong>Success:</strong> Operation completed successfully.
+        </my-alert>
+        
+        <my-alert variant="warning" size="medium">
+          <strong>Warning:</strong> Please review the following items.
+        </my-alert>
+        
+        <my-alert variant="danger" size="medium">
+          <strong>Error:</strong> An error occurred during processing.
+        </my-alert>
+      </div>
+
+      <my-notification-center size="large">
+        <my-notification variant="info" timestamp="2024-01-15T10:30:00">
+          System maintenance scheduled for tonight.
+        </my-notification>
+        <my-notification variant="success" timestamp="2024-01-15T09:15:00">
+          Profile updated successfully.
+        </my-notification>
+      </my-notification-center>
+    </section>
+
+    <!-- Footer -->
+    <footer class="section">
+      <my-divider style="margin: 2rem 0;"></my-divider>
+      <my-container-footer>
+        <p>© 2024 Component Library. All rights reserved.</p>
+        <my-button-group orientation="horizontal">
+          <my-button variant="ghost" size="small">Privacy</my-button>
+          <my-button variant="ghost" size="small">Terms</my-button>
+          <my-button variant="ghost" size="small">Support</my-button>
+        </my-button-group>
+      </my-container-footer>
+    </footer>
+  </div>
+
+  <!-- Modal Examples (initially hidden) -->
+  <my-modal id="example-modal" size="large">
+    <h2 slot="header">Example Modal</h2>
+    <p>This is an example modal dialog for testing overlay components.</p>
+    <my-button slot="footer" variant="primary">Confirm</my-button>
+    <my-button slot="footer" variant="secondary">Cancel</my-button>
+  </my-modal>
+
+  <my-drawer id="example-drawer" position="right" size="medium">
+    <h3 slot="header">Settings Panel</h3>
+    <my-form>
+      <my-form-group>
+        <my-label>Theme</my-label>
+        <my-select>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </my-select>
+      </my-form-group>
+      <my-form-group>
+        <my-checkbox checked>Enable notifications</my-checkbox>
+      </my-form-group>
+    </my-form>
+  </my-drawer>
+
+  <!-- Tooltip Examples -->
+  <div style="margin-top: 2rem; text-align: center;">
+    <my-tooltip content="This is a tooltip" position="top">
+      <my-button variant="outline">Hover for tooltip</my-button>
+    </my-tooltip>
+  </div>
+</body>
+</html>
