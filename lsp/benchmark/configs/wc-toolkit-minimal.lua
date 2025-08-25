@@ -23,22 +23,23 @@ vim.opt.ruler = false
 vim.opt.laststatus = 0
 vim.opt.signcolumn = "no"
 
--- Find wc-toolkit server path
+-- Find wc-toolkit server path (use the built VS Code extension server)
 local function get_wc_toolkit_server_path()
   local current_dir = vim.fn.getcwd()
-  local server_path = current_dir .. '/servers/wc-language-server/packages/language-server/bin/wc-language-server.js'
+  local server_path = current_dir .. '/servers/wc-language-server/packages/vscode/dist/server.js'
   if vim.fn.filereadable(server_path) == 1 then
     return {'node', server_path, '--stdio'}
   end
-  error("wc-toolkit LSP server not found at " .. server_path .. ". Please run the setup script first.")
+  error("wc-toolkit LSP server not found at " .. server_path .. ". Please build the VS Code extension first.")
 end
 
--- Minimal LSP configuration for wc-toolkit
+-- Minimal LSP configuration for wc-toolkit (matching VS Code extension)
 local wc_toolkit_config = {
   name = 'wc-toolkit-lsp',
   cmd = get_wc_toolkit_server_path(),
   root_markers = {
     'custom-elements.json',
+    'wc.config.js',
     'package.json',
     '.git',
   },
@@ -49,6 +50,12 @@ local wc_toolkit_config = {
   },
   single_file_support = true,
   capabilities = vim.lsp.protocol.make_client_capabilities(),
+  init_options = {
+    typescript = {
+      tsdk = vim.fn.system('npm list typescript --depth=0 --silent 2>/dev/null | grep typescript | head -1'):match('typescript@[^%s]+') and 
+             vim.fn.trim(vim.fn.system('npm root')) .. '/typescript/lib' or nil
+    }
+  },
   on_attach = function(client, bufnr)
     -- Minimal attach - no keybindings or fancy features
   end,

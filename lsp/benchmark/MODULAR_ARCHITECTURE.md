@@ -10,11 +10,15 @@ benchmark/
 │   ├── cem-minimal.lua        # Minimal config for cem LSP
 │   └── wc-toolkit-minimal.lua # Minimal config for wc-toolkit LSP
 ├── modules/                    # Modular benchmark test modules
-│   ├── startup_benchmark.lua
-│   ├── hover_benchmark.lua
-│   ├── completion_benchmark.lua
-│   ├── diagnostics_benchmark.lua
-│   └── file_lifecycle_benchmark.lua
+│   ├── startup_benchmark.lua            # Server initialization (20 iterations)
+│   ├── hover_benchmark.lua              # Hover performance (10 iterations per element)  
+│   ├── completion_benchmark.lua         # Completion performance (15 iterations per context)
+│   ├── diagnostics_benchmark.lua        # Diagnostics publishing (with capability detection)
+│   ├── file_lifecycle_benchmark.lua     # File operations (5 iterations)
+│   ├── stress_test_benchmark.lua        # Large workload scenarios
+│   ├── attribute_hover_benchmark.lua    # Attribute hover correctness (21 attributes)
+│   ├── edit_cycles_benchmark.lua        # Edit responsiveness (rapid HTML editing)
+│   └── lit_template_benchmark.lua       # Lit-html template support testing
 ├── run_modular_benchmark.lua   # Main benchmark runner
 ├── run_comparison.sh          # Convenience script for both servers
 └── fixtures/                  # Test data
@@ -99,11 +103,15 @@ return M
 
 ### Available Modules
 
-1. **startup_benchmark.lua**: Tests server initialization time
-2. **hover_benchmark.lua**: Tests hover request performance and functionality
-3. **completion_benchmark.lua**: Tests completion request performance
-4. **diagnostics_benchmark.lua**: Tests diagnostics publishing
-5. **file_lifecycle_benchmark.lua**: Tests file open/change/close operations
+1. **startup_benchmark.lua**: Tests server initialization time (20 iterations)
+2. **hover_benchmark.lua**: Tests hover request performance and functionality (30 total tests)
+3. **completion_benchmark.lua**: Tests completion request performance (45 total tests)
+4. **diagnostics_benchmark.lua**: Tests diagnostics publishing with capability detection
+5. **file_lifecycle_benchmark.lua**: Tests file open/change/close operations (5 iterations)
+6. **stress_test_benchmark.lua**: Tests high-load scenarios with large documents (800+ lines)
+7. **attribute_hover_benchmark.lua**: Tests attribute hover correctness across 21 attribute types
+8. **edit_cycles_benchmark.lua**: Tests LSP responsiveness during rapid HTML editing (3 scenarios)
+9. **lit_template_benchmark.lua**: Tests LSP functionality within TypeScript template literals (5 scenarios)
 
 ## Results Format
 

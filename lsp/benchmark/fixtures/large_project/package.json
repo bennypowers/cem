@@ -22,10 +22,10 @@
     "ui-library"
   ],
   "dependencies": {
-    "lit": "^3.0.0"
+    "lit": "^3.3.1"
   },
   "devDependencies": {
     "@custom-elements-manifest/analyzer": "^0.9.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.9.2"
   }
 }

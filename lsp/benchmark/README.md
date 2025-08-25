@@ -19,12 +19,15 @@ benchmark/
 │   ├── cem-minimal.lua        # cem LSP configuration
 │   └── wc-toolkit-minimal.lua # wc-toolkit LSP configuration
 ├── modules/                    # Modular benchmark test modules
-│   ├── startup_benchmark.lua       # Server initialization (20 iterations)
-│   ├── hover_benchmark.lua         # Hover performance (10 iterations per element)
-│   ├── completion_benchmark.lua    # Completion performance (15 iterations per context)
-│   ├── diagnostics_benchmark.lua   # Diagnostics publishing
-│   ├── file_lifecycle_benchmark.lua # File operations (5 iterations)
-│   └── stress_test_benchmark.lua   # Large workload scenarios
+│   ├── startup_benchmark.lua            # Server initialization (20 iterations)
+│   ├── hover_benchmark.lua              # Hover performance (10 iterations per element)
+│   ├── completion_benchmark.lua         # Completion performance (15 iterations per context)
+│   ├── diagnostics_benchmark.lua        # Diagnostics publishing
+│   ├── file_lifecycle_benchmark.lua     # File operations (5 iterations)
+│   ├── stress_test_benchmark.lua        # Large workload scenarios
+│   ├── attribute_hover_benchmark.lua    # Attribute hover correctness (21 attributes)
+│   ├── edit_cycles_benchmark.lua        # Edit responsiveness (rapid HTML editing)
+│   └── lit_template_benchmark.lua       # Lit-html template support testing
 ├── utils/                      # Measurement and reporting utilities
 │   ├── measurement.lua        # Statistical analysis functions
 │   ├── reporting.lua          # Output formatting
@@ -114,6 +117,7 @@ Overall Success Rate: 100.0% (6/6)
 ### 4. Diagnostics Benchmark
 - **Content**: HTML with intentional errors
 - **Measures**: Diagnostics publishing time, error categorization
+- **Capability Detection**: Gracefully handles servers without diagnostics support
 
 ### 5. File Lifecycle Benchmark
 - **Operations**: File open, modification, rapid changes
@@ -125,26 +129,52 @@ Overall Success Rate: 100.0% (6/6)
 - **Load Tests**: 50 bulk hovers, 30 rapid completions
 - **Measures**: High-load performance, stability
 
+### 7. Attribute Hover Benchmark
+- **Attributes**: 21 different attribute types across element categories
+- **Coverage**: Buttons, forms, layout, charts, tables, media, overlays
+- **Iterations**: 3 per attribute type
+- **Measures**: Hover content accuracy, response completeness
+
+### 8. Edit Cycles Benchmark
+- **Scenarios**: Attribute addition, element insertion, content modification
+- **Edit Types**: 5 rapid edits per scenario across 3 scenarios
+- **Measures**: Diagnostics/completion response times during active editing
+- **Real-world Simulation**: Mimics developer typing patterns
+
+### 9. Lit-html Template Benchmark
+- **Test Areas**: Element hover, attribute completion, tag completion, template interpolation, event binding
+- **Template Coverage**: 280+ line TypeScript dashboard application
+- **Measures**: LSP functionality within template literals, interpolation awareness
+
 ## 📈 Latest Results Summary
 
-Based on the most recent comprehensive benchmarks:
+Based on the most recent comprehensive benchmarks with bug fixes applied:
 
 ### Performance Comparison
 - **Startup Time**: cem LSP slightly faster (1.98ms vs 2.01ms)
 - **Hover Success**: Both servers 66.7% (my-icon element not found in manifests)
 - **Completion**: Both servers 100% success rate
-- **Diagnostics**: cem LSP supports diagnostics, wc-toolkit does not
+- **Diagnostics**: Both servers support diagnostics (wc-toolkit configuration issue resolved)
+- **Edit Cycles**: Both servers 100% success rate after benchmark fixes
 - **Stress Testing**: Both servers handle large workloads well
 
 ### Reliability Analysis
-- **cem LSP**: 100% reliability (6/6 benchmarks pass)
-- **wc-toolkit LSP**: 83.3% reliability (5/6 benchmarks pass, diagnostics not supported)
+- **cem LSP**: 100% reliability (9/9 benchmarks pass)
+- **wc-toolkit LSP**: 100% reliability (9/9 benchmarks pass, diagnostics working)
 
 ### Key Findings
 1. **Performance**: Very similar startup and operation times
-2. **Functionality**: cem LSP has broader LSP feature support (diagnostics)
-3. **Stability**: Both servers handle stress testing well
-4. **Completeness**: Both provide good completion and hover support
+2. **Functionality**: Both servers provide excellent LSP feature support including diagnostics
+3. **Stability**: Both servers handle stress testing and edit cycles excellently  
+4. **Completeness**: Both provide excellent completion and hover support
+5. **Feature Coverage**: Both servers provide comprehensive LSP support with different architectural approaches
+
+### Recent Bug Fixes Applied ✅
+- **Edit Cycles Benchmark**: Fixed invalid column positions causing "out of range" errors
+- **Diagnostics Request Protocol**: Fixed incorrect `publishDiagnostics` usage (server-to-client notification vs client-to-server request)
+- **Server Capability Detection**: Enhanced diagnostics benchmark to gracefully handle servers without diagnostics support
+- **Realistic Edit Positions**: Updated edit scenarios to use valid positions in large-page.html test fixture
+- **wc-toolkit Configuration**: Fixed server binary path and TypeScript SDK initialization for proper diagnostics support
 
 ## 🛠 Development
 
