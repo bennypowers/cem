@@ -1,15 +1,22 @@
 ---
 title: Benchmarks
-description: Performance benchmarks of analyzers, generated from scripts/benchmark.sh.
+description: Performance benchmarks for CEM generate tool and LSP server implementations.
 weight: 30
 ---
+
+## Overview
+
+CEM provides two types of benchmarks for comprehensive performance analysis:
+
+### **Generate Tool Benchmarks**
+Performance comparison of custom element manifest generation tools.
 
 **Number of runs per tool**: {{<benchmark-runs>}}  
 **Number of files analyzed per run**: {{<benchmark-files>}}
 
 <figure class="benchmarks-bar-chart" role="group" aria-labelledby="bar-caption">
   <figcaption id="bar-caption" style="font-weight:bold;margin-bottom:0.5em;">
-    Benchmark results: lower is better (seconds)
+    Generate tool benchmark results: lower is better (seconds)
   </figcaption>
   {{<benchmark-bar-chart>}}
 </figure>
@@ -279,6 +286,67 @@ json-viewer {
 {{% /benchmark-tool-cards.inline %}}
 
 </div>
+
+### **LSP Server Benchmarks**
+
+The CEM project includes a comprehensive benchmarking framework for evaluating Language Server Protocol (LSP) server performance. This system provides data-driven insights for comparing LSP implementations across realistic development scenarios.
+
+#### Running LSP Benchmarks
+
+```bash
+# Run benchmarks for both servers
+make bench-lsp
+
+# Test individual servers
+make bench-lsp-cem        # CEM LSP only
+make bench-lsp-wc         # wc-toolkit LSP only
+```
+
+#### Benchmark Categories
+
+The benchmark suite tests LSP servers across **9 critical dimensions**:
+
+1. **Startup Performance** - LSP server initialization and capability registration
+2. **Hover Information** - Hover responses for custom elements and attributes  
+3. **Code Completion** - Tag name and attribute completions
+4. **Diagnostics** - Error detection and validation messages
+5. **File Lifecycle** - Document open, change, and close handling
+6. **Stress Testing** - High-load scenarios with large documents (800+ lines)
+7. **Attribute Hover Correctness** - Hover accuracy for 21 different attribute types
+8. **Edit Cycles Responsiveness** - Performance during rapid HTML editing
+9. **Lit-html Template Support** - LSP functionality within TypeScript template literals
+
+#### Key Performance Metrics
+
+- **Overall Success Rate** (target: >80% for production readiness)
+- **Response Times P95** (target: <100ms for good user experience)  
+- **Memory Usage** (target: <50MB for development efficiency)
+- **Server Survival Rate** (target: 100% for reliability)
+
+#### Test Fixtures
+
+- **233 custom elements** across 10 categories with comprehensive attributes
+- **300-line realistic HTML** with component showcase  
+- **280+ line Lit template** demonstrating complex dashboard applications
+- **Generic naming** (`my-*` prefix) for universal applicability
+
+#### Expected Performance Profiles
+
+**CEM LSP Server:**
+- ✅ Broader LSP feature support (diagnostics, go-to-definition, references)
+- ✅ Rich manifest data with comprehensive attribute information
+- ✅ Tree-sitter powered parsing for accuracy
+
+**wc-toolkit LSP Server:**
+- ✅ Lightweight architecture with minimal resource footprint
+- ✅ Basic reliability with simpler implementation
+- ⚠️ Limited features (basic hover/completion only)
+
+Results are saved as JSON files in `lsp/benchmark/results/` for detailed analysis and comparison.
+
+For complete LSP benchmark documentation, see the [LSP Server Benchmarks](/docs/lsp#benchmarks) section.
+
+---
 
 {{< loadchart.inline >}}
 <script type="module" src="{{ absURL "js/charts.js" }}"></script>

@@ -26,3 +26,5 @@ docs/custom-elements.json
 docs/public
 docs/static/*-last-output.*
 docs/**/custom-elements.json
+
+lsp/benchmark/results

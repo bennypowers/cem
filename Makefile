@@ -3,7 +3,7 @@ SHELL := /bin/bash
 CONTRIBUTING_PATH = docs/content/docs/contributing.md
 WINDOWS_CC_IMAGE := cem-windows-cc-image
 
-.PHONY: build test test-unit test-e2e update watch bench profile flamegraph coverage show-coverage clean lint format prepare-npm install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package
+.PHONY: build test test-unit test-e2e update watch bench bench-lsp bench-lsp-cem bench-lsp-wc profile flamegraph coverage show-coverage clean lint format prepare-npm install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package
 
 # NOTE: this is a non-traditional install target, which installs to ~/.local/bin/
 # It's mostly intended for local development, not for distribution
@@ -74,8 +74,28 @@ watch:
 		find . -type f \( -name "*.go" -o -name "*.scm" -o -name "*.ts" \) | entr -d sh -c 'make test || true'; \
 	done
 
+# Go performance benchmarks
 bench:
 	go test -v -cpuprofile=cpu.out -bench=BenchmarkGenerate -run=^$$ ./generate/
+
+# LSP server benchmarks
+bench-lsp: build
+	@echo "Running LSP server benchmarks..."
+	@cd lsp/benchmark && \
+	echo "Testing cem LSP server..." && \
+	nvim --headless --clean -u configs/cem-minimal.lua -l run_modular_benchmark.lua && \
+	echo "Testing wc-toolkit LSP server..." && \
+	nvim --headless --clean -u configs/wc-toolkit-minimal.lua -l run_modular_benchmark.lua && \
+	echo "LSP benchmarks completed. Results saved in lsp/benchmark/results/"
+
+# LSP benchmark for a specific server
+bench-lsp-cem: build
+	@echo "Running benchmarks for cem LSP server only..."
+	@cd lsp/benchmark && nvim --headless --clean -u configs/cem-minimal.lua -l run_modular_benchmark.lua
+
+bench-lsp-wc: build
+	@echo "Running benchmarks for wc-toolkit LSP server only..."
+	@cd lsp/benchmark && nvim --headless --clean -u configs/wc-toolkit-minimal.lua -l run_modular_benchmark.lua
 
 profile:
 	go test -bench=... -run=^$ -cpuprofile=cpu.out ./generate/

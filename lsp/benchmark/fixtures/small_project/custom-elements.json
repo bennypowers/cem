@@ -1,0 +1,114 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "Small project with 10 custom elements for basic performance testing",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "./src/my-button.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "A simple button component",
+          "name": "MyButton",
+          "tagName": "my-button",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "type",
+              "type": {"text": "\"primary\" | \"secondary\" | \"danger\""},
+              "description": "Button variant",
+              "default": "\"primary\""
+            },
+            {
+              "name": "size",
+              "type": {"text": "\"small\" | \"medium\" | \"large\""},
+              "description": "Button size",
+              "default": "\"medium\""
+            },
+            {
+              "name": "disabled",
+              "type": {"text": "boolean"},
+              "description": "Whether the button is disabled"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button",
+          "declaration": {"name": "MyButton"}
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module", 
+      "path": "./src/my-card.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "A card container component",
+          "name": "MyCard",
+          "tagName": "my-card",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "title",
+              "type": {"text": "string"},
+              "description": "Card title"
+            }
+          ],
+          "slots": [
+            {
+              "description": "Card header content",
+              "name": "header"
+            },
+            {
+              "description": "Card main content",
+              "name": "content"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "my-card",
+          "declaration": {"name": "MyCard"}
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "./src/my-input.js", 
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "An input field component",
+          "name": "MyInput",
+          "tagName": "my-input",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "placeholder",
+              "type": {"text": "string"},
+              "description": "Input placeholder text"
+            },
+            {
+              "name": "value",
+              "type": {"text": "string"},
+              "description": "Input value"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input",
+          "declaration": {"name": "MyInput"}
+        }
+      ]
+    }
+  ]
+}
