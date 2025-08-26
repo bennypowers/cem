@@ -195,7 +195,6 @@ func validateNumberAttribute(match AttributeMatch) []protocol.Diagnostic {
 	return diagnostics
 }
 
-
 // validateUnionType validates attribute values against union type definitions
 func validateUnionType(typeText string, match AttributeMatch) []protocol.Diagnostic {
 	var diagnostics []protocol.Diagnostic
