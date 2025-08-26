@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Card Examples - Large Project</title>
+  <script type="module" src="../components.js"></script>
+</head>
+<body>
+  <main>
+    <h1>Card Component Examples</h1>
+    
+    <section class="basic-cards">
+      <h2>Basic Card Variants</h2>
+      <div class="grid">
+        <my-card variant="outlined" size="medium">
+          <h3 slot="header">Outlined Card</h3>
+          <p>Basic outlined card example with standard content.</p>
+          <my-button slot="footer" variant="primary">Action</my-button>
+        </my-card>
+        
+        <my-card variant="filled" size="medium">
+          <h3 slot="header">Filled Card</h3>
+          <p>Filled card variant with background styling.</p>
+          <my-button slot="footer" variant="secondary">Secondary</my-button>
+        </my-card>
+        
+        <my-card variant="elevated" size="large">
+          <h3 slot="header">Elevated Card</h3>
+          <p>Elevated card with shadow and larger size.</p>
+          <my-button-group slot="footer">
+            <my-button variant="primary">Confirm</my-button>
+            <my-button variant="tertiary">Cancel</my-button>
+          </my-button-group>
+        </my-card>
+      </div>
+    </section>
+    
+    <section class="interactive-cards">
+      <h2>Interactive Cards</h2>
+      <my-card variant="outlined" clickable>
+        <my-icon slot="icon" name="star" size="large"></my-icon>
+        <h3 slot="header">Clickable Card</h3>
+        <p>This card is clickable and responds to user interaction.</p>
+      </my-card>
+      
+      <my-card variant="filled" size="small">
+        <my-avatar slot="avatar" src="user.jpg" size="medium"></my-avatar>
+        <h4 slot="header">User Profile Card</h4>
+        <p>Compact user profile with avatar and basic info.</p>
+        <my-button slot="footer" variant="ghost" size="small">View Profile</my-button>
+      </my-card>
+    </section>
+    
+    <section class="complex-cards">
+      <h2>Complex Card Layouts</h2>
+      <my-card variant="elevated" size="large">
+        <my-header slot="header" size="large">
+          <h2>Dashboard Card</h2>
+          <my-button variant="ghost" size="small">Settings</my-button>
+        </my-header>
+        
+        <my-content>
+          <my-chart type="line" data-source="api/metrics"></my-chart>
+          <my-table size="small">
+            <my-table-header>
+              <my-table-cell type="header">Metric</my-table-cell>
+              <my-table-cell type="header">Value</my-table-cell>
+            </my-table-header>
+            <my-table-row>
+              <my-table-cell>Users</my-table-cell>
+              <my-table-cell>1,234</my-table-cell>
+            </my-table-row>
+          </my-table>
+        </my-content>
+        
+        <my-footer slot="footer">
+          <my-button variant="primary">Export Data</my-button>
+          <my-button variant="secondary">Refresh</my-button>
+        </my-footer>
+      </my-card>
+    </section>
+    
+    <section class="nested-cards">
+      <h2>Nested Card Structures</h2>
+      <my-card variant="outlined" size="large">
+        <h2 slot="header">Parent Card Container</h2>
+        
+        <div class="nested-grid">
+          <my-card variant="filled" size="small">
+            <h4 slot="header">Nested Card 1</h4>
+            <my-button variant="primary" size="small">Action 1</my-button>
+          </my-card>
+          
+          <my-card variant="filled" size="small">
+            <h4 slot="header">Nested Card 2</h4>
+            <my-button variant="secondary" size="small">Action 2</my-button>
+          </my-card>
+          
+          <my-card variant="filled" size="small">
+            <h4 slot="header">Nested Card 3</h4>
+            <my-button variant="tertiary" size="small">Action 3</my-button>
+          </my-card>
+        </div>
+      </my-card>
+    </section>
+  </main>
+</body>
+</html>

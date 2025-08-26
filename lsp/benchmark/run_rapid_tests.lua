@@ -1,43 +1,36 @@
 #!/usr/bin/env nvim --headless --clean -l
--- Enhanced LSP Benchmark Runner (Real-world Performance Testing)
--- Usage: nvim --headless --clean -u configs/cem-minimal.lua -l run_enhanced_benchmarks.lua
--- Usage: nvim --headless --clean -u configs/wc-toolkit-minimal.lua -l run_enhanced_benchmarks.lua
--- 
--- This runner focuses on the new enhanced benchmarks that reveal architectural performance differences
--- Time limit: 120 seconds total (CI-friendly)
+-- Rapid Typing and References Benchmark Runner
+-- Usage: nvim --headless --clean -u configs/cem-minimal.lua -l run_rapid_tests.lua
+-- Usage: nvim --headless --clean -u configs/wc-toolkit-minimal.lua -l run_rapid_tests.lua
 
 -- Ensure the benchmark directory is in the path
 local script_dir = vim.fn.getcwd()
 package.path = script_dir .. '/?.lua;' .. package.path
 
--- Import enhanced benchmark modules only
-local multi_buffer_benchmark = require('modules.multi_buffer_benchmark')
-local neovim_workflow_benchmark = require('modules.neovim_workflow_benchmark')
-local incremental_parsing_benchmark = require('modules.incremental_parsing_benchmark')
-local large_project_benchmark = require('modules.large_project_benchmark')
+-- Import the new benchmark modules
 local rapid_typing_benchmark = require('modules.rapid_typing_benchmark')
 local references_performance_benchmark = require('modules.references_performance_benchmark')
 local integrated_workflow_benchmark = require('modules.integrated_workflow_benchmark')
 
-local function run_enhanced_benchmarks()
+local function run_rapid_tests()
   local overall_start_time = vim.fn.reltime()
-  local max_total_time_seconds = 140 -- 2.3 minutes total for new benchmarks
+  local max_total_time_seconds = 60 -- 1 minute total
   
   local server_name = _G.BENCHMARK_LSP_NAME or "unknown"
   local config = _G.BENCHMARK_LSP_CONFIG
   
   if not config then
     print("ERROR: No LSP configuration found. Make sure to use the appropriate config file:")
-    print("  nvim --headless --clean -u configs/cem-minimal.lua -l run_enhanced_benchmarks.lua")
-    print("  nvim --headless --clean -u configs/wc-toolkit-minimal.lua -l run_enhanced_benchmarks.lua")
+    print("  nvim --headless --clean -u configs/cem-minimal.lua -l run_rapid_tests.lua")
+    print("  nvim --headless --clean -u configs/wc-toolkit-minimal.lua -l run_rapid_tests.lua")
     return
   end
   
-  print(string.format("Running ENHANCED benchmarks for %s LSP server (max %ds)", server_name, max_total_time_seconds))
-  print("🚀 Real-world performance testing: rapid typing, references, multi-buffer, workflows")
+  print(string.format("Running RAPID TYPING tests for %s LSP server (max %ds)", server_name, max_total_time_seconds))
+  print("🚀 Testing realistic typing speeds at 60-80 WPM with go-to-references")
   print("=" .. string.rep("=", 70))
   
-  -- Use large project fixture for expanded features
+  -- Use large project fixture
   local fixture_dir = script_dir .. '/fixtures/large_project'
   
   -- Check if fixture exists
@@ -50,16 +43,12 @@ local function run_enhanced_benchmarks()
     server_name = server_name,
     timestamp = os.date("%Y-%m-%d %H:%M:%S"),
     fixture_dir = fixture_dir,
-    benchmark_type = "enhanced_performance",
+    benchmark_type = "rapid_typing_performance",
     benchmarks = {}
   }
   
-  -- Enhanced benchmarks with time allocations
+  -- Rapid typing focused benchmarks
   local benchmarks = {
-    {name = "multi_buffer", module = multi_buffer_benchmark, time_limit = 20},
-    {name = "neovim_workflow", module = neovim_workflow_benchmark, time_limit = 25},
-    {name = "incremental_parsing", module = incremental_parsing_benchmark, time_limit = 20},
-    {name = "large_project", module = large_project_benchmark, time_limit = 15},
     {name = "rapid_typing", module = rapid_typing_benchmark, time_limit = 25},
     {name = "references_performance", module = references_performance_benchmark, time_limit = 20},
     {name = "integrated_workflow", module = integrated_workflow_benchmark, time_limit = 15}
@@ -91,35 +80,21 @@ local function run_enhanced_benchmarks()
           print(string.format("   Duration: %.2fs / %ds limit", result.total_time, benchmark.time_limit))
         end
         
-        -- Display enhanced benchmark specific metrics
-        if result.total_buffers_opened then
-          print(string.format("   Multi-buffer: %d buffers, %d concurrent requests", 
-            result.total_buffers_opened, result.concurrent_requests_completed or 0))
-        end
-        
-        if result.total_operations and result.successful_completions then
-          print(string.format("   Workflow: %d operations, %d completions", 
-            result.total_operations, result.successful_completions))
-        end
-        
-        if result.total_edits then
-          print(string.format("   Incremental: %d edits, %d parsing responses", 
-            result.total_edits, result.parsing_responses or 0))
-        end
-        
-        if result.files_opened then
-          print(string.format("   Project: %d files, %d symbols found", 
-            result.files_opened, result.symbols_found or 0))
-        end
-        
+        -- Display rapid typing specific metrics
         if result.total_characters_typed then
           print(string.format("   Rapid Typing: %d chars, %d completions", 
             result.total_characters_typed, result.completion_responses or 0))
+          if result.avg_typing_speed then
+            print(string.format("   Average Speed: %.1f WPM", result.avg_typing_speed))
+          end
         end
         
         if result.total_references_searched then
           print(string.format("   References: %d searches, %d refs found", 
             result.total_references_searched, result.total_references_found or 0))
+          if result.avg_references_per_element then
+            print(string.format("   Average refs per element: %.1f", result.avg_references_per_element))
+          end
         end
         
         if result.workflow_iterations then
@@ -147,7 +122,7 @@ local function run_enhanced_benchmarks()
   
   -- Generate summary report
   print("\n" .. string.rep("=", 70))
-  print(string.format("ENHANCED BENCHMARK SUMMARY FOR %s", string.upper(server_name)))
+  print(string.format("RAPID TYPING BENCHMARK SUMMARY FOR %s", string.upper(server_name)))
   print(string.rep("=", 70))
   
   local successful_benchmarks = 0
@@ -172,23 +147,23 @@ local function run_enhanced_benchmarks()
   
   local overall_success_rate = successful_benchmarks / total_benchmarks
   print(string.rep("-", 70))
-  print(string.format("Enhanced Benchmark Success Rate: %.1f%% (%d/%d)", 
+  print(string.format("Rapid Typing Success Rate: %.1f%% (%d/%d)", 
     overall_success_rate * 100, successful_benchmarks, total_benchmarks))
   
   -- Performance assessment
-  if overall_success_rate >= 0.75 then
-    print("🎉 Real-world performance is EXCELLENT")
-    print("   Rapid typing, references, multi-buffer, and workflows all working well")
-  elseif overall_success_rate >= 0.5 then
-    print("⚠️  Real-world performance is GOOD")
-    print("   Some advanced features may need optimization")
+  if overall_success_rate >= 1.0 then
+    print("🎉 Rapid typing performance is EXCELLENT")
+    print("   All typing speeds and references working smoothly")
+  elseif overall_success_rate >= 0.67 then
+    print("⚠️  Rapid typing performance is GOOD")
+    print("   Most features working but some may need optimization")
   else
-    print("🚨 Real-world performance needs IMPROVEMENT")
-    print("   Consider architectural optimizations for better user experience")
+    print("🚨 Rapid typing performance needs IMPROVEMENT")
+    print("   Typing or references features may be too slow for real-world use")
   end
   
   -- Save results to file
-  local results_file = string.format('results/%s_enhanced_results_%s.json', 
+  local results_file = string.format('results/%s_rapid_typing_%s.json', 
     server_name, os.date("%Y%m%d_%H%M%S"))
   
   -- Ensure results directory exists
@@ -197,18 +172,14 @@ local function run_enhanced_benchmarks()
   local json_content = vim.fn.json_encode(all_results)
   vim.fn.writefile({json_content}, script_dir .. '/' .. results_file)
   
-  print(string.format("\nEnhanced results saved to: %s", results_file))
+  print(string.format("\nRapid typing results saved to: %s", results_file))
   
   -- Final timing report
   local total_elapsed_time = vim.fn.reltime(overall_start_time)[1]
-  print(string.format("Total enhanced benchmark time: %.1fs / %.0fs limit", total_elapsed_time, max_total_time_seconds))
-  
-  if total_elapsed_time > max_total_time_seconds then
-    print("⚠️  Warning: Exceeded time limit - some benchmarks may have been skipped")
-  end
+  print(string.format("Total rapid typing test time: %.1fs / %.0fs limit", total_elapsed_time, max_total_time_seconds))
   
   print(string.rep("=", 70))
 end
 
--- Run enhanced benchmarks
-run_enhanced_benchmarks()
+-- Run rapid typing tests
+run_rapid_tests()

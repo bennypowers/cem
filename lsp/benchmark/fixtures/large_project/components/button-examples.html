@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Button Examples - Large Project</title>
+  <script type="module" src="../components.js"></script>
+</head>
+<body>
+  <main>
+    <h1>Button Component Examples</h1>
+    
+    <section class="examples">
+      <h2>Basic Buttons</h2>
+      <my-button variant="primary" size="large">Primary Large</my-button>
+      <my-button variant="secondary" size="medium">Secondary Medium</my-button>
+      <my-button variant="tertiary" size="small">Tertiary Small</my-button>
+    </section>
+    
+    <section class="examples">
+      <h2>Button States</h2>
+      <my-button variant="primary" disabled>Disabled Primary</my-button>
+      <my-button variant="secondary" loading>Loading Secondary</my-button>
+      <my-button variant="primary" icon="star">With Icon</my-button>
+    </section>
+    
+    <section class="examples">
+      <h2>Button Groups</h2>
+      <my-button-group orientation="horizontal">
+        <my-button variant="primary">Save</my-button>
+        <my-button variant="secondary">Cancel</my-button>
+        <my-button variant="tertiary">Reset</my-button>
+      </my-button-group>
+    </section>
+    
+    <section class="examples">
+      <h2>Interactive Buttons</h2>
+      <my-button variant="primary" onclick="handleClick()">Click Handler</my-button>
+      <my-button variant="secondary" type="submit">Submit Button</my-button>
+      <my-button variant="primary" href="/link">Link Button</my-button>
+    </section>
+    
+    <section class="card-examples">
+      <h2>Buttons in Cards</h2>
+      <my-card variant="outlined">
+        <h3 slot="header">Card with Buttons</h3>
+        <p>Example card containing multiple button variations.</p>
+        <my-button-group slot="footer">
+          <my-button variant="primary" size="medium">Confirm</my-button>
+          <my-button variant="secondary" size="medium">Cancel</my-button>
+        </my-button-group>
+      </my-card>
+    </section>
+  </main>
+</body>
+</html>

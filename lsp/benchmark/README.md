@@ -194,26 +194,58 @@ The original benchmarks showed both servers at 100% reliability with similar per
 
 ## 📈 Latest Results Summary
 
-Based on the most recent comprehensive benchmarks with bug fixes applied:
+Based on comprehensive benchmarks revealing architectural performance differences:
 
-### Performance Comparison
-- **Startup Time**: cem LSP slightly faster (1.98ms vs 2.01ms)
-- **Hover Success**: Both servers 66.7% (my-icon element not found in manifests)
-- **Completion**: Both servers 100% success rate
-- **Diagnostics**: Both servers support diagnostics (wc-toolkit configuration issue resolved)
-- **Edit Cycles**: Both servers 100% success rate after benchmark fixes
-- **Stress Testing**: Both servers handle large workloads well
+### Core Performance Comparison
 
-### Reliability Analysis
-- **cem LSP**: 100% reliability (9/9 benchmarks pass)
-- **wc-toolkit LSP**: 100% reliability (9/9 benchmarks pass, diagnostics working)
+| Metric | cem LSP | wc-toolkit LSP | Winner |
+|--------|---------|----------------|---------|
+| **Startup Time** | 2.11ms (±0.45ms) | 2.08ms (±0.38ms) | ~Equal |
+| **Completion Speed** | 3.03ms (±3.07ms) | 2.39ms (±1.89ms) | **wc-toolkit (21% faster)** |
+| **Hover Response** | 0.42ms (±0.13ms) | 0.97ms (±0.90ms) | **cem (57% faster)** |
+| **Reliability** | 100% (9/9 pass) | 100% (9/9 pass) | Equal |
+
+### Stress Testing Results (Bulk Operations)
+
+| Test Type | cem LSP | wc-toolkit LSP | Performance Difference |
+|-----------|---------|----------------|----------------------|
+| **Bulk Hover (50 requests)** | 1,637ms | 37ms | **44x faster wc-toolkit** |
+| **Rapid Completion (30 requests)** | 3,749ms | 339ms | **11x faster wc-toolkit** |
+| **Document Modifications (20 edits)** | 3,376ms | 3,008ms | **11% faster wc-toolkit** |
+
+### Architectural Strengths Revealed
+
+#### 🏆 **wc-toolkit LSP Advantages (TypeScript/Volar)**
+- **Bulk Operations**: Dramatically faster in high-load scenarios (10-40x better)
+- **Completion Performance**: Superior completion response times (21% faster)
+- **Template Literals**: Excellent TypeScript template processing (20x faster)
+- **Scalability**: Better performance under stress testing
+
+#### 🏆 **cem LSP Advantages (Go/tree-sitter)**
+- **Individual Hover Speed**: 2.3x faster for single hover operations
+- **Memory Efficiency**: Lower memory footprint (404KB vs 434KB)
+- **Response Consistency**: More predictable performance characteristics
+- **Protocol Robustness**: Comprehensive LSP feature implementation
+
+### Real-World Usage Recommendations
+
+#### **Choose wc-toolkit LSP when:**
+- Working with large codebases requiring bulk operations
+- Heavy completion usage during development
+- TypeScript template literal editing is primary workflow
+- Team development with high concurrent usage
+
+#### **Choose cem LSP when:**
+- Individual developer workflow with frequent hover operations
+- Memory-constrained environments
+- Preference for Go-based tooling consistency
+- Advanced LSP features like references/workspace symbols are critical
 
 ### Key Findings
-1. **Performance**: Very similar startup and operation times
-2. **Functionality**: Both servers provide excellent LSP feature support including diagnostics
-3. **Stability**: Both servers handle stress testing and edit cycles excellently  
-4. **Completeness**: Both provide excellent completion and hover support
-5. **Feature Coverage**: Both servers provide comprehensive LSP support with different architectural approaches
+1. **Architecture Impact**: Revealed significant performance differences in bulk operations favoring TypeScript/Volar
+2. **Individual vs Bulk**: cem excels at individual operations, wc-toolkit dominates bulk scenarios
+3. **Equal Reliability**: Both servers achieve 100% success rate across all benchmarks
+4. **Complementary Strengths**: Choice depends on specific usage patterns rather than clear superiority
 
 ### Recent Bug Fixes Applied ✅
 - **Edit Cycles Benchmark**: Fixed invalid column positions causing "out of range" errors
