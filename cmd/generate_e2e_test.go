@@ -1,3 +1,5 @@
+//go:build e2e
+
 /*
 Copyright © 2025 Benny Powers <web@bennypowers.com>
 
@@ -14,7 +16,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
-//go:build e2e
 
 package cmd_test
 

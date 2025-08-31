@@ -611,7 +611,7 @@ func (r *Registry) handleFileChange(event platform.FileWatchEvent) {
 	r.watcherMu.RLock()
 	callback := r.onReload
 	r.watcherMu.RUnlock()
-	
+
 	if callback != nil {
 		callback()
 	}
