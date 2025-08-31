@@ -24,6 +24,7 @@ import (
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/modulegraph"
 	"bennypowers.dev/cem/queries"
 	W "bennypowers.dev/cem/workspace"
 	protocol "github.com/tliron/glsp/protocol_3_16"
@@ -177,7 +178,7 @@ func (s *Server) QueryManager() (*queries.QueryManager, error) {
 	return s.documents.QueryManager(), nil
 }
 
-func (s *Server) ModuleGraph() *types.ModuleGraph {
+func (s *Server) ModuleGraph() *modulegraph.ModuleGraph {
 	if s.registry == nil {
 		return nil
 	}

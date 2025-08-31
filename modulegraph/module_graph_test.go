@@ -14,16 +14,16 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
-package types_test
+package modulegraph_test
 
 import (
 	"testing"
 
-	"bennypowers.dev/cem/lsp/types"
+	"bennypowers.dev/cem/modulegraph"
 )
 
 func TestModuleGraph_BasicOperations(t *testing.T) {
-	mg := types.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
+	mg := modulegraph.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
 
 	// Test adding direct exports
 	mg.AddDirectExport("components/rh-tab.js", "RhTab", "rh-tab")
@@ -75,7 +75,7 @@ func TestModuleGraph_BasicOperations(t *testing.T) {
 }
 
 func TestModuleGraph_ReExports(t *testing.T) {
-	mg := types.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
+	mg := modulegraph.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
 
 	// Add a direct export
 	mg.AddDirectExport("components/rh-tab.js", "RhTab", "rh-tab")
@@ -107,16 +107,16 @@ func TestModuleGraph_ReExports(t *testing.T) {
 
 func TestModuleGraph_RealWorldScenario(t *testing.T) {
 	// Create module graph and populate from manifest data (like production LSP server)
-	mg := types.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
+	mg := modulegraph.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
 
 	// Simulate manifest data for rh-tabs scenario
 	elementMap := map[string]interface{}{
-		"rh-tab": &types.MockElementDefinition{
+		"rh-tab": &modulegraph.MockElementDefinition{
 			TagName:    "rh-tab",
 			ClassName:  "RhTab",
 			ModulePath: "rh-tab.ts",
 		},
-		"rh-tabs": &types.MockElementDefinition{
+		"rh-tabs": &modulegraph.MockElementDefinition{
 			TagName:    "rh-tabs",
 			ClassName:  "RhTabs",
 			ModulePath: "rh-tabs.ts",
@@ -178,7 +178,7 @@ func TestModuleGraph_RealWorldScenario(t *testing.T) {
 }
 
 func TestModuleGraph_GetModuleExports(t *testing.T) {
-	mg := types.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
+	mg := modulegraph.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
 
 	// Add exports to a module
 	mg.AddDirectExport("components/multi-element.js", "ElementOne", "element-one")
@@ -212,7 +212,7 @@ func TestModuleGraph_GetModuleExports(t *testing.T) {
 }
 
 func TestModuleGraph_EmptyGraph(t *testing.T) {
-	mg := types.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
+	mg := modulegraph.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
 
 	// Test empty graph behavior
 	allTagNames := mg.GetAllTagNames()

@@ -27,8 +27,8 @@ import (
 
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp/helpers"
-	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/modulegraph"
 	"bennypowers.dev/cem/queries"
 	W "bennypowers.dev/cem/workspace"
 )
@@ -109,7 +109,7 @@ type Registry struct {
 	generateMu      sync.RWMutex
 	localWorkspace  W.WorkspaceContext // Track the local workspace for generate watching
 	// Module graph for tracking re-export relationships
-	moduleGraph *types.ModuleGraph
+	moduleGraph *modulegraph.ModuleGraph
 }
 
 // NewRegistry creates a new empty registry with the given file watcher.
@@ -123,7 +123,7 @@ func NewRegistry(fileWatcher platform.FileWatcher) *Registry {
 		queryManager = nil
 	}
 
-	moduleGraph := types.NewModuleGraph(queryManager)
+	moduleGraph := modulegraph.NewModuleGraph(queryManager)
 
 	return &Registry{
 		Elements:             make(map[string]*M.CustomElement),
@@ -194,7 +194,7 @@ func (r *Registry) clear() {
 		// For production, this should not happen, but handle gracefully
 		queryManager = nil
 	}
-	r.moduleGraph = types.NewModuleGraph(queryManager)
+	r.moduleGraph = modulegraph.NewModuleGraph(queryManager)
 }
 
 // clearDataOnly resets the registry data but preserves manifest paths for watching
@@ -212,7 +212,7 @@ func (r *Registry) clearDataOnly() {
 		// For production, this should not happen, but handle gracefully
 		queryManager = nil
 	}
-	r.moduleGraph = types.NewModuleGraph(queryManager)
+	r.moduleGraph = modulegraph.NewModuleGraph(queryManager)
 	// Note: ManifestPaths are preserved for file watching
 }
 
@@ -874,7 +874,7 @@ func (r *Registry) addManifestPath(path string) {
 }
 
 // GetModuleGraph returns the module graph for re-export analysis
-func (r *Registry) GetModuleGraph() *types.ModuleGraph {
+func (r *Registry) GetModuleGraph() *modulegraph.ModuleGraph {
 	return r.moduleGraph
 }
 

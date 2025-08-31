@@ -23,6 +23,7 @@ import (
 
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/modulegraph"
 	"bennypowers.dev/cem/queries"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
@@ -40,7 +41,7 @@ type MockServerContext struct {
 	WorkspaceRootStr string
 	DocumentMgr      types.DocumentManager
 	QueryMgr         *queries.QueryManager
-	ModuleGraphInst  *types.ModuleGraph
+	ModuleGraphInst  *modulegraph.ModuleGraph
 	types.Registry
 }
 
@@ -136,7 +137,7 @@ func (r *MockManifestResolver) GetElementsFromManifestModule(manifestModulePath 
 // Verify MockServerContext implements ServerContext
 var _ types.ServerContext = (*MockServerContext)(nil)
 var _ types.ElementDefinition = (*MockElementDefinition)(nil)
-var _ types.ManifestResolver = (*MockManifestResolver)(nil)
+var _ modulegraph.ManifestResolver = (*MockManifestResolver)(nil)
 
 // NewMockServerContext creates a new mock server context
 func NewMockServerContext() *MockServerContext {
@@ -326,14 +327,14 @@ func (m *MockServerContext) QueryManager() (*queries.QueryManager, error) {
 	return nil, fmt.Errorf("QueryManager not available in test context")
 }
 
-func (m *MockServerContext) ModuleGraph() *types.ModuleGraph {
+func (m *MockServerContext) ModuleGraph() *modulegraph.ModuleGraph {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	// Return the persistent module graph instance
 	if m.ModuleGraphInst == nil {
 		// Initialize with a mock manifest resolver and QueryManager
-		m.ModuleGraphInst = types.NewModuleGraph(m.QueryMgr)
+		m.ModuleGraphInst = modulegraph.NewModuleGraph(m.QueryMgr)
 		// Set workspace root if available
 		if m.WorkspaceRootStr != "" {
 			m.ModuleGraphInst.SetWorkspaceRoot(m.WorkspaceRootStr)

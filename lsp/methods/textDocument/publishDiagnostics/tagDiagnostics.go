@@ -23,6 +23,7 @@ import (
 
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
+	"bennypowers.dev/cem/modulegraph"
 	"bennypowers.dev/cem/queries"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
@@ -588,7 +589,7 @@ func resolveImportPathToElements(importPath string, ctx types.ServerContext) []s
 }
 
 // resolveImportPathWithModuleGraph uses the module graph for transitive dependency resolution
-func resolveImportPathWithModuleGraph(importPath string, moduleGraph *types.ModuleGraph) []string {
+func resolveImportPathWithModuleGraph(importPath string, moduleGraph *modulegraph.ModuleGraph) []string {
 	var elements []string
 
 	helpers.SafeDebugLog("[DIAGNOSTICS] Checking module graph for import path '%s'", importPath)
@@ -622,7 +623,7 @@ func resolveImportPathWithModuleGraph(importPath string, moduleGraph *types.Modu
 }
 
 // findMatchingModuleForImportPath finds a module in the graph that matches the import path
-func findMatchingModuleForImportPath(importPath string, moduleGraph *types.ModuleGraph) string {
+func findMatchingModuleForImportPath(importPath string, moduleGraph *modulegraph.ModuleGraph) string {
 	// Get all module paths directly - O(n) instead of O(n*m)
 	allModulePaths := moduleGraph.GetAllModulePaths()
 
@@ -698,7 +699,7 @@ func resolveImportPathWithManifests(importPath string, ctx types.ServerContext) 
 }
 
 // getAllTagNamesFromModuleGraph extracts all tag names from the module graph
-func getAllTagNamesFromModuleGraph(moduleGraph *types.ModuleGraph) []string {
+func getAllTagNamesFromModuleGraph(moduleGraph *modulegraph.ModuleGraph) []string {
 	return moduleGraph.GetAllTagNames()
 }
 

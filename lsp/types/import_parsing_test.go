@@ -19,21 +19,21 @@ package types_test
 import (
 	"testing"
 
-	"bennypowers.dev/cem/lsp/types"
+	"bennypowers.dev/cem/modulegraph"
 )
 
 func TestModuleGraph_ImportParsing_Simple(t *testing.T) {
 	// Create module graph and populate from manifest data (like production LSP server)
-	mg := types.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
+	mg := modulegraph.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
 
 	// Simulate manifest data for elements
 	elementMap := map[string]interface{}{
-		"my-icon": &types.MockElementDefinition{
+		"my-icon": &modulegraph.MockElementDefinition{
 			TagName:    "my-icon",
 			ClassName:  "MyIcon",
 			ModulePath: "my-icon.js",
 		},
-		"my-button": &types.MockElementDefinition{
+		"my-button": &modulegraph.MockElementDefinition{
 			TagName:    "my-button",
 			ClassName:  "MyButton",
 			ModulePath: "my-button.js",
