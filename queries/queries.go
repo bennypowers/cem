@@ -1,3 +1,19 @@
+/*
+Copyright © 2025 Benny Powers <web@bennypowers.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
 package queries
 
 import (
@@ -165,7 +181,7 @@ func AllQueries() QuerySelector {
 func LSPQueries() QuerySelector {
 	return QuerySelector{
 		HTML:       []string{"customElements", "completionContext", "scriptTags", "headElements"},
-		TypeScript: []string{"htmlTemplates", "completionContext", "imports", "classes"},
+		TypeScript: []string{"htmlTemplates", "completionContext", "imports", "classes", "exports"},
 		CSS:        []string{},
 		JSDoc:      []string{},
 	}
@@ -337,6 +353,10 @@ func (qm QueryMatcher) Close() {
 
 func (qm QueryMatcher) GetCaptureNameByIndex(index uint32) string {
 	return qm.query.CaptureNames()[index]
+}
+
+func (qm QueryMatcher) CaptureCount() int {
+	return len(qm.query.CaptureNames())
 }
 
 func (qm QueryMatcher) GetCaptureIndexForName(name string) (uint, bool) {
@@ -772,4 +792,52 @@ func adjustTemplateRange(templateRange *Range, templateNode *ts.Node, content []
 			Character: templateStart.Character + templateRange.End.Character,
 		},
 	}
+}
+
+// Thread-safe singleton QueryManager (there can be only one!)
+var (
+	globalQueryManager *QueryManager
+	globalQueryOnce    sync.Once
+	globalQueryError   error
+)
+
+// GetGlobalQueryManager returns the singleton QueryManager instance
+func GetGlobalQueryManager() (*QueryManager, error) {
+	globalQueryOnce.Do(func() {
+		manager, err := NewQueryManager(LSPQueries())
+		if err != nil {
+			globalQueryError = err
+			return
+		}
+		globalQueryManager = manager
+	})
+
+	if globalQueryError != nil {
+		return nil, globalQueryError
+	}
+
+	if globalQueryManager == nil {
+		return nil, fmt.Errorf("failed to initialize global query manager")
+	}
+
+	return globalQueryManager, nil
+}
+
+// GetCachedQueryMatcher returns a query matcher with cached query but fresh cursor
+// This prevents concurrent access to the same cursor which causes segmentation faults
+func GetCachedQueryMatcher(manager *QueryManager, language, queryName string) (*QueryMatcher, error) {
+	if manager == nil {
+		return nil, ErrNoQueryManager
+	}
+
+	// Get the cached query (thread-safe to share)
+	query, err := manager.getQuery(queryName, language)
+	if err != nil {
+		return nil, err
+	}
+
+	// Always create a fresh cursor (NOT thread-safe to share)
+	cursor := ts.NewQueryCursor()
+	matcher := QueryMatcher{query, cursor}
+	return &matcher, nil
 }

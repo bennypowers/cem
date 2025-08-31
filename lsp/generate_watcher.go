@@ -151,7 +151,7 @@ func (w *InProcessGenerateWatcher) watchFiles() error {
 				}
 
 				debounceTimer = time.AfterFunc(debounceDuration, func() {
-					if err := w.generateAndCallback(); err != nil {
+					if err := w.generateFullAndCallback(); err != nil {
 						helpers.SafeDebugLog("Failed to regenerate manifest: %v", err)
 					}
 				})
@@ -192,8 +192,45 @@ func (w *InProcessGenerateWatcher) shouldProcessFile(filename string) bool {
 }
 
 // generateAndCallback generates the manifest in-memory and calls the callback
+// For LSP startup performance, this now generates lazily instead of processing all workspace files
 func (w *InProcessGenerateWatcher) generateAndCallback() error {
 	helpers.SafeDebugLog("Generating manifest in-memory for LSP...")
+
+	// For LSP performance, we now generate an empty manifest initially
+	// and only do full generation when files actually change.
+	// This eliminates the 5+ minute startup delay from scanning thousands of files.
+
+	// Try to get existing in-memory manifest from the session
+	var pkg *M.Package
+	if w.generateSession != nil {
+		pkg = w.generateSession.InMemoryManifest()
+	}
+
+	// If no existing manifest, create minimal empty manifest instead of full workspace scan
+	if pkg == nil {
+		helpers.SafeDebugLog("Creating minimal empty manifest for fast LSP startup")
+		// Create empty package - this will be populated later when files change
+		emptyPkg := M.NewPackage([]M.Module{})
+		pkg = &emptyPkg
+		helpers.SafeDebugLog("Created empty manifest for lazy initialization")
+	} else {
+		helpers.SafeDebugLog("Using existing in-memory manifest with %d modules", len(pkg.Modules))
+	}
+
+	// Call the callback with the manifest (empty or existing)
+	if w.callback != nil {
+		if err := w.callback(pkg); err != nil {
+			return fmt.Errorf("manifest callback failed: %w", err)
+		}
+	}
+
+	helpers.SafeDebugLog("Successfully provided manifest to LSP (lazy mode)")
+	return nil
+}
+
+// generateFullAndCallback performs full manifest generation when files actually change
+func (w *InProcessGenerateWatcher) generateFullAndCallback() error {
+	helpers.SafeDebugLog("Performing full manifest generation due to file changes...")
 
 	// Create a fresh GenerateSession to avoid any caching issues
 	// that might prevent updated file content from being parsed correctly
@@ -216,7 +253,7 @@ func (w *InProcessGenerateWatcher) generateAndCallback() error {
 		}
 	}
 
-	helpers.SafeDebugLog("Successfully generated manifest in-memory for LSP")
+	helpers.SafeDebugLog("Successfully regenerated full manifest due to file changes")
 	return nil
 }
 

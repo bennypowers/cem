@@ -18,6 +18,7 @@ package types
 
 import (
 	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/modulegraph"
 	"bennypowers.dev/cem/queries"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
@@ -79,4 +80,7 @@ type ServerContext interface {
 
 	// Query operations for tree-sitter
 	QueryManager() (*queries.QueryManager, error)
+
+	// Module graph operations for re-export analysis
+	ModuleGraph() *modulegraph.ModuleGraph
 }

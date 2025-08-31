@@ -142,8 +142,8 @@ func TestAttributeValueDiagnostics_UnionTypes(t *testing.T) {
 	// Check that we get suggestions for close matches
 	expectedMessages := map[string]bool{
 		"Expected one of: 'small', 'medium' or 'large' for attribute 'size', got 'smll'. Did you mean 'small'?": false,
-		"Expected one of: 'light', 'dark' or 'auto' for attribute 'theme', got 'Dark'. Did you mean 'dark'?":      false,
-		"Expected one of: 'primary' or 'secondary' for attribute 'variant', got 'invalid'":                       false,
+		"Expected one of: 'light', 'dark' or 'auto' for attribute 'theme', got 'Dark'. Did you mean 'dark'?":    false,
+		"Expected one of: 'primary' or 'secondary' for attribute 'variant', got 'invalid'":                      false,
 	}
 
 	for _, diag := range diagnostics {

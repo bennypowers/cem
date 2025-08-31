@@ -28,12 +28,15 @@ import (
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp/helpers"
 	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/modulegraph"
+	"bennypowers.dev/cem/queries"
 	W "bennypowers.dev/cem/workspace"
 )
 
 // ElementDefinition stores a custom element with its source information
 type ElementDefinition struct {
 	CustomElement *M.CustomElement
+	className     string             // Class name from the declaration
 	modulePath    string             // Path from the manifest module
 	Source        *M.SourceReference // Source reference if available
 	packageName   string             // Package name from package.json (if loaded from a package)
@@ -62,6 +65,24 @@ func (ed *ElementDefinition) Element() *M.CustomElement {
 	return ed.CustomElement
 }
 
+// GetModulePath returns the module path (for module graph interface compatibility)
+func (ed *ElementDefinition) GetModulePath() string {
+	return ed.modulePath
+}
+
+// GetTagName returns the tag name
+func (ed *ElementDefinition) GetTagName() string {
+	if ed.CustomElement != nil {
+		return ed.CustomElement.TagName
+	}
+	return ""
+}
+
+// GetClassName returns the class name
+func (ed *ElementDefinition) GetClassName() string {
+	return ed.className
+}
+
 // Registry manages all loaded custom elements manifests and provides
 // fast lookup capabilities for LSP features
 type Registry struct {
@@ -87,12 +108,23 @@ type Registry struct {
 	generateWatcher *InProcessGenerateWatcher
 	generateMu      sync.RWMutex
 	localWorkspace  W.WorkspaceContext // Track the local workspace for generate watching
+	// Module graph for tracking re-export relationships
+	moduleGraph *modulegraph.ModuleGraph
 }
 
 // NewRegistry creates a new empty registry with the given file watcher.
 // For production use, pass platform.NewFSNotifyFileWatcher().
 // For testing, pass platform.NewMockFileWatcher().
 func NewRegistry(fileWatcher platform.FileWatcher) *Registry {
+	// Get QueryManager for dependency injection
+	queryManager, err := queries.GetGlobalQueryManager()
+	if err != nil {
+		// For production, this should not happen, but handle gracefully
+		queryManager = nil
+	}
+
+	moduleGraph := modulegraph.NewModuleGraph(queryManager)
+
 	return &Registry{
 		Elements:             make(map[string]*M.CustomElement),
 		ElementDefinitions:   make(map[string]*ElementDefinition),
@@ -101,6 +133,7 @@ func NewRegistry(fileWatcher platform.FileWatcher) *Registry {
 		ManifestPaths:        make([]string, 0),
 		ManifestPackageNames: make(map[string]string),
 		fileWatcher:          fileWatcher,
+		moduleGraph:          moduleGraph,
 	}
 }
 
@@ -137,6 +170,12 @@ func (r *Registry) LoadFromWorkspace(workspace W.WorkspaceContext) error {
 		helpers.SafeDebugLog("Warning: Could not load config manifests: %v", err)
 	}
 
+	// 4. Initialize module graph for lazy building
+	// Instead of scanning the entire workspace upfront (which was 5000+ files),
+	// we now build the module graph lazily as imports are discovered in open documents.
+	// This provides fast startup while maintaining accurate re-export resolution.
+	r.initializeLazyModuleGraph(workspace)
+
 	helpers.SafeDebugLog("Loaded %d custom elements from %d manifests", len(r.Elements), len(r.Manifests))
 	return nil
 }
@@ -149,6 +188,13 @@ func (r *Registry) clear() {
 	r.Manifests = r.Manifests[:0]
 	r.ManifestPaths = r.ManifestPaths[:0]
 	r.ManifestPackageNames = make(map[string]string)
+	// Get QueryManager for dependency injection
+	queryManager, err := queries.GetGlobalQueryManager()
+	if err != nil {
+		// For production, this should not happen, but handle gracefully
+		queryManager = nil
+	}
+	r.moduleGraph = modulegraph.NewModuleGraph(queryManager)
 }
 
 // clearDataOnly resets the registry data but preserves manifest paths for watching
@@ -160,6 +206,13 @@ func (r *Registry) clearDataOnly() {
 	r.ElementDefinitions = make(map[string]*ElementDefinition)
 	r.attributes = make(map[string]map[string]*M.Attribute)
 	r.Manifests = r.Manifests[:0]
+	// Get QueryManager for dependency injection
+	queryManager, err := queries.GetGlobalQueryManager()
+	if err != nil {
+		// For production, this should not happen, but handle gracefully
+		queryManager = nil
+	}
+	r.moduleGraph = modulegraph.NewModuleGraph(queryManager)
 	// Note: ManifestPaths are preserved for file watching
 }
 
@@ -275,6 +328,8 @@ func (r *Registry) loadPackageManifest(packagePath string) {
 	if pkg, err := r.loadManifestFileWithPackageName(manifestPath, packageJSON.Name); err == nil {
 		r.addManifest(pkg, packageJSON.Name)
 		helpers.SafeDebugLog("Loaded manifest from %s (%s)", packageJSON.Name, manifestPath)
+	} else {
+		helpers.SafeDebugLog("Failed to load manifest from %s (%s): %v", packageJSON.Name, manifestPath, err)
 	}
 }
 
@@ -361,6 +416,7 @@ func (r *Registry) addManifest(manifest *M.Package, packageName string) {
 					// Store the element definition with source information
 					elementDef := &ElementDefinition{
 						CustomElement: element,
+						className:     customElementDecl.Name, // Store the class name from the declaration
 						modulePath:    module.Path,
 						Source:        customElementDecl.Source,
 						packageName:   packageName,
@@ -440,15 +496,38 @@ func (r *Registry) ElementDefinition(tagName string) (*ElementDefinition, bool) 
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
+	// First check manifest-based definitions
 	definition, exists := r.ElementDefinitions[tagName]
-	helpers.SafeDebugLog("[REGISTRY] GetElementDefinition('%s'): exists=%t", tagName, exists)
 	if exists {
+		helpers.SafeDebugLog("[REGISTRY] GetElementDefinition('%s'): found in manifests", tagName)
 		helpers.SafeDebugLog("[REGISTRY] Element '%s' module path: %s", tagName, definition.modulePath)
 		if definition.Source != nil {
 			helpers.SafeDebugLog("[REGISTRY] Element '%s' source href: %s", tagName, definition.Source.Href)
 		}
+		return definition, true
 	}
-	return definition, exists
+
+	// If not found in manifests, check module graph
+	if r.moduleGraph != nil {
+		elementSources := r.moduleGraph.GetElementSources(tagName)
+		if len(elementSources) > 0 {
+			helpers.SafeDebugLog("[REGISTRY] GetElementDefinition('%s'): found in module graph with sources: %v", tagName, elementSources)
+			// Create a minimal ElementDefinition for module graph elements
+			// Use the first source as the primary module path
+			modulePath := elementSources[0]
+			return &ElementDefinition{
+				CustomElement: &M.CustomElement{
+					TagName: tagName,
+				},
+				className:   "", // Class name not available from module graph
+				modulePath:  modulePath,
+				packageName: "", // Package names not available for module graph elements - they come from file scanning, not manifests
+			}, true
+		}
+	}
+
+	helpers.SafeDebugLog("[REGISTRY] GetElementDefinition('%s'): not found", tagName)
+	return nil, false
 }
 
 // AllTagNames returns all registered custom element tag names
@@ -456,10 +535,30 @@ func (r *Registry) AllTagNames() []string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
+	// Collect tags from manifests
 	tags := make([]string, 0, len(r.Elements))
 	for tag := range r.Elements {
 		tags = append(tags, tag)
 	}
+
+	// Also include tags from module graph (for elements discovered from source files)
+	if r.moduleGraph != nil {
+		moduleGraphTags := r.moduleGraph.GetAllTagNames()
+
+		// Use map for O(1) duplicate detection instead of O(n²) nested loops
+		seen := make(map[string]bool, len(tags))
+		for _, tag := range tags {
+			seen[tag] = true
+		}
+
+		for _, tag := range moduleGraphTags {
+			if !seen[tag] {
+				tags = append(tags, tag)
+				seen[tag] = true
+			}
+		}
+	}
+
 	return tags
 }
 
@@ -558,7 +657,7 @@ func (r *Registry) handleFileChange(event platform.FileWatchEvent) {
 	r.watcherMu.RLock()
 	callback := r.onReload
 	r.watcherMu.RUnlock()
-	
+
 	if callback != nil {
 		callback()
 	}
@@ -772,4 +871,208 @@ func (r *Registry) addManifestPath(path string) {
 		}
 	}
 	r.watcherMu.RUnlock()
+}
+
+// GetModuleGraph returns the module graph for re-export analysis
+func (r *Registry) GetModuleGraph() *modulegraph.ModuleGraph {
+	return r.moduleGraph
+}
+
+// RegistryManifestResolver implements ManifestResolver using the registry's manifest data
+type RegistryManifestResolver struct {
+	registry *Registry
+}
+
+// NewRegistryManifestResolver creates a new manifest resolver using the registry
+func NewRegistryManifestResolver(registry *Registry) *RegistryManifestResolver {
+	return &RegistryManifestResolver{registry: registry}
+}
+
+// FindManifestModulesForImportPath finds manifest modules that match an import path
+func (r *RegistryManifestResolver) FindManifestModulesForImportPath(importPath string) []string {
+	if r.registry == nil {
+		return nil
+	}
+
+	var matchingModules []string
+
+	r.registry.mu.RLock()
+	defer r.registry.mu.RUnlock()
+
+	// Search through all element definitions to find matches
+	for _, elementDef := range r.registry.ElementDefinitions {
+		modulePath := elementDef.GetModulePath()
+		if modulePath == "" {
+			continue
+		}
+
+		// Use the same path matching logic as tagDiagnostics.go
+		if r.pathsMatch(importPath, modulePath) {
+			// Avoid duplicates
+			found := false
+			for _, existing := range matchingModules {
+				if existing == modulePath {
+					found = true
+					break
+				}
+			}
+			if !found {
+				matchingModules = append(matchingModules, modulePath)
+			}
+		}
+	}
+
+	return matchingModules
+}
+
+// GetManifestModulePath converts a file path to its corresponding manifest module path
+func (r *RegistryManifestResolver) GetManifestModulePath(filePath string) string {
+	if r.registry == nil {
+		return ""
+	}
+
+	r.registry.mu.RLock()
+	defer r.registry.mu.RUnlock()
+
+	// Search through all element definitions to find one that matches this file path
+	// This is a reverse lookup from file path to manifest module path
+	for _, elementDef := range r.registry.ElementDefinitions {
+		modulePath := elementDef.GetModulePath()
+		if modulePath == "" {
+			continue
+		}
+
+		// Try direct path matching first
+		if r.pathsMatch(filePath, modulePath) {
+			return modulePath
+		}
+
+		// For Red Hat Design System pattern: convert TypeScript source paths to manifest paths
+		// e.g., "elements/rh-tabs/rh-tab-panel.ts" -> "rh-tabs/rh-tab-panel.js"
+		if strings.HasSuffix(filePath, ".ts") {
+			// Convert .ts to .js for comparison
+			jsFilePath := strings.TrimSuffix(filePath, ".ts") + ".js"
+			if r.pathsMatch(jsFilePath, modulePath) {
+				return modulePath
+			}
+
+			// Also try without elements/ prefix
+			// "elements/rh-tabs/rh-tab-panel.ts" -> "rh-tabs/rh-tab-panel.js"
+			if strings.HasPrefix(filePath, "elements/") {
+				relativeJsPath := strings.TrimPrefix(jsFilePath, "elements/")
+				if r.pathsMatch(relativeJsPath, modulePath) {
+					return modulePath
+				}
+			}
+		}
+	}
+
+	return ""
+}
+
+// GetElementsFromManifestModule returns all custom element tag names available from a manifest module
+func (r *RegistryManifestResolver) GetElementsFromManifestModule(manifestModulePath string) []string {
+	if r.registry == nil {
+		return nil
+	}
+
+	var elements []string
+
+	r.registry.mu.RLock()
+	defer r.registry.mu.RUnlock()
+
+	// Search through all element definitions to find those from this manifest module
+	for tagName, elementDef := range r.registry.ElementDefinitions {
+		modulePath := elementDef.GetModulePath()
+		if modulePath == manifestModulePath {
+			elements = append(elements, tagName)
+		}
+	}
+
+	return elements
+}
+
+// pathsMatch checks if an import path matches an element source path
+// This duplicates the logic from tagDiagnostics.go for now, but should ideally be unified
+func (r *RegistryManifestResolver) pathsMatch(importPath, elementSource string) bool {
+	// Direct match first (for exact package imports)
+	if importPath == elementSource {
+		return true
+	}
+
+	// Normalize paths for comparison
+	normalizedImport := r.normalizePath(importPath)
+	normalizedSource := r.normalizePath(elementSource)
+
+	// Direct match on normalized paths
+	if normalizedImport == normalizedSource {
+		return true
+	}
+
+	// Check if import path ends with the element source (relative imports)
+	if strings.HasSuffix(importPath, elementSource) {
+		return true
+	}
+
+	// Check if element source ends with import path (package imports)
+	if strings.HasSuffix(elementSource, importPath) {
+		return true
+	}
+
+	// Extract just the filename and compare
+	importFile := filepath.Base(importPath)
+	elementFile := filepath.Base(elementSource)
+	return importFile == elementFile
+}
+
+// normalizePath normalizes a file path for comparison
+// This duplicates the logic from tagDiagnostics.go for now, but should ideally be unified
+func (r *RegistryManifestResolver) normalizePath(path string) string {
+	// Remove common prefixes/suffixes
+	path = strings.TrimPrefix(path, "./")
+	path = strings.TrimPrefix(path, "../")
+	path = strings.TrimPrefix(path, "/")
+
+	// Handle npm package paths like @rhds/elements/rh-card/rh-card.js
+	// vs manifest paths like ./dist/rh-card.js
+	if strings.Contains(path, "/") {
+		// Keep the last two segments for better matching
+		parts := strings.Split(path, "/")
+		if len(parts) >= 2 {
+			return strings.Join(parts[len(parts)-2:], "/")
+		}
+	}
+
+	return path
+}
+
+// initializeLazyModuleGraph initializes the module graph with manifest data but defers file scanning
+func (r *Registry) initializeLazyModuleGraph(workspace W.WorkspaceContext) {
+	if workspace == nil {
+		return
+	}
+
+	workspaceRoot := workspace.Root()
+	if workspaceRoot == "" {
+		return
+	}
+
+	helpers.SafeDebugLog("[REGISTRY] Initializing lazy module graph for workspace: %s", workspaceRoot)
+
+	// Create manifest resolver and update module graph to use it
+	manifestResolver := NewRegistryManifestResolver(r)
+	r.moduleGraph.SetManifestResolver(manifestResolver)
+
+	// Populate the module graph with custom element definitions from manifests
+	// This is fast since it only uses already-loaded manifest data
+	elementMap := make(map[string]interface{})
+	for tagName, elementDef := range r.ElementDefinitions {
+		elementMap[tagName] = elementDef
+	}
+	r.moduleGraph.PopulateFromManifests(elementMap)
+
+	// Store workspace root for lazy file parsing
+	r.moduleGraph.SetWorkspaceRoot(workspaceRoot)
+
+	helpers.SafeDebugLog("[REGISTRY] Module graph initialized with %d manifest elements and manifest resolver, ready for lazy building", len(elementMap))
 }

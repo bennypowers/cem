@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "rh-tabs/rh-tabs.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "Tabs component",
+          "name": "RhTabs",
+          "tagName": "rh-tabs",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "RhTabs",
+          "declaration": {
+            "name": "RhTabs",
+            "module": "rh-tabs/rh-tabs.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "rh-tabs",
+          "declaration": {
+            "name": "RhTabs",
+            "module": "rh-tabs/rh-tabs.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module", 
+      "path": "rh-tabs/rh-tab.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "Tab component",
+          "name": "RhTab",
+          "tagName": "rh-tab",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "RhTab",
+          "declaration": {
+            "name": "RhTab",
+            "module": "rh-tabs/rh-tab.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "rh-tab",
+          "declaration": {
+            "name": "RhTab",
+            "module": "rh-tabs/rh-tab.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "rh-tabs/rh-tab-panel.js", 
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "Tab panel component",
+          "name": "RhTabPanel",
+          "tagName": "rh-tab-panel",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "RhTabPanel",
+          "declaration": {
+            "name": "RhTabPanel",
+            "module": "rh-tabs/rh-tab-panel.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "rh-tab-panel",
+          "declaration": {
+            "name": "RhTabPanel",
+            "module": "rh-tabs/rh-tab-panel.js"
+          }
+        }
+      ]
+    }
+  ]
+}

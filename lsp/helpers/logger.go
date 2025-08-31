@@ -17,16 +17,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package helpers
 
 import (
-	"sync"
-
 	"bennypowers.dev/cem/internal/logging"
 	"github.com/tliron/glsp"
 )
 
 // Debug logging state - shared across all textDocument methods
-var (
-	debugLogMutex sync.RWMutex
-)
+// (Currently no shared state needed)
 
 // SetGlobalLoggerContext sets the LSP context for the centralized logger
 func SetGlobalLoggerContext(context *glsp.Context) {
