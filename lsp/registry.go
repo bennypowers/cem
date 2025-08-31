@@ -28,6 +28,7 @@ import (
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
+	"bennypowers.dev/cem/queries"
 	M "bennypowers.dev/cem/manifest"
 	W "bennypowers.dev/cem/workspace"
 )
@@ -115,6 +116,15 @@ type Registry struct {
 // For production use, pass platform.NewFSNotifyFileWatcher().
 // For testing, pass platform.NewMockFileWatcher().
 func NewRegistry(fileWatcher platform.FileWatcher) *Registry {
+	// Get QueryManager for dependency injection
+	queryManager, err := queries.GetGlobalQueryManager()
+	if err != nil {
+		// For production, this should not happen, but handle gracefully
+		queryManager = nil
+	}
+	
+	moduleGraph := types.NewModuleGraph(queryManager)
+	
 	return &Registry{
 		Elements:             make(map[string]*M.CustomElement),
 		ElementDefinitions:   make(map[string]*ElementDefinition),
@@ -123,7 +133,7 @@ func NewRegistry(fileWatcher platform.FileWatcher) *Registry {
 		ManifestPaths:        make([]string, 0),
 		ManifestPackageNames: make(map[string]string),
 		fileWatcher:          fileWatcher,
-		moduleGraph:          types.NewModuleGraph(),
+		moduleGraph:          moduleGraph,
 	}
 }
 
@@ -178,7 +188,13 @@ func (r *Registry) clear() {
 	r.Manifests = r.Manifests[:0]
 	r.ManifestPaths = r.ManifestPaths[:0]
 	r.ManifestPackageNames = make(map[string]string)
-	r.moduleGraph = types.NewModuleGraph()
+	// Get QueryManager for dependency injection
+	queryManager, err := queries.GetGlobalQueryManager()
+	if err != nil {
+		// For production, this should not happen, but handle gracefully
+		queryManager = nil
+	}
+	r.moduleGraph = types.NewModuleGraph(queryManager)
 }
 
 // clearDataOnly resets the registry data but preserves manifest paths for watching
@@ -190,7 +206,13 @@ func (r *Registry) clearDataOnly() {
 	r.ElementDefinitions = make(map[string]*ElementDefinition)
 	r.attributes = make(map[string]map[string]*M.Attribute)
 	r.Manifests = r.Manifests[:0]
-	r.moduleGraph = types.NewModuleGraph()
+	// Get QueryManager for dependency injection
+	queryManager, err := queries.GetGlobalQueryManager()
+	if err != nil {
+		// For production, this should not happen, but handle gracefully
+		queryManager = nil
+	}
+	r.moduleGraph = types.NewModuleGraph(queryManager)
 	// Note: ManifestPaths are preserved for file watching
 }
 
@@ -306,6 +328,8 @@ func (r *Registry) loadPackageManifest(packagePath string) {
 	if pkg, err := r.loadManifestFileWithPackageName(manifestPath, packageJSON.Name); err == nil {
 		r.addManifest(pkg, packageJSON.Name)
 		helpers.SafeDebugLog("Loaded manifest from %s (%s)", packageJSON.Name, manifestPath)
+	} else {
+		helpers.SafeDebugLog("Failed to load manifest from %s (%s): %v", packageJSON.Name, manifestPath, err)
 	}
 }
 

@@ -332,8 +332,8 @@ func (m *MockServerContext) ModuleGraph() *types.ModuleGraph {
 
 	// Return the persistent module graph instance
 	if m.ModuleGraphInst == nil {
-		// Initialize with a mock manifest resolver
-		m.ModuleGraphInst = types.NewModuleGraph()
+		// Initialize with a mock manifest resolver and QueryManager
+		m.ModuleGraphInst = types.NewModuleGraph(m.QueryMgr)
 		// Set workspace root if available
 		if m.WorkspaceRootStr != "" {
 			m.ModuleGraphInst.SetWorkspaceRoot(m.WorkspaceRootStr)
@@ -403,7 +403,11 @@ func (m *MockServerContext) SetRegistry(registry types.Registry) {
 
 // SetQueryManager sets the query manager for tests
 func (m *MockServerContext) SetQueryManager(qm *queries.QueryManager) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.QueryMgr = qm
+	// Reset the module graph instance so it gets recreated with the new QueryManager
+	m.ModuleGraphInst = nil
 }
 
 // AddElementDescription adds a description for an element

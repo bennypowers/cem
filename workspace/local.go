@@ -23,7 +23,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"sync"
 
 	C "bennypowers.dev/cem/cmd/config"
 	M "bennypowers.dev/cem/manifest"
@@ -31,9 +30,6 @@ import (
 	"github.com/pterm/pterm"
 	"gopkg.in/yaml.v3"
 )
-
-// ptermMutex protects concurrent access to pterm global state during testing
-var ptermMutex sync.Mutex
 
 var _ WorkspaceContext = (*FileSystemWorkspaceContext)(nil)
 
@@ -49,10 +45,6 @@ type FileSystemWorkspaceContext struct {
 }
 
 func (c *FileSystemWorkspaceContext) initConfig() (*C.CemConfig, error) {
-	// Protect entire config initialization with mutex to ensure thread-safety
-	ptermMutex.Lock()
-	defer ptermMutex.Unlock()
-
 	var config C.CemConfig
 	config.ProjectDir = c.Root()
 	config.ConfigFile = c.ConfigFile()

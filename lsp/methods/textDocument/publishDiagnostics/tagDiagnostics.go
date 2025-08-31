@@ -168,6 +168,9 @@ func parseScriptImports(content string, ctx types.ServerContext, doc types.Docum
 	// Parse TypeScript imports directly (for .ts files)
 	tsImports := parseTypeScriptImports(content, ctx)
 	helpers.SafeDebugLog("[DIAGNOSTICS] TypeScript parsing returned %d elements: %v", len(tsImports), tsImports)
+	if len(tsImports) == 0 {
+		helpers.SafeDebugLog("[DIAGNOSTICS] No TypeScript imports found, content: %s", content)
+	}
 	importedElements = append(importedElements, tsImports...)
 
 	// Parse module scripts for static and dynamic imports (for HTML files)
@@ -189,6 +192,98 @@ func parseScriptImports(content string, ctx types.ServerContext, doc types.Docum
 	return uniqueImports
 }
 
+// ParseScriptImportsForTest is the exported version for testing
+func ParseScriptImportsForTest(content string, ctx types.ServerContext, doc types.Document) []string {
+	return parseScriptImports(content, ctx, doc)
+}
+
+// ParseTypeScriptImportsForTest is the exported version for testing
+func ParseTypeScriptImportsForTest(content string, ctx types.ServerContext) []string {
+	return parseTypeScriptImports(content, ctx)
+}
+
+// ParseTypeScriptImportsDebugForTest is the exported version for testing with debug output
+func ParseTypeScriptImportsDebugForTest(content string, ctx types.ServerContext) ([]string, []string) {
+	var importedElements []string
+	var debugInfo []string
+
+	debugInfo = append(debugInfo, fmt.Sprintf("Input content: %q", content))
+
+	// Get TypeScript parser from pool
+	parser := queries.RetrieveTypeScriptParser()
+	defer queries.PutTypeScriptParser(parser)
+
+	// Parse the TypeScript content
+	contentBytes := []byte(content)
+	tree := parser.Parse(contentBytes, nil)
+	if tree == nil {
+		debugInfo = append(debugInfo, "Failed to parse TypeScript content with tree-sitter")
+		return importedElements, debugInfo
+	}
+	defer tree.Close()
+	
+	// Safety check: verify tree root node is valid
+	rootNode := tree.RootNode()
+	if rootNode == nil {
+		debugInfo = append(debugInfo, "Tree root node is nil, skipping TypeScript import parsing")
+		return importedElements, debugInfo
+	}
+
+	debugInfo = append(debugInfo, "Tree parsed successfully")
+
+	// Get query manager from context for dependency injection
+	queryManager, err := ctx.QueryManager()
+	if err != nil {
+		debugInfo = append(debugInfo, fmt.Sprintf("Failed to get query manager from context: %v", err))
+		return importedElements, debugInfo
+	}
+
+	// Get cached import matcher for performance
+	importMatcher, err := queries.GetCachedQueryMatcher(queryManager, "typescript", "imports")
+	if err != nil {
+		debugInfo = append(debugInfo, fmt.Sprintf("Failed to get cached import matcher: %v", err))
+		return importedElements, debugInfo
+	}
+
+	debugInfo = append(debugInfo, "Successfully got import matcher")
+
+	// Extract import paths using tree-sitter - use the contentBytes we already created
+	matchCount := 0
+	for match := range importMatcher.AllQueryMatches(rootNode, contentBytes) {
+		matchCount++
+		debugInfo = append(debugInfo, fmt.Sprintf("Found match %d", matchCount))
+		
+		// Safety check: verify match is valid
+		if match == nil {
+			debugInfo = append(debugInfo, "Match is nil, skipping")
+			continue
+		}
+		
+		for i, capture := range match.Captures {
+			captureName := importMatcher.GetCaptureNameByIndex(capture.Index)
+			captureText := capture.Node.Utf8Text(contentBytes)
+			debugInfo = append(debugInfo, fmt.Sprintf("  Capture %d: name=%s, text=%q", i, captureName, captureText))
+
+			// Handle static, dynamic, and legacy import patterns
+			if captureName == "import.spec" || captureName == "dynamicImport.spec" || captureName == "staticImport.spec" {
+				importPath := captureText
+				// Remove quotes from import path
+				importPath = strings.Trim(importPath, `"'`)
+				debugInfo = append(debugInfo, fmt.Sprintf("  Processing import path: %s", importPath))
+				elements := resolveImportPathToElements(importPath, ctx)
+				importedElements = append(importedElements, elements...)
+				debugInfo = append(debugInfo, fmt.Sprintf("  Resolved to elements: %v", elements))
+			} else {
+				debugInfo = append(debugInfo, fmt.Sprintf("  Ignoring capture: %s", captureName))
+			}
+		}
+	}
+
+	debugInfo = append(debugInfo, fmt.Sprintf("Total matches found: %d", matchCount))
+
+	return importedElements, debugInfo
+}
+
 // parseTypeScriptImports parses TypeScript import statements using tree-sitter
 func parseTypeScriptImports(content string, ctx types.ServerContext) []string {
 	var importedElements []string
@@ -200,17 +295,25 @@ func parseTypeScriptImports(content string, ctx types.ServerContext) []string {
 	defer queries.PutTypeScriptParser(parser)
 
 	// Parse the TypeScript content
-	tree := parser.Parse([]byte(content), nil)
+	contentBytes := []byte(content)
+	tree := parser.Parse(contentBytes, nil)
 	if tree == nil {
 		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to parse TypeScript content with tree-sitter")
 		return importedElements
 	}
 	defer tree.Close()
+	
+	// Safety check: verify tree root node is valid
+	rootNode := tree.RootNode()
+	if rootNode == nil {
+		helpers.SafeDebugLog("[DIAGNOSTICS] Tree root node is nil, skipping TypeScript import parsing")
+		return importedElements
+	}
 
-	// Get singleton query manager for performance
-	queryManager, err := queries.GetGlobalQueryManager()
+	// Get query manager from context for dependency injection
+	queryManager, err := ctx.QueryManager()
 	if err != nil {
-		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to get global query manager: %v", err)
+		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to get query manager from context: %v", err)
 		return importedElements
 	}
 	// Note: Don't defer Close() on singleton
@@ -223,9 +326,13 @@ func parseTypeScriptImports(content string, ctx types.ServerContext) []string {
 	}
 	// Note: Don't defer Close() on cached matcher
 
-	// Extract import paths using tree-sitter
-	contentBytes := []byte(content)
-	for match := range importMatcher.AllQueryMatches(tree.RootNode(), contentBytes) {
+	// Extract import paths using tree-sitter - use the contentBytes we already created
+	for match := range importMatcher.AllQueryMatches(rootNode, contentBytes) {
+		// Safety check: verify match is valid
+		if match == nil {
+			continue
+		}
+		
 		for _, capture := range match.Captures {
 			captureName := importMatcher.GetCaptureNameByIndex(capture.Index)
 
@@ -287,10 +394,10 @@ func parseModuleScriptImports(ctx types.ServerContext, doc types.Document) []str
 	}
 	defer tree.Close()
 
-	// Get singleton query manager for performance
-	queryManager, err := queries.GetGlobalQueryManager()
+	// Get query manager from context for dependency injection
+	queryManager, err := ctx.QueryManager()
 	if err != nil {
-		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to get global query manager: %v", err)
+		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to get query manager from context: %v", err)
 		return importedElements
 	}
 
@@ -357,10 +464,10 @@ func parseNonModuleScriptImports(content string, ctx types.ServerContext) []stri
 	}
 	defer tree.Close()
 
-	// Get singleton query manager for performance
-	queryManager, err := queries.GetGlobalQueryManager()
+	// Get query manager from context for dependency injection
+	queryManager, err := ctx.QueryManager()
 	if err != nil {
-		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to get global query manager: %v", err)
+		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to get query manager from context: %v", err)
 		return importedElements
 	}
 

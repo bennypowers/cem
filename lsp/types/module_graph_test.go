@@ -23,7 +23,7 @@ import (
 )
 
 func TestModuleGraph_BasicOperations(t *testing.T) {
-	mg := types.NewModuleGraph()
+	mg := types.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
 
 	// Test adding direct exports
 	mg.AddDirectExport("components/rh-tab.js", "RhTab", "rh-tab")
@@ -75,7 +75,7 @@ func TestModuleGraph_BasicOperations(t *testing.T) {
 }
 
 func TestModuleGraph_ReExports(t *testing.T) {
-	mg := types.NewModuleGraph()
+	mg := types.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
 
 	// Add a direct export
 	mg.AddDirectExport("components/rh-tab.js", "RhTab", "rh-tab")
@@ -107,7 +107,7 @@ func TestModuleGraph_ReExports(t *testing.T) {
 
 func TestModuleGraph_RealWorldScenario(t *testing.T) {
 	// Create module graph and populate from manifest data (like production LSP server)
-	mg := types.NewModuleGraph()
+	mg := types.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
 
 	// Simulate manifest data for rh-tabs scenario
 	elementMap := map[string]interface{}{
@@ -178,7 +178,7 @@ func TestModuleGraph_RealWorldScenario(t *testing.T) {
 }
 
 func TestModuleGraph_GetModuleExports(t *testing.T) {
-	mg := types.NewModuleGraph()
+	mg := types.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
 
 	// Add exports to a module
 	mg.AddDirectExport("components/multi-element.js", "ElementOne", "element-one")
@@ -212,7 +212,7 @@ func TestModuleGraph_GetModuleExports(t *testing.T) {
 }
 
 func TestModuleGraph_EmptyGraph(t *testing.T) {
-	mg := types.NewModuleGraph()
+	mg := types.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
 
 	// Test empty graph behavior
 	allTagNames := mg.GetAllTagNames()

@@ -55,7 +55,7 @@ type FileParser interface {
 type ExportParser interface {
 	// ParseExportsFromContent parses export statements from file content
 	// Returns any parsing errors, but implementations should be resilient
-	ParseExportsFromContent(modulePath string, content []byte, exportTracker *ExportTracker, dependencyTracker *DependencyTracker) error
+	ParseExportsFromContent(modulePath string, content []byte, exportTracker *ExportTracker, dependencyTracker *DependencyTracker, queryManager *queries.QueryManager) error
 }
 
 // ManifestResolver interface abstracts manifest-based path resolution
@@ -271,7 +271,7 @@ func (m *mockFileInfo) Sys() interface{}   { return nil }
 type DefaultExportParser struct{}
 
 // ParseExportsFromContent implements ExportParser using tree-sitter
-func (p *DefaultExportParser) ParseExportsFromContent(modulePath string, content []byte, exportTracker *ExportTracker, dependencyTracker *DependencyTracker) error {
+func (p *DefaultExportParser) ParseExportsFromContent(modulePath string, content []byte, exportTracker *ExportTracker, dependencyTracker *DependencyTracker, queryManager *queries.QueryManager) error {
 	// Get TypeScript parser from pool
 	parser := queries.RetrieveTypeScriptParser()
 	defer queries.PutTypeScriptParser(parser)
@@ -317,16 +317,14 @@ func (p *DefaultExportParser) ParseExportsFromContent(modulePath string, content
 	defer tree.Close()
 
 	// Try to use tree-sitter queries for accurate parsing
-	return p.parseExportsWithQueries(tree, modulePath, content, exportTracker, dependencyTracker)
+	return p.parseExportsWithQueries(tree, modulePath, content, exportTracker, dependencyTracker, queryManager)
 }
 
 // parseExportsWithQueries uses tree-sitter queries to parse export statements
-func (p *DefaultExportParser) parseExportsWithQueries(tree *ts.Tree, modulePath string, content []byte, exportTracker *ExportTracker, dependencyTracker *DependencyTracker) error {
-	// PERFORMANCE OPTIMIZATION: Use thread-safe singleton QueryManager and cached matchers
-	// There can be only one QueryManager, but we cache matchers for different query types
-	queryManager, err := queries.GetGlobalQueryManager()
-	if err != nil {
-		return fmt.Errorf("failed to get global query manager for module %s: %w", modulePath, err)
+func (p *DefaultExportParser) parseExportsWithQueries(tree *ts.Tree, modulePath string, content []byte, exportTracker *ExportTracker, dependencyTracker *DependencyTracker, queryManager *queries.QueryManager) error {
+	// PERFORMANCE OPTIMIZATION: Use injected QueryManager for dependency injection
+	if queryManager == nil {
+		return fmt.Errorf("query manager not available for parsing exports in module %s", modulePath)
 	}
 
 	// Get cached export matcher (thread-safe)
@@ -652,6 +650,7 @@ type ModuleGraph struct {
 	exportParser     ExportParser
 	manifestResolver ManifestResolver
 	metrics          MetricsCollector
+	queryManager     *queries.QueryManager
 }
 
 // NoOpManifestResolver implements ManifestResolver but returns empty results
@@ -670,7 +669,7 @@ func (r *NoOpManifestResolver) GetElementsFromManifestModule(manifestModulePath 
 }
 
 // NewModuleGraph creates a new empty module graph with default dependencies
-func NewModuleGraph() *ModuleGraph {
+func NewModuleGraph(queryManager *queries.QueryManager) *ModuleGraph {
 	return &ModuleGraph{
 		exportTracker:      NewExportTracker(),
 		dependencyTracker:  NewDependencyTracker(),
@@ -678,13 +677,14 @@ func NewModuleGraph() *ModuleGraph {
 		exportParser:       &DefaultExportParser{},
 		manifestResolver:   &NoOpManifestResolver{},
 		metrics:            &NoOpMetricsCollector{}, // Default to no-op for performance
+		queryManager:       queryManager, // Required parameter for dependency injection
 		MaxTransitiveDepth: DefaultMaxTransitiveDepth,
 		// TransitiveElementsCache is initialized as zero value (ready to use)
 	}
 }
 
 // NewModuleGraphWithMetrics creates a new module graph with metrics collection enabled
-func NewModuleGraphWithMetrics() *ModuleGraph {
+func NewModuleGraphWithMetrics(queryManager *queries.QueryManager) *ModuleGraph {
 	return &ModuleGraph{
 		exportTracker:      NewExportTracker(),
 		dependencyTracker:  NewDependencyTracker(),
@@ -692,6 +692,7 @@ func NewModuleGraphWithMetrics() *ModuleGraph {
 		exportParser:       &DefaultExportParser{},
 		manifestResolver:   &NoOpManifestResolver{},
 		metrics:            NewDefaultMetricsCollector(),
+		queryManager:       queryManager, // Required parameter for dependency injection
 		MaxTransitiveDepth: DefaultMaxTransitiveDepth,
 		// TransitiveElementsCache is initialized as zero value (ready to use)
 	}
@@ -699,7 +700,7 @@ func NewModuleGraphWithMetrics() *ModuleGraph {
 
 // NewModuleGraphWithDependencies creates a new module graph with custom dependencies
 // This is useful for testing and dependency injection
-func NewModuleGraphWithDependencies(fileParser FileParser, exportParser ExportParser, manifestResolver ManifestResolver, metrics MetricsCollector) *ModuleGraph {
+func NewModuleGraphWithDependencies(fileParser FileParser, exportParser ExportParser, manifestResolver ManifestResolver, metrics MetricsCollector, queryManager *queries.QueryManager) *ModuleGraph {
 	// Validate all parameters and provide safe defaults
 	if fileParser == nil {
 		fileParser = &OSFileParser{}
@@ -713,6 +714,8 @@ func NewModuleGraphWithDependencies(fileParser FileParser, exportParser ExportPa
 	if metrics == nil {
 		metrics = &NoOpMetricsCollector{}
 	}
+	// Note: queryManager can be nil for graceful degradation
+	
 	return &ModuleGraph{
 		exportTracker:      NewExportTracker(),
 		dependencyTracker:  NewDependencyTracker(),
@@ -720,6 +723,7 @@ func NewModuleGraphWithDependencies(fileParser FileParser, exportParser ExportPa
 		exportParser:       exportParser,
 		manifestResolver:   manifestResolver,
 		metrics:            metrics,
+		queryManager:       queryManager,
 		MaxTransitiveDepth: DefaultMaxTransitiveDepth,
 		// TransitiveElementsCache is initialized as zero value (ready to use)
 	}
@@ -727,7 +731,7 @@ func NewModuleGraphWithDependencies(fileParser FileParser, exportParser ExportPa
 
 // NewModuleGraphWithFileParser creates a new module graph with a custom file parser
 // This is useful for testing with mock file systems (backwards compatibility)
-func NewModuleGraphWithFileParser(fileParser FileParser) *ModuleGraph {
+func NewModuleGraphWithFileParser(fileParser FileParser, queryManager *queries.QueryManager) *ModuleGraph {
 	return &ModuleGraph{
 		exportTracker:      NewExportTracker(),
 		dependencyTracker:  NewDependencyTracker(),
@@ -735,6 +739,7 @@ func NewModuleGraphWithFileParser(fileParser FileParser) *ModuleGraph {
 		exportParser:       &DefaultExportParser{},
 		manifestResolver:   &NoOpManifestResolver{},
 		metrics:            &NoOpMetricsCollector{},
+		queryManager:       queryManager, // Required parameter for dependency injection
 		MaxTransitiveDepth: DefaultMaxTransitiveDepth,
 		// TransitiveElementsCache is initialized as zero value (ready to use)
 	}
@@ -1099,7 +1104,7 @@ func (mg *ModuleGraph) parseFileExports(filePath, workspaceRoot string) error {
 	modulePath := filepath.ToSlash(relPath)
 
 	// Parse exports using injected parser
-	return mg.exportParser.ParseExportsFromContent(modulePath, content, mg.exportTracker, mg.dependencyTracker)
+	return mg.exportParser.ParseExportsFromContent(modulePath, content, mg.exportTracker, mg.dependencyTracker, mg.queryManager)
 }
 
 // resolveReExportChains resolves transitive re-export relationships
@@ -1165,6 +1170,7 @@ func (mg *ModuleGraph) SetMaxTransitiveDepth(depth int) {
 	// Clear cache since depth limit affects results
 	mg.TransitiveElementsCache = sync.Map{}
 }
+
 
 // Lazy Module Graph Building Methods
 
@@ -1433,12 +1439,11 @@ func (mg *ModuleGraph) extractFileDependencies(filePath string) ([]string, error
 	helpers.SafeDebugLog("[MODULE_GRAPH] DEBUG: Successfully parsed tree for %s", filePath)
 
 	// Get cached export matcher (which includes import queries)
-	queryManager, err := queries.GetGlobalQueryManager()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get global query manager for file %s: %w", filePath, err)
+	if mg.queryManager == nil {
+		return nil, fmt.Errorf("query manager not available for extracting dependencies from file %s", filePath)
 	}
 
-	exportMatcher, err := queries.GetCachedQueryMatcher(queryManager, "typescript", "exports")
+	exportMatcher, err := queries.GetCachedQueryMatcher(mg.queryManager, "typescript", "exports")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cached export matcher for file %s: %w", filePath, err)
 	}

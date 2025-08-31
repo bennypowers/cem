@@ -24,6 +24,7 @@ import (
 
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
+	"bennypowers.dev/cem/queries"
 )
 
 func TestModuleGraph_TransitiveElements_SingleLevel(t *testing.T) {
@@ -31,7 +32,7 @@ func TestModuleGraph_TransitiveElements_SingleLevel(t *testing.T) {
 	helpers.SetDebugLoggingEnabled(true)
 	defer helpers.SetDebugLoggingEnabled(false)
 
-	mg := types.NewModuleGraph()
+	mg := types.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
 
 	// my-button.js defines my-button element
 	mg.AddDirectExport("my-button.js", "MyButton", "my-button")
@@ -64,7 +65,7 @@ func TestModuleGraph_TransitiveElements_SingleLevel(t *testing.T) {
 }
 
 func TestModuleGraph_TransitiveElements_TwoLevels(t *testing.T) {
-	mg := types.NewModuleGraph()
+	mg := types.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
 
 	// my-icon.js defines my-icon element (base dependency)
 	mg.AddDirectExport("my-icon.js", "MyIcon", "my-icon")
@@ -101,7 +102,7 @@ func TestModuleGraph_TransitiveElements_TwoLevels(t *testing.T) {
 }
 
 func TestModuleGraph_TransitiveElements_ThreeLevels(t *testing.T) {
-	mg := types.NewModuleGraph()
+	mg := types.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
 
 	// Deep dependency chain: my-tabs -> my-tab -> my-button -> my-icon
 
@@ -144,7 +145,7 @@ func TestModuleGraph_TransitiveElements_ThreeLevels(t *testing.T) {
 }
 
 func TestModuleGraph_TransitiveElements_DiamondDependency(t *testing.T) {
-	mg := types.NewModuleGraph()
+	mg := types.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
 
 	// Diamond dependency pattern:
 	//     my-form.js
@@ -201,7 +202,7 @@ func TestModuleGraph_TransitiveElements_DiamondDependency(t *testing.T) {
 }
 
 func TestModuleGraph_TransitiveElements_CircularDependency(t *testing.T) {
-	mg := types.NewModuleGraph()
+	mg := types.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
 
 	// Circular dependency: my-a.js -> my-b.js -> my-c.js -> my-a.js
 	mg.AddDirectExport("my-a.js", "MyA", "my-a")
@@ -236,7 +237,7 @@ func TestModuleGraph_TransitiveElements_CircularDependency(t *testing.T) {
 }
 
 func TestModuleGraph_TransitiveElements_DepthLimit(t *testing.T) {
-	mg := types.NewModuleGraph()
+	mg := types.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
 
 	// Create a deep chain: my-1 -> my-2 -> my-3 -> ... -> my-10
 	for i := 1; i <= 10; i++ {
@@ -269,7 +270,7 @@ func TestModuleGraph_TransitiveElements_DepthLimit(t *testing.T) {
 
 func TestModuleGraph_RealWorldWorkspaceScenario(t *testing.T) {
 	// Create module graph and populate from manifest data (like production LSP server)
-	mg := types.NewModuleGraph()
+	mg := types.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
 
 	// Simulate manifest data for transitive scenario
 	elementMap := map[string]interface{}{
@@ -382,12 +383,19 @@ func TestModuleGraph_RecursiveDependencyBuilding(t *testing.T) {
 		t.Fatalf("Failed to create test files: %v", err)
 	}
 
+	// Get query manager for test
+	queryManager, err := queries.GetGlobalQueryManager()
+	if err != nil {
+		t.Fatalf("Failed to get query manager: %v", err)
+	}
+	
 	// Create module graph with workspace root
 	mg := types.NewModuleGraphWithDependencies(
 		&types.OSFileParser{},
 		&types.DefaultExportParser{},
 		&types.NoOpManifestResolver{}, // Use no-op since we're testing file-based dependency building
 		&types.NoOpMetricsCollector{},
+		queryManager,
 	)
 	mg.SetWorkspaceRoot(tempDir)
 
