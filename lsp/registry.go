@@ -521,7 +521,7 @@ func (r *Registry) ElementDefinition(tagName string) (*ElementDefinition, bool) 
 				},
 				className:   "", // Class name not available from module graph
 				modulePath:  modulePath,
-				packageName: "", // Module graph doesn't track package names currently
+				packageName: "", // Package names not available for module graph elements - they come from file scanning, not manifests
 			}, true
 		}
 	}

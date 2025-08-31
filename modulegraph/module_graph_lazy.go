@@ -290,7 +290,7 @@ func (mg *ModuleGraph) extractFileDependencies(filePath string) ([]string, error
 	tree := parser.Parse(content, nil)
 	if tree == nil {
 		helpers.SafeDebugLog("[MODULE_GRAPH] DEBUG: Tree parsing failed for %s", filePath)
-		return nil, nil // Skip files that fail to parse
+		return []string{}, nil // Return empty slice instead of nil to avoid NPD
 	}
 	defer tree.Close()
 	helpers.SafeDebugLog("[MODULE_GRAPH] DEBUG: Successfully parsed tree for %s", filePath)

@@ -411,6 +411,8 @@ func (mg *ModuleGraph) PopulateFromManifests(elements map[string]interface{}) {
 			}
 		}
 	}
+	// Clear transitive cache after population to ensure fresh calculations
+	mg.ClearTransitiveElementsCache()
 }
 
 // BuildFromWorkspace analyzes the workspace to build the module graph
@@ -547,6 +549,16 @@ func (mg *ModuleGraph) SetManifestResolver(manifestResolver ManifestResolver) {
 	mg.manifestResolver = manifestResolver
 }
 
+// ClearTransitiveElementsCache safely clears the transitive elements cache
+// This should be called when module graph structure changes to prevent stale data
+func (mg *ModuleGraph) ClearTransitiveElementsCache() {
+	// Safely clear all entries from the sync.Map
+	mg.TransitiveElementsCache.Range(func(key, value interface{}) bool {
+		mg.TransitiveElementsCache.Delete(key)
+		return true // continue iteration
+	})
+}
+
 // SetMaxTransitiveDepth updates the maximum transitive depth for this module graph
 func (mg *ModuleGraph) SetMaxTransitiveDepth(depth int) {
 	if depth <= 0 {
@@ -554,5 +566,5 @@ func (mg *ModuleGraph) SetMaxTransitiveDepth(depth int) {
 	}
 	mg.MaxTransitiveDepth = depth
 	// Clear cache since depth limit affects results
-	mg.TransitiveElementsCache = sync.Map{}
+	mg.ClearTransitiveElementsCache()
 }
