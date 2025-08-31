@@ -177,6 +177,13 @@ func (s *Server) QueryManager() (*queries.QueryManager, error) {
 	return s.documents.QueryManager(), nil
 }
 
+func (s *Server) ModuleGraph() *types.ModuleGraph {
+	if s.registry == nil {
+		return nil
+	}
+	return s.registry.GetModuleGraph()
+}
+
 // UpdateWorkspaceFromLSP updates the workspace context based on LSP initialize parameters
 func (s *Server) UpdateWorkspaceFromLSP(rootURI *string, workspaceFolders []protocol.WorkspaceFolder) error {
 	helpers.SafeDebugLog("[UPDATE_WORKSPACE] Starting workspace context update")

@@ -259,6 +259,11 @@ func (m *MockServerContext) QueryManager() (*queries.QueryManager, error) {
 	return nil, fmt.Errorf("QueryManager not available in test context")
 }
 
+func (m *MockServerContext) ModuleGraph() *types.ModuleGraph {
+	// Return a new empty module graph for testing
+	return types.NewModuleGraph()
+}
+
 // Helper methods for setting up test data
 
 // AddDocument adds a document to the mock context

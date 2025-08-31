@@ -79,4 +79,7 @@ type ServerContext interface {
 
 	// Query operations for tree-sitter
 	QueryManager() (*queries.QueryManager, error)
+
+	// Module graph operations for re-export analysis
+	ModuleGraph() *ModuleGraph
 }

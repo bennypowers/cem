@@ -445,14 +445,105 @@ func parseNonModuleScriptImports(content string, ctx types.ServerContext) []stri
 }
 
 // resolveImportPathToElements resolves an import path to custom element tag names
+// This function now uses both manifest data and module graph re-export information
 func resolveImportPathToElements(importPath string, ctx types.ServerContext) []string {
 	var elements []string
 
 	helpers.SafeDebugLog("[DIAGNOSTICS] Resolving import path '%s' to elements", importPath)
 
-	// Get all available elements and their sources
+	// Try module graph first for re-export aware resolution
+	if moduleGraph := ctx.ModuleGraph(); moduleGraph != nil {
+		moduleGraphElements := resolveImportPathWithModuleGraph(importPath, moduleGraph)
+		if len(moduleGraphElements) > 0 {
+			helpers.SafeDebugLog("[DIAGNOSTICS] Module graph resolved '%s' to %d elements: %v", importPath, len(moduleGraphElements), moduleGraphElements)
+			elements = append(elements, moduleGraphElements...)
+		}
+	}
+
+	// Also check manifest-based resolution for compatibility
+	manifestElements := resolveImportPathWithManifests(importPath, ctx)
+	elements = append(elements, manifestElements...)
+
+	// Remove duplicates
+	seen := make(map[string]bool)
+	var uniqueElements []string
+	for _, elem := range elements {
+		if !seen[elem] {
+			seen[elem] = true
+			uniqueElements = append(uniqueElements, elem)
+		}
+	}
+
+	helpers.SafeDebugLog("[DIAGNOSTICS] Import '%s' resolved to %d total elements: %v", importPath, len(uniqueElements), uniqueElements)
+	return uniqueElements
+}
+
+// resolveImportPathWithModuleGraph uses the module graph for transitive dependency resolution
+func resolveImportPathWithModuleGraph(importPath string, moduleGraph *types.ModuleGraph) []string {
+	var elements []string
+
+	helpers.SafeDebugLog("[DIAGNOSTICS] Checking module graph for import path '%s'", importPath)
+
+	// Try to find a module that matches this import path
+	matchingModule := findMatchingModuleForImportPath(importPath, moduleGraph)
+	if matchingModule != "" {
+		// Get all transitively available elements from this module
+		transitiveElements := moduleGraph.GetTransitiveElements(matchingModule)
+		helpers.SafeDebugLog("[DIAGNOSTICS] MODULE GRAPH TRANSITIVE MATCH: Import '%s' provides %d transitive elements: %v", importPath, len(transitiveElements), transitiveElements)
+		return transitiveElements
+	}
+
+	// Fallback: check direct element sources (original behavior)
+	allTagNames := getAllTagNamesFromModuleGraph(moduleGraph)
+
+	for _, tagName := range allTagNames {
+		// Get all module sources that export this element
+		elementSources := moduleGraph.GetElementSources(tagName)
+
+		for _, sourceModule := range elementSources {
+			if pathsMatch(importPath, sourceModule) {
+				elements = append(elements, tagName)
+				helpers.SafeDebugLog("[DIAGNOSTICS] MODULE GRAPH DIRECT MATCH: Import '%s' provides element '%s' via module '%s'", importPath, tagName, sourceModule)
+				break // Found match, don't need to check other sources
+			}
+		}
+	}
+
+	return elements
+}
+
+// findMatchingModuleForImportPath finds a module in the graph that matches the import path
+func findMatchingModuleForImportPath(importPath string, moduleGraph *types.ModuleGraph) string {
+	// Get all tag names to find all modules in the graph
+	allTagNames := moduleGraph.GetAllTagNames()
+	modulesSeen := make(map[string]bool)
+
+	for _, tagName := range allTagNames {
+		elementSources := moduleGraph.GetElementSources(tagName)
+		for _, sourceModule := range elementSources {
+			if !modulesSeen[sourceModule] {
+				modulesSeen[sourceModule] = true
+
+				// Check if this module matches the import path
+				if pathsMatch(importPath, sourceModule) {
+					helpers.SafeDebugLog("[DIAGNOSTICS] Found matching module '%s' for import path '%s'", sourceModule, importPath)
+					return sourceModule
+				}
+			}
+		}
+	}
+
+	helpers.SafeDebugLog("[DIAGNOSTICS] No matching module found for import path '%s'", importPath)
+	return ""
+}
+
+// resolveImportPathWithManifests uses traditional manifest-based resolution
+func resolveImportPathWithManifests(importPath string, ctx types.ServerContext) []string {
+	var elements []string
+
+	// Get all available elements and their sources from manifests
 	allTagNames := ctx.AllTagNames()
-	helpers.SafeDebugLog("[DIAGNOSTICS] Found %d elements to check against import path", len(allTagNames))
+	helpers.SafeDebugLog("[DIAGNOSTICS] Found %d elements from manifests to check against import path", len(allTagNames))
 
 	for _, tagName := range allTagNames {
 		if elementSource, hasSource := ctx.ElementSource(tagName); hasSource {
@@ -460,7 +551,7 @@ func resolveImportPathToElements(importPath string, ctx types.ServerContext) []s
 			// Check if the import path matches this element's source
 			if pathsMatch(importPath, elementSource) {
 				elements = append(elements, tagName)
-				helpers.SafeDebugLog("[DIAGNOSTICS] MATCH: Import '%s' provides element '%s'", importPath, tagName)
+				helpers.SafeDebugLog("[DIAGNOSTICS] MANIFEST MATCH: Import '%s' provides element '%s'", importPath, tagName)
 			} else {
 				helpers.SafeDebugLog("[DIAGNOSTICS] NO MATCH: Import '%s' vs element source '%s'", importPath, elementSource)
 			}
@@ -469,8 +560,12 @@ func resolveImportPathToElements(importPath string, ctx types.ServerContext) []s
 		}
 	}
 
-	helpers.SafeDebugLog("[DIAGNOSTICS] Import '%s' resolved to %d elements: %v", importPath, len(elements), elements)
 	return elements
+}
+
+// getAllTagNamesFromModuleGraph extracts all tag names from the module graph
+func getAllTagNamesFromModuleGraph(moduleGraph *types.ModuleGraph) []string {
+	return moduleGraph.GetAllTagNames()
 }
 
 // pathsMatch checks if an import path matches an element source path

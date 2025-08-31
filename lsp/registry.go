@@ -27,6 +27,7 @@ import (
 
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp/helpers"
+	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
 	W "bennypowers.dev/cem/workspace"
 )
@@ -87,6 +88,8 @@ type Registry struct {
 	generateWatcher *InProcessGenerateWatcher
 	generateMu      sync.RWMutex
 	localWorkspace  W.WorkspaceContext // Track the local workspace for generate watching
+	// Module graph for tracking re-export relationships
+	moduleGraph *types.ModuleGraph
 }
 
 // NewRegistry creates a new empty registry with the given file watcher.
@@ -101,6 +104,7 @@ func NewRegistry(fileWatcher platform.FileWatcher) *Registry {
 		ManifestPaths:        make([]string, 0),
 		ManifestPackageNames: make(map[string]string),
 		fileWatcher:          fileWatcher,
+		moduleGraph:          types.NewModuleGraph(),
 	}
 }
 
@@ -137,6 +141,11 @@ func (r *Registry) LoadFromWorkspace(workspace W.WorkspaceContext) error {
 		helpers.SafeDebugLog("Warning: Could not load config manifests: %v", err)
 	}
 
+	// 4. Build module graph from workspace for re-export analysis
+	if err := r.buildModuleGraph(workspace); err != nil {
+		helpers.SafeDebugLog("Warning: Could not build module graph: %v", err)
+	}
+
 	helpers.SafeDebugLog("Loaded %d custom elements from %d manifests", len(r.Elements), len(r.Manifests))
 	return nil
 }
@@ -149,6 +158,7 @@ func (r *Registry) clear() {
 	r.Manifests = r.Manifests[:0]
 	r.ManifestPaths = r.ManifestPaths[:0]
 	r.ManifestPackageNames = make(map[string]string)
+	r.moduleGraph = types.NewModuleGraph()
 }
 
 // clearDataOnly resets the registry data but preserves manifest paths for watching
@@ -160,6 +170,7 @@ func (r *Registry) clearDataOnly() {
 	r.ElementDefinitions = make(map[string]*ElementDefinition)
 	r.attributes = make(map[string]map[string]*M.Attribute)
 	r.Manifests = r.Manifests[:0]
+	r.moduleGraph = types.NewModuleGraph()
 	// Note: ManifestPaths are preserved for file watching
 }
 
@@ -440,15 +451,37 @@ func (r *Registry) ElementDefinition(tagName string) (*ElementDefinition, bool) 
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
+	// First check manifest-based definitions
 	definition, exists := r.ElementDefinitions[tagName]
-	helpers.SafeDebugLog("[REGISTRY] GetElementDefinition('%s'): exists=%t", tagName, exists)
 	if exists {
+		helpers.SafeDebugLog("[REGISTRY] GetElementDefinition('%s'): found in manifests", tagName)
 		helpers.SafeDebugLog("[REGISTRY] Element '%s' module path: %s", tagName, definition.modulePath)
 		if definition.Source != nil {
 			helpers.SafeDebugLog("[REGISTRY] Element '%s' source href: %s", tagName, definition.Source.Href)
 		}
+		return definition, true
 	}
-	return definition, exists
+
+	// If not found in manifests, check module graph
+	if r.moduleGraph != nil {
+		elementSources := r.moduleGraph.GetElementSources(tagName)
+		if len(elementSources) > 0 {
+			helpers.SafeDebugLog("[REGISTRY] GetElementDefinition('%s'): found in module graph with sources: %v", tagName, elementSources)
+			// Create a minimal ElementDefinition for module graph elements
+			// Use the first source as the primary module path
+			modulePath := elementSources[0]
+			return &ElementDefinition{
+				CustomElement: &M.CustomElement{
+					TagName: tagName,
+				},
+				modulePath:  modulePath,
+				packageName: "", // Module graph doesn't track package names currently
+			}, true
+		}
+	}
+
+	helpers.SafeDebugLog("[REGISTRY] GetElementDefinition('%s'): not found", tagName)
+	return nil, false
 }
 
 // AllTagNames returns all registered custom element tag names
@@ -456,10 +489,30 @@ func (r *Registry) AllTagNames() []string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
+	// Collect tags from manifests
 	tags := make([]string, 0, len(r.Elements))
 	for tag := range r.Elements {
 		tags = append(tags, tag)
 	}
+
+	// Also include tags from module graph (for elements discovered from source files)
+	if r.moduleGraph != nil {
+		moduleGraphTags := r.moduleGraph.GetAllTagNames()
+
+		// Use map for O(1) duplicate detection instead of O(n²) nested loops
+		seen := make(map[string]bool, len(tags))
+		for _, tag := range tags {
+			seen[tag] = true
+		}
+
+		for _, tag := range moduleGraphTags {
+			if !seen[tag] {
+				tags = append(tags, tag)
+				seen[tag] = true
+			}
+		}
+	}
+
 	return tags
 }
 
@@ -772,4 +825,24 @@ func (r *Registry) addManifestPath(path string) {
 		}
 	}
 	r.watcherMu.RUnlock()
+}
+
+// GetModuleGraph returns the module graph for re-export analysis
+func (r *Registry) GetModuleGraph() *types.ModuleGraph {
+	return r.moduleGraph
+}
+
+// buildModuleGraph builds the module graph from the workspace
+func (r *Registry) buildModuleGraph(workspace W.WorkspaceContext) error {
+	if workspace == nil {
+		return nil
+	}
+
+	workspaceRoot := workspace.Root()
+	if workspaceRoot == "" {
+		return nil
+	}
+
+	helpers.SafeDebugLog("[REGISTRY] Building module graph for workspace: %s", workspaceRoot)
+	return r.moduleGraph.BuildFromWorkspace(workspaceRoot)
 }
