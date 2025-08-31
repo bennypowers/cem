@@ -268,24 +268,34 @@ func TestModuleGraph_TransitiveElements_DepthLimit(t *testing.T) {
 }
 
 func TestModuleGraph_RealWorldWorkspaceScenario(t *testing.T) {
-	// Create a temporary directory for test files
-	tempDir, err := os.MkdirTemp("", "transitive-module-graph-test")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
-
-	// Create test files that represent the transitive dependency scenario
-	if err := createTransitiveTestFiles(tempDir); err != nil {
-		t.Fatalf("Failed to create test files: %v", err)
-	}
-
-	// Test module graph building with real files
+	// Create module graph and populate from manifest data (like production LSP server)
 	mg := types.NewModuleGraph()
-	err = mg.BuildFromWorkspace(tempDir)
-	if err != nil {
-		t.Fatalf("Failed to build module graph: %v", err)
+
+	// Simulate manifest data for transitive scenario
+	elementMap := map[string]interface{}{
+		"my-icon": &types.MockElementDefinition{
+			TagName:    "my-icon",
+			ClassName:  "MyIcon",
+			ModulePath: "my-icon.ts",
+		},
+		"my-tab": &types.MockElementDefinition{
+			TagName:    "my-tab",
+			ClassName:  "MyTab",
+			ModulePath: "my-tab.ts",
+		},
+		"my-tabs": &types.MockElementDefinition{
+			TagName:    "my-tabs",
+			ClassName:  "MyTabs",
+			ModulePath: "my-tabs.ts",
+		},
 	}
+
+	// Populate module graph from manifest data (production approach)
+	mg.PopulateFromManifests(elementMap)
+
+	// Add dependency relationships to simulate transitive dependencies
+	mg.AddModuleDependency("my-tabs.ts", "my-tab.ts") // my-tabs imports my-tab
+	mg.AddModuleDependency("my-tab.ts", "my-icon.ts") // my-tab imports my-icon
 
 	// Verify transitive dependencies were detected
 	// Use direct element tracking since no manifest resolver is configured

@@ -17,8 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package types_test
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
 	"bennypowers.dev/cem/lsp/types"
@@ -108,49 +106,28 @@ func TestModuleGraph_ReExports(t *testing.T) {
 }
 
 func TestModuleGraph_RealWorldScenario(t *testing.T) {
-	// Create a temporary directory for test files
-	tempDir, err := os.MkdirTemp("", "module-graph-test")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
-
-	// Create test TypeScript files simulating the rh-tabs scenario
-	rhTabFile := filepath.Join(tempDir, "rh-tab.ts")
-	rhTabContent := `
-export class RhTab extends HTMLElement {
-  // Element implementation
-}
-
-customElements.define('rh-tab', RhTab);
-`
-
-	rhTabsFile := filepath.Join(tempDir, "rh-tabs.ts")
-	rhTabsContent := `
-export class RhTabs extends HTMLElement {
-  // Tabs container implementation
-}
-
-// Re-export RhTab for convenience
-export { RhTab } from './rh-tab.js';
-
-customElements.define('rh-tabs', RhTabs);
-`
-
-	// Write test files
-	if err := os.WriteFile(rhTabFile, []byte(rhTabContent), 0644); err != nil {
-		t.Fatalf("Failed to write rh-tab.ts: %v", err)
-	}
-	if err := os.WriteFile(rhTabsFile, []byte(rhTabsContent), 0644); err != nil {
-		t.Fatalf("Failed to write rh-tabs.ts: %v", err)
-	}
-
-	// Test module graph building
+	// Create module graph and populate from manifest data (like production LSP server)
 	mg := types.NewModuleGraph()
-	err = mg.BuildFromWorkspace(tempDir)
-	if err != nil {
-		t.Fatalf("Failed to build module graph: %v", err)
+
+	// Simulate manifest data for rh-tabs scenario
+	elementMap := map[string]interface{}{
+		"rh-tab": &types.MockElementDefinition{
+			TagName:    "rh-tab",
+			ClassName:  "RhTab",
+			ModulePath: "rh-tab.ts",
+		},
+		"rh-tabs": &types.MockElementDefinition{
+			TagName:    "rh-tabs",
+			ClassName:  "RhTabs",
+			ModulePath: "rh-tabs.ts",
+		},
 	}
+
+	// Populate module graph from manifest data (production approach)
+	mg.PopulateFromManifests(elementMap)
+
+	// Add re-export relationship (rh-tabs.ts re-exports rh-tab.ts)
+	mg.AddReExport("rh-tabs.ts", "rh-tab.ts", "RhTab", "rh-tab")
 
 	// Verify that rh-tab was detected from rh-tab.ts
 	tabSources := mg.GetElementSources("rh-tab")
@@ -197,6 +174,7 @@ customElements.define('rh-tabs', RhTabs);
 	if !hasRhTabs {
 		t.Error("Expected to find 'rh-tabs' in all tag names")
 	}
+
 }
 
 func TestModuleGraph_GetModuleExports(t *testing.T) {

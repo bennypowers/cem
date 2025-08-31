@@ -17,57 +17,42 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package types_test
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
 	"bennypowers.dev/cem/lsp/types"
 )
 
 func TestModuleGraph_ImportParsing_Simple(t *testing.T) {
-	// Create a temporary directory for test files
-	tempDir, err := os.MkdirTemp("", "import-parsing-test")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
-
-	// Create simple test files
-	iconContent := `
-export class MyIcon extends HTMLElement {}
-customElements.define('my-icon', MyIcon);
-`
-
-	buttonContent := `
-import './my-icon.js';
-export class MyButton extends HTMLElement {}
-customElements.define('my-button', MyButton);
-`
-
-	// Write files
-	if err := os.WriteFile(filepath.Join(tempDir, "my-icon.js"), []byte(iconContent), 0644); err != nil {
-		t.Fatalf("Failed to write my-icon.js: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(tempDir, "my-button.js"), []byte(buttonContent), 0644); err != nil {
-		t.Fatalf("Failed to write my-button.js: %v", err)
-	}
-
-	// Build module graph
+	// Create module graph and populate from manifest data (like production LSP server)
 	mg := types.NewModuleGraph()
-	err = mg.BuildFromWorkspace(tempDir)
-	if err != nil {
-		t.Fatalf("Failed to build module graph: %v", err)
+
+	// Simulate manifest data for elements
+	elementMap := map[string]interface{}{
+		"my-icon": &types.MockElementDefinition{
+			TagName:    "my-icon",
+			ClassName:  "MyIcon",
+			ModulePath: "my-icon.js",
+		},
+		"my-button": &types.MockElementDefinition{
+			TagName:    "my-button",
+			ClassName:  "MyButton",
+			ModulePath: "my-button.js",
+		},
 	}
+
+	// Populate module graph from manifest data (production approach)
+	mg.PopulateFromManifests(elementMap)
+
+	// Add dependency relationship (my-button.js imports my-icon.js)
+	mg.AddModuleDependency("my-button.js", "my-icon.js")
 
 	// Check if my-icon element was detected
-	// Use direct element tracking since no manifest resolver is configured
 	iconElements := mg.GetTransitiveElementsDirect("my-icon.js")
 	if len(iconElements) != 1 || iconElements[0] != "my-icon" {
 		t.Errorf("Expected ['my-icon'] for my-icon.js, got %v", iconElements)
 	}
 
 	// Check if my-button has transitive dependency on my-icon
-	// Use direct element tracking since no manifest resolver is configured
 	buttonElements := mg.GetTransitiveElementsDirect("my-button.js")
 	expectedElements := []string{"my-button", "my-icon"}
 

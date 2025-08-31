@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -71,12 +72,6 @@ type ManifestResolver interface {
 	// GetElementsFromManifestModule returns all custom element tag names available from a manifest module
 	// This is the key method that maps manifest modules to their available custom elements
 	GetElementsFromManifestModule(manifestModulePath string) []string
-}
-
-// normalizeImportPath converts a relative import path to an absolute module path
-// Deprecated: Use helpers.NormalizeImportPath instead
-func normalizeImportPath(importPath string) string {
-	return helpers.NormalizeImportPath(importPath)
 }
 
 // MetricsCollector interface abstracts metrics collection for observability
@@ -284,10 +279,9 @@ func (p *DefaultExportParser) ParseExportsFromContent(modulePath string, content
 	// Parse the content
 	tree := parser.Parse(content, nil)
 	if tree == nil {
-		// Skip files that fail to parse - this is expected for files with syntax errors
-		// or files that aren't valid TypeScript/JavaScript. We silently continue to
-		// ensure parsing failures don't break the entire module graph building process.
-		return nil
+		// Log parsing failure and return error for proper error handling
+		helpers.SafeDebugLog("[MODULE_GRAPH] Failed to parse file '%s' - syntax errors or invalid TS/JS", modulePath)
+		return fmt.Errorf("failed to parse file '%s': syntax errors or invalid TypeScript/JavaScript", modulePath)
 	}
 	defer tree.Close()
 
@@ -321,9 +315,9 @@ func (p *DefaultExportParser) parseExportsWithQueries(tree *ts.Tree, modulePath 
 
 // processExportMatch processes a single export/import match from tree-sitter
 func (p *DefaultExportParser) processExportMatch(match *ts.QueryMatch, matcher *queries.QueryMatcher, modulePath string, content []byte, exportTracker *ExportTracker, dependencyTracker *DependencyTracker) {
-	var exportName, sourceModule, tagName, className string
+	var exportName, sourceModule string
 	var importSource string
-	var isCustomElementsDefine, isImport bool
+	var isImport bool
 
 	// Process all captures in this match
 	for _, capture := range match.Captures {
@@ -335,12 +329,6 @@ func (p *DefaultExportParser) processExportMatch(match *ts.QueryMatch, matcher *
 			exportName = captureText
 		case "export.source":
 			sourceModule = captureText
-		case "customElements.tagName":
-			tagName = captureText
-			isCustomElementsDefine = true
-		case "customElements.className":
-			className = captureText
-			isCustomElementsDefine = true
 		case "export.class.name", "export.function.name", "export.variable.name", "export.default.name":
 			exportName = captureText
 		case "import.source", "import.dynamic.source":
@@ -349,16 +337,10 @@ func (p *DefaultExportParser) processExportMatch(match *ts.QueryMatch, matcher *
 		}
 	}
 
-	// Handle CustomElements.define() - this is a direct export
-	if isCustomElementsDefine && tagName != "" && className != "" {
-		exportTracker.AddDirectExport(modulePath, className, tagName)
-		return
-	}
-
 	// Handle import statements - track module dependencies
 	if isImport && importSource != "" {
 		// Normalize the import path to handle relative imports
-		normalizedImportPath := normalizeImportPath(importSource)
+		normalizedImportPath := helpers.NormalizeImportPath(importSource)
 		dependencyTracker.AddModuleDependency(modulePath, normalizedImportPath)
 		return
 	}
@@ -368,7 +350,7 @@ func (p *DefaultExportParser) processExportMatch(match *ts.QueryMatch, matcher *
 		// Track re-export relationship at module level - this is sufficient because
 		// resolveReExportChains() will later resolve all elements from source modules
 		// to re-exporting modules using existing manifest data
-		normalizedSourceModule := normalizeImportPath(sourceModule)
+		normalizedSourceModule := helpers.NormalizeImportPath(sourceModule)
 		dependencyTracker.AddModuleDependency(modulePath, normalizedSourceModule)
 		dependencyTracker.AddReExportChain(modulePath, normalizedSourceModule)
 		return
@@ -566,7 +548,7 @@ func (dt *DependencyTracker) AddModuleDependency(importingModule, importedModule
 	defer dt.mu.Unlock()
 
 	// Add to dependency list if not already present
-	if !contains(dt.ModuleDependencies[importingModule], importedModule) {
+	if !slices.Contains(dt.ModuleDependencies[importingModule], importedModule) {
 		dt.ModuleDependencies[importingModule] = append(dt.ModuleDependencies[importingModule], importedModule)
 	}
 }
@@ -580,7 +562,7 @@ func (dt *DependencyTracker) AddReExportChain(reExportingModule, sourceModule st
 	dt.mu.Lock()
 	defer dt.mu.Unlock()
 
-	if !contains(dt.ReExportChains[reExportingModule], sourceModule) {
+	if !slices.Contains(dt.ReExportChains[reExportingModule], sourceModule) {
 		dt.ReExportChains[reExportingModule] = append(dt.ReExportChains[reExportingModule], sourceModule)
 	}
 }
@@ -687,11 +669,18 @@ func NewModuleGraphWithMetrics() *ModuleGraph {
 // NewModuleGraphWithDependencies creates a new module graph with custom dependencies
 // This is useful for testing and dependency injection
 func NewModuleGraphWithDependencies(fileParser FileParser, exportParser ExportParser, manifestResolver ManifestResolver, metrics MetricsCollector) *ModuleGraph {
-	if metrics == nil {
-		metrics = &NoOpMetricsCollector{}
+	// Validate all parameters and provide safe defaults
+	if fileParser == nil {
+		fileParser = &OSFileParser{}
+	}
+	if exportParser == nil {
+		exportParser = &DefaultExportParser{}
 	}
 	if manifestResolver == nil {
 		manifestResolver = &NoOpManifestResolver{}
+	}
+	if metrics == nil {
+		metrics = &NoOpMetricsCollector{}
 	}
 	return &ModuleGraph{
 		exportTracker:      NewExportTracker(),
@@ -1144,16 +1133,6 @@ func (mg *ModuleGraph) SetMaxTransitiveDepth(depth int) {
 	mg.MaxTransitiveDepth = depth
 	// Clear cache since depth limit affects results
 	mg.TransitiveElementsCache = sync.Map{}
-}
-
-// contains checks if a string slice contains a specific string
-func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
 }
 
 // Lazy Module Graph Building Methods

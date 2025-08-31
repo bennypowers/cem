@@ -137,18 +137,3 @@
   )
 ) @export.variable
 
-;; CustomElements.define() calls for direct element registration
-(call_expression
-  function: (member_expression
-    object: (identifier) @customElements.object
-    (#eq? @customElements.object "customElements")
-    property: (property_identifier) @customElements.method
-    (#eq? @customElements.method "define")
-  )
-  arguments: (arguments
-    (string
-      (string_fragment) @customElements.tagName
-    )
-    (identifier) @customElements.className
-  )
-) @customElements.define

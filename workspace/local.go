@@ -49,6 +49,10 @@ type FileSystemWorkspaceContext struct {
 }
 
 func (c *FileSystemWorkspaceContext) initConfig() (*C.CemConfig, error) {
+	// Protect entire config initialization with mutex to ensure thread-safety
+	ptermMutex.Lock()
+	defer ptermMutex.Unlock()
+
 	var config C.CemConfig
 	config.ProjectDir = c.Root()
 	config.ConfigFile = c.ConfigFile()
@@ -77,9 +81,7 @@ func (c *FileSystemWorkspaceContext) initConfig() (*C.CemConfig, error) {
 	if config.Generate.Exclude == nil {
 		config.Generate.Exclude = make([]string, 0)
 	}
-	// Set debug verbosity (protect with mutex to prevent data races during testing)
-	ptermMutex.Lock()
-	defer ptermMutex.Unlock()
+	// Set debug verbosity
 	if config.Verbose {
 		pterm.EnableDebugMessages()
 	} else {
