@@ -793,7 +793,6 @@ func adjustTemplateRange(templateRange *Range, templateNode *ts.Node, content []
 // Thread-safe singleton QueryManager (there can be only one!)
 var (
 	globalQueryManager *QueryManager
-	globalQueryMutex   sync.RWMutex
 	globalQueryOnce    sync.Once
 )
 

@@ -988,46 +988,6 @@ func (mg *ModuleGraph) calculateTransitiveElementsDirect(modulePath string) []st
 	return result
 }
 
-// getTransitivelyImportedModules returns all manifest modules that are transitively imported from the given module
-// This is a private helper for GetTransitiveElements
-func (mg *ModuleGraph) getTransitivelyImportedModules(modulePath string) []string {
-	visited := make(map[string]bool)
-	maxDepth := DefaultMaxTransitiveDepth
-
-	// Breadth-first traversal to collect all transitively imported modules
-	queue := []string{modulePath}
-	depth := 0
-
-	for len(queue) > 0 && depth < maxDepth {
-		nextQueue := []string{}
-
-		for _, currentModule := range queue {
-			if visited[currentModule] {
-				continue // Skip already visited modules (handles cycles)
-			}
-			visited[currentModule] = true
-
-			// Add dependencies to next level queue
-			dependencies := mg.dependencyTracker.GetModuleDependencies(currentModule)
-			for _, dependency := range dependencies {
-				if !visited[dependency] {
-					nextQueue = append(nextQueue, dependency)
-				}
-			}
-		}
-
-		queue = nextQueue
-		depth++
-	}
-
-	// Convert visited map to slice
-	result := make([]string, 0, len(visited))
-	for module := range visited {
-		result = append(result, module)
-	}
-
-	return result
-}
 
 // PopulateFromManifests populates the module graph with custom element definitions from manifests
 func (mg *ModuleGraph) PopulateFromManifests(elements map[string]interface{}) {
