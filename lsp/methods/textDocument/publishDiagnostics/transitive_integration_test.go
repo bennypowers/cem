@@ -19,28 +19,33 @@ package publishDiagnostics_test
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
 	W "bennypowers.dev/cem/workspace"
 )
 
 func TestTransitiveIntegration_ThreeLevelDependency(t *testing.T) {
-	// Create a temporary workspace with transitive dependency chain
-	tempDir, err := os.MkdirTemp("", "transitive-integration-test")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
+	// NOTE: The issue was that the test wasn't triggering the textDocument/didOpen
+	// lifecycle which causes lazy module graph building. Fixed by properly opening
+	// the document through the server.
 
-	// Create test files demonstrating: my-tabs -> my-tab -> my-icon
-	if err := createTransitiveTestWorkspace(tempDir); err != nil {
-		t.Fatalf("Failed to create test files: %v", err)
+	// Disable debug logging during this test to avoid race conditions with pterm global state
+	helpers.SetDebugLoggingEnabled(false)
+	defer helpers.SetDebugLoggingEnabled(false)
+
+	// Use the fixture directory with predefined transitive dependency chain
+	fixtureDir, err := filepath.Abs(filepath.Join("..", "..", "..", "test", "fixtures", "transitive-integration"))
+	if err != nil {
+		t.Fatalf("Failed to get absolute fixture path: %v", err)
 	}
+	t.Logf("DEBUG: Using fixture directory: %s", fixtureDir)
 
 	// Create workspace context
-	workspace := W.NewFileSystemWorkspaceContext(tempDir)
+	workspace := W.NewFileSystemWorkspaceContext(fixtureDir)
 	err = workspace.Init()
 	if err != nil {
 		t.Fatalf("Failed to initialize workspace: %v", err)
@@ -53,10 +58,12 @@ func TestTransitiveIntegration_ThreeLevelDependency(t *testing.T) {
 	}
 	defer server.Close()
 
+	t.Logf("DEBUG: About to call InitializeForTesting")
 	err = server.InitializeForTesting()
 	if err != nil {
 		t.Fatalf("Failed to initialize server: %v", err)
 	}
+	t.Logf("DEBUG: InitializeForTesting completed")
 
 	// Test HTML content that imports my-tabs.js and uses all three elements
 	htmlContent := `<!DOCTYPE html>
@@ -78,21 +85,155 @@ func TestTransitiveIntegration_ThreeLevelDependency(t *testing.T) {
 </body>
 </html>`
 
-	// Create document manager
-	dm, err := lsp.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create document manager: %v", err)
-	}
-	defer dm.Close()
+	// Simulate the DidOpen lifecycle without the LSP notification part
+	// This triggers the document processing and lazy module graph building
 
-	// Create document
-	doc := dm.OpenDocument("file://test.html", htmlContent, 1)
+	// Get the document manager
+	dm, err := server.DocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to get document manager: %v", err)
+	}
+
+	// Open the document (this is what DidOpen does internally)
+	doc := dm.OpenDocument("file:///test.html", htmlContent, 1)
 	if doc == nil {
 		t.Fatal("Failed to open document")
 	}
 
-	// Run tag diagnostics
+	// Trigger the diagnostics processing pipeline which includes lazy module graph building
+	// This is the key part that should cause BuildForImportPath to be called for './my-tabs.js'
+	// We call the internal diagnostics analysis which triggers the lazy building
+
+	// Debug: Check if server has module graph access and workspace root
+	moduleGraph := server.ModuleGraph()
+	if moduleGraph != nil {
+		t.Logf("DEBUG: Server has module graph access")
+		allModules := moduleGraph.GetAllModulePaths()
+		t.Logf("DEBUG: Module graph contains %d modules before diagnostics: %v", len(allModules), allModules)
+
+		// Check workspace root - this is critical for TypeScript file discovery
+		workspaceRoot := server.Workspace().Root()
+		t.Logf("DEBUG: Workspace root: %s", workspaceRoot)
+		t.Logf("DEBUG: Fixture directory: %s", fixtureDir)
+
+		// Check if TypeScript files exist at expected paths
+		for _, module := range []string{"my-tabs.js", "my-tab.js", "my-icon.js"} {
+			tsPath := strings.TrimSuffix(module, ".js") + ".ts"
+			fullTsPath := filepath.Join(workspaceRoot, tsPath)
+			t.Logf("DEBUG: Checking TypeScript file: %s (exists: %t)", fullTsPath, fileExists(fullTsPath))
+		}
+	} else {
+		t.Logf("DEBUG: Server has NO module graph access!")
+	}
+
+	// Debug: Test the resolveImportPathToElements function manually
+	t.Logf("DEBUG: Testing manual import resolution for './my-tabs.js'")
+
 	diagnostics := publishDiagnostics.AnalyzeTagNameDiagnosticsForTest(server, doc)
+
+	// Debug: Check module graph after diagnostics
+	if moduleGraph != nil {
+		allModules := moduleGraph.GetAllModulePaths()
+		t.Logf("DEBUG: Module graph contains %d modules after diagnostics: %v", len(allModules), allModules)
+
+		// Test BuildForImportPath manually to see if it works
+		err := moduleGraph.BuildForImportPath("./my-tabs.js")
+		if err != nil {
+			t.Logf("DEBUG: BuildForImportPath('./my-tabs.js') failed: %v", err)
+		} else {
+			t.Logf("DEBUG: BuildForImportPath('./my-tabs.js') succeeded")
+		}
+
+		// Test building dependencies for each module separately to see if that fixes it
+		err = moduleGraph.BuildForImportPath("./my-tab.js")
+		if err != nil {
+			t.Logf("DEBUG: BuildForImportPath('./my-tab.js') failed: %v", err)
+		} else {
+			t.Logf("DEBUG: BuildForImportPath('./my-tab.js') succeeded")
+		}
+
+		err = moduleGraph.BuildForImportPath("./my-icon.js")
+		if err != nil {
+			t.Logf("DEBUG: BuildForImportPath('./my-icon.js') failed: %v", err)
+		} else {
+			t.Logf("DEBUG: BuildForImportPath('./my-icon.js') succeeded")
+		}
+
+		// Test transitive resolution for the key case
+		t.Logf("DEBUG: About to call GetTransitiveElements('my-tabs.js') - this should show BFS debug logs")
+		transitiveElements := moduleGraph.GetTransitiveElements("my-tabs.js")
+		t.Logf("DEBUG: GetTransitiveElements('my-tabs.js') returns: %v", transitiveElements)
+
+		// Test the caching theory - create a fresh server and module graph
+		t.Logf("DEBUG: Testing with fresh server to check caching theory")
+		freshServer, err := lsp.NewServer(workspace, lsp.TransportStdio)
+		if err != nil {
+			t.Fatalf("Failed to create fresh server: %v", err)
+		}
+		defer freshServer.Close()
+
+		err = freshServer.InitializeForTesting()
+		if err != nil {
+			t.Fatalf("Failed to initialize fresh server: %v", err)
+		}
+
+		freshModuleGraph := freshServer.ModuleGraph()
+		if freshModuleGraph != nil {
+			// Build dependencies on fresh graph
+			err = freshModuleGraph.BuildForImportPath("./my-tabs.js")
+			if err != nil {
+				t.Logf("DEBUG: Fresh BuildForImportPath('./my-tabs.js') failed: %v", err)
+			} else {
+				t.Logf("DEBUG: Fresh BuildForImportPath('./my-tabs.js') succeeded")
+			}
+
+			// Test transitive resolution on fresh graph
+			freshTransitive := freshModuleGraph.GetTransitiveElements("my-tabs.js")
+			t.Logf("DEBUG: Fresh GetTransitiveElements('my-tabs.js') returns: %v", freshTransitive)
+		}
+
+		// Check what dependencies the dependency tracker knows about
+		myTabsDeps := moduleGraph.GetModuleDependencies("my-tabs.js")
+		myTabDeps := moduleGraph.GetModuleDependencies("my-tab.js")
+		myIconDeps := moduleGraph.GetModuleDependencies("my-icon.js")
+		t.Logf("DEBUG: Dependencies - my-tabs.js: %v", myTabsDeps)
+		t.Logf("DEBUG: Dependencies - my-tab.js: %v", myTabDeps)
+		t.Logf("DEBUG: Dependencies - my-icon.js: %v", myIconDeps)
+
+		// Test direct module element lookup
+		for _, module := range []string{"my-tabs.js", "my-tab.js", "my-icon.js"} {
+			elements := moduleGraph.GetElementSources(module)
+			t.Logf("DEBUG: GetElementSources('%s') returns: %v", module, elements)
+		}
+
+		// Check what module paths are stored in registry element definitions
+		registry := server.Registry()
+		if registry != nil {
+			t.Logf("DEBUG: Registry element definitions:")
+			for tagName := range registry.ElementDefinitions {
+				elementDef, exists := registry.ElementDefinition(tagName)
+				if exists {
+					modulePath := elementDef.GetModulePath()
+					t.Logf("DEBUG: Element '%s' -> module path '%s'", tagName, modulePath)
+				}
+			}
+
+			// Test the registry manifest resolver directly
+			manifestResolver := lsp.NewRegistryManifestResolver(registry)
+			t.Logf("DEBUG: Testing manifest resolver GetElementsFromManifestModule:")
+			for _, module := range []string{"my-tabs.js", "my-tab.js", "my-icon.js"} {
+				elements := manifestResolver.GetElementsFromManifestModule(module)
+				t.Logf("DEBUG: GetElementsFromManifestModule('%s') returns: %v", module, elements)
+			}
+
+			// Test manifest-based import path resolution (this might be what RHDS uses)
+			t.Logf("DEBUG: Testing manifest-based import path resolution:")
+			manifestModules := manifestResolver.FindManifestModulesForImportPath("./my-tabs.js")
+			t.Logf("DEBUG: FindManifestModulesForImportPath('./my-tabs.js') returns: %v", manifestModules)
+
+			// Manual simulation removed to see production debug logs
+		}
+	}
 
 	// With transitive dependency resolution, ALL elements should be available
 	// None of my-tabs, my-tab, or my-icon should have import errors
@@ -119,20 +260,11 @@ func TestTransitiveIntegration_ThreeLevelDependency(t *testing.T) {
 }
 
 func TestTransitiveIntegration_PartialImport(t *testing.T) {
-	// Create a temporary workspace
-	tempDir, err := os.MkdirTemp("", "partial-import-test")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
-
-	// Create test files
-	if err := createTransitiveTestWorkspace(tempDir); err != nil {
-		t.Fatalf("Failed to create test files: %v", err)
-	}
+	// Use the fixture directory with predefined transitive dependency chain
+	fixtureDir := filepath.Join("..", "..", "..", "test", "fixtures", "transitive-integration")
 
 	// Create workspace and server
-	workspace := W.NewFileSystemWorkspaceContext(tempDir)
+	workspace := W.NewFileSystemWorkspaceContext(fixtureDir)
 	if err := workspace.Init(); err != nil {
 		t.Fatalf("Failed to initialize workspace: %v", err)
 	}
@@ -199,57 +331,15 @@ func TestTransitiveIntegration_PartialImport(t *testing.T) {
 	}
 }
 
-// createTransitiveTestWorkspace creates a realistic workspace with transitive dependencies
-func createTransitiveTestWorkspace(tempDir string) error {
-	// my-icon.js (base dependency)
-	iconContent := `
-export class MyIcon extends HTMLElement {
-  connectedCallback() {
-    this.innerHTML = '<svg><!-- icon --></svg>';
-  }
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }
 
-customElements.define('my-icon', MyIcon);
-`
-
-	// my-tab.js (imports my-icon)
-	tabContent := `
-import './my-icon.js';
-
-export class MyTab extends HTMLElement {
-  connectedCallback() {
-    this.innerHTML = '<div class="tab">Tab content</div>';
-  }
-}
-
-customElements.define('my-tab', MyTab);
-`
-
-	// my-tabs.js (imports my-tab, which transitively imports my-icon)
-	tabsContent := `
-import './my-tab.js';
-
-export class MyTabs extends HTMLElement {
-  connectedCallback() {
-    this.innerHTML = '<div class="tabs">Tabs container</div>';
-  }
-}
-
-customElements.define('my-tabs', MyTabs);
-`
-
-	// Write test files
-	files := map[string]string{
-		"my-icon.js": iconContent,
-		"my-tab.js":  tabContent,
-		"my-tabs.js": tabsContent,
+func getKeys(m map[string]bool) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
 	}
-
-	for filename, content := range files {
-		if err := os.WriteFile(filepath.Join(tempDir, filename), []byte(content), 0644); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return keys
 }

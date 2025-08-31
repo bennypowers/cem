@@ -22,10 +22,15 @@ import (
 	"path/filepath"
 	"testing"
 
+	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 )
 
 func TestModuleGraph_TransitiveElements_SingleLevel(t *testing.T) {
+	// Enable debug logging for this test
+	helpers.SetDebugLoggingEnabled(true)
+	defer helpers.SetDebugLoggingEnabled(false)
+
 	mg := types.NewModuleGraph()
 
 	// my-button.js defines my-button element
@@ -36,7 +41,8 @@ func TestModuleGraph_TransitiveElements_SingleLevel(t *testing.T) {
 	mg.AddDirectExport("my-card.js", "MyCard", "my-card")
 
 	// When importing my-card.js, both my-card and my-button should be available
-	transitiveElements := mg.GetTransitiveElements("my-card.js")
+	// Use direct element tracking since no manifest resolver is configured
+	transitiveElements := mg.GetTransitiveElementsDirect("my-card.js")
 	expectedElements := []string{"my-card", "my-button"}
 
 	if len(transitiveElements) != 2 {
@@ -72,7 +78,8 @@ func TestModuleGraph_TransitiveElements_TwoLevels(t *testing.T) {
 	mg.AddDirectExport("my-card.js", "MyCard", "my-card")
 
 	// When importing my-card.js, all three elements should be available
-	transitiveElements := mg.GetTransitiveElements("my-card.js")
+	// Use direct element tracking since no manifest resolver is configured
+	transitiveElements := mg.GetTransitiveElementsDirect("my-card.js")
 	expectedElements := []string{"my-card", "my-button", "my-icon"}
 
 	if len(transitiveElements) != 3 {
@@ -114,7 +121,8 @@ func TestModuleGraph_TransitiveElements_ThreeLevels(t *testing.T) {
 	mg.AddDirectExport("my-tabs.js", "MyTabs", "my-tabs")
 
 	// When importing my-tabs.js, all four elements should be available
-	transitiveElements := mg.GetTransitiveElements("my-tabs.js")
+	// Use direct element tracking since no manifest resolver is configured
+	transitiveElements := mg.GetTransitiveElementsDirect("my-tabs.js")
 	expectedElements := []string{"my-tabs", "my-tab", "my-button", "my-icon"}
 
 	if len(transitiveElements) != 4 {
@@ -161,7 +169,8 @@ func TestModuleGraph_TransitiveElements_DiamondDependency(t *testing.T) {
 	mg.AddDirectExport("my-form.js", "MyForm", "my-form")
 
 	// When importing my-form.js, all elements should be available (no duplicates)
-	transitiveElements := mg.GetTransitiveElements("my-form.js")
+	// Use direct element tracking since no manifest resolver is configured
+	transitiveElements := mg.GetTransitiveElementsDirect("my-form.js")
 	expectedElements := []string{"my-form", "my-input", "my-button", "my-icon"}
 
 	if len(transitiveElements) != 4 {
@@ -204,7 +213,8 @@ func TestModuleGraph_TransitiveElements_CircularDependency(t *testing.T) {
 	mg.AddModuleDependency("my-c.js", "my-a.js") // Creates cycle
 
 	// Should handle circular dependencies without infinite loop
-	transitiveElements := mg.GetTransitiveElements("my-a.js")
+	// Use direct element tracking since no manifest resolver is configured
+	transitiveElements := mg.GetTransitiveElementsDirect("my-a.js")
 	expectedElements := []string{"my-a", "my-b", "my-c"}
 
 	if len(transitiveElements) != 3 {
@@ -243,7 +253,8 @@ func TestModuleGraph_TransitiveElements_DepthLimit(t *testing.T) {
 	}
 
 	// Should limit depth to prevent performance issues
-	transitiveElements := mg.GetTransitiveElements("my-1.js")
+	// Use direct element tracking since no manifest resolver is configured
+	transitiveElements := mg.GetTransitiveElementsDirect("my-1.js")
 
 	// Should include at least 5 levels (configurable depth limit)
 	if len(transitiveElements) < 5 {
@@ -277,7 +288,8 @@ func TestModuleGraph_RealWorldWorkspaceScenario(t *testing.T) {
 	}
 
 	// Verify transitive dependencies were detected
-	transitiveElements := mg.GetTransitiveElements("my-tabs.ts")
+	// Use direct element tracking since no manifest resolver is configured
+	transitiveElements := mg.GetTransitiveElementsDirect("my-tabs.ts")
 
 	// Should include my-tabs, my-tab, and my-icon
 	expectedElements := []string{"my-tabs", "my-tab", "my-icon"}
@@ -343,4 +355,59 @@ customElements.define('my-tabs', MyTabs);
 	}
 
 	return nil
+}
+
+// TestModuleGraph_RecursiveDependencyBuilding tests the new recursive dependency building functionality
+// that ensures complete transitive dependency trees are built for manifest modules
+func TestModuleGraph_RecursiveDependencyBuilding(t *testing.T) {
+	// Create temporary directory for test files
+	tempDir, err := os.MkdirTemp("", "module-graph-recursive-test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Create test files with transitive dependency chain
+	if err := createTransitiveTestFiles(tempDir); err != nil {
+		t.Fatalf("Failed to create test files: %v", err)
+	}
+
+	// Create module graph with workspace root
+	mg := types.NewModuleGraphWithDependencies(
+		&types.OSFileParser{},
+		&types.DefaultExportParser{},
+		&types.NoOpManifestResolver{}, // Use no-op since we're testing file-based dependency building
+		&types.NoOpMetricsCollector{},
+	)
+	mg.SetWorkspaceRoot(tempDir)
+
+	// Test that buildDependenciesForManifestModule builds the complete transitive tree
+	// This should recursively find: my-tabs.ts -> my-tab.ts -> my-icon.ts
+	err = mg.BuildForImportPath("./my-tabs.ts")
+	if err != nil {
+		t.Fatalf("Failed to build dependencies for my-tabs.ts: %v", err)
+	}
+
+	// Verify that all transitive dependencies were built
+	tabsDeps := mg.GetModuleDependencies("my-tabs.ts")
+	tabDeps := mg.GetModuleDependencies("my-tab.ts")
+	iconDeps := mg.GetModuleDependencies("my-icon.ts")
+
+	// Check the complete dependency chain
+	if len(tabsDeps) != 1 || tabsDeps[0] != "my-tab.ts" {
+		t.Errorf("Expected my-tabs.ts to depend on [my-tab.ts], got %v", tabsDeps)
+	}
+
+	if len(tabDeps) != 1 || tabDeps[0] != "my-icon.ts" {
+		t.Errorf("Expected my-tab.ts to depend on [my-icon.ts], got %v", tabDeps)
+	}
+
+	if len(iconDeps) != 0 {
+		t.Errorf("Expected my-icon.ts to have no dependencies, got %v", iconDeps)
+	}
+
+	t.Logf("✅ Recursive dependency building successfully created complete transitive chain:")
+	t.Logf("  my-tabs.ts -> %v", tabsDeps)
+	t.Logf("  my-tab.ts -> %v", tabDeps)
+	t.Logf("  my-icon.ts -> %v", iconDeps)
 }

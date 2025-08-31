@@ -40,6 +40,7 @@ type MockServerContext struct {
 	WorkspaceRootStr string
 	DocumentMgr      types.DocumentManager
 	QueryMgr         *queries.QueryManager
+	ModuleGraphInst  *types.ModuleGraph
 	types.Registry
 }
 
@@ -67,9 +68,75 @@ func (m *MockElementDefinition) Element() *M.CustomElement {
 	return m.ElementPtr
 }
 
+// MockManifestResolver implements types.ManifestResolver for testing
+type MockManifestResolver struct {
+	ctx *MockServerContext
+}
+
+func (r *MockManifestResolver) FindManifestModulesForImportPath(importPath string) []string {
+	if r.ctx == nil {
+		return nil
+	}
+
+	r.ctx.mu.RLock()
+	defer r.ctx.mu.RUnlock()
+
+	var matchingModules []string
+	// Search through element definitions to find matches
+	for _, elementDef := range r.ctx.ElementDefsMap {
+		modulePath := elementDef.ModulePath()
+		if modulePath == "" {
+			continue
+		}
+
+		// Simple path matching for test
+		if importPath == "@rhds/elements/rh-tabs/rh-tabs.js" && modulePath == "rh-tabs/rh-tabs.js" {
+			matchingModules = append(matchingModules, modulePath)
+		}
+	}
+	return matchingModules
+}
+
+func (r *MockManifestResolver) GetManifestModulePath(filePath string) string {
+	if r.ctx == nil {
+		return ""
+	}
+
+	// For test fixtures, map TypeScript files to their manifest module paths
+	if filePath == "rh-tabs/rh-tabs.ts" {
+		return "rh-tabs/rh-tabs.js"
+	}
+	if filePath == "rh-tabs/rh-tab.ts" {
+		return "rh-tabs/rh-tab.js"
+	}
+	if filePath == "rh-tabs/rh-tab-panel.ts" {
+		return "rh-tabs/rh-tab-panel.js"
+	}
+	return ""
+}
+
+func (r *MockManifestResolver) GetElementsFromManifestModule(manifestModulePath string) []string {
+	if r.ctx == nil {
+		return nil
+	}
+
+	r.ctx.mu.RLock()
+	defer r.ctx.mu.RUnlock()
+
+	var elements []string
+	// Find elements that belong to this manifest module
+	for tagName, elementDef := range r.ctx.ElementDefsMap {
+		if elementDef.ModulePath() == manifestModulePath {
+			elements = append(elements, tagName)
+		}
+	}
+	return elements
+}
+
 // Verify MockServerContext implements ServerContext
 var _ types.ServerContext = (*MockServerContext)(nil)
 var _ types.ElementDefinition = (*MockElementDefinition)(nil)
+var _ types.ManifestResolver = (*MockManifestResolver)(nil)
 
 // NewMockServerContext creates a new mock server context
 func NewMockServerContext() *MockServerContext {
@@ -260,8 +327,22 @@ func (m *MockServerContext) QueryManager() (*queries.QueryManager, error) {
 }
 
 func (m *MockServerContext) ModuleGraph() *types.ModuleGraph {
-	// Return a new empty module graph for testing
-	return types.NewModuleGraph()
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	// Return the persistent module graph instance
+	if m.ModuleGraphInst == nil {
+		// Initialize with a mock manifest resolver
+		m.ModuleGraphInst = types.NewModuleGraph()
+		// Set workspace root if available
+		if m.WorkspaceRootStr != "" {
+			m.ModuleGraphInst.SetWorkspaceRoot(m.WorkspaceRootStr)
+		}
+		// Create a mock manifest resolver that uses this context
+		mockResolver := &MockManifestResolver{ctx: m}
+		m.ModuleGraphInst.SetManifestResolver(mockResolver)
+	}
+	return m.ModuleGraphInst
 }
 
 // Helper methods for setting up test data

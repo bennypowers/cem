@@ -60,13 +60,15 @@ customElements.define('my-button', MyButton);
 	}
 
 	// Check if my-icon element was detected
-	iconElements := mg.GetTransitiveElements("my-icon.js")
+	// Use direct element tracking since no manifest resolver is configured
+	iconElements := mg.GetTransitiveElementsDirect("my-icon.js")
 	if len(iconElements) != 1 || iconElements[0] != "my-icon" {
 		t.Errorf("Expected ['my-icon'] for my-icon.js, got %v", iconElements)
 	}
 
 	// Check if my-button has transitive dependency on my-icon
-	buttonElements := mg.GetTransitiveElements("my-button.js")
+	// Use direct element tracking since no manifest resolver is configured
+	buttonElements := mg.GetTransitiveElementsDirect("my-button.js")
 	expectedElements := []string{"my-button", "my-icon"}
 
 	if len(buttonElements) != 2 {

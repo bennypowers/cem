@@ -23,6 +23,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sync"
 
 	C "bennypowers.dev/cem/cmd/config"
 	M "bennypowers.dev/cem/manifest"
@@ -30,6 +31,9 @@ import (
 	"github.com/pterm/pterm"
 	"gopkg.in/yaml.v3"
 )
+
+// ptermMutex protects concurrent access to pterm global state during testing
+var ptermMutex sync.Mutex
 
 var _ WorkspaceContext = (*FileSystemWorkspaceContext)(nil)
 
@@ -73,7 +77,9 @@ func (c *FileSystemWorkspaceContext) initConfig() (*C.CemConfig, error) {
 	if config.Generate.Exclude == nil {
 		config.Generate.Exclude = make([]string, 0)
 	}
-	// Set debug verbosity
+	// Set debug verbosity (protect with mutex to prevent data races during testing)
+	ptermMutex.Lock()
+	defer ptermMutex.Unlock()
 	if config.Verbose {
 		pterm.EnableDebugMessages()
 	} else {

@@ -789,3 +789,64 @@ func adjustTemplateRange(templateRange *Range, templateNode *ts.Node, content []
 		},
 	}
 }
+
+// Thread-safe singleton QueryManager (there can be only one!)
+var (
+	globalQueryManager *QueryManager
+	globalQueryMutex   sync.RWMutex
+	globalQueryOnce    sync.Once
+)
+
+// GetGlobalQueryManager returns the singleton QueryManager instance
+func GetGlobalQueryManager() (*QueryManager, error) {
+	globalQueryOnce.Do(func() {
+		manager, err := NewQueryManager(LSPQueries())
+		if err != nil {
+			// Store the error to return it
+			return
+		}
+		globalQueryManager = manager
+	})
+
+	if globalQueryManager == nil {
+		return nil, fmt.Errorf("failed to initialize global query manager")
+	}
+
+	return globalQueryManager, nil
+}
+
+// Thread-safe cached query matchers
+var (
+	cachedQueryMatchers = make(map[string]*QueryMatcher)
+	matcherCacheMutex   sync.RWMutex
+)
+
+// GetCachedQueryMatcher returns a cached query matcher, creating one if needed
+func GetCachedQueryMatcher(manager *QueryManager, language, queryName string) (*QueryMatcher, error) {
+	cacheKey := fmt.Sprintf("%s:%s", language, queryName)
+
+	// Try to get from cache first (read lock)
+	matcherCacheMutex.RLock()
+	if matcher, exists := cachedQueryMatchers[cacheKey]; exists {
+		matcherCacheMutex.RUnlock()
+		return matcher, nil
+	}
+	matcherCacheMutex.RUnlock()
+
+	// Create new query matcher (write lock)
+	matcherCacheMutex.Lock()
+	defer matcherCacheMutex.Unlock()
+
+	// Double-check pattern in case another goroutine created it
+	if matcher, exists := cachedQueryMatchers[cacheKey]; exists {
+		return matcher, nil
+	}
+
+	matcher, err := NewQueryMatcher(manager, language, queryName)
+	if err != nil {
+		return nil, err
+	}
+
+	cachedQueryMatchers[cacheKey] = matcher
+	return matcher, nil
+}

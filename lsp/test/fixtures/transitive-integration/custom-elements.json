@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "my-icon.js",
+      "declarations": [
+        {
+          "name": "MyIcon",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "my-icon",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "my-icon",
+          "declaration": {
+            "name": "MyIcon",
+            "module": "my-icon.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "MyIcon",
+          "declaration": {
+            "name": "MyIcon",
+            "module": "my-icon.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "my-tab.js",
+      "declarations": [
+        {
+          "name": "MyTab",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "my-tab",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "my-tab",
+          "declaration": {
+            "name": "MyTab",
+            "module": "my-tab.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "MyTab",
+          "declaration": {
+            "name": "MyTab",
+            "module": "my-tab.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "my-tabs.js",
+      "declarations": [
+        {
+          "name": "MyTabs",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "my-tabs",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "my-tabs",
+          "declaration": {
+            "name": "MyTabs",
+            "module": "my-tabs.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "MyTabs",
+          "declaration": {
+            "name": "MyTabs",
+            "module": "my-tabs.js"
+          }
+        }
+      ]
+    }
+  ]
+}

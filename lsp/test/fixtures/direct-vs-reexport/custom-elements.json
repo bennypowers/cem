@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "2.0.0",
+  "modules": [
+    {
+      "path": "button-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyButton",
+          "customElement": true,
+          "tagName": "my-button"
+        }
+      ]
+    }
+  ]
+}

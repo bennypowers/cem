@@ -68,45 +68,15 @@ func AnalyzeTagNameDiagnosticsForTest(ctx types.ServerContext, doc types.Documen
 		tagName := match.Value
 		helpers.SafeDebugLog("[DIAGNOSTICS] Checking tag '%s'", tagName)
 
-		// Check if the tag exists in the manifest
-		isValid := slices.Contains(allAvailableTagNames, tagName)
-
 		// Check if the tag is imported (available in current context)
 		isImported := slices.Contains(importedElements, tagName)
 
-		if !isValid {
-			// Check if this element exists but might need an import
-			if _, exists := ctx.ElementDefinition(tagName); exists {
-				if importPath, hasSource := ctx.ElementSource(tagName); hasSource {
-					// Element exists but may need import - create missing import diagnostic
-					// Note: importPath currently contains module path, needs package.json resolution
-					helpers.SafeDebugLog("[DIAGNOSTICS] Element '%s' exists but may need import from '%s'", tagName, importPath)
+		// Check if the tag exists in manifests (but may not be imported)
+		existsInManifest := slices.Contains(allAvailableTagNames, tagName)
 
-					severity := protocol.DiagnosticSeverityError
-					source := "cem-lsp"
-					var diagnostic protocol.Diagnostic
-					diagnostic.Range = match.Range
-					diagnostic.Severity = &severity
-					diagnostic.Source = &source
-					diagnostic.Message = fmt.Sprintf("Custom element '%s' is not imported. Add import from '%s'", tagName, importPath)
-
-					// Add missing import autofix data
-					autofixData := &types.AutofixData{
-						Type:       types.DiagnosticTypeMissingImport,
-						Original:   tagName,
-						Suggestion: fmt.Sprintf("import '%s'", importPath),
-						Range:      match.Range,
-						ImportPath: importPath,
-						TagName:    tagName,
-					}
-					diagnostic.Data = autofixData.ToMap()
-
-					diagnostics = append(diagnostics, diagnostic)
-					helpers.SafeDebugLog("[DIAGNOSTICS] Added missing import diagnostic for tag '%s'", tagName)
-					continue
-				}
-			}
-			helpers.SafeDebugLog("[DIAGNOSTICS] Invalid custom element tag '%s'", tagName)
+		if !existsInManifest {
+			// Element doesn't exist in any manifest - show unknown element with typo suggestions
+			helpers.SafeDebugLog("[DIAGNOSTICS] Unknown custom element tag '%s'", tagName)
 
 			// Find closest match using Levenshtein distance
 			closestMatch, distance := findClosestMatch(tagName, allAvailableTagNames, 3)
@@ -150,8 +120,8 @@ func AnalyzeTagNameDiagnosticsForTest(ctx types.ServerContext, doc types.Documen
 			}
 
 			diagnostics = append(diagnostics, diagnostic)
-			helpers.SafeDebugLog("[DIAGNOSTICS] Added diagnostic for invalid tag '%s'", tagName)
-		} else if isValid && !isImported {
+			helpers.SafeDebugLog("[DIAGNOSTICS] Added diagnostic for unknown tag '%s'", tagName)
+		} else if existsInManifest && !isImported {
 			// Element exists in manifest but is not imported
 			if importPath, hasSource := ctx.ElementSource(tagName); hasSource {
 				severity := protocol.DiagnosticSeverityError
@@ -238,21 +208,21 @@ func parseTypeScriptImports(content string, ctx types.ServerContext) []string {
 	}
 	defer tree.Close()
 
-	// Get query manager for imports
-	queryManager, err := queries.NewQueryManager(queries.LSPQueries())
+	// Get singleton query manager for performance
+	queryManager, err := queries.GetGlobalQueryManager()
 	if err != nil {
-		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to create query manager: %v", err)
+		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to get global query manager: %v", err)
 		return importedElements
 	}
-	defer queryManager.Close()
+	// Note: Don't defer Close() on singleton
 
-	// Create import matcher
-	importMatcher, err := queries.NewQueryMatcher(queryManager, "typescript", "imports")
+	// Get cached import matcher for performance
+	importMatcher, err := queries.GetCachedQueryMatcher(queryManager, "typescript", "imports")
 	if err != nil {
-		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to create import matcher: %v", err)
+		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to get cached import matcher: %v", err)
 		return importedElements
 	}
-	defer importMatcher.Close()
+	// Note: Don't defer Close() on cached matcher
 
 	// Extract import paths using tree-sitter
 	contentBytes := []byte(content)
@@ -318,21 +288,19 @@ func parseModuleScriptImports(ctx types.ServerContext, doc types.Document) []str
 	}
 	defer tree.Close()
 
-	// Get query manager for script tags
-	queryManager, err := queries.NewQueryManager(queries.LSPQueries())
+	// Get singleton query manager for performance
+	queryManager, err := queries.GetGlobalQueryManager()
 	if err != nil {
-		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to create query manager: %v", err)
+		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to get global query manager: %v", err)
 		return importedElements
 	}
-	defer queryManager.Close()
 
-	// Create script tag matcher
-	scriptMatcher, err := queries.NewQueryMatcher(queryManager, "html", "scriptTags")
+	// Get cached script tag matcher
+	scriptMatcher, err := queries.GetCachedQueryMatcher(queryManager, "html", "scriptTags")
 	if err != nil {
-		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to create script matcher: %v", err)
+		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to get cached script matcher: %v", err)
 		return importedElements
 	}
-	defer scriptMatcher.Close()
 
 	// Parse module scripts and extract imports
 	contentBytes := []byte(content)
@@ -390,21 +358,19 @@ func parseNonModuleScriptImports(content string, ctx types.ServerContext) []stri
 	}
 	defer tree.Close()
 
-	// Get query manager for script tags
-	queryManager, err := queries.NewQueryManager(queries.LSPQueries())
+	// Get singleton query manager for performance
+	queryManager, err := queries.GetGlobalQueryManager()
 	if err != nil {
-		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to create query manager: %v", err)
+		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to get global query manager: %v", err)
 		return importedElements
 	}
-	defer queryManager.Close()
 
-	// Create script tag matcher
-	scriptMatcher, err := queries.NewQueryMatcher(queryManager, "html", "scriptTags")
+	// Get cached script tag matcher
+	scriptMatcher, err := queries.GetCachedQueryMatcher(queryManager, "html", "scriptTags")
 	if err != nil {
-		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to create script matcher: %v", err)
+		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to get cached script matcher: %v", err)
 		return importedElements
 	}
-	defer scriptMatcher.Close()
 
 	// Extract src attributes from non-module script tags
 	contentBytes := []byte(content)
@@ -456,13 +422,33 @@ func resolveImportPathToElements(importPath string, ctx types.ServerContext) []s
 	elements = append(elements, manifestElements...)
 	helpers.SafeDebugLog("[DIAGNOSTICS] Manifest resolved '%s' to %d elements: %v", importPath, len(manifestElements), manifestElements)
 
-	// Also check module graph for additional re-export aware resolution
+	// Lazy build module graph for this import path, then check for additional re-export aware resolution
 	if moduleGraph := ctx.ModuleGraph(); moduleGraph != nil {
+		// LOG: Starting lazy build process
+		ctx.DebugLog("🔍 LAZY BUILD: Starting for import '%s'", importPath)
+
+		// Trigger lazy building for this specific import path
+		if err := moduleGraph.BuildForImportPath(importPath); err != nil {
+			ctx.DebugLog("❌ LAZY BUILD: Failed for '%s': %v", importPath, err)
+			helpers.SafeDebugLog("[DIAGNOSTICS] Warning: Failed to lazy build module graph for '%s': %v", importPath, err)
+		} else {
+			ctx.DebugLog("✅ LAZY BUILD: Completed for '%s'", importPath)
+		}
+
+		// LOG: Check what modules exist in graph after build
+		allModules := moduleGraph.GetAllModulePaths()
+		ctx.DebugLog("📊 MODULE GRAPH: Contains %d modules after build: %v", len(allModules), allModules)
+
 		moduleGraphElements := resolveImportPathWithModuleGraph(importPath, moduleGraph)
 		if len(moduleGraphElements) > 0 {
+			ctx.DebugLog("🎯 MODULE GRAPH: Resolved '%s' to %d elements: %v", importPath, len(moduleGraphElements), moduleGraphElements)
 			helpers.SafeDebugLog("[DIAGNOSTICS] Module graph resolved '%s' to %d additional elements: %v", importPath, len(moduleGraphElements), moduleGraphElements)
 			elements = append(elements, moduleGraphElements...)
+		} else {
+			ctx.DebugLog("🔍 MODULE GRAPH: No elements found for import '%s'", importPath)
 		}
+	} else {
+		ctx.DebugLog("⚠️ MODULE GRAPH: Not available in context")
 	}
 
 	// Remove duplicates
@@ -518,15 +504,48 @@ func findMatchingModuleForImportPath(importPath string, moduleGraph *types.Modul
 	// Get all module paths directly - O(n) instead of O(n*m)
 	allModulePaths := moduleGraph.GetAllModulePaths()
 
+	helpers.SafeDebugLog("[DIAGNOSTICS] 🔍 Finding module for import '%s' among %d modules", importPath, len(allModulePaths))
+
+	// First, try direct path matching
 	for _, sourceModule := range allModulePaths {
+		helpers.SafeDebugLog("[DIAGNOSTICS] 🔄 Checking module '%s' against import '%s'", sourceModule, importPath)
 		// Check if this module matches the import path
 		if pathsMatch(importPath, sourceModule) {
-			helpers.SafeDebugLog("[DIAGNOSTICS] Found matching module '%s' for import path '%s'", sourceModule, importPath)
+			helpers.SafeDebugLog("[DIAGNOSTICS] ✅ Found matching module '%s' for import path '%s'", sourceModule, importPath)
 			return sourceModule
+		} else {
+			helpers.SafeDebugLog("[DIAGNOSTICS] ❌ No match: '%s' vs '%s'", importPath, sourceModule)
 		}
 	}
 
-	helpers.SafeDebugLog("[DIAGNOSTICS] No matching module found for import path '%s'", importPath)
+	// If no direct match, try reverse resolution - convert import path to likely file path
+	// For '@rhds/elements/rh-tabs/rh-tabs.js' -> 'rh-tabs/rh-tabs.js'
+	var expectedRelativePath string
+	if strings.HasPrefix(importPath, "@") {
+		// Handle scoped packages like @rhds/elements/path/file.js
+		parts := strings.SplitN(importPath, "/", 3)
+		if len(parts) >= 3 {
+			expectedRelativePath = parts[2] // Get 'rh-tabs/rh-tabs.js'
+		}
+	} else {
+		// Handle regular packages
+		parts := strings.SplitN(importPath, "/", 2)
+		if len(parts) >= 2 {
+			expectedRelativePath = parts[1]
+		}
+	}
+
+	// Try to find modules that match the expected relative path
+	if expectedRelativePath != "" {
+		for _, sourceModule := range allModulePaths {
+			if strings.HasSuffix(sourceModule, expectedRelativePath) || sourceModule == expectedRelativePath {
+				helpers.SafeDebugLog("[DIAGNOSTICS] Found module '%s' via relative path matching for import '%s'", sourceModule, importPath)
+				return sourceModule
+			}
+		}
+	}
+
+	helpers.SafeDebugLog("[DIAGNOSTICS] No matching module found for import path '%s' (checked %d modules)", importPath, len(allModulePaths))
 	return ""
 }
 

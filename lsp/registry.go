@@ -35,6 +35,7 @@ import (
 // ElementDefinition stores a custom element with its source information
 type ElementDefinition struct {
 	CustomElement *M.CustomElement
+	className     string             // Class name from the declaration
 	modulePath    string             // Path from the manifest module
 	Source        *M.SourceReference // Source reference if available
 	packageName   string             // Package name from package.json (if loaded from a package)
@@ -61,6 +62,24 @@ func (ed *ElementDefinition) SourceHref() string {
 // Element returns the custom element for this definition
 func (ed *ElementDefinition) Element() *M.CustomElement {
 	return ed.CustomElement
+}
+
+// GetModulePath returns the module path (for module graph interface compatibility)
+func (ed *ElementDefinition) GetModulePath() string {
+	return ed.modulePath
+}
+
+// GetTagName returns the tag name
+func (ed *ElementDefinition) GetTagName() string {
+	if ed.CustomElement != nil {
+		return ed.CustomElement.TagName
+	}
+	return ""
+}
+
+// GetClassName returns the class name
+func (ed *ElementDefinition) GetClassName() string {
+	return ed.className
 }
 
 // Registry manages all loaded custom elements manifests and provides
@@ -141,10 +160,11 @@ func (r *Registry) LoadFromWorkspace(workspace W.WorkspaceContext) error {
 		helpers.SafeDebugLog("Warning: Could not load config manifests: %v", err)
 	}
 
-	// 4. Build module graph from workspace for re-export analysis
-	if err := r.buildModuleGraph(workspace); err != nil {
-		helpers.SafeDebugLog("Warning: Could not build module graph: %v", err)
-	}
+	// 4. Initialize module graph for lazy building
+	// Instead of scanning the entire workspace upfront (which was 5000+ files),
+	// we now build the module graph lazily as imports are discovered in open documents.
+	// This provides fast startup while maintaining accurate re-export resolution.
+	r.initializeLazyModuleGraph(workspace)
 
 	helpers.SafeDebugLog("Loaded %d custom elements from %d manifests", len(r.Elements), len(r.Manifests))
 	return nil
@@ -372,6 +392,7 @@ func (r *Registry) addManifest(manifest *M.Package, packageName string) {
 					// Store the element definition with source information
 					elementDef := &ElementDefinition{
 						CustomElement: element,
+						className:     customElementDecl.Name, // Store the class name from the declaration
 						modulePath:    module.Path,
 						Source:        customElementDecl.Source,
 						packageName:   packageName,
@@ -474,6 +495,7 @@ func (r *Registry) ElementDefinition(tagName string) (*ElementDefinition, bool) 
 				CustomElement: &M.CustomElement{
 					TagName: tagName,
 				},
+				className:   "", // Class name not available from module graph
 				modulePath:  modulePath,
 				packageName: "", // Module graph doesn't track package names currently
 			}, true
@@ -832,7 +854,225 @@ func (r *Registry) GetModuleGraph() *types.ModuleGraph {
 	return r.moduleGraph
 }
 
-// buildModuleGraph builds the module graph from the workspace
+// RegistryManifestResolver implements ManifestResolver using the registry's manifest data
+type RegistryManifestResolver struct {
+	registry *Registry
+}
+
+// NewRegistryManifestResolver creates a new manifest resolver using the registry
+func NewRegistryManifestResolver(registry *Registry) *RegistryManifestResolver {
+	return &RegistryManifestResolver{registry: registry}
+}
+
+// FindManifestModulesForImportPath finds manifest modules that match an import path
+func (r *RegistryManifestResolver) FindManifestModulesForImportPath(importPath string) []string {
+	if r.registry == nil {
+		return nil
+	}
+
+	var matchingModules []string
+
+	r.registry.mu.RLock()
+	defer r.registry.mu.RUnlock()
+
+	// Search through all element definitions to find matches
+	for _, elementDef := range r.registry.ElementDefinitions {
+		modulePath := elementDef.GetModulePath()
+		if modulePath == "" {
+			continue
+		}
+
+		// Use the same path matching logic as tagDiagnostics.go
+		if r.pathsMatch(importPath, modulePath) {
+			// Avoid duplicates
+			found := false
+			for _, existing := range matchingModules {
+				if existing == modulePath {
+					found = true
+					break
+				}
+			}
+			if !found {
+				matchingModules = append(matchingModules, modulePath)
+			}
+		}
+	}
+
+	return matchingModules
+}
+
+// GetManifestModulePath converts a file path to its corresponding manifest module path
+func (r *RegistryManifestResolver) GetManifestModulePath(filePath string) string {
+	if r.registry == nil {
+		return ""
+	}
+
+	r.registry.mu.RLock()
+	defer r.registry.mu.RUnlock()
+
+	// Search through all element definitions to find one that matches this file path
+	// This is a reverse lookup from file path to manifest module path
+	for _, elementDef := range r.registry.ElementDefinitions {
+		modulePath := elementDef.GetModulePath()
+		if modulePath == "" {
+			continue
+		}
+
+		// Try direct path matching first
+		if r.pathsMatch(filePath, modulePath) {
+			return modulePath
+		}
+
+		// For Red Hat Design System pattern: convert TypeScript source paths to manifest paths
+		// e.g., "elements/rh-tabs/rh-tab-panel.ts" -> "rh-tabs/rh-tab-panel.js"
+		if strings.HasSuffix(filePath, ".ts") {
+			// Convert .ts to .js for comparison
+			jsFilePath := strings.TrimSuffix(filePath, ".ts") + ".js"
+			if r.pathsMatch(jsFilePath, modulePath) {
+				return modulePath
+			}
+
+			// Also try without elements/ prefix
+			// "elements/rh-tabs/rh-tab-panel.ts" -> "rh-tabs/rh-tab-panel.js"
+			if strings.HasPrefix(filePath, "elements/") {
+				relativeJsPath := strings.TrimPrefix(jsFilePath, "elements/")
+				if r.pathsMatch(relativeJsPath, modulePath) {
+					return modulePath
+				}
+			}
+		}
+	}
+
+	return ""
+}
+
+// GetElementsFromManifestModule returns all custom element tag names available from a manifest module
+func (r *RegistryManifestResolver) GetElementsFromManifestModule(manifestModulePath string) []string {
+	if r.registry == nil {
+		return nil
+	}
+
+	var elements []string
+
+	r.registry.mu.RLock()
+	defer r.registry.mu.RUnlock()
+
+	// Search through all element definitions to find those from this manifest module
+	for tagName, elementDef := range r.registry.ElementDefinitions {
+		modulePath := elementDef.GetModulePath()
+		if modulePath == manifestModulePath {
+			elements = append(elements, tagName)
+		}
+	}
+
+	return elements
+}
+
+// pathsMatch checks if an import path matches an element source path
+// This duplicates the logic from tagDiagnostics.go for now, but should ideally be unified
+func (r *RegistryManifestResolver) pathsMatch(importPath, elementSource string) bool {
+	// Direct match first (for exact package imports)
+	if importPath == elementSource {
+		return true
+	}
+
+	// Normalize paths for comparison
+	normalizedImport := r.normalizePath(importPath)
+	normalizedSource := r.normalizePath(elementSource)
+
+	// Direct match on normalized paths
+	if normalizedImport == normalizedSource {
+		return true
+	}
+
+	// Check if import path ends with the element source (relative imports)
+	if strings.HasSuffix(importPath, elementSource) {
+		return true
+	}
+
+	// Check if element source ends with import path (package imports)
+	if strings.HasSuffix(elementSource, importPath) {
+		return true
+	}
+
+	// Extract just the filename and compare
+	importFile := filepath.Base(importPath)
+	elementFile := filepath.Base(elementSource)
+	return importFile == elementFile
+}
+
+// normalizePath normalizes a file path for comparison
+// This duplicates the logic from tagDiagnostics.go for now, but should ideally be unified
+func (r *RegistryManifestResolver) normalizePath(path string) string {
+	// Remove common prefixes/suffixes
+	path = strings.TrimPrefix(path, "./")
+	path = strings.TrimPrefix(path, "../")
+	path = strings.TrimPrefix(path, "/")
+
+	// Handle npm package paths like @rhds/elements/rh-card/rh-card.js
+	// vs manifest paths like ./dist/rh-card.js
+	if strings.Contains(path, "/") {
+		// Keep the last two segments for better matching
+		parts := strings.Split(path, "/")
+		if len(parts) >= 2 {
+			return strings.Join(parts[len(parts)-2:], "/")
+		}
+	}
+
+	return path
+}
+
+// initializeLazyModuleGraph initializes the module graph with manifest data but defers file scanning
+func (r *Registry) initializeLazyModuleGraph(workspace W.WorkspaceContext) {
+	if workspace == nil {
+		return
+	}
+
+	workspaceRoot := workspace.Root()
+	if workspaceRoot == "" {
+		return
+	}
+
+	helpers.SafeDebugLog("[REGISTRY] Initializing lazy module graph for workspace: %s", workspaceRoot)
+
+	// Create manifest resolver and update module graph to use it
+	manifestResolver := NewRegistryManifestResolver(r)
+	r.moduleGraph.SetManifestResolver(manifestResolver)
+
+	// Populate the module graph with custom element definitions from manifests
+	// This is fast since it only uses already-loaded manifest data
+	elementMap := make(map[string]interface{})
+	for tagName, elementDef := range r.ElementDefinitions {
+		elementMap[tagName] = elementDef
+	}
+	r.moduleGraph.PopulateFromManifests(elementMap)
+
+	// Store workspace root for lazy file parsing
+	r.moduleGraph.SetWorkspaceRoot(workspaceRoot)
+
+	helpers.SafeDebugLog("[REGISTRY] Module graph initialized with %d manifest elements and manifest resolver, ready for lazy building", len(elementMap))
+}
+
+// buildModuleGraphForImports builds module graph entries for specific import paths found in documents
+func (r *Registry) buildModuleGraphForImports(importPaths []string) error {
+	if r.moduleGraph == nil {
+		return nil
+	}
+
+	helpers.SafeDebugLog("[REGISTRY] Building module graph for %d import paths", len(importPaths))
+
+	// Build module graph entries only for the requested import paths
+	for _, importPath := range importPaths {
+		if err := r.moduleGraph.BuildForImportPath(importPath); err != nil {
+			helpers.SafeDebugLog("[REGISTRY] Warning: Could not build module graph for import %s: %v", importPath, err)
+			// Continue with other imports even if one fails
+		}
+	}
+
+	return nil
+}
+
+// buildModuleGraph builds the module graph from the workspace (legacy method, kept for compatibility)
 func (r *Registry) buildModuleGraph(workspace W.WorkspaceContext) error {
 	if workspace == nil {
 		return nil
@@ -843,6 +1083,18 @@ func (r *Registry) buildModuleGraph(workspace W.WorkspaceContext) error {
 		return nil
 	}
 
-	helpers.SafeDebugLog("[REGISTRY] Building module graph for workspace: %s", workspaceRoot)
-	return r.moduleGraph.BuildFromWorkspace(workspaceRoot)
+	helpers.SafeDebugLog("[REGISTRY] Building full module graph for workspace: %s", workspaceRoot)
+
+	// First, populate the module graph with custom element definitions from manifests
+	elementMap := make(map[string]interface{})
+	for tagName, elementDef := range r.ElementDefinitions {
+		elementMap[tagName] = elementDef
+	}
+	r.moduleGraph.PopulateFromManifests(elementMap)
+
+	// Store workspace root for lazy building
+	r.moduleGraph.SetWorkspaceRoot(workspaceRoot)
+
+	helpers.SafeDebugLog("[REGISTRY] Module graph initialized with %d manifest elements and manifest resolver, ready for lazy building", len(elementMap))
+	return nil
 }
