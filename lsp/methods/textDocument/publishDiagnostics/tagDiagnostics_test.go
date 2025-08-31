@@ -171,7 +171,7 @@ func TestTagDiagnostics_TypeScriptImports(t *testing.T) {
 	// Load manifests manually like other successful tests
 	ctx := testhelpers.NewMockServerContext()
 
-	// Set up QueryManager for tree-sitter functionality  
+	// Set up QueryManager for tree-sitter functionality
 	// Create a dedicated QueryManager for this test to avoid global state contamination
 	queryManager, err := queries.NewQueryManager(queries.LSPQueries())
 	if err != nil {
@@ -220,19 +220,19 @@ func TestTagDiagnostics_TypeScriptImports(t *testing.T) {
 		}
 	}
 
-	// Debug: manually test import resolution  
+	// Debug: manually test import resolution
 	docContent, err := doc.Content()
 	if err != nil {
 		t.Fatalf("Failed to get content: %v", err)
 	}
 	t.Logf("TypeScript file content: %q", docContent)
-	
+
 	// Test TypeScript import parsing functionality
 	// Note: This test focuses on the QueryManager dependency injection
 	// rather than complex tree-sitter parsing to avoid race conditions
 	importedElements := publishDiagnostics.ParseScriptImportsForTest(docContent, ctx, doc)
 	t.Logf("All imported elements from parseScriptImports: %v", importedElements)
-	
+
 	// The main assertion: verify that QueryManager dependency injection is working
 	// If QueryManager is properly injected, the import should be detected
 	expectedElement := "my-foo"
@@ -243,7 +243,7 @@ func TestTagDiagnostics_TypeScriptImports(t *testing.T) {
 			break
 		}
 	}
-	
+
 	if !hasExpectedElement {
 		t.Logf("WARNING: Expected element '%s' not found in imported elements", expectedElement)
 		t.Logf("This may indicate QueryManager dependency injection issues")

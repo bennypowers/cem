@@ -388,7 +388,7 @@ func TestModuleGraph_RecursiveDependencyBuilding(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to get query manager: %v", err)
 	}
-	
+
 	// Create module graph with workspace root
 	mg := types.NewModuleGraphWithDependencies(
 		&types.OSFileParser{},

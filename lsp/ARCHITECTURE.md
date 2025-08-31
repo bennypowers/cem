@@ -59,6 +59,11 @@ The CEM LSP server provides Language Server Protocol support for custom elements
 - **TypeScript Parsing**: Extract HTML template literals then parse as HTML
 - **Performance**: Shared parser pools between `generate` and `lsp` packages
 
+#### Concurrency Safety
+- **Query Cursors**: NOT thread-safe - each operation requires a fresh cursor
+- **Implementation**: `GetCachedQueryMatcher()` caches queries but creates fresh cursors
+- **Performance**: Minimal impact (query compilation expensive, cursor creation cheap)
+
 ## Diagnostics and Validation System
 
 The LSP implements comprehensive real-time validation with autofix capabilities following the "Diagnostics + Code Actions Pattern":
@@ -228,6 +233,12 @@ lsp/*_test.go                         # All tests use package lsp_test
 - **Generate Glob Test**: `generate/glob_expansion_regression_test.go`
 - **Nil Type Test**: `lsp/nil_type_regression_test.go`
 - **Race Condition Prevention**: All fixes include comprehensive test coverage
+
+### Tree-Sitter Concurrency Fix ✅ COMPLETED
+- **Issue**: Segmentation faults during concurrent tests after dependency injection refactoring
+- **Root Cause**: `GetCachedQueryMatcher()` shared `QueryMatcher` instances between goroutines
+- **Solution**: Cache queries (thread-safe) but create fresh cursors per operation
+- **Lesson**: When refactoring introduces failures, examine what changed first
 
 ## Recent Architectural Achievements ✅
 

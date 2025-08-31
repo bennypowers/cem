@@ -47,6 +47,12 @@
 - Ensure all method contexts inherit from appropriate base interfaces
 - Keep context interfaces focused on specific method requirements
 
+**Tree-Sitter Concurrency Safety**:
+- **CRITICAL**: Never cache or share `QueryMatcher` instances between goroutines
+- Query cursors are NOT thread-safe - each operation needs a fresh cursor
+- **Safe Pattern**: Cache queries, create fresh cursors per matcher
+- **Debugging**: Individual test passes + concurrent segfaults = shared cursor issue
+
 **Integration Points**:
 - Diagnostics + Code Actions: Always implement together for complete autofix workflows
 - Document lifecycle integration: Hook diagnostics into didOpen/didChange events

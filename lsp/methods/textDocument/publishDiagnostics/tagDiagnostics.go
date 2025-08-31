@@ -221,7 +221,7 @@ func ParseTypeScriptImportsDebugForTest(content string, ctx types.ServerContext)
 		return importedElements, debugInfo
 	}
 	defer tree.Close()
-	
+
 	// Safety check: verify tree root node is valid
 	rootNode := tree.RootNode()
 	if rootNode == nil {
@@ -252,14 +252,18 @@ func ParseTypeScriptImportsDebugForTest(content string, ctx types.ServerContext)
 	for match := range importMatcher.AllQueryMatches(rootNode, contentBytes) {
 		matchCount++
 		debugInfo = append(debugInfo, fmt.Sprintf("Found match %d", matchCount))
-		
+
 		// Safety check: verify match is valid
 		if match == nil {
 			debugInfo = append(debugInfo, "Match is nil, skipping")
 			continue
 		}
-		
+
 		for i, capture := range match.Captures {
+			// Safety check for capture index bounds
+			if int(capture.Index) >= importMatcher.CaptureCount() {
+				continue // Skip invalid capture indices
+			}
 			captureName := importMatcher.GetCaptureNameByIndex(capture.Index)
 			captureText := capture.Node.Utf8Text(contentBytes)
 			debugInfo = append(debugInfo, fmt.Sprintf("  Capture %d: name=%s, text=%q", i, captureName, captureText))
@@ -302,7 +306,7 @@ func parseTypeScriptImports(content string, ctx types.ServerContext) []string {
 		return importedElements
 	}
 	defer tree.Close()
-	
+
 	// Safety check: verify tree root node is valid
 	rootNode := tree.RootNode()
 	if rootNode == nil {
@@ -332,8 +336,12 @@ func parseTypeScriptImports(content string, ctx types.ServerContext) []string {
 		if match == nil {
 			continue
 		}
-		
+
 		for _, capture := range match.Captures {
+			// Safety check for capture index bounds
+			if int(capture.Index) >= importMatcher.CaptureCount() {
+				continue // Skip invalid capture indices
+			}
 			captureName := importMatcher.GetCaptureNameByIndex(capture.Index)
 
 			// Handle static, dynamic, and legacy import patterns
@@ -417,6 +425,10 @@ func parseModuleScriptImports(ctx types.ServerContext, doc types.Document) []str
 		// Process attributes and content in this script tag
 		var attrName, attrValue string
 		for _, capture := range match.Captures {
+			// Safety check for capture index bounds
+			if int(capture.Index) >= scriptMatcher.CaptureCount() {
+				continue // Skip invalid capture indices
+			}
 			captureName := scriptMatcher.GetCaptureNameByIndex(capture.Index)
 			captureText := capture.Node.Utf8Text(contentBytes)
 
@@ -487,6 +499,10 @@ func parseNonModuleScriptImports(content string, ctx types.ServerContext) []stri
 		// Process attributes in this script tag
 		var attrName, attrValue string
 		for _, capture := range match.Captures {
+			// Safety check for capture index bounds
+			if int(capture.Index) >= scriptMatcher.CaptureCount() {
+				continue // Skip invalid capture indices
+			}
 			captureName := scriptMatcher.GetCaptureNameByIndex(capture.Index)
 			captureText := capture.Node.Utf8Text(contentBytes)
 

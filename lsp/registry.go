@@ -28,8 +28,8 @@ import (
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
-	"bennypowers.dev/cem/queries"
 	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/queries"
 	W "bennypowers.dev/cem/workspace"
 )
 
@@ -122,9 +122,9 @@ func NewRegistry(fileWatcher platform.FileWatcher) *Registry {
 		// For production, this should not happen, but handle gracefully
 		queryManager = nil
 	}
-	
+
 	moduleGraph := types.NewModuleGraph(queryManager)
-	
+
 	return &Registry{
 		Elements:             make(map[string]*M.CustomElement),
 		ElementDefinitions:   make(map[string]*ElementDefinition),

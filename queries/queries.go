@@ -355,6 +355,10 @@ func (qm QueryMatcher) GetCaptureNameByIndex(index uint32) string {
 	return qm.query.CaptureNames()[index]
 }
 
+func (qm QueryMatcher) CaptureCount() int {
+	return len(qm.query.CaptureNames())
+}
+
 func (qm QueryMatcher) GetCaptureIndexForName(name string) (uint, bool) {
 	return qm.query.CaptureIndexForName(name)
 }
@@ -819,25 +823,21 @@ func GetGlobalQueryManager() (*QueryManager, error) {
 	return globalQueryManager, nil
 }
 
-// Thread-safe cached query matchers using sync.Map for optimal concurrent access
-var cachedQueryMatchers sync.Map
-
-// GetCachedQueryMatcher returns a cached query matcher, creating one if needed
+// GetCachedQueryMatcher returns a query matcher with cached query but fresh cursor
+// This prevents concurrent access to the same cursor which causes segmentation faults
 func GetCachedQueryMatcher(manager *QueryManager, language, queryName string) (*QueryMatcher, error) {
-	cacheKey := fmt.Sprintf("%s:%s", language, queryName)
-
-	// Try to get from cache first
-	if cached, exists := cachedQueryMatchers.Load(cacheKey); exists {
-		return cached.(*QueryMatcher), nil
+	if manager == nil {
+		return nil, ErrNoQueryManager
 	}
 
-	// Create new query matcher
-	matcher, err := NewQueryMatcher(manager, language, queryName)
+	// Get the cached query (thread-safe to share)
+	query, err := manager.getQuery(queryName, language)
 	if err != nil {
 		return nil, err
 	}
 
-	// Store in cache, but use LoadOrStore to handle concurrent creation
-	actual, _ := cachedQueryMatchers.LoadOrStore(cacheKey, matcher)
-	return actual.(*QueryMatcher), nil
+	// Always create a fresh cursor (NOT thread-safe to share)
+	cursor := ts.NewQueryCursor()
+	matcher := QueryMatcher{query, cursor}
+	return &matcher, nil
 }
