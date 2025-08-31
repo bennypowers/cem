@@ -794,6 +794,7 @@ func adjustTemplateRange(templateRange *Range, templateNode *ts.Node, content []
 var (
 	globalQueryManager *QueryManager
 	globalQueryOnce    sync.Once
+	globalQueryError   error
 )
 
 // GetGlobalQueryManager returns the singleton QueryManager instance
@@ -801,11 +802,15 @@ func GetGlobalQueryManager() (*QueryManager, error) {
 	globalQueryOnce.Do(func() {
 		manager, err := NewQueryManager(LSPQueries())
 		if err != nil {
-			// Store the error to return it
+			globalQueryError = err
 			return
 		}
 		globalQueryManager = manager
 	})
+
+	if globalQueryError != nil {
+		return nil, globalQueryError
+	}
 
 	if globalQueryManager == nil {
 		return nil, fmt.Errorf("failed to initialize global query manager")

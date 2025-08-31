@@ -18,7 +18,6 @@ package publishDiagnostics
 
 import (
 	"fmt"
-	"path/filepath"
 	"slices"
 	"strings"
 
@@ -583,58 +582,7 @@ func getAllTagNamesFromModuleGraph(moduleGraph *types.ModuleGraph) []string {
 // pathsMatch checks if an import path matches an element source path
 func pathsMatch(importPath, elementSource string) bool {
 	helpers.SafeDebugLog("[DIAGNOSTICS] Comparing import '%s' vs element source '%s'", importPath, elementSource)
-
-	// Direct match first (for exact package imports)
-	if importPath == elementSource {
-		helpers.SafeDebugLog("[DIAGNOSTICS] Direct match")
-		return true
-	}
-
-	// Normalize paths for comparison
-	normalizedImport := normalizePath(importPath)
-	normalizedSource := normalizePath(elementSource)
-	helpers.SafeDebugLog("[DIAGNOSTICS] Normalized: import='%s' vs source='%s'", normalizedImport, normalizedSource)
-
-	// Direct match on normalized paths
-	if normalizedImport == normalizedSource {
-		helpers.SafeDebugLog("[DIAGNOSTICS] Normalized match")
-		return true
-	}
-
-	// Check if import path ends with the element source (relative imports)
-	if strings.HasSuffix(importPath, elementSource) {
-		return true
-	}
-
-	// Check if element source ends with import path (package imports)
-	if strings.HasSuffix(elementSource, importPath) {
-		return true
-	}
-
-	// Extract just the filename and compare
-	importFile := filepath.Base(importPath)
-	elementFile := filepath.Base(elementSource)
-	return importFile == elementFile
-}
-
-// normalizePath normalizes a file path for comparison
-func normalizePath(path string) string {
-	// Remove common prefixes/suffixes
-	path = strings.TrimPrefix(path, "./")
-	path = strings.TrimPrefix(path, "../")
-	path = strings.TrimPrefix(path, "/")
-
-	// Handle npm package paths like @rhds/elements/rh-card/rh-card.js
-	// vs manifest paths like ./dist/rh-card.js
-	if strings.Contains(path, "/") {
-		// Keep the last two segments for better matching
-		parts := strings.Split(path, "/")
-		if len(parts) >= 2 {
-			return strings.Join(parts[len(parts)-2:], "/")
-		}
-	}
-
-	return path
+	return helpers.PathsMatch(importPath, elementSource)
 }
 
 // TagMatch represents a found custom element tag in the document

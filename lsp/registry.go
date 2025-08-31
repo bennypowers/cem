@@ -1052,4 +1052,3 @@ func (r *Registry) initializeLazyModuleGraph(workspace W.WorkspaceContext) {
 
 	helpers.SafeDebugLog("[REGISTRY] Module graph initialized with %d manifest elements and manifest resolver, ready for lazy building", len(elementMap))
 }
-

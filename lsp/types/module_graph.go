@@ -74,22 +74,9 @@ type ManifestResolver interface {
 }
 
 // normalizeImportPath converts a relative import path to an absolute module path
+// Deprecated: Use helpers.NormalizeImportPath instead
 func normalizeImportPath(importPath string) string {
-	// Handle relative imports like './my-icon.js'
-	if strings.HasPrefix(importPath, "./") {
-		// Convert './my-icon.js' to 'my-icon.js'
-		return strings.TrimPrefix(importPath, "./")
-	}
-
-	// Handle parent directory imports like '../shared/utils.js'
-	if strings.HasPrefix(importPath, "../") {
-		// For now, just remove the prefix - more sophisticated resolution
-		// could be added if needed
-		return strings.TrimPrefix(importPath, "../")
-	}
-
-	// Handle absolute imports (npm packages, etc.) - return as-is
-	return importPath
+	return helpers.NormalizeImportPath(importPath)
 }
 
 // MetricsCollector interface abstracts metrics collection for observability
@@ -643,6 +630,10 @@ type ModuleGraph struct {
 	// Workspace root for lazy building
 	workspaceRoot string
 
+	// MaxTransitiveDepth is the maximum depth for transitive closure computation
+	// to prevent performance issues with deeply nested dependency chains
+	MaxTransitiveDepth int
+
 	// Injected dependencies for improved testability
 	fileParser       FileParser
 	exportParser     ExportParser
@@ -668,12 +659,13 @@ func (r *NoOpManifestResolver) GetElementsFromManifestModule(manifestModulePath 
 // NewModuleGraph creates a new empty module graph with default dependencies
 func NewModuleGraph() *ModuleGraph {
 	return &ModuleGraph{
-		exportTracker:     NewExportTracker(),
-		dependencyTracker: NewDependencyTracker(),
-		fileParser:        &OSFileParser{},
-		exportParser:      &DefaultExportParser{},
-		manifestResolver:  &NoOpManifestResolver{},
-		metrics:           &NoOpMetricsCollector{}, // Default to no-op for performance
+		exportTracker:      NewExportTracker(),
+		dependencyTracker:  NewDependencyTracker(),
+		fileParser:         &OSFileParser{},
+		exportParser:       &DefaultExportParser{},
+		manifestResolver:   &NoOpManifestResolver{},
+		metrics:            &NoOpMetricsCollector{}, // Default to no-op for performance
+		MaxTransitiveDepth: DefaultMaxTransitiveDepth,
 		// TransitiveElementsCache is initialized as zero value (ready to use)
 	}
 }
@@ -681,12 +673,13 @@ func NewModuleGraph() *ModuleGraph {
 // NewModuleGraphWithMetrics creates a new module graph with metrics collection enabled
 func NewModuleGraphWithMetrics() *ModuleGraph {
 	return &ModuleGraph{
-		exportTracker:     NewExportTracker(),
-		dependencyTracker: NewDependencyTracker(),
-		fileParser:        &OSFileParser{},
-		exportParser:      &DefaultExportParser{},
-		manifestResolver:  &NoOpManifestResolver{},
-		metrics:           NewDefaultMetricsCollector(),
+		exportTracker:      NewExportTracker(),
+		dependencyTracker:  NewDependencyTracker(),
+		fileParser:         &OSFileParser{},
+		exportParser:       &DefaultExportParser{},
+		manifestResolver:   &NoOpManifestResolver{},
+		metrics:            NewDefaultMetricsCollector(),
+		MaxTransitiveDepth: DefaultMaxTransitiveDepth,
 		// TransitiveElementsCache is initialized as zero value (ready to use)
 	}
 }
@@ -701,12 +694,13 @@ func NewModuleGraphWithDependencies(fileParser FileParser, exportParser ExportPa
 		manifestResolver = &NoOpManifestResolver{}
 	}
 	return &ModuleGraph{
-		exportTracker:     NewExportTracker(),
-		dependencyTracker: NewDependencyTracker(),
-		fileParser:        fileParser,
-		exportParser:      exportParser,
-		manifestResolver:  manifestResolver,
-		metrics:           metrics,
+		exportTracker:      NewExportTracker(),
+		dependencyTracker:  NewDependencyTracker(),
+		fileParser:         fileParser,
+		exportParser:       exportParser,
+		manifestResolver:   manifestResolver,
+		metrics:            metrics,
+		MaxTransitiveDepth: DefaultMaxTransitiveDepth,
 		// TransitiveElementsCache is initialized as zero value (ready to use)
 	}
 }
@@ -715,12 +709,13 @@ func NewModuleGraphWithDependencies(fileParser FileParser, exportParser ExportPa
 // This is useful for testing with mock file systems (backwards compatibility)
 func NewModuleGraphWithFileParser(fileParser FileParser) *ModuleGraph {
 	return &ModuleGraph{
-		exportTracker:     NewExportTracker(),
-		dependencyTracker: NewDependencyTracker(),
-		fileParser:        fileParser,
-		exportParser:      &DefaultExportParser{},
-		manifestResolver:  &NoOpManifestResolver{},
-		metrics:           &NoOpMetricsCollector{},
+		exportTracker:      NewExportTracker(),
+		dependencyTracker:  NewDependencyTracker(),
+		fileParser:         fileParser,
+		exportParser:       &DefaultExportParser{},
+		manifestResolver:   &NoOpManifestResolver{},
+		metrics:            &NoOpMetricsCollector{},
+		MaxTransitiveDepth: DefaultMaxTransitiveDepth,
 		// TransitiveElementsCache is initialized as zero value (ready to use)
 	}
 }
@@ -834,8 +829,8 @@ func (mg *ModuleGraph) calculateTransitiveElementsFromManifest(modulePath string
 	}
 
 	visited := make(map[string]bool)
-	elements := make(map[string]bool)     // Use map to avoid duplicates
-	maxDepth := DefaultMaxTransitiveDepth // Configurable depth limit to prevent performance issues
+	elements := make(map[string]bool) // Use map to avoid duplicates
+	maxDepth := mg.MaxTransitiveDepth // Configurable depth limit to prevent performance issues
 
 	// Breadth-first traversal to collect all transitive manifest modules
 	queue := []string{modulePath}
@@ -937,7 +932,7 @@ func (mg *ModuleGraph) GetTransitiveElementsDirect(modulePath string) []string {
 func (mg *ModuleGraph) calculateTransitiveElementsDirect(modulePath string) []string {
 	visited := make(map[string]bool)
 	elements := make(map[string]bool)
-	maxDepth := DefaultMaxTransitiveDepth
+	maxDepth := mg.MaxTransitiveDepth
 
 	// Debug: Check what exports we have for the starting module
 	startingExports := mg.exportTracker.GetModuleExports(modulePath)
@@ -987,7 +982,6 @@ func (mg *ModuleGraph) calculateTransitiveElementsDirect(modulePath string) []st
 	helpers.SafeDebugLog("[MODULE_GRAPH] Total transitive elements for '%s': %d elements: %v", modulePath, len(result), result)
 	return result
 }
-
 
 // PopulateFromManifests populates the module graph with custom element definitions from manifests
 func (mg *ModuleGraph) PopulateFromManifests(elements map[string]interface{}) {
@@ -1140,6 +1134,16 @@ func (mg *ModuleGraph) GetMetrics() MetricsCollector {
 // SetManifestResolver updates the manifest resolver for this module graph
 func (mg *ModuleGraph) SetManifestResolver(manifestResolver ManifestResolver) {
 	mg.manifestResolver = manifestResolver
+}
+
+// SetMaxTransitiveDepth updates the maximum transitive depth for this module graph
+func (mg *ModuleGraph) SetMaxTransitiveDepth(depth int) {
+	if depth <= 0 {
+		depth = DefaultMaxTransitiveDepth
+	}
+	mg.MaxTransitiveDepth = depth
+	// Clear cache since depth limit affects results
+	mg.TransitiveElementsCache = sync.Map{}
 }
 
 // contains checks if a string slice contains a specific string
