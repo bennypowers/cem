@@ -55,6 +55,25 @@ func TestModuleGraph_BasicOperations(t *testing.T) {
 			t.Errorf("Expected tag '%s' not found in %v", expectedTag, allTagNames)
 		}
 	}
+
+	// Test getting all module paths
+	allModulePaths := mg.GetAllModulePaths()
+	expectedModules := []string{"components/rh-tab.js", "components/rh-button.js"}
+	if len(allModulePaths) != 2 {
+		t.Errorf("Expected 2 module paths, got %d", len(allModulePaths))
+	}
+	for _, expectedModule := range expectedModules {
+		found := false
+		for _, module := range allModulePaths {
+			if module == expectedModule {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("Expected module '%s' not found in %v", expectedModule, allModulePaths)
+		}
+	}
 }
 
 func TestModuleGraph_ReExports(t *testing.T) {

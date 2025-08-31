@@ -445,24 +445,25 @@ func parseNonModuleScriptImports(content string, ctx types.ServerContext) []stri
 }
 
 // resolveImportPathToElements resolves an import path to custom element tag names
-// This function now uses both manifest data and module graph re-export information
+// This function checks manifest data first, then uses module graph for additional re-export information
 func resolveImportPathToElements(importPath string, ctx types.ServerContext) []string {
 	var elements []string
 
 	helpers.SafeDebugLog("[DIAGNOSTICS] Resolving import path '%s' to elements", importPath)
 
-	// Try module graph first for re-export aware resolution
+	// Check manifest-based resolution first (primary source)
+	manifestElements := resolveImportPathWithManifests(importPath, ctx)
+	elements = append(elements, manifestElements...)
+	helpers.SafeDebugLog("[DIAGNOSTICS] Manifest resolved '%s' to %d elements: %v", importPath, len(manifestElements), manifestElements)
+
+	// Also check module graph for additional re-export aware resolution
 	if moduleGraph := ctx.ModuleGraph(); moduleGraph != nil {
 		moduleGraphElements := resolveImportPathWithModuleGraph(importPath, moduleGraph)
 		if len(moduleGraphElements) > 0 {
-			helpers.SafeDebugLog("[DIAGNOSTICS] Module graph resolved '%s' to %d elements: %v", importPath, len(moduleGraphElements), moduleGraphElements)
+			helpers.SafeDebugLog("[DIAGNOSTICS] Module graph resolved '%s' to %d additional elements: %v", importPath, len(moduleGraphElements), moduleGraphElements)
 			elements = append(elements, moduleGraphElements...)
 		}
 	}
-
-	// Also check manifest-based resolution for compatibility
-	manifestElements := resolveImportPathWithManifests(importPath, ctx)
-	elements = append(elements, manifestElements...)
 
 	// Remove duplicates
 	seen := make(map[string]bool)
@@ -514,22 +515,14 @@ func resolveImportPathWithModuleGraph(importPath string, moduleGraph *types.Modu
 
 // findMatchingModuleForImportPath finds a module in the graph that matches the import path
 func findMatchingModuleForImportPath(importPath string, moduleGraph *types.ModuleGraph) string {
-	// Get all tag names to find all modules in the graph
-	allTagNames := moduleGraph.GetAllTagNames()
-	modulesSeen := make(map[string]bool)
+	// Get all module paths directly - O(n) instead of O(n*m)
+	allModulePaths := moduleGraph.GetAllModulePaths()
 
-	for _, tagName := range allTagNames {
-		elementSources := moduleGraph.GetElementSources(tagName)
-		for _, sourceModule := range elementSources {
-			if !modulesSeen[sourceModule] {
-				modulesSeen[sourceModule] = true
-
-				// Check if this module matches the import path
-				if pathsMatch(importPath, sourceModule) {
-					helpers.SafeDebugLog("[DIAGNOSTICS] Found matching module '%s' for import path '%s'", sourceModule, importPath)
-					return sourceModule
-				}
-			}
+	for _, sourceModule := range allModulePaths {
+		// Check if this module matches the import path
+		if pathsMatch(importPath, sourceModule) {
+			helpers.SafeDebugLog("[DIAGNOSTICS] Found matching module '%s' for import path '%s'", sourceModule, importPath)
+			return sourceModule
 		}
 	}
 

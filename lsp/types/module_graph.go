@@ -558,6 +558,18 @@ func (et *ExportTracker) GetModuleExports(modulePath string) []ModuleExport {
 	return result
 }
 
+// GetAllModulePaths returns all module paths that have exports
+func (et *ExportTracker) GetAllModulePaths() []string {
+	et.mu.RLock()
+	defer et.mu.RUnlock()
+
+	var modules []string
+	for modulePath := range et.ModuleExports {
+		modules = append(modules, modulePath)
+	}
+	return modules
+}
+
 // AddElementSource adds a module as a source for an element (used by re-export resolution)
 func (et *ExportTracker) AddElementSource(tagName, modulePath string) {
 	if tagName == "" || modulePath == "" {
@@ -757,6 +769,11 @@ func (mg *ModuleGraph) GetElementSources(tagName string) []string {
 // GetAllTagNames returns all custom element tag names tracked in the module graph
 func (mg *ModuleGraph) GetAllTagNames() []string {
 	return mg.exportTracker.GetAllTagNames()
+}
+
+// GetAllModulePaths returns all module paths that have exports
+func (mg *ModuleGraph) GetAllModulePaths() []string {
+	return mg.exportTracker.GetAllModulePaths()
 }
 
 // AddModuleDependency registers that one module imports another
