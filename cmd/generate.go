@@ -122,6 +122,11 @@ var generateCmd = &cobra.Command{
 			printErrorsAsWarnings(err)
 		}
 
+		// Check if manifestStr is nil before dereferencing
+		if manifestStr == nil {
+			return errs
+		}
+
 		if outputPath != "" {
 			writer, err := ctx.OutputWriter(outputPath)
 			if err != nil {
