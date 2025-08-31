@@ -819,38 +819,25 @@ func GetGlobalQueryManager() (*QueryManager, error) {
 	return globalQueryManager, nil
 }
 
-// Thread-safe cached query matchers
-var (
-	cachedQueryMatchers = make(map[string]*QueryMatcher)
-	matcherCacheMutex   sync.RWMutex
-)
+// Thread-safe cached query matchers using sync.Map for optimal concurrent access
+var cachedQueryMatchers sync.Map
 
 // GetCachedQueryMatcher returns a cached query matcher, creating one if needed
 func GetCachedQueryMatcher(manager *QueryManager, language, queryName string) (*QueryMatcher, error) {
 	cacheKey := fmt.Sprintf("%s:%s", language, queryName)
 
-	// Try to get from cache first (read lock)
-	matcherCacheMutex.RLock()
-	if matcher, exists := cachedQueryMatchers[cacheKey]; exists {
-		matcherCacheMutex.RUnlock()
-		return matcher, nil
-	}
-	matcherCacheMutex.RUnlock()
-
-	// Create new query matcher (write lock)
-	matcherCacheMutex.Lock()
-	defer matcherCacheMutex.Unlock()
-
-	// Double-check pattern in case another goroutine created it
-	if matcher, exists := cachedQueryMatchers[cacheKey]; exists {
-		return matcher, nil
+	// Try to get from cache first
+	if cached, exists := cachedQueryMatchers.Load(cacheKey); exists {
+		return cached.(*QueryMatcher), nil
 	}
 
+	// Create new query matcher
 	matcher, err := NewQueryMatcher(manager, language, queryName)
 	if err != nil {
 		return nil, err
 	}
 
-	cachedQueryMatchers[cacheKey] = matcher
-	return matcher, nil
+	// Store in cache, but use LoadOrStore to handle concurrent creation
+	actual, _ := cachedQueryMatchers.LoadOrStore(cacheKey, matcher)
+	return actual.(*QueryMatcher), nil
 }

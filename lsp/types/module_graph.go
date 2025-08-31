@@ -279,9 +279,40 @@ func (p *DefaultExportParser) ParseExportsFromContent(modulePath string, content
 	// Parse the content
 	tree := parser.Parse(content, nil)
 	if tree == nil {
-		// Log parsing failure and return error for proper error handling
-		helpers.SafeDebugLog("[MODULE_GRAPH] Failed to parse file '%s' - syntax errors or invalid TS/JS", modulePath)
-		return fmt.Errorf("failed to parse file '%s': syntax errors or invalid TypeScript/JavaScript", modulePath)
+		// Enhanced error reporting with content analysis
+		contentSize := len(content)
+		hasContent := contentSize > 0
+		
+		var errorDetails string
+		if !hasContent {
+			errorDetails = "empty file"
+		} else if contentSize > 100000 {
+			errorDetails = fmt.Sprintf("file too large (%d bytes)", contentSize)
+		} else {
+			// Check for common syntax issues by examining first few lines
+			previewSize := contentSize
+			if previewSize > 500 {
+				previewSize = 500
+			}
+			lines := strings.Split(string(content[:previewSize]), "\n")
+			
+			// Check for common non-JS/TS file types
+			checkSize := contentSize
+			if checkSize > 100 {
+				checkSize = 100
+			}
+			
+			if len(lines) > 0 && strings.Contains(lines[0], "<?xml") {
+				errorDetails = "XML file detected (not TypeScript/JavaScript)"
+			} else if strings.Contains(string(content[:checkSize]), "\x00") {
+				errorDetails = "binary file detected"
+			} else {
+				errorDetails = "syntax errors or invalid TypeScript/JavaScript syntax"
+			}
+		}
+		
+		helpers.SafeDebugLog("[MODULE_GRAPH] Failed to parse file '%s' - %s (size: %d bytes)", modulePath, errorDetails, contentSize)
+		return fmt.Errorf("failed to parse file '%s': %s", modulePath, errorDetails)
 	}
 	defer tree.Close()
 
