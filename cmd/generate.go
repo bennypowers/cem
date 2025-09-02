@@ -137,20 +137,14 @@ var generateCmd = &cobra.Command{
 				if err != nil {
 					errs = errors.Join(errs, err)
 				} else {
+					// Only print success/timing message when write actually succeeds
 					end := time.Since(start)
 					reloutputpath, err := filepath.Rel(ctx.Root(), outputPath)
 					if err != nil {
 						reloutputpath = outputPath
 					}
 					fmtstr := "Wrote manifest to %s in %s\n"
-					durationStyle := G.ColorizeDuration(end)
-					var durationStr string
-					if durationStyle != nil {
-						durationStr = durationStyle.Sprint(end)
-					} else {
-						durationStr = end.String()
-					}
-					args := []any{reloutputpath, durationStr}
+					args := []any{reloutputpath, G.ColorizeDuration(end).Sprint(end)}
 					if errs != nil {
 						pterm.Warning.Printf(fmtstr, args...)
 					} else {
