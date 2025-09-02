@@ -8,6 +8,9 @@
         {
           "name": "NonCe",
           "summary": "NOT a custom element",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/class-ce-and-non-ce.ts#L2"
+          },
           "kind": "class"
         },
         {
@@ -15,6 +18,9 @@
           "superclass": {
             "name": "LitElement",
             "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/class-ce-and-non-ce.ts#L4"
           },
           "kind": "class",
           "tagName": "custom-element",

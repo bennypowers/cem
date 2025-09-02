@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/source-hrefs.js",
+      "declarations": [
+        {
+          "name": "testVariable",
+          "description": "Test variable for source href generation",
+          "kind": "variable",
+          "source": {
+            "href": "https://github.com/example/repo/tree/main/src/source-hrefs.ts#L28"
+          }
+        },
+        {
+          "name": "testFunction",
+          "description": "Test function for source href generation",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/example/repo/tree/main/src/source-hrefs.ts#L21"
+          }
+        },
+        {
+          "name": "TestClass",
+          "description": "Test class for source href generation",
+          "members": [
+            {
+              "name": "testProperty",
+              "description": "A test property",
+              "type": {
+                "text": "string"
+              },
+              "default": "'test'",
+              "kind": "field"
+            },
+            {
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "name": "testMethod",
+              "description": "A test method",
+              "kind": "method"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/example/repo/tree/main/src/source-hrefs.ts#L4"
+          },
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "TestClass",
+          "declaration": {
+            "name": "TestClass",
+            "module": "src/source-hrefs.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "testFunction",
+          "declaration": {
+            "name": "testFunction",
+            "module": "src/source-hrefs.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "testVariable",
+          "declaration": {
+            "name": "testVariable",
+            "module": "src/source-hrefs.js"
+          }
+        }
+      ]
+    }
+  ]
+}

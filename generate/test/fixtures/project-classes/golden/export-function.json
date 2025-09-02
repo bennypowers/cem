@@ -7,43 +7,70 @@
       "declarations": [
         {
           "name": "simple",
-          "kind": "function"
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L1"
+          }
         },
         {
           "name": "described",
           "description": "description",
-          "kind": "function"
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L3"
+          }
         },
         {
           "name": "summarized",
           "summary": "summary",
-          "kind": "function"
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L5"
+          }
         },
         {
           "name": "async",
-          "kind": "function"
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L6"
+          }
         },
         {
           "name": "generator",
-          "kind": "function"
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L7"
+          }
         },
         {
           "name": "arrowsimple",
-          "kind": "function"
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L9"
+          }
         },
         {
           "name": "arrowdescribed",
           "description": "arrow description",
-          "kind": "function"
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L11"
+          }
         },
         {
           "name": "arrowsummarized",
           "summary": "arrow summary",
-          "kind": "function"
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L13"
+          }
         },
         {
           "name": "arrowasync",
-          "kind": "function"
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L14"
+          }
         },
         {
           "parameters": [
@@ -55,7 +82,10 @@
             }
           ],
           "name": "param",
-          "kind": "function"
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L16"
+          }
         },
         {
           "parameters": [
@@ -72,7 +102,10 @@
           },
           "name": "describedparam",
           "description": "description",
-          "kind": "function"
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L22"
+          }
         },
         {
           "parameters": [
@@ -85,7 +118,10 @@
             }
           ],
           "name": "rest",
-          "kind": "function"
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L23"
+          }
         },
         {
           "parameters": [
@@ -103,7 +139,10 @@
           },
           "name": "describedrest",
           "description": "description",
-          "kind": "function"
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L29"
+          }
         }
       ],
       "exports": [

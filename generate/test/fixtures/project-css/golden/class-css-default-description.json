@@ -11,6 +11,9 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-css/src/class-css-default-description.ts#L2"
+          },
           "kind": "class",
           "tagName": "class-css-default-description",
           "cssProperties": [

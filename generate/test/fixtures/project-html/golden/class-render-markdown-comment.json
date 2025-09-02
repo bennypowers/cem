@@ -11,6 +11,9 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-html/src/class-render-markdown-comment.ts#L5"
+          },
           "kind": "class",
           "tagName": "class-render-markdown-comment",
           "slots": [

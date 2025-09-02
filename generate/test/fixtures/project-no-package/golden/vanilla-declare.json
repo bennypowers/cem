@@ -11,6 +11,9 @@
             "name": "HTMLElement",
             "package": "global:"
           },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-vanilla/src/vanilla-declare.ts#L1"
+          },
           "kind": "class",
           "customElement": true
         }
