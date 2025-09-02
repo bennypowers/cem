@@ -23,6 +23,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"bennypowers.dev/cem/internal/logging"
 	W "bennypowers.dev/cem/workspace"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -56,9 +57,23 @@ var rootCmd = &cobra.Command{
 		viper.SetConfigType("yaml")
 		viper.SetConfigName("cem")
 
-		if viper.GetBool("verbose") {
+		// Handle verbose and quiet flags (mutually exclusive)
+		verbose := viper.GetBool("verbose")
+		quiet := viper.GetBool("quiet")
+
+		if verbose && quiet {
+			return fmt.Errorf("cannot use both --verbose and --quiet flags together")
+		}
+
+		if verbose {
 			pterm.EnableDebugMessages()
 		}
+
+		// Configure quiet mode to suppress INFO and DEBUG messages
+		if quiet {
+			logging.SetQuietEnabled(true)
+		}
+
 		pterm.Debug.Printfln("Project directory: %q", rootDir)
 
 		cfgFile := wctx.ConfigFile()
@@ -88,10 +103,12 @@ func init() {
 	rootCmd.PersistentFlags().String("config", "", "config file (default is $CWD/.config/cem.yaml)")
 	rootCmd.PersistentFlags().StringP("package", "p", "", "deno-style package specifier e.g. npm:@scope/package, or path to package directory")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "verbose logging output")
+	rootCmd.PersistentFlags().BoolP("quiet", "q", false, "quiet output (only warnings and errors)")
 
 	viper.BindPFlag("configFile", rootCmd.PersistentFlags().Lookup("config"))
 	viper.BindPFlag("package", rootCmd.PersistentFlags().Lookup("package"))
 	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
+	viper.BindPFlag("quiet", rootCmd.PersistentFlags().Lookup("quiet"))
 	viper.BindPFlag("sourceControlRootUrl", rootCmd.PersistentFlags().Lookup("source-control-root-url"))
 
 	rootCmd.PersistentFlags().String("project-dir", "", "Path to project directory (default: parent directory of .config/cem.yaml)")

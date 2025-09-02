@@ -18,8 +18,6 @@ package generate
 
 import (
 	"errors"
-	"fmt"
-	"os"
 	"regexp"
 	"slices"
 	"strings"
@@ -95,13 +93,13 @@ func isPropertyField(captures Q.CaptureMap) bool {
 	return false
 }
 
-func amendFieldTypeWithCaptures(captures Q.CaptureMap, field *M.ClassField) {
+func amendFieldTypeWithCaptures(captures Q.CaptureMap, field *M.ClassField, logger *LogCtx) {
 	for _, capture := range captures["field.type"] {
 		typeText := capture.Text
 		if typeText != "" {
 			// Debug: log type extraction for variant property
 			if field.Name == "variant" {
-				fmt.Fprintf(os.Stderr, "[DEBUG] Extracted type for variant property: '%s'\n", typeText)
+				logger.Debug("Extracted type for variant property: '%s'", typeText)
 			}
 			field.Type = &M.Type{
 				Text: typeText,
@@ -186,7 +184,7 @@ func (mp *ModuleProcessor) createClassFieldFromAccessorMatch(
 	field.Name = fieldName
 	field.Readonly = isReadonly
 
-	amendFieldTypeWithCaptures(captures, &field.ClassField)
+	amendFieldTypeWithCaptures(captures, &field.ClassField, mp.logger)
 	amendFieldPrivacyWithCaptures(captures, &field.ClassField)
 	isCustomElement := classType == "HTMLElement" || classType == "LitElement"
 	isProperty := isCustomElement && !isStatic && isPropertyField(captures)
@@ -220,7 +218,7 @@ func (mp *ModuleProcessor) createClassFieldFromConstructorParameterMatch(
 		},
 	}
 
-	amendFieldTypeWithCaptures(captures, &field.ClassField)
+	amendFieldTypeWithCaptures(captures, &field.ClassField, mp.logger)
 	amendFieldPrivacyWithCaptures(captures, &field.ClassField)
 
 	// Constructor parameters on non-CE classes typically don't have @property decorators
@@ -257,7 +255,7 @@ func (mp *ModuleProcessor) createClassFieldFromFieldMatch(
 		},
 	}
 
-	amendFieldTypeWithCaptures(captures, &field.ClassField)
+	amendFieldTypeWithCaptures(captures, &field.ClassField, mp.logger)
 	amendFieldPrivacyWithCaptures(captures, &field.ClassField)
 
 	for _, x := range captures["field.initializer"] {
@@ -336,7 +334,7 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 
 		// Debug: log all variant property processing
 		if memberName == "variant" {
-			fmt.Fprintf(os.Stderr, "[DEBUG] Processing variant member: kind=%s, static=%v\n", kind, isStatic)
+			mp.logger.Debug("Processing variant member: kind=%s, static=%v", kind, isStatic)
 		}
 
 		switch kind {
