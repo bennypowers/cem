@@ -17,10 +17,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package generate
 
 import (
-	"os/exec"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	
+	W "bennypowers.dev/cem/workspace"
 )
 
 // TestGenerateConfigFileNotFoundNoPanic tests the exact scenario that originally caused a panic.
@@ -34,12 +36,18 @@ import (
 // bennypowers.dev/cem/cmd.init.func1(0x147b3c0, {0xc000325f50, 0x1, 0x3})
 //     /home/bennyp/Developer/cem/cmd/generate.go:150 +0xc0e
 func TestGenerateConfigFileNotFoundNoPanic(t *testing.T) {
-	// Use the existing cem binary in the project root
-	cemBinary := "/home/bennyp/Developer/cem/cem"
-
-	// Test the exact scenario that originally caused a panic
-	cmd := exec.Command(cemBinary, "generate", "--config", ".config/cem.yaml", "src/source-hrefs.ts")
-	cmd.Dir = filepath.Join("test", "fixtures", "project-source-hrefs")
+	// Test the exact scenario that originally caused a panic using go run
+	projectRoot := filepath.Join("..", "..")
+	cmd := exec.Command("go", "run", "./cmd/cem", "generate", "--config", ".config/cem.yaml", "src/source-hrefs.ts")
+	cmd.Dir = projectRoot
+	
+	// Set the working directory for the cem command to the test fixture
+	fixtureDir, err := filepath.Abs(filepath.Join("test", "fixtures", "project-source-hrefs"))
+	if err != nil {
+		t.Fatalf("Could not get absolute path to fixture: %v", err)
+	}
+	
+	cmd.Dir = fixtureDir
 
 	cmdOutput, err := cmd.CombinedOutput()
 
@@ -78,8 +86,14 @@ func TestGenerateConfigFileNotFoundNoPanic(t *testing.T) {
 // when writing output files. This tests the specific line that was panicking in
 // cmd/generate.go:150 (pterm.Success.Printf)
 func TestGenerateSuccessCodePathNoPanic(t *testing.T) {
-	// Use the existing cem binary in the project root
-	cemBinary := "/home/bennyp/Developer/cem/cem"
+	// Build a temporary binary for this test to ensure we're testing current code
+	tempDir := t.TempDir()
+	cemBinary := filepath.Join(tempDir, "cem-test")
+	buildCmd := exec.Command("go", "build", "-o", cemBinary, "./cmd/cem")
+	buildCmd.Dir = filepath.Join("..", "..")
+	if err := buildCmd.Run(); err != nil {
+		t.Fatalf("Could not build cem binary: %v", err)
+	}
 
 	// Test successful generation with output file (the code path that was panicking)
 	outputFile := filepath.Join(t.TempDir(), "test-manifest.json")
