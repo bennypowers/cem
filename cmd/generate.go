@@ -143,7 +143,14 @@ var generateCmd = &cobra.Command{
 						reloutputpath = outputPath
 					}
 					fmtstr := "Wrote manifest to %s in %s\n"
-					args := []any{reloutputpath, G.ColorizeDuration(end).Sprint(end)}
+					durationStyle := G.ColorizeDuration(end)
+					var durationStr string
+					if durationStyle != nil {
+						durationStr = durationStyle.Sprint(end)
+					} else {
+						durationStr = end.String()
+					}
+					args := []any{reloutputpath, durationStr}
 					if errs != nil {
 						pterm.Warning.Printf(fmtstr, args...)
 					} else {
