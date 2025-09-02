@@ -31,27 +31,27 @@ import (
 func init() {
 	// Modify existing printers to use foreground colors only, no backgrounds
 	// Preserve original functionality while changing styling
-	
+
 	pterm.Info = *pterm.Info.WithPrefix(pterm.Prefix{
 		Text:  "INFO",
 		Style: pterm.NewStyle(pterm.FgBlue),
 	}).WithMessageStyle(&pterm.ThemeDefault.DefaultText)
-	
+
 	pterm.Success = *pterm.Success.WithPrefix(pterm.Prefix{
-		Text:  "SUCCESS", 
+		Text:  "SUCCESS",
 		Style: pterm.NewStyle(pterm.FgGreen),
 	}).WithMessageStyle(&pterm.ThemeDefault.DefaultText)
-	
+
 	pterm.Warning = *pterm.Warning.WithPrefix(pterm.Prefix{
 		Text:  "WARNING",
 		Style: pterm.NewStyle(pterm.FgYellow),
 	}).WithMessageStyle(&pterm.ThemeDefault.DefaultText)
-	
+
 	pterm.Error = *pterm.Error.WithPrefix(pterm.Prefix{
 		Text:  "ERROR",
 		Style: pterm.NewStyle(pterm.FgRed),
 	}).WithMessageStyle(&pterm.ThemeDefault.DefaultText)
-	
+
 	pterm.Debug = *pterm.Debug.WithPrefix(pterm.Prefix{
 		Text:  "DEBUG",
 		Style: pterm.NewStyle(pterm.FgCyan),
@@ -341,7 +341,7 @@ func (l *Logger) log(level LogLevel, format string, args ...any) {
 	if level == LogLevelDebug && !debugEnabled {
 		return
 	}
-	
+
 	// Skip INFO and DEBUG messages if quiet mode is enabled
 	if quietEnabled && (level == LogLevelInfo || level == LogLevelDebug) {
 		return

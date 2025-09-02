@@ -60,20 +60,20 @@ var rootCmd = &cobra.Command{
 		// Handle verbose and quiet flags (mutually exclusive)
 		verbose := viper.GetBool("verbose")
 		quiet := viper.GetBool("quiet")
-		
+
 		if verbose && quiet {
 			return fmt.Errorf("cannot use both --verbose and --quiet flags together")
 		}
-		
+
 		if verbose {
 			pterm.EnableDebugMessages()
 		}
-		
+
 		// Configure quiet mode to suppress INFO and DEBUG messages
 		if quiet {
 			logging.SetQuietEnabled(true)
 		}
-		
+
 		pterm.Debug.Printfln("Project directory: %q", rootDir)
 
 		cfgFile := wctx.ConfigFile()
