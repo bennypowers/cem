@@ -84,16 +84,21 @@ func (m *MockTimeProvider) GetSleepCalls() []time.Duration {
 
 // MockFileWatcher provides controllable file watching for testing.
 // Events are triggered manually, eliminating real file system dependencies.
+// With Go 1.25's synctest, channels work reliably in concurrent tests.
 type MockFileWatcher struct {
 	mu           sync.RWMutex
 	watchedPaths map[string]bool
 	closed       bool
+	events       chan FileWatchEvent
+	errors       chan error
 }
 
 // NewMockFileWatcher creates a new mock file watcher.
 func NewMockFileWatcher() *MockFileWatcher {
 	return &MockFileWatcher{
 		watchedPaths: make(map[string]bool),
+		events:       make(chan FileWatchEvent, 100), // Buffered to prevent blocking
+		errors:       make(chan error, 10),
 	}
 }
 
@@ -130,25 +135,22 @@ func (m *MockFileWatcher) Close() error {
 	}
 
 	m.closed = true
+	close(m.events)
+	close(m.errors)
 	return nil
 }
 
 func (m *MockFileWatcher) Events() <-chan FileWatchEvent {
-	// Return nil channel to avoid race detector issues
-	// Tests should not rely on channel-based event delivery from mocks
-	return nil
+	return m.events
 }
 
 func (m *MockFileWatcher) Errors() <-chan error {
-	// Return nil channel to avoid race detector issues
-	// Tests should not rely on channel-based error delivery from mocks
-	return nil
+	return m.errors
 }
 
 // TriggerEvent manually triggers a file watch event.
 // This allows tests to simulate file changes instantly.
-// Note: In the race-detector-safe version, events are not delivered via channels.
-// Tests using this mock should not rely on channel-based event delivery.
+// With Go 1.25's synctest, events are now safely delivered via channels.
 func (m *MockFileWatcher) TriggerEvent(name string, op WatchOp) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -167,22 +169,28 @@ func (m *MockFileWatcher) TriggerEvent(name string, op WatchOp) {
 	}
 
 	if watched {
-		// Event is acknowledged but not delivered via channels to avoid race detector issues
-		// Tests should use alternative synchronization mechanisms for verifying events
-		_ = watched // Acknowledge the event was processed
+		// Send event via channel - synctest makes this safe
+		select {
+		case m.events <- FileWatchEvent{Name: name, Op: op}:
+		default:
+			// Channel full, drop event (shouldn't happen with buffered channel)
+		}
 	}
 }
 
 // TriggerError manually triggers a file watch error.
-// Note: In the race-detector-safe version, errors are not delivered via channels.
+// With Go 1.25's synctest, errors are now safely delivered via channels.
 func (m *MockFileWatcher) TriggerError(err error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	if !m.closed {
-		// Error is acknowledged but not delivered via channels to avoid race detector issues
-		// Tests should use alternative synchronization mechanisms for verifying errors
-		_ = err // Acknowledge the error was processed
+		// Send error via channel - synctest makes this safe
+		select {
+		case m.errors <- err:
+		default:
+			// Channel full, drop error (shouldn't happen with buffered channel)
+		}
 	}
 }
 

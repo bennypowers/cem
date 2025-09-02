@@ -52,10 +52,8 @@ install-bindings:
 	go generate ./...
 
 test-unit:
-	# Run race tests excluding internal/platform due to Go race detector "hole in findfunctab" issue
-	# The issue occurs with channel operations in FSNotifyFileWatcher and mock implementations
-	# Race-unsafe tests can be run manually: go test -tags=race_unsafe ./internal/platform/
-	gotestsum -- -race $$(go list ./... | grep -v internal/platform) && go test -tags="!race_unsafe" ./internal/platform/
+	# Run race tests on all packages - Go 1.25's synctest resolves previous race detector issues
+	gotestsum -- -race ./...
 
 test-e2e:
 	gotestsum -- -race -tags=e2e ./cmd/
