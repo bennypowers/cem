@@ -22,8 +22,9 @@ import (
 	"path/filepath"
 	"sync"
 	"testing"
-	"time"
+	"testing/synctest"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	W "bennypowers.dev/cem/workspace"
@@ -79,134 +80,162 @@ func TestManifestFileWatchingIntegration(t *testing.T) {
 	})
 
 	t.Run("file watching triggers reload", func(t *testing.T) {
-		// TODO(Go 1.25): Replace CI skip with testing/synctest virtual time
-		// and testing/fstest.MapFS for deterministic file watching tests.
-		// This will eliminate timing dependencies and enable instant test execution.
-		// See: https://tip.golang.org/doc/go1.25#testing
-		if os.Getenv("CI") == "true" {
-			t.Skip("Skipping file watching integration test in CI environment - timing sensitive until Go 1.25 provides testing/synctest")
-		}
+		synctest.Test(t, func(t *testing.T) {
+			// Go 1.25: Using synctest with MockFileWatcher for deterministic file watching tests.
+			// This eliminates timing dependencies while testing the actual file watcher integration.
 
-		// Create fresh registry for this test
-		testRegistry, err := lsp.NewRegistryWithDefaults()
-		if err != nil {
-			t.Fatalf("Failed to create registry: %v", err)
-		}
-		err = testRegistry.LoadFromWorkspace(workspace)
-		if err != nil {
-			t.Fatalf("Failed to load from workspace: %v", err)
-		}
-
-		var reloadCount int
-		var reloadMu sync.Mutex
-
-		// Set up file watching
-		onReload := func() {
-			reloadMu.Lock()
-			defer reloadMu.Unlock()
-			reloadCount++
-			// Simulate the server's reload process using public API
-			// Create fresh workspace to avoid caching issues
-			freshWorkspace := W.NewFileSystemWorkspaceContext(tempDir)
-			err := freshWorkspace.Init()
+			// Create registry with MockFileWatcher for testing
+			mockFileWatcher := platform.NewMockFileWatcher()
+			testRegistry := lsp.NewRegistry(mockFileWatcher)
+			err = testRegistry.LoadFromWorkspace(workspace)
 			if err != nil {
-				return
+				t.Fatalf("Failed to load from workspace: %v", err)
 			}
-			testRegistry.LoadFromWorkspace(freshWorkspace)
-		}
 
-		err = testRegistry.StartFileWatching(onReload)
-		if err != nil {
-			t.Fatalf("Failed to start file watching: %v", err)
-		}
-		defer testRegistry.StopFileWatching()
+			var reloadCount int
+			var reloadMu sync.Mutex
 
-		// Copy updated manifest fixture to trigger file change
-		updatedFixturePath := filepath.Join("test", "fixtures", "file-watch-integration", "updated-manifest.json")
-		err = testhelpers.CopyFile(updatedFixturePath, manifestPath)
-		if err != nil {
-			t.Fatalf("Failed to copy updated manifest fixture: %v", err)
-		}
-
-		// Wait for file system event to be processed
-		timeout := time.After(3 * time.Second)
-		for {
-			select {
-			case <-timeout:
-				t.Fatal("Timeout waiting for file change to be detected")
-			default:
+			// Set up file watching with reload callback
+			onReload := func() {
 				reloadMu.Lock()
-				count := reloadCount
-				reloadMu.Unlock()
-
-				if count > 0 {
-					// Reload was triggered, verify the registry was updated
-					if len(testRegistry.Elements) == 2 {
-						if _, exists := testRegistry.Elements["new-element"]; exists {
-							return // Success!
-						}
-					}
+				defer reloadMu.Unlock()
+				reloadCount++
+				// Simulate the server's reload process using public API
+				// Create fresh workspace to avoid caching issues
+				freshWorkspace := W.NewFileSystemWorkspaceContext(tempDir)
+				err := freshWorkspace.Init()
+				if err != nil {
+					return
 				}
-				time.Sleep(100 * time.Millisecond)
+				testRegistry.LoadFromWorkspace(freshWorkspace)
 			}
-		}
+
+			err = testRegistry.StartFileWatching(onReload)
+			if err != nil {
+				t.Fatalf("Failed to start file watching: %v", err)
+			}
+			defer testRegistry.StopFileWatching()
+
+			// Copy updated manifest fixture to trigger file change
+			updatedFixturePath := filepath.Join("test", "fixtures", "file-watch-integration", "updated-manifest.json")
+			err = testhelpers.CopyFile(updatedFixturePath, manifestPath)
+			if err != nil {
+				t.Fatalf("Failed to copy updated manifest fixture: %v", err)
+			}
+
+			// Simulate file change detection via MockFileWatcher - instant with virtual time
+			// This tests the actual file watcher event handling but without real filesystem delays
+			
+			// Get the absolute path to match what the registry tracks
+			absManifestPath, err := filepath.Abs(manifestPath)
+			if err != nil {
+				t.Fatalf("Failed to get absolute path: %v", err)
+			}
+			
+			// Trigger event with absolute path
+			mockFileWatcher.TriggerEvent(absManifestPath, platform.Write)
+			
+			// Yield to allow the watchFiles goroutine to process the event in synctest
+			var quickWait sync.WaitGroup
+			quickWait.Add(1)
+			go func() {
+				defer quickWait.Done()
+			}()
+			quickWait.Wait()
+			
+			// Verify reload was triggered - instant with virtual time
+			reloadMu.Lock()
+			count := reloadCount
+			reloadMu.Unlock()
+
+			if count == 0 {
+				t.Fatal("Reload should have been triggered by file watcher event")
+			}
+
+			// Verify the registry was updated with the new manifest content
+			if len(testRegistry.Elements) == 2 {
+				if _, exists := testRegistry.Elements["new-element"]; exists {
+					return // Success!
+				}
+			}
+			t.Errorf("Registry not properly updated after file change. Elements: %d", len(testRegistry.Elements))
+		})
 	})
 
 	t.Run("multiple file changes", func(t *testing.T) {
-		// Create fresh registry for this test
-		testRegistry, err := lsp.NewRegistryWithDefaults()
-		if err != nil {
-			t.Fatalf("Failed to create registry: %v", err)
-		}
-		err = testRegistry.LoadFromWorkspace(workspace)
-		if err != nil {
-			t.Fatalf("Failed to load from workspace: %v", err)
-		}
+		synctest.Test(t, func(t *testing.T) {
+			// Create registry with MockFileWatcher for testing
+			mockFileWatcher := platform.NewMockFileWatcher()
+			testRegistry := lsp.NewRegistry(mockFileWatcher)
+			err = testRegistry.LoadFromWorkspace(workspace)
+			if err != nil {
+				t.Fatalf("Failed to load from workspace: %v", err)
+			}
 
-		var reloadCount int
-		var reloadMu sync.Mutex
+			var reloadCount int
+			var reloadMu sync.Mutex
 
-		onReload := func() {
+			onReload := func() {
+				reloadMu.Lock()
+				defer reloadMu.Unlock()
+				reloadCount++
+				// Create fresh workspace to avoid caching issues
+				freshWorkspace := W.NewFileSystemWorkspaceContext(tempDir)
+				err := freshWorkspace.Init()
+				if err != nil {
+					return
+				}
+				testRegistry.LoadFromWorkspace(freshWorkspace)
+			}
+
+			err = testRegistry.StartFileWatching(onReload)
+			if err != nil {
+				t.Fatalf("Failed to start file watching: %v", err)
+			}
+			defer testRegistry.StopFileWatching()
+
+			// Use the MockFileWatcher for triggering events
+
+			// Make multiple rapid changes by copying fixtures alternately
+			fixtures := []string{"initial-manifest.json", "updated-manifest.json"}
+			
+			// Get absolute path for consistent triggering
+			absManifestPath, err := filepath.Abs(manifestPath)
+			if err != nil {
+				t.Fatalf("Failed to get absolute path: %v", err)
+			}
+			
+			for i := 0; i < 3; i++ {
+				fixtureName := fixtures[i%2]
+				fixturePath := filepath.Join("test", "fixtures", "file-watch-integration", fixtureName)
+				err = testhelpers.CopyFile(fixturePath, manifestPath)
+				if err != nil {
+					t.Fatalf("Failed to copy manifest fixture %s: %v", fixtureName, err)
+				}
+				// Trigger file change event via MockFileWatcher - instant with virtual time
+				mockFileWatcher.TriggerEvent(absManifestPath, platform.Write)
+				
+				// Yield to allow the watchFiles goroutine to process the event
+				var quickWait sync.WaitGroup
+				quickWait.Add(1)
+				go func() {
+					defer quickWait.Done()
+				}()
+				quickWait.Wait()
+			}
+
+			// Verify multiple changes were processed - instant with virtual time
 			reloadMu.Lock()
-			defer reloadMu.Unlock()
-			reloadCount++
-			// Create fresh workspace to avoid caching issues
-			freshWorkspace := W.NewFileSystemWorkspaceContext(tempDir)
-			err := freshWorkspace.Init()
-			if err != nil {
-				return
+			count := reloadCount
+			reloadMu.Unlock()
+
+			if count == 0 {
+				t.Error("Expected at least one reload, got none")
 			}
-			testRegistry.LoadFromWorkspace(freshWorkspace)
-		}
-
-		err = testRegistry.StartFileWatching(onReload)
-		if err != nil {
-			t.Fatalf("Failed to start file watching: %v", err)
-		}
-		defer testRegistry.StopFileWatching()
-
-		// Make multiple rapid changes by copying fixtures alternately
-		fixtures := []string{"initial-manifest.json", "updated-manifest.json"}
-		for i := 0; i < 3; i++ {
-			fixtureName := fixtures[i%2]
-			fixturePath := filepath.Join("test", "fixtures", "file-watch-integration", fixtureName)
-			err = testhelpers.CopyFile(fixturePath, manifestPath)
-			if err != nil {
-				t.Fatalf("Failed to copy manifest fixture %s: %v", fixtureName, err)
+			if count != 3 {
+				t.Logf("Expected 3 reloads, got %d", count)
 			}
-			time.Sleep(200 * time.Millisecond)
-		}
-
-		// Wait for changes to be processed
-		time.Sleep(1 * time.Second)
-
-		reloadMu.Lock()
-		count := reloadCount
-		reloadMu.Unlock()
-
-		if count == 0 {
-			t.Error("Expected at least one reload, got none")
-		}
+		})
 	})
 }
 
@@ -280,56 +309,81 @@ func TestPackageJSONWatching(t *testing.T) {
 	})
 
 	t.Run("package.json changes trigger reload", func(t *testing.T) {
-		var reloadTriggered bool
-		var reloadMu sync.Mutex
+		synctest.Test(t, func(t *testing.T) {
+			var reloadTriggered bool
+			var reloadMu sync.Mutex
 
-		onReload := func() {
-			reloadMu.Lock()
-			defer reloadMu.Unlock()
-			reloadTriggered = true
-		}
-
-		err := registry.StartFileWatching(onReload)
-		if err != nil {
-			t.Fatalf("Failed to start file watching: %v", err)
-		}
-		defer registry.StopFileWatching()
-
-		// Update package.json by reading, modifying, and writing back
-		var packageJSON map[string]interface{}
-		packageData, err := os.ReadFile(packagePath)
-		if err != nil {
-			t.Fatalf("Failed to read package.json: %v", err)
-		}
-		err = json.Unmarshal(packageData, &packageJSON)
-		if err != nil {
-			t.Fatalf("Failed to parse package.json: %v", err)
-		}
-
-		packageJSON["version"] = "1.0.1"
-		updatedData, _ := json.MarshalIndent(packageJSON, "", "  ")
-		err = os.WriteFile(packagePath, updatedData, 0644)
-		if err != nil {
-			t.Fatalf("Failed to update package.json: %v", err)
-		}
-
-		// Wait for file change detection
-		timeout := time.After(2 * time.Second)
-		for {
-			select {
-			case <-timeout:
-				t.Fatal("Timeout waiting for package.json change to be detected")
-			default:
-				reloadMu.Lock()
-				triggered := reloadTriggered
-				reloadMu.Unlock()
-
-				if triggered {
-					return // Success!
-				}
-				time.Sleep(100 * time.Millisecond)
+			// Create registry with MockFileWatcher for testing
+			mockFileWatcher := platform.NewMockFileWatcher()
+			testRegistry := lsp.NewRegistry(mockFileWatcher)
+			
+			// Load workspace to populate manifest paths
+			workspace := W.NewFileSystemWorkspaceContext(tempDir)
+			err = workspace.Init()
+			if err != nil {
+				t.Fatalf("Failed to initialize workspace: %v", err)
 			}
-		}
+			err = testRegistry.LoadFromWorkspace(workspace)
+			if err != nil {
+				t.Fatalf("Failed to load from workspace: %v", err)
+			}
+
+			onReload := func() {
+				reloadMu.Lock()
+				defer reloadMu.Unlock()
+				reloadTriggered = true
+			}
+
+			err = testRegistry.StartFileWatching(onReload)
+			if err != nil {
+				t.Fatalf("Failed to start file watching: %v", err)
+			}
+			defer testRegistry.StopFileWatching()
+
+			// Update package.json by reading, modifying, and writing back
+			var packageJSON map[string]interface{}
+			packageData, err := os.ReadFile(packagePath)
+			if err != nil {
+				t.Fatalf("Failed to read package.json: %v", err)
+			}
+			err = json.Unmarshal(packageData, &packageJSON)
+			if err != nil {
+				t.Fatalf("Failed to parse package.json: %v", err)
+			}
+
+			packageJSON["version"] = "1.0.1"
+			updatedData, _ := json.MarshalIndent(packageJSON, "", "  ")
+			err = os.WriteFile(packagePath, updatedData, 0644)
+			if err != nil {
+				t.Fatalf("Failed to update package.json: %v", err)
+			}
+
+			// Trigger file change event via MockFileWatcher - instant with virtual time
+			// Get absolute path for consistent triggering
+			absPackagePath, err := filepath.Abs(packagePath)
+			if err != nil {
+				t.Fatalf("Failed to get absolute path: %v", err)
+			}
+			
+			mockFileWatcher.TriggerEvent(absPackagePath, platform.Write)
+			
+			// Yield to allow the watchFiles goroutine to process the event
+			var quickWait sync.WaitGroup
+			quickWait.Add(1)
+			go func() {
+				defer quickWait.Done()
+			}()
+			quickWait.Wait()
+
+			// Verify reload was triggered - instant with virtual time
+			reloadMu.Lock()
+			triggered := reloadTriggered
+			reloadMu.Unlock()
+
+			if !triggered {
+				t.Fatal("package.json change should have triggered reload")
+			}
+		})
 	})
 }
 

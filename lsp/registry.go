@@ -878,6 +878,13 @@ func (r *Registry) GetModuleGraph() *modulegraph.ModuleGraph {
 	return r.moduleGraph
 }
 
+// GetFileWatcher returns the file watcher for testing purposes
+func (r *Registry) GetFileWatcher() platform.FileWatcher {
+	r.watcherMu.RLock()
+	defer r.watcherMu.RUnlock()
+	return r.fileWatcher
+}
+
 // RegistryManifestResolver implements ManifestResolver using the registry's manifest data
 type RegistryManifestResolver struct {
 	registry *Registry
