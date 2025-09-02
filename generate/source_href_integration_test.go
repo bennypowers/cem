@@ -30,7 +30,7 @@ import (
 // TestSourceHrefGeneration verifies that source hrefs are generated correctly when configured
 func TestSourceHrefGeneration(t *testing.T) {
 	fixtureDir := filepath.Join("test", "fixtures", "project-source-hrefs")
-	
+
 	ctx := W.NewFileSystemWorkspaceContext(fixtureDir)
 	if err := ctx.Init(); err != nil {
 		t.Fatalf("Failed to initialize workspace: %v", err)
@@ -41,7 +41,7 @@ func TestSourceHrefGeneration(t *testing.T) {
 		t.Fatalf("Failed to get config: %v", err)
 	}
 	cfg.Generate.Files = []string{"src/source-hrefs.ts"}
-	
+
 	manifestJSON, err := Generate(ctx)
 	if err != nil {
 		t.Fatalf("Failed to generate manifest: %v", err)
@@ -65,7 +65,7 @@ func TestSourceHrefGeneration(t *testing.T) {
 	foundClass := false
 	foundFunction := false
 	foundVariable := false
-	
+
 	for _, decl := range module.Declarations {
 		switch d := decl.(type) {
 		case *M.ClassDeclaration:
@@ -124,7 +124,7 @@ func TestSourceHrefGenerationWithoutConfig(t *testing.T) {
 	tempDir := t.TempDir()
 	configDir := filepath.Join(tempDir, ".config")
 	srcDir := filepath.Join(tempDir, "src")
-	
+
 	if err := os.MkdirAll(configDir, 0755); err != nil {
 		t.Fatalf("Failed to create config dir: %v", err)
 	}
@@ -155,7 +155,7 @@ func TestSourceHrefGenerationWithoutConfig(t *testing.T) {
 		t.Fatalf("Failed to get config: %v", err)
 	}
 	cfg.Generate.Files = []string{"src/test.ts"}
-	
+
 	manifestJSON, err := Generate(ctx)
 	if err != nil {
 		t.Fatalf("Failed to generate manifest: %v", err)

@@ -23,12 +23,12 @@ import (
 
 func TestBuildSourceHref(t *testing.T) {
 	tests := []struct {
-		name                  string
-		sourceControlRootUrl  string
-		filePath              string
-		lineNumber            uint
-		expected              string
-		expectError           bool
+		name                 string
+		sourceControlRootUrl string
+		filePath             string
+		lineNumber           uint
+		expected             string
+		expectError          bool
 	}{
 		{
 			name:                 "basic GitHub URL",
@@ -107,19 +107,19 @@ func TestBuildSourceHref(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := buildSourceHref(tt.sourceControlRootUrl, tt.filePath, tt.lineNumber)
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Errorf("buildSourceHref() expected error but got none")
 				}
 				return
 			}
-			
+
 			if err != nil {
 				t.Errorf("buildSourceHref() unexpected error: %v", err)
 				return
 			}
-			
+
 			if result != tt.expected {
 				t.Errorf("buildSourceHref() = %v, want %v", result, tt.expected)
 			}
@@ -132,7 +132,7 @@ func TestGenerateSourceReferenceNilNode(t *testing.T) {
 		file: "test.ts",
 		code: []byte("test content"),
 	}
-	
+
 	sourceRef, err := mp.generateSourceReference(nil)
 	if err != nil {
 		t.Errorf("generateSourceReference(nil) should not return error, got: %v", err)
@@ -180,19 +180,19 @@ func TestByteOffsetToLineNumber(t *testing.T) {
 		{
 			name:     "second line",
 			code:     []byte("function foo() {\n  return 'bar';\n}"),
-			offset:   17,  // start of "return"
+			offset:   17, // start of "return"
 			expected: 2,
 		},
 		{
 			name:     "third line",
 			code:     []byte("function foo() {\n  return 'bar';\n}"),
-			offset:   33,  // start of "}"
+			offset:   33, // start of "}"
 			expected: 3,
 		},
 		{
 			name:     "middle of first line",
 			code:     []byte("function foo() {\n  return 'bar';\n}"),
-			offset:   9,   // start of "foo"
+			offset:   9, // start of "foo"
 			expected: 1,
 		},
 		{
@@ -204,7 +204,7 @@ func TestByteOffsetToLineNumber(t *testing.T) {
 		{
 			name:     "single line",
 			code:     []byte("const x = 42;"),
-			offset:   6,   // start of "x"
+			offset:   6, // start of "x"
 			expected: 1,
 		},
 	}

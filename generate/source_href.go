@@ -36,7 +36,7 @@ func (mp *ModuleProcessor) generateSourceReference(node *ts.Node) (*M.SourceRefe
 	if err != nil {
 		return nil, fmt.Errorf("failed to get config for source reference: %w", err)
 	}
-	
+
 	if cfg.SourceControlRootUrl == "" {
 		return nil, nil // No error, just not configured
 	}
@@ -46,7 +46,7 @@ func (mp *ModuleProcessor) generateSourceReference(node *ts.Node) (*M.SourceRefe
 	if err != nil {
 		return nil, fmt.Errorf("failed to build source href: %w", err)
 	}
-	
+
 	if href == "" {
 		return nil, nil // No error, just couldn't build href
 	}
@@ -62,7 +62,7 @@ func (mp *ModuleProcessor) byteOffsetToLineNumber(offset uint) uint {
 	if mp.lineOffsets == nil {
 		mp.buildLineOffsetCache()
 	}
-	
+
 	// Binary search to find the line containing this offset
 	line := 1
 	for i, lineOffset := range mp.lineOffsets {
@@ -70,7 +70,7 @@ func (mp *ModuleProcessor) byteOffsetToLineNumber(offset uint) uint {
 			return uint(line + i)
 		}
 	}
-	
+
 	// If offset is beyond all newlines, it's on the last line
 	return uint(line + len(mp.lineOffsets))
 }
@@ -79,7 +79,7 @@ func (mp *ModuleProcessor) byteOffsetToLineNumber(offset uint) uint {
 // This enables O(log n) line number lookups instead of O(n) scans
 func (mp *ModuleProcessor) buildLineOffsetCache() {
 	mp.lineOffsets = make([]uint, 0, 100) // Pre-allocate for typical file size
-	
+
 	for i, b := range mp.code {
 		if b == '\n' {
 			mp.lineOffsets = append(mp.lineOffsets, uint(i))
@@ -118,7 +118,7 @@ func buildSourceHref(sourceControlRootUrl, filePath string, lineNumber uint) (st
 	// Clean the file path - remove leading ./ or / if present
 	cleanPath := strings.TrimPrefix(filePath, "./")
 	cleanPath = strings.TrimPrefix(cleanPath, "/")
-	
+
 	// Join the base URL with the file path
 	u, err := baseURL.Parse(cleanPath)
 	if err != nil {
