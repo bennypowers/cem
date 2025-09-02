@@ -59,6 +59,7 @@ type ModuleProcessor struct {
 	packageJSON                  *M.PackageJSON
 	ctx                          W.WorkspaceContext
 	cssCache                     CssCache // CSS parsing cache for performance
+	lineOffsets                  []uint   // Cache of newline byte offsets for fast line number lookup
 }
 
 func NewModuleProcessor(
@@ -296,7 +297,7 @@ func (mp *ModuleProcessor) processDeclarations() error {
 
 	// variable declarations
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "variable") {
-		declaration, err := generateVarDeclaration(captures, mp.queryManager)
+		declaration, err := mp.generateVarDeclaration(captures)
 		if err != nil {
 			mp.errors = errors.Join(mp.errors, err)
 		} else {
@@ -306,7 +307,7 @@ func (mp *ModuleProcessor) processDeclarations() error {
 
 	// function declarations
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "function") {
-		declaration, err := generateFunctionDeclaration(captures, mp.root, mp.code, mp.queryManager)
+		declaration, err := mp.generateFunctionDeclaration(captures)
 		if err != nil {
 			mp.errors = errors.Join(mp.errors, err)
 		} else {

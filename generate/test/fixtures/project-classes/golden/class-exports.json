@@ -11,12 +11,18 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/class-exports.ts#L1"
+          },
           "kind": "class",
           "tagName": "class-ce",
           "customElement": true
         },
         {
           "name": "ClassExported",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/class-exports.ts#L3"
+          },
           "kind": "class"
         },
         {
@@ -24,6 +30,9 @@
           "superclass": {
             "name": "LitElement",
             "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/class-exports.ts#L5"
           },
           "kind": "class",
           "tagName": "class-exported-ce",

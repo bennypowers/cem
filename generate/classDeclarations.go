@@ -120,6 +120,14 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 		},
 	}
 
+	// Add source reference if available
+	sourceRef, sourceErr := mp.generateSourceReference(classDeclarationNode)
+	if sourceErr != nil {
+		errs = errors.Join(errs, fmt.Errorf("failed to generate source reference for class %s: %w", className, sourceErr))
+	} else {
+		declaration.Source = sourceRef
+	}
+
 	var superclassName string
 	err := mp.step("Processing heritage", 1, func() error {
 		superClassNameNodes, ok := captures["superclass.name"]

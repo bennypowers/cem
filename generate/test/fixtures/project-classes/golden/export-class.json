@@ -7,12 +7,18 @@
       "declarations": [
         {
           "name": "Simple",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-class.ts#L1"
+          },
           "kind": "class"
         },
         {
           "name": "Subclass",
           "superclass": {
             "name": "Simple"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-class.ts#L3"
           },
           "kind": "class"
         },
@@ -21,10 +27,16 @@
           "superclass": {
             "name": "Simple"
           },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-class.ts#L8"
+          },
           "kind": "class"
         },
         {
           "name": "Foo",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-class.ts#L10"
+          },
           "kind": "class"
         }
       ],

@@ -12,6 +12,9 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-html/src/class-render-parts-docs-class-description-merge.ts#L5"
+          },
           "kind": "class",
           "tagName": "class-render-parts-docs-class-description-merge",
           "cssParts": [

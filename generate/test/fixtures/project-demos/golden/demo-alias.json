@@ -11,6 +11,9 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-alias/demo-alias.ts#L4"
+          },
           "kind": "class",
           "tagName": "demo-alias",
           "demos": [
@@ -35,6 +38,9 @@
           "superclass": {
             "name": "LitElement",
             "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-alias/demo-alias.ts#L10"
           },
           "kind": "class",
           "tagName": "demo-slugify-alias",

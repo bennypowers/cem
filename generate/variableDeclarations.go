@@ -18,14 +18,14 @@ package generate
 
 import (
 	"errors"
+	"fmt"
 
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
 )
 
-func generateVarDeclaration(
+func (mp *ModuleProcessor) generateVarDeclaration(
 	captures Q.CaptureMap,
-	queryManager *Q.QueryManager,
 ) (declaration *M.VariableDeclaration, errs error) {
 	nameNodes, ok := captures["variable.name"]
 	if !ok || len(nameNodes) <= 0 {
@@ -43,6 +43,15 @@ func generateVarDeclaration(
 		},
 	}
 
+	// Add source reference if available
+	nameNode := Q.GetDescendantById(mp.root, nameNodes[0].NodeId)
+	sourceRef, sourceErr := mp.generateSourceReference(nameNode)
+	if sourceErr != nil {
+		errs = errors.Join(errs, fmt.Errorf("failed to generate source reference for variable %s: %w", varName, sourceErr))
+	} else {
+		declaration.Source = sourceRef
+	}
+
 	typeNodes, ok := captures["variable.type"]
 	if ok && len(typeNodes) > 0 {
 		declaration.Type = &M.Type{
@@ -52,7 +61,7 @@ func generateVarDeclaration(
 
 	jsdoc, ok := captures["variable.jsdoc"]
 	if ok && len(jsdoc) > 0 {
-		info, err := NewPropertyInfo(jsdoc[0].Text, queryManager)
+		info, err := NewPropertyInfo(jsdoc[0].Text, mp.queryManager)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		} else {

@@ -12,6 +12,9 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-description-multiline.ts#L5"
+          },
           "kind": "class",
           "tagName": "jsdoc-description-multiline",
           "customElement": true

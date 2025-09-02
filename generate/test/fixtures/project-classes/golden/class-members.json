@@ -58,6 +58,9 @@
               "kind": "method"
             }
           ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/class-members.ts#L8"
+          },
           "kind": "class",
           "tagName": "class-members",
           "attributes": [

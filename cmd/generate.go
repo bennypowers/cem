@@ -137,6 +137,7 @@ var generateCmd = &cobra.Command{
 				if err != nil {
 					errs = errors.Join(errs, err)
 				} else {
+					// Only print success/timing message when write actually succeeds
 					end := time.Since(start)
 					reloutputpath, err := filepath.Rel(ctx.Root(), outputPath)
 					if err != nil {
