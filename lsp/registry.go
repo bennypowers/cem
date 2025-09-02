@@ -747,7 +747,7 @@ func (r *Registry) StartGenerateWatcher() error {
 					if customElement.CustomElement.TagName == "test-button" {
 						for _, attr := range customElement.CustomElement.Attributes {
 							if attr.Name == "variant" && attr.Type != nil {
-								fmt.Fprintf(os.Stderr, "[DEBUG] Received manifest - variant type: '%s'\n", attr.Type.Text)
+								helpers.SafeDebugLog("Received manifest - variant type: '%s'", attr.Type.Text)
 							}
 						}
 					}

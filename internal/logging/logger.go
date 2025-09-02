@@ -26,6 +26,38 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
+// init configures pterm styles to use foreground colors only (no backgrounds)
+// This creates cleaner, more readable output similar to pterm logger examples
+func init() {
+	// Modify existing printers to use foreground colors only, no backgrounds
+	// Preserve original functionality while changing styling
+	
+	pterm.Info = *pterm.Info.WithPrefix(pterm.Prefix{
+		Text:  "INFO",
+		Style: pterm.NewStyle(pterm.FgBlue),
+	}).WithMessageStyle(&pterm.ThemeDefault.DefaultText)
+	
+	pterm.Success = *pterm.Success.WithPrefix(pterm.Prefix{
+		Text:  "SUCCESS", 
+		Style: pterm.NewStyle(pterm.FgGreen),
+	}).WithMessageStyle(&pterm.ThemeDefault.DefaultText)
+	
+	pterm.Warning = *pterm.Warning.WithPrefix(pterm.Prefix{
+		Text:  "WARNING",
+		Style: pterm.NewStyle(pterm.FgYellow),
+	}).WithMessageStyle(&pterm.ThemeDefault.DefaultText)
+	
+	pterm.Error = *pterm.Error.WithPrefix(pterm.Prefix{
+		Text:  "ERROR",
+		Style: pterm.NewStyle(pterm.FgRed),
+	}).WithMessageStyle(&pterm.ThemeDefault.DefaultText)
+	
+	pterm.Debug = *pterm.Debug.WithPrefix(pterm.Prefix{
+		Text:  "DEBUG",
+		Style: pterm.NewStyle(pterm.FgCyan),
+	}).WithMessageStyle(&pterm.ThemeDefault.DefaultText)
+}
+
 // LogLevel represents the severity level of a log message
 type LogLevel int
 
@@ -58,6 +90,7 @@ type Logger struct {
 	mode         LoggerMode
 	lspContext   *glsp.Context
 	debugEnabled bool
+	quietEnabled bool
 }
 
 // LoggerMode determines how logs are output
@@ -108,6 +141,20 @@ func (l *Logger) IsDebugEnabled() bool {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
 	return l.debugEnabled
+}
+
+// SetQuietEnabled controls whether quiet mode is active (suppresses INFO and DEBUG)
+func (l *Logger) SetQuietEnabled(enabled bool) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.quietEnabled = enabled
+}
+
+// IsQuietEnabled returns whether quiet mode is active
+func (l *Logger) IsQuietEnabled() bool {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+	return l.quietEnabled
 }
 
 // Debug logs a debug message (only shown if debug is enabled)
@@ -264,7 +311,13 @@ type MessageAction struct {
 func (l *Logger) Success(format string, args ...any) {
 	l.mu.RLock()
 	mode := l.mode
+	quietEnabled := l.quietEnabled
 	l.mu.RUnlock()
+
+	// Skip success messages if quiet mode is enabled (success is above warning)
+	if quietEnabled {
+		return
+	}
 
 	if mode == ModeCLI {
 		// Use pterm Success for CLI
@@ -281,10 +334,16 @@ func (l *Logger) log(level LogLevel, format string, args ...any) {
 	mode := l.mode
 	lspContext := l.lspContext
 	debugEnabled := l.debugEnabled
+	quietEnabled := l.quietEnabled
 	l.mu.RUnlock()
 
 	// Skip debug messages if debug is not enabled
 	if level == LogLevelDebug && !debugEnabled {
+		return
+	}
+	
+	// Skip INFO and DEBUG messages if quiet mode is enabled
+	if quietEnabled && (level == LogLevelInfo || level == LogLevelDebug) {
 		return
 	}
 
@@ -390,4 +449,12 @@ func SetDebugEnabled(enabled bool) {
 
 func IsDebugEnabled() bool {
 	return globalLogger.IsDebugEnabled()
+}
+
+func SetQuietEnabled(enabled bool) {
+	globalLogger.SetQuietEnabled(enabled)
+}
+
+func IsQuietEnabled() bool {
+	return globalLogger.IsQuietEnabled()
 }

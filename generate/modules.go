@@ -85,7 +85,7 @@ func NewModuleProcessor(
 	logger := NewLogCtx(file, cfg)
 
 	// Debug: log module creation/reuse
-	fmt.Fprintf(os.Stderr, "[DEBUG] Processing module: %s (address: %p)\n", file, module)
+	logger.Debug("Processing module: %s (address: %p)", file, module)
 
 	tree := parser.Parse(code, nil)
 	root := tree.RootNode()
