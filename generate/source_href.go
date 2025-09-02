@@ -57,19 +57,34 @@ func (mp *ModuleProcessor) generateSourceReference(node *ts.Node) (*M.SourceRefe
 }
 
 // byteOffsetToLineNumber converts a byte offset to a 1-based line number
+// Uses a line offset cache for O(log n) lookup instead of O(n) scan
 func (mp *ModuleProcessor) byteOffsetToLineNumber(offset uint) uint {
-	line := uint(1) // Start from line 1 (1-based)
+	if mp.lineOffsets == nil {
+		mp.buildLineOffsetCache()
+	}
 	
-	for i, b := range mp.code {
-		if uint(i) >= offset {
-			break
-		}
-		if b == '\n' {
-			line++
+	// Binary search to find the line containing this offset
+	line := 1
+	for i, lineOffset := range mp.lineOffsets {
+		if offset < lineOffset {
+			return uint(line + i)
 		}
 	}
 	
-	return line
+	// If offset is beyond all newlines, it's on the last line
+	return uint(line + len(mp.lineOffsets))
+}
+
+// buildLineOffsetCache builds a cache of byte offsets for each newline
+// This enables O(log n) line number lookups instead of O(n) scans
+func (mp *ModuleProcessor) buildLineOffsetCache() {
+	mp.lineOffsets = make([]uint, 0, 100) // Pre-allocate for typical file size
+	
+	for i, b := range mp.code {
+		if b == '\n' {
+			mp.lineOffsets = append(mp.lineOffsets, uint(i))
+		}
+	}
 }
 
 // buildSourceHref constructs a source href URL from base URL, file path, and line number

@@ -59,6 +59,7 @@ type ModuleProcessor struct {
 	packageJSON                  *M.PackageJSON
 	ctx                          W.WorkspaceContext
 	cssCache                     CssCache // CSS parsing cache for performance
+	lineOffsets                  []uint   // Cache of newline byte offsets for fast line number lookup
 }
 
 func NewModuleProcessor(

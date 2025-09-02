@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package generate
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -138,6 +139,28 @@ func TestGenerateSourceReferenceNilNode(t *testing.T) {
 	}
 	if sourceRef != nil {
 		t.Errorf("generateSourceReference(nil) should return nil, got: %v", sourceRef)
+	}
+}
+
+func TestByteOffsetToLineNumberPerformance(t *testing.T) {
+	// Create a large file with many lines to test performance
+	lines := 1000
+	var content []byte
+	for i := 0; i < lines; i++ {
+		content = append(content, []byte(fmt.Sprintf("// Line %d\n", i+1))...)
+	}
+
+	mp := &ModuleProcessor{
+		code: content,
+	}
+
+	// Test multiple lookups - this should be fast with caching
+	for i := 0; i < 10; i++ {
+		offset := uint(len(content) / 2) // Middle of file
+		lineNum := mp.byteOffsetToLineNumber(offset)
+		if lineNum < 400 || lineNum > 600 { // Should be around line 500
+			t.Errorf("Expected line number around 500, got %d", lineNum)
+		}
 	}
 }
 
