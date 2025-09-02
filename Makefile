@@ -60,6 +60,15 @@ test-e2e:
 
 test: test-unit test-e2e
 
+# Flexible test target that accepts TEST_ARGS for filtering
+# Usage: make test-pkg TEST_ARGS="-v ./lsp/methods/textDocument/definition/ -run TestDefinition"
+test-pkg:
+	@if [ -z "$(TEST_ARGS)" ]; then \
+		echo "Usage: make test-pkg TEST_ARGS=\"-v ./path/to/package/ -run TestName\""; \
+		exit 1; \
+	fi
+	go test -race $(TEST_ARGS)
+
 update:
 	go test -race -json ./... --update | go tool tparse -all
 
