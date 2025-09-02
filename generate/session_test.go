@@ -19,6 +19,7 @@ package generate
 import (
 	"context"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	M "bennypowers.dev/cem/manifest"
@@ -218,29 +219,30 @@ func TestGenerateSession_GetInMemoryManifest(t *testing.T) {
 			}
 
 			if tt.testConcurrency {
-				// Test concurrent access to in-memory manifest
-				done := make(chan bool, 2)
+				// Test concurrent access to in-memory manifest using virtual time
+				synctest.Test(t, func(t *testing.T) {
+					done := make(chan bool, 2)
 
-				// Goroutine 1: Generate manifest
-				go func() {
-					_, err := session.GenerateFullManifest(context.Background())
-					assert.NoError(t, err)
-					done <- true
-				}()
+					// Goroutine 1: Generate manifest
+					go func() {
+						_, err := session.GenerateFullManifest(context.Background())
+						assert.NoError(t, err)
+						done <- true
+					}()
 
-				// Goroutine 2: Read in-memory manifest
-				go func() {
-					// Wait a bit, then try to read
-					time.Sleep(10 * time.Millisecond)
-					manifest := session.InMemoryManifest()
-					// Should not panic or cause race condition
-					_ = manifest
-					done <- true
-				}()
+					// Goroutine 2: Read in-memory manifest
+					go func() {
+						// Virtual time coordination - no real delay needed
+						manifest := session.InMemoryManifest()
+						// Should not panic or cause race condition
+						_ = manifest
+						done <- true
+					}()
 
-				// Wait for both to complete
-				<-done
-				<-done
+					// Wait for both to complete
+					<-done
+					<-done
+				})
 			} else {
 				manifest := session.InMemoryManifest()
 

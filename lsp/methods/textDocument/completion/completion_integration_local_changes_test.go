@@ -276,9 +276,7 @@ export class TestButton extends LitElement {
 		t.Fatalf("Failed to close TypeScript file: %v", err)
 	}
 
-	// Additional delay to ensure file system consistency
-	time.Sleep(200 * time.Millisecond)
-
+	// File operations are synchronous, no delay needed for filesystem consistency
 	// Debug: Check if the TypeScript file exists and has the right content
 	if updatedContent, err := os.ReadFile(tsFilePath); err == nil {
 		t.Logf("TypeScript file content after update: %s", string(updatedContent))

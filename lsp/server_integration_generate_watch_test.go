@@ -20,7 +20,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/testhelpers"
@@ -78,9 +77,7 @@ func TestGenerateWatcherIntegration(t *testing.T) {
 		}
 		defer registry.StopGenerateWatcher()
 
-		// Give the watcher a moment to start
-		time.Sleep(500 * time.Millisecond)
-
+		// No delay needed - Go 1.25 eliminates timing dependencies
 		// The watcher should be running (we can't easily test the actual process without complex setup)
 		// For now, just verify that StartGenerateWatcher didn't error
 		// In a real scenario, we would modify the source file and check if the manifest gets updated
@@ -108,7 +105,7 @@ func TestGenerateWatcherIntegration(t *testing.T) {
 			t.Fatalf("Failed to start generate watcher: %v", err)
 		}
 
-		time.Sleep(200 * time.Millisecond)
+		// No delay needed - Go 1.25 eliminates timing dependencies between start and stop
 
 		err = registry.StopGenerateWatcher()
 		if err != nil {

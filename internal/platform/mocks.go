@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"testing/fstest"
 	"time"
 )
 
@@ -162,6 +163,12 @@ func (m *MockFileWatcher) TriggerEvent(name string, op WatchOp) {
 	// Check if path is being watched
 	watched := false
 	for watchedPath := range m.watchedPaths {
+		// Handle root path specially
+		if watchedPath == "/" {
+			watched = true
+			break
+		}
+		// Check exact match or subdirectory
 		if name == watchedPath || strings.HasPrefix(name, watchedPath+string(filepath.Separator)) {
 			watched = true
 			break
@@ -287,4 +294,294 @@ func (fs *TempDirFileSystem) Cleanup() error {
 // Useful for debugging or when you need to interact with the temp directory directly.
 func (fs *TempDirFileSystem) RealPath(name string) string {
 	return fs.resolvePath(name)
+}
+
+// MapFileSystem wraps Go's testing/fstest.MapFS to implement the platform.FileSystem interface.
+// This provides a standards-compliant in-memory filesystem for testing using Go 1.25's
+// improved fstest package features.
+//
+// Features from Go 1.25:
+// - Enhanced MapFS with Lstat() for symlink handling
+// - ReadLink() support for symbolic links
+// - Comprehensive TestFS validation
+// - Integration with file watchers for event simulation
+type MapFileSystem struct {
+	mu           sync.RWMutex
+	mapFS        fstest.MapFS
+	tempDir      string
+	watcher      *MockFileWatcher
+	timeProvider TimeProvider
+}
+
+// NewMapFileSystem creates a new filesystem based on testing/fstest.MapFS.
+// If timeProvider is nil, a default mock time provider is created.
+func NewMapFileSystem(timeProvider TimeProvider) *MapFileSystem {
+	if timeProvider == nil {
+		timeProvider = NewMockTimeProvider(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC))
+	}
+
+	return &MapFileSystem{
+		mapFS:        make(fstest.MapFS),
+		tempDir:      "/tmp",
+		watcher:      NewMockFileWatcher(),
+		timeProvider: timeProvider,
+	}
+}
+
+// SetWatcher allows injection of a custom file watcher for testing integration.
+func (mfs *MapFileSystem) SetWatcher(watcher *MockFileWatcher) {
+	mfs.mu.Lock()
+	defer mfs.mu.Unlock()
+	mfs.watcher = watcher
+}
+
+// GetWatcher returns the associated file watcher for testing integration.
+func (mfs *MapFileSystem) GetWatcher() *MockFileWatcher {
+	mfs.mu.RLock()
+	defer mfs.mu.RUnlock()
+	return mfs.watcher
+}
+
+// GetMapFS returns the underlying fstest.MapFS for direct manipulation in tests.
+func (mfs *MapFileSystem) GetMapFS() fstest.MapFS {
+	mfs.mu.RLock()
+	defer mfs.mu.RUnlock()
+	return mfs.mapFS
+}
+
+func (mfs *MapFileSystem) WriteFile(name string, data []byte, perm fs.FileMode) error {
+	mfs.mu.Lock()
+	defer mfs.mu.Unlock()
+
+	name = mfs.cleanPath(name)
+
+	// Ensure parent directory structure exists in MapFS
+	if err := mfs.ensureParentDirLocked(name); err != nil {
+		return err
+	}
+
+	// Create MapFile
+	mfs.mapFS[name] = &fstest.MapFile{
+		Data:    append([]byte(nil), data...), // copy data
+		Mode:    perm,
+		ModTime: mfs.timeProvider.Now(),
+	}
+
+	// Trigger file watcher event
+	if mfs.watcher != nil {
+		mfs.watcher.TriggerEvent("/"+name, Write)
+	}
+
+	return nil
+}
+
+func (mfs *MapFileSystem) ReadFile(name string) ([]byte, error) {
+	mfs.mu.RLock()
+	defer mfs.mu.RUnlock()
+
+	name = mfs.cleanPath(name)
+
+	// Use MapFS's ReadFile method
+	return fs.ReadFile(mfs.mapFS, name)
+}
+
+func (mfs *MapFileSystem) Remove(name string) error {
+	mfs.mu.Lock()
+	defer mfs.mu.Unlock()
+
+	name = mfs.cleanPath(name)
+
+	// Check if file exists
+	if _, exists := mfs.mapFS[name]; !exists {
+		return &fs.PathError{Op: "remove", Path: name, Err: fs.ErrNotExist}
+	}
+
+	delete(mfs.mapFS, name)
+
+	// Trigger file watcher event
+	if mfs.watcher != nil {
+		mfs.watcher.TriggerEvent("/"+name, Remove)
+	}
+
+	return nil
+}
+
+func (mfs *MapFileSystem) MkdirAll(path string, perm fs.FileMode) error {
+	mfs.mu.Lock()
+	defer mfs.mu.Unlock()
+
+	path = mfs.cleanPath(path)
+
+	// MapFS represents directories implicitly through file paths
+	// We'll create a .keep file to represent empty directories
+	keepFile := path + "/.keep"
+
+	// Check if path conflicts with existing file
+	if file, exists := mfs.mapFS[path]; exists && !file.Mode.IsDir() {
+		return &fs.PathError{Op: "mkdir", Path: path, Err: fmt.Errorf("not a directory")}
+	}
+
+	// Create the .keep file to represent the directory
+	mfs.mapFS[keepFile] = &fstest.MapFile{
+		Data:    []byte(""),
+		Mode:    0644,
+		ModTime: mfs.timeProvider.Now(),
+	}
+
+	// Trigger file watcher event
+	if mfs.watcher != nil {
+		mfs.watcher.TriggerEvent("/"+path, Create)
+	}
+
+	return nil
+}
+
+func (mfs *MapFileSystem) TempDir() string {
+	mfs.mu.RLock()
+	defer mfs.mu.RUnlock()
+	return mfs.tempDir
+}
+
+// SetTempDir allows customizing the temp directory path for testing.
+func (mfs *MapFileSystem) SetTempDir(dir string) {
+	mfs.mu.Lock()
+	defer mfs.mu.Unlock()
+	mfs.tempDir = dir
+}
+
+func (mfs *MapFileSystem) Stat(name string) (fs.FileInfo, error) {
+	mfs.mu.RLock()
+	defer mfs.mu.RUnlock()
+
+	name = mfs.cleanPath(name)
+
+	// Use MapFS's Stat method (available via fs.Stat)
+	return fs.Stat(mfs.mapFS, name)
+}
+
+func (mfs *MapFileSystem) Exists(path string) bool {
+	mfs.mu.RLock()
+	defer mfs.mu.RUnlock()
+
+	path = mfs.cleanPath(path)
+
+	// Check if file exists directly
+	if _, exists := mfs.mapFS[path]; exists {
+		return true
+	}
+
+	// Check if it's a directory by looking for any files that start with path + "/"
+	prefix := path + "/"
+	for filePath := range mfs.mapFS {
+		if strings.HasPrefix(filePath, prefix) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// Helper methods
+
+func (mfs *MapFileSystem) cleanPath(path string) string {
+	cleaned := filepath.Clean(path)
+	if !filepath.IsAbs(cleaned) {
+		cleaned = "/" + cleaned
+	}
+	// Remove leading slash for MapFS compatibility (MapFS uses relative paths)
+	return strings.TrimPrefix(cleaned, "/")
+}
+
+func (mfs *MapFileSystem) ensureParentDirLocked(filePath string) error {
+	dir := filepath.Dir(filePath)
+	if dir == "." || dir == "/" || dir == "" {
+		return nil
+	}
+
+	// For MapFS, we don't need to pre-create directories
+	// They are implicitly created when files are added
+	// Just check if a file exists with the same name as the parent directory
+	if file, exists := mfs.mapFS[dir]; exists && !file.Mode.IsDir() {
+		return &fs.PathError{Op: "open", Path: filePath, Err: fmt.Errorf("not a directory")}
+	}
+
+	return nil
+}
+
+func (mfs *MapFileSystem) existsLocked(path string) bool {
+	// Check if file exists directly
+	if _, exists := mfs.mapFS[path]; exists {
+		return true
+	}
+
+	// Check if it's a directory by looking for any files that start with path + "/"
+	prefix := path + "/"
+	for filePath := range mfs.mapFS {
+		if strings.HasPrefix(filePath, prefix) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// TestFS validates the filesystem using Go's fstest.TestFS.
+// This is particularly useful for ensuring filesystem compliance.
+func (mfs *MapFileSystem) TestFS(expectedFiles ...string) error {
+	mfs.mu.RLock()
+	defer mfs.mu.RUnlock()
+
+	return fstest.TestFS(mfs.mapFS, expectedFiles...)
+}
+
+// Debug utilities
+
+// ListFiles returns all files in the MapFS for debugging.
+func (mfs *MapFileSystem) ListFiles() map[string]interface{} {
+	mfs.mu.RLock()
+	defer mfs.mu.RUnlock()
+
+	result := make(map[string]interface{})
+
+	for path, file := range mfs.mapFS {
+		if file.Mode.IsDir() {
+			result[path] = "directory"
+		} else {
+			result[path] = fmt.Sprintf("file (%d bytes)", len(file.Data))
+		}
+	}
+
+	return result
+}
+
+// AddFile adds a file directly to the MapFS for test setup.
+// This is a convenience method for test initialization.
+func (mfs *MapFileSystem) AddFile(path string, content string, mode fs.FileMode) {
+	mfs.mu.Lock()
+	defer mfs.mu.Unlock()
+
+	path = mfs.cleanPath(path)
+	mfs.mapFS[path] = &fstest.MapFile{
+		Data:    []byte(content),
+		Mode:    mode,
+		ModTime: mfs.timeProvider.Now(),
+	}
+}
+
+// AddDir adds a directory directly to the MapFS for test setup.
+// Note: MapFS represents directories implicitly through file paths.
+// Empty directories need a placeholder file to exist.
+func (mfs *MapFileSystem) AddDir(path string, mode fs.FileMode) {
+	mfs.mu.Lock()
+	defer mfs.mu.Unlock()
+
+	path = mfs.cleanPath(path)
+
+	// For empty directories, create a special .keep file
+	keepFile := path + "/.keep"
+	mfs.mapFS[keepFile] = &fstest.MapFile{
+		Data:    []byte(""),
+		Mode:    0644,
+		ModTime: mfs.timeProvider.Now(),
+	}
 }
