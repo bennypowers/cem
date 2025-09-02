@@ -18,16 +18,14 @@ package generate
 
 import (
 	"errors"
+	"fmt"
 
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
 )
 
-func generateFunctionDeclaration(
+func (mp *ModuleProcessor) generateFunctionDeclaration(
 	captures Q.CaptureMap,
-	_ any,
-	_ []byte,
-	queryManager *Q.QueryManager,
 ) (declaration *M.FunctionDeclaration, err error) {
 	nameNodes, ok := captures["function.name"]
 	if !ok || len(nameNodes) <= 0 {
@@ -44,6 +42,15 @@ func generateFunctionDeclaration(
 		FullyQualified: M.FullyQualified{
 			Name: funcName,
 		},
+	}
+
+	// Add source reference if available
+	nameNode := Q.GetDescendantById(mp.root, nameNodes[0].NodeId)
+	sourceRef, sourceErr := mp.generateSourceReference(nameNode)
+	if sourceErr != nil {
+		err = errors.Join(err, fmt.Errorf("failed to generate source reference for function %s: %w", funcName, sourceErr))
+	} else {
+		declaration.Source = sourceRef
 	}
 
 	params, ok := captures["function.params"]
@@ -71,7 +78,7 @@ func generateFunctionDeclaration(
 
 	jsdoc, ok := captures["function.jsdoc"]
 	if ok && len(jsdoc) > 0 {
-		error, info := NewMethodInfo(jsdoc[0].Text, queryManager)
+		error, info := NewMethodInfo(jsdoc[0].Text, mp.queryManager)
 		if error != nil {
 			return nil, errors.Join(err, error)
 		} else {

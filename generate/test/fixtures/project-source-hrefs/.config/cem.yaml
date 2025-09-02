@@ -1,0 +1,3 @@
+sourceControlRootUrl: https://github.com/example/repo/tree/main/
+files:
+  - src/*.ts
