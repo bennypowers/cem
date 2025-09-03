@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"testing/synctest"
 
 	G "bennypowers.dev/cem/generate"
 	W "bennypowers.dev/cem/workspace"
@@ -15,6 +16,7 @@ import (
 // when the Generate function returns a nil manifest pointer due to file processing errors.
 // This was causing a panic in cmd/generate.go:131 when attempting to dereference *manifestStr
 func TestGenerateWithNilManifest(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
 	// Create a temporary workspace
 	tempDir := t.TempDir()
 
@@ -61,11 +63,13 @@ func TestGenerateWithNilManifest(t *testing.T) {
 
 	// The error should contain information about the file processing failure
 	assert.Contains(t, err.Error(), "NewModuleProcessor", "Error should indicate NewModuleProcessor failure")
+	}) // End synctest.Test
 }
 
 // TestGenerateWithFileReadError tests the case where os.ReadFile fails
 // and ensures the Generate function returns nil manifest and error gracefully
 func TestGenerateWithFileReadError(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
 	// Create a temporary workspace
 	tempDir := t.TempDir()
 
@@ -105,6 +109,7 @@ func TestGenerateWithFileReadError(t *testing.T) {
 	assert.Error(t, err, "Generate should return an error when file cannot be read")
 	assert.Nil(t, manifestStr, "Manifest should be nil when generation fails")
 	assert.Contains(t, err.Error(), "NewModuleProcessor", "Error should indicate NewModuleProcessor failure")
+	}) // End synctest.Test
 }
 
 // TestGenerateHandlesNilManifestProperly verifies that the command layer

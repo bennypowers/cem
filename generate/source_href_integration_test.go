@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"testing/synctest"
 
 	M "bennypowers.dev/cem/manifest"
 	W "bennypowers.dev/cem/workspace"
@@ -29,6 +30,7 @@ import (
 
 // TestSourceHrefGeneration verifies that source hrefs are generated correctly when configured
 func TestSourceHrefGeneration(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
 	fixtureDir := filepath.Join("test", "fixtures", "project-source-hrefs")
 
 	ctx := W.NewFileSystemWorkspaceContext(fixtureDir)
@@ -116,10 +118,12 @@ func TestSourceHrefGeneration(t *testing.T) {
 	if !foundVariable {
 		t.Error("Expected to find testVariable declaration")
 	}
+	}) // End synctest.Test
 }
 
 // TestSourceHrefGenerationWithoutConfig verifies no source hrefs when not configured
 func TestSourceHrefGenerationWithoutConfig(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
 	// Create temporary fixture without sourceControlRootUrl
 	tempDir := t.TempDir()
 	configDir := filepath.Join(tempDir, ".config")
@@ -185,4 +189,5 @@ func TestSourceHrefGenerationWithoutConfig(t *testing.T) {
 			}
 		}
 	}
+	}) // End synctest.Test
 }

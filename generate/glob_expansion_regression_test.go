@@ -21,6 +21,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"testing/synctest"
 
 	G "bennypowers.dev/cem/generate"
 	M "bennypowers.dev/cem/manifest"
@@ -33,6 +34,7 @@ import (
 // where glob patterns like "elements/*/rh-*.ts" were treated as literal file paths
 // instead of being expanded to actual matching files.
 func TestGlobPatternExpansion(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
 	// Create a temporary workspace
 	tempDir := t.TempDir()
 
@@ -106,11 +108,13 @@ export class RhAlert extends LitElement {
 	attr := customElementDecl.CustomElement.Attributes[0]
 	assert.Equal(t, "state", attr.Name, "Attribute name should be 'state'")
 	assert.Equal(t, "'info' | 'warning' | 'error'", attr.Type.Text, "Attribute type should be the union type")
+	}) // End synctest.Test
 }
 
 // TestGlobPatternWithWatchSession tests that glob patterns work correctly
 // with watch sessions, ensuring the fix works for both generate and watch modes.
 func TestGlobPatternWithWatchSession(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
 	// Create a temporary workspace
 	tempDir := t.TempDir()
 
@@ -153,4 +157,5 @@ export class MyElement extends LitElement {}`
 
 	// Clean up
 	session.Close()
+	}) // End synctest.Test
 }
