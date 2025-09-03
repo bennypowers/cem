@@ -508,22 +508,6 @@ func (mfs *MapFileSystem) ensureParentDirLocked(filePath string) error {
 	return nil
 }
 
-func (mfs *MapFileSystem) existsLocked(path string) bool {
-	// Check if file exists directly
-	if _, exists := mfs.mapFS[path]; exists {
-		return true
-	}
-
-	// Check if it's a directory by looking for any files that start with path + "/"
-	prefix := path + "/"
-	for filePath := range mfs.mapFS {
-		if strings.HasPrefix(filePath, prefix) {
-			return true
-		}
-	}
-
-	return false
-}
 
 // TestFS validates the filesystem using Go's fstest.TestFS.
 // This is particularly useful for ensuring filesystem compliance.
