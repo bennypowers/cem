@@ -209,3 +209,17 @@ func (fw *FSNotifyFileWatcher) translateEvents() {
 		}
 	}
 }
+
+// GenerateWatcher provides an abstraction over generate watching operations.
+// This interface enables:
+// - Testing with mock generate watchers (instant callbacks)
+// - In-process vs subprocess implementations
+// - Graceful handling of generate watcher unavailability
+type GenerateWatcher interface {
+	// Start begins watching for source file changes and generating manifests
+	Start() error
+	// Stop ceases watching and cleans up resources
+	Stop() error
+	// IsRunning returns whether the watcher is currently active
+	IsRunning() bool
+}

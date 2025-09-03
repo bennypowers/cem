@@ -585,3 +585,66 @@ func (mfs *MapFileSystem) AddDir(path string, mode fs.FileMode) {
 		ModTime: mfs.timeProvider.Now(),
 	}
 }
+
+// MockGenerateWatcher provides controllable generate watching for testing.
+// With Go 1.25's synctest, this enables instant, deterministic manifest generation testing.
+type MockGenerateWatcher struct {
+	mu       sync.RWMutex
+	running  bool
+	callback func() error // Simplified callback for testing
+}
+
+// NewMockGenerateWatcher creates a new mock generate watcher.
+func NewMockGenerateWatcher(callback func() error) *MockGenerateWatcher {
+	return &MockGenerateWatcher{
+		callback: callback,
+	}
+}
+
+func (m *MockGenerateWatcher) Start() error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.running {
+		return fmt.Errorf("generate watcher is already running")
+	}
+
+	m.running = true
+	return nil
+}
+
+func (m *MockGenerateWatcher) Stop() error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if !m.running {
+		return nil
+	}
+
+	m.running = false
+	return nil
+}
+
+func (m *MockGenerateWatcher) IsRunning() bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.running
+}
+
+// TriggerGenerate manually triggers manifest generation.
+// This allows tests to simulate source file changes instantly.
+// With Go 1.25's synctest, generation happens instantly in virtual time.
+func (m *MockGenerateWatcher) TriggerGenerate() error {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	if !m.running {
+		return fmt.Errorf("generate watcher is not running")
+	}
+
+	if m.callback != nil {
+		return m.callback()
+	}
+
+	return nil
+}

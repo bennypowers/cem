@@ -52,7 +52,6 @@ install-bindings:
 	go generate ./...
 
 test-unit:
-	# Run race tests on all packages - Go 1.25's synctest resolves previous race detector issues
 	gotestsum -- -race ./...
 
 test-e2e:
