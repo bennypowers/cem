@@ -3,6 +3,10 @@ SHELL := /bin/bash
 CONTRIBUTING_PATH = docs/content/docs/contributing.md
 WINDOWS_CC_IMAGE := cem-windows-cc-image
 
+# Use Go 1.25 toolchain automatically with JSON v2 experiment
+export GOTOOLCHAIN := auto
+export GOEXPERIMENT := jsonv2
+
 .PHONY: build test test-unit test-e2e update watch bench profile flamegraph coverage show-coverage clean lint format prepare-npm install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package
 
 # NOTE: this is a non-traditional install target, which installs to ~/.local/bin/
@@ -49,15 +53,21 @@ install-bindings:
 	go generate ./...
 
 test-unit:
-	# Run race tests excluding internal/platform due to Go race detector "hole in findfunctab" issue
-	# The issue occurs with channel operations in FSNotifyFileWatcher and mock implementations
-	# Race-unsafe tests can be run manually: go test -tags=race_unsafe ./internal/platform/
-	gotestsum -- -race $$(go list ./... | grep -v internal/platform) && go test -tags="!race_unsafe" ./internal/platform/
+	gotestsum -- -race ./...
 
 test-e2e:
 	gotestsum -- -race -tags=e2e ./cmd/
 
 test: test-unit test-e2e
+
+# Flexible test target that accepts TEST_ARGS for filtering
+# Usage: make test-pkg TEST_ARGS="-v ./lsp/methods/textDocument/definition/ -run TestDefinition"
+test-pkg:
+	@if [ -z "$(TEST_ARGS)" ]; then \
+		echo "Usage: make test-pkg TEST_ARGS=\"-v ./path/to/package/ -run TestName\""; \
+		exit 1; \
+	fi
+	go test -race $(TEST_ARGS)
 
 update:
 	go test -race -json ./... --update | go tool tparse -all

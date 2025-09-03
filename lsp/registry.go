@@ -105,7 +105,7 @@ type Registry struct {
 	watcherMu   sync.RWMutex
 	onReload    func() // Callback when manifests are reloaded
 	// Generate watching for local project
-	generateWatcher *InProcessGenerateWatcher
+	generateWatcher platform.GenerateWatcher
 	generateMu      sync.RWMutex
 	localWorkspace  W.WorkspaceContext // Track the local workspace for generate watching
 	// Module graph for tracking re-export relationships
@@ -713,9 +713,17 @@ func (r *Registry) StartGenerateWatcher() error {
 	r.generateMu.Lock()
 	defer r.generateMu.Unlock()
 
-	// Only start if we have a local workspace and no watcher is running
-	if r.localWorkspace == nil || r.generateWatcher != nil {
+	// Only start if we have a local workspace
+	if r.localWorkspace == nil {
 		return nil
+	}
+
+	// If a generate watcher is already set (e.g., for testing), just start it
+	if r.generateWatcher != nil {
+		if r.generateWatcher.IsRunning() {
+			return nil // Already running
+		}
+		return r.generateWatcher.Start()
 	}
 
 	// Get the workspace root directory
@@ -876,6 +884,20 @@ func (r *Registry) addManifestPath(path string) {
 // GetModuleGraph returns the module graph for re-export analysis
 func (r *Registry) GetModuleGraph() *modulegraph.ModuleGraph {
 	return r.moduleGraph
+}
+
+// GetFileWatcher returns the file watcher for testing purposes
+func (r *Registry) GetFileWatcher() platform.FileWatcher {
+	r.watcherMu.RLock()
+	defer r.watcherMu.RUnlock()
+	return r.fileWatcher
+}
+
+// SetGenerateWatcher sets a custom generate watcher for testing purposes
+func (r *Registry) SetGenerateWatcher(watcher platform.GenerateWatcher) {
+	r.generateMu.Lock()
+	defer r.generateMu.Unlock()
+	r.generateWatcher = watcher
 }
 
 // RegistryManifestResolver implements ManifestResolver using the registry's manifest data

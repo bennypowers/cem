@@ -1,6 +1,6 @@
 module bennypowers.dev/cem
 
-go 1.24.3
+go 1.25
 
 require (
 	github.com/IBM/fp-go v1.0.153

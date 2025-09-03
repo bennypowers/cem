@@ -18,10 +18,13 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24.x'
+          go-version: '1.25.x'
+        env:
+          GOTOOLCHAIN: auto
+          GOEXPERIMENT: jsonv2
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v8
         with:
-          version: latest
+          version: v2.4.0
           only-new-issues: true
           args: --verbose

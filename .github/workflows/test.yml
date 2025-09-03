@@ -11,13 +11,16 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24.x'
+          go-version: '1.25.x'
+        env:
+          GOTOOLCHAIN: auto
+          GOEXPERIMENT: jsonv2
       - name: Install dependencies
         run: go get .
       - name: Install Go tools
         run: |
           go install gotest.tools/gotestsum@latest
-          go install github.com/mfridman/tparse@latest 
+          go install github.com/mfridman/tparse@latest
       - name: Build
         run: go build -v ./...
       - name: Run unit tests

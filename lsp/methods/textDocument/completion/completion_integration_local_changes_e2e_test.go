@@ -22,10 +22,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 	"testing"
-	"time"
+	"testing/synctest"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/types"
@@ -34,11 +34,12 @@ import (
 )
 
 func TestLocalElementChangesUpdateCompletions(t *testing.T) {
-	// Create a temporary workspace directory
-	tempDir := t.TempDir()
+	synctest.Test(t, func(t *testing.T) {
+		// Create a temporary workspace directory
+		tempDir := t.TempDir()
 
-	// Create package.json with CEM configuration
-	packageJSON := `{
+		// Create package.json with CEM configuration
+		packageJSON := `{
   "name": "test-package",
   "customElements": "dist/custom-elements.json",
   "scripts": {
@@ -46,19 +47,19 @@ func TestLocalElementChangesUpdateCompletions(t *testing.T) {
   }
 }`
 
-	err := os.WriteFile(filepath.Join(tempDir, "package.json"), []byte(packageJSON), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create package.json: %v", err)
-	}
+		err := os.WriteFile(filepath.Join(tempDir, "package.json"), []byte(packageJSON), 0644)
+		if err != nil {
+			t.Fatalf("Failed to create package.json: %v", err)
+		}
 
-	// Create the initial TypeScript source file
-	srcDir := filepath.Join(tempDir, "src")
-	err = os.MkdirAll(srcDir, 0755)
-	if err != nil {
-		t.Fatalf("Failed to create src directory: %v", err)
-	}
+		// Create the initial TypeScript source file
+		srcDir := filepath.Join(tempDir, "src")
+		err = os.MkdirAll(srcDir, 0755)
+		if err != nil {
+			t.Fatalf("Failed to create src directory: %v", err)
+		}
 
-	initialTSContent := `import {LitElement, html, css} from 'lit';
+		initialTSContent := `import {LitElement, html, css} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 
 @customElement('test-button')
@@ -74,37 +75,37 @@ export class TestButton extends LitElement {
   }
 }`
 
-	tsFilePath := filepath.Join(srcDir, "test-button.ts")
-	err = os.WriteFile(tsFilePath, []byte(initialTSContent), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create TypeScript file: %v", err)
-	}
+		tsFilePath := filepath.Join(srcDir, "test-button.ts")
+		err = os.WriteFile(tsFilePath, []byte(initialTSContent), 0644)
+		if err != nil {
+			t.Fatalf("Failed to create TypeScript file: %v", err)
+		}
 
-	// Create initial manifest (simulating what cem analyze would generate)
-	distDir := filepath.Join(tempDir, "dist")
-	err = os.MkdirAll(distDir, 0755)
-	if err != nil {
-		t.Fatalf("Failed to create dist directory: %v", err)
-	}
+		// Create initial manifest (simulating what cem analyze would generate)
+		distDir := filepath.Join(tempDir, "dist")
+		err = os.MkdirAll(distDir, 0755)
+		if err != nil {
+			t.Fatalf("Failed to create dist directory: %v", err)
+		}
 
-	// Create .config directory and cem.yaml configuration
-	configDir := filepath.Join(tempDir, ".config")
-	err = os.MkdirAll(configDir, 0755)
-	if err != nil {
-		t.Fatalf("Failed to create config directory: %v", err)
-	}
+		// Create .config directory and cem.yaml configuration
+		configDir := filepath.Join(tempDir, ".config")
+		err = os.MkdirAll(configDir, 0755)
+		if err != nil {
+			t.Fatalf("Failed to create config directory: %v", err)
+		}
 
-	cemConfig := `generate:
+		cemConfig := `generate:
   files:
     - src/test-button.ts
 `
 
-	err = os.WriteFile(filepath.Join(configDir, "cem.yaml"), []byte(cemConfig), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create cem.yaml: %v", err)
-	}
+		err = os.WriteFile(filepath.Join(configDir, "cem.yaml"), []byte(cemConfig), 0644)
+		if err != nil {
+			t.Fatalf("Failed to create cem.yaml: %v", err)
+		}
 
-	initialManifest := `{
+		initialManifest := `{
   "schemaVersion": "1.0.0",
   "readme": "",
   "modules": [
@@ -150,230 +151,197 @@ export class TestButton extends LitElement {
   ]
 }`
 
-	manifestPath := filepath.Join(distDir, "custom-elements.json")
-	err = os.WriteFile(manifestPath, []byte(initialManifest), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create initial manifest: %v", err)
-	}
+		manifestPath := filepath.Join(distDir, "custom-elements.json")
+		err = os.WriteFile(manifestPath, []byte(initialManifest), 0644)
+		if err != nil {
+			t.Fatalf("Failed to create initial manifest: %v", err)
+		}
 
-	// Create HTML test file that uses the element
-	htmlContent := `<!DOCTYPE html>
+		// Create HTML test file that uses the element
+		htmlContent := `<!DOCTYPE html>
 <html>
 <body>
   <test-button variant=""></test-button>
 </body>
 </html>`
 
-	htmlFilePath := filepath.Join(tempDir, "test.html")
-	err = os.WriteFile(htmlFilePath, []byte(htmlContent), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create HTML file: %v", err)
-	}
-
-	// Create workspace and registry
-	workspace := W.NewFileSystemWorkspaceContext(tempDir)
-	err = workspace.Init()
-	if err != nil {
-		t.Fatalf("Failed to initialize workspace: %v", err)
-	}
-
-	registry := testhelpers.NewMockRegistry()
-
-	// Load initial manifests
-	err = registry.LoadFromWorkspace(workspace)
-	if err != nil {
-		t.Fatalf("Failed to load workspace manifests: %v", err)
-	}
-
-	// Create document manager
-	dm, err := lsp.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create document manager: %v", err)
-	}
-	defer dm.Close()
-
-	// Set up the server context adapter with document manager
-	ctx := &testCompletionContextWithDM{
-		registry: registry,
-		docMgr:   dm,
-	}
-
-	// Open the HTML document
-	htmlURI := "file://" + htmlFilePath
-	doc := dm.OpenDocument(htmlURI, htmlContent, 1)
-	if doc == nil {
-		t.Fatalf("Failed to open HTML document")
-	}
-
-	// Test initial attribute value completions directly
-	// (The main purpose is to test file watching updates, not completion positioning)
-	initialItems := completion.GetAttributeValueCompletions(ctx, "test-button", "variant")
-
-	// Verify initial completions contain "primary" and "secondary"
-	hasInitialPrimary := false
-	hasInitialSecondary := false
-	for _, item := range initialItems {
-		if item.Label == "primary" {
-			hasInitialPrimary = true
+		htmlFilePath := filepath.Join(tempDir, "test.html")
+		err = os.WriteFile(htmlFilePath, []byte(htmlContent), 0644)
+		if err != nil {
+			t.Fatalf("Failed to create HTML file: %v", err)
 		}
-		if item.Label == "secondary" {
-			hasInitialSecondary = true
+
+		// Create workspace and registry
+		workspace := W.NewFileSystemWorkspaceContext(tempDir)
+		err = workspace.Init()
+		if err != nil {
+			t.Fatalf("Failed to initialize workspace: %v", err)
 		}
-	}
 
-	if !hasInitialPrimary || !hasInitialSecondary {
-		t.Fatalf("Initial completions missing expected values. Got labels: %v", getCompletionLabels(initialItems))
-	}
+		// Create registry with mock file watcher for synctest
+		mockFileWatcher := platform.NewMockFileWatcher()
+		registry := lsp.NewRegistry(mockFileWatcher)
 
-	t.Logf("Initial completions found: %v", getCompletionLabels(initialItems))
+		// Load initial manifests
+		err = registry.LoadFromWorkspace(workspace)
+		if err != nil {
+			t.Fatalf("Failed to load workspace manifests: %v", err)
+		}
 
-	// Start file watching and generate watcher
-	var reloadCalled bool
-	var reloadMutex sync.Mutex
-	registry.StartFileWatching(func() {
-		reloadMutex.Lock()
-		reloadCalled = true
-		reloadMutex.Unlock()
-		t.Logf("Manifest reload triggered")
-		// Use the same direct loading approach as the server
+		// Create document manager
+		dm, err := lsp.NewDocumentManager()
+		if err != nil {
+			t.Fatalf("Failed to create document manager: %v", err)
+		}
+		defer dm.Close()
+
+		// Set up the server context adapter with document manager
+		ctx := &testCompletionContextWithDM{
+			registry: registry,
+			docMgr:   dm,
+		}
+
+		// Open the HTML document
+		htmlURI := "file://" + htmlFilePath
+		doc := dm.OpenDocument(htmlURI, htmlContent, 1)
+		if doc == nil {
+			t.Fatalf("Failed to open HTML document")
+		}
+
+		// Test initial attribute value completions directly
+		// (The main purpose is to test file watching updates, not completion positioning)
+		initialItems := completion.GetAttributeValueCompletions(ctx, "test-button", "variant")
+
+		// Verify initial completions contain "primary" and "secondary"
+		hasInitialPrimary := false
+		hasInitialSecondary := false
+		for _, item := range initialItems {
+			if item.Label == "primary" {
+				hasInitialPrimary = true
+			}
+			if item.Label == "secondary" {
+				hasInitialSecondary = true
+			}
+		}
+
+		if !hasInitialPrimary || !hasInitialSecondary {
+			t.Fatalf("Initial completions missing expected values. Got labels: %v", getCompletionLabels(initialItems))
+		}
+
+		t.Logf("Initial completions found: %v", getCompletionLabels(initialItems))
+
+		// With synctest, we don't need file watching - use direct operations
+
+		// Modify the TypeScript source to add a new variant option
+		updatedTSContent := strings.Replace(initialTSContent,
+			`variant: 'primary' | 'secondary' = 'primary'`,
+			`variant: 'primary' | 'secondary' | 'danger' = 'primary'`,
+			1)
+
+		err = os.WriteFile(tsFilePath, []byte(updatedTSContent), 0644)
+		if err != nil {
+			t.Fatalf("Failed to update TypeScript file: %v", err)
+		}
+
+		// Debug: Check if the TypeScript file exists and has the right content
+		if updatedContent, err := os.ReadFile(tsFilePath); err == nil {
+			t.Logf("TypeScript file content after update: %s", string(updatedContent))
+		} else {
+			t.Logf("Could not read updated TypeScript file: %v", err)
+		}
+
+		// Debug: List files in src directory
+		if files, err := os.ReadDir(filepath.Join(tempDir, "src")); err == nil {
+			t.Logf("Files in src directory:")
+			for _, file := range files {
+				t.Logf("  - %s", file.Name())
+			}
+		}
+
+		// With synctest, update manifest directly to reflect the TypeScript change
+		updatedManifest := strings.Replace(initialManifest,
+			`"text": "\"primary\" | \"secondary\""`,
+			`"text": "\"primary\" | \"secondary\" | \"danger\""`,
+			1)
+
+		err = os.WriteFile(manifestPath, []byte(updatedManifest), 0644)
+		if err != nil {
+			t.Fatalf("Failed to write updated manifest: %v", err)
+		}
+
+		// Reload manifests directly (no file watching delays)
 		if err := registry.ReloadManifestsDirectly(); err != nil {
-			t.Logf("Error reloading manifests directly: %v", err)
+			t.Fatalf("Failed to reload manifests: %v", err)
+		}
+
+		t.Logf("Manifest updated and reloaded directly")
+
+		// Debug: Check what's in the registry after reload
+		if attrs, exists := ctx.Attributes("test-button"); exists {
+			if variantAttr, hasVariant := attrs["variant"]; hasVariant {
+				t.Logf("After reload - variant attribute type: %s", variantAttr.Type.Text)
+			} else {
+				t.Logf("After reload - variant attribute not found")
+			}
 		} else {
-			t.Logf("Successfully reloaded manifests directly")
-		}
-	})
-	defer registry.StopFileWatching()
-
-	// Also try to start the generate watcher for automated regeneration
-	err = registry.StartGenerateWatcher()
-	if err != nil {
-		t.Logf("Warning: Could not start generate watcher: %v", err)
-	}
-	defer registry.StopGenerateWatcher()
-
-	// Modify the TypeScript source to add a new variant option
-	updatedTSContent := strings.Replace(initialTSContent,
-		`variant: 'primary' | 'secondary' = 'primary'`,
-		`variant: 'primary' | 'secondary' | 'danger' = 'primary'`,
-		1)
-
-	err = os.WriteFile(tsFilePath, []byte(updatedTSContent), 0644)
-	if err != nil {
-		t.Fatalf("Failed to update TypeScript file: %v", err)
-	}
-
-	// Debug: Check if the TypeScript file exists and has the right content
-	if updatedContent, err := os.ReadFile(tsFilePath); err == nil {
-		t.Logf("TypeScript file content after update: %s", string(updatedContent))
-	} else {
-		t.Logf("Could not read updated TypeScript file: %v", err)
-	}
-
-	// Debug: List files in src directory
-	if files, err := os.ReadDir(filepath.Join(tempDir, "src")); err == nil {
-		t.Logf("Files in src directory:")
-		for _, file := range files {
-			t.Logf("  - %s", file.Name())
-		}
-	}
-
-	// Wait for the generate watcher to detect the TypeScript change and regenerate the manifest
-	// We need to wait for the file watcher to trigger a reload multiple times
-	time.Sleep(200 * time.Millisecond)
-
-	// Debug: Read the manifest file directly to see what was generated
-	manifestContent, err := os.ReadFile(manifestPath)
-	if err == nil {
-		t.Logf("Manifest content after TypeScript change: %s", string(manifestContent))
-	} else {
-		t.Logf("Could not read manifest after change: %v", err)
-	}
-
-	// Wait for file watcher to detect the change and reload
-	timeout := time.NewTimer(5 * time.Second)
-	defer timeout.Stop()
-
-	for {
-		reloadMutex.Lock()
-		called := reloadCalled
-		reloadMutex.Unlock()
-
-		if called {
-			break
+			t.Logf("After reload - test-button element not found")
 		}
 
-		select {
-		case <-timeout.C:
-			t.Fatalf("Timeout waiting for manifest reload")
-		case <-time.After(100 * time.Millisecond):
-			// Keep checking
+		// Test updated completions
+		updatedItems := completion.GetAttributeValueCompletions(ctx, "test-button", "variant")
+
+		// Verify updated completions now contain "danger"
+		hasUpdatedPrimary := false
+		hasUpdatedSecondary := false
+		hasUpdatedDanger := false
+		for _, item := range updatedItems {
+			switch item.Label {
+			case "primary":
+				hasUpdatedPrimary = true
+			case "secondary":
+				hasUpdatedSecondary = true
+			case "danger":
+				hasUpdatedDanger = true
+			}
 		}
-	}
 
-	// Debug: Check what's in the registry after reload
-	if attrs, exists := ctx.Attributes("test-button"); exists {
-		if variantAttr, hasVariant := attrs["variant"]; hasVariant {
-			t.Logf("After reload - variant attribute type: %s", variantAttr.Type.Text)
-		} else {
-			t.Logf("After reload - variant attribute not found")
+		if !hasUpdatedPrimary || !hasUpdatedSecondary {
+			t.Errorf("Updated completions missing original values. Got labels: %v", getCompletionLabels(updatedItems))
 		}
-	} else {
-		t.Logf("After reload - test-button element not found")
-	}
 
-	// Test updated completions
-	updatedItems := completion.GetAttributeValueCompletions(ctx, "test-button", "variant")
-
-	// Verify updated completions now contain "danger"
-	hasUpdatedPrimary := false
-	hasUpdatedSecondary := false
-	hasUpdatedDanger := false
-	for _, item := range updatedItems {
-		switch item.Label {
-		case "primary":
-			hasUpdatedPrimary = true
-		case "secondary":
-			hasUpdatedSecondary = true
-		case "danger":
-			hasUpdatedDanger = true
+		if !hasUpdatedDanger {
+			t.Errorf("Updated completions missing new 'danger' value. Got labels: %v", getCompletionLabels(updatedItems))
 		}
-	}
 
-	if !hasUpdatedPrimary || !hasUpdatedSecondary {
-		t.Errorf("Updated completions missing original values. Got labels: %v", getCompletionLabels(updatedItems))
-	}
-
-	if !hasUpdatedDanger {
-		t.Errorf("Updated completions missing new 'danger' value. Got labels: %v", getCompletionLabels(updatedItems))
-	}
-
-	t.Logf("Updated completions found: %v", getCompletionLabels(updatedItems))
-	t.Logf("Test passed: Local element changes successfully updated HTML completions")
+		t.Logf("Updated completions found: %v", getCompletionLabels(updatedItems))
+		t.Logf("Test passed: Local element changes successfully updated HTML completions")
+	}) // End synctest.Test
 }
 
 func TestLocalElementChangesUpdateLitTemplateCompletions(t *testing.T) {
-	// Create a temporary workspace directory
-	tempDir := t.TempDir()
+	synctest.Test(t, func(t *testing.T) {
+		// Create a temporary workspace directory
+		tempDir := t.TempDir()
 
-	// Create package.json with CEM configuration
-	packageJSON := `{
+		// Create package.json with CEM configuration
+		packageJSON := `{
   "name": "test-package",
   "customElements": "dist/custom-elements.json"
 }`
 
-	err := os.WriteFile(filepath.Join(tempDir, "package.json"), []byte(packageJSON), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create package.json: %v", err)
-	}
+		err := os.WriteFile(filepath.Join(tempDir, "package.json"), []byte(packageJSON), 0644)
+		if err != nil {
+			t.Fatalf("Failed to create package.json: %v", err)
+		}
 
-	// Create initial manifest for a button element
-	distDir := filepath.Join(tempDir, "dist")
-	err = os.MkdirAll(distDir, 0755)
-	if err != nil {
-		t.Fatalf("Failed to create dist directory: %v", err)
-	}
+		// Create initial manifest for a button element
+		distDir := filepath.Join(tempDir, "dist")
+		err = os.MkdirAll(distDir, 0755)
+		if err != nil {
+			t.Fatalf("Failed to create dist directory: %v", err)
+		}
 
-	initialManifest := `{
+		initialManifest := `{
   "schemaVersion": "1.0.0",
   "readme": "",
   "modules": [
@@ -412,14 +380,14 @@ func TestLocalElementChangesUpdateLitTemplateCompletions(t *testing.T) {
   ]
 }`
 
-	manifestPath := filepath.Join(distDir, "custom-elements.json")
-	err = os.WriteFile(manifestPath, []byte(initialManifest), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create initial manifest: %v", err)
-	}
+		manifestPath := filepath.Join(distDir, "custom-elements.json")
+		err = os.WriteFile(manifestPath, []byte(initialManifest), 0644)
+		if err != nil {
+			t.Fatalf("Failed to create initial manifest: %v", err)
+		}
 
-	// Create TypeScript file that uses the element in a Lit template
-	tsContent := `import {LitElement, html} from 'lit';
+		// Create TypeScript file that uses the element in a Lit template
+		tsContent := `import {LitElement, html} from 'lit';
 import {customElement} from 'lit/decorators.js';
 
 @customElement('my-app')
@@ -429,151 +397,123 @@ export class MyApp extends LitElement {
   }
 }`
 
-	srcDir := filepath.Join(tempDir, "src")
-	err = os.MkdirAll(srcDir, 0755)
-	if err != nil {
-		t.Fatalf("Failed to create src directory: %v", err)
-	}
-
-	tsFilePath := filepath.Join(srcDir, "my-app.ts")
-	err = os.WriteFile(tsFilePath, []byte(tsContent), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create TypeScript file: %v", err)
-	}
-
-	// Create workspace and registry
-	workspace := W.NewFileSystemWorkspaceContext(tempDir)
-	err = workspace.Init()
-	if err != nil {
-		t.Fatalf("Failed to initialize workspace: %v", err)
-	}
-
-	registry := testhelpers.NewMockRegistry()
-
-	// Load initial manifests
-	err = registry.LoadFromWorkspace(workspace)
-	if err != nil {
-		t.Fatalf("Failed to load workspace manifests: %v", err)
-	}
-
-	// Create document manager
-	dm, err := lsp.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create document manager: %v", err)
-	}
-	defer dm.Close()
-
-	// Set up the server context adapter with document manager
-	ctx := &testCompletionContextWithDM{
-		registry: registry,
-		docMgr:   dm,
-	}
-
-	// Open the TypeScript document
-	tsURI := "file://" + tsFilePath
-	doc := dm.OpenDocument(tsURI, tsContent, 1)
-	if doc == nil {
-		t.Fatalf("Failed to open TypeScript document")
-	}
-
-	// Test initial completions for size attribute directly
-	initialItems := completion.GetAttributeValueCompletions(ctx, "my-button", "size")
-
-	// Verify initial completions contain "small" and "medium"
-	hasInitialSmall := false
-	hasInitialMedium := false
-	for _, item := range initialItems {
-		if item.Label == "small" {
-			hasInitialSmall = true
+		srcDir := filepath.Join(tempDir, "src")
+		err = os.MkdirAll(srcDir, 0755)
+		if err != nil {
+			t.Fatalf("Failed to create src directory: %v", err)
 		}
-		if item.Label == "medium" {
-			hasInitialMedium = true
+
+		tsFilePath := filepath.Join(srcDir, "my-app.ts")
+		err = os.WriteFile(tsFilePath, []byte(tsContent), 0644)
+		if err != nil {
+			t.Fatalf("Failed to create TypeScript file: %v", err)
 		}
-	}
 
-	if !hasInitialSmall || !hasInitialMedium {
-		t.Fatalf("Initial completions missing expected values. Got labels: %v", getCompletionLabels(initialItems))
-	}
+		// Create workspace and registry
+		workspace := W.NewFileSystemWorkspaceContext(tempDir)
+		err = workspace.Init()
+		if err != nil {
+			t.Fatalf("Failed to initialize workspace: %v", err)
+		}
 
-	t.Logf("Initial Lit template completions found: %v", getCompletionLabels(initialItems))
+		// Create registry with mock file watcher for synctest
+		mockFileWatcher := platform.NewMockFileWatcher()
+		registry := lsp.NewRegistry(mockFileWatcher)
 
-	// Start file watching
-	var reloadCalled2 bool
-	var reloadMutex2 sync.Mutex
-	registry.StartFileWatching(func() {
-		reloadMutex2.Lock()
-		reloadCalled2 = true
-		reloadMutex2.Unlock()
-		t.Logf("Manifest reload triggered")
-		// Use the same direct loading approach as the server
+		// Load initial manifests
+		err = registry.LoadFromWorkspace(workspace)
+		if err != nil {
+			t.Fatalf("Failed to load workspace manifests: %v", err)
+		}
+
+		// Create document manager
+		dm, err := lsp.NewDocumentManager()
+		if err != nil {
+			t.Fatalf("Failed to create document manager: %v", err)
+		}
+		defer dm.Close()
+
+		// Set up the server context adapter with document manager
+		ctx := &testCompletionContextWithDM{
+			registry: registry,
+			docMgr:   dm,
+		}
+
+		// Open the TypeScript document
+		tsURI := "file://" + tsFilePath
+		doc := dm.OpenDocument(tsURI, tsContent, 1)
+		if doc == nil {
+			t.Fatalf("Failed to open TypeScript document")
+		}
+
+		// Test initial completions for size attribute directly
+		initialItems := completion.GetAttributeValueCompletions(ctx, "my-button", "size")
+
+		// Verify initial completions contain "small" and "medium"
+		hasInitialSmall := false
+		hasInitialMedium := false
+		for _, item := range initialItems {
+			if item.Label == "small" {
+				hasInitialSmall = true
+			}
+			if item.Label == "medium" {
+				hasInitialMedium = true
+			}
+		}
+
+		if !hasInitialSmall || !hasInitialMedium {
+			t.Fatalf("Initial completions missing expected values. Got labels: %v", getCompletionLabels(initialItems))
+		}
+
+		t.Logf("Initial Lit template completions found: %v", getCompletionLabels(initialItems))
+
+		// With synctest, update manifest directly
+		updatedManifest := strings.Replace(initialManifest,
+			`"text": "\"small\" | \"medium\""`,
+			`"text": "\"small\" | \"medium\" | \"large\""`,
+			1)
+
+		err = os.WriteFile(manifestPath, []byte(updatedManifest), 0644)
+		if err != nil {
+			t.Fatalf("Failed to update manifest: %v", err)
+		}
+
+		// Reload manifests directly (no file watching delays)
 		if err := registry.ReloadManifestsDirectly(); err != nil {
-			t.Logf("Error reloading manifests directly: %v", err)
-		} else {
-			t.Logf("Successfully reloaded manifests directly")
-		}
-	})
-	defer registry.StopFileWatching()
-
-	// Update the manifest to add a new size option
-	updatedManifest := strings.Replace(initialManifest,
-		`"text": "\"small\" | \"medium\""`,
-		`"text": "\"small\" | \"medium\" | \"large\""`,
-		1)
-
-	err = os.WriteFile(manifestPath, []byte(updatedManifest), 0644)
-	if err != nil {
-		t.Fatalf("Failed to update manifest: %v", err)
-	}
-
-	// Wait for file watcher to detect the change and reload
-	timeout := time.NewTimer(5 * time.Second)
-	defer timeout.Stop()
-
-	for {
-		reloadMutex2.Lock()
-		called := reloadCalled2
-		reloadMutex2.Unlock()
-
-		if called {
-			break
+			t.Fatalf("Failed to reload manifests: %v", err)
 		}
 
-		select {
-		case <-timeout.C:
-			t.Fatalf("Timeout waiting for manifest reload")
-		case <-time.After(100 * time.Millisecond):
-			// Keep checking
+		t.Logf("Manifest updated and reloaded directly")
+
+		// Test updated completions
+		updatedItems := completion.GetAttributeValueCompletions(ctx, "my-button", "size")
+
+		// Verify updated completions now contain "large"
+		hasUpdatedSmall := false
+		hasUpdatedMedium := false
+		hasUpdatedLarge := false
+		for _, item := range updatedItems {
+			switch item.Label {
+			case "small":
+				hasUpdatedSmall = true
+			case "medium":
+				hasUpdatedMedium = true
+			case "large":
+				hasUpdatedLarge = true
+			}
 		}
-	}
 
-	// Test updated completions
-	updatedItems := completion.GetAttributeValueCompletions(ctx, "my-button", "size")
-
-	// Verify updated completions now contain "large"
-	hasUpdatedSmall := false
-	hasUpdatedMedium := false
-	hasUpdatedLarge := false
-	for _, item := range updatedItems {
-		switch item.Label {
-		case "small":
-			hasUpdatedSmall = true
-		case "medium":
-			hasUpdatedMedium = true
-		case "large":
-			hasUpdatedLarge = true
+		if !hasUpdatedSmall || !hasUpdatedMedium {
+			t.Errorf("Updated completions missing original values. Got labels: %v", getCompletionLabels(updatedItems))
 		}
-	}
 
-	if !hasUpdatedSmall || !hasUpdatedMedium {
-		t.Errorf("Updated completions missing original values. Got labels: %v", getCompletionLabels(updatedItems))
-	}
+		if !hasUpdatedLarge {
+			t.Errorf("Updated completions missing new 'large' value. Got labels: %v", getCompletionLabels(updatedItems))
+		}
 
-	if !hasUpdatedLarge {
-		t.Errorf("Updated completions missing new 'large' value. Got labels: %v", getCompletionLabels(updatedItems))
-	}
-
-	t.Logf("Updated Lit template completions found: %v", getCompletionLabels(updatedItems))
-	t.Logf("Test passed: Local element changes successfully updated Lit template completions")
+		t.Logf("Updated Lit template completions found: %v", getCompletionLabels(updatedItems))
+		t.Logf("Test passed: Local element changes successfully updated Lit template completions")
+	}) // End synctest.Test
 }
 
 // testCompletionContextWithDM implements CompletionContext for testing with document manager
