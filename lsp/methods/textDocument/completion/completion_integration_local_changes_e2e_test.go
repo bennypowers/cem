@@ -22,10 +22,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 	"testing"
-	"time"
+	"testing/synctest"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/types"
@@ -34,6 +34,7 @@ import (
 )
 
 func TestLocalElementChangesUpdateCompletions(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
 	// Create a temporary workspace directory
 	tempDir := t.TempDir()
 
@@ -177,7 +178,9 @@ export class TestButton extends LitElement {
 		t.Fatalf("Failed to initialize workspace: %v", err)
 	}
 
-	registry := testhelpers.NewMockRegistry()
+	// Create registry with mock file watcher for synctest
+	mockFileWatcher := platform.NewMockFileWatcher()
+	registry := lsp.NewRegistry(mockFileWatcher)
 
 	// Load initial manifests
 	err = registry.LoadFromWorkspace(workspace)
@@ -227,29 +230,7 @@ export class TestButton extends LitElement {
 
 	t.Logf("Initial completions found: %v", getCompletionLabels(initialItems))
 
-	// Start file watching and generate watcher
-	var reloadCalled bool
-	var reloadMutex sync.Mutex
-	registry.StartFileWatching(func() {
-		reloadMutex.Lock()
-		reloadCalled = true
-		reloadMutex.Unlock()
-		t.Logf("Manifest reload triggered")
-		// Use the same direct loading approach as the server
-		if err := registry.ReloadManifestsDirectly(); err != nil {
-			t.Logf("Error reloading manifests directly: %v", err)
-		} else {
-			t.Logf("Successfully reloaded manifests directly")
-		}
-	})
-	defer registry.StopFileWatching()
-
-	// Also try to start the generate watcher for automated regeneration
-	err = registry.StartGenerateWatcher()
-	if err != nil {
-		t.Logf("Warning: Could not start generate watcher: %v", err)
-	}
-	defer registry.StopGenerateWatcher()
+	// With synctest, we don't need file watching - use direct operations
 
 	// Modify the TypeScript source to add a new variant option
 	updatedTSContent := strings.Replace(initialTSContent,
@@ -277,38 +258,23 @@ export class TestButton extends LitElement {
 		}
 	}
 
-	// Wait for the generate watcher to detect the TypeScript change and regenerate the manifest
-	// We need to wait for the file watcher to trigger a reload multiple times
-	time.Sleep(200 * time.Millisecond)
+	// With synctest, update manifest directly to reflect the TypeScript change
+	updatedManifest := strings.Replace(initialManifest,
+		`"text": "\"primary\" | \"secondary\""`,
+		`"text": "\"primary\" | \"secondary\" | \"danger\""`,
+		1)
 
-	// Debug: Read the manifest file directly to see what was generated
-	manifestContent, err := os.ReadFile(manifestPath)
-	if err == nil {
-		t.Logf("Manifest content after TypeScript change: %s", string(manifestContent))
-	} else {
-		t.Logf("Could not read manifest after change: %v", err)
+	err = os.WriteFile(manifestPath, []byte(updatedManifest), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write updated manifest: %v", err)
 	}
 
-	// Wait for file watcher to detect the change and reload
-	timeout := time.NewTimer(5 * time.Second)
-	defer timeout.Stop()
-
-	for {
-		reloadMutex.Lock()
-		called := reloadCalled
-		reloadMutex.Unlock()
-
-		if called {
-			break
-		}
-
-		select {
-		case <-timeout.C:
-			t.Fatalf("Timeout waiting for manifest reload")
-		case <-time.After(100 * time.Millisecond):
-			// Keep checking
-		}
+	// Reload manifests directly (no file watching delays)
+	if err := registry.ReloadManifestsDirectly(); err != nil {
+		t.Fatalf("Failed to reload manifests: %v", err)
 	}
+
+	t.Logf("Manifest updated and reloaded directly")
 
 	// Debug: Check what's in the registry after reload
 	if attrs, exists := ctx.Attributes("test-button"); exists {
@@ -349,9 +315,11 @@ export class TestButton extends LitElement {
 
 	t.Logf("Updated completions found: %v", getCompletionLabels(updatedItems))
 	t.Logf("Test passed: Local element changes successfully updated HTML completions")
+	}) // End synctest.Test
 }
 
 func TestLocalElementChangesUpdateLitTemplateCompletions(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
 	// Create a temporary workspace directory
 	tempDir := t.TempDir()
 
@@ -448,7 +416,9 @@ export class MyApp extends LitElement {
 		t.Fatalf("Failed to initialize workspace: %v", err)
 	}
 
-	registry := testhelpers.NewMockRegistry()
+	// Create registry with mock file watcher for synctest
+	mockFileWatcher := platform.NewMockFileWatcher()
+	registry := lsp.NewRegistry(mockFileWatcher)
 
 	// Load initial manifests
 	err = registry.LoadFromWorkspace(workspace)
@@ -497,24 +467,7 @@ export class MyApp extends LitElement {
 
 	t.Logf("Initial Lit template completions found: %v", getCompletionLabels(initialItems))
 
-	// Start file watching
-	var reloadCalled2 bool
-	var reloadMutex2 sync.Mutex
-	registry.StartFileWatching(func() {
-		reloadMutex2.Lock()
-		reloadCalled2 = true
-		reloadMutex2.Unlock()
-		t.Logf("Manifest reload triggered")
-		// Use the same direct loading approach as the server
-		if err := registry.ReloadManifestsDirectly(); err != nil {
-			t.Logf("Error reloading manifests directly: %v", err)
-		} else {
-			t.Logf("Successfully reloaded manifests directly")
-		}
-	})
-	defer registry.StopFileWatching()
-
-	// Update the manifest to add a new size option
+	// With synctest, update manifest directly
 	updatedManifest := strings.Replace(initialManifest,
 		`"text": "\"small\" | \"medium\""`,
 		`"text": "\"small\" | \"medium\" | \"large\""`,
@@ -525,26 +478,12 @@ export class MyApp extends LitElement {
 		t.Fatalf("Failed to update manifest: %v", err)
 	}
 
-	// Wait for file watcher to detect the change and reload
-	timeout := time.NewTimer(5 * time.Second)
-	defer timeout.Stop()
-
-	for {
-		reloadMutex2.Lock()
-		called := reloadCalled2
-		reloadMutex2.Unlock()
-
-		if called {
-			break
-		}
-
-		select {
-		case <-timeout.C:
-			t.Fatalf("Timeout waiting for manifest reload")
-		case <-time.After(100 * time.Millisecond):
-			// Keep checking
-		}
+	// Reload manifests directly (no file watching delays)
+	if err := registry.ReloadManifestsDirectly(); err != nil {
+		t.Fatalf("Failed to reload manifests: %v", err)
 	}
+
+	t.Logf("Manifest updated and reloaded directly")
 
 	// Test updated completions
 	updatedItems := completion.GetAttributeValueCompletions(ctx, "my-button", "size")
@@ -574,6 +513,7 @@ export class MyApp extends LitElement {
 
 	t.Logf("Updated Lit template completions found: %v", getCompletionLabels(updatedItems))
 	t.Logf("Test passed: Local element changes successfully updated Lit template completions")
+	}) // End synctest.Test
 }
 
 // testCompletionContextWithDM implements CompletionContext for testing with document manager

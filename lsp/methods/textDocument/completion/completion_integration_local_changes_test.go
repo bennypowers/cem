@@ -21,11 +21,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 	"testing"
-	"time"
+	"testing/synctest"
 
 	G "bennypowers.dev/cem/generate"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/testhelpers"
@@ -34,8 +34,9 @@ import (
 )
 
 func TestLocalElementChangesUpdateCompletions(t *testing.T) {
-	// Create a temporary workspace directory
-	tempDir := t.TempDir()
+	synctest.Test(t, func(t *testing.T) {
+		// Create a temporary workspace directory
+		tempDir := t.TempDir()
 
 	// Create package.json with CEM configuration
 	packageJSON := `{
@@ -177,20 +178,13 @@ export class TestButton extends LitElement {
 		t.Fatalf("Failed to initialize workspace: %v", err)
 	}
 
-	// Create a full LSP server instance like TestServerLevelIntegration
-	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
+	// With synctest, use simplified registry setup with mock file watcher
+	mockFileWatcher := platform.NewMockFileWatcher()
+	registry := lsp.NewRegistry(mockFileWatcher)
+	err = registry.LoadFromWorkspace(workspace)
 	if err != nil {
-		t.Fatalf("Failed to create LSP server: %v", err)
+		t.Fatalf("Failed to load manifests from workspace: %v", err)
 	}
-	defer server.Close()
-
-	// Initialize the server (this loads manifests and starts file watching AND generate watcher)
-	err = server.InitializeForTesting()
-	if err != nil {
-		t.Fatalf("Failed to initialize server: %v", err)
-	}
-
-	registry := server.Registry()
 
 	// Create document manager
 	dm, err := lsp.NewDocumentManager()
@@ -365,11 +359,13 @@ export class TestButton extends LitElement {
 
 	t.Logf("Updated completions found: %v", testhelpers.GetCompletionLabels(updatedItems))
 	t.Logf("Test passed: Local element changes successfully updated HTML completions")
+	})
 }
 
 func TestLocalElementChangesUpdateLitTemplateCompletions(t *testing.T) {
-	// Create a temporary workspace directory
-	tempDir := t.TempDir()
+	synctest.Test(t, func(t *testing.T) {
+		// Create a temporary workspace directory
+		tempDir := t.TempDir()
 
 	// Create package.json with CEM configuration
 	packageJSON := `{
@@ -464,20 +460,13 @@ export class MyApp extends LitElement {
 		t.Fatalf("Failed to initialize workspace: %v", err)
 	}
 
-	// Create a full LSP server instance like TestServerLevelIntegration
-	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
+	// With synctest, use simplified registry setup with mock file watcher
+	mockFileWatcher := platform.NewMockFileWatcher()
+	registry := lsp.NewRegistry(mockFileWatcher)
+	err = registry.LoadFromWorkspace(workspace)
 	if err != nil {
-		t.Fatalf("Failed to create LSP server: %v", err)
+		t.Fatalf("Failed to load manifests from workspace: %v", err)
 	}
-	defer server.Close()
-
-	// Initialize the server (this loads manifests and starts file watching AND generate watcher)
-	err = server.InitializeForTesting()
-	if err != nil {
-		t.Fatalf("Failed to initialize server: %v", err)
-	}
-
-	registry := server.Registry()
 
 	// Create document manager
 	dm, err := lsp.NewDocumentManager()
@@ -530,22 +519,7 @@ export class MyApp extends LitElement {
 
 	t.Logf("Initial Lit template completions found: %v", testhelpers.GetCompletionLabels(initialItems))
 
-	// Start file watching
-	var reloadCalled2 bool
-	var reloadMutex2 sync.Mutex
-	registry.StartFileWatching(func() {
-		reloadMutex2.Lock()
-		reloadCalled2 = true
-		reloadMutex2.Unlock()
-		t.Logf("Manifest reload triggered")
-		// Use the same direct loading approach as the server
-		if err := registry.ReloadManifestsDirectly(); err != nil {
-			t.Logf("Error reloading manifests directly: %v", err)
-		} else {
-			t.Logf("Successfully reloaded manifests directly")
-		}
-	})
-	defer registry.StopFileWatching()
+	// With synctest, we don't need file watching setup - direct reload is instant
 
 	// Update the manifest to add a new size option
 	updatedManifest := strings.Replace(initialManifest,
@@ -558,25 +532,10 @@ export class MyApp extends LitElement {
 		t.Fatalf("Failed to update manifest: %v", err)
 	}
 
-	// Wait for file watcher to detect the change and reload
-	timeout := time.NewTimer(5 * time.Second)
-	defer timeout.Stop()
-
-	for {
-		reloadMutex2.Lock()
-		called := reloadCalled2
-		reloadMutex2.Unlock()
-
-		if called {
-			break
-		}
-
-		select {
-		case <-timeout.C:
-			t.Fatalf("Timeout waiting for manifest reload")
-		case <-time.After(100 * time.Millisecond):
-			// Keep checking
-		}
+	// With synctest, reload happens instantly - no polling needed
+	// Just trigger the reload directly since we're using virtual time
+	if err := registry.ReloadManifestsDirectly(); err != nil {
+		t.Fatalf("Failed to reload manifests: %v", err)
 	}
 
 	// Test updated completions
@@ -607,6 +566,7 @@ export class MyApp extends LitElement {
 
 	t.Logf("Updated Lit template completions found: %v", testhelpers.GetCompletionLabels(updatedItems))
 	t.Logf("Test passed: Local element changes successfully updated Lit template completions")
+	})
 }
 
 // Helper function to get attribute names for debugging

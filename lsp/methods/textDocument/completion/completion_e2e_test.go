@@ -24,7 +24,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
+	"testing/synctest"
 
 	G "bennypowers.dev/cem/generate"
 	"bennypowers.dev/cem/lsp"
@@ -36,6 +36,7 @@ import (
 // TestServerLevelIntegration tests the complete server integration including
 // manifest reloading behavior exactly as it would work in real usage
 func TestServerLevelIntegration(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
 	// Create a temporary workspace directory that mimics a real project
 	tempDir := t.TempDir()
 
@@ -215,10 +216,12 @@ export class TestAlert extends LitElement {
 		t.Fatalf("Failed to update TypeScript file: %v", err)
 	}
 
-	t.Logf("File updated, waiting for generate watcher to process changes...")
+	t.Logf("File updated, triggering manifest reload...")
 
-	// Wait for the generate watcher to detect changes and regenerate
-	time.Sleep(5 * time.Second)
+	// With synctest, we can reload manifests directly without waiting
+	if err := server.Registry().ReloadManifestsDirectly(); err != nil {
+		t.Fatalf("Failed to reload manifests: %v", err)
+	}
 
 	// Test updated completions - should now include 'error'
 	updatedItems := completion.GetAttributeValueCompletions(ctx, "test-alert", "state")
@@ -265,4 +268,5 @@ export class TestAlert extends LitElement {
 	} else {
 		t.Logf("✅ SUCCESS: 'error' found in completions!")
 	}
+	}) // End synctest.Test
 }

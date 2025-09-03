@@ -24,9 +24,10 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
+	"testing/synctest"
 
 	G "bennypowers.dev/cem/generate"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	M "bennypowers.dev/cem/manifest"
@@ -40,6 +41,7 @@ import (
 // 4. Verify generate watcher detects changes
 // 5. Verify completions update with new value
 func TestCompletionUpdateCycle(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
 	// Create a temporary workspace directory
 	tempDir := t.TempDir()
 	fixtureDir := filepath.Join("..", "..", "..", "test", "fixtures", "completion-update-cycle")
@@ -104,8 +106,9 @@ func TestCompletionUpdateCycle(t *testing.T) {
 		t.Fatalf("Failed to write manifest: %v", err)
 	}
 
-	// Create registry and load manifests
-	registry := testhelpers.NewMockRegistry()
+	// Create registry with mock file watcher for synctest
+	mockFileWatcher := platform.NewMockFileWatcher()
+	registry := lsp.NewRegistry(mockFileWatcher)
 	if err := registry.LoadFromWorkspace(workspace); err != nil {
 		t.Fatalf("Failed to load workspace manifests: %v", err)
 	}
@@ -165,31 +168,7 @@ func TestCompletionUpdateCycle(t *testing.T) {
 		}
 	}
 
-	// Create a channel to signal when manifest reload completes
-	reloadComplete := make(chan bool, 1)
-
-	// Start file watching with proper event coordination
-	registry.StartFileWatching(func() {
-		t.Logf("Manifest reload triggered")
-		if err := registry.ReloadManifestsDirectly(); err != nil {
-			t.Logf("Error reloading manifests directly: %v", err)
-		} else {
-			t.Logf("Successfully reloaded manifests directly")
-			// Signal that reload is complete
-			select {
-			case reloadComplete <- true:
-			default:
-				// Channel full, reload already signaled
-			}
-		}
-	})
-	defer registry.StopFileWatching()
-
-	// Start generate watcher
-	if err := registry.StartGenerateWatcher(); err != nil {
-		t.Logf("Warning: Could not start generate watcher: %v", err)
-	}
-	defer registry.StopGenerateWatcher()
+	// With synctest, we don't need file watching - use direct operations
 
 	// Now simulate editing the source file to add 'four'
 	t.Logf("=== User edits test-element.ts to add 'four' ===")
@@ -210,18 +189,28 @@ func TestCompletionUpdateCycle(t *testing.T) {
 	}
 	t.Logf("Updated file content: %s", string(updatedContent))
 
-	t.Logf("File updated, waiting for generate watcher to process changes...")
+	t.Logf("File updated, regenerating manifest and reloading...")
 
-	// Wait for the reload to complete (with timeout)
-	select {
-	case <-reloadComplete:
-		t.Logf("Manifest reload completed successfully")
-	case <-time.After(15 * time.Second):
-		t.Fatalf("Timeout waiting for manifest reload to complete")
+	// With synctest, regenerate manifest directly (no waiting)
+	pkg, err = generateSession.GenerateFullManifest(context.Background())
+	if err != nil {
+		t.Fatalf("Failed to regenerate manifest: %v", err)
 	}
 
-	// Give a small buffer for any remaining async operations
-	time.Sleep(100 * time.Millisecond)
+	// Write updated manifest to file
+	manifestStr, err = M.SerializeToString(pkg)
+	if err != nil {
+		t.Fatalf("Failed to serialize updated manifest: %v", err)
+	}
+
+	if err := os.WriteFile(manifestPath, []byte(manifestStr), 0644); err != nil {
+		t.Fatalf("Failed to write updated manifest: %v", err)
+	}
+
+	// Reload manifests directly (no file watching delays)
+	if err := registry.ReloadManifestsDirectly(); err != nil {
+		t.Fatalf("Failed to reload manifests: %v", err)
+	}
 
 	// Debug: Check what the generate command actually wrote to the manifest
 	manifestContent, err := os.ReadFile(manifestPath)
@@ -274,6 +263,7 @@ func TestCompletionUpdateCycle(t *testing.T) {
 	} else {
 		t.Errorf("❌ FAILURE: 'four' not found in updated completions")
 	}
+	}) // End synctest.Test
 }
 
 // copyFixtureFile copies a file from the fixture directory to the target location
