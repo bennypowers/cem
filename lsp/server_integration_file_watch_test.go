@@ -23,6 +23,7 @@ import (
 	"sync"
 	"testing"
 	"testing/synctest"
+	"time"
 
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp"
@@ -309,81 +310,75 @@ func TestPackageJSONWatching(t *testing.T) {
 	})
 
 	t.Run("package.json changes trigger reload", func(t *testing.T) {
-		synctest.Test(t, func(t *testing.T) {
-			var reloadTriggered bool
-			var reloadMu sync.Mutex
+		// Create registry with MockFileWatcher for testing
+		mockFileWatcher := platform.NewMockFileWatcher()
+		testRegistry := lsp.NewRegistry(mockFileWatcher)
 
-			// Create registry with MockFileWatcher for testing
-			mockFileWatcher := platform.NewMockFileWatcher()
-			testRegistry := lsp.NewRegistry(mockFileWatcher)
+		// Load workspace to populate manifest paths
+		workspace := W.NewFileSystemWorkspaceContext(tempDir)
+		err = workspace.Init()
+		if err != nil {
+			t.Fatalf("Failed to initialize workspace: %v", err)
+		}
+		err = testRegistry.LoadFromWorkspace(workspace)
+		if err != nil {
+			t.Fatalf("Failed to load from workspace: %v", err)
+		}
 
-			// Load workspace to populate manifest paths
-			workspace := W.NewFileSystemWorkspaceContext(tempDir)
-			err = workspace.Init()
-			if err != nil {
-				t.Fatalf("Failed to initialize workspace: %v", err)
-			}
-			err = testRegistry.LoadFromWorkspace(workspace)
-			if err != nil {
-				t.Fatalf("Failed to load from workspace: %v", err)
-			}
+		// Use a simple mutex approach like the other tests
+		var reloadTriggered bool
+		var reloadMu sync.Mutex
 
-			onReload := func() {
-				reloadMu.Lock()
-				defer reloadMu.Unlock()
-				reloadTriggered = true
-			}
-
-			err = testRegistry.StartFileWatching(onReload)
-			if err != nil {
-				t.Fatalf("Failed to start file watching: %v", err)
-			}
-			defer testRegistry.StopFileWatching()
-
-			// Update package.json by reading, modifying, and writing back
-			var packageJSON map[string]interface{}
-			packageData, err := os.ReadFile(packagePath)
-			if err != nil {
-				t.Fatalf("Failed to read package.json: %v", err)
-			}
-			err = json.Unmarshal(packageData, &packageJSON)
-			if err != nil {
-				t.Fatalf("Failed to parse package.json: %v", err)
-			}
-
-			packageJSON["version"] = "1.0.1"
-			updatedData, _ := json.MarshalIndent(packageJSON, "", "  ")
-			err = os.WriteFile(packagePath, updatedData, 0644)
-			if err != nil {
-				t.Fatalf("Failed to update package.json: %v", err)
-			}
-
-			// Trigger file change event via MockFileWatcher - instant with virtual time
-			// Get absolute path for consistent triggering
-			absPackagePath, err := filepath.Abs(packagePath)
-			if err != nil {
-				t.Fatalf("Failed to get absolute path: %v", err)
-			}
-
-			mockFileWatcher.TriggerEvent(absPackagePath, platform.Write)
-
-			// Yield to allow the watchFiles goroutine to process the event
-			var quickWait sync.WaitGroup
-			quickWait.Add(1)
-			go func() {
-				defer quickWait.Done()
-			}()
-			quickWait.Wait()
-
-			// Verify reload was triggered - instant with virtual time
+		onReload := func() {
 			reloadMu.Lock()
-			triggered := reloadTriggered
-			reloadMu.Unlock()
+			defer reloadMu.Unlock()
+			reloadTriggered = true
+		}
 
-			if !triggered {
-				t.Fatal("package.json change should have triggered reload")
-			}
-		})
+		err = testRegistry.StartFileWatching(onReload)
+		if err != nil {
+			t.Fatalf("Failed to start file watching: %v", err)
+		}
+		defer testRegistry.StopFileWatching()
+
+		// Update package.json by reading, modifying, and writing back
+		var packageJSON map[string]interface{}
+		packageData, err := os.ReadFile(packagePath)
+		if err != nil {
+			t.Fatalf("Failed to read package.json: %v", err)
+		}
+		err = json.Unmarshal(packageData, &packageJSON)
+		if err != nil {
+			t.Fatalf("Failed to parse package.json: %v", err)
+		}
+
+		packageJSON["version"] = "1.0.1"
+		updatedData, _ := json.MarshalIndent(packageJSON, "", "  ")
+		err = os.WriteFile(packagePath, updatedData, 0644)
+		if err != nil {
+			t.Fatalf("Failed to update package.json: %v", err)
+		}
+
+		// Trigger file change event via MockFileWatcher
+		// Get absolute path for consistent triggering
+		absPackagePath, err := filepath.Abs(packagePath)
+		if err != nil {
+			t.Fatalf("Failed to get absolute path: %v", err)
+		}
+
+		mockFileWatcher.TriggerEvent(absPackagePath, platform.Write)
+
+		// Give time for the event to be processed (using real time)
+		time.Sleep(10 * time.Millisecond)
+
+		// Verify reload was triggered
+		reloadMu.Lock()
+		triggered := reloadTriggered
+		reloadMu.Unlock()
+
+		if !triggered {
+			t.Fatal("package.json change should have triggered reload")
+		}
 	})
 }
 
