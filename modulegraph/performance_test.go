@@ -98,7 +98,7 @@ export class MyTabs {
 		filename := fmt.Sprintf("test-file-%d.ts", i)
 		content := fmt.Sprintf("export const value%d = %d;", i, i)
 		mapFS.AddFile(filename, content, 0644)
-		
+
 		// Verify file was created instantly
 		if !mapFS.Exists(filename) {
 			t.Errorf("File %s should exist immediately", filename)
@@ -147,7 +147,7 @@ func TestFileSystemCompliance(t *testing.T) {
 	// Test file listing
 	files := mapFS.ListFiles()
 	t.Logf("MapFS contains: %v", files)
-	
+
 	// Check that files exist (directories might not be listed the same way)
 	expectedFiles := []string{"test.ts", "subdir/nested.ts"}
 	for _, expected := range expectedFiles {
@@ -155,7 +155,7 @@ func TestFileSystemCompliance(t *testing.T) {
 			t.Errorf("Expected file %s not found in listing", expected)
 		}
 	}
-	
+
 	// Verify directory exists using Exists() method instead of listing
 	if !mapFS.Exists("emptydir") {
 		t.Errorf("Expected directory emptydir to exist")

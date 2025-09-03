@@ -193,7 +193,7 @@ export class TestAlert extends LitElement {
 			defer generateCallbackMu.Unlock()
 
 			// Simulate the generate process creating an updated manifest
-			updatedManifest := strings.Replace(initialManifest, 
+			updatedManifest := strings.Replace(initialManifest,
 				`"text": "\"info\" | \"success\" | \"warning\""`,
 				`"text": "\"info\" | \"success\" | \"warning\" | \"error\""`,
 				1)
@@ -276,4 +276,3 @@ export class TestAlert extends LitElement {
 		t.Logf("✅ Test passed: Generate integration with synctest completed instantly")
 	})
 }
-

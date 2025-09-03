@@ -125,16 +125,16 @@ func TestManifestFileWatchingIntegration(t *testing.T) {
 
 			// Simulate file change detection via MockFileWatcher - instant with virtual time
 			// This tests the actual file watcher event handling but without real filesystem delays
-			
+
 			// Get the absolute path to match what the registry tracks
 			absManifestPath, err := filepath.Abs(manifestPath)
 			if err != nil {
 				t.Fatalf("Failed to get absolute path: %v", err)
 			}
-			
+
 			// Trigger event with absolute path
 			mockFileWatcher.TriggerEvent(absManifestPath, platform.Write)
-			
+
 			// Yield to allow the watchFiles goroutine to process the event in synctest
 			var quickWait sync.WaitGroup
 			quickWait.Add(1)
@@ -142,7 +142,7 @@ func TestManifestFileWatchingIntegration(t *testing.T) {
 				defer quickWait.Done()
 			}()
 			quickWait.Wait()
-			
+
 			// Verify reload was triggered - instant with virtual time
 			reloadMu.Lock()
 			count := reloadCount
@@ -198,13 +198,13 @@ func TestManifestFileWatchingIntegration(t *testing.T) {
 
 			// Make multiple rapid changes by copying fixtures alternately
 			fixtures := []string{"initial-manifest.json", "updated-manifest.json"}
-			
+
 			// Get absolute path for consistent triggering
 			absManifestPath, err := filepath.Abs(manifestPath)
 			if err != nil {
 				t.Fatalf("Failed to get absolute path: %v", err)
 			}
-			
+
 			for i := 0; i < 3; i++ {
 				fixtureName := fixtures[i%2]
 				fixturePath := filepath.Join("test", "fixtures", "file-watch-integration", fixtureName)
@@ -214,7 +214,7 @@ func TestManifestFileWatchingIntegration(t *testing.T) {
 				}
 				// Trigger file change event via MockFileWatcher - instant with virtual time
 				mockFileWatcher.TriggerEvent(absManifestPath, platform.Write)
-				
+
 				// Yield to allow the watchFiles goroutine to process the event
 				var quickWait sync.WaitGroup
 				quickWait.Add(1)
@@ -316,7 +316,7 @@ func TestPackageJSONWatching(t *testing.T) {
 			// Create registry with MockFileWatcher for testing
 			mockFileWatcher := platform.NewMockFileWatcher()
 			testRegistry := lsp.NewRegistry(mockFileWatcher)
-			
+
 			// Load workspace to populate manifest paths
 			workspace := W.NewFileSystemWorkspaceContext(tempDir)
 			err = workspace.Init()
@@ -364,9 +364,9 @@ func TestPackageJSONWatching(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to get absolute path: %v", err)
 			}
-			
+
 			mockFileWatcher.TriggerEvent(absPackagePath, platform.Write)
-			
+
 			// Yield to allow the watchFiles goroutine to process the event
 			var quickWait sync.WaitGroup
 			quickWait.Add(1)

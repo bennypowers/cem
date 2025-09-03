@@ -39,4 +39,3 @@ func CopyFile(src, dst string) error {
 	}
 	return os.WriteFile(dst, data, 0644)
 }
-

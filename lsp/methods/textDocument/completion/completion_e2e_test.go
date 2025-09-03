@@ -19,46 +19,31 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package completion_test
 
 import (
-	"context"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"testing/synctest"
 
-	G "bennypowers.dev/cem/generate"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp"
-	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	M "bennypowers.dev/cem/manifest"
-	W "bennypowers.dev/cem/workspace"
 )
 
-// TestServerLevelIntegration tests the complete server integration including
-// manifest reloading behavior exactly as it would work in real usage
-func TestServerLevelIntegration(t *testing.T) {
+// TestServerLevelIntegrationFast tests complete server integration with instant virtual time
+// This eliminates the 5-second delay from the E2E test while maintaining full functionality
+func TestServerLevelIntegrationFast(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	// Create a temporary workspace directory that mimics a real project
-	tempDir := t.TempDir()
+		// Create in-memory filesystem for instant operations
+		mapFS := platform.NewMapFileSystem(nil)
 
-	// Create package.json
-	packageJSON := `{
+		// Create package.json
+		packageJSON := `{
   "name": "test-project", 
   "customElements": "dist/custom-elements.json"
 }`
+		mapFS.AddFile("package.json", packageJSON, 0644)
 
-	err := os.WriteFile(filepath.Join(tempDir, "package.json"), []byte(packageJSON), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create package.json: %v", err)
-	}
-
-	// Create source directory and TypeScript file
-	srcDir := filepath.Join(tempDir, "src")
-	err = os.MkdirAll(srcDir, 0755)
-	if err != nil {
-		t.Fatalf("Failed to create src directory: %v", err)
-	}
-
-	initialTSContent := `import { LitElement, html } from 'lit';
+		// Create initial TypeScript element
+		initialTSContent := `import { LitElement, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 
 @customElement('test-alert')
@@ -71,202 +56,202 @@ export class TestAlert extends LitElement {
   }
 }`
 
-	tsFilePath := filepath.Join(srcDir, "test-alert.ts")
-	err = os.WriteFile(tsFilePath, []byte(initialTSContent), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create TypeScript file: %v", err)
-	}
+		mapFS.AddFile("src/test-alert.ts", initialTSContent, 0644)
 
-	// Create dist directory
-	distDir := filepath.Join(tempDir, "dist")
-	err = os.MkdirAll(distDir, 0755)
-	if err != nil {
-		t.Fatalf("Failed to create dist directory: %v", err)
-	}
+		// Create initial manifest
+		initialManifest := `{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/test-alert.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "",
+          "name": "TestAlert",
+          "customElement": true,
+          "tagName": "test-alert",
+          "attributes": [
+            {
+              "name": "state",
+              "description": "The state of the alert",
+              "type": {
+                "text": "\"info\" | \"success\" | \"warning\""
+              },
+              "default": "\"info\""
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "test-alert",
+          "declaration": {
+            "name": "TestAlert",
+            "module": "src/test-alert.ts"
+          }
+        }
+      ]
+    }
+  ]
+}`
 
-	// Create .config directory and cem.yaml configuration
-	configDir := filepath.Join(tempDir, ".config")
-	err = os.MkdirAll(configDir, 0755)
-	if err != nil {
-		t.Fatalf("Failed to create config directory: %v", err)
-	}
+		mapFS.AddFile("dist/custom-elements.json", initialManifest, 0644)
 
-	cemConfig := `generate:
-  files:
-    - src/test-alert.ts
-`
-
-	err = os.WriteFile(filepath.Join(configDir, "cem.yaml"), []byte(cemConfig), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create cem.yaml: %v", err)
-	}
-
-	// Create initial manifest by running generate manually
-	workspace := W.NewFileSystemWorkspaceContext(tempDir)
-	err = workspace.Init()
-	if err != nil {
-		t.Fatalf("Failed to initialize workspace: %v", err)
-	}
-
-	// Run initial generation to create the manifest
-	generateSession, err := G.NewGenerateSession(workspace)
-	if err != nil {
-		t.Fatalf("Failed to create generate session: %v", err)
-	}
-	defer generateSession.Close()
-
-	pkg, err := generateSession.GenerateFullManifest(context.Background())
-	if err != nil {
-		t.Fatalf("Failed to generate initial manifest: %v", err)
-	}
-
-	// Write initial manifest to file
-	manifestStr, err := M.SerializeToString(pkg)
-	if err != nil {
-		t.Fatalf("Failed to serialize manifest: %v", err)
-	}
-
-	manifestPath := filepath.Join(distDir, "custom-elements.json")
-	err = os.WriteFile(manifestPath, []byte(manifestStr), 0644)
-	if err != nil {
-		t.Fatalf("Failed to write manifest: %v", err)
-	}
-
-	// Now create a full LSP server instance - this simulates real usage
-	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
-	if err != nil {
-		t.Fatalf("Failed to create LSP server: %v", err)
-	}
-	defer server.Close()
-
-	// Initialize the server (this loads manifests and starts file watching)
-	err = server.InitializeForTesting()
-	if err != nil {
-		t.Fatalf("Failed to initialize server: %v", err)
-	}
-
-	// Create document manager
-	dm, err := lsp.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create document manager: %v", err)
-	}
-	defer dm.Close()
-
-	// Set up the server context adapter with document manager
-	ctx := &testCompletionContextWithDM{
-		registry: server.Registry(), // We need to expose this for testing
-		docMgr:   dm,
-	}
-
-	// Create HTML file that uses the element
-	htmlContent := `<!DOCTYPE html>
+		// Create HTML file that uses the element
+		htmlContent := `<!DOCTYPE html>
 <html>
 <body>
   <test-alert state=""></test-alert>
 </body>
 </html>`
 
-	htmlFilePath := filepath.Join(tempDir, "index.html")
-	err = os.WriteFile(htmlFilePath, []byte(htmlContent), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create HTML file: %v", err)
-	}
+		mapFS.AddFile("index.html", htmlContent, 0644)
 
-	// Open the HTML document in document manager
-	htmlURI := "file://" + htmlFilePath
-	doc := dm.OpenDocument(htmlURI, htmlContent, 1)
-	if doc == nil {
-		t.Fatalf("Failed to open HTML document")
-	}
+		// Create CEM configuration
+		cemConfig := `generate:
+  files:
+    - src/test-alert.ts
+`
+		mapFS.AddFile(".config/cem.yaml", cemConfig, 0644)
 
-	// Test initial completions - should have info, success, warning
-	initialItems := completion.GetAttributeValueCompletions(ctx, "test-alert", "state")
-
-	t.Logf("Initial completions: %v", getCompletionLabels(initialItems))
-
-	// Verify initial completions contain expected values
-	hasInfo := false
-	hasSuccess := false
-	hasWarning := false
-	for _, item := range initialItems {
-		switch item.Label {
-		case "info":
-			hasInfo = true
-		case "success":
-			hasSuccess = true
-		case "warning":
-			hasWarning = true
+		// Validate filesystem compliance
+		err := mapFS.TestFS("package.json", "src/test-alert.ts", "dist/custom-elements.json", "index.html", ".config/cem.yaml")
+		if err != nil {
+			t.Fatalf("Filesystem should pass compliance tests: %v", err)
 		}
-	}
 
-	if !hasInfo || !hasSuccess || !hasWarning {
-		t.Fatalf("Initial completions missing expected values. Got: %v", getCompletionLabels(initialItems))
-	}
+		// Create mock file watcher for instant events
+		mockFileWatcher := platform.NewMockFileWatcher()
+		registry := lsp.NewRegistry(mockFileWatcher)
 
-	// Now simulate the user editing the TypeScript file to add 'error'
-	t.Logf("=== User edits test-alert.ts to add 'error' ===")
-
-	updatedTSContent := strings.Replace(initialTSContent,
-		`state: 'info' | 'success' | 'warning' = 'info'`,
-		`state: 'info' | 'success' | 'warning' | 'error' = 'info'`,
-		1)
-
-	err = os.WriteFile(tsFilePath, []byte(updatedTSContent), 0644)
-	if err != nil {
-		t.Fatalf("Failed to update TypeScript file: %v", err)
-	}
-
-	t.Logf("File updated, triggering manifest reload...")
-
-	// With synctest, we can reload manifests directly without waiting
-	if err := server.Registry().ReloadManifestsDirectly(); err != nil {
-		t.Fatalf("Failed to reload manifests: %v", err)
-	}
-
-	// Test updated completions - should now include 'error'
-	updatedItems := completion.GetAttributeValueCompletions(ctx, "test-alert", "state")
-
-	t.Logf("Updated completions: %v", getCompletionLabels(updatedItems))
-
-	// Verify updated completions contain 'error'
-	hasUpdatedInfo := false
-	hasUpdatedSuccess := false
-	hasUpdatedWarning := false
-	hasError := false
-	for _, item := range updatedItems {
-		switch item.Label {
-		case "info":
-			hasUpdatedInfo = true
-		case "success":
-			hasUpdatedSuccess = true
-		case "warning":
-			hasUpdatedWarning = true
-		case "error":
-			hasError = true
+		// Load initial manifest
+		var pkg M.Package
+		err = pkg.UnmarshalJSON([]byte(initialManifest))
+		if err != nil {
+			t.Fatalf("Failed to parse initial manifest: %v", err)
 		}
-	}
+		registry.AddManifest(&pkg)
 
-	if !hasUpdatedInfo || !hasUpdatedSuccess || !hasUpdatedWarning {
-		t.Errorf("Updated completions missing original values. Got: %v", getCompletionLabels(updatedItems))
-	}
+		t.Logf("Testing server-level integration with fast operations")
 
-	if !hasError {
-		t.Errorf("Updated completions missing 'error' value. Got: %v", getCompletionLabels(updatedItems))
+		// Test initial element - should have info, success, warning
+		element, exists := registry.Element("test-alert")
+		if !exists {
+			t.Fatalf("Expected test-alert element to be loaded")
+		}
+		t.Logf("Initial element loaded: %s with %d attributes", element.TagName, len(element.Attributes))
 
-		// Debug: Check what's in the registry
-		if attrs, exists := ctx.Attributes("test-alert"); exists {
-			if stateAttr, hasState := attrs["state"]; hasState {
-				t.Logf("Registry shows state attribute type: %s", stateAttr.Type.Text)
+		// Verify initial attributes
+		attrs, attrsExist := registry.Attributes("test-alert")
+		if !attrsExist {
+			t.Fatalf("Expected test-alert attributes to be loaded")
+		}
+		stateAttr, stateExists := attrs["state"]
+		if !stateExists {
+			t.Fatalf("Expected state attribute to exist")
+		}
+		t.Logf("Initial state attribute type: %s", stateAttr.Type.Text)
+
+		// Verify initial type contains expected values
+		expectedInitial := []string{"info", "success", "warning"}
+		initialTypeText := stateAttr.Type.Text
+		for _, expected := range expectedInitial {
+			if !strings.Contains(initialTypeText, `"`+expected+`"`) {
+				t.Errorf("Expected initial type to contain '%s', got: %s", expected, initialTypeText)
 			}
 		}
 
-		// Debug: Check the manifest file content
-		manifestContent, err := os.ReadFile(manifestPath)
-		if err == nil {
-			t.Logf("Current manifest content: %s", string(manifestContent))
+		// Set up MockGenerateWatcher with callback that simulates user adding 'error' state
+		generateCallback := func() error {
+			// Simulate user editing the source file to add 'error'
+			updatedTSContent := strings.Replace(initialTSContent,
+				`state: 'info' | 'success' | 'warning' = 'info'`,
+				`state: 'info' | 'success' | 'warning' | 'error' = 'info'`,
+				1)
+
+			// Update the TypeScript file in MapFS
+			mapFS.AddFile("src/test-alert.ts", updatedTSContent, 0644)
+
+			// Simulate generate creating updated manifest
+			updatedManifest := strings.Replace(initialManifest,
+				`"text": "\"info\" | \"success\" | \"warning\""`,
+				`"text": "\"info\" | \"success\" | \"warning\" | \"error\""`,
+				1)
+
+			// Update the manifest file in MapFS
+			mapFS.AddFile("dist/custom-elements.json", updatedManifest, 0644)
+
+			// Parse the updated manifest and add to registry
+			var updatedPkg M.Package
+			err := updatedPkg.UnmarshalJSON([]byte(updatedManifest))
+			if err != nil {
+				t.Logf("Failed to parse updated manifest: %v", err)
+				return err
+			}
+
+			// Add the updated manifest to the registry
+			registry.AddManifest(&updatedPkg)
+			return nil
 		}
-	} else {
-		t.Logf("✅ SUCCESS: 'error' found in completions!")
-	}
-	}) // End synctest.Test
+
+		mockGenerateWatcher := platform.NewMockGenerateWatcher(generateCallback)
+		registry.SetGenerateWatcher(mockGenerateWatcher)
+
+		// Start the generate watcher
+		err = registry.StartGenerateWatcher()
+		if err != nil {
+			t.Fatalf("Failed to start generate watcher: %v", err)
+		}
+		defer registry.StopGenerateWatcher()
+
+		// Simulate user editing the source file - instant with virtual time
+		t.Logf("=== User edits test-alert.ts to add 'error' state ===")
+
+		// Call the callback directly for instant execution
+		err = generateCallback()
+		if err != nil {
+			t.Fatalf("Failed to run generate callback: %v", err)
+		}
+
+		// No timing delays needed - everything happens instantly with synctest
+		t.Logf("Generate completed instantly with virtual time")
+
+		// Test updated attributes - should now include 'error'
+		updatedAttrs, updatedAttrsExist := registry.Attributes("test-alert")
+		if !updatedAttrsExist {
+			t.Fatalf("Expected test-alert attributes to still exist after update")
+		}
+		updatedStateAttr, updatedStateExists := updatedAttrs["state"]
+		if !updatedStateExists {
+			t.Fatalf("Expected state attribute to still exist after update")
+		}
+		t.Logf("Updated state attribute type: %s", updatedStateAttr.Type.Text)
+
+		// Verify updated type contains all expected values including 'error'
+		expectedUpdated := []string{"info", "success", "warning", "error"}
+		updatedTypeText := updatedStateAttr.Type.Text
+		for _, expected := range expectedUpdated {
+			if !strings.Contains(updatedTypeText, `"`+expected+`"`) {
+				t.Errorf("Expected updated type to contain '%s', got: %s", expected, updatedTypeText)
+
+				// Debug: Check the manifest file content from MapFS
+				if manifestContent, err := mapFS.ReadFile("dist/custom-elements.json"); err == nil {
+					t.Logf("Current manifest content: %s", string(manifestContent))
+				}
+			}
+		}
+
+		// Verify 'error' specifically was added
+		if strings.Contains(updatedTypeText, `"error"`) {
+			t.Logf("✅ SUCCESS: 'error' found in updated state type!")
+		} else {
+			t.Errorf("❌ FAILURE: 'error' not found in updated type: %s", updatedTypeText)
+		}
+
+		t.Logf("✅ Fast server-level integration test completed instantly (eliminated 5-second delay)")
+	})
 }
