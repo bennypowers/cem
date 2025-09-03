@@ -194,7 +194,7 @@ export class TestElement extends LitElement {
 		if err != nil {
 			t.Fatalf("Failed to start generate watcher: %v", err)
 		}
-		defer registry.StopGenerateWatcher()
+		defer func() { _ = registry.StopGenerateWatcher() }()
 
 		// Simulate user editing the source file - instant with virtual time
 		t.Logf("=== User edits test-element.ts to add 'four' to union ===")
