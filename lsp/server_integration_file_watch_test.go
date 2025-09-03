@@ -108,14 +108,14 @@ func TestManifestFileWatchingIntegration(t *testing.T) {
 				if err != nil {
 					return
 				}
-				testRegistry.LoadFromWorkspace(freshWorkspace)
+				_ = testRegistry.LoadFromWorkspace(freshWorkspace)
 			}
 
 			err = testRegistry.StartFileWatching(onReload)
 			if err != nil {
 				t.Fatalf("Failed to start file watching: %v", err)
 			}
-			defer testRegistry.StopFileWatching()
+			defer func() { _ = testRegistry.StopFileWatching() }()
 
 			// Copy updated manifest fixture to trigger file change
 			updatedFixturePath := filepath.Join("test", "fixtures", "file-watch-integration", "updated-manifest.json")
@@ -186,14 +186,14 @@ func TestManifestFileWatchingIntegration(t *testing.T) {
 				if err != nil {
 					return
 				}
-				testRegistry.LoadFromWorkspace(freshWorkspace)
+				_ = testRegistry.LoadFromWorkspace(freshWorkspace)
 			}
 
 			err = testRegistry.StartFileWatching(onReload)
 			if err != nil {
 				t.Fatalf("Failed to start file watching: %v", err)
 			}
-			defer testRegistry.StopFileWatching()
+			defer func() { _ = testRegistry.StopFileWatching() }()
 
 			// Use the MockFileWatcher for triggering events
 
@@ -339,7 +339,7 @@ func TestPackageJSONWatching(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to start file watching: %v", err)
 		}
-		defer testRegistry.StopFileWatching()
+		defer func() { _ = testRegistry.StopFileWatching() }()
 
 		// Update package.json by reading, modifying, and writing back
 		var packageJSON map[string]interface{}
@@ -432,6 +432,6 @@ func TestFileWatchingErrorHandling(t *testing.T) {
 		if err != nil {
 			t.Errorf("Expected StartFileWatching to handle nonexistent files gracefully, got error: %v", err)
 		}
-		defer testRegistry.StopFileWatching()
+		defer func() { _ = testRegistry.StopFileWatching() }()
 	})
 }

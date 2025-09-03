@@ -84,7 +84,7 @@ func TestGenerateWithFileReadError(t *testing.T) {
 		require.NoError(t, err)
 
 		// Clean up permissions after test
-		defer os.Chmod(restrictedFile, 0644)
+		defer func() { _ = os.Chmod(restrictedFile, 0644) }()
 
 		// Create .config directory and cem.yaml pointing to the restricted file
 		configDir := filepath.Join(tempDir, ".config")

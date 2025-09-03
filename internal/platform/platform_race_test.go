@@ -77,7 +77,7 @@ func TestMockTimeProvider(t *testing.T) {
 func TestMockFileWatcher(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		watcher := platform.NewMockFileWatcher()
-		defer watcher.Close()
+		defer func() { _ = watcher.Close() }()
 
 		// Test adding watch paths
 		err := watcher.Add("/test/path")
@@ -103,7 +103,7 @@ func TestMockFileWatcher(t *testing.T) {
 		}
 
 		// Test triggering events - now works correctly with synctest isolation
-		watcher.Add("/test/path") // Re-add for event testing
+		_ = watcher.Add("/test/path") // Re-add for event testing
 		watcher.TriggerEvent("/test/path/file.txt", platform.Write)
 
 		// Read from Events() channel - synctest provides proper isolation

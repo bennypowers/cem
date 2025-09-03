@@ -203,7 +203,7 @@ export class TestButton extends LitElement {
 		if err != nil {
 			t.Fatalf("Failed to start generate watcher: %v", err)
 		}
-		defer registry.StopGenerateWatcher()
+		defer func() { _ = registry.StopGenerateWatcher() }()
 
 		// Simulate user editing the source file - instant with virtual time
 		t.Logf("=== User edits test-button.ts to add 'danger' variant ===")
@@ -399,7 +399,7 @@ export class MyApp extends LitElement {
 		if err != nil {
 			t.Fatalf("Failed to start generate watcher: %v", err)
 		}
-		defer registry.StopGenerateWatcher()
+		defer func() { _ = registry.StopGenerateWatcher() }()
 
 		// Simulate user editing - instant execution
 		t.Logf("=== User edits my-button.ts to add 'large' size ===")

@@ -226,7 +226,7 @@ export class TestAlert extends LitElement {
 		if err != nil {
 			t.Fatalf("Failed to start generate watcher: %v", err)
 		}
-		defer registry.StopGenerateWatcher()
+		defer func() { _ = registry.StopGenerateWatcher() }()
 
 		// Update the TypeScript file to add 'error' state
 		updatedTSContent := strings.Replace(initialTSContent,

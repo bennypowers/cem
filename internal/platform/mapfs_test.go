@@ -117,12 +117,13 @@ func TestMapFileSystem_FileWatcherIntegration(t *testing.T) {
 		t.Logf("Watched paths after adding '/': %v", watcher.GetWatchedPaths())
 
 		// Perform filesystem operations that should trigger events
-		mfs.WriteFile("/test.txt", []byte("watched content"), 0644)
+		_ = mfs.WriteFile("/test.txt", []byte("watched content"), 0644)
 
 		// Check for file watcher events
 		events := make([]platform.FileWatchEvent, 0)
 
 		// Collect events with a reasonable limit
+	eventLoop:
 		for i := 0; i < 5; i++ {
 			select {
 			case event := <-watcher.Events():
@@ -130,7 +131,7 @@ func TestMapFileSystem_FileWatcherIntegration(t *testing.T) {
 				t.Logf("Received event: %s %v", event.Name, event.Op)
 			default:
 				// No more immediate events
-				break
+				break eventLoop
 			}
 		}
 
@@ -139,7 +140,7 @@ func TestMapFileSystem_FileWatcherIntegration(t *testing.T) {
 		}
 
 		// Remove the file
-		mfs.Remove("/test.txt")
+		_ = mfs.Remove("/test.txt")
 
 		// Check for remove event
 		select {
