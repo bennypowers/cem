@@ -14,6 +14,7 @@ jobs:
           go-version: '1.25.x'
         env:
           GOTOOLCHAIN: auto
+          GOEXPERIMENT: jsonv2
       - name: Install dependencies
         run: go get .
       - name: Install Go tools
