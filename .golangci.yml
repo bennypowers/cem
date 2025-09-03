@@ -1,35 +1,45 @@
-linters-settings:
-  errcheck:
-    # list of functions to exclude from checking, where each entry is a single function to exclude.
-    # see https://github.com/kisielk/errcheck#excluding-functions for details
-    exclude-functions:
-      - (github.com/spf13/viper.Viper).BindPFlag
-      - (*github.com/spf13/pflag.FlagSet).MarkDeprecated
-
-linters:
-  enable:
-    - errcheck
-    - gosimple
-    - govet
-    - staticcheck
-    - unused
-  disable:
-    - ineffassign # Too many false positives in this codebase
-
-issues:
-  exclude-rules:
-    # Exclude certain linters from running on tests files.
-    - path: _test\.go
-      linters:
-        - errcheck
-        - unused
-    # Exclude legacy issues that would require significant refactoring
-    - path: generate/
-      linters:
-        - errcheck
-    - path: workspace/
-      linters:
-        - errcheck
-    - path: cmd/
-      linters:
-        - errcheck
+version: "2"
+# linters:
+  # disable:
+  #   - ineffassign # Too many false positives in this codebase
+  # settings:
+  #   errcheck:
+  #   # list of functions to exclude from checking, where each entry is a single function to exclude.
+  #   # see https://github.com/kisielk/errcheck#excluding-functions for details
+  #     exclude-functions:
+  #       - (github.com/spf13/viper.Viper).BindPFlag
+  #       - (*github.com/spf13/pflag.FlagSet).MarkDeprecated
+  # exclusions:
+  #   generated: lax
+  #   presets:
+  #     - comments
+  #     - common-false-positives
+  #     - legacy
+  #     - std-error-handling
+  #   rules:
+  #     - linters:
+  #         - errcheck
+  #         - unused
+  #   # Exclude certain linters from running on tests files.
+  #       path: _test\.go
+  #     - linters:
+  #         - errcheck
+  #   # Exclude legacy issues that would require significant refactoring
+  #       path: generate/
+  #     - linters:
+  #         - errcheck
+  #       path: workspace/
+  #     - linters:
+  #         - errcheck
+  #       path: cmd/
+  #   paths:
+  #     - third_party$
+  #     - builtin$
+  #     - examples$
+# formatters:
+  # exclusions:
+  #   generated: lax
+  #   paths:
+  #     - third_party$
+  #     - builtin$
+  #     - examples$
