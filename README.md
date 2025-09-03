@@ -27,6 +27,28 @@ See more in the [Generate docs][generatedocs]
 
 ---
 
+### `cem lsp`
+
+The `cem lsp` command starts a Language Server Protocol (LSP) server that provides intelligent IDE features for custom elements in HTML and TypeScript files. It offers contextual autocomplete, hover documentation, and other editor enhancements by analyzing your custom elements manifests.
+
+**Features:**
+- Tag name and attribute completion for custom elements
+- Slot attribute value completion for direct children of slotted elements  
+- Hover documentation with type information
+- **Error detection with autofixes** - Real-time validation with one-click corrections:
+  - Slot validation with smart suggestions
+  - Tag name validation with typo detection and missing import suggestions
+  - Attribute validation against HTML global attributes and custom element schemas
+  - Attribute value validation against manifest type definitions (union types, literals, numbers, booleans)
+- Go-to-definition support for jumping to element source code
+- Go-to-references to find all usages of custom elements across your workspace
+- Support for HTML files and TypeScript template literals
+- Automatic manifest discovery and live reloading
+
+See more in the [LSP docs][lspdocs]
+
+---
+
 ### `cem list`
 
 The `cem list` command provides a fast, flexible way to inspect custom elements, their features, and their metadata directly from your manifest file.
@@ -51,28 +73,6 @@ The `cem validate` command validates your `custom-elements.json` file against th
 See more in the [Validate docs][validatedocs]
 
 See the [Configuration Reference][configdocs] for more information.
-
----
-
-### `cem lsp`
-
-The `cem lsp` command starts a Language Server Protocol (LSP) server that provides intelligent IDE features for custom elements in HTML and TypeScript files. It offers contextual autocomplete, hover documentation, and other editor enhancements by analyzing your custom elements manifests.
-
-**Features:**
-- Tag name and attribute completion for custom elements
-- Slot attribute value completion for direct children of slotted elements  
-- Hover documentation with type information
-- **Error detection with autofixes** - Real-time validation with one-click corrections:
-  - Slot validation with smart suggestions
-  - Tag name validation with typo detection and missing import suggestions
-  - Attribute validation against HTML global attributes and custom element schemas
-  - Attribute value validation against manifest type definitions (union types, literals, numbers, booleans)
-- Go-to-definition support for jumping to element source code
-- Go-to-references to find all usages of custom elements across your workspace
-- Support for HTML files and TypeScript template literals
-- Automatic manifest discovery and live reloading
-
-See more in the [LSP docs][lspdocs]
 
 ---
 
