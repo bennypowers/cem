@@ -88,17 +88,17 @@ the terms of the [GNU General Public License v3.0][gpl3].
 
 &copy; 2025 Benny Powers
 
-[cem]: https://github.com/webcomponents/custom-elements-manifest
-[dtcg]: https://tr.designtokens.org/format/
-[go]: https://go.dev
-[treesitter]: https://tree-sitter.github.io/tree-sitter/
-[gpl3]: https://www.gnu.org/licenses/gpl-3.0.html
-[contributingmd]: https://bennypowers.github.io/cem/docs/contributing/
-[issuenew]: https://github.com/bennypowers/cem/issues/new
-[installationdocs]: https://bennypowers.github.io/cem/installation/
-[generatedocs]: https://bennypowers.github.io/cem/commands/generate/
-[listdocs]: https://bennypowers.github.io/cem/commands/list/
-[searchdocs]: https://bennypowers.github.io/cem/commands/search/
-[validatedocs]: https://bennypowers.github.io/cem/commands/validate/
-[lspdocs]: https://bennypowers.github.io/cem/docs/lsp/
-[configdocs]: https://bennypowers.github.io/cem/configuration/
+[cem]:              https://github.com/webcomponents/custom-elements-manifest
+[dtcg]:             https://tr.designtokens.org/format/
+[go]:               https://go.dev
+[treesitter]:       https://tree-sitter.github.io/tree-sitter/
+[gpl3]:             https://www.gnu.org/licenses/gpl-3.0.html
+[issuenew]:         https://github.com/bennypowers/cem/issues/new
+[contributingmd]:   https://bennypowers.dev/cem/docs/contributing/
+[installationdocs]: https://bennypowers.dev/cem/docs/installation/
+[generatedocs]:     https://bennypowers.dev/cem/docs/commands/generate/
+[listdocs]:         https://bennypowers.dev/cem/docs/commands/list/
+[searchdocs]:       https://bennypowers.dev/cem/docs/commands/search/
+[validatedocs]:     https://bennypowers.dev/cem/docs/commands/validate/
+[lspdocs]:          https://bennypowers.dev/cem/docs/lsp/
+[configdocs]:       https://bennypowers.dev/cem/docs/configuration/
