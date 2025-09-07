@@ -35,4 +35,11 @@ The `cem` command-line tool has several commands to help you generate and query 
     <p>Ensure your custom elements manifest files conform to the official schema and catch potential issues before publishing.</p>
   </div>
 
+  <div>
+    <h2>
+      <a href="mcp" class="text-blue-600 hover:text-blue-800 no-underline">MCP Server</a>
+    </h2>
+    <p>Start a Model Context Protocol server that provides AI-native access to your manifest data for intelligent HTML generation and component understanding.</p>
+  </div>
+
 </div>

@@ -10,6 +10,7 @@ require (
 	github.com/dunglas/go-urlpattern v0.0.0-20241020164140-716dfa1c80b1
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/gosimple/slug v1.15.0
+	github.com/modelcontextprotocol/go-sdk v0.4.0
 	github.com/nsf/jsondiff v0.0.0-20230430225905-43f6cf3098c1
 	github.com/pterm/pterm v0.12.81
 	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06
@@ -41,6 +42,7 @@ require (
 	github.com/dnephin/pflag v1.0.7 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
+	github.com/google/jsonschema-go v0.2.1-0.20250825175020-748c325cec76 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/gookit/color v1.5.4 // indirect
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
@@ -73,6 +75,7 @@ require (
 	github.com/tliron/commonlog v0.2.19 // indirect
 	github.com/tliron/kutil v0.3.27 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
+	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.39.0 // indirect
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
