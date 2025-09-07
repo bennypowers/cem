@@ -22,24 +22,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	M "bennypowers.dev/cem/manifest"
 	W "bennypowers.dev/cem/workspace"
 	"github.com/stretchr/testify/require"
 )
 
-// loadTestManifest is a helper function to load manifests from test fixtures
-func loadTestManifest(t *testing.T, fixturePath string) *M.Package {
-	t.Helper()
-
-	manifestBytes, err := os.ReadFile(fixturePath)
-	require.NoError(t, err, "Failed to read manifest")
-
-	var manifest M.Package
-	err = json.Unmarshal(manifestBytes, &manifest)
-	require.NoError(t, err, "Failed to parse manifest")
-
-	return &manifest
-}
 
 // createTestWorkspace creates a temporary workspace for testing
 func createTestWorkspace(t *testing.T, fixtureName string) (W.WorkspaceContext, func()) {
@@ -59,7 +45,7 @@ func createTestWorkspace(t *testing.T, fixtureName string) (W.WorkspaceContext, 
 	require.NoError(t, err, "Failed to initialize workspace")
 
 	cleanup := func() {
-		os.RemoveAll(tempDir)
+		_ = os.RemoveAll(tempDir)
 	}
 
 	return workspace, cleanup

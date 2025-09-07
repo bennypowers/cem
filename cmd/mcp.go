@@ -59,7 +59,7 @@ Tools provided:
 		wctx := ctx.Value(W.WorkspaceContextKey).(W.WorkspaceContext)
 
 		// Determine transport based on boolean flags
-		var transport MCP.TransportKind = MCP.TransportStdio // default
+		transport := MCP.TransportStdio // default
 
 		stdioFlag, _ := cmd.Flags().GetBool("stdio")
 		tcpFlag, _ := cmd.Flags().GetBool("tcp")
