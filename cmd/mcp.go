@@ -86,11 +86,17 @@ Tools provided:
 		}
 
 		// Create and run the MCP server
-		server, err := MCP.NewSimpleServer(wctx, transport)
+		server, err := MCP.NewSimpleCEMServer(wctx)
 		if err != nil {
 			return err
 		}
-		return server.Run()
+
+		// For now, only stdio transport is implemented
+		if transport != MCP.TransportStdio {
+			return fmt.Errorf("only stdio transport is currently implemented")
+		}
+
+		return server.Run(ctx)
 	},
 }
 

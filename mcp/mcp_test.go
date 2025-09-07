@@ -26,7 +26,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-
 // createTestWorkspace creates a temporary workspace for testing
 func createTestWorkspace(t *testing.T, fixtureName string) (W.WorkspaceContext, func()) {
 	t.Helper()
