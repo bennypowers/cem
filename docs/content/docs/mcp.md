@@ -1,6 +1,6 @@
 ---
 title: MCP Server
-weight: 50
+weight: 30
 ---
 
 The `cem mcp` command starts a Model Context Protocol (MCP) server that provides AI-native access to your custom elements manifest data. This enables intelligent HTML generation, component understanding, and design system compliance for AI assistants.
