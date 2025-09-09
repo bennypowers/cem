@@ -88,7 +88,9 @@ func (s *SimpleCEMServer) setupTools() {
 	// Add query_registry tool
 	mcp.AddTool(s.server, &mcp.Tool{
 		Name:        "query_registry",
-		Description: "Query the custom elements registry",
+		Description: `Query the custom elements registry.
+		Any time the user is writing HTML,
+		query the registry for available custom elements`,
 	}, func(ctx context.Context, req *mcp.CallToolRequest, args struct {
 		TagName string `json:"tagName,omitempty" jsonschema:"Optional tag name to filter by"`
 	}) (*mcp.CallToolResult, any, error) {
@@ -97,25 +99,14 @@ func (s *SimpleCEMServer) setupTools() {
 
 	// Add validate_element tool
 	mcp.AddTool(s.server, &mcp.Tool{
-		Name:        "validate_element",
-		Description: "Validate custom element HTML usage against manifest definitions",
+		Name:        "validate_html",
+		Description: `Validate all HTML, by checking the use of custom elements in the code
+		against the custom elements manifest descriptions (i.e. guidelines) for those elements`,
 	}, func(ctx context.Context, req *mcp.CallToolRequest, args struct {
-		TagName string `json:"tagName" jsonschema:"The custom element tag name"`
 		HTML    string `json:"html" jsonschema:"The HTML to validate"`
 	}) (*mcp.CallToolResult, any, error) {
 		return s.handleValidateElement(ctx, req, args)
 	})
-
-	// Add suggest_attributes tool
-	mcp.AddTool(s.server, &mcp.Tool{
-		Name:        "suggest_attributes",
-		Description: "Get attribute suggestions for a custom element",
-	}, func(ctx context.Context, req *mcp.CallToolRequest, args struct {
-		TagName string `json:"tagName" jsonschema:"The custom element tag name"`
-	}) (*mcp.CallToolResult, any, error) {
-		return s.handleSuggestAttributes(ctx, req, args)
-	})
-}
 
 // Tool handlers
 
@@ -182,60 +173,6 @@ func (s *SimpleCEMServer) handleValidateElement(ctx context.Context, req *mcp.Ca
 	return &mcp.CallToolResult{
 		Content: []mcp.Content{
 			&mcp.TextContent{Text: validationResult},
-		},
-	}, nil, nil
-}
-
-func (s *SimpleCEMServer) handleSuggestAttributes(ctx context.Context, req *mcp.CallToolRequest, args struct {
-	TagName string `json:"tagName" jsonschema:"The custom element tag name"`
-}) (*mcp.CallToolResult, any, error) {
-	element, err := s.registry.GetElementInfo(args.TagName)
-	if err != nil {
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{
-				&mcp.TextContent{Text: fmt.Sprintf("Element '%s' not found in registry", args.TagName)},
-			},
-		}, nil, nil
-	}
-
-	attributes := element.Attributes()
-	if len(attributes) == 0 {
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{
-				&mcp.TextContent{Text: fmt.Sprintf("Element '%s' has no attributes defined", args.TagName)},
-			},
-		}, nil, nil
-	}
-
-	// Build attribute suggestions
-	suggestions := make([]map[string]interface{}, 0, len(attributes))
-	for _, attr := range attributes {
-		suggestion := map[string]interface{}{
-			"name":        attr.Name(),
-			"type":        attr.Type(),
-			"description": attr.Description(),
-			"required":    attr.Required(),
-		}
-
-		if attr.Default() != "" {
-			suggestion["default"] = attr.Default()
-		}
-
-		if len(attr.Values()) > 0 {
-			suggestion["values"] = attr.Values()
-		}
-
-		suggestions = append(suggestions, suggestion)
-	}
-
-	data, err := json.MarshalIndent(suggestions, "", "  ")
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to marshal attributes: %w", err)
-	}
-
-	return &mcp.CallToolResult{
-		Content: []mcp.Content{
-			&mcp.TextContent{Text: fmt.Sprintf("Attributes for '%s':\n%s", args.TagName, string(data))},
 		},
 	}, nil, nil
 }
