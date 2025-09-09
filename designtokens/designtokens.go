@@ -132,9 +132,7 @@ func MergeDesignTokensToModule(module *M.Module, designTokens types.DesignTokens
 					// If user has no description, use only the design token description
 					if p.Description != "" && token.Description != "" {
 						p.Description = p.Description + "\n\n" + token.Description
-					} else if p.Description != "" {
-						p.Description = p.Description
-					} else {
+					} else if p.Description == "" && token.Description != "" {
 						p.Description = token.Description
 					}
 					p.Syntax = token.Syntax
