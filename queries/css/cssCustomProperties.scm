@@ -34,7 +34,7 @@
 
 ( ; :host {
   ;   /** var call in :host declaration */
-  ;   color: var(--blue);
+  ;   color: var(--_private, var(--blue));
   ; }
   (rule_set
     (selectors
@@ -44,6 +44,8 @@
       (comment)? @comment (#match? @comment "^/\\*\\*")
       .
       (declaration
+        ; properties starting with --_ are treated as private
+        ; and excluded from the manifest
         (property_name) @prop.name (#not-match? @prop.name "^--[^_]")
         ":"
         (call_expression
@@ -51,6 +53,8 @@
           (arguments
             "("
             .
+            ; properties starting with --_ are treated as private
+            ; and excluded from the manifest
             (plain_value) @property (#match? @property "^--[^_]")
             ("," [_(_)]* @default)?
             .
