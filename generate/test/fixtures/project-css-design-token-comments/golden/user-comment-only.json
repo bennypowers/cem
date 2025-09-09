@@ -20,12 +20,11 @@
           "cssProperties": [
             {
               "name": "--my-custom-color",
-              "syntax": "<color>"
+              "description": "USER description for a custom property without design token"
             },
             {
               "name": "--my-custom-background",
-              "description": "USER comment for custom background",
-              "syntax": "<color>"
+              "description": "USER comment for custom background"
             }
           ],
           "customElement": true

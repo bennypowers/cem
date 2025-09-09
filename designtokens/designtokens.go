@@ -127,8 +127,15 @@ func MergeDesignTokensToModule(module *M.Module, designTokens types.DesignTokens
 		if d, ok := d.(*M.CustomElementDeclaration); ok {
 			for i, p := range d.CssProperties {
 				if token, ok := designTokens.Get(p.Name); ok {
-					p.Description = token.GetDescription()
-					p.Syntax = token.GetSyntax()
+					// Merge user's description with design token description
+					// If user has a description, concatenate with two newlines
+					// If user has no description, use only the design token description
+					if p.Description != "" {
+						p.Description = p.Description + "\n\n" + token.Description
+					} else {
+						p.Description = token.Description
+					}
+					p.Syntax = token.Syntax
 					d.CssProperties[i] = p
 				}
 			}
@@ -140,7 +147,19 @@ func MergeDesignTokensToModule(module *M.Module, designTokens types.DesignTokens
 // flattenTokens recursively flattens the DTCG tokens into a map of names to token objects.
 // Names are in CSS custom property format (--foo-bar).
 func flattenTokens(data map[string]any, prefix string) map[string]map[string]any {
+	return flattenTokensWithType(data, prefix, "")
+}
+
+// flattenTokensWithType recursively flattens DTCG tokens with $type inheritance
+func flattenTokensWithType(data map[string]any, prefix string, inheritedType string) map[string]map[string]any {
 	result := make(map[string]map[string]any)
+
+	// Check if this group has a $type that should be inherited
+	currentType := inheritedType
+	if groupType, ok := data["$type"].(string); ok {
+		currentType = groupType
+	}
+
 	for k, v := range data {
 		if strings.HasPrefix(k, "$") {
 			continue
@@ -155,9 +174,18 @@ func flattenTokens(data map[string]any, prefix string) map[string]map[string]any
 		case map[string]any:
 			// if contains $value, it's a leaf token
 			if _, ok := val["$value"]; ok {
-				result[name] = val
+				// Copy the token and add inherited $type if not already present
+				tokenProps := make(map[string]any)
+				maps.Copy(tokenProps, val)
+				if currentType != "" {
+					if _, hasType := tokenProps["$type"]; !hasType {
+						tokenProps["$type"] = currentType
+					}
+				}
+				result[name] = tokenProps
 			} else {
-				maps.Copy(result, flattenTokens(val, name))
+				// Recurse into group with inherited $type
+				maps.Copy(result, flattenTokensWithType(val, name, currentType))
 			}
 		}
 	}

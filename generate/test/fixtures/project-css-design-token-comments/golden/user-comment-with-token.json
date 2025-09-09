@@ -21,12 +21,12 @@
             {
               "name": "--cem-color-primary",
               "description": "USER description for the primary color, specified on the token fallback for a _private var\n\nDESIGN TOKEN description for primary color",
-              "syntax": "<color>"
+              "syntax": "\u003ccolor\u003e"
             },
             {
               "name": "--cem-color-secondary",
-              "description": "USER description for secondary color This is a multiline comment that explains the usage of the secondary color token\n\nDESIGN TOKEN description for secondary color",
-              "syntax": "<color>"
+              "description": "USER description for secondary color\nThis is a multiline comment that explains\nthe usage of the secondary color token\n\nDESIGN TOKEN description for secondary color",
+              "syntax": "\u003ccolor\u003e"
             }
           ],
           "customElement": true

@@ -21,12 +21,12 @@
             {
               "name": "--cem-color-primary",
               "description": "DESIGN TOKEN description for primary color",
-              "syntax": "<color>"
+              "syntax": "\u003ccolor\u003e"
             },
             {
               "name": "--cem-spacing-base",
               "description": "DESIGN TOKEN description for base spacing",
-              "syntax": "<length>"
+              "syntax": "\u003clength\u003e"
             }
           ],
           "customElement": true
