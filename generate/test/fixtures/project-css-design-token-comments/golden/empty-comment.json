@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/empty-comment.js",
+      "declarations": [
+        {
+          "name": "EmptyComment",
+          "description": "Element that has empty comments with design tokens",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-css-design-token-comments/src/empty-comment.ts#L9"
+          },
+          "kind": "class",
+          "tagName": "empty-comment",
+          "cssProperties": [
+            {
+              "name": "--cem-color-primary",
+              "description": "DESIGN TOKEN description for primary color",
+              "syntax": "<color>"
+            },
+            {
+              "name": "--cem-spacing-base",
+              "description": "DESIGN TOKEN description for base spacing",
+              "syntax": "<length>"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "empty-comment",
+          "declaration": {
+            "name": "EmptyComment",
+            "module": "src/empty-comment.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "EmptyComment",
+          "declaration": {
+            "name": "EmptyComment",
+            "module": "src/empty-comment.js"
+          }
+        }
+      ]
+    }
+  ]
+}

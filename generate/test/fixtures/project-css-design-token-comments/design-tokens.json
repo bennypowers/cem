@@ -1,0 +1,20 @@
+{
+  "color": {
+    "$type": "color",
+    "primary": {
+      "$value": "#0066cc",
+      "$description": "DESIGN TOKEN description for primary color"
+    },
+    "secondary": {
+      "$value": "#6666cc",
+      "$description": "DESIGN TOKEN description for secondary color"
+    }
+  },
+  "spacing": {
+    "base": {
+      "$value": "1rem",
+      "$description": "DESIGN TOKEN description for base spacing",
+      "$type": "dimension"
+    }
+  }
+}
