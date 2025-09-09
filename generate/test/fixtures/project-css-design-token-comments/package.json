@@ -1,3 +1,4 @@
 {
-  "name": "css-design-token-comments-test"
+  "name": "css-design-token-comments-test",
+  "customElements": "custom-elements.json"
 }

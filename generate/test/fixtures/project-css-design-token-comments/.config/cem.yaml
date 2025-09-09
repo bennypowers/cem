@@ -1,5 +1,7 @@
 sourceControlRootUrl: https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-css-design-token-comments/
 generate:
+  files:
+    - ./src/*.ts
   designTokens:
     spec: design-tokens.json
     prefix: cem
