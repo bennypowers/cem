@@ -93,6 +93,9 @@ e.g. `var(--_private)`
 finds in your elements
 - You can use jsdoc-like comment syntax before each var call to document your
 variables
+- When both user comments and design token descriptions exist for the same CSS 
+custom property, `cem` uses the user's variable description first, then the 
+design token's description, separated by two new lines.
 
 ### Example
 
@@ -140,6 +143,21 @@ Bad:
 /** comment for --d */
 --c: var(--d);
 ```
+
+### JSON Output Format
+
+The generated manifest uses Go's JSON marshaling, which escapes HTML-sensitive characters for security reasons. Characters like `<` and `>` are converted to `\u003c` and `\u003e` respectively to prevent XSS attacks when JSON is embedded in HTML script tags.
+
+This means CSS syntax values in your manifest will appear escaped:
+
+```json
+{
+  "name": "--primary-color",
+  "syntax": "\u003ccolor\u003e"
+}
+```
+
+This is the expected behavior and doesn't affect the functionality of the manifest. Tools consuming the manifest should handle these standard JSON escape sequences correctly.
 
 ---
 
