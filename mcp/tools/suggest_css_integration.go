@@ -226,7 +226,7 @@ func generateThemeExamples(element types.ElementInfo, args SuggestCssIntegration
 	for _, theme := range themes {
 		section.WriteString(fmt.Sprintf("### %s Theme\n", strings.Title(theme)))
 		section.WriteString("```css\n")
-		
+
 		// Theme-specific custom properties
 		if len(element.CssProperties()) > 0 {
 			section.WriteString(fmt.Sprintf("[data-theme=\"%s\"] %s {\n", theme, element.TagName()))

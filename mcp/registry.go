@@ -25,8 +25,8 @@ import (
 	LSP "bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/helpers"
 	M "bennypowers.dev/cem/manifest"
-	"bennypowers.dev/cem/types"
 	MCPTypes "bennypowers.dev/cem/mcp/types"
+	"bennypowers.dev/cem/types"
 )
 
 // Registry manages custom elements manifests for MCP context
@@ -852,11 +852,11 @@ type ElementInfoAdapter struct {
 	*ElementInfo
 }
 
-func (e *ElementInfoAdapter) TagName() string     { return e.ElementInfo.TagName }
-func (e *ElementInfoAdapter) Name() string        { return e.ElementInfo.Name }
-func (e *ElementInfoAdapter) Description() string { return e.ElementInfo.Description }
-func (e *ElementInfoAdapter) Module() string      { return e.ElementInfo.Module }
-func (e *ElementInfoAdapter) Package() string     { return e.ElementInfo.Package }
+func (e *ElementInfoAdapter) TagName() string      { return e.ElementInfo.TagName }
+func (e *ElementInfoAdapter) Name() string         { return e.ElementInfo.Name }
+func (e *ElementInfoAdapter) Description() string  { return e.ElementInfo.Description }
+func (e *ElementInfoAdapter) Module() string       { return e.ElementInfo.Module }
+func (e *ElementInfoAdapter) Package() string      { return e.ElementInfo.Package }
 func (e *ElementInfoAdapter) Guidelines() []string { return e.ElementInfo.Guidelines }
 
 func (e *ElementInfoAdapter) Attributes() []MCPTypes.Attribute {
@@ -944,19 +944,25 @@ func (e *ElementInfoAdapter) ItemsByKind(kind string) []MCPTypes.Item {
 
 // Item adapters
 type AttributeAdapter struct{ Attribute }
+
 func (a *AttributeAdapter) Kind() string { return string(a.Attribute.Kind()) }
 
 type SlotAdapter struct{ Slot }
+
 func (s *SlotAdapter) Kind() string { return string(s.Slot.Kind()) }
 
 type EventAdapter struct{ Event }
+
 func (e *EventAdapter) Kind() string { return string(e.Event.Kind()) }
 
 type CssPropertyAdapter struct{ CssProperty }
+
 func (c *CssPropertyAdapter) Kind() string { return string(c.CssProperty.Kind()) }
 
 type CssPartAdapter struct{ CssPart }
+
 func (c *CssPartAdapter) Kind() string { return string(c.CssPart.Kind()) }
 
 type CssStateAdapter struct{ CssState }
+
 func (c *CssStateAdapter) Kind() string { return string(c.CssState.Kind()) }

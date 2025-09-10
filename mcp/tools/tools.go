@@ -22,15 +22,15 @@ func Tools(registry types.Registry) ([]types.ToolDefinition, error) {
 		return nil, fmt.Errorf("failed to get current file path")
 	}
 	toolsDir := filepath.Dir(filename)
-	
+
 	var toolDefs []types.ToolDefinition
-	
+
 	// Find all markdown files in the tools directory
 	files, err := filepath.Glob(filepath.Join(toolsDir, "*.md"))
 	if err != nil {
 		return nil, fmt.Errorf("failed to find tool markdown files: %w", err)
 	}
-	
+
 	for _, file := range files {
 		toolDef, err := parseToolDefinition(file, registry)
 		if err != nil {
@@ -38,7 +38,7 @@ func Tools(registry types.Registry) ([]types.ToolDefinition, error) {
 		}
 		toolDefs = append(toolDefs, toolDef)
 	}
-	
+
 	return toolDefs, nil
 }
 
@@ -48,28 +48,28 @@ func parseToolDefinition(filename string, registry types.Registry) (types.ToolDe
 	if err != nil {
 		return types.ToolDefinition{}, fmt.Errorf("failed to read file: %w", err)
 	}
-	
+
 	// Split frontmatter and markdown content
 	parts := strings.SplitN(string(content), "---", 3)
 	if len(parts) < 3 {
 		return types.ToolDefinition{}, fmt.Errorf("invalid markdown format: missing frontmatter")
 	}
-	
+
 	// Parse YAML frontmatter
 	var frontmatter types.Frontmatter
 	if err := yaml.Unmarshal([]byte(parts[1]), &frontmatter); err != nil {
 		return types.ToolDefinition{}, fmt.Errorf("failed to parse frontmatter: %w", err)
 	}
-	
+
 	// Extract description from markdown content
 	description := strings.TrimSpace(parts[2])
-	
+
 	// Get the corresponding handler
 	handler, err := getToolHandler(frontmatter.Name, registry)
 	if err != nil {
 		return types.ToolDefinition{}, fmt.Errorf("failed to get handler for tool %s: %w", frontmatter.Name, err)
 	}
-	
+
 	return types.ToolDefinition{
 		Name:        frontmatter.Name,
 		Description: description,

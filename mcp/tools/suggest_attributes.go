@@ -98,7 +98,7 @@ func handleSuggestAttributes(ctx context.Context, req *mcp.CallToolRequest, regi
 
 		// Check if it's accessibility-related
 		attrName := strings.ToLower(attr.Name())
-		if strings.HasPrefix(attrName, "aria-") || attrName == "role" || 
+		if strings.HasPrefix(attrName, "aria-") || attrName == "role" ||
 			strings.Contains(attrName, "label") || strings.Contains(attrName, "accessible") {
 			accessibilityAttrs = append(accessibilityAttrs, attr)
 		}
@@ -261,7 +261,7 @@ func generateAttributeExamples(element types.ElementInfo, context string) string
 
 	// Basic example
 	basicExample := fmt.Sprintf("<%s", tagName)
-	
+
 	// Add required attributes
 	for _, attr := range element.Attributes() {
 		if attr.Required() {

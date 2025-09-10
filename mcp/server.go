@@ -22,6 +22,7 @@ import (
 	"fmt"
 
 	"bennypowers.dev/cem/lsp/helpers"
+	"bennypowers.dev/cem/mcp/resources"
 	"bennypowers.dev/cem/mcp/tools"
 	"bennypowers.dev/cem/types"
 	"github.com/google/jsonschema-go/jsonschema"
@@ -68,6 +69,11 @@ func NewServer(workspace types.WorkspaceContext) (*Server, error) {
 		return nil, fmt.Errorf("failed to setup tools: %w", err)
 	}
 
+	// Add resources to the server
+	if err := cemServer.setupResources(); err != nil {
+		return nil, fmt.Errorf("failed to setup resources: %w", err)
+	}
+
 	return cemServer, nil
 }
 
@@ -98,7 +104,7 @@ func (s *Server) Run(ctx context.Context) error {
 func (s *Server) setupTools() error {
 	// Create registry adapter for tools
 	registryAdapter := NewRegistryAdapter(s.registry)
-	
+
 	// Get tool definitions from tools package
 	toolDefs, err := tools.Tools(registryAdapter)
 	if err != nil {
@@ -114,7 +120,7 @@ func (s *Server) setupTools() error {
 			if err != nil {
 				return fmt.Errorf("failed to marshal input schema for tool %s: %w", toolDef.Name, err)
 			}
-			
+
 			var schema jsonschema.Schema
 			if err := json.Unmarshal(schemaBytes, &schema); err != nil {
 				return fmt.Errorf("failed to unmarshal input schema for tool %s: %w", toolDef.Name, err)
@@ -127,6 +133,30 @@ func (s *Server) setupTools() error {
 			Description: toolDef.Description,
 			InputSchema: inputSchema,
 		}, toolDef.Handler)
+	}
+
+	return nil
+}
+
+// setupResources adds resources to the MCP server
+func (s *Server) setupResources() error {
+	// Create registry adapter for resources
+	registryAdapter := NewRegistryAdapter(s.registry)
+
+	// Get resource definitions from resources package
+	resourceDefs, err := resources.Resources(registryAdapter)
+	if err != nil {
+		return fmt.Errorf("failed to load resource definitions: %w", err)
+	}
+
+	// Register each resource with the MCP server
+	for _, resourceDef := range resourceDefs {
+		s.server.AddResource(&mcp.Resource{
+			URI:         resourceDef.URI,
+			Name:        resourceDef.Name,
+			MIMEType:    resourceDef.MimeType,
+			Description: resourceDef.Description,
+		}, resourceDef.Handler)
 	}
 
 	return nil

@@ -35,11 +35,11 @@ func handleValidateHtml(ctx context.Context, req *mcp.CallToolRequest, registry 
 
 	// Basic HTML structure analysis
 	html := validateArgs.Html
-	
+
 	// Check for custom elements in the HTML
 	elements := registry.AllElements()
 	var foundElements []string
-	
+
 	for tagName := range elements {
 		// Look for the custom element in the HTML
 		if strings.Contains(html, "<"+tagName) || strings.Contains(html, "</"+tagName) {
@@ -134,7 +134,7 @@ func validateAccessibility(html string, elements map[string]types.ElementInfo) s
 
 	// Check landmark structure
 	hasMain := strings.Contains(html, "<main") || strings.Contains(html, `role="main"`)
-	
+
 	if !hasMain {
 		issues = append(issues, "No main landmark found - consider adding <main> element")
 	}
@@ -192,8 +192,8 @@ func validateSemanticStructure(html string) string {
 	divCount := strings.Count(html, "<div")
 	sectionCount := strings.Count(html, "<section")
 	articleCount := strings.Count(html, "<article")
-	
-	if divCount > 5 && (sectionCount + articleCount) == 0 {
+
+	if divCount > 5 && (sectionCount+articleCount) == 0 {
 		suggestions = append(suggestions, "Consider using semantic elements like <section> or <article> instead of multiple <div> elements")
 	}
 
@@ -242,7 +242,7 @@ func validateManifestCompliance(html string, elements map[string]types.ElementIn
 			// Extract the element usage from HTML
 			elementRegex := regexp.MustCompile(`<` + regexp.QuoteMeta(tagName) + `[^>]*>`)
 			usages := elementRegex.FindAllString(html, -1)
-			
+
 			for _, usage := range usages {
 				// Check required attributes
 				for _, attr := range element.Attributes() {
@@ -268,7 +268,7 @@ func validateManifestCompliance(html string, elements map[string]types.ElementIn
 								}
 							}
 							if !isValid {
-								issues = append(issues, fmt.Sprintf("Invalid value '%s' for attribute '%s' in <%s>. Valid values: %s", 
+								issues = append(issues, fmt.Sprintf("Invalid value '%s' for attribute '%s' in <%s>. Valid values: %s",
 									value, attr.Name(), tagName, strings.Join(validValues, ", ")))
 							}
 						}
@@ -330,7 +330,7 @@ func validateSpecificElement(html string, tagName string, element types.ElementI
 
 	for i, usage := range usages {
 		results.WriteString(fmt.Sprintf("%d. `%s`\n", i+1, usage))
-		
+
 		// Validate attributes for this usage
 		var attrIssues []string
 		for _, attr := range element.Attributes() {

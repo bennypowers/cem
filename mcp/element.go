@@ -36,15 +36,15 @@ func (s *Server) handleElementResource(ctx context.Context, tagName string) (*mc
 // EnhancedElementData provides rich element information for AI consumption
 type EnhancedElementData struct {
 	*ElementInfo
-	
+
 	// Additional AI-friendly metadata
-	Categories      []string            `json:"categories"`
-	UsagePatterns   []UsagePattern      `json:"usagePatterns"`
+	Categories        []string          `json:"categories"`
+	UsagePatterns     []UsagePattern    `json:"usagePatterns"`
 	AccessibilityInfo AccessibilityInfo `json:"accessibilityInfo"`
-	CssIntegration  CssIntegration      `json:"cssIntegration"`
-	Examples        []ElementExample    `json:"examples"`
-	Guidelines      []string            `json:"guidelines"`
-	RelatedElements []string            `json:"relatedElements,omitempty"`
+	CssIntegration    CssIntegration    `json:"cssIntegration"`
+	Examples          []ElementExample  `json:"examples"`
+	Guidelines        []string          `json:"guidelines"`
+	RelatedElements   []string          `json:"relatedElements,omitempty"`
 }
 
 // UsagePattern describes common ways to use the element
@@ -67,11 +67,11 @@ type AccessibilityInfo struct {
 
 // CssIntegration provides CSS usage guidance
 type CssIntegration struct {
-	ThemingApproach   string                    `json:"themingApproach,omitempty"`
-	ResponsivePatterns []string                 `json:"responsivePatterns,omitempty"`
-	PropertyExamples  map[string]string         `json:"propertyExamples,omitempty"`
-	PartExamples      map[string]string         `json:"partExamples,omitempty"`
-	StateExamples     map[string]string         `json:"stateExamples,omitempty"`
+	ThemingApproach    string            `json:"themingApproach,omitempty"`
+	ResponsivePatterns []string          `json:"responsivePatterns,omitempty"`
+	PropertyExamples   map[string]string `json:"propertyExamples,omitempty"`
+	PartExamples       map[string]string `json:"partExamples,omitempty"`
+	StateExamples      map[string]string `json:"stateExamples,omitempty"`
 }
 
 // ElementExample provides usage examples
@@ -85,16 +85,16 @@ type ElementExample struct {
 // buildEnhancedElementData creates comprehensive element data for AI consumption
 func (s *Server) buildEnhancedElementData(element *ElementInfo) *EnhancedElementData {
 	enhanced := &EnhancedElementData{
-		ElementInfo:     element,
-		Categories:      s.categorizeElement(element),
-		UsagePatterns:   s.generateUsagePatterns(element),
+		ElementInfo:       element,
+		Categories:        s.categorizeElement(element),
+		UsagePatterns:     s.generateUsagePatterns(element),
 		AccessibilityInfo: s.generateAccessibilityInfo(element),
-		CssIntegration:  s.generateCssIntegration(element),
-		Examples:        s.generateElementExamples(element),
-		Guidelines:      s.extractGuidelines(element),
-		RelatedElements: s.findRelatedElements(element),
+		CssIntegration:    s.generateCssIntegration(element),
+		Examples:          s.generateElementExamples(element),
+		Guidelines:        s.extractGuidelines(element),
+		RelatedElements:   s.findRelatedElements(element),
 	}
-	
+
 	return enhanced
 }
 
@@ -102,47 +102,47 @@ func (s *Server) buildEnhancedElementData(element *ElementInfo) *EnhancedElement
 func (s *Server) categorizeElement(element *ElementInfo) []string {
 	var categories []string
 	tagName := strings.ToLower(element.TagName)
-	
+
 	// Form elements
 	if s.isFormElement(element) {
 		categories = append(categories, "form")
 	}
-	
+
 	// Layout elements
 	if s.isLayoutElement(element) {
 		categories = append(categories, "layout")
 	}
-	
+
 	// Interactive elements
 	if strings.Contains(tagName, "button") || strings.Contains(tagName, "link") {
 		categories = append(categories, "interactive")
 	}
-	
+
 	// Navigation elements
 	if strings.Contains(tagName, "nav") || strings.Contains(tagName, "menu") {
 		categories = append(categories, "navigation")
 	}
-	
+
 	// Display elements
 	if strings.Contains(tagName, "card") || strings.Contains(tagName, "panel") {
 		categories = append(categories, "display")
 	}
-	
+
 	// Content elements
 	if strings.Contains(tagName, "text") || strings.Contains(tagName, "content") {
 		categories = append(categories, "content")
 	}
-	
+
 	// Media elements
 	if strings.Contains(tagName, "image") || strings.Contains(tagName, "video") || strings.Contains(tagName, "audio") {
 		categories = append(categories, "media")
 	}
-	
+
 	// If no specific category matches, use generic
 	if len(categories) == 0 {
 		categories = append(categories, "generic")
 	}
-	
+
 	return categories
 }
 
@@ -150,10 +150,10 @@ func (s *Server) categorizeElement(element *ElementInfo) []string {
 func (s *Server) generateUsagePatterns(element *ElementInfo) []UsagePattern {
 	var patterns []UsagePattern
 	tagName := element.TagName
-	
+
 	// Basic usage pattern
 	basicExample := fmt.Sprintf("<%s", tagName)
-	
+
 	// Add required attributes
 	for _, attr := range element.Attributes() {
 		if attr.Required() {
@@ -165,7 +165,7 @@ func (s *Server) generateUsagePatterns(element *ElementInfo) []UsagePattern {
 			}
 		}
 	}
-	
+
 	// Add default slot content if available
 	hasDefaultSlot := false
 	for _, slot := range element.Slots() {
@@ -174,20 +174,20 @@ func (s *Server) generateUsagePatterns(element *ElementInfo) []UsagePattern {
 			break
 		}
 	}
-	
+
 	if hasDefaultSlot {
 		basicExample += ">Content</" + tagName + ">"
 	} else {
 		basicExample += "></" + tagName + ">"
 	}
-	
+
 	patterns = append(patterns, UsagePattern{
 		Name:        "Basic Usage",
 		Description: "Standard element usage with minimal configuration",
 		Example:     basicExample,
 		Context:     "general",
 	})
-	
+
 	// Form context pattern
 	if s.isFormElement(element) {
 		patterns = append(patterns, UsagePattern{
@@ -197,7 +197,7 @@ func (s *Server) generateUsagePatterns(element *ElementInfo) []UsagePattern {
 			Context:     "form",
 		})
 	}
-	
+
 	// Layout context pattern
 	if s.isLayoutElement(element) {
 		patterns = append(patterns, UsagePattern{
@@ -207,7 +207,7 @@ func (s *Server) generateUsagePatterns(element *ElementInfo) []UsagePattern {
 			Context:     "layout",
 		})
 	}
-	
+
 	return patterns
 }
 
@@ -215,7 +215,7 @@ func (s *Server) generateUsagePatterns(element *ElementInfo) []UsagePattern {
 func (s *Server) generateAccessibilityInfo(element *ElementInfo) AccessibilityInfo {
 	info := AccessibilityInfo{}
 	tagName := strings.ToLower(element.TagName)
-	
+
 	// Recommend roles based on element type
 	switch {
 	case strings.Contains(tagName, "button"):
@@ -236,7 +236,7 @@ func (s *Server) generateAccessibilityInfo(element *ElementInfo) AccessibilityIn
 		info.FocusManagement = "Focus should be trapped within the dialog"
 		info.KeyboardSupport = "Escape key should close the dialog"
 	}
-	
+
 	// Check for accessibility-related attributes
 	var ariaAttrs []string
 	for _, attr := range element.Attributes() {
@@ -248,12 +248,12 @@ func (s *Server) generateAccessibilityInfo(element *ElementInfo) AccessibilityIn
 	if len(ariaAttrs) > 0 {
 		info.AriaAttributes = append(info.AriaAttributes, ariaAttrs...)
 	}
-	
+
 	// Color contrast guidance for themed elements
 	if len(element.CssProperties()) > 0 {
 		info.ColorContrast = "Ensure sufficient color contrast (4.5:1) when customizing colors"
 	}
-	
+
 	return info
 }
 
@@ -264,7 +264,7 @@ func (s *Server) generateCssIntegration(element *ElementInfo) CssIntegration {
 		PartExamples:     make(map[string]string),
 		StateExamples:    make(map[string]string),
 	}
-	
+
 	// CSS Custom Properties examples
 	if len(element.CssProperties()) > 0 {
 		integration.ThemingApproach = "Use CSS custom properties for consistent theming"
@@ -272,19 +272,19 @@ func (s *Server) generateCssIntegration(element *ElementInfo) CssIntegration {
 			integration.PropertyExamples[prop.Name()] = s.generatePropertyExample(prop)
 		}
 	}
-	
+
 	// CSS Parts examples
 	for _, part := range element.CssParts() {
-		integration.PartExamples[part.Name()] = fmt.Sprintf("%s::%s { /* Style the %s */ }", 
+		integration.PartExamples[part.Name()] = fmt.Sprintf("%s::%s { /* Style the %s */ }",
 			element.TagName, part.Name(), part.Description())
 	}
-	
+
 	// CSS States examples
 	for _, state := range element.CssStates() {
-		integration.StateExamples[state.Name()] = fmt.Sprintf("%s:%s { /* Style when %s */ }", 
+		integration.StateExamples[state.Name()] = fmt.Sprintf("%s:%s { /* Style when %s */ }",
 			element.TagName, state.Name(), state.Description())
 	}
-	
+
 	// Responsive patterns
 	if len(element.CssProperties()) > 0 {
 		integration.ResponsivePatterns = []string{
@@ -293,14 +293,14 @@ func (s *Server) generateCssIntegration(element *ElementInfo) CssIntegration {
 			"Consider mobile-first approach with progressive enhancement",
 		}
 	}
-	
+
 	return integration
 }
 
 // generateElementExamples creates comprehensive usage examples
 func (s *Server) generateElementExamples(element *ElementInfo) []ElementExample {
 	var examples []ElementExample
-	
+
 	// Basic example
 	examples = append(examples, ElementExample{
 		Title:       "Basic Usage",
@@ -308,7 +308,7 @@ func (s *Server) generateElementExamples(element *ElementInfo) []ElementExample 
 		Html:        s.generateBasicExample(element),
 		Context:     "general",
 	})
-	
+
 	// Accessible example
 	examples = append(examples, ElementExample{
 		Title:       "Accessible Implementation",
@@ -316,7 +316,7 @@ func (s *Server) generateElementExamples(element *ElementInfo) []ElementExample 
 		Html:        s.generateAccessibleExample(element),
 		Context:     "accessibility",
 	})
-	
+
 	// Themed example if CSS properties are available
 	if len(element.CssProperties()) > 0 {
 		examples = append(examples, ElementExample{
@@ -326,7 +326,7 @@ func (s *Server) generateElementExamples(element *ElementInfo) []ElementExample 
 			Context:     "styling",
 		})
 	}
-	
+
 	return examples
 }
 
@@ -338,13 +338,13 @@ func (s *Server) generateBasicExample(element *ElementInfo) string {
 
 func (s *Server) generateAccessibleExample(element *ElementInfo) string {
 	// Implementation details for accessible example generation
-	return fmt.Sprintf("<%s role=\"button\" aria-label=\"Accessible %s\">Content</%s>", 
+	return fmt.Sprintf("<%s role=\"button\" aria-label=\"Accessible %s\">Content</%s>",
 		element.TagName, element.TagName, element.TagName)
 }
 
 func (s *Server) generateThemedExample(element *ElementInfo) string {
 	// Implementation details for themed example generation
-	return fmt.Sprintf("<%s style=\"%s: custom-value;\">Themed content</%s>", 
+	return fmt.Sprintf("<%s style=\"%s: custom-value;\">Themed content</%s>",
 		element.TagName, element.CssProperties()[0].Name(), element.TagName)
 }
 
@@ -354,14 +354,14 @@ func (s *Server) generatePropertyExample(prop CssProperty) string {
 
 func (s *Server) isFormElement(element *ElementInfo) bool {
 	tagName := strings.ToLower(element.TagName)
-	return strings.Contains(tagName, "input") || strings.Contains(tagName, "button") || 
-		   strings.Contains(tagName, "field") || strings.Contains(tagName, "form")
+	return strings.Contains(tagName, "input") || strings.Contains(tagName, "button") ||
+		strings.Contains(tagName, "field") || strings.Contains(tagName, "form")
 }
 
 func (s *Server) isLayoutElement(element *ElementInfo) bool {
 	tagName := strings.ToLower(element.TagName)
-	return strings.Contains(tagName, "grid") || strings.Contains(tagName, "flex") || 
-		   strings.Contains(tagName, "layout") || strings.Contains(tagName, "card")
+	return strings.Contains(tagName, "grid") || strings.Contains(tagName, "flex") ||
+		strings.Contains(tagName, "layout") || strings.Contains(tagName, "card")
 }
 
 func (s *Server) generateFormExample(element *ElementInfo) string {
@@ -384,24 +384,24 @@ func (s *Server) generateLayoutExample(element *ElementInfo) string {
 
 func (s *Server) extractGuidelines(element *ElementInfo) []string {
 	var guidelines []string
-	
+
 	// Extract from element description
 	desc := element.Description
 	if desc != "" {
 		// Look for guideline keywords
 		if strings.Contains(strings.ToLower(desc), "should") ||
-		   strings.Contains(strings.ToLower(desc), "must") ||
-		   strings.Contains(strings.ToLower(desc), "recommended") {
+			strings.Contains(strings.ToLower(desc), "must") ||
+			strings.Contains(strings.ToLower(desc), "recommended") {
 			guidelines = append(guidelines, desc)
 		}
 	}
-	
+
 	// Extract from attribute guidelines
 	for _, attr := range element.Attributes() {
 		attrGuidelines := attr.Guidelines()
 		guidelines = append(guidelines, attrGuidelines...)
 	}
-	
+
 	return guidelines
 }
 
@@ -409,7 +409,7 @@ func (s *Server) findRelatedElements(element *ElementInfo) []string {
 	// Simple implementation - could be enhanced with more sophisticated matching
 	var related []string
 	tagName := element.TagName
-	
+
 	elements := s.registry.GetAllElements()
 	for otherTagName := range elements {
 		if otherTagName != tagName {
@@ -419,19 +419,19 @@ func (s *Server) findRelatedElements(element *ElementInfo) []string {
 			}
 		}
 	}
-	
+
 	return related
 }
 
 func (s *Server) areElementsRelated(tagName1, tagName2 string) bool {
 	// Simple heuristic for related elements
 	commonPrefixes := []string{"button", "input", "form", "card", "nav", "menu"}
-	
+
 	for _, prefix := range commonPrefixes {
 		if strings.HasPrefix(tagName1, prefix) && strings.HasPrefix(tagName2, prefix) {
 			return true
 		}
 	}
-	
+
 	return false
 }

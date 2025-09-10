@@ -52,7 +52,7 @@ func handleGenerateAccessibleHtml(ctx context.Context, req *mcp.CallToolRequest,
 
 	// Generate HTML based on context
 	generatedHTML := generateAccessibleHTML(element, genArgs)
-	
+
 	response.WriteString("## Generated Accessible HTML\n\n")
 	response.WriteString("```html\n")
 	response.WriteString(generatedHTML)
@@ -81,7 +81,7 @@ func generateAccessibleHTML(element types.ElementInfo, args GenerateAccessibleHt
 	var html strings.Builder
 
 	tagName := element.TagName()
-	
+
 	// Start opening tag
 	html.WriteString("<" + tagName)
 
@@ -373,7 +373,7 @@ func generateAlternativeImplementations(element types.ElementInfo, args Generate
 	alternatives.WriteString("\n```\n\n")
 
 	// Form context version
-	if strings.ToLower(args.Context) == "form" || 
+	if strings.ToLower(args.Context) == "form" ||
 		strings.Contains(strings.ToLower(element.TagName()), "input") {
 		alternatives.WriteString("### Form Context\n")
 		alternatives.WriteString("```html\n")

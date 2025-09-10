@@ -11,13 +11,13 @@ import (
 
 // AccessibilityResource provides comprehensive accessibility guidance
 type AccessibilityResource struct {
-	Overview            string                    `json:"overview"`
-	WcagGuidelines      []WcagGuideline          `json:"wcagGuidelines"`
-	ElementPatterns     map[string]A11yPattern   `json:"elementPatterns"`
-	CommonPatterns      []A11yPattern            `json:"commonPatterns"`
-	TestingGuidance     TestingGuidance          `json:"testingGuidance"`
-	Tools               []A11yTool               `json:"tools"`
-	Checklist           []ChecklistItem          `json:"checklist"`
+	Overview        string                 `json:"overview"`
+	WcagGuidelines  []WcagGuideline        `json:"wcagGuidelines"`
+	ElementPatterns map[string]A11yPattern `json:"elementPatterns"`
+	CommonPatterns  []A11yPattern          `json:"commonPatterns"`
+	TestingGuidance TestingGuidance        `json:"testingGuidance"`
+	Tools           []A11yTool             `json:"tools"`
+	Checklist       []ChecklistItem        `json:"checklist"`
 }
 
 // WcagGuideline represents a WCAG accessibility guideline
@@ -32,12 +32,12 @@ type WcagGuideline struct {
 
 // A11yPattern represents an accessibility pattern for specific use cases
 type A11yPattern struct {
-	Name        string   `json:"name"`
-	Description string   `json:"description"`
-	WhenToUse   string   `json:"whenToUse"`
-	AriaRoles   []string `json:"ariaRoles,omitempty"`
-	AriaProps   []string `json:"ariaProperties,omitempty"`
-	Examples    []string `json:"examples"`
+	Name           string   `json:"name"`
+	Description    string   `json:"description"`
+	WhenToUse      string   `json:"whenToUse"`
+	AriaRoles      []string `json:"ariaRoles,omitempty"`
+	AriaProps      []string `json:"ariaProperties,omitempty"`
+	Examples       []string `json:"examples"`
 	CommonMistakes []string `json:"commonMistakes,omitempty"`
 }
 
@@ -59,9 +59,9 @@ type TestingMethod struct {
 
 // ScreenReader describes screen reader testing
 type ScreenReader struct {
-	Name         string   `json:"name"`
-	Platform     string   `json:"platform"`
-	TestingTips  []string `json:"testingTips"`
+	Name        string   `json:"name"`
+	Platform    string   `json:"platform"`
+	TestingTips []string `json:"testingTips"`
 }
 
 // A11yTool represents an accessibility tool
@@ -203,7 +203,7 @@ func (s *Server) generateWcagGuidelines() []WcagGuideline {
 // generateElementAccessibilityPatterns creates patterns for specific element types
 func (s *Server) generateElementAccessibilityPatterns() map[string]A11yPattern {
 	patterns := make(map[string]A11yPattern)
-	
+
 	elements := s.registry.GetAllElements()
 	for tagName, element := range elements {
 		pattern := s.generateElementAccessibilityPattern(element)
@@ -211,14 +211,14 @@ func (s *Server) generateElementAccessibilityPatterns() map[string]A11yPattern {
 			patterns[tagName] = pattern
 		}
 	}
-	
+
 	return patterns
 }
 
 // generateElementAccessibilityPattern creates accessibility pattern for a specific element
 func (s *Server) generateElementAccessibilityPattern(element *ElementInfo) A11yPattern {
 	tagName := strings.ToLower(element.TagName)
-	
+
 	switch {
 	case strings.Contains(tagName, "button"):
 		return A11yPattern{
@@ -237,7 +237,7 @@ func (s *Server) generateElementAccessibilityPattern(element *ElementInfo) A11yP
 				"Missing aria-label for icon-only buttons",
 			},
 		}
-		
+
 	case strings.Contains(tagName, "input") || strings.Contains(tagName, "field"):
 		return A11yPattern{
 			Name:        "Form Input Pattern",
@@ -255,7 +255,7 @@ func (s *Server) generateElementAccessibilityPattern(element *ElementInfo) A11yP
 				"Missing validation feedback",
 			},
 		}
-		
+
 	case strings.Contains(tagName, "dialog") || strings.Contains(tagName, "modal"):
 		return A11yPattern{
 			Name:        "Dialog Pattern",
@@ -276,7 +276,7 @@ func (s *Server) generateElementAccessibilityPattern(element *ElementInfo) A11yP
 				"Background content still accessible",
 			},
 		}
-		
+
 	default:
 		// Generic pattern based on element features
 		if len(element.Events()) > 0 {
@@ -296,7 +296,7 @@ func (s *Server) generateElementAccessibilityPattern(element *ElementInfo) A11yP
 			}
 		}
 	}
-	
+
 	return A11yPattern{}
 }
 
@@ -402,8 +402,8 @@ func (s *Server) generateTestingGuidance() TestingGuidance {
 		},
 		ScreenReaders: []ScreenReader{
 			{
-				Name:        "NVDA",
-				Platform:    "Windows",
+				Name:     "NVDA",
+				Platform: "Windows",
 				TestingTips: []string{
 					"Free and widely used",
 					"Good for testing basic functionality",
@@ -412,8 +412,8 @@ func (s *Server) generateTestingGuidance() TestingGuidance {
 				},
 			},
 			{
-				Name:        "JAWS",
-				Platform:    "Windows",
+				Name:     "JAWS",
+				Platform: "Windows",
 				TestingTips: []string{
 					"Most popular commercial screen reader",
 					"Test if possible due to market share",
@@ -421,8 +421,8 @@ func (s *Server) generateTestingGuidance() TestingGuidance {
 				},
 			},
 			{
-				Name:        "VoiceOver",
-				Platform:    "macOS/iOS",
+				Name:     "VoiceOver",
+				Platform: "macOS/iOS",
 				TestingTips: []string{
 					"Built into Apple devices",
 					"Use rotor for navigation",

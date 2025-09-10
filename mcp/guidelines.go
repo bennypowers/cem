@@ -11,23 +11,23 @@ import (
 
 // GuidelinesResource provides extracted usage guidelines from manifests
 type GuidelinesResource struct {
-	Overview         string                    `json:"overview"`
-	GeneralGuidelines []Guideline              `json:"generalGuidelines"`
-	ElementGuidelines map[string][]Guideline   `json:"elementGuidelines"`
-	AttributeGuidelines map[string][]Guideline `json:"attributeGuidelines"`
-	AccessibilityGuidelines []Guideline        `json:"accessibilityGuidelines"`
-	CssGuidelines    []Guideline              `json:"cssGuidelines"`
-	BestPractices    []BestPractice           `json:"bestPractices"`
+	Overview                string                 `json:"overview"`
+	GeneralGuidelines       []Guideline            `json:"generalGuidelines"`
+	ElementGuidelines       map[string][]Guideline `json:"elementGuidelines"`
+	AttributeGuidelines     map[string][]Guideline `json:"attributeGuidelines"`
+	AccessibilityGuidelines []Guideline            `json:"accessibilityGuidelines"`
+	CssGuidelines           []Guideline            `json:"cssGuidelines"`
+	BestPractices           []BestPractice         `json:"bestPractices"`
 }
 
 // Guideline represents a single usage guideline
 type Guideline struct {
-	Text        string   `json:"text"`
-	Source      string   `json:"source"`
-	Type        string   `json:"type"`
-	Context     string   `json:"context,omitempty"`
-	Examples    []string `json:"examples,omitempty"`
-	Severity    string   `json:"severity"` // "must", "should", "recommended"
+	Text     string   `json:"text"`
+	Source   string   `json:"source"`
+	Type     string   `json:"type"`
+	Context  string   `json:"context,omitempty"`
+	Examples []string `json:"examples,omitempty"`
+	Severity string   `json:"severity"` // "must", "should", "recommended"
 }
 
 // BestPractice represents a design system best practice
@@ -42,24 +42,24 @@ type BestPractice struct {
 // handleGuidelinesResource extracts and provides usage guidelines from manifest data
 func (s *Server) handleGuidelinesResource(ctx context.Context, uri string) (*mcp.ReadResourceResult, error) {
 	elements := s.registry.GetAllElements()
-	
+
 	guidelines := &GuidelinesResource{
-		Overview: s.generateGuidelinesOverview(len(elements)),
-		GeneralGuidelines: s.extractGeneralGuidelines(),
-		ElementGuidelines: make(map[string][]Guideline),
-		AttributeGuidelines: make(map[string][]Guideline),
+		Overview:                s.generateGuidelinesOverview(len(elements)),
+		GeneralGuidelines:       s.extractGeneralGuidelines(),
+		ElementGuidelines:       make(map[string][]Guideline),
+		AttributeGuidelines:     make(map[string][]Guideline),
 		AccessibilityGuidelines: s.generateAccessibilityGuidelines(),
-		CssGuidelines: s.generateCssGuidelines(),
-		BestPractices: s.generateBestPractices(),
+		CssGuidelines:           s.generateCssGuidelines(),
+		BestPractices:           s.generateBestPractices(),
 	}
-	
+
 	// Extract guidelines from each element
 	for tagName, element := range elements {
 		elementGuidelines := s.extractElementGuidelines(element)
 		if len(elementGuidelines) > 0 {
 			guidelines.ElementGuidelines[tagName] = elementGuidelines
 		}
-		
+
 		// Extract attribute-specific guidelines
 		for _, attr := range element.Attributes() {
 			attrGuidelines := s.extractAttributeGuidelines(attr, tagName)
@@ -69,7 +69,7 @@ func (s *Server) handleGuidelinesResource(ctx context.Context, uri string) (*mcp
 			}
 		}
 	}
-	
+
 	contents, err := json.MarshalIndent(guidelines, "", "  ")
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal guidelines: %w", err)
@@ -146,15 +146,15 @@ func (s *Server) extractGeneralGuidelines() []Guideline {
 // extractElementGuidelines extracts guidelines from element descriptions and metadata
 func (s *Server) extractElementGuidelines(element *ElementInfo) []Guideline {
 	var guidelines []Guideline
-	
+
 	description := element.Description
 	if description == "" {
 		return guidelines
 	}
-	
+
 	// Look for guideline keywords in descriptions
 	sentences := s.splitIntoSentences(description)
-	
+
 	for _, sentence := range sentences {
 		severity := s.determineSeverity(sentence)
 		if severity != "" {
@@ -164,32 +164,32 @@ func (s *Server) extractElementGuidelines(element *ElementInfo) []Guideline {
 				Type:     "usage",
 				Severity: severity,
 			}
-			
+
 			// Add context based on element type
 			if s.isFormElement(element) {
 				guideline.Context = "form"
 			} else if s.isLayoutElement(element) {
 				guideline.Context = "layout"
 			}
-			
+
 			guidelines = append(guidelines, guideline)
 		}
 	}
-	
+
 	return guidelines
 }
 
 // extractAttributeGuidelines extracts guidelines from attribute descriptions
 func (s *Server) extractAttributeGuidelines(attr Attribute, elementName string) []Guideline {
 	var guidelines []Guideline
-	
+
 	description := attr.Description()
 	if description == "" {
 		return guidelines
 	}
-	
+
 	sentences := s.splitIntoSentences(description)
-	
+
 	for _, sentence := range sentences {
 		severity := s.determineSeverity(sentence)
 		if severity != "" {
@@ -199,7 +199,7 @@ func (s *Server) extractAttributeGuidelines(attr Attribute, elementName string) 
 				Type:     "attribute",
 				Severity: severity,
 			}
-			
+
 			// Add examples for enum attributes
 			if values := attr.Values(); len(values) > 0 {
 				for _, value := range values {
@@ -207,11 +207,11 @@ func (s *Server) extractAttributeGuidelines(attr Attribute, elementName string) 
 					guideline.Examples = append(guideline.Examples, example)
 				}
 			}
-			
+
 			guidelines = append(guidelines, guideline)
 		}
 	}
-	
+
 	// Add required attribute guideline
 	if attr.Required() {
 		guidelines = append(guidelines, Guideline{
@@ -221,7 +221,7 @@ func (s *Server) extractAttributeGuidelines(attr Attribute, elementName string) 
 			Severity: "must",
 		})
 	}
-	
+
 	return guidelines
 }
 
@@ -409,7 +409,7 @@ func (s *Server) splitIntoSentences(text string) []string {
 	// Simple sentence splitting - could be enhanced with more sophisticated logic
 	sentences := strings.Split(text, ". ")
 	var result []string
-	
+
 	for _, sentence := range sentences {
 		sentence = strings.TrimSpace(sentence)
 		if sentence != "" {
@@ -420,37 +420,37 @@ func (s *Server) splitIntoSentences(text string) []string {
 			result = append(result, sentence)
 		}
 	}
-	
+
 	return result
 }
 
 // determineSeverity determines the severity level of a guideline based on keywords
 func (s *Server) determineSeverity(text string) string {
 	lowerText := strings.ToLower(text)
-	
+
 	// Must/Required keywords
-	if strings.Contains(lowerText, "must") || 
-	   strings.Contains(lowerText, "required") || 
-	   strings.Contains(lowerText, "essential") ||
-	   strings.Contains(lowerText, "mandatory") {
+	if strings.Contains(lowerText, "must") ||
+		strings.Contains(lowerText, "required") ||
+		strings.Contains(lowerText, "essential") ||
+		strings.Contains(lowerText, "mandatory") {
 		return "must"
 	}
-	
+
 	// Should/Recommended keywords
-	if strings.Contains(lowerText, "should") || 
-	   strings.Contains(lowerText, "recommended") || 
-	   strings.Contains(lowerText, "best practice") ||
-	   strings.Contains(lowerText, "prefer") {
+	if strings.Contains(lowerText, "should") ||
+		strings.Contains(lowerText, "recommended") ||
+		strings.Contains(lowerText, "best practice") ||
+		strings.Contains(lowerText, "prefer") {
 		return "should"
 	}
-	
+
 	// Suggestion keywords
-	if strings.Contains(lowerText, "consider") || 
-	   strings.Contains(lowerText, "may") || 
-	   strings.Contains(lowerText, "can") ||
-	   strings.Contains(lowerText, "optional") {
+	if strings.Contains(lowerText, "consider") ||
+		strings.Contains(lowerText, "may") ||
+		strings.Contains(lowerText, "can") ||
+		strings.Contains(lowerText, "optional") {
 		return "recommended"
 	}
-	
+
 	return ""
 }
