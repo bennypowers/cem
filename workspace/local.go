@@ -297,7 +297,8 @@ func (c *FileSystemWorkspaceContext) FSPathToModule(fsPath string) (string, erro
 
 // ResolveModuleDependency resolves a dependency path relative to a module
 func (c *FileSystemWorkspaceContext) ResolveModuleDependency(
-	modulePath, dependencyPath string,
+	modulePath,
+	dependencyPath string,
 ) (string, error) {
 	if filepath.IsAbs(dependencyPath) {
 		// Convert to module-relative path
