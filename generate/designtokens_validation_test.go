@@ -50,14 +50,14 @@ func (m *mockDesignTokens) Get(name string) (types.TokenResult, bool) {
 	return nil, false
 }
 
-// Mock token result for testing  
+// Mock token result for testing
 type mockTokenResult struct {
 	value       any
 	description string
 	syntax      string
 }
 
-func (m *mockTokenResult) GetValue() any        { return m.value }
+func (m *mockTokenResult) GetValue() any          { return m.value }
 func (m *mockTokenResult) GetDescription() string { return m.description }
 func (m *mockTokenResult) GetSyntax() string      { return m.syntax }
 
