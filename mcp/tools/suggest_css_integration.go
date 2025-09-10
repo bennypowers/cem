@@ -141,26 +141,36 @@ func generateCustomPropertiesSection(
 		}
 		section.WriteString(fmt.Sprintf("**Inherits:** %t\n\n", prop.Inherits()))
 
-		// Generate usage example
-		section.WriteString("**Example:**\n")
+		// Generate usage guidance
+		section.WriteString("**Usage:**\n")
 		section.WriteString("```css\n")
 		section.WriteString(fmt.Sprintf("%s {\n", element.TagName()))
 		if prop.Initial() != "" {
-			section.WriteString(fmt.Sprintf("  %s: %s; /* custom value */\n", prop.Name(), generateExampleValue(prop)))
+			section.WriteString(fmt.Sprintf("  %s: %s; /* default value */\n", prop.Name(), prop.Initial()))
 		} else {
-			section.WriteString(fmt.Sprintf("  %s: your-value;\n", prop.Name()))
+			section.WriteString(fmt.Sprintf("  %s: /* set appropriate value based on %s */;\n", prop.Name(), prop.Syntax()))
 		}
 		section.WriteString("}\n")
 		section.WriteString("```\n\n")
 	}
 
-	// Generate comprehensive theming example
-	section.WriteString("### Complete Theming Example\n")
+	// Generate theming guidance
+	section.WriteString("### Theming Guidance\n")
+	section.WriteString("When customizing these properties, consider:\n")
+	section.WriteString("- The element's intended purpose and context\n")
+	section.WriteString("- Accessibility requirements (contrast, readability)\n")
+	section.WriteString("- Consistency with your design system\n")
+	section.WriteString("- The property's syntax requirements and constraints\n\n")
+
+	section.WriteString("**Example Template:**\n")
 	section.WriteString("```css\n")
 	section.WriteString(fmt.Sprintf("%s {\n", element.TagName()))
 	for _, prop := range properties {
-		exampleValue := generateExampleValue(prop)
-		section.WriteString(fmt.Sprintf("  %s: %s;\n", prop.Name(), exampleValue))
+		if prop.Initial() != "" {
+			section.WriteString(fmt.Sprintf("  %s: %s; /* modify as needed */\n", prop.Name(), prop.Initial()))
+		} else {
+			section.WriteString(fmt.Sprintf("  %s: /* provide value matching syntax: %s */;\n", prop.Name(), prop.Syntax()))
+		}
 	}
 	section.WriteString("}\n")
 	section.WriteString("```\n\n")
@@ -188,22 +198,19 @@ func generateCssPartsSection(
 		section.WriteString("**Usage:**\n")
 		section.WriteString("```css\n")
 		section.WriteString(fmt.Sprintf("%s::%s {\n", element.TagName(), part.Name()))
-		section.WriteString("  /* Style the " + part.Name() + " part */\n")
-		section.WriteString(generateExamplePartStyles(part))
+		if part.Description() != "" {
+			section.WriteString(fmt.Sprintf("  /* %s */\n", part.Description()))
+		}
+		section.WriteString("  /* Add your styling here */\n")
 		section.WriteString("}\n")
 		section.WriteString("```\n\n")
 	}
 
-	// Generate comprehensive parts styling example
+	// Generate comprehensive parts styling guidance
 	if len(parts) > 1 {
-		section.WriteString("### Complete Parts Styling\n")
-		section.WriteString("```css\n")
-		for _, part := range parts {
-			section.WriteString(fmt.Sprintf("%s::%s {\n", element.TagName(), part.Name()))
-			section.WriteString(generateExamplePartStyles(part))
-			section.WriteString("}\n\n")
-		}
-		section.WriteString("```\n\n")
+		section.WriteString("### Styling Multiple Parts\n")
+		section.WriteString("Consider how these parts work together in the element's design.\n")
+		section.WriteString("Each part represents a distinct visual component that can be styled independently.\n\n")
 	}
 
 	return section.String()
@@ -229,8 +236,12 @@ func generateCssStatesSection(
 		section.WriteString("**Usage:**\n")
 		section.WriteString("```css\n")
 		section.WriteString(fmt.Sprintf("%s:%s {\n", element.TagName(), state.Name()))
-		section.WriteString("  /* Styles when element is in " + state.Name() + " state */\n")
-		section.WriteString(generateExampleStateStyles(state))
+		if state.Description() != "" {
+			section.WriteString(fmt.Sprintf("  /* %s */\n", state.Description()))
+		} else {
+			section.WriteString(fmt.Sprintf("  /* Styles when element is in %s state */\n", state.Name()))
+		}
+		section.WriteString("  /* Add your styling here */\n")
 		section.WriteString("}\n")
 		section.WriteString("```\n\n")
 	}
@@ -238,41 +249,64 @@ func generateCssStatesSection(
 	return section.String()
 }
 
-// generateThemeExamples creates theme-specific styling examples
+// generateThemeExamples creates theme-specific styling guidance
 func generateThemeExamples(element types.ElementInfo, args SuggestCssIntegrationArgs) string {
 	var section strings.Builder
-	section.WriteString("## 🌈 Theme Examples\n\n")
+	section.WriteString("## 🌈 Theming Guidance\n\n")
 
-	themes := []string{"light", "dark", "high-contrast"}
+	// Only show specific theme if requested
 	if args.Theme != "" {
-		themes = []string{args.Theme}
+		section.WriteString(fmt.Sprintf("### %s Theme Considerations\n", strings.Title(args.Theme)))
+	} else {
+		section.WriteString("### Multi-Theme Support\n")
 	}
 
-	for _, theme := range themes {
-		section.WriteString(fmt.Sprintf("### %s Theme\n", titleCase.String(theme)))
-		section.WriteString("```css\n")
+	section.WriteString("When implementing themes for this element, consider:\n\n")
 
-		// Theme-specific custom properties
-		if len(element.CssProperties()) > 0 {
-			section.WriteString(fmt.Sprintf("[data-theme=\"%s\"] %s {\n", theme, element.TagName()))
-			for _, prop := range element.CssProperties() {
-				value := generateThemeSpecificValue(prop, theme)
-				section.WriteString(fmt.Sprintf("  %s: %s;\n", prop.Name(), value))
+	if len(element.CssProperties()) > 0 {
+		section.WriteString("**Custom Properties:** Each property has specific constraints\n")
+		for _, prop := range element.CssProperties() {
+			section.WriteString(fmt.Sprintf("- `%s`", prop.Name()))
+			if prop.Syntax() != "" {
+				section.WriteString(fmt.Sprintf(" (syntax: %s)", prop.Syntax()))
 			}
-			section.WriteString("}\n\n")
-		}
-
-		// Theme-specific part styling
-		if len(element.CssParts()) > 0 {
-			for _, part := range element.CssParts() {
-				section.WriteString(fmt.Sprintf("[data-theme=\"%s\"] %s::%s {\n", theme, element.TagName(), part.Name()))
-				section.WriteString(generateThemeSpecificPartStyles(part, theme))
-				section.WriteString("}\n\n")
+			if prop.Description() != "" {
+				section.WriteString(fmt.Sprintf(": %s", prop.Description()))
 			}
+			section.WriteString("\n")
 		}
-
-		section.WriteString("```\n\n")
+		section.WriteString("\n")
 	}
+
+	if len(element.CssParts()) > 0 {
+		section.WriteString("**Styleable Parts:** Consider visual hierarchy and relationships\n")
+		for _, part := range element.CssParts() {
+			section.WriteString(fmt.Sprintf("- `%s`", part.Name()))
+			if part.Description() != "" {
+				section.WriteString(fmt.Sprintf(": %s", part.Description()))
+			}
+			section.WriteString("\n")
+		}
+		section.WriteString("\n")
+	}
+
+	if len(element.CssStates()) > 0 {
+		section.WriteString("**Interactive States:** Consider user feedback and transitions\n")
+		for _, state := range element.CssStates() {
+			section.WriteString(fmt.Sprintf("- `:%s`", state.Name()))
+			if state.Description() != "" {
+				section.WriteString(fmt.Sprintf(": %s", state.Description()))
+			}
+			section.WriteString("\n")
+		}
+		section.WriteString("\n")
+	}
+
+	section.WriteString("**Best Practices:**\n")
+	section.WriteString("- Use semantic color names and design tokens\n")
+	section.WriteString("- Ensure sufficient contrast ratios for accessibility\n")
+	section.WriteString("- Test themes with the element's intended content\n")
+	section.WriteString("- Consider animation and transition preferences\n\n")
 
 	return section.String()
 }
@@ -382,90 +416,130 @@ func generateCssAccessibilityGuidance(
 // Helper functions for generating example values
 
 func generateExampleValue(prop types.CssProperty) string {
-	propName := strings.ToLower(prop.Name())
-	switch {
-	case strings.Contains(propName, "color"):
-		return "#007acc"
-	case strings.Contains(propName, "size") || strings.Contains(propName, "width") || strings.Contains(propName, "height"):
-		return "16px"
-	case strings.Contains(propName, "space") || strings.Contains(propName, "padding") || strings.Contains(propName, "margin"):
-		return "8px"
-	case strings.Contains(propName, "font"):
-		return "Inter, sans-serif"
-	case strings.Contains(propName, "weight"):
-		return "500"
-	case strings.Contains(propName, "radius"):
-		return "4px"
-	case strings.Contains(propName, "shadow"):
-		return "0 2px 4px rgba(0,0,0,0.1)"
-	default:
-		if prop.Initial() != "" {
-			return "custom-value"
+	// Use initial value from manifest if available - this is the most reliable
+	if initial := prop.Initial(); initial != "" {
+		return initial
+	}
+
+	// Use syntax to generate appropriate placeholder
+	if syntax := prop.Syntax(); syntax != "" {
+		return generateValueFromSyntax(syntax, prop.Name())
+	}
+
+	// If no manifest data available, provide semantic placeholder
+	return fmt.Sprintf("/* your %s value */", prop.Name())
+}
+
+// generateValueFromSyntax creates example values based on CSS syntax definitions
+func generateValueFromSyntax(syntax, propName string) string {
+	syntax = strings.TrimSpace(syntax)
+	propName = strings.ToLower(propName)
+
+	// Handle union types first (e.g., "small | medium | large")
+	if strings.Contains(syntax, "|") {
+		options := strings.Split(syntax, "|")
+		for _, option := range options {
+			option = strings.TrimSpace(option)
+			// Return the first concrete value (not a generic type)
+			if !strings.Contains(option, "<") && option != "" {
+				return option
+			}
 		}
-		return "your-value"
+	}
+
+	// For generic types, provide semantic placeholders
+	syntax = strings.ToLower(syntax)
+	switch {
+	case strings.Contains(syntax, "<color>"):
+		return "/* your color value */"
+	case strings.Contains(syntax, "<length>"):
+		return "/* your length value (e.g., 16px, 1rem) */"
+	case strings.Contains(syntax, "<percentage>"):
+		return "/* your percentage value (e.g., 50%) */"
+	case strings.Contains(syntax, "<number>"):
+		return "/* your number value */"
+	case strings.Contains(syntax, "<integer>"):
+		return "/* your integer value */"
+	case strings.Contains(syntax, "<time>"):
+		return "/* your time value (e.g., 0.3s, 200ms) */"
+	case strings.Contains(syntax, "<angle>"):
+		return "/* your angle value (e.g., 45deg, 0.5turn) */"
+	case strings.Contains(syntax, "<string>"):
+		return "/* your string value */"
+	case strings.Contains(syntax, "<url>"):
+		return "/* url('path/to/resource') */"
+	default:
+		// If syntax doesn't match known patterns, use it as-is if it looks like a value
+		if syntax != "" && !strings.Contains(syntax, "<") {
+			return syntax
+		}
+		return "/* your value here */"
 	}
 }
 
 func generateExamplePartStyles(part types.CssPart) string {
-	partName := strings.ToLower(part.Name())
-	switch {
-	case strings.Contains(partName, "button"):
-		return "  background: #007acc;\n  color: white;\n  border-radius: 4px;\n"
-	case strings.Contains(partName, "input"):
-		return "  border: 1px solid #ccc;\n  padding: 8px;\n  border-radius: 4px;\n"
-	case strings.Contains(partName, "text"):
-		return "  font-size: 16px;\n  color: #333;\n"
-	case strings.Contains(partName, "icon"):
-		return "  width: 16px;\n  height: 16px;\n  fill: currentColor;\n"
-	default:
-		return "  /* Custom styles for " + part.Name() + " */\n"
+	// Use description to guide styling suggestions
+	if desc := part.Description(); desc != "" {
+		return fmt.Sprintf("  /* %s */\n  /* Add your styles here */\n", desc)
 	}
+
+	// Fallback to basic comment
+	return fmt.Sprintf("  /* Styles for %s part */\n  /* Add your styles here */\n", part.Name())
 }
 
 func generateExampleStateStyles(state types.CssState) string {
-	stateName := strings.ToLower(state.Name())
-	switch {
-	case strings.Contains(stateName, "active"):
-		return "  background: #005fcc;\n  transform: scale(0.98);\n"
-	case strings.Contains(stateName, "disabled"):
-		return "  opacity: 0.5;\n  pointer-events: none;\n"
-	case strings.Contains(stateName, "hover"):
-		return "  background: #0066cc;\n"
-	case strings.Contains(stateName, "loading"):
-		return "  opacity: 0.7;\n  cursor: wait;\n"
-	default:
-		return "  /* Styles for " + state.Name() + " state */\n"
+	// Use description to guide styling suggestions
+	if desc := state.Description(); desc != "" {
+		return fmt.Sprintf("  /* %s */\n  /* Add your styles here */\n", desc)
 	}
+
+	// Fallback to basic comment
+	return fmt.Sprintf("  /* Styles for %s state */\n  /* Add your styles here */\n", state.Name())
 }
 
 func generateThemeSpecificValue(prop types.CssProperty, theme string) string {
-	propName := strings.ToLower(prop.Name())
-	switch theme {
-	case "dark":
-		switch {
-		case strings.Contains(propName, "background"):
-			return "#1a1a1a"
-		case strings.Contains(propName, "color") && !strings.Contains(propName, "background"):
-			return "#ffffff"
-		case strings.Contains(propName, "border"):
-			return "#333"
-		default:
-			return generateExampleValue(prop)
-		}
-	case "high-contrast":
-		switch {
-		case strings.Contains(propName, "background"):
-			return "#000000"
-		case strings.Contains(propName, "color") && !strings.Contains(propName, "background"):
-			return "#ffffff"
-		case strings.Contains(propName, "border"):
-			return "#ffffff"
-		default:
-			return generateExampleValue(prop)
-		}
-	default: // light theme
-		return generateExampleValue(prop)
+	// Start with the base example value from manifest
+	baseValue := generateExampleValue(prop)
+	
+	// If the property has a specific initial value, use theme variations of it
+	if initial := prop.Initial(); initial != "" {
+		return generateThemeVariation(initial, theme, prop.Name())
 	}
+
+	// Use syntax-aware theme generation
+	if syntax := prop.Syntax(); syntax != "" {
+		return generateThemeValueFromSyntax(syntax, theme, prop.Name())
+	}
+
+	// Fallback to name-based theming
+	return generateThemeVariation(baseValue, theme, prop.Name())
+}
+
+// generateThemeVariation applies theme-specific modifications to a base value
+func generateThemeVariation(baseValue, theme, propName string) string {
+	// If baseValue is already a comment placeholder, enhance it with theme context
+	if strings.Contains(baseValue, "/*") {
+		return fmt.Sprintf("/* your %s value for %s theme */", propName, theme)
+	}
+
+	// If we have a concrete value, return it as-is for any theme
+	// The element author knows best what values are appropriate
+	return baseValue
+}
+
+// generateThemeValueFromSyntax creates theme-specific values based on CSS syntax
+func generateThemeValueFromSyntax(syntax, theme, propName string) string {
+	// For any syntax type, provide theme-aware placeholder
+	if strings.Contains(strings.ToLower(syntax), "<color>") {
+		return fmt.Sprintf("/* your %s color value for %s theme */", propName, theme)
+	}
+
+	// For non-color properties, return syntax-appropriate value with theme context
+	baseValue := generateValueFromSyntax(syntax, propName)
+	if strings.Contains(baseValue, "/*") {
+		return strings.Replace(baseValue, "*/", fmt.Sprintf(" for %s theme */", theme), 1)
+	}
+	return baseValue
 }
 
 func generateThemeSpecificPartStyles(part types.CssPart, theme string) string {

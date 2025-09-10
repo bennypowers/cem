@@ -15,15 +15,13 @@ inputSchema:
   required: ["tagName"]
 ---
 
-Recommend CSS integration patterns for custom elements including custom properties, CSS parts, custom states, and proper styling approaches. Provides guidance on theming, responsive design, and accessibility-compliant styling.
+Provide CSS integration guidance for custom elements by analyzing their manifest-defined CSS APIs. Uses actual property descriptions, syntax constraints, and initial values from the manifest to guide intelligent styling decisions.
 
-Offers comprehensive styling guidance for:
-- CSS custom properties (variables) with syntax definitions and usage patterns
-- CSS parts for styling internal element structure with ::part() selectors
-- CSS custom states for conditional styling with :--state selectors
-- Proper cascade and inheritance patterns for custom elements
-- Theming strategies using CSS custom properties and design tokens
-- Responsive design approaches that work with component architecture
-- Accessibility considerations for color contrast, focus styles, and motion
+Extracts and presents:
+- CSS custom properties with their syntax definitions, descriptions, and initial values from the manifest
+- CSS parts with their descriptions and intended styling purposes
+- CSS custom states with their descriptions and behavioral context
+- Theming considerations based on property constraints and semantics
+- Styling guidance that respects the element's documented design intent
 
-Use this tool when integrating custom elements into design systems, creating component themes, implementing responsive designs with custom elements, or ensuring CSS follows accessibility guidelines. The tool helps maintain consistent styling patterns and proper CSS architecture.
+The tool avoids hardcoded styling suggestions and instead presents manifest data to help make informed styling decisions. Use this when you need to understand how to properly style a custom element, implement themes that respect element constraints, or integrate components into design systems while following their documented CSS APIs.
