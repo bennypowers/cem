@@ -103,8 +103,8 @@ func getToolHandler(toolName string, registry types.Registry) (mcp.ToolHandler, 
 		return makeValidateHtmlHandler(registry), nil
 	case "suggest_attributes":
 		return makeSuggestAttributesHandler(registry), nil
-	case "generate_accessible_html":
-		return makeGenerateAccessibleHtmlHandler(registry), nil
+	case "generate_html":
+		return makeGenerateHtmlHandler(registry), nil
 	case "suggest_css_integration":
 		return makeSuggestCssIntegrationHandler(registry), nil
 	default:
@@ -131,9 +131,9 @@ func makeSuggestAttributesHandler(registry types.Registry) mcp.ToolHandler {
 	}
 }
 
-func makeGenerateAccessibleHtmlHandler(registry types.Registry) mcp.ToolHandler {
+func makeGenerateHtmlHandler(registry types.Registry) mcp.ToolHandler {
 	return func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return handleGenerateAccessibleHtml(ctx, req, registry)
+		return handleGenerateHtml(ctx, req, registry)
 	}
 }
 
