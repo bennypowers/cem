@@ -19,9 +19,9 @@ package types
 
 // TokenResult represents a design token with its value, description, and syntax
 type TokenResult interface {
-	GetValue() any
-	GetDescription() string
-	GetSyntax() string
+	Value() any
+	Description() string
+	Syntax() string
 }
 
 // DesignTokens provides access to design tokens by name
