@@ -41,7 +41,7 @@ var ErrPackageNotFound = errors.New("package not found")
 type designTokensCacheImpl struct {
 	loader types.DesignTokensLoader
 	spec   string
-	tokens any
+	tokens types.DesignTokens
 	err    error
 }
 
@@ -53,7 +53,7 @@ func NewDesignTokensCache(loader types.DesignTokensLoader) types.DesignTokensCac
 }
 
 // LoadOrReuse loads design tokens from the cache if available, or loads and caches them
-func (cache *designTokensCacheImpl) LoadOrReuse(ctx types.WorkspaceContext) (any, error) {
+func (cache *designTokensCacheImpl) LoadOrReuse(ctx types.WorkspaceContext) (types.DesignTokens, error) {
 	// If no loader is provided, return nil (no design tokens)
 	if cache.loader == nil {
 		return nil, nil

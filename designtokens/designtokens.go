@@ -43,6 +43,21 @@ type TokenResult struct {
 	Syntax      string
 }
 
+// GetValue implements types.TokenResult.GetValue
+func (tr TokenResult) GetValue() any {
+	return tr.Value
+}
+
+// GetDescription implements types.TokenResult.GetDescription
+func (tr TokenResult) GetDescription() string {
+	return tr.Description
+}
+
+// GetSyntax implements types.TokenResult.GetSyntax
+func (tr TokenResult) GetSyntax() string {
+	return tr.Syntax
+}
+
 // DesignTokens provides access to design tokens by name.
 type DesignTokens struct {
 	prefix string
@@ -50,7 +65,7 @@ type DesignTokens struct {
 }
 
 // Get returns the TokenResult for the given name, prepending the prefix if it's not present.
-func (dt *DesignTokens) Get(name string) (TokenResult, bool) {
+func (dt *DesignTokens) Get(name string) (types.TokenResult, bool) {
 	fullName := name
 	normalPrefix := strings.TrimLeft(dt.prefix, "-")
 	if normalPrefix != "" && !strings.HasPrefix(name, "--"+normalPrefix+"-") {
@@ -101,23 +116,19 @@ func NewLoader() types.DesignTokensLoader {
 }
 
 // Load implements types.DesignTokensLoader.Load
-func (l *Loader) Load(ctx any) (any, error) {
+func (l *Loader) Load(ctx types.WorkspaceContext) (types.DesignTokens, error) {
 	// Cast the context to our minimal types.WorkspaceContext interface
 	// This is safe because the workspace package will pass the correct type
-	wsCtx, ok := ctx.(types.WorkspaceContext)
-	if !ok {
-		return nil, errors.New("invalid context type for design tokens loading")
-	}
-	return LoadDesignTokens(wsCtx)
+	return LoadDesignTokens(ctx)
 }
 
-func MergeDesignTokensToModule(module *M.Module, designTokens DesignTokens) {
+func MergeDesignTokensToModule(module *M.Module, designTokens types.DesignTokens) {
 	for i, d := range module.Declarations {
 		if d, ok := d.(*M.CustomElementDeclaration); ok {
 			for i, p := range d.CssProperties {
 				if token, ok := designTokens.Get(p.Name); ok {
-					p.Description = token.Description
-					p.Syntax = token.Syntax
+					p.Description = token.GetDescription()
+					p.Syntax = token.GetSyntax()
 					d.CssProperties[i] = p
 				}
 			}

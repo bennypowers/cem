@@ -258,7 +258,7 @@ func (gs *GenerateSession) applyPostProcessingToModules(ctx context.Context, res
 
 			// Apply design tokens if available
 			if result.designTokens != nil {
-				DT.MergeDesignTokensToModule(module, *result.designTokens)
+				DT.MergeDesignTokensToModule(module, result.designTokens)
 			}
 
 			// Discover demos and attach to module if available

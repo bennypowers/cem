@@ -32,14 +32,34 @@ import (
 // mockDesignTokensLoader implements DesignTokensLoader interface for testing
 type mockDesignTokensLoader struct {
 	loadCount int
-	result    any
+	result    types.DesignTokens
 	err       error
 }
 
-func (m *mockDesignTokensLoader) Load(ctx any) (any, error) {
+func (m *mockDesignTokensLoader) Load(ctx types.WorkspaceContext) (types.DesignTokens, error) {
 	m.loadCount++
 	return m.result, m.err
 }
+
+// mockDesignTokens implements DesignTokens interface for testing
+type mockDesignTokens struct {
+	name string
+}
+
+func (m *mockDesignTokens) Get(name string) (types.TokenResult, bool) {
+	return nil, false
+}
+
+// mockTokenResult implements TokenResult interface for testing
+type mockTokenResult struct {
+	value       any
+	description string
+	syntax      string
+}
+
+func (m *mockTokenResult) GetValue() any        { return m.value }
+func (m *mockTokenResult) GetDescription() string { return m.description }
+func (m *mockTokenResult) GetSyntax() string      { return m.syntax }
 
 // mockWorkspaceContext implements WorkspaceContext for testing
 type mockWorkspaceContext struct {
@@ -66,7 +86,8 @@ func (m *mockWorkspaceContext) ResolveModuleDependency(modulePath, dependencyPat
 func (m *mockWorkspaceContext) DesignTokensCache() types.DesignTokensCache { return nil }
 
 func TestDesignTokensCache_WithLoader(t *testing.T) {
-	loader := &mockDesignTokensLoader{result: "test-tokens"}
+	mockTokens := &mockDesignTokens{name: "test-tokens"}
+	loader := &mockDesignTokensLoader{result: mockTokens}
 	cache := W.NewDesignTokensCache(loader)
 
 	ctx := &mockWorkspaceContext{
@@ -84,8 +105,8 @@ func TestDesignTokensCache_WithLoader(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
-	if result1 != "test-tokens" {
-		t.Errorf("Expected 'test-tokens', got %v", result1)
+	if result1 == nil {
+		t.Errorf("Expected design tokens object, got nil")
 	}
 	if loader.loadCount != 1 {
 		t.Errorf("Expected load count 1, got %d", loader.loadCount)
@@ -96,8 +117,8 @@ func TestDesignTokensCache_WithLoader(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
-	if result2 != "test-tokens" {
-		t.Errorf("Expected 'test-tokens', got %v", result2)
+	if result2 == nil {
+		t.Errorf("Expected design tokens object, got nil")
 	}
 	if loader.loadCount != 1 {
 		t.Errorf("Expected load count still 1 (cached), got %d", loader.loadCount)
@@ -109,8 +130,8 @@ func TestDesignTokensCache_WithLoader(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
-	if result3 != "test-tokens" {
-		t.Errorf("Expected 'test-tokens', got %v", result3)
+	if result3 == nil {
+		t.Errorf("Expected design tokens object, got nil")
 	}
 	if loader.loadCount != 2 {
 		t.Errorf("Expected load count 2 (reloaded), got %d", loader.loadCount)
@@ -178,7 +199,7 @@ func TestDesignTokensCache_LoaderError(t *testing.T) {
 }
 
 func TestDesignTokensCache_Clear(t *testing.T) {
-	loader := &mockDesignTokensLoader{result: "test-tokens"}
+	loader := &mockDesignTokensLoader{result: &mockDesignTokens{name: "test-tokens"}}
 	cache := W.NewDesignTokensCache(loader)
 
 	ctx := &mockWorkspaceContext{
@@ -214,7 +235,7 @@ func TestDesignTokensCache_Clear(t *testing.T) {
 }
 
 func TestDesignTokensCache_ConfigError(t *testing.T) {
-	loader := &mockDesignTokensLoader{result: "test-tokens"}
+	loader := &mockDesignTokensLoader{result: &mockDesignTokens{name: "test-tokens"}}
 	cache := W.NewDesignTokensCache(loader)
 
 	// mockWorkspaceContext that returns config error

@@ -17,19 +17,32 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package types
 
+// TokenResult represents a design token with its value, description, and syntax
+type TokenResult interface {
+	GetValue() any
+	GetDescription() string
+	GetSyntax() string
+}
+
+// DesignTokens provides access to design tokens by name
+type DesignTokens interface {
+	// Get returns the TokenResult for the given name, prepending the prefix if it's not present
+	Get(name string) (TokenResult, bool)
+}
+
 // DesignTokensLoader provides an interface for loading design tokens
 // This interface allows dependency injection without circular imports between
 // designtokens and workspace packages
 type DesignTokensLoader interface {
 	// Load loads design tokens from the workspace context
 	// Returns the loaded design tokens and any error encountered
-	Load(ctx any) (any, error)
+	Load(ctx WorkspaceContext) (DesignTokens, error)
 }
 
 // DesignTokensCache provides caching for design tokens to avoid redundant loading
 type DesignTokensCache interface {
 	// LoadOrReuse loads design tokens if not cached, or returns cached result
-	LoadOrReuse(ctx WorkspaceContext) (any, error)
+	LoadOrReuse(ctx WorkspaceContext) (DesignTokens, error)
 	// Clear resets the cache
 	Clear()
 }

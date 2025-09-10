@@ -23,24 +23,43 @@ import (
 	"testing"
 
 	C "bennypowers.dev/cem/cmd/config"
-	DT "bennypowers.dev/cem/designtokens"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
 )
 
 // Mock design tokens cache for testing validation scenarios
 type mockDesignTokensCache struct {
-	returnValue interface{}
+	returnValue types.DesignTokens
 	returnError error
 }
 
-func (m *mockDesignTokensCache) LoadOrReuse(ctx types.WorkspaceContext) (interface{}, error) {
+func (m *mockDesignTokensCache) LoadOrReuse(ctx types.WorkspaceContext) (types.DesignTokens, error) {
 	return m.returnValue, m.returnError
 }
 
 func (m *mockDesignTokensCache) Clear() {
 	// No-op for testing
 }
+
+// Mock design tokens for testing
+type mockDesignTokens struct {
+	name string
+}
+
+func (m *mockDesignTokens) Get(name string) (types.TokenResult, bool) {
+	return nil, false
+}
+
+// Mock token result for testing  
+type mockTokenResult struct {
+	value       any
+	description string
+	syntax      string
+}
+
+func (m *mockTokenResult) GetValue() any        { return m.value }
+func (m *mockTokenResult) GetDescription() string { return m.description }
+func (m *mockTokenResult) GetSyntax() string      { return m.syntax }
 
 // Mock workspace context for testing
 type mockWorkspaceContext struct {
@@ -72,14 +91,14 @@ func (m *mockWorkspaceContext) ResolveModuleDependency(string, string) (string, 
 func TestValidateAndLoadDesignTokens(t *testing.T) {
 	tests := []struct {
 		name          string
-		cacheReturn   interface{}
+		cacheReturn   types.DesignTokens
 		cacheError    error
 		expectError   bool
 		errorContains string
 	}{
 		{
 			name:        "successful_validation",
-			cacheReturn: &DT.DesignTokens{},
+			cacheReturn: &mockDesignTokens{name: "test"},
 			cacheError:  nil,
 			expectError: false,
 		},
@@ -96,20 +115,6 @@ func TestValidateAndLoadDesignTokens(t *testing.T) {
 			cacheError:    nil,
 			expectError:   true,
 			errorContains: "design tokens cache returned nil",
-		},
-		{
-			name:          "wrong_type_from_cache",
-			cacheReturn:   "not a design tokens object",
-			cacheError:    nil,
-			expectError:   true,
-			errorContains: "cached design tokens object has unexpected type",
-		},
-		{
-			name:          "nil_pointer_after_cast",
-			cacheReturn:   (*DT.DesignTokens)(nil),
-			cacheError:    nil,
-			expectError:   true,
-			errorContains: "design tokens object is nil after type assertion",
 		},
 	}
 
@@ -153,10 +158,11 @@ func TestValidateAndLoadDesignTokens(t *testing.T) {
 	}
 }
 
-func TestValidateAndLoadDesignTokens_ErrorMessage_Quality(t *testing.T) {
-	// Test that error messages are descriptive and helpful
+func TestValidateAndLoadDesignTokens_Success(t *testing.T) {
+	// Test that valid design tokens are returned successfully
+	mockTokens := &mockDesignTokens{name: "test"}
 	mockCache := &mockDesignTokensCache{
-		returnValue: 42, // Wrong type
+		returnValue: mockTokens,
 		returnError: nil,
 	}
 
@@ -164,33 +170,25 @@ func TestValidateAndLoadDesignTokens_ErrorMessage_Quality(t *testing.T) {
 		cache: mockCache,
 	}
 
-	_, err := validateAndLoadDesignTokens(mockCtx)
+	result, err := validateAndLoadDesignTokens(mockCtx)
 
-	if err == nil {
-		t.Fatal("Expected error but got none")
+	if err != nil {
+		t.Fatalf("Expected no error but got: %v", err)
 	}
 
-	errorMsg := err.Error()
-
-	// Check that the error message includes useful information
-	expectedParts := []string{
-		"cached design tokens object",
-		"unexpected type",
-		"int",                        // The actual type (42 is an int)
-		"*designtokens.DesignTokens", // The expected type
+	if result == nil {
+		t.Error("Expected design tokens object but got nil")
 	}
 
-	for _, part := range expectedParts {
-		if !strings.Contains(errorMsg, part) {
-			t.Errorf("Error message should contain %q but doesn't. Full message: %s", part, errorMsg)
-		}
+	if result != mockTokens {
+		t.Error("Expected same design tokens object that was cached")
 	}
 }
 
-func TestValidateAndLoadDesignTokens_IntegrationWithStringType(t *testing.T) {
-	// Test with a common wrong type that might be returned (string instead of DesignTokens)
+func TestValidateAndLoadDesignTokens_NilReturn(t *testing.T) {
+	// Test when cache returns nil (valid case with no design tokens configured)
 	mockCache := &mockDesignTokensCache{
-		returnValue: "this is not a design tokens object",
+		returnValue: nil,
 		returnError: nil,
 	}
 
@@ -205,22 +203,13 @@ func TestValidateAndLoadDesignTokens_IntegrationWithStringType(t *testing.T) {
 	}
 
 	if result != nil {
-		t.Error("Expected nil result when validation fails")
+		t.Error("Expected nil result when cache returns nil")
 	}
 
 	// Verify the error message is helpful for debugging
 	errorMsg := err.Error()
-	expectedParts := []string{
-		"cached design tokens object",
-		"unexpected type",
-		"string",
-		"*designtokens.DesignTokens",
-	}
-
-	for _, part := range expectedParts {
-		if !strings.Contains(errorMsg, part) {
-			t.Errorf("Error message should contain %q but doesn't. Full message: %s", part, errorMsg)
-		}
+	if !strings.Contains(errorMsg, "design tokens cache returned nil") {
+		t.Errorf("Expected error about nil cache return, got: %s", errorMsg)
 	}
 }
 

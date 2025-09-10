@@ -51,7 +51,7 @@ func matchesAnyPattern(file string, patterns []string) bool {
 
 type preprocessResult struct {
 	demoFiles       []string
-	designTokens    *DT.DesignTokens
+	designTokens    types.DesignTokens
 	excludePatterns []string
 	includedFiles   []string
 }
@@ -184,7 +184,7 @@ func postprocess(
 		go func(module *M.Module) {
 			defer wg.Done()
 			if result.designTokens != nil {
-				DT.MergeDesignTokensToModule(module, *result.designTokens)
+				DT.MergeDesignTokensToModule(module, result.designTokens)
 			}
 			// Discover demos and attach to manifest
 			if len(demoMap) > 0 {
@@ -229,9 +229,9 @@ func Generate(ctx types.WorkspaceContext) (manifest *string, errs error) {
 	return &manifestStr, nil
 }
 
-// validateAndLoadDesignTokens loads design tokens from cache and validates the type.
-// Returns a proper error if the cached object is not the expected DesignTokens type.
-func validateAndLoadDesignTokens(ctx types.WorkspaceContext) (*DT.DesignTokens, error) {
+// validateAndLoadDesignTokens loads design tokens from cache.
+// Returns a proper error if the cached object cannot be loaded.
+func validateAndLoadDesignTokens(ctx types.WorkspaceContext) (types.DesignTokens, error) {
 	tokens, err := ctx.DesignTokensCache().LoadOrReuse(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load design tokens: %w", err)
@@ -241,14 +241,5 @@ func validateAndLoadDesignTokens(ctx types.WorkspaceContext) (*DT.DesignTokens, 
 		return nil, fmt.Errorf("design tokens cache returned nil - check design tokens spec configuration")
 	}
 
-	designTokens, ok := tokens.(*DT.DesignTokens)
-	if !ok {
-		return nil, fmt.Errorf("cached design tokens object has unexpected type %T, expected *designtokens.DesignTokens", tokens)
-	}
-
-	if designTokens == nil {
-		return nil, fmt.Errorf("design tokens object is nil after type assertion")
-	}
-
-	return designTokens, nil
+	return tokens, nil
 }
