@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/no-user-comment.js",
+      "declarations": [
+        {
+          "name": "NoUserComment",
+          "description": "Element that uses design tokens without user comments",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-css-design-token-comments/src/no-user-comment.ts#L9"
+          },
+          "kind": "class",
+          "tagName": "no-user-comment",
+          "cssProperties": [
+            {
+              "name": "--cem-color-primary",
+              "description": "DESIGN TOKEN description for primary color",
+              "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--cem-spacing-base",
+              "description": "DESIGN TOKEN description for base spacing",
+              "syntax": "\u003clength\u003e"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "no-user-comment",
+          "declaration": {
+            "name": "NoUserComment",
+            "module": "src/no-user-comment.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "NoUserComment",
+          "declaration": {
+            "name": "NoUserComment",
+            "module": "src/no-user-comment.js"
+          }
+        }
+      ]
+    }
+  ]
+}

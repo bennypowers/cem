@@ -38,24 +38,24 @@ func isPackageSpecifier(spec string) bool {
 
 // TokenResult represents the exported structure with CSS type mapping.
 type TokenResult struct {
-	Value       any
-	Description string
-	Syntax      string
+	value       any
+	description string
+	syntax      string
 }
 
-// GetValue implements types.TokenResult.GetValue
-func (tr TokenResult) GetValue() any {
-	return tr.Value
+// Value implements types.TokenResult.Value
+func (tr TokenResult) Value() any {
+	return tr.value
 }
 
-// GetDescription implements types.TokenResult.GetDescription
-func (tr TokenResult) GetDescription() string {
-	return tr.Description
+// Description implements types.TokenResult.Description
+func (tr TokenResult) Description() string {
+	return tr.description
 }
 
-// GetSyntax implements types.TokenResult.GetSyntax
-func (tr TokenResult) GetSyntax() string {
-	return tr.Syntax
+// Syntax implements types.TokenResult.Syntax
+func (tr TokenResult) Syntax() string {
+	return tr.syntax
 }
 
 // DesignTokens provides access to design tokens by name.
@@ -92,7 +92,7 @@ func LoadDesignTokens(ctx types.WorkspaceContext) (*DesignTokens, error) {
 		return nil, err
 	}
 	tokens := make(map[string]TokenResult)
-	flat := flattenTokens(raw, "")
+	flat := flattenTokens(raw, "", "")
 	for name, tok := range flat {
 		var fullName string
 		styleDictName, ok := tok["name"]
@@ -127,8 +127,18 @@ func MergeDesignTokensToModule(module *M.Module, designTokens types.DesignTokens
 		if d, ok := d.(*M.CustomElementDeclaration); ok {
 			for i, p := range d.CssProperties {
 				if token, ok := designTokens.Get(p.Name); ok {
-					p.Description = token.GetDescription()
-					p.Syntax = token.GetSyntax()
+					// Merge user's description with design token description
+					// If user has a description, concatenate with two newlines
+					// If user has no description, use only the design token description
+					tokenDesc := token.Description()
+					if tokenDesc != "" {
+						if p.Description != "" {
+							p.Description = p.Description + "\n\n" + tokenDesc
+						} else {
+							p.Description = tokenDesc
+						}
+					}
+					p.Syntax = token.Syntax()
 					d.CssProperties[i] = p
 				}
 			}
@@ -137,10 +147,20 @@ func MergeDesignTokensToModule(module *M.Module, designTokens types.DesignTokens
 	}
 }
 
-// flattenTokens recursively flattens the DTCG tokens into a map of names to token objects.
-// Names are in CSS custom property format (--foo-bar).
-func flattenTokens(data map[string]any, prefix string) map[string]map[string]any {
+// flattenTokens recursively flattens DTCG tokens with $type inheritance
+func flattenTokens(
+	data map[string]any,
+	prefix string,
+	inheritedType string,
+) map[string]map[string]any {
 	result := make(map[string]map[string]any)
+
+	// Check if this group has a $type that should be inherited
+	currentType := inheritedType
+	if groupType, ok := data["$type"].(string); ok {
+		currentType = groupType
+	}
+
 	for k, v := range data {
 		if strings.HasPrefix(k, "$") {
 			continue
@@ -155,9 +175,18 @@ func flattenTokens(data map[string]any, prefix string) map[string]map[string]any
 		case map[string]any:
 			// if contains $value, it's a leaf token
 			if _, ok := val["$value"]; ok {
-				result[name] = val
+				// Copy the token and add inherited $type if not already present
+				tokenProps := make(map[string]any)
+				maps.Copy(tokenProps, val)
+				if currentType != "" {
+					if _, hasType := tokenProps["$type"]; !hasType {
+						tokenProps["$type"] = currentType
+					}
+				}
+				result[name] = tokenProps
 			} else {
-				maps.Copy(result, flattenTokens(val, name))
+				// Recurse into group with inherited $type
+				maps.Copy(result, flattenTokens(val, name, currentType))
 			}
 		}
 	}
@@ -235,15 +264,15 @@ func parseNpmSpecifier(path string) (npmSpec, bool) {
 func toTokenResult(tok map[string]any) TokenResult {
 	var out TokenResult
 	if v, ok := tok["$value"]; ok {
-		out.Value = v
+		out.value = v
 	}
 	if d, ok := tok["$description"].(string); ok {
-		out.Description = d
+		out.description = d
 	} else if d, ok := tok["description"].(string); ok {
-		out.Description = d
+		out.description = d
 	}
 	if t, ok := tok["$type"].(string); ok {
-		out.Syntax = dtcgTypeToCSS(t)
+		out.syntax = dtcgTypeToCSS(t)
 	}
 	return out
 }

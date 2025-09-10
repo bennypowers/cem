@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/user-comment-only.js",
+      "declarations": [
+        {
+          "name": "UserCommentOnly",
+          "description": "Element that has CSS comments but no matching design tokens",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-css-design-token-comments/src/user-comment-only.ts#L9"
+          },
+          "kind": "class",
+          "tagName": "user-comment-only",
+          "cssProperties": [
+            {
+              "name": "--my-custom-color",
+              "description": "USER description for a custom property without design token"
+            },
+            {
+              "name": "--my-custom-background",
+              "description": "USER comment for custom background"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "user-comment-only",
+          "declaration": {
+            "name": "UserCommentOnly",
+            "module": "src/user-comment-only.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "UserCommentOnly",
+          "declaration": {
+            "name": "UserCommentOnly",
+            "module": "src/user-comment-only.js"
+          }
+        }
+      ]
+    }
+  ]
+}
