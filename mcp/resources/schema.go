@@ -29,7 +29,7 @@ import (
 func handleSchemaResource(ctx context.Context, req *mcp.ReadResourceRequest, registry types.Registry) (*mcp.ReadResourceResult, error) {
 	// Use the latest stable schema version (2.1.1-speculative is our most complete)
 	schemaVersion := "2.1.1-speculative"
-	
+
 	// Get schema using the same method as the validate command
 	schemaData, err := V.GetSchema(schemaVersion)
 	if err != nil {

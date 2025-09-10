@@ -73,7 +73,7 @@ func handleSuggestCssIntegration(ctx context.Context, req *mcp.CallToolRequest, 
 	if !hasCustomProperties && !hasCustomParts && !hasCustomStates {
 		response.WriteString("❌ This element doesn't define CSS custom properties, parts, or states in the manifest.\n")
 		response.WriteString("You can still style it using regular CSS selectors.\n\n")
-		
+
 		// Use template for basic styling guidance
 		templateData := NewTemplateData(element, cssArgs)
 		basicStyling, err := renderTemplate("basic_styling", templateData)
@@ -81,7 +81,7 @@ func handleSuggestCssIntegration(ctx context.Context, req *mcp.CallToolRequest, 
 			return nil, fmt.Errorf("failed to render basic styling template: %w", err)
 		}
 		response.WriteString(basicStyling)
-		
+
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{
 				&mcp.TextContent{

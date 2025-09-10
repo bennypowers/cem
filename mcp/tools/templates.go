@@ -62,7 +62,7 @@ func renderTemplate(templateName string, data TemplateData) (string, error) {
 	// Create template with helper functions
 	tmpl := template.New(templateName).Funcs(template.FuncMap{
 		"title": strings.Title,
-		"len":   func(slice interface{}) int {
+		"len": func(slice interface{}) int {
 			switch s := slice.(type) {
 			case []types.CssProperty:
 				return len(s)
