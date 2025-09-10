@@ -87,6 +87,13 @@ func LoadDesignTokens(ctx W.WorkspaceContext) (*DesignTokens, error) {
 	return &DesignTokens{tokens: tokens, prefix: prefix}, nil
 }
 
+// init sets up the function callback to avoid circular dependency
+func init() {
+	W.SetLoadDesignTokensFunc(func(ctx W.WorkspaceContext) (interface{}, error) {
+		return LoadDesignTokens(ctx)
+	})
+}
+
 func MergeDesignTokensToModule(module *M.Module, designTokens DesignTokens) {
 	for i, d := range module.Declarations {
 		if d, ok := d.(*M.CustomElementDeclaration); ok {
@@ -163,6 +170,9 @@ func readJSONFileOrSpecifier(ctx W.WorkspaceContext, path string) ([]byte, error
 	}
 
 	// Default: treat as local file
+	if filepath.IsAbs(path) {
+		return os.ReadFile(path)
+	}
 	return os.ReadFile(filepath.Join(ctx.Root(), path))
 }
 

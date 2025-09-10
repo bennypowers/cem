@@ -38,6 +38,64 @@ var ErrNoPackageCustomElements = errors.New("package does not specify a custom e
 var ErrManifestNotFound = errors.New("manifest not found")
 var ErrPackageNotFound = errors.New("package not found")
 
+// DesignTokensCache provides caching for design tokens to avoid redundant loading
+type DesignTokensCache interface {
+	// LoadOrReuse loads design tokens if not cached, or returns cached result
+	LoadOrReuse(ctx WorkspaceContext) (interface{}, error)
+	// Clear resets the cache
+	Clear()
+}
+
+// designTokensCacheImpl implements DesignTokensCache
+type designTokensCacheImpl struct {
+	spec   string
+	tokens interface{}
+	err    error
+}
+
+// NewDesignTokensCache creates a new design tokens cache
+func NewDesignTokensCache() DesignTokensCache {
+	return &designTokensCacheImpl{}
+}
+
+// LoadOrReuse loads design tokens from the cache if available, or loads and caches them
+func (cache *designTokensCacheImpl) LoadOrReuse(ctx WorkspaceContext) (interface{}, error) {
+	cfg, err := ctx.Config()
+	if err != nil {
+		return nil, err
+	}
+
+	spec := cfg.Generate.DesignTokens.Spec
+
+	// If cache hit (same spec), return cached result
+	if cache.spec == spec {
+		return cache.tokens, cache.err
+	}
+
+	// Cache miss or different spec, load fresh
+	// We need to call the actual loading function, but we can't import designtokens here
+	// So we'll use a callback approach - this will be set by the designtokens package
+	cache.spec = spec
+	cache.tokens, cache.err = loadDesignTokensFunc(ctx)
+	return cache.tokens, cache.err
+}
+
+// Clear resets the cache
+func (cache *designTokensCacheImpl) Clear() {
+	cache.spec = ""
+	cache.tokens = nil
+	cache.err = nil
+}
+
+// loadDesignTokensFunc is a function variable that will be set by the designtokens package
+// to avoid circular dependency
+var loadDesignTokensFunc func(WorkspaceContext) (interface{}, error)
+
+// SetLoadDesignTokensFunc sets the function used to load design tokens
+func SetLoadDesignTokensFunc(fn func(WorkspaceContext) (interface{}, error)) {
+	loadDesignTokensFunc = fn
+}
+
 // isGlobPattern checks if a string contains any common glob pattern metacharacters.
 // This is a heuristic and may produce false positives for file paths that
 // legitimately contain one of these characters, but it covers most common cases.
@@ -120,4 +178,7 @@ type WorkspaceContext interface {
 	FSPathToModule(fsPath string) (string, error)
 	// ResolveModuleDependency resolves a dependency path relative to a module
 	ResolveModuleDependency(modulePath, dependencyPath string) (string, error)
+
+	// DesignTokensCache returns the design tokens cache for this workspace
+	DesignTokensCache() DesignTokensCache
 }

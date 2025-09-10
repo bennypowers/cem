@@ -23,6 +23,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	C "bennypowers.dev/cem/cmd/config"
 	M "bennypowers.dev/cem/manifest"
@@ -40,8 +41,9 @@ type FileSystemWorkspaceContext struct {
 	config                     *C.CemConfig
 	customElementsManifestPath string
 	// Cache parsed results if desired
-	manifest    *M.Package
-	packageJSON *M.PackageJSON
+	manifest          *M.Package
+	packageJSON       *M.PackageJSON
+	designTokensCache DesignTokensCache
 }
 
 func (c *FileSystemWorkspaceContext) initConfig() (*C.CemConfig, error) {
@@ -84,7 +86,10 @@ func (c *FileSystemWorkspaceContext) initConfig() (*C.CemConfig, error) {
 }
 
 func NewFileSystemWorkspaceContext(root string) *FileSystemWorkspaceContext {
-	return &FileSystemWorkspaceContext{root: root}
+	return &FileSystemWorkspaceContext{
+		root:              root,
+		designTokensCache: NewDesignTokensCache(),
+	}
 }
 
 // ConfigFile Returns the path to the config file, or an empty string if it does not exist.
@@ -183,6 +188,15 @@ func (c *FileSystemWorkspaceContext) Glob(pattern string) ([]string, error) {
 	if isGlobPattern(pattern) {
 		return doublestar.Glob(filepath.Join(c.root, pattern))
 	} else {
+		// If pattern is an absolute path, try to make it relative to project root
+		if filepath.IsAbs(pattern) {
+			if rel, err := filepath.Rel(c.root, pattern); err == nil {
+				// Check if the relative path doesn't go outside the project (no ../)
+				if !strings.HasPrefix(rel, "..") {
+					return []string{rel}, nil
+				}
+			}
+		}
 		return []string{pattern}, nil
 	}
 }
@@ -198,6 +212,11 @@ func (c *FileSystemWorkspaceContext) OutputWriter(path string) (io.WriteCloser, 
 
 func (c *FileSystemWorkspaceContext) Root() string {
 	return c.root
+}
+
+// DesignTokensCache returns the design tokens cache for this workspace
+func (c *FileSystemWorkspaceContext) DesignTokensCache() DesignTokensCache {
+	return c.designTokensCache
 }
 
 func (c *FileSystemWorkspaceContext) Cleanup() error {

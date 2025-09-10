@@ -84,6 +84,21 @@ var generateCmd = &cobra.Command{
 		cfg.Generate.Files = files
 		cfg.Generate.Exclude = exclude
 
+		// Merge design tokens config from flags
+		if designTokensSpec := viper.GetString("generate.designTokens.spec"); designTokensSpec != "" {
+			cfg.Generate.DesignTokens.Spec = designTokensSpec
+		}
+		if designTokensPrefix := viper.GetString("generate.designTokens.prefix"); designTokensPrefix != "" {
+			cfg.Generate.DesignTokens.Prefix = designTokensPrefix
+		}
+
+		// Early validation: if design tokens are specified, validate they can be loaded
+		if cfg.Generate.DesignTokens.Spec != "" {
+			if _, err := ctx.DesignTokensCache().LoadOrReuse(ctx); err != nil {
+				return fmt.Errorf("failed to load design tokens from '%s': %w", cfg.Generate.DesignTokens.Spec, err)
+			}
+		}
+
 		// Check if watch mode is enabled
 		watch, err := cmd.Flags().GetBool("watch")
 		if err != nil {

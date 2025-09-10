@@ -50,10 +50,14 @@ type RemoteWorkspaceContext struct {
 	packageJSON        *M.PackageJSON
 	customElementsPath string
 	spinner            *pterm.SpinnerPrinter
+	designTokensCache  DesignTokensCache
 }
 
 func NewRemoteWorkspaceContext(spec string) *RemoteWorkspaceContext {
-	return &RemoteWorkspaceContext{spec: spec}
+	return &RemoteWorkspaceContext{
+		spec:              spec,
+		designTokensCache: NewDesignTokensCache(),
+	}
 }
 
 func (c *RemoteWorkspaceContext) Init() error {
@@ -321,6 +325,11 @@ func (c *RemoteWorkspaceContext) ResolveModuleDependency(modulePath, dependencyP
 	moduleDir := filepath.Dir(modulePath)
 	resolved := filepath.Join(moduleDir, dependencyPath)
 	return filepath.Clean(resolved), nil
+}
+
+// DesignTokensCache returns the design tokens cache for this workspace
+func (c *RemoteWorkspaceContext) DesignTokensCache() DesignTokensCache {
+	return c.designTokensCache
 }
 
 func setupTempdirFromCache(cacheDir string) (string, error) {

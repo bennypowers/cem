@@ -73,11 +73,13 @@ func preprocess(ctx W.WorkspaceContext) (r preprocessResult, errs error) {
 	}
 
 	if cfg.Generate.DesignTokens.Spec != "" {
-		tokens, err := DT.LoadDesignTokens(ctx)
+		tokens, err := ctx.DesignTokensCache().LoadOrReuse(ctx)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
-		r.designTokens = tokens
+		if designTokens, ok := tokens.(*DT.DesignTokens); ok {
+			r.designTokens = designTokens
+		}
 	}
 	if cfg.Generate.DemoDiscovery.FileGlob != "" {
 		demoFiles, err := ctx.Glob(cfg.Generate.DemoDiscovery.FileGlob)
