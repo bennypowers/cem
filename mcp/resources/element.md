@@ -1,0 +1,22 @@
+---
+uri: cem://element/{tagName}
+name: element
+mimeType: application/json
+uriTemplate: true
+---
+
+Detailed information about a specific custom element including usage patterns, examples, and integration guidance. This resource provides comprehensive element documentation optimized for AI-assisted development.
+
+Provides extensive element details including:
+- Complete attribute definitions with types, defaults, and validation
+- Slot structure and content recommendations
+- Event definitions and usage patterns
+- CSS custom properties, parts, and states with examples
+- Accessibility requirements and ARIA patterns
+- Integration guidelines and best practices
+- Usage examples in different contexts (forms, layouts, themes)
+- Common attribute combinations and patterns
+- Framework-specific integration notes
+- Performance considerations and optimization tips
+
+Use this resource when working with a specific element to understand its API, get usage examples, or ensure proper implementation according to design system guidelines.
