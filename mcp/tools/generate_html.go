@@ -24,7 +24,11 @@ import (
 
 	"bennypowers.dev/cem/mcp/types"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
+
+var titleCase = cases.Title(language.English)
 
 // GenerateHtmlArgs represents the arguments for the generate_html tool
 type GenerateHtmlArgs struct {
@@ -36,7 +40,11 @@ type GenerateHtmlArgs struct {
 }
 
 // handleGenerateHtml generates HTML structure for custom elements
-func handleGenerateHtml(ctx context.Context, req *mcp.CallToolRequest, registry types.Registry) (*mcp.CallToolResult, error) {
+func handleGenerateHtml(
+	ctx context.Context,
+	req *mcp.CallToolRequest,
+	registry types.Registry,
+) (*mcp.CallToolResult, error) {
 	// Parse args from request
 	var genArgs GenerateHtmlArgs
 	if req.Params.Arguments != nil {
@@ -134,7 +142,6 @@ func generateHTML(element types.ElementInfo, args GenerateHtmlArgs) string {
 	return html.String()
 }
 
-
 // generateElementContent creates content based on element slots
 func generateElementContent(element types.ElementInfo, args GenerateHtmlArgs) string {
 	if args.Content != "" {
@@ -152,7 +159,7 @@ func generateElementContent(element types.ElementInfo, args GenerateHtmlArgs) st
 				// Default slot
 				content.WriteString("Default content")
 			} else {
-				content.WriteString(fmt.Sprintf(`<span slot="%s">%s content</span>`, slotName, strings.Title(slotName)))
+				content.WriteString(fmt.Sprintf(`<span slot="%s">%s content</span>`, slotName, titleCase.String(slotName)))
 			}
 			content.WriteString("\n  ")
 		}
@@ -165,7 +172,10 @@ func generateElementContent(element types.ElementInfo, args GenerateHtmlArgs) st
 }
 
 // generateUsageNotes provides basic usage information
-func generateUsageNotes(element types.ElementInfo, args GenerateHtmlArgs) string {
+func generateUsageNotes(
+	element types.ElementInfo,
+	args GenerateHtmlArgs,
+) string {
 	var notes strings.Builder
 	notes.WriteString("## Usage Notes\n\n")
 

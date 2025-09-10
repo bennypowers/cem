@@ -117,7 +117,10 @@ func handleSuggestCssIntegration(ctx context.Context, req *mcp.CallToolRequest, 
 }
 
 // generateCustomPropertiesSection creates guidance for CSS custom properties
-func generateCustomPropertiesSection(element types.ElementInfo, args SuggestCssIntegrationArgs) string {
+func generateCustomPropertiesSection(
+	element types.ElementInfo,
+	args SuggestCssIntegrationArgs,
+) string {
 	var section strings.Builder
 	section.WriteString("## 🎨 CSS Custom Properties\n\n")
 
@@ -166,7 +169,10 @@ func generateCustomPropertiesSection(element types.ElementInfo, args SuggestCssI
 }
 
 // generateCssPartsSection creates guidance for CSS parts
-func generateCssPartsSection(element types.ElementInfo, args SuggestCssIntegrationArgs) string {
+func generateCssPartsSection(
+	element types.ElementInfo,
+	args SuggestCssIntegrationArgs,
+) string {
 	var section strings.Builder
 	section.WriteString("## 🔧 CSS Parts\n\n")
 
@@ -204,7 +210,10 @@ func generateCssPartsSection(element types.ElementInfo, args SuggestCssIntegrati
 }
 
 // generateCssStatesSection creates guidance for CSS states
-func generateCssStatesSection(element types.ElementInfo, args SuggestCssIntegrationArgs) string {
+func generateCssStatesSection(
+	element types.ElementInfo,
+	args SuggestCssIntegrationArgs,
+) string {
 	var section strings.Builder
 	section.WriteString("## 🔄 CSS Custom States\n\n")
 
@@ -240,7 +249,7 @@ func generateThemeExamples(element types.ElementInfo, args SuggestCssIntegration
 	}
 
 	for _, theme := range themes {
-		section.WriteString(fmt.Sprintf("### %s Theme\n", strings.Title(theme)))
+		section.WriteString(fmt.Sprintf("### %s Theme\n", titleCase.String(theme)))
 		section.WriteString("```css\n")
 
 		// Theme-specific custom properties
@@ -269,7 +278,10 @@ func generateThemeExamples(element types.ElementInfo, args SuggestCssIntegration
 }
 
 // generateResponsiveGuidance creates responsive design guidance
-func generateResponsiveGuidance(element types.ElementInfo, args SuggestCssIntegrationArgs) string {
+func generateResponsiveGuidance(
+	element types.ElementInfo,
+	args SuggestCssIntegrationArgs,
+) string {
 	var section strings.Builder
 	section.WriteString("## 📱 Responsive Design\n\n")
 
@@ -314,7 +326,10 @@ func generateResponsiveGuidance(element types.ElementInfo, args SuggestCssIntegr
 }
 
 // generateCssAccessibilityGuidance creates accessibility-focused CSS guidance
-func generateCssAccessibilityGuidance(element types.ElementInfo, args SuggestCssIntegrationArgs) string {
+func generateCssAccessibilityGuidance(
+	element types.ElementInfo,
+	args SuggestCssIntegrationArgs,
+) string {
 	var section strings.Builder
 	section.WriteString("## ♿ Accessibility Considerations\n\n")
 
@@ -466,7 +481,10 @@ func generateThemeSpecificPartStyles(part types.CssPart, theme string) string {
 }
 
 // generateBasicStylingGuidance provides guidance when no CSS features are defined
-func generateBasicStylingGuidance(element types.ElementInfo, args SuggestCssIntegrationArgs) string {
+func generateBasicStylingGuidance(
+	element types.ElementInfo,
+	args SuggestCssIntegrationArgs,
+) string {
 	var section strings.Builder
 	section.WriteString("## Basic Styling Guidance\n\n")
 

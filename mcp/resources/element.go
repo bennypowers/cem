@@ -8,10 +8,18 @@ import (
 
 	"bennypowers.dev/cem/mcp/types"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
+var titleCase = cases.Title(language.English)
+
 // handleElementResource provides detailed information about a specific custom element
-func handleElementResource(ctx context.Context, req *mcp.ReadResourceRequest, registry types.Registry) (*mcp.ReadResourceResult, error) {
+func handleElementResource(
+	ctx context.Context,
+	req *mcp.ReadResourceRequest,
+	registry types.Registry,
+) (*mcp.ReadResourceResult, error) {
 	// Extract tag name from URI template: cem://element/{tagName}
 	tagName, err := extractTagNameFromURI(req.Params.URI)
 	if err != nil {
@@ -57,8 +65,8 @@ func extractTagNameFromURI(uri string) (string, error) {
 }
 
 // createElementDocumentation creates comprehensive documentation for an element
-func createElementDocumentation(element types.ElementInfo) map[string]interface{} {
-	doc := map[string]interface{}{
+func createElementDocumentation(element types.ElementInfo) map[string]any {
+	doc := map[string]any{
 		"tagName":       element.TagName(),
 		"description":   element.Description(),
 		"attributes":    createAttributeDocumentation(element.Attributes()),
@@ -77,11 +85,11 @@ func createElementDocumentation(element types.ElementInfo) map[string]interface{
 }
 
 // createAttributeDocumentation creates detailed attribute documentation
-func createAttributeDocumentation(attributes []types.Attribute) []map[string]interface{} {
-	result := make([]map[string]interface{}, len(attributes))
+func createAttributeDocumentation(attributes []types.Attribute) []map[string]any {
+	result := make([]map[string]any, len(attributes))
 
 	for i, attr := range attributes {
-		attrDoc := map[string]interface{}{
+		attrDoc := map[string]any{
 			"name":        attr.Name(),
 			"description": attr.Description(),
 			"type":        attr.Type(),
@@ -98,11 +106,11 @@ func createAttributeDocumentation(attributes []types.Attribute) []map[string]int
 }
 
 // createSlotDocumentation creates detailed slot documentation
-func createSlotDocumentation(slots []types.Slot) []map[string]interface{} {
-	result := make([]map[string]interface{}, len(slots))
+func createSlotDocumentation(slots []types.Slot) []map[string]any {
+	result := make([]map[string]any, len(slots))
 
 	for i, slot := range slots {
-		slotDoc := map[string]interface{}{
+		slotDoc := map[string]any{
 			"name":        slot.Name(),
 			"description": slot.Description(),
 			"examples":    generateSlotExamples(slot),
@@ -116,11 +124,11 @@ func createSlotDocumentation(slots []types.Slot) []map[string]interface{} {
 }
 
 // createEventDocumentation creates detailed event documentation
-func createEventDocumentation(events []types.Event) []map[string]interface{} {
-	result := make([]map[string]interface{}, len(events))
+func createEventDocumentation(events []types.Event) []map[string]any {
+	result := make([]map[string]any, len(events))
 
 	for i, event := range events {
-		eventDoc := map[string]interface{}{
+		eventDoc := map[string]any{
 			"name":        event.Name(),
 			"description": event.Description(),
 			"type":        event.Type(),
@@ -135,11 +143,11 @@ func createEventDocumentation(events []types.Event) []map[string]interface{} {
 }
 
 // createCSSPropertyDocumentation creates detailed CSS property documentation
-func createCSSPropertyDocumentation(props []types.CssProperty) []map[string]interface{} {
-	result := make([]map[string]interface{}, len(props))
+func createCSSPropertyDocumentation(props []types.CssProperty) []map[string]any {
+	result := make([]map[string]any, len(props))
 
 	for i, prop := range props {
-		propDoc := map[string]interface{}{
+		propDoc := map[string]any{
 			"name":        prop.Name(),
 			"description": prop.Description(),
 			"syntax":      prop.Syntax(),
@@ -156,11 +164,11 @@ func createCSSPropertyDocumentation(props []types.CssProperty) []map[string]inte
 }
 
 // createCSSPartDocumentation creates detailed CSS parts documentation
-func createCSSPartDocumentation(parts []types.CssPart) []map[string]interface{} {
-	result := make([]map[string]interface{}, len(parts))
+func createCSSPartDocumentation(parts []types.CssPart) []map[string]any {
+	result := make([]map[string]any, len(parts))
 
 	for i, part := range parts {
-		partDoc := map[string]interface{}{
+		partDoc := map[string]any{
 			"name":        part.Name(),
 			"description": part.Description(),
 			"examples":    generateCSSPartExamples(part),
@@ -174,11 +182,11 @@ func createCSSPartDocumentation(parts []types.CssPart) []map[string]interface{} 
 }
 
 // createCSSStateDocumentation creates detailed CSS states documentation
-func createCSSStateDocumentation(states []types.CssState) []map[string]interface{} {
-	result := make([]map[string]interface{}, len(states))
+func createCSSStateDocumentation(states []types.CssState) []map[string]any {
+	result := make([]map[string]any, len(states))
 
 	for i, state := range states {
-		stateDoc := map[string]interface{}{
+		stateDoc := map[string]any{
 			"name":        state.Name(),
 			"description": state.Description(),
 			"examples":    generateCSSStateExamples(state),
@@ -192,11 +200,11 @@ func createCSSStateDocumentation(states []types.CssState) []map[string]interface
 }
 
 // createExampleDocumentation creates enhanced example documentation
-func createExampleDocumentation(examples []types.Example) []map[string]interface{} {
-	result := make([]map[string]interface{}, len(examples))
+func createExampleDocumentation(examples []types.Example) []map[string]any {
+	result := make([]map[string]any, len(examples))
 
 	for i, example := range examples {
-		exampleDoc := map[string]interface{}{
+		exampleDoc := map[string]any{
 			"title":       example.Title(),
 			"description": example.Description(),
 			"code":        example.Code(),
@@ -225,8 +233,8 @@ func generateAttributeExamples(attr types.Attribute) []string {
 	return examples
 }
 
-func generateAttributeValidation(attr types.Attribute) map[string]interface{} {
-	validation := map[string]interface{}{
+func generateAttributeValidation(attr types.Attribute) map[string]any {
+	validation := map[string]any{
 		"type":     attr.Type(),
 		"required": attr.Required(),
 	}
@@ -269,14 +277,14 @@ func generateEventExamples(event types.Event) []string {
 
 	examples := []string{
 		fmt.Sprintf(`element.addEventListener('%s', (e) => {\n  console.log('Event details:', e.detail);\n});`, eventName),
-		fmt.Sprintf(`<my-element on%s="handleEvent(event)"></my-element>`, strings.Title(eventName)),
+		fmt.Sprintf(`<my-element on%s="handleEvent(event)"></my-element>`, titleCase.String(eventName)),
 	}
 
 	return examples
 }
 
-func generateEventUsage(event types.Event) map[string]interface{} {
-	usage := map[string]interface{}{
+func generateEventUsage(event types.Event) map[string]any {
+	usage := map[string]any{
 		"bubbles":    true,  // Most custom events bubble
 		"cancelable": false, // Most custom events are not cancelable
 		"detail":     event.Type(),
@@ -300,8 +308,8 @@ func generateCSSPropertyExamples(prop types.CssProperty) []string {
 	return examples
 }
 
-func generateCSSPropertyIntegration(prop types.CssProperty) map[string]interface{} {
-	integration := map[string]interface{}{
+func generateCSSPropertyIntegration(prop types.CssProperty) map[string]any {
+	integration := map[string]any{
 		"syntax":   prop.Syntax(),
 		"inherits": prop.Inherits(),
 		"initial":  prop.Initial(),
@@ -353,8 +361,8 @@ func generateCSSStateSelectors(state types.CssState) []string {
 	return selectors
 }
 
-func generateExampleContext(example types.Example) map[string]interface{} {
-	context := map[string]interface{}{
+func generateExampleContext(example types.Example) map[string]any {
+	context := map[string]any{
 		"title":       example.Title(),
 		"description": example.Description(),
 		"useCase":     "General usage example",
@@ -363,7 +371,9 @@ func generateExampleContext(example types.Example) map[string]interface{} {
 	return context
 }
 
-func generateExampleVariations(example types.Example) []string {
+func generateExampleVariations(
+	example types.Example,
+) []string {
 	variations := []string{
 		"Basic usage",
 		"With additional attributes",
@@ -373,8 +383,8 @@ func generateExampleVariations(example types.Example) []string {
 	return variations
 }
 
-func createUsagePatterns(element types.ElementInfo) map[string]interface{} {
-	patterns := map[string]interface{}{
+func createUsagePatterns(element types.ElementInfo) map[string]any {
+	patterns := map[string]any{
 		"common": []string{
 			fmt.Sprintf("<%s></%s>", element.TagName(), element.TagName()),
 		},
@@ -385,8 +395,10 @@ func createUsagePatterns(element types.ElementInfo) map[string]interface{} {
 	return patterns
 }
 
-func createAccessibilityGuidance(element types.ElementInfo) map[string]interface{} {
-	guidance := map[string]interface{}{
+func createAccessibilityGuidance(
+	element types.ElementInfo,
+) map[string]any {
+	guidance := map[string]any{
 		"considerations": []string{
 			"Ensure proper ARIA attributes when needed",
 			"Maintain keyboard accessibility",
@@ -401,9 +413,9 @@ func createAccessibilityGuidance(element types.ElementInfo) map[string]interface
 	return guidance
 }
 
-func createIntegrationGuidance(element types.ElementInfo) map[string]interface{} {
-	guidance := map[string]interface{}{
-		"frameworks": map[string]interface{}{
+func createIntegrationGuidance(element types.ElementInfo) map[string]any {
+	guidance := map[string]any{
+		"frameworks": map[string]any{
 			"vanilla": fmt.Sprintf("document.createElement('%s')", element.TagName()),
 			"lit":     fmt.Sprintf("html`<%s></%s>`", element.TagName(), element.TagName()),
 			"react":   fmt.Sprintf("<%s></%s>", element.TagName(), element.TagName()),
