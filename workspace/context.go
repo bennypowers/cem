@@ -153,19 +153,35 @@ func findProjectRootFromCommand(cmd *cobra.Command) (string, bool) {
 	// If that fails, look at command arguments for file paths
 	args := cmd.Flags().Args()
 	for _, arg := range args {
+		var dir string
 		if filepath.IsAbs(arg) {
 			// For absolute paths, start looking from the directory containing the file
-			dir := filepath.Dir(arg)
-			if root, found := findProjectRootFromDir(dir); found {
-				return root, true
+			dir = filepath.Dir(arg)
+		} else {
+			// For relative paths, resolve them relative to current working directory
+			if absPath, err := filepath.Abs(arg); err == nil {
+				dir = filepath.Dir(absPath)
+			} else {
+				continue // Skip if we can't resolve the path
 			}
+		}
+		if root, found := findProjectRootFromDir(dir); found {
+			return root, true
 		}
 	}
 
 	// Also check design-tokens flag for additional hint
 	if designTokensPath, _ := cmd.Flags().GetString("design-tokens"); designTokensPath != "" {
+		var dir string
 		if filepath.IsAbs(designTokensPath) {
-			dir := filepath.Dir(designTokensPath)
+			dir = filepath.Dir(designTokensPath)
+		} else {
+			// For relative paths, resolve them relative to current working directory
+			if absPath, err := filepath.Abs(designTokensPath); err == nil {
+				dir = filepath.Dir(absPath)
+			}
+		}
+		if dir != "" {
 			if root, found := findProjectRootFromDir(dir); found {
 				return root, true
 			}

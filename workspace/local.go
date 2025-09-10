@@ -196,6 +196,16 @@ func (c *FileSystemWorkspaceContext) Glob(pattern string) ([]string, error) {
 					return []string{rel}, nil
 				}
 			}
+		} else {
+			// For relative paths, resolve them to absolute first, then make relative to project root
+			if absPath, err := filepath.Abs(pattern); err == nil {
+				if rel, err := filepath.Rel(c.root, absPath); err == nil {
+					// Check if the relative path doesn't go outside the project (no ../)
+					if !strings.HasPrefix(rel, "..") {
+						return []string{rel}, nil
+					}
+				}
+			}
 		}
 		return []string{pattern}, nil
 	}
