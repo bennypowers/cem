@@ -73,11 +73,10 @@ func preprocess(ctx types.WorkspaceContext) (r preprocessResult, errs error) {
 	}
 
 	if cfg.Generate.DesignTokens.Spec != "" {
-		tokens, err := ctx.DesignTokensCache().LoadOrReuse(ctx)
+		designTokens, err := validateAndLoadDesignTokens(ctx)
 		if err != nil {
 			errs = errors.Join(errs, err)
-		}
-		if designTokens, ok := tokens.(*DT.DesignTokens); ok {
+		} else {
 			r.designTokens = designTokens
 		}
 	}
@@ -228,4 +227,28 @@ func Generate(ctx types.WorkspaceContext) (manifest *string, errs error) {
 		return nil, fmt.Errorf("module serialize failed: %w", err)
 	}
 	return &manifestStr, nil
+}
+
+// validateAndLoadDesignTokens loads design tokens from cache and validates the type.
+// Returns a proper error if the cached object is not the expected DesignTokens type.
+func validateAndLoadDesignTokens(ctx types.WorkspaceContext) (*DT.DesignTokens, error) {
+	tokens, err := ctx.DesignTokensCache().LoadOrReuse(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load design tokens: %w", err)
+	}
+
+	if tokens == nil {
+		return nil, fmt.Errorf("design tokens cache returned nil - check design tokens spec configuration")
+	}
+
+	designTokens, ok := tokens.(*DT.DesignTokens)
+	if !ok {
+		return nil, fmt.Errorf("cached design tokens object has unexpected type %T, expected *designtokens.DesignTokens", tokens)
+	}
+
+	if designTokens == nil {
+		return nil, fmt.Errorf("design tokens object is nil after type assertion")
+	}
+
+	return designTokens, nil
 }
