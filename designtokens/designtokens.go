@@ -101,7 +101,7 @@ func NewLoader() types.DesignTokensLoader {
 }
 
 // Load implements types.DesignTokensLoader.Load
-func (l *Loader) Load(ctx interface{}) (interface{}, error) {
+func (l *Loader) Load(ctx any) (any, error) {
 	// Cast the context to our minimal types.WorkspaceContext interface
 	// This is safe because the workspace package will pass the correct type
 	wsCtx, ok := ctx.(types.WorkspaceContext)

@@ -52,20 +52,22 @@ func (m *mockWorkspaceContext) DesignTokensCache() types.DesignTokensCache {
 }
 
 // Implement other required methods as no-ops for testing
-func (m *mockWorkspaceContext) Root() string                                        { return "/test" }
-func (m *mockWorkspaceContext) ConfigFile() string                                  { return "" }
-func (m *mockWorkspaceContext) Config() (*C.CemConfig, error)                       { return nil, nil }
-func (m *mockWorkspaceContext) Init() error                                         { return nil }
-func (m *mockWorkspaceContext) Glob(string) ([]string, error)                       { return nil, nil }
-func (m *mockWorkspaceContext) Cleanup() error                                      { return nil }
-func (m *mockWorkspaceContext) PackageJSON() (*M.PackageJSON, error)                { return nil, nil }
-func (m *mockWorkspaceContext) Manifest() (*M.Package, error)                       { return nil, nil }
-func (m *mockWorkspaceContext) CustomElementsManifestPath() string                  { return "" }
-func (m *mockWorkspaceContext) ReadFile(string) (io.ReadCloser, error)              { return nil, nil }
-func (m *mockWorkspaceContext) OutputWriter(string) (io.WriteCloser, error)         { return nil, nil }
-func (m *mockWorkspaceContext) ModulePathToFS(string) string                        { return "" }
-func (m *mockWorkspaceContext) FSPathToModule(string) (string, error)               { return "", nil }
-func (m *mockWorkspaceContext) ResolveModuleDependency(string, string) (string, error) { return "", nil }
+func (m *mockWorkspaceContext) Root() string                                { return "/test" }
+func (m *mockWorkspaceContext) ConfigFile() string                          { return "" }
+func (m *mockWorkspaceContext) Config() (*C.CemConfig, error)               { return nil, nil }
+func (m *mockWorkspaceContext) Init() error                                 { return nil }
+func (m *mockWorkspaceContext) Glob(string) ([]string, error)               { return nil, nil }
+func (m *mockWorkspaceContext) Cleanup() error                              { return nil }
+func (m *mockWorkspaceContext) PackageJSON() (*M.PackageJSON, error)        { return nil, nil }
+func (m *mockWorkspaceContext) Manifest() (*M.Package, error)               { return nil, nil }
+func (m *mockWorkspaceContext) CustomElementsManifestPath() string          { return "" }
+func (m *mockWorkspaceContext) ReadFile(string) (io.ReadCloser, error)      { return nil, nil }
+func (m *mockWorkspaceContext) OutputWriter(string) (io.WriteCloser, error) { return nil, nil }
+func (m *mockWorkspaceContext) ModulePathToFS(string) string                { return "" }
+func (m *mockWorkspaceContext) FSPathToModule(string) (string, error)       { return "", nil }
+func (m *mockWorkspaceContext) ResolveModuleDependency(string, string) (string, error) {
+	return "", nil
+}
 
 func TestValidateAndLoadDesignTokens(t *testing.T) {
 	tests := []struct {
@@ -189,23 +191,23 @@ func TestValidateAndLoadDesignTokens_IntegrationWithStringType(t *testing.T) {
 	// Test with a common wrong type that might be returned (string instead of DesignTokens)
 	mockCache := &mockDesignTokensCache{
 		returnValue: "this is not a design tokens object",
-		returnError:  nil,
+		returnError: nil,
 	}
-	
+
 	mockCtx := &mockWorkspaceContext{
 		cache: mockCache,
 	}
 
 	result, err := validateAndLoadDesignTokens(mockCtx)
-	
+
 	if err == nil {
 		t.Fatal("Expected error but got none")
 	}
-	
+
 	if result != nil {
 		t.Error("Expected nil result when validation fails")
 	}
-	
+
 	// Verify the error message is helpful for debugging
 	errorMsg := err.Error()
 	expectedParts := []string{
@@ -214,7 +216,7 @@ func TestValidateAndLoadDesignTokens_IntegrationWithStringType(t *testing.T) {
 		"string",
 		"*designtokens.DesignTokens",
 	}
-	
+
 	for _, part := range expectedParts {
 		if !strings.Contains(errorMsg, part) {
 			t.Errorf("Error message should contain %q but doesn't. Full message: %s", part, errorMsg)
@@ -227,28 +229,28 @@ func TestValidateAndLoadDesignTokens_CacheErrorHandling(t *testing.T) {
 	originalError := errors.New("network timeout while fetching design tokens")
 	mockCache := &mockDesignTokensCache{
 		returnValue: nil,
-		returnError:  originalError,
+		returnError: originalError,
 	}
-	
+
 	mockCtx := &mockWorkspaceContext{
 		cache: mockCache,
 	}
 
 	result, err := validateAndLoadDesignTokens(mockCtx)
-	
+
 	if err == nil {
 		t.Fatal("Expected error but got none")
 	}
-	
+
 	if result != nil {
 		t.Error("Expected nil result when cache fails")
 	}
-	
+
 	// Verify the original error is wrapped and preserved
 	if !strings.Contains(err.Error(), "failed to load design tokens") {
 		t.Error("Error should be wrapped with descriptive message")
 	}
-	
+
 	if !strings.Contains(err.Error(), originalError.Error()) {
 		t.Error("Original error should be preserved in wrapped error")
 	}

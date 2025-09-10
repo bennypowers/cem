@@ -40,7 +40,7 @@ func TestTagDiagnostics_WithImports(t *testing.T) {
 	}
 
 	// Create workspace context
-	workspace := W.NewFileSystemWorkspaceContextWithDefaults(fixtureDir)
+	workspace := W.NewFileSystemWorkspaceContext(fixtureDir)
 	err = workspace.Init()
 	if err != nil {
 		t.Fatalf("Failed to initialize workspace: %v", err)
@@ -142,7 +142,7 @@ func TestTagDiagnostics_TypeScriptImports(t *testing.T) {
 	}
 
 	// Create workspace context
-	workspace := W.NewFileSystemWorkspaceContextWithDefaults(fixtureDir)
+	workspace := W.NewFileSystemWorkspaceContext(fixtureDir)
 	err = workspace.Init()
 	if err != nil {
 		t.Fatalf("Failed to initialize workspace: %v", err)
@@ -279,7 +279,7 @@ func TestTagDiagnostics_MissingImports(t *testing.T) {
 	}
 
 	// Create workspace context
-	workspace := W.NewFileSystemWorkspaceContextWithDefaults(fixtureDir)
+	workspace := W.NewFileSystemWorkspaceContext(fixtureDir)
 	err = workspace.Init()
 	if err != nil {
 		t.Fatalf("Failed to initialize workspace: %v", err)
@@ -384,7 +384,7 @@ func TestTagDiagnostics_IgnoreComment(t *testing.T) {
 	}
 
 	// Create workspace context (use fixture dir for manifests)
-	workspace := W.NewFileSystemWorkspaceContextWithDefaults(fixtureDir)
+	workspace := W.NewFileSystemWorkspaceContext(fixtureDir)
 	err = workspace.Init()
 	if err != nil {
 		t.Fatalf("Failed to initialize workspace: %v", err)
@@ -453,7 +453,7 @@ func TestTagDiagnostics_ActualMissingImports(t *testing.T) {
 	}
 
 	// Create workspace context
-	workspace := W.NewFileSystemWorkspaceContextWithDefaults(fixtureDir)
+	workspace := W.NewFileSystemWorkspaceContext(fixtureDir)
 	err = workspace.Init()
 	if err != nil {
 		t.Fatalf("Failed to initialize workspace: %v", err)
@@ -540,7 +540,7 @@ func TestTagDiagnostics_SideEffectImports(t *testing.T) {
 	}
 
 	// Create workspace context
-	workspace := W.NewFileSystemWorkspaceContextWithDefaults(fixtureDir)
+	workspace := W.NewFileSystemWorkspaceContext(fixtureDir)
 	err = workspace.Init()
 	if err != nil {
 		t.Fatalf("Failed to initialize workspace: %v", err)

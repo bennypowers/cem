@@ -83,7 +83,7 @@ func GetWorkspaceContext(cmd *cobra.Command) (types.WorkspaceContext, error) {
 func getAppropriateContextForSpec(spec, cmdName string) (ctx types.WorkspaceContext, err error) {
 	if !IsPackageSpecifier(spec) {
 		// if it's a file path, use it
-		return NewFileSystemWorkspaceContextWithDefaults(spec), nil
+		return NewFileSystemWorkspaceContext(spec), nil
 	} else {
 		// if it's a specifier, try to get it from node_modules
 		name, _, err := parseNpmSpecifier(spec)
@@ -92,7 +92,7 @@ func getAppropriateContextForSpec(spec, cmdName string) (ctx types.WorkspaceCont
 		}
 		localPath := filepath.Join("node_modules", name)
 		if stat, err := os.Stat(localPath); err == nil && stat.IsDir() {
-			return NewFileSystemWorkspaceContextWithDefaults(localPath), nil
+			return NewFileSystemWorkspaceContext(localPath), nil
 		}
 		// finally, we fetch from the network
 		if cmdName == "generate" {

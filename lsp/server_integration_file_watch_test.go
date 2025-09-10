@@ -49,7 +49,7 @@ func TestManifestFileWatchingIntegration(t *testing.T) {
 	}
 
 	// Create workspace context
-	workspace := W.NewFileSystemWorkspaceContextWithDefaults(tempDir)
+	workspace := W.NewFileSystemWorkspaceContext(tempDir)
 	err = workspace.Init() // Initialize workspace to discover manifest paths
 	if err != nil {
 		t.Fatalf("Failed to initialize workspace: %v", err)
@@ -99,7 +99,7 @@ func TestManifestFileWatchingIntegration(t *testing.T) {
 			reloadCount++
 			// Simulate the server's reload process using public API
 			// Create fresh workspace to avoid caching issues
-			freshWorkspace := W.NewFileSystemWorkspaceContextWithDefaults(tempDir)
+			freshWorkspace := W.NewFileSystemWorkspaceContext(tempDir)
 			err := freshWorkspace.Init()
 			if err != nil {
 				return
@@ -170,7 +170,7 @@ func TestManifestFileWatchingIntegration(t *testing.T) {
 				defer reloadMu.Unlock()
 				reloadCount++
 				// Create fresh workspace to avoid caching issues
-				freshWorkspace := W.NewFileSystemWorkspaceContextWithDefaults(tempDir)
+				freshWorkspace := W.NewFileSystemWorkspaceContext(tempDir)
 				err := freshWorkspace.Init()
 				if err != nil {
 					return
@@ -276,7 +276,7 @@ func TestPackageJSONWatching(t *testing.T) {
 
 	t.Run("package.json with customElements tracked", func(t *testing.T) {
 		// Create workspace and load manifests to trigger package.json discovery
-		workspace := W.NewFileSystemWorkspaceContextWithDefaults(tempDir)
+		workspace := W.NewFileSystemWorkspaceContext(tempDir)
 		err := workspace.Init()
 		if err != nil {
 			t.Fatalf("Failed to initialize workspace: %v", err)
@@ -306,7 +306,7 @@ func TestPackageJSONWatching(t *testing.T) {
 		testRegistry := lsp.NewRegistry(mockFileWatcher)
 
 		// Load workspace to populate manifest paths
-		workspace := W.NewFileSystemWorkspaceContextWithDefaults(tempDir)
+		workspace := W.NewFileSystemWorkspaceContext(tempDir)
 		err = workspace.Init()
 		if err != nil {
 			t.Fatalf("Failed to initialize workspace: %v", err)

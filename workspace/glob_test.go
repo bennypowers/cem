@@ -45,7 +45,7 @@ func TestGlob_CrossPlatform(t *testing.T) {
 		}
 	}
 
-	ctx := NewFileSystemWorkspaceContextWithDefaults(tmpDir)
+	ctx := NewFileSystemWorkspaceContext(tmpDir)
 
 	tests := []struct {
 		name     string
@@ -115,7 +115,7 @@ func TestGlob_CrossPlatform(t *testing.T) {
 
 func TestMakeRelativeToRoot_CrossPlatform(t *testing.T) {
 	tmpDir := t.TempDir()
-	ctx := NewFileSystemWorkspaceContextWithDefaults(tmpDir)
+	ctx := NewFileSystemWorkspaceContext(tmpDir)
 
 	tests := []struct {
 		name        string
@@ -184,7 +184,7 @@ func TestMakeRelativeToRoot_CrossPlatform(t *testing.T) {
 
 func TestHandleNonGlobPattern_CrossPlatform(t *testing.T) {
 	tmpDir := t.TempDir()
-	ctx := NewFileSystemWorkspaceContextWithDefaults(tmpDir)
+	ctx := NewFileSystemWorkspaceContext(tmpDir)
 
 	// Test path cleaning with different separators
 	testPattern := "src/./component/../component.ts"

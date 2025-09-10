@@ -33,7 +33,7 @@ func BenchmarkGenerate(b *testing.B) {
 		b.Fatalf("BenchmarkGenerate failed to resolve project dir: %v", err)
 	}
 
-	ctx := W.NewFileSystemWorkspaceContextWithDefaults(path)
+	ctx := W.NewFileSystemWorkspaceContext(path)
 	if err := ctx.Init(); err != nil {
 		b.Fatalf("BenchmarkGenerate failed to init context: %v", err)
 	}

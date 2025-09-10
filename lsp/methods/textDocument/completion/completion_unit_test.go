@@ -36,7 +36,7 @@ func TestBasicAttributeValueCompletions(t *testing.T) {
 	// The generate watcher will create the manifest from the TypeScript source file
 
 	// Create workspace context after manifest exists
-	workspace := W.NewFileSystemWorkspaceContextWithDefaults(fixtureDir)
+	workspace := W.NewFileSystemWorkspaceContext(fixtureDir)
 	err = workspace.Init()
 	if err != nil {
 		t.Fatalf("Failed to initialize workspace: %v", err)

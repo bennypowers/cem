@@ -117,7 +117,7 @@ Showcases different card variants with accessibility features.
 			}
 
 			// Extract metadata
-			ctx := W.NewFileSystemWorkspaceContextWithDefaults(tmpDir)
+			ctx := W.NewFileSystemWorkspaceContext(tmpDir)
 			result, err := extractDemoMetadata(ctx, filePath)
 			if err != nil {
 				t.Fatalf("extractDemoMetadata failed: %v", err)
@@ -144,7 +144,7 @@ Showcases different card variants with accessibility features.
 }
 
 func TestGenerateFallbackURL(t *testing.T) {
-	ctx := W.NewFileSystemWorkspaceContextWithDefaults(t.TempDir())
+	ctx := W.NewFileSystemWorkspaceContext(t.TempDir())
 
 	tests := []struct {
 		name        string
@@ -371,7 +371,7 @@ func TestExtractDemoTags(t *testing.T) {
 			}
 
 			// Extract tags
-			ctx := W.NewFileSystemWorkspaceContextWithDefaults(tmpDir)
+			ctx := W.NewFileSystemWorkspaceContext(tmpDir)
 			result, err := extractDemoTags(ctx, filePath, tt.elementAliases)
 			if err != nil {
 				t.Fatalf("extractDemoTags failed: %v", err)
@@ -517,7 +517,7 @@ func TestNewDemoMap(t *testing.T) {
 	}
 
 	// Create workspace context for test
-	ctx := W.NewFileSystemWorkspaceContextWithDefaults(tmpDir)
+	ctx := W.NewFileSystemWorkspaceContext(tmpDir)
 
 	demoMap, err := NewDemoMap(ctx, []string{demo1Path, demo2Path}, elementAliases)
 	if err != nil {

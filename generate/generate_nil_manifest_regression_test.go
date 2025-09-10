@@ -47,7 +47,7 @@ func TestGenerateWithNilManifest(t *testing.T) {
 		require.NoError(t, err)
 
 		// Create workspace context
-		workspace := W.NewFileSystemWorkspaceContextWithDefaults(tempDir)
+		workspace := W.NewFileSystemWorkspaceContext(tempDir)
 		err = workspace.Init()
 		require.NoError(t, err)
 
@@ -99,7 +99,7 @@ func TestGenerateWithFileReadError(t *testing.T) {
 		require.NoError(t, err)
 
 		// Create workspace context
-		workspace := W.NewFileSystemWorkspaceContextWithDefaults(tempDir)
+		workspace := W.NewFileSystemWorkspaceContext(tempDir)
 		err = workspace.Init()
 		require.NoError(t, err)
 

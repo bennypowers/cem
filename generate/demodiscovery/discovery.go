@@ -377,10 +377,10 @@ func DiscoverDemos(
 	for _, decl := range module.Declarations {
 		// Only attach to custom element classes with a tag name
 		ce, ok := decl.(*M.CustomElementDeclaration)
-		tagName := ce.CustomElement.TagName
 		if !ok || ce.Kind != "class" || ce.TagName == "" {
 			continue
 		}
+		tagName := ce.TagName
 		demoFiles := demoMap[tagName]
 		moduleDir := filepath.Dir(module.Path)
 		sort.SliceStable(demoFiles, func(i, j int) bool {

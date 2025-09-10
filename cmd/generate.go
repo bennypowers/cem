@@ -22,7 +22,6 @@ import (
 	"path/filepath"
 	"time"
 
-	DT "bennypowers.dev/cem/designtokens"
 	G "bennypowers.dev/cem/generate"
 	DD "bennypowers.dev/cem/generate/demodiscovery"
 	"bennypowers.dev/cem/internal/logging"
@@ -48,9 +47,8 @@ var generateCmd = &cobra.Command{
 			return fmt.Errorf("project context not initialized: %w", err)
 		}
 
-		// Create a new context with design tokens loader injected
-		designTokensLoader := DT.NewLoader()
-		ctx := W.NewFileSystemWorkspaceContext(baseCtx.Root(), designTokensLoader)
+		// Create a new context with design tokens functionality
+		ctx := W.NewFileSystemWorkspaceContext(baseCtx.Root())
 		if err := ctx.Init(); err != nil {
 			return fmt.Errorf("failed to initialize workspace context with design tokens: %w", err)
 		}

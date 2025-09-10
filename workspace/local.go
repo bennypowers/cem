@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	C "bennypowers.dev/cem/cmd/config"
+	DT "bennypowers.dev/cem/designtokens"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
 	"github.com/bmatcuk/doublestar"
@@ -86,22 +87,10 @@ func (c *FileSystemWorkspaceContext) initConfig() (*C.CemConfig, error) {
 	return &config, nil
 }
 
-func NewFileSystemWorkspaceContext(
-	root string,
-	designTokensLoader types.DesignTokensLoader,
-) *FileSystemWorkspaceContext {
+func NewFileSystemWorkspaceContext(root string) *FileSystemWorkspaceContext {
 	return &FileSystemWorkspaceContext{
 		root:              root,
-		designTokensCache: NewDesignTokensCache(designTokensLoader),
-	}
-}
-
-// NewFileSystemWorkspaceContextWithDefaults creates a workspace context with a nil design tokens loader
-// This is useful for tests and cases where design tokens functionality is not needed
-func NewFileSystemWorkspaceContextWithDefaults(root string) *FileSystemWorkspaceContext {
-	return &FileSystemWorkspaceContext{
-		root:              root,
-		designTokensCache: NewDesignTokensCache(nil),
+		designTokensCache: NewDesignTokensCache(DT.NewLoader()),
 	}
 }
 

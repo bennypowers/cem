@@ -31,7 +31,7 @@ import (
 
 // setupTestContext creates a test workspace context
 func setupTestContext(t *testing.T, fixture string) types.WorkspaceContext {
-	ctx := W.NewFileSystemWorkspaceContextWithDefaults(fixture)
+	ctx := W.NewFileSystemWorkspaceContext(fixture)
 	require.NoError(t, ctx.Init())
 	return ctx
 }
@@ -477,7 +477,7 @@ func TestMergeModulesIntoManifest_WithIndex(t *testing.T) {
 }
 
 func BenchmarkGenerateSession_SingleGeneration(b *testing.B) {
-	ctx := W.NewFileSystemWorkspaceContextWithDefaults("test/fixtures/project-classes")
+	ctx := W.NewFileSystemWorkspaceContext("test/fixtures/project-classes")
 	require.NoError(b, ctx.Init())
 
 	cfg, err := ctx.Config()
@@ -496,7 +496,7 @@ func BenchmarkGenerateSession_SingleGeneration(b *testing.B) {
 }
 
 func BenchmarkGenerateSession_ReusedSession(b *testing.B) {
-	ctx := W.NewFileSystemWorkspaceContextWithDefaults("test/fixtures/project-classes")
+	ctx := W.NewFileSystemWorkspaceContext("test/fixtures/project-classes")
 	require.NoError(b, ctx.Init())
 
 	cfg, err := ctx.Config()

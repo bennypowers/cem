@@ -26,9 +26,7 @@ import (
 	"strings"
 	"testing"
 
-	DT "bennypowers.dev/cem/designtokens"
 	"bennypowers.dev/cem/generate"
-	"bennypowers.dev/cem/types"
 	W "bennypowers.dev/cem/workspace"
 	"github.com/nsf/jsondiff"
 )
@@ -69,27 +67,15 @@ func TestGenerate(t *testing.T) {
 				t.Fatalf("failed to create %s: %v", projectGoldenDir, err)
 			}
 
-			// First create a basic context to check if design tokens are configured
-			baseCtx := W.NewFileSystemWorkspaceContextWithDefaults(projectDir)
-			if err := baseCtx.Init(); err != nil {
+			// Create workspace context with design tokens functionality
+			ctx := W.NewFileSystemWorkspaceContext(projectDir)
+			if err := ctx.Init(); err != nil {
 				t.Fatalf("TestGenerate: %v", err)
 			}
 
-			cfg, err := baseCtx.Config()
+			cfg, err := ctx.Config()
 			if err != nil {
 				t.Fatalf("TestGenerate: %v", err)
-			}
-
-			// If design tokens are configured, create context with design tokens loader
-			var ctx types.WorkspaceContext
-			if cfg.Generate.DesignTokens.Spec != "" {
-				designTokensLoader := DT.NewLoader()
-				ctx = W.NewFileSystemWorkspaceContext(projectDir, designTokensLoader)
-				if err := ctx.Init(); err != nil {
-					t.Fatalf("TestGenerate: %v", err)
-				}
-			} else {
-				ctx = baseCtx
 			}
 
 			var cases []testcase
