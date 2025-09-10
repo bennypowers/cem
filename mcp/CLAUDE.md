@@ -1,5 +1,68 @@
 # CEM MCP Server Implementation Plan
 
+## 🎯 Core Philosophy: Data + Context + LLM Decision Making
+
+**The Central Approach**: CEM MCP operates on a fundamental principle:
+
+1. **📊 Take User Data** - Raw manifest data (properties, parts, states, descriptions)
+2. **📖 Add Rich Context** - Schema definitions, usage patterns, constraints, and guidance 
+3. **🧠 Let LLM Decide** - Present enriched data to AI for intelligent decision making
+
+**NOT** hardcoded outputs → **YES** templated context that guides LLM reasoning
+
+### Template-Driven Intelligence
+
+```
+Manifest Data → Go Templates → Rich Context → LLM → Smart Decisions
+     ↓              ↓              ↓           ↓           ↓
+  Raw APIs    +  Usage Patterns  =  Guided   →  AI chooses  →  Proper
+  Syntax info    Best practices     Context     appropriate    Usage
+  Descriptions   Constraints                    values/styles
+```
+
+**Example in Practice:**
+- **Don't generate**: `color: #007acc` (hardcoded)
+- **Do provide**: `color: /* your color value (syntax: <color>) */` + property description
+- **LLM decides**: Appropriate color based on element's purpose and context
+
+**Why This Matters:**
+- ✅ **Respects element authors** - Uses their documented constraints and intent
+- ✅ **Scales to any manifest** - Works with any element, any property definition
+- ✅ **Context-aware** - LLM considers element purpose, design system, accessibility
+- ✅ **Maintainable** - Content updates don't require code changes
+- ❌ **Avoids assumptions** - No hardcoded values that might be inappropriate
+
+This approach respects element authors' documented intent while enabling intelligent AI assistance.
+
+### 🌐 Template System Architecture
+
+**Implementation**: All tool responses use Go templates with embedded manifest data:
+
+```
+mcp/tools/templates/
+├── css_properties.md      # CSS custom properties guidance
+├── css_parts.md           # CSS parts styling patterns  
+├── css_states.md          # CSS custom states usage
+├── theming_guidance.md    # Theme-aware styling advice
+├── basic_styling.md       # Fallback for elements without CSS APIs
+└── responsive_guidance.md # Responsive design patterns
+```
+
+**Template Features**:
+- **Data-driven**: `{{.Name}}`, `{{.Description}}`, `{{.Syntax}}`
+- **Conditional**: `{{if .Initial}}...{{end}}`
+- **Iterative**: `{{range .CssProperties}}...{{end}}`
+- **Smart logic**: `{{if gt (len .CssParts) 1}}` for plural handling
+
+**Benefits**:
+✓ **Maintainable**: Content in markdown, not Go code
+✓ **Extensible**: New guidance = new template file
+✓ **Consistent**: Same data model across all tools
+✓ **Context-aware**: Templates adapt to actual manifest content
+✓ **LLM-friendly**: Rich context without hardcoded assumptions
+
+---
+
 ## Vision: Intelligent HTML Generation Platform
 
 **End Goal**: Create an AI-native component intelligence platform that enables intelligent HTML generation with:
@@ -23,24 +86,24 @@ The existing LSP server (`cmd/lsp.go`) already solves 80% of the architecture ch
 
 **Strategy**: Refactor shared components into a common service layer that both LSP and MCP can consume.
 
-### 2. **Enhanced Context Beyond Initial Scope**
-Your initial thoughts (JSON schema + manifests) are foundational, but MCP enables much richer context:
+### 2. **Template-Driven Context Enhancement**
+Building on manifest data, the template system provides **rich, contextual guidance**:
 
 **Resources (Read-only data)**:
 - Live manifest registry with real-time updates
 - Custom element definitions with inheritance chains
 - Type information and validation rules
-- Usage examples and best practices
+- **Template-generated usage patterns** from manifest descriptions
 - CSS integration patterns (custom properties, parts, states)
 - Design system guidelines and component relationships
 
-**Tools (Interactive capabilities)**:
-- Element validation and suggestion
+**Tools (Template-powered capabilities)**:
+- Element validation with **context-aware suggestions**
 - Import path resolution
 - Component compatibility checking
-- Real-time manifest querying
-- **HTML generation assistance** with correct slot/attribute usage
-- **CSS integration guidance** for proper styling
+- Real-time manifest querying with **templated responses**
+- **HTML generation** using manifest data + template guidance
+- **CSS integration guidance** via templates that respect property syntax/constraints
 
 ### 3. **Multi-Modal Context Delivery**
 **Smart Context Adaptation**: Unlike static documentation, MCP can provide context that adapts to the AI's current task:
@@ -72,15 +135,20 @@ mcp/
 - `cem://css/{tagName}` - CSS integration guide (custom properties, parts, states)
 - `cem://guidelines` - Design system guidelines and component usage rules
 
-### Phase 2: HTML Generation Tools (Weeks 3-4)
-**Interactive MCP Tools for Intelligent HTML Generation**:
-- `validate_element` - Validate custom element usage with slot/attribute checking
-- `suggest_attributes` - Get valid attributes with type-aware value suggestions
+### Phase 2: Template-Powered Tools (Weeks 3-4)
+**Interactive MCP Tools Using Template-Driven Guidance**:
+- `validate_element` - Validate using **manifest constraints + contextual feedback**
+- `suggest_attributes` - Present **syntax definitions + usage guidance** for LLM decisions
 - `resolve_import` - Find correct import path for element
 - `query_registry` - Search elements by criteria
-- `generate_html` - **Generate correct HTML structure with proper slots and attributes**
-- `validate_css_usage` - **Ensure proper CSS custom property and part usage**
-- `suggest_css_integration` - **Recommend CSS patterns for styling elements**
+- `generate_html` - **Template-driven HTML structure** respecting manifest slot/attribute definitions
+- `validate_css_usage` - **Template-based validation** using property syntax and constraints
+- `suggest_css_integration` - **Template system** presenting CSS APIs with rich context for LLM
+
+**Template Philosophy Applied**:
+- **No hardcoded suggestions** → Rich manifest data + contextual templates
+- **LLM-driven decisions** → AI chooses appropriate values based on provided constraints
+- **Extensible guidance** → New templates = new capabilities without code changes
 
 ### Phase 3: Intelligent HTML Generation Features (Week 5+)
 **Context Intelligence for HTML Generation**:
