@@ -74,17 +74,14 @@ func handleValidateHtml(ctx context.Context, req *mcp.CallToolRequest, registry 
 
 	// Perform validation based on context
 	switch strings.ToLower(validateArgs.Context) {
-	case "accessibility":
-		results.WriteString(validateAccessibility(html, elements))
 	case "semantic":
 		results.WriteString(validateSemanticStructure(html))
 	case "manifest-compliance":
 		results.WriteString(validateManifestCompliance(html, elements))
 	default:
-		// Comprehensive validation
-		results.WriteString(validateAccessibility(html, elements))
-		results.WriteString(validateSemanticStructure(html))
+		// Focus on manifest compliance and semantic structure
 		results.WriteString(validateManifestCompliance(html, elements))
+		results.WriteString(validateSemanticStructure(html))
 	}
 
 	// If specific tagName is provided, focus validation on that element
@@ -105,83 +102,81 @@ func handleValidateHtml(ctx context.Context, req *mcp.CallToolRequest, registry 
 	}, nil
 }
 
-// validateAccessibility checks for accessibility compliance
-func validateAccessibility(html string, elements map[string]types.ElementInfo) string {
+// validateManifestCompliance checks custom element usage against manifest guidelines only
+func validateManifestCompliance(html string, elements map[string]types.ElementInfo) string {
 	var results strings.Builder
-	results.WriteString("## Accessibility Validation\n\n")
+	results.WriteString("## Manifest Compliance Validation\n\n")
 
 	var issues []string
-	var suggestions []string
+	var notes []string
 
-	// Check for missing alt attributes on images
-	imgRegex := regexp.MustCompile(`<img[^>]*>`)
-	images := imgRegex.FindAllString(html, -1)
-	for _, img := range images {
-		if !strings.Contains(img, "alt=") {
-			issues = append(issues, "Image missing alt attribute: "+img)
-		}
-	}
-
-	// Check for proper heading hierarchy
-	h1Count := strings.Count(html, "<h1")
-	if h1Count == 0 {
-		issues = append(issues, "No h1 heading found - should have exactly one h1 per page")
-	} else if h1Count > 1 {
-		issues = append(issues, fmt.Sprintf("Multiple h1 headings found (%d) - should have exactly one h1 per page", h1Count))
-	}
-
-	// Check for form labels
-	inputRegex := regexp.MustCompile(`<input[^>]*>`)
-	inputs := inputRegex.FindAllString(html, -1)
-	for _, input := range inputs {
-		if !strings.Contains(input, "aria-label=") && !strings.Contains(input, "id=") {
-			issues = append(issues, "Input without proper labeling: "+input)
-		}
-	}
-
-	// Check for button accessibility
-	buttonRegex := regexp.MustCompile(`<button[^>]*>`)
-	buttons := buttonRegex.FindAllString(html, -1)
-	for _, button := range buttons {
-		if strings.Contains(button, "disabled") && !strings.Contains(button, "aria-disabled") {
-			suggestions = append(suggestions, "Consider adding aria-disabled to disabled buttons: "+button)
-		}
-	}
-
-	// Check landmark structure
-	hasMain := strings.Contains(html, "<main") || strings.Contains(html, `role="main"`)
-
-	if !hasMain {
-		issues = append(issues, "No main landmark found - consider adding <main> element")
-	}
-
-	// Custom element accessibility checks
+	// Focus only on custom elements and their manifest-defined requirements
 	for tagName, element := range elements {
 		if strings.Contains(html, "<"+tagName) {
-			// Check if element has accessibility guidelines
-			guidelines := element.Guidelines()
-			if len(guidelines) > 0 {
-				suggestions = append(suggestions, fmt.Sprintf("Review accessibility guidelines for <%s>: %s", tagName, strings.Join(guidelines, "; ")))
+			// Extract the element usage from HTML
+			elementRegex := regexp.MustCompile(`<` + regexp.QuoteMeta(tagName) + `[^>]*>`)
+			usages := elementRegex.FindAllString(html, -1)
+
+			for _, usage := range usages {
+				// Check required attributes per manifest
+				for _, attr := range element.Attributes() {
+					if attr.Required() && !strings.Contains(usage, attr.Name()+"=") {
+						issues = append(issues, fmt.Sprintf("Required attribute '%s' missing in <%s>", attr.Name(), tagName))
+					}
+				}
+
+				// Check for proper attribute values per manifest constraints
+				for _, attr := range element.Attributes() {
+					if strings.Contains(usage, attr.Name()+"=") && len(attr.Values()) > 0 {
+						// Extract attribute value
+						attrRegex := regexp.MustCompile(attr.Name() + `=["']([^"']+)["']`)
+						matches := attrRegex.FindStringSubmatch(usage)
+						if len(matches) > 1 {
+							value := matches[1]
+							validValues := attr.Values()
+							isValid := false
+							for _, validValue := range validValues {
+								if value == validValue {
+									isValid = true
+									break
+								}
+							}
+							if !isValid {
+								issues = append(issues, fmt.Sprintf("Invalid value '%s' for attribute '%s' in <%s>. Valid values: %s",
+									value, attr.Name(), tagName, strings.Join(validValues, ", ")))
+							}
+						}
+					}
+				}
+			}
+
+			// Note available features for guidance
+			if len(element.Slots()) > 0 {
+				notes = append(notes, fmt.Sprintf("<%s> supports slots: %s", tagName, getSlotNames(element.Slots())))
+			}
+
+			// Note manifest guidelines if available
+			if len(element.Guidelines()) > 0 {
+				notes = append(notes, fmt.Sprintf("<%s> guidelines: %s", tagName, strings.Join(element.Guidelines(), "; ")))
 			}
 		}
 	}
 
-	// Report issues
+	// Report results
 	if len(issues) > 0 {
-		results.WriteString("### ❌ Accessibility Issues\n\n")
+		results.WriteString("### ❌ Manifest Compliance Issues\n\n")
 		for _, issue := range issues {
 			results.WriteString(fmt.Sprintf("- %s\n", issue))
 		}
 		results.WriteString("\n")
 	} else {
-		results.WriteString("### ✅ No Critical Accessibility Issues Found\n\n")
+		results.WriteString("### ✅ No Manifest Compliance Issues Found\n\n")
 	}
 
-	// Report suggestions
-	if len(suggestions) > 0 {
-		results.WriteString("### 💡 Accessibility Suggestions\n\n")
-		for _, suggestion := range suggestions {
-			results.WriteString(fmt.Sprintf("- %s\n", suggestion))
+	if len(notes) > 0 {
+		results.WriteString("### 💡 Manifest-Defined Features\n\n")
+		for _, note := range notes {
+			results.WriteString(fmt.Sprintf("- %s\n", note))
 		}
 		results.WriteString("\n")
 	}
@@ -239,88 +234,6 @@ func validateSemanticStructure(html string) string {
 
 	if len(issues) == 0 && len(suggestions) == 0 {
 		results.WriteString("### ✅ Good Semantic Structure\n\n")
-	}
-
-	return results.String()
-}
-
-// validateManifestCompliance checks custom element usage against manifest definitions
-func validateManifestCompliance(html string, elements map[string]types.ElementInfo) string {
-	var results strings.Builder
-	results.WriteString("## Manifest Compliance Validation\n\n")
-
-	var issues []string
-	var suggestions []string
-
-	// Check each custom element found in HTML
-	for tagName, element := range elements {
-		if strings.Contains(html, "<"+tagName) {
-			// Extract the element usage from HTML
-			elementRegex := regexp.MustCompile(`<` + regexp.QuoteMeta(tagName) + `[^>]*>`)
-			usages := elementRegex.FindAllString(html, -1)
-
-			for _, usage := range usages {
-				// Check required attributes
-				for _, attr := range element.Attributes() {
-					if attr.Required() && !strings.Contains(usage, attr.Name()+"=") {
-						issues = append(issues, fmt.Sprintf("Required attribute '%s' missing in <%s>", attr.Name(), tagName))
-					}
-				}
-
-				// Check for proper attribute values
-				for _, attr := range element.Attributes() {
-					if strings.Contains(usage, attr.Name()+"=") && len(attr.Values()) > 0 {
-						// Extract attribute value
-						attrRegex := regexp.MustCompile(attr.Name() + `=["']([^"']+)["']`)
-						matches := attrRegex.FindStringSubmatch(usage)
-						if len(matches) > 1 {
-							value := matches[1]
-							validValues := attr.Values()
-							isValid := false
-							for _, validValue := range validValues {
-								if value == validValue {
-									isValid = true
-									break
-								}
-							}
-							if !isValid {
-								issues = append(issues, fmt.Sprintf("Invalid value '%s' for attribute '%s' in <%s>. Valid values: %s",
-									value, attr.Name(), tagName, strings.Join(validValues, ", ")))
-							}
-						}
-					}
-				}
-			}
-
-			// Suggest using available slots
-			if len(element.Slots()) > 0 {
-				suggestions = append(suggestions, fmt.Sprintf("<%s> supports slots: %s", tagName, getSlotNames(element.Slots())))
-			}
-
-			// Suggest CSS customization if available
-			if len(element.CssProperties()) > 0 {
-				suggestions = append(suggestions, fmt.Sprintf("<%s> can be styled with CSS custom properties", tagName))
-			}
-		}
-	}
-
-	// Report results
-	if len(issues) > 0 {
-		results.WriteString("### ❌ Manifest Compliance Issues\n\n")
-		for _, issue := range issues {
-			results.WriteString(fmt.Sprintf("- %s\n", issue))
-		}
-		results.WriteString("\n")
-	} else {
-		results.WriteString("### ✅ No Manifest Compliance Issues Found\n\n")
-	}
-
-	if len(suggestions) > 0 {
-		results.WriteString("### 💡 Enhancement Suggestions\n\n")
-		for _, suggestion := range suggestions {
-			results.WriteString(fmt.Sprintf("- %s\n", suggestion))
-		}
-		results.WriteString("\n")
 	}
 
 	return results.String()
