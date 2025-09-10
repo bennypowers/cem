@@ -22,12 +22,13 @@ import (
 	"path/filepath"
 	"testing"
 
-	W "bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/types"
+	"bennypowers.dev/cem/workspace"
 	"github.com/stretchr/testify/require"
 )
 
 // createTestWorkspace creates a temporary workspace for testing
-func createTestWorkspace(t *testing.T, fixtureName string) (W.WorkspaceContext, func()) {
+func createTestWorkspace(t *testing.T, fixtureName string) (types.WorkspaceContext, func()) {
 	t.Helper()
 
 	// Create temporary directory
@@ -39,7 +40,7 @@ func createTestWorkspace(t *testing.T, fixtureName string) (W.WorkspaceContext, 
 	copyFixtureFiles(t, fixtureDir, tempDir)
 
 	// Create workspace context and initialize it
-	workspace := W.NewFileSystemWorkspaceContext(tempDir)
+	workspace := workspace.NewFileSystemWorkspaceContext(tempDir)
 	err = workspace.Init()
 	require.NoError(t, err, "Failed to initialize workspace")
 

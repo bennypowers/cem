@@ -2,7 +2,6 @@ package mcp
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -17,7 +16,7 @@ type SuggestAttributesArgs struct {
 }
 
 // handleSuggestAttributes provides intelligent attribute suggestions for custom elements
-func (s *SimpleCEMServer) handleSuggestAttributes(ctx context.Context, req *mcp.CallToolRequest, args SuggestAttributesArgs) (*mcp.CallToolResult, any, error) {
+func (s *Server) handleSuggestAttributes(ctx context.Context, req *mcp.CallToolRequest, args SuggestAttributesArgs) (*mcp.CallToolResult, any, error) {
 	element, err := s.registry.GetElementInfo(args.TagName)
 	if err != nil {
 		return &mcp.CallToolResult{
@@ -118,7 +117,7 @@ func (s *SimpleCEMServer) handleSuggestAttributes(ctx context.Context, req *mcp.
 }
 
 // formatAttributeSuggestion formats a single attribute suggestion with details
-func (s *SimpleCEMServer) formatAttributeSuggestion(response *strings.Builder, attr Attribute, context string, required bool) {
+func (s *Server) formatAttributeSuggestion(response *strings.Builder, attr Attribute, context string, required bool) {
 	// Attribute name and type
 	response.WriteString(fmt.Sprintf("• %s", attr.Name()))
 	if required {
@@ -163,7 +162,7 @@ func (s *SimpleCEMServer) formatAttributeSuggestion(response *strings.Builder, a
 }
 
 // explainEnumValue provides contextual explanations for enum values
-func (s *SimpleCEMServer) explainEnumValue(attrName, value, context string) string {
+func (s *Server) explainEnumValue(attrName, value, context string) string {
 	// Basic explanations based on common patterns
 	switch {
 	case attrName == "variant" || attrName == "type":
@@ -201,7 +200,7 @@ func (s *SimpleCEMServer) explainEnumValue(attrName, value, context string) stri
 }
 
 // addContextualRecommendations adds context-specific attribute recommendations
-func (s *SimpleCEMServer) addContextualRecommendations(response *strings.Builder, context string, attributes []Attribute) {
+func (s *Server) addContextualRecommendations(response *strings.Builder, context string, attributes []Attribute) {
 	switch context {
 	case "form":
 		response.WriteString("- Consider accessibility attributes like aria-label or aria-describedby\n")

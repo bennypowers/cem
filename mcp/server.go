@@ -18,18 +18,12 @@ package mcp
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
-	W "bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/lsp/helpers"
+	"bennypowers.dev/cem/types"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
-
-// MCPServer implements the MCP server interface for custom elements
-type MCPServer struct {
-	workspace   W.WorkspaceContext
-	registry    *Registry
-	initialized bool
-}
 
 // ServerInfo represents basic server information
 type ServerInfo struct {
@@ -38,52 +32,42 @@ type ServerInfo struct {
 	Description string `json:"description"`
 }
 
-// Resource represents an MCP resource
-type Resource struct {
-	URI      string `json:"uri"`
-	Name     string `json:"name"`
-	MimeType string `json:"mimeType"`
-	Contents string `json:"contents"`
+// Server implements an MCP server for custom elements
+type Server struct {
+	workspace types.WorkspaceContext
+	registry  *Registry
+	server    *mcp.Server
 }
 
-// Tool represents an MCP tool
-type Tool struct {
-	Name        string                 `json:"name"`
-	Description string                 `json:"description"`
-	InputSchema map[string]interface{} `json:"inputSchema"`
-}
+// NewServer creates a new CEM MCP server
+func NewServer(workspace types.WorkspaceContext) (*Server, error) {
+	helpers.SafeDebugLog("Creating CEM MCP server for workspace: %s", workspace.Root())
 
-// ToolResult represents the result of a tool call
-type ToolResult struct {
-	Content []map[string]interface{} `json:"content"`
-}
-
-// NewMCPServer creates a new MCP server instance
-func NewMCPServer(workspace W.WorkspaceContext) (*MCPServer, error) {
 	registry, err := NewRegistry(workspace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create registry: %w", err)
 	}
 
-	return &MCPServer{
+	// Create MCP server
+	server := mcp.NewServer(&mcp.Implementation{
+		Name:    "cem",
+		Version: "1.0.0",
+	}, nil)
+
+	cemServer := &Server{
 		workspace: workspace,
 		registry:  registry,
-	}, nil
-}
-
-// Initialize initializes the MCP server
-func (s *MCPServer) Initialize(ctx context.Context) error {
-	err := s.registry.LoadManifests()
-	if err != nil {
-		return fmt.Errorf("failed to load manifests: %w", err)
+		server:    server,
 	}
 
-	s.initialized = true
-	return nil
+	// Add tools to the server
+	cemServer.setupTools()
+
+	return cemServer, nil
 }
 
-// GetServerInfo returns basic server information
-func (s *MCPServer) GetServerInfo() ServerInfo {
+// GetInfo returns server information
+func (s *Server) GetInfo() ServerInfo {
 	return ServerInfo{
 		Name:        "cem",
 		Version:     "1.0.0",
@@ -91,226 +75,73 @@ func (s *MCPServer) GetServerInfo() ServerInfo {
 	}
 }
 
-// ListResources returns available MCP resources
-func (s *MCPServer) ListResources(ctx context.Context) ([]Resource, error) {
-	if !s.initialized {
-		return nil, fmt.Errorf("server not initialized")
-	}
+// Run starts the MCP server with stdio transport
+func (s *Server) Run(ctx context.Context) error {
+	helpers.SafeDebugLog("Starting CEM MCP server with stdio transport")
 
-	resources := []Resource{
-		{
-			URI:      "cem://schema",
-			Name:     "Custom Elements Manifest Schema",
-			MimeType: "application/json",
-		},
-		{
-			URI:      "cem://registry",
-			Name:     "Element Registry",
-			MimeType: "application/json",
-		},
-	}
-
-	// Add element-specific resources
-	elements := s.registry.GetAllElements()
-	for tagName := range elements {
-		resources = append(resources, Resource{
-			URI:      fmt.Sprintf("cem://element/%s", tagName),
-			Name:     fmt.Sprintf("Element: %s", tagName),
-			MimeType: "application/json",
-		})
-	}
-
-	return resources, nil
-}
-
-// GetResource returns the content of a specific resource
-func (s *MCPServer) GetResource(ctx context.Context, uri string) (*Resource, error) {
-	if !s.initialized {
-		return nil, fmt.Errorf("server not initialized")
-	}
-
-	switch uri {
-	case "cem://schema":
-		schema, err := s.registry.GetManifestSchema()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get schema: %w", err)
-		}
-
-		contents, err := json.MarshalIndent(schema, "", "  ")
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal schema: %w", err)
-		}
-
-		return &Resource{
-			URI:      uri,
-			Name:     "Custom Elements Manifest Schema",
-			MimeType: "application/json",
-			Contents: string(contents),
-		}, nil
-
-	case "cem://registry":
-		elements := s.registry.GetAllElements()
-
-		contents, err := json.MarshalIndent(elements, "", "  ")
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal registry: %w", err)
-		}
-
-		return &Resource{
-			URI:      uri,
-			Name:     "Element Registry",
-			MimeType: "application/json",
-			Contents: string(contents),
-		}, nil
-
-	default:
-		return nil, fmt.Errorf("resource not found: %s", uri)
-	}
-}
-
-// ListTools returns available MCP tools
-func (s *MCPServer) ListTools(ctx context.Context) ([]Tool, error) {
-	if !s.initialized {
-		return nil, fmt.Errorf("server not initialized")
-	}
-
-	tools := []Tool{
-		{
-			Name:        "validate_element",
-			Description: "Validate custom element HTML usage against manifest definitions",
-			InputSchema: map[string]interface{}{
-				"type": "object",
-				"properties": map[string]interface{}{
-					"tagName": map[string]interface{}{
-						"type":        "string",
-						"description": "The custom element tag name",
-					},
-					"html": map[string]interface{}{
-						"type":        "string",
-						"description": "The HTML to validate",
-					},
-				},
-				"required": []string{"tagName", "html"},
-			},
-		},
-		{
-			Name:        "query_registry",
-			Description: "Query the custom elements registry",
-			InputSchema: map[string]interface{}{
-				"type": "object",
-				"properties": map[string]interface{}{
-					"tagName": map[string]interface{}{
-						"type":        "string",
-						"description": "Optional tag name to filter by",
-					},
-				},
-			},
-		},
-	}
-
-	return tools, nil
-}
-
-// CallTool executes a tool with the given arguments
-func (s *MCPServer) CallTool(ctx context.Context, name string, args map[string]interface{}) (*ToolResult, error) {
-	if !s.initialized {
-		return nil, fmt.Errorf("server not initialized")
-	}
-
-	switch name {
-	case "validate_element":
-		return s.validateElement(ctx, args)
-	case "query_registry":
-		return s.queryRegistry(ctx, args)
-	default:
-		return nil, fmt.Errorf("unknown tool: %s", name)
-	}
-}
-
-// validateElement validates custom element HTML usage
-func (s *MCPServer) validateElement(ctx context.Context, args map[string]interface{}) (*ToolResult, error) {
-	tagName, ok := args["tagName"].(string)
-	if !ok {
-		return nil, fmt.Errorf("tagName is required and must be a string")
-	}
-
-	_, ok = args["html"].(string)
-	if !ok {
-		return nil, fmt.Errorf("html is required and must be a string")
-	}
-
-	// Basic validation logic
-	element, err := s.registry.GetElementInfo(tagName)
+	// Initialize the registry
+	err := s.registry.LoadManifests()
 	if err != nil {
-		return &ToolResult{
-			Content: []map[string]interface{}{
-				{
-					"type": "text",
-					"text": fmt.Sprintf("Element '%s' not found in registry", tagName),
-				},
-			},
-		}, nil
+		return fmt.Errorf("failed to load manifests: %w", err)
 	}
 
-	// For now, just return basic element info
-	return &ToolResult{
-		Content: []map[string]interface{}{
-			{
-				"type": "text",
-				"text": fmt.Sprintf("Element '%s' found. HTML validation would be performed here.", element.TagName),
-			},
-		},
-	}, nil
+	// Run the MCP server
+	return s.server.Run(ctx, &mcp.StdioTransport{})
 }
 
-// queryRegistry queries the custom elements registry
-func (s *MCPServer) queryRegistry(ctx context.Context, args map[string]interface{}) (*ToolResult, error) {
-	elements := s.registry.GetAllElements()
-
-	if tagName, ok := args["tagName"].(string); ok {
-		if element, exists := elements[tagName]; exists {
-			data, err := json.MarshalIndent(element, "", "  ")
-			if err != nil {
-				return nil, fmt.Errorf("failed to marshal element: %w", err)
-			}
-
-			return &ToolResult{
-				Content: []map[string]interface{}{
-					{
-						"type": "text",
-						"text": string(data),
-					},
-				},
-			}, nil
-		} else {
-			return &ToolResult{
-				Content: []map[string]interface{}{
-					{
-						"type": "text",
-						"text": fmt.Sprintf("Element '%s' not found", tagName),
-					},
-				},
-			}, nil
+// setupTools adds tools to the MCP server
+func (s *Server) setupTools() {
+	// Add query_registry tool
+	mcp.AddTool(s.server, &mcp.Tool{
+		Name:        "query_registry",
+		Description: `Query the custom elements registry.
+		Any time the user is writing HTML,
+		query the registry for available custom elements`,
+	}, func(ctx context.Context, req *mcp.CallToolRequest, args struct {
+		TagName string `json:"tagName,omitempty" jsonschema:"Optional tag name to filter by"`
+		Filter  string `json:"filter,omitempty" jsonschema:"Filter by element capabilities"`
+		Search  string `json:"search,omitempty" jsonschema:"Search term for elements"`
+	}) (*mcp.CallToolResult, any, error) {
+		queryArgs := QueryRegistryArgs{
+			TagName: args.TagName,
+			Filter:  args.Filter,
+			Search:  args.Search,
 		}
-	}
+		return s.handleQueryRegistry(ctx, req, queryArgs)
+	})
 
-	// Return all elements
-	var tagNames []string
-	for tagName := range elements {
-		tagNames = append(tagNames, tagName)
-	}
+	// Add validate_element tool
+	mcp.AddTool(s.server, &mcp.Tool{
+		Name:        "validate_html",
+		Description: `Validate all HTML, by checking the use of custom elements in the code
+		against the custom elements manifest descriptions (i.e. guidelines) for those elements`,
+	}, func(ctx context.Context, req *mcp.CallToolRequest, args struct {
+		HTML    string `json:"html" jsonschema:"The HTML to validate"`
+		Context string `json:"context,omitempty" jsonschema:"Context for validation"`
+		TagName string `json:"tagName,omitempty" jsonschema:"Specific element to validate"`
+	}) (*mcp.CallToolResult, any, error) {
+		validateArgs := ValidateHtmlArgs{
+			Html:    args.HTML,
+			Context: args.Context,
+			TagName: args.TagName,
+		}
+		return s.handleValidateHtml(ctx, req, validateArgs)
+	})
 
-	data, err := json.MarshalIndent(tagNames, "", "  ")
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal tag names: %w", err)
-	}
-
-	return &ToolResult{
-		Content: []map[string]interface{}{
-			{
-				"type": "text",
-				"text": fmt.Sprintf("Found %d elements: %s", len(tagNames), string(data)),
-			},
-		},
-	}, nil
+	// Add suggest_attributes tool
+	mcp.AddTool(s.server, &mcp.Tool{
+		Name:        "suggest_attributes",
+		Description: "Get attribute suggestions for a custom element",
+	}, func(ctx context.Context, req *mcp.CallToolRequest, args struct {
+		TagName string `json:"tagName" jsonschema:"The custom element tag name"`
+		Context string `json:"context,omitempty" jsonschema:"Context for suggestions"`
+		Partial string `json:"partial,omitempty" jsonschema:"Partial attribute name to filter"`
+	}) (*mcp.CallToolResult, any, error) {
+		suggestArgs := SuggestAttributesArgs{
+			TagName: args.TagName,
+			Context: args.Context,
+			Partial: args.Partial,
+		}
+		return s.handleSuggestAttributes(ctx, req, suggestArgs)
+	})
 }

@@ -16,7 +16,7 @@ type SuggestCssIntegrationArgs struct {
 }
 
 // handleSuggestCssIntegration provides CSS integration guidance for custom elements
-func (s *SimpleCEMServer) handleSuggestCssIntegration(ctx context.Context, req *mcp.CallToolRequest, args SuggestCssIntegrationArgs) (*mcp.CallToolResult, any, error) {
+func (s *Server) handleSuggestCssIntegration(ctx context.Context, req *mcp.CallToolRequest, args SuggestCssIntegrationArgs) (*mcp.CallToolResult, any, error) {
 	element, err := s.registry.GetElementInfo(args.TagName)
 	if err != nil {
 		return &mcp.CallToolResult{
@@ -129,7 +129,7 @@ func (s *SimpleCEMServer) handleSuggestCssIntegration(ctx context.Context, req *
 }
 
 // getSampleValue returns sample values for different CSS syntax types
-func (s *SimpleCEMServer) getSampleValue(syntax string) string {
+func (s *Server) getSampleValue(syntax string) string {
 	switch {
 	case strings.Contains(syntax, "color"):
 		return "#007acc"
@@ -153,7 +153,7 @@ func (s *SimpleCEMServer) getSampleValue(syntax string) string {
 }
 
 // addCssContextRecommendations adds context-specific CSS recommendations
-func (s *SimpleCEMServer) addCssContextRecommendations(response *strings.Builder, context, tagName string, element *ElementInfo) {
+func (s *Server) addCssContextRecommendations(response *strings.Builder, context, tagName string, element *ElementInfo) {
 	switch context {
 	case "theme":
 		response.WriteString("• Use CSS custom properties to create consistent theming\n")
@@ -190,7 +190,7 @@ func (s *SimpleCEMServer) addCssContextRecommendations(response *strings.Builder
 }
 
 // addStyleTargetGuidance adds guidance for specific styling targets
-func (s *SimpleCEMServer) addStyleTargetGuidance(response *strings.Builder, target, tagName string, element *ElementInfo) {
+func (s *Server) addStyleTargetGuidance(response *strings.Builder, target, tagName string, element *ElementInfo) {
 	switch target {
 	case "element":
 		response.WriteString("• Style the element container using standard CSS selectors\n")
@@ -230,7 +230,7 @@ func (s *SimpleCEMServer) addStyleTargetGuidance(response *strings.Builder, targ
 }
 
 // getDarkModeValue suggests dark mode variants for CSS values
-func (s *SimpleCEMServer) getDarkModeValue(lightValue string) string {
+func (s *Server) getDarkModeValue(lightValue string) string {
 	// Basic dark mode value suggestions
 	switch lightValue {
 	case "white", "#ffffff", "#fff":

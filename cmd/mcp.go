@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	MCP "bennypowers.dev/cem/mcp"
-	W "bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/types"
+	"bennypowers.dev/cem/workspace"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -49,51 +49,18 @@ Tools provided:
 - Element validation and HTML generation assistance
 - Attribute and slot usage suggestions
 - CSS integration guidance
-- Import path resolution
-- Component compatibility checking`,
+- Registry querying and component discovery`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// CRITICAL: Redirect all pterm output to stderr immediately to prevent MCP stdout contamination
 		pterm.SetDefaultOutput(os.Stderr)
 
 		ctx := cmd.Context()
-		wctx := ctx.Value(W.WorkspaceContextKey).(W.WorkspaceContext)
+		wctx := ctx.Value(workspace.WorkspaceContextKey).(types.WorkspaceContext)
 
-		// Determine transport based on boolean flags
-		transport := MCP.TransportStdio // default
-
-		stdioFlag, _ := cmd.Flags().GetBool("stdio")
-		tcpFlag, _ := cmd.Flags().GetBool("tcp")
-		websocketFlag, _ := cmd.Flags().GetBool("websocket")
-
-		// Check which transport flag is set
-		flagCount := 0
-		if stdioFlag {
-			transport = MCP.TransportStdio
-			flagCount++
-		}
-		if tcpFlag {
-			transport = MCP.TransportTCP
-			flagCount++
-		}
-		if websocketFlag {
-			transport = MCP.TransportWebSocket
-			flagCount++
-		}
-
-		// Ensure only one transport flag is set
-		if flagCount > 1 {
-			return fmt.Errorf("only one transport flag may be specified")
-		}
-
-		// Create and run the MCP server
-		server, err := MCP.NewSimpleCEMServer(wctx)
+		// Create and run the MCP server with stdio transport
+		server, err := MCP.NewServer(wctx)
 		if err != nil {
 			return err
-		}
-
-		// For now, only stdio transport is implemented
-		if transport != MCP.TransportStdio {
-			return fmt.Errorf("only stdio transport is currently implemented")
 		}
 
 		return server.Run(ctx)
@@ -102,7 +69,4 @@ Tools provided:
 
 func init() {
 	rootCmd.AddCommand(mcpCmd)
-	mcpCmd.Flags().Bool("stdio", false, "Use stdio transport (default)")
-	mcpCmd.Flags().Bool("tcp", false, "Use TCP transport")
-	mcpCmd.Flags().Bool("websocket", false, "Use WebSocket transport")
 }

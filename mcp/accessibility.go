@@ -81,7 +81,7 @@ type ChecklistItem struct {
 }
 
 // handleAccessibilityResource provides comprehensive accessibility guidance
-func (s *SimpleCEMServer) handleAccessibilityResource(ctx context.Context, uri string) (*mcp.Resource, error) {
+func (s *Server) handleAccessibilityResource(ctx context.Context, uri string) (*mcp.ReadResourceResult, error) {
 	resource := &AccessibilityResource{
 		Overview:        s.generateAccessibilityOverview(),
 		WcagGuidelines:  s.generateWcagGuidelines(),
@@ -97,16 +97,17 @@ func (s *SimpleCEMServer) handleAccessibilityResource(ctx context.Context, uri s
 		return nil, fmt.Errorf("failed to marshal accessibility resource: %w", err)
 	}
 
-	return &mcp.Resource{
-		URI:      uri,
-		Name:     "Accessibility Patterns and Guidelines",
-		MimeType: "application/json",
-		Text:     string(contents),
+	return &mcp.ReadResourceResult{
+		Contents: []*mcp.ResourceContents{{
+			URI:      uri,
+			MIMEType: "application/json",
+			Text:     string(contents),
+		}},
 	}, nil
 }
 
 // generateAccessibilityOverview creates an overview of accessibility requirements
-func (s *SimpleCEMServer) generateAccessibilityOverview() string {
+func (s *Server) generateAccessibilityOverview() string {
 	return `
 Accessibility is a fundamental requirement for web applications. This resource provides comprehensive 
 guidance for implementing accessible custom elements that work for all users, including those using 
@@ -123,7 +124,7 @@ This guidance follows WCAG 2.1 Level AA standards and provides patterns specific
 }
 
 // generateWcagGuidelines creates key WCAG guidelines relevant to custom elements
-func (s *SimpleCEMServer) generateWcagGuidelines() []WcagGuideline {
+func (s *Server) generateWcagGuidelines() []WcagGuideline {
 	return []WcagGuideline{
 		{
 			Principle:   "Perceivable",
@@ -200,7 +201,7 @@ func (s *SimpleCEMServer) generateWcagGuidelines() []WcagGuideline {
 }
 
 // generateElementAccessibilityPatterns creates patterns for specific element types
-func (s *SimpleCEMServer) generateElementAccessibilityPatterns() map[string]A11yPattern {
+func (s *Server) generateElementAccessibilityPatterns() map[string]A11yPattern {
 	patterns := make(map[string]A11yPattern)
 	
 	elements := s.registry.GetAllElements()
@@ -215,7 +216,7 @@ func (s *SimpleCEMServer) generateElementAccessibilityPatterns() map[string]A11y
 }
 
 // generateElementAccessibilityPattern creates accessibility pattern for a specific element
-func (s *SimpleCEMServer) generateElementAccessibilityPattern(element *ElementInfo) A11yPattern {
+func (s *Server) generateElementAccessibilityPattern(element *ElementInfo) A11yPattern {
 	tagName := strings.ToLower(element.TagName)
 	
 	switch {
@@ -300,7 +301,7 @@ func (s *SimpleCEMServer) generateElementAccessibilityPattern(element *ElementIn
 }
 
 // generateCommonAccessibilityPatterns creates common accessibility patterns
-func (s *SimpleCEMServer) generateCommonAccessibilityPatterns() []A11yPattern {
+func (s *Server) generateCommonAccessibilityPatterns() []A11yPattern {
 	return []A11yPattern{
 		{
 			Name:        "Skip Links",
@@ -348,7 +349,7 @@ func (s *SimpleCEMServer) generateCommonAccessibilityPatterns() []A11yPattern {
 }
 
 // generateTestingGuidance creates comprehensive testing guidance
-func (s *SimpleCEMServer) generateTestingGuidance() TestingGuidance {
+func (s *Server) generateTestingGuidance() TestingGuidance {
 	return TestingGuidance{
 		AutomatedTesting: []TestingMethod{
 			{
@@ -442,7 +443,7 @@ func (s *SimpleCEMServer) generateTestingGuidance() TestingGuidance {
 }
 
 // generateAccessibilityTools creates a list of recommended accessibility tools
-func (s *SimpleCEMServer) generateAccessibilityTools() []A11yTool {
+func (s *Server) generateAccessibilityTools() []A11yTool {
 	return []A11yTool{
 		{
 			Name:        "axe DevTools",
@@ -484,7 +485,7 @@ func (s *SimpleCEMServer) generateAccessibilityTools() []A11yTool {
 }
 
 // generateAccessibilityChecklist creates a comprehensive accessibility checklist
-func (s *SimpleCEMServer) generateAccessibilityChecklist() []ChecklistItem {
+func (s *Server) generateAccessibilityChecklist() []ChecklistItem {
 	return []ChecklistItem{
 		{
 			Category:    "Keyboard Navigation",

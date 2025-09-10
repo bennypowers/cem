@@ -8,7 +8,7 @@ import (
 )
 
 // handleSchemaResource provides the JSON schema for custom elements manifests
-func (s *SimpleCEMServer) handleSchemaResource(ctx context.Context, uri string) (*mcp.Resource, error) {
+func (s *Server) handleSchemaResource(ctx context.Context, uri string) (*mcp.ReadResourceResult, error) {
 	schema, err := s.registry.GetManifestSchema()
 	if err != nil {
 		return nil, err
@@ -19,10 +19,11 @@ func (s *SimpleCEMServer) handleSchemaResource(ctx context.Context, uri string) 
 		return nil, err
 	}
 
-	return &mcp.Resource{
-		URI:      uri,
-		Name:     "Custom Elements Manifest Schema",
-		MimeType: "application/json",
-		Text:     string(contents),
+	return &mcp.ReadResourceResult{
+		Contents: []*mcp.ResourceContents{{
+			URI:      uri,
+			MIMEType: "application/json",
+			Text:     string(contents),
+		}},
 	}, nil
 }

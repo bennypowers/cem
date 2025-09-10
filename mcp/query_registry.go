@@ -17,7 +17,7 @@ type QueryRegistryArgs struct {
 }
 
 // handleQueryRegistry queries and explores the custom elements registry
-func (s *SimpleCEMServer) handleQueryRegistry(ctx context.Context, req *mcp.CallToolRequest, args QueryRegistryArgs) (*mcp.CallToolResult, any, error) {
+func (s *Server) handleQueryRegistry(ctx context.Context, req *mcp.CallToolRequest, args QueryRegistryArgs) (*mcp.CallToolResult, any, error) {
 	elements := s.registry.GetAllElements()
 
 	// Handle specific element query
@@ -138,7 +138,7 @@ func (s *SimpleCEMServer) handleQueryRegistry(ctx context.Context, req *mcp.Call
 }
 
 // matchesFilter checks if an element matches the given filter criteria
-func (s *SimpleCEMServer) matchesFilter(element *ElementInfo, filter string) bool {
+func (s *Server) matchesFilter(element *ElementInfo, filter string) bool {
 	switch filter {
 	case "has-slots":
 		return len(element.Slots()) > 0
@@ -198,7 +198,7 @@ func (s *SimpleCEMServer) matchesFilter(element *ElementInfo, filter string) boo
 }
 
 // buildCapabilitiesSummary creates a summary of element capabilities
-func (s *SimpleCEMServer) buildCapabilitiesSummary(element *ElementInfo) string {
+func (s *Server) buildCapabilitiesSummary(element *ElementInfo) string {
 	var capabilities []string
 	
 	if len(element.Attributes()) > 0 {
@@ -224,7 +224,7 @@ func (s *SimpleCEMServer) buildCapabilitiesSummary(element *ElementInfo) string 
 }
 
 // getAccessibilityFeatures identifies accessibility-related features
-func (s *SimpleCEMServer) getAccessibilityFeatures(element *ElementInfo) []string {
+func (s *Server) getAccessibilityFeatures(element *ElementInfo) []string {
 	var features []string
 	
 	// Check for accessibility-related attributes

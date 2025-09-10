@@ -10,7 +10,7 @@ import (
 )
 
 // handleElementResource provides detailed information about a specific element
-func (s *SimpleCEMServer) handleElementResource(ctx context.Context, tagName string) (*mcp.Resource, error) {
+func (s *Server) handleElementResource(ctx context.Context, tagName string) (*mcp.ReadResourceResult, error) {
 	element, err := s.registry.GetElementInfo(tagName)
 	if err != nil {
 		return nil, fmt.Errorf("element '%s' not found: %w", tagName, err)
@@ -24,11 +24,12 @@ func (s *SimpleCEMServer) handleElementResource(ctx context.Context, tagName str
 		return nil, fmt.Errorf("failed to marshal element data: %w", err)
 	}
 
-	return &mcp.Resource{
-		URI:      fmt.Sprintf("cem://element/%s", tagName),
-		Name:     fmt.Sprintf("Element: %s", tagName),
-		MimeType: "application/json",
-		Text:     string(contents),
+	return &mcp.ReadResourceResult{
+		Contents: []*mcp.ResourceContents{{
+			URI:      fmt.Sprintf("cem://element/%s", tagName),
+			MIMEType: "application/json",
+			Text:     string(contents),
+		}},
 	}, nil
 }
 
@@ -82,7 +83,7 @@ type ElementExample struct {
 }
 
 // buildEnhancedElementData creates comprehensive element data for AI consumption
-func (s *SimpleCEMServer) buildEnhancedElementData(element *ElementInfo) *EnhancedElementData {
+func (s *Server) buildEnhancedElementData(element *ElementInfo) *EnhancedElementData {
 	enhanced := &EnhancedElementData{
 		ElementInfo:     element,
 		Categories:      s.categorizeElement(element),
@@ -97,8 +98,56 @@ func (s *SimpleCEMServer) buildEnhancedElementData(element *ElementInfo) *Enhanc
 	return enhanced
 }
 
+// categorizeElement assigns semantic categories to elements based on their features
+func (s *Server) categorizeElement(element *ElementInfo) []string {
+	var categories []string
+	tagName := strings.ToLower(element.TagName)
+	
+	// Form elements
+	if s.isFormElement(element) {
+		categories = append(categories, "form")
+	}
+	
+	// Layout elements
+	if s.isLayoutElement(element) {
+		categories = append(categories, "layout")
+	}
+	
+	// Interactive elements
+	if strings.Contains(tagName, "button") || strings.Contains(tagName, "link") {
+		categories = append(categories, "interactive")
+	}
+	
+	// Navigation elements
+	if strings.Contains(tagName, "nav") || strings.Contains(tagName, "menu") {
+		categories = append(categories, "navigation")
+	}
+	
+	// Display elements
+	if strings.Contains(tagName, "card") || strings.Contains(tagName, "panel") {
+		categories = append(categories, "display")
+	}
+	
+	// Content elements
+	if strings.Contains(tagName, "text") || strings.Contains(tagName, "content") {
+		categories = append(categories, "content")
+	}
+	
+	// Media elements
+	if strings.Contains(tagName, "image") || strings.Contains(tagName, "video") || strings.Contains(tagName, "audio") {
+		categories = append(categories, "media")
+	}
+	
+	// If no specific category matches, use generic
+	if len(categories) == 0 {
+		categories = append(categories, "generic")
+	}
+	
+	return categories
+}
+
 // generateUsagePatterns creates common usage patterns for the element
-func (s *SimpleCEMServer) generateUsagePatterns(element *ElementInfo) []UsagePattern {
+func (s *Server) generateUsagePatterns(element *ElementInfo) []UsagePattern {
 	var patterns []UsagePattern
 	tagName := element.TagName
 	
@@ -163,7 +212,7 @@ func (s *SimpleCEMServer) generateUsagePatterns(element *ElementInfo) []UsagePat
 }
 
 // generateAccessibilityInfo creates accessibility guidance
-func (s *SimpleCEMServer) generateAccessibilityInfo(element *ElementInfo) AccessibilityInfo {
+func (s *Server) generateAccessibilityInfo(element *ElementInfo) AccessibilityInfo {
 	info := AccessibilityInfo{}
 	tagName := strings.ToLower(element.TagName)
 	
@@ -209,7 +258,7 @@ func (s *SimpleCEMServer) generateAccessibilityInfo(element *ElementInfo) Access
 }
 
 // generateCssIntegration creates CSS integration guidance
-func (s *SimpleCEMServer) generateCssIntegration(element *ElementInfo) CssIntegration {
+func (s *Server) generateCssIntegration(element *ElementInfo) CssIntegration {
 	integration := CssIntegration{
 		PropertyExamples: make(map[string]string),
 		PartExamples:     make(map[string]string),
@@ -249,7 +298,7 @@ func (s *SimpleCEMServer) generateCssIntegration(element *ElementInfo) CssIntegr
 }
 
 // generateElementExamples creates comprehensive usage examples
-func (s *SimpleCEMServer) generateElementExamples(element *ElementInfo) []ElementExample {
+func (s *Server) generateElementExamples(element *ElementInfo) []ElementExample {
 	var examples []ElementExample
 	
 	// Basic example
@@ -282,40 +331,40 @@ func (s *SimpleCEMServer) generateElementExamples(element *ElementInfo) []Elemen
 }
 
 // Helper methods for generating examples
-func (s *SimpleCEMServer) generateBasicExample(element *ElementInfo) string {
+func (s *Server) generateBasicExample(element *ElementInfo) string {
 	// Implementation details for basic example generation
 	return fmt.Sprintf("<%s>Basic content</%s>", element.TagName, element.TagName)
 }
 
-func (s *SimpleCEMServer) generateAccessibleExample(element *ElementInfo) string {
+func (s *Server) generateAccessibleExample(element *ElementInfo) string {
 	// Implementation details for accessible example generation
 	return fmt.Sprintf("<%s role=\"button\" aria-label=\"Accessible %s\">Content</%s>", 
 		element.TagName, element.TagName, element.TagName)
 }
 
-func (s *SimpleCEMServer) generateThemedExample(element *ElementInfo) string {
+func (s *Server) generateThemedExample(element *ElementInfo) string {
 	// Implementation details for themed example generation
 	return fmt.Sprintf("<%s style=\"%s: custom-value;\">Themed content</%s>", 
 		element.TagName, element.CssProperties()[0].Name(), element.TagName)
 }
 
-func (s *SimpleCEMServer) generatePropertyExample(prop CssProperty) string {
+func (s *Server) generatePropertyExample(prop CssProperty) string {
 	return fmt.Sprintf("%s: %s; /* %s */", prop.Name(), prop.Initial(), prop.Description())
 }
 
-func (s *SimpleCEMServer) isFormElement(element *ElementInfo) bool {
+func (s *Server) isFormElement(element *ElementInfo) bool {
 	tagName := strings.ToLower(element.TagName)
 	return strings.Contains(tagName, "input") || strings.Contains(tagName, "button") || 
 		   strings.Contains(tagName, "field") || strings.Contains(tagName, "form")
 }
 
-func (s *SimpleCEMServer) isLayoutElement(element *ElementInfo) bool {
+func (s *Server) isLayoutElement(element *ElementInfo) bool {
 	tagName := strings.ToLower(element.TagName)
 	return strings.Contains(tagName, "grid") || strings.Contains(tagName, "flex") || 
 		   strings.Contains(tagName, "layout") || strings.Contains(tagName, "card")
 }
 
-func (s *SimpleCEMServer) generateFormExample(element *ElementInfo) string {
+func (s *Server) generateFormExample(element *ElementInfo) string {
 	return fmt.Sprintf(`<form>
   <label for="example">Label:</label>
   <%s id="example" name="example" required>
@@ -324,7 +373,7 @@ func (s *SimpleCEMServer) generateFormExample(element *ElementInfo) string {
 </form>`, element.TagName, element.TagName)
 }
 
-func (s *SimpleCEMServer) generateLayoutExample(element *ElementInfo) string {
+func (s *Server) generateLayoutExample(element *ElementInfo) string {
 	return fmt.Sprintf(`<section class="layout">
   <%s>
     <h2>Section Title</h2>
@@ -333,7 +382,7 @@ func (s *SimpleCEMServer) generateLayoutExample(element *ElementInfo) string {
 </section>`, element.TagName, element.TagName)
 }
 
-func (s *SimpleCEMServer) extractGuidelines(element *ElementInfo) []string {
+func (s *Server) extractGuidelines(element *ElementInfo) []string {
 	var guidelines []string
 	
 	// Extract from element description
@@ -356,7 +405,7 @@ func (s *SimpleCEMServer) extractGuidelines(element *ElementInfo) []string {
 	return guidelines
 }
 
-func (s *SimpleCEMServer) findRelatedElements(element *ElementInfo) []string {
+func (s *Server) findRelatedElements(element *ElementInfo) []string {
 	// Simple implementation - could be enhanced with more sophisticated matching
 	var related []string
 	tagName := element.TagName
@@ -374,7 +423,7 @@ func (s *SimpleCEMServer) findRelatedElements(element *ElementInfo) []string {
 	return related
 }
 
-func (s *SimpleCEMServer) areElementsRelated(tagName1, tagName2 string) bool {
+func (s *Server) areElementsRelated(tagName1, tagName2 string) bool {
 	// Simple heuristic for related elements
 	commonPrefixes := []string{"button", "input", "form", "card", "nav", "menu"}
 	

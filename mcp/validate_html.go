@@ -16,7 +16,7 @@ type ValidateHtmlArgs struct {
 }
 
 // handleValidateHtml validates HTML for accessibility and custom element compliance
-func (s *SimpleCEMServer) handleValidateHtml(ctx context.Context, req *mcp.CallToolRequest, args ValidateHtmlArgs) (*mcp.CallToolResult, any, error) {
+func (s *Server) handleValidateHtml(ctx context.Context, req *mcp.CallToolRequest, args ValidateHtmlArgs) (*mcp.CallToolResult, any, error) {
 	var results strings.Builder
 	results.WriteString("HTML Validation Results:\n\n")
 

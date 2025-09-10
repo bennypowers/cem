@@ -25,13 +25,13 @@ import (
 	LSP "bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/helpers"
 	M "bennypowers.dev/cem/manifest"
-	W "bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/types"
 )
 
 // Registry manages custom elements manifests for MCP context
 // This is a lightweight wrapper around the LSP registry for reuse
 type Registry struct {
-	workspace   W.WorkspaceContext
+	workspace   types.WorkspaceContext
 	lspRegistry *LSP.Registry
 	mcpCache    map[string]*ElementInfo // Cache for converted MCP elements
 	mu          sync.RWMutex
@@ -509,7 +509,7 @@ func extractEnumValues(t *M.Type) []string {
 }
 
 // NewRegistry creates a new MCP registry
-func NewRegistry(workspace W.WorkspaceContext) (*Registry, error) {
+func NewRegistry(workspace types.WorkspaceContext) (*Registry, error) {
 	helpers.SafeDebugLog("Creating MCP registry for workspace: %s", workspace.Root())
 
 	// Create the underlying LSP registry for reuse

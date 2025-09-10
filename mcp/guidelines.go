@@ -40,7 +40,7 @@ type BestPractice struct {
 }
 
 // handleGuidelinesResource extracts and provides usage guidelines from manifest data
-func (s *SimpleCEMServer) handleGuidelinesResource(ctx context.Context, uri string) (*mcp.Resource, error) {
+func (s *Server) handleGuidelinesResource(ctx context.Context, uri string) (*mcp.ReadResourceResult, error) {
 	elements := s.registry.GetAllElements()
 	
 	guidelines := &GuidelinesResource{
@@ -75,16 +75,17 @@ func (s *SimpleCEMServer) handleGuidelinesResource(ctx context.Context, uri stri
 		return nil, fmt.Errorf("failed to marshal guidelines: %w", err)
 	}
 
-	return &mcp.Resource{
-		URI:      uri,
-		Name:     "Usage Guidelines and Best Practices",
-		MimeType: "application/json",
-		Text:     string(contents),
+	return &mcp.ReadResourceResult{
+		Contents: []*mcp.ResourceContents{{
+			URI:      uri,
+			MIMEType: "application/json",
+			Text:     string(contents),
+		}},
 	}, nil
 }
 
 // generateGuidelinesOverview creates an overview of the guidelines system
-func (s *SimpleCEMServer) generateGuidelinesOverview(elementCount int) string {
+func (s *Server) generateGuidelinesOverview(elementCount int) string {
 	return fmt.Sprintf(`
 This resource contains extracted usage guidelines and best practices from %d custom elements.
 Guidelines are categorized by severity:
@@ -97,7 +98,7 @@ Use these guidelines when generating HTML, validating usage, or providing recomm
 }
 
 // extractGeneralGuidelines provides general usage guidelines that apply to all elements
-func (s *SimpleCEMServer) extractGeneralGuidelines() []Guideline {
+func (s *Server) extractGeneralGuidelines() []Guideline {
 	return []Guideline{
 		{
 			Text:     "Always provide meaningful descriptions for custom elements",
@@ -143,7 +144,7 @@ func (s *SimpleCEMServer) extractGeneralGuidelines() []Guideline {
 }
 
 // extractElementGuidelines extracts guidelines from element descriptions and metadata
-func (s *SimpleCEMServer) extractElementGuidelines(element *ElementInfo) []Guideline {
+func (s *Server) extractElementGuidelines(element *ElementInfo) []Guideline {
 	var guidelines []Guideline
 	
 	description := element.Description
@@ -179,7 +180,7 @@ func (s *SimpleCEMServer) extractElementGuidelines(element *ElementInfo) []Guide
 }
 
 // extractAttributeGuidelines extracts guidelines from attribute descriptions
-func (s *SimpleCEMServer) extractAttributeGuidelines(attr Attribute, elementName string) []Guideline {
+func (s *Server) extractAttributeGuidelines(attr Attribute, elementName string) []Guideline {
 	var guidelines []Guideline
 	
 	description := attr.Description()
@@ -225,7 +226,7 @@ func (s *SimpleCEMServer) extractAttributeGuidelines(attr Attribute, elementName
 }
 
 // generateAccessibilityGuidelines creates accessibility-focused guidelines
-func (s *SimpleCEMServer) generateAccessibilityGuidelines() []Guideline {
+func (s *Server) generateAccessibilityGuidelines() []Guideline {
 	return []Guideline{
 		{
 			Text:     "Provide alternative text for images and icons",
@@ -286,7 +287,7 @@ func (s *SimpleCEMServer) generateAccessibilityGuidelines() []Guideline {
 }
 
 // generateCssGuidelines creates CSS integration guidelines
-func (s *SimpleCEMServer) generateCssGuidelines() []Guideline {
+func (s *Server) generateCssGuidelines() []Guideline {
 	return []Guideline{
 		{
 			Text:     "Use CSS custom properties for consistent theming",
@@ -338,7 +339,7 @@ func (s *SimpleCEMServer) generateCssGuidelines() []Guideline {
 }
 
 // generateBestPractices creates design system best practices
-func (s *SimpleCEMServer) generateBestPractices() []BestPractice {
+func (s *Server) generateBestPractices() []BestPractice {
 	return []BestPractice{
 		{
 			Title:       "Semantic HTML Structure",
@@ -404,7 +405,7 @@ func (s *SimpleCEMServer) generateBestPractices() []BestPractice {
 // Helper methods
 
 // splitIntoSentences splits text into individual sentences
-func (s *SimpleCEMServer) splitIntoSentences(text string) []string {
+func (s *Server) splitIntoSentences(text string) []string {
 	// Simple sentence splitting - could be enhanced with more sophisticated logic
 	sentences := strings.Split(text, ". ")
 	var result []string
@@ -424,7 +425,7 @@ func (s *SimpleCEMServer) splitIntoSentences(text string) []string {
 }
 
 // determineSeverity determines the severity level of a guideline based on keywords
-func (s *SimpleCEMServer) determineSeverity(text string) string {
+func (s *Server) determineSeverity(text string) string {
 	lowerText := strings.ToLower(text)
 	
 	// Must/Required keywords

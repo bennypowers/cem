@@ -2,7 +2,6 @@ package mcp
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -18,7 +17,7 @@ type GenerateAccessibleHtmlArgs struct {
 }
 
 // handleGenerateAccessibleHtml generates semantically correct HTML with accessibility features
-func (s *SimpleCEMServer) handleGenerateAccessibleHtml(ctx context.Context, req *mcp.CallToolRequest, args GenerateAccessibleHtmlArgs) (*mcp.CallToolResult, any, error) {
+func (s *Server) handleGenerateAccessibleHtml(ctx context.Context, req *mcp.CallToolRequest, args GenerateAccessibleHtmlArgs) (*mcp.CallToolResult, any, error) {
 	element, err := s.registry.GetElementInfo(args.TagName)
 	if err != nil {
 		return &mcp.CallToolResult{
