@@ -18,10 +18,13 @@ package mcp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"bennypowers.dev/cem/lsp/helpers"
+	"bennypowers.dev/cem/mcp/tools"
 	"bennypowers.dev/cem/types"
+	"github.com/google/jsonschema-go/jsonschema"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -61,7 +64,9 @@ func NewServer(workspace types.WorkspaceContext) (*Server, error) {
 	}
 
 	// Add tools to the server
-	cemServer.setupTools()
+	if err := cemServer.setupTools(); err != nil {
+		return nil, fmt.Errorf("failed to setup tools: %w", err)
+	}
 
 	return cemServer, nil
 }
@@ -90,58 +95,39 @@ func (s *Server) Run(ctx context.Context) error {
 }
 
 // setupTools adds tools to the MCP server
-func (s *Server) setupTools() {
-	// Add query_registry tool
-	mcp.AddTool(s.server, &mcp.Tool{
-		Name:        "query_registry",
-		Description: `Query the custom elements registry.
-		Any time the user is writing HTML,
-		query the registry for available custom elements`,
-	}, func(ctx context.Context, req *mcp.CallToolRequest, args struct {
-		TagName string `json:"tagName,omitempty" jsonschema:"Optional tag name to filter by"`
-		Filter  string `json:"filter,omitempty" jsonschema:"Filter by element capabilities"`
-		Search  string `json:"search,omitempty" jsonschema:"Search term for elements"`
-	}) (*mcp.CallToolResult, any, error) {
-		queryArgs := QueryRegistryArgs{
-			TagName: args.TagName,
-			Filter:  args.Filter,
-			Search:  args.Search,
-		}
-		return s.handleQueryRegistry(ctx, req, queryArgs)
-	})
+func (s *Server) setupTools() error {
+	// Create registry adapter for tools
+	registryAdapter := NewRegistryAdapter(s.registry)
+	
+	// Get tool definitions from tools package
+	toolDefs, err := tools.Tools(registryAdapter)
+	if err != nil {
+		return fmt.Errorf("failed to load tool definitions: %w", err)
+	}
 
-	// Add validate_element tool
-	mcp.AddTool(s.server, &mcp.Tool{
-		Name:        "validate_html",
-		Description: `Validate all HTML, by checking the use of custom elements in the code
-		against the custom elements manifest descriptions (i.e. guidelines) for those elements`,
-	}, func(ctx context.Context, req *mcp.CallToolRequest, args struct {
-		HTML    string `json:"html" jsonschema:"The HTML to validate"`
-		Context string `json:"context,omitempty" jsonschema:"Context for validation"`
-		TagName string `json:"tagName,omitempty" jsonschema:"Specific element to validate"`
-	}) (*mcp.CallToolResult, any, error) {
-		validateArgs := ValidateHtmlArgs{
-			Html:    args.HTML,
-			Context: args.Context,
-			TagName: args.TagName,
+	// Register each tool with the MCP server
+	for _, toolDef := range toolDefs {
+		// Convert input schema from map to *jsonschema.Schema
+		var inputSchema *jsonschema.Schema
+		if toolDef.InputSchema != nil {
+			schemaBytes, err := json.Marshal(toolDef.InputSchema)
+			if err != nil {
+				return fmt.Errorf("failed to marshal input schema for tool %s: %w", toolDef.Name, err)
+			}
+			
+			var schema jsonschema.Schema
+			if err := json.Unmarshal(schemaBytes, &schema); err != nil {
+				return fmt.Errorf("failed to unmarshal input schema for tool %s: %w", toolDef.Name, err)
+			}
+			inputSchema = &schema
 		}
-		return s.handleValidateHtml(ctx, req, validateArgs)
-	})
 
-	// Add suggest_attributes tool
-	mcp.AddTool(s.server, &mcp.Tool{
-		Name:        "suggest_attributes",
-		Description: "Get attribute suggestions for a custom element",
-	}, func(ctx context.Context, req *mcp.CallToolRequest, args struct {
-		TagName string `json:"tagName" jsonschema:"The custom element tag name"`
-		Context string `json:"context,omitempty" jsonschema:"Context for suggestions"`
-		Partial string `json:"partial,omitempty" jsonschema:"Partial attribute name to filter"`
-	}) (*mcp.CallToolResult, any, error) {
-		suggestArgs := SuggestAttributesArgs{
-			TagName: args.TagName,
-			Context: args.Context,
-			Partial: args.Partial,
-		}
-		return s.handleSuggestAttributes(ctx, req, suggestArgs)
-	})
+		s.server.AddTool(&mcp.Tool{
+			Name:        toolDef.Name,
+			Description: toolDef.Description,
+			InputSchema: inputSchema,
+		}, toolDef.Handler)
+	}
+
+	return nil
 }

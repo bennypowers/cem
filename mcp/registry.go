@@ -26,6 +26,7 @@ import (
 	"bennypowers.dev/cem/lsp/helpers"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
+	MCPTypes "bennypowers.dev/cem/mcp/types"
 )
 
 // Registry manages custom elements manifests for MCP context
@@ -816,3 +817,146 @@ func (r *Registry) generateCssStateExamples(state M.CssCustomState) []string {
 
 	return examples
 }
+
+// RegistryAdapter implements MCPTypes.Registry interface for tools package
+type RegistryAdapter struct {
+	*Registry
+}
+
+// NewRegistryAdapter creates an adapter that implements the tools interface
+func NewRegistryAdapter(registry *Registry) MCPTypes.Registry {
+	return &RegistryAdapter{Registry: registry}
+}
+
+// ElementInfo implements MCPTypes.Registry interface
+func (r *RegistryAdapter) ElementInfo(tagName string) (MCPTypes.ElementInfo, error) {
+	element, err := r.Registry.GetElementInfo(tagName)
+	if err != nil {
+		return nil, err
+	}
+	return &ElementInfoAdapter{ElementInfo: element}, nil
+}
+
+// AllElements implements MCPTypes.Registry interface
+func (r *RegistryAdapter) AllElements() map[string]MCPTypes.ElementInfo {
+	elements := r.Registry.GetAllElements()
+	adapted := make(map[string]MCPTypes.ElementInfo)
+	for tagName, element := range elements {
+		adapted[tagName] = &ElementInfoAdapter{ElementInfo: element}
+	}
+	return adapted
+}
+
+// ElementInfoAdapter implements MCPTypes.ElementInfo interface
+type ElementInfoAdapter struct {
+	*ElementInfo
+}
+
+func (e *ElementInfoAdapter) TagName() string     { return e.ElementInfo.TagName }
+func (e *ElementInfoAdapter) Name() string        { return e.ElementInfo.Name }
+func (e *ElementInfoAdapter) Description() string { return e.ElementInfo.Description }
+func (e *ElementInfoAdapter) Module() string      { return e.ElementInfo.Module }
+func (e *ElementInfoAdapter) Package() string     { return e.ElementInfo.Package }
+func (e *ElementInfoAdapter) Guidelines() []string { return e.ElementInfo.Guidelines }
+
+func (e *ElementInfoAdapter) Attributes() []MCPTypes.Attribute {
+	var adapted []MCPTypes.Attribute
+	for _, attr := range e.ElementInfo.Attributes() {
+		adapted = append(adapted, &AttributeAdapter{Attribute: attr})
+	}
+	return adapted
+}
+
+func (e *ElementInfoAdapter) Slots() []MCPTypes.Slot {
+	var adapted []MCPTypes.Slot
+	for _, slot := range e.ElementInfo.Slots() {
+		adapted = append(adapted, &SlotAdapter{Slot: slot})
+	}
+	return adapted
+}
+
+func (e *ElementInfoAdapter) Events() []MCPTypes.Event {
+	var adapted []MCPTypes.Event
+	for _, event := range e.ElementInfo.Events() {
+		adapted = append(adapted, &EventAdapter{Event: event})
+	}
+	return adapted
+}
+
+func (e *ElementInfoAdapter) CssProperties() []MCPTypes.CssProperty {
+	var adapted []MCPTypes.CssProperty
+	for _, prop := range e.ElementInfo.CssProperties() {
+		adapted = append(adapted, &CssPropertyAdapter{CssProperty: prop})
+	}
+	return adapted
+}
+
+func (e *ElementInfoAdapter) CssParts() []MCPTypes.CssPart {
+	var adapted []MCPTypes.CssPart
+	for _, part := range e.ElementInfo.CssParts() {
+		adapted = append(adapted, &CssPartAdapter{CssPart: part})
+	}
+	return adapted
+}
+
+func (e *ElementInfoAdapter) CssStates() []MCPTypes.CssState {
+	var adapted []MCPTypes.CssState
+	for _, state := range e.ElementInfo.CssStates() {
+		adapted = append(adapted, &CssStateAdapter{CssState: state})
+	}
+	return adapted
+}
+
+func (e *ElementInfoAdapter) Examples() []MCPTypes.Example {
+	var adapted []MCPTypes.Example
+	for _, example := range e.ElementInfo.Examples {
+		adapted = append(adapted, MCPTypes.ExampleInfo{
+			TitleValue:       example.Title,
+			DescriptionValue: example.Description,
+			CodeValue:        example.Code,
+			LanguageValue:    example.Language,
+		})
+	}
+	return adapted
+}
+
+func (e *ElementInfoAdapter) ItemsByKind(kind string) []MCPTypes.Item {
+	var adapted []MCPTypes.Item
+	items := e.ElementInfo.ItemsByKind(ItemKind(kind))
+	for _, item := range items {
+		switch v := item.(type) {
+		case Attribute:
+			adapted = append(adapted, &AttributeAdapter{Attribute: v})
+		case Slot:
+			adapted = append(adapted, &SlotAdapter{Slot: v})
+		case Event:
+			adapted = append(adapted, &EventAdapter{Event: v})
+		case CssProperty:
+			adapted = append(adapted, &CssPropertyAdapter{CssProperty: v})
+		case CssPart:
+			adapted = append(adapted, &CssPartAdapter{CssPart: v})
+		case CssState:
+			adapted = append(adapted, &CssStateAdapter{CssState: v})
+		}
+	}
+	return adapted
+}
+
+// Item adapters
+type AttributeAdapter struct{ Attribute }
+func (a *AttributeAdapter) Kind() string { return string(a.Attribute.Kind()) }
+
+type SlotAdapter struct{ Slot }
+func (s *SlotAdapter) Kind() string { return string(s.Slot.Kind()) }
+
+type EventAdapter struct{ Event }
+func (e *EventAdapter) Kind() string { return string(e.Event.Kind()) }
+
+type CssPropertyAdapter struct{ CssProperty }
+func (c *CssPropertyAdapter) Kind() string { return string(c.CssProperty.Kind()) }
+
+type CssPartAdapter struct{ CssPart }
+func (c *CssPartAdapter) Kind() string { return string(c.CssPart.Kind()) }
+
+type CssStateAdapter struct{ CssState }
+func (c *CssStateAdapter) Kind() string { return string(c.CssState.Kind()) }
