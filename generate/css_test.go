@@ -105,7 +105,7 @@ func TestCssCache_ThreadSafety(t *testing.T) {
 
 func TestGenerateSession_CssCache_Integration(t *testing.T) {
 	// Test CSS cache initialization in GenerateSession
-	ctx := W.NewFileSystemWorkspaceContext("testdata")
+	ctx := W.NewFileSystemWorkspaceContextWithDefaults("testdata")
 	setupCtx, err := NewGenerateContext(ctx)
 	if err != nil {
 		t.Fatalf("Failed to create setup context: %v", err)

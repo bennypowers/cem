@@ -23,14 +23,15 @@ import (
 	"time"
 
 	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/types"
 	W "bennypowers.dev/cem/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // setupTestContext creates a test workspace context
-func setupTestContext(t *testing.T, fixture string) W.WorkspaceContext {
-	ctx := W.NewFileSystemWorkspaceContext(fixture)
+func setupTestContext(t *testing.T, fixture string) types.WorkspaceContext {
+	ctx := W.NewFileSystemWorkspaceContextWithDefaults(fixture)
 	require.NoError(t, ctx.Init())
 	return ctx
 }
@@ -476,7 +477,7 @@ func TestMergeModulesIntoManifest_WithIndex(t *testing.T) {
 }
 
 func BenchmarkGenerateSession_SingleGeneration(b *testing.B) {
-	ctx := W.NewFileSystemWorkspaceContext("test/fixtures/project-classes")
+	ctx := W.NewFileSystemWorkspaceContextWithDefaults("test/fixtures/project-classes")
 	require.NoError(b, ctx.Init())
 
 	cfg, err := ctx.Config()
@@ -495,7 +496,7 @@ func BenchmarkGenerateSession_SingleGeneration(b *testing.B) {
 }
 
 func BenchmarkGenerateSession_ReusedSession(b *testing.B) {
-	ctx := W.NewFileSystemWorkspaceContext("test/fixtures/project-classes")
+	ctx := W.NewFileSystemWorkspaceContextWithDefaults("test/fixtures/project-classes")
 	require.NoError(b, ctx.Init())
 
 	cfg, err := ctx.Config()

@@ -33,7 +33,7 @@ func TestSourceHrefGeneration(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		fixtureDir := filepath.Join("test", "fixtures", "project-source-hrefs")
 
-		ctx := W.NewFileSystemWorkspaceContext(fixtureDir)
+		ctx := W.NewFileSystemWorkspaceContextWithDefaults(fixtureDir)
 		if err := ctx.Init(); err != nil {
 			t.Fatalf("Failed to initialize workspace: %v", err)
 		}
@@ -149,7 +149,7 @@ func TestSourceHrefGenerationWithoutConfig(t *testing.T) {
 			t.Fatalf("Failed to write source: %v", err)
 		}
 
-		ctx := W.NewFileSystemWorkspaceContext(tempDir)
+		ctx := W.NewFileSystemWorkspaceContextWithDefaults(tempDir)
 		if err := ctx.Init(); err != nil {
 			t.Fatalf("Failed to initialize workspace: %v", err)
 		}

@@ -33,7 +33,7 @@ func TestModuleGraphIntegration_DirectVsReExport(t *testing.T) {
 	}
 
 	// Create workspace and server
-	workspace := W.NewFileSystemWorkspaceContext(fixtureDir)
+	workspace := W.NewFileSystemWorkspaceContextWithDefaults(fixtureDir)
 	if err := workspace.Init(); err != nil {
 		t.Fatalf("Failed to initialize workspace: %v", err)
 	}

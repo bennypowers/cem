@@ -24,8 +24,7 @@ import (
 	"io"
 	"strings"
 
-	C "bennypowers.dev/cem/cmd/config"
-	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/types"
 )
 
 type contextKey string
@@ -38,28 +37,28 @@ var ErrNoPackageCustomElements = errors.New("package does not specify a custom e
 var ErrManifestNotFound = errors.New("manifest not found")
 var ErrPackageNotFound = errors.New("package not found")
 
-// DesignTokensCache provides caching for design tokens to avoid redundant loading
-type DesignTokensCache interface {
-	// LoadOrReuse loads design tokens if not cached, or returns cached result
-	LoadOrReuse(ctx WorkspaceContext) (interface{}, error)
-	// Clear resets the cache
-	Clear()
-}
-
 // designTokensCacheImpl implements DesignTokensCache
 type designTokensCacheImpl struct {
+	loader types.DesignTokensLoader
 	spec   string
-	tokens interface{}
+	tokens any
 	err    error
 }
 
-// NewDesignTokensCache creates a new design tokens cache
-func NewDesignTokensCache() DesignTokensCache {
-	return &designTokensCacheImpl{}
+// NewDesignTokensCache creates a new design tokens cache with the given loader
+func NewDesignTokensCache(loader types.DesignTokensLoader) types.DesignTokensCache {
+	return &designTokensCacheImpl{
+		loader: loader,
+	}
 }
 
 // LoadOrReuse loads design tokens from the cache if available, or loads and caches them
-func (cache *designTokensCacheImpl) LoadOrReuse(ctx WorkspaceContext) (interface{}, error) {
+func (cache *designTokensCacheImpl) LoadOrReuse(ctx types.WorkspaceContext) (any, error) {
+	// If no loader is provided, return nil (no design tokens)
+	if cache.loader == nil {
+		return nil, nil
+	}
+
 	cfg, err := ctx.Config()
 	if err != nil {
 		return nil, err
@@ -73,10 +72,8 @@ func (cache *designTokensCacheImpl) LoadOrReuse(ctx WorkspaceContext) (interface
 	}
 
 	// Cache miss or different spec, load fresh
-	// We need to call the actual loading function, but we can't import designtokens here
-	// So we'll use a callback approach - this will be set by the designtokens package
 	cache.spec = spec
-	cache.tokens, cache.err = loadDesignTokensFunc(ctx)
+	cache.tokens, cache.err = cache.loader.Load(ctx)
 	return cache.tokens, cache.err
 }
 
@@ -85,15 +82,6 @@ func (cache *designTokensCacheImpl) Clear() {
 	cache.spec = ""
 	cache.tokens = nil
 	cache.err = nil
-}
-
-// loadDesignTokensFunc is a function variable that will be set by the designtokens package
-// to avoid circular dependency
-var loadDesignTokensFunc func(WorkspaceContext) (interface{}, error)
-
-// SetLoadDesignTokensFunc sets the function used to load design tokens
-func SetLoadDesignTokensFunc(fn func(WorkspaceContext) (interface{}, error)) {
-	loadDesignTokensFunc = fn
 }
 
 // isGlobPattern checks if a string contains any common glob pattern metacharacters.
@@ -144,41 +132,4 @@ func decodeJSON[T any](rc io.ReadCloser) (*T, error) {
 // IsPackageSpecifier checks if a string is an npm package specifier.
 func IsPackageSpecifier(spec string) bool {
 	return strings.HasPrefix(spec, "npm:") || strings.HasPrefix(spec, "jsr:")
-}
-
-// WorkspaceContext abstracts access to package resources, regardless of source (local or remote).
-type WorkspaceContext interface {
-	// Performs validation/discovery and caches results as needed.
-	Init() error
-	// ConfigFile Returns the path to the config file
-	ConfigFile() string
-	// Config returns the parsed and initialized config
-	Config() (*C.CemConfig, error)
-	// Returns the package's parsed PackageJSON.
-	PackageJSON() (*M.PackageJSON, error)
-	// Manifest returns the package's parsed custom elements manifest.
-	Manifest() (*M.Package, error)
-	// CustomElementsManifestPath returns the path to the manifest file.
-	CustomElementsManifestPath() string
-	// ReadFile returns an io.ReadCloser for a file within the package.
-	ReadFile(path string) (io.ReadCloser, error)
-	// Glob returns a list of file paths matching the given pattern (e.g., *.ts).
-	Glob(pattern string) ([]string, error)
-	// Writes outputs to paths
-	OutputWriter(path string) (io.WriteCloser, error)
-	// Root returns the canonical root path or name for the package.
-	Root() string
-	// Cleanup releases any resources (e.g., tempdirs) held by the context.
-	Cleanup() error
-
-	// Path resolution utilities for consistent module/filesystem path mapping
-	// ModulePathToFS converts a module path to filesystem path for watching
-	ModulePathToFS(modulePath string) string
-	// FSPathToModule converts a filesystem path to module path for manifest lookup
-	FSPathToModule(fsPath string) (string, error)
-	// ResolveModuleDependency resolves a dependency path relative to a module
-	ResolveModuleDependency(modulePath, dependencyPath string) (string, error)
-
-	// DesignTokensCache returns the design tokens cache for this workspace
-	DesignTokensCache() DesignTokensCache
 }

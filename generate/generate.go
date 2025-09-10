@@ -28,7 +28,7 @@ import (
 	DD "bennypowers.dev/cem/generate/demodiscovery"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
-	W "bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/types"
 
 	DS "github.com/bmatcuk/doublestar"
 	ts "github.com/tree-sitter/go-tree-sitter"
@@ -57,7 +57,7 @@ type preprocessResult struct {
 }
 
 // preprocess handles config merging for generate command
-func preprocess(ctx W.WorkspaceContext) (r preprocessResult, errs error) {
+func preprocess(ctx types.WorkspaceContext) (r preprocessResult, errs error) {
 	cfg, err := ctx.Config()
 	if err != nil {
 		return r, err
@@ -108,7 +108,7 @@ func preprocess(ctx W.WorkspaceContext) (r preprocessResult, errs error) {
 
 type processJob struct {
 	file string
-	ctx  W.WorkspaceContext
+	ctx  types.WorkspaceContext
 }
 
 func processModule(
@@ -155,7 +155,7 @@ func processModule(
 }
 
 func postprocess(
-	ctx W.WorkspaceContext,
+	ctx types.WorkspaceContext,
 	result preprocessResult,
 	allTagAliases map[string]string,
 	qm *Q.QueryManager,
@@ -174,7 +174,7 @@ func postprocess(
 	if cfgErr == nil {
 		urlPattern = cfg.Generate.DemoDiscovery.URLPattern
 	}
-	demoMap, err := DD.NewDemoMapWithPattern(result.demoFiles, urlPattern, allTagAliases)
+	demoMap, err := DD.NewDemoMapWithPattern(ctx, result.demoFiles, urlPattern, allTagAliases)
 	if err != nil {
 		errsList = append(errsList, err)
 	}
@@ -211,7 +211,7 @@ func postprocess(
 }
 
 // Generates a custom-elements manifest from a list of typescript files
-func Generate(ctx W.WorkspaceContext) (manifest *string, errs error) {
+func Generate(ctx types.WorkspaceContext) (manifest *string, errs error) {
 	session, err := NewGenerateSession(ctx)
 	if err != nil {
 		return nil, err

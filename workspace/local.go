@@ -27,12 +27,13 @@ import (
 
 	C "bennypowers.dev/cem/cmd/config"
 	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/types"
 	"github.com/bmatcuk/doublestar"
 	"github.com/pterm/pterm"
 	"gopkg.in/yaml.v3"
 )
 
-var _ WorkspaceContext = (*FileSystemWorkspaceContext)(nil)
+var _ types.WorkspaceContext = (*FileSystemWorkspaceContext)(nil)
 
 // FileSystemWorkspaceContext implements WorkspaceContext for a local filesystem
 // package.
@@ -43,7 +44,7 @@ type FileSystemWorkspaceContext struct {
 	// Cache parsed results if desired
 	manifest          *M.Package
 	packageJSON       *M.PackageJSON
-	designTokensCache DesignTokensCache
+	designTokensCache types.DesignTokensCache
 }
 
 func (c *FileSystemWorkspaceContext) initConfig() (*C.CemConfig, error) {
@@ -85,10 +86,22 @@ func (c *FileSystemWorkspaceContext) initConfig() (*C.CemConfig, error) {
 	return &config, nil
 }
 
-func NewFileSystemWorkspaceContext(root string) *FileSystemWorkspaceContext {
+func NewFileSystemWorkspaceContext(
+	root string,
+	designTokensLoader types.DesignTokensLoader,
+) *FileSystemWorkspaceContext {
 	return &FileSystemWorkspaceContext{
 		root:              root,
-		designTokensCache: NewDesignTokensCache(),
+		designTokensCache: NewDesignTokensCache(designTokensLoader),
+	}
+}
+
+// NewFileSystemWorkspaceContextWithDefaults creates a workspace context with a nil design tokens loader
+// This is useful for tests and cases where design tokens functionality is not needed
+func NewFileSystemWorkspaceContextWithDefaults(root string) *FileSystemWorkspaceContext {
+	return &FileSystemWorkspaceContext{
+		root:              root,
+		designTokensCache: NewDesignTokensCache(nil),
 	}
 }
 
@@ -186,7 +199,20 @@ func (c *FileSystemWorkspaceContext) ReadFile(path string) (io.ReadCloser, error
 
 func (c *FileSystemWorkspaceContext) Glob(pattern string) ([]string, error) {
 	if isGlobPattern(pattern) {
-		return doublestar.Glob(filepath.Join(c.root, pattern))
+		result, err := doublestar.Glob(filepath.Join(c.root, pattern))
+		if err != nil {
+			return nil, err
+		}
+		// Convert absolute paths back to relative paths
+		relativeResult := make([]string, len(result))
+		for i, absPath := range result {
+			if rel, relErr := filepath.Rel(c.root, absPath); relErr == nil {
+				relativeResult[i] = rel
+			} else {
+				relativeResult[i] = absPath // fallback to absolute if rel fails
+			}
+		}
+		return relativeResult, nil
 	} else {
 		// If pattern is an absolute path, try to make it relative to project root
 		if filepath.IsAbs(pattern) {
@@ -225,7 +251,7 @@ func (c *FileSystemWorkspaceContext) Root() string {
 }
 
 // DesignTokensCache returns the design tokens cache for this workspace
-func (c *FileSystemWorkspaceContext) DesignTokensCache() DesignTokensCache {
+func (c *FileSystemWorkspaceContext) DesignTokensCache() types.DesignTokensCache {
 	return c.designTokensCache
 }
 
@@ -252,7 +278,9 @@ func (c *FileSystemWorkspaceContext) FSPathToModule(fsPath string) (string, erro
 }
 
 // ResolveModuleDependency resolves a dependency path relative to a module
-func (c *FileSystemWorkspaceContext) ResolveModuleDependency(modulePath, dependencyPath string) (string, error) {
+func (c *FileSystemWorkspaceContext) ResolveModuleDependency(
+	modulePath, dependencyPath string,
+) (string, error) {
 	if filepath.IsAbs(dependencyPath) {
 		// Convert to module-relative path
 		rel, err := filepath.Rel(c.root, dependencyPath)

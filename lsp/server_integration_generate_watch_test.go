@@ -53,7 +53,7 @@ func TestGenerateWatcherIntegration(t *testing.T) {
 
 	t.Run("generate watcher starts for local project", func(t *testing.T) {
 		// Create workspace and registry
-		workspace := W.NewFileSystemWorkspaceContext(tempDir)
+		workspace := W.NewFileSystemWorkspaceContextWithDefaults(tempDir)
 		err := workspace.Init()
 		if err != nil {
 			t.Fatalf("Failed to initialize workspace: %v", err)
@@ -84,7 +84,7 @@ func TestGenerateWatcherIntegration(t *testing.T) {
 	})
 
 	t.Run("generate watcher stops cleanly", func(t *testing.T) {
-		workspace := W.NewFileSystemWorkspaceContext(tempDir)
+		workspace := W.NewFileSystemWorkspaceContextWithDefaults(tempDir)
 		err = workspace.Init()
 		if err != nil {
 			t.Fatalf("Failed to initialize workspace: %v", err)
@@ -134,7 +134,7 @@ func TestGenerateWatcherIntegration(t *testing.T) {
 	})
 
 	t.Run("generate watcher prevents double start", func(t *testing.T) {
-		workspace := W.NewFileSystemWorkspaceContext(tempDir)
+		workspace := W.NewFileSystemWorkspaceContextWithDefaults(tempDir)
 		err = workspace.Init()
 		if err != nil {
 			t.Fatalf("Failed to initialize workspace: %v", err)

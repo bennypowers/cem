@@ -53,7 +53,7 @@ func TestRunWatchMode(t *testing.T) {
 			testFile := filepath.Join(srcDir, "test.ts")
 			require.NoError(t, os.WriteFile(testFile, []byte("export class Test {}"), 0644))
 
-			ctx := W.NewFileSystemWorkspaceContext(tempDir)
+			ctx := W.NewFileSystemWorkspaceContextWithDefaults(tempDir)
 			require.NoError(t, ctx.Init())
 
 			// Test that watch session can be created (we don't actually run the watch loop in tests)
@@ -91,7 +91,7 @@ func TestWatchWorkflow_Integration(t *testing.T) {
 	}`
 	require.NoError(t, os.WriteFile(testFile, []byte(initialContent), 0644))
 
-	ctx := W.NewFileSystemWorkspaceContext(tempDir)
+	ctx := W.NewFileSystemWorkspaceContextWithDefaults(tempDir)
 	require.NoError(t, ctx.Init())
 
 	cfg, err := ctx.Config()

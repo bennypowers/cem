@@ -45,7 +45,7 @@ func TestTransitiveIntegration_ThreeLevelDependency(t *testing.T) {
 	t.Logf("DEBUG: Using fixture directory: %s", fixtureDir)
 
 	// Create workspace context
-	workspace := W.NewFileSystemWorkspaceContext(fixtureDir)
+	workspace := W.NewFileSystemWorkspaceContextWithDefaults(fixtureDir)
 	err = workspace.Init()
 	if err != nil {
 		t.Fatalf("Failed to initialize workspace: %v", err)
@@ -264,7 +264,7 @@ func TestTransitiveIntegration_PartialImport(t *testing.T) {
 	fixtureDir := filepath.Join("..", "..", "..", "test", "fixtures", "transitive-integration")
 
 	// Create workspace and server
-	workspace := W.NewFileSystemWorkspaceContext(fixtureDir)
+	workspace := W.NewFileSystemWorkspaceContextWithDefaults(fixtureDir)
 	if err := workspace.Init(); err != nil {
 		t.Fatalf("Failed to initialize workspace: %v", err)
 	}

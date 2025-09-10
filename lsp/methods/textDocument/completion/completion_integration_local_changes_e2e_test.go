@@ -172,7 +172,7 @@ export class TestButton extends LitElement {
 		}
 
 		// Create workspace and registry
-		workspace := W.NewFileSystemWorkspaceContext(tempDir)
+		workspace := W.NewFileSystemWorkspaceContextWithDefaults(tempDir)
 		err = workspace.Init()
 		if err != nil {
 			t.Fatalf("Failed to initialize workspace: %v", err)
@@ -410,7 +410,7 @@ export class MyApp extends LitElement {
 		}
 
 		// Create workspace and registry
-		workspace := W.NewFileSystemWorkspaceContext(tempDir)
+		workspace := W.NewFileSystemWorkspaceContextWithDefaults(tempDir)
 		err = workspace.Init()
 		if err != nil {
 			t.Fatalf("Failed to initialize workspace: %v", err)

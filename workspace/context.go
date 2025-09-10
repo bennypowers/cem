@@ -24,6 +24,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"bennypowers.dev/cem/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -36,10 +37,10 @@ var projectFiles = []string{
 	"tsconfig.json",
 }
 
-func GetWorkspaceContext(cmd *cobra.Command) (WorkspaceContext, error) {
+func GetWorkspaceContext(cmd *cobra.Command) (types.WorkspaceContext, error) {
 	val := cmd.Context().Value(WorkspaceContextKey)
 	if val != nil {
-		return val.(WorkspaceContext), nil
+		return val.(types.WorkspaceContext), nil
 	}
 
 	spec := viper.GetString("package")
@@ -79,10 +80,10 @@ func GetWorkspaceContext(cmd *cobra.Command) (WorkspaceContext, error) {
 	}
 }
 
-func getAppropriateContextForSpec(spec, cmdName string) (ctx WorkspaceContext, err error) {
+func getAppropriateContextForSpec(spec, cmdName string) (ctx types.WorkspaceContext, err error) {
 	if !IsPackageSpecifier(spec) {
 		// if it's a file path, use it
-		return NewFileSystemWorkspaceContext(spec), nil
+		return NewFileSystemWorkspaceContextWithDefaults(spec), nil
 	} else {
 		// if it's a specifier, try to get it from node_modules
 		name, _, err := parseNpmSpecifier(spec)
@@ -91,7 +92,7 @@ func getAppropriateContextForSpec(spec, cmdName string) (ctx WorkspaceContext, e
 		}
 		localPath := filepath.Join("node_modules", name)
 		if stat, err := os.Stat(localPath); err == nil && stat.IsDir() {
-			return NewFileSystemWorkspaceContext(localPath), nil
+			return NewFileSystemWorkspaceContextWithDefaults(localPath), nil
 		}
 		// finally, we fetch from the network
 		if cmdName == "generate" {

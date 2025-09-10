@@ -78,7 +78,7 @@ func TestCompletionUpdateCycle(t *testing.T) {
 		}
 
 		// Create workspace and generate initial manifest
-		workspace := W.NewFileSystemWorkspaceContext(tempDir)
+		workspace := W.NewFileSystemWorkspaceContextWithDefaults(tempDir)
 		if err := workspace.Init(); err != nil {
 			t.Fatalf("Failed to initialize workspace: %v", err)
 		}

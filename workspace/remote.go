@@ -32,13 +32,14 @@ import (
 
 	C "bennypowers.dev/cem/cmd/config"
 	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/types"
 	"github.com/adrg/xdg"
 	"github.com/bmatcuk/doublestar"
 	"github.com/pterm/pterm"
 	"gopkg.in/yaml.v3"
 )
 
-var _ WorkspaceContext = (*RemoteWorkspaceContext)(nil)
+var _ types.WorkspaceContext = (*RemoteWorkspaceContext)(nil)
 
 // RemoteWorkspaceContext implements WorkspaceContext for remote packages.
 type RemoteWorkspaceContext struct {
@@ -50,13 +51,13 @@ type RemoteWorkspaceContext struct {
 	packageJSON        *M.PackageJSON
 	customElementsPath string
 	spinner            *pterm.SpinnerPrinter
-	designTokensCache  DesignTokensCache
+	designTokensCache  types.DesignTokensCache
 }
 
 func NewRemoteWorkspaceContext(spec string) *RemoteWorkspaceContext {
 	return &RemoteWorkspaceContext{
 		spec:              spec,
-		designTokensCache: NewDesignTokensCache(),
+		designTokensCache: NewDesignTokensCache(nil), // Remote contexts don't need design tokens loading
 	}
 }
 
@@ -328,7 +329,7 @@ func (c *RemoteWorkspaceContext) ResolveModuleDependency(modulePath, dependencyP
 }
 
 // DesignTokensCache returns the design tokens cache for this workspace
-func (c *RemoteWorkspaceContext) DesignTokensCache() DesignTokensCache {
+func (c *RemoteWorkspaceContext) DesignTokensCache() types.DesignTokensCache {
 	return c.designTokensCache
 }
 

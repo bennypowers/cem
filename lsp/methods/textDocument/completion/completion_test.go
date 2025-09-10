@@ -107,7 +107,7 @@ func TestServerLevelIntegration(t *testing.T) {
 	tsFilePath := filepath.Join(tempDir, "src", "test-alert.ts")
 
 	// Create initial manifest by running generate manually
-	workspace := W.NewFileSystemWorkspaceContext(tempDir)
+	workspace := W.NewFileSystemWorkspaceContextWithDefaults(tempDir)
 	err = workspace.Init()
 	if err != nil {
 		t.Fatalf("Failed to initialize workspace: %v", err)

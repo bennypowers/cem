@@ -28,8 +28,13 @@ import (
 	"strings"
 
 	M "bennypowers.dev/cem/manifest"
-	W "bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/types"
 )
+
+// isPackageSpecifier checks if a string is an npm package specifier
+func isPackageSpecifier(spec string) bool {
+	return strings.HasPrefix(spec, "npm:") || strings.HasPrefix(spec, "jsr:")
+}
 
 // TokenResult represents the exported structure with CSS type mapping.
 type TokenResult struct {
@@ -57,7 +62,7 @@ func (dt *DesignTokens) Get(name string) (TokenResult, bool) {
 
 // LoadDesignTokens loads tokens from a path or Deno-style specifier and returns a DesignTokens struct.
 // The prefix is prepended to all token names on load.
-func LoadDesignTokens(ctx W.WorkspaceContext) (*DesignTokens, error) {
+func LoadDesignTokens(ctx types.WorkspaceContext) (*DesignTokens, error) {
 	cfg, err := ctx.Config()
 	if err != nil {
 		return nil, err
@@ -87,11 +92,23 @@ func LoadDesignTokens(ctx W.WorkspaceContext) (*DesignTokens, error) {
 	return &DesignTokens{tokens: tokens, prefix: prefix}, nil
 }
 
-// init sets up the function callback to avoid circular dependency
-func init() {
-	W.SetLoadDesignTokensFunc(func(ctx W.WorkspaceContext) (interface{}, error) {
-		return LoadDesignTokens(ctx)
-	})
+// Loader implements the types.DesignTokensLoader interface
+type Loader struct{}
+
+// NewLoader creates a new design tokens loader
+func NewLoader() types.DesignTokensLoader {
+	return &Loader{}
+}
+
+// Load implements types.DesignTokensLoader.Load
+func (l *Loader) Load(ctx interface{}) (interface{}, error) {
+	// Cast the context to our minimal types.WorkspaceContext interface
+	// This is safe because the workspace package will pass the correct type
+	wsCtx, ok := ctx.(types.WorkspaceContext)
+	if !ok {
+		return nil, errors.New("invalid context type for design tokens loading")
+	}
+	return LoadDesignTokens(wsCtx)
 }
 
 func MergeDesignTokensToModule(module *M.Module, designTokens DesignTokens) {
@@ -146,8 +163,8 @@ func kebabCase(s string) string {
 // readJSONFileOrSpecifier loads a JSON file from a regular path or a Deno-style specifier.
 // If the specifier is an npm: spec, it first checks node_modules in the current working directory.
 // If not found locally, it falls back to fetching from the network.
-func readJSONFileOrSpecifier(ctx W.WorkspaceContext, path string) ([]byte, error) {
-	if W.IsPackageSpecifier(path) {
+func readJSONFileOrSpecifier(ctx types.WorkspaceContext, path string) ([]byte, error) {
+	if isPackageSpecifier(path) {
 		// Try npm/Deno specifier and @scope/pkg/file.json style
 		if spec, ok := parseNpmSpecifier(path); ok {
 			// Try node_modules first

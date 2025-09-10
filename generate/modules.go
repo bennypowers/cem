@@ -28,7 +28,7 @@ import (
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
 	S "bennypowers.dev/cem/set"
-	W "bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/types"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -57,13 +57,13 @@ type ModuleProcessor struct {
 	module                       *M.Module
 	errors                       error
 	packageJSON                  *M.PackageJSON
-	ctx                          W.WorkspaceContext
+	ctx                          types.WorkspaceContext
 	cssCache                     CssCache // CSS parsing cache for performance
 	lineOffsets                  []uint   // Cache of newline byte offsets for fast line number lookup
 }
 
 func NewModuleProcessor(
-	ctx W.WorkspaceContext,
+	ctx types.WorkspaceContext,
 	file string,
 	parser *ts.Parser,
 	queryManager *Q.QueryManager,

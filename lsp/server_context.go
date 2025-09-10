@@ -213,7 +213,7 @@ func (s *Server) UpdateWorkspaceFromLSP(rootURI *string, workspaceFolders []prot
 	}
 
 	// Create new workspace context with the correct root
-	newWorkspace := W.NewFileSystemWorkspaceContext(newRoot)
+	newWorkspace := W.NewFileSystemWorkspaceContextWithDefaults(newRoot)
 	if err := newWorkspace.Init(); err != nil {
 		helpers.SafeDebugLog("[SERVER_ADAPTER] Failed to initialize new workspace context: %v", err)
 		return fmt.Errorf("failed to initialize workspace context: %w", err)

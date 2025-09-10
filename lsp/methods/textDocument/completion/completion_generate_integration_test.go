@@ -143,7 +143,7 @@ export class TestAlert extends LitElement {
 		}
 
 		// Create workspace and registry with MockFileWatcher
-		workspace := W.NewFileSystemWorkspaceContext(tempDir)
+		workspace := W.NewFileSystemWorkspaceContextWithDefaults(tempDir)
 		err = workspace.Init()
 		if err != nil {
 			t.Fatalf("Failed to initialize workspace: %v", err)

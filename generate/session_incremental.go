@@ -244,7 +244,7 @@ func (gs *GenerateSession) applyPostProcessingToModules(ctx context.Context, res
 		if cfgErr == nil {
 			urlPattern = cfg.Generate.DemoDiscovery.URLPattern
 		}
-		demoMap, err = DD.NewDemoMapWithPattern(result.demoFiles, urlPattern, allTagAliases)
+		demoMap, err = DD.NewDemoMapWithPattern(gs.setupCtx.WorkspaceContext, result.demoFiles, urlPattern, allTagAliases)
 		if err != nil {
 			errsList = append(errsList, err)
 		}
