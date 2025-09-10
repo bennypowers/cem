@@ -27,7 +27,7 @@ import (
 	G "bennypowers.dev/cem/generate"
 	"bennypowers.dev/cem/lsp/helpers"
 	M "bennypowers.dev/cem/manifest"
-	W "bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/types"
 	"github.com/fsnotify/fsnotify"
 )
 
@@ -42,13 +42,17 @@ type InProcessGenerateWatcher struct {
 	ctx             context.Context
 	cancel          context.CancelFunc
 	mu              sync.RWMutex
-	workspace       W.WorkspaceContext
+	workspace       types.WorkspaceContext
 	globs           []string
 	callback        ManifestUpdateCallback
 }
 
 // NewInProcessGenerateWatcher creates a new in-process generate watcher
-func NewInProcessGenerateWatcher(workspace W.WorkspaceContext, globs []string, callback ManifestUpdateCallback) (*InProcessGenerateWatcher, error) {
+func NewInProcessGenerateWatcher(
+	workspace types.WorkspaceContext,
+	globs []string,
+	callback ManifestUpdateCallback,
+) (*InProcessGenerateWatcher, error) {
 	// Create cancellable context for clean shutdown
 	ctx, cancel := context.WithCancel(context.Background())
 

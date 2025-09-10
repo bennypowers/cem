@@ -508,7 +508,6 @@ func (mfs *MapFileSystem) ensureParentDirLocked(filePath string) error {
 	return nil
 }
 
-
 // TestFS validates the filesystem using Go's fstest.TestFS.
 // This is particularly useful for ensuring filesystem compliance.
 func (mfs *MapFileSystem) TestFS(expectedFiles ...string) error {

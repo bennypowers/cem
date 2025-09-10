@@ -30,7 +30,7 @@ import (
 	C "bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/internal/logging"
 	M "bennypowers.dev/cem/manifest"
-	W "bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/types"
 	DS "github.com/bmatcuk/doublestar"
 	"github.com/fsnotify/fsnotify"
 	"github.com/pterm/pterm"
@@ -38,7 +38,7 @@ import (
 
 // WatchSession manages the long-lived watch mode state
 type WatchSession struct {
-	ctx             W.WorkspaceContext
+	ctx             types.WorkspaceContext
 	globs           []string
 	generateSession *GenerateSession
 	debounceTimer   *time.Timer
@@ -53,7 +53,7 @@ type WatchSession struct {
 }
 
 // NewWatchSession creates a new watch session with the given workspace context and globs
-func NewWatchSession(ctx W.WorkspaceContext, globs []string) (*WatchSession, error) {
+func NewWatchSession(ctx types.WorkspaceContext, globs []string) (*WatchSession, error) {
 	generateSession, err := NewGenerateSession(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("create generate session: %w", err)

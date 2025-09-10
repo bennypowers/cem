@@ -23,15 +23,18 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	C "bennypowers.dev/cem/cmd/config"
+	DT "bennypowers.dev/cem/designtokens"
 	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/types"
 	"github.com/bmatcuk/doublestar"
 	"github.com/pterm/pterm"
 	"gopkg.in/yaml.v3"
 )
 
-var _ WorkspaceContext = (*FileSystemWorkspaceContext)(nil)
+var _ types.WorkspaceContext = (*FileSystemWorkspaceContext)(nil)
 
 // FileSystemWorkspaceContext implements WorkspaceContext for a local filesystem
 // package.
@@ -40,8 +43,9 @@ type FileSystemWorkspaceContext struct {
 	config                     *C.CemConfig
 	customElementsManifestPath string
 	// Cache parsed results if desired
-	manifest    *M.Package
-	packageJSON *M.PackageJSON
+	manifest          *M.Package
+	packageJSON       *M.PackageJSON
+	designTokensCache types.DesignTokensCache
 }
 
 func (c *FileSystemWorkspaceContext) initConfig() (*C.CemConfig, error) {
@@ -84,7 +88,10 @@ func (c *FileSystemWorkspaceContext) initConfig() (*C.CemConfig, error) {
 }
 
 func NewFileSystemWorkspaceContext(root string) *FileSystemWorkspaceContext {
-	return &FileSystemWorkspaceContext{root: root}
+	return &FileSystemWorkspaceContext{
+		root:              root,
+		designTokensCache: NewDesignTokensCache(DT.NewLoader()),
+	}
 }
 
 // ConfigFile Returns the path to the config file, or an empty string if it does not exist.
@@ -180,11 +187,72 @@ func (c *FileSystemWorkspaceContext) ReadFile(path string) (io.ReadCloser, error
 }
 
 func (c *FileSystemWorkspaceContext) Glob(pattern string) ([]string, error) {
+	// Clean and normalize the pattern first
+	pattern = filepath.Clean(pattern)
+
 	if isGlobPattern(pattern) {
-		return doublestar.Glob(filepath.Join(c.root, pattern))
-	} else {
-		return []string{pattern}, nil
+		// For glob patterns, join with root and execute glob
+		globPath := filepath.Join(c.root, pattern)
+		result, err := doublestar.Glob(globPath)
+		if err != nil {
+			return nil, fmt.Errorf("glob pattern %q failed: %w", pattern, err)
+		}
+
+		// Convert absolute paths back to relative paths within project
+		relativeResult := make([]string, 0, len(result))
+		for _, absPath := range result {
+			if rel, err := c.makeRelativeToRoot(absPath); err == nil {
+				relativeResult = append(relativeResult, rel)
+			}
+			// Skip files outside project root (don't include them in results)
+		}
+		return relativeResult, nil
 	}
+
+	// For non-glob patterns, handle as individual file paths
+	return c.handleNonGlobPattern(pattern)
+}
+
+// makeRelativeToRoot converts an absolute path to relative path within project root.
+// Returns error if path is outside project root.
+func (c *FileSystemWorkspaceContext) makeRelativeToRoot(absPath string) (string, error) {
+	// Clean both paths to ensure consistent separators
+	cleanRoot := filepath.Clean(c.root)
+	cleanPath := filepath.Clean(absPath)
+
+	rel, err := filepath.Rel(cleanRoot, cleanPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to compute relative path: %w", err)
+	}
+
+	// Check if path escapes project root (cross-platform check)
+	if strings.HasPrefix(rel, ".."+string(filepath.Separator)) || rel == ".." {
+		return "", fmt.Errorf("path %q is outside project root %q", absPath, c.root)
+	}
+
+	return rel, nil
+}
+
+// handleNonGlobPattern processes individual file patterns (not glob patterns)
+func (c *FileSystemWorkspaceContext) handleNonGlobPattern(pattern string) ([]string, error) {
+	if filepath.IsAbs(pattern) {
+		// Convert absolute path to relative if within project
+		if rel, err := c.makeRelativeToRoot(pattern); err == nil {
+			return []string{rel}, nil
+		}
+		// If outside project root, return empty (don't process external files)
+		return []string{}, nil
+	}
+
+	// For relative patterns, ensure they resolve within project
+	absPath := filepath.Join(c.root, pattern)
+	if rel, err := c.makeRelativeToRoot(absPath); err == nil {
+		return []string{rel}, nil
+	}
+
+	// Fallback: return the original pattern if path resolution fails
+	// This maintains backward compatibility for edge cases
+	return []string{filepath.Clean(pattern)}, nil
 }
 
 func (c *FileSystemWorkspaceContext) OutputWriter(path string) (io.WriteCloser, error) {
@@ -198,6 +266,11 @@ func (c *FileSystemWorkspaceContext) OutputWriter(path string) (io.WriteCloser, 
 
 func (c *FileSystemWorkspaceContext) Root() string {
 	return c.root
+}
+
+// DesignTokensCache returns the design tokens cache for this workspace
+func (c *FileSystemWorkspaceContext) DesignTokensCache() types.DesignTokensCache {
+	return c.designTokensCache
 }
 
 func (c *FileSystemWorkspaceContext) Cleanup() error {
@@ -223,7 +296,10 @@ func (c *FileSystemWorkspaceContext) FSPathToModule(fsPath string) (string, erro
 }
 
 // ResolveModuleDependency resolves a dependency path relative to a module
-func (c *FileSystemWorkspaceContext) ResolveModuleDependency(modulePath, dependencyPath string) (string, error) {
+func (c *FileSystemWorkspaceContext) ResolveModuleDependency(
+	modulePath,
+	dependencyPath string,
+) (string, error) {
 	if filepath.IsAbs(dependencyPath) {
 		// Convert to module-relative path
 		rel, err := filepath.Rel(c.root, dependencyPath)

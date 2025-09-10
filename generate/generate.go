@@ -28,7 +28,7 @@ import (
 	DD "bennypowers.dev/cem/generate/demodiscovery"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
-	W "bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/types"
 
 	DS "github.com/bmatcuk/doublestar"
 	ts "github.com/tree-sitter/go-tree-sitter"
@@ -51,13 +51,13 @@ func matchesAnyPattern(file string, patterns []string) bool {
 
 type preprocessResult struct {
 	demoFiles       []string
-	designTokens    *DT.DesignTokens
+	designTokens    types.DesignTokens
 	excludePatterns []string
 	includedFiles   []string
 }
 
 // preprocess handles config merging for generate command
-func preprocess(ctx W.WorkspaceContext) (r preprocessResult, errs error) {
+func preprocess(ctx types.WorkspaceContext) (r preprocessResult, errs error) {
 	cfg, err := ctx.Config()
 	if err != nil {
 		return r, err
@@ -73,11 +73,12 @@ func preprocess(ctx W.WorkspaceContext) (r preprocessResult, errs error) {
 	}
 
 	if cfg.Generate.DesignTokens.Spec != "" {
-		tokens, err := DT.LoadDesignTokens(ctx)
+		designTokens, err := validateAndLoadDesignTokens(ctx)
 		if err != nil {
 			errs = errors.Join(errs, err)
+		} else {
+			r.designTokens = designTokens
 		}
-		r.designTokens = tokens
 	}
 	if cfg.Generate.DemoDiscovery.FileGlob != "" {
 		demoFiles, err := ctx.Glob(cfg.Generate.DemoDiscovery.FileGlob)
@@ -106,7 +107,7 @@ func preprocess(ctx W.WorkspaceContext) (r preprocessResult, errs error) {
 
 type processJob struct {
 	file string
-	ctx  W.WorkspaceContext
+	ctx  types.WorkspaceContext
 }
 
 func processModule(
@@ -153,7 +154,7 @@ func processModule(
 }
 
 func postprocess(
-	ctx W.WorkspaceContext,
+	ctx types.WorkspaceContext,
 	result preprocessResult,
 	allTagAliases map[string]string,
 	qm *Q.QueryManager,
@@ -172,7 +173,7 @@ func postprocess(
 	if cfgErr == nil {
 		urlPattern = cfg.Generate.DemoDiscovery.URLPattern
 	}
-	demoMap, err := DD.NewDemoMapWithPattern(result.demoFiles, urlPattern, allTagAliases)
+	demoMap, err := DD.NewDemoMapWithPattern(ctx, result.demoFiles, urlPattern, allTagAliases)
 	if err != nil {
 		errsList = append(errsList, err)
 	}
@@ -183,7 +184,7 @@ func postprocess(
 		go func(module *M.Module) {
 			defer wg.Done()
 			if result.designTokens != nil {
-				DT.MergeDesignTokensToModule(module, *result.designTokens)
+				DT.MergeDesignTokensToModule(module, result.designTokens)
 			}
 			// Discover demos and attach to manifest
 			if len(demoMap) > 0 {
@@ -209,7 +210,7 @@ func postprocess(
 }
 
 // Generates a custom-elements manifest from a list of typescript files
-func Generate(ctx W.WorkspaceContext) (manifest *string, errs error) {
+func Generate(ctx types.WorkspaceContext) (manifest *string, errs error) {
 	session, err := NewGenerateSession(ctx)
 	if err != nil {
 		return nil, err
@@ -226,4 +227,19 @@ func Generate(ctx W.WorkspaceContext) (manifest *string, errs error) {
 		return nil, fmt.Errorf("module serialize failed: %w", err)
 	}
 	return &manifestStr, nil
+}
+
+// validateAndLoadDesignTokens loads design tokens from cache.
+// Returns a proper error if the cached object cannot be loaded.
+func validateAndLoadDesignTokens(ctx types.WorkspaceContext) (types.DesignTokens, error) {
+	tokens, err := ctx.DesignTokensCache().LoadOrReuse(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load design tokens: %w", err)
+	}
+
+	if tokens == nil {
+		return nil, fmt.Errorf("design tokens cache returned nil - check design tokens spec configuration")
+	}
+
+	return tokens, nil
 }

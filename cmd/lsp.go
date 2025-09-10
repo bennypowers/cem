@@ -21,6 +21,7 @@ import (
 	"os"
 
 	LSP "bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/types"
 	W "bennypowers.dev/cem/workspace"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -49,7 +50,7 @@ Features provided:
 		pterm.SetDefaultOutput(os.Stderr)
 
 		ctx := cmd.Context()
-		wctx := ctx.Value(W.WorkspaceContextKey).(W.WorkspaceContext)
+		wctx := ctx.Value(W.WorkspaceContextKey).(types.WorkspaceContext)
 
 		// Determine transport based on boolean flags
 		var transport LSP.TransportKind = LSP.TransportStdio // default

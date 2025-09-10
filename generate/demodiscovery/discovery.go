@@ -31,7 +31,7 @@ import (
 	C "bennypowers.dev/cem/cmd/config"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
-	W "bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/types"
 	"github.com/dunglas/go-urlpattern"
 	"github.com/gosimple/slug"
 	"github.com/pterm/pterm"
@@ -93,8 +93,16 @@ func extractMicrodata(root *ts.Node, code []byte, property string) string {
 }
 
 // extractDemoMetadata extracts metadata from a demo file using HTML5 microdata
-func extractDemoMetadata(path string) (DemoMetadata, error) {
-	code, err := os.ReadFile(path)
+func extractDemoMetadata(ctx types.WorkspaceContext, path string) (DemoMetadata, error) {
+	// Resolve path relative to workspace root if it's not absolute
+	var absPath string
+	if filepath.IsAbs(path) {
+		absPath = path
+	} else {
+		absPath = filepath.Join(ctx.Root(), path)
+	}
+
+	code, err := os.ReadFile(absPath)
 	if err != nil {
 		return DemoMetadata{}, fmt.Errorf("could not read demo file: %w", err)
 	}
@@ -171,7 +179,10 @@ func serializeTagAliases(tagAliases map[string]string) string {
 }
 
 // getOrCreateTemplate returns a cached template or creates and caches a new one
-func (c *templateCache) getOrCreateTemplate(templateStr string, tagAliases map[string]string) (*template.Template, error) {
+func (c *templateCache) getOrCreateTemplate(
+	templateStr string,
+	tagAliases map[string]string,
+) (*template.Template, error) {
 	// Create a cache key that includes the template string and tag aliases
 	// Since tag aliases affect the function map, we need to include them in the key
 	cacheKey := fmt.Sprintf("%s|%s", templateStr, serializeTagAliases(tagAliases))
@@ -269,7 +280,12 @@ func createTemplateFuncMap(tagAliases map[string]string) template.FuncMap {
 }
 
 // generateFallbackURL creates a URL using URLPattern-based configuration
-func generateFallbackURL(ctx W.WorkspaceContext, cfg *C.CemConfig, demoPath string, tagAliases map[string]string) (string, error) {
+func generateFallbackURL(
+	ctx types.WorkspaceContext,
+	cfg *C.CemConfig,
+	demoPath string,
+	tagAliases map[string]string,
+) (string, error) {
 	urlPattern := cfg.Generate.DemoDiscovery.URLPattern
 	urlTemplate := cfg.Generate.DemoDiscovery.URLTemplate
 
@@ -312,7 +328,7 @@ func generateFallbackURL(ctx W.WorkspaceContext, cfg *C.CemConfig, demoPath stri
 	}
 
 	// Create template data from captured groups
-	templateData := make(map[string]interface{})
+	templateData := make(map[string]any)
 	for key, value := range result.Pathname.Groups {
 		templateData[key] = value
 	}
@@ -347,7 +363,7 @@ func resolveDemoSourceURL(cfg *C.CemConfig, demoPath string) (string, error) {
 
 // DiscoverDemos attaches demos (indexed by tag name) to custom element declarations.
 func DiscoverDemos(
-	ctx W.WorkspaceContext,
+	ctx types.WorkspaceContext,
 	tagAliases map[string]string,
 	module *M.Module,
 	qm *Q.QueryManager,
@@ -361,10 +377,10 @@ func DiscoverDemos(
 	for _, decl := range module.Declarations {
 		// Only attach to custom element classes with a tag name
 		ce, ok := decl.(*M.CustomElementDeclaration)
-		tagName := ce.CustomElement.TagName
 		if !ok || ce.Kind != "class" || ce.TagName == "" {
 			continue
 		}
+		tagName := ce.TagName
 		demoFiles := demoMap[tagName]
 		moduleDir := filepath.Dir(module.Path)
 		sort.SliceStable(demoFiles, func(i, j int) bool {
@@ -391,7 +407,7 @@ func DiscoverDemos(
 		})
 		for _, demoPath := range demoFiles {
 			// Extract metadata (microdata first, then fallbacks)
-			metadata, err := extractDemoMetadata(demoPath)
+			metadata, err := extractDemoMetadata(ctx, demoPath)
 			if err != nil {
 				errs = errors.Join(errs, err)
 				continue
