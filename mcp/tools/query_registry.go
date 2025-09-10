@@ -50,15 +50,16 @@ func handleQueryRegistry(ctx context.Context, req *mcp.CallToolRequest, registry
 	// Handle specific element query
 	if queryArgs.TagName != "" {
 		if element, exists := elements[queryArgs.TagName]; exists {
-			data, err := json.MarshalIndent(element, "", "  ")
+			templateData := NewAttributeTemplateData(element, "")
+			elementDetails, err := renderTemplate("element_details", templateData)
 			if err != nil {
-				return nil, fmt.Errorf("failed to marshal element: %w", err)
+				return nil, fmt.Errorf("failed to render element details: %w", err)
 			}
 
 			return &mcp.CallToolResult{
 				Content: []mcp.Content{
 					&mcp.TextContent{
-						Text: fmt.Sprintf("Element '%s' details:\n\n```json\n%s\n```", queryArgs.TagName, string(data)),
+						Text: elementDetails,
 					},
 				},
 			}, nil
@@ -87,7 +88,17 @@ func handleQueryRegistry(ctx context.Context, req *mcp.CallToolRequest, registry
 	}
 
 	// Build comprehensive registry information
-	result := buildRegistryResponse(filteredElements, queryArgs)
+	registryData := RegistryQueryData{
+		Elements:   filteredElements,
+		Categories: categorizeElementsWithCapabilities(filteredElements),
+		Filter:     queryArgs.Filter,
+		Search:     queryArgs.Search,
+	}
+
+	result, err := renderRegistryTemplate("registry_query_results", registryData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to render registry query results: %w", err)
+	}
 
 	return &mcp.CallToolResult{
 		Content: []mcp.Content{
@@ -155,54 +166,9 @@ func matchesFilter(element types.ElementInfo, filter, search string) bool {
 	return true
 }
 
-// buildRegistryResponse creates a comprehensive response about the registry
-func buildRegistryResponse(elements map[string]types.ElementInfo, args QueryRegistryArgs) string {
-	var response strings.Builder
-
-	if args.Filter != "" || args.Search != "" {
-		response.WriteString(fmt.Sprintf("# Filtered Custom Elements Registry (%d elements)\n\n", len(elements)))
-		if args.Filter != "" {
-			response.WriteString(fmt.Sprintf("**Filter:** %s\n", args.Filter))
-		}
-		if args.Search != "" {
-			response.WriteString(fmt.Sprintf("**Search:** %s\n", args.Search))
-		}
-		response.WriteString("\n")
-	} else {
-		response.WriteString(fmt.Sprintf("# Custom Elements Registry (%d elements)\n\n", len(elements)))
-	}
-
-	if len(elements) == 0 {
-		response.WriteString("No elements found matching the specified criteria.\n")
-		return response.String()
-	}
-
-	// Group elements by capabilities for better organization
-	categories := categorizeElements(elements)
-
-	for category, elementList := range categories {
-		if len(elementList) > 0 {
-			response.WriteString(fmt.Sprintf("## %s (%d elements)\n\n", category, len(elementList)))
-			for _, element := range elementList {
-				response.WriteString(formatElementSummary(element))
-				response.WriteString("\n")
-			}
-		}
-	}
-
-	// Add usage suggestions
-	response.WriteString("\n## Usage Suggestions\n\n")
-	response.WriteString("Use `query_registry` with specific parameters to explore elements:\n")
-	response.WriteString("- `tagName`: Get detailed info about a specific element\n")
-	response.WriteString("- `filter`: Filter by capabilities (has-slots, has-events, interactive, form)\n")
-	response.WriteString("- `search`: Search element names and descriptions\n")
-
-	return response.String()
-}
-
-// categorizeElements groups elements by their primary capabilities
-func categorizeElements(elements map[string]types.ElementInfo) map[string][]types.ElementInfo {
-	categories := map[string][]types.ElementInfo{
+// categorizeElementsWithCapabilities groups elements by their primary capabilities and adds capability info
+func categorizeElementsWithCapabilities(elements map[string]types.ElementInfo) map[string][]ElementWithCapabilities {
+	categories := map[string][]ElementWithCapabilities{
 		"Form Elements":        {},
 		"Interactive Elements": {},
 		"Layout Elements":      {},
@@ -237,47 +203,31 @@ func categorizeElements(elements map[string]types.ElementInfo) map[string][]type
 			category = "Navigation Elements"
 		}
 
-		categories[category] = append(categories[category], element)
+		// Build capability list
+		var capabilities []string
+		if len(element.Attributes()) > 0 {
+			capabilities = append(capabilities, fmt.Sprintf("%d attributes", len(element.Attributes())))
+		}
+		if len(element.Slots()) > 0 {
+			capabilities = append(capabilities, fmt.Sprintf("%d slots", len(element.Slots())))
+		}
+		if len(element.Events()) > 0 {
+			capabilities = append(capabilities, fmt.Sprintf("%d events", len(element.Events())))
+		}
+		if len(element.CssProperties()) > 0 {
+			capabilities = append(capabilities, fmt.Sprintf("%d CSS properties", len(element.CssProperties())))
+		}
+		if len(element.CssParts()) > 0 {
+			capabilities = append(capabilities, fmt.Sprintf("%d CSS parts", len(element.CssParts())))
+		}
+
+		elementWithCaps := ElementWithCapabilities{
+			ElementInfo:  element,
+			Capabilities: capabilities,
+		}
+
+		categories[category] = append(categories[category], elementWithCaps)
 	}
 
 	return categories
-}
-
-// formatElementSummary creates a concise summary of an element
-func formatElementSummary(element types.ElementInfo) string {
-	var summary strings.Builder
-
-	summary.WriteString(fmt.Sprintf("### `%s`\n", element.TagName()))
-
-	if element.Description() != "" {
-		summary.WriteString(fmt.Sprintf("%s\n", element.Description()))
-	}
-
-	// Add capability badges
-	var capabilities []string
-	if len(element.Attributes()) > 0 {
-		capabilities = append(capabilities, fmt.Sprintf("%d attributes", len(element.Attributes())))
-	}
-	if len(element.Slots()) > 0 {
-		capabilities = append(capabilities, fmt.Sprintf("%d slots", len(element.Slots())))
-	}
-	if len(element.Events()) > 0 {
-		capabilities = append(capabilities, fmt.Sprintf("%d events", len(element.Events())))
-	}
-	if len(element.CssProperties()) > 0 {
-		capabilities = append(capabilities, fmt.Sprintf("%d CSS properties", len(element.CssProperties())))
-	}
-	if len(element.CssParts()) > 0 {
-		capabilities = append(capabilities, fmt.Sprintf("%d CSS parts", len(element.CssParts())))
-	}
-
-	if len(capabilities) > 0 {
-		summary.WriteString(fmt.Sprintf("**Capabilities:** %s\n", strings.Join(capabilities, " • ")))
-	}
-
-	if element.Package() != "" {
-		summary.WriteString(fmt.Sprintf("**Package:** %s\n", element.Package()))
-	}
-
-	return summary.String()
 }

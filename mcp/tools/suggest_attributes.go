@@ -124,8 +124,14 @@ func handleSuggestAttributes(ctx context.Context, req *mcp.CallToolRequest, regi
 	if len(requiredAttrs) > 0 {
 		response.WriteString("## ⚠️ Required Attributes\n\n")
 		for _, attr := range requiredAttrs {
-			response.WriteString(formatAttributeDetails(attr, suggestArgs.Context))
-			response.WriteString("\n")
+			attrData := NewSingleAttributeData(attr, element.TagName(), suggestArgs.Context)
+			attrDetails, err := renderAttributeTemplate("attribute_details", attrData)
+			if err != nil {
+				response.WriteString(fmt.Sprintf("Error rendering attribute details: %v\n", err))
+			} else {
+				response.WriteString(attrDetails)
+				response.WriteString("\n")
+			}
 		}
 	}
 
@@ -133,8 +139,14 @@ func handleSuggestAttributes(ctx context.Context, req *mcp.CallToolRequest, regi
 	if len(optionalAttrs) > 0 {
 		response.WriteString("## 💡 Optional Attributes\n\n")
 		for _, attr := range optionalAttrs {
-			response.WriteString(formatAttributeDetails(attr, suggestArgs.Context))
-			response.WriteString("\n")
+			attrData := NewSingleAttributeData(attr, element.TagName(), suggestArgs.Context)
+			attrDetails, err := renderAttributeTemplate("attribute_details", attrData)
+			if err != nil {
+				response.WriteString(fmt.Sprintf("Error rendering attribute details: %v\n", err))
+			} else {
+				response.WriteString(attrDetails)
+				response.WriteString("\n")
+			}
 		}
 	}
 
@@ -142,16 +154,33 @@ func handleSuggestAttributes(ctx context.Context, req *mcp.CallToolRequest, regi
 	if suggestArgs.Context == "accessibility" && len(accessibilityAttrs) > 0 {
 		response.WriteString("## ♿ Accessibility Attributes\n\n")
 		for _, attr := range accessibilityAttrs {
-			response.WriteString(formatAttributeDetails(attr, suggestArgs.Context))
-			response.WriteString("\n")
+			attrData := NewSingleAttributeData(attr, element.TagName(), suggestArgs.Context)
+			attrDetails, err := renderAttributeTemplate("attribute_details", attrData)
+			if err != nil {
+				response.WriteString(fmt.Sprintf("Error rendering attribute details: %v\n", err))
+			} else {
+				response.WriteString(attrDetails)
+				response.WriteString("\n")
+			}
 		}
 	}
 
 	// Add context-specific suggestions
-	response.WriteString(generateContextualSuggestions(element, suggestArgs.Context))
+	templateData := NewAttributeTemplateData(element, suggestArgs.Context)
+	contextualSuggestions, err := renderTemplate("contextual_suggestions", templateData)
+	if err != nil {
+		response.WriteString(fmt.Sprintf("Error rendering contextual suggestions: %v\n", err))
+	} else {
+		response.WriteString(contextualSuggestions)
+	}
 
 	// Add usage examples
-	response.WriteString(generateAttributeExamples(element, suggestArgs.Context))
+	attributeExamples, err := renderTemplate("attribute_examples", templateData)
+	if err != nil {
+		response.WriteString(fmt.Sprintf("Error rendering attribute examples: %v\n", err))
+	} else {
+		response.WriteString(attributeExamples)
+	}
 
 	return &mcp.CallToolResult{
 		Content: []mcp.Content{
@@ -160,175 +189,4 @@ func handleSuggestAttributes(ctx context.Context, req *mcp.CallToolRequest, regi
 			},
 		},
 	}, nil
-}
-
-// formatAttributeDetails creates a detailed description of an attribute
-func formatAttributeDetails(attr types.Attribute, context string) string {
-	var details strings.Builder
-
-	// Attribute name and type
-	details.WriteString(fmt.Sprintf("### `%s`", attr.Name()))
-	if attr.Type() != "" {
-		details.WriteString(fmt.Sprintf(" _%s_", attr.Type()))
-	}
-	details.WriteString("\n\n")
-
-	// Description
-	if attr.Description() != "" {
-		details.WriteString(fmt.Sprintf("%s\n\n", attr.Description()))
-	}
-
-	// Type information
-	if attr.Type() != "" {
-		details.WriteString(fmt.Sprintf("**Type:** `%s`\n", attr.Type()))
-	}
-
-	// Default value
-	if attr.Default() != "" {
-		details.WriteString(fmt.Sprintf("**Default:** `%s`\n", attr.Default()))
-	}
-
-	// Required status
-	if attr.Required() {
-		details.WriteString("**Required:** Yes ⚠️\n")
-	} else {
-		details.WriteString("**Required:** No\n")
-	}
-
-	// Valid values (enum/union types)
-	if len(attr.Values()) > 0 {
-		details.WriteString("**Valid Values:**\n")
-		for _, value := range attr.Values() {
-			details.WriteString(fmt.Sprintf("- `%s`\n", value))
-		}
-	}
-
-	// Usage examples from attribute
-	if len(attr.Examples()) > 0 {
-		details.WriteString("**Examples:**\n")
-		for _, example := range attr.Examples() {
-			details.WriteString(fmt.Sprintf("- `%s`\n", example))
-		}
-	}
-
-	// Guidelines
-	if len(attr.Guidelines()) > 0 {
-		details.WriteString("**Guidelines:**\n")
-		for _, guideline := range attr.Guidelines() {
-			details.WriteString(fmt.Sprintf("- %s\n", guideline))
-		}
-	}
-
-	return details.String()
-}
-
-// generateContextualSuggestions provides context-specific attribute recommendations
-func generateContextualSuggestions(element types.ElementInfo, context string) string {
-	var suggestions strings.Builder
-
-	switch strings.ToLower(context) {
-	case "accessibility":
-		suggestions.WriteString("## ♿ Accessibility Recommendations\n\n")
-		suggestions.WriteString("Consider these accessibility attributes:\n")
-		suggestions.WriteString("- `role`: Define the element's purpose for screen readers\n")
-		suggestions.WriteString("- `aria-label`: Provide accessible name if not obvious\n")
-		suggestions.WriteString("- `aria-describedby`: Reference detailed description\n")
-		suggestions.WriteString("- `aria-expanded`: For collapsible elements\n")
-		suggestions.WriteString("- `aria-hidden`: Hide decorative elements from screen readers\n")
-		suggestions.WriteString("- `tabindex`: Control keyboard navigation\n\n")
-
-	case "form":
-		suggestions.WriteString("## 📝 Form Context Recommendations\n\n")
-		suggestions.WriteString("For form usage, consider:\n")
-		suggestions.WriteString("- `name`: For form submission\n")
-		suggestions.WriteString("- `required`: Mark required fields\n")
-		suggestions.WriteString("- `disabled`: Disable when not available\n")
-		suggestions.WriteString("- `aria-invalid`: Indicate validation state\n")
-		suggestions.WriteString("- `aria-describedby`: Link to error messages\n\n")
-
-	case "interactive":
-		suggestions.WriteString("## 🖱️ Interactive Element Recommendations\n\n")
-		suggestions.WriteString("For interactive elements, consider:\n")
-		suggestions.WriteString("- `disabled`: Control interaction state\n")
-		suggestions.WriteString("- `aria-pressed`: For toggle buttons\n")
-		suggestions.WriteString("- `aria-expanded`: For expandable controls\n")
-		suggestions.WriteString("- `aria-controls`: Reference controlled element\n\n")
-
-	case "styling":
-		if len(element.CssProperties()) > 0 {
-			suggestions.WriteString("## 🎨 CSS Customization\n\n")
-			suggestions.WriteString("This element supports CSS custom properties:\n")
-			for _, prop := range element.CssProperties() {
-				suggestions.WriteString(fmt.Sprintf("- `%s`: %s\n", prop.Name(), prop.Description()))
-			}
-			suggestions.WriteString("\n")
-		}
-	}
-
-	return suggestions.String()
-}
-
-// generateAttributeExamples creates comprehensive usage examples
-func generateAttributeExamples(element types.ElementInfo, context string) string {
-	var examples strings.Builder
-	examples.WriteString("## 📋 Usage Examples\n\n")
-
-	tagName := element.TagName()
-
-	// Basic example
-	basicExample := fmt.Sprintf("<%s", tagName)
-
-	// Add required attributes
-	for _, attr := range element.Attributes() {
-		if attr.Required() {
-			if attr.Default() != "" {
-				basicExample += fmt.Sprintf(` %s="%s"`, attr.Name(), attr.Default())
-			} else if len(attr.Values()) > 0 {
-				basicExample += fmt.Sprintf(` %s="%s"`, attr.Name(), attr.Values()[0])
-			} else {
-				basicExample += fmt.Sprintf(` %s="value"`, attr.Name())
-			}
-		}
-	}
-	basicExample += "></" + tagName + ">"
-
-	examples.WriteString("### Basic Usage\n")
-	examples.WriteString(fmt.Sprintf("```html\n%s\n```\n\n", basicExample))
-
-	// Context-specific examples
-	switch strings.ToLower(context) {
-	case "accessibility":
-		accessibleExample := fmt.Sprintf(`<%s role="button" aria-label="Accessible %s" tabindex="0">`, tagName, tagName)
-		accessibleExample += "Content</" + tagName + ">"
-		examples.WriteString("### Accessible Implementation\n")
-		examples.WriteString(fmt.Sprintf("```html\n%s\n```\n\n", accessibleExample))
-
-	case "form":
-		formExample := fmt.Sprintf(`<form>
-  <label for="my-%s">Label:</label>
-  <%s id="my-%s" name="field-name" required>
-    Content
-  </%s>
-</form>`, tagName, tagName, tagName, tagName)
-		examples.WriteString("### Form Integration\n")
-		examples.WriteString(fmt.Sprintf("```html\n%s\n```\n\n", formExample))
-	}
-
-	// Example with all optional attributes
-	if len(element.Attributes()) > 1 {
-		fullExample := fmt.Sprintf("<%s", tagName)
-		for _, attr := range element.Attributes() {
-			if attr.Default() != "" {
-				fullExample += fmt.Sprintf(` %s="%s"`, attr.Name(), attr.Default())
-			} else if len(attr.Values()) > 0 {
-				fullExample += fmt.Sprintf(` %s="%s"`, attr.Name(), attr.Values()[0])
-			}
-		}
-		fullExample += "></" + tagName + ">"
-
-		examples.WriteString("### Full Configuration\n")
-		examples.WriteString(fmt.Sprintf("```html\n%s\n```\n\n", fullExample))
-	}
-
-	return examples.String()
 }
