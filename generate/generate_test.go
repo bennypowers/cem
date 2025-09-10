@@ -67,6 +67,7 @@ func TestGenerate(t *testing.T) {
 				t.Fatalf("failed to create %s: %v", projectGoldenDir, err)
 			}
 
+			// Create workspace context with design tokens functionality
 			ctx := W.NewFileSystemWorkspaceContext(projectDir)
 			if err := ctx.Init(); err != nil {
 				t.Fatalf("TestGenerate: %v", err)

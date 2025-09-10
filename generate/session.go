@@ -22,7 +22,7 @@ import (
 	"sync"
 
 	M "bennypowers.dev/cem/manifest"
-	W "bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/types"
 )
 
 // GenerateSession holds reusable state for efficient generation cycles.
@@ -50,7 +50,7 @@ type GenerateSession struct {
 // - generate/generate.go:234 (single generation)
 //
 // Performance: Expensive operation (~10-50ms) due to tree-sitter query compilation
-func NewGenerateSession(ctx W.WorkspaceContext) (*GenerateSession, error) {
+func NewGenerateSession(ctx types.WorkspaceContext) (*GenerateSession, error) {
 	setupCtx, err := NewGenerateContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("initialize setup context: %w", err)

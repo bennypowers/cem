@@ -244,7 +244,7 @@ func (gs *GenerateSession) applyPostProcessingToModules(ctx context.Context, res
 		if cfgErr == nil {
 			urlPattern = cfg.Generate.DemoDiscovery.URLPattern
 		}
-		demoMap, err = DD.NewDemoMapWithPattern(result.demoFiles, urlPattern, allTagAliases)
+		demoMap, err = DD.NewDemoMapWithPattern(gs.setupCtx.WorkspaceContext, result.demoFiles, urlPattern, allTagAliases)
 		if err != nil {
 			errsList = append(errsList, err)
 		}
@@ -258,7 +258,7 @@ func (gs *GenerateSession) applyPostProcessingToModules(ctx context.Context, res
 
 			// Apply design tokens if available
 			if result.designTokens != nil {
-				DT.MergeDesignTokensToModule(module, *result.designTokens)
+				DT.MergeDesignTokensToModule(module, result.designTokens)
 			}
 
 			// Discover demos and attach to module if available

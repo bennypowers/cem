@@ -30,7 +30,7 @@ import (
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/modulegraph"
 	"bennypowers.dev/cem/queries"
-	W "bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/types"
 )
 
 // ElementDefinition stores a custom element with its source information
@@ -107,7 +107,7 @@ type Registry struct {
 	// Generate watching for local project
 	generateWatcher platform.GenerateWatcher
 	generateMu      sync.RWMutex
-	localWorkspace  W.WorkspaceContext // Track the local workspace for generate watching
+	localWorkspace  types.WorkspaceContext // Track the local workspace for generate watching
 	// Module graph for tracking re-export relationships
 	moduleGraph *modulegraph.ModuleGraph
 }
@@ -149,7 +149,7 @@ func NewRegistryWithDefaults() (*Registry, error) {
 
 // LoadFromWorkspace loads all available custom elements manifests from
 // the workspace context
-func (r *Registry) LoadFromWorkspace(workspace W.WorkspaceContext) error {
+func (r *Registry) LoadFromWorkspace(workspace types.WorkspaceContext) error {
 	helpers.SafeDebugLog("Loading manifests from workspace...")
 
 	// Clear existing data
@@ -217,7 +217,7 @@ func (r *Registry) clearDataOnly() {
 }
 
 // loadWorkspaceManifest loads the manifest from the current workspace
-func (r *Registry) loadWorkspaceManifest(workspace W.WorkspaceContext) error {
+func (r *Registry) loadWorkspaceManifest(workspace types.WorkspaceContext) error {
 	helpers.SafeDebugLog("Attempting to load workspace manifest...")
 	helpers.SafeDebugLog("Workspace root: %s", workspace.Root())
 	helpers.SafeDebugLog("Workspace manifest path: %s", workspace.CustomElementsManifestPath())
@@ -270,7 +270,7 @@ func (r *Registry) loadWorkspaceManifest(workspace W.WorkspaceContext) error {
 }
 
 // loadNodeModulesManifests loads manifests from node_modules packages
-func (r *Registry) loadNodeModulesManifests(workspace W.WorkspaceContext) error {
+func (r *Registry) loadNodeModulesManifests(workspace types.WorkspaceContext) error {
 	// Look for node_modules directory
 	nodeModulesPath := filepath.Join(workspace.Root(), "node_modules")
 	entries, err := os.ReadDir(nodeModulesPath)
@@ -334,7 +334,7 @@ func (r *Registry) loadPackageManifest(packagePath string) {
 }
 
 // loadConfigManifests loads manifests specified in the config
-func (r *Registry) loadConfigManifests(workspace W.WorkspaceContext) error {
+func (r *Registry) loadConfigManifests(workspace types.WorkspaceContext) error {
 	// TODO: Add config support for specifying additional manifest paths
 	// This would allow users to specify manifests from non-npm sources
 	return nil
@@ -1069,7 +1069,7 @@ func (r *RegistryManifestResolver) normalizePath(path string) string {
 }
 
 // initializeLazyModuleGraph initializes the module graph with manifest data but defers file scanning
-func (r *Registry) initializeLazyModuleGraph(workspace W.WorkspaceContext) {
+func (r *Registry) initializeLazyModuleGraph(workspace types.WorkspaceContext) {
 	if workspace == nil {
 		return
 	}

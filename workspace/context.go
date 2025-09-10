@@ -24,28 +24,48 @@ import (
 	"os"
 	"path/filepath"
 
+	"bennypowers.dev/cem/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-func GetWorkspaceContext(cmd *cobra.Command) (WorkspaceContext, error) {
+// Files that indicate project root, in order of preference
+var projectFiles = []string{
+	".config/cem.yaml",
+	"package.json",
+	".git",
+	"tsconfig.json",
+}
+
+func GetWorkspaceContext(cmd *cobra.Command) (types.WorkspaceContext, error) {
 	val := cmd.Context().Value(WorkspaceContextKey)
 	if val != nil {
-		return val.(WorkspaceContext), nil
+		return val.(types.WorkspaceContext), nil
 	}
 
-	configPath := viper.GetString("configFile")
-	if p, _ := cmd.Flags().GetString("configFile"); p != "" {
-		configPath = p
-	}
 	spec := viper.GetString("package")
 	if p, _ := cmd.Flags().GetString("package"); p != "" {
 		spec = p
 	}
 
-	// fall back to previous behavior: use the directory above .config
+	// If no package specified, determine project root
 	if spec == "" {
-		spec = filepath.Dir(configPath)
+		configPath := viper.GetString("configFile")
+		if p, _ := cmd.Flags().GetString("configFile"); p != "" {
+			configPath = p
+		}
+
+		if configPath != "" {
+			// Use explicit config file path
+			spec = filepath.Dir(configPath)
+		} else {
+			// Auto-detect project root by looking for common project files
+			if detectedRoot, found := findProjectRootFromCommand(cmd); found {
+				spec = detectedRoot
+			} else {
+				spec = "." // fallback to current directory
+			}
+		}
 	}
 
 	if ctx, err := getAppropriateContextForSpec(spec, cmd.Name()); err != nil {
@@ -60,7 +80,7 @@ func GetWorkspaceContext(cmd *cobra.Command) (WorkspaceContext, error) {
 	}
 }
 
-func getAppropriateContextForSpec(spec, cmdName string) (ctx WorkspaceContext, err error) {
+func getAppropriateContextForSpec(spec, cmdName string) (ctx types.WorkspaceContext, err error) {
 	if !IsPackageSpecifier(spec) {
 		// if it's a file path, use it
 		return NewFileSystemWorkspaceContext(spec), nil
@@ -111,4 +131,84 @@ func copyFile(src, dst string) (int64, error) {
 	defer destination.Close()
 	nBytes, err := io.Copy(destination, source)
 	return nBytes, err
+}
+
+// findProjectRoot searches for project root by looking for common project files
+// Returns the detected root path and whether it was found
+func findProjectRoot() (string, bool) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return "", false
+	}
+	return findProjectRootFromDir(cwd)
+}
+
+// findProjectRootFromCommand attempts to find project root by looking at command arguments
+// for file paths and searching upward from those locations
+func findProjectRootFromCommand(cmd *cobra.Command) (string, bool) {
+	// First try the standard findProjectRoot from current directory
+	if root, found := findProjectRoot(); found {
+		return root, true
+	}
+
+	// If that fails, look at command arguments for file paths
+	args := cmd.Flags().Args()
+	for _, arg := range args {
+		var dir string
+		if filepath.IsAbs(arg) {
+			// For absolute paths, start looking from the directory containing the file
+			dir = filepath.Dir(arg)
+		} else {
+			// For relative paths, resolve them relative to current working directory
+			if absPath, err := filepath.Abs(arg); err == nil {
+				dir = filepath.Dir(absPath)
+			} else {
+				continue // Skip if we can't resolve the path
+			}
+		}
+		if root, found := findProjectRootFromDir(dir); found {
+			return root, true
+		}
+	}
+
+	// Also check design-tokens flag for additional hint
+	if designTokensPath, _ := cmd.Flags().GetString("design-tokens"); designTokensPath != "" {
+		var dir string
+		if filepath.IsAbs(designTokensPath) {
+			dir = filepath.Dir(designTokensPath)
+		} else {
+			// For relative paths, resolve them relative to current working directory
+			if absPath, err := filepath.Abs(designTokensPath); err == nil {
+				dir = filepath.Dir(absPath)
+			}
+		}
+		if dir != "" {
+			if root, found := findProjectRootFromDir(dir); found {
+				return root, true
+			}
+		}
+	}
+
+	return "", false
+}
+
+// findProjectRootFromDir searches for project root starting from a specific directory
+func findProjectRootFromDir(startDir string) (string, bool) {
+	dir := startDir
+	for {
+		for _, file := range projectFiles {
+			if fileExists(filepath.Join(dir, file)) {
+				return dir, true
+			}
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			// Reached filesystem root
+			break
+		}
+		dir = parent
+	}
+
+	return "", false
 }

@@ -25,6 +25,7 @@ import (
 	G "bennypowers.dev/cem/generate"
 	DD "bennypowers.dev/cem/generate/demodiscovery"
 	"bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/types"
 	W "bennypowers.dev/cem/workspace"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -39,9 +40,17 @@ var generateCmd = &cobra.Command{
 	Short: "Generates a custom elements manifest",
 	RunE: func(cmd *cobra.Command, args []string) (errs error) {
 		start = time.Now()
-		ctx, err := W.GetWorkspaceContext(cmd)
+
+		// Create workspace context with design tokens loader for generate command
+		baseCtx, err := W.GetWorkspaceContext(cmd)
 		if err != nil {
 			return fmt.Errorf("project context not initialized: %w", err)
+		}
+
+		// Create a new context with design tokens functionality
+		ctx := W.NewFileSystemWorkspaceContext(baseCtx.Root())
+		if err := ctx.Init(); err != nil {
+			return fmt.Errorf("failed to initialize workspace context with design tokens: %w", err)
 		}
 
 		// de-dupe globs
@@ -83,6 +92,21 @@ var generateCmd = &cobra.Command{
 
 		cfg.Generate.Files = files
 		cfg.Generate.Exclude = exclude
+
+		// Merge design tokens config from flags
+		if designTokensSpec := viper.GetString("generate.designTokens.spec"); designTokensSpec != "" {
+			cfg.Generate.DesignTokens.Spec = designTokensSpec
+		}
+		if designTokensPrefix := viper.GetString("generate.designTokens.prefix"); designTokensPrefix != "" {
+			cfg.Generate.DesignTokens.Prefix = designTokensPrefix
+		}
+
+		// Early validation: if design tokens are specified, validate they can be loaded
+		if cfg.Generate.DesignTokens.Spec != "" {
+			if _, err := ctx.DesignTokensCache().LoadOrReuse(ctx); err != nil {
+				return fmt.Errorf("failed to load design tokens from '%s': %w", cfg.Generate.DesignTokens.Spec, err)
+			}
+		}
 
 		// Check if watch mode is enabled
 		watch, err := cmd.Flags().GetBool("watch")
@@ -160,7 +184,7 @@ var generateCmd = &cobra.Command{
 }
 
 // Use WorkspaceContext to expand globs
-func expand(ctx W.WorkspaceContext, globs []string) (files []string, errs error) {
+func expand(ctx types.WorkspaceContext, globs []string) (files []string, errs error) {
 	for _, pattern := range globs {
 		matches, err := ctx.Glob(pattern)
 		if err != nil {
@@ -225,7 +249,7 @@ func init() {
 }
 
 // runWatchMode starts the file watching mode - delegates to generate package
-func runWatchMode(ctx W.WorkspaceContext, globs []string) error {
+func runWatchMode(ctx types.WorkspaceContext, globs []string) error {
 	session, err := G.NewWatchSession(ctx, globs)
 	if err != nil {
 		return err

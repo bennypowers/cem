@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/static-styles-attrib.css"
+    }
+  ]
+}

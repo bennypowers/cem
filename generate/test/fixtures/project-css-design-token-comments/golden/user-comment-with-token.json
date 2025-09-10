@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/user-comment-with-token.js",
+      "declarations": [
+        {
+          "name": "UserCommentWithToken",
+          "description": "Element that demonstrates CSS comments merging with design tokens",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-css-design-token-comments/src/user-comment-with-token.ts#L9"
+          },
+          "kind": "class",
+          "tagName": "user-comment-with-token",
+          "cssProperties": [
+            {
+              "name": "--cem-color-primary",
+              "description": "USER description for the primary color, specified on the token fallback for a _private var\n\nDESIGN TOKEN description for primary color",
+              "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--cem-color-secondary",
+              "description": "USER description for secondary color\nThis is a multiline comment that explains\nthe usage of the secondary color token\n\nDESIGN TOKEN description for secondary color",
+              "syntax": "\u003ccolor\u003e"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "user-comment-with-token",
+          "declaration": {
+            "name": "UserCommentWithToken",
+            "module": "src/user-comment-with-token.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "UserCommentWithToken",
+          "declaration": {
+            "name": "UserCommentWithToken",
+            "module": "src/user-comment-with-token.js"
+          }
+        }
+      ]
+    }
+  ]
+}

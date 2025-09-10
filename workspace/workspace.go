@@ -24,8 +24,7 @@ import (
 	"io"
 	"strings"
 
-	C "bennypowers.dev/cem/cmd/config"
-	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/types"
 )
 
 type contextKey string
@@ -37,6 +36,53 @@ var ErrRemoteUnsupported = fmt.Errorf("Remote workspace context is not yet suppo
 var ErrNoPackageCustomElements = errors.New("package does not specify a custom elements manifest")
 var ErrManifestNotFound = errors.New("manifest not found")
 var ErrPackageNotFound = errors.New("package not found")
+
+// designTokensCacheImpl implements DesignTokensCache
+type designTokensCacheImpl struct {
+	loader types.DesignTokensLoader
+	spec   string
+	tokens types.DesignTokens
+	err    error
+}
+
+// NewDesignTokensCache creates a new design tokens cache with the given loader
+func NewDesignTokensCache(loader types.DesignTokensLoader) types.DesignTokensCache {
+	return &designTokensCacheImpl{
+		loader: loader,
+	}
+}
+
+// LoadOrReuse loads design tokens from the cache if available, or loads and caches them
+func (cache *designTokensCacheImpl) LoadOrReuse(ctx types.WorkspaceContext) (types.DesignTokens, error) {
+	// If no loader is provided, return nil (no design tokens)
+	if cache.loader == nil {
+		return nil, nil
+	}
+
+	cfg, err := ctx.Config()
+	if err != nil {
+		return nil, err
+	}
+
+	spec := cfg.Generate.DesignTokens.Spec
+
+	// If cache hit (same spec), return cached result
+	if cache.spec == spec {
+		return cache.tokens, cache.err
+	}
+
+	// Cache miss or different spec, load fresh
+	cache.spec = spec
+	cache.tokens, cache.err = cache.loader.Load(ctx)
+	return cache.tokens, cache.err
+}
+
+// Clear resets the cache
+func (cache *designTokensCacheImpl) Clear() {
+	cache.spec = ""
+	cache.tokens = nil
+	cache.err = nil
+}
 
 // isGlobPattern checks if a string contains any common glob pattern metacharacters.
 // This is a heuristic and may produce false positives for file paths that
@@ -86,38 +132,4 @@ func decodeJSON[T any](rc io.ReadCloser) (*T, error) {
 // IsPackageSpecifier checks if a string is an npm package specifier.
 func IsPackageSpecifier(spec string) bool {
 	return strings.HasPrefix(spec, "npm:") || strings.HasPrefix(spec, "jsr:")
-}
-
-// WorkspaceContext abstracts access to package resources, regardless of source (local or remote).
-type WorkspaceContext interface {
-	// Performs validation/discovery and caches results as needed.
-	Init() error
-	// ConfigFile Returns the path to the config file
-	ConfigFile() string
-	// Config returns the parsed and initialized config
-	Config() (*C.CemConfig, error)
-	// Returns the package's parsed PackageJSON.
-	PackageJSON() (*M.PackageJSON, error)
-	// Manifest returns the package's parsed custom elements manifest.
-	Manifest() (*M.Package, error)
-	// CustomElementsManifestPath returns the path to the manifest file.
-	CustomElementsManifestPath() string
-	// ReadFile returns an io.ReadCloser for a file within the package.
-	ReadFile(path string) (io.ReadCloser, error)
-	// Glob returns a list of file paths matching the given pattern (e.g., *.ts).
-	Glob(pattern string) ([]string, error)
-	// Writes outputs to paths
-	OutputWriter(path string) (io.WriteCloser, error)
-	// Root returns the canonical root path or name for the package.
-	Root() string
-	// Cleanup releases any resources (e.g., tempdirs) held by the context.
-	Cleanup() error
-
-	// Path resolution utilities for consistent module/filesystem path mapping
-	// ModulePathToFS converts a module path to filesystem path for watching
-	ModulePathToFS(modulePath string) string
-	// FSPathToModule converts a filesystem path to module path for manifest lookup
-	FSPathToModule(fsPath string) (string, error)
-	// ResolveModuleDependency resolves a dependency path relative to a module
-	ResolveModuleDependency(modulePath, dependencyPath string) (string, error)
 }

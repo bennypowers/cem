@@ -28,14 +28,34 @@ import (
 	"strings"
 
 	M "bennypowers.dev/cem/manifest"
-	W "bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/types"
 )
+
+// isPackageSpecifier checks if a string is an npm package specifier
+func isPackageSpecifier(spec string) bool {
+	return strings.HasPrefix(spec, "npm:") || strings.HasPrefix(spec, "jsr:")
+}
 
 // TokenResult represents the exported structure with CSS type mapping.
 type TokenResult struct {
-	Value       any
-	Description string
-	Syntax      string
+	value       any
+	description string
+	syntax      string
+}
+
+// Value implements types.TokenResult.Value
+func (tr TokenResult) Value() any {
+	return tr.value
+}
+
+// Description implements types.TokenResult.Description
+func (tr TokenResult) Description() string {
+	return tr.description
+}
+
+// Syntax implements types.TokenResult.Syntax
+func (tr TokenResult) Syntax() string {
+	return tr.syntax
 }
 
 // DesignTokens provides access to design tokens by name.
@@ -45,7 +65,7 @@ type DesignTokens struct {
 }
 
 // Get returns the TokenResult for the given name, prepending the prefix if it's not present.
-func (dt *DesignTokens) Get(name string) (TokenResult, bool) {
+func (dt *DesignTokens) Get(name string) (types.TokenResult, bool) {
 	fullName := name
 	normalPrefix := strings.TrimLeft(dt.prefix, "-")
 	if normalPrefix != "" && !strings.HasPrefix(name, "--"+normalPrefix+"-") {
@@ -57,7 +77,7 @@ func (dt *DesignTokens) Get(name string) (TokenResult, bool) {
 
 // LoadDesignTokens loads tokens from a path or Deno-style specifier and returns a DesignTokens struct.
 // The prefix is prepended to all token names on load.
-func LoadDesignTokens(ctx W.WorkspaceContext) (*DesignTokens, error) {
+func LoadDesignTokens(ctx types.WorkspaceContext) (*DesignTokens, error) {
 	cfg, err := ctx.Config()
 	if err != nil {
 		return nil, err
@@ -72,7 +92,7 @@ func LoadDesignTokens(ctx W.WorkspaceContext) (*DesignTokens, error) {
 		return nil, err
 	}
 	tokens := make(map[string]TokenResult)
-	flat := flattenTokens(raw, "")
+	flat := flattenTokens(raw, "", "")
 	for name, tok := range flat {
 		var fullName string
 		styleDictName, ok := tok["name"]
@@ -87,13 +107,38 @@ func LoadDesignTokens(ctx W.WorkspaceContext) (*DesignTokens, error) {
 	return &DesignTokens{tokens: tokens, prefix: prefix}, nil
 }
 
-func MergeDesignTokensToModule(module *M.Module, designTokens DesignTokens) {
+// Loader implements the types.DesignTokensLoader interface
+type Loader struct{}
+
+// NewLoader creates a new design tokens loader
+func NewLoader() types.DesignTokensLoader {
+	return &Loader{}
+}
+
+// Load implements types.DesignTokensLoader.Load
+func (l *Loader) Load(ctx types.WorkspaceContext) (types.DesignTokens, error) {
+	// Cast the context to our minimal types.WorkspaceContext interface
+	// This is safe because the workspace package will pass the correct type
+	return LoadDesignTokens(ctx)
+}
+
+func MergeDesignTokensToModule(module *M.Module, designTokens types.DesignTokens) {
 	for i, d := range module.Declarations {
 		if d, ok := d.(*M.CustomElementDeclaration); ok {
 			for i, p := range d.CssProperties {
 				if token, ok := designTokens.Get(p.Name); ok {
-					p.Description = token.Description
-					p.Syntax = token.Syntax
+					// Merge user's description with design token description
+					// If user has a description, concatenate with two newlines
+					// If user has no description, use only the design token description
+					tokenDesc := token.Description()
+					if tokenDesc != "" {
+						if p.Description != "" {
+							p.Description = p.Description + "\n\n" + tokenDesc
+						} else {
+							p.Description = tokenDesc
+						}
+					}
+					p.Syntax = token.Syntax()
 					d.CssProperties[i] = p
 				}
 			}
@@ -102,10 +147,20 @@ func MergeDesignTokensToModule(module *M.Module, designTokens DesignTokens) {
 	}
 }
 
-// flattenTokens recursively flattens the DTCG tokens into a map of names to token objects.
-// Names are in CSS custom property format (--foo-bar).
-func flattenTokens(data map[string]any, prefix string) map[string]map[string]any {
+// flattenTokens recursively flattens DTCG tokens with $type inheritance
+func flattenTokens(
+	data map[string]any,
+	prefix string,
+	inheritedType string,
+) map[string]map[string]any {
 	result := make(map[string]map[string]any)
+
+	// Check if this group has a $type that should be inherited
+	currentType := inheritedType
+	if groupType, ok := data["$type"].(string); ok {
+		currentType = groupType
+	}
+
 	for k, v := range data {
 		if strings.HasPrefix(k, "$") {
 			continue
@@ -120,9 +175,18 @@ func flattenTokens(data map[string]any, prefix string) map[string]map[string]any
 		case map[string]any:
 			// if contains $value, it's a leaf token
 			if _, ok := val["$value"]; ok {
-				result[name] = val
+				// Copy the token and add inherited $type if not already present
+				tokenProps := make(map[string]any)
+				maps.Copy(tokenProps, val)
+				if currentType != "" {
+					if _, hasType := tokenProps["$type"]; !hasType {
+						tokenProps["$type"] = currentType
+					}
+				}
+				result[name] = tokenProps
 			} else {
-				maps.Copy(result, flattenTokens(val, name))
+				// Recurse into group with inherited $type
+				maps.Copy(result, flattenTokens(val, name, currentType))
 			}
 		}
 	}
@@ -139,8 +203,8 @@ func kebabCase(s string) string {
 // readJSONFileOrSpecifier loads a JSON file from a regular path or a Deno-style specifier.
 // If the specifier is an npm: spec, it first checks node_modules in the current working directory.
 // If not found locally, it falls back to fetching from the network.
-func readJSONFileOrSpecifier(ctx W.WorkspaceContext, path string) ([]byte, error) {
-	if W.IsPackageSpecifier(path) {
+func readJSONFileOrSpecifier(ctx types.WorkspaceContext, path string) ([]byte, error) {
+	if isPackageSpecifier(path) {
 		// Try npm/Deno specifier and @scope/pkg/file.json style
 		if spec, ok := parseNpmSpecifier(path); ok {
 			// Try node_modules first
@@ -163,6 +227,9 @@ func readJSONFileOrSpecifier(ctx W.WorkspaceContext, path string) ([]byte, error
 	}
 
 	// Default: treat as local file
+	if filepath.IsAbs(path) {
+		return os.ReadFile(path)
+	}
 	return os.ReadFile(filepath.Join(ctx.Root(), path))
 }
 
@@ -197,15 +264,15 @@ func parseNpmSpecifier(path string) (npmSpec, bool) {
 func toTokenResult(tok map[string]any) TokenResult {
 	var out TokenResult
 	if v, ok := tok["$value"]; ok {
-		out.Value = v
+		out.value = v
 	}
 	if d, ok := tok["$description"].(string); ok {
-		out.Description = d
+		out.description = d
 	} else if d, ok := tok["description"].(string); ok {
-		out.Description = d
+		out.description = d
 	}
 	if t, ok := tok["$type"].(string); ok {
-		out.Syntax = dtcgTypeToCSS(t)
+		out.syntax = dtcgTypeToCSS(t)
 	}
 	return out
 }

@@ -23,13 +23,14 @@ import (
 	"time"
 
 	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/types"
 	W "bennypowers.dev/cem/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // setupTestContext creates a test workspace context
-func setupTestContext(t *testing.T, fixture string) W.WorkspaceContext {
+func setupTestContext(t *testing.T, fixture string) types.WorkspaceContext {
 	ctx := W.NewFileSystemWorkspaceContext(fixture)
 	require.NoError(t, ctx.Init())
 	return ctx

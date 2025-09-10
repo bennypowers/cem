@@ -117,7 +117,8 @@ Showcases different card variants with accessibility features.
 			}
 
 			// Extract metadata
-			result, err := extractDemoMetadata(filePath)
+			ctx := W.NewFileSystemWorkspaceContext(tmpDir)
+			result, err := extractDemoMetadata(ctx, filePath)
 			if err != nil {
 				t.Fatalf("extractDemoMetadata failed: %v", err)
 			}
@@ -370,7 +371,8 @@ func TestExtractDemoTags(t *testing.T) {
 			}
 
 			// Extract tags
-			result, err := extractDemoTags(filePath, tt.elementAliases)
+			ctx := W.NewFileSystemWorkspaceContext(tmpDir)
+			result, err := extractDemoTags(ctx, filePath, tt.elementAliases)
 			if err != nil {
 				t.Fatalf("extractDemoTags failed: %v", err)
 			}
@@ -514,7 +516,10 @@ func TestNewDemoMap(t *testing.T) {
 		"rh-card":   "card",
 	}
 
-	demoMap, err := NewDemoMap([]string{demo1Path, demo2Path}, elementAliases)
+	// Create workspace context for test
+	ctx := W.NewFileSystemWorkspaceContext(tmpDir)
+
+	demoMap, err := NewDemoMap(ctx, []string{demo1Path, demo2Path}, elementAliases)
 	if err != nil {
 		t.Fatalf("NewDemoMap failed: %v", err)
 	}
