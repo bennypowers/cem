@@ -198,43 +198,72 @@ func (c *FileSystemWorkspaceContext) ReadFile(path string) (io.ReadCloser, error
 }
 
 func (c *FileSystemWorkspaceContext) Glob(pattern string) ([]string, error) {
+	// Clean and normalize the pattern first
+	pattern = filepath.Clean(pattern)
+
 	if isGlobPattern(pattern) {
-		result, err := doublestar.Glob(filepath.Join(c.root, pattern))
+		// For glob patterns, join with root and execute glob
+		globPath := filepath.Join(c.root, pattern)
+		result, err := doublestar.Glob(globPath)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("glob pattern %q failed: %w", pattern, err)
 		}
-		// Convert absolute paths back to relative paths
-		relativeResult := make([]string, len(result))
-		for i, absPath := range result {
-			if rel, relErr := filepath.Rel(c.root, absPath); relErr == nil {
-				relativeResult[i] = rel
-			} else {
-				relativeResult[i] = absPath // fallback to absolute if rel fails
+
+		// Convert absolute paths back to relative paths within project
+		relativeResult := make([]string, 0, len(result))
+		for _, absPath := range result {
+			if rel, err := c.makeRelativeToRoot(absPath); err == nil {
+				relativeResult = append(relativeResult, rel)
 			}
+			// Skip files outside project root (don't include them in results)
 		}
 		return relativeResult, nil
-	} else {
-		// If pattern is an absolute path, try to make it relative to project root
-		if filepath.IsAbs(pattern) {
-			if rel, err := filepath.Rel(c.root, pattern); err == nil {
-				// Check if the relative path doesn't go outside the project (no ../)
-				if !strings.HasPrefix(rel, "..") {
-					return []string{rel}, nil
-				}
-			}
-		} else {
-			// For relative paths, resolve them to absolute first, then make relative to project root
-			if absPath, err := filepath.Abs(pattern); err == nil {
-				if rel, err := filepath.Rel(c.root, absPath); err == nil {
-					// Check if the relative path doesn't go outside the project (no ../)
-					if !strings.HasPrefix(rel, "..") {
-						return []string{rel}, nil
-					}
-				}
-			}
-		}
-		return []string{pattern}, nil
 	}
+
+	// For non-glob patterns, handle as individual file paths
+	return c.handleNonGlobPattern(pattern)
+}
+
+// makeRelativeToRoot converts an absolute path to relative path within project root.
+// Returns error if path is outside project root.
+func (c *FileSystemWorkspaceContext) makeRelativeToRoot(absPath string) (string, error) {
+	// Clean both paths to ensure consistent separators
+	cleanRoot := filepath.Clean(c.root)
+	cleanPath := filepath.Clean(absPath)
+
+	rel, err := filepath.Rel(cleanRoot, cleanPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to compute relative path: %w", err)
+	}
+
+	// Check if path escapes project root (cross-platform check)
+	if strings.HasPrefix(rel, ".."+string(filepath.Separator)) || rel == ".." {
+		return "", fmt.Errorf("path %q is outside project root %q", absPath, c.root)
+	}
+
+	return rel, nil
+}
+
+// handleNonGlobPattern processes individual file patterns (not glob patterns)
+func (c *FileSystemWorkspaceContext) handleNonGlobPattern(pattern string) ([]string, error) {
+	if filepath.IsAbs(pattern) {
+		// Convert absolute path to relative if within project
+		if rel, err := c.makeRelativeToRoot(pattern); err == nil {
+			return []string{rel}, nil
+		}
+		// If outside project root, return empty (don't process external files)
+		return []string{}, nil
+	}
+
+	// For relative patterns, ensure they resolve within project
+	absPath := filepath.Join(c.root, pattern)
+	if rel, err := c.makeRelativeToRoot(absPath); err == nil {
+		return []string{rel}, nil
+	}
+
+	// Fallback: return the original pattern if path resolution fails
+	// This maintains backward compatibility for edge cases
+	return []string{filepath.Clean(pattern)}, nil
 }
 
 func (c *FileSystemWorkspaceContext) OutputWriter(path string) (io.WriteCloser, error) {
