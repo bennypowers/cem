@@ -20,30 +20,9 @@ The MCP server transforms your custom elements manifests into a structured, type
 ```bash
 # Start MCP server for current workspace
 cem mcp
-
-# Start with specific transport
-cem mcp --transport stdio
-cem mcp --transport tcp --port 8080
-cem mcp --transport websocket --port 9090
 ```
 
-## Command Options
-
-### Transport Options
-
-```bash
---transport string    Transport type (stdio, tcp, websocket) (default "stdio")
---port int           Port for TCP/WebSocket transports (default 8080)
---host string        Host for TCP/WebSocket transports (default "localhost")
-```
-
-### Server Options
-
-```bash
---cache              Enable element info caching (default true)
---watch              Watch manifest files for changes (default true)
---debug              Enable debug logging
-```
+The server uses stdio transport and automatically discovers manifests from your workspace.
 
 ## MCP Resources
 
@@ -67,77 +46,75 @@ cem://element/{tagName}
 ```
 Returns detailed information about a specific element, including all attributes, slots, events, CSS properties, parts, and states.
 
-### Package Resources
+### Guidelines Resource
 ```
-cem://package/{packageName}
+cem://guidelines
 ```
-Provides package-specific manifest information for multi-package workspaces.
+Provides design system guidelines and best practices for component usage.
+
+### Accessibility Resource
+```
+cem://accessibility
+```
+Returns accessibility patterns and validation rules for component compliance.
 
 ## MCP Tools
 
 The server provides interactive tools for AI assistance:
 
-### Element Validation
-```json
-{
-  "name": "validate_element",
-  "description": "Validate custom element usage",
-  "inputSchema": {
-    "type": "object",
-    "properties": {
-      "tagName": {"type": "string"},
-      "attributes": {"type": "object"},
-      "slots": {"type": "object"}
-    }
-  }
-}
-```
+### HTML Validation
+**Tool:** `validate_html`
+
+Validates HTML for semantic structure and manifest compliance.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `html` | string | ✅ | HTML content to validate |
+| `tagName` | string | | Focus validation on specific element |
+| `context` | string | | Validation context (`semantic`, `manifest-compliance`) |
 
 ### Attribute Suggestions
-```json
-{
-  "name": "suggest_attributes",
-  "description": "Get valid attributes with type-aware suggestions",
-  "inputSchema": {
-    "type": "object", 
-    "properties": {
-      "tagName": {"type": "string"},
-      "context": {"type": "string"}
-    }
-  }
-}
-```
+**Tool:** `suggest_attributes`
+
+Get intelligent attribute suggestions with manifest context.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `tagName` | string | ✅ | Element to get attribute suggestions for |
+| `context` | string | | Usage context (`accessibility`, `form`, `interactive`, `styling`) |
 
 ### HTML Generation
-```json
-{
-  "name": "generate_html",
-  "description": "Generate correct HTML structure with proper slots and attributes",
-  "inputSchema": {
-    "type": "object",
-    "properties": {
-      "tagName": {"type": "string"},
-      "content": {"type": "object"},
-      "attributes": {"type": "object"}
-    }
-  }
-}
-```
+**Tool:** `generate_html`
+
+Generate correct HTML structure with proper slots and attributes.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `tagName` | string | ✅ | Element to generate HTML for |
+| `attributes` | object | | Attribute values to include |
+| `content` | object | | Slot content mapping |
 
 ### CSS Integration
-```json
-{
-  "name": "suggest_css",
-  "description": "Recommend CSS patterns for styling elements",
-  "inputSchema": {
-    "type": "object",
-    "properties": {
-      "tagName": {"type": "string"},
-      "styleTarget": {"type": "string"}
-    }
-  }
-}
-```
+**Tool:** `suggest_css_integration`
+
+Provides CSS integration guidance using manifest-defined CSS APIs.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `tagName` | string | ✅ | Element to get CSS guidance for |
+| `styleTarget` | string | | What to style (`element`, `parts`, `states`, `properties`) |
+| `context` | string | | Styling context (`theme`, `responsive`, `dark-mode`) |
+
+### Registry Queries
+**Tool:** `query_registry`
+
+Search and explore the element registry.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `tagName` | string | | Get details for specific element |
+| `filter` | string | | Filter by capabilities (`has-slots`, `has-events`, `interactive`, `form`) |
+| `search` | string | | Search element names and descriptions |
 
 ## Usage Examples
 
@@ -148,7 +125,6 @@ The server provides interactive tools for AI assistance:
 import { MCPClient } from '@modelcontextprotocol/client';
 
 const client = new MCPClient({
-  transport: 'stdio',
   command: 'cem',
   args: ['mcp']
 });
@@ -185,32 +161,24 @@ const result = await client.callTool('generate_html', {
   }
 });
 
-console.log(result.html);
+console.log(result.content);
 // Output: <my-button variant="primary" size="large">
 //           Click me!
 //           <span slot="icon">🚀</span>
 //         </my-button>
 ```
 
-### Validating Component Usage
+### Validating HTML Usage
 
 ```typescript
-// Validate attribute usage
-const validation = await client.callTool('validate_element', {
+// Validate HTML against manifests
+const validation = await client.callTool('validate_html', {
+  html: '<my-card elevation="5" variant="outlined">Card content</my-card>',
   tagName: 'my-card',
-  attributes: {
-    elevation: '5',
-    variant: 'outlined'
-  },
-  slots: {
-    header: 'Card Title',
-    '': 'Card content here'
-  }
+  context: 'manifest-compliance'
 });
 
-if (!validation.valid) {
-  console.log('Validation errors:', validation.errors);
-}
+console.log('Validation results:', validation.content);
 ```
 
 ## Integration with AI Systems
@@ -224,10 +192,7 @@ Add to your Claude Desktop configuration:
   "mcpServers": {
     "cem": {
       "command": "cem",
-      "args": ["mcp"],
-      "env": {
-        "CEM_WORKSPACE": "/path/to/your/project"
-      }
+      "args": ["mcp"]
     }
   }
 }
@@ -241,8 +206,7 @@ Add to your Claude Desktop configuration:
     "servers": [
       {
         "name": "cem",
-        "command": "cem mcp",
-        "workspaceRoot": true
+        "command": "cem mcp"
       }
     ]
   }
@@ -252,7 +216,6 @@ Add to your Claude Desktop configuration:
 ### Custom Integration
 
 ```typescript
-import { MCPServer } from '@modelcontextprotocol/server';
 import { spawn } from 'child_process';
 
 class CEMIntegration {
@@ -264,13 +227,8 @@ class CEMIntegration {
       stdio: ['pipe', 'pipe', 'pipe']
     });
     
-    // Handle MCP communication
-    return new MCPServer({
-      transport: {
-        read: this.mcpProcess.stdout,
-        write: this.mcpProcess.stdin
-      }
-    });
+    // Handle MCP communication via stdio
+    return this.mcpProcess;
   }
 }
 ```
@@ -300,42 +258,15 @@ Item (base interface)
 - **Performance**: Efficient caching and filtering
 - **JSON Compatible**: Full API serialization support
 
-## Advanced Configuration
+## Template-Driven Intelligence
 
-### Workspace Detection
+The MCP server uses a unique **Data + Context + LLM Decision Making** approach:
 
-The MCP server automatically detects workspace boundaries and loads manifests from:
+1. **📊 Manifest Data** - Raw element definitions, CSS APIs, constraints
+2. **📖 Rich Context** - Usage patterns, guidelines, best practices  
+3. **🧠 LLM Decisions** - AI chooses appropriate values based on provided context
 
-- `custom-elements.json` files
-- `package.json` files with `customElements` field
-- Nested component packages
-- Monorepo structures
-
-### Caching Strategy
-
-```bash
-# Enable persistent caching
-cem mcp --cache-file .cem-cache.json
-
-# Memory-only caching (default)
-cem mcp --cache
-
-# Disable caching for development
-cem mcp --no-cache
-```
-
-### File Watching
-
-```bash
-# Watch for manifest changes (default)
-cem mcp --watch
-
-# Disable watching for production
-cem mcp --no-watch
-
-# Custom watch patterns
-cem mcp --watch-pattern "**/*.json"
-```
+This means the server doesn't provide hardcoded suggestions but instead gives AI systems the rich context needed to make intelligent decisions about element usage, styling, and validation.
 
 ## Troubleshooting
 
@@ -360,47 +291,9 @@ ls custom-elements.json package.json
 ```
 
 **Connection issues:**
-```bash
-# Test with debug mode
-cem mcp --debug
-
-# Try different transport
-cem mcp --transport tcp --port 8080
-```
-
-### Debug Mode
-
-Enable comprehensive logging:
-
-```bash
-cem mcp --debug
-```
-
-This provides:
-- Manifest loading details
-- Element conversion process
-- Cache hit/miss information
-- Tool invocation logs
-- Resource access tracking
-
-### Performance Monitoring
-
-The server includes built-in performance monitoring:
-
-```bash
-# Enable metrics
-cem mcp --metrics
-
-# Custom metrics endpoint
-cem mcp --metrics-port 9091
-```
-
-Metrics include:
-- Element access patterns
-- Cache efficiency
-- Tool usage statistics
-- Resource request timing
-- Memory usage tracking
+- Ensure the `cem mcp` command runs without errors
+- Check that manifest files exist in your workspace
+- Verify your AI client is configured for stdio transport
 
 ## See Also
 
