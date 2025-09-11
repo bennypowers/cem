@@ -336,35 +336,6 @@ if err != nil {
 }
 ```
 
-## Migration from Legacy Types
-
-If you're migrating from the previous concrete types, here's the mapping:
-
-| Legacy Type | New Interface | Access Method |
-|-------------|---------------|---------------|
-| `AttributeInfo` | `Attribute` | `element.Attributes()` |
-| `SlotInfo` | `Slot` | `element.Slots()` |
-| `EventInfo` | `Event` | `element.Events()` |
-| `CssPropertyInfo` | `CssProperty` | `element.CssProperties()` |
-| `CssPartInfo` | `CssPart` | `element.CssParts()` |
-| `CssStateInfo` | `CssState` | `element.CssStates()` |
-
-### Migration Example
-
-```go
-// Legacy approach
-element, _ := registry.GetElementInfo("my-button")
-for _, attr := range element.AttributeInfos { // Old way
-    fmt.Println(attr.Name, attr.Type)
-}
-
-// New approach
-element, _ := registry.GetElementInfo("my-button")
-for _, attr := range element.Attributes() { // New way
-    fmt.Println(attr.Name(), attr.Type())
-}
-```
-
 ## Contributing
 
 When extending the registry with new item types:
