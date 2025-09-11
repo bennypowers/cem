@@ -732,7 +732,7 @@ func (r *Registry) convertElement(element *M.CustomElement, tagName string) *Ele
 	return &ElementInfo{
 		TagName:     tagName,
 		Name:        tagName, // Use tag name as name for now
-		Description: "",      // Will be extracted from JSDoc or other sources
+		Description: "", // Description not available from embedded CustomElement
 		Module:      "",      // Would need module path from element definitions
 		Package:     "",      // Would need package name from element definitions
 		Items:       items,
