@@ -242,19 +242,19 @@ func convertCSSStatesForTemplate(states []types.CssState) []CSSStateTemplateData
 func renderElementTemplate(templateName string, data ElementTemplateData) (string, error) {
 	// For now, render a simple template-driven documentation
 	// In the future, this could use the full template system from templates.go
-	
+
 	// Create a basic template-driven markdown output that follows Data + Context + LLM philosophy
 	var result strings.Builder
-	
+
 	result.WriteString(fmt.Sprintf("# %s Element\n\n", data.TagName))
-	
+
 	if data.Description != "" {
 		result.WriteString(fmt.Sprintf("## Description\n%s\n\n", data.Description))
 	}
-	
+
 	result.WriteString("## Usage Context\n\n")
 	result.WriteString(fmt.Sprintf("The `%s` element provides the following capabilities for your application:\n\n", data.TagName))
-	
+
 	if len(data.Attributes) > 0 {
 		result.WriteString("### Attributes\n\n")
 		for _, attr := range data.Attributes {
@@ -275,7 +275,7 @@ func renderElementTemplate(templateName string, data ElementTemplateData) (strin
 			result.WriteString("\n")
 		}
 	}
-	
+
 	if len(data.Slots) > 0 {
 		result.WriteString("### Slots\n\n")
 		for _, slot := range data.Slots {
@@ -290,7 +290,7 @@ func renderElementTemplate(templateName string, data ElementTemplateData) (strin
 			result.WriteString("\n")
 		}
 	}
-	
+
 	if len(data.Events) > 0 {
 		result.WriteString("### Events\n\n")
 		for _, event := range data.Events {
@@ -305,7 +305,7 @@ func renderElementTemplate(templateName string, data ElementTemplateData) (strin
 			result.WriteString("\n")
 		}
 	}
-	
+
 	if len(data.CssProperties) > 0 {
 		result.WriteString("### CSS Custom Properties\n\n")
 		for _, prop := range data.CssProperties {
@@ -323,7 +323,7 @@ func renderElementTemplate(templateName string, data ElementTemplateData) (strin
 			result.WriteString("\n")
 		}
 	}
-	
+
 	if len(data.CssParts) > 0 {
 		result.WriteString("### CSS Parts\n\n")
 		for _, part := range data.CssParts {
@@ -334,7 +334,7 @@ func renderElementTemplate(templateName string, data ElementTemplateData) (strin
 			result.WriteString("\n")
 		}
 	}
-	
+
 	if len(data.CssStates) > 0 {
 		result.WriteString("### CSS Custom States\n\n")
 		for _, state := range data.CssStates {
@@ -345,16 +345,15 @@ func renderElementTemplate(templateName string, data ElementTemplateData) (strin
 			result.WriteString("\n")
 		}
 	}
-	
+
 	result.WriteString("## Integration Context\n\n")
 	result.WriteString(fmt.Sprintf("Use this element by including `<%s>` in your HTML. ", data.TagName))
 	result.WriteString("Refer to the attribute, slot, and CSS information above to customize its behavior and appearance according to your design requirements.\n\n")
 	result.WriteString("The element follows web standards and accessibility best practices. ")
 	result.WriteString("Consider the semantic meaning and user experience when integrating this component into your application.\n")
-	
+
 	return result.String(), nil
 }
-
 
 // createElementDocumentation creates comprehensive documentation for an element
 func createElementDocumentation(element types.ElementInfo) map[string]any {

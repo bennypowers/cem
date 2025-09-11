@@ -32,7 +32,7 @@ type ElementSummary struct {
 	Package      string   `json:"package,omitempty"`
 	Module       string   `json:"module,omitempty"`
 	Capabilities []string `json:"capabilities"`
-	
+
 	// Capability counts for quick assessment
 	AttributeCount   int `json:"attributeCount"`
 	SlotCount        int `json:"slotCount"`
@@ -46,10 +46,10 @@ type ElementSummary struct {
 func handleElementsResource(ctx context.Context, req *mcp.ReadResourceRequest, registry types.Registry) (*mcp.ReadResourceResult, error) {
 	// Get all elements from registry
 	elementMap := registry.AllElements()
-	
+
 	// Convert to element summaries for discovery
 	elements := make([]ElementSummary, 0, len(elementMap))
-	
+
 	for _, element := range elementMap {
 		summary := ElementSummary{
 			TagName:          element.TagName(),
@@ -64,13 +64,13 @@ func handleElementsResource(ctx context.Context, req *mcp.ReadResourceRequest, r
 			CssPartCount:     len(element.CssParts()),
 			CssStateCount:    len(element.CssStates()),
 		}
-		
+
 		// Build capability summary
 		summary.Capabilities = buildCapabilitySummary(element)
-		
+
 		elements = append(elements, summary)
 	}
-	
+
 	// Build response following CEM elements structure
 	elementsData := map[string]interface{}{
 		"elements": elements,
@@ -79,12 +79,12 @@ func handleElementsResource(ctx context.Context, req *mcp.ReadResourceRequest, r
 			"categories":    categorizeElementsByCapabilities(elements),
 		},
 	}
-	
+
 	contents, err := json.MarshalIndent(elementsData, "", "  ")
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &mcp.ReadResourceResult{
 		Contents: []*mcp.ResourceContents{{
 			URI:      req.Params.URI,
@@ -97,62 +97,62 @@ func handleElementsResource(ctx context.Context, req *mcp.ReadResourceRequest, r
 // buildCapabilitySummary creates a list of capabilities for an element
 func buildCapabilitySummary(element types.ElementInfo) []string {
 	var capabilities []string
-	
+
 	if len(element.Attributes()) > 0 {
 		capabilities = append(capabilities, "configurable")
 	}
-	
+
 	if len(element.Slots()) > 0 {
 		capabilities = append(capabilities, "content-slots")
 	}
-	
+
 	if len(element.Events()) > 0 {
 		capabilities = append(capabilities, "interactive")
 	}
-	
+
 	if len(element.CssProperties()) > 0 {
 		capabilities = append(capabilities, "themeable")
 	}
-	
+
 	if len(element.CssParts()) > 0 {
 		capabilities = append(capabilities, "styleable")
 	}
-	
+
 	if len(element.CssStates()) > 0 {
 		capabilities = append(capabilities, "stateful")
 	}
-	
+
 	// Add semantic capabilities based on tag name patterns
 	tagName := element.TagName()
 	if containsAny(tagName, []string{"button", "input", "field", "form"}) {
 		capabilities = append(capabilities, "form-element")
 	}
-	
+
 	if containsAny(tagName, []string{"grid", "layout", "container", "flex"}) {
 		capabilities = append(capabilities, "layout-element")
 	}
-	
+
 	if containsAny(tagName, []string{"nav", "menu", "tab", "breadcrumb"}) {
 		capabilities = append(capabilities, "navigation-element")
 	}
-	
+
 	return capabilities
 }
 
 // categorizeElementsByCapabilities groups elements by their primary capabilities
 func categorizeElementsByCapabilities(elements []ElementSummary) map[string]int {
 	categories := map[string]int{
-		"configurable":       0,
-		"content-slots":      0,
-		"interactive":        0,
-		"themeable":          0,
-		"styleable":          0,
-		"stateful":           0,
-		"form-elements":      0,
-		"layout-elements":    0,
+		"configurable":        0,
+		"content-slots":       0,
+		"interactive":         0,
+		"themeable":           0,
+		"styleable":           0,
+		"stateful":            0,
+		"form-elements":       0,
+		"layout-elements":     0,
 		"navigation-elements": 0,
 	}
-	
+
 	for _, element := range elements {
 		for _, capability := range element.Capabilities {
 			if capability == "form-element" {
@@ -166,7 +166,7 @@ func categorizeElementsByCapabilities(elements []ElementSummary) map[string]int 
 			}
 		}
 	}
-	
+
 	return categories
 }
 

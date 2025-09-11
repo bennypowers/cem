@@ -73,11 +73,11 @@ func TestRegistry_GetElementInfo(t *testing.T) {
 				assert.Equal(t, "", info.Description) // Description not available from CustomElement
 
 				// Test type-specific accessors
-				assert.Len(t, info.Attributes(), 3) // variant, size, disabled
-				assert.Len(t, info.Slots(), 2)      // default, icon
-				assert.Len(t, info.Events(), 1)     // button-click
+				assert.Len(t, info.Attributes(), 3)    // variant, size, disabled
+				assert.Len(t, info.Slots(), 2)         // default, icon
+				assert.Len(t, info.Events(), 1)        // button-click
 				assert.Len(t, info.CssProperties(), 2) // --button-color, --button-padding
-				assert.Len(t, info.CssParts(), 1)   // button
+				assert.Len(t, info.CssParts(), 1)      // button
 
 				// Check key attributes
 				variantAttr := findAttribute(info.Attributes(), "variant")
@@ -133,11 +133,11 @@ func TestRegistry_GetElementInfo(t *testing.T) {
 				assert.Equal(t, "", info.Description) // Description not available from CustomElement
 
 				// Test type-specific accessors
-				assert.Len(t, info.Attributes(), 1)   // elevation
-				assert.Len(t, info.Slots(), 3)        // default, header, footer
-				assert.Len(t, info.Events(), 0)       // no events
+				assert.Len(t, info.Attributes(), 1)    // elevation
+				assert.Len(t, info.Slots(), 3)         // default, header, footer
+				assert.Len(t, info.Events(), 0)        // no events
 				assert.Len(t, info.CssProperties(), 1) // --card-background
-				assert.Len(t, info.CssParts(), 4)     // container, header, content, footer
+				assert.Len(t, info.CssParts(), 4)      // container, header, content, footer
 
 				// Check elevation attribute
 				elevationAttr := findAttribute(info.Attributes(), "elevation")
@@ -240,12 +240,12 @@ func TestRegistry_GetManifestSchema(t *testing.T) {
 
 	// Check that schema has required fields from the actual custom elements manifest schema
 	assert.Equal(t, "http://json-schema.org/draft-07/schema#", schema["$schema"])
-	
+
 	// The actual schema has a versioned title
 	title, ok := schema["title"].(string)
 	require.True(t, ok, "Schema should have a title")
 	assert.Contains(t, title, "Custom Elements Manifest Schema")
-	
+
 	// The actual schema should have type at root level or in allOf/anyOf structure
 	// Check for either direct type or complex schema structure
 	if schemaType, exists := schema["type"]; exists {
@@ -259,12 +259,12 @@ func TestRegistry_GetManifestSchema(t *testing.T) {
 	// The schema should have definitions for the manifest structure
 	if definitions, ok := schema["definitions"].(map[string]interface{}); ok {
 		assert.NotEmpty(t, definitions, "Schema should have definitions")
-		
+
 		// Look for manifest or package definition
 		hasManifestDef := false
 		for defName := range definitions {
-			if strings.Contains(strings.ToLower(defName), "manifest") || 
-			   strings.Contains(strings.ToLower(defName), "package") {
+			if strings.Contains(strings.ToLower(defName), "manifest") ||
+				strings.Contains(strings.ToLower(defName), "package") {
 				hasManifestDef = true
 				break
 			}
@@ -278,7 +278,7 @@ func TestRegistry_GetManifestSchema(t *testing.T) {
 			t.Errorf("Schema should have either definitions or $ref")
 		}
 	}
-	
+
 	// The rest of the test just verifies we got a valid schema
 	// Since we're now using the real schema from V.GetSchema(), the exact structure
 	// may vary but it should be a valid JSON schema

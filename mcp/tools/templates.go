@@ -57,7 +57,6 @@ type ElementWithCapabilities struct {
 	Capabilities []string
 }
 
-
 // HTMLGenerationData represents the data for HTML generation templates
 type HTMLGenerationData struct {
 	types.ElementInfo
@@ -279,7 +278,6 @@ func renderAttributeTemplate(templateName string, data AttributeTemplateData) (s
 
 	return buf.String(), nil
 }
-
 
 // renderHTMLTemplate loads and executes a template with HTMLGenerationData
 func renderHTMLTemplate(templateName string, data HTMLGenerationData) (string, error) {

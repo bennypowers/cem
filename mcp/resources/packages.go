@@ -39,13 +39,13 @@ type PackageInfo struct {
 func handlePackagesResource(ctx context.Context, req *mcp.ReadResourceRequest, registry types.Registry) (*mcp.ReadResourceResult, error) {
 	// Get all elements to analyze package structure
 	elementMap := registry.AllElements()
-	
+
 	// Group elements by package (extracted from tag names and metadata)
 	packageMap := make(map[string]*PackageInfo)
-	
+
 	for tagName, element := range elementMap {
 		packageName := extractPackageFromElement(element)
-		
+
 		if packageMap[packageName] == nil {
 			packageMap[packageName] = &PackageInfo{
 				Name:     packageName,
@@ -53,17 +53,17 @@ func handlePackagesResource(ctx context.Context, req *mcp.ReadResourceRequest, r
 				Modules:  []string{}, // Will be enhanced when module info is available
 			}
 		}
-		
+
 		packageMap[packageName].Elements = append(packageMap[packageName].Elements, tagName)
 		packageMap[packageName].ElementCount++
 	}
-	
+
 	// Convert to slice for consistent output
 	packages := make([]PackageInfo, 0, len(packageMap))
 	for _, pkg := range packageMap {
 		packages = append(packages, *pkg)
 	}
-	
+
 	// Build response following CEM package structure
 	packagesData := map[string]interface{}{
 		"packages": packages,
@@ -72,12 +72,12 @@ func handlePackagesResource(ctx context.Context, req *mcp.ReadResourceRequest, r
 			"totalElements": len(elementMap),
 		},
 	}
-	
+
 	contents, err := json.MarshalIndent(packagesData, "", "  ")
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &mcp.ReadResourceResult{
 		Contents: []*mcp.ResourceContents{{
 			URI:      req.Params.URI,
@@ -93,13 +93,13 @@ func extractPackageFromElement(element types.ElementInfo) string {
 	if element.Package() != "" {
 		return element.Package()
 	}
-	
+
 	// Fallback to extracting from tag name prefix
 	tagName := element.TagName()
 	if parts := splitTagName(tagName); len(parts) > 1 {
 		return parts[0]
 	}
-	
+
 	// Default package name
 	return "default"
 }
@@ -108,7 +108,7 @@ func extractPackageFromElement(element types.ElementInfo) string {
 func splitTagName(tagName string) []string {
 	result := []string{}
 	current := ""
-	
+
 	for _, char := range tagName {
 		if char == '-' {
 			if current != "" {
@@ -119,10 +119,10 @@ func splitTagName(tagName string) []string {
 			current += string(char)
 		}
 	}
-	
+
 	if current != "" {
 		result = append(result, current)
 	}
-	
+
 	return result
 }
