@@ -118,84 +118,9 @@ type CssState interface {
 	isCssState() // Marker method to distinguish CSS states
 }
 
-// BaseItem provides common implementation for all items
-type BaseItem struct {
-	name        string
-	description string
-	guidelines  []string
-	examples    []string
-}
+//go:generate go run ../tools/gen-mcp-adapters
 
-func (b BaseItem) Name() string         { return b.name }
-func (b BaseItem) Description() string  { return b.description }
-func (b BaseItem) Guidelines() []string { return b.guidelines }
-func (b BaseItem) Examples() []string   { return b.examples }
-
-// AttributeItem implements the Attribute interface
-type AttributeItem struct {
-	BaseItem
-	typ      string
-	default_ string
-	required bool
-	values   []string
-}
-
-func (a AttributeItem) Kind() ItemKind   { return KindAttribute }
-func (a AttributeItem) Type() string     { return a.typ }
-func (a AttributeItem) Default() string  { return a.default_ }
-func (a AttributeItem) Required() bool   { return a.required }
-func (a AttributeItem) Values() []string { return a.values }
-
-// SlotItem implements the Slot interface
-type SlotItem struct {
-	BaseItem
-}
-
-func (s SlotItem) Kind() ItemKind { return KindSlot }
-func (s SlotItem) isSlot()        {}
-
-// EventItem implements the Event interface
-type EventItem struct {
-	BaseItem
-	typ string
-}
-
-func (e EventItem) Kind() ItemKind { return KindEvent }
-func (e EventItem) Type() string   { return e.typ }
-func (e EventItem) isEvent()       {}
-
-// CssPropertyItem implements the CssProperty interface
-type CssPropertyItem struct {
-	BaseItem
-	syntax   string
-	inherits bool
-	initial  string
-}
-
-func (c CssPropertyItem) Kind() ItemKind  { return KindCssProperty }
-func (c CssPropertyItem) Syntax() string  { return c.syntax }
-func (c CssPropertyItem) Inherits() bool  { return c.inherits }
-func (c CssPropertyItem) Initial() string { return c.initial }
-
-// CssPartItem implements the CssPart interface
-type CssPartItem struct {
-	BaseItem
-}
-
-func (c CssPartItem) Kind() ItemKind { return KindCssPart }
-func (c CssPartItem) isCssPart()     {}
-
-// CssStateItem implements the CssState interface
-type CssStateItem struct {
-	BaseItem
-}
-
-func (c CssStateItem) Kind() ItemKind { return KindCssState }
-func (c CssStateItem) isCssState()    {}
-
-// JSON marshaling for API compatibility
-
-// itemJSON is a helper struct for marshaling items
+// JSON marshaling helper types
 type itemJSON struct {
 	Kind        ItemKind `json:"kind"`
 	Name        string   `json:"name"`
@@ -212,86 +137,6 @@ type itemJSON struct {
 	Syntax   *string `json:"syntax,omitempty"`
 	Inherits *bool   `json:"inherits,omitempty"`
 	Initial  *string `json:"initial,omitempty"`
-}
-
-// MarshalJSON for AttributeItem
-func (a AttributeItem) MarshalJSON() ([]byte, error) {
-	j := itemJSON{
-		Kind:        a.Kind(),
-		Name:        a.Name(),
-		Description: a.Description(),
-		Guidelines:  a.Guidelines(),
-		Examples:    a.Examples(),
-		Type:        &a.typ,
-		Default:     &a.default_,
-		Required:    &a.required,
-		Values:      a.values,
-	}
-	return json.Marshal(j)
-}
-
-// MarshalJSON for SlotItem
-func (s SlotItem) MarshalJSON() ([]byte, error) {
-	j := itemJSON{
-		Kind:        s.Kind(),
-		Name:        s.Name(),
-		Description: s.Description(),
-		Guidelines:  s.Guidelines(),
-		Examples:    s.Examples(),
-	}
-	return json.Marshal(j)
-}
-
-// MarshalJSON for EventItem
-func (e EventItem) MarshalJSON() ([]byte, error) {
-	j := itemJSON{
-		Kind:        e.Kind(),
-		Name:        e.Name(),
-		Description: e.Description(),
-		Guidelines:  e.Guidelines(),
-		Examples:    e.Examples(),
-		Type:        &e.typ,
-	}
-	return json.Marshal(j)
-}
-
-// MarshalJSON for CssPropertyItem
-func (c CssPropertyItem) MarshalJSON() ([]byte, error) {
-	j := itemJSON{
-		Kind:        c.Kind(),
-		Name:        c.Name(),
-		Description: c.Description(),
-		Guidelines:  c.Guidelines(),
-		Examples:    c.Examples(),
-		Syntax:      &c.syntax,
-		Inherits:    &c.inherits,
-		Initial:     &c.initial,
-	}
-	return json.Marshal(j)
-}
-
-// MarshalJSON for CssPartItem
-func (c CssPartItem) MarshalJSON() ([]byte, error) {
-	j := itemJSON{
-		Kind:        c.Kind(),
-		Name:        c.Name(),
-		Description: c.Description(),
-		Guidelines:  c.Guidelines(),
-		Examples:    c.Examples(),
-	}
-	return json.Marshal(j)
-}
-
-// MarshalJSON for CssStateItem
-func (c CssStateItem) MarshalJSON() ([]byte, error) {
-	j := itemJSON{
-		Kind:        c.Kind(),
-		Name:        c.Name(),
-		Description: c.Description(),
-		Guidelines:  c.Guidelines(),
-		Examples:    c.Examples(),
-	}
-	return json.Marshal(j)
 }
 
 // ElementInfo contains enhanced element information for MCP context
@@ -398,81 +243,55 @@ type ExampleInfo struct {
 
 // NewAttributeItem creates a new attribute item from manifest data
 func NewAttributeItem(attr M.Attribute, guidelines []string, examples []string) Attribute {
-	return AttributeItem{
-		BaseItem: BaseItem{
-			name:        attr.Name,
-			description: attr.Description,
-			guidelines:  guidelines,
-			examples:    examples,
-		},
-		typ:      getTypeString(attr.Type),
-		default_: attr.Default,
-		required: false, // Not available in manifest structure
-		values:   extractEnumValues(attr.Type),
+	return AttributeMcpAdapter{
+		Attribute:  &attr,
+		guidelines: guidelines,
+		examples:   examples,
 	}
 }
 
 // NewSlotItem creates a new slot item from manifest data
 func NewSlotItem(slot M.Slot, guidelines []string, examples []string) Slot {
-	return SlotItem{
-		BaseItem: BaseItem{
-			name:        slot.Name,
-			description: slot.Description,
-			guidelines:  guidelines,
-			examples:    examples,
-		},
+	return SlotMcpAdapter{
+		Slot:       &slot,
+		guidelines: guidelines,
+		examples:   examples,
 	}
 }
 
 // NewEventItem creates a new event item from manifest data
 func NewEventItem(event M.Event, guidelines []string, examples []string) Event {
-	return EventItem{
-		BaseItem: BaseItem{
-			name:        event.Name,
-			description: event.Description,
-			guidelines:  guidelines,
-			examples:    examples,
-		},
-		typ: getTypeString(event.Type),
+	return EventMcpAdapter{
+		Event:      &event,
+		guidelines: guidelines,
+		examples:   examples,
 	}
 }
 
 // NewCssPropertyItem creates a new CSS property item from manifest data
 func NewCssPropertyItem(prop M.CssCustomProperty, guidelines []string, examples []string) CssProperty {
-	return CssPropertyItem{
-		BaseItem: BaseItem{
-			name:        prop.Name,
-			description: prop.Description,
-			guidelines:  guidelines,
-			examples:    examples,
-		},
-		syntax:   prop.Syntax,
-		inherits: false, // Not available in manifest
-		initial:  prop.Default,
+	return CssPropertyMcpAdapter{
+		CssCustomProperty: &prop,
+		guidelines:        guidelines,
+		examples:          examples,
 	}
 }
 
 // NewCssPartItem creates a new CSS part item from manifest data
 func NewCssPartItem(part M.CssPart, guidelines []string, examples []string) CssPart {
-	return CssPartItem{
-		BaseItem: BaseItem{
-			name:        part.Name,
-			description: part.Description,
-			guidelines:  guidelines,
-			examples:    examples,
-		},
+	return CssPartMcpAdapter{
+		CssPart:    &part,
+		guidelines: guidelines,
+		examples:   examples,
 	}
 }
 
 // NewCssStateItem creates a new CSS state item from manifest data
 func NewCssStateItem(state M.CssCustomState, guidelines []string, examples []string) CssState {
-	return CssStateItem{
-		BaseItem: BaseItem{
-			name:        state.Name,
-			description: state.Description,
-			guidelines:  guidelines,
-			examples:    examples,
-		},
+	return CssStateMcpAdapter{
+		CssCustomState: &state,
+		guidelines:     guidelines,
+		examples:       examples,
 	}
 }
 
@@ -599,7 +418,7 @@ func (r *Registry) GetAllElements() map[string]*ElementInfo {
 func (r *Registry) GetManifestSchema() (map[string]interface{}, error) {
 	// Use the same schema detection and retrieval logic as the schema resource
 	versions := r.GetManifestSchemaVersions()
-	
+
 	// If no manifests found, use latest stable version as fallback
 	schemaVersion := "2.1.1-speculative"
 	if len(versions) == 1 {
@@ -732,7 +551,7 @@ func (r *Registry) convertElement(element *M.CustomElement, tagName string) *Ele
 	return &ElementInfo{
 		TagName:     tagName,
 		Name:        tagName, // Use tag name as name for now
-		Description: "", // Description not available from embedded CustomElement
+		Description: "",      // Description not available from embedded CustomElement
 		Module:      "",      // Would need module path from element definitions
 		Package:     "",      // Would need package name from element definitions
 		Items:       items,
@@ -779,13 +598,6 @@ func (r *Registry) extractTextGuidelines(text string) []string {
 
 	return guidelines
 }
-
-
-
-
-
-
-
 
 // RegistryAdapter implements MCPTypes.Registry interface for tools package
 type RegistryAdapter struct {

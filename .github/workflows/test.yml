@@ -21,6 +21,8 @@ jobs:
         run: |
           go install gotest.tools/gotestsum@latest
           go install github.com/mfridman/tparse@latest
+      - name: Generate code
+        run: make generate
       - name: Build
         run: go build -v ./...
       - name: Run unit tests
