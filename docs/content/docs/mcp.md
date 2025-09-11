@@ -28,35 +28,13 @@ The server uses stdio transport and automatically discovers manifests from your 
 
 The server provides several resource types that AI systems can access:
 
-### Schema Resource
-```
-cem://schema
-```
-Returns the JSON schema for custom elements manifests, enabling validation and understanding of manifest structure.
-
-### Registry Resource
-```
-cem://registry
-```
-Provides the complete registry of all available elements with their metadata, including counts and basic information.
-
-### Element Resources
-```
-cem://element/{tagName}
-```
-Returns detailed information about a specific element, including all attributes, slots, events, CSS properties, parts, and states.
-
-### Guidelines Resource
-```
-cem://guidelines
-```
-Provides design system guidelines and best practices for component usage.
-
-### Accessibility Resource
-```
-cem://accessibility
-```
-Returns accessibility patterns and validation rules for component compliance.
+| URI                       | Description                                                                                                                        |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `cem://schema`            | Returns the JSON schema for custom elements manifests, enabling validation and understanding of manifest structure.                |
+| `cem://registry`          | Provides the complete registry of all available elements with their metadata, including counts and basic information.              |
+| `cem://element/{tagName}` | Returns detailed information about a specific element, including all attributes, slots, events, CSS properties, parts, and states. |
+| `cem://guidelines`        | Provides design system guidelines and best practices for component usage.                                                          |
+| `cem://accessibility`     | Returns accessibility patterns and validation rules for component compliance.                                                      |
 
 ## MCP Tools
 
@@ -67,54 +45,54 @@ The server provides interactive tools for AI assistance:
 
 Validates HTML for semantic structure and manifest compliance.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `html` | string | ✅ | HTML content to validate |
-| `tagName` | string | | Focus validation on specific element |
-| `context` | string | | Validation context (`semantic`, `manifest-compliance`) |
+| Parameter | Type   | Required | Description                                            |
+| --------- | ------ | -------- | ------------------------------------------------------ |
+| `html`    | string | ✅       | HTML content to validate                               |
+| `tagName` | string |          | Focus validation on specific element                   |
+| `context` | string |          | Validation context (`semantic`, `manifest-compliance`) |
 
 ### Attribute Suggestions
 **Tool:** `suggest_attributes`
 
 Get intelligent attribute suggestions with manifest context.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `tagName` | string | ✅ | Element to get attribute suggestions for |
-| `context` | string | | Usage context (`accessibility`, `form`, `interactive`, `styling`) |
+| Parameter | Type   | Required | Description                                                       |
+| --------- | ------ | -------- | ----------------------------------------------------------------- |
+| `tagName` | string | ✅       | Element to get attribute suggestions for                          |
+| `context` | string |          | Usage context (`accessibility`, `form`, `interactive`, `styling`) |
 
 ### HTML Generation
 **Tool:** `generate_html`
 
 Generate correct HTML structure with proper slots and attributes.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `tagName` | string | ✅ | Element to generate HTML for |
-| `attributes` | object | | Attribute values to include |
-| `content` | object | | Slot content mapping |
+| Parameter    | Type   | Required | Description                  |
+| ------------ | ------ | -------- | ---------------------------- |
+| `tagName`    | string | ✅       | Element to generate HTML for |
+| `attributes` | object |          | Attribute values to include  |
+| `content`    | object |          | Slot content mapping         |
 
 ### CSS Integration
 **Tool:** `suggest_css_integration`
 
 Provides CSS integration guidance using manifest-defined CSS APIs.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `tagName` | string | ✅ | Element to get CSS guidance for |
-| `styleTarget` | string | | What to style (`element`, `parts`, `states`, `properties`) |
-| `context` | string | | Styling context (`theme`, `responsive`, `dark-mode`) |
+| Parameter     | Type   | Required | Description                                                |
+| ------------- | ------ | -------- | ---------------------------------------------------------- |
+| `tagName`     | string | ✅       | Element to get CSS guidance for                            |
+| `styleTarget` | string |          | What to style (`element`, `parts`, `states`, `properties`) |
+| `context`     | string |          | Styling context (`theme`, `responsive`, `dark-mode`)       |
 
 ### Registry Queries
 **Tool:** `query_registry`
 
 Search and explore the element registry.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `tagName` | string | | Get details for specific element |
-| `filter` | string | | Filter by capabilities (`has-slots`, `has-events`, `interactive`, `form`) |
-| `search` | string | | Search element names and descriptions |
+| Parameter | Type   | Required | Description                                                               |
+| --------- | ------ | -------- | ------------------------------------------------------------------------- |
+| `tagName` | string |          | Get details for specific element                                          |
+| `filter`  | string |          | Filter by capabilities (`has-slots`, `has-events`, `interactive`, `form`) |
+| `search`  | string |          | Search element names and descriptions                                     |
 
 ## Usage Examples
 
