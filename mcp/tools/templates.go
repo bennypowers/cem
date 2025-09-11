@@ -21,7 +21,6 @@ import (
 	"embed"
 	"fmt"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"text/template"
 
@@ -398,11 +397,3 @@ func renderValidationTemplate(templateName string, data HTMLValidationData) (str
 	return buf.String(), nil
 }
 
-// getTemplatesDir returns the directory containing template files
-func getTemplatesDir() string {
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		return ""
-	}
-	return filepath.Join(filepath.Dir(filename), "templates")
-}

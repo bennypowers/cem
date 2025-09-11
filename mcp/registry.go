@@ -611,7 +611,7 @@ func NewRegistryAdapter(registry *Registry) MCPTypes.Registry {
 
 // ElementInfo implements MCPTypes.Registry interface
 func (r *RegistryAdapter) ElementInfo(tagName string) (MCPTypes.ElementInfo, error) {
-	element, err := r.Registry.GetElementInfo(tagName)
+	element, err := r.GetElementInfo(tagName)
 	if err != nil {
 		return nil, err
 	}
@@ -620,7 +620,7 @@ func (r *RegistryAdapter) ElementInfo(tagName string) (MCPTypes.ElementInfo, err
 
 // AllElements implements MCPTypes.Registry interface
 func (r *RegistryAdapter) AllElements() map[string]MCPTypes.ElementInfo {
-	elements := r.Registry.GetAllElements()
+	elements := r.GetAllElements()
 	adapted := make(map[string]MCPTypes.ElementInfo)
 	for tagName, element := range elements {
 		adapted[tagName] = &ElementInfoAdapter{ElementInfo: element}
