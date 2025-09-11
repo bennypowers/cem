@@ -118,7 +118,7 @@ type CssState interface {
 	isCssState() // Marker method to distinguish CSS states
 }
 
-//go:generate go run ../tools/gen-mcp-adapters
+//go:generate env GOOS= GOARCH= go run ../tools/gen-mcp-adapters
 
 // JSON marshaling helper types
 type itemJSON struct {
