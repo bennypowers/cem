@@ -18,7 +18,6 @@ package resources
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -28,95 +27,217 @@ import (
 
 // handleGuidelinesResource provides design system guidelines and best practices
 func handleGuidelinesResource(ctx context.Context, req *mcp.ReadResourceRequest, registry types.Registry) (*mcp.ReadResourceResult, error) {
-	// Generate comprehensive guidelines from the registry
-	guidelines := generateDesignSystemGuidelines(registry)
+	// Collect guidelines data from the registry
+	guidelinesData := collectGuidelinesData(registry)
 
-	contents, err := json.MarshalIndent(guidelines, "", "  ")
+	// Render comprehensive guidelines using templates
+	var response strings.Builder
+
+	// Render each section using its specific template
+	overview, err := renderGuidelinesTemplate("guidelines_overview", guidelinesData)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to render guidelines overview: %w", err)
 	}
+	response.WriteString(overview)
+	response.WriteString("\n\n")
+
+	elementGuidelines, err := renderGuidelinesTemplate("element_guidelines", guidelinesData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to render element guidelines: %w", err)
+	}
+	response.WriteString(elementGuidelines)
+	response.WriteString("\n\n")
+
+	accessibilityGuidelines, err := renderGuidelinesTemplate("accessibility_guidelines", guidelinesData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to render accessibility guidelines: %w", err)
+	}
+	response.WriteString(accessibilityGuidelines)
+	response.WriteString("\n\n")
+
+	cssGuidelines, err := renderGuidelinesTemplate("css_guidelines", guidelinesData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to render CSS guidelines: %w", err)
+	}
+	response.WriteString(cssGuidelines)
+	response.WriteString("\n\n")
+
+	patternGuidelines, err := renderGuidelinesTemplate("pattern_guidelines", guidelinesData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to render pattern guidelines: %w", err)
+	}
+	response.WriteString(patternGuidelines)
 
 	return &mcp.ReadResourceResult{
 		Contents: []*mcp.ResourceContents{{
 			URI:      req.Params.URI,
-			MIMEType: "application/json",
-			Text:     string(contents),
+			MIMEType: "text/markdown",
+			Text:     response.String(),
 		}},
 	}, nil
 }
 
-// generateDesignSystemGuidelines creates comprehensive design system guidelines
-func generateDesignSystemGuidelines(registry types.Registry) map[string]interface{} {
+// collectGuidelinesData gathers all guidelines information into structured data
+func collectGuidelinesData(registry types.Registry) GuidelinesData {
 	elementMap := registry.AllElements()
 
-	// Convert map to slice
+	// Convert map to slice for processing
 	elements := make([]types.ElementInfo, 0, len(elementMap))
 	for _, element := range elementMap {
 		elements = append(elements, element)
 	}
 
-	guidelines := map[string]interface{}{
-		"overview":      generateOverviewGuidelines(),
-		"naming":        generateNamingGuidelines(elements),
-		"usage":         generateUsageGuidelines(elements),
-		"patterns":      generatePatternGuidelines(elements),
-		"accessibility": generateAccessibilityGuidelines(elements),
-		"performance":   generatePerformanceGuidelines(),
-		"theming":       generateThemingGuidelines(elements),
-		"composition":   generateCompositionGuidelines(elements),
-		"antiPatterns":  generateAntiPatterns(),
-		"testing":       generateTestingGuidelines(),
-	}
-
-	return guidelines
-}
-
-// generateOverviewGuidelines creates high-level design system guidance
-func generateOverviewGuidelines() map[string]interface{} {
-	return map[string]interface{}{
-		"principles": []string{
-			"Consistency: Maintain consistent patterns across all components",
-			"Accessibility: Ensure all components are accessible by default",
-			"Performance: Optimize for fast loading and smooth interactions",
-			"Flexibility: Design components to work in various contexts",
-			"Semantic: Use meaningful element and attribute names",
-		},
-		"philosophy": map[string]interface{}{
-			"componentFirst": "Design with components as the primary building blocks",
-			"progressive":    "Support progressive enhancement and graceful degradation",
-			"inclusive":      "Design for all users, abilities, and devices",
-			"maintainable":   "Write code that is easy to understand and modify",
-		},
+	return GuidelinesData{
+		Overview:                generateOverview(len(elements)),
+		Principles:              generatePrinciples(),
+		Philosophy:              generatePhilosophy(),
+		GeneralGuidelines:       generateGeneralGuidelines(),
+		ElementGuidelines:       generateElementGuidelines(elements),
+		NamingGuidelines:        generateNamingGuidelines(elements),
+		AccessibilityGuidelines: generateAccessibilityGuidelines(),
+		ThemingGuidelines:       generateThemingGuidelines(elements),
+		PerformanceGuidelines:   generatePerformanceGuidelines(),
+		CompositionGuidelines:   generateCompositionGuidelines(),
+		IntegrationGuidelines:   generateIntegrationGuidelines(),
+		TestingGuidelines:       generateTestingGuidelines(),
+		AntiPatterns:            generateAntiPatterns(),
+		BestPractices:           generateBestPractices(),
+		FrameworkGuidelines:     generateFrameworkGuidelines(),
+		LayoutPatterns:          generateLayoutPatterns(),
+		DataPatterns:            generateDataPatterns(),
+		FormPatterns:            generateFormPatterns(),
+		NavigationPatterns:      generateNavigationPatterns(),
+		FeedbackPatterns:        generateFeedbackPatterns(),
+		PatternsByCategory:      generatePatternsByCategory(),
+		ProgressiveEnhancement:  generateProgressiveEnhancement(),
+		ErrorHandlingPatterns:   generateErrorHandlingPatterns(),
+		SecurityGuidelines:      generateSecurityGuidelines(),
+		ColorGuidelines:         generateColorGuidelines(),
+		ResponsiveGuidelines:    generateResponsiveGuidelines(),
+		CSSBestPractices:        generateCSSBestPractices(),
 	}
 }
 
-// generateNamingGuidelines creates guidelines for element and attribute naming
-func generateNamingGuidelines(elements []types.ElementInfo) map[string]interface{} {
-	// Analyze existing elements to extract naming patterns
+// generateOverview creates the overview description
+func generateOverview(elementCount int) string {
+	return fmt.Sprintf("Comprehensive design system guidelines extracted from %d custom elements and their manifests. These guidelines ensure consistent, accessible, and maintainable component usage across your application.", elementCount)
+}
+
+// generatePrinciples creates core design principles
+func generatePrinciples() []string {
+	return []string{
+		"Consistency: Maintain consistent patterns across all components",
+		"Accessibility: Ensure all components are accessible by default",
+		"Performance: Optimize for fast loading and smooth interactions",
+		"Flexibility: Design components to work in various contexts",
+		"Semantic: Use meaningful element and attribute names",
+	}
+}
+
+// generatePhilosophy creates design philosophy mapping
+func generatePhilosophy() map[string]string {
+	return map[string]string{
+		"componentFirst": "Design with components as the primary building blocks",
+		"progressive":    "Support progressive enhancement and graceful degradation",
+		"inclusive":      "Design for all users, abilities, and devices",
+		"maintainable":   "Write code that is easy to understand and modify",
+	}
+}
+
+// generateGeneralGuidelines creates general guideline categories
+func generateGeneralGuidelines() []GuidelineCategory {
+	return []GuidelineCategory{
+		{
+			Category: "semantic",
+			Guidelines: []string{
+				"Use semantic HTML within slots whenever possible",
+				"Provide meaningful content for screen readers",
+				"Ensure keyboard navigation works properly",
+				"Test with various content lengths and types",
+			},
+		},
+		{
+			Category: "documentation",
+			Guidelines: []string{
+				"Always provide meaningful descriptions for custom elements",
+				"Use semantic slot names that describe content purpose",
+				"Include accessibility attributes for interactive elements",
+			},
+		},
+	}
+}
+
+// generateElementGuidelines creates element-specific guidelines
+func generateElementGuidelines(elements []types.ElementInfo) map[string]ElementGuideline {
+	elementGuidelines := make(map[string]ElementGuideline)
+
+	for _, element := range elements {
+		// Create attribute guidelines
+		var attrGuidelines []AttributeGuideline
+		for _, attr := range element.Attributes() {
+			guidance := []string{}
+			if attr.Required() {
+				guidance = append(guidance, "This attribute is required")
+			}
+			if attr.Default() != "" {
+				guidance = append(guidance, fmt.Sprintf("Default value: %s", attr.Default()))
+			}
+			if len(attr.Values()) > 0 {
+				guidance = append(guidance, fmt.Sprintf("Valid values: %s", strings.Join(attr.Values(), ", ")))
+			}
+
+			attrGuidelines = append(attrGuidelines, AttributeGuideline{
+				Attribute: attr,
+				Guidance:  guidance,
+			})
+		}
+
+		// Create slot guidelines
+		var slotGuidelines []SlotGuideline
+		for _, slot := range element.Slots() {
+			slotGuidelines = append(slotGuidelines, SlotGuideline{
+				Slot: slot,
+				Guidance: []string{
+					"Use semantic HTML elements when possible",
+					"Consider accessibility when adding content",
+				},
+			})
+		}
+
+		// Generate usage examples
+		examples := generateUsageExamples(element)
+
+		elementGuidelines[element.TagName()] = ElementGuideline{
+			ElementInfo: element,
+			Guidelines:  []string{"Follow manifest-defined constraints and patterns"},
+			Examples:    examples,
+			Attributes:  attrGuidelines,
+			Slots:       slotGuidelines,
+		}
+	}
+
+	return elementGuidelines
+}
+
+// generateNamingGuidelines creates naming convention guidelines
+func generateNamingGuidelines(elements []types.ElementInfo) NamingGuidelines {
 	prefixes := extractCommonPrefixes(elements)
 
-	return map[string]interface{}{
-		"elements": map[string]interface{}{
-			"format":   "kebab-case with meaningful prefixes",
-			"pattern":  "prefix-component-variant",
-			"examples": generateNamingExamples(prefixes),
-			"prefixes": prefixes,
-			"guidelines": []string{
+	return NamingGuidelines{
+		Elements: NamingCategory{
+			Format:  "kebab-case with meaningful prefixes",
+			Pattern: "prefix-component-variant",
+			Guidelines: []string{
 				"Use descriptive names that indicate purpose",
 				"Include namespace/brand prefix to avoid conflicts",
 				"Use consistent naming patterns across related components",
 				"Avoid abbreviations unless they're widely understood",
 			},
+			Examples: generateNamingExamples(prefixes),
 		},
-		"attributes": map[string]interface{}{
-			"format": "kebab-case",
-			"types": map[string]interface{}{
-				"boolean": "Use boolean attributes for true/false values",
-				"string":  "Use descriptive names for string attributes",
-				"number":  "Include units in name when applicable (e.g., max-width)",
-				"enum":    "Use clear, descriptive enum values",
-			},
-			"guidelines": []string{
+		Attributes: NamingCategory{
+			Format: "kebab-case",
+			Guidelines: []string{
 				"Match HTML conventions where possible",
 				"Use ARIA patterns for accessibility attributes",
 				"Prefix custom attributes to avoid conflicts",
@@ -126,90 +247,31 @@ func generateNamingGuidelines(elements []types.ElementInfo) map[string]interface
 	}
 }
 
-// generateUsageGuidelines creates component usage guidelines
-func generateUsageGuidelines(elements []types.ElementInfo) map[string]interface{} {
-	elementGuidelines := make(map[string]interface{})
-
-	for _, element := range elements {
-		elementGuidelines[element.TagName()] = generateElementUsageGuidelines(element)
-	}
-
-	return map[string]interface{}{
-		"general": map[string]interface{}{
-			"principles": []string{
-				"Use semantic HTML within slots whenever possible",
-				"Provide meaningful content for screen readers",
-				"Ensure keyboard navigation works properly",
-				"Test with various content lengths and types",
-			},
-			"patterns": []string{
-				"Wrap components in semantic containers when needed",
-				"Use proper heading hierarchy",
-				"Provide skip links for complex interfaces",
-				"Implement focus management for interactive components",
-			},
-		},
-		"elements": elementGuidelines,
-		"integration": map[string]interface{}{
-			"frameworks": generateFrameworkGuidelines(),
-			"bundling":   generateBundlingGuidelines(),
-			"imports":    generateImportGuidelines(),
-		},
-	}
-}
-
-// generatePatternGuidelines creates common usage pattern guidelines
-func generatePatternGuidelines(elements []types.ElementInfo) map[string]interface{} {
-	return map[string]interface{}{
-		"layout": map[string]interface{}{
-			"containers": []string{
-				"Use layout components for consistent spacing",
-				"Implement responsive design patterns",
-				"Consider container queries for component-based responsiveness",
-			},
-			"grid": []string{
-				"Use CSS Grid for two-dimensional layouts",
-				"Implement consistent grid systems",
-				"Support both fixed and flexible layouts",
-			},
-			"flexbox": []string{
-				"Use Flexbox for one-dimensional layouts",
-				"Implement consistent alignment patterns",
-				"Support various content distributions",
-			},
-		},
-		"forms":      generateFormPatterns(elements),
-		"navigation": generateNavigationPatterns(elements),
-		"feedback":   generateFeedbackPatterns(elements),
-		"data":       generateDataPatterns(elements),
-	}
-}
-
-// generateAccessibilityGuidelines creates accessibility-focused guidelines
-func generateAccessibilityGuidelines(elements []types.ElementInfo) map[string]interface{} {
-	return map[string]interface{}{
-		"wcag": map[string]interface{}{
-			"level": "AA compliance required",
-			"principles": []string{
+// generateAccessibilityGuidelines creates accessibility guidelines
+func generateAccessibilityGuidelines() AccessibilityGuidelines {
+	return AccessibilityGuidelines{
+		WCAG: WCAGGuidelines{
+			Level: "AA compliance required",
+			Principles: []string{
 				"Perceivable: Provide text alternatives and sufficient contrast",
 				"Operable: Ensure keyboard accessibility and reasonable time limits",
 				"Understandable: Make text readable and predictable",
 				"Robust: Maximize compatibility with assistive technologies",
 			},
 		},
-		"aria": map[string]interface{}{
+		ARIA: map[string]string{
 			"roles":      "Use appropriate ARIA roles for custom semantics",
 			"properties": "Implement ARIA properties for relationships",
 			"states":     "Manage ARIA states for dynamic content",
 			"labels":     "Provide accessible names and descriptions",
 		},
-		"keyboard": map[string]interface{}{
+		Keyboard: map[string]string{
 			"navigation": "Support standard keyboard navigation patterns",
 			"focus":      "Implement visible focus indicators",
 			"shortcuts":  "Provide consistent keyboard shortcuts",
 			"trapping":   "Implement focus trapping for modals",
 		},
-		"testing": []string{
+		Testing: []string{
 			"Test with screen readers (NVDA, JAWS, VoiceOver)",
 			"Verify keyboard-only navigation",
 			"Check color contrast ratios",
@@ -218,22 +280,51 @@ func generateAccessibilityGuidelines(elements []types.ElementInfo) map[string]in
 	}
 }
 
-// generatePerformanceGuidelines creates performance optimization guidelines
-func generatePerformanceGuidelines() map[string]interface{} {
-	return map[string]interface{}{
-		"loading": map[string]interface{}{
+// generateThemingGuidelines creates CSS theming guidelines
+func generateThemingGuidelines(elements []types.ElementInfo) ThemingGuidelines {
+	cssProperties := extractAllCSSProperties(elements)
+
+	return ThemingGuidelines{
+		Tokens: map[string]string{
+			"colors":      "Use semantic color tokens (primary, secondary, etc.)",
+			"typography":  "Implement consistent typography scales",
+			"spacing":     "Use consistent spacing scales",
+			"breakpoints": "Define standard responsive breakpoints",
+		},
+		CustomProperties: map[string]interface{}{
+			"naming":    "Use consistent naming conventions for CSS custom properties",
+			"scoping":   "Scope properties appropriately (global vs component)",
+			"fallbacks": "Provide fallback values for older browsers",
+			"available": cssProperties,
+		},
+		Parts: map[string]string{
+			"usage":     "Use CSS parts for styling internal component structure",
+			"naming":    "Use descriptive names for CSS parts",
+			"stability": "Consider API stability when exposing parts",
+		},
+		States: map[string]string{
+			"custom":      "Use CSS custom states for component state styling",
+			"consistency": "Maintain consistent state naming across components",
+		},
+	}
+}
+
+// generatePerformanceGuidelines creates performance guidelines
+func generatePerformanceGuidelines() PerformanceGuidelines {
+	return PerformanceGuidelines{
+		Loading: map[string]string{
 			"lazy":       "Implement lazy loading for non-critical components",
 			"bundling":   "Bundle related components together",
 			"splitting":  "Use code splitting for large component libraries",
 			"preloading": "Preload critical components",
 		},
-		"rendering": map[string]interface{}{
+		Rendering: map[string]string{
 			"virtualization": "Use virtual scrolling for large lists",
 			"memoization":    "Cache expensive calculations",
 			"batching":       "Batch DOM updates when possible",
 			"animations":     "Use CSS animations and transforms",
 		},
-		"memory": map[string]interface{}{
+		Memory: map[string]string{
 			"cleanup":    "Clean up event listeners and timers",
 			"references": "Avoid memory leaks with proper cleanup",
 			"observers":  "Disconnect observers when not needed",
@@ -241,51 +332,21 @@ func generatePerformanceGuidelines() map[string]interface{} {
 	}
 }
 
-// generateThemingGuidelines creates theming and styling guidelines
-func generateThemingGuidelines(elements []types.ElementInfo) map[string]interface{} {
-	// Extract CSS properties from all elements
-	cssProperties := extractAllCSSProperties(elements)
-
-	return map[string]interface{}{
-		"tokens": map[string]interface{}{
-			"colors":      "Use semantic color tokens (primary, secondary, etc.)",
-			"typography":  "Implement consistent typography scales",
-			"spacing":     "Use consistent spacing scales",
-			"breakpoints": "Define standard responsive breakpoints",
-		},
-		"customProperties": map[string]interface{}{
-			"naming":    "Use consistent naming conventions for CSS custom properties",
-			"scoping":   "Scope properties appropriately (global vs component)",
-			"fallbacks": "Provide fallback values for older browsers",
-			"available": cssProperties,
-		},
-		"parts": map[string]interface{}{
-			"usage":     "Use CSS parts for styling internal component structure",
-			"naming":    "Use descriptive names for CSS parts",
-			"stability": "Consider API stability when exposing parts",
-		},
-		"states": map[string]interface{}{
-			"custom":      "Use CSS custom states for component state styling",
-			"consistency": "Maintain consistent state naming across components",
-		},
-	}
-}
-
-// generateCompositionGuidelines creates component composition guidelines
-func generateCompositionGuidelines(elements []types.ElementInfo) map[string]interface{} {
-	return map[string]interface{}{
-		"slots": map[string]interface{}{
+// generateCompositionGuidelines creates composition guidelines
+func generateCompositionGuidelines() CompositionGuidelines {
+	return CompositionGuidelines{
+		Slots: map[string]string{
 			"design":     "Design flexible slot APIs for maximum reusability",
 			"naming":     "Use descriptive slot names",
 			"defaults":   "Provide sensible default content",
 			"validation": "Consider content validation for slots",
 		},
-		"nesting": map[string]interface{}{
+		Nesting: map[string]string{
 			"hierarchy":   "Maintain semantic hierarchy in nested components",
 			"context":     "Consider how components interact when nested",
 			"performance": "Be mindful of nested component performance",
 		},
-		"communication": map[string]interface{}{
+		Communication: map[string]string{
 			"events":     "Use custom events for component communication",
 			"properties": "Design clear property APIs",
 			"context":    "Consider context providers for shared state",
@@ -293,51 +354,46 @@ func generateCompositionGuidelines(elements []types.ElementInfo) map[string]inte
 	}
 }
 
-// generateAntiPatterns creates guidelines about what to avoid
-func generateAntiPatterns() map[string]interface{} {
-	return map[string]interface{}{
-		"avoid": []string{
-			"Breaking semantic HTML structure",
-			"Ignoring accessibility requirements",
-			"Creating overly complex component APIs",
-			"Mixing presentation and business logic",
-			"Using non-standard naming conventions",
-			"Forgetting keyboard navigation",
-			"Hardcoding styles without theming support",
-			"Creating components that can't be styled",
-			"Ignoring performance implications",
+// generateIntegrationGuidelines creates integration guidelines
+func generateIntegrationGuidelines() IntegrationGuidelines {
+	return IntegrationGuidelines{
+		Frameworks: map[string]string{
+			"vanilla": "Import and use directly in HTML",
+			"lit":     "Use within Lit templates with proper property binding",
+			"react":   "Import and use as JSX elements",
+			"vue":     "Register as custom elements for use in templates",
+			"angular": "Use CUSTOM_ELEMENTS_SCHEMA for custom elements",
 		},
-		"alternatives": map[string]interface{}{
-			"semantics":   "Always use appropriate semantic HTML",
-			"a11y":        "Build accessibility in from the start",
-			"api":         "Keep component APIs simple and focused",
-			"separation":  "Separate concerns clearly",
-			"naming":      "Follow established naming conventions",
-			"keyboard":    "Always consider keyboard users",
-			"theming":     "Support theming and customization",
-			"styling":     "Provide multiple styling options",
-			"performance": "Consider performance from the beginning",
+		Bundling: map[string]string{
+			"strategy":     "Bundle related components together",
+			"splitting":    "Use dynamic imports for lazy loading",
+			"optimization": "Tree-shake unused components",
+		},
+		Imports: map[string]string{
+			"es6":      "Use ES6 import syntax when possible",
+			"cdn":      "Consider CDN imports for simpler projects",
+			"bundling": "Import from package entry points",
 		},
 	}
 }
 
-// generateTestingGuidelines creates component testing guidelines
-func generateTestingGuidelines() map[string]interface{} {
-	return map[string]interface{}{
-		"types": map[string]interface{}{
+// generateTestingGuidelines creates testing guidelines
+func generateTestingGuidelines() TestingGuidelines {
+	return TestingGuidelines{
+		Types: map[string]string{
 			"unit":          "Test individual component functionality",
 			"integration":   "Test component interactions",
 			"accessibility": "Test with accessibility tools",
 			"visual":        "Test visual appearance across browsers",
 			"performance":   "Test loading and runtime performance",
 		},
-		"tools": []string{
+		Tools: []string{
 			"Web Test Runner for unit testing",
 			"Playwright for integration testing",
 			"axe-core for accessibility testing",
 			"Lighthouse for performance testing",
 		},
-		"practices": []string{
+		Practices: []string{
 			"Test component APIs thoroughly",
 			"Include accessibility in all tests",
 			"Test keyboard navigation",
@@ -347,7 +403,221 @@ func generateTestingGuidelines() map[string]interface{} {
 	}
 }
 
-// Helper functions for generating specific guidelines
+// generateAntiPatterns creates anti-pattern guidelines
+func generateAntiPatterns() []string {
+	return []string{
+		"Breaking semantic HTML structure",
+		"Ignoring accessibility requirements",
+		"Creating overly complex component APIs",
+		"Mixing presentation and business logic",
+		"Using non-standard naming conventions",
+		"Forgetting keyboard navigation",
+		"Hardcoding styles without theming support",
+		"Creating components that can't be styled",
+		"Ignoring performance implications",
+	}
+}
+
+// generateBestPractices creates best practice guidelines
+func generateBestPractices() []string {
+	return []string{
+		"Always use appropriate semantic HTML",
+		"Build accessibility in from the start",
+		"Keep component APIs simple and focused",
+		"Separate concerns clearly",
+		"Follow established naming conventions",
+		"Always consider keyboard users",
+		"Support theming and customization",
+		"Provide multiple styling options",
+		"Consider performance from the beginning",
+	}
+}
+
+// generateFrameworkGuidelines creates framework integration guidelines
+func generateFrameworkGuidelines() map[string]string {
+	return map[string]string{
+		"vanilla": "Import and use directly in HTML",
+		"lit":     "Use within Lit templates with proper property binding",
+		"react":   "Import and use as JSX elements",
+		"vue":     "Register as custom elements for use in templates",
+		"angular": "Use CUSTOM_ELEMENTS_SCHEMA for custom elements",
+	}
+}
+
+// generateLayoutPatterns creates layout pattern guidelines
+func generateLayoutPatterns() LayoutPatterns {
+	return LayoutPatterns{
+		Containers: []string{
+			"Use layout components for consistent spacing",
+			"Implement responsive design patterns",
+			"Consider container queries for component-based responsiveness",
+		},
+		Grid: []string{
+			"Use CSS Grid for two-dimensional layouts",
+			"Implement consistent grid systems",
+			"Support both fixed and flexible layouts",
+		},
+		Flexbox: []string{
+			"Use Flexbox for one-dimensional layouts",
+			"Implement consistent alignment patterns",
+			"Support various content distributions",
+		},
+	}
+}
+
+// generateDataPatterns creates data pattern guidelines
+func generateDataPatterns() DataPatterns {
+	return DataPatterns{
+		Display: []string{
+			"Use appropriate components for data types",
+			"Implement consistent formatting",
+			"Support different data densities",
+		},
+		Interaction: []string{
+			"Provide sorting and filtering options",
+			"Implement pagination for large datasets",
+			"Support data export when appropriate",
+		},
+	}
+}
+
+// generateFormPatterns creates form pattern guidelines
+func generateFormPatterns() FormPatterns {
+	return FormPatterns{
+		Validation: []string{
+			"Provide real-time validation feedback",
+			"Use appropriate input types",
+			"Include clear error messages",
+		},
+		Labeling: []string{
+			"Associate labels with form controls",
+			"Use placeholder text appropriately",
+			"Provide help text when needed",
+		},
+		Grouping: []string{
+			"Group related form fields",
+			"Use fieldsets for complex forms",
+			"Implement logical tab order",
+		},
+	}
+}
+
+// generateNavigationPatterns creates navigation pattern guidelines
+func generateNavigationPatterns() NavigationPatterns {
+	return NavigationPatterns{
+		Structure: []string{
+			"Use consistent navigation patterns",
+			"Implement breadcrumbs for deep navigation",
+			"Provide clear navigation hierarchy",
+		},
+		Interaction: []string{
+			"Support keyboard navigation",
+			"Indicate current location",
+			"Use appropriate focus management",
+		},
+	}
+}
+
+// generateFeedbackPatterns creates feedback pattern guidelines
+func generateFeedbackPatterns() FeedbackPatterns {
+	return FeedbackPatterns{
+		Types: []string{
+			"Success messages for completed actions",
+			"Error messages for failed actions",
+			"Warning messages for important information",
+			"Info messages for general guidance",
+		},
+		Delivery: []string{
+			"Use appropriate timing for messages",
+			"Provide multiple ways to access feedback",
+			"Ensure messages are accessible",
+		},
+	}
+}
+
+// generatePatternsByCategory creates categorized patterns
+func generatePatternsByCategory() map[string][]string {
+	return map[string][]string{
+		"semantic": {
+			"Use appropriate semantic elements",
+			"Maintain document outline hierarchy",
+			"Provide meaningful content structure",
+		},
+		"interactive": {
+			"Ensure keyboard accessibility",
+			"Provide clear focus indicators",
+			"Support assistive technologies",
+		},
+		"layout": {
+			"Use consistent spacing patterns",
+			"Implement responsive design",
+			"Consider container queries",
+		},
+	}
+}
+
+// generateProgressiveEnhancement creates progressive enhancement guidelines
+func generateProgressiveEnhancement() []string {
+	return []string{
+		"Ensure functionality works without JavaScript",
+		"Provide fallback content for custom elements",
+		"Layer enhancements progressively",
+		"Test with various levels of support",
+	}
+}
+
+// generateErrorHandlingPatterns creates error handling guidelines
+func generateErrorHandlingPatterns() []string {
+	return []string{
+		"Provide clear error messages",
+		"Implement graceful degradation",
+		"Handle network failures appropriately",
+		"Log errors for debugging purposes",
+	}
+}
+
+// generateSecurityGuidelines creates security guidelines
+func generateSecurityGuidelines() []string {
+	return []string{
+		"Sanitize user input appropriately",
+		"Validate data before processing",
+		"Follow secure coding practices",
+		"Consider XSS prevention measures",
+	}
+}
+
+// generateColorGuidelines creates color guidelines
+func generateColorGuidelines() map[string]string {
+	return map[string]string{
+		"contrast":    "Ensure sufficient color contrast (4.5:1 for normal text)",
+		"independence": "Don't rely on color alone to convey information",
+		"theming":     "Support light and dark themes",
+		"accessibility": "Consider color blindness and visual impairments",
+	}
+}
+
+// generateResponsiveGuidelines creates responsive design guidelines
+func generateResponsiveGuidelines() map[string]string {
+	return map[string]string{
+		"mobile":     "Design mobile-first responsive layouts",
+		"breakpoints": "Use consistent breakpoint systems",
+		"containers": "Consider container queries for components",
+		"flexibility": "Design for various screen sizes and orientations",
+	}
+}
+
+// generateCSSBestPractices creates CSS best practices
+func generateCSSBestPractices() []string {
+	return []string{
+		"Use CSS custom properties for theming",
+		"Implement consistent naming conventions",
+		"Minimize specificity conflicts",
+		"Use logical properties for internationalization",
+		"Consider CSS containment for performance",
+	}
+}
+
+// Helper functions that are still needed
 
 func extractCommonPrefixes(elements []types.ElementInfo) []string {
 	prefixCount := make(map[string]int)
@@ -390,47 +660,6 @@ func generateNamingExamples(prefixes []string) []string {
 	return examples
 }
 
-func generateElementUsageGuidelines(element types.ElementInfo) map[string]interface{} {
-	guidelines := map[string]interface{}{
-		"description": element.Description(),
-		"attributes":  generateAttributeGuidelines(element.Attributes()),
-		"slots":       generateSlotUsageGuidelines(element.Slots()),
-		"examples":    generateUsageExamples(element),
-	}
-
-	return guidelines
-}
-
-func generateAttributeGuidelines(attributes []types.Attribute) []map[string]interface{} {
-	guidelines := make([]map[string]interface{}, len(attributes))
-
-	for i, attr := range attributes {
-		guidelines[i] = map[string]interface{}{
-			"name":        attr.Name(),
-			"description": attr.Description(),
-			"type":        attr.Type(),
-			"required":    attr.Required(),
-			"guidance":    generateAttributeSpecificGuidance(attr),
-		}
-	}
-
-	return guidelines
-}
-
-func generateSlotUsageGuidelines(slots []types.Slot) []map[string]interface{} {
-	guidelines := make([]map[string]interface{}, len(slots))
-
-	for i, slot := range slots {
-		guidelines[i] = map[string]interface{}{
-			"name":        slot.Name(),
-			"description": slot.Description(),
-			"guidance":    generateSlotSpecificGuidance(slot),
-		}
-	}
-
-	return guidelines
-}
-
 func generateUsageExamples(element types.ElementInfo) []string {
 	tagName := element.TagName()
 
@@ -461,127 +690,6 @@ func generateUsageExamples(element types.ElementInfo) []string {
 	}
 
 	return examples
-}
-
-func generateAttributeSpecificGuidance(attr types.Attribute) []string {
-	guidance := []string{}
-
-	if attr.Required() {
-		guidance = append(guidance, "This attribute is required")
-	}
-
-	if attr.Default() != "" {
-		guidance = append(guidance, fmt.Sprintf("Default value: %s", attr.Default()))
-	}
-
-	// Add type-specific guidance
-	attrType := strings.ToLower(attr.Type())
-	if strings.Contains(attrType, "boolean") {
-		guidance = append(guidance, "Use as a boolean attribute (present = true, absent = false)")
-	}
-
-	return guidance
-}
-
-func generateSlotSpecificGuidance(slot types.Slot) []string {
-	guidance := []string{
-		"Use semantic HTML elements when possible",
-		"Consider accessibility when adding content",
-	}
-
-	return guidance
-}
-
-func generateFormPatterns(elements []types.ElementInfo) map[string]interface{} {
-	return map[string]interface{}{
-		"validation": []string{
-			"Provide real-time validation feedback",
-			"Use appropriate input types",
-			"Include clear error messages",
-		},
-		"labeling": []string{
-			"Associate labels with form controls",
-			"Use placeholder text appropriately",
-			"Provide help text when needed",
-		},
-		"grouping": []string{
-			"Group related form fields",
-			"Use fieldsets for complex forms",
-			"Implement logical tab order",
-		},
-	}
-}
-
-func generateNavigationPatterns(elements []types.ElementInfo) map[string]interface{} {
-	return map[string]interface{}{
-		"structure": []string{
-			"Use consistent navigation patterns",
-			"Implement breadcrumbs for deep navigation",
-			"Provide clear navigation hierarchy",
-		},
-		"interaction": []string{
-			"Support keyboard navigation",
-			"Indicate current location",
-			"Use appropriate focus management",
-		},
-	}
-}
-
-func generateFeedbackPatterns(elements []types.ElementInfo) map[string]interface{} {
-	return map[string]interface{}{
-		"types": []string{
-			"Success messages for completed actions",
-			"Error messages for failed actions",
-			"Warning messages for important information",
-			"Info messages for general guidance",
-		},
-		"delivery": []string{
-			"Use appropriate timing for messages",
-			"Provide multiple ways to access feedback",
-			"Ensure messages are accessible",
-		},
-	}
-}
-
-func generateDataPatterns(elements []types.ElementInfo) map[string]interface{} {
-	return map[string]interface{}{
-		"display": []string{
-			"Use appropriate components for data types",
-			"Implement consistent formatting",
-			"Support different data densities",
-		},
-		"interaction": []string{
-			"Provide sorting and filtering options",
-			"Implement pagination for large datasets",
-			"Support data export when appropriate",
-		},
-	}
-}
-
-func generateFrameworkGuidelines() map[string]interface{} {
-	return map[string]interface{}{
-		"vanilla": "Import and use directly in HTML",
-		"lit":     "Use within Lit templates with proper property binding",
-		"react":   "Import and use as JSX elements",
-		"vue":     "Register as custom elements for use in templates",
-		"angular": "Use CUSTOM_ELEMENTS_SCHEMA for custom elements",
-	}
-}
-
-func generateBundlingGuidelines() map[string]interface{} {
-	return map[string]interface{}{
-		"strategy":     "Bundle related components together",
-		"splitting":    "Use dynamic imports for lazy loading",
-		"optimization": "Tree-shake unused components",
-	}
-}
-
-func generateImportGuidelines() map[string]interface{} {
-	return map[string]interface{}{
-		"es6":      "Use ES6 import syntax when possible",
-		"cdn":      "Consider CDN imports for simpler projects",
-		"bundling": "Import from package entry points",
-	}
 }
 
 func extractAllCSSProperties(elements []types.ElementInfo) []string {

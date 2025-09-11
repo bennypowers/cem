@@ -147,6 +147,7 @@ type ElementUsage struct {
 	Issues []string
 }
 
+
 // NewTemplateData creates template data from element info and args
 func NewTemplateData(element types.ElementInfo, args SuggestCssIntegrationArgs) TemplateData {
 	return TemplateData{
@@ -452,6 +453,7 @@ func renderValidationTemplate(templateName string, data HTMLValidationData) (str
 
 	return buf.String(), nil
 }
+
 
 // getTemplatesDir returns the directory containing template files
 func getTemplatesDir() string {
