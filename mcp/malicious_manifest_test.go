@@ -61,7 +61,11 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 	// Create a temporary directory for our test
 	tempDir, err := os.MkdirTemp("", "mcp_security_test")
 	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
+	defer func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Logf("Failed to remove temp dir: %v", err)
+		}
+	}()
 
 	// Create a malicious manifest
 	maliciousManifest := map[string]interface{}{
@@ -336,7 +340,7 @@ func TestTemplateRenderingWithMaliciousData(t *testing.T) {
 					if data, ok := tc.data.(tools.HTMLValidationData); ok {
 						if len(data.FoundElements) > 0 {
 							element := data.FoundElements[0]
-							desc := element.ElementInfo.Description()
+							desc := element.Description()
 							if strings.Contains(desc, "<script>") {
 								assert.Contains(t, result, "&lt;script&gt;", "HTML should be escaped")
 							}
