@@ -21,13 +21,11 @@ import (
 	"fmt"
 	"strings"
 
+	"bennypowers.dev/cem/mcp/helpers"
 	"bennypowers.dev/cem/mcp/types"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 )
 
-var titleCase = cases.Title(language.English)
 
 // handleElementResource provides detailed information about a specific custom element
 func handleElementResource(
@@ -568,7 +566,7 @@ func generateEventExamples(event types.Event) []string {
 
 	examples := []string{
 		fmt.Sprintf(`element.addEventListener('%s', (e) => {\n  console.log('Event details:', e.detail);\n});`, eventName),
-		fmt.Sprintf(`<my-element on%s="handleEvent(event)"></my-element>`, titleCase.String(eventName)),
+		fmt.Sprintf(`<my-element on%s="handleEvent(event)"></my-element>`, helpers.TitleCaser.String(eventName)),
 	}
 
 	return examples

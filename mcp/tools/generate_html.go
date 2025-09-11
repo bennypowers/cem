@@ -21,13 +21,11 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"bennypowers.dev/cem/mcp/helpers"
 	"bennypowers.dev/cem/mcp/types"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 )
 
-var titleCase = cases.Title(language.English)
 
 // GenerateHtmlArgs represents the arguments for the generate_html tool
 type GenerateHtmlArgs struct {
@@ -145,7 +143,7 @@ func generateHTMLStructure(element types.ElementInfo, args GenerateHtmlArgs) (st
 				defaultContent = "Default content"
 			}
 		} else {
-			exampleContent = titleCase.String(slotName) + " content"
+			exampleContent = helpers.TitleCaser.String(slotName) + " content"
 		}
 
 		templateData.Slots = append(templateData.Slots, SlotWithContent{

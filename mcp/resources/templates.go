@@ -24,6 +24,7 @@ import (
 	"strings"
 	"text/template"
 
+	"bennypowers.dev/cem/mcp/helpers"
 	"bennypowers.dev/cem/mcp/types"
 )
 
@@ -189,7 +190,7 @@ func renderGuidelinesTemplate(templateName string, data GuidelinesData) (string,
 	// Create template with helper functions
 	tmpl := template.New(templateName).Funcs(template.FuncMap{
 		"title": func(str string) string {
-			return titleCase.String(str)
+			return helpers.TitleCaser.String(str)
 		},
 		"len": func(slice any) int {
 			switch s := slice.(type) {

@@ -25,11 +25,13 @@ import (
 	"strings"
 	"text/template"
 
+	"bennypowers.dev/cem/mcp/helpers"
 	"bennypowers.dev/cem/mcp/types"
 )
 
 //go:embed templates/*.md
 var templateFiles embed.FS
+
 
 // TemplateData represents the data passed to templates
 type TemplateData struct {
@@ -180,7 +182,7 @@ func NewSingleAttributeData(attr types.Attribute, tagName, context string) Attri
 func renderTemplate(templateName string, data TemplateData) (string, error) {
 	// Create template with helper functions
 	tmpl := template.New(templateName).Funcs(template.FuncMap{
-		"title": strings.Title,
+		"title": helpers.TitleCaser.String,
 		"len": func(slice interface{}) int {
 			switch s := slice.(type) {
 			case []types.CssProperty:
@@ -240,7 +242,7 @@ func renderTemplate(templateName string, data TemplateData) (string, error) {
 func renderAttributeTemplate(templateName string, data AttributeTemplateData) (string, error) {
 	// Create template with helper functions
 	tmpl := template.New(templateName).Funcs(template.FuncMap{
-		"title": strings.Title,
+		"title": helpers.TitleCaser.String,
 		"len": func(slice interface{}) int {
 			switch s := slice.(type) {
 			case []string:
@@ -283,7 +285,7 @@ func renderAttributeTemplate(templateName string, data AttributeTemplateData) (s
 func renderHTMLTemplate(templateName string, data HTMLGenerationData) (string, error) {
 	// Create template with helper functions
 	tmpl := template.New(templateName).Funcs(template.FuncMap{
-		"title": strings.Title,
+		"title": helpers.TitleCaser.String,
 		"len": func(slice interface{}) int {
 			switch s := slice.(type) {
 			case []types.Attribute:
@@ -338,7 +340,7 @@ func renderHTMLTemplate(templateName string, data HTMLGenerationData) (string, e
 func renderValidationTemplate(templateName string, data HTMLValidationData) (string, error) {
 	// Create template with helper functions
 	tmpl := template.New(templateName).Funcs(template.FuncMap{
-		"title": strings.Title,
+		"title": helpers.TitleCaser.String,
 		"len": func(slice interface{}) int {
 			switch s := slice.(type) {
 			case []types.Attribute:
