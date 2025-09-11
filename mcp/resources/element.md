@@ -1,7 +1,7 @@
 ---
 uri: cem://element/{tagName}
 name: element
-mimeType: application/json
+mimeType: text/markdown
 uriTemplate: true
 ---
 

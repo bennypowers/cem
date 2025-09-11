@@ -27,6 +27,7 @@ import (
 	M "bennypowers.dev/cem/manifest"
 	MCPTypes "bennypowers.dev/cem/mcp/types"
 	"bennypowers.dev/cem/types"
+	V "bennypowers.dev/cem/validate"
 )
 
 // Registry manages custom elements manifests for MCP context
@@ -596,24 +597,28 @@ func (r *Registry) GetAllElements() map[string]*ElementInfo {
 
 // GetManifestSchema returns the JSON schema for custom elements manifests
 func (r *Registry) GetManifestSchema() (map[string]interface{}, error) {
-	// This would include the custom elements manifest JSON schema
-	// For now, return a basic structure
-	schema := map[string]interface{}{
-		"$schema":     "http://json-schema.org/draft-07/schema#",
-		"title":       "Custom Elements Manifest",
-		"description": "A JSON schema for custom elements manifest files",
-		"type":        "object",
-		"properties": map[string]interface{}{
-			"schemaVersion": map[string]interface{}{
-				"type":        "string",
-				"description": "The version of the custom elements manifest schema",
-			},
-			"modules": map[string]interface{}{
-				"type":        "array",
-				"description": "Array of module definitions",
-			},
-		},
-		"required": []string{"schemaVersion", "modules"},
+	// Use the same schema detection and retrieval logic as the schema resource
+	versions := r.GetManifestSchemaVersions()
+	
+	// If no manifests found, use latest stable version as fallback
+	schemaVersion := "2.1.1-speculative"
+	if len(versions) == 1 {
+		schemaVersion = versions[0]
+	} else if len(versions) > 1 {
+		// Multiple versions: prefer the highest version, with speculative versions favored
+		schemaVersion = r.selectBestSchemaVersion(versions)
+	}
+
+	// Get the actual JSON schema using the same method as the validate command and schema resource
+	schemaData, err := V.GetSchema(schemaVersion)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load schema: %w", err)
+	}
+
+	// Parse the JSON schema data into a map for return
+	var schema map[string]interface{}
+	if err := json.Unmarshal(schemaData, &schema); err != nil {
+		return nil, fmt.Errorf("failed to parse schema JSON: %w", err)
 	}
 
 	return schema, nil
@@ -644,52 +649,84 @@ func (r *Registry) GetManifestSchemaVersions() []string {
 	return versions
 }
 
+// selectBestSchemaVersion chooses the best schema version from multiple options
+func (r *Registry) selectBestSchemaVersion(versions []string) string {
+	// Fallback if empty
+	if len(versions) == 0 {
+		return "2.1.1-speculative"
+	}
+
+	// Simple heuristic: prefer speculative versions, then highest semantic version
+	var best string
+	var hasSpeculative bool
+
+	for _, version := range versions {
+		if version == "" {
+			continue
+		}
+
+		// Always prefer speculative versions as they are most complete
+		if strings.Contains(version, "speculative") {
+			if !hasSpeculative || version > best {
+				best = version
+				hasSpeculative = true
+			}
+		} else if !hasSpeculative {
+			// Among non-speculative versions, take the highest
+			if best == "" || version > best {
+				best = version
+			}
+		}
+	}
+
+	// If no valid version found, use fallback
+	if best == "" {
+		return "2.1.1-speculative"
+	}
+
+	return best
+}
+
 // Helper methods for converting LSP types to MCP types
 
 // convertElement converts a manifest element to enhanced MCP format using the new interface-based design
 func (r *Registry) convertElement(element *M.CustomElement, tagName string) *ElementInfo {
 	var items []Item
 
-	// Convert attributes
+	// Convert attributes (examples now provided via template-driven resources)
 	for _, attr := range element.Attributes {
 		guidelines := r.extractGuidelines(attr.Description)
-		examples := r.generateAttributeExamples(attr)
-		items = append(items, NewAttributeItem(attr, guidelines, examples))
+		items = append(items, NewAttributeItem(attr, guidelines, []string{}))
 	}
 
-	// Convert slots
+	// Convert slots (examples now provided via template-driven resources)
 	for _, slot := range element.Slots {
 		guidelines := r.extractGuidelines(slot.Description)
-		examples := r.generateSlotExamples(slot)
-		items = append(items, NewSlotItem(slot, guidelines, examples))
+		items = append(items, NewSlotItem(slot, guidelines, []string{}))
 	}
 
-	// Convert events
+	// Convert events (examples now provided via template-driven resources)
 	for _, event := range element.Events {
 		guidelines := r.extractGuidelines(event.Description)
-		examples := r.generateEventExamples(event)
-		items = append(items, NewEventItem(event, guidelines, examples))
+		items = append(items, NewEventItem(event, guidelines, []string{}))
 	}
 
-	// Convert CSS properties
+	// Convert CSS properties (examples now provided via template-driven resources)
 	for _, prop := range element.CssProperties {
 		guidelines := r.extractGuidelines(prop.Description)
-		examples := r.generateCssPropertyExamples(prop)
-		items = append(items, NewCssPropertyItem(prop, guidelines, examples))
+		items = append(items, NewCssPropertyItem(prop, guidelines, []string{}))
 	}
 
-	// Convert CSS parts
+	// Convert CSS parts (examples now provided via template-driven resources)
 	for _, part := range element.CssParts {
 		guidelines := r.extractGuidelines(part.Description)
-		examples := r.generateCssPartExamples(part)
-		items = append(items, NewCssPartItem(part, guidelines, examples))
+		items = append(items, NewCssPartItem(part, guidelines, []string{}))
 	}
 
-	// Convert CSS states
+	// Convert CSS states (examples now provided via template-driven resources)
 	for _, state := range element.CssStates {
 		guidelines := r.extractGuidelines(state.Description)
-		examples := r.generateCssStateExamples(state)
-		items = append(items, NewCssStateItem(state, guidelines, examples))
+		items = append(items, NewCssStateItem(state, guidelines, []string{}))
 	}
 
 	return &ElementInfo{
@@ -700,7 +737,7 @@ func (r *Registry) convertElement(element *M.CustomElement, tagName string) *Ele
 		Package:     "",      // Would need package name from element definitions
 		Items:       items,
 		Guidelines:  r.extractGuidelinesFromElement(element),
-		Examples:    r.generateExamples(tagName, element),
+		Examples:    []ExampleInfo{}, // Examples now provided via template-driven resources
 		Metadata:    make(map[string]interface{}),
 	}
 }
@@ -743,105 +780,12 @@ func (r *Registry) extractTextGuidelines(text string) []string {
 	return guidelines
 }
 
-func (r *Registry) generateExamples(tagName string, element *M.CustomElement) []ExampleInfo {
-	var examples []ExampleInfo
 
-	// Generate basic HTML example
-	htmlExample := fmt.Sprintf("<%s></%s>", tagName, tagName)
-	examples = append(examples, ExampleInfo{
-		Title:    "Basic Usage",
-		Code:     htmlExample,
-		Language: "html",
-	})
 
-	// Generate example with attributes if available
-	if len(element.Attributes) > 0 {
-		var attrs []string
-		for _, attr := range element.Attributes {
-			if attr.Default != "" {
-				attrs = append(attrs, fmt.Sprintf(`%s="%s"`, attr.Name, attr.Default))
-			}
-		}
-		if len(attrs) > 0 {
-			attrExample := fmt.Sprintf("<%s %s></%s>", tagName, strings.Join(attrs, " "), tagName)
-			examples = append(examples, ExampleInfo{
-				Title:    "With Attributes",
-				Code:     attrExample,
-				Language: "html",
-			})
-		}
-	}
 
-	return examples
-}
 
-func (r *Registry) generateAttributeExamples(attr M.Attribute) []string {
-	var examples []string
 
-	if attr.Default != "" {
-		examples = append(examples, attr.Default)
-	}
 
-	// Add type-specific examples
-	if attr.Type != nil {
-		switch strings.ToLower(attr.Type.Text) {
-		case "boolean":
-			examples = append(examples, "true", "false")
-		case "number":
-			examples = append(examples, "1", "0", "100")
-		}
-	}
-
-	return examples
-}
-
-func (r *Registry) generateSlotExamples(slot M.Slot) []string {
-	var examples []string
-
-	if slot.Name == "" {
-		examples = append(examples, "<p>Default slot content</p>")
-	} else {
-		examples = append(examples, fmt.Sprintf(`<span slot="%s">Content for %s slot</span>`, slot.Name, slot.Name))
-	}
-
-	return examples
-}
-
-func (r *Registry) generateEventExamples(event M.Event) []string {
-	var examples []string
-
-	examples = append(examples, fmt.Sprintf(`element.addEventListener('%s', (e) => { console.log(e.detail); });`, event.Name))
-
-	return examples
-}
-
-func (r *Registry) generateCssPartExamples(part M.CssPart) []string {
-	var examples []string
-
-	examples = append(examples, fmt.Sprintf(`my-element::%s { color: red; }`, part.Name))
-
-	return examples
-}
-
-func (r *Registry) generateCssPropertyExamples(prop M.CssCustomProperty) []string {
-	var examples []string
-
-	if prop.Default != "" {
-		examples = append(examples, fmt.Sprintf(`%s: %s;`, prop.Name, prop.Default))
-	} else {
-		examples = append(examples, fmt.Sprintf(`%s: value;`, prop.Name))
-	}
-
-	return examples
-}
-
-func (r *Registry) generateCssStateExamples(state M.CssCustomState) []string {
-	var examples []string
-
-	examples = append(examples, fmt.Sprintf(`my-element:%s { opacity: 0.5; }`, state.Name))
-
-	return examples
-}
 
 // RegistryAdapter implements MCPTypes.Registry interface for tools package
 type RegistryAdapter struct {
