@@ -46,89 +46,92 @@ func handleValidateHtml(ctx context.Context, req *mcp.CallToolRequest, registry 
 		}
 	}
 
-	var results strings.Builder
-	results.WriteString("# HTML Validation Results\n\n")
+	// Prepare validation data
+	validationData := collectValidationData(validateArgs, registry)
 
-	// Basic HTML structure analysis
-	html := validateArgs.Html
-
-	// Check for custom elements in the HTML
-	elements := registry.AllElements()
-	var foundElements []string
-
-	for tagName := range elements {
-		// Look for the custom element in the HTML
-		if strings.Contains(html, "<"+tagName) || strings.Contains(html, "</"+tagName) {
-			foundElements = append(foundElements, tagName)
-		}
-	}
-
-	if len(foundElements) > 0 {
-		results.WriteString("## Custom Elements Found\n\n")
-		for _, tagName := range foundElements {
-			element, _ := registry.ElementInfo(tagName)
-			results.WriteString(fmt.Sprintf("- `%s`: %s\n", tagName, element.Description()))
-		}
-		results.WriteString("\n")
-	}
-
-	// Perform validation based on context
-	switch strings.ToLower(validateArgs.Context) {
-	case "semantic":
-		results.WriteString(validateSemanticStructure(html))
-	case "manifest-compliance":
-		results.WriteString(validateManifestCompliance(html, elements))
-	default:
-		// Focus on manifest compliance and semantic structure
-		results.WriteString(validateManifestCompliance(html, elements))
-		results.WriteString(validateSemanticStructure(html))
-	}
-
-	// If specific tagName is provided, focus validation on that element
-	if validateArgs.TagName != "" {
-		if element, err := registry.ElementInfo(validateArgs.TagName); err == nil {
-			results.WriteString(validateSpecificElement(html, validateArgs.TagName, element))
-		} else {
-			results.WriteString(fmt.Sprintf("## Element-Specific Validation\n\n❌ Element '%s' not found in registry\n\n", validateArgs.TagName))
-		}
+	// Render validation results using template
+	response, err := renderValidationTemplate("html_validation_results", validationData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to render validation template: %w", err)
 	}
 
 	return &mcp.CallToolResult{
 		Content: []mcp.Content{
 			&mcp.TextContent{
-				Text: results.String(),
+				Text: response,
 			},
 		},
 	}, nil
 }
 
-// validateManifestCompliance checks custom element usage against manifest guidelines only
-func validateManifestCompliance(html string, elements map[string]types.ElementInfo) string {
-	var results strings.Builder
-	results.WriteString("## Manifest Compliance Validation\n\n")
+// collectValidationData gathers all validation information into structured data
+func collectValidationData(args ValidateHtmlArgs, registry types.Registry) HTMLValidationData {
+	html := args.Html
+	elements := registry.AllElements()
+	
+	validationData := HTMLValidationData{
+		Html:    html,
+		Context: args.Context,
+	}
 
-	var issues []string
-	var notes []string
+	// Find custom elements in HTML
+	for tagName, element := range elements {
+		if strings.Contains(html, "<"+tagName) || strings.Contains(html, "</"+tagName) {
+			validationData.FoundElements = append(validationData.FoundElements, ElementWithIssues{
+				ElementInfo: element,
+				UsageCount:  strings.Count(html, "<"+tagName),
+			})
+		}
+	}
 
-	// Focus only on custom elements and their manifest-defined requirements
+	// Collect manifest compliance issues
+	validationData.ManifestIssues, validationData.ManifestFeatures = collectManifestValidation(html, elements)
+
+	// Collect semantic structure issues
+	validationData.SemanticIssues, validationData.SemanticSuggestions = collectSemanticValidation(html)
+
+	// Handle specific element validation
+	if args.TagName != "" {
+		if element, err := registry.ElementInfo(args.TagName); err == nil {
+			validationData.SpecificElement = collectSpecificElementValidation(html, args.TagName, element)
+		} else {
+			validationData.SpecificElement = &ElementValidationResult{
+				TagName:      args.TagName,
+				ElementFound: false,
+			}
+		}
+	}
+
+	return validationData
+}
+
+// collectManifestValidation checks custom element usage against manifests
+func collectManifestValidation(html string, elements map[string]types.ElementInfo) ([]ValidationIssue, []ValidationFeature) {
+	var issues []ValidationIssue
+	var features []ValidationFeature
+
 	for tagName, element := range elements {
 		if strings.Contains(html, "<"+tagName) {
-			// Extract the element usage from HTML
+			// Extract element usages
 			elementRegex := regexp.MustCompile(`<` + regexp.QuoteMeta(tagName) + `[^>]*>`)
 			usages := elementRegex.FindAllString(html, -1)
 
 			for _, usage := range usages {
-				// Check required attributes per manifest
+				// Check required attributes
 				for _, attr := range element.Attributes() {
 					if attr.Required() && !strings.Contains(usage, attr.Name()+"=") {
-						issues = append(issues, fmt.Sprintf("Required attribute '%s' missing in <%s>", attr.Name(), tagName))
+						issues = append(issues, ValidationIssue{
+							Type:      "missing-attribute",
+							Element:   tagName,
+							Attribute: attr.Name(),
+							Priority:  "error",
+						})
 					}
 				}
 
-				// Check for proper attribute values per manifest constraints
+				// Check attribute values
 				for _, attr := range element.Attributes() {
 					if strings.Contains(usage, attr.Name()+"=") && len(attr.Values()) > 0 {
-						// Extract attribute value
 						attrRegex := regexp.MustCompile(attr.Name() + `=["']([^"']+)["']`)
 						matches := attrRegex.FindStringSubmatch(usage)
 						if len(matches) > 1 {
@@ -142,61 +145,64 @@ func validateManifestCompliance(html string, elements map[string]types.ElementIn
 								}
 							}
 							if !isValid {
-								issues = append(issues, fmt.Sprintf("Invalid value '%s' for attribute '%s' in <%s>. Valid values: %s",
-									value, attr.Name(), tagName, strings.Join(validValues, ", ")))
+								issues = append(issues, ValidationIssue{
+									Type:      "invalid-value",
+									Element:   tagName,
+									Attribute: attr.Name(),
+									Actual:    value,
+									Expected:  strings.Join(validValues, ", "),
+									Priority:  "error",
+								})
 							}
 						}
 					}
 				}
 			}
 
-			// Note available features for guidance
+			// Collect available features for guidance
 			if len(element.Slots()) > 0 {
-				notes = append(notes, fmt.Sprintf("<%s> supports slots: %s", tagName, getSlotNames(element.Slots())))
+				features = append(features, ValidationFeature{
+					Type:    "slots",
+					Element: tagName,
+					Details: getSlotNames(element.Slots()),
+				})
 			}
 
-			// Note manifest guidelines if available
 			if len(element.Guidelines()) > 0 {
-				notes = append(notes, fmt.Sprintf("<%s> guidelines: %s", tagName, strings.Join(element.Guidelines(), "; ")))
+				features = append(features, ValidationFeature{
+					Type:    "guidelines",
+					Element: tagName,
+					Details: strings.Join(element.Guidelines(), "; "),
+				})
+			}
+
+			cssCount := len(element.CssProperties()) + len(element.CssParts()) + len(element.CssStates())
+			if cssCount > 0 {
+				features = append(features, ValidationFeature{
+					Type:    "css-apis",
+					Element: tagName,
+					Details: fmt.Sprintf("%d", cssCount),
+				})
 			}
 		}
 	}
 
-	// Report results
-	if len(issues) > 0 {
-		results.WriteString("### ❌ Manifest Compliance Issues\n\n")
-		for _, issue := range issues {
-			results.WriteString(fmt.Sprintf("- %s\n", issue))
-		}
-		results.WriteString("\n")
-	} else {
-		results.WriteString("### ✅ No Manifest Compliance Issues Found\n\n")
-	}
-
-	if len(notes) > 0 {
-		results.WriteString("### 💡 Manifest-Defined Features\n\n")
-		for _, note := range notes {
-			results.WriteString(fmt.Sprintf("- %s\n", note))
-		}
-		results.WriteString("\n")
-	}
-
-	return results.String()
+	return issues, features
 }
 
-// validateSemanticStructure checks for proper semantic HTML usage
-func validateSemanticStructure(html string) string {
-	var results strings.Builder
-	results.WriteString("## Semantic Structure Validation\n\n")
+// collectSemanticValidation analyzes HTML for semantic structure
+func collectSemanticValidation(html string) ([]ValidationIssue, []ValidationSuggestion) {
+	var issues []ValidationIssue
+	var suggestions []ValidationSuggestion
 
-	var issues []string
-	var suggestions []string
-
-	// Check for proper document structure
+	// Check document structure
 	hasMain := strings.Contains(html, "<main")
-
 	if !hasMain {
-		issues = append(issues, "Consider using <main> element for primary content")
+		issues = append(issues, ValidationIssue{
+			Type:     "semantic-issue",
+			Message:  "Consider using <main> element for primary content",
+			Priority: "warning",
+		})
 	}
 
 	// Check for div abuse
@@ -205,92 +211,57 @@ func validateSemanticStructure(html string) string {
 	articleCount := strings.Count(html, "<article")
 
 	if divCount > 5 && (sectionCount+articleCount) == 0 {
-		suggestions = append(suggestions, "Consider using semantic elements like <section> or <article> instead of multiple <div> elements")
+		suggestions = append(suggestions, ValidationSuggestion{
+			Type:     "semantic-elements",
+			Priority: "suggestion",
+			Message:  "Consider using semantic elements like <section> or <article> instead of multiple <div> elements",
+		})
 	}
 
-	// Check for proper list usage
+	// Check list usage
 	if strings.Contains(html, "•") || strings.Contains(html, "1.") || strings.Contains(html, "-") {
 		if !strings.Contains(html, "<ul") && !strings.Contains(html, "<ol") {
-			suggestions = append(suggestions, "Consider using proper list elements (<ul> or <ol>) for list content")
+			suggestions = append(suggestions, ValidationSuggestion{
+				Type:     "list-structure",
+				Priority: "suggestion",
+				Message:  "Consider using proper list elements (<ul> or <ol>) for list content",
+			})
 		}
 	}
 
-	// Report results
-	if len(issues) > 0 {
-		results.WriteString("### ❌ Semantic Issues\n\n")
-		for _, issue := range issues {
-			results.WriteString(fmt.Sprintf("- %s\n", issue))
-		}
-		results.WriteString("\n")
-	}
-
-	if len(suggestions) > 0 {
-		results.WriteString("### 💡 Semantic Suggestions\n\n")
-		for _, suggestion := range suggestions {
-			results.WriteString(fmt.Sprintf("- %s\n", suggestion))
-		}
-		results.WriteString("\n")
-	}
-
-	if len(issues) == 0 && len(suggestions) == 0 {
-		results.WriteString("### ✅ Good Semantic Structure\n\n")
-	}
-
-	return results.String()
+	return issues, suggestions
 }
 
-// validateSpecificElement performs focused validation on a specific element
-func validateSpecificElement(html string, tagName string, element types.ElementInfo) string {
-	var results strings.Builder
-	results.WriteString(fmt.Sprintf("## Element-Specific Validation: `%s`\n\n", tagName))
-
-	if !strings.Contains(html, "<"+tagName) {
-		results.WriteString("❌ Element not found in HTML\n\n")
-		return results.String()
+// collectSpecificElementValidation analyzes specific element usage
+func collectSpecificElementValidation(html, tagName string, element types.ElementInfo) *ElementValidationResult {
+	result := &ElementValidationResult{
+		ElementInfo:  element,
+		TagName:      tagName,
+		ElementFound: strings.Contains(html, "<"+tagName),
 	}
 
-	results.WriteString(fmt.Sprintf("**Description**: %s\n\n", element.Description()))
+	if !result.ElementFound {
+		return result
+	}
 
-	// Extract all usages of this element
+	// Extract all usages
 	elementRegex := regexp.MustCompile(`<` + regexp.QuoteMeta(tagName) + `[^>]*>`)
 	usages := elementRegex.FindAllString(html, -1)
 
-	results.WriteString(fmt.Sprintf("**Found %d usage(s):**\n\n", len(usages)))
+	for _, usage := range usages {
+		elementUsage := ElementUsage{Html: usage}
 
-	for i, usage := range usages {
-		results.WriteString(fmt.Sprintf("%d. `%s`\n", i+1, usage))
-
-		// Validate attributes for this usage
-		var attrIssues []string
+		// Check for attribute issues
 		for _, attr := range element.Attributes() {
 			if attr.Required() && !strings.Contains(usage, attr.Name()+"=") {
-				attrIssues = append(attrIssues, fmt.Sprintf("Missing required attribute: %s", attr.Name()))
+				elementUsage.Issues = append(elementUsage.Issues, fmt.Sprintf("Missing required attribute: %s", attr.Name()))
 			}
 		}
 
-		if len(attrIssues) > 0 {
-			results.WriteString("   - Issues: " + strings.Join(attrIssues, "; ") + "\n")
-		} else {
-			results.WriteString("   - ✅ No issues found\n")
-		}
+		result.Usages = append(result.Usages, elementUsage)
 	}
 
-	results.WriteString("\n")
-
-	// Show available features
-	if len(element.Attributes()) > 0 {
-		results.WriteString("**Available Attributes:**\n")
-		for _, attr := range element.Attributes() {
-			required := ""
-			if attr.Required() {
-				required = " (required)"
-			}
-			results.WriteString(fmt.Sprintf("- `%s`: %s%s\n", attr.Name(), attr.Description(), required))
-		}
-		results.WriteString("\n")
-	}
-
-	return results.String()
+	return result
 }
 
 // getSlotNames extracts slot names from the slots slice

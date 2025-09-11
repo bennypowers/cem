@@ -90,6 +90,63 @@ type SlotWithContent struct {
 	DefaultContent string
 }
 
+// HTMLValidationData represents data for HTML validation templates
+type HTMLValidationData struct {
+	Html                 string
+	Context              string
+	FoundElements        []ElementWithIssues
+	ManifestIssues       []ValidationIssue
+	ManifestFeatures     []ValidationFeature
+	SemanticIssues       []ValidationIssue
+	SemanticSuggestions  []ValidationSuggestion
+	SpecificElement      *ElementValidationResult
+}
+
+// ElementWithIssues pairs an element with its validation results
+type ElementWithIssues struct {
+	types.ElementInfo
+	UsageCount int
+}
+
+// ValidationIssue represents a specific validation problem
+type ValidationIssue struct {
+	Type      string // "missing-attribute", "invalid-value", "semantic-issue"
+	Element   string
+	Attribute string
+	Expected  string
+	Actual    string
+	Message   string
+	Priority  string // "error", "warning", "info"
+}
+
+// ValidationFeature represents available manifest features
+type ValidationFeature struct {
+	Type    string // "slots", "guidelines", "css-apis"
+	Element string
+	Details string
+}
+
+// ValidationSuggestion represents improvement suggestions
+type ValidationSuggestion struct {
+	Type     string // "semantic-elements", "list-structure", "document-structure"
+	Priority string // "error", "warning", "suggestion"
+	Message  string
+}
+
+// ElementValidationResult represents specific element validation
+type ElementValidationResult struct {
+	types.ElementInfo
+	TagName       string
+	ElementFound  bool
+	Usages        []ElementUsage
+}
+
+// ElementUsage represents a specific usage of an element in HTML
+type ElementUsage struct {
+	Html   string
+	Issues []string
+}
+
 // NewTemplateData creates template data from element info and args
 func NewTemplateData(element types.ElementInfo, args SuggestCssIntegrationArgs) TemplateData {
 	return TemplateData{
@@ -309,6 +366,68 @@ func renderHTMLTemplate(templateName string, data HTMLGenerationData) (string, e
 		},
 		"join": func(slice []string, sep string) string {
 			return strings.Join(slice, sep)
+		},
+	})
+
+	// Load template content
+	templatePath := filepath.Join("templates", templateName+".md")
+	content, err := templateFiles.ReadFile(templatePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read template %s: %w", templateName, err)
+	}
+
+	// Parse template
+	tmpl, err = tmpl.Parse(string(content))
+	if err != nil {
+		return "", fmt.Errorf("failed to parse template %s: %w", templateName, err)
+	}
+
+	// Execute template
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("failed to execute template %s: %w", templateName, err)
+	}
+
+	return buf.String(), nil
+}
+
+// renderValidationTemplate loads and executes a template with HTMLValidationData
+func renderValidationTemplate(templateName string, data HTMLValidationData) (string, error) {
+	// Create template with helper functions
+	tmpl := template.New(templateName).Funcs(template.FuncMap{
+		"title": strings.Title,
+		"len": func(slice interface{}) int {
+			switch s := slice.(type) {
+			case []types.Attribute:
+				return len(s)
+			case []types.Slot:
+				return len(s)
+			case []types.Event:
+				return len(s)
+			case []ElementWithIssues:
+				return len(s)
+			case []ValidationIssue:
+				return len(s)
+			case []ValidationFeature:
+				return len(s)
+			case []ValidationSuggestion:
+				return len(s)
+			case []ElementUsage:
+				return len(s)
+			case []string:
+				return len(s)
+			default:
+				return 0
+			}
+		},
+		"gt": func(a, b int) bool {
+			return a > b
+		},
+		"join": func(slice []string, sep string) string {
+			return strings.Join(slice, sep)
+		},
+		"add": func(a, b int) int {
+			return a + b
 		},
 	})
 
