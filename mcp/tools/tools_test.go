@@ -59,17 +59,16 @@ func TestTemplateRenderer(t *testing.T) {
 		checkContent []string // strings that should be present in output
 	}{
 		{
-			name:         "basic template test",
+			name:         "accessibility context template",
 			templateName: "contextual_suggestions",
 			setupData: func() interface{} {
 				return map[string]interface{}{
-					"TagName":     "button-element",
-					"Description": "A test element",
-					"Context":     "testing",
+					"TagName": "button-element",
+					"Context": "accessibility", // This should match a condition in the template
 				}
 			},
 			expectError:  false,
-			checkContent: []string{"button-element"},
+			checkContent: []string{"button-element", "Accessibility"},
 		},
 		{
 			name:         "non-existent template",
@@ -198,19 +197,17 @@ func TestTemplateRenderer_Basic(t *testing.T) {
 	// Test that the template renderer works with basic data
 	renderer := tools.NewTemplateRenderer()
 
-	// Test a simple template rendering without complex types
-	testData := map[string]interface{}{
-		"TagName":     "test-element",
-		"Description": "A test element",
-		"Context":     "testing",
+	// Test with data that matches template conditions
+	testDataWithContext := map[string]interface{}{
+		"TagName": "test-element",
+		"Context": "form", // This should match the form condition
 	}
 
-	// Test templates that should exist
 	templates := []string{"contextual_suggestions"}
 
 	for _, template := range templates {
 		t.Run(template, func(t *testing.T) {
-			output, err := renderer.Render(template, testData)
+			output, err := renderer.Render(template, testDataWithContext)
 
 			if err != nil {
 				// If template doesn't exist, that's okay - just log it

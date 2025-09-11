@@ -123,7 +123,7 @@ type CssState interface {
 // with the MCP-specific Item interface. The env vars ensure the generator
 // runs on the host architecture even during cross-compilation builds.
 //
-//go:generate env GOOS= GOARCH= go run ../tools/gen-mcp-adapters
+//go:generate env GOOS= GOARCH= go run ./tools/gen-adapters
 
 // JSON marshaling helper types
 type itemJSON struct {
