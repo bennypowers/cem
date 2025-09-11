@@ -68,7 +68,7 @@ func handleValidateHtml(ctx context.Context, req *mcp.CallToolRequest, registry 
 func collectValidationData(args ValidateHtmlArgs, registry types.Registry) HTMLValidationData {
 	html := args.Html
 	elements := registry.AllElements()
-	
+
 	validationData := HTMLValidationData{
 		Html:    html,
 		Context: args.Context,

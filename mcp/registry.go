@@ -619,6 +619,31 @@ func (r *Registry) GetManifestSchema() (map[string]interface{}, error) {
 	return schema, nil
 }
 
+// GetManifestSchemaVersions returns all unique schema versions found in loaded manifests
+func (r *Registry) GetManifestSchemaVersions() []string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	if r.lspRegistry == nil {
+		return []string{}
+	}
+
+	versionSet := make(map[string]struct{})
+	var versions []string
+
+	// Extract schema versions from all loaded manifests
+	for _, manifest := range r.lspRegistry.Manifests {
+		if manifest != nil && manifest.SchemaVersion != "" {
+			if _, exists := versionSet[manifest.SchemaVersion]; !exists {
+				versionSet[manifest.SchemaVersion] = struct{}{}
+				versions = append(versions, manifest.SchemaVersion)
+			}
+		}
+	}
+
+	return versions
+}
+
 // Helper methods for converting LSP types to MCP types
 
 // convertElement converts a manifest element to enhanced MCP format using the new interface-based design
@@ -845,6 +870,11 @@ func (r *RegistryAdapter) AllElements() map[string]MCPTypes.ElementInfo {
 		adapted[tagName] = &ElementInfoAdapter{ElementInfo: element}
 	}
 	return adapted
+}
+
+// GetManifestSchemaVersions implements MCPTypes.Registry interface
+func (r *RegistryAdapter) GetManifestSchemaVersions() []string {
+	return r.Registry.GetManifestSchemaVersions()
 }
 
 // ElementInfoAdapter implements MCPTypes.ElementInfo interface

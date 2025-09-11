@@ -92,14 +92,14 @@ type SlotWithContent struct {
 
 // HTMLValidationData represents data for HTML validation templates
 type HTMLValidationData struct {
-	Html                 string
-	Context              string
-	FoundElements        []ElementWithIssues
-	ManifestIssues       []ValidationIssue
-	ManifestFeatures     []ValidationFeature
-	SemanticIssues       []ValidationIssue
-	SemanticSuggestions  []ValidationSuggestion
-	SpecificElement      *ElementValidationResult
+	Html                string
+	Context             string
+	FoundElements       []ElementWithIssues
+	ManifestIssues      []ValidationIssue
+	ManifestFeatures    []ValidationFeature
+	SemanticIssues      []ValidationIssue
+	SemanticSuggestions []ValidationSuggestion
+	SpecificElement     *ElementValidationResult
 }
 
 // ElementWithIssues pairs an element with its validation results
@@ -136,9 +136,9 @@ type ValidationSuggestion struct {
 // ElementValidationResult represents specific element validation
 type ElementValidationResult struct {
 	types.ElementInfo
-	TagName       string
-	ElementFound  bool
-	Usages        []ElementUsage
+	TagName      string
+	ElementFound bool
+	Usages       []ElementUsage
 }
 
 // ElementUsage represents a specific usage of an element in HTML
@@ -146,7 +146,6 @@ type ElementUsage struct {
 	Html   string
 	Issues []string
 }
-
 
 // NewTemplateData creates template data from element info and args
 func NewTemplateData(element types.ElementInfo, args SuggestCssIntegrationArgs) TemplateData {
@@ -453,7 +452,6 @@ func renderValidationTemplate(templateName string, data HTMLValidationData) (str
 
 	return buf.String(), nil
 }
-
 
 // getTemplatesDir returns the directory containing template files
 func getTemplatesDir() string {

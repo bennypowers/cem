@@ -242,4 +242,3 @@ func renderGuidelinesTemplate(templateName string, data GuidelinesData) (string,
 
 	return buf.String(), nil
 }
-

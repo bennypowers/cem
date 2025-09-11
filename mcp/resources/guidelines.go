@@ -589,9 +589,9 @@ func generateSecurityGuidelines() []string {
 // generateColorGuidelines creates color guidelines
 func generateColorGuidelines() map[string]string {
 	return map[string]string{
-		"contrast":    "Ensure sufficient color contrast (4.5:1 for normal text)",
-		"independence": "Don't rely on color alone to convey information",
-		"theming":     "Support light and dark themes",
+		"contrast":      "Ensure sufficient color contrast (4.5:1 for normal text)",
+		"independence":  "Don't rely on color alone to convey information",
+		"theming":       "Support light and dark themes",
 		"accessibility": "Consider color blindness and visual impairments",
 	}
 }
@@ -599,9 +599,9 @@ func generateColorGuidelines() map[string]string {
 // generateResponsiveGuidelines creates responsive design guidelines
 func generateResponsiveGuidelines() map[string]string {
 	return map[string]string{
-		"mobile":     "Design mobile-first responsive layouts",
+		"mobile":      "Design mobile-first responsive layouts",
 		"breakpoints": "Use consistent breakpoint systems",
-		"containers": "Consider container queries for components",
+		"containers":  "Consider container queries for components",
 		"flexibility": "Design for various screen sizes and orientations",
 	}
 }

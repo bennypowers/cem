@@ -22,6 +22,7 @@ type Registry interface {
 	ElementInfo(tagName string) (ElementInfo, error)
 	AllElements() map[string]ElementInfo
 	LoadManifests() error
+	GetManifestSchemaVersions() []string
 }
 
 // ElementInfo represents element information as needed by tools
