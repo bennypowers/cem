@@ -18,7 +18,6 @@ package tools
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -34,36 +33,40 @@ type SuggestCssIntegrationArgs struct {
 	Options map[string]string `json:"options,omitempty"`
 }
 
+// CSSTemplateData specific to CSS integration tools
+type CSSTemplateData struct {
+	BaseTemplateData
+	Theme string
+}
+
+// NewCSSTemplateData creates CSS-specific template data
+func NewCSSTemplateData(element types.ElementInfo, context string, options map[string]string, theme string) CSSTemplateData {
+	return CSSTemplateData{
+		BaseTemplateData: NewBaseTemplateData(element, context, options),
+		Theme:            theme,
+	}
+}
+
 // handleSuggestCssIntegration provides CSS integration guidance for custom elements
 func handleSuggestCssIntegration(ctx context.Context, req *mcp.CallToolRequest, registry types.Registry) (*mcp.CallToolResult, error) {
 	// Parse args from request
-	var cssArgs SuggestCssIntegrationArgs
-	if req.Params.Arguments != nil {
-		if argsData, err := json.Marshal(req.Params.Arguments); err != nil {
-			return nil, fmt.Errorf("failed to marshal args: %w", err)
-		} else if err := json.Unmarshal(argsData, &cssArgs); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal args: %w", err)
-		}
+	cssArgs, err := ParseToolArgs[SuggestCssIntegrationArgs](req)
+	if err != nil {
+		return nil, err
 	}
 
 	// Get element information
-	element, err := registry.ElementInfo(cssArgs.TagName)
+	element, errorResponse, err := LookupElement(registry, cssArgs.TagName)
 	if err != nil {
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{
-				&mcp.TextContent{
-					Text: fmt.Sprintf("Element '%s' not found in workspace", cssArgs.TagName),
-				},
-			},
-		}, nil
+		return nil, err
+	}
+	if errorResponse != nil {
+		return errorResponse, nil
 	}
 
-	var response strings.Builder
-	response.WriteString(fmt.Sprintf("# CSS Integration Guide for `%s`\n\n", cssArgs.TagName))
-
-	if element.Description() != "" {
-		response.WriteString(fmt.Sprintf("**Element Description:** %s\n\n", element.Description()))
-	}
+	response := NewResponseBuilder()
+	response.AddHeader(1, fmt.Sprintf("CSS Integration Guide for `%s`", cssArgs.TagName))
+	response.AddDescription(element)
 
 	// Check available CSS features
 	hasCustomProperties := len(element.CssProperties()) > 0
@@ -71,77 +74,41 @@ func handleSuggestCssIntegration(ctx context.Context, req *mcp.CallToolRequest, 
 	hasCustomStates := len(element.CssStates()) > 0
 
 	if !hasCustomProperties && !hasCustomParts && !hasCustomStates {
-		response.WriteString("❌ This element doesn't define CSS custom properties, parts, or states in the manifest.\n")
-		response.WriteString("You can still style it using regular CSS selectors.\n\n")
+		response.AddSection("❌ This element doesn't define CSS custom properties, parts, or states in the manifest.\n")
+		response.AddSection("You can still style it using regular CSS selectors.\n")
 
 		// Use template for basic styling guidance
-		templateData := NewTemplateData(element, cssArgs)
-		basicStyling, err := renderTemplate("basic_styling", templateData)
-		if err != nil {
-			return nil, fmt.Errorf("failed to render basic styling template: %w", err)
-		}
-		response.WriteString(basicStyling)
+		templateData := NewCSSTemplateData(element, cssArgs.Context, cssArgs.Options, cssArgs.Theme)
+		response.AddTemplateSection("basic_styling", templateData)
 
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{
-				&mcp.TextContent{
-					Text: response.String(),
-				},
-			},
-		}, nil
+		return response.Build(), nil
 	}
 
 	// Prepare template data
-	templateData := NewTemplateData(element, cssArgs)
+	templateData := NewCSSTemplateData(element, cssArgs.Context, cssArgs.Options, cssArgs.Theme)
 
 	// Generate CSS custom properties section
 	if hasCustomProperties {
-		propsSection, err := renderTemplate("css_properties", templateData)
-		if err != nil {
-			return nil, fmt.Errorf("failed to render CSS properties template: %w", err)
-		}
-		response.WriteString(propsSection)
+		response.AddTemplateSection("css_properties", templateData)
 	}
 
 	// Generate CSS parts section
 	if hasCustomParts {
-		partsSection, err := renderTemplate("css_parts", templateData)
-		if err != nil {
-			return nil, fmt.Errorf("failed to render CSS parts template: %w", err)
-		}
-		response.WriteString(partsSection)
+		response.AddTemplateSection("css_parts", templateData)
 	}
 
 	// Generate CSS states section
 	if hasCustomStates {
-		statesSection, err := renderTemplate("css_states", templateData)
-		if err != nil {
-			return nil, fmt.Errorf("failed to render CSS states template: %w", err)
-		}
-		response.WriteString(statesSection)
+		response.AddTemplateSection("css_states", templateData)
 	}
 
 	// Generate theming guidance
-	themingSection, err := renderTemplate("theming_guidance", templateData)
-	if err != nil {
-		return nil, fmt.Errorf("failed to render theming guidance template: %w", err)
-	}
-	response.WriteString(themingSection)
+	response.AddTemplateSection("theming_guidance", templateData)
 
 	// Generate responsive guidance if context suggests it
 	if strings.Contains(strings.ToLower(cssArgs.Context), "responsive") || cssArgs.Options["responsive"] == "true" {
-		responsiveSection, err := renderTemplate("responsive_guidance", templateData)
-		if err != nil {
-			return nil, fmt.Errorf("failed to render responsive guidance template: %w", err)
-		}
-		response.WriteString(responsiveSection)
+		response.AddTemplateSection("responsive_guidance", templateData)
 	}
 
-	return &mcp.CallToolResult{
-		Content: []mcp.Content{
-			&mcp.TextContent{
-				Text: response.String(),
-			},
-		},
-	}, nil
+	return response.Build(), nil
 }

@@ -18,7 +18,6 @@ package tools
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"bennypowers.dev/cem/mcp/helpers"
@@ -35,6 +34,23 @@ type GenerateHtmlArgs struct {
 	Attributes map[string]string `json:"attributes,omitempty"`
 }
 
+// HTMLGenerationTemplateData specific to HTML generation
+type HTMLGenerationTemplateData struct {
+	BaseTemplateData
+	Content            string
+	GeneratedHTML      string
+	RequiredAttributes []AttributeWithValue
+	OptionalAttributes []AttributeWithValue
+	Slots              []SlotWithContent
+}
+
+// NewHTMLGenerationTemplateData creates HTML generation template data
+func NewHTMLGenerationTemplateData(element types.ElementInfo, context string, options map[string]string) HTMLGenerationTemplateData {
+	return HTMLGenerationTemplateData{
+		BaseTemplateData: NewBaseTemplateData(element, context, options),
+	}
+}
+
 // handleGenerateHtml generates HTML structure for custom elements
 func handleGenerateHtml(
 	ctx context.Context,
@@ -42,25 +58,18 @@ func handleGenerateHtml(
 	registry types.Registry,
 ) (*mcp.CallToolResult, error) {
 	// Parse args from request
-	var genArgs GenerateHtmlArgs
-	if req.Params.Arguments != nil {
-		if argsData, err := json.Marshal(req.Params.Arguments); err != nil {
-			return nil, fmt.Errorf("failed to marshal args: %w", err)
-		} else if err := json.Unmarshal(argsData, &genArgs); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal args: %w", err)
-		}
+	genArgs, err := ParseToolArgs[GenerateHtmlArgs](req)
+	if err != nil {
+		return nil, err
 	}
 
 	// Get element information
-	element, err := registry.ElementInfo(genArgs.TagName)
+	element, errorResponse, err := LookupElement(registry, genArgs.TagName)
 	if err != nil {
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{
-				&mcp.TextContent{
-					Text: fmt.Sprintf("Element '%s' not found in workspace", genArgs.TagName),
-				},
-			},
-		}, nil
+		return nil, err
+	}
+	if errorResponse != nil {
+		return errorResponse, nil
 	}
 
 	// Generate HTML structure first
@@ -73,7 +82,7 @@ func handleGenerateHtml(
 	templateData := prepareHTMLTemplateData(element, genArgs, generatedHTML)
 
 	// Render the complete response using template
-	response, err := renderHTMLTemplate("html_generation", templateData)
+	response, err := RenderTemplate("html_generation", templateData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to render HTML generation template: %w", err)
 	}
@@ -90,11 +99,9 @@ func handleGenerateHtml(
 // generateHTMLStructure creates the actual HTML using template
 func generateHTMLStructure(element types.ElementInfo, args GenerateHtmlArgs) (string, error) {
 	// Prepare data for HTML structure template
-	templateData := HTMLGenerationData{
-		ElementInfo: element,
-		Content:     args.Content,
-		Context:     args.Context,
-		Options:     args.Options,
+	templateData := HTMLGenerationTemplateData{
+		BaseTemplateData: NewBaseTemplateData(element, args.Context, args.Options),
+		Content:          args.Content,
 	}
 
 	// Separate required and optional attributes
@@ -153,17 +160,15 @@ func generateHTMLStructure(element types.ElementInfo, args GenerateHtmlArgs) (st
 	}
 
 	// Use template to generate HTML structure
-	return renderHTMLTemplate("html_structure", templateData)
+	return RenderTemplate("html_structure", templateData)
 }
 
 // prepareHTMLTemplateData prepares all data for the main HTML generation template
-func prepareHTMLTemplateData(element types.ElementInfo, args GenerateHtmlArgs, generatedHTML string) HTMLGenerationData {
-	templateData := HTMLGenerationData{
-		ElementInfo:   element,
-		GeneratedHTML: generatedHTML,
-		Content:       args.Content,
-		Context:       args.Context,
-		Options:       args.Options,
+func prepareHTMLTemplateData(element types.ElementInfo, args GenerateHtmlArgs, generatedHTML string) HTMLGenerationTemplateData {
+	templateData := HTMLGenerationTemplateData{
+		BaseTemplateData: NewBaseTemplateData(element, args.Context, args.Options),
+		Content:          args.Content,
+		GeneratedHTML:    generatedHTML,
 	}
 
 	// Add attribute data with values for the main template

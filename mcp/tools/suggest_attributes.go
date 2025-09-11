@@ -18,7 +18,6 @@ package tools
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -33,47 +32,47 @@ type SuggestAttributesArgs struct {
 	Partial string `json:"partial,omitempty"`
 }
 
+// AttributeSuggestionTemplateData specific to attribute suggestions
+type AttributeSuggestionTemplateData struct {
+	BaseTemplateData
+	Attribute types.Attribute
+	TagName   string
+}
+
+// NewAttributeSuggestionTemplateData creates attribute suggestion template data
+func NewAttributeSuggestionTemplateData(element types.ElementInfo, attr types.Attribute, context string) AttributeSuggestionTemplateData {
+	return AttributeSuggestionTemplateData{
+		BaseTemplateData: NewBaseTemplateData(element, context, nil),
+		Attribute:        attr,
+		TagName:          element.TagName(),
+	}
+}
+
 // handleSuggestAttributes provides intelligent attribute suggestions for custom elements
 func handleSuggestAttributes(ctx context.Context, req *mcp.CallToolRequest, registry types.Registry) (*mcp.CallToolResult, error) {
 	// Parse args from request
-	var suggestArgs SuggestAttributesArgs
-	if req.Params.Arguments != nil {
-		if argsData, err := json.Marshal(req.Params.Arguments); err != nil {
-			return nil, fmt.Errorf("failed to marshal args: %w", err)
-		} else if err := json.Unmarshal(argsData, &suggestArgs); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal args: %w", err)
-		}
+	suggestArgs, err := ParseToolArgs[SuggestAttributesArgs](req)
+	if err != nil {
+		return nil, err
 	}
 
 	// Get element information
-	element, err := registry.ElementInfo(suggestArgs.TagName)
+	element, errorResponse, err := LookupElement(registry, suggestArgs.TagName)
 	if err != nil {
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{
-				&mcp.TextContent{
-					Text: fmt.Sprintf("Element '%s' not found in workspace", suggestArgs.TagName),
-				},
-			},
-		}, nil
+		return nil, err
+	}
+	if errorResponse != nil {
+		return errorResponse, nil
 	}
 
-	var response strings.Builder
-	response.WriteString(fmt.Sprintf("# Attribute Suggestions for `%s`\n\n", suggestArgs.TagName))
-
-	if element.Description() != "" {
-		response.WriteString(fmt.Sprintf("**Element Description:** %s\n\n", element.Description()))
-	}
+	response := NewResponseBuilder()
+	response.AddHeader(1, fmt.Sprintf("Attribute Suggestions for `%s`", suggestArgs.TagName))
+	response.AddDescription(element)
 
 	attributes := element.Attributes()
 	if len(attributes) == 0 {
-		response.WriteString("❌ No attributes defined for this element in the manifest.\n")
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{
-				&mcp.TextContent{
-					Text: response.String(),
-				},
-			},
-		}, nil
+		response.AddSection("❌ No attributes defined for this element in the manifest.")
+		return response.Build(), nil
 	}
 
 	// Filter attributes based on partial match if provided
@@ -90,14 +89,8 @@ func handleSuggestAttributes(ctx context.Context, req *mcp.CallToolRequest, regi
 	}
 
 	if len(filteredAttributes) == 0 {
-		response.WriteString(fmt.Sprintf("❌ No attributes found matching '%s'\n", suggestArgs.Partial))
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{
-				&mcp.TextContent{
-					Text: response.String(),
-				},
-			},
-		}, nil
+		response.AddSection(fmt.Sprintf("❌ No attributes found matching '%s'", suggestArgs.Partial))
+		return response.Build(), nil
 	}
 
 	// Categorize attributes
@@ -122,71 +115,52 @@ func handleSuggestAttributes(ctx context.Context, req *mcp.CallToolRequest, regi
 
 	// Show required attributes first
 	if len(requiredAttrs) > 0 {
-		response.WriteString("## ⚠️ Required Attributes\n\n")
+		response.AddHeader(2, "⚠️ Required Attributes")
 		for _, attr := range requiredAttrs {
-			attrData := NewSingleAttributeData(attr, element.TagName(), suggestArgs.Context)
-			attrDetails, err := renderAttributeTemplate("attribute_details", attrData)
+			attrData := NewAttributeSuggestionTemplateData(element, attr, suggestArgs.Context)
+			attrDetails, err := RenderTemplate("attribute_details", attrData)
 			if err != nil {
-				response.WriteString(fmt.Sprintf("Error rendering attribute details: %v\n", err))
+				response.AddSection(fmt.Sprintf("Error rendering attribute details: %v", err))
 			} else {
-				response.WriteString(attrDetails)
-				response.WriteString("\n")
+				response.AddSection(attrDetails)
 			}
 		}
 	}
 
 	// Show optional attributes
 	if len(optionalAttrs) > 0 {
-		response.WriteString("## 💡 Optional Attributes\n\n")
+		response.AddHeader(2, "💡 Optional Attributes")
 		for _, attr := range optionalAttrs {
-			attrData := NewSingleAttributeData(attr, element.TagName(), suggestArgs.Context)
-			attrDetails, err := renderAttributeTemplate("attribute_details", attrData)
+			attrData := NewAttributeSuggestionTemplateData(element, attr, suggestArgs.Context)
+			attrDetails, err := RenderTemplate("attribute_details", attrData)
 			if err != nil {
-				response.WriteString(fmt.Sprintf("Error rendering attribute details: %v\n", err))
+				response.AddSection(fmt.Sprintf("Error rendering attribute details: %v", err))
 			} else {
-				response.WriteString(attrDetails)
-				response.WriteString("\n")
+				response.AddSection(attrDetails)
 			}
 		}
 	}
 
 	// Show accessibility attributes if context is accessibility
 	if suggestArgs.Context == "accessibility" && len(accessibilityAttrs) > 0 {
-		response.WriteString("## ♿ Accessibility Attributes\n\n")
+		response.AddHeader(2, "♿ Accessibility Attributes")
 		for _, attr := range accessibilityAttrs {
-			attrData := NewSingleAttributeData(attr, element.TagName(), suggestArgs.Context)
-			attrDetails, err := renderAttributeTemplate("attribute_details", attrData)
+			attrData := NewAttributeSuggestionTemplateData(element, attr, suggestArgs.Context)
+			attrDetails, err := RenderTemplate("attribute_details", attrData)
 			if err != nil {
-				response.WriteString(fmt.Sprintf("Error rendering attribute details: %v\n", err))
+				response.AddSection(fmt.Sprintf("Error rendering attribute details: %v", err))
 			} else {
-				response.WriteString(attrDetails)
-				response.WriteString("\n")
+				response.AddSection(attrDetails)
 			}
 		}
 	}
 
 	// Add context-specific suggestions
-	templateData := NewAttributeTemplateData(element, suggestArgs.Context)
-	contextualSuggestions, err := renderTemplate("contextual_suggestions", templateData)
-	if err != nil {
-		response.WriteString(fmt.Sprintf("Error rendering contextual suggestions: %v\n", err))
-	} else {
-		response.WriteString(contextualSuggestions)
-	}
+	baseData := NewBaseTemplateData(element, suggestArgs.Context, nil)
+	response.AddTemplateSection("contextual_suggestions", baseData)
 
 	// Add usage examples
-	attributeExamples, err := renderTemplate("attribute_examples", templateData)
-	if err != nil {
-		response.WriteString(fmt.Sprintf("Error rendering attribute examples: %v\n", err))
-	} else {
-		response.WriteString(attributeExamples)
-	}
+	response.AddTemplateSection("attribute_examples", baseData)
 
-	return &mcp.CallToolResult{
-		Content: []mcp.Content{
-			&mcp.TextContent{
-				Text: response.String(),
-			},
-		},
-	}, nil
+	return response.Build(), nil
 }

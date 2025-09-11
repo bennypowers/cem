@@ -28,6 +28,27 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
+// ValidationTemplateData specific to validation tools
+type ValidationTemplateData struct {
+	BaseTemplateData
+	Html                         string
+	FoundElements                []ElementWithIssues
+	ManifestIssues               []ValidationIssue
+	ManifestFeatures             []ValidationFeature
+	SlotContentIssues            []SlotContentIssue
+	AttributeConflicts           []AttributeConflict
+	ContentAttributeRedundancies []ContentAttributeRedundancy
+	SpecificElement              *ElementValidationResult
+}
+
+// NewValidationTemplateData creates validation template data
+func NewValidationTemplateData(element mcpTypes.ElementInfo, context string, options map[string]string, html string) ValidationTemplateData {
+	return ValidationTemplateData{
+		BaseTemplateData: NewBaseTemplateData(element, context, options),
+		Html:             html,
+	}
+}
+
 // createDocumentManager creates a minimal document manager for MCP validation
 // This leverages the existing tree-sitter infrastructure from the LSP
 func createDocumentManager() (types.DocumentManager, error) {
@@ -42,7 +63,11 @@ type ValidateHtmlArgs struct {
 }
 
 // handleValidateHtml validates HTML for accessibility and custom element compliance using tree-sitter
-func handleValidateHtml(ctx context.Context, req *mcp.CallToolRequest, registry mcpTypes.Registry) (*mcp.CallToolResult, error) {
+func handleValidateHtml(
+	ctx context.Context,
+	req *mcp.CallToolRequest,
+	registry mcpTypes.Registry,
+) (*mcp.CallToolResult, error) {
 	// Parse args from request
 	var validateArgs ValidateHtmlArgs
 	if req.Params.Arguments != nil {
@@ -81,9 +106,9 @@ func validateHtmlWithTreeSitter(html string, registry mcpTypes.Registry) (string
 	doc := dm.OpenDocument("temp://validation.html", html, 1)
 
 	// Prepare validation data using existing template structure
-	data := HTMLValidationData{
-		Html:    html,
-		Context: "", // Default context for general validation
+	data := ValidationTemplateData{
+		Html:             html,
+		BaseTemplateData: BaseTemplateData{Context: ""}, // Default context for general validation
 	}
 
 	// Use tree-sitter to find custom elements
@@ -137,7 +162,7 @@ func validateHtmlWithTreeSitter(html string, registry mcpTypes.Registry) (string
 		}
 	}
 
-	return renderValidationTemplate("html_validation_results", data)
+	return RenderTemplate("html_validation_results", data)
 }
 
 // validateElementAttributes validates attributes for a custom element using tree-sitter parsed data

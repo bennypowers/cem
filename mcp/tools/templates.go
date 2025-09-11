@@ -31,42 +31,131 @@ import (
 //go:embed templates/*.md
 var templateFiles embed.FS
 
-// TemplateData represents the data passed to templates
-type TemplateData struct {
-	TagName       string
-	Description   string
-	CssProperties []types.CssProperty
-	CssParts      []types.CssPart
-	CssStates     []types.CssState
-	Attributes    []types.Attribute
-	Theme         string
-	Context       string
-	Options       map[string]string
+// TemplateRenderer provides a unified interface for rendering templates with different data types
+type TemplateRenderer struct {
+	funcMap template.FuncMap
 }
 
-// AttributeTemplateData represents the data passed to attribute-specific templates
-type AttributeTemplateData struct {
-	types.Attribute
-	TagName string
-	Context string
+// NewTemplateRenderer creates a new template renderer with unified function map
+func NewTemplateRenderer() *TemplateRenderer {
+	return &TemplateRenderer{
+		funcMap: template.FuncMap{
+			"title": helpers.TitleCaser.String,
+			"len": func(slice interface{}) int {
+				switch s := slice.(type) {
+				case []types.Attribute:
+					return len(s)
+				case []types.Slot:
+					return len(s)
+				case []types.Event:
+					return len(s)
+				case []types.CssProperty:
+					return len(s)
+				case []types.CssPart:
+					return len(s)
+				case []types.CssState:
+					return len(s)
+				case []ElementWithIssues:
+					return len(s)
+				case []ValidationIssue:
+					return len(s)
+				case []ValidationFeature:
+					return len(s)
+				case []ValidationSuggestion:
+					return len(s)
+				case []ElementUsage:
+					return len(s)
+				case []SlotContentIssue:
+					return len(s)
+				case []AttributeConflict:
+					return len(s)
+				case []ContentAttributeRedundancy:
+					return len(s)
+				case []AttributeWithValue:
+					return len(s)
+				case []SlotWithContent:
+					return len(s)
+				case []string:
+					return len(s)
+				default:
+					return 0
+				}
+			},
+			"index": func(slice interface{}, i int) interface{} {
+				switch s := slice.(type) {
+				case []string:
+					if i >= 0 && i < len(s) {
+						return s[i]
+					}
+				}
+				return ""
+			},
+			"gt": func(a, b int) bool {
+				return a > b
+			},
+			"join": func(slice []string, sep string) string {
+				return strings.Join(slice, sep)
+			},
+			"add": func(a, b int) int {
+				return a + b
+			},
+		},
+	}
 }
+
+// Render renders a template with the given data using the unified template system
+func (tr *TemplateRenderer) Render(templateName string, data interface{}) (string, error) {
+	// Create template with unified function map
+	tmpl := template.New(templateName).Funcs(tr.funcMap)
+
+	// Load template content
+	templatePath := filepath.Join("templates", templateName+".md")
+	content, err := templateFiles.ReadFile(templatePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read template %s: %w", templateName, err)
+	}
+
+	// Parse template
+	tmpl, err = tmpl.Parse(string(content))
+	if err != nil {
+		return "", fmt.Errorf("failed to parse template %s: %w", templateName, err)
+	}
+
+	// Execute template
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("failed to execute template %s: %w", templateName, err)
+	}
+
+	return buf.String(), nil
+}
+
+// Global template renderer instance
+var globalRenderer = NewTemplateRenderer()
+
+// TemplateDataProvider defines the interface for all template data types
+type TemplateDataProvider interface {
+	// Core element information
+	GetElement() types.ElementInfo
+	GetContext() string
+	GetOptions() map[string]string
+}
+
+// BaseTemplateData provides common template data fields
+type BaseTemplateData struct {
+	Element types.ElementInfo
+	Context string
+	Options map[string]string
+}
+
+func (b BaseTemplateData) GetElement() types.ElementInfo { return b.Element }
+func (b BaseTemplateData) GetContext() string            { return b.Context }
+func (b BaseTemplateData) GetOptions() map[string]string { return b.Options }
 
 // ElementWithCapabilities wraps an element with its capability strings
 type ElementWithCapabilities struct {
 	types.ElementInfo
 	Capabilities []string
-}
-
-// HTMLGenerationData represents the data for HTML generation templates
-type HTMLGenerationData struct {
-	types.ElementInfo
-	GeneratedHTML      string
-	Content            string
-	RequiredAttributes []AttributeWithValue
-	OptionalAttributes []AttributeWithValue
-	Slots              []SlotWithContent
-	Context            string
-	Options            map[string]string
 }
 
 // AttributeWithValue pairs an attribute with its assigned value
@@ -167,265 +256,16 @@ type ContentAttributeRedundancy struct {
 	SlotContent    string
 }
 
-// NewTemplateData creates template data from element info and args
-func NewTemplateData(element types.ElementInfo, args SuggestCssIntegrationArgs) TemplateData {
-	return TemplateData{
-		TagName:       element.TagName(),
-		Description:   element.Description(),
-		CssProperties: element.CssProperties(),
-		CssParts:      element.CssParts(),
-		CssStates:     element.CssStates(),
-		Attributes:    element.Attributes(),
-		Theme:         args.Theme,
-		Context:       args.Context,
-		Options:       args.Options,
+// NewBaseTemplateData creates base template data
+func NewBaseTemplateData(element types.ElementInfo, context string, options map[string]string) BaseTemplateData {
+	return BaseTemplateData{
+		Element: element,
+		Context: context,
+		Options: options,
 	}
 }
 
-// NewAttributeTemplateData creates template data for attribute-specific templates
-func NewAttributeTemplateData(element types.ElementInfo, context string) TemplateData {
-	return TemplateData{
-		TagName:       element.TagName(),
-		Description:   element.Description(),
-		CssProperties: element.CssProperties(),
-		CssParts:      element.CssParts(),
-		CssStates:     element.CssStates(),
-		Attributes:    element.Attributes(),
-		Context:       context,
-	}
-}
-
-// NewSingleAttributeData creates data for rendering a single attribute
-func NewSingleAttributeData(attr types.Attribute, tagName, context string) AttributeTemplateData {
-	return AttributeTemplateData{
-		Attribute: attr,
-		TagName:   tagName,
-		Context:   context,
-	}
-}
-
-// renderTemplate loads and executes a template with the given data
-func renderTemplate(templateName string, data TemplateData) (string, error) {
-	// Create template with helper functions
-	tmpl := template.New(templateName).Funcs(template.FuncMap{
-		"title": helpers.TitleCaser.String,
-		"len": func(slice interface{}) int {
-			switch s := slice.(type) {
-			case []types.CssProperty:
-				return len(s)
-			case []types.CssPart:
-				return len(s)
-			case []types.CssState:
-				return len(s)
-			case []types.Attribute:
-				return len(s)
-			case []string:
-				return len(s)
-			default:
-				return 0
-			}
-		},
-		"index": func(slice interface{}, i int) interface{} {
-			switch s := slice.(type) {
-			case []string:
-				if i >= 0 && i < len(s) {
-					return s[i]
-				}
-			}
-			return ""
-		},
-		"gt": func(a, b int) bool {
-			return a > b
-		},
-		"join": func(slice []string, sep string) string {
-			return strings.Join(slice, sep)
-		},
-	})
-
-	// Load template content
-	templatePath := filepath.Join("templates", templateName+".md")
-	content, err := templateFiles.ReadFile(templatePath)
-	if err != nil {
-		return "", fmt.Errorf("failed to read template %s: %w", templateName, err)
-	}
-
-	// Parse template
-	tmpl, err = tmpl.Parse(string(content))
-	if err != nil {
-		return "", fmt.Errorf("failed to parse template %s: %w", templateName, err)
-	}
-
-	// Execute template
-	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, data); err != nil {
-		return "", fmt.Errorf("failed to execute template %s: %w", templateName, err)
-	}
-
-	return buf.String(), nil
-}
-
-// renderAttributeTemplate loads and executes a template with AttributeTemplateData
-func renderAttributeTemplate(templateName string, data AttributeTemplateData) (string, error) {
-	// Create template with helper functions
-	tmpl := template.New(templateName).Funcs(template.FuncMap{
-		"title": helpers.TitleCaser.String,
-		"len": func(slice interface{}) int {
-			switch s := slice.(type) {
-			case []string:
-				return len(s)
-			default:
-				return 0
-			}
-		},
-		"gt": func(a, b int) bool {
-			return a > b
-		},
-		"join": func(slice []string, sep string) string {
-			return strings.Join(slice, sep)
-		},
-	})
-
-	// Load template content
-	templatePath := filepath.Join("templates", templateName+".md")
-	content, err := templateFiles.ReadFile(templatePath)
-	if err != nil {
-		return "", fmt.Errorf("failed to read template %s: %w", templateName, err)
-	}
-
-	// Parse template
-	tmpl, err = tmpl.Parse(string(content))
-	if err != nil {
-		return "", fmt.Errorf("failed to parse template %s: %w", templateName, err)
-	}
-
-	// Execute template
-	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, data); err != nil {
-		return "", fmt.Errorf("failed to execute template %s: %w", templateName, err)
-	}
-
-	return buf.String(), nil
-}
-
-// renderHTMLTemplate loads and executes a template with HTMLGenerationData
-func renderHTMLTemplate(templateName string, data HTMLGenerationData) (string, error) {
-	// Create template with helper functions
-	tmpl := template.New(templateName).Funcs(template.FuncMap{
-		"title": helpers.TitleCaser.String,
-		"len": func(slice interface{}) int {
-			switch s := slice.(type) {
-			case []types.Attribute:
-				return len(s)
-			case []types.Slot:
-				return len(s)
-			case []types.Event:
-				return len(s)
-			case []types.CssProperty:
-				return len(s)
-			case []AttributeWithValue:
-				return len(s)
-			case []SlotWithContent:
-				return len(s)
-			case []string:
-				return len(s)
-			default:
-				return 0
-			}
-		},
-		"gt": func(a, b int) bool {
-			return a > b
-		},
-		"join": func(slice []string, sep string) string {
-			return strings.Join(slice, sep)
-		},
-	})
-
-	// Load template content
-	templatePath := filepath.Join("templates", templateName+".md")
-	content, err := templateFiles.ReadFile(templatePath)
-	if err != nil {
-		return "", fmt.Errorf("failed to read template %s: %w", templateName, err)
-	}
-
-	// Parse template
-	tmpl, err = tmpl.Parse(string(content))
-	if err != nil {
-		return "", fmt.Errorf("failed to parse template %s: %w", templateName, err)
-	}
-
-	// Execute template
-	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, data); err != nil {
-		return "", fmt.Errorf("failed to execute template %s: %w", templateName, err)
-	}
-
-	return buf.String(), nil
-}
-
-// renderValidationTemplate loads and executes a template with HTMLValidationData
-func renderValidationTemplate(templateName string, data HTMLValidationData) (string, error) {
-	// Create template with helper functions
-	tmpl := template.New(templateName).Funcs(template.FuncMap{
-		"title": helpers.TitleCaser.String,
-		"len": func(slice interface{}) int {
-			switch s := slice.(type) {
-			case []types.Attribute:
-				return len(s)
-			case []types.Slot:
-				return len(s)
-			case []types.Event:
-				return len(s)
-			case []ElementWithIssues:
-				return len(s)
-			case []ValidationIssue:
-				return len(s)
-			case []ValidationFeature:
-				return len(s)
-			case []ValidationSuggestion:
-				return len(s)
-			case []ElementUsage:
-				return len(s)
-			case []SlotContentIssue:
-				return len(s)
-			case []AttributeConflict:
-				return len(s)
-			case []ContentAttributeRedundancy:
-				return len(s)
-			case []string:
-				return len(s)
-			default:
-				return 0
-			}
-		},
-		"gt": func(a, b int) bool {
-			return a > b
-		},
-		"join": func(slice []string, sep string) string {
-			return strings.Join(slice, sep)
-		},
-		"add": func(a, b int) int {
-			return a + b
-		},
-	})
-
-	// Load template content
-	templatePath := filepath.Join("templates", templateName+".md")
-	content, err := templateFiles.ReadFile(templatePath)
-	if err != nil {
-		return "", fmt.Errorf("failed to read template %s: %w", templateName, err)
-	}
-
-	// Parse template
-	tmpl, err = tmpl.Parse(string(content))
-	if err != nil {
-		return "", fmt.Errorf("failed to parse template %s: %w", templateName, err)
-	}
-
-	// Execute template
-	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, data); err != nil {
-		return "", fmt.Errorf("failed to execute template %s: %w", templateName, err)
-	}
-
-	return buf.String(), nil
+// RenderTemplate renders a template using the unified renderer (new API)
+func RenderTemplate(templateName string, data interface{}) (string, error) {
+	return globalRenderer.Render(templateName, data)
 }
