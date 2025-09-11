@@ -25,6 +25,7 @@ import (
 	LSP "bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/helpers"
 	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/mcp/security"
 	MCPTypes "bennypowers.dev/cem/mcp/types"
 	"bennypowers.dev/cem/types"
 	V "bennypowers.dev/cem/validate"
@@ -579,7 +580,16 @@ func (r *Registry) extractGuidelinesFromElement(element *M.CustomElement) []stri
 
 // extractGuidelines is a generic helper that extracts guidelines from any description text
 func (r *Registry) extractGuidelines(description string) []string {
-	return r.extractTextGuidelines(description)
+	// Sanitize description to prevent template injection
+	sanitized := security.SanitizeDescriptionPreservingMarkdown(description)
+	
+	// Log security warning if injection was detected
+	if security.DetectTemplateInjection(description) {
+		patterns := security.GetInjectionPatterns(description)
+		helpers.SafeDebugLog("Template injection detected in description: %v", patterns)
+	}
+	
+	return r.extractTextGuidelines(sanitized)
 }
 
 func (r *Registry) extractTextGuidelines(text string) []string {
@@ -645,7 +655,10 @@ type ElementInfoAdapter struct {
 
 func (e *ElementInfoAdapter) TagName() string      { return e.ElementInfo.TagName }
 func (e *ElementInfoAdapter) Name() string         { return e.ElementInfo.Name }
-func (e *ElementInfoAdapter) Description() string  { return e.ElementInfo.Description }
+func (e *ElementInfoAdapter) Description() string  { 
+	// Sanitize description to prevent template injection
+	return security.SanitizeDescriptionPreservingMarkdown(e.ElementInfo.Description)
+}
 func (e *ElementInfoAdapter) Module() string       { return e.ElementInfo.Module }
 func (e *ElementInfoAdapter) Package() string      { return e.ElementInfo.Package }
 func (e *ElementInfoAdapter) Guidelines() []string { return e.ElementInfo.Guidelines }

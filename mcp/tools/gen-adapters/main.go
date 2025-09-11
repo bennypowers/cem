@@ -115,6 +115,7 @@ package mcp
 import (
 	"encoding/json"
 	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/mcp/security"
 )
 
 {{range .Adapters}}
@@ -134,7 +135,7 @@ func (a {{.Name}}) Name() string {
 }
 
 func (a {{.Name}}) Description() string {
-	return a.{{.ManifestType}}.Description
+	return security.SanitizeDescriptionPreservingMarkdown(a.{{.ManifestType}}.Description)
 }
 
 func (a {{.Name}}) Guidelines() []string {

@@ -20,9 +20,9 @@ import (
 	"bytes"
 	"embed"
 	"fmt"
+	"html/template"
 	"path/filepath"
 	"strings"
-	"text/template"
 
 	"bennypowers.dev/cem/mcp/helpers"
 	"bennypowers.dev/cem/mcp/types"
@@ -187,7 +187,12 @@ type FeedbackPatterns struct {
 
 // renderGuidelinesTemplate loads and executes a template with GuidelinesData
 func renderGuidelinesTemplate(templateName string, data GuidelinesData) (string, error) {
-	// Create template with helper functions
+	// Security: Validate template name to prevent path traversal
+	if strings.Contains(templateName, "..") || strings.Contains(templateName, "/") {
+		return "", fmt.Errorf("invalid template name: %s", templateName)
+	}
+
+	// Create template with helper functions (restricted function map)
 	tmpl := template.New(templateName).Funcs(template.FuncMap{
 		"title": func(str string) string {
 			return helpers.TitleCaser.String(str)
@@ -229,8 +234,12 @@ func renderGuidelinesTemplate(templateName string, data GuidelinesData) (string,
 		return "", fmt.Errorf("failed to read template %s: %w", templateName, err)
 	}
 
+	// Note: Template files are trusted and expected to contain Go template syntax
+	// Security validation is applied to user data, not template structure
+	templateContent := string(content)
+
 	// Parse template
-	tmpl, err = tmpl.Parse(string(content))
+	tmpl, err = tmpl.Parse(templateContent)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse template %s: %w", templateName, err)
 	}
