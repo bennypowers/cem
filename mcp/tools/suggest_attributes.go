@@ -51,7 +51,7 @@ func handleSuggestAttributes(ctx context.Context, req *mcp.CallToolRequest, regi
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{
 				&mcp.TextContent{
-					Text: fmt.Sprintf("Element '%s' not found in registry", suggestArgs.TagName),
+					Text: fmt.Sprintf("Element '%s' not found in workspace", suggestArgs.TagName),
 				},
 			},
 		}, nil

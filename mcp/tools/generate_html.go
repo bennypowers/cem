@@ -60,7 +60,7 @@ func handleGenerateHtml(
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{
 				&mcp.TextContent{
-					Text: fmt.Sprintf("Element '%s' not found in registry", genArgs.TagName),
+					Text: fmt.Sprintf("Element '%s' not found in workspace", genArgs.TagName),
 				},
 			},
 		}, nil

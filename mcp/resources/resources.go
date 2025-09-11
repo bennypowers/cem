@@ -119,8 +119,10 @@ func getResourceHandler(resourceName string, registry types.Registry) (mcp.Resou
 	switch resourceName {
 	case "schema":
 		return makeSchemaHandler(registry), nil
-	case "registry":
-		return makeRegistryHandler(registry), nil
+	case "packages":
+		return makePackagesHandler(registry), nil
+	case "elements":
+		return makeElementsHandler(registry), nil
 	case "element":
 		return makeElementHandler(registry), nil
 	case "guidelines":
@@ -139,9 +141,15 @@ func makeSchemaHandler(registry types.Registry) mcp.ResourceHandler {
 	}
 }
 
-func makeRegistryHandler(registry types.Registry) mcp.ResourceHandler {
+func makePackagesHandler(registry types.Registry) mcp.ResourceHandler {
 	return func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
-		return handleRegistryResource(ctx, req, registry)
+		return handlePackagesResource(ctx, req, registry)
+	}
+}
+
+func makeElementsHandler(registry types.Registry) mcp.ResourceHandler {
+	return func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+		return handleElementsResource(ctx, req, registry)
 	}
 }
 

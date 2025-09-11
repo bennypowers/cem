@@ -97,8 +97,6 @@ func parseToolDefinition(filename string, registry types.Registry) (types.ToolDe
 // getToolHandler returns the appropriate handler function for a tool
 func getToolHandler(toolName string, registry types.Registry) (mcp.ToolHandler, error) {
 	switch toolName {
-	case "query_registry":
-		return makeQueryRegistryHandler(registry), nil
 	case "validate_html":
 		return makeValidateHtmlHandler(registry), nil
 	case "suggest_attributes":
@@ -113,12 +111,6 @@ func getToolHandler(toolName string, registry types.Registry) (mcp.ToolHandler, 
 }
 
 // Handler factory functions
-func makeQueryRegistryHandler(registry types.Registry) mcp.ToolHandler {
-	return func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return handleQueryRegistry(ctx, req, registry)
-	}
-}
-
 func makeValidateHtmlHandler(registry types.Registry) mcp.ToolHandler {
 	return func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		return handleValidateHtml(ctx, req, registry)

@@ -52,7 +52,7 @@ func handleSuggestCssIntegration(ctx context.Context, req *mcp.CallToolRequest, 
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{
 				&mcp.TextContent{
-					Text: fmt.Sprintf("Element '%s' not found in registry", cssArgs.TagName),
+					Text: fmt.Sprintf("Element '%s' not found in workspace", cssArgs.TagName),
 				},
 			},
 		}, nil
