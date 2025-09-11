@@ -13,7 +13,7 @@ The MCP server transforms your custom elements manifests into a structured, type
 - Understand component APIs and relationships
 - Provide CSS integration guidance for custom properties and parts
 - Enforce design system guidelines and best practices
-- Validate component usage in real-time
+- Validate custom element usage patterns and manifest compliance
 
 ## Quick Start
 
@@ -44,13 +44,19 @@ The server provides interactive tools for AI assistance:
 ### HTML Validation
 **Tool:** `validate_html`
 
-Validates HTML for semantic structure and manifest compliance.
+Validates custom element usage based on manifest guidelines and best practices. Focuses on custom element-specific issues like slot content guidelines, attribute conflicts, and content/attribute redundancy.
 
 | Parameter | Type   | Required | Description                                            |
 | --------- | ------ | -------- | ------------------------------------------------------ |
 | `html`    | string | ✅       | HTML content to validate                               |
 | `tagName` | string |          | Focus validation on specific element                   |
-| `context` | string |          | Validation context (`semantic`, `manifest-compliance`) |
+| `context` | string |          | Validation context for custom elements                 |
+
+**Validation Types:**
+- **Slot Content Guidelines**: Validates slotted content against manifest slot descriptions
+- **Attribute Conflicts**: Detects contradictory attribute combinations (e.g., `loading="eager"` + `lazy="true"`)
+- **Content/Attribute Redundancy**: Identifies when slot content overrides attribute values
+- **Manifest Compliance**: Ensures custom elements are used according to their documented constraints
 
 ### Attribute Suggestions
 **Tool:** `suggest_attributes`

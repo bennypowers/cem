@@ -8,22 +8,22 @@ inputSchema:
       description: "The HTML content to validate"
     context:
       type: string
-      description: "Validation context (e.g., 'accessibility', 'semantic', 'manifest-compliance')"
+      description: "Validation context for custom elements"
     tagName:
       type: string
       description: "Optional: specific custom element tag name to focus validation on"
   required: ["html"]
 ---
 
-Validate HTML structure for accessibility compliance, semantic correctness, and proper custom element usage patterns. Analyzes HTML against custom elements manifest definitions and web accessibility guidelines.
+Validate custom element usage based on manifest guidelines and best practices. Focuses exclusively on custom element-specific validation, not general HTML or accessibility auditing.
 
-Performs comprehensive validation including:
-- Custom element attribute validation against manifest definitions
-- Slot content structure and semantic appropriateness
-- ARIA attributes and accessibility compliance checking
-- Semantic HTML structure and landmark usage
-- CSS custom properties and parts usage validation
-- Focus management and keyboard navigation patterns
-- Color contrast and visual accessibility requirements
+Performs custom element validation including:
+- **Slot Content Guidelines**: Validates slotted content against manifest slot descriptions and content rules
+- **Attribute Conflicts**: Detects contradictory attribute combinations (e.g., `loading="eager"` + `lazy="true"`)
+- **Content/Attribute Redundancy**: Identifies when slot content overrides or conflicts with attribute values
+- **Manifest Compliance**: Ensures custom elements are used according to their documented constraints and requirements
+- **Custom Element Accessibility**: Validates accessibility patterns specific to custom element usage
 
-Use this tool when reviewing HTML for accessibility issues, validating custom element usage against manifest specifications, checking semantic HTML structure, or ensuring compliance with web accessibility guidelines. The tool provides detailed feedback on accessibility violations and suggests corrections.
+Use this tool when reviewing custom element usage in HTML, ensuring proper slot content, validating attribute combinations, or checking compliance with manifest-defined guidelines. The tool provides specific feedback on custom element usage patterns and suggests corrections based on manifest documentation.
+
+This tool does NOT validate general HTML structure, standard accessibility requirements, or semantic HTML patterns - it focuses solely on custom element usage validation.

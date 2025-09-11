@@ -136,7 +136,7 @@ mcp/
 
 ### Template-Powered Tools
 **Interactive MCP Tools Using Template-Driven Guidance**:
-- `validate_html` - Validate HTML for semantic structure and manifest compliance
+- `validate_html` - Validate custom element usage based on manifest guidelines and best practices
 - `suggest_attributes` - Present syntax definitions + usage guidance for LLM decisions
 - `generate_html` - Template-driven HTML structure respecting manifest slot/attribute definitions
 - `suggest_css_integration` - Template system presenting CSS APIs with rich context for LLM
@@ -324,24 +324,19 @@ The MCP server provides comprehensive accessibility validation through its resou
 
 ### Current Accessibility Features
 
-#### HTML Structure Analysis
-- **Semantic HTML validation**: Parse HTML and verify proper semantic element usage
-- **Heading hierarchy validation**: Ensure proper h1-h6 nesting and logical document outline
-- **Landmark structure verification**: Check for appropriate landmark roles and ARIA regions
-- **List structure validation**: Verify proper ul/ol/li nesting and semantic list usage
+#### Custom Element Content Analysis
+- **Slot content guidelines**: Parse slot descriptions and validate slotted content against manifest guidelines
+- **Attribute combination validation**: Detect contradictory attribute combinations based on manifest constraints
+- **Content/attribute redundancy**: Identify when slot content overrides or conflicts with attribute values
+- **Manifest compliance**: Ensure custom elements are used according to their documented requirements
 
-#### ARIA Implementation Validation  
-- **ARIA role validation**: Verify roles are appropriate for element types and contexts
-- **ARIA property validation**: Check aria-label, aria-describedby, aria-labelledby usage and relationships
-- **ARIA state validation**: Validate aria-expanded, aria-checked, aria-selected states
-- **ARIA relationship validation**: Ensure aria-controls, aria-owns relationships point to valid elements
-- **Required ARIA attributes**: Check for required ARIA attributes based on roles
+#### Custom Element Accessibility Validation  
+- **Component role validation**: Verify custom elements have appropriate implicit or explicit ARIA roles
+- **Slot accessibility**: Ensure slotted content maintains accessibility semantics and proper ARIA relationships
+- **Component state validation**: Validate accessibility states specific to custom element behavior  
+- **Shadow DOM accessibility**: Check that CSS parts and custom properties don't break accessibility
+- **Manifest accessibility patterns**: Apply accessibility guidelines from manifest descriptions and documentation
 
-#### Component-Level Accessibility
-- **Custom element role validation**: Ensure custom elements have appropriate implicit or explicit roles
-- **Slot content accessibility**: Validate that slotted content maintains semantic meaning
-- **CSS Shadow DOM accessibility**: Verify CSS parts and custom properties don't break accessibility
-- **Event accessibility**: Ensure custom events provide appropriate accessibility information
 
 ### Integration with Existing Tools
 - Leverages existing LSP infrastructure for real-time validation

@@ -25,7 +25,6 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-
 // handleElementResource provides detailed information about a specific custom element
 func handleElementResource(
 	ctx context.Context,

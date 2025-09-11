@@ -54,23 +54,27 @@
 {{else if eq .Type "css-apis"}}- **`<{{.Element}}>`** supports {{.Details}} CSS customization options
 {{else}}- **{{.Type}}**: {{.Details}}
 {{end}}{{end}}
-{{end}}## Semantic Structure Validation
+{{end}}## Custom Element Content Validation
 
-{{if gt (len .SemanticIssues) 0}}### ❌ Semantic Issues
+{{if gt (len .SlotContentIssues) 0}}### ❌ Slot Content Issues
 
-{{range .SemanticIssues}}{{if eq .Priority "error"}}- **{{.Message}}**
-{{else}}- {{.Message}}
-{{end}}{{end}}
-{{end}}{{if gt (len .SemanticSuggestions) 0}}### 💡 Semantic Suggestions
+{{range .SlotContentIssues}}- **`<{{.ElementTagName}}>`** slot `{{.SlotName}}`: {{.ViolationMessage}}
+  - **Guideline**: {{.Guideline}}
+{{end}}
+{{end}}{{if gt (len .AttributeConflicts) 0}}### ⚠️ Attribute Conflicts
 
-{{range .SemanticSuggestions}}{{if eq .Type "semantic-elements"}}- **Semantic Elements**: {{.Message}}
-{{else if eq .Type "list-structure"}}- **List Structure**: {{.Message}}
-{{else if eq .Type "document-structure"}}- **Document Structure**: {{.Message}}
-{{else}}- **{{.Type}}**: {{.Message}}
-{{end}}{{end}}
-{{end}}{{if eq (len .SemanticIssues) 0}}{{if eq (len .SemanticSuggestions) 0}}### ✅ Good Semantic Structure
+{{range .AttributeConflicts}}- **`<{{.ElementTagName}}>`**: `{{.Attribute1}}="{{.Value1}}"` conflicts with `{{.Attribute2}}="{{.Value2}}"`
+  - **Reason**: {{.ConflictReason}}
+{{end}}
+{{end}}{{if gt (len .ContentAttributeRedundancies) 0}}### 🔄 Content/Attribute Redundancy
 
-{{end}}{{end}}{{end}}{{if .SpecificElement}}## Element-Specific Validation: `{{.SpecificElement.TagName}}`
+{{range .ContentAttributeRedundancies}}- **`<{{.ElementTagName}}>`**: Attribute `{{.AttributeName}}="{{.AttributeValue}}"` is overridden by slot content
+  - **Slot**: `{{.SlotName}}` contains: `{{.SlotContent}}`
+{{end}}
+{{end}}{{if eq (len .SlotContentIssues) 0}}{{if eq (len .AttributeConflicts) 0}}{{if eq (len .ContentAttributeRedundancies) 0}}### ✅ Custom Element Usage Looks Good
+
+No custom element content or attribute issues found.
+{{end}}{{end}}{{end}}{{end}}{{if .SpecificElement}}## Element-Specific Validation: `{{.SpecificElement.TagName}}`
 
 {{if .SpecificElement.ElementFound}}**Description:** {{.SpecificElement.Description}}
 

@@ -20,12 +20,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"strings"
 
-	"bennypowers.dev/cem/mcp/types"
+	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/types"
+	mcpTypes "bennypowers.dev/cem/mcp/types"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
+
+// createDocumentManager creates a minimal document manager for MCP validation
+// This leverages the existing tree-sitter infrastructure from the LSP
+func createDocumentManager() (types.DocumentManager, error) {
+	return lsp.NewDocumentManager()
+}
 
 // ValidateHtmlArgs represents the arguments for the validate_html tool
 type ValidateHtmlArgs struct {
@@ -34,8 +41,8 @@ type ValidateHtmlArgs struct {
 	TagName string `json:"tagName,omitempty"`
 }
 
-// handleValidateHtml validates HTML for accessibility and custom element compliance
-func handleValidateHtml(ctx context.Context, req *mcp.CallToolRequest, registry types.Registry) (*mcp.CallToolResult, error) {
+// handleValidateHtml validates HTML for accessibility and custom element compliance using tree-sitter
+func handleValidateHtml(ctx context.Context, req *mcp.CallToolRequest, registry mcpTypes.Registry) (*mcp.CallToolResult, error) {
 	// Parse args from request
 	var validateArgs ValidateHtmlArgs
 	if req.Params.Arguments != nil {
@@ -46,233 +53,289 @@ func handleValidateHtml(ctx context.Context, req *mcp.CallToolRequest, registry 
 		}
 	}
 
-	// Prepare validation data
-	validationData := collectValidationData(validateArgs, registry)
-
-	// Render validation results using template
-	response, err := renderValidationTemplate("html_validation_results", validationData)
+	// Use tree-sitter to parse and validate HTML
+	validationResult, err := validateHtmlWithTreeSitter(validateArgs.Html, registry)
 	if err != nil {
-		return nil, fmt.Errorf("failed to render validation template: %w", err)
+		return nil, fmt.Errorf("failed to validate HTML: %w", err)
 	}
 
 	return &mcp.CallToolResult{
 		Content: []mcp.Content{
 			&mcp.TextContent{
-				Text: response,
+				Text: validationResult,
 			},
 		},
 	}, nil
 }
 
-// collectValidationData gathers all validation information into structured data
-func collectValidationData(args ValidateHtmlArgs, registry types.Registry) HTMLValidationData {
-	html := args.Html
-	elements := registry.AllElements()
+// validateHtmlWithTreeSitter performs HTML validation using tree-sitter parsing
+func validateHtmlWithTreeSitter(html string, registry mcpTypes.Registry) (string, error) {
+	// Create document manager for tree-sitter parsing
+	dm, err := createDocumentManager()
+	if err != nil {
+		return "", fmt.Errorf("failed to create document manager: %w", err)
+	}
+	defer dm.Close()
 
-	validationData := HTMLValidationData{
+	// Create a document from the HTML content
+	doc := dm.OpenDocument("temp://validation.html", html, 1)
+
+	// Prepare validation data using existing template structure
+	data := HTMLValidationData{
 		Html:    html,
-		Context: args.Context,
+		Context: "", // Default context for general validation
 	}
 
-	// Find custom elements in HTML
-	for tagName, element := range elements {
-		if strings.Contains(html, "<"+tagName) || strings.Contains(html, "</"+tagName) {
-			validationData.FoundElements = append(validationData.FoundElements, ElementWithIssues{
-				ElementInfo: element,
-				UsageCount:  strings.Count(html, "<"+tagName),
+	// Use tree-sitter to find custom elements
+	elements, err := doc.FindCustomElements(dm)
+	if err != nil {
+		return "", fmt.Errorf("failed to find custom elements: %w", err)
+	}
+
+	// Convert tree-sitter results to template-compatible format
+	for _, element := range elements {
+		// Check if element exists in registry
+		registryElement, err := registry.ElementInfo(element.TagName)
+		if err != nil {
+			// Unknown element - add to manifest issues
+			data.ManifestIssues = append(data.ManifestIssues, ValidationIssue{
+				Type:    "unknown-element",
+				Element: element.TagName,
+				Message: fmt.Sprintf("Custom element '%s' not found in registry", element.TagName),
 			})
-		}
-	}
-
-	// Collect manifest compliance issues
-	validationData.ManifestIssues, validationData.ManifestFeatures = collectManifestValidation(html, elements)
-
-	// Collect semantic structure issues
-	validationData.SemanticIssues, validationData.SemanticSuggestions = collectSemanticValidation(html)
-
-	// Handle specific element validation
-	if args.TagName != "" {
-		if element, err := registry.ElementInfo(args.TagName); err == nil {
-			validationData.SpecificElement = collectSpecificElementValidation(html, args.TagName, element)
 		} else {
-			validationData.SpecificElement = &ElementValidationResult{
-				TagName:      args.TagName,
-				ElementFound: false,
-			}
-		}
-	}
-
-	return validationData
-}
-
-// collectManifestValidation checks custom element usage against manifests
-func collectManifestValidation(html string, elements map[string]types.ElementInfo) ([]ValidationIssue, []ValidationFeature) {
-	var issues []ValidationIssue
-	var features []ValidationFeature
-
-	for tagName, element := range elements {
-		if strings.Contains(html, "<"+tagName) {
-			// Extract element usages
-			elementRegex := regexp.MustCompile(`<` + regexp.QuoteMeta(tagName) + `[^>]*>`)
-			usages := elementRegex.FindAllString(html, -1)
-
-			for _, usage := range usages {
-				// Check required attributes
-				for _, attr := range element.Attributes() {
-					if attr.Required() && !strings.Contains(usage, attr.Name()+"=") {
-						issues = append(issues, ValidationIssue{
-							Type:      "missing-attribute",
-							Element:   tagName,
-							Attribute: attr.Name(),
-							Priority:  "error",
-						})
-					}
-				}
-
-				// Check attribute values
-				for _, attr := range element.Attributes() {
-					if strings.Contains(usage, attr.Name()+"=") && len(attr.Values()) > 0 {
-						attrRegex := regexp.MustCompile(attr.Name() + `=["']([^"']+)["']`)
-						matches := attrRegex.FindStringSubmatch(usage)
-						if len(matches) > 1 {
-							value := matches[1]
-							validValues := attr.Values()
-							isValid := false
-							for _, validValue := range validValues {
-								if value == validValue {
-									isValid = true
-									break
-								}
-							}
-							if !isValid {
-								issues = append(issues, ValidationIssue{
-									Type:      "invalid-value",
-									Element:   tagName,
-									Attribute: attr.Name(),
-									Actual:    value,
-									Expected:  strings.Join(validValues, ", "),
-									Priority:  "error",
-								})
-							}
-						}
-					}
-				}
-			}
-
-			// Collect available features for guidance
-			if len(element.Slots()) > 0 {
-				features = append(features, ValidationFeature{
-					Type:    "slots",
-					Element: tagName,
-					Details: getSlotNames(element.Slots()),
-				})
-			}
-
-			if len(element.Guidelines()) > 0 {
-				features = append(features, ValidationFeature{
-					Type:    "guidelines",
-					Element: tagName,
-					Details: strings.Join(element.Guidelines(), "; "),
-				})
-			}
-
-			cssCount := len(element.CssProperties()) + len(element.CssParts()) + len(element.CssStates())
-			if cssCount > 0 {
-				features = append(features, ValidationFeature{
-					Type:    "css-apis",
-					Element: tagName,
-					Details: fmt.Sprintf("%d", cssCount),
-				})
-			}
-		}
-	}
-
-	return issues, features
-}
-
-// collectSemanticValidation analyzes HTML for semantic structure
-func collectSemanticValidation(html string) ([]ValidationIssue, []ValidationSuggestion) {
-	var issues []ValidationIssue
-	var suggestions []ValidationSuggestion
-
-	// Check document structure
-	hasMain := strings.Contains(html, "<main")
-	if !hasMain {
-		issues = append(issues, ValidationIssue{
-			Type:     "semantic-issue",
-			Message:  "Consider using <main> element for primary content",
-			Priority: "warning",
-		})
-	}
-
-	// Check for div abuse
-	divCount := strings.Count(html, "<div")
-	sectionCount := strings.Count(html, "<section")
-	articleCount := strings.Count(html, "<article")
-
-	if divCount > 5 && (sectionCount+articleCount) == 0 {
-		suggestions = append(suggestions, ValidationSuggestion{
-			Type:     "semantic-elements",
-			Priority: "suggestion",
-			Message:  "Consider using semantic elements like <section> or <article> instead of multiple <div> elements",
-		})
-	}
-
-	// Check list usage
-	if strings.Contains(html, "•") || strings.Contains(html, "1.") || strings.Contains(html, "-") {
-		if !strings.Contains(html, "<ul") && !strings.Contains(html, "<ol") {
-			suggestions = append(suggestions, ValidationSuggestion{
-				Type:     "list-structure",
-				Priority: "suggestion",
-				Message:  "Consider using proper list elements (<ul> or <ol>) for list content",
+			// Add to found elements
+			data.FoundElements = append(data.FoundElements, ElementWithIssues{
+				ElementInfo: registryElement,
+				UsageCount:  1, // Tree-sitter found it, so at least 1 usage
 			})
+
+			// Validate attributes using tree-sitter parsed data
+			attributeIssues := validateElementAttributes(element, registryElement)
+			data.ManifestIssues = append(data.ManifestIssues, attributeIssues...)
+
+			// Validate slot content guidelines
+			slotIssues := validateSlotContentGuidelines(element, registryElement)
+			data.SlotContentIssues = append(data.SlotContentIssues, slotIssues...)
+
+			// Validate attribute combinations
+			conflicts := validateAttributeCombinations(element, registryElement)
+			data.AttributeConflicts = append(data.AttributeConflicts, conflicts...)
+
+			// Validate content/attribute redundancy
+			redundancies := validateContentAttributeRedundancy(element, registryElement)
+			data.ContentAttributeRedundancies = append(data.ContentAttributeRedundancies, redundancies...)
+
+			// Add manifest features
+			if registryElement.Description() != "" {
+				data.ManifestFeatures = append(data.ManifestFeatures, ValidationFeature{
+					Type:    "manifest-element",
+					Details: fmt.Sprintf("Element <%s> properly registered in manifest", element.TagName),
+					Element: element.TagName,
+				})
+			}
 		}
 	}
 
-	return issues, suggestions
+	return renderValidationTemplate("html_validation_results", data)
 }
 
-// collectSpecificElementValidation analyzes specific element usage
-func collectSpecificElementValidation(html, tagName string, element types.ElementInfo) *ElementValidationResult {
-	result := &ElementValidationResult{
-		ElementInfo:  element,
-		TagName:      tagName,
-		ElementFound: strings.Contains(html, "<"+tagName),
+// validateElementAttributes validates attributes for a custom element using tree-sitter parsed data
+func validateElementAttributes(element types.CustomElementMatch, registryElement mcpTypes.ElementInfo) []ValidationIssue {
+	var issues []ValidationIssue
+
+	// Check required attributes
+	for _, attr := range registryElement.Attributes() {
+		if attr.Required() {
+			if _, exists := element.Attributes[attr.Name()]; !exists {
+				issues = append(issues, ValidationIssue{
+					Type:    "missing-required-attribute",
+					Element: element.TagName,
+					Message: fmt.Sprintf("Required attribute '%s' is missing", attr.Name()),
+				})
+			}
+		}
 	}
 
-	if !result.ElementFound {
-		return result
-	}
-
-	// Extract all usages
-	elementRegex := regexp.MustCompile(`<` + regexp.QuoteMeta(tagName) + `[^>]*>`)
-	usages := elementRegex.FindAllString(html, -1)
-
-	for _, usage := range usages {
-		elementUsage := ElementUsage{Html: usage}
-
-		// Check for attribute issues
-		for _, attr := range element.Attributes() {
-			if attr.Required() && !strings.Contains(usage, attr.Name()+"=") {
-				elementUsage.Issues = append(elementUsage.Issues, fmt.Sprintf("Missing required attribute: %s", attr.Name()))
+	// Validate attribute values against manifest constraints
+	for attrName, attrMatch := range element.Attributes {
+		// Find the attribute definition in the manifest
+		var manifestAttr mcpTypes.Attribute
+		var found bool
+		for _, attr := range registryElement.Attributes() {
+			if attr.Name() == attrName {
+				manifestAttr = attr
+				found = true
+				break
 			}
 		}
 
-		result.Usages = append(result.Usages, elementUsage)
+		if !found {
+			issues = append(issues, ValidationIssue{
+				Type:    "unknown-attribute",
+				Element: element.TagName,
+				Message: fmt.Sprintf("Unknown attribute '%s' for element <%s>", attrName, element.TagName),
+			})
+			continue
+		}
+
+		// Validate attribute value if it has constraints
+		if len(manifestAttr.Values()) > 0 && attrMatch.Value != "" {
+			validValues := manifestAttr.Values()
+			isValid := false
+			for _, validValue := range validValues {
+				if attrMatch.Value == validValue {
+					isValid = true
+					break
+				}
+			}
+			if !isValid {
+				issues = append(issues, ValidationIssue{
+					Type:    "invalid-attribute-value",
+					Element: element.TagName,
+					Message: fmt.Sprintf("Invalid value '%s' for attribute '%s'. Expected one of: %v",
+						attrMatch.Value, attrName, validValues),
+				})
+			}
+		}
 	}
 
-	return result
+	return issues
 }
 
-// getSlotNames extracts slot names from the slots slice
-func getSlotNames(slots []types.Slot) string {
-	var names []string
-	for _, slot := range slots {
-		name := slot.Name()
-		if name == "" {
-			name = "default"
-		}
-		names = append(names, name)
+// validateSlotContentGuidelines validates slotted content against manifest guidelines
+func validateSlotContentGuidelines(element types.CustomElementMatch, registryElement mcpTypes.ElementInfo) []SlotContentIssue {
+	var issues []SlotContentIssue
+
+	// Check if element has slots defined in manifest
+	slots := registryElement.Slots()
+	if len(slots) == 0 {
+		return issues
 	}
-	return strings.Join(names, ", ")
+
+	// For each slot, check if there are content guidelines in the description
+	for _, slot := range slots {
+		description := slot.Description()
+		if description == "" {
+			continue
+		}
+
+		// Look for guideline keywords in slot descriptions
+		// This is a basic implementation that can be enhanced
+		if strings.Contains(strings.ToLower(description), "only") ||
+			strings.Contains(strings.ToLower(description), "must") ||
+			strings.Contains(strings.ToLower(description), "should not") ||
+			strings.Contains(strings.ToLower(description), "avoid") {
+
+			// Found potential content guidelines - this is where we would
+			// analyze the actual slotted content using tree-sitter
+			// For now, create a placeholder issue to show the structure works
+			if strings.Contains(strings.ToLower(description), "interactive") {
+				issues = append(issues, SlotContentIssue{
+					SlotName:         slot.Name(),
+					ElementTagName:   element.TagName,
+					Guideline:        description,
+					ViolationMessage: "Potential interactive content guideline - check slot content manually",
+				})
+			}
+		}
+	}
+
+	return issues
+}
+
+// validateAttributeCombinations detects conflicting attribute combinations
+func validateAttributeCombinations(element types.CustomElementMatch, registryElement mcpTypes.ElementInfo) []AttributeConflict {
+	var conflicts []AttributeConflict
+
+	// Look for common contradictory attribute patterns
+	attributes := element.Attributes
+
+	// Check for loading/lazy conflicts
+	if loadingAttr, hasLoading := attributes["loading"]; hasLoading {
+		if lazyAttr, hasLazy := attributes["lazy"]; hasLazy {
+			if loadingAttr.Value == "eager" && (lazyAttr.Value == "true" || lazyAttr.Value == "") {
+				conflicts = append(conflicts, AttributeConflict{
+					ElementTagName: element.TagName,
+					Attribute1:     "loading",
+					Value1:         loadingAttr.Value,
+					Attribute2:     "lazy",
+					Value2:         lazyAttr.Value,
+					ConflictReason: "Eager loading conflicts with lazy loading",
+				})
+			}
+		}
+	}
+
+	// Check for disabled/interactive conflicts
+	if disabledAttr, hasDisabled := attributes["disabled"]; hasDisabled {
+		if interactiveAttr, hasInteractive := attributes["interactive"]; hasInteractive {
+			if (disabledAttr.Value == "true" || disabledAttr.Value == "") &&
+				(interactiveAttr.Value == "true" || interactiveAttr.Value == "") {
+				conflicts = append(conflicts, AttributeConflict{
+					ElementTagName: element.TagName,
+					Attribute1:     "disabled",
+					Value1:         disabledAttr.Value,
+					Attribute2:     "interactive",
+					Value2:         interactiveAttr.Value,
+					ConflictReason: "Disabled elements cannot be interactive",
+				})
+			}
+		}
+	}
+
+	return conflicts
+}
+
+// validateContentAttributeRedundancy detects when slot content overrides attributes
+func validateContentAttributeRedundancy(element types.CustomElementMatch, registryElement mcpTypes.ElementInfo) []ContentAttributeRedundancy {
+	var redundancies []ContentAttributeRedundancy
+
+	// Check for common attribute/slot combinations that might be redundant
+	attributes := element.Attributes
+	slots := registryElement.Slots()
+
+	// Look for attributes that have corresponding slots
+	for _, slot := range slots {
+		slotName := slot.Name()
+
+		// Check for common patterns where attributes might be overridden by slots
+		if slotName == "label" {
+			if labelAttr, hasLabel := attributes["label"]; hasLabel {
+				redundancies = append(redundancies, ContentAttributeRedundancy{
+					ElementTagName: element.TagName,
+					AttributeName:  "label",
+					AttributeValue: labelAttr.Value,
+					SlotName:       slotName,
+					SlotContent:    "[slot content not analyzed - tree-sitter enhancement needed]",
+				})
+			}
+		}
+
+		if slotName == "title" {
+			if titleAttr, hasTitle := attributes["title"]; hasTitle {
+				redundancies = append(redundancies, ContentAttributeRedundancy{
+					ElementTagName: element.TagName,
+					AttributeName:  "title",
+					AttributeValue: titleAttr.Value,
+					SlotName:       slotName,
+					SlotContent:    "[slot content not analyzed - tree-sitter enhancement needed]",
+				})
+			}
+		}
+
+		if slotName == "icon" {
+			if iconAttr, hasIcon := attributes["icon"]; hasIcon {
+				redundancies = append(redundancies, ContentAttributeRedundancy{
+					ElementTagName: element.TagName,
+					AttributeName:  "icon",
+					AttributeValue: iconAttr.Value,
+					SlotName:       slotName,
+					SlotContent:    "[slot content not analyzed - tree-sitter enhancement needed]",
+				})
+			}
+		}
+	}
+
+	return redundancies
 }

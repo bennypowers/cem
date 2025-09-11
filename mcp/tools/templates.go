@@ -31,7 +31,6 @@ import (
 //go:embed templates/*.md
 var templateFiles embed.FS
 
-
 // TemplateData represents the data passed to templates
 type TemplateData struct {
 	TagName       string
@@ -83,16 +82,17 @@ type SlotWithContent struct {
 	DefaultContent string
 }
 
-// HTMLValidationData represents data for HTML validation templates
+// HTMLValidationData represents data for custom element validation templates
 type HTMLValidationData struct {
-	Html                string
-	Context             string
-	FoundElements       []ElementWithIssues
-	ManifestIssues      []ValidationIssue
-	ManifestFeatures    []ValidationFeature
-	SemanticIssues      []ValidationIssue
-	SemanticSuggestions []ValidationSuggestion
-	SpecificElement     *ElementValidationResult
+	Html                         string
+	Context                      string
+	FoundElements                []ElementWithIssues
+	ManifestIssues               []ValidationIssue
+	ManifestFeatures             []ValidationFeature
+	SlotContentIssues            []SlotContentIssue
+	AttributeConflicts           []AttributeConflict
+	ContentAttributeRedundancies []ContentAttributeRedundancy
+	SpecificElement              *ElementValidationResult
 }
 
 // ElementWithIssues pairs an element with its validation results
@@ -138,6 +138,33 @@ type ElementValidationResult struct {
 type ElementUsage struct {
 	Html   string
 	Issues []string
+}
+
+// SlotContentIssue represents content guideline violations in slots
+type SlotContentIssue struct {
+	SlotName         string
+	ElementTagName   string
+	Guideline        string
+	ViolationMessage string
+}
+
+// AttributeConflict represents conflicting attribute combinations
+type AttributeConflict struct {
+	ElementTagName string
+	Attribute1     string
+	Value1         string
+	Attribute2     string
+	Value2         string
+	ConflictReason string
+}
+
+// ContentAttributeRedundancy represents cases where slot content overrides attributes
+type ContentAttributeRedundancy struct {
+	ElementTagName string
+	AttributeName  string
+	AttributeValue string
+	SlotName       string
+	SlotContent    string
 }
 
 // NewTemplateData creates template data from element info and args
@@ -358,6 +385,12 @@ func renderValidationTemplate(templateName string, data HTMLValidationData) (str
 				return len(s)
 			case []ElementUsage:
 				return len(s)
+			case []SlotContentIssue:
+				return len(s)
+			case []AttributeConflict:
+				return len(s)
+			case []ContentAttributeRedundancy:
+				return len(s)
 			case []string:
 				return len(s)
 			default:
@@ -396,4 +429,3 @@ func renderValidationTemplate(templateName string, data HTMLValidationData) (str
 
 	return buf.String(), nil
 }
-

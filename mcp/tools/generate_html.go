@@ -26,7 +26,6 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-
 // GenerateHtmlArgs represents the arguments for the generate_html tool
 type GenerateHtmlArgs struct {
 	TagName    string            `json:"tagName"`

@@ -118,6 +118,11 @@ type CssState interface {
 	isCssState() // Marker method to distinguish CSS states
 }
 
+// Code generation for MCP adapter types.
+// This generates type-safe adapter implementations that wrap manifest types
+// with the MCP-specific Item interface. The env vars ensure the generator
+// runs on the host architecture even during cross-compilation builds.
+//
 //go:generate env GOOS= GOARCH= go run ../tools/gen-mcp-adapters
 
 // JSON marshaling helper types
