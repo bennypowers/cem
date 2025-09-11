@@ -49,6 +49,21 @@ See more in the [LSP docs][lspdocs]
 
 ---
 
+### `cem mcp`
+
+The `cem mcp` command starts a Model Context Protocol (MCP) server that provides AI-native access to your custom elements manifest data. This enables intelligent HTML generation, component understanding, and design system compliance for AI assistants.
+
+**Features:**
+- **Resources**: Access to schemas, package discovery, element summaries, and accessibility patterns
+- **Tools**: HTML validation, attribute suggestions, HTML generation, and CSS integration guidance  
+- **Cross-package discovery**: Multi-manifest support for complex design systems
+
+The server transforms your custom elements manifests into structured, actionable context that AI systems can use to generate proper HTML with correct slot usage, appropriate attributes, and design system compliance.
+
+See more in the [MCP docs][mcpdocs]
+
+---
+
 ### `cem list`
 
 The `cem list` command provides a fast, flexible way to inspect custom elements, their features, and their metadata directly from your manifest file.
@@ -101,4 +116,5 @@ the terms of the [GNU General Public License v3.0][gpl3].
 [searchdocs]:       https://bennypowers.dev/cem/docs/commands/search/
 [validatedocs]:     https://bennypowers.dev/cem/docs/commands/validate/
 [lspdocs]:          https://bennypowers.dev/cem/docs/lsp/
+[mcpdocs]:          https://bennypowers.dev/cem/docs/mcp/
 [configdocs]:       https://bennypowers.dev/cem/docs/configuration/

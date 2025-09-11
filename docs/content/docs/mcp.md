@@ -31,7 +31,8 @@ The server provides several resource types that AI systems can access:
 | URI                       | Description                                                                                                                        |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `cem://schema`            | Returns the JSON schema for custom elements manifests, enabling validation and understanding of manifest structure.                |
-| `cem://registry`          | Provides the complete registry of all available elements with their metadata, including counts and basic information.              |
+| `cem://packages`          | Provides package discovery and overview of available manifest packages in the workspace.                                          |
+| `cem://elements`          | Returns summaries of all available elements with their capabilities and basic metadata.                                           |
 | `cem://element/{tagName}` | Returns detailed information about a specific element, including all attributes, slots, events, CSS properties, parts, and states. |
 | `cem://guidelines`        | Provides design system guidelines and best practices for component usage.                                                          |
 | `cem://accessibility`     | Returns accessibility patterns and validation rules for component compliance.                                                      |
@@ -83,16 +84,6 @@ Provides CSS integration guidance using manifest-defined CSS APIs.
 | `styleTarget` | string |          | What to style (`element`, `parts`, `states`, `properties`) |
 | `context`     | string |          | Styling context (`theme`, `responsive`, `dark-mode`)       |
 
-### Registry Queries
-**Tool:** `query_registry`
-
-Search and explore the element registry.
-
-| Parameter | Type   | Required | Description                                                               |
-| --------- | ------ | -------- | ------------------------------------------------------------------------- |
-| `tagName` | string |          | Get details for specific element                                          |
-| `filter`  | string |          | Filter by capabilities (`has-slots`, `has-events`, `interactive`, `form`) |
-| `search`  | string |          | Search element names and descriptions                                     |
 
 ## Usage Examples
 
@@ -117,7 +108,7 @@ await client.connect();
 const schema = await client.readResource('cem://schema');
 
 // Get all available elements
-const registry = await client.readResource('cem://registry');
+const elements = await client.readResource('cem://elements');
 
 // Get specific element details
 const button = await client.readResource('cem://element/my-button');
