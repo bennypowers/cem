@@ -246,8 +246,23 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Find project root by looking for go.mod
+	projectRoot := wd
+	for {
+		if _, err := os.Stat(filepath.Join(projectRoot, "go.mod")); err == nil {
+			break
+		}
+		parent := filepath.Dir(projectRoot)
+		if parent == projectRoot {
+			// Reached filesystem root without finding go.mod
+			fmt.Fprintf(os.Stderr, "Could not find project root (go.mod not found)\n")
+			os.Exit(1)
+		}
+		projectRoot = parent
+	}
+
 	// Determine output file path
-	outputPath := filepath.Join(wd, "mcp", "adapters_generated.go")
+	outputPath := filepath.Join(projectRoot, "mcp", "adapters_generated.go")
 
 	// Create the output file
 	file, err := os.Create(outputPath)
