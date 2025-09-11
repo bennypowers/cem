@@ -20,7 +20,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"bennypowers.dev/cem/mcp/types"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -67,56 +66,52 @@ func handleGenerateHtml(
 		}, nil
 	}
 
-	var response strings.Builder
-	response.WriteString(fmt.Sprintf("# HTML Generation for `%s`\n\n", genArgs.TagName))
-
-	if element.Description() != "" {
-		response.WriteString(fmt.Sprintf("**Element Description:** %s\n\n", element.Description()))
+	// Generate HTML structure first
+	generatedHTML, err := generateHTMLStructure(element, genArgs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate HTML structure: %w", err)
 	}
 
-	// Generate HTML structure
-	generatedHTML := generateHTML(element, genArgs)
+	// Prepare template data
+	templateData := prepareHTMLTemplateData(element, genArgs, generatedHTML)
 
-	response.WriteString("## Generated HTML\n\n")
-	response.WriteString("```html\n")
-	response.WriteString(generatedHTML)
-	response.WriteString("\n```\n\n")
-
-	// Add usage notes
-	response.WriteString(generateUsageNotes(element, genArgs))
+	// Render the complete response using template
+	response, err := renderHTMLTemplate("html_generation", templateData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to render HTML generation template: %w", err)
+	}
 
 	return &mcp.CallToolResult{
 		Content: []mcp.Content{
 			&mcp.TextContent{
-				Text: response.String(),
+				Text: response,
 			},
 		},
 	}, nil
 }
 
-// generateHTML creates HTML structure for the element
-func generateHTML(element types.ElementInfo, args GenerateHtmlArgs) string {
-	var html strings.Builder
+// generateHTMLStructure creates the actual HTML using template
+func generateHTMLStructure(element types.ElementInfo, args GenerateHtmlArgs) (string, error) {
+	// Prepare data for HTML structure template
+	templateData := HTMLGenerationData{
+		ElementInfo: element,
+		Content:     args.Content,
+		Context:     args.Context,
+		Options:     args.Options,
+	}
 
-	tagName := element.TagName()
-
-	// Start opening tag
-	html.WriteString("<" + tagName)
-
-	// Add required attributes with provided or default values
+	// Separate required and optional attributes
 	for _, attr := range element.Attributes() {
 		if attr.Required() {
-			if value, exists := args.Attributes[attr.Name()]; exists {
-				html.WriteString(fmt.Sprintf(` %s="%s"`, attr.Name(), value))
-			} else if attr.Default() != "" {
-				html.WriteString(fmt.Sprintf(` %s="%s"`, attr.Name(), attr.Default()))
-			} else if len(attr.Values()) > 0 {
-				html.WriteString(fmt.Sprintf(` %s="%s"`, attr.Name(), attr.Values()[0]))
-			}
+			value := getAttributeValue(attr, args.Attributes)
+			templateData.RequiredAttributes = append(templateData.RequiredAttributes, AttributeWithValue{
+				Attribute: attr,
+				Value:     value,
+			})
 		}
 	}
 
-	// Add user-provided attributes (excluding required ones already added)
+	// Add user-provided optional attributes
 	for name, value := range args.Attributes {
 		isRequired := false
 		for _, attr := range element.Attributes() {
@@ -126,99 +121,85 @@ func generateHTML(element types.ElementInfo, args GenerateHtmlArgs) string {
 			}
 		}
 		if !isRequired {
-			html.WriteString(fmt.Sprintf(` %s="%s"`, name, value))
-		}
-	}
-
-	html.WriteString(">")
-
-	// Add content with slot structure
-	content := generateElementContent(element, args)
-	html.WriteString(content)
-
-	// Close tag
-	html.WriteString("</" + tagName + ">")
-
-	return html.String()
-}
-
-// generateElementContent creates content based on element slots
-func generateElementContent(element types.ElementInfo, args GenerateHtmlArgs) string {
-	if args.Content != "" {
-		return args.Content
-	}
-
-	var content strings.Builder
-
-	// Generate content based on available slots
-	slots := element.Slots()
-	if len(slots) > 0 {
-		for _, slot := range slots {
-			slotName := slot.Name()
-			if slotName == "" {
-				// Default slot
-				content.WriteString("Default content")
-			} else {
-				content.WriteString(fmt.Sprintf(`<span slot="%s">%s content</span>`, slotName, titleCase.String(slotName)))
+			// Find the attribute definition if it exists
+			for _, attr := range element.Attributes() {
+				if attr.Name() == name {
+					templateData.OptionalAttributes = append(templateData.OptionalAttributes, AttributeWithValue{
+						Attribute: attr,
+						Value:     value,
+					})
+					break
+				}
 			}
-			content.WriteString("\n  ")
 		}
-	} else {
-		// No slots defined, add basic content
-		content.WriteString("Element content")
 	}
 
-	return content.String()
+	// Prepare slot data with example content
+	for _, slot := range element.Slots() {
+		slotName := slot.Name()
+		var exampleContent, defaultContent string
+
+		if slotName == "" {
+			defaultContent = args.Content
+			if defaultContent == "" {
+				defaultContent = "Default content"
+			}
+		} else {
+			exampleContent = titleCase.String(slotName) + " content"
+		}
+
+		templateData.Slots = append(templateData.Slots, SlotWithContent{
+			Slot:           slot,
+			ExampleContent: exampleContent,
+			DefaultContent: defaultContent,
+		})
+	}
+
+	// Use template to generate HTML structure
+	return renderHTMLTemplate("html_structure", templateData)
 }
 
-// generateUsageNotes provides basic usage information
-func generateUsageNotes(
-	element types.ElementInfo,
-	args GenerateHtmlArgs,
-) string {
-	var notes strings.Builder
-	notes.WriteString("## Usage Notes\n\n")
+// prepareHTMLTemplateData prepares all data for the main HTML generation template
+func prepareHTMLTemplateData(element types.ElementInfo, args GenerateHtmlArgs, generatedHTML string) HTMLGenerationData {
+	templateData := HTMLGenerationData{
+		ElementInfo:   element,
+		GeneratedHTML: generatedHTML,
+		Content:       args.Content,
+		Context:       args.Context,
+		Options:       args.Options,
+	}
 
-	// Required attributes
-	requiredAttrs := []string{}
+	// Add attribute data with values for the main template
 	for _, attr := range element.Attributes() {
 		if attr.Required() {
-			requiredAttrs = append(requiredAttrs, attr.Name())
+			value := getAttributeValue(attr, args.Attributes)
+			templateData.RequiredAttributes = append(templateData.RequiredAttributes, AttributeWithValue{
+				Attribute: attr,
+				Value:     value,
+			})
 		}
 	}
-	if len(requiredAttrs) > 0 {
-		notes.WriteString("### Required Attributes\n")
-		for _, attrName := range requiredAttrs {
-			notes.WriteString(fmt.Sprintf("- `%s`\n", attrName))
-		}
-		notes.WriteString("\n")
+
+	return templateData
+}
+
+// getAttributeValue determines the value to use for an attribute
+func getAttributeValue(attr types.Attribute, providedAttrs map[string]string) string {
+	// Check if user provided a value
+	if value, exists := providedAttrs[attr.Name()]; exists {
+		return value
 	}
 
-	// Available slots
-	slots := element.Slots()
-	if len(slots) > 0 {
-		notes.WriteString("### Available Slots\n")
-		for _, slot := range slots {
-			slotName := slot.Name()
-			if slotName == "" {
-				notes.WriteString("- Default slot\n")
-			} else {
-				notes.WriteString(fmt.Sprintf("- `%s`", slotName))
-				if slot.Description() != "" {
-					notes.WriteString(fmt.Sprintf(": %s", slot.Description()))
-				}
-				notes.WriteString("\n")
-			}
-		}
-		notes.WriteString("\n")
+	// Use default value if available
+	if attr.Default() != "" {
+		return attr.Default()
 	}
 
-	// Accessibility considerations
-	notes.WriteString("### Accessibility Considerations\n")
-	notes.WriteString("- This element may have built-in accessibility features via ElementInternals\n")
-	notes.WriteString("- Check the element's shadow DOM for implemented accessibility patterns\n")
-	notes.WriteString("- Avoid adding redundant ARIA attributes that may conflict with built-in semantics\n")
-	notes.WriteString("- Test with screen readers to verify the element's accessibility implementation\n\n")
+	// Use first valid value if available
+	if len(attr.Values()) > 0 {
+		return attr.Values()[0]
+	}
 
-	return notes.String()
+	// Fallback to placeholder
+	return "value"
 }

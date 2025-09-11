@@ -65,6 +65,31 @@ type RegistryQueryData struct {
 	Search     string
 }
 
+// HTMLGenerationData represents the data for HTML generation templates
+type HTMLGenerationData struct {
+	types.ElementInfo
+	GeneratedHTML      string
+	Content            string
+	RequiredAttributes []AttributeWithValue
+	OptionalAttributes []AttributeWithValue
+	Slots              []SlotWithContent
+	Context            string
+	Options            map[string]string
+}
+
+// AttributeWithValue pairs an attribute with its assigned value
+type AttributeWithValue struct {
+	types.Attribute
+	Value string
+}
+
+// SlotWithContent pairs a slot with example content
+type SlotWithContent struct {
+	types.Slot
+	ExampleContent string
+	DefaultContent string
+}
+
 // NewTemplateData creates template data from element info and args
 func NewTemplateData(element types.ElementInfo, args SuggestCssIntegrationArgs) TemplateData {
 	return TemplateData{
@@ -217,6 +242,61 @@ func renderRegistryTemplate(templateName string, data RegistryQueryData) (string
 			case map[string][]ElementWithCapabilities:
 				return len(s)
 			case []ElementWithCapabilities:
+				return len(s)
+			case []string:
+				return len(s)
+			default:
+				return 0
+			}
+		},
+		"gt": func(a, b int) bool {
+			return a > b
+		},
+		"join": func(slice []string, sep string) string {
+			return strings.Join(slice, sep)
+		},
+	})
+
+	// Load template content
+	templatePath := filepath.Join("templates", templateName+".md")
+	content, err := templateFiles.ReadFile(templatePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read template %s: %w", templateName, err)
+	}
+
+	// Parse template
+	tmpl, err = tmpl.Parse(string(content))
+	if err != nil {
+		return "", fmt.Errorf("failed to parse template %s: %w", templateName, err)
+	}
+
+	// Execute template
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("failed to execute template %s: %w", templateName, err)
+	}
+
+	return buf.String(), nil
+}
+
+// renderHTMLTemplate loads and executes a template with HTMLGenerationData
+func renderHTMLTemplate(templateName string, data HTMLGenerationData) (string, error) {
+	// Create template with helper functions
+	tmpl := template.New(templateName).Funcs(template.FuncMap{
+		"title": strings.Title,
+		"len": func(slice interface{}) int {
+			switch s := slice.(type) {
+			case []types.Attribute:
+				return len(s)
+			case []types.Slot:
+				return len(s)
+			case []types.Event:
+				return len(s)
+			case []types.CssProperty:
+				return len(s)
+			case []AttributeWithValue:
+				return len(s)
+			case []SlotWithContent:
 				return len(s)
 			case []string:
 				return len(s)
