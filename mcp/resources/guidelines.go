@@ -93,9 +93,9 @@ func collectGuidelinesData(registry types.MCPContext) GuidelinesData {
 		Philosophy:              generatePhilosophy(),
 		GeneralGuidelines:       generateGeneralGuidelines(),
 		ElementGuidelines:       generateElementGuidelines(elements),
-		NamingGuidelines:        generateNamingGuidelines(elements),
+		NamingGuidelines:        generateNamingGuidelines(registry),
 		AccessibilityGuidelines: generateAccessibilityGuidelines(),
-		ThemingGuidelines:       generateThemingGuidelines(elements),
+		ThemingGuidelines:       generateThemingGuidelines(registry),
 		PerformanceGuidelines:   generatePerformanceGuidelines(),
 		CompositionGuidelines:   generateCompositionGuidelines(),
 		IntegrationGuidelines:   generateIntegrationGuidelines(),
@@ -220,8 +220,8 @@ func generateElementGuidelines(elements []types.ElementInfo) map[string]ElementG
 }
 
 // generateNamingGuidelines creates naming convention guidelines
-func generateNamingGuidelines(elements []types.ElementInfo) NamingGuidelines {
-	prefixes := extractCommonPrefixes(elements)
+func generateNamingGuidelines(registry types.MCPContext) NamingGuidelines {
+	prefixes := registry.CommonPrefixes()
 
 	return NamingGuidelines{
 		Elements: NamingCategory{
@@ -281,8 +281,8 @@ func generateAccessibilityGuidelines() AccessibilityGuidelines {
 }
 
 // generateThemingGuidelines creates CSS theming guidelines
-func generateThemingGuidelines(elements []types.ElementInfo) ThemingGuidelines {
-	cssProperties := extractAllCSSProperties(elements)
+func generateThemingGuidelines(registry types.MCPContext) ThemingGuidelines {
+	cssProperties := registry.AllCSSProperties()
 
 	return ThemingGuidelines{
 		Tokens: map[string]string{
@@ -619,28 +619,6 @@ func generateCSSBestPractices() []string {
 
 // Helper functions that are still needed
 
-func extractCommonPrefixes(elements []types.ElementInfo) []string {
-	prefixCount := make(map[string]int)
-
-	for _, element := range elements {
-		tagName := element.TagName()
-		if parts := strings.Split(tagName, "-"); len(parts) > 1 {
-			prefix := parts[0]
-			prefixCount[prefix]++
-		}
-	}
-
-	// Return prefixes used by multiple elements
-	var prefixes []string
-	for prefix, count := range prefixCount {
-		if count > 1 {
-			prefixes = append(prefixes, prefix)
-		}
-	}
-
-	return prefixes
-}
-
 func generateNamingExamples(prefixes []string) []string {
 	examples := []string{
 		"my-button",
@@ -690,21 +668,4 @@ func generateUsageExamples(element types.ElementInfo) []string {
 	}
 
 	return examples
-}
-
-func extractAllCSSProperties(elements []types.ElementInfo) []string {
-	propertySet := make(map[string]bool)
-
-	for _, element := range elements {
-		for _, prop := range element.CssProperties() {
-			propertySet[prop.Name()] = true
-		}
-	}
-
-	properties := make([]string, 0, len(propertySet))
-	for prop := range propertySet {
-		properties = append(properties, prop)
-	}
-
-	return properties
 }

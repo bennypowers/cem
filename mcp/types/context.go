@@ -26,6 +26,10 @@ type MCPContext interface {
 	LoadManifests() error
 	GetManifestSchemaVersions() []string
 	DocumentManager() types.DocumentManager
+
+	// Lazy-computed cached methods for performance
+	CommonPrefixes() []string
+	AllCSSProperties() []string
 }
 
 // ElementInfo represents element information as needed by tools

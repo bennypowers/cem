@@ -39,7 +39,13 @@ type MCPContext struct {
 	lspRegistry     *LSP.Registry
 	documentManager lspTypes.DocumentManager
 	mcpCache        map[string]*ElementInfo // Cache for converted MCP elements
-	mu              sync.RWMutex
+
+	// Lazy-computed cached values for performance
+	commonPrefixes     []string // Common element tag name prefixes
+	allCSSProperties   []string // All CSS custom properties across elements
+	computedCacheValid bool     // Whether computed cache is valid
+
+	mu sync.RWMutex
 }
 
 // ItemKind defines the type of item
@@ -373,10 +379,140 @@ func (ctx *MCPContext) LoadManifests() error {
 	// Clear the cache when reloading manifests
 	ctx.mcpCache = make(map[string]*ElementInfo)
 
+	// Invalidate computed cache
+	ctx.computedCacheValid = false
+	ctx.commonPrefixes = nil
+	ctx.allCSSProperties = nil
+
 	if err := ctx.lspRegistry.LoadFromWorkspace(ctx.workspace); err != nil {
 		return fmt.Errorf("failed to load manifests from workspace %q: %w", ctx.workspace.Root(), err)
 	}
 	return nil
+}
+
+// CommonPrefixes returns common element tag name prefixes (lazy-computed and cached)
+func (ctx *MCPContext) CommonPrefixes() []string {
+	ctx.mu.RLock()
+	if ctx.computedCacheValid && ctx.commonPrefixes != nil {
+		defer ctx.mu.RUnlock()
+		return ctx.commonPrefixes
+	}
+	ctx.mu.RUnlock()
+
+	ctx.mu.Lock()
+	defer ctx.mu.Unlock()
+
+	// Double-check after acquiring write lock
+	if ctx.computedCacheValid && ctx.commonPrefixes != nil {
+		return ctx.commonPrefixes
+	}
+
+	ctx.ensureComputedCacheValidLocked()
+	return ctx.commonPrefixes
+}
+
+// AllCSSProperties returns all CSS custom properties across elements (lazy-computed and cached)
+func (ctx *MCPContext) AllCSSProperties() []string {
+	ctx.mu.RLock()
+	if ctx.computedCacheValid && ctx.allCSSProperties != nil {
+		defer ctx.mu.RUnlock()
+		return ctx.allCSSProperties
+	}
+	ctx.mu.RUnlock()
+
+	ctx.mu.Lock()
+	defer ctx.mu.Unlock()
+
+	// Double-check after acquiring write lock
+	if ctx.computedCacheValid && ctx.allCSSProperties != nil {
+		return ctx.allCSSProperties
+	}
+
+	ctx.ensureComputedCacheValidLocked()
+	return ctx.allCSSProperties
+}
+
+// ensureComputedCacheValidLocked computes cached values if invalid (must hold write lock)
+func (ctx *MCPContext) ensureComputedCacheValidLocked() {
+	if ctx.computedCacheValid {
+		return
+	}
+
+	// Extract tag names while holding the lock, then release lock for conversion
+	tagNames := make([]string, 0, len(ctx.lspRegistry.Elements))
+	for tagName := range ctx.lspRegistry.Elements {
+		tagNames = append(tagNames, tagName)
+	}
+
+	// Temporarily release the write lock to avoid deadlock when calling GetElementInfo
+	ctx.mu.Unlock()
+
+	// Convert elements outside the lock to avoid deadlock
+	elements := make([]MCPTypes.ElementInfo, 0, len(tagNames))
+	for _, tagName := range tagNames {
+		if info, err := ctx.GetElementInfo(tagName); err == nil {
+			adapter := &ElementInfoAdapter{ElementInfo: info}
+			elements = append(elements, adapter)
+		}
+	}
+
+	// Reacquire the write lock to update cached values
+	ctx.mu.Lock()
+
+	// Double-check cache validity in case another goroutine computed it
+	if ctx.computedCacheValid {
+		return
+	}
+
+	// Compute common prefixes
+	ctx.commonPrefixes = ctx.computeCommonPrefixes(elements)
+
+	// Compute all CSS properties
+	ctx.allCSSProperties = ctx.computeAllCSSProperties(elements)
+
+	// Mark cache as valid
+	ctx.computedCacheValid = true
+}
+
+// computeCommonPrefixes extracts common prefixes from element tag names
+func (ctx *MCPContext) computeCommonPrefixes(elements []MCPTypes.ElementInfo) []string {
+	prefixCount := make(map[string]int)
+
+	for _, element := range elements {
+		tagName := element.TagName()
+		if parts := strings.Split(tagName, "-"); len(parts) > 1 {
+			prefix := parts[0]
+			prefixCount[prefix]++
+		}
+	}
+
+	// Return prefixes used by multiple elements
+	var prefixes []string
+	for prefix, count := range prefixCount {
+		if count > 1 {
+			prefixes = append(prefixes, prefix)
+		}
+	}
+
+	return prefixes
+}
+
+// computeAllCSSProperties extracts all CSS custom properties from all elements
+func (ctx *MCPContext) computeAllCSSProperties(elements []MCPTypes.ElementInfo) []string {
+	propertySet := make(map[string]bool)
+
+	for _, element := range elements {
+		for _, prop := range element.CssProperties() {
+			propertySet[prop.Name()] = true
+		}
+	}
+
+	properties := make([]string, 0, len(propertySet))
+	for prop := range propertySet {
+		properties = append(properties, prop)
+	}
+
+	return properties
 }
 
 // DocumentManager returns the shared document manager for validation
