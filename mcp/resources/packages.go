@@ -19,6 +19,7 @@ package resources
 import (
 	"context"
 	"encoding/json"
+	"strings"
 
 	"bennypowers.dev/cem/mcp/types"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -96,33 +97,10 @@ func extractPackageFromElement(element types.ElementInfo) string {
 
 	// Fallback to extracting from tag name prefix
 	tagName := element.TagName()
-	if parts := splitTagName(tagName); len(parts) > 1 {
+	if parts := strings.Split(tagName, "-"); len(parts) > 1 {
 		return parts[0]
 	}
 
 	// Default package name
 	return "default"
-}
-
-// splitTagName splits a tag name on hyphens for package extraction
-func splitTagName(tagName string) []string {
-	result := []string{}
-	current := ""
-
-	for _, char := range tagName {
-		if char == '-' {
-			if current != "" {
-				result = append(result, current)
-				current = ""
-			}
-		} else {
-			current += string(char)
-		}
-	}
-
-	if current != "" {
-		result = append(result, current)
-	}
-
-	return result
 }
