@@ -39,38 +39,38 @@ func TestSanitizeDescription(t *testing.T) {
 		{
 			name:        "template injection - variable access",
 			input:       "A button component {{.Config}} for actions",
-			expected:    "A button component for actions",
-			description: "Template variable access should be removed",
+			expected:    "[Description removed: contains template syntax]",
+			description: "Template variable access should be rejected",
 		},
 		{
 			name:        "template injection - range construct",
 			input:       "{{range .Items}}{{.Name}}{{end}} Available items",
-			expected:    "Available items",
-			description: "Range constructs should be removed",
+			expected:    "[Description removed: contains template syntax]",
+			description: "Range constructs should be rejected",
 		},
 		{
 			name:        "template injection - with construct",
 			input:       "{{with .Settings}}{{.Theme}}{{end}} button styling",
-			expected:    "button styling",
-			description: "With constructs should be removed",
+			expected:    "[Description removed: contains template syntax]",
+			description: "With constructs should be rejected",
 		},
 		{
 			name:        "template injection - define construct",
 			input:       "{{define \"malicious\"}}evil{{end}} Safe content",
-			expected:    "evil Safe content",
-			description: "Define constructs should be removed but content preserved",
+			expected:    "[Description removed: contains template syntax]",
+			description: "Define constructs should be rejected",
 		},
 		{
 			name:        "template injection - template construct",
 			input:       "{{template \"inject\" .}} Some content",
-			expected:    "Some content",
-			description: "Template constructs should be removed",
+			expected:    "[Description removed: contains template syntax]",
+			description: "Template constructs should be rejected",
 		},
 		{
 			name:        "template injection - block construct",
 			input:       "{{block \"malicious\" .}}default{{end}} content",
-			expected:    "default content",
-			description: "Block constructs should be removed but content preserved",
+			expected:    "[Description removed: contains template syntax]",
+			description: "Block constructs should be rejected",
 		},
 		{
 			name:        "html injection",
@@ -81,8 +81,8 @@ func TestSanitizeDescription(t *testing.T) {
 		{
 			name:        "multiple injection attempts",
 			input:       "{{.Secret}} A button <script>evil()</script> {{range .Items}}{{.}}{{end}}",
-			expected:    "A button &lt;script&gt;evil()&lt;/script&gt;",
-			description: "Multiple injection attempts should all be sanitized",
+			expected:    "[Description removed: contains template syntax]",
+			description: "Multiple injection attempts should result in rejection",
 		},
 		{
 			name:        "empty description",
@@ -101,6 +101,24 @@ func TestSanitizeDescription(t *testing.T) {
 			input:       "A   button    component\n\n\twith    whitespace",
 			expected:    "A button component with whitespace",
 			description: "Excessive whitespace should be normalized",
+		},
+		{
+			name:        "whitespace obfuscated template injection",
+			input:       "A button { {   .Config   } } component",
+			expected:    "[Description removed: contains template syntax]",
+			description: "Whitespace obfuscated template injection should be detected and rejected",
+		},
+		{
+			name:        "html comment obfuscated template injection",
+			input:       "A button {{<!--comment-->.Config}} component",
+			expected:    "[Description removed: contains template syntax]",
+			description: "HTML comment obfuscated template injection should be detected and rejected",
+		},
+		{
+			name:        "multiline template injection",
+			input:       "A button {{\n  .Config\n}} component",
+			expected:    "[Description removed: contains template syntax]",
+			description: "Multiline template injection should be detected and rejected",
 		},
 	}
 
@@ -134,8 +152,8 @@ func TestSanitizeDescriptionPreservingMarkdown(t *testing.T) {
 		{
 			name:        "markdown with template injection",
 			input:       "A button `{{.Config}}` with ```{{range .}}{{.}}{{end}}``` injection",
-			expected:    "A button `` with `````` injection",
-			description: "Template injection should be removed even with markdown",
+			expected:    "[Description removed: contains template syntax]",
+			description: "Template injection should be rejected even with markdown",
 		},
 		{
 			name:        "html in markdown",
@@ -196,6 +214,24 @@ func TestDetectTemplateInjection(t *testing.T) {
 			expected:    false,
 			description: "Regular braces should not be flagged",
 		},
+		{
+			name:        "whitespace obfuscated template",
+			input:       "A button { {   .Config   } } component",
+			expected:    true,
+			description: "Template syntax with whitespace obfuscation should be detected",
+		},
+		{
+			name:        "html comment obfuscated template",
+			input:       "A button {{<!--comment-->.Config}} component",
+			expected:    true,
+			description: "Template syntax with HTML comment obfuscation should be detected",
+		},
+		{
+			name:        "multiline template",
+			input:       "A button {{\n  .Config\n}} component",
+			expected:    true,
+			description: "Multiline template syntax should be detected",
+		},
 	}
 
 	for _, test := range tests {
@@ -216,26 +252,26 @@ func TestGetInjectionPatterns(t *testing.T) {
 		{
 			name:        "variable access",
 			input:       "{{.Config}} test",
-			expected:    []string{"variable_access"},
-			description: "Should detect variable access pattern",
+			expected:    []string{"template_syntax_detected", "variable_access"},
+			description: "Should detect template syntax and variable access pattern",
 		},
 		{
 			name:        "range construct",
 			input:       "{{range .Items}}{{.}}{{end}}",
-			expected:    []string{"range_construct", "variable_access"},
-			description: "Should detect range and variable access patterns",
+			expected:    []string{"template_syntax_detected", "range_construct", "variable_access"},
+			description: "Should detect template syntax, range and variable access patterns",
 		},
 		{
 			name:        "multiple patterns",
 			input:       "{{with .Data}}{{range .Items}}{{template \"x\" .}}{{end}}{{end}}",
-			expected:    []string{"range_construct", "with_construct", "template_construct"},
-			description: "Should detect multiple patterns",
+			expected:    []string{"template_syntax_detected", "range_construct", "with_construct", "template_construct"},
+			description: "Should detect template syntax and multiple specific patterns",
 		},
 		{
 			name:        "dollar variable",
 			input:       "{{$var := .Config}}{{$var}}",
-			expected:    []string{"dollar_variable"},
-			description: "Should detect dollar variable pattern",
+			expected:    []string{"template_syntax_detected", "dollar_variable"},
+			description: "Should detect template syntax and dollar variable pattern",
 		},
 		{
 			name:        "clean text",
@@ -262,18 +298,32 @@ func TestSanitizeWithPolicy(t *testing.T) {
 		description string
 	}{
 		{
-			name:        "default policy",
+			name:        "default policy with template injection",
 			input:       "A button {{.Config}} with `code` and <script>evil</script>",
 			policy:      DefaultSecurityPolicy(),
-			expected:    "A button with `code` and &lt;script&gt;evil&lt;/script&gt;",
-			description: "Default policy should preserve markdown and escape HTML",
+			expected:    "[Description removed: contains template syntax]",
+			description: "Default policy should reject template injection",
 		},
 		{
-			name:        "strict policy",
+			name:        "strict policy with template injection",
 			input:       "A button {{.Config}} with `code` and <script>evil</script>",
 			policy:      StrictSecurityPolicy(),
+			expected:    "[Description removed: contains template syntax]",
+			description: "Strict policy should reject template injection",
+		},
+		{
+			name:        "default policy without template injection",
+			input:       "A button with `code` and <script>evil</script>",
+			policy:      DefaultSecurityPolicy(),
 			expected:    "A button with `code` and &lt;script&gt;evil&lt;/script&gt;",
-			description: "Strict policy should escape everything",
+			description: "Default policy should preserve markdown and escape HTML when no templates",
+		},
+		{
+			name:        "strict policy without template injection",
+			input:       "A button with `code` and <script>evil</script>",
+			policy:      StrictSecurityPolicy(),
+			expected:    "A button with `code` and &lt;script&gt;evil&lt;/script&gt;",
+			description: "Strict policy should escape everything when no templates",
 		},
 		{
 			name:        "short length limit",

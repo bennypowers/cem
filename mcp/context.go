@@ -707,7 +707,7 @@ func (ctx *MCPContext) convertElement(element *M.CustomElement, tagName string) 
 	return &ElementInfo{
 		TagName:     tagName,
 		Name:        tagName, // Use tag name as name for now
-		Description: "",      // Description not available from embedded CustomElement
+		Description: "",      // Description not available from embedded CustomElement (would need full declaration)
 		Module:      "",      // Would need module path from element definitions
 		Package:     "",      // Would need package name from element definitions
 		Items:       items,

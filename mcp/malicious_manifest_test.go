@@ -65,11 +65,9 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 	// Test that the description is sanitized
 	t.Run("element description sanitized", func(t *testing.T) {
 		description := element.Description()
-		assert.NotContains(t, description, "{{", "Template syntax should be removed from element description")
-		assert.NotContains(t, description, "}}", "Template syntax should be removed from element description")
-
-		// Note: Element description might be empty because it's not populated from manifest description
-		// The important thing is that no template injection is present
+		// Element descriptions are not currently populated from manifest declarations (architectural limitation)
+		// The important security protection is at the item level (attributes, slots, events, etc.)
+		assert.Equal(t, "", description, "Element descriptions are not currently supported")
 		t.Logf("Element description: '%s'", description)
 	})
 
@@ -80,9 +78,8 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 
 		attr := attributes[0]
 		description := attr.Description()
-		assert.NotContains(t, description, "{{", "Template syntax should be removed from attribute description")
-		assert.NotContains(t, description, "}}", "Template syntax should be removed from attribute description")
-		assert.Contains(t, description, "&lt;script&gt;", "HTML should be escaped in attribute description")
+		// Since the original description contains template injection, the entire description should be rejected
+		assert.Equal(t, "[Description removed: contains template syntax]", description, "Descriptions with template syntax should be completely rejected")
 	})
 
 	// Test that slots are sanitized
@@ -92,8 +89,8 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 
 		slot := slots[0]
 		description := slot.Description()
-		assert.NotContains(t, description, "{{", "Template syntax should be removed from slot description")
-		assert.NotContains(t, description, "}}", "Template syntax should be removed from slot description")
+		// Since the original description contains template injection, the entire description should be rejected
+		assert.Equal(t, "[Description removed: contains template syntax]", description, "Descriptions with template syntax should be completely rejected")
 	})
 
 	// Test that events are sanitized
@@ -103,8 +100,8 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 
 		event := events[0]
 		description := event.Description()
-		assert.NotContains(t, description, "{{", "Template syntax should be removed from event description")
-		assert.NotContains(t, description, "}}", "Template syntax should be removed from event description")
+		// Since the original description contains template injection, the entire description should be rejected
+		assert.Equal(t, "[Description removed: contains template syntax]", description, "Descriptions with template syntax should be completely rejected")
 	})
 
 	// Test that CSS properties are sanitized
@@ -114,8 +111,8 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 
 		prop := props[0]
 		description := prop.Description()
-		assert.NotContains(t, description, "{{", "Template syntax should be removed from CSS property description")
-		assert.NotContains(t, description, "}}", "Template syntax should be removed from CSS property description")
+		// Since the original description contains template injection, the entire description should be rejected
+		assert.Equal(t, "[Description removed: contains template syntax]", description, "Descriptions with template syntax should be completely rejected")
 	})
 
 	// Test that CSS parts are sanitized
@@ -125,8 +122,8 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 
 		part := parts[0]
 		description := part.Description()
-		assert.NotContains(t, description, "{{", "Template syntax should be removed from CSS part description")
-		assert.NotContains(t, description, "}}", "Template syntax should be removed from CSS part description")
+		// Since the original description contains template injection, the entire description should be rejected
+		assert.Equal(t, "[Description removed: contains template syntax]", description, "Descriptions with template syntax should be completely rejected")
 	})
 
 	// Test that CSS states are sanitized
@@ -136,8 +133,8 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 
 		state := states[0]
 		description := state.Description()
-		assert.NotContains(t, description, "{{", "Template syntax should be removed from CSS state description")
-		assert.NotContains(t, description, "}}", "Template syntax should be removed from CSS state description")
+		// Since the original description contains template injection, the entire description should be rejected
+		assert.Equal(t, "[Description removed: contains template syntax]", description, "Descriptions with template syntax should be completely rejected")
 	})
 }
 
