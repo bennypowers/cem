@@ -26,9 +26,8 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-
 // handleAccessibilityResource provides comprehensive accessibility patterns and validation rules
-func handleAccessibilityResource(ctx context.Context, req *mcp.ReadResourceRequest, registry types.Registry) (*mcp.ReadResourceResult, error) {
+func handleAccessibilityResource(ctx context.Context, req *mcp.ReadResourceRequest, registry types.MCPContext) (*mcp.ReadResourceResult, error) {
 	// Generate comprehensive accessibility guidance
 	accessibility := generateAccessibilityGuidance(registry)
 
@@ -47,7 +46,7 @@ func handleAccessibilityResource(ctx context.Context, req *mcp.ReadResourceReque
 }
 
 // generateAccessibilityGuidance creates manifest-specific accessibility guidance
-func generateAccessibilityGuidance(registry types.Registry) map[string]interface{} {
+func generateAccessibilityGuidance(registry types.MCPContext) map[string]interface{} {
 	elementMap := registry.AllElements()
 
 	// Convert map to slice
@@ -68,7 +67,6 @@ func generateAccessibilityGuidance(registry types.Registry) map[string]interface
 	return guidance
 }
 
-
 // generateCustomElementAccessibilityGuidance creates manifest-based accessibility guidance
 func generateCustomElementAccessibilityGuidance(elements []types.ElementInfo) map[string]interface{} {
 	elementGuidance := make(map[string]interface{})
@@ -79,10 +77,6 @@ func generateCustomElementAccessibilityGuidance(elements []types.ElementInfo) ma
 
 	return elementGuidance
 }
-
-
-
-
 
 func generateElementAccessibilityGuidance(element types.ElementInfo) map[string]interface{} {
 	guidance := map[string]interface{}{
@@ -123,7 +117,6 @@ func generateElementAccessibilityGuidance(element types.ElementInfo) map[string]
 	return guidance
 }
 
-
 // analyzeManifestAccessibility analyzes all elements for accessibility information
 func analyzeManifestAccessibility(elements []types.ElementInfo) map[string]interface{} {
 	totalElements := len(elements)
@@ -145,11 +138,11 @@ func analyzeManifestAccessibility(elements []types.ElementInfo) map[string]inter
 
 	return map[string]interface{}{
 		"summary": map[string]interface{}{
-			"totalElements":               totalElements,
-			"elementsWithA11yInfo":        elementsWithA11yInfo,
-			"elementsWithA11yAttributes":  elementsWithA11yAttributes,
-			"elementsWithA11yEvents":      elementsWithA11yEvents,
-			"coveragePercentage":          float64(elementsWithA11yInfo) / float64(totalElements) * 100,
+			"totalElements":              totalElements,
+			"elementsWithA11yInfo":       elementsWithA11yInfo,
+			"elementsWithA11yAttributes": elementsWithA11yAttributes,
+			"elementsWithA11yEvents":     elementsWithA11yEvents,
+			"coveragePercentage":         float64(elementsWithA11yInfo) / float64(totalElements) * 100,
 		},
 	}
 }

@@ -29,18 +29,18 @@ import (
 )
 
 // getTestRegistry creates a registry using the test fixtures following the existing pattern
-func getTestRegistry(t *testing.T) *mcp.RegistryAdapter {
+func getTestRegistry(t *testing.T) *mcp.MCPContextAdapter {
 	workspace := W.NewFileSystemWorkspaceContext("../test-fixtures/multiple-elements")
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewRegistry(workspace)
+	registry, err := mcp.NewMCPContext(workspace)
 	require.NoError(t, err)
 
 	err = registry.LoadManifests()
 	require.NoError(t, err)
 
-	return mcp.NewRegistryAdapter(registry).(*mcp.RegistryAdapter)
+	return mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
 }
 
 func TestTemplateRenderer(t *testing.T) {
@@ -113,7 +113,7 @@ func TestToolsLoading_Integration(t *testing.T) {
 	toolNames := make(map[string]bool)
 	for _, def := range toolDefs {
 		toolNames[def.Name] = true
-		
+
 		// Basic validation of each tool definition
 		assert.NotEmpty(t, def.Name, "Tool should have name")
 		assert.NotEmpty(t, def.Description, "Tool should have description")

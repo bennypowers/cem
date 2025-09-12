@@ -55,7 +55,7 @@ func NewHTMLGenerationTemplateData(element types.ElementInfo, context string, op
 func handleGenerateHtml(
 	ctx context.Context,
 	req *mcp.CallToolRequest,
-	registry types.Registry,
+	registry types.MCPContext,
 ) (*mcp.CallToolResult, error) {
 	// Parse args from request
 	genArgs, err := ParseToolArgs[GenerateHtmlArgs](req)

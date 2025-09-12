@@ -150,13 +150,13 @@ func TestValidationTemplateData_WithFixtures(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewRegistry(workspace)
+	registry, err := mcp.NewMCPContext(workspace)
 	require.NoError(t, err)
 
 	err = registry.LoadManifests()
 	require.NoError(t, err)
 
-	registryAdapter := mcp.NewRegistryAdapter(registry).(*mcp.RegistryAdapter)
+	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
 
 	buttonElement, err := registryAdapter.ElementInfo("button-element")
 	require.NoError(t, err)

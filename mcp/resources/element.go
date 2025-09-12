@@ -29,7 +29,7 @@ import (
 func handleElementResource(
 	ctx context.Context,
 	req *mcp.ReadResourceRequest,
-	registry types.Registry,
+	registry types.MCPContext,
 ) (*mcp.ReadResourceResult, error) {
 	// Extract tag name from URI template: cem://element/{tagName}
 	tagName, err := extractTagNameFromURI(req.Params.URI)

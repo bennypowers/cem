@@ -39,7 +39,7 @@ type ServerInfo struct {
 // Server implements an MCP server for custom elements
 type Server struct {
 	workspace types.WorkspaceContext
-	registry  *Registry
+	registry  *MCPContext
 	server    *mcp.Server
 }
 
@@ -47,7 +47,7 @@ type Server struct {
 func NewServer(workspace types.WorkspaceContext) (*Server, error) {
 	helpers.SafeDebugLog("Creating CEM MCP server for workspace: %s", workspace.Root())
 
-	registry, err := NewRegistry(workspace)
+	registry, err := NewMCPContext(workspace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create registry: %w", err)
 	}
@@ -103,7 +103,7 @@ func (s *Server) Run(ctx context.Context) error {
 // setupTools adds tools to the MCP server
 func (s *Server) setupTools() error {
 	// Create registry adapter for tools
-	registryAdapter := NewRegistryAdapter(s.registry)
+	registryAdapter := NewMCPContextAdapter(s.registry)
 
 	// Get tool definitions from tools package
 	toolDefs, err := tools.Tools(registryAdapter)
@@ -141,7 +141,7 @@ func (s *Server) setupTools() error {
 // setupResources adds resources to the MCP server
 func (s *Server) setupResources() error {
 	// Create registry adapter for resources
-	registryAdapter := NewRegistryAdapter(s.registry)
+	registryAdapter := NewMCPContextAdapter(s.registry)
 
 	// Get resource definitions from resources package
 	resourceDefs, err := resources.Resources(registryAdapter)

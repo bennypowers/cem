@@ -47,7 +47,7 @@ func NewTemplateRenderer() *TemplateRenderer {
 func NewSecureTemplateRenderer(policy security.SecurityPolicy) *TemplateRenderer {
 	return &TemplateRenderer{
 		securityPolicy: policy,
-		funcMap: createSecureFuncMap(),
+		funcMap:        createSecureFuncMap(),
 	}
 }
 

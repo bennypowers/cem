@@ -59,14 +59,14 @@ func TestDynamicSchemaVersionDetection(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create registry and load manifests
-	registry, err := NewRegistry(workspace)
+	registry, err := NewMCPContext(workspace)
 	require.NoError(t, err)
 
 	err = registry.LoadManifests()
 	require.NoError(t, err)
 
 	// Create registry adapter
-	registryAdapter := NewRegistryAdapter(registry)
+	registryAdapter := NewMCPContextAdapter(registry)
 
 	// Test GetManifestSchemaVersions method
 	versions := registryAdapter.GetManifestSchemaVersions()

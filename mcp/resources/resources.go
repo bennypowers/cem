@@ -49,7 +49,7 @@ type ResourceFrontmatter struct {
 }
 
 // Resources returns all available resource definitions with their handlers
-func Resources(registry types.Registry) ([]ResourceDefinition, error) {
+func Resources(registry types.MCPContext) ([]ResourceDefinition, error) {
 	// Get the directory where this source file is located
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
@@ -77,7 +77,7 @@ func Resources(registry types.Registry) ([]ResourceDefinition, error) {
 }
 
 // parseResourceDefinition parses a markdown file with frontmatter into a ResourceDefinition
-func parseResourceDefinition(filename string, registry types.Registry) (ResourceDefinition, error) {
+func parseResourceDefinition(filename string, registry types.MCPContext) (ResourceDefinition, error) {
 	content, err := os.ReadFile(filename)
 	if err != nil {
 		return ResourceDefinition{}, fmt.Errorf("failed to read file: %w", err)
@@ -115,7 +115,7 @@ func parseResourceDefinition(filename string, registry types.Registry) (Resource
 }
 
 // getResourceHandler returns the appropriate handler function for a resource
-func getResourceHandler(resourceName string, registry types.Registry) (mcp.ResourceHandler, error) {
+func getResourceHandler(resourceName string, registry types.MCPContext) (mcp.ResourceHandler, error) {
 	switch resourceName {
 	case "schema":
 		return makeSchemaHandler(registry), nil
@@ -135,37 +135,37 @@ func getResourceHandler(resourceName string, registry types.Registry) (mcp.Resou
 }
 
 // Handler factory functions
-func makeSchemaHandler(registry types.Registry) mcp.ResourceHandler {
+func makeSchemaHandler(registry types.MCPContext) mcp.ResourceHandler {
 	return func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		return handleSchemaResource(ctx, req, registry)
 	}
 }
 
-func makePackagesHandler(registry types.Registry) mcp.ResourceHandler {
+func makePackagesHandler(registry types.MCPContext) mcp.ResourceHandler {
 	return func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		return handlePackagesResource(ctx, req, registry)
 	}
 }
 
-func makeElementsHandler(registry types.Registry) mcp.ResourceHandler {
+func makeElementsHandler(registry types.MCPContext) mcp.ResourceHandler {
 	return func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		return handleElementsResource(ctx, req, registry)
 	}
 }
 
-func makeElementHandler(registry types.Registry) mcp.ResourceHandler {
+func makeElementHandler(registry types.MCPContext) mcp.ResourceHandler {
 	return func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		return handleElementResource(ctx, req, registry)
 	}
 }
 
-func makeGuidelinesHandler(registry types.Registry) mcp.ResourceHandler {
+func makeGuidelinesHandler(registry types.MCPContext) mcp.ResourceHandler {
 	return func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		return handleGuidelinesResource(ctx, req, registry)
 	}
 }
 
-func makeAccessibilityHandler(registry types.Registry) mcp.ResourceHandler {
+func makeAccessibilityHandler(registry types.MCPContext) mcp.ResourceHandler {
 	return func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		return handleAccessibilityResource(ctx, req, registry)
 	}

@@ -49,7 +49,7 @@ func NewAttributeSuggestionTemplateData(element types.ElementInfo, attr types.At
 }
 
 // handleSuggestAttributes provides intelligent attribute suggestions for custom elements
-func handleSuggestAttributes(ctx context.Context, req *mcp.CallToolRequest, registry types.Registry) (*mcp.CallToolResult, error) {
+func handleSuggestAttributes(ctx context.Context, req *mcp.CallToolRequest, registry types.MCPContext) (*mcp.CallToolResult, error) {
 	// Parse args from request
 	suggestArgs, err := ParseToolArgs[SuggestAttributesArgs](req)
 	if err != nil {

@@ -26,7 +26,7 @@ import (
 )
 
 // handleGuidelinesResource provides design system guidelines and best practices
-func handleGuidelinesResource(ctx context.Context, req *mcp.ReadResourceRequest, registry types.Registry) (*mcp.ReadResourceResult, error) {
+func handleGuidelinesResource(ctx context.Context, req *mcp.ReadResourceRequest, registry types.MCPContext) (*mcp.ReadResourceResult, error) {
 	// Collect guidelines data from the registry
 	guidelinesData := collectGuidelinesData(registry)
 
@@ -78,7 +78,7 @@ func handleGuidelinesResource(ctx context.Context, req *mcp.ReadResourceRequest,
 }
 
 // collectGuidelinesData gathers all guidelines information into structured data
-func collectGuidelinesData(registry types.Registry) GuidelinesData {
+func collectGuidelinesData(registry types.MCPContext) GuidelinesData {
 	elementMap := registry.AllElements()
 
 	// Convert map to slice for processing

@@ -43,7 +43,7 @@ func ParseToolArgs[T any](req *mcp.CallToolRequest) (T, error) {
 // - If element found: (element, nil, nil)
 // - If element not found: (nil, errorResponse, nil)
 // - If lookup failed: (nil, nil, error)
-func LookupElement(registry types.Registry, tagName string) (types.ElementInfo, *mcp.CallToolResult, error) {
+func LookupElement(registry types.MCPContext, tagName string) (types.ElementInfo, *mcp.CallToolResult, error) {
 	element, err := registry.ElementInfo(tagName)
 	if err != nil {
 		// Element not found - return user-friendly response, not an error

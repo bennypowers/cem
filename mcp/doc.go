@@ -47,7 +47,7 @@ flexibility and type safety:
 
 	// Create registry
 	ws := workspace.NewFileSystemWorkspaceContext("/path/to/project")
-	registry, err := mcp.NewRegistry(ws)
+	registry, err := mcp.NewMCPContext(ws)
 	if err != nil {
 		return err
 	}

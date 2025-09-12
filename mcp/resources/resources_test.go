@@ -30,12 +30,12 @@ import (
 )
 
 // getTestRegistry creates a registry using the test fixtures following the existing pattern
-func getTestRegistry(t *testing.T) *mcp.Registry {
+func getTestRegistry(t *testing.T) *mcp.MCPContext {
 	workspace := W.NewFileSystemWorkspaceContext("../test-fixtures/multiple-elements")
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewRegistry(workspace)
+	registry, err := mcp.NewMCPContext(workspace)
 	require.NoError(t, err)
 
 	err = registry.LoadManifests()
@@ -46,7 +46,7 @@ func getTestRegistry(t *testing.T) *mcp.Registry {
 
 func TestResources_LoadingAndParsing(t *testing.T) {
 	registry := getTestRegistry(t)
-	registryAdapter := mcp.NewRegistryAdapter(registry)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
 	resourceDefs, err := resources.Resources(registryAdapter)
 	require.NoError(t, err)
@@ -71,7 +71,7 @@ func TestResources_LoadingAndParsing(t *testing.T) {
 
 func TestSchemaResource_Integration(t *testing.T) {
 	registry := getTestRegistry(t)
-	registryAdapter := mcp.NewRegistryAdapter(registry)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
 	resourceDefs, err := resources.Resources(registryAdapter)
 	require.NoError(t, err)
@@ -110,7 +110,7 @@ func TestSchemaResource_Integration(t *testing.T) {
 
 func TestElementsResource_Integration(t *testing.T) {
 	registry := getTestRegistry(t)
-	registryAdapter := mcp.NewRegistryAdapter(registry)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
 	resourceDefs, err := resources.Resources(registryAdapter)
 	require.NoError(t, err)
@@ -154,7 +154,7 @@ func TestElementsResource_Integration(t *testing.T) {
 
 func TestElementResource_Integration(t *testing.T) {
 	registry := getTestRegistry(t)
-	registryAdapter := mcp.NewRegistryAdapter(registry)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
 	resourceDefs, err := resources.Resources(registryAdapter)
 	require.NoError(t, err)
@@ -197,7 +197,7 @@ func TestElementResource_Integration(t *testing.T) {
 		},
 		{
 			name:        "non-existent element",
-			uri:         "cem://element/non-existent", 
+			uri:         "cem://element/non-existent",
 			expectError: true, // This will actually error since element doesn't exist
 			checkFunc:   nil,
 		},
@@ -233,7 +233,7 @@ func TestElementResource_Integration(t *testing.T) {
 
 func TestPackagesResource_Integration(t *testing.T) {
 	registry := getTestRegistry(t)
-	registryAdapter := mcp.NewRegistryAdapter(registry)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
 	resourceDefs, err := resources.Resources(registryAdapter)
 	require.NoError(t, err)
@@ -272,7 +272,7 @@ func TestPackagesResource_Integration(t *testing.T) {
 
 func TestGuidelinesResource_Integration(t *testing.T) {
 	registry := getTestRegistry(t)
-	registryAdapter := mcp.NewRegistryAdapter(registry)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
 	resourceDefs, err := resources.Resources(registryAdapter)
 	require.NoError(t, err)
@@ -306,7 +306,7 @@ func TestGuidelinesResource_Integration(t *testing.T) {
 
 func TestAccessibilityResource_Integration(t *testing.T) {
 	registry := getTestRegistry(t)
-	registryAdapter := mcp.NewRegistryAdapter(registry)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
 	resourceDefs, err := resources.Resources(registryAdapter)
 	require.NoError(t, err)
@@ -341,7 +341,7 @@ func TestAccessibilityResource_Integration(t *testing.T) {
 func TestResourceFrontmatterParsing(t *testing.T) {
 	// Test that resource definitions are parsed correctly from markdown files
 	registry := getTestRegistry(t)
-	registryAdapter := mcp.NewRegistryAdapter(registry)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
 	resourceDefs, err := resources.Resources(registryAdapter)
 	require.NoError(t, err)
@@ -391,7 +391,7 @@ func TestResourceFrontmatterParsing(t *testing.T) {
 
 func TestResourceErrorHandling(t *testing.T) {
 	registry := getTestRegistry(t)
-	registryAdapter := mcp.NewRegistryAdapter(registry)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
 	resourceDefs, err := resources.Resources(registryAdapter)
 	require.NoError(t, err)
@@ -453,7 +453,7 @@ func TestResourceErrorHandling(t *testing.T) {
 func TestAllResourcesWithFixtures(t *testing.T) {
 	// Test that all resources work with real fixture data
 	registry := getTestRegistry(t)
-	registryAdapter := mcp.NewRegistryAdapter(registry)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
 	resourceDefs, err := resources.Resources(registryAdapter)
 	require.NoError(t, err)

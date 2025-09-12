@@ -27,7 +27,7 @@ import (
 )
 
 // handleSchemaResource provides the JSON schema for custom elements manifests
-func handleSchemaResource(ctx context.Context, req *mcp.ReadResourceRequest, registry types.Registry) (*mcp.ReadResourceResult, error) {
+func handleSchemaResource(ctx context.Context, req *mcp.ReadResourceRequest, registry types.MCPContext) (*mcp.ReadResourceResult, error) {
 	// Detect schema version from loaded manifests
 	schemaVersion := detectSchemaVersion(registry)
 
@@ -47,7 +47,7 @@ func handleSchemaResource(ctx context.Context, req *mcp.ReadResourceRequest, reg
 }
 
 // detectSchemaVersion extracts schema version from workspace manifests
-func detectSchemaVersion(registry types.Registry) string {
+func detectSchemaVersion(registry types.MCPContext) string {
 	versions := registry.GetManifestSchemaVersions()
 
 	// If no manifests found, use latest stable version as fallback

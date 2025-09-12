@@ -31,7 +31,7 @@ import (
 )
 
 // Tools returns all available tool definitions with their handlers
-func Tools(registry types.Registry) ([]types.ToolDefinition, error) {
+func Tools(registry types.MCPContext) ([]types.ToolDefinition, error) {
 	// Get the directory where this source file is located
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
@@ -59,7 +59,7 @@ func Tools(registry types.Registry) ([]types.ToolDefinition, error) {
 }
 
 // parseToolDefinition parses a markdown file with frontmatter into a ToolDefinition
-func parseToolDefinition(filename string, registry types.Registry) (types.ToolDefinition, error) {
+func parseToolDefinition(filename string, registry types.MCPContext) (types.ToolDefinition, error) {
 	content, err := os.ReadFile(filename)
 	if err != nil {
 		return types.ToolDefinition{}, fmt.Errorf("failed to read file: %w", err)
@@ -95,7 +95,7 @@ func parseToolDefinition(filename string, registry types.Registry) (types.ToolDe
 }
 
 // getToolHandler returns the appropriate handler function for a tool
-func getToolHandler(toolName string, registry types.Registry) (mcp.ToolHandler, error) {
+func getToolHandler(toolName string, registry types.MCPContext) (mcp.ToolHandler, error) {
 	switch toolName {
 	case "validate_html":
 		return makeValidateHtmlHandler(registry), nil
@@ -111,25 +111,25 @@ func getToolHandler(toolName string, registry types.Registry) (mcp.ToolHandler, 
 }
 
 // Handler factory functions
-func makeValidateHtmlHandler(registry types.Registry) mcp.ToolHandler {
+func makeValidateHtmlHandler(registry types.MCPContext) mcp.ToolHandler {
 	return func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		return handleValidateHtml(ctx, req, registry)
 	}
 }
 
-func makeSuggestAttributesHandler(registry types.Registry) mcp.ToolHandler {
+func makeSuggestAttributesHandler(registry types.MCPContext) mcp.ToolHandler {
 	return func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		return handleSuggestAttributes(ctx, req, registry)
 	}
 }
 
-func makeGenerateHtmlHandler(registry types.Registry) mcp.ToolHandler {
+func makeGenerateHtmlHandler(registry types.MCPContext) mcp.ToolHandler {
 	return func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		return handleGenerateHtml(ctx, req, registry)
 	}
 }
 
-func makeSuggestCssIntegrationHandler(registry types.Registry) mcp.ToolHandler {
+func makeSuggestCssIntegrationHandler(registry types.MCPContext) mcp.ToolHandler {
 	return func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		return handleSuggestCssIntegration(ctx, req, registry)
 	}

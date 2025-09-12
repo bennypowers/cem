@@ -48,7 +48,6 @@ func NewValidationTemplateData(element mcpTypes.ElementInfo, context string, opt
 	}
 }
 
-
 // ValidateHtmlArgs represents the arguments for the validate_html tool
 type ValidateHtmlArgs struct {
 	Html    string `json:"html"`
@@ -60,7 +59,7 @@ type ValidateHtmlArgs struct {
 func handleValidateHtml(
 	ctx context.Context,
 	req *mcp.CallToolRequest,
-	registry mcpTypes.Registry,
+	registry mcpTypes.MCPContext,
 ) (*mcp.CallToolResult, error) {
 	// Parse args from request
 	var validateArgs ValidateHtmlArgs
@@ -88,7 +87,7 @@ func handleValidateHtml(
 }
 
 // validateHtmlWithTreeSitter performs HTML validation using tree-sitter parsing
-func validateHtmlWithTreeSitter(html string, registry mcpTypes.Registry) (string, error) {
+func validateHtmlWithTreeSitter(html string, registry mcpTypes.MCPContext) (string, error) {
 	// Get the shared document manager from registry
 	dm := registry.DocumentManager()
 

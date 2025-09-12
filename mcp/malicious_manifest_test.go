@@ -42,19 +42,19 @@ type mockElementInfo struct {
 	description string
 }
 
-func (m *mockElementInfo) TagName() string                    { return m.tagName }
-func (m *mockElementInfo) Name() string                       { return m.tagName }
-func (m *mockElementInfo) Description() string                { return m.description }
-func (m *mockElementInfo) Module() string                     { return "" }
-func (m *mockElementInfo) Package() string                    { return "" }
-func (m *mockElementInfo) Guidelines() []string               { return []string{} }
-func (m *mockElementInfo) Attributes() []types.Attribute      { return []types.Attribute{} }
-func (m *mockElementInfo) Slots() []types.Slot                { return []types.Slot{} }
-func (m *mockElementInfo) Events() []types.Event              { return []types.Event{} }
-func (m *mockElementInfo) CssProperties() []types.CssProperty { return []types.CssProperty{} }
-func (m *mockElementInfo) CssParts() []types.CssPart          { return []types.CssPart{} }
-func (m *mockElementInfo) CssStates() []types.CssState        { return []types.CssState{} }
-func (m *mockElementInfo) Examples() []types.Example          { return []types.Example{} }
+func (m *mockElementInfo) TagName() string                      { return m.tagName }
+func (m *mockElementInfo) Name() string                         { return m.tagName }
+func (m *mockElementInfo) Description() string                  { return m.description }
+func (m *mockElementInfo) Module() string                       { return "" }
+func (m *mockElementInfo) Package() string                      { return "" }
+func (m *mockElementInfo) Guidelines() []string                 { return []string{} }
+func (m *mockElementInfo) Attributes() []types.Attribute        { return []types.Attribute{} }
+func (m *mockElementInfo) Slots() []types.Slot                  { return []types.Slot{} }
+func (m *mockElementInfo) Events() []types.Event                { return []types.Event{} }
+func (m *mockElementInfo) CssProperties() []types.CssProperty   { return []types.CssProperty{} }
+func (m *mockElementInfo) CssParts() []types.CssPart            { return []types.CssPart{} }
+func (m *mockElementInfo) CssStates() []types.CssState          { return []types.CssState{} }
+func (m *mockElementInfo) Examples() []types.Example            { return []types.Example{} }
 func (m *mockElementInfo) ItemsByKind(kind string) []types.Item { return []types.Item{} }
 
 func TestMaliciousManifestMitigation(t *testing.T) {
@@ -77,10 +77,10 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 				"path": "src/malicious-button.js",
 				"declarations": []map[string]interface{}{
 					{
-						"kind":        "class",
-						"description": "A button component {{.DatabasePassword}} with {{range .Secrets}}{{.}}{{end}} injection attempts",
-						"name":        "MaliciousButton",
-						"tagName":     "malicious-button",
+						"kind":          "class",
+						"description":   "A button component {{.DatabasePassword}} with {{range .Secrets}}{{.}}{{end}} injection attempts",
+						"name":          "MaliciousButton",
+						"tagName":       "malicious-button",
 						"customElement": true,
 						"attributes": []map[string]interface{}{
 							{
@@ -146,7 +146,7 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 	wctx := workspace.NewFileSystemWorkspaceContext(tempDir)
 	require.NoError(t, wctx.Init())
 
-	registry, err := NewRegistry(wctx)
+	registry, err := NewMCPContext(wctx)
 	require.NoError(t, err)
 
 	// Load the malicious manifest
@@ -162,7 +162,7 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 		description := element.Description
 		assert.NotContains(t, description, "{{", "Template syntax should be removed from element description")
 		assert.NotContains(t, description, "}}", "Template syntax should be removed from element description")
-		
+
 		// Note: Element description might be empty because it's not populated from manifest description
 		// The important thing is that no template injection is present
 		t.Logf("Element description: '%s'", description)
@@ -172,7 +172,7 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 	t.Run("attribute descriptions sanitized", func(t *testing.T) {
 		attributes := element.Attributes()
 		require.Len(t, attributes, 1)
-		
+
 		attr := attributes[0]
 		description := attr.Description()
 		assert.NotContains(t, description, "{{", "Template syntax should be removed from attribute description")
@@ -184,7 +184,7 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 	t.Run("slot descriptions sanitized", func(t *testing.T) {
 		slots := element.Slots()
 		require.Len(t, slots, 1)
-		
+
 		slot := slots[0]
 		description := slot.Description()
 		assert.NotContains(t, description, "{{", "Template syntax should be removed from slot description")
@@ -195,7 +195,7 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 	t.Run("event descriptions sanitized", func(t *testing.T) {
 		events := element.Events()
 		require.Len(t, events, 1)
-		
+
 		event := events[0]
 		description := event.Description()
 		assert.NotContains(t, description, "{{", "Template syntax should be removed from event description")
@@ -206,7 +206,7 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 	t.Run("css property descriptions sanitized", func(t *testing.T) {
 		props := element.CssProperties()
 		require.Len(t, props, 1)
-		
+
 		prop := props[0]
 		description := prop.Description()
 		assert.NotContains(t, description, "{{", "Template syntax should be removed from CSS property description")
@@ -217,7 +217,7 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 	t.Run("css part descriptions sanitized", func(t *testing.T) {
 		parts := element.CssParts()
 		require.Len(t, parts, 1)
-		
+
 		part := parts[0]
 		description := part.Description()
 		assert.NotContains(t, description, "{{", "Template syntax should be removed from CSS part description")
@@ -228,7 +228,7 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 	t.Run("css state descriptions sanitized", func(t *testing.T) {
 		states := element.CssStates()
 		require.Len(t, states, 1)
-		
+
 		state := states[0]
 		description := state.Description()
 		assert.NotContains(t, description, "{{", "Template syntax should be removed from CSS state description")
@@ -239,7 +239,7 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 func TestTemplateRenderingWithMaliciousData(t *testing.T) {
 	// This test simulates what would happen if malicious data somehow made it through to template rendering
 	// It verifies that our template security controls and html/template auto-escaping prevent execution
-	
+
 	// Create a template renderer for testing
 	templateRenderer := newTestTemplateRenderer()
 
@@ -288,7 +288,7 @@ func TestTemplateRenderingWithMaliciousData(t *testing.T) {
 		},
 		{
 			name:         "template_syntax_in_data",
-			templateName: "html_validation_results", 
+			templateName: "html_validation_results",
 			data: tools.HTMLValidationData{
 				FoundElements: []tools.ElementWithIssues{
 					{
@@ -322,20 +322,20 @@ func TestTemplateRenderingWithMaliciousData(t *testing.T) {
 	for _, tc := range maliciousTestCases {
 		t.Run(tc.name, func(t *testing.T) {
 			result, err := templateRenderer.Render(tc.templateName, tc.data)
-			
+
 			if tc.expectError {
 				assert.Error(t, err, tc.description)
 				assert.Empty(t, result, "Should not return content on error")
 			} else {
 				assert.NoError(t, err, tc.description)
 				assert.NotEmpty(t, result, "Should return rendered content")
-				
+
 				// Verify that dangerous content is properly escaped
 				if strings.Contains(tc.templateName, "html_validation_results") {
 					// Check that script tags are escaped
 					assert.NotContains(t, result, "<script>", "Script tags should be escaped")
-					// Note: javascript: in text content is not escaped by html/template and that's okay 
-					
+					// Note: javascript: in text content is not escaped by html/template and that's okay
+
 					// Check that HTML is escaped by html/template
 					if data, ok := tc.data.(tools.HTMLValidationData); ok {
 						if len(data.FoundElements) > 0 {
@@ -361,18 +361,18 @@ func TestSecurityMetrics(t *testing.T) {
 	// Test that security functions perform adequately
 	t.Run("sanitization performance", func(t *testing.T) {
 		maliciousInput := strings.Repeat("{{.Secret}} ", 1000) + "Normal content"
-		
+
 		// Should complete in reasonable time
 		start := func() {
 			for i := 0; i < 100; i++ {
 				security.SanitizeDescription(maliciousInput)
 			}
 		}
-		
+
 		// Just verify it doesn't panic or hang
 		start()
 	})
-	
+
 	t.Run("detection accuracy", func(t *testing.T) {
 		// Test with various injection patterns
 		injectionTests := []string{
@@ -383,11 +383,11 @@ func TestSecurityMetrics(t *testing.T) {
 			"{{define \"evil\"}}{{.}}{{end}}",
 			"{{block \"bad\" .}}default{{end}}",
 		}
-		
+
 		for _, test := range injectionTests {
 			assert.True(t, security.DetectTemplateInjection(test), "Should detect injection in: %s", test)
 		}
-		
+
 		// Test false positives
 		safeTests := []string{
 			"Normal description",
@@ -395,7 +395,7 @@ func TestSecurityMetrics(t *testing.T) {
 			"CSS: .class { color: red; }",
 			"Code example: if (x) { return true; }",
 		}
-		
+
 		for _, test := range safeTests {
 			assert.False(t, security.DetectTemplateInjection(test), "Should not detect injection in: %s", test)
 		}

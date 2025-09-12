@@ -39,6 +39,12 @@ type CSSTemplateData struct {
 	Theme string
 }
 
+// Template accessor methods for direct access in templates
+func (c CSSTemplateData) TagName() string                    { return c.Element.TagName() }
+func (c CSSTemplateData) CssProperties() []types.CssProperty { return c.Element.CssProperties() }
+func (c CSSTemplateData) CssParts() []types.CssPart          { return c.Element.CssParts() }
+func (c CSSTemplateData) CssStates() []types.CssState        { return c.Element.CssStates() }
+
 // NewCSSTemplateData creates CSS-specific template data
 func NewCSSTemplateData(element types.ElementInfo, context string, options map[string]string, theme string) CSSTemplateData {
 	return CSSTemplateData{
@@ -48,7 +54,7 @@ func NewCSSTemplateData(element types.ElementInfo, context string, options map[s
 }
 
 // handleSuggestCssIntegration provides CSS integration guidance for custom elements
-func handleSuggestCssIntegration(ctx context.Context, req *mcp.CallToolRequest, registry types.Registry) (*mcp.CallToolResult, error) {
+func handleSuggestCssIntegration(ctx context.Context, req *mcp.CallToolRequest, registry types.MCPContext) (*mcp.CallToolResult, error) {
 	// Parse args from request
 	cssArgs, err := ParseToolArgs[SuggestCssIntegrationArgs](req)
 	if err != nil {

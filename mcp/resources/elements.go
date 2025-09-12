@@ -43,7 +43,7 @@ type ElementSummary struct {
 }
 
 // handleElementsResource provides all element declarations for discovery
-func handleElementsResource(ctx context.Context, req *mcp.ReadResourceRequest, registry types.Registry) (*mcp.ReadResourceResult, error) {
+func handleElementsResource(ctx context.Context, req *mcp.ReadResourceRequest, registry types.MCPContext) (*mcp.ReadResourceResult, error) {
 	// Get all elements from registry
 	elementMap := registry.AllElements()
 

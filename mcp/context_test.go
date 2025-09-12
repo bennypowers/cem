@@ -26,32 +26,32 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRegistry_NewRegistry(t *testing.T) {
+func TestMCPContext_NewRegistry(t *testing.T) {
 	workspace := W.NewFileSystemWorkspaceContext("./test-fixtures/multiple-elements")
 
-	registry, err := mcp.NewRegistry(workspace)
+	registry, err := mcp.NewMCPContext(workspace)
 	require.NoError(t, err, "Failed to create registry")
 	assert.NotNil(t, registry, "Registry should not be nil")
 }
 
-func TestRegistry_LoadManifests(t *testing.T) {
+func TestMCPContext_LoadManifests(t *testing.T) {
 	workspace := W.NewFileSystemWorkspaceContext("./test-fixtures/multiple-elements")
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewRegistry(workspace)
+	registry, err := mcp.NewMCPContext(workspace)
 	require.NoError(t, err, "Failed to create registry")
 
 	err = registry.LoadManifests()
 	require.NoError(t, err, "Failed to load manifests")
 }
 
-func TestRegistry_GetElementInfo(t *testing.T) {
+func TestMCPContext_GetElementInfo(t *testing.T) {
 	workspace := W.NewFileSystemWorkspaceContext("./test-fixtures/multiple-elements")
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewRegistry(workspace)
+	registry, err := mcp.NewMCPContext(workspace)
 	require.NoError(t, err, "Failed to create registry")
 
 	err = registry.LoadManifests()
@@ -199,12 +199,12 @@ func TestRegistry_GetElementInfo(t *testing.T) {
 	}
 }
 
-func TestRegistry_GetAllElements(t *testing.T) {
+func TestMCPContext_GetAllElements(t *testing.T) {
 	workspace := W.NewFileSystemWorkspaceContext("./test-fixtures/multiple-elements")
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewRegistry(workspace)
+	registry, err := mcp.NewMCPContext(workspace)
 	require.NoError(t, err, "Failed to create registry")
 
 	err = registry.LoadManifests()
@@ -226,12 +226,12 @@ func TestRegistry_GetAllElements(t *testing.T) {
 	assert.Equal(t, "", cardElement.Description) // Description not available from CustomElement
 }
 
-func TestRegistry_GetManifestSchema(t *testing.T) {
+func TestMCPContext_GetManifestSchema(t *testing.T) {
 	workspace := W.NewFileSystemWorkspaceContext("./test-fixtures/multiple-elements")
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewRegistry(workspace)
+	registry, err := mcp.NewMCPContext(workspace)
 	require.NoError(t, err, "Failed to create registry")
 
 	schema, err := registry.GetManifestSchema()
@@ -286,12 +286,12 @@ func TestRegistry_GetManifestSchema(t *testing.T) {
 
 // Table-driven tests for detailed data conversion testing
 
-func TestRegistry_AttributeConversion(t *testing.T) {
+func TestMCPContext_AttributeConversion(t *testing.T) {
 	workspace := W.NewFileSystemWorkspaceContext("./test-fixtures/multiple-elements")
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewRegistry(workspace)
+	registry, err := mcp.NewMCPContext(workspace)
 	require.NoError(t, err)
 
 	err = registry.LoadManifests()
@@ -379,12 +379,12 @@ func TestRegistry_AttributeConversion(t *testing.T) {
 	}
 }
 
-func TestRegistry_SlotConversion(t *testing.T) {
+func TestMCPContext_SlotConversion(t *testing.T) {
 	workspace := W.NewFileSystemWorkspaceContext("./test-fixtures/multiple-elements")
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewRegistry(workspace)
+	registry, err := mcp.NewMCPContext(workspace)
 	require.NoError(t, err)
 
 	err = registry.LoadManifests()
@@ -448,12 +448,12 @@ func TestRegistry_SlotConversion(t *testing.T) {
 	}
 }
 
-func TestRegistry_CssPropertyConversion(t *testing.T) {
+func TestMCPContext_CssPropertyConversion(t *testing.T) {
 	workspace := W.NewFileSystemWorkspaceContext("./test-fixtures/multiple-elements")
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewRegistry(workspace)
+	registry, err := mcp.NewMCPContext(workspace)
 	require.NoError(t, err)
 
 	err = registry.LoadManifests()
@@ -518,12 +518,12 @@ func TestRegistry_CssPropertyConversion(t *testing.T) {
 	}
 }
 
-func TestRegistry_CssPartConversion(t *testing.T) {
+func TestMCPContext_CssPartConversion(t *testing.T) {
 	workspace := W.NewFileSystemWorkspaceContext("./test-fixtures/multiple-elements")
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewRegistry(workspace)
+	registry, err := mcp.NewMCPContext(workspace)
 	require.NoError(t, err)
 
 	err = registry.LoadManifests()

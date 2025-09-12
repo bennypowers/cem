@@ -26,18 +26,18 @@ import (
 var (
 	// Go template syntax patterns
 	templateActionPattern = regexp.MustCompile(`\{\{.*?\}\}`)
-	
+
 	// Specific dangerous template constructs
-	rangePattern     = regexp.MustCompile(`\{\{\s*range\s+.*?\}\}`)
-	withPattern      = regexp.MustCompile(`\{\{\s*with\s+.*?\}\}`)
-	definePattern    = regexp.MustCompile(`\{\{\s*define\s+.*?\}\}`)
-	templatePattern  = regexp.MustCompile(`\{\{\s*template\s+.*?\}\}`)
-	blockPattern     = regexp.MustCompile(`\{\{\s*block\s+.*?\}\}`)
-	
+	rangePattern    = regexp.MustCompile(`\{\{\s*range\s+.*?\}\}`)
+	withPattern     = regexp.MustCompile(`\{\{\s*with\s+.*?\}\}`)
+	definePattern   = regexp.MustCompile(`\{\{\s*define\s+.*?\}\}`)
+	templatePattern = regexp.MustCompile(`\{\{\s*template\s+.*?\}\}`)
+	blockPattern    = regexp.MustCompile(`\{\{\s*block\s+.*?\}\}`)
+
 	// Variable access patterns
-	dotPattern       = regexp.MustCompile(`\{\{\s*\..*?\}\}`)
-	dollarPattern    = regexp.MustCompile(`\{\{\s*\$.*?\}\}`)
-	
+	dotPattern    = regexp.MustCompile(`\{\{\s*\..*?\}\}`)
+	dollarPattern = regexp.MustCompile(`\{\{\s*\$.*?\}\}`)
+
 	// Maximum safe description length
 	maxDescriptionLength = 2000
 )
@@ -48,22 +48,22 @@ func SanitizeDescription(description string) string {
 	if description == "" {
 		return ""
 	}
-	
+
 	// Limit length to prevent abuse
 	if len(description) > maxDescriptionLength {
 		description = description[:maxDescriptionLength] + "..."
 	}
-	
+
 	// Remove all Go template syntax
 	description = templateActionPattern.ReplaceAllString(description, "")
-	
+
 	// HTML escape any remaining content to prevent XSS
 	description = html.EscapeString(description)
-	
+
 	// Clean up excessive whitespace
 	description = strings.TrimSpace(description)
 	description = regexp.MustCompile(`\s+`).ReplaceAllString(description, " ")
-	
+
 	return description
 }
 
@@ -72,52 +72,52 @@ func SanitizeDescriptionPreservingMarkdown(description string) string {
 	if description == "" {
 		return ""
 	}
-	
+
 	// Limit length to prevent abuse
 	if len(description) > maxDescriptionLength {
 		description = description[:maxDescriptionLength] + "..."
 	}
-	
+
 	// Remove all Go template syntax first
 	description = templateActionPattern.ReplaceAllString(description, "")
-	
+
 	// Preserve basic markdown patterns before HTML escaping
 	// This is a simple approach - more sophisticated markdown parsing could be added
 	codeBlockPattern := regexp.MustCompile("```([^`]*)```")
 	inlineCodePattern := regexp.MustCompile("`([^`]*)`")
-	
+
 	// Temporarily replace markdown code blocks to protect them
 	codeBlocks := codeBlockPattern.FindAllString(description, -1)
 	for i, block := range codeBlocks {
 		placeholder := "___CODEBLOCK_" + string(rune(i+'A')) + "___"
 		description = strings.Replace(description, block, placeholder, 1)
 	}
-	
+
 	inlineCodes := inlineCodePattern.FindAllString(description, -1)
 	for i, code := range inlineCodes {
 		placeholder := "___INLINECODE_" + string(rune(i+'A')) + "___"
 		description = strings.Replace(description, code, placeholder, 1)
 	}
-	
+
 	// HTML escape the content
 	description = html.EscapeString(description)
-	
+
 	// Restore markdown code blocks (they're already safe)
 	for i, block := range codeBlocks {
 		placeholder := "___CODEBLOCK_" + string(rune(i+'A')) + "___"
 		// Remove the backticks from escaped version and restore original
 		description = strings.Replace(description, placeholder, block, 1)
 	}
-	
+
 	for i, code := range inlineCodes {
 		placeholder := "___INLINECODE_" + string(rune(i+'A')) + "___"
 		description = strings.Replace(description, placeholder, code, 1)
 	}
-	
+
 	// Clean up excessive whitespace
 	description = strings.TrimSpace(description)
 	description = regexp.MustCompile(`\s+`).ReplaceAllString(description, " ")
-	
+
 	return description
 }
 
@@ -126,7 +126,7 @@ func DetectTemplateInjection(description string) bool {
 	if description == "" {
 		return false
 	}
-	
+
 	// Check for Go template syntax
 	return templateActionPattern.MatchString(description)
 }
@@ -134,7 +134,7 @@ func DetectTemplateInjection(description string) bool {
 // GetInjectionPatterns returns detected injection patterns for logging/analysis
 func GetInjectionPatterns(description string) []string {
 	var patterns []string
-	
+
 	if rangePattern.MatchString(description) {
 		patterns = append(patterns, "range_construct")
 	}
@@ -156,7 +156,7 @@ func GetInjectionPatterns(description string) []string {
 	if dollarPattern.MatchString(description) {
 		patterns = append(patterns, "dollar_variable")
 	}
-	
+
 	return patterns
 }
 
@@ -164,7 +164,7 @@ func GetInjectionPatterns(description string) []string {
 type SecurityPolicy struct {
 	MaxDescriptionLength int
 	AllowMarkdown        bool
-	StrictMode          bool
+	StrictMode           bool
 }
 
 // DefaultSecurityPolicy returns the default security policy
@@ -172,7 +172,7 @@ func DefaultSecurityPolicy() SecurityPolicy {
 	return SecurityPolicy{
 		MaxDescriptionLength: maxDescriptionLength,
 		AllowMarkdown:        true,
-		StrictMode:          false,
+		StrictMode:           false,
 	}
 }
 
@@ -181,7 +181,7 @@ func StrictSecurityPolicy() SecurityPolicy {
 	return SecurityPolicy{
 		MaxDescriptionLength: 500,
 		AllowMarkdown:        false,
-		StrictMode:          true,
+		StrictMode:           true,
 	}
 }
 
@@ -190,24 +190,24 @@ func SanitizeWithPolicy(description string, policy SecurityPolicy) string {
 	if description == "" {
 		return ""
 	}
-	
+
 	// Apply length limit
 	if len(description) > policy.MaxDescriptionLength {
 		description = description[:policy.MaxDescriptionLength] + "..."
 	}
-	
+
 	// Remove template injection attempts
 	description = templateActionPattern.ReplaceAllString(description, "")
-	
+
 	// Apply sanitization based on policy
 	if policy.AllowMarkdown && !policy.StrictMode {
 		return SanitizeDescriptionPreservingMarkdown(description)
 	}
-	
+
 	// Strict mode: just HTML escape and clean
 	description = html.EscapeString(description)
 	description = strings.TrimSpace(description)
 	description = regexp.MustCompile(`\s+`).ReplaceAllString(description, " ")
-	
+
 	return description
 }

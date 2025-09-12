@@ -32,9 +32,9 @@ import (
 	V "bennypowers.dev/cem/validate"
 )
 
-// Registry manages custom elements manifests for MCP context
+// MCPContext manages custom elements manifests for MCP context
 // This is a lightweight wrapper around the LSP registry for reuse
-type Registry struct {
+type MCPContext struct {
 	workspace       types.WorkspaceContext
 	lspRegistry     *LSP.Registry
 	documentManager lspTypes.DocumentManager
@@ -337,8 +337,8 @@ func extractEnumValues(t *M.Type) []string {
 	return values
 }
 
-// NewRegistry creates a new MCP registry
-func NewRegistry(workspace types.WorkspaceContext) (*Registry, error) {
+// NewMCPContext creates a new MCP context
+func NewMCPContext(workspace types.WorkspaceContext) (*MCPContext, error) {
 	helpers.SafeDebugLog("Creating MCP registry for workspace: %s", workspace.Root())
 
 	// Create the underlying LSP registry for reuse
@@ -353,80 +353,80 @@ func NewRegistry(workspace types.WorkspaceContext) (*Registry, error) {
 		return nil, fmt.Errorf("failed to create document manager: %w", err)
 	}
 
-	registry := &Registry{
+	context := &MCPContext{
 		workspace:       workspace,
 		lspRegistry:     lspRegistry,
 		documentManager: documentManager,
 		mcpCache:        make(map[string]*ElementInfo),
 	}
 
-	return registry, nil
+	return context, nil
 }
 
 // LoadManifests loads all available manifests
-func (r *Registry) LoadManifests() error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+func (ctx *MCPContext) LoadManifests() error {
+	ctx.mu.Lock()
+	defer ctx.mu.Unlock()
 
 	helpers.SafeDebugLog("Loading manifests for MCP context")
 
 	// Clear the cache when reloading manifests
-	r.mcpCache = make(map[string]*ElementInfo)
+	ctx.mcpCache = make(map[string]*ElementInfo)
 
-	if err := r.lspRegistry.LoadFromWorkspace(r.workspace); err != nil {
-		return fmt.Errorf("failed to load manifests from workspace %q: %w", r.workspace.Root(), err)
+	if err := ctx.lspRegistry.LoadFromWorkspace(ctx.workspace); err != nil {
+		return fmt.Errorf("failed to load manifests from workspace %q: %w", ctx.workspace.Root(), err)
 	}
 	return nil
 }
 
 // DocumentManager returns the shared document manager for validation
-func (r *Registry) DocumentManager() lspTypes.DocumentManager {
-	return r.documentManager
+func (ctx *MCPContext) DocumentManager() lspTypes.DocumentManager {
+	return ctx.documentManager
 }
 
 // GetElementInfo returns enhanced element information for MCP context
-func (r *Registry) GetElementInfo(tagName string) (*ElementInfo, error) {
-	r.mu.RLock()
+func (ctx *MCPContext) GetElementInfo(tagName string) (*ElementInfo, error) {
+	ctx.mu.RLock()
 
 	// Check cache first
-	if cached, exists := r.mcpCache[tagName]; exists {
-		r.mu.RUnlock()
+	if cached, exists := ctx.mcpCache[tagName]; exists {
+		ctx.mu.RUnlock()
 		return cached, nil
 	}
 
 	// Get basic element from LSP registry
-	element := r.lspRegistry.Elements[tagName]
+	element := ctx.lspRegistry.Elements[tagName]
 	if element == nil {
-		r.mu.RUnlock()
+		ctx.mu.RUnlock()
 		return nil, fmt.Errorf("failed to get element info for %q: element not found in registry", tagName)
 	}
-	r.mu.RUnlock()
+	ctx.mu.RUnlock()
 
 	// Convert to enhanced MCP format (outside of read lock to avoid blocking)
-	info := r.convertElement(element, tagName)
+	info := ctx.convertElement(element, tagName)
 
 	// Cache the result
-	r.mu.Lock()
-	r.mcpCache[tagName] = info
-	r.mu.Unlock()
+	ctx.mu.Lock()
+	ctx.mcpCache[tagName] = info
+	ctx.mu.Unlock()
 
 	return info, nil
 }
 
 // GetAllElements returns all available elements
-func (r *Registry) GetAllElements() map[string]*ElementInfo {
-	r.mu.RLock()
+func (ctx *MCPContext) GetAllElements() map[string]*ElementInfo {
+	ctx.mu.RLock()
 	// Extract tag names while holding the lock
-	tagNames := make([]string, 0, len(r.lspRegistry.Elements))
-	for tagName := range r.lspRegistry.Elements {
+	tagNames := make([]string, 0, len(ctx.lspRegistry.Elements))
+	for tagName := range ctx.lspRegistry.Elements {
 		tagNames = append(tagNames, tagName)
 	}
-	r.mu.RUnlock()
+	ctx.mu.RUnlock()
 
 	// Convert elements outside the lock to avoid deadlock
 	elements := make(map[string]*ElementInfo)
 	for _, tagName := range tagNames {
-		if info, err := r.GetElementInfo(tagName); err == nil {
+		if info, err := ctx.GetElementInfo(tagName); err == nil {
 			elements[tagName] = info
 		}
 	}
@@ -435,9 +435,9 @@ func (r *Registry) GetAllElements() map[string]*ElementInfo {
 }
 
 // GetManifestSchema returns the JSON schema for custom elements manifests
-func (r *Registry) GetManifestSchema() (map[string]interface{}, error) {
+func (ctx *MCPContext) GetManifestSchema() (map[string]interface{}, error) {
 	// Use the same schema detection and retrieval logic as the schema resource
-	versions := r.GetManifestSchemaVersions()
+	versions := ctx.GetManifestSchemaVersions()
 
 	// If no manifests found, use latest stable version as fallback
 	schemaVersion := "2.1.1-speculative"
@@ -445,7 +445,7 @@ func (r *Registry) GetManifestSchema() (map[string]interface{}, error) {
 		schemaVersion = versions[0]
 	} else if len(versions) > 1 {
 		// Multiple versions: prefer the highest version, with speculative versions favored
-		schemaVersion = r.selectBestSchemaVersion(versions)
+		schemaVersion = ctx.selectBestSchemaVersion(versions)
 	}
 
 	// Get the actual JSON schema using the same method as the validate command and schema resource
@@ -464,11 +464,11 @@ func (r *Registry) GetManifestSchema() (map[string]interface{}, error) {
 }
 
 // GetManifestSchemaVersions returns all unique schema versions found in loaded manifests
-func (r *Registry) GetManifestSchemaVersions() []string {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
+func (ctx *MCPContext) GetManifestSchemaVersions() []string {
+	ctx.mu.RLock()
+	defer ctx.mu.RUnlock()
 
-	if r.lspRegistry == nil {
+	if ctx.lspRegistry == nil {
 		return []string{}
 	}
 
@@ -476,7 +476,7 @@ func (r *Registry) GetManifestSchemaVersions() []string {
 	var versions []string
 
 	// Extract schema versions from all loaded manifests
-	for _, manifest := range r.lspRegistry.Manifests {
+	for _, manifest := range ctx.lspRegistry.Manifests {
 		if manifest != nil && manifest.SchemaVersion != "" {
 			if _, exists := versionSet[manifest.SchemaVersion]; !exists {
 				versionSet[manifest.SchemaVersion] = struct{}{}
@@ -489,7 +489,7 @@ func (r *Registry) GetManifestSchemaVersions() []string {
 }
 
 // selectBestSchemaVersion chooses the best schema version from multiple options
-func (r *Registry) selectBestSchemaVersion(versions []string) string {
+func (ctx *MCPContext) selectBestSchemaVersion(versions []string) string {
 	// Fallback if empty
 	if len(versions) == 0 {
 		return "2.1.1-speculative"
@@ -529,42 +529,42 @@ func (r *Registry) selectBestSchemaVersion(versions []string) string {
 // Helper methods for converting LSP types to MCP types
 
 // convertElement converts a manifest element to enhanced MCP format using the new interface-based design
-func (r *Registry) convertElement(element *M.CustomElement, tagName string) *ElementInfo {
+func (ctx *MCPContext) convertElement(element *M.CustomElement, tagName string) *ElementInfo {
 	var items []Item
 
 	// Convert attributes (examples now provided via template-driven resources)
 	for _, attr := range element.Attributes {
-		guidelines := r.extractGuidelines(attr.Description)
+		guidelines := ctx.extractGuidelines(attr.Description)
 		items = append(items, NewAttributeItem(attr, guidelines, []string{}))
 	}
 
 	// Convert slots (examples now provided via template-driven resources)
 	for _, slot := range element.Slots {
-		guidelines := r.extractGuidelines(slot.Description)
+		guidelines := ctx.extractGuidelines(slot.Description)
 		items = append(items, NewSlotItem(slot, guidelines, []string{}))
 	}
 
 	// Convert events (examples now provided via template-driven resources)
 	for _, event := range element.Events {
-		guidelines := r.extractGuidelines(event.Description)
+		guidelines := ctx.extractGuidelines(event.Description)
 		items = append(items, NewEventItem(event, guidelines, []string{}))
 	}
 
 	// Convert CSS properties (examples now provided via template-driven resources)
 	for _, prop := range element.CssProperties {
-		guidelines := r.extractGuidelines(prop.Description)
+		guidelines := ctx.extractGuidelines(prop.Description)
 		items = append(items, NewCssPropertyItem(prop, guidelines, []string{}))
 	}
 
 	// Convert CSS parts (examples now provided via template-driven resources)
 	for _, part := range element.CssParts {
-		guidelines := r.extractGuidelines(part.Description)
+		guidelines := ctx.extractGuidelines(part.Description)
 		items = append(items, NewCssPartItem(part, guidelines, []string{}))
 	}
 
 	// Convert CSS states (examples now provided via template-driven resources)
 	for _, state := range element.CssStates {
-		guidelines := r.extractGuidelines(state.Description)
+		guidelines := ctx.extractGuidelines(state.Description)
 		items = append(items, NewCssStateItem(state, guidelines, []string{}))
 	}
 
@@ -575,7 +575,7 @@ func (r *Registry) convertElement(element *M.CustomElement, tagName string) *Ele
 		Module:      "",      // Would need module path from element definitions
 		Package:     "",      // Would need package name from element definitions
 		Items:       items,
-		Guidelines:  r.extractGuidelinesFromElement(element),
+		Guidelines:  ctx.extractGuidelinesFromElement(element),
 		Examples:    []ExampleInfo{}, // Examples now provided via template-driven resources
 		Metadata:    make(map[string]interface{}),
 	}
@@ -583,7 +583,7 @@ func (r *Registry) convertElement(element *M.CustomElement, tagName string) *Ele
 
 // Helper methods for extracting guidelines and examples
 
-func (r *Registry) extractGuidelinesFromElement(element *M.CustomElement) []string {
+func (ctx *MCPContext) extractGuidelinesFromElement(element *M.CustomElement) []string {
 	var guidelines []string
 
 	// For now, extract guidelines from attributes, slots, etc descriptions
@@ -593,20 +593,20 @@ func (r *Registry) extractGuidelinesFromElement(element *M.CustomElement) []stri
 }
 
 // extractGuidelines is a generic helper that extracts guidelines from any description text
-func (r *Registry) extractGuidelines(description string) []string {
+func (ctx *MCPContext) extractGuidelines(description string) []string {
 	// Sanitize description to prevent template injection
 	sanitized := security.SanitizeDescriptionPreservingMarkdown(description)
-	
+
 	// Log security warning if injection was detected
 	if security.DetectTemplateInjection(description) {
 		patterns := security.GetInjectionPatterns(description)
 		helpers.SafeDebugLog("Template injection detected in description: %v", patterns)
 	}
-	
-	return r.extractTextGuidelines(sanitized)
+
+	return ctx.extractTextGuidelines(sanitized)
 }
 
-func (r *Registry) extractTextGuidelines(text string) []string {
+func (ctx *MCPContext) extractTextGuidelines(text string) []string {
 	var guidelines []string
 	if text == "" {
 		return guidelines
@@ -628,28 +628,28 @@ func (r *Registry) extractTextGuidelines(text string) []string {
 	return guidelines
 }
 
-// RegistryAdapter implements MCPTypes.Registry interface for tools package
-type RegistryAdapter struct {
-	*Registry
+// MCPContextAdapter implements MCPTypes.MCPContext interface for tools package
+type MCPContextAdapter struct {
+	*MCPContext
 }
 
-// NewRegistryAdapter creates an adapter that implements the tools interface
-func NewRegistryAdapter(registry *Registry) MCPTypes.Registry {
-	return &RegistryAdapter{Registry: registry}
+// NewMCPContextAdapter creates an adapter that implements the tools interface
+func NewMCPContextAdapter(context *MCPContext) MCPTypes.MCPContext {
+	return &MCPContextAdapter{MCPContext: context}
 }
 
-// ElementInfo implements MCPTypes.Registry interface
-func (r *RegistryAdapter) ElementInfo(tagName string) (MCPTypes.ElementInfo, error) {
-	element, err := r.GetElementInfo(tagName)
+// ElementInfo implements MCPTypes.MCPContext interface
+func (ctx *MCPContextAdapter) ElementInfo(tagName string) (MCPTypes.ElementInfo, error) {
+	element, err := ctx.GetElementInfo(tagName)
 	if err != nil {
 		return nil, err
 	}
 	return &ElementInfoAdapter{ElementInfo: element}, nil
 }
 
-// AllElements implements MCPTypes.Registry interface
-func (r *RegistryAdapter) AllElements() map[string]MCPTypes.ElementInfo {
-	elements := r.GetAllElements()
+// AllElements implements MCPTypes.MCPContext interface
+func (ctx *MCPContextAdapter) AllElements() map[string]MCPTypes.ElementInfo {
+	elements := ctx.GetAllElements()
 	adapted := make(map[string]MCPTypes.ElementInfo)
 	for tagName, element := range elements {
 		adapted[tagName] = &ElementInfoAdapter{ElementInfo: element}
@@ -657,14 +657,14 @@ func (r *RegistryAdapter) AllElements() map[string]MCPTypes.ElementInfo {
 	return adapted
 }
 
-// GetManifestSchemaVersions implements MCPTypes.Registry interface
-func (r *RegistryAdapter) GetManifestSchemaVersions() []string {
-	return r.Registry.GetManifestSchemaVersions()
+// GetManifestSchemaVersions implements MCPTypes.MCPContext interface
+func (ctx *MCPContextAdapter) GetManifestSchemaVersions() []string {
+	return ctx.MCPContext.GetManifestSchemaVersions()
 }
 
-// DocumentManager implements MCPTypes.Registry interface
-func (r *RegistryAdapter) DocumentManager() lspTypes.DocumentManager {
-	return r.Registry.DocumentManager()
+// DocumentManager implements MCPTypes.MCPContext interface
+func (ctx *MCPContextAdapter) DocumentManager() lspTypes.DocumentManager {
+	return ctx.MCPContext.DocumentManager()
 }
 
 // ElementInfoAdapter implements MCPTypes.ElementInfo interface
@@ -672,9 +672,9 @@ type ElementInfoAdapter struct {
 	*ElementInfo
 }
 
-func (e *ElementInfoAdapter) TagName() string      { return e.ElementInfo.TagName }
-func (e *ElementInfoAdapter) Name() string         { return e.ElementInfo.Name }
-func (e *ElementInfoAdapter) Description() string  { 
+func (e *ElementInfoAdapter) TagName() string { return e.ElementInfo.TagName }
+func (e *ElementInfoAdapter) Name() string    { return e.ElementInfo.Name }
+func (e *ElementInfoAdapter) Description() string {
 	// Sanitize description to prevent template injection
 	return security.SanitizeDescriptionPreservingMarkdown(e.ElementInfo.Description)
 }

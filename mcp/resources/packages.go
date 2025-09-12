@@ -36,7 +36,7 @@ type PackageInfo struct {
 }
 
 // handlePackagesResource provides all packages in the workspace
-func handlePackagesResource(ctx context.Context, req *mcp.ReadResourceRequest, registry types.Registry) (*mcp.ReadResourceResult, error) {
+func handlePackagesResource(ctx context.Context, req *mcp.ReadResourceRequest, registry types.MCPContext) (*mcp.ReadResourceResult, error) {
 	// Get all elements to analyze package structure
 	elementMap := registry.AllElements()
 

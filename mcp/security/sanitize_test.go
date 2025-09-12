@@ -262,24 +262,24 @@ func TestSanitizeWithPolicy(t *testing.T) {
 		description string
 	}{
 		{
-			name:  "default policy",
-			input: "A button {{.Config}} with `code` and <script>evil</script>",
-			policy: DefaultSecurityPolicy(),
-			expected: "A button with `code` and &lt;script&gt;evil&lt;/script&gt;",
+			name:        "default policy",
+			input:       "A button {{.Config}} with `code` and <script>evil</script>",
+			policy:      DefaultSecurityPolicy(),
+			expected:    "A button with `code` and &lt;script&gt;evil&lt;/script&gt;",
 			description: "Default policy should preserve markdown and escape HTML",
 		},
 		{
-			name:  "strict policy",
-			input: "A button {{.Config}} with `code` and <script>evil</script>",
-			policy: StrictSecurityPolicy(),
-			expected: "A button with `code` and &lt;script&gt;evil&lt;/script&gt;",
+			name:        "strict policy",
+			input:       "A button {{.Config}} with `code` and <script>evil</script>",
+			policy:      StrictSecurityPolicy(),
+			expected:    "A button with `code` and &lt;script&gt;evil&lt;/script&gt;",
 			description: "Strict policy should escape everything",
 		},
 		{
-			name:  "short length limit",
-			input: "A very long description that exceeds the policy limit",
-			policy: SecurityPolicy{MaxDescriptionLength: 10, AllowMarkdown: false, StrictMode: true},
-			expected: "A very lon...",
+			name:        "short length limit",
+			input:       "A very long description that exceeds the policy limit",
+			policy:      SecurityPolicy{MaxDescriptionLength: 10, AllowMarkdown: false, StrictMode: true},
+			expected:    "A very lon...",
 			description: "Should respect custom length limits",
 		},
 	}
@@ -311,7 +311,7 @@ func TestSecurityPolicies(t *testing.T) {
 // Benchmark tests to ensure sanitization doesn't significantly impact performance
 func BenchmarkSanitizeDescription(b *testing.B) {
 	input := "A button component {{.Config}} with some <script>alert('test')</script> content"
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		SanitizeDescription(input)
@@ -320,7 +320,7 @@ func BenchmarkSanitizeDescription(b *testing.B) {
 
 func BenchmarkDetectTemplateInjection(b *testing.B) {
 	input := "A button component {{.Config}} with {{range .Items}}{{.}}{{end}} injection"
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		DetectTemplateInjection(input)
@@ -344,13 +344,13 @@ func TestTemplateInjectionMitigation(t *testing.T) {
 			sanitized := SanitizeDescription(input)
 			assert.NotContains(t, sanitized, "{{", "Template syntax should be removed")
 			assert.NotContains(t, sanitized, "}}", "Template syntax should be removed")
-			
+
 			// Test detection - only check for template injection if input contains template syntax
 			if strings.Contains(input, "{{") {
 				assert.True(t, DetectTemplateInjection(input), "Template injection should be detected")
 			}
 			assert.False(t, DetectTemplateInjection(sanitized), "Sanitized text should not trigger detection")
-			
+
 			// Test that HTML is escaped
 			if strings.Contains(input, "<script>") {
 				assert.Contains(t, sanitized, "&lt;script&gt;", "Script tags should be escaped")

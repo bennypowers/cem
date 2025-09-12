@@ -18,9 +18,9 @@ package types
 
 import "bennypowers.dev/cem/lsp/types"
 
-// Registry interface for accessing custom elements manifest data
-// This allows tools to access registry without circular dependency
-type Registry interface {
+// MCPContext interface for accessing custom elements manifest data
+// This allows tools to access context without circular dependency
+type MCPContext interface {
 	ElementInfo(tagName string) (ElementInfo, error)
 	AllElements() map[string]ElementInfo
 	LoadManifests() error
