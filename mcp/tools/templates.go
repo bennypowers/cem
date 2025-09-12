@@ -17,146 +17,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package tools
 
 import (
-	"bytes"
 	"embed"
-	"fmt"
-	"html/template"
-	"path/filepath"
-	"strings"
 
-	"bennypowers.dev/cem/mcp/helpers"
-	"bennypowers.dev/cem/mcp/security"
+	"bennypowers.dev/cem/mcp/templates"
 	"bennypowers.dev/cem/mcp/types"
 )
 
 //go:embed templates/*.md
-var templateFiles embed.FS
+var toolsTemplateFiles embed.FS
 
-// TemplateRenderer provides a unified interface for rendering templates with different data types
-type TemplateRenderer struct {
-	funcMap        template.FuncMap
-	securityPolicy security.SecurityPolicy
+func init() {
+	// Register tools templates with the global template pool
+	templates.RegisterTemplateSource("tools", &toolsTemplateFiles)
 }
-
-// NewTemplateRenderer creates a new template renderer with unified function map
-func NewTemplateRenderer() *TemplateRenderer {
-	return NewSecureTemplateRenderer(security.DefaultSecurityPolicy())
-}
-
-// NewSecureTemplateRenderer creates a new template renderer with security controls
-func NewSecureTemplateRenderer(policy security.SecurityPolicy) *TemplateRenderer {
-	return &TemplateRenderer{
-		securityPolicy: policy,
-		funcMap:        createSecureFuncMap(),
-	}
-}
-
-// createSecureFuncMap creates a restricted function map for template security
-func createSecureFuncMap() template.FuncMap {
-	return template.FuncMap{
-		"title": helpers.TitleCaser.String,
-		"len": func(slice interface{}) int {
-			switch s := slice.(type) {
-			case []types.Attribute:
-				return len(s)
-			case []types.Slot:
-				return len(s)
-			case []types.Event:
-				return len(s)
-			case []types.CssProperty:
-				return len(s)
-			case []types.CssPart:
-				return len(s)
-			case []types.CssState:
-				return len(s)
-			case []ElementWithIssues:
-				return len(s)
-			case []ValidationIssue:
-				return len(s)
-			case []ValidationFeature:
-				return len(s)
-			case []ValidationSuggestion:
-				return len(s)
-			case []ElementUsage:
-				return len(s)
-			case []SlotContentIssue:
-				return len(s)
-			case []AttributeConflict:
-				return len(s)
-			case []ContentAttributeRedundancy:
-				return len(s)
-			case []AttributeWithValue:
-				return len(s)
-			case []SlotWithContent:
-				return len(s)
-			case []string:
-				return len(s)
-			default:
-				return 0
-			}
-		},
-		"index": func(slice interface{}, i int) interface{} {
-			switch s := slice.(type) {
-			case []string:
-				if i >= 0 && i < len(s) {
-					return s[i]
-				}
-			}
-			return ""
-		},
-		"gt": func(a, b int) bool {
-			return a > b
-		},
-		"join": func(slice []string, sep string) string {
-			return strings.Join(slice, sep)
-		},
-		"add": func(a, b int) int {
-			return a + b
-		},
-	}
-}
-
-// Render renders a template with the given data using the unified template system
-func (tr *TemplateRenderer) Render(templateName string, data interface{}) (string, error) {
-	// Security: Validate template name to prevent path traversal
-	if strings.Contains(templateName, "..") || strings.Contains(templateName, "/") {
-		return "", fmt.Errorf("invalid template name: %s", templateName)
-	}
-
-	// Create template with unified function map
-	tmpl := template.New(templateName).Funcs(tr.funcMap)
-
-	// Load template content
-	templatePath := filepath.Join("templates", templateName+".md")
-	content, err := templateFiles.ReadFile(templatePath)
-	if err != nil {
-		return "", fmt.Errorf("failed to read template %s: %w", templateName, err)
-	}
-
-	// Note: Template files are trusted and expected to contain Go template syntax
-	// Security validation is applied to user data, not template structure
-	templateContent := string(content)
-
-	// Parse template
-	tmpl, err = tmpl.Parse(templateContent)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse template %s: %w", templateName, err)
-	}
-
-	// Execute template with security context
-	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, data); err != nil {
-		return "", fmt.Errorf("failed to execute template %s: %w", templateName, err)
-	}
-
-	// Return the rendered result
-	// Note: Security is enforced at the data input level (description sanitization)
-	// rather than output validation to avoid false positives
-	return buf.String(), nil
-}
-
-// Global template renderer instance
-var globalRenderer = NewTemplateRenderer()
 
 // TemplateDataProvider defines the interface for all template data types
 type TemplateDataProvider interface {
@@ -290,7 +163,7 @@ func NewBaseTemplateData(element types.ElementInfo, context string, options map[
 	}
 }
 
-// RenderTemplate renders a template using the unified renderer (new API)
+// RenderTemplate renders a template using the global thread-safe pool
 func RenderTemplate(templateName string, data interface{}) (string, error) {
-	return globalRenderer.Render(templateName, data)
+	return templates.RenderTemplate(templateName, data)
 }

@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"strings"
 
+	"bennypowers.dev/cem/mcp/templates"
 	"bennypowers.dev/cem/mcp/types"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -33,36 +34,36 @@ func handleGuidelinesResource(ctx context.Context, req *mcp.ReadResourceRequest,
 	// Render comprehensive guidelines using templates
 	var response strings.Builder
 
-	// Render each section using its specific template
-	overview, err := renderGuidelinesTemplate("guidelines_overview", guidelinesData)
+	// Render each section using the shared template system
+	overview, err := templates.RenderTemplate("guidelines_overview", guidelinesData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to render guidelines overview: %w", err)
 	}
 	response.WriteString(overview)
 	response.WriteString("\n\n")
 
-	elementGuidelines, err := renderGuidelinesTemplate("element_guidelines", guidelinesData)
+	elementGuidelines, err := templates.RenderTemplate("element_guidelines", guidelinesData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to render element guidelines: %w", err)
 	}
 	response.WriteString(elementGuidelines)
 	response.WriteString("\n\n")
 
-	accessibilityGuidelines, err := renderGuidelinesTemplate("accessibility_guidelines", guidelinesData)
+	accessibilityGuidelines, err := templates.RenderTemplate("accessibility_guidelines", guidelinesData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to render accessibility guidelines: %w", err)
 	}
 	response.WriteString(accessibilityGuidelines)
 	response.WriteString("\n\n")
 
-	cssGuidelines, err := renderGuidelinesTemplate("css_guidelines", guidelinesData)
+	cssGuidelines, err := templates.RenderTemplate("css_guidelines", guidelinesData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to render CSS guidelines: %w", err)
 	}
 	response.WriteString(cssGuidelines)
 	response.WriteString("\n\n")
 
-	patternGuidelines, err := renderGuidelinesTemplate("pattern_guidelines", guidelinesData)
+	patternGuidelines, err := templates.RenderTemplate("pattern_guidelines", guidelinesData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to render pattern guidelines: %w", err)
 	}

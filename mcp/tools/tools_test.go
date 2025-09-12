@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/mcp"
+	"bennypowers.dev/cem/mcp/templates"
 	"bennypowers.dev/cem/mcp/tools"
 	W "bennypowers.dev/cem/workspace"
 	mcpSDK "github.com/modelcontextprotocol/go-sdk/mcp"
@@ -45,7 +46,6 @@ func getTestRegistry(t *testing.T) *mcp.MCPContextAdapter {
 
 func TestTemplateRenderer(t *testing.T) {
 	registry := getTestRegistry(t)
-	renderer := tools.NewTemplateRenderer()
 
 	// Get real elements from fixtures
 	_, err := registry.ElementInfo("button-element")
@@ -83,7 +83,7 @@ func TestTemplateRenderer(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			data := test.setupData()
-			output, err := renderer.Render(test.templateName, data)
+			output, err := templates.RenderTemplate(test.templateName, data)
 
 			if test.expectError {
 				assert.Error(t, err, "Expected error for template: %s", test.templateName)
@@ -195,7 +195,6 @@ func TestHelpers_Integration(t *testing.T) {
 
 func TestTemplateRenderer_Basic(t *testing.T) {
 	// Test that the template renderer works with basic data
-	renderer := tools.NewTemplateRenderer()
 
 	// Test with data that matches template conditions
 	testDataWithContext := map[string]interface{}{
@@ -203,18 +202,18 @@ func TestTemplateRenderer_Basic(t *testing.T) {
 		"Context": "form", // This should match the form condition
 	}
 
-	templates := []string{"contextual_suggestions"}
+	templateNames := []string{"contextual_suggestions"}
 
-	for _, template := range templates {
-		t.Run(template, func(t *testing.T) {
-			output, err := renderer.Render(template, testDataWithContext)
+	for _, templateName := range templateNames {
+		t.Run(templateName, func(t *testing.T) {
+			output, err := templates.RenderTemplate(templateName, testDataWithContext)
 
 			if err != nil {
 				// If template doesn't exist, that's okay - just log it
-				t.Logf("Template %s not found or error: %v", template, err)
+				t.Logf("Template %s not found or error: %v", templateName, err)
 			} else {
-				assert.NotEmpty(t, output, "Template %s should produce output", template)
-				assert.NotContains(t, output, "{{", "Template %s should not contain unprocessed syntax", template)
+				assert.NotEmpty(t, output, "Template %s should produce output", templateName)
+				assert.NotContains(t, output, "{{", "Template %s should not contain unprocessed syntax", templateName)
 			}
 		})
 	}

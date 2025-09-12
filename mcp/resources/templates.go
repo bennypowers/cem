@@ -17,19 +17,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package resources
 
 import (
-	"bytes"
 	"embed"
-	"fmt"
-	"html/template"
-	"path/filepath"
-	"strings"
-
-	"bennypowers.dev/cem/mcp/helpers"
+	
+	"bennypowers.dev/cem/mcp/templates"
 	"bennypowers.dev/cem/mcp/types"
 )
 
 //go:embed templates/*.md
-var templateFiles embed.FS
+var resourcesTemplateFiles embed.FS
+
+func init() {
+	// Register resources templates with the global template pool
+	templates.RegisterTemplateSource("resources", &resourcesTemplateFiles)
+}
 
 // GuidelinesData represents data for guidelines templates
 type GuidelinesData struct {
@@ -185,70 +185,3 @@ type FeedbackPatterns struct {
 	Delivery []string
 }
 
-// renderGuidelinesTemplate loads and executes a template with GuidelinesData
-func renderGuidelinesTemplate(templateName string, data GuidelinesData) (string, error) {
-	// Security: Validate template name to prevent path traversal
-	if strings.Contains(templateName, "..") || strings.Contains(templateName, "/") {
-		return "", fmt.Errorf("invalid template name: %s", templateName)
-	}
-
-	// Create template with helper functions (restricted function map)
-	tmpl := template.New(templateName).Funcs(template.FuncMap{
-		"title": func(str string) string {
-			return helpers.TitleCaser.String(str)
-		},
-		"len": func(slice any) int {
-			switch s := slice.(type) {
-			case []string:
-				return len(s)
-			case []GuidelineCategory:
-				return len(s)
-			case []AttributeGuideline:
-				return len(s)
-			case []SlotGuideline:
-				return len(s)
-			case map[string]ElementGuideline:
-				return len(s)
-			case map[string]string:
-				return len(s)
-			case map[string]any:
-				return len(s)
-			case map[string][]string:
-				return len(s)
-			default:
-				return 0
-			}
-		},
-		"gt": func(a, b int) bool {
-			return a > b
-		},
-		"join": func(slice []string, sep string) string {
-			return strings.Join(slice, sep)
-		},
-	})
-
-	// Load template content
-	templatePath := filepath.Join("templates", templateName+".md")
-	content, err := templateFiles.ReadFile(templatePath)
-	if err != nil {
-		return "", fmt.Errorf("failed to read template %s: %w", templateName, err)
-	}
-
-	// Note: Template files are trusted and expected to contain Go template syntax
-	// Security validation is applied to user data, not template structure
-	templateContent := string(content)
-
-	// Parse template
-	tmpl, err = tmpl.Parse(templateContent)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse template %s: %w", templateName, err)
-	}
-
-	// Execute template
-	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, data); err != nil {
-		return "", fmt.Errorf("failed to execute template %s: %w", templateName, err)
-	}
-
-	return buf.String(), nil
-}
