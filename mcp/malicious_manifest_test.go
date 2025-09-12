@@ -29,20 +29,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// getTestRegistry creates a registry using test fixtures 
-func getTestRegistry(t *testing.T) *mcp.MCPContextAdapter {
-	workspace := workspace.NewFileSystemWorkspaceContext("test-fixtures/multiple-elements")
-	err := workspace.Init()
-	require.NoError(t, err)
-
-	registry, err := mcp.NewMCPContext(workspace)
-	require.NoError(t, err)
-
-	err = registry.LoadManifests()
-	require.NoError(t, err)
-
-	return mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
-}
 
 
 func TestMaliciousManifestMitigation(t *testing.T) {
