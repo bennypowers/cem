@@ -24,6 +24,7 @@ import (
 
 	LSP "bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/helpers"
+	lspTypes "bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/mcp/security"
 	MCPTypes "bennypowers.dev/cem/mcp/types"
@@ -34,10 +35,11 @@ import (
 // Registry manages custom elements manifests for MCP context
 // This is a lightweight wrapper around the LSP registry for reuse
 type Registry struct {
-	workspace   types.WorkspaceContext
-	lspRegistry *LSP.Registry
-	mcpCache    map[string]*ElementInfo // Cache for converted MCP elements
-	mu          sync.RWMutex
+	workspace       types.WorkspaceContext
+	lspRegistry     *LSP.Registry
+	documentManager lspTypes.DocumentManager
+	mcpCache        map[string]*ElementInfo // Cache for converted MCP elements
+	mu              sync.RWMutex
 }
 
 // ItemKind defines the type of item
@@ -345,10 +347,17 @@ func NewRegistry(workspace types.WorkspaceContext) (*Registry, error) {
 		return nil, fmt.Errorf("failed to create LSP registry: %w", err)
 	}
 
+	// Create a shared document manager for validation
+	documentManager, err := LSP.NewDocumentManager()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create document manager: %w", err)
+	}
+
 	registry := &Registry{
-		workspace:   workspace,
-		lspRegistry: lspRegistry,
-		mcpCache:    make(map[string]*ElementInfo),
+		workspace:       workspace,
+		lspRegistry:     lspRegistry,
+		documentManager: documentManager,
+		mcpCache:        make(map[string]*ElementInfo),
 	}
 
 	return registry, nil
@@ -368,6 +377,11 @@ func (r *Registry) LoadManifests() error {
 		return fmt.Errorf("failed to load manifests from workspace %q: %w", r.workspace.Root(), err)
 	}
 	return nil
+}
+
+// DocumentManager returns the shared document manager for validation
+func (r *Registry) DocumentManager() lspTypes.DocumentManager {
+	return r.documentManager
 }
 
 // GetElementInfo returns enhanced element information for MCP context
@@ -646,6 +660,11 @@ func (r *RegistryAdapter) AllElements() map[string]MCPTypes.ElementInfo {
 // GetManifestSchemaVersions implements MCPTypes.Registry interface
 func (r *RegistryAdapter) GetManifestSchemaVersions() []string {
 	return r.Registry.GetManifestSchemaVersions()
+}
+
+// DocumentManager implements MCPTypes.Registry interface
+func (r *RegistryAdapter) DocumentManager() lspTypes.DocumentManager {
+	return r.Registry.DocumentManager()
 }
 
 // ElementInfoAdapter implements MCPTypes.ElementInfo interface

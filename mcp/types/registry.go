@@ -16,6 +16,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package types
 
+import "bennypowers.dev/cem/lsp/types"
+
 // Registry interface for accessing custom elements manifest data
 // This allows tools to access registry without circular dependency
 type Registry interface {
@@ -23,6 +25,7 @@ type Registry interface {
 	AllElements() map[string]ElementInfo
 	LoadManifests() error
 	GetManifestSchemaVersions() []string
+	DocumentManager() types.DocumentManager
 }
 
 // ElementInfo represents element information as needed by tools

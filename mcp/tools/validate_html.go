@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"strings"
 
-	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/types"
 	mcpTypes "bennypowers.dev/cem/mcp/types"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -49,11 +48,6 @@ func NewValidationTemplateData(element mcpTypes.ElementInfo, context string, opt
 	}
 }
 
-// createDocumentManager creates a minimal document manager for MCP validation
-// This leverages the existing tree-sitter infrastructure from the LSP
-func createDocumentManager() (types.DocumentManager, error) {
-	return lsp.NewDocumentManager()
-}
 
 // ValidateHtmlArgs represents the arguments for the validate_html tool
 type ValidateHtmlArgs struct {
@@ -95,12 +89,8 @@ func handleValidateHtml(
 
 // validateHtmlWithTreeSitter performs HTML validation using tree-sitter parsing
 func validateHtmlWithTreeSitter(html string, registry mcpTypes.Registry) (string, error) {
-	// Create document manager for tree-sitter parsing
-	dm, err := createDocumentManager()
-	if err != nil {
-		return "", fmt.Errorf("failed to create document manager: %w", err)
-	}
-	defer dm.Close()
+	// Get the shared document manager from registry
+	dm := registry.DocumentManager()
 
 	// Create a document from the HTML content
 	doc := dm.OpenDocument("temp://validation.html", html, 1)
