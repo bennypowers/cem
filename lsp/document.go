@@ -521,7 +521,7 @@ func (d *Document) findHTMLCustomElements(dm *DocumentManager) ([]CustomElementM
 					// Find the value that comes immediately after this attribute name
 					// Look for the closest value that starts after the attribute name ends
 					var closestValue string
-					var closestDistance uint = ^uint(0) // Max uint value
+					var closestDistance = ^uint(0) // Max uint value
 
 					for valuePos, value := range valuesByPosition {
 						if valuePos > attrName.EndByte {
@@ -712,7 +712,7 @@ func (d *Document) parseHTMLInTemplate(template TemplateContext, dm *DocumentMan
 					// Find the value that comes immediately after this attribute name
 					// Look for the closest value that starts after the attribute name ends
 					var closestValue string
-					var closestDistance uint = ^uint(0) // Max uint value
+					var closestDistance = ^uint(0) // Max uint value
 
 					for valuePos, value := range valuesByPosition {
 						if valuePos > attrName.EndByte {
