@@ -490,17 +490,51 @@ func (d *Document) findHTMLCustomElements(dm *DocumentManager) ([]CustomElementM
 			// Collect attributes
 			attributes := make(map[string]AttributeMatch)
 			if attrNames, ok := captureMap["attr.name"]; ok {
-				for i, attrName := range attrNames {
+				// Build a map of attribute values by their byte position for proper matching
+				valuesByPosition := make(map[uint]string)
+
+				// Collect quoted attribute values
+				if attrValues, ok := captureMap["attr.value"]; ok {
+					for _, attrValue := range attrValues {
+						// Strip quotes from quoted attribute values
+						value := attrValue.Text
+						if len(value) >= 2 && (value[0] == '"' || value[0] == '\'') {
+							value = value[1 : len(value)-1] // Remove first and last character (quotes)
+						}
+						valuesByPosition[attrValue.StartByte] = value
+					}
+				}
+
+				// Collect unquoted attribute values
+				if unquotedValues, ok := captureMap["attr.unquoted.value"]; ok {
+					for _, unquotedValue := range unquotedValues {
+						valuesByPosition[unquotedValue.StartByte] = unquotedValue.Text
+					}
+				}
+
+				for _, attrName := range attrNames {
 					attrMatch := AttributeMatch{
 						Name:  attrName.Text,
 						Range: d.byteRangeToProtocolRange(attrName.StartByte, attrName.EndByte),
 					}
 
-					// Try to find corresponding value
-					if attrValues, ok := captureMap["attr.value"]; ok && i < len(attrValues) {
-						attrMatch.Value = attrValues[i].Text
-					} else if unquotedValues, ok := captureMap["attr.unquoted.value"]; ok && i < len(unquotedValues) {
-						attrMatch.Value = unquotedValues[i].Text
+					// Find the value that comes immediately after this attribute name
+					// Look for the closest value that starts after the attribute name ends
+					var closestValue string
+					var closestDistance uint = ^uint(0) // Max uint value
+
+					for valuePos, value := range valuesByPosition {
+						if valuePos > attrName.EndByte {
+							distance := valuePos - attrName.EndByte
+							if distance < closestDistance {
+								closestDistance = distance
+								closestValue = value
+							}
+						}
+					}
+
+					if closestValue != "" {
+						attrMatch.Value = closestValue
 					}
 
 					attributes[attrName.Text] = attrMatch
@@ -642,7 +676,29 @@ func (d *Document) parseHTMLInTemplate(template TemplateContext, dm *DocumentMan
 			// Collect attributes (similarly adjusted)
 			attributes := make(map[string]AttributeMatch)
 			if attrNames, ok := captureMap["attr.name"]; ok {
-				for i, attrName := range attrNames {
+				// Build a map of attribute values by their byte position for proper matching
+				valuesByPosition := make(map[uint]string)
+
+				// Collect quoted attribute values
+				if attrValues, ok := captureMap["attr.value"]; ok {
+					for _, attrValue := range attrValues {
+						// Strip quotes from quoted attribute values
+						value := attrValue.Text
+						if len(value) >= 2 && (value[0] == '"' || value[0] == '\'') {
+							value = value[1 : len(value)-1] // Remove first and last character (quotes)
+						}
+						valuesByPosition[attrValue.StartByte] = value
+					}
+				}
+
+				// Collect unquoted attribute values
+				if unquotedValues, ok := captureMap["attr.unquoted.value"]; ok {
+					for _, unquotedValue := range unquotedValues {
+						valuesByPosition[unquotedValue.StartByte] = unquotedValue.Text
+					}
+				}
+
+				for _, attrName := range attrNames {
 					attrInnerRange := d.templateByteRangeToProtocolRange(
 						templateContent,
 						attrName.StartByte,
@@ -653,9 +709,23 @@ func (d *Document) parseHTMLInTemplate(template TemplateContext, dm *DocumentMan
 						Range: d.adjustRangeForTemplate(attrInnerRange, template.Range),
 					}
 
-					// Try to find corresponding value
-					if attrValues, ok := captureMap["attr.value"]; ok && i < len(attrValues) {
-						attrMatch.Value = attrValues[i].Text
+					// Find the value that comes immediately after this attribute name
+					// Look for the closest value that starts after the attribute name ends
+					var closestValue string
+					var closestDistance uint = ^uint(0) // Max uint value
+
+					for valuePos, value := range valuesByPosition {
+						if valuePos > attrName.EndByte {
+							distance := valuePos - attrName.EndByte
+							if distance < closestDistance {
+								closestDistance = distance
+								closestValue = value
+							}
+						}
+					}
+
+					if closestValue != "" {
+						attrMatch.Value = closestValue
 					}
 
 					attributes[attrName.Text] = attrMatch

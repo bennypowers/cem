@@ -322,6 +322,70 @@ func TestValidateHtml_InvalidAttributeValue(t *testing.T) {
 	}
 }
 
+func TestValidateHtml_AttributeValueParsing_Regression(t *testing.T) {
+	// Regression test for attribute value parsing bug where boolean attributes
+	// cause misaligned indices between attr.name and attr.value arrays
+	workspace := W.NewFileSystemWorkspaceContext("../test-fixtures/multiple-elements")
+	err := workspace.Init()
+	require.NoError(t, err)
+
+	registry, err := mcp.NewMCPContext(workspace)
+	require.NoError(t, err)
+
+	err = registry.LoadManifests()
+	require.NoError(t, err)
+
+	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+
+	// Test HTML with boolean attributes AND valued attributes - this was causing the bug
+	// The "disabled" boolean attribute should not interfere with "variant" value parsing
+	html := `<button-element variant="primary" disabled>Call to action</button-element>`
+
+	argsJSON, err := json.Marshal(map[string]interface{}{
+		"html":    html,
+		"context": "test attribute value parsing",
+	})
+	require.NoError(t, err)
+
+	req := &mcpSDK.CallToolRequest{
+		Params: &mcpSDK.CallToolParamsRaw{
+			Name:      "validate_html",
+			Arguments: json.RawMessage(argsJSON),
+		},
+	}
+
+	handler := tools.MakeValidateHtmlHandler(registryAdapter)
+	result, err := handler(context.Background(), req)
+	require.NoError(t, err)
+	require.Len(t, result.Content, 1)
+
+	textContent, ok := result.Content[0].(*mcpSDK.TextContent)
+	require.True(t, ok)
+
+	t.Logf("Validation result: %s", textContent.Text)
+
+	// The bug would cause "empty attribute values" to be reported incorrectly
+	// This test ensures that valid attribute values are NOT reported as empty
+	assert.NotContains(t, textContent.Text, "empty attribute values",
+		"Should not report empty attribute values for attributes that clearly have values")
+
+	// Since variant="primary" has a valid value, it should not be flagged as empty
+	if strings.Contains(textContent.Text, "variant") && strings.Contains(textContent.Text, "empty") {
+		t.Errorf("variant attribute incorrectly reported as having empty value when it clearly has 'primary'")
+	}
+
+	// Regression test: ensure that boolean attributes with valued attributes work correctly
+	// The result should show "No Manifest Compliance Issues Found" because:
+	// 1. variant="primary" is a valid value for button-element
+	// 2. disabled is a valid boolean attribute (global HTML attribute)
+	assert.Contains(t, textContent.Text, "No Manifest Compliance Issues Found",
+		"Should not report any manifest compliance issues when attributes are correctly parsed")
+
+	// Ensure we're not getting the incorrect quoted values bug
+	assert.NotContains(t, textContent.Text, `"primary"`,
+		"Should not include quotes in attribute value validation")
+}
+
 func TestValidateHtml_UnknownElement(t *testing.T) {
 	workspace := W.NewFileSystemWorkspaceContext("../test-fixtures/multiple-elements")
 	err := workspace.Init()

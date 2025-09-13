@@ -225,8 +225,11 @@ func validateElementAttributes(element types.CustomElementMatch, registryElement
 			}
 			if !isValid {
 				issues = append(issues, ValidationIssue{
-					Type:    "invalid-attribute-value",
-					Element: element.TagName,
+					Type:      "invalid-attribute-value",
+					Element:   element.TagName,
+					Attribute: attrName,
+					Actual:    attrMatch.Value,
+					Expected:  fmt.Sprintf("%v", validValues),
 					Message: fmt.Sprintf("Invalid value '%s' for attribute '%s'. Expected one of: %v",
 						attrMatch.Value, attrName, validValues),
 				})
