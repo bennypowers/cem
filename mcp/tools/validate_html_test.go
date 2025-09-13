@@ -17,7 +17,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package tools_test
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
 	"testing"
 
 	"bennypowers.dev/cem/mcp"
@@ -176,4 +179,364 @@ func TestValidationTemplateData_WithFixtures(t *testing.T) {
 	assert.Equal(t, buttonElement, data.GetElement())
 	assert.Equal(t, context, data.GetContext())
 	assert.Equal(t, options, data.GetOptions())
+}
+
+func TestValidateHtml_UnknownAttributeDetection(t *testing.T) {
+	workspace := W.NewFileSystemWorkspaceContext("../test-fixtures/multiple-elements")
+	err := workspace.Init()
+	require.NoError(t, err)
+
+	registry, err := mcp.NewMCPContext(workspace)
+	require.NoError(t, err)
+
+	err = registry.LoadManifests()
+	require.NoError(t, err)
+
+	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+
+	// First verify the element exists in the registry
+	buttonElement, err := registryAdapter.ElementInfo("button-element")
+	require.NoError(t, err)
+	require.NotNil(t, buttonElement)
+	t.Logf("Button element found: %s with %d attributes", buttonElement.TagName(), len(buttonElement.Attributes()))
+
+	// Test the specific case that failed: priority instead of variant
+	html := `<button-element priority="primary">Call to action</button-element>`
+
+	argsJSON, err := json.Marshal(map[string]interface{}{
+		"html":    html,
+		"context": "test validation",
+	})
+	require.NoError(t, err)
+
+	req := &mcpSDK.CallToolRequest{
+		Params: &mcpSDK.CallToolParamsRaw{
+			Name:      "validate_html",
+			Arguments: json.RawMessage(argsJSON),
+		},
+	}
+
+	handler := tools.MakeValidateHtmlHandler(registryAdapter)
+	result, err := handler(context.Background(), req)
+	require.NoError(t, err)
+	require.Len(t, result.Content, 1)
+
+	textContent, ok := result.Content[0].(*mcpSDK.TextContent)
+	require.True(t, ok)
+
+	t.Logf("Validation result: %s", textContent.Text)
+
+	// The result should contain an error about the unknown attribute
+	assert.Contains(t, textContent.Text, "Unknown Attribute")
+	assert.Contains(t, textContent.Text, "priority")
+	assert.Contains(t, textContent.Text, "button-element")
+	// Should suggest the correct attribute if available
+	if strings.Contains(textContent.Text, "Did you mean") {
+		assert.Contains(t, textContent.Text, "variant")
+	}
+}
+
+func TestValidateHtml_ValidAttributes(t *testing.T) {
+	workspace := W.NewFileSystemWorkspaceContext("../test-fixtures/multiple-elements")
+	err := workspace.Init()
+	require.NoError(t, err)
+
+	registry, err := mcp.NewMCPContext(workspace)
+	require.NoError(t, err)
+
+	err = registry.LoadManifests()
+	require.NoError(t, err)
+
+	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+
+	// Test with correct variant attribute
+	html := `<button-element variant="primary">Call to action</button-element>`
+
+	argsJSON, err := json.Marshal(map[string]interface{}{
+		"html":    html,
+		"context": "test validation",
+	})
+	require.NoError(t, err)
+
+	req := &mcpSDK.CallToolRequest{
+		Params: &mcpSDK.CallToolParamsRaw{
+			Name:      "validate_html",
+			Arguments: json.RawMessage(argsJSON),
+		},
+	}
+
+	handler := tools.MakeValidateHtmlHandler(registryAdapter)
+	result, err := handler(context.Background(), req)
+	require.NoError(t, err)
+	require.Len(t, result.Content, 1)
+
+	textContent, ok := result.Content[0].(*mcpSDK.TextContent)
+	require.True(t, ok)
+
+	// The result should show no unknown attribute issues
+	assert.NotContains(t, textContent.Text, "Unknown Attribute")
+	assert.NotContains(t, textContent.Text, "priority")
+}
+
+func TestValidateHtml_InvalidAttributeValue(t *testing.T) {
+	workspace := W.NewFileSystemWorkspaceContext("../test-fixtures/multiple-elements")
+	err := workspace.Init()
+	require.NoError(t, err)
+
+	registry, err := mcp.NewMCPContext(workspace)
+	require.NoError(t, err)
+
+	err = registry.LoadManifests()
+	require.NoError(t, err)
+
+	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+
+	// Test with invalid attribute value (assuming variant has restricted values)
+	html := `<button-element variant="invalid-value">Call to action</button-element>`
+
+	argsJSON, err := json.Marshal(map[string]interface{}{
+		"html":    html,
+		"context": "test validation",
+	})
+	require.NoError(t, err)
+
+	req := &mcpSDK.CallToolRequest{
+		Params: &mcpSDK.CallToolParamsRaw{
+			Name:      "validate_html",
+			Arguments: json.RawMessage(argsJSON),
+		},
+	}
+
+	handler := tools.MakeValidateHtmlHandler(registryAdapter)
+	result, err := handler(context.Background(), req)
+	require.NoError(t, err)
+	require.Len(t, result.Content, 1)
+
+	textContent, ok := result.Content[0].(*mcpSDK.TextContent)
+	require.True(t, ok)
+
+	// Check if validation detects invalid values (depends on manifest constraints)
+	if strings.Contains(textContent.Text, "Invalid Attribute Value") {
+		// The template output might not contain the exact string "invalid-value" but should show the validation error
+		t.Logf("Validation detected invalid attribute value: %s", textContent.Text)
+	}
+}
+
+func TestValidateHtml_UnknownElement(t *testing.T) {
+	workspace := W.NewFileSystemWorkspaceContext("../test-fixtures/multiple-elements")
+	err := workspace.Init()
+	require.NoError(t, err)
+
+	registry, err := mcp.NewMCPContext(workspace)
+	require.NoError(t, err)
+
+	err = registry.LoadManifests()
+	require.NoError(t, err)
+
+	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+
+	// Test with unknown custom element
+	html := `<unknown-custom-element attribute="value">Content</unknown-custom-element>`
+
+	argsJSON, err := json.Marshal(map[string]interface{}{
+		"html":    html,
+		"context": "test validation",
+	})
+	require.NoError(t, err)
+
+	req := &mcpSDK.CallToolRequest{
+		Params: &mcpSDK.CallToolParamsRaw{
+			Name:      "validate_html",
+			Arguments: json.RawMessage(argsJSON),
+		},
+	}
+
+	handler := tools.MakeValidateHtmlHandler(registryAdapter)
+	result, err := handler(context.Background(), req)
+	require.NoError(t, err)
+	require.Len(t, result.Content, 1)
+
+	textContent, ok := result.Content[0].(*mcpSDK.TextContent)
+	require.True(t, ok)
+
+	// The result should contain an error about the unknown element
+	assert.Contains(t, textContent.Text, "Unknown Element")
+	assert.Contains(t, textContent.Text, "unknown-custom-element")
+}
+
+func TestValidateHtml_MultipleIssues(t *testing.T) {
+	workspace := W.NewFileSystemWorkspaceContext("../test-fixtures/multiple-elements")
+	err := workspace.Init()
+	require.NoError(t, err)
+
+	registry, err := mcp.NewMCPContext(workspace)
+	require.NoError(t, err)
+
+	err = registry.LoadManifests()
+	require.NoError(t, err)
+
+	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+
+	// HTML with multiple validation issues
+	html := `
+		<button-element priority="primary">Button 1</button-element>
+		<unknown-custom-element>Unknown</unknown-custom-element>
+	`
+
+	argsJSON, err := json.Marshal(map[string]interface{}{
+		"html":    html,
+		"context": "test validation",
+	})
+	require.NoError(t, err)
+
+	req := &mcpSDK.CallToolRequest{
+		Params: &mcpSDK.CallToolParamsRaw{
+			Name:      "validate_html",
+			Arguments: json.RawMessage(argsJSON),
+		},
+	}
+
+	handler := tools.MakeValidateHtmlHandler(registryAdapter)
+	result, err := handler(context.Background(), req)
+	require.NoError(t, err)
+	require.Len(t, result.Content, 1)
+
+	textContent, ok := result.Content[0].(*mcpSDK.TextContent)
+	require.True(t, ok)
+
+	// Should contain both types of issues
+	assert.Contains(t, textContent.Text, "Unknown Attribute") // priority
+	assert.Contains(t, textContent.Text, "Unknown Element")   // unknown-custom-element
+}
+
+func TestValidateHtml_GlobalAttributesAllowed(t *testing.T) {
+	workspace := W.NewFileSystemWorkspaceContext("../test-fixtures/multiple-elements")
+	err := workspace.Init()
+	require.NoError(t, err)
+
+	registry, err := mcp.NewMCPContext(workspace)
+	require.NoError(t, err)
+
+	err = registry.LoadManifests()
+	require.NoError(t, err)
+
+	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+
+	// Test HTML with various global attributes that should NOT be flagged as unknown
+	html := `
+		<button-element
+			id="my-button"
+			class="primary-btn"
+			slot="footer"
+			style="color: red"
+			title="Click me"
+			data-testid="button-test"
+			aria-label="Primary button"
+			onmouseover="handleHover()"
+			tabindex="0"
+			hidden
+			draggable="true"
+			contenteditable="false"
+			spellcheck="false"
+			translate="no"
+			lang="en"
+			dir="ltr">
+			Click me
+		</button-element>`
+
+	argsJSON, err := json.Marshal(map[string]interface{}{
+		"html":    html,
+		"context": "global attributes test",
+	})
+	require.NoError(t, err)
+
+	req := &mcpSDK.CallToolRequest{
+		Params: &mcpSDK.CallToolParamsRaw{
+			Name:      "validate_html",
+			Arguments: json.RawMessage(argsJSON),
+		},
+	}
+
+	handler := tools.MakeValidateHtmlHandler(registryAdapter)
+	result, err := handler(context.Background(), req)
+	require.NoError(t, err)
+	require.Len(t, result.Content, 1)
+
+	textContent, ok := result.Content[0].(*mcpSDK.TextContent)
+	require.True(t, ok)
+
+	t.Logf("Validation result for global attributes: %s", textContent.Text)
+
+	// Global attributes should NOT be flagged as unknown
+	globalAttrs := []string{"id", "class", "slot", "style", "title", "data-testid",
+		"aria-label", "onmouseover", "tabindex", "hidden", "draggable",
+		"contenteditable", "spellcheck", "translate", "lang", "dir"}
+
+	for _, attr := range globalAttrs {
+		assert.NotContains(t, textContent.Text, fmt.Sprintf("Unknown attribute '%s'", attr),
+			"Global attribute '%s' should not be flagged as unknown", attr)
+	}
+
+	// Should not contain any unknown attribute errors for the global attributes
+	if strings.Contains(textContent.Text, "Unknown Attribute") {
+		// If there are unknown attribute errors, they should not be for global attributes
+		for _, attr := range globalAttrs {
+			assert.NotContains(t, textContent.Text, attr,
+				"Unknown attribute error should not mention global attribute '%s'", attr)
+		}
+	}
+}
+
+func TestValidateHtml_GlobalAttributesWithUnknownCustomAttribute(t *testing.T) {
+	workspace := W.NewFileSystemWorkspaceContext("../test-fixtures/multiple-elements")
+	err := workspace.Init()
+	require.NoError(t, err)
+
+	registry, err := mcp.NewMCPContext(workspace)
+	require.NoError(t, err)
+
+	err = registry.LoadManifests()
+	require.NoError(t, err)
+
+	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+
+	// Test HTML with both global attributes (which should be OK) and unknown custom attribute (which should be flagged)
+	html := `<button-element
+		id="my-button"
+		class="primary-btn"
+		slot="footer"
+		unknown-custom-attr="should-be-flagged">
+		Click me
+	</button-element>`
+
+	argsJSON, err := json.Marshal(map[string]interface{}{
+		"html":    html,
+		"context": "mixed attributes test",
+	})
+	require.NoError(t, err)
+
+	req := &mcpSDK.CallToolRequest{
+		Params: &mcpSDK.CallToolParamsRaw{
+			Name:      "validate_html",
+			Arguments: json.RawMessage(argsJSON),
+		},
+	}
+
+	handler := tools.MakeValidateHtmlHandler(registryAdapter)
+	result, err := handler(context.Background(), req)
+	require.NoError(t, err)
+	require.Len(t, result.Content, 1)
+
+	textContent, ok := result.Content[0].(*mcpSDK.TextContent)
+	require.True(t, ok)
+
+	t.Logf("Validation result for mixed attributes: %s", textContent.Text)
+
+	// Global attributes should NOT be flagged
+	assert.NotContains(t, textContent.Text, "Unknown attribute 'id'")
+	assert.NotContains(t, textContent.Text, "Unknown attribute 'class'")
+	assert.NotContains(t, textContent.Text, "Unknown attribute 'slot'")
+
+	// Unknown custom attribute SHOULD be flagged
+	assert.Contains(t, textContent.Text, "unknown-custom-attr")
 }

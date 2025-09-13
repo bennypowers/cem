@@ -24,8 +24,10 @@
 
 {{if gt (len .ManifestIssues) 0}}### ❌ Manifest Compliance Issues
 
-{{range .ManifestIssues}}{{if eq .Type "missing-attribute"}}- **Missing Required Attribute**: `{{.Attribute}}` is required for `<{{.Element}}>`
-{{else if eq .Type "invalid-value"}}- **Invalid Attribute Value**: `{{.Attribute}}="{{.Actual}}"` in `<{{.Element}}>`. {{if .Expected}}Valid values: {{.Expected}}{{end}}
+{{range .ManifestIssues}}{{if eq .Type "missing-required-attribute"}}- **Missing Required Attribute**: `{{.Attribute}}` is required for `<{{.Element}}>`
+{{else if eq .Type "invalid-attribute-value"}}- **Invalid Attribute Value**: `{{.Attribute}}="{{.Actual}}"` in `<{{.Element}}>`. {{if .Expected}}Valid values: {{.Expected}}{{end}}
+{{else if eq .Type "unknown-attribute"}}- **Unknown Attribute**: `{{.Message}}`
+{{else if eq .Type "unknown-element"}}- **Unknown Element**: `{{.Message}}`
 {{else}}- **{{.Type}}**: {{.Message}}
 {{end}}{{end}}
 {{else}}### ✅ No Manifest Compliance Issues Found
@@ -39,10 +41,12 @@
 {{end}}{{end}}
 {{end}}{{else}}## Manifest Compliance Validation
 
-{{if gt (len .ManifestIssues) 0}}### ❌ Manifest Compliance Issues
+{{if .ManifestIssues}}### ❌ Manifest Compliance Issues
 
-{{range .ManifestIssues}}{{if eq .Type "missing-attribute"}}- **Missing Required Attribute**: `{{.Attribute}}` is required for `<{{.Element}}>`
-{{else if eq .Type "invalid-value"}}- **Invalid Attribute Value**: `{{.Attribute}}="{{.Actual}}"` in `<{{.Element}}>`. {{if .Expected}}Valid values: {{.Expected}}{{end}}
+{{range .ManifestIssues}}{{if eq .Type "missing-required-attribute"}}- **Missing Required Attribute**: `{{.Attribute}}` is required for `<{{.Element}}>`
+{{else if eq .Type "invalid-attribute-value"}}- **Invalid Attribute Value**: `{{.Attribute}}="{{.Actual}}"` in `<{{.Element}}>`. {{if .Expected}}Valid values: {{.Expected}}{{end}}
+{{else if eq .Type "unknown-attribute"}}- **Unknown Attribute**: `{{.Message}}`
+{{else if eq .Type "unknown-element"}}- **Unknown Element**: `{{.Message}}`
 {{else}}- **{{.Type}}**: {{.Message}}
 {{end}}{{end}}
 {{else}}### ✅ No Manifest Compliance Issues Found

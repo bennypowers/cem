@@ -31,11 +31,11 @@ import (
 
 // TemplatePool provides thread-safe template rendering with instance pooling
 type TemplatePool struct {
-	funcMap        template.FuncMap
-	securityPolicy security.SecurityPolicy
-	pools          map[string]*sync.Pool
-	poolsMu        sync.RWMutex
-	templateSources map[string]*embed.FS
+	funcMap           template.FuncMap
+	securityPolicy    security.SecurityPolicy
+	pools             map[string]*sync.Pool
+	poolsMu           sync.RWMutex
+	templateSources   map[string]*embed.FS
 	templateSourcesMu sync.RWMutex
 }
 
@@ -47,9 +47,9 @@ func NewTemplatePool() *TemplatePool {
 // NewSecureTemplatePool creates a new template pool with security controls
 func NewSecureTemplatePool(policy security.SecurityPolicy) *TemplatePool {
 	return &TemplatePool{
-		securityPolicy: policy,
-		funcMap:        createSecureFuncMap(),
-		pools:          make(map[string]*sync.Pool),
+		securityPolicy:  policy,
+		funcMap:         createSecureFuncMap(),
+		pools:           make(map[string]*sync.Pool),
 		templateSources: make(map[string]*embed.FS),
 	}
 }
@@ -66,19 +66,19 @@ func (tp *TemplatePool) getTemplatePool(templateName string) *sync.Pool {
 	tp.poolsMu.RLock()
 	pool, exists := tp.pools[templateName]
 	tp.poolsMu.RUnlock()
-	
+
 	if exists {
 		return pool
 	}
-	
+
 	tp.poolsMu.Lock()
 	defer tp.poolsMu.Unlock()
-	
+
 	// Double-check after acquiring write lock
 	if pool, exists := tp.pools[templateName]; exists {
 		return pool
 	}
-	
+
 	// Create new pool for this template
 	pool = &sync.Pool{
 		New: func() interface{} {
@@ -94,10 +94,10 @@ func (tp *TemplatePool) createTemplate(templateName string) *template.Template {
 	// Try to load template from registered sources
 	tp.templateSourcesMu.RLock()
 	defer tp.templateSourcesMu.RUnlock()
-	
+
 	var content []byte
 	var err error
-	
+
 	// Try each registered template source
 	for _, fs := range tp.templateSources {
 		templatePath := filepath.Join("templates", templateName+".md")
@@ -106,12 +106,12 @@ func (tp *TemplatePool) createTemplate(templateName string) *template.Template {
 			break
 		}
 	}
-	
+
 	if err != nil {
 		// Return nil to indicate template not found - this will cause Execute to fail
 		return nil
 	}
-	
+
 	// Create and parse template with function map
 	tmpl := template.New(templateName).Funcs(tp.funcMap)
 	tmpl, err = tmpl.Parse(string(content))
@@ -119,7 +119,7 @@ func (tp *TemplatePool) createTemplate(templateName string) *template.Template {
 		// Return nil to indicate parse error - this will cause Execute to fail
 		return nil
 	}
-	
+
 	return tmpl
 }
 
@@ -129,24 +129,24 @@ func (tp *TemplatePool) Render(templateName string, data interface{}) (string, e
 	if strings.Contains(templateName, "..") || strings.Contains(templateName, "/") {
 		return "", fmt.Errorf("invalid template name: %s", templateName)
 	}
-	
+
 	// Get template instance from pool
 	pool := tp.getTemplatePool(templateName)
 	tmplInterface := pool.Get()
 	defer pool.Put(tmplInterface)
-	
+
 	// Check if template creation failed
 	tmpl, ok := tmplInterface.(*template.Template)
 	if !ok || tmpl == nil {
 		return "", fmt.Errorf("template not found: %s", templateName)
 	}
-	
+
 	// Execute template
 	var buf bytes.Buffer
 	if err := tmpl.Execute(&buf, data); err != nil {
 		return "", fmt.Errorf("failed to execute template %s: %w", templateName, err)
 	}
-	
+
 	return buf.String(), nil
 }
 

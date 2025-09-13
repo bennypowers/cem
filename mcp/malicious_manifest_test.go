@@ -29,8 +29,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-
-
 func TestMaliciousManifestMitigation(t *testing.T) {
 	// Use the malicious manifest fixture
 	wctx := workspace.NewFileSystemWorkspaceContext("test-fixtures/malicious-manifest")
@@ -127,7 +125,7 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 func TestTemplateRenderingWithMaliciousData(t *testing.T) {
 	// Test that the template security controls and html/template auto-escaping work
 	// by using the malicious manifest fixture
-	
+
 	// Use the malicious manifest fixture
 	wctx := workspace.NewFileSystemWorkspaceContext("test-fixtures/malicious-manifest")
 	require.NoError(t, wctx.Init())
@@ -203,10 +201,10 @@ func TestTemplateRenderingWithMaliciousData(t *testing.T) {
 					// Check that template injection syntax was removed by security sanitization
 					assert.NotContains(t, result, "{{.", "Template syntax should be removed by security sanitization")
 					assert.NotContains(t, result, "}}", "Template syntax should be removed by security sanitization")
-					
+
 					// Check that HTML content is escaped by html/template
 					assert.NotContains(t, result, "<script>", "Script tags should be escaped")
-					
+
 					// The template should render without template injection
 					assert.NotContains(t, result, "{{range .Secrets}}", "Template injection should be prevented")
 					assert.NotContains(t, result, "{{.DatabasePassword}}", "Template injection should be prevented")

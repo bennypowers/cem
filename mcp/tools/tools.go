@@ -117,6 +117,11 @@ func makeValidateHtmlHandler(registry types.MCPContext) mcp.ToolHandler {
 	}
 }
 
+// MakeValidateHtmlHandler is the exported version for testing
+func MakeValidateHtmlHandler(registry types.MCPContext) mcp.ToolHandler {
+	return makeValidateHtmlHandler(registry)
+}
+
 func makeSuggestAttributesHandler(registry types.MCPContext) mcp.ToolHandler {
 	return func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		return handleSuggestAttributes(ctx, req, registry)

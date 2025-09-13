@@ -139,22 +139,22 @@ func isValidTemplateWithActions(content string) bool {
 	if err != nil {
 		return false // Invalid template syntax
 	}
-	
+
 	// Try executing with nil data to see if there are template actions
 	var buf strings.Builder
 	err = tmpl.Execute(&buf, nil)
-	
+
 	// If execution fails, it contains template actions (good detection)
 	// If execution succeeds, check if any template processing occurred
 	if err != nil {
 		return true // Template actions detected (execution failed)
 	}
-	
+
 	// Additional check: see if the content actually changed during template processing
 	// If it's just text with {{ }} that looks like templates but isn't, the output will be the same
 	originalText := content
 	processedText := buf.String()
-	
+
 	// If they're different, template processing occurred
 	return originalText != processedText
 }
@@ -163,14 +163,14 @@ func isValidTemplateWithActions(content string) bool {
 func normalizeForTemplateCheck(content string) string {
 	// Remove excessive whitespace that could be used to obfuscate template syntax
 	normalized := regexp.MustCompile(`\s+`).ReplaceAllString(content, " ")
-	
+
 	// Normalize common spacing patterns around template delimiters
 	normalized = regexp.MustCompile(`\{\s*\{\s*`).ReplaceAllString(normalized, "{{")
 	normalized = regexp.MustCompile(`\s*\}\s*\}`).ReplaceAllString(normalized, "}}")
-	
+
 	// Remove HTML comments that could be used to hide template syntax
 	normalized = regexp.MustCompile(`<!--.*?-->`).ReplaceAllString(normalized, "")
-	
+
 	return strings.TrimSpace(normalized)
 }
 
@@ -181,10 +181,10 @@ func GetInjectionPatterns(description string) []string {
 
 	if DetectTemplateInjection(description) {
 		patterns = append(patterns, "template_syntax_detected")
-		
+
 		// Normalize for pattern analysis to catch obfuscated patterns
 		normalized := normalizeForTemplateCheck(description)
-		
+
 		// Provide additional analysis for common patterns
 		if strings.Contains(normalized, "{{range") || strings.Contains(description, "{{range") {
 			patterns = append(patterns, "range_construct")
@@ -255,7 +255,7 @@ func SanitizeWithPolicy(description string, policy SecurityPolicy) string {
 
 	// Apply sanitization based on policy
 	if policy.AllowMarkdown && !policy.StrictMode {
-		// For markdown preservation, we still need to call the markdown function 
+		// For markdown preservation, we still need to call the markdown function
 		// but skip the template check since we already did it
 		return sanitizePreservingMarkdownWithoutTemplateCheck(description)
 	}

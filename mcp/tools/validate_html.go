@@ -24,6 +24,8 @@ import (
 
 	"bennypowers.dev/cem/lsp/types"
 	mcpTypes "bennypowers.dev/cem/mcp/types"
+	"bennypowers.dev/cem/validations"
+	"github.com/agext/levenshtein"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -96,8 +98,14 @@ func validateHtmlWithTreeSitter(html string, registry mcpTypes.MCPContext) (stri
 
 	// Prepare validation data using existing template structure
 	data := ValidationTemplateData{
-		Html:             html,
-		BaseTemplateData: BaseTemplateData{Context: ""}, // Default context for general validation
+		Html:                         html,
+		BaseTemplateData:             BaseTemplateData{Context: ""}, // Default context for general validation
+		FoundElements:                []ElementWithIssues{},
+		ManifestIssues:               []ValidationIssue{},
+		ManifestFeatures:             []ValidationFeature{},
+		SlotContentIssues:            []SlotContentIssue{},
+		AttributeConflicts:           []AttributeConflict{},
+		ContentAttributeRedundancies: []ContentAttributeRedundancy{},
 	}
 
 	// Use tree-sitter to find custom elements
@@ -173,6 +181,11 @@ func validateElementAttributes(element types.CustomElementMatch, registryElement
 
 	// Validate attribute values against manifest constraints
 	for attrName, attrMatch := range element.Attributes {
+		// Skip global HTML attributes (slot, id, class, etc.)
+		if validations.IsGlobalAttribute(attrName) {
+			continue
+		}
+
 		// Find the attribute definition in the manifest
 		var manifestAttr mcpTypes.Attribute
 		var found bool
@@ -185,10 +198,17 @@ func validateElementAttributes(element types.CustomElementMatch, registryElement
 		}
 
 		if !found {
+			// Try to suggest corrections for common attribute mistakes
+			suggestion := suggestAttributeCorrection(attrName, registryElement)
+			message := fmt.Sprintf("Unknown attribute '%s' for element <%s>", attrName, element.TagName)
+			if suggestion != "" {
+				message += fmt.Sprintf(". Did you mean '%s'?", suggestion)
+			}
+
 			issues = append(issues, ValidationIssue{
 				Type:    "unknown-attribute",
 				Element: element.TagName,
-				Message: fmt.Sprintf("Unknown attribute '%s' for element <%s>", attrName, element.TagName),
+				Message: message,
 			})
 			continue
 		}
@@ -352,4 +372,49 @@ func validateContentAttributeRedundancy(element types.CustomElementMatch, regist
 	}
 
 	return redundancies
+}
+
+// suggestAttributeCorrection suggests the most likely correct attribute name for a typo
+func suggestAttributeCorrection(typedAttr string, element mcpTypes.ElementInfo) string {
+	attributes := element.Attributes()
+	if len(attributes) == 0 {
+		return ""
+	}
+
+	// Define common typos and their corrections
+	commonTypos := map[string]string{
+		"priority": "variant", // Common mistake for rh-cta
+		"type":     "variant",
+		"style":    "variant",
+		"theme":    "color-palette",
+		"color":    "color-palette",
+		"href":     "slot", // href should often go in slotted content
+	}
+
+	// Check for exact typo matches first
+	if correction, exists := commonTypos[typedAttr]; exists {
+		// Verify the correction exists in this element's attributes
+		for _, attr := range attributes {
+			if attr.Name() == correction {
+				return correction
+			}
+		}
+	}
+
+	// If no exact typo match, find the closest attribute by name similarity
+	bestMatch := ""
+	minDistance := len(typedAttr) + 1 // Start with max possible distance
+
+	for _, attr := range attributes {
+		attrName := attr.Name()
+		distance := levenshtein.Distance(typedAttr, attrName, nil)
+
+		// Only suggest if the distance is reasonable (less than half the length)
+		if distance < minDistance && distance <= len(typedAttr)/2 {
+			bestMatch = attrName
+			minDistance = distance
+		}
+	}
+
+	return bestMatch
 }

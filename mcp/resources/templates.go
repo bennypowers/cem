@@ -18,7 +18,7 @@ package resources
 
 import (
 	"embed"
-	
+
 	"bennypowers.dev/cem/mcp/templates"
 	"bennypowers.dev/cem/mcp/types"
 )
@@ -184,4 +184,3 @@ type FeedbackPatterns struct {
 	Types    []string
 	Delivery []string
 }
-

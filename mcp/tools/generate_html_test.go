@@ -31,12 +31,12 @@ func TestGenerateHTMLStructure(t *testing.T) {
 	registry := getTestRegistry(t)
 
 	tests := []struct {
-		name          string
-		tagName       string
-		content       string
-		attributes    map[string]string
-		expectError   bool
-		checkHTML     []string // strings that should be present in HTML output
+		name        string
+		tagName     string
+		content     string
+		attributes  map[string]string
+		expectError bool
+		checkHTML   []string // strings that should be present in HTML output
 	}{
 		{
 			name:        "basic element generation",
