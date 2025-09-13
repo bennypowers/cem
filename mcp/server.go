@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"bennypowers.dev/cem/internal/version"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/mcp/resources"
 	"bennypowers.dev/cem/mcp/tools"
@@ -81,7 +82,7 @@ func NewServer(workspace types.WorkspaceContext) (*Server, error) {
 func (s *Server) GetInfo() ServerInfo {
 	return ServerInfo{
 		Name:        "cem",
-		Version:     "1.0.0",
+		Version:     version.GetVersion(),
 		Description: "Custom Elements Manifest MCP Server - provides intelligent context about custom elements for AI systems",
 	}
 }

@@ -20,6 +20,7 @@ import (
 	"context"
 	"testing"
 
+	"bennypowers.dev/cem/internal/version"
 	"bennypowers.dev/cem/mcp/resources"
 	W "bennypowers.dev/cem/workspace"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -47,8 +48,19 @@ func TestServer_GetInfo(t *testing.T) {
 	info := server.GetInfo()
 
 	assert.Equal(t, "cem", info.Name)
-	assert.Equal(t, "1.0.0", info.Version)
+	assert.NotEmpty(t, info.Version, "Version should not be empty")
 	assert.Contains(t, info.Description, "Custom Elements Manifest")
+}
+
+func TestServer_VersionConsistency(t *testing.T) {
+	workspace := W.NewFileSystemWorkspaceContext("./test-fixtures/basic")
+	server, err := NewServer(workspace)
+	require.NoError(t, err)
+
+	info := server.GetInfo()
+	expectedVersion := version.GetVersion()
+
+	assert.Equal(t, expectedVersion, info.Version, "MCP server version should match overall CEM version")
 }
 
 func TestDynamicSchemaVersionDetection(t *testing.T) {
