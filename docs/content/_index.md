@@ -4,14 +4,15 @@ layout: home
 ---
 # cem
 
-![A hexagon with a spiderweb pattern spiraling into the bottom right corner](/images/logo.svg)
+![A hexagon with a spiderweb pattern spiraling into the bottom right corner][logo]
 
-The blazing-fast **CLI** tool for generating and working with **[Custom Elements Manifests][schema]**. 
-{.subheading}
+The blazing-fast **CLI** tool for generating and working with
+**[Custom Elements Manifests][schema]**. {.subheading}
 
 Use `cem` to [generate][generate], [validate][validate], and [query][search] 
-custom elements manifests. Then, use the built-in [LSP server][lsp] to activate powerful 
-editor features like hover documentation, autocomplete, and more.
+custom elements manifests. Then, use the built-in [LSP][lsp] and [MCP][mcp]
+servers to activate powerful, AI-native editor features like hover 
+documentation, autocomplete, and more.
 
 ```bash
 npm install --save-dev @pwrs/cem
@@ -22,8 +23,10 @@ npm install --save-dev @pwrs/cem
   {{< cta link="/docs" type="secondary" text="Read the Docs" >}}
 </div>
 
+[logo]: /images/logo.svg
 [schema]: https://github.com/webcomponents/custom-elements-manifest/
 [generate]: ./docs/commands/generate/
 [validate]: ./docs/commands/validate/
 [search]: ./docs/commands/search/
 [lsp]: ./docs/lsp/
+[mcp]: ./docs/mcp/

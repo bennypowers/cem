@@ -1,0 +1,84 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module", 
+      "path": "test-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "TestElement",
+          "tagName": "test-element",
+          "customElement": true,
+          "description": "A test element for MCP tests",
+          "attributes": [
+            {
+              "name": "variant",
+              "type": {
+                "text": "\"primary\" | \"secondary\""
+              },
+              "description": "Element variant",
+              "default": "\"primary\""
+            },
+            {
+              "name": "disabled",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Whether element is disabled"
+            }
+          ],
+          "slots": [
+            {
+              "name": "",
+              "description": "Default slot content"
+            },
+            {
+              "name": "header",
+              "description": "Header slot content"
+            }
+          ],
+          "events": [
+            {
+              "name": "test-event",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "Test event"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--test-color",
+              "syntax": "<color>",
+              "default": "blue",
+              "description": "Test color property"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "container",
+              "description": "Main container part"
+            }
+          ],
+          "cssStates": [
+            {
+              "name": "active", 
+              "description": "Active state"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "test-element",
+          "declaration": {
+            "name": "TestElement",
+            "module": "test-element.js"
+          }
+        }
+      ]
+    }
+  ]
+}

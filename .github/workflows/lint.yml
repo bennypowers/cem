@@ -22,6 +22,8 @@ jobs:
         env:
           GOTOOLCHAIN: auto
           GOEXPERIMENT: jsonv2
+      - name: Generate code
+        run: make generate
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v8
         with:
