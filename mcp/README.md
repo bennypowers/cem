@@ -1,354 +1,129 @@
-# CEM MCP Registry
+# CEM MCP Server
 
-The MCP (Model Context Protocol) registry provides an interface-based system for accessing and working with Custom Elements Manifest data in an AI-native way.
+An MCP (Model Context Protocol) server that provides AI assistants with intelligent access to Custom Elements Manifest data for generating accurate HTML with web components.
 
-## Overview
+## What It Does
 
-The MCP registry transforms raw custom elements manifest data into a structured, type-safe interface hierarchy that enables intelligent HTML generation and component understanding.
+The CEM MCP Server helps AI assistants understand your custom elements and generate correct HTML by providing:
 
-## Key Features
+- **Component discovery**: Find available custom elements in your project
+- **Attribute validation**: Get accurate attribute names, types, and values
+- **HTML generation**: Generate valid HTML with proper component usage
+- **Documentation access**: Access component descriptions and usage guidelines
 
-- **Interface-based polymorphism**: Unified `Item` interface with specialized implementations
-- **Type-safe accessors**: Compile-time guarantees for different item types
-- **JSON marshaling**: Full API compatibility for external consumption
-- **Thread-safe operations**: Concurrent access with proper locking
-- **Caching layer**: Performance optimization for repeated queries
-- **Go best practices**: No "Get" prefixes, proper naming conventions
+## Setup
 
-## Quick Start
+1. **Install CEM**: First make sure you have the CEM CLI installed
+   ```bash
+   npm install -g @pwrs/cem
+   ```
 
-```go
-package main
+2. **Generate manifests**: Run CEM in your project to generate Custom Elements Manifests
+   ```bash
+   cem analyze
+   ```
 
-import (
-    "fmt"
-    "bennypowers.dev/cem/mcp"
-    "bennypowers.dev/cem/workspace"
-)
+3. **Start the MCP server**: Run the CEM MCP server in your project directory
+   ```bash
+   cem mcp
+   ```
 
-func main() {
-    // Create workspace and registry
-    ws := workspace.NewFileSystemWorkspaceContext("/path/to/project")
-    registry, err := mcp.NewRegistry(ws)
-    if err != nil {
-        panic(err)
-    }
-    
-    // Load manifests
-    err = registry.LoadManifests()
-    if err != nil {
-        panic(err)
-    }
-    
-    // Get element information
-    element, err := registry.GetElementInfo("my-button")
-    if err != nil {
-        panic(err)
-    }
-    
-    // Access different item types
-    fmt.Printf("Attributes: %d\n", len(element.Attributes()))
-    fmt.Printf("Slots: %d\n", len(element.Slots()))
-    fmt.Printf("CSS Properties: %d\n", len(element.CssProperties()))
-    
-    // Work with specific items
-    for _, attr := range element.Attributes() {
-        fmt.Printf("Attribute: %s (%s)\n", attr.Name(), attr.Type())
-        if attr.Default() != "" {
-            fmt.Printf("  Default: %s\n", attr.Default())
-        }
-    }
-}
-```
-
-## Architecture
-
-### Interface Hierarchy
-
-The registry uses a carefully designed interface hierarchy that provides both flexibility and type safety:
-
-```
-Item (base interface)
-├── Typed (adds Type() method)
-│   ├── Attribute (adds Default(), Required(), Values())
-│   └── Event (adds isEvent() marker)
-├── Slot (adds isSlot() marker)
-├── CssProperty (adds Syntax(), Inherits(), Initial())
-├── CssPart (adds isCssPart() marker)
-└── CssState (adds isCssState() marker)
-```
-
-### Core Types
-
-- **Registry**: Main entry point, manages manifest loading and caching
-- **ElementInfo**: Container for all element-related information
-- **Item interfaces**: Type-safe representations of manifest components
-- **Implementation structs**: Concrete types that implement the interfaces
-
-## Interface Reference
-
-### Base Interfaces
-
-#### Item
-```go
-type Item interface {
-    Name() string
-    Description() string
-    Guidelines() []string
-    Examples() []string
-    Kind() ItemKind
-}
-```
-
-#### Typed
-```go
-type Typed interface {
-    Item
-    Type() string
-}
-```
-
-#### Defaultable
-```go
-type Defaultable interface {
-    Item
-    Default() string
-}
-```
-
-#### Enumerable
-```go
-type Enumerable interface {
-    Item
-    Values() []string
-}
-```
-
-### Specialized Interfaces
-
-#### Attribute
-```go
-type Attribute interface {
-    Typed
-    Defaultable
-    Enumerable
-    Required() bool
-}
-```
-
-#### Event
-```go
-type Event interface {
-    Typed
-    isEvent() // Marker method
-}
-```
-
-#### Slot
-```go
-type Slot interface {
-    Item
-    isSlot() // Marker method
-}
-```
-
-#### CssProperty
-```go
-type CssProperty interface {
-    Item
-    Syntax() string
-    Inherits() bool
-    Initial() string
-}
-```
-
-#### CssPart
-```go
-type CssPart interface {
-    Item
-    isCssPart() // Marker method
-}
-```
-
-#### CssState
-```go
-type CssState interface {
-    Item
-    isCssState() // Marker method
-}
-```
+4. **Connect to AI assistant**: Configure your AI assistant (Claude Desktop, etc.) to use the MCP server
 
 ## Usage Examples
 
-### Working with Attributes
+### Discovering Components
 
-```go
-element, _ := registry.GetElementInfo("my-button")
+Ask your AI assistant about available components:
 
-for _, attr := range element.Attributes() {
-    fmt.Printf("Attribute: %s\n", attr.Name())
-    fmt.Printf("  Type: %s\n", attr.Type())
-    fmt.Printf("  Required: %t\n", attr.Required())
-    
-    if attr.Default() != "" {
-        fmt.Printf("  Default: %s\n", attr.Default())
-    }
-    
-    if len(attr.Values()) > 0 {
-        fmt.Printf("  Values: %v\n", attr.Values())
-    }
-}
-```
+> "What custom elements are available in this project?"
 
-### Working with CSS Properties
+The MCP server will provide a list of all custom elements found in your manifests.
 
-```go
-element, _ := registry.GetElementInfo("my-card")
+### Getting Component Information
 
-for _, prop := range element.CssProperties() {
-    fmt.Printf("CSS Property: %s\n", prop.Name())
-    fmt.Printf("  Syntax: %s\n", prop.Syntax())
-    fmt.Printf("  Initial: %s\n", prop.Initial())
-    fmt.Printf("  Inherits: %t\n", prop.Inherits())
-}
-```
+Ask for details about specific components:
 
-### Working with Slots
+> "Tell me about the `my-button` component"
 
-```go
-element, _ := registry.GetElementInfo("my-dialog")
+You'll get information about:
+- Available attributes and their types
+- Slots for content projection
+- CSS custom properties for styling
+- Events the component fires
+- CSS parts for external styling
 
-for _, slot := range element.Slots() {
-    if slot.Name() == "" {
-        fmt.Println("Default slot:", slot.Description())
-    } else {
-        fmt.Printf("Named slot '%s': %s\n", slot.Name(), slot.Description())
-    }
-}
-```
+### Generating HTML
 
-### Unified Item Processing
+Ask the AI to generate HTML using your components:
 
-```go
-element, _ := registry.GetElementInfo("my-element")
+> "Create a form with my-input and my-button components"
 
-// Process all items regardless of type
-for _, item := range element.Items {
-    fmt.Printf("%s: %s (%s)\n", item.Kind(), item.Name(), item.Description())
-    
-    // Type-specific processing
-    switch item.Kind() {
-    case mcp.KindAttribute:
-        if attr, ok := item.(mcp.Attribute); ok {
-            fmt.Printf("  Type: %s\n", attr.Type())
-        }
-    case mcp.KindCssProperty:
-        if prop, ok := item.(mcp.CssProperty); ok {
-            fmt.Printf("  Syntax: %s\n", prop.Syntax())
-        }
-    }
-}
-```
+The AI will generate valid HTML with correct attribute names and values based on your component definitions.
 
-## JSON Marshaling
+## Configuration
 
-All item types support JSON marshaling for API compatibility:
+### Claude Desktop
 
-```go
-element, _ := registry.GetElementInfo("my-button")
-data, err := json.Marshal(element)
-if err != nil {
-    panic(err)
-}
+Add to your Claude Desktop MCP configuration:
 
-// The JSON will include all items with their type-specific fields
-fmt.Println(string(data))
-```
-
-Example JSON output:
 ```json
 {
-  "tagName": "my-button",
-  "name": "my-button",
-  "items": [
-    {
-      "kind": "attribute",
-      "name": "variant",
-      "description": "Button variant",
-      "type": "\"primary\" | \"secondary\"",
-      "default": "\"primary\"",
-      "required": false,
-      "values": ["primary", "secondary"]
-    },
-    {
-      "kind": "slot",
-      "name": "",
-      "description": "Button content"
-    },
-    {
-      "kind": "css-property",
-      "name": "--button-color",
-      "description": "Button text color",
-      "syntax": "<color>",
-      "inherits": false,
-      "initial": "currentColor"
+  "mcpServers": {
+    "cem": {
+      "command": "cem",
+      "args": ["mcp"]
     }
-  ]
+  }
 }
 ```
 
-## Performance Considerations
+### Other AI Assistants
 
-### Caching
+The CEM MCP server follows the standard MCP protocol and should work with any MCP-compatible AI assistant.
 
-The registry implements a thread-safe caching layer:
-- Element info is cached after first access
-- Cache is invalidated when manifests are reloaded
-- Concurrent access is protected with read/write mutexes
+## What You Get
 
-### Memory Usage
+### Accurate Component Usage
 
-- Interface-based design minimizes memory overhead
-- Shared base implementations reduce duplication
-- Lazy loading of element information
+The AI assistant will have access to:
+- **Exact attribute names and types** from your component definitions
+- **Slot information** for proper content placement
+- **CSS custom properties** for theme-aware styling
+- **Event details** for interactive components
 
-### Thread Safety
+### Smart HTML Generation
 
-- All public methods are thread-safe
-- Read/write locks protect concurrent access
-- Deadlock prevention in `GetAllElements()`
+Instead of guessing, the AI can generate HTML like:
 
-## Error Handling
+```html
+<!-- AI knows the correct attributes and their types -->
+<my-button variant="primary" size="large">
+  Click me
+</my-button>
 
-The registry provides clear error messages for common scenarios:
+<!-- AI understands slot usage -->
+<my-card>
+  <h2 slot="title">Card Title</h2>
+  <p>Card content goes in the default slot</p>
+  <button slot="action">Learn More</button>
+</my-card>
+```
 
-```go
-// Element not found
-element, err := registry.GetElementInfo("non-existent")
-if err != nil {
-    // Error: "failed to get element info for \"non-existent\": element not found in registry"
-}
+### Design System Integration
 
-// Manifest loading failures
-err = registry.LoadManifests()
-if err != nil {
-    // Error includes workspace path and underlying cause
+The AI can help with styling using your component's CSS API:
+
+```css
+my-button {
+  --button-background: var(--primary-color);
+  --button-radius: var(--border-radius-md);
 }
 ```
 
-## Contributing
+## Benefits
 
-When extending the registry with new item types:
-
-1. Add the interface to the hierarchy
-2. Create a corresponding implementation struct
-3. Add a factory function following naming conventions
-4. Implement JSON marshaling
-5. Add marker methods if needed for type discrimination
-6. Update tests and documentation
-
-## See Also
-
-- [MCP CLAUDE.md](./CLAUDE.md) - Complete implementation plan
-- [Registry Tests](./registry_test.go) - Usage examples and test cases
-- [Interface Implementation](./registry.go) - Full source code
+- **No more guessing** - AI uses your actual component definitions
+- **Consistent usage** - Components are used according to their documented API
+- **Better DX** - Less time looking up component documentation
+- **Design system compliance** - Automatic adherence to your design tokens
