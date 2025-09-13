@@ -205,3 +205,15 @@ func getAttributeValue(attr types.Attribute, providedAttrs map[string]string) st
 	// Fallback to placeholder
 	return "value"
 }
+
+// Testing helpers - exported functions for test access
+
+// GenerateHTMLStructureForTesting exposes generateHTMLStructure for testing
+func GenerateHTMLStructureForTesting(element types.ElementInfo, args GenerateHtmlArgs) (string, error) {
+	return generateHTMLStructure(element, args)
+}
+
+// HandleGenerateHtmlForTesting exposes handleGenerateHtml for testing
+func HandleGenerateHtmlForTesting(ctx context.Context, req *mcp.CallToolRequest, registry types.MCPContext) (*mcp.CallToolResult, error) {
+	return handleGenerateHtml(ctx, req, registry)
+}

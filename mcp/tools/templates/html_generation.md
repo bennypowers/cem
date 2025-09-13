@@ -1,6 +1,6 @@
-# HTML Generation for `{{.TagName}}`
+# HTML Generation for `{{.Element.TagName}}`
 
-{{if .Description}}**Element Description:** {{.Description}}
+{{if .Element.Description}}**Element Description:** {{.Element.Description}}
 
 {{end}}## Generated HTML
 
@@ -11,14 +11,14 @@
 ## Element Structure and Guidelines
 
 ### Tag Information
-- **Element:** `{{.TagName}}`{{if .Package}}
-- **Package:** {{.Package}}{{end}}
-{{if .Description}}
-- **Purpose:** {{.Description}}{{end}}
+- **Element:** `{{.Element.TagName}}`{{if .Element.Package}}
+- **Package:** {{.Element.Package}}{{end}}
+{{if .Element.Description}}
+- **Purpose:** {{.Element.Description}}{{end}}
 
-{{if gt (len .Attributes) 0}}### Attributes Available
+{{if gt (len .Element.Attributes) 0}}### Attributes Available
 
-{{range .Attributes}}#### `{{.Name}}`{{if .Required}} ⚠️ **Required**{{end}}
+{{range .Element.Attributes}}#### `{{.Name}}`{{if .Required}} ⚠️ **Required**{{end}}
 {{if .Description}}{{.Description}}
 {{end}}{{if .Type}}**Type:** `{{.Type}}`
 {{end}}{{if .Default}}**Default:** `{{.Default}}`
@@ -26,18 +26,18 @@
 {{end}}
 {{end}}{{end}}
 
-{{if gt (len .Slots) 0}}### Slots Available
+{{if gt (len .Element.Slots) 0}}### Slots Available
 
-{{range .Slots}}#### {{if .Name}}`{{.Name}}` slot{{else}}Default slot{{end}}
+{{range .Element.Slots}}#### {{if .Name}}`{{.Name}}` slot{{else}}Default slot{{end}}
 {{if .Description}}{{.Description}}
 {{end}}{{if .Name}}**Usage:** `<element slot="{{.Name}}">content</element>`
 {{else}}**Usage:** Content placed directly inside the element
 {{end}}
 {{end}}{{end}}
 
-{{if gt (len .Events) 0}}### Events Available
+{{if gt (len .Element.Events) 0}}### Events Available
 
-{{range .Events}}#### `{{.Name}}`
+{{range .Element.Events}}#### `{{.Name}}`
 {{if .Description}}{{.Description}}
 {{end}}
 {{end}}{{end}}
@@ -48,9 +48,9 @@
 - Use semantic HTML within slots for better accessibility
 - Respect the element's intended purpose and constraints
 - Check element documentation for specific usage guidelines
-{{if gt (len .CssProperties) 0}}
+{{if gt (len .Element.CssProperties) 0}}
 ### Styling
-This element supports {{len .CssProperties}} CSS custom properties for theming. Use the `suggest_css_integration` tool for styling guidance.
+This element supports {{len .Element.CssProperties}} CSS custom properties for theming. Use the `suggest_css_integration` tool for styling guidance.
 {{end}}
 ### Accessibility
 - This element may implement accessibility features via ElementInternals
