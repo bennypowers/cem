@@ -251,9 +251,9 @@ CSS property descriptions should answer: **What visual aspect does this control 
 <figure class="do">
   <blockquote>
     Border radius for button corners affecting visual style and brand
-    consistency. Use design system radius tokens (`--radius-sm`, `--radius-md`,
-    `--radius-lg`) for consistency. Impacts touch target perception on mobile
-    devices.
+    consistency. Use design system radius tokens (<code>--radius-sm</code>,
+    <code>--radius-md</code>, <code>--radius-lg</code>) for consistency.
+    Impacts touch target perception on mobile devices.
   </blockquote>
   <figcaption>✅ Good: Visual and functional explanation</figcaption>
 </figure>
@@ -274,9 +274,9 @@ For a `selection-change` event:
 <figure class="do">
   <blockquote>
     Fired when user selects or deselects items, including keyboard and mouse
-    interactions. Event detail contains `selectedItems` array and
-    `previousSelection` for accessibility announcements. Debounced to prevent
-    excessive firing during rapid selection changes.
+    interactions. Event detail contains <code>selectedItems</code> array and
+    <code>previousSelection</code> for accessibility announcements. Debounced
+    to prevent excessive firing during rapid selection changes.
   </blockquote>
   <figcaption>✅ Good: Complete event information</figcaption>
 </figure>

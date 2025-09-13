@@ -91,76 +91,18 @@ Provides CSS integration guidance using manifest-defined CSS APIs.
 | `context`     | string |          | Styling context (`theme`, `responsive`, `dark-mode`)       |
 
 
-## Usage Examples
+## Usage
 
-### Basic Server Setup
+Once connected, AI assistants can access your component information through natural language:
 
-```typescript
-// Connect to MCP server
-import { MCPClient } from '@modelcontextprotocol/client';
+- **"What custom elements are available?"** - Lists all components
+- **"Tell me about the my-button component"** - Shows attributes, slots, CSS APIs
+- **"Generate a form with my-input and my-button"** - Creates valid HTML
+- **"How do I style the my-card component?"** - Provides CSS guidance
 
-const client = new MCPClient({
-  command: 'cem',
-  args: ['mcp']
-});
-
-await client.connect();
-```
-
-### Getting Element Information
-
-```typescript
-// Get schema information
-const schema = await client.readResource('cem://schema');
-
-// Get all available elements
-const elements = await client.readResource('cem://elements');
-
-// Get specific element details
-const button = await client.readResource('cem://element/my-button');
-```
-
-### Generating HTML with AI Assistance
-
-```typescript
-// Generate HTML for a button component
-const result = await client.callTool('generate_html', {
-  tagName: 'my-button',
-  attributes: {
-    variant: 'primary',
-    size: 'large'
-  },
-  content: {
-    '': 'Click me!',
-    'icon': '🚀'
-  }
-});
-
-console.log(result.content);
-// Output: <my-button variant="primary" size="large">
-//           Click me!
-//           <span slot="icon">🚀</span>
-//         </my-button>
-```
-
-### Validating HTML Usage
-
-```typescript
-// Validate HTML against manifests
-const validation = await client.callTool('validate_html', {
-  html: '<my-card elevation="5" variant="outlined">Card content</my-card>',
-  tagName: 'my-card',
-  context: 'manifest-compliance'
-});
-
-console.log('Validation results:', validation.content);
-```
-
-## Integration with AI Systems
+## AI Client Configuration
 
 ### Claude Desktop
-
-Add to your Claude Desktop configuration:
 
 ```json
 {
@@ -173,75 +115,24 @@ Add to your Claude Desktop configuration:
 }
 ```
 
-### VSCode with Continue
+### Other Clients
 
-```json
-{
-  "mcp": {
-    "servers": [
-      {
-        "name": "cem",
-        "command": "cem mcp"
-      }
-    ]
-  }
-}
-```
+The CEM MCP server works with any MCP-compatible AI client:
 
-### Custom Integration
+- **Claude Code** - See [Claude Code MCP docs](https://docs.anthropic.com/en/docs/claude-code/mcp)
+- **Cursor** - See [Cursor MCP integration](https://docs.cursor.com/mcp)
+- **Continue.dev** - See [Continue MCP setup](https://docs.continue.dev/mcp)
+- **Custom clients** - See [MCP specification](https://spec.modelcontextprotocol.io/)
 
-```typescript
-import { spawn } from 'child_process';
+## How It Works
 
-class CEMIntegration {
-  private mcpProcess: any;
-  
-  async start(workspacePath: string) {
-    this.mcpProcess = spawn('cem', ['mcp'], {
-      cwd: workspacePath,
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
-    
-    // Handle MCP communication via stdio
-    return this.mcpProcess;
-  }
-}
-```
+The MCP server uses a **Data + Context + LLM Decision Making** approach:
 
-## Interface-Based Registry
+1. **📊 Manifest Data** - Your component definitions, CSS APIs, constraints
+2. **📖 Rich Context** - Usage patterns, guidelines, best practices
+3. **🧠 AI Decisions** - AI chooses appropriate values based on provided context
 
-The MCP server uses a sophisticated interface-based registry that provides type-safe access to manifest data:
-
-### Interface Hierarchy
-
-```
-Item (base interface)
-├── Typed (adds Type() method)
-│   ├── Attribute (adds Default(), Required(), Values())
-│   └── Event (adds isEvent() marker)
-├── Slot (adds isSlot() marker)  
-├── CssProperty (adds Syntax(), Inherits(), Initial())
-├── CssPart (adds isCssPart() marker)
-└── CssState (adds isCssState() marker)
-```
-
-### Benefits
-
-- **Type Safety**: Compile-time guarantees for component data
-- **Polymorphism**: Unified access with specialized interfaces
-- **Extensibility**: Easy to add new item types
-- **Performance**: Efficient caching and filtering
-- **JSON Compatible**: Full API serialization support
-
-## Template-Driven Intelligence
-
-The MCP server uses a unique **Data + Context + LLM Decision Making** approach:
-
-1. **📊 Manifest Data** - Raw element definitions, CSS APIs, constraints
-2. **📖 Rich Context** - Usage patterns, guidelines, best practices  
-3. **🧠 LLM Decisions** - AI chooses appropriate values based on provided context
-
-This means the server doesn't provide hardcoded suggestions but instead gives AI systems the rich context needed to make intelligent decisions about element usage, styling, and validation.
+This means no hardcoded suggestions - just rich context that enables intelligent decisions about component usage and styling.
 
 ## Troubleshooting
 
