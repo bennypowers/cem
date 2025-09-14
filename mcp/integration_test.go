@@ -132,7 +132,7 @@ func TestSchemaResilientTemplateIntegration(t *testing.T) {
 	})
 
 	// Golden file comparison (update mode)
-	goldenPath := filepath.Join("testdata", "schema_resilient_template.golden")
+	goldenPath := filepath.Join("testdata", "schema_resilient_template.golden.md")
 
 	if updateGolden := os.Getenv("UPDATE_GOLDEN"); updateGolden != "" {
 		// Update golden file

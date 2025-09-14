@@ -84,6 +84,8 @@ func collectManifestContext(registry types.MCPContext) ManifestContext {
 		ElementPatterns:     extractElementPatterns(elements),
 		AttributePatterns:   extractAttributePatterns(elements),
 		SlotPatterns:        extractSlotPatterns(elements),
+		CssPartPatterns:     extractCssPartPatterns(elements),
+		CssStatePatterns:    extractCssStatePatterns(elements),
 		ExtractedGuidelines: extractAllGuidelines(elements),
 	}
 }
@@ -194,6 +196,56 @@ func extractSlotPatterns(elements []types.ElementInfo) []SlotPattern {
 	return patterns
 }
 
+// extractCssPartPatterns finds common CSS part patterns
+func extractCssPartPatterns(elements []types.ElementInfo) []CssPartPattern {
+	partFreq := make(map[string]int)
+
+	// Count CSS part usage across elements
+	for _, element := range elements {
+		for _, part := range element.CssParts() {
+			partFreq[part.Name()]++
+		}
+	}
+
+	var patterns []CssPartPattern
+	for partName, count := range partFreq {
+		if count > 1 {
+			patterns = append(patterns, CssPartPattern{
+				Name:        partName,
+				UsageCount:  count,
+				Description: fmt.Sprintf("Used in %d elements", count),
+			})
+		}
+	}
+
+	return patterns
+}
+
+// extractCssStatePatterns finds common CSS state patterns
+func extractCssStatePatterns(elements []types.ElementInfo) []CssStatePattern {
+	stateFreq := make(map[string]int)
+
+	// Count CSS state usage across elements
+	for _, element := range elements {
+		for _, state := range element.CssStates() {
+			stateFreq[state.Name()]++
+		}
+	}
+
+	var patterns []CssStatePattern
+	for stateName, count := range stateFreq {
+		if count > 1 {
+			patterns = append(patterns, CssStatePattern{
+				Name:        stateName,
+				UsageCount:  count,
+				Description: fmt.Sprintf("Used in %d elements", count),
+			})
+		}
+	}
+
+	return patterns
+}
+
 // extractAllGuidelines extracts RFC 2119 guidelines from all descriptions
 func extractAllGuidelines(elements []types.ElementInfo) []ExtractedGuideline {
 	var guidelines []ExtractedGuideline
@@ -249,7 +301,7 @@ func extractGuidelinesFromText(text string) []string {
 	return guidelines
 }
 
-// getSchemaDefinitions extracts relevant schema definitions for context
+// getSchemaDefinitions loads the complete schema for template functions
 func getSchemaDefinitions(registry types.MCPContext) (map[string]interface{}, error) {
 	// Get schema versions from manifests
 	versions := registry.GetManifestSchemaVersions()
@@ -264,32 +316,12 @@ func getSchemaDefinitions(registry types.MCPContext) (map[string]interface{}, er
 		return nil, fmt.Errorf("failed to load schema %s: %w", schemaVersion, err)
 	}
 
-	// Parse schema JSON
+	// Parse schema JSON - return the complete schema for template functions
 	var schema map[string]interface{}
 	if err := json.Unmarshal(schemaData, &schema); err != nil {
 		return nil, fmt.Errorf("failed to parse schema JSON: %w", err)
 	}
 
-	// Extract relevant definitions and descriptions for context
-	definitions := make(map[string]interface{})
-
-	// Get main schema properties with descriptions
-	if props, ok := schema["properties"]; ok {
-		definitions["properties"] = props
-	}
-
-	// Get definitions section with type descriptions
-	if defs, ok := schema["definitions"]; ok {
-		definitions["definitions"] = defs
-	}
-
-	// Get schema description and title
-	if desc, ok := schema["description"]; ok {
-		definitions["description"] = desc
-	}
-	if title, ok := schema["title"]; ok {
-		definitions["title"] = title
-	}
-
-	return definitions, nil
+	// Return complete schema so template functions can navigate properly
+	return schema, nil
 }

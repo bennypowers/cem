@@ -1,6 +1,6 @@
 {{.Overview}}
 
-## Schema Context: {{.SchemaDefinitions.title}}
+## Schema Context: {{.SchemaDefinitions.title}}{{if .SchemaVersion}} ({{.SchemaVersion}}){{end}}
 
 {{if .SchemaVersion}}
 {{if .SchemaDefinitions.description}}{{.SchemaDefinitions.description}}{{end}}
@@ -15,52 +15,57 @@
 {{end}}
 {{end}}
 
-{{$customElement := schemaDesc .SchemaDefinitions "CustomElement"}}
+{{$customElement := schemaDesc .SchemaDefinitions "CustomElementDeclaration"}}
 {{if $customElement}}
-#### CustomElement
+#### CustomElementDeclaration
 {{$customElement}}
 
 Core properties:
-{{$tagName := schemaFieldDesc .SchemaDefinitions "CustomElement" "tagName"}}
+{{$tagName := schemaFieldDesc .SchemaDefinitions "CustomElementDeclaration" "tagName"}}
 {{if $tagName}}- **tagName**: {{$tagName}}{{end}}
-{{$attributes := schemaFieldDesc .SchemaDefinitions "CustomElement" "attributes"}}
+{{$attributes := schemaFieldDesc .SchemaDefinitions "CustomElementDeclaration" "attributes"}}
 {{if $attributes}}- **attributes**: {{$attributes}}{{end}}
-{{$slots := schemaFieldDesc .SchemaDefinitions "CustomElement" "slots"}}
+{{$slots := schemaFieldDesc .SchemaDefinitions "CustomElementDeclaration" "slots"}}
 {{if $slots}}- **slots**: {{$slots}}{{end}}
-{{$events := schemaFieldDesc .SchemaDefinitions "CustomElement" "events"}}
+{{$events := schemaFieldDesc .SchemaDefinitions "CustomElementDeclaration" "events"}}
 {{if $events}}- **events**: {{$events}}{{end}}
-{{$cssProperties := schemaFieldDesc .SchemaDefinitions "CustomElement" "cssProperties"}}
+{{$cssProperties := schemaFieldDesc .SchemaDefinitions "CustomElementDeclaration" "cssProperties"}}
 {{if $cssProperties}}- **cssProperties**: {{$cssProperties}}{{end}}
-{{$cssParts := schemaFieldDesc .SchemaDefinitions "CustomElement" "cssParts"}}
+{{$cssParts := schemaFieldDesc .SchemaDefinitions "CustomElementDeclaration" "cssParts"}}
 {{if $cssParts}}- **cssParts**: {{$cssParts}}{{end}}
-{{$cssStates := schemaFieldDesc .SchemaDefinitions "CustomElement" "cssStates"}}
+{{$cssStates := schemaFieldDesc .SchemaDefinitions "CustomElementDeclaration" "cssStates"}}
 {{if $cssStates}}- **cssStates**: {{$cssStates}}{{end}}
 {{end}}
 
-{{$attribute := schemaDesc .SchemaDefinitions "Attribute"}}
-{{if $attribute}}
+{{if gt (len .AttributePatterns) 0}}
 #### Attribute
-{{$attribute}}
+Element attributes define the interface between HTML and your custom element. Each attribute has a name, type constraints, and optional default values.
 
-Key constraints:
+Key properties:
+{{$name := schemaFieldDesc .SchemaDefinitions "Attribute" "name"}}
+{{if $name}}- **name**: {{$name}}{{end}}
 {{$type := schemaFieldDesc .SchemaDefinitions "Attribute" "type"}}
 {{if $type}}- **type**: {{$type}}{{end}}
 {{$default := schemaFieldDesc .SchemaDefinitions "Attribute" "default"}}
 {{if $default}}- **default**: {{$default}}{{end}}
 {{$required := schemaFieldDesc .SchemaDefinitions "Attribute" "required"}}
 {{if $required}}- **required**: {{$required}}{{end}}
+{{$fieldName := schemaFieldDesc .SchemaDefinitions "Attribute" "fieldName"}}
+{{if $fieldName}}- **fieldName**: {{$fieldName}}{{end}}
 {{end}}
 
-{{$slot := schemaDesc .SchemaDefinitions "Slot"}}
-{{if $slot}}
+{{if gt (len .SlotPatterns) 0}}
 #### Slot
-{{$slot}}
+Content slots define where child content can be placed within your custom element's shadow DOM. Slots enable flexible, composable component designs.
+
+Key properties:
+{{$name := schemaFieldDesc .SchemaDefinitions "Slot" "name"}}
+{{if $name}}- **name**: {{$name}}{{end}}
 {{end}}
 
-{{$cssCustomProperty := schemaDesc .SchemaDefinitions "CssCustomProperty"}}
-{{if $cssCustomProperty}}
+{{if gt (len .CSSProperties) 0}}
 #### CssCustomProperty
-{{$cssCustomProperty}}
+CSS custom properties (CSS variables) provide a styling API for your custom elements. They allow theme customization and design system integration.
 
 Properties:
 {{$name := schemaFieldDesc .SchemaDefinitions "CssCustomProperty" "name"}}
@@ -71,6 +76,24 @@ Properties:
 {{if $inherits}}- **inherits**: {{$inherits}}{{end}}
 {{$initialValue := schemaFieldDesc .SchemaDefinitions "CssCustomProperty" "initialValue"}}
 {{if $initialValue}}- **initialValue**: {{$initialValue}}{{end}}
+{{end}}
+
+{{if gt (len .CssPartPatterns) 0}}
+#### CssPart
+CSS parts provide styling hooks for internal components of your custom elements. They enable precise styling without breaking encapsulation.
+
+Key properties:
+{{$name := schemaFieldDesc .SchemaDefinitions "CssPart" "name"}}
+{{if $name}}- **name**: {{$name}}{{end}}
+{{end}}
+
+{{if gt (len .CssStatePatterns) 0}}
+#### CssCustomState
+CSS custom states represent dynamic conditions of your custom elements. They provide semantic styling hooks for interactive states.
+
+Key properties:
+{{$name := schemaFieldDesc .SchemaDefinitions "CssCustomState" "name"}}
+{{if $name}}- **name**: {{$name}}{{end}}
 {{end}}
 
 This schema provides the semantic framework for understanding your specific component data below.
@@ -104,6 +127,20 @@ Your components define **{{len .CSSProperties}} CSS custom properties**:
 
 {{range .CSSProperties}}
 - `{{.}}`
+{{end}}
+{{end}}
+
+{{if gt (len .CssPartPatterns) 0}}### Common CSS Parts
+
+{{range .CssPartPatterns}}
+- `{{.Name}}` - {{.Description}}
+{{end}}
+{{end}}
+
+{{if gt (len .CssStatePatterns) 0}}### Common CSS States
+
+{{range .CssStatePatterns}}
+- `{{.Name}}` - {{.Description}}
 {{end}}
 {{end}}
 

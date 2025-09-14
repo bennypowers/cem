@@ -45,6 +45,8 @@ type ManifestContext struct {
 	ElementPatterns     []ElementPattern      // Patterns found across elements
 	AttributePatterns   []AttributePattern    // Common attribute usage patterns
 	SlotPatterns        []SlotPattern         // Common slot usage patterns
+	CssPartPatterns     []CssPartPattern      // Common CSS part usage patterns
+	CssStatePatterns    []CssStatePattern     // Common CSS state usage patterns
 	ExtractedGuidelines []ExtractedGuideline  // Guidelines extracted from descriptions
 }
 
@@ -66,6 +68,20 @@ type AttributePattern struct {
 type SlotPattern struct {
 	Name        string // Slot name
 	UsageCount  int    // Number of elements using this slot
+	Description string // Description of usage pattern
+}
+
+// CssPartPattern represents common CSS part usage
+type CssPartPattern struct {
+	Name        string // CSS part name
+	UsageCount  int    // Number of elements using this part
+	Description string // Description of usage pattern
+}
+
+// CssStatePattern represents common CSS state usage
+type CssStatePattern struct {
+	Name        string // CSS state name
+	UsageCount  int    // Number of elements using this state
 	Description string // Description of usage pattern
 }
 
