@@ -390,26 +390,6 @@ func suggestAttributeCorrection(typedAttr string, element mcpTypes.ElementInfo) 
 		return ""
 	}
 
-	// Define common typos and their corrections
-	commonTypos := map[string]string{
-		"priority": "variant", // Common mistake for rh-cta
-		"type":     "variant",
-		"style":    "variant",
-		"theme":    "color-palette",
-		"color":    "color-palette",
-		"href":     "slot", // href should often go in slotted content
-	}
-
-	// Check for exact typo matches first
-	if correction, exists := commonTypos[typedAttr]; exists {
-		// Verify the correction exists in this element's attributes
-		for _, attr := range attributes {
-			if attr.Name() == correction {
-				return correction
-			}
-		}
-	}
-
 	// If no exact typo match, find the closest attribute by name similarity
 	bestMatch := ""
 	minDistance := len(typedAttr) + 1 // Start with max possible distance
