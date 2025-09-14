@@ -19,6 +19,9 @@ package resources_test
 import (
 	"context"
 	"encoding/json"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"bennypowers.dev/cem/mcp"
@@ -116,6 +119,10 @@ func TestSchemaResource_Integration(t *testing.T) {
 }
 
 func TestElementsResource_Integration(t *testing.T) {
+	testResourceWithGolden(t, "cem://elements", "elements_resource.golden.json")
+}
+
+func TestElementsResource_Integration_Legacy(t *testing.T) {
 	registry := getTestRegistry(t)
 	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
@@ -157,6 +164,23 @@ func TestElementsResource_Integration(t *testing.T) {
 	// Basic content checks - verify essential elements from fixtures are present
 	assert.Contains(t, content.Text, "button-element", "Should contain fixture elements")
 	assert.Contains(t, content.Text, "card-element", "Should contain fixture elements")
+}
+
+// Golden file tests for specific element resources
+func TestElementResource_ButtonElement_Golden(t *testing.T) {
+	testResourceWithGolden(t, "cem://element/button-element", "button_element_resource.golden.md")
+}
+
+func TestElementResource_CardElement_Golden(t *testing.T) {
+	testResourceWithGolden(t, "cem://element/card-element", "card_element_resource.golden.md")
+}
+
+func TestSchemaResource_Golden(t *testing.T) {
+	testResourceWithGolden(t, "cem://schema", "schema_resource.golden.json")
+}
+
+func TestPackagesResource_Golden(t *testing.T) {
+	testResourceWithGolden(t, "cem://packages", "packages_resource.golden.json")
 }
 
 func TestElementResource_Integration(t *testing.T) {
@@ -494,4 +518,59 @@ func TestAllResourcesWithFixtures(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Helper function for testing resource output with golden files
+func testResourceWithGolden(t *testing.T, uri string, goldenFile string) {
+	registry := getTestRegistry(t)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
+
+	resourceDefs, err := resources.Resources(registryAdapter)
+	require.NoError(t, err)
+
+	// Find the resource that handles this URI
+	var resourceHandler *resources.ResourceDefinition
+	for _, resource := range resourceDefs {
+		// Check for exact match or URI template match
+		if resource.URI == uri || (resource.URITemplate && strings.HasPrefix(uri, strings.Replace(resource.URI, "{tagName}", "", 1))) {
+			resourceHandler = &resource
+			break
+		}
+	}
+	require.NotNil(t, resourceHandler, "Should find resource handler for URI: %s", uri)
+
+	// Create request
+	req := &mcpSDK.ReadResourceRequest{
+		Params: &mcpSDK.ReadResourceParams{URI: uri},
+	}
+
+	// Call resource handler
+	result, err := resourceHandler.Handler(context.Background(), req)
+	require.NoError(t, err, "Resource handler should not return error")
+	require.Len(t, result.Contents, 1, "Resource should return content")
+
+	content := result.Contents[0]
+	output := content.Text
+
+	// Handle UPDATE_GOLDEN flag
+	goldenPath := filepath.Join("../fixtures/resource-integration", goldenFile)
+	if os.Getenv("UPDATE_GOLDEN") == "1" {
+		err := os.MkdirAll(filepath.Dir(goldenPath), 0755)
+		require.NoError(t, err, "Failed to create golden file directory")
+
+		err = os.WriteFile(goldenPath, []byte(output), 0644)
+		require.NoError(t, err, "Failed to update golden file %s", goldenPath)
+		t.Logf("Updated golden file: %s", goldenPath)
+		return
+	}
+
+	// Compare with golden file
+	expectedData, err := os.ReadFile(goldenPath)
+	if os.IsNotExist(err) {
+		t.Fatalf("Golden file %s does not exist. Run with UPDATE_GOLDEN=1 to create it.", goldenPath)
+	}
+	require.NoError(t, err, "Should be able to read golden file: %s", goldenPath)
+
+	assert.Equal(t, string(expectedData), output, "Resource output should match golden file")
+	assert.Equal(t, uri, content.URI, "Resource should preserve URI")
 }

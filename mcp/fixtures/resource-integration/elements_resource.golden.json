@@ -1,0 +1,54 @@
+{
+  "elements": [
+    {
+      "tagName": "button-element",
+      "name": "button-element",
+      "package": "button",
+      "capabilities": [
+        "configurable",
+        "content-slots",
+        "interactive",
+        "themeable",
+        "styleable",
+        "form-element"
+      ],
+      "attributeCount": 3,
+      "slotCount": 2,
+      "eventCount": 1,
+      "cssPropertyCount": 2,
+      "cssPartCount": 1,
+      "cssStateCount": 0
+    },
+    {
+      "tagName": "card-element",
+      "name": "card-element",
+      "package": "card",
+      "capabilities": [
+        "configurable",
+        "content-slots",
+        "themeable",
+        "styleable"
+      ],
+      "attributeCount": 1,
+      "slotCount": 3,
+      "eventCount": 0,
+      "cssPropertyCount": 1,
+      "cssPartCount": 4,
+      "cssStateCount": 0
+    }
+  ],
+  "metadata": {
+    "categories": {
+      "configurable": 2,
+      "content-slots": 2,
+      "form-elements": 1,
+      "interactive": 1,
+      "layout-elements": 0,
+      "navigation-elements": 0,
+      "stateful": 0,
+      "styleable": 2,
+      "themeable": 2
+    },
+    "totalElements": 2
+  }
+}

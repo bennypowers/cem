@@ -120,6 +120,17 @@ func TestGenerateHTML_WithFixtures(t *testing.T) {
 }
 
 func TestGenerateHTMLTool_Integration(t *testing.T) {
+	// Test successful case with comprehensive output validation
+	args := tools.GenerateHtmlArgs{
+		TagName: "button-element",
+		Content: "Test Button",
+		Context: "integration-test",
+	}
+
+	testGenerateHtmlWithGolden(t, args, "integration_test.golden.md")
+}
+
+func TestGenerateHTMLTool_Integration_Legacy(t *testing.T) {
 	registry := getTestRegistry(t)
 
 	// Quick integration test to verify tool handler exists and basic functionality
@@ -158,6 +169,20 @@ func TestGenerateHTMLTool_Integration(t *testing.T) {
 }
 
 func TestGenerateHTMLRegression_TagNameAccess(t *testing.T) {
+	// Regression test for the specific error in the transcript:
+	// "can't evaluate field TagName in type tools.HTMLGenerationTemplateData"
+
+	// Test that the html_structure template can access TagName correctly
+	args := tools.GenerateHtmlArgs{
+		TagName: "button-element",
+		Content: "test content",
+		Context: "regression-test",
+	}
+
+	testGenerateHtmlWithGolden(t, args, "regression_tagname_access.golden.md")
+}
+
+func TestGenerateHTMLRegression_TagNameAccess_Legacy(t *testing.T) {
 	// Regression test for the specific error in the transcript:
 	// "can't evaluate field TagName in type tools.HTMLGenerationTemplateData"
 
@@ -200,4 +225,51 @@ func TestGenerateHTMLRegression_TagNameAccess(t *testing.T) {
 	assert.Contains(t, output, "&amp;lt;button-element", "Should contain opening tag (double-encoded)")
 	assert.Contains(t, output, "&amp;lt;/button-element&gt;", "Should contain closing tag (double-encoded)")
 	assert.Contains(t, output, "test content", "Should contain provided content")
+}
+
+// Helper function for testing generate HTML with golden files
+func testGenerateHtmlWithGolden(t *testing.T, args tools.GenerateHtmlArgs, goldenFile string) {
+	registry := getTestRegistry(t)
+
+	argsJSON, err := json.Marshal(args)
+	require.NoError(t, err)
+
+	req := &mcpSDK.CallToolRequest{
+		Params: &mcpSDK.CallToolParamsRaw{
+			Name:      "generate_html",
+			Arguments: json.RawMessage(argsJSON),
+		},
+	}
+
+	handler := tools.MakeGenerateHtmlHandler(registry)
+	result, err := handler(context.Background(), req)
+	require.NoError(t, err, "Tool should not return error")
+	require.NotNil(t, result, "Tool should return result")
+	require.Len(t, result.Content, 1, "Result should have content")
+
+	textContent, ok := result.Content[0].(*mcpSDK.TextContent)
+	require.True(t, ok, "Content should be text")
+
+	output := textContent.Text
+
+	// Handle UPDATE_GOLDEN flag
+	goldenPath := filepath.Join("../fixtures/generate-html-integration", goldenFile)
+	if os.Getenv("UPDATE_GOLDEN") == "1" {
+		err := os.MkdirAll(filepath.Dir(goldenPath), 0755)
+		require.NoError(t, err, "Failed to create golden file directory")
+
+		err = os.WriteFile(goldenPath, []byte(output), 0644)
+		require.NoError(t, err, "Failed to update golden file %s", goldenPath)
+		t.Logf("Updated golden file: %s", goldenPath)
+		return
+	}
+
+	// Compare with golden file
+	expectedData, err := os.ReadFile(goldenPath)
+	if os.IsNotExist(err) {
+		t.Fatalf("Golden file %s does not exist. Run with UPDATE_GOLDEN=1 to create it.", goldenPath)
+	}
+	require.NoError(t, err, "Should be able to read golden file: %s", goldenPath)
+
+	assert.Equal(t, string(expectedData), output, "Generated HTML should match golden file")
 }

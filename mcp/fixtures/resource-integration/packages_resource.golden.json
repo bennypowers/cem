@@ -1,0 +1,26 @@
+{
+  "metadata": {
+    "totalElements": 2,
+    "totalPackages": 2
+  },
+  "packages": [
+    {
+      "name": "button",
+      "elements": [
+        "button-element"
+      ],
+      "modules": [],
+      "elementCount": 1,
+      "moduleCount": 0
+    },
+    {
+      "name": "card",
+      "elements": [
+        "card-element"
+      ],
+      "modules": [],
+      "elementCount": 1,
+      "moduleCount": 0
+    }
+  ]
+}
