@@ -27,13 +27,11 @@ import (
 	"sync"
 
 	"bennypowers.dev/cem/mcp/helpers"
-	"bennypowers.dev/cem/mcp/security"
 )
 
 // TemplatePool provides thread-safe template rendering with instance pooling
 type TemplatePool struct {
 	funcMap           template.FuncMap
-	securityPolicy    security.SecurityPolicy
 	pools             map[string]*sync.Pool
 	poolsMu           sync.RWMutex
 	templateSources   map[string]*embed.FS
@@ -42,13 +40,7 @@ type TemplatePool struct {
 
 // NewTemplatePool creates a new thread-safe template pool
 func NewTemplatePool() *TemplatePool {
-	return NewSecureTemplatePool(security.DefaultSecurityPolicy())
-}
-
-// NewSecureTemplatePool creates a new template pool with security controls
-func NewSecureTemplatePool(policy security.SecurityPolicy) *TemplatePool {
 	return &TemplatePool{
-		securityPolicy:  policy,
 		funcMap:         createSecureFuncMap(),
 		pools:           make(map[string]*sync.Pool),
 		templateSources: make(map[string]*embed.FS),

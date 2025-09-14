@@ -730,14 +730,8 @@ func (ctx *MCPContext) extractGuidelinesFromElement(element *M.CustomElement) []
 
 // extractGuidelines is a generic helper that extracts guidelines from any description text
 func (ctx *MCPContext) extractGuidelines(description string) []string {
-	// Sanitize description to prevent template injection
-	sanitized := security.SanitizeDescriptionPreservingMarkdown(description)
-
-	// Log security warning if injection was detected
-	if security.DetectTemplateInjection(description) {
-		patterns := security.GetInjectionPatterns(description)
-		helpers.SafeDebugLog("Template injection detected in description: %v", patterns)
-	}
+	// Sanitize description
+	sanitized := security.SanitizeDescription(description)
 
 	return ctx.extractTextGuidelines(sanitized)
 }
@@ -812,7 +806,7 @@ func (e *ElementInfoAdapter) TagName() string { return e.ElementInfo.TagName }
 func (e *ElementInfoAdapter) Name() string    { return e.ElementInfo.Name }
 func (e *ElementInfoAdapter) Description() string {
 	// Sanitize description to prevent template injection
-	return security.SanitizeDescriptionPreservingMarkdown(e.ElementInfo.Description)
+	return security.SanitizeDescription(e.ElementInfo.Description)
 }
 func (e *ElementInfoAdapter) Module() string       { return e.ElementInfo.Module }
 func (e *ElementInfoAdapter) Package() string      { return e.ElementInfo.Package }

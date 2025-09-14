@@ -135,7 +135,7 @@ func (a {{.Name}}) Name() string {
 }
 
 func (a {{.Name}}) Description() string {
-	return security.SanitizeDescriptionPreservingMarkdown(a.{{.ManifestType}}.Description)
+	return security.SanitizeDescription(a.{{.ManifestType}}.Description)
 }
 
 func (a {{.Name}}) Guidelines() []string {
