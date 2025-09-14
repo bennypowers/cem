@@ -47,7 +47,48 @@ cem mcp --max-description-length 5000
 
 ## General Principles
 
-### 1. Write for Both Humans and AI
+### 1. Use RFC 2119 Keywords for Actionable Guidelines
+
+The CEM MCP server extracts actionable guidelines from your descriptions by looking for [RFC 2119](https://tools.ietf.org/html/rfc2119) keywords. This creates structured guidance that AI systems can use for intelligent code generation and validation.
+
+The guideline extraction system looks for these keywords in your descriptions:
+
+- **MUST** / **must** - Required behavior or values
+- **SHOULD** / **should** - Recommended practices
+- **AVOID** / **avoid** - Discouraged patterns
+- **USE** / **use** - Preferred approaches
+
+#### Effective RFC 2119 Usage
+
+You can use either uppercase or lowercase - both work equally well:
+
+```typescript
+/**
+ * Button size affecting touch targets and visual hierarchy.
+ * Must be 'large' for primary mobile actions to meet accessibility requirements.
+ * Should use 'medium' for standard desktop interfaces.
+ * Avoid 'small' for important actions as it reduces accessibility.
+ */
+@property()
+size: 'small' | 'medium' | 'large' = 'medium'
+```
+
+This generates both type suggestions ('small', 'medium', 'large') and guideline recommendations from the must/should/avoid statements.
+
+#### Less Effective Patterns
+
+```typescript
+/**
+ * This property controls the button size. Different sizes are available
+ * for different use cases. Pick the one that works best.
+ */
+@property()
+size: 'small' | 'medium' | 'large' = 'medium'
+```
+
+While the type information is extracted, no guidelines are generated because there are no RFC 2119 keywords.
+
+### 2. Write for Both Humans and AI
 
 Good descriptions serve dual purposes:
 - **Human developers** need clear, concise information for manual coding
@@ -63,7 +104,7 @@ Good descriptions serve dual purposes:
   <figcaption>❌ Poor: Too brief and technical</figcaption>
 </figure>
 
-### 2. Include Usage Context and Guidelines
+### 3. Include Usage Context and Guidelines
 
 AI systems benefit from understanding **when** and **how** to use components:
 
@@ -77,7 +118,7 @@ AI systems benefit from understanding **when** and **how** to use components:
   <figcaption>❌ Poor: Just describes what it is</figcaption>
 </figure>
 
-### 3. Emphasize Accessibility Requirements
+### 4. Emphasize Accessibility Requirements
 
 Since accessibility is a core priority, include accessibility guidance in descriptions:
 
@@ -90,6 +131,29 @@ Since accessibility is a core priority, include accessibility guidance in descri
   <blockquote>A toggle button component</blockquote>
   <figcaption>❌ Poor: No accessibility information</figcaption>
 </figure>
+
+### 5. Combine Types and Guidelines for Maximum AI Effectiveness
+
+The most AI-friendly approach combines clear TypeScript union types with guideline-rich descriptions:
+
+```typescript
+/**
+ * Visual style variant affecting semantic meaning and accessibility.
+ * Use 'primary' for main call-to-action buttons in forms and dialogs.
+ * Use 'secondary' for supporting actions that complement primary actions.
+ * Use 'danger' for destructive actions that require user confirmation.
+ * Avoid using 'danger' for non-destructive actions to prevent confusion.
+ * Each variant provides appropriate color contrast for accessibility.
+ */
+@property()
+variant: 'primary' | 'secondary' | 'danger' | 'ghost' = 'primary'
+```
+
+This provides:
+- **Type suggestions**: AI understands all valid values from the union type
+- **Usage guidelines**: When to use each variant (extracted from RFC 2119 keywords)
+- **Accessibility context**: Color contrast considerations
+- **Anti-patterns**: What to avoid and why
 
 ## Element Descriptions
 
