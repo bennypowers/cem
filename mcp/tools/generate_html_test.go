@@ -33,7 +33,7 @@ func TestGenerateHTML_WithFixtures(t *testing.T) {
 	registry := getTestRegistry(t)
 
 	// Find all test fixture directories
-	fixturesDir := "test-fixtures/generate-html"
+	fixturesDir := "../fixtures/generate-html"
 	fixtures, err := os.ReadDir(fixturesDir)
 	require.NoError(t, err, "Should be able to read fixtures directory")
 

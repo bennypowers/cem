@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "2.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "card.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "Card",
+          "tagName": "v2-card",
+          "customElement": true,
+          "description": "A card element for schema 2.0.0",
+          "attributes": [
+            {
+              "name": "title",
+              "type": {
+                "text": "string"
+              },
+              "description": "Card title"
+            },
+            {
+              "name": "collapsible",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Whether card can be collapsed"
+            }
+          ],
+          "slots": [
+            {
+              "name": "",
+              "description": "Card content"
+            },
+            {
+              "name": "actions",
+              "description": "Card action buttons"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--v2-card-bg",
+              "syntax": "<color>",
+              "description": "Card background color"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "v2-card",
+          "declaration": {
+            "name": "Card",
+            "module": "card.js"
+          }
+        }
+      ]
+    }
+  ]
+}

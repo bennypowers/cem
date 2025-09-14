@@ -77,6 +77,7 @@ func collectManifestContext(registry types.MCPContext) ManifestContext {
 
 		// User manifest data
 		Overview:            generateOverview(elements, registry),
+		Elements:            elements,
 		ElementCount:        len(elements),
 		CommonPrefixes:      registry.CommonPrefixes(),
 		CSSProperties:       registry.AllCSSProperties(),

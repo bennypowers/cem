@@ -1,0 +1,97 @@
+{
+  "schemaVersion": "2.1.1-speculative",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "advanced-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "AdvancedElement",
+          "tagName": "advanced-element",
+          "customElement": true,
+          "description": "An advanced element for schema 2.1.1-speculative with all features",
+          "attributes": [
+            {
+              "name": "size",
+              "type": {
+                "text": "\"small\" | \"medium\" | \"large\""
+              },
+              "description": "Element size variant",
+              "default": "\"medium\""
+            },
+            {
+              "name": "loading",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Whether element is in loading state"
+            }
+          ],
+          "slots": [
+            {
+              "name": "",
+              "description": "Main content slot"
+            },
+            {
+              "name": "icon",
+              "description": "Icon slot for element"
+            }
+          ],
+          "events": [
+            {
+              "name": "state-change",
+              "type": {
+                "text": "CustomEvent<{loading: boolean}>"
+              },
+              "description": "Fired when loading state changes"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--advanced-size",
+              "syntax": "<length>",
+              "default": "1rem",
+              "description": "Base size for element"
+            },
+            {
+              "name": "--advanced-color",
+              "syntax": "<color>",
+              "description": "Primary color for element"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "base",
+              "description": "Base container part"
+            },
+            {
+              "name": "content",
+              "description": "Content container part"
+            }
+          ],
+          "cssStates": [
+            {
+              "name": "loading",
+              "description": "Loading state"
+            },
+            {
+              "name": "error",
+              "description": "Error state"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "advanced-element",
+          "declaration": {
+            "name": "AdvancedElement",
+            "module": "advanced-element.js"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -33,7 +33,7 @@ import (
 
 // getTestRegistry creates a registry using the test fixtures following the existing pattern
 func getTestRegistry(t *testing.T) *mcp.MCPContext {
-	workspace := W.NewFileSystemWorkspaceContext("./test-fixtures/multiple-elements")
+	workspace := W.NewFileSystemWorkspaceContext("./fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -132,7 +132,7 @@ func TestSchemaResilientTemplateIntegration(t *testing.T) {
 	})
 
 	// Golden file comparison (update mode)
-	goldenPath := filepath.Join("testdata", "schema_resilient_template.golden.md")
+	goldenPath := filepath.Join("fixtures", "template-rendering", "schema_resilient_template.golden.md")
 
 	if updateGolden := os.Getenv("UPDATE_GOLDEN"); updateGolden != "" {
 		// Update golden file

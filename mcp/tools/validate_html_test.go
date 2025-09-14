@@ -151,7 +151,7 @@ func TestValidateHtmlArgs_Parsing(t *testing.T) {
 }
 
 func TestValidationTemplateData_WithFixtures(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("../test-fixtures/multiple-elements")
+	workspace := W.NewFileSystemWorkspaceContext("../fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -184,7 +184,7 @@ func TestValidationTemplateData_WithFixtures(t *testing.T) {
 }
 
 func TestValidateHtml_UnknownAttributeDetection(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("../test-fixtures/multiple-elements")
+	workspace := W.NewFileSystemWorkspaceContext("../fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -239,7 +239,7 @@ func TestValidateHtml_UnknownAttributeDetection(t *testing.T) {
 }
 
 func TestValidateHtml_ValidAttributes(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("../test-fixtures/multiple-elements")
+	workspace := W.NewFileSystemWorkspaceContext("../fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -281,7 +281,7 @@ func TestValidateHtml_ValidAttributes(t *testing.T) {
 }
 
 func TestValidateHtml_InvalidAttributeValue(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("../test-fixtures/multiple-elements")
+	workspace := W.NewFileSystemWorkspaceContext("../fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -327,7 +327,7 @@ func TestValidateHtml_InvalidAttributeValue(t *testing.T) {
 func TestValidateHtml_AttributeValueParsing_Regression(t *testing.T) {
 	// Regression test for attribute value parsing bug where boolean attributes
 	// cause misaligned indices between attr.name and attr.value arrays
-	workspace := W.NewFileSystemWorkspaceContext("../test-fixtures/multiple-elements")
+	workspace := W.NewFileSystemWorkspaceContext("../fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -387,7 +387,7 @@ func TestValidateHtml_AttributeValueParsing_Regression(t *testing.T) {
 }
 
 func TestValidateHtml_UnknownElement(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("../test-fixtures/multiple-elements")
+	workspace := W.NewFileSystemWorkspaceContext("../fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -429,7 +429,7 @@ func TestValidateHtml_UnknownElement(t *testing.T) {
 }
 
 func TestValidateHtml_MultipleIssues(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("../test-fixtures/multiple-elements")
+	workspace := W.NewFileSystemWorkspaceContext("../fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -474,7 +474,7 @@ func TestValidateHtml_MultipleIssues(t *testing.T) {
 }
 
 func TestValidateHtml_GlobalAttributesAllowed(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("../test-fixtures/multiple-elements")
+	workspace := W.NewFileSystemWorkspaceContext("../fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -552,7 +552,7 @@ func TestValidateHtml_GlobalAttributesAllowed(t *testing.T) {
 }
 
 func TestValidateHtml_GlobalAttributesWithUnknownCustomAttribute(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("../test-fixtures/multiple-elements")
+	workspace := W.NewFileSystemWorkspaceContext("../fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -605,7 +605,7 @@ func TestValidateHtml_GlobalAttributesWithUnknownCustomAttribute(t *testing.T) {
 
 // Helper function to test validate_html tool with fixture/golden pattern
 func testValidateHtmlWithGolden(t *testing.T, fixtureFile, contextStr, goldenFile string) {
-	workspace := W.NewFileSystemWorkspaceContext("../test-fixtures/multiple-elements")
+	workspace := W.NewFileSystemWorkspaceContext("../fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -618,7 +618,7 @@ func testValidateHtmlWithGolden(t *testing.T, fixtureFile, contextStr, goldenFil
 	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
 
 	// Read HTML from fixture file
-	fixturePath := filepath.Join("../testdata/validate_html_fixtures", fixtureFile)
+	fixturePath := filepath.Join("../fixtures/validate-html", fixtureFile)
 	htmlData, err := os.ReadFile(fixturePath)
 	require.NoError(t, err, "Should be able to read fixture file: %s", fixturePath)
 
@@ -644,7 +644,7 @@ func testValidateHtmlWithGolden(t *testing.T, fixtureFile, contextStr, goldenFil
 	require.True(t, ok)
 
 	// Compare with golden file
-	goldenPath := filepath.Join("../testdata", goldenFile)
+	goldenPath := filepath.Join("../fixtures/validate-html", goldenFile)
 	expectedData, err := os.ReadFile(goldenPath)
 	require.NoError(t, err, "Should be able to read golden file: %s", goldenPath)
 

@@ -32,7 +32,7 @@ import (
 
 // getTestRegistry creates a registry using the test fixtures following the existing pattern
 func getTestRegistry(t *testing.T) *mcp.MCPContext {
-	workspace := W.NewFileSystemWorkspaceContext("../test-fixtures/multiple-elements")
+	workspace := W.NewFileSystemWorkspaceContext("../fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 

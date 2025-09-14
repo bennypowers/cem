@@ -29,7 +29,7 @@ import (
 )
 
 func TestNewServer(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./test-fixtures/basic")
+	workspace := W.NewFileSystemWorkspaceContext("./fixtures/basic-integration")
 
 	server, err := NewServer(workspace)
 	require.NoError(t, err)
@@ -41,7 +41,7 @@ func TestNewServer(t *testing.T) {
 }
 
 func TestServer_GetInfo(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./test-fixtures/basic")
+	workspace := W.NewFileSystemWorkspaceContext("./fixtures/basic-integration")
 	server, err := NewServer(workspace)
 	require.NoError(t, err)
 
@@ -53,7 +53,7 @@ func TestServer_GetInfo(t *testing.T) {
 }
 
 func TestServer_VersionConsistency(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./test-fixtures/basic")
+	workspace := W.NewFileSystemWorkspaceContext("./fixtures/basic-integration")
 	server, err := NewServer(workspace)
 	require.NoError(t, err)
 
@@ -64,7 +64,7 @@ func TestServer_VersionConsistency(t *testing.T) {
 }
 
 func TestDynamicSchemaVersionDetection(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./test-fixtures/basic")
+	workspace := W.NewFileSystemWorkspaceContext("./fixtures/basic-integration")
 
 	// Initialize workspace
 	err := workspace.Init()
@@ -85,7 +85,7 @@ func TestDynamicSchemaVersionDetection(t *testing.T) {
 	t.Logf("Detected schema versions: %v", versions)
 
 	// Should detect the schema version from the test fixture
-	// The test fixture in ./test-fixtures/basic has schemaVersion "2.1.1"
+	// The test fixture in ./fixtures/basic-integration has schemaVersion "2.1.1"
 	assert.NotEmpty(t, versions, "Should detect at least one schema version")
 
 	if len(versions) > 0 {

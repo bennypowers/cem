@@ -1,8 +1,9 @@
-# Component Context for Backwards Compatibility Test
+# Component Context for Schema 2.0.0 Test
 
-Testing schema 1.0.0 with minimal data.
+Test context for schema version 2.0.0 from fixture file with 1 elements.
 
-## Schema Context:  (1.0.0)
+
+*Using  (2.0.0)*
 
 
 The top-level interface of a custom elements manifest file.
@@ -17,20 +18,10 @@ other packages may import from. Multiple modules may export the same object
 via re-exports, but in most cases a package should document the single
 canonical export that should be used.
 
-### Schema Field Definitions
 
 
-
-
-#### modules
-An array of the modules this package contains.
-
-
-
-
-
-#### CustomElementDeclaration
-A description of a custom element class.
+## Custom Elements in Your Project
+Custom elements are JavaScript classes that extend HTML with new functionality. A description of a custom element class.
 
 Custom elements are JavaScript classes, so this extends from
 `ClassDeclaration` and adds custom-element-specific features like
@@ -40,67 +31,23 @@ Note that `tagName` in this interface is optional. Tag names are not
 neccessarily part of a custom element class, but belong to the definition
 (often called the &#34;registration&#34;) or the `customElements.define()` call.
 
-Because classes and tag anmes can only be registered once, there&#39;s a
+Because classes and tag names can only be registered once, there&#39;s a
 one-to-one relationship between classes and tag names. For ease of use,
 we allow the tag name here.
 
 Some packages define and register custom elements in separate modules. In
 these cases one `Module` should contain the `CustomElement` without a
 tagName, and another `Module` should contain the
-`CustomElement`.
+`CustomElementExport`.
+*No custom elements found in your manifests.*
 
-Core properties:
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-This schema provides the semantic framework for understanding your specific component data below.
-
-
-## Your Component Data
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## Schema Reference
 
 ## How to Use This Context
 
-This information helps AI understand:
-- **Your naming conventions** ( prefixes)
-- **Your component patterns** (common attributes and slots)
-- **Your CSS architecture** (custom properties and design tokens)
-- **Your documented constraints** (guidelines from descriptions)
-
-When asking for component help, the AI can now reference your actual manifest data and the schema definitions that explain what each field means.
+Each element above shows its complete API surface. When working with custom elements:
+- Use the exact tag names and attribute names shown
+- Respect the slot structure for content placement
+- Use CSS custom properties for theming and styling
+- Follow the documented guidelines and constraints
+- Reference the schema properties for understanding data types and requirements

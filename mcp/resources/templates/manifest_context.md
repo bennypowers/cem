@@ -1,165 +1,140 @@
 {{.Overview}}
 
-## Schema Context: {{.SchemaDefinitions.title}}{{if .SchemaVersion}} ({{.SchemaVersion}}){{end}}
-
 {{if .SchemaVersion}}
-{{if .SchemaDefinitions.description}}{{.SchemaDefinitions.description}}{{end}}
+*Using {{.SchemaDefinitions.title}}{{if .SchemaVersion}} ({{.SchemaVersion}}){{end}}*
+{{if .SchemaDefinitions.description}}
 
-### Schema Field Definitions
-
-{{if .SchemaDefinitions.properties}}
-{{$modules := schemaDesc .SchemaDefinitions "modules"}}
-{{if $modules}}
-#### modules
-{{$modules}}
+{{.SchemaDefinitions.description}}
 {{end}}
-{{end}}
-
-{{$customElement := schemaDesc .SchemaDefinitions "CustomElementDeclaration"}}
-{{if $customElement}}
-#### CustomElementDeclaration
-{{$customElement}}
-
-Core properties:
-{{$tagName := schemaFieldDesc .SchemaDefinitions "CustomElementDeclaration" "tagName"}}
-{{if $tagName}}- **tagName**: {{$tagName}}{{end}}
-{{$attributes := schemaFieldDesc .SchemaDefinitions "CustomElementDeclaration" "attributes"}}
-{{if $attributes}}- **attributes**: {{$attributes}}{{end}}
-{{$slots := schemaFieldDesc .SchemaDefinitions "CustomElementDeclaration" "slots"}}
-{{if $slots}}- **slots**: {{$slots}}{{end}}
-{{$events := schemaFieldDesc .SchemaDefinitions "CustomElementDeclaration" "events"}}
-{{if $events}}- **events**: {{$events}}{{end}}
-{{$cssProperties := schemaFieldDesc .SchemaDefinitions "CustomElementDeclaration" "cssProperties"}}
-{{if $cssProperties}}- **cssProperties**: {{$cssProperties}}{{end}}
-{{$cssParts := schemaFieldDesc .SchemaDefinitions "CustomElementDeclaration" "cssParts"}}
-{{if $cssParts}}- **cssParts**: {{$cssParts}}{{end}}
-{{$cssStates := schemaFieldDesc .SchemaDefinitions "CustomElementDeclaration" "cssStates"}}
-{{if $cssStates}}- **cssStates**: {{$cssStates}}{{end}}
-{{end}}
-
-{{if gt (len .AttributePatterns) 0}}
-#### Attribute
-Element attributes define the interface between HTML and your custom element. Each attribute has a name, type constraints, and optional default values.
-
-Key properties:
-{{$name := schemaFieldDesc .SchemaDefinitions "Attribute" "name"}}
-{{if $name}}- **name**: {{$name}}{{end}}
-{{$type := schemaFieldDesc .SchemaDefinitions "Attribute" "type"}}
-{{if $type}}- **type**: {{$type}}{{end}}
-{{$default := schemaFieldDesc .SchemaDefinitions "Attribute" "default"}}
-{{if $default}}- **default**: {{$default}}{{end}}
-{{$required := schemaFieldDesc .SchemaDefinitions "Attribute" "required"}}
-{{if $required}}- **required**: {{$required}}{{end}}
-{{$fieldName := schemaFieldDesc .SchemaDefinitions "Attribute" "fieldName"}}
-{{if $fieldName}}- **fieldName**: {{$fieldName}}{{end}}
-{{end}}
-
-{{if gt (len .SlotPatterns) 0}}
-#### Slot
-Content slots define where child content can be placed within your custom element's shadow DOM. Slots enable flexible, composable component designs.
-
-Key properties:
-{{$name := schemaFieldDesc .SchemaDefinitions "Slot" "name"}}
-{{if $name}}- **name**: {{$name}}{{end}}
-{{end}}
-
-{{if gt (len .CSSProperties) 0}}
-#### CssCustomProperty
-CSS custom properties (CSS variables) provide a styling API for your custom elements. They allow theme customization and design system integration.
-
-Properties:
-{{$name := schemaFieldDesc .SchemaDefinitions "CssCustomProperty" "name"}}
-{{if $name}}- **name**: {{$name}}{{end}}
-{{$syntax := schemaFieldDesc .SchemaDefinitions "CssCustomProperty" "syntax"}}
-{{if $syntax}}- **syntax**: {{$syntax}}{{end}}
-{{$inherits := schemaFieldDesc .SchemaDefinitions "CssCustomProperty" "inherits"}}
-{{if $inherits}}- **inherits**: {{$inherits}}{{end}}
-{{$initialValue := schemaFieldDesc .SchemaDefinitions "CssCustomProperty" "initialValue"}}
-{{if $initialValue}}- **initialValue**: {{$initialValue}}{{end}}
-{{end}}
-
-{{if gt (len .CssPartPatterns) 0}}
-#### CssPart
-CSS parts provide styling hooks for internal components of your custom elements. They enable precise styling without breaking encapsulation.
-
-Key properties:
-{{$name := schemaFieldDesc .SchemaDefinitions "CssPart" "name"}}
-{{if $name}}- **name**: {{$name}}{{end}}
-{{end}}
-
-{{if gt (len .CssStatePatterns) 0}}
-#### CssCustomState
-CSS custom states represent dynamic conditions of your custom elements. They provide semantic styling hooks for interactive states.
-
-Key properties:
-{{$name := schemaFieldDesc .SchemaDefinitions "CssCustomState" "name"}}
-{{if $name}}- **name**: {{$name}}{{end}}
-{{end}}
-
-This schema provides the semantic framework for understanding your specific component data below.
 {{else}}
-Note: No schema version detected in your manifests. Consider adding schema version for better AI understanding.
+*Note: No schema version detected in your manifests. Consider adding schema version for better AI understanding.*
 {{end}}
 
-## Your Component Data
+## Custom Elements in Your Project
 
-{{if gt (len .ElementPatterns) 0}}### Element Naming Patterns
-{{range .ElementPatterns}}
-- **{{.Description}}**: {{join .Examples ", "}}
-{{end}}
-{{end}}
+{{- $customElement := schemaDesc .SchemaDefinitions "CustomElementDeclaration"}}
+{{- if $customElement}}
+Custom elements are JavaScript classes that extend HTML with new functionality. {{$customElement}}
+{{- end}}
 
-{{if gt (len .AttributePatterns) 0}}### Common Attributes
-{{range .AttributePatterns}}
-- `{{.Name}}` - {{.Description}}
-{{end}}
-{{end}}
+{{- if gt (len .Elements) 0}}
+{{- range .Elements}}
 
-{{if gt (len .SlotPatterns) 0}}### Common Slots
-{{range .SlotPatterns}}
-- `{{.Name}}` - {{.Description}}
-{{end}}
-{{end}}
+### `{{.TagName}}`
+{{- if .Description}}
 
-{{if gt (len .CSSProperties) 0}}### Your CSS Custom Properties
+{{.Description}}
+{{- end}}
 
-Your components define **{{len .CSSProperties}} CSS custom properties**:
+{{- if gt (len .Attributes) 0}}
+**Attributes:**
+{{- range .Attributes}}
+- `{{.Name}}`{{if .Type}} ({{.Type}}){{end}}{{if .Description}} - {{.Description}}{{end}}
+{{- end}}
+{{- end}}
 
-{{range .CSSProperties}}
-- `{{.}}`
-{{end}}
-{{end}}
+{{- if gt (len .Slots) 0}}
+**Slots:**
+{{- range .Slots}}
+- `{{if .Name}}{{.Name}}{{else}}default{{end}}`{{if .Description}} - {{.Description}}{{end}}
+{{- end}}
+{{- end}}
 
-{{if gt (len .CssPartPatterns) 0}}### Common CSS Parts
+{{- if gt (len .CssProperties) 0}}
+**CSS Custom Properties:**
+{{- range .CssProperties}}
+- `{{.Name}}`{{if .Syntax}} ({{.Syntax}}){{end}}{{if .Description}} - {{.Description}}{{end}}
+{{- end}}
+{{- end}}
 
-{{range .CssPartPatterns}}
-- `{{.Name}}` - {{.Description}}
-{{end}}
-{{end}}
+{{- if gt (len .CssParts) 0}}
+**CSS Parts:**
+{{- range .CssParts}}
+- `{{.Name}}`{{if .Description}} - {{.Description}}{{end}}
+{{- end}}
+{{- end}}
 
-{{if gt (len .CssStatePatterns) 0}}### Common CSS States
+{{- if gt (len .CssStates) 0}}
+**CSS States:**
+{{- range .CssStates}}
+- `{{.Name}}`{{if .Description}} - {{.Description}}{{end}}
+{{- end}}
+{{- end}}
 
-{{range .CssStatePatterns}}
-- `{{.Name}}` - {{.Description}}
-{{end}}
-{{end}}
+{{- if gt (len .Events) 0}}
+**Events:**
+{{- range .Events}}
+- `{{.Name}}`{{if .Description}} - {{.Description}}{{end}}
+{{- end}}
+{{- end}}
+{{- end}}
+{{- else}}
+*No custom elements found in your manifests.*
+{{- end}}
 
-{{if gt (len .ExtractedGuidelines) 0}}### Guidelines from Your Manifest Descriptions
+{{- if gt (len .CommonPrefixes) 0}}
+
+## Naming Conventions
+
+Your elements follow these naming patterns:
+{{- range .CommonPrefixes}}
+- `{{.}}-*` prefix
+{{- end}}
+{{- end}}
+
+{{- if gt (len .ExtractedGuidelines) 0}}
+
+## Guidelines from Your Manifest Descriptions
 
 These guidelines were extracted from your component and attribute descriptions using RFC 2119 keywords:
+{{- range .ExtractedGuidelines}}
 
-{{range .ExtractedGuidelines}}
 **{{.Source}}** ({{.Type}}): {{.Guideline}}
+{{- end}}
+{{- end}}
 
-{{end}}
-{{end}}
+## Schema Reference
+
+{{- $attributeSchema := schemaDesc .SchemaDefinitions "Attribute"}}
+{{- if $attributeSchema}}
+**Attribute Properties**: {{$attributeSchema}}
+{{- $type := schemaFieldDesc .SchemaDefinitions "Attribute" "type"}}
+{{- if $type}}
+- **type**: {{$type}}
+{{- end}}
+{{- $default := schemaFieldDesc .SchemaDefinitions "Attribute" "default"}}
+{{- if $default}}
+- **default**: {{$default}}
+{{- end}}
+{{- end}}
+
+{{- $slotSchema := schemaDesc .SchemaDefinitions "Slot"}}
+{{- if $slotSchema}}
+**Slot Properties**: {{$slotSchema}}
+{{- $name := schemaFieldDesc .SchemaDefinitions "Slot" "name"}}
+{{- if $name}}
+- **name**: {{$name}}
+{{- end}}
+{{- end}}
+
+{{- $cssPropertySchema := schemaDesc .SchemaDefinitions "CssCustomProperty"}}
+{{- if $cssPropertySchema}}
+**CSS Custom Property Properties**: {{$cssPropertySchema}}
+{{- $name := schemaFieldDesc .SchemaDefinitions "CssCustomProperty" "name"}}
+{{- if $name}}
+- **name**: {{$name}}
+{{- end}}
+{{- $syntax := schemaFieldDesc .SchemaDefinitions "CssCustomProperty" "syntax"}}
+{{- if $syntax}}
+- **syntax**: {{$syntax}}
+{{- end}}
+{{- end}}
 
 ## How to Use This Context
 
-This information helps AI understand:
-- **Your naming conventions** ({{join .CommonPrefixes ", "}} prefixes)
-- **Your component patterns** (common attributes and slots)
-- **Your CSS architecture** (custom properties and design tokens)
-- **Your documented constraints** (guidelines from descriptions)
-
-When asking for component help, the AI can now reference your actual manifest data and the schema definitions that explain what each field means.
+Each element above shows its complete API surface. When working with custom elements:
+- Use the exact tag names and attribute names shown
+- Respect the slot structure for content placement
+- Use CSS custom properties for theming and styling
+- Follow the documented guidelines and constraints
+- Reference the schema properties for understanding data types and requirements

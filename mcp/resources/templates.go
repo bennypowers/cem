@@ -20,6 +20,7 @@ import (
 	"embed"
 
 	"bennypowers.dev/cem/mcp/templates"
+	"bennypowers.dev/cem/mcp/types"
 )
 
 //go:embed templates/*.md
@@ -38,6 +39,7 @@ type ManifestContext struct {
 
 	// User manifest data - your specific values and patterns
 	Overview            string                // Overview of manifest statistics
+	Elements            []types.ElementInfo   // All elements with their complete API surface
 	ElementCount        int                   // Number of elements in manifests
 	CommonPrefixes      []string              // Common element prefixes found
 	CSSProperties       []string              // All CSS custom properties

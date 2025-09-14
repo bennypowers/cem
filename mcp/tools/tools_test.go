@@ -33,7 +33,7 @@ import (
 
 // getTestRegistry creates a registry using the test fixtures following the existing pattern
 func getTestRegistry(t *testing.T) *mcp.MCPContextAdapter {
-	workspace := W.NewFileSystemWorkspaceContext("../test-fixtures/multiple-elements")
+	workspace := W.NewFileSystemWorkspaceContext("../fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -222,9 +222,9 @@ func TestTemplateRenderer_Basic(t *testing.T) {
 }
 
 // Helper function to test templates with fixture/golden pattern
-func testTemplateWithGolden(t *testing.T, templateName, fixtureFile, goldenFile string) {
+func testTemplateWithGolden(t *testing.T, templateName, contextName, fixtureFile, goldenFile string) {
 	// Read template data from fixture file
-	fixturePath := filepath.Join("../testdata/template_fixtures", fixtureFile)
+	fixturePath := filepath.Join("../fixtures", contextName, fixtureFile)
 	fixtureData, err := os.ReadFile(fixturePath)
 	require.NoError(t, err, "Should be able to read fixture file: %s", fixturePath)
 
@@ -236,9 +236,20 @@ func testTemplateWithGolden(t *testing.T, templateName, fixtureFile, goldenFile 
 	output, err := templates.RenderTemplate(templateName, templateData)
 	require.NoError(t, err, "Template should render without error")
 
+	// Handle UPDATE_GOLDEN flag
+	goldenPath := filepath.Join("../fixtures", contextName, goldenFile)
+	if os.Getenv("UPDATE_GOLDEN") == "1" {
+		err := os.WriteFile(goldenPath, []byte(output), 0644)
+		require.NoError(t, err, "Failed to update golden file %s", goldenPath)
+		t.Logf("Updated golden file: %s", goldenPath)
+		return
+	}
+
 	// Compare with golden file
-	goldenPath := filepath.Join("../testdata", goldenFile)
 	expectedData, err := os.ReadFile(goldenPath)
+	if os.IsNotExist(err) {
+		t.Fatalf("Golden file %s does not exist. Run with UPDATE_GOLDEN=1 to create it.", goldenPath)
+	}
 	require.NoError(t, err, "Should be able to read golden file: %s", goldenPath)
 
 	assert.Equal(t, string(expectedData), output, "Template output should match golden file")
@@ -246,9 +257,9 @@ func testTemplateWithGolden(t *testing.T, templateName, fixtureFile, goldenFile 
 
 // Fixture/Golden pattern tests for templates
 func TestTemplates_FixtureGolden_AccessibilityContext(t *testing.T) {
-	testTemplateWithGolden(t, "contextual_suggestions", "accessibility_context.json", "template_accessibility_context.golden.md")
+	testTemplateWithGolden(t, "contextual_suggestions", "accessibility-context", "accessibility_context.json", "template_accessibility_context.golden.md")
 }
 
 func TestTemplates_FixtureGolden_FormContext(t *testing.T) {
-	testTemplateWithGolden(t, "contextual_suggestions", "form_context.json", "template_form_context.golden.md")
+	testTemplateWithGolden(t, "contextual_suggestions", "form-context", "form_context.json", "template_form_context.golden.md")
 }
