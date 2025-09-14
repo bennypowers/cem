@@ -134,6 +134,11 @@ func makeGenerateHtmlHandler(registry types.MCPContext) mcp.ToolHandler {
 	}
 }
 
+// MakeGenerateHtmlHandler is the exported version for testing
+func MakeGenerateHtmlHandler(registry types.MCPContext) mcp.ToolHandler {
+	return makeGenerateHtmlHandler(registry)
+}
+
 func makeSuggestCssIntegrationHandler(registry types.MCPContext) mcp.ToolHandler {
 	return func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		return handleSuggestCssIntegration(ctx, req, registry)
