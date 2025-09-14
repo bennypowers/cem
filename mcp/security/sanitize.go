@@ -110,20 +110,19 @@ func SanitizeDescriptionPreservingMarkdown(description string) string {
 	return description
 }
 
+// templateInjectionResult caches expensive parsing operations
+type templateInjectionResult struct {
+	normalized                     string
+	hasPatternInOriginal          bool
+	hasPatternInNormalized        bool
+	hasActionsInOriginal          bool
+	hasActionsInNormalized        bool
+}
+
 // DetectTemplateInjection checks if a description contains potential template injection
-// Uses a combination of pattern detection and template parser validation
+// Uses optimized detection with result caching to avoid redundant expensive operations
 func DetectTemplateInjection(description string) bool {
-	if description == "" {
-		return false
-	}
-
-	// First check if it contains template-like patterns
-	if !containsTemplateLikePattern(description) && !containsTemplateLikePattern(normalizeForTemplateCheck(description)) {
-		return false // No template patterns found
-	}
-
-	// If patterns found, verify they're valid template syntax using parser
-	return isValidTemplateWithActions(description) || isValidTemplateWithActions(normalizeForTemplateCheck(description))
+	return detectTemplateInjectionWithResult(description, nil)
 }
 
 // containsTemplateLikePattern checks for basic template syntax patterns
@@ -175,41 +174,100 @@ func normalizeForTemplateCheck(content string) string {
 }
 
 // GetInjectionPatterns returns detected injection patterns for logging/analysis
-// Now uses template parser for detection and provides general classification
+// Uses optimized template detection with shared result caching
 func GetInjectionPatterns(description string) []string {
 	var patterns []string
+	patternSet := make(map[string]bool) // Track unique patterns
 
-	if DetectTemplateInjection(description) {
-		patterns = append(patterns, "template_syntax_detected")
+	if detectTemplateInjectionWithResult(description, func(result *templateInjectionResult) {
+		patternSet["template_syntax_detected"] = true
 
-		// Normalize for pattern analysis to catch obfuscated patterns
-		normalized := normalizeForTemplateCheck(description)
+		// Analyze both original and normalized for specific patterns (avoiding duplicates)
+		checkPatterns := func(content string) {
+			if strings.Contains(content, "{{range") {
+				patternSet["range_construct"] = true
+			}
+			if strings.Contains(content, "{{with") {
+				patternSet["with_construct"] = true
+			}
+			if strings.Contains(content, "{{define") {
+				patternSet["define_construct"] = true
+			}
+			if strings.Contains(content, "{{template") {
+				patternSet["template_construct"] = true
+			}
+			if strings.Contains(content, "{{block") {
+				patternSet["block_construct"] = true
+			}
+			if strings.Contains(content, "{{.") {
+				patternSet["variable_access"] = true
+			}
+			if strings.Contains(content, "{{$") {
+				patternSet["dollar_variable"] = true
+			}
+		}
 
-		// Provide additional analysis for common patterns
-		if strings.Contains(normalized, "{{range") || strings.Contains(description, "{{range") {
-			patterns = append(patterns, "range_construct")
-		}
-		if strings.Contains(normalized, "{{with") || strings.Contains(description, "{{with") {
-			patterns = append(patterns, "with_construct")
-		}
-		if strings.Contains(normalized, "{{define") || strings.Contains(description, "{{define") {
-			patterns = append(patterns, "define_construct")
-		}
-		if strings.Contains(normalized, "{{template") || strings.Contains(description, "{{template") {
-			patterns = append(patterns, "template_construct")
-		}
-		if strings.Contains(normalized, "{{block") || strings.Contains(description, "{{block") {
-			patterns = append(patterns, "block_construct")
-		}
-		if strings.Contains(normalized, "{{.") || strings.Contains(description, "{{.") {
-			patterns = append(patterns, "variable_access")
-		}
-		if strings.Contains(normalized, "{{$") || strings.Contains(description, "{{$") {
-			patterns = append(patterns, "dollar_variable")
+		checkPatterns(description)
+		checkPatterns(result.normalized)
+	}) {
+		// Convert set to slice maintaining order for consistent results
+		for _, pattern := range []string{
+			"template_syntax_detected",
+			"range_construct",
+			"with_construct",
+			"define_construct",
+			"template_construct",
+			"block_construct",
+			"variable_access",
+			"dollar_variable",
+		} {
+			if patternSet[pattern] {
+				patterns = append(patterns, pattern)
+			}
 		}
 	}
 
 	return patterns
+}
+
+// detectTemplateInjectionWithResult performs detection and calls callback with cached results
+func detectTemplateInjectionWithResult(description string, callback func(*templateInjectionResult)) bool {
+	if description == "" {
+		return false
+	}
+
+	// Cache all expensive operations to avoid redundant calls
+	result := &templateInjectionResult{
+		normalized: normalizeForTemplateCheck(description),
+	}
+
+	// Check template patterns (cheap operations first)
+	result.hasPatternInOriginal = containsTemplateLikePattern(description)
+	result.hasPatternInNormalized = containsTemplateLikePattern(result.normalized)
+
+	// Early exit if no template patterns found
+	if !result.hasPatternInOriginal && !result.hasPatternInNormalized {
+		return false
+	}
+
+	// Only do expensive template parsing if patterns were found
+	result.hasActionsInOriginal = isValidTemplateWithActions(description)
+	if result.hasActionsInOriginal {
+		if callback != nil {
+			callback(result)
+		}
+		return true
+	}
+
+	// Only check normalized version if original didn't have actions
+	result.hasActionsInNormalized = isValidTemplateWithActions(result.normalized)
+	hasInjection := result.hasActionsInNormalized
+
+	if hasInjection && callback != nil {
+		callback(result)
+	}
+
+	return hasInjection
 }
 
 // SecurityPolicy defines security constraints for template rendering
