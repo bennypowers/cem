@@ -112,11 +112,11 @@ func SanitizeDescriptionPreservingMarkdown(description string) string {
 
 // templateInjectionResult caches expensive parsing operations
 type templateInjectionResult struct {
-	normalized                     string
-	hasPatternInOriginal          bool
-	hasPatternInNormalized        bool
-	hasActionsInOriginal          bool
-	hasActionsInNormalized        bool
+	normalized             string
+	hasPatternInOriginal   bool
+	hasPatternInNormalized bool
+	hasActionsInOriginal   bool
+	hasActionsInNormalized bool
 }
 
 // DetectTemplateInjection checks if a description contains potential template injection

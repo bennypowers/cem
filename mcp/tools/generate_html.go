@@ -205,4 +205,3 @@ func getAttributeValue(attr types.Attribute, providedAttrs map[string]string) st
 	// Fallback to placeholder
 	return "value"
 }
-
