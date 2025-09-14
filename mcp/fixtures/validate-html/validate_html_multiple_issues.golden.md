@@ -8,8 +8,8 @@
 
 ### ❌ Manifest Compliance Issues
 
-- **Unknown Attribute**: `Unknown attribute &#39;priority&#39; for element &lt;button-element&gt;`
-- **Unknown Element**: `Custom element &#39;unknown-custom-element&#39; not found in registry`
+- **Unknown Attribute**: `Unknown attribute 'priority' for element <button-element>`
+- **Unknown Element**: `Custom element 'unknown-custom-element' not found in registry`
 
 ## Custom Element Content Validation
 

@@ -3,7 +3,7 @@
 Test context for schema version 2.0.0 from fixture file with 1 elements.
 
 
-*Using  (2.0.0)*
+*Using Custom Elements Manifest Schema (2.0.0)*
 
 
 The top-level interface of a custom elements manifest file.
@@ -29,9 +29,9 @@ attributes, events, and slots.
 
 Note that `tagName` in this interface is optional. Tag names are not
 neccessarily part of a custom element class, but belong to the definition
-(often called the &#34;registration&#34;) or the `customElements.define()` call.
+(often called the "registration") or the `customElements.define()` call.
 
-Because classes and tag names can only be registered once, there&#39;s a
+Because classes and tag names can only be registered once, there's a
 one-to-one relationship between classes and tag names. For ease of use,
 we allow the tag name here.
 

@@ -4,7 +4,7 @@
 
 ### ❌ Manifest Compliance Issues
 
-- **Unknown Element**: `Custom element &#39;unknown-custom-element&#39; not found in registry`
+- **Unknown Element**: `Custom element 'unknown-custom-element' not found in registry`
 
 ## Custom Element Content Validation
 

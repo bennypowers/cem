@@ -2,7 +2,7 @@
 
 ## Basic Usage
 ```html
-&lt;card-element>&lt;/card-element>
+<card-element></card-element>
 ```
 
 
@@ -16,7 +16,7 @@ Card elevation level
 - **Default**: 1
 
 ```html
-&lt;card-element elevation="1">&lt;/card-element>
+<card-element elevation=1></card-element>
 ```
 
 
@@ -28,27 +28,27 @@ Card elevation level
 Card content
 
 ```html
-&lt;card-element>
+<card-element>
   <p>Default slot content</p>
-&lt;/card-element>
+</card-element>
 ```
 
 ### header Slot
 Card header
 
 ```html
-&lt;card-element>
+<card-element>
   <span slot="header">header content</span>
-&lt;/card-element>
+</card-element>
 ```
 
 ### footer Slot
 Card footer
 
 ```html
-&lt;card-element>
+<card-element>
   <span slot="footer">footer content</span>
-&lt;/card-element>
+</card-element>
 ```
 
 
@@ -60,7 +60,7 @@ Card footer
 
 ### --card-background
 Card background color
-- **Syntax**: &lt;color&gt;
+- **Syntax**: `<color>`
 - **Initial**: white
 
 ```css

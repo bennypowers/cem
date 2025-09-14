@@ -2,7 +2,7 @@
 
 ## Basic Usage
 ```html
-&lt;button-element>&lt;/button-element>
+<button-element></button-element>
 ```
 
 
@@ -12,22 +12,22 @@
 
 ### variant Attribute
 Button variant
-- **Type**: &#34;primary&#34; | &#34;secondary&#34; | &#34;ghost&#34;
-- **Default**: &#34;primary&#34;
-- **Options**: &#34;primary&#34;, &#34;secondary&#34;, &#34;ghost&#34;
+- **Type**: "primary" | "secondary" | "ghost"
+- **Default**: "primary"
+- **Options**: "primary", "secondary", "ghost"
 
 ```html
-&lt;button-element variant="&#34;primary&#34;">&lt;/button-element>
+<button-element variant="primary"></button-element>
 ```
 
 ### size Attribute
 Button size
-- **Type**: &#34;small&#34; | &#34;medium&#34; | &#34;large&#34;
-- **Default**: &#34;medium&#34;
-- **Options**: &#34;small&#34;, &#34;medium&#34;, &#34;large&#34;
+- **Type**: "small" | "medium" | "large"
+- **Default**: "medium"
+- **Options**: "small", "medium", "large"
 
 ```html
-&lt;button-element size="&#34;medium&#34;">&lt;/button-element>
+<button-element size="medium"></button-element>
 ```
 
 ### disabled Attribute
@@ -35,7 +35,7 @@ Whether button is disabled
 - **Type**: boolean
 
 ```html
-&lt;button-element disabled="/* your boolean value */">&lt;/button-element>
+<button-element disabled></button-element>
 ```
 
 
@@ -47,18 +47,18 @@ Whether button is disabled
 Button content
 
 ```html
-&lt;button-element>
+<button-element>
   <p>Default slot content</p>
-&lt;/button-element>
+</button-element>
 ```
 
 ### icon Slot
 Button icon
 
 ```html
-&lt;button-element>
+<button-element>
   <span slot="icon">icon content</span>
-&lt;/button-element>
+</button-element>
 ```
 
 
@@ -84,7 +84,7 @@ element.addEventListener('button-click', (event) => {
 
 ### --button-color
 Button color
-- **Syntax**: &lt;color&gt;
+- **Syntax**: `<color>`
 - **Initial**: blue
 
 ```css
@@ -95,7 +95,7 @@ button-element {
 
 ### --button-padding
 Button padding
-- **Syntax**: &lt;length&gt;
+- **Syntax**: `<length>`
 - **Initial**: 8px
 
 ```css

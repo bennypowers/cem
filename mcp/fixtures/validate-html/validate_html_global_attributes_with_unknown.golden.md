@@ -8,7 +8,7 @@
 
 ### ❌ Manifest Compliance Issues
 
-- **Unknown Attribute**: `Unknown attribute &#39;unknown-custom-attr&#39; for element &lt;button-element&gt;`
+- **Unknown Attribute**: `Unknown attribute 'unknown-custom-attr' for element <button-element>`
 
 ## Custom Element Content Validation
 

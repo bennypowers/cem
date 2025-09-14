@@ -1,7 +1,7 @@
 {{.Overview}}
 
 {{if .SchemaVersion}}
-*Using {{.SchemaDefinitions.title}}{{if .SchemaVersion}} ({{.SchemaVersion}}){{end}}*
+*Using {{if .SchemaDefinitions.title}}{{.SchemaDefinitions.title}}{{else}}Custom Elements Manifest Schema{{end}}{{if .SchemaVersion}} ({{.SchemaVersion}}){{end}}*
 {{if .SchemaDefinitions.description}}
 
 {{.SchemaDefinitions.description}}

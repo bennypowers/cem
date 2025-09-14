@@ -20,11 +20,11 @@ import (
 	"bytes"
 	"embed"
 	"fmt"
-	"html/template"
 	"path"
 	"reflect"
 	"strings"
 	"sync"
+	"text/template"
 
 	"bennypowers.dev/cem/mcp/helpers"
 )
@@ -193,6 +193,9 @@ func createSecureFuncMap() template.FuncMap {
 		},
 		"gt": func(a, b int) bool {
 			return a > b
+		},
+		"eq": func(a, b interface{}) bool {
+			return a == b
 		},
 		"join": func(slice []string, sep string) string {
 			return strings.Join(slice, sep)

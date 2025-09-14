@@ -3,10 +3,10 @@
 ## Generated HTML
 
 ```html
-&amp;lt;button-element&gt;
+<button-element>
   test content
-  &lt;span slot=&#34;icon&#34;&gt;Icon content&lt;/span&gt;
-&amp;lt;/button-element&gt;
+  <span slot="icon">Icon content</span>
+</button-element>
 ```
 
 ## Element Structure and Guidelines
@@ -19,15 +19,15 @@
 
 #### `variant`
 Button variant
-**Type:** `&#34;primary&#34; | &#34;secondary&#34; | &#34;ghost&#34;`
-**Default:** `&#34;primary&#34;`
-**Valid Values:** `&#34;primary&#34;`, `&#34;secondary&#34;`, `&#34;ghost&#34;`
+**Type:** `"primary" | "secondary" | "ghost"`
+**Default:** `"primary"`
+**Valid Values:** `"primary"`, `"secondary"`, `"ghost"`
 
 #### `size`
 Button size
-**Type:** `&#34;small&#34; | &#34;medium&#34; | &#34;large&#34;`
-**Default:** `&#34;medium&#34;`
-**Valid Values:** `&#34;small&#34;`, `&#34;medium&#34;`, `&#34;large&#34;`
+**Type:** `"small" | "medium" | "large"`
+**Default:** `"medium"`
+**Valid Values:** `"small"`, `"medium"`, `"large"`
 
 #### `disabled`
 Whether button is disabled

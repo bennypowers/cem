@@ -8,7 +8,7 @@
 
 ### ❌ Manifest Compliance Issues
 
-- **Invalid Attribute Value**: `variant="invalid-value"` in `&lt;button-element>`. Valid values: [&#34;primary&#34; &#34;secondary&#34; &#34;ghost&#34;]
+- **Invalid Attribute Value**: `variant="invalid-value"` in `<button-element>`. Valid values: ["primary" "secondary" "ghost"]
 
 ## Custom Element Content Validation
 

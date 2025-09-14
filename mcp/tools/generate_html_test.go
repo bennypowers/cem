@@ -220,10 +220,10 @@ func TestGenerateHTMLRegression_TagNameAccess_Legacy(t *testing.T) {
 	output := textContent.Text
 	assert.NotEmpty(t, output, "Template should produce output")
 
-	// Verify the fix worked - should contain the actual tag name
+	// Verify the fix worked - should contain the actual tag name with proper HTML (unescaped)
 	assert.Contains(t, output, "button-element", "Generated HTML should contain the correct tag name")
-	assert.Contains(t, output, "&amp;lt;button-element", "Should contain opening tag (double-encoded)")
-	assert.Contains(t, output, "&amp;lt;/button-element&gt;", "Should contain closing tag (double-encoded)")
+	assert.Contains(t, output, "<button-element>", "Should contain unescaped opening tag")
+	assert.Contains(t, output, "</button-element>", "Should contain unescaped closing tag")
 	assert.Contains(t, output, "test content", "Should contain provided content")
 }
 

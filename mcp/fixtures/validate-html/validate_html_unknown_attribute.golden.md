@@ -8,7 +8,7 @@
 
 ### ❌ Manifest Compliance Issues
 
-- **Unknown Attribute**: `Unknown attribute &#39;priority&#39; for element &lt;button-element&gt;`
+- **Unknown Attribute**: `Unknown attribute 'priority' for element <button-element>`
 
 ## Custom Element Content Validation
 

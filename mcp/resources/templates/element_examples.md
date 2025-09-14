@@ -21,7 +21,7 @@
 - **Options**: {{join .Values ", "}}{{end}}
 
 ```html
-<{{$.TagName}} {{.Name}}="{{if .Default}}{{.Default}}{{else}}{{if .Values}}{{index .Values 0}}{{else}}/* your {{.Type}} value */{{end}}{{end}}"></{{$.TagName}}>
+<{{$.TagName}}{{if eq .Type "boolean"}} {{.Name}}{{else}} {{.Name}}={{if .Default}}{{.Default}}{{else}}"{{if .Values}}{{index .Values 0}}{{else}}{{.Type}}"{{end}}{{end}}{{end}}></{{$.TagName}}>
 ```
 {{end}}
 {{end}}
@@ -61,12 +61,12 @@ element.addEventListener('{{.Name}}', (event) => {
 {{range .CssProperties}}
 ### {{.Name}}
 {{if .Description}}{{.Description}}{{end}}
-{{if .Syntax}}- **Syntax**: {{.Syntax}}{{end}}
+{{if .Syntax}}- **Syntax**: `{{.Syntax}}`{{end}}
 {{if .Initial}}- **Initial**: {{.Initial}}{{end}}
 
 ```css
 {{$.TagName}} {
-  {{.Name}}: {{if .Initial}}{{.Initial}}{{else}}/* your {{.Syntax}} value */{{end}};
+  {{.Name}}: {{if .Initial}}{{.Initial}}{{else}}/* your value here */{{end}};
 }
 ```
 {{end}}
