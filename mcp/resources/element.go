@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"strings"
 
+	"bennypowers.dev/cem/mcp/templates"
 	"bennypowers.dev/cem/mcp/types"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -88,7 +89,7 @@ func generateTemplateElementDocumentation(element types.ElementInfo) (string, er
 	}
 
 	// Render the element examples template with rich context for LLM
-	return renderElementTemplate("element_examples", data)
+	return templates.RenderTemplate("element_examples", data)
 }
 
 // ElementTemplateData represents the data structure for element templates
@@ -232,121 +233,4 @@ func convertCSSStatesForTemplate(states []types.CssState) []CSSStateTemplateData
 		}
 	}
 	return result
-}
-
-// renderElementTemplate renders an element template with the given data
-func renderElementTemplate(templateName string, data ElementTemplateData) (string, error) {
-	// For now, render a simple template-driven documentation
-	// In the future, this could use the full template system from templates.go
-
-	// Create a basic template-driven markdown output that follows Data + Context + LLM philosophy
-	var result strings.Builder
-
-	result.WriteString(fmt.Sprintf("# %s Element\n\n", data.TagName))
-
-	if data.Description != "" {
-		result.WriteString(fmt.Sprintf("## Description\n%s\n\n", data.Description))
-	}
-
-	result.WriteString("## Usage Context\n\n")
-	result.WriteString(fmt.Sprintf("The `%s` element provides the following capabilities for your application:\n\n", data.TagName))
-
-	if len(data.Attributes) > 0 {
-		result.WriteString("### Attributes\n\n")
-		for _, attr := range data.Attributes {
-			result.WriteString(fmt.Sprintf("**%s** (%s)", attr.Name, attr.Type))
-			if attr.Default != "" {
-				result.WriteString(fmt.Sprintf(" - Default: `%s`", attr.Default))
-			}
-			if attr.Required {
-				result.WriteString(" - Required")
-			}
-			result.WriteString("\n")
-			if attr.Description != "" {
-				result.WriteString(fmt.Sprintf("- %s\n", attr.Description))
-			}
-			if len(attr.Values) > 0 {
-				result.WriteString(fmt.Sprintf("- Options: `%s`\n", strings.Join(attr.Values, "`, `")))
-			}
-			result.WriteString("\n")
-		}
-	}
-
-	if len(data.Slots) > 0 {
-		result.WriteString("### Slots\n\n")
-		for _, slot := range data.Slots {
-			if slot.Name == "" {
-				result.WriteString("**Default slot**\n")
-			} else {
-				result.WriteString(fmt.Sprintf("**%s** slot\n", slot.Name))
-			}
-			if slot.Description != "" {
-				result.WriteString(fmt.Sprintf("- %s\n", slot.Description))
-			}
-			result.WriteString("\n")
-		}
-	}
-
-	if len(data.Events) > 0 {
-		result.WriteString("### Events\n\n")
-		for _, event := range data.Events {
-			result.WriteString(fmt.Sprintf("**%s**", event.Name))
-			if event.Type != "" {
-				result.WriteString(fmt.Sprintf(" (%s)", event.Type))
-			}
-			result.WriteString("\n")
-			if event.Description != "" {
-				result.WriteString(fmt.Sprintf("- %s\n", event.Description))
-			}
-			result.WriteString("\n")
-		}
-	}
-
-	if len(data.CssProperties) > 0 {
-		result.WriteString("### CSS Custom Properties\n\n")
-		for _, prop := range data.CssProperties {
-			result.WriteString(fmt.Sprintf("**%s**", prop.Name))
-			if prop.Syntax != "" {
-				result.WriteString(fmt.Sprintf(" - Syntax: %s", prop.Syntax))
-			}
-			if prop.Initial != "" {
-				result.WriteString(fmt.Sprintf(" - Initial: `%s`", prop.Initial))
-			}
-			result.WriteString("\n")
-			if prop.Description != "" {
-				result.WriteString(fmt.Sprintf("- %s\n", prop.Description))
-			}
-			result.WriteString("\n")
-		}
-	}
-
-	if len(data.CssParts) > 0 {
-		result.WriteString("### CSS Parts\n\n")
-		for _, part := range data.CssParts {
-			result.WriteString(fmt.Sprintf("**%s** part\n", part.Name))
-			if part.Description != "" {
-				result.WriteString(fmt.Sprintf("- %s\n", part.Description))
-			}
-			result.WriteString("\n")
-		}
-	}
-
-	if len(data.CssStates) > 0 {
-		result.WriteString("### CSS Custom States\n\n")
-		for _, state := range data.CssStates {
-			result.WriteString(fmt.Sprintf("**%s** state\n", state.Name))
-			if state.Description != "" {
-				result.WriteString(fmt.Sprintf("- %s\n", state.Description))
-			}
-			result.WriteString("\n")
-		}
-	}
-
-	result.WriteString("## Integration Context\n\n")
-	result.WriteString(fmt.Sprintf("Use this element by including `<%s>` in your HTML. ", data.TagName))
-	result.WriteString("Refer to the attribute, slot, and CSS information above to customize its behavior and appearance according to your design requirements.\n\n")
-	result.WriteString("The element follows web standards and accessibility best practices. ")
-	result.WriteString("Consider the semantic meaning and user experience when integrating this component into your application.\n")
-
-	return result.String(), nil
 }

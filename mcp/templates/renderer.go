@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"html/template"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"sync"
 
@@ -168,8 +169,15 @@ func createSecureFuncMap() template.FuncMap {
 			default:
 				// Use reflection for unknown slice/map types
 				if s != nil {
+					// First try the Len() method interface
 					if v, ok := s.(interface{ Len() int }); ok {
 						return v.Len()
+					}
+
+					// Fall back to reflection for any slice type
+					rv := reflect.ValueOf(s)
+					if rv.Kind() == reflect.Slice || rv.Kind() == reflect.Array || rv.Kind() == reflect.Map || rv.Kind() == reflect.Chan {
+						return rv.Len()
 					}
 				}
 				return 0
