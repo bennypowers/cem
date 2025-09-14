@@ -18,6 +18,8 @@ package tools_test
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"bennypowers.dev/cem/mcp"
@@ -217,4 +219,36 @@ func TestTemplateRenderer_Basic(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Helper function to test templates with fixture/golden pattern
+func testTemplateWithGolden(t *testing.T, templateName, fixtureFile, goldenFile string) {
+	// Read template data from fixture file
+	fixturePath := filepath.Join("../testdata/template_fixtures", fixtureFile)
+	fixtureData, err := os.ReadFile(fixturePath)
+	require.NoError(t, err, "Should be able to read fixture file: %s", fixturePath)
+
+	var templateData interface{}
+	err = json.Unmarshal(fixtureData, &templateData)
+	require.NoError(t, err, "Should be able to parse fixture JSON")
+
+	// Render template
+	output, err := templates.RenderTemplate(templateName, templateData)
+	require.NoError(t, err, "Template should render without error")
+
+	// Compare with golden file
+	goldenPath := filepath.Join("../testdata", goldenFile)
+	expectedData, err := os.ReadFile(goldenPath)
+	require.NoError(t, err, "Should be able to read golden file: %s", goldenPath)
+
+	assert.Equal(t, string(expectedData), output, "Template output should match golden file")
+}
+
+// Fixture/Golden pattern tests for templates
+func TestTemplates_FixtureGolden_AccessibilityContext(t *testing.T) {
+	testTemplateWithGolden(t, "contextual_suggestions", "accessibility_context.json", "template_accessibility_context.golden.md")
+}
+
+func TestTemplates_FixtureGolden_FormContext(t *testing.T) {
+	testTemplateWithGolden(t, "contextual_suggestions", "form_context.json", "template_form_context.golden.md")
 }

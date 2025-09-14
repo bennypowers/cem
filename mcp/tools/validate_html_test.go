@@ -20,6 +20,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -362,8 +364,6 @@ func TestValidateHtml_AttributeValueParsing_Regression(t *testing.T) {
 	textContent, ok := result.Content[0].(*mcpSDK.TextContent)
 	require.True(t, ok)
 
-	t.Logf("Validation result: %s", textContent.Text)
-
 	// The bug would cause "empty attribute values" to be reported incorrectly
 	// This test ensures that valid attribute values are NOT reported as empty
 	assert.NotContains(t, textContent.Text, "empty attribute values",
@@ -594,8 +594,6 @@ func TestValidateHtml_GlobalAttributesWithUnknownCustomAttribute(t *testing.T) {
 	textContent, ok := result.Content[0].(*mcpSDK.TextContent)
 	require.True(t, ok)
 
-	t.Logf("Validation result for mixed attributes: %s", textContent.Text)
-
 	// Global attributes should NOT be flagged
 	assert.NotContains(t, textContent.Text, "Unknown attribute 'id'")
 	assert.NotContains(t, textContent.Text, "Unknown attribute 'class'")
@@ -603,4 +601,85 @@ func TestValidateHtml_GlobalAttributesWithUnknownCustomAttribute(t *testing.T) {
 
 	// Unknown custom attribute SHOULD be flagged
 	assert.Contains(t, textContent.Text, "unknown-custom-attr")
+}
+
+// Helper function to test validate_html tool with fixture/golden pattern
+func testValidateHtmlWithGolden(t *testing.T, fixtureFile, contextStr, goldenFile string) {
+	workspace := W.NewFileSystemWorkspaceContext("../test-fixtures/multiple-elements")
+	err := workspace.Init()
+	require.NoError(t, err)
+
+	registry, err := mcp.NewMCPContext(workspace)
+	require.NoError(t, err)
+
+	err = registry.LoadManifests()
+	require.NoError(t, err)
+
+	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+
+	// Read HTML from fixture file
+	fixturePath := filepath.Join("../testdata/validate_html_fixtures", fixtureFile)
+	htmlData, err := os.ReadFile(fixturePath)
+	require.NoError(t, err, "Should be able to read fixture file: %s", fixturePath)
+
+	argsJSON, err := json.Marshal(map[string]interface{}{
+		"html":    string(htmlData),
+		"context": contextStr,
+	})
+	require.NoError(t, err)
+
+	req := &mcpSDK.CallToolRequest{
+		Params: &mcpSDK.CallToolParamsRaw{
+			Name:      "validate_html",
+			Arguments: json.RawMessage(argsJSON),
+		},
+	}
+
+	handler := tools.MakeValidateHtmlHandler(registryAdapter)
+	result, err := handler(context.Background(), req)
+	require.NoError(t, err)
+	require.Len(t, result.Content, 1)
+
+	textContent, ok := result.Content[0].(*mcpSDK.TextContent)
+	require.True(t, ok)
+
+	// Compare with golden file
+	goldenPath := filepath.Join("../testdata", goldenFile)
+	expectedData, err := os.ReadFile(goldenPath)
+	require.NoError(t, err, "Should be able to read golden file: %s", goldenPath)
+
+	assert.Equal(t, string(expectedData), textContent.Text, "Output should match golden file")
+}
+
+// Fixture/Golden pattern tests for validate_html tool
+func TestValidateHtml_FixtureGolden_UnknownAttribute(t *testing.T) {
+	testValidateHtmlWithGolden(t, "unknown_attribute.html", "test validation", "validate_html_unknown_attribute.golden.md")
+}
+
+func TestValidateHtml_FixtureGolden_ValidAttributes(t *testing.T) {
+	testValidateHtmlWithGolden(t, "valid_attributes.html", "test validation", "validate_html_valid_attributes.golden.md")
+}
+
+func TestValidateHtml_FixtureGolden_InvalidAttributeValue(t *testing.T) {
+	testValidateHtmlWithGolden(t, "invalid_attribute_value.html", "test validation", "validate_html_invalid_attribute_value.golden.md")
+}
+
+func TestValidateHtml_FixtureGolden_AttributeParsingRegression(t *testing.T) {
+	testValidateHtmlWithGolden(t, "attribute_parsing_regression.html", "test attribute value parsing", "validate_html_attribute_parsing_regression.golden.md")
+}
+
+func TestValidateHtml_FixtureGolden_UnknownElement(t *testing.T) {
+	testValidateHtmlWithGolden(t, "unknown_element.html", "test validation", "validate_html_unknown_element.golden.md")
+}
+
+func TestValidateHtml_FixtureGolden_MultipleIssues(t *testing.T) {
+	testValidateHtmlWithGolden(t, "multiple_issues.html", "test validation", "validate_html_multiple_issues.golden.md")
+}
+
+func TestValidateHtml_FixtureGolden_GlobalAttributesAllowed(t *testing.T) {
+	testValidateHtmlWithGolden(t, "global_attributes_allowed.html", "global attributes test", "validate_html_global_attributes_allowed.golden.md")
+}
+
+func TestValidateHtml_FixtureGolden_GlobalAttributesWithUnknown(t *testing.T) {
+	testValidateHtmlWithGolden(t, "global_attributes_with_unknown.html", "mixed attributes test", "validate_html_global_attributes_with_unknown.golden.md")
 }

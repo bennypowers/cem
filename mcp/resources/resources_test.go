@@ -23,6 +23,7 @@ import (
 
 	"bennypowers.dev/cem/mcp"
 	"bennypowers.dev/cem/mcp/resources"
+	V "bennypowers.dev/cem/validate"
 	W "bennypowers.dev/cem/workspace"
 	mcpSDK "github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/assert"
@@ -102,6 +103,12 @@ func TestSchemaResource_Integration(t *testing.T) {
 	assert.Equal(t, "application/json", content.MIMEType)
 	assert.NotEmpty(t, content.Text)
 
+	// Validate that it matches the canonical schema from validate package
+	expectedSchema, err := V.GetSchema("2.1.1-speculative") // Use the expected version from test fixtures
+	require.NoError(t, err, "Should be able to get canonical schema")
+
+	assert.Equal(t, string(expectedSchema), content.Text, "Schema resource should return canonical schema")
+
 	// Validate that it's valid JSON
 	var jsonData interface{}
 	err = json.Unmarshal([]byte(content.Text), &jsonData)
@@ -147,7 +154,7 @@ func TestElementsResource_Integration(t *testing.T) {
 	require.NoError(t, err, "Elements should be valid JSON")
 	assert.NotNil(t, jsonData, "Should have element data")
 
-	// Basic content checks
+	// Basic content checks - verify essential elements from fixtures are present
 	assert.Contains(t, content.Text, "button-element", "Should contain fixture elements")
 	assert.Contains(t, content.Text, "card-element", "Should contain fixture elements")
 }
