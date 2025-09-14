@@ -19,6 +19,7 @@ package resources
 import (
 	"context"
 	"encoding/json"
+	"sort"
 	"strings"
 
 	"bennypowers.dev/cem/mcp/types"
@@ -44,7 +45,15 @@ func handlePackagesResource(ctx context.Context, req *mcp.ReadResourceRequest, r
 	// Group elements by package (extracted from tag names and metadata)
 	packageMap := make(map[string]*PackageInfo)
 
-	for tagName, element := range elementMap {
+	// Sort element keys for deterministic processing
+	elementKeys := make([]string, 0, len(elementMap))
+	for tagName := range elementMap {
+		elementKeys = append(elementKeys, tagName)
+	}
+	sort.Strings(elementKeys)
+
+	for _, tagName := range elementKeys {
+		element := elementMap[tagName]
 		packageName := extractPackageFromElement(element)
 
 		if packageMap[packageName] == nil {
@@ -59,9 +68,18 @@ func handlePackagesResource(ctx context.Context, req *mcp.ReadResourceRequest, r
 		packageMap[packageName].ElementCount++
 	}
 
-	// Convert to slice for consistent output
+	// Convert to slice for consistent output with sorted package names
+	packageNames := make([]string, 0, len(packageMap))
+	for packageName := range packageMap {
+		packageNames = append(packageNames, packageName)
+	}
+	sort.Strings(packageNames)
+
 	packages := make([]PackageInfo, 0, len(packageMap))
-	for _, pkg := range packageMap {
+	for _, packageName := range packageNames {
+		pkg := packageMap[packageName]
+		// Sort elements within each package for consistency
+		sort.Strings(pkg.Elements)
 		packages = append(packages, *pkg)
 	}
 

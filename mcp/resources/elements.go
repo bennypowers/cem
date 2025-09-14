@@ -19,6 +19,7 @@ package resources
 import (
 	"context"
 	"encoding/json"
+	"sort"
 
 	"bennypowers.dev/cem/mcp/types"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -50,7 +51,15 @@ func handleElementsResource(ctx context.Context, req *mcp.ReadResourceRequest, r
 	// Convert to element summaries for discovery
 	elements := make([]ElementSummary, 0, len(elementMap))
 
-	for _, element := range elementMap {
+	// Sort element keys for deterministic JSON output
+	elementKeys := make([]string, 0, len(elementMap))
+	for tagName := range elementMap {
+		elementKeys = append(elementKeys, tagName)
+	}
+	sort.Strings(elementKeys)
+
+	for _, tagName := range elementKeys {
+		element := elementMap[tagName]
 		summary := ElementSummary{
 			TagName:          element.TagName(),
 			Name:             element.Name(),
