@@ -61,6 +61,23 @@ Ask the AI to generate HTML using your components:
 
 The AI will generate valid HTML with correct attribute names and values based on your component definitions.
 
+## Description Limits
+
+For security and optimal AI performance, the MCP server enforces a **2000 character limit** on component description fields. Descriptions exceeding this limit are automatically truncated with "..." appended.
+
+This ensures:
+- **Fast processing** - AI can quickly parse component information
+- **Security** - Prevents abuse through extremely long descriptions
+- **Quality focus** - Encourages concise, actionable documentation
+
+**Best Practice**: Keep descriptions concise and focused. Most effective descriptions are 200-400 characters.
+
+You can customize this limit via configuration file or command line flag:
+
+```bash
+cem mcp --max-description-length 5000
+```
+
 ## Configuration
 
 ### Claude Desktop

@@ -23,7 +23,10 @@ import (
 	"text/template"
 )
 
-// Maximum safe description length
+// Maximum safe description length to prevent abuse and ensure good AI performance.
+// This limit balances comprehensive documentation with processing efficiency.
+// Descriptions longer than this are truncated with "..." appended.
+// Can be customized via config file or --max-description-length flag.
 const maxDescriptionLength = 2000
 
 // SanitizeDescription sanitizes a description field to remove template injection attempts
@@ -102,6 +105,32 @@ func SanitizeDescriptionPreservingMarkdown(description string) string {
 		placeholder := "___INLINECODE_" + string(rune(i+'A')) + "___"
 		description = strings.Replace(description, placeholder, code, 1)
 	}
+
+	// Clean up excessive whitespace
+	description = strings.TrimSpace(description)
+	description = regexp.MustCompile(`\s+`).ReplaceAllString(description, " ")
+
+	return description
+}
+
+// SanitizeDescriptionWithLength sanitizes with a custom max length
+func SanitizeDescriptionWithLength(description string, maxLength int) string {
+	if description == "" {
+		return ""
+	}
+
+	// Limit length to prevent abuse
+	if len(description) > maxLength {
+		description = description[:maxLength] + "..."
+	}
+
+	// Check for template injection using comprehensive detection
+	if DetectTemplateInjection(description) {
+		return "[Description removed: contains template syntax]"
+	}
+
+	// HTML escape for additional XSS protection
+	description = html.EscapeString(description)
 
 	// Clean up excessive whitespace
 	description = strings.TrimSpace(description)

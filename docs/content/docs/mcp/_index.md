@@ -15,6 +15,12 @@ The MCP server transforms your custom elements manifests into a structured, type
 - Enforce design system guidelines and best practices
 - Validate custom element usage patterns and manifest compliance
 
+### Security and Limits
+
+For security and optimal AI performance, the server enforces a **2000 character limit** on description fields. Descriptions exceeding this limit are automatically truncated. This limit can be customized via configuration file or command line flags.
+
+For best practices on writing effective descriptions within this limit, see [Writing Effective Descriptions](/docs/mcp/writing-descriptions/).
+
 ## Quick Start
 
 ```bash

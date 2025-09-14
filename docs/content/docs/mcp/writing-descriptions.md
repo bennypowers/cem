@@ -16,6 +16,35 @@ AI language models use your manifest descriptions to:
 
 Well-written descriptions enable AI to make intelligent decisions about component usage, while poor descriptions lead to incorrect or suboptimal code generation.
 
+## Description Length Limits
+
+The CEM MCP server enforces a **2000 character limit** on description fields to ensure optimal AI performance and prevent abuse. Descriptions exceeding this limit are automatically truncated with "..." appended.
+
+This limit applies to:
+- Element descriptions
+- Attribute descriptions
+- Slot descriptions
+- CSS property descriptions
+- Event descriptions
+- CSS part descriptions
+
+**Best Practice**: Most effective descriptions are much shorter than 2000 characters. Aim for 200-400 characters for core information, using the full limit only for complex components requiring extensive guidance.
+
+### Customizing Length Limits
+
+For projects requiring different description length limits, you can configure this in your CEM configuration file:
+
+```yaml
+mcp:
+  maxDescriptionLength: 5000
+```
+
+Or use the command line flag:
+
+```bash
+cem mcp --max-description-length 5000
+```
+
 ## General Principles
 
 ### 1. Write for Both Humans and AI

@@ -24,6 +24,7 @@ import (
 	"bennypowers.dev/cem/workspace"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // mcpCmd represents the mcp command
@@ -57,8 +58,16 @@ Tools provided:
 		ctx := cmd.Context()
 		wctx := ctx.Value(workspace.WorkspaceContextKey).(types.WorkspaceContext)
 
+		// Get max description length from config/flag (flag overrides config, config overrides default)
+		maxDescriptionLength := viper.GetInt("mcp.maxDescriptionLength")
+		if maxDescriptionLength == 0 {
+			maxDescriptionLength = 2000 // default
+		}
+
 		// Create and run the MCP server with stdio transport
-		server, err := MCP.NewServer(wctx)
+		server, err := MCP.NewServerWithConfig(wctx, MCP.ServerConfig{
+			MaxDescriptionLength: maxDescriptionLength,
+		})
 		if err != nil {
 			return err
 		}
@@ -68,5 +77,7 @@ Tools provided:
 }
 
 func init() {
+	mcpCmd.Flags().IntP("max-description-length", "", 2000, "Maximum length for description fields before truncation")
+	viper.BindPFlag("mcp.maxDescriptionLength", mcpCmd.Flags().Lookup("max-description-length"))
 	rootCmd.AddCommand(mcpCmd)
 }

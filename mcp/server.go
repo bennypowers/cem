@@ -37,15 +37,28 @@ type ServerInfo struct {
 	Description string `json:"description"`
 }
 
+// ServerConfig contains configuration options for the MCP server
+type ServerConfig struct {
+	MaxDescriptionLength int
+}
+
 // Server implements an MCP server for custom elements
 type Server struct {
 	workspace types.WorkspaceContext
 	registry  *MCPContext
 	server    *mcp.Server
+	config    ServerConfig
 }
 
-// NewServer creates a new CEM MCP server
+// NewServer creates a new CEM MCP server with default configuration
 func NewServer(workspace types.WorkspaceContext) (*Server, error) {
+	return NewServerWithConfig(workspace, ServerConfig{
+		MaxDescriptionLength: 2000,
+	})
+}
+
+// NewServerWithConfig creates a new CEM MCP server with custom configuration
+func NewServerWithConfig(workspace types.WorkspaceContext, config ServerConfig) (*Server, error) {
 	helpers.SafeDebugLog("Creating CEM MCP server for workspace: %s", workspace.Root())
 
 	registry, err := NewMCPContext(workspace)
@@ -63,6 +76,7 @@ func NewServer(workspace types.WorkspaceContext) (*Server, error) {
 		workspace: workspace,
 		registry:  registry,
 		server:    server,
+		config:    config,
 	}
 
 	// Add tools to the server
