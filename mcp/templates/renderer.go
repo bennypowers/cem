@@ -21,7 +21,7 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
-	"path/filepath"
+	"path"
 	"reflect"
 	"strings"
 	"sync"
@@ -93,7 +93,8 @@ func (tp *TemplatePool) createTemplate(templateName string) *template.Template {
 
 	// Try each registered template source
 	for _, fs := range tp.templateSources {
-		templatePath := filepath.Join("templates", templateName+".md")
+		// Use path.Join (not filepath.Join) - embed.FS requires POSIX / separators
+		templatePath := path.Join("templates", templateName+".md")
 		content, err = fs.ReadFile(templatePath)
 		if err == nil {
 			break
