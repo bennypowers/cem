@@ -18,10 +18,12 @@ package tools
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"bennypowers.dev/cem/mcp/helpers"
 	"bennypowers.dev/cem/mcp/types"
+	V "bennypowers.dev/cem/validate"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -48,6 +50,13 @@ type HTMLGenerationTemplateData struct {
 func NewHTMLGenerationTemplateData(element types.ElementInfo, context string, options map[string]string) HTMLGenerationTemplateData {
 	return HTMLGenerationTemplateData{
 		BaseTemplateData: NewBaseTemplateData(element, context, options),
+	}
+}
+
+// NewHTMLGenerationTemplateDataWithSchema creates HTML generation template data with schema context
+func NewHTMLGenerationTemplateDataWithSchema(element types.ElementInfo, context string, options map[string]string, schemaDefinitions interface{}) HTMLGenerationTemplateData {
+	return HTMLGenerationTemplateData{
+		BaseTemplateData: NewBaseTemplateDataWithSchema(element, context, options, schemaDefinitions),
 	}
 }
 
@@ -78,8 +87,14 @@ func handleGenerateHtml(
 		return nil, fmt.Errorf("failed to generate HTML structure: %w", err)
 	}
 
-	// Prepare template data
-	templateData := prepareHTMLTemplateData(element, genArgs, generatedHTML)
+	// Get schema definitions for rich context
+	schemaDefinitions, err := getSchemaDefinitions(registry)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get schema definitions: %w", err)
+	}
+
+	// Prepare template data with schema context
+	templateData := prepareHTMLTemplateDataWithSchema(element, genArgs, generatedHTML, schemaDefinitions)
 
 	// Render the complete response using template
 	response, err := RenderTemplate("html_generation", templateData)
@@ -185,6 +200,28 @@ func prepareHTMLTemplateData(element types.ElementInfo, args GenerateHtmlArgs, g
 	return templateData
 }
 
+// prepareHTMLTemplateDataWithSchema prepares all data for the main HTML generation template with schema context
+func prepareHTMLTemplateDataWithSchema(element types.ElementInfo, args GenerateHtmlArgs, generatedHTML string, schemaDefinitions interface{}) HTMLGenerationTemplateData {
+	templateData := HTMLGenerationTemplateData{
+		BaseTemplateData: NewBaseTemplateDataWithSchema(element, args.Context, args.Options, schemaDefinitions),
+		Content:          args.Content,
+		GeneratedHTML:    generatedHTML,
+	}
+
+	// Add attribute data with values for the main template
+	for _, attr := range element.Attributes() {
+		if attr.Required() {
+			value := getAttributeValue(attr, args.Attributes)
+			templateData.RequiredAttributes = append(templateData.RequiredAttributes, AttributeWithValue{
+				Attribute: attr,
+				Value:     value,
+			})
+		}
+	}
+
+	return templateData
+}
+
 // getAttributeValue determines the value to use for an attribute
 func getAttributeValue(attr types.Attribute, providedAttrs map[string]string) string {
 	// Check if user provided a value
@@ -204,4 +241,27 @@ func getAttributeValue(attr types.Attribute, providedAttrs map[string]string) st
 
 	// Fallback to placeholder
 	return "value"
+}
+
+// getSchemaDefinitions retrieves schema definitions for template context
+func getSchemaDefinitions(registry types.MCPContext) (map[string]interface{}, error) {
+	// Get schema versions from manifests
+	versions := registry.GetManifestSchemaVersions()
+	if len(versions) == 0 {
+		return make(map[string]interface{}), nil
+	}
+
+	// Use the first version to load schema
+	schemaVersion := versions[0]
+	schemaData, err := V.GetSchema(schemaVersion)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load schema %s: %w", schemaVersion, err)
+	}
+	// Parse schema JSON - return the complete schema for template functions
+	var schema map[string]interface{}
+	if err := json.Unmarshal(schemaData, &schema); err != nil {
+		return nil, fmt.Errorf("failed to parse schema JSON: %w", err)
+	}
+	// Return complete schema so template functions can navigate properly
+	return schema, nil
 }

@@ -1,5 +1,15 @@
 # HTML Generation for `button-element`
 
+**What is a Custom Element:** A description of a custom element class.
+
+Custom elements are JavaScript classes, so this extends from `ClassDeclaration` and adds custom-element-specific features like attributes, events, and slots.
+
+Note that `tagName` in this interface is optional. Tag names are not neccessarily part of a custom element class, but belong to the definition (often called the "registration") or the `customElements.define()` call.
+
+Because classes and tag names can only be registered once, there's a one-to-one relationship between classes and tag names. For ease of use, we allow the tag name here.
+
+Some packages define and register custom elements in separate modules. In these cases one `Module` should contain the `CustomElement` without a tagName, and another `Module` should contain the `CustomElementExport`.
+
 ## Generated HTML
 
 ```html
@@ -16,41 +26,49 @@
 
 
 ### Attributes Available
+Attributes can have the following fields: **Type** (The type that the attribute will be serialized/deserialized as.), **Default** (The default value of the attribute, if any.
+
+As attributes are always strings, this is the actual value, not a human readable description.).
+
 
 #### `variant`
-Button variant
+**Description:** Button variant
 **Type:** `"primary" | "secondary" | "ghost"`
 **Default:** `"primary"`
 **Valid Values:** `"primary"`, `"secondary"`, `"ghost"`
 
+
 #### `size`
-Button size
+**Description:** Button size
 **Type:** `"small" | "medium" | "large"`
 **Default:** `"medium"`
 **Valid Values:** `"small"`, `"medium"`, `"large"`
 
+
 #### `disabled`
-Whether button is disabled
+**Description:** Whether button is disabled
 **Type:** `boolean`
 
 
 
-### Slots Available
 
+### Slots Available
 #### Default slot
-Button content
+**Description:** Button content
 **Usage:** Content placed directly inside the element
 
+
 #### `icon` slot
-Button icon
+**Description:** Button icon
 **Usage:** `<element slot="icon">content</element>`
 
 
 
-### Events Available
 
+### Events Available
 #### `button-click`
-Button click event
+**Description:** Button click event
+**Type:** `CustomEvent`
 
 
 
@@ -62,7 +80,14 @@ Button click event
 - Check element documentation for specific usage guidelines
 
 ### Styling
-This element supports 2 CSS custom properties for theming. Use the `suggest_css_integration` tool for styling guidance.
+This element supports 2 CSS custom properties for theming.
+
+**Available CSS Custom Properties:**
+- **`--button-color`**: Button color (Syntax: `<color>`) — Default: `blue`
+- **`--button-padding`**: Button padding (Syntax: `<length>`) — Default: `8px`
+
+
+Use the `suggest_css_integration` tool for detailed styling guidance.
 
 ### Accessibility
 - This element may implement accessibility features via ElementInternals

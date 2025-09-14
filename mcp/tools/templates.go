@@ -41,9 +41,10 @@ type TemplateDataProvider interface {
 
 // BaseTemplateData provides common template data fields
 type BaseTemplateData struct {
-	Element types.ElementInfo
-	Context string
-	Options map[string]string
+	Element           types.ElementInfo
+	Context           string
+	Options           map[string]string
+	SchemaDefinitions interface{} // Schema data for template functions
 }
 
 func (b BaseTemplateData) GetElement() types.ElementInfo { return b.Element }
@@ -160,6 +161,16 @@ func NewBaseTemplateData(element types.ElementInfo, context string, options map[
 		Element: element,
 		Context: context,
 		Options: options,
+	}
+}
+
+// NewBaseTemplateDataWithSchema creates base template data with schema context
+func NewBaseTemplateDataWithSchema(element types.ElementInfo, context string, options map[string]string, schemaDefinitions interface{}) BaseTemplateData {
+	return BaseTemplateData{
+		Element:           element,
+		Context:           context,
+		Options:           options,
+		SchemaDefinitions: schemaDefinitions,
 	}
 }
 

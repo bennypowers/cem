@@ -5,7 +5,7 @@
 
 {{range $tagName, $guidelines := .ElementGuidelines}}
 ### `{{$tagName}}`
-{{if .Description}}**Description**: {{.Description}}{{end}}
+{{if .Description}}{{.Description}}{{end}}
 
 {{if gt (len .Attributes) 0}}**Attributes:**
 {{range .Attributes}}
