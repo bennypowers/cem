@@ -1,0 +1,71 @@
+# Component Context from Your Manifests
+
+Your workspace contains **2 custom elements** with real constraints and patterns.
+
+## Your Component Library Statistics
+- **2 elements** across **0 common prefixes** ()
+- **3 CSS custom properties** defined
+- **Schema versions**: 2.1.1
+
+This context is derived from your actual manifest data, not generic guidelines.
+
+## Schema Context: Custom Elements Manifest Schema 2.1.1-speculative
+
+
+This is a speculative schema for 2.1.1 based on 2.1.0, with workarounds for known issues. See: https://github.com/webcomponents/custom-elements-manifest/issues/138 and https://github.com/vega/ts-json-schema-generator/pull/2323
+
+### Schema Field Definitions
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+This schema provides the semantic framework for understanding your specific component data below.
+
+
+## Your Component Data
+
+
+
+
+
+### Common Slots
+
+- `default` - Used in 2 elements
+
+
+
+### Your CSS Custom Properties
+
+Your components define **3 CSS custom properties**:
+
+
+- `--card-background`
+
+- `--button-color`
+
+- `--button-padding`
+
+
+
+
+
+## How to Use This Context
+
+This information helps AI understand:
+- **Your naming conventions** ( prefixes)
+- **Your component patterns** (common attributes and slots)
+- **Your CSS architecture** (custom properties and design tokens)
+- **Your documented constraints** (guidelines from descriptions)
+
+When asking for component help, the AI can now reference your actual manifest data and the schema definitions that explain what each field means.

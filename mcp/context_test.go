@@ -84,9 +84,9 @@ func TestMCPContext_GetElementInfo(t *testing.T) {
 				require.NotNil(t, variantAttr, "Should have variant attribute")
 				assert.Equal(t, "\"primary\" | \"secondary\" | \"ghost\"", variantAttr.Type())
 				assert.Equal(t, "\"primary\"", variantAttr.Default())
-				assert.Contains(t, variantAttr.Values(), "primary")
-				assert.Contains(t, variantAttr.Values(), "secondary")
-				assert.Contains(t, variantAttr.Values(), "ghost")
+				assert.Contains(t, variantAttr.Values(), "\"primary\"")
+				assert.Contains(t, variantAttr.Values(), "\"secondary\"")
+				assert.Contains(t, variantAttr.Values(), "\"ghost\"")
 
 				sizeAttr := findAttribute(info.Attributes(), "size")
 				require.NotNil(t, sizeAttr, "Should have size attribute")
@@ -317,7 +317,7 @@ func TestMCPContext_AttributeConversion(t *testing.T) {
 			expectedDesc:     "Button variant",
 			expectedDefault:  "\"primary\"",
 			expectedRequired: false,
-			expectedValues:   []string{"primary", "secondary", "ghost"},
+			expectedValues:   []string{"\"primary\"", "\"secondary\"", "\"ghost\""},
 		},
 		{
 			name:             "button size attribute",
@@ -328,7 +328,7 @@ func TestMCPContext_AttributeConversion(t *testing.T) {
 			expectedDesc:     "Button size",
 			expectedDefault:  "\"medium\"",
 			expectedRequired: false,
-			expectedValues:   []string{"small", "medium", "large"},
+			expectedValues:   []string{"\"small\"", "\"medium\"", "\"large\""},
 		},
 		{
 			name:             "button disabled attribute",

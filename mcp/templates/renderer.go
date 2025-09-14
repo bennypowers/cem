@@ -148,6 +148,12 @@ func (tp *TemplatePool) Render(templateName string, data interface{}) (string, e
 func createSecureFuncMap() template.FuncMap {
 	return template.FuncMap{
 		"title": helpers.TitleCaser.String,
+		"schemaDesc": func(schemaData interface{}, typeName string) string {
+			return getSchemaDescription(schemaData, typeName)
+		},
+		"schemaFieldDesc": func(schemaData interface{}, typeName, fieldName string) string {
+			return getSchemaFieldDescription(schemaData, typeName, fieldName)
+		},
 		"len": func(slice interface{}) int {
 			switch s := slice.(type) {
 			case []string:
@@ -208,4 +214,74 @@ func RegisterTemplateSource(packageName string, fs *embed.FS) {
 // RenderTemplate renders a template using the global thread-safe pool
 func RenderTemplate(templateName string, data interface{}) (string, error) {
 	return globalTemplatePool.Render(templateName, data)
+}
+
+// getSchemaDescription extracts description for a schema type by name
+func getSchemaDescription(schemaData interface{}, typeName string) string {
+	schema, ok := schemaData.(map[string]interface{})
+	if !ok {
+		return ""
+	}
+
+	// Try definitions section first
+	if definitions, ok := schema["definitions"].(map[string]interface{}); ok {
+		if typeObj, ok := definitions[typeName].(map[string]interface{}); ok {
+			if desc, ok := typeObj["description"].(string); ok {
+				return desc
+			}
+		}
+	}
+
+	// Try properties section
+	if properties, ok := schema["properties"].(map[string]interface{}); ok {
+		if typeObj, ok := properties[typeName].(map[string]interface{}); ok {
+			if desc, ok := typeObj["description"].(string); ok {
+				return desc
+			}
+		}
+	}
+
+	return ""
+}
+
+// getSchemaFieldDescription extracts description for a specific field of a schema type
+func getSchemaFieldDescription(schemaData interface{}, typeName, fieldName string) string {
+	schema, ok := schemaData.(map[string]interface{})
+	if !ok {
+		return ""
+	}
+
+	// Navigate to type definition
+	var typeObj map[string]interface{}
+
+	// Try definitions section first
+	if definitions, ok := schema["definitions"].(map[string]interface{}); ok {
+		if obj, ok := definitions[typeName].(map[string]interface{}); ok {
+			typeObj = obj
+		}
+	}
+
+	// Try properties section if not found in definitions
+	if typeObj == nil {
+		if properties, ok := schema["properties"].(map[string]interface{}); ok {
+			if obj, ok := properties[typeName].(map[string]interface{}); ok {
+				typeObj = obj
+			}
+		}
+	}
+
+	if typeObj == nil {
+		return ""
+	}
+
+	// Navigate to field properties
+	if properties, ok := typeObj["properties"].(map[string]interface{}); ok {
+		if fieldObj, ok := properties[fieldName].(map[string]interface{}); ok {
+			if desc, ok := fieldObj["description"].(string); ok {
+				return desc
+			}
+		}
+	}
+
+	return ""
 }

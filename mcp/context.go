@@ -322,23 +322,29 @@ func getTypeString(t *M.Type) string {
 	return t.Text
 }
 
-// extractEnumValues extracts enum values from union types
+// extractEnumValues splits TypeScript union types on | and returns parts verbatim
+//
+// Examples:
+//   - "\"primary\" | \"secondary\"" → ["\"primary\"", "\"secondary\""]
+//   - "boolean | string" → ["boolean", "string"]
+//   - "Color.Red | Color.Blue" → ["Color.Red", "Color.Blue"]
+//   - "ComponentSize" → [] (no | separator)
+//
+// Returns empty slice when no | separator found.
 func extractEnumValues(t *M.Type) []string {
 	var values []string
 	if t == nil || t.Text == "" {
 		return values
 	}
 
-	// Simple heuristic: extract values from union types like "red" | "green" | "blue"
+	// Split union types on | and pass parts verbatim
 	text := t.Text
 	if strings.Contains(text, "|") {
 		parts := strings.Split(text, "|")
 		for _, part := range parts {
-			part = strings.TrimSpace(part)
-			// Remove quotes
-			part = strings.Trim(part, `"'`)
+			part = strings.TrimSpace(part) // Only trim whitespace
 			if part != "" {
-				values = append(values, part)
+				values = append(values, part) // Pass verbatim - let LLM parse
 			}
 		}
 	}
@@ -739,6 +745,22 @@ func (ctx *MCPContext) extractGuidelines(description string) []string {
 	return ctx.extractTextGuidelines(sanitized)
 }
 
+// extractTextGuidelines extracts guideline text using keyword-based heuristics
+//
+// LIMITATIONS: This function uses simple keyword matching and has known limitations:
+// - Only recognizes RFC 2119 keywords: "should", "must", "use", "avoid"
+// - Assumes English-language documentation
+// - Splits on periods (.) which may break on abbreviations or decimals
+// - May extract false positives from unrelated sentences containing keywords
+// - Does NOT support:
+//   - Other documentation styles (JSDoc @param, MDN patterns)
+//   - Non-English documentation
+//   - Structured guidelines (YAML front matter, markdown headers)
+//   - Context-aware parsing (code examples vs prose)
+//   - Multi-sentence guidelines spanning periods
+//
+// For robust guideline extraction, consider structured documentation formats.
+// See RFC 2119 for recommended keyword usage: https://tools.ietf.org/html/rfc2119
 func (ctx *MCPContext) extractTextGuidelines(text string) []string {
 	var guidelines []string
 	if text == "" {

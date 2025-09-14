@@ -218,7 +218,13 @@ func validateElementAttributes(element types.CustomElementMatch, registryElement
 			validValues := manifestAttr.Values()
 			isValid := false
 			for _, validValue := range validValues {
-				if attrMatch.Value == validValue {
+				// Compare against both quoted and unquoted versions
+				// since HTML attributes are unquoted but TypeScript values may be quoted
+				unquotedValue := validValue
+				if len(validValue) >= 2 && validValue[0] == '"' && validValue[len(validValue)-1] == '"' {
+					unquotedValue = validValue[1 : len(validValue)-1]
+				}
+				if attrMatch.Value == validValue || attrMatch.Value == unquotedValue {
 					isValid = true
 					break
 				}

@@ -20,7 +20,6 @@ import (
 	"embed"
 
 	"bennypowers.dev/cem/mcp/templates"
-	"bennypowers.dev/cem/mcp/types"
 )
 
 //go:embed templates/*.md
@@ -31,156 +30,48 @@ func init() {
 	templates.RegisterTemplateSource("resources", &resourcesTemplateFiles)
 }
 
-// GuidelinesData represents data for guidelines templates
-type GuidelinesData struct {
-	Overview                string
-	Principles              []string
-	Philosophy              map[string]string
-	GeneralGuidelines       []GuidelineCategory
-	ElementGuidelines       map[string]ElementGuideline
-	NamingGuidelines        NamingGuidelines
-	AccessibilityGuidelines AccessibilityGuidelines
-	ThemingGuidelines       ThemingGuidelines
-	PerformanceGuidelines   PerformanceGuidelines
-	CompositionGuidelines   CompositionGuidelines
-	IntegrationGuidelines   IntegrationGuidelines
-	TestingGuidelines       TestingGuidelines
-	AntiPatterns            []string
-	BestPractices           []string
-	FrameworkGuidelines     map[string]string
-	LayoutPatterns          LayoutPatterns
-	DataPatterns            DataPatterns
-	FormPatterns            FormPatterns
-	NavigationPatterns      NavigationPatterns
-	FeedbackPatterns        FeedbackPatterns
-	PatternsByCategory      map[string][]string
-	ProgressiveEnhancement  []string
-	ErrorHandlingPatterns   []string
-	SecurityGuidelines      []string
-	ColorGuidelines         map[string]string
-	ResponsiveGuidelines    map[string]string
-	CSSBestPractices        []string
+// ManifestContext represents context combining schema definitions with user manifest data
+type ManifestContext struct {
+	// Schema context - what fields mean according to custom elements spec
+	SchemaVersion     string                     // Active schema version
+	SchemaDefinitions map[string]interface{}     // Schema definitions for semantic understanding
+
+	// User manifest data - your specific values and patterns
+	Overview            string                // Overview of manifest statistics
+	ElementCount        int                   // Number of elements in manifests
+	CommonPrefixes      []string              // Common element prefixes found
+	CSSProperties       []string              // All CSS custom properties
+	SchemaVersions      []string              // Manifest schema versions in use
+	ElementPatterns     []ElementPattern      // Patterns found across elements
+	AttributePatterns   []AttributePattern    // Common attribute usage patterns
+	SlotPatterns        []SlotPattern         // Common slot usage patterns
+	ExtractedGuidelines []ExtractedGuideline  // Guidelines extracted from descriptions
 }
 
-// GuidelineCategory represents a category of guidelines
-type GuidelineCategory struct {
-	Category   string
-	Guidelines []string
+// ElementPattern represents a pattern found across multiple elements
+type ElementPattern struct {
+	Type        string   // Type of pattern (e.g., "naming", "structure")
+	Description string   // Description of the pattern
+	Examples    []string // Example elements that follow this pattern
 }
 
-// ElementGuideline represents usage guidelines for a specific element
-type ElementGuideline struct {
-	types.ElementInfo
-	Guidelines []string
-	Examples   []string
-	Attributes []AttributeGuideline
-	Slots      []SlotGuideline
+// AttributePattern represents common attribute usage
+type AttributePattern struct {
+	Name        string // Attribute name
+	UsageCount  int    // Number of elements using this attribute
+	Description string // Description of usage pattern
 }
 
-// AttributeGuideline represents guidance for a specific attribute
-type AttributeGuideline struct {
-	types.Attribute
-	Guidance []string
+// SlotPattern represents common slot usage
+type SlotPattern struct {
+	Name        string // Slot name
+	UsageCount  int    // Number of elements using this slot
+	Description string // Description of usage pattern
 }
 
-// SlotGuideline represents guidance for a specific slot
-type SlotGuideline struct {
-	types.Slot
-	Guidance []string
-}
-
-// NamingGuidelines represents naming convention guidelines
-type NamingGuidelines struct {
-	Elements   NamingCategory
-	Attributes NamingCategory
-}
-
-// NamingCategory represents naming guidelines for a category
-type NamingCategory struct {
-	Format     string
-	Pattern    string
-	Guidelines []string
-	Examples   []string
-}
-
-// AccessibilityGuidelines represents accessibility-focused guidelines
-type AccessibilityGuidelines struct {
-	WCAG     WCAGGuidelines
-	ARIA     map[string]string
-	Keyboard map[string]string
-	Testing  []string
-}
-
-// WCAGGuidelines represents WCAG compliance guidelines
-type WCAGGuidelines struct {
-	Level      string
-	Principles []string
-}
-
-// ThemingGuidelines represents CSS theming guidelines
-type ThemingGuidelines struct {
-	Tokens           map[string]string
-	CustomProperties map[string]any
-	Parts            map[string]string
-	States           map[string]string
-}
-
-// PerformanceGuidelines represents performance optimization guidelines
-type PerformanceGuidelines struct {
-	Loading   map[string]string
-	Rendering map[string]string
-	Memory    map[string]string
-}
-
-// CompositionGuidelines represents component composition guidelines
-type CompositionGuidelines struct {
-	Slots         map[string]string
-	Nesting       map[string]string
-	Communication map[string]string
-}
-
-// IntegrationGuidelines represents framework integration guidelines
-type IntegrationGuidelines struct {
-	Frameworks map[string]string
-	Bundling   map[string]string
-	Imports    map[string]string
-}
-
-// TestingGuidelines represents testing guidelines
-type TestingGuidelines struct {
-	Types     map[string]string
-	Tools     []string
-	Practices []string
-}
-
-// LayoutPatterns represents layout pattern guidelines
-type LayoutPatterns struct {
-	Containers []string
-	Grid       []string
-	Flexbox    []string
-}
-
-// DataPatterns represents data display patterns
-type DataPatterns struct {
-	Display     []string
-	Interaction []string
-}
-
-// FormPatterns represents form accessibility patterns
-type FormPatterns struct {
-	Validation []string
-	Labeling   []string
-	Grouping   []string
-}
-
-// NavigationPatterns represents navigation accessibility patterns
-type NavigationPatterns struct {
-	Structure   []string
-	Interaction []string
-}
-
-// FeedbackPatterns represents feedback and messaging patterns
-type FeedbackPatterns struct {
-	Types    []string
-	Delivery []string
+// ExtractedGuideline represents a guideline extracted from manifest descriptions
+type ExtractedGuideline struct {
+	Source    string // Source element/attribute (e.g., "my-button" or "my-button.variant")
+	Type      string // Type of source ("element" or "attribute")
+	Guideline string // The extracted guideline text
 }
