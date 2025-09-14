@@ -26,6 +26,9 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
+// defaultSchemaVersion is the fallback schema version when no manifests are found or version detection fails
+const defaultSchemaVersion = "2.1.1-speculative"
+
 // handleSchemaResource provides the JSON schema for custom elements manifests
 func handleSchemaResource(ctx context.Context, req *mcp.ReadResourceRequest, registry types.MCPContext) (*mcp.ReadResourceResult, error) {
 	// Detect schema version from loaded manifests
@@ -52,7 +55,7 @@ func detectSchemaVersion(registry types.MCPContext) string {
 
 	// If no manifests found, use latest stable version as fallback
 	if len(versions) == 0 {
-		return "2.1.1-speculative"
+		return defaultSchemaVersion
 	}
 
 	// If single version, use it
@@ -68,7 +71,7 @@ func detectSchemaVersion(registry types.MCPContext) string {
 func selectBestSchemaVersion(versions []string) string {
 	// Fallback if empty
 	if len(versions) == 0 {
-		return "2.1.1-speculative"
+		return defaultSchemaVersion
 	}
 
 	// Simple heuristic: prefer speculative versions, then highest semantic version
@@ -96,7 +99,7 @@ func selectBestSchemaVersion(versions []string) string {
 
 	// If no valid version found, use fallback
 	if best == "" {
-		return "2.1.1-speculative"
+		return defaultSchemaVersion
 	}
 
 	return best

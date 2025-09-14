@@ -32,6 +32,9 @@ import (
 	V "bennypowers.dev/cem/validate"
 )
 
+// defaultSchemaVersion is the fallback schema version when no manifests are found or version detection fails
+const defaultSchemaVersion = "2.1.1-speculative"
+
 // MCPContext manages custom elements manifests for MCP context
 // This is a lightweight wrapper around the LSP registry for reuse
 type MCPContext struct {
@@ -576,7 +579,7 @@ func (ctx *MCPContext) GetManifestSchema() (map[string]interface{}, error) {
 	versions := ctx.GetManifestSchemaVersions()
 
 	// If no manifests found, use latest stable version as fallback
-	schemaVersion := "2.1.1-speculative"
+	schemaVersion := defaultSchemaVersion
 	if len(versions) == 1 {
 		schemaVersion = versions[0]
 	} else if len(versions) > 1 {
@@ -628,7 +631,7 @@ func (ctx *MCPContext) GetManifestSchemaVersions() []string {
 func (ctx *MCPContext) selectBestSchemaVersion(versions []string) string {
 	// Fallback if empty
 	if len(versions) == 0 {
-		return "2.1.1-speculative"
+		return defaultSchemaVersion
 	}
 
 	// Simple heuristic: prefer speculative versions, then highest semantic version
@@ -656,7 +659,7 @@ func (ctx *MCPContext) selectBestSchemaVersion(versions []string) string {
 
 	// If no valid version found, use fallback
 	if best == "" {
-		return "2.1.1-speculative"
+		return defaultSchemaVersion
 	}
 
 	return best
