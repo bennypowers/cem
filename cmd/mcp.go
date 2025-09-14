@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	MCP "bennypowers.dev/cem/mcp"
@@ -55,6 +56,11 @@ Tools provided:
 		// CRITICAL: Redirect all pterm output to stderr immediately to prevent MCP stdout contamination
 		pterm.SetDefaultOutput(os.Stderr)
 
+		// Bind flags to viper
+		if err := viper.BindPFlag("mcp.maxDescriptionLength", cmd.Flags().Lookup("max-description-length")); err != nil {
+			return fmt.Errorf("failed to bind max-description-length flag: %w", err)
+		}
+
 		ctx := cmd.Context()
 		wctx := ctx.Value(workspace.WorkspaceContextKey).(types.WorkspaceContext)
 
@@ -78,6 +84,5 @@ Tools provided:
 
 func init() {
 	mcpCmd.Flags().IntP("max-description-length", "", 2000, "Maximum length for description fields before truncation")
-	viper.BindPFlag("mcp.maxDescriptionLength", mcpCmd.Flags().Lookup("max-description-length"))
 	rootCmd.AddCommand(mcpCmd)
 }
