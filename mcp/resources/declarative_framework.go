@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
 	"bennypowers.dev/cem/mcp/templates"
@@ -291,15 +292,7 @@ func fetchAllElementsWithCapabilities(registry types.MCPContext, path string) (i
 	for tagName := range elementMap {
 		elementKeys = append(elementKeys, tagName)
 	}
-
-	// Simple sort implementation
-	for i := 0; i < len(elementKeys); i++ {
-		for j := i + 1; j < len(elementKeys); j++ {
-			if elementKeys[i] > elementKeys[j] {
-				elementKeys[i], elementKeys[j] = elementKeys[j], elementKeys[i]
-			}
-		}
-	}
+	sort.Strings(elementKeys)
 
 	for _, tagName := range elementKeys {
 		element := elementMap[tagName]
@@ -405,15 +398,7 @@ func fetchPackageCollection(registry types.MCPContext, path string) (interface{}
 	for name := range packageMap {
 		packageNames = append(packageNames, name)
 	}
-
-	// Sort package names for stable output
-	for i := 0; i < len(packageNames); i++ {
-		for j := i + 1; j < len(packageNames); j++ {
-			if packageNames[i] > packageNames[j] {
-				packageNames[i], packageNames[j] = packageNames[j], packageNames[i]
-			}
-		}
-	}
+	sort.Strings(packageNames)
 
 	packages := make([]map[string]interface{}, 0, len(packageMap))
 	for _, name := range packageNames {
@@ -422,23 +407,11 @@ func fetchPackageCollection(registry types.MCPContext, path string) (interface{}
 		// Sort elements and modules for stable output
 		elements := make([]string, len(pkg.Elements))
 		copy(elements, pkg.Elements)
-		for i := 0; i < len(elements); i++ {
-			for j := i + 1; j < len(elements); j++ {
-				if elements[i] > elements[j] {
-					elements[i], elements[j] = elements[j], elements[i]
-				}
-			}
-		}
+		sort.Strings(elements)
 
 		modules := make([]string, len(pkg.Modules))
 		copy(modules, pkg.Modules)
-		for i := 0; i < len(modules); i++ {
-			for j := i + 1; j < len(modules); j++ {
-				if modules[i] > modules[j] {
-					modules[i], modules[j] = modules[j], modules[i]
-				}
-			}
-		}
+		sort.Strings(modules)
 
 		packages = append(packages, map[string]interface{}{
 			"name":         name,

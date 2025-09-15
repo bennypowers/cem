@@ -27,6 +27,9 @@ import (
 // Can be customized via config file or --max-description-length flag.
 const maxDescriptionLength = 2000
 
+// Compiled regex for whitespace normalization to avoid recompiling on every call
+var whitespaceRegex = regexp.MustCompile(`\s+`)
+
 // SanitizeDescription sanitizes a description field for safe use in MCP responses
 // Handles length limits and whitespace normalization
 func SanitizeDescription(description string) string {
@@ -46,7 +49,7 @@ func SanitizeDescriptionWithLength(description string, maxLength int) string {
 
 	// Clean up excessive whitespace
 	description = strings.TrimSpace(description)
-	description = regexp.MustCompile(`\s+`).ReplaceAllString(description, " ")
+	description = whitespaceRegex.ReplaceAllString(description, " ")
 
 	return description
 }

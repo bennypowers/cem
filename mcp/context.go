@@ -517,7 +517,7 @@ func (e *MCPElementInfoAdapter) Module() string {
 }
 
 func (e *MCPElementInfoAdapter) Package() string {
-	return e.MCPCustomElementDeclaration.PackageName
+	return e.PackageName
 }
 
 // Member accessors returning manifest types directly
