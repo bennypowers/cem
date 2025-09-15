@@ -61,7 +61,7 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 		require.Len(t, attributes, 1)
 
 		attr := attributes[0]
-		description := attr.Description()
+		description := attr.Description
 		// Template syntax is now preserved as literal text and whitespace normalized
 		assert.Contains(t, description, "{{", "Template syntax should be preserved as literal text")
 		assert.NotContains(t, description, "\n", "Whitespace should be normalized")
@@ -73,7 +73,7 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 		require.Len(t, slots, 1)
 
 		slot := slots[0]
-		description := slot.Description()
+		description := slot.Description
 		// Template syntax is now preserved as literal text and whitespace normalized
 		assert.Contains(t, description, "{{", "Template syntax should be preserved as literal text")
 		assert.NotContains(t, description, "\n", "Whitespace should be normalized")
@@ -85,7 +85,7 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 		require.Len(t, events, 1)
 
 		event := events[0]
-		description := event.Description()
+		description := event.Description
 		// Template syntax is now preserved as literal text and whitespace normalized
 		assert.Contains(t, description, "{{", "Template syntax should be preserved as literal text")
 		assert.NotContains(t, description, "\n", "Whitespace should be normalized")
@@ -97,7 +97,7 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 		require.Len(t, props, 1)
 
 		prop := props[0]
-		description := prop.Description()
+		description := prop.Description
 		// Template syntax is now preserved as literal text and whitespace normalized
 		assert.Contains(t, description, "{{", "Template syntax should be preserved as literal text")
 		assert.NotContains(t, description, "\n", "Whitespace should be normalized")
@@ -109,7 +109,7 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 		require.Len(t, parts, 1)
 
 		part := parts[0]
-		description := part.Description()
+		description := part.Description
 		// Template syntax is now preserved as literal text and whitespace normalized
 		assert.Contains(t, description, "{{", "Template syntax should be preserved as literal text")
 		assert.NotContains(t, description, "\n", "Whitespace should be normalized")
@@ -121,7 +121,7 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 		require.Len(t, states, 1)
 
 		state := states[0]
-		description := state.Description()
+		description := state.Description
 		// Template syntax is now preserved as literal text and whitespace normalized
 		assert.Contains(t, description, "{{", "Template syntax should be preserved as literal text")
 		assert.NotContains(t, description, "\n", "Whitespace should be normalized")

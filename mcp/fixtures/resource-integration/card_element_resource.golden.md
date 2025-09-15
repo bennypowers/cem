@@ -1,118 +1,47 @@
-# card-element Usage Examples
+# Element Reference: `card-element`
 
-## Basic Usage
-```html
-<card-element></card-element>
-```
-
-
-
-
-## With Attributes
-
-### elevation Attribute
-Card elevation level
-- **Type**: number
-- **Default**: 1
-
-```html
-<card-element elevation=1></card-element>
-```
-
-
-
-
-## With Slots
-
-### Default Slot
-Card content
-
-```html
-<card-element>
-  <p>Default slot content</p>
-</card-element>
-```
-
-### header Slot
-Card header
-
-```html
-<card-element>
-  <span slot="header">header content</span>
-</card-element>
-```
-
-### footer Slot
-Card footer
-
-```html
-<card-element>
-  <span slot="footer">footer content</span>
-</card-element>
-```
+**Name:** card-element
 
 
 
 
 
+## API Overview
 
-## CSS Custom Properties
+**Attributes:** 1 configurable properties
+**Slots:** 3 content areas
 
-### --card-background
-Card background color
-- **Syntax**: `<color>`
-- **Initial**: white
+**CSS Properties:** 1 custom properties
+**CSS Parts:** 4 styleable parts
 
-```css
-card-element {
-  --card-background: white;
-}
-```
+
+## Integration
 
 
 
+## Related Resources
 
-## CSS Parts
+- **Attributes:** [`cem://element/card-element/attributes`](cem://element/card-element/attributes)
+- **Slots:** [`cem://element/card-element/slots`](cem://element/card-element/slots)
+- **Events:** [`cem://element/card-element/events`](cem://element/card-element/events)
+- **Styling:** [`cem://element/card-element/css`](cem://element/card-element/css)
 
-### container Part
-Card container
+---
 
-```css
-card-element::part(container) {
-  /* Style the container part */
-  color: /* your color value */;
-}
-```
+## Detailed API Documentation
 
-### header Part
-Card header part
+For comprehensive API details, use these focused resources:
 
-```css
-card-element::part(header) {
-  /* Style the header part */
-  color: /* your color value */;
-}
-```
+- **`cem://element/card-element/attributes`** - Complete attribute reference with types and constraints
+- **`cem://element/card-element/slots`** - Slot documentation and content guidelines
 
-### content Part
-Card content part
-
-```css
-card-element::part(content) {
-  /* Style the content part */
-  color: /* your color value */;
-}
-```
-
-### footer Part
-Card footer part
-
-```css
-card-element::part(footer) {
-  /* Style the footer part */
-  color: /* your color value */;
-}
-```
+- **`cem://element/card-element/css/custom-properties`** - CSS custom properties for theming
+- **`cem://element/card-element/css/parts`** - CSS parts for targeted styling
 
 
+## Related Resources
 
+- **`cem://elements`** - Browse all available elements
+- **`cem://packages`** - Package organization and structure
+- **`cem://guidelines`** - Usage guidelines and best practices
+- **`cem://accessibility`** - Accessibility patterns and requirements

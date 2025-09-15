@@ -3,6 +3,12 @@ uri: cem://element/{tagName}
 name: element
 mimeType: text/markdown
 uriTemplate: true
+dataFetchers:
+  - name: element
+    type: manifest_element
+    path: ""
+    required: true
+template: element
 ---
 
 Detailed information about a specific custom element including usage patterns, examples, and integration guidance. This resource provides comprehensive element documentation optimized for AI-assisted development.

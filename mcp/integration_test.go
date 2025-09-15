@@ -18,6 +18,7 @@ package mcp_test
 
 import (
 	"context"
+	"flag"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,6 +31,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+var update = flag.Bool("update", false, "update golden files")
 
 // getTestRegistry creates a registry using the test fixtures following the existing pattern
 func getTestRegistry(t *testing.T) *mcp.MCPContext {
@@ -55,10 +58,10 @@ func TestSchemaResilientTemplateIntegration(t *testing.T) {
 	resourceDefs, err := resources.Resources(registryAdapter)
 	require.NoError(t, err)
 
-	// Find the guidelines resource
+	// Find the general guidelines resource (not element-specific)
 	var guidelinesURI string
 	for _, resource := range resourceDefs {
-		if strings.Contains(resource.URI, "guidelines") {
+		if resource.URI == "cem://guidelines" {
 			guidelinesURI = resource.URI
 			break
 		}
@@ -134,7 +137,7 @@ func TestSchemaResilientTemplateIntegration(t *testing.T) {
 	// Golden file comparison (update mode)
 	goldenPath := filepath.Join("fixtures", "template-rendering", "schema_resilient_template.golden.md")
 
-	if updateGolden := os.Getenv("UPDATE_GOLDEN"); updateGolden != "" {
+	if *update {
 		// Update golden file
 		err := os.MkdirAll(filepath.Dir(goldenPath), 0755)
 		require.NoError(t, err)
@@ -148,7 +151,7 @@ func TestSchemaResilientTemplateIntegration(t *testing.T) {
 		if goldenData, err := os.ReadFile(goldenPath); err == nil {
 			goldenContent := string(goldenData)
 			if content != goldenContent {
-				t.Logf("Content differs from golden file. Run with UPDATE_GOLDEN=1 to update.")
+				t.Logf("Content differs from golden file. Run with --update to update.")
 				t.Logf("Golden length: %d, Actual length: %d", len(goldenContent), len(content))
 
 				// Show a snippet of the differences for debugging
@@ -161,7 +164,7 @@ func TestSchemaResilientTemplateIntegration(t *testing.T) {
 			}
 		} else {
 			t.Logf("Golden file doesn't exist: %s", goldenPath)
-			t.Log("Run with UPDATE_GOLDEN=1 to create it")
+			t.Log("Run with --update to create it")
 
 			// Show sample output for verification
 			lines := strings.Split(content, "\n")

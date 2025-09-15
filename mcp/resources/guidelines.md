@@ -1,7 +1,17 @@
 ---
 uri: cem://guidelines
 name: guidelines
-mimeType: application/json
+mimeType: text/markdown
+dataFetchers:
+  - name: guidelines
+    type: guidelines_extraction
+    path: ""
+    required: false
+  - name: manifest_overview
+    type: workspace_manifest_overview
+    path: ""
+    required: false
+template: guidelines
 ---
 
 Design system guidelines and best practices extracted from component manifests and documentation. This resource provides comprehensive usage guidance for building consistent, accessible user interfaces.

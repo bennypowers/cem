@@ -2,6 +2,12 @@
 uri: cem://packages
 name: packages
 mimeType: application/json
+dataFetchers:
+  - name: packages
+    type: package_overview
+    path: ""
+    required: true
+responseType: json
 ---
 
 Complete listing of all packages in the workspace containing custom elements manifests. This resource provides the entry point for discovering the component ecosystem organized by package structure.

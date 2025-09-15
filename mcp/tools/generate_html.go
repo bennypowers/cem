@@ -119,43 +119,26 @@ func generateHTMLStructure(element types.ElementInfo, args GenerateHtmlArgs) (st
 		Content:          args.Content,
 	}
 
-	// Separate required and optional attributes
-	for _, attr := range element.Attributes() {
-		if attr.Required() {
-			value := getAttributeValue(attr, args.Attributes)
-			templateData.RequiredAttributes = append(templateData.RequiredAttributes, AttributeWithValue{
-				Attribute: attr,
-				Value:     value,
-			})
-		}
-	}
+	// All attributes are optional in custom elements manifests
+	// (no Required field exists in manifest.Attribute)
 
-	// Add user-provided optional attributes
+	// Add user-provided attributes
 	for name, value := range args.Attributes {
-		isRequired := false
+		// Find the attribute definition if it exists
 		for _, attr := range element.Attributes() {
-			if attr.Required() && attr.Name() == name {
-				isRequired = true
+			if attr.Name == name {
+				templateData.OptionalAttributes = append(templateData.OptionalAttributes, AttributeWithValue{
+					Attribute: attr,
+					Value:     value,
+				})
 				break
-			}
-		}
-		if !isRequired {
-			// Find the attribute definition if it exists
-			for _, attr := range element.Attributes() {
-				if attr.Name() == name {
-					templateData.OptionalAttributes = append(templateData.OptionalAttributes, AttributeWithValue{
-						Attribute: attr,
-						Value:     value,
-					})
-					break
-				}
 			}
 		}
 	}
 
 	// Prepare slot data with example content
 	for _, slot := range element.Slots() {
-		slotName := slot.Name()
+		slotName := slot.Name
 		var exampleContent, defaultContent string
 
 		if slotName == "" {
@@ -187,15 +170,7 @@ func prepareHTMLTemplateData(element types.ElementInfo, args GenerateHtmlArgs, g
 	}
 
 	// Add attribute data with values for the main template
-	for _, attr := range element.Attributes() {
-		if attr.Required() {
-			value := getAttributeValue(attr, args.Attributes)
-			templateData.RequiredAttributes = append(templateData.RequiredAttributes, AttributeWithValue{
-				Attribute: attr,
-				Value:     value,
-			})
-		}
-	}
+	// All attributes are optional in custom elements manifests
 
 	return templateData
 }
@@ -209,15 +184,7 @@ func prepareHTMLTemplateDataWithSchema(element types.ElementInfo, args GenerateH
 	}
 
 	// Add attribute data with values for the main template
-	for _, attr := range element.Attributes() {
-		if attr.Required() {
-			value := getAttributeValue(attr, args.Attributes)
-			templateData.RequiredAttributes = append(templateData.RequiredAttributes, AttributeWithValue{
-				Attribute: attr,
-				Value:     value,
-			})
-		}
-	}
+	// All attributes are optional in custom elements manifests
 
 	return templateData
 }
@@ -225,19 +192,17 @@ func prepareHTMLTemplateDataWithSchema(element types.ElementInfo, args GenerateH
 // getAttributeValue determines the value to use for an attribute
 func getAttributeValue(attr types.Attribute, providedAttrs map[string]string) string {
 	// Check if user provided a value
-	if value, exists := providedAttrs[attr.Name()]; exists {
+	if value, exists := providedAttrs[attr.Name]; exists {
 		return value
 	}
 
 	// Use default value if available
-	if attr.Default() != "" {
-		return attr.Default()
+	if attr.Default != "" {
+		return attr.Default
 	}
 
-	// Use first valid value if available
-	if len(attr.Values()) > 0 {
-		return attr.Values()[0]
-	}
+	// No enum values available from manifest directly
+	// (would need to parse attr.Type.Text for union types)
 
 	// Fallback to placeholder
 	return "value"

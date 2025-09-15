@@ -7,23 +7,24 @@
 
 {{schemaDesc .SchemaDefinitions "Attribute"}}
 
+| Attribute | Type | Default | Summary |
+| --------- | ---- | ------- | ------- |
+{{range .Element.Attributes}}| `{{.Name}}` | {{if .Type}}`{{.Type.Text}}`{{else}}-{{end}} | {{if .Default}}`{{.Default}}`{{else}}-{{end}} | {{if .Summary}}{{.Summary}}{{else if .Description}}{{.Description}}{{else}}-{{end}} |
+{{end}}
+
+{{if gt (len .Element.Attributes) 0}}
+## Detailed Attribute Information
+
 {{range .Element.Attributes}}
-### `{{.Name}}`{{if .Required}} *(required)*{{end}}
+### `{{.Name}}`
+{{if .Summary}}{{.Summary}}{{end}}
+{{if .Description}}
 
-{{if .Description}}{{.Description}}{{end}}
+{{.Description}}{{end}}
 
-**Type:** `{{.Type}}`{{if .Default}} | **Default:** `{{.Default}}`{{end}}{{if .Values}} | **Values:** {{range $i, $v := .Values}}{{if $i}}, {{end}}`{{$v}}`{{end}}{{end}}
+**Type:** `{{.Type}}`{{if .Default}} | **Default:** `{{.Default}}`{{end}}{{if .IsEnum}} | **Values:** {{range $i, $v := .GetEnumValues}}{{if $i}}, {{end}}`{{$v}}`{{end}}{{end}}
 
-{{if .Guidelines}}
-**Guidelines:**
-{{range .Guidelines}}- {{.}}
-{{end}}{{end}}
-
-{{if .Examples}}
-**Examples:**
-{{range .Examples}}- {{.}}
-{{end}}{{end}}
-
+{{end}}
 {{end}}
 
 ## HTML Usage Examples
@@ -33,10 +34,10 @@
 <{{.Element.TagName}}></{{.Element.TagName}}>
 
 <!-- With attributes -->
-<{{.Element.TagName}}{{range .Element.Attributes}}{{if .Required}} {{.Name}}={{if .Default}}"{{.Default}}"{{else}}{{if .Values}}"{{index .Values 0}}"{{else}}"{{.Type}}"{{end}}{{end}}{{end}}{{end}}></{{.Element.TagName}}>
+<{{.Element.TagName}}{{range .Element.Attributes}}{{if false}} {{.Name}}={{if .Default}}"{{.Default}}"{{else}}{{if .IsEnum}}"{{index .GetEnumValues 0}}"{{else}}"{{.Type}}"{{end}}{{end}}{{end}}{{end}}></{{.Element.TagName}}>
 
 <!-- With optional attributes -->
-<{{.Element.TagName}}{{range .Element.Attributes}}{{if not .Required}} {{.Name}}={{if .Default}}"{{.Default}}"{{else}}{{if .Values}}"{{index .Values 0}}"{{else}}"{{.Type}}"{{end}}{{end}}{{end}}{{end}}></{{.Element.TagName}}>
+<{{.Element.TagName}}{{range .Element.Attributes}}{{if true}} {{.Name}}={{if .Default}}"{{.Default}}"{{else}}{{if .IsEnum}}"{{index .GetEnumValues 0}}"{{else}}"{{.Type}}"{{end}}{{end}}{{end}}{{end}}></{{.Element.TagName}}>
 ```
 
 {{else}}

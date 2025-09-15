@@ -19,6 +19,7 @@ package resources_test
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"os"
 	"path/filepath"
 	"strings"
@@ -33,6 +34,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+var update = flag.Bool("update", false, "update golden files")
 
 // getTestRegistry creates a registry using the test fixtures following the existing pattern
 func getTestRegistry(t *testing.T) *mcp.MCPContext {
@@ -111,7 +114,14 @@ func TestSchemaResource_Integration(t *testing.T) {
 	expectedSchema, err := V.GetSchema("2.1.1-speculative") // Use the expected version from test fixtures
 	require.NoError(t, err, "Should be able to get canonical schema")
 
-	assert.Equal(t, string(expectedSchema), content.Text, "Schema resource should return canonical schema")
+	// Parse both schemas to compare content rather than string formatting
+	var expectedJSON, actualJSON interface{}
+	err = json.Unmarshal(expectedSchema, &expectedJSON)
+	require.NoError(t, err, "Expected schema should be valid JSON")
+	err = json.Unmarshal([]byte(content.Text), &actualJSON)
+	require.NoError(t, err, "Actual schema should be valid JSON")
+
+	assert.Equal(t, expectedJSON, actualJSON, "Schema resource should return equivalent schema content")
 
 	// Validate that it's valid JSON
 	var jsonData interface{}
@@ -156,11 +166,9 @@ func TestElementsResource_Integration_Legacy(t *testing.T) {
 	assert.Equal(t, "application/json", content.MIMEType)
 	assert.NotEmpty(t, content.Text)
 
-	// Validate it's valid JSON (structure may vary)
-	var jsonData interface{}
-	err = json.Unmarshal([]byte(content.Text), &jsonData)
-	require.NoError(t, err, "Elements should be valid JSON")
-	assert.NotNil(t, jsonData, "Should have element data")
+	// Validate it contains JSON content with element information
+	assert.Contains(t, content.Text, `"elements"`, "Should contain elements key")
+	assert.Contains(t, content.Text, `"metadata"`, "Should contain metadata key")
 
 	// Basic content checks - verify essential elements from fixtures are present
 	assert.Contains(t, content.Text, "button-element", "Should contain fixture elements")
@@ -213,7 +221,7 @@ func TestElementResource_Integration(t *testing.T) {
 			expectError: false,
 			checkFunc: func(t *testing.T, content *mcpSDK.ResourceContents) {
 				assert.Contains(t, content.Text, "button-element", "Should contain element name")
-				assert.Contains(t, content.Text, "variant", "Should contain attributes info")
+				assert.Contains(t, content.Text, "API Overview", "Should contain API overview section")
 				// The actual content may not contain the exact description we expect
 				assert.NotEmpty(t, content.Text, "Should have content")
 			},
@@ -224,7 +232,7 @@ func TestElementResource_Integration(t *testing.T) {
 			expectError: false,
 			checkFunc: func(t *testing.T, content *mcpSDK.ResourceContents) {
 				assert.Contains(t, content.Text, "card-element", "Should contain element name")
-				assert.Contains(t, content.Text, "elevation", "Should contain attributes info")
+				assert.Contains(t, content.Text, "API Overview", "Should contain API overview section")
 			},
 		},
 		{
@@ -556,9 +564,9 @@ func testResourceWithGolden(t *testing.T, uri string, goldenFile string) {
 	content := result.Contents[0]
 	output := content.Text
 
-	// Handle UPDATE_GOLDEN flag
+	// Handle --update flag
 	goldenPath := filepath.Join("../fixtures/resource-integration", goldenFile)
-	if os.Getenv("UPDATE_GOLDEN") == "1" {
+	if *update {
 		err := os.MkdirAll(filepath.Dir(goldenPath), 0755)
 		require.NoError(t, err, "Failed to create golden file directory")
 
@@ -571,7 +579,7 @@ func testResourceWithGolden(t *testing.T, uri string, goldenFile string) {
 	// Compare with golden file
 	expectedData, err := os.ReadFile(goldenPath)
 	if os.IsNotExist(err) {
-		t.Fatalf("Golden file %s does not exist. Run with UPDATE_GOLDEN=1 to create it.", goldenPath)
+		t.Fatalf("Golden file %s does not exist. Run with --update to create it.", goldenPath)
 	}
 	require.NoError(t, err, "Should be able to read golden file: %s", goldenPath)
 

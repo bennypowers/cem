@@ -101,7 +101,8 @@ func testSchemaVersionWithGolden(t *testing.T, version string) {
 func testWithGoldenFile(t *testing.T, actual, goldenFileName string) {
 	goldenPath := filepath.Join("..", "fixtures", "multiple-schemas", goldenFileName)
 
-	if os.Getenv("UPDATE_GOLDEN") == "1" {
+	// Check for update mode via environment variable (internal test pattern)
+	if updateGolden := os.Getenv("UPDATE_GOLDEN"); updateGolden != "" {
 		err := os.WriteFile(goldenPath, []byte(actual), 0644)
 		require.NoError(t, err, "Failed to update golden file %s", goldenPath)
 		t.Logf("Updated golden file: %s", goldenPath)
@@ -147,7 +148,8 @@ func testBackwardsCompatibilityWithGolden(t *testing.T, version string) {
 func testBackwardsCompatibilityWithGoldenFile(t *testing.T, actual, goldenFileName string) {
 	goldenPath := filepath.Join("..", "fixtures", "schema-backwards-compatibility", goldenFileName)
 
-	if os.Getenv("UPDATE_GOLDEN") == "1" {
+	// Check for update mode via environment variable (internal test pattern)
+	if updateGolden := os.Getenv("UPDATE_GOLDEN"); updateGolden != "" {
 		err := os.WriteFile(goldenPath, []byte(actual), 0644)
 		require.NoError(t, err, "Failed to update golden file %s", goldenPath)
 		t.Logf("Updated golden file: %s", goldenPath)

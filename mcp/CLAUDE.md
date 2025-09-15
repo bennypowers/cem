@@ -39,13 +39,17 @@ This approach respects element authors' documented intent while enabling intelli
 **Implementation**: All tool responses use Go templates with embedded manifest data:
 
 ```
-mcp/tools/templates/
-├── css_properties.md      # CSS custom properties guidance
-├── css_parts.md           # CSS parts styling patterns  
-├── css_states.md          # CSS custom states usage
-├── theming_guidance.md    # Theme-aware styling advice
-├── basic_styling.md       # Fallback for elements without CSS APIs
-└── responsive_guidance.md # Responsive design patterns
+mcp/resources/templates/
+├── element.md             # Element overview and API summary
+├── element_attributes.md  # Attribute documentation and constraints
+├── element_events.md      # Event patterns and JavaScript integration
+├── element_slots.md       # Slot usage and content guidelines
+├── element_styling.md     # CSS customization with properties, parts, states
+├── elements.md            # Elements discovery and capabilities overview
+├── packages.md            # Package structure and organization
+├── schema.md              # JSON schema definitions and validation
+├── accessibility.md       # Accessibility patterns and requirements
+└── guidelines.md          # Usage guidelines and best practices
 ```
 
 **Template Features**:
@@ -120,10 +124,13 @@ Building on manifest data, the template system provides **rich, contextual guida
 cmd/mcp.go              # MCP command implementation
 mcp/
 ├── server.go           # MCP server implementation
-├── resources/          # Resource providers (manifests, schemas)
-├── tools/              # Interactive tools for HTML generation
-├── registry.go         # Manifest registry management
-└── templates/          # Template system for rich context
+├── resources/          # Declarative resource framework with YAML configs
+│   ├── *.md            # Resource configurations with YAML frontmatter
+│   ├── templates/      # Go template files for rich context rendering
+│   └── declarative_framework.go  # Data fetchers and template engine
+├── tools/              # Interactive tools for HTML generation and validation
+├── context.go          # Manifest registry and workspace context
+└── templates/          # Core template rendering engine
 ```
 
 **Available Resources**:
@@ -350,3 +357,67 @@ The MCP server provides comprehensive accessibility validation through its resou
 - **Keyboard accessibility**: All functionality available via keyboard
 - **AI assistance quality**: AI suggestions improve accessibility compliance rates
 - **Developer experience**: Accessibility validation integrated seamlessly into development workflow
+
+## Current Implementation: Declarative Architecture Details
+
+### How It Works: Technical Implementation
+
+The MCP server uses a **declarative tool framework** with a **Data + Context + LLM Decision Making** approach:
+
+#### Declarative Architecture
+
+The server uses a data-driven architecture where tools are defined through YAML configuration rather than hardcoded logic:
+
+1. **📊 Data Fetchers** - Extract specific manifest data using JSON path queries
+2. **📋 Template Rendering** - Combine data with Go templates for rich, contextual responses
+3. **📖 Schema Integration** - Provide JSON schema context for AI understanding
+4. **🧠 Intelligent Context** - Present comprehensive information while letting AI make smart decisions
+
+#### Core Philosophy
+
+1. **📊 Manifest Data** - Your component definitions, CSS APIs, constraints
+2. **📖 Rich Context** - Usage patterns, guidelines, best practices, schema definitions
+3. **🧠 AI Decisions** - AI chooses appropriate values based on provided context
+
+This means no hardcoded suggestions - just rich context that enables intelligent decisions about component usage and styling.
+
+#### Benefits of the Declarative Approach
+
+- **🔧 Drop-in Resource Support** - New resources can be added with just YAML configuration
+- **📝 Template-Driven Content** - Rich responses generated from your manifest data
+- **⚡ Reduced Maintenance** - 77% less Go code to maintain
+- **🎯 Focused Resources** - Specialized resources for attributes, slots, events, CSS APIs
+- **🔄 Consistent Output** - All resources use the same data processing pipeline
+- **🚀 RESTful Architecture** - Resources follow web standards for caching and access
+- **📊 Granular Access** - Optional sub-resource paths for specific items (e.g., `/attributes/{name}`)
+
+### Architecture: Resources as Database
+
+The MCP server follows a **"manifests as database, resources as API"** principle:
+
+#### 📊 Manifest Database
+Your custom elements manifests serve as a structured database of component information, providing:
+- Type definitions and constraints
+- Usage guidelines and patterns
+- Design system integration rules
+- Accessibility requirements
+
+#### 🔗 Declarative Resources
+Declarative resources provide comprehensive access to this database through RESTful endpoints:
+
+**Element Information:**
+- `cem://element/{tagName}/attributes` - Attribute documentation and constraints
+- `cem://element/{tagName}/slots` - Content guidelines and accessibility
+- `cem://element/{tagName}/events` - Event patterns and integration
+
+**CSS Styling:**
+- `cem://element/{tagName}/css/parts` - CSS parts for targeted styling
+- `cem://element/{tagName}/css/custom-properties` - Theming and customization
+- `cem://element/{tagName}/css/states` - Interactive state styling
+
+#### ⚡ Action Tools
+Core tools perform concrete actions using the resource data:
+- **`generate_html`** - Creates proper HTML structure
+- **`validate_html`** - Ensures manifest compliance
+
+This architecture separates **information access** (resources) from **actions** (tools), providing better performance, caching, and a cleaner API surface.

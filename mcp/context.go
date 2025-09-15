@@ -41,7 +41,7 @@ type MCPContext struct {
 	workspace       types.WorkspaceContext
 	lspRegistry     *LSP.Registry
 	documentManager lspTypes.DocumentManager
-	mcpCache        map[string]*ElementInfo // Cache for converted MCP elements
+	mcpCache        map[string]MCPTypes.ElementInfo // Cache for converted MCP elements
 
 	// Lazy-computed cached values for performance
 	commonPrefixes     []string // Common element tag name prefixes
@@ -51,202 +51,17 @@ type MCPContext struct {
 	mu sync.RWMutex
 }
 
-// ItemKind defines the type of item
-type ItemKind string
-
-const (
-	KindAttribute   ItemKind = "attribute"
-	KindSlot        ItemKind = "slot"
-	KindEvent       ItemKind = "event"
-	KindCssPart     ItemKind = "css-part"
-	KindCssProperty ItemKind = "css-property"
-	KindCssState    ItemKind = "css-state"
-)
-
-// Item is the base interface that all element items implement
-type Item interface {
-	Name() string
-	Description() string
-	Guidelines() []string
-	Examples() []string
-	Kind() ItemKind
+// MCPCustomElementDeclaration embeds manifest types with MCP-specific data
+type MCPCustomElementDeclaration struct {
+	*M.RenderableCustomElementDeclaration
+	Guidelines   []string `json:"guidelines,omitempty"`
+	CacheKey     string   `json:"cacheKey,omitempty"`
+	ModulePath   string   `json:"modulePath,omitempty"`
+	PackageName  string   `json:"packageName,omitempty"`
 }
 
-// Typed interface for items that have a type (attributes, events)
-type Typed interface {
-	Item
-	Type() string
-}
+// Use the interface from mcp/types instead of struct alias
 
-// Defaultable interface for items that have default values
-type Defaultable interface {
-	Item
-	Default() string
-}
-
-// Enumerable interface for items that have enum/union values
-type Enumerable interface {
-	Item
-	Values() []string
-}
-
-// Attribute interface combines multiple capabilities
-type Attribute interface {
-	Typed
-	Defaultable
-	Enumerable
-	Required() bool
-}
-
-// Event interface for custom events
-type Event interface {
-	Typed
-	isEvent() // Marker method to distinguish events
-}
-
-// Slot interface for content slots
-type Slot interface {
-	Item
-	isSlot() // Marker method to distinguish slots
-}
-
-// CssProperty interface for CSS custom properties
-type CssProperty interface {
-	Item
-	Syntax() string
-	Inherits() bool
-	Initial() string
-}
-
-// CssPart interface for CSS parts
-type CssPart interface {
-	Item
-	isCssPart() // Marker method to distinguish CSS parts
-}
-
-// CssState interface for CSS custom states
-type CssState interface {
-	Item
-	isCssState() // Marker method to distinguish CSS states
-}
-
-// Code generation for MCP adapter types.
-// This generates type-safe adapter implementations that wrap manifest types
-// with the MCP-specific Item interface. The env vars ensure the generator
-// runs on the host architecture even during cross-compilation builds.
-//
-//go:generate env GOOS= GOARCH= go run ./tools/gen-adapters
-
-// JSON marshaling helper types
-type itemJSON struct {
-	Kind        ItemKind `json:"kind"`
-	Name        string   `json:"name"`
-	Description string   `json:"description,omitempty"`
-	Guidelines  []string `json:"guidelines,omitempty"`
-	Examples    []string `json:"examples,omitempty"`
-
-	// Optional fields based on type
-	Type     *string  `json:"type,omitempty"`
-	Default  *string  `json:"default,omitempty"`
-	Required *bool    `json:"required,omitempty"`
-	Values   []string `json:"values,omitempty"`
-
-	Syntax   *string `json:"syntax,omitempty"`
-	Inherits *bool   `json:"inherits,omitempty"`
-	Initial  *string `json:"initial,omitempty"`
-}
-
-// ElementInfo contains enhanced element information for MCP context
-type ElementInfo struct {
-	TagName     string                 `json:"tagName"`
-	Name        string                 `json:"name"`
-	Description string                 `json:"description,omitempty"`
-	Module      string                 `json:"module,omitempty"`
-	Package     string                 `json:"package,omitempty"`
-	Items       []Item                 `json:"items"`
-	Guidelines  []string               `json:"guidelines,omitempty"`
-	Examples    []ExampleInfo          `json:"examples,omitempty"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
-}
-
-// Type-safe convenience accessors for ElementInfo
-
-// Attributes returns all attribute items
-func (e *ElementInfo) Attributes() []Attribute {
-	var attrs []Attribute
-	for _, item := range e.Items {
-		if attr, ok := item.(Attribute); ok {
-			attrs = append(attrs, attr)
-		}
-	}
-	return attrs
-}
-
-// Slots returns all slot items
-func (e *ElementInfo) Slots() []Slot {
-	var slots []Slot
-	for _, item := range e.Items {
-		if slot, ok := item.(Slot); ok {
-			slots = append(slots, slot)
-		}
-	}
-	return slots
-}
-
-// Events returns all event items
-func (e *ElementInfo) Events() []Event {
-	var events []Event
-	for _, item := range e.Items {
-		if event, ok := item.(Event); ok {
-			events = append(events, event)
-		}
-	}
-	return events
-}
-
-// CssProperties returns all CSS property items
-func (e *ElementInfo) CssProperties() []CssProperty {
-	var props []CssProperty
-	for _, item := range e.Items {
-		if prop, ok := item.(CssProperty); ok {
-			props = append(props, prop)
-		}
-	}
-	return props
-}
-
-// CssParts returns all CSS part items
-func (e *ElementInfo) CssParts() []CssPart {
-	var parts []CssPart
-	for _, item := range e.Items {
-		if part, ok := item.(CssPart); ok {
-			parts = append(parts, part)
-		}
-	}
-	return parts
-}
-
-// CssStates returns all CSS state items
-func (e *ElementInfo) CssStates() []CssState {
-	var states []CssState
-	for _, item := range e.Items {
-		if state, ok := item.(CssState); ok {
-			states = append(states, state)
-		}
-	}
-	return states
-}
-
-// ItemsByKind returns all items of a specific kind
-func (e *ElementInfo) ItemsByKind(kind ItemKind) []Item {
-	var items []Item
-	for _, item := range e.Items {
-		if item.Kind() == kind {
-			items = append(items, item)
-		}
-	}
-	return items
-}
 
 // ExampleInfo contains usage examples
 type ExampleInfo struct {
@@ -256,61 +71,6 @@ type ExampleInfo struct {
 	Language    string `json:"language,omitempty"`
 }
 
-// Factory functions for creating items
-
-// NewAttributeItem creates a new attribute item from manifest data
-func NewAttributeItem(attr M.Attribute, guidelines []string, examples []string) Attribute {
-	return AttributeMcpAdapter{
-		Attribute:  &attr,
-		guidelines: guidelines,
-		examples:   examples,
-	}
-}
-
-// NewSlotItem creates a new slot item from manifest data
-func NewSlotItem(slot M.Slot, guidelines []string, examples []string) Slot {
-	return SlotMcpAdapter{
-		Slot:       &slot,
-		guidelines: guidelines,
-		examples:   examples,
-	}
-}
-
-// NewEventItem creates a new event item from manifest data
-func NewEventItem(event M.Event, guidelines []string, examples []string) Event {
-	return EventMcpAdapter{
-		Event:      &event,
-		guidelines: guidelines,
-		examples:   examples,
-	}
-}
-
-// NewCssPropertyItem creates a new CSS property item from manifest data
-func NewCssPropertyItem(prop M.CssCustomProperty, guidelines []string, examples []string) CssProperty {
-	return CssPropertyMcpAdapter{
-		CssCustomProperty: &prop,
-		guidelines:        guidelines,
-		examples:          examples,
-	}
-}
-
-// NewCssPartItem creates a new CSS part item from manifest data
-func NewCssPartItem(part M.CssPart, guidelines []string, examples []string) CssPart {
-	return CssPartMcpAdapter{
-		CssPart:    &part,
-		guidelines: guidelines,
-		examples:   examples,
-	}
-}
-
-// NewCssStateItem creates a new CSS state item from manifest data
-func NewCssStateItem(state M.CssCustomState, guidelines []string, examples []string) CssState {
-	return CssStateMcpAdapter{
-		CssCustomState: &state,
-		guidelines:     guidelines,
-		examples:       examples,
-	}
-}
 
 // Helper functions
 
@@ -322,35 +82,6 @@ func getTypeString(t *M.Type) string {
 	return t.Text
 }
 
-// extractEnumValues splits TypeScript union types on | and returns parts verbatim
-//
-// Examples:
-//   - "\"primary\" | \"secondary\"" → ["\"primary\"", "\"secondary\""]
-//   - "boolean | string" → ["boolean", "string"]
-//   - "Color.Red | Color.Blue" → ["Color.Red", "Color.Blue"]
-//   - "ComponentSize" → [] (no | separator)
-//
-// Returns empty slice when no | separator found.
-func extractEnumValues(t *M.Type) []string {
-	var values []string
-	if t == nil || t.Text == "" {
-		return values
-	}
-
-	// Split union types on | and pass parts verbatim
-	text := t.Text
-	if strings.Contains(text, "|") {
-		parts := strings.Split(text, "|")
-		for _, part := range parts {
-			part = strings.TrimSpace(part) // Only trim whitespace
-			if part != "" {
-				values = append(values, part) // Pass verbatim - let LLM parse
-			}
-		}
-	}
-
-	return values
-}
 
 // NewMCPContext creates a new MCP context
 func NewMCPContext(workspace types.WorkspaceContext) (*MCPContext, error) {
@@ -372,7 +103,7 @@ func NewMCPContext(workspace types.WorkspaceContext) (*MCPContext, error) {
 		workspace:       workspace,
 		lspRegistry:     lspRegistry,
 		documentManager: documentManager,
-		mcpCache:        make(map[string]*ElementInfo),
+		mcpCache:        make(map[string]MCPTypes.ElementInfo),
 	}
 
 	return context, nil
@@ -386,7 +117,7 @@ func (ctx *MCPContext) LoadManifests() error {
 	helpers.SafeDebugLog("Loading manifests for MCP context")
 
 	// Clear the cache when reloading manifests
-	ctx.mcpCache = make(map[string]*ElementInfo)
+	ctx.mcpCache = make(map[string]MCPTypes.ElementInfo)
 
 	// Invalidate computed cache
 	ctx.computedCacheValid = false
@@ -460,8 +191,7 @@ func (ctx *MCPContext) ensureComputedCacheValidLocked() {
 	elements := make([]MCPTypes.ElementInfo, 0, len(tagNames))
 	for _, tagName := range tagNames {
 		if info, err := ctx.GetElementInfo(tagName); err == nil {
-			adapter := &ElementInfoAdapter{ElementInfo: info}
-			elements = append(elements, adapter)
+			elements = append(elements, info)
 		}
 	}
 
@@ -512,7 +242,7 @@ func (ctx *MCPContext) computeAllCSSProperties(elements []MCPTypes.ElementInfo) 
 
 	for _, element := range elements {
 		for _, prop := range element.CssProperties() {
-			propertySet[prop.Name()] = true
+			propertySet[prop.Name] = true
 		}
 	}
 
@@ -530,7 +260,7 @@ func (ctx *MCPContext) DocumentManager() lspTypes.DocumentManager {
 }
 
 // GetElementInfo returns enhanced element information for MCP context
-func (ctx *MCPContext) GetElementInfo(tagName string) (*ElementInfo, error) {
+func (ctx *MCPContext) GetElementInfo(tagName string) (MCPTypes.ElementInfo, error) {
 	ctx.mu.RLock()
 
 	// Check cache first
@@ -559,7 +289,7 @@ func (ctx *MCPContext) GetElementInfo(tagName string) (*ElementInfo, error) {
 }
 
 // GetAllElements returns all available elements
-func (ctx *MCPContext) GetAllElements() map[string]*ElementInfo {
+func (ctx *MCPContext) GetAllElements() map[string]MCPTypes.ElementInfo {
 	ctx.mu.RLock()
 	// Extract tag names while holding the lock
 	tagNames := make([]string, 0, len(ctx.lspRegistry.Elements))
@@ -569,7 +299,7 @@ func (ctx *MCPContext) GetAllElements() map[string]*ElementInfo {
 	ctx.mu.RUnlock()
 
 	// Convert elements outside the lock to avoid deadlock
-	elements := make(map[string]*ElementInfo)
+	elements := make(map[string]MCPTypes.ElementInfo)
 	for _, tagName := range tagNames {
 		if info, err := ctx.GetElementInfo(tagName); err == nil {
 			elements[tagName] = info
@@ -673,56 +403,31 @@ func (ctx *MCPContext) selectBestSchemaVersion(versions []string) string {
 
 // Helper methods for converting LSP types to MCP types
 
-// convertElement converts a manifest element to enhanced MCP format using the new interface-based design
-func (ctx *MCPContext) convertElement(element *M.CustomElement, tagName string) *ElementInfo {
-	var items []Item
+// convertElement converts a manifest element to enhanced MCP format using the embedding approach
+func (ctx *MCPContext) convertElement(element *M.CustomElement, tagName string) MCPTypes.ElementInfo {
+	// Create an MCPCustomElementDeclaration with embedded manifest data
+	// Note: Since we only have a CustomElement, we'll create a minimal RenderableCustomElementDeclaration
+	// In practice, this should be called with the full declaration from the registry
 
-	// Convert attributes (examples now provided via template-driven resources)
-	for _, attr := range element.Attributes {
-		guidelines := ctx.extractGuidelines(attr.Description)
-		items = append(items, NewAttributeItem(attr, guidelines, []string{}))
+	// For now, create a minimal renderable declaration
+	// TODO: Update this when we have access to the full RenderableCustomElementDeclaration
+	decl := &M.CustomElementDeclaration{
+		CustomElement: *element,
+	}
+	decl.Name = tagName
+	decl.TagName = tagName
+
+	renderable := &M.RenderableCustomElementDeclaration{
+		CustomElementDeclaration: decl,
 	}
 
-	// Convert slots (examples now provided via template-driven resources)
-	for _, slot := range element.Slots {
-		guidelines := ctx.extractGuidelines(slot.Description)
-		items = append(items, NewSlotItem(slot, guidelines, []string{}))
+	mcpElement := &MCPCustomElementDeclaration{
+		RenderableCustomElementDeclaration: renderable,
+		Guidelines:                        ctx.extractGuidelinesFromElement(element),
 	}
 
-	// Convert events (examples now provided via template-driven resources)
-	for _, event := range element.Events {
-		guidelines := ctx.extractGuidelines(event.Description)
-		items = append(items, NewEventItem(event, guidelines, []string{}))
-	}
-
-	// Convert CSS properties (examples now provided via template-driven resources)
-	for _, prop := range element.CssProperties {
-		guidelines := ctx.extractGuidelines(prop.Description)
-		items = append(items, NewCssPropertyItem(prop, guidelines, []string{}))
-	}
-
-	// Convert CSS parts (examples now provided via template-driven resources)
-	for _, part := range element.CssParts {
-		guidelines := ctx.extractGuidelines(part.Description)
-		items = append(items, NewCssPartItem(part, guidelines, []string{}))
-	}
-
-	// Convert CSS states (examples now provided via template-driven resources)
-	for _, state := range element.CssStates {
-		guidelines := ctx.extractGuidelines(state.Description)
-		items = append(items, NewCssStateItem(state, guidelines, []string{}))
-	}
-
-	return &ElementInfo{
-		TagName:     tagName,
-		Name:        tagName, // Use tag name as name for now
-		Description: "",      // Description not available from embedded CustomElement (would need full declaration)
-		Module:      "",      // Would need module path from element definitions
-		Package:     "",      // Would need package name from element definitions
-		Items:       items,
-		Guidelines:  ctx.extractGuidelinesFromElement(element),
-		Examples:    []ExampleInfo{}, // Examples now provided via template-driven resources
-		Metadata:    make(map[string]interface{}),
+	return &MCPElementInfoAdapter{
+		MCPCustomElementDeclaration: mcpElement,
 	}
 }
 
@@ -799,17 +504,13 @@ func (ctx *MCPContextAdapter) ElementInfo(tagName string) (MCPTypes.ElementInfo,
 	if err != nil {
 		return nil, err
 	}
-	return &ElementInfoAdapter{ElementInfo: element}, nil
+	return element, nil
 }
 
 // AllElements implements MCPTypes.MCPContext interface
 func (ctx *MCPContextAdapter) AllElements() map[string]MCPTypes.ElementInfo {
 	elements := ctx.GetAllElements()
-	adapted := make(map[string]MCPTypes.ElementInfo)
-	for tagName, element := range elements {
-		adapted[tagName] = &ElementInfoAdapter{ElementInfo: element}
-	}
-	return adapted
+	return elements
 }
 
 // GetManifestSchemaVersions implements MCPTypes.MCPContext interface
@@ -823,124 +524,120 @@ func (ctx *MCPContextAdapter) DocumentManager() lspTypes.DocumentManager {
 }
 
 // ElementInfoAdapter implements MCPTypes.ElementInfo interface
-type ElementInfoAdapter struct {
-	*ElementInfo
+// MCPElementInfoAdapter implements MCPTypes.ElementInfo interface for MCP-specific behavior
+type MCPElementInfoAdapter struct {
+	*MCPCustomElementDeclaration
 }
 
-func (e *ElementInfoAdapter) TagName() string { return e.ElementInfo.TagName }
-func (e *ElementInfoAdapter) Name() string    { return e.ElementInfo.Name }
-func (e *ElementInfoAdapter) Description() string {
-	// Sanitize description to prevent template injection
-	return security.SanitizeDescription(e.ElementInfo.Description)
-}
-func (e *ElementInfoAdapter) Module() string       { return e.ElementInfo.Module }
-func (e *ElementInfoAdapter) Package() string      { return e.ElementInfo.Package }
-func (e *ElementInfoAdapter) Guidelines() []string { return e.ElementInfo.Guidelines }
-
-func (e *ElementInfoAdapter) Attributes() []MCPTypes.Attribute {
-	var adapted []MCPTypes.Attribute
-	for _, attr := range e.ElementInfo.Attributes() {
-		adapted = append(adapted, &AttributeAdapter{Attribute: attr})
+// Declaration returns the underlying manifest declaration
+func (e *MCPElementInfoAdapter) Declaration() *M.CustomElementDeclaration {
+	if e.MCPCustomElementDeclaration.CustomElementDeclaration != nil {
+		return e.MCPCustomElementDeclaration.CustomElementDeclaration
 	}
-	return adapted
+	return nil
 }
 
-func (e *ElementInfoAdapter) Slots() []MCPTypes.Slot {
-	var adapted []MCPTypes.Slot
-	for _, slot := range e.ElementInfo.Slots() {
-		adapted = append(adapted, &SlotAdapter{Slot: slot})
+// Convenience accessors that delegate to embedded manifest types
+func (e *MCPElementInfoAdapter) TagName() string {
+	if e.RenderableCustomElementDeclaration != nil {
+		return e.RenderableCustomElementDeclaration.CustomElementDeclaration.TagName
 	}
-	return adapted
+	return ""
 }
 
-func (e *ElementInfoAdapter) Events() []MCPTypes.Event {
-	var adapted []MCPTypes.Event
-	for _, event := range e.ElementInfo.Events() {
-		adapted = append(adapted, &EventAdapter{Event: event})
+// Template-friendly access
+func (e *MCPElementInfoAdapter) Element() *M.CustomElementDeclaration {
+	if e.RenderableCustomElementDeclaration != nil {
+		return e.RenderableCustomElementDeclaration.CustomElementDeclaration
 	}
-	return adapted
+	return nil
 }
 
-func (e *ElementInfoAdapter) CssProperties() []MCPTypes.CssProperty {
-	var adapted []MCPTypes.CssProperty
-	for _, prop := range e.ElementInfo.CssProperties() {
-		adapted = append(adapted, &CssPropertyAdapter{CssProperty: prop})
+func (e *MCPElementInfoAdapter) Name() string {
+	if e.RenderableCustomElementDeclaration != nil {
+		return e.RenderableCustomElementDeclaration.Name()
 	}
-	return adapted
+	return ""
 }
 
-func (e *ElementInfoAdapter) CssParts() []MCPTypes.CssPart {
-	var adapted []MCPTypes.CssPart
-	for _, part := range e.ElementInfo.CssParts() {
-		adapted = append(adapted, &CssPartAdapter{CssPart: part})
+func (e *MCPElementInfoAdapter) Summary() string {
+	if e.RenderableCustomElementDeclaration != nil {
+		// Use the Summary method from manifest types
+		return security.SanitizeDescription(e.RenderableCustomElementDeclaration.Summary())
 	}
-	return adapted
+	return ""
 }
 
-func (e *ElementInfoAdapter) CssStates() []MCPTypes.CssState {
-	var adapted []MCPTypes.CssState
-	for _, state := range e.ElementInfo.CssStates() {
-		adapted = append(adapted, &CssStateAdapter{CssState: state})
+func (e *MCPElementInfoAdapter) Description() string {
+	if e.RenderableCustomElementDeclaration != nil {
+		return security.SanitizeDescription(e.RenderableCustomElementDeclaration.Description())
 	}
-	return adapted
+	return ""
 }
+
+func (e *MCPElementInfoAdapter) Module() string {
+	return e.MCPCustomElementDeclaration.ModulePath
+}
+
+func (e *MCPElementInfoAdapter) Package() string {
+	return e.MCPCustomElementDeclaration.PackageName
+}
+
+// Member accessors returning manifest types directly
+func (e *MCPElementInfoAdapter) Attributes() []M.Attribute {
+	if decl := e.Declaration(); decl != nil {
+		return decl.Attributes
+	}
+	return nil
+}
+
+func (e *MCPElementInfoAdapter) Slots() []M.Slot {
+	if decl := e.Declaration(); decl != nil {
+		return decl.Slots
+	}
+	return nil
+}
+
+func (e *MCPElementInfoAdapter) Events() []M.Event {
+	if decl := e.Declaration(); decl != nil {
+		return decl.Events
+	}
+	return nil
+}
+
+func (e *MCPElementInfoAdapter) CssProperties() []M.CssCustomProperty {
+	if decl := e.Declaration(); decl != nil {
+		return decl.CssProperties
+	}
+	return nil
+}
+
+func (e *MCPElementInfoAdapter) CssParts() []M.CssPart {
+	if decl := e.Declaration(); decl != nil {
+		return decl.CssParts
+	}
+	return nil
+}
+
+func (e *MCPElementInfoAdapter) CssStates() []M.CssCustomState {
+	if decl := e.Declaration(); decl != nil {
+		return decl.CssStates
+	}
+	return nil
+}
+
+
+// MCP-specific behavior
+func (e *MCPElementInfoAdapter) Guidelines() []string {
+	return e.MCPCustomElementDeclaration.Guidelines
+}
+
+// Legacy alias for transition
+type ElementInfoAdapter = MCPElementInfoAdapter
+
 
 func (e *ElementInfoAdapter) Examples() []MCPTypes.Example {
-	var adapted []MCPTypes.Example
-	for _, example := range e.ElementInfo.Examples {
-		adapted = append(adapted, MCPTypes.ExampleInfo{
-			TitleValue:       example.Title,
-			DescriptionValue: example.Description,
-			CodeValue:        example.Code,
-			LanguageValue:    example.Language,
-		})
-	}
-	return adapted
+	// TODO: Extract examples from manifest if available
+	return []MCPTypes.Example{}
 }
 
-func (e *ElementInfoAdapter) ItemsByKind(kind string) []MCPTypes.Item {
-	var adapted []MCPTypes.Item
-	items := e.ElementInfo.ItemsByKind(ItemKind(kind))
-	for _, item := range items {
-		switch v := item.(type) {
-		case Attribute:
-			adapted = append(adapted, &AttributeAdapter{Attribute: v})
-		case Slot:
-			adapted = append(adapted, &SlotAdapter{Slot: v})
-		case Event:
-			adapted = append(adapted, &EventAdapter{Event: v})
-		case CssProperty:
-			adapted = append(adapted, &CssPropertyAdapter{CssProperty: v})
-		case CssPart:
-			adapted = append(adapted, &CssPartAdapter{CssPart: v})
-		case CssState:
-			adapted = append(adapted, &CssStateAdapter{CssState: v})
-		}
-	}
-	return adapted
-}
-
-// Item adapters
-type AttributeAdapter struct{ Attribute }
-
-func (a *AttributeAdapter) Kind() string { return string(a.Attribute.Kind()) }
-
-type SlotAdapter struct{ Slot }
-
-func (s *SlotAdapter) Kind() string { return string(s.Slot.Kind()) }
-
-type EventAdapter struct{ Event }
-
-func (e *EventAdapter) Kind() string { return string(e.Event.Kind()) }
-
-type CssPropertyAdapter struct{ CssProperty }
-
-func (c *CssPropertyAdapter) Kind() string { return string(c.CssProperty.Kind()) }
-
-type CssPartAdapter struct{ CssPart }
-
-func (c *CssPartAdapter) Kind() string { return string(c.CssPart.Kind()) }
-
-type CssStateAdapter struct{ CssState }
-
-func (c *CssStateAdapter) Kind() string { return string(c.CssState.Kind()) }

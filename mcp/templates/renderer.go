@@ -27,6 +27,7 @@ import (
 	"text/template"
 
 	"bennypowers.dev/cem/mcp/helpers"
+	"bennypowers.dev/cem/mcp/security"
 )
 
 // TemplatePool provides thread-safe template rendering with instance pooling
@@ -202,6 +203,9 @@ func createSecureFuncMap() template.FuncMap {
 		},
 		"add": func(a, b int) int {
 			return a + b
+		},
+		"sanitize": func(input string) string {
+			return security.SanitizeDescription(input)
 		},
 	}
 }

@@ -2,6 +2,12 @@
 uri: cem://elements
 name: elements
 mimeType: application/json
+dataFetchers:
+  - name: elements
+    type: all_elements_with_capabilities
+    path: ""
+    required: true
+responseType: json
 ---
 
 Complete listing of all custom element declarations across all packages in the workspace. This resource provides a comprehensive view of available elements for discovery and planning.

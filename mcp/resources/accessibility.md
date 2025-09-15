@@ -1,7 +1,17 @@
 ---
 uri: cem://accessibility
 name: accessibility
-mimeType: application/json
+mimeType: text/markdown
+dataFetchers:
+  - name: accessibility_patterns
+    type: accessibility_extraction
+    path: ""
+    required: false
+  - name: manifest_context
+    type: workspace_manifest_overview
+    path: ""
+    required: false
+template: accessibility
 ---
 
 Comprehensive accessibility patterns, guidelines, and validation rules for custom elements. This resource provides WCAG 2.1 AA compliance guidance and implementation patterns for building accessible web components.

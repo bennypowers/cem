@@ -31,6 +31,11 @@ func init() {
 	templates.RegisterTemplateSource("resources", &resourcesTemplateFiles)
 }
 
+// GetTemplateFS returns the embedded template filesystem for debugging
+func GetTemplateFS() *embed.FS {
+	return &resourcesTemplateFiles
+}
+
 // ManifestContext represents context combining schema definitions with user manifest data
 type ManifestContext struct {
 	// Schema context - what fields mean according to custom elements spec
@@ -93,3 +98,4 @@ type ExtractedGuideline struct {
 	Type      string // Type of source ("element" or "attribute")
 	Guideline string // The extracted guideline text
 }
+

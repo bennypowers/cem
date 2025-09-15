@@ -16,7 +16,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package types
 
-import "bennypowers.dev/cem/lsp/types"
+import (
+	"bennypowers.dev/cem/lsp/types"
+	"bennypowers.dev/cem/manifest"
+)
 
 // MCPContext interface for accessing custom elements manifest data
 // This allows tools to access context without circular dependency
@@ -32,64 +35,40 @@ type MCPContext interface {
 	AllCSSProperties() []string
 }
 
-// ElementInfo represents element information as needed by tools
+// ElementInfo represents element information using manifest types directly
 type ElementInfo interface {
+	// Core manifest data
+	Declaration() *manifest.CustomElementDeclaration
+
+	// Convenience accessors that delegate to manifest types
 	TagName() string
 	Name() string
+	Summary() string
 	Description() string
 	Module() string
 	Package() string
-	Attributes() []Attribute
-	Slots() []Slot
-	Events() []Event
-	CssProperties() []CssProperty
-	CssParts() []CssPart
-	CssStates() []CssState
+
+	// Member accessors returning manifest types
+	Attributes() []manifest.Attribute
+	Slots() []manifest.Slot
+	Events() []manifest.Event
+	CssProperties() []manifest.CssCustomProperty
+	CssParts() []manifest.CssPart
+	CssStates() []manifest.CssCustomState
+
+
+	// MCP-specific extensions
 	Guidelines() []string
 	Examples() []Example
-	ItemsByKind(kind string) []Item
 }
 
-// Item interfaces for different element features
-type Item interface {
-	Name() string
-	Description() string
-	Guidelines() []string
-	Examples() []string
-	Kind() string
-}
-
-type Attribute interface {
-	Item
-	Type() string
-	Default() string
-	Required() bool
-	Values() []string
-}
-
-type Slot interface {
-	Item
-}
-
-type Event interface {
-	Item
-	Type() string
-}
-
-type CssProperty interface {
-	Item
-	Syntax() string
-	Inherits() bool
-	Initial() string
-}
-
-type CssPart interface {
-	Item
-}
-
-type CssState interface {
-	Item
-}
+// Legacy type aliases - use manifest types directly instead
+type Attribute = manifest.Attribute
+type Slot = manifest.Slot
+type Event = manifest.Event
+type CssProperty = manifest.CssCustomProperty
+type CssPart = manifest.CssPart
+type CssState = manifest.CssCustomState
 
 type Example interface {
 	Title() string

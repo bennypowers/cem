@@ -17,7 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package resources
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -107,72 +106,20 @@ func parseResourceDefinition(filename string, registry types.MCPContext) (types.
 
 // getResourceHandler returns the appropriate handler function for a resource
 func getResourceHandler(resourceDef types.ResourceDefinition, registry types.MCPContext) (mcp.ResourceHandler, error) {
-	// Check if this is a declarative resource (has data fetchers)
-	if len(resourceDef.DataFetchers) > 0 {
-		config := DeclarativeResourceConfig{
-			URI:          resourceDef.URI,
-			Name:         resourceDef.Name,
-			MimeType:     resourceDef.MimeType,
-			URITemplate:  resourceDef.URITemplate,
-			DataFetchers: resourceDef.DataFetchers,
-			Template:     resourceDef.Template,
-			ResponseType: resourceDef.ResponseType,
-		}
-		return MakeDeclarativeResourceHandler(registry, config), nil
+	// All resources are now declarative and must have data fetchers
+	if len(resourceDef.DataFetchers) == 0 {
+		return nil, fmt.Errorf("resource %s is missing data fetchers configuration", resourceDef.Name)
 	}
 
-	// Fallback to legacy handlers for non-declarative resources
-	switch resourceDef.Name {
-	case "schema":
-		return makeSchemaHandler(registry), nil
-	case "packages":
-		return makePackagesHandler(registry), nil
-	case "elements":
-		return makeElementsHandler(registry), nil
-	case "element":
-		return makeElementHandler(registry), nil
-	case "guidelines":
-		return makeGuidelinesHandler(registry), nil
-	case "accessibility":
-		return makeAccessibilityHandler(registry), nil
-	default:
-		return nil, fmt.Errorf("unknown resource: %s", resourceDef.Name)
+	config := DeclarativeResourceConfig{
+		URI:          resourceDef.URI,
+		Name:         resourceDef.Name,
+		MimeType:     resourceDef.MimeType,
+		URITemplate:  resourceDef.URITemplate,
+		DataFetchers: resourceDef.DataFetchers,
+		Template:     resourceDef.Template,
+		ResponseType: resourceDef.ResponseType,
 	}
+	return MakeDeclarativeResourceHandler(registry, config), nil
 }
 
-// Handler factory functions
-func makeSchemaHandler(registry types.MCPContext) mcp.ResourceHandler {
-	return func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
-		return handleSchemaResource(ctx, req, registry)
-	}
-}
-
-func makePackagesHandler(registry types.MCPContext) mcp.ResourceHandler {
-	return func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
-		return handlePackagesResource(ctx, req, registry)
-	}
-}
-
-func makeElementsHandler(registry types.MCPContext) mcp.ResourceHandler {
-	return func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
-		return handleElementsResource(ctx, req, registry)
-	}
-}
-
-func makeElementHandler(registry types.MCPContext) mcp.ResourceHandler {
-	return func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
-		return handleElementResource(ctx, req, registry)
-	}
-}
-
-func makeGuidelinesHandler(registry types.MCPContext) mcp.ResourceHandler {
-	return func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
-		return handleGuidelinesResource(ctx, req, registry)
-	}
-}
-
-func makeAccessibilityHandler(registry types.MCPContext) mcp.ResourceHandler {
-	return func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
-		return handleAccessibilityResource(ctx, req, registry)
-	}
-}

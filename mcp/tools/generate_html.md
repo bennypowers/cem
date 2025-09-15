@@ -28,4 +28,17 @@ Creates HTML structures that:
 
 Use this tool when you need to generate HTML for custom elements, create component examples, or build markup templates. The tool focuses on correct element structure while respecting modern custom element accessibility patterns.
 
-Based on the user's prompt, and the requirements given, consult the `cem://elements` resource for a list of available custom elements
+## Resource Discovery
+
+When choosing elements and understanding their capabilities, use these resources:
+
+- **`cem://elements`** - Complete listing of all available custom elements for discovery and planning
+- **`cem://element/{tagName}`** - Detailed element information including all APIs and usage guidance
+- **`cem://element/{tagName}/attributes`** - Focused attribute documentation with types and constraints
+- **`cem://element/{tagName}/slots`** - Content guidelines and accessibility considerations for slot usage
+- **`cem://element/{tagName}/events`** - Event patterns and JavaScript integration guidance
+- **`cem://element/{tagName}/css/parts`** - CSS parts styling guidance for element customization
+- **`cem://element/{tagName}/css/custom-properties`** - CSS custom properties for theming and styling
+- **`cem://element/{tagName}/css/states`** - CSS custom states for interactive styling patterns
+
+These resources provide the context needed to generate proper HTML with correct attributes, slots, and styling integration.

@@ -1,123 +1,47 @@
-# button-element Usage Examples
+# Element Reference: `button-element`
 
-## Basic Usage
-```html
-<button-element></button-element>
-```
+**Name:** button-element
 
 
 
 
-## With Attributes
 
-### variant Attribute
-Button variant
-- **Type**: "primary" | "secondary" | "ghost"
-- **Default**: "primary"
-- **Options**: "primary", "secondary", "ghost"
+## API Overview
 
-```html
-<button-element variant="primary"></button-element>
-```
+**Attributes:** 3 configurable properties
+**Slots:** 2 content areas
+**Events:** 1 custom events
+**CSS Properties:** 2 custom properties
+**CSS Parts:** 1 styleable parts
 
-### size Attribute
-Button size
-- **Type**: "small" | "medium" | "large"
-- **Default**: "medium"
-- **Options**: "small", "medium", "large"
 
-```html
-<button-element size="medium"></button-element>
-```
-
-### disabled Attribute
-Whether button is disabled
-- **Type**: boolean
-
-```html
-<button-element disabled></button-element>
-```
+## Integration
 
 
 
+## Related Resources
 
-## With Slots
+- **Attributes:** [`cem://element/button-element/attributes`](cem://element/button-element/attributes)
+- **Slots:** [`cem://element/button-element/slots`](cem://element/button-element/slots)
+- **Events:** [`cem://element/button-element/events`](cem://element/button-element/events)
+- **Styling:** [`cem://element/button-element/css`](cem://element/button-element/css)
 
-### Default Slot
-Button content
+---
 
-```html
-<button-element>
-  <p>Default slot content</p>
-</button-element>
-```
+## Detailed API Documentation
 
-### icon Slot
-Button icon
+For comprehensive API details, use these focused resources:
 
-```html
-<button-element>
-  <span slot="icon">icon content</span>
-</button-element>
-```
+- **`cem://element/button-element/attributes`** - Complete attribute reference with types and constraints
+- **`cem://element/button-element/slots`** - Slot documentation and content guidelines
+- **`cem://element/button-element/events`** - Event details and JavaScript integration
+- **`cem://element/button-element/css/custom-properties`** - CSS custom properties for theming
+- **`cem://element/button-element/css/parts`** - CSS parts for targeted styling
 
 
+## Related Resources
 
-
-## Event Handling
-
-### button-click Event
-Button click event
-- **Type**: CustomEvent
-
-```javascript
-element.addEventListener('button-click', (event) => {
-  // Handle button-click event
-  console.log('button-click fired:', event.detail);
-});
-```
-
-
-
-
-## CSS Custom Properties
-
-### --button-color
-Button color
-- **Syntax**: `<color>`
-- **Initial**: blue
-
-```css
-button-element {
-  --button-color: blue;
-}
-```
-
-### --button-padding
-Button padding
-- **Syntax**: `<length>`
-- **Initial**: 8px
-
-```css
-button-element {
-  --button-padding: 8px;
-}
-```
-
-
-
-
-## CSS Parts
-
-### button Part
-The button element
-
-```css
-button-element::part(button) {
-  /* Style the button part */
-  color: /* your color value */;
-}
-```
-
-
-
+- **`cem://elements`** - Browse all available elements
+- **`cem://packages`** - Package organization and structure
+- **`cem://guidelines`** - Usage guidelines and best practices
+- **`cem://accessibility`** - Accessibility patterns and requirements

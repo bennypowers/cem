@@ -9,6 +9,7 @@ require (
 	github.com/bmatcuk/doublestar v1.3.4
 	github.com/dunglas/go-urlpattern v0.0.0-20241020164140-716dfa1c80b1
 	github.com/fsnotify/fsnotify v1.9.0
+	github.com/google/jsonschema-go v0.2.1-0.20250825175020-748c325cec76
 	github.com/gosimple/slug v1.15.0
 	github.com/modelcontextprotocol/go-sdk v0.4.0
 	github.com/nsf/jsondiff v0.0.0-20230430225905-43f6cf3098c1
@@ -18,6 +19,7 @@ require (
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
+	github.com/tidwall/gjson v1.18.0
 	github.com/tliron/glsp v0.2.2
 	github.com/tree-sitter/go-tree-sitter v0.24.0
 	github.com/tree-sitter/tree-sitter-css v0.23.2
@@ -25,6 +27,7 @@ require (
 	github.com/tree-sitter/tree-sitter-jsdoc v0.23.2
 	github.com/tree-sitter/tree-sitter-typescript v0.23.2
 	golang.org/x/mod v0.26.0
+	golang.org/x/text v0.26.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -42,7 +45,6 @@ require (
 	github.com/dnephin/pflag v1.0.7 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
-	github.com/google/jsonschema-go v0.2.1-0.20250825175020-748c325cec76 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/gookit/color v1.5.4 // indirect
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
@@ -72,7 +74,6 @@ require (
 	github.com/spf13/cast v1.9.2 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/tidwall/gjson v1.18.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tliron/commonlog v0.2.19 // indirect
@@ -86,7 +87,6 @@ require (
 	golang.org/x/sync v0.15.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/term v0.32.0 // indirect
-	golang.org/x/text v0.26.0 // indirect
 	golang.org/x/tools v0.34.0 // indirect
 	gotest.tools/gotestsum v1.12.3 // indirect
 )

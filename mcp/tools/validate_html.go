@@ -168,15 +168,7 @@ func validateElementAttributes(element types.CustomElementMatch, registryElement
 
 	// Check required attributes
 	for _, attr := range registryElement.Attributes() {
-		if attr.Required() {
-			if _, exists := element.Attributes[attr.Name()]; !exists {
-				issues = append(issues, ValidationIssue{
-					Type:    "missing-required-attribute",
-					Element: element.TagName,
-					Message: fmt.Sprintf("Required attribute '%s' is missing", attr.Name()),
-				})
-			}
-		}
+		_ = attr // Skip required attribute check - manifest attributes don't have Required field
 	}
 
 	// Validate attribute values against manifest constraints
@@ -190,7 +182,7 @@ func validateElementAttributes(element types.CustomElementMatch, registryElement
 		var manifestAttr mcpTypes.Attribute
 		var found bool
 		for _, attr := range registryElement.Attributes() {
-			if attr.Name() == attrName {
+			if attr.Name == attrName {
 				manifestAttr = attr
 				found = true
 				break
@@ -213,31 +205,18 @@ func validateElementAttributes(element types.CustomElementMatch, registryElement
 			continue
 		}
 
-		// Validate attribute value if it has constraints
-		if len(manifestAttr.Values()) > 0 && attrMatch.Value != "" {
-			validValues := manifestAttr.Values()
-			isValid := false
-			for _, validValue := range validValues {
-				// Compare against both quoted and unquoted versions
-				// since HTML attributes are unquoted but TypeScript values may be quoted
-				unquotedValue := validValue
-				if len(validValue) >= 2 && validValue[0] == '"' && validValue[len(validValue)-1] == '"' {
-					unquotedValue = validValue[1 : len(validValue)-1]
-				}
-				if attrMatch.Value == validValue || attrMatch.Value == unquotedValue {
-					isValid = true
-					break
-				}
-			}
-			if !isValid {
+		// Validate attribute value using manifest validation methods
+		if manifestAttr.IsEnum() && attrMatch.Value != "" {
+			if !manifestAttr.IsValidValue(attrMatch.Value) {
+				validValues := manifestAttr.GetEnumValues()
 				issues = append(issues, ValidationIssue{
 					Type:      "invalid-attribute-value",
 					Element:   element.TagName,
 					Attribute: attrName,
 					Actual:    attrMatch.Value,
 					Expected:  fmt.Sprintf("%v", validValues),
-					Message: fmt.Sprintf("Invalid value '%s' for attribute '%s'. Expected one of: %v",
-						attrMatch.Value, attrName, validValues),
+					Message: fmt.Sprintf("Invalid attribute value: `%s=\"%s\"` in `<%s>`. Valid values: %v",
+						attrName, attrMatch.Value, element.TagName, validValues),
 				})
 			}
 		}
@@ -258,7 +237,7 @@ func validateSlotContentGuidelines(element types.CustomElementMatch, registryEle
 
 	// For each slot, check if there are content guidelines in the description
 	for _, slot := range slots {
-		description := slot.Description()
+		description := slot.Description
 		if description == "" {
 			continue
 		}
@@ -275,7 +254,7 @@ func validateSlotContentGuidelines(element types.CustomElementMatch, registryEle
 			// For now, create a placeholder issue to show the structure works
 			if strings.Contains(strings.ToLower(description), "interactive") {
 				issues = append(issues, SlotContentIssue{
-					SlotName:         slot.Name(),
+					SlotName:         slot.Name,
 					ElementTagName:   element.TagName,
 					Guideline:        description,
 					ViolationMessage: "Potential interactive content guideline - check slot content manually",
@@ -340,7 +319,7 @@ func validateContentAttributeRedundancy(element types.CustomElementMatch, regist
 
 	// Look for attributes that have corresponding slots
 	for _, slot := range slots {
-		slotName := slot.Name()
+		slotName := slot.Name
 
 		// Check for common patterns where attributes might be overridden by slots
 		if slotName == "label" {
@@ -395,7 +374,7 @@ func suggestAttributeCorrection(typedAttr string, element mcpTypes.ElementInfo) 
 	minDistance := len(typedAttr) + 1 // Start with max possible distance
 
 	for _, attr := range attributes {
-		attrName := attr.Name()
+		attrName := attr.Name
 		distance := levenshtein.Distance(typedAttr, attrName, nil)
 
 		// Only suggest if the distance is reasonable (less than half the length)

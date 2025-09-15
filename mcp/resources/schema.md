@@ -2,6 +2,12 @@
 uri: cem://schema
 name: schema
 mimeType: application/json
+dataFetchers:
+  - name: schema
+    type: manifest_schema
+    path: ""
+    required: true
+template: schema
 ---
 
 JSON Schema for Custom Elements Manifest format. This schema defines the structure and validation rules for custom elements manifest files, ensuring consistency and correctness across component definitions.

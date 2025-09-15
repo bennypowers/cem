@@ -1,6 +1,4 @@
 {
-    "title": "Custom Elements Manifest Schema 2.1.1-speculative",
-    "description": "This is a speculative schema for 2.1.1 based on 2.1.0, with workarounds for known issues. See: https://github.com/webcomponents/custom-elements-manifest/issues/138 and https://github.com/vega/ts-json-schema-generator/pull/2323",
   "$ref": "#/definitions/Package",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
@@ -255,7 +253,7 @@
           "type": "string"
         },
         "syntax": {
-          "description": "The expected syntax of the defined property. Defaults to \"*\".\n\nThe syntax must be a valid CSS [syntax string](https://developer.mozilla.org/en-US/docs/Web/CSS/@property/syntax) as defined in the CSS Properties and Values API.\n\nExamples:\n\n\"<color>\": accepts a color \"<length> | <percentage>\": accepts lengths or percentages but not calc expressions with a combination of the two \"small | medium | large\": accepts one of these values set as custom idents. \"*\": any valid token",
+          "description": "The expected syntax of the defined property. Defaults to \"*\".\n\nThe syntax must be a valid CSS [syntax string](https://developer.mozilla.org/en-US/docs/Web/CSS/@property/syntax) as defined in the CSS Properties and Values API.\n\nExamples:\n\n\"\u003ccolor\u003e\": accepts a color \"\u003clength\u003e | \u003cpercentage\u003e\": accepts lengths or percentages but not calc expressions with a combination of the two \"small | medium | large\": accepts one of these values set as custom idents. \"*\": any valid token",
           "type": "string"
         }
       },
@@ -1248,7 +1246,7 @@
       "additionalProperties": false,
       "properties": {
         "references": {
-          "description": "An array of references to the types in the type string.\n\nThese references have optional indices into the type string so that tools can understand the references in the type string independently of the type system and syntax. For example, a documentation viewer could display the type `Array<FooElement | BarElement>` with cross-references to `FooElement` and `BarElement` without understanding arrays, generics, or union types.",
+          "description": "An array of references to the types in the type string.\n\nThese references have optional indices into the type string so that tools can understand the references in the type string independently of the type system and syntax. For example, a documentation viewer could display the type `Array\u003cFooElement | BarElement\u003e` with cross-references to `FooElement` and `BarElement` without understanding arrays, generics, or union types.",
           "items": {
             "$ref": "#/definitions/TypeReference"
           },
@@ -1337,5 +1335,7 @@
       ],
       "type": "object"
     }
-  }
+  },
+  "description": "This is a speculative schema for 2.1.1 based on 2.1.0, with workarounds for known issues. See: https://github.com/webcomponents/custom-elements-manifest/issues/138 and https://github.com/vega/ts-json-schema-generator/pull/2323",
+  "title": "Custom Elements Manifest Schema 2.1.1-speculative"
 }

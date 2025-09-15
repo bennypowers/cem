@@ -10,17 +10,10 @@
 {{range .Element.Slots}}
 ### {{if .Name}}`{{.Name}}` slot{{else}}Default slot{{end}}
 
-{{if .Description}}{{.Description}}{{end}}
+{{if .Summary}}{{.Summary}}{{end}}
+{{if .Description}}
 
-{{if .Guidelines}}
-**Guidelines:**
-{{range .Guidelines}}- {{.}}
-{{end}}{{end}}
-
-{{if .Examples}}
-**Examples:**
-{{range .Examples}}- {{.}}
-{{end}}{{end}}
+{{.Description}}{{end}}
 
 {{end}}
 

@@ -22,6 +22,7 @@ import (
 
 	"bennypowers.dev/cem/internal/version"
 	"bennypowers.dev/cem/mcp/resources"
+	"bennypowers.dev/cem/mcp/types"
 	W "bennypowers.dev/cem/workspace"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/assert"
@@ -99,7 +100,7 @@ func TestDynamicSchemaVersionDetection(t *testing.T) {
 	require.NoError(t, err)
 
 	// Find the schema resource
-	var schemaResourceDef *resources.ResourceDefinition
+	var schemaResourceDef *types.ResourceDefinition
 	for _, resourceDef := range resourceDefs {
 		if resourceDef.Name == "schema" {
 			schemaResourceDef = &resourceDef
