@@ -81,38 +81,6 @@ Validates custom element usage based on manifest guidelines and best practices. 
 - **Content/Attribute Redundancy**: Identifies when slot content overrides attribute values
 - **Manifest Compliance**: Ensures custom elements are used according to their documented constraints
 
-## Architecture: Resources as Database
-
-The MCP server now follows a **"manifests as database, resources as API"** principle:
-
-### 📊 Manifest Database
-Your custom elements manifests serve as a structured database of component information, providing:
-- Type definitions and constraints
-- Usage guidelines and patterns
-- Design system integration rules
-- Accessibility requirements
-
-### 🔗 Declarative Resources
-Declarative resources provide comprehensive access to this database through RESTful endpoints:
-
-**Element Information:**
-- `cem://element/{tagName}/attributes` - Attribute documentation and constraints
-- `cem://element/{tagName}/slots` - Content guidelines and accessibility
-- `cem://element/{tagName}/events` - Event patterns and integration
-
-**CSS Styling:**
-- `cem://element/{tagName}/css/parts` - CSS parts for targeted styling
-- `cem://element/{tagName}/css/custom-properties` - Theming and customization
-- `cem://element/{tagName}/css/states` - Interactive state styling
-
-### ⚡ Action Tools
-Core tools perform concrete actions using the resource data:
-- **`generate_html`** - Creates proper HTML structure
-- **`validate_html`** - Ensures manifest compliance
-
-This architecture separates **information access** (resources) from **actions** (tools), providing better performance, caching, and a cleaner API surface.
-
-
 ## Usage
 
 Once connected, AI assistants can access your component information through natural language:
@@ -148,34 +116,14 @@ The CEM MCP server works with any MCP-compatible AI client:
 
 ## How It Works
 
-The MCP server uses a **declarative tool framework** with a **Data + Context + LLM Decision Making** approach:
+The CEM MCP server works by transforming your custom elements manifests into AI-accessible resources and tools:
 
-### Declarative Architecture
+1. **📊 Manifest Discovery** - Automatically finds and loads custom elements manifests from your workspace
+2. **🔗 Resource API** - Exposes component information through structured URIs (like `cem://element/{tagName}/attributes`)
+3. **⚡ Action Tools** - Provides concrete capabilities like HTML generation and validation
+4. **🧠 Intelligent Context** - Combines your component data with rich context to help AI make informed decisions
 
-The server uses a data-driven architecture where tools are defined through YAML configuration rather than hardcoded logic:
-
-1. **📊 Data Fetchers** - Extract specific manifest data using JSON path queries
-2. **📋 Template Rendering** - Combine data with Go templates for rich, contextual responses
-3. **📖 Schema Integration** - Provide JSON schema context for AI understanding
-4. **🧠 Intelligent Context** - Present comprehensive information while letting AI make smart decisions
-
-### Core Philosophy
-
-1. **📊 Manifest Data** - Your component definitions, CSS APIs, constraints
-2. **📖 Rich Context** - Usage patterns, guidelines, best practices, schema definitions
-3. **🧠 AI Decisions** - AI chooses appropriate values based on provided context
-
-This means no hardcoded suggestions - just rich context that enables intelligent decisions about component usage and styling.
-
-### Benefits of the Declarative Approach
-
-- **🔧 Drop-in Resource Support** - New resources can be added with just YAML configuration
-- **📝 Template-Driven Content** - Rich responses generated from your manifest data
-- **⚡ Reduced Maintenance** - 77% less Go code to maintain
-- **🎯 Focused Resources** - Specialized resources for attributes, slots, events, CSS APIs
-- **🔄 Consistent Output** - All resources use the same data processing pipeline
-- **🚀 RESTful Architecture** - Resources follow web standards for caching and access
-- **📊 Granular Access** - Optional sub-resource paths for specific items (e.g., `/attributes/{name}`)
+The server acts as a bridge between your component definitions and AI systems, enabling intelligent code generation while respecting your documented component constraints and guidelines.
 
 ## Troubleshooting
 
@@ -206,8 +154,6 @@ ls custom-elements.json package.json
 
 ## See Also
 
-- [Writing Effective Descriptions](/docs/mcp/writing-descriptions/) - Guidelines for AI-friendly component documentation, including declarative framework integration
-- [Registry Interface Documentation](/docs/mcp/interfaces/) - Detailed interface reference
+- [Writing Effective Descriptions](/docs/mcp/writing-descriptions/) - Guidelines for AI-friendly component documentation
 - [Usage Examples](/docs/mcp/examples/) - Comprehensive usage examples
-- [Architecture Overview](/docs/mcp/architecture/) - System design and patterns
 - [API Reference](/docs/mcp/api/) - Complete API documentation
