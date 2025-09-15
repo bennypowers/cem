@@ -119,4 +119,3 @@ func TestTemplateGoldenFiles(t *testing.T) {
 		}
 	})
 }
-

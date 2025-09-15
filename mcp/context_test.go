@@ -20,9 +20,9 @@ import (
 	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/mcp"
 	"bennypowers.dev/cem/mcp/types"
-	"bennypowers.dev/cem/manifest"
 	W "bennypowers.dev/cem/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

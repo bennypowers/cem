@@ -50,4 +50,3 @@ func SanitizeDescriptionWithLength(description string, maxLength int) string {
 
 	return description
 }
-

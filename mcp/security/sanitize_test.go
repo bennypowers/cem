@@ -76,11 +76,6 @@ func TestSanitizeDescription(t *testing.T) {
 	}
 }
 
-
-
-
-
-
 // Benchmark tests to ensure sanitization doesn't significantly impact performance
 func BenchmarkSanitizeDescription(b *testing.B) {
 	input := "A button component with some <script>alert('test')</script> content and lots of whitespace"

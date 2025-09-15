@@ -54,14 +54,13 @@ type MCPContext struct {
 // MCPCustomElementDeclaration embeds manifest types with MCP-specific data
 type MCPCustomElementDeclaration struct {
 	*M.RenderableCustomElementDeclaration
-	Guidelines   []string `json:"guidelines,omitempty"`
-	CacheKey     string   `json:"cacheKey,omitempty"`
-	ModulePath   string   `json:"modulePath,omitempty"`
-	PackageName  string   `json:"packageName,omitempty"`
+	Guidelines  []string `json:"guidelines,omitempty"`
+	CacheKey    string   `json:"cacheKey,omitempty"`
+	ModulePath  string   `json:"modulePath,omitempty"`
+	PackageName string   `json:"packageName,omitempty"`
 }
 
 // Use the interface from mcp/types instead of struct alias
-
 
 // ExampleInfo contains usage examples
 type ExampleInfo struct {
@@ -70,7 +69,6 @@ type ExampleInfo struct {
 	Code        string `json:"code"`
 	Language    string `json:"language,omitempty"`
 }
-
 
 // Helper functions
 
@@ -81,7 +79,6 @@ func getTypeString(t *M.Type) string {
 	}
 	return t.Text
 }
-
 
 // NewMCPContext creates a new MCP context
 func NewMCPContext(workspace types.WorkspaceContext) (*MCPContext, error) {
@@ -423,7 +420,7 @@ func (ctx *MCPContext) convertElement(element *M.CustomElement, tagName string) 
 
 	mcpElement := &MCPCustomElementDeclaration{
 		RenderableCustomElementDeclaration: renderable,
-		Guidelines:                        ctx.extractGuidelinesFromElement(element),
+		Guidelines:                         ctx.extractGuidelinesFromElement(element),
 	}
 
 	return &MCPElementInfoAdapter{
@@ -626,7 +623,6 @@ func (e *MCPElementInfoAdapter) CssStates() []M.CssCustomState {
 	return nil
 }
 
-
 // MCP-specific behavior
 func (e *MCPElementInfoAdapter) Guidelines() []string {
 	return e.MCPCustomElementDeclaration.Guidelines
@@ -635,9 +631,7 @@ func (e *MCPElementInfoAdapter) Guidelines() []string {
 // Legacy alias for transition
 type ElementInfoAdapter = MCPElementInfoAdapter
 
-
 func (e *ElementInfoAdapter) Examples() []MCPTypes.Example {
 	// TODO: Extract examples from manifest if available
 	return []MCPTypes.Example{}
 }
-

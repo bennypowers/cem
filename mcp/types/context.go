@@ -56,7 +56,6 @@ type ElementInfo interface {
 	CssParts() []manifest.CssPart
 	CssStates() []manifest.CssCustomState
 
-
 	// MCP-specific extensions
 	Guidelines() []string
 	Examples() []Example
