@@ -126,7 +126,6 @@ func MakeValidateHtmlHandler(registry types.MCPContext) mcp.ToolHandler {
 	return makeValidateHtmlHandler(registry)
 }
 
-
 func makeGenerateHtmlHandler(registry types.MCPContext) mcp.ToolHandler {
 	return func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		return handleGenerateHtml(ctx, req, registry)
@@ -137,5 +136,3 @@ func makeGenerateHtmlHandler(registry types.MCPContext) mcp.ToolHandler {
 func MakeGenerateHtmlHandler(registry types.MCPContext) mcp.ToolHandler {
 	return makeGenerateHtmlHandler(registry)
 }
-
-

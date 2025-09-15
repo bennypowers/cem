@@ -11,21 +11,14 @@ dataFetchers:
 template: element
 ---
 
-Detailed information about a specific custom element including usage patterns, examples, and integration guidance. This resource provides comprehensive element documentation optimized for AI-assisted development.
+Overview of a specific custom element including API summary and usage guidance.
 
-Provides extensive element details including:
-- Complete attribute definitions with types, defaults, and validation
-- Slot structure and content recommendations
-- Event definitions and usage patterns
-- CSS custom properties, parts, and states with examples
-- Accessibility requirements and ARIA patterns
-- Integration guidelines and best practices
-- Usage examples in different contexts (forms, layouts, themes)
-- Common attribute combinations and patterns
-- Framework-specific integration notes
-- Performance considerations and optimization tips
+Provides:
+- Attribute, slot, event, and CSS API counts
+- Integration guidance
+- Related resource links
 
-Use this resource when working with a specific element to understand its API, get usage examples, or ensure proper implementation according to design system guidelines.
+Use for element API overview before implementing.
 
 ## Available Element Tools
 

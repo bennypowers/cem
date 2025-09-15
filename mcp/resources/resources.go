@@ -122,4 +122,3 @@ func getResourceHandler(resourceDef types.ResourceDefinition, registry types.MCP
 	}
 	return MakeDeclarativeResourceHandler(registry, config), nil
 }
-

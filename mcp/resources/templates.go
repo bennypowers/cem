@@ -39,22 +39,22 @@ func GetTemplateFS() *embed.FS {
 // ManifestContext represents context combining schema definitions with user manifest data
 type ManifestContext struct {
 	// Schema context - what fields mean according to custom elements spec
-	SchemaVersion     string                     // Active schema version
-	SchemaDefinitions map[string]interface{}     // Schema definitions for semantic understanding
+	SchemaVersion     string                 // Active schema version
+	SchemaDefinitions map[string]interface{} // Schema definitions for semantic understanding
 
 	// User manifest data - your specific values and patterns
-	Overview            string                // Overview of manifest statistics
-	Elements            []types.ElementInfo   // All elements with their complete API surface
-	ElementCount        int                   // Number of elements in manifests
-	CommonPrefixes      []string              // Common element prefixes found
-	CSSProperties       []string              // All CSS custom properties
-	SchemaVersions      []string              // Manifest schema versions in use
-	ElementPatterns     []ElementPattern      // Patterns found across elements
-	AttributePatterns   []AttributePattern    // Common attribute usage patterns
-	SlotPatterns        []SlotPattern         // Common slot usage patterns
-	CssPartPatterns     []CssPartPattern      // Common CSS part usage patterns
-	CssStatePatterns    []CssStatePattern     // Common CSS state usage patterns
-	ExtractedGuidelines []ExtractedGuideline  // Guidelines extracted from descriptions
+	Overview            string               // Overview of manifest statistics
+	Elements            []types.ElementInfo  // All elements with their complete API surface
+	ElementCount        int                  // Number of elements in manifests
+	CommonPrefixes      []string             // Common element prefixes found
+	CSSProperties       []string             // All CSS custom properties
+	SchemaVersions      []string             // Manifest schema versions in use
+	ElementPatterns     []ElementPattern     // Patterns found across elements
+	AttributePatterns   []AttributePattern   // Common attribute usage patterns
+	SlotPatterns        []SlotPattern        // Common slot usage patterns
+	CssPartPatterns     []CssPartPattern     // Common CSS part usage patterns
+	CssStatePatterns    []CssStatePattern    // Common CSS state usage patterns
+	ExtractedGuidelines []ExtractedGuideline // Guidelines extracted from descriptions
 }
 
 // ElementPattern represents a pattern found across multiple elements
@@ -98,4 +98,3 @@ type ExtractedGuideline struct {
 	Type      string // Type of source ("element" or "attribute")
 	Guideline string // The extracted guideline text
 }
-

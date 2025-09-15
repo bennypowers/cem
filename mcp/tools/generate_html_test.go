@@ -29,7 +29,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-
 func TestGenerateHTML_WithFixtures(t *testing.T) {
 	registry := getTestRegistry(t)
 

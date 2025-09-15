@@ -10,15 +10,12 @@ dataFetchers:
 template: schema
 ---
 
-JSON Schema for Custom Elements Manifest format. This schema defines the structure and validation rules for custom elements manifest files, ensuring consistency and correctness across component definitions.
+JSON Schema for Custom Elements Manifest format validation.
 
-Provides comprehensive schema validation for:
-- Manifest structure and required fields
-- Module definitions and exports
-- Custom element declarations with attributes, slots, events
-- CSS custom properties, parts, and states
-- Type definitions and inheritance
-- Package metadata and dependencies
-- Documentation and example formats
+Provides schema definitions for:
+- Manifest structure and fields
+- Element declarations
+- CSS APIs and type definitions
+- Package metadata
 
-Use this resource to understand the manifest format, validate manifest files, or generate tooling that works with custom elements manifests.
+Use to validate manifests or build tooling.

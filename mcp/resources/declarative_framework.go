@@ -308,16 +308,16 @@ func fetchAllElementsWithCapabilities(registry types.MCPContext, path string) (i
 		capabilities := buildElementCapabilities(element)
 
 		summary := map[string]interface{}{
-			"tagName":           element.TagName(),
-			"name":              element.Name(),
-			"package":           extractPackageFromElementInfo(element),
-			"capabilities":      capabilities,
-			"attributeCount":    len(element.Attributes()),
-			"slotCount":         len(element.Slots()),
-			"eventCount":        len(element.Events()),
-			"cssPropertyCount":  len(element.CssProperties()),
-			"cssPartCount":      len(element.CssParts()),
-			"cssStateCount":     len(element.CssStates()),
+			"tagName":          element.TagName(),
+			"name":             element.Name(),
+			"package":          extractPackageFromElementInfo(element),
+			"capabilities":     capabilities,
+			"attributeCount":   len(element.Attributes()),
+			"slotCount":        len(element.Slots()),
+			"eventCount":       len(element.Events()),
+			"cssPropertyCount": len(element.CssProperties()),
+			"cssPartCount":     len(element.CssParts()),
+			"cssStateCount":    len(element.CssStates()),
 		}
 		elements = append(elements, summary)
 	}
@@ -400,15 +400,52 @@ func fetchPackageCollection(registry types.MCPContext, path string) (interface{}
 		}
 	}
 
-	// Convert to response format
+	// Convert to response format with stable sorting
+	packageNames := make([]string, 0, len(packageMap))
+	for name := range packageMap {
+		packageNames = append(packageNames, name)
+	}
+
+	// Sort package names for stable output
+	for i := 0; i < len(packageNames); i++ {
+		for j := i + 1; j < len(packageNames); j++ {
+			if packageNames[i] > packageNames[j] {
+				packageNames[i], packageNames[j] = packageNames[j], packageNames[i]
+			}
+		}
+	}
+
 	packages := make([]map[string]interface{}, 0, len(packageMap))
-	for name, pkg := range packageMap {
+	for _, name := range packageNames {
+		pkg := packageMap[name]
+
+		// Sort elements and modules for stable output
+		elements := make([]string, len(pkg.Elements))
+		copy(elements, pkg.Elements)
+		for i := 0; i < len(elements); i++ {
+			for j := i + 1; j < len(elements); j++ {
+				if elements[i] > elements[j] {
+					elements[i], elements[j] = elements[j], elements[i]
+				}
+			}
+		}
+
+		modules := make([]string, len(pkg.Modules))
+		copy(modules, pkg.Modules)
+		for i := 0; i < len(modules); i++ {
+			for j := i + 1; j < len(modules); j++ {
+				if modules[i] > modules[j] {
+					modules[i], modules[j] = modules[j], modules[i]
+				}
+			}
+		}
+
 		packages = append(packages, map[string]interface{}{
 			"name":         name,
-			"elements":     pkg.Elements,
-			"modules":      pkg.Modules,
-			"elementCount": len(pkg.Elements),
-			"moduleCount":  len(pkg.Modules),
+			"elements":     elements,
+			"modules":      modules,
+			"elementCount": len(elements),
+			"moduleCount":  len(modules),
 		})
 	}
 

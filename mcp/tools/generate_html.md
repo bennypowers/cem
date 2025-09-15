@@ -18,15 +18,15 @@ inputSchema:
   required: ["tagName"]
 ---
 
-Generate HTML for custom elements with proper slot usage and required attributes. Inspects the element's APIs as listed in the manifest, and leverages any built-in accessibility features the element has.
+Generate HTML for custom elements with proper slot usage and attributes based on manifest definitions.
 
-Creates HTML structures that:
-- Place content in correct slots based on manifest definitions
-- Include required attributes with appropriate default values
-- Respect any of the element's built-in accessibility features (e.g. implicit role)
-- Provide usage notes about available attributes and slots
+Creates HTML that:
+- Places content in correct slots
+- Includes required attributes with defaults
+- Respects accessibility features
+- Provides usage notes
 
-Use this tool when you need to generate HTML for custom elements, create component examples, or build markup templates. The tool focuses on correct element structure while respecting modern custom element accessibility patterns.
+Use to generate correct HTML structure for custom elements.
 
 ## Resource Discovery
 
