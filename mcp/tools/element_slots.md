@@ -10,6 +10,15 @@ inputSchema:
       type: string
       description: "Usage context for additional guidance"
   required: ["tagName"]
+dataFetchers:
+  - name: element
+    type: manifest_element
+    path: ""
+    required: true
+  - name: schema
+    type: schema_definitions
+    path: "definitions"
+    required: false
 ---
 
 Provides comprehensive slot usage patterns and content guidelines. Focuses specifically on element slots with detailed information for proper content placement and structure.

@@ -10,6 +10,15 @@ inputSchema:
       type: string
       description: "Usage context for additional guidance"
   required: ["tagName"]
+dataFetchers:
+  - name: element
+    type: manifest_element
+    path: ""
+    required: true
+  - name: schema
+    type: schema_definitions
+    path: "definitions"
+    required: false
 ---
 
 Provides comprehensive CSS customization guidance including custom properties, parts, and states. Focuses specifically on element styling with detailed information for theme integration and design system compliance.

@@ -80,23 +80,42 @@ func parseToolDefinition(filename string, registry types.MCPContext) (types.Tool
 	// Extract description from markdown content
 	description := strings.TrimSpace(parts[2])
 
+	// Create tool definition first
+	toolDef := types.ToolDefinition{
+		Name:         frontmatter.Name,
+		Description:  description,
+		InputSchema:  frontmatter.InputSchema,
+		DataFetchers: frontmatter.DataFetchers,
+		Template:     frontmatter.Template,
+		ResponseType: frontmatter.ResponseType,
+	}
+
 	// Get the corresponding handler
-	handler, err := getToolHandler(frontmatter.Name, registry)
+	handler, err := getToolHandler(toolDef, registry)
 	if err != nil {
 		return types.ToolDefinition{}, fmt.Errorf("failed to get handler for tool %s: %w", frontmatter.Name, err)
 	}
 
-	return types.ToolDefinition{
-		Name:        frontmatter.Name,
-		Description: description,
-		InputSchema: frontmatter.InputSchema,
-		Handler:     handler,
-	}, nil
+	// Set the handler and return the complete tool definition
+	toolDef.Handler = handler
+	return toolDef, nil
 }
 
 // getToolHandler returns the appropriate handler function for a tool
-func getToolHandler(toolName string, registry types.MCPContext) (mcp.ToolHandler, error) {
-	switch toolName {
+func getToolHandler(toolDef types.ToolDefinition, registry types.MCPContext) (mcp.ToolHandler, error) {
+	// Check if this is a declarative tool (has data fetchers)
+	if len(toolDef.DataFetchers) > 0 {
+		config := DeclarativeToolConfig{
+			Name:         toolDef.Name,
+			DataFetchers: toolDef.DataFetchers,
+			Template:     toolDef.Template,
+			ResponseType: toolDef.ResponseType,
+		}
+		return MakeDeclarativeHandler(registry, config), nil
+	}
+
+	// Fallback to legacy handlers for non-declarative tools
+	switch toolDef.Name {
 	case "validate_html":
 		return makeValidateHtmlHandler(registry), nil
 	case "suggest_attributes":
@@ -105,18 +124,8 @@ func getToolHandler(toolName string, registry types.MCPContext) (mcp.ToolHandler
 		return makeGenerateHtmlHandler(registry), nil
 	case "suggest_css_integration":
 		return makeSuggestCssIntegrationHandler(registry), nil
-	case "element_details":
-		return makeElementDetailsHandler(registry), nil
-	case "element_attributes":
-		return makeElementAttributesHandler(registry), nil
-	case "element_slots":
-		return makeElementSlotsHandler(registry), nil
-	case "element_events":
-		return makeElementEventsHandler(registry), nil
-	case "element_styling":
-		return makeElementStylingHandler(registry), nil
 	default:
-		return nil, fmt.Errorf("unknown tool: %s", toolName)
+		return nil, fmt.Errorf("unknown tool: %s", toolDef.Name)
 	}
 }
 
@@ -155,57 +164,99 @@ func makeSuggestCssIntegrationHandler(registry types.MCPContext) mcp.ToolHandler
 	}
 }
 
-func makeElementDetailsHandler(registry types.MCPContext) mcp.ToolHandler {
-	return func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return handleElementDetails(ctx, req, registry)
-	}
-}
-
-// MakeElementDetailsHandler is the exported version for testing
+// MakeElementDetailsHandler is the exported version for testing - now uses declarative framework
 func MakeElementDetailsHandler(registry types.MCPContext) mcp.ToolHandler {
-	return makeElementDetailsHandler(registry)
-}
-
-func makeElementAttributesHandler(registry types.MCPContext) mcp.ToolHandler {
-	return func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return handleElementAttributes(ctx, req, registry)
+	config := DeclarativeToolConfig{
+		Name: "element_details",
+		DataFetchers: []types.DataFetcher{
+			{Name: "element", Type: "manifest_element", Path: "", Required: true},
+			{Name: "schema", Type: "schema_definitions", Path: "definitions", Required: false},
+		},
+		Template:     "",
+		ResponseType: "",
 	}
+	return MakeDeclarativeHandler(registry, config)
 }
 
-// MakeElementAttributesHandler is the exported version for testing
+// MakeElementAttributesHandler is the exported version for testing - now uses declarative framework
 func MakeElementAttributesHandler(registry types.MCPContext) mcp.ToolHandler {
-	return makeElementAttributesHandler(registry)
-}
-
-func makeElementSlotsHandler(registry types.MCPContext) mcp.ToolHandler {
-	return func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return handleElementSlots(ctx, req, registry)
+	config := DeclarativeToolConfig{
+		Name: "element_attributes",
+		DataFetchers: []types.DataFetcher{
+			{Name: "element", Type: "manifest_element", Path: "", Required: true},
+			{Name: "schema", Type: "schema_definitions", Path: "definitions", Required: false},
+			{Name: "attributes", Type: "attribute_collection", Path: "", Required: true},
+		},
+		Template:     "",
+		ResponseType: "",
 	}
+	return MakeDeclarativeHandler(registry, config)
 }
 
-// MakeElementSlotsHandler is the exported version for testing
+// MakeElementSlotsHandler is the exported version for testing - now uses declarative framework
 func MakeElementSlotsHandler(registry types.MCPContext) mcp.ToolHandler {
-	return makeElementSlotsHandler(registry)
-}
-
-func makeElementEventsHandler(registry types.MCPContext) mcp.ToolHandler {
-	return func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return handleElementEvents(ctx, req, registry)
+	config := DeclarativeToolConfig{
+		Name: "element_slots",
+		DataFetchers: []types.DataFetcher{
+			{Name: "element", Type: "manifest_element", Path: "", Required: true},
+			{Name: "schema", Type: "schema_definitions", Path: "definitions", Required: false},
+		},
+		Template:     "",
+		ResponseType: "",
 	}
+	return MakeDeclarativeHandler(registry, config)
 }
 
-// MakeElementEventsHandler is the exported version for testing
+// MakeElementEventsHandler is the exported version for testing - now uses declarative framework
 func MakeElementEventsHandler(registry types.MCPContext) mcp.ToolHandler {
-	return makeElementEventsHandler(registry)
-}
-
-func makeElementStylingHandler(registry types.MCPContext) mcp.ToolHandler {
-	return func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return handleElementStyling(ctx, req, registry)
+	config := DeclarativeToolConfig{
+		Name: "element_events",
+		DataFetchers: []types.DataFetcher{
+			{Name: "element", Type: "manifest_element", Path: "", Required: true},
+			{Name: "schema", Type: "schema_definitions", Path: "definitions", Required: false},
+		},
+		Template:     "",
+		ResponseType: "",
 	}
+	return MakeDeclarativeHandler(registry, config)
 }
 
-// MakeElementStylingHandler is the exported version for testing
+// MakeElementStylingHandler is the exported version for testing - now uses declarative framework
 func MakeElementStylingHandler(registry types.MCPContext) mcp.ToolHandler {
-	return makeElementStylingHandler(registry)
+	config := DeclarativeToolConfig{
+		Name: "element_styling",
+		DataFetchers: []types.DataFetcher{
+			{Name: "element", Type: "manifest_element", Path: "", Required: true},
+			{Name: "schema", Type: "schema_definitions", Path: "definitions", Required: false},
+		},
+		Template:     "",
+		ResponseType: "",
+	}
+	return MakeDeclarativeHandler(registry, config)
+}
+
+// Argument types for testing compatibility
+type ElementDetailsArgs struct {
+	TagName string `json:"tagName"`
+	Context string `json:"context,omitempty"`
+}
+
+type ElementAttributesArgs struct {
+	TagName string `json:"tagName"`
+	Context string `json:"context,omitempty"`
+}
+
+type ElementSlotsArgs struct {
+	TagName string `json:"tagName"`
+	Context string `json:"context,omitempty"`
+}
+
+type ElementEventsArgs struct {
+	TagName string `json:"tagName"`
+	Context string `json:"context,omitempty"`
+}
+
+type ElementStylingArgs struct {
+	TagName string `json:"tagName"`
+	Context string `json:"context,omitempty"`
 }

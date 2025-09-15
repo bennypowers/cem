@@ -10,6 +10,19 @@ inputSchema:
       type: string
       description: "Usage context for additional guidance"
   required: ["tagName"]
+dataFetchers:
+  - name: element
+    type: manifest_element
+    path: ""
+    required: true
+  - name: schema
+    type: schema_definitions
+    path: "definitions"
+    required: false
+  - name: attributes
+    type: attribute_collection
+    path: ""
+    required: true
 ---
 
 Provides detailed attribute documentation including types, defaults, valid values, and usage guidelines. Focuses specifically on element attributes with comprehensive information for implementation.

@@ -20,16 +20,30 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
+// DataFetcher represents a declarative data source for tools
+type DataFetcher struct {
+	Name     string `yaml:"name"`
+	Type     string `yaml:"type"`
+	Path     string `yaml:"path"`
+	Required bool   `yaml:"required,omitempty"`
+}
+
 // ToolDefinition represents a complete tool definition with metadata and handler
 type ToolDefinition struct {
-	Name        string                 `yaml:"name"`
-	Description string                 `yaml:"-"` // From markdown content
-	InputSchema map[string]interface{} `yaml:"inputSchema"`
-	Handler     mcp.ToolHandler        `yaml:"-"`
+	Name         string                 `yaml:"name"`
+	Description  string                 `yaml:"-"` // From markdown content
+	InputSchema  map[string]interface{} `yaml:"inputSchema"`
+	DataFetchers []DataFetcher          `yaml:"dataFetchers,omitempty"`
+	Template     string                 `yaml:"template,omitempty"`
+	ResponseType string                 `yaml:"responseType,omitempty"`
+	Handler      mcp.ToolHandler        `yaml:"-"`
 }
 
 // Frontmatter represents the YAML frontmatter from tool markdown files
 type Frontmatter struct {
-	Name        string                 `yaml:"name"`
-	InputSchema map[string]interface{} `yaml:"inputSchema"`
+	Name         string                 `yaml:"name"`
+	InputSchema  map[string]interface{} `yaml:"inputSchema"`
+	DataFetchers []DataFetcher          `yaml:"dataFetchers,omitempty"`
+	Template     string                 `yaml:"template,omitempty"`
+	ResponseType string                 `yaml:"responseType,omitempty"`
 }

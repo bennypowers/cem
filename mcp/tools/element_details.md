@@ -10,6 +10,15 @@ inputSchema:
       type: string
       description: "Usage context for additional guidance"
   required: ["tagName"]
+dataFetchers:
+  - name: element
+    type: manifest_element
+    path: ""
+    required: true
+  - name: schema
+    type: schema_definitions
+    path: "definitions"
+    required: false
 ---
 
 Provides comprehensive detailed information about a custom element including all APIs, schema definitions, and usage guidance. This is the complete reference for understanding everything about an element.

@@ -10,6 +10,15 @@ inputSchema:
       type: string
       description: "Usage context for additional guidance"
   required: ["tagName"]
+dataFetchers:
+  - name: element
+    type: manifest_element
+    path: ""
+    required: true
+  - name: schema
+    type: schema_definitions
+    path: "definitions"
+    required: false
 ---
 
 Provides detailed event documentation including triggers, data payloads, and JavaScript integration patterns. Focuses specifically on element events with comprehensive information for event handling implementation.

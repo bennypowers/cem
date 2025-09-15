@@ -27,3 +27,5 @@ Creates HTML structures that:
 - Provide usage notes about available attributes and slots
 
 Use this tool when you need to generate HTML for custom elements, create component examples, or build markup templates. The tool focuses on correct element structure while respecting modern custom element accessibility patterns.
+
+Based on the user's prompt, and the requirements given, consult the `cem://elements` resource for a list of available custom elements

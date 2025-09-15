@@ -45,6 +45,45 @@ Or use the command line flag:
 cem mcp --max-description-length 5000
 ```
 
+## Declarative Tool Architecture
+
+The CEM MCP server uses a **declarative tool framework** that transforms your manifest data into intelligent, context-aware responses for AI systems. Understanding this architecture helps you write more effective descriptions.
+
+### How the Declarative Framework Works
+
+The MCP server uses a data-driven approach where tools are defined through YAML configuration rather than hardcoded logic:
+
+1. **Data Fetchers**: Extract specific information from your manifests using JSON path queries
+2. **Template Rendering**: Combine manifest data with Go templates to create rich, contextual responses
+3. **Schema Integration**: Provide JSON schema definitions that help AI understand component constraints
+4. **Intelligent Context**: Present comprehensive information while letting AI make smart decisions
+
+### What This Means for Your Descriptions
+
+The declarative framework **amplifies** the impact of your manifest descriptions by:
+
+- **Contextualizing** your descriptions with related schema information
+- **Combining** element descriptions with attribute, slot, and CSS property details
+- **Presenting** comprehensive usage patterns derived from your component API definitions
+- **Enabling** AI to understand relationships between different parts of your component
+
+**Key insight**: Your descriptions don't work in isolation. They're combined with type information, schema definitions, and usage patterns to create comprehensive guidance that helps AI make intelligent decisions about component usage.
+
+### Writing for the Declarative Framework
+
+Since the framework combines multiple data sources, focus your descriptions on:
+
+1. **Purpose and Context**: What the component/attribute/slot is **for**, not just what it **is**
+2. **Usage Guidelines**: When and how to use it effectively
+3. **Relationships**: How it works with other component features
+4. **Constraints**: What to avoid or be careful about
+
+The framework will automatically combine this with:
+- Type definitions and valid values
+- Schema descriptions and relationships
+- Usage patterns from your component API
+- Cross-component consistency information
+
 ## General Principles
 
 ### 1. Use RFC 2119 Keywords for Actionable Guidelines
@@ -154,6 +193,73 @@ This provides:
 - **Usage guidelines**: When to use each variant (extracted from RFC 2119 keywords)
 - **Accessibility context**: Color contrast considerations
 - **Anti-patterns**: What to avoid and why
+
+## Declarative Tool Integration
+
+The declarative framework provides several specialized tools that present your descriptions in focused, context-aware formats. Understanding how these tools work helps you write descriptions that shine in each context.
+
+### Element-Focused Tools
+
+The framework includes specialized tools for different aspects of your components:
+
+- **`element_details`**: Comprehensive overview with all APIs and usage guidance
+- **`element_attributes`**: Focused attribute documentation with type constraints
+- **`element_slots`**: Content guidelines and accessibility considerations for slots
+- **`element_events`**: Event triggers, data payloads, and integration patterns
+- **`element_styling`**: CSS customization with design system integration
+
+### How Tools Present Your Content
+
+Each tool combines your descriptions with relevant schema information:
+
+```
+Your Description + Type Information + Schema Context = Rich AI Guidance
+```
+
+**Example**: For an attribute description like "Button size affecting accessibility", the `element_attributes` tool combines this with:
+- Union type values (`'small' | 'medium' | 'large'`)
+- Default value information (`'medium'`)
+- Schema descriptions for size concepts
+- Cross-component consistency patterns
+
+**Result**: AI receives comprehensive guidance like:
+> "Button size affects touch targets and accessibility. Use 'small' for compact layouts, 'medium' for standard interfaces, 'large' for mobile-first actions. Each size ensures minimum touch target requirements for accessibility compliance."
+
+### Writing for Tool Specialization
+
+Since tools focus on specific aspects, tailor your descriptions accordingly:
+
+#### For Element Descriptions (used by `element_details`)
+Focus on overall purpose, main use cases, and key relationships:
+```typescript
+/**
+ * An accessible card container for grouping related content with semantic markup.
+ * Use for dashboard widgets, content previews, and information grouping.
+ * Supports responsive design and maintains proper heading hierarchy.
+ */
+```
+
+#### For Attribute Descriptions (enhanced by `element_attributes`)
+Focus on purpose, constraints, and usage context:
+```typescript
+/**
+ * Controls card prominence in visual hierarchy. Use 'flat' for embedded content,
+ * 'raised' for interactive cards, 'floating' for modal-style overlays.
+ */
+elevation: 'flat' | 'raised' | 'floating'
+```
+
+#### For Slot Descriptions (used by `element_slots`)
+Focus on content types, accessibility, and relationships:
+```typescript
+/**
+ * Card header area for titles and actions. Should contain heading elements (h2-h4)
+ * to maintain document structure. Avoid interactive elements that conflict with
+ * card-level actions. Announced first by screen readers.
+ */
+```
+
+The declarative framework ensures that your focused descriptions are automatically enhanced with relevant schema information, type constraints, and cross-component patterns to provide comprehensive AI guidance.
 
 ## Element Descriptions
 

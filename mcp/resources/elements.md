@@ -17,3 +17,5 @@ Provides detailed elements information including:
 - Performance characteristics and bundle impact
 
 Use this resource to discover all available custom elements, understand the complete component vocabulary, plan element selection for projects, or analyze capabilities across the entire ecosystem.
+
+When choosing elements, use `cem://element/{tagName}` for more information about available APIs.
