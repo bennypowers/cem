@@ -47,3 +47,27 @@ type Frontmatter struct {
 	Template     string                 `yaml:"template,omitempty"`
 	ResponseType string                 `yaml:"responseType,omitempty"`
 }
+
+// ResourceDefinition represents a complete resource definition with metadata and handler
+type ResourceDefinition struct {
+	URI          string                 `yaml:"uri"`
+	Name         string                 `yaml:"name"`
+	MimeType     string                 `yaml:"mimeType"`
+	URITemplate  bool                   `yaml:"uriTemplate,omitempty"`
+	Description  string                 `yaml:"-"` // From markdown content
+	DataFetchers []DataFetcher          `yaml:"dataFetchers,omitempty"`
+	Template     string                 `yaml:"template,omitempty"`
+	ResponseType string                 `yaml:"responseType,omitempty"`
+	Handler      mcp.ResourceHandler    `yaml:"-"`
+}
+
+// ResourceFrontmatter represents the YAML frontmatter from resource markdown files
+type ResourceFrontmatter struct {
+	URI          string        `yaml:"uri"`
+	Name         string        `yaml:"name"`
+	MimeType     string        `yaml:"mimeType"`
+	URITemplate  bool          `yaml:"uriTemplate,omitempty"`
+	DataFetchers []DataFetcher `yaml:"dataFetchers,omitempty"`
+	Template     string        `yaml:"template,omitempty"`
+	ResponseType string        `yaml:"responseType,omitempty"`
+}

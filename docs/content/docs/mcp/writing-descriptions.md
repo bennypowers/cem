@@ -198,25 +198,26 @@ This provides:
 
 The declarative framework provides several specialized tools that present your descriptions in focused, context-aware formats. Understanding how these tools work helps you write descriptions that shine in each context.
 
-### Element-Focused Tools
+### Element-Focused Resources
 
-The framework includes specialized tools for different aspects of your components:
+The framework includes specialized declarative resources for different aspects of your components:
 
-- **`element_details`**: Comprehensive overview with all APIs and usage guidance
-- **`element_attributes`**: Focused attribute documentation with type constraints
-- **`element_slots`**: Content guidelines and accessibility considerations for slots
-- **`element_events`**: Event triggers, data payloads, and integration patterns
-- **`element_styling`**: CSS customization with design system integration
+- **`cem://element/{tagName}/attributes`**: Focused attribute documentation with type constraints
+- **`cem://element/{tagName}/slots`**: Content guidelines and accessibility considerations for slots
+- **`cem://element/{tagName}/events`**: Event triggers, data payloads, and integration patterns
+- **`cem://element/{tagName}/css/parts`**: CSS parts styling guidance for targeted customization
+- **`cem://element/{tagName}/css/custom-properties`**: CSS custom properties documentation for theming
+- **`cem://element/{tagName}/css/states`**: CSS custom states documentation for interactive styling
 
-### How Tools Present Your Content
+### How Resources Present Your Content
 
-Each tool combines your descriptions with relevant schema information:
+Each resource combines your descriptions with relevant schema information:
 
 ```
 Your Description + Type Information + Schema Context = Rich AI Guidance
 ```
 
-**Example**: For an attribute description like "Button size affecting accessibility", the `element_attributes` tool combines this with:
+**Example**: For an attribute description like "Button size affecting accessibility", the `cem://element/{tagName}/attributes` resource combines this with:
 - Union type values (`'small' | 'medium' | 'large'`)
 - Default value information (`'medium'`)
 - Schema descriptions for size concepts
@@ -225,9 +226,9 @@ Your Description + Type Information + Schema Context = Rich AI Guidance
 **Result**: AI receives comprehensive guidance like:
 > "Button size affects touch targets and accessibility. Use 'small' for compact layouts, 'medium' for standard interfaces, 'large' for mobile-first actions. Each size ensures minimum touch target requirements for accessibility compliance."
 
-### Writing for Tool Specialization
+### Writing for Resource Specialization
 
-Since tools focus on specific aspects, tailor your descriptions accordingly:
+Since resources focus on specific aspects, tailor your descriptions accordingly:
 
 #### For Element Descriptions (used by `element_details`)
 Focus on overall purpose, main use cases, and key relationships:
@@ -239,7 +240,7 @@ Focus on overall purpose, main use cases, and key relationships:
  */
 ```
 
-#### For Attribute Descriptions (enhanced by `element_attributes`)
+#### For Attribute Descriptions (enhanced by `cem://element/{tagName}/attributes`)
 Focus on purpose, constraints, and usage context:
 ```typescript
 /**
@@ -249,7 +250,7 @@ Focus on purpose, constraints, and usage context:
 elevation: 'flat' | 'raised' | 'floating'
 ```
 
-#### For Slot Descriptions (used by `element_slots`)
+#### For Slot Descriptions (used by `cem://element/{tagName}/slots`)
 Focus on content types, accessibility, and relationships:
 ```typescript
 /**

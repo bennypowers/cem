@@ -3,6 +3,20 @@ uri: cem://element/{tagName}/attributes
 name: element-attributes
 mimeType: text/markdown
 uriTemplate: true
+dataFetchers:
+  - name: element
+    type: manifest_element
+    path: ""
+    required: true
+  - name: schema
+    type: schema_definitions
+    path: "definitions"
+    required: false
+  - name: attributes
+    type: attribute_collection
+    path: ""
+    required: true
+template: element_attributes
 ---
 
 Detailed attribute documentation for a specific custom element, including types, constraints, default values, and usage patterns. This resource provides comprehensive attribute information optimized for AI-assisted development.

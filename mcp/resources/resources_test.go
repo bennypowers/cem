@@ -26,6 +26,7 @@ import (
 
 	"bennypowers.dev/cem/mcp"
 	"bennypowers.dev/cem/mcp/resources"
+	"bennypowers.dev/cem/mcp/types"
 	V "bennypowers.dev/cem/validate"
 	W "bennypowers.dev/cem/workspace"
 	mcpSDK "github.com/modelcontextprotocol/go-sdk/mcp"
@@ -81,7 +82,7 @@ func TestSchemaResource_Integration(t *testing.T) {
 	require.NoError(t, err)
 
 	// Find schema resource
-	var schemaResource *resources.ResourceDefinition
+	var schemaResource *types.ResourceDefinition
 	for _, def := range resourceDefs {
 		if def.Name == "schema" {
 			schemaResource = &def
@@ -130,7 +131,7 @@ func TestElementsResource_Integration_Legacy(t *testing.T) {
 	require.NoError(t, err)
 
 	// Find elements resource
-	var elementsResource *resources.ResourceDefinition
+	var elementsResource *types.ResourceDefinition
 	for _, def := range resourceDefs {
 		if def.Name == "elements" {
 			elementsResource = &def
@@ -191,7 +192,7 @@ func TestElementResource_Integration(t *testing.T) {
 	require.NoError(t, err)
 
 	// Find element resource
-	var elementResource *resources.ResourceDefinition
+	var elementResource *types.ResourceDefinition
 	for _, def := range resourceDefs {
 		if def.Name == "element" {
 			elementResource = &def
@@ -270,7 +271,7 @@ func TestPackagesResource_Integration(t *testing.T) {
 	require.NoError(t, err)
 
 	// Find packages resource
-	var packagesResource *resources.ResourceDefinition
+	var packagesResource *types.ResourceDefinition
 	for _, def := range resourceDefs {
 		if def.Name == "packages" {
 			packagesResource = &def
@@ -309,7 +310,7 @@ func TestGuidelinesResource_Integration(t *testing.T) {
 	require.NoError(t, err)
 
 	// Find guidelines resource
-	var guidelinesResource *resources.ResourceDefinition
+	var guidelinesResource *types.ResourceDefinition
 	for _, def := range resourceDefs {
 		if def.Name == "guidelines" {
 			guidelinesResource = &def
@@ -343,7 +344,7 @@ func TestAccessibilityResource_Integration(t *testing.T) {
 	require.NoError(t, err)
 
 	// Find accessibility resource
-	var accessibilityResource *resources.ResourceDefinition
+	var accessibilityResource *types.ResourceDefinition
 	for _, def := range resourceDefs {
 		if def.Name == "accessibility" {
 			accessibilityResource = &def
@@ -403,7 +404,7 @@ func TestResourceFrontmatterParsing(t *testing.T) {
 		},
 	}
 
-	resourceMap := make(map[string]resources.ResourceDefinition)
+	resourceMap := make(map[string]types.ResourceDefinition)
 	for _, def := range resourceDefs {
 		resourceMap[def.Name] = def
 	}
@@ -428,7 +429,7 @@ func TestResourceErrorHandling(t *testing.T) {
 	require.NoError(t, err)
 
 	// Find element resource for testing error conditions
-	var elementResource *resources.ResourceDefinition
+	var elementResource *types.ResourceDefinition
 	for _, def := range resourceDefs {
 		if def.Name == "element" {
 			elementResource = &def
@@ -496,6 +497,9 @@ func TestAllResourcesWithFixtures(t *testing.T) {
 			testURI := resource.URI
 			if resource.Name == "element" {
 				testURI = "cem://element/button-element" // Use known fixture element
+			} else if strings.Contains(resource.URI, "{tagName}") {
+				// For all declarative resources that require tagName, use button-element
+				testURI = strings.Replace(resource.URI, "{tagName}", "button-element", 1)
 			}
 
 			req := &mcpSDK.ReadResourceRequest{
@@ -529,7 +533,7 @@ func testResourceWithGolden(t *testing.T, uri string, goldenFile string) {
 	require.NoError(t, err)
 
 	// Find the resource that handles this URI
-	var resourceHandler *resources.ResourceDefinition
+	var resourceHandler *types.ResourceDefinition
 	for _, resource := range resourceDefs {
 		// Check for exact match or URI template match
 		if resource.URI == uri || (resource.URITemplate && strings.HasPrefix(uri, strings.Replace(resource.URI, "{tagName}", "", 1))) {

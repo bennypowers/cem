@@ -18,6 +18,7 @@ package tools_test
 
 import (
 	"encoding/json"
+	"flag"
 	"os"
 	"path/filepath"
 	"testing"
@@ -30,6 +31,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+var update = flag.Bool("update", false, "update golden files")
 
 
 // getTestRegistry creates a registry using the test fixtures following the existing pattern
@@ -112,7 +115,7 @@ func TestToolsLoading_Integration(t *testing.T) {
 	require.NotEmpty(t, toolDefs, "Should load tool definitions")
 
 	// Verify expected tools are present
-	expectedTools := []string{"validate_html", "suggest_attributes", "generate_html", "suggest_css_integration"}
+	expectedTools := []string{"validate_html", "generate_html"}
 	toolNames := make(map[string]bool)
 	for _, def := range toolDefs {
 		toolNames[def.Name] = true

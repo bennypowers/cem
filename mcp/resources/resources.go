@@ -30,26 +30,10 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-// ResourceDefinition represents a resource with metadata from markdown frontmatter
-type ResourceDefinition struct {
-	URI         string              `yaml:"uri"`
-	Name        string              `yaml:"name"`
-	MimeType    string              `yaml:"mimeType"`
-	URITemplate bool                `yaml:"uriTemplate,omitempty"`
-	Description string              `yaml:"-"` // From markdown content
-	Handler     mcp.ResourceHandler `yaml:"-"`
-}
-
-// Frontmatter represents the YAML frontmatter from resource markdown files
-type ResourceFrontmatter struct {
-	URI         string `yaml:"uri"`
-	Name        string `yaml:"name"`
-	MimeType    string `yaml:"mimeType"`
-	URITemplate bool   `yaml:"uriTemplate,omitempty"`
-}
+// Using ResourceDefinition and ResourceFrontmatter from types package
 
 // Resources returns all available resource definitions with their handlers
-func Resources(registry types.MCPContext) ([]ResourceDefinition, error) {
+func Resources(registry types.MCPContext) ([]types.ResourceDefinition, error) {
 	// Get the directory where this source file is located
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
@@ -57,7 +41,7 @@ func Resources(registry types.MCPContext) ([]ResourceDefinition, error) {
 	}
 	resourcesDir := filepath.Dir(filename)
 
-	var resourceDefs []ResourceDefinition
+	var resourceDefs []types.ResourceDefinition
 
 	// Find all markdown files in the resources directory
 	files, err := filepath.Glob(filepath.Join(resourcesDir, "*.md"))
@@ -77,46 +61,68 @@ func Resources(registry types.MCPContext) ([]ResourceDefinition, error) {
 }
 
 // parseResourceDefinition parses a markdown file with frontmatter into a ResourceDefinition
-func parseResourceDefinition(filename string, registry types.MCPContext) (ResourceDefinition, error) {
+func parseResourceDefinition(filename string, registry types.MCPContext) (types.ResourceDefinition, error) {
 	content, err := os.ReadFile(filename)
 	if err != nil {
-		return ResourceDefinition{}, fmt.Errorf("failed to read file: %w", err)
+		return types.ResourceDefinition{}, fmt.Errorf("failed to read file: %w", err)
 	}
 
 	// Split frontmatter and markdown content
 	parts := strings.SplitN(string(content), "---", 3)
 	if len(parts) < 3 {
-		return ResourceDefinition{}, fmt.Errorf("invalid markdown format: missing frontmatter")
+		return types.ResourceDefinition{}, fmt.Errorf("invalid markdown format: missing frontmatter")
 	}
 
 	// Parse YAML frontmatter
-	var frontmatter ResourceFrontmatter
+	var frontmatter types.ResourceFrontmatter
 	if err := yaml.Unmarshal([]byte(parts[1]), &frontmatter); err != nil {
-		return ResourceDefinition{}, fmt.Errorf("failed to parse frontmatter: %w", err)
+		return types.ResourceDefinition{}, fmt.Errorf("failed to parse frontmatter: %w", err)
 	}
 
 	// Extract description from markdown content
 	description := strings.TrimSpace(parts[2])
 
-	// Get the corresponding handler
-	handler, err := getResourceHandler(frontmatter.Name, registry)
-	if err != nil {
-		return ResourceDefinition{}, fmt.Errorf("failed to get handler for resource %s: %w", frontmatter.Name, err)
+	// Create resource definition first
+	resourceDef := types.ResourceDefinition{
+		URI:          frontmatter.URI,
+		Name:         frontmatter.Name,
+		MimeType:     frontmatter.MimeType,
+		URITemplate:  frontmatter.URITemplate,
+		Description:  description,
+		DataFetchers: frontmatter.DataFetchers,
+		Template:     frontmatter.Template,
+		ResponseType: frontmatter.ResponseType,
 	}
 
-	return ResourceDefinition{
-		URI:         frontmatter.URI,
-		Name:        frontmatter.Name,
-		MimeType:    frontmatter.MimeType,
-		URITemplate: frontmatter.URITemplate,
-		Description: description,
-		Handler:     handler,
-	}, nil
+	// Get the corresponding handler
+	handler, err := getResourceHandler(resourceDef, registry)
+	if err != nil {
+		return types.ResourceDefinition{}, fmt.Errorf("failed to get handler for resource %s: %w", frontmatter.Name, err)
+	}
+
+	// Set the handler and return the complete resource definition
+	resourceDef.Handler = handler
+	return resourceDef, nil
 }
 
 // getResourceHandler returns the appropriate handler function for a resource
-func getResourceHandler(resourceName string, registry types.MCPContext) (mcp.ResourceHandler, error) {
-	switch resourceName {
+func getResourceHandler(resourceDef types.ResourceDefinition, registry types.MCPContext) (mcp.ResourceHandler, error) {
+	// Check if this is a declarative resource (has data fetchers)
+	if len(resourceDef.DataFetchers) > 0 {
+		config := DeclarativeResourceConfig{
+			URI:          resourceDef.URI,
+			Name:         resourceDef.Name,
+			MimeType:     resourceDef.MimeType,
+			URITemplate:  resourceDef.URITemplate,
+			DataFetchers: resourceDef.DataFetchers,
+			Template:     resourceDef.Template,
+			ResponseType: resourceDef.ResponseType,
+		}
+		return MakeDeclarativeResourceHandler(registry, config), nil
+	}
+
+	// Fallback to legacy handlers for non-declarative resources
+	switch resourceDef.Name {
 	case "schema":
 		return makeSchemaHandler(registry), nil
 	case "packages":
@@ -130,7 +136,7 @@ func getResourceHandler(resourceName string, registry types.MCPContext) (mcp.Res
 	case "accessibility":
 		return makeAccessibilityHandler(registry), nil
 	default:
-		return nil, fmt.Errorf("unknown resource: %s", resourceName)
+		return nil, fmt.Errorf("unknown resource: %s", resourceDef.Name)
 	}
 }
 

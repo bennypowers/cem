@@ -34,18 +34,35 @@ The server uses stdio transport and automatically discovers manifests from your 
 
 The server provides several resource types that AI systems can access:
 
-| URI                       | Description                                                                                                                        |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `cem://schema`            | Returns the JSON schema for custom elements manifests, enabling validation and understanding of manifest structure.                |
-| `cem://packages`          | Provides package discovery and overview of available manifest packages in the workspace.                                          |
-| `cem://elements`          | Returns summaries of all available elements with their capabilities and basic metadata.                                           |
-| `cem://element/{tagName}` | Returns detailed information about a specific element, including all attributes, slots, events, CSS properties, parts, and states. |
-| `cem://guidelines`        | Provides design system guidelines and best practices for component usage.                                                          |
-| `cem://accessibility`     | Returns accessibility patterns and validation rules for component compliance.                                                      |
+| URI                                             | Description                                                                                                                           |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `cem://schema`                                  | Returns the JSON schema for custom elements manifests, enabling validation and understanding of manifest structure.                   |
+| `cem://packages`                                | Provides package discovery and overview of available manifest packages in the workspace.                                          |
+| `cem://elements`                                | Returns summaries of all available elements with their capabilities and basic metadata.                                               |
+| `cem://element/{tagName}`                       | Returns detailed information about a specific element, including all attributes, slots, events, CSS properties, parts, and states. |
+| `cem://element/{tagName}/attributes`            | Focused attribute documentation with type constraints, valid values, and usage patterns.                                           |
+| `cem://element/{tagName}/slots`                 | Content guidelines and accessibility considerations for slot usage.                                                       |
+| `cem://element/{tagName}/events`                | Event triggers, data payloads, and JavaScript integration patterns.                                                                   |
+| `cem://element/{tagName}/css/parts`             | CSS parts styling guidance for targeted element customization.                                                                    |
+| `cem://element/{tagName}/css/custom-properties` | CSS custom properties documentation for comprehensive theming.                                                           |
+| `cem://element/{tagName}/css/states`            | CSS custom states documentation for interactive styling patterns.                                                                  |
+| `cem://guidelines`                              | Provides design system guidelines and best practices for component usage.                                                            |
+| `cem://accessibility`                           | Returns accessibility patterns and validation rules for component compliance.                                                         |
 
 ## MCP Tools
 
-The server provides interactive tools built on the declarative framework. All element-focused tools (`element_*`) are now fully declarative, using YAML configuration and template rendering for consistent, rich responses:
+The server provides **core action tools** that work with the declarative resource "database". Progressive disclosure is handled by the comprehensive resource system, while tools focus on concrete actions:
+
+### HTML Generation
+**Tool:** `generate_html`
+
+Generate correct HTML structure with proper slots and attributes using manifest data.
+
+| Parameter    | Type   | Required | Description                  |
+| ------------ | ------ | -------- | ---------------------------- |
+| `tagName`    | string | ✅       | Element to generate HTML for |
+| `attributes` | object |          | Attribute values to include  |
+| `content`    | object |          | Slot content mapping         |
 
 ### HTML Validation
 **Tool:** `validate_html`
@@ -64,63 +81,36 @@ Validates custom element usage based on manifest guidelines and best practices. 
 - **Content/Attribute Redundancy**: Identifies when slot content overrides attribute values
 - **Manifest Compliance**: Ensures custom elements are used according to their documented constraints
 
-### Attribute Suggestions
-**Tool:** `suggest_attributes`
+## Architecture: Resources as Database
 
-Get intelligent attribute suggestions with manifest context.
+The MCP server now follows a **"manifests as database, resources as API"** principle:
 
-| Parameter | Type   | Required | Description                                                       |
-| --------- | ------ | -------- | ----------------------------------------------------------------- |
-| `tagName` | string | ✅       | Element to get attribute suggestions for                          |
-| `context` | string |          | Usage context (`accessibility`, `form`, `interactive`, `styling`) |
+### 📊 Manifest Database
+Your custom elements manifests serve as a structured database of component information, providing:
+- Type definitions and constraints
+- Usage guidelines and patterns
+- Design system integration rules
+- Accessibility requirements
 
-### HTML Generation
-**Tool:** `generate_html`
+### 🔗 Declarative Resources
+Declarative resources provide comprehensive access to this database through RESTful endpoints:
 
-Generate correct HTML structure with proper slots and attributes.
+**Element Information:**
+- `cem://element/{tagName}/attributes` - Attribute documentation and constraints
+- `cem://element/{tagName}/slots` - Content guidelines and accessibility
+- `cem://element/{tagName}/events` - Event patterns and integration
 
-| Parameter    | Type   | Required | Description                  |
-| ------------ | ------ | -------- | ---------------------------- |
-| `tagName`    | string | ✅       | Element to generate HTML for |
-| `attributes` | object |          | Attribute values to include  |
-| `content`    | object |          | Slot content mapping         |
+**CSS Styling:**
+- `cem://element/{tagName}/css/parts` - CSS parts for targeted styling
+- `cem://element/{tagName}/css/custom-properties` - Theming and customization
+- `cem://element/{tagName}/css/states` - Interactive state styling
 
-### CSS Integration
-**Tool:** `suggest_css_integration`
+### ⚡ Action Tools
+Core tools perform concrete actions using the resource data:
+- **`generate_html`** - Creates proper HTML structure
+- **`validate_html`** - Ensures manifest compliance
 
-Provides CSS integration guidance using manifest-defined CSS APIs.
-
-| Parameter     | Type   | Required | Description                                                |
-| ------------- | ------ | -------- | ---------------------------------------------------------- |
-| `tagName`     | string | ✅       | Element to get CSS guidance for                            |
-| `styleTarget` | string |          | What to style (`element`, `parts`, `states`, `properties`) |
-| `context`     | string |          | Styling context (`theme`, `responsive`, `dark-mode`)       |
-
-### Element Information Tools (Declarative)
-
-These tools use the declarative framework to provide focused, template-driven information:
-
-**Tool:** `element_details`
-Complete element reference with all APIs, schema definitions, and usage guidance.
-
-**Tool:** `element_attributes`
-Focused attribute documentation with type constraints, valid values, and usage patterns.
-
-**Tool:** `element_slots`
-Content guidelines and accessibility considerations for slot usage.
-
-**Tool:** `element_events`
-Event triggers, data payloads, and JavaScript integration patterns.
-
-**Tool:** `element_styling`
-CSS customization guidance including custom properties, parts, and states.
-
-| Parameter | Type   | Required | Description                                           |
-| --------- | ------ | -------- | ----------------------------------------------------- |
-| `tagName` | string | ✅       | Element to get information for                        |
-| `context` | string |          | Usage context for additional focused guidance         |
-
-All declarative tools automatically combine your manifest descriptions with schema information, type constraints, and usage patterns to provide comprehensive AI guidance.
+This architecture separates **information access** (resources) from **actions** (tools), providing better performance, caching, and a cleaner API surface.
 
 
 ## Usage
@@ -179,11 +169,13 @@ This means no hardcoded suggestions - just rich context that enables intelligent
 
 ### Benefits of the Declarative Approach
 
-- **🔧 Drop-in Tool Support** - New tools can be added with just YAML configuration
+- **🔧 Drop-in Resource Support** - New resources can be added with just YAML configuration
 - **📝 Template-Driven Content** - Rich responses generated from your manifest data
 - **⚡ Reduced Maintenance** - 77% less Go code to maintain
-- **🎯 Focused Tools** - Specialized tools for attributes, slots, events, styling
-- **🔄 Consistent Output** - All tools use the same data processing pipeline
+- **🎯 Focused Resources** - Specialized resources for attributes, slots, events, CSS APIs
+- **🔄 Consistent Output** - All resources use the same data processing pipeline
+- **🚀 RESTful Architecture** - Resources follow web standards for caching and access
+- **📊 Granular Access** - Optional sub-resource paths for specific items (e.g., `/attributes/{name}`)
 
 ## Troubleshooting
 
