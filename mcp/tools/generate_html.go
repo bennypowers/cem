@@ -162,18 +162,6 @@ func generateHTMLStructure(element types.ElementInfo, args GenerateHtmlArgs) (st
 }
 
 // prepareHTMLTemplateData prepares all data for the main HTML generation template
-func prepareHTMLTemplateData(element types.ElementInfo, args GenerateHtmlArgs, generatedHTML string) HTMLGenerationTemplateData {
-	templateData := HTMLGenerationTemplateData{
-		BaseTemplateData: NewBaseTemplateData(element, args.Context, args.Options),
-		Content:          args.Content,
-		GeneratedHTML:    generatedHTML,
-	}
-
-	// Add attribute data with values for the main template
-	// All attributes are optional in custom elements manifests
-
-	return templateData
-}
 
 // prepareHTMLTemplateDataWithSchema prepares all data for the main HTML generation template with schema context
 func prepareHTMLTemplateDataWithSchema(element types.ElementInfo, args GenerateHtmlArgs, generatedHTML string, schemaDefinitions interface{}) HTMLGenerationTemplateData {
@@ -190,23 +178,6 @@ func prepareHTMLTemplateDataWithSchema(element types.ElementInfo, args GenerateH
 }
 
 // getAttributeValue determines the value to use for an attribute
-func getAttributeValue(attr types.Attribute, providedAttrs map[string]string) string {
-	// Check if user provided a value
-	if value, exists := providedAttrs[attr.Name]; exists {
-		return value
-	}
-
-	// Use default value if available
-	if attr.Default != "" {
-		return attr.Default
-	}
-
-	// No enum values available from manifest directly
-	// (would need to parse attr.Type.Text for union types)
-
-	// Fallback to placeholder
-	return "value"
-}
 
 // getSchemaDefinitions retrieves schema definitions for template context
 func getSchemaDefinitions(registry types.MCPContext) (map[string]interface{}, error) {

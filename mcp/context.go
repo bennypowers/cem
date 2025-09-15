@@ -73,12 +73,6 @@ type ExampleInfo struct {
 // Helper functions
 
 // getTypeString safely extracts type text from manifest Type
-func getTypeString(t *M.Type) string {
-	if t == nil {
-		return ""
-	}
-	return t.Text
-}
 
 // NewMCPContext creates a new MCP context
 func NewMCPContext(workspace types.WorkspaceContext) (*MCPContext, error) {
@@ -420,7 +414,7 @@ func (ctx *MCPContext) convertElement(element *M.CustomElement, tagName string) 
 
 	mcpElement := &MCPCustomElementDeclaration{
 		RenderableCustomElementDeclaration: renderable,
-		Guidelines:                         ctx.extractGuidelinesFromElement(element),
+		Guidelines:                         []string{}, // Guidelines extraction removed
 	}
 
 	return &MCPElementInfoAdapter{
@@ -430,60 +424,6 @@ func (ctx *MCPContext) convertElement(element *M.CustomElement, tagName string) 
 
 // Helper methods for extracting guidelines and examples
 
-func (ctx *MCPContext) extractGuidelinesFromElement(element *M.CustomElement) []string {
-	var guidelines []string
-
-	// For now, extract guidelines from attributes, slots, etc descriptions
-	// In the future, this could be enhanced to extract from JSDoc or other sources
-
-	return guidelines
-}
-
-// extractGuidelines is a generic helper that extracts guidelines from any description text
-func (ctx *MCPContext) extractGuidelines(description string) []string {
-	// Sanitize description
-	sanitized := security.SanitizeDescription(description)
-
-	return ctx.extractTextGuidelines(sanitized)
-}
-
-// extractTextGuidelines extracts guideline text using keyword-based heuristics
-//
-// LIMITATIONS: This function uses simple keyword matching and has known limitations:
-// - Only recognizes RFC 2119 keywords: "should", "must", "use", "avoid"
-// - Assumes English-language documentation
-// - Splits on periods (.) which may break on abbreviations or decimals
-// - May extract false positives from unrelated sentences containing keywords
-// - Does NOT support:
-//   - Other documentation styles (JSDoc @param, MDN patterns)
-//   - Non-English documentation
-//   - Structured guidelines (YAML front matter, markdown headers)
-//   - Context-aware parsing (code examples vs prose)
-//   - Multi-sentence guidelines spanning periods
-//
-// For robust guideline extraction, consider structured documentation formats.
-// See RFC 2119 for recommended keyword usage: https://tools.ietf.org/html/rfc2119
-func (ctx *MCPContext) extractTextGuidelines(text string) []string {
-	var guidelines []string
-	if text == "" {
-		return guidelines
-	}
-
-	sentences := strings.Split(text, ".")
-	for _, sentence := range sentences {
-		sentence = strings.TrimSpace(sentence)
-		if strings.Contains(strings.ToLower(sentence), "should") ||
-			strings.Contains(strings.ToLower(sentence), "must") ||
-			strings.Contains(strings.ToLower(sentence), "use") ||
-			strings.Contains(strings.ToLower(sentence), "avoid") {
-			if sentence != "" {
-				guidelines = append(guidelines, sentence+".")
-			}
-		}
-	}
-
-	return guidelines
-}
 
 // MCPContextAdapter implements MCPTypes.MCPContext interface for tools package
 type MCPContextAdapter struct {
@@ -528,8 +468,8 @@ type MCPElementInfoAdapter struct {
 
 // Declaration returns the underlying manifest declaration
 func (e *MCPElementInfoAdapter) Declaration() *M.CustomElementDeclaration {
-	if e.MCPCustomElementDeclaration.CustomElementDeclaration != nil {
-		return e.MCPCustomElementDeclaration.CustomElementDeclaration
+	if e.CustomElementDeclaration != nil {
+		return e.CustomElementDeclaration
 	}
 	return nil
 }
@@ -537,7 +477,7 @@ func (e *MCPElementInfoAdapter) Declaration() *M.CustomElementDeclaration {
 // Convenience accessors that delegate to embedded manifest types
 func (e *MCPElementInfoAdapter) TagName() string {
 	if e.RenderableCustomElementDeclaration != nil {
-		return e.RenderableCustomElementDeclaration.CustomElementDeclaration.TagName
+		return e.CustomElementDeclaration.TagName
 	}
 	return ""
 }
@@ -545,7 +485,7 @@ func (e *MCPElementInfoAdapter) TagName() string {
 // Template-friendly access
 func (e *MCPElementInfoAdapter) Element() *M.CustomElementDeclaration {
 	if e.RenderableCustomElementDeclaration != nil {
-		return e.RenderableCustomElementDeclaration.CustomElementDeclaration
+		return e.CustomElementDeclaration
 	}
 	return nil
 }
@@ -573,7 +513,7 @@ func (e *MCPElementInfoAdapter) Description() string {
 }
 
 func (e *MCPElementInfoAdapter) Module() string {
-	return e.MCPCustomElementDeclaration.ModulePath
+	return e.ModulePath
 }
 
 func (e *MCPElementInfoAdapter) Package() string {
