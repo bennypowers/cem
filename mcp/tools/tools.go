@@ -105,6 +105,16 @@ func getToolHandler(toolName string, registry types.MCPContext) (mcp.ToolHandler
 		return makeGenerateHtmlHandler(registry), nil
 	case "suggest_css_integration":
 		return makeSuggestCssIntegrationHandler(registry), nil
+	case "element_details":
+		return makeElementDetailsHandler(registry), nil
+	case "element_attributes":
+		return makeElementAttributesHandler(registry), nil
+	case "element_slots":
+		return makeElementSlotsHandler(registry), nil
+	case "element_events":
+		return makeElementEventsHandler(registry), nil
+	case "element_styling":
+		return makeElementStylingHandler(registry), nil
 	default:
 		return nil, fmt.Errorf("unknown tool: %s", toolName)
 	}
@@ -143,4 +153,59 @@ func makeSuggestCssIntegrationHandler(registry types.MCPContext) mcp.ToolHandler
 	return func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		return handleSuggestCssIntegration(ctx, req, registry)
 	}
+}
+
+func makeElementDetailsHandler(registry types.MCPContext) mcp.ToolHandler {
+	return func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		return handleElementDetails(ctx, req, registry)
+	}
+}
+
+// MakeElementDetailsHandler is the exported version for testing
+func MakeElementDetailsHandler(registry types.MCPContext) mcp.ToolHandler {
+	return makeElementDetailsHandler(registry)
+}
+
+func makeElementAttributesHandler(registry types.MCPContext) mcp.ToolHandler {
+	return func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		return handleElementAttributes(ctx, req, registry)
+	}
+}
+
+// MakeElementAttributesHandler is the exported version for testing
+func MakeElementAttributesHandler(registry types.MCPContext) mcp.ToolHandler {
+	return makeElementAttributesHandler(registry)
+}
+
+func makeElementSlotsHandler(registry types.MCPContext) mcp.ToolHandler {
+	return func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		return handleElementSlots(ctx, req, registry)
+	}
+}
+
+// MakeElementSlotsHandler is the exported version for testing
+func MakeElementSlotsHandler(registry types.MCPContext) mcp.ToolHandler {
+	return makeElementSlotsHandler(registry)
+}
+
+func makeElementEventsHandler(registry types.MCPContext) mcp.ToolHandler {
+	return func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		return handleElementEvents(ctx, req, registry)
+	}
+}
+
+// MakeElementEventsHandler is the exported version for testing
+func MakeElementEventsHandler(registry types.MCPContext) mcp.ToolHandler {
+	return makeElementEventsHandler(registry)
+}
+
+func makeElementStylingHandler(registry types.MCPContext) mcp.ToolHandler {
+	return func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		return handleElementStyling(ctx, req, registry)
+	}
+}
+
+// MakeElementStylingHandler is the exported version for testing
+func MakeElementStylingHandler(registry types.MCPContext) mcp.ToolHandler {
+	return makeElementStylingHandler(registry)
 }

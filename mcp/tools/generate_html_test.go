@@ -29,6 +29,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+
 func TestGenerateHTML_WithFixtures(t *testing.T) {
 	registry := getTestRegistry(t)
 
@@ -252,9 +253,9 @@ func testGenerateHtmlWithGolden(t *testing.T, args tools.GenerateHtmlArgs, golde
 
 	output := textContent.Text
 
-	// Handle UPDATE_GOLDEN flag
+	// Handle -update flag
 	goldenPath := filepath.Join("../fixtures/generate-html-integration", goldenFile)
-	if os.Getenv("UPDATE_GOLDEN") == "1" {
+	if *update {
 		err := os.MkdirAll(filepath.Dir(goldenPath), 0755)
 		require.NoError(t, err, "Failed to create golden file directory")
 
@@ -267,7 +268,7 @@ func testGenerateHtmlWithGolden(t *testing.T, args tools.GenerateHtmlArgs, golde
 	// Compare with golden file
 	expectedData, err := os.ReadFile(goldenPath)
 	if os.IsNotExist(err) {
-		t.Fatalf("Golden file %s does not exist. Run with UPDATE_GOLDEN=1 to create it.", goldenPath)
+		t.Fatalf("Golden file %s does not exist. Run with -update to create it.", goldenPath)
 	}
 	require.NoError(t, err, "Should be able to read golden file: %s", goldenPath)
 

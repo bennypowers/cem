@@ -31,6 +31,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+
 // getTestRegistry creates a registry using the test fixtures following the existing pattern
 func getTestRegistry(t *testing.T) *mcp.MCPContextAdapter {
 	workspace := W.NewFileSystemWorkspaceContext("../fixtures/multiple-elements-integration")
@@ -236,9 +237,9 @@ func testTemplateWithGolden(t *testing.T, templateName, contextName, fixtureFile
 	output, err := templates.RenderTemplate(templateName, templateData)
 	require.NoError(t, err, "Template should render without error")
 
-	// Handle UPDATE_GOLDEN flag
+	// Handle -update flag
 	goldenPath := filepath.Join("../fixtures", contextName, goldenFile)
-	if os.Getenv("UPDATE_GOLDEN") == "1" {
+	if *update {
 		err := os.WriteFile(goldenPath, []byte(output), 0644)
 		require.NoError(t, err, "Failed to update golden file %s", goldenPath)
 		t.Logf("Updated golden file: %s", goldenPath)
@@ -248,7 +249,7 @@ func testTemplateWithGolden(t *testing.T, templateName, contextName, fixtureFile
 	// Compare with golden file
 	expectedData, err := os.ReadFile(goldenPath)
 	if os.IsNotExist(err) {
-		t.Fatalf("Golden file %s does not exist. Run with UPDATE_GOLDEN=1 to create it.", goldenPath)
+		t.Fatalf("Golden file %s does not exist. Run with -update to create it.", goldenPath)
 	}
 	require.NoError(t, err, "Should be able to read golden file: %s", goldenPath)
 
