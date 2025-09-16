@@ -23,12 +23,14 @@ import (
 	"sort"
 	"strings"
 
+	"bennypowers.dev/cem/mcp/constants"
 	"bennypowers.dev/cem/mcp/templates"
 	"bennypowers.dev/cem/mcp/types"
 	V "bennypowers.dev/cem/validate"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/tidwall/gjson"
 )
+
 
 // DeclarativeResourceConfig holds the configuration for a declarative resource
 type DeclarativeResourceConfig struct {
@@ -332,7 +334,7 @@ func fetchSchemaVersionDetection(registry types.MCPContext, path string) (interf
 	// Schema detection logic from schema.go
 	versions := registry.GetManifestSchemaVersions()
 
-	defaultVersion := "2.1.1-speculative"
+	defaultVersion := constants.DefaultSchemaVersion
 	selectedVersion := defaultVersion
 
 	if len(versions) == 1 {
@@ -590,7 +592,7 @@ func categorizeElementsByCapabilityList(elements []map[string]interface{}) map[s
 
 func selectBestVersion(versions []string) string {
 	if len(versions) == 0 {
-		return "2.1.1-speculative"
+		return constants.DefaultSchemaVersion
 	}
 
 	var best string
@@ -616,7 +618,7 @@ func selectBestVersion(versions []string) string {
 	}
 
 	if best == "" {
-		return "2.1.1-speculative"
+		return constants.DefaultSchemaVersion
 	}
 	return best
 }

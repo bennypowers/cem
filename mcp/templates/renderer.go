@@ -121,7 +121,10 @@ func (tp *TemplatePool) createTemplate(templateName string) *template.Template {
 // Render renders a template using the thread-safe pool
 func (tp *TemplatePool) Render(templateName string, data interface{}) (string, error) {
 	// Security: Validate template name to prevent path traversal
-	if strings.Contains(templateName, "..") || strings.Contains(templateName, "/") {
+	// Note: embed.FS always uses POSIX separators (/), even on Windows,
+	// so we only need to check for POSIX path traversal patterns.
+	// We also check for backslashes as an extra precaution.
+	if strings.Contains(templateName, "..") || strings.Contains(templateName, "/") || strings.Contains(templateName, "\\") {
 		return "", fmt.Errorf("invalid template name: %s", templateName)
 	}
 
