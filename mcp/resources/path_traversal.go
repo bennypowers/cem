@@ -153,7 +153,7 @@ func (e *PathTraversalEngine) resolvePathVariables(path string, args any) (strin
 		end := start + 2
 		for end < len(resolvedPath) {
 			c := resolvedPath[end]
-			if !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_') {
+			if (c < 'a' || c > 'z') && (c < 'A' || c > 'Z') && (c < '0' || c > '9') && c != '_' {
 				break
 			}
 			end++
