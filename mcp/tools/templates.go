@@ -31,25 +31,9 @@ func init() {
 	templates.RegisterTemplateSource("tools", &toolsTemplateFiles)
 }
 
-// TemplateDataProvider defines the interface for all template data types
-type TemplateDataProvider interface {
-	// Core element information
-	GetElement() types.ElementInfo
-	GetContext() string
-	GetOptions() map[string]string
-}
-
-// BaseTemplateData provides common template data fields
-type BaseTemplateData struct {
-	Element           types.ElementInfo
-	Context           string
-	Options           map[string]string
-	SchemaDefinitions interface{} // Schema data for template functions
-}
-
-func (b BaseTemplateData) GetElement() types.ElementInfo { return b.Element }
-func (b BaseTemplateData) GetContext() string            { return b.Context }
-func (b BaseTemplateData) GetOptions() map[string]string { return b.Options }
+// Use unified template data types from types package
+type TemplateDataProvider = types.TemplateDataProvider
+type BaseTemplateData = types.BaseTemplateData
 
 // ElementWithCapabilities wraps an element with its capability strings
 type ElementWithCapabilities struct {
@@ -155,24 +139,9 @@ type ContentAttributeRedundancy struct {
 	SlotContent    string
 }
 
-// NewBaseTemplateData creates base template data
-func NewBaseTemplateData(element types.ElementInfo, context string, options map[string]string) BaseTemplateData {
-	return BaseTemplateData{
-		Element: element,
-		Context: context,
-		Options: options,
-	}
-}
-
-// NewBaseTemplateDataWithSchema creates base template data with schema context
-func NewBaseTemplateDataWithSchema(element types.ElementInfo, context string, options map[string]string, schemaDefinitions interface{}) BaseTemplateData {
-	return BaseTemplateData{
-		Element:           element,
-		Context:           context,
-		Options:           options,
-		SchemaDefinitions: schemaDefinitions,
-	}
-}
+// Use unified template data constructors from types package
+var NewBaseTemplateData = types.NewBaseTemplateData
+var NewBaseTemplateDataWithSchema = types.NewBaseTemplateDataWithSchema
 
 // RenderTemplate renders a template using the global thread-safe pool
 func RenderTemplate(templateName string, data interface{}) (string, error) {

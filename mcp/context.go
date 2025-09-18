@@ -88,13 +88,6 @@ func NewMCPCustomElementDeclaration(element *M.CustomElement, tagName string) *M
 
 // Use the interface from mcp/types instead of struct alias
 
-// ExampleInfo contains usage examples
-type ExampleInfo struct {
-	Title       string `json:"title"`
-	Description string `json:"description,omitempty"`
-	Code        string `json:"code"`
-	Language    string `json:"language,omitempty"`
-}
 
 // Helper functions
 
@@ -619,10 +612,7 @@ func (e *MCPElementInfoAdapter) Guidelines() []string {
 	return e.MCPCustomElementDeclaration.Guidelines
 }
 
-// Legacy alias for transition
-type ElementInfoAdapter = MCPElementInfoAdapter
-
-func (e *ElementInfoAdapter) Examples() []MCPTypes.Example {
+func (e *MCPElementInfoAdapter) Examples() []MCPTypes.Example {
 	// Extract examples from element and attributes
 	var examples []MCPTypes.Example
 

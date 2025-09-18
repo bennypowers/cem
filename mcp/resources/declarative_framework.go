@@ -38,26 +38,12 @@ type DeclarativeResourceConfig struct {
 	ResponseType string
 }
 
-// FetchedData represents the result of a data fetcher (ported from tools)
-type FetchedData map[string]any
+// Use unified template data types from types package
+type FetchedData = types.FetchedData
+type BaseTemplateData = types.BaseTemplateData
 
-// BaseTemplateData provides common template data fields (ported from tools)
-type BaseTemplateData struct {
-	Element           types.ElementInfo
-	Context           string
-	Options           map[string]string
-	SchemaDefinitions any
-}
-
-// NewBaseTemplateDataWithSchema creates base template data with schema context
-func NewBaseTemplateDataWithSchema(element types.ElementInfo, context string, options map[string]string, schemaDefinitions any) BaseTemplateData {
-	return BaseTemplateData{
-		Element:           element,
-		Context:           context,
-		Options:           options,
-		SchemaDefinitions: schemaDefinitions,
-	}
-}
+// Use unified template data constructor
+var NewBaseTemplateDataWithSchema = types.NewBaseTemplateDataWithSchema
 
 // handleDeclarativeResource is the generic handler for declarative resources
 func handleDeclarativeResource(

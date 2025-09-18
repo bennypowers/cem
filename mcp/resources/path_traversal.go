@@ -17,73 +17,43 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package resources
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
 
+	"bennypowers.dev/cem/manifest/traversal"
 	"bennypowers.dev/cem/mcp/types"
-	"github.com/tidwall/gjson"
 )
 
-// PathTraversalEngine handles declarative data path resolution
+// PathTraversalEngine handles MCP-specific data path resolution
+// extending the base manifest traversal engine with MCP-specific features
 type PathTraversalEngine struct {
-	// Future: could add caching, optimizations, etc.
+	engine *traversal.Engine
 }
 
-// NewPathTraversalEngine creates a new path traversal engine
+// NewPathTraversalEngine creates a new MCP path traversal engine
 func NewPathTraversalEngine() *PathTraversalEngine {
-	return &PathTraversalEngine{}
+	return &PathTraversalEngine{
+		engine: traversal.NewEngine(),
+	}
 }
 
-// ResolvePath resolves a JSONPath expression against a data source
+// ResolvePath delegates to the base engine with MCP variable resolution
 func (e *PathTraversalEngine) ResolvePath(source, path string, sources map[string]any) (any, error) {
-	// Get the source data
-	sourceData, exists := sources[source]
-	if !exists {
-		return nil, fmt.Errorf("data source '%s' not found", source)
-	}
-
-	// Handle variable substitution in path ($.varName)
-	resolvedPath, err := e.resolvePathVariables(path, sources["args"])
-	if err != nil {
-		return nil, fmt.Errorf("failed to resolve path variables: %w", err)
-	}
-
-	// Convert source data to JSON for gjson processing
-	sourceJSON, err := json.Marshal(sourceData)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal source data: %w", err)
-	}
-
-	// Use gjson to resolve the path
-	result := gjson.GetBytes(sourceJSON, resolvedPath)
-	finalPath := resolvedPath
-	if !result.Exists() {
-		// Handle special cases where gjson path might need adjustment
-		if strings.Contains(resolvedPath, "[") {
-			// This might be a map access like elements[button-element]
-			// Convert to gjson map syntax: elements.button-element
-			adjustedPath := convertMapAccessToGjsonPath(resolvedPath)
-			finalPath = adjustedPath
-			result = gjson.GetBytes(sourceJSON, adjustedPath)
-		}
-
-		if !result.Exists() {
-			return nil, fmt.Errorf("path '%s' not found in source '%s'", finalPath, source)
+	// Handle MCP-specific variable substitution in path ($.varName)
+	resolvedPath := path
+	if strings.Contains(path, "$.") {
+		var err error
+		resolvedPath, err = e.resolvePathVariables(path, sources["args"])
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve path variables: %w", err)
 		}
 	}
 
-	// Parse the result back to Go types
-	var parsedResult any
-	if err := json.Unmarshal([]byte(result.Raw), &parsedResult); err != nil {
-		return nil, fmt.Errorf("failed to parse result: %w", err)
-	}
-
-	return parsedResult, nil
+	return e.engine.ResolvePath(source, resolvedPath, sources)
 }
 
-// ResolvePathWithFilter resolves a path and applies a filter to the result
+// ResolvePathWithFilter resolves a path and applies a filter to the result (backward compatibility)
 func (e *PathTraversalEngine) ResolvePathWithFilter(source, path, filter string, sources map[string]any) (any, error) {
 	result, err := e.ResolvePath(source, path, sources)
 	if err != nil {
@@ -98,38 +68,42 @@ func (e *PathTraversalEngine) ResolvePathWithFilter(source, path, filter string,
 		return result, nil
 	}
 
-	return e.applyFilter(result, filter)
+	return e.applyMCPFilter(result, filter)
 }
 
-// ExecuteDataFetcher executes a single DataFetcher using the new path-based system
+// ExecuteDataFetcher executes a single DataFetcher using MCP-specific extensions
 func (e *PathTraversalEngine) ExecuteDataFetcher(fetcher types.DataFetcher, sources map[string]any) (any, error) {
-	// Validate required fields
-	if fetcher.Source == "" {
-		return nil, fmt.Errorf("fetcher '%s' missing required 'source' field", fetcher.Name)
+	// Pre-process path variables (MCP-specific feature)
+	resolvedPath := fetcher.Path
+	if strings.Contains(resolvedPath, "$.") {
+		var err error
+		resolvedPath, err = e.resolvePathVariables(resolvedPath, sources["args"])
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve path variables: %w", err)
+		}
 	}
 
-	// If path is empty, return the source data directly
-	var result any
-	var err error
-	if fetcher.Path == "" {
-		sourceData, exists := sources[fetcher.Source]
-		if !exists {
-			return nil, fmt.Errorf("data source '%s' not found", fetcher.Source)
-		}
-		result = sourceData
-		// Apply filter if specified
-		if fetcher.Filter != "" {
-			result, err = e.applyFilter(result, fetcher.Filter)
-		}
-	} else {
-		// Resolve the path
-		result, err = e.ResolvePathWithFilter(fetcher.Source, fetcher.Path, fetcher.Filter, sources)
+	// Convert to manifest traversal.DataFetcher
+	manifestFetcher := traversal.DataFetcher{
+		Name:     fetcher.Name,
+		Source:   fetcher.Source,
+		Path:     resolvedPath,
+		Filter:   "", // We'll handle filters separately for MCP-specific ones
+		Required: fetcher.Required,
 	}
+
+	// Execute using base engine
+	result, err := e.engine.ExecuteDataFetcher(manifestFetcher, sources)
 	if err != nil {
-		if fetcher.Required {
-			return nil, fmt.Errorf("required fetcher '%s' failed: %w", fetcher.Name, err)
+		return nil, err
+	}
+
+	// Apply MCP-specific filters if needed
+	if fetcher.Filter != "" {
+		result, err = e.applyMCPFilter(result, fetcher.Filter)
+		if err != nil {
+			return nil, err
 		}
-		return nil, nil // Non-required fetcher failure returns nil
 	}
 
 	return result, nil
@@ -215,21 +189,21 @@ func (e *PathTraversalEngine) resolvePathVariables(path string, args any) (strin
 	return resolvedPath, nil
 }
 
-// applyFilter applies various filters to transform results
-func (e *PathTraversalEngine) applyFilter(result any, filter string) (any, error) {
+// applyMCPFilter applies MCP-specific filters to transform results
+func (e *PathTraversalEngine) applyMCPFilter(result any, filter string) (any, error) {
 	switch filter {
+	case "attributes":
+		return e.getElementAttributes(result), nil
+	case "packages_with_metadata":
+		return e.getPackagesWithMetadata(result), nil
 	case "first":
 		return e.getFirst(result), nil
 	case "count":
 		return e.getCount(result), nil
 	case "exists":
 		return e.getExists(result), nil
-	case "attributes":
-		return e.getElementAttributes(result), nil
-	case "packages_with_metadata":
-		return e.getPackagesWithMetadata(result), nil
 	default:
-		return nil, fmt.Errorf("unknown filter: %s", filter)
+		return nil, fmt.Errorf("unknown MCP filter: %s", filter)
 	}
 }
 
@@ -321,44 +295,6 @@ func (e *PathTraversalEngine) filterArrayByName(dataArray []any, targetName stri
 	return nil, nil // Not found, but not an error
 }
 
-// convertMapAccessToGjsonPath converts path syntax like "elements[button-element]" to gjson-compatible "elements.button-element"
-func convertMapAccessToGjsonPath(path string) string {
-	// Handle simple map access: elements[key] -> elements.key
-	result := path
-	searchStart := 0
-
-	// Replace [key] with .key for simple map access, but preserve filter expressions
-	for {
-		start := strings.Index(result[searchStart:], "[")
-		if start == -1 {
-			break
-		}
-		start += searchStart
-
-		end := strings.Index(result[start:], "]")
-		if end == -1 {
-			break
-		}
-		end += start
-
-		// Extract the key
-		key := result[start+1 : end]
-
-		// Skip if this looks like a filter expression (containing ? or @)
-		if strings.Contains(key, "?") || strings.Contains(key, "@") {
-			// This is a filter expression, leave it as is but continue past it
-			searchStart = end + 1
-			continue
-		}
-
-		// Convert [key] to .key for simple map access
-		result = result[:start] + "." + key + result[end+1:]
-		// Continue searching from after the replacement
-		searchStart = start + 1 + len(key)
-	}
-
-	return result
-}
 
 // isInGjsonFilterExpression checks if a position in the path is inside a gjson filter expression #(...)
 func isInGjsonFilterExpression(path string, position int) bool {
