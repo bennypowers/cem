@@ -73,39 +73,80 @@ func handleDeclarativeResource(
 		return nil, fmt.Errorf("failed to prepare template data: %w", err)
 	}
 
-	// Step 4: Check if this should return JSON directly
-	var response string
-	if config.ResponseType == "json" {
-		// Return JSON directly from the first data fetcher
-		for _, data := range fetchedData {
-			jsonBytes, err := json.MarshalIndent(data, "", "  ")
-			if err != nil {
-				return nil, fmt.Errorf("failed to marshal JSON response: %w", err)
-			}
-			response = string(jsonBytes)
-			break // Use first fetcher result for JSON response
-		}
-	} else {
-		// Step 5: Render the template with the prepared data
-		templateName := config.Template
-		if templateName == "" {
-			templateName = config.Name
-		}
+	// Step 4: Early branch on response type to dispatch to specialized handlers
+	switch config.ResponseType {
+	case "json":
+		return handleJSONResponse(req, config, fetchedData, args)
+	default:
+		return handleTemplateResponse(req, config, templateData, args, fetchedData)
+	}
+}
 
-		var err error
-		response, err = templates.RenderTemplate(templateName, templateData)
-		if err != nil {
-			return nil, fmt.Errorf("failed to render template '%s': %w", templateName, err)
-		}
+// handleJSONResponse processes resources that return raw JSON data
+func handleJSONResponse(
+	req *mcp.ReadResourceRequest,
+	config DeclarativeResourceConfig,
+	fetchedData FetchedData,
+	args map[string]any,
+) (*mcp.ReadResourceResult, error) {
+	// JSON responses use the first data fetcher result
+	if len(config.DataFetchers) == 0 {
+		return nil, fmt.Errorf("no data fetchers configured for JSON response")
 	}
 
-	// Step 6: Apply any sub-resource filtering if needed
+	firstFetcherName := config.DataFetchers[0].Name
+	data, exists := fetchedData[firstFetcherName]
+	if !exists {
+		return nil, fmt.Errorf("no data found from primary fetcher '%s' for JSON response", firstFetcherName)
+	}
+
+	// Marshal the data to JSON
+	jsonBytes, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal JSON response: %w", err)
+	}
+
+	// Apply sub-resource filtering if needed
+	filteredResponse, err := applySubResourceFiltering(string(jsonBytes), args, fetchedData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to apply sub-resource filtering: %w", err)
+	}
+
+	return &mcp.ReadResourceResult{
+		Contents: []*mcp.ResourceContents{{
+			URI:      req.Params.URI,
+			MIMEType: config.MimeType,
+			Text:     filteredResponse,
+		}},
+	}, nil
+}
+
+// handleTemplateResponse processes resources that use Go templates for rendering
+func handleTemplateResponse(
+	req *mcp.ReadResourceRequest,
+	config DeclarativeResourceConfig,
+	templateData any,
+	args map[string]any,
+	fetchedData FetchedData,
+) (*mcp.ReadResourceResult, error) {
+	// Determine template name
+	templateName := config.Template
+	if templateName == "" {
+		templateName = config.Name
+	}
+
+	// Render the template with the prepared data
+	response, err := templates.RenderTemplate(templateName, templateData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to render template '%s': %w", templateName, err)
+	}
+
+	// Apply sub-resource filtering if needed
 	filteredResponse, err := applySubResourceFiltering(response, args, fetchedData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to apply sub-resource filtering: %w", err)
 	}
 
-	// Step 7: Return the response as a resource
 	return &mcp.ReadResourceResult{
 		Contents: []*mcp.ResourceContents{{
 			URI:      req.Params.URI,
@@ -153,11 +194,6 @@ func executeDataFetchers(fetchers []types.DataFetcher, registry types.MCPContext
 
 	return data, nil
 }
-
-
-
-
-
 
 // prepareTemplateData combines arguments and fetched data for template rendering (ported from tools)
 func prepareTemplateData(args map[string]any, fetchedData FetchedData, registry types.MCPContext) (any, error) {
@@ -318,5 +354,3 @@ func makeDeclarativeResourceHandler(registry types.MCPContext, config Declarativ
 func MakeDeclarativeResourceHandler(registry types.MCPContext, config DeclarativeResourceConfig) mcp.ResourceHandler {
 	return makeDeclarativeResourceHandler(registry, config)
 }
-
-
