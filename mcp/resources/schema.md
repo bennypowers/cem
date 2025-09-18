@@ -4,8 +4,8 @@ name: schema
 mimeType: application/json
 dataFetchers:
   - name: schema
-    type: manifest_schema
-    path: ""
+    source: schema
+    path: json
     required: true
 template: schema
 ---

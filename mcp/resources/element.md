@@ -5,7 +5,7 @@ mimeType: text/markdown
 uriTemplate: true
 dataFetchers:
   - name: element
-    type: manifest_element
+    source: elementInfo
     path: ""
     required: true
 template: element

@@ -4,12 +4,13 @@ name: guidelines
 mimeType: text/markdown
 dataFetchers:
   - name: guidelines
-    type: guidelines_extraction
-    path: ""
+    source: registry
+    path: "elements"
     required: false
   - name: manifest_overview
-    type: workspace_manifest_overview
+    source: registry
     path: ""
+    filter: packages_with_metadata
     required: false
 template: guidelines
 ---

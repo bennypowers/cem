@@ -4,12 +4,13 @@ name: accessibility
 mimeType: text/markdown
 dataFetchers:
   - name: accessibility_patterns
-    type: accessibility_extraction
-    path: ""
+    source: registry
+    path: "elements"
     required: false
   - name: manifest_context
-    type: workspace_manifest_overview
+    source: registry
     path: ""
+    filter: packages_with_metadata
     required: false
 template: accessibility
 ---

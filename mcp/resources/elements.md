@@ -4,8 +4,8 @@ name: elements
 mimeType: application/json
 dataFetchers:
   - name: elements
-    type: all_elements_with_capabilities
-    path: ""
+    source: registry
+    path: "elementsSummary"
     required: true
 responseType: json
 ---

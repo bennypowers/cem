@@ -5,12 +5,12 @@ mimeType: text/markdown
 uriTemplate: true
 dataFetchers:
   - name: element
-    type: manifest_element
+    source: elementInfo
     path: ""
     required: true
   - name: guidelines
-    type: guidelines_extraction
-    path: ""
+    source: registry
+    path: "elements"
     required: false
 template: element_guidelines
 ---

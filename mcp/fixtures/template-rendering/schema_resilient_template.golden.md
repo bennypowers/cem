@@ -1,71 +1,87 @@
-# Component Context from Your Manifests
+# Design System Guidelines
 
-Your workspace contains **2 custom elements** with real constraints and patterns.
+## Summary
+4 guidelines extracted from manifest documentation
 
-## Your Component Library Statistics
-- **2 elements** across **0 common prefixes** ()
-- **3 CSS custom properties** defined
-- **Schema versions**: 2.1.1
-
-This context is derived from your actual manifest data, not generic guidelines.
-
-
-*Using Custom Elements Manifest Schema 2.1.1-speculative (2.1.1)*
-
-
-This is a speculative schema for 2.1.1 based on 2.1.0, with workarounds for known issues. See: https://github.com/webcomponents/custom-elements-manifest/issues/138 and https://github.com/vega/ts-json-schema-generator/pull/2323
+## Element Guidelines
 
 
 
-## Custom Elements in Your Project
-Custom elements are JavaScript classes that extend HTML with new functionality. A description of a custom element class.
 
-Custom elements are JavaScript classes, so this extends from `ClassDeclaration` and adds custom-element-specific features like attributes, events, and slots.
 
-Note that `tagName` in this interface is optional. Tag names are not neccessarily part of a custom element class, but belong to the definition (often called the &#34;registration&#34;) or the `customElements.define()` call.
 
-Because classes and tag names can only be registered once, there&#39;s a one-to-one relationship between classes and tag names. For ease of use, we allow the tag name here.
 
-Some packages define and register custom elements in separate modules. In these cases one `Module` should contain the `CustomElement` without a tagName, and another `Module` should contain the `CustomElementExport`.
 
-### `card-element`
-**Attributes:**
-- `elevation` (number) - Card elevation level
-**Slots:**
-- `default` - Card content
-- `header` - Card header
-- `footer` - Card footer
-**CSS Custom Properties:**
-- `--card-background` (&lt;color&gt;) - Card background color
-**CSS Parts:**
-- `container` - Card container
-- `header` - Card header part
-- `content` - Card content part
-- `footer` - Card footer part
 
-### `button-element`
-**Attributes:**
-- `variant` (&#34;primary&#34; | &#34;secondary&#34; | &#34;ghost&#34;) - Button variant
-- `size` (&#34;small&#34; | &#34;medium&#34; | &#34;large&#34;) - Button size
-- `disabled` (boolean) - Whether button is disabled
-**Slots:**
-- `default` - Button content
-- `icon` - Button icon
-**CSS Custom Properties:**
-- `--button-color` (&lt;color&gt;) - Button color
-- `--button-padding` (&lt;length&gt;) - Button padding
-**CSS Parts:**
-- `button` - The button element
-**Events:**
-- `button-click` - Button click event
 
-## Schema Reference
 
-## How to Use This Context
+## Attribute Guidelines
 
-Each element above shows its complete API surface. When working with custom elements:
-- Use the exact tag names and attribute names shown
-- Respect the slot structure for content placement
-- Use CSS custom properties for theming and styling
-- Follow the documented guidelines and constraints
-- Reference the schema properties for understanding data types and requirements
+
+
+### `button-element.variant` Attribute
+Button variant
+
+---
+
+
+
+### `button-element.size` Attribute
+Button size
+
+---
+
+
+
+### `button-element.disabled` Attribute
+Whether button is disabled
+
+---
+
+
+
+### `card-element.elevation` Attribute
+Card elevation level
+
+---
+
+
+
+## Guidelines Application
+
+These guidelines are extracted from element and attribute descriptions in your manifests. Use them to:
+
+### Development Standards
+- **Consistent usage** - Follow documented patterns for element implementation
+- **Attribute validation** - Ensure attributes are used according to their intended purpose
+- **Content guidelines** - Understand proper element content and structure
+- **Integration patterns** - Learn how elements should work together
+
+### Design System Compliance
+- **Component behavior** - Understand expected element behavior and interactions
+- **Content strategy** - Follow documented content guidelines and constraints
+- **Accessibility requirements** - Implement proper accessibility based on element guidance
+- **Performance considerations** - Follow optimization guidelines from element documentation
+
+### Code Review Standards
+- **Manifest compliance** - Verify implementations follow documented guidelines
+- **Consistency checking** - Ensure similar elements are used similarly across projects
+- **Best practice validation** - Apply documented best practices consistently
+- **Documentation completeness** - Ensure new elements include proper guidelines
+
+## Guideline Categories
+
+Guidelines are categorized by their source and scope:
+
+- **Element guidelines** - Overall element usage, behavior, and integration patterns
+- **Attribute guidelines** - Specific attribute usage, validation, and value constraints
+- **Content guidelines** - Slot content requirements and content structure patterns
+- **Styling guidelines** - CSS integration patterns and theming requirements
+
+---
+
+For implementation guidance, use:
+- **`cem://elements`** - Browse elements with guideline context
+- **`cem://element/{tagName}`** - Detailed element information including guidelines
+- **`cem://accessibility`** - Accessibility-specific patterns and requirements
+- **`cem://packages`** - Package-level organization and consistency patterns

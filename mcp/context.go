@@ -19,6 +19,7 @@ package mcp
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"strings"
 	"sync"
 
@@ -57,6 +58,32 @@ type MCPCustomElementDeclaration struct {
 	CacheKey    string   `json:"cacheKey,omitempty"`
 	ModulePath  string   `json:"modulePath,omitempty"`
 	PackageName string   `json:"packageName,omitempty"`
+}
+
+// NewMCPCustomElementDeclaration creates a new MCP custom element declaration from a manifest element
+func NewMCPCustomElementDeclaration(element *M.CustomElement, tagName string) *MCPCustomElementDeclaration {
+	// Create a minimal CustomElementDeclaration from the CustomElement
+	decl := &M.CustomElementDeclaration{
+		CustomElement: *element,
+	}
+	decl.Name = tagName
+	decl.TagName = tagName
+
+	// Create a RenderableCustomElementDeclaration
+	renderable := &M.RenderableCustomElementDeclaration{
+		CustomElementDeclaration: decl,
+	}
+
+	// Extract guidelines from element description and attribute descriptions
+	guidelines := extractGuidelinesFromElement(element)
+
+	return &MCPCustomElementDeclaration{
+		RenderableCustomElementDeclaration: renderable,
+		Guidelines:                         guidelines,
+		CacheKey:                          generateCacheKey(tagName, element),
+		ModulePath:                        "",  // Set by registry when available
+		PackageName:                       "",  // Set by registry when available
+	}
 }
 
 // Use the interface from mcp/types instead of struct alias
@@ -162,41 +189,62 @@ func (ctx *MCPContext) AllCSSProperties() []string {
 	return ctx.allCSSProperties
 }
 
+// registrySnapshot represents an immutable snapshot of registry state for cache computation
+type registrySnapshot struct {
+	elements map[string]MCPTypes.ElementInfo
+}
+
+// takeRegistrySnapshot creates an atomic snapshot of the current registry state
+// This method must be called while holding at least a read lock
+func (ctx *MCPContext) takeRegistrySnapshot() (*registrySnapshot, error) {
+	// Extract all tag names from registry
+	tagNames := make([]string, 0, len(ctx.lspRegistry.Elements))
+	for tagName := range ctx.lspRegistry.Elements {
+		tagNames = append(tagNames, tagName)
+	}
+
+	// Convert elements to MCPTypes while holding the lock
+	// This avoids the need for lock juggling later
+	elements := make(map[string]MCPTypes.ElementInfo, len(tagNames))
+	for _, tagName := range tagNames {
+		element := ctx.lspRegistry.Elements[tagName]
+		if element != nil {
+			// Convert element using the existing conversion logic
+			info := ctx.convertElement(element, tagName)
+			elements[tagName] = info
+		}
+	}
+
+	return &registrySnapshot{
+		elements: elements,
+	}, nil
+}
+
 // ensureComputedCacheValidLocked computes cached values if invalid (must hold write lock)
 func (ctx *MCPContext) ensureComputedCacheValidLocked() {
 	if ctx.computedCacheValid {
 		return
 	}
 
-	// Extract tag names while holding the lock, then release lock for conversion
-	tagNames := make([]string, 0, len(ctx.lspRegistry.Elements))
-	for tagName := range ctx.lspRegistry.Elements {
-		tagNames = append(tagNames, tagName)
-	}
-
-	// Temporarily release the write lock to avoid deadlock when calling GetElementInfo
-	ctx.mu.Unlock()
-
-	// Convert elements outside the lock to avoid deadlock
-	elements := make([]MCPTypes.ElementInfo, 0, len(tagNames))
-	for _, tagName := range tagNames {
-		if info, err := ctx.GetElementInfo(tagName); err == nil {
-			elements = append(elements, info)
-		}
-	}
-
-	// Reacquire the write lock to update cached values
-	ctx.mu.Lock()
-
-	// Double-check cache validity in case another goroutine computed it
-	if ctx.computedCacheValid {
+	// Take atomic snapshot of registry state while holding the lock
+	snapshot, err := ctx.takeRegistrySnapshot()
+	if err != nil {
+		// Initialize with empty slices on error - cache computation is not critical
+		ctx.commonPrefixes = []string{}
+		ctx.allCSSProperties = []string{}
+		ctx.computedCacheValid = true
 		return
 	}
 
-	// Compute common prefixes
-	ctx.commonPrefixes = ctx.computeCommonPrefixes(elements)
+	// Convert snapshot elements to slice for computation
+	elements := make([]MCPTypes.ElementInfo, 0, len(snapshot.elements))
+	for _, element := range snapshot.elements {
+		elements = append(elements, element)
+	}
 
-	// Compute all CSS properties
+	// Compute cached values from consistent snapshot
+	// No lock juggling needed - all data is from atomic snapshot
+	ctx.commonPrefixes = ctx.computeCommonPrefixes(elements)
 	ctx.allCSSProperties = ctx.computeAllCSSProperties(elements)
 
 	// Mark cache as valid
@@ -216,7 +264,7 @@ func (ctx *MCPContext) computeCommonPrefixes(elements []MCPTypes.ElementInfo) []
 	}
 
 	// Return prefixes used by multiple elements
-	var prefixes []string
+	prefixes := make([]string, 0) // Initialize as empty slice, not nil
 	for prefix, count := range prefixCount {
 		if count > 1 {
 			prefixes = append(prefixes, prefix)
@@ -393,28 +441,10 @@ func (ctx *MCPContext) selectBestSchemaVersion(versions []string) string {
 
 // Helper methods for converting LSP types to MCP types
 
-// convertElement converts a manifest element to enhanced MCP format using the embedding approach
+// convertElement converts a manifest element to enhanced MCP format using the new constructor
 func (ctx *MCPContext) convertElement(element *M.CustomElement, tagName string) MCPTypes.ElementInfo {
-	// Create an MCPCustomElementDeclaration with embedded manifest data
-	// Note: Since we only have a CustomElement, we'll create a minimal RenderableCustomElementDeclaration
-	// In practice, this should be called with the full declaration from the registry
-
-	// For now, create a minimal renderable declaration
-	// TODO: Update this when we have access to the full RenderableCustomElementDeclaration
-	decl := &M.CustomElementDeclaration{
-		CustomElement: *element,
-	}
-	decl.Name = tagName
-	decl.TagName = tagName
-
-	renderable := &M.RenderableCustomElementDeclaration{
-		CustomElementDeclaration: decl,
-	}
-
-	mcpElement := &MCPCustomElementDeclaration{
-		RenderableCustomElementDeclaration: renderable,
-		Guidelines:                         []string{}, // Guidelines extraction removed
-	}
+	// Use the proper constructor to create the MCP element declaration
+	mcpElement := NewMCPCustomElementDeclaration(element, tagName)
 
 	return &MCPElementInfoAdapter{
 		MCPCustomElementDeclaration: mcpElement,
@@ -422,6 +452,28 @@ func (ctx *MCPContext) convertElement(element *M.CustomElement, tagName string) 
 }
 
 // Helper methods for extracting guidelines and examples
+
+// extractGuidelinesFromElement extracts usage guidelines from element description and attributes
+func extractGuidelinesFromElement(element *M.CustomElement) []string {
+	var guidelines []string
+
+	// Note: CustomElement doesn't have Description directly - it's in the embedded ClassDeclaration
+	// For now, we'll extract from attributes only until we have full access to the declaration
+	for _, attr := range element.Attributes {
+		if attr.Description != "" {
+			guidelines = append(guidelines, fmt.Sprintf("%s: %s", attr.Name, attr.Description))
+		}
+	}
+
+	return guidelines
+}
+
+
+// generateCacheKey generates a unique cache key for the element
+func generateCacheKey(tagName string, element *M.CustomElement) string {
+	// Use tag name for basic cache key
+	return tagName
+}
 
 
 // MCPContextAdapter implements MCPTypes.MCPContext interface for tools package
@@ -571,6 +623,72 @@ func (e *MCPElementInfoAdapter) Guidelines() []string {
 type ElementInfoAdapter = MCPElementInfoAdapter
 
 func (e *ElementInfoAdapter) Examples() []MCPTypes.Example {
-	// TODO: Extract examples from manifest if available
-	return []MCPTypes.Example{}
+	// Extract examples from element and attributes
+	var examples []MCPTypes.Example
+
+	// Basic usage example
+	if e.TagName() != "" {
+		examples = append(examples, MCPTypes.ExampleInfo{
+			TitleValue:       "Basic Usage",
+			DescriptionValue: fmt.Sprintf("Standard implementation of %s", e.TagName()),
+			CodeValue:        fmt.Sprintf("<%s></%s>", e.TagName(), e.TagName()),
+			LanguageValue:    "html",
+		})
+
+		// Example with attributes if available
+		if attrs := e.Attributes(); len(attrs) > 0 {
+			var attrParts []string
+			attrLimit := int(math.Min(3, float64(len(attrs)))) // Limit to first 3 attributes
+			for _, attr := range attrs[:attrLimit] {
+				if attr.Default != "" {
+					attrParts = append(attrParts, fmt.Sprintf(`%s="%s"`, attr.Name, attr.Default))
+				} else {
+					// Provide example values based on type
+					switch attr.Type.Text {
+					case "boolean":
+						attrParts = append(attrParts, attr.Name)
+					case "string":
+						attrParts = append(attrParts, fmt.Sprintf(`%s="example"`, attr.Name))
+					case "number":
+						attrParts = append(attrParts, fmt.Sprintf(`%s="0"`, attr.Name))
+					default:
+						attrParts = append(attrParts, fmt.Sprintf(`%s="value"`, attr.Name))
+					}
+				}
+			}
+
+			if len(attrParts) > 0 {
+				examples = append(examples, MCPTypes.ExampleInfo{
+					TitleValue:       "With Attributes",
+					DescriptionValue: fmt.Sprintf("Using %s with common attributes", e.TagName()),
+					CodeValue:        fmt.Sprintf("<%s %s></%s>", e.TagName(), strings.Join(attrParts, " "), e.TagName()),
+					LanguageValue:    "html",
+				})
+			}
+		}
+
+		// Example with slots if available
+		if slots := e.Slots(); len(slots) > 0 {
+			var slotContent []string
+			slotLimit := int(math.Min(2, float64(len(slots)))) // Limit to first 2 slots
+			for _, slot := range slots[:slotLimit] {
+				if slot.Name == "" {
+					slotContent = append(slotContent, "Default content")
+				} else {
+					slotContent = append(slotContent, fmt.Sprintf(`<span slot="%s">%s content</span>`, slot.Name, slot.Name))
+				}
+			}
+
+			if len(slotContent) > 0 {
+				examples = append(examples, MCPTypes.ExampleInfo{
+					TitleValue:       "With Content Slots",
+					DescriptionValue: fmt.Sprintf("Using %s with slotted content", e.TagName()),
+					CodeValue:        fmt.Sprintf("<%s>\n  %s\n</%s>", e.TagName(), strings.Join(slotContent, "\n  "), e.TagName()),
+					LanguageValue:    "html",
+				})
+			}
+		}
+	}
+
+	return examples
 }

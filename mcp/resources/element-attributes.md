@@ -5,16 +5,17 @@ mimeType: text/markdown
 uriTemplate: true
 dataFetchers:
   - name: element
-    type: manifest_element
+    source: elementInfo
     path: ""
     required: true
   - name: schema
-    type: schema_definitions
-    path: "definitions"
+    source: schema
+    path: definitions
     required: false
   - name: attributes
-    type: attribute_collection
+    source: elementInfo
     path: ""
+    filter: "attributes"
     required: true
 template: element_attributes
 ---

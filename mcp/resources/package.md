@@ -5,8 +5,8 @@ mimeType: text/markdown
 uriTemplate: true
 dataFetchers:
   - name: package
-    type: package_collection
-    path: ""
+    source: registry
+    path: "packages[$.package]"
     required: true
 template: package
 ---

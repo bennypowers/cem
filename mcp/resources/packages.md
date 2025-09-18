@@ -4,8 +4,9 @@ name: packages
 mimeType: application/json
 dataFetchers:
   - name: packages
-    type: package_overview
+    source: registry
     path: ""
+    filter: "packages_with_metadata"
     required: true
 responseType: json
 ---
