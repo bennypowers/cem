@@ -1,0 +1,165 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "button-element.js", 
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "ButtonElement",
+          "tagName": "button-element",
+          "customElement": true,
+          "description": "A custom button element",
+          "attributes": [
+            {
+              "name": "variant",
+              "type": {
+                "text": "\"primary\" | \"secondary\" | \"ghost\""
+              },
+              "description": "Button variant",
+              "default": "\"primary\""
+            },
+            {
+              "name": "size",
+              "type": {
+                "text": "\"small\" | \"medium\" | \"large\""
+              },
+              "description": "Button size",
+              "default": "\"medium\""
+            },
+            {
+              "name": "disabled",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Whether button is disabled"
+            }
+          ],
+          "slots": [
+            {
+              "name": "",
+              "description": "Button content"
+            },
+            {
+              "name": "icon",
+              "description": "Button icon"
+            }
+          ],
+          "events": [
+            {
+              "name": "button-click",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "Button click event"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--button-color",
+              "syntax": "<color>",
+              "default": "blue",
+              "description": "Button color"
+            },
+            {
+              "name": "--button-padding",
+              "syntax": "<length>",
+              "default": "8px",
+              "description": "Button padding"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "button",
+              "description": "The button element"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "button-element", 
+          "declaration": {
+            "name": "ButtonElement",
+            "module": "button-element.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "card-element.js",
+      "declarations": [
+        {
+          "kind": "class", 
+          "name": "CardElement",
+          "tagName": "card-element",
+          "customElement": true,
+          "description": "A card container element",
+          "attributes": [
+            {
+              "name": "elevation",
+              "type": {
+                "text": "number"
+              },
+              "description": "Card elevation level",
+              "default": "1"
+            }
+          ],
+          "slots": [
+            {
+              "name": "",
+              "description": "Card content"
+            },
+            {
+              "name": "header",
+              "description": "Card header"
+            },
+            {
+              "name": "footer", 
+              "description": "Card footer"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--card-background",
+              "syntax": "<color>",
+              "default": "white",
+              "description": "Card background color"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "container",
+              "description": "Card container"
+            },
+            {
+              "name": "header",
+              "description": "Card header part"
+            },
+            {
+              "name": "content",
+              "description": "Card content part"
+            },
+            {
+              "name": "footer",
+              "description": "Card footer part"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "card-element",
+          "declaration": {
+            "name": "CardElement", 
+            "module": "card-element.js"
+          }
+        }
+      ]
+    }
+  ]
+}

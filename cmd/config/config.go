@@ -49,6 +49,11 @@ type GenerateConfig struct {
 	DemoDiscovery DemoDiscoveryConfig `mapstructure:"demoDiscovery" yaml:"demoDiscovery"`
 }
 
+type MCPConfig struct {
+	// Maximum length for description fields before truncation (default: 2000)
+	MaxDescriptionLength int `mapstructure:"maxDescriptionLength" yaml:"maxDescriptionLength"`
+}
+
 type CemConfig struct {
 	ProjectDir string `mapstructure:"projectDir" yaml:"projectDir"`
 	ConfigFile string `mapstructure:"configFile" yaml:"configFile"`
@@ -56,6 +61,8 @@ type CemConfig struct {
 	PackageName string `mapstructure:"packageName" yaml:"packageName"`
 	// Generate command options
 	Generate GenerateConfig `mapstructure:"generate" yaml:"generate"`
+	// MCP server options
+	MCP MCPConfig `mapstructure:"mcp" yaml:"mcp"`
 	// Canonical public source control URL corresponding to project root on primary branch.
 	// e.g. https://github.com/bennypowers/cem/tree/main/
 	SourceControlRootUrl string `mapstructure:"sourceControlRootUrl" yaml:"sourceControlRootUrl"`

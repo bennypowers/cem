@@ -253,6 +253,7 @@ func NewQueryManager(selector QuerySelector) (*QueryManager, error) {
 
 func (qm *QueryManager) loadQuery(language, queryName string) error {
 	// Read the query file
+	// Use path.Join (not filepath.Join) - embed.FS requires POSIX / separators
 	queryPath := path.Join(language, queryName+".scm")
 	data, err := queries.ReadFile(queryPath)
 	if err != nil {

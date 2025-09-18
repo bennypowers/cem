@@ -521,17 +521,11 @@ del {
 .toc {
   border-left: 2px solid var(--color-theme);
   padding: 0 1rem;
-  height: 0;
-  overflow: hidden;
   filter: opacity(0.87);
 }
 
 .toc-item {
   font-size: 0.9rem;
-}
-
-.toc:has(.active) {
-  height: initial;
 }
 
 /* Video container */
@@ -676,6 +670,9 @@ del {
 /* State classes */
 .active {
   color: var(--color-theme);
+  .toc {
+    height: initial;
+  }
 }
 
 .is {

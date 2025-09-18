@@ -1,0 +1,1 @@
+{{.FetchedData.schema}}

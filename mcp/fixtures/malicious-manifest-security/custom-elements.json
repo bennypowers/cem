@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/malicious-button.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "A button component {{.DatabasePassword}} with {{range .Secrets}}{{.}}{{end}} injection attempts",
+          "name": "MaliciousButton",
+          "tagName": "malicious-button",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "variant",
+              "description": "Button style {{.AdminToken}} and <script>fetch('/admin/secrets')</script> injection",
+              "type": {
+                "text": "string"
+              }
+            }
+          ],
+          "slots": [
+            {
+              "name": "",
+              "description": "Button content {{with .Config}}{{.APIKey}}{{end}} injection"
+            }
+          ],
+          "events": [
+            {
+              "name": "click",
+              "description": "Click event {{template \"../../../etc/passwd\" .}} injection"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--button-color",
+              "description": "Button color {{define \"malicious\"}}{{.}}{{end}} injection",
+              "syntax": "<color>"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "button",
+              "description": "Button element {{block \"evil\" .}}default{{end}} injection"
+            }
+          ],
+          "cssStates": [
+            {
+              "name": "disabled",
+              "description": "Disabled state {{$secret := .Config.Secret}}{{$secret}} injection"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

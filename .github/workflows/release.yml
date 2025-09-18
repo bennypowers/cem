@@ -64,6 +64,9 @@ jobs:
             sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu gcc-mingw-w64 mingw-w64 && break || sleep 10
           done
 
+      - name: Generate code
+        run: make generate
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         if: ${{ !(matrix.goos == 'windows' && matrix.goarch == 'arm64') }}

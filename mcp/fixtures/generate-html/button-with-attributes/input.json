@@ -1,0 +1,9 @@
+{
+  "tagName": "button-element",
+  "content": "Submit",
+  "attributes": {
+    "variant": "primary",
+    "size": "large"
+  },
+  "context": "test"
+}

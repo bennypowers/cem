@@ -1,0 +1,92 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "input.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "Input",
+          "tagName": "v2-1-input",
+          "customElement": true,
+          "description": "An input element for schema 2.1.0",
+          "attributes": [
+            {
+              "name": "value",
+              "type": {
+                "text": "string"
+              },
+              "description": "Input value"
+            },
+            {
+              "name": "placeholder",
+              "type": {
+                "text": "string"
+              },
+              "description": "Input placeholder text"
+            },
+            {
+              "name": "required",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Whether input is required"
+            }
+          ],
+          "slots": [
+            {
+              "name": "prefix",
+              "description": "Content before input"
+            },
+            {
+              "name": "suffix",
+              "description": "Content after input"
+            }
+          ],
+          "events": [
+            {
+              "name": "input-change",
+              "type": {
+                "text": "CustomEvent<string>"
+              },
+              "description": "Input value changed"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--input-border",
+              "syntax": "<color>",
+              "description": "Input border color"
+            },
+            {
+              "name": "--input-padding",
+              "syntax": "<length>",
+              "description": "Input padding"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "input",
+              "description": "The input element"
+            },
+            {
+              "name": "wrapper",
+              "description": "Input wrapper"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "v2-1-input",
+          "declaration": {
+            "name": "Input",
+            "module": "input.js"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -17,49 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package publishDiagnostics
 
 import (
-	_ "embed"
-	"encoding/json"
 	"fmt"
 	"strings"
 
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/validations"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
-
-//go:embed data/global_attributes.json
-var globalAttributesJSON []byte
-
-// MDNCompatData represents the structure of MDN browser compatibility data
-type MDNCompatData struct {
-	HTML struct {
-		GlobalAttributes map[string]interface{} `json:"global_attributes"`
-	} `json:"html"`
-}
-
-var globalAttributes map[string]bool
-
-// Initialize global attributes from embedded MDN data
-func init() {
-	globalAttributes = make(map[string]bool)
-
-	var mdnData MDNCompatData
-	if err := json.Unmarshal(globalAttributesJSON, &mdnData); err == nil {
-		for attrName := range mdnData.HTML.GlobalAttributes {
-			// Convert data_attributes to data-* pattern
-			if attrName == "data_attributes" {
-				// We'll handle data-* pattern separately
-				continue
-			}
-			globalAttributes[attrName] = true
-		}
-
-		helpers.SafeDebugLog("[DIAGNOSTICS] Loaded %d global HTML attributes from MDN data", len(globalAttributes))
-	} else {
-		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to load MDN global attributes data: %v", err)
-	}
-}
 
 // AttributeMatch represents a found attribute in the document
 type AttributeMatch struct {
@@ -97,7 +63,7 @@ func AnalyzeAttributeDiagnosticsForTest(ctx types.ServerContext, doc types.Docum
 		// For custom elements, validate all their attributes
 		if isCustomElement(match.TagName) {
 			// Skip if it's a global HTML attribute (valid on all elements)
-			if isGlobalAttribute(match.Name) {
+			if validations.IsGlobalAttribute(match.Name) {
 				continue
 			}
 
@@ -146,33 +112,6 @@ func AnalyzeAttributeDiagnosticsForTest(ctx types.ServerContext, doc types.Docum
 
 	helpers.SafeDebugLog("[DIAGNOSTICS] Generated %d attribute diagnostics", len(diagnostics))
 	return diagnostics
-}
-
-// isGlobalAttribute checks if an attribute is a valid global HTML attribute
-func isGlobalAttribute(name string) bool {
-	nameLower := strings.ToLower(name)
-
-	// Check if it's in our global attributes list
-	if globalAttributes[nameLower] {
-		return true
-	}
-
-	// Check for data-* attributes (always valid)
-	if strings.HasPrefix(nameLower, "data-") {
-		return true
-	}
-
-	// Check for aria-* attributes (always valid)
-	if strings.HasPrefix(nameLower, "aria-") {
-		return true
-	}
-
-	// Check for event handler attributes starting with "on"
-	if strings.HasPrefix(nameLower, "on") && len(nameLower) > 2 {
-		return true
-	}
-
-	return false
 }
 
 // findAttributes finds all attributes in the document content
@@ -357,6 +296,7 @@ func findClosestGlobalAttribute(target string) string {
 
 	targetLower := strings.ToLower(target)
 
+	globalAttributes := validations.GetGlobalAttributes()
 	for attrName := range globalAttributes {
 		distance := levenshteinDistance(targetLower, attrName)
 		if distance < bestDistance && distance <= 2 { // Only suggest if close
