@@ -171,16 +171,9 @@ func (e *PathTraversalEngine) resolvePathVariables(path string, args any) (strin
 		}
 
 		// Convert value to string, handling gjson filter context
-		var valueStr string
-
-		// Check if we're inside a gjson filter expression #(...)
-		if isInGjsonFilterExpression(resolvedPath, start) {
-			// For gjson filter expressions, string values don't need quotes
-			valueStr = fmt.Sprintf("%v", value)
-		} else {
-			// For regular path access, use the value as-is
-			valueStr = fmt.Sprintf("%v", value)
-		}
+		// For gjson filter expressions, string values don't need quotes
+		// For regular path access, use the value as-is
+		valueStr := fmt.Sprintf("%v", value)
 
 		// Replace the variable with its value
 		resolvedPath = resolvedPath[:start] + valueStr + resolvedPath[end:]
@@ -293,25 +286,4 @@ func (e *PathTraversalEngine) filterArrayByName(dataArray []any, targetName stri
 		}
 	}
 	return nil, nil // Not found, but not an error
-}
-
-
-// isInGjsonFilterExpression checks if a position in the path is inside a gjson filter expression #(...)
-func isInGjsonFilterExpression(path string, position int) bool {
-	// Look backwards from position to find the most recent #( or )
-	for i := position - 1; i >= 0; i-- {
-		if i < len(path)-1 && path[i] == '#' && path[i+1] == '(' {
-			// Found opening #(, now look forward for closing )
-			for j := position; j < len(path); j++ {
-				if path[j] == ')' {
-					return true // We're between #( and )
-				}
-			}
-			return false // Found #( but no closing )
-		}
-		if path[i] == ')' {
-			return false // Found ) before #(, we're not in a filter
-		}
-	}
-	return false // No #( found
 }
