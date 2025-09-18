@@ -1,49 +1,13 @@
 # Design System Guidelines
 
 ## Summary
-4 guidelines extracted from manifest documentation
+<no value> guidelines extracted from manifest documentation
 
 ## Element Guidelines
 
 
 
-
-
-
-
-
-
-
-
 ## Attribute Guidelines
-
-
-
-### `button-element.variant` Attribute
-Button variant
-
----
-
-
-
-### `button-element.size` Attribute
-Button size
-
----
-
-
-
-### `button-element.disabled` Attribute
-Whether button is disabled
-
----
-
-
-
-### `card-element.elevation` Attribute
-Card elevation level
-
----
 
 
 

@@ -1,7 +1,7 @@
-# Elements Discovery
+# Your Component Library 📚
 
-## Summary
-{{.FetchedData.elements.metadata.totalElements}} custom elements available
+## What's Available
+**{{.FetchedData.elements.metadata.totalElements}} custom elements** ready to use in your project!
 
 {{if .FetchedData.elements.metadata.categories}}
 ## Element Categories
@@ -31,18 +31,24 @@ Use this overview to find elements by their functional capabilities:
 - **Layout-elements** - Components for page structure and content organization
 - **Navigation-elements** - Components for site navigation and user guidance
 
-## Development Guidance
+## Smart Element Selection 🧠
 
-### Element Selection
-Choose elements based on:
-1. **Functional requirements** - Match capabilities to your needs
-2. **Package consistency** - Prefer elements from the same design system
+### ✅ Choose Wisely
+1. **Match functionality to needs** - Don't over-engineer with complex elements for simple tasks
+2. **Stick to one design system** - Mix-and-match can create inconsistent experiences
+3. **Consider maintenance** - Simpler elements = fewer breaking changes
 
-### Integration Planning
-- Elements with more attributes require more configuration
-- Interactive elements need event handling setup
-- Themeable elements benefit from design token integration
-- Layout elements should align with your CSS architecture
+### 🚫 Common Selection Mistakes
+- **Don't** pick elements just because they have more features
+- **Don't** mix components from different packages without checking compatibility
+- **Don't** ignore accessibility requirements when choosing interactive elements
+- **Don't** assume all elements work well together without testing
+
+### Integration Wisdom 💡
+- **Configurable elements** need thoughtful default values
+- **Interactive elements** require proper event handling
+- **Themeable elements** work best with design system integration
+- **Layout elements** should complement your existing CSS architecture
 
 ---
 

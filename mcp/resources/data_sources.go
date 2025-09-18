@@ -122,7 +122,16 @@ func (p *DataSourceProvider) createElementsSummary(allElements map[string]types.
 	var elements []map[string]any
 	categoryCounts := make(map[string]int)
 
+	// Sort elements by tag name for stable ordering
+	var sortedElements []types.ElementInfo
 	for _, element := range allElements {
+		sortedElements = append(sortedElements, element)
+	}
+	sort.Slice(sortedElements, func(i, j int) bool {
+		return sortedElements[i].TagName() > sortedElements[j].TagName()
+	})
+
+	for _, element := range sortedElements {
 		// Calculate counts
 		attributeCount := len(element.Attributes())
 		slotCount := len(element.Slots())

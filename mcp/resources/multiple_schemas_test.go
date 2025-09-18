@@ -39,18 +39,18 @@ func loadManifestFromFixture(t *testing.T, version string) ManifestContext {
 	require.NoError(t, err, "Should be able to read manifest fixture for version %s", version)
 
 	// Parse manifest to extract basic information for the overview
-	var manifestJSON map[string]interface{}
+	var manifestJSON map[string]any
 	err = json.Unmarshal(manifestData, &manifestJSON)
 	require.NoError(t, err, "Should be able to parse manifest JSON for version %s", version)
 
 	// Extract basic info from manifest for context
 	var elementCount int
-	if modules, ok := manifestJSON["modules"].([]interface{}); ok {
+	if modules, ok := manifestJSON["modules"].([]any); ok {
 		for _, module := range modules {
-			if moduleMap, ok := module.(map[string]interface{}); ok {
-				if declarations, ok := moduleMap["declarations"].([]interface{}); ok {
+			if moduleMap, ok := module.(map[string]any); ok {
+				if declarations, ok := moduleMap["declarations"].([]any); ok {
 					for _, decl := range declarations {
-						if declMap, ok := decl.(map[string]interface{}); ok {
+						if declMap, ok := decl.(map[string]any); ok {
 							if kind, ok := declMap["kind"].(string); ok && kind == "class" {
 								if _, hasTagName := declMap["tagName"]; hasTagName {
 									elementCount++
@@ -68,7 +68,7 @@ func loadManifestFromFixture(t *testing.T, version string) ManifestContext {
 	require.NoError(t, err, "Should be able to load schema %s", version)
 
 	// Parse schema
-	var schema map[string]interface{}
+	var schema map[string]any
 	err = json.Unmarshal(schemaData, &schema)
 	require.NoError(t, err, "Should be able to parse schema %s", version)
 
@@ -90,7 +90,7 @@ func testSchemaVersionWithGolden(t *testing.T, version string) {
 	context := loadManifestFromFixture(t, version)
 
 	// Render template
-	result, err := templates.RenderTemplate("manifest_context", context)
+	result, err := templates.RenderTemplate("manifest-context", context)
 	require.NoError(t, err, "Template should render successfully for schema %s", version)
 
 	// Compare with golden file using fixture/golden pattern
@@ -137,7 +137,7 @@ func testBackwardsCompatibilityWithGolden(t *testing.T, version string) {
 	context.Overview = fmt.Sprintf("# Component Context for Backwards Compatibility Test\n\nTesting schema %s with real manifest data.", version)
 
 	// Should not fail even if some schema types don't exist in older versions
-	result, err := templates.RenderTemplate("manifest_context", context)
+	result, err := templates.RenderTemplate("manifest-context", context)
 	require.NoError(t, err, "Template should be backwards compatible with schema %s", version)
 
 	// Compare with golden file using fixture/golden pattern

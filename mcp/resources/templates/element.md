@@ -1,55 +1,47 @@
-# Element Reference: `{{.Element.TagName | sanitize}}`
+# Meet `{{.Element.TagName | sanitize}}`
 
-{{if .Element.Name}}**Name:** {{.Element.Name | sanitize}}{{end}}
-{{if .Element.Summary}}{{.Element.Summary | sanitize}}{{end}}
+{{if .Element.Name}}**{{.Element.Name | sanitize}}** — {{end}}{{if .Element.Summary}}{{.Element.Summary | sanitize}}{{else}}Your next favorite custom element{{end}}
 {{if .Element.Description}}
 
 {{.Element.Description | sanitize}}{{end}}
 
-{{if .Element.Package}}**Package:** `{{.Element.Package | sanitize}}`{{end}}{{if .Element.Module}} | **Module:** `{{.Element.Module | sanitize}}`{{end}}
+{{if .Element.Package}}**From the `{{.Element.Package | sanitize}}` package**{{end}}{{if .Element.Module}} • **Import from** `{{.Element.Module | sanitize}}`{{end}}
 
 ## API Overview
 
-{{if gt (len .Element.Attributes) 0}}**Attributes:** {{len .Element.Attributes}} configurable properties{{end}}
-{{if gt (len .Element.Slots) 0}}**Slots:** {{len .Element.Slots}} content areas{{end}}
-{{if gt (len .Element.Events) 0}}**Events:** {{len .Element.Events}} custom events{{end}}
-{{if gt (len .Element.CssProperties) 0}}**CSS Properties:** {{len .Element.CssProperties}} custom properties{{end}}
-{{if gt (len .Element.CssParts) 0}}**CSS Parts:** {{len .Element.CssParts}} styleable parts{{end}}
-{{if gt (len .Element.CssStates) 0}}**CSS States:** {{len .Element.CssStates}} custom states{{end}}
+This element comes loaded with:
+{{if gt (len .Element.Attributes) 0}}• **{{len .Element.Attributes}} attributes** to configure its behavior{{end}}
+{{if gt (len .Element.Slots) 0}}• **{{len .Element.Slots}} content slots** for your HTML{{end}}
+{{if gt (len .Element.Events) 0}}• **{{len .Element.Events}} events** to listen for{{end}}
+{{if gt (len .Element.CssProperties) 0}}• **{{len .Element.CssProperties}} CSS properties** for theming{{end}}
+{{if gt (len .Element.CssParts) 0}}• **{{len .Element.CssParts}} CSS parts** for precise styling{{end}}
+{{if gt (len .Element.CssStates) 0}}• **{{len .Element.CssStates}} CSS states** for conditional styling{{end}}
 
-## Integration
+## Ready to Use It? 🚀
 
-{{if .Element.Module}}**Module:** `{{.Element.Module | sanitize}}`
-
-### Import
+{{if .Element.Module}}**First, bring it into your project:**
 ```javascript
 import '{{.Element.Module | sanitize}}';
 ```
+
+Now you're ready to drop `<{{.Element.TagName}}>` tags into your HTML!
+{{else}}This element is ready to use right out of the box — no imports needed!
 {{end}}
 
-## Related Resources
+## Dive Deeper 🏊‍♀️
 
-- **Attributes:** [`cem://element/{{.Element.TagName}}/attributes`](cem://element/{{.Element.TagName}}/attributes)
-- **Slots:** [`cem://element/{{.Element.TagName}}/slots`](cem://element/{{.Element.TagName}}/slots)
-- **Events:** [`cem://element/{{.Element.TagName}}/events`](cem://element/{{.Element.TagName}}/events)
-- **Styling:** [`cem://element/{{.Element.TagName}}/css`](cem://element/{{.Element.TagName}}/css)
+Want to master this element? These resources have everything you need:
 
----
+{{if gt (len .Element.Attributes) 0}}• **[Attributes](cem://element/{{.Element.TagName}}/attributes)** — Learn every setting and option{{end}}
+{{if gt (len .Element.Slots) 0}}• **[Slots](cem://element/{{.Element.TagName}}/slots)** — Discover where your content goes{{end}}
+{{if gt (len .Element.Events) 0}}• **[Events](cem://element/{{.Element.TagName}}/events)** — Hook into what's happening{{end}}
+{{if gt (len .Element.CssProperties) 0}}• **[CSS Properties](cem://element/{{.Element.TagName}}/css/custom-properties)** — Make it look exactly right{{end}}
+{{if gt (len .Element.CssParts) 0}}• **[CSS Parts](cem://element/{{.Element.TagName}}/css/parts)** — Style individual pieces{{end}}
+{{if gt (len .Element.CssStates) 0}}• **[CSS States](cem://element/{{.Element.TagName}}/css/states)** — Style different modes and states{{end}}
 
-## Detailed API Documentation
+## Explore the Ecosystem 🌐
 
-For comprehensive API details, use these focused resources:
-
-{{if gt (len .Element.Attributes) 0}}- **`cem://element/{{.Element.TagName}}/attributes`** - Complete attribute reference with types and constraints{{end}}
-{{if gt (len .Element.Slots) 0}}- **`cem://element/{{.Element.TagName}}/slots`** - Slot documentation and content guidelines{{end}}
-{{if gt (len .Element.Events) 0}}- **`cem://element/{{.Element.TagName}}/events`** - Event details and JavaScript integration{{end}}
-{{if gt (len .Element.CssProperties) 0}}- **`cem://element/{{.Element.TagName}}/css/custom-properties`** - CSS custom properties for theming{{end}}
-{{if gt (len .Element.CssParts) 0}}- **`cem://element/{{.Element.TagName}}/css/parts`** - CSS parts for targeted styling{{end}}
-{{if gt (len .Element.CssStates) 0}}- **`cem://element/{{.Element.CssStates}}/css/states`** - CSS custom states for conditional styling{{end}}
-
-## Related Resources
-
-- **`cem://elements`** - Browse all available elements
-- **`cem://packages`** - Package organization and structure
-- **`cem://guidelines`** - Usage guidelines and best practices
-- **`cem://accessibility`** - Accessibility patterns and requirements
+• **[All Elements](cem://elements)** — See what else is available
+• **[Package Guide](cem://packages)** — Understand the component library structure
+• **[Best Practices](cem://guidelines)** — Learn the recommended patterns
+• **[Accessibility Tips](cem://accessibility)** — Build inclusive experiences

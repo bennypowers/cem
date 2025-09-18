@@ -115,7 +115,7 @@ func TestSchemaResource_Integration(t *testing.T) {
 	require.NoError(t, err, "Should be able to get canonical schema")
 
 	// Parse both schemas to compare content rather than string formatting
-	var expectedJSON, actualJSON interface{}
+	var expectedJSON, actualJSON any
 	err = json.Unmarshal(expectedSchema, &expectedJSON)
 	require.NoError(t, err, "Expected schema should be valid JSON")
 	err = json.Unmarshal([]byte(content.Text), &actualJSON)
@@ -124,7 +124,7 @@ func TestSchemaResource_Integration(t *testing.T) {
 	assert.Equal(t, expectedJSON, actualJSON, "Schema resource should return equivalent schema content")
 
 	// Validate that it's valid JSON
-	var jsonData interface{}
+	var jsonData any
 	err = json.Unmarshal([]byte(content.Text), &jsonData)
 	assert.NoError(t, err, "Schema should be valid JSON")
 }
@@ -305,7 +305,7 @@ func TestPackagesResource_Integration(t *testing.T) {
 	assert.NotEmpty(t, content.Text)
 
 	// Parse and validate packages data
-	var packages interface{}
+	var packages any
 	err = json.Unmarshal([]byte(content.Text), &packages)
 	assert.NoError(t, err, "Packages should be valid JSON")
 }

@@ -12,7 +12,7 @@ dataFetchers:
     source: registry
     path: "elements"
     required: false
-template: element_guidelines
+template: element-guidelines
 ---
 
 Comprehensive guidelines and best practices for a specific custom element, including usage patterns, accessibility requirements, and design system compliance. This resource provides focused guidance for proper element implementation and integration.

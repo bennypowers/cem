@@ -1,14 +1,30 @@
-# HTML Generation for `button-element`
+# HTML Generation for `button-element` ✨
 
-
-
-## Generated HTML
+## Your Generated HTML 🎉
 
 ```html
 <button-element>
   Test Button
   <span slot="icon">Icon content</span>
 </button-element>
+```
+
+### ✅ What Makes This Good
+- Proper attribute usage based on manifest definitions
+- Semantic HTML structure with meaningful content
+- Accessibility considerations built-in
+- Following component design patterns
+
+### 🚫 What to Avoid
+```html
+<!-- DON'T: Missing required attributes -->
+<button-element></button-element>
+
+<!-- DON'T: Invalid attribute values -->
+<button-element invalid-attr="wrong-value"></button-element>
+
+<!-- DON'T: Conflicting or redundant attributes -->
+<button-element disabled="false" enabled="true"></button-element>
 ```
 
 ## Element Overview

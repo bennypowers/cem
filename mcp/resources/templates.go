@@ -39,8 +39,8 @@ func GetTemplateFS() *embed.FS {
 // ManifestContext represents context combining schema definitions with user manifest data
 type ManifestContext struct {
 	// Schema context - what fields mean according to custom elements spec
-	SchemaVersion     string                 // Active schema version
-	SchemaDefinitions map[string]interface{} // Schema definitions for semantic understanding
+	SchemaVersion     string         // Active schema version
+	SchemaDefinitions map[string]any // Schema definitions for semantic understanding
 
 	// User manifest data - your specific values and patterns
 	Overview            string               // Overview of manifest statistics

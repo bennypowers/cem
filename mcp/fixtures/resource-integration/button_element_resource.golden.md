@@ -1,47 +1,39 @@
-# Element Reference: `button-element`
+# Meet `button-element`
 
-**Name:** button-element
-
+**button-element** — Your next favorite custom element
 
 
 
 
 ## API Overview
 
-**Attributes:** 3 configurable properties
-**Slots:** 2 content areas
-**Events:** 1 custom events
-**CSS Properties:** 2 custom properties
-**CSS Parts:** 1 styleable parts
+This element comes loaded with:
+• **3 attributes** to configure its behavior
+• **2 content slots** for your HTML
+• **1 events** to listen for
+• **2 CSS properties** for theming
+• **1 CSS parts** for precise styling
 
 
-## Integration
+## Ready to Use It? 🚀
+
+This element is ready to use right out of the box — no imports needed!
 
 
+## Dive Deeper 🏊‍♀️
 
-## Related Resources
+Want to master this element? These resources have everything you need:
 
-- **Attributes:** [`cem://element/button-element/attributes`](cem://element/button-element/attributes)
-- **Slots:** [`cem://element/button-element/slots`](cem://element/button-element/slots)
-- **Events:** [`cem://element/button-element/events`](cem://element/button-element/events)
-- **Styling:** [`cem://element/button-element/css`](cem://element/button-element/css)
-
----
-
-## Detailed API Documentation
-
-For comprehensive API details, use these focused resources:
-
-- **`cem://element/button-element/attributes`** - Complete attribute reference with types and constraints
-- **`cem://element/button-element/slots`** - Slot documentation and content guidelines
-- **`cem://element/button-element/events`** - Event details and JavaScript integration
-- **`cem://element/button-element/css/custom-properties`** - CSS custom properties for theming
-- **`cem://element/button-element/css/parts`** - CSS parts for targeted styling
+• **[Attributes](cem://element/button-element/attributes)** — Learn every setting and option
+• **[Slots](cem://element/button-element/slots)** — Discover where your content goes
+• **[Events](cem://element/button-element/events)** — Hook into what's happening
+• **[CSS Properties](cem://element/button-element/css/custom-properties)** — Make it look exactly right
+• **[CSS Parts](cem://element/button-element/css/parts)** — Style individual pieces
 
 
-## Related Resources
+## Explore the Ecosystem 🌐
 
-- **`cem://elements`** - Browse all available elements
-- **`cem://packages`** - Package organization and structure
-- **`cem://guidelines`** - Usage guidelines and best practices
-- **`cem://accessibility`** - Accessibility patterns and requirements
+• **[All Elements](cem://elements)** — See what else is available
+• **[Package Guide](cem://packages)** — Understand the component library structure
+• **[Best Practices](cem://guidelines)** — Learn the recommended patterns
+• **[Accessibility Tips](cem://accessibility)** — Build inclusive experiences

@@ -12,7 +12,7 @@ dataFetchers:
     source: schema
     path: "definitions"
     required: false
-template: element_styling
+template: element-styling
 ---
 
 CSS parts styling guidance for targeted element customization and design system integration. This resource provides comprehensive CSS parts information optimized for AI-assisted styling and theming.

@@ -12,7 +12,7 @@ dataFetchers:
     source: schema
     path: "definitions"
     required: false
-template: element_styling
+template: element-styling
 ---
 
 CSS custom states documentation for interactive and conditional styling patterns. This resource provides comprehensive custom state information optimized for AI-assisted interaction styling and state management.

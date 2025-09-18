@@ -12,7 +12,7 @@ dataFetchers:
     source: schema
     path: "definitions"
     required: false
-template: element_slots
+template: element-slots
 ---
 
 Comprehensive slot usage patterns and content guidelines for a specific custom element. This resource provides detailed slot documentation optimized for AI-assisted content placement and structure.

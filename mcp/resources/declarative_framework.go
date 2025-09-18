@@ -319,3 +319,4 @@ func MakeDeclarativeResourceHandler(registry types.MCPContext, config Declarativ
 	return makeDeclarativeResourceHandler(registry, config)
 }
 
+

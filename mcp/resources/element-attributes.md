@@ -15,9 +15,9 @@ dataFetchers:
   - name: attributes
     source: elementInfo
     path: ""
-    filter: "attributes"
+    filter: attributes
     required: true
-template: element_attributes
+template: element-attributes
 ---
 
 Attribute documentation for custom elements including types, defaults, and constraints.

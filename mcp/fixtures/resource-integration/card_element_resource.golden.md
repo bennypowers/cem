@@ -1,47 +1,39 @@
-# Element Reference: `card-element`
+# Meet `card-element`
 
-**Name:** card-element
-
+**card-element** — Your next favorite custom element
 
 
 
 
 ## API Overview
 
-**Attributes:** 1 configurable properties
-**Slots:** 3 content areas
+This element comes loaded with:
+• **1 attributes** to configure its behavior
+• **3 content slots** for your HTML
 
-**CSS Properties:** 1 custom properties
-**CSS Parts:** 4 styleable parts
-
-
-## Integration
+• **1 CSS properties** for theming
+• **4 CSS parts** for precise styling
 
 
+## Ready to Use It? 🚀
 
-## Related Resources
-
-- **Attributes:** [`cem://element/card-element/attributes`](cem://element/card-element/attributes)
-- **Slots:** [`cem://element/card-element/slots`](cem://element/card-element/slots)
-- **Events:** [`cem://element/card-element/events`](cem://element/card-element/events)
-- **Styling:** [`cem://element/card-element/css`](cem://element/card-element/css)
-
----
-
-## Detailed API Documentation
-
-For comprehensive API details, use these focused resources:
-
-- **`cem://element/card-element/attributes`** - Complete attribute reference with types and constraints
-- **`cem://element/card-element/slots`** - Slot documentation and content guidelines
-
-- **`cem://element/card-element/css/custom-properties`** - CSS custom properties for theming
-- **`cem://element/card-element/css/parts`** - CSS parts for targeted styling
+This element is ready to use right out of the box — no imports needed!
 
 
-## Related Resources
+## Dive Deeper 🏊‍♀️
 
-- **`cem://elements`** - Browse all available elements
-- **`cem://packages`** - Package organization and structure
-- **`cem://guidelines`** - Usage guidelines and best practices
-- **`cem://accessibility`** - Accessibility patterns and requirements
+Want to master this element? These resources have everything you need:
+
+• **[Attributes](cem://element/card-element/attributes)** — Learn every setting and option
+• **[Slots](cem://element/card-element/slots)** — Discover where your content goes
+
+• **[CSS Properties](cem://element/card-element/css/custom-properties)** — Make it look exactly right
+• **[CSS Parts](cem://element/card-element/css/parts)** — Style individual pieces
+
+
+## Explore the Ecosystem 🌐
+
+• **[All Elements](cem://elements)** — See what else is available
+• **[Package Guide](cem://packages)** — Understand the component library structure
+• **[Best Practices](cem://guidelines)** — Learn the recommended patterns
+• **[Accessibility Tips](cem://accessibility)** — Build inclusive experiences

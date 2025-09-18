@@ -75,7 +75,7 @@ func (tp *TemplatePool) getTemplatePool(templateName string) *sync.Pool {
 
 	// Create new pool for this template
 	pool = &sync.Pool{
-		New: func() interface{} {
+		New: func() any {
 			return tp.createTemplate(templateName)
 		},
 	}
@@ -119,7 +119,7 @@ func (tp *TemplatePool) createTemplate(templateName string) *template.Template {
 }
 
 // Render renders a template using the thread-safe pool
-func (tp *TemplatePool) Render(templateName string, data interface{}) (string, error) {
+func (tp *TemplatePool) Render(templateName string, data any) (string, error) {
 	// Security: Validate template name to prevent path traversal
 	// Note: embed.FS always uses POSIX separators (/), even on Windows,
 	// so we only need to check for POSIX path traversal patterns.
@@ -152,18 +152,18 @@ func (tp *TemplatePool) Render(templateName string, data interface{}) (string, e
 func createSecureFuncMap() template.FuncMap {
 	return template.FuncMap{
 		"title": helpers.TitleCaser.String,
-		"schemaDesc": func(schemaData interface{}, typeName string) string {
+		"schemaDesc": func(schemaData any, typeName string) string {
 			return getSchemaDescription(schemaData, typeName)
 		},
-		"schemaFieldDesc": func(schemaData interface{}, typeName, fieldName string) string {
+		"schemaFieldDesc": func(schemaData any, typeName, fieldName string) string {
 			return getSchemaFieldDescription(schemaData, typeName, fieldName)
 		},
-		"len": func(slice interface{}) int {
+		"len": func(slice any) int {
 			switch s := slice.(type) {
 			case []string:
 				return len(s)
 			// Map types for guidelines templates
-			case map[string]interface{}:
+			case map[string]any:
 				return len(s)
 			case map[string]string:
 				return len(s)
@@ -186,7 +186,7 @@ func createSecureFuncMap() template.FuncMap {
 				return 0
 			}
 		},
-		"index": func(slice interface{}, i int) interface{} {
+		"index": func(slice any, i int) any {
 			switch s := slice.(type) {
 			case []string:
 				if i >= 0 && i < len(s) {
@@ -198,7 +198,7 @@ func createSecureFuncMap() template.FuncMap {
 		"gt": func(a, b int) bool {
 			return a > b
 		},
-		"eq": func(a, b interface{}) bool {
+		"eq": func(a, b any) bool {
 			return a == b
 		},
 		"join": func(slice []string, sep string) string {
@@ -222,20 +222,20 @@ func RegisterTemplateSource(packageName string, fs *embed.FS) {
 }
 
 // RenderTemplate renders a template using the global thread-safe pool
-func RenderTemplate(templateName string, data interface{}) (string, error) {
+func RenderTemplate(templateName string, data any) (string, error) {
 	return globalTemplatePool.Render(templateName, data)
 }
 
 // getSchemaDescription extracts description for a schema type by name
-func getSchemaDescription(schemaData interface{}, typeName string) string {
-	schema, ok := schemaData.(map[string]interface{})
+func getSchemaDescription(schemaData any, typeName string) string {
+	schema, ok := schemaData.(map[string]any)
 	if !ok {
 		return ""
 	}
 
 	// Try definitions section first
-	if definitions, ok := schema["definitions"].(map[string]interface{}); ok {
-		if typeObj, ok := definitions[typeName].(map[string]interface{}); ok {
+	if definitions, ok := schema["definitions"].(map[string]any); ok {
+		if typeObj, ok := definitions[typeName].(map[string]any); ok {
 			if desc, ok := typeObj["description"].(string); ok {
 				return desc
 			}
@@ -243,8 +243,8 @@ func getSchemaDescription(schemaData interface{}, typeName string) string {
 	}
 
 	// Try properties section
-	if properties, ok := schema["properties"].(map[string]interface{}); ok {
-		if typeObj, ok := properties[typeName].(map[string]interface{}); ok {
+	if properties, ok := schema["properties"].(map[string]any); ok {
+		if typeObj, ok := properties[typeName].(map[string]any); ok {
 			if desc, ok := typeObj["description"].(string); ok {
 				return desc
 			}
@@ -255,26 +255,26 @@ func getSchemaDescription(schemaData interface{}, typeName string) string {
 }
 
 // getSchemaFieldDescription extracts description for a specific field of a schema type
-func getSchemaFieldDescription(schemaData interface{}, typeName, fieldName string) string {
-	schema, ok := schemaData.(map[string]interface{})
+func getSchemaFieldDescription(schemaData any, typeName, fieldName string) string {
+	schema, ok := schemaData.(map[string]any)
 	if !ok {
 		return ""
 	}
 
 	// Navigate to type definition
-	var typeObj map[string]interface{}
+	var typeObj map[string]any
 
 	// Try definitions section first
-	if definitions, ok := schema["definitions"].(map[string]interface{}); ok {
-		if obj, ok := definitions[typeName].(map[string]interface{}); ok {
+	if definitions, ok := schema["definitions"].(map[string]any); ok {
+		if obj, ok := definitions[typeName].(map[string]any); ok {
 			typeObj = obj
 		}
 	}
 
 	// Try properties section if not found in definitions
 	if typeObj == nil {
-		if properties, ok := schema["properties"].(map[string]interface{}); ok {
-			if obj, ok := properties[typeName].(map[string]interface{}); ok {
+		if properties, ok := schema["properties"].(map[string]any); ok {
+			if obj, ok := properties[typeName].(map[string]any); ok {
 				typeObj = obj
 			}
 		}
@@ -285,8 +285,8 @@ func getSchemaFieldDescription(schemaData interface{}, typeName, fieldName strin
 	}
 
 	// Navigate to field properties
-	if properties, ok := typeObj["properties"].(map[string]interface{}); ok {
-		if fieldObj, ok := properties[fieldName].(map[string]interface{}); ok {
+	if properties, ok := typeObj["properties"].(map[string]any); ok {
+		if fieldObj, ok := properties[fieldName].(map[string]any); ok {
 			if desc, ok := fieldObj["description"].(string); ok {
 				return desc
 			}

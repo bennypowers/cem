@@ -103,7 +103,7 @@ func TestTemplateGoldenFiles(t *testing.T) {
 	}
 
 	t.Run("golden file infrastructure", func(t *testing.T) {
-		goldenPath := filepath.Join("..", "fixtures", "template-rendering", "manifest_context.golden.md")
+		goldenPath := filepath.Join("..", "fixtures", "template-rendering", "manifest-context.golden.md")
 
 		// This test demonstrates the golden file testing infrastructure
 		// In a real scenario with working templates, it would:

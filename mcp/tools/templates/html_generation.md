@@ -1,11 +1,29 @@
-# HTML Generation for `{{.Element.TagName}}`
+# HTML Generation for `{{.Element.TagName}}` ✨
 
-{{if .Element.Description}}{{.Element.Description}}{{end}}
+{{if .Element.Description}}{{.Element.Description}}
 
-## Generated HTML
+{{end}}## Your Generated HTML 🎉
 
 ```html
 {{.GeneratedHTML}}
+```
+
+### ✅ What Makes This Good
+- Proper attribute usage based on manifest definitions
+- Semantic HTML structure with meaningful content
+- Accessibility considerations built-in
+- Following component design patterns
+
+### 🚫 What to Avoid
+```html
+<!-- DON'T: Missing required attributes -->
+<{{.Element.TagName}}></{{.Element.TagName}}>
+
+<!-- DON'T: Invalid attribute values -->
+<{{.Element.TagName}} invalid-attr="wrong-value"></{{.Element.TagName}}>
+
+<!-- DON'T: Conflicting or redundant attributes -->
+<{{.Element.TagName}} disabled="false" enabled="true"></{{.Element.TagName}}>
 ```
 
 ## Element Overview

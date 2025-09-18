@@ -41,10 +41,10 @@ This approach respects element authors' documented intent while enabling intelli
 ```
 mcp/resources/templates/
 ├── element.md             # Element overview and API summary
-├── element_attributes.md  # Attribute documentation and constraints
-├── element_events.md      # Event patterns and JavaScript integration
-├── element_slots.md       # Slot usage and content guidelines
-├── element_styling.md     # CSS customization with properties, parts, states
+├── element-attributes.md  # Attribute documentation and constraints
+├── element-events.md      # Event patterns and JavaScript integration
+├── element-slots.md       # Slot usage and content guidelines
+├── element-styling.md     # CSS customization with properties, parts, states
 ├── elements.md            # Elements discovery and capabilities overview
 ├── packages.md            # Package structure and organization
 ├── schema.md              # JSON schema definitions and validation

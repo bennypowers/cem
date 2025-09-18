@@ -12,7 +12,7 @@ dataFetchers:
     source: schema
     path: "definitions"
     required: false
-template: element_events
+template: element-events
 ---
 
 Detailed event documentation including triggers, data payloads, and JavaScript integration patterns for a specific custom element. This resource provides comprehensive event information optimized for AI-assisted event handling implementation.

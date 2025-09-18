@@ -12,7 +12,7 @@ dataFetchers:
     source: schema
     path: "definitions"
     required: false
-template: element_styling
+template: element-styling
 ---
 
 CSS custom properties documentation for comprehensive element theming and design system integration. This resource provides detailed custom property information optimized for AI-assisted styling and theme development.
