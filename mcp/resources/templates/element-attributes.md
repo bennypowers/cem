@@ -22,7 +22,7 @@
 
 {{.Description}}{{end}}
 
-**Type:** `{{.Type}}`{{if .Default}} • **Default:** `{{.Default}}`{{end}}{{if .IsEnum}} • **Options:** {{range $i, $v := .GetEnumValues}}{{if $i}}, {{end}}`{{$v}}`{{end}}{{end}}
+**Type:** `{{.Type}}`{{if .Default}} • **Default:** `{{.Default}}`{{end}}{{if .IsEnum}} • **Options:** {{range $i, $v := .EnumValues}}{{if $i}}, {{end}}`{{$v}}`{{end}}{{end}}
 
 {{end}}
 
@@ -33,10 +33,10 @@
 <{{.Element.TagName}}></{{.Element.TagName}}>
 
 <!-- With some personality -->
-<{{.Element.TagName}}{{range .Element.Attributes}}{{if false}} {{.Name}}={{if .Default}}"{{.Default}}"{{else}}{{if .IsEnum}}"{{index .GetEnumValues 0}}"{{else}}"{{.Type}}"{{end}}{{end}}{{end}}{{end}}></{{.Element.TagName}}>
+<{{.Element.TagName}}{{range .Element.Attributes}}{{if false}} {{.Name}}={{if .Default}}"{{.Default}}"{{else}}{{if .IsEnum}}"{{index .EnumValues 0}}"{{else}}"{{.Type}}"{{end}}{{end}}{{end}}{{end}}></{{.Element.TagName}}>
 
 <!-- All dressed up -->
-<{{.Element.TagName}}{{range .Element.Attributes}}{{if true}} {{.Name}}={{if .Default}}"{{.Default}}"{{else}}{{if .IsEnum}}"{{index .GetEnumValues 0}}"{{else}}"{{.Type}}"{{end}}{{end}}{{end}}{{end}}></{{.Element.TagName}}>
+<{{.Element.TagName}}{{range .Element.Attributes}}{{if true}} {{.Name}}={{if .Default}}"{{.Default}}"{{else}}{{if .IsEnum}}"{{index .EnumValues 0}}"{{else}}"{{.Type}}"{{end}}{{end}}{{end}}{{end}}></{{.Element.TagName}}>
 ```
 
 {{else}}

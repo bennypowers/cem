@@ -208,7 +208,7 @@ func validateElementAttributes(element types.CustomElementMatch, registryElement
 		// Validate attribute value using manifest validation methods
 		if manifestAttr.IsEnum() && attrMatch.Value != "" {
 			if !manifestAttr.IsValidValue(attrMatch.Value) {
-				validValues := manifestAttr.GetEnumValues()
+				validValues := manifestAttr.EnumValues()
 				issues = append(issues, ValidationIssue{
 					Type:      "invalid-attribute-value",
 					Element:   element.TagName,
@@ -267,7 +267,10 @@ func validateSlotContentGuidelines(element types.CustomElementMatch, registryEle
 }
 
 // validateAttributeCombinations detects conflicting attribute combinations
-func validateAttributeCombinations(element types.CustomElementMatch, registryElement mcpTypes.ElementInfo) []AttributeConflict {
+func validateAttributeCombinations(
+	element types.CustomElementMatch,
+	registryElement mcpTypes.ElementInfo,
+) []AttributeConflict {
 	var conflicts []AttributeConflict
 
 	// Look for common contradictory attribute patterns

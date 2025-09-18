@@ -107,9 +107,9 @@ func (a *Attribute) IsEnum() bool {
 	return strings.Contains(a.Type.Text, "|")
 }
 
-// GetEnumValues extracts enum values from union type definitions
+// EnumValues extracts enum values from union type definitions
 // Returns empty slice if not an enum type
-func (a *Attribute) GetEnumValues() []string {
+func (a *Attribute) EnumValues() []string {
 	if !a.IsEnum() {
 		return nil
 	}
@@ -132,7 +132,7 @@ func (a *Attribute) IsValidValue(value string) bool {
 		return true // Non-enum attributes accept any value
 	}
 
-	enumValues := a.GetEnumValues()
+	enumValues := a.EnumValues()
 	for _, validValue := range enumValues {
 		// Check both quoted and unquoted versions
 		// HTML attributes are unquoted but TypeScript values may be quoted
@@ -157,7 +157,7 @@ func (a *Attribute) GetValidationError(value string) error {
 		return nil // Non-enum attributes don't have validation errors
 	}
 
-	enumValues := a.GetEnumValues()
+	enumValues := a.EnumValues()
 	return fmt.Errorf("invalid value %q for attribute %q. Valid values: %v",
 		value, a.Name, enumValues)
 }
