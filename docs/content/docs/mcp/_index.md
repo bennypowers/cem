@@ -125,6 +125,47 @@ The CEM MCP server works by transforming your custom elements manifests into AI-
 
 The server acts as a bridge between your component definitions and AI systems, enabling intelligent code generation while respecting your documented component constraints and guidelines.
 
+## Debugging
+
+### MCP Inspector
+
+The [MCP Inspector](https://github.com/modelcontextprotocol/inspector) provides interactive debugging and testing capabilities for MCP servers. Use it to debug the CEM MCP server:
+
+```bash
+# Install MCP Inspector
+npm install -g @modelcontextprotocol/inspector
+
+# Debug CEM MCP server
+mcp-inspector cem mcp
+```
+
+The inspector provides:
+- **Interactive testing** - Call tools and resources directly in a web UI
+- **Real-time logs** - View server initialization and runtime messages
+- **Schema validation** - Test resource URIs and tool parameters
+- **Message inspection** - Debug MCP protocol communication
+
+### Debugging Specific Projects
+
+Use the `--package` flag to debug different project directories:
+
+```bash
+# Debug specific project, with custom description limit
+mcp-inspector cem mcp --package /path/to/project --max-description-length 5000
+```
+
+### Verbose Logging
+
+Enable detailed logging for development:
+
+```bash
+# Enable verbose output
+cem mcp --verbose
+
+# Or with MCP Inspector
+mcp-inspector cem mcp --verbose
+```
+
 ## Troubleshooting
 
 ### Common Issues
@@ -151,6 +192,15 @@ ls custom-elements.json package.json
 - Ensure the `cem mcp` command runs without errors
 - Check that manifest files exist in your workspace
 - Verify your AI client is configured for stdio transport
+
+**Inspector shows empty resources:**
+```bash
+# Verify manifests are discoverable
+cem list --verbose
+
+# Test specific project directory
+mcp-inspector cem mcp --package ./path/to/project
+```
 
 ## See Also
 
