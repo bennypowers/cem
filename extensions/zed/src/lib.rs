@@ -18,7 +18,7 @@ impl zed::Extension for CemExtension {
         worktree: &zed::Worktree,
     ) -> Result<zed::Command> {
         let binary_path = self.language_server_binary(language_server_id, worktree)?;
-        
+
         Ok(zed::Command {
             command: binary_path,
             args: vec!["lsp".to_string()],
@@ -61,16 +61,16 @@ impl CemExtension {
 
         let (platform, arch) = zed::current_platform();
         let asset_name = format!(
-            "cem-{arch}-{os}",
-            arch = match arch {
-                zed::Architecture::Aarch64 => "aarch64",
-                zed::Architecture::X8664 => "x86_64",
-                zed::Architecture::X86 => "x86",
-            },
+            "cem-{os}-{arch}",
             os = match platform {
-                zed::Os::Mac => "apple-darwin",
-                zed::Os::Linux => "unknown-linux-gnu",
-                zed::Os::Windows => "pc-windows-msvc.exe",
+                zed::Os::Mac => "darwin",
+                zed::Os::Linux => "linux",
+                zed::Os::Windows => "windows",
+            },
+            arch = match arch {
+                zed::Architecture::Aarch64 => "arm64",
+                zed::Architecture::X8664 => "amd64",
+                zed::Architecture::X86 => "amd64",
             }
         );
 
