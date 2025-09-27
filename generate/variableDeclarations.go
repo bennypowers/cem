@@ -22,6 +22,7 @@ import (
 
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
+	"bennypowers.dev/cem/generate/jsdoc"
 )
 
 func (mp *ModuleProcessor) generateVarDeclaration(
@@ -59,13 +60,11 @@ func (mp *ModuleProcessor) generateVarDeclaration(
 		}
 	}
 
-	jsdoc, ok := captures["variable.jsdoc"]
-	if ok && len(jsdoc) > 0 {
-		info, err := NewPropertyInfo(jsdoc[0].Text, mp.queryManager)
+	jsdocNodes, ok := captures["variable.jsdoc"]
+	if ok && len(jsdocNodes) > 0 {
+		err := jsdoc.EnrichPropertyWithJSDoc(jsdocNodes[0].Text, &declaration.PropertyLike, mp.queryManager)
 		if err != nil {
 			errs = errors.Join(errs, err)
-		} else {
-			info.MergeToPropertyLike(&declaration.PropertyLike)
 		}
 	}
 

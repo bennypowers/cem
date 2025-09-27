@@ -29,6 +29,7 @@ import (
 
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
+	"bennypowers.dev/cem/generate/jsdoc"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -192,11 +193,9 @@ func amendStylesMapFromSource(
 				pterm.Warning.Printf("%s:%d: Ambiguous comment ignored: more than one var() call in declaration.\n", path, line)
 			} else {
 				for _, comment := range comment {
-					info, err := NewCssCustomPropertyInfo(comment.Text, queryManager)
+					err := jsdoc.EnrichCSSPropertyWithJSDoc(comment.Text, &p, queryManager)
 					if err != nil {
 						errs = errors.Join(errs, err)
-					} else {
-						info.MergeToCssCustomProperty(&p)
 					}
 				}
 			}
