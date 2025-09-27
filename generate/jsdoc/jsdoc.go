@@ -74,7 +74,7 @@ func EnrichCustomElementWithJSDoc(jsdocText string, decl *M.CustomElementDeclara
 // EnrichMethodWithJSDoc parses JSDoc comment text and applies the extracted information
 // to a ClassMethod.
 func EnrichMethodWithJSDoc(jsdocText string, method *M.ClassMethod, queryManager *Q.QueryManager) error {
-	err, info := parseForMethod(jsdocText, queryManager)
+	info, err := parseForMethod(jsdocText, queryManager)
 	if err != nil {
 		return err
 	}
@@ -85,7 +85,7 @@ func EnrichMethodWithJSDoc(jsdocText string, method *M.ClassMethod, queryManager
 // EnrichFunctionWithJSDoc parses JSDoc comment text and applies the extracted information
 // to a FunctionDeclaration.
 func EnrichFunctionWithJSDoc(jsdocText string, fn *M.FunctionDeclaration, queryManager *Q.QueryManager) error {
-	err, info := parseForMethod(jsdocText, queryManager)
+	info, err := parseForMethod(jsdocText, queryManager)
 	if err != nil {
 		return err
 	}

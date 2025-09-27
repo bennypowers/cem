@@ -252,7 +252,7 @@ func parseForCSSProperty(code string, queryManager *Q.QueryManager) (*cssPropert
 	return &info, nil
 }
 
-func parseForMethod(source string, queryManager *Q.QueryManager) (error, *methodInfo) {
+func parseForMethod(source string, queryManager *Q.QueryManager) (*methodInfo, error) {
 	info := methodInfo{}
 	code := []byte(source)
 	parser := Q.GetJSDocParser()
@@ -263,7 +263,7 @@ func parseForMethod(source string, queryManager *Q.QueryManager) (error, *method
 
 	qm, err := Q.NewQueryMatcher(queryManager, "jsdoc", "jsdoc")
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 	defer qm.Close()
 
@@ -300,7 +300,7 @@ func parseForMethod(source string, queryManager *Q.QueryManager) (error, *method
 		}
 	}
 
-	return nil, &info
+	return &info, nil
 }
 
 func newTagInfo(tag string) tagInfo {
