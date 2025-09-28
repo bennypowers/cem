@@ -20,7 +20,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25.x'
+          go-version: "1.25.x"
         env:
           GOTOOLCHAIN: auto
           GOEXPERIMENT: jsonv2
@@ -48,9 +48,10 @@ jobs:
           cp docs/data/lastBenchmark.json pr_bench.json
 
       - name: Checkout target branch (base)
-        run: |
-          git fetch origin ${{ github.base_ref }} --depth=1
-          git checkout ${{ github.base_ref }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+          fetch-depth: 1
 
       - name: Prewarm benchmarks on base branch
         run: make bench
@@ -68,10 +69,11 @@ jobs:
           awk "BEGIN {print $end - $start}" > base_bench_time.txt
           cp docs/data/lastBenchmark.json base_bench.json
 
-      - name: Checkout PR branch (base)
-        run: |
-          git fetch origin ${{ github.head_ref }} --depth=1
-          git checkout ${{ github.head_ref }}
+      - name: Checkout PR branch (for comparing)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 1
 
       - name: Compare benchmark results
         run: scripts/compare-benchmarks.sh
