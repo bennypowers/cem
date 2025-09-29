@@ -20,9 +20,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 
 	"bennypowers.dev/cem/mcp/helpers"
 	"bennypowers.dev/cem/mcp/types"
+	"bennypowers.dev/cem/set"
 	V "bennypowers.dev/cem/validate"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -43,8 +45,25 @@ type HTMLGenerationTemplateData struct {
 	GeneratedHTML      string
 	RequiredAttributes []AttributeWithValue
 	OptionalAttributes []AttributeWithValue
+	SortedAttributes   []AttributeWithValue
 	Slots              []SlotWithContent
 }
+
+// nativeHTMLAttributes defines standard HTML attributes that should be sorted alphabetically
+var nativeHTMLAttributes = set.NewSet(
+	"id", "class", "style", "title", "lang", "dir", "role",
+	"aria-label", "aria-labelledby", "aria-describedby", "aria-hidden", "aria-expanded",
+	"aria-controls", "aria-live", "aria-atomic", "aria-relevant", "aria-busy",
+	"tabindex", "contenteditable", "draggable", "dropzone", "hidden",
+	"spellcheck", "translate", "accesskey", "autocomplete", "autofocus",
+	"disabled", "readonly", "required", "multiple", "selected", "checked",
+	"value", "placeholder", "pattern", "min", "max", "step", "size",
+	"rows", "cols", "wrap", "accept", "capture", "form", "formaction",
+	"formenctype", "formmethod", "formnovalidate", "formtarget",
+	"name", "type", "src", "href", "target", "rel", "download",
+	"media", "sizes", "srcset", "alt", "width", "height", "loading",
+	"decoding", "crossorigin", "referrerpolicy", "integrity",
+)
 
 // NewHTMLGenerationTemplateData creates HTML generation template data
 func NewHTMLGenerationTemplateData(element types.ElementInfo, context string, options map[string]string) HTMLGenerationTemplateData {
@@ -136,6 +155,10 @@ func generateHTMLStructure(element types.ElementInfo, args GenerateHtmlArgs) (st
 		}
 	}
 
+	// Sort attributes according to HTML conventions
+	templateData.SortedAttributes = sortAttributesForHTML(templateData.OptionalAttributes, element.Attributes())
+
+
 	// Prepare slot data with example content
 	for _, slot := range element.Slots() {
 		slotName := slot.Name
@@ -178,6 +201,93 @@ func prepareHTMLTemplateDataWithSchema(element types.ElementInfo, args GenerateH
 }
 
 // getAttributeValue determines the value to use for an attribute
+
+// sortAttributesForHTML sorts attributes according to HTML conventions:
+// 1. id (if exists)
+// 2. class (if exists)
+// 3. native HTML attributes (alphabetically)
+// 4. custom element attributes (in manifest order)
+func sortAttributesForHTML(attributes []AttributeWithValue, manifestAttrs []types.Attribute) []AttributeWithValue {
+	if len(attributes) == 0 {
+		return attributes
+	}
+
+	// Create map for manifest order lookup
+	manifestOrder := make(map[string]int)
+	for i, attr := range manifestAttrs {
+		manifestOrder[attr.Name] = i
+	}
+
+	// Separate attributes into categories
+	var idAttr, classAttr *AttributeWithValue
+	var nativeAttrs, customAttrs []AttributeWithValue
+
+	for i := range attributes {
+		attr := &attributes[i]
+		switch attr.Name {
+		case "id":
+			idAttr = attr
+		case "class":
+			classAttr = attr
+		default:
+			// Check if this attribute is defined in the manifest first
+			// If so, it's a custom element attribute regardless of name collision
+			isManifestAttr := false
+			for _, manifestAttr := range manifestAttrs {
+				if manifestAttr.Name == attr.Name {
+					isManifestAttr = true
+					break
+				}
+			}
+
+			if isManifestAttr {
+				customAttrs = append(customAttrs, *attr)
+			} else if nativeHTMLAttributes.Has(attr.Name) {
+				nativeAttrs = append(nativeAttrs, *attr)
+			} else {
+				customAttrs = append(customAttrs, *attr)
+			}
+		}
+	}
+
+	// Sort native attributes alphabetically
+	sort.Slice(nativeAttrs, func(i, j int) bool {
+		return nativeAttrs[i].Name < nativeAttrs[j].Name
+	})
+
+	// Sort custom attributes by manifest order
+	sort.Slice(customAttrs, func(i, j int) bool {
+		orderI, hasI := manifestOrder[customAttrs[i].Name]
+		orderJ, hasJ := manifestOrder[customAttrs[j].Name]
+
+		// If both have manifest order, use that
+		if hasI && hasJ {
+			return orderI < orderJ
+		}
+		// If only one has manifest order, it comes first
+		if hasI {
+			return true
+		}
+		if hasJ {
+			return false
+		}
+		// If neither has manifest order, sort alphabetically
+		return customAttrs[i].Name < customAttrs[j].Name
+	})
+
+	// Combine in order: id, class, native, custom
+	var result []AttributeWithValue
+	if idAttr != nil {
+		result = append(result, *idAttr)
+	}
+	if classAttr != nil {
+		result = append(result, *classAttr)
+	}
+	result = append(result, nativeAttrs...)
+	result = append(result, customAttrs...)
+
+	return result
+}
 
 // getSchemaDefinitions retrieves schema definitions for template context
 func getSchemaDefinitions(registry types.MCPContext) (map[string]interface{}, error) {
