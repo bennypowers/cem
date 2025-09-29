@@ -7,6 +7,7 @@ import (
 
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -44,16 +45,15 @@ func TestJSXDocumentSupport(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// This test will fail initially as JSX support doesn't exist yet
-			dm, err := lsp.NewDocumentManager()
+			dm, err := document.NewDocumentManager()
 			require.NoError(t, err, "Should create document manager")
 			defer dm.Close()
 
 			// Open document and check language detection
 			doc := dm.OpenDocument(tt.uri, "// test content", 1)
 
-			// Cast to concrete type to access Language field (this will help us see what JSX support we need)
-			concreteDoc := doc.(*lsp.Document)
-			assert.Equal(t, tt.expected, concreteDoc.Language, "Document language should match expected")
+			// Check language detection using the interface method
+			assert.Equal(t, tt.expected, doc.Language(), "Document language should match expected")
 		})
 	}
 }
@@ -69,7 +69,7 @@ func TestJSXCustomElementDetection(t *testing.T) {
 	manifestPath := filepath.Join(fixtureDir, "custom-elements.json")
 	registry.AddManifestPath(manifestPath)
 
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	require.NoError(t, err, "Should create document manager")
 	defer dm.Close()
 
@@ -124,7 +124,7 @@ func TestJSXAttributeDetection(t *testing.T) {
 	manifestPath := filepath.Join(fixtureDir, "custom-elements.json")
 	registry.AddManifestPath(manifestPath)
 
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	require.NoError(t, err, "Should create document manager")
 	defer dm.Close()
 
@@ -154,7 +154,7 @@ func TestJSXAttributeDetection(t *testing.T) {
 
 func TestJSXCompletionContext(t *testing.T) {
 	// Setup test environment
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	require.NoError(t, err, "Should create document manager")
 	defer dm.Close()
 

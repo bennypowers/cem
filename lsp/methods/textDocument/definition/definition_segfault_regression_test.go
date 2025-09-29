@@ -21,7 +21,7 @@ import (
 	"testing"
 	"testing/synctest"
 
-	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/definition"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	protocol "github.com/tliron/glsp/protocol_3_16"
@@ -34,7 +34,7 @@ func TestDefinitionNilPointerRegression(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 
 	// Create a real DocumentManager
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}
@@ -76,7 +76,7 @@ func TestDefinitionConcurrentAccess(t *testing.T) {
 		ctx := testhelpers.NewMockServerContext()
 
 		// Create a real DocumentManager
-		dm, err := lsp.NewDocumentManager()
+		dm, err := document.NewDocumentManager()
 		if err != nil {
 			t.Fatalf("Failed to create DocumentManager: %v", err)
 		}

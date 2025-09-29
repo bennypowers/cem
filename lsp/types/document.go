@@ -18,7 +18,9 @@ package types
 
 import (
 	M "bennypowers.dev/cem/manifest"
+	Q "bennypowers.dev/cem/queries"
 	protocol "github.com/tliron/glsp/protocol_3_16"
+	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
 // Document interface for LSP document operations
@@ -28,14 +30,51 @@ type Document interface {
 	Content() (string, error) // Returns content with proper error handling
 	Version() int32
 	URI() string
+	Language() string // Returns the document language
 	FindCustomElements(dm any) ([]CustomElementMatch, error)
 	AnalyzeCompletionContextTS(position protocol.Position, dm any) *CompletionAnalysis
 	CompletionPrefix(analysis *CompletionAnalysis) string                            // Get completion prefix using tree-sitter
-	GetScriptTags() []ScriptTag                                                      // Get parsed script tags
+	ScriptTags() []ScriptTag                                                      // Get parsed script tags
 	FindModuleScript() (protocol.Position, bool)                                     // Find insertion point in module script
 	FindInlineModuleScript() (protocol.Position, bool)                               // Find insertion point in inline module script (no src)
 	FindHeadInsertionPoint(dm any) (protocol.Position, bool)                         // Find insertion point in <head> section
 	ByteRangeToProtocolRange(content string, startByte, endByte uint) protocol.Range // Convert byte range to protocol range
+	Close()                                                                           // Clean up document resources
+
+	// Tree-sitter methods for incremental parsing support
+	Tree() *ts.Tree                   // Get the current syntax tree
+	SetTree(tree *ts.Tree)            // Set the syntax tree
+	Parser() *ts.Parser               // Get the tree-sitter parser
+	SetParser(parser *ts.Parser)      // Set the tree-sitter parser
+	UpdateContent(content string, version int32) // Update document content
+}
+
+// LanguageHandler defines the interface for language-specific operations
+type LanguageHandler interface {
+	Language() string
+	CreateDocument(uri, content string, version int32) Document
+	FindCustomElements(doc Document) ([]CustomElementMatch, error)
+	AnalyzeCompletionContext(doc Document, position protocol.Position) *CompletionAnalysis
+	FindElementAtPosition(doc Document, position protocol.Position) *CustomElementMatch
+	FindAttributeAtPosition(doc Document, position protocol.Position) (*AttributeMatch, string)
+	Close()
+}
+
+// Manager interface for document lifecycle management
+type Manager interface {
+	// Document lifecycle
+	OpenDocument(uri, content string, version int32) Document
+	UpdateDocument(uri, content string, version int32) Document
+	UpdateDocumentWithChanges(uri, content string, version int32, changes []protocol.TextDocumentContentChangeEvent) Document
+	CloseDocument(uri string)
+	Document(uri string) Document
+	AllDocuments() []Document
+
+	// Core query management (language-agnostic)
+	QueryManager() *Q.QueryManager
+
+	// Cleanup
+	Close()
 }
 
 // CustomElementMatch represents a found custom element
@@ -75,4 +114,31 @@ type ImportStatement struct {
 	Range      protocol.Range // Range of the import statement
 	ImportPath string         // The imported path/module
 	Type       string         // "static" or "dynamic"
+}
+
+// ParseStrategy represents different parsing strategies for document updates
+type ParseStrategy int
+
+const (
+	// ParseStrategyFull always performs a full reparse
+	ParseStrategyFull ParseStrategy = iota
+	// ParseStrategyIncremental attempts incremental parsing with fallback to full
+	ParseStrategyIncremental
+	// ParseStrategyAuto automatically chooses based on change characteristics
+	ParseStrategyAuto
+)
+
+// ParseResult represents the result of a parsing operation
+type ParseResult struct {
+	Success         bool
+	UsedIncremental bool
+	Error           error
+	NewTree         *ts.Tree
+	OldTree         *ts.Tree // For cleanup purposes
+}
+
+// IncrementalParser interface for incremental document parsing
+type IncrementalParser interface {
+	// ParseWithStrategy parses a document using the configured strategy
+	ParseWithStrategy(doc Document, newContent string, changes []protocol.TextDocumentContentChangeEvent) ParseResult
 }

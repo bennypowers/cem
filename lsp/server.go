@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/helpers"
 	serverMethods "bennypowers.dev/cem/lsp/methods/server"
 	"bennypowers.dev/cem/lsp/methods/textDocument"
@@ -29,6 +30,7 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/hover"
 	"bennypowers.dev/cem/lsp/methods/textDocument/references"
 	"bennypowers.dev/cem/lsp/methods/workspace/symbol"
+	lspTypes "bennypowers.dev/cem/lsp/types"
 	"bennypowers.dev/cem/types"
 	"github.com/pterm/pterm"
 	"github.com/tliron/glsp"
@@ -50,7 +52,7 @@ const (
 type Server struct {
 	workspace types.WorkspaceContext
 	registry  *Registry
-	documents *DocumentManager
+	documents lspTypes.Manager
 	server    *server.Server
 	transport TransportKind
 }
@@ -60,7 +62,7 @@ func NewServer(workspace types.WorkspaceContext, transport TransportKind) (*Serv
 	// Configure pterm to output to stderr to avoid contaminating LSP stdout stream
 	pterm.SetDefaultOutput(os.Stderr)
 
-	documents, err := NewDocumentManager()
+	documents, err := document.NewDocumentManager()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create document manager: %w", err)
 	}

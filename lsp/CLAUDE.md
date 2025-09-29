@@ -689,7 +689,7 @@ All tree-sitter HTML script tag parsing and import detection functionality is no
 - **Performance optimized** - Uses parser pooling from existing `Q.RetrieveTypeScriptParser()`
 
 #### ✅ **Missing Import Detection Integration** - COMPLETED  
-- **Updated `parseModuleScriptImports()`** - Now uses tree-sitter tracked data from `Document.GetScriptTags()`
+- **Updated `parseModuleScriptImports()`** - Now uses tree-sitter tracked data from `Document.ScriptTags()`
 - **Leverages parsed data** - Uses `ImportStatement[]` from tree-sitter instead of regex re-parsing
 - **Maintains compatibility** - Keeps regex fallback for edge cases
 - **All tests passing** - Full diagnostics test suite validates integration
@@ -715,7 +715,7 @@ All tree-sitter HTML script tag parsing and import detection functionality is no
 ### 🚀 **Performance & Architecture Benefits**
 - **Accuracy**: Tree-sitter understands actual AST structure vs regex patterns
 - **Performance**: Leverages parser pools and cached query matchers 
-- **Maintainability**: Single source of truth for script tag data via `Document.GetScriptTags()`
+- **Maintainability**: Single source of truth for script tag data via `Document.ScriptTags()`
 - **Extensibility**: Easy to add new import detection patterns with tree-sitter queries
 - **Reliability**: Comprehensive test coverage ensures stability across all scenarios
 

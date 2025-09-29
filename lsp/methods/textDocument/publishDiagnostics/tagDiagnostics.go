@@ -367,94 +367,17 @@ func parseTypeScriptImports(content string, ctx types.ServerContext) []string {
 func parseModuleScriptImports(ctx types.ServerContext, doc types.Document) []string {
 	var importedElements []string
 
-	// First try to use tree-sitter parsed script tags from document for performance
+	// Use tree-sitter parsed script tags from document
 	if doc != nil {
-		scriptTags := doc.GetScriptTags()
-		if len(scriptTags) > 0 {
-			for _, scriptTag := range scriptTags {
-				if scriptTag.IsModule {
-					// Use the parsed imports from tree-sitter
-					for _, importStmt := range scriptTag.Imports {
-						elements := resolveImportPathToElements(importStmt.ImportPath, ctx)
-						importedElements = append(importedElements, elements...)
-					}
+		scriptTags := doc.ScriptTags()
+		for _, scriptTag := range scriptTags {
+			if scriptTag.IsModule {
+				// Use the parsed imports from tree-sitter
+				for _, importStmt := range scriptTag.Imports {
+					elements := resolveImportPathToElements(importStmt.ImportPath, ctx)
+					importedElements = append(importedElements, elements...)
 				}
 			}
-			return importedElements
-		}
-	}
-
-	// Fallback: parse content directly with tree-sitter.
-	// TODO: this was only added for testing and should likely be removed
-	content, err := doc.Content()
-	if err != nil {
-		return importedElements
-	}
-
-	// Get HTML parser from pool
-	parser := queries.GetHTMLParser()
-	defer queries.PutHTMLParser(parser)
-
-	// Parse the HTML content
-	tree := parser.Parse([]byte(content), nil)
-	if tree == nil {
-		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to parse HTML content with tree-sitter")
-		return importedElements
-	}
-	defer tree.Close()
-
-	// Get query manager from context for dependency injection
-	queryManager, err := ctx.QueryManager()
-	if err != nil {
-		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to get query manager from context: %v", err)
-		return importedElements
-	}
-
-	// Get cached script tag matcher
-	scriptMatcher, err := queries.GetCachedQueryMatcher(queryManager, "html", "scriptTags")
-	if err != nil {
-		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to get cached script matcher: %v", err)
-		return importedElements
-	}
-
-	// Parse module scripts and extract imports
-	contentBytes := []byte(content)
-	for match := range scriptMatcher.AllQueryMatches(tree.RootNode(), contentBytes) {
-		var isModule bool
-		var scriptContent string
-
-		// Process attributes and content in this script tag
-		var attrName, attrValue string
-		for _, capture := range match.Captures {
-			// Safety check for capture index bounds
-			if int(capture.Index) >= scriptMatcher.CaptureCount() {
-				continue // Skip invalid capture indices
-			}
-			captureName := scriptMatcher.GetCaptureNameByIndex(capture.Index)
-			captureText := capture.Node.Utf8Text(contentBytes)
-
-			switch captureName {
-			case "attr.name":
-				attrName = captureText
-			case "attr.value":
-				attrValue = strings.Trim(captureText, `"'`)
-
-				// Check if this is a module script
-				if attrName == "type" && strings.ToLower(attrValue) == "module" {
-					isModule = true
-				}
-			case "content":
-				scriptContent = captureText
-			}
-		}
-
-		// Only process module scripts with content
-		if isModule && scriptContent != "" {
-			helpers.SafeDebugLog("[DIAGNOSTICS] Found module script with content: %s", scriptContent)
-			// Parse the TypeScript content inside the script tag for imports
-			elements := parseTypeScriptImports(scriptContent, ctx)
-			importedElements = append(importedElements, elements...)
-			helpers.SafeDebugLog("[DIAGNOSTICS] Module script content resolved to elements: %v", elements)
 		}
 	}
 

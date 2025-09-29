@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	W "bennypowers.dev/cem/workspace"
 	protocol "github.com/tliron/glsp/protocol_3_16"
@@ -56,7 +57,7 @@ func TestBasicAttributeValueCompletions(t *testing.T) {
 	}
 
 	// Create document manager
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create document manager: %v", err)
 	}

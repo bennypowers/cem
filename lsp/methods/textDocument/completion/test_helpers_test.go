@@ -24,7 +24,7 @@ import (
 	"strings"
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/types"
 	protocol "github.com/tliron/glsp/protocol_3_16"
@@ -38,7 +38,7 @@ type TestHelpers struct{}
 // DEPRECATED: Tests should use dm.OpenDocument() directly
 func NewMockTemplateDocument(content, templateContext string) types.Document {
 	// Create a DocumentManager and use it to open the document
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		panic("Failed to create DocumentManager for test: " + err.Error())
 	}
@@ -106,18 +106,14 @@ func (h *TestHelpers) GetAttributeValueCompletionsUsingMainEntry(
 
 // getDocumentManagerFromContext extracts DocumentManager from a completion context
 // This uses type assertion to check if the context has a document manager
-func getDocumentManagerFromContext(ctx types.ServerContext) *lsp.DocumentManager {
+func getDocumentManagerFromContext(ctx types.ServerContext) types.DocumentManager {
 	// Try to extract document manager using the ServerContext interface
 	dm, err := ctx.DocumentManager()
 	if err != nil {
 		return nil
 	}
 
-	// Type assert to concrete DocumentManager type
-	if lspDM, ok := dm.(*lsp.DocumentManager); ok {
-		return lspDM
-	}
-	return nil
+	return dm
 }
 
 // Global helper instance

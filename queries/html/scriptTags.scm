@@ -8,7 +8,8 @@
         (quoted_attribute_value
           (attribute_value) @attr.value)
         (attribute_value) @attr.value
-      ]))? @start.tag
+      ])*) @start.tag
   (raw_text)? @content
   (end_tag
-    (tag_name)))
+    (tag_name))?
+) @script

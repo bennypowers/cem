@@ -19,7 +19,7 @@ package publishDiagnostics_test
 import (
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/manifest"
 )
@@ -32,7 +32,7 @@ func TestSlotDiagnosticsBasic(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 
 	// Add test document using DocumentManager
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}

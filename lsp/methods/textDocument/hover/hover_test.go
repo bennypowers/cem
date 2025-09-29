@@ -23,7 +23,7 @@ import (
 	"strings"
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/hover"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/lsp/types"
@@ -94,7 +94,7 @@ func TestHoverIntegrationWithDocumentChanges(t *testing.T) {
 
 	ctx.AddManifest(&pkg)
 
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}
@@ -162,7 +162,7 @@ func TestHoverIntegrationWithDocumentChanges(t *testing.T) {
 			}
 
 			// Add document to the mock context using DocumentManager
-			dm, err := lsp.NewDocumentManager()
+			dm, err := document.NewDocumentManager()
 			if err != nil {
 				t.Fatalf("Failed to create DocumentManager: %v", err)
 			}
@@ -258,7 +258,7 @@ func TestHoverWithTypeScriptTemplates(t *testing.T) {
 
 	ctx.AddManifest(&pkg)
 
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}
@@ -290,7 +290,7 @@ func TestHoverWithTypeScriptTemplates(t *testing.T) {
 			uri := "file:///test.ts"
 
 			// Add document to the mock context using DocumentManager
-			dm, err := lsp.NewDocumentManager()
+			dm, err := document.NewDocumentManager()
 			if err != nil {
 				t.Fatalf("Failed to create DocumentManager: %v", err)
 			}
