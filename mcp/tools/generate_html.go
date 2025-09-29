@@ -233,29 +233,30 @@ func sortAttributesForHTML(attributes []AttributeWithValue, manifestAttrs []type
 	var nativeAttrs, customAttrs []AttributeWithValue
 
 	for i := range attributes {
-		attr := &attributes[i]
-		switch attr.Name {
+		// Store the attribute value once to avoid repeated dereferencing
+		attrValue := attributes[i]
+		switch attrValue.Name {
 		case "id":
-			idAttr = attr
+			idAttr = &attributes[i]
 		case "class":
-			classAttr = attr
+			classAttr = &attributes[i]
 		default:
 			// Check if this attribute is defined in the manifest first
 			// If so, it's a custom element attribute regardless of name collision
 			isManifestAttr := false
 			for _, manifestAttr := range manifestAttrs {
-				if manifestAttr.Name == attr.Name {
+				if manifestAttr.Name == attrValue.Name {
 					isManifestAttr = true
 					break
 				}
 			}
 
 			if isManifestAttr {
-				customAttrs = append(customAttrs, *attr)
-			} else if validations.IsGlobalAttribute(attr.Name) {
-				nativeAttrs = append(nativeAttrs, *attr)
+				customAttrs = append(customAttrs, attrValue)
+			} else if validations.IsGlobalAttribute(attrValue.Name) {
+				nativeAttrs = append(nativeAttrs, attrValue)
 			} else {
-				customAttrs = append(customAttrs, *attr)
+				customAttrs = append(customAttrs, attrValue)
 			}
 		}
 	}
