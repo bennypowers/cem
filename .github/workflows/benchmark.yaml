@@ -36,7 +36,11 @@ jobs:
         run: |
           mkdir -p docs/data
           start=$(date +%s.%N)
-          make bench > pr_bench.txt 2>&1
+          if ! make bench > pr_bench.txt 2>&1; then
+            cat pr_bench.txt
+            echo "::error::Benchmarking (make bench) failed on PR branch"
+            exit 1
+          fi
           cat pr_bench.txt
           end=$(date +%s.%N)
           awk "BEGIN {print $end - $start}" > pr_bench_time.txt
@@ -55,7 +59,11 @@ jobs:
         id: bench-base
         run: |
           start=$(date +%s.%N)
-          make bench > base_bench.txt 2>&1
+          if ! make bench > base_bench.txt 2>&1; then
+            cat base_bench.txt
+            echo "::error::Benchmarking (make bench) failed on base branch"
+            exit 1
+          fi
           end=$(date +%s.%N)
           awk "BEGIN {print $end - $start}" > base_bench_time.txt
           cp docs/data/lastBenchmark.json base_bench.json
@@ -67,7 +75,17 @@ jobs:
           fetch-depth: 1
 
       - name: Compare benchmark results
-        run: scripts/compare-benchmarks.sh
+        run: |
+          if [ ! -f "scripts/compare-benchmarks.sh" ]; then
+            echo "::error::Compare script not found: scripts/compare-benchmarks.sh"
+            exit 1
+          fi
+          if [ ! -f "pr_bench.json" ] || [ ! -f "base_bench.json" ]; then
+            echo "::error::Benchmark JSON files missing - pr_bench.json or base_bench.json not found"
+            exit 1
+          fi
+          echo "Running benchmark comparison..."
+          scripts/compare-benchmarks.sh
 
       - name: Find previous benchmark comment
         id: find-comment
