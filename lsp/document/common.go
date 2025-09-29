@@ -22,10 +22,9 @@ import (
 
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
-	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-// extractDocumentManager safely extracts a types.Manager from any type,
+// ExtractDocumentManager safely extracts a types.Manager from any type,
 // handling both real types.Manager and mock implementations
 func ExtractDocumentManager(dm any) types.Manager {
 	if dm == nil {
@@ -62,21 +61,4 @@ func getLanguageFromURI(uri string) string {
 	default:
 		return "html" // Default to HTML
 	}
-}
-
-// Helper function to check if position is within range
-func isPositionInRange(pos protocol.Position, r protocol.Range) bool {
-	if pos.Line < r.Start.Line || pos.Line > r.End.Line {
-		return false
-	}
-
-	if pos.Line == r.Start.Line && pos.Character < r.Start.Character {
-		return false
-	}
-
-	if pos.Line == r.End.Line && pos.Character > r.End.Character {
-		return false
-	}
-
-	return true
 }

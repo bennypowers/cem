@@ -407,7 +407,7 @@ func (d *TSXDocument) findTagNameForAttribute(byteOffset uint, captureMap Q.Capt
 	if tagNames, exists := captureMap["tag.name.completion"]; exists {
 		fmt.Printf("[DEBUG] findTagNameForAttribute: found %d tag captures for offset %d\n", len(tagNames), byteOffset)
 		var closestTag *Q.CaptureInfo
-		var closestDistance uint = ^uint(0) // Max uint value
+		var closestDistance = ^uint(0) // Max uint value
 
 		for _, tagCapture := range tagNames {
 			fmt.Printf("[DEBUG]   tag capture: text='%s' start=%d end=%d\n", tagCapture.Text, tagCapture.StartByte, tagCapture.EndByte)
@@ -457,7 +457,7 @@ func (d *TSXDocument) findBestTagName(byteOffset uint, possibleMatches []struct 
 	captureMap  Q.CaptureMap
 }) string {
 	var bestTagName string
-	var bestDistance uint = ^uint(0) // Max uint value
+	var bestDistance = ^uint(0) // Max uint value
 
 	// Look through all captures for tag names
 	for _, match := range possibleMatches {
@@ -494,7 +494,7 @@ func (d *TSXDocument) findBestAttributeName(byteOffset uint, possibleMatches []s
 	captureMap  Q.CaptureMap
 }) string {
 	var bestAttrName string
-	var bestDistance uint = ^uint(0) // Max uint value
+	var bestDistance = ^uint(0) // Max uint value
 
 	// Look through all captures for attribute names across ALL capture maps
 	for _, match := range possibleMatches {

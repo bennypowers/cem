@@ -104,19 +104,6 @@ func (h *TestHelpers) GetAttributeValueCompletionsUsingMainEntry(
 	return completion.GetAttributeValueCompletions(ctx, tagName, attributeName), nil
 }
 
-// getDocumentManagerFromContext extracts DocumentManager from a completion context
-// This uses type assertion to check if the context has a document manager
-func getDocumentManagerFromContext(ctx types.ServerContext) types.DocumentManager {
-	// Try to extract document manager using the ServerContext interface
-	dm, err := ctx.DocumentManager()
-	if err != nil {
-		return nil
-	}
-
-	return dm
-}
-
-// Global helper instance
 var TestHelper = &TestHelpers{}
 
 // MockDocument implements types.Document for testing

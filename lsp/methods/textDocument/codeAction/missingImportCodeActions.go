@@ -292,7 +292,7 @@ func findLastImportPosition(doc types.Document, scriptPosition protocol.Position
 	}
 
 	lines := strings.Split(content, "\n")
-	var lastImportLine int = -1
+	var lastImportLine = -1
 
 	// Find the script start line by searching backwards from scriptPosition
 	scriptStartLine := 0
