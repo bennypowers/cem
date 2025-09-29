@@ -122,6 +122,10 @@ var tsxParserPool = sync.Pool{
 	},
 }
 
+// Note: Removed cursor pooling due to stateful nature of QueryCursor objects.
+// Cursors maintain internal state that can affect subsequent queries,
+// leading to unpredictable behavior. Always create fresh cursors.
+
 // GetHTMLParser returns a pooled HTML parser.
 // Always call PutHTMLParser when done.
 func GetHTMLParser() *ts.Parser {
@@ -394,8 +398,8 @@ type QueryMatcher struct {
 
 func (qm QueryMatcher) Close() {
 	// NOTE: we don't close queries here, only at the end of execution in QueryManager.Close
-	// Return cursor to pool for reuse instead of closing it
-	cursorPool.Put(qm.cursor)
+	// Close the cursor since we're not pooling
+	qm.cursor.Close()
 }
 
 func (qm QueryMatcher) GetCaptureNameByIndex(index uint32) string {
