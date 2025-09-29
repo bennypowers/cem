@@ -427,10 +427,3 @@ func splitLines(content string) []string {
 	return lines
 }
 
-// max returns the maximum of two uint values
-func max(a, b uint) uint {
-	if a > b {
-		return a
-	}
-	return b
-}

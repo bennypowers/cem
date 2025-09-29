@@ -367,12 +367,3 @@ func (ip *incrementalParser) hasErrorNodes(node *ts.Node) bool {
 
 	return false
 }
-
-// max returns the maximum of two uint values
-func max(a, b uint) uint {
-	if a > b {
-		return a
-	}
-	return b
-}
-
