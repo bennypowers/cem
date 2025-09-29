@@ -36,21 +36,17 @@ jobs:
         run: |
           mkdir -p docs/data
           start=$(date +%s.%N)
-          if ! make bench > pr_bench.txt 2>&1; then
-            cat pr_bench.txt
-            echo "::error::Benchmarking (make bench) failed on PR branch"
-            exit 1
-          fi
+          make bench > pr_bench.txt 2>&1
           cat pr_bench.txt
           end=$(date +%s.%N)
           awk "BEGIN {print $end - $start}" > pr_bench_time.txt
-          # Copy output JSON so it doesn't get overwritten
           cp docs/data/lastBenchmark.json pr_bench.json
 
       - name: Checkout target branch (base)
-        run: |
-          git fetch origin ${{ github.base_ref }} --depth=1
-          git checkout ${{ github.base_ref }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+          fetch-depth: 1
 
       - name: Prewarm benchmarks on base branch
         run: make bench
@@ -59,19 +55,16 @@ jobs:
         id: bench-base
         run: |
           start=$(date +%s.%N)
-          if ! make bench > base_bench.txt 2>&1; then
-            cat base_bench.txt
-            echo "::error::Benchmarking (make bench) failed on base branch"
-            exit 1
-          fi
+          make bench > base_bench.txt 2>&1
           end=$(date +%s.%N)
           awk "BEGIN {print $end - $start}" > base_bench_time.txt
           cp docs/data/lastBenchmark.json base_bench.json
 
-      - name: Checkout PR branch (base)
-        run: |
-          git fetch origin ${{ github.head_ref }} --depth=1
-          git checkout ${{ github.head_ref }}
+      - name: Restore PR context for comparison
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
 
       - name: Compare benchmark results
         run: scripts/compare-benchmarks.sh
