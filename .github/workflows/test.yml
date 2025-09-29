@@ -1,6 +1,13 @@
 name: Test
 on:
-  - push
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 jobs:
   test:
@@ -8,17 +15,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
-          go-version: '1.25.x'
+          go-version-file: go.mod
         env:
           GOTOOLCHAIN: auto
           GOEXPERIMENT: jsonv2
-      - name: Install dependencies
-        run: go get .
-      - name: Install Go tools
+      - name: Install Go dependencies and tools
         run: |
+          go get .
           go install gotest.tools/gotestsum@latest
           go install github.com/mfridman/tparse@latest
       - name: Generate code

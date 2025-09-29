@@ -14,64 +14,38 @@ jobs:
     steps:
       - name: Checkout PR branch
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
-          go-version: '1.25.x'
+          go-version-file: go.mod
         env:
           GOTOOLCHAIN: auto
           GOEXPERIMENT: jsonv2
-
-      - name: Install tparse
-        run: go install github.com/mfridman/tparse@latest
-
-      - name: Prewarm benchmarks on PR branch
-        run: make bench
-
+      - name: Install Go dependencies and tools
+        run: |
+          go get .
+          go install gotest.tools/gotestsum@latest
+          go install github.com/mfridman/tparse@latest
       - name: Run benchmarks on PR branch
         id: bench-pr
-        run: |
-          mkdir -p docs/data
-          start=$(date +%s.%N)
-          if ! make bench > pr_bench.txt 2>&1; then
-            cat pr_bench.txt
-            echo "::error::Benchmarking (make bench) failed on PR branch"
-            exit 1
-          fi
-          cat pr_bench.txt
-          end=$(date +%s.%N)
-          awk "BEGIN {print $end - $start}" > pr_bench_time.txt
-          # Copy output JSON so it doesn't get overwritten
-          cp docs/data/lastBenchmark.json pr_bench.json
+        run: scripts/benchmark-ci-run.sh pr
 
       - name: Checkout target branch (base)
-        run: |
-          git fetch origin ${{ github.base_ref }} --depth=1
-          git checkout ${{ github.base_ref }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
 
       - name: Prewarm benchmarks on base branch
         run: make bench
 
       - name: Run benchmarks on base branch
         id: bench-base
-        run: |
-          start=$(date +%s.%N)
-          if ! make bench > base_bench.txt 2>&1; then
-            cat base_bench.txt
-            echo "::error::Benchmarking (make bench) failed on base branch"
-            exit 1
-          fi
-          end=$(date +%s.%N)
-          awk "BEGIN {print $end - $start}" > base_bench_time.txt
-          cp docs/data/lastBenchmark.json base_bench.json
+        run: scripts/benchmark-ci-run.sh base
 
-      - name: Checkout PR branch (base)
-        run: |
-          git fetch origin ${{ github.head_ref }} --depth=1
-          git checkout ${{ github.head_ref }}
+      - name: Restore PR context for comparison
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
 
       - name: Compare benchmark results
         run: scripts/compare-benchmarks.sh
