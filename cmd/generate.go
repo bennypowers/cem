@@ -157,7 +157,11 @@ var generateCmd = &cobra.Command{
 			if err != nil {
 				errs = errors.Join(errs, err)
 			} else {
-				defer writer.Close()
+				defer func() {
+				if err := writer.Close(); err != nil {
+					errs = errors.Join(errs, err)
+				}
+			}()
 				_, err := writer.Write([]byte(*manifestStr + "\n"))
 				if err != nil {
 					errs = errors.Join(errs, err)
@@ -238,14 +242,14 @@ func init() {
 	generateCmd.Flags().String("demo-discovery-url-pattern", "", "Go Regexp pattern with named capture groups for generating canonical demo urls")
 	generateCmd.Flags().String("demo-discovery-url-template", "", "URL pattern string using {groupName} syntax to interpolate named captures from the URL pattern")
 	generateCmd.Flags().BoolP("watch", "w", false, "watch files for changes and regenerate")
-	viper.BindPFlag("generate.noDefaultExcludes", generateCmd.Flags().Lookup("no-default-excludes"))
-	viper.BindPFlag("generate.output", generateCmd.Flags().Lookup("output"))
-	viper.BindPFlag("generate.exclude", generateCmd.Flags().Lookup("exclude"))
-	viper.BindPFlag("generate.designTokens.spec", generateCmd.Flags().Lookup("design-tokens"))
-	viper.BindPFlag("generate.designTokens.prefix", generateCmd.Flags().Lookup("design-tokens-prefix"))
-	viper.BindPFlag("generate.demoDiscovery.fileGlob", generateCmd.Flags().Lookup("demo-discovery-file-glob"))
-	viper.BindPFlag("generate.demoDiscovery.urlPattern", generateCmd.Flags().Lookup("demo-discovery-url-pattern"))
-	viper.BindPFlag("generate.demoDiscovery.urlTemplate", generateCmd.Flags().Lookup("demo-discovery-url-template"))
+	_ = viper.BindPFlag("generate.noDefaultExcludes", generateCmd.Flags().Lookup("no-default-excludes"))
+	_ = viper.BindPFlag("generate.output", generateCmd.Flags().Lookup("output"))
+	_ = viper.BindPFlag("generate.exclude", generateCmd.Flags().Lookup("exclude"))
+	_ = viper.BindPFlag("generate.designTokens.spec", generateCmd.Flags().Lookup("design-tokens"))
+	_ = viper.BindPFlag("generate.designTokens.prefix", generateCmd.Flags().Lookup("design-tokens-prefix"))
+	_ = viper.BindPFlag("generate.demoDiscovery.fileGlob", generateCmd.Flags().Lookup("demo-discovery-file-glob"))
+	_ = viper.BindPFlag("generate.demoDiscovery.urlPattern", generateCmd.Flags().Lookup("demo-discovery-url-pattern"))
+	_ = viper.BindPFlag("generate.demoDiscovery.urlTemplate", generateCmd.Flags().Lookup("demo-discovery-url-template"))
 }
 
 // runWatchMode starts the file watching mode - delegates to generate package

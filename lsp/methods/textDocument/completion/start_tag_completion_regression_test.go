@@ -146,11 +146,3 @@ func TestStartTagCompletionRegression(t *testing.T) {
 	}
 }
 
-// extractCompletionLabels extracts labels from completion items for debugging
-func extractCompletionLabels(completions []protocol.CompletionItem) []string {
-	labels := make([]string, len(completions))
-	for i, completion := range completions {
-		labels[i] = completion.Label
-	}
-	return labels
-}

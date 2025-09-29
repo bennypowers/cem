@@ -62,7 +62,7 @@ func (c *FileSystemWorkspaceContext) initConfig() (*C.CemConfig, error) {
 		if err != nil {
 			return nil, err
 		}
-		defer rc.Close()
+		defer func() { _ = rc.Close() }()
 		if err := yaml.NewDecoder(rc).Decode(&config); err != nil {
 			return nil, err
 		}
@@ -109,7 +109,7 @@ func (c *FileSystemWorkspaceContext) PackageJSON() (*M.PackageJSON, error) {
 	} else if err != nil {
 		return nil, err
 	}
-	defer rc.Close()
+	defer func() { _ = rc.Close() }()
 	p, err := decodeJSON[M.PackageJSON](rc)
 	if err != nil {
 		return nil, err
@@ -139,7 +139,7 @@ func (c *FileSystemWorkspaceContext) Manifest() (*M.Package, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rc.Close()
+	defer func() { _ = rc.Close() }()
 
 	m, err := decodeJSON[M.Package](rc)
 	if err != nil {

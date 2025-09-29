@@ -542,15 +542,6 @@ func (d *TSXDocument) positionToByteOffset(pos protocol.Position, content string
 	return offset
 }
 
-// getCaptureMapKeys returns the keys from a capture map for debugging
-func getCaptureMapKeys(captureMap Q.CaptureMap) []string {
-	keys := make([]string, 0, len(captureMap))
-	for k := range captureMap {
-		keys = append(keys, k)
-	}
-	return keys
-}
-
 // extractCustomElementFromText extracts the custom element name from capture text
 func extractCustomElementFromText(text string) string {
 	// Look for the last occurrence of a custom element pattern

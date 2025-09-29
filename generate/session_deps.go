@@ -113,7 +113,7 @@ func (fdt *FileDependencyTracker) UpdateFileHash(fsPath string) ([32]byte, error
 	if err != nil {
 		return [32]byte{}, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	hasher := sha256.New()
 	if _, err := io.Copy(hasher, file); err != nil {

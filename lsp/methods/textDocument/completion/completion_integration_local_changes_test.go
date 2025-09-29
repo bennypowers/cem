@@ -440,12 +440,3 @@ export class MyApp extends LitElement {
 		t.Logf("✅ Fast Lit template completion test completed instantly (eliminated 10+ second delays)")
 	})
 }
-
-// Helper function to get attribute names for debugging
-func getAttrNames(attrs map[string]*M.Attribute) []string {
-	names := make([]string, 0, len(attrs))
-	for name := range attrs {
-		names = append(names, name)
-	}
-	return names
-}

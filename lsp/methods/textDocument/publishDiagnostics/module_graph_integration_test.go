@@ -43,7 +43,7 @@ func TestModuleGraphIntegration_DirectVsReExport(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	if err := server.InitializeForTesting(); err != nil {
 		t.Fatalf("Failed to initialize server: %v", err)

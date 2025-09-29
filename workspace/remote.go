@@ -183,7 +183,7 @@ func (c *RemoteWorkspaceContext) fetchFromNpm(name, version string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	type npmMeta struct {
 		Versions map[string]struct {
 			Dist struct{ Tarball string }
@@ -198,7 +198,7 @@ func (c *RemoteWorkspaceContext) fetchFromNpm(name, version string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	err = extractFilesFromTarGz(resp.Body, c.cacheDir, []string{"package.json", "custom-elements.json"})
 	if err != nil {
 		return err
@@ -231,7 +231,7 @@ func (c *RemoteWorkspaceContext) Config() (*C.CemConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	var cfg C.CemConfig
 	if err := yaml.NewDecoder(f).Decode(&cfg); err != nil {
 		return nil, err
@@ -248,7 +248,7 @@ func (c *RemoteWorkspaceContext) Manifest() (*M.Package, error) {
 		manifestPath := filepath.Join(c.cacheDir, pkg.CustomElements)
 		rc, err := os.Open(manifestPath)
 		if err == nil {
-			defer rc.Close()
+			defer func() { _ = rc.Close() }()
 			return decodeJSON[M.Package](rc)
 		}
 	}
@@ -260,7 +260,7 @@ func (c *RemoteWorkspaceContext) PackageJSON() (*M.PackageJSON, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not open package.json in remote workspace: %w", err)
 	}
-	defer rc.Close()
+	defer func() { _ = rc.Close() }()
 	return decodeJSON[M.PackageJSON](rc)
 }
 
@@ -345,7 +345,7 @@ func setupTempdirFromCache(cacheDir string) (string, error) {
 	for _, f := range files {
 		src := filepath.Join(cacheDir, f.Name())
 		dst := filepath.Join(tempdir, f.Name())
-		copyFile(src, dst)
+		_, _ = copyFile(src, dst)
 	}
 	return tempdir, nil
 }
@@ -356,7 +356,7 @@ func (c *RemoteWorkspaceContext) fetch(url, dest string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode == http.StatusNotFound {
 		if strings.HasSuffix(url, "package.json") {
@@ -377,7 +377,7 @@ func (c *RemoteWorkspaceContext) fetch(url, dest string) error {
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer func() { _ = out.Close() }()
 	_, err = io.Copy(out, resp.Body)
 	return err
 }
@@ -387,7 +387,7 @@ func extractFilesFromTarGz(r io.Reader, dest string, wanted []string) error {
 	if err != nil {
 		return err
 	}
-	defer gzr.Close()
+	defer func() { _ = gzr.Close() }()
 	tr := tar.NewReader(gzr)
 	for {
 		hdr, err := tr.Next()
@@ -404,10 +404,10 @@ func extractFilesFromTarGz(r io.Reader, dest string, wanted []string) error {
 					return err
 				}
 				if _, err := io.Copy(out, tr); err != nil {
-					out.Close()
+					_ = out.Close()
 					return err
 				}
-				out.Close()
+				_ = out.Close()
 			}
 		}
 	}

@@ -221,7 +221,7 @@ func ParseTypeScriptImportsDebugForTest(content string, ctx types.ServerContext)
 		debugInfo = append(debugInfo, "Failed to parse TypeScript content with tree-sitter")
 		return importedElements, debugInfo
 	}
-	defer tree.Close()
+	defer func() { tree.Close() }()
 
 	// Safety check: verify tree root node is valid
 	rootNode := tree.RootNode()
@@ -306,7 +306,7 @@ func parseTypeScriptImports(content string, ctx types.ServerContext) []string {
 		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to parse TypeScript content with tree-sitter")
 		return importedElements
 	}
-	defer tree.Close()
+	defer func() { tree.Close() }()
 
 	// Safety check: verify tree root node is valid
 	rootNode := tree.RootNode()
@@ -398,7 +398,7 @@ func parseNonModuleScriptImports(content string, ctx types.ServerContext) []stri
 		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to parse HTML content with tree-sitter")
 		return importedElements
 	}
-	defer tree.Close()
+	defer func() { tree.Close() }()
 
 	// Get query manager from context for dependency injection
 	queryManager, err := ctx.QueryManager()

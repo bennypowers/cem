@@ -53,7 +53,7 @@ Features provided:
 		wctx := ctx.Value(W.WorkspaceContextKey).(types.WorkspaceContext)
 
 		// Determine transport based on boolean flags
-		var transport LSP.TransportKind = LSP.TransportStdio // default
+		var transport = LSP.TransportStdio // default
 
 		stdioFlag, _ := cmd.Flags().GetBool("stdio")
 		tcpFlag, _ := cmd.Flags().GetBool("tcp")

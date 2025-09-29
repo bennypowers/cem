@@ -26,7 +26,6 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/list"
-	"bennypowers.dev/cem/manifest"
 	M "bennypowers.dev/cem/manifest"
 	"github.com/stretchr/testify/assert"
 )
@@ -38,11 +37,11 @@ func stripANSI(s string) string {
 	return ansiRegexp.ReplaceAllString(s, "")
 }
 
-func loadTestFixture(t *testing.T) *manifest.Package {
+func loadTestFixture(t *testing.T) *M.Package {
 	t.Helper()
 	bytes, err := os.ReadFile(filepath.Join("fixtures", filepath.Base(t.Name())+".json"))
 	assert.NoError(t, err)
-	var pkg manifest.Package
+	var pkg M.Package
 	err = json.Unmarshal(bytes, &pkg)
 	assert.NoError(t, err)
 	return &pkg
@@ -70,7 +69,7 @@ func checkGolden(t *testing.T, actual []byte) {
 func TestRender(t *testing.T) {
 	t.Run("custom-element-table-coverage", func(t *testing.T) {
 		pkg := loadTestFixture(t)
-		renderable := manifest.NewRenderablePackage(pkg)
+		renderable := M.NewRenderablePackage(pkg)
 
 		opts := list.RenderOptions{}
 		output, err := list.Render(renderable, opts, M.True)

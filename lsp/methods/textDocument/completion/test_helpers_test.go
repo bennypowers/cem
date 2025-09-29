@@ -162,7 +162,7 @@ func CopyFixtureFiles(t *testing.T, fixtureDir, targetDir string) {
 		if err != nil {
 			return err
 		}
-		defer src.Close()
+		defer func() { _ = src.Close() }()
 
 		err = os.MkdirAll(filepath.Dir(targetPath), 0755)
 		if err != nil {
@@ -173,7 +173,7 @@ func CopyFixtureFiles(t *testing.T, fixtureDir, targetDir string) {
 		if err != nil {
 			return err
 		}
-		defer dst.Close()
+		defer func() { _ = dst.Close() }()
 
 		_, err = io.Copy(dst, src)
 		return err
@@ -195,7 +195,7 @@ func CopyFixtureFile(t *testing.T, fixtureDir, filename, targetDir, targetFilena
 	if err != nil {
 		t.Fatalf("Failed to open source file %s: %v", src, err)
 	}
-	defer srcFile.Close()
+	defer func() { _ = srcFile.Close() }()
 
 	err = os.MkdirAll(filepath.Dir(dst), 0755)
 	if err != nil {
@@ -206,7 +206,7 @@ func CopyFixtureFile(t *testing.T, fixtureDir, filename, targetDir, targetFilena
 	if err != nil {
 		t.Fatalf("Failed to create target file %s: %v", dst, err)
 	}
-	defer dstFile.Close()
+	defer func() { _ = dstFile.Close() }()
 
 	_, err = io.Copy(dstFile, srcFile)
 	if err != nil {

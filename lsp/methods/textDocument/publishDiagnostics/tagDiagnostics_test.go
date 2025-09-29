@@ -52,7 +52,7 @@ func TestTagDiagnostics_WithImports(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// Initialize the server
 	err = server.InitializeForTesting()
@@ -154,7 +154,7 @@ func TestTagDiagnostics_TypeScriptImports(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// Initialize the server
 	err = server.InitializeForTesting()
@@ -291,7 +291,7 @@ func TestTagDiagnostics_MissingImports(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// Initialize the server
 	err = server.InitializeForTesting()
@@ -371,7 +371,7 @@ func TestTagDiagnostics_IgnoreComment(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	// Write file with ignore comment
 	ignoreFile := filepath.Join(tempDir, "ignore-test.html")
@@ -396,7 +396,7 @@ func TestTagDiagnostics_IgnoreComment(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// Initialize the server
 	err = server.InitializeForTesting()
@@ -465,7 +465,7 @@ func TestTagDiagnostics_ActualMissingImports(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// Initialize the server
 	err = server.InitializeForTesting()
@@ -552,7 +552,7 @@ func TestTagDiagnostics_SideEffectImports(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// Initialize the server
 	err = server.InitializeForTesting()

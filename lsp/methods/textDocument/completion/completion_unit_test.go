@@ -48,7 +48,7 @@ func TestBasicAttributeValueCompletions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// Initialize the server
 	err = server.InitializeForTesting()

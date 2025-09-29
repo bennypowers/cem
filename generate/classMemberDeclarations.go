@@ -280,7 +280,7 @@ func (mp *ModuleProcessor) createClassFieldFromFieldMatch(
 		amendFieldWithPropertyConfigCaptures(captures, &field)
 	}
 
-	mp.amendFieldWithJsdoc(captures, &field.ClassField)
+	_ = mp.amendFieldWithJsdoc(captures, &field.ClassField)
 	return nil, field
 }
 

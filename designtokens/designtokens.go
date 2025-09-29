@@ -218,7 +218,7 @@ func readJSONFileOrSpecifier(ctx types.WorkspaceContext, path string) ([]byte, e
 			if err != nil {
 				return nil, err
 			}
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 			if resp.StatusCode != http.StatusOK {
 				return nil, errors.New("failed to fetch from npm specifier: " + resp.Status)
 			}

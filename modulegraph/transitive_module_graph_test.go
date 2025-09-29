@@ -376,7 +376,7 @@ func TestModuleGraph_RecursiveDependencyBuilding(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	// Create test files with transitive dependency chain
 	if err := createTransitiveTestFiles(tempDir); err != nil {

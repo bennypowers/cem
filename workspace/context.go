@@ -122,13 +122,13 @@ func copyFile(src, dst string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	defer source.Close()
+	defer func() { _ = source.Close() }()
 
 	destination, err := os.Create(dst)
 	if err != nil {
 		return 0, err
 	}
-	defer destination.Close()
+	defer func() { _ = destination.Close() }()
 	nBytes, err := io.Copy(destination, source)
 	return nBytes, err
 }

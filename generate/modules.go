@@ -247,7 +247,7 @@ func (mp *ModuleProcessor) processClasses() error {
 		// If it's a CustomElementDeclaration, handle styles
 		if ce, ok := d.(*M.CustomElementDeclaration); ok {
 			var props CssPropsMap
-			mp.step("Processing styles", 2, func() error {
+			_ = mp.step("Processing styles", 2, func() error {
 				props, err = mp.processStyles(captures)
 				if err != nil {
 					mp.errors = errors.Join(mp.errors, err)

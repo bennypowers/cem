@@ -121,7 +121,7 @@ func parseNpmSpecifier(spec string) (name, version string, err error) {
 
 // decodeJSON parses a JSON stream into a struct of type T.
 func decodeJSON[T any](rc io.ReadCloser) (*T, error) {
-	defer rc.Close()
+	defer func() { _ = rc.Close() }()
 	var out T
 	if err := json.NewDecoder(rc).Decode(&out); err != nil {
 		return nil, err
