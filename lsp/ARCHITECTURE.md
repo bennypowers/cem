@@ -243,10 +243,148 @@ lsp/*_test.go                         # All tests use package lsp_test
 ## Recent Architectural Achievements ✅
 
 - ✅ **Query Unification**: Share tree-sitter infrastructure between `generate` and `lsp` (COMPLETED)
-- ✅ **Advanced Incremental Parsing**: Proper text synchronization and edit handling (COMPLETED)  
+- ✅ **Advanced Incremental Parsing**: Proper text synchronization and edit handling (COMPLETED)
 - ✅ **File Watching System**: Automatic manifest reloading on file changes (COMPLETED)
 - ✅ **Race Condition Safety**: Thread-safe file watching and registry operations (COMPLETED)
 - ✅ **Local Element Integration**: Comprehensive testing of local package changes updating completions (COMPLETED)
+- ✅ **Legacy Code Removal**: Eliminated unused regex-based DocumentParser (Issue #109) (COMPLETED)
+
+## JSX Support Preparation (Future Enhancement Opportunities)
+
+While implementing tree-sitter parsing improvements (Issue #109), the following architectural patterns were identified that will make future JSX support implementation easier:
+
+### 1. Document Type System Enhancement
+**Current State**: Document language detection uses string-based file extension mapping
+```go
+// document.go:getLanguageFromURI()
+if strings.HasSuffix(uri, ".html") {
+    return "html"
+} else if strings.HasSuffix(uri, ".ts") || strings.HasSuffix(uri, ".js") {
+    return "typescript"
+}
+```
+
+**JSX-Ready Enhancement**: Add structured document type system
+```go
+type DocumentType int
+const (
+    DocumentTypeHTML DocumentType = iota
+    DocumentTypeTypeScript
+    DocumentTypeJSX  // Future JSX support
+)
+
+func getDocumentType(uri string) DocumentType {
+    switch {
+    case strings.HasSuffix(uri, ".jsx"), strings.HasSuffix(uri, ".tsx"):
+        return DocumentTypeJSX
+    case strings.HasSuffix(uri, ".html"):
+        return DocumentTypeHTML
+    case strings.HasSuffix(uri, ".ts"), strings.HasSuffix(uri, ".js"):
+        return DocumentTypeTypeScript
+    }
+}
+```
+
+### 2. Parser Pool Extension Architecture
+**Current State**: `queries/queries.go` supports HTML, CSS, TypeScript, JSDoc parsers
+```go
+var languages = struct {
+    typescript *ts.Language
+    jsdoc      *ts.Language
+    css        *ts.Language
+    html       *ts.Language
+}
+```
+
+**JSX-Ready Enhancement**: Extend parser pool for JSX grammar
+```go
+// Future enhancement point
+var languages = struct {
+    typescript *ts.Language
+    jsdoc      *ts.Language
+    css        *ts.Language
+    html       *ts.Language
+    jsx        *ts.Language  // tree-sitter-javascript with JSX extension
+}
+```
+
+### 3. Query Organization for JSX
+**Current Structure**:
+```
+queries/
+├── html/
+│   ├── customElements.scm
+│   └── completionContext.scm
+└── typescript/
+    ├── htmlTemplates.scm
+    └── completionContext.scm
+```
+
+**JSX-Ready Structure**:
+```
+queries/
+├── html/
+├── typescript/
+└── jsx/                          # Future JSX query directory
+    ├── jsxElements.scm          # JSX component detection
+    ├── propsCompletion.scm      # JSX props completion context
+    └── componentDefinition.scm  # React component definitions
+```
+
+### 4. Element Detection Dispatch Pattern
+**Current Pattern**: Document parsing uses switch statement on language
+```go
+// document.go:FindAllCustomElements()
+switch d.Language {
+case "html":
+    htmlElements, err := d.findHTMLCustomElements(dm)
+case "typescript":
+    tsElements, err := d.findTypeScriptCustomElements(dm)
+}
+```
+
+**JSX-Ready Pattern**: Extensible dispatch system
+```go
+// Future enhancement - easy to add JSX case
+switch d.Language {
+case "html":
+    return d.findHTMLCustomElements(dm)
+case "typescript":
+    return d.findTypeScriptCustomElements(dm)
+case "jsx":  // Future JSX support point
+    return d.findJSXComponents(dm)
+}
+```
+
+### 5. Query Selector Enhancement for JSX
+**Current State**: `LSPQueries()` loads HTML and TypeScript queries
+```go
+func LSPQueries() QuerySelector {
+    return QuerySelector{
+        HTML:       []string{"customElements", "completionContext"},
+        TypeScript: []string{"htmlTemplates", "completionContext"},
+    }
+}
+```
+
+**JSX-Ready Enhancement**: Add JSX query category
+```go
+func LSPQueries() QuerySelector {
+    return QuerySelector{
+        HTML:       []string{"customElements", "completionContext"},
+        TypeScript: []string{"htmlTemplates", "completionContext"},
+        JSX:        []string{"jsxElements", "propsCompletion"},  // Future JSX queries
+    }
+}
+```
+
+### Benefits of This Preparation
+- **Clean Extension Points**: JSX support can be added without refactoring existing code
+- **Consistent Patterns**: JSX implementation will follow established tree-sitter patterns
+- **Performance Ready**: JSX parsing will inherit parser pooling and query caching benefits
+- **Type Safety**: Document type system provides compile-time safety for language-specific operations
+
+These preparation points emerged from the tree-sitter architecture analysis during Issue #109 implementation and provide a clear roadmap for future JSX support without requiring changes to core LSP functionality.
 - ✅ **Source File Watching**: Auto-regenerate manifests when source files change (COMPLETED)
 - ✅ **Go-to-Definition**: Jump to custom element source definitions (COMPLETED)
 - ✅ **Production Stability**: Critical bug fixes for glob patterns, nil safety, and thread safety (COMPLETED)

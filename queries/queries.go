@@ -56,11 +56,13 @@ var languages = struct {
 	jsdoc      *ts.Language
 	css        *ts.Language
 	html       *ts.Language
+	tsx        *ts.Language
 }{
 	ts.NewLanguage(tsTypescript.LanguageTypescript()),
 	ts.NewLanguage(tsJsdoc.Language()),
 	ts.NewLanguage(tsCss.Language()),
 	ts.NewLanguage(tsHtml.Language()),
+	ts.NewLanguage(tsTypescript.LanguageTSX()), // TSX uses TypeScript's TSX dialect
 }
 
 // ---- Parser Pooling Section ----
@@ -104,6 +106,17 @@ var typescriptParserPool = sync.Pool{
 		parser := ts.NewParser()
 		if err := parser.SetLanguage(languages.typescript); err != nil {
 			panic(fmt.Sprintf("failed to set TypeScript language: %v", err))
+		}
+		return parser
+	},
+}
+
+// TSX parser pool
+var tsxParserPool = sync.Pool{
+	New: func() any {
+		parser := ts.NewParser()
+		if err := parser.SetLanguage(languages.tsx); err != nil {
+			panic(fmt.Sprintf("failed to set TSX language: %v", err))
 		}
 		return parser
 	},
@@ -157,6 +170,18 @@ func PutTypeScriptParser(parser *ts.Parser) {
 	typescriptParserPool.Put(parser)
 }
 
+// GetTSXParser returns a pooled TSX parser.
+// Always call PutTSXParser when done.
+func GetTSXParser() *ts.Parser {
+	return tsxParserPool.Get().(*ts.Parser)
+}
+
+// PutTSXParser returns a parser to the TSX pool.
+func PutTSXParser(parser *ts.Parser) {
+	parser.Reset()
+	tsxParserPool.Put(parser)
+}
+
 // ---- End Parser Pooling Section ----
 
 // QuerySelector defines which queries to load for performance
@@ -165,6 +190,7 @@ type QuerySelector struct {
 	TypeScript []string // TypeScript query names to load
 	CSS        []string // CSS query names to load
 	JSDoc      []string // JSDoc query names to load
+	TSX        []string // TSX query names to load
 }
 
 // AllQueries returns a selector that loads all available queries
@@ -184,6 +210,7 @@ func LSPQueries() QuerySelector {
 		TypeScript: []string{"htmlTemplates", "completionContext", "imports", "classes", "exports"},
 		CSS:        []string{},
 		JSDoc:      []string{},
+		TSX:        []string{"customElements", "completionContext"}, // TSX queries for custom element detection
 	}
 }
 
@@ -207,6 +234,7 @@ type QueryManager struct {
 	jsdoc      map[string]*ts.Query
 	css        map[string]*ts.Query
 	html       map[string]*ts.Query
+	tsx        map[string]*ts.Query
 }
 
 func NewQueryManager(selector QuerySelector) (*QueryManager, error) {
@@ -216,6 +244,7 @@ func NewQueryManager(selector QuerySelector) (*QueryManager, error) {
 		jsdoc:      make(map[string]*ts.Query),
 		css:        make(map[string]*ts.Query),
 		html:       make(map[string]*ts.Query),
+		tsx:        make(map[string]*ts.Query),
 	}
 
 	// Load only the requested queries
@@ -247,6 +276,13 @@ func NewQueryManager(selector QuerySelector) (*QueryManager, error) {
 		}
 	}
 
+	for _, queryName := range selector.TSX {
+		if err := qm.loadQuery("tsx", queryName); err != nil {
+			qm.Close()
+			return nil, fmt.Errorf("failed to load TSX query %s: %w", queryName, err)
+		}
+	}
+
 	pterm.Debug.Println("Constructing selected queries took", time.Since(start))
 	return qm, nil
 }
@@ -271,6 +307,8 @@ func (qm *QueryManager) loadQuery(language, queryName string) error {
 		tsLang = languages.css
 	case "html":
 		tsLang = languages.html
+	case "tsx":
+		tsLang = languages.tsx
 	default:
 		return fmt.Errorf("unknown language %s", language)
 	}
@@ -289,6 +327,8 @@ func (qm *QueryManager) loadQuery(language, queryName string) error {
 		qm.css[queryName] = query
 	case "html":
 		qm.html[queryName] = query
+	case "tsx":
+		qm.tsx[queryName] = query
 	}
 
 	return nil
@@ -307,6 +347,9 @@ func (qm *QueryManager) Close() {
 	for _, query := range qm.html {
 		query.Close()
 	}
+	for _, query := range qm.tsx {
+		query.Close()
+	}
 }
 
 func (qm *QueryManager) getQuery(queryName string, language string) (*ts.Query, error) {
@@ -321,6 +364,8 @@ func (qm *QueryManager) getQuery(queryName string, language string) (*ts.Query, 
 		q, ok = qm.css[queryName]
 	case "html":
 		q, ok = qm.html[queryName]
+	case "tsx":
+		q, ok = qm.tsx[queryName]
 	}
 	if !ok {
 		return nil, fmt.Errorf("unknown query %s", queryName)

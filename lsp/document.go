@@ -66,6 +66,8 @@ type DocumentManager struct {
 	tsCompletionContext   *Q.QueryMatcher    // Cached TypeScript completion context query
 	htmlScriptTags        *Q.QueryMatcher    // Cached HTML script tags query
 	htmlHeadElements      *Q.QueryMatcher    // Cached HTML head elements query
+	tsxCustomElements     *Q.QueryMatcher    // Cached TSX custom elements query
+	tsxCompletionContext  *Q.QueryMatcher    // Cached TSX completion context query
 	incrementalParser     *IncrementalParser // Incremental parsing engine
 	mu                    sync.RWMutex
 }
@@ -168,6 +170,31 @@ func NewDocumentManager() (*DocumentManager, error) {
 		return nil, fmt.Errorf("failed to create HTML head elements query: %w", err)
 	}
 
+	tsxCustomElements, err := Q.NewQueryMatcher(queryManager, "tsx", "customElements")
+	if err != nil {
+		htmlCustomElements.Close()
+		tsHtmlTemplates.Close()
+		htmlCompletionContext.Close()
+		tsCompletionContext.Close()
+		htmlScriptTags.Close()
+		htmlHeadElements.Close()
+		queryManager.Close()
+		return nil, fmt.Errorf("failed to create TSX custom elements query: %w", err)
+	}
+
+	tsxCompletionContext, err := Q.NewQueryMatcher(queryManager, "tsx", "completionContext")
+	if err != nil {
+		htmlCustomElements.Close()
+		tsHtmlTemplates.Close()
+		htmlCompletionContext.Close()
+		tsCompletionContext.Close()
+		htmlScriptTags.Close()
+		htmlHeadElements.Close()
+		tsxCustomElements.Close()
+		queryManager.Close()
+		return nil, fmt.Errorf("failed to create TSX completion context query: %w", err)
+	}
+
 	return &DocumentManager{
 		documents:             make(map[string]*Document),
 		queryManager:          queryManager,
@@ -177,6 +204,8 @@ func NewDocumentManager() (*DocumentManager, error) {
 		tsCompletionContext:   tsCompletionContext,
 		htmlScriptTags:        htmlScriptTags,
 		htmlHeadElements:      htmlHeadElements,
+		tsxCustomElements:     tsxCustomElements,
+		tsxCompletionContext:  tsxCompletionContext,
 		incrementalParser:     NewIncrementalParser(ParseStrategyAuto),
 	}, nil
 }
@@ -208,6 +237,12 @@ func (dm *DocumentManager) Close() {
 	}
 	if dm.htmlHeadElements != nil {
 		dm.htmlHeadElements.Close()
+	}
+	if dm.tsxCustomElements != nil {
+		dm.tsxCustomElements.Close()
+	}
+	if dm.tsxCompletionContext != nil {
+		dm.tsxCompletionContext.Close()
 	}
 
 	if dm.queryManager != nil {
@@ -354,10 +389,12 @@ func (dm *DocumentManager) getLanguageFromURI(uri string) string {
 	switch ext {
 	case ".html", ".htm":
 		return "html"
-	case ".ts", ".tsx":
+	case ".ts":
 		return "typescript"
-	case ".js", ".jsx":
+	case ".js":
 		return "typescript" // Use TypeScript parser for JS too
+	case ".tsx", ".jsx":
+		return "tsx" // TSX files get their own language type
 	default:
 		return "html" // Default to HTML
 	}
@@ -407,6 +444,8 @@ func (d *Document) parseInternal() {
 			Q.PutHTMLParser(d.Parser)
 		case "typescript":
 			Q.PutTypeScriptParser(d.Parser)
+		case "tsx":
+			Q.PutTSXParser(d.Parser)
 		}
 		d.Parser = nil
 	}
@@ -417,6 +456,8 @@ func (d *Document) parseInternal() {
 		d.Parser = Q.GetHTMLParser()
 	case "typescript":
 		d.Parser = Q.RetrieveTypeScriptParser()
+	case "tsx":
+		d.Parser = Q.GetTSXParser()
 	default:
 		d.Parser = Q.GetHTMLParser()
 	}
@@ -451,6 +492,12 @@ func (d *Document) findCustomElementsInternal(dm *DocumentManager) ([]CustomElem
 			return nil, err
 		}
 		elements = append(elements, tsElements...)
+	case "tsx":
+		tsxElements, err := d.findTSXCustomElements(dm)
+		if err != nil {
+			return nil, err
+		}
+		elements = append(elements, tsxElements...)
 	}
 
 	return elements, nil
@@ -569,6 +616,152 @@ func (d *Document) findTypeScriptCustomElements(dm *DocumentManager) ([]CustomEl
 			continue // Skip templates that fail to parse
 		}
 		elements = append(elements, htmlElements...)
+	}
+
+	return elements, nil
+}
+
+// findTSXCustomElements finds custom elements in TSX content
+func (d *Document) findTSXCustomElements(dm *DocumentManager) ([]CustomElementMatch, error) {
+	var elements []CustomElementMatch
+
+	// Safety checks
+	if dm == nil {
+		helpers.SafeDebugLog("[DOCUMENT] DocumentManager is nil in findTSXCustomElements")
+		return elements, nil
+	}
+
+	if d.Tree == nil {
+		return elements, nil
+	}
+
+	// Use the cached TSX query matcher
+	matcher := dm.tsxCustomElements
+
+	root := d.Tree.RootNode()
+	content := []byte(d.content)
+
+	// Ensure tree size doesn't exceed content length
+	if root.EndByte() > uint(len(content)) {
+		// Tree is out of sync with content, return empty results
+		return elements, nil
+	}
+
+	// Search for both regular TSX elements and self-closing elements
+	for captureMap := range matcher.ParentCaptures(root, content, "element") {
+		if tagNames, ok := captureMap["tag.name"]; ok && len(tagNames) > 0 {
+			tagName := tagNames[0].Text
+			tagRange := d.byteRangeToProtocolRange(tagNames[0].StartByte, tagNames[0].EndByte)
+
+			// Collect TSX attributes
+			attributes := make(map[string]AttributeMatch)
+			if attrNames, ok := captureMap["attr.name"]; ok {
+				// Build a map of attribute values by their byte position for proper matching
+				valuesByPosition := make(map[uint]string)
+
+				// Collect TSX attribute values (from jsx_expression or string literals)
+				if attrValues, ok := captureMap["attr.value"]; ok {
+					for _, attrValue := range attrValues {
+						// For TSX, attr.value might be a string literal or an expression
+						value := attrValue.Text
+						// Strip quotes from string literals
+						if len(value) >= 2 && (value[0] == '"' || value[0] == '\'') {
+							value = value[1 : len(value)-1] // Remove quotes
+						}
+						valuesByPosition[attrValue.StartByte] = value
+					}
+				}
+
+				for _, attrName := range attrNames {
+					attrMatch := AttributeMatch{
+						Name:  attrName.Text,
+						Range: d.byteRangeToProtocolRange(attrName.StartByte, attrName.EndByte),
+					}
+
+					// Find the value that comes immediately after this attribute name
+					var closestValue string
+					var closestDistance = ^uint(0) // Max uint value
+
+					for valuePos, value := range valuesByPosition {
+						if valuePos > attrName.EndByte {
+							distance := valuePos - attrName.EndByte
+							if distance < closestDistance {
+								closestDistance = distance
+								closestValue = value
+							}
+						}
+					}
+
+					if closestValue != "" {
+						attrMatch.Value = closestValue
+					}
+
+					attributes[attrName.Text] = attrMatch
+				}
+			}
+
+			elements = append(elements, CustomElementMatch{
+				TagName:    tagName,
+				Range:      tagRange,
+				Attributes: attributes,
+			})
+		}
+	}
+
+	// Also search for self-closing TSX elements
+	for captureMap := range matcher.ParentCaptures(root, content, "self.closing.tag") {
+		if tagNames, ok := captureMap["tag.name"]; ok && len(tagNames) > 0 {
+			tagName := tagNames[0].Text
+			tagRange := d.byteRangeToProtocolRange(tagNames[0].StartByte, tagNames[0].EndByte)
+
+			// Collect TSX attributes for self-closing elements
+			attributes := make(map[string]AttributeMatch)
+			if attrNames, ok := captureMap["attr.name"]; ok {
+				valuesByPosition := make(map[uint]string)
+
+				if attrValues, ok := captureMap["attr.value"]; ok {
+					for _, attrValue := range attrValues {
+						value := attrValue.Text
+						if len(value) >= 2 && (value[0] == '"' || value[0] == '\'') {
+							value = value[1 : len(value)-1]
+						}
+						valuesByPosition[attrValue.StartByte] = value
+					}
+				}
+
+				for _, attrName := range attrNames {
+					attrMatch := AttributeMatch{
+						Name:  attrName.Text,
+						Range: d.byteRangeToProtocolRange(attrName.StartByte, attrName.EndByte),
+					}
+
+					var closestValue string
+					var closestDistance = ^uint(0)
+
+					for valuePos, value := range valuesByPosition {
+						if valuePos > attrName.EndByte {
+							distance := valuePos - attrName.EndByte
+							if distance < closestDistance {
+								closestDistance = distance
+								closestValue = value
+							}
+						}
+					}
+
+					if closestValue != "" {
+						attrMatch.Value = closestValue
+					}
+
+					attributes[attrName.Text] = attrMatch
+				}
+			}
+
+			elements = append(elements, CustomElementMatch{
+				TagName:    tagName,
+				Range:      tagRange,
+				Attributes: attributes,
+			})
+		}
 	}
 
 	return elements, nil
@@ -1134,6 +1327,8 @@ func (d *Document) analyzeCompletionContextTSInternal(position protocol.Position
 		return d.analyzeHTMLCompletionContext(byteOffset, analysis, dm)
 	case "typescript":
 		return d.analyzeTypeScriptCompletionContext(byteOffset, analysis, dm)
+	case "tsx":
+		return d.analyzeTSXCompletionContext(byteOffset, analysis, dm)
 	}
 
 	return nil
@@ -1992,4 +2187,233 @@ func (d *Document) parseImportsWithTreeSitter(content string, startByte uint) []
 	}
 
 	return imports
+}
+
+// analyzeTSXCompletionContext analyzes completion context in TSX/JSX files
+func (d *Document) analyzeTSXCompletionContext(byteOffset uint, analysis *types.CompletionAnalysis, dm *DocumentManager) *types.CompletionAnalysis {
+	// Check for nil document manager - can happen when called from diagnostics or other contexts
+	if dm == nil {
+		helpers.SafeDebugLog("[COMPLETION] DocumentManager is nil, returning basic analysis")
+		return analysis
+	}
+
+	root := d.Tree.RootNode()
+	content := []byte(d.content)
+
+	helpers.SafeDebugLog("[COMPLETION] Analyzing TSX completion context at byte offset %d", byteOffset)
+
+	// Use TSX completion context query to find what we're completing at this position
+	matcher := dm.tsxCompletionContext
+
+	// Get all captures from all query matches
+	allCaptures := make(map[string][]Q.CaptureInfo)
+	isInAnyTag := false
+
+	for match := range matcher.AllQueryMatches(root, content) {
+		for _, capture := range match.Captures {
+			captureName := matcher.GetCaptureNameByIndex(capture.Index)
+			text := capture.Node.Utf8Text(content)
+			ci := Q.CaptureInfo{
+				NodeId:    int(capture.Node.Id()),
+				Text:      text,
+				StartByte: capture.Node.StartByte(),
+				EndByte:   capture.Node.EndByte(),
+			}
+
+			helpers.SafeDebugLog("[COMPLETION] Found TSX capture '%s' at %d-%d: '%s'", captureName, ci.StartByte, ci.EndByte, text)
+
+			// Check if cursor is inside or immediately after any tag-related node
+			var inRange bool
+			switch captureName {
+			case "tag.name.completion":
+				// Tag name completion should use exact range matching
+				inRange = byteOffset >= capture.Node.StartByte() && byteOffset <= capture.Node.EndByte()
+			case "tag.name.context", "attribute.context", "attr.value.completion":
+				// Attribute contexts can use extended range for whitespace after attributes
+				inRange = byteOffset >= capture.Node.StartByte() && byteOffset <= capture.Node.EndByte()+2
+			case "incomplete.jsx":
+				// For incomplete JSX (ERROR nodes), allow a wider range for completion after the element
+				inRange = byteOffset >= capture.Node.StartByte() && byteOffset <= capture.Node.EndByte()+5
+			case "attr.name.completion":
+				// For attribute name completion, allow some space after
+				inRange = byteOffset >= capture.Node.StartByte() && byteOffset <= capture.Node.EndByte()+3
+			}
+
+			if inRange {
+				isInAnyTag = true
+			}
+
+			if _, exists := allCaptures[captureName]; !exists {
+				allCaptures[captureName] = make([]Q.CaptureInfo, 0)
+			}
+			allCaptures[captureName] = append(allCaptures[captureName], ci)
+		}
+	}
+
+	helpers.SafeDebugLog("[COMPLETION] TSX: All captures collected for analysis")
+
+	// If cursor is not in any tag context, return unknown immediately
+	if !isInAnyTag {
+		analysis.Type = types.CompletionUnknown
+		return analysis
+	}
+
+	// Check attribute value completion first (more specific than tag names) - prefer smaller, more specific captures
+	if attrValues, ok := allCaptures["attr.value.completion"]; ok {
+		helpers.SafeDebugLog("[COMPLETION] TSX: Found %d attr.value.completion captures", len(attrValues))
+
+		// Sort by size (smaller captures first) to prefer specific string literals over large ERROR nodes
+		bestMatch := &Q.CaptureInfo{}
+		found := false
+
+		for _, attrValue := range attrValues {
+			if byteOffset >= attrValue.StartByte && byteOffset <= attrValue.EndByte {
+				helpers.SafeDebugLog("[COMPLETION] TSX: Cursor in range for attr.value.completion: %d-%d", attrValue.StartByte, attrValue.EndByte)
+				// Prefer smaller captures (more specific) over larger ones
+				if !found || (attrValue.EndByte-attrValue.StartByte) < (bestMatch.EndByte-bestMatch.StartByte) {
+					bestMatch = &attrValue
+					found = true
+				}
+			}
+		}
+
+		if found {
+			text := bestMatch.Text
+			helpers.SafeDebugLog("[COMPLETION] TSX: Best match text: '%s'", text)
+			// For TSX, check if this is a string literal (like '""') or if it's part of an incomplete statement with =
+			if strings.Contains(text, "=") || (strings.HasPrefix(text, "\"") && strings.HasSuffix(text, "\"")) ||
+				(strings.HasPrefix(text, "'") && strings.HasSuffix(text, "'")) {
+				analysis.Type = types.CompletionAttributeValue
+
+				// Find the closest attribute name capture to the cursor position
+				if attrNames, ok := allCaptures["attr.name.completion"]; ok {
+					var closestAttr *Q.CaptureInfo
+					var closestDistance = uint(^uint(0)) // Max uint value
+
+					for _, attrName := range attrNames {
+						// Calculate distance from attribute end to cursor position
+						if attrName.EndByte <= byteOffset {
+							distance := byteOffset - attrName.EndByte
+							if distance < closestDistance {
+								closestDistance = distance
+								closestAttr = &attrName
+							}
+						}
+					}
+
+					if closestAttr != nil {
+						analysis.AttributeName = closestAttr.Text
+						helpers.SafeDebugLog("[COMPLETION] TSX: Using closest attribute: '%s'", closestAttr.Text)
+					}
+				}
+
+				// Find the closest custom element tag name to the cursor position
+				if analysis.TagName == "" {
+					if tagNames, ok := allCaptures["tag.name.completion"]; ok {
+						var closestTag *Q.CaptureInfo
+						var closestDistance = uint(^uint(0)) // Max uint value
+
+						for _, tagName := range tagNames {
+							// Only consider custom elements (containing hyphens)
+							if strings.Contains(tagName.Text, "-") {
+								// Calculate distance from tag end to cursor position
+								if tagName.EndByte <= byteOffset {
+									distance := byteOffset - tagName.EndByte
+									if distance < closestDistance {
+										closestDistance = distance
+										closestTag = &tagName
+									}
+								}
+							}
+						}
+
+						if closestTag != nil {
+							analysis.TagName = closestTag.Text
+							helpers.SafeDebugLog("[COMPLETION] TSX: Using closest tag: '%s'", closestTag.Text)
+						}
+					}
+				}
+
+				return analysis
+			}
+		}
+	}
+
+	// Check tag name completion first for incomplete tags (more specific than attribute completion)
+	if tagNames, ok := allCaptures["tag.name.completion"]; ok {
+		for _, tagName := range tagNames {
+			if byteOffset >= tagName.StartByte && byteOffset <= tagName.EndByte {
+				// Use tree-sitter captured text directly - no regex needed
+				tagText := tagName.Text
+
+				// Handle incomplete tags by checking if it contains a hyphen (custom element)
+				// But be more selective - don't match very long ERROR node text
+				if strings.Contains(tagText, "-") && len(tagText) < 50 {
+					helpers.SafeDebugLog("[COMPLETION] Detected TSX tag name completion: '%s'", tagText)
+					analysis.Type = types.CompletionTagName
+					analysis.TagName = tagText
+					return analysis
+				}
+			}
+		}
+	}
+
+	// Check general attribute name completion (only after ruling out tag name completion)
+	if attrContexts, ok := allCaptures["attribute.context"]; ok {
+		for _, attrContext := range attrContexts {
+			if byteOffset >= attrContext.StartByte && byteOffset <= attrContext.EndByte+2 {
+				text := attrContext.Text
+				if strings.Contains(text, "\n") || strings.Count(text, "<") > 1 {
+					continue
+				}
+
+				// Use tree-sitter captures to find tag name context
+				if tagContexts, ok := allCaptures["tag.name.context"]; ok {
+					for _, tagContext := range tagContexts {
+						tagName := tagContext.Text
+						// Only provide attribute completion for custom elements (containing hyphen)
+						if strings.Contains(tagName, "-") {
+							helpers.SafeDebugLog("[COMPLETION] Detected TSX attribute name completion for tag: '%s'", tagName)
+							analysis.Type = types.CompletionAttributeName
+							analysis.TagName = tagName
+							return analysis
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Check for attribute name completion after incomplete JSX (ERROR nodes)
+	if incompleteJSX, ok := allCaptures["incomplete.jsx"]; ok {
+		for _, incomplete := range incompleteJSX {
+			// Check if cursor is just after the incomplete JSX element (for attribute name completion)
+			if byteOffset >= incomplete.EndByte && byteOffset <= incomplete.EndByte+5 {
+				incompleteText := incomplete.Text
+				// Extract the tag name from incomplete JSX like "return <my-card"
+				if strings.Contains(incompleteText, "<") && strings.Contains(incompleteText, "-") {
+					// Find the tag name in the incomplete JSX
+					startIdx := strings.LastIndex(incompleteText, "<")
+					if startIdx != -1 {
+						tagPart := incompleteText[startIdx+1:]
+						tagPart = strings.TrimSpace(tagPart)
+						// Remove any trailing non-tag characters
+						if spaceIdx := strings.Index(tagPart, " "); spaceIdx != -1 {
+							tagPart = tagPart[:spaceIdx]
+						}
+
+						if strings.Contains(tagPart, "-") {
+							helpers.SafeDebugLog("[COMPLETION] Detected TSX attribute name completion after incomplete JSX for tag: '%s'", tagPart)
+							analysis.Type = types.CompletionAttributeName
+							analysis.TagName = tagPart
+							return analysis
+						}
+					}
+				}
+			}
+		}
+	}
+
+	analysis.Type = types.CompletionUnknown
+	return analysis
 }
