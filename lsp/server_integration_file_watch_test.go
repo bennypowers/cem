@@ -37,7 +37,7 @@ func TestManifestFileWatchingIntegration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	// Copy initial manifest fixture to temp directory
 	fixturePath := filepath.Join("test", "fixtures", "file-watch-integration", "initial-manifest.json")
@@ -237,7 +237,7 @@ func TestPackageJSONWatching(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	// Copy manifest to the referenced location
 	manifestPath := filepath.Join(tempDir, "custom-elements.json")
@@ -385,7 +385,7 @@ func TestFileWatchingErrorHandling(t *testing.T) {
 		if err != nil {
 			t.Errorf("Expected StartFileWatching to succeed with no files, got error: %v", err)
 		}
-		defer registry.StopFileWatching()
+		defer func() { _ = registry.StopFileWatching() }()
 	})
 
 	t.Run("stop watching when not started", func(t *testing.T) {
@@ -407,7 +407,7 @@ func TestFileWatchingErrorHandling(t *testing.T) {
 			t.Errorf("Second StartFileWatching failed: %v", err2)
 		}
 
-		defer registry.StopFileWatching()
+		defer func() { _ = registry.StopFileWatching() }()
 	})
 
 	t.Run("watch nonexistent file", func(t *testing.T) {

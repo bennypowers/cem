@@ -228,7 +228,7 @@ func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsM
 					} else {
 						content, err := os.ReadFile(absPath)
 						if err != nil {
-							errs = errors.Join(errs, fmt.Errorf(`Could not open css file
+							errs = errors.Join(errs, fmt.Errorf(`could not open css file
 	imported as %s
 	at path %s
 	from module directory %s: %w`, spec, absPath, moduleDir, err))

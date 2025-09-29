@@ -65,6 +65,7 @@ func Completion(ctx types.ServerContext, context *glsp.Context, params *protocol
 	helpers.SafeDebugLog("[COMPLETION] Analysis result: Type=%d, TagName='%s', AttributeName='%s'",
 		analysis.Type, analysis.TagName, analysis.AttributeName)
 
+
 	// Return appropriate completions based on context
 	switch analysis.Type {
 	case types.CompletionTagName:
@@ -127,6 +128,16 @@ func getTagNameCompletions(ctx types.ServerContext, doc types.Document, analysis
 
 	// Get completion prefix to filter results
 	prefix := doc.CompletionPrefix(analysis)
+
+	// For tag name completion, extract only the relevant tag name part from complex prefixes
+	if prefix != "" && strings.Contains(prefix, "<") {
+		// Find the last occurrence of "<" and extract what comes after it
+		lastOpenBracket := strings.LastIndex(prefix, "<")
+		if lastOpenBracket != -1 {
+			// Extract everything after the last "<"
+			prefix = prefix[lastOpenBracket+1:]
+		}
+	}
 
 	for _, tagName := range ctx.AllTagNames() {
 		// Filter by prefix if provided

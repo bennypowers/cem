@@ -24,6 +24,7 @@ import (
 	"sync"
 
 	LSP "bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/helpers"
 	lspTypes "bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
@@ -104,7 +105,7 @@ func NewMCPContext(workspace types.WorkspaceContext) (*MCPContext, error) {
 	}
 
 	// Create a shared document manager for validation
-	documentManager, err := LSP.NewDocumentManager()
+	documentManager, err := document.NewDocumentManager()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create document manager: %w", err)
 	}

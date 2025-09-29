@@ -19,7 +19,7 @@ package references_test
 import (
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/references"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	"github.com/tliron/glsp"
@@ -31,7 +31,7 @@ func TestReferences(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 
 	// Create DocumentManager and add documents
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}

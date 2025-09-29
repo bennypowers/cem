@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
 	W "bennypowers.dev/cem/workspace"
 )
@@ -42,7 +43,7 @@ func TestModuleGraphIntegration_DirectVsReExport(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	if err := server.InitializeForTesting(); err != nil {
 		t.Fatalf("Failed to initialize server: %v", err)
@@ -62,7 +63,7 @@ func TestModuleGraphIntegration_DirectVsReExport(t *testing.T) {
 </html>`
 
 	// Create document manager
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create document manager: %v", err)
 	}

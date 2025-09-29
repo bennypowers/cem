@@ -32,7 +32,7 @@ func TestGenerateWatcherIntegration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	// Copy fixture files to create a realistic project structure
 	fixtureDir := filepath.Join("test", "fixtures", "generate-watch-test")
@@ -75,7 +75,7 @@ func TestGenerateWatcherIntegration(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to start generate watcher: %v", err)
 		}
-		defer registry.StopGenerateWatcher()
+		defer func() { _ = registry.StopGenerateWatcher() }()
 
 		// No delay needed - Go 1.25 eliminates timing dependencies
 		// The watcher should be running (we can't easily test the actual process without complex setup)
@@ -160,6 +160,6 @@ func TestGenerateWatcherIntegration(t *testing.T) {
 			t.Errorf("Second StartGenerateWatcher should not error when already running: %v", err2)
 		}
 
-		defer registry.StopGenerateWatcher()
+		defer func() { _ = registry.StopGenerateWatcher() }()
 	})
 }

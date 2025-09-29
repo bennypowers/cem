@@ -24,7 +24,7 @@ import (
 	"strings"
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/types"
 	protocol "github.com/tliron/glsp/protocol_3_16"
@@ -38,7 +38,7 @@ type TestHelpers struct{}
 // DEPRECATED: Tests should use dm.OpenDocument() directly
 func NewMockTemplateDocument(content, templateContext string) types.Document {
 	// Create a DocumentManager and use it to open the document
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		panic("Failed to create DocumentManager for test: " + err.Error())
 	}
@@ -104,23 +104,6 @@ func (h *TestHelpers) GetAttributeValueCompletionsUsingMainEntry(
 	return completion.GetAttributeValueCompletions(ctx, tagName, attributeName), nil
 }
 
-// getDocumentManagerFromContext extracts DocumentManager from a completion context
-// This uses type assertion to check if the context has a document manager
-func getDocumentManagerFromContext(ctx types.ServerContext) *lsp.DocumentManager {
-	// Try to extract document manager using the ServerContext interface
-	dm, err := ctx.DocumentManager()
-	if err != nil {
-		return nil
-	}
-
-	// Type assert to concrete DocumentManager type
-	if lspDM, ok := dm.(*lsp.DocumentManager); ok {
-		return lspDM
-	}
-	return nil
-}
-
-// Global helper instance
 var TestHelper = &TestHelpers{}
 
 // MockDocument implements types.Document for testing
@@ -179,7 +162,7 @@ func CopyFixtureFiles(t *testing.T, fixtureDir, targetDir string) {
 		if err != nil {
 			return err
 		}
-		defer src.Close()
+		defer func() { _ = src.Close() }()
 
 		err = os.MkdirAll(filepath.Dir(targetPath), 0755)
 		if err != nil {
@@ -190,7 +173,7 @@ func CopyFixtureFiles(t *testing.T, fixtureDir, targetDir string) {
 		if err != nil {
 			return err
 		}
-		defer dst.Close()
+		defer func() { _ = dst.Close() }()
 
 		_, err = io.Copy(dst, src)
 		return err
@@ -212,7 +195,7 @@ func CopyFixtureFile(t *testing.T, fixtureDir, filename, targetDir, targetFilena
 	if err != nil {
 		t.Fatalf("Failed to open source file %s: %v", src, err)
 	}
-	defer srcFile.Close()
+	defer func() { _ = srcFile.Close() }()
 
 	err = os.MkdirAll(filepath.Dir(dst), 0755)
 	if err != nil {
@@ -223,7 +206,7 @@ func CopyFixtureFile(t *testing.T, fixtureDir, filename, targetDir, targetFilena
 	if err != nil {
 		t.Fatalf("Failed to create target file %s: %v", dst, err)
 	}
-	defer dstFile.Close()
+	defer func() { _ = dstFile.Close() }()
 
 	_, err = io.Copy(dstFile, srcFile)
 	if err != nil {

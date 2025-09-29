@@ -646,7 +646,7 @@ func TestValidateDemoDiscoveryConfig(t *testing.T) {
 			},
 			tagAliases:    map[string]string{},
 			expectError:   true,
-			errorContains: "Invalid demo discovery urlPattern",
+			errorContains: "invalid demo discovery urlPattern",
 		},
 		{
 			name: "invalid template syntax",

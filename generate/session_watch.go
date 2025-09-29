@@ -98,7 +98,7 @@ func (ws *WatchSession) RunWatch() error {
 	if err != nil {
 		return fmt.Errorf("setup file watcher: %w", err)
 	}
-	defer watcher.Close()
+	defer func() { _ = watcher.Close() }()
 
 	logging.Info("Watching for file changes... (Ctrl+C to stop)")
 
@@ -260,7 +260,7 @@ func (ws *WatchSession) isOurWrite(filePath string) bool {
 	if err != nil {
 		return false // If we can't read it, assume it's not our write
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	hasher := sha256.New()
 	if _, err := io.Copy(hasher, file); err != nil {
@@ -458,7 +458,7 @@ func (ws *WatchSession) writeManifest(manifestStr string) error {
 
 	_, err = writer.Write(contentBytes)
 	if err != nil {
-		writer.Close()
+		_ = writer.Close()
 		return err
 	}
 

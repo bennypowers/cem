@@ -227,7 +227,7 @@ func (x *CustomElementField) IsDeprecated() bool {
 	return x.Deprecated != nil
 }
 
-func (x *CustomElementField) GetStartByte() uint { return x.ClassField.StartByte }
+func (x *CustomElementField) GetStartByte() uint { return x.StartByte }
 
 func (f *CustomElementField) UnmarshalJSON(data []byte) error {
 	type Rest CustomElementField

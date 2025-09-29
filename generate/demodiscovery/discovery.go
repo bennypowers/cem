@@ -243,7 +243,7 @@ func ValidateDemoDiscoveryConfig(cfg *C.CemConfig, tagAliases map[string]string)
 	if demoConfig.URLPattern != "" {
 		_, err := cache.getOrCreatePattern(demoConfig.URLPattern)
 		if err != nil {
-			return fmt.Errorf("Invalid demo discovery urlPattern %q\n\nMust use URLPattern syntax, example: \"/elements/:tag/demo/:demo.html\"\n", demoConfig.URLPattern)
+			return fmt.Errorf("invalid demo discovery urlPattern %q - must use URLPattern syntax, example: \"/elements/:tag/demo/:demo.html\"", demoConfig.URLPattern)
 		}
 	}
 

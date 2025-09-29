@@ -6,32 +6,32 @@
 (call_expression
   function: (identifier) @template.tag
   (#eq? @template.tag "html")
-  (template_string) @string
-) @template
+  (template_string) @template.content
+) @context
 
 ;; Generic HTML template literals - html<T>`...`
 (call_expression
   function: (identifier) @generic.template.tag
   (#eq? @generic.template.tag "html")
   type_arguments: (type_arguments)
-  arguments: (arguments (template_string) @string)
-) @template
+  arguments: (arguments (template_string) @template.content)
+) @context
 
 ;; innerHTML assignments - element.innerHTML = `...`
 (assignment_expression
   left: (member_expression
     property: (property_identifier) @property.name)
-  right: (template_string) @string
+  right: (template_string) @template.content
   (#eq? @property.name "innerHTML")
-) @template
+) @context
 
 ;; outerHTML assignments - element.outerHTML = `...`
 (assignment_expression
   left: (member_expression
     property: (property_identifier) @property.name)
-  right: (template_string) @string
+  right: (template_string) @template.content
   (#eq? @property.name "outerHTML")
-) @template
+) @context
 
 ;; Template substitutions (JavaScript expressions inside ${...})
 ;; These should NOT be captured for CEM completions

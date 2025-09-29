@@ -54,10 +54,11 @@ func CreateMissingImportAction(
 			scriptPosition, hasInlineScript := doc.FindInlineModuleScript()
 			if hasInlineScript {
 				// Amend existing inline script tag by adding import statement inside it
-				// Use the indentation detected from the specific script tag location
+				// Find the position after the last import statement
+				lastImportPosition := findLastImportPosition(doc, scriptPosition)
 				scriptContentIndent := detectScriptTagIndentation(doc, scriptPosition)
 				importStatement = fmt.Sprintf(`%simport "%s";`, scriptContentIndent, autofixData.ImportPath)
-				insertPosition = scriptPosition
+				insertPosition = lastImportPosition
 			} else {
 				// 2. Try to find head section for new script placement
 				dm, err := ctx.DocumentManager()
@@ -273,9 +274,63 @@ func detectScriptTagIndentation(doc types.Document, scriptPosition protocol.Posi
 		return baseIndent
 	}
 
-	// If no existing imports found, use the file's script indentation pattern
-	_, scriptIndent := detectIndentation(doc)
-	return scriptIndent
+	// If no existing imports found, try to detect the base indentation level
+	// inside the script tag rather than using the doubled scriptIndent
+	baseIndent, _ := detectIndentation(doc)
+	return baseIndent
+}
+
+// findLastImportPosition finds the position after the last import statement in a script tag
+func findLastImportPosition(doc types.Document, scriptPosition protocol.Position) protocol.Position {
+	if doc == nil {
+		return scriptPosition // Fallback to the original position
+	}
+
+	content, err := doc.Content()
+	if err != nil {
+		return scriptPosition // Fallback to the original position
+	}
+
+	lines := strings.Split(content, "\n")
+	var lastImportLine = -1
+
+	// Find the script start line by searching backwards from scriptPosition
+	scriptStartLine := 0
+	for i := int(scriptPosition.Line); i >= 0; i-- {
+		if strings.Contains(lines[i], "<script") {
+			scriptStartLine = i
+			break
+		}
+	}
+
+	// Find the script end line by searching forwards
+	scriptEndLine := len(lines) - 1
+	for i := scriptStartLine; i < len(lines); i++ {
+		if strings.Contains(lines[i], "</script>") {
+			scriptEndLine = i
+			break
+		}
+	}
+
+	// Find the last import statement within the script tag
+	for i := scriptStartLine; i < scriptEndLine; i++ {
+		line := lines[i]
+		trimmedLine := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmedLine, "import ") {
+			lastImportLine = i
+		}
+	}
+
+	// If we found import statements, position after the last one
+	if lastImportLine >= 0 {
+		return protocol.Position{
+			Line:      uint32(lastImportLine + 1), // Next line after the last import
+			Character: 0,                          // Beginning of the line
+		}
+	}
+
+	// No imports found, use the original script position
+	return scriptPosition
 }
 
 // findImportInsertionPosition finds the position to insert new imports after existing imports

@@ -11,78 +11,105 @@
 
 ;; Handle incomplete opening tags that are parsed as ERROR nodes
 ;; This catches cases like "<my-el", "<custom-element", or just "<" but NOT attribute values or quoted strings
-(ERROR) @tag.name.completion
-  (#match? @tag.name.completion "^<[^\\s=\"']*$")
-  (#not-match? @tag.name.completion ".*=.*")
-  (#not-match? @tag.name.completion ".*\".*")
+(ERROR) @tag.name @context
+  (#match? @tag.name "^<[^\\s=\"']*$")
+  (#not-match? @tag.name ".*=.*")
+  (#not-match? @tag.name ".*\".*")
 
 ;; Handle incomplete attributes in ERROR nodes (but not attribute values)
 ;; Pattern for attribute context: tag name followed by space, but no = yet
-(ERROR) @attribute.context
-  (#match? @attribute.context "^<\\w[\\w-]*\\s+[^=]*$")
-
-;; Also capture the tag name for attribute context
-(ERROR) @tag.name.context
-  (#match? @tag.name.context "^<\\w[\\w-]*\\s+")
+(ERROR) @attr.name @context
+  (#match? @attr.name "^<\\w[\\w-]*\\s+[^=]*$")
 
 ;; Handle simple tag followed by space (like "<my-element ")
-;; But not multi-line content or multiple tags
-(ERROR) @attribute.context
-  (#match? @attribute.context "^<\\w[\\w-]*\\s*$")
-  (#not-match? @attribute.context ".*\\n.*")
+;; This should be attribute name completion context
+(ERROR) @attr.name @context
+  (#match? @attr.name "^<\\w[\\w-]*\\s*$")
+  (#not-match? @attr.name ".*\\n.*")
 
 ;; Attribute contexts - match any attribute in custom element tags
-(start_tag 
-  (tag_name) @tag.name.context
-  (attribute)* @attribute.context
-  (#match? @tag.name.context ".*-.*")) @attribute.context
+(start_tag
+  (tag_name) @tag.name
+  (attribute
+    (attribute_name) @attr.name
+    (quoted_attribute_value) @attr.value
+  )*
+  (#match? @tag.name ".*-.*")
+) @context
 
-(self_closing_tag 
-  (tag_name) @tag.name.context
-  (attribute)* @attribute.context
-  (#match? @tag.name.context ".*-.*")) @attribute.context
+;; Incomplete start tag with just tag name and whitespace (attribute name completion context)
+;; This captures the case where user types "<my-element " and cursor is after the space
+(start_tag
+  (tag_name) @tag.name
+  (#match? @tag.name ".*-.*")
+) @attr.name.space @context
+
+(self_closing_tag
+  (tag_name) @tag.name
+  (attribute
+    (attribute_name) @attr.name
+    (quoted_attribute_value) @attr.value
+  )*
+  (#match? @tag.name ".*-.*")
+) @context
 
 ;; Capture incomplete start tags as attribute context
-(start_tag) @attribute.context
-(self_closing_tag) @attribute.context
+(start_tag
+  (tag_name) @tag.name
+  (attribute
+    (attribute_name) @attr.name
+    (quoted_attribute_value) @attr.value
+  )*
+) @context
+
+(self_closing_tag
+  (tag_name) @tag.name
+  (attribute
+    (attribute_name) @attr.name
+    (quoted_attribute_value) @attr.value
+  )*
+) @context
 
 ;; Catch incomplete tags (error nodes might contain partial attributes)
 (ERROR
-  (tag_name) @tag.name.context
-  (#match? @tag.name.context ".*-.*")) @attribute.context
+  (tag_name) @tag.name
+  (#match? @tag.name ".*-.*")
+) @context
 
 ;; Attribute value completion - quoted values
 (attribute
-  (attribute_name) @attr.name.value.context
-  (quoted_attribute_value) @attr.value.completion)
+  (attribute_name) @attr.name
+  (quoted_attribute_value) @attr.value
+) @context
 
 ;; Attribute value completion - unquoted values (for incomplete typing)
 (attribute
-  (attribute_name) @attr.name.value.context
-  (attribute_value) @attr.value.completion)
+  (attribute_name) @attr.name
+  (attribute_value) @attr.value
+) @context
 
 ;; Handle attribute value completion in ERROR nodes
 ;; This catches incomplete attribute values like: disabled="partial or variant="
 ;; But ensures there's actually an attribute with = before quotes
-(ERROR) @attr.value.completion
-  (#match? @attr.value.completion ".*\\w[\\w-]*\\s*=\\s*[\"'][^\"']*$")
+(ERROR) @attr.value @context
+  (#match? @attr.value ".*\\w[\\w-]*\\s*=\\s*[\"'][^\"']*$")
 
 ;; Handle case where cursor is right after = (like disabled=|)
 ;; But ensure there's a proper tag and attribute before it
-(ERROR) @attr.value.completion
-  (#match? @attr.value.completion ".*<\\w[\\w-]*.*\\w[\\w-]*\\s*=\\s*$")
+(ERROR) @attr.value @context
+  (#match? @attr.value ".*<\\w[\\w-]*.*\\w[\\w-]*\\s*=\\s*$")
 
 ;; Lit-specific syntax - event bindings (@) - must start with @ and not be . or ?
-(attribute_name) @attr.name.lit.event
-  (#match? @attr.name.lit.event "^@[^.?].*|^@$")
+(attribute_name) @attr.name @context
+  (#match? @attr.name "^@[^.?].*|^@$")
 
 ;; Lit-specific syntax - property bindings (.) - must start with . and not be @ or ?
-(attribute_name) @attr.name.lit.property
-  (#match? @attr.name.lit.property "^\\.[^@?].*|^\\.$")
+(attribute_name) @attr.name @context
+  (#match? @attr.name "^\\.[^@?].*|^\\.$")
 
 ;; Lit-specific syntax - boolean attributes (?) - must start with ? and not be @ or .
-(attribute_name) @attr.name.lit.boolean
-  (#match? @attr.name.lit.boolean "^\\?[^@.].*|^\\?$")
+(attribute_name) @attr.name @context
+  (#match? @attr.name "^\\?[^@.].*|^\\?$")
 
 ;; Lit-specific syntax in ERROR nodes (for incomplete attributes)
 ;; These patterns need to be very specific to avoid false matches

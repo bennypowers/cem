@@ -1,0 +1,33 @@
+{
+  "version": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "./src/my-card.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "A custom card component",
+          "name": "MyCard",
+          "tagName": "my-card",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "variant",
+              "type": {
+                "text": "\"primary\" | \"secondary\" | \"tertiary\""
+              },
+              "description": "The card variant style"
+            }
+          ],
+          "slots": [
+            {
+              "description": "Header content for the card",
+              "name": "header"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

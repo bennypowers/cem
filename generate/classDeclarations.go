@@ -42,7 +42,7 @@ func (mp *ModuleProcessor) generateClassDeclarationParsed(
 	}
 	isCustomElement := hasCustomElementDecorator || isHTMLElement
 	classDeclarationCaptures, hasClassDeclaration := captures["class.declaration"]
-	if !(hasClassDeclaration && len(classDeclarationCaptures) > 0) {
+	if !hasClassDeclaration || len(classDeclarationCaptures) <= 0 {
 		return nil, NewError("could not find class declaration")
 	}
 
@@ -160,7 +160,7 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 
 	err = mp.step("Processing members", 1, func() error {
 		members, err := mp.getClassMembersFromClassDeclarationNode(
-			declaration.ClassLike.Name,
+			declaration.Name,
 			classDeclarationNode,
 			superclassName,
 		)
@@ -214,7 +214,7 @@ func (mp *ModuleProcessor) generateHTMLElementClassDeclaration(
 
 	err = mp.step("Processing observedAttributes", 1, func() error {
 		for _, name := range captures["observedAttributes.attributeName"] {
-			declaration.CustomElement.Attributes = append(declaration.CustomElement.Attributes, M.Attribute{
+			declaration.Attributes = append(declaration.Attributes, M.Attribute{
 				StartByte: name.StartByte,
 				FullyQualified: M.FullyQualified{
 					Name: name.Text,
@@ -273,13 +273,13 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 	if ok && len(tagNameNodes) > 0 {
 		tagName := tagNameNodes[0].Text
 		if tagName != "" {
-			declaration.CustomElement.TagName = tagName
+			declaration.TagName = tagName
 		}
 	} else {
 		errs = errors.Join(errs, &Q.NoCaptureError{Capture: "tag-name", Query: "classes"})
 	}
 
-	declaration.CustomElement.Attributes = A.Chain(func(member M.ClassMember) []M.Attribute {
+	declaration.Attributes = A.Chain(func(member M.ClassMember) []M.Attribute {
 		field, ok := (member).(*M.CustomElementField)
 		if ok && field.Attribute != "" {
 			return []M.Attribute{{

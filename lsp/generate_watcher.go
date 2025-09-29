@@ -115,7 +115,7 @@ func (w *InProcessGenerateWatcher) watchFiles() error {
 	if err != nil {
 		return fmt.Errorf("failed to create file watcher: %w", err)
 	}
-	defer watcher.Close()
+	defer func() { _ = watcher.Close() }()
 
 	// Add directories to watch based on globs
 	watchedDirs := make(map[string]bool)

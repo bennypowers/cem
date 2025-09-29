@@ -19,7 +19,7 @@ package publishDiagnostics_test
 import (
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
@@ -29,7 +29,7 @@ func TestAttributeDiagnostics_GlobalAttributes(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 	content := `<div class="test" id="main" data-value="42">Hello</div>`
 	// Create DocumentManager and document
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}
@@ -50,7 +50,7 @@ func TestAttributeDiagnostics_CustomElementValidAttribute(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 	content := `<my-element size="large" color="red">Content</my-element>`
 	// Create DocumentManager and document
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}
@@ -77,7 +77,7 @@ func TestAttributeDiagnostics_CustomElementInvalidAttribute(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 	content := `<my-element siz="large" colour="red">Content</my-element>`
 	// Create DocumentManager and document
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}
@@ -115,7 +115,7 @@ func TestAttributeDiagnostics_ScriptTypeModule(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 	content := `<script type="module">import './my-element.js';</script>`
 	// Create DocumentManager and document
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}
@@ -139,7 +139,7 @@ func TestAttributeDiagnostics_GlobalAttributeTypoOnCustomElement(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 	content := `<my-custom-element clas="test" titl="tooltip">Hello</my-custom-element>`
 	// Create DocumentManager and document
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}
@@ -184,7 +184,7 @@ func TestAttributeDiagnostics_StandardElementIgnored(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 	content := `<div clas="test" titl="tooltip">Hello</div>`
 	// Create DocumentManager and document
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}

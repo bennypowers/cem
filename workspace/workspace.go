@@ -32,7 +32,7 @@ type contextKey string
 const WorkspaceContextKey = contextKey("workspaceContext")
 
 var ErrNoManifest = errors.New("no package.json found, could not derive custom-elements.json")
-var ErrRemoteUnsupported = fmt.Errorf("Remote workspace context is not yet supported: %w", errors.ErrUnsupported)
+var ErrRemoteUnsupported = fmt.Errorf("remote workspace context is not yet supported: %w", errors.ErrUnsupported)
 var ErrNoPackageCustomElements = errors.New("package does not specify a custom elements manifest")
 var ErrManifestNotFound = errors.New("manifest not found")
 var ErrPackageNotFound = errors.New("package not found")
@@ -121,7 +121,7 @@ func parseNpmSpecifier(spec string) (name, version string, err error) {
 
 // decodeJSON parses a JSON stream into a struct of type T.
 func decodeJSON[T any](rc io.ReadCloser) (*T, error) {
-	defer rc.Close()
+	defer func() { _ = rc.Close() }()
 	var out T
 	if err := json.NewDecoder(rc).Decode(&out); err != nil {
 		return nil, err

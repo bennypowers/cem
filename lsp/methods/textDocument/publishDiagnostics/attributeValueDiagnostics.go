@@ -18,7 +18,6 @@ package publishDiagnostics
 
 import (
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -28,9 +27,6 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-// attributeRegex parses attribute name-value pairs
-// Matches: name="value", name='value', name=value, or just name
-var attributeRegex = regexp.MustCompile(`(\w+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?`)
 
 // analyzeAttributeValueDiagnostics validates attribute values against their type definitions
 func analyzeAttributeValueDiagnostics(ctx types.ServerContext, doc types.Document) []protocol.Diagnostic {
@@ -49,8 +45,8 @@ func AnalyzeAttributeValueDiagnosticsForTest(ctx types.ServerContext, doc types.
 
 	helpers.SafeDebugLog("[VALUE_DIAGNOSTICS] Analyzing attribute values in document (length=%d)", len(content))
 
-	// Find all attributes in the document with their values
-	attributeMatches := findAttributesWithValues(content)
+	// Find all attributes in the document with their values using tree-sitter
+	attributeMatches := findAttributesWithValues(doc, ctx)
 	helpers.SafeDebugLog("[VALUE_DIAGNOSTICS] Found %d attributes with values", len(attributeMatches))
 
 	for _, match := range attributeMatches {
@@ -411,105 +407,40 @@ func formatUnionOptions(options []string) string {
 	return strings.Join(quoted[:len(quoted)-1], ", ") + " or " + quoted[len(quoted)-1]
 }
 
-// findAttributesWithValues finds all attributes in the document content with their values
-func findAttributesWithValues(content string) []AttributeMatch {
+// findAttributesWithValues finds all attributes in the document using tree-sitter parsing
+func findAttributesWithValues(doc types.Document, ctx types.ServerContext) []AttributeMatch {
 	var matches []AttributeMatch
-	lines := strings.Split(content, "\n")
 
-	for lineIdx, line := range lines {
-		// Look for attributes in opening tags
-		idx := 0
-		for {
-			tagStart := strings.Index(line[idx:], "<")
-			if tagStart == -1 {
-				break
+	// Get DocumentManager from context for tree-sitter queries
+	dm, err := ctx.DocumentManager()
+	if err != nil {
+		helpers.SafeDebugLog("[VALUE_DIAGNOSTICS] Failed to get DocumentManager: %v", err)
+		return matches
+	}
+
+	// Use Document's built-in FindCustomElements method to find all custom elements
+	elements, err := doc.FindCustomElements(dm)
+	if err != nil {
+		helpers.SafeDebugLog("[VALUE_DIAGNOSTICS] Error finding custom elements: %v", err)
+		return matches
+	}
+
+	// Convert each element's attributes to AttributeMatch format
+	for _, element := range elements {
+		for attrName, attr := range element.Attributes {
+			match := AttributeMatch{
+				Name:     attrName,
+				TagName:  element.TagName,
+				Value:    attr.Value,
+				HasValue: attr.Value != "", // Determine if attribute has a value
+				Line:     attr.Range.Start.Line,
+				StartCol: attr.Range.Start.Character,
+				EndCol:   attr.Range.End.Character,
 			}
-			tagStart += idx
-
-			// Skip closing tags and comments
-			if tagStart+1 < len(line) && (line[tagStart+1] == '/' || line[tagStart+1] == '!') {
-				idx = tagStart + 1
-				continue
-			}
-
-			// Find the tag name first
-			tagNameEnd := strings.IndexAny(line[tagStart+1:], " \t\n\r/>")
-			if tagNameEnd == -1 {
-				idx = tagStart + 1
-				continue
-			}
-			tagName := line[tagStart+1 : tagStart+1+tagNameEnd]
-
-			// Find the end of the tag
-			tagEnd := strings.Index(line[tagStart:], ">")
-			if tagEnd == -1 {
-				idx = tagStart + 1
-				continue
-			}
-			tagEnd += tagStart
-
-			// Extract the attribute section
-			attrSection := line[tagStart+1+tagNameEnd : tagEnd]
-
-			// Find attributes in this section with their values
-			attrMatches := findAttributesWithValuesInSection(attrSection, tagName, uint32(lineIdx), uint32(tagStart+1+tagNameEnd))
-			matches = append(matches, attrMatches...)
-
-			idx = tagEnd + 1
+			matches = append(matches, match)
 		}
 	}
 
 	return matches
 }
 
-// findAttributesWithValuesInSection finds attributes within a tag's attribute section with their values
-func findAttributesWithValuesInSection(section string, tagName string, line uint32, startOffset uint32) []AttributeMatch {
-	var matches []AttributeMatch
-
-	// Use pre-compiled regex to parse attribute name-value pairs
-	attrMatches := attributeRegex.FindAllStringSubmatch(section, -1)
-
-	for _, attrMatch := range attrMatches {
-		if len(attrMatch) < 2 {
-			continue
-		}
-
-		attrName := attrMatch[1]
-		var attrValue string
-		hasValue := false
-
-		// Check which capture group has the value
-		if attrMatch[2] != "" { // Double-quoted value
-			attrValue = attrMatch[2]
-			hasValue = true
-		} else if attrMatch[3] != "" { // Single-quoted value
-			attrValue = attrMatch[3]
-			hasValue = true
-		} else if attrMatch[4] != "" { // Unquoted value
-			attrValue = attrMatch[4]
-			hasValue = true
-		} else {
-			// No value (boolean attribute)
-			attrValue = ""
-			hasValue = false
-		}
-
-		// Find the position of this attribute in the section
-		attrPos := strings.Index(section, attrMatch[0])
-		if attrPos == -1 {
-			continue
-		}
-
-		matches = append(matches, AttributeMatch{
-			Name:     attrName,
-			TagName:  tagName,
-			Value:    attrValue,
-			HasValue: hasValue,
-			Line:     line,
-			StartCol: startOffset + uint32(attrPos),
-			EndCol:   startOffset + uint32(attrPos+len(attrMatch[0])),
-		})
-	}
-
-	return matches
-}

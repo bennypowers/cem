@@ -22,7 +22,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
@@ -56,7 +56,7 @@ func TestEndToEndStartTagCompletion(t *testing.T) {
 	t.Logf("Loaded %d tags: %v", len(allTags), allTags)
 
 	// Create and set a real DocumentManager
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}

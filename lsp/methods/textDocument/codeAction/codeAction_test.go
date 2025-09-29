@@ -19,7 +19,7 @@ package codeAction_test
 import (
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/codeAction"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	protocol "github.com/tliron/glsp/protocol_3_16"
@@ -30,7 +30,7 @@ func TestCodeActionSlotSuggestion(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 
 	// Create DocumentManager and add document
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}
@@ -145,7 +145,7 @@ func TestCodeActionNoDiagnostics(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 
 	// Create DocumentManager and add document
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}

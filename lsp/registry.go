@@ -752,8 +752,8 @@ func (r *Registry) StartGenerateWatcher() error {
 		for _, module := range pkg.Modules {
 			for _, decl := range module.Declarations {
 				if customElement, ok := decl.(*M.CustomElementDeclaration); ok {
-					if customElement.CustomElement.TagName == "test-button" {
-						for _, attr := range customElement.CustomElement.Attributes {
+					if customElement.TagName == "test-button" {
+						for _, attr := range customElement.Attributes {
 							if attr.Name == "variant" && attr.Type != nil {
 								helpers.SafeDebugLog("Received manifest - variant type: '%s'", attr.Type.Text)
 							}

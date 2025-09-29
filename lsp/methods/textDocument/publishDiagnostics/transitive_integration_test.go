@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
 	W "bennypowers.dev/cem/workspace"
@@ -56,7 +57,7 @@ func TestTransitiveIntegration_ThreeLevelDependency(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	t.Logf("DEBUG: About to call InitializeForTesting")
 	err = server.InitializeForTesting()
@@ -170,7 +171,7 @@ func TestTransitiveIntegration_ThreeLevelDependency(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to create fresh server: %v", err)
 		}
-		defer freshServer.Close()
+		defer func() { _ = freshServer.Close() }()
 
 		err = freshServer.InitializeForTesting()
 		if err != nil {
@@ -273,7 +274,7 @@ func TestTransitiveIntegration_PartialImport(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	if err := server.InitializeForTesting(); err != nil {
 		t.Fatalf("Failed to initialize server: %v", err)
@@ -295,7 +296,7 @@ func TestTransitiveIntegration_PartialImport(t *testing.T) {
 </body>
 </html>`
 
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create document manager: %v", err)
 	}
@@ -336,10 +337,3 @@ func fileExists(path string) bool {
 	return err == nil
 }
 
-func getKeys(m map[string]bool) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	return keys
-}

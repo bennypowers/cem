@@ -17,7 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package completion_test
 
 import (
-	"os"
 	"strings"
 	"testing"
 	"testing/synctest"
@@ -244,14 +243,3 @@ export class TestElement extends LitElement {
 	})
 }
 
-// copyFixtureFile copies a file from the fixture directory to the target location
-
-// syncFile ensures a file is synced to disk
-func syncFile(path string) error {
-	file, err := os.OpenFile(path, os.O_RDWR, 0)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	return file.Sync()
-}

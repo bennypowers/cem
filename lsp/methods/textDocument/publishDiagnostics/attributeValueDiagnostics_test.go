@@ -19,7 +19,7 @@ package publishDiagnostics_test
 import (
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
@@ -31,7 +31,7 @@ func TestAttributeValueDiagnostics_BooleanAttributes(t *testing.T) {
 	content := `<my-element disabled="false" hidden="true" readonly>Content</my-element>`
 
 	// Create DocumentManager and document
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}
@@ -103,7 +103,7 @@ func TestAttributeValueDiagnostics_UnionTypes(t *testing.T) {
 	content := `<my-element size="smll" theme="Dark" variant="invalid">Content</my-element>`
 
 	// Create DocumentManager and document
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}
@@ -166,7 +166,7 @@ func TestAttributeValueDiagnostics_LiteralTypes(t *testing.T) {
 	content := `<my-element role="Primary" status="Inactive">Content</my-element>`
 
 	// Create DocumentManager and document
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}
@@ -221,7 +221,7 @@ func TestAttributeValueDiagnostics_NumberTypes(t *testing.T) {
 	content := `<my-element count="abc" max="42" min="">Content</my-element>`
 
 	// Create DocumentManager and document
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}
@@ -279,7 +279,7 @@ func TestAttributeValueDiagnostics_ArrayTypes(t *testing.T) {
 	content := `<my-element items='["a","b"]' tags="tag1,tag2">Content</my-element>`
 
 	// Create DocumentManager and document
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}
@@ -327,7 +327,7 @@ func TestAttributeValueDiagnostics_StringTypes(t *testing.T) {
 	content := `<my-element label="Hello World" description="">Content</my-element>`
 
 	// Create DocumentManager and document
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}
@@ -364,7 +364,7 @@ func TestAttributeValueDiagnostics_NoTypeInformation(t *testing.T) {
 	content := `<my-element custom="value">Content</my-element>`
 
 	// Create DocumentManager and document
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}
@@ -397,7 +397,7 @@ func TestAttributeValueDiagnostics_StandardHTMLElements(t *testing.T) {
 	content := `<div invalid-attr="value">Content</div>`
 
 	// Create DocumentManager and document
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}
@@ -422,7 +422,7 @@ func TestAttributeValueDiagnostics_EdgeCases(t *testing.T) {
 	content := `<my-element unquoted=value quoted="quoted value" empty="">Content</my-element>`
 
 	// Create DocumentManager and document
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}

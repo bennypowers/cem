@@ -18,20 +18,18 @@ package lsp
 
 import (
 	"bennypowers.dev/cem/lsp/helpers"
+	"bennypowers.dev/cem/lsp/types"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
-// ParseStrategy represents different parsing strategies for document updates
-type ParseStrategy int
+// Use types from the types package
+type ParseStrategy = types.ParseStrategy
 
 const (
-	// ParseStrategyFull always performs a full reparse
-	ParseStrategyFull ParseStrategy = iota
-	// ParseStrategyIncremental attempts incremental parsing with fallback to full
-	ParseStrategyIncremental
-	// ParseStrategyAuto automatically chooses based on change characteristics
-	ParseStrategyAuto
+	ParseStrategyFull        = types.ParseStrategyFull
+	ParseStrategyIncremental = types.ParseStrategyIncremental
+	ParseStrategyAuto        = types.ParseStrategyAuto
 )
 
 // DocumentEdit represents a change to a document
@@ -173,8 +171,8 @@ func (ip *IncrementalParser) calculateOldLength(changeRange *protocol.Range, con
 }
 
 // ParseWithStrategy parses a document using the configured strategy
-func (ip *IncrementalParser) ParseWithStrategy(doc *Document, newContent string, changes []protocol.TextDocumentContentChangeEvent) ParseResult {
-	if doc.Parser == nil {
+func (ip *IncrementalParser) ParseWithStrategy(doc types.Document, newContent string, changes []protocol.TextDocumentContentChangeEvent) ParseResult {
+	if doc.Tree() == nil {
 		return ip.performFullParse(doc, newContent)
 	}
 
@@ -186,7 +184,11 @@ func (ip *IncrementalParser) ParseWithStrategy(doc *Document, newContent string,
 	case ParseStrategyFull:
 		return ip.performFullParse(doc, newContent)
 	case ParseStrategyAuto:
-		analysis := ip.AnalyzeChanges(changes, doc.content)
+		oldContent, err := doc.Content()
+		if err != nil {
+			return ParseResult{Success: false, Error: err}
+		}
+		analysis := ip.AnalyzeChanges(changes, oldContent)
 		if analysis.ShouldUseIncremental {
 			return ip.attemptIncrementalParse(doc, newContent, changes)
 		}
@@ -196,17 +198,11 @@ func (ip *IncrementalParser) ParseWithStrategy(doc *Document, newContent string,
 	}
 }
 
-// ParseResult represents the result of a parsing operation
-type ParseResult struct {
-	Success         bool
-	UsedIncremental bool
-	Error           error
-	NewTree         *ts.Tree
-	OldTree         *ts.Tree // For cleanup purposes
-}
+// Use ParseResult from types package
+type ParseResult = types.ParseResult
 
 // determineStrategy determines which parsing strategy to use
-func (ip *IncrementalParser) determineStrategy(doc *Document, newContent string, changes []protocol.TextDocumentContentChangeEvent) ParseStrategy {
+func (ip *IncrementalParser) determineStrategy(doc types.Document, newContent string, changes []protocol.TextDocumentContentChangeEvent) ParseStrategy {
 	if ip.strategy != ParseStrategyAuto {
 		return ip.strategy
 	}
@@ -227,31 +223,38 @@ func (ip *IncrementalParser) determineStrategy(doc *Document, newContent string,
 }
 
 // attemptIncrementalParse attempts incremental parsing with fallback to full parsing
-func (ip *IncrementalParser) attemptIncrementalParse(doc *Document, newContent string, changes []protocol.TextDocumentContentChangeEvent) ParseResult {
-	helpers.SafeDebugLog("[INCREMENTAL] Attempting incremental parse for %s", doc.uri)
+func (ip *IncrementalParser) attemptIncrementalParse(doc types.Document, newContent string, changes []protocol.TextDocumentContentChangeEvent) ParseResult {
+	helpers.SafeDebugLog("[INCREMENTAL] Attempting incremental parse for %s", doc.URI())
 
-	if doc.Tree == nil {
+	if doc.Tree() == nil {
 		helpers.SafeDebugLog("[INCREMENTAL] No existing tree, falling back to full parse")
 		return ip.performFullParse(doc, newContent)
 	}
 
 	// Keep reference to old tree
-	oldTree := doc.Tree
+	oldTree := doc.Tree()
+
+	// Get old content for edit conversion
+	oldContent, err := doc.Content()
+	if err != nil {
+		helpers.SafeDebugLog("[INCREMENTAL] Failed to get document content: %v", err)
+		return ip.performFullParse(doc, newContent)
+	}
 
 	// Apply edits to the tree for incremental parsing
 	for _, change := range changes {
 		if change.Range != nil {
-			edit := ip.convertToTreeSitterEdit(change, doc.content)
+			edit := ip.convertToTreeSitterEdit(change, oldContent)
 			oldTree.Edit(&edit)
 		}
 	}
 
 	// Attempt incremental parsing
-	newTree := doc.Parser.Parse([]byte(newContent), oldTree)
+	newTree := doc.Parser().Parse([]byte(newContent), oldTree)
 
 	// Validate the incremental parse result
 	if ip.validateIncrementalParse(newTree, newContent) {
-		helpers.SafeDebugLog("[INCREMENTAL] Incremental parse successful for %s", doc.uri)
+		helpers.SafeDebugLog("[INCREMENTAL] Incremental parse successful for %s", doc.URI())
 		return ParseResult{
 			Success:         true,
 			UsedIncremental: true,
@@ -261,18 +264,18 @@ func (ip *IncrementalParser) attemptIncrementalParse(doc *Document, newContent s
 	}
 
 	// Incremental parsing failed, fall back to full parsing
-	helpers.SafeDebugLog("[INCREMENTAL] Incremental parse failed, falling back to full parse for %s", doc.uri)
+	helpers.SafeDebugLog("[INCREMENTAL] Incremental parse failed, falling back to full parse for %s", doc.URI())
 	newTree.Close() // Clean up failed incremental tree
 
 	return ip.performFullParse(doc, newContent)
 }
 
 // performFullParse performs a full document parse
-func (ip *IncrementalParser) performFullParse(doc *Document, newContent string) ParseResult {
-	helpers.SafeDebugLog("[INCREMENTAL] Performing full parse for %s", doc.uri)
+func (ip *IncrementalParser) performFullParse(doc types.Document, newContent string) ParseResult {
+	helpers.SafeDebugLog("[INCREMENTAL] Performing full parse for %s", doc.URI())
 
-	oldTree := doc.Tree
-	newTree := doc.Parser.Parse([]byte(newContent), nil)
+	oldTree := doc.Tree()
+	newTree := doc.Parser().Parse([]byte(newContent), nil)
 
 	return ParseResult{
 		Success:         true,
@@ -424,10 +427,3 @@ func splitLines(content string) []string {
 	return lines
 }
 
-// max returns the maximum of two uint values
-func max(a, b uint) uint {
-	if a > b {
-		return a
-	}
-	return b
-}

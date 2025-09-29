@@ -37,12 +37,12 @@ var rootCmd = &cobra.Command{
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		_, err := os.Getwd()
 		if err != nil {
-			return fmt.Errorf("Unable to get current working directory: %v", err)
+			return fmt.Errorf("unable to get current working directory: %v", err)
 		}
 
 		wctx, err := W.GetWorkspaceContext(cmd)
 		if err != nil {
-			return fmt.Errorf("Failed to create project context: %v", err)
+			return fmt.Errorf("failed to create project context: %v", err)
 		}
 
 		// Store the project context in the Cobra context
@@ -105,12 +105,12 @@ func init() {
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "verbose logging output")
 	rootCmd.PersistentFlags().BoolP("quiet", "q", false, "quiet output (only warnings and errors)")
 
-	viper.BindPFlag("configFile", rootCmd.PersistentFlags().Lookup("config"))
-	viper.BindPFlag("package", rootCmd.PersistentFlags().Lookup("package"))
-	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
-	viper.BindPFlag("quiet", rootCmd.PersistentFlags().Lookup("quiet"))
-	viper.BindPFlag("sourceControlRootUrl", rootCmd.PersistentFlags().Lookup("source-control-root-url"))
+	_ = viper.BindPFlag("configFile", rootCmd.PersistentFlags().Lookup("config"))
+	_ = viper.BindPFlag("package", rootCmd.PersistentFlags().Lookup("package"))
+	_ = viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
+	_ = viper.BindPFlag("quiet", rootCmd.PersistentFlags().Lookup("quiet"))
+	_ = viper.BindPFlag("sourceControlRootUrl", rootCmd.PersistentFlags().Lookup("source-control-root-url"))
 
 	rootCmd.PersistentFlags().String("project-dir", "", "Path to project directory (default: parent directory of .config/cem.yaml)")
-	rootCmd.PersistentFlags().MarkDeprecated("project-dir", "Will be removed, use --package instead")
+	_ = rootCmd.PersistentFlags().MarkDeprecated("project-dir", "Will be removed, use --package instead")
 }

@@ -22,7 +22,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
@@ -50,7 +50,7 @@ func TestSlotAttributeCompletions(t *testing.T) {
 	ctx.AddManifest(&pkg)
 
 	// Create a real document manager
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create document manager: %v", err)
 	}
@@ -158,7 +158,7 @@ func TestSlotCompletionDetails(t *testing.T) {
 	ctx.AddManifest(&pkg)
 
 	// Create and set a real DocumentManager
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}
@@ -224,7 +224,7 @@ func TestSlotAttributeNameSuggestion(t *testing.T) {
 	ctx.AddManifest(&pkg)
 
 	// Create and set a real DocumentManager
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}

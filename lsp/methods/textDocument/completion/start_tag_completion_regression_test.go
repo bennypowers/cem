@@ -22,7 +22,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/lsp/types"
@@ -53,7 +53,7 @@ func TestStartTagCompletionRegression(t *testing.T) {
 	ctx.AddManifest(&pkg)
 
 	// Create and set a real DocumentManager
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}
@@ -146,11 +146,3 @@ func TestStartTagCompletionRegression(t *testing.T) {
 	}
 }
 
-// extractCompletionLabels extracts labels from completion items for debugging
-func extractCompletionLabels(completions []protocol.CompletionItem) []string {
-	labels := make([]string, len(completions))
-	for i, completion := range completions {
-		labels[i] = completion.Label
-	}
-	return labels
-}

@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
@@ -51,7 +52,7 @@ func TestTagDiagnostics_WithImports(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// Initialize the server
 	err = server.InitializeForTesting()
@@ -60,7 +61,7 @@ func TestTagDiagnostics_WithImports(t *testing.T) {
 	}
 
 	// Create document manager
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create document manager: %v", err)
 	}
@@ -116,7 +117,7 @@ func TestTagDiagnostics_WithImports(t *testing.T) {
 	// Should have 0 diagnostics when imports are present
 	// Debug: Check if script tags are being parsed
 	if doc != nil {
-		scriptTags := doc.GetScriptTags()
+		scriptTags := doc.ScriptTags()
 		t.Logf("Document has %d script tags parsed", len(scriptTags))
 		for i, tag := range scriptTags {
 			t.Logf("Script %d: IsModule=%t, %d imports", i, tag.IsModule, len(tag.Imports))
@@ -153,7 +154,7 @@ func TestTagDiagnostics_TypeScriptImports(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// Initialize the server
 	err = server.InitializeForTesting()
@@ -162,7 +163,7 @@ func TestTagDiagnostics_TypeScriptImports(t *testing.T) {
 	}
 
 	// Create document manager
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create document manager: %v", err)
 	}
@@ -290,7 +291,7 @@ func TestTagDiagnostics_MissingImports(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// Initialize the server
 	err = server.InitializeForTesting()
@@ -299,7 +300,7 @@ func TestTagDiagnostics_MissingImports(t *testing.T) {
 	}
 
 	// Create document manager
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create document manager: %v", err)
 	}
@@ -370,7 +371,7 @@ func TestTagDiagnostics_IgnoreComment(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	// Write file with ignore comment
 	ignoreFile := filepath.Join(tempDir, "ignore-test.html")
@@ -395,7 +396,7 @@ func TestTagDiagnostics_IgnoreComment(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// Initialize the server
 	err = server.InitializeForTesting()
@@ -404,7 +405,7 @@ func TestTagDiagnostics_IgnoreComment(t *testing.T) {
 	}
 
 	// Create document manager
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create document manager: %v", err)
 	}
@@ -464,7 +465,7 @@ func TestTagDiagnostics_ActualMissingImports(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// Initialize the server
 	err = server.InitializeForTesting()
@@ -473,7 +474,7 @@ func TestTagDiagnostics_ActualMissingImports(t *testing.T) {
 	}
 
 	// Create document manager
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create document manager: %v", err)
 	}
@@ -551,7 +552,7 @@ func TestTagDiagnostics_SideEffectImports(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// Initialize the server
 	err = server.InitializeForTesting()
@@ -560,7 +561,7 @@ func TestTagDiagnostics_SideEffectImports(t *testing.T) {
 	}
 
 	// Create document manager
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create document manager: %v", err)
 	}

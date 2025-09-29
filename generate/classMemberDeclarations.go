@@ -194,7 +194,7 @@ func (mp *ModuleProcessor) createClassFieldFromAccessorMatch(
 		amendFieldWithPropertyConfigCaptures(captures, &field)
 	}
 
-	field.ClassField.StartByte = captures["accessor"][0].StartByte
+	field.StartByte = captures["accessor"][0].StartByte
 	err = mp.amendFieldWithJsdoc(captures, &field.ClassField)
 	return field, err
 }
@@ -240,7 +240,7 @@ func (mp *ModuleProcessor) createClassFieldFromFieldMatch(
 	isStatic bool,
 	superclass string,
 	captures Q.CaptureMap,
-) (err error, field M.CustomElementField) {
+) (field M.CustomElementField, err error) {
 	_, readonly := captures["field.readonly"]
 
 	field = M.CustomElementField{
@@ -280,8 +280,8 @@ func (mp *ModuleProcessor) createClassFieldFromFieldMatch(
 		amendFieldWithPropertyConfigCaptures(captures, &field)
 	}
 
-	mp.amendFieldWithJsdoc(captures, &field.ClassField)
-	return nil, field
+	_ = mp.amendFieldWithJsdoc(captures, &field.ClassField)
+	return field, nil
 }
 
 // Identify kind and key
@@ -340,8 +340,8 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 
 		switch kind {
 		case "field":
-			error, field := mp.createClassFieldFromFieldMatch(memberName, isStatic, superclass, captures)
-			field.ClassField.StartByte = captures["field"][0].StartByte
+			field, error := mp.createClassFieldFromFieldMatch(memberName, isStatic, superclass, captures)
+			field.StartByte = captures["field"][0].StartByte
 			if error != nil {
 				errs = errors.Join(errs, error)
 			} else {
@@ -349,7 +349,7 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 			}
 		case "constructor-parameter":
 			field, err := mp.createClassFieldFromConstructorParameterMatch(memberName, superclass, captures)
-			field.ClassField.StartByte = captures["constructor.parameter"][0].StartByte
+			field.StartByte = captures["constructor.parameter"][0].StartByte
 			if err != nil {
 				errs = errors.Join(errs, err)
 			} else {
@@ -380,8 +380,8 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 					existing.Privacy = field.Privacy
 				}
 				// Merge jsdoc, attribute, etc. as needed
-				if field.PropertyLike.Description != "" && existing.PropertyLike.Description == "" {
-					existing.PropertyLike.Description = field.PropertyLike.Description
+				if field.Description != "" && existing.Description == "" {
+					existing.Description = field.Description
 				}
 				memberMap[prevKey] = existing
 			} else {

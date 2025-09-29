@@ -75,7 +75,7 @@ update:
 	go test -race -json ./... --update | go tool tparse -all
 
 lint:
-	golangci-lint run
+	GOEXPERIMENT="" golangci-lint run
 
 format:
 	gofmt -s -w .

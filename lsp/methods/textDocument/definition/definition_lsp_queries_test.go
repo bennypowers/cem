@@ -19,7 +19,7 @@ package definition_test
 import (
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/definition"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/queries"
@@ -55,7 +55,7 @@ func TestDefinition_GoesToActualDefinitionNotTopOfFile(t *testing.T) {
 	ctx.SetWorkspaceRoot("definition-test-fixtures")
 
 	// Create a real DocumentManager with LSP queries (includes classes)
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}
