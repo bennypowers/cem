@@ -2,405 +2,64 @@
 
 ## Overview
 
-The CEM LSP server provides Language Server Protocol support for custom elements in HTML files and TypeScript template literals. It uses tree-sitter for parsing and leverages existing custom-elements manifest data for intelligent features.
+The CEM LSP server provides Language Server Protocol support for custom elements in HTML files and TypeScript template literals. It uses tree-sitter for parsing and leverages custom-elements manifest data for intelligent IDE features.
 
 ## Core Components
 
 ### Server (`server.go`)
-- **Role**: LSP protocol handler and coordinator
-- **Responsibilities**: Delegates LSP requests to organized method handlers
-- **Dependencies**: Registry, DocumentManager, WorkspaceContext
-- **Pattern**: Thin delegator layer with adapter pattern for clean interfaces
+LSP protocol handler that delegates requests to organized method handlers using an adapter pattern for clean interfaces.
 
-### Registry (`registry.go`) 
-- **Role**: Custom elements manifest indexing and file watching
-- **Data Sources**: Workspace manifests, node_modules packages, config-specified files
-- **Indexing**: Tag name → element definition, element → attributes mapping
-- **Performance**: In-memory indexes for O(1) lookups
-- **File Watching**: Automatic manifest reload using fsnotify when files change
-- **Path Tracking**: Monitors manifest files and package.json files for changes
-- **Thread Safety**: Comprehensive mutex protection for all registry data structures
-  - Main data mutex (`mu`) protects Elements, Attributes, ElementDefinitions maps
-  - File watcher mutex (`watcherMu`) protects file watching operations
-  - Generate watcher mutex (`generateMu`) protects generate watcher lifecycle
-  - All read/write operations properly synchronized to prevent race conditions
+### Registry (`registry.go`)
+Indexes custom elements manifests from workspace, node_modules, and config files. Provides O(1) lookups with automatic file watching for manifest changes. Thread-safe with comprehensive mutex protection.
 
 ### Document Manager (`document.go`)
-- **Role**: Document lifecycle and tree-sitter parsing
-- **Features**: Incremental parsing, parser pooling, query caching
-- **Parsing**: HTML files directly, TypeScript template literals extracted and parsed as HTML
-- **Cache**: Pre-parsed tree-sitter queries for performance
+Manages document lifecycle with tree-sitter parsing, incremental updates, parser pooling, and query caching. Handles HTML files directly and extracts TypeScript template literals.
 
 ### Method Organization (`methods/`)
-- **Structure**: Organized by LSP method type with colocated packages
-- **Current Organization**:
-  - `methods/server.go` - Server lifecycle methods (initialize, shutdown)
-  - `methods/textDocument/` - All text document methods in separate packages:
-    - `completion/` - Complete completion feature with tests and fixtures
-    - `definition/` - Go-to-definition implementation with tests
-    - `hover/` - Hover functionality with TypeScript template support
-    - `publishDiagnostics/` - Real-time validation with comprehensive error detection:
-      - `slotDiagnostics.go` - Slot attribute validation with smart suggestions
-      - `tagDiagnostics.go` - Custom element tag name validation with typo detection
-      - `attributeDiagnostics.go` - HTML attribute validation using MDN browser-compat-data
-      - `attributeValueDiagnostics.go` - Attribute value validation against manifest types
-    - `codeAction/` - Autofix actions for diagnostics with one-click corrections
-    - `lifecycle.go` - Document lifecycle (didOpen, didChange, didClose)
-    - `context.go` - Cursor position analysis utilities
-- **Pattern**: Context interfaces for dependency injection and clean testing
-- **Benefits**: Clean separation, testable units, maintainable code, colocated tests
-
-## Parsing Strategy
-
-### Tree-sitter Integration
-- **Query System**: Pre-compiled tree-sitter queries cached at startup via shared `queries/` package
-- **Selective Loading**: Only loads queries needed for LSP operations (`customElements`, `htmlTemplates`)
-- **HTML Parsing**: Direct parsing of HTML files for custom elements
-- **TypeScript Parsing**: Extract HTML template literals then parse as HTML
-- **Performance**: Shared parser pools between `generate` and `lsp` packages
-
-#### Concurrency Safety
-- **Query Cursors**: NOT thread-safe - each operation requires a fresh cursor
-- **Implementation**: `GetCachedQueryMatcher()` caches queries but creates fresh cursors
-- **Performance**: Minimal impact (query compilation expensive, cursor creation cheap)
-
-## Diagnostics and Validation System
-
-The LSP implements comprehensive real-time validation with autofix capabilities following the "Diagnostics + Code Actions Pattern":
-
-### Validation Engine (`publishDiagnostics/`)
-- **Slot Validation**: Validates slot attribute values against manifest slot definitions
-  - Uses Levenshtein distance for intelligent typo suggestions
-  - Detects parent-child relationships for slot context validation
-- **Tag Name Validation**: Validates custom element tag names with two error classes:
-  - **Typo Detection**: Suggests corrections for misspelled tag names
-  - **Missing Import Detection**: Identifies elements that exist but aren't imported
-- **Attribute Validation**: Validates HTML attributes using authoritative data sources:
-  - **Global Attributes**: Uses embedded MDN browser-compat-data (automatically updated)
-  - **Custom Element Attributes**: Validates against manifest schemas
-- **Attribute Value Validation**: Validates values against manifest type definitions:
-  - **Union Types**: Validates against available options with typo suggestions (`"red" | "green" | "blue"`)
-  - **Literal Types**: Exact string matching with case correction (`"primary"`)
-  - **Number Types**: Numeric format validation
-  - **Boolean Types**: HTML boolean attribute semantics (presence = true, absence = false)
-  - **Array Types**: Informational guidance about format diversity
-
-### HTML Parsing Enhancement
-- **Enhanced AttributeMatch**: Extended to include value extraction (`Value`, `HasValue` fields)
-- **Regex-based Value Parsing**: Handles quoted/unquoted values, empty values, boolean attributes
-- **Position Tracking**: Precise line/column information for accurate diagnostics
-
-### Autofix System (`codeAction/`)
-- **Structured AutofixData**: Type-safe diagnostic data using `types.AutofixData`
-- **One-click Corrections**: Workspace text edits for instant fixes
-- **Multiple Fix Types**: Supports slot, tag, attribute, and attribute value corrections
-- **LSP Protocol Compliance**: Standard `textDocument/codeAction` implementation
-
-### Type System Integration
-- **DiagnosticType Constants**: Structured type system for different validation categories
-- **AutofixData Serialization**: Safe conversion to/from LSP protocol map format
-- **Extensible Design**: Easy to add new diagnostic types and autofix behaviors
-
-### Template Literal Support
-Detects and parses:
-- `html`backtick`` tagged templates
-- `html<Generic>`backtick`` tagged templates with generics
-- `element.innerHTML = `backtick`` assignments
-- `element.outerHTML = `backtick`` assignments
+Organized by LSP method type with colocated packages:
+- `textDocument/completion/` - Autocompletion with type-based suggestions
+- `textDocument/hover/` - Element and attribute information
+- `textDocument/definition/` - Go-to-definition for custom elements
+- `textDocument/publishDiagnostics/` - Real-time validation (slots, tags, attributes, values)
+- `textDocument/codeAction/` - One-click autofixes for diagnostics
+- `textDocument/references/` - Find all element usages
+- `workspace/symbol/` - Search custom elements across workspace
 
 ## Data Flow
 
 1. **Initialization**: Load manifests → build indexes → cache queries → start file watching
-2. **Document Open**: Parse document → extract custom elements → cache AST
-3. **LSP Request**: Analyze cursor position → query indexes → return results
-4. **Document Change**: Incremental reparse → update cached data
-5. **Manifest Change**: File watcher detects change → reload manifest → rebuild indexes → notify clients
+2. **Document Events**: Parse documents → extract custom elements → cache ASTs
+3. **LSP Requests**: Analyze cursor position → query indexes → return results
+4. **File Changes**: Incremental reparse → update cached data → reload manifests
 
-## Performance Characteristics
+## Key Features
 
-- **Query Parsing**: Once at startup (expensive operation avoided during requests)
-- **Document Parsing**: Incremental updates using tree-sitter
-- **Manifest Lookup**: O(1) hash table lookups
-- **Memory Usage**: Cached ASTs and indexes, managed cleanup
+### Parsing
+- **Tree-sitter Integration**: Shared query system with selective loading for performance
+- **Template Literal Support**: Detects `html`` templates, `innerHTML` assignments, etc.
+- **Incremental Updates**: Efficient document change handling
+
+### Validation & Autofixes
+- **Slot Validation**: Validates slot names with typo suggestions
+- **Tag Validation**: Detects typos and missing imports
+- **Attribute Validation**: Uses embedded MDN browser-compat-data
+- **Value Validation**: Type-based validation (union, literal, number, boolean)
+
+### Navigation
+- **Go-to-Definition**: Jump to custom element source definitions
+- **Find References**: Workspace-wide element usage search with gitignore filtering
+- **Workspace Symbols**: Fuzzy search across all custom elements
 
 ## Interface Design
 
-Uses adapter pattern to separate concerns with unified type system:
-- **HoverContext**: Element and attribute lookup capabilities + raw DocumentManager access
-- **CompletionContext**: Tag name enumeration, element details, and slot information
-- **DefinitionContext**: Element definition lookup + raw DocumentManager access for position analysis
-- **LifecycleContext**: Document management operations
-- **ServerContext**: Resource cleanup and workspace access
+Uses adapter pattern with unified type system:
+- **Context Interfaces**: Method-specific contexts for dependency injection
+- **Shared Types**: Unified document, element, and attribute interfaces in `lsp/types/`
+- **Public API Testing**: All tests use public interfaces only
 
-**Type Unification in `lsp/types/`**:
-- **Document**: Unified document interface for all LSP methods
-- **CustomElementMatch**: Shared element match type
-- **AttributeMatch**: Shared attribute match type
-- **ElementDefinition**: Common element definition interface
+## Performance
 
-This allows method implementations to be pure functions with clear dependencies and consistent types.
-
-## Limitations
-
-- **Template Positioning**: Range calculation in template literals is simplified
-- ✅ **Incremental Parsing**: Currently does full reparse on document changes (FIXED - now handles incremental text changes properly)
-- **Context Analysis**: Tree-sitter based template detection could be more sophisticated
-
-## Testing Architecture
-
-### Test Package Separation
-- **Public API Testing**: All tests use `package lsp_test` to ensure only public APIs are tested
-- **Implementation Detail Avoidance**: Private methods are not tested directly
-- **Realistic Test Scenarios**: Tests focus on behavior through public interfaces
-
-### Integration Test Strategy
-- **Test Fixtures**: Realistic custom elements manifests with complete element definitions
-- **Document Lifecycle Testing**: Comprehensive testing of document changes and hover stability
-- **Position-based Testing**: Verification of cursor position analysis for elements and attributes
-- **Adapter Pattern Testing**: Custom test contexts implementing LSP interfaces for isolated testing
-- **File Watching Testing**: End-to-end tests for manifest file change detection and reloading
-
-### Test Files Structure
-```
-cmd/fixture/lsp-hover-test/           # Integration test fixtures
-├── package.json                     # Package with customElements reference
-├── custom-elements.json             # Complete manifest with test elements
-└── index.html                       # HTML file with custom elements
-
-cmd/fixture/file-watch-test/          # File watching test fixtures
-├── package.json                     # Package.json with customElements field
-├── initial-manifest.json            # Initial manifest state for testing
-└── updated-manifest.json            # Updated manifest for change detection
-
-lsp/*_test.go                         # All tests use package lsp_test
-├── file_watch_integration_test.go    # Comprehensive file watching tests
-├── hover_integration_test.go         # Document change hover stability tests
-├── local_changes_integration_test.go # Local element changes and completion updates
-├── completion_test.go                # Completion context and integration tests
-├── registry_unit_test.go             # Registry behavior tests
-└── context_analysis_test.go          # Context analysis behavior tests
-```
-
-### Test Coverage
-- ✅ **Hover Stability**: Tests that hover continues working after document edits
-- ✅ **Document Management**: Tests document opening, updating, and content tracking
-- ✅ **Registry Integration**: Tests manifest loading and element registration
-- ✅ **Position Analysis**: Tests cursor position to element/attribute mapping
-- ✅ **Interface Adapters**: Tests that different document interfaces work correctly
-- ✅ **File Watching**: Tests manifest file change detection, reloading, and package.json watching
-- ✅ **Race Condition Safety**: All tests pass with `-race` flag, ensuring thread safety
-- ✅ **Local Element Changes**: Integration test demonstrating completion updates when local manifests change
-- ✅ **Public API Compliance**: All tests use public APIs only, ensuring proper encapsulation
-- ✅ **Refactoring Compatibility**: All tests updated for new package structure and type system
-- ✅ **Method Package Testing**: Each feature package has comprehensive tests (completion/, definition/, hover/)
-- ✅ **Context Interface Testing**: Thorough testing of all context interfaces and their implementations
-
-### Debug Logging
-- ✅ **Comprehensive Logging**: Added detailed debug logging throughout the system
-  - **[LIFECYCLE]**: Document lifecycle events (open, change, close)
-  - **[DOCUMENT]**: Document parsing, element detection, and position analysis
-  - **[HOVER]**: Hover request processing and registry lookups
-  - **[COMPLETION]**: Completion context analysis and item generation
-  - **[REGISTRY]**: Manifest loading and element/attribute lookups
-- ✅ **Troubleshooting Support**: Logs help identify issues with:
-  - Document parsing after changes
-  - Element position detection
-  - Registry element/attribute lookups
-  - Completion context detection
-- ✅ **Incremental Change Handling**: Proper support for incremental text changes
-  - **[LIFECYCLE]**: Detailed logging of change events and content synchronization
-  - **Range-based changes**: Handles both full document and incremental range-based updates
-  - **Multi-line changes**: Supports complex text edits across multiple lines
-  - **Bounds checking**: Safe handling of out-of-bounds edit ranges
-
-## Recent Critical Improvements
-
-### Production Stability Fixes ✅ COMPLETED
-- **Glob Pattern Expansion**: Fixed generate watcher glob pattern handling in `generate/generate.go`
-  - Issue: Patterns like `elements/*/rh-*.ts` were treated as literal file paths
-  - Solution: Added proper glob expansion using `ctx.Glob()` before processing
-  - Impact: Generate watcher now correctly processes source file changes
-- **Nil Pointer Safety**: Added comprehensive null checks in `lsp/server.go`
-  - Issue: Debug logging crashed when attributes had nil Type fields
-  - Solution: Safe type access with fallback empty strings
-  - Impact: Server no longer crashes on manifests with incomplete type information
-- **Thread Safety**: Complete registry synchronization in `lsp/registry.go`
-  - Issue: Race conditions during concurrent manifest loading and file watching
-  - Solution: Added main data mutex (`mu`) protecting all registry maps
-  - Impact: All tests pass with `-race` flag, eliminates concurrency bugs
-
-### Regression Test Coverage ✅ COMPLETED
-- **Generate Glob Test**: `generate/glob_expansion_regression_test.go`
-- **Nil Type Test**: `lsp/nil_type_regression_test.go`
-- **Race Condition Prevention**: All fixes include comprehensive test coverage
-
-### Tree-Sitter Concurrency Fix ✅ COMPLETED
-- **Issue**: Segmentation faults during concurrent tests after dependency injection refactoring
-- **Root Cause**: `GetCachedQueryMatcher()` shared `QueryMatcher` instances between goroutines
-- **Solution**: Cache queries (thread-safe) but create fresh cursors per operation
-- **Lesson**: When refactoring introduces failures, examine what changed first
-
-## Recent Architectural Achievements ✅
-
-- ✅ **Query Unification**: Share tree-sitter infrastructure between `generate` and `lsp` (COMPLETED)
-- ✅ **Advanced Incremental Parsing**: Proper text synchronization and edit handling (COMPLETED)
-- ✅ **File Watching System**: Automatic manifest reloading on file changes (COMPLETED)
-- ✅ **Race Condition Safety**: Thread-safe file watching and registry operations (COMPLETED)
-- ✅ **Local Element Integration**: Comprehensive testing of local package changes updating completions (COMPLETED)
-- ✅ **Legacy Code Removal**: Eliminated unused regex-based DocumentParser (Issue #109) (COMPLETED)
-
-## JSX Support Preparation (Future Enhancement Opportunities)
-
-While implementing tree-sitter parsing improvements (Issue #109), the following architectural patterns were identified that will make future JSX support implementation easier:
-
-### 1. Document Type System Enhancement
-**Current State**: Document language detection uses string-based file extension mapping
-```go
-// document.go:getLanguageFromURI()
-if strings.HasSuffix(uri, ".html") {
-    return "html"
-} else if strings.HasSuffix(uri, ".ts") || strings.HasSuffix(uri, ".js") {
-    return "typescript"
-}
-```
-
-**JSX-Ready Enhancement**: Add structured document type system
-```go
-type DocumentType int
-const (
-    DocumentTypeHTML DocumentType = iota
-    DocumentTypeTypeScript
-    DocumentTypeJSX  // Future JSX support
-)
-
-func getDocumentType(uri string) DocumentType {
-    switch {
-    case strings.HasSuffix(uri, ".jsx"), strings.HasSuffix(uri, ".tsx"):
-        return DocumentTypeJSX
-    case strings.HasSuffix(uri, ".html"):
-        return DocumentTypeHTML
-    case strings.HasSuffix(uri, ".ts"), strings.HasSuffix(uri, ".js"):
-        return DocumentTypeTypeScript
-    }
-}
-```
-
-### 2. Parser Pool Extension Architecture
-**Current State**: `queries/queries.go` supports HTML, CSS, TypeScript, JSDoc parsers
-```go
-var languages = struct {
-    typescript *ts.Language
-    jsdoc      *ts.Language
-    css        *ts.Language
-    html       *ts.Language
-}
-```
-
-**JSX-Ready Enhancement**: Extend parser pool for JSX grammar
-```go
-// Future enhancement point
-var languages = struct {
-    typescript *ts.Language
-    jsdoc      *ts.Language
-    css        *ts.Language
-    html       *ts.Language
-    jsx        *ts.Language  // tree-sitter-javascript with JSX extension
-}
-```
-
-### 3. Query Organization for JSX
-**Current Structure**:
-```
-queries/
-├── html/
-│   ├── customElements.scm
-│   └── completionContext.scm
-└── typescript/
-    ├── htmlTemplates.scm
-    └── completionContext.scm
-```
-
-**JSX-Ready Structure**:
-```
-queries/
-├── html/
-├── typescript/
-└── jsx/                          # Future JSX query directory
-    ├── jsxElements.scm          # JSX component detection
-    ├── propsCompletion.scm      # JSX props completion context
-    └── componentDefinition.scm  # React component definitions
-```
-
-### 4. Element Detection Dispatch Pattern
-**Current Pattern**: Document parsing uses switch statement on language
-```go
-// document.go:FindAllCustomElements()
-switch d.Language {
-case "html":
-    htmlElements, err := d.findHTMLCustomElements(dm)
-case "typescript":
-    tsElements, err := d.findTypeScriptCustomElements(dm)
-}
-```
-
-**JSX-Ready Pattern**: Extensible dispatch system
-```go
-// Future enhancement - easy to add JSX case
-switch d.Language {
-case "html":
-    return d.findHTMLCustomElements(dm)
-case "typescript":
-    return d.findTypeScriptCustomElements(dm)
-case "jsx":  // Future JSX support point
-    return d.findJSXComponents(dm)
-}
-```
-
-### 5. Query Selector Enhancement for JSX
-**Current State**: `LSPQueries()` loads HTML and TypeScript queries
-```go
-func LSPQueries() QuerySelector {
-    return QuerySelector{
-        HTML:       []string{"customElements", "completionContext"},
-        TypeScript: []string{"htmlTemplates", "completionContext"},
-    }
-}
-```
-
-**JSX-Ready Enhancement**: Add JSX query category
-```go
-func LSPQueries() QuerySelector {
-    return QuerySelector{
-        HTML:       []string{"customElements", "completionContext"},
-        TypeScript: []string{"htmlTemplates", "completionContext"},
-        JSX:        []string{"jsxElements", "propsCompletion"},  // Future JSX queries
-    }
-}
-```
-
-### Benefits of This Preparation
-- **Clean Extension Points**: JSX support can be added without refactoring existing code
-- **Consistent Patterns**: JSX implementation will follow established tree-sitter patterns
-- **Performance Ready**: JSX parsing will inherit parser pooling and query caching benefits
-- **Type Safety**: Document type system provides compile-time safety for language-specific operations
-
-These preparation points emerged from the tree-sitter architecture analysis during Issue #109 implementation and provide a clear roadmap for future JSX support without requiring changes to core LSP functionality.
-- ✅ **Source File Watching**: Auto-regenerate manifests when source files change (COMPLETED)
-- ✅ **Go-to-Definition**: Jump to custom element source definitions (COMPLETED)
-- ✅ **Production Stability**: Critical bug fixes for glob patterns, nil safety, and thread safety (COMPLETED)
-- ✅ **Method Package Organization**: Clean separation of LSP methods into colocated packages (COMPLETED)
-- ✅ **Type System Unification**: Consolidated type definitions in `lsp/types/` package (COMPLETED)
-
-## Future Architecture Goals
-
-### Immediate Improvements (High Priority)
-- **Method Package Consistency**: Move server lifecycle methods (`initialize`, `shutdown`) to `methods/server/` package for consistency
-- **Helper Reorganization**: Move logging utilities from `logger.go` to `helpers/` package
-- **LSP-Compliant Logging**: Align logging with LSP standards using `logMessage`/`showMessage` for proper IDE integration
-- **Workspace Method Organization**: Create `methods/workspace/` package for workspace-related LSP methods
-
-### Medium-Term Goals
-- **Context-Aware Analysis**: Smarter completion based on cursor position
-- **Diagnostic System**: Real-time validation with proper error ranges
-- **Enhanced Template Support**: Better TypeScript template literal hover support
-- **Configuration Management**: Centralized configuration handling with LSP `workspace/configuration` support
+- **Query Caching**: Pre-compiled tree-sitter queries cached at startup
+- **O(1) Lookups**: Hash table indexes for manifest data
+- **Parser Pooling**: Shared parser instances across operations
+- **Incremental Parsing**: Updates only changed document sections
