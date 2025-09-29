@@ -273,3 +273,4 @@ func testGenerateHtmlWithGolden(t *testing.T, args tools.GenerateHtmlArgs, golde
 
 	assert.Equal(t, string(expectedData), output, "Generated HTML should match golden file")
 }
+
