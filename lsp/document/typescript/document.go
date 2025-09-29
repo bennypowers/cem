@@ -234,11 +234,18 @@ func (d *TypeScriptDocument) findHTMLTemplates(handler *Handler) ([]TemplateCont
 
 	var templates []TemplateContext
 
-	// Use the cached query matcher to find HTML templates with different parent capture names
+	// Create a fresh HTML templates query matcher for thread safety
+	templatesMatcher, err := Q.GetCachedQueryMatcher(handler.queryManager, "typescript", "htmlTemplates")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTML templates matcher: %w", err)
+	}
+	defer templatesMatcher.Close()
+
+	// Find HTML templates with different parent capture names
 	parentCaptureNames := []string{"html.template", "html.generic.template", "html.options.template", "innerHTML.assignment"}
 
 	for _, parentName := range parentCaptureNames {
-		for captureMap := range handler.tsHtmlTemplates.ParentCaptures(tree.RootNode(), []byte(content), parentName) {
+		for captureMap := range templatesMatcher.ParentCaptures(tree.RootNode(), []byte(content), parentName) {
 			// Process different template literal capture names
 			templateCaptureNames := []string{"template.literal", "generic.template.literal", "options.template.literal", "innerHTML.template"}
 
@@ -344,11 +351,19 @@ func (d *TypeScriptDocument) analyzeCompletionContext(
 	// Convert position to byte offset
 	byteOffset := d.positionToByteOffset(position, content)
 
+	// Create a fresh completion context query matcher for thread safety
+	completionMatcher, err := Q.GetCachedQueryMatcher(handler.queryManager, "typescript", "completionContext")
+	if err != nil {
+		helpers.SafeDebugLog("[TypeScript] Failed to create completion context matcher: %v", err)
+		return analysis
+	}
+	defer completionMatcher.Close()
+
 	// Use tree-sitter to analyze context
 	helpers.SafeDebugLog("[TypeScript] Analyzing completion context at offset %d", byteOffset)
 
 	captureCount := 0
-	for captureMap := range handler.tsCompletionContext.ParentCaptures(tree.RootNode(), []byte(content), "context") {
+	for captureMap := range completionMatcher.ParentCaptures(tree.RootNode(), []byte(content), "context") {
 		captureCount++
 		helpers.SafeDebugLog("[TypeScript] Found capture map %d with keys: %v", captureCount, getCaptureMapKeys(captureMap))
 

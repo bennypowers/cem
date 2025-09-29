@@ -210,8 +210,14 @@ func (d *HTMLDocument) findCustomElements(handler *Handler) ([]types.CustomEleme
 		return nil, err
 	}
 
-	// Use the cached query matcher
-	matcher := handler.htmlCustomElements
+	// Create a fresh query matcher for thread safety
+	matcher, err := Q.GetCachedQueryMatcher(handler.queryManager, "html", "customElements")
+	if err != nil {
+		helpers.SafeDebugLog("[HTML] Failed to create custom elements matcher: %v", err)
+		return elements, nil
+	}
+	defer matcher.Close()
+
 	root := tree.RootNode()
 	contentBytes := []byte(content)
 
@@ -311,6 +317,14 @@ func (d *HTMLDocument) analyzeCompletionContext(position protocol.Position, hand
 	// Debug logging for the failing test case
 	helpers.SafeDebugLog("[HTML] analyzeCompletionContext: content=%q, position=%+v, byteOffset=%d", content, position, byteOffset)
 
+	// Create a fresh completion context query matcher for thread safety
+	completionMatcher, err := Q.GetCachedQueryMatcher(handler.queryManager, "html", "completionContext")
+	if err != nil {
+		helpers.SafeDebugLog("[HTML] Failed to create completion context matcher: %v", err)
+		return analysis
+	}
+	defer completionMatcher.Close()
+
 	// Use tree-sitter to analyze context
 	// First, collect all captures across all capture maps
 	allTagNames := []Q.CaptureInfo{}
@@ -318,7 +332,7 @@ func (d *HTMLDocument) analyzeCompletionContext(position protocol.Position, hand
 	allAttrValues := []Q.CaptureInfo{}
 
 	captureCount := 0
-	for captureMap := range handler.htmlCompletionContext.ParentCaptures(tree.RootNode(), []byte(content), "context") {
+	for captureMap := range completionMatcher.ParentCaptures(tree.RootNode(), []byte(content), "context") {
 		captureCount++
 		// Collect all captures of each type
 		if tagNames, exists := captureMap["tag.name"]; exists {
@@ -409,7 +423,7 @@ func (d *HTMLDocument) analyzeCompletionContext(position protocol.Position, hand
 
 	// Special case: check if cursor is positioned just after a custom element tag name or attribute (attribute name completion)
 	if analysis.Type == types.CompletionUnknown && captureCount > 0 {
-		for captureMap := range handler.htmlCompletionContext.ParentCaptures(tree.RootNode(), []byte(content), "context") {
+		for captureMap := range completionMatcher.ParentCaptures(tree.RootNode(), []byte(content), "context") {
 			for captureName, captures := range captureMap {
 				if captureName == "tag.name" {
 					for _, capture := range captures {
@@ -433,7 +447,7 @@ func (d *HTMLDocument) analyzeCompletionContext(position protocol.Position, hand
 
 		// Additional special case: check if cursor is positioned after a complete attribute
 		// This handles cases like <test-component color="red" |> where cursor is after the space
-		for captureMap := range handler.htmlCompletionContext.ParentCaptures(tree.RootNode(), []byte(content), "context") {
+		for captureMap := range completionMatcher.ParentCaptures(tree.RootNode(), []byte(content), "context") {
 			var associatedTagName string
 			var latestAttrEnd uint
 

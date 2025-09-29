@@ -29,35 +29,14 @@ import (
 
 // Handler implements language-specific operations for HTML documents
 type Handler struct {
-	queryManager          *Q.QueryManager
-	htmlCustomElements    *Q.QueryMatcher
-	htmlCompletionContext *Q.QueryMatcher
-	htmlScriptTags        *Q.QueryMatcher
-	htmlHeadElements      *Q.QueryMatcher
-	mu                    sync.RWMutex
+	queryManager *Q.QueryManager
+	mu           sync.RWMutex
 }
 
 // NewHandler creates a new HTML language handler
 func NewHandler(queryManager *Q.QueryManager) (*Handler, error) {
 	h := &Handler{
 		queryManager: queryManager,
-	}
-
-	var err error
-	if h.htmlCustomElements, err = Q.GetCachedQueryMatcher(h.queryManager, "html", "customElements"); err != nil {
-		return nil, fmt.Errorf("failed to load HTML custom elements query: %w", err)
-	}
-
-	if h.htmlCompletionContext, err = Q.GetCachedQueryMatcher(h.queryManager, "html", "completionContext"); err != nil {
-		return nil, fmt.Errorf("failed to load HTML completion context query: %w", err)
-	}
-
-	if h.htmlScriptTags, err = Q.GetCachedQueryMatcher(h.queryManager, "html", "scriptTags"); err != nil {
-		return nil, fmt.Errorf("failed to load HTML script tags query: %w", err)
-	}
-
-	if h.htmlHeadElements, err = Q.GetCachedQueryMatcher(h.queryManager, "html", "headElements"); err != nil {
-		return nil, fmt.Errorf("failed to load HTML head elements query: %w", err)
 	}
 
 	return h, nil
@@ -175,8 +154,14 @@ func (h *Handler) ParseScriptTags(doc types.Document) ([]types.ScriptTag, error)
 
 	var scriptTags []types.ScriptTag
 
-	// Use the cached script tags query matcher
-	for captureMap := range h.htmlScriptTags.ParentCaptures(tree.RootNode(), []byte(content), "script") {
+	// Create a fresh script tags query matcher for thread safety
+	scriptTagsMatcher, err := Q.GetCachedQueryMatcher(h.queryManager, "html", "scriptTags")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create script tags matcher: %w", err)
+	}
+	defer scriptTagsMatcher.Close()
+
+	for captureMap := range scriptTagsMatcher.ParentCaptures(tree.RootNode(), []byte(content), "script") {
 		scriptTag := types.ScriptTag{}
 
 		// Extract the script element range
@@ -302,22 +287,8 @@ func (h *Handler) Close() {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	if h.htmlCustomElements != nil {
-		h.htmlCustomElements.Close()
-		h.htmlCustomElements = nil
-	}
-	if h.htmlCompletionContext != nil {
-		h.htmlCompletionContext.Close()
-		h.htmlCompletionContext = nil
-	}
-	if h.htmlScriptTags != nil {
-		h.htmlScriptTags.Close()
-		h.htmlScriptTags = nil
-	}
-	if h.htmlHeadElements != nil {
-		h.htmlHeadElements.Close()
-		h.htmlHeadElements = nil
-	}
+	// No persistent QueryMatcher instances to clean up
+	// QueryMatchers are now created fresh per operation and closed immediately
 }
 
 // Helper function to check if position is within range

@@ -28,25 +28,14 @@ import (
 
 // Handler implements language-specific operations for TSX documents
 type Handler struct {
-	queryManager         *Q.QueryManager
-	tsxCustomElements    *Q.QueryMatcher
-	tsxCompletionContext *Q.QueryMatcher
-	mu                   sync.RWMutex
+	queryManager *Q.QueryManager
+	mu           sync.RWMutex
 }
 
 // NewHandler creates a new TSX language handler
 func NewHandler(queryManager *Q.QueryManager) (*Handler, error) {
 	h := &Handler{
 		queryManager: queryManager,
-	}
-
-	var err error
-	if h.tsxCustomElements, err = Q.GetCachedQueryMatcher(h.queryManager, "tsx", "customElements"); err != nil {
-		return nil, fmt.Errorf("failed to load TSX custom elements query: %w", err)
-	}
-
-	if h.tsxCompletionContext, err = Q.GetCachedQueryMatcher(h.queryManager, "tsx", "completionContext"); err != nil {
-		return nil, fmt.Errorf("failed to load TSX completion context query: %w", err)
 	}
 
 	return h, nil
@@ -143,14 +132,8 @@ func (h *Handler) Close() {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	if h.tsxCustomElements != nil {
-		h.tsxCustomElements.Close()
-		h.tsxCustomElements = nil
-	}
-	if h.tsxCompletionContext != nil {
-		h.tsxCompletionContext.Close()
-		h.tsxCompletionContext = nil
-	}
+	// No persistent QueryMatcher instances to clean up
+	// QueryMatchers are now created fresh per operation and closed immediately
 }
 
 // Helper function to check if position is within range

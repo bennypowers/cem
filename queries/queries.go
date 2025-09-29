@@ -394,7 +394,8 @@ type QueryMatcher struct {
 
 func (qm QueryMatcher) Close() {
 	// NOTE: we don't close queries here, only at the end of execution in QueryManager.Close
-	qm.cursor.Close()
+	// Return cursor to pool for reuse instead of closing it
+	cursorPool.Put(qm.cursor)
 }
 
 func (qm QueryMatcher) GetCaptureNameByIndex(index uint32) string {

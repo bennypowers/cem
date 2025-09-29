@@ -217,12 +217,18 @@ func (d *TSXDocument) findCustomElements(handler *Handler) ([]types.CustomElemen
 	// Use a map to deduplicate elements based on position
 	elementMap := make(map[string]types.CustomElementMatch)
 
-	// Use the cached query matcher to find custom elements in JSX
+	// Create a fresh query matcher for thread safety
+	customElementsMatcher, err := Q.GetCachedQueryMatcher(handler.queryManager, "tsx", "customElements")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create custom elements matcher: %w", err)
+	}
+	defer customElementsMatcher.Close()
+
 	// Handle multiple parent capture types: element, self.closing.tag, start.tag, incomplete.element
 	parentCaptureNames := []string{"element", "self.closing.tag", "start.tag", "incomplete.element"}
 
 	for _, parentName := range parentCaptureNames {
-		for captureMap := range handler.tsxCustomElements.ParentCaptures(tree.RootNode(), []byte(content), parentName) {
+		for captureMap := range customElementsMatcher.ParentCaptures(tree.RootNode(), []byte(content), parentName) {
 			if tagNames, exists := captureMap["tag.name"]; exists {
 				for _, tagCapture := range tagNames {
 					if strings.Contains(tagCapture.Text, "-") {
@@ -298,6 +304,13 @@ func (d *TSXDocument) analyzeCompletionContext(position protocol.Position, handl
 	// Convert position to byte offset
 	byteOffset := d.positionToByteOffset(position, content)
 
+	// Create a fresh completion context query matcher for thread safety
+	completionMatcher, err := Q.GetCachedQueryMatcher(handler.queryManager, "tsx", "completionContext")
+	if err != nil {
+		return analysis
+	}
+	defer completionMatcher.Close()
+
 	// Use tree-sitter to analyze context
 	// Collect all matching captures first, then prioritize
 	var possibleMatches []struct {
@@ -306,7 +319,7 @@ func (d *TSXDocument) analyzeCompletionContext(position protocol.Position, handl
 		captureMap  Q.CaptureMap
 	}
 
-	for captureMap := range handler.tsxCompletionContext.ParentCaptures(tree.RootNode(), []byte(content), "context") {
+	for captureMap := range completionMatcher.ParentCaptures(tree.RootNode(), []byte(content), "context") {
 		// Find which contexts the cursor is in by checking byte offsets
 		for captureName, captures := range captureMap {
 			// Skip generic "context" captures, only score specific completion types
@@ -336,7 +349,7 @@ func (d *TSXDocument) analyzeCompletionContext(position protocol.Position, handl
 	if len(possibleMatches) == 0 {
 		// Check for the special case where cursor is right after a custom element tag
 		// Look for captures that end just before the cursor position
-		for captureMap := range handler.tsxCompletionContext.ParentCaptures(tree.RootNode(), []byte(content), "context") {
+		for captureMap := range completionMatcher.ParentCaptures(tree.RootNode(), []byte(content), "context") {
 			for captureName, captures := range captureMap {
 				for _, capture := range captures {
 					// If cursor is 1-2 positions after a tag name completion capture

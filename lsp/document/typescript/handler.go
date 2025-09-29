@@ -28,25 +28,14 @@ import (
 
 // Handler implements language-specific operations for TypeScript documents
 type Handler struct {
-	queryManager        *Q.QueryManager
-	tsHtmlTemplates     *Q.QueryMatcher
-	tsCompletionContext *Q.QueryMatcher
-	mu                  sync.RWMutex
+	queryManager *Q.QueryManager
+	mu           sync.RWMutex
 }
 
 // NewHandler creates a new TypeScript language handler
 func NewHandler(queryManager *Q.QueryManager) (*Handler, error) {
 	h := &Handler{
 		queryManager: queryManager,
-	}
-
-	var err error
-	if h.tsHtmlTemplates, err = Q.GetCachedQueryMatcher(h.queryManager, "typescript", "htmlTemplates"); err != nil {
-		return nil, fmt.Errorf("failed to load TypeScript HTML templates query: %w", err)
-	}
-
-	if h.tsCompletionContext, err = Q.GetCachedQueryMatcher(h.queryManager, "typescript", "completionContext"); err != nil {
-		return nil, fmt.Errorf("failed to load TypeScript completion context query: %w", err)
 	}
 
 	return h, nil
@@ -143,14 +132,8 @@ func (h *Handler) Close() {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	if h.tsHtmlTemplates != nil {
-		h.tsHtmlTemplates.Close()
-		h.tsHtmlTemplates = nil
-	}
-	if h.tsCompletionContext != nil {
-		h.tsCompletionContext.Close()
-		h.tsCompletionContext = nil
-	}
+	// No persistent QueryMatcher instances to clean up
+	// QueryMatchers are now created fresh per operation and closed immediately
 }
 
 // Helper function to check if position is within range
