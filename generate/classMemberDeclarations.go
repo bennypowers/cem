@@ -25,6 +25,7 @@ import (
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
 	S "bennypowers.dev/cem/set"
+	"bennypowers.dev/cem/generate/jsdoc"
 
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
@@ -121,12 +122,12 @@ func amendFieldPrivacyWithCaptures(captures Q.CaptureMap, field *M.ClassField) {
 
 func (mp ModuleProcessor) amendFieldWithJsdoc(captures Q.CaptureMap, field *M.ClassField) error {
 	for _, x := range captures["member"] {
-		jsdoc := GetJSDocForNode(Q.GetDescendantById(mp.root, x.NodeId), mp.code)
-		info, err := NewPropertyInfo(jsdoc, mp.queryManager)
-		if err != nil {
-			return err
-		} else {
-			info.MergeToPropertyLike(&field.PropertyLike)
+		jsdocText := jsdoc.ExtractFromNode(Q.GetDescendantById(mp.root, x.NodeId), mp.code)
+		if jsdocText != "" {
+			err := jsdoc.EnrichPropertyWithJSDoc(jsdocText, &field.PropertyLike, mp.queryManager)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -136,12 +137,12 @@ func (mp ModuleProcessor) amendMethodWithJsdoc(captures Q.CaptureMap, method *M.
 	// JSDoc
 	if members, ok := captures["member"]; ok {
 		for _, member := range members {
-			jsdoc := GetJSDocForNode(Q.GetDescendantById(mp.root, member.NodeId), mp.code)
-			err, info := NewMethodInfo(jsdoc, mp.queryManager)
-			if err != nil {
-				return err
-			} else {
-				info.MergeToMethod(method)
+			jsdocText := jsdoc.ExtractFromNode(Q.GetDescendantById(mp.root, member.NodeId), mp.code)
+			if jsdocText != "" {
+				err := jsdoc.EnrichMethodWithJSDoc(jsdocText, method, mp.queryManager)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}

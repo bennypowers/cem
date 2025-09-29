@@ -23,6 +23,7 @@ import (
 
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
+	"bennypowers.dev/cem/generate/jsdoc"
 
 	A "github.com/IBM/fp-go/array"
 	ts "github.com/tree-sitter/go-tree-sitter"
@@ -177,13 +178,11 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 	}
 
 	err = mp.step("Processing jsdoc", 1, func() error {
-		jsdoc, ok := captures["class.jsdoc"]
-		if ok && len(jsdoc) > 0 {
-			info, err := NewClassInfo(jsdoc[0].Text, mp.queryManager)
+		jsdocNodes, ok := captures["class.jsdoc"]
+		if ok && len(jsdocNodes) > 0 {
+			err := jsdoc.EnrichClassWithJSDoc(jsdocNodes[0].Text, declaration, mp.queryManager)
 			if err != nil {
 				return err
-			} else {
-				info.MergeToClassDeclaration(declaration)
 			}
 		}
 		return nil
@@ -229,14 +228,15 @@ func (mp *ModuleProcessor) generateHTMLElementClassDeclaration(
 	}
 
 	err = mp.step("Processing class jsdoc", 1, func() error {
-		jsdoc, ok := captures["class.jsdoc"]
-		if ok && len(jsdoc) > 0 {
-			info, err := NewClassInfo(jsdoc[0].Text, mp.queryManager)
+		jsdocNodes, ok := captures["class.jsdoc"]
+		if ok && len(jsdocNodes) > 0 {
+			err := jsdoc.EnrichCustomElementWithJSDoc(jsdocNodes[0].Text, declaration, mp.queryManager)
 			if err != nil {
 				return err
-			} else {
-				info.MergeToCustomElementDeclaration(declaration)
-				alias = info.Alias
+			}
+			alias, err = jsdoc.ExtractAliasFromJSDoc(jsdocNodes[0].Text, mp.queryManager)
+			if err != nil {
+				return err
 			}
 		}
 		slices.SortStableFunc(declaration.Attributes, func(a M.Attribute, b M.Attribute) int {
@@ -300,14 +300,15 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 	})(declaration.Members)
 
 	err = mp.step("Processing class jsdoc", 2, func() error {
-		jsdoc, ok := captures["class.jsdoc"]
-		if ok && len(jsdoc) > 0 {
-			classInfo, err := NewClassInfo(jsdoc[0].Text, mp.queryManager)
+		jsdocNodes, ok := captures["class.jsdoc"]
+		if ok && len(jsdocNodes) > 0 {
+			err := jsdoc.EnrichCustomElementWithJSDoc(jsdocNodes[0].Text, declaration, mp.queryManager)
 			if err != nil {
 				return err
-			} else {
-				classInfo.MergeToCustomElementDeclaration(declaration)
-				alias = classInfo.Alias
+			}
+			alias, err = jsdoc.ExtractAliasFromJSDoc(jsdocNodes[0].Text, mp.queryManager)
+			if err != nil {
+				return err
 			}
 		}
 		slices.SortStableFunc(declaration.Attributes, func(a M.Attribute, b M.Attribute) int {

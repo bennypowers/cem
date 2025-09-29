@@ -22,6 +22,7 @@ import (
 
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
+	"bennypowers.dev/cem/generate/jsdoc"
 )
 
 func (mp *ModuleProcessor) generateFunctionDeclaration(
@@ -76,13 +77,11 @@ func (mp *ModuleProcessor) generateFunctionDeclaration(
 		}
 	}
 
-	jsdoc, ok := captures["function.jsdoc"]
-	if ok && len(jsdoc) > 0 {
-		error, info := NewMethodInfo(jsdoc[0].Text, mp.queryManager)
-		if error != nil {
-			return nil, errors.Join(err, error)
-		} else {
-			info.MergeToFunctionDeclaration(declaration)
+	jsdocNodes, ok := captures["function.jsdoc"]
+	if ok && len(jsdocNodes) > 0 {
+		jsdocErr := jsdoc.EnrichFunctionWithJSDoc(jsdocNodes[0].Text, declaration, mp.queryManager)
+		if jsdocErr != nil {
+			return nil, errors.Join(err, jsdocErr)
 		}
 	}
 
