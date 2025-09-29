@@ -28,6 +28,21 @@ import (
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
+// Completion scoring constants for prioritizing tree-sitter captures
+const (
+	// Base scores for different completion types (lower scores are more specific)
+	SCORE_TAG_NAME_BASE       = 10 // Most specific: tag name completion
+	SCORE_ATTR_NAME_BASE      = 20 // Medium specificity: attribute name completion
+	SCORE_ATTR_VALUE_BASE     = 30 // Least specific: attribute value completion
+
+	// Bonus/penalty scoring factors
+	SCORE_CURSOR_BONUS        = 50 // Large bonus for captures containing cursor
+	SCORE_BROAD_CAPTURE_PENALTY = 5  // Penalty multiplier for broad captures (ERROR nodes)
+
+	// Thresholds for completion analysis
+	MAX_REASONABLE_TAG_LENGTH = 10 // Threshold for reasonable tag name length
+)
+
 // TSXDocument represents a TSX document with tree-sitter parsing
 type TSXDocument struct {
 	uri        string
@@ -592,35 +607,43 @@ func extractAttributeNameFromText(text string) string {
 	return ""
 }
 
-// scoreMatch scores a completion match based on type specificity and capture precision
+// scoreMatch scores a completion match based on type specificity and capture precision.
+//
+// Scoring Strategy:
+// - Lower scores are better (more specific matches win)
+// - Tag name completion gets the lowest base score (most specific)
+// - Attribute value completion gets the highest base score (least specific)
+// - Large bonus for captures that contain the cursor position
+// - Penalties for overly broad captures (ERROR nodes) and long captures
 func scoreMatch(captureType string, captureMap Q.CaptureMap, capture Q.CaptureInfo, byteOffset uint) int {
 	score := 0
 
 	// Base score for match type (lower scores win for more specific captures)
 	switch captureType {
 	case "tag.name.completion":
-		score += 10 // Lowest base score for most specific
+		score += SCORE_TAG_NAME_BASE // Most specific completion type
 	case "attr.name.completion":
-		score += 20
+		score += SCORE_ATTR_NAME_BASE // Medium specificity
 	case "attr.value.completion":
-		score += 30 // Highest base score for most complex
+		score += SCORE_ATTR_VALUE_BASE // Least specific (most complex context)
 	}
 
-	// Huge bonus for captures that contain the cursor (lower score = better)
+	// Large bonus for captures that contain the cursor (lower score = better)
 	// This ensures that captures containing the cursor are strongly preferred
 	if capture.StartByte <= byteOffset && byteOffset <= capture.EndByte {
-		score -= 50 // Significant bonus for containing cursor
+		score -= SCORE_CURSOR_BONUS // Significant bonus for containing cursor
 	}
 
 	// Penalty for overly broad capture maps (ERROR nodes often have many captures)
-	// More captures usually means less precision
+	// More captures usually means less precision in tree-sitter parsing
 	if len(captureMap) > 2 {
-		score += len(captureMap) * 5 // Penalize broad captures
+		score += len(captureMap) * SCORE_BROAD_CAPTURE_PENALTY // Penalize broad captures
 	}
 
 	// Major penalty for overly long captures (likely ERROR node captures)
+	// Reasonable tag/attribute names are usually short
 	captureLength := capture.EndByte - capture.StartByte
-	if captureLength > 10 { // Reasonable tag names are usually short
+	if captureLength > MAX_REASONABLE_TAG_LENGTH {
 		score += int(captureLength) // Penalize based on length
 	}
 
