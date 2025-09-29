@@ -292,21 +292,15 @@ func (d *TSXDocument) analyzeCompletionContext(position protocol.Position, handl
 	}
 
 	for captureMap := range handler.tsxCompletionContext.ParentCaptures(tree.RootNode(), []byte(content), "context") {
-		fmt.Printf("[DEBUG] Found captureMap with keys: %v\n", getCaptureMapKeys(captureMap))
 		// Find which contexts the cursor is in by checking byte offsets
 		for captureName, captures := range captureMap {
 			// Skip generic "context" captures, only score specific completion types
 			if captureName == "context" {
 				continue
 			}
-			fmt.Printf("[DEBUG] Checking capture %s with %d captures\n", captureName, len(captures))
 			for _, capture := range captures {
-				fmt.Printf("[DEBUG] Capture %s: text='%s' start=%d end=%d (cursor at %d)\n",
-					captureName, capture.Text, capture.StartByte, capture.EndByte, byteOffset)
-
 				// Include captures that contain the cursor
 				if capture.StartByte <= byteOffset && byteOffset <= capture.EndByte {
-					fmt.Printf("[DEBUG] Match found for %s (cursor inside capture)\n", captureName)
 					possibleMatches = append(possibleMatches, struct {
 						captureType string
 						capture     Q.CaptureInfo
@@ -314,7 +308,6 @@ func (d *TSXDocument) analyzeCompletionContext(position protocol.Position, handl
 					}{captureName, capture, captureMap})
 				} else if captureName == "attr.name.completion" && capture.EndByte <= byteOffset && byteOffset-capture.EndByte <= 10 {
 					// Include attribute name captures that end just before the cursor (for attribute value completion)
-					fmt.Printf("[DEBUG] Match found for %s (attribute near cursor, distance=%d)\n", captureName, byteOffset-capture.EndByte)
 					possibleMatches = append(possibleMatches, struct {
 						captureType string
 						capture     Q.CaptureInfo
@@ -340,7 +333,6 @@ func (d *TSXDocument) analyzeCompletionContext(position protocol.Position, handl
 							// This is likely attribute name completion context
 							analysis.Type = types.CompletionAttributeName
 							analysis.TagName = extractCustomElementFromText(capture.Text)
-							fmt.Printf("[DEBUG] Special case: cursor after tag name, setting attribute completion\n")
 							return analysis
 						}
 					}
@@ -405,13 +397,10 @@ func (d *TSXDocument) analyzeCompletionContext(position protocol.Position, handl
 func (d *TSXDocument) findTagNameForAttribute(byteOffset uint, captureMap Q.CaptureMap) string {
 	// Look for tag name captures that are before the current position
 	if tagNames, exists := captureMap["tag.name.completion"]; exists {
-		fmt.Printf("[DEBUG] findTagNameForAttribute: found %d tag captures for offset %d\n", len(tagNames), byteOffset)
 		var closestTag *Q.CaptureInfo
 		var closestDistance = ^uint(0) // Max uint value
 
 		for _, tagCapture := range tagNames {
-			fmt.Printf("[DEBUG]   tag capture: text='%s' start=%d end=%d\n", tagCapture.Text, tagCapture.StartByte, tagCapture.EndByte)
-
 			// For attribute completions, we want tag captures that contain the cursor OR end just before it
 			if (tagCapture.StartByte <= byteOffset && byteOffset <= tagCapture.EndByte) ||
 				(tagCapture.EndByte <= byteOffset) {
@@ -427,7 +416,6 @@ func (d *TSXDocument) findTagNameForAttribute(byteOffset uint, captureMap Q.Capt
 				if distance < closestDistance {
 					closestDistance = distance
 					closestTag = &tagCapture
-					fmt.Printf("[DEBUG]   new closest tag: distance=%d\n", distance)
 				}
 			}
 		}
@@ -441,12 +429,10 @@ func (d *TSXDocument) findTagNameForAttribute(byteOffset uint, captureMap Q.Capt
 					tagName = closestTag.Text
 				}
 			}
-			fmt.Printf("[DEBUG] findTagNameForAttribute returning: '%s' (extracted from '%s')\n", tagName, closestTag.Text)
 			return tagName
 		}
 	}
 
-	fmt.Printf("[DEBUG] findTagNameForAttribute: no tag found\n")
 	return ""
 }
 
@@ -664,23 +650,12 @@ func (d *TSXDocument) AnalyzeCompletionContextTS(position protocol.Position, dm 
 					AnalyzeCompletionContext(types.Document, protocol.Position) *types.CompletionAnalysis
 				}); ok {
 					result := h.AnalyzeCompletionContext(d, position)
-					fmt.Printf("[DEBUG] AnalyzeCompletionContext returned: Type=%d, TagName=%s, AttributeName=%s\n",
-						result.Type, result.TagName, result.AttributeName)
 					return result
-				} else {
-					fmt.Printf("[DEBUG] Handler type assertion failed for AnalyzeCompletionContext\n")
 				}
-			} else {
-				fmt.Printf("[DEBUG] GetLanguageHandler returned nil for tsx\n")
 			}
-		} else {
-			fmt.Printf("[DEBUG] GetLanguageHandler method not found\n")
 		}
-	} else {
-		fmt.Printf("[DEBUG] Invalid dm value\n")
 	}
 	// Fallback: return safe default
-	fmt.Printf("[DEBUG] Returning fallback CompletionUnknown\n")
 	return &types.CompletionAnalysis{
 		Type: types.CompletionUnknown,
 	}
