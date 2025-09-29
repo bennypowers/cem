@@ -1,0 +1,10 @@
+{
+  "tagName": "button-element",
+  "content": "Test Button",
+  "attributes": {
+    "size": "large",
+    "variant": "primary",
+    "disabled": "true"
+  },
+  "context": "test"
+}

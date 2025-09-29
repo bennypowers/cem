@@ -22,12 +22,16 @@ import (
 	"fmt"
 	"sort"
 
+	"bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/mcp/helpers"
 	"bennypowers.dev/cem/mcp/types"
-	"bennypowers.dev/cem/set"
 	V "bennypowers.dev/cem/validate"
+	"bennypowers.dev/cem/validations"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
+
+type SchemaDefinitionMap map[string]any
+type AttributeMap map[string]string
 
 // GenerateHtmlArgs represents the arguments for the generate_html tool
 type GenerateHtmlArgs struct {
@@ -35,7 +39,7 @@ type GenerateHtmlArgs struct {
 	Context    string            `json:"context,omitempty"`
 	Options    map[string]string `json:"options,omitempty"`
 	Content    string            `json:"content,omitempty"`
-	Attributes map[string]string `json:"attributes,omitempty"`
+	Attributes AttributeMap      `json:"attributes,omitempty"`
 }
 
 // HTMLGenerationTemplateData specific to HTML generation
@@ -49,22 +53,6 @@ type HTMLGenerationTemplateData struct {
 	Slots              []SlotWithContent
 }
 
-// nativeHTMLAttributes defines standard HTML attributes that should be sorted alphabetically
-var nativeHTMLAttributes = set.NewSet(
-	"id", "class", "style", "title", "lang", "dir", "role",
-	"aria-label", "aria-labelledby", "aria-describedby", "aria-hidden", "aria-expanded",
-	"aria-controls", "aria-live", "aria-atomic", "aria-relevant", "aria-busy",
-	"tabindex", "contenteditable", "draggable", "dropzone", "hidden",
-	"spellcheck", "translate", "accesskey", "autocomplete", "autofocus",
-	"disabled", "readonly", "required", "multiple", "selected", "checked",
-	"value", "placeholder", "pattern", "min", "max", "step", "size",
-	"rows", "cols", "wrap", "accept", "capture", "form", "formaction",
-	"formenctype", "formmethod", "formnovalidate", "formtarget",
-	"name", "type", "src", "href", "target", "rel", "download",
-	"media", "sizes", "srcset", "alt", "width", "height", "loading",
-	"decoding", "crossorigin", "referrerpolicy", "integrity",
-)
-
 // NewHTMLGenerationTemplateData creates HTML generation template data
 func NewHTMLGenerationTemplateData(element types.ElementInfo, context string, options map[string]string) HTMLGenerationTemplateData {
 	return HTMLGenerationTemplateData{
@@ -73,7 +61,7 @@ func NewHTMLGenerationTemplateData(element types.ElementInfo, context string, op
 }
 
 // NewHTMLGenerationTemplateDataWithSchema creates HTML generation template data with schema context
-func NewHTMLGenerationTemplateDataWithSchema(element types.ElementInfo, context string, options map[string]string, schemaDefinitions interface{}) HTMLGenerationTemplateData {
+func NewHTMLGenerationTemplateDataWithSchema(element types.ElementInfo, context string, options map[string]string, schemaDefinitions any) HTMLGenerationTemplateData {
 	return HTMLGenerationTemplateData{
 		BaseTemplateData: NewBaseTemplateDataWithSchema(element, context, options, schemaDefinitions),
 	}
@@ -113,7 +101,12 @@ func handleGenerateHtml(
 	}
 
 	// Prepare template data with schema context
-	templateData := prepareHTMLTemplateDataWithSchema(element, genArgs, generatedHTML, schemaDefinitions)
+	templateData := prepareHTMLTemplateDataWithSchema(
+		element,
+		genArgs,
+		generatedHTML,
+		schemaDefinitions,
+	)
 
 	// Render the complete response using template
 	response, err := RenderTemplate("html_generation", templateData)
@@ -143,21 +136,33 @@ func generateHTMLStructure(element types.ElementInfo, args GenerateHtmlArgs) (st
 
 	// Add user-provided attributes
 	for name, value := range args.Attributes {
-		// Find the attribute definition if it exists
+		// Find the attribute definition if it exists in the element manifest
+		found := false
 		for _, attr := range element.Attributes() {
 			if attr.Name == name {
 				templateData.OptionalAttributes = append(templateData.OptionalAttributes, AttributeWithValue{
 					Attribute: attr,
 					Value:     value,
 				})
+				found = true
 				break
 			}
+		}
+
+		// If not found in manifest but is a valid global HTML attribute, include it
+		if !found && validations.IsGlobalAttribute(name) {
+			attr := types.Attribute{
+				FullyQualified: manifest.FullyQualified{Name: name},
+			}
+			templateData.OptionalAttributes = append(templateData.OptionalAttributes, AttributeWithValue{
+				Attribute: attr,
+				Value:     value,
+			})
 		}
 	}
 
 	// Sort attributes according to HTML conventions
 	templateData.SortedAttributes = sortAttributesForHTML(templateData.OptionalAttributes, element.Attributes())
-
 
 	// Prepare slot data with example content
 	for _, slot := range element.Slots() {
@@ -187,7 +192,12 @@ func generateHTMLStructure(element types.ElementInfo, args GenerateHtmlArgs) (st
 // prepareHTMLTemplateData prepares all data for the main HTML generation template
 
 // prepareHTMLTemplateDataWithSchema prepares all data for the main HTML generation template with schema context
-func prepareHTMLTemplateDataWithSchema(element types.ElementInfo, args GenerateHtmlArgs, generatedHTML string, schemaDefinitions interface{}) HTMLGenerationTemplateData {
+func prepareHTMLTemplateDataWithSchema(
+	element types.ElementInfo,
+	args GenerateHtmlArgs,
+	generatedHTML string,
+	schemaDefinitions SchemaDefinitionMap,
+) HTMLGenerationTemplateData {
 	templateData := HTMLGenerationTemplateData{
 		BaseTemplateData: NewBaseTemplateDataWithSchema(element, args.Context, args.Options, schemaDefinitions),
 		Content:          args.Content,
@@ -242,7 +252,7 @@ func sortAttributesForHTML(attributes []AttributeWithValue, manifestAttrs []type
 
 			if isManifestAttr {
 				customAttrs = append(customAttrs, *attr)
-			} else if nativeHTMLAttributes.Has(attr.Name) {
+			} else if validations.IsGlobalAttribute(attr.Name) {
 				nativeAttrs = append(nativeAttrs, *attr)
 			} else {
 				customAttrs = append(customAttrs, *attr)
@@ -290,11 +300,11 @@ func sortAttributesForHTML(attributes []AttributeWithValue, manifestAttrs []type
 }
 
 // getSchemaDefinitions retrieves schema definitions for template context
-func getSchemaDefinitions(registry types.MCPContext) (map[string]interface{}, error) {
+func getSchemaDefinitions(registry types.MCPContext) (SchemaDefinitionMap, error) {
 	// Get schema versions from manifests
 	versions := registry.GetManifestSchemaVersions()
 	if len(versions) == 0 {
-		return make(map[string]interface{}), nil
+		return make(map[string]any), nil
 	}
 
 	// Use the first version to load schema
@@ -304,7 +314,7 @@ func getSchemaDefinitions(registry types.MCPContext) (map[string]interface{}, er
 		return nil, fmt.Errorf("failed to load schema %s: %w", schemaVersion, err)
 	}
 	// Parse schema JSON - return the complete schema for template functions
-	var schema map[string]interface{}
+	schema := make(map[string]any)
 	if err := json.Unmarshal(schemaData, &schema); err != nil {
 		return nil, fmt.Errorf("failed to parse schema JSON: %w", err)
 	}
