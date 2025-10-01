@@ -58,6 +58,7 @@ type ServerContext interface {
 	// Server lifecycle
 	InitializeManifests() error
 	UpdateWorkspaceFromLSP(rootURI *string, workspaceFolders []protocol.WorkspaceFolder) error
+	Close() error
 
 	// Document operations
 	DocumentManager() (DocumentManager, error)

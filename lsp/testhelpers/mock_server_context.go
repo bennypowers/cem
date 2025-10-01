@@ -165,6 +165,11 @@ func (m *MockServerContext) UpdateWorkspaceFromLSP(rootURI *string, workspaceFol
 	return nil
 }
 
+func (m *MockServerContext) Close() error {
+	// Mock implementation - nothing to clean up
+	return nil
+}
+
 // Document operations
 func (m *MockServerContext) DocumentManager() (types.DocumentManager, error) {
 	if m.DocumentMgr != nil {
