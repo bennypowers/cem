@@ -18,6 +18,7 @@ package publishDiagnostics
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -216,10 +217,8 @@ func validateUnionType(typeText string, match AttributeMatch) []protocol.Diagnos
 	}
 
 	// Check if the value matches any of the union options
-	for _, option := range options {
-		if match.Value == option {
-			return diagnostics // Valid value found
-		}
+	if slices.Contains(options, match.Value) {
+		return diagnostics // Valid value found
 	}
 
 	// Value doesn't match any option - suggest the closest one
@@ -353,8 +352,8 @@ func parseUnionOptions(typeText string) []string {
 	var options []string
 
 	// Split by | and clean up quotes and whitespace
-	parts := strings.Split(typeText, "|")
-	for _, part := range parts {
+	parts := strings.SplitSeq(typeText, "|")
+	for part := range parts {
 		part = strings.TrimSpace(part)
 		part = strings.Trim(part, `"'`) // Remove quotes
 		if part != "" {
