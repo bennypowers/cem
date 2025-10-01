@@ -267,7 +267,7 @@ func findClosestAttribute(target string, attributes []M.Attribute) string {
 	bestDistance := 999
 
 	for _, attr := range attributes {
-		distance := levenshtein.Distance(strings.ToLower(target), strings.ToLower(attr.Name), nil)
+		distance := levenshtein.Distance(strings.ToLower(target), strings.ToLower(attr.Name), &levenshtein.Params{})
 		if distance < bestDistance && distance <= 3 { // Only suggest if reasonably close
 			bestDistance = distance
 			bestMatch = attr.Name
@@ -286,7 +286,7 @@ func findClosestGlobalAttribute(target string) string {
 
 	globalAttributes := validations.GetGlobalAttributes()
 	for attrName := range globalAttributes {
-		distance := levenshtein.Distance(targetLower, attrName, nil)
+		distance := levenshtein.Distance(targetLower, attrName, &levenshtein.Params{})
 		if distance < bestDistance && distance <= 2 { // Only suggest if close
 			bestDistance = distance
 			bestMatch = attrName
