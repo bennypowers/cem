@@ -42,9 +42,11 @@ type InProcessGenerateWatcher struct {
 	ctx             context.Context
 	cancel          context.CancelFunc
 	mu              sync.RWMutex
+	done            chan struct{} // Signal to stop file watching
 	workspace       types.WorkspaceContext
 	globs           []string
 	callback        ManifestUpdateCallback
+	debounceTimer   *time.Timer // Track debounce timer for cleanup
 }
 
 // NewInProcessGenerateWatcher creates a new in-process generate watcher
@@ -81,13 +83,22 @@ func NewInProcessGenerateWatcher(
 // Start begins the file watching process in a goroutine
 // This will watch for source file changes and regenerate the manifest automatically
 // NOTE: This generates manifests in-memory only and calls the callback, never writes files
+// Thread-safety: All operations in this function are protected by mu
 func (w *InProcessGenerateWatcher) Start() error {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
+	w.mu.Lock()
+	defer w.mu.Unlock()
 
 	if w.generateSession == nil {
 		return fmt.Errorf("watcher not initialized")
 	}
+
+	// Prevent starting the watcher multiple times
+	if w.done != nil {
+		return fmt.Errorf("generate watcher already running")
+	}
+
+	// PROTECTED BY LOCK: Initialize done channel for shutdown signaling
+	w.done = make(chan struct{})
 
 	// Do initial generation and call callback
 	if err := w.generateAndCallback(); err != nil {
@@ -110,6 +121,13 @@ func (w *InProcessGenerateWatcher) Start() error {
 
 // watchFiles sets up file watching for source files and calls generateAndCallback on changes
 func (w *InProcessGenerateWatcher) watchFiles() error {
+	// Get done channel reference under lock to avoid race condition
+	// We copy the channel reference once at startup to avoid holding the lock
+	// during the entire watch loop. The channel is immutable once copied.
+	w.mu.RLock()
+	done := w.done
+	w.mu.RUnlock()
+
 	// Create file watcher
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -134,7 +152,6 @@ func (w *InProcessGenerateWatcher) watchFiles() error {
 	}
 
 	// Debouncing to avoid excessive regeneration
-	var debounceTimer *time.Timer
 	debounceDuration := 500 * time.Millisecond
 
 	// Watch for file changes
@@ -149,16 +166,17 @@ func (w *InProcessGenerateWatcher) watchFiles() error {
 			if w.shouldProcessFile(event.Name) {
 				helpers.SafeDebugLog("File change detected: %s", event.Name)
 
-				// Reset debounce timer
-				if debounceTimer != nil {
-					debounceTimer.Stop()
+				// Reset and store debounce timer
+				w.mu.Lock()
+				if w.debounceTimer != nil {
+					w.debounceTimer.Stop()
 				}
-
-				debounceTimer = time.AfterFunc(debounceDuration, func() {
+				w.debounceTimer = time.AfterFunc(debounceDuration, func() {
 					if err := w.generateFullAndCallback(); err != nil {
 						helpers.SafeDebugLog("Failed to regenerate manifest: %v", err)
 					}
 				})
+				w.mu.Unlock()
 			}
 
 		case err, ok := <-watcher.Errors:
@@ -166,6 +184,11 @@ func (w *InProcessGenerateWatcher) watchFiles() error {
 				return nil
 			}
 			helpers.SafeDebugLog("File watcher error: %v", err)
+
+		case <-done:
+			// This case triggers when Stop() closes the done channel
+			helpers.SafeDebugLog("Generate watcher stopped due to shutdown signal")
+			return nil
 
 		case <-w.ctx.Done():
 			helpers.SafeDebugLog("Generate watcher stopped due to context cancellation")
@@ -262,11 +285,25 @@ func (w *InProcessGenerateWatcher) generateFullAndCallback() error {
 }
 
 // Stop cleanly shuts down the file watcher
+// Thread-safety: All operations in this function are protected by mu
 func (w *InProcessGenerateWatcher) Stop() error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
 	helpers.SafeDebugLog("Stopping in-process generate watcher")
+
+	// PROTECTED BY LOCK: Stop the debounce timer to prevent it from firing after shutdown
+	if w.debounceTimer != nil {
+		w.debounceTimer.Stop()
+		w.debounceTimer = nil
+	}
+
+	// PROTECTED BY LOCK: Signal the watchFiles goroutine to stop
+	// Closing the channel is thread-safe and will cause watchFiles to exit
+	if w.done != nil {
+		close(w.done)
+		w.done = nil
+	}
 
 	// Cancel the context to signal shutdown
 	if w.cancel != nil {

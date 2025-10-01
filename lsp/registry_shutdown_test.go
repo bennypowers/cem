@@ -23,6 +23,8 @@ import (
 
 	"bennypowers.dev/cem/internal/platform"
 	LSP "bennypowers.dev/cem/lsp"
+	M "bennypowers.dev/cem/manifest"
+	W "bennypowers.dev/cem/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -146,5 +148,73 @@ func TestRegistryFileWatcherStopWithTimeout(t *testing.T) {
 	case <-time.After(1 * time.Second):
 		t.Fatal("StopFileWatching did not complete within 1 second - goroutine is hanging!")
 	}
+}
+
+// TestGenerateWatcherShutdown verifies that the generate watcher goroutine
+// exits properly when Stop is called.
+// This test prevents the bug where LSP server hangs at 100% CPU from the generate watcher.
+func TestGenerateWatcherShutdown(t *testing.T) {
+	// Create a test workspace context
+	tempDir := t.TempDir()
+	workspace := W.NewFileSystemWorkspaceContext(tempDir)
+	err := workspace.Init()
+	require.NoError(t, err)
+
+	// Create callback
+	callbackCalled := false
+	callback := func(pkg *M.Package) error {
+		callbackCalled = true
+		return nil
+	}
+
+	// Create generate watcher
+	watcher, err := LSP.NewInProcessGenerateWatcher(workspace, []string{"**/*.ts"}, callback)
+	require.NoError(t, err)
+
+	// Start the watcher
+	err = watcher.Start()
+	require.NoError(t, err)
+
+	// Give it time to start
+	time.Sleep(10 * time.Millisecond)
+
+	// Stop the watcher with a timeout
+	done := make(chan error, 1)
+	go func() {
+		done <- watcher.Stop()
+	}()
+
+	select {
+	case err := <-done:
+		require.NoError(t, err, "Stop should complete without error")
+		assert.True(t, callbackCalled, "Initial callback should have been called")
+	case <-time.After(1 * time.Second):
+		t.Fatal("Generate watcher Stop did not complete within 1 second - goroutine is hanging!")
+	}
+}
+
+// TestGenerateWatcherDoubleStart verifies that starting the watcher twice fails appropriately
+func TestGenerateWatcherDoubleStart(t *testing.T) {
+	tempDir := t.TempDir()
+	workspace := W.NewFileSystemWorkspaceContext(tempDir)
+	err := workspace.Init()
+	require.NoError(t, err)
+
+	watcher, err := LSP.NewInProcessGenerateWatcher(workspace, []string{"**/*.ts"}, func(pkg *M.Package) error {
+		return nil
+	})
+	require.NoError(t, err)
+
+	// First start should succeed
+	err1 := watcher.Start()
+	require.NoError(t, err1, "First Start should succeed")
+
+	// Second start should fail
+	err2 := watcher.Start()
+	require.Error(t, err2, "Second Start should fail")
+	assert.Contains(t, err2.Error(), "already running", "Error should mention already running")
+
+	// Cleanup
+	_ = watcher.Stop()
 }
 
