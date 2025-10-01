@@ -571,6 +571,7 @@ func (r *Registry) AddManifest(pkg *M.Package) {
 }
 
 // StartFileWatching initializes file watching for manifest changes
+// Thread-safety: All operations in this function are protected by watcherMu.Lock()
 func (r *Registry) StartFileWatching(onReload func()) error {
 	r.watcherMu.Lock()
 	defer r.watcherMu.Unlock()
@@ -579,7 +580,13 @@ func (r *Registry) StartFileWatching(onReload func()) error {
 		return fmt.Errorf("no file watcher configured")
 	}
 
+	// Prevent starting the watcher multiple times
+	if r.watcherDone != nil {
+		return fmt.Errorf("file watcher already running")
+	}
+
 	r.onReload = onReload
+	// PROTECTED BY LOCK: Channel initialization is thread-safe with StopFileWatching
 	r.watcherDone = make(chan struct{})
 
 	// Add all known manifest paths to the watcher
@@ -598,6 +605,7 @@ func (r *Registry) StartFileWatching(onReload func()) error {
 }
 
 // StopFileWatching stops file watching
+// Thread-safety: All operations in this function are protected by watcherMu.Lock()
 func (r *Registry) StopFileWatching() error {
 	r.watcherMu.Lock()
 	defer r.watcherMu.Unlock()
@@ -606,8 +614,8 @@ func (r *Registry) StopFileWatching() error {
 		return nil
 	}
 
-	// Signal the watchFiles goroutine to stop (under lock to prevent races)
-	// Note: Closing the channel is thread-safe and will cause watchFiles to exit
+	// PROTECTED BY LOCK: This nil check and channel close are atomic with respect
+	// to StartFileWatching, preventing races between concurrent Start/Stop calls
 	if r.watcherDone != nil {
 		close(r.watcherDone)
 		r.watcherDone = nil
