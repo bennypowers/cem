@@ -138,17 +138,22 @@ func TestJSXAttributeDetection(t *testing.T) {
 	elements, err := doc.FindCustomElements(dm)
 	require.NoError(t, err, "Should parse JSX without error")
 
-	if len(elements) > 0 {
-		// Check my-card attributes
-		myCard := elements[0]
-		assert.Equal(t, "my-card", myCard.TagName)
-
-		// Verify attributes are detected
-		expectedAttrs := []string{"title", "variant", "disabled"}
-		for _, expectedAttr := range expectedAttrs {
-			_, exists := myCard.Attributes[expectedAttr]
-			assert.True(t, exists, "Should detect %s attribute", expectedAttr)
+	// Find my-card element (order is not guaranteed)
+	var myCard *types.CustomElementMatch
+	for i := range elements {
+		if elements[i].TagName == "my-card" {
+			myCard = &elements[i]
+			break
 		}
+	}
+
+	require.NotNil(t, myCard, "Should find my-card element in parsed elements")
+
+	// Verify attributes are detected
+	expectedAttrs := []string{"title", "variant", "disabled"}
+	for _, expectedAttr := range expectedAttrs {
+		_, exists := myCard.Attributes[expectedAttr]
+		assert.True(t, exists, "Should detect %s attribute", expectedAttr)
 	}
 }
 

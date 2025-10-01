@@ -23,7 +23,9 @@ import (
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
+	Q "bennypowers.dev/cem/queries"
 	"bennypowers.dev/cem/validations"
+	"github.com/agext/levenshtein"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
@@ -40,23 +42,31 @@ type AttributeMatch struct {
 
 // analyzeAttributeDiagnostics finds unknown attributes and suggests corrections
 func analyzeAttributeDiagnostics(ctx types.ServerContext, doc types.Document) []protocol.Diagnostic {
-	return AnalyzeAttributeDiagnosticsForTest(ctx, doc)
+	diagnostics, err := AnalyzeAttributeDiagnosticsForTest(ctx, doc)
+	if err != nil {
+		helpers.SafeDebugLog("[DIAGNOSTICS] Attribute analysis failed: %v", err)
+		return []protocol.Diagnostic{}
+	}
+	return diagnostics
 }
 
 // AnalyzeAttributeDiagnosticsForTest is the exported version for testing
-func AnalyzeAttributeDiagnosticsForTest(ctx types.ServerContext, doc types.Document) []protocol.Diagnostic {
+func AnalyzeAttributeDiagnosticsForTest(ctx types.ServerContext, doc types.Document) ([]protocol.Diagnostic, error) {
 	var diagnostics []protocol.Diagnostic
 
 	// Get document content to search for attributes
 	content, err := doc.Content()
 	if err != nil {
-		return diagnostics
+		return nil, fmt.Errorf("failed to get document content: %w", err)
 	}
 
 	helpers.SafeDebugLog("[DIAGNOSTICS] Analyzing attributes in document (length=%d)", len(content))
 
-	// Find all attributes in the document
-	attributeMatches := findAttributes(content)
+	// Find all attributes in the document using tree-sitter
+	attributeMatches, err := findAttributes(ctx, doc, content)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find attributes: %w", err)
+	}
 	helpers.SafeDebugLog("[DIAGNOSTICS] Found %d attributes", len(attributeMatches))
 
 	for _, match := range attributeMatches {
@@ -111,141 +121,119 @@ func AnalyzeAttributeDiagnosticsForTest(ctx types.ServerContext, doc types.Docum
 	}
 
 	helpers.SafeDebugLog("[DIAGNOSTICS] Generated %d attribute diagnostics", len(diagnostics))
-	return diagnostics
+	return diagnostics, nil
 }
 
-// findAttributes finds all attributes in the document content
-func findAttributes(content string) []AttributeMatch {
+// findAttributes finds all attributes in the document using tree-sitter
+func findAttributes(ctx types.ServerContext, doc types.Document, content string) ([]AttributeMatch, error) {
 	var matches []AttributeMatch
-	lines := strings.Split(content, "\n")
 
-	for lineIdx, line := range lines {
-		// Look for attributes in opening tags
-		idx := 0
-		for {
-			tagStart := strings.Index(line[idx:], "<")
-			if tagStart == -1 {
-				break
-			}
-			tagStart += idx
-
-			// Skip closing tags and comments
-			if tagStart+1 < len(line) && (line[tagStart+1] == '/' || line[tagStart+1] == '!') {
-				idx = tagStart + 1
-				continue
-			}
-
-			// Find the tag name first
-			tagNameEnd := strings.IndexAny(line[tagStart+1:], " \t\n\r/>")
-			if tagNameEnd == -1 {
-				idx = tagStart + 1
-				continue
-			}
-			tagName := line[tagStart+1 : tagStart+1+tagNameEnd]
-
-			// Find the end of the tag
-			tagEnd := strings.Index(line[tagStart:], ">")
-			if tagEnd == -1 {
-				idx = tagStart + 1
-				continue
-			}
-			tagEnd += tagStart
-
-			// Extract the attribute section
-			attrSection := line[tagStart+1+tagNameEnd : tagEnd]
-
-			// Find attributes in this section
-			attrMatches := findAttributesInSection(attrSection, tagName, uint32(lineIdx), uint32(tagStart+1+tagNameEnd))
-			matches = append(matches, attrMatches...)
-
-			idx = tagEnd + 1
-		}
+	// Get the tree-sitter tree
+	tree := doc.Tree()
+	if tree == nil {
+		return nil, fmt.Errorf("no tree-sitter tree available")
 	}
 
-	return matches
+	// Get query manager from context
+	qm, err := ctx.QueryManager()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get QueryManager: %w", err)
+	}
+
+	// Create query matcher for attributes
+	matcher, err := Q.NewQueryMatcher(qm, "html", "attributes")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create attributes query matcher: %w", err)
+	}
+	defer matcher.Close()
+
+	root := tree.RootNode()
+	text := []byte(content)
+
+	// Process start tags
+	for captureMap := range matcher.ParentCaptures(root, text, "start.tag") {
+		processTagCaptures(captureMap, content, &matches)
+	}
+
+	// Process self-closing tags
+	for captureMap := range matcher.ParentCaptures(root, text, "self.closing.tag") {
+		processTagCaptures(captureMap, content, &matches)
+	}
+
+	helpers.SafeDebugLog("[ATTR_DIAG] Tree-sitter found %d attributes", len(matches))
+	return matches, nil
 }
 
-// findAttributesInSection finds attributes within a tag's attribute section
-func findAttributesInSection(section string, tagName string, line uint32, startOffset uint32) []AttributeMatch {
-	var matches []AttributeMatch
+// processTagCaptures processes a single tag's captures and extracts attributes
+func processTagCaptures(captureMap Q.CaptureMap, content string, matches *[]AttributeMatch) {
+	var tagName string
+	var attrNames []Q.CaptureInfo
+	var quotedValues []Q.CaptureInfo
+	var unquotedValues []Q.CaptureInfo
 
-	// Parse attribute names and values
-	i := 0
-	for i < len(section) {
-		// Skip whitespace
-		for i < len(section) && (section[i] == ' ' || section[i] == '\t' || section[i] == '\n' || section[i] == '\r') {
-			i++
-		}
-		if i >= len(section) {
-			break
-		}
-
-		// Find attribute name (ends with =, whitespace, or end of section)
-		nameStart := i
-		for i < len(section) && section[i] != '=' && section[i] != ' ' && section[i] != '\t' && section[i] != '\n' && section[i] != '\r' {
-			i++
-		}
-
-		if i > nameStart {
-			attrName := section[nameStart:i]
-
-			// Skip if this looks like a value rather than an attribute name
-			if strings.Contains(attrName, `"`) || strings.Contains(attrName, `'`) {
-				continue
-			}
-
-			// Initialize attribute match
-			attrMatch := AttributeMatch{
-				Name:     attrName,
-				TagName:  tagName,
-				Value:    "",
-				HasValue: false,
-				Line:     line,
-				StartCol: startOffset + uint32(nameStart),
-				EndCol:   startOffset + uint32(i),
-			}
-
-			// Check if there's a value
-			if i < len(section) && section[i] == '=' {
-				i++ // skip =
-				// Skip whitespace
-				for i < len(section) && (section[i] == ' ' || section[i] == '\t') {
-					i++
-				}
-
-				valueStart := i
-				attrMatch.HasValue = true
-
-				// Extract quoted value
-				if i < len(section) && (section[i] == '"' || section[i] == '\'') {
-					quote := section[i]
-					i++ // skip opening quote
-					valueStart = i
-					for i < len(section) && section[i] != quote {
-						i++
-					}
-					if valueStart < i {
-						attrMatch.Value = section[valueStart:i]
-					}
-					if i < len(section) {
-						i++ // skip closing quote
-					}
-				} else {
-					// Extract unquoted value
-					for i < len(section) && section[i] != ' ' && section[i] != '\t' && section[i] != '\n' && section[i] != '\r' {
-						i++
-					}
-					if valueStart < i {
-						attrMatch.Value = section[valueStart:i]
-					}
-				}
-			}
-
-			matches = append(matches, attrMatch)
-		}
+	// Extract tag name
+	if tagNodes, ok := captureMap["tag.name"]; ok && len(tagNodes) > 0 {
+		tagName = tagNodes[0].Text
 	}
 
-	return matches
+	if tagName == "" {
+		return
+	}
+
+	// Extract attribute names
+	if names, ok := captureMap["attr.name"]; ok {
+		attrNames = names
+	}
+
+	// Extract quoted values
+	if quoted, ok := captureMap["attr.value.quoted"]; ok {
+		quotedValues = quoted
+	}
+
+	// Extract unquoted values
+	if unquoted, ok := captureMap["attr.value.unquoted"]; ok {
+		unquotedValues = unquoted
+	}
+
+	// Process each attribute
+	for i, attrNameInfo := range attrNames {
+		attrName := attrNameInfo.Text
+		attrValue := ""
+		hasValue := false
+
+		// Check for quoted value
+		if i < len(quotedValues) {
+			rawValue := quotedValues[i].Text
+			// Strip quotes
+			if len(rawValue) >= 2 {
+				attrValue = rawValue[1 : len(rawValue)-1]
+			}
+			hasValue = true
+		} else if i < len(unquotedValues) {
+			attrValue = unquotedValues[i].Text
+			hasValue = true
+		}
+
+		// Convert byte positions to line/column
+		lines := strings.Split(content[:attrNameInfo.StartByte], "\n")
+		line := uint32(len(lines) - 1)
+		startCol := uint32(len(lines[len(lines)-1]))
+
+		endLines := strings.Split(content[:attrNameInfo.EndByte], "\n")
+		endCol := uint32(len(endLines[len(endLines)-1]))
+
+		match := AttributeMatch{
+			Name:     attrName,
+			TagName:  tagName,
+			Value:    attrValue,
+			HasValue: hasValue,
+			Line:     line,
+			StartCol: startCol,
+			EndCol:   endCol,
+		}
+
+		*matches = append(*matches, match)
+	}
 }
 
 // isCustomElement checks if a tag name looks like a custom element (contains hyphen)
@@ -279,7 +267,7 @@ func findClosestAttribute(target string, attributes []M.Attribute) string {
 	bestDistance := 999
 
 	for _, attr := range attributes {
-		distance := levenshteinDistance(strings.ToLower(target), strings.ToLower(attr.Name))
+		distance := levenshtein.Distance(strings.ToLower(target), strings.ToLower(attr.Name), nil)
 		if distance < bestDistance && distance <= 3 { // Only suggest if reasonably close
 			bestDistance = distance
 			bestMatch = attr.Name
@@ -298,7 +286,7 @@ func findClosestGlobalAttribute(target string) string {
 
 	globalAttributes := validations.GetGlobalAttributes()
 	for attrName := range globalAttributes {
-		distance := levenshteinDistance(targetLower, attrName)
+		distance := levenshtein.Distance(targetLower, attrName, nil)
 		if distance < bestDistance && distance <= 2 { // Only suggest if close
 			bestDistance = distance
 			bestMatch = attrName
@@ -357,49 +345,4 @@ func createUnknownAttributeDiagnostic(match AttributeMatch) protocol.Diagnostic 
 		Severity: &[]protocol.DiagnosticSeverity{protocol.DiagnosticSeverityWarning}[0],
 		Source:   &[]string{"cem-lsp"}[0],
 	}
-}
-
-// levenshteinDistance calculates the edit distance between two strings
-func levenshteinDistance(a, b string) int {
-	if len(a) == 0 {
-		return len(b)
-	}
-	if len(b) == 0 {
-		return len(a)
-	}
-
-	matrix := make([][]int, len(a)+1)
-	for i := range matrix {
-		matrix[i] = make([]int, len(b)+1)
-		matrix[i][0] = i
-	}
-	for j := 0; j <= len(b); j++ {
-		matrix[0][j] = j
-	}
-
-	for i := 1; i <= len(a); i++ {
-		for j := 1; j <= len(b); j++ {
-			cost := 0
-			if a[i-1] != b[j-1] {
-				cost = 1
-			}
-			matrix[i][j] = minAttribute(
-				matrix[i-1][j]+1,      // deletion
-				matrix[i][j-1]+1,      // insertion
-				matrix[i-1][j-1]+cost, // substitution
-			)
-		}
-	}
-
-	return matrix[len(a)][len(b)]
-}
-
-func minAttribute(a, b, c int) int {
-	if a <= b && a <= c {
-		return a
-	}
-	if b <= c {
-		return b
-	}
-	return c
 }

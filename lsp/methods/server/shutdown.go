@@ -27,15 +27,9 @@ func Shutdown(ctx types.ServerContext, context *glsp.Context) error {
 	// Send shutdown message
 	logging.Info("CEM LSP Server shutting down...")
 
-	dm, _ := ctx.DocumentManager()
-	if dm != nil {
-		dm.Close()
-	}
-
-	if ws := ctx.Workspace(); ws != nil {
-		if err := ws.Cleanup(); err != nil {
-			logging.Warning("Error during workspace cleanup: %v", err)
-		}
+	// Close the server to stop all watchers and cleanup resources
+	if err := ctx.Close(); err != nil {
+		logging.Warning("Error during server cleanup: %v", err)
 	}
 
 	return nil

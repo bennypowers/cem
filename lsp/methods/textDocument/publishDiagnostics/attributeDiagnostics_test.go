@@ -38,7 +38,10 @@ func TestAttributeDiagnostics_GlobalAttributes(t *testing.T) {
 	doc := dm.OpenDocument("test.html", content, 1)
 	ctx.AddDocument("test.html", doc)
 
-	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
+	diagnostics, err := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
+	if err != nil {
+		t.Fatalf("Failed to analyze attributes: %v", err)
+	}
 
 	// Should have no diagnostics for global attributes
 	if len(diagnostics) != 0 {
@@ -65,7 +68,10 @@ func TestAttributeDiagnostics_CustomElementValidAttribute(t *testing.T) {
 		"color": {FullyQualified: M.FullyQualified{Name: "color"}},
 	})
 
-	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
+	diagnostics, err := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
+	if err != nil {
+		t.Fatalf("Failed to analyze attributes: %v", err)
+	}
 
 	// Should have no diagnostics for valid custom element attributes
 	if len(diagnostics) != 0 {
@@ -92,7 +98,10 @@ func TestAttributeDiagnostics_CustomElementInvalidAttribute(t *testing.T) {
 		"color": {FullyQualified: M.FullyQualified{Name: "color"}},
 	})
 
-	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
+	diagnostics, err := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
+	if err != nil {
+		t.Fatalf("Failed to analyze attributes: %v", err)
+	}
 
 	// Should have 2 diagnostics for invalid attributes
 	if len(diagnostics) != 2 {
@@ -124,7 +133,10 @@ func TestAttributeDiagnostics_ScriptTypeModule(t *testing.T) {
 	doc := dm.OpenDocument("test.html", content, 1)
 	ctx.AddDocument("test.html", doc)
 
-	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
+	diagnostics, err := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
+	if err != nil {
+		t.Fatalf("Failed to analyze attributes: %v", err)
+	}
 
 	// Should have 0 diagnostics - script[type] is outside CEM scope
 	if len(diagnostics) != 0 {
@@ -151,7 +163,10 @@ func TestAttributeDiagnostics_GlobalAttributeTypoOnCustomElement(t *testing.T) {
 	// Custom element with no defined attributes
 	ctx.AddAttributes("my-custom-element", map[string]*M.Attribute{})
 
-	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
+	diagnostics, err := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
+	if err != nil {
+		t.Fatalf("Failed to analyze attributes: %v", err)
+	}
 
 	// Should have 2 diagnostics for global attribute typos on custom elements
 	if len(diagnostics) != 2 {
@@ -193,7 +208,10 @@ func TestAttributeDiagnostics_StandardElementIgnored(t *testing.T) {
 	doc := dm.OpenDocument("test.html", content, 1)
 	ctx.AddDocument("test.html", doc)
 
-	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
+	diagnostics, err := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
+	if err != nil {
+		t.Fatalf("Failed to analyze attributes: %v", err)
+	}
 
 	// Should have 0 diagnostics - standard HTML elements are outside CEM scope (except slot)
 	if len(diagnostics) != 0 {

@@ -497,7 +497,6 @@ func analyzeDocument(dm *DocumentManager) {
   - Issue: Refactoring created interface mismatches between test contexts and actual interfaces
   - Solution: Updated test implementations to use unified `types.Document` interface
   - Impact: All completion tests now pass with proper type safety
-- **Definition Context Enhancement**: Added `GetRawDocumentManager()` method to `DefinitionContext` interface
   - Issue: Nil pointer dereference in definition tests when `FindElementAtPosition` called with nil DocumentManager
   - Solution: Extended `DefinitionContext` interface to include DocumentManager access (matching `HoverContext` pattern)
   - Impact: Definition tests now pass without crashes, proper DocumentManager threading

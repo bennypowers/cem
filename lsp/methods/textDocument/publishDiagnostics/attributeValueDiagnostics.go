@@ -18,15 +18,16 @@ package publishDiagnostics
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
+	"github.com/agext/levenshtein"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
-
 
 // analyzeAttributeValueDiagnostics validates attribute values against their type definitions
 func analyzeAttributeValueDiagnostics(ctx types.ServerContext, doc types.Document) []protocol.Diagnostic {
@@ -216,10 +217,8 @@ func validateUnionType(typeText string, match AttributeMatch) []protocol.Diagnos
 	}
 
 	// Check if the value matches any of the union options
-	for _, option := range options {
-		if match.Value == option {
-			return diagnostics // Valid value found
-		}
+	if slices.Contains(options, match.Value) {
+		return diagnostics // Valid value found
 	}
 
 	// Value doesn't match any option - suggest the closest one
@@ -353,8 +352,8 @@ func parseUnionOptions(typeText string) []string {
 	var options []string
 
 	// Split by | and clean up quotes and whitespace
-	parts := strings.Split(typeText, "|")
-	for _, part := range parts {
+	parts := strings.SplitSeq(typeText, "|")
+	for part := range parts {
 		part = strings.TrimSpace(part)
 		part = strings.Trim(part, `"'`) // Remove quotes
 		if part != "" {
@@ -375,7 +374,11 @@ func findClosestUnionOption(value string, options []string) string {
 	bestDistance := 999
 
 	for _, option := range options {
-		distance := levenshteinDistance(strings.ToLower(value), strings.ToLower(option))
+		distance := levenshtein.Distance(
+			strings.ToLower(value),
+			strings.ToLower(option),
+			nil,
+		)
 		if distance < bestDistance && distance <= 2 { // Only suggest if reasonably close
 			bestDistance = distance
 			bestMatch = option
@@ -443,4 +446,3 @@ func findAttributesWithValues(doc types.Document, ctx types.ServerContext) []Att
 
 	return matches
 }
-

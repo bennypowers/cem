@@ -36,6 +36,10 @@ type documentManager struct {
 	languageHandlers   map[string]types.LanguageHandler
 	incrementalParser  types.IncrementalParser
 	mu                 sync.RWMutex
+	// Per-URI locks to serialize tree-sitter operations on the same document
+	// Tree-sitter C objects are NOT thread-safe - concurrent access causes segfaults
+	uriLocks           map[string]*sync.Mutex
+	uriLocksMu         sync.Mutex
 }
 
 // NewDocumentManager creates a new document manager with language handlers
@@ -51,6 +55,7 @@ func NewDocumentManager() (types.Manager, error) {
 		queryManager:      queryManager,
 		languageHandlers:  make(map[string]types.LanguageHandler),
 		incrementalParser: newIncrementalParser(types.ParseStrategyAuto),
+		uriLocks:          make(map[string]*sync.Mutex),
 	}
 
 	// Initialize language handlers
@@ -61,8 +66,35 @@ func NewDocumentManager() (types.Manager, error) {
 	return dm, nil
 }
 
+// getURILock returns or creates a mutex for the given URI
+// This ensures tree-sitter operations on the same document are serialized
+func (dm *documentManager) getURILock(uri string) *sync.Mutex {
+	dm.uriLocksMu.Lock()
+	defer dm.uriLocksMu.Unlock()
+
+	if lock, exists := dm.uriLocks[uri]; exists {
+		return lock
+	}
+
+	lock := &sync.Mutex{}
+	dm.uriLocks[uri] = lock
+	return lock
+}
+
+// cleanupURILock removes the mutex for a URI when the document is closed
+func (dm *documentManager) cleanupURILock(uri string) {
+	dm.uriLocksMu.Lock()
+	defer dm.uriLocksMu.Unlock()
+	delete(dm.uriLocks, uri)
+}
+
 // OpenDocument tracks a new document
 func (dm *documentManager) OpenDocument(uri, content string, version int32) types.Document {
+	// Serialize all tree-sitter operations for this URI to prevent concurrent access
+	uriLock := dm.getURILock(uri)
+	uriLock.Lock()
+	defer uriLock.Unlock()
+
 	dm.mu.Lock()
 	defer dm.mu.Unlock()
 
@@ -102,12 +134,21 @@ func (dm *documentManager) UpdateDocumentWithChanges(uri, content string, versio
 	helpers.SafeDebugLog("[DOCUMENT] UpdateDocumentWithChanges: URI=%s, Version=%d, ContentLength=%d, Changes=%d",
 		uri, version, len(content), len(changes))
 
+	// Serialize all tree-sitter operations for this URI to prevent concurrent access
+	uriLock := dm.getURILock(uri)
+	uriLock.Lock()
+	defer uriLock.Unlock()
+
 	dm.mu.Lock()
 	defer dm.mu.Unlock()
 
 	doc, exists := dm.documents[uri]
 	if !exists {
 		helpers.SafeDebugLog("[DOCUMENT] Document not found, creating new one: %s", uri)
+		// Note: We already hold the URI lock, OpenDocument will try to acquire it again
+		// Need to unlock before calling OpenDocument to avoid deadlock
+		dm.mu.Unlock()
+		uriLock.Unlock()
 		return dm.OpenDocument(uri, content, version)
 	}
 
@@ -180,6 +221,11 @@ func (dm *documentManager) AllDocuments() []types.Document {
 
 // CloseDocument removes a document from tracking
 func (dm *documentManager) CloseDocument(uri string) {
+	// Serialize all tree-sitter operations for this URI to prevent concurrent access
+	uriLock := dm.getURILock(uri)
+	uriLock.Lock()
+	defer uriLock.Unlock()
+
 	dm.mu.Lock()
 	defer dm.mu.Unlock()
 
@@ -187,6 +233,9 @@ func (dm *documentManager) CloseDocument(uri string) {
 		doc.Close()
 		delete(dm.documents, uri)
 	}
+
+	// Clean up the URI lock after closing the document
+	dm.cleanupURILock(uri)
 }
 
 // QueryManager returns the query manager for tree-sitter queries

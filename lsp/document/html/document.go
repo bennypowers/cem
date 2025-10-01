@@ -200,15 +200,16 @@ func (d *HTMLDocument) findCustomElements(handler *Handler) ([]types.CustomEleme
 		return elements, nil
 	}
 
-	tree := d.Tree()
+	// Hold read lock for the ENTIRE duration of tree usage to prevent Close() from freeing it
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+
+	tree := d.tree  // Access tree directly while holding lock
 	if tree == nil {
 		return elements, nil
 	}
 
-	content, err := d.Content()
-	if err != nil {
-		return nil, err
-	}
+	content := d.content  // Access content directly while holding lock
 
 	// Create a fresh query matcher for thread safety
 	matcher, err := Q.GetCachedQueryMatcher(handler.queryManager, "html", "customElements")

@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"testing/synctest"
@@ -397,16 +398,24 @@ func TestFileWatchingErrorHandling(t *testing.T) {
 	})
 
 	t.Run("double start watching", func(t *testing.T) {
-		err1 := registry.StartFileWatching(func() {})
-		err2 := registry.StartFileWatching(func() {})
+		// Ensure clean state - stop any existing watcher first
+		_ = registry.StopFileWatching()
 
+		// First start should succeed
+		err1 := registry.StartFileWatching(func() {})
 		if err1 != nil {
 			t.Errorf("First StartFileWatching failed: %v", err1)
 		}
-		if err2 != nil {
-			t.Errorf("Second StartFileWatching failed: %v", err2)
+
+		// Second start should fail with "already running" error
+		err2 := registry.StartFileWatching(func() {})
+		if err2 == nil {
+			t.Errorf("Second StartFileWatching should have failed with 'already running' error, but succeeded")
+		} else if !strings.Contains(err2.Error(), "already running") {
+			t.Errorf("Expected 'already running' error, got: %v", err2)
 		}
 
+		// Cleanup
 		defer func() { _ = registry.StopFileWatching() }()
 	})
 

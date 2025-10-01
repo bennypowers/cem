@@ -103,7 +103,9 @@ type Registry struct {
 	// File watching
 	fileWatcher platform.FileWatcher
 	watcherMu   sync.RWMutex
-	onReload    func() // Callback when manifests are reloaded
+	watcherDone chan struct{}  // Signal to stop file watching
+	watcherWg   sync.WaitGroup // Wait for watcher goroutine to exit
+	onReload    func()         // Callback when manifests are reloaded
 	// Generate watching for local project
 	generateWatcher platform.GenerateWatcher
 	generateMu      sync.RWMutex
@@ -570,6 +572,7 @@ func (r *Registry) AddManifest(pkg *M.Package) {
 }
 
 // StartFileWatching initializes file watching for manifest changes
+// Thread-safety: All operations in this function are protected by watcherMu.Lock()
 func (r *Registry) StartFileWatching(onReload func()) error {
 	r.watcherMu.Lock()
 	defer r.watcherMu.Unlock()
@@ -578,7 +581,14 @@ func (r *Registry) StartFileWatching(onReload func()) error {
 		return fmt.Errorf("no file watcher configured")
 	}
 
+	// Prevent starting the watcher multiple times
+	if r.watcherDone != nil {
+		return fmt.Errorf("file watcher already running")
+	}
+
 	r.onReload = onReload
+	// PROTECTED BY LOCK: Channel initialization is thread-safe with StopFileWatching
+	r.watcherDone = make(chan struct{})
 
 	// Add all known manifest paths to the watcher
 	for _, path := range r.ManifestPaths {
@@ -590,12 +600,16 @@ func (r *Registry) StartFileWatching(onReload func()) error {
 	}
 
 	// Start watching in a goroutine
-	go r.watchFiles()
+	r.watcherWg.Go(func() {
+		r.watchFiles()
+		helpers.SafeDebugLog("File watcher goroutine exiting")
+	})
 
 	return nil
 }
 
 // StopFileWatching stops file watching
+// Thread-safety: All operations in this function are protected by watcherMu.Lock()
 func (r *Registry) StopFileWatching() error {
 	r.watcherMu.Lock()
 	defer r.watcherMu.Unlock()
@@ -604,6 +618,25 @@ func (r *Registry) StopFileWatching() error {
 		return nil
 	}
 
+	// PROTECTED BY LOCK: This nil check and channel close are atomic with respect
+	// to StartFileWatching, preventing races between concurrent Start/Stop calls
+	if r.watcherDone != nil {
+		close(r.watcherDone)
+		// Closing is sufficient for shutdown signaling
+	}
+
+	// Release lock before waiting to avoid deadlock
+	r.watcherMu.Unlock()
+
+	// Wait for goroutine to exit
+	r.watcherWg.Wait()
+	helpers.SafeDebugLog("File watcher goroutine has exited")
+
+	// Reacquire lock for final cleanup
+	r.watcherMu.Lock()
+
+	// Now it's safe to set watcherDone to nil - goroutine has exited
+	r.watcherDone = nil
 	err := r.fileWatcher.Close()
 	r.onReload = nil
 	return err
@@ -612,6 +645,9 @@ func (r *Registry) StopFileWatching() error {
 // watchFiles handles file system events in a goroutine
 func (r *Registry) watchFiles() {
 	// Get channel references under lock to avoid race condition
+	// We copy the channel references once at startup to avoid holding the lock
+	// during the entire watch loop. The channels are immutable once copied,
+	// so this is safe even if StopFileWatching is called concurrently.
 	r.watcherMu.RLock()
 	if r.fileWatcher == nil {
 		r.watcherMu.RUnlock()
@@ -619,8 +655,11 @@ func (r *Registry) watchFiles() {
 	}
 	events := r.fileWatcher.Events()
 	errors := r.fileWatcher.Errors()
+	done := r.watcherDone
 	r.watcherMu.RUnlock()
 
+	// If done is nil, the select will simply ignore that case (nil channels never trigger)
+	// This shouldn't happen in practice, but is safe if it does
 	for {
 		select {
 		case event, ok := <-events:
@@ -633,6 +672,10 @@ func (r *Registry) watchFiles() {
 				return
 			}
 			helpers.SafeDebugLog("File watcher error: %v", err)
+		case <-done:
+			// This case triggers when StopFileWatching closes the done channel
+			helpers.SafeDebugLog("File watcher stopped due to shutdown signal")
+			return
 		}
 	}
 }

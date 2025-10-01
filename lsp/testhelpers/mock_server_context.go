@@ -165,6 +165,11 @@ func (m *MockServerContext) UpdateWorkspaceFromLSP(rootURI *string, workspaceFol
 	return nil
 }
 
+func (m *MockServerContext) Close() error {
+	// Mock implementation - nothing to clean up
+	return nil
+}
+
 // Document operations
 func (m *MockServerContext) DocumentManager() (types.DocumentManager, error) {
 	if m.DocumentMgr != nil {
@@ -395,6 +400,11 @@ func (m *MockServerContext) SetWorkspaceRoot(root string) {
 // SetDocumentManager sets the document manager for tests
 func (m *MockServerContext) SetDocumentManager(dm types.DocumentManager) {
 	m.DocumentMgr = dm
+	// If the document manager has a QueryManager method, extract it
+	// This handles the case where a real DocumentManager is provided with a QueryManager
+	if dmWithQM, ok := dm.(interface{ QueryManager() *queries.QueryManager }); ok {
+		m.QueryMgr = dmWithQM.QueryManager()
+	}
 }
 
 // SetDocumentManager sets the document manager for tests
