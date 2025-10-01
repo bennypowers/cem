@@ -104,6 +104,7 @@ type Registry struct {
 	fileWatcher platform.FileWatcher
 	watcherMu   sync.RWMutex
 	watcherDone chan struct{} // Signal to stop file watching
+	watcherWg   sync.WaitGroup // Wait for watcher goroutine to exit
 	onReload    func()        // Callback when manifests are reloaded
 	// Generate watching for local project
 	generateWatcher platform.GenerateWatcher
@@ -599,7 +600,12 @@ func (r *Registry) StartFileWatching(onReload func()) error {
 	}
 
 	// Start watching in a goroutine
-	go r.watchFiles()
+	r.watcherWg.Add(1)
+	go func() {
+		defer r.watcherWg.Done()
+		r.watchFiles()
+		helpers.SafeDebugLog("File watcher goroutine exiting")
+	}()
 
 	return nil
 }
@@ -618,9 +624,22 @@ func (r *Registry) StopFileWatching() error {
 	// to StartFileWatching, preventing races between concurrent Start/Stop calls
 	if r.watcherDone != nil {
 		close(r.watcherDone)
-		r.watcherDone = nil
+		// Do NOT set r.watcherDone = nil - this races with goroutine reading it at line 658
+		// Closing is sufficient for shutdown signaling
 	}
 
+	// Release lock before waiting to avoid deadlock
+	r.watcherMu.Unlock()
+
+	// Wait for goroutine to exit
+	r.watcherWg.Wait()
+	helpers.SafeDebugLog("File watcher goroutine has exited")
+
+	// Reacquire lock for final cleanup
+	r.watcherMu.Lock()
+
+	// Now it's safe to set watcherDone to nil - goroutine has exited
+	r.watcherDone = nil
 	err := r.fileWatcher.Close()
 	r.onReload = nil
 	return err

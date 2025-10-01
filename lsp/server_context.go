@@ -63,6 +63,7 @@ func (s *Server) InitializeManifests() error {
 	}
 
 	// Start generate watcher for local project source file changes
+	// Note: Uses a grace period to ignore initial event flood from fsnotify
 	if err := s.registry.StartGenerateWatcher(); err != nil {
 		helpers.SafeDebugLog("Warning: Could not start generate watcher: %v", err)
 		// Don't fail startup if generate watcher fails

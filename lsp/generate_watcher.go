@@ -19,6 +19,7 @@ package lsp
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -43,10 +44,11 @@ type InProcessGenerateWatcher struct {
 	cancel          context.CancelFunc
 	mu              sync.RWMutex
 	done            chan struct{} // Signal to stop file watching
+	wg              sync.WaitGroup // Wait for goroutine to exit
 	workspace       types.WorkspaceContext
 	globs           []string
 	callback        ManifestUpdateCallback
-	debounceTimer   *time.Timer // Track debounce timer for cleanup
+	debounceTimer   *time.Timer  // Track debounce timer for cleanup
 }
 
 // NewInProcessGenerateWatcher creates a new in-process generate watcher
@@ -107,13 +109,36 @@ func (w *InProcessGenerateWatcher) Start() error {
 	}
 
 	// Start watching in a goroutine to avoid blocking the LSP server
+	w.wg.Add(1)
 	go func() {
+		defer w.wg.Done()
 		helpers.SafeDebugLog("Starting in-process generate watcher for workspace: %s", w.workspace.Root())
+
+		// Sleep for grace period BEFORE setting up fsnotify watcher
+		// This avoids the initial event flood entirely
+		gracePeriod := 2 * time.Second
+		helpers.SafeDebugLog("Waiting %v before starting file watcher to avoid initial event flood", gracePeriod)
+
+		select {
+		case <-time.After(gracePeriod):
+			// Grace period elapsed, proceed with watching
+		case <-w.done:
+			// Shutdown requested during grace period
+			helpers.SafeDebugLog("Generate watcher stopped during grace period")
+			return
+		case <-w.ctx.Done():
+			// Context cancelled during grace period
+			helpers.SafeDebugLog("Generate watcher cancelled during grace period")
+			return
+		}
+
+		helpers.SafeDebugLog("Grace period elapsed, starting file watcher")
 
 		// Set up file watcher
 		if err := w.watchFiles(); err != nil {
 			helpers.SafeDebugLog("File watching failed: %v", err)
 		}
+		helpers.SafeDebugLog("Generate watcher goroutine exiting")
 	}()
 
 	return nil
@@ -122,8 +147,6 @@ func (w *InProcessGenerateWatcher) Start() error {
 // watchFiles sets up file watching for source files and calls generateAndCallback on changes
 func (w *InProcessGenerateWatcher) watchFiles() error {
 	// Get done channel reference under lock to avoid race condition
-	// We copy the channel reference once at startup to avoid holding the lock
-	// during the entire watch loop. The channel is immutable once copied.
 	w.mu.RLock()
 	done := w.done
 	w.mu.RUnlock()
@@ -135,19 +158,51 @@ func (w *InProcessGenerateWatcher) watchFiles() error {
 	}
 	defer func() { _ = watcher.Close() }()
 
-	// Add directories to watch based on globs
-	watchedDirs := make(map[string]bool)
-	for _, glob := range w.globs {
-		// Convert glob to directory - watch the directory containing the files
-		dir := filepath.Dir(filepath.Join(w.workspace.Root(), glob))
-		if !watchedDirs[dir] {
-			err = watcher.Add(dir)
-			if err != nil {
-				helpers.SafeDebugLog("Failed to watch directory %s: %v", dir, err)
-			} else {
-				helpers.SafeDebugLog("Watching directory: %s", dir)
-				watchedDirs[dir] = true
+	// Walk the workspace to find files, filtering out node_modules
+	var filesToWatch []string
+	rootDir := w.workspace.Root()
+
+	err = filepath.WalkDir(rootDir, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return nil // Skip errors
+		}
+
+		// ALWAYS skip node_modules
+		if d.IsDir() && d.Name() == "node_modules" {
+			return filepath.SkipDir
+		}
+
+		// Skip hidden directories
+		if d.IsDir() && strings.HasPrefix(d.Name(), ".") {
+			return filepath.SkipDir
+		}
+
+		// Only watch .ts and .js files
+		if !d.IsDir() && (strings.HasSuffix(path, ".ts") || strings.HasSuffix(path, ".js")) {
+			// Check if this file matches our globs
+			if w.shouldProcessFile(path) {
+				filesToWatch = append(filesToWatch, path)
 			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to walk workspace: %w", err)
+	}
+
+	// Fail early if there are too many files to watch
+	const maxFiles = 1000
+	if len(filesToWatch) > maxFiles {
+		return fmt.Errorf("refusing to watch %d files (max %d) - adjust your globs or use `cem generate --watch` separately", len(filesToWatch), maxFiles)
+	}
+
+	// Watch individual files (not directories) to avoid event floods
+	helpers.SafeDebugLog("Watching %d source files for changes", len(filesToWatch))
+	for _, file := range filesToWatch {
+		if err := watcher.Add(file); err != nil {
+			helpers.SafeDebugLog("Failed to watch file %s: %v", file, err)
 		}
 	}
 
@@ -186,7 +241,6 @@ func (w *InProcessGenerateWatcher) watchFiles() error {
 			helpers.SafeDebugLog("File watcher error: %v", err)
 
 		case <-done:
-			// This case triggers when Stop() closes the done channel
 			helpers.SafeDebugLog("Generate watcher stopped due to shutdown signal")
 			return nil
 
@@ -302,13 +356,27 @@ func (w *InProcessGenerateWatcher) Stop() error {
 	// Closing the channel is thread-safe and will cause watchFiles to exit
 	if w.done != nil {
 		close(w.done)
-		w.done = nil
+		// Do NOT set w.done = nil - this races with goroutine reading it at line 125
+		// Closing is sufficient for shutdown signaling
 	}
 
 	// Cancel the context to signal shutdown
 	if w.cancel != nil {
 		w.cancel()
 	}
+
+	// Release the lock before waiting to avoid deadlock
+	w.mu.Unlock()
+
+	// Wait for goroutine to exit
+	w.wg.Wait()
+	helpers.SafeDebugLog("Generate watcher goroutine has exited")
+
+	// Reacquire lock for final cleanup
+	w.mu.Lock()
+
+	// Now it's safe to set done to nil - goroutine has exited
+	w.done = nil
 
 	// Close the generate session
 	if w.generateSession != nil {

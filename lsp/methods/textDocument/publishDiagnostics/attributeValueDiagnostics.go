@@ -24,9 +24,9 @@ import (
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
+	"github.com/agext/levenshtein"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
-
 
 // analyzeAttributeValueDiagnostics validates attribute values against their type definitions
 func analyzeAttributeValueDiagnostics(ctx types.ServerContext, doc types.Document) []protocol.Diagnostic {
@@ -375,7 +375,11 @@ func findClosestUnionOption(value string, options []string) string {
 	bestDistance := 999
 
 	for _, option := range options {
-		distance := levenshteinDistance(strings.ToLower(value), strings.ToLower(option))
+		distance := levenshtein.Distance(
+			strings.ToLower(value),
+			strings.ToLower(option),
+			nil,
+		)
 		if distance < bestDistance && distance <= 2 { // Only suggest if reasonably close
 			bestDistance = distance
 			bestMatch = option
@@ -443,4 +447,3 @@ func findAttributesWithValues(doc types.Document, ctx types.ServerContext) []Att
 
 	return matches
 }
-
