@@ -63,7 +63,7 @@
         },
         {
           "name": "ExampleMultiline",
-          "description": "Class with multi-line caption\n\n\u003cfigure\u003e\n\u003cfigcaption\u003eThis example demonstrates advanced usage patterns with multiple lines\u003c/figcaption\u003e\n\n```html\n\u003cexample-multiline\u003e\u003c/example-multiline\u003e\n```\n\u003c/figure\u003e",
+          "description": "Class with multi-line caption\n\n\u003cfigure\u003e\n\u003cfigcaption\u003eThis example demonstrates\nadvanced usage patterns\nwith multiple lines\u003c/figcaption\u003e\n\n```html\n\u003cexample-multiline\u003e\u003c/example-multiline\u003e\n```\n\u003c/figure\u003e",
           "superclass": {
             "name": "LitElement",
             "package": "lit"

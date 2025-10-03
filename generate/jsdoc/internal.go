@@ -80,8 +80,8 @@ func extractImplicitCaption(content string) (caption, code string) {
 		return "", content // Code block on first line - no caption
 	}
 
-	// Everything before fence is caption
-	caption = strings.Join(lines[:fenceIndex], " ")
+	// Everything before fence is caption, preserve newlines
+	caption = strings.Join(lines[:fenceIndex], "\n")
 	code = strings.Join(lines[fenceIndex:], "\n")
 
 	return strings.TrimSpace(caption), code
@@ -90,4 +90,22 @@ func extractImplicitCaption(content string) (caption, code string) {
 // formatFigure wraps code in <figure>/<figcaption> HTML elements
 func formatFigure(caption, code string) string {
 	return fmt.Sprintf("<figure>\n<figcaption>%s</figcaption>\n\n%s\n</figure>", caption, code)
+}
+
+// appendExample appends an example to a description string with proper spacing
+func appendExample(currentDescription, example string) string {
+	if currentDescription != "" {
+		return currentDescription + "\n\n" + example
+	}
+	return example
+}
+
+// handleExampleTag processes an @example tag and appends it to the current description
+func handleExampleTag(currentDescription, tagName, content string) string {
+	info := tagInfo{
+		Tag:         tagName,
+		Description: content,
+	}
+	example := info.toExample()
+	return appendExample(currentDescription, example)
 }

@@ -118,11 +118,7 @@ func parseForClass(source string, queryManager *Q.QueryManager) (*classInfo, err
 					info.Demos = append(info.Demos, tagInfo.toDemo())
 				case "@example":
 					example := tagInfo.toExample()
-					if info.Description != "" {
-						info.Description += "\n\n" + example
-					} else {
-						info.Description = example
-					}
+					info.Description = appendExample(info.Description, example)
 				case "@deprecated":
 					if tagInfo.Description == "" {
 						info.Deprecated = M.NewDeprecated(true)
@@ -190,16 +186,7 @@ func parseForProperty(code string, queryManager *Q.QueryManager) (*propertyInfo,
 			case "@type":
 				info.Type = tagType
 			case "@example":
-				tagInfo := tagInfo{
-					Tag:         tagName,
-					Description: content,
-				}
-				example := tagInfo.toExample()
-				if info.Description != "" {
-					info.Description += "\n\n" + example
-				} else {
-					info.Description = example
-				}
+				info.Description = handleExampleTag(info.Description, tagName, content)
 			case "@deprecated":
 				if content == "" {
 					info.Deprecated = M.NewDeprecated(true)
@@ -258,16 +245,7 @@ func parseForCSSProperty(code string, queryManager *Q.QueryManager) (*cssPropert
 			case "@syntax":
 				info.Syntax = tagType
 			case "@example":
-				tagInfo := tagInfo{
-					Tag:         tagName,
-					Description: content,
-				}
-				example := tagInfo.toExample()
-				if info.Description != "" {
-					info.Description += "\n\n" + example
-				} else {
-					info.Description = example
-				}
+				info.Description = handleExampleTag(info.Description, tagName, content)
 			case "@deprecated":
 				if content == "" {
 					info.Deprecated = M.NewDeprecated(true)
@@ -324,11 +302,7 @@ func parseForMethod(source string, queryManager *Q.QueryManager) (*methodInfo, e
 					}
 				case "@example":
 					example := tagInfo.toExample()
-					if info.Description != "" {
-						info.Description += "\n\n" + example
-					} else {
-						info.Description = example
-					}
+					info.Description = appendExample(info.Description, example)
 				case "@summary":
 					info.Summary = normalizeJsdocLines(tagInfo.Description)
 				}
