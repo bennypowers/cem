@@ -1,7 +1,9 @@
 package jsdoc
 
 import (
+	"fmt"
 	"regexp"
+	"strings"
 )
 
 func stripTrailingSplat(str string) string {
@@ -37,4 +39,55 @@ func findNamedMatches(
 		results[name] = str[startIndex:endIndex]
 	}
 	return results
+}
+
+// extractExplicitCaption finds <caption>...</caption> tags in the content
+// and returns the caption text and the remaining code.
+// If no caption tag is found, returns empty caption and original content.
+func extractExplicitCaption(content string) (caption, code string) {
+	re := regexp.MustCompile(`(?s)<caption>(.*?)</caption>(.*)`)
+
+	if re.MatchString(content) {
+		submatch := re.FindStringSubmatch(content)
+		if len(submatch) >= 3 {
+			return strings.TrimSpace(submatch[1]), strings.TrimSpace(submatch[2])
+		}
+	}
+
+	return "", content
+}
+
+// extractImplicitCaption detects "text\n```" pattern where text before
+// the first fenced code block becomes the caption.
+// Returns empty caption if code block is on first line or no code block found.
+func extractImplicitCaption(content string) (caption, code string) {
+	lines := strings.Split(strings.TrimSpace(content), "\n")
+
+	// Find first fenced code block
+	fenceIndex := -1
+	for i, line := range lines {
+		if strings.HasPrefix(strings.TrimSpace(line), "```") {
+			fenceIndex = i
+			break
+		}
+	}
+
+	if fenceIndex == -1 {
+		return "", content // No code block
+	}
+
+	if fenceIndex == 0 {
+		return "", content // Code block on first line - no caption
+	}
+
+	// Everything before fence is caption
+	caption = strings.Join(lines[:fenceIndex], " ")
+	code = strings.Join(lines[fenceIndex:], "\n")
+
+	return strings.TrimSpace(caption), code
+}
+
+// formatFigure wraps code in <figure>/<figcaption> HTML elements
+func formatFigure(caption, code string) string {
+	return fmt.Sprintf("<figure>\n<figcaption>%s</figcaption>\n\n%s\n</figure>", caption, code)
 }
