@@ -116,6 +116,9 @@ func parseForClass(source string, queryManager *Q.QueryManager) (*classInfo, err
 					info.CssStates = append(info.CssStates, state)
 				case "@demo":
 					info.Demos = append(info.Demos, tagInfo.toDemo())
+				case "@example":
+					example := tagInfo.toExample()
+					info.Description = appendExample(info.Description, example)
 				case "@deprecated":
 					if tagInfo.Description == "" {
 						info.Deprecated = M.NewDeprecated(true)
@@ -182,6 +185,8 @@ func parseForProperty(code string, queryManager *Q.QueryManager) (*propertyInfo,
 				info.Summary += normalizeJsdocLines(content)
 			case "@type":
 				info.Type = tagType
+			case "@example":
+				info.Description = handleExampleTag(info.Description, tagName, content)
 			case "@deprecated":
 				if content == "" {
 					info.Deprecated = M.NewDeprecated(true)
@@ -239,6 +244,8 @@ func parseForCSSProperty(code string, queryManager *Q.QueryManager) (*cssPropert
 				info.Summary += normalizeJsdocLines(content)
 			case "@syntax":
 				info.Syntax = tagType
+			case "@example":
+				info.Description = handleExampleTag(info.Description, tagName, content)
 			case "@deprecated":
 				if content == "" {
 					info.Deprecated = M.NewDeprecated(true)
@@ -293,6 +300,9 @@ func parseForMethod(source string, queryManager *Q.QueryManager) (*methodInfo, e
 					} else {
 						info.Deprecated = M.NewDeprecated(tagInfo.Description)
 					}
+				case "@example":
+					example := tagInfo.toExample()
+					info.Description = appendExample(info.Description, example)
 				case "@summary":
 					info.Summary = normalizeJsdocLines(tagInfo.Description)
 				}
@@ -470,4 +480,21 @@ func (info tagInfo) toParameter() parameterInfo {
 	}
 	param.Optional = info.Value != "" || strings.Contains(info.Description, "["+info.Name+"]")
 	return param
+}
+
+func (info tagInfo) toExample() string {
+	content := normalizeJsdocLines(info.Description)
+
+	// 1. Check for explicit <caption> tag
+	if caption, code := extractExplicitCaption(content); caption != "" {
+		return formatFigure(caption, code)
+	}
+
+	// 2. Check for implicit caption pattern (text before fenced code block)
+	if caption, code := extractImplicitCaption(content); caption != "" {
+		return formatFigure(caption, code)
+	}
+
+	// 3. No caption - return raw content
+	return content
 }

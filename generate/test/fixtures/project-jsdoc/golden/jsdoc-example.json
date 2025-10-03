@@ -1,0 +1,193 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-example.js",
+      "declarations": [
+        {
+          "name": "ExampleInline",
+          "description": "Class with inline caption example\n\n\u003cfigure\u003e\n\u003cfigcaption\u003eBasic usage\u003c/figcaption\u003e\n\n```html\n\u003cexample-inline\u003e\u003c/example-inline\u003e\n```\n\u003c/figure\u003e",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-example.ts#L8"
+          },
+          "kind": "class",
+          "tagName": "example-inline",
+          "customElement": true
+        },
+        {
+          "name": "ExampleExplicit",
+          "description": "Class with explicit caption tag\n\n\u003cfigure\u003e\n\u003cfigcaption\u003eAdvanced example with caption tag\u003c/figcaption\u003e\n\n```html\n\u003cexample-explicit\u003e\u003c/example-explicit\u003e\n```\n\u003c/figure\u003e",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-example.ts#L19"
+          },
+          "kind": "class",
+          "tagName": "example-explicit",
+          "customElement": true
+        },
+        {
+          "name": "ExampleNoCaption",
+          "description": "Class with no caption (code-only)\n\n```html\n\u003cexample-no-caption\u003e\u003c/example-no-caption\u003e\n```",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-example.ts#L29"
+          },
+          "kind": "class",
+          "tagName": "example-no-caption",
+          "customElement": true
+        },
+        {
+          "name": "ExampleMultiple",
+          "description": "Class with multiple examples\n\n\u003cfigure\u003e\n\u003cfigcaption\u003eSimple case\u003c/figcaption\u003e\n\n```html\n\u003cexample-multiple\u003e\u003c/example-multiple\u003e\n```\n\u003c/figure\u003e\n\n\u003cfigure\u003e\n\u003cfigcaption\u003eComplex case with attributes\u003c/figcaption\u003e\n\n```html\n\u003cexample-multiple foo=\"bar\" baz=\"qux\"\u003e\u003c/example-multiple\u003e\n```\n\u003c/figure\u003e",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-example.ts#L43"
+          },
+          "kind": "class",
+          "tagName": "example-multiple",
+          "customElement": true
+        },
+        {
+          "name": "ExampleMultiline",
+          "description": "Class with multi-line caption\n\n\u003cfigure\u003e\n\u003cfigcaption\u003eThis example demonstrates\nadvanced usage patterns\nwith multiple lines\u003c/figcaption\u003e\n\n```html\n\u003cexample-multiline\u003e\u003c/example-multiline\u003e\n```\n\u003c/figure\u003e",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-example.ts#L56"
+          },
+          "kind": "class",
+          "tagName": "example-multiline",
+          "customElement": true
+        },
+        {
+          "name": "ExampleWithMethods",
+          "description": "Class with description and example",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "doSomething",
+              "description": "Method with example\n\n\u003cfigure\u003e\n\u003cfigcaption\u003eBasic method call\u003c/figcaption\u003e\n\n```typescript\nelement.doSomething();\n```\n\u003c/figure\u003e",
+              "kind": "method"
+            },
+            {
+              "name": "value",
+              "description": "Property with example\n\n\u003cfigure\u003e\n\u003cfigcaption\u003eSetting the value\u003c/figcaption\u003e\n\n```typescript\nelement.value = 'hello';\n```\n\u003c/figure\u003e",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "value"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-example.ts#L62"
+          },
+          "kind": "class",
+          "tagName": "example-with-methods",
+          "attributes": [
+            {
+              "name": "value",
+              "description": "Property with example\n\n\u003cfigure\u003e\n\u003cfigcaption\u003eSetting the value\u003c/figcaption\u003e\n\n```typescript\nelement.value = 'hello';\n```\n\u003c/figure\u003e",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "value"
+            }
+          ],
+          "customElement": true
+        },
+        {
+          "name": "ExampleNoLang",
+          "description": "Class with example without language specifier\n\n```\n\u003cexample-no-lang\u003e\u003c/example-no-lang\u003e\n```",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-example.ts#L90"
+          },
+          "kind": "class",
+          "tagName": "example-no-lang",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "example-inline",
+          "declaration": {
+            "name": "ExampleInline",
+            "module": "src/jsdoc-example.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "example-explicit",
+          "declaration": {
+            "name": "ExampleExplicit",
+            "module": "src/jsdoc-example.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "example-no-caption",
+          "declaration": {
+            "name": "ExampleNoCaption",
+            "module": "src/jsdoc-example.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "example-multiple",
+          "declaration": {
+            "name": "ExampleMultiple",
+            "module": "src/jsdoc-example.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "example-multiline",
+          "declaration": {
+            "name": "ExampleMultiline",
+            "module": "src/jsdoc-example.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "example-with-methods",
+          "declaration": {
+            "name": "ExampleWithMethods",
+            "module": "src/jsdoc-example.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "example-no-lang",
+          "declaration": {
+            "name": "ExampleNoLang",
+            "module": "src/jsdoc-example.js"
+          }
+        }
+      ]
+    }
+  ]
+}
