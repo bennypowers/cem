@@ -570,6 +570,7 @@ func TestTagDiagnostics_SideEffectImports(t *testing.T) {
 	// Use the fixture workspace instead of mock context to get real module graph behavior
 	ctx := testhelpers.NewMockServerContext()
 	ctx.SetWorkspaceRoot(fixtureDir)
+	ctx.SetDocumentManager(dm)
 
 	// Add the rh-tabs elements to the context
 	ctx.AddElement("rh-tabs", &M.CustomElement{TagName: "rh-tabs"})
@@ -668,4 +669,112 @@ func TestTagDiagnostics_SideEffectImports(t *testing.T) {
 	// TODO: When module graph properly handles side-effect imports,
 	// this test should be updated to expect NO diagnostics for rh-tab-panel
 	// because it should be resolved as transitively available through rh-tabs.js
+}
+
+// TestTagDiagnostics_JsDocExamples tests that custom elements in JSDoc HTML examples
+// don't trigger missing import errors (since they're documentation, not actual code)
+func TestTagDiagnostics_JsDocExamples(t *testing.T) {
+	// Setup fixture workspace
+	fixtureDir, err := filepath.Abs("test-fixtures/tag-diagnostics")
+	if err != nil {
+		t.Fatalf("Failed to get fixture path: %v", err)
+	}
+
+	// Create workspace context
+	workspace := W.NewFileSystemWorkspaceContext(fixtureDir)
+	err = workspace.Init()
+	if err != nil {
+		t.Fatalf("Failed to initialize workspace: %v", err)
+	}
+
+	// Create server (this loads manifests automatically)
+	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	// Initialize the server
+	err = server.InitializeForTesting()
+	if err != nil {
+		t.Fatalf("Failed to initialize server: %v", err)
+	}
+
+	// Create document manager
+	dm, err := document.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create document manager: %v", err)
+	}
+	defer dm.Close()
+
+	// Load manifests manually like other successful tests
+	ctx := testhelpers.NewMockServerContext()
+
+	// Set up QueryManager for tree-sitter functionality
+	queryManager, err := queries.NewQueryManager(queries.LSPQueries())
+	if err != nil {
+		t.Fatalf("Failed to create query manager: %v", err)
+	}
+	ctx.SetQueryManager(queryManager)
+
+	// Load manifest from node_modules (where the actual test data is)
+	manifestPath := filepath.Join(fixtureDir, "node_modules", "@scope", "package", "custom-elements.json")
+	if manifestBytes, err := os.ReadFile(manifestPath); err == nil {
+		var pkg M.Package
+		if err := json.Unmarshal(manifestBytes, &pkg); err == nil {
+			ctx.AddManifest(&pkg)
+			ctx.SetDocumentManager(dm)
+		}
+	}
+
+	// Read the TypeScript file with JSDoc examples
+	tsPath := filepath.Join(fixtureDir, "jsdoc-example.ts")
+	content, err := os.ReadFile(tsPath)
+	if err != nil {
+		t.Fatalf("Failed to read TypeScript file: %v", err)
+	}
+
+	// Open document
+	uri := "file://" + tsPath
+	doc := dm.OpenDocument(uri, string(content), 1)
+	if doc == nil {
+		t.Fatal("Failed to open document")
+	}
+
+	// Add document to the mock context
+	ctx.AddDocument(uri, doc)
+
+	// Analyze tag diagnostics
+	diagnostics := publishDiagnostics.AnalyzeTagNameDiagnosticsForTest(ctx, doc)
+
+	// Debug: Print all diagnostics
+	t.Logf("Found %d diagnostics:", len(diagnostics))
+	for i, diag := range diagnostics {
+		t.Logf("  Diagnostic %d: %s (line %d, char %d-%d)",
+			i, diag.Message,
+			diag.Range.Start.Line,
+			diag.Range.Start.Character,
+			diag.Range.End.Character)
+	}
+
+	// Should only have 1 diagnostic for the actual code usage of <my-foo> (not imported)
+	// Should NOT have diagnostics for JSDoc examples (form-element, input-field, etc.)
+	if len(diagnostics) != 1 {
+		t.Errorf("Expected 1 diagnostic (for actual my-foo usage), got %d", len(diagnostics))
+		for i, diag := range diagnostics {
+			t.Errorf("  Diagnostic %d: %s", i, diag.Message)
+		}
+		return
+	}
+
+	// Verify the diagnostic is for my-foo (the actual code, not JSDoc examples)
+	diag := diagnostics[0]
+	if !strings.Contains(diag.Message, "my-foo") {
+		t.Errorf("Expected diagnostic for 'my-foo', got: %s", diag.Message)
+	}
+
+	// Verify it's a missing import diagnostic (my-foo exists in manifest but not imported)
+	if !strings.Contains(diag.Message, "not imported") {
+		t.Errorf("Expected 'not imported' diagnostic for my-foo, got: %s", diag.Message)
+	}
 }

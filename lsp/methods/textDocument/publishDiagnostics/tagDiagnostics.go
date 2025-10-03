@@ -37,7 +37,7 @@ func analyzeTagNameDiagnostics(ctx types.ServerContext, doc types.Document) []pr
 func AnalyzeTagNameDiagnosticsForTest(ctx types.ServerContext, doc types.Document) []protocol.Diagnostic {
 	var diagnostics []protocol.Diagnostic
 
-	// Get document content to search for custom element tags
+	// Get document content to check for ignore comment
 	content, err := doc.Content()
 	if err != nil {
 		return diagnostics
@@ -52,8 +52,18 @@ func AnalyzeTagNameDiagnosticsForTest(ctx types.ServerContext, doc types.Documen
 		return diagnostics // Return empty diagnostics array
 	}
 
-	// Find all custom element tag names in the document
-	tagMatches := findCustomElementTags(content)
+	// Find all custom element tag names using tree-sitter
+	dm, dmErr := ctx.DocumentManager()
+	if dmErr != nil {
+		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to get DocumentManager: %v", dmErr)
+		return diagnostics
+	}
+
+	tagMatches, err := doc.FindCustomElements(dm)
+	if err != nil {
+		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to find custom elements: %v", err)
+		return diagnostics
+	}
 	helpers.SafeDebugLog("[DIAGNOSTICS] Found %d custom element tags", len(tagMatches))
 
 	// Parse script imports to get actually imported elements
@@ -65,7 +75,7 @@ func AnalyzeTagNameDiagnosticsForTest(ctx types.ServerContext, doc types.Documen
 	helpers.SafeDebugLog("[DIAGNOSTICS] All available tag names in manifests: %v", allAvailableTagNames)
 
 	for _, match := range tagMatches {
-		tagName := match.Value
+		tagName := match.TagName
 		helpers.SafeDebugLog("[DIAGNOSTICS] Checking tag '%s'", tagName)
 
 		// Check if the tag is imported (available in current context)
@@ -630,92 +640,4 @@ func getAllTagNamesFromModuleGraph(moduleGraph *modulegraph.ModuleGraph) []strin
 func pathsMatch(importPath, elementSource string) bool {
 	helpers.SafeDebugLog("[DIAGNOSTICS] Comparing import '%s' vs element source '%s'", importPath, elementSource)
 	return helpers.PathsMatch(importPath, elementSource)
-}
-
-// TagMatch represents a found custom element tag in the document
-type TagMatch struct {
-	Value string
-	Range protocol.Range
-}
-
-// findCustomElementTags finds all custom element tag names in the document content
-func findCustomElementTags(content string) []TagMatch {
-	var matches []TagMatch
-	lines := strings.Split(content, "\n")
-
-	for lineIdx, line := range lines {
-		// Look for opening tags with hyphens (custom elements)
-		idx := 0
-		for {
-			tagStart := strings.Index(line[idx:], "<")
-			if tagStart == -1 {
-				break
-			}
-			tagStart += idx
-
-			// Skip closing tags and comments
-			if tagStart+1 < len(line) && (line[tagStart+1] == '/' || line[tagStart+1] == '!') {
-				idx = tagStart + 1
-				continue
-			}
-
-			// Find the end of the tag name (stop at space, /, >, or other delimiters)
-			tagEnd := -1
-			delimiters := " \t\n\r/>="
-			spaceIdx := strings.IndexAny(line[tagStart+1:], delimiters)
-			if spaceIdx != -1 {
-				tagEnd = tagStart + 1 + spaceIdx
-			}
-
-			if tagEnd == -1 {
-				idx = tagStart + 1
-				continue
-			}
-
-			// Extract the tag name
-			tagName := line[tagStart+1 : tagEnd]
-
-			// Validate that this looks like a custom element (has a dash and is valid)
-			if strings.Contains(tagName, "-") && isValidCustomElementName(tagName) {
-				match := TagMatch{
-					Value: tagName,
-					Range: protocol.Range{
-						Start: protocol.Position{
-							Line:      uint32(lineIdx),
-							Character: uint32(tagStart + 1),
-						},
-						End: protocol.Position{
-							Line:      uint32(lineIdx),
-							Character: uint32(tagEnd),
-						},
-					},
-				}
-				matches = append(matches, match)
-			}
-
-			idx = tagEnd
-		}
-	}
-
-	return matches
-}
-
-// isValidCustomElementName checks if a tag name follows custom element naming rules
-func isValidCustomElementName(tagName string) bool {
-	// Basic validation - must contain hyphen and not start with invalid characters
-	if !strings.Contains(tagName, "-") {
-		return false
-	}
-
-	// Cannot start with certain reserved patterns
-	if strings.HasPrefix(tagName, "xml") || strings.HasPrefix(tagName, "xmlns") {
-		return false
-	}
-
-	// Must not contain uppercase (CE spec allows case-insensitive but lowercase is convention)
-	if strings.ToLower(tagName) != tagName {
-		return false
-	}
-
-	return true
 }
