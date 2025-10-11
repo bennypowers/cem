@@ -7,7 +7,8 @@ layout: home
 ![A hexagon with a spiderweb pattern spiraling into the bottom right corner][logo]
 
 The blazing-fast **CLI** tool for generating and working with
-**[Custom Elements Manifests][schema]**. {.subheading}
+**[Custom Elements Manifests][schema]**.
+{.subheading}
 
 Use `cem` to [generate][generate], [validate][validate], and [query][search] 
 custom elements manifests. Then, use the built-in [LSP][lsp] and [MCP][mcp]
