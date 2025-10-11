@@ -4,7 +4,6 @@ CONTRIBUTING_PATH = docs/content/docs/contributing.md
 WINDOWS_CC_IMAGE := cem-windows-cc-image
 
 # Use Go 1.25 toolchain automatically with JSON v2 experiment
-export GOTOOLCHAIN := auto
 export GOEXPERIMENT := jsonv2
 
 .PHONY: build test test-unit test-e2e update watch bench profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package
@@ -75,7 +74,7 @@ update:
 	go test -race -json ./... --update | go tool tparse -all
 
 lint:
-	GOEXPERIMENT="" golangci-lint run
+	golangci-lint run
 
 format:
 	gofmt -s -w .
