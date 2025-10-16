@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-description-markdown.js",
+      "declarations": [
+        {
+          "name": "JsdocDescriptionMarkdown",
+          "description": "description\n\nthe description contains:\n- markdown list\n- inline code\n- multiple lines\n- markdown headings\n\n## Heading\nmarkdown heading follows `list`.",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-description-markdown.ts#L13"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-description-markdown",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-description-markdown",
+          "declaration": {
+            "name": "JsdocDescriptionMarkdown",
+            "module": "src/jsdoc-description-markdown.js"
+          }
+        }
+      ]
+    }
+  ]
+}
