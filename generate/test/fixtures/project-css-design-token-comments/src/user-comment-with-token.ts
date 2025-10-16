@@ -12,6 +12,8 @@ export class UserCommentWithToken extends LitElement {
       color: var(--_my-var,
         /** USER description for the primary color, specified on the token fallback for a _private var */
         var(--cem-color-primary));
+      /** @summary comment on a private var */
+      border-color: var(--_private);
 
       /**
        * USER description for secondary color
@@ -19,6 +21,16 @@ export class UserCommentWithToken extends LitElement {
        * the usage of the secondary color token
        */
       background-color: var(--cem-color-secondary);
+
+      /** @summary Outer comment on private var value assignment */
+      --_private-with-outer-comment: var(--_another-private);
+
+      font-weight: var(--_private-weight,
+        /** @summary Nested comment on spacing token inside private var fallback */
+        var(--cem-spacing-base));
+
+      /** @summary Direct summary comment on design token */
+      padding: var(--cem-spacing-base);
     }
   `;
 }

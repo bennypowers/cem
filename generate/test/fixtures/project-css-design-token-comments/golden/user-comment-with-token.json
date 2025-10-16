@@ -27,6 +27,12 @@
               "name": "--cem-color-secondary",
               "description": "USER description for secondary color\nThis is a multiline comment that explains\nthe usage of the secondary color token\n\nDESIGN TOKEN description for secondary color",
               "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--cem-spacing-base",
+              "summary": "Nested comment on spacing token inside private var fallback\n\nDirect summary comment on design token",
+              "description": "DESIGN TOKEN description for base spacing",
+              "syntax": "\u003clength\u003e"
             }
           ],
           "customElement": true
