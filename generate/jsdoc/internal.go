@@ -11,7 +11,7 @@ func stripTrailingSplat(str string) string {
 }
 
 func normalizeJsdocLines(str string) string {
-	re := regexp.MustCompile(`(?m)^\s+\*\s+`)
+	re := regexp.MustCompile(`(?m)^[ \t]*\*[ \t]*`)
 	new := re.ReplaceAllString(str, "")
 	return stripTrailingSplat(new)
 }

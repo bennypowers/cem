@@ -7,7 +7,7 @@
       "declarations": [
         {
           "name": "JsdocDescriptionMarkdown",
-          "description": "description\n\nthe description contains:\n- markdown list\n- inline code\n- multiple lines\n- markdown headings\n\n## Heading\nmarkdown heading follows `list`.\n",
+          "description": "description\n\nthe description contains:\n- markdown list\n- inline code\n- multiple lines\n- markdown headings\n\n## Heading\nmarkdown heading follows `list`.",
           "superclass": {
             "name": "LitElement",
             "package": "lit"
