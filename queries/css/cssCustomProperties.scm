@@ -77,3 +77,19 @@
       .
       ")"))) @cssProperty
 
+( ; calc(/** @summary icon size */ var(--blue, 24px) + 4px)
+  ; Captures comments within function arguments (like calc, clamp, etc.)
+  ; that precede var() calls, even when wrapped in binary expressions
+  (arguments
+    (comment) @comment (#match? @comment "^/\\*\\*")
+    (_
+      (call_expression
+        (function_name) @fn (#eq? @fn "var")
+        (arguments
+          "("
+          .
+          (plain_value) @property (#match? @property "^--[^_]")
+          ("," [_(_)]* @default)?
+          .
+          ")"))))) @cssProperty
+

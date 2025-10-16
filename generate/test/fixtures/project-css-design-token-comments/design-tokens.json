@@ -16,5 +16,12 @@
       "$description": "DESIGN TOKEN description for base spacing",
       "$type": "dimension"
     }
+  },
+  "length": {
+    "$type": "dimension",
+    "xl": {
+      "$value": "24px",
+      "$description": "DESIGN TOKEN description for XL length"
+    }
   }
 }
