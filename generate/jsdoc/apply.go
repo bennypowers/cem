@@ -6,6 +6,17 @@ import (
 	M "bennypowers.dev/cem/manifest"
 )
 
+// appendWithSeparator appends new content to existing content with a separator if both are non-empty
+func appendWithSeparator(existing, new, separator string) string {
+	if new == "" {
+		return existing
+	}
+	if existing == "" {
+		return new
+	}
+	return existing + separator + new
+}
+
 func applyToClassDeclaration(info *classInfo, declaration *M.ClassDeclaration) {
 	declaration.Deprecated = info.Deprecated
 	declaration.Description = info.Description
@@ -78,8 +89,8 @@ func applyToCustomElementDeclaration(info *classInfo, declaration *M.CustomEleme
 }
 
 func applyToCSSProperty(info *cssPropertyInfo, declaration *M.CssCustomProperty) {
-	declaration.Description += info.Description
-	declaration.Summary += info.Summary
+	declaration.Description = appendWithSeparator(declaration.Description, info.Description, "\n\n")
+	declaration.Summary = appendWithSeparator(declaration.Summary, info.Summary, "\n\n")
 	declaration.Deprecated = info.Deprecated
 	if info.Syntax != "" {
 		declaration.Syntax = info.Syntax
@@ -87,8 +98,8 @@ func applyToCSSProperty(info *cssPropertyInfo, declaration *M.CssCustomProperty)
 }
 
 func applyToPropertyLike(info *propertyInfo, declaration *M.PropertyLike) {
-	declaration.Description += info.Description
-	declaration.Summary += info.Summary
+	declaration.Description = appendWithSeparator(declaration.Description, info.Description, "\n\n")
+	declaration.Summary = appendWithSeparator(declaration.Summary, info.Summary, "\n\n")
 	declaration.Deprecated = info.Deprecated
 	if info.Type != "" {
 		declaration.Type = &M.Type{
