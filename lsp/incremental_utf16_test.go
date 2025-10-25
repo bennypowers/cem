@@ -95,6 +95,13 @@ func TestUTF16ToByteOffset(t *testing.T) {
 			expectedByte: 4, // Should clamp to end of text
 			description:  "Offset beyond text length",
 		},
+		{
+			name:         "Replacement char U+FFFD (valid)",
+			text:         "�x", // U+FFFD followed by ASCII
+			utf16Offset:  1,   // after U+FFFD (1 UTF-16 unit)
+			expectedByte: 3,   // U+FFFD is 3 bytes in UTF-8
+			description:  "Valid U+FFFD should count as one UTF-16 unit, three bytes",
+		},
 	}
 
 	for _, tt := range tests {
@@ -137,6 +144,13 @@ func TestByteOffsetToUTF16(t *testing.T) {
 			byteOffset:    6, // First two characters (3 bytes each)
 			expectedUTF16: 2, // Each char is 1 UTF-16 code unit
 			description:   "Chinese characters (3 bytes each, 1 UTF-16 code unit each)",
+		},
+		{
+			name:          "Replacement char U+FFFD (valid)",
+			text:          "�x",
+			byteOffset:    3,  // after U+FFFD's 3 bytes
+			expectedUTF16: 1,  // one UTF-16 code unit
+			description:   "Valid U+FFFD should map 3 bytes -> 1 UTF-16 unit",
 		},
 	}
 

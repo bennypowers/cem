@@ -46,7 +46,9 @@ func UTF16ToByteOffset(text string, utf16Offset uint32) uint {
 
 	for byteOffset < uint(len(text)) && utf16Count < utf16Offset {
 		r, size := utf8.DecodeRuneInString(text[byteOffset:])
-		if r == utf8.RuneError {
+		// Check for invalid UTF-8: RuneError with size == 1
+		// Note: Valid U+FFFD has size == 3, so we need to check both
+		if r == utf8.RuneError && size == 1 {
 			// Invalid UTF-8, treat as single byte
 			byteOffset++
 			utf16Count++
@@ -68,7 +70,9 @@ func ByteOffsetToUTF16(text string, byteOffset uint) uint32 {
 
 	for currentByte < byteOffset && currentByte < uint(len(text)) {
 		r, size := utf8.DecodeRuneInString(text[currentByte:])
-		if r == utf8.RuneError {
+		// Check for invalid UTF-8: RuneError with size == 1
+		// Note: Valid U+FFFD has size == 3, so we need to check both
+		if r == utf8.RuneError && size == 1 {
 			// Invalid UTF-8, treat as single byte
 			currentByte++
 			utf16Count++
@@ -176,49 +180,22 @@ func (ip *IncrementalParser) AnalyzeChanges(changes []protocol.TextDocumentConte
 	return analysis
 }
 
-// calculateOldLength calculates the length of text being replaced
+// calculateOldLength calculates the byte length of text being replaced
+// Uses UTF-16 to UTF-8 conversion for accurate byte-based calculations
 func (ip *IncrementalParser) calculateOldLength(changeRange *protocol.Range, content string) uint {
-	lines := splitLines(content)
-	if changeRange.Start.Line >= uint32(len(lines)) {
+	if changeRange == nil {
+		return uint(len(content))
+	}
+
+	// Use positionToByteOffset for accurate UTF-16 to UTF-8 conversion
+	startByte := ip.positionToByteOffset(changeRange.Start, content)
+	endByte := ip.positionToByteOffset(changeRange.End, content)
+
+	if endByte < startByte {
 		return 0
 	}
 
-	startLine := changeRange.Start.Line
-	endLine := changeRange.End.Line
-
-	if endLine >= uint32(len(lines)) {
-		endLine = uint32(len(lines)) - 1
-	}
-
-	if startLine == endLine {
-		// Single line change
-		line := lines[startLine]
-		if changeRange.End.Character <= uint32(len(line)) {
-			return uint(changeRange.End.Character - changeRange.Start.Character)
-		}
-		return uint(len(line)) - uint(changeRange.Start.Character)
-	}
-
-	// Multi-line change
-	var totalLength uint = 0
-
-	// First line: from start character to end of line
-	if changeRange.Start.Character < uint32(len(lines[startLine])) {
-		totalLength += uint(len(lines[startLine])) - uint(changeRange.Start.Character)
-	}
-	totalLength += 1 // newline
-
-	// Middle lines: full lines
-	for i := startLine + 1; i < endLine; i++ {
-		totalLength += uint(len(lines[i])) + 1 // +1 for newline
-	}
-
-	// Last line: from start to end character
-	if endLine > startLine && changeRange.End.Character <= uint32(len(lines[endLine])) {
-		totalLength += uint(changeRange.End.Character)
-	}
-
-	return totalLength
+	return endByte - startByte
 }
 
 // ParseWithStrategy parses a document using the configured strategy
