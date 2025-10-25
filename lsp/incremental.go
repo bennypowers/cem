@@ -83,11 +83,6 @@ func ByteOffsetToUTF16(text string, byteOffset uint) uint32 {
 	return utf16Count
 }
 
-// utf16Length returns the number of UTF-16 code units in a UTF-8 string
-func utf16Length(text string) uint32 {
-	return ByteOffsetToUTF16(text, uint(len(text)))
-}
-
 // DocumentEdit represents a change to a document
 type DocumentEdit struct {
 	StartPosition protocol.Position // Start position of the edit
