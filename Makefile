@@ -97,7 +97,7 @@ flamegraph: profile
 coverage:
 	@echo "Running unit tests with coverage..."
 	@mkdir -p coverage/unit
-	go test -cover ./... -args -test.gocoverdir="$(PWD)/coverage/unit"
+	go test ./... -cover -args -test.gocoverdir="$(PWD)/coverage/unit"
 	@echo "Running e2e tests with coverage..."
 	go test -count=1 -tags=e2e ./cmd/
 	@echo "Merging coverage data..."

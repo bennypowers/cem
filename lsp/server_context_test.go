@@ -29,14 +29,14 @@ import (
 func TestServer_Workspace(t *testing.T) {
 	// Create workspace
 	workspace := W.NewFileSystemWorkspaceContext("/test/workspace")
-	workspace.Init()
+	_ = workspace.Init()
 
 	// Create server with workspace
 	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// Test Workspace() method
 	retrievedWorkspace := server.Workspace()
@@ -75,13 +75,13 @@ func TestServer_WorkspaceRoot(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			workspace := W.NewFileSystemWorkspaceContext(tt.root)
-			workspace.Init()
+			_ = workspace.Init()
 
 			server, err := lsp.NewServer(workspace, lsp.TransportStdio)
 			if err != nil {
 				t.Fatalf("Failed to create server: %v", err)
 			}
-			defer server.Close()
+			defer func() { _ = server.Close() }()
 
 			root := server.WorkspaceRoot()
 			if root != tt.expected {
@@ -93,13 +93,13 @@ func TestServer_WorkspaceRoot(t *testing.T) {
 
 func TestServer_Element(t *testing.T) {
 	workspace := W.NewFileSystemWorkspaceContext("/test")
-	workspace.Init()
+	_ = workspace.Init()
 
 	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// Load manifest from fixture file
 	manifestJSON, err := os.ReadFile("test-fixtures/server-context/test-element.json")
@@ -133,13 +133,13 @@ func TestServer_Element(t *testing.T) {
 
 func TestServer_Attributes(t *testing.T) {
 	workspace := W.NewFileSystemWorkspaceContext("/test")
-	workspace.Init()
+	_ = workspace.Init()
 
 	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// Load manifest from fixture file
 	manifestJSON, err := os.ReadFile("test-fixtures/server-context/element-with-attributes.json")
@@ -181,13 +181,13 @@ func TestServer_Attributes(t *testing.T) {
 
 func TestServer_Slots(t *testing.T) {
 	workspace := W.NewFileSystemWorkspaceContext("/test")
-	workspace.Init()
+	_ = workspace.Init()
 
 	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// Load manifest from fixture file
 	manifestJSON, err := os.ReadFile("test-fixtures/server-context/element-with-slots.json")
@@ -229,13 +229,13 @@ func TestServer_Slots(t *testing.T) {
 
 func TestServer_AddManifest(t *testing.T) {
 	workspace := W.NewFileSystemWorkspaceContext("/test")
-	workspace.Init()
+	_ = workspace.Init()
 
 	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// Initially no elements
 	initialCount := server.ElementCount()
@@ -305,13 +305,13 @@ func TestServer_ElementSource(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			workspace := W.NewFileSystemWorkspaceContext("/test/workspace")
-			workspace.Init()
+			_ = workspace.Init()
 
 			server, err := lsp.NewServer(workspace, lsp.TransportStdio)
 			if err != nil {
 				t.Fatalf("Failed to create server: %v", err)
 			}
-			defer server.Close()
+			defer func() { _ = server.Close() }()
 
 			// Load manifest from fixture file
 			manifestJSON, err := os.ReadFile(tt.fixtureFile)
@@ -341,13 +341,13 @@ func TestServer_ElementSource(t *testing.T) {
 
 func TestServer_ModuleGraph(t *testing.T) {
 	workspace := W.NewFileSystemWorkspaceContext("/test")
-	workspace.Init()
+	_ = workspace.Init()
 
 	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// Get module graph
 	graph := server.ModuleGraph()
@@ -360,13 +360,13 @@ func TestServer_ModuleGraph(t *testing.T) {
 
 func TestServer_ElementDescription(t *testing.T) {
 	workspace := W.NewFileSystemWorkspaceContext("/test")
-	workspace.Init()
+	_ = workspace.Init()
 
 	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// Load manifest from fixture file
 	manifestJSON, err := os.ReadFile("test-fixtures/server-context/test-element.json")

@@ -67,7 +67,7 @@ type lspClient struct {
 	cmd        *exec.Cmd
 	mu         sync.Mutex
 	nextID     atomic.Int64
-	pending    map[int64]chan json.RawMessage
+	pending    map[int64]chan jsonrpcResponse
 	pendingMu  sync.Mutex
 }
 
@@ -139,15 +139,31 @@ func (c *lspClient) handleResponses() {
 			return
 		}
 
-		var resp jsonrpcResponse
-		if err := json.Unmarshal(msg, &resp); err != nil {
-			continue // Skip malformed responses
+		// Peek to detect server-side requests/notifications
+		var meta struct {
+			ID     *int64 `json:"id,omitempty"`
+			Method string `json:"method,omitempty"`
+		}
+		if err := json.Unmarshal(msg, &meta); err == nil && meta.Method != "" {
+			// If it's a request, reply with "method not found" to avoid server blocking.
+			if meta.ID != nil {
+				_ = c.writeMessage(jsonrpcResponse{
+					JSONRPC: "2.0",
+					ID:      *meta.ID,
+					Error:   &jsonrpcError{Code: -32601, Message: "method not supported by test client"},
+				})
+			}
+			continue
 		}
 
-		// Deliver to waiting caller
+		// Otherwise it's a response
+		var resp jsonrpcResponse
+		if err := json.Unmarshal(msg, &resp); err != nil {
+			continue // Skip malformed
+		}
 		c.pendingMu.Lock()
 		if ch, ok := c.pending[resp.ID]; ok {
-			ch <- resp.Result
+			ch <- resp
 			delete(c.pending, resp.ID)
 		}
 		c.pendingMu.Unlock()
@@ -158,7 +174,7 @@ func (c *lspClient) call(method string, params, result any) error {
 	id := c.nextID.Add(1)
 
 	// Register response channel
-	respChan := make(chan json.RawMessage, 1)
+	respChan := make(chan jsonrpcResponse, 1)
 	c.pendingMu.Lock()
 	c.pending[id] = respChan
 	c.pendingMu.Unlock()
@@ -179,11 +195,16 @@ func (c *lspClient) call(method string, params, result any) error {
 	}
 
 	// Wait for response
-	respData := <-respChan
+	resp := <-respChan
+
+	// Check for error in response
+	if resp.Error != nil {
+		return fmt.Errorf("jsonrpc error %d: %s", resp.Error.Code, resp.Error.Message)
+	}
 
 	// Unmarshal result
-	if result != nil && respData != nil {
-		if err := json.Unmarshal(respData, result); err != nil {
+	if result != nil && resp.Result != nil {
+		if err := json.Unmarshal(resp.Result, result); err != nil {
 			return fmt.Errorf("unmarshaling result: %w", err)
 		}
 	}
@@ -234,7 +255,7 @@ func startLSPServer(ctx context.Context, workDir string) (*lspClient, error) {
 		stdin:   stdin,
 		stdout:  bufio.NewReader(stdoutPipe),
 		cmd:     cmd,
-		pending: make(map[int64]chan json.RawMessage),
+		pending: make(map[int64]chan jsonrpcResponse),
 	}
 
 	// Start response handler

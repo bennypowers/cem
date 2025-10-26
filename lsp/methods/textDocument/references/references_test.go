@@ -148,7 +148,7 @@ func TestReferences_WorkspaceSearch(t *testing.T) {
 		if location.URI == "file:///test-fixtures/workspace-search/index.html" {
 			foundHTML = true
 		}
-		if location.URI == "file://test-fixtures/workspace-search/component.ts" {
+		if location.URI == "file:///test-fixtures/workspace-search/component.ts" {
 			foundTS = true
 		}
 	}
@@ -202,7 +202,7 @@ func TestReferences_GitignoreFiltering(t *testing.T) {
 
 	// Verify that ignored/should-be-skipped.html is NOT in results
 	for _, location := range locations {
-		if location.URI == "file://test-fixtures/workspace-search/ignored/should-be-skipped.html" {
+		if location.URI == "file:///test-fixtures/workspace-search/ignored/should-be-skipped.html" {
 			t.Error("Found reference in gitignored file - should have been filtered out")
 		}
 	}
