@@ -179,7 +179,7 @@ lsp/
 ├── helpers/               # Utility functions
 │   └── debug.go           # Debug logging utilities
 ├── methods/               # Organized LSP method implementations
-│   ├── server.go          # Server lifecycle (initialize, shutdown)
+│   ├── lifecycle/         # LSP lifecycle methods (initialize, initialized, shutdown, setTrace)
 │   └── textDocument/      # Text document methods
 │       ├── completion/    # Completion feature package
 │       │   ├── completion.go           # Main completion implementation
@@ -485,7 +485,7 @@ func analyzeDocument(dm *DocumentManager) {
 
 ### Server Capability Declaration Pattern
 **When**: Adding any new LSP method support
-**Required**: Update `methods/server/initialize.go` ServerCapabilities
+**Required**: Update `methods/lifecycle/initialize.go` ServerCapabilities
 **Example**: Adding `CodeActionProvider` when implementing `textDocument/codeAction`
 **Testing**: Verify capabilities are declared in initialization response
 
