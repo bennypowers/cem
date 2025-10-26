@@ -92,3 +92,198 @@ func TestReferences(t *testing.T) {
 		}
 	}
 }
+
+func TestReferences_WorkspaceSearch(t *testing.T) {
+	// Create MockServerContext
+	ctx := testhelpers.NewMockServerContext()
+
+	// Create DocumentManager
+	dm, err := document.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
+
+	// Set workspace root to test fixtures directory
+	ctx.SetWorkspaceRoot("test-fixtures/workspace-search")
+
+	// Open one document (the others will be searched from disk)
+	doc := dm.OpenDocument("file:///test-fixtures/workspace-search/index.html", `<rh-card>test</rh-card>`, 1)
+	ctx.AddDocument("file:///test-fixtures/workspace-search/index.html", doc)
+
+	// Create request for references to rh-card
+	params := &protocol.ReferenceParams{
+		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
+			TextDocument: protocol.TextDocumentIdentifier{
+				URI: "file:///test-fixtures/workspace-search/index.html",
+			},
+			Position: protocol.Position{Line: 0, Character: 5}, // Inside rh-card
+		},
+		Context: protocol.ReferenceContext{
+			IncludeDeclaration: true,
+		},
+	}
+
+	// Call References function - should search both open doc and workspace files
+	locations, err := references.References(ctx, &glsp.Context{}, params)
+
+	// Verify results
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	// Should find references in:
+	// 1. Open document (index.html)
+	// 2. component.ts (found via workspace search)
+	// Note: We expect at least 2 references, but might find more depending on file contents
+	if len(locations) < 2 {
+		t.Errorf("Expected at least 2 locations (open doc + workspace), got %d", len(locations))
+	}
+
+	// Verify we found references in both HTML and TypeScript files
+	foundHTML := false
+	foundTS := false
+	for _, location := range locations {
+		if location.URI == "file:///test-fixtures/workspace-search/index.html" {
+			foundHTML = true
+		}
+		if location.URI == "file://test-fixtures/workspace-search/component.ts" {
+			foundTS = true
+		}
+	}
+
+	if !foundHTML {
+		t.Error("Expected to find references in index.html")
+	}
+	if !foundTS {
+		t.Error("Expected to find references in component.ts via workspace search")
+	}
+}
+
+func TestReferences_GitignoreFiltering(t *testing.T) {
+	// Create MockServerContext
+	ctx := testhelpers.NewMockServerContext()
+
+	// Create DocumentManager
+	dm, err := document.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
+
+	// Set workspace root to test fixtures directory (has .gitignore)
+	ctx.SetWorkspaceRoot("test-fixtures/workspace-search")
+
+	// Open a document to trigger search
+	doc := dm.OpenDocument("file:///test-fixtures/workspace-search/index.html", `<rh-card>test</rh-card>`, 1)
+	ctx.AddDocument("file:///test-fixtures/workspace-search/index.html", doc)
+
+	// Create request
+	params := &protocol.ReferenceParams{
+		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
+			TextDocument: protocol.TextDocumentIdentifier{
+				URI: "file:///test-fixtures/workspace-search/index.html",
+			},
+			Position: protocol.Position{Line: 0, Character: 5},
+		},
+		Context: protocol.ReferenceContext{
+			IncludeDeclaration: true,
+		},
+	}
+
+	// Call References function
+	locations, err := references.References(ctx, &glsp.Context{}, params)
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	// Verify that ignored/should-be-skipped.html is NOT in results
+	for _, location := range locations {
+		if location.URI == "file://test-fixtures/workspace-search/ignored/should-be-skipped.html" {
+			t.Error("Found reference in gitignored file - should have been filtered out")
+		}
+	}
+}
+
+func TestReferences_NoElement(t *testing.T) {
+	// Create MockServerContext
+	ctx := testhelpers.NewMockServerContext()
+
+	// Create DocumentManager
+	dm, err := document.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
+
+	// Open document with no custom elements at cursor
+	doc := dm.OpenDocument("file:///test.html", `<div>regular html</div>`, 1)
+	ctx.AddDocument("file:///test.html", doc)
+
+	// Create request at position with no element
+	params := &protocol.ReferenceParams{
+		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
+			TextDocument: protocol.TextDocumentIdentifier{
+				URI: "file:///test.html",
+			},
+			Position: protocol.Position{Line: 0, Character: 2}, // Inside <div>
+		},
+		Context: protocol.ReferenceContext{
+			IncludeDeclaration: true,
+		},
+	}
+
+	// Call References function
+	locations, err := references.References(ctx, &glsp.Context{}, params)
+
+	// Should return empty array, not error
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if len(locations) != 0 {
+		t.Errorf("Expected 0 locations for non-custom-element, got %d", len(locations))
+	}
+}
+
+func TestReferences_DocumentNotFound(t *testing.T) {
+	// Create MockServerContext without adding document
+	ctx := testhelpers.NewMockServerContext()
+
+	// Create DocumentManager
+	dm, err := document.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
+
+	// Create request for non-existent document
+	params := &protocol.ReferenceParams{
+		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
+			TextDocument: protocol.TextDocumentIdentifier{
+				URI: "file:///non-existent.html",
+			},
+			Position: protocol.Position{Line: 0, Character: 5},
+		},
+		Context: protocol.ReferenceContext{
+			IncludeDeclaration: true,
+		},
+	}
+
+	// Call References function
+	locations, err := references.References(ctx, &glsp.Context{}, params)
+
+	// Should return empty array, not error
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if len(locations) != 0 {
+		t.Errorf("Expected 0 locations for non-existent document, got %d", len(locations))
+	}
+}
