@@ -1,0 +1,14 @@
+{
+	"schemaVersion": "1.0.0",
+	"modules": [{
+		"path": "test-card.js",
+		"declarations": [
+			{"kind": "class", "name": "TestCard", "customElement": true, "tagName": "test-card"}
+		],
+		"exports": [{
+			"kind": "custom-element-definition",
+			"name": "test-card",
+			"declaration": {"name": "TestCard"}
+		}]
+	}]
+}

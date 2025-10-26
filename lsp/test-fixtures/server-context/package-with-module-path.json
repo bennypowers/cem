@@ -1,0 +1,14 @@
+{
+	"schemaVersion": "1.0.0",
+	"modules": [{
+		"path": "button/button-element.js",
+		"declarations": [
+			{"kind": "class", "name": "TestButton", "customElement": true, "tagName": "test-button"}
+		],
+		"exports": [{
+			"kind": "custom-element-definition",
+			"name": "test-button",
+			"declaration": {"name": "TestButton"}
+		}]
+	}]
+}
