@@ -492,7 +492,7 @@ func TestLSPDidChange(t *testing.T) {
 			},
 			Version: 2,
 		},
-		ContentChanges: []interface{}{
+		ContentChanges: []any{
 			protocol.TextDocumentContentChangeEvent{
 				Text: updatedContent,
 			},
