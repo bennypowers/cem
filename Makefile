@@ -102,7 +102,11 @@ coverage:
 	go test -count=1 -tags=e2e ./cmd/
 	@echo "Merging coverage data..."
 	@mkdir -p coverage/merged
-	go tool covdata merge -i=./coverage/unit,./cmd/coverage.e2e -o coverage/merged
+	@COVDIRS=./coverage/unit; \
+	if [ -d ./cmd/coverage.e2e ]; then \
+		COVDIRS="$$COVDIRS,./cmd/coverage.e2e"; \
+	fi; \
+	go tool covdata merge -i=$$COVDIRS -o coverage/merged
 	@echo "Converting to text format..."
 	go tool covdata textfmt -i=coverage/merged -o cover.out
 	@echo "Coverage report:"
