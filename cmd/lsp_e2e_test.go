@@ -33,6 +33,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
@@ -194,8 +195,18 @@ func (c *lspClient) call(method string, params, result any) error {
 		return err
 	}
 
-	// Wait for response
-	resp := <-respChan
+	// Wait for response with timeout
+	var resp jsonrpcResponse
+	select {
+	case resp = <-respChan:
+		// Response received
+	case <-time.After(30 * time.Second):
+		// Timeout - clean up pending map entry
+		c.pendingMu.Lock()
+		delete(c.pending, id)
+		c.pendingMu.Unlock()
+		return fmt.Errorf("timeout waiting for response to %s (id=%d)", method, id)
+	}
 
 	// Check for error in response
 	if resp.Error != nil {
