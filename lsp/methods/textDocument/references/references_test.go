@@ -18,6 +18,7 @@ package references_test
 
 import (
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"bennypowers.dev/cem/lsp/document"
@@ -205,7 +206,8 @@ func TestReferences_GitignoreFiltering(t *testing.T) {
 
 	// Verify that ignored/should-be-skipped.html is NOT in results
 	for _, location := range locations {
-		if location.URI == "file:///test-fixtures/workspace-search/ignored/should-be-skipped.html" {
+		// Check path component to handle both relative and absolute URIs
+		if strings.Contains(string(location.URI), "ignored/should-be-skipped.html") {
 			t.Error("Found reference in gitignored file - should have been filtered out")
 		}
 	}
