@@ -22,7 +22,7 @@ import (
 
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/helpers"
-	serverMethods "bennypowers.dev/cem/lsp/methods/server"
+	"bennypowers.dev/cem/lsp/methods/lifecycle"
 	"bennypowers.dev/cem/lsp/methods/textDocument"
 	"bennypowers.dev/cem/lsp/methods/textDocument/codeAction"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
@@ -84,10 +84,10 @@ func NewServer(workspace types.WorkspaceContext, transport TransportKind) (*Serv
 	// Create the GLSP server with our handler
 	// Handlers are wrapped with middleware for logging, error handling, and panic recovery
 	handler := protocol.Handler{
-		Initialize:             method(s, "initialize", serverMethods.Initialize),
-		Initialized:            notify(s, "initialized", serverMethods.Initialized),
-		Shutdown:               noParam(s, "shutdown", serverMethods.Shutdown),
-		SetTrace:               notify(s, "$/setTrace", serverMethods.SetTrace),
+		Initialize:             method(s, "initialize", lifecycle.Initialize),
+		Initialized:            notify(s, "initialized", lifecycle.Initialized),
+		Shutdown:               noParam(s, "shutdown", lifecycle.Shutdown),
+		SetTrace:               notify(s, "$/setTrace", lifecycle.SetTrace),
 		TextDocumentHover:      method(s, "textDocument/hover", hover.Hover),
 		TextDocumentCompletion: method(s, "textDocument/completion", completion.Completion),
 		TextDocumentDefinition: method(s, "textDocument/definition", definition.Definition),

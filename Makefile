@@ -17,7 +17,7 @@ install: build
 all: windows
 
 clean:
-	rm -rf dist/ cpu.out cover.out artifacts platforms
+	rm -rf dist/ cpu.out cover.out coverage/ cmd/coverage.e2e/ artifacts platforms
 
 build: generate
 	@mkdir -p dist
@@ -96,15 +96,24 @@ flamegraph: profile
 
 coverage:
 	@echo "Running unit tests with coverage..."
-	go test -coverprofile=cover.unit.out -covermode=atomic ./...
+	@mkdir -p coverage/unit
+	go test ./... -cover -args -test.gocoverdir="$(PWD)/coverage/unit"
 	@echo "Running e2e tests with coverage..."
 	go test -count=1 -tags=e2e ./cmd/
-	@echo "Merging coverage profiles..."
-	@echo "mode: atomic" > cover.out
-	@grep -h -v "^mode:" cover.unit.out cmd/coverage.e2e.out >> cover.out
-	@rm cover.unit.out cmd/coverage.e2e.out
+	@echo "Merging coverage data..."
+	@mkdir -p coverage/merged
+	@COVDIRS=./coverage/unit; \
+	if [ -d ./cmd/coverage.e2e ]; then \
+		COVDIRS="$$COVDIRS,./cmd/coverage.e2e"; \
+	fi; \
+	go tool covdata merge -i=$$COVDIRS -o coverage/merged
+	@echo "Converting to text format..."
+	go tool covdata textfmt -i=coverage/merged -o cover.out
 	@echo "Coverage report:"
-	@go tool cover -func=cover.out
+	@go tool cover -func=cover.out | tail -20
+	@echo ""
+	@echo "Total coverage:"
+	@go tool cover -func=cover.out | grep total
 	@echo "To view the full report, run 'make show-coverage'"
 
 show-coverage:

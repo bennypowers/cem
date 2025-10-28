@@ -288,6 +288,14 @@ func findReferencesInDocument(ctx types.ServerContext, doc types.Document, eleme
 func findReferencesInWorkspace(workspaceRoot string, elementName string, openDocuments []types.Document) []protocol.Location {
 	var locations []protocol.Location
 
+	// Ensure workspace root is absolute
+	absWorkspaceRoot, err := filepath.Abs(workspaceRoot)
+	if err != nil {
+		helpers.SafeDebugLog("[REFERENCES] Failed to get absolute workspace path: %v", err)
+		return locations
+	}
+	workspaceRoot = absWorkspaceRoot
+
 	// Create a set of open document URIs to avoid duplicates
 	openFiles := make(map[string]bool)
 	for _, doc := range openDocuments {
@@ -302,7 +310,7 @@ func findReferencesInWorkspace(workspaceRoot string, elementName string, openDoc
 	}
 
 	// Find all relevant files in workspace
-	err := filepath.Walk(workspaceRoot, func(path string, info os.FileInfo, err error) error {
+	walkErr := filepath.Walk(workspaceRoot, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return nil // Skip errors and continue
 		}
@@ -352,8 +360,8 @@ func findReferencesInWorkspace(workspaceRoot string, elementName string, openDoc
 		return nil
 	})
 
-	if err != nil {
-		helpers.SafeDebugLog("[REFERENCES] Error walking workspace: %v", err)
+	if walkErr != nil {
+		helpers.SafeDebugLog("[REFERENCES] Error walking workspace: %v", walkErr)
 	}
 
 	helpers.SafeDebugLog("[REFERENCES] Found %d workspace references for %s", len(locations), elementName)

@@ -14,7 +14,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
-package server
+package lifecycle
 
 import (
 	"bennypowers.dev/cem/lsp/helpers"
@@ -28,9 +28,9 @@ func SetTrace(ctx types.ServerContext, context *glsp.Context, params *protocol.S
 	// Use LSP standard trace levels to control debug logging
 	switch params.Value {
 	case protocol.TraceValueOff:
-		// Disable debug logging
+		// Log before disabling to ensure message is emitted
+		ctx.DebugLog("Disabling debug logging via $/setTrace")
 		helpers.SetDebugLoggingEnabled(false)
-		ctx.DebugLog("Debug logging disabled via $/setTrace")
 	case protocol.TraceValueMessage:
 		// Enable basic debug logging
 		helpers.SetDebugLoggingEnabled(true)
@@ -39,6 +39,9 @@ func SetTrace(ctx types.ServerContext, context *glsp.Context, params *protocol.S
 		// Enable verbose debug logging (same as messages for now)
 		helpers.SetDebugLoggingEnabled(true)
 		ctx.DebugLog("Verbose debug logging enabled via $/setTrace")
+	default:
+		// Unknown/unsupported value; ignore gracefully
+		ctx.DebugLog("Ignoring unknown $/setTrace value")
 	}
 
 	return nil

@@ -79,33 +79,32 @@ func TestMain(m *testing.M) {
 	// Run the tests
 	code := m.Run()
 
-	// Merge coverage data from the E2E tests into a single profile.
-	// This file is placed in the `cmd` directory where `go test` is run.
+	// Merge coverage data from the E2E tests into binary format.
+	// This directory is placed in the `cmd` directory where `go test` is run.
+	// The Makefile will later merge this with unit test coverage.
 	cwd, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
 
 	e2eCoverDir := filepath.Join(cwd, "coverage.e2e")
-	e2eCoverOut := filepath.Join(cwd, "coverage.e2e.out")
 
-	defer os.RemoveAll(e2eCoverDir)
+	// Remove old coverage data if it exists, then create fresh directory
+	os.RemoveAll(e2eCoverDir)
+	if err := os.MkdirAll(e2eCoverDir, 0755); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create E2E coverage directory: %v\n", err)
+	}
 
+	// Merge coverage from all E2E test runs into binary format
 	mergeCmd := exec.Command("go", "tool", "covdata", "merge", "-i", coverDir, "-o", e2eCoverDir)
 	mergeCmd.Stdout = os.Stdout
 	mergeCmd.Stderr = os.Stderr
 	if err := mergeCmd.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to merge coverage data: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to merge E2E coverage data: %v\n", err)
 	}
 
-	// Convert the merged data to the legacy text format
-	// so it can be read by `go tool cover`
-	textCmd := exec.Command("go", "tool", "covdata", "textfmt", "-i", e2eCoverDir, "-o", e2eCoverOut)
-	textCmd.Stdout = os.Stdout
-	textCmd.Stderr = os.Stderr
-	if err := textCmd.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to convert coverage data: %v\n", err)
-	}
+	// Note: We keep the binary format directory (coverage.e2e/) for the Makefile to merge
+	// with unit test coverage. The Makefile's 'coverage' target will handle final conversion.
 
 	os.Exit(code)
 }
