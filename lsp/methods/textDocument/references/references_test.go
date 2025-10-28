@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package references_test
 
 import (
+	"path/filepath"
 	"testing"
 
 	"bennypowers.dev/cem/lsp/document"
@@ -142,13 +143,15 @@ func TestReferences_WorkspaceSearch(t *testing.T) {
 	}
 
 	// Verify we found references in both HTML and TypeScript files
+	// Note: URIs will be absolute paths since workspace root gets converted to absolute
 	foundHTML := false
 	foundTS := false
 	for _, location := range locations {
-		if location.URI == "file:///test-fixtures/workspace-search/index.html" {
+		// Check by filename since URIs will be absolute paths
+		if filepath.Base(string(location.URI)) == "index.html" {
 			foundHTML = true
 		}
-		if location.URI == "file:///test-fixtures/workspace-search/component.ts" {
+		if filepath.Base(string(location.URI)) == "component.ts" {
 			foundTS = true
 		}
 	}
