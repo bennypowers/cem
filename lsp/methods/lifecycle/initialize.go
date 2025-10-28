@@ -31,7 +31,6 @@ import (
 func Initialize(ctx types.ServerContext, context *glsp.Context, params *protocol.InitializeParams) (any, error) {
 	// Configure centralized logger for LSP mode
 	logging.SetLSPContext(context)
-	logging.SetDebugEnabled(true)
 
 	// Send initialization message (non-intrusive)
 	logging.Info("CEM LSP Server initializing...")
@@ -40,9 +39,6 @@ func Initialize(ctx types.ServerContext, context *glsp.Context, params *protocol
 	if executable, err := os.Executable(); err == nil {
 		logging.Debug("LSP server binary: %s", executable)
 	}
-
-	// Enable debug logging for LSP helpers
-	helpers.SetDebugLoggingEnabled(true)
 
 	// Log workspace information from LSP client
 	if params.RootURI != nil {
@@ -70,7 +66,6 @@ func Initialize(ctx types.ServerContext, context *glsp.Context, params *protocol
 		CompletionProvider: &protocol.CompletionOptions{
 			TriggerCharacters: []string{
 				"<",
-				" ",
 				"=",
 				"\"",
 				"@",
