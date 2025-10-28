@@ -29,14 +29,20 @@ import (
 func TestServer_Workspace(t *testing.T) {
 	// Create workspace
 	workspace := W.NewFileSystemWorkspaceContext("/test/workspace")
-	_ = workspace.Init()
+	if err := workspace.Init(); err != nil {
+		t.Fatalf("Failed to init workspace: %v", err)
+	}
 
 	// Create server with workspace
 	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer func() { _ = server.Close() }()
+	defer func() {
+		if err := server.Close(); err != nil {
+			t.Fatalf("Failed to close server: %v", err)
+		}
+	}()
 
 	// Test Workspace() method
 	retrievedWorkspace := server.Workspace()
@@ -75,13 +81,19 @@ func TestServer_WorkspaceRoot(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			workspace := W.NewFileSystemWorkspaceContext(tt.root)
-			_ = workspace.Init()
+			if err := workspace.Init(); err != nil {
+				t.Fatalf("Failed to init workspace: %v", err)
+			}
 
 			server, err := lsp.NewServer(workspace, lsp.TransportStdio)
 			if err != nil {
 				t.Fatalf("Failed to create server: %v", err)
 			}
-			defer func() { _ = server.Close() }()
+			defer func() {
+				if err := server.Close(); err != nil {
+					t.Fatalf("Failed to close server: %v", err)
+				}
+			}()
 
 			root := server.WorkspaceRoot()
 			if root != tt.expected {
@@ -93,7 +105,9 @@ func TestServer_WorkspaceRoot(t *testing.T) {
 
 func TestServer_Element(t *testing.T) {
 	workspace := W.NewFileSystemWorkspaceContext("/test")
-	_ = workspace.Init()
+	if err := workspace.Init(); err != nil {
+		t.Fatalf("Failed to init workspace: %v", err)
+	}
 
 	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
 	if err != nil {
@@ -133,7 +147,9 @@ func TestServer_Element(t *testing.T) {
 
 func TestServer_Attributes(t *testing.T) {
 	workspace := W.NewFileSystemWorkspaceContext("/test")
-	_ = workspace.Init()
+	if err := workspace.Init(); err != nil {
+		t.Fatalf("Failed to init workspace: %v", err)
+	}
 
 	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
 	if err != nil {
@@ -181,7 +197,9 @@ func TestServer_Attributes(t *testing.T) {
 
 func TestServer_Slots(t *testing.T) {
 	workspace := W.NewFileSystemWorkspaceContext("/test")
-	_ = workspace.Init()
+	if err := workspace.Init(); err != nil {
+		t.Fatalf("Failed to init workspace: %v", err)
+	}
 
 	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
 	if err != nil {
@@ -229,7 +247,9 @@ func TestServer_Slots(t *testing.T) {
 
 func TestServer_AddManifest(t *testing.T) {
 	workspace := W.NewFileSystemWorkspaceContext("/test")
-	_ = workspace.Init()
+	if err := workspace.Init(); err != nil {
+		t.Fatalf("Failed to init workspace: %v", err)
+	}
 
 	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
 	if err != nil {
@@ -305,7 +325,9 @@ func TestServer_ElementSource(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			workspace := W.NewFileSystemWorkspaceContext("/test/workspace")
-			_ = workspace.Init()
+			if err := workspace.Init(); err != nil {
+				t.Fatalf("Failed to init workspace: %v", err)
+			}
 
 			server, err := lsp.NewServer(workspace, lsp.TransportStdio)
 			if err != nil {
@@ -316,12 +338,12 @@ func TestServer_ElementSource(t *testing.T) {
 			// Load manifest from fixture file
 			manifestJSON, err := os.ReadFile(tt.fixtureFile)
 			if err != nil {
-				t.Fatalf("Failed to read manifest fixture: %v", err)
+				t.Fatalf("Failed to read manifest fixture %s: %v", tt.fixtureFile, err)
 			}
 
 			var manifest M.Package
 			if err := json.Unmarshal(manifestJSON, &manifest); err != nil {
-				t.Fatalf("Failed to unmarshal manifest: %v", err)
+				t.Fatalf("Failed to unmarshal manifest %s: %v", tt.fixtureFile, err)
 			}
 
 			server.AddManifest(&manifest)
@@ -341,7 +363,9 @@ func TestServer_ElementSource(t *testing.T) {
 
 func TestServer_ModuleGraph(t *testing.T) {
 	workspace := W.NewFileSystemWorkspaceContext("/test")
-	_ = workspace.Init()
+	if err := workspace.Init(); err != nil {
+		t.Fatalf("Failed to init workspace: %v", err)
+	}
 
 	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
 	if err != nil {
@@ -360,7 +384,9 @@ func TestServer_ModuleGraph(t *testing.T) {
 
 func TestServer_ElementDescription(t *testing.T) {
 	workspace := W.NewFileSystemWorkspaceContext("/test")
-	_ = workspace.Init()
+	if err := workspace.Init(); err != nil {
+		t.Fatalf("Failed to init workspace: %v", err)
+	}
 
 	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
 	if err != nil {
