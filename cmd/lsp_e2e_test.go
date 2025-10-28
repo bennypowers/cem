@@ -371,7 +371,7 @@ func TestLSPHover(t *testing.T) {
 		t.Fatalf("Failed to send didOpen: %v", err)
 	}
 
-	// Request hover on "MyElement" class name (line 4, character 13)
+	// Request hover on "MyElement" class name (line 4, character 15)
 	// The file content is:
 	//   Line 1: /**
 	//   Line 2:  * @customElement my-element
@@ -424,6 +424,14 @@ func TestLSPCompletion(t *testing.T) {
 		t.Fatalf("Failed to send didOpen: %v", err)
 	}
 
+	// Compute safe EOF position from file contents
+	lines := strings.Split(string(content), "\n")
+	eofLine := len(lines) - 1
+	if eofLine < 0 {
+		eofLine = 0
+	}
+	eofChar := len(lines[eofLine])
+
 	// Request completion at the end of the file
 	completionParams := protocol.CompletionParams{
 		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
@@ -431,8 +439,8 @@ func TestLSPCompletion(t *testing.T) {
 				URI: protocol.DocumentUri("file://" + jsFile),
 			},
 			Position: protocol.Position{
-				Line:      4, // After the class definition
-				Character: 0,
+				Line:      uint32(eofLine),
+				Character: uint32(eofChar),
 			},
 		},
 	}
