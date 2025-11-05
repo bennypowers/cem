@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "comp-a.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "CompA",
+          "tagName": "comp-a",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "comp-a",
+          "declaration": {
+            "name": "CompA"
+          }
+        }
+      ]
+    }
+  ]
+}

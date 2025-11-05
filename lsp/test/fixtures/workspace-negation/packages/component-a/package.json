@@ -1,0 +1,5 @@
+{
+  "name": "@test/component-a",
+  "version": "1.0.0",
+  "customElements": "custom-elements.json"
+}
