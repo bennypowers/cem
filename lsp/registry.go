@@ -31,7 +31,7 @@ import (
 	"bennypowers.dev/cem/modulegraph"
 	"bennypowers.dev/cem/queries"
 	"bennypowers.dev/cem/types"
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v3" // Required for parsing pnpm-workspace.yaml files
 )
 
 // ElementDefinition stores a custom element with its source information
@@ -306,13 +306,12 @@ func (r *Registry) loadWorkspacePackageManifests(workspace types.WorkspaceContex
 func (r *Registry) discoverWorkspacePackages(workspace types.WorkspaceContext) ([]string, error) {
 	root := workspace.Root()
 	var workspacePatterns []string
-	var packageManager string
 
 	// Detect package manager and get workspace patterns
 	// 1. Try pnpm (pnpm-workspace.yaml)
+	// pnpm uses a separate YAML file for workspace configuration instead of package.json
 	pnpmWorkspaceFile := filepath.Join(root, "pnpm-workspace.yaml")
 	if _, err := os.Stat(pnpmWorkspaceFile); err == nil {
-		packageManager = "pnpm"
 		patterns, err := r.parsePnpmWorkspace(pnpmWorkspaceFile)
 		if err == nil {
 			workspacePatterns = patterns
@@ -321,7 +320,8 @@ func (r *Registry) discoverWorkspacePackages(workspace types.WorkspaceContext) (
 	}
 
 	// 2. Try npm/yarn (package.json workspaces field)
-	if packageManager == "" {
+	// Only check package.json if we haven't found patterns yet (pnpm takes precedence)
+	if len(workspacePatterns) == 0 {
 		packageJSONPath := filepath.Join(root, "package.json")
 		if _, err := os.Stat(packageJSONPath); err == nil {
 			patterns, err := r.parseNpmYarnWorkspaces(packageJSONPath)

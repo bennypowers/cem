@@ -19,6 +19,7 @@ package lsp_test
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"bennypowers.dev/cem/lsp"
@@ -69,10 +70,10 @@ func TestWorkspaceDiagnostics_NoFalsePositives_npm(t *testing.T) {
 	// CRITICAL: Should have NO "unknown element" diagnostic for <my-element-a>
 	// because it's a workspace sibling that IS imported
 	for _, diag := range diagnostics {
-		if contains(diag.Message, "my-element-a") && contains(diag.Message, "Unknown") {
+		if strings.Contains(diag.Message, "my-element-a") && strings.Contains(diag.Message, "Unknown") {
 			t.Errorf("FALSE POSITIVE: Got 'unknown element' diagnostic for workspace sibling: %s", diag.Message)
 		}
-		if contains(diag.Message, "my-element-a") && contains(diag.Message, "not imported") {
+		if strings.Contains(diag.Message, "my-element-a") && strings.Contains(diag.Message, "not imported") {
 			t.Errorf("FALSE POSITIVE: Got 'missing import' diagnostic for workspace sibling: %s", diag.Message)
 		}
 	}
@@ -123,10 +124,10 @@ func TestWorkspaceDiagnostics_NoFalsePositives_yarn(t *testing.T) {
 
 	// Should have NO false positive diagnostics
 	for _, diag := range diagnostics {
-		if contains(diag.Message, "my-element-a") && contains(diag.Message, "Unknown") {
+		if strings.Contains(diag.Message, "my-element-a") && strings.Contains(diag.Message, "Unknown") {
 			t.Errorf("FALSE POSITIVE: Got 'unknown element' diagnostic for yarn workspace sibling: %s", diag.Message)
 		}
-		if contains(diag.Message, "my-element-a") && contains(diag.Message, "not imported") {
+		if strings.Contains(diag.Message, "my-element-a") && strings.Contains(diag.Message, "not imported") {
 			t.Errorf("FALSE POSITIVE: Got 'missing import' diagnostic for yarn workspace sibling: %s", diag.Message)
 		}
 	}
@@ -177,10 +178,10 @@ func TestWorkspaceDiagnostics_NoFalsePositives_pnpm(t *testing.T) {
 
 	// Should have NO false positive diagnostics
 	for _, diag := range diagnostics {
-		if contains(diag.Message, "my-element-a") && contains(diag.Message, "Unknown") {
+		if strings.Contains(diag.Message, "my-element-a") && strings.Contains(diag.Message, "Unknown") {
 			t.Errorf("FALSE POSITIVE: Got 'unknown element' diagnostic for pnpm workspace sibling: %s", diag.Message)
 		}
-		if contains(diag.Message, "my-element-a") && contains(diag.Message, "not imported") {
+		if strings.Contains(diag.Message, "my-element-a") && strings.Contains(diag.Message, "not imported") {
 			t.Errorf("FALSE POSITIVE: Got 'missing import' diagnostic for pnpm workspace sibling: %s", diag.Message)
 		}
 	}
@@ -193,18 +194,3 @@ func TestWorkspaceDiagnostics_NoFalsePositives_pnpm(t *testing.T) {
 	}
 }
 
-// contains is a helper function to check if a string contains a substring
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) &&
-		(s[:len(substr)] == substr || s[len(s)-len(substr):] == substr ||
-		containsMiddle(s, substr)))
-}
-
-func containsMiddle(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
-}
