@@ -31,6 +31,7 @@ import (
 	"bennypowers.dev/cem/modulegraph"
 	"bennypowers.dev/cem/queries"
 	"bennypowers.dev/cem/types"
+	"gopkg.in/yaml.v3"
 )
 
 // ElementDefinition stores a custom element with its source information
@@ -162,17 +163,22 @@ func (r *Registry) LoadFromWorkspace(workspace types.WorkspaceContext) error {
 		helpers.SafeDebugLog("Warning: Could not load workspace manifest: %v", err)
 	}
 
-	// 2. Load manifests from node_modules packages
+	// 2. Load manifests from workspace packages (npm/yarn/pnpm workspaces)
+	if err := r.loadWorkspacePackageManifests(workspace); err != nil {
+		helpers.SafeDebugLog("Warning: Could not load workspace package manifests: %v", err)
+	}
+
+	// 3. Load manifests from node_modules packages
 	if err := r.loadNodeModulesManifests(workspace); err != nil {
 		helpers.SafeDebugLog("Warning: Could not load node_modules manifests: %v", err)
 	}
 
-	// 3. Load manifests specified in config
+	// 4. Load manifests specified in config
 	if err := r.loadConfigManifests(workspace); err != nil {
 		helpers.SafeDebugLog("Warning: Could not load config manifests: %v", err)
 	}
 
-	// 4. Initialize module graph for lazy building
+	// 5. Initialize module graph for lazy building
 	// Instead of scanning the entire workspace upfront (which was 5000+ files),
 	// we now build the module graph lazily as imports are discovered in open documents.
 	// This provides fast startup while maintaining accurate re-export resolution.
@@ -269,6 +275,245 @@ func (r *Registry) loadWorkspaceManifest(workspace types.WorkspaceContext) error
 	}
 
 	return nil
+}
+
+// loadWorkspacePackageManifests loads manifests from workspace packages (npm/yarn/pnpm workspaces)
+func (r *Registry) loadWorkspacePackageManifests(workspace types.WorkspaceContext) error {
+	helpers.SafeDebugLog("Attempting to load workspace package manifests...")
+
+	// Detect package manager and get workspace configuration
+	workspacePackages, err := r.discoverWorkspacePackages(workspace)
+	if err != nil {
+		return fmt.Errorf("could not discover workspace packages: %w", err)
+	}
+
+	if len(workspacePackages) == 0 {
+		helpers.SafeDebugLog("No workspace packages found")
+		return nil
+	}
+
+	helpers.SafeDebugLog("Found %d workspace packages", len(workspacePackages))
+
+	// Load manifest from each workspace package
+	for _, pkgPath := range workspacePackages {
+		r.loadWorkspacePackage(pkgPath)
+	}
+
+	return nil
+}
+
+// discoverWorkspacePackages discovers workspace packages based on package manager config
+func (r *Registry) discoverWorkspacePackages(workspace types.WorkspaceContext) ([]string, error) {
+	root := workspace.Root()
+	var workspacePatterns []string
+	var packageManager string
+
+	// Detect package manager and get workspace patterns
+	// 1. Try pnpm (pnpm-workspace.yaml)
+	pnpmWorkspaceFile := filepath.Join(root, "pnpm-workspace.yaml")
+	if _, err := os.Stat(pnpmWorkspaceFile); err == nil {
+		packageManager = "pnpm"
+		patterns, err := r.parsePnpmWorkspace(pnpmWorkspaceFile)
+		if err == nil {
+			workspacePatterns = patterns
+			helpers.SafeDebugLog("Detected pnpm workspace with %d patterns", len(patterns))
+		}
+	}
+
+	// 2. Try npm/yarn (package.json workspaces field)
+	if packageManager == "" {
+		packageJSONPath := filepath.Join(root, "package.json")
+		if _, err := os.Stat(packageJSONPath); err == nil {
+			patterns, err := r.parseNpmYarnWorkspaces(packageJSONPath)
+			if err == nil && len(patterns) > 0 {
+				workspacePatterns = patterns
+				// Determine if npm or yarn based on lock file
+				if _, err := os.Stat(filepath.Join(root, "yarn.lock")); err == nil {
+					packageManager = "yarn"
+					helpers.SafeDebugLog("Detected yarn workspace with %d patterns", len(patterns))
+				} else {
+					packageManager = "npm"
+					helpers.SafeDebugLog("Detected npm workspace with %d patterns", len(patterns))
+				}
+			}
+		}
+	}
+
+	if len(workspacePatterns) == 0 {
+		return nil, nil
+	}
+
+	// Separate positive and negative patterns
+	var positivePatterns []string
+	var negativePatterns []string
+	for _, pattern := range workspacePatterns {
+		if strings.HasPrefix(pattern, "!") {
+			// Remove the "!" prefix for negation patterns
+			negativePatterns = append(negativePatterns, strings.TrimPrefix(pattern, "!"))
+		} else {
+			positivePatterns = append(positivePatterns, pattern)
+		}
+	}
+
+	// Expand positive glob patterns to find actual workspace package directories
+	var packageDirs []string
+	for _, pattern := range positivePatterns {
+		matches, err := r.expandWorkspacePattern(workspace, pattern)
+		if err != nil {
+			helpers.SafeDebugLog("Warning: Could not expand pattern %s: %v", pattern, err)
+			continue
+		}
+		packageDirs = append(packageDirs, matches...)
+	}
+
+	// Filter out packages matching negation patterns
+	if len(negativePatterns) > 0 {
+		packageDirs = r.filterNegatedPackages(workspace, packageDirs, negativePatterns)
+	}
+
+	helpers.SafeDebugLog("Expanded %d patterns to %d package directories", len(workspacePatterns), len(packageDirs))
+	return packageDirs, nil
+}
+
+// parsePnpmWorkspace parses pnpm-workspace.yaml and returns workspace patterns
+func (r *Registry) parsePnpmWorkspace(path string) ([]string, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read pnpm-workspace.yaml: %w", err)
+	}
+
+	var config struct {
+		Packages []string `yaml:"packages"`
+	}
+
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		return nil, fmt.Errorf("failed to parse pnpm-workspace.yaml: %w", err)
+	}
+
+	return config.Packages, nil
+}
+
+// parseNpmYarnWorkspaces parses package.json workspaces field
+func (r *Registry) parseNpmYarnWorkspaces(path string) ([]string, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read package.json: %w", err)
+	}
+
+	var pkg struct {
+		Workspaces interface{} `json:"workspaces"`
+	}
+
+	if err := json.Unmarshal(data, &pkg); err != nil {
+		return nil, fmt.Errorf("failed to parse package.json: %w", err)
+	}
+
+	if pkg.Workspaces == nil {
+		return nil, nil
+	}
+
+	// Handle both array format and object format
+	switch w := pkg.Workspaces.(type) {
+	case []interface{}:
+		// Array format: ["packages/*"]
+		patterns := make([]string, 0, len(w))
+		for _, p := range w {
+			if str, ok := p.(string); ok {
+				patterns = append(patterns, str)
+			}
+		}
+		return patterns, nil
+	case map[string]interface{}:
+		// Object format: {"packages": ["packages/*"]}
+		if pkgs, ok := w["packages"].([]interface{}); ok {
+			patterns := make([]string, 0, len(pkgs))
+			for _, p := range pkgs {
+				if str, ok := p.(string); ok {
+					patterns = append(patterns, str)
+				}
+			}
+			return patterns, nil
+		}
+	}
+
+	return nil, nil
+}
+
+// expandWorkspacePattern expands a glob pattern to actual directories using workspace.Glob
+func (r *Registry) expandWorkspacePattern(workspace types.WorkspaceContext, pattern string) ([]string, error) {
+	// Use workspace.Glob which supports ** doublestar patterns
+	matches, err := workspace.Glob(pattern)
+	if err != nil {
+		return nil, fmt.Errorf("failed to expand pattern %s: %w", pattern, err)
+	}
+
+	root := workspace.Root()
+
+	// Filter to only directories that contain package.json
+	var packageDirs []string
+	for _, relPath := range matches {
+		absPath := filepath.Join(root, relPath)
+		info, err := os.Stat(absPath)
+		if err != nil || !info.IsDir() {
+			continue
+		}
+
+		// Check if this directory has a package.json
+		packageJSONPath := filepath.Join(absPath, "package.json")
+		if _, err := os.Stat(packageJSONPath); err == nil {
+			packageDirs = append(packageDirs, absPath)
+		}
+	}
+
+	return packageDirs, nil
+}
+
+// filterNegatedPackages removes packages matching negation patterns
+func (r *Registry) filterNegatedPackages(workspace types.WorkspaceContext, packageDirs []string, negativePatterns []string) []string {
+	root := workspace.Root()
+	var filtered []string
+
+	for _, pkgDir := range packageDirs {
+		// Convert to relative path for pattern matching
+		relPath, err := filepath.Rel(root, pkgDir)
+		if err != nil {
+			// If we can't get relative path, skip this package
+			continue
+		}
+
+		excluded := false
+		for _, negPattern := range negativePatterns {
+			// Try to match the negation pattern
+			matches, err := workspace.Glob(negPattern)
+			if err != nil {
+				continue
+			}
+
+			// Check if this package matches any negation pattern
+			for _, match := range matches {
+				if filepath.Clean(match) == filepath.Clean(relPath) {
+					excluded = true
+					helpers.SafeDebugLog("Excluding package %s (matched negation pattern %s)", relPath, negPattern)
+					break
+				}
+			}
+			if excluded {
+				break
+			}
+		}
+
+		if !excluded {
+			filtered = append(filtered, pkgDir)
+		}
+	}
+
+	return filtered
+}
+
+// loadWorkspacePackage loads a manifest from a single workspace package directory
+func (r *Registry) loadWorkspacePackage(pkgPath string) {
+	helpers.SafeDebugLog("Loading workspace package from: %s", pkgPath)
+	r.loadPackageManifest(pkgPath)
 }
 
 // loadNodeModulesManifests loads manifests from node_modules packages
