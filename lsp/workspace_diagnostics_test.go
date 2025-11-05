@@ -41,7 +41,9 @@ func TestWorkspaceDiagnostics_NoFalsePositives_npm(t *testing.T) {
 	// Create LSP server
 	server, err := lsp.NewServer(wsCtx, lsp.TransportStdio)
 	require.NoError(t, err, "Failed to create server")
-	defer server.Close()
+	defer func() {
+		_ = server.Close()
+	}()
 
 	// Initialize server (this loads manifests)
 	err = server.InitializeForTesting()
@@ -94,7 +96,9 @@ func TestWorkspaceDiagnostics_NoFalsePositives_yarn(t *testing.T) {
 	// Create LSP server
 	server, err := lsp.NewServer(wsCtx, lsp.TransportStdio)
 	require.NoError(t, err, "Failed to create server")
-	defer server.Close()
+	defer func() {
+		_ = server.Close()
+	}()
 
 	// Initialize server
 	err = server.InitializeForTesting()
@@ -146,7 +150,9 @@ func TestWorkspaceDiagnostics_NoFalsePositives_pnpm(t *testing.T) {
 	// Create LSP server
 	server, err := lsp.NewServer(wsCtx, lsp.TransportStdio)
 	require.NoError(t, err, "Failed to create server")
-	defer server.Close()
+	defer func() {
+		_ = server.Close()
+	}()
 
 	// Initialize server
 	err = server.InitializeForTesting()

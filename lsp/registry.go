@@ -327,12 +327,10 @@ func (r *Registry) discoverWorkspacePackages(workspace types.WorkspaceContext) (
 			patterns, err := r.parseNpmYarnWorkspaces(packageJSONPath)
 			if err == nil && len(patterns) > 0 {
 				workspacePatterns = patterns
-				// Determine if npm or yarn based on lock file
+				// Determine if npm or yarn based on lock file (for debug logging only)
 				if _, err := os.Stat(filepath.Join(root, "yarn.lock")); err == nil {
-					packageManager = "yarn"
 					helpers.SafeDebugLog("Detected yarn workspace with %d patterns", len(patterns))
 				} else {
-					packageManager = "npm"
 					helpers.SafeDebugLog("Detected npm workspace with %d patterns", len(patterns))
 				}
 			}
