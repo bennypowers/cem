@@ -33,11 +33,11 @@ func BuildAttributeFieldMap(members []ClassMember) map[string]*CustomElementFiel
 }
 
 // getAttributeFieldMap returns the cached map or builds it if needed.
-// This method uses lazy initialization for optimal memory usage.
+// This method uses lazy initialization with sync.Once for thread-safe concurrent access.
 func (ced *CustomElementDeclaration) getAttributeFieldMap() map[string]*CustomElementField {
-	if ced.attributeFieldMap == nil {
+	ced.attributeFieldOnce.Do(func() {
 		ced.attributeFieldMap = BuildAttributeFieldMap(ced.Members)
-	}
+	})
 	return ced.attributeFieldMap
 }
 
@@ -48,7 +48,7 @@ func (ced *CustomElementDeclaration) getAttributeFieldMap() map[string]*CustomEl
 // Subsequent calls reuse the cached map for optimal performance.
 //
 // Performance: O(1) lookup vs O(n) linear search through Members.
-// Thread-safe for read operations after first initialization.
+// Thread-safe: Uses sync.Once to ensure safe concurrent initialization.
 func (ced *CustomElementDeclaration) LookupAttributeField(attrName string) *CustomElementField {
 	if ced == nil {
 		return nil
@@ -91,12 +91,11 @@ func BuildExportMaps(exports []Export, modulePath string) (
 }
 
 // buildExportMaps builds and caches the export maps if not already built.
+// This method uses lazy initialization with sync.Once for thread-safe concurrent access.
 func (m *Module) buildExportMaps() {
-	if m.customElementExportMap != nil {
-		return // already built
-	}
-
-	m.customElementExportMap, m.jsExportMap = BuildExportMaps(m.Exports, m.Path)
+	m.exportMapsOnce.Do(func() {
+		m.customElementExportMap, m.jsExportMap = BuildExportMaps(m.Exports, m.Path)
+	})
 }
 
 // LookupCustomElementExport finds the CustomElementExport for a declaration name.
@@ -106,6 +105,7 @@ func (m *Module) buildExportMaps() {
 // Subsequent calls reuse the cached map for optimal performance.
 //
 // Performance: O(1) lookup vs O(n) linear search through Exports.
+// Thread-safe: Uses sync.Once to ensure safe concurrent initialization.
 func (m *Module) LookupCustomElementExport(declName string) *CustomElementExport {
 	if m == nil {
 		return nil
@@ -121,6 +121,7 @@ func (m *Module) LookupCustomElementExport(declName string) *CustomElementExport
 // Subsequent calls reuse the cached map for optimal performance.
 //
 // Performance: O(1) lookup vs O(n) linear search through Exports.
+// Thread-safe: Uses sync.Once to ensure safe concurrent initialization.
 func (m *Module) LookupJavaScriptExport(declName string) *JavaScriptExport {
 	if m == nil {
 		return nil

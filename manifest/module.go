@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/pterm/pterm"
 )
@@ -42,6 +43,7 @@ type JavaScriptModule struct {
 	// Performance optimization: cached maps for O(1) export lookups
 	customElementExportMap map[string]*CustomElementExport `json:"-"`
 	jsExportMap            map[string]*JavaScriptExport    `json:"-"`
+	exportMapsOnce         sync.Once                       `json:"-"`
 }
 
 func NewModule(file string) *Module {

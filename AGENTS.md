@@ -18,10 +18,10 @@ The codebase uses map-based lookups for performance-critical operations in the m
 
 **Implementation details**:
 - Maps are `json:"-"` tagged (won't affect JSON serialization)
-- Built on-demand via lazy initialization (minimal memory overhead)
-- Read-only after creation (thread-safe for concurrent reads)
+- Built on-demand via lazy initialization with `sync.Once` (minimal memory overhead)
+- Thread-safe for concurrent reads and initialization
 - Helper functions exported for testing: `BuildAttributeFieldMap()`, `BuildExportMaps()`
 
 **Benchmarks**: Run `make bench-lookup` to see A/B comparison
 **Memory impact**: Negligible for small structures, beneficial for large
-**Thread safety**: Safe for concurrent reads after first initialization
+**Thread safety**: Uses sync.Once to ensure safe concurrent initialization
