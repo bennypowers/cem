@@ -106,8 +106,12 @@ func benchmarkExportLookupCurrent(b *testing.B, numExports int) {
 		}
 	}
 
-	// Create a declaration to search for (last one for worst case)
-	declName := "TestElement" + fmt.Sprintf("%d", numExports-2)
+	// Create a declaration to search for (largest even index for worst case)
+	idx := numExports - 2
+	if idx%2 == 1 {
+		idx--
+	}
+	declName := "TestElement" + fmt.Sprintf("%d", idx)
 
 	b.ResetTimer()
 
@@ -220,7 +224,12 @@ func benchmarkExportLookupMap(b *testing.B, numExports int) {
 		}
 	}
 
-	declName := "TestElement" + fmt.Sprintf("%d", numExports-2)
+	// Create a declaration to search for (largest even index for worst case)
+	idx := numExports - 2
+	if idx%2 == 1 {
+		idx--
+	}
+	declName := "TestElement" + fmt.Sprintf("%d", idx)
 
 	b.ResetTimer()
 
