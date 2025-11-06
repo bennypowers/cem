@@ -332,7 +332,7 @@ jobs:
           BRANCH="update-cem-${{ steps.version.outputs.version }}"
           git checkout -b "$BRANCH"
           git commit -m "Update cem to v${{ steps.version.outputs.version }}"
-          git push -u origin "$BRANCH"
+          git push -f -u origin "$BRANCH"
 
       - name: Create Pull Request
         working-directory: zed-extensions
