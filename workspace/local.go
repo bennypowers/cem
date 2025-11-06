@@ -314,3 +314,83 @@ func (c *FileSystemWorkspaceContext) ResolveModuleDependency(
 	resolved := filepath.Join(moduleDir, dependencyPath)
 	return filepath.Clean(resolved), nil
 }
+
+// FindWorkspaceRoot searches upward from the given path to find the workspace root.
+// It looks for workspace indicators like .git, pnpm-workspace.yaml, or package.json with workspaces field.
+// If the path is already inside a workspace package subdirectory, it will find the parent workspace root.
+func FindWorkspaceRoot(startPath string) (string, error) {
+	// Resolve to absolute path
+	absPath, err := filepath.Abs(startPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to resolve path: %w", err)
+	}
+
+	// Ensure we're starting from a directory
+	info, err := os.Stat(absPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to stat path: %w", err)
+	}
+	if !info.IsDir() {
+		absPath = filepath.Dir(absPath)
+	}
+
+	current := absPath
+	checked := make(map[string]bool)
+
+	for !checked[current] {
+		checked[current] = true
+
+		// Check for workspace indicators
+		if isWorkspaceRoot(current) {
+			// Found a potential workspace root
+			// But check if the parent is ALSO a workspace root
+			// This handles cases like:
+			// - /path/to/repo/package.json (workspaces: ["./elements"])
+			// - /path/to/repo/elements/package.json
+			parent := filepath.Dir(current)
+			if parent != current && isWorkspaceRoot(parent) {
+				// Parent is also a workspace root, use that instead
+				current = parent
+				continue
+			}
+			return current, nil
+		}
+
+		// Move to parent directory
+		parent := filepath.Dir(current)
+		if parent == current {
+			// Reached filesystem root without finding workspace
+			return absPath, nil // Return original path as fallback
+		}
+		current = parent
+	}
+
+	return absPath, nil // Return original path as fallback
+}
+
+// isWorkspaceRoot checks if a directory is a workspace root by looking for:
+// - .git directory (version control root)
+// - pnpm-workspace.yaml (pnpm workspace)
+// - package.json with "workspaces" field (npm/yarn workspace)
+func isWorkspaceRoot(dir string) bool {
+	// Check for .git directory
+	if _, err := os.Stat(filepath.Join(dir, ".git")); err == nil {
+		return true
+	}
+
+	// Check for pnpm-workspace.yaml
+	if _, err := os.Stat(filepath.Join(dir, "pnpm-workspace.yaml")); err == nil {
+		return true
+	}
+
+	// Check for package.json with workspaces field
+	packageJSONPath := filepath.Join(dir, "package.json")
+	if data, err := os.ReadFile(packageJSONPath); err == nil {
+		// Simple check for "workspaces" field without full JSON parsing
+		if strings.Contains(string(data), `"workspaces"`) {
+			return true
+		}
+	}
+
+	return false
+}

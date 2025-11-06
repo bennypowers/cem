@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package lsp
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -25,12 +26,15 @@ import (
 	"strings"
 	"sync"
 
+	"bennypowers.dev/cem/generate"
+	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp/helpers"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/modulegraph"
 	"bennypowers.dev/cem/queries"
 	"bennypowers.dev/cem/types"
+	"bennypowers.dev/cem/workspace"
 	"gopkg.in/yaml.v3" // Required for parsing pnpm-workspace.yaml files
 )
 
@@ -153,7 +157,7 @@ func NewRegistryWithDefaults() (*Registry, error) {
 // LoadFromWorkspace loads all available custom elements manifests from
 // the workspace context
 func (r *Registry) LoadFromWorkspace(workspace types.WorkspaceContext) error {
-	helpers.SafeDebugLog("Loading manifests from workspace...")
+	logging.Info("[REGISTRY] Loading manifests from workspace root: %s", workspace.Root())
 
 	// Clear existing data
 	r.clear()
@@ -230,9 +234,33 @@ func (r *Registry) loadWorkspaceManifest(workspace types.WorkspaceContext) error
 	helpers.SafeDebugLog("Workspace root: %s", workspace.Root())
 	helpers.SafeDebugLog("Workspace manifest path: %s", workspace.CustomElementsManifestPath())
 
+	// Try to get package name from workspace package.json first
+	var packageName string
+	if packageJSON, err := workspace.PackageJSON(); err == nil && packageJSON != nil {
+		packageName = packageJSON.Name
+		helpers.SafeDebugLog("Package name from workspace package.json: '%s'", packageName)
+	} else {
+		helpers.SafeDebugLog("Could not read workspace package.json: %v", err)
+	}
+
 	pkg, err := workspace.Manifest()
 	if err != nil {
 		helpers.SafeDebugLog("Error loading workspace manifest: %v", err)
+
+		// If manifest loading failed, try to generate it in-memory
+		// This handles both cases:
+		// 1. package.json has "customElements" field but file doesn't exist
+		// 2. package.json has no "customElements" field (RHDS case)
+		helpers.SafeDebugLog("Workspace manifest not available, attempting in-memory generation")
+		if generatedPkg := r.generateInMemoryManifest(workspace.Root(), packageName); generatedPkg != nil {
+			r.addManifest(generatedPkg, packageName)
+			r.localWorkspace = workspace
+			helpers.SafeDebugLog("Successfully generated in-memory manifest for workspace")
+			return nil
+		}
+		helpers.SafeDebugLog("Failed to generate in-memory manifest for workspace")
+
+		// Return original error since in-memory generation also failed
 		return err
 	}
 
@@ -245,15 +273,6 @@ func (r *Registry) loadWorkspaceManifest(workspace types.WorkspaceContext) error
 					helpers.SafeDebugLog("    Declaration [%d]: %s (tag: %s)", j, customElementDecl.Name, customElementDecl.TagName)
 				}
 			}
-		}
-
-		// Try to get package name from workspace package.json
-		var packageName string
-		if packageJSON, err := workspace.PackageJSON(); err == nil && packageJSON != nil {
-			packageName = packageJSON.Name
-			helpers.SafeDebugLog("Package name from workspace package.json: '%s'", packageName)
-		} else {
-			helpers.SafeDebugLog("Could not read workspace package.json: %v", err)
 		}
 
 		r.addManifest(pkg, packageName)
@@ -271,7 +290,15 @@ func (r *Registry) loadWorkspaceManifest(workspace types.WorkspaceContext) error
 
 		helpers.SafeDebugLog("Loaded workspace manifest with %d modules", len(pkg.Modules))
 	} else {
-		helpers.SafeDebugLog("Workspace manifest is nil")
+		helpers.SafeDebugLog("Workspace manifest is nil, attempting in-memory generation")
+		// If no manifest but workspace exists, try to generate in-memory
+		if generatedPkg := r.generateInMemoryManifest(workspace.Root(), packageName); generatedPkg != nil {
+			r.addManifest(generatedPkg, packageName)
+			r.localWorkspace = workspace
+			helpers.SafeDebugLog("Successfully generated in-memory manifest for workspace")
+		} else {
+			helpers.SafeDebugLog("Failed to generate in-memory manifest for workspace")
+		}
 	}
 
 	return nil
@@ -551,6 +578,7 @@ func (r *Registry) loadNodeModulesManifests(workspace types.WorkspaceContext) er
 }
 
 // loadPackageManifest loads a manifest from a specific package directory
+// If the manifest file doesn't exist, it generates it in-memory
 func (r *Registry) loadPackageManifest(packagePath string) {
 	// Read package.json to find customElements field
 	packageJSONPath := filepath.Join(packagePath, "package.json")
@@ -569,13 +597,63 @@ func (r *Registry) loadPackageManifest(packagePath string) {
 		manifestPath = filepath.Join(packagePath, packageJSON.CustomElements)
 	}
 
-	// Load the manifest
+	// Try to load the manifest file
 	if pkg, err := r.loadManifestFileWithPackageName(manifestPath, packageJSON.Name); err == nil {
 		r.addManifest(pkg, packageJSON.Name)
 		helpers.SafeDebugLog("Loaded manifest from %s (%s)", packageJSON.Name, manifestPath)
-	} else {
-		helpers.SafeDebugLog("Failed to load manifest from %s (%s): %v", packageJSON.Name, manifestPath, err)
+		return
 	}
+
+	// If manifest file doesn't exist, generate it in-memory
+	if _, statErr := os.Stat(manifestPath); os.IsNotExist(statErr) {
+		helpers.SafeDebugLog("Manifest file %s doesn't exist, generating in-memory for %s", manifestPath, packageJSON.Name)
+		if pkg := r.generateInMemoryManifest(packagePath, packageJSON.Name); pkg != nil {
+			r.addManifest(pkg, packageJSON.Name)
+			helpers.SafeDebugLog("Generated in-memory manifest for %s with %d modules", packageJSON.Name, len(pkg.Modules))
+		} else {
+			helpers.SafeDebugLog("Failed to generate in-memory manifest for %s", packageJSON.Name)
+		}
+	} else {
+		helpers.SafeDebugLog("Failed to load manifest from %s (%s): file exists but couldn't be parsed", packageJSON.Name, manifestPath)
+	}
+}
+
+// generateInMemoryManifest generates a custom elements manifest in-memory for a package directory
+// This is used when a workspace package declares customElements but the file doesn't exist yet
+func (r *Registry) generateInMemoryManifest(packagePath string, packageName string) *M.Package {
+	logging.Info("[IN-MEMORY] Starting in-memory generation for package '%s' at path: %s", packageName, packagePath)
+
+	// Create a workspace context for the package directory
+	wsCtx := workspace.NewFileSystemWorkspaceContext(packagePath)
+
+	// Initialize the workspace context to load config
+	if err := wsCtx.Init(); err != nil {
+		logging.Warning("[IN-MEMORY] Failed to initialize workspace context for %s: %v", packageName, err)
+		return nil
+	}
+
+	logging.Info("[IN-MEMORY] Successfully initialized workspace context for %s", packageName)
+
+	// Create a generate session
+	session, err := generate.NewGenerateSession(wsCtx)
+	if err != nil {
+		logging.Warning("[IN-MEMORY] Failed to create generate session for %s: %v", packageName, err)
+		return nil
+	}
+	defer session.Close()
+
+	logging.Info("[IN-MEMORY] Created generate session, starting generation for %s...", packageName)
+
+	// Generate the manifest
+	pkg, err := session.GenerateFullManifest(context.Background())
+	if err != nil {
+		logging.Warning("[IN-MEMORY] Failed to generate manifest for %s: %v", packageName, err)
+		return nil
+	}
+
+	logging.Info("[IN-MEMORY] Successfully generated manifest for %s with %d modules", packageName, len(pkg.Modules))
+
+	return pkg
 }
 
 // loadConfigManifests loads manifests specified in the config
@@ -648,6 +726,9 @@ func (r *Registry) addManifest(manifest *M.Package, packageName string) {
 
 	r.Manifests = append(r.Manifests, manifest)
 
+	// Collect tag names for this manifest to log
+	var tagNames []string
+
 	// Index all custom elements from all modules
 	for _, module := range manifest.Modules {
 		for _, decl := range module.Declarations {
@@ -673,6 +754,9 @@ func (r *Registry) addManifest(manifest *M.Package, packageName string) {
 					helpers.SafeDebugLog("[REGISTRY] Registering element '%s' with packageName='%s', modulePath='%s'", element.TagName, packageName, module.Path)
 					r.ElementDefinitions[element.TagName] = elementDef
 
+					// Collect tag name for logging
+					tagNames = append(tagNames, element.TagName)
+
 					// Index attributes for this element
 					if element.Attributes != nil {
 						attrMap := make(map[string]*M.Attribute)
@@ -686,6 +770,14 @@ func (r *Registry) addManifest(manifest *M.Package, packageName string) {
 			}
 		}
 	}
+
+	// Log the manifest with all its elements
+	displayName := packageName
+	if displayName == "" {
+		displayName = "(unknown)"
+	}
+	elementsList := strings.Join(tagNames, ", ")
+	logging.Info("[REGISTRY] Loaded `%s` elements: %s", displayName, elementsList)
 }
 
 // Element returns the custom element definition for a tag name
