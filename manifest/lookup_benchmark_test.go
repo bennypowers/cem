@@ -131,6 +131,116 @@ func benchmarkExportLookupCurrent(b *testing.B, numExports int) {
 	}
 }
 
+// BenchmarkAttributeLookup_Map uses the new O(1) map-based lookup
+func BenchmarkAttributeLookup_Map(b *testing.B) {
+	b.Run("Small-5members", func(b *testing.B) {
+		benchmarkAttributeLookupMap(b, 5)
+	})
+	b.Run("Medium-20members", func(b *testing.B) {
+		benchmarkAttributeLookupMap(b, 20)
+	})
+	b.Run("Large-100members", func(b *testing.B) {
+		benchmarkAttributeLookupMap(b, 100)
+	})
+}
+
+func benchmarkAttributeLookupMap(b *testing.B, numMembers int) {
+	// Same setup as Current version
+	ced := &manifest.CustomElementDeclaration{}
+	ced.Members = make([]manifest.ClassMember, numMembers)
+
+	for i := 0; i < numMembers; i++ {
+		if i%2 == 0 {
+			field := &manifest.CustomElementField{}
+			field.Attribute = "test-attr-" + string(rune('a'+i))
+			field.Name = "testField" + string(rune('A'+i))
+			ced.Members[i] = field
+		} else {
+			field := &manifest.ClassField{}
+			field.Name = "regularField" + string(rune('A'+i))
+			ced.Members[i] = field
+		}
+	}
+
+	attrName := "test-attr-" + string(rune('a'+numMembers-2))
+
+	b.ResetTimer()
+
+	// Benchmark the new map-based lookup
+	for i := 0; i < b.N; i++ {
+		field := ced.LookupAttributeField(attrName)
+		_ = field // Prevent optimization
+	}
+}
+
+// BenchmarkExportLookup_Map uses the new O(1) map-based lookup
+func BenchmarkExportLookup_Map(b *testing.B) {
+	b.Run("Small-5exports", func(b *testing.B) {
+		benchmarkExportLookupMap(b, 5)
+	})
+	b.Run("Medium-20exports", func(b *testing.B) {
+		benchmarkExportLookupMap(b, 20)
+	})
+	b.Run("Large-100exports", func(b *testing.B) {
+		benchmarkExportLookupMap(b, 100)
+	})
+}
+
+func benchmarkExportLookupMap(b *testing.B, numExports int) {
+	// Same setup as Current version
+	mod := &manifest.Module{}
+	mod.Path = "/test/module.js"
+	mod.Exports = make([]manifest.Export, numExports)
+
+	for i := 0; i < numExports; i++ {
+		if i%2 == 0 {
+			exp := &manifest.CustomElementExport{}
+			exp.Declaration = &manifest.Reference{
+				Name:   "TestElement" + string(rune('A'+i)),
+				Module: mod.Path,
+			}
+			mod.Exports[i] = exp
+		} else {
+			exp := &manifest.JavaScriptExport{}
+			exp.Declaration = &manifest.Reference{
+				Name:   "TestExport" + string(rune('A'+i)),
+				Module: mod.Path,
+			}
+			mod.Exports[i] = exp
+		}
+	}
+
+	declName := "TestElement" + string(rune('A'+numExports-2))
+
+	b.ResetTimer()
+
+	// Benchmark the new map-based lookup
+	for i := 0; i < b.N; i++ {
+		cee := mod.LookupCustomElementExport(declName)
+		je := mod.LookupJavaScriptExport(declName)
+		_, _ = cee, je // Prevent optimization
+	}
+}
+
+// BenchmarkRenderableCreation_Map measures end-to-end with map lookups
+func BenchmarkRenderableCreation_Map(b *testing.B) {
+	manifestJSON, err := os.ReadFile(filepath.Join("fixtures", "custom-element-member-grouping.json"))
+	if err != nil {
+		b.Fatalf("Failed to load fixture: %v", err)
+	}
+
+	var pkg manifest.Package
+	if err := json.Unmarshal([]byte(manifestJSON), &pkg); err != nil {
+		b.Fatalf("Failed to unmarshal manifest: %v", err)
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_ = manifest.NewRenderablePackage(&pkg)
+	}
+}
+
 // BenchmarkRenderableCreation_Current measures end-to-end renderable creation
 func BenchmarkRenderableCreation_Current(b *testing.B) {
 	// Load a realistic manifest with multiple elements
