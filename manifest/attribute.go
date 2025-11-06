@@ -178,18 +178,8 @@ func NewRenderableAttribute(
 	cee *CustomElementExport,
 	mod *Module,
 ) *RenderableAttribute {
-	var field *CustomElementField
-	// TODO: perf: use a map
-	// reuse the one from TagRenderableAttributes, maybe refactor so it goes
-	// from Field to Attr or something
-	for _, f := range ced.Members {
-		if cef, ok := f.(*CustomElementField); ok {
-			if cef.Attribute == attr.Name {
-				field = cef
-				break
-			}
-		}
-	}
+	// Use O(1) map lookup instead of O(n) linear search
+	field := ced.LookupAttributeField(attr.Name)
 	return &RenderableAttribute{
 		Attribute:                attr,
 		CustomElementField:       field,
