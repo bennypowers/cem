@@ -261,7 +261,7 @@ jobs:
         run: |
           # Extract version from release tag (e.g., v1.0.0 -> 1.0.0)
           VERSION=$(echo ${{ github.event.release.tag_name }} | sed 's/^v//')
-          npm version $VERSION --no-git-tag-version
+          npm version $VERSION --no-git-tag-version --allow-same-version
 
       - name: Build extension
         working-directory: extensions/vscode
@@ -337,7 +337,7 @@ jobs:
       - name: Create Pull Request
         working-directory: zed-extensions
         env:
-          GH_TOKEN: ${{ secrets.ZED_PR_PAT }}
+          GH_TOKEN: ${{ secrets.ZED_COMMITTER_TOKEN }}
         run: |
           gh pr create \
             --repo zed-industries/extensions \
