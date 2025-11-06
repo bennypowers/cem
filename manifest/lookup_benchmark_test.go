@@ -223,28 +223,10 @@ func benchmarkExportLookupMap(b *testing.B, numExports int) {
 	}
 }
 
-// BenchmarkRenderableCreation_Map measures end-to-end with map lookups
-func BenchmarkRenderableCreation_Map(b *testing.B) {
-	manifestJSON, err := os.ReadFile(filepath.Join("fixtures", "custom-element-member-grouping.json"))
-	if err != nil {
-		b.Fatalf("Failed to load fixture: %v", err)
-	}
-
-	var pkg manifest.Package
-	if err := json.Unmarshal([]byte(manifestJSON), &pkg); err != nil {
-		b.Fatalf("Failed to unmarshal manifest: %v", err)
-	}
-
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		_ = manifest.NewRenderablePackage(&pkg)
-	}
-}
-
-// BenchmarkRenderableCreation_Current measures end-to-end renderable creation
-func BenchmarkRenderableCreation_Current(b *testing.B) {
-	// Load a realistic manifest with multiple elements
+// BenchmarkRenderableCreation measures end-to-end renderable package creation.
+// This benchmark exercises the full rendering pipeline including attribute field
+// lookups and export lookups using the optimized map-based implementation.
+func BenchmarkRenderableCreation(b *testing.B) {
 	manifestJSON, err := os.ReadFile(filepath.Join("fixtures", "custom-element-member-grouping.json"))
 	if err != nil {
 		b.Fatalf("Failed to load fixture: %v", err)
