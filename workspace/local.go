@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package workspace
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -386,8 +387,10 @@ func isWorkspaceRoot(dir string) bool {
 	// Check for package.json with workspaces field
 	packageJSONPath := filepath.Join(dir, "package.json")
 	if data, err := os.ReadFile(packageJSONPath); err == nil {
-		// Simple check for "workspaces" field without full JSON parsing
-		if strings.Contains(string(data), `"workspaces"`) {
+		var pkg struct {
+			Workspaces interface{} `json:"workspaces"`
+		}
+		if err := json.Unmarshal(data, &pkg); err == nil && pkg.Workspaces != nil {
 			return true
 		}
 	}
