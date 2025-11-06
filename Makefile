@@ -6,7 +6,10 @@ WINDOWS_CC_IMAGE := cem-windows-cc-image
 # Use Go 1.25 toolchain automatically with JSON v2 experiment
 export GOEXPERIMENT := jsonv2
 
-.PHONY: build test test-unit test-e2e update watch bench profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package
+# Extract version from goals if present (e.g., "make release v0.6.6" or "make release patch")
+VERSION ?= $(filter v% patch minor major,$(MAKECMDGOALS))
+
+.PHONY: build test test-unit test-e2e update watch bench profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major
 
 # NOTE: this is a non-traditional install target, which installs to ~/.local/bin/
 # It's mostly intended for local development, not for distribution
@@ -197,3 +200,23 @@ vscode-publish:
 	npm version $$VERSION --no-git-tag-version --allow-same-version && \
 	npm run build && \
 	npm run publish
+
+## Make version targets (v*) and bump types no-ops for "make release" syntax
+v%:
+	@:
+
+patch minor major:
+	@:
+
+## Release (creates version commit, pushes it, then uses gh to tag and create release)
+release:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Error: VERSION or bump type is required"; \
+		echo "Usage: make release <version|patch|minor|major>"; \
+		echo "  make release v0.6.6   - Release explicit version"; \
+		echo "  make release patch    - Bump patch version (0.0.x)"; \
+		echo "  make release minor    - Bump minor version (0.x.0)"; \
+		echo "  make release major    - Bump major version (x.0.0)"; \
+		exit 1; \
+	fi
+	@./scripts/release.sh $(VERSION)

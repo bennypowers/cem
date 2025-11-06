@@ -300,11 +300,46 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Release to Zed extensions
-        uses: huacnlee/zed-extension-action@v1
+      - name: Get extension version
+        id: version
+        run: |
+          VERSION=$(grep '^version = ' extensions/zed/extension.toml | cut -d'"' -f2)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extension version: $VERSION"
+
+      - name: Checkout zed-extensions fork
+        uses: actions/checkout@v4
         with:
-          extension-name: cem
-          extension-path: extensions/zed
-          push-to: bennypowers/zed-extensions
+          repository: bennypowers/zed-extensions
+          path: zed-extensions
+          token: ${{ secrets.ZED_COMMITTER_TOKEN }}
+
+      - name: Update Zed Extension
+        working-directory: zed-extensions
+        run: |
+          git config user.name "Benny Powers"
+          git config user.email "web@bennypowers.com"
+          # Initialize only the cem submodule
+          git submodule update --init extensions/cem
+          # Update submodule to latest release tag
+          cd extensions/cem
+          git fetch origin --tags
+          git checkout ${{ github.event.release.tag_name }}
+          cd ../..
+          # Update version in extensions.toml for cem section only
+          sed -i '/^\[cem\]/,/^\[/ s/^version = .*/version = "${{ steps.version.outputs.version }}"/' extensions.toml
+          git add extensions/cem extensions.toml
+          BRANCH="update-cem-${{ steps.version.outputs.version }}"
+          git checkout -b "$BRANCH"
+          git commit -m "Update cem to v${{ steps.version.outputs.version }}"
+          git push -u origin "$BRANCH"
+
+      - name: Create Pull Request
+        working-directory: zed-extensions
         env:
-          COMMITTER_TOKEN: ${{ secrets.ZED_COMMITTER_TOKEN }}
+          GH_TOKEN: ${{ secrets.ZED_PR_PAT }}
+        run: |
+          gh pr create \
+            --repo zed-industries/extensions \
+            --title "Update cem to v${{ steps.version.outputs.version }}" \
+            --body "Updates cem extension to [version ${{ steps.version.outputs.version }}](https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.version }})."
