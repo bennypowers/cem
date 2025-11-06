@@ -9,7 +9,7 @@ export GOEXPERIMENT := jsonv2
 # Extract version from goals if present (e.g., "make release v0.6.6" or "make release patch")
 VERSION ?= $(filter v% patch minor major,$(MAKECMDGOALS))
 
-.PHONY: build test test-unit test-e2e update watch bench profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major
+.PHONY: build test test-unit test-e2e update watch bench bench-lookup profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major
 
 # NOTE: this is a non-traditional install target, which installs to ~/.local/bin/
 # It's mostly intended for local development, not for distribution
@@ -90,6 +90,16 @@ watch:
 
 bench:
 	go test -v -cpuprofile=cpu.out -bench=BenchmarkGenerate -run=^$$ ./generate/
+
+bench-lookup:
+	@echo "=== Running Attribute Lookup Benchmarks ==="
+	go test -bench=BenchmarkAttributeLookup -benchmem -count=5 -run=^$$ ./manifest/
+	@echo ""
+	@echo "=== Running Export Lookup Benchmarks ==="
+	go test -bench=BenchmarkExportLookup -benchmem -count=5 -run=^$$ ./manifest/
+	@echo ""
+	@echo "=== Running Renderable Creation Benchmarks ==="
+	go test -bench=BenchmarkRenderableCreation -benchmem -count=5 -run=^$$ ./manifest/
 
 profile:
 	go test -bench=... -run=^$ -cpuprofile=cpu.out ./generate/
