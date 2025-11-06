@@ -38,10 +38,6 @@ type JavaScriptModule struct {
 	Declarations []Declaration `json:"declarations,omitempty"`
 	Exports      []Export      `json:"exports,omitempty"`
 	Deprecated   Deprecated    `json:"deprecated,omitempty"` // bool or string
-
-	// Performance optimization: cached maps for O(1) export lookups
-	customElementExportMap map[string]*CustomElementExport `json:"-"`
-	jsExportMap            map[string]*JavaScriptExport    `json:"-"`
 }
 
 func NewModule(file string) *Module {

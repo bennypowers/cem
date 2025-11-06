@@ -18,12 +18,23 @@ package manifest
 
 import "sync"
 
-// Package-level sync primitives for thread-safe lazy initialization.
+// Package-level caches for thread-safe lazy initialization.
 // These are kept external to manifest structs to avoid affecting their semantic structure.
 var (
-	attributeFieldInitMap = &sync.Map{} // map[*CustomElementDeclaration]*sync.Once
-	exportMapsInitMap     = &sync.Map{} // map[*Module]*sync.Once
+	// Cache for attribute field maps: map[*CustomElementDeclaration]map[string]*CustomElementField
+	attributeFieldCache = &sync.Map{}
+	attributeFieldOnce  = &sync.Map{} // map[*CustomElementDeclaration]*sync.Once
+
+	// Cache for export maps: map[*Module]exportMaps
+	exportMapsCache = &sync.Map{}
+	exportMapsOnce  = &sync.Map{} // map[*Module]*sync.Once
 )
+
+// exportMaps holds both CustomElementExport and JavaScriptExport maps
+type exportMaps struct {
+	customElementExports map[string]*CustomElementExport
+	jsExports            map[string]*JavaScriptExport
+}
 
 // BuildAttributeFieldMap creates a map from attribute name to CustomElementField
 // for fast O(1) lookups. Returns an empty map (not nil) if no fields found.
@@ -43,17 +54,25 @@ func BuildAttributeFieldMap(members []ClassMember) map[string]*CustomElementFiel
 
 // getAttributeFieldMap returns the cached map or builds it if needed.
 // This method uses lazy initialization with sync.Once for thread-safe concurrent access.
-// The sync.Once is stored externally to avoid adding non-semantic fields to the struct.
+// Both the cache and sync.Once are stored externally to avoid adding non-semantic fields to the struct.
 func (ced *CustomElementDeclaration) getAttributeFieldMap() map[string]*CustomElementField {
+	// Check if already cached
+	if cached, ok := attributeFieldCache.Load(ced); ok {
+		return cached.(map[string]*CustomElementField)
+	}
+
 	// Get or create a sync.Once for this instance
-	once, _ := attributeFieldInitMap.LoadOrStore(ced, &sync.Once{})
+	once, _ := attributeFieldOnce.LoadOrStore(ced, &sync.Once{})
 
 	// Use the sync.Once to ensure single initialization
 	once.(*sync.Once).Do(func() {
-		ced.attributeFieldMap = BuildAttributeFieldMap(ced.Members)
+		m := BuildAttributeFieldMap(ced.Members)
+		attributeFieldCache.Store(ced, m)
 	})
 
-	return ced.attributeFieldMap
+	// Load the now-initialized cache
+	cached, _ := attributeFieldCache.Load(ced)
+	return cached.(map[string]*CustomElementField)
 }
 
 // LookupAttributeField performs an O(1) lookup to find the CustomElementField
@@ -107,21 +126,35 @@ func BuildExportMaps(exports []Export, modulePath string) (
 
 // buildExportMaps builds and caches the export maps if not already built.
 // This method uses lazy initialization with sync.Once for thread-safe concurrent access.
-// The sync.Once is stored externally to avoid adding non-semantic fields to the struct.
-func (m *Module) buildExportMaps() {
+// Both the cache and sync.Once are stored externally to avoid adding non-semantic fields to the struct.
+func (m *Module) buildExportMaps() *exportMaps {
+	// Check if already cached
+	if cached, ok := exportMapsCache.Load(m); ok {
+		return cached.(*exportMaps)
+	}
+
 	// Get or create a sync.Once for this instance
-	once, _ := exportMapsInitMap.LoadOrStore(m, &sync.Once{})
+	once, _ := exportMapsOnce.LoadOrStore(m, &sync.Once{})
 
 	// Use the sync.Once to ensure single initialization
 	once.(*sync.Once).Do(func() {
-		m.customElementExportMap, m.jsExportMap = BuildExportMaps(m.Exports, m.Path)
+		ceMap, jsMap := BuildExportMaps(m.Exports, m.Path)
+		maps := &exportMaps{
+			customElementExports: ceMap,
+			jsExports:            jsMap,
+		}
+		exportMapsCache.Store(m, maps)
 	})
+
+	// Load the now-initialized cache
+	cached, _ := exportMapsCache.Load(m)
+	return cached.(*exportMaps)
 }
 
 // LookupCustomElementExport finds the CustomElementExport for a declaration name.
 // Returns nil if not found.
 //
-// This method uses an internal cache that is lazily initialized on first use.
+// This method uses an external cache that is lazily initialized on first use.
 // Subsequent calls reuse the cached map for optimal performance.
 //
 // Performance: O(1) lookup vs O(n) linear search through Exports.
@@ -130,14 +163,14 @@ func (m *Module) LookupCustomElementExport(declName string) *CustomElementExport
 	if m == nil {
 		return nil
 	}
-	m.buildExportMaps()
-	return m.customElementExportMap[declName]
+	maps := m.buildExportMaps()
+	return maps.customElementExports[declName]
 }
 
 // LookupJavaScriptExport finds the JavaScriptExport for a declaration name.
 // Returns nil if not found.
 //
-// This method uses an internal cache that is lazily initialized on first use.
+// This method uses an external cache that is lazily initialized on first use.
 // Subsequent calls reuse the cached map for optimal performance.
 //
 // Performance: O(1) lookup vs O(n) linear search through Exports.
@@ -146,6 +179,6 @@ func (m *Module) LookupJavaScriptExport(declName string) *JavaScriptExport {
 	if m == nil {
 		return nil
 	}
-	m.buildExportMaps()
-	return m.jsExportMap[declName]
+	maps := m.buildExportMaps()
+	return maps.jsExports[declName]
 }
