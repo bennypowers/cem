@@ -104,7 +104,7 @@ func BuildExportMaps(exports []Export, modulePath string) (
 
 	for i, exp := range exports {
 		if cee, ok := exp.(*CustomElementExport); ok {
-			if cee != nil && cee.Declaration != nil {
+			if cee != nil && cee.Declaration != nil && cee.Declaration.Name != "" {
 				name := cee.Declaration.Name
 				// Match module path logic from original implementation
 				if cee.Declaration.Module == "" || cee.Declaration.Module == modulePath {
