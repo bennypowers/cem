@@ -2,6 +2,7 @@ package manifest_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -32,18 +33,18 @@ func benchmarkAttributeLookupCurrent(b *testing.B, numMembers int) {
 	for i := 0; i < numMembers; i++ {
 		if i%2 == 0 {
 			field := &manifest.CustomElementField{}
-			field.Attribute = "test-attr-" + string(rune('a'+i))
-			field.Name = "testField" + string(rune('A'+i))
+			field.Attribute = "test-attr-" + fmt.Sprintf("%d", i)
+			field.Name = "testField" + fmt.Sprintf("%d", i)
 			ced.Members[i] = field
 		} else {
 			field := &manifest.ClassField{}
-			field.Name = "regularField" + string(rune('A'+i))
+			field.Name = "regularField" + fmt.Sprintf("%d", i)
 			ced.Members[i] = field
 		}
 	}
 
 	// Create the attribute name to search for (last one for worst case)
-	attrName := "test-attr-" + string(rune('a'+numMembers-2))
+	attrName := "test-attr-" + fmt.Sprintf("%d", numMembers-2)
 
 	b.ResetTimer()
 
@@ -87,14 +88,14 @@ func benchmarkExportLookupCurrent(b *testing.B, numExports int) {
 		if i%2 == 0 {
 			exp := &manifest.CustomElementExport{}
 			exp.Declaration = &manifest.Reference{
-				Name:   "TestElement" + string(rune('A'+i)),
+				Name:   "TestElement" + fmt.Sprintf("%d", i),
 				Module: mod.Path,
 			}
 			mod.Exports[i] = exp
 		} else {
 			exp := &manifest.JavaScriptExport{}
 			exp.Declaration = &manifest.Reference{
-				Name:   "TestExport" + string(rune('A'+i)),
+				Name:   "TestExport" + fmt.Sprintf("%d", i),
 				Module: mod.Path,
 			}
 			mod.Exports[i] = exp
@@ -102,7 +103,7 @@ func benchmarkExportLookupCurrent(b *testing.B, numExports int) {
 	}
 
 	// Create a declaration to search for (last one for worst case)
-	declName := "TestElement" + string(rune('A'+numExports-2))
+	declName := "TestElement" + fmt.Sprintf("%d", numExports-2)
 
 	b.ResetTimer()
 
@@ -152,17 +153,17 @@ func benchmarkAttributeLookupMap(b *testing.B, numMembers int) {
 	for i := 0; i < numMembers; i++ {
 		if i%2 == 0 {
 			field := &manifest.CustomElementField{}
-			field.Attribute = "test-attr-" + string(rune('a'+i))
-			field.Name = "testField" + string(rune('A'+i))
+			field.Attribute = "test-attr-" + fmt.Sprintf("%d", i)
+			field.Name = "testField" + fmt.Sprintf("%d", i)
 			ced.Members[i] = field
 		} else {
 			field := &manifest.ClassField{}
-			field.Name = "regularField" + string(rune('A'+i))
+			field.Name = "regularField" + fmt.Sprintf("%d", i)
 			ced.Members[i] = field
 		}
 	}
 
-	attrName := "test-attr-" + string(rune('a'+numMembers-2))
+	attrName := "test-attr-" + fmt.Sprintf("%d", numMembers-2)
 
 	b.ResetTimer()
 
@@ -196,21 +197,21 @@ func benchmarkExportLookupMap(b *testing.B, numExports int) {
 		if i%2 == 0 {
 			exp := &manifest.CustomElementExport{}
 			exp.Declaration = &manifest.Reference{
-				Name:   "TestElement" + string(rune('A'+i)),
+				Name:   "TestElement" + fmt.Sprintf("%d", i),
 				Module: mod.Path,
 			}
 			mod.Exports[i] = exp
 		} else {
 			exp := &manifest.JavaScriptExport{}
 			exp.Declaration = &manifest.Reference{
-				Name:   "TestExport" + string(rune('A'+i)),
+				Name:   "TestExport" + fmt.Sprintf("%d", i),
 				Module: mod.Path,
 			}
 			mod.Exports[i] = exp
 		}
 	}
 
-	declName := "TestElement" + string(rune('A'+numExports-2))
+	declName := "TestElement" + fmt.Sprintf("%d", numExports-2)
 
 	b.ResetTimer()
 
