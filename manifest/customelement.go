@@ -33,6 +33,9 @@ var _ GroupedRenderable = (*RenderableCustomElementDeclaration)(nil)
 type CustomElementDeclaration struct {
 	ClassDeclaration
 	CustomElement
+
+	// Performance optimization: cached map for O(1) attribute field lookups
+	attributeFieldMap map[string]*CustomElementField `json:"-"`
 }
 
 // CustomElement adds fields to classes/mixins for custom elements.
