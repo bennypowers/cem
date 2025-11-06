@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "layout-grid.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "LayoutGrid",
+          "tagName": "layout-grid",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "layout-grid",
+          "declaration": {
+            "name": "LayoutGrid"
+          }
+        }
+      ]
+    }
+  ]
+}

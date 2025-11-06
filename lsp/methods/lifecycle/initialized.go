@@ -37,6 +37,24 @@ func Initialized(ctx types.ServerContext, context *glsp.Context, params *protoco
 
 		// Send informative initialization complete message
 		logging.Info("CEM LSP loaded %d elements from %d manifests", elementCount, manifestCount)
+
+		// Log elements grouped by package name for debugging
+		packageElements := make(map[string][]string)
+		allTags := ctx.AllTagNames()
+		for _, tagName := range allTags {
+			if def, exists := ctx.ElementDefinition(tagName); exists {
+				packageName := def.PackageName()
+				if packageName == "" {
+					packageName = "(unknown)"
+				}
+				packageElements[packageName] = append(packageElements[packageName], tagName)
+			}
+		}
+
+		// Log elements per package
+		for packageName, tags := range packageElements {
+			logging.Debug("Package '%s': %d elements - %v", packageName, len(tags), tags)
+		}
 	}
 
 	// Show early software notice

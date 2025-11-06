@@ -32,8 +32,9 @@ func Initialize(ctx types.ServerContext, context *glsp.Context, params *protocol
 	// Configure centralized logger for LSP mode
 	logging.SetLSPContext(context)
 
-	// Send initialization message (non-intrusive)
-	logging.Info("CEM LSP Server initializing...")
+	// Send initialization message with version
+	serverVersion := version.GetVersion()
+	logging.Info("CEM LSP Server initializing (version %s)...", serverVersion)
 
 	// Debug info about binary location
 	if executable, err := os.Executable(); err == nil {
@@ -59,7 +60,6 @@ func Initialize(ctx types.ServerContext, context *glsp.Context, params *protocol
 	// Define server capabilities
 	openClose := true
 	changeKind := protocol.TextDocumentSyncKindIncremental
-	serverVersion := version.GetVersion()
 
 	capabilities := protocol.ServerCapabilities{
 		HoverProvider: &protocol.HoverOptions{},

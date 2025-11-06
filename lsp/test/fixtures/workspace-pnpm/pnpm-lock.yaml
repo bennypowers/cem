@@ -1,0 +1,21 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    devDependencies: {}
+
+  packages/component-a:
+    dependencies: {}
+
+  packages/component-b:
+    dependencies:
+      '@test/component-a':
+        specifier: workspace:*
+        version: link:../component-a
+
+packages: {}

@@ -1,0 +1,6 @@
+{
+  "name": "@test/simple-components",
+  "version": "1.0.0",
+  "description": "Simple component library without manifest file",
+  "type": "module"
+}
