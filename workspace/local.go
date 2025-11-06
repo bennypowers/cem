@@ -419,14 +419,3 @@ func hasWorkspaceMetadata(dir string) bool {
 
 	return false
 }
-
-// isWorkspaceRoot checks if a directory is a workspace root by looking for:
-// - .git directory (version control root)
-// - pnpm-workspace.yaml (pnpm workspace)
-// - package.json with "workspaces" field (npm/yarn workspace)
-//
-// Deprecated: This function is kept for backward compatibility.
-// Use isVCSRoot() and hasWorkspaceMetadata() for more precise detection.
-func isWorkspaceRoot(dir string) bool {
-	return isVCSRoot(dir) || hasWorkspaceMetadata(dir)
-}
