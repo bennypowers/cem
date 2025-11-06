@@ -143,3 +143,141 @@ func TestFindWorkspaceRoot_NoWorkspace(t *testing.T) {
 		assert.Equal(t, subDir, root, "Expected to return original path when no workspace found")
 	})
 }
+
+// TestFindWorkspaceRoot_GitSubmoduleBoundary tests VCS boundary detection
+// This ensures that Git submodules are treated as hard boundaries and we don't
+// climb to parent repositories when the current directory only has VCS markers
+func TestFindWorkspaceRoot_GitSubmoduleBoundary(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create parent repo structure:
+	// tmpDir/
+	//   .git/
+	//   package.json (with workspaces)
+	//   submodules/
+	//     my-submodule/
+	//       .git/
+	//       package.json (NO workspaces - just a simple package)
+	//       src/
+	//         index.ts
+
+	// Create parent .git directory
+	parentGitDir := filepath.Join(tmpDir, ".git")
+	err := os.Mkdir(parentGitDir, 0755)
+	require.NoError(t, err)
+
+	// Create parent package.json with workspaces
+	parentPackageJSON := filepath.Join(tmpDir, "package.json")
+	err = os.WriteFile(parentPackageJSON, []byte(`{
+		"name": "@test/parent-repo",
+		"workspaces": ["./submodules/*"]
+	}`), 0644)
+	require.NoError(t, err)
+
+	// Create submodules directory
+	submodulesDir := filepath.Join(tmpDir, "submodules")
+	err = os.Mkdir(submodulesDir, 0755)
+	require.NoError(t, err)
+
+	// Create submodule directory
+	submoduleDir := filepath.Join(submodulesDir, "my-submodule")
+	err = os.Mkdir(submoduleDir, 0755)
+	require.NoError(t, err)
+
+	// Create submodule .git directory (this is a VCS boundary)
+	submoduleGitDir := filepath.Join(submoduleDir, ".git")
+	err = os.Mkdir(submoduleGitDir, 0755)
+	require.NoError(t, err)
+
+	// Create submodule package.json WITHOUT workspaces (just a simple package)
+	submodulePackageJSON := filepath.Join(submoduleDir, "package.json")
+	err = os.WriteFile(submodulePackageJSON, []byte(`{
+		"name": "@test/my-submodule"
+	}`), 0644)
+	require.NoError(t, err)
+
+	// Create src directory inside submodule
+	srcDir := filepath.Join(submoduleDir, "src")
+	err = os.Mkdir(srcDir, 0755)
+	require.NoError(t, err)
+
+	t.Run("Git submodule is a hard boundary - should NOT climb to parent", func(t *testing.T) {
+		// Start from submodule/src/ and should find submoduleDir, NOT tmpDir
+		// This is because submoduleDir has .git (VCS marker) even though it doesn't
+		// have workspace metadata (pnpm-workspace.yaml or package.json with workspaces)
+		root, err := workspace.FindWorkspaceRoot(srcDir)
+		require.NoError(t, err)
+		assert.Equal(t, submoduleDir, root,
+			"Expected to stop at Git submodule boundary, not climb to parent repo")
+	})
+
+	t.Run("Starting from submodule root should return submodule root", func(t *testing.T) {
+		// Start from submoduleDir itself
+		root, err := workspace.FindWorkspaceRoot(submoduleDir)
+		require.NoError(t, err)
+		assert.Equal(t, submoduleDir, root,
+			"Expected to return submodule root, not climb to parent")
+	})
+}
+
+// TestFindWorkspaceRoot_WorkspaceMetadataClimb tests that we DO climb when
+// workspace metadata (not just VCS markers) is present
+func TestFindWorkspaceRoot_WorkspaceMetadataClimb(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create structure:
+	// tmpDir/
+	//   pnpm-workspace.yaml (workspace metadata - should climb)
+	//   packages/
+	//     my-package/
+	//       package.json (with workspaces - workspace metadata)
+	//       elements/
+	//         package.json
+
+	// Create pnpm-workspace.yaml at root
+	pnpmWorkspace := filepath.Join(tmpDir, "pnpm-workspace.yaml")
+	err := os.WriteFile(pnpmWorkspace, []byte(`packages:
+  - 'packages/*'
+`), 0644)
+	require.NoError(t, err)
+
+	// Create packages directory
+	packagesDir := filepath.Join(tmpDir, "packages")
+	err = os.Mkdir(packagesDir, 0755)
+	require.NoError(t, err)
+
+	// Create my-package directory
+	myPackageDir := filepath.Join(packagesDir, "my-package")
+	err = os.Mkdir(myPackageDir, 0755)
+	require.NoError(t, err)
+
+	// Create my-package package.json WITH workspaces (workspace metadata)
+	myPackageJSON := filepath.Join(myPackageDir, "package.json")
+	err = os.WriteFile(myPackageJSON, []byte(`{
+		"name": "@test/my-package",
+		"workspaces": ["./elements"]
+	}`), 0644)
+	require.NoError(t, err)
+
+	// Create elements directory
+	elementsDir := filepath.Join(myPackageDir, "elements")
+	err = os.Mkdir(elementsDir, 0755)
+	require.NoError(t, err)
+
+	// Create elements package.json
+	elementsPackageJSON := filepath.Join(elementsDir, "package.json")
+	err = os.WriteFile(elementsPackageJSON, []byte(`{
+		"name": "@test/elements"
+	}`), 0644)
+	require.NoError(t, err)
+
+	t.Run("Should climb when workspace metadata is present", func(t *testing.T) {
+		// Start from elements/ and should climb to tmpDir
+		// Because both myPackageDir and tmpDir have workspace metadata,
+		// we should prefer the topmost workspace
+		root, err := workspace.FindWorkspaceRoot(elementsDir)
+		require.NoError(t, err)
+		assert.Equal(t, tmpDir, root,
+			"Expected to climb to topmost workspace when workspace metadata is present")
+	})
+}

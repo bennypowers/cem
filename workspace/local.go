@@ -319,6 +319,12 @@ func (c *FileSystemWorkspaceContext) ResolveModuleDependency(
 // FindWorkspaceRoot searches upward from the given path to find the workspace root.
 // It looks for workspace indicators like .git, pnpm-workspace.yaml, or package.json with workspaces field.
 // If the path is already inside a workspace package subdirectory, it will find the parent workspace root.
+//
+// VCS Boundary Handling:
+// - If a directory has ONLY VCS markers (.git) without workspace metadata, treat it as a hard boundary
+// - This prevents crossing Git submodule boundaries
+// - If a directory has workspace metadata (pnpm-workspace.yaml, package.json with workspaces),
+//   continue climbing to find the topmost workspace root
 func FindWorkspaceRoot(startPath string) (string, error) {
 	// Resolve to absolute path
 	absPath, err := filepath.Abs(startPath)
@@ -338,47 +344,63 @@ func FindWorkspaceRoot(startPath string) (string, error) {
 	current := absPath
 	checked := make(map[string]bool)
 
+	// Track the last directory we found with any workspace indicator
+	var lastRootCandidate string
+
 	for !checked[current] {
 		checked[current] = true
 
-		// Check for workspace indicators
-		if isWorkspaceRoot(current) {
-			// Found a potential workspace root
-			// But check if the parent is ALSO a workspace root
-			// This handles cases like:
-			// - /path/to/repo/package.json (workspaces: ["./elements"])
-			// - /path/to/repo/elements/package.json
-			parent := filepath.Dir(current)
-			if parent != current && isWorkspaceRoot(parent) {
-				// Parent is also a workspace root, use that instead
-				current = parent
-				continue
+		// Check if current directory has VCS marker
+		hasVCS := isVCSRoot(current)
+		// Check if current directory has workspace metadata
+		hasWorkspaceMeta := hasWorkspaceMetadata(current)
+
+		// If we have either VCS marker or workspace metadata, this is a candidate root
+		if hasVCS || hasWorkspaceMeta {
+			// If we ONLY have VCS marker (no workspace metadata), treat as hard boundary
+			// This prevents crossing Git submodule boundaries
+			if hasVCS && !hasWorkspaceMeta {
+				return current, nil
 			}
-			return current, nil
+
+			// We have workspace metadata - record this as a candidate
+			// but continue climbing to see if there's a parent workspace
+			lastRootCandidate = current
 		}
 
 		// Move to parent directory
 		parent := filepath.Dir(current)
 		if parent == current {
-			// Reached filesystem root without finding workspace
+			// Reached filesystem root
+			if lastRootCandidate != "" {
+				return lastRootCandidate, nil
+			}
 			return absPath, nil // Return original path as fallback
 		}
 		current = parent
 	}
 
+	// If we exhausted all directories and found a candidate, return it
+	if lastRootCandidate != "" {
+		return lastRootCandidate, nil
+	}
+
 	return absPath, nil // Return original path as fallback
 }
 
-// isWorkspaceRoot checks if a directory is a workspace root by looking for:
-// - .git directory (version control root)
-// - pnpm-workspace.yaml (pnpm workspace)
-// - package.json with "workspaces" field (npm/yarn workspace)
-func isWorkspaceRoot(dir string) bool {
+// isVCSRoot checks if a directory contains VCS markers (version control root)
+// Currently only checks for .git directory
+func isVCSRoot(dir string) bool {
 	// Check for .git directory
 	if _, err := os.Stat(filepath.Join(dir, ".git")); err == nil {
 		return true
 	}
+	return false
+}
 
+// hasWorkspaceMetadata checks if a directory contains workspace metadata files
+// These indicate actual workspace structure (not just VCS)
+func hasWorkspaceMetadata(dir string) bool {
 	// Check for pnpm-workspace.yaml
 	if _, err := os.Stat(filepath.Join(dir, "pnpm-workspace.yaml")); err == nil {
 		return true
@@ -396,4 +418,15 @@ func isWorkspaceRoot(dir string) bool {
 	}
 
 	return false
+}
+
+// isWorkspaceRoot checks if a directory is a workspace root by looking for:
+// - .git directory (version control root)
+// - pnpm-workspace.yaml (pnpm workspace)
+// - package.json with "workspaces" field (npm/yarn workspace)
+//
+// Deprecated: This function is kept for backward compatibility.
+// Use isVCSRoot() and hasWorkspaceMetadata() for more precise detection.
+func isWorkspaceRoot(dir string) bool {
+	return isVCSRoot(dir) || hasWorkspaceMetadata(dir)
 }
