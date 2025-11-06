@@ -43,8 +43,12 @@ func benchmarkAttributeLookupCurrent(b *testing.B, numMembers int) {
 		}
 	}
 
-	// Create the attribute name to search for (last one for worst case)
-	attrName := "test-attr-" + fmt.Sprintf("%d", numMembers-2)
+	// Create the attribute name to search for (last even index for worst case)
+	idx := numMembers - 1
+	if idx%2 == 1 {
+		idx--
+	}
+	attrName := "test-attr-" + fmt.Sprintf("%d", idx)
 
 	b.ResetTimer()
 
@@ -163,7 +167,12 @@ func benchmarkAttributeLookupMap(b *testing.B, numMembers int) {
 		}
 	}
 
-	attrName := "test-attr-" + fmt.Sprintf("%d", numMembers-2)
+	// Create the attribute name to search for (last even index for worst case)
+	idx := numMembers - 1
+	if idx%2 == 1 {
+		idx--
+	}
+	attrName := "test-attr-" + fmt.Sprintf("%d", idx)
 
 	b.ResetTimer()
 
