@@ -16,6 +16,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package manifest
 
+import "sync"
+
+// Package-level sync primitives for thread-safe lazy initialization.
+// These are kept external to manifest structs to avoid affecting their semantic structure.
+var (
+	attributeFieldInitMap = &sync.Map{} // map[*CustomElementDeclaration]*sync.Once
+	exportMapsInitMap     = &sync.Map{} // map[*Module]*sync.Once
+)
+
 // BuildAttributeFieldMap creates a map from attribute name to CustomElementField
 // for fast O(1) lookups. Returns an empty map (not nil) if no fields found.
 //
@@ -34,10 +43,16 @@ func BuildAttributeFieldMap(members []ClassMember) map[string]*CustomElementFiel
 
 // getAttributeFieldMap returns the cached map or builds it if needed.
 // This method uses lazy initialization with sync.Once for thread-safe concurrent access.
+// The sync.Once is stored externally to avoid adding non-semantic fields to the struct.
 func (ced *CustomElementDeclaration) getAttributeFieldMap() map[string]*CustomElementField {
-	ced.attributeFieldOnce.Do(func() {
+	// Get or create a sync.Once for this instance
+	once, _ := attributeFieldInitMap.LoadOrStore(ced, &sync.Once{})
+
+	// Use the sync.Once to ensure single initialization
+	once.(*sync.Once).Do(func() {
 		ced.attributeFieldMap = BuildAttributeFieldMap(ced.Members)
 	})
+
 	return ced.attributeFieldMap
 }
 
@@ -92,8 +107,13 @@ func BuildExportMaps(exports []Export, modulePath string) (
 
 // buildExportMaps builds and caches the export maps if not already built.
 // This method uses lazy initialization with sync.Once for thread-safe concurrent access.
+// The sync.Once is stored externally to avoid adding non-semantic fields to the struct.
 func (m *Module) buildExportMaps() {
-	m.exportMapsOnce.Do(func() {
+	// Get or create a sync.Once for this instance
+	once, _ := exportMapsInitMap.LoadOrStore(m, &sync.Once{})
+
+	// Use the sync.Once to ensure single initialization
+	once.(*sync.Once).Do(func() {
 		m.customElementExportMap, m.jsExportMap = BuildExportMaps(m.Exports, m.Path)
 	})
 }
