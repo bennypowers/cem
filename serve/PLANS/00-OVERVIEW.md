@@ -179,38 +179,37 @@ serve:
       - Transform cache hit rate targets (e.g., >90%)
       - Memory usage limits (e.g., <500MB for typical project)
 
-1. **Phase 1: Core Server** (cmd/serve.go, server package)
+1. **Phase 1: Core Server** (cmd/serve.go, serve package)
    - HTTP server with static file serving
    - Watch mode integration (reuse generate/)
-   - WebSocket live reload
+   - [WebSocket live reload](./05-AUTORELOAD-HMR.md)
    - Basic logging
 
-2. **Phase 2: Routing and Demo Rendering** (server/demo package)
-   - URL routing
+2. **Phase 2: Routing and Demo Rendering** (serve/demo package)
+   - [URL routing](./10-URL-REWRITING.md)
    - Template system (Go html/template)
-   - Default chrome templates
-   - Raw demo mode
+   - [Chrome templates](./15-DEMO-CHROME.md)
 
-3. **Phase 3: Import Maps** (server/importmap package)
+3. **Phase 3: Import Maps** (serve/importmap package)
    - Auto-discovery from package.json
    - Override file loading
    - Merge strategy
-   - HTML injection middleware
+   - [HTML injection middleware](./20-IMPORTMAPS.md)
 
-4. **Phase 4: Transforms** (server/transform package)
+4. **Phase 4: Transforms** ([serve/transform](./30-TRANSFORMS.md) package)
    - esbuild integration (TypeScript)
    - CSS transform
    - Transform cache
 
-5. **Phase 5: Knobs** (server/knobs package, embedded JS)
+5. **Phase 5: Knobs** ([serve/knobs](./40-KNOBS.md) package, embedded JS)
    - Server-side control generation
    - Client-side event handlers
    - Template customization
    - Type inference from CEM
 
 6. **Phase 6: Polish**
-   - Error overlay
-   - Manifest viewer UI
-   - Event logger
+   - Error overlay (serve/errors package)
+   - Manifest viewer UI (serve/manifest package) (stretch goal)
+   - Event logger (serve/events package)
    - Documentation
 
