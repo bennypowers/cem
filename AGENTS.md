@@ -1,1 +1,2 @@
 - Always use Makefile targets for running tests or builds, since they export the necessary env vars
+- When commit messages mention AI agenst, always use `Assisted-By`, never use `Co-Authored-By` 
