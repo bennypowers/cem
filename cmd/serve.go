@@ -66,7 +66,11 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("failed to create server: %w", err)
 		}
-		defer server.Close()
+		defer func() {
+			if err := server.Close(); err != nil {
+				logger.Error("Failed to close server: %v", err)
+			}
+		}()
 
 		// Set pterm logger
 		server.SetLogger(logger)
