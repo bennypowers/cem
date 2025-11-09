@@ -50,6 +50,21 @@ const (
 	ESNext   Target = "esnext"
 )
 
+// ValidTargets returns all valid target values
+func ValidTargets() []Target {
+	return []Target{ES2015, ES2016, ES2017, ES2018, ES2019, ES2020, ES2021, ES2022, ES2023, ESNext}
+}
+
+// IsValidTarget checks if a target string is valid
+func IsValidTarget(target string) bool {
+	switch Target(target) {
+	case ES2015, ES2016, ES2017, ES2018, ES2019, ES2020, ES2021, ES2022, ES2023, ESNext:
+		return true
+	default:
+		return false
+	}
+}
+
 // SourceMapMode specifies how source maps are generated
 type SourceMapMode string
 

@@ -24,6 +24,7 @@ import (
 
 	"bennypowers.dev/cem/serve"
 	W "bennypowers.dev/cem/workspace"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -46,11 +47,24 @@ var serveCmd = &cobra.Command{
 		port := viper.GetInt("serve.port")
 		reload := !viper.GetBool("serve.no-reload")
 		verbose := viper.GetBool("verbose")
+		targetStr := viper.GetString("serve.target")
+
+		// Validate and parse target (default to ES2022)
+		var target serve.Target
+		if targetStr != "" {
+			if !serve.IsValidTarget(targetStr) {
+				return fmt.Errorf("invalid target '%s': must be one of es2015, es2016, es2017, es2018, es2019, es2020, es2021, es2022, es2023, or esnext", targetStr)
+			}
+			target = serve.Target(targetStr)
+		} else {
+			target = serve.ES2022
+		}
 
 		// Create server config
 		config := serve.Config{
 			Port:   port,
 			Reload: reload,
+			Target: target,
 		}
 
 		// Create pterm logger
@@ -81,19 +95,19 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("failed to set watch directory: %w", err)
 		}
 
-		// Update status
-		if l, ok := logger.(interface{ SetStatus(string) }); ok {
-			l.SetStatus("Generating initial manifest...")
-		}
-
-		// Generate initial manifest
-		logger.Info("Generating initial manifest...")
+		// Generate initial manifest (before starting live area)
+		pterm.Info.Println("Generating initial manifest...")
 		err = server.RegenerateManifest()
 		if err != nil {
-			logger.Error("Failed to generate initial manifest: %v", err)
-			logger.Info("Server will continue, but manifest may be unavailable")
+			pterm.Error.Printf("Failed to generate initial manifest: %v\n", err)
+			pterm.Info.Println("Server will continue, but manifest may be unavailable")
 		} else {
-			logger.Info("Initial manifest generated")
+			pterm.Success.Println("Initial manifest generated")
+		}
+
+		// Start live rendering area AFTER initial setup
+		if l, ok := logger.(interface{ Start() }); ok {
+			l.Start()
 		}
 
 		// Start server
@@ -107,8 +121,18 @@ var serveCmd = &cobra.Command{
 			logger.Info("Live reload enabled - watching for file changes")
 		}
 
-		// Update status with running info
-		statusMsg := fmt.Sprintf("Running on http://localhost:%d | Live reload: %v | Press Ctrl+C to stop", port, reload)
+		// Update status with running info (with colors)
+		reloadColor := pterm.FgRed.Sprint("false")
+		if reload {
+			reloadColor = pterm.FgGreen.Sprint("true")
+		}
+		statusMsg := fmt.Sprintf("Running on %s%s Live reload: %s %s Press %s to stop",
+			pterm.FgCyan.Sprintf("http://localhost:%d", port),
+			pterm.FgGray.Sprint(" |"),
+			reloadColor,
+			pterm.FgGray.Sprint("|"),
+			pterm.FgYellow.Sprint("Ctrl+C"),
+		)
 		if l, ok := logger.(interface{ SetStatus(string) }); ok {
 			l.SetStatus(statusMsg)
 		}
@@ -131,11 +155,15 @@ func init() {
 
 	serveCmd.Flags().Int("port", 8080, "Port to serve on")
 	serveCmd.Flags().Bool("no-reload", false, "Disable live reload")
+	serveCmd.Flags().String("target", "es2022", "TypeScript/JavaScript transform target (es2015, es2016, es2017, es2018, es2019, es2020, es2021, es2022, es2023, esnext)")
 
 	if err := viper.BindPFlag("serve.port", serveCmd.Flags().Lookup("port")); err != nil {
 		panic(fmt.Sprintf("failed to bind flag serve.port: %v", err))
 	}
 	if err := viper.BindPFlag("serve.no-reload", serveCmd.Flags().Lookup("no-reload")); err != nil {
 		panic(fmt.Sprintf("failed to bind flag serve.no-reload: %v", err))
+	}
+	if err := viper.BindPFlag("serve.target", serveCmd.Flags().Lookup("target")); err != nil {
+		panic(fmt.Sprintf("failed to bind flag serve.target: %v", err))
 	}
 }
