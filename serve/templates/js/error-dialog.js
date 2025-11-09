@@ -89,11 +89,6 @@ export class CEMErrorDialog extends HTMLElement {
     this.shadowRoot.appendChild(CEMErrorDialog.template.content.cloneNode(true));
 
     this._dialog = this.shadowRoot.querySelector('dialog');
-
-    // Handle ESC key
-    this._dialog.addEventListener('close', () => {
-      this.dispatchEvent(new CustomEvent('close'));
-    });
   }
 
   get title() {

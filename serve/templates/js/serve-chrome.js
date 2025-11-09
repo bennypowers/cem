@@ -262,8 +262,8 @@ Generated: ${new Date().toISOString()}`;
     // Listen for server log messages from the WebSocket client
     // The websocket-client.js dispatches 'cem:logs' events with server logs
     window.addEventListener('cem:logs', (event) => {
-      if (event.detail && event.detail.logs) {
-        this.#renderLogs(event.detail.logs);
+      if (event.logs) {
+        this.#renderLogs(event.logs);
       }
     });
   }

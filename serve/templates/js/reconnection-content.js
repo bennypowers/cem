@@ -1,5 +1,23 @@
 // Reconnection dialog content component
 
+/**
+ * Event dispatched when user clicks reload button
+ */
+class ReloadEvent extends Event {
+  constructor() {
+    super('reload', { bubbles: true, composed: true });
+  }
+}
+
+/**
+ * Event dispatched when user clicks retry button
+ */
+class RetryEvent extends Event {
+  constructor() {
+    super('retry', { bubbles: true, composed: true });
+  }
+}
+
 export class CEMReconnectionContent extends HTMLElement {
   static template;
 
@@ -84,12 +102,12 @@ export class CEMReconnectionContent extends HTMLElement {
 
     // Set up event listeners
     this.shadowRoot.getElementById('reload-btn').addEventListener('click', () => {
-      this.dispatchEvent(new CustomEvent('reload'));
+      this.dispatchEvent(new ReloadEvent());
     });
 
     this.shadowRoot.getElementById('retry-btn').addEventListener('click', () => {
       this.clearCountdown();
-      this.dispatchEvent(new CustomEvent('retry'));
+      this.dispatchEvent(new RetryEvent());
     });
   }
 
