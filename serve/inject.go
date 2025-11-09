@@ -99,6 +99,7 @@ func injectWebSocketClient(next http.Handler, enabled bool) http.Handler {
 			w.WriteHeader(rec.statusCode)
 			if _, err := w.Write(bodyBytes); err != nil {
 				// Client disconnected or write error - can't respond
+				return
 			}
 			return
 		}
@@ -124,6 +125,7 @@ func injectWebSocketClient(next http.Handler, enabled bool) http.Handler {
 		w.WriteHeader(rec.statusCode)
 		if _, err := w.Write([]byte(injected)); err != nil {
 			// Client disconnected or write error - can't respond
+			return
 		}
 	})
 }

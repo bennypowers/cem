@@ -104,7 +104,9 @@ func (s *Server) Start() error {
 		}
 
 		if err := fw.Watch(s.watchDir); err != nil {
-			_ = fw.Close()
+			if closeErr := fw.Close(); closeErr != nil {
+				s.logger.Error("Failed to close file watcher during cleanup: %v", closeErr)
+			}
 			return fmt.Errorf("failed to watch directory: %w", err)
 		}
 
@@ -145,7 +147,9 @@ func (s *Server) Close() error {
 	}
 
 	if s.watcher != nil {
-		_ = s.watcher.Close()
+		if err := s.watcher.Close(); err != nil {
+			s.logger.Error("Failed to close file watcher: %v", err)
+		}
 	}
 
 	if s.generateSession != nil {

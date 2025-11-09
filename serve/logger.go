@@ -111,7 +111,10 @@ func (l *ptermLogger) render() {
 // Stop stops the live rendering
 func (l *ptermLogger) Stop() {
 	if l.area != nil {
-		_ = l.area.Stop()
+		if err := l.area.Stop(); err != nil {
+			// Log to stderr since our logging system may be shutting down
+			fmt.Fprintf(os.Stderr, "Warning: failed to stop area printer: %v\n", err)
+		}
 	}
 }
 
@@ -185,13 +188,20 @@ func (l *ptermLogger) log(level, color, msg string, args ...interface{}) {
 	}
 
 	// Broadcast logs to WebSocket clients (after unlock to avoid blocking)
-	if l.wsManager != nil {
+	// Capture wsManager reference while holding lock to avoid race with SetWebSocketManager
+	l.mu.Lock()
+	ws := l.wsManager
+	l.mu.Unlock()
+
+	if ws != nil {
 		msg := LogMessage{
 			Type: "logs",
 			Logs: logsCopy,
 		}
 		if msgBytes, err := json.Marshal(msg); err == nil {
-			_ = l.wsManager.Broadcast(msgBytes)
+			// Broadcast error intentionally ignored - failures occur when clients
+			// disconnect and we can't log them here without causing infinite recursion
+			_ = ws.Broadcast(msgBytes)
 		}
 	}
 }

@@ -128,6 +128,10 @@ func init() {
 	serveCmd.Flags().Int("port", 8080, "Port to serve on")
 	serveCmd.Flags().Bool("no-reload", false, "Disable live reload")
 
-	viper.BindPFlag("serve.port", serveCmd.Flags().Lookup("port"))
-	viper.BindPFlag("serve.no-reload", serveCmd.Flags().Lookup("no-reload"))
+	if err := viper.BindPFlag("serve.port", serveCmd.Flags().Lookup("port")); err != nil {
+		panic(fmt.Sprintf("failed to bind flag serve.port: %v", err))
+	}
+	if err := viper.BindPFlag("serve.no-reload", serveCmd.Flags().Lookup("no-reload")); err != nil {
+		panic(fmt.Sprintf("failed to bind flag serve.no-reload: %v", err))
+	}
 }
