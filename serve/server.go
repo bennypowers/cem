@@ -345,7 +345,7 @@ func (s *Server) handleFileChanges() {
 		}
 
 		// Broadcast reload to all WebSocket clients
-		files := []string{filepath.Base(event.Path)}
+		files := []string{relPath}
 		err := s.BroadcastReload(files, "file-change")
 		if err != nil {
 			s.logger.Error("Failed to broadcast reload: %v", err)
