@@ -34,7 +34,7 @@ class CemServeDemo extends HTMLElement {
    * @param {*} value - Property value
    * @returns {boolean} - Whether the operation succeeded
    */
-  setProperty(selector, property, value) {
+  setDemoProperty(selector, property, value) {
     const root = this.#getShadowRoot() || this;
     const target = root.querySelector(selector);
     if (target) {
@@ -51,7 +51,7 @@ class CemServeDemo extends HTMLElement {
    * @param {string} value - CSS property value
    * @returns {boolean} - Whether the operation succeeded
    */
-  setCssCustomProperty(selector, cssProperty, value) {
+  setDemoCssCustomProperty(selector, cssProperty, value) {
     const root = this.#getShadowRoot() || this;
     const target = root.querySelector(selector);
     if (target) {
