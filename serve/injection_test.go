@@ -230,7 +230,7 @@ export class MyElement extends HTMLElement {}
 	}
 
 	// Get initial manifest
-	manifest1, err := server.GetManifest()
+	manifest1, err := server.Manifest()
 	if err != nil {
 		t.Fatalf("Failed to get initial manifest: %v", err)
 	}
@@ -254,7 +254,7 @@ export class MyElement extends HTMLElement {}
 	time.Sleep(500 * time.Millisecond)
 
 	// Get updated manifest
-	manifest2, err := server.GetManifest()
+	manifest2, err := server.Manifest()
 	if err != nil {
 		t.Fatalf("Failed to get updated manifest: %v", err)
 	}

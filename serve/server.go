@@ -106,7 +106,7 @@ func (s *Server) Start() error {
 
 	// Start file watcher if watch directory is set
 	if s.watchDir != "" {
-		fw, err := newFileWatcher(s.GetDebounceDuration(), s.logger)
+		fw, err := newFileWatcher(s.DebounceDuration(), s.logger)
 		if err != nil {
 			_ = listener.Close()
 			return fmt.Errorf("failed to create file watcher: %w", err)
@@ -194,8 +194,8 @@ func (s *Server) SetWatchDir(dir string) error {
 	return nil
 }
 
-// GetWatchDir returns the current watch directory
-func (s *Server) GetWatchDir() string {
+// WatchDir returns the current watch directory
+func (s *Server) WatchDir() string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.watchDir
@@ -211,8 +211,8 @@ func (s *Server) SetManifest(manifest []byte) error {
 	return nil
 }
 
-// GetManifest returns the current manifest
-func (s *Server) GetManifest() ([]byte, error) {
+// Manifest returns the current manifest
+func (s *Server) Manifest() ([]byte, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	// Defensive copy to prevent caller from mutating our internal state
@@ -224,8 +224,8 @@ func (s *Server) GetManifest() ([]byte, error) {
 	return manifestCopy, nil
 }
 
-// GetDebounceDuration returns the debounce duration (150ms per spec)
-func (s *Server) GetDebounceDuration() time.Duration {
+// DebounceDuration returns the debounce duration (150ms per spec)
+func (s *Server) DebounceDuration() time.Duration {
 	return 150 * time.Millisecond
 }
 

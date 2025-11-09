@@ -189,7 +189,7 @@ func TestFileWatcherSetup(t *testing.T) {
 		t.Fatalf("Failed to set watch directory: %v", err)
 	}
 
-	watchDir := server.GetWatchDir()
+	watchDir := server.WatchDir()
 	if watchDir != tmpDir {
 		t.Errorf("Expected watch dir %s, got %s", tmpDir, watchDir)
 	}
@@ -209,7 +209,7 @@ func TestManifestAccessors(t *testing.T) {
 		t.Fatalf("Failed to set manifest: %v", err)
 	}
 
-	manifest, err := server.GetManifest()
+	manifest, err := server.Manifest()
 	if err != nil {
 		t.Fatalf("Failed to get manifest: %v", err)
 	}
@@ -238,7 +238,7 @@ func TestManifestDefensiveCopy(t *testing.T) {
 	original[0] = 'X'
 
 	// Get manifest and verify it wasn't affected
-	retrieved, err := server.GetManifest()
+	retrieved, err := server.Manifest()
 	if err != nil {
 		t.Fatalf("Failed to get manifest: %v", err)
 	}
@@ -251,13 +251,13 @@ func TestManifestDefensiveCopy(t *testing.T) {
 	retrieved[0] = 'Y'
 
 	// Get manifest again and verify it wasn't affected
-	retrieved2, err := server.GetManifest()
+	retrieved2, err := server.Manifest()
 	if err != nil {
 		t.Fatalf("Failed to get manifest second time: %v", err)
 	}
 
 	if retrieved2[0] != '{' {
-		t.Error("GetManifest didn't make defensive copy - caller mutation affected internal state")
+		t.Error("Manifest didn't make defensive copy - caller mutation affected internal state")
 	}
 }
 
@@ -269,7 +269,7 @@ func TestDebounceDuration(t *testing.T) {
 	}
 	defer func() { _ = server.Close() }()
 
-	duration := server.GetDebounceDuration()
+	duration := server.DebounceDuration()
 	expected := "150ms"
 
 	if duration.String() != expected {
@@ -433,7 +433,7 @@ export class TestElement extends HTMLElement {}
 	}
 
 	// Get manifest
-	manifest, err := server.GetManifest()
+	manifest, err := server.Manifest()
 	if err != nil {
 		t.Fatalf("Failed to get manifest: %v", err)
 	}
