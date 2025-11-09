@@ -57,12 +57,18 @@ func NewPtermLogger(verbose bool) Logger {
 		status:       "Starting...",
 	}
 
-	if interactive {
-		logger.area, _ = pterm.DefaultArea.Start()
-		logger.render()
-	}
+	// Don't start live area immediately - let caller do it after initial setup
+	// This prevents initial logs from appearing above the live area
 
 	return logger
+}
+
+// Start starts the live rendering area (call after initial setup is complete)
+func (l *ptermLogger) Start() {
+	if l.interactive && l.area == nil {
+		l.area, _ = pterm.DefaultArea.Start()
+		l.render()
+	}
 }
 
 // SetStatus updates the status line and re-renders
@@ -99,10 +105,11 @@ func (l *ptermLogger) render() {
 		sb.WriteString(log + "\n")
 	}
 
-	// Add separator
-	sb.WriteString("\n" + strings.Repeat("─", 80) + "\n")
+	// Add separator with gray line
+	sb.WriteString("\n" + pterm.FgGray.Sprint(strings.Repeat("─", 80)) + "\n")
 
-	// Status line at bottom (no trailing newline to avoid empty cursor line)
+	// Status line at bottom (colors are applied at call site in cmd/serve.go)
+	// Example: ● Running on http://localhost:8080 | Live reload: true | Press Ctrl+C to stop
 	sb.WriteString(pterm.FgLightGreen.Sprint("● ") + l.status)
 
 	l.area.Update(sb.String())
@@ -163,12 +170,12 @@ func (l *ptermLogger) log(level, color, msg string, args ...interface{}) {
 
 		// Visual length is just the actual text without ANSI codes
 		visualLen := len(level) + 1 + len(formatted)
-		padding := width - visualLen - 9 // 9 to prevent overflow (8 for timestamp + 1 buffer)
+		padding := width - visualLen - 10 // 10 to prevent overflow (1 leading space + 8 for timestamp + 1 buffer)
 		if padding < 1 {
 			padding = 1
 		}
 
-		terminalLog := fmt.Sprintf("%s %s%s%s", prefix, coloredMsg, strings.Repeat(" ", padding), timestampStr)
+		terminalLog := fmt.Sprintf(" %s %s%s%s", prefix, coloredMsg, strings.Repeat(" ", padding), timestampStr)
 		l.terminalLogs = append(l.terminalLogs, terminalLog)
 
 		if len(l.terminalLogs) > l.maxTermLogs {
