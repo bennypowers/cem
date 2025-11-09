@@ -22,51 +22,62 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
 // TestDemoRouting_BasicRoute verifies demo URLs route correctly
 func TestDemoRouting_BasicRoute(t *testing.T) {
-	// Create test directory with demo file
+	// Create test directory
 	tmpDir := t.TempDir()
 
-	// Create demo HTML with metadata
+	// Copy fixture files
+	manifestBytes, err := os.ReadFile(filepath.Join("testdata", "demo-routing", "manifest.json"))
+	if err != nil {
+		t.Fatalf("Failed to read manifest fixture: %v", err)
+	}
+
+	demoHTML, err := os.ReadFile(filepath.Join("testdata", "demo-routing", "basic-demo.html"))
+	if err != nil {
+		t.Fatalf("Failed to read demo fixture: %v", err)
+	}
+
+	// Set up test directory structure
 	demoDir := filepath.Join(tmpDir, "demo")
-	err := os.MkdirAll(demoDir, 0755)
+	err = os.MkdirAll(demoDir, 0755)
 	if err != nil {
 		t.Fatalf("Failed to create demo directory: %v", err)
 	}
 
-	demoHTML := `<!DOCTYPE html>
-<html>
-<head>
-  <meta itemprop="name" content="Basic Demo">
-</head>
-<body>
-  <my-element></my-element>
-</body>
-</html>`
-
 	demoPath := filepath.Join(demoDir, "basic.html")
-	err = os.WriteFile(demoPath, []byte(demoHTML), 0644)
+	err = os.WriteFile(demoPath, demoHTML, 0644)
 	if err != nil {
 		t.Fatalf("Failed to write demo file: %v", err)
 	}
 
-	// Create server with demo routing
+	// Create server
 	server, err := NewServer(0)
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() {
+		if err := server.Close(); err != nil {
+			t.Errorf("Failed to close server: %v", err)
+		}
+	}()
 
 	err = server.SetWatchDir(tmpDir)
 	if err != nil {
 		t.Fatalf("Failed to set watch dir: %v", err)
 	}
 
-	// Request demo URL
-	req := httptest.NewRequest(http.MethodGet, "/components/my-element/demo/basic-demo/", nil)
+	err = server.SetManifest(manifestBytes)
+	if err != nil {
+		t.Fatalf("Failed to set manifest: %v", err)
+	}
+
+	// Request demo URL (matching the URL from manifest: ./demo/basic.html)
+	req := httptest.NewRequest(http.MethodGet, "/demo/basic.html", nil)
 	w := httptest.NewRecorder()
 
 	server.Handler().ServeHTTP(w, req)
@@ -76,11 +87,19 @@ func TestDemoRouting_BasicRoute(t *testing.T) {
 		t.Errorf("Expected status 200, got %d", w.Code)
 	}
 
-	// Should contain demo element
 	body := w.Body.String()
-	if body == "" {
-		t.Error("Expected demo content, got empty response")
+
+	// Should contain chrome wrapper
+	if !strings.Contains(body, "<cem-serve-chrome") {
+		t.Error("Expected cem-serve-chrome element")
 	}
 
-	// TODO: More assertions once we implement chrome
+	// Should contain demo content
+	if !strings.Contains(body, "my-element") {
+		t.Error("Expected demo element in response")
+	}
+
+	if !strings.Contains(body, "Hello World") {
+		t.Error("Expected demo content in response")
+	}
 }

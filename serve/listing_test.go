@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package serve
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -31,59 +30,21 @@ import (
 func TestRootListing_ShowsAllElements(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	// Create manifest with multiple elements and demos
-	manifest := map[string]interface{}{
-		"schemaVersion": "1.0.0",
-		"modules": []interface{}{
-			map[string]interface{}{
-				"path": "src/button/button.ts",
-				"declarations": []interface{}{
-					map[string]interface{}{
-						"name":    "MyButton",
-						"tagName": "my-button",
-						"demos": []interface{}{
-							map[string]interface{}{
-								"name": "Basic",
-								"url":  "./demo/basic.html",
-							},
-							map[string]interface{}{
-								"name": "Variants",
-								"url":  "./demo/variants.html",
-							},
-						},
-					},
-				},
-			},
-			map[string]interface{}{
-				"path": "src/card/card.ts",
-				"declarations": []interface{}{
-					map[string]interface{}{
-						"name":    "MyCard",
-						"tagName": "my-card",
-						"demos": []interface{}{
-							map[string]interface{}{
-								"name": "Simple",
-								"url":  "./demo/simple.html",
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	manifestBytes, _ := json.Marshal(manifest)
-	manifestPath := filepath.Join(tmpDir, "custom-elements.json")
-	err := os.WriteFile(manifestPath, manifestBytes, 0644)
+	// Load manifest fixture
+	manifestBytes, err := os.ReadFile(filepath.Join("testdata", "listing", "multiple-elements.json"))
 	if err != nil {
-		t.Fatalf("Failed to write manifest: %v", err)
+		t.Fatalf("Failed to read manifest fixture: %v", err)
 	}
 
 	server, err := NewServer(0)
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() {
+		if err := server.Close(); err != nil {
+			t.Errorf("Failed to close server: %v", err)
+		}
+	}()
 
 	err = server.SetWatchDir(tmpDir)
 	if err != nil {
@@ -134,13 +95,13 @@ func TestRootListing_ShowsAllElements(t *testing.T) {
 		t.Error("Expected 'Simple' demo link")
 	}
 
-	// Should link to demo URLs
-	if !strings.Contains(body, "/components/my-button/demo/") {
-		t.Error("Expected demo URL for my-button")
+	// Should link to demo URLs (from manifest: ./demo/basic.html, etc)
+	if !strings.Contains(body, "/demo/basic.html") {
+		t.Error("Expected demo URL /demo/basic.html")
 	}
 
-	if !strings.Contains(body, "/components/my-card/demo/") {
-		t.Error("Expected demo URL for my-card")
+	if !strings.Contains(body, "/demo/simple.html") {
+		t.Error("Expected demo URL /demo/simple.html")
 	}
 }
 
@@ -148,18 +109,21 @@ func TestRootListing_ShowsAllElements(t *testing.T) {
 func TestRootListing_EmptyManifest(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	manifest := map[string]interface{}{
-		"schemaVersion": "1.0.0",
-		"modules":       []interface{}{},
+	// Load empty manifest fixture
+	manifestBytes, err := os.ReadFile(filepath.Join("testdata", "listing", "empty-manifest.json"))
+	if err != nil {
+		t.Fatalf("Failed to read manifest fixture: %v", err)
 	}
-
-	manifestBytes, _ := json.Marshal(manifest)
 
 	server, err := NewServer(0)
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() {
+		if err := server.Close(); err != nil {
+			t.Errorf("Failed to close server: %v", err)
+		}
+	}()
 
 	err = server.SetWatchDir(tmpDir)
 	if err != nil {
@@ -183,8 +147,8 @@ func TestRootListing_EmptyManifest(t *testing.T) {
 	body := w.Body.String()
 
 	// Should show helpful message
-	if !strings.Contains(body, "No elements found") && !strings.Contains(body, "no demos") {
-		t.Error("Expected message about no elements found")
+	if !strings.Contains(body, "No demos found") {
+		t.Error("Expected message about no demos found")
 	}
 }
 
@@ -192,52 +156,21 @@ func TestRootListing_EmptyManifest(t *testing.T) {
 func TestRootListing_SortedByElement(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	manifest := map[string]interface{}{
-		"schemaVersion": "1.0.0",
-		"modules": []interface{}{
-			map[string]interface{}{
-				"path": "src/zebra.ts",
-				"declarations": []interface{}{
-					map[string]interface{}{
-						"tagName": "my-zebra",
-						"demos": []interface{}{
-							map[string]interface{}{"name": "Demo", "url": "./demo.html"},
-						},
-					},
-				},
-			},
-			map[string]interface{}{
-				"path": "src/apple.ts",
-				"declarations": []interface{}{
-					map[string]interface{}{
-						"tagName": "my-apple",
-						"demos": []interface{}{
-							map[string]interface{}{"name": "Demo", "url": "./demo.html"},
-						},
-					},
-				},
-			},
-			map[string]interface{}{
-				"path": "src/mango.ts",
-				"declarations": []interface{}{
-					map[string]interface{}{
-						"tagName": "my-mango",
-						"demos": []interface{}{
-							map[string]interface{}{"name": "Demo", "url": "./demo.html"},
-						},
-					},
-				},
-			},
-		},
+	// Load sorting test fixture
+	manifestBytes, err := os.ReadFile(filepath.Join("testdata", "listing", "sorting-test.json"))
+	if err != nil {
+		t.Fatalf("Failed to read manifest fixture: %v", err)
 	}
-
-	manifestBytes, _ := json.Marshal(manifest)
 
 	server, err := NewServer(0)
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() {
+		if err := server.Close(); err != nil {
+			t.Errorf("Failed to close server: %v", err)
+		}
+	}()
 
 	err = server.SetWatchDir(tmpDir)
 	if err != nil {
@@ -266,7 +199,7 @@ func TestRootListing_SortedByElement(t *testing.T) {
 	}
 
 	// Should be in alphabetical order
-	if !(applePos < mangoPos && mangoPos < zebraPos) {
+	if applePos >= mangoPos || mangoPos >= zebraPos {
 		t.Errorf("Expected alphabetical order: apple(%d) < mango(%d) < zebra(%d)",
 			applePos, mangoPos, zebraPos)
 	}

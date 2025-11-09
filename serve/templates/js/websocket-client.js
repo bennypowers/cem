@@ -99,6 +99,11 @@ class CEMReloadClient {
       this.status.show('reconnecting', 'Server restarting...');
       this.dialog.show();
       this.content.updateRetryInfo(30, 30000);
+    } else if (data.type === 'logs') {
+      // Dispatch custom event for log updates
+      window.dispatchEvent(new CustomEvent('cem:logs', {
+        detail: { logs: data.logs }
+      }));
     }
   }
 

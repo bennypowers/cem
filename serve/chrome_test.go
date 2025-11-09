@@ -19,6 +19,7 @@ package serve
 
 import (
 	"flag"
+	"html/template"
 	"os"
 	"path/filepath"
 	"testing"
@@ -39,7 +40,7 @@ func TestChromeRendering_BasicDemo(t *testing.T) {
 	rendered, err := renderDemoChrome(ChromeData{
 		TagName:      "my-element",
 		DemoTitle:    "Basic Example",
-		DemoHTML:     string(demoHTML),
+		DemoHTML:     template.HTML(demoHTML),
 		EnabledKnobs: "attributes properties slots css-properties",
 		ImportMap:    "{}",
 		Description:  "A simple example showing basic usage",
@@ -82,7 +83,7 @@ func TestChromeRendering_NoKnobs(t *testing.T) {
 	rendered, err := renderDemoChrome(ChromeData{
 		TagName:      "my-element",
 		DemoTitle:    "Basic Example",
-		DemoHTML:     string(demoHTML),
+		DemoHTML:     template.HTML(demoHTML),
 		EnabledKnobs: "", // No knobs
 		ImportMap:    "{}",
 	})
@@ -123,7 +124,7 @@ func TestChromeRendering_ShadowMode(t *testing.T) {
 	rendered, err := renderDemoChrome(ChromeData{
 		TagName:    "my-element",
 		DemoTitle:  "Basic Example",
-		DemoHTML:   string(demoHTML),
+		DemoHTML:   template.HTML(demoHTML),
 		ImportMap:  "{}",
 		ShadowMode: true,
 	})
@@ -160,7 +161,7 @@ func TestChromeRendering_MarkdownDescription(t *testing.T) {
 	rendered, err := renderDemoChrome(ChromeData{
 		TagName:     "my-element",
 		DemoTitle:   "Test",
-		DemoHTML:    demoHTML,
+		DemoHTML:    template.HTML(demoHTML),
 		ImportMap:   "{}",
 		Description: "This is **bold** and this is *italic*\n\n- Item 1\n- Item 2",
 	})
@@ -188,23 +189,4 @@ func TestChromeRendering_MarkdownDescription(t *testing.T) {
 		t.Errorf("Rendered chrome does not match golden file.\nGot:\n%s\n\nExpected:\n%s", rendered, string(expected))
 		t.Log("Run 'make update' to update golden files")
 	}
-}
-
-// ChromeData represents template data for demo chrome
-type ChromeData struct {
-	TagName      string
-	DemoTitle    string
-	DemoHTML     string
-	EnabledKnobs string
-	ImportMap    string
-	Description  string
-	ShadowMode   bool
-	DemoSwitcher string // HTML for demo nav
-	SourceURL    string // VCS source URL
-}
-
-// renderDemoChrome is a stub that will be implemented
-func renderDemoChrome(data ChromeData) (string, error) {
-	// TODO: Implement chrome rendering
-	return "", nil
 }
