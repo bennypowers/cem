@@ -20,6 +20,7 @@ package serve
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -235,6 +236,44 @@ func shouldIgnore(path string) bool {
 	ignoredDirs := []string{".git", "node_modules", "dist", "build", ".cache"}
 	for _, dir := range ignoredDirs {
 		if base == dir {
+			return true
+		}
+	}
+
+	// Ignore editor temp files
+	// Vim/Neovim: .swp, .swo, .swn, ~, 4913 (atomic write temps)
+	// Emacs: #file#, .#file
+	if strings.HasPrefix(base, ".") && strings.HasSuffix(base, ".swp") {
+		return true
+	}
+	if strings.HasPrefix(base, ".") && strings.HasSuffix(base, ".swo") {
+		return true
+	}
+	if strings.HasPrefix(base, ".") && strings.HasSuffix(base, ".swn") {
+		return true
+	}
+	if strings.HasSuffix(base, "~") {
+		return true
+	}
+	if strings.HasPrefix(base, "#") && strings.HasSuffix(base, "#") {
+		return true
+	}
+	if strings.HasPrefix(base, ".#") {
+		return true
+	}
+
+	// Ignore Neovim atomic write temp files (numbered files without extension in same dir)
+	// These are usually just numbers like "4913"
+	if len(base) > 0 && !strings.Contains(base, ".") {
+		// Check if it's all digits (likely a temp file)
+		allDigits := true
+		for _, c := range base {
+			if c < '0' || c > '9' {
+				allDigits = false
+				break
+			}
+		}
+		if allDigits {
 			return true
 		}
 	}

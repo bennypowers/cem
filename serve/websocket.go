@@ -32,9 +32,15 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+// connWrapper wraps a WebSocket connection with a write mutex
+type connWrapper struct {
+	conn *websocket.Conn
+	mu   sync.Mutex
+}
+
 // websocketManager implements WebSocketManager interface
 type websocketManager struct {
-	connections map[*websocket.Conn]bool
+	connections map[*websocket.Conn]*connWrapper
 	mu          sync.RWMutex
 	logger      Logger
 }
@@ -42,7 +48,7 @@ type websocketManager struct {
 // newWebSocketManager creates a new WebSocket manager
 func newWebSocketManager() WebSocketManager {
 	return &websocketManager{
-		connections: make(map[*websocket.Conn]bool),
+		connections: make(map[*websocket.Conn]*connWrapper),
 	}
 }
 
@@ -65,8 +71,12 @@ func (wm *websocketManager) Broadcast(message []byte) error {
 	wm.mu.RLock()
 	defer wm.mu.RUnlock()
 
-	for conn := range wm.connections {
-		err := conn.WriteMessage(websocket.TextMessage, message)
+	for _, wrapper := range wm.connections {
+		// Lock this connection's write mutex to prevent concurrent writes
+		wrapper.mu.Lock()
+		err := wrapper.conn.WriteMessage(websocket.TextMessage, message)
+		wrapper.mu.Unlock()
+
 		if err != nil {
 			if wm.logger != nil {
 				wm.logger.Error("Failed to send WebSocket message: %v", err)
@@ -88,9 +98,10 @@ func (wm *websocketManager) HandleConnection(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// Register connection
+	// Register connection with wrapper
+	wrapper := &connWrapper{conn: conn}
 	wm.mu.Lock()
-	wm.connections[conn] = true
+	wm.connections[conn] = wrapper
 	count := len(wm.connections)
 	wm.mu.Unlock()
 
