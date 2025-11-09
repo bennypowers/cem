@@ -73,7 +73,7 @@ func injectWebSocketClient(next http.Handler, enabled bool) http.Handler {
 
 		// Inject script before </head> or at start of <body>
 		html := string(bodyBytes)
-		script := "<script type=\"module\">\n" + WebSocketClientScript + "\n</script>"
+		script := "<script type=\"module\" src=\"/__cem/websocket-client.js\"></script>"
 		injected := injectScript(html, script)
 
 		// Copy headers
