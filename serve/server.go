@@ -46,6 +46,7 @@ type Server struct {
 	watcher         FileWatcher
 	watchDir        string
 	manifest        []byte
+	sourceFiles     map[string]bool // Set of source files to watch
 	running         bool
 	mu              sync.RWMutex
 	generateSession *G.GenerateSession
@@ -318,6 +319,16 @@ func (s *Server) RegenerateManifest() error {
 		return fmt.Errorf("generating manifest: %w", err)
 	}
 
+	// Extract source files from manifest for targeted file watching
+	sourceFiles := make(map[string]bool)
+	for _, module := range pkg.Modules {
+		if module.Path != "" {
+			sourceFiles[module.Path] = true
+		}
+	}
+	s.sourceFiles = sourceFiles
+	s.logger.Debug("Tracking %d source files from manifest", len(sourceFiles))
+
 	// Marshal to JSON
 	manifestBytes, err := json.MarshalIndent(pkg, "", "  ")
 	if err != nil {
@@ -367,6 +378,17 @@ func (s *Server) handleFileChanges() {
 			if rel, err := filepath.Rel(s.watchDir, event.Path); err == nil {
 				relPath = rel
 			}
+		}
+
+		// Check if this file is in our source files set
+		s.mu.RLock()
+		isSourceFile := s.sourceFiles != nil && s.sourceFiles[relPath]
+		s.mu.RUnlock()
+
+		// Skip files that aren't in the manifest
+		if !isSourceFile {
+			s.logger.Debug("Ignoring non-manifest file: %s", relPath)
+			continue
 		}
 
 		// Resolve .js to .ts if source exists
