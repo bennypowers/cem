@@ -23,40 +23,10 @@ import (
 	"strings"
 )
 
-// webSocketClientScript is the client-side JavaScript for live reload
-const webSocketClientScript = `<script>
-(function() {
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const ws = new WebSocket(protocol + '//' + window.location.host + '/__cem-reload');
-
-  // Expose socket on window for debugging
-  window.__cemReloadSocket = ws;
-
-  ws.onopen = function() {
-    console.log('[cem-serve] WebSocket connected');
-  };
-
-  ws.onmessage = function(event) {
-    const data = JSON.parse(event.data);
-    console.log('[cem-serve] Received reload payload:', data);
-    if (data.type === 'reload') {
-      console.log('[cem-serve] Reloading page:', data.reason, data.files);
-      window.location.reload();
-    }
-  };
-
-  ws.onclose = function() {
-    console.log('[cem-serve] Connection closed, retrying in 1s...');
-    setTimeout(function() {
-      window.location.reload();
-    }, 1000);
-  };
-
-  ws.onerror = function(error) {
-    console.error('[cem-serve] WebSocket error:', error);
-  };
-})();
-</script>`
+// webSocketClientScript returns the client-side JavaScript for live reload with auto-reconnection
+func webSocketClientScript() string {
+	return "<script type=\"module\">\n" + WebSocketClientScript + "\n</script>"
+}
 
 // injectWebSocketClient injects the WebSocket client script into HTML responses
 func injectWebSocketClient(next http.Handler, enabled bool) http.Handler {
@@ -106,7 +76,7 @@ func injectWebSocketClient(next http.Handler, enabled bool) http.Handler {
 
 		// Inject script before </head> or at start of <body>
 		html := string(bodyBytes)
-		injected := injectScript(html, webSocketClientScript)
+		injected := injectScript(html, webSocketClientScript())
 
 		// Copy headers
 		for k, v := range rec.header {

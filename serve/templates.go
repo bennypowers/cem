@@ -25,5 +25,8 @@ import (
 //go:embed templates/default-index.html
 var defaultIndexTemplate string
 
+//go:embed templates/websocket-client.js
+var WebSocketClientScript string
+
 // DefaultIndexTemplate is the parsed template for the default index page
 var DefaultIndexTemplate = template.Must(template.New("default-index").Parse(defaultIndexTemplate))
