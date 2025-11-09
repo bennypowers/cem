@@ -97,7 +97,7 @@ func injectWebSocketClient(next http.Handler, enabled bool) http.Handler {
 				}
 			}
 			w.WriteHeader(rec.statusCode)
-			w.Write(bodyBytes)
+			_, _ = w.Write(bodyBytes)
 			return
 		}
 
@@ -120,7 +120,7 @@ func injectWebSocketClient(next http.Handler, enabled bool) http.Handler {
 		}
 
 		w.WriteHeader(rec.statusCode)
-		w.Write([]byte(injected))
+		_, _ = w.Write([]byte(injected))
 	})
 }
 

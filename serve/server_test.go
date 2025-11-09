@@ -51,7 +51,7 @@ func TestReloadMessageFormat(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// Create reload message
 	msgBytes, err := server.CreateReloadMessage([]string{"test.ts", "foo.ts"}, "file-change")
@@ -96,7 +96,7 @@ func TestServerCreation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	if server.Port() != 8001 {
 		t.Errorf("Expected port 8001, got %d", server.Port())
@@ -114,7 +114,7 @@ func TestServerConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server with config: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	if server.Port() != 8002 {
 		t.Errorf("Expected port 8002, got %d", server.Port())
@@ -162,7 +162,7 @@ func TestWebSocketManager(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	wsManager := server.WebSocketManager()
 	if wsManager == nil {
@@ -181,7 +181,7 @@ func TestFileWatcherSetup(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	tmpDir := t.TempDir()
 	err = server.SetWatchDir(tmpDir)
@@ -201,7 +201,7 @@ func TestManifestAccessors(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	testManifest := []byte(`{"schemaVersion":"1.0.0","modules":[]}`)
 	err = server.SetManifest(testManifest)
@@ -225,7 +225,7 @@ func TestDebounceDuration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	duration := server.GetDebounceDuration()
 	expected := "150ms"
@@ -246,7 +246,7 @@ func TestConfigReloadDisabled(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// WebSocket manager should be nil when reload disabled
 	wsManager := server.WebSocketManager()
@@ -261,7 +261,7 @@ func TestCORSHeaders(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// Server should have CORS middleware configured
 	// This is tested more thoroughly in e2e tests
@@ -276,7 +276,7 @@ func TestLogging(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	logger := server.Logger()
 	if logger == nil {
@@ -290,7 +290,7 @@ func TestBroadcastReload(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// Should accept files and reason
 	err = server.BroadcastReload([]string{"test.ts"}, "file-change")
@@ -305,7 +305,7 @@ func TestManifestRegenerationTrigger(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	tmpDir := t.TempDir()
 	err = server.SetWatchDir(tmpDir)
@@ -377,7 +377,7 @@ export class TestElement extends HTMLElement {}
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	err = server.SetWatchDir(tmpDir)
 	if err != nil {

@@ -104,7 +104,7 @@ func (s *Server) Start() error {
 		}
 
 		if err := fw.Watch(s.watchDir); err != nil {
-			fw.Close()
+			_ = fw.Close()
 			return fmt.Errorf("failed to watch directory: %w", err)
 		}
 
@@ -145,7 +145,7 @@ func (s *Server) Close() error {
 	}
 
 	if s.watcher != nil {
-		s.watcher.Close()
+		_ = s.watcher.Close()
 	}
 
 	if s.generateSession != nil {
@@ -407,13 +407,13 @@ func (s *Server) serveManifest(w http.ResponseWriter, r *http.Request) {
 	manifest := s.manifest
 	s.mu.RUnlock()
 
-	if manifest == nil || len(manifest) == 0 {
+	if len(manifest) == 0 {
 		http.Error(w, "Manifest not available", http.StatusNotFound)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(manifest)
+	_, _ = w.Write(manifest)
 }
 
 // serveLogs serves the plain text logs for the debug console
@@ -422,10 +422,10 @@ func (s *Server) serveLogs(w http.ResponseWriter, r *http.Request) {
 	if logGetter, ok := s.logger.(interface{ GetLogs() []string }); ok {
 		logs := logGetter.GetLogs()
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(logs)
+		_ = json.NewEncoder(w).Encode(logs)
 	} else {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte("[]"))
+		_, _ = w.Write([]byte("[]"))
 	}
 }
 
@@ -615,7 +615,7 @@ func (s *Server) serveDefaultIndex(w http.ResponseWriter, r *http.Request) {
 </html>`, watchDir, manifestSize, wsConnections, elementsList)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write([]byte(html))
+	_, _ = w.Write([]byte(html))
 }
 
 // corsMiddleware adds CORS headers to responses

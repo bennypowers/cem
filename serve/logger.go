@@ -82,24 +82,6 @@ func (l *ptermLogger) SetWebSocketManager(wsManager WebSocketManager) {
 	l.wsManager = wsManager
 }
 
-// broadcastLogs sends current logs to all WebSocket clients
-func (l *ptermLogger) broadcastLogs() {
-	if l.wsManager == nil {
-		return
-	}
-
-	msg := LogMessage{
-		Type: "logs",
-		Logs: l.logs,
-	}
-
-	msgBytes, err := json.Marshal(msg)
-	if err != nil {
-		return
-	}
-
-	l.wsManager.Broadcast(msgBytes)
-}
 
 // render updates the live terminal display
 func (l *ptermLogger) render() {
@@ -129,7 +111,7 @@ func (l *ptermLogger) render() {
 // Stop stops the live rendering
 func (l *ptermLogger) Stop() {
 	if l.area != nil {
-		l.area.Stop()
+		_ = l.area.Stop()
 	}
 }
 
@@ -192,11 +174,12 @@ func (l *ptermLogger) log(level, color, msg string, args ...interface{}) {
 	} else {
 		l.mu.Unlock()
 		// Non-interactive: standard pterm output
-		if color == "info" {
+		switch color {
+		case "info":
 			pterm.Info.Println(formatted)
-		} else if color == "error" {
+		case "error":
 			pterm.Error.Println(formatted)
-		} else if color == "debug" {
+		case "debug":
 			pterm.Debug.Println(formatted)
 		}
 	}
@@ -208,7 +191,7 @@ func (l *ptermLogger) log(level, color, msg string, args ...interface{}) {
 			Logs: logsCopy,
 		}
 		if msgBytes, err := json.Marshal(msg); err == nil {
-			l.wsManager.Broadcast(msgBytes)
+			_ = l.wsManager.Broadcast(msgBytes)
 		}
 	}
 }
@@ -234,19 +217,4 @@ func (l *ptermLogger) Debug(msg string, args ...interface{}) {
 	if l.verbose {
 		l.log("DEBUG", "debug", msg, args...)
 	}
-}
-
-// basicLogger is a simple implementation for testing
-type basicLogger struct{}
-
-func (l *basicLogger) Info(msg string, args ...interface{}) {
-	fmt.Printf("[INFO] "+msg+"\n", args...)
-}
-
-func (l *basicLogger) Error(msg string, args ...interface{}) {
-	fmt.Printf("[ERROR] "+msg+"\n", args...)
-}
-
-func (l *basicLogger) Debug(msg string, args ...interface{}) {
-	fmt.Printf("[DEBUG] "+msg+"\n", args...)
 }
