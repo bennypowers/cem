@@ -24,6 +24,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -341,6 +342,19 @@ func (s *Server) Use(middleware func(http.Handler) http.Handler) error {
 	return nil
 }
 
+// resolveSourceFile checks if a .js file has a corresponding .ts source
+func (s *Server) resolveSourceFile(path string) string {
+	// If it's a .js file, check if .ts exists
+	if filepath.Ext(path) == ".js" {
+		tsPath := path[:len(path)-3] + ".ts"
+		fullTsPath := filepath.Join(s.watchDir, tsPath)
+		if _, err := os.Stat(fullTsPath); err == nil {
+			return tsPath
+		}
+	}
+	return path
+}
+
 // handleFileChanges listens for file change events and triggers reload
 func (s *Server) handleFileChanges() {
 	if s.watcher == nil {
@@ -354,7 +368,10 @@ func (s *Server) handleFileChanges() {
 				relPath = rel
 			}
 		}
-		s.logger.Info("File changed: %s", relPath)
+
+		// Resolve .js to .ts if source exists
+		displayPath := s.resolveSourceFile(relPath)
+		s.logger.Info("File changed: %s", displayPath)
 
 		// Regenerate manifest if a source file changed
 		ext := filepath.Ext(event.Path)
