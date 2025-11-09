@@ -118,11 +118,18 @@ func TransformTypeScript(source []byte, opts TransformOptions) (*TransformResult
 	}
 
 	// Transform using esbuild
+	// Set importHelpers: false to inline TypeScript helpers instead of importing from tslib
+	// This prevents issues with tslib module format mismatches in the browser
 	result := api.Transform(string(source), api.TransformOptions{
 		Loader:    loader,
 		Target:    target,
 		Format:    api.FormatESModule,
 		Sourcemap: sourcemap,
+		TsconfigRaw: `{
+			"compilerOptions": {
+				"importHelpers": false
+			}
+		}`,
 	})
 
 	// Check for errors
