@@ -29,19 +29,8 @@ import (
 // They should PASS in Phase 0 (verifying stubs return errors)
 // They will be updated in their respective phases to test actual functionality
 
-// TestImportMapStub_ReturnsNotImplemented verifies import map stub fails
-func TestImportMapStub_ReturnsNotImplemented(t *testing.T) {
-	_, err := serve.GenerateImportMap("package.json")
-	if err == nil {
-		t.Fatal("Expected GenerateImportMap to return error (not implemented)")
-	}
-	if !strings.Contains(err.Error(), "not implemented") {
-		t.Errorf("Expected 'not implemented' error, got: %v", err)
-	}
-	if !strings.Contains(err.Error(), "Phase 2") {
-		t.Errorf("Expected error to mention 'Phase 2', got: %v", err)
-	}
-}
+// TestImportMapStub_ReturnsNil is removed - Phase 2 tests are in importmap_test.go
+// This stub test is no longer needed as we're implementing Phase 2
 
 // TestTransformTypeScriptStub_ReturnsNotImplemented verifies TypeScript transform stub fails
 func TestTransformTypeScriptStub_ReturnsNotImplemented(t *testing.T) {

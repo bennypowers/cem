@@ -151,7 +151,7 @@ feat/dev-server (staging)
   - Details: [05-AUTORELOAD-HMR.md](./05-AUTORELOAD-HMR.md)
   - **Additions**: Interactive pterm UI with colored logs, persistent status line, WebSocket log broadcasting, default index.html with debug console
 
-- [ ] **Phase 2: Import Maps**
+- [x] **Phase 2: Import Maps** ✅
   - Goal: Auto-generate import maps from package.json with workspace/monorepo support
   - Prerequisites: Phase 1 (HTTP server)
   - Provides: Import map JSON for HTML injection

@@ -132,19 +132,19 @@ Priority (highest to lowest):
 
 ## Acceptance Criteria
 
-- [ ] Import map auto-generated from package.json dependencies
-- [ ] Import map includes workspace packages (monorepo support)
-- [ ] package.json `exports` field resolved (prioritize `import` condition)
-- [ ] package.json `main` field used as fallback when `exports` missing
-- [ ] Subpath patterns in `exports` handled correctly
-- [ ] User override file (import-map.json) merges with auto-generated map
-- [ ] User overrides win in merge conflicts (deep merge algorithm)
-- [ ] Import map injected into HTML `<head>` as `<script type="importmap">`
-- [ ] Workspace packages resolve to local paths (not /node_modules)
-- [ ] Workspace packages prioritized over node_modules
-- [ ] Missing node_modules dependencies logged as warnings
-- [ ] Packages with no `exports` or `main` field logged as warnings
-- [ ] Only bare specifiers processed (relative, absolute URLs, data URLs ignored)
-- [ ] Config priority enforced: CLI > file > auto-generated
-- [ ] Demos containing import maps fail with helpful error message
-- [ ] Tests cover exports resolution, workspace support, merge algorithm
+- [x] Import map auto-generated from package.json dependencies
+- [x] Import map includes workspace packages (monorepo support)
+- [x] package.json `exports` field resolved (prioritize `import` condition)
+- [x] package.json `main` field used as fallback when `exports` missing
+- [x] Subpath patterns in `exports` handled correctly
+- [x] User override file (import-map.json) merges with auto-generated map
+- [x] User overrides win in merge conflicts (deep merge algorithm)
+- [x] Import map injected into HTML `<head>` as `<script type="importmap">` (default index)
+- [x] Workspace packages resolve to local paths (not /node_modules)
+- [x] Workspace packages prioritized over node_modules
+- [x] Missing node_modules dependencies logged as warnings
+- [x] Packages with no `exports` or `main` field logged as warnings
+- [x] Only bare specifiers processed (relative, absolute URLs, data URLs ignored)
+- [x] Config priority enforced: CLI > file > auto-generated
+- [ ] Demos containing import maps fail with helpful error message (Phase 3 - demo rendering)
+- [x] Tests cover exports resolution, workspace support, merge algorithm

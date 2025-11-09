@@ -95,6 +95,12 @@ func (wm *websocketManager) Broadcast(message []byte) error {
 	return nil
 }
 
+// BroadcastShutdown sends a shutdown notification to all clients before closing
+func (wm *websocketManager) BroadcastShutdown() error {
+	shutdownMsg := []byte(`{"type":"shutdown","reason":"server-shutdown"}`)
+	return wm.Broadcast(shutdownMsg)
+}
+
 // HandleConnection handles a new WebSocket connection
 func (wm *websocketManager) HandleConnection(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
