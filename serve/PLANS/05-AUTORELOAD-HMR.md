@@ -1,5 +1,11 @@
 ## Auto-Reload and HMR
 
+## TDD First Steps
+
+1. Remove "not implemented" guard tests from existing tests for this phase
+2. Write comprehensive tests for real functionality (will fail - true red phase)
+3. Implement to make tests pass
+
 ### Auto-Reload
 - Watch source files (same as generate watch mode)
 - On change:

@@ -1,5 +1,11 @@
 ## Build Transformations
 
+## TDD First Steps
+
+1. Remove "not implemented" guard tests from existing tests for this phase
+2. Write comprehensive tests for real functionality (will fail - true red phase)
+3. Implement to make tests pass
+
 ### TypeScript (esbuild Go API)
 
 Single file transforms without type checking (rely on tsserver)
