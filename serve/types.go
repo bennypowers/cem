@@ -53,6 +53,7 @@ type Logger interface {
 type WebSocketManager interface {
 	ConnectionCount() int
 	Broadcast(message []byte) error
+	BroadcastShutdown() error
 	HandleConnection(w http.ResponseWriter, r *http.Request)
 	SetLogger(logger Logger)
 }

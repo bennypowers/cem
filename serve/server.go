@@ -151,6 +151,15 @@ func (s *Server) Close() error {
 		return nil
 	}
 
+	// Send shutdown notification to connected clients before shutting down
+	if s.wsManager != nil {
+		if err := s.wsManager.BroadcastShutdown(); err != nil {
+			s.logger.Error("Failed to broadcast shutdown notification: %v", err)
+		}
+		// Give clients a moment to receive the shutdown message
+		time.Sleep(100 * time.Millisecond)
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -435,6 +444,9 @@ func (s *Server) setupMiddleware() {
 	// Logs endpoint for debug console
 	mux.HandleFunc("/__cem-logs", s.serveLogs)
 
+	// Internal JavaScript modules
+	mux.HandleFunc("/__cem/", s.serveInternalModules)
+
 	// Static file server for all other routes
 	mux.HandleFunc("/", s.serveStaticFiles)
 
@@ -465,6 +477,26 @@ func (s *Server) setupMiddleware() {
 	handler = loggingMiddleware(s.logger)(handler)
 
 	s.handler = handler
+}
+
+// serveInternalModules serves embedded JavaScript modules from embed.FS
+func (s *Server) serveInternalModules(w http.ResponseWriter, r *http.Request) {
+	// Strip /__cem/ prefix to get the file path within the embedded FS
+	// Request: /__cem/foo.js -> templates/js/foo.js in embed.FS
+	path := strings.TrimPrefix(r.URL.Path, "/__cem/")
+	path = "templates/js/" + path
+
+	data, err := internalModules.ReadFile(path)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache")
+	if _, err := w.Write(data); err != nil {
+		s.logger.Error("Failed to write JavaScript module response: %v", err)
+	}
 }
 
 // serveManifest serves the custom elements manifest

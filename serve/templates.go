@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package serve
 
 import (
-	_ "embed"
+	"embed"
 	"html/template"
 )
 
@@ -27,6 +27,9 @@ var defaultIndexTemplate string
 
 //go:embed templates/websocket-client.js
 var WebSocketClientScript string
+
+//go:embed templates/js/*.js
+var internalModules embed.FS
 
 // DefaultIndexTemplate is the parsed template for the default index page
 var DefaultIndexTemplate = template.Must(template.New("default-index").Parse(defaultIndexTemplate))
