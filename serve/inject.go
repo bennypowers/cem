@@ -87,7 +87,7 @@ func injectWebSocketClient(next http.Handler, enabled bool) http.Handler {
 		// Check if this is an HTML response
 		contentType := rec.header.Get("Content-Type")
 		isHTML := strings.Contains(contentType, "text/html") ||
-		         (contentType == "" && len(bodyBytes) > 0 && strings.Contains(string(bodyBytes[:min(100, len(bodyBytes))]), "<html"))
+			(contentType == "" && len(bodyBytes) > 0 && strings.Contains(string(bodyBytes[:min(100, len(bodyBytes))]), "<html"))
 
 		if !isHTML {
 			// Not HTML, write original response
@@ -97,7 +97,9 @@ func injectWebSocketClient(next http.Handler, enabled bool) http.Handler {
 				}
 			}
 			w.WriteHeader(rec.statusCode)
-			_, _ = w.Write(bodyBytes)
+			if _, err := w.Write(bodyBytes); err != nil {
+				// Client disconnected or write error - can't respond
+			}
 			return
 		}
 
@@ -120,7 +122,9 @@ func injectWebSocketClient(next http.Handler, enabled bool) http.Handler {
 		}
 
 		w.WriteHeader(rec.statusCode)
-		_, _ = w.Write([]byte(injected))
+		if _, err := w.Write([]byte(injected)); err != nil {
+			// Client disconnected or write error - can't respond
+		}
 	})
 }
 

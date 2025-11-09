@@ -413,7 +413,9 @@ func (s *Server) serveManifest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write(manifest)
+	if _, err := w.Write(manifest); err != nil {
+		s.logger.Error("Failed to write manifest response: %v", err)
+	}
 }
 
 // serveLogs serves the plain text logs for the debug console
@@ -422,10 +424,14 @@ func (s *Server) serveLogs(w http.ResponseWriter, r *http.Request) {
 	if logGetter, ok := s.logger.(interface{ GetLogs() []string }); ok {
 		logs := logGetter.GetLogs()
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(logs)
+		if err := json.NewEncoder(w).Encode(logs); err != nil {
+			s.logger.Error("Failed to encode logs response: %v", err)
+		}
 	} else {
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte("[]"))
+		if _, err := w.Write([]byte("[]")); err != nil {
+			s.logger.Error("Failed to write empty logs response: %v", err)
+		}
 	}
 }
 
@@ -615,7 +621,9 @@ func (s *Server) serveDefaultIndex(w http.ResponseWriter, r *http.Request) {
 </html>`, watchDir, manifestSize, wsConnections, elementsList)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_, _ = w.Write([]byte(html))
+	if _, err := w.Write([]byte(html)); err != nil {
+		s.logger.Error("Failed to write default index response: %v", err)
+	}
 }
 
 // corsMiddleware adds CORS headers to responses
