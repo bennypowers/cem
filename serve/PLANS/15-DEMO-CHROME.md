@@ -1,5 +1,9 @@
 ## Demo Chrome
 
+## TDD First Steps
+
+Phase 3 has no stubs in existing tests. Follow standard TDD: write tests first, implement to make them pass.
+
 ### Server Side
 
 ```html

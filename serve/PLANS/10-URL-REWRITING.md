@@ -1,5 +1,8 @@
 ## Demo Rendering & URL Rewriting
 
+## TDD First Steps
+
+Phase 3 has no stubs in existing tests. Follow standard TDD: write tests first, implement to make them pass.
 
 ### Demo Discovery (Reuse Existing)
 - Use `generate/demodiscovery` package as-is

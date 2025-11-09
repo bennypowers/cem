@@ -1,5 +1,11 @@
 ## Import Maps
 
+## TDD First Steps
+
+1. Remove "not implemented" guard tests from existing tests for this phase
+2. Write comprehensive tests for real functionality (will fail - true red phase)
+3. Implement to make tests pass
+
 ### Auto-Generation Strategy
 ```json
 {

@@ -1,5 +1,9 @@
 # Basic Knobs
 
+## TDD First Steps
+
+Phase 5 has no stubs in existing tests. Follow standard TDD: write tests first, implement to make them pass.
+
 Knobs provide interactive controls for manipulating custom element attributes, properties, and CSS custom properties during development.
 
 **Scope**: This document covers basic knobs for **single elements**. For multiple elements and complex compositions, see `51-KNOBS-ADVANCED.md`. For custom templates, see `52-KNOBS-CUSTOM.md`.
