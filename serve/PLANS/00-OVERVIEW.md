@@ -136,19 +136,20 @@ feat/dev-server (staging)
 
 ## Implementation Plan
 
-- [ ] **Phase 0: Test Infrastructure**
+- [x] **Phase 0: Test Infrastructure** ✅
   - Goal: Establish fixture-based testing patterns and benchmarks for all subsequent phases
   - Prerequisites: None
   - Provides: Test helpers, mock manifest, WebSocket test client, transform cache test doubles, benchmarks
   - Details: See acceptance criteria at end of this document
 
-- [ ] **Phase 1: Core Server**
+- [x] **Phase 1: Core Server** ✅
   - Goal: Basic HTTP server with live reload and middleware pipeline foundation
   - Prerequisites: Phase 0
-  - Provides: HTTP server, middleware pipeline, WebSocket endpoint
+  - Provides: HTTP server, middleware pipeline, WebSocket endpoint, manifest generation, file watching
   - Consumes: `generate/session.go` (manifest generation)
   - Affects: All subsequent phases
   - Details: [05-AUTORELOAD-HMR.md](./05-AUTORELOAD-HMR.md)
+  - **Additions**: Interactive pterm UI with colored logs, persistent status line, WebSocket log broadcasting, default index.html with debug console
 
 - [ ] **Phase 2: Import Maps**
   - Goal: Auto-generate import maps from package.json with workspace/monorepo support

@@ -1,0 +1,5 @@
+{
+  "type": "reload",
+  "reason": "file-change",
+  "files": ["test.ts", "foo.ts"]
+}

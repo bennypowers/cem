@@ -29,20 +29,6 @@ import (
 // They should PASS in Phase 0 (verifying stubs return errors)
 // They will be updated in their respective phases to test actual functionality
 
-// TestServerStub_ReturnsNotImplemented verifies server stubs fail appropriately
-func TestServerStub_ReturnsNotImplemented(t *testing.T) {
-	_, err := serve.NewServer(8000)
-	if err == nil {
-		t.Fatal("Expected NewServer to return error (not implemented)")
-	}
-	if !strings.Contains(err.Error(), "not implemented") {
-		t.Errorf("Expected 'not implemented' error, got: %v", err)
-	}
-	if !strings.Contains(err.Error(), "Phase 1") {
-		t.Errorf("Expected error to mention 'Phase 1', got: %v", err)
-	}
-}
-
 // TestImportMapStub_ReturnsNotImplemented verifies import map stub fails
 func TestImportMapStub_ReturnsNotImplemented(t *testing.T) {
 	_, err := serve.GenerateImportMap("package.json")

@@ -18,36 +18,639 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package serve
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"path/filepath"
+	"sync"
+	"time"
+
+	G "bennypowers.dev/cem/generate"
+	M "bennypowers.dev/cem/manifest"
+	W "bennypowers.dev/cem/workspace"
 )
 
 // Server represents the development server
 type Server struct {
-	Port    int
-	Handler http.Handler
+	port            int
+	config          Config
+	server          *http.Server
+	handler         http.Handler
+	logger          Logger
+	wsManager       WebSocketManager
+	watcher         FileWatcher
+	watchDir        string
+	manifest        []byte
+	running         bool
+	mu              sync.RWMutex
+	generateSession *G.GenerateSession
 }
 
-// NewServer creates a new development server
-// TODO: Implement in Phase 1
+// NewServer creates a new server with the given port
 func NewServer(port int) (*Server, error) {
-	return nil, fmt.Errorf("not implemented: Phase 1 - Core Server")
+	config := Config{
+		Port:   port,
+		Reload: true,
+	}
+	return NewServerWithConfig(config)
 }
 
-// Start starts the development server
-// TODO: Implement in Phase 1
+// NewServerWithConfig creates a new server with the given config
+func NewServerWithConfig(config Config) (*Server, error) {
+	s := &Server{
+		port:   config.Port,
+		config: config,
+		logger: &defaultLogger{},
+	}
+
+	// Create WebSocket manager if reload is enabled
+	if config.Reload {
+		s.wsManager = newWebSocketManager()
+		s.wsManager.SetLogger(s.logger)
+	}
+
+	// Set up handler with middleware pipeline
+	s.setupMiddleware()
+
+	return s, nil
+}
+
+// Port returns the server's port
+func (s *Server) Port() int {
+	return s.port
+}
+
+// Start starts the HTTP server
 func (s *Server) Start() error {
-	return fmt.Errorf("not implemented: Phase 1 - Core Server")
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.running {
+		return fmt.Errorf("server already running")
+	}
+
+	s.server = &http.Server{
+		Addr:    fmt.Sprintf(":%d", s.port),
+		Handler: s.handler,
+	}
+
+	// Start file watcher if watch directory is set
+	if s.watchDir != "" {
+		fw, err := newFileWatcher(s.GetDebounceDuration(), s.logger)
+		if err != nil {
+			return fmt.Errorf("failed to create file watcher: %w", err)
+		}
+
+		if err := fw.Watch(s.watchDir); err != nil {
+			fw.Close()
+			return fmt.Errorf("failed to watch directory: %w", err)
+		}
+
+		s.watcher = fw
+
+		// Start file change handler
+		go s.handleFileChanges()
+	}
+
+	// Start server in goroutine
+	go func() {
+		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			s.logger.Error("Server error: %v", err)
+		}
+	}()
+
+	s.running = true
+	s.logger.Info("Server started on port %d", s.port)
+	return nil
 }
 
-// Stop stops the development server
-// TODO: Implement in Phase 1
-func (s *Server) Stop() error {
-	return fmt.Errorf("not implemented: Phase 1 - Core Server")
+// Close stops the server gracefully
+func (s *Server) Close() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if !s.running {
+		return nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if s.server != nil {
+		if err := s.server.Shutdown(ctx); err != nil {
+			return err
+		}
+	}
+
+	if s.watcher != nil {
+		s.watcher.Close()
+	}
+
+	if s.generateSession != nil {
+		s.generateSession.Close()
+	}
+
+	s.running = false
+	s.logger.Info("Server stopped")
+	return nil
 }
 
-// WebSocketEndpoint handles WebSocket connections for live reload
-// TODO: Implement in Phase 1
-func (s *Server) WebSocketEndpoint(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented: Phase 1 - Core Server", http.StatusNotImplemented)
+// IsRunning returns whether the server is currently running
+func (s *Server) IsRunning() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.running
+}
+
+// WebSocketManager returns the WebSocket manager (nil if reload disabled)
+func (s *Server) WebSocketManager() WebSocketManager {
+	return s.wsManager
+}
+
+// SetWatchDir sets the directory to watch for file changes
+func (s *Server) SetWatchDir(dir string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.watchDir = dir
+	return nil
+}
+
+// GetWatchDir returns the current watch directory
+func (s *Server) GetWatchDir() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.watchDir
+}
+
+// SetManifest sets the current manifest
+func (s *Server) SetManifest(manifest []byte) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.manifest = manifest
+	return nil
+}
+
+// GetManifest returns the current manifest
+func (s *Server) GetManifest() ([]byte, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.manifest, nil
+}
+
+// GetDebounceDuration returns the debounce duration (150ms per spec)
+func (s *Server) GetDebounceDuration() time.Duration {
+	return 150 * time.Millisecond
+}
+
+// Handler returns the HTTP handler
+func (s *Server) Handler() http.Handler {
+	return s.handler
+}
+
+// Logger returns the server logger
+func (s *Server) Logger() Logger {
+	return s.logger
+}
+
+// SetLogger sets the server's logger
+func (s *Server) SetLogger(logger Logger) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.logger = logger
+	if s.wsManager != nil {
+		s.wsManager.SetLogger(logger)
+		// Set WebSocket manager on logger for broadcasting logs
+		if wsSetter, ok := logger.(interface{ SetWebSocketManager(WebSocketManager) }); ok {
+			wsSetter.SetWebSocketManager(s.wsManager)
+		}
+	}
+	// Rebuild middleware pipeline with new logger
+	s.setupMiddleware()
+}
+
+// CreateReloadMessage creates a reload message JSON
+func (s *Server) CreateReloadMessage(files []string, reason string) ([]byte, error) {
+	msg := ReloadMessage{
+		Type:   "reload",
+		Reason: reason,
+		Files:  files,
+	}
+	return json.Marshal(msg)
+}
+
+// BroadcastReload broadcasts a reload event to all WebSocket clients
+func (s *Server) BroadcastReload(files []string, reason string) error {
+	if s.wsManager == nil {
+		return nil // Reload disabled
+	}
+
+	msgBytes, err := s.CreateReloadMessage(files, reason)
+	if err != nil {
+		return err
+	}
+
+	s.logger.Debug("Broadcasting reload: reason=%s, files=%v, clients=%d",
+		reason, files, s.wsManager.ConnectionCount())
+
+	return s.wsManager.Broadcast(msgBytes)
+}
+
+// RegenerateManifest triggers manifest regeneration
+func (s *Server) RegenerateManifest() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.watchDir == "" {
+		return fmt.Errorf("no watch directory set")
+	}
+
+	// Close old session if it exists
+	if s.generateSession != nil {
+		s.generateSession.Close()
+		s.generateSession = nil
+	}
+
+	// Create fresh workspace context and session for live reload
+	// This ensures we always read the latest file contents
+	workspace := W.NewFileSystemWorkspaceContext(s.watchDir)
+	if err := workspace.Init(); err != nil {
+		return fmt.Errorf("initialize workspace: %w", err)
+	}
+
+	session, err := G.NewGenerateSession(workspace)
+	if err != nil {
+		return fmt.Errorf("create generate session: %w", err)
+	}
+	s.generateSession = session
+
+	// Generate manifest
+	ctx := context.Background()
+	pkg, err := s.generateSession.GenerateFullManifest(ctx)
+	if err != nil {
+		return fmt.Errorf("generate manifest: %w", err)
+	}
+
+	// Marshal to JSON
+	manifestBytes, err := json.MarshalIndent(pkg, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshal manifest: %w", err)
+	}
+
+	s.manifest = manifestBytes
+	s.logger.Info("Manifest regenerated (%d bytes)", len(manifestBytes))
+	return nil
+}
+
+// Use registers a middleware function
+func (s *Server) Use(middleware func(http.Handler) http.Handler) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Apply middleware to existing handler
+	if s.handler != nil {
+		s.handler = middleware(s.handler)
+	}
+
+	return nil
+}
+
+// handleFileChanges listens for file change events and triggers reload
+func (s *Server) handleFileChanges() {
+	if s.watcher == nil {
+		return
+	}
+
+	for event := range s.watcher.Events() {
+		relPath := event.Path
+		if s.watchDir != "" {
+			if rel, err := filepath.Rel(s.watchDir, event.Path); err == nil {
+				relPath = rel
+			}
+		}
+		s.logger.Info("File changed: %s", relPath)
+
+		// Regenerate manifest if a source file changed
+		ext := filepath.Ext(event.Path)
+		if ext == ".ts" || ext == ".js" {
+			s.logger.Debug("Regenerating manifest for %s file change...", ext)
+			err := s.RegenerateManifest()
+			if err != nil {
+				s.logger.Error("Failed to regenerate manifest: %v", err)
+				// Continue anyway - we still want to reload the page
+			} else {
+				s.logger.Debug("Manifest regenerated successfully")
+			}
+		}
+
+		// Broadcast reload to all WebSocket clients
+		files := []string{filepath.Base(event.Path)}
+		err := s.BroadcastReload(files, "file-change")
+		if err != nil {
+			s.logger.Error("Failed to broadcast reload: %v", err)
+		}
+	}
+}
+
+// setupMiddleware configures the middleware pipeline
+func (s *Server) setupMiddleware() {
+	// Create a mux for routing
+	mux := http.NewServeMux()
+
+	// WebSocket endpoint for live reload
+	if s.wsManager != nil {
+		mux.HandleFunc("/__cem-reload", s.wsManager.HandleConnection)
+	}
+
+	// Manifest endpoint
+	mux.HandleFunc("/custom-elements.json", s.serveManifest)
+
+	// Logs endpoint for debug console
+	mux.HandleFunc("/__cem-logs", s.serveLogs)
+
+	// Static file server for all other routes
+	mux.HandleFunc("/", s.serveStaticFiles)
+
+	// Apply middleware in reverse order (last to first)
+	var handler http.Handler = mux
+
+	// 8. WebSocket client injection (into HTML)
+	handler = injectWebSocketClient(handler, s.config.Reload)
+
+	// 7. Static fallback (already in mux)
+
+	// 6. Demo rendering (Phase 3)
+	// TODO: Add demo rendering middleware
+
+	// 5. CSS transform (Phase 4)
+	// TODO: Add CSS transform middleware
+
+	// 4. TypeScript transform (Phase 4)
+	// TODO: Add TypeScript transform middleware
+
+	// 3. Import map injection (Phase 2)
+	// TODO: Add import map injection middleware
+
+	// 2. CORS headers
+	handler = corsMiddleware(handler)
+
+	// 1. Logging
+	handler = loggingMiddleware(s.logger)(handler)
+
+	s.handler = handler
+}
+
+// serveManifest serves the custom elements manifest
+func (s *Server) serveManifest(w http.ResponseWriter, r *http.Request) {
+	s.mu.RLock()
+	manifest := s.manifest
+	s.mu.RUnlock()
+
+	if manifest == nil || len(manifest) == 0 {
+		http.Error(w, "Manifest not available", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(manifest)
+}
+
+// serveLogs serves the plain text logs for the debug console
+func (s *Server) serveLogs(w http.ResponseWriter, r *http.Request) {
+	// Get logs from logger if it supports GetLogs()
+	if logGetter, ok := s.logger.(interface{ GetLogs() []string }); ok {
+		logs := logGetter.GetLogs()
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(logs)
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte("[]"))
+	}
+}
+
+// serveStaticFiles serves static files from the watch directory
+func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
+	s.mu.RLock()
+	watchDir := s.watchDir
+	s.mu.RUnlock()
+
+	if watchDir == "" {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Check if requesting root and no index.html exists
+	if r.URL.Path == "/" {
+		if _, err := http.Dir(watchDir).Open("index.html"); err != nil {
+			// No index.html, serve default page
+			s.serveDefaultIndex(w, r)
+			return
+		}
+	}
+
+	// Serve files from watch directory
+	fileServer := http.FileServer(http.Dir(watchDir))
+	fileServer.ServeHTTP(w, r)
+}
+
+// serveDefaultIndex serves a default index page with debug info
+func (s *Server) serveDefaultIndex(w http.ResponseWriter, r *http.Request) {
+	s.mu.RLock()
+	watchDir := s.watchDir
+	manifestSize := len(s.manifest)
+	manifestBytes := s.manifest
+	wsConnections := 0
+	if s.wsManager != nil {
+		wsConnections = s.wsManager.ConnectionCount()
+	}
+	s.mu.RUnlock()
+
+	// Parse manifest to extract custom elements using manifest package
+	elementsList := ""
+	if len(manifestBytes) > 0 {
+		var pkg M.Package
+		if err := json.Unmarshal(manifestBytes, &pkg); err == nil {
+			tagNames := pkg.GetAllTagNames()
+			if len(tagNames) > 0 {
+				for _, tagName := range tagNames {
+					elementsList += fmt.Sprintf("<li><code>&lt;%s&gt;</code></li>", tagName)
+				}
+			} else {
+				elementsList = "<li><em>No custom elements found</em></li>"
+			}
+		} else {
+			elementsList = "<li><em>Error parsing manifest</em></li>"
+		}
+	} else {
+		elementsList = "<li><em>Manifest not generated yet</em></li>"
+	}
+
+	html := fmt.Sprintf(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CEM Dev Server</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
+      line-height: 1.6;
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+    h1 { color: #60a5fa; }
+    .info {
+      background: #1e293b;
+      border-left: 4px solid #60a5fa;
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 4px;
+    }
+    .debug {
+      background: #1e293b;
+      color: #10b981;
+      padding: 1rem;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+    .status {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      background: #10b981;
+      color: #0f172a;
+    }
+    code {
+      background: #334155;
+      padding: 2px 6px;
+      border-radius: 3px;
+      color: #fbbf24;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    ul li {
+      padding: 0.5rem;
+      background: #1e293b;
+      margin: 0.25rem 0;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🚀 CEM Development Server</h1>
+
+  <div class="info">
+    <p><strong>Status:</strong> <span class="status">Running</span></p>
+    <p><strong>Watch Directory:</strong> <code>%s</code></p>
+    <p><strong>Manifest:</strong> %d bytes</p>
+    <p><strong>WebSocket Connections:</strong> %d</p>
+  </div>
+
+  <details>
+    <summary><h2 style="display: inline; cursor: pointer;">Custom Elements</h2></summary>
+    <ul>%s</ul>
+  </details>
+
+  <h2>Debug Console</h2>
+  <div class="debug" id="messages">Waiting for WebSocket messages...</div>
+
+  <script>
+    const messagesDiv = document.getElementById('messages');
+
+    // Fetch initial logs
+    async function loadInitialLogs() {
+      try {
+        const response = await fetch('/__cem-logs');
+        const logs = await response.json();
+        messagesDiv.textContent = logs.length > 0 ? logs.join('\n') : 'No logs yet...';
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      } catch (e) {
+        console.error('Failed to fetch logs:', e);
+      }
+    }
+
+    // Load initial logs
+    loadInitialLogs();
+
+    // Listen for log updates via WebSocket
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        if (window.__cemReloadSocket) {
+          console.log('[cem-serve] WebSocket client connected');
+
+          // Store original onmessage handler
+          const originalOnMessage = window.__cemReloadSocket.onmessage;
+
+          // Handle both reload and log messages
+          window.__cemReloadSocket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+
+            if (data.type === 'logs') {
+              // Update logs display
+              messagesDiv.textContent = data.logs.length > 0 ? data.logs.join('\n') : 'No logs yet...';
+              messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            } else if (data.type === 'reload') {
+              // Call original handler for reload
+              if (originalOnMessage) {
+                originalOnMessage.call(this, event);
+              }
+            }
+          };
+        }
+      }, 100);
+    });
+  </script>
+</body>
+</html>`, watchDir, manifestSize, wsConnections, elementsList)
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write([]byte(html))
+}
+
+// corsMiddleware adds CORS headers to responses
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		next.ServeHTTP(w, r)
+	})
+}
+
+// loggingMiddleware logs all requests except internal endpoints
+func loggingMiddleware(logger Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Skip logging for internal polling endpoints
+			if r.URL.Path != "/__cem-logs" && r.URL.Path != "/__cem-reload" {
+				logger.Info("%s %s", r.Method, r.URL.Path)
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// defaultLogger is a simple logger implementation
+type defaultLogger struct{}
+
+func (l *defaultLogger) Info(msg string, args ...interface{}) {
+	log.Printf("[INFO] "+msg, args...)
+}
+
+func (l *defaultLogger) Error(msg string, args ...interface{}) {
+	log.Printf("[ERROR] "+msg, args...)
+}
+
+func (l *defaultLogger) Debug(msg string, args ...interface{}) {
+	log.Printf("[DEBUG] "+msg, args...)
 }
