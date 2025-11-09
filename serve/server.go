@@ -21,17 +21,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
 
 	G "bennypowers.dev/cem/generate"
+	V "bennypowers.dev/cem/internal/version"
 	M "bennypowers.dev/cem/manifest"
 	W "bennypowers.dev/cem/workspace"
 )
@@ -444,11 +446,14 @@ func (s *Server) setupMiddleware() {
 	// Logs endpoint for debug console
 	mux.HandleFunc("/__cem-logs", s.serveLogs)
 
+	// Debug info endpoint
+	mux.HandleFunc("/__cem-debug", s.serveDebugInfo)
+
 	// Internal JavaScript modules
 	mux.HandleFunc("/__cem/", s.serveInternalModules)
 
-	// Static file server for all other routes
-	mux.HandleFunc("/", s.serveStaticFiles)
+	// Main handler: try demo routing first, then fall back to static files
+	mux.HandleFunc("/", s.serveMainHandler)
 
 	// Apply middleware in reverse order (last to first)
 	var handler http.Handler = mux
@@ -533,6 +538,99 @@ func (s *Server) serveLogs(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// getServerVersion returns version info for debug display
+func getServerVersion() string {
+	return V.GetVersion()
+}
+
+// serveDebugInfo serves debug information for the debug overlay
+func (s *Server) serveDebugInfo(w http.ResponseWriter, r *http.Request) {
+	s.mu.RLock()
+	watchDir := s.watchDir
+	manifestBytes := s.manifest
+	s.mu.RUnlock()
+
+	// Generate import map as a raw object (not JSON string)
+	var importMapObj interface{}
+	if watchDir != "" {
+		importMap, err := GenerateImportMap(watchDir, nil)
+		if err != nil {
+			s.logger.Warning("Failed to generate import map for debug info: %v", err)
+		} else if importMap != nil && len(importMap.Imports) > 0 {
+			importMapObj = importMap
+		}
+	}
+
+	// Parse manifest to get demo info
+	var demos []map[string]interface{}
+	if len(manifestBytes) > 0 {
+		var pkg M.Package
+		if err := json.Unmarshal(manifestBytes, &pkg); err == nil {
+			for _, renderableDemo := range pkg.RenderableDemos() {
+				demoURL := renderableDemo.Demo.URL
+				// Extract local route from canonical URL (strip origin)
+				localRoute := demoURL
+				if parsed, err := url.Parse(demoURL); err == nil && parsed.Path != "" {
+					// Use just the path component for the local route
+					localRoute = parsed.Path
+				}
+
+				demos = append(demos, map[string]interface{}{
+					"tagName":      renderableDemo.CustomElementDeclaration.TagName,
+					"description":  renderableDemo.Demo.Description,
+					"canonicalURL": demoURL,
+					"localRoute":   localRoute,
+				})
+			}
+		}
+	}
+
+	debugInfo := map[string]interface{}{
+		"watchDir":     watchDir,
+		"manifestSize": fmt.Sprintf("%d bytes", len(manifestBytes)),
+		"version":      getServerVersion(),
+		"os":           fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH),
+		"demos":        demos,
+		"demoCount":    len(demos),
+		"importMap":    importMapObj,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(debugInfo); err != nil {
+		s.logger.Error("Failed to encode debug info response: %v", err)
+	}
+}
+
+// serveMainHandler handles all non-special routes: tries demo routing first, then falls back to static files
+func (s *Server) serveMainHandler(w http.ResponseWriter, r *http.Request) {
+	// Parse query parameters
+	queryParams := make(map[string]string)
+	for key, values := range r.URL.Query() {
+		if len(values) > 0 {
+			queryParams[key] = values[0]
+		}
+	}
+
+	// Try to serve as demo route
+	html, err := s.serveDemoRoutes(r.URL.Path, queryParams)
+	if err != nil {
+		// Check if it's a routing table error (e.g., duplicate routes) vs just not found
+		if strings.Contains(err.Error(), "duplicate demo route") {
+			s.logger.Error("Demo routing error: %v", err)
+			http.Error(w, "Internal Server Error: duplicate demo routes", http.StatusInternalServerError)
+			return
+		}
+		// Not a demo route - fall through to static files
+		s.serveStaticFiles(w, r)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if _, err := w.Write([]byte(html)); err != nil {
+		s.logger.Error("Failed to write demo response: %v", err)
+	}
+}
+
 // serveStaticFiles serves static files from the watch directory
 func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 	s.mu.RLock()
@@ -582,44 +680,19 @@ func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 	fileServer.ServeHTTP(w, r)
 }
 
-// serveDefaultIndex serves a default index page with debug info
+// serveDefaultIndex serves the element listing page
 func (s *Server) serveDefaultIndex(w http.ResponseWriter, r *http.Request) {
 	s.mu.RLock()
 	watchDir := s.watchDir
-	manifestSize := len(s.manifest)
 	manifestBytes := s.manifest
-	wsConnections := 0
-	if s.wsManager != nil {
-		wsConnections = s.wsManager.ConnectionCount()
-	}
 	s.mu.RUnlock()
-
-	// Parse manifest to extract custom elements using manifest package
-	elementsList := ""
-	if len(manifestBytes) > 0 {
-		var pkg M.Package
-		if err := json.Unmarshal(manifestBytes, &pkg); err == nil {
-			tagNames := pkg.GetAllTagNames()
-			if len(tagNames) > 0 {
-				for _, tagName := range tagNames {
-					elementsList += fmt.Sprintf("<li><code>&lt;%s&gt;</code></li>", tagName)
-				}
-			} else {
-				elementsList = "<li><em>No custom elements found</em></li>"
-			}
-		} else {
-			elementsList = "<li><em>Error parsing manifest</em></li>"
-		}
-	} else {
-		elementsList = "<li><em>Manifest not generated yet</em></li>"
-	}
 
 	// Generate import map for the watch directory
 	var importMapJSON string
 	if watchDir != "" {
 		importMap, err := GenerateImportMap(watchDir, nil)
 		if err != nil {
-			s.logger.Warning("Failed to generate import map for default index: %v", err)
+			s.logger.Warning("Failed to generate import map for listing: %v", err)
 		} else if importMap != nil && len(importMap.Imports) > 0 {
 			// Marshal import map to JSON with indentation
 			importMapBytes, err := json.MarshalIndent(importMap, "  ", "  ")
@@ -631,26 +704,17 @@ func (s *Server) serveDefaultIndex(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Prepare template data
-	data := struct {
-		WatchDir      string
-		ManifestSize  int
-		WSConnections int
-		ElementsList  template.HTML
-		ImportMap     template.HTML // Use template.HTML (not template.JS) - content is JSON in HTML context
-	}{
-		WatchDir:      watchDir,
-		ManifestSize:  manifestSize,
-		WSConnections: wsConnections,
-		ElementsList:  template.HTML(elementsList),
-		// template.HTML prevents HTML escaping while preserving JSON syntax
-		// This is correct for <script type="importmap"> which expects JSON in HTML context
-		ImportMap: template.HTML(importMapJSON),
+	// Render element listing using chrome template
+	html, err := renderElementListing(manifestBytes, importMapJSON)
+	if err != nil {
+		s.logger.Error("Failed to render element listing: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := DefaultIndexTemplate.Execute(w, data); err != nil {
-		s.logger.Error("Failed to execute default index template: %v", err)
+	if _, err := w.Write([]byte(html)); err != nil {
+		s.logger.Error("Failed to write listing response: %v", err)
 	}
 }
 

@@ -25,11 +25,14 @@ import (
 //go:embed templates/default-index.html
 var defaultIndexTemplate string
 
-//go:embed templates/websocket-client.js
-var WebSocketClientScript string
+//go:embed templates/demo-chrome.html
+var demoChromeTemplate string
 
 //go:embed templates/js/*.js
 var internalModules embed.FS
 
 // DefaultIndexTemplate is the parsed template for the default index page
 var DefaultIndexTemplate = template.Must(template.New("default-index").Parse(defaultIndexTemplate))
+
+// DemoChromeTemplate is the parsed template for demo chrome
+var DemoChromeTemplate = template.Must(template.New("demo-chrome").Parse(demoChromeTemplate))

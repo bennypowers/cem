@@ -22,8 +22,8 @@
               "name": "--cem-length-xl",
               "summary": "Base icon container size",
               "description": "DESIGN TOKEN description for XL length",
-              "syntax": "<length>",
-              "default": "24px"
+              "default": "24px",
+              "syntax": "\u003clength\u003e"
             }
           ],
           "customElement": true

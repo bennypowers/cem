@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/button/button.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "name": "MyButton",
+          "tagName": "my-button",
+          "demos": [
+            {
+              "description": "Basic",
+              "url": "./demo/basic.html"
+            },
+            {
+              "description": "Variants",
+              "url": "./demo/variants.html"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/card/card.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "name": "MyCard",
+          "tagName": "my-card",
+          "demos": [
+            {
+              "description": "Simple",
+              "url": "./demo/simple.html"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

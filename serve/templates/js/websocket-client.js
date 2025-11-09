@@ -6,6 +6,18 @@ import { CEMConnectionStatus } from '/__cem/connection-status.js';
 import { CEMErrorDialog } from '/__cem/error-dialog.js';
 import { CEMReconnectionContent } from '/__cem/reconnection-content.js';
 
+/**
+ * Event dispatched when server logs are received
+ */
+class CemLogsEvent extends Event {
+  logs;
+
+  constructor(logs) {
+    super('cem:logs', { bubbles: true, composed: true });
+    this.logs = logs;
+  }
+}
+
 class CEMReloadClient {
   constructor() {
     this.config = {
@@ -99,6 +111,9 @@ class CEMReloadClient {
       this.status.show('reconnecting', 'Server restarting...');
       this.dialog.show();
       this.content.updateRetryInfo(30, 30000);
+    } else if (data.type === 'logs') {
+      // Dispatch custom event for log updates
+      window.dispatchEvent(new CemLogsEvent(data.logs));
     }
   }
 
