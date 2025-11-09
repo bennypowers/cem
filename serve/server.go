@@ -614,7 +614,13 @@ func (s *Server) serveMainHandler(w http.ResponseWriter, r *http.Request) {
 	// Try to serve as demo route
 	html, err := s.serveDemoRoutes(r.URL.Path, queryParams)
 	if err != nil {
-		// Not a demo route or error - fall through to static files
+		// Check if it's a routing table error (e.g., duplicate routes) vs just not found
+		if strings.Contains(err.Error(), "duplicate demo route") {
+			s.logger.Error("Demo routing error: %v", err)
+			http.Error(w, "Internal Server Error: duplicate demo routes", http.StatusInternalServerError)
+			return
+		}
+		// Not a demo route - fall through to static files
 		s.serveStaticFiles(w, r)
 		return
 	}

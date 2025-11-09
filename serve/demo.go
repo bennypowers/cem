@@ -110,6 +110,16 @@ func (s *Server) buildDemoRoutingTable(manifestBytes []byte) (map[string]*DemoRo
 			filePath = strings.TrimPrefix(filePath, "/")
 		}
 
+		// Check for duplicate routes before assignment
+		if existing, exists := routes[localRoute]; exists {
+			return nil, fmt.Errorf("duplicate demo route %q: %s (tagName: %s) conflicts with existing %s (tagName: %s)",
+				localRoute,
+				filePath,
+				renderableDemo.CustomElementDeclaration.TagName,
+				existing.FilePath,
+				existing.TagName)
+		}
+
 		routes[localRoute] = &DemoRouteEntry{
 			LocalRoute: localRoute,
 			TagName:    renderableDemo.CustomElementDeclaration.TagName,

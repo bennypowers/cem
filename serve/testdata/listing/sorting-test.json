@@ -13,7 +13,7 @@
           "demos": [
             {
               "description": "Demo",
-              "url": "./demo.html"
+              "url": "./zebra-demo.html"
             }
           ]
         }
@@ -31,7 +31,7 @@
           "demos": [
             {
               "description": "Demo",
-              "url": "./demo.html"
+              "url": "./apple-demo.html"
             }
           ]
         }
@@ -49,7 +49,7 @@
           "demos": [
             {
               "description": "Demo",
-              "url": "./demo.html"
+              "url": "./mango-demo.html"
             }
           ]
         }
