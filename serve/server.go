@@ -321,6 +321,30 @@ func (s *Server) BroadcastReload(files []string, reason string) error {
 	return s.wsManager.Broadcast(msgBytes)
 }
 
+// BroadcastError broadcasts an error notification to all WebSocket clients
+func (s *Server) BroadcastError(title, message, file string) error {
+	if s.wsManager == nil {
+		return nil // WebSocket disabled
+	}
+
+	msg := ErrorMessage{
+		Type:    "error",
+		Title:   title,
+		Message: message,
+		File:    file,
+	}
+
+	msgBytes, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+
+	s.logger.Debug("Broadcasting error: title=%s, file=%s, clients=%d",
+		title, file, s.wsManager.ConnectionCount())
+
+	return s.wsManager.Broadcast(msgBytes)
+}
+
 // RegenerateManifest triggers manifest regeneration
 func (s *Server) RegenerateManifest() error {
 	s.mu.Lock()
@@ -675,19 +699,30 @@ func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Check if requesting .js file but .ts exists - transform TypeScript to JavaScript
+	// Transform TypeScript files to JavaScript
 	requestPath := r.URL.Path
-	if filepath.Ext(requestPath) == ".js" {
-		tsPath := requestPath[:len(requestPath)-3] + ".ts"
+	ext := filepath.Ext(requestPath)
+
+	// Handle both .js requests (with .ts source) and direct .ts requests
+	var tsPath string
+	if ext == ".js" {
+		// Check if .ts file exists for .js request
+		tsPath = requestPath[:len(requestPath)-3] + ".ts"
+	} else if ext == ".ts" {
+		// Direct .ts request
+		tsPath = requestPath
+	}
+
+	if tsPath != "" {
 		// Strip leading slash and normalize path separators before joining
-		tsPath = strings.TrimPrefix(tsPath, "/")
-		tsPath = filepath.FromSlash(tsPath)
-		fullTsPath := filepath.Join(watchDir, tsPath)
+		tsPathNorm := strings.TrimPrefix(tsPath, "/")
+		tsPathNorm = filepath.FromSlash(tsPathNorm)
+		fullTsPath := filepath.Join(watchDir, tsPathNorm)
 		if _, err := os.Stat(fullTsPath); err == nil {
 			// .ts file exists, transform and serve it
 			source, err := os.ReadFile(fullTsPath)
 			if err != nil {
-				s.logger.Error("Failed to read TypeScript file %s: %v", tsPath, err)
+				s.logger.Error("Failed to read TypeScript file %s: %v", tsPathNorm, err)
 				http.Error(w, "Failed to read file", http.StatusInternalServerError)
 				return
 			}
@@ -697,15 +732,29 @@ func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 			tsconfigRaw := s.tsconfigRaw
 			s.mu.RUnlock()
 
+			// Get configured target (defaults to ES2022 if not set)
+			target := s.config.Target
+			if target == "" {
+				target = ES2022
+			}
+
 			// Transform TypeScript to JavaScript
 			result, err := TransformTypeScript(source, TransformOptions{
 				Loader:      LoaderTS,
-				Target:      ES2020,
+				Target:      target,
 				Sourcemap:   SourceMapInline,
 				TsconfigRaw: tsconfigRaw,
 			})
 			if err != nil {
-				s.logger.Error("Failed to transform TypeScript file %s: %v", tsPath, err)
+				s.logger.Error("Failed to transform TypeScript file %s: %v", tsPathNorm, err)
+
+				// Broadcast error to browser overlay
+				s.BroadcastError(
+					"TypeScript Transform Error",
+					err.Error(),
+					tsPathNorm,
+				)
+
 				http.Error(w, fmt.Sprintf("Transform error: %v", err), http.StatusInternalServerError)
 				return
 			}
@@ -746,10 +795,8 @@ func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set correct MIME type for JavaScript files
+	// Set correct MIME type for JavaScript files (for plain .js files without .ts source)
 	if filepath.Ext(requestPath) == ".js" {
-		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
-	} else if filepath.Ext(requestPath) == ".ts" {
 		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
 	}
 

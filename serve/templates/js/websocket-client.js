@@ -5,6 +5,7 @@ import { ReconnectingWebSocket } from '/__cem/reconnecting-websocket.js';
 import { CEMConnectionStatus } from '/__cem/connection-status.js';
 import { CEMErrorDialog } from '/__cem/error-dialog.js';
 import { CEMReconnectionContent } from '/__cem/reconnection-content.js';
+import { CEMTransformErrorOverlay } from '/__cem/transform-error-overlay.js';
 
 /**
  * Event dispatched when server logs are received
@@ -31,13 +32,16 @@ class CEMReloadClient {
     this.status = null;
     this.dialog = null;
     this.content = null;
+    this.errorOverlay = null;
     this.ws = null;
+    this.hasConnected = false;
   }
 
   init() {
     // Create UI components
     this.createStatus();
     this.createDialog();
+    this.createErrorOverlay();
 
     // Create WebSocket client
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -90,20 +94,35 @@ class CEMReloadClient {
     document.body.appendChild(this.dialog);
   }
 
+  createErrorOverlay() {
+    this.errorOverlay = document.createElement('cem-transform-error-overlay');
+    document.body.appendChild(this.errorOverlay);
+  }
+
   handleOpen() {
     console.log('[cem-serve] WebSocket connected');
-    this.status.show('connected', 'Connected', {
-      fadeDelay: this.config.badgeFadeDelay
-    });
+
+    // Only show "connected" toast if this is a reconnection, not initial connection
+    if (this.hasConnected) {
+      this.status.show('connected', 'Connected', {
+        fadeDelay: this.config.badgeFadeDelay
+      });
+    }
+
+    this.hasConnected = true;
     this.dialog.hide();
   }
 
   handleMessage(event) {
     const data = JSON.parse(event.data);
-    console.log('[cem-serve] Received message:', data);
+    console.debug('[cem-serve] Received message:', data);
 
     if (data.type === 'reload') {
       console.log('[cem-serve] Reloading page:', data.reason, data.files);
+      // Hide error overlay on reload (error was fixed)
+      if (this.errorOverlay && this.errorOverlay.open) {
+        this.errorOverlay.hide();
+      }
       window.location.reload();
     } else if (data.type === 'shutdown') {
       console.log('[cem-serve] Server shutting down gracefully');
@@ -114,6 +133,12 @@ class CEMReloadClient {
     } else if (data.type === 'logs') {
       // Dispatch custom event for log updates
       window.dispatchEvent(new CemLogsEvent(data.logs));
+    } else if (data.type === 'error') {
+      console.error('[cem-serve] Server error:', data);
+      // Show error overlay
+      if (this.errorOverlay) {
+        this.errorOverlay.show(data.title, data.message, data.file);
+      }
     }
   }
 
@@ -146,6 +171,9 @@ class CEMReloadClient {
     }
     if (this.dialog) {
       this.dialog.remove();
+    }
+    if (this.errorOverlay) {
+      this.errorOverlay.remove();
     }
   }
 }

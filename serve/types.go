@@ -26,6 +26,7 @@ import (
 type Config struct {
 	Port   int
 	Reload bool
+	Target Target // Transform target (default: ES2022)
 }
 
 // ReloadMessage represents a WebSocket reload event
@@ -39,6 +40,14 @@ type ReloadMessage struct {
 type LogMessage struct {
 	Type string   `json:"type"`
 	Logs []string `json:"logs"`
+}
+
+// ErrorMessage represents a WebSocket error notification (e.g., transform errors)
+type ErrorMessage struct {
+	Type    string `json:"type"`
+	Title   string `json:"title"`
+	Message string `json:"message"`
+	File    string `json:"file,omitempty"`
 }
 
 // Logger interface for dev server logging
