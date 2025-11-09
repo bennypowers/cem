@@ -19,8 +19,11 @@ package serve
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
+	"bennypowers.dev/cem/modulegraph"
+	"bennypowers.dev/cem/queries"
 	"github.com/evanw/esbuild/pkg/api"
 )
 
@@ -83,10 +86,11 @@ type TransformOptions struct {
 	Sourcefile  string // Original source file path for source maps
 }
 
-// TransformResult contains the transformed code and optional source map
+// TransformResult contains the transformed code, source map, and dependencies
 type TransformResult struct {
-	Code []byte
-	Map  []byte
+	Code         []byte
+	Map          []byte
+	Dependencies []string // Imported file paths
 }
 
 // TransformTypeScript transforms TypeScript source code to JavaScript using esbuild
@@ -165,11 +169,73 @@ func TransformTypeScript(source []byte, opts TransformOptions) (*TransformResult
 		return nil, fmt.Errorf("%s", errMsg)
 	}
 
+	// Extract dependencies from source code using tree-sitter
+	dependencies := extractDependencies(source, opts.Sourcefile)
+
 	// Return result
 	return &TransformResult{
-		Code: result.Code,
-		Map:  result.Map,
+		Code:         result.Code,
+		Map:          result.Map,
+		Dependencies: dependencies,
 	}, nil
+}
+
+// extractDependencies extracts import paths from TypeScript/JavaScript source using tree-sitter
+func extractDependencies(source []byte, sourcePath string) []string {
+	// Create a dependency tracker to collect imports
+	dependencyTracker := modulegraph.NewDependencyTracker()
+	exportTracker := modulegraph.NewExportTracker()
+
+	// Get global QueryManager for tree-sitter parsing
+	queryManager, err := queries.GetGlobalQueryManager()
+	if err != nil {
+		// If QueryManager fails to initialize, dependency tracking won't work
+		// but the transform can still succeed
+		return nil
+	}
+
+	// Use the DefaultExportParser to parse imports/exports
+	parser := &modulegraph.DefaultExportParser{}
+	err = parser.ParseExportsFromContent(sourcePath, source, exportTracker, dependencyTracker, queryManager)
+	if err != nil {
+		// Log error but don't fail the transform - dependency tracking is best-effort
+		// The transform can still succeed even if we can't track dependencies
+		return nil
+	}
+
+	// Get the dependencies that were found
+	deps := dependencyTracker.GetModuleDependencies(sourcePath)
+
+	// Resolve relative imports to absolute paths
+	resolvedDeps := make([]string, 0, len(deps))
+	for _, dep := range deps {
+		if isRelativeImport(dep) {
+			resolved := resolveImport(sourcePath, dep)
+			resolvedDeps = append(resolvedDeps, resolved)
+		}
+		// Skip bare specifiers (e.g., 'lit', '@rhds/elements') as they're not local files
+	}
+
+	return resolvedDeps
+}
+
+// isRelativeImport checks if an import path is relative (./ or ../)
+func isRelativeImport(path string) bool {
+	return strings.HasPrefix(path, "./") || strings.HasPrefix(path, "../")
+}
+
+// resolveImport resolves a relative import path against a source file
+func resolveImport(sourcePath, importPath string) string {
+	// Get directory of source file
+	sourceDir := filepath.Dir(sourcePath)
+
+	// Join and clean the path
+	resolved := filepath.Join(sourceDir, importPath)
+
+	// Normalize separators
+	resolved = filepath.Clean(resolved)
+
+	return resolved
 }
 
 // stringToTemplateLiteral escapes a string for safe inclusion in a JS template literal

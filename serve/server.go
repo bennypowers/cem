@@ -52,6 +52,7 @@ type Server struct {
 	manifest        []byte
 	sourceFiles     map[string]bool // Set of source files to watch
 	tsconfigRaw     string          // Cached tsconfig.json for transforms
+	transformCache  *TransformCache // LRU cache for transformed files
 	running         bool
 	mu              sync.RWMutex
 	generateSession *G.GenerateSession
@@ -79,6 +80,9 @@ func NewServerWithConfig(config Config) (*Server, error) {
 		s.wsManager = newWebSocketManager()
 		s.wsManager.SetLogger(s.logger)
 	}
+
+	// Initialize transform cache (500MB default)
+	s.transformCache = NewTransformCache(500 * 1024 * 1024)
 
 	// Set up handler with middleware pipeline
 	s.setupMiddleware()
@@ -131,6 +135,11 @@ func (s *Server) Start() error {
 
 		// Start file change handler
 		go s.handleFileChanges()
+	}
+
+	// Start cache stats logger (every 5 minutes)
+	if s.transformCache != nil {
+		go s.logCacheStats(5 * time.Minute)
 	}
 
 	// Start server in goroutine with pre-bound listener
@@ -427,6 +436,39 @@ func (s *Server) resolveSourceFile(path string) string {
 	return path
 }
 
+// logCacheStats periodically logs cache statistics
+func (s *Server) logCacheStats(interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		// Check if server is still running
+		s.mu.RLock()
+		running := s.running
+		s.mu.RUnlock()
+
+		if !running {
+			return
+		}
+
+		select {
+		case <-ticker.C:
+			if s.transformCache != nil {
+				stats := s.transformCache.Stats()
+				s.logger.Info("Transform cache stats: %d entries, %.1f%% hit rate, %d MB / %d MB",
+					stats.Entries,
+					stats.HitRate,
+					stats.SizeBytes/(1024*1024),
+					stats.MaxSize/(1024*1024),
+				)
+			}
+		case <-time.After(1 * time.Second):
+			// Check running status periodically
+			continue
+		}
+	}
+}
+
 // handleFileChanges listens for file change events and triggers reload
 func (s *Server) handleFileChanges() {
 	if s.watcher == nil {
@@ -455,6 +497,14 @@ func (s *Server) handleFileChanges() {
 		// Resolve .js to .ts if source exists
 		displayPath := s.resolveSourceFile(relPath)
 		s.logger.Info("File changed: %s", displayPath)
+
+		// Invalidate transform cache for this file and its dependents
+		if s.transformCache != nil {
+			invalidated := s.transformCache.Invalidate(event.Path)
+			if len(invalidated) > 0 {
+				s.logger.Debug("Invalidated %d cached transforms", len(invalidated))
+			}
+		}
 
 		// Regenerate manifest if a source file changed
 		ext := filepath.Ext(event.Path)
@@ -718,8 +768,30 @@ func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 		tsPathNorm := strings.TrimPrefix(tsPath, "/")
 		tsPathNorm = filepath.FromSlash(tsPathNorm)
 		fullTsPath := filepath.Join(watchDir, tsPathNorm)
-		if _, err := os.Stat(fullTsPath); err == nil {
-			// .ts file exists, transform and serve it
+
+		// Get file stat for cache key
+		fileInfo, err := os.Stat(fullTsPath)
+		if err == nil {
+			// .ts file exists - check cache first
+			cacheKey := CacheKey{
+				Path:    fullTsPath,
+				ModTime: fileInfo.ModTime(),
+				Size:    fileInfo.Size(),
+			}
+
+			// Try to get from cache
+			if cached, found := s.transformCache.Get(cacheKey); found {
+				s.logger.Debug("Cache hit for %s", tsPathNorm)
+				// Serve cached transformed JavaScript
+				w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+				if _, err := w.Write(cached.Code); err != nil {
+					s.logger.Error("Failed to write cached transform response: %v", err)
+				}
+				return
+			}
+
+			// Cache miss - read file and transform
+			s.logger.Debug("Cache miss for %s", tsPathNorm)
 			source, err := os.ReadFile(fullTsPath)
 			if err != nil {
 				s.logger.Error("Failed to read TypeScript file %s: %v", tsPathNorm, err)
@@ -759,6 +831,9 @@ func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, fmt.Sprintf("Transform error: %v", err), http.StatusInternalServerError)
 				return
 			}
+
+			// Store in cache
+			s.transformCache.Set(cacheKey, result.Code, result.Dependencies)
 
 			// Serve transformed JavaScript
 			w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
