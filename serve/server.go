@@ -27,6 +27,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -525,6 +526,9 @@ func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 	requestPath := r.URL.Path
 	if filepath.Ext(requestPath) == ".js" {
 		tsPath := requestPath[:len(requestPath)-3] + ".ts"
+		// Strip leading slash and normalize path separators before joining
+		tsPath = strings.TrimPrefix(tsPath, "/")
+		tsPath = filepath.FromSlash(tsPath)
 		fullTsPath := filepath.Join(watchDir, tsPath)
 		if _, err := os.Stat(fullTsPath); err == nil {
 			// .ts file exists, serve it with correct MIME type
