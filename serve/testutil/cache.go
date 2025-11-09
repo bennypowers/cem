@@ -42,15 +42,19 @@ func NewMockTransformCache() *MockTransformCache {
 
 // Get retrieves a transformed file from the cache
 func (c *MockTransformCache) Get(path string) ([]byte, bool) {
+	// Read the entry under read lock
 	c.mu.RLock()
-	defer c.mu.RUnlock()
-
 	content, found := c.entries[path]
+	c.mu.RUnlock()
+
+	// Update counters under write lock
+	c.mu.Lock()
 	if found {
 		c.hits++
 	} else {
 		c.misses++
 	}
+	c.mu.Unlock()
 
 	return content, found
 }

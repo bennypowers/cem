@@ -27,7 +27,9 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// WebSocketTestClient is a test client for WebSocket connections
+// WebSocketTestClient is a test client for WebSocket connections.
+// Note: Messages may be dropped when the message buffer (cap 100) is full.
+// The error channel uses blocking sends to ensure connection errors are not lost.
 type WebSocketTestClient struct {
 	conn     *websocket.Conn
 	messages chan []byte
@@ -72,17 +74,15 @@ func (c *WebSocketTestClient) readLoop() {
 	for {
 		_, message, err := c.conn.ReadMessage()
 		if err != nil {
-			select {
-			case c.errors <- err:
-			default:
-			}
+			// Block to ensure error is not lost
+			c.errors <- err
 			return
 		}
 
 		select {
 		case c.messages <- message:
 		default:
-			// Buffer full, skip message
+			// Buffer full, message dropped (documented in type comment)
 		}
 	}
 }
@@ -99,11 +99,10 @@ func (c *WebSocketTestClient) ReceiveMessage(t *testing.T, timeout time.Duration
 		return msg
 	case err := <-c.errors:
 		t.Fatalf("WebSocket error: %v", err)
-		return nil
 	case <-ctx.Done():
 		t.Fatal("Timeout waiting for WebSocket message")
-		return nil
 	}
+	return nil
 }
 
 // SendMessage sends a message to the WebSocket

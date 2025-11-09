@@ -21,6 +21,7 @@ package serve_test
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 
 	"bennypowers.dev/cem/serve/testutil"
@@ -63,7 +64,7 @@ func TestMockManifest(t *testing.T) {
 	manifestStr := string(manifest)
 	expectedFields := []string{"schemaVersion", "modules", "declarations"}
 	for _, field := range expectedFields {
-		if !contains(manifestStr, field) {
+		if !strings.Contains(manifestStr, field) {
 			t.Errorf("Mock manifest missing expected field: %s", field)
 		}
 	}
@@ -124,18 +125,4 @@ func TestFixturePattern(t *testing.T) {
 	// the fixture structure exists
 	// See serve/fixture/simple-demo/ for the established pattern
 	t.Log("Fixture pattern established in serve/fixture/simple-demo/")
-}
-
-// Helper function
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) && findSubstring(s, substr))
-}
-
-func findSubstring(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
