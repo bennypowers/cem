@@ -484,9 +484,9 @@ func (s *Server) serveManifest(w http.ResponseWriter, r *http.Request) {
 
 // serveLogs serves the plain text logs for the debug console
 func (s *Server) serveLogs(w http.ResponseWriter, r *http.Request) {
-	// Get logs from logger if it supports GetLogs()
-	if logGetter, ok := s.logger.(interface{ GetLogs() []string }); ok {
-		logs := logGetter.GetLogs()
+	// Get logs from logger if it supports Logs()
+	if logGetter, ok := s.logger.(interface{ Logs() []string }); ok {
+		logs := logGetter.Logs()
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(logs); err != nil {
 			s.logger.Error("Failed to encode logs response: %v", err)

@@ -206,7 +206,7 @@ func (l *ptermLogger) log(level, color, msg string, args ...interface{}) {
 	}
 }
 
-func (l *ptermLogger) GetLogs() []string {
+func (l *ptermLogger) Logs() []string {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	// Return a copy to avoid race conditions
