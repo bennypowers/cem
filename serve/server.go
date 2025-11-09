@@ -719,6 +719,10 @@ func (l *defaultLogger) Info(msg string, args ...interface{}) {
 	log.Printf("[INFO] "+msg, args...)
 }
 
+func (l *defaultLogger) Warning(msg string, args ...interface{}) {
+	log.Printf("[WARN] "+msg, args...)
+}
+
 func (l *defaultLogger) Error(msg string, args ...interface{}) {
 	log.Printf("[ERROR] "+msg, args...)
 }

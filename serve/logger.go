@@ -143,6 +143,9 @@ func (l *ptermLogger) log(level, color, msg string, args ...interface{}) {
 		case "info":
 			prefix = pterm.FgCyan.Sprint("INFO ")
 			coloredMsg = formatted
+		case "warning":
+			prefix = pterm.FgYellow.Sprint("WARN ")
+			coloredMsg = pterm.FgYellow.Sprint(formatted)
 		case "error":
 			prefix = pterm.FgRed.Sprint("ERROR")
 			coloredMsg = pterm.FgRed.Sprint(formatted)
@@ -180,6 +183,8 @@ func (l *ptermLogger) log(level, color, msg string, args ...interface{}) {
 		switch color {
 		case "info":
 			pterm.Info.Println(formatted)
+		case "warning":
+			pterm.Warning.Println(formatted)
 		case "error":
 			pterm.Error.Println(formatted)
 		case "debug":
@@ -217,6 +222,10 @@ func (l *ptermLogger) Logs() []string {
 
 func (l *ptermLogger) Info(msg string, args ...interface{}) {
 	l.log("INFO", "info", msg, args...)
+}
+
+func (l *ptermLogger) Warning(msg string, args ...interface{}) {
+	l.log("WARN", "warning", msg, args...)
 }
 
 func (l *ptermLogger) Error(msg string, args ...interface{}) {

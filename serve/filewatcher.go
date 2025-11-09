@@ -37,6 +37,7 @@ type fileWatcher struct {
 	mu             sync.Mutex
 	logger         Logger
 	done           chan struct{}
+	wg             sync.WaitGroup
 }
 
 // newFileWatcher creates a new file watcher with debouncing
@@ -56,6 +57,7 @@ func newFileWatcher(debounceWindow time.Duration, logger Logger) (FileWatcher, e
 	}
 
 	// Start event processing loop
+	fw.wg.Add(1)
 	go fw.processEvents()
 
 	return fw, nil
@@ -122,9 +124,10 @@ func (fw *fileWatcher) Close() error {
 	// Signal processEvents goroutine to exit
 	close(fw.done)
 
+	// Wait for processEvents to exit
+	fw.wg.Wait()
+
 	// Close events channel after processEvents has exited
-	// Give processEvents a moment to drain and exit
-	time.Sleep(10 * time.Millisecond)
 	close(fw.events)
 
 	return err
@@ -132,6 +135,7 @@ func (fw *fileWatcher) Close() error {
 
 // processEvents processes raw fsnotify events and applies debouncing
 func (fw *fileWatcher) processEvents() {
+	defer fw.wg.Done()
 	for {
 		select {
 		case event, ok := <-fw.watcher.Events:
@@ -218,7 +222,7 @@ func (fw *fileWatcher) flushDebouncedEvents() {
 		default:
 			// Channel full, drop event
 			if fw.logger != nil {
-				fw.logger.Debug("Dropped file event (channel full)")
+				fw.logger.Warning("Dropped file event (channel full) - consider reducing change frequency")
 			}
 		}
 	}
