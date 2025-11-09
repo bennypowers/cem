@@ -651,8 +651,7 @@ func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Check if requesting .js file but .ts exists (Phase 2 - serve TypeScript source)
-	// Transformations will be added in Phase 4
+	// Check if requesting .js file but .ts exists - transform TypeScript to JavaScript
 	requestPath := r.URL.Path
 	if filepath.Ext(requestPath) == ".js" {
 		tsPath := requestPath[:len(requestPath)-3] + ".ts"
@@ -661,9 +660,31 @@ func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 		tsPath = filepath.FromSlash(tsPath)
 		fullTsPath := filepath.Join(watchDir, tsPath)
 		if _, err := os.Stat(fullTsPath); err == nil {
-			// .ts file exists, serve it with correct MIME type
+			// .ts file exists, transform and serve it
+			source, err := os.ReadFile(fullTsPath)
+			if err != nil {
+				s.logger.Error("Failed to read TypeScript file %s: %v", tsPath, err)
+				http.Error(w, "Failed to read file", http.StatusInternalServerError)
+				return
+			}
+
+			// Transform TypeScript to JavaScript
+			result, err := TransformTypeScript(source, TransformOptions{
+				Loader:    LoaderTS,
+				Target:    ES2020,
+				Sourcemap: SourceMapInline,
+			})
+			if err != nil {
+				s.logger.Error("Failed to transform TypeScript file %s: %v", tsPath, err)
+				http.Error(w, fmt.Sprintf("Transform error: %v", err), http.StatusInternalServerError)
+				return
+			}
+
+			// Serve transformed JavaScript
 			w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
-			http.ServeFile(w, r, fullTsPath)
+			if _, err := w.Write(result.Code); err != nil {
+				s.logger.Error("Failed to write transform response: %v", err)
+			}
 			return
 		}
 	}
