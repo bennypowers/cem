@@ -103,6 +103,13 @@ func (s *Server) buildDemoRoutingTable(manifestBytes []byte) (map[string]*DemoRo
 			filePath = strings.TrimPrefix(filePath, "/")
 		}
 
+		// Normalize filePath to ensure it's always relative (security: prevent directory traversal)
+		// Strip leading "./" and "/" repeatedly to ensure relative path
+		for strings.HasPrefix(filePath, "./") || strings.HasPrefix(filePath, "/") {
+			filePath = strings.TrimPrefix(filePath, "./")
+			filePath = strings.TrimPrefix(filePath, "/")
+		}
+
 		routes[localRoute] = &DemoRouteEntry{
 			LocalRoute: localRoute,
 			TagName:    renderableDemo.CustomElementDeclaration.TagName,
