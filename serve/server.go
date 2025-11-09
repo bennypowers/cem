@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"path/filepath"
 	"sync"
@@ -37,6 +38,7 @@ type Server struct {
 	port            int
 	config          Config
 	server          *http.Server
+	listener        net.Listener
 	handler         http.Handler
 	logger          Logger
 	wsManager       WebSocketManager
@@ -91,8 +93,14 @@ func (s *Server) Start() error {
 		return fmt.Errorf("server already running")
 	}
 
+	// Bind the socket first to catch port binding errors before returning success
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", s.port))
+	if err != nil {
+		return fmt.Errorf("failed to bind port %d: %w", s.port, err)
+	}
+	s.listener = listener
+
 	s.server = &http.Server{
-		Addr:    fmt.Sprintf(":%d", s.port),
 		Handler: s.handler,
 	}
 
@@ -100,6 +108,7 @@ func (s *Server) Start() error {
 	if s.watchDir != "" {
 		fw, err := newFileWatcher(s.GetDebounceDuration(), s.logger)
 		if err != nil {
+			_ = listener.Close()
 			return fmt.Errorf("failed to create file watcher: %w", err)
 		}
 
@@ -107,6 +116,7 @@ func (s *Server) Start() error {
 			if closeErr := fw.Close(); closeErr != nil {
 				s.logger.Error("Failed to close file watcher during cleanup: %v", closeErr)
 			}
+			_ = listener.Close()
 			return fmt.Errorf("failed to watch directory: %w", err)
 		}
 
@@ -116,9 +126,9 @@ func (s *Server) Start() error {
 		go s.handleFileChanges()
 	}
 
-	// Start server in goroutine
+	// Start server in goroutine with pre-bound listener
 	go func() {
-		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := s.server.Serve(listener); err != nil && err != http.ErrServerClosed {
 			s.logger.Error("Server error: %v", err)
 		}
 	}()
@@ -145,6 +155,9 @@ func (s *Server) Close() error {
 			return err
 		}
 	}
+
+	// Note: server.Shutdown() already closes the listener, so we don't need to close it again
+	// The listener is only closed explicitly in error paths during Start()
 
 	if s.watcher != nil {
 		if err := s.watcher.Close(); err != nil {

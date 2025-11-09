@@ -417,3 +417,40 @@ export class TestElement extends HTMLElement {}
 		t.Error("Expected manifest to have modules field")
 	}
 }
+
+// TestPortBindingError verifies that port binding errors are detected immediately
+func TestPortBindingError(t *testing.T) {
+	// Create and start first server
+	server1, err := serve.NewServer(8888)
+	if err != nil {
+		t.Fatalf("Failed to create first server: %v", err)
+	}
+
+	err = server1.Start()
+	if err != nil {
+		t.Fatalf("Failed to start first server: %v", err)
+	}
+	defer func() { _ = server1.Close() }()
+
+	// Try to start second server on same port - should fail immediately
+	server2, err := serve.NewServer(8888)
+	if err != nil {
+		t.Fatalf("Failed to create second server: %v", err)
+	}
+
+	err = server2.Start()
+	if err == nil {
+		_ = server2.Close()
+		t.Fatal("Expected port binding error, but Start() succeeded")
+	}
+
+	// Verify error message mentions port binding
+	if !strings.Contains(err.Error(), "bind") && !strings.Contains(err.Error(), "address already in use") {
+		t.Errorf("Expected error about port binding, got: %v", err)
+	}
+
+	// Verify second server is not running
+	if server2.IsRunning() {
+		t.Error("Expected second server to not be running after bind failure")
+	}
+}
