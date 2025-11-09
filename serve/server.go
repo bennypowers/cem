@@ -208,14 +208,26 @@ func (s *Server) SetWatchDir(dir string) error {
 	defer s.mu.Unlock()
 	s.watchDir = dir
 
-	// Load tsconfig.json if it exists
-	tsconfigPath := filepath.Join(dir, "tsconfig.json")
-	if data, err := os.ReadFile(tsconfigPath); err == nil {
-		s.tsconfigRaw = string(data)
-		s.logger.Debug("Loaded tsconfig.json from %s", tsconfigPath)
-	} else {
+	// Load tsconfig - try tsconfig.settings.json first (common in monorepos),
+	// then fall back to tsconfig.json
+	tsconfigPaths := []string{
+		filepath.Join(dir, "tsconfig.settings.json"),
+		filepath.Join(dir, "tsconfig.json"),
+	}
+
+	loaded := false
+	for _, tsconfigPath := range tsconfigPaths {
+		if data, err := os.ReadFile(tsconfigPath); err == nil {
+			s.tsconfigRaw = string(data)
+			s.logger.Debug("Loaded TypeScript config from %s", tsconfigPath)
+			loaded = true
+			break
+		}
+	}
+
+	if !loaded {
 		s.tsconfigRaw = ""
-		s.logger.Debug("No tsconfig.json found, using default transform settings")
+		s.logger.Debug("No tsconfig found, using default transform settings")
 	}
 
 	return nil
