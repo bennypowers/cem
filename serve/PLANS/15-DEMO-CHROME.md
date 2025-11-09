@@ -6,6 +6,8 @@ Phase 3 has no stubs in existing tests. Follow standard TDD: write tests first, 
 
 ### Server Side
 
+Make sure to move client scripts (like web socket client, etc) from special injection functions into the chrome
+
 ```html
 <!DOCTYPE html>
 <html>

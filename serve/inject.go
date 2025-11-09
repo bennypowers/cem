@@ -21,12 +21,9 @@ import (
 	"bytes"
 	"net/http"
 	"strings"
-)
 
-// webSocketClientScript returns the client-side JavaScript for live reload with auto-reconnection
-func webSocketClientScript() string {
-	return "<script type=\"module\">\n" + WebSocketClientScript + "\n</script>"
-}
+	"golang.org/x/net/html"
+)
 
 // injectWebSocketClient injects the WebSocket client script into HTML responses
 func injectWebSocketClient(next http.Handler, enabled bool) http.Handler {
@@ -76,7 +73,8 @@ func injectWebSocketClient(next http.Handler, enabled bool) http.Handler {
 
 		// Inject script before </head> or at start of <body>
 		html := string(bodyBytes)
-		injected := injectScript(html, webSocketClientScript())
+		script := "<script type=\"module\">\n" + WebSocketClientScript + "\n</script>"
+		injected := injectScript(html, script)
 
 		// Copy headers
 		for k, v := range rec.header {
@@ -100,25 +98,90 @@ func injectWebSocketClient(next http.Handler, enabled bool) http.Handler {
 	})
 }
 
-// injectScript injects a script into HTML
-func injectScript(html, script string) string {
-	// Try to inject before </head>
-	if strings.Contains(html, "</head>") {
-		return strings.Replace(html, "</head>", script+"\n</head>", 1)
+// injectScript injects a script into HTML by parsing and manipulating the DOM
+func injectScript(htmlStr, script string) string {
+	doc, err := html.Parse(strings.NewReader(htmlStr))
+	if err != nil {
+		// Fallback to string replacement if parsing fails
+		if strings.Contains(htmlStr, "</head>") {
+			return strings.Replace(htmlStr, "</head>", script+"\n</head>", 1)
+		}
+		return htmlStr + "\n" + script
 	}
 
-	// Try to inject at start of <body>
-	if strings.Contains(html, "<body>") {
-		return strings.Replace(html, "<body>", "<body>\n"+script, 1)
+	// Parse the script string into nodes
+	scriptNodes, err := html.ParseFragment(strings.NewReader(script), &html.Node{
+		Type:     html.ElementNode,
+		Data:     "body",
+		DataAtom: 0,
+	})
+	if err != nil || len(scriptNodes) == 0 {
+		// Fallback if script parsing fails
+		if strings.Contains(htmlStr, "</head>") {
+			return strings.Replace(htmlStr, "</head>", script+"\n</head>", 1)
+		}
+		return htmlStr + "\n" + script
 	}
 
-	// Fallback: inject at end of HTML
-	if strings.Contains(html, "</html>") {
-		return strings.Replace(html, "</html>", script+"\n</html>", 1)
+	// Find the <head> element and inject before its closing tag
+	var findHead func(*html.Node) *html.Node
+	findHead = func(n *html.Node) *html.Node {
+		if n.Type == html.ElementNode && n.Data == "head" {
+			return n
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			if result := findHead(c); result != nil {
+				return result
+			}
+		}
+		return nil
 	}
 
-	// Last resort: append to end
-	return html + "\n" + script
+	head := findHead(doc)
+	if head != nil {
+		// Append script nodes to head
+		for _, scriptNode := range scriptNodes {
+			head.AppendChild(scriptNode)
+		}
+	} else {
+		// No head found, try to find body and prepend
+		var findBody func(*html.Node) *html.Node
+		findBody = func(n *html.Node) *html.Node {
+			if n.Type == html.ElementNode && n.Data == "body" {
+				return n
+			}
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				if result := findBody(c); result != nil {
+					return result
+				}
+			}
+			return nil
+		}
+
+		body := findBody(doc)
+		if body != nil {
+			// Prepend script nodes to body
+			for i := len(scriptNodes) - 1; i >= 0; i-- {
+				if body.FirstChild != nil {
+					body.InsertBefore(scriptNodes[i], body.FirstChild)
+				} else {
+					body.AppendChild(scriptNodes[i])
+				}
+			}
+		}
+	}
+
+	// Render the modified DOM back to HTML
+	var buf bytes.Buffer
+	if err := html.Render(&buf, doc); err != nil {
+		// Fallback on render error
+		if strings.Contains(htmlStr, "</head>") {
+			return strings.Replace(htmlStr, "</head>", script+"\n</head>", 1)
+		}
+		return htmlStr + "\n" + script
+	}
+
+	return buf.String()
 }
 
 // responseRecorder captures HTTP response for modification
