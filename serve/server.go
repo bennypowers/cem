@@ -689,6 +689,33 @@ func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Transform CSS files to JavaScript modules (constructable stylesheets)
+	if filepath.Ext(requestPath) == ".css" {
+		// Strip leading slash and normalize
+		cssPath := strings.TrimPrefix(requestPath, "/")
+		cssPath = filepath.FromSlash(cssPath)
+		fullCssPath := filepath.Join(watchDir, cssPath)
+
+		// Read CSS file
+		source, err := os.ReadFile(fullCssPath)
+		if err != nil {
+			// File doesn't exist - let normal file server handle 404
+			fileServer := http.FileServer(http.Dir(watchDir))
+			fileServer.ServeHTTP(w, r)
+			return
+		}
+
+		// Transform CSS to JavaScript module
+		transformed := TransformCSS(source)
+
+		// Serve as JavaScript module
+		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+		if _, err := w.Write([]byte(transformed)); err != nil {
+			s.logger.Error("Failed to write CSS transform response: %v", err)
+		}
+		return
+	}
+
 	// Set correct MIME type for JavaScript files
 	if filepath.Ext(requestPath) == ".js" {
 		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")

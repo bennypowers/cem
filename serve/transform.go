@@ -19,6 +19,7 @@ package serve
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/evanw/esbuild/pkg/api"
 )
@@ -139,4 +140,20 @@ func TransformTypeScript(source []byte, opts TransformOptions) (*TransformResult
 		Code: result.Code,
 		Map:  result.Map,
 	}, nil
+}
+
+// TransformCSS transforms CSS to a JavaScript module exporting a CSSStyleSheet
+func TransformCSS(source []byte) string {
+	// Escape backticks and backslashes in CSS
+	css := string(source)
+	css = strings.ReplaceAll(css, "\\", "\\\\")
+	css = strings.ReplaceAll(css, "`", "\\`")
+	css = strings.ReplaceAll(css, "${", "\\${")
+
+	// Wrap in constructable stylesheet template
+	return fmt.Sprintf(`// CSS transformed to constructable stylesheet
+const sheet = new CSSStyleSheet();
+sheet.replaceSync(%s);
+export default sheet;
+`, "`"+css+"`")
 }
