@@ -17,10 +17,28 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package serve
 
-import "fmt"
+// ImportMap represents an ES module import map
+type ImportMap struct {
+	Imports map[string]string `json:"imports"`
+}
 
-// GenerateImportMap generates an import map from package.json
-// TODO: Implement in Phase 2
-func GenerateImportMap(packageJSONPath string) ([]byte, error) {
-	return nil, fmt.Errorf("not implemented: Phase 2 - Import Maps")
+// ImportMapConfig configures import map generation
+type ImportMapConfig struct {
+	InputMapPath string            // Path to user override file
+	CLIOverrides map[string]string // CLI flag overrides (highest priority)
+	Logger       Logger            // Logger for warnings
+}
+
+// GenerateImportMap generates an import map from package.json and configuration
+// This is a stub implementation for TDD red phase - returns nil to make tests fail
+func GenerateImportMap(rootDir string, config *ImportMapConfig) (*ImportMap, error) {
+	// TODO: Phase 2 - Implement import map generation:
+	// 1. Parse package.json dependencies
+	// 2. Resolve workspace packages (monorepo support)
+	// 3. Resolve exports/main fields for each dependency
+	// 4. Handle subpath patterns in exports
+	// 5. Merge with user override file
+	// 6. Apply CLI overrides (highest priority)
+	// 7. Log warnings for missing dependencies or entry points
+	return nil, nil
 }
