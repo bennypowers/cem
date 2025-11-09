@@ -233,21 +233,21 @@ We can issue a browser warning based on user agent if someone tries to load a de
 
 ## Acceptance Criteria
 
-- [ ] Demo chrome template renders with SSR (Declarative Shadow DOM)
-- [ ] Chrome UI in shadow root, demo in light DOM
-- [ ] `<cem-serve-chrome>` custom element defined and registered
-- [ ] `<cem-serve-demo>` custom element defined with helper methods
-- [ ] Import map injected into `<head>` before demo scripts
-- [ ] `__cem-serve-chrome.js` script loaded and executed
-- [ ] Demo switcher nav shows all demos for current element
-- [ ] Current demo highlighted in demo switcher
-- [ ] VCS source link renders with correct icon (GitHub, GitLab)
-- [ ] Demo description renders as GFM markdown with HTML escaping
+- [x] Demo chrome template renders with SSR (Declarative Shadow DOM)
+- [x] Chrome UI in shadow root, demo in light DOM
+- [x] `<cem-serve-chrome>` custom element defined and registered
+- [x] `<cem-serve-demo>` custom element defined with helper methods
+- [x] Import map injected into `<head>` before demo scripts
+- [x] `__cem-serve-chrome.js` script loaded and executed
+- [x] Demo switcher nav shows all demos for current element
+- [x] Current demo highlighted in demo switcher
+- [x] VCS source link renders with correct icon (GitHub, GitLab, Bitbucket, generic)
+- [x] Demo description renders as GFM markdown with HTML escaping
 - [ ] Relative links in markdown resolve against demo file path
-- [ ] Query parameter `?shadow=true` wraps demo in shadow root
-- [ ] Light DOM mode (default) allows `document.querySelector()` in demo scripts
-- [ ] Module scripts in demos work without `currentScript` issues
+- [x] Query parameter `?shadow=true` wraps demo in shadow root
+- [x] Light DOM mode (default) allows `document.querySelector()` in demo scripts
+- [x] Module scripts in demos work without `currentScript` issues
 - [ ] Knobs panel renders when knobs enabled
-- [ ] Server errors logged to browser console
+- [x] Server errors logged to browser console
 - [ ] Browser compatibility check warns on unsupported browsers (DSD requirement)
 - [ ] Tests cover template rendering, shadow/light DOM modes

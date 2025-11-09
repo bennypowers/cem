@@ -163,12 +163,12 @@ server/transform/test-fixtures/
 
 ## Acceptance Criteria
 
-- [ ] TypeScript files transformed to JavaScript via esbuild Go API
-- [ ] Single-file transforms (no type checking, rely on tsserver)
-- [ ] Inline source maps generated for debugging
-- [ ] Server responds to `.js` URLs but reads `.ts` files
-- [ ] Transform target configurable via CLI/config (default ES2020 or ES2022)
-- [ ] tsconfig.json read and passed to esbuild's tsconfigRaw
+- [x] TypeScript files transformed to JavaScript via esbuild Go API
+- [x] Single-file transforms (no type checking, rely on tsserver)
+- [x] Inline source maps generated for debugging
+- [x] Server responds to `.js` URLs but reads `.ts` files
+- [x] Transform target configurable via CLI/config (default ES2022)
+- [x] tsconfig.json read and passed to esbuild's tsconfigRaw
 - [ ] Transform cache implemented with LRU eviction
 - [ ] Cache key includes path, modification time, and size
 - [ ] Dependency graph tracks module relationships (leverage PR #98)
@@ -177,13 +177,13 @@ server/transform/test-fixtures/
 - [ ] Cache stats logged (hits, misses, size)
 - [ ] Worker pool parallelizes transforms (max 4 concurrent)
 - [ ] Excess requests queued, 503 returned if queue full
-- [ ] CSS files transformed to CSSStyleSheet JavaScript modules
+- [x] CSS files transformed to CSSStyleSheet JavaScript modules
 - [ ] CSS transform triggered by glob pattern match (--transform-css flag)
-- [ ] CSS transform content-type: `application/javascript; charset=utf-8`
-- [ ] CSS transform does not support relative URLs (documented limitation)
+- [x] CSS transform content-type: `application/javascript; charset=utf-8`
+- [x] CSS transform does not support relative URLs (documented limitation)
 - [ ] Config `transforms.typescript.enabled` controls TypeScript transform
 - [ ] Config `transforms.css.enabled` controls CSS transform
 - [ ] Config `transforms.css.include/exclude` filters CSS files
-- [ ] Transform errors shown in browser error overlay
+- [x] Transform errors shown in browser error overlay
 - [ ] Tests cover cache invalidation, dependency graph, error handling
 - [ ] Tests use fixture pattern (input.ts → expected.js + source maps)
