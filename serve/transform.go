@@ -80,6 +80,7 @@ type TransformOptions struct {
 	Target      Target
 	Sourcemap   SourceMapMode
 	TsconfigRaw string // Optional tsconfig.json content as JSON string
+	Sourcefile  string // Original source file path for source maps
 }
 
 // TransformResult contains the transformed code and optional source map
@@ -150,6 +151,7 @@ func TransformTypeScript(source []byte, opts TransformOptions) (*TransformResult
 		Target:      target,
 		Format:      api.FormatESModule,
 		Sourcemap:   sourcemap,
+		Sourcefile:  opts.Sourcefile, // Set source file path for better source maps
 		TsconfigRaw: tsconfigRaw,
 	})
 

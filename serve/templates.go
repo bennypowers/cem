@@ -20,6 +20,7 @@ package serve
 import (
 	"embed"
 	"html/template"
+	"strings"
 )
 
 //go:embed templates/default-index.html
@@ -31,8 +32,13 @@ var demoChromeTemplate string
 //go:embed templates/js/*.js
 var internalModules embed.FS
 
+// Template functions available to templates
+var templateFuncs = template.FuncMap{
+	"contains": strings.Contains,
+}
+
 // DefaultIndexTemplate is the parsed template for the default index page
 var DefaultIndexTemplate = template.Must(template.New("default-index").Parse(defaultIndexTemplate))
 
 // DemoChromeTemplate is the parsed template for demo chrome
-var DemoChromeTemplate = template.Must(template.New("demo-chrome").Parse(demoChromeTemplate))
+var DemoChromeTemplate = template.Must(template.New("demo-chrome").Funcs(templateFuncs).Parse(demoChromeTemplate))

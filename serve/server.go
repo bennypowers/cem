@@ -743,6 +743,7 @@ func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 				Loader:      LoaderTS,
 				Target:      target,
 				Sourcemap:   SourceMapInline,
+				Sourcefile:  tsPathNorm, // Use normalized path for source maps
 				TsconfigRaw: tsconfigRaw,
 			})
 			if err != nil {
