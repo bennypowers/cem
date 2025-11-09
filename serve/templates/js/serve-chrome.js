@@ -17,7 +17,7 @@ class CemServeDemo extends HTMLElement {
    * @param {string} value - Attribute value
    * @returns {boolean} - Whether the operation succeeded
    */
-  setAttribute(selector, attribute, value) {
+  setDemoAttribute(selector, attribute, value) {
     const root = this.#getShadowRoot() || this;
     const target = root.querySelector(selector);
     if (target) {
