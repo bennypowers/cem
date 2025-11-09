@@ -317,16 +317,12 @@ func TestImportMap_SubpathPatterns(t *testing.T) {
 		t.Error("Expected utils-lib base import in map")
 	}
 
-	// Check if subpath pattern is preserved or expanded
-	hasSubpathPattern := false
-	for key := range importMap.Imports {
-		if strings.HasPrefix(key, "utils-lib/utils/") || key == "utils-lib/utils/" {
-			hasSubpathPattern = true
-			break
-		}
-	}
-	if !hasSubpathPattern {
-		t.Log("Note: Subpath pattern handling will be verified in implementation")
+	// Check that subpath pattern mapping exists
+	utilsKey := "utils-lib/utils/"
+	if mappedPath, exists := importMap.Imports[utilsKey]; !exists {
+		t.Fatalf("Expected '%s' wildcard mapping in import map, but key was missing. Available keys: %v", utilsKey, getKeys(importMap.Imports))
+	} else if !strings.Contains(mappedPath, "/utils/") {
+		t.Errorf("Expected wildcard mapping for '%s' to contain '/utils/', got: %s", utilsKey, mappedPath)
 	}
 }
 
@@ -1175,4 +1171,13 @@ func TestImportMap_ScopedPackages(t *testing.T) {
 	if !strings.Contains(mapping, "reactive-element.js") {
 		t.Errorf("Expected mapping to reactive-element.js, got: %s", mapping)
 	}
+}
+
+// getKeys returns all keys from a map for debugging purposes
+func getKeys(m map[string]string) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
 }
