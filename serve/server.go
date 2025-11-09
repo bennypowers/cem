@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"log"
 	"net"
 	"net/http"
@@ -519,6 +520,27 @@ func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Check if requesting .js file but .ts exists (Phase 2 - serve TypeScript source)
+	// Transformations will be added in Phase 4
+	requestPath := r.URL.Path
+	if filepath.Ext(requestPath) == ".js" {
+		tsPath := requestPath[:len(requestPath)-3] + ".ts"
+		fullTsPath := filepath.Join(watchDir, tsPath)
+		if _, err := os.Stat(fullTsPath); err == nil {
+			// .ts file exists, serve it with correct MIME type
+			w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+			http.ServeFile(w, r, fullTsPath)
+			return
+		}
+	}
+
+	// Set correct MIME type for JavaScript files
+	if filepath.Ext(requestPath) == ".js" {
+		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+	} else if filepath.Ext(requestPath) == ".ts" {
+		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+	}
+
 	// Serve files from watch directory
 	fileServer := http.FileServer(http.Dir(watchDir))
 	fileServer.ServeHTTP(w, r)
@@ -556,137 +578,43 @@ func (s *Server) serveDefaultIndex(w http.ResponseWriter, r *http.Request) {
 		elementsList = "<li><em>Manifest not generated yet</em></li>"
 	}
 
-	html := fmt.Sprintf(`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CEM Dev Server</title>
-  <style>
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      max-width: 800px;
-      margin: 40px auto;
-      padding: 0 20px;
-      line-height: 1.6;
-      background: #0f172a;
-      color: #e2e8f0;
-    }
-    h1 { color: #60a5fa; }
-    .info {
-      background: #1e293b;
-      border-left: 4px solid #60a5fa;
-      padding: 1rem;
-      margin: 1rem 0;
-      border-radius: 4px;
-    }
-    .debug {
-      background: #1e293b;
-      color: #10b981;
-      padding: 1rem;
-      border-radius: 4px;
-      font-family: 'Courier New', monospace;
-      font-size: 14px;
-      overflow-x: auto;
-      white-space: pre-wrap;
-    }
-    .status {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: bold;
-      background: #10b981;
-      color: #0f172a;
-    }
-    code {
-      background: #334155;
-      padding: 2px 6px;
-      border-radius: 3px;
-      color: #fbbf24;
-    }
-    ul {
-      list-style: none;
-      padding: 0;
-    }
-    ul li {
-      padding: 0.5rem;
-      background: #1e293b;
-      margin: 0.25rem 0;
-      border-radius: 4px;
-    }
-  </style>
-</head>
-<body>
-  <h1>🚀 CEM Development Server</h1>
+	// Generate import map for the watch directory
+	var importMapJSON string
+	if watchDir != "" {
+		importMap, err := GenerateImportMap(watchDir, nil)
+		if err != nil {
+			s.logger.Warning("Failed to generate import map for default index: %v", err)
+		} else if importMap != nil && len(importMap.Imports) > 0 {
+			// Marshal import map to JSON with indentation
+			importMapBytes, err := json.MarshalIndent(importMap, "  ", "  ")
+			if err != nil {
+				s.logger.Warning("Failed to marshal import map: %v", err)
+			} else {
+				importMapJSON = string(importMapBytes)
+			}
+		}
+	}
 
-  <div class="info">
-    <p><strong>Status:</strong> <span class="status">Running</span></p>
-    <p><strong>Watch Directory:</strong> <code>%s</code></p>
-    <p><strong>Manifest:</strong> %d bytes</p>
-    <p><strong>WebSocket Connections:</strong> %d</p>
-  </div>
-
-  <details>
-    <summary><h2 style="display: inline; cursor: pointer;">Custom Elements</h2></summary>
-    <ul>%s</ul>
-  </details>
-
-  <h2>Debug Console</h2>
-  <div class="debug" id="messages">Waiting for WebSocket messages...</div>
-
-  <script>
-    const messagesDiv = document.getElementById('messages');
-
-    // Fetch initial logs
-    async function loadInitialLogs() {
-      try {
-        const response = await fetch('/__cem-logs');
-        const logs = await response.json();
-        messagesDiv.textContent = logs.length > 0 ? logs.join('\n') : 'No logs yet...';
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-      } catch (e) {
-        console.error('Failed to fetch logs:', e);
-      }
-    }
-
-    // Load initial logs
-    loadInitialLogs();
-
-    // Listen for log updates via WebSocket
-    window.addEventListener('load', () => {
-      setTimeout(() => {
-        if (window.__cemReloadSocket) {
-          console.log('[cem-serve] WebSocket client connected');
-
-          // Store original onmessage handler
-          const originalOnMessage = window.__cemReloadSocket.onmessage;
-
-          // Handle both reload and log messages
-          window.__cemReloadSocket.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-
-            if (data.type === 'logs') {
-              // Update logs display
-              messagesDiv.textContent = data.logs.length > 0 ? data.logs.join('\n') : 'No logs yet...';
-              messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            } else if (data.type === 'reload') {
-              // Call original handler for reload
-              if (originalOnMessage) {
-                originalOnMessage.call(this, event);
-              }
-            }
-          };
-        }
-      }, 100);
-    });
-  </script>
-</body>
-</html>`, watchDir, manifestSize, wsConnections, elementsList)
+	// Prepare template data
+	data := struct {
+		WatchDir      string
+		ManifestSize  int
+		WSConnections int
+		ElementsList  template.HTML
+		ImportMap     template.HTML // Use template.HTML (not template.JS) - content is JSON in HTML context
+	}{
+		WatchDir:      watchDir,
+		ManifestSize:  manifestSize,
+		WSConnections: wsConnections,
+		ElementsList:  template.HTML(elementsList),
+		// template.HTML prevents HTML escaping while preserving JSON syntax
+		// This is correct for <script type="importmap"> which expects JSON in HTML context
+		ImportMap: template.HTML(importMapJSON),
+	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if _, err := w.Write([]byte(html)); err != nil {
-		s.logger.Error("Failed to write default index response: %v", err)
+	if err := DefaultIndexTemplate.Execute(w, data); err != nil {
+		s.logger.Error("Failed to execute default index template: %v", err)
 	}
 }
 
