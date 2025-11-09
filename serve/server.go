@@ -205,7 +205,9 @@ func (s *Server) GetWatchDir() string {
 func (s *Server) SetManifest(manifest []byte) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.manifest = manifest
+	// Defensive copy to prevent caller from mutating our internal state
+	s.manifest = make([]byte, len(manifest))
+	copy(s.manifest, manifest)
 	return nil
 }
 
@@ -213,7 +215,13 @@ func (s *Server) SetManifest(manifest []byte) error {
 func (s *Server) GetManifest() ([]byte, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return s.manifest, nil
+	// Defensive copy to prevent caller from mutating our internal state
+	if s.manifest == nil {
+		return nil, nil
+	}
+	manifestCopy := make([]byte, len(s.manifest))
+	copy(manifestCopy, s.manifest)
+	return manifestCopy, nil
 }
 
 // GetDebounceDuration returns the debounce duration (150ms per spec)

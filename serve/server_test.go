@@ -219,6 +219,48 @@ func TestManifestAccessors(t *testing.T) {
 	}
 }
 
+// TestManifestDefensiveCopy verifies that manifest uses defensive copying
+func TestManifestDefensiveCopy(t *testing.T) {
+	server, err := serve.NewServer(8014)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	// Create a manifest and modify it after setting
+	original := []byte(`{"schemaVersion":"1.0.0"}`)
+	err = server.SetManifest(original)
+	if err != nil {
+		t.Fatalf("Failed to set manifest: %v", err)
+	}
+
+	// Modify the original slice
+	original[0] = 'X'
+
+	// Get manifest and verify it wasn't affected
+	retrieved, err := server.GetManifest()
+	if err != nil {
+		t.Fatalf("Failed to get manifest: %v", err)
+	}
+
+	if retrieved[0] != '{' {
+		t.Error("SetManifest didn't make defensive copy - caller mutation affected internal state")
+	}
+
+	// Modify the retrieved slice
+	retrieved[0] = 'Y'
+
+	// Get manifest again and verify it wasn't affected
+	retrieved2, err := server.GetManifest()
+	if err != nil {
+		t.Fatalf("Failed to get manifest second time: %v", err)
+	}
+
+	if retrieved2[0] != '{' {
+		t.Error("GetManifest didn't make defensive copy - caller mutation affected internal state")
+	}
+}
+
 // TestDebounceDuration verifies 150ms debounce as per spec
 func TestDebounceDuration(t *testing.T) {
 	server, err := serve.NewServer(8007)
