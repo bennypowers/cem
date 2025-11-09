@@ -64,3 +64,20 @@ Answer: LSP catches this and reports in editor. Skip knobs for that element
 - values are valid when they conform to the config schema
 
 **Recommendation:** return 400 for invalid inputs, and log validation errors to console (and to error overlay)
+
+---
+
+## Acceptance Criteria
+
+- [ ] URL pattern `/components/{tag-name}/demo/{demo-slug}/` routes to demo
+- [ ] Demo slug extracted from demo file metadata (`<meta itemprop="name">`)
+- [ ] URL collision detection (two demos, same slug) logs error
+- [ ] Demo URLs regenerate when demos added/removed during watch
+- [ ] Query parameter `?chrome=false` renders minimal document
+- [ ] Query parameter `?disable-knobs=all` hides all knobs
+- [ ] Query parameter `?disable-knobs[]=attributes` hides attribute knobs only
+- [ ] Invalid query parameters return 400 with error message in overlay
+- [ ] Non-existent demo returns 404 with helpful error page
+- [ ] Demo URL discovery uses existing `generate/demodiscovery` package
+- [ ] URLPattern templates from config work correctly
+- [ ] Tests cover URL routing, parameter parsing, collision detection

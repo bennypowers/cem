@@ -1,3 +1,14 @@
+## Goals
+
+`cem serve` will provide a local development server, specifically geared for web component development. The workflow and structure are based on the custom-elements manifest, particularly around the `"demos"` field.
+Users will write demos for their elements, and the dev server will present those demos along with helpful utilities like error overlays, event logging, and element knobs (for attributes, css properties, etc).
+
+### Non-Goals
+
+`cem serve` is not meant as a general purpose development server, it's for developing web components in isolation. While it may be possible to develop quite complex `<my-app>`-style components with cem serve, it's primary purpose is *component development*
+It's also not meant to run as a service, it's for local development
+`cem serve`, like the rest of the `cem` project, does not expose a plugin API, preferring sensible defaults with limited, sensible configuration. We're not aiming to enable complex toolchains (non-standard css syntax transforms, etc). Rather, we encourage standards-based development. (TypeScript transforms are a major exception).
+
 ## Command Structure
 
 ```bash
@@ -22,227 +33,188 @@ cem serve [directory] [flags]
 --template-dir     Custom template directory for demo chrome
 ```
 
-## Core Architecture
+## Prior Art & References
 
-### HTTP Server (Go net/http)
-Static file serving with smart MIME types and a middleware pipeline to handle requests
+### @web/dev-server - Buildless Workflow
+- **URL**: https://modern-web.dev/docs/dev-server/overview/
+- **GitHub**: https://github.com/modernweb-dev/web
+- **Key feature**: Buildless ES module development with optional transformations
 
-Out of scope for initial implementation:
-- HTTPS support
-- Proxy configuration
-- Custom headers - CSP, Feature-Policy, etc.
-- Request logging format - Machine-readable option (JSON logs)
+### Vite - Error Overlay UX
+- **URL**: https://vite.dev/
+- **GitHub**: https://github.com/vitejs/vite
+- **Key feature**: Developer-friendly error overlay with source-mapped stack traces
+- Reference for Phase 6 polish work
 
-See [stretch goals](./99-STRETCH-GOALS.md)
+### PatternFly Elements Dev Server
+- **Location**: `patternfly-elements/tools/pfe-tools/dev-server/`
+- **Key features**:
+  - **Import maps**: Auto-generation from package.json with workspace support
+  - **Demo discovery**: Pattern matching and routing for demo files
+  - **CSS transforms**: Native constructable stylesheets syntax
 
-### Port Auto-Increment Behavior
+### open-wc HMR - Hot Module Replacement
+- **URL**: https://open-wc.org/docs/development/hot-module-replacement/
+- **GitHub**: https://github.com/open-wc/open-wc/tree/HEAD/packages/dev-server-hmr
+- **npm**: `@open-wc/dev-server-hmr`
+- **Key feature**: Web component-specific HMR with state preservation
+- Reference for stretch goal (99-STRETCH-GOALS.md)
 
-- If port 8000 is taken, starts on 8001
-- demos should not use localhost:8000 urls, so we can accept breakage as user error
-- Log actual port prominently on startup
-- Fail fast (exit 1) if entire range is exhausted
+### CEM Project Internal
+- **PR #98**: Dependency graph for incremental manifest updates → Phase 4 (transform cache)
+- **PR #127**: Workspace/monorepo support → Phase 2 (import maps)
+- **Existing packages:**
+  - `generate/session.go`: Manifest generation → Phase 1
+  - `generate/demodiscovery`: Demo URL discovery → Phase 3
 
-### Request Concurrency & Rate Limiting
-It's a dev server, so we don't need yet to implement rate limiting
+## Architecture Overview
 
-### Graceful Shutdown
-SIGINT/SIGTERM handling strategy:
-- Close WebSocket connections gracefully
-- Wait for in-flight requests (with 5s timeout)
-- Clean up file watchers
-- Flush logs
+See [01-ARCHITECTURE.md](./01-ARCHITECTURE.md) for detailed cross-cutting architectural concerns:
+- HTTP server design and middleware pipeline (7-stage request flow)
+- File watching strategy (source files, demos, config)
+- Manifest lifecycle management (in-memory generation, regeneration triggers)
+- WebSocket live reload implementation (`/__cem-reload` endpoint)
+- Error handling taxonomy (user code vs server errors, overlay rendering)
+- Cache management (transform cache, LRU eviction, ETags)
+- Graceful shutdown sequence (WebSocket cleanup, request draining)
+- Port auto-increment behavior
+- Logging format and examples
 
-### Middleware pipeline:
-  1. Logging
-     - passes through
-  2. CORS headers
-     - modifies response headers
-  3. Import map injection
-     - depends on package.json, which depends on manifest
-     - modifies HTML response
-  4. esbuild transform (TypeScript → JavaScript)
-     - modifies responses for subresources
-     - minimal dependencies since these are single-file transforms.
-     - skip for node_modules files (excepting monorepo siblings linked there)
-  5. CSS transform (optional: litcss-style)
-     - modifies responses for subresources
-     - minimal dependencies, just the config globs
-     - short circuits when file doesn't match config globs
-  6. Demo rendering and url transformation (with subresource loading)
-     - depends on import map
-     - short circuits when file ENOENT
-  7. Static fallback
+See [99-STRETCH-GOALS.md](./99-STRETCH-GOALS.md) for out-of-scope features: HTTPS, proxy config, custom headers, JSON logs.
 
-Middleware order is important, but there are middlewares which have minimal dependencies. The most important dependencies is package.json > import map > render HTML. When "dependencies" blocks in package.json files change, that affects the import map, which affects final rendered HTML. For the first draft, we can ignore changes to package.json files of node_modules dependencies (excluding monorepo siblings linked there)
+---
 
-### File Watching
+## Development Workflow
 
-#### Categories of files to watch
+To manage LLM review tool (CodeRabbit) context and enable incremental review:
 
-- Source files for elements (from manifest)
-- Source files for demos (`generate/demodiscovery`)
-- Config files
+### Branch Structure
+- **Staging branch**: `feat/dev-server` (existing, already created)
+- **Phase branches**: `feat/dev-server-phase-N-description`
+  - Example: `feat/dev-server-phase-0-testing-infra`
+  - Example: `feat/dev-server-phase-1-core-server`
+  - Example: `feat/dev-server-phase-2-import-maps`
 
-#### Considerations
+### PR Workflow
+1. Each phase implemented on its own branch
+2. Branches manage checklists in overview and plans.
+3. Phase PR merges to `feat/dev-server` (staging)
+4. After all phases complete, final PR: `feat/dev-server` → `main`
 
-- When source files are renamed or deleted, or entire watched directories, just regen manifest, then reload page
-- Follow symlinks
-- Debounce rapid changes (case: `git checkout`)
-- keep a reasonable max. watched files limit, and warn in console
+### Review Process
+- **Phase PRs** (to staging): Full CodeRabbit review, focused and manageable
+- **Final PR** (staging to main): Summary review only
+  - Instruct CodeRabbit to skip line-by-line (already reviewed in phase PRs)
+  - Focus on integration concerns and breaking changes
 
-### Manifest Generation
+### Benefits
+- ✅ Each phase PR is small and reviewable
+- ✅ CodeRabbit reviews incrementally (avoids context overload)
+- ✅ Main branch stays clean (no incomplete features)
+- ✅ Releases on main not blocked during development
+- ✅ Final PR manageable (just integration review)
 
-- Share code with `generate/session.go`
-- In-memory manifest (no file writes during serve)
-- Watch mode triggers regeneration → broadcast reload event
-- Demo discovery runs automatically on manifest update
-
-#### Options
-
-1. Read-lock for all HTTP handlers, write-lock during regeneration (blocks requests)
-2. Serve stale manifest during regeneration, atomic swap when done (no blocking)
-3. Version-based manifest with graceful degradation
-
-It makes sense to block relevant changes on manifest generation. Perhaps a pre-regen step which determines if the file changes are relevant to the current page, and only blocks on regen of relevant manifest paths.
-
-### Live Reload
-
-- WebSocket endpoint at `/__cem-reload`
-- Injected via `<script>` tag in HTML responses
-- Debounced broadcasts (prevent spam)
-- Events:
-  - `reload`
-  - `hmr`
-  - `manifest-updated`
-  - `error`
-
-## Additional Features
-
-### Error Handling
-- Show compilation or template runtime errors in browser overlay
-- Pretty error messages with stack traces relevant to user files
-- Source-mapped errors point to original TypeScript
-- ENOENT errors (missing demo) should show a 404 screen
-- Distinguish use code errors (esbuidl compilation, template compilation) from runtime / server errors
-  Place them in different blocks in the UI
-
-### Cache Management
-- ETag support for static assets
-- `Cache-Control: no-cache` for demos (always fresh)
-- In-memory cache for transformed files (cleared on change)
-- Add max cache size (MB or entry count)
-- Implement LRU eviction
-- Add cache hit/miss metrics to logging
-
-### CORS & Headers
-
+### Example Flow
 ```
-Access-Control-Allow-Origin: *
-X-Content-Type-Options: nosniff
+main (continues releases)
+
+feat/dev-server (staging)
+  ← PR #1: feat/dev-server-phase-0-testing-infra
+  ← PR #2: feat/dev-server-phase-1-core-server
+  ← PR #3: feat/dev-server-phase-2-import-maps
+  ← PR #4: feat/dev-server-phase-3-demo-rendering
+  ← PR #5: feat/dev-server-phase-4-transforms
+  ← PR #6: feat/dev-server-phase-5a-knobs-core
+  ← PR #7: feat/dev-server-phase-5b-knobs-advanced
+  ← PR #8: feat/dev-server-phase-5c-knobs-custom (optional)
+  ← PR #9: feat/dev-server-phase-6-polish
+
+→ Final PR: feat/dev-server → main (after all phases)
+   - CodeRabbit: summary only, skip line-by-line
+   - Review: integration concerns, breaking changes
 ```
 
-### Logging
-```
-[cem serve] Starting dev server on http://localhost:8000
-[cem serve] Manifest generated (23 elements, 47 demos)
-[cem serve] Watching 128 files for changes
-[cem serve] GET /components/pf-button/demo/variants/ 200 12ms
-[cem serve] File changed: elements/pf-button/pf-button.ts
-[cem serve] Manifest regenerated (1 file changed)
-[cem serve] Broadcast reload event to 3 clients
-```
+## Implementation Plan
 
-## Configuration File
+- [ ] **Phase 0: Test Infrastructure**
+  - Goal: Establish fixture-based testing patterns and benchmarks for all subsequent phases
+  - Prerequisites: None
+  - Provides: Test helpers, mock manifest, WebSocket test client, transform cache test doubles, benchmarks
+  - Details: See acceptance criteria at end of this document
 
-**`.config/cem.yaml` additions:** (defaults)
-```yaml
-serve:
-  port: 8000 # auto increments when port in use
-  open: true # launches browser
-  importMap: # see importMap section
-  knobs: # see knobs section
-  transforms: # see transform section
-  reload: # see reload section
-```
+- [ ] **Phase 1: Core Server**
+  - Goal: Basic HTTP server with live reload and middleware pipeline foundation
+  - Prerequisites: Phase 0
+  - Provides: HTTP server, middleware pipeline, WebSocket endpoint
+  - Consumes: `generate/session.go` (manifest generation)
+  - Affects: All subsequent phases
+  - Details: [05-AUTORELOAD-HMR.md](./05-AUTORELOAD-HMR.md)
 
-##  Implementation Plan
+- [ ] **Phase 2: Import Maps**
+  - Goal: Auto-generate import maps from package.json with workspace/monorepo support
+  - Prerequisites: Phase 1 (HTTP server)
+  - Provides: Import map JSON for HTML injection
+  - Consumes: package.json, node_modules (leverages PR #127 for workspace support)
+  - Affects: Phase 3 (demo rendering needs import maps)
+  - Details: [20-IMPORTMAPS.md](./20-IMPORTMAPS.md)
 
-### Phase 0: Test Infrastructure
-- HTTP server test helpers (similar to `cmd/e2e_helpers_test.go`)
-- Mock manifest generation
-- Fixture-based demo HTML (per CLAUDE.md directive)
-- WebSocket test client
-- Transform cache test doubles
-- set up benchmark / performance targets:
-    - Manifest regeneration time limits (e.g., <500ms for incremental)
-    - Max concurrent clients (e.g., 100)
-    - Transform cache hit rate targets (e.g., >90%)
-    - Memory usage limits (e.g., <500MB for typical project)
+- [ ] **Phase 3: Demo Rendering**
+  - Goal: URL routing and demo chrome templates with light DOM by default
+  - Prerequisites: Phase 1 (HTTP server), Phase 2 (import maps)
+  - Provides: Rendered demo HTML with chrome UI
+  - Consumes: Import maps, manifest, demo HTML files
+  - Affects: Phase 5 (knobs need chrome infrastructure)
+  - Details: [10-URL-REWRITING.md](./10-URL-REWRITING.md), [15-DEMO-CHROME.md](./15-DEMO-CHROME.md)
 
-#### Acceptance Criteria
-- Tests fail in red phase (command not implemented/stub implementation)
-- Benchmarks return output (despite implementation being a stub)
+- [ ] **Phase 4: Transforms**
+  - Goal: On-the-fly TypeScript and CSS transformation with dependency-aware caching
+  - Prerequisites: Phase 1 (HTTP server, middleware pipeline)
+  - Provides: Transformed JavaScript/CSS responses
+  - Consumes: Source files, tsconfig.json (leverages PR #98 for dependency graph)
+  - Affects: Demo rendering (transformed files loaded via import maps)
+  - Note: Can be implemented in parallel with Phases 2 and 3
+  - Details: [30-TRANSFORMS.md](./30-TRANSFORMS.md)
 
-### Phase 1: Core Server (cmd/serve.go, serve package)
-- HTTP server with static file serving
-- Watch mode integration (reuse generate/)
-- [WebSocket live reload](./05-AUTORELOAD-HMR.md)
-- Basic logging
+- [ ] **Phase 5: Knobs**
+  - Goal: Interactive controls for element attributes, properties, and CSS custom properties
+  - Prerequisites: Phase 3 (chrome infrastructure)
+  - Sub-phases:
+    - [ ] **Phase 5a: Basic Knobs (REQUIRED)**
+      - Goal: Single element demos with basic control types
+      - Provides: Knob UI in chrome sidebar
+      - Consumes: Manifest data, demo chrome
+      - Details: [50-KNOBS-CORE.md](./50-KNOBS-CORE.md)
+    - [ ] **Phase 5b: Advanced Knobs (REQUIRED)**
+      - Goal: Multiple elements and complex compositions with mutation observers
+      - Extends: Phase 5a
+      - Details: [51-KNOBS-ADVANCED.md](./51-KNOBS-ADVANCED.md)
+    - [ ] **Phase 5c: Custom Templates (OPTIONAL)**
+      - Goal: User-provided knob templates for specialized controls
+      - Extends: Phase 5a/5b
+      - Details: [52-KNOBS-CUSTOM.md](./52-KNOBS-CUSTOM.md)
 
-#### Acceptance Criteria
-- Server starts
-- Core config tested
-- Autoreload works
-- Core Errors logged to console
+- [ ] **Phase 6: Polish**
+  - Goal: Error overlay, documentation, and examples
+  - Prerequisites: All previous phases
+  - Provides: Enhanced developer experience
+  - Consumes: Errors from all phases
+  - Details: Error overlay (ref: Vite UX), documentation, example projects
 
-### Phase 2: Import Maps (serve/importmap package)
-- Auto-discovery from package.json
-- Override file loading
-- Merge strategy
-- [HTML injection middleware](./20-IMPORTMAPS.md)
+---
 
-#### Acceptance Criteria
-- Import map generated and appended to head
+## Phase 0 Acceptance Criteria
 
-### Phase 3: Routing and Demo Rendering (serve/demo package)
-- [URL routing](./10-URL-REWRITING.md)
-- Template system (Go html/template)
-- [Chrome templates](./15-DEMO-CHROME.md)
+Since Phase 0 is test infrastructure, its acceptance criteria are unique:
 
-#### Acceptance Criteria
-- Chrome implemented
-- Server Errors logged to browser console
-
-### Phase 4: Transforms ([serve/transform](./30-TRANSFORMS.md) package)
-- esbuild integration (TypeScript)
-- CSS transform
-- Transform cache
-
-#### Acceptance Criteria
-- Tests pass
-- "buildless workflow" enabled 
-  1. User starts server with element.ts, element.css, and demo/index.html files
-  2. Demo transforms sources to js
-  3. Writing changes to any of the three files reloads the page
-
-### Phase 5: Knobs ([serve/knobs](./40-KNOBS.md) package, embedded JS)
-- Server-side control generation
-- Client-side event handlers
-- Template customization
-- Type inference from CEM
-
-#### Acceptance Criteria
-- knobs display on demos
-- knobs control multiple elements
-- knobs have multiple kinds (enum, boolean)
-
-### Phase 6: Polish
-- Error overlay (serve/errors package)
-- Manifest viewer UI (serve/manifest package) (stretch goal)
-- Event logger (serve/events package)
-- Documentation
-
-#### Acceptance Criteria
-- Server errors logged to overlay
-- Custom element events logged
-- Manifest browser implemented
+- [ ] Test helpers exist and can be imported by phase tests
+- [ ] HTTP server test helper can start/stop test server
+- [ ] Mock manifest generation creates valid CEM JSON
+- [ ] Fixture pattern established (demo HTML + expected output)
+- [ ] WebSocket test client can connect and receive events
+- [ ] Transform cache test double implements cache interface
+- [ ] Benchmarks defined (even if implementation is stub):
+  - Manifest regeneration benchmark exists
+  - Transform cache benchmark exists
+  - WebSocket broadcast benchmark exists
+- [ ] All benchmarks return output (timing may be unrealistic with stubs)
+- [ ] Tests fail in "red" phase (prove they detect unimplemented features)

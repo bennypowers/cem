@@ -28,9 +28,9 @@ transform := api.Transform(source, api.TransformOptions{
 
 #### Caching and invalidation
 
-- Build dependency graph for modules (see prior art in PR #98, which creates a 
+- Build dependency graph for modules (see prior art in PR #98, which creates a
 dependency graph for incremental manifest updates, this should be sufficient for us, perhaps with minor modifications)
-- Cache transformed output (invalidate file and it's dependent tree on file change)
+- Cache transformed output (invalidate file and its dependent tree on file change)
 
 ```go
 type CacheKey struct {
@@ -44,6 +44,41 @@ This is fast and reliable enough for dev server.
 - Add max cache size (e.g., 500MB)
 - Implement LRU eviction
 - Log cache stats (hits, misses, size) periodically
+
+### Cache Invalidation Interface
+
+The transform cache integrates with the file watching system via event-based invalidation:
+
+**Event Flow:**
+1. FileWatcher detects file change
+2. FileWatcher emits `FileChangedEvent` with path
+3. TransformCache subscribes to `FileChangedEvent`
+4. On event receipt, cache:
+   - Looks up file in dependency graph
+   - Invalidates the changed file
+   - Walks dependency graph to find dependent files
+   - Invalidates all transitive dependents
+5. Next request for any invalidated file triggers fresh transform
+
+**Event Structure:**
+```go
+type FileChangedEvent struct {
+    Path      string
+    EventType string // "modified" | "deleted" | "created"
+}
+```
+
+**Cache Interface:**
+```go
+type TransformCache interface {
+    Get(path string) (transformed []byte, found bool)
+    Set(path string, content []byte, deps []string)
+    Invalidate(path string) []string // Returns list of invalidated dependents
+    Subscribe(eventBus EventBus)
+}
+```
+
+See [01-ARCHITECTURE.md](./01-ARCHITECTURE.md#cache-management) for overall cache management strategy.
 
 ### Config
 under `.serve.transforms`
@@ -117,3 +152,32 @@ server/transform/test-fixtures/
       ├── type-error.ts
       └── error-test.go
 ```
+
+---
+
+## Acceptance Criteria
+
+- [ ] TypeScript files transformed to JavaScript via esbuild Go API
+- [ ] Single-file transforms (no type checking, rely on tsserver)
+- [ ] Inline source maps generated for debugging
+- [ ] Server responds to `.js` URLs but reads `.ts` files
+- [ ] Transform target configurable via CLI/config (default ES2020 or ES2022)
+- [ ] tsconfig.json read and passed to esbuild's tsconfigRaw
+- [ ] Transform cache implemented with LRU eviction
+- [ ] Cache key includes path, modification time, and size
+- [ ] Dependency graph tracks module relationships (leverage PR #98)
+- [ ] File changes invalidate cached file and dependent tree
+- [ ] Max cache size enforced (e.g., 500MB)
+- [ ] Cache stats logged (hits, misses, size)
+- [ ] Worker pool parallelizes transforms (max 4 concurrent)
+- [ ] Excess requests queued, 503 returned if queue full
+- [ ] CSS files transformed to CSSStyleSheet JavaScript modules
+- [ ] CSS transform triggered by glob pattern match (--transform-css flag)
+- [ ] CSS transform content-type: `application/javascript; charset=utf-8`
+- [ ] CSS transform does not support relative URLs (documented limitation)
+- [ ] Config `transforms.typescript.enabled` controls TypeScript transform
+- [ ] Config `transforms.css.enabled` controls CSS transform
+- [ ] Config `transforms.css.include/exclude` filters CSS files
+- [ ] Transform errors shown in browser error overlay
+- [ ] Tests cover cache invalidation, dependency graph, error handling
+- [ ] Tests use fixture pattern (input.ts → expected.js + source maps)

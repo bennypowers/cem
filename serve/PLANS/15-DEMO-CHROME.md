@@ -146,6 +146,59 @@ Optional `?shadow=true` query parameter wraps demo in shadow root:
 - ✅ Complete isolation of demo from document
 - ✅ Tests real shadow DOM encapsulation
 
+### Knobs in Shadow Mode
+
+When `?shadow=true` is enabled, knobs use `getRootNode()` to access demo elements inside the shadow root.
+
+**Implementation in CemServeDemo:**
+
+```typescript
+class CemServeDemo extends HTMLElement {
+  #getShadowRoot(): ShadowRoot | null {
+    // Check if demo content is in shadow root
+    const template = this.querySelector('template[shadowrootmode]');
+    return template ? this.shadowRoot : null;
+  }
+
+  setAttribute(attribute: string, value: string): boolean {
+    const root = this.#getShadowRoot() || this;
+    const target = root.querySelector(`[${attribute}]`);
+    if (target) {
+      target.setAttribute(attribute, value);
+      return true;
+    }
+    return false;
+  }
+
+  setProperty(property: string, value: unknown): boolean {
+    const root = this.#getShadowRoot() || this;
+    const target = root.querySelector('[data-knob-target]');
+    if (target) {
+      target[property] = value;
+      return true;
+    }
+    return false;
+  }
+
+  setCssCustomProperty(cssProperty: string, value: string): boolean {
+    const root = this.#getShadowRoot() || this;
+    const target = root.querySelector('[data-knob-target]');
+    if (target) {
+      target.style.setProperty(cssProperty, value);
+      return true;
+    }
+    return false;
+  }
+}
+```
+
+**Behavior:**
+- **Light DOM mode** (default): `root = this`, queries work normally
+- **Shadow mode** (`?shadow=true`): `root = this.shadowRoot`, queries work inside shadow root
+- Knobs continue to function in both modes without user intervention
+
+See [50-KNOBS-CORE.md](./50-KNOBS-CORE.md) for complete knobs implementation details.
+
 ### Custom Element Name Collisions
 Not an issue. cem-serve- is a specific-enough prefix.
 
@@ -169,3 +222,26 @@ We can issue a browser warning based on user agent if someone tries to load a de
 ### Demo Switcher Navigation
 - Nav is SSRd by package and module (grouped by normalized primary tag name)
 - Current demo is highlighted `aria-active`
+
+---
+
+## Acceptance Criteria
+
+- [ ] Demo chrome template renders with SSR (Declarative Shadow DOM)
+- [ ] Chrome UI in shadow root, demo in light DOM
+- [ ] `<cem-serve-chrome>` custom element defined and registered
+- [ ] `<cem-serve-demo>` custom element defined with helper methods
+- [ ] Import map injected into `<head>` before demo scripts
+- [ ] `__cem-serve-chrome.js` script loaded and executed
+- [ ] Demo switcher nav shows all demos for current element
+- [ ] Current demo highlighted in demo switcher
+- [ ] VCS source link renders with correct icon (GitHub, GitLab)
+- [ ] Demo description renders as GFM markdown with HTML escaping
+- [ ] Relative links in markdown resolve against demo file path
+- [ ] Query parameter `?shadow=true` wraps demo in shadow root
+- [ ] Light DOM mode (default) allows `document.querySelector()` in demo scripts
+- [ ] Module scripts in demos work without `currentScript` issues
+- [ ] Knobs panel renders when knobs enabled
+- [ ] Server errors logged to browser console
+- [ ] Browser compatibility check warns on unsupported browsers (DSD requirement)
+- [ ] Tests cover template rendering, shadow/light DOM modes

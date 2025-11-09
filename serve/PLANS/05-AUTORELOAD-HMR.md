@@ -49,3 +49,24 @@ T2: regeneration completes → broadcast once or twice?
 - Single broadcast after batch completes
 - Include all changed files in event payload
 
+---
+
+## Acceptance Criteria
+
+- [ ] Server starts and listens on configured port
+- [ ] WebSocket endpoint `/__cem-reload` accepts connections
+- [ ] WebSocket client injected into all HTML responses
+- [ ] File watcher detects changes to source files
+- [ ] File watcher detects changes to demo files
+- [ ] File watcher detects changes to config files
+- [ ] File changes trigger manifest regeneration
+- [ ] Manifest regeneration broadcasts `reload` event via WebSocket
+- [ ] Browser receives reload event and reloads page
+- [ ] Debouncing works (rapid changes result in single reload)
+- [ ] 150ms debounce window implemented
+- [ ] Transform cache cleared for changed files on reload
+- [ ] Multiple connected clients all receive broadcast
+- [ ] Logging shows file changes and reload events
+- [ ] Core errors (server crashes, fatal errors) logged to console
+- [ ] Config `reload: false` disables live reload
+- [ ] Tests pass for WebSocket lifecycle

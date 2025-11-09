@@ -39,10 +39,21 @@ generate: true # based on package.json
 
 **Merging:** User overrides win, auto-generated fills gaps. Algorithm is deep merge, keeping user overrides at each layer.
 
-**Injection:** Middleware injects `<script type="importmap">` into HTML responses.
-- HTML should not already have an import map. user demos containing import maps 
-will fail, since the page already establishes an import map and the rule is that 
-the first map wins. For this reason we make the import map configurable.
+**Injection:** Middleware injects `<script type="importmap">` into HTML responses before any demo scripts are parsed.
+
+### Injection Timing
+
+Import map is injected during demo HTML template rendering (Phase 3):
+
+1. Server renders demo chrome template (see [15-DEMO-CHROME.md](./15-DEMO-CHROME.md))
+2. Import map JSON is generated (auto + overrides merged)
+3. Import map is injected as **first child of `<head>`** via template variable `{{.ImportMap}}`
+4. Demo HTML content is inserted into light DOM
+5. Demo scripts execute with import map already available
+
+This ensures import map is established before any module scripts in the demo execute.
+
+**Important constraint**: User demos should not already contain an import map. If they do, the page will fail since browsers only honor the first import map. For this reason, import map generation is configurable (can be disabled via config).
 
 
 ### package.json `exports` Field Resolution
@@ -110,3 +121,24 @@ Priority (highest to lowest):
 1. CLI flags
 2. Config file
 3. Auto-generated
+
+---
+
+## Acceptance Criteria
+
+- [ ] Import map auto-generated from package.json dependencies
+- [ ] Import map includes workspace packages (monorepo support)
+- [ ] package.json `exports` field resolved (prioritize `import` condition)
+- [ ] package.json `main` field used as fallback when `exports` missing
+- [ ] Subpath patterns in `exports` handled correctly
+- [ ] User override file (import-map.json) merges with auto-generated map
+- [ ] User overrides win in merge conflicts (deep merge algorithm)
+- [ ] Import map injected into HTML `<head>` as `<script type="importmap">`
+- [ ] Workspace packages resolve to local paths (not /node_modules)
+- [ ] Workspace packages prioritized over node_modules
+- [ ] Missing node_modules dependencies logged as warnings
+- [ ] Packages with no `exports` or `main` field logged as warnings
+- [ ] Only bare specifiers processed (relative, absolute URLs, data URLs ignored)
+- [ ] Config priority enforced: CLI > file > auto-generated
+- [ ] Demos containing import maps fail with helpful error message
+- [ ] Tests cover exports resolution, workspace support, merge algorithm
