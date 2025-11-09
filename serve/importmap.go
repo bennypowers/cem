@@ -370,12 +370,25 @@ func resolveExportValue(exportValue interface{}, pkgPath, rootDir string) (strin
 
 	case map[string]interface{}:
 		// Conditional exports - prioritize "import" condition
-		if importPath, ok := v["import"].(string); ok {
-			return pkgWebPath + "/" + strings.TrimPrefix(importPath, "./"), nil
+		if importValue, ok := v["import"]; ok {
+			// Recursively resolve if it's a nested condition
+			if importPath, ok := importValue.(string); ok {
+				return pkgWebPath + "/" + strings.TrimPrefix(importPath, "./"), nil
+			}
+			// Recursively resolve nested conditions
+			if importMap, ok := importValue.(map[string]interface{}); ok {
+				return resolveExportValue(importMap, pkgPath, rootDir)
+			}
 		}
 		// Try default condition
-		if defaultPath, ok := v["default"].(string); ok {
-			return pkgWebPath + "/" + strings.TrimPrefix(defaultPath, "./"), nil
+		if defaultValue, ok := v["default"]; ok {
+			if defaultPath, ok := defaultValue.(string); ok {
+				return pkgWebPath + "/" + strings.TrimPrefix(defaultPath, "./"), nil
+			}
+			// Recursively resolve nested default
+			if defaultMap, ok := defaultValue.(map[string]interface{}); ok {
+				return resolveExportValue(defaultMap, pkgPath, rootDir)
+			}
 		}
 	}
 
@@ -537,11 +550,25 @@ func resolveSimpleExportValue(exportValue interface{}, depWebPath string) string
 	case string:
 		return depWebPath + "/" + strings.TrimPrefix(v, "./")
 	case map[string]interface{}:
-		if importPath, ok := v["import"].(string); ok {
-			return depWebPath + "/" + strings.TrimPrefix(importPath, "./")
+		// Try import condition first
+		if importValue, ok := v["import"]; ok {
+			if importPath, ok := importValue.(string); ok {
+				return depWebPath + "/" + strings.TrimPrefix(importPath, "./")
+			}
+			// Recursively resolve nested import conditions
+			if importMap, ok := importValue.(map[string]interface{}); ok {
+				return resolveSimpleExportValue(importMap, depWebPath)
+			}
 		}
-		if defaultPath, ok := v["default"].(string); ok {
-			return depWebPath + "/" + strings.TrimPrefix(defaultPath, "./")
+		// Try default condition
+		if defaultValue, ok := v["default"]; ok {
+			if defaultPath, ok := defaultValue.(string); ok {
+				return depWebPath + "/" + strings.TrimPrefix(defaultPath, "./")
+			}
+			// Recursively resolve nested default
+			if defaultMap, ok := defaultValue.(map[string]interface{}); ok {
+				return resolveSimpleExportValue(defaultMap, depWebPath)
+			}
 		}
 	}
 	return ""
