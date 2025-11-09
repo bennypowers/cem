@@ -68,10 +68,17 @@ func (wm *websocketManager) ConnectionCount() int {
 
 // Broadcast sends a message to all connected clients
 func (wm *websocketManager) Broadcast(message []byte) error {
+	// Snapshot connections while holding read lock to avoid blocking connects/disconnects
 	wm.mu.RLock()
-	defer wm.mu.RUnlock()
-
+	snapshot := make([]*connWrapper, 0, len(wm.connections))
 	for _, wrapper := range wm.connections {
+		snapshot = append(snapshot, wrapper)
+	}
+	wm.mu.RUnlock()
+
+	// Write to all connections without holding manager lock
+	// so slow clients don't block connects/disconnects
+	for _, wrapper := range snapshot {
 		// Lock this connection's write mutex to prevent concurrent writes
 		wrapper.mu.Lock()
 		err := wrapper.conn.WriteMessage(websocket.TextMessage, message)
