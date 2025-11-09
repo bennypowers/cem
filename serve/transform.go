@@ -142,18 +142,52 @@ func TransformTypeScript(source []byte, opts TransformOptions) (*TransformResult
 	}, nil
 }
 
-// TransformCSS transforms CSS to a JavaScript module exporting a CSSStyleSheet
-func TransformCSS(source []byte) string {
-	// Escape backticks and backslashes in CSS
-	css := string(source)
-	css = strings.ReplaceAll(css, "\\", "\\\\")
-	css = strings.ReplaceAll(css, "`", "\\`")
-	css = strings.ReplaceAll(css, "${", "\\${")
+// stringToTemplateLiteral escapes a string for safe inclusion in a JS template literal
+// Based on Lit's stringToTemplateLiteral: /\\|`|\$(?={)|(?<=<)\//g
+func stringToTemplateLiteral(str string) string {
+	var result strings.Builder
+	result.Grow(len(str) + 20) // Pre-allocate with some buffer for escapes
 
-	// Wrap in constructable stylesheet template
-	return fmt.Sprintf(`// CSS transformed to constructable stylesheet
+	prevChar := rune(0)
+	for i, char := range str {
+		switch char {
+		case '\\', '`':
+			// Escape backslashes and backticks
+			result.WriteRune('\\')
+			result.WriteRune(char)
+		case '$':
+			// Only escape $ if followed by {  (\$(?={))
+			if i+1 < len(str) && str[i+1] == '{' {
+				result.WriteString("\\$")
+			} else {
+				result.WriteRune(char)
+			}
+		case '/':
+			// Escape / if preceded by <  ((?<=<)\/)
+			if prevChar == '<' {
+				result.WriteString("\\/")
+			} else {
+				result.WriteRune(char)
+			}
+		default:
+			result.WriteRune(char)
+		}
+		prevChar = char
+	}
+
+	return result.String()
+}
+
+// TransformCSS transforms CSS to a JavaScript module exporting a CSSStyleSheet
+func TransformCSS(source []byte, path string) string {
+	css := stringToTemplateLiteral(string(source))
+
+	// Use embedded template with source map
+	// Template format matches Lit's CSS module pattern
+	return fmt.Sprintf(`// [served] %s
 const sheet = new CSSStyleSheet();
 sheet.replaceSync(%s);
 export default sheet;
-`, "`"+css+"`")
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IiJ9
+`, path, "`"+css+"`")
 }

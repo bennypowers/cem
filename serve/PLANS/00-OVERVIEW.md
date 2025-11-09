@@ -159,7 +159,7 @@ feat/dev-server (staging)
   - Affects: Phase 3 (demo rendering needs import maps)
   - Details: [20-IMPORTMAPS.md](./20-IMPORTMAPS.md)
 
-- [ ] **Phase 3: Demo Rendering**
+- [x] **Phase 3: Demo Rendering**
   - Goal: URL routing and demo chrome templates with light DOM by default
   - Prerequisites: Phase 1 (HTTP server), Phase 2 (import maps)
   - Provides: Rendered demo HTML with chrome UI

@@ -706,7 +706,7 @@ func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Transform CSS to JavaScript module
-		transformed := TransformCSS(source)
+		transformed := TransformCSS(source, requestPath)
 
 		// Serve as JavaScript module
 		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")

@@ -33,7 +33,7 @@ func TestTransformCSS_Basic(t *testing.T) {
   color: var(--color, red);
 }`
 
-	result := TransformCSS([]byte(cssContent))
+	result := TransformCSS([]byte(cssContent), "test.css")
 
 	// Should wrap in CSSStyleSheet
 	if !strings.Contains(result, "new CSSStyleSheet()") {
@@ -57,9 +57,28 @@ func TestTransformCSS_Basic(t *testing.T) {
 
 	// Should escape backticks in CSS
 	cssWithBacktick := "content: `test`;"
-	escaped := TransformCSS([]byte(cssWithBacktick))
+	escaped := TransformCSS([]byte(cssWithBacktick), "test.css")
 	if strings.Contains(escaped, "content: `test`;") {
 		t.Error("Backticks in CSS not escaped")
+	}
+
+	// Should only escape ${ not all $ (matches Lit behavior)
+	cssWithDollar := "width: $var; height: ${expr};"
+	dollarEscaped := TransformCSS([]byte(cssWithDollar), "test.css")
+	// $var should NOT be escaped
+	if !strings.Contains(dollarEscaped, "$var") {
+		t.Error("Single $ incorrectly escaped (should only escape ${)")
+	}
+	// ${ should be escaped
+	if strings.Contains(dollarEscaped, "${expr}") && !strings.Contains(dollarEscaped, "\\${") {
+		t.Error("${ not properly escaped")
+	}
+
+	// Should escape </ to prevent script tag injection
+	cssWithScriptTag := "content: '</script>';"
+	scriptEscaped := TransformCSS([]byte(cssWithScriptTag), "test.css")
+	if strings.Contains(scriptEscaped, "</script>") && !strings.Contains(scriptEscaped, "<\\/script>") {
+		t.Error("</ not properly escaped")
 	}
 }
 
