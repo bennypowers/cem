@@ -36,7 +36,8 @@ type ChromeData struct {
 	Description  template.HTML
 	ShadowMode   bool
 	DemoSwitcher template.HTML
-	SourceURL    string
+	SourceURL    string // Source file URL (e.g., GitHub blob URL)
+	CanonicalURL string // Canonical demo URL
 }
 
 var (

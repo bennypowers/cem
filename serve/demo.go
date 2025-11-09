@@ -166,6 +166,12 @@ func (s *Server) renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[stri
 		demoTitle = filepath.Base(entry.FilePath)
 	}
 
+	// Get source URL (file location) and canonical URL (demo URL)
+	var sourceURL string
+	if entry.Demo.Source != nil {
+		sourceURL = entry.Demo.Source.Href
+	}
+
 	chromeData := ChromeData{
 		TagName:      entry.TagName,
 		DemoTitle:    demoTitle,
@@ -174,7 +180,8 @@ func (s *Server) renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[stri
 		ImportMap:    template.HTML(importMapJSON),
 		EnabledKnobs: queryParams["knobs"],
 		ShadowMode:   queryParams["shadow"] == "true",
-		SourceURL:    entry.Demo.URL,
+		SourceURL:    sourceURL,    // Link to source file
+		CanonicalURL: entry.Demo.URL, // Link to canonical demo
 	}
 
 	// Render with chrome
