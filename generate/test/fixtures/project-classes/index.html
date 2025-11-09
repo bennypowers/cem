@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CEM Dev Server Demo</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
+      line-height: 1.6;
+    }
+    h1 { color: #2563eb; }
+    .info {
+      background: #eff6ff;
+      border-left: 4px solid #2563eb;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+    .debug {
+      background: #1f2937;
+      color: #10b981;
+      padding: 1rem;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      overflow-x: auto;
+    }
+    .status {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .connected { background: #10b981; color: white; }
+    .disconnected { background: #ef4444; color: white; }
+  </style>
+</head>
+<body>
+  <h1>🚀 CEM Dev Server</h1>
+
+  <div class="info">
+    <p><strong>Live Reload Status:</strong> <span id="status" class="status disconnected">Disconnected</span></p>
+    <p>Edit any <code>.ts</code> or <code>.js</code> file in this project to see live reload in action!</p>
+  </div>
+
+  <h2>WebSocket Messages</h2>
+  <div class="debug" id="messages">Waiting for messages...</div>
+
+  <h2>How it works</h2>
+  <ul>
+    <li>The dev server injects a WebSocket client into this HTML page</li>
+    <li>When you edit source files, the server detects the change</li>
+    <li>The server sends a reload message via WebSocket</li>
+    <li>The client receives the message and reloads the page</li>
+  </ul>
+
+  <script>
+    // This script logs WebSocket events - the actual WebSocket client is injected by the server
+    const messagesDiv = document.getElementById('messages');
+    const statusSpan = document.getElementById('status');
+    const messages = [];
+
+    function log(msg) {
+      const timestamp = new Date().toLocaleTimeString();
+      messages.push(`[${timestamp}] ${msg}`);
+      messagesDiv.textContent = messages.join('\n');
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    // Listen for WebSocket events on the window
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        // Check if WebSocket client was injected
+        if (window.__cemReloadSocket) {
+          statusSpan.className = 'status connected';
+          statusSpan.textContent = 'Connected';
+          log('✓ WebSocket client loaded');
+        } else {
+          log('Waiting for WebSocket connection...');
+
+          // Keep checking
+          const checkInterval = setInterval(() => {
+            if (window.__cemReloadSocket) {
+              clearInterval(checkInterval);
+              statusSpan.className = 'status connected';
+              statusSpan.textContent = 'Connected';
+              log('✓ WebSocket client loaded');
+            }
+          }, 100);
+        }
+      }, 100);
+    });
+
+    // Log WebSocket messages by intercepting console
+    const originalLog = console.log;
+    console.log = function(...args) {
+      const msg = args.join(' ');
+      if (msg.includes('[cem-serve]')) {
+        log(msg);
+      }
+      originalLog.apply(console, args);
+    };
+  </script>
+</body>
+</html>
