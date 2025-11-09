@@ -153,7 +153,7 @@ var serveCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(serveCmd)
 
-	serveCmd.Flags().Int("port", 8080, "Port to serve on")
+	serveCmd.Flags().Int("port", 8000, "Port to serve on")
 	serveCmd.Flags().Bool("no-reload", false, "Disable live reload")
 	serveCmd.Flags().String("target", "es2022", "TypeScript/JavaScript transform target (es2015, es2016, es2017, es2018, es2019, es2020, es2021, es2022, es2023, esnext)")
 
