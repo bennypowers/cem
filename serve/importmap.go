@@ -27,7 +27,8 @@ import (
 
 // ImportMap represents an ES module import map
 type ImportMap struct {
-	Imports map[string]string `json:"imports"`
+	Imports map[string]string            `json:"imports"`
+	Scopes  map[string]map[string]string `json:"scopes,omitempty"`
 }
 
 // ImportMapConfig configures import map generation
@@ -50,6 +51,7 @@ type packageJSON struct {
 func GenerateImportMap(rootDir string, config *ImportMapConfig) (*ImportMap, error) {
 	result := &ImportMap{
 		Imports: make(map[string]string),
+		Scopes:  make(map[string]map[string]string),
 	}
 
 	// Default logger to no-op if not provided
@@ -124,6 +126,22 @@ func GenerateImportMap(rootDir string, config *ImportMapConfig) (*ImportMap, err
 					logger.Logger.Warning("Failed to add package %s exports: %v", depName, err)
 				}
 			}
+		}
+	}
+
+	// 4.5. Add scopes for transitive dependencies in node_modules
+	// For each package in the dependency tree, add scopes for their dependencies
+	if err := addTransitiveDependenciesToScopes(result, rootDir, rootPkg, logger.Logger); err != nil {
+		if logger.Logger != nil {
+			logger.Logger.Warning("Failed to add transitive dependencies: %v", err)
+		}
+	}
+
+	// 4.6. Add scopes for workspace packages and root package
+	// Workspace packages and root package also need to resolve bare specifiers
+	if err := addWorkspaceScopesToImportMap(result, rootDir, rootPkg, workspacePackages, logger.Logger); err != nil {
+		if logger.Logger != nil {
+			logger.Logger.Warning("Failed to add workspace scopes: %v", err)
 		}
 	}
 
@@ -362,4 +380,265 @@ func resolveExportValue(exportValue interface{}, pkgPath, rootDir string) (strin
 	}
 
 	return "", fmt.Errorf("could not resolve export value")
+}
+
+// addTransitiveDependenciesToScopes builds scopes for packages in the dependency tree
+// by recursively traversing dependencies from the root package
+func addTransitiveDependenciesToScopes(importMap *ImportMap, rootDir string, rootPkg *packageJSON, logger Logger) error {
+	if rootPkg == nil {
+		return nil
+	}
+
+	// Build dependency tree starting from root dependencies
+	visited := make(map[string]bool)
+	nodeModulesPath := filepath.Join(rootDir, "node_modules")
+
+	// Process each root dependency recursively
+	if rootPkg.Dependencies != nil {
+		for depName := range rootPkg.Dependencies {
+			if err := buildScopesForPackage(importMap, depName, nodeModulesPath, visited); err != nil {
+				if logger != nil {
+					logger.Warning("Failed to build scopes for %s: %v", depName, err)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// buildScopesForPackage recursively builds scopes for a package and its dependencies
+func buildScopesForPackage(importMap *ImportMap, pkgName string, nodeModulesPath string, visited map[string]bool) error {
+	// Skip if already processed
+	if visited[pkgName] {
+		return nil
+	}
+	visited[pkgName] = true
+
+	// Read package.json
+	pkgPath := filepath.Join(nodeModulesPath, pkgName)
+	pkgJSONPath := filepath.Join(pkgPath, "package.json")
+	pkg, err := readPackageJSON(pkgJSONPath)
+	if err != nil {
+		return err
+	}
+
+	// If this package has no dependencies, nothing to scope
+	if pkg.Dependencies == nil || len(pkg.Dependencies) == 0 {
+		return nil
+	}
+
+	// Create scope key for this package
+	scopeKey := "/node_modules/" + pkgName + "/"
+	if importMap.Scopes[scopeKey] == nil {
+		importMap.Scopes[scopeKey] = make(map[string]string)
+	}
+
+	// Add each dependency to this package's scope
+	for depName := range pkg.Dependencies {
+		// Check if dependency exists
+		depPath := filepath.Join(nodeModulesPath, depName)
+		if _, err := os.Stat(depPath); os.IsNotExist(err) {
+			continue // Dependency not installed, skip
+		}
+
+		// Read dependency's package.json
+		depPkgPath := filepath.Join(depPath, "package.json")
+		depPkg, err := readPackageJSON(depPkgPath)
+		if err != nil {
+			continue
+		}
+
+		// Add dependency to this package's scope
+		depWebPath := "/node_modules/" + depName
+		if depPkg.Exports != nil {
+			addDependencyExportsToScope(importMap.Scopes[scopeKey], depName, depWebPath, depPkg.Exports)
+		} else if depPkg.Main != "" {
+			mainPath := depWebPath + "/" + strings.TrimPrefix(depPkg.Main, "./")
+			importMap.Scopes[scopeKey][depName] = mainPath
+			importMap.Scopes[scopeKey][depName+"/"] = depWebPath + "/"
+		} else {
+			importMap.Scopes[scopeKey][depName+"/"] = depWebPath + "/"
+		}
+
+		// Recursively process this dependency's dependencies
+		if err := buildScopesForPackage(importMap, depName, nodeModulesPath, visited); err != nil {
+			// Continue on error, just skip this dependency's tree
+			continue
+		}
+	}
+
+	return nil
+}
+
+// addDependencyExportsToScope adds dependency exports to a scope map
+func addDependencyExportsToScope(scope map[string]string, depName, depWebPath string, exports interface{}) {
+	switch exp := exports.(type) {
+	case string:
+		// Simple string export
+		scope[depName] = depWebPath + "/" + strings.TrimPrefix(exp, "./")
+
+	case map[string]interface{}:
+		// Check if this is condition-only (no subpaths)
+		hasSubpaths := false
+		for exportPath := range exp {
+			if strings.HasPrefix(exportPath, ".") {
+				hasSubpaths = true
+				break
+			}
+		}
+
+		if !hasSubpaths {
+			// Condition-only export, resolve it
+			if importPath, ok := exp["import"].(string); ok {
+				scope[depName] = depWebPath + "/" + strings.TrimPrefix(importPath, "./")
+			} else if defaultPath, ok := exp["default"].(string); ok {
+				scope[depName] = depWebPath + "/" + strings.TrimPrefix(defaultPath, "./")
+			}
+		} else {
+			// Has subpaths - process each export path
+			for exportPath, exportValue := range exp {
+				var importKey string
+				if exportPath == "." {
+					importKey = depName
+				} else {
+					cleanPath := strings.TrimPrefix(exportPath, "./")
+					importKey = depName + "/" + cleanPath
+				}
+
+				// Handle wildcard patterns like "./decorators/*" -> "./decorators/*.js"
+				if strings.Contains(exportPath, "*") {
+					if targetStr, ok := exportValue.(string); ok && strings.Contains(targetStr, "*") {
+						// Extract prefixes before the wildcard
+						// "./decorators/*" becomes "decorators/"
+						// "./decorators/*.js" becomes "decorators/"
+						srcParts := strings.Split(strings.TrimPrefix(exportPath, "./"), "*")
+						dstParts := strings.Split(strings.TrimPrefix(targetStr, "./"), "*")
+						srcPrefix := srcParts[0]
+						dstPrefix := dstParts[0]
+						// Add trailing slash mapping for wildcards
+						scope[depName+"/"+srcPrefix] = depWebPath + "/" + dstPrefix
+					}
+					continue
+				}
+
+				// Resolve export value
+				if resolvedPath := resolveSimpleExportValue(exportValue, depWebPath); resolvedPath != "" {
+					scope[importKey] = resolvedPath
+				}
+			}
+		}
+	}
+}
+
+// resolveSimpleExportValue resolves an export value to a path (simplified version for scopes)
+func resolveSimpleExportValue(exportValue interface{}, depWebPath string) string {
+	switch v := exportValue.(type) {
+	case string:
+		return depWebPath + "/" + strings.TrimPrefix(v, "./")
+	case map[string]interface{}:
+		if importPath, ok := v["import"].(string); ok {
+			return depWebPath + "/" + strings.TrimPrefix(importPath, "./")
+		}
+		if defaultPath, ok := v["default"].(string); ok {
+			return depWebPath + "/" + strings.TrimPrefix(defaultPath, "./")
+		}
+	}
+	return ""
+}
+
+// addWorkspaceScopesToImportMap adds scopes for workspace packages and root package
+// so they can resolve bare specifiers to dependencies
+func addWorkspaceScopesToImportMap(importMap *ImportMap, rootDir string, rootPkg *packageJSON, workspacePackages map[string]string, logger Logger) error {
+	nodeModulesPath := filepath.Join(rootDir, "node_modules")
+
+	// Helper function to add dependencies to a scope (including transitive dependencies)
+	addDependenciesToScope := func(scopePrefix string, dependencies map[string]string) {
+		if len(dependencies) == 0 {
+			return
+		}
+
+		if importMap.Scopes[scopePrefix] == nil {
+			importMap.Scopes[scopePrefix] = make(map[string]string)
+		}
+
+		// Track visited packages to avoid infinite loops
+		visited := make(map[string]bool)
+
+		// Recursively add a package and its transitive dependencies to the scope
+		var addPackageAndDeps func(string)
+		addPackageAndDeps = func(depName string) {
+			if visited[depName] {
+				return
+			}
+			visited[depName] = true
+
+			depPath := filepath.Join(nodeModulesPath, depName)
+			if _, err := os.Stat(depPath); os.IsNotExist(err) {
+				return // Dependency not installed
+			}
+
+			depPkgPath := filepath.Join(depPath, "package.json")
+			depPkg, err := readPackageJSON(depPkgPath)
+			if err != nil {
+				return
+			}
+
+			// Add this package to the scope
+			depWebPath := "/node_modules/" + depName
+			if depPkg.Exports != nil {
+				addDependencyExportsToScope(importMap.Scopes[scopePrefix], depName, depWebPath, depPkg.Exports)
+			} else if depPkg.Main != "" {
+				mainPath := depWebPath + "/" + strings.TrimPrefix(depPkg.Main, "./")
+				importMap.Scopes[scopePrefix][depName] = mainPath
+				importMap.Scopes[scopePrefix][depName+"/"] = depWebPath + "/"
+			} else {
+				importMap.Scopes[scopePrefix][depName+"/"] = depWebPath + "/"
+			}
+
+			// Recursively add its dependencies
+			if depPkg.Dependencies != nil {
+				for transDepName := range depPkg.Dependencies {
+					addPackageAndDeps(transDepName)
+				}
+			}
+		}
+
+		// Add each direct dependency (which will recursively add transitives)
+		for depName := range dependencies {
+			addPackageAndDeps(depName)
+		}
+	}
+
+	// Add scopes for root package (if not a monorepo, or if it has dependencies)
+	if rootPkg != nil && rootPkg.Dependencies != nil {
+		// Root package files are served from "/"
+		addDependenciesToScope("/", rootPkg.Dependencies)
+	}
+
+	// Add scopes for each workspace package
+	for _, pkgPath := range workspacePackages {
+		pkgJSONPath := filepath.Join(pkgPath, "package.json")
+		pkg, err := readPackageJSON(pkgJSONPath)
+		if err != nil || pkg.Dependencies == nil {
+			continue
+		}
+
+		// Calculate web path for this workspace package
+		pkgRelPath, err := filepath.Rel(rootDir, pkgPath)
+		if err != nil {
+			continue
+		}
+
+		var scopePrefix string
+		if pkgRelPath == "." {
+			scopePrefix = "/"
+		} else {
+			scopePrefix = "/" + filepath.ToSlash(pkgRelPath) + "/"
+		}
+
+		addDependenciesToScope(scopePrefix, pkg.Dependencies)
+	}
+
+	return nil
 }
