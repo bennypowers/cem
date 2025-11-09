@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"html"
 	"html/template"
 	"net/url"
 	"path/filepath"
@@ -218,14 +219,18 @@ func buildListingHTML(elements []ElementListing) string {
 	for _, element := range elements {
 		buf.WriteString(`<section style="background: var(--__cem-bg-secondary); border: var(--__cem-border-width) solid var(--__cem-border-color); border-radius: var(--__cem-border-radius); padding: var(--__cem-spacing-lg);">`)
 
-		// Element name
-		buf.WriteString(fmt.Sprintf(`<h2 style="margin: 0 0 var(--__cem-spacing-md) 0; color: var(--__cem-accent-color); font-size: var(--__cem-font-size-lg);"><code>&lt;%s&gt;</code></h2>`, element.TagName))
+		// Element name - escape to prevent XSS
+		escapedTagName := html.EscapeString(element.TagName)
+		buf.WriteString(fmt.Sprintf(`<h2 style="margin: 0 0 var(--__cem-spacing-md) 0; color: var(--__cem-accent-color); font-size: var(--__cem-font-size-lg);"><code>&lt;%s&gt;</code></h2>`, escapedTagName))
 
 		// Demo list
 		buf.WriteString(`<ul style="list-style: none; padding: 0; margin: 0; display: grid; gap: var(--__cem-spacing-sm);">`)
 		for _, demo := range element.Demos {
+			// Escape both URL (for href attribute) and Name (for text content) to prevent XSS
+			escapedURL := html.EscapeString(demo.URL)
+			escapedName := html.EscapeString(demo.Name)
 			buf.WriteString(fmt.Sprintf(`<li><a href="%s" style="color: var(--__cem-text-primary); text-decoration: none; padding: var(--__cem-spacing-sm) var(--__cem-spacing-md); background: var(--__cem-bg-tertiary); border-radius: var(--__cem-border-radius); display: block; transition: background 0.2s;" onmouseover="this.style.background='var(--__cem-accent-color)'; this.style.color='white';" onmouseout="this.style.background='var(--__cem-bg-tertiary)'; this.style.color='var(--__cem-text-primary)';">%s</a></li>`,
-				demo.URL, demo.Name))
+				escapedURL, escapedName))
 		}
 		buf.WriteString(`</ul>`)
 
