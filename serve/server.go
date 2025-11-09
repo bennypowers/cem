@@ -51,6 +51,7 @@ type Server struct {
 	watchDir        string
 	manifest        []byte
 	sourceFiles     map[string]bool // Set of source files to watch
+	tsconfigRaw     string          // Cached tsconfig.json for transforms
 	running         bool
 	mu              sync.RWMutex
 	generateSession *G.GenerateSession
@@ -206,6 +207,17 @@ func (s *Server) SetWatchDir(dir string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.watchDir = dir
+
+	// Load tsconfig.json if it exists
+	tsconfigPath := filepath.Join(dir, "tsconfig.json")
+	if data, err := os.ReadFile(tsconfigPath); err == nil {
+		s.tsconfigRaw = string(data)
+		s.logger.Debug("Loaded tsconfig.json from %s", tsconfigPath)
+	} else {
+		s.tsconfigRaw = ""
+		s.logger.Debug("No tsconfig.json found, using default transform settings")
+	}
+
 	return nil
 }
 
@@ -668,11 +680,17 @@ func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
+			// Get tsconfig for transform
+			s.mu.RLock()
+			tsconfigRaw := s.tsconfigRaw
+			s.mu.RUnlock()
+
 			// Transform TypeScript to JavaScript
 			result, err := TransformTypeScript(source, TransformOptions{
-				Loader:    LoaderTS,
-				Target:    ES2020,
-				Sourcemap: SourceMapInline,
+				Loader:      LoaderTS,
+				Target:      ES2020,
+				Sourcemap:   SourceMapInline,
+				TsconfigRaw: tsconfigRaw,
 			})
 			if err != nil {
 				s.logger.Error("Failed to transform TypeScript file %s: %v", tsPath, err)

@@ -61,9 +61,10 @@ const (
 
 // TransformOptions configures the transformation
 type TransformOptions struct {
-	Loader    Loader
-	Target    Target
-	Sourcemap SourceMapMode
+	Loader      Loader
+	Target      Target
+	Sourcemap   SourceMapMode
+	TsconfigRaw string // Optional tsconfig.json content as JSON string
 }
 
 // TransformResult contains the transformed code and optional source map
@@ -117,19 +118,24 @@ func TransformTypeScript(source []byte, opts TransformOptions) (*TransformResult
 		sourcemap = api.SourceMapNone
 	}
 
-	// Transform using esbuild
-	// Set importHelpers: false to inline TypeScript helpers instead of importing from tslib
-	// This prevents issues with tslib module format mismatches in the browser
-	result := api.Transform(string(source), api.TransformOptions{
-		Loader:    loader,
-		Target:    target,
-		Format:    api.FormatESModule,
-		Sourcemap: sourcemap,
-		TsconfigRaw: `{
+	// Use provided tsconfig or default configuration
+	tsconfigRaw := opts.TsconfigRaw
+	if tsconfigRaw == "" {
+		// Default: inline helpers to avoid tslib dependency issues
+		tsconfigRaw = `{
 			"compilerOptions": {
 				"importHelpers": false
 			}
-		}`,
+		}`
+	}
+
+	// Transform using esbuild
+	result := api.Transform(string(source), api.TransformOptions{
+		Loader:      loader,
+		Target:      target,
+		Format:      api.FormatESModule,
+		Sourcemap:   sourcemap,
+		TsconfigRaw: tsconfigRaw,
 	})
 
 	// Check for errors
