@@ -46,7 +46,7 @@ see:
    - Memory per connection
    - Broadcast queue depth
 
-**RWebSocket lifecycle specification:
+**WebSocket lifecycle specification:**
 ```typescript
 // Client side
 class ReloadClient {

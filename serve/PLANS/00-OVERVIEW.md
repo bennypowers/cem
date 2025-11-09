@@ -167,49 +167,82 @@ serve:
 
 ##  Implementation Plan
 
-0. **Phase 0: Test Infrastructure**
-  - HTTP server test helpers (similar to `cmd/e2e_helpers_test.go`)
-  - Mock manifest generation
-  - Fixture-based demo HTML (per CLAUDE.local.md directive)
-  - WebSocket test client
-  - Transform cache test doubles
-  - set up benchmark / performance targets:
-      - Manifest regeneration time limits (e.g., <500ms for incremental)
-      - Max concurrent clients (e.g., 100)
-      - Transform cache hit rate targets (e.g., >90%)
-      - Memory usage limits (e.g., <500MB for typical project)
+### Phase 0: Test Infrastructure
+- HTTP server test helpers (similar to `cmd/e2e_helpers_test.go`)
+- Mock manifest generation
+- Fixture-based demo HTML (per CLAUDE.md directive)
+- WebSocket test client
+- Transform cache test doubles
+- set up benchmark / performance targets:
+    - Manifest regeneration time limits (e.g., <500ms for incremental)
+    - Max concurrent clients (e.g., 100)
+    - Transform cache hit rate targets (e.g., >90%)
+    - Memory usage limits (e.g., <500MB for typical project)
 
-1. **Phase 1: Core Server** (cmd/serve.go, serve package)
-   - HTTP server with static file serving
-   - Watch mode integration (reuse generate/)
-   - [WebSocket live reload](./05-AUTORELOAD-HMR.md)
-   - Basic logging
+#### Acceptance Criteria
+- Tests fail in red phase (command not implemented/stub implementation)
+- Benchmarks return output (despite implementation being a stub)
 
-2. **Phase 2: Routing and Demo Rendering** (serve/demo package)
-   - [URL routing](./10-URL-REWRITING.md)
-   - Template system (Go html/template)
-   - [Chrome templates](./15-DEMO-CHROME.md)
+### Phase 1: Core Server (cmd/serve.go, serve package)
+- HTTP server with static file serving
+- Watch mode integration (reuse generate/)
+- [WebSocket live reload](./05-AUTORELOAD-HMR.md)
+- Basic logging
 
-3. **Phase 3: Import Maps** (serve/importmap package)
-   - Auto-discovery from package.json
-   - Override file loading
-   - Merge strategy
-   - [HTML injection middleware](./20-IMPORTMAPS.md)
+#### Acceptance Criteria
+- Server starts
+- Core config tested
+- Autoreload works
+- Core Errors logged to console
 
-4. **Phase 4: Transforms** ([serve/transform](./30-TRANSFORMS.md) package)
-   - esbuild integration (TypeScript)
-   - CSS transform
-   - Transform cache
+### Phase 2: Import Maps (serve/importmap package)
+- Auto-discovery from package.json
+- Override file loading
+- Merge strategy
+- [HTML injection middleware](./20-IMPORTMAPS.md)
 
-5. **Phase 5: Knobs** ([serve/knobs](./40-KNOBS.md) package, embedded JS)
-   - Server-side control generation
-   - Client-side event handlers
-   - Template customization
-   - Type inference from CEM
+#### Acceptance Criteria
+- Import map generated and appended to head
 
-6. **Phase 6: Polish**
-   - Error overlay (serve/errors package)
-   - Manifest viewer UI (serve/manifest package) (stretch goal)
-   - Event logger (serve/events package)
-   - Documentation
+### Phase 3: Routing and Demo Rendering (serve/demo package)
+- [URL routing](./10-URL-REWRITING.md)
+- Template system (Go html/template)
+- [Chrome templates](./15-DEMO-CHROME.md)
 
+#### Acceptance Criteria
+- Chrome implemented
+- Server Errors logged to browser console
+
+### Phase 4: Transforms ([serve/transform](./30-TRANSFORMS.md) package)
+- esbuild integration (TypeScript)
+- CSS transform
+- Transform cache
+
+#### Acceptance Criteria
+- Tests pass
+- "buildless workflow" enabled 
+  1. User starts server with element.ts, element.css, and demo/index.html files
+  2. Demo transforms sources to js
+  3. Writing changes to any of the three files reloads the page
+
+### Phase 5: Knobs ([serve/knobs](./40-KNOBS.md) package, embedded JS)
+- Server-side control generation
+- Client-side event handlers
+- Template customization
+- Type inference from CEM
+
+#### Acceptance Criteria
+- knobs display on demos
+- knobs control multiple elements
+- knobs have multiple kinds (enum, boolean)
+
+### Phase 6: Polish
+- Error overlay (serve/errors package)
+- Manifest viewer UI (serve/manifest package) (stretch goal)
+- Event logger (serve/events package)
+- Documentation
+
+#### Acceptance Criteria
+- Server errors logged to overlay
+- Custom element events logged
+- Manifest browser implemented

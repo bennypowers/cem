@@ -23,7 +23,7 @@
         {{if .Demo.Source}}
         <a href="{{.Demo.Source}}"
            target="_blank"
-           title="View Source on {{.Demo.Source | deriveVCSHostNameFromURL}}">{{.Demo.Source | deriveIconFromURL}}</a>
+           title="View Source on {{.Demo.Source | deriveVCSHostNameFromURL}}">{{.Demo.Source | deriveVCSIconFromURL}}</a>
         {{end}}
       </header>
       {{if ne .EnabledKnobs ""}}
@@ -41,20 +41,24 @@
       </footer>
     </template>
     <h1 slot="title">{{.TagName}}</h1>
-    <cem-serve-demo id="demo">
-      <template shadowrootmode="open">
-        {{.DemoHTML}}
-      </template>
-    </cem-serve-demo>
     {{if .Demo.Description}}
     <section slot="description">{{.Demo.Description | markdown}}</section>
     {{end}}
+
+    <!-- Demo in light DOM by default -->
+    <cem-serve-demo id="demo">
+      {{.DemoHTML}}
+    </cem-serve-demo>
   </cem-serve-chrome>
 </body>
 </html>
 ```
 
-`EnabledKnobs` is a space-separated list of well known strings, computed from the config and url params, `attributes slots properties css-properties`.
+- `EnabledKnobs` is a space-separated list of well known strings, computed from the config and url params, `attributes slots properties css-properties`.
+- `deriveVSC*` functions are pure, and support GitHub, GitLab, others down the 
+line.
+- `markdown` does GFM, escaping HTML. Relative links are resolved against file 
+path.
 
 ### Client side
 
@@ -74,124 +78,94 @@ class CemServeChrome extends HTMLElement {
 
   static { customElements.define(this.is, this); }
 
-  // already present due to SSR
-  #demo = this.shadowRoot.getElementById('demo');
+  // Chrome UI in shadow root
   #knobs = this.shadowRoot.getElementById('knobs');
+
+  // Demo in light DOM (direct child)
+  #demo = this.querySelector('#demo');
 
   // ...
 }
 ```
 
----
+## Demo Isolation Strategy
 
-## Open Questions & Concerns
+### Light DOM by Default
 
-### Shadow DOM Boundary Issues
-**Issue:** Demo HTML is wrapped in shadow DOM (lines 44-48):
+Demos render in **light DOM** for ergonomic script access:
+
+**Rationale:**
+
+1. **Script ergonomics** - Demo scripts use `document.querySelector()` naturally:
+   ```javascript
+   <script type="module">
+     import '@rhds/elements/rh-tabs/rh-tabs.js';
+
+     const form = document.querySelector('form');  // ✅ Works
+     const tabs = document.querySelector('rh-tabs'); // ✅ Works
+
+     form.addEventListener('input', () => {
+       tabs.setAttribute('variant', ...);
+     });
+   </script>
+   ```
+
+2. **Module scripts work** - No `document.currentScript` issues (it's always null in modules)
+
+3. **Chrome still isolated** - Chrome UI in shadow root prevents:
+   - Chrome styles leaking to demo
+   - Demo styles affecting chrome
+   - Demo scripts accidentally selecting chrome elements
+
+4. **No migration burden** - Existing demos (like RHDS `rh-tabs/demo/color-context.html`) work as-is
+
+5. **Familiar patterns** - Matches how developers write HTML/JS naturally
+
+### Shadow Mode for Isolation Testing
+
+Optional `?shadow=true` query parameter wraps demo in shadow root:
+
 ```html
+<!-- When ?shadow=true -->
 <cem-serve-demo id="demo">
   <template shadowrootmode="open">
-    {{.DemoHTML}}
+    {{.DemoHTML}} <!-- Now isolated in shadow -->
   </template>
 </cem-serve-demo>
 ```
 
-**Problems this creates:**
-1. **Style inheritance broken** - Demos expecting document-level styles won't work
-2. **Slots don't cross boundaries** - If demo uses slotting, won't work across shadow root
-3. **Global CSS selectors fail** - Demos can't target elements outside shadow root
-4. **Focus management** - `document.activeElement` won't reflect focused element in shadow
+**Use cases:**
+- Testing component works in nested shadow roots
+- Verifying component doesn't leak styles
+- Debugging shadow DOM-specific issues
+- Ensuring component is truly encapsulated
 
-**Examples that break:**
-```css
-/* Won't work - outside shadow root */
-body { font-family: sans-serif; }
-```
-
-```html
-<!-- Won't work - slot can't cross shadow boundary -->
-<template id="user-template">
-  <slot name="avatar"></slot>
-</template>
-```
-
-**Recommendation:** Provide both shadow and light DOM modes:
-- Default: light DOM for maximum compatibility
-- `?shadow-demo=true` for isolation testing
+**Trade-offs:**
+- ❌ Demo scripts must use `getRootNode()` for queries
+- ❌ Can't use `document.currentScript` in module scripts
+- ✅ Complete isolation of demo from document
+- ✅ Tests real shadow DOM encapsulation
 
 ### Custom Element Name Collisions
-**Footgun:** Chrome uses `<cem-serve-chrome>` and `<cem-serve-demo>` (lines 15, 44).
-- What if user's demos define elements with same names?
-- Custom elements registry is global - redefinition throws error
-
-**Example collision:**
-```javascript
-// User demo file
-customElements.define('cem-serve-chrome', class extends HTMLElement {});
-// Error: 'cem-serve-chrome' has already been defined
-```
-
-**Recommendation:** Use unlikely-to-collide prefix:
-- `<__cem-internal-chrome>`
-- `<__cem-internal-demo>`
-
-Or use UUIDs in name: `<cem-serve-chrome-a3f2b1>`
+Not an issue. cem-serve- is a specific-enough prefix.
 
 ### Template Injection Security
 **Issue:** Server renders user-provided demo HTML (line 46) in templates.
-- Are demos sanitized against XSS?
-- Can demos inject script into chrome template?
-- Template functions like `deriveVCSHostNameFromURL` (line 26) - are they safe?
-
-**Attack vector:**
-```html
-<!-- Malicious demo -->
-<meta itemprop="name" content="</template><script>steal()</script>">
-```
+- Are demos sanitized against XSS? It's dev server, XSS isn't a huge concern
+- Can demos inject script into chrome template? Yes, in fact they need to to 
+load elements or use their JS APIs.
+- Template functions like `deriveVCSHostNameFromURL` (line 26) - are they safe? 
+  takes string and returns string.
 
 **Recommendation:**
 - Document template escaping strategy
 - Use Go's `html/template` auto-escaping
 - Validate demo metadata before rendering
 
-### Source Link VCS Icon Derivation
-**Issue:** Line 26 shows `{{.Demo.Source | deriveIconFromURL}}` but:
-- No specification for which VCS hosts are supported
-- What if URL is invalid?
-- What if icon resource fails to load?
-
-**Recommendation:** Define supported VCS list, fallback icon strategy.
-
-### Demo Description Markdown Rendering
-**Issue:** Line 50 shows `{{.Demo.Description | markdown}}` but:
-- Which markdown flavor? (CommonMark? GFM?)
-- Is HTML in markdown allowed? (XSS risk)
-- What about relative links in markdown?
-
-**Recommendation:**
-- Use CommonMark with strict HTML escaping
-- Document markdown subset supported
-- Resolve relative links against demo file path
-
-### Client-Side Hydration
-**Issue:** Templates use Declarative Shadow DOM (DSD) which requires:
-- Browser support (Chrome 90+, Safari 16.4+, Firefox 123+)
-- No polyfill available for older browsers
-
-**Footgun:** Demos won't render in older browsers without warning.
-
-**Recommendation:**
-- Add browser compatibility check on page load
-- Show error message in unsupported browsers
-- Document minimum browser versions
+### Browser support
+We target baseline support, so no need to polyfill DSD, ecma private fields, etc.
+We can issue a browser warning based on user agent if someone tries to load a dev server page with ie6 or whatever.
 
 ### Demo Switcher Navigation
-**Issue:** Line 22 shows `<nav><!-- demo switcher -->` but no details:
-- How are demos discovered for switcher?
-- Client-side or server-side rendered?
-- How to handle many demos (>50)?
-
-**Recommendation:** Specify demo switcher implementation:
-- Server renders list from manifest
-- Highlight current demo
-- Group by category if metadata available
+- Nav is SSRd by package and module (grouped by normalized primary tag name)
+- Current demo is highlighted `aria-active`

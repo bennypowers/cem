@@ -23,18 +23,19 @@
 ```
 
 ### Demo URL Synchronization with Watch Mode
-**Issue:** Integration between demo discovery and watch mode is underspecified.
-- How are demo URLs updated when demo files are added/removed during watch?
-- Does URL routing table regenerate on every manifest update?
-- What happens to open browser tabs when demo file is deleted?
-
-**Recommendation:** Document demo URL lifecycle during watch mode.
+- How are demo URLs updated when demo files are added/removed during watch? 
+Answer: This is handled in `generate/demodiscovery`
+- Does URL routing table regenerate on every manifest update? Answer: If 
+manifest changes are relevant to demo urls (e.g. new or removed demos), yes.
+- What happens to open browser tabs when demo file is deleted? Nothing, 404 on 
+manual reload.
 
 ### URL Collision Handling
-**Missing:** Strategy for handling URL conflicts:
-- Two demos with same slug for same element
-- Demo slug contains invalid URL characters
-- URLPattern parameters produce duplicate URLs
+- Two demos with same slug for same element? error in overlay, error logged in 
+  console. Possibly exit 1 and log error on startup
+- Demo slug contains invalid URL characters? they get slugified
+- URLPattern parameters produce duplicate URLs? log error in console, possibly 
+exit 1
 
 **Example collision:**
 ```html
@@ -46,7 +47,7 @@
 ```
 Both produce: `/components/my-el/demo/example/`
 
-**Recommendation:** Add collision detection, suffix with index or hash.
+**Recommendation:** Add collision detection, and error out.
 
 ### Non-Existent Element References
 **Issue:** What happens when demo references elements not in manifest?
@@ -54,17 +55,12 @@ Both produce: `/components/my-el/demo/example/`
 - Manifest doesn't have `unknown-element`
 - Knobs panel tries to discover controls
 
-**Options:**
-1. Show demo with warning overlay
-2. Return 404
-3. Show demo, skip knobs for unknown elements
-
-**Recommendation:** Option 3 for developer flexibility.
+Answer: LSP catches this and reports in editor. Skip knobs for that element
 
 ### Query Parameter Validation
-**Missing:** Validation for query parameters:
 - Invalid values for `chrome` (not boolean)
 - Malformed `disable-knobs[]` arrays
 - Conflicting parameters (`chrome=false&disable-knobs=all`)
+- values are valid when they conform to the config schema
 
-**Recommendation:** Document parameter validation rules, return 400 for invalid inputs.
+**Recommendation:** return 400 for invalid inputs, and log validation errors to console (and to error overlay)

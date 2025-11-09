@@ -1,6 +1,9 @@
 ## Build Transformations
 
 ### TypeScript (esbuild Go API)
+
+Single file transforms without type checking (rely on tsserver)
+
 ```go
 // Embedded esbuild transform
 transform := api.Transform(source, api.TransformOptions{
@@ -14,87 +17,21 @@ transform := api.Transform(source, api.TransformOptions{
 **Features:**
 - Zero external dependencies
 - On-the-fly `.ts` → `.js` transformation
-- Inline source maps for debugging
+- Inline source maps for debugging (size isn't an issue for a dev server)
 - Responds to `.js` URLs but reads `.ts` files (like pfe-tools router)
-- Cache transformed output (invalidate on file change)
 - Target is configurable via switch/config combo
+- tsconfig is read and passed to esbuild's tsconfigRaw arg.
+- Parallellizing transforms:
+  - Add worker pool for transforms (e.g., max 4 concurrent)
+  - Queue excess requests
+  - Return 503 if queue is full
 
-### CSS Transformation (Optional)
-```go
-// Transform .css files to CSSStyleSheet
-const sheet = new CSSStyleSheet()
-sheet.replaceSync(originalCss);
-export default sheet;
-```
+#### Caching and invalidation
 
-**Implementation:**
-- Simple template wrapper (no complex parsing)
-- Content-type: `application/javascript; charset=utf-8`
-- Optional flag: `--transform-css` takes a list of glob patterns to include (doublestar, negations)
-  - e.g. user wants to transform element css (added to lit static styles list)  
-    but does not want to transform page css (linked in document)
+- Build dependency graph for modules (see prior art in PR #98, which creates a 
+dependency graph for incremental manifest updates, this should be sufficient for us, perhaps with minor modifications)
+- Cache transformed output (invalidate file and it's dependent tree on file change)
 
-**No plugin system** - these are the only transforms, hard-coded and fast.
-
-### Config
-under `.serve.transforms`
-```yaml
-typescript:
-  enabled: true
-  target: es2022
-css:
-  enabled: true
-  include:
-    # - elements/**/*.css
-  exclude:
-    # - docs/styles/*.css
-```
-
----
-
-## Open Questions & Concerns
-
-### TypeScript Transform Without Type Checking
-**Issue:** esbuild transforms TypeScript to JavaScript **without type checking** (lines 4-11).
-- Fast but silently hides type errors
-- Developers may not realize code has type errors until separate type check
-
-**Example:**
-```typescript
-// This transforms successfully but has type error
-const x: string = 123; // esbuild doesn't complain
-```
-
-**Recommendation:**
-- Add warning in logs when TypeScript files are served
-- Suggest running `tsc --noEmit` separately
-- Consider optional type checking mode (slower but safer)
-
-### Transform Cache Dependencies
-**Issue:** "Cache transformed output (invalidate on file change)" (line 19) doesn't handle dependencies.
-
-**Problem:** If `a.ts` imports `b.ts`:
-```typescript
-// a.ts
-import { foo } from './b.js';
-```
-
-When `b.ts` changes:
-- Cache for `b.ts` is invalidated ✓
-- Cache for `a.ts` is NOT invalidated ✗ (stale!)
-
-**Recommendation:**
-- Build dependency graph from imports
-- Invalidate transitive dependents when file changes
-- Or: simpler approach - invalidate entire cache on any change (trade memory for correctness)
-
-### Cache Key Strategy
-**Missing:** How cache keys are generated:
-- File path only? (misses content changes)
-- File path + mtime? (can miss rapid changes within same second)
-- File path + content hash? (expensive)
-
-**Recommendation:**
 ```go
 type CacheKey struct {
     Path     string
@@ -104,134 +41,58 @@ type CacheKey struct {
 ```
 This is fast and reliable enough for dev server.
 
-### Cache Memory Limits
-**Issue:** No bounds on cache size (lines 19, 00-OVERVIEW.md:68).
-
-**Footgun:** Large codebase + many transforms = OOM.
-
-**Example scenario:**
-- 1000 TypeScript files
-- Average 50KB transformed
-- 1000 × 50KB = 50MB (manageable)
-
-But:
-- 10,000 files × 100KB = 1GB (not manageable)
-
-**Recommendation:**
 - Add max cache size (e.g., 500MB)
 - Implement LRU eviction
 - Log cache stats (hits, misses, size) periodically
 
-### CSS Transform Browser Compatibility
-**Issue:** CSS transform uses Constructable Stylesheets (lines 23-28):
-```javascript
-const sheet = new CSSStyleSheet();
-sheet.replaceSync(originalCss);
+### Config
+under `.serve.transforms`
+
+```yaml
+typescript:
+  enabled: true
+  target: es2022
+  tsconfig: ./path/to/tsconfig.json
 ```
 
-**Browser support:**
-- ✓ Chrome 73+
-- ✓ Safari 16.4+
-- ✓ Firefox 101+
-- ✗ IE 11
-- ✗ Older mobile browsers
-
-**Footgun:** Demos using transformed CSS won't work in older browsers.
-
-**Recommendation:**
-- Document browser requirements
-- Provide fallback for older browsers (style tag injection)
-- Or add flag: `--css-transform-style=constructable|link`
-
-### CSS URL Rewriting
-**Issue:** CSS transform wraps raw CSS (line 26) but doesn't handle relative URLs.
-
-**Problem:**
-```css
-/* elements/button/button.css */
-.button {
-  background: url('../shared/icon.svg');
-}
-```
-
-When transformed to JS module, relative URL breaks (resolved from wrong base).
-
-**Recommendation:**
-- Parse CSS for `url()` references
-- Rewrite to absolute paths based on CSS file location
-- Or document that CSS transform doesn't support relative URLs
-
-### CSS Transform Error Handling
-**Issue:** `sheet.replaceSync(originalCss)` (line 26) throws on invalid CSS.
-
-**Example:**
-```css
-/* Malformed CSS */
-.foo { color: ; }
-```
-
-**Result:** JavaScript error in browser, no graceful degradation.
-
-**Recommendation:**
-- Validate CSS before transformation
-- Return error to client (don't crash browser)
-- Show error overlay with CSS syntax issue
-
-### Transform Target Configuration
-**Issue:** Config shows `target: es2022` (line 44) but:
-- No validation of target values
-- What if user provides invalid target? (`target: es2099`)
-- What's the default if not specified?
-
-**Recommendation:**
+#### Transform Target Configuration
 - Validate target against esbuild's allowed values
 - Document supported targets (ES2015-ES2023, ESNext)
-- Set sensible default (ES2020 for broad compatibility)
+- Set sensible default (ES2020 or ES2022 for broad compatibility)
 
-### Source Map Handling
-**Issue:** Plan specifies "Inline source maps" (line 10) but:
-- Inline source maps increase file size significantly
-- No option for external source maps
-- What about original source serving? (debugger needs it)
-
-**Recommendation:**
-- Default to inline for simplicity
-- Add `--source-maps=inline|external|none` flag
-- Serve original `.ts` files at `/__source/` for debugger
-
-### TypeScript Configuration Ignored
-**Issue:** esbuild transform doesn't read `tsconfig.json`.
-- User's `compilerOptions` are ignored
-- `paths` mappings don't work
-- `jsx` settings might not match
-
-**Example:**
-```json
-// tsconfig.json
-{
-  "compilerOptions": {
-    "jsx": "react-jsx",
-    "paths": {
-      "@/*": ["src/*"]
-    }
-  }
-}
+### CSS Transformation (Optional)
+```go
+// Transform .css files to CSSStyleSheet
+const sheet = new CSSStyleSheet()
+sheet.replaceSync(originalCss);
+export default sheet;
 ```
 
-**Recommendation:**
-- Document that tsconfig.json is not used
-- Consider parsing tsconfig.json for `target` and `jsx` settings
-- Or tell users to use esbuild config format
+- Browser support for older versions is less important - we target browser baseline 2024 and up.
+- Errors in browser are fine for now.
 
-### Transform Concurrency
-**Missing:** Limits on concurrent transform operations.
-- What if 100 requests arrive for different TypeScript files?
-- esbuild is CPU-bound, parallel transforms compete
+**Implementation:**
+- Simple template wrapper (no complex parsing)
+- Content-type: `application/javascript; charset=utf-8`
+- Optional flag: `--transform-css` takes a list of glob patterns to include (doublestar, negations)
+  - e.g. user wants to transform element css (added to lit static styles list)  
+    but does not want to transform page css (linked in document)
+- document that CSS transform doesn't support relative URLs
+- no postcss or sass pipeline, at least not for initial release
 
-**Recommendation:**
-- Add worker pool for transforms (e.g., max 4 concurrent)
-- Queue excess requests
-- Return 503 if queue is full
+**No plugin system** - these are the only transforms, hard-coded and fast.
+
+### Config
+under `.serve.transforms`
+
+```yaml
+css:
+  enabled: true
+  include:
+    # - elements/**/*.css
+  exclude:
+    # - docs/styles/*.css
+```
 
 ### Testing Strategy for Transforms
 **Issue:** Complex transform logic needs comprehensive tests:
