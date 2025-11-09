@@ -91,10 +91,11 @@ func (wm *websocketManager) HandleConnection(w http.ResponseWriter, r *http.Requ
 	// Register connection
 	wm.mu.Lock()
 	wm.connections[conn] = true
+	count := len(wm.connections)
 	wm.mu.Unlock()
 
 	if wm.logger != nil {
-		wm.logger.Debug("WebSocket client connected (total: %d)", wm.ConnectionCount())
+		wm.logger.Debug("WebSocket client connected (total: %d)", count)
 	}
 
 	// Handle disconnection

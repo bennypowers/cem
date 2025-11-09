@@ -167,13 +167,15 @@ func (l *ptermLogger) log(level, color, msg string, args ...interface{}) {
 		}
 
 		// Calculate padding for right-aligned timestamp
+		// Use visual width (uncolored text length) not string length (which includes ANSI codes)
 		width := 80
 		if w, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil && w > 0 {
 			width = w
 		}
 
-		messageLen := len(level) + 1 + len(formatted)
-		padding := width - messageLen - 9 // 9 to prevent overflow (8 for timestamp + 1 buffer)
+		// Visual length is just the actual text without ANSI codes
+		visualLen := len(level) + 1 + len(formatted)
+		padding := width - visualLen - 9 // 9 to prevent overflow (8 for timestamp + 1 buffer)
 		if padding < 1 {
 			padding = 1
 		}

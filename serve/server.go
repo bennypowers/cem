@@ -276,12 +276,12 @@ func (s *Server) RegenerateManifest() error {
 	// This ensures we always read the latest file contents
 	workspace := W.NewFileSystemWorkspaceContext(s.watchDir)
 	if err := workspace.Init(); err != nil {
-		return fmt.Errorf("initialize workspace: %w", err)
+		return fmt.Errorf("initializing workspace: %w", err)
 	}
 
 	session, err := G.NewGenerateSession(workspace)
 	if err != nil {
-		return fmt.Errorf("create generate session: %w", err)
+		return fmt.Errorf("creating generate session: %w", err)
 	}
 	s.generateSession = session
 
@@ -289,13 +289,13 @@ func (s *Server) RegenerateManifest() error {
 	ctx := context.Background()
 	pkg, err := s.generateSession.GenerateFullManifest(ctx)
 	if err != nil {
-		return fmt.Errorf("generate manifest: %w", err)
+		return fmt.Errorf("generating manifest: %w", err)
 	}
 
 	// Marshal to JSON
 	manifestBytes, err := json.MarshalIndent(pkg, "", "  ")
 	if err != nil {
-		return fmt.Errorf("marshal manifest: %w", err)
+		return fmt.Errorf("marshaling manifest: %w", err)
 	}
 
 	s.manifest = manifestBytes

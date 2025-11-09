@@ -105,11 +105,28 @@ func (fw *fileWatcher) Events() <-chan FileEvent {
 
 // Close stops the file watcher
 func (fw *fileWatcher) Close() error {
-	close(fw.done)
-	if fw.watcher != nil {
-		return fw.watcher.Close()
+	// Stop the debounce timer first
+	fw.mu.Lock()
+	if fw.debounceTimer != nil {
+		fw.debounceTimer.Stop()
 	}
-	return nil
+	fw.mu.Unlock()
+
+	// Close the watcher to stop new events
+	var err error
+	if fw.watcher != nil {
+		err = fw.watcher.Close()
+	}
+
+	// Signal processEvents goroutine to exit
+	close(fw.done)
+
+	// Close events channel after processEvents has exited
+	// Give processEvents a moment to drain and exit
+	time.Sleep(10 * time.Millisecond)
+	close(fw.events)
+
+	return err
 }
 
 // processEvents processes raw fsnotify events and applies debouncing
@@ -163,6 +180,13 @@ func (fw *fileWatcher) flushDebouncedEvents() {
 	fw.mu.Lock()
 	defer fw.mu.Unlock()
 
+	// Check if watcher is closed
+	select {
+	case <-fw.done:
+		return
+	default:
+	}
+
 	if len(fw.debouncedFiles) == 0 {
 		return
 	}
@@ -176,18 +200,20 @@ func (fw *fileWatcher) flushDebouncedEvents() {
 	// Clear the map
 	fw.debouncedFiles = make(map[string]time.Time)
 
-	// Send batched event
-	// For now, just send the first file as a representative
-	// (in a real implementation, we'd pass all files)
+	// Send batched event with all files
 	if len(files) > 0 {
 		event := FileEvent{
-			Path:      files[0],
+			Path:      files[0],    // Primary file for backwards compatibility
+			Paths:     files,       // All changed files
 			EventType: "modified",
 			Timestamp: time.Now(),
 		}
 
 		select {
 		case fw.events <- event:
+		case <-fw.done:
+			// Watcher closed, don't send
+			return
 		default:
 			// Channel full, drop event
 			if fw.logger != nil {

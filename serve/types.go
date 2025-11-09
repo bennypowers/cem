@@ -65,7 +65,8 @@ type FileWatcher interface {
 
 // FileEvent represents a file system event
 type FileEvent struct {
-	Path      string
+	Path      string   // Primary file path (for single file events)
+	Paths     []string // All changed file paths (for batched events)
 	EventType string
 	Timestamp time.Time
 }
