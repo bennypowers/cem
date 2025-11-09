@@ -241,7 +241,7 @@ func shouldIgnore(path string) bool {
 	}
 
 	// Ignore editor temp files
-	// Vim/Neovim: .swp, .swo, .swn, ~, 4913 (atomic write temps)
+	// Vim/Neovim: .swp, .swo, .swn, ~
 	// Emacs: #file#, .#file
 	if strings.HasPrefix(base, ".") && strings.HasSuffix(base, ".swp") {
 		return true
@@ -262,21 +262,11 @@ func shouldIgnore(path string) bool {
 		return true
 	}
 
-	// Ignore Neovim atomic write temp files (numbered files without extension in same dir)
-	// These are usually just numbers like "4913"
-	if len(base) > 0 && !strings.Contains(base, ".") {
-		// Check if it's all digits (likely a temp file)
-		allDigits := true
-		for _, c := range base {
-			if c < '0' || c > '9' {
-				allDigits = false
-				break
-			}
-		}
-		if allDigits {
-			return true
-		}
-	}
+	// Note: We don't filter numeric filenames here because that would incorrectly
+	// ignore legitimate directories like "2025". Instead, manifest-based filtering
+	// in handleFileChanges() filters out files that aren't in the source list.
+	// Neovim's atomic write temp files will be filtered there since they won't
+	// be in the manifest.
 
 	return false
 }
