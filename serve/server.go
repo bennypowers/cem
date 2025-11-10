@@ -23,8 +23,11 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -38,6 +41,7 @@ import (
 	"bennypowers.dev/cem/serve/middleware/routes"
 	"bennypowers.dev/cem/serve/middleware/transform"
 	W "bennypowers.dev/cem/workspace"
+	"golang.org/x/net/html"
 )
 
 // Server represents the development server
@@ -595,6 +599,152 @@ func (s *Server) resolveSourceFile(path string) string {
 	return path
 }
 
+// extractModuleImports parses an HTML file and extracts ES module import specifiers
+// Returns both import specifiers from inline scripts and src URLs from script tags
+func extractModuleImports(htmlPath string) ([]string, error) {
+	file, err := os.Open(htmlPath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	imports := make(map[string]bool) // Use map to deduplicate
+	doc, err := html.Parse(file)
+	if err != nil {
+		return nil, err
+	}
+
+	// Import regex patterns
+	importFromRe := regexp.MustCompile(`import\s+(?:[^'"]*?)\s*from\s*['"]([^'"]+)['"]`)
+	importRe := regexp.MustCompile(`import\s*['"]([^'"]+)['"]`)
+
+	var visit func(*html.Node)
+	visit = func(n *html.Node) {
+		if n.Type == html.ElementNode && n.Data == "script" {
+			// Check if it's a module script
+			isModule := false
+			var srcAttr string
+			for _, attr := range n.Attr {
+				if attr.Key == "type" && attr.Val == "module" {
+					isModule = true
+				}
+				if attr.Key == "src" {
+					srcAttr = attr.Val
+				}
+			}
+
+			if isModule {
+				// External module script
+				if srcAttr != "" {
+					imports[srcAttr] = true
+				}
+
+				// Inline module script - extract import statements
+				if n.FirstChild != nil && n.FirstChild.Type == html.TextNode {
+					scriptContent := n.FirstChild.Data
+
+					// Extract "import ... from 'specifier'" statements
+					matches := importFromRe.FindAllStringSubmatch(scriptContent, -1)
+					for _, match := range matches {
+						if len(match) > 1 {
+							imports[match[1]] = true
+						}
+					}
+
+					// Extract "import 'specifier'" statements
+					matches = importRe.FindAllStringSubmatch(scriptContent, -1)
+					for _, match := range matches {
+						if len(match) > 1 && !strings.Contains(match[0], " from ") {
+							imports[match[1]] = true
+						}
+					}
+				}
+			}
+		}
+
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			visit(c)
+		}
+	}
+
+	visit(doc)
+
+	// Convert map to slice
+	result := make([]string, 0, len(imports))
+	for imp := range imports {
+		result = append(result, imp)
+	}
+
+	return result, nil
+}
+
+// resolveImportToPath converts an import specifier to a file path
+// Handles bare specifiers (via import map), relative paths, and absolute paths
+func (s *Server) resolveImportToPath(importSpec string) []string {
+	paths := make([]string, 0, 2)
+
+	// If it's a relative or absolute path, use it directly
+	if strings.HasPrefix(importSpec, "./") || strings.HasPrefix(importSpec, "../") || strings.HasPrefix(importSpec, "/") {
+		// Normalize the path
+		normalized := filepath.Clean(importSpec)
+		paths = append(paths, normalized)
+		s.logger.Debug("Resolved relative/absolute import %s -> %s", importSpec, normalized)
+		return paths
+	}
+
+	// Try to resolve via import map
+	s.mu.RLock()
+	importMap := s.importMap
+	s.mu.RUnlock()
+
+	if importMap != nil {
+		// First try exact match
+		if resolved, ok := importMap.Imports[importSpec]; ok {
+			s.logger.Info("Import map entry: %s -> %s", importSpec, resolved)
+			if parsedURL, err := url.Parse(resolved); err == nil && parsedURL.Path != "" {
+				paths = append(paths, parsedURL.Path)
+				s.logger.Info("Resolved bare import %s -> %s (via import map exact match)", importSpec, parsedURL.Path)
+			} else {
+				s.logger.Info("Failed to parse URL or extract path from: %s", resolved)
+			}
+		} else {
+			// Try prefix matching for entries ending with "/"
+			// Find the longest matching prefix
+			var longestPrefix string
+			var longestPrefixValue string
+			for key, value := range importMap.Imports {
+				if strings.HasSuffix(key, "/") && strings.HasPrefix(importSpec, key) {
+					if len(key) > len(longestPrefix) {
+						longestPrefix = key
+						longestPrefixValue = value
+					}
+				}
+			}
+
+			if longestPrefix != "" {
+				// Replace the prefix
+				suffix := strings.TrimPrefix(importSpec, longestPrefix)
+				resolved := longestPrefixValue + suffix
+				s.logger.Info("Import map prefix match: %s (prefix: %s -> %s)", importSpec, longestPrefix, longestPrefixValue)
+				if parsedURL, err := url.Parse(resolved); err == nil && parsedURL.Path != "" {
+					paths = append(paths, parsedURL.Path)
+					s.logger.Info("Resolved bare import %s -> %s (via import map prefix match)", importSpec, parsedURL.Path)
+				} else {
+					s.logger.Info("Failed to parse URL or extract path from: %s", resolved)
+				}
+			} else {
+				s.logger.Info("Import %s not found in import map (have %d entries)", importSpec, len(importMap.Imports))
+			}
+		}
+
+		// TODO: Check scopes section for more precise resolution
+	} else {
+		s.logger.Info("No import map available to resolve %s", importSpec)
+	}
+
+	return paths
+}
+
 // logCacheStats periodically logs cache statistics
 func (s *Server) logCacheStats(interval time.Duration) {
 	ticker := time.NewTicker(interval)
@@ -635,32 +785,64 @@ func (s *Server) handleFileChanges() {
 	}
 
 	for event := range s.watcher.Events() {
-		relPath := event.Path
-		if s.watchDir != "" {
-			if rel, err := filepath.Rel(s.watchDir, event.Path); err == nil {
-				relPath = rel
-			}
+		// Process all files in the batched event
+		filesToProcess := event.Paths
+		if len(filesToProcess) == 0 {
+			filesToProcess = []string{event.Path}
 		}
 
-		// Check if this is a relevant source file
-		ext := filepath.Ext(event.Path)
-		isRelevant := ext == ".ts" || ext == ".js" || ext == ".css"
+		// Filter to only relevant source files
+		relevantFiles := make([]string, 0, len(filesToProcess))
+		for _, filePath := range filesToProcess {
+			ext := filepath.Ext(filePath)
+			isRelevant := ext == ".ts" || ext == ".js" || ext == ".css"
 
-		// Skip files that aren't relevant source files
-		if !isRelevant {
-			s.logger.Debug("Ignoring non-source file: %s", relPath)
+			if !isRelevant {
+				var relPath string
+				if s.watchDir != "" {
+					if rel, err := filepath.Rel(s.watchDir, filePath); err == nil {
+						relPath = rel
+					} else {
+						relPath = filePath
+					}
+				} else {
+					relPath = filePath
+				}
+				s.logger.Debug("Ignoring non-source file: %s", relPath)
+				continue
+			}
+
+			relevantFiles = append(relevantFiles, filePath)
+		}
+
+		// Skip if no relevant files
+		if len(relevantFiles) == 0 {
 			continue
+		}
+
+		// Process the first relevant file (for manifest regeneration, etc.)
+		// In the future, we could optimize to only regenerate once for multiple files
+		changedPath := relevantFiles[0]
+		relPath := changedPath
+		if s.watchDir != "" {
+			if rel, err := filepath.Rel(s.watchDir, changedPath); err == nil {
+				relPath = rel
+			}
 		}
 
 		// Resolve .js to .ts if source exists
 		displayPath := s.resolveSourceFile(relPath)
 		s.logger.Info("File changed: %s", displayPath)
 
+		ext := filepath.Ext(changedPath)
+
 		// Invalidate transform cache for this file and its dependents
+		// Save the list of invalidated files for smart reload
+		var invalidatedFiles []string
 		if s.transformCache != nil {
-			invalidated := s.transformCache.Invalidate(event.Path)
-			if len(invalidated) > 0 {
-				s.logger.Debug("Invalidated %d cached transforms", len(invalidated))
+			invalidatedFiles = s.transformCache.Invalidate(changedPath)
+			if len(invalidatedFiles) > 0 {
+				s.logger.Debug("Invalidated %d cached transforms", len(invalidatedFiles))
 			}
 		}
 
@@ -710,13 +892,140 @@ func (s *Server) handleFileChanges() {
 			s.mu.Unlock()
 		}
 
-		// Broadcast reload to all WebSocket clients
+		// Smart reload: only reload pages that import the changed file or its dependents
+		s.logger.Info("===== SMART RELOAD: Checking affected pages for %s =====", relPath)
+		affectedPageURLs := s.getAffectedPageURLs(changedPath, invalidatedFiles)
+		s.logger.Info("===== SMART RELOAD: Found %d affected pages =====", len(affectedPageURLs))
+
+		if len(affectedPageURLs) == 0 {
+			s.logger.Debug("No pages affected by changes to %s", relPath)
+			continue
+		}
+
+		// Broadcast reload only to affected pages
 		files := []string{relPath}
-		err := s.BroadcastReload(files, "file-change")
+		msgBytes, err := s.CreateReloadMessage(files, "file-change")
 		if err != nil {
-			s.logger.Error("Failed to broadcast reload: %v", err)
+			s.logger.Error("Failed to create reload message: %v", err)
+			continue
+		}
+
+		if s.wsManager != nil {
+			err = s.wsManager.BroadcastToPages(msgBytes, affectedPageURLs)
+			if err != nil {
+				s.logger.Error("Failed to broadcast reload: %v", err)
+			} else {
+				s.logger.Info("Reload broadcast to %d affected pages", len(affectedPageURLs))
+			}
 		}
 	}
+}
+
+// getAffectedPageURLs returns page URLs that import the changed file or its dependents
+func (s *Server) getAffectedPageURLs(changedPath string, invalidatedFiles []string) []string {
+	s.logger.Info("getAffectedPageURLs called with changedPath=%s, invalidatedFiles=%d", changedPath, len(invalidatedFiles))
+	s.mu.RLock()
+	watchDir := s.watchDir
+	s.mu.RUnlock()
+
+	// Get all files affected by this change (from cache invalidation)
+	// Convert absolute paths to relative paths for comparison
+	affectedFiles := make(map[string]bool)
+
+	// Convert changed path to relative
+	if rel, err := filepath.Rel(watchDir, changedPath); err == nil {
+		affectedFiles[rel] = true
+		affectedFiles["/"+rel] = true // Also store with leading slash
+		s.logger.Info("Changed file (relative): %s", rel)
+		s.logger.Info("Affected files map keys: %v", affectedFiles)
+	} else {
+		affectedFiles[changedPath] = true
+		s.logger.Info("Could not make relative, using absolute: %s", changedPath)
+	}
+
+	// Add all transitively invalidated files (also convert to relative)
+	for _, path := range invalidatedFiles {
+		if rel, err := filepath.Rel(watchDir, path); err == nil {
+			affectedFiles[rel] = true
+			affectedFiles["/"+rel] = true
+		} else {
+			affectedFiles[path] = true
+		}
+	}
+
+	s.logger.Debug("Found %d affected file paths to check", len(affectedFiles))
+
+	// Get demo routes to find HTML file paths
+	s.mu.RLock()
+	demoRoutes := s.demoRoutes
+	s.mu.RUnlock()
+
+	if demoRoutes == nil {
+		s.logger.Info("No demo routes available for smart reload")
+		return nil
+	}
+
+	s.logger.Info("Checking %d demo routes for affected imports", len(demoRoutes))
+	affectedPages := make([]string, 0)
+
+	// For each demo route, check if it imports any affected files
+	for routePath, routeEntry := range demoRoutes {
+		s.logger.Info("Checking route: %s (file: %s)", routePath, routeEntry.FilePath)
+		htmlPath := filepath.Join(watchDir, routeEntry.FilePath)
+
+		// Extract imports from HTML
+		imports, err := extractModuleImports(htmlPath)
+		if err != nil {
+			s.logger.Info("Failed to parse %s: %v", routeEntry.FilePath, err)
+			continue
+		}
+
+		if len(imports) == 0 {
+			s.logger.Info("No imports found in %s", routeEntry.FilePath)
+			continue
+		}
+
+		s.logger.Info("Found %d imports in %s: %v", len(imports), routeEntry.FilePath, imports)
+
+		// Resolve imports to file paths and check if any match affected files
+		for _, importSpec := range imports {
+			resolvedPaths := s.resolveImportToPath(importSpec)
+			if len(resolvedPaths) == 0 {
+				s.logger.Debug("Could not resolve import: %s", importSpec)
+				continue
+			}
+
+			for _, resolvedPath := range resolvedPaths {
+				// Normalize the resolved path
+				normalizedResolved := filepath.Clean(resolvedPath)
+
+				// Also try with .ts extension instead of .js
+				normalizedResolvedTS := normalizedResolved
+				if strings.HasSuffix(normalizedResolved, ".js") {
+					normalizedResolvedTS = normalizedResolved[:len(normalizedResolved)-3] + ".ts"
+				}
+
+				s.logger.Info("Checking if %s or %s matches affected files", normalizedResolved, normalizedResolvedTS)
+
+				// Check if this resolved path matches any affected file
+				if affectedFiles[normalizedResolved] ||
+				   affectedFiles[normalizedResolvedTS] ||
+				   affectedFiles[strings.TrimPrefix(normalizedResolved, "/")] ||
+				   affectedFiles[strings.TrimPrefix(normalizedResolvedTS, "/")] {
+					affectedPages = append(affectedPages, routePath)
+					s.logger.Info("Page %s imports affected file %s (via %s)", routePath, normalizedResolved, importSpec)
+					goto nextRoute // Found a match, move to next route
+				}
+			}
+		}
+		nextRoute:
+	}
+
+	if len(affectedPages) == 0 {
+		s.logger.Debug("No pages import any of the affected files")
+	}
+
+	return affectedPages
 }
 
 // errorBroadcaster adapts Server.BroadcastError to the middleware interface

@@ -59,6 +59,7 @@ type Logger = logger.Logger
 type WebSocketManager interface {
 	ConnectionCount() int
 	Broadcast(message []byte) error
+	BroadcastToPages(message []byte, pageURLs []string) error
 	BroadcastShutdown() error
 	HandleConnection(w http.ResponseWriter, r *http.Request)
 	SetLogger(logger Logger)

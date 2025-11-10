@@ -43,9 +43,12 @@ class CEMReloadClient {
     this.createDialog();
     this.createErrorOverlay();
 
-    // Create WebSocket client
+    // Create WebSocket client with current page URL as query parameter
+    // Browsers don't send Referer header for WebSocket connections, so we need to explicitly pass it
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const url = protocol + '//' + window.location.host + '/__cem/reload';
+    const pageURL = encodeURIComponent(window.location.pathname);
+    const url = protocol + '//' + window.location.host + '/__cem/reload?page=' + pageURL;
+    console.log('[cem-serve] Connecting to WebSocket:', url, 'from page:', window.location.pathname);
 
     this.ws = new ReconnectingWebSocket(url, {
       baseDelay: this.config.baseDelay,
