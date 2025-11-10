@@ -21,6 +21,8 @@ import (
 	"container/list"
 	"sync"
 	"time"
+
+	"bennypowers.dev/cem/serve/logger"
 )
 
 // lruEntry wraps a cache key for the LRU list
@@ -44,12 +46,16 @@ type Cache struct {
 	dependents map[string][]string
 
 	// Metrics
-	hits   int64
-	misses int64
+	hits      int64
+	misses    int64
+	evictions int64
 
 	// Configuration
 	maxSize int64 // Max cache size in bytes
 	curSize int64 // Current cache size in bytes
+
+	// Logger
+	logger logger.Logger
 }
 
 // NewCache creates a new transform cache with the given max size
@@ -60,6 +66,18 @@ func NewCache(maxSizeBytes int64) *Cache {
 		lruMap:     make(map[CacheKey]*list.Element),
 		dependents: make(map[string][]string),
 		maxSize:    maxSizeBytes,
+	}
+}
+
+// NewCacheWithLogger creates a new transform cache with a logger
+func NewCacheWithLogger(maxSizeBytes int64, log logger.Logger) *Cache {
+	return &Cache{
+		entries:    make(map[CacheKey]*CacheEntry),
+		lru:        list.New(),
+		lruMap:     make(map[CacheKey]*list.Element),
+		dependents: make(map[string][]string),
+		maxSize:    maxSizeBytes,
+		logger:     log,
 	}
 }
 
@@ -171,6 +189,9 @@ func (c *Cache) evict(key CacheKey) {
 		return
 	}
 
+	// Track eviction
+	c.evictions++
+
 	// Remove from entries
 	delete(c.entries, key)
 	c.curSize -= entry.Size
@@ -256,6 +277,7 @@ func (c *Cache) Stats() CacheStats {
 	return CacheStats{
 		Hits:      c.hits,
 		Misses:    c.misses,
+		Evictions: c.evictions,
 		Entries:   len(c.entries),
 		SizeBytes: c.curSize,
 		MaxSize:   c.maxSize,
@@ -270,6 +292,25 @@ func (c *Cache) hitRate() float64 {
 		return 0
 	}
 	return float64(c.hits) / float64(total) * 100
+}
+
+// LogStats logs cache statistics if a logger is configured
+func (c *Cache) LogStats() {
+	if c.logger == nil {
+		return
+	}
+
+	stats := c.Stats()
+	c.logger.Info(
+		"Transform cache stats: %d hits, %d misses, %d evictions, %.1f%% hit rate, %d entries, %d/%d bytes",
+		stats.Hits,
+		stats.Misses,
+		stats.Evictions,
+		stats.HitRate,
+		stats.Entries,
+		stats.SizeBytes,
+		stats.MaxSize,
+	)
 }
 
 // Clear removes all entries from the cache
@@ -288,6 +329,7 @@ func (c *Cache) Clear() {
 type CacheStats struct {
 	Hits      int64
 	Misses    int64
+	Evictions int64
 	Entries   int
 	SizeBytes int64
 	MaxSize   int64
