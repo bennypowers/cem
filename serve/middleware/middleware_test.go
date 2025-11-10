@@ -165,7 +165,7 @@ func TestResponseRecorder_DefaultStatus(t *testing.T) {
 	rec := middleware.NewResponseRecorder()
 
 	// Write without calling WriteHeader
-	rec.Write([]byte("test"))
+	_, _ = rec.Write([]byte("test"))
 
 	if rec.StatusCode() != http.StatusOK {
 		t.Errorf("Expected default status 200, got %d", rec.StatusCode())
@@ -194,9 +194,9 @@ func TestResponseRecorder_Header(t *testing.T) {
 func TestResponseRecorder_MultipleWrites(t *testing.T) {
 	rec := middleware.NewResponseRecorder()
 
-	rec.Write([]byte("hello"))
-	rec.Write([]byte(" "))
-	rec.Write([]byte("world"))
+	_, _ = rec.Write([]byte("hello"))
+	_, _ = rec.Write([]byte(" "))
+	_, _ = rec.Write([]byte("world"))
 
 	body := rec.Body()
 	if string(body) != "hello world" {

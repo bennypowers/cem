@@ -97,7 +97,7 @@ func TestServeCSS_TransformsToModule(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	if err := server.SetWatchDir(tmpDir); err != nil {
 		t.Fatalf("Failed to set watch dir: %v", err)

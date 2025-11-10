@@ -44,7 +44,7 @@ func TestServeTypeScript_TransformsOnRequest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	if err := server.SetWatchDir(tmpDir); err != nil {
 		t.Fatalf("Failed to set watch dir: %v", err)
@@ -100,7 +100,7 @@ func TestServeTypeScript_OnlyWhenTsExists(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	if err := server.SetWatchDir(tmpDir); err != nil {
 		t.Fatalf("Failed to set watch dir: %v", err)

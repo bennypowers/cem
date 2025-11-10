@@ -156,5 +156,5 @@ func writeResponse(w http.ResponseWriter, rec *middleware.ResponseRecorder) {
 	w.WriteHeader(rec.StatusCode())
 
 	// Write body
-	w.Write(rec.Body())
+	_, _ = w.Write(rec.Body())
 }

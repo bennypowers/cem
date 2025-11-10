@@ -103,7 +103,7 @@ func TestCORS_PreservesStatusCode(t *testing.T) {
 // TestCORS_PreservesBody tests that response body is preserved
 func TestCORS_PreservesBody(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("test body"))
+		_, _ = w.Write([]byte("test body"))
 	})
 
 	mw := cors.New()

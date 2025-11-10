@@ -30,7 +30,7 @@ import (
 func TestInject_DisabledNoInjection(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte("<html><head></head><body>test</body></html>"))
+		_, _ = w.Write([]byte("<html><head></head><body>test</body></html>"))
 	})
 
 	mw := inject.New(false, "/script.js")
@@ -50,7 +50,7 @@ func TestInject_DisabledNoInjection(t *testing.T) {
 func TestInject_InjectsIntoHTML(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte("<html><head></head><body>test</body></html>"))
+		_, _ = w.Write([]byte("<html><head></head><body>test</body></html>"))
 	})
 
 	mw := inject.New(true, "/__cem/websocket-client.js")
@@ -85,7 +85,7 @@ func TestInject_OnlyInjectsIntoHTMLFiles(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "text/html")
-				w.Write([]byte("<html><head></head><body>test</body></html>"))
+				_, _ = w.Write([]byte("<html><head></head><body>test</body></html>"))
 			})
 
 			mw := inject.New(true, "/script.js")
@@ -129,7 +129,7 @@ func TestInject_OnlyInjectsIntoHTMLContentType(t *testing.T) {
 				if tt.contentType != "" {
 					w.Header().Set("Content-Type", tt.contentType)
 				}
-				w.Write([]byte(tt.body))
+				_, _ = w.Write([]byte(tt.body))
 			})
 
 			mw := inject.New(true, "/script.js")
@@ -152,7 +152,7 @@ func TestInject_OnlyInjectsIntoHTMLContentType(t *testing.T) {
 func TestInject_InjectsIntoHead(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte("<html><head><title>Test</title></head><body>content</body></html>"))
+		_, _ = w.Write([]byte("<html><head><title>Test</title></head><body>content</body></html>"))
 	})
 
 	mw := inject.New(true, "/script.js")
@@ -181,7 +181,7 @@ func TestInject_PreservesStatusCode(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("<html><head></head><body>404</body></html>"))
+		_, _ = w.Write([]byte("<html><head></head><body>404</body></html>"))
 	})
 
 	mw := inject.New(true, "/script.js")
@@ -202,7 +202,7 @@ func TestInject_PreservesHeaders(t *testing.T) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Header().Set("X-Custom", "value")
 		w.Header().Set("Cache-Control", "no-cache")
-		w.Write([]byte("<html><head></head><body>test</body></html>"))
+		_, _ = w.Write([]byte("<html><head></head><body>test</body></html>"))
 	})
 
 	mw := inject.New(true, "/script.js")
@@ -228,7 +228,7 @@ func TestInject_DoesNotSetContentLengthHeader(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		w.Header().Set("Content-Length", "100") // Original length
-		w.Write([]byte("<html><head></head><body>test</body></html>"))
+		_, _ = w.Write([]byte("<html><head></head><body>test</body></html>"))
 	})
 
 	mw := inject.New(true, "/script.js")
@@ -248,7 +248,7 @@ func TestInject_DoesNotSetContentLengthHeader(t *testing.T) {
 func TestInject_SetsContentTypeIfMissing(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Don't set Content-Type
-		w.Write([]byte("<html><head></head><body>test</body></html>"))
+		_, _ = w.Write([]byte("<html><head></head><body>test</body></html>"))
 	})
 
 	mw := inject.New(true, "/script.js")
@@ -268,7 +268,7 @@ func TestInject_SetsContentTypeIfMissing(t *testing.T) {
 func TestInject_HandlesEmptyHTML(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte("<html></html>"))
+		_, _ = w.Write([]byte("<html></html>"))
 	})
 
 	mw := inject.New(true, "/script.js")
@@ -288,7 +288,7 @@ func TestInject_HandlesEmptyHTML(t *testing.T) {
 func TestInject_HandlesHTMLWithoutHead(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte("<html><body>test</body></html>"))
+		_, _ = w.Write([]byte("<html><body>test</body></html>"))
 	})
 
 	mw := inject.New(true, "/script.js")
@@ -308,7 +308,7 @@ func TestInject_HandlesHTMLWithoutHead(t *testing.T) {
 func TestInject_MultipleRequests(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte("<html><head></head><body>test</body></html>"))
+		_, _ = w.Write([]byte("<html><head></head><body>test</body></html>"))
 	})
 
 	mw := inject.New(true, "/script.js")
@@ -330,7 +330,7 @@ func TestInject_MultipleRequests(t *testing.T) {
 func TestInject_CustomScriptPath(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte("<html><head></head><body>test</body></html>"))
+		_, _ = w.Write([]byte("<html><head></head><body>test</body></html>"))
 	})
 
 	customPath := "/custom/path/to/script.js"
@@ -352,7 +352,7 @@ func TestInject_NonHTMLPassthrough(t *testing.T) {
 	originalBody := `{"message": "hello"}`
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(originalBody))
+		_, _ = w.Write([]byte(originalBody))
 	})
 
 	mw := inject.New(true, "/script.js")

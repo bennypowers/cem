@@ -483,7 +483,7 @@ func buildScopesForPackage(importMap *ImportMap, pkgName string, nodeModulesPath
 	}
 
 	// If this package has no dependencies, nothing to scope
-	if pkg.Dependencies == nil || len(pkg.Dependencies) == 0 {
+	if len(pkg.Dependencies) == 0 {
 		return nil
 	}
 
