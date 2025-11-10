@@ -35,6 +35,9 @@ var workspaceListingTemplate string
 //go:embed templates/navigation.html
 var navigationTemplate string
 
+//go:embed templates/404.html
+var notFoundTemplate string
+
 //go:embed templates/**
 var templatesFS embed.FS
 
@@ -64,3 +67,6 @@ var WorkspaceListingTemplate = template.Must(template.New("workspace-listing").F
 
 // NavigationTemplate is the parsed template for navigation drawer
 var NavigationTemplate = template.Must(template.New("navigation").Funcs(templateFuncs).Parse(navigationTemplate))
+
+// NotFoundTemplate is the parsed template for 404 page content
+var NotFoundTemplate = template.Must(template.New("404").Funcs(templateFuncs).Parse(notFoundTemplate))

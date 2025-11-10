@@ -26,6 +26,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 
 	"bennypowers.dev/cem/serve/logger"
@@ -34,6 +35,38 @@ import (
 	V "bennypowers.dev/cem/internal/version"
 	M "bennypowers.dev/cem/manifest"
 )
+
+// notFoundDetector wraps http.ResponseWriter to detect and intercept 404 status codes
+type notFoundDetector struct {
+	http.ResponseWriter
+	is404       bool
+	wroteHeader bool
+	buffer      []byte
+}
+
+func (n *notFoundDetector) WriteHeader(statusCode int) {
+	if !n.wroteHeader {
+		n.wroteHeader = true
+		if statusCode == http.StatusNotFound {
+			n.is404 = true
+			// Don't write the header - we'll render our custom 404 page
+			return
+		}
+		n.ResponseWriter.WriteHeader(statusCode)
+	}
+}
+
+func (n *notFoundDetector) Write(b []byte) (int, error) {
+	if !n.wroteHeader {
+		n.WriteHeader(http.StatusOK)
+	}
+	if n.is404 {
+		// Capture the 404 response but don't write it
+		n.buffer = append(n.buffer, b...)
+		return len(b), nil
+	}
+	return n.ResponseWriter.Write(b)
+}
 
 // Config holds configuration for the internal routes middleware
 type Config struct {
@@ -85,8 +118,14 @@ func New(config Config) middleware.Middleware {
 				return
 			}
 
-			// Not a special route - pass to next handler (static files)
-			next.ServeHTTP(w, r)
+			// Not a special route - try static files with 404 detection
+			detector := &notFoundDetector{ResponseWriter: w}
+			next.ServeHTTP(detector, r)
+
+			// If static handler returned 404, show our custom 404 page
+			if detector.is404 {
+				serve404Page(w, r, config)
+			}
 		})
 	}
 }
@@ -413,4 +452,184 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 
 	// Render with chrome
 	return renderDemoChrome(chromeData)
+}
+
+// levenshteinDistance computes the Levenshtein distance between two strings
+func levenshteinDistance(s1, s2 string) int {
+	if len(s1) == 0 {
+		return len(s2)
+	}
+	if len(s2) == 0 {
+		return len(s1)
+	}
+
+	// Create a matrix to store distances
+	matrix := make([][]int, len(s1)+1)
+	for i := range matrix {
+		matrix[i] = make([]int, len(s2)+1)
+	}
+
+	// Initialize first row and column
+	for i := 0; i <= len(s1); i++ {
+		matrix[i][0] = i
+	}
+	for j := 0; j <= len(s2); j++ {
+		matrix[0][j] = j
+	}
+
+	// Fill in the matrix
+	for i := 1; i <= len(s1); i++ {
+		for j := 1; j <= len(s2); j++ {
+			cost := 0
+			if s1[i-1] != s2[j-1] {
+				cost = 1
+			}
+
+			matrix[i][j] = min(
+				matrix[i-1][j]+1,      // deletion
+				matrix[i][j-1]+1,      // insertion
+				matrix[i-1][j-1]+cost, // substitution
+			)
+		}
+	}
+
+	return matrix[len(s1)][len(s2)]
+}
+
+// min returns the minimum of three integers
+func min(a, b, c int) int {
+	if a < b {
+		if a < c {
+			return a
+		}
+		return c
+	}
+	if b < c {
+		return b
+	}
+	return c
+}
+
+// URLSuggestion represents a suggested URL with its distance
+type URLSuggestion struct {
+	URL      string
+	TagName  string
+	DemoName string
+	Distance int
+}
+
+// serve404Page renders a 404 page with URL suggestions
+func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
+	requestedPath := r.URL.Path
+
+	// Get all available demo routes
+	routesAny := config.Context.DemoRoutes()
+	if routesAny == nil {
+		// No routes available - render simple 404
+		http.Error(w, "Not Found", http.StatusNotFound)
+		return
+	}
+
+	routes, ok := routesAny.(map[string]*DemoRouteEntry)
+	if !ok {
+		http.Error(w, "Not Found", http.StatusNotFound)
+		return
+	}
+
+	// Compute Levenshtein distance for all routes
+	var suggestions []URLSuggestion
+	for route, entry := range routes {
+		distance := levenshteinDistance(requestedPath, route)
+		demoName := entry.Demo.Description
+		if demoName == "" {
+			demoName = filepath.Base(entry.FilePath)
+		}
+		suggestions = append(suggestions, URLSuggestion{
+			URL:      route,
+			TagName:  entry.TagName,
+			DemoName: demoName,
+			Distance: distance,
+		})
+	}
+
+	// Sort by distance (closest first)
+	sort.Slice(suggestions, func(i, j int) bool {
+		return suggestions[i].Distance < suggestions[j].Distance
+	})
+
+	// Take top 5 suggestions
+	maxSuggestions := 5
+	if len(suggestions) > maxSuggestions {
+		suggestions = suggestions[:maxSuggestions]
+	}
+
+	// Render 404 content with template
+	var notFoundHTML strings.Builder
+	notFoundData := map[string]interface{}{
+		"RequestedPath": requestedPath,
+		"Suggestions":   suggestions,
+	}
+	if err := NotFoundTemplate.Execute(&notFoundHTML, notFoundData); err != nil {
+		config.Context.Logger().Error("Failed to execute 404 template: %v", err)
+		http.Error(w, "Not Found", http.StatusNotFound)
+		return
+	}
+
+	// Get navigation data
+	var navigationHTML template.HTML
+	var packageName string
+
+	if config.Context.IsWorkspace() {
+		middlewarePackages := config.Context.WorkspacePackages()
+		packages := make([]PackageContext, len(middlewarePackages))
+		for i, pkg := range middlewarePackages {
+			packages[i] = PackageContext{
+				Name:     pkg.Name,
+				Path:     pkg.Path,
+				Manifest: pkg.Manifest,
+			}
+		}
+		navigationHTML, _ = BuildWorkspaceNavigation(packages)
+		packageName = "Workspace"
+	} else {
+		manifestBytes, err := config.Context.Manifest()
+		if err == nil && len(manifestBytes) > 0 {
+			pkgName := ""
+			if pkg, err := config.Context.PackageJSON(); err == nil && pkg != nil {
+				pkgName = pkg.Name
+			}
+			navigationHTML, packageName = BuildSinglePackageNavigation(manifestBytes, pkgName)
+		}
+	}
+
+	// Get import map
+	var importMapJSON string
+	if im := config.Context.ImportMap(); im != nil {
+		if importMap, ok := im.(*importmappkg.ImportMap); ok {
+			importMapJSON = importMap.ToJSON()
+		}
+	}
+
+	// Render 404 page with chrome
+	chromeData := ChromeData{
+		TagName:        "cem-serve",
+		DemoTitle:      "404 Not Found",
+		DemoHTML:       template.HTML(notFoundHTML.String()),
+		ImportMap:      template.HTML(importMapJSON),
+		PackageName:    packageName,
+		NavigationHTML: navigationHTML,
+	}
+
+	html, err := renderDemoChrome(chromeData)
+	if err != nil {
+		config.Context.Logger().Error("Failed to render 404 page: %v", err)
+		http.Error(w, "Not Found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusNotFound)
+	if _, err := w.Write([]byte(html)); err != nil {
+		config.Context.Logger().Error("Failed to write 404 response: %v", err)
+	}
 }
