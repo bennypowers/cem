@@ -28,6 +28,7 @@ import (
 	"runtime"
 	"strings"
 
+	"bennypowers.dev/cem/serve/logger"
 	"bennypowers.dev/cem/serve/middleware"
 	importmappkg "bennypowers.dev/cem/serve/middleware/importmap"
 	V "bennypowers.dev/cem/internal/version"
@@ -40,7 +41,7 @@ type Config struct {
 	Context middleware.DevServerContext
 
 	// LogsFunc returns the current logs (if logger supports it)
-	LogsFunc func() []string
+	LogsFunc func() []logger.LogEntry
 
 	// WebSocketHandler handles WebSocket upgrade requests for live reload
 	WebSocketHandler http.HandlerFunc
@@ -132,13 +133,13 @@ func serveManifest(w http.ResponseWriter, r *http.Request, config Config) {
 
 // serveLogs serves the plain text logs for the debug console
 func serveLogs(w http.ResponseWriter, r *http.Request, config Config) {
-	var logs []string
+	var logs []logger.LogEntry
 	if config.LogsFunc != nil {
 		logs = config.LogsFunc()
 	}
 
 	if logs == nil {
-		logs = []string{}
+		logs = []logger.LogEntry{}
 	}
 
 	w.Header().Set("Content-Type", "application/json")

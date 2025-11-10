@@ -63,9 +63,9 @@ type Server struct {
 	mu              sync.RWMutex
 	generateSession *G.GenerateSession
 	// Workspace mode fields
-	isWorkspace       bool                                // True if serving a monorepo workspace
-	workspaceRoot     string                              // Root directory of workspace
-	workspacePackages []middleware.WorkspacePackage       // Discovered packages with manifests
+	isWorkspace       bool                          // True if serving a monorepo workspace
+	workspaceRoot     string                        // Root directory of workspace
+	workspacePackages []middleware.WorkspacePackage // Discovered packages with manifests
 	// Cached routing table for demo routes (both workspace and single-package mode)
 	demoRoutes map[string]*routes.DemoRouteEntry
 	importMap  *importmappkg.ImportMap // Cached import map (workspace or single-package)
@@ -191,7 +191,7 @@ func (s *Server) Start() error {
 	}()
 
 	s.running = true
-	s.logger.Info("Server started on port %d", s.port)
+	s.logger.Debug("Server bound to port %d", s.port)
 	return nil
 }
 
@@ -427,12 +427,14 @@ func (s *Server) BroadcastError(title, message, file string) error {
 }
 
 // RegenerateManifest triggers manifest regeneration
-func (s *Server) RegenerateManifest() error {
+// RegenerateManifest performs a full manifest regeneration
+// Returns the manifest size in bytes and any error
+func (s *Server) RegenerateManifest() (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.watchDir == "" {
-		return fmt.Errorf("no watch directory set")
+		return 0, fmt.Errorf("no watch directory set")
 	}
 
 	// Close old session if it exists
@@ -445,12 +447,12 @@ func (s *Server) RegenerateManifest() error {
 	// This ensures we always read the latest file contents
 	workspace := W.NewFileSystemWorkspaceContext(s.watchDir)
 	if err := workspace.Init(); err != nil {
-		return fmt.Errorf("initializing workspace: %w", err)
+		return 0, fmt.Errorf("initializing workspace: %w", err)
 	}
 
 	session, err := G.NewGenerateSession(workspace)
 	if err != nil {
-		return fmt.Errorf("creating generate session: %w", err)
+		return 0, fmt.Errorf("creating generate session: %w", err)
 	}
 	s.generateSession = session
 
@@ -458,7 +460,7 @@ func (s *Server) RegenerateManifest() error {
 	ctx := context.Background()
 	pkg, err := s.generateSession.GenerateFullManifest(ctx)
 	if err != nil {
-		return fmt.Errorf("generating manifest: %w", err)
+		return 0, fmt.Errorf("generating manifest: %w", err)
 	}
 
 	// Extract source files from manifest for targeted file watching
@@ -474,7 +476,7 @@ func (s *Server) RegenerateManifest() error {
 	// Marshal to JSON
 	manifestBytes, err := json.MarshalIndent(pkg, "", "  ")
 	if err != nil {
-		return fmt.Errorf("marshaling manifest: %w", err)
+		return 0, fmt.Errorf("marshaling manifest: %w", err)
 	}
 
 	s.manifest = manifestBytes
@@ -488,18 +490,17 @@ func (s *Server) RegenerateManifest() error {
 		s.demoRoutes = routingTable
 		s.logger.Debug("Built routing table with %d demo routes", len(routingTable))
 	}
-
-	s.logger.Info("Manifest regenerated (%d bytes)", len(manifestBytes))
-	return nil
+	return len(manifestBytes), nil
 }
 
 // RegenerateManifestIncremental incrementally updates the manifest for changed files
-func (s *Server) RegenerateManifestIncremental(changedFiles []string) error {
+// Returns the manifest size in bytes and any error
+func (s *Server) RegenerateManifestIncremental(changedFiles []string) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.watchDir == "" {
-		return fmt.Errorf("no watch directory set")
+		return 0, fmt.Errorf("no watch directory set")
 	}
 
 	// If no generate session exists yet, do a full regeneration
@@ -531,7 +532,7 @@ func (s *Server) RegenerateManifestIncremental(changedFiles []string) error {
 	// Marshal to JSON
 	manifestBytes, err := json.MarshalIndent(pkg, "", "  ")
 	if err != nil {
-		return fmt.Errorf("marshaling manifest: %w", err)
+		return 0, fmt.Errorf("marshaling manifest: %w", err)
 	}
 
 	s.manifest = manifestBytes
@@ -546,8 +547,7 @@ func (s *Server) RegenerateManifestIncremental(changedFiles []string) error {
 		s.logger.Debug("Built routing table with %d demo routes", len(routingTable))
 	}
 
-	s.logger.Info("Manifest regenerated incrementally (%d bytes)", len(manifestBytes))
-	return nil
+	return len(manifestBytes), nil
 }
 
 // discoverWorkspacePackages finds all packages in workspace with manifests
@@ -842,10 +842,6 @@ func (s *Server) handleFileChanges() {
 	}
 
 	for event := range s.watcher.Events() {
-		eventReceived := time.Now()
-		s.logger.Info("===== FILE WATCHER EVENT RECEIVED at %v (creates:%v deletes:%v pkg.json:%v) =====",
-			eventReceived.Format("15:04:05.000"), event.HasCreates, event.HasDeletes, event.HasPackageJSON)
-
 		// Process all files in the batched event
 		filesToProcess := event.Paths
 		if len(filesToProcess) == 0 {
@@ -893,7 +889,6 @@ func (s *Server) handleFileChanges() {
 
 		// Resolve .js to .ts if source exists
 		displayPath := s.resolveSourceFile(relPath)
-		fileChangeStart := time.Now()
 		s.logger.Info("File changed: %s", displayPath)
 
 		ext := filepath.Ext(changedPath)
@@ -912,13 +907,13 @@ func (s *Server) handleFileChanges() {
 		if ext == ".ts" || ext == ".js" {
 			manifestStart := time.Now()
 			s.logger.Debug("Regenerating manifest incrementally for %s file change...", ext)
-			err := s.RegenerateManifestIncremental([]string{changedPath})
+			manifestSize, err := s.RegenerateManifestIncremental([]string{changedPath})
 			manifestDuration := time.Since(manifestStart)
 			if err != nil {
 				s.logger.Error("Failed to regenerate manifest incrementally: %v", err)
 				// Continue anyway - we still want to reload the page
 			} else {
-				s.logger.Info("Manifest regenerated incrementally in %v", manifestDuration)
+				s.logger.Info("Manifest regenerated incrementally (%d bytes) in %v", manifestSize, manifestDuration)
 			}
 
 			// Note: Import map regeneration is skipped for .ts/.js changes
@@ -969,11 +964,7 @@ func (s *Server) handleFileChanges() {
 		}
 
 		// Smart reload: only reload pages that import the changed file or its dependents
-		smartReloadStart := time.Now()
-		s.logger.Info("===== SMART RELOAD: Checking affected pages for %s =====", relPath)
 		affectedPageURLs := s.getAffectedPageURLs(changedPath, invalidatedFiles)
-		smartReloadDuration := time.Since(smartReloadStart)
-		s.logger.Info("===== SMART RELOAD: Found %d affected pages in %v =====", len(affectedPageURLs), smartReloadDuration)
 
 		if len(affectedPageURLs) == 0 {
 			s.logger.Debug("No pages affected by changes to %s", relPath)
@@ -992,9 +983,6 @@ func (s *Server) handleFileChanges() {
 			err = s.wsManager.BroadcastToPages(msgBytes, affectedPageURLs)
 			if err != nil {
 				s.logger.Error("Failed to broadcast reload: %v", err)
-			} else {
-				totalDuration := time.Since(fileChangeStart)
-				s.logger.Info("Reload broadcast to %d affected pages (total: %v)", len(affectedPageURLs), totalDuration)
 			}
 		}
 	}
@@ -1081,16 +1069,16 @@ func (s *Server) getAffectedPageURLs(changedPath string, invalidatedFiles []stri
 
 				// Check if this resolved path matches any affected file
 				if affectedFiles[normalizedResolved] ||
-				   affectedFiles[normalizedResolvedTS] ||
-				   affectedFiles[strings.TrimPrefix(normalizedResolved, "/")] ||
-				   affectedFiles[strings.TrimPrefix(normalizedResolvedTS, "/")] {
+					affectedFiles[normalizedResolvedTS] ||
+					affectedFiles[strings.TrimPrefix(normalizedResolved, "/")] ||
+					affectedFiles[strings.TrimPrefix(normalizedResolvedTS, "/")] {
 					affectedPages = append(affectedPages, routePath)
 					s.logger.Debug("Page %s imports affected file %s (via %s)", routePath, normalizedResolved, importSpec)
 					goto nextRoute // Found a match, move to next route
 				}
 			}
 		}
-		nextRoute:
+	nextRoute:
 	}
 
 	if len(affectedPages) == 0 {
@@ -1110,8 +1098,8 @@ func (e errorBroadcaster) BroadcastError(title, message, filename string) {
 }
 
 // getLogs returns logs if the logger supports it
-func (s *Server) getLogs() []string {
-	if logGetter, ok := s.logger.(interface{ Logs() []string }); ok {
+func (s *Server) getLogs() []logger.LogEntry {
+	if logGetter, ok := s.logger.(interface{ Logs() []logger.LogEntry }); ok {
 		return logGetter.Logs()
 	}
 	return nil
@@ -1129,7 +1117,7 @@ func (s *Server) setupMiddleware() {
 	// Middlewares are applied in reverse order (last to first in the chain)
 	// Terminal handler: static files
 	s.handler = middleware.Chain(
-		http.HandlerFunc(s.serveStaticFiles), // Static file server (terminal handler)
+		http.HandlerFunc(s.serveStaticFiles),                      // Static file server (terminal handler)
 		inject.New(s.config.Reload, "/__cem/websocket-client.js"), // WebSocket injection
 		importmappkg.New(importmappkg.MiddlewareConfig{ // Import map injection
 			Context: s,
@@ -1151,7 +1139,7 @@ func (s *Server) setupMiddleware() {
 			LogsFunc:         s.getLogs,
 			WebSocketHandler: wsHandler,
 		}),
-		cors.New(),                 // CORS headers
+		cors.New(),                  // CORS headers
 		requestlogger.New(s.logger), // HTTP request logging
 	)
 }

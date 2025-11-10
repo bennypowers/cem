@@ -40,8 +40,15 @@ type Logger interface {
 
 // LogMessage represents a log message broadcast to clients
 type LogMessage struct {
-	Type string   `json:"type"`
-	Logs []string `json:"logs"`
+	Type string      `json:"type"`
+	Logs []LogEntry `json:"logs"`
+}
+
+// LogEntry represents a single structured log entry
+type LogEntry struct {
+	Type    string `json:"type"`    // "info", "warn", "error", "debug"
+	Date    string `json:"date"`    // ISO8601 timestamp
+	Message string `json:"message"` // Log message content
 }
 
 // defaultLogger is a simple logger implementation using standard log package
@@ -71,8 +78,8 @@ func NewDefaultLogger() Logger {
 // ptermLogger implements Logger interface using pterm live rendering
 type ptermLogger struct {
 	verbose      bool
-	logs         []string // Plain text logs for web interface
-	terminalLogs []string // Colored logs for terminal display
+	logs         []LogEntry // Structured logs for web interface
+	terminalLogs []string   // Colored logs for terminal display
 	maxLogs      int
 	maxTermLogs  int
 	mu           sync.Mutex
@@ -88,7 +95,7 @@ func NewPtermLogger(verbose bool) Logger {
 
 	logger := &ptermLogger{
 		verbose:      verbose,
-		logs:         make([]string, 0),
+		logs:         make([]LogEntry, 0),
 		terminalLogs: make([]string, 0),
 		maxLogs:      100,
 		maxTermLogs:  50, // Keep last 50 logs visible in terminal
@@ -166,12 +173,17 @@ func (l *ptermLogger) Stop() {
 
 func (l *ptermLogger) log(level, color, msg string, args ...interface{}) {
 	formatted := fmt.Sprintf(msg, args...)
-	timestamp := time.Now().Format("15:04:05")
+	now := time.Now()
+	timestamp := now.Format("15:04:05")
 
-	// Store plain text log with timestamp for web interface
+	// Store structured log entry for web interface
 	l.mu.Lock()
-	plainLog := fmt.Sprintf("[%s] %s %s", timestamp, level, formatted)
-	l.logs = append(l.logs, plainLog)
+	logEntry := LogEntry{
+		Type:    color, // "info", "warning", "error", "debug"
+		Date:    now.Format(time.RFC3339),
+		Message: formatted,
+	}
+	l.logs = append(l.logs, logEntry)
 	if len(l.logs) > l.maxLogs {
 		l.logs = l.logs[len(l.logs)-l.maxLogs:]
 	}
@@ -249,7 +261,7 @@ func (l *ptermLogger) log(level, color, msg string, args ...interface{}) {
 			// Send only the new log entry (not the entire history)
 			msg := LogMessage{
 				Type: "logs",
-				Logs: []string{plainLog},
+				Logs: []LogEntry{logEntry},
 			}
 			if msgBytes, err := json.Marshal(msg); err == nil {
 				// Broadcast error intentionally ignored - failures occur when clients
@@ -260,11 +272,11 @@ func (l *ptermLogger) log(level, color, msg string, args ...interface{}) {
 	}
 }
 
-func (l *ptermLogger) Logs() []string {
+func (l *ptermLogger) Logs() []LogEntry {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	// Return a copy to avoid race conditions
-	logsCopy := make([]string, len(l.logs))
+	logsCopy := make([]LogEntry, len(l.logs))
 	copy(logsCopy, l.logs)
 	return logsCopy
 }

@@ -68,6 +68,7 @@ class CemServeChrome extends HTMLElement {
   #drawerOpen = false;
   #initialLogsFetched = false;
   #drawerContent = null;
+  #isInitialLoad = true;
 
   static {
     customElements.define('cem-serve-chrome', this);
@@ -99,6 +100,8 @@ class CemServeChrome extends HTMLElement {
     if (this.#drawerContent) {
       if (this.#drawerOpen) {
         this.#drawerContent.setAttribute('open', '');
+        // Scroll to bottom when opening drawer
+        this.#scrollLogsToBottom();
       } else {
         this.#drawerContent.removeAttribute('open');
       }
@@ -144,13 +147,18 @@ class CemServeChrome extends HTMLElement {
     this.#drawerContent = shadow.querySelector('.drawer-content');
 
     if (drawerToggle && this.#drawerContent) {
-      // Restore drawer state from localStorage
+      // Restore drawer state from localStorage without animation
       const savedState = localStorage.getItem('cem-serve-drawer-open');
       if (savedState === 'true') {
-        this.drawerOpen = true;
+        // Set state directly without triggering setter (no transitions class yet)
+        this.#drawerOpen = true;
+        this.#drawerContent.setAttribute('open', '');
       }
 
       drawerToggle.addEventListener('click', () => {
+        // Enable transitions on first click (and keep enabled)
+        this.#drawerContent.classList.add('transitions-enabled');
+        this.#isInitialLoad = false;
         this.drawerOpen = !this.drawerOpen;
       });
     }
@@ -298,11 +306,16 @@ Generated: ${new Date().toISOString()}`;
     if (!this.#logContainer) return;
 
     const logEntries = logs.map(log => {
-      const level = log.includes('[ERROR]') ? 'error' :
-                    log.includes('[WARN]') ? 'warn' :
-                    log.includes('[INFO]') ? 'info' :
-                    log.includes('[DEBUG]') ? 'debug' : '';
-      return `<div class="log-entry ${level}">${this.#escapeHtml(log)}</div>`;
+      // Log is now structured: { type: 'info'|'warning'|'error'|'debug', date: ISO8601, message: string }
+      const date = new Date(log.date);
+      const time = date.toLocaleTimeString();
+      const badge = this.#getLogBadge(log.type);
+
+      return `<div class="log-entry ${log.type}" data-log-id="${log.date}">
+        <span class="log-badge ${log.type}">${badge}</span>
+        <span class="log-time">${time}</span>
+        <span class="log-message">${this.#escapeHtml(log.message)}</span>
+      </div>`;
     }).join('');
 
     // Initial load: replace all logs (from fetch on page load - container is empty)
@@ -311,13 +324,55 @@ Generated: ${new Date().toISOString()}`;
       // First batch of logs from initial fetch - replace
       this.#logContainer.innerHTML = logEntries;
       this.#initialLogsFetched = true;
+
+      // Scroll latest log into view after initial logs are rendered (if drawer is open)
+      if (this.#drawerOpen) {
+        this.#scrollLatestIntoView();
+      }
     } else {
       // Individual log from WebSocket or subsequent updates - append
       this.#logContainer.insertAdjacentHTML('beforeend', logEntries);
-    }
 
-    // Auto-scroll to bottom
-    this.#logContainer.scrollTop = this.#logContainer.scrollHeight;
+      // Auto-scroll latest log into view if drawer is open (for streaming logs)
+      if (this.#drawerOpen) {
+        this.#scrollLatestIntoView();
+      }
+    }
+  }
+
+  #getLogBadge(type) {
+    switch (type) {
+      case 'info': return 'INFO';
+      case 'warning': return 'WARN';
+      case 'error': return 'ERROR';
+      case 'debug': return 'DEBUG';
+      default: return type.toUpperCase();
+    }
+  }
+
+  #scrollLatestIntoView() {
+    if (!this.#logContainer) return;
+
+    requestAnimationFrame(() => {
+      const lastLog = this.#logContainer.lastElementChild;
+      if (lastLog) {
+        lastLog.scrollIntoView({ behavior: 'auto', block: 'end' });
+      }
+    });
+  }
+
+  #scrollLogsToBottom() {
+    if (!this.#logContainer) return;
+
+    if (this.#isInitialLoad) {
+      // Initial load - scroll immediately (no transition)
+      this.#scrollLatestIntoView();
+    } else {
+      // User toggle - wait for drawer transition (300ms) plus a small buffer
+      setTimeout(() => {
+        this.#scrollLatestIntoView();
+      }, 350);
+    }
   }
 
   #escapeHtml(text) {
