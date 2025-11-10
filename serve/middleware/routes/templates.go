@@ -32,12 +32,22 @@ var demoChromeTemplate string
 //go:embed templates/workspace-listing.html
 var workspaceListingTemplate string
 
-//go:embed templates/js/*.js
+//go:embed templates/**
+var templatesFS embed.FS
+
+//go:embed templates/js/*.js templates/css/*.css
 var InternalModules embed.FS
 
 // Template functions available to templates
 var templateFuncs = template.FuncMap{
 	"contains": strings.Contains,
+	"include": func(path string) template.CSS {
+		content, err := templatesFS.ReadFile("templates/" + path)
+		if err != nil {
+			return template.CSS("/* Error reading " + path + ": " + err.Error() + " */")
+		}
+		return template.CSS(content)
+	},
 }
 
 // DefaultIndexTemplate is the parsed template for the default index page

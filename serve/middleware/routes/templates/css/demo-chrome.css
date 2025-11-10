@@ -1,0 +1,93 @@
+/* Enable cross-document view transitions for same-origin navigation */
+@view-transition {
+  navigation: auto;
+}
+
+/* Debug: verify view transitions are active */
+html::view-transition-group(*) {
+  animation-duration: 0.3s;
+}
+
+html::view-transition-old(*) {
+  animation: 90ms cubic-bezier(0.4, 0, 1, 1) both fade-out;
+}
+
+html::view-transition-new(*) {
+  animation: 210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+}
+
+@keyframes fade-out {
+  to { opacity: 0; }
+}
+
+:root {
+  /* Base colors using light-dark() */
+  --cem-dev-server-bg-primary: light-dark(#ffffff, #0f172a);
+  --cem-dev-server-bg-secondary: light-dark(#f8fafc, #1e293b);
+  --cem-dev-server-bg-tertiary: light-dark(#f1f5f9, #334155);
+
+  --cem-dev-server-text-primary: light-dark(#0f172a, #e2e8f0);
+  --cem-dev-server-text-secondary: light-dark(#475569, #94a3b8);
+  --cem-dev-server-text-muted: light-dark(#64748b, #64748b);
+
+  --cem-dev-server-border-color: light-dark(#e2e8f0, #334155);
+  --cem-dev-server-accent-color: light-dark(#3b82f6, #60a5fa);
+  --cem-dev-server-accent-hover: light-dark(#2563eb, #93bbfd);
+
+  /* Component-specific */
+  --cem-dev-server-header-height: 56px;
+  --cem-dev-server-sidebar-width: 280px;
+  --cem-dev-server-knobs-width: 320px;
+
+  /* Spacing */
+  --cem-dev-server-spacing-xs: 0.25rem;
+  --cem-dev-server-spacing-sm: 0.5rem;
+  --cem-dev-server-spacing-md: 1rem;
+  --cem-dev-server-spacing-lg: 1.5rem;
+  --cem-dev-server-spacing-xl: 2rem;
+
+  /* Typography */
+  --cem-dev-server-font-family: system-ui, -apple-system, sans-serif;
+  --cem-dev-server-font-family-mono: 'Courier New', monospace;
+  --cem-dev-server-font-size-sm: 0.875rem;
+  --cem-dev-server-font-size-base: 1rem;
+  --cem-dev-server-font-size-lg: 1.125rem;
+
+  /* Borders */
+  --cem-dev-server-border-radius: 6px;
+  --cem-dev-server-border-width: 1px;
+}
+
+html {
+  background: var(--cem-dev-server-bg-secondary);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--cem-dev-server-font-family);
+  background: var(--cem-dev-server-bg-primary);
+  color: var(--cem-dev-server-text-primary);
+  color-scheme: light dark;
+}
+
+/* View Transition: Make chrome appear persistent, fade content */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 150ms;
+}
+
+::view-transition-old(dev-server-header),
+::view-transition-new(dev-server-header),
+::view-transition-old(dev-server-footer),
+::view-transition-new(dev-server-footer),
+::view-transition-old(dev-server-drawer),
+::view-transition-new(dev-server-drawer),
+::view-transition-old(dev-server-knobs),
+::view-transition-new(dev-server-knobs) {
+  animation-duration: 0s;
+}
