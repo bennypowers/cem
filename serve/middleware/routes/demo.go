@@ -37,8 +37,8 @@ type DemoRouteEntry struct {
 	PackagePath string    // Absolute path to package directory (for workspace mode)
 }
 
-// buildDemoRoutingTable creates a routing table from manifest
-func buildDemoRoutingTable(manifestBytes []byte) (map[string]*DemoRouteEntry, error) {
+// BuildDemoRoutingTable creates a routing table from manifest
+func BuildDemoRoutingTable(manifestBytes []byte) (map[string]*DemoRouteEntry, error) {
 	if len(manifestBytes) == 0 {
 		return nil, fmt.Errorf("no manifest available")
 	}

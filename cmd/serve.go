@@ -23,6 +23,7 @@ import (
 	"syscall"
 
 	"bennypowers.dev/cem/serve"
+	"bennypowers.dev/cem/serve/logger"
 	W "bennypowers.dev/cem/workspace"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -68,9 +69,9 @@ var serveCmd = &cobra.Command{
 		}
 
 		// Create pterm logger
-		logger := serve.NewPtermLogger(verbose)
+		log := logger.NewPtermLogger(verbose)
 		defer func() {
-			if l, ok := logger.(interface{ Stop() }); ok {
+			if l, ok := log.(interface{ Stop() }); ok {
 				l.Stop()
 			}
 		}()
@@ -82,12 +83,12 @@ var serveCmd = &cobra.Command{
 		}
 		defer func() {
 			if err := server.Close(); err != nil {
-				logger.Error("Failed to close server: %v", err)
+				log.Error("Failed to close server: %v", err)
 			}
 		}()
 
 		// Set pterm logger
-		server.SetLogger(logger)
+		server.SetLogger(log)
 
 		// Set watch directory to project root
 		err = server.SetWatchDir(ctx.Root())
@@ -117,7 +118,7 @@ var serveCmd = &cobra.Command{
 		}
 
 		// Start live rendering area AFTER initial setup
-		if l, ok := logger.(interface{ Start() }); ok {
+		if l, ok := log.(interface{ Start() }); ok {
 			l.Start()
 		}
 
@@ -127,9 +128,9 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("failed to start server: %w", err)
 		}
 
-		logger.Info("Server started on http://localhost:%d", port)
+		log.Info("Server started on http://localhost:%d", port)
 		if reload {
-			logger.Info("Live reload enabled - watching for file changes")
+			log.Info("Live reload enabled - watching for file changes")
 		}
 
 		// Update status with running info (with colors)
@@ -144,7 +145,7 @@ var serveCmd = &cobra.Command{
 			pterm.FgGray.Sprint("|"),
 			pterm.FgYellow.Sprint("Ctrl+C"),
 		)
-		if l, ok := logger.(interface{ SetStatus(string) }); ok {
+		if l, ok := log.(interface{ SetStatus(string) }); ok {
 			l.SetStatus(statusMsg)
 		}
 
@@ -153,10 +154,10 @@ var serveCmd = &cobra.Command{
 		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 		<-sigChan
 
-		if l, ok := logger.(interface{ SetStatus(string) }); ok {
+		if l, ok := log.(interface{ SetStatus(string) }); ok {
 			l.SetStatus("Shutting down...")
 		}
-		logger.Info("Shutting down server...")
+		log.Info("Shutting down server...")
 		return nil
 	},
 }

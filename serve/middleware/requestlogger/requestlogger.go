@@ -15,31 +15,23 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package logger
+package requestlogger
 
 import (
 	"net/http"
 
+	"bennypowers.dev/cem/serve/logger"
 	"bennypowers.dev/cem/serve/middleware"
 )
 
-// Logger interface defines the logging methods required by the middleware.
-// This minimal interface avoids import cycles with the serve package.
-type Logger interface {
-	Info(msg string, args ...any)
-	Warning(msg string, args ...any)
-	Error(msg string, args ...any)
-	Debug(msg string, args ...any)
-}
-
 // New creates a logging middleware that logs all HTTP requests.
 // Internal polling endpoints (/__cem-logs, /__cem/reload) are not logged.
-func New(logger Logger) middleware.Middleware {
+func New(log logger.Logger) middleware.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Skip logging for internal polling endpoints
 			if r.URL.Path != "/__cem-logs" && r.URL.Path != "/__cem/reload" {
-				logger.Info("%s %s", r.Method, r.URL.Path)
+				log.Info("%s %s", r.Method, r.URL.Path)
 			}
 			next.ServeHTTP(w, r)
 		})

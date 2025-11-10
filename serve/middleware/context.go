@@ -17,13 +17,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package middleware
 
-// Logger is a minimal logging interface used by middlewares
-type Logger interface {
-	Info(msg string, args ...any)
-	Warning(msg string, args ...any)
-	Error(msg string, args ...any)
-	Debug(msg string, args ...any)
-}
+import (
+	"bennypowers.dev/cem/serve/logger"
+)
+
+// Logger is a type alias for the logger.Logger interface
+type Logger = logger.Logger
 
 // ImportMap is a marker interface for import map types
 type ImportMap interface {
@@ -54,9 +53,9 @@ type DevServerContext interface {
 	// ImportMap returns the pre-computed import map (may be nil)
 	ImportMap() ImportMap
 
-	// WorkspaceRoutes returns the pre-computed workspace routing table (workspace mode only, nil otherwise)
+	// DemoRoutes returns the pre-computed demo routing table (both workspace and single-package mode)
 	// The return type is map[string]*routes.DemoRouteEntry but we use any to avoid circular imports
-	WorkspaceRoutes() any
+	DemoRoutes() any
 
 	// Logger returns the server's logger
 	Logger() Logger

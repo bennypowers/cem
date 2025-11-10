@@ -15,11 +15,12 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package serve
+package logger
 
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"sync"
@@ -29,18 +30,61 @@ import (
 	"golang.org/x/term"
 )
 
+// Logger is the logging interface used throughout the serve package
+type Logger interface {
+	Info(msg string, args ...any)
+	Warning(msg string, args ...any)
+	Error(msg string, args ...any)
+	Debug(msg string, args ...any)
+}
+
+// WebSocketManager interface for broadcasting logs (to avoid import cycle with serve package)
+type WebSocketManager interface {
+	Broadcast(msg []byte) error
+}
+
+// LogMessage represents a log message broadcast to clients
+type LogMessage struct {
+	Type string   `json:"type"`
+	Logs []string `json:"logs"`
+}
+
+// defaultLogger is a simple logger implementation using standard log package
+type defaultLogger struct{}
+
+func (l *defaultLogger) Info(msg string, args ...any) {
+	log.Printf("[INFO] "+msg, args...)
+}
+
+func (l *defaultLogger) Warning(msg string, args ...any) {
+	log.Printf("[WARN] "+msg, args...)
+}
+
+func (l *defaultLogger) Error(msg string, args ...any) {
+	log.Printf("[ERROR] "+msg, args...)
+}
+
+func (l *defaultLogger) Debug(msg string, args ...any) {
+	log.Printf("[DEBUG] "+msg, args...)
+}
+
+// NewDefaultLogger creates a simple logger using the standard log package
+func NewDefaultLogger() Logger {
+	return &defaultLogger{}
+}
+
 // ptermLogger implements Logger interface using pterm live rendering
 type ptermLogger struct {
-	verbose       bool
-	logs          []string // Plain text logs for web interface
-	terminalLogs  []string // Colored logs for terminal display
-	maxLogs       int
-	maxTermLogs   int
-	mu            sync.Mutex
-	interactive   bool
-	area          *pterm.AreaPrinter
-	status        string
-	wsManager     WebSocketManager
+	verbose      bool
+	logs         []string // Plain text logs for web interface
+	terminalLogs []string // Colored logs for terminal display
+	maxLogs      int
+	maxTermLogs  int
+	mu           sync.Mutex
+	interactive  bool
+	area         *pterm.AreaPrinter
+	status       string
+	wsManager    WebSocketManager
 }
 
 // NewPtermLogger creates a new pterm-based logger with live rendering
@@ -87,7 +131,6 @@ func (l *ptermLogger) SetWebSocketManager(wsManager WebSocketManager) {
 	defer l.mu.Unlock()
 	l.wsManager = wsManager
 }
-
 
 // render updates the live terminal display
 func (l *ptermLogger) render() {

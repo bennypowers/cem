@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package logger_test
+package requestlogger_test
 
 import (
 	"fmt"
@@ -23,7 +23,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"bennypowers.dev/cem/serve/middleware/logger"
+	"bennypowers.dev/cem/serve/middleware/requestlogger"
 )
 
 // mockLogger implements the Logger interface for testing
@@ -54,7 +54,7 @@ func TestLogger_LogsRequest(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	mw := logger.New(mock)
+	mw := requestlogger.New(mock)
 	wrapped := mw(handler)
 
 	req := httptest.NewRequest("GET", "/test", nil)
@@ -90,7 +90,7 @@ func TestLogger_SkipsInternalEndpoints(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 			})
 
-			mw := logger.New(mock)
+			mw := requestlogger.New(mock)
 			wrapped := mw(handler)
 
 			req := httptest.NewRequest("GET", tt.path, nil)
@@ -112,7 +112,7 @@ func TestLogger_LogsMultipleRequests(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	mw := logger.New(mock)
+	mw := requestlogger.New(mock)
 	wrapped := mw(handler)
 
 	paths := []string{"/api/users", "/api/posts", "/static/image.png"}
@@ -142,7 +142,7 @@ func TestLogger_LogsDifferentMethods(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	mw := logger.New(mock)
+	mw := requestlogger.New(mock)
 	wrapped := mw(handler)
 
 	for _, method := range methods {
@@ -172,7 +172,7 @@ func TestLogger_CallsNextHandler(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	mw := logger.New(mock)
+	mw := requestlogger.New(mock)
 	wrapped := mw(handler)
 
 	req := httptest.NewRequest("GET", "/test", nil)
@@ -193,7 +193,7 @@ func TestLogger_PreservesResponse(t *testing.T) {
 		w.Write([]byte(`{"status":"ok"}`))
 	})
 
-	mw := logger.New(mock)
+	mw := requestlogger.New(mock)
 	wrapped := mw(handler)
 
 	req := httptest.NewRequest("POST", "/api/create", nil)
@@ -218,7 +218,7 @@ func TestLogger_LogsWithQueryString(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	mw := logger.New(mock)
+	mw := requestlogger.New(mock)
 	wrapped := mw(handler)
 
 	req := httptest.NewRequest("GET", "/api/search?q=test&limit=10", nil)
@@ -248,7 +248,7 @@ func TestLogger_LogsBeforeHandler(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	mw := logger.New(mock)
+	mw := requestlogger.New(mock)
 	wrapped := mw(handler)
 
 	req := httptest.NewRequest("GET", "/test", nil)
@@ -267,7 +267,7 @@ func TestLogger_LogsEvenOnError(t *testing.T) {
 		w.WriteHeader(http.StatusInternalServerError)
 	})
 
-	mw := logger.New(mock)
+	mw := requestlogger.New(mock)
 	wrapped := mw(handler)
 
 	req := httptest.NewRequest("GET", "/test", nil)

@@ -20,6 +20,8 @@ package serve
 import (
 	"net/http"
 	"time"
+
+	"bennypowers.dev/cem/serve/logger"
 )
 
 // Config represents the dev server configuration
@@ -50,13 +52,8 @@ type ErrorMessage struct {
 	File    string `json:"file,omitempty"`
 }
 
-// Logger interface for dev server logging
-type Logger interface {
-	Info(msg string, args ...interface{})
-	Warning(msg string, args ...interface{})
-	Error(msg string, args ...interface{})
-	Debug(msg string, args ...interface{})
-}
+// Logger is a type alias for the logger.Logger interface
+type Logger = logger.Logger
 
 // WebSocketManager manages WebSocket connections for live reload
 type WebSocketManager interface {

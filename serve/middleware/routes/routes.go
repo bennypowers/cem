@@ -274,36 +274,17 @@ func serveDemoRoute(w http.ResponseWriter, r *http.Request, config Config) bool 
 		}
 	}
 
-	// Get manifest from context
-	manifestBytes, err := config.Context.Manifest()
-	if err != nil || len(manifestBytes) == 0 {
-		// No manifest available - not a demo route
+	// Get pre-computed routing table from context (used in both workspace and single-package mode)
+	routesAny := config.Context.DemoRoutes()
+	if routesAny == nil {
+		// No routes available - not a demo route
 		return false
 	}
 
-	// Build routing table from manifest
-	var routes map[string]*DemoRouteEntry
-	if config.Context.IsWorkspace() {
-		// Workspace mode: use pre-computed routing table
-		workspaceRoutesAny := config.Context.WorkspaceRoutes()
-		if workspaceRoutesAny != nil {
-			var ok bool
-			routes, ok = workspaceRoutesAny.(map[string]*DemoRouteEntry)
-			if !ok {
-				config.Context.Logger().Error("Workspace routes has unexpected type")
-				return false
-			}
-		} else {
-			config.Context.Logger().Error("Workspace routes not initialized")
-			return false
-		}
-	} else {
-		// Single-package mode: build from manifest
-		routes, err = buildDemoRoutingTable(manifestBytes)
-		if err != nil {
-			// Can't build routing table - not a demo route
-			return false
-		}
+	routes, ok := routesAny.(map[string]*DemoRouteEntry)
+	if !ok {
+		config.Context.Logger().Error("Demo routes has unexpected type")
+		return false
 	}
 
 	// Normalize requested path (ensure trailing slash for directory-style)

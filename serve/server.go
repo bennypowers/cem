@@ -21,7 +21,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -30,11 +29,12 @@ import (
 	"time"
 
 	G "bennypowers.dev/cem/generate"
+	"bennypowers.dev/cem/serve/logger"
 	"bennypowers.dev/cem/serve/middleware"
 	"bennypowers.dev/cem/serve/middleware/cors"
 	importmappkg "bennypowers.dev/cem/serve/middleware/importmap"
 	"bennypowers.dev/cem/serve/middleware/inject"
-	"bennypowers.dev/cem/serve/middleware/logger"
+	"bennypowers.dev/cem/serve/middleware/requestlogger"
 	"bennypowers.dev/cem/serve/middleware/routes"
 	"bennypowers.dev/cem/serve/middleware/transform"
 	W "bennypowers.dev/cem/workspace"
@@ -62,8 +62,9 @@ type Server struct {
 	isWorkspace       bool                                // True if serving a monorepo workspace
 	workspaceRoot     string                              // Root directory of workspace
 	workspacePackages []middleware.WorkspacePackage       // Discovered packages with manifests
-	workspaceRoutes   map[string]*routes.DemoRouteEntry // Combined routing table (workspace mode only)
-	importMap         *importmappkg.ImportMap             // Cached import map (workspace or single-package)
+	// Cached routing table for demo routes (both workspace and single-package mode)
+	demoRoutes map[string]*routes.DemoRouteEntry
+	importMap  *importmappkg.ImportMap // Cached import map (workspace or single-package)
 }
 
 // NewServer creates a new server with the given port
@@ -80,7 +81,7 @@ func NewServerWithConfig(config Config) (*Server, error) {
 	s := &Server{
 		port:   config.Port,
 		config: config,
-		logger: &defaultLogger{},
+		logger: logger.NewDefaultLogger(),
 	}
 
 	// Create WebSocket manager if reload is enabled
@@ -124,11 +125,11 @@ func (s *Server) ImportMap() middleware.ImportMap {
 	return s.importMap
 }
 
-// WorkspaceRoutes returns the pre-computed workspace routing table (workspace mode only, nil otherwise)
-func (s *Server) WorkspaceRoutes() any {
+// DemoRoutes returns the pre-computed demo routing table (both workspace and single-package mode)
+func (s *Server) DemoRoutes() any {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return s.workspaceRoutes
+	return s.demoRoutes
 }
 
 // Start starts the HTTP server
@@ -305,13 +306,24 @@ func (s *Server) TsconfigRaw() string {
 	return s.tsconfigRaw
 }
 
-// SetManifest sets the current manifest
+// SetManifest sets the current manifest and builds the routing table
 func (s *Server) SetManifest(manifest []byte) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	// Defensive copy to prevent caller from mutating our internal state
 	s.manifest = make([]byte, len(manifest))
 	copy(s.manifest, manifest)
+
+	// Build routing table from manifest
+	routingTable, err := routes.BuildDemoRoutingTable(manifest)
+	if err != nil {
+		s.logger.Warning("Failed to build demo routing table: %v", err)
+		s.demoRoutes = nil
+	} else {
+		s.demoRoutes = routingTable
+		s.logger.Debug("Built routing table with %d demo routes", len(routingTable))
+	}
+
 	return nil
 }
 
@@ -462,6 +474,17 @@ func (s *Server) RegenerateManifest() error {
 	}
 
 	s.manifest = manifestBytes
+
+	// Build routing table from manifest
+	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes)
+	if err != nil {
+		s.logger.Warning("Failed to build demo routing table: %v", err)
+		s.demoRoutes = nil
+	} else {
+		s.demoRoutes = routingTable
+		s.logger.Debug("Built routing table with %d demo routes", len(routingTable))
+	}
+
 	s.logger.Info("Manifest regenerated (%d bytes)", len(manifestBytes))
 	return nil
 }
@@ -531,7 +554,7 @@ func (s *Server) InitializeWorkspaceMode() error {
 	if err != nil {
 		return fmt.Errorf("building workspace routing table: %w", err)
 	}
-	s.workspaceRoutes = workspaceRoutingTable
+	s.demoRoutes = workspaceRoutingTable
 	s.logger.Info("Built routing table with %d demo routes", len(workspaceRoutingTable))
 
 	// Convert middleware.WorkspacePackage to importmappkg.WorkspacePackage
@@ -653,6 +676,40 @@ func (s *Server) handleFileChanges() {
 			} else {
 				s.logger.Debug("Manifest regenerated successfully")
 			}
+
+			// Regenerate import map (both workspace and single-package mode)
+			s.mu.Lock()
+			if s.isWorkspace {
+				// Workspace mode: regenerate workspace import map
+				workspacePkgs := make([]importmappkg.WorkspacePackage, len(s.workspacePackages))
+				for i, pkg := range s.workspacePackages {
+					workspacePkgs[i] = importmappkg.WorkspacePackage{
+						Name:     pkg.Name,
+						Path:     pkg.Path,
+						Manifest: pkg.Manifest,
+					}
+				}
+				importMap, err := importmappkg.Generate(s.workspaceRoot, &importmappkg.Config{
+					WorkspacePackages: workspacePkgs,
+					Logger:            s.logger,
+				})
+				if err != nil {
+					s.logger.Warning("Failed to regenerate workspace import map: %v", err)
+				} else {
+					s.importMap = importMap
+					s.logger.Debug("Regenerated workspace import map")
+				}
+			} else {
+				// Single-package mode: regenerate import map
+				importMap, err := importmappkg.Generate(s.watchDir, nil)
+				if err != nil {
+					s.logger.Warning("Failed to regenerate import map: %v", err)
+				} else {
+					s.importMap = importMap
+					s.logger.Debug("Regenerated import map")
+				}
+			}
+			s.mu.Unlock()
 		}
 
 		// Broadcast reload to all WebSocket clients
@@ -715,8 +772,8 @@ func (s *Server) setupMiddleware() {
 			LogsFunc:         s.getLogs,
 			WebSocketHandler: wsHandler,
 		}),
-		cors.New(),           // CORS headers
-		logger.New(s.logger), // Logging
+		cors.New(),                 // CORS headers
+		requestlogger.New(s.logger), // HTTP request logging
 	)
 }
 
@@ -739,23 +796,4 @@ func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 	// Serve files from watch directory
 	fileServer := http.FileServer(http.Dir(watchDir))
 	fileServer.ServeHTTP(w, r)
-}
-
-// defaultLogger is a simple logger implementation
-type defaultLogger struct{}
-
-func (l *defaultLogger) Info(msg string, args ...any) {
-	log.Printf("[INFO] "+msg, args...)
-}
-
-func (l *defaultLogger) Warning(msg string, args ...any) {
-	log.Printf("[WARN] "+msg, args...)
-}
-
-func (l *defaultLogger) Error(msg string, args ...any) {
-	log.Printf("[ERROR] "+msg, args...)
-}
-
-func (l *defaultLogger) Debug(msg string, args ...any) {
-	log.Printf("[DEBUG] "+msg, args...)
 }
