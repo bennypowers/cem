@@ -66,6 +66,8 @@ class CemServeDemo extends HTMLElement {
 class CemServeChrome extends HTMLElement {
   #logContainer = null;
   #drawerOpen = false;
+  #initialLogsFetched = false;
+  #drawerContent = null;
 
   static {
     customElements.define('cem-serve-chrome', this);
@@ -81,6 +83,29 @@ class CemServeChrome extends HTMLElement {
 
   get tagName() {
     return this.getAttribute('tag-name') || '';
+  }
+
+  get drawerOpen() {
+    return this.#drawerOpen;
+  }
+
+  set drawerOpen(value) {
+    const newValue = Boolean(value);
+    if (this.#drawerOpen === newValue) return;
+
+    this.#drawerOpen = newValue;
+
+    // Update DOM
+    if (this.#drawerContent) {
+      if (this.#drawerOpen) {
+        this.#drawerContent.setAttribute('open', '');
+      } else {
+        this.#drawerContent.removeAttribute('open');
+      }
+    }
+
+    // Persist to localStorage
+    localStorage.setItem('cem-serve-drawer-open', String(this.#drawerOpen));
   }
 
   connectedCallback() {
@@ -114,18 +139,19 @@ class CemServeChrome extends HTMLElement {
       });
     }
 
-    // Set up drawer toggle
+    // Set up drawer toggle with localStorage persistence
     const drawerToggle = shadow.querySelector('.drawer-toggle');
-    const drawerContent = shadow.querySelector('.drawer-content');
+    this.#drawerContent = shadow.querySelector('.drawer-content');
 
-    if (drawerToggle && drawerContent) {
+    if (drawerToggle && this.#drawerContent) {
+      // Restore drawer state from localStorage
+      const savedState = localStorage.getItem('cem-serve-drawer-open');
+      if (savedState === 'true') {
+        this.drawerOpen = true;
+      }
+
       drawerToggle.addEventListener('click', () => {
-        this.#drawerOpen = !this.#drawerOpen;
-        if (this.#drawerOpen) {
-          drawerContent.setAttribute('open', '');
-        } else {
-          drawerContent.removeAttribute('open');
-        }
+        this.drawerOpen = !this.drawerOpen;
       });
     }
 
@@ -271,14 +297,24 @@ Generated: ${new Date().toISOString()}`;
   #renderLogs(logs) {
     if (!this.#logContainer) return;
 
-    // Server logs come formatted from the logger
-    this.#logContainer.innerHTML = logs.map(log => {
+    const logEntries = logs.map(log => {
       const level = log.includes('[ERROR]') ? 'error' :
                     log.includes('[WARN]') ? 'warn' :
                     log.includes('[INFO]') ? 'info' :
                     log.includes('[DEBUG]') ? 'debug' : '';
       return `<div class="log-entry ${level}">${this.#escapeHtml(log)}</div>`;
     }).join('');
+
+    // Initial load: replace all logs (from fetch on page load - container is empty)
+    // Individual logs: append to existing logs (from WebSocket stream - container has content)
+    if (!this.#initialLogsFetched) {
+      // First batch of logs from initial fetch - replace
+      this.#logContainer.innerHTML = logEntries;
+      this.#initialLogsFetched = true;
+    } else {
+      // Individual log from WebSocket or subsequent updates - append
+      this.#logContainer.insertAdjacentHTML('beforeend', logEntries);
+    }
 
     // Auto-scroll to bottom
     this.#logContainer.scrollTop = this.#logContainer.scrollHeight;
