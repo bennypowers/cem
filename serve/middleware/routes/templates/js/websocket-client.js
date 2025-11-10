@@ -25,7 +25,7 @@ class CEMReloadClient {
       baseDelay: 1000,
       maxDelay: 30000,
       jitterMax: 1000,
-      overlayThreshold: 5,
+      overlayThreshold: 15, // Show dialog after 15 attempts (~15 seconds)
       badgeFadeDelay: 2000
     };
 
