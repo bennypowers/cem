@@ -228,7 +228,7 @@ func (fw *fileWatcher) flushDebouncedEvents() {
 	}
 
 	if fw.logger != nil {
-		fw.logger.Info("File changes detected: %d files", len(files))
+		fw.logger.Info("File changes detected: %d files: %v", len(files), files)
 	}
 }
 

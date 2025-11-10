@@ -642,14 +642,13 @@ func (s *Server) handleFileChanges() {
 			}
 		}
 
-		// Check if this file is in our source files set
-		s.mu.RLock()
-		isSourceFile := s.sourceFiles != nil && s.sourceFiles[relPath]
-		s.mu.RUnlock()
+		// Check if this is a relevant source file
+		ext := filepath.Ext(event.Path)
+		isRelevant := ext == ".ts" || ext == ".js" || ext == ".css"
 
-		// Skip files that aren't in the manifest
-		if !isSourceFile {
-			s.logger.Debug("Ignoring non-manifest file: %s", relPath)
+		// Skip files that aren't relevant source files
+		if !isRelevant {
+			s.logger.Debug("Ignoring non-source file: %s", relPath)
 			continue
 		}
 
@@ -666,7 +665,6 @@ func (s *Server) handleFileChanges() {
 		}
 
 		// Regenerate manifest if a source file changed
-		ext := filepath.Ext(event.Path)
 		if ext == ".ts" || ext == ".js" {
 			s.logger.Debug("Regenerating manifest for %s file change...", ext)
 			err := s.RegenerateManifest()
