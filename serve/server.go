@@ -693,7 +693,7 @@ func extractModuleImports(htmlPath string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	imports := make(map[string]bool) // Use map to deduplicate
 	doc, err := html.Parse(file)
