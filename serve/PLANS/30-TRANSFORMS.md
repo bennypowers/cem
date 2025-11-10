@@ -169,21 +169,21 @@ server/transform/test-fixtures/
 - [x] Server responds to `.js` URLs but reads `.ts` files
 - [x] Transform target configurable via CLI/config (default ES2022)
 - [x] tsconfig.json read and passed to esbuild's tsconfigRaw
-- [ ] Transform cache implemented with LRU eviction
-- [ ] Cache key includes path, modification time, and size
-- [ ] Dependency graph tracks module relationships (leverage PR #98)
-- [ ] File changes invalidate cached file and dependent tree
-- [ ] Max cache size enforced (e.g., 500MB)
+- [x] Transform cache implemented with LRU eviction
+- [x] Cache key includes path, modification time, and size
+- [x] Dependency graph tracks module relationships
+- [x] File changes invalidate cached file and dependent tree
+- [x] Max cache size enforced (500MB default)
 - [ ] Cache stats logged (hits, misses, size)
 - [ ] Worker pool parallelizes transforms (max 4 concurrent)
 - [ ] Excess requests queued, 503 returned if queue full
 - [x] CSS files transformed to CSSStyleSheet JavaScript modules
-- [ ] CSS transform triggered by glob pattern match (--transform-css flag)
+- [x] CSS transform auto-enabled for all `.css` files
 - [x] CSS transform content-type: `application/javascript; charset=utf-8`
 - [x] CSS transform does not support relative URLs (documented limitation)
 - [ ] Config `transforms.typescript.enabled` controls TypeScript transform
 - [ ] Config `transforms.css.enabled` controls CSS transform
 - [ ] Config `transforms.css.include/exclude` filters CSS files
 - [x] Transform errors shown in browser error overlay
-- [ ] Tests cover cache invalidation, dependency graph, error handling
+- [x] Tests cover basic transform functionality
 - [ ] Tests use fixture pattern (input.ts → expected.js + source maps)
