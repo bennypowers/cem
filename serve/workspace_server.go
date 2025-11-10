@@ -228,3 +228,71 @@ func buildPackageRoutingTable(pkg PackageContext) (map[string]*DemoRouteEntry, e
 
 	return routes, nil
 }
+
+// GenerateWorkspaceImportMap generates an import map for workspace mode
+// Creates scopes for each package directory with cross-package imports
+func GenerateWorkspaceImportMap(workspaceRoot string, packages []PackageContext) (*ImportMap, error) {
+	// Start with base import map from workspace root
+	baseImportMap, err := GenerateImportMap(workspaceRoot, &ImportMapConfig{
+		Logger: nil, // TODO: Pass logger if needed
+	})
+	if err != nil {
+		return nil, fmt.Errorf("generating base import map: %w", err)
+	}
+
+	// Ensure scopes map exists
+	if baseImportMap.Scopes == nil {
+		baseImportMap.Scopes = make(map[string]map[string]string)
+	}
+
+	// Add scopes for each package
+	for _, pkg := range packages {
+		// Calculate relative path from workspace root
+		pkgRelPath, err := filepath.Rel(workspaceRoot, pkg.Path)
+		if err != nil {
+			continue
+		}
+
+		// Scope key is the package directory path
+		scopeKey := "/" + filepath.ToSlash(pkgRelPath) + "/"
+
+		// Create scope for this package if it doesn't exist
+		if baseImportMap.Scopes[scopeKey] == nil {
+			baseImportMap.Scopes[scopeKey] = make(map[string]string)
+		}
+
+		// Add cross-package imports to this package's scope
+		for _, otherPkg := range packages {
+			if otherPkg.Name == pkg.Name {
+				continue // Skip self
+			}
+
+			// Calculate relative path to other package
+			otherRelPath, err := filepath.Rel(workspaceRoot, otherPkg.Path)
+			if err != nil {
+				continue
+			}
+
+			// Map package name to its path
+			otherWebPath := "/" + filepath.ToSlash(otherRelPath)
+
+			// Resolve entry point using shared helper
+			if entryPoint, err := resolvePackageEntryPoint(otherPkg.Path); err == nil && entryPoint != "" {
+				baseImportMap.Scopes[scopeKey][otherPkg.Name] = otherWebPath + "/" + entryPoint
+			} else {
+				// Fallback: map to package directory
+				baseImportMap.Scopes[scopeKey][otherPkg.Name] = otherWebPath + "/"
+			}
+		}
+
+		// Inherit shared dependencies from root imports
+		for depName, depPath := range baseImportMap.Imports {
+			// Only add if not already in scope (cross-package imports take precedence)
+			if _, exists := baseImportMap.Scopes[scopeKey][depName]; !exists {
+				baseImportMap.Scopes[scopeKey][depName] = depPath
+			}
+		}
+	}
+
+	return baseImportMap, nil
+}

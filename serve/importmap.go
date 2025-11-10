@@ -240,6 +240,52 @@ func readPackageJSON(path string) (*packageJSON, error) {
 	return &pkg, nil
 }
 
+// resolvePackageEntryPoint resolves a package's main entry point from package.json
+// Returns the relative path to the entry point (e.g., "index.js" or "dist/index.mjs")
+// Returns empty string if no entry point can be determined
+func resolvePackageEntryPoint(pkgPath string) (string, error) {
+	pkgJSONPath := filepath.Join(pkgPath, "package.json")
+	data, err := os.ReadFile(pkgJSONPath)
+	if err != nil {
+		return "", err
+	}
+
+	var pkg struct {
+		Exports interface{} `json:"exports"`
+		Main    string      `json:"main"`
+	}
+	if err := json.Unmarshal(data, &pkg); err != nil {
+		return "", err
+	}
+
+	// Try exports field first
+	if pkg.Exports != nil {
+		// Try to resolve the "." export
+		if exportsMap, ok := pkg.Exports.(map[string]interface{}); ok {
+			if rootExport, ok := exportsMap["."].(string); ok {
+				return strings.TrimPrefix(rootExport, "./"), nil
+			}
+			// Try nested conditions
+			if rootValue, ok := exportsMap["."]; ok {
+				if resolved := resolveSimpleExportValue(rootValue, ""); resolved != "" {
+					return strings.TrimPrefix(resolved, "/"), nil
+				}
+			}
+		}
+		// Try string exports
+		if exportStr, ok := pkg.Exports.(string); ok {
+			return strings.TrimPrefix(exportStr, "./"), nil
+		}
+	}
+
+	// Fallback to main field
+	if pkg.Main != "" {
+		return strings.TrimPrefix(pkg.Main, "./"), nil
+	}
+
+	return "", nil
+}
+
 // readImportMapFile reads a user-provided import map file
 func readImportMapFile(path string) (*ImportMap, error) {
 	data, err := os.ReadFile(path)
