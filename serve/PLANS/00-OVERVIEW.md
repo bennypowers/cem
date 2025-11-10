@@ -167,7 +167,7 @@ feat/dev-server (staging)
   - Affects: Phase 5 (knobs need chrome infrastructure)
   - Details: [10-URL-REWRITING.md](./10-URL-REWRITING.md), [15-DEMO-CHROME.md](./15-DEMO-CHROME.md)
 
-- [ ] **Phase 4: Transforms**
+- [x] **Phase 4: Transforms**
   - Goal: On-the-fly TypeScript and CSS transformation with dependency-aware caching
   - Prerequisites: Phase 1 (HTTP server, middleware pipeline)
   - Provides: Transformed JavaScript/CSS responses
