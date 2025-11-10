@@ -23,20 +23,18 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"bennypowers.dev/cem/serve/middleware"
 )
 
 // TypeScriptConfig holds configuration for TypeScript transformation
 type TypeScriptConfig struct {
-	WatchDirFunc   func() string // Function to get current watch directory
-	Cache          *Cache
-	Logger         Logger
+	WatchDirFunc     func() string // Function to get current watch directory
+	TsconfigRawFunc  func() string // Function to get current tsconfig.json content
+	Cache            *Cache
+	Logger           Logger
 	ErrorBroadcaster ErrorBroadcaster
-	TsconfigRaw    string
-	Target         string
-	TsconfigMu     *sync.RWMutex // Protects TsconfigRaw
+	Target           string
 }
 
 // NewTypeScript creates a middleware that transforms TypeScript files to JavaScript
@@ -101,10 +99,11 @@ func NewTypeScript(config TypeScriptConfig) middleware.Middleware {
 						return
 					}
 
-					// Get tsconfig for transform
-					config.TsconfigMu.RLock()
-					tsconfigRaw := config.TsconfigRaw
-					config.TsconfigMu.RUnlock()
+					// Get tsconfig for transform (dynamically from function)
+					var tsconfigRaw string
+					if config.TsconfigRawFunc != nil {
+						tsconfigRaw = config.TsconfigRawFunc()
+					}
 
 					// Get configured target (defaults to ES2022 if not set)
 					target := config.Target

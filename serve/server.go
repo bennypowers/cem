@@ -59,10 +59,11 @@ type Server struct {
 	mu              sync.RWMutex
 	generateSession *G.GenerateSession
 	// Workspace mode fields
-	isWorkspace       bool                          // True if serving a monorepo workspace
-	workspaceRoot     string                        // Root directory of workspace
-	workspacePackages []middleware.WorkspacePackage // Discovered packages with manifests
-	importMap         *importmappkg.ImportMap       // Cached import map (workspace or single-package)
+	isWorkspace       bool                                // True if serving a monorepo workspace
+	workspaceRoot     string                              // Root directory of workspace
+	workspacePackages []middleware.WorkspacePackage       // Discovered packages with manifests
+	workspaceRoutes   map[string]*routes.DemoRouteEntry // Combined routing table (workspace mode only)
+	importMap         *importmappkg.ImportMap             // Cached import map (workspace or single-package)
 }
 
 // NewServer creates a new server with the given port
@@ -121,6 +122,13 @@ func (s *Server) ImportMap() middleware.ImportMap {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.importMap
+}
+
+// WorkspaceRoutes returns the pre-computed workspace routing table (workspace mode only, nil otherwise)
+func (s *Server) WorkspaceRoutes() any {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.workspaceRoutes
 }
 
 // Start starts the HTTP server
@@ -288,6 +296,13 @@ func (s *Server) WatchDir() string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.watchDir
+}
+
+// TsconfigRaw returns the current tsconfig.json content
+func (s *Server) TsconfigRaw() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.tsconfigRaw
 }
 
 // SetManifest sets the current manifest
@@ -503,6 +518,22 @@ func (s *Server) InitializeWorkspaceMode() error {
 	s.logger.Info("Found %d packages with manifests", len(packages))
 	s.workspacePackages = packages
 
+	// Build routing table from workspace packages
+	pkgContexts := make([]routes.PackageContext, len(packages))
+	for i, pkg := range packages {
+		pkgContexts[i] = routes.PackageContext{
+			Name:     pkg.Name,
+			Path:     pkg.Path,
+			Manifest: pkg.Manifest,
+		}
+	}
+	workspaceRoutingTable, err := routes.BuildWorkspaceRoutingTable(pkgContexts)
+	if err != nil {
+		return fmt.Errorf("building workspace routing table: %w", err)
+	}
+	s.workspaceRoutes = workspaceRoutingTable
+	s.logger.Info("Built routing table with %d demo routes", len(workspaceRoutingTable))
+
 	// Convert middleware.WorkspacePackage to importmappkg.WorkspacePackage
 	workspacePkgs := make([]importmappkg.WorkspacePackage, len(packages))
 	for i, pkg := range packages {
@@ -673,12 +704,11 @@ func (s *Server) setupMiddleware() {
 		}),
 		transform.NewTypeScript(transform.TypeScriptConfig{ // TypeScript transform
 			WatchDirFunc:     s.WatchDir,
+			TsconfigRawFunc:  s.TsconfigRaw,
 			Cache:            s.transformCache,
 			Logger:           s.logger,
 			ErrorBroadcaster: errorBroadcaster{s},
-			TsconfigRaw:      s.tsconfigRaw,
 			Target:           string(s.config.Target),
-			TsconfigMu:       &s.mu,
 		}),
 		routes.New(routes.Config{ // Internal CEM routes (includes WebSocket, demos, listings)
 			Context:          s,

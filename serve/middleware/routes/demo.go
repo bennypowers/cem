@@ -86,10 +86,30 @@ func buildDemoRoutingTable(manifestBytes []byte) (map[string]*DemoRouteEntry, er
 			if sourceControlRootURL != "" && strings.HasPrefix(sourceHref, sourceControlRootURL) {
 				filePath = strings.TrimPrefix(sourceHref, sourceControlRootURL)
 			} else if parsed, err := url.Parse(sourceHref); err == nil && parsed.Path != "" {
-				// Fallback: extract the filename and combine with module directory
-				moduleDir := filepath.Dir(renderableDemo.Module.Path)
-				filename := filepath.Base(parsed.Path)
-				filePath = filepath.Join(moduleDir, "demo", filename)
+				// Try to extract file path from GitHub/GitLab URLs
+				// URLs like: https://github.com/org/repo/tree/main/path/to/file.html
+				// or:        https://github.com/org/repo/blob/main/path/to/file.html
+				extractedPath := ""
+				path := parsed.Path
+				for _, prefix := range []string{"/tree/", "/blob/"} {
+					if idx := strings.Index(path, prefix); idx >= 0 {
+						// Find next slash after the branch name
+						branchStart := idx + len(prefix)
+						if slashIdx := strings.Index(path[branchStart:], "/"); slashIdx >= 0 {
+							extractedPath = path[branchStart+slashIdx+1:]
+							break
+						}
+					}
+				}
+
+				if extractedPath != "" {
+					filePath = extractedPath
+				} else {
+					// Fallback: extract the filename and combine with module directory
+					moduleDir := filepath.Dir(renderableDemo.Module.Path)
+					filename := filepath.Base(parsed.Path)
+					filePath = filepath.Join(moduleDir, "demo", filename)
+				}
 			}
 		} else if strings.HasPrefix(demoURL, "./") || strings.HasPrefix(demoURL, "/") {
 			// Relative path - use as-is (strip leading ./ if present)
@@ -237,11 +257,30 @@ func buildPackageRoutingTable(pkg PackageContext) (map[string]*DemoRouteEntry, e
 		var filePath string
 		if renderableDemo.Demo.Source != nil && renderableDemo.Demo.Source.Href != "" {
 			sourceHref := renderableDemo.Demo.Source.Href
-			// Extract filename from href and look in module's demo directory
+			// Try to extract file path from GitHub/GitLab URLs
+			// URLs like: https://github.com/org/repo/tree/main/path/to/file.html
 			if parsed, err := url.Parse(sourceHref); err == nil && parsed.Path != "" {
-				moduleDir := filepath.Dir(renderableDemo.Module.Path)
-				filename := filepath.Base(parsed.Path)
-				filePath = filepath.Join(moduleDir, "demo", filename)
+				extractedPath := ""
+				path := parsed.Path
+				for _, prefix := range []string{"/tree/", "/blob/"} {
+					if idx := strings.Index(path, prefix); idx >= 0 {
+						// Find next slash after the branch name
+						branchStart := idx + len(prefix)
+						if slashIdx := strings.Index(path[branchStart:], "/"); slashIdx >= 0 {
+							extractedPath = path[branchStart+slashIdx+1:]
+							break
+						}
+					}
+				}
+
+				if extractedPath != "" {
+					filePath = extractedPath
+				} else {
+					// Fallback: extract filename and combine with module directory
+					moduleDir := filepath.Dir(renderableDemo.Module.Path)
+					filename := filepath.Base(parsed.Path)
+					filePath = filepath.Join(moduleDir, "demo", filename)
+				}
 			} else {
 				filePath = sourceHref
 			}

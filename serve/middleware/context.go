@@ -54,6 +54,10 @@ type DevServerContext interface {
 	// ImportMap returns the pre-computed import map (may be nil)
 	ImportMap() ImportMap
 
+	// WorkspaceRoutes returns the pre-computed workspace routing table (workspace mode only, nil otherwise)
+	// The return type is map[string]*routes.DemoRouteEntry but we use any to avoid circular imports
+	WorkspaceRoutes() any
+
 	// Logger returns the server's logger
 	Logger() Logger
 }

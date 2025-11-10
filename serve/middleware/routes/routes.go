@@ -284,23 +284,17 @@ func serveDemoRoute(w http.ResponseWriter, r *http.Request, config Config) bool 
 	// Build routing table from manifest
 	var routes map[string]*DemoRouteEntry
 	if config.Context.IsWorkspace() {
-		// Workspace mode: build from workspace packages
-		// Convert middleware.WorkspacePackage to routes.PackageContext
-		middlewarePackages := config.Context.WorkspacePackages()
-		pkgContexts := make([]PackageContext, len(middlewarePackages))
-		for i, pkg := range middlewarePackages {
-			pkgContexts[i] = PackageContext{
-				Name:     pkg.Name,
-				Path:     pkg.Path,
-				Manifest: pkg.Manifest,
+		// Workspace mode: use pre-computed routing table
+		workspaceRoutesAny := config.Context.WorkspaceRoutes()
+		if workspaceRoutesAny != nil {
+			var ok bool
+			routes, ok = workspaceRoutesAny.(map[string]*DemoRouteEntry)
+			if !ok {
+				config.Context.Logger().Error("Workspace routes has unexpected type")
+				return false
 			}
-		}
-		routes, err = BuildWorkspaceRoutingTable(pkgContexts)
-		if err != nil {
-			// Routing table error - log and return false (not a demo route)
-			if strings.Contains(err.Error(), "duplicate demo route") {
-				config.Context.Logger().Error("Demo routing error: %v", err)
-			}
+		} else {
+			config.Context.Logger().Error("Workspace routes not initialized")
 			return false
 		}
 	} else {
@@ -324,6 +318,10 @@ func serveDemoRoute(w http.ResponseWriter, r *http.Request, config Config) bool 
 		// Not a demo route
 		return false
 	}
+
+	// Debug: log entry details
+	config.Context.Logger().Debug("Demo route entry: localRoute=%s, packagePath='%s', filePath='%s', isWorkspace=%v",
+		entry.LocalRoute, entry.PackagePath, entry.FilePath, config.Context.IsWorkspace())
 
 	// Render the demo
 	html, err := renderDemoFromRoute(entry, queryParams, config)
