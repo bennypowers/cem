@@ -356,7 +356,7 @@ func TestManifestRegenerationTrigger(t *testing.T) {
 	}
 
 	// Should be able to trigger regeneration
-	err = server.RegenerateManifest()
+	_, err = server.RegenerateManifest()
 	if err != nil {
 		// Error is expected if no source files exist, but method should exist
 		if !strings.Contains(err.Error(), "no source files") &&
@@ -427,7 +427,7 @@ export class TestElement extends HTMLElement {}
 	}
 
 	// Regenerate manifest
-	err = server.RegenerateManifest()
+	_, err = server.RegenerateManifest()
 	if err != nil {
 		t.Fatalf("Failed to regenerate manifest: %v", err)
 	}

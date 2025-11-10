@@ -106,7 +106,7 @@ var serveCmd = &cobra.Command{
 		// If not workspace mode, generate single-package manifest
 		if !server.IsWorkspace() {
 			pterm.Info.Println("Generating initial manifest...")
-			err = server.RegenerateManifest()
+			_, err = server.RegenerateManifest()
 			if err != nil {
 				pterm.Error.Printf("Failed to generate initial manifest: %v\n", err)
 				pterm.Info.Println("Server will continue, but manifest may be unavailable")
@@ -128,10 +128,12 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("failed to start server: %w", err)
 		}
 
-		log.Info("Server started on http://localhost:%d", port)
+		// Single startup message
+		reloadStatus := ""
 		if reload {
-			log.Info("Live reload enabled - watching for file changes")
+			reloadStatus = " (live reload enabled)"
 		}
+		log.Info("Server started on http://localhost:%d%s", port, reloadStatus)
 
 		// Update status with running info (with colors)
 		reloadColor := pterm.FgRed.Sprint("false")

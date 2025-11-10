@@ -224,7 +224,7 @@ export class MyElement extends HTMLElement {}
 	time.Sleep(200 * time.Millisecond)
 
 	// Generate initial manifest
-	err = server.RegenerateManifest()
+	_, err = server.RegenerateManifest()
 	if err != nil {
 		t.Fatalf("Failed to generate initial manifest: %v", err)
 	}
