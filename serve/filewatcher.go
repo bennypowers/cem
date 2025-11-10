@@ -20,6 +20,7 @@ package serve
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -279,10 +280,6 @@ func (fw *fileWatcher) flushDebouncedEvents() {
 			}
 		}
 	}
-
-	if fw.logger != nil {
-		fw.logger.Info("File changes detected: %d files: %v", len(files), files)
-	}
 }
 
 // shouldIgnore checks if a file path should be ignored
@@ -291,10 +288,8 @@ func shouldIgnore(path string) bool {
 
 	// Ignore hidden files and common directories
 	ignoredDirs := []string{".git", "node_modules", "dist", "build", ".cache"}
-	for _, dir := range ignoredDirs {
-		if base == dir {
-			return true
-		}
+	if slices.Contains(ignoredDirs, base) {
+		return true
 	}
 
 	// Ignore editor temp files

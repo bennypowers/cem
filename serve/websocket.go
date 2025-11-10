@@ -110,32 +110,14 @@ func (wm *websocketManager) BroadcastToPages(message []byte, pageURLs []string) 
 		return nil
 	}
 
-	if wm.logger != nil {
-		wm.logger.Info("BroadcastToPages: %d target URLs, %d active connections", len(pageURLs), len(wm.connections))
-		for i, url := range pageURLs {
-			if i < 5 { // Log first 5 target URLs
-				wm.logger.Info("  Target URL[%d]: %s", i, url)
-			}
-		}
-	}
-
 	// Snapshot connections while holding read lock
 	wm.mu.RLock()
-	// Log all connection page URLs for debugging
-	if wm.logger != nil {
-		for conn, wrapper := range wm.connections {
-			wm.logger.Info("  Connection %p has pageURL: %s", conn, wrapper.pageURL)
-		}
-	}
 
 	snapshot := make([]*connWrapper, 0, len(wm.connections))
 	for _, wrapper := range wm.connections {
 		// Check if this connection's page matches any of the target URLs
 		for _, targetURL := range pageURLs {
 			if wrapper.pageURL == targetURL || containsPath(wrapper.pageURL, targetURL) {
-				if wm.logger != nil {
-					wm.logger.Info("WebSocket MATCH: connection page '%s' matches target '%s'", wrapper.pageURL, targetURL)
-				}
 				snapshot = append(snapshot, wrapper)
 				break
 			}
@@ -194,17 +176,9 @@ func (wm *websocketManager) HandleConnection(w http.ResponseWriter, r *http.Requ
 	// Extract page URL from query parameter (preferred) or Referer header (fallback)
 	// Browsers don't send Referer header for WebSocket connections, so client passes it as ?page=...
 	pageURL := r.URL.Query().Get("page")
-	if wm.logger != nil {
-		wm.logger.Info("WebSocket connection - page query param: '%s'", pageURL)
-	}
-
 	// Fallback to Referer header if query param not present
 	if pageURL == "" {
 		referer := r.Header.Get("Referer")
-		if wm.logger != nil {
-			wm.logger.Info("WebSocket connection - Referer header: '%s'", referer)
-		}
-
 		if referer != "" {
 			// Parse the Referer URL to extract just the path
 			// Referer will be something like "http://localhost:8000/elements/accordion/demo/"
