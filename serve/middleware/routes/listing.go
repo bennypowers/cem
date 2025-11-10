@@ -21,7 +21,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"html"
 	"html/template"
 	"net/url"
 	"path/filepath"
@@ -39,22 +38,23 @@ type ElementListing struct {
 
 // DemoListing represents a single demo
 type DemoListing struct {
-	Name string
-	URL  string
-	Slug string
+	Name        string
+	URL         string
+	Slug        string
+	PackageName string // Package name (for workspace mode, empty for single-package)
 }
 
 // RenderElementListing renders the root listing page with all elements
-func RenderElementListing(manifestBytes []byte, importMap string) (string, error) {
+func RenderElementListing(manifestBytes []byte, importMap string, packageName string) (string, error) {
 	if len(manifestBytes) == 0 {
 		// Empty manifest - show helpful message
 		return renderDemoChrome(ChromeData{
 			TagName:   "cem-serve",
 			DemoTitle: "Component Browser",
 			DemoHTML: template.HTML(`
-				<div style="text-align: center; padding: var(--__cem-spacing-xl); color: var(--__cem-text-secondary);">
+				<div class="empty-state">
 					<p>No custom elements found in manifest.</p>
-					<p style="font-size: var(--__cem-font-size-sm);">Add some components to your project and they'll appear here.</p>
+					<p class="help-text">Add some components to your project and they'll appear here.</p>
 				</div>
 			`),
 			ImportMap: template.HTML(importMap),
@@ -67,17 +67,17 @@ func RenderElementListing(manifestBytes []byte, importMap string) (string, error
 		return "", fmt.Errorf("parsing manifest: %w", err)
 	}
 
-	// Extract all elements with demos
-	elements := extractElementListings(&pkg)
+	// Extract all elements with demos (pass package name for single-package mode)
+	elements := extractElementListings(&pkg, packageName)
 
 	if len(elements) == 0 {
 		return renderDemoChrome(ChromeData{
 			TagName:   "cem-serve",
 			DemoTitle: "Component Browser",
 			DemoHTML: template.HTML(`
-				<div style="text-align: center; padding: var(--__cem-spacing-xl); color: var(--__cem-text-secondary);">
+				<div class="empty-state">
 					<p>No demos found.</p>
-					<p style="font-size: var(--__cem-font-size-sm);">Add demo files to your components and they'll appear here.</p>
+					<p class="help-text">Add demo files to your components and they'll appear here.</p>
 				</div>
 			`),
 			ImportMap: template.HTML(importMap),
@@ -89,13 +89,19 @@ func RenderElementListing(manifestBytes []byte, importMap string) (string, error
 		return elements[i].TagName < elements[j].TagName
 	})
 
-	// Build listing HTML
-	listingHTML := buildListingHTML(elements)
+	// Render with template
+	var buf bytes.Buffer
+	err := WorkspaceListingTemplate.Execute(&buf, map[string]interface{}{
+		"Elements": elements,
+	})
+	if err != nil {
+		return "", fmt.Errorf("executing element listing template: %w", err)
+	}
 
 	return renderDemoChrome(ChromeData{
 		TagName:   "cem-serve",
 		DemoTitle: "Component Browser",
-		DemoHTML:  template.HTML(listingHTML),
+		DemoHTML:  template.HTML(buf.String()),
 		ImportMap: template.HTML(importMap),
 	})
 }
@@ -163,7 +169,7 @@ func extractLocalRoute(demoURL string) string {
 }
 
 // extractElementListings extracts element listings from manifest using RenderableDemos
-func extractElementListings(pkg *M.Package) []ElementListing {
+func extractElementListings(pkg *M.Package, packageName string) []ElementListing {
 	elements := []ElementListing{}
 	elementMap := make(map[string]*ElementListing)
 
@@ -195,9 +201,10 @@ func extractElementListings(pkg *M.Package) []ElementListing {
 		}
 
 		listing.Demos = append(listing.Demos, DemoListing{
-			Name: name,
-			URL:  localRoute,
-			Slug: slugify(name),
+			Name:        name,
+			URL:         localRoute,
+			Slug:        slugify(name),
+			PackageName: packageName,
 		})
 	}
 
@@ -207,40 +214,6 @@ func extractElementListings(pkg *M.Package) []ElementListing {
 	}
 
 	return elements
-}
-
-// buildListingHTML builds the HTML for the element listing
-func buildListingHTML(elements []ElementListing) string {
-	var buf bytes.Buffer
-
-	buf.WriteString(`<cem-serve-listing>`)
-	buf.WriteString(`<div style="display: grid; gap: var(--__cem-spacing-lg);">`)
-
-	for _, element := range elements {
-		buf.WriteString(`<section style="background: var(--__cem-bg-secondary); border: var(--__cem-border-width) solid var(--__cem-border-color); border-radius: var(--__cem-border-radius); padding: var(--__cem-spacing-lg);">`)
-
-		// Element name - escape to prevent XSS
-		escapedTagName := html.EscapeString(element.TagName)
-		buf.WriteString(fmt.Sprintf(`<h2 style="margin: 0 0 var(--__cem-spacing-md) 0; color: var(--__cem-accent-color); font-size: var(--__cem-font-size-lg);"><code>&lt;%s&gt;</code></h2>`, escapedTagName))
-
-		// Demo list
-		buf.WriteString(`<ul style="list-style: none; padding: 0; margin: 0; display: grid; gap: var(--__cem-spacing-sm);">`)
-		for _, demo := range element.Demos {
-			// Escape both URL (for href attribute) and Name (for text content) to prevent XSS
-			escapedURL := html.EscapeString(demo.URL)
-			escapedName := html.EscapeString(demo.Name)
-			buf.WriteString(fmt.Sprintf(`<li><a href="%s" style="color: var(--__cem-text-primary); text-decoration: none; padding: var(--__cem-spacing-sm) var(--__cem-spacing-md); background: var(--__cem-bg-tertiary); border-radius: var(--__cem-border-radius); display: block; transition: background 0.2s;" onmouseover="this.style.background='var(--__cem-accent-color)'; this.style.color='white';" onmouseout="this.style.background='var(--__cem-bg-tertiary)'; this.style.color='var(--__cem-text-primary)';">%s</a></li>`,
-				escapedURL, escapedName))
-		}
-		buf.WriteString(`</ul>`)
-
-		buf.WriteString(`</section>`)
-	}
-
-	buf.WriteString(`</div>`)
-	buf.WriteString(`</cem-serve-listing>`)
-
-	return buf.String()
 }
 
 // slugify converts a string to a URL-safe slug
@@ -261,19 +234,6 @@ func slugify(s string) string {
 	return result
 }
 
-// WorkspaceElementListing represents an element with its demos for template rendering
-type WorkspaceElementListing struct {
-	TagName string
-	Demos   []WorkspaceDemoListing
-}
-
-// WorkspaceDemoListing represents a demo for template rendering
-type WorkspaceDemoListing struct {
-	Name        string
-	URL         string
-	PackageName string
-}
-
 // RenderWorkspaceListing renders the workspace index page with all packages
 func RenderWorkspaceListing(packages []PackageContext, importMap string) (string, error) {
 	if len(packages) == 0 {
@@ -281,7 +241,7 @@ func RenderWorkspaceListing(packages []PackageContext, importMap string) (string
 			TagName:   "cem-serve",
 			DemoTitle: "Workspace Browser",
 			DemoHTML: template.HTML(`
-				<div style="text-align: center; padding: var(--__cem-spacing-xl); color: var(--__cem-text-secondary);">
+				<div class="empty-state">
 					<p>No packages found in workspace.</p>
 				</div>
 			`),
@@ -302,27 +262,28 @@ func RenderWorkspaceListing(packages []PackageContext, importMap string) (string
 	}
 
 	// Build element listings
-	var elementListings []WorkspaceElementListing
+	var elementListings []ElementListing
 	for tagName, tagRoutes := range elementRoutes {
 		// Sort demos by URL
 		sort.Slice(tagRoutes, func(i, j int) bool {
 			return tagRoutes[i].LocalRoute < tagRoutes[j].LocalRoute
 		})
 
-		var demoListings []WorkspaceDemoListing
+		var demoListings []DemoListing
 		for _, route := range tagRoutes {
 			demoName := route.Demo.Description
 			if demoName == "" {
 				demoName = prettifyRoute(route.LocalRoute)
 			}
-			demoListings = append(demoListings, WorkspaceDemoListing{
+			demoListings = append(demoListings, DemoListing{
 				Name:        demoName,
 				URL:         route.LocalRoute,
+				Slug:        slugify(demoName),
 				PackageName: route.PackageName,
 			})
 		}
 
-		elementListings = append(elementListings, WorkspaceElementListing{
+		elementListings = append(elementListings, ElementListing{
 			TagName: tagName,
 			Demos:   demoListings,
 		})

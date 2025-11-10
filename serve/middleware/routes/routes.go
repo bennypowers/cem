@@ -249,7 +249,8 @@ func serveIndexListing(w http.ResponseWriter, r *http.Request, config Config) bo
 			config.Context.Logger().Warning("Failed to get manifest for index listing: %v", err2)
 			return false
 		}
-		html, err = RenderElementListing(manifestBytes, importMapJSON)
+		// TODO: Get package name from config/package.json
+		html, err = RenderElementListing(manifestBytes, importMapJSON, "")
 	}
 
 	if err != nil {
