@@ -115,6 +115,9 @@ class CemServeChrome extends HTMLElement {
     const shadow = this.shadowRoot;
     if (!shadow) return;
 
+    // Set up navigation drawer
+    this.#setupNavigationDrawer(shadow);
+
     // Set up debug overlay
     const debugButton = shadow.querySelector('.debug-button');
     const debugOverlay = shadow.querySelector('.debug-overlay');
@@ -373,6 +376,55 @@ Generated: ${new Date().toISOString()}`;
         this.#scrollLatestIntoView();
       }, 350);
     }
+  }
+
+  #setupNavigationDrawer(shadow) {
+    const navDrawer = shadow.querySelector('.nav-drawer');
+    const navDrawerToggle = shadow.querySelector('.nav-drawer-toggle');
+    const navDrawerClose = shadow.querySelector('.nav-drawer-close');
+    const navDrawerOverlay = shadow.querySelector('.nav-drawer-overlay');
+
+    if (!navDrawer || !navDrawerToggle) {
+      // No navigation drawer on this page
+      return;
+    }
+
+    // Toggle drawer
+    const toggleDrawer = () => {
+      const isOpen = navDrawer.hasAttribute('open');
+      if (isOpen) {
+        navDrawer.removeAttribute('open');
+        localStorage.removeItem('cem-serve-nav-drawer-open');
+      } else {
+        navDrawer.setAttribute('open', '');
+        localStorage.setItem('cem-serve-nav-drawer-open', 'true');
+      }
+    };
+
+    navDrawerToggle.addEventListener('click', toggleDrawer);
+    navDrawerClose?.addEventListener('click', toggleDrawer);
+    navDrawerOverlay?.addEventListener('click', toggleDrawer);
+
+    // Restore drawer state from localStorage
+    const savedState = localStorage.getItem('cem-serve-nav-drawer-open');
+    if (savedState === 'true') {
+      navDrawer.setAttribute('open', '');
+    }
+
+    // Mark current page in navigation
+    const currentPath = window.location.pathname;
+    const navLinks = shadow.querySelectorAll('.nav-demo-link');
+    navLinks.forEach(link => {
+      const href = link.getAttribute('href');
+      if (href === currentPath) {
+        link.setAttribute('aria-current', 'page');
+        // Open the parent details element
+        const details = link.closest('details');
+        if (details) {
+          details.setAttribute('open', '');
+        }
+      }
+    });
   }
 
   #escapeHtml(text) {

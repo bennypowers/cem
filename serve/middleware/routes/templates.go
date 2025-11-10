@@ -32,6 +32,9 @@ var demoChromeTemplate string
 //go:embed templates/workspace-listing.html
 var workspaceListingTemplate string
 
+//go:embed templates/navigation.html
+var navigationTemplate string
+
 //go:embed templates/**
 var templatesFS embed.FS
 
@@ -58,3 +61,6 @@ var DemoChromeTemplate = template.Must(template.New("demo-chrome").Funcs(templat
 
 // WorkspaceListingTemplate is the parsed template for workspace package listing
 var WorkspaceListingTemplate = template.Must(template.New("workspace-listing").Funcs(templateFuncs).Parse(workspaceListingTemplate))
+
+// NavigationTemplate is the parsed template for navigation drawer
+var NavigationTemplate = template.Must(template.New("navigation").Funcs(templateFuncs).Parse(navigationTemplate))

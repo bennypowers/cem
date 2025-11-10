@@ -5,7 +5,7 @@
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#1e293b" media="(prefers-color-scheme: dark)">
-  <title>{{.DemoTitle}} - {{.TagName}}</title>
+  <title>{{if .PackageName}}{{.PackageName}}{{else}}{{.DemoTitle}} - {{.TagName}}{{end}}</title>
   {{if .ImportMap}}
   <script type="importmap">
 {{.ImportMap}}
@@ -24,6 +24,13 @@
       <style>{{include "css/serve-chrome.css"}}</style>
 
       <header>
+        {{if .NavigationHTML}}
+        <button class="nav-drawer-toggle" aria-label="Toggle navigation">
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+            <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+          </svg>
+        </button>
+        {{end}}
         <slot name="title"></slot>
         <nav>
           {{.DemoSwitcher}}
@@ -109,6 +116,21 @@
         </div>
       </div>
 
+      {{if .NavigationHTML}}
+      <aside class="nav-drawer" aria-label="Component navigation">
+        <div class="nav-drawer-header">
+          <h2>Components</h2>
+          <button class="nav-drawer-close" aria-label="Close navigation">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+            </svg>
+          </button>
+        </div>
+        {{.NavigationHTML}}
+      </aside>
+      <div class="nav-drawer-overlay"></div>
+      {{end}}
+
       <div class="layout">
         {{if .EnabledKnobs}}
         <aside id="knobs">
@@ -142,7 +164,7 @@
       </footer>
     </template>
 
-    <h1 slot="title">{{.TagName}}</h1>
+    <h1 slot="title">{{if .PackageName}}{{.PackageName}}{{else}}{{.TagName}}{{end}}</h1>
 
     {{if .EnabledKnobs}}
     <div slot="knobs">

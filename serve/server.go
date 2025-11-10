@@ -344,6 +344,36 @@ func (s *Server) Manifest() ([]byte, error) {
 	return manifestCopy, nil
 }
 
+// PackageJSON returns parsed package.json from the watch directory
+func (s *Server) PackageJSON() (*middleware.PackageJSON, error) {
+	watchDir := s.WatchDir()
+	if watchDir == "" {
+		return nil, nil
+	}
+
+	packageJSONPath := filepath.Join(watchDir, "package.json")
+	data, err := os.ReadFile(packageJSONPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	var pkg struct {
+		Name    string `json:"name"`
+		Version string `json:"version"`
+	}
+	if err := json.Unmarshal(data, &pkg); err != nil {
+		return nil, err
+	}
+
+	return &middleware.PackageJSON{
+		Name:    pkg.Name,
+		Version: pkg.Version,
+	}, nil
+}
+
 // DebounceDuration returns the debounce duration for file watching
 func (s *Server) DebounceDuration() time.Duration {
 	return 50 * time.Millisecond

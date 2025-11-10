@@ -249,8 +249,12 @@ func serveIndexListing(w http.ResponseWriter, r *http.Request, config Config) bo
 			config.Context.Logger().Warning("Failed to get manifest for index listing: %v", err2)
 			return false
 		}
-		// TODO: Get package name from config/package.json
-		html, err = RenderElementListing(manifestBytes, importMapJSON, "")
+		// Get package name from package.json
+		pkgName := ""
+		if pkg, err := config.Context.PackageJSON(); err == nil && pkg != nil {
+			pkgName = pkg.Name
+		}
+		html, err = RenderElementListing(manifestBytes, importMapJSON, pkgName)
 	}
 
 	if err != nil {
@@ -306,8 +310,38 @@ func serveDemoRoute(w http.ResponseWriter, r *http.Request, config Config) bool 
 	config.Context.Logger().Debug("Demo route entry: localRoute=%s, packagePath='%s', filePath='%s', isWorkspace=%v",
 		entry.LocalRoute, entry.PackagePath, entry.FilePath, config.Context.IsWorkspace())
 
+	// Build navigation data for the drawer
+	var navigationHTML template.HTML
+	var packageName string
+
+	if config.Context.IsWorkspace() {
+		// Workspace mode: build navigation from all packages
+		middlewarePackages := config.Context.WorkspacePackages()
+		packages := make([]PackageContext, len(middlewarePackages))
+		for i, pkg := range middlewarePackages {
+			packages[i] = PackageContext{
+				Name:     pkg.Name,
+				Path:     pkg.Path,
+				Manifest: pkg.Manifest,
+			}
+		}
+		navigationHTML, _ = BuildWorkspaceNavigation(packages)
+		packageName = "Workspace"
+	} else {
+		// Single-package mode: build navigation from manifest
+		manifestBytes, err := config.Context.Manifest()
+		if err == nil && len(manifestBytes) > 0 {
+			// Get package name from package.json
+			pkgName := ""
+			if pkg, err := config.Context.PackageJSON(); err == nil && pkg != nil {
+				pkgName = pkg.Name
+			}
+			navigationHTML, packageName = BuildSinglePackageNavigation(manifestBytes, pkgName)
+		}
+	}
+
 	// Render the demo
-	html, err := renderDemoFromRoute(entry, queryParams, config)
+	html, err := renderDemoFromRoute(entry, queryParams, config, navigationHTML, packageName)
 	if err != nil {
 		config.Context.Logger().Error("Failed to render demo: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -322,7 +356,7 @@ func serveDemoRoute(w http.ResponseWriter, r *http.Request, config Config) bool 
 }
 
 // renderDemoFromRoute renders a demo page with chrome using routing table entry
-func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, config Config) (string, error) {
+func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, config Config, navigationHTML template.HTML, packageName string) (string, error) {
 	// Determine base directory for file path
 	var baseDir string
 	if config.Context.IsWorkspace() && entry.PackagePath != "" {
@@ -364,15 +398,17 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 	}
 
 	chromeData := ChromeData{
-		TagName:      entry.TagName,
-		DemoTitle:    demoTitle,
-		DemoHTML:     template.HTML(demoHTML),
-		Description:  template.HTML(entry.Demo.Description),
-		ImportMap:    template.HTML(importMapJSON),
-		EnabledKnobs: queryParams["knobs"],
-		ShadowMode:   queryParams["shadow"] == "true",
-		SourceURL:    sourceURL,      // Link to source file
-		CanonicalURL: entry.Demo.URL, // Link to canonical demo
+		TagName:        entry.TagName,
+		DemoTitle:      demoTitle,
+		DemoHTML:       template.HTML(demoHTML),
+		Description:    template.HTML(entry.Demo.Description),
+		ImportMap:      template.HTML(importMapJSON),
+		EnabledKnobs:   queryParams["knobs"],
+		ShadowMode:     queryParams["shadow"] == "true",
+		SourceURL:      sourceURL,      // Link to source file
+		CanonicalURL:   entry.Demo.URL, // Link to canonical demo
+		PackageName:    packageName,
+		NavigationHTML: navigationHTML,
 	}
 
 	// Render with chrome

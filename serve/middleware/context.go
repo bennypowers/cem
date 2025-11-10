@@ -36,6 +36,12 @@ type WorkspacePackage struct {
 	Manifest []byte // Generated custom elements manifest
 }
 
+// PackageJSON represents parsed package.json data
+type PackageJSON struct {
+	Name    string
+	Version string
+}
+
 // DevServerContext provides middlewares access to dev server state and functionality
 type DevServerContext interface {
 	// WatchDir returns the directory being watched for changes
@@ -59,4 +65,7 @@ type DevServerContext interface {
 
 	// Logger returns the server's logger
 	Logger() Logger
+
+	// PackageJSON returns parsed package.json (single-package mode only)
+	PackageJSON() (*PackageJSON, error)
 }
