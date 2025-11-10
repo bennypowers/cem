@@ -363,7 +363,7 @@ func (s *Server) SetLogger(logger Logger) {
 	if s.wsManager != nil {
 		s.wsManager.SetLogger(logger)
 		// Set WebSocket manager on logger for broadcasting logs
-		if wsSetter, ok := logger.(interface{ SetWebSocketManager(WebSocketManager) }); ok {
+		if wsSetter, ok := logger.(interface{ SetWebSocketManager(any) }); ok {
 			wsSetter.SetWebSocketManager(s.wsManager)
 		}
 	}

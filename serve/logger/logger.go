@@ -38,11 +38,6 @@ type Logger interface {
 	Debug(msg string, args ...any)
 }
 
-// WebSocketManager interface for broadcasting logs (to avoid import cycle with serve package)
-type WebSocketManager interface {
-	Broadcast(msg []byte) error
-}
-
 // LogMessage represents a log message broadcast to clients
 type LogMessage struct {
 	Type string   `json:"type"`
@@ -84,7 +79,7 @@ type ptermLogger struct {
 	interactive  bool
 	area         *pterm.AreaPrinter
 	status       string
-	wsManager    WebSocketManager
+	wsManager    any // WebSocket manager for broadcasting logs (any type with Broadcast method)
 }
 
 // NewPtermLogger creates a new pterm-based logger with live rendering
@@ -126,7 +121,8 @@ func (l *ptermLogger) SetStatus(status string) {
 }
 
 // SetWebSocketManager sets the WebSocket manager for broadcasting logs
-func (l *ptermLogger) SetWebSocketManager(wsManager WebSocketManager) {
+// Accepts any type that has a Broadcast([]byte) error method
+func (l *ptermLogger) SetWebSocketManager(wsManager any) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.wsManager = wsManager
@@ -184,8 +180,8 @@ func (l *ptermLogger) log(level, color, msg string, args ...interface{}) {
 	logsCopy := make([]string, len(l.logs))
 	copy(logsCopy, l.logs)
 
-	if l.interactive {
-		// Create colored log line for terminal
+	if l.interactive && l.area != nil {
+		// Interactive mode with live area started: store colored logs and render
 		var prefix, coloredMsg string
 		timestampStr := pterm.FgGray.Sprint(timestamp)
 
@@ -229,7 +225,7 @@ func (l *ptermLogger) log(level, color, msg string, args ...interface{}) {
 		l.render()
 	} else {
 		l.mu.Unlock()
-		// Non-interactive: standard pterm output
+		// Non-interactive OR area not started yet: standard pterm output
 		switch color {
 		case "info":
 			pterm.Info.Println(formatted)
@@ -249,14 +245,20 @@ func (l *ptermLogger) log(level, color, msg string, args ...interface{}) {
 	l.mu.Unlock()
 
 	if ws != nil {
-		msg := LogMessage{
-			Type: "logs",
-			Logs: logsCopy,
+		// Type assert to interface with Broadcast method
+		type broadcaster interface {
+			Broadcast([]byte) error
 		}
-		if msgBytes, err := json.Marshal(msg); err == nil {
-			// Broadcast error intentionally ignored - failures occur when clients
-			// disconnect and we can't log them here without causing infinite recursion
-			_ = ws.Broadcast(msgBytes)
+		if bc, ok := ws.(broadcaster); ok {
+			msg := LogMessage{
+				Type: "logs",
+				Logs: logsCopy,
+			}
+			if msgBytes, err := json.Marshal(msg); err == nil {
+				// Broadcast error intentionally ignored - failures occur when clients
+				// disconnect and we can't log them here without causing infinite recursion
+				_ = bc.Broadcast(msgBytes)
+			}
 		}
 	}
 }
