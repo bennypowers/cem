@@ -175,8 +175,8 @@ server/transform/test-fixtures/
 - [x] File changes invalidate cached file and dependent tree
 - [x] Max cache size enforced (500MB default)
 - [x] Cache stats logged (hits, misses, size)
-- [ ] Worker pool parallelizes transforms (max 4 concurrent)
-- [ ] Excess requests queued, 503 returned if queue full
+- [x] Worker pool parallelizes transforms (max 4 concurrent)
+- [x] Excess requests queued, 503 returned if queue full
 - [x] CSS files transformed to CSSStyleSheet JavaScript modules
 - [x] CSS transform auto-enabled for all `.css` files
 - [x] CSS transform content-type: `application/javascript; charset=utf-8`
@@ -186,4 +186,4 @@ server/transform/test-fixtures/
 - [ ] Config `transforms.css.include/exclude` filters CSS files
 - [x] Transform errors shown in browser error overlay
 - [x] Tests cover basic transform functionality
-- [ ] Tests use fixture pattern (input.ts → expected.js + source maps)
+- [x] Tests use fixture pattern (input.ts → expected.js + source maps)
