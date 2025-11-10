@@ -29,6 +29,9 @@ var defaultIndexTemplate string
 //go:embed templates/demo-chrome.html
 var demoChromeTemplate string
 
+//go:embed templates/workspace-listing.html
+var workspaceListingTemplate string
+
 //go:embed templates/js/*.js
 var internalModules embed.FS
 
@@ -42,3 +45,6 @@ var DefaultIndexTemplate = template.Must(template.New("default-index").Parse(def
 
 // DemoChromeTemplate is the parsed template for demo chrome
 var DemoChromeTemplate = template.Must(template.New("demo-chrome").Funcs(templateFuncs).Parse(demoChromeTemplate))
+
+// WorkspaceListingTemplate is the parsed template for workspace package listing
+var WorkspaceListingTemplate = template.Must(template.New("workspace-listing").Funcs(templateFuncs).Parse(workspaceListingTemplate))

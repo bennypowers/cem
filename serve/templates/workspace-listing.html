@@ -1,0 +1,22 @@
+<cem-serve-listing>
+  <div style="display: grid; gap: var(--__cem-spacing-lg);">
+    {{range .Elements}}
+    <section style="background: var(--__cem-bg-secondary); border: var(--__cem-border-width) solid var(--__cem-border-color); border-radius: var(--__cem-border-radius); padding: var(--__cem-spacing-lg);">
+      <h2 style="margin: 0 0 var(--__cem-spacing-md) 0; color: var(--__cem-accent-color); font-size: var(--__cem-font-size-lg);"><code>&lt;{{.TagName}}&gt;</code></h2>
+
+      <ul style="list-style: none; padding: 0; margin: 0; display: grid; gap: var(--__cem-spacing-sm);">
+        {{range .Demos}}
+        <li>
+          <a href="{{.URL}}"
+             style="color: var(--__cem-text-primary); text-decoration: none; padding: var(--__cem-spacing-sm) var(--__cem-spacing-md); background: var(--__cem-bg-tertiary); border-radius: var(--__cem-border-radius); display: block; transition: background 0.2s;"
+             onmouseover="this.style.background='var(--__cem-accent-color)'; this.style.color='white';"
+             onmouseout="this.style.background='var(--__cem-bg-tertiary)'; this.style.color='var(--__cem-text-primary)';">
+            {{.Name}}{{if .PackageName}} <span style="color: var(--__cem-text-secondary); font-size: var(--__cem-font-size-sm);">({{.PackageName}})</span>{{end}}
+          </a>
+        </li>
+        {{end}}
+      </ul>
+    </section>
+    {{end}}
+  </div>
+</cem-serve-listing>

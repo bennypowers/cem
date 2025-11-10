@@ -32,11 +32,20 @@ import (
 	"sync"
 	"time"
 
+	C "bennypowers.dev/cem/cmd/config"
 	G "bennypowers.dev/cem/generate"
 	V "bennypowers.dev/cem/internal/version"
 	M "bennypowers.dev/cem/manifest"
 	W "bennypowers.dev/cem/workspace"
 )
+
+// PackageContext holds information about a single package in the workspace
+type PackageContext struct {
+	Name     string       // Package name from package.json
+	Path     string       // Absolute path to package directory
+	Manifest []byte       // Generated custom elements manifest
+	Config   *C.CemConfig // Package-specific config
+}
 
 // Server represents the development server
 type Server struct {
@@ -56,6 +65,12 @@ type Server struct {
 	running         bool
 	mu              sync.RWMutex
 	generateSession *G.GenerateSession
+	// Workspace mode fields
+	isWorkspace       bool                       // True if serving a monorepo workspace
+	workspaceRoot     string                     // Root directory of workspace
+	workspacePackages []PackageContext           // Discovered packages with manifests
+	workspaceRoutes   map[string]*DemoRouteEntry // Combined routing table
+	importMap         *ImportMap                 // Cached import map (workspace or single-package)
 }
 
 // NewServer creates a new server with the given port
@@ -93,6 +108,34 @@ func NewServerWithConfig(config Config) (*Server, error) {
 // Port returns the server's port
 func (s *Server) Port() int {
 	return s.port
+}
+
+// IsWorkspace returns true if server is running in workspace mode
+func (s *Server) IsWorkspace() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.isWorkspace
+}
+
+// ImportMap returns the cached import map, generating it if needed for single-package mode
+func (s *Server) ImportMap() (*ImportMap, error) {
+	s.mu.RLock()
+	cached := s.importMap
+	isWorkspace := s.isWorkspace
+	watchDir := s.watchDir
+	s.mu.RUnlock()
+
+	// If we have a cached import map (workspace mode), return it
+	if cached != nil {
+		return cached, nil
+	}
+
+	// Single-package mode: generate on demand
+	if !isWorkspace && watchDir != "" {
+		return GenerateImportMap(watchDir, nil)
+	}
+
+	return nil, nil
 }
 
 // Start starts the HTTP server
@@ -410,6 +453,83 @@ func (s *Server) RegenerateManifest() error {
 	return nil
 }
 
+// discoverWorkspacePackages finds all packages in workspace with manifests
+func discoverWorkspacePackages(rootDir string) ([]PackageContext, error) {
+	packages, err := W.LoadWorkspaceManifests(rootDir)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert workspace.PackageWithManifest to serve.PackageContext
+	contexts := make([]PackageContext, len(packages))
+	for i, pkg := range packages {
+		contexts[i] = PackageContext{
+			Name:     pkg.Name,
+			Path:     pkg.Path,
+			Manifest: pkg.Manifest,
+			Config:   nil, // TODO: Load config from package
+		}
+	}
+
+	return contexts, nil
+}
+
+// InitializeWorkspaceMode detects and initializes workspace mode if applicable
+func (s *Server) InitializeWorkspaceMode() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.watchDir == "" {
+		return fmt.Errorf("no watch directory set")
+	}
+
+	// Check if this is a workspace
+	if !W.IsWorkspaceMode(s.watchDir) {
+		s.isWorkspace = false
+		return nil
+	}
+
+	s.logger.Info("Detected workspace mode - discovering packages...")
+	s.isWorkspace = true
+	s.workspaceRoot = s.watchDir
+
+	// Discover packages with manifests
+	packages, err := discoverWorkspacePackages(s.watchDir)
+	if err != nil {
+		return fmt.Errorf("discovering workspace packages: %w", err)
+	}
+
+	if len(packages) == 0 {
+		return fmt.Errorf("no packages with customElements field found in workspace")
+	}
+
+	s.logger.Info("Found %d packages with manifests", len(packages))
+	s.workspacePackages = packages
+
+	// Build combined routing table
+	routes, err := BuildWorkspaceRoutingTable(packages)
+	if err != nil {
+		return fmt.Errorf("building workspace routing table: %w", err)
+	}
+
+	s.workspaceRoutes = routes
+	s.logger.Info("Built routing table with %d demo routes", len(routes))
+
+	// Generate workspace import map using unified GenerateImportMap
+	importMap, err := GenerateImportMap(s.workspaceRoot, &ImportMapConfig{
+		WorkspacePackages: packages,
+		Logger:            s.logger,
+	})
+	if err != nil {
+		return fmt.Errorf("generating workspace import map: %w", err)
+	}
+
+	s.importMap = importMap
+	s.logger.Info("Generated workspace import map")
+
+	return nil
+}
+
 // Use registers a middleware function
 func (s *Server) Use(middleware func(http.Handler) http.Handler) error {
 	s.mu.Lock()
@@ -648,15 +768,13 @@ func (s *Server) serveDebugInfo(w http.ResponseWriter, r *http.Request) {
 	manifestBytes := s.manifest
 	s.mu.RUnlock()
 
-	// Generate import map as a raw object (not JSON string)
-	var importMapObj interface{}
-	if watchDir != "" {
-		importMap, err := GenerateImportMap(watchDir, nil)
-		if err != nil {
-			s.logger.Warning("Failed to generate import map for debug info: %v", err)
-		} else if importMap != nil && len(importMap.Imports) > 0 {
-			importMapObj = importMap
-		}
+	// Get import map
+	var importMapObj any
+	importMap, err := s.ImportMap()
+	if err != nil {
+		s.logger.Warning("Failed to get import map for debug info: %v", err)
+	} else if importMap != nil && len(importMap.Imports) > 0 {
+		importMapObj = importMap
 	}
 
 	// Parse manifest to get demo info
@@ -733,6 +851,7 @@ func (s *Server) serveMainHandler(w http.ResponseWriter, r *http.Request) {
 func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 	s.mu.RLock()
 	watchDir := s.watchDir
+	isWorkspace := s.isWorkspace
 	s.mu.RUnlock()
 
 	if watchDir == "" {
@@ -742,9 +861,14 @@ func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 
 	// Check if requesting root and no index.html exists
 	if r.URL.Path == "/" {
+		if isWorkspace {
+			// Workspace mode: always serve index listing
+			s.serveIndex(w, r)
+			return
+		}
 		if _, err := http.Dir(watchDir).Open("index.html"); err != nil {
-			// No index.html, serve default page
-			s.serveDefaultIndex(w, r)
+			// No index.html, serve index listing
+			s.serveIndex(w, r)
 			return
 		}
 	}
@@ -755,10 +879,11 @@ func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 
 	// Handle both .js requests (with .ts source) and direct .ts requests
 	var tsPath string
-	if ext == ".js" {
+	switch ext {
+	case ".js":
 		// Check if .ts file exists for .js request
 		tsPath = requestPath[:len(requestPath)-3] + ".ts"
-	} else if ext == ".ts" {
+	case ".ts":
 		// Direct .ts request
 		tsPath = requestPath
 	}
@@ -881,34 +1006,57 @@ func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 	fileServer.ServeHTTP(w, r)
 }
 
-// serveDefaultIndex serves the element listing page
-func (s *Server) serveDefaultIndex(w http.ResponseWriter, r *http.Request) {
-	s.mu.RLock()
-	watchDir := s.watchDir
-	manifestBytes := s.manifest
-	s.mu.RUnlock()
-
-	// Generate import map for the watch directory
-	var importMapJSON string
-	if watchDir != "" {
-		importMap, err := GenerateImportMap(watchDir, nil)
-		if err != nil {
-			s.logger.Warning("Failed to generate import map for listing: %v", err)
-		} else if importMap != nil && len(importMap.Imports) > 0 {
-			// Marshal import map to JSON with indentation
-			importMapBytes, err := json.MarshalIndent(importMap, "  ", "  ")
-			if err != nil {
-				s.logger.Warning("Failed to marshal import map: %v", err)
-			} else {
-				importMapJSON = string(importMapBytes)
-			}
-		}
+// getImportMapJSON returns the import map as indented JSON string
+func (s *Server) getImportMapJSON() string {
+	importMap, err := s.ImportMap()
+	if err != nil {
+		s.logger.Warning("Failed to get import map: %v", err)
+		return ""
 	}
 
-	// Render element listing using chrome template
-	html, err := renderElementListing(manifestBytes, importMapJSON)
+	if importMap == nil || len(importMap.Imports) == 0 {
+		return ""
+	}
+
+	importMapBytes, err := json.MarshalIndent(importMap, "  ", "  ")
 	if err != nil {
-		s.logger.Error("Failed to render element listing: %v", err)
+		s.logger.Warning("Failed to marshal import map: %v", err)
+		return ""
+	}
+
+	return string(importMapBytes)
+}
+
+// serveIndex serves the index page (workspace or single-package listing)
+func (s *Server) serveIndex(w http.ResponseWriter, _ *http.Request) {
+	importMapJSON := s.getImportMapJSON()
+
+	var html string
+	var err error
+
+	s.mu.RLock()
+	isWorkspace := s.isWorkspace
+	s.mu.RUnlock()
+
+	if isWorkspace {
+		// Workspace mode: render workspace listing
+		s.mu.RLock()
+		packages := s.workspacePackages
+		routes := s.workspaceRoutes
+		s.mu.RUnlock()
+
+		html, err = renderWorkspaceListing(packages, routes, importMapJSON)
+	} else {
+		// Single-package mode: render element listing
+		s.mu.RLock()
+		manifestBytes := s.manifest
+		s.mu.RUnlock()
+
+		html, err = renderElementListing(manifestBytes, importMapJSON)
+	}
+
+	if err != nil {
+		s.logger.Error("Failed to render listing: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -944,18 +1092,18 @@ func loggingMiddleware(logger Logger) func(http.Handler) http.Handler {
 // defaultLogger is a simple logger implementation
 type defaultLogger struct{}
 
-func (l *defaultLogger) Info(msg string, args ...interface{}) {
+func (l *defaultLogger) Info(msg string, args ...any) {
 	log.Printf("[INFO] "+msg, args...)
 }
 
-func (l *defaultLogger) Warning(msg string, args ...interface{}) {
+func (l *defaultLogger) Warning(msg string, args ...any) {
 	log.Printf("[WARN] "+msg, args...)
 }
 
-func (l *defaultLogger) Error(msg string, args ...interface{}) {
+func (l *defaultLogger) Error(msg string, args ...any) {
 	log.Printf("[ERROR] "+msg, args...)
 }
 
-func (l *defaultLogger) Debug(msg string, args ...interface{}) {
+func (l *defaultLogger) Debug(msg string, args ...any) {
 	log.Printf("[DEBUG] "+msg, args...)
 }

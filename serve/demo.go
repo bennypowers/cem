@@ -136,29 +136,38 @@ func (s *Server) buildDemoRoutingTable(manifestBytes []byte) (map[string]*DemoRo
 // renderDemoFromRoute renders a demo page with chrome using routing table entry
 func (s *Server) renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string) (string, error) {
 	s.mu.RLock()
+	isWorkspace := s.isWorkspace
 	watchDir := s.watchDir
 	s.mu.RUnlock()
 
+	// Determine base directory for file path
+	var baseDir string
+	if isWorkspace && entry.PackagePath != "" {
+		// Workspace mode: use package directory
+		baseDir = entry.PackagePath
+	} else {
+		// Single-package mode: use watch directory
+		baseDir = watchDir
+	}
+
 	// Read demo HTML file
-	demoPath := filepath.Join(watchDir, entry.FilePath)
+	demoPath := filepath.Join(baseDir, entry.FilePath)
 	demoHTML, err := os.ReadFile(demoPath)
 	if err != nil {
 		return "", fmt.Errorf("reading demo file %s: %w", entry.FilePath, err)
 	}
 
-	// Generate import map
+	// Get import map
 	var importMapJSON string
-	if watchDir != "" {
-		importMap, err := GenerateImportMap(watchDir, nil)
+	importMap, err := s.ImportMap()
+	if err != nil {
+		s.logger.Warning("Failed to get import map for demo: %v", err)
+	} else if importMap != nil && len(importMap.Imports) > 0 {
+		importMapBytes, err := json.MarshalIndent(importMap, "  ", "  ")
 		if err != nil {
-			s.logger.Warning("Failed to generate import map for demo: %v", err)
-		} else if importMap != nil && len(importMap.Imports) > 0 {
-			importMapBytes, err := json.MarshalIndent(importMap, "  ", "  ")
-			if err != nil {
-				s.logger.Warning("Failed to marshal import map: %v", err)
-			} else {
-				importMapJSON = string(importMapBytes)
-			}
+			s.logger.Warning("Failed to marshal import map: %v", err)
+		} else {
+			importMapJSON = string(importMapBytes)
 		}
 	}
 
@@ -193,13 +202,23 @@ func (s *Server) renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[stri
 // serveDemoRoutes handles demo routing using the manifest-based routing table
 func (s *Server) serveDemoRoutes(path string, queryParams map[string]string) (string, error) {
 	s.mu.RLock()
+	isWorkspace := s.isWorkspace
+	workspaceRoutes := s.workspaceRoutes
 	manifestBytes := s.manifest
 	s.mu.RUnlock()
 
-	// Build routing table from manifest
-	routes, err := s.buildDemoRoutingTable(manifestBytes)
-	if err != nil {
-		return "", fmt.Errorf("building demo routing table: %w", err)
+	var routes map[string]*DemoRouteEntry
+	var err error
+
+	// Use workspace routes if in workspace mode
+	if isWorkspace {
+		routes = workspaceRoutes
+	} else {
+		// Build routing table from manifest for single-package mode
+		routes, err = s.buildDemoRoutingTable(manifestBytes)
+		if err != nil {
+			return "", fmt.Errorf("building demo routing table: %w", err)
+		}
 	}
 
 	// Normalize requested path (ensure trailing slash for directory-style)
@@ -215,4 +234,144 @@ func (s *Server) serveDemoRoutes(path string, queryParams map[string]string) (st
 	}
 
 	return s.renderDemoFromRoute(entry, queryParams)
+}
+
+// BuildWorkspaceRoutingTable builds a combined routing table from all packages
+// Returns error if route conflicts are detected
+func BuildWorkspaceRoutingTable(packages []PackageContext) (map[string]*DemoRouteEntry, error) {
+	routes := make(map[string]*DemoRouteEntry)
+	conflicts := make(map[string][]routeConflict)
+
+	for _, pkg := range packages {
+		// Build routing table for this package
+		pkgRoutes, err := buildPackageRoutingTable(pkg)
+		if err != nil {
+			// Skip packages with routing errors
+			continue
+		}
+
+		// Merge routes, detecting conflicts
+		for route, entry := range pkgRoutes {
+			if existing, exists := routes[route]; exists {
+				// Conflict detected
+				conflict := routeConflict{
+					Route:       route,
+					PackageName: pkg.Name,
+					PackagePath: pkg.Path,
+					FilePath:    entry.FilePath,
+				}
+				conflicts[route] = append(conflicts[route], conflict)
+				// Also add the existing entry to conflicts if not already there
+				if len(conflicts[route]) == 1 {
+					existingConflict := routeConflict{
+						Route:       route,
+						PackageName: existing.PackageName,
+						PackagePath: existing.PackagePath,
+						FilePath:    existing.FilePath,
+					}
+					conflicts[route] = []routeConflict{existingConflict, conflict}
+				}
+			} else {
+				routes[route] = entry
+			}
+		}
+	}
+
+	// If conflicts detected, return detailed error
+	if len(conflicts) > 0 {
+		return nil, formatRouteConflictsError(conflicts)
+	}
+
+	return routes, nil
+}
+
+// routeConflict represents a routing conflict between packages
+type routeConflict struct {
+	Route       string
+	PackageName string
+	PackagePath string
+	FilePath    string
+}
+
+// formatRouteConflictsError creates a detailed error message for route conflicts
+func formatRouteConflictsError(conflicts map[string][]routeConflict) error {
+	var msg strings.Builder
+	msg.WriteString("Route conflicts detected:\n\n")
+
+	for route, conflictList := range conflicts {
+		msg.WriteString(fmt.Sprintf("Conflict for route '%s':\n", route))
+		for _, c := range conflictList {
+			msg.WriteString(fmt.Sprintf("  - Package '%s' (%s)\n", c.PackageName, c.PackagePath))
+			msg.WriteString(fmt.Sprintf("    Source: %s\n", c.FilePath))
+		}
+		msg.WriteString("\n")
+	}
+
+	msg.WriteString("Fix: Configure unique urlPattern in each package's manifest or demo metadata\n")
+
+	return fmt.Errorf("%s", msg.String())
+}
+
+// buildPackageRoutingTable builds routing table for a single package
+func buildPackageRoutingTable(pkg PackageContext) (map[string]*DemoRouteEntry, error) {
+	var manifest M.Package
+	if err := json.Unmarshal(pkg.Manifest, &manifest); err != nil {
+		return nil, fmt.Errorf("parsing manifest for %s: %w", pkg.Name, err)
+	}
+
+	routes := make(map[string]*DemoRouteEntry)
+
+	for _, renderableDemo := range manifest.RenderableDemos() {
+		demoURL := renderableDemo.Demo.URL
+
+		// Extract local route from canonical URL
+		localRoute := demoURL
+		if parsed, err := url.Parse(demoURL); err == nil && parsed.Path != "" {
+			localRoute = parsed.Path
+		}
+
+		// Normalize relative paths
+		if strings.HasPrefix(localRoute, "./") {
+			localRoute = localRoute[1:]
+		}
+		if !strings.HasPrefix(localRoute, "/") {
+			localRoute = "/" + localRoute
+		}
+
+		// Ensure trailing slash for directory-style URLs
+		if !strings.HasSuffix(localRoute, "/") && !strings.Contains(filepath.Base(localRoute), ".") {
+			localRoute += "/"
+		}
+
+		// Resolve file path
+		var filePath string
+		if renderableDemo.Demo.Source != nil && renderableDemo.Demo.Source.Href != "" {
+			sourceHref := renderableDemo.Demo.Source.Href
+			// Extract filename from href and look in module's demo directory
+			if parsed, err := url.Parse(sourceHref); err == nil && parsed.Path != "" {
+				moduleDir := filepath.Dir(renderableDemo.Module.Path)
+				filename := filepath.Base(parsed.Path)
+				filePath = filepath.Join(moduleDir, "demo", filename)
+			} else {
+				filePath = sourceHref
+			}
+		} else {
+			// Fallback: try to find demo file in module directory
+			moduleDir := filepath.Dir(renderableDemo.Module.Path)
+			filePath = filepath.Join(moduleDir, "demo", "index.html")
+		}
+
+		entry := &DemoRouteEntry{
+			LocalRoute:  localRoute,
+			TagName:     renderableDemo.CustomElementDeclaration.TagName,
+			Demo:        renderableDemo.Demo,
+			FilePath:    filePath,
+			PackageName: pkg.Name,
+			PackagePath: pkg.Path,
+		}
+
+		routes[localRoute] = entry
+	}
+
+	return routes, nil
 }

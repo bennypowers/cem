@@ -95,14 +95,25 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("failed to set watch directory: %w", err)
 		}
 
-		// Generate initial manifest (before starting live area)
-		pterm.Info.Println("Generating initial manifest...")
-		err = server.RegenerateManifest()
+		// Try workspace mode initialization first
+		pterm.Info.Println("Initializing server...")
+		err = server.InitializeWorkspaceMode()
 		if err != nil {
-			pterm.Error.Printf("Failed to generate initial manifest: %v\n", err)
-			pterm.Info.Println("Server will continue, but manifest may be unavailable")
+			return fmt.Errorf("failed to initialize workspace mode: %w", err)
+		}
+
+		// If not workspace mode, generate single-package manifest
+		if !server.IsWorkspace() {
+			pterm.Info.Println("Generating initial manifest...")
+			err = server.RegenerateManifest()
+			if err != nil {
+				pterm.Error.Printf("Failed to generate initial manifest: %v\n", err)
+				pterm.Info.Println("Server will continue, but manifest may be unavailable")
+			} else {
+				pterm.Success.Println("Initial manifest generated")
+			}
 		} else {
-			pterm.Success.Println("Initial manifest generated")
+			pterm.Success.Println("Workspace mode initialized")
 		}
 
 		// Start live rendering area AFTER initial setup

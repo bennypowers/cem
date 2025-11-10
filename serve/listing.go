@@ -260,3 +260,86 @@ func slugify(s string) string {
 	result = template.HTMLEscapeString(result)
 	return result
 }
+
+// WorkspaceElementListing represents an element with its demos for template rendering
+type WorkspaceElementListing struct {
+	TagName string
+	Demos   []WorkspaceDemoListing
+}
+
+// WorkspaceDemoListing represents a demo for template rendering
+type WorkspaceDemoListing struct {
+	Name        string
+	URL         string
+	PackageName string
+}
+
+// renderWorkspaceListing renders the workspace index page with all packages
+func renderWorkspaceListing(packages []PackageContext, routes map[string]*DemoRouteEntry, importMap string) (string, error) {
+	if len(packages) == 0 {
+		return renderDemoChrome(ChromeData{
+			TagName:   "cem-serve",
+			DemoTitle: "Workspace Browser",
+			DemoHTML: template.HTML(`
+				<div style="text-align: center; padding: var(--__cem-spacing-xl); color: var(--__cem-text-secondary);">
+					<p>No packages found in workspace.</p>
+				</div>
+			`),
+			ImportMap: template.HTML(importMap),
+		})
+	}
+
+	// Group routes by element (tag name)
+	elementRoutes := make(map[string][]*DemoRouteEntry)
+	for _, route := range routes {
+		elementRoutes[route.TagName] = append(elementRoutes[route.TagName], route)
+	}
+
+	// Build element listings
+	var elementListings []WorkspaceElementListing
+	for tagName, tagRoutes := range elementRoutes {
+		// Sort demos by URL
+		sort.Slice(tagRoutes, func(i, j int) bool {
+			return tagRoutes[i].LocalRoute < tagRoutes[j].LocalRoute
+		})
+
+		var demoListings []WorkspaceDemoListing
+		for _, route := range tagRoutes {
+			demoName := route.Demo.Description
+			if demoName == "" {
+				demoName = prettifyRoute(route.LocalRoute)
+			}
+			demoListings = append(demoListings, WorkspaceDemoListing{
+				Name:        demoName,
+				URL:         route.LocalRoute,
+				PackageName: route.PackageName,
+			})
+		}
+
+		elementListings = append(elementListings, WorkspaceElementListing{
+			TagName: tagName,
+			Demos:   demoListings,
+		})
+	}
+
+	// Sort elements alphabetically
+	sort.Slice(elementListings, func(i, j int) bool {
+		return elementListings[i].TagName < elementListings[j].TagName
+	})
+
+	// Render with template
+	var buf bytes.Buffer
+	err := WorkspaceListingTemplate.Execute(&buf, map[string]interface{}{
+		"Elements": elementListings,
+	})
+	if err != nil {
+		return "", fmt.Errorf("executing workspace listing template: %w", err)
+	}
+
+	return renderDemoChrome(ChromeData{
+		TagName:   "cem-serve",
+		DemoTitle: "Workspace Browser",
+		DemoHTML:  template.HTML(buf.String()),
+		ImportMap: template.HTML(importMap),
+	})
+}

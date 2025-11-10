@@ -19,6 +19,7 @@ package workspace
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -255,4 +256,55 @@ func findWorkspaceRootWithWorkspaces(startDir string) string {
 		}
 		dir = parent
 	}
+}
+
+// IsWorkspaceMode determines if a directory is a monorepo workspace
+// Returns true if multiple packages with customElements manifests are found
+func IsWorkspaceMode(dir string) bool {
+	packages, err := FindPackagesWithManifests(dir)
+	if err != nil {
+		return false
+	}
+
+	// Workspace mode requires multiple packages with manifests
+	return len(packages) > 1
+}
+
+// PackageWithManifest represents a workspace package with its loaded manifest
+type PackageWithManifest struct {
+	Name     string // Package name from package.json
+	Path     string // Absolute path to package directory
+	Manifest []byte // Loaded custom elements manifest JSON
+}
+
+// LoadWorkspaceManifests loads manifest data for all workspace packages
+// Returns packages with their manifests loaded, skipping any that fail to load
+func LoadWorkspaceManifests(rootDir string) ([]PackageWithManifest, error) {
+	packages, err := FindPackagesWithManifests(rootDir)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []PackageWithManifest
+	for _, pkg := range packages {
+		// Load package's manifest
+		manifestPath := filepath.Join(pkg.Path, pkg.CustomElementsRef)
+		manifestData, err := os.ReadFile(manifestPath)
+		if err != nil {
+			// Skip packages with missing manifests
+			continue
+		}
+
+		result = append(result, PackageWithManifest{
+			Name:     pkg.Name,
+			Path:     pkg.Path,
+			Manifest: manifestData,
+		})
+	}
+
+	if len(result) == 0 {
+		return nil, fmt.Errorf("no packages with manifests found in workspace")
+	}
+
+	return result, nil
 }

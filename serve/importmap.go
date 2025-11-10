@@ -35,9 +35,10 @@ type ImportMap struct {
 
 // ImportMapConfig configures import map generation
 type ImportMapConfig struct {
-	InputMapPath string            // Path to user override file
-	CLIOverrides map[string]string // CLI flag overrides (highest priority)
-	Logger       Logger            // Logger for warnings
+	InputMapPath      string            // Path to user override file
+	CLIOverrides      map[string]string // CLI flag overrides (highest priority)
+	Logger            Logger            // Logger for warnings
+	WorkspacePackages []PackageContext  // If set, generate workspace-mode import map (flattened scopes)
 }
 
 // packageJSON represents the structure we need from package.json
@@ -86,6 +87,17 @@ func findWorkspaceRoot(startDir string) string {
 
 // GenerateImportMap generates an import map from package.json and configuration
 func GenerateImportMap(rootDir string, config *ImportMapConfig) (*ImportMap, error) {
+	// Default config to empty if not provided
+	if config == nil {
+		config = &ImportMapConfig{}
+	}
+
+	// Workspace mode: generate flattened import map from packages
+	if len(config.WorkspacePackages) > 0 {
+		return generateWorkspaceImportMap(rootDir, config.WorkspacePackages, config.Logger)
+	}
+
+	// Single-package mode: generate import map with scopes
 	result := &ImportMap{
 		Imports: make(map[string]string),
 		Scopes:  make(map[string]map[string]string),
@@ -93,9 +105,6 @@ func GenerateImportMap(rootDir string, config *ImportMapConfig) (*ImportMap, err
 
 	// Default logger to no-op if not provided
 	logger := config
-	if logger == nil {
-		logger = &ImportMapConfig{}
-	}
 
 	// 1. Parse root package.json
 	rootPkgPath := filepath.Join(rootDir, "package.json")
@@ -720,4 +729,95 @@ func addWorkspaceScopesToImportMap(importMap *ImportMap, workspaceRoot, rootDir 
 	}
 
 	return nil
+}
+
+// generateWorkspaceImportMap generates an import map for workspace mode (private implementation)
+// Only includes dependencies from packages with customElements fields
+// Global imports: workspace packages + their direct dependencies
+// Scopes: transitive dependencies
+func generateWorkspaceImportMap(workspaceRoot string, packages []PackageContext, logger Logger) (*ImportMap, error) {
+	result := &ImportMap{
+		Imports: make(map[string]string),
+		Scopes:  make(map[string]map[string]string),
+	}
+
+	// Collect all package names that have customElements (to exclude from node_modules)
+	workspacePackageNames := make(map[string]bool)
+	for _, pkg := range packages {
+		workspacePackageNames[pkg.Name] = true
+	}
+
+	// Add all workspace packages to global imports with their exports
+	for _, pkg := range packages {
+		// Add package exports to import map (this handles subpaths like @patternfly/elements/pf-avatar/pf-avatar.js)
+		if err := addPackageExportsToImportMap(result, pkg.Name, pkg.Path, workspaceRoot, logger); err != nil {
+			// If exports resolution fails, add basic mapping as fallback
+			pkgRelPath, err := filepath.Rel(workspaceRoot, pkg.Path)
+			if err != nil {
+				continue
+			}
+			pkgWebPath := "/" + filepath.ToSlash(pkgRelPath)
+
+			if entryPoint, err := resolvePackageEntryPoint(pkg.Path); err == nil && entryPoint != "" {
+				result.Imports[pkg.Name] = pkgWebPath + "/" + entryPoint
+			} else {
+				result.Imports[pkg.Name+"/"] = pkgWebPath + "/"
+			}
+		}
+	}
+
+	// Collect dependencies from all packages (from package.json, not all workspace packages)
+	allDeps := make(map[string]bool)
+	for _, pkg := range packages {
+		pkgJSONPath := filepath.Join(pkg.Path, "package.json")
+		data, err := os.ReadFile(pkgJSONPath)
+		if err != nil {
+			continue
+		}
+
+		var pkgJSON struct {
+			Dependencies map[string]string `json:"dependencies"`
+		}
+		if err := json.Unmarshal(data, &pkgJSON); err != nil {
+			continue
+		}
+
+		// Collect dependency names (excluding workspace packages)
+		for depName := range pkgJSON.Dependencies {
+			if !workspacePackageNames[depName] {
+				allDeps[depName] = true
+			}
+		}
+	}
+
+	// Resolve all dependencies from workspace root's node_modules
+	for depName := range allDeps {
+		depPath := filepath.Join(workspaceRoot, "node_modules", depName)
+		if _, err := os.Stat(depPath); os.IsNotExist(err) {
+			continue
+		}
+
+		// Add to global imports with proper exports resolution
+		if err := addPackageExportsToImportMap(result, depName, depPath, workspaceRoot, logger); err != nil {
+			// Skip packages that fail to resolve
+			continue
+		}
+	}
+
+	// Add scopes for transitive dependencies
+	// Convert allDeps map[string]bool to map[string]string for scope building
+	depsMap := make(map[string]string)
+	for depName := range allDeps {
+		depsMap[depName] = "*" // Version doesn't matter for scope building
+	}
+
+	// Use the existing scope-building logic from single-package mode
+	if err := addTransitiveDependenciesToScopes(result, workspaceRoot, &packageJSON{Dependencies: depsMap}, logger); err != nil {
+		// Log but don't fail - workspace mode is best-effort
+		if logger != nil {
+			logger.Warning("Failed to add transitive dependencies: %v", err)
+		}
+	}
+
+	return result, nil
 }
