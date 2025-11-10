@@ -74,8 +74,11 @@ type FileWatcher interface {
 
 // FileEvent represents a file system event
 type FileEvent struct {
-	Path      string   // Primary file path (for single file events)
-	Paths     []string // All changed file paths (for batched events)
-	EventType string
-	Timestamp time.Time
+	Path             string   // Primary file path (for single file events)
+	Paths            []string // All changed file paths (for batched events)
+	EventType        string   // Event type for primary file (create/delete/modify)
+	HasCreates       bool     // True if any files were created
+	HasDeletes       bool     // True if any files were deleted
+	HasPackageJSON   bool     // True if package.json was modified
+	Timestamp        time.Time
 }

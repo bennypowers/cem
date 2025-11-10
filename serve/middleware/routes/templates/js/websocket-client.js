@@ -37,11 +37,24 @@ class CEMReloadClient {
     this.hasConnected = false;
   }
 
-  init() {
+  async init() {
     // Create UI components
     this.createStatus();
     this.createDialog();
     this.createErrorOverlay();
+
+    // Fetch initial log history on page load
+    try {
+      const response = await fetch('/__cem-logs');
+      if (response.ok) {
+        const logs = await response.json();
+        if (logs && logs.length > 0) {
+          window.dispatchEvent(new CemLogsEvent(logs));
+        }
+      }
+    } catch (err) {
+      console.warn('[cem-serve] Failed to fetch initial logs:', err);
+    }
 
     // Create WebSocket client with current page URL as query parameter
     // Browsers don't send Referer header for WebSocket connections, so we need to explicitly pass it

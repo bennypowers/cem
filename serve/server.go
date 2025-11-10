@@ -344,9 +344,9 @@ func (s *Server) Manifest() ([]byte, error) {
 	return manifestCopy, nil
 }
 
-// DebounceDuration returns the debounce duration (150ms per spec)
+// DebounceDuration returns the debounce duration for file watching
 func (s *Server) DebounceDuration() time.Duration {
-	return 150 * time.Millisecond
+	return 50 * time.Millisecond
 }
 
 // Handler returns the HTTP handler
@@ -490,6 +490,63 @@ func (s *Server) RegenerateManifest() error {
 	}
 
 	s.logger.Info("Manifest regenerated (%d bytes)", len(manifestBytes))
+	return nil
+}
+
+// RegenerateManifestIncremental incrementally updates the manifest for changed files
+func (s *Server) RegenerateManifestIncremental(changedFiles []string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.watchDir == "" {
+		return fmt.Errorf("no watch directory set")
+	}
+
+	// If no generate session exists yet, do a full regeneration
+	if s.generateSession == nil {
+		s.mu.Unlock() // Unlock before calling RegenerateManifest which will lock
+		return s.RegenerateManifest()
+	}
+
+	// Use incremental processing with existing session
+	ctx := context.Background()
+	pkg, err := s.generateSession.ProcessChangedFiles(ctx, changedFiles)
+	if err != nil {
+		// If incremental processing fails, fall back to full regeneration
+		s.logger.Warning("Incremental manifest generation failed, falling back to full regeneration: %v", err)
+		s.mu.Unlock() // Unlock before calling RegenerateManifest which will lock
+		return s.RegenerateManifest()
+	}
+
+	// Extract source files from manifest for targeted file watching
+	sourceFiles := make(map[string]bool)
+	for _, module := range pkg.Modules {
+		if module.Path != "" {
+			sourceFiles[module.Path] = true
+		}
+	}
+	s.sourceFiles = sourceFiles
+	s.logger.Debug("Tracking %d source files from manifest", len(sourceFiles))
+
+	// Marshal to JSON
+	manifestBytes, err := json.MarshalIndent(pkg, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshaling manifest: %w", err)
+	}
+
+	s.manifest = manifestBytes
+
+	// Build routing table from manifest
+	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes)
+	if err != nil {
+		s.logger.Warning("Failed to build demo routing table: %v", err)
+		s.demoRoutes = nil
+	} else {
+		s.demoRoutes = routingTable
+		s.logger.Debug("Built routing table with %d demo routes", len(routingTable))
+	}
+
+	s.logger.Info("Manifest regenerated incrementally (%d bytes)", len(manifestBytes))
 	return nil
 }
 
@@ -700,12 +757,12 @@ func (s *Server) resolveImportToPath(importSpec string) []string {
 	if importMap != nil {
 		// First try exact match
 		if resolved, ok := importMap.Imports[importSpec]; ok {
-			s.logger.Info("Import map entry: %s -> %s", importSpec, resolved)
+			s.logger.Debug("Import map entry: %s -> %s", importSpec, resolved)
 			if parsedURL, err := url.Parse(resolved); err == nil && parsedURL.Path != "" {
 				paths = append(paths, parsedURL.Path)
-				s.logger.Info("Resolved bare import %s -> %s (via import map exact match)", importSpec, parsedURL.Path)
+				s.logger.Debug("Resolved bare import %s -> %s (via import map exact match)", importSpec, parsedURL.Path)
 			} else {
-				s.logger.Info("Failed to parse URL or extract path from: %s", resolved)
+				s.logger.Debug("Failed to parse URL or extract path from: %s", resolved)
 			}
 		} else {
 			// Try prefix matching for entries ending with "/"
@@ -725,21 +782,21 @@ func (s *Server) resolveImportToPath(importSpec string) []string {
 				// Replace the prefix
 				suffix := strings.TrimPrefix(importSpec, longestPrefix)
 				resolved := longestPrefixValue + suffix
-				s.logger.Info("Import map prefix match: %s (prefix: %s -> %s)", importSpec, longestPrefix, longestPrefixValue)
+				s.logger.Debug("Import map prefix match: %s (prefix: %s -> %s)", importSpec, longestPrefix, longestPrefixValue)
 				if parsedURL, err := url.Parse(resolved); err == nil && parsedURL.Path != "" {
 					paths = append(paths, parsedURL.Path)
-					s.logger.Info("Resolved bare import %s -> %s (via import map prefix match)", importSpec, parsedURL.Path)
+					s.logger.Debug("Resolved bare import %s -> %s (via import map prefix match)", importSpec, parsedURL.Path)
 				} else {
-					s.logger.Info("Failed to parse URL or extract path from: %s", resolved)
+					s.logger.Debug("Failed to parse URL or extract path from: %s", resolved)
 				}
 			} else {
-				s.logger.Info("Import %s not found in import map (have %d entries)", importSpec, len(importMap.Imports))
+				s.logger.Debug("Import %s not found in import map (have %d entries)", importSpec, len(importMap.Imports))
 			}
 		}
 
 		// TODO: Check scopes section for more precise resolution
 	} else {
-		s.logger.Info("No import map available to resolve %s", importSpec)
+		s.logger.Debug("No import map available to resolve %s", importSpec)
 	}
 
 	return paths
@@ -785,6 +842,10 @@ func (s *Server) handleFileChanges() {
 	}
 
 	for event := range s.watcher.Events() {
+		eventReceived := time.Now()
+		s.logger.Info("===== FILE WATCHER EVENT RECEIVED at %v (creates:%v deletes:%v pkg.json:%v) =====",
+			eventReceived.Format("15:04:05.000"), event.HasCreates, event.HasDeletes, event.HasPackageJSON)
+
 		// Process all files in the batched event
 		filesToProcess := event.Paths
 		if len(filesToProcess) == 0 {
@@ -832,6 +893,7 @@ func (s *Server) handleFileChanges() {
 
 		// Resolve .js to .ts if source exists
 		displayPath := s.resolveSourceFile(relPath)
+		fileChangeStart := time.Now()
 		s.logger.Info("File changed: %s", displayPath)
 
 		ext := filepath.Ext(changedPath)
@@ -848,16 +910,28 @@ func (s *Server) handleFileChanges() {
 
 		// Regenerate manifest if a source file changed
 		if ext == ".ts" || ext == ".js" {
-			s.logger.Debug("Regenerating manifest for %s file change...", ext)
-			err := s.RegenerateManifest()
+			manifestStart := time.Now()
+			s.logger.Debug("Regenerating manifest incrementally for %s file change...", ext)
+			err := s.RegenerateManifestIncremental([]string{changedPath})
+			manifestDuration := time.Since(manifestStart)
 			if err != nil {
-				s.logger.Error("Failed to regenerate manifest: %v", err)
+				s.logger.Error("Failed to regenerate manifest incrementally: %v", err)
 				// Continue anyway - we still want to reload the page
 			} else {
-				s.logger.Debug("Manifest regenerated successfully")
+				s.logger.Info("Manifest regenerated incrementally in %v", manifestDuration)
 			}
 
-			// Regenerate import map (both workspace and single-package mode)
+			// Note: Import map regeneration is skipped for .ts/.js changes
+			// Import maps are built from package.json exports, not source files
+			// They only need to be regenerated when package.json changes
+		}
+
+		// Regenerate import map only when necessary:
+		// - package.json was modified (exports may have changed)
+		// - files were created (new modules may need to be mapped)
+		// - files were deleted (old modules may need to be unmapped)
+		if event.HasPackageJSON || event.HasCreates || event.HasDeletes {
+			importMapStart := time.Now()
 			s.mu.Lock()
 			if s.isWorkspace {
 				// Workspace mode: regenerate workspace import map
@@ -877,7 +951,8 @@ func (s *Server) handleFileChanges() {
 					s.logger.Warning("Failed to regenerate workspace import map: %v", err)
 				} else {
 					s.importMap = importMap
-					s.logger.Debug("Regenerated workspace import map")
+					importMapDuration := time.Since(importMapStart)
+					s.logger.Info("Regenerated workspace import map in %v", importMapDuration)
 				}
 			} else {
 				// Single-package mode: regenerate import map
@@ -886,16 +961,19 @@ func (s *Server) handleFileChanges() {
 					s.logger.Warning("Failed to regenerate import map: %v", err)
 				} else {
 					s.importMap = importMap
-					s.logger.Debug("Regenerated import map")
+					importMapDuration := time.Since(importMapStart)
+					s.logger.Info("Regenerated import map in %v", importMapDuration)
 				}
 			}
 			s.mu.Unlock()
 		}
 
 		// Smart reload: only reload pages that import the changed file or its dependents
+		smartReloadStart := time.Now()
 		s.logger.Info("===== SMART RELOAD: Checking affected pages for %s =====", relPath)
 		affectedPageURLs := s.getAffectedPageURLs(changedPath, invalidatedFiles)
-		s.logger.Info("===== SMART RELOAD: Found %d affected pages =====", len(affectedPageURLs))
+		smartReloadDuration := time.Since(smartReloadStart)
+		s.logger.Info("===== SMART RELOAD: Found %d affected pages in %v =====", len(affectedPageURLs), smartReloadDuration)
 
 		if len(affectedPageURLs) == 0 {
 			s.logger.Debug("No pages affected by changes to %s", relPath)
@@ -915,7 +993,8 @@ func (s *Server) handleFileChanges() {
 			if err != nil {
 				s.logger.Error("Failed to broadcast reload: %v", err)
 			} else {
-				s.logger.Info("Reload broadcast to %d affected pages", len(affectedPageURLs))
+				totalDuration := time.Since(fileChangeStart)
+				s.logger.Info("Reload broadcast to %d affected pages (total: %v)", len(affectedPageURLs), totalDuration)
 			}
 		}
 	}
@@ -923,7 +1002,7 @@ func (s *Server) handleFileChanges() {
 
 // getAffectedPageURLs returns page URLs that import the changed file or its dependents
 func (s *Server) getAffectedPageURLs(changedPath string, invalidatedFiles []string) []string {
-	s.logger.Info("getAffectedPageURLs called with changedPath=%s, invalidatedFiles=%d", changedPath, len(invalidatedFiles))
+	s.logger.Debug("getAffectedPageURLs called with changedPath=%s, invalidatedFiles=%d", changedPath, len(invalidatedFiles))
 	s.mu.RLock()
 	watchDir := s.watchDir
 	s.mu.RUnlock()
@@ -936,11 +1015,11 @@ func (s *Server) getAffectedPageURLs(changedPath string, invalidatedFiles []stri
 	if rel, err := filepath.Rel(watchDir, changedPath); err == nil {
 		affectedFiles[rel] = true
 		affectedFiles["/"+rel] = true // Also store with leading slash
-		s.logger.Info("Changed file (relative): %s", rel)
-		s.logger.Info("Affected files map keys: %v", affectedFiles)
+		s.logger.Debug("Changed file (relative): %s", rel)
+		s.logger.Debug("Affected files map keys: %v", affectedFiles)
 	} else {
 		affectedFiles[changedPath] = true
-		s.logger.Info("Could not make relative, using absolute: %s", changedPath)
+		s.logger.Debug("Could not make relative, using absolute: %s", changedPath)
 	}
 
 	// Add all transitively invalidated files (also convert to relative)
@@ -961,37 +1040,32 @@ func (s *Server) getAffectedPageURLs(changedPath string, invalidatedFiles []stri
 	s.mu.RUnlock()
 
 	if demoRoutes == nil {
-		s.logger.Info("No demo routes available for smart reload")
+		s.logger.Debug("No demo routes available for smart reload")
 		return nil
 	}
 
-	s.logger.Info("Checking %d demo routes for affected imports", len(demoRoutes))
+	s.logger.Debug("Checking %d demo routes for affected imports", len(demoRoutes))
 	affectedPages := make([]string, 0)
 
 	// For each demo route, check if it imports any affected files
 	for routePath, routeEntry := range demoRoutes {
-		s.logger.Info("Checking route: %s (file: %s)", routePath, routeEntry.FilePath)
 		htmlPath := filepath.Join(watchDir, routeEntry.FilePath)
 
 		// Extract imports from HTML
 		imports, err := extractModuleImports(htmlPath)
 		if err != nil {
-			s.logger.Info("Failed to parse %s: %v", routeEntry.FilePath, err)
+			s.logger.Debug("Failed to parse %s: %v", routeEntry.FilePath, err)
 			continue
 		}
 
 		if len(imports) == 0 {
-			s.logger.Info("No imports found in %s", routeEntry.FilePath)
-			continue
+			continue // Skip routes with no imports
 		}
-
-		s.logger.Info("Found %d imports in %s: %v", len(imports), routeEntry.FilePath, imports)
 
 		// Resolve imports to file paths and check if any match affected files
 		for _, importSpec := range imports {
 			resolvedPaths := s.resolveImportToPath(importSpec)
 			if len(resolvedPaths) == 0 {
-				s.logger.Debug("Could not resolve import: %s", importSpec)
 				continue
 			}
 
@@ -1005,15 +1079,13 @@ func (s *Server) getAffectedPageURLs(changedPath string, invalidatedFiles []stri
 					normalizedResolvedTS = normalizedResolved[:len(normalizedResolved)-3] + ".ts"
 				}
 
-				s.logger.Info("Checking if %s or %s matches affected files", normalizedResolved, normalizedResolvedTS)
-
 				// Check if this resolved path matches any affected file
 				if affectedFiles[normalizedResolved] ||
 				   affectedFiles[normalizedResolvedTS] ||
 				   affectedFiles[strings.TrimPrefix(normalizedResolved, "/")] ||
 				   affectedFiles[strings.TrimPrefix(normalizedResolvedTS, "/")] {
 					affectedPages = append(affectedPages, routePath)
-					s.logger.Info("Page %s imports affected file %s (via %s)", routePath, normalizedResolved, importSpec)
+					s.logger.Debug("Page %s imports affected file %s (via %s)", routePath, normalizedResolved, importSpec)
 					goto nextRoute // Found a match, move to next route
 				}
 			}

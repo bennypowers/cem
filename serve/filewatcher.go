@@ -33,6 +33,7 @@ type fileWatcher struct {
 	events         chan FileEvent
 	debounceWindow time.Duration
 	debouncedFiles map[string]time.Time
+	fileEventTypes map[string]string // Track event type (create/delete/modify) for each file
 	debounceTimer  *time.Timer
 	mu             sync.Mutex
 	logger         Logger
@@ -148,9 +149,28 @@ func (fw *fileWatcher) processEvents() {
 				continue
 			}
 
-			// Track file change
+			// Determine event type
+			var eventType string
+			if event.Op&fsnotify.Create == fsnotify.Create {
+				eventType = "create"
+			} else if event.Op&fsnotify.Remove == fsnotify.Remove {
+				eventType = "delete"
+			} else if event.Op&fsnotify.Write == fsnotify.Write {
+				eventType = "modify"
+			} else if event.Op&fsnotify.Rename == fsnotify.Rename {
+				eventType = "rename"
+			} else {
+				eventType = "modify" // Default
+			}
+
+			// Track file change with event type
 			fw.mu.Lock()
 			fw.debouncedFiles[event.Name] = time.Now()
+			// Store event type for this file (we'll use the last one if multiple events)
+			if fw.fileEventTypes == nil {
+				fw.fileEventTypes = make(map[string]string)
+			}
+			fw.fileEventTypes[event.Name] = eventType
 
 			// Reset debounce timer
 			if fw.debounceTimer != nil {
@@ -163,7 +183,7 @@ func (fw *fileWatcher) processEvents() {
 			fw.mu.Unlock()
 
 			if fw.logger != nil {
-				fw.logger.Debug("File changed: %s", event.Name)
+				fw.logger.Debug("File %s: %s", eventType, event.Name)
 			}
 
 		case err, ok := <-fw.watcher.Errors:
@@ -196,22 +216,55 @@ func (fw *fileWatcher) flushDebouncedEvents() {
 		return
 	}
 
-	// Collect all changed files
+	// Collect all changed files and analyze event types
 	files := make([]string, 0, len(fw.debouncedFiles))
+	var hasCreates, hasDeletes, hasPackageJSON bool
+	var primaryEventType string
+
 	for file := range fw.debouncedFiles {
 		files = append(files, file)
+
+		// Check event type for this file
+		eventType := fw.fileEventTypes[file]
+		ext := filepath.Ext(file)
+
+		// Only count creates/deletes for source files (.ts/.js), not temp files
+		isSourceFile := ext == ".ts" || ext == ".js"
+		if isSourceFile && eventType == "create" {
+			hasCreates = true
+		} else if isSourceFile && eventType == "delete" {
+			hasDeletes = true
+		}
+
+		// Check if package.json was modified
+		if filepath.Base(file) == "package.json" {
+			hasPackageJSON = true
+		}
+
+		// Use first file's event type as primary
+		if primaryEventType == "" {
+			primaryEventType = eventType
+		}
 	}
 
-	// Clear the map
+	// Clear the maps
 	fw.debouncedFiles = make(map[string]time.Time)
+	fw.fileEventTypes = make(map[string]string)
 
 	// Send batched event with all files
 	if len(files) > 0 {
+		if primaryEventType == "" {
+			primaryEventType = "modify"
+		}
+
 		event := FileEvent{
-			Path:      files[0],    // Primary file for backwards compatibility
-			Paths:     files,       // All changed files
-			EventType: "modified",
-			Timestamp: time.Now(),
+			Path:           files[0],
+			Paths:          files,
+			EventType:      primaryEventType,
+			HasCreates:     hasCreates,
+			HasDeletes:     hasDeletes,
+			HasPackageJSON: hasPackageJSON,
+			Timestamp:      time.Now(),
 		}
 
 		select {

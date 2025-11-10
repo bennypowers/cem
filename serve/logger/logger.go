@@ -176,9 +176,8 @@ func (l *ptermLogger) log(level, color, msg string, args ...interface{}) {
 		l.logs = l.logs[len(l.logs)-l.maxLogs:]
 	}
 
-	// Get copy of logs for broadcasting (before unlock)
-	logsCopy := make([]string, len(l.logs))
-	copy(logsCopy, l.logs)
+	// Capture wsManager reference while holding lock to avoid race with SetWebSocketManager
+	ws := l.wsManager
 
 	if l.interactive && l.area != nil {
 		// Interactive mode with live area started: store colored logs and render
@@ -238,11 +237,8 @@ func (l *ptermLogger) log(level, color, msg string, args ...interface{}) {
 		}
 	}
 
-	// Broadcast logs to WebSocket clients (after unlock to avoid blocking)
-	// Capture wsManager reference while holding lock to avoid race with SetWebSocketManager
-	l.mu.Lock()
-	ws := l.wsManager
-	l.mu.Unlock()
+	// Broadcast just this individual log entry to WebSocket clients
+	// Full log history is sent on page load via /__cem/logs endpoint
 
 	if ws != nil {
 		// Type assert to interface with Broadcast method
@@ -250,9 +246,10 @@ func (l *ptermLogger) log(level, color, msg string, args ...interface{}) {
 			Broadcast([]byte) error
 		}
 		if bc, ok := ws.(broadcaster); ok {
+			// Send only the new log entry (not the entire history)
 			msg := LogMessage{
 				Type: "logs",
-				Logs: logsCopy,
+				Logs: []string{plainLog},
 			}
 			if msgBytes, err := json.Marshal(msg); err == nil {
 				// Broadcast error intentionally ignored - failures occur when clients
