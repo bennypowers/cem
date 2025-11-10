@@ -1125,6 +1125,7 @@ func (s *Server) setupMiddleware() {
 		transform.NewCSS(transform.CSSConfig{ // CSS transform
 			WatchDirFunc: s.WatchDir,
 			Logger:       s.logger,
+			Enabled:      true, // TODO: Read from config
 		}),
 		transform.NewTypeScript(transform.TypeScriptConfig{ // TypeScript transform
 			WatchDirFunc:     s.WatchDir,
@@ -1133,6 +1134,7 @@ func (s *Server) setupMiddleware() {
 			Logger:           s.logger,
 			ErrorBroadcaster: errorBroadcaster{s},
 			Target:           string(s.config.Target),
+			Enabled:          true, // TODO: Read from config
 		}),
 		routes.New(routes.Config{ // Internal CEM routes (includes WebSocket, demos, listings)
 			Context:          s,

@@ -30,12 +30,19 @@ import (
 type CSSConfig struct {
 	WatchDirFunc func() string // Function to get current watch directory
 	Logger       Logger
+	Enabled      bool // Enable/disable CSS transformation
 }
 
 // NewCSS creates a middleware that transforms CSS files to JavaScript modules
 func NewCSS(config CSSConfig) middleware.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Skip if transformation is disabled
+			if !config.Enabled {
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			// Get watch directory dynamically
 			watchDir := config.WatchDirFunc()
 			if watchDir == "" {

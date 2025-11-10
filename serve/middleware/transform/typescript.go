@@ -35,12 +35,19 @@ type TypeScriptConfig struct {
 	Logger           Logger
 	ErrorBroadcaster ErrorBroadcaster
 	Target           string
+	Enabled          bool // Enable/disable TypeScript transformation
 }
 
 // NewTypeScript creates a middleware that transforms TypeScript files to JavaScript
 func NewTypeScript(config TypeScriptConfig) middleware.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Skip if transformation is disabled
+			if !config.Enabled {
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			// Get watch directory dynamically
 			watchDir := config.WatchDirFunc()
 			if watchDir == "" {
