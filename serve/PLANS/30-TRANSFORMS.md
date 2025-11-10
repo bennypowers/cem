@@ -174,15 +174,15 @@ server/transform/test-fixtures/
 - [x] Dependency graph tracks module relationships
 - [x] File changes invalidate cached file and dependent tree
 - [x] Max cache size enforced (500MB default)
-- [ ] Cache stats logged (hits, misses, size)
+- [x] Cache stats logged (hits, misses, size)
 - [ ] Worker pool parallelizes transforms (max 4 concurrent)
 - [ ] Excess requests queued, 503 returned if queue full
 - [x] CSS files transformed to CSSStyleSheet JavaScript modules
 - [x] CSS transform auto-enabled for all `.css` files
 - [x] CSS transform content-type: `application/javascript; charset=utf-8`
 - [x] CSS transform does not support relative URLs (documented limitation)
-- [ ] Config `transforms.typescript.enabled` controls TypeScript transform
-- [ ] Config `transforms.css.enabled` controls CSS transform
+- [x] Config `transforms.typescript.enabled` controls TypeScript transform
+- [x] Config `transforms.css.enabled` controls CSS transform
 - [ ] Config `transforms.css.include/exclude` filters CSS files
 - [x] Transform errors shown in browser error overlay
 - [x] Tests cover basic transform functionality
