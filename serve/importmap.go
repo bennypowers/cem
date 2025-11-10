@@ -23,6 +23,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	W "bennypowers.dev/cem/workspace"
 )
 
 // ImportMap represents an ES module import map
@@ -45,6 +47,41 @@ type packageJSON struct {
 	Workspaces   interface{}            `json:"workspaces"` // Can be []string or object with "packages" field
 	Exports      interface{}            `json:"exports"`
 	Main         string                 `json:"main"`
+}
+
+// findWorkspaceRoot walks up the directory tree to find the workspace root
+// Returns the directory containing node_modules or workspace configuration
+// Stops at git repository boundaries to avoid breaking out of submodules
+func findWorkspaceRoot(startDir string) string {
+	dir := startDir
+	for {
+		// Check if node_modules exists in this directory
+		nodeModulesPath := filepath.Join(dir, "node_modules")
+		if stat, err := os.Stat(nodeModulesPath); err == nil && stat.IsDir() {
+			return dir
+		}
+
+		// Check if there's a package.json with workspaces field
+		pkgPath := filepath.Join(dir, "package.json")
+		if pkg, err := readPackageJSON(pkgPath); err == nil && pkg.Workspaces != nil {
+			return dir
+		}
+
+		// Stop if we've reached a git repository root (don't go higher)
+		gitDir := filepath.Join(dir, ".git")
+		if stat, err := os.Stat(gitDir); err == nil && stat.IsDir() {
+			// Hit git boundary without finding workspace root, return start dir
+			return startDir
+		}
+
+		// Move up one directory
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			// Reached filesystem root, return original directory
+			return startDir
+		}
+		dir = parent
+	}
 }
 
 // GenerateImportMap generates an import map from package.json and configuration
@@ -71,10 +108,28 @@ func GenerateImportMap(rootDir string, config *ImportMapConfig) (*ImportMap, err
 		return nil, fmt.Errorf("reading package.json: %w", err)
 	}
 
+	// 1.5. Find workspace root if we're in a workspace package
+	// This handles the case where serve is run from a subdirectory in a monorepo
+	workspaceRoot := findWorkspaceRoot(rootDir)
+	if workspaceRoot != rootDir {
+		if logger.Logger != nil {
+			logger.Logger.Debug("Detected workspace subdirectory, using workspace root: %s", workspaceRoot)
+		}
+	}
+
 	// 2. Discover workspace packages (monorepo support)
+	// If we found a workspace root, load its package.json for workspace config
 	workspacePackages := make(map[string]string) // name -> path
-	if rootPkg.Workspaces != nil {
-		workspaces, err := discoverWorkspaces(rootDir, rootPkg.Workspaces)
+	workspacePkg := rootPkg
+	if workspaceRoot != rootDir {
+		// Load workspace root's package.json
+		workspaceRootPkgPath := filepath.Join(workspaceRoot, "package.json")
+		if pkg, err := readPackageJSON(workspaceRootPkgPath); err == nil {
+			workspacePkg = pkg
+		}
+	}
+	if workspacePkg.Workspaces != nil {
+		workspaces, err := W.DiscoverWorkspacePackages(workspaceRoot, workspacePkg.Workspaces)
 		if err != nil {
 			if logger.Logger != nil {
 				logger.Logger.Warning("Failed to discover workspaces: %v", err)
@@ -103,6 +158,7 @@ func GenerateImportMap(rootDir string, config *ImportMapConfig) (*ImportMap, err
 	}
 
 	// 4. Resolve dependencies from node_modules (skip if already in workspaces)
+	// Use workspaceRoot for node_modules location (handles monorepo case)
 	if rootPkg.Dependencies != nil {
 		for depName := range rootPkg.Dependencies {
 			// Skip if already resolved as workspace package
@@ -110,8 +166,8 @@ func GenerateImportMap(rootDir string, config *ImportMapConfig) (*ImportMap, err
 				continue
 			}
 
-			// Check for scoped package
-			depPath := filepath.Join(rootDir, "node_modules", depName)
+			// Look for package in workspace root's node_modules
+			depPath := filepath.Join(workspaceRoot, "node_modules", depName)
 
 			// Check if package exists
 			if _, err := os.Stat(depPath); os.IsNotExist(err) {
@@ -131,7 +187,8 @@ func GenerateImportMap(rootDir string, config *ImportMapConfig) (*ImportMap, err
 
 	// 4.5. Add scopes for transitive dependencies in node_modules
 	// For each package in the dependency tree, add scopes for their dependencies
-	if err := addTransitiveDependenciesToScopes(result, rootDir, rootPkg, logger.Logger); err != nil {
+	// Use workspaceRoot for node_modules location (handles monorepo case)
+	if err := addTransitiveDependenciesToScopes(result, workspaceRoot, rootPkg, logger.Logger); err != nil {
 		if logger.Logger != nil {
 			logger.Logger.Warning("Failed to add transitive dependencies: %v", err)
 		}
@@ -139,7 +196,8 @@ func GenerateImportMap(rootDir string, config *ImportMapConfig) (*ImportMap, err
 
 	// 4.6. Add scopes for workspace packages and root package
 	// Workspace packages and root package also need to resolve bare specifiers
-	if err := addWorkspaceScopesToImportMap(result, rootDir, rootPkg, workspacePackages, logger.Logger); err != nil {
+	// Use workspaceRoot for node_modules location (handles monorepo case)
+	if err := addWorkspaceScopesToImportMap(result, workspaceRoot, rootDir, rootPkg, workspacePackages, logger.Logger); err != nil {
 		if logger.Logger != nil {
 			logger.Logger.Warning("Failed to add workspace scopes: %v", err)
 		}
@@ -180,59 +238,6 @@ func readPackageJSON(path string) (*packageJSON, error) {
 	}
 
 	return &pkg, nil
-}
-
-// discoverWorkspaces finds all workspace packages
-func discoverWorkspaces(rootDir string, workspacesField interface{}) (map[string]string, error) {
-	result := make(map[string]string)
-
-	var patterns []string
-
-	// Handle different workspace field formats
-	switch v := workspacesField.(type) {
-	case []interface{}:
-		for _, item := range v {
-			if str, ok := item.(string); ok {
-				patterns = append(patterns, str)
-			}
-		}
-	case map[string]interface{}:
-		if packages, ok := v["packages"].([]interface{}); ok {
-			for _, item := range packages {
-				if str, ok := item.(string); ok {
-					patterns = append(patterns, str)
-				}
-			}
-		}
-	}
-
-	// For each pattern, find matching directories
-	for _, pattern := range patterns {
-		matches, err := filepath.Glob(filepath.Join(rootDir, pattern))
-		if err != nil {
-			continue
-		}
-
-		for _, match := range matches {
-			info, err := os.Stat(match)
-			if err != nil || !info.IsDir() {
-				continue
-			}
-
-			// Read package.json in this workspace
-			pkgPath := filepath.Join(match, "package.json")
-			pkg, err := readPackageJSON(pkgPath)
-			if err != nil {
-				continue
-			}
-
-			if pkg.Name != "" {
-				result[pkg.Name] = match
-			}
-		}
-	}
-
-	return result, nil
 }
 
 // readImportMapFile reads a user-provided import map file
@@ -576,8 +581,9 @@ func resolveSimpleExportValue(exportValue interface{}, depWebPath string) string
 
 // addWorkspaceScopesToImportMap adds scopes for workspace packages and root package
 // so they can resolve bare specifiers to dependencies
-func addWorkspaceScopesToImportMap(importMap *ImportMap, rootDir string, rootPkg *packageJSON, workspacePackages map[string]string, logger Logger) error {
-	nodeModulesPath := filepath.Join(rootDir, "node_modules")
+// workspaceRoot is where node_modules is located, rootDir is for calculating relative paths
+func addWorkspaceScopesToImportMap(importMap *ImportMap, workspaceRoot, rootDir string, rootPkg *packageJSON, workspacePackages map[string]string, logger Logger) error {
+	nodeModulesPath := filepath.Join(workspaceRoot, "node_modules")
 
 	// Helper function to add dependencies to a scope (including transitive dependencies)
 	addDependenciesToScope := func(scopePrefix string, dependencies map[string]string) {
