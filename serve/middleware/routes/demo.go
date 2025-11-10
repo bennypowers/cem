@@ -15,14 +15,12 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package serve
+package routes
 
 import (
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"net/url"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -39,8 +37,8 @@ type DemoRouteEntry struct {
 	PackagePath string    // Absolute path to package directory (for workspace mode)
 }
 
-// buildDemoRoutingTable creates a routing table from manifest and workspace config
-func (s *Server) buildDemoRoutingTable(manifestBytes []byte) (map[string]*DemoRouteEntry, error) {
+// buildDemoRoutingTable creates a routing table from manifest
+func buildDemoRoutingTable(manifestBytes []byte) (map[string]*DemoRouteEntry, error) {
 	if len(manifestBytes) == 0 {
 		return nil, fmt.Errorf("no manifest available")
 	}
@@ -50,15 +48,9 @@ func (s *Server) buildDemoRoutingTable(manifestBytes []byte) (map[string]*DemoRo
 		return nil, fmt.Errorf("parsing manifest: %w", err)
 	}
 
-	// Get the source control root URL from config if available
+	// TODO: Get source control root URL from config
+	// For now, we'll extract it from the demo source.href if needed
 	var sourceControlRootURL string
-	if s.generateSession != nil {
-		if workspace := s.generateSession.WorkspaceContext(); workspace != nil {
-			if config, err := workspace.Config(); err == nil && config.SourceControlRootUrl != "" {
-				sourceControlRootURL = config.SourceControlRootUrl
-			}
-		}
-	}
 
 	routes := make(map[string]*DemoRouteEntry)
 
@@ -133,108 +125,6 @@ func (s *Server) buildDemoRoutingTable(manifestBytes []byte) (map[string]*DemoRo
 	return routes, nil
 }
 
-// renderDemoFromRoute renders a demo page with chrome using routing table entry
-func (s *Server) renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string) (string, error) {
-	s.mu.RLock()
-	isWorkspace := s.isWorkspace
-	watchDir := s.watchDir
-	s.mu.RUnlock()
-
-	// Determine base directory for file path
-	var baseDir string
-	if isWorkspace && entry.PackagePath != "" {
-		// Workspace mode: use package directory
-		baseDir = entry.PackagePath
-	} else {
-		// Single-package mode: use watch directory
-		baseDir = watchDir
-	}
-
-	// Read demo HTML file
-	demoPath := filepath.Join(baseDir, entry.FilePath)
-	demoHTML, err := os.ReadFile(demoPath)
-	if err != nil {
-		return "", fmt.Errorf("reading demo file %s: %w", entry.FilePath, err)
-	}
-
-	// Get import map
-	var importMapJSON string
-	importMap, err := s.ImportMap()
-	if err != nil {
-		s.logger.Warning("Failed to get import map for demo: %v", err)
-	} else if importMap != nil && len(importMap.Imports) > 0 {
-		importMapBytes, err := json.MarshalIndent(importMap, "  ", "  ")
-		if err != nil {
-			s.logger.Warning("Failed to marshal import map: %v", err)
-		} else {
-			importMapJSON = string(importMapBytes)
-		}
-	}
-
-	// Prepare chrome data
-	demoTitle := entry.Demo.Description
-	if demoTitle == "" {
-		demoTitle = filepath.Base(entry.FilePath)
-	}
-
-	// Get source URL (file location) and canonical URL (demo URL)
-	var sourceURL string
-	if entry.Demo.Source != nil {
-		sourceURL = entry.Demo.Source.Href
-	}
-
-	chromeData := ChromeData{
-		TagName:      entry.TagName,
-		DemoTitle:    demoTitle,
-		DemoHTML:     template.HTML(demoHTML),
-		Description:  template.HTML(entry.Demo.Description),
-		ImportMap:    template.HTML(importMapJSON),
-		EnabledKnobs: queryParams["knobs"],
-		ShadowMode:   queryParams["shadow"] == "true",
-		SourceURL:    sourceURL,    // Link to source file
-		CanonicalURL: entry.Demo.URL, // Link to canonical demo
-	}
-
-	// Render with chrome
-	return renderDemoChrome(chromeData)
-}
-
-// serveDemoRoutes handles demo routing using the manifest-based routing table
-func (s *Server) serveDemoRoutes(path string, queryParams map[string]string) (string, error) {
-	s.mu.RLock()
-	isWorkspace := s.isWorkspace
-	workspaceRoutes := s.workspaceRoutes
-	manifestBytes := s.manifest
-	s.mu.RUnlock()
-
-	var routes map[string]*DemoRouteEntry
-	var err error
-
-	// Use workspace routes if in workspace mode
-	if isWorkspace {
-		routes = workspaceRoutes
-	} else {
-		// Build routing table from manifest for single-package mode
-		routes, err = s.buildDemoRoutingTable(manifestBytes)
-		if err != nil {
-			return "", fmt.Errorf("building demo routing table: %w", err)
-		}
-	}
-
-	// Normalize requested path (ensure trailing slash for directory-style)
-	normalizedPath := path
-	if normalizedPath != "/" && normalizedPath[len(normalizedPath)-1] != '/' && filepath.Ext(normalizedPath) == "" {
-		normalizedPath += "/"
-	}
-
-	// Look up route in table
-	entry, found := routes[normalizedPath]
-	if !found {
-		return "", fmt.Errorf("demo not found for route: %s", path)
-	}
-
-	return s.renderDemoFromRoute(entry, queryParams)
-}
 
 // BuildWorkspaceRoutingTable builds a combined routing table from all packages
 // Returns error if route conflicts are detected

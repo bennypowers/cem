@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package serve
+package routes
 
 import (
 	"bytes"
@@ -44,8 +44,8 @@ type DemoListing struct {
 	Slug string
 }
 
-// renderElementListing renders the root listing page with all elements
-func renderElementListing(manifestBytes []byte, importMap string) (string, error) {
+// RenderElementListing renders the root listing page with all elements
+func RenderElementListing(manifestBytes []byte, importMap string) (string, error) {
 	if len(manifestBytes) == 0 {
 		// Empty manifest - show helpful message
 		return renderDemoChrome(ChromeData{
@@ -274,8 +274,8 @@ type WorkspaceDemoListing struct {
 	PackageName string
 }
 
-// renderWorkspaceListing renders the workspace index page with all packages
-func renderWorkspaceListing(packages []PackageContext, routes map[string]*DemoRouteEntry, importMap string) (string, error) {
+// RenderWorkspaceListing renders the workspace index page with all packages
+func RenderWorkspaceListing(packages []PackageContext, importMap string) (string, error) {
 	if len(packages) == 0 {
 		return renderDemoChrome(ChromeData{
 			TagName:   "cem-serve",
@@ -287,6 +287,12 @@ func renderWorkspaceListing(packages []PackageContext, routes map[string]*DemoRo
 			`),
 			ImportMap: template.HTML(importMap),
 		})
+	}
+
+	// Build routing table on-demand
+	routes, err := BuildWorkspaceRoutingTable(packages)
+	if err != nil {
+		return "", fmt.Errorf("building workspace routing table: %w", err)
 	}
 
 	// Group routes by element (tag name)
@@ -329,7 +335,7 @@ func renderWorkspaceListing(packages []PackageContext, routes map[string]*DemoRo
 
 	// Render with template
 	var buf bytes.Buffer
-	err := WorkspaceListingTemplate.Execute(&buf, map[string]interface{}{
+	err = WorkspaceListingTemplate.Execute(&buf, map[string]interface{}{
 		"Elements": elementListings,
 	})
 	if err != nil {

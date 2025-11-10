@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package serve
+package importmap
 
 import (
 	"encoding/json"
@@ -26,20 +26,6 @@ import (
 
 	W "bennypowers.dev/cem/workspace"
 )
-
-// ImportMap represents an ES module import map
-type ImportMap struct {
-	Imports map[string]string            `json:"imports"`
-	Scopes  map[string]map[string]string `json:"scopes,omitempty"`
-}
-
-// ImportMapConfig configures import map generation
-type ImportMapConfig struct {
-	InputMapPath      string            // Path to user override file
-	CLIOverrides      map[string]string // CLI flag overrides (highest priority)
-	Logger            Logger            // Logger for warnings
-	WorkspacePackages []PackageContext  // If set, generate workspace-mode import map (flattened scopes)
-}
 
 // packageJSON represents the structure we need from package.json
 type packageJSON struct {
@@ -85,11 +71,11 @@ func findWorkspaceRoot(startDir string) string {
 	}
 }
 
-// GenerateImportMap generates an import map from package.json and configuration
-func GenerateImportMap(rootDir string, config *ImportMapConfig) (*ImportMap, error) {
+// Generate generates an import map from package.json and configuration
+func Generate(rootDir string, config *Config) (*ImportMap, error) {
 	// Default config to empty if not provided
 	if config == nil {
-		config = &ImportMapConfig{}
+		config = &Config{}
 	}
 
 	// Workspace mode: generate flattened import map from packages
@@ -735,7 +721,7 @@ func addWorkspaceScopesToImportMap(importMap *ImportMap, workspaceRoot, rootDir 
 // Only includes dependencies from packages with customElements fields
 // Global imports: workspace packages + their direct dependencies
 // Scopes: transitive dependencies
-func generateWorkspaceImportMap(workspaceRoot string, packages []PackageContext, logger Logger) (*ImportMap, error) {
+func generateWorkspaceImportMap(workspaceRoot string, packages []WorkspacePackage, logger Logger) (*ImportMap, error) {
 	result := &ImportMap{
 		Imports: make(map[string]string),
 		Scopes:  make(map[string]map[string]string),

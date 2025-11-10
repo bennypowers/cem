@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package serve
+package transform
 
 import (
 	"container/list"
@@ -23,23 +23,13 @@ import (
 	"time"
 )
 
-// CacheKey uniquely identifies a cached transform based on file metadata
-type CacheKey struct {
-	Path    string
-	ModTime time.Time
-	Size    int64
+// lruEntry wraps a cache key for the LRU list
+type lruEntry struct {
+	key CacheKey
 }
 
-// CacheEntry stores transformed code and its dependencies
-type CacheEntry struct {
-	Code         []byte   // Transformed JavaScript
-	Dependencies []string // Imported files (for invalidation)
-	Size         int64    // Size in bytes (for LRU eviction)
-	AccessTime   time.Time
-}
-
-// TransformCache provides thread-safe caching of transformed files with LRU eviction
-type TransformCache struct {
+// Cache provides thread-safe caching of transformed files with LRU eviction
+type Cache struct {
 	mu sync.RWMutex
 
 	// Cache storage: key -> entry
@@ -62,14 +52,9 @@ type TransformCache struct {
 	curSize int64 // Current cache size in bytes
 }
 
-// lruEntry wraps a cache key for the LRU list
-type lruEntry struct {
-	key CacheKey
-}
-
-// NewTransformCache creates a new transform cache with the given max size
-func NewTransformCache(maxSizeBytes int64) *TransformCache {
-	return &TransformCache{
+// NewCache creates a new transform cache with the given max size
+func NewCache(maxSizeBytes int64) *Cache {
+	return &Cache{
 		entries:    make(map[CacheKey]*CacheEntry),
 		lru:        list.New(),
 		lruMap:     make(map[CacheKey]*list.Element),
@@ -79,7 +64,7 @@ func NewTransformCache(maxSizeBytes int64) *TransformCache {
 }
 
 // Get retrieves a cached entry if it exists
-func (c *TransformCache) Get(key CacheKey) (*CacheEntry, bool) {
+func (c *Cache) Get(key CacheKey) (*CacheEntry, bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -100,7 +85,7 @@ func (c *TransformCache) Get(key CacheKey) (*CacheEntry, bool) {
 }
 
 // Set adds or updates a cache entry
-func (c *TransformCache) Set(key CacheKey, code []byte, dependencies []string) {
+func (c *Cache) Set(key CacheKey, code []byte, dependencies []string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -150,7 +135,7 @@ func (c *TransformCache) Set(key CacheKey, code []byte, dependencies []string) {
 }
 
 // addDependent adds a dependent relationship (dep is imported by dependent)
-func (c *TransformCache) addDependent(dep, dependent string) {
+func (c *Cache) addDependent(dep, dependent string) {
 	// Find existing dependents for this dependency
 	deps := c.dependents[dep]
 
@@ -166,7 +151,7 @@ func (c *TransformCache) addDependent(dep, dependent string) {
 }
 
 // evictIfNeeded evicts LRU entries until under size limit
-func (c *TransformCache) evictIfNeeded() {
+func (c *Cache) evictIfNeeded() {
 	for c.curSize > c.maxSize && c.lru.Len() > 0 {
 		// Get least recently used (back of list)
 		elem := c.lru.Back()
@@ -180,7 +165,7 @@ func (c *TransformCache) evictIfNeeded() {
 }
 
 // evict removes an entry from the cache
-func (c *TransformCache) evict(key CacheKey) {
+func (c *Cache) evict(key CacheKey) {
 	entry, found := c.entries[key]
 	if !found {
 		return
@@ -201,7 +186,7 @@ func (c *TransformCache) evict(key CacheKey) {
 }
 
 // removeDependents removes all dependent relationships for a file
-func (c *TransformCache) removeDependents(path string) {
+func (c *Cache) removeDependents(path string) {
 	delete(c.dependents, path)
 
 	// Also remove this path from other files' dependent lists
@@ -222,7 +207,7 @@ func (c *TransformCache) removeDependents(path string) {
 
 // Invalidate removes a file and all its transitive dependents from cache
 // Returns list of invalidated paths
-func (c *TransformCache) Invalidate(path string) []string {
+func (c *Cache) Invalidate(path string) []string {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -235,7 +220,7 @@ func (c *TransformCache) Invalidate(path string) []string {
 }
 
 // invalidateRecursive recursively invalidates a file and its dependents
-func (c *TransformCache) invalidateRecursive(path string, visited map[string]bool, invalidated *[]string) {
+func (c *Cache) invalidateRecursive(path string, visited map[string]bool, invalidated *[]string) {
 	if visited[path] {
 		return
 	}
@@ -264,22 +249,22 @@ func (c *TransformCache) invalidateRecursive(path string, visited map[string]boo
 }
 
 // Stats returns cache statistics
-func (c *TransformCache) Stats() CacheStats {
+func (c *Cache) Stats() CacheStats {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
 	return CacheStats{
-		Hits:       c.hits,
-		Misses:     c.misses,
-		Entries:    len(c.entries),
-		SizeBytes:  c.curSize,
-		MaxSize:    c.maxSize,
-		HitRate:    c.hitRate(),
+		Hits:      c.hits,
+		Misses:    c.misses,
+		Entries:   len(c.entries),
+		SizeBytes: c.curSize,
+		MaxSize:   c.maxSize,
+		HitRate:   c.hitRate(),
 	}
 }
 
 // hitRate calculates the cache hit rate as a percentage
-func (c *TransformCache) hitRate() float64 {
+func (c *Cache) hitRate() float64 {
 	total := c.hits + c.misses
 	if total == 0 {
 		return 0
@@ -288,7 +273,7 @@ func (c *TransformCache) hitRate() float64 {
 }
 
 // Clear removes all entries from the cache
-func (c *TransformCache) Clear() {
+func (c *Cache) Clear() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 

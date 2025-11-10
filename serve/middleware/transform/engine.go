@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package serve
+package transform
 
 import (
 	"fmt"
@@ -41,16 +41,16 @@ const (
 type Target string
 
 const (
-	ES2015   Target = "es2015"
-	ES2016   Target = "es2016"
-	ES2017   Target = "es2017"
-	ES2018   Target = "es2018"
-	ES2019   Target = "es2019"
-	ES2020   Target = "es2020"
-	ES2021   Target = "es2021"
-	ES2022   Target = "es2022"
-	ES2023   Target = "es2023"
-	ESNext   Target = "esnext"
+	ES2015 Target = "es2015"
+	ES2016 Target = "es2016"
+	ES2017 Target = "es2017"
+	ES2018 Target = "es2018"
+	ES2019 Target = "es2019"
+	ES2020 Target = "es2020"
+	ES2021 Target = "es2021"
+	ES2022 Target = "es2022"
+	ES2023 Target = "es2023"
+	ESNext Target = "esnext"
 )
 
 // ValidTargets returns all valid target values
@@ -84,13 +84,6 @@ type TransformOptions struct {
 	Sourcemap   SourceMapMode
 	TsconfigRaw string // Optional tsconfig.json content as JSON string
 	Sourcefile  string // Original source file path for source maps
-}
-
-// TransformResult contains the transformed code, source map, and dependencies
-type TransformResult struct {
-	Code         []byte
-	Map          []byte
-	Dependencies []string // Imported file paths
 }
 
 // TransformTypeScript transforms TypeScript source code to JavaScript using esbuild

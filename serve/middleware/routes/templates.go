@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package serve
+package routes
 
 import (
 	"embed"
@@ -33,7 +33,7 @@ var demoChromeTemplate string
 var workspaceListingTemplate string
 
 //go:embed templates/js/*.js
-var internalModules embed.FS
+var InternalModules embed.FS
 
 // Template functions available to templates
 var templateFuncs = template.FuncMap{

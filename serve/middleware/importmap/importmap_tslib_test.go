@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package serve
+package importmap
 
 import (
 	"encoding/json"
@@ -74,7 +74,7 @@ func TestImportMap_TslibExports(t *testing.T) {
 	}
 
 	// Generate import map
-	importMap, err := GenerateImportMap(tmpDir, nil)
+	importMap, err := Generate(tmpDir, nil)
 	if err != nil {
 		t.Fatalf("GenerateImportMap failed: %v", err)
 	}

@@ -24,28 +24,21 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
-	"runtime"
-	"strings"
 	"sync"
 	"time"
 
-	C "bennypowers.dev/cem/cmd/config"
 	G "bennypowers.dev/cem/generate"
-	V "bennypowers.dev/cem/internal/version"
-	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/serve/middleware"
+	"bennypowers.dev/cem/serve/middleware/cors"
+	importmappkg "bennypowers.dev/cem/serve/middleware/importmap"
+	"bennypowers.dev/cem/serve/middleware/inject"
+	"bennypowers.dev/cem/serve/middleware/logger"
+	"bennypowers.dev/cem/serve/middleware/routes"
+	"bennypowers.dev/cem/serve/middleware/transform"
 	W "bennypowers.dev/cem/workspace"
 )
-
-// PackageContext holds information about a single package in the workspace
-type PackageContext struct {
-	Name     string       // Package name from package.json
-	Path     string       // Absolute path to package directory
-	Manifest []byte       // Generated custom elements manifest
-	Config   *C.CemConfig // Package-specific config
-}
 
 // Server represents the development server
 type Server struct {
@@ -59,18 +52,17 @@ type Server struct {
 	watcher         FileWatcher
 	watchDir        string
 	manifest        []byte
-	sourceFiles     map[string]bool // Set of source files to watch
-	tsconfigRaw     string          // Cached tsconfig.json for transforms
-	transformCache  *TransformCache // LRU cache for transformed files
+	sourceFiles     map[string]bool  // Set of source files to watch
+	tsconfigRaw     string           // Cached tsconfig.json for transforms
+	transformCache  *transform.Cache // LRU cache for transformed files
 	running         bool
 	mu              sync.RWMutex
 	generateSession *G.GenerateSession
 	// Workspace mode fields
-	isWorkspace       bool                       // True if serving a monorepo workspace
-	workspaceRoot     string                     // Root directory of workspace
-	workspacePackages []PackageContext           // Discovered packages with manifests
-	workspaceRoutes   map[string]*DemoRouteEntry // Combined routing table
-	importMap         *ImportMap                 // Cached import map (workspace or single-package)
+	isWorkspace       bool                          // True if serving a monorepo workspace
+	workspaceRoot     string                        // Root directory of workspace
+	workspacePackages []middleware.WorkspacePackage // Discovered packages with manifests
+	importMap         *importmappkg.ImportMap       // Cached import map (workspace or single-package)
 }
 
 // NewServer creates a new server with the given port
@@ -97,7 +89,7 @@ func NewServerWithConfig(config Config) (*Server, error) {
 	}
 
 	// Initialize transform cache (500MB default)
-	s.transformCache = NewTransformCache(500 * 1024 * 1024)
+	s.transformCache = transform.NewCache(500 * 1024 * 1024)
 
 	// Set up handler with middleware pipeline
 	s.setupMiddleware()
@@ -117,25 +109,18 @@ func (s *Server) IsWorkspace() bool {
 	return s.isWorkspace
 }
 
-// ImportMap returns the cached import map, generating it if needed for single-package mode
-func (s *Server) ImportMap() (*ImportMap, error) {
+// WorkspacePackages returns discovered workspace packages (workspace mode only)
+func (s *Server) WorkspacePackages() []middleware.WorkspacePackage {
 	s.mu.RLock()
-	cached := s.importMap
-	isWorkspace := s.isWorkspace
-	watchDir := s.watchDir
-	s.mu.RUnlock()
+	defer s.mu.RUnlock()
+	return s.workspacePackages
+}
 
-	// If we have a cached import map (workspace mode), return it
-	if cached != nil {
-		return cached, nil
-	}
-
-	// Single-package mode: generate on demand
-	if !isWorkspace && watchDir != "" {
-		return GenerateImportMap(watchDir, nil)
-	}
-
-	return nil, nil
+// ImportMap returns the cached import map (may be nil)
+func (s *Server) ImportMap() middleware.ImportMap {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.importMap
 }
 
 // Start starts the HTTP server
@@ -282,6 +267,19 @@ func (s *Server) SetWatchDir(dir string) error {
 		s.logger.Debug("No tsconfig found, using default transform settings")
 	}
 
+	// Generate import map for single-package mode
+	// (Workspace mode generates in InitializeWorkspaceMode instead)
+	if !s.isWorkspace {
+		importMap, err := importmappkg.Generate(dir, nil)
+		if err != nil {
+			s.logger.Warning("Failed to generate import map: %v", err)
+			s.importMap = nil
+		} else {
+			s.importMap = importMap
+			s.logger.Debug("Generated import map for single-package mode")
+		}
+	}
+
 	return nil
 }
 
@@ -326,7 +324,7 @@ func (s *Server) Handler() http.Handler {
 }
 
 // Logger returns the server logger
-func (s *Server) Logger() Logger {
+func (s *Server) Logger() middleware.Logger {
 	return s.logger
 }
 
@@ -454,20 +452,19 @@ func (s *Server) RegenerateManifest() error {
 }
 
 // discoverWorkspacePackages finds all packages in workspace with manifests
-func discoverWorkspacePackages(rootDir string) ([]PackageContext, error) {
+func discoverWorkspacePackages(rootDir string) ([]middleware.WorkspacePackage, error) {
 	packages, err := W.LoadWorkspaceManifests(rootDir)
 	if err != nil {
 		return nil, err
 	}
 
-	// Convert workspace.PackageWithManifest to serve.PackageContext
-	contexts := make([]PackageContext, len(packages))
+	// Convert workspace.PackageWithManifest to middleware.WorkspacePackage
+	contexts := make([]middleware.WorkspacePackage, len(packages))
 	for i, pkg := range packages {
-		contexts[i] = PackageContext{
+		contexts[i] = middleware.WorkspacePackage{
 			Name:     pkg.Name,
 			Path:     pkg.Path,
 			Manifest: pkg.Manifest,
-			Config:   nil, // TODO: Load config from package
 		}
 	}
 
@@ -506,18 +503,19 @@ func (s *Server) InitializeWorkspaceMode() error {
 	s.logger.Info("Found %d packages with manifests", len(packages))
 	s.workspacePackages = packages
 
-	// Build combined routing table
-	routes, err := BuildWorkspaceRoutingTable(packages)
-	if err != nil {
-		return fmt.Errorf("building workspace routing table: %w", err)
+	// Convert middleware.WorkspacePackage to importmappkg.WorkspacePackage
+	workspacePkgs := make([]importmappkg.WorkspacePackage, len(packages))
+	for i, pkg := range packages {
+		workspacePkgs[i] = importmappkg.WorkspacePackage{
+			Name:     pkg.Name,
+			Path:     pkg.Path,
+			Manifest: pkg.Manifest,
+		}
 	}
 
-	s.workspaceRoutes = routes
-	s.logger.Info("Built routing table with %d demo routes", len(routes))
-
-	// Generate workspace import map using unified GenerateImportMap
-	importMap, err := GenerateImportMap(s.workspaceRoot, &ImportMapConfig{
-		WorkspacePackages: packages,
+	// Generate workspace import map using middleware package
+	importMap, err := importmappkg.Generate(s.workspaceRoot, &importmappkg.Config{
+		WorkspacePackages: workspacePkgs,
 		Logger:            s.logger,
 	})
 	if err != nil {
@@ -526,19 +524,6 @@ func (s *Server) InitializeWorkspaceMode() error {
 
 	s.importMap = importMap
 	s.logger.Info("Generated workspace import map")
-
-	return nil
-}
-
-// Use registers a middleware function
-func (s *Server) Use(middleware func(http.Handler) http.Handler) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	// Apply middleware to existing handler
-	if s.handler != nil {
-		s.handler = middleware(s.handler)
-	}
 
 	return nil
 }
@@ -648,210 +633,67 @@ func (s *Server) handleFileChanges() {
 	}
 }
 
+// errorBroadcaster adapts Server.BroadcastError to the middleware interface
+type errorBroadcaster struct {
+	*Server
+}
+
+func (e errorBroadcaster) BroadcastError(title, message, filename string) {
+	_ = e.Server.BroadcastError(title, message, filename) // Ignore error
+}
+
+// getLogs returns logs if the logger supports it
+func (s *Server) getLogs() []string {
+	if logGetter, ok := s.logger.(interface{ Logs() []string }); ok {
+		return logGetter.Logs()
+	}
+	return nil
+}
+
 // setupMiddleware configures the middleware pipeline
 func (s *Server) setupMiddleware() {
-	// Create a mux for routing
-	mux := http.NewServeMux()
-
-	// WebSocket endpoint for live reload
+	// Get WebSocket handler if reload is enabled
+	var wsHandler http.HandlerFunc
 	if s.wsManager != nil {
-		mux.HandleFunc("/__cem-reload", s.wsManager.HandleConnection)
+		wsHandler = s.wsManager.HandleConnection
 	}
 
-	// Manifest endpoint
-	mux.HandleFunc("/custom-elements.json", s.serveManifest)
-
-	// Logs endpoint for debug console
-	mux.HandleFunc("/__cem-logs", s.serveLogs)
-
-	// Debug info endpoint
-	mux.HandleFunc("/__cem-debug", s.serveDebugInfo)
-
-	// Internal JavaScript modules
-	mux.HandleFunc("/__cem/", s.serveInternalModules)
-
-	// Main handler: try demo routing first, then fall back to static files
-	mux.HandleFunc("/", s.serveMainHandler)
-
-	// Apply middleware in reverse order (last to first)
-	var handler http.Handler = mux
-
-	// 8. WebSocket client injection (into HTML)
-	handler = injectWebSocketClient(handler, s.config.Reload)
-
-	// 7. Static fallback (already in mux)
-
-	// 6. Demo rendering (Phase 3)
-	// TODO: Add demo rendering middleware
-
-	// 5. CSS transform (Phase 4)
-	// TODO: Add CSS transform middleware
-
-	// 4. TypeScript transform (Phase 4)
-	// TODO: Add TypeScript transform middleware
-
-	// 3. Import map injection (Phase 2)
-	// TODO: Add import map injection middleware
-
-	// 2. CORS headers
-	handler = corsMiddleware(handler)
-
-	// 1. Logging
-	handler = loggingMiddleware(s.logger)(handler)
-
-	s.handler = handler
-}
-
-// serveInternalModules serves embedded JavaScript modules from embed.FS
-func (s *Server) serveInternalModules(w http.ResponseWriter, r *http.Request) {
-	// Strip /__cem/ prefix to get the file path within the embedded FS
-	// Request: /__cem/foo.js -> templates/js/foo.js in embed.FS
-	path := strings.TrimPrefix(r.URL.Path, "/__cem/")
-	path = "templates/js/" + path
-
-	data, err := internalModules.ReadFile(path)
-	if err != nil {
-		http.NotFound(w, r)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
-	w.Header().Set("Cache-Control", "no-cache")
-	if _, err := w.Write(data); err != nil {
-		s.logger.Error("Failed to write JavaScript module response: %v", err)
-	}
-}
-
-// serveManifest serves the custom elements manifest
-func (s *Server) serveManifest(w http.ResponseWriter, r *http.Request) {
-	s.mu.RLock()
-	manifest := s.manifest
-	s.mu.RUnlock()
-
-	if len(manifest) == 0 {
-		http.Error(w, "Manifest not available", http.StatusNotFound)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if _, err := w.Write(manifest); err != nil {
-		s.logger.Error("Failed to write manifest response: %v", err)
-	}
-}
-
-// serveLogs serves the plain text logs for the debug console
-func (s *Server) serveLogs(w http.ResponseWriter, r *http.Request) {
-	// Get logs from logger if it supports Logs()
-	if logGetter, ok := s.logger.(interface{ Logs() []string }); ok {
-		logs := logGetter.Logs()
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(logs); err != nil {
-			s.logger.Error("Failed to encode logs response: %v", err)
-		}
-	} else {
-		w.Header().Set("Content-Type", "application/json")
-		if _, err := w.Write([]byte("[]")); err != nil {
-			s.logger.Error("Failed to write empty logs response: %v", err)
-		}
-	}
-}
-
-// getServerVersion returns version info for debug display
-func getServerVersion() string {
-	return V.GetVersion()
-}
-
-// serveDebugInfo serves debug information for the debug overlay
-func (s *Server) serveDebugInfo(w http.ResponseWriter, r *http.Request) {
-	s.mu.RLock()
-	watchDir := s.watchDir
-	manifestBytes := s.manifest
-	s.mu.RUnlock()
-
-	// Get import map
-	var importMapObj any
-	importMap, err := s.ImportMap()
-	if err != nil {
-		s.logger.Warning("Failed to get import map for debug info: %v", err)
-	} else if importMap != nil && len(importMap.Imports) > 0 {
-		importMapObj = importMap
-	}
-
-	// Parse manifest to get demo info
-	var demos []map[string]interface{}
-	if len(manifestBytes) > 0 {
-		var pkg M.Package
-		if err := json.Unmarshal(manifestBytes, &pkg); err == nil {
-			for _, renderableDemo := range pkg.RenderableDemos() {
-				demoURL := renderableDemo.Demo.URL
-				// Extract local route from canonical URL (strip origin)
-				localRoute := demoURL
-				if parsed, err := url.Parse(demoURL); err == nil && parsed.Path != "" {
-					// Use just the path component for the local route
-					localRoute = parsed.Path
-				}
-
-				demos = append(demos, map[string]interface{}{
-					"tagName":      renderableDemo.CustomElementDeclaration.TagName,
-					"description":  renderableDemo.Demo.Description,
-					"canonicalURL": demoURL,
-					"localRoute":   localRoute,
-				})
-			}
-		}
-	}
-
-	debugInfo := map[string]interface{}{
-		"watchDir":     watchDir,
-		"manifestSize": fmt.Sprintf("%d bytes", len(manifestBytes)),
-		"version":      getServerVersion(),
-		"os":           fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH),
-		"demos":        demos,
-		"demoCount":    len(demos),
-		"importMap":    importMapObj,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(debugInfo); err != nil {
-		s.logger.Error("Failed to encode debug info response: %v", err)
-	}
-}
-
-// serveMainHandler handles all non-special routes: tries demo routing first, then falls back to static files
-func (s *Server) serveMainHandler(w http.ResponseWriter, r *http.Request) {
-	// Parse query parameters
-	queryParams := make(map[string]string)
-	for key, values := range r.URL.Query() {
-		if len(values) > 0 {
-			queryParams[key] = values[0]
-		}
-	}
-
-	// Try to serve as demo route
-	html, err := s.serveDemoRoutes(r.URL.Path, queryParams)
-	if err != nil {
-		// Check if it's a routing table error (e.g., duplicate routes) vs just not found
-		if strings.Contains(err.Error(), "duplicate demo route") {
-			s.logger.Error("Demo routing error: %v", err)
-			http.Error(w, "Internal Server Error: duplicate demo routes", http.StatusInternalServerError)
-			return
-		}
-		// Not a demo route - fall through to static files
-		s.serveStaticFiles(w, r)
-		return
-	}
-
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if _, err := w.Write([]byte(html)); err != nil {
-		s.logger.Error("Failed to write demo response: %v", err)
-	}
+	// Apply middleware using Chain helper
+	// Middlewares are applied in reverse order (last to first in the chain)
+	// Terminal handler: static files
+	s.handler = middleware.Chain(
+		http.HandlerFunc(s.serveStaticFiles), // Static file server (terminal handler)
+		inject.New(s.config.Reload, "/__cem/websocket-client.js"), // WebSocket injection
+		importmappkg.New(importmappkg.MiddlewareConfig{ // Import map injection
+			Context: s,
+		}),
+		transform.NewCSS(transform.CSSConfig{ // CSS transform
+			WatchDirFunc: s.WatchDir,
+			Logger:       s.logger,
+		}),
+		transform.NewTypeScript(transform.TypeScriptConfig{ // TypeScript transform
+			WatchDirFunc:     s.WatchDir,
+			Cache:            s.transformCache,
+			Logger:           s.logger,
+			ErrorBroadcaster: errorBroadcaster{s},
+			TsconfigRaw:      s.tsconfigRaw,
+			Target:           string(s.config.Target),
+			TsconfigMu:       &s.mu,
+		}),
+		routes.New(routes.Config{ // Internal CEM routes (includes WebSocket, demos, listings)
+			Context:          s,
+			LogsFunc:         s.getLogs,
+			WebSocketHandler: wsHandler,
+		}),
+		cors.New(),           // CORS headers
+		logger.New(s.logger), // Logging
+	)
 }
 
 // serveStaticFiles serves static files from the watch directory
 func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 	s.mu.RLock()
 	watchDir := s.watchDir
-	isWorkspace := s.isWorkspace
 	s.mu.RUnlock()
 
 	if watchDir == "" {
@@ -859,234 +701,14 @@ func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if requesting root and no index.html exists
-	if r.URL.Path == "/" {
-		if isWorkspace {
-			// Workspace mode: always serve index listing
-			s.serveIndex(w, r)
-			return
-		}
-		if _, err := http.Dir(watchDir).Open("index.html"); err != nil {
-			// No index.html, serve index listing
-			s.serveIndex(w, r)
-			return
-		}
-	}
-
-	// Transform TypeScript files to JavaScript
-	requestPath := r.URL.Path
-	ext := filepath.Ext(requestPath)
-
-	// Handle both .js requests (with .ts source) and direct .ts requests
-	var tsPath string
-	switch ext {
-	case ".js":
-		// Check if .ts file exists for .js request
-		tsPath = requestPath[:len(requestPath)-3] + ".ts"
-	case ".ts":
-		// Direct .ts request
-		tsPath = requestPath
-	}
-
-	if tsPath != "" {
-		// Strip leading slash and normalize path separators before joining
-		tsPathNorm := strings.TrimPrefix(tsPath, "/")
-		tsPathNorm = filepath.FromSlash(tsPathNorm)
-		fullTsPath := filepath.Join(watchDir, tsPathNorm)
-
-		// Get file stat for cache key
-		fileInfo, err := os.Stat(fullTsPath)
-		if err == nil {
-			// .ts file exists - check cache first
-			cacheKey := CacheKey{
-				Path:    fullTsPath,
-				ModTime: fileInfo.ModTime(),
-				Size:    fileInfo.Size(),
-			}
-
-			// Try to get from cache
-			if cached, found := s.transformCache.Get(cacheKey); found {
-				s.logger.Debug("Cache hit for %s", tsPathNorm)
-				// Serve cached transformed JavaScript
-				w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
-				if _, err := w.Write(cached.Code); err != nil {
-					s.logger.Error("Failed to write cached transform response: %v", err)
-				}
-				return
-			}
-
-			// Cache miss - read file and transform
-			s.logger.Debug("Cache miss for %s", tsPathNorm)
-			source, err := os.ReadFile(fullTsPath)
-			if err != nil {
-				s.logger.Error("Failed to read TypeScript file %s: %v", tsPathNorm, err)
-				http.Error(w, "Failed to read file", http.StatusInternalServerError)
-				return
-			}
-
-			// Get tsconfig for transform
-			s.mu.RLock()
-			tsconfigRaw := s.tsconfigRaw
-			s.mu.RUnlock()
-
-			// Get configured target (defaults to ES2022 if not set)
-			target := s.config.Target
-			if target == "" {
-				target = ES2022
-			}
-
-			// Transform TypeScript to JavaScript
-			result, err := TransformTypeScript(source, TransformOptions{
-				Loader:      LoaderTS,
-				Target:      target,
-				Sourcemap:   SourceMapInline,
-				Sourcefile:  tsPathNorm, // Use normalized path for source maps
-				TsconfigRaw: tsconfigRaw,
-			})
-			if err != nil {
-				s.logger.Error("Failed to transform TypeScript file %s: %v", tsPathNorm, err)
-
-				// Broadcast error to browser overlay
-				s.BroadcastError(
-					"TypeScript Transform Error",
-					err.Error(),
-					tsPathNorm,
-				)
-
-				http.Error(w, fmt.Sprintf("Transform error: %v", err), http.StatusInternalServerError)
-				return
-			}
-
-			// Store in cache
-			s.transformCache.Set(cacheKey, result.Code, result.Dependencies)
-
-			// Serve transformed JavaScript
-			w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
-			if _, err := w.Write(result.Code); err != nil {
-				s.logger.Error("Failed to write transform response: %v", err)
-			}
-			return
-		}
-	}
-
-	// Transform CSS files to JavaScript modules (constructable stylesheets)
-	if filepath.Ext(requestPath) == ".css" {
-		// Strip leading slash and normalize
-		cssPath := strings.TrimPrefix(requestPath, "/")
-		cssPath = filepath.FromSlash(cssPath)
-		fullCssPath := filepath.Join(watchDir, cssPath)
-
-		// Read CSS file
-		source, err := os.ReadFile(fullCssPath)
-		if err != nil {
-			// File doesn't exist - let normal file server handle 404
-			fileServer := http.FileServer(http.Dir(watchDir))
-			fileServer.ServeHTTP(w, r)
-			return
-		}
-
-		// Transform CSS to JavaScript module
-		transformed := TransformCSS(source, requestPath)
-
-		// Serve as JavaScript module
-		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
-		if _, err := w.Write([]byte(transformed)); err != nil {
-			s.logger.Error("Failed to write CSS transform response: %v", err)
-		}
-		return
-	}
-
-	// Set correct MIME type for JavaScript files (for plain .js files without .ts source)
-	if filepath.Ext(requestPath) == ".js" {
+	// Set correct MIME type for JavaScript files
+	if filepath.Ext(r.URL.Path) == ".js" {
 		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
 	}
 
 	// Serve files from watch directory
 	fileServer := http.FileServer(http.Dir(watchDir))
 	fileServer.ServeHTTP(w, r)
-}
-
-// getImportMapJSON returns the import map as indented JSON string
-func (s *Server) getImportMapJSON() string {
-	importMap, err := s.ImportMap()
-	if err != nil {
-		s.logger.Warning("Failed to get import map: %v", err)
-		return ""
-	}
-
-	if importMap == nil || len(importMap.Imports) == 0 {
-		return ""
-	}
-
-	importMapBytes, err := json.MarshalIndent(importMap, "  ", "  ")
-	if err != nil {
-		s.logger.Warning("Failed to marshal import map: %v", err)
-		return ""
-	}
-
-	return string(importMapBytes)
-}
-
-// serveIndex serves the index page (workspace or single-package listing)
-func (s *Server) serveIndex(w http.ResponseWriter, _ *http.Request) {
-	importMapJSON := s.getImportMapJSON()
-
-	var html string
-	var err error
-
-	s.mu.RLock()
-	isWorkspace := s.isWorkspace
-	s.mu.RUnlock()
-
-	if isWorkspace {
-		// Workspace mode: render workspace listing
-		s.mu.RLock()
-		packages := s.workspacePackages
-		routes := s.workspaceRoutes
-		s.mu.RUnlock()
-
-		html, err = renderWorkspaceListing(packages, routes, importMapJSON)
-	} else {
-		// Single-package mode: render element listing
-		s.mu.RLock()
-		manifestBytes := s.manifest
-		s.mu.RUnlock()
-
-		html, err = renderElementListing(manifestBytes, importMapJSON)
-	}
-
-	if err != nil {
-		s.logger.Error("Failed to render listing: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if _, err := w.Write([]byte(html)); err != nil {
-		s.logger.Error("Failed to write listing response: %v", err)
-	}
-}
-
-// corsMiddleware adds CORS headers to responses
-func corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("X-Content-Type-Options", "nosniff")
-		next.ServeHTTP(w, r)
-	})
-}
-
-// loggingMiddleware logs all requests except internal endpoints
-func loggingMiddleware(logger Logger) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Skip logging for internal polling endpoints
-			if r.URL.Path != "/__cem-logs" && r.URL.Path != "/__cem-reload" {
-				logger.Info("%s %s", r.Method, r.URL.Path)
-			}
-			next.ServeHTTP(w, r)
-		})
-	}
 }
 
 // defaultLogger is a simple logger implementation

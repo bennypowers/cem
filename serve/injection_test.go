@@ -84,8 +84,8 @@ func TestHTMLInjection_WebSocketClient(t *testing.T) {
 	bodyStr := string(body)
 
 	// Verify WebSocket client script is injected
-	if !strings.Contains(bodyStr, "/__cem-reload") {
-		t.Error("Expected HTML to contain WebSocket client script with /__cem-reload endpoint")
+	if !strings.Contains(bodyStr, "/__cem/reload") {
+		t.Error("Expected HTML to contain WebSocket client script with /__cem/reload endpoint")
 	}
 
 	if !strings.Contains(bodyStr, "WebSocket") {
@@ -150,7 +150,7 @@ func TestHTMLInjection_NoInjectionWhenDisabled(t *testing.T) {
 	bodyStr := string(body)
 
 	// Verify WebSocket client script is NOT injected when reload disabled
-	if strings.Contains(bodyStr, "/__cem-reload") {
+	if strings.Contains(bodyStr, "/__cem/reload") {
 		t.Error("Expected HTML to NOT contain WebSocket client when reload disabled")
 	}
 }

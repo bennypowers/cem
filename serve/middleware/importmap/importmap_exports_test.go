@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package serve
+package importmap
 
 import (
 	"os"
@@ -42,7 +42,7 @@ func TestImportMap_SinglePackageWithExportsMap(t *testing.T) {
 		t.Fatalf("Failed to write package.json: %v", err)
 	}
 
-	importMap, err := GenerateImportMap(tmpDir, nil)
+	importMap, err := Generate(tmpDir, nil)
 	if err != nil {
 		t.Fatalf("GenerateImportMap failed: %v", err)
 	}
@@ -118,7 +118,7 @@ func TestImportMap_WorkspacePackageWithExportsMap(t *testing.T) {
 		t.Fatalf("Failed to write workspace package.json: %v", err)
 	}
 
-	importMap, err := GenerateImportMap(tmpDir, nil)
+	importMap, err := Generate(tmpDir, nil)
 	if err != nil {
 		t.Fatalf("GenerateImportMap failed: %v", err)
 	}
@@ -201,7 +201,7 @@ func TestImportMap_NodeModuleDependencyWithExportsMap(t *testing.T) {
 		t.Fatalf("Failed to write dependency package.json: %v", err)
 	}
 
-	importMap, err := GenerateImportMap(tmpDir, nil)
+	importMap, err := Generate(tmpDir, nil)
 	if err != nil {
 		t.Fatalf("GenerateImportMap failed: %v", err)
 	}
@@ -283,7 +283,7 @@ func TestImportMap_ConditionalExportsWithImportCondition(t *testing.T) {
 		t.Fatalf("Failed to write dependency package.json: %v", err)
 	}
 
-	importMap, err := GenerateImportMap(tmpDir, nil)
+	importMap, err := Generate(tmpDir, nil)
 	if err != nil {
 		t.Fatalf("GenerateImportMap failed: %v", err)
 	}
@@ -340,7 +340,7 @@ func TestImportMap_WildcardExports(t *testing.T) {
 		t.Fatalf("Failed to write dependency package.json: %v", err)
 	}
 
-	importMap, err := GenerateImportMap(tmpDir, nil)
+	importMap, err := Generate(tmpDir, nil)
 	if err != nil {
 		t.Fatalf("GenerateImportMap failed: %v", err)
 	}
@@ -383,7 +383,7 @@ func TestImportMap_WildcardWithPrefix(t *testing.T) {
 		t.Fatalf("Failed to write package.json: %v", err)
 	}
 
-	importMap, err := GenerateImportMap(tmpDir, nil)
+	importMap, err := Generate(tmpDir, nil)
 	if err != nil {
 		t.Fatalf("GenerateImportMap failed: %v", err)
 	}
@@ -442,7 +442,7 @@ func TestImportMap_ConditionOnlyExports(t *testing.T) {
 		t.Fatalf("Failed to write dependency package.json: %v", err)
 	}
 
-	importMap, err := GenerateImportMap(tmpDir, nil)
+	importMap, err := Generate(tmpDir, nil)
 	if err != nil {
 		t.Fatalf("GenerateImportMap failed: %v", err)
 	}
@@ -498,7 +498,7 @@ func TestImportMap_SubpathWildcardPatterns(t *testing.T) {
 		t.Fatalf("Failed to write dependency package.json: %v", err)
 	}
 
-	importMap, err := GenerateImportMap(tmpDir, nil)
+	importMap, err := Generate(tmpDir, nil)
 	if err != nil {
 		t.Fatalf("GenerateImportMap failed: %v", err)
 	}
@@ -581,7 +581,7 @@ func TestImportMap_MultipleWorkspacesWithExports(t *testing.T) {
 		t.Fatalf("Failed to write workspace package.json: %v", err)
 	}
 
-	importMap, err := GenerateImportMap(tmpDir, nil)
+	importMap, err := Generate(tmpDir, nil)
 	if err != nil {
 		t.Fatalf("GenerateImportMap failed: %v", err)
 	}

@@ -48,7 +48,7 @@ func TestWebSocketEndpoint_Connection(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// Connect to WebSocket endpoint
-	_ = testutil.NewWebSocketTestClient(t, "ws://localhost:9000/__cem-reload")
+	_ = testutil.NewWebSocketTestClient(t, "ws://localhost:9000/__cem/reload")
 
 	// Give WebSocket time to connect
 	time.Sleep(100 * time.Millisecond)
@@ -75,9 +75,9 @@ func TestWebSocketEndpoint_Broadcast(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// Connect multiple clients
-	client1 := testutil.NewWebSocketTestClient(t, "ws://localhost:9001/__cem-reload")
-	client2 := testutil.NewWebSocketTestClient(t, "ws://localhost:9001/__cem-reload")
-	client3 := testutil.NewWebSocketTestClient(t, "ws://localhost:9001/__cem-reload")
+	client1 := testutil.NewWebSocketTestClient(t, "ws://localhost:9001/__cem/reload")
+	client2 := testutil.NewWebSocketTestClient(t, "ws://localhost:9001/__cem/reload")
+	client3 := testutil.NewWebSocketTestClient(t, "ws://localhost:9001/__cem/reload")
 
 	// Broadcast a reload message
 	err = server.BroadcastReload([]string{"test.ts"}, "file-change")
@@ -141,7 +141,7 @@ func TestWebSocketEndpoint_Disconnect(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// Connect client
-	wsClient := testutil.NewWebSocketTestClient(t, "ws://localhost:9002/__cem-reload")
+	wsClient := testutil.NewWebSocketTestClient(t, "ws://localhost:9002/__cem/reload")
 
 	// Verify connection exists
 	if server.WebSocketManager().ConnectionCount() != 1 {

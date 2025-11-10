@@ -45,7 +45,7 @@ class CEMReloadClient {
 
     // Create WebSocket client
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const url = protocol + '//' + window.location.host + '/__cem-reload';
+    const url = protocol + '//' + window.location.host + '/__cem/reload';
 
     this.ws = new ReconnectingWebSocket(url, {
       baseDelay: this.config.baseDelay,
