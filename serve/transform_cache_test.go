@@ -249,3 +249,61 @@ func TestTransformCache_CircularDependency(t *testing.T) {
 		t.Error("Expected b.ts to be invalidated")
 	}
 }
+
+// TestTransformCache_MultipleEntriesSamePath tests that all cache entries with the same path are invalidated
+func TestTransformCache_MultipleEntriesSamePath(t *testing.T) {
+	cache := NewTransformCache(1024 * 1024)
+
+	// Create multiple cache entries for same path with different mod times
+	// This simulates rapid file changes where old entries haven't been evicted yet
+	path := "/test/file.ts"
+	baseTime := time.Now()
+
+	key1 := CacheKey{Path: path, ModTime: baseTime, Size: 100}
+	key2 := CacheKey{Path: path, ModTime: baseTime.Add(1 * time.Second), Size: 100}
+	key3 := CacheKey{Path: path, ModTime: baseTime.Add(2 * time.Second), Size: 100}
+
+	// Set all three entries (different keys, same path)
+	cache.Set(key1, []byte("version 1"), []string{})
+	cache.Set(key2, []byte("version 2"), []string{})
+	cache.Set(key3, []byte("version 3"), []string{})
+
+	// Verify all are in cache
+	if _, found := cache.Get(key1); !found {
+		t.Error("Expected key1 to be cached")
+	}
+	if _, found := cache.Get(key2); !found {
+		t.Error("Expected key2 to be cached")
+	}
+	if _, found := cache.Get(key3); !found {
+		t.Error("Expected key3 to be cached")
+	}
+
+	// Invalidate the path - should remove ALL entries with this path
+	invalidated := cache.Invalidate(path)
+
+	// Should report path only once in invalidated list
+	if len(invalidated) != 1 {
+		t.Errorf("Expected path to appear once in invalidated list, got %d times: %v", len(invalidated), invalidated)
+	}
+	if invalidated[0] != path {
+		t.Errorf("Expected invalidated path %q, got %q", path, invalidated[0])
+	}
+
+	// Verify ALL entries were removed from cache
+	if _, found := cache.Get(key1); found {
+		t.Error("Expected key1 to be invalidated")
+	}
+	if _, found := cache.Get(key2); found {
+		t.Error("Expected key2 to be invalidated")
+	}
+	if _, found := cache.Get(key3); found {
+		t.Error("Expected key3 to be invalidated")
+	}
+
+	// Verify cache is empty
+	stats := cache.Stats()
+	if stats.Entries != 0 {
+		t.Errorf("Expected 0 cache entries after invalidation, got %d", stats.Entries)
+	}
+}
