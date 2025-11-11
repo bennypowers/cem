@@ -5,7 +5,7 @@
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#1e293b" media="(prefers-color-scheme: dark)">
-  <title>{{if .PackageName}}{{.PackageName}}{{else}}{{.DemoTitle}} - {{.TagName}}{{end}}</title>
+  <title>{{if .PackageName}}{{.PackageName}}{{if ne .TagName "cem-serve"}} - {{.TagName}}{{end}}{{else}}{{.DemoTitle}} - {{.TagName}}{{end}}</title>
   <link rel="icon" href="/__cem/logo.svg" type="image/svg+xml">
   {{if .ImportMap}}
   <script type="importmap">
@@ -25,7 +25,7 @@
 
       <header>
         {{if .NavigationHTML}}
-        <button class="nav-drawer-toggle" aria-label="Toggle navigation">
+        <button class="nav-drawer-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-drawer">
           <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
             <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
           </svg>
@@ -117,7 +117,7 @@
       </div>
 
       {{if .NavigationHTML}}
-      <aside class="nav-drawer" aria-label="Component navigation">
+      <aside id="nav-drawer" class="nav-drawer" aria-label="Component navigation" aria-hidden="true">
         <div class="nav-drawer-header">
           <button class="nav-drawer-close" aria-label="Close navigation">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -128,7 +128,7 @@
         </div>
         {{.NavigationHTML}}
       </aside>
-      <div class="nav-drawer-overlay"></div>
+      <div class="nav-drawer-overlay" aria-hidden="true"></div>
       {{end}}
 
       <div class="layout">

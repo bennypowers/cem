@@ -389,19 +389,65 @@ Generated: ${new Date().toISOString()}`;
       return;
     }
 
+    // Get all focusable elements in drawer for focus trap
+    const getFocusableElements = () => {
+      return navDrawer.querySelectorAll(
+        'a[href], button:not([disabled]), details, [tabindex]:not([tabindex="-1"])'
+      );
+    };
+
     // Toggle drawer (no localStorage - sidebar closes on navigation)
     const toggleDrawer = () => {
       const isOpen = navDrawer.hasAttribute('open');
       if (isOpen) {
         navDrawer.removeAttribute('open');
+        navDrawer.setAttribute('aria-hidden', 'true');
+        navDrawerOverlay?.setAttribute('aria-hidden', 'true');
+        navDrawerToggle.setAttribute('aria-expanded', 'false');
       } else {
         navDrawer.setAttribute('open', '');
+        navDrawer.setAttribute('aria-hidden', 'false');
+        navDrawerOverlay?.setAttribute('aria-hidden', 'false');
+        navDrawerToggle.setAttribute('aria-expanded', 'true');
+        // Focus first focusable element (close button)
+        navDrawerClose?.focus();
       }
     };
 
     navDrawerToggle.addEventListener('click', toggleDrawer);
     navDrawerClose?.addEventListener('click', toggleDrawer);
     navDrawerOverlay?.addEventListener('click', toggleDrawer);
+
+    // Escape key to close drawer
+    shadow.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && navDrawer.hasAttribute('open')) {
+        toggleDrawer();
+        navDrawerToggle.focus(); // Return focus to toggle button
+      }
+    });
+
+    // Basic focus trap - keep focus within drawer when open
+    navDrawer.addEventListener('keydown', (e) => {
+      if (e.key !== 'Tab' || !navDrawer.hasAttribute('open')) {
+        return;
+      }
+
+      const focusableElements = Array.from(getFocusableElements());
+      if (focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (e.shiftKey && document.activeElement === firstElement) {
+        // Shift+Tab on first element - go to last
+        e.preventDefault();
+        lastElement.focus();
+      } else if (!e.shiftKey && document.activeElement === lastElement) {
+        // Tab on last element - go to first
+        e.preventDefault();
+        firstElement.focus();
+      }
+    });
 
     // Mark current page in navigation
     const currentPath = window.location.pathname;
