@@ -208,6 +208,23 @@ func Generate(rootDir string, config *Config) (*ImportMap, error) {
 		for key, value := range userMap.Imports {
 			result.Imports[key] = value
 		}
+		// Merge scopes from user import map
+		if len(userMap.Scopes) > 0 {
+			if result.Scopes == nil {
+				result.Scopes = make(map[string]map[string]string)
+			}
+			for scopeKey, userScopeMap := range userMap.Scopes {
+				if result.Scopes[scopeKey] == nil {
+					// No existing scope for this key, use the entire user scope map
+					result.Scopes[scopeKey] = userScopeMap
+				} else {
+					// Merge individual import entries, user entries override existing
+					for importKey, importValue := range userScopeMap {
+						result.Scopes[scopeKey][importKey] = importValue
+					}
+				}
+			}
+		}
 	}
 
 	// 6. Apply CLI overrides (highest priority)
