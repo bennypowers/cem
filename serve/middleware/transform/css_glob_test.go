@@ -140,7 +140,7 @@ func TestCSSGlobFiltering(t *testing.T) {
 				nextCalled = true
 				// Serve original CSS (not transformed)
 				w.Header().Set("Content-Type", "text/css; charset=utf-8")
-				w.Write([]byte(":host { color: red; }"))
+				_, _ = w.Write([]byte(":host { color: red; }"))
 			})
 
 			// Wrap with middleware
@@ -199,7 +199,7 @@ func TestCSSGlobFiltering_E2E(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/css; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("/* not transformed */"))
+		_, _ = w.Write([]byte("/* not transformed */"))
 	})
 
 	handler := middleware(next)
