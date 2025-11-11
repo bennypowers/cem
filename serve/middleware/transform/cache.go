@@ -277,11 +277,15 @@ func (c *Cache) invalidateRecursive(path string, visited map[string]bool, invali
 	}
 
 	// Find all cache entries for this path (may have multiple with different mod times)
+	// Track if we've added this path to invalidated slice to avoid duplicates
+	pathAdded := false
 	for key := range c.entries {
 		if key.Path == path {
 			c.evict(key)
-			*invalidated = append(*invalidated, path)
-			break // Only one entry per path should exist at a time
+			if !pathAdded {
+				*invalidated = append(*invalidated, path)
+				pathAdded = true
+			}
 		}
 	}
 
