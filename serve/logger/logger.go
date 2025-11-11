@@ -180,6 +180,7 @@ func (l *ptermLogger) render() {
 func (l *ptermLogger) Stop() {
 	l.mu.Lock()
 	area := l.area
+	l.area = nil
 	l.mu.Unlock()
 
 	if area != nil {
