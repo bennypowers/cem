@@ -23,54 +23,49 @@ package serve_test
 
 import (
 	"encoding/json"
-	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve"
 )
 
-// copyDir recursively copies a directory from src to dst
-func copyDir(src, dst string) error {
-	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
+// mapFSAdapter adapts platform.MapFileSystem to serve.FileSystem
+type mapFSAdapter struct {
+	*platform.MapFileSystem
+}
 
-		// Get relative path from src
-		relPath, err := filepath.Rel(src, path)
-		if err != nil {
-			return err
-		}
+func (a *mapFSAdapter) ReadFile(name string) ([]byte, error) {
+	return a.MapFileSystem.ReadFile(name)
+}
 
-		dstPath := filepath.Join(dst, relPath)
+func (a *mapFSAdapter) Stat(name string) (fs.FileInfo, error) {
+	return a.MapFileSystem.Stat(name)
+}
 
-		if info.IsDir() {
-			// Create directory
-			return os.MkdirAll(dstPath, info.Mode())
-		}
+// newTestFS creates an in-memory filesystem with manifest-regen fixture data
+func newTestFS(t *testing.T) serve.FileSystem {
+	t.Helper()
 
-		// Copy file
-		srcFile, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer srcFile.Close()
+	mfs := platform.NewMapFileSystem(nil)
 
-		dstFile, err := os.Create(dstPath)
-		if err != nil {
-			return err
-		}
-		defer dstFile.Close()
+	// Load fixture data from testdata/manifest-regen
+	mfs.AddFile("/test-package/package.json", `{
+  "name": "test-package",
+  "customElements": "custom-elements.json"
+}`, 0644)
 
-		if _, err := io.Copy(dstFile, srcFile); err != nil {
-			return err
-		}
+	mfs.AddFile("/test-package/.config/cem.yaml", `generate:
+  files:
+    - "src/*.ts"
+`, 0644)
 
-		return os.Chmod(dstPath, info.Mode())
-	})
+	mfs.AddFile("/test-package/src/test.ts", `export class TestElement extends HTMLElement {}`, 0644)
+
+	return &mapFSAdapter{MapFileSystem: mfs}
 }
 
 // TestReloadMessageFormat verifies reload message structure matches expected format
@@ -579,22 +574,20 @@ func TestImportResolution(t *testing.T) {
 // RegenerateManifestIncremental when generateSession is nil doesn't cause
 // a double-unlock panic
 func TestRegenerateManifestIncremental_NoDoubleLockPanic(t *testing.T) {
-	server, err := serve.NewServer(0)
+	// Create in-memory filesystem with fixture data
+	mfs := newTestFS(t)
+
+	server, err := serve.NewServerWithConfig(serve.Config{
+		Port:   0,
+		Reload: true,
+		FS:     mfs,
+	})
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
 	defer func() { _ = server.Close() }()
 
-	// Use fixture directly from testdata - copy to temp dir to allow manifest generation
-	fixturePath := filepath.Join("testdata", "manifest-regen")
-	tmpDir := t.TempDir()
-
-	err = copyDir(fixturePath, tmpDir)
-	if err != nil {
-		t.Fatalf("Failed to copy fixture: %v", err)
-	}
-
-	err = server.SetWatchDir(tmpDir)
+	err = server.SetWatchDir("/test-package")
 	if err != nil {
 		t.Fatalf("Failed to set watch directory: %v", err)
 	}
@@ -608,7 +601,7 @@ func TestRegenerateManifestIncremental_NoDoubleLockPanic(t *testing.T) {
 		}
 	}()
 
-	srcFile := filepath.Join(tmpDir, "src", "test.ts")
+	srcFile := "/test-package/src/test.ts"
 	_, err = server.RegenerateManifestIncremental([]string{srcFile})
 	// Error is expected (since we're calling incremental without a session),
 	// but no panic should occur

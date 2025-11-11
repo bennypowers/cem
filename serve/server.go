@@ -62,6 +62,7 @@ type Server struct {
 	running         bool
 	mu              sync.RWMutex
 	generateSession *G.GenerateSession
+	fs              FileSystem // Filesystem abstraction for testability
 	// Workspace mode fields
 	isWorkspace       bool                          // True if serving a monorepo workspace
 	workspaceRoot     string                        // Root directory of workspace
@@ -86,6 +87,13 @@ func NewServerWithConfig(config Config) (*Server, error) {
 		port:   config.Port,
 		config: config,
 		logger: logger.NewDefaultLogger(),
+	}
+
+	// Use provided filesystem or default to os package
+	if config.FS != nil {
+		s.fs = config.FS
+	} else {
+		s.fs = osFileSystem{}
 	}
 
 	// Create WebSocket manager if reload is enabled
@@ -267,7 +275,7 @@ func (s *Server) SetWatchDir(dir string) error {
 
 	loaded := false
 	for _, tsconfigPath := range tsconfigPaths {
-		if data, err := os.ReadFile(tsconfigPath); err == nil {
+		if data, err := s.fs.ReadFile(tsconfigPath); err == nil {
 			s.tsconfigRaw = string(data)
 			s.logger.Debug("Loaded TypeScript config from %s", tsconfigPath)
 			loaded = true
