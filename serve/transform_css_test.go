@@ -24,66 +24,9 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform/testutil"
-	"bennypowers.dev/cem/serve/middleware/transform"
 )
 
-// TestTransformCSS_Basic tests basic CSS to constructable stylesheet transformation
-func TestTransformCSS_Basic(t *testing.T) {
-	cssContent := `:host {
-  display: block;
-  color: var(--color, red);
-}`
-
-	result := transform.TransformCSS([]byte(cssContent), "test.css")
-
-	// Should wrap in CSSStyleSheet
-	if !strings.Contains(result, "new CSSStyleSheet()") {
-		t.Error("Output missing CSSStyleSheet constructor")
-	}
-
-	// Should use replaceSync
-	if !strings.Contains(result, "replaceSync") {
-		t.Error("Output missing replaceSync call")
-	}
-
-	// Should export default
-	if !strings.Contains(result, "export default") {
-		t.Error("Output missing default export")
-	}
-
-	// Should contain the original CSS
-	if !strings.Contains(result, ":host") {
-		t.Error("Output missing original CSS content")
-	}
-
-	// Should escape backticks in CSS
-	cssWithBacktick := "content: `test`;"
-	escaped := transform.TransformCSS([]byte(cssWithBacktick), "test.css")
-	if strings.Contains(escaped, "content: `test`;") {
-		t.Error("Backticks in CSS not escaped")
-	}
-
-	// Should only escape ${ not all $ (matches Lit behavior)
-	cssWithDollar := "width: $var; height: ${expr};"
-	dollarEscaped := transform.TransformCSS([]byte(cssWithDollar), "test.css")
-	// $var should NOT be escaped
-	if !strings.Contains(dollarEscaped, "$var") {
-		t.Error("Single $ incorrectly escaped (should only escape ${)")
-	}
-	// ${ should be escaped
-	if strings.Contains(dollarEscaped, "${expr}") && !strings.Contains(dollarEscaped, "\\${") {
-		t.Error("${ not properly escaped")
-	}
-
-	// Should escape </ to prevent script tag injection
-	cssWithScriptTag := "content: '</script>';"
-	scriptEscaped := transform.TransformCSS([]byte(cssWithScriptTag), "test.css")
-	if strings.Contains(scriptEscaped, "</script>") && !strings.Contains(scriptEscaped, "<\\/script>") {
-		t.Error("</ not properly escaped")
-	}
-}
-
-// TestServCSS_TransformsToModule tests HTTP serving of CSS as JavaScript module
+// TestServeCSS_TransformsToModule tests HTTP serving of CSS as JavaScript module
 func TestServeCSS_TransformsToModule(t *testing.T) {
 	// Load CSS fixture into in-memory filesystem
 	mfs := testutil.NewFixtureFS(t, "transforms/http-css", "/test")

@@ -15,13 +15,11 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package serve
+package transform
 
 import (
 	"strings"
 	"testing"
-
-	"bennypowers.dev/cem/serve/middleware/transform"
 )
 
 // TestTransformTypeScript_WithTsconfigRaw tests that custom tsconfig settings are respected
@@ -34,10 +32,10 @@ class MyElement {
 `
 
 	// Transform with experimentalDecorators enabled via TsconfigRaw
-	result, err := transform.TransformTypeScript([]byte(source), transform.TransformOptions{
-		Loader:    transform.LoaderTS,
-		Target:    transform.ES2020,
-		Sourcemap: transform.SourceMapInline,
+	result, err := TransformTypeScript([]byte(source), TransformOptions{
+		Loader:    LoaderTS,
+		Target:    ES2020,
+		Sourcemap: SourceMapInline,
 		TsconfigRaw: `{
 			"compilerOptions": {
 				"experimentalDecorators": true,
@@ -75,10 +73,10 @@ async function test() {
 `
 
 	// Transform without TsconfigRaw - should use default (importHelpers: false)
-	result, err := transform.TransformTypeScript([]byte(source), transform.TransformOptions{
-		Loader:    transform.LoaderTS,
-		Target:    transform.ES2020,
-		Sourcemap: transform.SourceMapInline,
+	result, err := TransformTypeScript([]byte(source), TransformOptions{
+		Loader:    LoaderTS,
+		Target:    ES2020,
+		Sourcemap: SourceMapInline,
 	})
 
 	if err != nil {

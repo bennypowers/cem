@@ -24,6 +24,7 @@ import (
 
 	"bennypowers.dev/cem/serve"
 	"bennypowers.dev/cem/serve/logger"
+	"bennypowers.dev/cem/serve/middleware/transform"
 	W "bennypowers.dev/cem/workspace"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -51,14 +52,14 @@ var serveCmd = &cobra.Command{
 		targetStr := viper.GetString("serve.target")
 
 		// Validate and parse target (default to ES2022)
-		var target serve.Target
+		var target transform.Target
 		if targetStr != "" {
-			if !serve.IsValidTarget(targetStr) {
+			if !transform.IsValidTarget(targetStr) {
 				return fmt.Errorf("invalid target '%s': must be one of es2015, es2016, es2017, es2018, es2019, es2020, es2021, es2022, es2023, or esnext", targetStr)
 			}
-			target = serve.Target(targetStr)
+			target = transform.Target(targetStr)
 		} else {
-			target = serve.ES2022
+			target = transform.ES2022
 		}
 
 		// Create server config

@@ -54,12 +54,10 @@ func TestPool_LimitsConcurrentTasks(t *testing.T) {
 
 	// Submit 10 tasks
 	var wg sync.WaitGroup
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 10 {
+		wg.Go(func() {
 			_ = pool.Submit(task)
-		}()
+		})
 	}
 
 	wg.Wait()
@@ -82,7 +80,7 @@ func TestPool_QueueOverflowReturnsError(t *testing.T) {
 	defer close(blocker)
 
 	var gotError bool
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		err := pool.Submit(func() error {
 			<-blocker
 			return nil
@@ -155,7 +153,7 @@ func TestPool_BackpressurePreventsBoundlessGoroutines(t *testing.T) {
 	}
 
 	// Submit first 2 tasks - should acquire workers immediately
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		if err := pool.Submit(taskFn); err != nil {
 			t.Fatalf("Task %d should succeed but got error: %v", i, err)
 		}
@@ -167,7 +165,7 @@ func TestPool_BackpressurePreventsBoundlessGoroutines(t *testing.T) {
 
 	// Now workers are busy. Submit 3 more tasks to fill queue
 	t.Log("Submitting 3 tasks to fill queue (queue depth=3)")
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		if err := pool.Submit(taskFn); err != nil {
 			t.Fatalf("Queue task %d should succeed but got error: %v", i, err)
 		}
