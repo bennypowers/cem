@@ -119,8 +119,12 @@ func (l *ptermLogger) Start() {
 		area, _ := pterm.DefaultArea.Start()
 		l.mu.Lock()
 		l.area = area
+		hasLogs := len(l.terminalLogs) > 0
 		l.mu.Unlock()
-		l.render()
+		// Only render if we have logs to display
+		if hasLogs {
+			l.render()
+		}
 	}
 }
 
