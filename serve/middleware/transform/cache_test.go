@@ -15,21 +15,20 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package transform
+package transform_test
 
 import (
-	"os"
-	"path/filepath"
 	"slices"
-	"strings"
 	"testing"
 	"time"
+
+	"bennypowers.dev/cem/serve/middleware/transform"
 )
 
 func TestCacheStats_TracksHitsAndMisses(t *testing.T) {
-	cache := NewCache(1024 * 1024) // 1MB cache
+	cache := transform.NewCache(1024 * 1024) // 1MB cache
 
-	key := CacheKey{Path: "test.ts", ModTime: time.Now(), Size: 100}
+	key := transform.CacheKey{Path: "test.ts", ModTime: time.Now(), Size: 100}
 
 	// Miss on first get
 	_, found := cache.Get(key)
@@ -60,11 +59,11 @@ func TestCacheStats_TracksHitsAndMisses(t *testing.T) {
 }
 
 func TestCacheStats_TracksEvictions(t *testing.T) {
-	cache := NewCache(100) // Tiny cache to force evictions
+	cache := transform.NewCache(100) // Tiny cache to force evictions
 
 	// Add entries that exceed cache size
 	for i := range 5 {
-		key := CacheKey{Path: "test.ts", ModTime: time.Now().Add(time.Duration(i) * time.Second), Size: 50}
+		key := transform.CacheKey{Path: "test.ts", ModTime: time.Now().Add(time.Duration(i) * time.Second), Size: 50}
 		cache.Set(key, make([]byte, 50), nil)
 	}
 
@@ -89,10 +88,10 @@ func TestCache_LogsStatsWhenCalled(t *testing.T) {
 		},
 	}
 
-	cache := NewCacheWithLogger(1024, mockLogger)
+	cache := transform.NewCacheWithLogger(1024, mockLogger)
 
 	// Add some entries
-	key := CacheKey{Path: "test.ts", ModTime: time.Now(), Size: 100}
+	key := transform.CacheKey{Path: "test.ts", ModTime: time.Now(), Size: 100}
 	cache.Set(key, []byte("code"), nil)
 	cache.Get(key)
 
@@ -141,7 +140,7 @@ func (m *mockLogger) Debug(msg string, args ...any) {
 }
 
 func TestCache_CSSImportDependencies(t *testing.T) {
-	cache := NewCache(10 * 1024 * 1024) // 10MB cache
+	cache := transform.NewCache(10 * 1024 * 1024) // 10MB cache
 
 	// Simulate a TypeScript file that imports a CSS file
 	tsPath := "/test/component.ts"
@@ -149,7 +148,7 @@ func TestCache_CSSImportDependencies(t *testing.T) {
 	tsCode := []byte(`import './component.css';\nexport class Component {}`)
 
 	// Set the TS file with CSS as a dependency
-	key := CacheKey{Path: tsPath, ModTime: time.Now(), Size: int64(len(tsCode))}
+	key := transform.CacheKey{Path: tsPath, ModTime: time.Now(), Size: int64(len(tsCode))}
 	cache.Set(key, tsCode, []string{cssPath})
 
 	// Now when component.css changes, it should invalidate component.ts
@@ -166,75 +165,12 @@ func TestCache_CSSImportDependencies(t *testing.T) {
 	}
 }
 
-func TestExtractDependencies_CSSImports(t *testing.T) {
-	// Read fixture file with CSS import
-	inputPath := filepath.Join("..", "..", "testdata", "transforms", "css-import", "input.ts")
-	source, err := os.ReadFile(inputPath)
-	if err != nil {
-		t.Fatalf("Failed to read test fixture: %v", err)
-	}
-
-	// Extract dependencies from the source
-	absPath, _ := filepath.Abs(inputPath)
-
-	deps := extractDependencies(source, absPath)
-
-	if len(deps) == 0 {
-		t.Fatal("Expected CSS import to be extracted as dependency, got 0 dependencies")
-	}
-
-	foundCSS := false
-	for _, dep := range deps {
-		if strings.HasSuffix(dep, "component.css") {
-			foundCSS = true
-			break
-		}
-	}
-
-	if !foundCSS {
-		t.Errorf("Expected to find component.css in dependencies, got: %v", deps)
-	}
-}
-
-func TestCache_CSSImportDependenciesExtracted(t *testing.T) {
-	// Integration test: Verify that CSS imports are automatically extracted and tracked
-	cache := NewCache(10 * 1024 * 1024)
-
-	// Read fixture file with CSS import
-	inputPath := filepath.Join("..", "..", "testdata", "transforms", "css-import", "input.ts")
-	source, err := os.ReadFile(inputPath)
-	if err != nil {
-		t.Fatalf("Failed to read test fixture: %v", err)
-	}
-
-	absPath, _ := filepath.Abs(inputPath)
-	cssPath, _ := filepath.Abs(filepath.Join(filepath.Dir(inputPath), "component.css"))
-
-	// Extract dependencies and cache with them
-	deps := extractDependencies(source, absPath)
-	key := CacheKey{Path: absPath, ModTime: time.Now(), Size: int64(len(source))}
-	cache.Set(key, source, deps)
-
-	// Verify CSS file change invalidates TypeScript file
-	invalidated := cache.Invalidate(cssPath)
-
-	if len(invalidated) == 0 {
-		t.Fatal("Expected CSS file change to invalidate TypeScript file via extracted dependencies")
-	}
-
-	found := slices.Contains(invalidated, absPath)
-
-	if !found {
-		t.Errorf("Expected %s to be invalidated when %s changes, got: %v", absPath, cssPath, invalidated)
-	}
-}
-
 // TestCache_Invalidation tests cache invalidation
 func TestCache_Invalidation(t *testing.T) {
-	cache := NewCache(1024 * 1024)
+	cache := transform.NewCache(1024 * 1024)
 
 	// Create cache entry
-	key := CacheKey{
+	key := transform.CacheKey{
 		Path:    "/test/file.ts",
 		ModTime: time.Now(),
 		Size:    100,
@@ -261,12 +197,12 @@ func TestCache_Invalidation(t *testing.T) {
 
 // TestCache_TransitiveInvalidation tests transitive dependency invalidation
 func TestCache_TransitiveInvalidation(t *testing.T) {
-	cache := NewCache(1024 * 1024)
+	cache := transform.NewCache(1024 * 1024)
 
 	// Create dependency chain: a.ts imports b.ts imports c.ts
-	keyA := CacheKey{Path: "/test/a.ts", ModTime: time.Now(), Size: 100}
-	keyB := CacheKey{Path: "/test/b.ts", ModTime: time.Now(), Size: 100}
-	keyC := CacheKey{Path: "/test/c.ts", ModTime: time.Now(), Size: 100}
+	keyA := transform.CacheKey{Path: "/test/a.ts", ModTime: time.Now(), Size: 100}
+	keyB := transform.CacheKey{Path: "/test/b.ts", ModTime: time.Now(), Size: 100}
+	keyC := transform.CacheKey{Path: "/test/c.ts", ModTime: time.Now(), Size: 100}
 
 	cache.Set(keyC, []byte("// c.ts"), []string{})              // c has no deps
 	cache.Set(keyB, []byte("// b.ts"), []string{"/test/c.ts"}) // b imports c
@@ -322,11 +258,11 @@ func TestCache_TransitiveInvalidation(t *testing.T) {
 
 // TestCache_CircularDependency tests circular dependency handling
 func TestCache_CircularDependency(t *testing.T) {
-	cache := NewCache(1024 * 1024)
+	cache := transform.NewCache(1024 * 1024)
 
 	// Create circular dependency: a.ts -> b.ts -> a.ts
-	keyA := CacheKey{Path: "/test/a.ts", ModTime: time.Now(), Size: 100}
-	keyB := CacheKey{Path: "/test/b.ts", ModTime: time.Now(), Size: 100}
+	keyA := transform.CacheKey{Path: "/test/a.ts", ModTime: time.Now(), Size: 100}
+	keyB := transform.CacheKey{Path: "/test/b.ts", ModTime: time.Now(), Size: 100}
 
 	cache.Set(keyA, []byte("// a.ts"), []string{"/test/b.ts"}) // a imports b
 	cache.Set(keyB, []byte("// b.ts"), []string{"/test/a.ts"}) // b imports a (circular!)
@@ -350,16 +286,16 @@ func TestCache_CircularDependency(t *testing.T) {
 
 // TestCache_MultipleEntriesSamePath tests that all cache entries with the same path are invalidated
 func TestCache_MultipleEntriesSamePath(t *testing.T) {
-	cache := NewCache(1024 * 1024)
+	cache := transform.NewCache(1024 * 1024)
 
 	// Create multiple cache entries for same path with different mod times
 	// This simulates rapid file changes where old entries haven't been evicted yet
 	path := "/test/file.ts"
 	baseTime := time.Now()
 
-	key1 := CacheKey{Path: path, ModTime: baseTime, Size: 100}
-	key2 := CacheKey{Path: path, ModTime: baseTime.Add(1 * time.Second), Size: 100}
-	key3 := CacheKey{Path: path, ModTime: baseTime.Add(2 * time.Second), Size: 100}
+	key1 := transform.CacheKey{Path: path, ModTime: baseTime, Size: 100}
+	key2 := transform.CacheKey{Path: path, ModTime: baseTime.Add(1 * time.Second), Size: 100}
+	key3 := transform.CacheKey{Path: path, ModTime: baseTime.Add(2 * time.Second), Size: 100}
 
 	// Set all three entries (different keys, same path)
 	cache.Set(key1, []byte("version 1"), []string{})

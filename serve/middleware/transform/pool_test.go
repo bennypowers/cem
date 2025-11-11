@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package transform
+package transform_test
 
 import (
 	"errors"
@@ -23,11 +23,13 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"bennypowers.dev/cem/serve/middleware/transform"
 )
 
 func TestPool_LimitsConcurrentTasks(t *testing.T) {
 	// Create pool with max 2 concurrent tasks
-	pool := NewPool(2, 10)
+	pool := transform.NewPool(2, 10)
 	defer pool.Close()
 
 	// Track concurrent executions
@@ -71,7 +73,7 @@ func TestPool_LimitsConcurrentTasks(t *testing.T) {
 
 func TestPool_QueueOverflowReturnsError(t *testing.T) {
 	// Create pool with small queue to test overflow
-	pool := NewPool(1, 2)
+	pool := transform.NewPool(1, 2)
 	defer pool.Close()
 
 	// Submit many blocking tasks rapidly
@@ -86,7 +88,7 @@ func TestPool_QueueOverflowReturnsError(t *testing.T) {
 			return nil
 		})
 
-		if err == ErrPoolQueueFull {
+		if err == transform.ErrPoolQueueFull {
 			gotError = true
 			break
 		} else if err != nil {
@@ -100,7 +102,7 @@ func TestPool_QueueOverflowReturnsError(t *testing.T) {
 }
 
 func TestPool_SubmitReturnsNilOnSuccess(t *testing.T) {
-	pool := NewPool(2, 10)
+	pool := transform.NewPool(2, 10)
 	defer pool.Close()
 
 	// Submit should return nil when task is queued successfully
@@ -114,7 +116,7 @@ func TestPool_SubmitReturnsNilOnSuccess(t *testing.T) {
 }
 
 func TestPool_CloseStopsAcceptingTasks(t *testing.T) {
-	pool := NewPool(2, 10)
+	pool := transform.NewPool(2, 10)
 	pool.Close()
 
 	err := pool.Submit(func() error {
@@ -124,7 +126,7 @@ func TestPool_CloseStopsAcceptingTasks(t *testing.T) {
 	if err == nil {
 		t.Fatal("Expected error when submitting to closed pool")
 	}
-	if err != ErrPoolClosed {
+	if err != transform.ErrPoolClosed {
 		t.Errorf("Expected ErrPoolClosed, got %v", err)
 	}
 }
@@ -133,7 +135,7 @@ func TestPool_CloseStopsAcceptingTasks(t *testing.T) {
 // before spawning goroutines, preventing unbounded goroutine accumulation
 func TestPool_BackpressurePreventsBoundlessGoroutines(t *testing.T) {
 	// Create pool with 2 workers and 3 queue slots
-	pool := NewPool(2, 3)
+	pool := transform.NewPool(2, 3)
 	defer pool.Close()
 
 	// Block to control when workers become available
@@ -203,7 +205,7 @@ func TestPool_BackpressurePreventsBoundlessGoroutines(t *testing.T) {
 	// 7th task MUST fail - queue completely full
 	err2 := pool.Submit(taskFn)
 	t.Logf("7th task result: %v", err2)
-	if err2 != ErrPoolQueueFull {
+	if err2 != transform.ErrPoolQueueFull {
 		t.Errorf("Expected 7th task to get ErrPoolQueueFull, got: %v", err2)
 		t.Error("Bug: Queue was drained beyond dispatcher holding one task")
 	}
