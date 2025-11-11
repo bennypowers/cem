@@ -23,6 +23,7 @@ package serve_test
 
 import (
 	"encoding/json"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,6 +31,47 @@ import (
 
 	"bennypowers.dev/cem/serve"
 )
+
+// copyDir recursively copies a directory from src to dst
+func copyDir(src, dst string) error {
+	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Get relative path from src
+		relPath, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+
+		dstPath := filepath.Join(dst, relPath)
+
+		if info.IsDir() {
+			// Create directory
+			return os.MkdirAll(dstPath, info.Mode())
+		}
+
+		// Copy file
+		srcFile, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer srcFile.Close()
+
+		dstFile, err := os.Create(dstPath)
+		if err != nil {
+			return err
+		}
+		defer dstFile.Close()
+
+		if _, err := io.Copy(dstFile, srcFile); err != nil {
+			return err
+		}
+
+		return os.Chmod(dstPath, info.Mode())
+	})
+}
 
 // TestReloadMessageFormat verifies reload message structure matches expected format
 func TestReloadMessageFormat(t *testing.T) {
@@ -531,4 +573,47 @@ func TestImportResolution(t *testing.T) {
 	// Note: We can't directly test resolveImportToPath since it's not exported
 	// But we've verified the logic through integration testing in the RHDS project
 	// This test primarily verifies the import map generation works correctly
+}
+
+// TestRegenerateManifestIncremental_NoDoubleLockPanic verifies that calling
+// RegenerateManifestIncremental when generateSession is nil doesn't cause
+// a double-unlock panic
+func TestRegenerateManifestIncremental_NoDoubleLockPanic(t *testing.T) {
+	server, err := serve.NewServer(0)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	// Use fixture directly from testdata - copy to temp dir to allow manifest generation
+	fixturePath := filepath.Join("testdata", "manifest-regen")
+	tmpDir := t.TempDir()
+
+	err = copyDir(fixturePath, tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to copy fixture: %v", err)
+	}
+
+	err = server.SetWatchDir(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to set watch directory: %v", err)
+	}
+
+	// Call RegenerateManifestIncremental WITHOUT calling RegenerateManifest first
+	// This means generateSession will be nil, triggering the fallback path
+	// With the bug, this will cause a double-unlock panic
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("Double-unlock panic detected: %v", r)
+		}
+	}()
+
+	srcFile := filepath.Join(tmpDir, "src", "test.ts")
+	_, err = server.RegenerateManifestIncremental([]string{srcFile})
+	// Error is expected (since we're calling incremental without a session),
+	// but no panic should occur
+	if err != nil {
+		// This is acceptable - we're just checking for panic
+		t.Logf("RegenerateManifestIncremental returned error (expected): %v", err)
+	}
 }

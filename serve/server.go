@@ -527,9 +527,9 @@ func (s *Server) RegenerateManifest() (int, error) {
 // Returns the manifest size in bytes and any error
 func (s *Server) RegenerateManifestIncremental(changedFiles []string) (int, error) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if s.watchDir == "" {
+		s.mu.Unlock()
 		return 0, fmt.Errorf("no watch directory set")
 	}
 
@@ -562,6 +562,7 @@ func (s *Server) RegenerateManifestIncremental(changedFiles []string) (int, erro
 	// Marshal to JSON
 	manifestBytes, err := json.MarshalIndent(pkg, "", "  ")
 	if err != nil {
+		s.mu.Unlock()
 		return 0, fmt.Errorf("marshaling manifest: %w", err)
 	}
 
@@ -577,6 +578,7 @@ func (s *Server) RegenerateManifestIncremental(changedFiles []string) (int, erro
 		s.logger.Debug("Built routing table with %d demo routes", len(routingTable))
 	}
 
+	s.mu.Unlock()
 	return len(manifestBytes), nil
 }
 
