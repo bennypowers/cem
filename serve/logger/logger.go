@@ -111,8 +111,15 @@ func NewPtermLogger(verbose bool) Logger {
 
 // Start starts the live rendering area (call after initial setup is complete)
 func (l *ptermLogger) Start() {
-	if l.interactive && l.area == nil {
-		l.area, _ = pterm.DefaultArea.Start()
+	l.mu.Lock()
+	shouldStart := l.interactive && l.area == nil
+	l.mu.Unlock()
+
+	if shouldStart {
+		area, _ := pterm.DefaultArea.Start()
+		l.mu.Lock()
+		l.area = area
+		l.mu.Unlock()
 		l.render()
 	}
 }
@@ -137,12 +144,12 @@ func (l *ptermLogger) SetWebSocketManager(wsManager any) {
 
 // render updates the live terminal display
 func (l *ptermLogger) render() {
+	l.mu.Lock()
+
 	if !l.interactive || l.area == nil {
+		l.mu.Unlock()
 		return
 	}
-
-	l.mu.Lock()
-	defer l.mu.Unlock()
 
 	var sb strings.Builder
 
@@ -158,13 +165,21 @@ func (l *ptermLogger) render() {
 	// Example: ● Running on http://localhost:8080 | Live reload: true | Press Ctrl+C to stop
 	sb.WriteString(pterm.FgLightGreen.Sprint("● ") + l.status)
 
-	l.area.Update(sb.String())
+	// Hand off pointer before calling into pterm API
+	area := l.area
+	l.mu.Unlock()
+
+	area.Update(sb.String())
 }
 
 // Stop stops the live rendering
 func (l *ptermLogger) Stop() {
-	if l.area != nil {
-		if err := l.area.Stop(); err != nil {
+	l.mu.Lock()
+	area := l.area
+	l.mu.Unlock()
+
+	if area != nil {
+		if err := area.Stop(); err != nil {
 			// Log to stderr since our logging system may be shutting down
 			fmt.Fprintf(os.Stderr, "Warning: failed to stop area printer: %v\n", err)
 		}
