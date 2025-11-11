@@ -27,15 +27,18 @@ import (
 	"bennypowers.dev/cem/serve/middleware"
 )
 
+// DefaultTarget is the default TypeScript transformation target.
+const DefaultTarget = "ES2022"
+
 // TypeScriptConfig holds configuration for TypeScript transformation
 type TypeScriptConfig struct {
-	WatchDirFunc     func() string         // Function to get current watch directory
-	TsconfigRawFunc  func() string         // Function to get current tsconfig.json content
+	WatchDirFunc     func() string // Function to get current watch directory
+	TsconfigRawFunc  func() string // Function to get current tsconfig.json content
 	Cache            *Cache
 	Logger           Logger
 	ErrorBroadcaster ErrorBroadcaster
 	Target           string
-	Enabled          bool              // Enable/disable TypeScript transformation
+	Enabled          bool                // Enable/disable TypeScript transformation
 	FS               platform.FileSystem // Filesystem abstraction for testability
 }
 
@@ -129,7 +132,7 @@ func NewTypeScript(config TypeScriptConfig) middleware.Middleware {
 					// Get configured target (defaults to ES2022 if not set)
 					target := config.Target
 					if target == "" {
-						target = "ES2022"
+						target = DefaultTarget
 					}
 
 					// Transform TypeScript to JavaScript
