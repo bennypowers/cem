@@ -15,29 +15,26 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package transform
+package transform_test
 
 import (
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
+
+	"bennypowers.dev/cem/internal/platform/testutil"
+	"bennypowers.dev/cem/serve/middleware/transform"
 )
 
 // TestTypeScriptTransform_Basic tests basic TypeScript to JavaScript transformation
 func TestTypeScriptTransform_Basic(t *testing.T) {
-	// Read input TypeScript file
-	inputPath := filepath.Join("..", "..", "testdata", "transforms", "basic", "input.ts")
-	input, err := os.ReadFile(inputPath)
-	if err != nil {
-		t.Fatalf("Failed to read input file: %v", err)
-	}
+	// Read input TypeScript file from fixture
+	input := testutil.LoadFixtureFile(t, "transforms/basic/input.ts")
 
 	// Transform TypeScript to JavaScript
-	result, err := TransformTypeScript(input, TransformOptions{
-		Loader:    LoaderTS,
-		Target:    ES2020,
-		Sourcemap: SourceMapInline,
+	result, err := transform.TransformTypeScript(input, transform.TransformOptions{
+		Loader:    transform.LoaderTS,
+		Target:    transform.ES2020,
+		Sourcemap: transform.SourceMapInline,
 	})
 	if err != nil {
 		t.Fatalf("Transform failed: %v", err)

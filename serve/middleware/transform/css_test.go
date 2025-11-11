@@ -15,21 +15,22 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package transform
+package transform_test
 
 import (
 	"strings"
 	"testing"
+
+	"bennypowers.dev/cem/internal/platform/testutil"
+	"bennypowers.dev/cem/serve/middleware/transform"
 )
 
 // TestTransformCSS_Basic tests basic CSS to constructable stylesheet transformation
 func TestTransformCSS_Basic(t *testing.T) {
-	cssContent := `:host {
-  display: block;
-  color: var(--color, red);
-}`
+	// Read fixture CSS file
+	cssContent := testutil.LoadFixtureFile(t, "transforms/css-basic/input.css")
 
-	result := TransformCSS([]byte(cssContent), "test.css")
+	result := transform.TransformCSS(cssContent, "test.css")
 
 	// Should wrap in CSSStyleSheet
 	if !strings.Contains(result, "new CSSStyleSheet()") {
@@ -50,29 +51,37 @@ func TestTransformCSS_Basic(t *testing.T) {
 	if !strings.Contains(result, ":host") {
 		t.Error("Output missing original CSS content")
 	}
+}
 
-	// Should escape backticks in CSS
+// TestTransformCSS_EscapesBackticks tests that backticks are escaped in template literals
+func TestTransformCSS_EscapesBackticks(t *testing.T) {
 	cssWithBacktick := "content: `test`;"
-	escaped := TransformCSS([]byte(cssWithBacktick), "test.css")
+	escaped := transform.TransformCSS([]byte(cssWithBacktick), "test.css")
 	if strings.Contains(escaped, "content: `test`;") {
 		t.Error("Backticks in CSS not escaped")
 	}
+}
 
-	// Should only escape ${ not all $ (matches Lit behavior)
+// TestTransformCSS_EscapesDollarBrace tests that ${ is escaped but $ alone is not
+func TestTransformCSS_EscapesDollarBrace(t *testing.T) {
 	cssWithDollar := "width: $var; height: ${expr};"
-	dollarEscaped := TransformCSS([]byte(cssWithDollar), "test.css")
-	// $var should NOT be escaped
+	dollarEscaped := transform.TransformCSS([]byte(cssWithDollar), "test.css")
+
+	// $var should NOT be escaped (matches Lit behavior)
 	if !strings.Contains(dollarEscaped, "$var") {
 		t.Error("Single $ incorrectly escaped (should only escape ${)")
 	}
+
 	// ${ should be escaped
 	if strings.Contains(dollarEscaped, "${expr}") && !strings.Contains(dollarEscaped, "\\${") {
 		t.Error("${ not properly escaped")
 	}
+}
 
-	// Should escape </ to prevent script tag injection
+// TestTransformCSS_EscapesScriptTags tests that </ is escaped to prevent injection
+func TestTransformCSS_EscapesScriptTags(t *testing.T) {
 	cssWithScriptTag := "content: '</script>';"
-	scriptEscaped := TransformCSS([]byte(cssWithScriptTag), "test.css")
+	scriptEscaped := transform.TransformCSS([]byte(cssWithScriptTag), "test.css")
 	if strings.Contains(scriptEscaped, "</script>") && !strings.Contains(scriptEscaped, "<\\/script>") {
 		t.Error("</ not properly escaped")
 	}

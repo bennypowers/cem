@@ -1,4 +1,4 @@
-Practice TDD. When writing tests, always write use the fixture/golden patterns we've established. Use mapfs to copy the fixtures to an in-memory fs when testing.
+Practice TDD. When writing tests, always write use the fixture/golden patterns we've established. Use the NewFixtureFS() helper instead of os.ReadFile() to create in-memory testing file systems from fixtures.
 
 Getter methods should be named Foo(), not GetFoo().
 

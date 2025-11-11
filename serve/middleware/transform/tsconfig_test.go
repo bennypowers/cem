@@ -15,27 +15,26 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package transform
+package transform_test
 
 import (
 	"strings"
 	"testing"
+
+	"bennypowers.dev/cem/internal/platform/testutil"
+	"bennypowers.dev/cem/serve/middleware/transform"
 )
 
 // TestTransformTypeScript_WithTsconfigRaw tests that custom tsconfig settings are respected
 func TestTransformTypeScript_WithTsconfigRaw(t *testing.T) {
-	source := `
-class MyElement {
-	@property({ type: String })
-	name = 'default';
-}
-`
+	// Read fixture file with decorator syntax
+	source := testutil.LoadFixtureFile(t, "transforms/tsconfig-decorators/input.ts")
 
 	// Transform with experimentalDecorators enabled via TsconfigRaw
-	result, err := TransformTypeScript([]byte(source), TransformOptions{
-		Loader:    LoaderTS,
-		Target:    ES2020,
-		Sourcemap: SourceMapInline,
+	result, err := transform.TransformTypeScript(source, transform.TransformOptions{
+		Loader:    transform.LoaderTS,
+		Target:    transform.ES2020,
+		Sourcemap: transform.SourceMapInline,
 		TsconfigRaw: `{
 			"compilerOptions": {
 				"experimentalDecorators": true,
@@ -64,19 +63,14 @@ class MyElement {
 
 // TestTransformTypeScript_DefaultTsconfigDisablesImportHelpers tests the default behavior
 func TestTransformTypeScript_DefaultTsconfigDisablesImportHelpers(t *testing.T) {
-	source := `
-async function test() {
-	const obj = { a: 1, b: 2 };
-	const { a, ...rest } = obj;
-	return rest;
-}
-`
+	// Read fixture file with features that could use tslib
+	source := testutil.LoadFixtureFile(t, "transforms/tsconfig-default/input.ts")
 
 	// Transform without TsconfigRaw - should use default (importHelpers: false)
-	result, err := TransformTypeScript([]byte(source), TransformOptions{
-		Loader:    LoaderTS,
-		Target:    ES2020,
-		Sourcemap: SourceMapInline,
+	result, err := transform.TransformTypeScript(source, transform.TransformOptions{
+		Loader:    transform.LoaderTS,
+		Target:    transform.ES2020,
+		Sourcemap: transform.SourceMapInline,
 	})
 
 	if err != nil {
