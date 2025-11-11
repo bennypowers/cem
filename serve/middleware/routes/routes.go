@@ -82,6 +82,9 @@ type Config struct {
 
 // New creates a middleware that handles internal CEM routes and demo routing
 func New(config Config) middleware.Middleware {
+	// Set error broadcaster for template error reporting
+	SetErrorBroadcaster(config.Context)
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Handle internal CEM routes first

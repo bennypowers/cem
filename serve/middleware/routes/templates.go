@@ -21,6 +21,8 @@ import (
 	"embed"
 	"html/template"
 	"strings"
+
+	"bennypowers.dev/cem/serve/middleware"
 )
 
 //go:embed templates/default-index.html
@@ -44,13 +46,33 @@ var templatesFS embed.FS
 //go:embed templates/js/*.js templates/css/*.css templates/images/*
 var InternalModules embed.FS
 
+// errorBroadcaster holds the error broadcaster for template errors
+// Set by SetErrorBroadcaster when routes middleware is initialized
+var errorBroadcaster middleware.DevServerContext
+
+// SetErrorBroadcaster sets the error broadcaster for template error reporting
+func SetErrorBroadcaster(ctx middleware.DevServerContext) {
+	errorBroadcaster = ctx
+}
+
 // Template functions available to templates
 var templateFuncs = template.FuncMap{
 	"contains": strings.Contains,
 	"include": func(path string) template.CSS {
 		content, err := templatesFS.ReadFile("templates/" + path)
 		if err != nil {
-			return template.CSS("/* Error reading " + path + ": " + err.Error() + " */")
+			errMsg := "/* Error reading " + path + ": " + err.Error() + " */"
+
+			// Broadcast error to connected clients via WebSocket overlay
+			if errorBroadcaster != nil {
+				_ = errorBroadcaster.BroadcastError(
+					"Template Include Error",
+					"Failed to include template file: "+err.Error(),
+					path,
+				)
+			}
+
+			return template.CSS(errMsg)
 		}
 		return template.CSS(content)
 	},

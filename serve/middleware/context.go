@@ -72,4 +72,7 @@ type DevServerContext interface {
 
 	// FileSystem returns the filesystem abstraction for reading files
 	FileSystem() platform.FileSystem
+
+	// BroadcastError broadcasts an error notification to all WebSocket clients
+	BroadcastError(title, message, file string) error
 }
