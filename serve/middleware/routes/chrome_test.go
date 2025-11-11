@@ -190,3 +190,59 @@ func TestChromeRendering_MarkdownDescription(t *testing.T) {
 		t.Log("Run 'make update' to update golden files")
 	}
 }
+
+// TestChromeRendering_WithNavigation verifies navigation drawer rendering
+func TestChromeRendering_WithNavigation(t *testing.T) {
+	// Read demo partial
+	demoPath := filepath.Join("testdata", "chrome-rendering", "basic-demo.html")
+	demoHTML, err := os.ReadFile(demoPath)
+	if err != nil {
+		t.Fatalf("Failed to read demo fixture: %v", err)
+	}
+
+	// Read manifest with multiple elements
+	manifestPath := filepath.Join("testdata", "chrome-rendering", "manifest-with-navigation.json")
+	manifestBytes, err := os.ReadFile(manifestPath)
+	if err != nil {
+		t.Fatalf("Failed to read manifest fixture: %v", err)
+	}
+
+	// Build navigation HTML using the same function as production code
+	navigationHTML, packageName := BuildSinglePackageNavigation(manifestBytes, "test-package")
+
+	// Render chrome with navigation
+	rendered, err := renderDemoChrome(ChromeData{
+		TagName:        "demo-subset-one",
+		DemoTitle:      "Demo with Navigation",
+		DemoHTML:       template.HTML(demoHTML),
+		EnabledKnobs:   "attributes properties",
+		ImportMap:      "{}",
+		Description:    "Testing navigation drawer rendering",
+		PackageName:    packageName,
+		NavigationHTML: navigationHTML,
+	})
+	if err != nil {
+		t.Fatalf("Failed to render chrome: %v", err)
+	}
+
+	goldenPath := filepath.Join("testdata", "chrome-rendering", "expected-with-navigation.html")
+
+	if *update {
+		err := os.WriteFile(goldenPath, []byte(rendered), 0644)
+		if err != nil {
+			t.Fatalf("Failed to update golden file: %v", err)
+		}
+		t.Log("Updated golden file:", goldenPath)
+		return
+	}
+
+	expected, err := os.ReadFile(goldenPath)
+	if err != nil {
+		t.Fatalf("Failed to read golden file: %v", err)
+	}
+
+	if rendered != string(expected) {
+		t.Errorf("Rendered chrome does not match golden file.\nGot:\n%s\n\nExpected:\n%s", rendered, string(expected))
+		t.Log("Run 'make update' to update golden files")
+	}
+}
