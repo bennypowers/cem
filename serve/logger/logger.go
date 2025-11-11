@@ -118,11 +118,8 @@ func (l *ptermLogger) Start() {
 	}
 
 	if l.area != nil {
-		hasLogs := len(l.terminalLogs) > 0
 		l.mu.Unlock()
-		if hasLogs {
-			l.render()
-		}
+		l.render()
 		return
 	}
 	l.mu.Unlock()
@@ -139,10 +136,9 @@ func (l *ptermLogger) Start() {
 	}
 
 	l.area = area
-	hasLogs := len(l.terminalLogs) > 0
 	l.mu.Unlock()
 
-	if hasLogs {
+	if area != nil {
 		l.render()
 	}
 }
