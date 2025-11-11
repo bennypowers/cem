@@ -128,6 +128,36 @@ nav {
     font-size: var(--cem-dev-server-font-size-sm);
   }
 
+  details {
+    margin-top: var(--cem-dev-server-spacing-md);
+
+    summary {
+      cursor: pointer;
+      color: var(--cem-dev-server-text-secondary);
+      font-size: var(--cem-dev-server-font-size-sm);
+    }
+
+    pre {
+      margin-top: var(--cem-dev-server-spacing-sm);
+      padding: var(--cem-dev-server-spacing-sm);
+      background: var(--cem-dev-server-bg-tertiary);
+      border-radius: var(--cem-dev-server-border-radius);
+      font-size: var(--cem-dev-server-font-size-sm);
+      overflow-x: auto;
+    }
+  }
+
+  .button-container {
+    display: flex;
+    gap: var(--cem-dev-server-spacing-sm);
+    margin-top: var(--cem-dev-server-spacing-md);
+  }
+
+  p {
+    color: var(--cem-dev-server-text-muted);
+    font-size: var(--cem-dev-server-font-size-sm);
+  }
+
   button {
     margin-top: var(--cem-dev-server-spacing-md);
     padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);
@@ -151,6 +181,11 @@ aside#knobs {
   border-right: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
   padding: var(--cem-dev-server-spacing-lg);
   overflow-y: auto;
+
+  p {
+    color: var(--cem-dev-server-text-muted);
+    font-size: var(--cem-dev-server-font-size-sm);
+  }
 }
 
 main {

@@ -313,6 +313,36 @@ nav {
     font-size: var(--cem-dev-server-font-size-sm);
   }
 
+  details {
+    margin-top: var(--cem-dev-server-spacing-md);
+
+    summary {
+      cursor: pointer;
+      color: var(--cem-dev-server-text-secondary);
+      font-size: var(--cem-dev-server-font-size-sm);
+    }
+
+    pre {
+      margin-top: var(--cem-dev-server-spacing-sm);
+      padding: var(--cem-dev-server-spacing-sm);
+      background: var(--cem-dev-server-bg-tertiary);
+      border-radius: var(--cem-dev-server-border-radius);
+      font-size: var(--cem-dev-server-font-size-sm);
+      overflow-x: auto;
+    }
+  }
+
+  .button-container {
+    display: flex;
+    gap: var(--cem-dev-server-spacing-sm);
+    margin-top: var(--cem-dev-server-spacing-md);
+  }
+
+  p {
+    color: var(--cem-dev-server-text-muted);
+    font-size: var(--cem-dev-server-font-size-sm);
+  }
+
   button {
     margin-top: var(--cem-dev-server-spacing-md);
     padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);
@@ -336,6 +366,11 @@ aside#knobs {
   border-right: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
   padding: var(--cem-dev-server-spacing-lg);
   overflow-y: auto;
+
+  p {
+    color: var(--cem-dev-server-text-muted);
+    font-size: var(--cem-dev-server-font-size-sm);
+  }
 }
 
 main {
@@ -767,15 +802,15 @@ footer ::slotted([slot="description"]) {
             <dt>User Agent</dt>
             <dd id="debug-ua">-</dd>
           </dl>
-          <details id="debug-demos-details" style="margin-top: var(--__cem-spacing-md);">
-            <summary style="cursor: pointer; color: var(--__cem-text-secondary); font-size: var(--__cem-font-size-sm);">Show Demo URLs from Manifest</summary>
-            <pre id="debug-demos-list" style="margin-top: var(--__cem-spacing-sm); padding: var(--__cem-spacing-sm); background: var(--__cem-bg-tertiary); border-radius: var(--__cem-border-radius); font-size: var(--__cem-font-size-sm); overflow-x: auto;">-</pre>
+          <details id="debug-demos-details">
+            <summary>Show Demo URLs from Manifest</summary>
+            <pre id="debug-demos-list">-</pre>
           </details>
-          <details id="debug-importmap-details" style="margin-top: var(--__cem-spacing-md);">
-            <summary style="cursor: pointer; color: var(--__cem-text-secondary); font-size: var(--__cem-font-size-sm);">Show Import Map</summary>
-            <pre id="debug-importmap" style="margin-top: var(--__cem-spacing-sm); padding: var(--__cem-spacing-sm); background: var(--__cem-bg-tertiary); border-radius: var(--__cem-border-radius); font-size: var(--__cem-font-size-sm); overflow-x: auto;">-</pre>
+          <details id="debug-importmap-details">
+            <summary>Show Import Map</summary>
+            <pre id="debug-importmap">-</pre>
           </details>
-          <div style="display: flex; gap: var(--__cem-spacing-sm); margin-top: var(--__cem-spacing-md);">
+          <div class="button-container">
             <button class="debug-copy">Copy Debug Info</button>
             <button class="debug-close">Close</button>
           </div>
@@ -822,7 +857,7 @@ footer ::slotted([slot="description"]) {
     
     <div slot="knobs">
       
-      <p style="color: var(--__cem-text-muted); font-size: var(--__cem-font-size-sm);">
+      <p>
         Knobs: attributes properties slots css-properties
       </p>
     </div>

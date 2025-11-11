@@ -21,7 +21,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/fs"
 	"net"
 	"net/http"
 	"net/url"
@@ -377,7 +376,7 @@ func (s *Server) PackageJSON() (*middleware.PackageJSON, error) {
 
 	// Use injected filesystem if available, otherwise fall back to os.ReadFile
 	if filesystem := s.FileSystem(); filesystem != nil {
-		data, err = fs.ReadFile(filesystem, packageJSONPath)
+		data, err = filesystem.ReadFile(packageJSONPath)
 	} else {
 		data, err = os.ReadFile(packageJSONPath)
 	}

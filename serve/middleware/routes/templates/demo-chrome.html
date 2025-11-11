@@ -101,15 +101,15 @@
             <dt>User Agent</dt>
             <dd id="debug-ua">-</dd>
           </dl>
-          <details id="debug-demos-details" style="margin-top: var(--__cem-spacing-md);">
-            <summary style="cursor: pointer; color: var(--__cem-text-secondary); font-size: var(--__cem-font-size-sm);">Show Demo URLs from Manifest</summary>
-            <pre id="debug-demos-list" style="margin-top: var(--__cem-spacing-sm); padding: var(--__cem-spacing-sm); background: var(--__cem-bg-tertiary); border-radius: var(--__cem-border-radius); font-size: var(--__cem-font-size-sm); overflow-x: auto;">-</pre>
+          <details id="debug-demos-details">
+            <summary>Show Demo URLs from Manifest</summary>
+            <pre id="debug-demos-list">-</pre>
           </details>
-          <details id="debug-importmap-details" style="margin-top: var(--__cem-spacing-md);">
-            <summary style="cursor: pointer; color: var(--__cem-text-secondary); font-size: var(--__cem-font-size-sm);">Show Import Map</summary>
-            <pre id="debug-importmap" style="margin-top: var(--__cem-spacing-sm); padding: var(--__cem-spacing-sm); background: var(--__cem-bg-tertiary); border-radius: var(--__cem-border-radius); font-size: var(--__cem-font-size-sm); overflow-x: auto;">-</pre>
+          <details id="debug-importmap-details">
+            <summary>Show Import Map</summary>
+            <pre id="debug-importmap">-</pre>
           </details>
-          <div style="display: flex; gap: var(--__cem-spacing-sm); margin-top: var(--__cem-spacing-md);">
+          <div class="button-container">
             <button class="debug-copy">Copy Debug Info</button>
             <button class="debug-close">Close</button>
           </div>
@@ -169,7 +169,7 @@
     {{if .EnabledKnobs}}
     <div slot="knobs">
       <!-- Knobs will be rendered here in Phase 5 -->
-      <p style="color: var(--__cem-text-muted); font-size: var(--__cem-font-size-sm);">
+      <p>
         Knobs: {{.EnabledKnobs}}
       </p>
     </div>
