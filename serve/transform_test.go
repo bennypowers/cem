@@ -22,6 +22,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"bennypowers.dev/cem/serve/middleware/transform"
 )
 
 // TestTypeScriptTransform_Basic tests basic TypeScript to JavaScript transformation
@@ -34,10 +36,10 @@ func TestTypeScriptTransform_Basic(t *testing.T) {
 	}
 
 	// Transform TypeScript to JavaScript
-	result, err := TransformTypeScript(input, TransformOptions{
-		Loader:    LoaderTS,
-		Target:    ES2020,
-		Sourcemap: SourceMapInline,
+	result, err := transform.TransformTypeScript(input, transform.TransformOptions{
+		Loader:    transform.LoaderTS,
+		Target:    transform.ES2020,
+		Sourcemap: transform.SourceMapInline,
 	})
 	if err != nil {
 		t.Fatalf("Transform failed: %v", err)

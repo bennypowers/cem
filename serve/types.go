@@ -23,13 +23,14 @@ import (
 
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/logger"
+	"bennypowers.dev/cem/serve/middleware/transform"
 )
 
 // Config represents the dev server configuration
 type Config struct {
 	Port   int
 	Reload bool
-	Target Target                // Transform target (default: ES2022)
+	Target transform.Target      // Transform target (default: ES2022)
 	FS     platform.FileSystem // Optional filesystem for testing (defaults to os package)
 }
 

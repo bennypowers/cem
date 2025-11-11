@@ -20,13 +20,15 @@ package serve
 import (
 	"testing"
 	"time"
+
+	"bennypowers.dev/cem/serve/middleware/transform"
 )
 
 // TestTransformCache_BasicOperations tests basic cache operations
 func TestTransformCache_BasicOperations(t *testing.T) {
-	cache := NewTransformCache(1024 * 1024) // 1MB cache
+	cache := transform.NewCache(1024 * 1024) // 1MB cache
 
-	key := CacheKey{
+	key := transform.CacheKey{
 		Path:    "/test/file.ts",
 		ModTime: time.Now(),
 		Size:    100,
@@ -60,10 +62,10 @@ func TestTransformCache_BasicOperations(t *testing.T) {
 
 // TestTransformCache_Invalidation tests cache invalidation
 func TestTransformCache_Invalidation(t *testing.T) {
-	cache := NewTransformCache(1024 * 1024)
+	cache := transform.NewCache(1024 * 1024)
 
 	// Create cache entry
-	key := CacheKey{
+	key := transform.CacheKey{
 		Path:    "/test/file.ts",
 		ModTime: time.Now(),
 		Size:    100,
@@ -90,12 +92,12 @@ func TestTransformCache_Invalidation(t *testing.T) {
 
 // TestTransformCache_TransitiveInvalidation tests transitive dependency invalidation
 func TestTransformCache_TransitiveInvalidation(t *testing.T) {
-	cache := NewTransformCache(1024 * 1024)
+	cache := transform.NewCache(1024 * 1024)
 
 	// Create dependency chain: a.ts imports b.ts imports c.ts
-	keyA := CacheKey{Path: "/test/a.ts", ModTime: time.Now(), Size: 100}
-	keyB := CacheKey{Path: "/test/b.ts", ModTime: time.Now(), Size: 100}
-	keyC := CacheKey{Path: "/test/c.ts", ModTime: time.Now(), Size: 100}
+	keyA := transform.CacheKey{Path: "/test/a.ts", ModTime: time.Now(), Size: 100}
+	keyB := transform.CacheKey{Path: "/test/b.ts", ModTime: time.Now(), Size: 100}
+	keyC := transform.CacheKey{Path: "/test/c.ts", ModTime: time.Now(), Size: 100}
 
 	cache.Set(keyC, []byte("// c.ts"), []string{})              // c has no deps
 	cache.Set(keyB, []byte("// b.ts"), []string{"/test/c.ts"}) // b imports c
@@ -152,12 +154,12 @@ func TestTransformCache_TransitiveInvalidation(t *testing.T) {
 // TestTransformCache_LRUEviction tests LRU cache eviction
 func TestTransformCache_LRUEviction(t *testing.T) {
 	// Create small cache (100 bytes)
-	cache := NewTransformCache(100)
+	cache := transform.NewCache(100)
 
 	// Add entries that exceed cache size
-	key1 := CacheKey{Path: "/test/1.ts", ModTime: time.Now(), Size: 50}
-	key2 := CacheKey{Path: "/test/2.ts", ModTime: time.Now(), Size: 50}
-	key3 := CacheKey{Path: "/test/3.ts", ModTime: time.Now(), Size: 50}
+	key1 := transform.CacheKey{Path: "/test/1.ts", ModTime: time.Now(), Size: 50}
+	key2 := transform.CacheKey{Path: "/test/2.ts", ModTime: time.Now(), Size: 50}
+	key3 := transform.CacheKey{Path: "/test/3.ts", ModTime: time.Now(), Size: 50}
 
 	code := make([]byte, 50) // 50 bytes each
 
@@ -183,9 +185,9 @@ func TestTransformCache_LRUEviction(t *testing.T) {
 
 // TestTransformCache_Stats tests cache statistics
 func TestTransformCache_Stats(t *testing.T) {
-	cache := NewTransformCache(1024 * 1024)
+	cache := transform.NewCache(1024 * 1024)
 
-	key := CacheKey{Path: "/test/file.ts", ModTime: time.Now(), Size: 100}
+	key := transform.CacheKey{Path: "/test/file.ts", ModTime: time.Now(), Size: 100}
 	code := []byte("console.log('test');")
 
 	// Initial stats
@@ -224,11 +226,11 @@ func TestTransformCache_Stats(t *testing.T) {
 
 // TestTransformCache_CircularDependency tests circular dependency handling
 func TestTransformCache_CircularDependency(t *testing.T) {
-	cache := NewTransformCache(1024 * 1024)
+	cache := transform.NewCache(1024 * 1024)
 
 	// Create circular dependency: a.ts -> b.ts -> a.ts
-	keyA := CacheKey{Path: "/test/a.ts", ModTime: time.Now(), Size: 100}
-	keyB := CacheKey{Path: "/test/b.ts", ModTime: time.Now(), Size: 100}
+	keyA := transform.CacheKey{Path: "/test/a.ts", ModTime: time.Now(), Size: 100}
+	keyB := transform.CacheKey{Path: "/test/b.ts", ModTime: time.Now(), Size: 100}
 
 	cache.Set(keyA, []byte("// a.ts"), []string{"/test/b.ts"}) // a imports b
 	cache.Set(keyB, []byte("// b.ts"), []string{"/test/a.ts"}) // b imports a (circular!)
@@ -252,16 +254,16 @@ func TestTransformCache_CircularDependency(t *testing.T) {
 
 // TestTransformCache_MultipleEntriesSamePath tests that all cache entries with the same path are invalidated
 func TestTransformCache_MultipleEntriesSamePath(t *testing.T) {
-	cache := NewTransformCache(1024 * 1024)
+	cache := transform.NewCache(1024 * 1024)
 
 	// Create multiple cache entries for same path with different mod times
 	// This simulates rapid file changes where old entries haven't been evicted yet
 	path := "/test/file.ts"
 	baseTime := time.Now()
 
-	key1 := CacheKey{Path: path, ModTime: baseTime, Size: 100}
-	key2 := CacheKey{Path: path, ModTime: baseTime.Add(1 * time.Second), Size: 100}
-	key3 := CacheKey{Path: path, ModTime: baseTime.Add(2 * time.Second), Size: 100}
+	key1 := transform.CacheKey{Path: path, ModTime: baseTime, Size: 100}
+	key2 := transform.CacheKey{Path: path, ModTime: baseTime.Add(1 * time.Second), Size: 100}
+	key3 := transform.CacheKey{Path: path, ModTime: baseTime.Add(2 * time.Second), Size: 100}
 
 	// Set all three entries (different keys, same path)
 	cache.Set(key1, []byte("version 1"), []string{})
