@@ -438,9 +438,9 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 			baseDir, entry.FilePath, config.Context.IsWorkspace(), entry.PackagePath)
 	}
 
-	// Read demo HTML file
+	// Read demo HTML file using injected filesystem
 	demoPath := filepath.Join(baseDir, entry.FilePath)
-	demoHTML, err := os.ReadFile(demoPath)
+	demoHTML, err := config.Context.FileSystem().ReadFile(demoPath)
 	if err != nil {
 		return "", fmt.Errorf("reading demo file %s: %w", entry.FilePath, err)
 	}

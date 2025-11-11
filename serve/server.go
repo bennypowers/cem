@@ -145,6 +145,13 @@ func (s *Server) DemoRoutes() any {
 	return s.demoRoutes
 }
 
+// FileSystem returns the filesystem abstraction
+func (s *Server) FileSystem() platform.FileSystem {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.fs
+}
+
 // Start starts the HTTP server
 func (s *Server) Start() error {
 	s.mu.Lock()
@@ -1191,10 +1198,11 @@ func (s *Server) setupMiddleware() {
 	)
 }
 
-// serveStaticFiles serves static files from the watch directory
+// serveStaticFiles serves static files from the watch directory using injected filesystem
 func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 	s.mu.RLock()
 	watchDir := s.watchDir
+	fs := s.fs
 	s.mu.RUnlock()
 
 	if watchDir == "" {
@@ -1202,12 +1210,57 @@ func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set correct MIME type for JavaScript files
-	if filepath.Ext(r.URL.Path) == ".js" {
-		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+	// Clean the URL path
+	requestPath := filepath.Clean(r.URL.Path)
+	if requestPath == "." {
+		requestPath = "/"
 	}
 
-	// Serve files from watch directory
-	fileServer := http.FileServer(http.Dir(watchDir))
-	fileServer.ServeHTTP(w, r)
+	// Build full file path
+	fullPath := filepath.Join(watchDir, strings.TrimPrefix(requestPath, "/"))
+
+	// Reject path traversal attempts
+	if rel, err := filepath.Rel(watchDir, fullPath); err != nil || strings.HasPrefix(rel, "..") {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Try to read the file using injected filesystem
+	content, err := fs.ReadFile(fullPath)
+	if err != nil {
+		// Check if it's a directory - if so, try index.html
+		if stat, statErr := fs.Stat(fullPath); statErr == nil && stat.IsDir() {
+			indexPath := filepath.Join(fullPath, "index.html")
+			if indexContent, indexErr := fs.ReadFile(indexPath); indexErr == nil {
+				content = indexContent
+				fullPath = indexPath
+				err = nil
+			}
+		}
+
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+	}
+
+	// Set correct MIME type
+	ext := filepath.Ext(fullPath)
+	switch ext {
+	case ".js":
+		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+	case ".css":
+		w.Header().Set("Content-Type", "text/css; charset=utf-8")
+	case ".html":
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	case ".json":
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	case ".svg":
+		w.Header().Set("Content-Type", "image/svg+xml")
+	}
+
+	// Write the content
+	if _, err := w.Write(content); err != nil {
+		s.logger.Error("Failed to write static file response: %v", err)
+	}
 }

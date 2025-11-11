@@ -20,10 +20,10 @@ package serve
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
+
+	"bennypowers.dev/cem/internal/platform/testutil"
 )
 
 // TestTransformCSS_Basic tests basic CSS to constructable stylesheet transformation
@@ -84,27 +84,25 @@ func TestTransformCSS_Basic(t *testing.T) {
 
 // TestServCSS_TransformsToModule tests HTTP serving of CSS as JavaScript module
 func TestServeCSS_TransformsToModule(t *testing.T) {
-	tmpDir := t.TempDir()
+	// Load CSS fixture into in-memory filesystem
+	mfs := testutil.NewFixtureFS(t, "transforms/http-css", "/test")
 
-	// Write a CSS file
-	cssContent := `:host { display: block; }`
-	cssPath := filepath.Join(tmpDir, "styles.css")
-	if err := os.WriteFile(cssPath, []byte(cssContent), 0644); err != nil {
-		t.Fatalf("Failed to write CSS file: %v", err)
-	}
-
-	server, err := NewServer(0)
+	server, err := NewServerWithConfig(Config{
+		Port:   0,
+		Reload: true,
+		FS:     mfs,
+	})
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
 	defer func() { _ = server.Close() }()
 
-	if err := server.SetWatchDir(tmpDir); err != nil {
+	if err := server.SetWatchDir("/test"); err != nil {
 		t.Fatalf("Failed to set watch dir: %v", err)
 	}
 
-	// Request the CSS file
-	req := httptest.NewRequest("GET", "/styles.css", nil)
+	// Request the CSS file (server should serve transformed CSS from fixture)
+	req := httptest.NewRequest("GET", "/simple-host.css", nil)
 	w := httptest.NewRecorder()
 
 	server.Handler().ServeHTTP(w, req)
@@ -142,43 +140,34 @@ func TestServeCSS_WarnsWithoutImportAttribute(t *testing.T) {
 
 // TestServeCSS_RejectsPathTraversal tests that path traversal attacks are blocked
 func TestServeCSS_RejectsPathTraversal(t *testing.T) {
-	// Create a parent directory with watch dir as subdirectory
-	parentDir := t.TempDir()
-	watchDir := filepath.Join(parentDir, "project")
-	if err := os.Mkdir(watchDir, 0755); err != nil {
-		t.Fatalf("Failed to create watch dir: %v", err)
-	}
+	// Load path-traversal fixtures:
+	// Fixture structure creates:
+	//   /parent/legitimate.css (inside watch dir)
+	//   /parent/secret.css (outside watch dir, at parent level)
+	mfs := testutil.NewFixtureFS(t, "transforms/http-css/path-traversal", "/parent")
 
-	// Create legitimate CSS in watch directory
-	legitimateCss := filepath.Join(watchDir, "legitimate.css")
-	if err := os.WriteFile(legitimateCss, []byte(":host { color: blue; }"), 0644); err != nil {
-		t.Fatalf("Failed to write legitimate CSS: %v", err)
-	}
-
-	// Create a "sensitive" file OUTSIDE watch directory but in parent
-	secretCss := filepath.Join(parentDir, "secret.css")
-	secretContent := ":host { color: red; /* SECRET */ }"
-	if err := os.WriteFile(secretCss, []byte(secretContent), 0644); err != nil {
-		t.Fatalf("Failed to write secret CSS: %v", err)
-	}
-
-	server, err := NewServer(0)
+	server, err := NewServerWithConfig(Config{
+		Port:   0,
+		Reload: true,
+		FS:     mfs,
+	})
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
 	defer func() { _ = server.Close() }()
 
-	if err := server.SetWatchDir(watchDir); err != nil {
+	// Set watch dir to /parent (both files are in this dir, so we test same-level access control)
+	// Note: Unlike TypeScript test, CSS fixtures are in same directory
+	if err := server.SetWatchDir("/parent"); err != nil {
 		t.Fatalf("Failed to set watch dir: %v", err)
 	}
 
 	// Path traversal to access file in parent directory
-	// Since secret.css is in parent of watchDir, we need /../secret.css
 	attacks := []string{
 		"/../secret.css",                    // Direct parent access
 		"/subdir/../../secret.css",          // Via non-existent subdir
 		"/./../secret.css",                  // Mixed with current dir
-		"/./../../project/../secret.css",    // Complex traversal
+		"/./../../parent/../secret.css",     // Complex traversal
 	}
 
 	for _, attack := range attacks {

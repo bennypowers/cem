@@ -21,24 +21,14 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"testing"
 
-	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/internal/platform/testutil"
 )
 
 func TestTypeScript_DisabledByConfig(t *testing.T) {
-	// Load fixture
-	inputPath := filepath.Join("..", "..", "testdata", "transforms", "config-test", "input.ts")
-	inputBytes, err := os.ReadFile(inputPath)
-	if err != nil {
-		t.Fatalf("Failed to read fixture: %v", err)
-	}
-
-	// Create in-memory filesystem with TypeScript file
-	mfs := platform.NewMapFileSystem(nil)
-	mfs.AddFile("/test/test.ts", string(inputBytes), 0644)
+	// Load fixtures into in-memory filesystem
+	mfs := testutil.NewFixtureFS(t, "transforms/config-test", "/test")
 
 	// Create middleware with Enabled=false
 	middleware := NewTypeScript(TypeScriptConfig{
@@ -68,16 +58,8 @@ func TestTypeScript_DisabledByConfig(t *testing.T) {
 }
 
 func TestTypeScript_EnabledByConfig(t *testing.T) {
-	// Load fixture
-	inputPath := filepath.Join("..", "..", "testdata", "transforms", "config-test", "input.ts")
-	inputBytes, err := os.ReadFile(inputPath)
-	if err != nil {
-		t.Fatalf("Failed to read fixture: %v", err)
-	}
-
-	// Create in-memory filesystem with TypeScript file
-	mfs := platform.NewMapFileSystem(nil)
-	mfs.AddFile("/test/test.ts", string(inputBytes), 0644)
+	// Load fixtures into in-memory filesystem
+	mfs := testutil.NewFixtureFS(t, "transforms/config-test", "/test")
 
 	// Create middleware with Enabled=true and cache
 	cache := NewCache(1024 * 1024)
@@ -124,16 +106,8 @@ func TestTypeScript_EnabledByConfig(t *testing.T) {
 }
 
 func TestCSS_DisabledByConfig(t *testing.T) {
-	// Load fixture
-	inputPath := filepath.Join("..", "..", "testdata", "transforms", "config-test", "input.css")
-	inputBytes, err := os.ReadFile(inputPath)
-	if err != nil {
-		t.Fatalf("Failed to read fixture: %v", err)
-	}
-
-	// Create in-memory filesystem with CSS file
-	mfs := platform.NewMapFileSystem(nil)
-	mfs.AddFile("/test/test.css", string(inputBytes), 0644)
+	// Load fixtures into in-memory filesystem
+	mfs := testutil.NewFixtureFS(t, "transforms/config-test", "/test")
 
 	// Create middleware with Enabled=false
 	middleware := NewCSS(CSSConfig{
@@ -163,16 +137,8 @@ func TestCSS_DisabledByConfig(t *testing.T) {
 }
 
 func TestCSS_EnabledByConfig(t *testing.T) {
-	// Load fixture
-	inputPath := filepath.Join("..", "..", "testdata", "transforms", "config-test", "input.css")
-	inputBytes, err := os.ReadFile(inputPath)
-	if err != nil {
-		t.Fatalf("Failed to read fixture: %v", err)
-	}
-
-	// Create in-memory filesystem with CSS file
-	mfs := platform.NewMapFileSystem(nil)
-	mfs.AddFile("/test/test.css", string(inputBytes), 0644)
+	// Load fixtures into in-memory filesystem
+	mfs := testutil.NewFixtureFS(t, "transforms/config-test", "/test")
 
 	// Create middleware with Enabled=true
 	middleware := NewCSS(CSSConfig{

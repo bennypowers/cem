@@ -20,43 +20,24 @@ package serve
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
+
+	"bennypowers.dev/cem/internal/platform/testutil"
 )
 
 // TestDemoRouting_BasicRoute verifies demo URLs route correctly
 func TestDemoRouting_BasicRoute(t *testing.T) {
-	// Create test directory
-	tmpDir := t.TempDir()
+	// Load fixtures from testdata into MapFileSystem
+	mfs := testutil.NewFixtureFS(t, "demo-routing", "/test")
+	manifestBytes := testutil.LoadFixtureFile(t, "demo-routing/manifest.json")
 
-	// Copy fixture files
-	manifestBytes, err := os.ReadFile(filepath.Join("testdata", "demo-routing", "manifest.json"))
-	if err != nil {
-		t.Fatalf("Failed to read manifest fixture: %v", err)
-	}
-
-	demoHTML, err := os.ReadFile(filepath.Join("testdata", "demo-routing", "basic-demo.html"))
-	if err != nil {
-		t.Fatalf("Failed to read demo fixture: %v", err)
-	}
-
-	// Set up test directory structure
-	demoDir := filepath.Join(tmpDir, "demo")
-	err = os.MkdirAll(demoDir, 0755)
-	if err != nil {
-		t.Fatalf("Failed to create demo directory: %v", err)
-	}
-
-	demoPath := filepath.Join(demoDir, "basic.html")
-	err = os.WriteFile(demoPath, demoHTML, 0644)
-	if err != nil {
-		t.Fatalf("Failed to write demo file: %v", err)
-	}
-
-	// Create server
-	server, err := NewServer(0)
+	// Create server with MapFileSystem
+	server, err := NewServerWithConfig(Config{
+		Port:   0,
+		Reload: true,
+		FS:     mfs,
+	})
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
@@ -66,7 +47,7 @@ func TestDemoRouting_BasicRoute(t *testing.T) {
 		}
 	}()
 
-	err = server.SetWatchDir(tmpDir)
+	err = server.SetWatchDir("/test")
 	if err != nil {
 		t.Fatalf("Failed to set watch dir: %v", err)
 	}

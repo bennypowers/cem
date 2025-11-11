@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package middleware
 
 import (
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/logger"
 )
 
@@ -68,4 +69,7 @@ type DevServerContext interface {
 
 	// PackageJSON returns parsed package.json (single-package mode only)
 	PackageJSON() (*PackageJSON, error)
+
+	// FileSystem returns the filesystem abstraction for reading files
+	FileSystem() platform.FileSystem
 }

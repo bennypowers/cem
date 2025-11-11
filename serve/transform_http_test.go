@@ -20,38 +20,35 @@ package serve
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
+
+	"bennypowers.dev/cem/internal/platform/testutil"
 )
 
 // TestServeTypeScript_TransformsOnRequest tests that requesting a .js file
 // serves the corresponding .ts file transformed to JavaScript
 func TestServeTypeScript_TransformsOnRequest(t *testing.T) {
-	// Create a temporary directory with a TypeScript file
-	tmpDir := t.TempDir()
+	// Load TypeScript fixture into in-memory filesystem
+	mfs := testutil.NewFixtureFS(t, "transforms/http-typescript", "/test")
 
-	// Write a TypeScript file
-	tsContent := `export const greeting: string = "Hello, TypeScript!";`
-	tsPath := filepath.Join(tmpDir, "test.ts")
-	if err := os.WriteFile(tsPath, []byte(tsContent), 0644); err != nil {
-		t.Fatalf("Failed to write test file: %v", err)
-	}
-
-	// Create server
-	server, err := NewServer(0)
+	// Create server with MapFileSystem
+	server, err := NewServerWithConfig(Config{
+		Port:   0,
+		Reload: true,
+		FS:     mfs,
+	})
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
 	defer func() { _ = server.Close() }()
 
-	if err := server.SetWatchDir(tmpDir); err != nil {
+	if err := server.SetWatchDir("/test"); err != nil {
 		t.Fatalf("Failed to set watch dir: %v", err)
 	}
 
-	// Request the .js file (server should serve transformed .ts)
-	req := httptest.NewRequest("GET", "/test.js", nil)
+	// Request the .js file (server should serve transformed .ts from fixture)
+	req := httptest.NewRequest("GET", "/simple-greeting.js", nil)
 	w := httptest.NewRecorder()
 
 	server.Handler().ServeHTTP(w, req)
@@ -87,27 +84,25 @@ func TestServeTypeScript_TransformsOnRequest(t *testing.T) {
 // TestServeTypeScript_OnlyWhenTsExists tests that .js files are served normally
 // when no corresponding .ts file exists
 func TestServeTypeScript_OnlyWhenTsExists(t *testing.T) {
-	tmpDir := t.TempDir()
+	// Load plain JavaScript fixture (no .ts counterpart)
+	mfs := testutil.NewFixtureFS(t, "transforms/http-typescript", "/test")
 
-	// Write a plain .js file (no .ts counterpart)
-	jsContent := `export const greeting = "Hello, JavaScript!";`
-	jsPath := filepath.Join(tmpDir, "plain.js")
-	if err := os.WriteFile(jsPath, []byte(jsContent), 0644); err != nil {
-		t.Fatalf("Failed to write test file: %v", err)
-	}
-
-	server, err := NewServer(0)
+	server, err := NewServerWithConfig(Config{
+		Port:   0,
+		Reload: true,
+		FS:     mfs,
+	})
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
 	defer func() { _ = server.Close() }()
 
-	if err := server.SetWatchDir(tmpDir); err != nil {
+	if err := server.SetWatchDir("/test"); err != nil {
 		t.Fatalf("Failed to set watch dir: %v", err)
 	}
 
-	// Request the .js file
-	req := httptest.NewRequest("GET", "/plain.js", nil)
+	// Request the .js file from fixture
+	req := httptest.NewRequest("GET", "/plain-javascript.js", nil)
 	w := httptest.NewRecorder()
 
 	server.Handler().ServeHTTP(w, req)
@@ -119,40 +114,32 @@ func TestServeTypeScript_OnlyWhenTsExists(t *testing.T) {
 
 	// Should serve the original JS file unchanged
 	body := w.Body.String()
-	if body != jsContent {
+	expectedContent := "export const greeting = \"Hello, JavaScript!\";\n"
+	if body != expectedContent {
 		t.Errorf("Expected original JS content, got: %s", body)
 	}
 }
 
 // TestServeTypeScript_RejectsPathTraversal tests that path traversal attacks are blocked
 func TestServeTypeScript_RejectsPathTraversal(t *testing.T) {
-	// Create a parent directory with watch dir as subdirectory
-	parentDir := t.TempDir()
-	watchDir := filepath.Join(parentDir, "project")
-	if err := os.Mkdir(watchDir, 0755); err != nil {
-		t.Fatalf("Failed to create watch dir: %v", err)
-	}
+	// Load path-traversal fixtures:
+	// Fixture structure creates:
+	//   /parent/project/legitimate.ts (inside watch dir)
+	//   /parent/secret.ts (outside watch dir)
+	mfs := testutil.NewFixtureFS(t, "transforms/http-typescript/path-traversal", "/parent")
 
-	// Create legitimate TypeScript in watch directory
-	legitimateTs := filepath.Join(watchDir, "legitimate.ts")
-	if err := os.WriteFile(legitimateTs, []byte("export const x: number = 42;"), 0644); err != nil {
-		t.Fatalf("Failed to write legitimate TS: %v", err)
-	}
-
-	// Create a "sensitive" TypeScript file OUTSIDE watch directory but in parent
-	secretTs := filepath.Join(parentDir, "secret.ts")
-	secretContent := "export const API_KEY: string = 'SECRET123';"
-	if err := os.WriteFile(secretTs, []byte(secretContent), 0644); err != nil {
-		t.Fatalf("Failed to write secret TS: %v", err)
-	}
-
-	server, err := NewServer(0)
+	server, err := NewServerWithConfig(Config{
+		Port:   0,
+		Reload: true,
+		FS:     mfs,
+	})
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
 	defer func() { _ = server.Close() }()
 
-	if err := server.SetWatchDir(watchDir); err != nil {
+	// Set watch dir to /parent/project (only legitimate.ts should be accessible)
+	if err := server.SetWatchDir("/parent/project"); err != nil {
 		t.Fatalf("Failed to set watch dir: %v", err)
 	}
 
