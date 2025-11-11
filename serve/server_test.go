@@ -545,27 +545,27 @@ func TestPortBindingError(t *testing.T) {
 
 // TestImportResolution verifies import map resolution with prefix matching
 func TestImportResolution(t *testing.T) {
-	tmpDir := t.TempDir()
-
-	// Create a package.json with exports that use wildcards
+	// Create in-memory filesystem with package.json
+	mfs := platform.NewMapFileSystem(nil)
 	packageJSON := `{
   "name": "@test/elements",
   "exports": {
     "./*": "./src/*"
   }
 }`
-	err := os.WriteFile(filepath.Join(tmpDir, "package.json"), []byte(packageJSON), 0644)
-	if err != nil {
-		t.Fatalf("Failed to write package.json: %v", err)
-	}
+	mfs.AddFile("/test/package.json", packageJSON, 0644)
 
-	server, err := serve.NewServer(8015)
+	server, err := serve.NewServerWithConfig(serve.Config{
+		Port:   8015,
+		Reload: true,
+		FS:     &mapFSAdapter{MapFileSystem: mfs},
+	})
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
 	defer func() { _ = server.Close() }()
 
-	err = server.SetWatchDir(tmpDir)
+	err = server.SetWatchDir("/test")
 	if err != nil {
 		t.Fatalf("Failed to set watch directory: %v", err)
 	}
