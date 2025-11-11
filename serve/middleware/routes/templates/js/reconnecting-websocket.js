@@ -3,12 +3,7 @@
 export class ReconnectingWebSocket {
   constructor(url, options = {}) {
     this.url = url;
-    this.config = {
-      baseDelay: options.baseDelay || 1000,
-      maxDelay: options.maxDelay || 30000,
-      jitterMax: options.jitterMax || 1000,
-      ...options
-    };
+    this.jitterMax = options.jitterMax ?? 1000;
 
     this.ws = null;
     this.retryCount = 0;
@@ -110,7 +105,7 @@ export class ReconnectingWebSocket {
     }
 
     // Add jitter to avoid thundering herd
-    const jitter = Math.random() * this.config.jitterMax;
+    const jitter = Math.random() * this.jitterMax;
     return delay + jitter;
   }
 

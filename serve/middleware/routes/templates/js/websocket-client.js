@@ -22,8 +22,6 @@ class CemLogsEvent extends Event {
 class CEMReloadClient {
   constructor() {
     this.config = {
-      baseDelay: 1000,
-      maxDelay: 30000,
       jitterMax: 1000,
       overlayThreshold: 15, // Show dialog after 15 attempts (~15 seconds)
       badgeFadeDelay: 2000
@@ -64,8 +62,6 @@ class CEMReloadClient {
     console.log('[cem-serve] Connecting to WebSocket:', url, 'from page:', window.location.pathname);
 
     this.ws = new ReconnectingWebSocket(url, {
-      baseDelay: this.config.baseDelay,
-      maxDelay: this.config.maxDelay,
       jitterMax: this.config.jitterMax
     });
 
