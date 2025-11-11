@@ -18,24 +18,44 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 // Package urlutil provides utility functions for URL path matching and manipulation.
 package urlutil
 
+import (
+	"net/url"
+)
+
 // ContainsPath checks if a full URL contains a path as an exact match or valid prefix.
 // It returns true if:
 // - fullURL exactly equals path, or
 // - fullURL starts with path followed by a valid delimiter ('/', '?', or '#')
+//
+// Both fullURL and path are URL-decoded before comparison to handle
+// cases like "/demo/my%20file.html" matching "/demo/my file.html".
 //
 // This prevents false positive matches like "/elements/button" matching "/elements/buttonly".
 func ContainsPath(fullURL, path string) bool {
 	if len(path) == 0 {
 		return false
 	}
+
+	// Decode both URLs to normalize encoding differences
+	decodedFull, err := url.PathUnescape(fullURL)
+	if err != nil {
+		// If decoding fails, use original string
+		decodedFull = fullURL
+	}
+	decodedPath, err := url.PathUnescape(path)
+	if err != nil {
+		// If decoding fails, use original string
+		decodedPath = path
+	}
+
 	// Exact match
-	if fullURL == path {
+	if decodedFull == decodedPath {
 		return true
 	}
 	// Prefix match only if followed by valid delimiter ('/', '?', or '#')
-	if len(fullURL) > len(path) && fullURL[:len(path)] == path {
+	if len(decodedFull) > len(decodedPath) && decodedFull[:len(decodedPath)] == decodedPath {
 		// Check the character immediately after the path
-		nextChar := fullURL[len(path)]
+		nextChar := decodedFull[len(decodedPath)]
 		if nextChar == '/' || nextChar == '?' || nextChar == '#' {
 			return true
 		}
