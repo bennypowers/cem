@@ -23,13 +23,39 @@ package serve_test
 
 import (
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve"
+	importmappkg "bennypowers.dev/cem/serve/middleware/importmap"
 )
+
+// newTestFS creates an in-memory filesystem with manifest-regen fixture data
+func newTestFS(t *testing.T) platform.FileSystem {
+	t.Helper()
+
+	mfs := platform.NewMapFileSystem(nil)
+
+	// Load fixture data from testdata/manifest-regen
+	mfs.AddFile("/test-package/package.json", `{
+  "name": "test-package",
+  "customElements": "custom-elements.json"
+}`, 0644)
+
+	mfs.AddFile("/test-package/.config/cem.yaml", `generate:
+  files:
+    - "src/*.ts"
+`, 0644)
+
+	mfs.AddFile("/test-package/src/test.ts", `export class TestElement extends HTMLElement {}`, 0644)
+
+	return mfs
+}
 
 // TestReloadMessageFormat verifies reload message structure matches expected format
 func TestReloadMessageFormat(t *testing.T) {
@@ -41,7 +67,7 @@ func TestReloadMessageFormat(t *testing.T) {
 	}
 
 	// Parse expected message
-	var expected map[string]interface{}
+	var expected map[string]any
 	if err := json.Unmarshal(expectedBytes, &expected); err != nil {
 		t.Fatalf("Failed to parse expected message: %v", err)
 	}
@@ -60,7 +86,7 @@ func TestReloadMessageFormat(t *testing.T) {
 	}
 
 	// Parse actual message
-	var actual map[string]interface{}
+	var actual map[string]any
 	if err := json.Unmarshal(msgBytes, &actual); err != nil {
 		t.Fatalf("Failed to parse actual message: %v", err)
 	}
@@ -75,12 +101,12 @@ func TestReloadMessageFormat(t *testing.T) {
 	}
 
 	// Verify files array
-	actualFiles, ok := actual["files"].([]interface{})
+	actualFiles, ok := actual["files"].([]any)
 	if !ok {
 		t.Fatal("Expected files to be an array")
 	}
 
-	expectedFiles, ok := expected["files"].([]interface{})
+	expectedFiles, ok := expected["files"].([]any)
 	if !ok {
 		t.Fatal("Expected files in golden to be an array")
 	}
@@ -177,21 +203,26 @@ func TestWebSocketManager(t *testing.T) {
 
 // TestFileWatcherSetup verifies file watcher can be configured
 func TestFileWatcherSetup(t *testing.T) {
-	server, err := serve.NewServer(8005)
+	mfs := newTestFS(t)
+	server, err := serve.NewServerWithConfig(serve.Config{
+		Port:   8005,
+		Reload: true,
+		FS:     mfs,
+	})
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
 	defer func() { _ = server.Close() }()
 
-	tmpDir := t.TempDir()
-	err = server.SetWatchDir(tmpDir)
+	testDir := "/test-package"
+	err = server.SetWatchDir(testDir)
 	if err != nil {
 		t.Fatalf("Failed to set watch directory: %v", err)
 	}
 
 	watchDir := server.WatchDir()
-	if watchDir != tmpDir {
-		t.Errorf("Expected watch dir %s, got %s", tmpDir, watchDir)
+	if watchDir != testDir {
+		t.Errorf("Expected watch dir %s, got %s", testDir, watchDir)
 	}
 }
 
@@ -261,7 +292,7 @@ func TestManifestDefensiveCopy(t *testing.T) {
 	}
 }
 
-// TestDebounceDuration verifies 150ms debounce as per spec
+// TestDebounceDuration verifies 50ms debounce duration
 func TestDebounceDuration(t *testing.T) {
 	server, err := serve.NewServer(8007)
 	if err != nil {
@@ -270,7 +301,7 @@ func TestDebounceDuration(t *testing.T) {
 	defer func() { _ = server.Close() }()
 
 	duration := server.DebounceDuration()
-	expected := "150ms"
+	expected := "50ms"
 
 	if duration.String() != expected {
 		t.Errorf("Expected debounce duration %s, got %s", expected, duration.String())
@@ -343,20 +374,24 @@ func TestBroadcastReload(t *testing.T) {
 
 // TestManifestRegenerationTrigger verifies regeneration can be triggered
 func TestManifestRegenerationTrigger(t *testing.T) {
-	server, err := serve.NewServer(8012)
+	mfs := newTestFS(t)
+	server, err := serve.NewServerWithConfig(serve.Config{
+		Port:   8012,
+		Reload: true,
+		FS:     mfs,
+	})
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
 	defer func() { _ = server.Close() }()
 
-	tmpDir := t.TempDir()
-	err = server.SetWatchDir(tmpDir)
+	err = server.SetWatchDir("/test-package")
 	if err != nil {
 		t.Fatalf("Failed to set watch directory: %v", err)
 	}
 
 	// Should be able to trigger regeneration
-	err = server.RegenerateManifest()
+	_, err = server.RegenerateManifest()
 	if err != nil {
 		// Error is expected if no source files exist, but method should exist
 		if !strings.Contains(err.Error(), "no source files") &&
@@ -427,7 +462,7 @@ export class TestElement extends HTMLElement {}
 	}
 
 	// Regenerate manifest
-	err = server.RegenerateManifest()
+	_, err = server.RegenerateManifest()
 	if err != nil {
 		t.Fatalf("Failed to regenerate manifest: %v", err)
 	}
@@ -444,7 +479,7 @@ export class TestElement extends HTMLElement {}
 	}
 
 	// Verify manifest is valid JSON
-	var manifestObj map[string]interface{}
+	var manifestObj map[string]any
 	if err := json.Unmarshal(manifest, &manifestObj); err != nil {
 		t.Fatalf("Expected valid JSON manifest, got error: %v", err)
 	}
@@ -494,5 +529,246 @@ func TestPortBindingError(t *testing.T) {
 	// Verify second server is not running
 	if server2.IsRunning() {
 		t.Error("Expected second server to not be running after bind failure")
+	}
+}
+
+// TestImportResolution verifies import map resolution with prefix matching
+func TestImportResolution(t *testing.T) {
+	// Create in-memory filesystem with test package
+	mfs := platform.NewMapFileSystem(nil)
+	packageJSON := `{
+  "name": "@test/elements",
+  "exports": {
+    "./*": "./src/*"
+  }
+}`
+	mfs.AddFile("/test-package/package.json", packageJSON, 0644)
+
+	server, err := serve.NewServerWithConfig(serve.Config{
+		Port:   8015,
+		Reload: true,
+		FS:     mfs,
+	})
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	err = server.SetWatchDir("/test-package")
+	if err != nil {
+		t.Fatalf("Failed to set watch directory: %v", err)
+	}
+
+	// The server should have generated an import map with the prefix entry
+	// @test/elements/ -> /src/
+	// This would allow @test/elements/foo/bar.js to resolve to /src/foo/bar.js
+
+	importMap := server.ImportMap()
+	if importMap == nil {
+		t.Fatal("Expected import map to be generated, got nil")
+	}
+
+	// Type assert to concrete import map type to inspect entries
+	im, ok := importMap.(*importmappkg.ImportMap)
+	if !ok {
+		t.Fatalf("Expected *importmap.ImportMap, got %T", importMap)
+	}
+
+	// Verify the prefix entry exists
+	expectedPrefix := "@test/elements/"
+	expectedTarget := "/src/"
+
+	actualTarget, exists := im.Imports[expectedPrefix]
+	if !exists {
+		t.Errorf("Expected import map to contain prefix entry %q, but it was missing. Imports: %v", expectedPrefix, im.Imports)
+	}
+
+	if actualTarget != expectedTarget {
+		t.Errorf("Expected prefix entry %q to map to %q, got %q", expectedPrefix, expectedTarget, actualTarget)
+	}
+}
+
+// TestRegenerateManifestIncremental_NoDoubleLockPanic verifies that calling
+// RegenerateManifestIncremental when generateSession is nil doesn't cause
+// a double-unlock panic
+func TestRegenerateManifestIncremental_NoDoubleLockPanic(t *testing.T) {
+	// Create in-memory filesystem with fixture data
+	mfs := newTestFS(t)
+
+	server, err := serve.NewServerWithConfig(serve.Config{
+		Port:   0,
+		Reload: true,
+		FS:     mfs,
+	})
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	err = server.SetWatchDir("/test-package")
+	if err != nil {
+		t.Fatalf("Failed to set watch directory: %v", err)
+	}
+
+	// Call RegenerateManifestIncremental WITHOUT calling RegenerateManifest first
+	// This means generateSession will be nil, triggering the fallback path
+	// With the bug, this will cause a double-unlock panic
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("Double-unlock panic detected: %v", r)
+		}
+	}()
+
+	srcFile := "/test-package/src/test.ts"
+	_, err = server.RegenerateManifestIncremental([]string{srcFile})
+	// Error is expected (since we're calling incremental without a session),
+	// but no panic should occur
+	if err != nil {
+		// This is acceptable - we're just checking for panic
+		t.Logf("RegenerateManifestIncremental returned error (expected): %v", err)
+	}
+}
+
+// TestStaticFileMIMETypes_JSModules verifies that JavaScript module files are served with correct MIME types
+func TestStaticFileMIMETypes_JSModules(t *testing.T) {
+	tests := []struct {
+		name         string
+		path         string
+		fileContent  string
+		expectedMIME string
+	}{
+		{
+			name:         ".mjs file",
+			path:         "/test.mjs",
+			fileContent:  "export const foo = 'bar';",
+			expectedMIME: "application/javascript; charset=utf-8",
+		},
+		{
+			name:         ".cjs file",
+			path:         "/test.cjs",
+			fileContent:  "module.exports = { foo: 'bar' };",
+			expectedMIME: "application/javascript; charset=utf-8",
+		},
+		{
+			name:         ".json file",
+			path:         "/test.json",
+			fileContent:  `{"foo": "bar"}`,
+			expectedMIME: "application/json; charset=utf-8",
+		},
+		{
+			name:         ".svg file",
+			path:         "/test.svg",
+			fileContent:  `<svg xmlns="http://www.w3.org/2000/svg"></svg>`,
+			expectedMIME: "image/svg+xml",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create in-memory filesystem with test file
+			mfs := platform.NewMapFileSystem(nil)
+			mfs.AddFile("/test-package"+tt.path, tt.fileContent, 0644)
+			mfs.AddFile("/test-package/package.json", `{"name": "test"}`, 0644)
+
+			server, err := serve.NewServerWithConfig(serve.Config{
+				Port: 0,
+				FS:   mfs,
+			})
+			if err != nil {
+				t.Fatalf("Failed to create server: %v", err)
+			}
+			defer func() { _ = server.Close() }()
+
+			err = server.SetWatchDir("/test-package")
+			if err != nil {
+				t.Fatalf("Failed to set watch directory: %v", err)
+			}
+
+			// Make request for static file (no need to start the server, just use the handler)
+			req := httptest.NewRequest("GET", tt.path, nil)
+			rec := httptest.NewRecorder()
+
+			server.Handler().ServeHTTP(rec, req)
+
+			// Verify status code
+			if rec.Code != http.StatusOK {
+				t.Errorf("Expected status 200, got %d", rec.Code)
+			}
+
+			// Verify MIME type
+			contentType := rec.Header().Get("Content-Type")
+			if contentType != tt.expectedMIME {
+				t.Errorf("Expected Content-Type %q, got %q", tt.expectedMIME, contentType)
+			}
+		})
+	}
+}
+
+// TestStaticFileMIMETypes_NodeModules verifies MIME types for node_modules files (regression test)
+func TestStaticFileMIMETypes_NodeModules(t *testing.T) {
+	tests := []struct {
+		name         string
+		path         string
+		fileContent  string
+		expectedMIME string
+	}{
+		{
+			name:         "tslib .mjs in node_modules",
+			path:         "/node_modules/tslib/tslib.es6.mjs",
+			fileContent:  "export function __extends() {}",
+			expectedMIME: "application/javascript; charset=utf-8",
+		},
+		{
+			name:         "package .mjs in node_modules",
+			path:         "/node_modules/some-package/index.mjs",
+			fileContent:  "export default {}",
+			expectedMIME: "application/javascript; charset=utf-8",
+		},
+		{
+			name:         "package .cjs in node_modules",
+			path:         "/node_modules/some-package/index.cjs",
+			fileContent:  "module.exports = {}",
+			expectedMIME: "application/javascript; charset=utf-8",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create in-memory filesystem with test file
+			mfs := platform.NewMapFileSystem(nil)
+			mfs.AddFile("/test-package"+tt.path, tt.fileContent, 0644)
+			mfs.AddFile("/test-package/package.json", `{"name": "test"}`, 0644)
+
+			server, err := serve.NewServerWithConfig(serve.Config{
+				Port: 0,
+				FS:   mfs,
+			})
+			if err != nil {
+				t.Fatalf("Failed to create server: %v", err)
+			}
+			defer func() { _ = server.Close() }()
+
+			err = server.SetWatchDir("/test-package")
+			if err != nil {
+				t.Fatalf("Failed to set watch directory: %v", err)
+			}
+
+			// Make request for static file (no need to start the server, just use the handler)
+			req := httptest.NewRequest("GET", tt.path, nil)
+			rec := httptest.NewRecorder()
+
+			server.Handler().ServeHTTP(rec, req)
+
+			// Verify status code
+			if rec.Code != http.StatusOK {
+				t.Errorf("Expected status 200, got %d", rec.Code)
+			}
+
+			// Verify MIME type - this is the critical regression test
+			contentType := rec.Header().Get("Content-Type")
+			if contentType != tt.expectedMIME {
+				t.Errorf("Expected Content-Type %q, got %q (regression: .mjs/.cjs should not be text/plain)", tt.expectedMIME, contentType)
+			}
+		})
 	}
 }

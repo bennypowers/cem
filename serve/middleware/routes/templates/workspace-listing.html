@@ -1,0 +1,18 @@
+<cem-serve-listing>
+  <div class="listing-grid">
+    {{range .Elements}}
+    <section class="element-section">
+      <h2 class="element-title"><code>&lt;{{.TagName}}&gt;</code></h2>
+      <ul class="demo-list">
+        {{range .Demos}}
+        <li>
+          <a href="{{.URL}}" class="demo-link">
+            {{.Name}}{{if .PackageName}} <span class="package-name">({{.PackageName}})</span>{{end}}
+          </a>
+        </li>
+        {{end}}
+      </ul>
+    </section>
+    {{end}}
+  </div>
+</cem-serve-listing>

@@ -60,7 +60,7 @@ func TestFileWatcher_SourceFileChange(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// Connect WebSocket to receive reload events
-	wsClient := testutil.NewWebSocketTestClient(t, "ws://localhost:9100/__cem-reload")
+	wsClient := testutil.NewWebSocketTestClient(t, "ws://localhost:9100/__cem/reload")
 
 	// Modify the file
 	time.Sleep(200 * time.Millisecond) // Let watcher initialize
@@ -104,7 +104,7 @@ func TestFileWatcher_Debouncing(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	wsClient := testutil.NewWebSocketTestClient(t, "ws://localhost:9101/__cem-reload")
+	wsClient := testutil.NewWebSocketTestClient(t, "ws://localhost:9101/__cem/reload")
 
 	time.Sleep(200 * time.Millisecond) // Let watcher initialize
 
@@ -152,7 +152,7 @@ func TestFileWatcher_MultipleFileTypes(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	wsClient := testutil.NewWebSocketTestClient(t, "ws://localhost:9102/__cem-reload")
+	wsClient := testutil.NewWebSocketTestClient(t, "ws://localhost:9102/__cem/reload")
 
 	time.Sleep(200 * time.Millisecond)
 

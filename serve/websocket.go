@@ -19,8 +19,10 @@ package serve
 
 import (
 	"net/http"
+	"net/url"
 	"sync"
 
+	"bennypowers.dev/cem/serve/internal/urlutil"
 	"github.com/gorilla/websocket"
 )
 
@@ -34,8 +36,9 @@ var upgrader = websocket.Upgrader{
 
 // connWrapper wraps a WebSocket connection with a write mutex
 type connWrapper struct {
-	conn *websocket.Conn
-	mu   sync.Mutex
+	conn    *websocket.Conn
+	mu      sync.Mutex
+	pageURL string // The demo page URL this connection is viewing
 }
 
 // websocketManager implements WebSocketManager interface
@@ -101,6 +104,48 @@ func (wm *websocketManager) BroadcastShutdown() error {
 	return wm.Broadcast(shutdownMsg)
 }
 
+// BroadcastToPages sends a message only to clients viewing specific page URLs
+// pageURLs can contain partial matches (e.g., "/elements/accordion/demo/" will match all accordion demos)
+func (wm *websocketManager) BroadcastToPages(message []byte, pageURLs []string) error {
+	if len(pageURLs) == 0 {
+		return nil
+	}
+
+	// Snapshot connections while holding read lock
+	wm.mu.RLock()
+
+	snapshot := make([]*connWrapper, 0, len(wm.connections))
+	for _, wrapper := range wm.connections {
+		// Check if this connection's page matches any of the target URLs
+		for _, targetURL := range pageURLs {
+			if wrapper.pageURL == targetURL || urlutil.ContainsPath(wrapper.pageURL, targetURL) {
+				snapshot = append(snapshot, wrapper)
+				break
+			}
+		}
+	}
+	wm.mu.RUnlock()
+
+	// Write to matched connections without holding manager lock
+	for _, wrapper := range snapshot {
+		wrapper.mu.Lock()
+		err := wrapper.conn.WriteMessage(websocket.TextMessage, message)
+		wrapper.mu.Unlock()
+
+		if err != nil {
+			if wm.logger != nil {
+				wm.logger.Error("Failed to send WebSocket message: %v", err)
+			}
+		}
+	}
+
+	if wm.logger != nil && len(snapshot) > 0 {
+		wm.logger.Debug("Broadcast to %d/%d connections (targeted pages)", len(snapshot), wm.ConnectionCount())
+	}
+
+	return nil
+}
+
 // HandleConnection handles a new WebSocket connection
 func (wm *websocketManager) HandleConnection(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -111,15 +156,49 @@ func (wm *websocketManager) HandleConnection(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	// Extract page URL from query parameter (preferred) or Referer header (fallback)
+	// Browsers don't send Referer header for WebSocket connections, so client passes it as ?page=...
+	pageURL := r.URL.Query().Get("page")
+	// Fallback to Referer header if query param not present
+	if pageURL == "" {
+		referer := r.Header.Get("Referer")
+		if referer != "" {
+			// Parse the Referer URL to extract just the path
+			// Referer will be something like "http://localhost:8000/elements/accordion/demo/"
+			// We need to extract just "/elements/accordion/demo/"
+			if parsedURL, err := url.Parse(referer); err == nil {
+				pageURL = parsedURL.Path
+				if wm.logger != nil {
+					wm.logger.Info("Parsed Referer to path: %s", pageURL)
+				}
+			} else {
+				if wm.logger != nil {
+					wm.logger.Warning("Failed to parse Referer URL: %v", err)
+				}
+			}
+		}
+	}
+
+	// Last resort: use request URL path
+	if pageURL == "" {
+		pageURL = r.URL.Path
+		if wm.logger != nil {
+			wm.logger.Warning("No page URL from query or Referer, using request path: %s", pageURL)
+		}
+	}
+
 	// Register connection with wrapper
-	wrapper := &connWrapper{conn: conn}
+	wrapper := &connWrapper{
+		conn:    conn,
+		pageURL: pageURL,
+	}
 	wm.mu.Lock()
 	wm.connections[conn] = wrapper
 	count := len(wm.connections)
 	wm.mu.Unlock()
 
 	if wm.logger != nil {
-		wm.logger.Debug("WebSocket client connected (total: %d)", count)
+		wm.logger.Debug("WebSocket client connected from %s (total: %d)", pageURL, count)
 	}
 
 	// Handle disconnection

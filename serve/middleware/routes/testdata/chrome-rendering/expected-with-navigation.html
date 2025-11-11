@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1e293b" media="(prefers-color-scheme: dark)">
+  <title>test-package - demo-subset-one</title>
+  <link rel="icon" href="/__cem/logo.svg" type="image/svg+xml">
+  
+  <script type="importmap">
+{}
+  </script>
+  
+  <script type="module" src="/__cem/websocket-client.js"></script>
+  <script type="module" src="/__cem/serve-chrome.js"></script>
+  <style>/* Enable cross-document view transitions for same-origin navigation */
+@view-transition {
+  navigation: auto;
+}
+
+/* Debug: verify view transitions are active */
+html::view-transition-group(*) {
+  animation-duration: 0.3s;
+}
+
+html::view-transition-old(*) {
+  animation: 90ms cubic-bezier(0.4, 0, 1, 1) both fade-out;
+}
+
+html::view-transition-new(*) {
+  animation: 210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+}
+
+@keyframes fade-out {
+  to { opacity: 0; }
+}
+
+:root {
+  /* Base colors using light-dark() */
+  --cem-dev-server-bg-primary: light-dark(#ffffff, #0f172a);
+  --cem-dev-server-bg-secondary: light-dark(#f8fafc, #1e293b);
+  --cem-dev-server-bg-tertiary: light-dark(#f1f5f9, #334155);
+
+  --cem-dev-server-text-primary: light-dark(#0f172a, #e2e8f0);
+  --cem-dev-server-text-secondary: light-dark(#475569, #94a3b8);
+  --cem-dev-server-text-muted: light-dark(#64748b, #64748b);
+
+  --cem-dev-server-border-color: light-dark(#e2e8f0, #334155);
+  --cem-dev-server-accent-color: light-dark(#3b82f6, #60a5fa);
+  --cem-dev-server-accent-hover: light-dark(#2563eb, #93bbfd);
+
+  /* Component-specific */
+  --cem-dev-server-header-height: 56px;
+  --cem-dev-server-sidebar-width: 280px;
+  --cem-dev-server-knobs-width: 320px;
+
+  /* Spacing */
+  --cem-dev-server-spacing-xs: 0.25rem;
+  --cem-dev-server-spacing-sm: 0.5rem;
+  --cem-dev-server-spacing-md: 1rem;
+  --cem-dev-server-spacing-lg: 1.5rem;
+  --cem-dev-server-spacing-xl: 2rem;
+
+  /* Typography */
+  --cem-dev-server-font-family: system-ui, -apple-system, sans-serif;
+  --cem-dev-server-font-family-mono: 'Courier New', monospace;
+  --cem-dev-server-font-size-sm: 0.875rem;
+  --cem-dev-server-font-size-base: 1rem;
+  --cem-dev-server-font-size-lg: 1.125rem;
+
+  /* Borders */
+  --cem-dev-server-border-radius: 6px;
+  --cem-dev-server-border-width: 1px;
+}
+
+html {
+  background: var(--cem-dev-server-bg-secondary);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--cem-dev-server-font-family);
+  background: var(--cem-dev-server-bg-primary);
+  color: var(--cem-dev-server-text-primary);
+  color-scheme: light dark;
+}
+
+/* View Transition: Make chrome appear persistent, fade content */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 150ms;
+}
+
+::view-transition-old(dev-server-header),
+::view-transition-new(dev-server-header),
+::view-transition-old(dev-server-footer),
+::view-transition-new(dev-server-footer),
+::view-transition-old(dev-server-drawer),
+::view-transition-new(dev-server-drawer),
+::view-transition-old(dev-server-knobs),
+::view-transition-new(dev-server-knobs) {
+  animation-duration: 0s;
+}
+
+/* Listing component styles (light DOM) */
+cem-serve-listing {
+  display: block;
+
+  .listing-grid {
+    display: grid;
+    gap: var(--cem-dev-server-spacing-lg);
+  }
+
+  .element-section {
+    background: var(--cem-dev-server-bg-secondary);
+    border: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
+    border-radius: var(--cem-dev-server-border-radius);
+    padding: var(--cem-dev-server-spacing-lg);
+  }
+
+  .element-title {
+    margin: 0 0 var(--cem-dev-server-spacing-md) 0;
+    color: var(--cem-dev-server-accent-color);
+    font-size: var(--cem-dev-server-font-size-lg);
+  }
+
+  .demo-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: var(--cem-dev-server-spacing-sm);
+  }
+
+  .demo-link {
+    color: var(--cem-dev-server-text-primary);
+    text-decoration: none;
+    padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);
+    background: var(--cem-dev-server-bg-tertiary);
+    border-radius: var(--cem-dev-server-border-radius);
+    display: block;
+    transition: background 0.2s, color 0.2s;
+
+    &:hover {
+      background: var(--cem-dev-server-accent-color);
+      color: white;
+
+      .package-name {
+        color: rgba(255, 255, 255, 0.8);
+      }
+    }
+
+    .package-name {
+      color: var(--cem-dev-server-text-secondary);
+      font-size: var(--cem-dev-server-font-size-sm);
+    }
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: var(--cem-dev-server-spacing-xl);
+    color: var(--cem-dev-server-text-secondary);
+
+    p {
+      margin: var(--cem-dev-server-spacing-sm) 0;
+    }
+
+    .help-text {
+      font-size: var(--cem-dev-server-font-size-sm);
+    }
+  }
+}
+</style>
+</head>
+<body>
+  <cem-serve-chrome role="none"
+                    knobs="attributes properties"
+                    tag-name="demo-subset-one">
+    <template shadowrootmode="open">
+      <style>:host {
+  display: block;
+  min-height: 100vh;
+}
+
+header {
+  view-transition-name: dev-server-header;
+  position: sticky;
+  top: 0;
+  height: var(--cem-dev-server-header-height);
+  background: var(--cem-dev-server-bg-secondary);
+  border-bottom: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--cem-dev-server-spacing-lg);
+  gap: var(--cem-dev-server-spacing-md);
+  z-index: 100;
+}
+
+header ::slotted([slot="title"]) {
+  margin: 0;
+  font-size: var(--cem-dev-server-font-size-lg);
+  font-weight: 600;
+  color: var(--cem-dev-server-accent-color);
+  flex: 1;
+}
+
+nav {
+  display: flex;
+  gap: var(--cem-dev-server-spacing-sm);
+
+  a {
+    color: var(--cem-dev-server-text-secondary);
+    text-decoration: none;
+    padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);
+    border-radius: var(--cem-dev-server-border-radius);
+    font-size: var(--cem-dev-server-font-size-sm);
+    transition: background 0.2s, color 0.2s;
+
+    &:hover {
+      background: var(--cem-dev-server-bg-tertiary);
+      color: var(--cem-dev-server-text-primary);
+    }
+
+    &[aria-current="page"] {
+      background: var(--cem-dev-server-accent-color);
+      color: white;
+    }
+  }
+}
+
+.source-link {
+  color: var(--cem-dev-server-text-secondary);
+  text-decoration: none;
+  padding: var(--cem-dev-server-spacing-sm);
+  border-radius: var(--cem-dev-server-border-radius);
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+
+  &:hover {
+    color: var(--cem-dev-server-accent-color);
+  }
+}
+
+.debug-button {
+  background: none;
+  border: none;
+  color: var(--cem-dev-server-text-secondary);
+  padding: var(--cem-dev-server-spacing-sm);
+  border-radius: var(--cem-dev-server-border-radius);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s, background 0.2s;
+
+  &:hover {
+    color: var(--cem-dev-server-accent-color);
+    background: var(--cem-dev-server-bg-tertiary);
+  }
+}
+
+.debug-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+
+  &[open] {
+    display: flex;
+  }
+}
+
+.debug-panel {
+  background: var(--cem-dev-server-bg-primary);
+  border: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
+  border-radius: var(--cem-dev-server-border-radius);
+  padding: var(--cem-dev-server-spacing-lg);
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+
+  h2 {
+    margin: 0 0 var(--cem-dev-server-spacing-md) 0;
+    color: var(--cem-dev-server-accent-color);
+  }
+
+  dl {
+    margin: 0;
+  }
+
+  dt {
+    color: var(--cem-dev-server-text-secondary);
+    font-size: var(--cem-dev-server-font-size-sm);
+    margin-top: var(--cem-dev-server-spacing-sm);
+  }
+
+  dd {
+    margin: 0 0 var(--cem-dev-server-spacing-sm) 0;
+    font-family: var(--cem-dev-server-font-family-mono);
+    font-size: var(--cem-dev-server-font-size-sm);
+  }
+
+  details {
+    margin-top: var(--cem-dev-server-spacing-md);
+
+    summary {
+      cursor: pointer;
+      color: var(--cem-dev-server-text-secondary);
+      font-size: var(--cem-dev-server-font-size-sm);
+    }
+
+    pre {
+      margin-top: var(--cem-dev-server-spacing-sm);
+      padding: var(--cem-dev-server-spacing-sm);
+      background: var(--cem-dev-server-bg-tertiary);
+      border-radius: var(--cem-dev-server-border-radius);
+      font-size: var(--cem-dev-server-font-size-sm);
+      overflow-x: auto;
+    }
+  }
+
+  .button-container {
+    display: flex;
+    gap: var(--cem-dev-server-spacing-sm);
+    margin-top: var(--cem-dev-server-spacing-md);
+  }
+
+  p {
+    color: var(--cem-dev-server-text-muted);
+    font-size: var(--cem-dev-server-font-size-sm);
+  }
+
+  button {
+    margin-top: var(--cem-dev-server-spacing-md);
+    padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);
+    background: var(--cem-dev-server-accent-color);
+    color: white;
+    border: none;
+    border-radius: var(--cem-dev-server-border-radius);
+    cursor: pointer;
+  }
+}
+
+.layout {
+  display: flex;
+  min-height: calc(100vh - var(--cem-dev-server-header-height));
+}
+
+aside#knobs {
+  view-transition-name: dev-server-knobs;
+  width: var(--cem-dev-server-knobs-width);
+  background: var(--cem-dev-server-bg-secondary);
+  border-right: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
+  padding: var(--cem-dev-server-spacing-lg);
+  overflow-y: auto;
+
+  p {
+    color: var(--cem-dev-server-text-muted);
+    font-size: var(--cem-dev-server-font-size-sm);
+  }
+}
+
+main {
+  flex: 1;
+  padding: var(--cem-dev-server-spacing-xl);
+  overflow: auto;
+}
+
+footer {
+  view-transition-name: dev-server-footer;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--cem-dev-server-bg-secondary);
+  border-top: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
+  z-index: 50;
+}
+
+.footer-description {
+  padding: var(--cem-dev-server-spacing-lg);
+
+  &.empty {
+    display: none;
+  }
+}
+
+footer ::slotted([slot="description"]) {
+  margin: 0;
+  color: var(--cem-dev-server-text-secondary);
+  line-height: 1.6;
+
+  code {
+    background: var(--cem-dev-server-bg-tertiary);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: var(--cem-dev-server-font-family-mono);
+    font-size: var(--cem-dev-server-font-size-sm);
+  }
+}
+
+.drawer-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--cem-dev-server-spacing-sm);
+  background: none;
+  border: none;
+  color: var(--cem-dev-server-text-secondary);
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s;
+
+  &:hover {
+    background: var(--cem-dev-server-bg-tertiary);
+  }
+}
+
+.drawer-content {
+  view-transition-name: dev-server-drawer;
+  max-height: 0;
+  overflow: hidden;
+
+  &[open] {
+    max-height: 400px;
+  }
+
+  &.transitions-enabled {
+    transition: max-height 0.3s ease;
+  }
+}
+
+.tabs {
+  display: flex;
+  gap: var(--cem-dev-server-spacing-sm);
+  padding: var(--cem-dev-server-spacing-md);
+  border-bottom: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
+}
+
+.tab {
+  background: none;
+  border: none;
+  color: var(--cem-dev-server-text-secondary);
+  padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);
+  border-radius: var(--cem-dev-server-border-radius);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+
+  &:hover {
+    background: var(--cem-dev-server-bg-tertiary);
+  }
+
+  &[aria-selected="true"] {
+    background: var(--cem-dev-server-accent-color);
+    color: white;
+  }
+}
+
+.tab-panel {
+  display: none;
+  padding: var(--cem-dev-server-spacing-md);
+  height: 300px;
+  overflow-y: auto;
+
+  &[active] {
+    display: block;
+  }
+}
+
+.log-entry {
+  font-family: var(--cem-dev-server-font-family-mono);
+  font-size: var(--cem-dev-server-font-size-sm);
+  padding: var(--cem-dev-server-spacing-xs) var(--cem-dev-server-spacing-md);
+  display: flex;
+  gap: var(--cem-dev-server-spacing-sm);
+  align-items: baseline;
+}
+
+.log-badge {
+  font-weight: 600;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+
+  &.info {
+    background: #3b82f6;
+    color: white;
+  }
+
+  &.warning {
+    background: #f59e0b;
+    color: white;
+  }
+
+  &.error {
+    background: #ef4444;
+    color: white;
+  }
+
+  &.debug {
+    background: #6b7280;
+    color: white;
+  }
+}
+
+.log-time {
+  color: var(--cem-dev-server-text-muted);
+  flex-shrink: 0;
+  font-size: 11px;
+}
+
+.log-message {
+  color: var(--cem-dev-server-text-primary);
+  word-break: break-word;
+}
+
+/* Navigation drawer */
+.nav-drawer-toggle {
+  background: none;
+  border: none;
+  color: var(--cem-dev-server-text-secondary);
+  padding: var(--cem-dev-server-spacing-sm);
+  border-radius: var(--cem-dev-server-border-radius);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s, background 0.2s;
+  margin-inline-end: var(--cem-dev-server-spacing-md);
+
+  &:hover {
+    color: var(--cem-dev-server-accent-color);
+    background: var(--cem-dev-server-bg-tertiary);
+  }
+}
+
+.nav-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 99;
+}
+
+.nav-drawer {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: min(320px, 80vw);
+  background: var(--cem-dev-server-bg-primary);
+  border-inline-end: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.nav-drawer[open] {
+  transform: translateX(0);
+}
+
+.nav-drawer[open] ~ .nav-drawer-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.nav-drawer-header {
+  display: flex;
+  align-items: center;
+  gap: var(--cem-dev-server-spacing-md);
+  height: var(--cem-dev-server-header-height);
+  padding: 0 var(--cem-dev-server-spacing-lg);
+  border-bottom: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
+
+  h2 {
+    margin: 0;
+    font-size: var(--cem-dev-server-font-size-lg);
+    color: var(--cem-dev-server-accent-color);
+  }
+}
+
+.nav-drawer-close {
+  background: none;
+  border: none;
+  color: var(--cem-dev-server-text-secondary);
+  padding: var(--cem-dev-server-spacing-sm);
+  border-radius: var(--cem-dev-server-border-radius);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s, background 0.2s;
+
+  &:hover {
+    color: var(--cem-dev-server-accent-color);
+    background: var(--cem-dev-server-bg-tertiary);
+  }
+}
+
+.nav-drawer-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--cem-dev-server-spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--cem-dev-server-spacing-sm);
+
+  /* Single-package mode: hide package disclosure level */
+  &.single-package {
+    .nav-package {
+      & > summary {
+        display: none;
+      }
+
+      /* Remove extra margin/padding from flattened structure */
+      margin: 0;
+      padding: 0;
+    }
+
+    .nav-element {
+      /* No extra indent in single-package mode */
+      margin-inline-start: 0;
+    }
+  }
+}
+
+.nav-package {
+  margin-bottom: var(--cem-dev-server-spacing-md);
+
+  & > summary {
+    cursor: pointer;
+    padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);
+    background: var(--cem-dev-server-bg-secondary);
+    border-radius: var(--cem-dev-server-border-radius);
+    color: var(--cem-dev-server-accent-color);
+    font-weight: 600;
+    font-size: var(--cem-dev-server-font-size-base);
+    list-style: none;
+    transition: background 0.2s;
+    margin-bottom: var(--cem-dev-server-spacing-sm);
+
+    &:hover {
+      background: var(--cem-dev-server-bg-tertiary);
+    }
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &::before {
+      content: '▸';
+      display: inline-block;
+      margin-inline-end: var(--cem-dev-server-spacing-sm);
+      transition: transform 0.2s;
+    }
+  }
+
+  &[open] > summary::before {
+    transform: rotate(90deg);
+  }
+}
+
+.nav-element {
+  margin-bottom: var(--cem-dev-server-spacing-sm);
+  margin-inline-start: var(--cem-dev-server-spacing-md);
+
+  summary {
+    cursor: pointer;
+    padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);
+    background: var(--cem-dev-server-bg-secondary);
+    border-radius: var(--cem-dev-server-border-radius);
+    color: var(--cem-dev-server-accent-color);
+    font-family: var(--cem-dev-server-font-family-mono);
+    font-size: var(--cem-dev-server-font-size-sm);
+    list-style: none;
+    transition: background 0.2s;
+
+    &:hover {
+      background: var(--cem-dev-server-bg-tertiary);
+    }
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &::before {
+      content: '▸';
+      display: inline-block;
+      margin-inline-end: var(--cem-dev-server-spacing-sm);
+      transition: transform 0.2s;
+    }
+  }
+
+  &[open] summary::before {
+    transform: rotate(90deg);
+  }
+}
+
+.nav-element-title {
+  user-select: none;
+}
+
+.nav-demo-list {
+  list-style: none;
+  padding: 0;
+  margin: var(--cem-dev-server-spacing-sm) 0 0 0;
+  display: grid;
+  gap: var(--cem-dev-server-spacing-xs);
+}
+
+.nav-demo-link {
+  color: var(--cem-dev-server-text-primary);
+  text-decoration: none;
+  padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);
+  padding-inline-start: calc(var(--cem-dev-server-spacing-md) * 2);
+  background: var(--cem-dev-server-bg-tertiary);
+  border-radius: var(--cem-dev-server-border-radius);
+  display: block;
+  font-size: var(--cem-dev-server-font-size-sm);
+  transition: background 0.2s, color 0.2s;
+
+  &:hover {
+    background: var(--cem-dev-server-accent-color);
+    color: white;
+
+    .nav-package-name {
+      color: rgba(255, 255, 255, 0.8);
+    }
+  }
+
+  &[aria-current="page"] {
+    background: var(--cem-dev-server-accent-color);
+    color: white;
+
+    .nav-package-name {
+      color: rgba(255, 255, 255, 0.8);
+    }
+  }
+}
+
+.nav-package-name {
+  color: var(--cem-dev-server-text-secondary);
+  font-size: var(--cem-dev-server-font-size-sm);
+}
+</style>
+
+      <header>
+        
+        <button class="nav-drawer-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-drawer">
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+            <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+          </svg>
+        </button>
+        
+        <slot name="title"></slot>
+        <nav>
+          
+        </nav>
+        
+        
+        <button class="debug-button"
+                aria-label="Debug info"
+                title="Debug info">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+            <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+          </svg>
+        </button>
+      </header>
+
+      <div class="debug-overlay">
+        <div class="debug-panel">
+          <h2>Debug Information</h2>
+          <dl>
+            <dt>Server Version</dt>
+            <dd id="debug-version">-</dd>
+            <dt>Server OS</dt>
+            <dd id="debug-os">-</dd>
+            <dt>Watch Directory</dt>
+            <dd id="debug-watch-dir">-</dd>
+            <dt>Manifest Size</dt>
+            <dd id="debug-manifest-size">-</dd>
+            <dt>Demos Found</dt>
+            <dd id="debug-demo-count">-</dd>
+            <dt>Tag Name</dt>
+            <dd>demo-subset-one</dd>
+            <dt>Demo Title</dt>
+            <dd>Demo with Navigation</dd>
+            <dt>Browser</dt>
+            <dd id="debug-browser">-</dd>
+            <dt>User Agent</dt>
+            <dd id="debug-ua">-</dd>
+          </dl>
+          <details id="debug-demos-details">
+            <summary>Show Demo URLs from Manifest</summary>
+            <pre id="debug-demos-list">-</pre>
+          </details>
+          <details id="debug-importmap-details">
+            <summary>Show Import Map</summary>
+            <pre id="debug-importmap">-</pre>
+          </details>
+          <div class="button-container">
+            <button class="debug-copy">Copy Debug Info</button>
+            <button class="debug-close">Close</button>
+          </div>
+        </div>
+      </div>
+
+      
+      <aside id="nav-drawer" class="nav-drawer" aria-label="Component navigation" aria-hidden="true">
+        <div class="nav-drawer-header">
+          <button class="nav-drawer-close" aria-label="Close navigation">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+            </svg>
+          </button>
+          <h2>Components</h2>
+        </div>
+        <nav class="nav-drawer-content single-package"
+     aria-label="Component navigation">
+  
+  <details class="nav-package" open>
+    <summary class="nav-package-title">test-package</summary>
+    
+    <details class="nav-element">
+      <summary class="nav-element-title"><code>&lt;demo-subset-one&gt;</code></summary>
+      <ul class="nav-demo-list">
+        
+        <li><a href="/cem-demos/demo-subset/subset/" class="nav-demo-link">Subset</a></li>
+        
+      </ul>
+    </details>
+    
+    <details class="nav-element">
+      <summary class="nav-element-title"><code>&lt;demo-subset-two&gt;</code></summary>
+      <ul class="nav-demo-list">
+        
+        <li><a href="/cem-demos/demo-subset/subset/" class="nav-demo-link">Subset</a></li>
+        
+      </ul>
+    </details>
+    
+  </details>
+  
+</nav>
+
+      </aside>
+      <div class="nav-drawer-overlay" aria-hidden="true"></div>
+      
+
+      <div class="layout">
+        
+        <aside id="knobs">
+          <slot name="knobs"></slot>
+        </aside>
+        
+        <main>
+          <slot></slot>
+        </main>
+      </div>
+
+      <footer>
+        <div class="footer-description">
+          <slot name="description"></slot>
+        </div>
+        <button class="drawer-toggle" aria-label="Toggle debug drawer">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+          </svg>
+        </button>
+        <div class="drawer-content">
+          <div class="tabs" role="tablist">
+            <button class="tab" role="tab" aria-selected="true" aria-controls="panel-logs">
+              Server Logs
+            </button>
+          </div>
+          <div class="tab-panel" id="panel-logs" role="tabpanel" active>
+            <div id="log-container"></div>
+          </div>
+        </div>
+      </footer>
+    </template>
+
+    <h1 slot="title">test-package</h1>
+
+    
+    <div slot="knobs">
+      
+      <p>
+        Knobs: attributes properties
+      </p>
+    </div>
+    
+
+    
+    <section slot="description">
+      <p>Testing navigation drawer rendering</p>
+
+    </section>
+    
+
+    
+    
+    <cem-serve-demo id="demo">
+<meta itemprop="name" content="Basic Example">
+<meta itemprop="description" content="A simple example showing basic usage">
+
+<my-element id="example" variant="primary">
+  <span slot="label">Hello World</span>
+</my-element>
+
+    </cem-serve-demo>
+    
+  </cem-serve-chrome>
+</body>
+</html>

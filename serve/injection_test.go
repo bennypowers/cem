@@ -84,8 +84,8 @@ func TestHTMLInjection_WebSocketClient(t *testing.T) {
 	bodyStr := string(body)
 
 	// Verify WebSocket client script is injected
-	if !strings.Contains(bodyStr, "/__cem-reload") {
-		t.Error("Expected HTML to contain WebSocket client script with /__cem-reload endpoint")
+	if !strings.Contains(bodyStr, "/__cem/reload") {
+		t.Error("Expected HTML to contain WebSocket client script with /__cem/reload endpoint")
 	}
 
 	if !strings.Contains(bodyStr, "WebSocket") {
@@ -150,7 +150,7 @@ func TestHTMLInjection_NoInjectionWhenDisabled(t *testing.T) {
 	bodyStr := string(body)
 
 	// Verify WebSocket client script is NOT injected when reload disabled
-	if strings.Contains(bodyStr, "/__cem-reload") {
+	if strings.Contains(bodyStr, "/__cem/reload") {
 		t.Error("Expected HTML to NOT contain WebSocket client when reload disabled")
 	}
 }
@@ -224,7 +224,7 @@ export class MyElement extends HTMLElement {}
 	time.Sleep(200 * time.Millisecond)
 
 	// Generate initial manifest
-	err = server.RegenerateManifest()
+	_, err = server.RegenerateManifest()
 	if err != nil {
 		t.Fatalf("Failed to generate initial manifest: %v", err)
 	}

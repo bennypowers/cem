@@ -23,7 +23,10 @@ import (
 	"syscall"
 
 	"bennypowers.dev/cem/serve"
+	"bennypowers.dev/cem/serve/logger"
+	"bennypowers.dev/cem/serve/middleware/transform"
 	W "bennypowers.dev/cem/workspace"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -46,17 +49,30 @@ var serveCmd = &cobra.Command{
 		port := viper.GetInt("serve.port")
 		reload := !viper.GetBool("serve.no-reload")
 		verbose := viper.GetBool("verbose")
+		targetStr := viper.GetString("serve.target")
+
+		// Validate and parse target (default to ES2022)
+		var target transform.Target
+		if targetStr != "" {
+			if !transform.IsValidTarget(targetStr) {
+				return fmt.Errorf("invalid target '%s': must be one of es2015, es2016, es2017, es2018, es2019, es2020, es2021, es2022, es2023, or esnext", targetStr)
+			}
+			target = transform.Target(targetStr)
+		} else {
+			target = transform.ES2022
+		}
 
 		// Create server config
 		config := serve.Config{
 			Port:   port,
 			Reload: reload,
+			Target: target,
 		}
 
 		// Create pterm logger
-		logger := serve.NewPtermLogger(verbose)
+		log := logger.NewPtermLogger(verbose)
 		defer func() {
-			if l, ok := logger.(interface{ Stop() }); ok {
+			if l, ok := log.(interface{ Stop() }); ok {
 				l.Stop()
 			}
 		}()
@@ -68,12 +84,12 @@ var serveCmd = &cobra.Command{
 		}
 		defer func() {
 			if err := server.Close(); err != nil {
-				logger.Error("Failed to close server: %v", err)
+				log.Error("Failed to close server: %v", err)
 			}
 		}()
 
 		// Set pterm logger
-		server.SetLogger(logger)
+		server.SetLogger(log)
 
 		// Set watch directory to project root
 		err = server.SetWatchDir(ctx.Root())
@@ -81,19 +97,30 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("failed to set watch directory: %w", err)
 		}
 
-		// Update status
-		if l, ok := logger.(interface{ SetStatus(string) }); ok {
-			l.SetStatus("Generating initial manifest...")
+		// Try workspace mode initialization first
+		pterm.Info.Println("Initializing server...")
+		err = server.InitializeWorkspaceMode()
+		if err != nil {
+			return fmt.Errorf("failed to initialize workspace mode: %w", err)
 		}
 
-		// Generate initial manifest
-		logger.Info("Generating initial manifest...")
-		err = server.RegenerateManifest()
-		if err != nil {
-			logger.Error("Failed to generate initial manifest: %v", err)
-			logger.Info("Server will continue, but manifest may be unavailable")
+		// If not workspace mode, generate single-package manifest
+		if !server.IsWorkspace() {
+			pterm.Info.Println("Generating initial manifest...")
+			_, err = server.RegenerateManifest()
+			if err != nil {
+				pterm.Error.Printf("Failed to generate initial manifest: %v\n", err)
+				pterm.Info.Println("Server will continue, but manifest may be unavailable")
+			} else {
+				pterm.Success.Println("Initial manifest generated")
+			}
 		} else {
-			logger.Info("Initial manifest generated")
+			pterm.Success.Println("Workspace mode initialized")
+		}
+
+		// Start live rendering area AFTER initial setup
+		if l, ok := log.(interface{ Start() }); ok {
+			l.Start()
 		}
 
 		// Start server
@@ -102,14 +129,26 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("failed to start server: %w", err)
 		}
 
-		logger.Info("Server started on http://localhost:%d", port)
+		// Single startup message
+		reloadStatus := ""
 		if reload {
-			logger.Info("Live reload enabled - watching for file changes")
+			reloadStatus = " (live reload enabled)"
 		}
+		log.Info("Server started on http://localhost:%d%s", port, reloadStatus)
 
-		// Update status with running info
-		statusMsg := fmt.Sprintf("Running on http://localhost:%d | Live reload: %v | Press Ctrl+C to stop", port, reload)
-		if l, ok := logger.(interface{ SetStatus(string) }); ok {
+		// Update status with running info (with colors)
+		reloadColor := pterm.FgRed.Sprint("false")
+		if reload {
+			reloadColor = pterm.FgGreen.Sprint("true")
+		}
+		statusMsg := fmt.Sprintf("Running on %s%s Live reload: %s %s Press %s to stop",
+			pterm.FgCyan.Sprintf("http://localhost:%d", port),
+			pterm.FgGray.Sprint(" |"),
+			reloadColor,
+			pterm.FgGray.Sprint("|"),
+			pterm.FgYellow.Sprint("Ctrl+C"),
+		)
+		if l, ok := log.(interface{ SetStatus(string) }); ok {
 			l.SetStatus(statusMsg)
 		}
 
@@ -118,10 +157,10 @@ var serveCmd = &cobra.Command{
 		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 		<-sigChan
 
-		if l, ok := logger.(interface{ SetStatus(string) }); ok {
+		if l, ok := log.(interface{ SetStatus(string) }); ok {
 			l.SetStatus("Shutting down...")
 		}
-		logger.Info("Shutting down server...")
+		log.Info("Shutting down server...")
 		return nil
 	},
 }
@@ -129,13 +168,17 @@ var serveCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(serveCmd)
 
-	serveCmd.Flags().Int("port", 8080, "Port to serve on")
+	serveCmd.Flags().Int("port", 8000, "Port to serve on")
 	serveCmd.Flags().Bool("no-reload", false, "Disable live reload")
+	serveCmd.Flags().String("target", "es2022", "TypeScript/JavaScript transform target (es2015, es2016, es2017, es2018, es2019, es2020, es2021, es2022, es2023, esnext)")
 
 	if err := viper.BindPFlag("serve.port", serveCmd.Flags().Lookup("port")); err != nil {
 		panic(fmt.Sprintf("failed to bind flag serve.port: %v", err))
 	}
 	if err := viper.BindPFlag("serve.no-reload", serveCmd.Flags().Lookup("no-reload")); err != nil {
 		panic(fmt.Sprintf("failed to bind flag serve.no-reload: %v", err))
+	}
+	if err := viper.BindPFlag("serve.target", serveCmd.Flags().Lookup("target")); err != nil {
+		panic(fmt.Sprintf("failed to bind flag serve.target: %v", err))
 	}
 }

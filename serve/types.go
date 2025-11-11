@@ -20,12 +20,18 @@ package serve
 import (
 	"net/http"
 	"time"
+
+	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/serve/logger"
+	"bennypowers.dev/cem/serve/middleware/transform"
 )
 
 // Config represents the dev server configuration
 type Config struct {
 	Port   int
 	Reload bool
+	Target transform.Target      // Transform target (default: ES2022)
+	FS     platform.FileSystem // Optional filesystem for testing (defaults to os package)
 }
 
 // ReloadMessage represents a WebSocket reload event
@@ -41,18 +47,22 @@ type LogMessage struct {
 	Logs []string `json:"logs"`
 }
 
-// Logger interface for dev server logging
-type Logger interface {
-	Info(msg string, args ...interface{})
-	Warning(msg string, args ...interface{})
-	Error(msg string, args ...interface{})
-	Debug(msg string, args ...interface{})
+// ErrorMessage represents a WebSocket error notification (e.g., transform errors)
+type ErrorMessage struct {
+	Type    string `json:"type"`
+	Title   string `json:"title"`
+	Message string `json:"message"`
+	File    string `json:"file,omitempty"`
 }
+
+// Logger is a type alias for the logger.Logger interface
+type Logger = logger.Logger
 
 // WebSocketManager manages WebSocket connections for live reload
 type WebSocketManager interface {
 	ConnectionCount() int
 	Broadcast(message []byte) error
+	BroadcastToPages(message []byte, pageURLs []string) error
 	BroadcastShutdown() error
 	HandleConnection(w http.ResponseWriter, r *http.Request)
 	SetLogger(logger Logger)
@@ -67,8 +77,11 @@ type FileWatcher interface {
 
 // FileEvent represents a file system event
 type FileEvent struct {
-	Path      string   // Primary file path (for single file events)
-	Paths     []string // All changed file paths (for batched events)
-	EventType string
-	Timestamp time.Time
+	Path             string   // Primary file path (for single file events)
+	Paths            []string // All changed file paths (for batched events)
+	EventType        string   // Event type for primary file (create/delete/modify)
+	HasCreates       bool     // True if any files were created
+	HasDeletes       bool     // True if any files were deleted
+	HasPackageJSON   bool     // True if package.json was modified
+	Timestamp        time.Time
 }

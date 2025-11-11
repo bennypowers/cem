@@ -159,7 +159,7 @@ feat/dev-server (staging)
   - Affects: Phase 3 (demo rendering needs import maps)
   - Details: [20-IMPORTMAPS.md](./20-IMPORTMAPS.md)
 
-- [ ] **Phase 3: Demo Rendering**
+- [x] **Phase 3: Demo Rendering**
   - Goal: URL routing and demo chrome templates with light DOM by default
   - Prerequisites: Phase 1 (HTTP server), Phase 2 (import maps)
   - Provides: Rendered demo HTML with chrome UI
@@ -167,7 +167,7 @@ feat/dev-server (staging)
   - Affects: Phase 5 (knobs need chrome infrastructure)
   - Details: [10-URL-REWRITING.md](./10-URL-REWRITING.md), [15-DEMO-CHROME.md](./15-DEMO-CHROME.md)
 
-- [ ] **Phase 4: Transforms**
+- [x] **Phase 4: Transforms**
   - Goal: On-the-fly TypeScript and CSS transformation with dependency-aware caching
   - Prerequisites: Phase 1 (HTTP server, middleware pipeline)
   - Provides: Transformed JavaScript/CSS responses
