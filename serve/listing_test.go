@@ -18,25 +18,51 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package serve
 
 import (
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"bennypowers.dev/cem/internal/platform"
 )
+
+// listingTestFS creates an in-memory filesystem for listing tests
+type listingFSAdapter struct {
+	*platform.MapFileSystem
+}
+
+func (a *listingFSAdapter) ReadFile(name string) ([]byte, error) {
+	return a.MapFileSystem.ReadFile(name)
+}
+
+func (a *listingFSAdapter) Stat(name string) (fs.FileInfo, error) {
+	return a.MapFileSystem.Stat(name)
+}
+
+func newListingTestFS() FileSystem {
+	mfs := platform.NewMapFileSystem(nil)
+	// Add minimal directory structure
+	mfs.AddFile("/test/package.json", `{"name":"test"}`, 0644)
+	return &listingFSAdapter{MapFileSystem: mfs}
+}
 
 // TestRootListing_ShowsAllElements verifies GET / shows element listing
 func TestRootListing_ShowsAllElements(t *testing.T) {
-	tmpDir := t.TempDir()
-
 	// Load manifest fixture
 	manifestBytes, err := os.ReadFile(filepath.Join("testdata", "listing", "multiple-elements.json"))
 	if err != nil {
 		t.Fatalf("Failed to read manifest fixture: %v", err)
 	}
 
-	server, err := NewServer(0)
+	mfs := newListingTestFS()
+	server, err := NewServerWithConfig(Config{
+		Port:   0,
+		Reload: true,
+		FS:     mfs,
+	})
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
@@ -46,7 +72,7 @@ func TestRootListing_ShowsAllElements(t *testing.T) {
 		}
 	}()
 
-	err = server.SetWatchDir(tmpDir)
+	err = server.SetWatchDir("/test")
 	if err != nil {
 		t.Fatalf("Failed to set watch dir: %v", err)
 	}
@@ -107,15 +133,18 @@ func TestRootListing_ShowsAllElements(t *testing.T) {
 
 // TestRootListing_EmptyManifest verifies listing with no elements
 func TestRootListing_EmptyManifest(t *testing.T) {
-	tmpDir := t.TempDir()
-
 	// Load empty manifest fixture
 	manifestBytes, err := os.ReadFile(filepath.Join("testdata", "listing", "empty-manifest.json"))
 	if err != nil {
 		t.Fatalf("Failed to read manifest fixture: %v", err)
 	}
 
-	server, err := NewServer(0)
+	mfs := newListingTestFS()
+	server, err := NewServerWithConfig(Config{
+		Port:   0,
+		Reload: true,
+		FS:     mfs,
+	})
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
@@ -125,7 +154,7 @@ func TestRootListing_EmptyManifest(t *testing.T) {
 		}
 	}()
 
-	err = server.SetWatchDir(tmpDir)
+	err = server.SetWatchDir("/test")
 	if err != nil {
 		t.Fatalf("Failed to set watch dir: %v", err)
 	}
@@ -154,15 +183,18 @@ func TestRootListing_EmptyManifest(t *testing.T) {
 
 // TestRootListing_SortedByElement verifies alphabetical sorting
 func TestRootListing_SortedByElement(t *testing.T) {
-	tmpDir := t.TempDir()
-
 	// Load sorting test fixture
 	manifestBytes, err := os.ReadFile(filepath.Join("testdata", "listing", "sorting-test.json"))
 	if err != nil {
 		t.Fatalf("Failed to read manifest fixture: %v", err)
 	}
 
-	server, err := NewServer(0)
+	mfs := newListingTestFS()
+	server, err := NewServerWithConfig(Config{
+		Port:   0,
+		Reload: true,
+		FS:     mfs,
+	})
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
@@ -172,7 +204,7 @@ func TestRootListing_SortedByElement(t *testing.T) {
 		}
 	}()
 
-	err = server.SetWatchDir(tmpDir)
+	err = server.SetWatchDir("/test")
 	if err != nil {
 		t.Fatalf("Failed to set watch dir: %v", err)
 	}
