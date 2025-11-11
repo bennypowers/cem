@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"net"
 	"net/http"
 	"net/url"
@@ -370,7 +371,17 @@ func (s *Server) PackageJSON() (*middleware.PackageJSON, error) {
 	}
 
 	packageJSONPath := filepath.Join(watchDir, "package.json")
-	data, err := os.ReadFile(packageJSONPath)
+
+	var data []byte
+	var err error
+
+	// Use injected filesystem if available, otherwise fall back to os.ReadFile
+	if filesystem := s.FileSystem(); filesystem != nil {
+		data, err = fs.ReadFile(filesystem, packageJSONPath)
+	} else {
+		data, err = os.ReadFile(packageJSONPath)
+	}
+
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil
