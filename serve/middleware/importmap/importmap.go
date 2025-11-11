@@ -36,12 +36,6 @@ type MiddlewareConfig struct {
 func New(config MiddlewareConfig) middleware.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Only inject into HTML responses (path check)
-			if !strings.HasSuffix(r.URL.Path, ".html") && r.URL.Path != "/" {
-				next.ServeHTTP(w, r)
-				return
-			}
-
 			// Capture the response
 			rec := middleware.NewResponseRecorder()
 			next.ServeHTTP(rec, r)
