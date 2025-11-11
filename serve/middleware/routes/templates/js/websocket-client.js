@@ -192,7 +192,9 @@ class CEMReloadClient {
 
 // Initialize on load
 const client = new CEMReloadClient();
-client.init();
+client.init().catch(err => {
+  console.error('[cem-serve] Failed to initialize:', err);
+});
 
 // Cleanup on unload
 window.addEventListener('beforeunload', () => client.destroy());
