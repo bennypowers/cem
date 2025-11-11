@@ -214,21 +214,26 @@ func TestWebSocketManager(t *testing.T) {
 
 // TestFileWatcherSetup verifies file watcher can be configured
 func TestFileWatcherSetup(t *testing.T) {
-	server, err := serve.NewServer(8005)
+	mfs := newTestFS(t)
+	server, err := serve.NewServerWithConfig(serve.Config{
+		Port:   8005,
+		Reload: true,
+		FS:     mfs,
+	})
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
 	defer func() { _ = server.Close() }()
 
-	tmpDir := t.TempDir()
-	err = server.SetWatchDir(tmpDir)
+	testDir := "/test-package"
+	err = server.SetWatchDir(testDir)
 	if err != nil {
 		t.Fatalf("Failed to set watch directory: %v", err)
 	}
 
 	watchDir := server.WatchDir()
-	if watchDir != tmpDir {
-		t.Errorf("Expected watch dir %s, got %s", tmpDir, watchDir)
+	if watchDir != testDir {
+		t.Errorf("Expected watch dir %s, got %s", testDir, watchDir)
 	}
 }
 
@@ -380,14 +385,18 @@ func TestBroadcastReload(t *testing.T) {
 
 // TestManifestRegenerationTrigger verifies regeneration can be triggered
 func TestManifestRegenerationTrigger(t *testing.T) {
-	server, err := serve.NewServer(8012)
+	mfs := newTestFS(t)
+	server, err := serve.NewServerWithConfig(serve.Config{
+		Port:   8012,
+		Reload: true,
+		FS:     mfs,
+	})
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
 	defer func() { _ = server.Close() }()
 
-	tmpDir := t.TempDir()
-	err = server.SetWatchDir(tmpDir)
+	err = server.SetWatchDir("/test-package")
 	if err != nil {
 		t.Fatalf("Failed to set watch directory: %v", err)
 	}
