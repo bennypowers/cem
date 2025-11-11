@@ -785,15 +785,31 @@ func extractModuleImports(htmlPath string) ([]string, error) {
 
 // resolveImportToPath converts an import specifier to a file path
 // Handles bare specifiers (via import map), relative paths, and absolute paths
-func (s *Server) resolveImportToPath(importSpec string) []string {
+// contextDir is the directory of the HTML file making the import (for resolving relative imports)
+func (s *Server) resolveImportToPath(importSpec string, contextDir string) []string {
 	paths := make([]string, 0, 2)
 
-	// If it's a relative or absolute path, use it directly
-	if strings.HasPrefix(importSpec, "./") || strings.HasPrefix(importSpec, "../") || strings.HasPrefix(importSpec, "/") {
-		// Normalize the path
+	// If it's a relative path, resolve it relative to the context directory
+	if strings.HasPrefix(importSpec, "./") || strings.HasPrefix(importSpec, "../") {
+		var resolved string
+		if contextDir != "" {
+			// Resolve relative to the HTML file's directory
+			resolved = filepath.Join(contextDir, importSpec)
+		} else {
+			// No context available, use import spec as-is
+			resolved = importSpec
+		}
+		normalized := filepath.Clean(resolved)
+		paths = append(paths, normalized)
+		s.logger.Debug("Resolved relative import %s (context: %s) -> %s", importSpec, contextDir, normalized)
+		return paths
+	}
+
+	// If it's an absolute path, use it directly
+	if strings.HasPrefix(importSpec, "/") {
 		normalized := filepath.Clean(importSpec)
 		paths = append(paths, normalized)
-		s.logger.Debug("Resolved relative/absolute import %s -> %s", importSpec, normalized)
+		s.logger.Debug("Resolved absolute import %s -> %s", importSpec, normalized)
 		return paths
 	}
 
@@ -1100,9 +1116,12 @@ func (s *Server) getAffectedPageURLs(changedPath string, invalidatedFiles []stri
 			continue // Skip routes with no imports
 		}
 
+		// Get the directory of the HTML file for resolving relative imports
+		demoDir := filepath.Dir(routeEntry.FilePath)
+
 		// Resolve imports to file paths and check if any match affected files
 		for _, importSpec := range imports {
-			resolvedPaths := s.resolveImportToPath(importSpec)
+			resolvedPaths := s.resolveImportToPath(importSpec, demoDir)
 			if len(resolvedPaths) == 0 {
 				continue
 			}
