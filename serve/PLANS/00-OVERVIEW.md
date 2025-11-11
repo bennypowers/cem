@@ -167,7 +167,7 @@ feat/dev-server (staging)
   - Affects: Phase 5 (knobs need chrome infrastructure)
   - Details: [10-URL-REWRITING.md](./10-URL-REWRITING.md), [15-DEMO-CHROME.md](./15-DEMO-CHROME.md)
 
-- [x] **Phase 4: Transforms**
+- [x] **Phase 4: Transforms** ✅ (95% complete - 2 config items remaining)
   - Goal: On-the-fly TypeScript and CSS transformation with dependency-aware caching
   - Prerequisites: Phase 1 (HTTP server, middleware pipeline)
   - Provides: Transformed JavaScript/CSS responses
@@ -175,31 +175,42 @@ feat/dev-server (staging)
   - Affects: Demo rendering (transformed files loaded via import maps)
   - Note: Can be implemented in parallel with Phases 2 and 3
   - Details: [30-TRANSFORMS.md](./30-TRANSFORMS.md)
+  - **Remaining work**: CSS include/exclude glob filtering, YAML config loading
 
-- [ ] **Phase 5: Knobs**
+- [ ] **Phase 5: Knobs** (Sequential implementation: 5a → 5b → 5c)
   - Goal: Interactive controls for element attributes, properties, and CSS custom properties
   - Prerequisites: Phase 3 (chrome infrastructure)
+  - **Implementation approach**: Complete each sub-phase fully before moving to the next
   - Sub-phases:
-    - [ ] **Phase 5a: Basic Knobs (REQUIRED)**
+    - [ ] **Phase 5a: Basic Knobs (REQUIRED)** - Implement first
       - Goal: Single element demos with basic control types
       - Provides: Knob UI in chrome sidebar
       - Consumes: Manifest data, demo chrome
       - Details: [50-KNOBS-CORE.md](./50-KNOBS-CORE.md)
-    - [ ] **Phase 5b: Advanced Knobs (REQUIRED)**
+    - [ ] **Phase 5b: Advanced Knobs (REQUIRED)** - Implement after 5a is complete
       - Goal: Multiple elements and complex compositions with mutation observers
       - Extends: Phase 5a
       - Details: [51-KNOBS-ADVANCED.md](./51-KNOBS-ADVANCED.md)
-    - [ ] **Phase 5c: Custom Templates (OPTIONAL)**
+    - [ ] **Phase 5c: Custom Templates (REQUIRED)** - Implement after 5b is complete
       - Goal: User-provided knob templates for specialized controls
       - Extends: Phase 5a/5b
       - Details: [52-KNOBS-CUSTOM.md](./52-KNOBS-CUSTOM.md)
 
-- [ ] **Phase 6: Polish**
-  - Goal: Error overlay, documentation, and examples
+- [ ] **Phase 6: Polish** (Partially implemented early)
+  - Goal: Documentation and examples
   - Prerequisites: All previous phases
   - Provides: Enhanced developer experience
-  - Consumes: Errors from all phases
-  - Details: Error overlay (ref: Vite UX), documentation, example projects
+  - **Already implemented** (during Phases 1-4):
+    - ✅ Error overlay with source-mapped stack traces
+    - ✅ Colored logging with structured badges (INFO, WARN, ERROR, DEBUG)
+    - ✅ Navigation drawer for demo browsing
+    - ✅ 404 error page with helpful navigation
+    - ✅ View Transitions API support
+    - ✅ Favicon support
+  - **Remaining work**:
+    - [ ] Comprehensive documentation
+    - [ ] Example projects showcasing features
+    - [ ] Performance tuning and final polish
 
 ---
 

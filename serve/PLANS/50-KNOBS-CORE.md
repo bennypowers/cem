@@ -4,6 +4,14 @@
 
 Phase 5 has no stubs in existing tests. Follow standard TDD: write tests first, implement to make them pass.
 
+**Prerequisites**: Complete Phase 4 remaining work (CSS glob filtering, YAML config) before starting Phase 5a.
+
+**Approach**:
+1. Write failing tests using fixture/golden patterns
+2. Implement server-side knob generation
+3. Implement client-side knob behavior
+4. Verify integration tests pass
+
 Knobs provide interactive controls for manipulating custom element attributes, properties, and CSS custom properties during development.
 
 **Scope**: This document covers basic knobs for **single elements**. For multiple elements and complex compositions, see `51-KNOBS-ADVANCED.md`. For custom templates, see `52-KNOBS-CUSTOM.md`.
@@ -258,27 +266,60 @@ Control CSS custom properties (CSS variables) on custom elements.
 
 ## Testing Strategy
 
-Fixture-based tests (per CLAUDE.md):
+**Follow established patterns from Phases 1-4:**
+
+### Use testutil Package
+- Use `testutil.NewFixtureFS()` for in-memory filesystems
+- Use `testutil.LoadFixtureFile()` to load test data
+- Place fixtures in `internal/platform/testutil/fixtures/knobs/`
+- Use golden file pattern for expected outputs
+
+### Test Structure
+Follow the patterns from `serve/middleware/routes/`, `serve/middleware/transform/`:
 
 ```
-serve/knobs/test-fixtures/
-  ├── simple/
-  │   ├── demo.html (single element, few attributes)
-  │   ├── manifest.json (element definition)
-  │   ├── expected-knobs.html (rendered knob HTML)
-  │   └── knobs-test.go (test knob generation)
-  │
-  ├── types/
-  │   ├── boolean-demo.html
-  │   ├── string-demo.html
-  │   ├── number-demo.html
-  │   ├── enum-demo.html
-  │   └── types-test.go (test all type mappings)
-  │
-  └── integration/
-      ├── demo.html
-      ├── test.js (simulates knob interactions)
-      └── integration-test.go (test client-server round trip)
+serve/middleware/knobs/
+  ├── knobs.go (main implementation)
+  ├── knobs_test.go (unit tests)
+  ├── testdata/
+  │   ├── simple-element/
+  │   │   ├── manifest.json (element definition)
+  │   │   └── expected-basic.html (golden file for rendered knobs)
+  │   ├── type-mappings/
+  │   │   ├── manifest-boolean.json
+  │   │   ├── manifest-enum.json
+  │   │   └── expected-*.html (golden files)
+  │   └── chrome-rendering/
+  │       └── expected-*.html (rendered chrome with knobs)
+```
+
+### Testing Fixtures
+Use the fixture pattern established in Phase 4:
+
+```go
+// Example test
+func TestKnobRendering_SimpleElement(t *testing.T) {
+    mfs := testutil.NewFixtureFS()
+    mfs.AddFile("/test/manifest.json", manifestJSON, 0644)
+    mfs.AddFile("/test/demo.html", demoHTML, 0644)
+
+    // Test knob generation
+    knobs := GenerateKnobs(manifest, demo)
+
+    // Compare against golden file
+    expected := testutil.LoadFixtureFile(t, "knobs/simple-element/expected-basic.html")
+    if diff := cmp.Diff(expected, knobs); diff != "" {
+        t.Errorf("Knobs mismatch (-want +got):\n%s", diff)
+    }
+}
+```
+
+### Update Flag Support
+Use `--update` flag to regenerate golden files (like Phase 3/4 tests):
+
+```bash
+go test ./serve/middleware/knobs/... --update
+```
 ```
 
 ### Test Coverage

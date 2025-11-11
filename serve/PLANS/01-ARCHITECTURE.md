@@ -71,6 +71,31 @@ Each phase can register middleware at appropriate pipeline stages:
 - **Phase 3**: Demo rendering
 - **Phase 4**: Transform middlewares
 
+### Implementation Status (as of Phase 4 completion)
+
+**Fully Implemented**:
+- ✅ Logging middleware with colored badges (INFO, WARN, ERROR, DEBUG)
+- ✅ CORS headers with security headers
+- ✅ Import map injection with workspace/monorepo support
+- ✅ TypeScript transformation with tree-sitter dependency tracking
+- ✅ CSS transformation to constructable stylesheets
+- ✅ Demo rendering with chrome templates and navigation drawer
+- ✅ Static file serving with proper MIME types (.mjs, .cjs support)
+
+**Additional Features Implemented**:
+- ✅ Error overlay with source-mapped stack traces
+- ✅ 404 error page with helpful navigation
+- ✅ WebSocket live reload with smart invalidation
+- ✅ Transform cache with LRU eviction and worker pool
+- ✅ Path traversal protection
+- ✅ View Transitions API support
+
+**Monorepo/Workspace Support** (implemented beyond plan):
+- Multi-package discovery and routing
+- Workspace-scoped import maps
+- Cross-package dependency tracking
+- Package conflict detection
+
 ## Manifest Integration
 
 The manifest is central to multiple features. It must be managed carefully to avoid race conditions.
@@ -172,16 +197,18 @@ Errors can originate from multiple phases. The overlay (Phase 6) must handle all
 
 ### Error Display Strategy
 
-**In browser overlay** (Phase 6):
+**In browser overlay** (✅ Implemented in Phase 4):
 - **User code errors** (compilation, templates): Primary block with source-mapped stack traces
 - **Server errors**: Secondary block, less prominent
 - **ENOENT**: Special 404 screen (not an overlay)
 
-**Error message requirements**:
-- Pretty formatting with syntax highlighting
-- Stack traces point to original files (not transformed)
-- Source maps for TypeScript errors
-- Clear distinction between error types
+**Error message requirements** (✅ All implemented):
+- ✅ Pretty formatting with syntax highlighting
+- ✅ Stack traces point to original files (not transformed)
+- ✅ Source maps for TypeScript errors
+- ✅ Clear distinction between error types
+- ✅ File path links in error overlay
+- ✅ Error details preserved during navigation
 
 ### Error Collection Mechanism
 

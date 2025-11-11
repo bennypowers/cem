@@ -163,27 +163,80 @@ server/transform/test-fixtures/
 
 ## Acceptance Criteria
 
+### Implemented (18/19 = 95%)
+
+#### TypeScript Transforms
 - [x] TypeScript files transformed to JavaScript via esbuild Go API
 - [x] Single-file transforms (no type checking, rely on tsserver)
 - [x] Inline source maps generated for debugging
 - [x] Server responds to `.js` URLs but reads `.ts` files
 - [x] Transform target configurable via CLI/config (default ES2022)
 - [x] tsconfig.json read and passed to esbuild's tsconfigRaw
+  - **Bonus**: Also supports `tsconfig.settings.json` for monorepos
+
+#### Caching & Performance
 - [x] Transform cache implemented with LRU eviction
 - [x] Cache key includes path, modification time, and size
-- [x] Dependency graph tracks module relationships
+- [x] Dependency graph tracks module relationships (using tree-sitter)
 - [x] File changes invalidate cached file and dependent tree
 - [x] Max cache size enforced (500MB default)
 - [x] Cache stats logged (hits, misses, size)
 - [x] Worker pool parallelizes transforms (max 4 concurrent)
 - [x] Excess requests queued, 503 returned if queue full
+
+#### CSS Transforms
 - [x] CSS files transformed to CSSStyleSheet JavaScript modules
 - [x] CSS transform auto-enabled for all `.css` files
 - [x] CSS transform content-type: `application/javascript; charset=utf-8`
 - [x] CSS transform does not support relative URLs (documented limitation)
-- [x] Config `transforms.typescript.enabled` controls TypeScript transform
-- [x] Config `transforms.css.enabled` controls CSS transform
-- [ ] Config `transforms.css.include/exclude` filters CSS files
+
+#### Error Handling & Testing
 - [x] Transform errors shown in browser error overlay
 - [x] Tests cover basic transform functionality
 - [x] Tests use fixture pattern (input.ts → expected.js + source maps)
+
+### Remaining Work (2 items)
+
+#### Config System Integration
+- [ ] Wire up YAML config loading for `transforms.typescript.enabled` and `transforms.css.enabled`
+  - Currently hard-coded to `true` with TODO comments in `serve/server.go`
+  - Config struct fields exist but aren't read from YAML
+
+#### CSS Glob Filtering
+- [ ] Config `transforms.css.include/exclude` filters CSS files via glob patterns
+  - Planned feature not yet implemented
+  - Currently transforms ALL `.css` files when enabled
+
+---
+
+## Features Implemented Beyond the Plan
+
+The following features were implemented during Phase 4 but weren't in the original plan:
+
+### Workspace/Monorepo Support
+- Multi-package discovery and routing
+- Workspace-scoped import maps
+- Cross-package dependency tracking
+- Package conflict detection
+
+### Enhanced UI Features (Early Phase 6 Implementation)
+- Browser error overlay for transform errors
+- Structured logging with colored badges (INFO, WARN, ERROR, DEBUG)
+- Navigation drawer for demo browsing
+- 404 error page with helpful navigation
+- View Transitions API support for persistent chrome
+
+### Import Map Enhancements
+- Nested conditional exports resolution
+- Scope merging from user import maps
+- Replace existing import maps instead of duplicating
+
+### Developer Experience
+- Progressive backoff for WebSocket reconnection
+- Smart reload based on module dependency graph
+- Reduced log verbosity (HTTP requests at Debug level)
+- Favicon support in demo chrome
+
+### Security
+- Path traversal protection for CSS/TS transforms
+- Proper URL escaping and validation

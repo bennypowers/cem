@@ -290,22 +290,47 @@ Complex demos may have many elements:
 
 ## Testing Strategy
 
-Fixture-based tests (per CLAUDE.local.md):
+**Follow established patterns from Phase 5a and Phases 1-4:**
 
+### Fixture Structure
 ```
-serve/knobs/test-fixtures/
-  ├── complex-composition/
-  │   ├── demo.html (nested elements like pf-tabs example)
-  │   ├── manifest.json (multiple element definitions)
-  │   ├── expected-knobs.html (rendered knob groups)
-  │   └── discovery-test.go (tests DiscoverKnobTargets)
-  │
-  └── mutation-observer/
-      ├── demo.html (initial state)
-      ├── test.js (simulates adding/removing elements)
-      ├── expected-after-add.html
-      ├── expected-after-remove.html
-      └── observer-test.go (tests MutationObserver behavior)
+serve/middleware/knobs/testdata/
+  ├── advanced/
+  │   ├── complex-composition/
+  │   │   ├── manifest.json (pf-tabs + pf-tab + pf-tab-panel)
+  │   │   ├── demo.html (nested elements)
+  │   │   └── expected-knobs.html (golden: all knob groups rendered)
+  │   ├── mutation-observer/
+  │   │   ├── demo-initial.html
+  │   │   ├── expected-initial.html (golden)
+  │   │   ├── expected-after-add.html (golden)
+  │   │   └── expected-after-remove.html (golden)
+  │   └── label-generation/
+  │       ├── manifest.json
+  │       ├── demo-with-ids.html
+  │       ├── demo-with-text.html
+  │       ├── demo-with-aria.html
+  │       └── expected-*.html (golden files for each labeling scenario)
+```
+
+### Test Pattern
+```go
+func TestAdvancedKnobs_ComplexComposition(t *testing.T) {
+    mfs := testutil.NewFixtureFS()
+    // Load manifest with multiple elements
+    // Load demo with nested composition
+    // Generate knobs
+    // Verify against golden file
+    // Verify ordering matches source order
+    // Verify primary element expanded, others collapsed
+}
+```
+
+### Client-Side Testing
+If feasible with Go's JavaScript testing support:
+- Test MutationObserver behavior
+- Test element addition/removal
+- Test no-loop guarantee (knobs don't reset targets)
 ```
 
 ### Test Coverage
