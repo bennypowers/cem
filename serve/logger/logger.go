@@ -112,19 +112,38 @@ func NewPtermLogger(verbose bool) Logger {
 // Start starts the live rendering area (call after initial setup is complete)
 func (l *ptermLogger) Start() {
 	l.mu.Lock()
-	shouldStart := l.interactive && l.area == nil
-	l.mu.Unlock()
+	if !l.interactive {
+		l.mu.Unlock()
+		return
+	}
 
-	if shouldStart {
-		area, _ := pterm.DefaultArea.Start()
-		l.mu.Lock()
-		l.area = area
+	if l.area != nil {
 		hasLogs := len(l.terminalLogs) > 0
 		l.mu.Unlock()
-		// Only render if we have logs to display
 		if hasLogs {
 			l.render()
 		}
+		return
+	}
+	l.mu.Unlock()
+
+	area, _ := pterm.DefaultArea.Start()
+
+	l.mu.Lock()
+	if l.area != nil {
+		l.mu.Unlock()
+		if area != nil {
+			_ = area.Stop()
+		}
+		return
+	}
+
+	l.area = area
+	hasLogs := len(l.terminalLogs) > 0
+	l.mu.Unlock()
+
+	if hasLogs {
+		l.render()
 	}
 }
 
