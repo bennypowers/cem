@@ -112,6 +112,11 @@ func (c *Cache) Set(key CacheKey, code []byte, dependencies []string) {
 
 	// Check if entry already exists
 	if existing, found := c.entries[key]; found {
+		// Drop stale dependency edges before recording the new set
+		for _, dep := range existing.Dependencies {
+			c.removeDependent(dep, key.Path)
+		}
+
 		// Update size accounting
 		c.curSize -= existing.Size
 		c.curSize += entrySize
@@ -166,6 +171,23 @@ func (c *Cache) addDependent(dep, dependent string) {
 
 	// Add to list
 	c.dependents[dep] = append(deps, dependent)
+}
+
+func (c *Cache) removeDependent(dep, dependent string) {
+	deps, ok := c.dependents[dep]
+	if !ok {
+		return
+	}
+	for i, d := range deps {
+		if d == dependent {
+			if len(deps) == 1 {
+				delete(c.dependents, dep)
+			} else {
+				c.dependents[dep] = append(deps[:i], deps[i+1:]...)
+			}
+			break
+		}
+	}
 }
 
 // evictIfNeeded evicts LRU entries until under size limit
