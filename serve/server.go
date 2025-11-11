@@ -84,6 +84,32 @@ func NewServer(port int) (*Server, error) {
 
 // NewServerWithConfig creates a new server with the given config
 func NewServerWithConfig(config Config) (*Server, error) {
+	// Apply default transform settings if not configured
+	// Check if transforms config looks uninitialized (all zero values)
+	transformsUnset := config.Transforms.TypeScript.Target == "" &&
+		!config.Transforms.TypeScript.Enabled &&
+		!config.Transforms.CSS.Enabled &&
+		len(config.Transforms.CSS.Include) == 0 &&
+		len(config.Transforms.CSS.Exclude) == 0
+
+	if transformsUnset {
+		// Apply defaults when transforms config is completely unset
+		config.Transforms.TypeScript.Enabled = true
+		config.Transforms.CSS.Enabled = true
+		config.Transforms.TypeScript.Target = config.Target
+		if config.Transforms.TypeScript.Target == "" {
+			config.Transforms.TypeScript.Target = transform.ES2022
+		}
+	} else {
+		// Partial config: fill in missing target only
+		if config.Transforms.TypeScript.Target == "" && config.Transforms.TypeScript.Enabled {
+			config.Transforms.TypeScript.Target = config.Target
+			if config.Transforms.TypeScript.Target == "" {
+				config.Transforms.TypeScript.Target = transform.ES2022
+			}
+		}
+	}
+
 	s := &Server{
 		port:   config.Port,
 		config: config,
@@ -1232,7 +1258,9 @@ func (s *Server) setupMiddleware() {
 		transform.NewCSS(transform.CSSConfig{ // CSS transform
 			WatchDirFunc: s.WatchDir,
 			Logger:       s.logger,
-			Enabled:      true, // TODO: Read from config
+			Enabled:      s.config.Transforms.CSS.Enabled,
+			Include:      s.config.Transforms.CSS.Include,
+			Exclude:      s.config.Transforms.CSS.Exclude,
 			FS:           s.fs,
 		}),
 		transform.NewTypeScript(transform.TypeScriptConfig{ // TypeScript transform
@@ -1241,8 +1269,8 @@ func (s *Server) setupMiddleware() {
 			Cache:            s.transformCache,
 			Logger:           s.logger,
 			ErrorBroadcaster: errorBroadcaster{s},
-			Target:           string(s.config.Target),
-			Enabled:          true, // TODO: Read from config
+			Target:           string(s.config.Transforms.TypeScript.Target),
+			Enabled:          s.config.Transforms.TypeScript.Enabled,
 			FS:               s.fs,
 		}),
 		routes.New(routes.Config{ // Internal CEM routes (includes WebSocket, demos, listings)

@@ -24,14 +24,46 @@ import (
 
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/middleware"
+	DS "github.com/bmatcuk/doublestar/v4"
 )
 
 // CSSConfig holds configuration for CSS transformation
 type CSSConfig struct {
 	WatchDirFunc func() string         // Function to get current watch directory
 	Logger       Logger
-	Enabled      bool              // Enable/disable CSS transformation
-	FS           platform.FileSystem // Filesystem abstraction for testability
+	Enabled      bool                   // Enable/disable CSS transformation
+	Include      []string               // Glob patterns to include (empty means all .css files)
+	Exclude      []string               // Glob patterns to exclude
+	FS           platform.FileSystem    // Filesystem abstraction for testability
+}
+
+// shouldTransformCSS checks if a CSS file should be transformed based on include/exclude patterns
+func shouldTransformCSS(cssPath string, include []string, exclude []string) bool {
+	// If include patterns are specified, file must match at least one
+	if len(include) > 0 {
+		matched := false
+		for _, pattern := range include {
+			if match, _ := DS.Match(pattern, cssPath); match {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+
+	// If exclude patterns are specified, file must not match any
+	if len(exclude) > 0 {
+		for _, pattern := range exclude {
+			if match, _ := DS.Match(pattern, cssPath); match {
+				return false
+			}
+		}
+	}
+
+	// If no patterns specified, or file passed all checks, transform it
+	return true
 }
 
 // NewCSS creates a middleware that transforms CSS files to JavaScript modules
@@ -75,6 +107,13 @@ func NewCSS(config CSSConfig) middleware.Middleware {
 			// Reject attempts to escape the watch directory
 			if rel, err := filepath.Rel(watchDirClean, fullCssPath); err != nil || strings.HasPrefix(rel, "..") {
 				http.NotFound(w, r)
+				return
+			}
+
+			// Check include/exclude patterns
+			if !shouldTransformCSS(cssPath, config.Include, config.Exclude) {
+				// Don't transform this CSS file, pass to next handler
+				next.ServeHTTP(w, r)
 				return
 			}
 
