@@ -63,7 +63,7 @@ specific
 &lt;/a>.
 &lt;/info-callout>
 
-&lt;script type="module" src="../../js/info-callout.js">&lt;/script>
+&lt;script type="module" src="https://bennypowers.dev/cem/js/info-callout.js">&lt;/script>
 
 &lt;h2 id="jsdoc">JSDoc&lt;/h2>
 &lt;p>Use JSDoc comments to add metadata to your element classes, similar to other
