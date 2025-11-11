@@ -36,8 +36,10 @@ type MiddlewareConfig struct {
 func New(config MiddlewareConfig) middleware.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Only inject into HTML responses (path check)
-			if !strings.HasSuffix(r.URL.Path, ".html") && r.URL.Path != "/" {
+			// Skip internal routes that need direct ResponseWriter access (WebSocket, etc.)
+			// or are known non-HTML responses
+			if strings.HasPrefix(r.URL.Path, "/__cem") ||
+				r.URL.Path == "/custom-elements.json" {
 				next.ServeHTTP(w, r)
 				return
 			}
