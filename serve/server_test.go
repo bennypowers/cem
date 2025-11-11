@@ -30,6 +30,7 @@ import (
 
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve"
+	importmappkg "bennypowers.dev/cem/serve/middleware/importmap"
 )
 
 // newTestFS creates an in-memory filesystem with manifest-regen fixture data
@@ -531,7 +532,7 @@ func TestPortBindingError(t *testing.T) {
 
 // TestImportResolution verifies import map resolution with prefix matching
 func TestImportResolution(t *testing.T) {
-	// Create in-memory filesystem with package.json
+	// Create in-memory filesystem with test package
 	mfs := platform.NewMapFileSystem(nil)
 	packageJSON := `{
   "name": "@test/elements",
@@ -539,7 +540,7 @@ func TestImportResolution(t *testing.T) {
     "./*": "./src/*"
   }
 }`
-	mfs.AddFile("/test/package.json", packageJSON, 0644)
+	mfs.AddFile("/test-package/package.json", packageJSON, 0644)
 
 	server, err := serve.NewServerWithConfig(serve.Config{
 		Port:   8015,
@@ -551,7 +552,7 @@ func TestImportResolution(t *testing.T) {
 	}
 	defer func() { _ = server.Close() }()
 
-	err = server.SetWatchDir("/test")
+	err = server.SetWatchDir("/test-package")
 	if err != nil {
 		t.Fatalf("Failed to set watch directory: %v", err)
 	}
@@ -560,9 +561,29 @@ func TestImportResolution(t *testing.T) {
 	// @test/elements/ -> /src/
 	// This would allow @test/elements/foo/bar.js to resolve to /src/foo/bar.js
 
-	// Note: We can't directly test resolveImportToPath since it's not exported
-	// But we've verified the logic through integration testing in the RHDS project
-	// This test primarily verifies the import map generation works correctly
+	importMap := server.ImportMap()
+	if importMap == nil {
+		t.Fatal("Expected import map to be generated, got nil")
+	}
+
+	// Type assert to concrete import map type to inspect entries
+	im, ok := importMap.(*importmappkg.ImportMap)
+	if !ok {
+		t.Fatalf("Expected *importmap.ImportMap, got %T", importMap)
+	}
+
+	// Verify the prefix entry exists
+	expectedPrefix := "@test/elements/"
+	expectedTarget := "/src/"
+
+	actualTarget, exists := im.Imports[expectedPrefix]
+	if !exists {
+		t.Errorf("Expected import map to contain prefix entry %q, but it was missing. Imports: %v", expectedPrefix, im.Imports)
+	}
+
+	if actualTarget != expectedTarget {
+		t.Errorf("Expected prefix entry %q to map to %q, got %q", expectedPrefix, expectedTarget, actualTarget)
+	}
 }
 
 // TestRegenerateManifestIncremental_NoDoubleLockPanic verifies that calling

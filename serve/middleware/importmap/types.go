@@ -17,7 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package importmap
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"bennypowers.dev/cem/internal/platform"
+)
 
 // ImportMap represents an ES module import map
 type ImportMap struct {
@@ -44,10 +48,11 @@ func (im *ImportMap) ToJSON() string {
 
 // Config configures import map generation
 type Config struct {
-	InputMapPath      string            // Path to user override file
-	CLIOverrides      map[string]string // CLI flag overrides (highest priority)
-	Logger            Logger            // Logger for warnings
+	InputMapPath      string              // Path to user override file
+	CLIOverrides      map[string]string   // CLI flag overrides (highest priority)
+	Logger            Logger              // Logger for warnings
 	WorkspacePackages []WorkspacePackage  // If set, generate workspace-mode import map (flattened scopes)
+	FS                platform.FileSystem // Filesystem abstraction (defaults to OS filesystem if nil)
 }
 
 // Logger is a minimal logging interface

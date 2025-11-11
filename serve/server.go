@@ -299,7 +299,9 @@ func (s *Server) SetWatchDir(dir string) error {
 	// Generate import map for single-package mode
 	// (Workspace mode generates in InitializeWorkspaceMode instead)
 	if !s.isWorkspace {
-		importMap, err := importmappkg.Generate(dir, nil)
+		importMap, err := importmappkg.Generate(dir, &importmappkg.Config{
+			FS: s.fs,
+		})
 		if err != nil {
 			s.logger.Warning("Failed to generate import map: %v", err)
 			s.importMap = nil
@@ -680,6 +682,7 @@ func (s *Server) InitializeWorkspaceMode() error {
 	importMap, err := importmappkg.Generate(s.workspaceRoot, &importmappkg.Config{
 		WorkspacePackages: workspacePkgs,
 		Logger:            s.logger,
+		FS:                s.fs,
 	})
 	if err != nil {
 		return fmt.Errorf("generating workspace import map: %w", err)
@@ -1010,6 +1013,7 @@ func (s *Server) handleFileChanges() {
 				importMap, err := importmappkg.Generate(s.workspaceRoot, &importmappkg.Config{
 					WorkspacePackages: workspacePkgs,
 					Logger:            s.logger,
+					FS:                s.fs,
 				})
 				if err != nil {
 					s.logger.Warning("Failed to regenerate workspace import map: %v", err)
@@ -1020,7 +1024,9 @@ func (s *Server) handleFileChanges() {
 				}
 			} else {
 				// Single-package mode: regenerate import map
-				importMap, err := importmappkg.Generate(s.watchDir, nil)
+				importMap, err := importmappkg.Generate(s.watchDir, &importmappkg.Config{
+					FS: s.fs,
+				})
 				if err != nil {
 					s.logger.Warning("Failed to regenerate import map: %v", err)
 				} else {
