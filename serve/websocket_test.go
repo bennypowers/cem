@@ -102,12 +102,12 @@ func TestWebSocketEndpoint_Broadcast(t *testing.T) {
 		t.Fatalf("Failed to read golden file: %v", err)
 	}
 
-	var expected map[string]interface{}
+	var expected map[string]any
 	if err := json.Unmarshal(expectedBytes, &expected); err != nil {
 		t.Fatalf("Failed to parse expected message: %v", err)
 	}
 
-	var actual map[string]interface{}
+	var actual map[string]any
 	if err := json.Unmarshal(msg1, &actual); err != nil {
 		t.Fatalf("Failed to parse actual message: %v", err)
 	}

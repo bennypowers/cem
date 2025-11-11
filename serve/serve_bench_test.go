@@ -27,7 +27,7 @@ func BenchmarkManifestRegeneration(b *testing.B) {
 	// This is a stub to establish the benchmark pattern
 	b.ReportAllocs()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		// Simulate manifest regeneration
 		_ = make([]byte, 1024)
 	}
@@ -42,7 +42,7 @@ func BenchmarkTransformCache(b *testing.B) {
 	cache := make(map[string][]byte)
 
 	b.Run("Set", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			cache["file.ts"] = []byte("content")
 		}
 	})
@@ -50,7 +50,7 @@ func BenchmarkTransformCache(b *testing.B) {
 	b.Run("Get", func(b *testing.B) {
 		cache["file.ts"] = []byte("content")
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_ = cache["file.ts"]
 		}
 	})
@@ -69,8 +69,7 @@ func BenchmarkWebSocketBroadcast(b *testing.B) {
 
 	message := []byte(`{"type":"reload"}`)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		for _, client := range clients {
 			select {
 			case client <- message:

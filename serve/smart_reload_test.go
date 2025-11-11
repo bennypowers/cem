@@ -19,6 +19,7 @@ package serve
 
 import (
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform/testutil"
@@ -60,13 +61,7 @@ func TestGetAffectedPageURLs_ImportedFileChange(t *testing.T) {
 	}
 
 	expectedRoute := "/demo/basic.html"
-	found := false
-	for _, page := range affectedPages {
-		if page == expectedRoute {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(affectedPages, expectedRoute)
 
 	if !found {
 		t.Errorf("Expected affected pages to include %s, got: %v", expectedRoute, affectedPages)
@@ -109,13 +104,7 @@ func TestGetAffectedPageURLs_HTMLFileChange(t *testing.T) {
 	}
 
 	expectedRoute := "/demo/basic.html"
-	found := false
-	for _, page := range affectedPages {
-		if page == expectedRoute {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(affectedPages, expectedRoute)
 
 	if !found {
 		t.Errorf("Expected affected pages to include %s, got: %v", expectedRoute, affectedPages)

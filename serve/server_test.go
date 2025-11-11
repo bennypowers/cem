@@ -64,7 +64,7 @@ func TestReloadMessageFormat(t *testing.T) {
 	}
 
 	// Parse expected message
-	var expected map[string]interface{}
+	var expected map[string]any
 	if err := json.Unmarshal(expectedBytes, &expected); err != nil {
 		t.Fatalf("Failed to parse expected message: %v", err)
 	}
@@ -83,7 +83,7 @@ func TestReloadMessageFormat(t *testing.T) {
 	}
 
 	// Parse actual message
-	var actual map[string]interface{}
+	var actual map[string]any
 	if err := json.Unmarshal(msgBytes, &actual); err != nil {
 		t.Fatalf("Failed to parse actual message: %v", err)
 	}
@@ -98,12 +98,12 @@ func TestReloadMessageFormat(t *testing.T) {
 	}
 
 	// Verify files array
-	actualFiles, ok := actual["files"].([]interface{})
+	actualFiles, ok := actual["files"].([]any)
 	if !ok {
 		t.Fatal("Expected files to be an array")
 	}
 
-	expectedFiles, ok := expected["files"].([]interface{})
+	expectedFiles, ok := expected["files"].([]any)
 	if !ok {
 		t.Fatal("Expected files in golden to be an array")
 	}
@@ -476,7 +476,7 @@ export class TestElement extends HTMLElement {}
 	}
 
 	// Verify manifest is valid JSON
-	var manifestObj map[string]interface{}
+	var manifestObj map[string]any
 	if err := json.Unmarshal(manifest, &manifestObj); err != nil {
 		t.Fatalf("Expected valid JSON manifest, got error: %v", err)
 	}
