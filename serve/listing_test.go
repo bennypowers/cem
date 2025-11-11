@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package serve
 
 import (
-	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -29,24 +28,12 @@ import (
 	"bennypowers.dev/cem/internal/platform"
 )
 
-// listingTestFS creates an in-memory filesystem for listing tests
-type listingFSAdapter struct {
-	*platform.MapFileSystem
-}
-
-func (a *listingFSAdapter) ReadFile(name string) ([]byte, error) {
-	return a.MapFileSystem.ReadFile(name)
-}
-
-func (a *listingFSAdapter) Stat(name string) (fs.FileInfo, error) {
-	return a.MapFileSystem.Stat(name)
-}
-
-func newListingTestFS() FileSystem {
+// newListingTestFS creates an in-memory filesystem for listing tests
+func newListingTestFS() platform.FileSystem {
 	mfs := platform.NewMapFileSystem(nil)
 	// Add minimal directory structure
 	mfs.AddFile("/test/package.json", `{"name":"test"}`, 0644)
-	return &listingFSAdapter{MapFileSystem: mfs}
+	return mfs
 }
 
 // TestRootListing_ShowsAllElements verifies GET / shows element listing

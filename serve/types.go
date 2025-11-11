@@ -18,37 +18,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package serve
 
 import (
-	"io/fs"
 	"net/http"
-	"os"
 	"time"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/logger"
 )
-
-// FileSystem abstracts filesystem operations for testability
-type FileSystem interface {
-	ReadFile(name string) ([]byte, error)
-	Stat(name string) (fs.FileInfo, error)
-}
-
-// osFileSystem implements FileSystem using the standard os package
-type osFileSystem struct{}
-
-func (osFileSystem) ReadFile(name string) ([]byte, error) {
-	return os.ReadFile(name)
-}
-
-func (osFileSystem) Stat(name string) (fs.FileInfo, error) {
-	return os.Stat(name)
-}
 
 // Config represents the dev server configuration
 type Config struct {
 	Port   int
 	Reload bool
-	Target Target // Transform target (default: ES2022)
-	FS     FileSystem // Optional filesystem for testing (defaults to os package)
+	Target Target                // Transform target (default: ES2022)
+	FS     platform.FileSystem // Optional filesystem for testing (defaults to os package)
 }
 
 // ReloadMessage represents a WebSocket reload event

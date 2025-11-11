@@ -32,6 +32,7 @@ import (
 	"time"
 
 	G "bennypowers.dev/cem/generate"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/logger"
 	"bennypowers.dev/cem/serve/middleware"
 	"bennypowers.dev/cem/serve/middleware/cors"
@@ -62,7 +63,7 @@ type Server struct {
 	running         bool
 	mu              sync.RWMutex
 	generateSession *G.GenerateSession
-	fs              FileSystem // Filesystem abstraction for testability
+	fs              platform.FileSystem // Filesystem abstraction for testability
 	// Workspace mode fields
 	isWorkspace       bool                          // True if serving a monorepo workspace
 	workspaceRoot     string                        // Root directory of workspace
@@ -93,7 +94,7 @@ func NewServerWithConfig(config Config) (*Server, error) {
 	if config.FS != nil {
 		s.fs = config.FS
 	} else {
-		s.fs = osFileSystem{}
+		s.fs = platform.NewOSFileSystem()
 	}
 
 	// Create WebSocket manager if reload is enabled
@@ -1168,6 +1169,7 @@ func (s *Server) setupMiddleware() {
 			WatchDirFunc: s.WatchDir,
 			Logger:       s.logger,
 			Enabled:      true, // TODO: Read from config
+			FS:           s.fs,
 		}),
 		transform.NewTypeScript(transform.TypeScriptConfig{ // TypeScript transform
 			WatchDirFunc:     s.WatchDir,
@@ -1177,6 +1179,7 @@ func (s *Server) setupMiddleware() {
 			ErrorBroadcaster: errorBroadcaster{s},
 			Target:           string(s.config.Target),
 			Enabled:          true, // TODO: Read from config
+			FS:               s.fs,
 		}),
 		routes.New(routes.Config{ // Internal CEM routes (includes WebSocket, demos, listings)
 			Context:          s,

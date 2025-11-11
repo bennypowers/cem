@@ -20,26 +20,33 @@ package transform
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/middleware"
 )
 
 // TypeScriptConfig holds configuration for TypeScript transformation
 type TypeScriptConfig struct {
-	WatchDirFunc     func() string // Function to get current watch directory
-	TsconfigRawFunc  func() string // Function to get current tsconfig.json content
+	WatchDirFunc     func() string         // Function to get current watch directory
+	TsconfigRawFunc  func() string         // Function to get current tsconfig.json content
 	Cache            *Cache
 	Logger           Logger
 	ErrorBroadcaster ErrorBroadcaster
 	Target           string
-	Enabled          bool // Enable/disable TypeScript transformation
+	Enabled          bool              // Enable/disable TypeScript transformation
+	FS               platform.FileSystem // Filesystem abstraction for testability
 }
 
 // NewTypeScript creates a middleware that transforms TypeScript files to JavaScript
 func NewTypeScript(config TypeScriptConfig) middleware.Middleware {
+	// Default to real filesystem if not provided
+	fs := config.FS
+	if fs == nil {
+		fs = platform.NewOSFileSystem()
+	}
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Skip if transformation is disabled
@@ -84,7 +91,7 @@ func NewTypeScript(config TypeScriptConfig) middleware.Middleware {
 				}
 
 				// Get file stat for cache key
-				fileInfo, err := os.Stat(fullTsPath)
+				fileInfo, err := fs.Stat(fullTsPath)
 				if err == nil {
 					// .ts file exists - check cache first
 					cacheKey := CacheKey{
@@ -106,7 +113,7 @@ func NewTypeScript(config TypeScriptConfig) middleware.Middleware {
 
 					// Cache miss - read file and transform
 					config.Logger.Debug("Cache miss for %s", tsPathNorm)
-					source, err := os.ReadFile(fullTsPath)
+					source, err := fs.ReadFile(fullTsPath)
 					if err != nil {
 						config.Logger.Error("Failed to read TypeScript file %s: %v", tsPathNorm, err)
 						http.Error(w, "Failed to read file", http.StatusInternalServerError)

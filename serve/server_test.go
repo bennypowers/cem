@@ -23,7 +23,6 @@ package serve_test
 
 import (
 	"encoding/json"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -33,21 +32,8 @@ import (
 	"bennypowers.dev/cem/serve"
 )
 
-// mapFSAdapter adapts platform.MapFileSystem to serve.FileSystem
-type mapFSAdapter struct {
-	*platform.MapFileSystem
-}
-
-func (a *mapFSAdapter) ReadFile(name string) ([]byte, error) {
-	return a.MapFileSystem.ReadFile(name)
-}
-
-func (a *mapFSAdapter) Stat(name string) (fs.FileInfo, error) {
-	return a.MapFileSystem.Stat(name)
-}
-
 // newTestFS creates an in-memory filesystem with manifest-regen fixture data
-func newTestFS(t *testing.T) serve.FileSystem {
+func newTestFS(t *testing.T) platform.FileSystem {
 	t.Helper()
 
 	mfs := platform.NewMapFileSystem(nil)
@@ -65,7 +51,7 @@ func newTestFS(t *testing.T) serve.FileSystem {
 
 	mfs.AddFile("/test-package/src/test.ts", `export class TestElement extends HTMLElement {}`, 0644)
 
-	return &mapFSAdapter{MapFileSystem: mfs}
+	return mfs
 }
 
 // TestReloadMessageFormat verifies reload message structure matches expected format
@@ -558,7 +544,7 @@ func TestImportResolution(t *testing.T) {
 	server, err := serve.NewServerWithConfig(serve.Config{
 		Port:   8015,
 		Reload: true,
-		FS:     &mapFSAdapter{MapFileSystem: mfs},
+		FS:     mfs,
 	})
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)

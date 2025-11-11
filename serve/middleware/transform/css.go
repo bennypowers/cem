@@ -19,22 +19,29 @@ package transform
 
 import (
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/middleware"
 )
 
 // CSSConfig holds configuration for CSS transformation
 type CSSConfig struct {
-	WatchDirFunc func() string // Function to get current watch directory
+	WatchDirFunc func() string         // Function to get current watch directory
 	Logger       Logger
-	Enabled      bool // Enable/disable CSS transformation
+	Enabled      bool              // Enable/disable CSS transformation
+	FS           platform.FileSystem // Filesystem abstraction for testability
 }
 
 // NewCSS creates a middleware that transforms CSS files to JavaScript modules
 func NewCSS(config CSSConfig) middleware.Middleware {
+	// Default to real filesystem if not provided
+	fs := config.FS
+	if fs == nil {
+		fs = platform.NewOSFileSystem()
+	}
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Skip if transformation is disabled
@@ -72,7 +79,7 @@ func NewCSS(config CSSConfig) middleware.Middleware {
 			}
 
 			// Read CSS file
-			source, err := os.ReadFile(fullCssPath)
+			source, err := fs.ReadFile(fullCssPath)
 			if err != nil {
 				// File doesn't exist - let next handler handle 404
 				next.ServeHTTP(w, r)

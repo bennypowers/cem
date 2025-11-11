@@ -24,20 +24,27 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"bennypowers.dev/cem/internal/platform"
 )
 
 func TestTypeScript_DisabledByConfig(t *testing.T) {
-	// Create temp dir with TypeScript file
-	tmpDir := t.TempDir()
-	tsFile := filepath.Join(tmpDir, "test.ts")
-	if err := os.WriteFile(tsFile, []byte("const x: number = 42;"), 0644); err != nil {
-		t.Fatal(err)
+	// Load fixture
+	inputPath := filepath.Join("..", "..", "testdata", "transforms", "config-test", "input.ts")
+	inputBytes, err := os.ReadFile(inputPath)
+	if err != nil {
+		t.Fatalf("Failed to read fixture: %v", err)
 	}
+
+	// Create in-memory filesystem with TypeScript file
+	mfs := platform.NewMapFileSystem(nil)
+	mfs.AddFile("/test/test.ts", string(inputBytes), 0644)
 
 	// Create middleware with Enabled=false
 	middleware := NewTypeScript(TypeScriptConfig{
-		WatchDirFunc: func() string { return tmpDir },
+		WatchDirFunc: func() string { return "/test" },
 		Enabled:      false,
+		FS:           mfs,
 	})
 
 	// Create test handler that should be called (middleware should skip)
@@ -61,23 +68,28 @@ func TestTypeScript_DisabledByConfig(t *testing.T) {
 }
 
 func TestTypeScript_EnabledByConfig(t *testing.T) {
-	// Create temp dir with TypeScript file
-	tmpDir := t.TempDir()
-	tsFile := filepath.Join(tmpDir, "test.ts")
-	if err := os.WriteFile(tsFile, []byte("const x: number = 42;"), 0644); err != nil {
-		t.Fatal(err)
+	// Load fixture
+	inputPath := filepath.Join("..", "..", "testdata", "transforms", "config-test", "input.ts")
+	inputBytes, err := os.ReadFile(inputPath)
+	if err != nil {
+		t.Fatalf("Failed to read fixture: %v", err)
 	}
+
+	// Create in-memory filesystem with TypeScript file
+	mfs := platform.NewMapFileSystem(nil)
+	mfs.AddFile("/test/test.ts", string(inputBytes), 0644)
 
 	// Create middleware with Enabled=true and cache
 	cache := NewCache(1024 * 1024)
 	middleware := NewTypeScript(TypeScriptConfig{
-		WatchDirFunc:     func() string { return tmpDir },
+		WatchDirFunc:     func() string { return "/test" },
 		TsconfigRawFunc:  func() string { return "" },
 		Cache:            cache,
 		Logger:           &mockLogger{},
 		Enabled:          true,
 		Target:           "ES2022",
 		ErrorBroadcaster: &mockErrorBroadcaster{},
+		FS:               mfs,
 	})
 
 	// Create test handler
@@ -112,17 +124,22 @@ func TestTypeScript_EnabledByConfig(t *testing.T) {
 }
 
 func TestCSS_DisabledByConfig(t *testing.T) {
-	// Create temp dir with CSS file
-	tmpDir := t.TempDir()
-	cssFile := filepath.Join(tmpDir, "test.css")
-	if err := os.WriteFile(cssFile, []byte(".test { color: red; }"), 0644); err != nil {
-		t.Fatal(err)
+	// Load fixture
+	inputPath := filepath.Join("..", "..", "testdata", "transforms", "config-test", "input.css")
+	inputBytes, err := os.ReadFile(inputPath)
+	if err != nil {
+		t.Fatalf("Failed to read fixture: %v", err)
 	}
+
+	// Create in-memory filesystem with CSS file
+	mfs := platform.NewMapFileSystem(nil)
+	mfs.AddFile("/test/test.css", string(inputBytes), 0644)
 
 	// Create middleware with Enabled=false
 	middleware := NewCSS(CSSConfig{
-		WatchDirFunc: func() string { return tmpDir },
+		WatchDirFunc: func() string { return "/test" },
 		Enabled:      false,
+		FS:           mfs,
 	})
 
 	// Create test handler that should be called
@@ -146,17 +163,23 @@ func TestCSS_DisabledByConfig(t *testing.T) {
 }
 
 func TestCSS_EnabledByConfig(t *testing.T) {
-	// Create temp dir with CSS file
-	tmpDir := t.TempDir()
-	cssFile := filepath.Join(tmpDir, "test.css")
-	if err := os.WriteFile(cssFile, []byte(".test { color: red; }"), 0644); err != nil {
-		t.Fatal(err)
+	// Load fixture
+	inputPath := filepath.Join("..", "..", "testdata", "transforms", "config-test", "input.css")
+	inputBytes, err := os.ReadFile(inputPath)
+	if err != nil {
+		t.Fatalf("Failed to read fixture: %v", err)
 	}
+
+	// Create in-memory filesystem with CSS file
+	mfs := platform.NewMapFileSystem(nil)
+	mfs.AddFile("/test/test.css", string(inputBytes), 0644)
 
 	// Create middleware with Enabled=true
 	middleware := NewCSS(CSSConfig{
-		WatchDirFunc: func() string { return tmpDir },
+		WatchDirFunc: func() string { return "/test" },
 		Enabled:      true,
+		Logger:       &mockLogger{},
+		FS:           mfs,
 	})
 
 	// Create test handler
