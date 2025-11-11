@@ -65,12 +65,13 @@ func (p *Pool) dispatch() {
 		case <-p.closed:
 			return
 		case t := <-p.queue:
-			// Start goroutine that will acquire worker and execute
-			go func(t task) {
-				// Acquire worker slot (blocks if all workers busy)
-				// This prevents the queue from being drained when workers are busy
-				select {
-				case p.workers <- struct{}{}:
+			// Acquire worker slot BEFORE spawning goroutine
+			// This blocks the dispatcher when all workers are busy,
+			// keeping tasks in the queue and enforcing backpressure
+			select {
+			case p.workers <- struct{}{}:
+				// Worker acquired - now spawn goroutine to execute task
+				go func(t task) {
 					defer func() {
 						// Release worker slot
 						<-p.workers
@@ -78,11 +79,11 @@ func (p *Pool) dispatch() {
 
 					// Execute task (errors are handled by caller)
 					_ = t.fn()
-				case <-p.closed:
-					// Pool closed while waiting for worker
-					return
-				}
-			}(t)
+				}(t)
+			case <-p.closed:
+				// Pool closed while waiting for worker
+				return
+			}
 		}
 	}
 }
