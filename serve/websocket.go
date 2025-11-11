@@ -147,8 +147,6 @@ func (wm *websocketManager) BroadcastToPages(message []byte, pageURLs []string) 
 
 // containsPath checks if a full URL contains a path
 func containsPath(fullURL, path string) bool {
-	// For now, just do exact prefix match
-	// TODO: Could be made more sophisticated to handle query params, fragments, etc.
 	if len(path) == 0 {
 		return false
 	}
@@ -156,9 +154,13 @@ func containsPath(fullURL, path string) bool {
 	if fullURL == path {
 		return true
 	}
-	// Prefix match (e.g., "/elements/accordion/demo/" matches "/elements/accordion/demo/accents/")
+	// Prefix match only if followed by valid delimiter ('/', '?', or '#')
 	if len(fullURL) > len(path) && fullURL[:len(path)] == path {
-		return true
+		// Check the character immediately after the path
+		nextChar := fullURL[len(path)]
+		if nextChar == '/' || nextChar == '?' || nextChar == '#' {
+			return true
+		}
 	}
 	return false
 }
