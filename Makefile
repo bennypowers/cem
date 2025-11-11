@@ -6,6 +6,16 @@ WINDOWS_CC_IMAGE := cem-windows-cc-image
 # Use Go 1.25 toolchain automatically with JSON v2 experiment
 export GOEXPERIMENT := jsonv2
 
+# Workaround for Gentoo Linux "hole in findfunctab" error with race detector
+# See: https://bugs.gentoo.org/961618
+# Gentoo's Go build has issues with the race detector and internal linker.
+# Using external linker resolves the issue.
+ifeq ($(shell test -f /etc/gentoo-release && echo yes),yes)
+    RACE_LDFLAGS := -ldflags="-linkmode=external"
+else
+    RACE_LDFLAGS :=
+endif
+
 .PHONY: build test test-unit test-e2e update watch bench profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package
 
 # NOTE: this is a non-traditional install target, which installs to ~/.local/bin/
@@ -54,10 +64,10 @@ generate:
 install-bindings: generate
 
 test-unit: generate
-	gotestsum -- -race ./...
+	gotestsum -- -race $(RACE_LDFLAGS) ./...
 
 test-e2e: generate
-	gotestsum -- -race -tags=e2e ./cmd/
+	gotestsum -- -race $(RACE_LDFLAGS) -tags=e2e ./cmd/
 
 test: test-unit test-e2e
 
@@ -68,10 +78,10 @@ test-pkg:
 		echo "Usage: make test-pkg TEST_ARGS=\"-v ./path/to/package/ -run TestName\""; \
 		exit 1; \
 	fi
-	go test -race $(TEST_ARGS)
+	go test -race $(RACE_LDFLAGS) $(TEST_ARGS)
 
 update:
-	go test -race -json ./... --update | go tool tparse -all
+	go test -race $(RACE_LDFLAGS) -json ./... --update | go tool tparse -all
 
 lint:
 	golangci-lint run
