@@ -15,9 +15,13 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package serve
+package serve_test
 
-import "testing"
+import (
+	"testing"
+
+	"bennypowers.dev/cem/serve/internal/urlutil"
+)
 
 // TestContainsPath_ExactMatch tests that exact matches return true
 func TestContainsPath_ExactMatch(t *testing.T) {
@@ -33,8 +37,8 @@ func TestContainsPath_ExactMatch(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.fullURL, func(t *testing.T) {
-			if got := containsPath(tt.fullURL, tt.path); got != tt.want {
-				t.Errorf("containsPath(%q, %q) = %v, want %v", tt.fullURL, tt.path, got, tt.want)
+			if got := urlutil.ContainsPath(tt.fullURL, tt.path); got != tt.want {
+				t.Errorf("urlutil.ContainsPath(%q, %q) = %v, want %v", tt.fullURL, tt.path, got, tt.want)
 			}
 		})
 	}
@@ -57,8 +61,8 @@ func TestContainsPath_ValidDelimiters(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := containsPath(tt.fullURL, tt.path); got != tt.want {
-				t.Errorf("containsPath(%q, %q) = %v, want %v", tt.fullURL, tt.path, got, tt.want)
+			if got := urlutil.ContainsPath(tt.fullURL, tt.path); got != tt.want {
+				t.Errorf("urlutil.ContainsPath(%q, %q) = %v, want %v", tt.fullURL, tt.path, got, tt.want)
 			}
 		})
 	}
@@ -81,8 +85,8 @@ func TestContainsPath_InvalidPrefixMatch(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := containsPath(tt.fullURL, tt.path); got != tt.want {
-				t.Errorf("containsPath(%q, %q) = %v, want %v", tt.fullURL, tt.path, got, tt.want)
+			if got := urlutil.ContainsPath(tt.fullURL, tt.path); got != tt.want {
+				t.Errorf("urlutil.ContainsPath(%q, %q) = %v, want %v", tt.fullURL, tt.path, got, tt.want)
 			}
 		})
 	}
@@ -104,8 +108,8 @@ func TestContainsPath_EdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := containsPath(tt.fullURL, tt.path); got != tt.want {
-				t.Errorf("containsPath(%q, %q) = %v, want %v", tt.fullURL, tt.path, got, tt.want)
+			if got := urlutil.ContainsPath(tt.fullURL, tt.path); got != tt.want {
+				t.Errorf("urlutil.ContainsPath(%q, %q) = %v, want %v", tt.fullURL, tt.path, got, tt.want)
 			}
 		})
 	}

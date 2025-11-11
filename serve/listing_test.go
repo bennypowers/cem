@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package serve
+package serve_test
 
 import (
 	"net/http"
@@ -26,6 +26,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/serve"
 )
 
 // newListingTestFS creates an in-memory filesystem for listing tests
@@ -45,7 +46,7 @@ func TestRootListing_ShowsAllElements(t *testing.T) {
 	}
 
 	mfs := newListingTestFS()
-	server, err := NewServerWithConfig(Config{
+	server, err := serve.NewServerWithConfig(serve.Config{
 		Port:   0,
 		Reload: true,
 		FS:     mfs,
@@ -127,7 +128,7 @@ func TestRootListing_EmptyManifest(t *testing.T) {
 	}
 
 	mfs := newListingTestFS()
-	server, err := NewServerWithConfig(Config{
+	server, err := serve.NewServerWithConfig(serve.Config{
 		Port:   0,
 		Reload: true,
 		FS:     mfs,
@@ -177,7 +178,7 @@ func TestRootListing_SortedByElement(t *testing.T) {
 	}
 
 	mfs := newListingTestFS()
-	server, err := NewServerWithConfig(Config{
+	server, err := serve.NewServerWithConfig(serve.Config{
 		Port:   0,
 		Reload: true,
 		FS:     mfs,

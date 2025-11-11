@@ -22,6 +22,7 @@ import (
 	"net/url"
 	"sync"
 
+	"bennypowers.dev/cem/serve/internal/urlutil"
 	"github.com/gorilla/websocket"
 )
 
@@ -117,7 +118,7 @@ func (wm *websocketManager) BroadcastToPages(message []byte, pageURLs []string) 
 	for _, wrapper := range wm.connections {
 		// Check if this connection's page matches any of the target URLs
 		for _, targetURL := range pageURLs {
-			if wrapper.pageURL == targetURL || containsPath(wrapper.pageURL, targetURL) {
+			if wrapper.pageURL == targetURL || urlutil.ContainsPath(wrapper.pageURL, targetURL) {
 				snapshot = append(snapshot, wrapper)
 				break
 			}
@@ -143,26 +144,6 @@ func (wm *websocketManager) BroadcastToPages(message []byte, pageURLs []string) 
 	}
 
 	return nil
-}
-
-// containsPath checks if a full URL contains a path
-func containsPath(fullURL, path string) bool {
-	if len(path) == 0 {
-		return false
-	}
-	// Exact match
-	if fullURL == path {
-		return true
-	}
-	// Prefix match only if followed by valid delimiter ('/', '?', or '#')
-	if len(fullURL) > len(path) && fullURL[:len(path)] == path {
-		// Check the character immediately after the path
-		nextChar := fullURL[len(path)]
-		if nextChar == '/' || nextChar == '?' || nextChar == '#' {
-			return true
-		}
-	}
-	return false
 }
 
 // HandleConnection handles a new WebSocket connection

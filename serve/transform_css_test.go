@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package serve
+package serve_test
 
 import (
 	"net/http"
@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform/testutil"
+	"bennypowers.dev/cem/serve"
 )
 
 // TestServeCSS_TransformsToModule tests HTTP serving of CSS as JavaScript module
@@ -31,7 +32,7 @@ func TestServeCSS_TransformsToModule(t *testing.T) {
 	// Load CSS fixture into in-memory filesystem
 	mfs := testutil.NewFixtureFS(t, "transforms/http-css", "/test")
 
-	server, err := NewServerWithConfig(Config{
+	server, err := serve.NewServerWithConfig(serve.Config{
 		Port:   0,
 		Reload: true,
 		FS:     mfs,
@@ -90,7 +91,7 @@ func TestServeCSS_RejectsPathTraversal(t *testing.T) {
 	//   /parent/secret.css (outside watch dir, at parent level)
 	mfs := testutil.NewFixtureFS(t, "transforms/http-css/path-traversal", "/parent")
 
-	server, err := NewServerWithConfig(Config{
+	server, err := serve.NewServerWithConfig(serve.Config{
 		Port:   0,
 		Reload: true,
 		FS:     mfs,

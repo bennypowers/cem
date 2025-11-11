@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package serve
+package serve_test
 
 import (
 	"net/http"
@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform/testutil"
+	"bennypowers.dev/cem/serve"
 )
 
 // TestServeTypeScript_TransformsOnRequest tests that requesting a .js file
@@ -33,7 +34,7 @@ func TestServeTypeScript_TransformsOnRequest(t *testing.T) {
 	mfs := testutil.NewFixtureFS(t, "transforms/http-typescript", "/test")
 
 	// Create server with MapFileSystem
-	server, err := NewServerWithConfig(Config{
+	server, err := serve.NewServerWithConfig(serve.Config{
 		Port:   0,
 		Reload: true,
 		FS:     mfs,
@@ -87,7 +88,7 @@ func TestServeTypeScript_OnlyWhenTsExists(t *testing.T) {
 	// Load plain JavaScript fixture (no .ts counterpart)
 	mfs := testutil.NewFixtureFS(t, "transforms/http-typescript", "/test")
 
-	server, err := NewServerWithConfig(Config{
+	server, err := serve.NewServerWithConfig(serve.Config{
 		Port:   0,
 		Reload: true,
 		FS:     mfs,
@@ -128,7 +129,7 @@ func TestServeTypeScript_RejectsPathTraversal(t *testing.T) {
 	//   /parent/secret.ts (outside watch dir)
 	mfs := testutil.NewFixtureFS(t, "transforms/http-typescript/path-traversal", "/parent")
 
-	server, err := NewServerWithConfig(Config{
+	server, err := serve.NewServerWithConfig(serve.Config{
 		Port:   0,
 		Reload: true,
 		FS:     mfs,

@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package serve
+package serve_test
 
 import (
 	"net/http"
@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform/testutil"
+	"bennypowers.dev/cem/serve"
 )
 
 // TestDemoRouting_BasicRoute verifies demo URLs route correctly
@@ -33,7 +34,7 @@ func TestDemoRouting_BasicRoute(t *testing.T) {
 	manifestBytes := testutil.LoadFixtureFile(t, "demo-routing/manifest.json")
 
 	// Create server with MapFileSystem
-	server, err := NewServerWithConfig(Config{
+	server, err := serve.NewServerWithConfig(serve.Config{
 		Port:   0,
 		Reload: true,
 		FS:     mfs,
