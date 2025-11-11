@@ -290,7 +290,7 @@ func TestManifestDefensiveCopy(t *testing.T) {
 	}
 }
 
-// TestDebounceDuration verifies 150ms debounce as per spec
+// TestDebounceDuration verifies 50ms debounce duration
 func TestDebounceDuration(t *testing.T) {
 	server, err := serve.NewServer(8007)
 	if err != nil {
@@ -299,7 +299,7 @@ func TestDebounceDuration(t *testing.T) {
 	defer func() { _ = server.Close() }()
 
 	duration := server.DebounceDuration()
-	expected := "150ms"
+	expected := "50ms"
 
 	if duration.String() != expected {
 		t.Errorf("Expected debounce duration %s, got %s", expected, duration.String())

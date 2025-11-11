@@ -36,15 +36,15 @@ func (m *mockLogger) Info(msg string, args ...any) {
 }
 
 func (m *mockLogger) Warning(msg string, args ...any) {
-	m.logs = append(m.logs, fmt.Sprintf("WARNING: "+msg, args...))
+	m.logs = append(m.logs, fmt.Sprintf(msg, args...))
 }
 
 func (m *mockLogger) Error(msg string, args ...any) {
-	m.logs = append(m.logs, fmt.Sprintf("ERROR: "+msg, args...))
+	m.logs = append(m.logs, fmt.Sprintf(msg, args...))
 }
 
 func (m *mockLogger) Debug(msg string, args ...any) {
-	m.logs = append(m.logs, fmt.Sprintf("DEBUG: "+msg, args...))
+	m.logs = append(m.logs, fmt.Sprintf(msg, args...))
 }
 
 // TestLogger_LogsRequest tests that requests are logged
