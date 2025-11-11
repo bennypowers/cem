@@ -1,62 +1,66 @@
 // WebSocket client with automatic reconnection logic
 
 export class ReconnectingWebSocket {
-  constructor(url, options = {}) {
-    this.url = url;
-    this.jitterMax = options.jitterMax ?? 1000;
+  #url;
+  #jitterMax;
+  #retryCount = 0;
+  #retryTimeout = null;
+  #isConnected = false;
+  #listeners = {
+    open: [],
+    message: [],
+    close: [],
+    error: [],
+    reconnecting: []
+  };
 
-    this.ws = null;
-    this.retryCount = 0;
-    this.retryTimeout = null;
-    this.isConnected = false;
-    this.listeners = {
-      open: [],
-      message: [],
-      close: [],
-      error: [],
-      reconnecting: []
-    };
+  // Public property - accessed externally for debugging
+  ws = null;
+
+  constructor(url, options = {}) {
+    this.#url = url;
+    this.#jitterMax = options.jitterMax ?? 1000;
   }
 
   connect() {
-    this.ws = new WebSocket(this.url);
+    this.ws = new WebSocket(this.#url);
 
     this.ws.onopen = (event) => {
-      this.isConnected = true;
-      this.retryCount = 0;
-      clearTimeout(this.retryTimeout);
-      this.retryTimeout = null;
-      this._dispatch('open', event);
+      this.#isConnected = true;
+      this.#retryCount = 0;
+      clearTimeout(this.#retryTimeout);
+      this.#retryTimeout = null;
+      this.#dispatch('open', event);
     };
 
     this.ws.onmessage = (event) => {
-      this._dispatch('message', event);
+      this.#dispatch('message', event);
     };
 
     this.ws.onclose = (event) => {
-      this.isConnected = false;
+      this.#isConnected = false;
       this.ws = null;
-      this._dispatch('close', event);
-      this._reconnect();
+      this.#dispatch('close', event);
+      this.#reconnect();
     };
 
     this.ws.onerror = (event) => {
-      this.isConnected = false;
-      this._dispatch('error', event);
+      this.#isConnected = false;
+      this.#dispatch('error', event);
     };
 
     return this;
   }
 
   send(data) {
-    if (this.ws && this.isConnected) {
+    if (this.ws && this.#isConnected) {
       this.ws.send(data);
     }
   }
 
   close() {
-    clearTimeout(this.retryTimeout);
-    this.retryTimeout = null;
+    clearTimeout(this.#retryTimeout);
+    this.#retryTimeout = null;
     if (this.ws) {
       this.ws.close();
       this.ws = null;
@@ -64,26 +68,26 @@ export class ReconnectingWebSocket {
   }
 
   on(event, callback) {
-    if (this.listeners[event]) {
-      this.listeners[event].push(callback);
+    if (this.#listeners[event]) {
+      this.#listeners[event].push(callback);
     }
     return this;
   }
 
   off(event, callback) {
-    if (this.listeners[event]) {
-      this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+    if (this.#listeners[event]) {
+      this.#listeners[event] = this.#listeners[event].filter(cb => cb !== callback);
     }
     return this;
   }
 
-  _dispatch(event, data) {
-    if (this.listeners[event]) {
-      this.listeners[event].forEach(callback => callback(data));
+  #dispatch(event, data) {
+    if (this.#listeners[event]) {
+      this.#listeners[event].forEach(callback => callback(data));
     }
   }
 
-  _calculateBackoff() {
+  #calculateBackoff() {
     // Progressive backoff strategy that stays aggressive early, backs off gradually
     // Attempts 1-20: 1 second (20 seconds total)
     // Attempts 21-40: 2 seconds (40 seconds more = 1 minute total)
@@ -92,44 +96,44 @@ export class ReconnectingWebSocket {
     // Attempts 81+: 30 seconds
 
     let delay;
-    if (this.retryCount <= 20) {
+    if (this.#retryCount <= 20) {
       delay = 1000; // 1 second
-    } else if (this.retryCount <= 40) {
+    } else if (this.#retryCount <= 40) {
       delay = 2000; // 2 seconds
-    } else if (this.retryCount <= 60) {
+    } else if (this.#retryCount <= 60) {
       delay = 5000; // 5 seconds
-    } else if (this.retryCount <= 80) {
+    } else if (this.#retryCount <= 80) {
       delay = 10000; // 10 seconds
     } else {
       delay = 30000; // 30 seconds
     }
 
     // Add jitter to avoid thundering herd
-    const jitter = Math.random() * this.jitterMax;
+    const jitter = Math.random() * this.#jitterMax;
     return delay + jitter;
   }
 
-  _reconnect() {
-    if (this.retryTimeout) return; // Already scheduled
+  #reconnect() {
+    if (this.#retryTimeout) return; // Already scheduled
 
-    this.retryCount++;
-    const delay = this._calculateBackoff();
+    this.#retryCount++;
+    const delay = this.#calculateBackoff();
 
-    this._dispatch('reconnecting', {
-      attempt: this.retryCount,
+    this.#dispatch('reconnecting', {
+      attempt: this.#retryCount,
       delay
     });
 
-    this.retryTimeout = setTimeout(() => {
-      this.retryTimeout = null;
+    this.#retryTimeout = setTimeout(() => {
+      this.#retryTimeout = null;
       this.connect();
     }, delay);
   }
 
   retry() {
-    clearTimeout(this.retryTimeout);
-    this.retryTimeout = null;
-    this.retryCount = 0;
+    clearTimeout(this.#retryTimeout);
+    this.#retryTimeout = null;
+    this.#retryCount = 0;
     this.connect();
   }
 }
