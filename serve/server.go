@@ -709,9 +709,16 @@ func (s *Server) resolveSourceFile(path string) string {
 	// If it's a .js file, check if .ts exists
 	if filepath.Ext(path) == ".js" {
 		tsPath := path[:len(path)-3] + ".ts"
-		fullTsPath := filepath.Join(s.watchDir, tsPath)
-		if _, err := os.Stat(fullTsPath); err == nil {
-			return tsPath
+		watchDir := s.WatchDir()
+		if watchDir != "" {
+			fullTsPath := filepath.Join(watchDir, tsPath)
+			if fs := s.FileSystem(); fs != nil {
+				if _, err := fs.Stat(fullTsPath); err == nil {
+					return tsPath
+				}
+			} else if _, err := os.Stat(fullTsPath); err == nil {
+				return tsPath
+			}
 		}
 	}
 	return path
