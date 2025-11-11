@@ -308,7 +308,17 @@ func serveIndexListing(w http.ResponseWriter, r *http.Request, config Config) bo
 		// Single-package mode: check if index.html exists
 		watchDir := config.Context.WatchDir()
 		if watchDir != "" {
-			if _, err := os.Stat(filepath.Join(watchDir, "index.html")); err == nil {
+			indexPath := filepath.Join(watchDir, "index.html")
+			var err error
+
+			// Use injected filesystem if available, otherwise fall back to os.Stat
+			if filesystem := config.Context.FileSystem(); filesystem != nil {
+				_, err = filesystem.Stat(indexPath)
+			} else {
+				_, err = os.Stat(indexPath)
+			}
+
+			if err == nil {
 				// index.html exists, let static handler serve it
 				return false
 			}
