@@ -894,6 +894,9 @@ func (s *Server) logCacheStats(interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
+	checkTicker := time.NewTicker(1 * time.Second)
+	defer checkTicker.Stop()
+
 	for {
 		// Check if server is still running
 		s.mu.RLock()
@@ -915,7 +918,7 @@ func (s *Server) logCacheStats(interval time.Duration) {
 					stats.MaxSize/(1024*1024),
 				)
 			}
-		case <-time.After(1 * time.Second):
+		case <-checkTicker.C:
 			// Check running status periodically
 			continue
 		}
