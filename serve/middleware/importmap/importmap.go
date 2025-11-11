@@ -20,6 +20,7 @@ package importmap
 import (
 	"encoding/json"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"bennypowers.dev/cem/serve/middleware"
@@ -110,9 +111,29 @@ func New(config MiddlewareConfig) middleware.Middleware {
 	}
 }
 
-// injectImportMap injects an import map script into HTML
-// It tries to inject before </head>, otherwise at the start of <body>
-func injectImportMap(html string, importMapJSON string) string {
+// injectImportMap injects or replaces an import map script in HTML
+// If an import map already exists, it replaces it; otherwise it injects a new one
+func injectImportMap(htmlStr string, importMapJSON string) string {
+	// Regex pattern to match <script type="importmap">...</script>
+	// Handles both single and double quotes, and content with newlines
+	importMapPattern := regexp.MustCompile(`(?s)<script\s+type=["']importmap["'][^>]*>.*?</script>`)
+
+	// Check if an import map already exists
+	if importMapPattern.MatchString(htmlStr) {
+		// Replace existing import map with new content
+		replacement := `<script type="importmap">
+` + importMapJSON + `
+  </script>`
+		return importMapPattern.ReplaceAllString(htmlStr, replacement)
+	}
+
+	// No existing import map found, inject a new one before </head>
+	return injectImportMapFallback(htmlStr, importMapJSON)
+}
+
+// injectImportMapFallback uses string replacement to inject import map
+// Used when HTML parsing fails or when injecting (not replacing)
+func injectImportMapFallback(html string, importMapJSON string) string {
 	importMapScript := "<script type=\"importmap\">\n  " + importMapJSON + "\n  </script>"
 
 	// Try to inject before </head>
