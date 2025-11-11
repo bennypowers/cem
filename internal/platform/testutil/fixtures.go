@@ -58,7 +58,10 @@ func NewFixtureFS(t *testing.T, fixtureDir string, rootPath string) *platform.Ma
 		t.Fatalf("Could not find fixtures at %s (tried all paths)", fixtureDir)
 	}
 
+	// Walk fixture directory and load all files into memory
+	// Callback returns errors immediately to terminate on first failure
 	err := filepath.WalkDir(fixturePath, func(path string, d fs.DirEntry, err error) error {
+		// Propagate any errors from WalkDir (e.g., permission denied)
 		if err != nil {
 			return err
 		}
