@@ -213,8 +213,34 @@ func extractDependencies(source []byte, sourcePath string) []string {
 }
 
 // isRelativeImport checks if an import path is relative (./ or ../)
+// Also handles normalized relative imports where the ./ or ../ prefix was removed
 func isRelativeImport(path string) bool {
-	return strings.HasPrefix(path, "./") || strings.HasPrefix(path, "../")
+	// Check for explicit relative path markers
+	if strings.HasPrefix(path, "./") || strings.HasPrefix(path, "../") {
+		return true
+	}
+
+	// Handle normalized relative imports (where ./ or ../ prefix was removed by NormalizeImportPath)
+	// A path is NOT relative if it's a bare specifier (npm package):
+	// 1. Scoped package starting with @ (e.g., @rhds/elements)
+	// 2. Simple package name without / and without file extension (e.g., lit)
+	// 3. Absolute path starting with /
+
+	if strings.HasPrefix(path, "@") || strings.HasPrefix(path, "/") {
+		return false // Scoped package or absolute path
+	}
+
+	if !strings.Contains(path, "/") {
+		// If there's no /, it could be either:
+		// - A bare specifier like 'lit' (no extension)
+		// - A normalized relative import like 'component.css' (has extension)
+		hasExtension := strings.Contains(path, ".")
+		return hasExtension // True if it's a file with extension, false if it's a bare package
+	}
+
+	// If we get here, it's a path like "shared/utils.js"
+	// which are normalized relative imports
+	return true
 }
 
 // resolveImport resolves a relative import path against a source file

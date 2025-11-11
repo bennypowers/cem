@@ -123,7 +123,7 @@ func NewTypeScript(config TypeScriptConfig) middleware.Middleware {
 						Loader:      LoaderTS,
 						Target:      Target(target),
 						Sourcemap:   SourceMapInline,
-						Sourcefile:  tsPathNorm, // Use normalized path for source maps
+						Sourcefile:  fullTsPath, // Use absolute path for dependency resolution
 						TsconfigRaw: tsconfigRaw,
 					})
 					if err != nil {
@@ -143,6 +143,9 @@ func NewTypeScript(config TypeScriptConfig) middleware.Middleware {
 					}
 
 					// Store in cache
+					if len(result.Dependencies) > 0 {
+						config.Logger.Debug("Caching %s with %d dependencies: %v", tsPathNorm, len(result.Dependencies), result.Dependencies)
+					}
 					config.Cache.Set(cacheKey, result.Code, result.Dependencies)
 
 					// Serve transformed JavaScript

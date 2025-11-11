@@ -929,7 +929,9 @@ func (s *Server) handleFileChanges() {
 		if s.transformCache != nil {
 			invalidatedFiles = s.transformCache.Invalidate(changedPath)
 			if len(invalidatedFiles) > 0 {
-				s.logger.Debug("Invalidated %d cached transforms", len(invalidatedFiles))
+				s.logger.Debug("Invalidated %d cached transforms: %v", len(invalidatedFiles), invalidatedFiles)
+			} else {
+				s.logger.Debug("No cached transforms invalidated for %s", changedPath)
 			}
 		}
 

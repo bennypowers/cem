@@ -18,6 +18,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package transform
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -133,5 +136,106 @@ func (m *mockLogger) Error(msg string, args ...any) {
 func (m *mockLogger) Debug(msg string, args ...any) {
 	if m.debugFunc != nil {
 		m.debugFunc(msg, args...)
+	}
+}
+
+func TestCache_CSSImportDependencies(t *testing.T) {
+	cache := NewCache(10 * 1024 * 1024) // 10MB cache
+
+	// Simulate a TypeScript file that imports a CSS file
+	tsPath := "/test/component.ts"
+	cssPath := "/test/component.css"
+	tsCode := []byte(`import './component.css';\nexport class Component {}`)
+	
+	// Set the TS file with CSS as a dependency
+	key := CacheKey{Path: tsPath, ModTime: time.Now(), Size: int64(len(tsCode))}
+	cache.Set(key, tsCode, []string{cssPath})
+
+	// Now when component.css changes, it should invalidate component.ts
+	invalidated := cache.Invalidate(cssPath)
+	
+	if len(invalidated) == 0 {
+		t.Fatal("Expected CSS file change to invalidate TypeScript file, got 0 invalidations")
+	}
+	
+	found := false
+	for _, path := range invalidated {
+		if path == tsPath {
+			found = true
+			break
+		}
+	}
+	
+	if !found {
+		t.Errorf("Expected %s to be invalidated when %s changes, got: %v", tsPath, cssPath, invalidated)
+	}
+}
+
+func TestExtractDependencies_CSSImports(t *testing.T) {
+	// Read fixture file with CSS import
+	inputPath := filepath.Join("..", "..", "testdata", "transforms", "css-import", "input.ts")
+	source, err := os.ReadFile(inputPath)
+	if err != nil {
+		t.Fatalf("Failed to read test fixture: %v", err)
+	}
+
+	// Extract dependencies from the source
+	absPath, _ := filepath.Abs(inputPath)
+
+	deps := extractDependencies(source, absPath)
+
+	if len(deps) == 0 {
+		t.Fatal("Expected CSS import to be extracted as dependency, got 0 dependencies")
+	}
+
+	foundCSS := false
+	for _, dep := range deps {
+		if strings.HasSuffix(dep, "component.css") {
+			foundCSS = true
+			break
+		}
+	}
+
+	if !foundCSS {
+		t.Errorf("Expected to find component.css in dependencies, got: %v", deps)
+	}
+}
+
+func TestCache_CSSImportDependenciesExtracted(t *testing.T) {
+	// Integration test: Verify that CSS imports are automatically extracted and tracked
+	cache := NewCache(10 * 1024 * 1024)
+
+	// Read fixture file with CSS import
+	inputPath := filepath.Join("..", "..", "testdata", "transforms", "css-import", "input.ts")
+	source, err := os.ReadFile(inputPath)
+	if err != nil {
+		t.Fatalf("Failed to read test fixture: %v", err)
+	}
+
+	absPath, _ := filepath.Abs(inputPath)
+	cssPath, _ := filepath.Abs(filepath.Join(filepath.Dir(inputPath), "component.css"))
+
+	// Extract dependencies and cache with them
+	deps := extractDependencies(source, absPath)
+	key := CacheKey{Path: absPath, ModTime: time.Now(), Size: int64(len(source))}
+	cache.Set(key, source, deps)
+
+	// Verify CSS file change invalidates TypeScript file
+	invalidated := cache.Invalidate(cssPath)
+
+	if len(invalidated) == 0 {
+		t.Fatal("Expected CSS file change to invalidate TypeScript file via extracted dependencies")
+	}
+
+	found := false
+	for _, path := range invalidated {
+		if path == absPath {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		t.Errorf("Expected %s to be invalidated when %s changes, got: %v", absPath, cssPath, invalidated)
 	}
 }

@@ -59,3 +59,4 @@ func TestTypeScriptTransform_Basic(t *testing.T) {
 		t.Error("Output missing inline source map")
 	}
 }
+
