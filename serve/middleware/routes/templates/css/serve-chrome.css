@@ -365,8 +365,9 @@ footer ::slotted([slot="description"]) {
 .nav-drawer-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: var(--cem-dev-server-spacing-lg);
+  gap: var(--cem-dev-server-spacing-md);
+  height: var(--cem-dev-server-header-height);
+  padding: 0 var(--cem-dev-server-spacing-lg);
   border-bottom: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
 
   h2 {
