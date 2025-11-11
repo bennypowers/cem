@@ -35,19 +35,19 @@ func TestPool_LimitsConcurrentTasks(t *testing.T) {
 	// Track concurrent executions
 	var concurrent int32
 	var maxConcurrent int32
+	var maxMu sync.Mutex
 
 	// Function that tracks concurrency
 	task := func() error {
 		current := atomic.AddInt32(&concurrent, 1)
 		defer atomic.AddInt32(&concurrent, -1)
 
-		// Update max if needed
-		for {
-			max := atomic.LoadInt32(&maxConcurrent)
-			if current <= max || atomic.CompareAndSwapInt32(&maxConcurrent, max, current) {
-				break
-			}
+		// Update max if needed (using mutex for simplicity in test code)
+		maxMu.Lock()
+		if current > maxConcurrent {
+			maxConcurrent = current
 		}
+		maxMu.Unlock()
 
 		// Simulate work
 		time.Sleep(50 * time.Millisecond)
@@ -65,7 +65,10 @@ func TestPool_LimitsConcurrentTasks(t *testing.T) {
 	wg.Wait()
 
 	// Verify max concurrent was respected
-	max := atomic.LoadInt32(&maxConcurrent)
+	maxMu.Lock()
+	max := maxConcurrent
+	maxMu.Unlock()
+
 	if max > 2 {
 		t.Errorf("Expected max 2 concurrent tasks, got %d", max)
 	}
