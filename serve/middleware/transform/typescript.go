@@ -72,9 +72,16 @@ func NewTypeScript(config TypeScriptConfig) middleware.Middleware {
 
 			if tsPath != "" {
 				// Strip leading slash and normalize path separators before joining
+				watchDirClean := filepath.Clean(watchDir)
 				tsPathNorm := strings.TrimPrefix(tsPath, "/")
-				tsPathNorm = filepath.FromSlash(tsPathNorm)
-				fullTsPath := filepath.Join(watchDir, tsPathNorm)
+				tsPathNorm = filepath.Clean(filepath.FromSlash(tsPathNorm))
+				fullTsPath := filepath.Join(watchDirClean, tsPathNorm)
+
+				// Reject attempts to escape the watch directory
+				if rel, err := filepath.Rel(watchDirClean, fullTsPath); err != nil || strings.HasPrefix(rel, "..") {
+					http.NotFound(w, r)
+					return
+				}
 
 				// Get file stat for cache key
 				fileInfo, err := os.Stat(fullTsPath)

@@ -123,3 +123,83 @@ func TestServeTypeScript_OnlyWhenTsExists(t *testing.T) {
 		t.Errorf("Expected original JS content, got: %s", body)
 	}
 }
+
+// TestServeTypeScript_RejectsPathTraversal tests that path traversal attacks are blocked
+func TestServeTypeScript_RejectsPathTraversal(t *testing.T) {
+	// Create a parent directory with watch dir as subdirectory
+	parentDir := t.TempDir()
+	watchDir := filepath.Join(parentDir, "project")
+	if err := os.Mkdir(watchDir, 0755); err != nil {
+		t.Fatalf("Failed to create watch dir: %v", err)
+	}
+
+	// Create legitimate TypeScript in watch directory
+	legitimateTs := filepath.Join(watchDir, "legitimate.ts")
+	if err := os.WriteFile(legitimateTs, []byte("export const x: number = 42;"), 0644); err != nil {
+		t.Fatalf("Failed to write legitimate TS: %v", err)
+	}
+
+	// Create a "sensitive" TypeScript file OUTSIDE watch directory but in parent
+	secretTs := filepath.Join(parentDir, "secret.ts")
+	secretContent := "export const API_KEY: string = 'SECRET123';"
+	if err := os.WriteFile(secretTs, []byte(secretContent), 0644); err != nil {
+		t.Fatalf("Failed to write secret TS: %v", err)
+	}
+
+	server, err := NewServer(0)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	if err := server.SetWatchDir(watchDir); err != nil {
+		t.Fatalf("Failed to set watch dir: %v", err)
+	}
+
+	// Path traversal to access file in parent directory
+	// Request .js but the server should check for .ts
+	attacks := []string{
+		"/../secret.js",                     // Direct parent access (.js request)
+		"/../secret.ts",                     // Direct parent access (.ts request)
+		"/subdir/../../secret.js",           // Via non-existent subdir
+		"/./../secret.ts",                   // Mixed with current dir
+		"/./../../project/../secret.js",     // Complex traversal
+	}
+
+	for _, attack := range attacks {
+		t.Run(attack, func(t *testing.T) {
+			req := httptest.NewRequest("GET", attack, nil)
+			w := httptest.NewRecorder()
+
+			server.Handler().ServeHTTP(w, req)
+
+			// Should return 404, not expose the secret file
+			if w.Code != http.StatusNotFound {
+				t.Errorf("Expected status 404 for path traversal, got %d", w.Code)
+			}
+
+			// Should NOT contain secret content
+			body := w.Body.String()
+			if strings.Contains(body, "SECRET123") || strings.Contains(body, "API_KEY") {
+				t.Errorf("Path traversal succeeded! Secret content leaked: %s", body)
+			}
+		})
+	}
+
+	// Verify legitimate access still works
+	t.Run("legitimate access", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/legitimate.js", nil)
+		w := httptest.NewRecorder()
+
+		server.Handler().ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("Expected status 200 for legitimate request, got %d", w.Code)
+		}
+
+		body := w.Body.String()
+		if !strings.Contains(body, "42") {
+			t.Error("Legitimate TypeScript file not served correctly")
+		}
+	})
+}

@@ -60,9 +60,16 @@ func NewCSS(config CSSConfig) middleware.Middleware {
 			}
 
 			// Strip leading slash and normalize
+			watchDirClean := filepath.Clean(watchDir)
 			cssPath := strings.TrimPrefix(requestPath, "/")
-			cssPath = filepath.FromSlash(cssPath)
-			fullCssPath := filepath.Join(watchDir, cssPath)
+			cssPath = filepath.Clean(filepath.FromSlash(cssPath))
+			fullCssPath := filepath.Join(watchDirClean, cssPath)
+
+			// Reject attempts to escape the watch directory
+			if rel, err := filepath.Rel(watchDirClean, fullCssPath); err != nil || strings.HasPrefix(rel, "..") {
+				http.NotFound(w, r)
+				return
+			}
 
 			// Read CSS file
 			source, err := os.ReadFile(fullCssPath)

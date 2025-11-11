@@ -139,3 +139,82 @@ func TestServeCSS_WarnsWithoutImportAttribute(t *testing.T) {
 	// the server logs a warning. Implementation requires examining the referrer
 	// to detect how the CSS is being imported.
 }
+
+// TestServeCSS_RejectsPathTraversal tests that path traversal attacks are blocked
+func TestServeCSS_RejectsPathTraversal(t *testing.T) {
+	// Create a parent directory with watch dir as subdirectory
+	parentDir := t.TempDir()
+	watchDir := filepath.Join(parentDir, "project")
+	if err := os.Mkdir(watchDir, 0755); err != nil {
+		t.Fatalf("Failed to create watch dir: %v", err)
+	}
+
+	// Create legitimate CSS in watch directory
+	legitimateCss := filepath.Join(watchDir, "legitimate.css")
+	if err := os.WriteFile(legitimateCss, []byte(":host { color: blue; }"), 0644); err != nil {
+		t.Fatalf("Failed to write legitimate CSS: %v", err)
+	}
+
+	// Create a "sensitive" file OUTSIDE watch directory but in parent
+	secretCss := filepath.Join(parentDir, "secret.css")
+	secretContent := ":host { color: red; /* SECRET */ }"
+	if err := os.WriteFile(secretCss, []byte(secretContent), 0644); err != nil {
+		t.Fatalf("Failed to write secret CSS: %v", err)
+	}
+
+	server, err := NewServer(0)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	if err := server.SetWatchDir(watchDir); err != nil {
+		t.Fatalf("Failed to set watch dir: %v", err)
+	}
+
+	// Path traversal to access file in parent directory
+	// Since secret.css is in parent of watchDir, we need /../secret.css
+	attacks := []string{
+		"/../secret.css",                    // Direct parent access
+		"/subdir/../../secret.css",          // Via non-existent subdir
+		"/./../secret.css",                  // Mixed with current dir
+		"/./../../project/../secret.css",    // Complex traversal
+	}
+
+	for _, attack := range attacks {
+		t.Run(attack, func(t *testing.T) {
+			req := httptest.NewRequest("GET", attack, nil)
+			w := httptest.NewRecorder()
+
+			server.Handler().ServeHTTP(w, req)
+
+			// Should return 404, not expose the secret file
+			if w.Code != http.StatusNotFound {
+				t.Errorf("Expected status 404 for path traversal, got %d", w.Code)
+			}
+
+			// Should NOT contain secret content
+			body := w.Body.String()
+			if strings.Contains(body, "SECRET") {
+				t.Errorf("Path traversal succeeded! Secret content leaked: %s", body)
+			}
+		})
+	}
+
+	// Verify legitimate access still works
+	t.Run("legitimate access", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/legitimate.css", nil)
+		w := httptest.NewRecorder()
+
+		server.Handler().ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("Expected status 200 for legitimate request, got %d", w.Code)
+		}
+
+		body := w.Body.String()
+		if !strings.Contains(body, "color: blue") {
+			t.Error("Legitimate CSS file not served correctly")
+		}
+	})
+}
