@@ -102,6 +102,24 @@ func TestContainsPath(t *testing.T) {
 			path:    "/demo/my file.html",
 			want:    true,
 		},
+		{
+			name:    "root path",
+			fullURL: "/",
+			path:    "/",
+			want:    true,
+		},
+		{
+			name:    "trailing slash in fullURL",
+			fullURL: "/demo/basic/",
+			path:    "/demo/basic",
+			want:    true,
+		},
+		{
+			name:    "trailing slash in path",
+			fullURL: "/demo/basic",
+			path:    "/demo/basic/",
+			want:    false,
+		},
 	}
 
 	for _, tt := range tests {
