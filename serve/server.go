@@ -1301,7 +1301,7 @@ func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 	// Set correct MIME type
 	ext := filepath.Ext(fullPath)
 	switch ext {
-	case ".js":
+	case ".js", ".mjs", ".cjs":
 		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
 	case ".css":
 		w.Header().Set("Content-Type", "text/css; charset=utf-8")
