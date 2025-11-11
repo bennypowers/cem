@@ -41,7 +41,7 @@ var notFoundTemplate string
 //go:embed templates/**
 var templatesFS embed.FS
 
-//go:embed templates/js/*.js templates/css/*.css
+//go:embed templates/js/*.js templates/css/*.css templates/images/*
 var InternalModules embed.FS
 
 // Template functions available to templates

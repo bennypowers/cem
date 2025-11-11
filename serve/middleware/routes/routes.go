@@ -130,12 +130,26 @@ func New(config Config) middleware.Middleware {
 	}
 }
 
-// serveInternalModules serves embedded JavaScript modules from embed.FS
+// serveInternalModules serves embedded static assets from embed.FS
 func serveInternalModules(w http.ResponseWriter, r *http.Request, config Config) {
 	// Strip /__cem/ prefix to get the file path within the embedded FS
 	// Request: /__cem/foo.js -> templates/js/foo.js in embed.FS
-	path := strings.TrimPrefix(r.URL.Path, "/__cem/")
-	path = "templates/js/" + path
+	// Request: /__cem/logo.svg -> templates/images/logo.svg in embed.FS
+	reqPath := strings.TrimPrefix(r.URL.Path, "/__cem/")
+
+	// Determine subdirectory based on file extension
+	var path string
+	switch {
+	case strings.HasSuffix(reqPath, ".js"):
+		path = "templates/js/" + reqPath
+	case strings.HasSuffix(reqPath, ".css"):
+		path = "templates/css/" + reqPath
+	case strings.HasSuffix(reqPath, ".svg"), strings.HasSuffix(reqPath, ".png"), strings.HasSuffix(reqPath, ".jpg"), strings.HasSuffix(reqPath, ".jpeg"):
+		path = "templates/images/" + reqPath
+	default:
+		// Try js as default for backward compatibility
+		path = "templates/js/" + reqPath
+	}
 
 	data, err := InternalModules.ReadFile(path)
 	if err != nil {
@@ -143,10 +157,25 @@ func serveInternalModules(w http.ResponseWriter, r *http.Request, config Config)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+	// Set content type based on file extension
+	contentType := "application/octet-stream"
+	switch {
+	case strings.HasSuffix(reqPath, ".js"):
+		contentType = "application/javascript; charset=utf-8"
+	case strings.HasSuffix(reqPath, ".css"):
+		contentType = "text/css; charset=utf-8"
+	case strings.HasSuffix(reqPath, ".svg"):
+		contentType = "image/svg+xml"
+	case strings.HasSuffix(reqPath, ".png"):
+		contentType = "image/png"
+	case strings.HasSuffix(reqPath, ".jpg"), strings.HasSuffix(reqPath, ".jpeg"):
+		contentType = "image/jpeg"
+	}
+
+	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("Cache-Control", "no-cache")
 	if _, err := w.Write(data); err != nil {
-		config.Context.Logger().Error("Failed to write JavaScript module response: %v", err)
+		config.Context.Logger().Error("Failed to write static asset response: %v", err)
 	}
 }
 
