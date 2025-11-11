@@ -706,15 +706,18 @@ func (s *Server) resolveSourceFile(path string) string {
 
 // extractModuleImports parses an HTML file and extracts ES module import specifiers
 // Returns both import specifiers from inline scripts and src URLs from script tags
-func extractModuleImports(htmlPath string) ([]string, error) {
-	file, err := os.Open(htmlPath)
+func (s *Server) extractModuleImports(htmlPath string) ([]string, error) {
+	s.mu.RLock()
+	fs := s.fs
+	s.mu.RUnlock()
+
+	content, err := fs.ReadFile(htmlPath)
 	if err != nil {
 		return nil, err
 	}
-	defer func() { _ = file.Close() }()
 
 	imports := make(map[string]bool) // Use map to deduplicate
-	doc, err := html.Parse(file)
+	doc, err := html.Parse(strings.NewReader(string(content)))
 	if err != nil {
 		return nil, err
 	}
@@ -916,7 +919,7 @@ func (s *Server) handleFileChanges() {
 		relevantFiles := make([]string, 0, len(filesToProcess))
 		for _, filePath := range filesToProcess {
 			ext := filepath.Ext(filePath)
-			isRelevant := ext == ".ts" || ext == ".js" || ext == ".css"
+			isRelevant := ext == ".ts" || ext == ".js" || ext == ".css" || ext == ".html"
 
 			if !isRelevant {
 				var relPath string
@@ -1103,10 +1106,19 @@ func (s *Server) getAffectedPageURLs(changedPath string, invalidatedFiles []stri
 
 	// For each demo route, check if it imports any affected files
 	for routePath, routeEntry := range demoRoutes {
+		// First, check if the changed file IS this demo HTML file
+		if affectedFiles[routeEntry.FilePath] ||
+			affectedFiles["/"+routeEntry.FilePath] ||
+			affectedFiles[strings.TrimPrefix(routeEntry.FilePath, "/")] {
+			affectedPages = append(affectedPages, routePath)
+			s.logger.Debug("Page %s is the changed file itself", routePath)
+			continue // Already added, skip import checking for this route
+		}
+
 		htmlPath := filepath.Join(watchDir, routeEntry.FilePath)
 
 		// Extract imports from HTML
-		imports, err := extractModuleImports(htmlPath)
+		imports, err := s.extractModuleImports(htmlPath)
 		if err != nil {
 			s.logger.Debug("Failed to parse %s: %v", routeEntry.FilePath, err)
 			continue
