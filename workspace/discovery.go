@@ -43,6 +43,7 @@ type packageJSON struct {
 
 // DiscoverWorkspacePackages discovers all workspace packages from workspace patterns
 // Returns map of package name -> absolute path to package directory
+// Supports negated patterns (prefixed with !) to exclude packages
 func DiscoverWorkspacePackages(rootDir string, workspacesField interface{}) (map[string]string, error) {
 	result := make(map[string]string)
 
@@ -66,8 +67,21 @@ func DiscoverWorkspacePackages(rootDir string, workspacesField interface{}) (map
 		}
 	}
 
-	// For each pattern, find matching directories
+	// Split patterns into includes and excludes
+	var includePatterns []string
+	var excludePatterns []string
+
 	for _, pattern := range patterns {
+		if len(pattern) > 0 && pattern[0] == '!' {
+			// Negated pattern - strip the ! and add to excludes
+			excludePatterns = append(excludePatterns, pattern[1:])
+		} else {
+			includePatterns = append(includePatterns, pattern)
+		}
+	}
+
+	// Process include patterns to find all matching directories
+	for _, pattern := range includePatterns {
 		matches, err := filepath.Glob(filepath.Join(rootDir, pattern))
 		if err != nil {
 			continue
@@ -93,6 +107,26 @@ func DiscoverWorkspacePackages(rootDir string, workspacesField interface{}) (map
 				}
 				result[pkg.Name] = absPath
 			}
+		}
+	}
+
+	// Remove packages that match exclude patterns
+	for _, excludePattern := range excludePatterns {
+		matches, err := filepath.Glob(filepath.Join(rootDir, excludePattern))
+		if err != nil {
+			continue
+		}
+
+		for _, match := range matches {
+			// Read package.json to get the package name
+			pkgPath := filepath.Join(match, "package.json")
+			pkg, err := readPackageJSON(pkgPath)
+			if err != nil {
+				continue
+			}
+
+			// Remove from result if it was found
+			delete(result, pkg.Name)
 		}
 	}
 
