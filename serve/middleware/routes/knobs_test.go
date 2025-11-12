@@ -445,6 +445,24 @@ func TestGenerateElementLabel(t *testing.T) {
 			instanceIndex: 1,
 			expectedLabel: "my-card No. 2",
 		},
+		{
+			name:          "label from nested text (h2)",
+			demoFile:      "multi-element-nested-demo.html",
+			instanceIndex: 0,
+			expectedLabel: "User Profile",
+		},
+		{
+			name:          "label from deeply nested text",
+			demoFile:      "multi-element-nested-demo.html",
+			instanceIndex: 1,
+			expectedLabel: "Settings Panel",
+		},
+		{
+			name:          "label from span text",
+			demoFile:      "multi-element-nested-demo.html",
+			instanceIndex: 2,
+			expectedLabel: "Dashboard",
+		},
 	}
 
 	for _, tt := range tests {

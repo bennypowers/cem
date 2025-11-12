@@ -369,6 +369,31 @@ func markdownToHTML(text string) string {
 	return buf.String()
 }
 
+// firstTextContent extracts the first non-empty text node from an element's subtree.
+// This handles nested content like <my-card><h2>Title</h2></my-card> correctly.
+func firstTextContent(n *html.Node) string {
+	var text string
+	var walk func(*html.Node) bool
+	walk = func(node *html.Node) bool {
+		if node.Type == html.TextNode {
+			trimmed := strings.TrimSpace(node.Data)
+			if trimmed != "" {
+				text = trimmed
+				return true // Found text, stop walking
+			}
+		}
+		// Recurse through children
+		for c := node.FirstChild; c != nil; c = c.NextSibling {
+			if walk(c) {
+				return true // Bubble up the stop signal
+			}
+		}
+		return false
+	}
+	walk(n)
+	return text
+}
+
 // discoverElementInstances finds all instances of a custom element in demo HTML
 func discoverElementInstances(tagName string, demoHTML []byte) ([]ElementInstance, error) {
 	var instances []ElementInstance
@@ -400,9 +425,9 @@ func discoverElementInstances(tagName string, demoHTML []byte) ([]ElementInstanc
 				}
 			}
 
-			// Extract text content (first child text node, trimmed)
-			if n.FirstChild != nil && n.FirstChild.Type == html.TextNode {
-				instance.TextContent = strings.TrimSpace(n.FirstChild.Data)
+			// Extract the first non-empty descendant text node, trimmed
+			if text := firstTextContent(n); text != "" {
+				instance.TextContent = text
 			}
 
 			instances = append(instances, instance)
