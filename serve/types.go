@@ -51,6 +51,7 @@ type Config struct {
 	Reload     bool
 	Target     transform.Target // Transform target (default: ES2022) - deprecated, use Transforms.TypeScript.Target
 	Transforms TransformConfig  // Transform configuration
+	ConfigFile string           // Path to config file (for error reporting)
 	FS         platform.FileSystem // Optional filesystem for testing (defaults to os package)
 }
 

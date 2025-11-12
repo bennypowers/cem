@@ -33,6 +33,7 @@ type CSSConfig struct {
 	WatchDirFunc     func() string      // Function to get current watch directory
 	Logger           Logger
 	ErrorBroadcaster ErrorBroadcaster   // Sends errors to browser error overlay
+	ConfigFile       string             // Path to config file (for error reporting)
 	Enabled          bool               // Enable/disable CSS transformation
 	Include          []string           // Glob patterns to include (empty means all .css files)
 	Exclude          []string           // Glob patterns to exclude
@@ -40,7 +41,7 @@ type CSSConfig struct {
 }
 
 // shouldTransformCSS checks if a CSS file should be transformed based on include/exclude patterns
-func shouldTransformCSS(cssPath string, include []string, exclude []string, logger Logger, errorBroadcaster ErrorBroadcaster) bool {
+func shouldTransformCSS(cssPath string, include []string, exclude []string, logger Logger, errorBroadcaster ErrorBroadcaster, configFile string) bool {
 	// If include patterns are specified, file must match at least one
 	if len(include) > 0 {
 		matched := false
@@ -86,7 +87,7 @@ func shouldTransformCSS(cssPath string, include []string, exclude []string, logg
 					errorBroadcaster.BroadcastError(
 						"CSS Transform Config Error",
 						errMsg,
-						"", // No specific file for config errors
+						configFile,
 					)
 				}
 				// Treat invalid pattern as non-matching (don't exclude)
@@ -147,7 +148,7 @@ func NewCSS(config CSSConfig) middleware.Middleware {
 			}
 
 			// Check include/exclude patterns
-			if !shouldTransformCSS(cssPath, config.Include, config.Exclude, config.Logger, config.ErrorBroadcaster) {
+			if !shouldTransformCSS(cssPath, config.Include, config.Exclude, config.Logger, config.ErrorBroadcaster, config.ConfigFile) {
 				// Don't transform this CSS file, pass to next handler
 				next.ServeHTTP(w, r)
 				return

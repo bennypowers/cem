@@ -1259,6 +1259,7 @@ func (s *Server) setupMiddleware() {
 			WatchDirFunc:     s.WatchDir,
 			Logger:           s.logger,
 			ErrorBroadcaster: errorBroadcaster{s},
+			ConfigFile:       s.config.ConfigFile,
 			Enabled:          s.config.Transforms.CSS.Enabled,
 			Include:          s.config.Transforms.CSS.Include,
 			Exclude:          s.config.Transforms.CSS.Exclude,
