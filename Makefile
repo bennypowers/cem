@@ -3,6 +3,9 @@ SHELL := /bin/bash
 CONTRIBUTING_PATH = docs/content/docs/contributing.md
 WINDOWS_CC_IMAGE := cem-windows-cc-image
 
+# Extract version from goals if present (e.g., "make release v0.6.6" or "make release patch")
+VERSION ?= $(filter v% patch minor major,$(MAKECMDGOALS))
+
 # Use Go 1.25 toolchain automatically with JSON v2 experiment
 export GOEXPERIMENT := jsonv2
 
@@ -15,10 +18,6 @@ ifeq ($(shell test -f /etc/gentoo-release && echo yes),yes)
 else
     RACE_LDFLAGS :=
 endif
-
-.PHONY: build test test-unit test-e2e update watch bench profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package
-# Extract version from goals if present (e.g., "make release v0.6.6" or "make release patch")
-VERSION ?= $(filter v% patch minor major,$(MAKECMDGOALS))
 
 .PHONY: build test test-unit test-e2e update watch bench bench-lookup profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major
 
