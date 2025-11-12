@@ -17,6 +17,7 @@
   <script type="module" src="/__cem/elements/cem-tabs/cem-tabs.js"></script>
   <script type="module" src="/__cem/elements/cem-nav-drawer/cem-nav-drawer.js"></script>
   <script type="module" src="/__cem/elements/cem-serve-demo/cem-serve-demo.js"></script>
+  <script type="module" src="/__cem/elements/cem-serve-knob/cem-serve-knobs.js"></script>
   <script type="module" src="/__cem/serve-chrome.js"></script>
   <style>{{include "css/demo-chrome.css"}}</style>
 </head>
@@ -120,11 +121,6 @@
       </div>
 
       <div class="layout">
-        {{if .EnabledKnobs}}
-        <aside id="knobs">
-          <slot name="knobs"></slot>
-        </aside>
-        {{end}}
         <main>
           <slot></slot>
         </main>
@@ -145,7 +141,13 @@
               Server Logs
             </button>
             <div slot="panel" class="tab-panel" id="panel-knobs" role="tabpanel">
-              <div id="knobs-container"></div>
+              <div id="knobs-container">
+                {{if .KnobsHTML}}
+                {{.KnobsHTML}}
+                {{else}}
+                <p class="knobs-empty">No knobs available for this element.</p>
+                {{end}}
+              </div>
             </div>
             <div slot="panel" class="tab-panel" id="panel-logs" role="tabpanel">
               <div id="log-container"></div>
@@ -156,15 +158,6 @@
     </template>
 
     <h1 slot="title">{{if .PackageName}}{{.PackageName}}{{else}}{{.TagName}}{{end}}</h1>
-
-    {{if .EnabledKnobs}}
-    <div slot="knobs">
-      <!-- Knobs will be rendered here in Phase 5 -->
-      <p>
-        Knobs: {{.EnabledKnobs}}
-      </p>
-    </div>
-    {{end}}
 
     {{if .Description}}
     <section slot="description">

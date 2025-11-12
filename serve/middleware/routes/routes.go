@@ -481,13 +481,41 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 		sourceURL = entry.Demo.Source.Href
 	}
 
+	// Generate knobs (default to all categories if not specified)
+	var knobsHTML template.HTML
+	enabledKnobs := queryParams["knobs"]
+	if enabledKnobs == "" {
+		// Default to all knob categories
+		enabledKnobs = "attributes properties css-properties"
+	}
+
+	// Fetch manifest and find declaration for this element
+	manifestBytes, err := config.Context.Manifest()
+	if err == nil && len(manifestBytes) > 0 {
+		var pkg M.Package
+		if err := json.Unmarshal(manifestBytes, &pkg); err == nil {
+			// Find the custom element declaration
+			for _, renderableDemo := range pkg.RenderableDemos() {
+				if renderableDemo.CustomElementDeclaration.TagName == entry.TagName {
+					// Generate knobs for this declaration
+					knobs, err := GenerateKnobs(renderableDemo.CustomElementDeclaration, demoHTML, enabledKnobs)
+					if err == nil {
+						knobsHTML, _ = RenderKnobsHTML(knobs)
+					}
+					break
+				}
+			}
+		}
+	}
+
 	chromeData := ChromeData{
 		TagName:        entry.TagName,
 		DemoTitle:      demoTitle,
 		DemoHTML:       template.HTML(demoHTML),
 		Description:    template.HTML(entry.Demo.Description),
 		ImportMap:      template.HTML(importMapJSON),
-		EnabledKnobs:   queryParams["knobs"],
+		EnabledKnobs:   enabledKnobs,
+		KnobsHTML:      knobsHTML,
 		ShadowMode:     queryParams["shadow"] == "true",
 		SourceURL:      sourceURL,      // Link to source file
 		CanonicalURL:   entry.Demo.URL, // Link to canonical demo

@@ -17,7 +17,7 @@
   <script type="module" src="/__cem/elements/cem-tabs/cem-tabs.js"></script>
   <script type="module" src="/__cem/elements/cem-nav-drawer/cem-nav-drawer.js"></script>
   <script type="module" src="/__cem/elements/cem-serve-demo/cem-serve-demo.js"></script>
-  <script type="module" src="/__cem/knob-events.js"></script>
+  <script type="module" src="/__cem/elements/cem-serve-knob/cem-serve-knobs.js"></script>
   <script type="module" src="/__cem/serve-chrome.js"></script>
   <style>/* Enable cross-document view transitions for same-origin navigation */
 @view-transition {
@@ -714,8 +714,43 @@ footer ::slotted([slot="description"]) {
   font-size: var(--cem-dev-server-font-size-sm);
 }
 
+/* Knob description content (slotted in light DOM) */
+cem-serve-knob-attribute [slot="description"],
+cem-serve-knob-property [slot="description"],
+cem-serve-knob-css-property [slot="description"] {
+  p {
+    margin: var(--cem-dev-server-spacing-xs) 0;
+  }
+
+  code {
+    background: var(--cem-dev-server-bg-tertiary);
+    border-radius: 3px;
+    font-family: var(--cem-dev-server-font-family-mono);
+  }
+
+  a {
+    color: var(--cem-dev-server-accent-color);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  strong {
+    font-weight: 600;
+  }
+
+  ul, ol {
+    margin: var(--cem-dev-server-spacing-xs) 0;
+    padding-left: var(--cem-dev-server-spacing-lg);
+  }
+}
+
 /* Syntax highlighting (chroma - themable via CSS custom properties) */
-.knob-description {
+cem-serve-knob-attribute [slot="description"],
+cem-serve-knob-property [slot="description"],
+cem-serve-knob-css-property [slot="description"] {
   .chroma {
     background-color: var(--cem-dev-server-bg-tertiary);
     padding: var(--cem-dev-server-spacing-sm);

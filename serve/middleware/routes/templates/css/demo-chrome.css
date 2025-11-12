@@ -60,6 +60,25 @@ html::view-transition-new(*) {
   /* Borders */
   --cem-dev-server-border-radius: 6px;
   --cem-dev-server-border-width: 1px;
+
+  /* Syntax highlighting (chroma) */
+  --cem-dev-server-syntax-keyword: light-dark(#d73a49, #ff7b72);
+  --cem-dev-server-syntax-type: light-dark(#445588, #79c0ff);
+  --cem-dev-server-syntax-name: light-dark(#008080, #79c0ff);
+  --cem-dev-server-syntax-class: light-dark(#445588, #ffa657);
+  --cem-dev-server-syntax-decorator: light-dark(#3c5d5d, #ffa657);
+  --cem-dev-server-syntax-special: light-dark(#800080, #d2a8ff);
+  --cem-dev-server-syntax-function: light-dark(#6f42c1, #d2a8ff);
+  --cem-dev-server-syntax-tag: light-dark(#22863a, #7ee787);
+  --cem-dev-server-syntax-string: light-dark(#032f62, #a5d6ff);
+  --cem-dev-server-syntax-number: light-dark(#005cc5, #79c0ff);
+  --cem-dev-server-syntax-error: light-dark(#d73a49, #ff7b72);
+  --cem-dev-server-syntax-error-bg: light-dark(#ffeef0, #490202);
+  --cem-dev-server-syntax-inserted: light-dark(#22863a, #7ee787);
+  --cem-dev-server-syntax-inserted-bg: light-dark(#f0fff4, #04260f);
+  --cem-dev-server-syntax-deleted: light-dark(#22863a, #ffa198);
+  --cem-dev-server-syntax-deleted-bg: light-dark(#f0fff4, #490202);
+  --cem-dev-server-syntax-highlight: light-dark(#ffffcc, #404040);
 }
 
 html {

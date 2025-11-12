@@ -44,6 +44,9 @@ var notFoundTemplate string
 //go:embed templates/element-wrapper.html
 var elementWrapperTemplate string
 
+//go:embed templates/knobs.html
+var knobsTemplate string
+
 //go:embed templates/**
 var templatesFS embed.FS
 
@@ -62,6 +65,9 @@ func SetErrorBroadcaster(ctx middleware.DevServerContext) {
 // Template functions available to templates
 var templateFuncs = template.FuncMap{
 	"contains": strings.Contains,
+	"join": func(elems []string, sep string) string {
+		return strings.Join(elems, sep)
+	},
 	"dict": func(values ...interface{}) (map[string]string, error) {
 		if len(values)%2 != 0 {
 			return nil, fmt.Errorf("dict requires even number of arguments")
@@ -131,3 +137,6 @@ var NotFoundTemplate = template.Must(template.New("404").Funcs(templateFuncs).Pa
 
 // ElementWrapperTemplate is the parsed template for wrapping custom elements with DSD
 var ElementWrapperTemplate = template.Must(template.New("element-wrapper").Parse(elementWrapperTemplate))
+
+// KnobsTemplate is the parsed template for knobs controls
+var KnobsTemplate = template.Must(template.New("knobs").Funcs(templateFuncs).Parse(knobsTemplate))

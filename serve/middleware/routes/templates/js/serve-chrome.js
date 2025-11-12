@@ -4,7 +4,7 @@ import {
   KnobAttributeChangeEvent,
   KnobPropertyChangeEvent,
   KnobCSSPropertyChangeEvent
-} from './knob-events.js';
+} from '/__cem/knob-events.js';
 
 class CemServeChrome extends HTMLElement {
   static is = 'cem-serve-chrome'
@@ -19,7 +19,7 @@ class CemServeChrome extends HTMLElement {
   #$ = (selector) => this.shadowRoot.querySelector(selector);
   #$$ = (selector) => this.shadowRoot.querySelectorAll(selector);
 
-  get demo() { return this.#$('cem-serve-demo'); }
+  get demo() { return this.querySelector('cem-serve-demo'); }
 
   get knobs() { return this.getAttribute('knobs') || ''; }
 
@@ -208,95 +208,63 @@ class CemServeChrome extends HTMLElement {
   }
 
   #setupKnobs() {
-    // Get the knobs container
-    const knobsContainer = this.#$('#knobs-container');
-    if (!knobsContainer) return;
+    // Listen for knob change events from knob custom elements
+    this.addEventListener('knob:attribute-change', (e) => {
+      this.#handleAttributeKnobChange(e.name, e.value);
+    });
 
-    // Get all knob inputs
-    const knobInputs = knobsContainer.querySelectorAll('[data-knob-category]');
+    this.addEventListener('knob:property-change', (e) => {
+      this.#handlePropertyKnobChange(e.name, e.value);
+    });
 
-    knobInputs.forEach(knobControl => {
-      const category = knobControl.dataset.knobCategory;
-      const input = knobControl.querySelector('input, select');
-      if (!input) return;
-
-      const knobName = input.dataset.knobName;
-      if (!knobName) return;
-
-      // Listen for input changes
-      input.addEventListener('input', () => {
-        this.#handleKnobChange(category, knobName, input);
-      });
-
-      // For select/checkbox, also listen to change event
-      if (input.tagName === 'SELECT' || input.type === 'checkbox') {
-        input.addEventListener('change', () => {
-          this.#handleKnobChange(category, knobName, input);
-        });
-      }
+    this.addEventListener('knob:css-property-change', (e) => {
+      this.#handleCSSPropertyKnobChange(e.name, e.value);
     });
   }
 
-  #handleKnobChange(category, name, input) {
+  #handleAttributeKnobChange(name, value) {
     const demoElement = this.demo?.querySelector(this.tagName);
     if (!demoElement) {
       console.warn('[cem-serve-chrome] Demo element not found:', this.tagName);
       return;
     }
 
-    let value;
-    let event;
-
-    // Get the value based on input type
-    if (input.type === 'checkbox') {
-      value = input.checked;
-    } else if (input.type === 'number') {
-      value = input.valueAsNumber;
+    // Handle boolean attributes
+    if (typeof value === 'boolean') {
+      if (value) {
+        demoElement.setAttribute(name, '');
+      } else {
+        demoElement.removeAttribute(name);
+      }
+    } else if (value === '') {
+      demoElement.removeAttribute(name);
     } else {
-      value = input.value;
+      demoElement.setAttribute(name, value);
     }
 
-    // Handle different knob categories
-    switch (category) {
-      case 'attributes':
-        // Set or remove attribute based on value
-        if (input.type === 'checkbox') {
-          if (value) {
-            demoElement.setAttribute(name, '');
-          } else {
-            demoElement.removeAttribute(name);
-          }
-        } else if (value === '') {
-          demoElement.removeAttribute(name);
-        } else {
-          demoElement.setAttribute(name, value);
-        }
-        event = new KnobAttributeChangeEvent(name, value);
-        break;
+    console.log(`[cem-serve-chrome] Attribute changed: ${name} = ${value}`);
+  }
 
-      case 'properties':
-        // Set property value
-        demoElement[name] = value;
-        event = new KnobPropertyChangeEvent(name, value);
-        break;
-
-      case 'css-properties':
-        // Set CSS custom property
-        demoElement.style.setProperty(name, value);
-        event = new KnobCSSPropertyChangeEvent(name, value);
-        break;
-
-      default:
-        console.warn('[cem-serve-chrome] Unknown knob category:', category);
-        return;
+  #handlePropertyKnobChange(name, value) {
+    const demoElement = this.demo?.querySelector(this.tagName);
+    if (!demoElement) {
+      console.warn('[cem-serve-chrome] Demo element not found:', this.tagName);
+      return;
     }
 
-    // Dispatch the custom event
-    if (event) {
-      this.dispatchEvent(event);
+    demoElement[name] = value;
+    console.log(`[cem-serve-chrome] Property changed: ${name} = ${value}`);
+  }
+
+  #handleCSSPropertyKnobChange(name, value) {
+    const demoElement = this.demo?.querySelector(this.tagName);
+    if (!demoElement) {
+      console.warn('[cem-serve-chrome] Demo element not found:', this.tagName);
+      return;
     }
 
-    console.log(`[cem-serve-chrome] Knob changed: ${category}/${name} = ${value}`);
+    demoElement.style.setProperty(name, value);
+    console.log(`[cem-serve-chrome] CSS property changed: ${name} = ${value}`);
   }
 
   #detectBrowser() {

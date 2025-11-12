@@ -11,6 +11,7 @@ require (
 	github.com/dunglas/go-urlpattern v0.0.0-20241020164140-716dfa1c80b1
 	github.com/evanw/esbuild v0.27.0
 	github.com/fsnotify/fsnotify v1.9.0
+	github.com/google/go-cmp v0.7.0
 	github.com/google/jsonschema-go v0.2.1-0.20250825175020-748c325cec76
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674
 	github.com/gosimple/slug v1.15.0
@@ -41,6 +42,7 @@ require (
 	atomicgo.dev/cursor v0.2.0 // indirect
 	atomicgo.dev/keyboard v0.2.9 // indirect
 	atomicgo.dev/schedule v0.1.0 // indirect
+	github.com/alecthomas/chroma/v2 v2.2.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/bitfield/gotestdox v0.2.2 // indirect
 	github.com/bits-and-blooms/bitset v1.14.3 // indirect
@@ -48,6 +50,7 @@ require (
 	github.com/charmbracelet/x/ansi v0.8.0 // indirect
 	github.com/containerd/console v1.0.5 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dlclark/regexp2 v1.7.0 // indirect
 	github.com/dnephin/pflag v1.0.7 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
@@ -85,6 +88,7 @@ require (
 	github.com/tliron/kutil v0.3.27 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
+	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20230729083705-37449abec8cc // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.43.0 // indirect
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
