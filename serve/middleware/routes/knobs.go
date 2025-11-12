@@ -95,79 +95,11 @@ func GenerateKnobs(declaration *M.CustomElementDeclaration, demoHTML []byte, ena
 		return nil, fmt.Errorf("declaration is nil")
 	}
 
-	// Parse enabled knobs (space-separated list of categories)
-	enabled := parseEnabledKnobs(enabledKnobs)
-
-	knobs := &KnobsData{
-		TagName: declaration.TagName,
-	}
-
 	// Parse demo HTML to extract current values
 	currentValues := extractCurrentValues(declaration.TagName, demoHTML)
 
-	// Build set of property names for deduplication
-	propertyNames := make(map[string]bool)
-	if enabled[KnobCategoryProperty] {
-		for _, member := range declaration.Members {
-			if field, ok := member.(*M.ClassField); ok {
-				if field.Privacy == M.Public || field.Privacy == "" {
-					propertyNames[field.Name] = true
-				}
-			}
-		}
-	}
-
-	// Generate attribute knobs (skip if same-named property exists)
-	// Also deduplicate by name, preferring attributes with more specific types
-	if enabled[KnobCategoryAttribute] {
-		seenAttrs := make(map[string]*M.Attribute)
-		for i := range declaration.Attributes {
-			attr := &declaration.Attributes[i]
-			// Skip attribute if a property with the same name exists
-			if propertyNames[attr.Name] {
-				continue
-			}
-
-			// Deduplicate: keep attribute with more specific type
-			if existing, exists := seenAttrs[attr.Name]; exists {
-				// Prefer the one with a type over null
-				if attr.Type != nil && (existing.Type == nil || existing.Type.Text == "") {
-					seenAttrs[attr.Name] = attr
-				}
-				// Otherwise keep the first one
-				continue
-			}
-			seenAttrs[attr.Name] = attr
-		}
-
-		// Convert deduplicated attributes to knobs
-		for _, attr := range seenAttrs {
-			knob := attributeToKnob(*attr, currentValues)
-			knobs.AttributeKnobs = append(knobs.AttributeKnobs, knob)
-		}
-	}
-
-	// Generate property knobs (from class fields)
-	if enabled[KnobCategoryProperty] {
-		for _, member := range declaration.Members {
-			if field, ok := member.(*M.ClassField); ok {
-				if field.Privacy == M.Public || field.Privacy == "" {
-					knob := propertyToKnob(field, currentValues)
-					knobs.PropertyKnobs = append(knobs.PropertyKnobs, knob)
-				}
-			}
-		}
-	}
-
-	// Generate CSS custom property knobs
-	if enabled[KnobCategoryCSSProperty] {
-		for _, cssProp := range declaration.CssProperties {
-			knob := cssPropertyToKnob(cssProp, currentValues)
-			knobs.CSSPropertyKnobs = append(knobs.CSSPropertyKnobs, knob)
-		}
-	}
-
-	return knobs, nil
+	// Delegate to generateKnobsForInstance
+	return generateKnobsForInstance(declaration, currentValues, enabledKnobs)
 }
 
 // parseEnabledKnobs converts a space-separated list into a map
