@@ -85,7 +85,10 @@ func NewServer(port int) (*Server, error) {
 // NewServerWithConfig creates a new server with the given config
 func NewServerWithConfig(config Config) (*Server, error) {
 	// Apply default transform settings if not configured
-	// Check if transforms config looks uninitialized (all zero values)
+	// NOTE: This is a fallback for non-viper usage (e.g., tests that construct Config directly).
+	// cmd/serve.go handles defaulting correctly via viper.IsSet() which can distinguish
+	// between "not set" and "explicitly set to false". This zero-value detection cannot
+	// make that distinction, so it only applies defaults when ALL transform fields are unset.
 	transformsUnset := config.Transforms.TypeScript.Target == "" &&
 		!config.Transforms.TypeScript.Enabled &&
 		!config.Transforms.CSS.Enabled &&
@@ -93,7 +96,7 @@ func NewServerWithConfig(config Config) (*Server, error) {
 		len(config.Transforms.CSS.Exclude) == 0
 
 	if transformsUnset {
-		// Apply defaults when transforms config is completely unset
+		// Apply defaults when transforms config is completely unset (test/non-viper usage)
 		config.Transforms.TypeScript.Enabled = true
 		config.Transforms.CSS.Enabled = true
 		config.Transforms.TypeScript.Target = config.Target
