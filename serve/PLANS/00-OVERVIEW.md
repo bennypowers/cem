@@ -167,7 +167,7 @@ feat/dev-server (staging)
   - Affects: Phase 5 (knobs need chrome infrastructure)
   - Details: [10-URL-REWRITING.md](./10-URL-REWRITING.md), [15-DEMO-CHROME.md](./15-DEMO-CHROME.md)
 
-- [x] **Phase 4: Transforms** ✅ (95% complete - 2 config items remaining)
+- [x] **Phase 4: Transforms** ✅ (100% complete)
   - Goal: On-the-fly TypeScript and CSS transformation with dependency-aware caching
   - Prerequisites: Phase 1 (HTTP server, middleware pipeline)
   - Provides: Transformed JavaScript/CSS responses
@@ -175,7 +175,7 @@ feat/dev-server (staging)
   - Affects: Demo rendering (transformed files loaded via import maps)
   - Note: Can be implemented in parallel with Phases 2 and 3
   - Details: [30-TRANSFORMS.md](./30-TRANSFORMS.md)
-  - **Remaining work**: CSS include/exclude glob filtering, YAML config loading
+  - **Status**: All features implemented, including CSS glob filtering and YAML config
 
 - [ ] **Phase 5: Knobs** (Sequential implementation: 5a → 5b → 5c)
   - Goal: Interactive controls for element attributes, properties, and CSS custom properties

@@ -195,17 +195,15 @@ server/transform/test-fixtures/
 - [x] Tests cover basic transform functionality
 - [x] Tests use fixture pattern (input.ts → expected.js + source maps)
 
-### Remaining Work (2 items)
+### Phase 4 Complete! (19/19 = 100%) ✅
 
-#### Config System Integration
-- [ ] Wire up YAML config loading for `transforms.typescript.enabled` and `transforms.css.enabled`
-  - Currently hard-coded to `true` with TODO comments in `serve/server.go`
-  - Config struct fields exist but aren't read from YAML
+All acceptance criteria have been implemented and tested.
 
-#### CSS Glob Filtering
-- [ ] Config `transforms.css.include/exclude` filters CSS files via glob patterns
-  - Planned feature not yet implemented
-  - Currently transforms ALL `.css` files when enabled
+**Recently completed** (Phase 4 touchups):
+- ✅ CSS include/exclude glob filtering with doublestar patterns
+- ✅ YAML config loading for `transforms.typescript.enabled` and `transforms.css.enabled`
+- ✅ Config defaults (transforms enabled by default when config unset)
+- ✅ Comprehensive tests for glob pattern matching (15 test cases)
 
 ---
 

@@ -26,12 +26,33 @@ import (
 	"bennypowers.dev/cem/serve/middleware/transform"
 )
 
+// TransformConfig holds transform-specific configuration
+type TransformConfig struct {
+	TypeScript TypeScriptConfig
+	CSS        CSSConfig
+}
+
+// TypeScriptConfig holds TypeScript transform configuration
+type TypeScriptConfig struct {
+	Enabled bool
+	Target  transform.Target
+}
+
+// CSSConfig holds CSS transform configuration
+type CSSConfig struct {
+	Enabled bool
+	Include []string // Glob patterns to include
+	Exclude []string // Glob patterns to exclude
+}
+
 // Config represents the dev server configuration
 type Config struct {
-	Port   int
-	Reload bool
-	Target transform.Target      // Transform target (default: ES2022)
-	FS     platform.FileSystem // Optional filesystem for testing (defaults to os package)
+	Port       int
+	Reload     bool
+	Target     transform.Target // Transform target (default: ES2022) - deprecated, use Transforms.TypeScript.Target
+	Transforms TransformConfig  // Transform configuration
+	ConfigFile string           // Path to config file (for error reporting)
+	FS         platform.FileSystem // Optional filesystem for testing (defaults to os package)
 }
 
 // ReloadMessage represents a WebSocket reload event

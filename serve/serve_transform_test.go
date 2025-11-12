@@ -26,7 +26,21 @@ import (
 
 	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/serve"
+	"bennypowers.dev/cem/serve/middleware/transform"
 )
+
+// defaultTransformConfig returns a Config with transforms enabled (for tests)
+func defaultTransformConfig() serve.TransformConfig {
+	return serve.TransformConfig{
+		TypeScript: serve.TypeScriptConfig{
+			Enabled: true,
+			Target:  transform.ES2022,
+		},
+		CSS: serve.CSSConfig{
+			Enabled: true,
+		},
+	}
+}
 
 // TestServeTypeScript_TransformsOnRequest tests that requesting a .js file
 // serves the corresponding .ts file transformed to JavaScript
@@ -36,9 +50,10 @@ func TestServeTypeScript_TransformsOnRequest(t *testing.T) {
 
 	// Create server with MapFileSystem
 	server, err := serve.NewServerWithConfig(serve.Config{
-		Port:   0,
-		Reload: true,
-		FS:     mfs,
+		Port:       0,
+		Reload:     true,
+		FS:         mfs,
+		Transforms: defaultTransformConfig(),
 	})
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
@@ -90,9 +105,10 @@ func TestServeTypeScript_OnlyWhenTsExists(t *testing.T) {
 	mfs := testutil.NewFixtureFS(t, "transforms/http-typescript", "/test")
 
 	server, err := serve.NewServerWithConfig(serve.Config{
-		Port:   0,
-		Reload: true,
-		FS:     mfs,
+		Port:       0,
+		Reload:     true,
+		FS:         mfs,
+		Transforms: defaultTransformConfig(),
 	})
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
@@ -131,9 +147,10 @@ func TestServeTypeScript_RejectsPathTraversal(t *testing.T) {
 	mfs := testutil.NewFixtureFS(t, "transforms/http-typescript/path-traversal", "/parent")
 
 	server, err := serve.NewServerWithConfig(serve.Config{
-		Port:   0,
-		Reload: true,
-		FS:     mfs,
+		Port:       0,
+		Reload:     true,
+		FS:         mfs,
+		Transforms: defaultTransformConfig(),
 	})
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
@@ -199,9 +216,10 @@ func TestServeCSS_TransformsToModule(t *testing.T) {
 	mfs := testutil.NewFixtureFS(t, "transforms/http-css", "/test")
 
 	server, err := serve.NewServerWithConfig(serve.Config{
-		Port:   0,
-		Reload: true,
-		FS:     mfs,
+		Port:       0,
+		Reload:     true,
+		FS:         mfs,
+		Transforms: defaultTransformConfig(),
 	})
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
@@ -258,9 +276,10 @@ func TestServeCSS_RejectsPathTraversal(t *testing.T) {
 	mfs := testutil.NewFixtureFS(t, "transforms/http-css/path-traversal", "/parent")
 
 	server, err := serve.NewServerWithConfig(serve.Config{
-		Port:   0,
-		Reload: true,
-		FS:     mfs,
+		Port:       0,
+		Reload:     true,
+		FS:         mfs,
+		Transforms: defaultTransformConfig(),
 	})
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)

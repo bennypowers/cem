@@ -7,9 +7,12 @@ require (
 	github.com/adrg/xdg v0.5.3
 	github.com/agext/levenshtein v1.2.3
 	github.com/bmatcuk/doublestar v1.3.4
+	github.com/bmatcuk/doublestar/v4 v4.9.1
 	github.com/dunglas/go-urlpattern v0.0.0-20241020164140-716dfa1c80b1
+	github.com/evanw/esbuild v0.27.0
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/google/jsonschema-go v0.2.1-0.20250825175020-748c325cec76
+	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674
 	github.com/gosimple/slug v1.15.0
 	github.com/modelcontextprotocol/go-sdk v0.4.0
 	github.com/nsf/jsondiff v0.0.0-20230430225905-43f6cf3098c1
@@ -26,10 +29,11 @@ require (
 	github.com/tree-sitter/tree-sitter-html v0.23.2
 	github.com/tree-sitter/tree-sitter-jsdoc v0.23.2
 	github.com/tree-sitter/tree-sitter-typescript v0.23.2
+	github.com/yuin/goldmark v1.7.13
 	golang.org/x/mod v0.29.0
+	golang.org/x/net v0.46.0
+	golang.org/x/term v0.36.0
 	golang.org/x/text v0.30.0
-	golang.org/x/tools v0.38.0
-	golang.org/x/tools/gopls v0.20.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -45,12 +49,10 @@ require (
 	github.com/containerd/console v1.0.5 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dnephin/pflag v1.0.7 // indirect
-	github.com/evanw/esbuild v0.27.0 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/gookit/color v1.5.4 // indirect
-	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/iancoleman/strcase v0.3.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -83,15 +85,12 @@ require (
 	github.com/tliron/kutil v0.3.27 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
-	github.com/yuin/goldmark v1.7.13 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.43.0 // indirect
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
-	golang.org/x/net v0.46.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.37.0 // indirect
-	golang.org/x/telemetry v0.0.0-20251008203120-078029d740a8 // indirect
-	golang.org/x/term v0.36.0 // indirect
+	golang.org/x/tools v0.38.0 // indirect
 	gotest.tools/gotestsum v1.12.3 // indirect
 )
 

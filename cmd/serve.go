@@ -51,6 +51,26 @@ var serveCmd = &cobra.Command{
 		verbose := viper.GetBool("verbose")
 		targetStr := viper.GetString("serve.target")
 
+		// Load transform configuration
+		tsEnabled := viper.GetBool("serve.transforms.typescript.enabled")
+		if !viper.IsSet("serve.transforms.typescript.enabled") {
+			tsEnabled = true // Default to enabled
+		}
+
+		cssEnabled := viper.GetBool("serve.transforms.css.enabled")
+		if !viper.IsSet("serve.transforms.css.enabled") {
+			cssEnabled = true // Default to enabled
+		}
+
+		cssInclude := viper.GetStringSlice("serve.transforms.css.include")
+		cssExclude := viper.GetStringSlice("serve.transforms.css.exclude")
+
+		// Get target from transforms config or fallback to --target flag
+		configTarget := viper.GetString("serve.transforms.typescript.target")
+		if targetStr == "" && configTarget != "" {
+			targetStr = configTarget
+		}
+
 		// Validate and parse target (default to ES2022)
 		var target transform.Target
 		if targetStr != "" {
@@ -67,6 +87,17 @@ var serveCmd = &cobra.Command{
 			Port:   port,
 			Reload: reload,
 			Target: target,
+			Transforms: serve.TransformConfig{
+				TypeScript: serve.TypeScriptConfig{
+					Enabled: tsEnabled,
+					Target:  target,
+				},
+				CSS: serve.CSSConfig{
+					Enabled: cssEnabled,
+					Include: cssInclude,
+					Exclude: cssExclude,
+				},
+			},
 		}
 
 		// Create pterm logger

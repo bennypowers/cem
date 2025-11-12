@@ -84,6 +84,9 @@ func NewServer(port int) (*Server, error) {
 
 // NewServerWithConfig creates a new server with the given config
 func NewServerWithConfig(config Config) (*Server, error) {
+	// No defaulting here - cmd/serve.go handles defaults via viper.IsSet()
+	// Tests must explicitly set transform config values
+
 	s := &Server{
 		port:   config.Port,
 		config: config,
@@ -1230,10 +1233,14 @@ func (s *Server) setupMiddleware() {
 			Context: s,
 		}),
 		transform.NewCSS(transform.CSSConfig{ // CSS transform
-			WatchDirFunc: s.WatchDir,
-			Logger:       s.logger,
-			Enabled:      true, // TODO: Read from config
-			FS:           s.fs,
+			WatchDirFunc:     s.WatchDir,
+			Logger:           s.logger,
+			ErrorBroadcaster: errorBroadcaster{s},
+			ConfigFile:       s.config.ConfigFile,
+			Enabled:          s.config.Transforms.CSS.Enabled,
+			Include:          s.config.Transforms.CSS.Include,
+			Exclude:          s.config.Transforms.CSS.Exclude,
+			FS:               s.fs,
 		}),
 		transform.NewTypeScript(transform.TypeScriptConfig{ // TypeScript transform
 			WatchDirFunc:     s.WatchDir,
@@ -1241,8 +1248,8 @@ func (s *Server) setupMiddleware() {
 			Cache:            s.transformCache,
 			Logger:           s.logger,
 			ErrorBroadcaster: errorBroadcaster{s},
-			Target:           string(s.config.Target),
-			Enabled:          true, // TODO: Read from config
+			Target:           string(s.config.Transforms.TypeScript.Target),
+			Enabled:          s.config.Transforms.TypeScript.Enabled,
 			FS:               s.fs,
 		}),
 		routes.New(routes.Config{ // Internal CEM routes (includes WebSocket, demos, listings)
