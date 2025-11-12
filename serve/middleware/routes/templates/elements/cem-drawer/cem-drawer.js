@@ -56,7 +56,7 @@ export class CemServeDrawer extends HTMLElement {
     const resizeHandle = this.#$('resize-handle');
     const content = this.#$('content');
     if (resizeHandle && content) {
-      resizeHandle.addEventListener('mousedown', this.#startResize.bind(this));
+      resizeHandle.addEventListener('mousedown', this.#startResize);
     }
 
     // Set initial height when open
@@ -65,7 +65,7 @@ export class CemServeDrawer extends HTMLElement {
     }
   }
 
-  #startResize(e) {
+  #startResize = (e) => {
     this.#isDragging = true;
     this.#startY = e.clientY;
     const content = this.#$('content');
@@ -75,14 +75,14 @@ export class CemServeDrawer extends HTMLElement {
     content.classList.remove('transitions-enabled');
 
     // Add global event listeners
-    document.addEventListener('mousemove', this.#handleResize.bind(this));
-    document.addEventListener('mouseup', this.#stopResize.bind(this));
+    document.addEventListener('mousemove', this.#handleResize);
+    document.addEventListener('mouseup', this.#stopResize);
 
     // Prevent text selection during drag
     e.preventDefault();
   }
 
-  #handleResize(e) {
+  #handleResize = (e) => {
     if (!this.#isDragging) return;
 
     const deltaY = this.#startY - e.clientY; // Inverted because drawer grows upward
@@ -95,7 +95,7 @@ export class CemServeDrawer extends HTMLElement {
     content.style.height = `${newHeight}px`;
   }
 
-  #stopResize() {
+  #stopResize = () => {
     this.#isDragging = false;
 
     // Re-enable transitions
@@ -110,8 +110,8 @@ export class CemServeDrawer extends HTMLElement {
     }, 300);
 
     // Remove global event listeners
-    document.removeEventListener('mousemove', this.#handleResize.bind(this));
-    document.removeEventListener('mouseup', this.#stopResize.bind(this));
+    document.removeEventListener('mousemove', this.#handleResize);
+    document.removeEventListener('mouseup', this.#stopResize);
   }
 
   attributeChangedCallback(name, oldValue, newValue) {

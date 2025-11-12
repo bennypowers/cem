@@ -9,17 +9,28 @@ export class CemServeDemo extends HTMLElement {
    * Set an attribute on an element in the demo
    * @param {string} selector - CSS selector for target element
    * @param {string} attribute - Attribute name
-   * @param {string} value - Attribute value
+   * @param {string|boolean} value - Attribute value (boolean for presence/absence)
    * @returns {boolean} - Whether the operation succeeded
    */
   setDemoAttribute(selector, attribute, value) {
     const root = this.shadowRoot ?? this;
     const target = root.querySelector(selector);
-    if (target) {
+    if (!target) return false;
+
+    // Handle boolean attributes (presence/absence)
+    if (typeof value === 'boolean') {
+      if (value) {
+        target.setAttribute(attribute, '');
+      } else {
+        target.removeAttribute(attribute);
+      }
+    } else if (value === '' || value === null || value === undefined) {
+      target.removeAttribute(attribute);
+    } else {
       target.setAttribute(attribute, value);
-      return true;
     }
-    return false;
+
+    return true;
   }
 
   /**

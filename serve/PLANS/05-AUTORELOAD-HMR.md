@@ -60,7 +60,7 @@ T2: regeneration completes → broadcast once or twice?
 ## Acceptance Criteria
 
 - [ ] Server starts and listens on configured port
-- [ ] WebSocket endpoint `/__cem-reload` accepts connections
+- [ ] WebSocket endpoint `/__cem/reload` accepts connections
 - [ ] WebSocket client injected into all HTML responses
 - [ ] File watcher detects changes to source files
 - [ ] File watcher detects changes to demo files

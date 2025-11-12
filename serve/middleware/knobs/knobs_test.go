@@ -1,6 +1,10 @@
 //go:build ignore
 // +build ignore
 
+// This file is intentionally excluded from the build because Phase 5 is on pause.
+// GenerateKnobsHTML() is not yet implemented and the required testdata/ fixtures
+// do not exist. Remove this build tag when implementing Phase 5b (Advanced Knobs).
+
 /*
 Copyright © 2025 Benny Powers <web@bennypowers.com>
 

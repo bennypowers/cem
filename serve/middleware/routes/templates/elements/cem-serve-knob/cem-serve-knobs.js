@@ -87,7 +87,7 @@ class CemServeKnobBase extends HTMLElement {
         input.checked = false;
         break;
 
-      case 'enum':
+      case 'enum': {
         input = document.createElement('select');
         // Add empty option
         const emptyOpt = document.createElement('option');
@@ -104,6 +104,7 @@ class CemServeKnobBase extends HTMLElement {
           input.appendChild(opt);
         });
         break;
+      }
 
       case 'number':
         input = document.createElement('input');
@@ -112,7 +113,7 @@ class CemServeKnobBase extends HTMLElement {
         if (defaultValue) input.placeholder = defaultValue;
         break;
 
-      case 'color':
+      case 'color': {
         // Create a wrapper for color picker + text input
         const wrapper = document.createElement('div');
         wrapper.classList.add('color-input-wrapper');
@@ -154,6 +155,7 @@ class CemServeKnobBase extends HTMLElement {
 
         // Return wrapper instead of single input
         return wrapper;
+      }
 
       default: // string
         input = document.createElement('input');

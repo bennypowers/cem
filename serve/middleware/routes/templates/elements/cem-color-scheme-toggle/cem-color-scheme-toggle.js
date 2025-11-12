@@ -6,11 +6,28 @@ export class CemColorSchemeToggle extends HTMLElement {
 
   #$ = id => this.shadowRoot.getElementById(id);
 
+  // Storage access gatekeeper - localStorage can throw in Safari private mode
+  #getStorageItem(key, defaultValue) {
+    try {
+      return localStorage.getItem(key) ?? defaultValue;
+    } catch (e) {
+      return defaultValue;
+    }
+  }
+
+  #setStorageItem(key, value) {
+    try {
+      localStorage.setItem(key, value);
+    } catch (e) {
+      // Storage unavailable (private mode), silently continue
+    }
+  }
+
   connectedCallback() {
     if (!this.shadowRoot) return;
 
     // Restore saved color scheme preference
-    const saved = localStorage.getItem('cem-serve-color-scheme') || 'system';
+    const saved = this.#getStorageItem('cem-serve-color-scheme', 'system');
     this.#applyColorScheme(saved);
     this.#updateRadioButtons(saved);
 
@@ -43,7 +60,7 @@ export class CemColorSchemeToggle extends HTMLElement {
     }
 
     // Save preference
-    localStorage.setItem('cem-serve-color-scheme', scheme);
+    this.#setStorageItem('cem-serve-color-scheme', scheme);
   }
 
   #updateRadioButtons(scheme) {

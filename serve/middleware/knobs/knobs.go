@@ -20,7 +20,13 @@ package knobs
 import "errors"
 
 // GenerateKnobsHTML generates HTML for knobs UI from manifest and demo
-// TODO: Implement for Phase 5
+//
+// NOTE: Phase 5a (Basic Knobs) is complete! The working implementation is in
+// serve/middleware/routes/knobs.go (GenerateKnobs + RenderKnobsHTML).
+//
+// This standalone function is planned for Phase 5b as a refactoring to extract
+// knob generation logic from the routes package into a reusable API.
+// See serve/PLANS/51-KNOBS-ADVANCED.md for Phase 5b specification.
 func GenerateKnobsHTML(manifestJSON []byte, demoHTML []byte) (string, error) {
-	return "", errors.New("not implemented - Phase 5 on pause")
+	return "", errors.New("not implemented - planned for Phase 5b refactoring")
 }

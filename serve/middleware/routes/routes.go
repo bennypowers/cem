@@ -499,8 +499,24 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 				if renderableDemo.CustomElementDeclaration.TagName == entry.TagName {
 					// Generate knobs for this declaration
 					knobs, err := GenerateKnobs(renderableDemo.CustomElementDeclaration, demoHTML, enabledKnobs)
-					if err == nil {
-						knobsHTML, _ = RenderKnobsHTML(knobs)
+					if err != nil {
+						config.Context.Logger().Warning("Failed to generate knobs for %s: %v", entry.TagName, err)
+						_ = config.Context.BroadcastError(
+							"Knobs Generation Error",
+							fmt.Sprintf("Failed to generate knobs for <%s>: %v", entry.TagName, err),
+							entry.TagName,
+						)
+						break
+					}
+
+					knobsHTML, err = RenderKnobsHTML(knobs)
+					if err != nil {
+						config.Context.Logger().Warning("Failed to render knobs HTML for %s: %v", entry.TagName, err)
+						_ = config.Context.BroadcastError(
+							"Knobs Render Error",
+							fmt.Sprintf("Failed to render knobs HTML for <%s>: %v", entry.TagName, err),
+							entry.TagName,
+						)
 					}
 					break
 				}

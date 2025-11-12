@@ -78,9 +78,9 @@ func TestLogger_SkipsInternalEndpoints(t *testing.T) {
 	}{
 		{"Regular path", "/api/test", true},
 		{"Root path", "/", true},
-		{"Logs endpoint", "/__cem-logs", false},
+		{"Logs endpoint", "/__cem/logs", false},
 		{"Reload endpoint", "/__cem/reload", false},
-		{"Other internal", "/__cem-debug", true},
+		{"Other internal", "/__cem/debug", true},
 	}
 
 	for _, tt := range tests {

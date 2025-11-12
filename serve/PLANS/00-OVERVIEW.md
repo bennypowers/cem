@@ -73,7 +73,7 @@ See [01-ARCHITECTURE.md](./01-ARCHITECTURE.md) for detailed cross-cutting archit
 - HTTP server design and middleware pipeline (7-stage request flow)
 - File watching strategy (source files, demos, config)
 - Manifest lifecycle management (in-memory generation, regeneration triggers)
-- WebSocket live reload implementation (`/__cem-reload` endpoint)
+- WebSocket live reload implementation (`/__cem/reload` endpoint)
 - Error handling taxonomy (user code vs server errors, overlay rendering)
 - Cache management (transform cache, LRU eviction, ETags)
 - Graceful shutdown sequence (WebSocket cleanup, request draining)

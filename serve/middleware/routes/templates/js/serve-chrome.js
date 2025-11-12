@@ -223,47 +223,47 @@ class CemServeChrome extends HTMLElement {
   }
 
   #handleAttributeKnobChange(name, value) {
-    const demoElement = this.demo?.querySelector(this.tagName);
-    if (!demoElement) {
-      console.warn('[cem-serve-chrome] Demo element not found:', this.tagName);
+    if (!this.demo) {
+      console.warn('[cem-serve-chrome] Demo wrapper not found');
       return;
     }
 
-    // Handle boolean attributes
-    if (typeof value === 'boolean') {
-      if (value) {
-        demoElement.setAttribute(name, '');
-      } else {
-        demoElement.removeAttribute(name);
-      }
-    } else if (value === '') {
-      demoElement.removeAttribute(name);
-    } else {
-      demoElement.setAttribute(name, value);
+    const success = this.demo.setDemoAttribute(this.tagName, name, value);
+    if (!success) {
+      console.warn('[cem-serve-chrome] Demo element not found:', this.tagName);
+      return;
     }
 
     console.log(`[cem-serve-chrome] Attribute changed: ${name} = ${value}`);
   }
 
   #handlePropertyKnobChange(name, value) {
-    const demoElement = this.demo?.querySelector(this.tagName);
-    if (!demoElement) {
+    if (!this.demo) {
+      console.warn('[cem-serve-chrome] Demo wrapper not found');
+      return;
+    }
+
+    const success = this.demo.setDemoProperty(this.tagName, name, value);
+    if (!success) {
       console.warn('[cem-serve-chrome] Demo element not found:', this.tagName);
       return;
     }
 
-    demoElement[name] = value;
     console.log(`[cem-serve-chrome] Property changed: ${name} = ${value}`);
   }
 
   #handleCSSPropertyKnobChange(name, value) {
-    const demoElement = this.demo?.querySelector(this.tagName);
-    if (!demoElement) {
+    if (!this.demo) {
+      console.warn('[cem-serve-chrome] Demo wrapper not found');
+      return;
+    }
+
+    const success = this.demo.setDemoCssCustomProperty(this.tagName, name, value);
+    if (!success) {
       console.warn('[cem-serve-chrome] Demo element not found:', this.tagName);
       return;
     }
 
-    demoElement.style.setProperty(name, value);
     console.log(`[cem-serve-chrome] CSS property changed: ${name} = ${value}`);
   }
 
@@ -298,7 +298,7 @@ class CemServeChrome extends HTMLElement {
     // Include import map if available
     let importMapSection = '';
     if (this.#debugData?.importMapJSON) {
-      importMapSection = `\n${'='.repeat(40)}\nImport Map:\n${'='.repeat(40)}\n${this._debugData.importMapJSON}\n`;
+      importMapSection = `\n${'='.repeat(40)}\nImport Map:\n${'='.repeat(40)}\n${this.#debugData.importMapJSON}\n`;
     }
 
     const debugText = `CEM Serve Debug Information

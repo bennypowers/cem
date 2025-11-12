@@ -2,30 +2,25 @@
   display: block;
 }
 
-.knob-label {
+#knob-label {
   display: flex;
   flex-direction: column;
   gap: var(--cem-dev-server-spacing-xs, 4px);
 }
 
-#input-container {
-  order: 2;
-}
-
-.knob-header {
-  order: 1;
+#knob-header {
   display: flex;
   align-items: center;
   gap: var(--cem-dev-server-spacing-xs, 4px);
 }
 
-.knob-name {
+#knob-name {
   font-weight: 500;
   color: var(--cem-dev-server-text-primary);
   font-family: var(--cem-dev-server-font-family-mono, monospace);
 }
 
-.knob-type {
+#knob-type {
   font-size: 0.75rem;
   padding: 2px 6px;
   border-radius: 3px;
@@ -35,8 +30,7 @@
   font-weight: 400;
 }
 
-.knob-description {
-  order: 3;
+#knob-description {
   font-size: var(--cem-dev-server-font-size-sm);
 }
 
