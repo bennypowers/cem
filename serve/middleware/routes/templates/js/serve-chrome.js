@@ -231,11 +231,17 @@ class CemServeChrome extends HTMLElement {
    * Get the instance index from a knob element by finding its parent <details> container
    */
   #getKnobInstanceIndex(knobElement) {
+    // Need to traverse composed path since knob elements have shadow roots
     const details = knobElement.closest('.knob-group-instance');
+
     if (details && details.dataset.instanceIndex !== undefined) {
-      return parseInt(details.dataset.instanceIndex, 10);
+      const index = parseInt(details.dataset.instanceIndex, 10);
+      console.log('[cem-serve-chrome] Found instance index:', index, 'for knob:', knobElement, 'details:', details);
+      return index;
     }
-    // Fallback to 0 (first element) for single-instance or error cases
+
+    // Fallback - log warning
+    console.warn('[cem-serve-chrome] Could not find instance index for knob element:', knobElement, 'falling back to 0');
     return 0;
   }
 
@@ -309,6 +315,18 @@ class CemServeChrome extends HTMLElement {
 
     const root = this.demo.shadowRoot ?? this.demo;
     const elements = root.querySelectorAll(this.tagName);
+
+    console.log(`[cem-serve-chrome] Getting element instance ${index} of ${this.tagName}:`, {
+      totalElements: elements.length,
+      requestedIndex: index,
+      allElements: Array.from(elements).map(el => ({
+        id: el.id,
+        variant: el.getAttribute('variant'),
+        className: el.className,
+        element: el
+      })),
+      selectedElement: elements[index]
+    });
 
     return elements[index] || null;
   }
