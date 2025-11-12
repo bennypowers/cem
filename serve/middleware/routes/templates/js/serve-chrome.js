@@ -50,9 +50,6 @@ class CemServeChrome extends HTMLElement {
     });
 
     console.log('[cem-serve-chrome] Demo chrome initialized for', this.tagName);
-
-    // Expose diagnostic function globally
-    window.cemDiagnostics = () => this.#runDiagnostics();
   }
 
   async #fetchDebugInfo() {
@@ -215,12 +212,6 @@ class CemServeChrome extends HTMLElement {
     // Phase 5b: Events bubble from knob elements through their <details> container
     // The container has data-instance-index and data-tag-name to identify which element instance
     this.addEventListener('knob:attribute-change', (e) => {
-      console.log('[cem-serve-chrome] knob:attribute-change event:', {
-        target: e.target,
-        targetTagName: e.target.tagName,
-        composedPath: e.composedPath(),
-        knobName: e.name
-      });
       const { tagName, instanceIndex } = this.#getKnobTarget(e.target, e);
       this.#handleAttributeKnobChange(e.name, e.value, tagName, instanceIndex);
     });
@@ -246,13 +237,10 @@ class CemServeChrome extends HTMLElement {
     // If we have the event, use composedPath to traverse shadow boundaries
     if (event && event.composedPath) {
       const path = event.composedPath();
-      console.log('[cem-serve-chrome] Searching composedPath for .knob-group-instance:', path);
-
       for (const element of path) {
         if (element.classList && element.classList.contains('knob-group-instance')) {
           const tagName = element.dataset.tagName;
           const instanceIndex = parseInt(element.dataset.instanceIndex, 10);
-          console.log('[cem-serve-chrome] Found target:', { tagName, instanceIndex }, 'from element:', element);
           return { tagName, instanceIndex };
         }
       }
@@ -263,12 +251,10 @@ class CemServeChrome extends HTMLElement {
     if (details && details.dataset.instanceIndex !== undefined) {
       const tagName = details.dataset.tagName;
       const instanceIndex = parseInt(details.dataset.instanceIndex, 10);
-      console.log('[cem-serve-chrome] Found target via closest():', { tagName, instanceIndex });
       return { tagName, instanceIndex };
     }
 
-    // Fallback - log warning and use chrome's tag name
-    console.warn('[cem-serve-chrome] Could not find knob target, falling back to chrome tagName');
+    // Fallback - use chrome's tag name
     return { tagName: this.tagName, instanceIndex: 0 };
   }
 
@@ -297,8 +283,6 @@ class CemServeChrome extends HTMLElement {
     } else {
       element.setAttribute(name, value);
     }
-
-    console.log(`[cem-serve-chrome] Attribute changed on ${tagName} instance ${instanceIndex}: ${name} = ${value}`);
   }
 
   #handlePropertyKnobChange(name, value, tagName, instanceIndex = 0) {
@@ -314,7 +298,6 @@ class CemServeChrome extends HTMLElement {
     }
 
     element[name] = value;
-    console.log(`[cem-serve-chrome] Property changed on ${tagName} instance ${instanceIndex}: ${name} = ${value}`);
   }
 
   #handleCSSPropertyKnobChange(name, value, tagName, instanceIndex = 0) {
@@ -331,7 +314,6 @@ class CemServeChrome extends HTMLElement {
 
     const propertyName = name.startsWith('--') ? name : `--${name}`;
     element.style.setProperty(propertyName, value);
-    console.log(`[cem-serve-chrome] CSS property changed on ${tagName} instance ${instanceIndex}: ${propertyName} = ${value}`);
   }
 
   /**
@@ -342,19 +324,6 @@ class CemServeChrome extends HTMLElement {
 
     const root = this.demo.shadowRoot ?? this.demo;
     const elements = root.querySelectorAll(tagName);
-
-    console.log(`[cem-serve-chrome] Getting element instance ${index} of ${tagName}:`, {
-      totalElements: elements.length,
-      requestedIndex: index,
-      allElements: Array.from(elements).map(el => ({
-        id: el.id,
-        variant: el.getAttribute('variant'),
-        className: el.className,
-        element: el
-      })),
-      selectedElement: elements[index]
-    });
-
     return elements[index] || null;
   }
 
@@ -492,67 +461,5 @@ Generated: ${new Date().toISOString()}`;
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
-  }
-
-  #runDiagnostics() {
-    console.log('=== CEM Knobs Diagnostics ===');
-
-    // 1. List all knob groups in the DOM
-    const knobGroups = this.shadowRoot.querySelectorAll('.knob-group-instance');
-    console.log(`\n1. Found ${knobGroups.length} knob groups:`);
-    knobGroups.forEach((group, i) => {
-      const tagName = group.dataset.tagName;
-      const instanceIndex = group.dataset.instanceIndex;
-      const label = group.querySelector('.instance-label')?.textContent || '(no label)';
-      const isOpen = group.hasAttribute('open');
-      console.log(`  [${i}] ${tagName} instance ${instanceIndex}: "${label}" ${isOpen ? '(open)' : '(closed)'}`);
-    });
-
-    // 2. List all actual elements in the demo
-    if (this.demo) {
-      const root = this.demo.shadowRoot ?? this.demo;
-      const allCustomElements = Array.from(root.querySelectorAll('*')).filter(el => el.tagName.includes('-'));
-      console.log(`\n2. Found ${allCustomElements.length} custom elements in demo:`);
-
-      // Group by tag name to show counts
-      const byTag = {};
-      allCustomElements.forEach(el => {
-        if (!byTag[el.tagName.toLowerCase()]) {
-          byTag[el.tagName.toLowerCase()] = [];
-        }
-        byTag[el.tagName.toLowerCase()].push(el);
-      });
-
-      Object.entries(byTag).forEach(([tagName, elements]) => {
-        console.log(`  ${tagName}: ${elements.length} instance(s)`);
-        elements.forEach((el, i) => {
-          console.log(`    [${i}] id="${el.id || '(none)'}" text="${el.textContent?.trim().substring(0, 20) || ''}"`);
-        });
-      });
-    }
-
-    // 3. Test knob targeting
-    console.log('\n3. Testing knob targeting for first knob group:');
-    if (knobGroups.length > 0) {
-      const firstGroup = knobGroups[0];
-      const tagName = firstGroup.dataset.tagName;
-      const instanceIndex = parseInt(firstGroup.dataset.instanceIndex, 10);
-      console.log(`  Target: ${tagName} instance ${instanceIndex}`);
-
-      const targetElement = this.#getElementInstance(tagName, instanceIndex);
-      if (targetElement) {
-        console.log(`  ✓ Found element:`, targetElement);
-        console.log(`    Tag: ${targetElement.tagName}`);
-        console.log(`    ID: ${targetElement.id || '(none)'}`);
-        console.log(`    Attributes:`, Array.from(targetElement.attributes).map(a => `${a.name}="${a.value}"`).join(' '));
-      } else {
-        console.log(`  ✗ Element not found!`);
-      }
-    }
-
-    console.log('\n=== End Diagnostics ===');
-    console.log('\nNow checking server logs for knob generation details...');
-
-    return 'Diagnostics complete - check console and server output';
   }
 }
