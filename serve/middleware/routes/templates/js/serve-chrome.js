@@ -212,36 +212,56 @@ class CemServeChrome extends HTMLElement {
     // Phase 5b: Events bubble from knob elements through their <details> container
     // The container has data-instance-index to identify which element instance
     this.addEventListener('knob:attribute-change', (e) => {
-      const instanceIndex = this.#getKnobInstanceIndex(e.target);
+      console.log('[cem-serve-chrome] knob:attribute-change event:', {
+        target: e.target,
+        targetTagName: e.target.tagName,
+        composedPath: e.composedPath(),
+        knobName: e.name
+      });
+      const instanceIndex = this.#getKnobInstanceIndex(e.target, e);
       this.#handleAttributeKnobChange(e.name, e.value, instanceIndex);
     });
 
     this.addEventListener('knob:property-change', (e) => {
-      const instanceIndex = this.#getKnobInstanceIndex(e.target);
+      const instanceIndex = this.#getKnobInstanceIndex(e.target, e);
       this.#handlePropertyKnobChange(e.name, e.value, instanceIndex);
     });
 
     this.addEventListener('knob:css-property-change', (e) => {
-      const instanceIndex = this.#getKnobInstanceIndex(e.target);
+      const instanceIndex = this.#getKnobInstanceIndex(e.target, e);
       this.#handleCSSPropertyKnobChange(e.name, e.value, instanceIndex);
     });
   }
 
   /**
    * Get the instance index from a knob element by finding its parent <details> container
+   * Uses the event's composedPath to traverse through shadow boundaries
    */
-  #getKnobInstanceIndex(knobElement) {
-    // Need to traverse composed path since knob elements have shadow roots
-    const details = knobElement.closest('.knob-group-instance');
+  #getKnobInstanceIndex(knobElement, event) {
+    // If we have the event, use composedPath to traverse shadow boundaries
+    if (event && event.composedPath) {
+      const path = event.composedPath();
+      console.log('[cem-serve-chrome] Searching composedPath for .knob-group-instance:', path);
 
+      for (const element of path) {
+        if (element.classList && element.classList.contains('knob-group-instance')) {
+          const index = parseInt(element.dataset.instanceIndex, 10);
+          console.log('[cem-serve-chrome] Found instance index:', index, 'from element:', element);
+          return index;
+        }
+      }
+    }
+
+    // Fallback to closest() for non-shadow cases
+    const details = knobElement.closest('.knob-group-instance');
     if (details && details.dataset.instanceIndex !== undefined) {
       const index = parseInt(details.dataset.instanceIndex, 10);
-      console.log('[cem-serve-chrome] Found instance index:', index, 'for knob:', knobElement, 'details:', details);
+      console.log('[cem-serve-chrome] Found instance index via closest():', index);
       return index;
     }
 
     // Fallback - log warning
-    console.warn('[cem-serve-chrome] Could not find instance index for knob element:', knobElement, 'falling back to 0');
+    console.warn('[cem-serve-chrome] Could not find instance index, falling back to 0');
     return 0;
   }
 

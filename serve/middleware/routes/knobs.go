@@ -594,6 +594,74 @@ func generateKnobsForInstance(declaration *M.CustomElementDeclaration, currentVa
 	return knobs, nil
 }
 
+// GenerateKnobsForAllElements discovers all custom elements in demo HTML and generates knobs for each.
+// This supports compositional components (e.g., accordion + accordion-header + accordion-panel).
+// Returns knob groups for all discovered elements in source order.
+func GenerateKnobsForAllElements(pkg *M.Package, demoHTML []byte, enabledKnobs string) ([]ElementKnobGroup, error) {
+	// Discover all unique custom element tag names in the demo
+	tagNames := discoverCustomElementTagNames(demoHTML)
+	if len(tagNames) == 0 {
+		return nil, nil
+	}
+
+	// Build a map of tag name -> declaration for quick lookup
+	declarations := make(map[string]*M.CustomElementDeclaration)
+	for _, demo := range pkg.RenderableDemos() {
+		declarations[demo.CustomElementDeclaration.TagName] = demo.CustomElementDeclaration
+	}
+
+	// Generate knobs for each custom element type found in demo
+	var allGroups []ElementKnobGroup
+	for _, tagName := range tagNames {
+		declaration, ok := declarations[tagName]
+		if !ok {
+			// Skip elements not in manifest
+			continue
+		}
+
+		// Generate multi-instance knobs for this element type
+		groups, err := GenerateMultiInstanceKnobs(declaration, demoHTML, enabledKnobs)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate knobs for %s: %w", tagName, err)
+		}
+
+		allGroups = append(allGroups, groups...)
+	}
+
+	return allGroups, nil
+}
+
+// discoverCustomElementTagNames finds all custom element tag names in HTML.
+// Returns unique tag names in the order they first appear in the document.
+func discoverCustomElementTagNames(demoHTML []byte) []string {
+	doc, err := html.Parse(bytes.NewReader(demoHTML))
+	if err != nil {
+		return nil
+	}
+
+	// Track seen tag names to maintain uniqueness and order
+	seen := make(map[string]bool)
+	var tagNames []string
+
+	var walk func(*html.Node)
+	walk = func(n *html.Node) {
+		if n.Type == html.ElementNode {
+			// Custom elements contain a hyphen
+			if strings.Contains(n.Data, "-") && !seen[n.Data] {
+				seen[n.Data] = true
+				tagNames = append(tagNames, n.Data)
+			}
+		}
+
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			walk(c)
+		}
+	}
+	walk(doc)
+
+	return tagNames
+}
+
 // RenderMultiInstanceKnobsHTML renders the multi-instance knobs HTML template.
 // This is the Phase 5b implementation that renders knobs using <details> groups.
 // Uses the knobs-multi.html template with:
