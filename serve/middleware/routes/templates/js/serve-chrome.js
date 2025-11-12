@@ -239,8 +239,9 @@ class CemServeChrome extends HTMLElement {
       const path = event.composedPath();
       for (const element of path) {
         if (element.classList && element.classList.contains('knob-group-instance')) {
-          const tagName = element.dataset.tagName;
-          const instanceIndex = parseInt(element.dataset.instanceIndex, 10);
+          const tagName = element.dataset.tagName || this.tagName;
+          let instanceIndex = Number.parseInt(element.dataset.instanceIndex ?? '', 10);
+          if (Number.isNaN(instanceIndex)) instanceIndex = 0;
           return { tagName, instanceIndex };
         }
       }
@@ -249,8 +250,9 @@ class CemServeChrome extends HTMLElement {
     // Fallback to closest() for non-shadow cases
     const details = knobElement.closest('.knob-group-instance');
     if (details && details.dataset.instanceIndex !== undefined) {
-      const tagName = details.dataset.tagName;
-      const instanceIndex = parseInt(details.dataset.instanceIndex, 10);
+      const tagName = details.dataset.tagName || this.tagName;
+      let instanceIndex = Number.parseInt(details.dataset.instanceIndex ?? '', 10);
+      if (Number.isNaN(instanceIndex)) instanceIndex = 0;
       return { tagName, instanceIndex };
     }
 
