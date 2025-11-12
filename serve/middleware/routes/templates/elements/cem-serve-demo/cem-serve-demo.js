@@ -1,5 +1,6 @@
-// CEM Serve Demo - Demo wrapper component for knobs integration
-
+/**
+ * Demo wrapper component for knobs integration
+ */
 export class CemServeDemo extends HTMLElement {
   static is = 'cem-serve-demo';
   static { customElements.define(this.is, this); }

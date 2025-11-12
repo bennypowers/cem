@@ -23,21 +23,22 @@
 ::slotted(.tab) {
   background: none;
   border: none;
+  border-bottom: 3px solid transparent;
   color: var(--cem-dev-server-text-secondary, #64748b);
   padding: var(--cem-dev-server-spacing-sm, 8px) var(--cem-dev-server-spacing-md, 16px);
-  border-radius: var(--cem-dev-server-border-radius, 4px);
   cursor: pointer;
   font-family: inherit;
   font-size: inherit;
+  transition: border-color 0.2s, color 0.2s;
 }
 
 ::slotted(.tab:hover) {
-  background: var(--cem-dev-server-bg-tertiary, #f1f5f9);
+  color: var(--cem-dev-server-text-primary, #1e293b);
 }
 
 ::slotted(.tab[aria-selected="true"]) {
-  background: var(--cem-dev-server-accent-color, #3b82f6);
-  color: white;
+  border-bottom-color: var(--cem-dev-server-accent-color, #3b82f6);
+  color: var(--cem-dev-server-accent-color, #3b82f6);
 }
 
 /* Slotted panel styles */

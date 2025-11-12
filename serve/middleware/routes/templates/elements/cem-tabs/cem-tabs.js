@@ -28,8 +28,9 @@ export class CemServeTabs extends HTMLElement {
   }
 
   connectedCallback() {
-    // Set up tab click handlers
+    // Set up tab click handlers and keyboard navigation
     this.#setupTabs();
+    this.#setupKeyboardNavigation();
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -53,12 +54,61 @@ export class CemServeTabs extends HTMLElement {
         const panelId = tab.getAttribute('aria-controls');
         if (panelId) {
           this.value = panelId;
+          // Focus the clicked tab
+          tab.focus();
         }
       });
     });
 
     // Set initial state
     this.#updateTabState();
+  }
+
+  #setupKeyboardNavigation() {
+    this.addEventListener('keydown', (e) => {
+      const tabs = Array.from(this.querySelectorAll('[slot="tab"]'));
+      const currentTab = this.shadowRoot?.activeElement || document.activeElement;
+
+      // Only handle if focus is on a tab
+      if (!tabs.includes(currentTab)) return;
+
+      const currentIndex = tabs.indexOf(currentTab);
+      let nextIndex = -1;
+
+      switch (e.key) {
+        case 'ArrowLeft':
+        case 'ArrowUp':
+          e.preventDefault();
+          nextIndex = currentIndex - 1;
+          if (nextIndex < 0) nextIndex = tabs.length - 1;
+          break;
+        case 'ArrowRight':
+        case 'ArrowDown':
+          e.preventDefault();
+          nextIndex = currentIndex + 1;
+          if (nextIndex >= tabs.length) nextIndex = 0;
+          break;
+        case 'Home':
+          e.preventDefault();
+          nextIndex = 0;
+          break;
+        case 'End':
+          e.preventDefault();
+          nextIndex = tabs.length - 1;
+          break;
+        default:
+          return;
+      }
+
+      if (nextIndex !== -1) {
+        const nextTab = tabs[nextIndex];
+        const panelId = nextTab.getAttribute('aria-controls');
+        if (panelId) {
+          this.value = panelId;
+          nextTab.focus();
+        }
+      }
+    });
   }
 
   #updateTabState() {
@@ -70,8 +120,10 @@ export class CemServeTabs extends HTMLElement {
       const controlsId = tab.getAttribute('aria-controls');
       if (controlsId === currentValue) {
         tab.setAttribute('aria-selected', 'true');
+        tab.setAttribute('tabindex', '0'); // Make selected tab focusable
       } else {
         tab.setAttribute('aria-selected', 'false');
+        tab.setAttribute('tabindex', '-1'); // Remove other tabs from tab order
       }
     });
 
