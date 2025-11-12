@@ -260,11 +260,11 @@ export class KnobsManager {
   #insertKnobGroupInOrder(knobGroup, targetIndex) {
     const existingGroups = Array.from(this.#knobsContainer.querySelectorAll('.knob-group-instance'));
 
-    // Find insertion point
+    // Find insertion point - use >= to insert before existing group at same index
     let insertBefore = null;
     for (const group of existingGroups) {
       const groupIndex = parseInt(group.dataset.instanceIndex, 10);
-      if (groupIndex > targetIndex) {
+      if (groupIndex >= targetIndex) {
         insertBefore = group;
         break;
       }

@@ -460,9 +460,11 @@ func generateElementLabel(instance ElementInstance, tagName string, index int) s
 	// Priority 2: Text content (trimmed, max 20 chars)
 	if instance.TextContent != "" {
 		text := instance.TextContent
-		if len(text) > 20 {
-			// Truncate and add ellipsis (trim to remove trailing space)
-			return strings.TrimSpace(text[:20]) + "…"
+		runes := []rune(text)
+		if len(runes) > 20 {
+			// Truncate to 20 runes (preserves multi-byte characters like emoji/CJK)
+			truncated := string(runes[:20])
+			return strings.TrimSpace(truncated) + "…"
 		}
 		return text
 	}
