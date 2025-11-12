@@ -13,6 +13,12 @@
   </script>
   
   <script type="module" src="/__cem/websocket-client.js"></script>
+  <script type="module" src="/__cem/elements/cem-drawer/cem-drawer.js"></script>
+  <script type="module" src="/__cem/elements/cem-tabs/cem-tabs.js"></script>
+  <script type="module" src="/__cem/elements/cem-nav-drawer/cem-nav-drawer.js"></script>
+  <script type="module" src="/__cem/elements/cem-serve-demo/cem-serve-demo.js"></script>
+  <script type="module" src="/__cem/elements/cem-serve-knob/cem-serve-knobs.js"></script>
+  <script type="module" src="/__cem/elements/cem-color-scheme-toggle/cem-color-scheme-toggle.js"></script>
   <script type="module" src="/__cem/serve-chrome.js"></script>
   <style>/* Enable cross-document view transitions for same-origin navigation */
 @view-transition {
@@ -76,6 +82,25 @@ html::view-transition-new(*) {
   /* Borders */
   --cem-dev-server-border-radius: 6px;
   --cem-dev-server-border-width: 1px;
+
+  /* Syntax highlighting (chroma) */
+  --cem-dev-server-syntax-keyword: light-dark(#d73a49, #ff7b72);
+  --cem-dev-server-syntax-type: light-dark(#445588, #79c0ff);
+  --cem-dev-server-syntax-name: light-dark(#008080, #79c0ff);
+  --cem-dev-server-syntax-class: light-dark(#445588, #ffa657);
+  --cem-dev-server-syntax-decorator: light-dark(#3c5d5d, #ffa657);
+  --cem-dev-server-syntax-special: light-dark(#800080, #d2a8ff);
+  --cem-dev-server-syntax-function: light-dark(#6f42c1, #d2a8ff);
+  --cem-dev-server-syntax-tag: light-dark(#22863a, #7ee787);
+  --cem-dev-server-syntax-string: light-dark(#032f62, #a5d6ff);
+  --cem-dev-server-syntax-number: light-dark(#005cc5, #79c0ff);
+  --cem-dev-server-syntax-error: light-dark(#d73a49, #ff7b72);
+  --cem-dev-server-syntax-error-bg: light-dark(#ffeef0, #490202);
+  --cem-dev-server-syntax-inserted: light-dark(#22863a, #7ee787);
+  --cem-dev-server-syntax-inserted-bg: light-dark(#f0fff4, #04260f);
+  --cem-dev-server-syntax-deleted: light-dark(#22863a, #ffa198);
+  --cem-dev-server-syntax-deleted-bg: light-dark(#f0fff4, #490202);
+  --cem-dev-server-syntax-highlight: light-dark(#ffffcc, #404040);
 }
 
 html {
@@ -359,24 +384,125 @@ nav {
   min-height: calc(100vh - var(--cem-dev-server-header-height));
 }
 
-aside#knobs {
-  view-transition-name: dev-server-knobs;
-  width: var(--cem-dev-server-knobs-width);
-  background: var(--cem-dev-server-bg-secondary);
-  border-right: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
-  padding: var(--cem-dev-server-spacing-lg);
-  overflow-y: auto;
-
-  p {
-    color: var(--cem-dev-server-text-muted);
-    font-size: var(--cem-dev-server-font-size-sm);
-  }
-}
-
 main {
   flex: 1;
   padding: var(--cem-dev-server-spacing-xl);
   overflow: auto;
+}
+
+/* Knobs controls styling */
+.knobs-container {
+  padding: var(--cem-dev-server-spacing-md);
+}
+
+.knobs-empty {
+  color: var(--cem-dev-server-text-muted);
+  font-size: var(--cem-dev-server-font-size-sm);
+  text-align: center;
+  padding: var(--cem-dev-server-spacing-lg);
+
+  code {
+    background: var(--cem-dev-server-bg-tertiary);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: var(--cem-dev-server-font-family-mono);
+  }
+}
+
+.knob-group {
+  margin-bottom: var(--cem-dev-server-spacing-lg);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.knob-group-title {
+  margin: 0 0 var(--cem-dev-server-spacing-md) 0;
+  color: var(--cem-dev-server-accent-color);
+  font-size: var(--cem-dev-server-font-size-base);
+  font-weight: 600;
+  border-bottom: 1px solid var(--cem-dev-server-border-color);
+  padding-bottom: var(--cem-dev-server-spacing-sm);
+}
+
+.knob-control {
+  margin-bottom: var(--cem-dev-server-spacing-md);
+}
+
+.knob-label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cem-dev-server-spacing-xs);
+  cursor: pointer;
+}
+
+.knob-name {
+  font-family: var(--cem-dev-server-font-family-mono);
+  font-size: var(--cem-dev-server-font-size-sm);
+  color: var(--cem-dev-server-text-primary);
+  font-weight: 500;
+}
+
+.knob-input {
+  padding: var(--cem-dev-server-spacing-sm);
+  border: 1px solid var(--cem-dev-server-border-color);
+  border-radius: var(--cem-dev-server-border-radius);
+  background: var(--cem-dev-server-bg-primary);
+  color: var(--cem-dev-server-text-primary);
+  font-family: var(--cem-dev-server-font-family);
+  font-size: var(--cem-dev-server-font-size-sm);
+
+  &:focus {
+    outline: 2px solid var(--cem-dev-server-accent-color);
+    outline-offset: 2px;
+  }
+
+  &[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+  }
+
+  &[type="color"] {
+    height: 40px;
+    cursor: pointer;
+  }
+}
+
+.knob-description {
+  color: var(--cem-dev-server-text-secondary);
+  font-size: var(--cem-dev-server-font-size-sm);
+  line-height: 1.5;
+
+  p {
+    margin: var(--cem-dev-server-spacing-xs) 0;
+  }
+
+  code {
+    background: var(--cem-dev-server-bg-tertiary);
+    border-radius: 3px;
+    font-family: var(--cem-dev-server-font-family-mono);
+  }
+
+  a {
+    color: var(--cem-dev-server-accent-color);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  strong {
+    font-weight: 600;
+    color: var(--cem-dev-server-text-primary);
+  }
+
+  ul, ol {
+    margin: var(--cem-dev-server-spacing-xs) 0;
+    padding-left: var(--cem-dev-server-spacing-lg);
+  }
 }
 
 footer {
@@ -412,71 +538,11 @@ footer ::slotted([slot="description"]) {
   }
 }
 
-.drawer-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--cem-dev-server-spacing-sm);
-  background: none;
-  border: none;
-  color: var(--cem-dev-server-text-secondary);
-  cursor: pointer;
-  width: 100%;
-  transition: background 0.2s;
-
-  &:hover {
-    background: var(--cem-dev-server-bg-tertiary);
-  }
-}
-
-.drawer-content {
-  view-transition-name: dev-server-drawer;
-  max-height: 0;
-  overflow: hidden;
-
-  &[open] {
-    max-height: 400px;
-  }
-
-  &.transitions-enabled {
-    transition: max-height 0.3s ease;
-  }
-}
-
-.tabs {
-  display: flex;
-  gap: var(--cem-dev-server-spacing-sm);
-  padding: var(--cem-dev-server-spacing-md);
-  border-bottom: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
-}
-
-.tab {
-  background: none;
-  border: none;
-  color: var(--cem-dev-server-text-secondary);
-  padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);
-  border-radius: var(--cem-dev-server-border-radius);
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-
-  &:hover {
-    background: var(--cem-dev-server-bg-tertiary);
-  }
-
-  &[aria-selected="true"] {
-    background: var(--cem-dev-server-accent-color);
-    color: white;
-  }
-}
-
-.tab-panel {
-  display: none;
-  padding: var(--cem-dev-server-spacing-md);
-  height: 300px;
-  overflow-y: auto;
-
-  &[active] {
-    display: block;
+/* Hide footer drawer components until localStorage state is restored (prevents flash) */
+:host(.initializing) {
+  cem-drawer,
+  cem-tabs {
+    visibility: hidden;
   }
 }
 
@@ -529,118 +595,7 @@ footer ::slotted([slot="description"]) {
   word-break: break-word;
 }
 
-/* Navigation drawer */
-.nav-drawer-toggle {
-  background: none;
-  border: none;
-  color: var(--cem-dev-server-text-secondary);
-  padding: var(--cem-dev-server-spacing-sm);
-  border-radius: var(--cem-dev-server-border-radius);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  transition: color 0.2s, background 0.2s;
-  margin-inline-end: var(--cem-dev-server-spacing-md);
-
-  &:hover {
-    color: var(--cem-dev-server-accent-color);
-    background: var(--cem-dev-server-bg-tertiary);
-  }
-}
-
-.nav-drawer-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-  z-index: 99;
-}
-
-.nav-drawer {
-  position: fixed;
-  inset-block: 0;
-  inset-inline-start: 0;
-  width: min(320px, 80vw);
-  background: var(--cem-dev-server-bg-primary);
-  border-inline-end: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
-  transform: translateX(-100%);
-  transition: transform 0.3s ease;
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.nav-drawer[open] {
-  transform: translateX(0);
-}
-
-.nav-drawer[open] ~ .nav-drawer-overlay {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.nav-drawer-header {
-  display: flex;
-  align-items: center;
-  gap: var(--cem-dev-server-spacing-md);
-  height: var(--cem-dev-server-header-height);
-  padding: 0 var(--cem-dev-server-spacing-lg);
-  border-bottom: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
-
-  h2 {
-    margin: 0;
-    font-size: var(--cem-dev-server-font-size-lg);
-    color: var(--cem-dev-server-accent-color);
-  }
-}
-
-.nav-drawer-close {
-  background: none;
-  border: none;
-  color: var(--cem-dev-server-text-secondary);
-  padding: var(--cem-dev-server-spacing-sm);
-  border-radius: var(--cem-dev-server-border-radius);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  transition: color 0.2s, background 0.2s;
-
-  &:hover {
-    color: var(--cem-dev-server-accent-color);
-    background: var(--cem-dev-server-bg-tertiary);
-  }
-}
-
-.nav-drawer-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--cem-dev-server-spacing-md);
-  display: flex;
-  flex-direction: column;
-  gap: var(--cem-dev-server-spacing-sm);
-
-  /* Single-package mode: hide package disclosure level */
-  &.single-package {
-    .nav-package {
-      & > summary {
-        display: none;
-      }
-
-      /* Remove extra margin/padding from flattened structure */
-      margin: 0;
-      padding: 0;
-    }
-
-    .nav-element {
-      /* No extra indent in single-package mode */
-      margin-inline-start: 0;
-    }
-  }
-}
-
+/* Navigation content (light DOM slotted content for cem-nav-drawer) */
 .nav-package {
   margin-bottom: var(--cem-dev-server-spacing-md);
 
@@ -759,6 +714,179 @@ footer ::slotted([slot="description"]) {
   color: var(--cem-dev-server-text-secondary);
   font-size: var(--cem-dev-server-font-size-sm);
 }
+
+/* Knob description content (slotted in light DOM) */
+cem-serve-knob-attribute [slot="description"],
+cem-serve-knob-property [slot="description"],
+cem-serve-knob-css-property [slot="description"] {
+  p {
+    margin: var(--cem-dev-server-spacing-xs) 0;
+  }
+
+  code {
+    background: var(--cem-dev-server-bg-tertiary);
+    border-radius: 3px;
+    font-family: var(--cem-dev-server-font-family-mono);
+  }
+
+  a {
+    color: var(--cem-dev-server-accent-color);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  strong {
+    font-weight: 600;
+  }
+
+  ul, ol {
+    margin: var(--cem-dev-server-spacing-xs) 0;
+    padding-left: var(--cem-dev-server-spacing-lg);
+  }
+}
+
+/* Syntax highlighting (chroma - themable via CSS custom properties) */
+cem-serve-knob-attribute [slot="description"],
+cem-serve-knob-property [slot="description"],
+cem-serve-knob-css-property [slot="description"] {
+  .chroma {
+    background-color: var(--cem-dev-server-bg-tertiary);
+    padding: var(--cem-dev-server-spacing-sm);
+    border-radius: var(--cem-dev-server-border-radius);
+    overflow-x: auto;
+  }
+
+  .chroma .lntd { vertical-align: top; padding: 0; margin: 0; border: 0; }
+  .chroma .lntable { border-spacing: 0; padding: 0; margin: 0; border: 0; }
+  .chroma .hl { background-color: var(--cem-dev-server-syntax-highlight) }
+  .chroma .lnt,
+  .chroma .ln {
+    white-space: pre;
+    user-select: none;
+    margin-right: 0.4em;
+    padding: 0 0.4em 0 0.4em;
+    color: var(--cem-dev-server-text-muted);
+  }
+  .chroma .line { display: flex; }
+
+  /* Keywords */
+  .chroma .k,
+  .chroma .kc,
+  .chroma .kd,
+  .chroma .kn,
+  .chroma .kp,
+  .chroma .kr {
+    color: var(--cem-dev-server-syntax-keyword);
+    font-weight: bold;
+  }
+  .chroma .kt { color: var(--cem-dev-server-syntax-type); font-weight: bold; }
+
+  /* Names */
+  .chroma .na,
+  .chroma .nb,
+  .chroma .no,
+  .chroma .nv,
+  .chroma .vc,
+  .chroma .vg,
+  .chroma .vi {
+    color: var(--cem-dev-server-syntax-name);
+  }
+  .chroma .bp { color: var(--cem-dev-server-text-secondary) }
+  .chroma .nc { color: var(--cem-dev-server-syntax-class); font-weight: bold; }
+  .chroma .nd { color: var(--cem-dev-server-syntax-decorator); font-weight: bold; }
+  .chroma .ni,
+  .chroma .ss {
+    color: var(--cem-dev-server-syntax-special);
+  }
+  .chroma .ne,
+  .chroma .nl {
+    color: var(--cem-dev-server-syntax-keyword);
+    font-weight: bold;
+  }
+  .chroma .nf { color: var(--cem-dev-server-syntax-function); font-weight: bold; }
+  .chroma .nn { color: var(--cem-dev-server-text-secondary) }
+  .chroma .nt { color: var(--cem-dev-server-syntax-tag) }
+
+  /* Strings */
+  .chroma .s,
+  .chroma .sa,
+  .chroma .sb,
+  .chroma .sc,
+  .chroma .dl,
+  .chroma .sd,
+  .chroma .s2,
+  .chroma .se,
+  .chroma .sh,
+  .chroma .si,
+  .chroma .sx,
+  .chroma .s1 {
+    color: var(--cem-dev-server-syntax-string);
+  }
+  .chroma .sr { color: var(--cem-dev-server-syntax-tag) }
+
+  /* Numbers */
+  .chroma .m,
+  .chroma .mb,
+  .chroma .mf,
+  .chroma .mh,
+  .chroma .mi,
+  .chroma .il,
+  .chroma .mo {
+    color: var(--cem-dev-server-syntax-number);
+  }
+
+  /* Operators */
+  .chroma .o,
+  .chroma .ow {
+    color: var(--cem-dev-server-syntax-keyword);
+    font-weight: bold;
+  }
+
+  /* Comments */
+  .chroma .c,
+  .chroma .ch,
+  .chroma .cm,
+  .chroma .c1 {
+    color: var(--cem-dev-server-text-muted);
+    font-style: italic;
+  }
+  .chroma .cs,
+  .chroma .cp,
+  .chroma .cpf {
+    color: var(--cem-dev-server-text-muted);
+    font-weight: bold;
+    font-style: italic;
+  }
+
+  /* Errors */
+  .chroma .err {
+    color: var(--cem-dev-server-syntax-error);
+    background-color: var(--cem-dev-server-syntax-error-bg);
+  }
+
+  /* Generics */
+  .chroma .gd {
+    color: var(--cem-dev-server-syntax-deleted);
+    background-color: var(--cem-dev-server-syntax-deleted-bg);
+  }
+  .chroma .ge { font-style: italic; }
+  .chroma .gr { color: var(--cem-dev-server-syntax-error) }
+  .chroma .gh { color: var(--cem-dev-server-text-secondary) }
+  .chroma .gi {
+    color: var(--cem-dev-server-syntax-inserted);
+    background-color: var(--cem-dev-server-syntax-inserted-bg);
+  }
+  .chroma .go { color: var(--cem-dev-server-text-secondary) }
+  .chroma .gp { color: var(--cem-dev-server-text-secondary) }
+  .chroma .gs { font-weight: bold; }
+  .chroma .gu { color: var(--cem-dev-server-text-secondary) }
+  .chroma .gt { color: var(--cem-dev-server-syntax-error) }
+  .chroma .gl { text-decoration: underline; }
+  .chroma .w { color: var(--cem-dev-server-text-muted) }
+}
 </style>
 
       <header>
@@ -777,6 +905,104 @@ footer ::slotted([slot="description"]) {
             <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
           </svg>
         </button>
+        <cem-color-scheme-toggle>
+          <template shadowrootmode="open">
+  <style>:host {
+  display: block;
+}
+
+#toggle-group {
+  display: flex;
+  gap: 2px;
+  background: var(--cem-dev-server-bg-tertiary);
+  border-radius: var(--cem-dev-server-border-radius);
+  padding: 2px;
+  border: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
+}
+
+.toggle-option {
+  position: relative;
+  cursor: pointer;
+  margin: 0;
+}
+
+.toggle-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: calc(var(--cem-dev-server-border-radius) - 2px);
+  color: var(--cem-dev-server-text-secondary);
+  transition: background-color 0.2s, color 0.2s;
+
+  &:hover {
+    background: var(--cem-dev-server-bg-primary);
+    color: var(--cem-dev-server-text-primary);
+  }
+}
+
+.toggle-option input[type="radio"]:checked + .toggle-label {
+  background: var(--cem-dev-server-accent-color);
+  color: white;
+}
+
+.toggle-option input[type="radio"]:focus-visible + .toggle-label {
+  outline: 2px solid var(--cem-dev-server-accent-color);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+</style>
+<div id="toggle-group" role="radiogroup" aria-label="Color scheme">
+  <label class="toggle-option">
+    <input type="radio" name="color-scheme" value="light">
+    <span class="toggle-label">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
+      </svg>
+      <span class="sr-only">Light</span>
+    </span>
+  </label>
+  <label class="toggle-option">
+    <input type="radio" name="color-scheme" value="system" checked>
+    <span class="toggle-label">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zm8 0A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm-8 8A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm8 0A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3z"/>
+      </svg>
+      <span class="sr-only">System</span>
+    </span>
+  </label>
+  <label class="toggle-option">
+    <input type="radio" name="color-scheme" value="dark">
+    <span class="toggle-label">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/>
+      </svg>
+      <span class="sr-only">Dark</span>
+    </span>
+  </label>
+</div>
+</template>
+
+        </cem-color-scheme-toggle>
       </header>
 
       <div class="debug-overlay">
@@ -817,14 +1043,7 @@ footer ::slotted([slot="description"]) {
         </div>
       </div>
 
-      
-
       <div class="layout">
-        
-        <aside id="knobs">
-          <slot name="knobs"></slot>
-        </aside>
-        
         <main>
           <slot></slot>
         </main>
@@ -834,34 +1053,193 @@ footer ::slotted([slot="description"]) {
         <div class="footer-description">
           <slot name="description"></slot>
         </div>
-        <button class="drawer-toggle" aria-label="Toggle debug drawer">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
-          </svg>
-        </button>
-        <div class="drawer-content">
-          <div class="tabs" role="tablist">
-            <button class="tab" role="tab" aria-selected="true" aria-controls="panel-logs">
+        <cem-drawer class="initializing">
+          <template shadowrootmode="open">
+  <style>:host {
+  display: flex;
+  flex-direction: column;
+}
+
+#resize-handle {
+  height: 4px;
+  width: 100%;
+  cursor: ns-resize;
+  background: transparent;
+  position: relative;
+  display: none;
+
+  :host([open]) & {
+    display: block;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 4px;
+    background: var(--cem-dev-server-border-color, #cbd5e1);
+    border-radius: 2px;
+    transition: background 0.2s;
+  }
+
+  &:hover::before,
+  &:active::before {
+    background: var(--cem-dev-server-accent-color, #3b82f6);
+  }
+}
+
+#toggle {
+  background: none;
+  border: none;
+  color: var(--cem-dev-server-text-secondary, #64748b);
+  padding: var(--cem-dev-server-spacing-sm, 8px);
+  border-radius: var(--cem-dev-server-border-radius, 4px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  transition: background 0.2s, transform 0.2s;
+  &:hover {
+    background: var(--cem-dev-server-bg-tertiary, #f1f5f9);
+  }
+
+  & svg {
+    transform: rotate(0deg);
+    transition: transform 0.2s;
+  }
+
+  :host([open]) & svg {
+    transform: rotate(180deg);
+  }
+
+}
+
+#content {
+  view-transition-name: dev-server-drawer;
+  height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  &.transitions-enabled {
+    transition: height 0.3s ease;
+  }
+}
+
+</style>
+<div id="resize-handle" title="Drag to resize"></div>
+<button id="toggle"
+        aria-label="Toggle drawer">
+  <svg width="16"
+       height="16"
+       viewBox="0 0 16 16"
+       fill="currentColor">
+    <path fill-rule="evenodd"
+          d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+  </svg>
+</button>
+<div id="content">
+  <slot></slot>
+</div>
+</template>
+
+          <cem-tabs>
+            <template shadowrootmode="open">
+  <style>:host {
+  display: block;
+  height: 100%;
+}
+
+.tabs-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.tabs {
+  display: flex;
+  gap: var(--cem-dev-server-spacing-sm, 8px);
+  padding: var(--cem-dev-server-spacing-md, 16px);
+  border-bottom: var(--cem-dev-server-border-width, 1px) solid var(--cem-dev-server-border-color, #cbd5e1);
+  flex-shrink: 0;
+}
+
+.panels {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Slotted tab button styles */
+::slotted(.tab) {
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--cem-dev-server-text-secondary, #64748b);
+  padding: var(--cem-dev-server-spacing-sm, 8px) var(--cem-dev-server-spacing-md, 16px);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+::slotted(.tab:hover) {
+  color: var(--cem-dev-server-text-primary, #1e293b);
+}
+
+::slotted(.tab[aria-selected="true"]) {
+  border-bottom-color: var(--cem-dev-server-accent-color, #3b82f6);
+  color: var(--cem-dev-server-accent-color, #3b82f6);
+}
+
+/* Slotted panel styles */
+::slotted(.tab-panel) {
+  display: none;
+  padding: var(--cem-dev-server-spacing-md, 16px);
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+::slotted(.tab-panel[active]) {
+  display: block;
+}
+</style>
+<div class="tabs-container">
+  <div class="tabs" role="tablist">
+    <slot name="tab"></slot>
+  </div>
+  <div class="panels">
+    <slot name="panel"></slot>
+  </div>
+</div>
+</template>
+
+            <button slot="tab" class="tab" role="tab" aria-selected="false" aria-controls="panel-knobs">
+              Knobs
+            </button>
+            <button slot="tab" class="tab" role="tab" aria-selected="false" aria-controls="panel-logs">
               Server Logs
             </button>
-          </div>
-          <div class="tab-panel" id="panel-logs" role="tabpanel" active>
-            <div id="log-container"></div>
-          </div>
-        </div>
+            <div slot="panel" class="tab-panel" id="panel-knobs" role="tabpanel">
+              <div id="knobs-container">
+                
+                <p class="knobs-empty">No knobs available for this element.</p>
+                
+              </div>
+            </div>
+            <div slot="panel" class="tab-panel" id="panel-logs" role="tabpanel">
+              <div id="log-container"></div>
+            </div>
+          </cem-tabs>
+        </cem-drawer>
       </footer>
     </template>
 
     <h1 slot="title">my-element</h1>
-
-    
-    <div slot="knobs">
-      
-      <p>
-        Knobs: attributes properties slots css-properties
-      </p>
-    </div>
-    
 
     
     <section slot="description">

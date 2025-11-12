@@ -88,7 +88,7 @@
     // Fetch initial logs
     async function loadInitialLogs() {
       try {
-        const response = await fetch('/__cem-logs');
+        const response = await fetch('/__cem/logs');
         const logs = await response.json();
         messagesDiv.textContent = logs.length > 0 ? logs.join('\n') : 'No logs yet...';
         messagesDiv.scrollTop = messagesDiv.scrollHeight;

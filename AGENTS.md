@@ -10,3 +10,8 @@ Always use Makefile targets for running tests or builds, since they export the n
 When commit messages mention AI agents, always use `Assisted-By`, never use `Co-Authored-By`.
 
 When writing CSS, use modern native syntax including nesting, :has, layers, and light-dark()
+
+When writing web components (e.g. for the dev server)
+- prefer ids to classes in shadow roots for unique elements
+- don't use `class` on the host as a public api, use attributes instead
+- don't dispatch new CustomEvent with details, instead create custom classes which extend Event, and have class fields for attached state.

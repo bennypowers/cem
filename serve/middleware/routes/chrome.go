@@ -21,9 +21,11 @@ import (
 	"bytes"
 	"html/template"
 
+	chromahtml "github.com/alecthomas/chroma/v2/formatters/html"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
-	"github.com/yuin/goldmark/renderer/html"
+	highlighting "github.com/yuin/goldmark-highlighting/v2"
+	goldmarkhtml "github.com/yuin/goldmark/renderer/html"
 )
 
 // ChromeData represents template data for demo chrome
@@ -32,6 +34,7 @@ type ChromeData struct {
 	DemoTitle      string
 	DemoHTML       template.HTML
 	EnabledKnobs   string
+	KnobsHTML      template.HTML // Rendered knobs controls HTML
 	ImportMap      template.HTML // Use HTML instead of JS for importmap script content
 	Description    template.HTML
 	ShadowMode     bool
@@ -43,12 +46,20 @@ type ChromeData struct {
 }
 
 var (
-	// Markdown renderer with GFM and HTML escaping
+	// Markdown renderer with GFM, syntax highlighting, and HTML escaping
 	md = goldmark.New(
-		goldmark.WithExtensions(extension.GFM),
+		goldmark.WithExtensions(
+			extension.GFM,
+			highlighting.NewHighlighting(
+				highlighting.WithStyle("github"),
+				highlighting.WithFormatOptions(
+					chromahtml.WithClasses(true),
+				),
+			),
+		),
 		goldmark.WithRendererOptions(
-			html.WithHardWraps(),
-			html.WithXHTML(),
+			goldmarkhtml.WithHardWraps(),
+			goldmarkhtml.WithXHTML(),
 		),
 	)
 )

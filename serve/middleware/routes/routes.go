@@ -97,17 +97,17 @@ func New(config Config) middleware.Middleware {
 					http.NotFound(w, r)
 				}
 				return
+			case r.URL.Path == "/__cem/logs":
+				serveLogs(w, r, config)
+				return
+			case r.URL.Path == "/__cem/debug":
+				serveDebugInfo(w, r, config)
+				return
 			case strings.HasPrefix(r.URL.Path, "/__cem/"):
 				serveInternalModules(w, r, config)
 				return
 			case r.URL.Path == "/custom-elements.json":
 				serveManifest(w, r, config)
-				return
-			case r.URL.Path == "/__cem-logs":
-				serveLogs(w, r, config)
-				return
-			case r.URL.Path == "/__cem-debug":
-				serveDebugInfo(w, r, config)
 				return
 			}
 
@@ -140,9 +140,12 @@ func serveInternalModules(w http.ResponseWriter, r *http.Request, config Config)
 	// Request: /__cem/logo.svg -> templates/images/logo.svg in embed.FS
 	reqPath := strings.TrimPrefix(r.URL.Path, "/__cem/")
 
-	// Determine subdirectory based on file extension
+	// Determine subdirectory based on file extension and path
 	var path string
 	switch {
+	case strings.HasPrefix(reqPath, "elements/"):
+		// Element files (e.g., elements/cem-drawer/cem-drawer.js)
+		path = "templates/" + reqPath
 	case strings.HasSuffix(reqPath, ".js"):
 		path = "templates/js/" + reqPath
 	case strings.HasSuffix(reqPath, ".css"):
@@ -478,13 +481,57 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 		sourceURL = entry.Demo.Source.Href
 	}
 
+	// Generate knobs (default to all categories if not specified)
+	var knobsHTML template.HTML
+	enabledKnobs := queryParams["knobs"]
+	if enabledKnobs == "" {
+		// Default to all knob categories
+		enabledKnobs = "attributes properties css-properties"
+	}
+
+	// Fetch manifest and find declaration for this element
+	manifestBytes, err := config.Context.Manifest()
+	if err == nil && len(manifestBytes) > 0 {
+		var pkg M.Package
+		if err := json.Unmarshal(manifestBytes, &pkg); err == nil {
+			// Find the custom element declaration
+			for _, renderableDemo := range pkg.RenderableDemos() {
+				if renderableDemo.CustomElementDeclaration.TagName == entry.TagName {
+					// Generate knobs for this declaration
+					knobs, err := GenerateKnobs(renderableDemo.CustomElementDeclaration, demoHTML, enabledKnobs)
+					if err != nil {
+						config.Context.Logger().Warning("Failed to generate knobs for %s: %v", entry.TagName, err)
+						_ = config.Context.BroadcastError(
+							"Knobs Generation Error",
+							fmt.Sprintf("Failed to generate knobs for <%s>: %v", entry.TagName, err),
+							entry.TagName,
+						)
+						break
+					}
+
+					knobsHTML, err = RenderKnobsHTML(knobs)
+					if err != nil {
+						config.Context.Logger().Warning("Failed to render knobs HTML for %s: %v", entry.TagName, err)
+						_ = config.Context.BroadcastError(
+							"Knobs Render Error",
+							fmt.Sprintf("Failed to render knobs HTML for <%s>: %v", entry.TagName, err),
+							entry.TagName,
+						)
+					}
+					break
+				}
+			}
+		}
+	}
+
 	chromeData := ChromeData{
 		TagName:        entry.TagName,
 		DemoTitle:      demoTitle,
 		DemoHTML:       template.HTML(demoHTML),
 		Description:    template.HTML(entry.Demo.Description),
 		ImportMap:      template.HTML(importMapJSON),
-		EnabledKnobs:   queryParams["knobs"],
+		EnabledKnobs:   enabledKnobs,
+		KnobsHTML:      knobsHTML,
 		ShadowMode:     queryParams["shadow"] == "true",
 		SourceURL:      sourceURL,      // Link to source file
 		CanonicalURL:   entry.Demo.URL, // Link to canonical demo

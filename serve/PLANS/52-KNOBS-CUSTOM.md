@@ -1,8 +1,10 @@
 # Custom Knob Templates (OPTIONAL)
 
+**Status**: ❌ **NOT YET IMPLEMENTED** (Optional Feature)
+
 This document covers the custom template system that allows users to override default knob UI with their own components.
 
-**Note**: This is an OPTIONAL feature. Basic knobs (50-KNOBS-CORE.md) and advanced knobs (51-KNOBS-ADVANCED.md) provide full functionality without custom templates.
+**Note**: This is an OPTIONAL feature. Basic knobs (50-KNOBS-CORE.md) ✅ and advanced knobs (51-KNOBS-ADVANCED.md) ❌ provide full functionality without custom templates.
 
 ## Overview
 

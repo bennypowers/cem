@@ -1,0 +1,74 @@
+:host {
+  display: flex;
+  flex-direction: column;
+}
+
+#resize-handle {
+  height: 4px;
+  width: 100%;
+  cursor: ns-resize;
+  background: transparent;
+  position: relative;
+  display: none;
+
+  :host([open]) & {
+    display: block;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 4px;
+    background: var(--cem-dev-server-border-color, #cbd5e1);
+    border-radius: 2px;
+    transition: background 0.2s;
+  }
+
+  &:hover::before,
+  &:active::before {
+    background: var(--cem-dev-server-accent-color, #3b82f6);
+  }
+}
+
+#toggle {
+  background: none;
+  border: none;
+  color: var(--cem-dev-server-text-secondary, #64748b);
+  padding: var(--cem-dev-server-spacing-sm, 8px);
+  border-radius: var(--cem-dev-server-border-radius, 4px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  transition: background 0.2s, transform 0.2s;
+  &:hover {
+    background: var(--cem-dev-server-bg-tertiary, #f1f5f9);
+  }
+
+  & svg {
+    transform: rotate(0deg);
+    transition: transform 0.2s;
+  }
+
+  :host([open]) & svg {
+    transform: rotate(180deg);
+  }
+
+}
+
+#content {
+  view-transition-name: dev-server-drawer;
+  height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  &.transitions-enabled {
+    transition: height 0.3s ease;
+  }
+}
+

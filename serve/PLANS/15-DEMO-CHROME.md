@@ -15,7 +15,7 @@ Make sure to move client scripts (like web socket client, etc) from special inje
   <meta charset="utf-8">
   <title>{{.DemoTitle}} - {{.TagName}}</title>
   <script type="importmap">{{.ImportMap}}</script>
-  <script src="/__cem-serve-chrome.js"></script>
+  <script src="/__cem/elements/cem-serve-chrome.js"></script>
 </head>
 <body>
   <cem-serve-chrome role="none"
@@ -238,7 +238,7 @@ We can issue a browser warning based on user agent if someone tries to load a de
 - [x] `<cem-serve-chrome>` custom element defined and registered
 - [x] `<cem-serve-demo>` custom element defined with helper methods
 - [x] Import map injected into `<head>` before demo scripts
-- [x] `__cem-serve-chrome.js` script loaded and executed
+- [x] `__cem/elements/cem-serve-chrome.js` script loaded and executed
 - [x] Demo switcher nav shows all demos for current element
 - [x] Current demo highlighted in demo switcher
 - [x] VCS source link renders with correct icon (GitHub, GitLab, Bitbucket, generic)

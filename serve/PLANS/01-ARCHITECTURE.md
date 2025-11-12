@@ -295,7 +295,7 @@ Server error occurred, show in overlay.
 ### WebSocket Lifecycle
 
 **Server-side**:
-- Endpoint: `/__cem-reload`
+- Endpoint: `/__cem/reload`
 - Manage client connections (add/remove on connect/disconnect)
 - Broadcast events to all connected clients
 - Debounce broadcasts (150ms) to prevent spam

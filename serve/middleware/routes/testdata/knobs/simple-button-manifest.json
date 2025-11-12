@@ -1,0 +1,89 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/my-button.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "name": "MyButton",
+          "tagName": "my-button",
+          "attributes": [
+            {
+              "name": "disabled",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Whether the button is disabled",
+              "fieldName": "disabled"
+            },
+            {
+              "name": "variant",
+              "type": {
+                "text": "'primary' | 'secondary' | 'danger'"
+              },
+              "description": "Button variant",
+              "default": "primary"
+            },
+            {
+              "name": "size",
+              "type": {
+                "text": "'sm' | 'md' | 'lg'"
+              },
+              "description": "Button size",
+              "default": "md"
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "disabled",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Whether the button is disabled",
+              "default": "false"
+            },
+            {
+              "kind": "field",
+              "name": "label",
+              "type": {
+                "text": "string"
+              },
+              "description": "Button label text"
+            },
+            {
+              "kind": "field",
+              "name": "count",
+              "type": {
+                "text": "number"
+              },
+              "description": "Click count",
+              "default": "0"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--button-color",
+              "description": "Button background color",
+              "default": "#0066cc"
+            },
+            {
+              "name": "--button-padding",
+              "description": "Button padding",
+              "default": "0.5rem 1rem"
+            }
+          ],
+          "demos": [
+            {
+              "description": "Basic Button",
+              "url": "./demo/basic.html"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

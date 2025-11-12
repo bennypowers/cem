@@ -25,12 +25,12 @@ import (
 )
 
 // New creates a logging middleware that logs all HTTP requests at Debug level.
-// Internal polling endpoints (/__cem-logs, /__cem/reload) are not logged.
+// Internal polling endpoints (/__cem/logs, /__cem/reload) are not logged.
 func New(log logger.Logger) middleware.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Skip logging for internal polling endpoints
-			if r.URL.Path != "/__cem-logs" && r.URL.Path != "/__cem/reload" {
+			if r.URL.Path != "/__cem/logs" && r.URL.Path != "/__cem/reload" {
 				log.Debug("%s %s", r.Method, r.URL.Path)
 			}
 			next.ServeHTTP(w, r)
