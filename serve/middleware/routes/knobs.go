@@ -653,37 +653,6 @@ func GenerateKnobsForAllElements(pkg *M.Package, demoHTML []byte, enabledKnobs s
 	return allGroups, nil
 }
 
-// discoverCustomElementTagNames finds all custom element tag names in HTML.
-// Returns unique tag names in the order they first appear in the document.
-func discoverCustomElementTagNames(demoHTML []byte) []string {
-	doc, err := html.Parse(bytes.NewReader(demoHTML))
-	if err != nil {
-		return nil
-	}
-
-	// Track seen tag names to maintain uniqueness and order
-	seen := make(map[string]bool)
-	var tagNames []string
-
-	var walk func(*html.Node)
-	walk = func(n *html.Node) {
-		if n.Type == html.ElementNode {
-			// Custom elements contain a hyphen
-			if strings.Contains(n.Data, "-") && !seen[n.Data] {
-				seen[n.Data] = true
-				tagNames = append(tagNames, n.Data)
-			}
-		}
-
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			walk(c)
-		}
-	}
-	walk(doc)
-
-	return tagNames
-}
-
 // discoverAllCustomElementInstances finds all custom element instances in HTML
 // in depth-first source order (parent first, then children left-to-right).
 func discoverAllCustomElementInstances(demoHTML []byte) ([]ElementInstance, error) {
