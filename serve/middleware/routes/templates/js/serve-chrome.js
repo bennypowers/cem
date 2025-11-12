@@ -50,6 +50,9 @@ class CemServeChrome extends HTMLElement {
     });
 
     console.log('[cem-serve-chrome] Demo chrome initialized for', this.tagName);
+
+    // Expose diagnostic function globally
+    window.cemDiagnostics = () => this.#runDiagnostics();
   }
 
   async #fetchDebugInfo() {
@@ -489,5 +492,67 @@ Generated: ${new Date().toISOString()}`;
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  #runDiagnostics() {
+    console.log('=== CEM Knobs Diagnostics ===');
+
+    // 1. List all knob groups in the DOM
+    const knobGroups = this.shadowRoot.querySelectorAll('.knob-group-instance');
+    console.log(`\n1. Found ${knobGroups.length} knob groups:`);
+    knobGroups.forEach((group, i) => {
+      const tagName = group.dataset.tagName;
+      const instanceIndex = group.dataset.instanceIndex;
+      const label = group.querySelector('.instance-label')?.textContent || '(no label)';
+      const isOpen = group.hasAttribute('open');
+      console.log(`  [${i}] ${tagName} instance ${instanceIndex}: "${label}" ${isOpen ? '(open)' : '(closed)'}`);
+    });
+
+    // 2. List all actual elements in the demo
+    if (this.demo) {
+      const root = this.demo.shadowRoot ?? this.demo;
+      const allCustomElements = Array.from(root.querySelectorAll('*')).filter(el => el.tagName.includes('-'));
+      console.log(`\n2. Found ${allCustomElements.length} custom elements in demo:`);
+
+      // Group by tag name to show counts
+      const byTag = {};
+      allCustomElements.forEach(el => {
+        if (!byTag[el.tagName.toLowerCase()]) {
+          byTag[el.tagName.toLowerCase()] = [];
+        }
+        byTag[el.tagName.toLowerCase()].push(el);
+      });
+
+      Object.entries(byTag).forEach(([tagName, elements]) => {
+        console.log(`  ${tagName}: ${elements.length} instance(s)`);
+        elements.forEach((el, i) => {
+          console.log(`    [${i}] id="${el.id || '(none)'}" text="${el.textContent?.trim().substring(0, 20) || ''}"`);
+        });
+      });
+    }
+
+    // 3. Test knob targeting
+    console.log('\n3. Testing knob targeting for first knob group:');
+    if (knobGroups.length > 0) {
+      const firstGroup = knobGroups[0];
+      const tagName = firstGroup.dataset.tagName;
+      const instanceIndex = parseInt(firstGroup.dataset.instanceIndex, 10);
+      console.log(`  Target: ${tagName} instance ${instanceIndex}`);
+
+      const targetElement = this.#getElementInstance(tagName, instanceIndex);
+      if (targetElement) {
+        console.log(`  ✓ Found element:`, targetElement);
+        console.log(`    Tag: ${targetElement.tagName}`);
+        console.log(`    ID: ${targetElement.id || '(none)'}`);
+        console.log(`    Attributes:`, Array.from(targetElement.attributes).map(a => `${a.name}="${a.value}"`).join(' '));
+      } else {
+        console.log(`  ✗ Element not found!`);
+      }
+    }
+
+    console.log('\n=== End Diagnostics ===');
+    console.log('\nNow checking server logs for knob generation details...');
+
+    return 'Diagnostics complete - check console and server output';
   }
 }

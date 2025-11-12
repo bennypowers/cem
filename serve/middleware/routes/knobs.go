@@ -613,6 +613,18 @@ func GenerateKnobsForAllElements(pkg *M.Package, demoHTML []byte, enabledKnobs s
 		return nil, err
 	}
 
+	// DEBUG: Log discovered instances
+	var instanceSummary []string
+	for i, inst := range instances {
+		instanceSummary = append(instanceSummary, fmt.Sprintf("[%d] %s (id=%s, text=%q)", i, inst.TagName, inst.ID, inst.TextContent))
+	}
+	if len(instanceSummary) > 0 {
+		fmt.Printf("[knobs] Discovered %d instances in depth-first order:\n", len(instances))
+		for _, s := range instanceSummary {
+			fmt.Printf("  %s\n", s)
+		}
+	}
+
 	// Generate knobs for each instance in order
 	var allGroups []ElementKnobGroup
 	instanceCounts := make(map[string]int) // Track instance index per tag name
