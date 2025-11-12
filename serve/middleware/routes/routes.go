@@ -97,17 +97,17 @@ func New(config Config) middleware.Middleware {
 					http.NotFound(w, r)
 				}
 				return
-			case strings.HasPrefix(r.URL.Path, "/__cem/"):
-				serveInternalModules(w, r, config)
-				return
-			case r.URL.Path == "/custom-elements.json":
-				serveManifest(w, r, config)
-				return
 			case r.URL.Path == "/__cem/logs":
 				serveLogs(w, r, config)
 				return
 			case r.URL.Path == "/__cem/debug":
 				serveDebugInfo(w, r, config)
+				return
+			case strings.HasPrefix(r.URL.Path, "/__cem/"):
+				serveInternalModules(w, r, config)
+				return
+			case r.URL.Path == "/custom-elements.json":
+				serveManifest(w, r, config)
 				return
 			}
 
