@@ -47,6 +47,9 @@ var elementWrapperTemplate string
 //go:embed templates/knobs.html
 var knobsTemplate string
 
+//go:embed templates/knobs-multi.html
+var knobsMultiTemplate string
+
 //go:embed templates/**
 var templatesFS embed.FS
 
@@ -140,3 +143,6 @@ var ElementWrapperTemplate = template.Must(template.New("element-wrapper").Parse
 
 // KnobsTemplate is the parsed template for knobs controls
 var KnobsTemplate = template.Must(template.New("knobs").Funcs(templateFuncs).Parse(knobsTemplate))
+
+// KnobsMultiTemplate is the parsed template for multi-instance knobs controls
+var KnobsMultiTemplate = template.Must(template.New("knobs-multi").Funcs(templateFuncs).Parse(knobsMultiTemplate))

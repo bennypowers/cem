@@ -68,6 +68,23 @@ type KnobData struct {
 	Default      string
 }
 
+// ElementInstance represents a discovered custom element instance in the demo HTML
+type ElementInstance struct {
+	Node        *html.Node
+	ID          string
+	AriaLabel   string
+	TextContent string
+	Attributes  map[string]string
+}
+
+// ElementKnobGroup represents knobs for a single element instance
+type ElementKnobGroup struct {
+	TagName   string
+	Label     string
+	IsPrimary bool
+	Knobs     *KnobsData
+}
+
 // GenerateKnobs generates knob controls from manifest and demo HTML
 func GenerateKnobs(declaration *M.CustomElementDeclaration, demoHTML []byte, enabledKnobs string) (*KnobsData, error) {
 	if declaration == nil {
@@ -348,4 +365,235 @@ func markdownToHTML(text string) string {
 		return text // Return original text on error
 	}
 	return buf.String()
+}
+
+// discoverElementInstances finds all instances of a custom element in demo HTML
+func discoverElementInstances(tagName string, demoHTML []byte) ([]ElementInstance, error) {
+	var instances []ElementInstance
+
+	doc, err := html.Parse(bytes.NewReader(demoHTML))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse demo HTML: %w", err)
+	}
+
+	// Walk the DOM tree in source order
+	var walk func(*html.Node)
+	walk = func(n *html.Node) {
+		if n.Type == html.ElementNode && n.Data == tagName {
+			instance := ElementInstance{
+				Node:       n,
+				Attributes: make(map[string]string),
+			}
+
+			// Extract attributes
+			for _, attr := range n.Attr {
+				instance.Attributes[attr.Key] = attr.Val
+
+				// Save important attributes for labeling
+				switch attr.Key {
+				case "id":
+					instance.ID = attr.Val
+				case "aria-label":
+					instance.AriaLabel = attr.Val
+				}
+			}
+
+			// Extract text content (first child text node, trimmed)
+			if n.FirstChild != nil && n.FirstChild.Type == html.TextNode {
+				instance.TextContent = strings.TrimSpace(n.FirstChild.Data)
+			}
+
+			instances = append(instances, instance)
+		}
+
+		// Recurse through children
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			walk(c)
+		}
+	}
+	walk(doc)
+
+	return instances, nil
+}
+
+// generateElementLabel creates a label for an element instance using the priority system:
+// 1. ID (#id)
+// 2. Text content (trimmed, max 20 chars)
+// 3. aria-label
+// 4. Fallback: "tag-name No. N"
+func generateElementLabel(instance ElementInstance, tagName string, index int) string {
+	// Priority 1: ID
+	if instance.ID != "" {
+		return "#" + instance.ID
+	}
+
+	// Priority 2: Text content (trimmed, max 20 chars)
+	if instance.TextContent != "" {
+		text := instance.TextContent
+		if len(text) > 20 {
+			// Truncate and add ellipsis (trim to remove trailing space)
+			return strings.TrimSpace(text[:20]) + "…"
+		}
+		return text
+	}
+
+	// Priority 3: aria-label
+	if instance.AriaLabel != "" {
+		return instance.AriaLabel
+	}
+
+	// Priority 4: Fallback - "tag-name No. N" (1-indexed for display)
+	return fmt.Sprintf("%s No. %d", tagName, index+1)
+}
+
+// GenerateMultiInstanceKnobs generates knobs for all instances of an element in demo HTML
+func GenerateMultiInstanceKnobs(declaration *M.CustomElementDeclaration, demoHTML []byte, enabledKnobs string) ([]ElementKnobGroup, error) {
+	if declaration == nil {
+		return nil, fmt.Errorf("declaration is nil")
+	}
+
+	// Discover all instances in demo HTML
+	instances, err := discoverElementInstances(declaration.TagName, demoHTML)
+	if err != nil {
+		return nil, err
+	}
+
+	var groups []ElementKnobGroup
+
+	for i, instance := range instances {
+		// Generate label for this instance
+		label := generateElementLabel(instance, declaration.TagName, i)
+
+		// Extract current values for this specific instance
+		currentValues := instance.Attributes
+
+		// Generate knobs for this instance using existing GenerateKnobs logic
+		knobs, err := generateKnobsForInstance(declaration, currentValues, enabledKnobs)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate knobs for instance %d: %w", i, err)
+		}
+
+		group := ElementKnobGroup{
+			TagName:   declaration.TagName,
+			Label:     label,
+			IsPrimary: i == 0, // First instance is primary
+			Knobs:     knobs,
+		}
+
+		groups = append(groups, group)
+	}
+
+	return groups, nil
+}
+
+// generateKnobsForInstance is a helper that generates knobs for a single instance
+// It's similar to GenerateKnobs but takes pre-extracted currentValues
+func generateKnobsForInstance(declaration *M.CustomElementDeclaration, currentValues map[string]string, enabledKnobs string) (*KnobsData, error) {
+	// Parse enabled knobs (space-separated list of categories)
+	enabled := parseEnabledKnobs(enabledKnobs)
+
+	knobs := &KnobsData{
+		TagName: declaration.TagName,
+	}
+
+	// Build set of property names for deduplication
+	propertyNames := make(map[string]bool)
+	if enabled[KnobCategoryProperty] {
+		for _, member := range declaration.Members {
+			if field, ok := member.(*M.ClassField); ok {
+				if field.Privacy == M.Public || field.Privacy == "" {
+					propertyNames[field.Name] = true
+				}
+			}
+		}
+	}
+
+	// Generate attribute knobs (skip if same-named property exists)
+	if enabled[KnobCategoryAttribute] {
+		seenAttrs := make(map[string]*M.Attribute)
+		for i := range declaration.Attributes {
+			attr := &declaration.Attributes[i]
+			// Skip attribute if a property with the same name exists
+			if propertyNames[attr.Name] {
+				continue
+			}
+
+			// Deduplicate: keep attribute with more specific type
+			if existing, exists := seenAttrs[attr.Name]; exists {
+				// Prefer the one with a type over null
+				if attr.Type != nil && (existing.Type == nil || existing.Type.Text == "") {
+					seenAttrs[attr.Name] = attr
+				}
+				// Otherwise keep the first one
+				continue
+			}
+			seenAttrs[attr.Name] = attr
+		}
+
+		// Convert deduplicated attributes to knobs
+		for _, attr := range seenAttrs {
+			knob := attributeToKnob(*attr, currentValues)
+			knobs.AttributeKnobs = append(knobs.AttributeKnobs, knob)
+		}
+	}
+
+	// Generate property knobs (from class fields)
+	if enabled[KnobCategoryProperty] {
+		for _, member := range declaration.Members {
+			if field, ok := member.(*M.ClassField); ok {
+				if field.Privacy == M.Public || field.Privacy == "" {
+					knob := propertyToKnob(field, currentValues)
+					knobs.PropertyKnobs = append(knobs.PropertyKnobs, knob)
+				}
+			}
+		}
+	}
+
+	// Generate CSS custom property knobs
+	if enabled[KnobCategoryCSSProperty] {
+		for _, cssProp := range declaration.CssProperties {
+			knob := cssPropertyToKnob(cssProp, currentValues)
+			knobs.CSSPropertyKnobs = append(knobs.CSSPropertyKnobs, knob)
+		}
+	}
+
+	return knobs, nil
+}
+
+// RenderMultiInstanceKnobsHTML renders the multi-instance knobs HTML template
+func RenderMultiInstanceKnobsHTML(knobGroups []ElementKnobGroup) (template.HTML, error) {
+	if len(knobGroups) == 0 {
+		return "", nil
+	}
+
+	// Convert markdown descriptions to HTML for all knobs in all groups
+	for gi := range knobGroups {
+		if knobGroups[gi].Knobs == nil {
+			continue
+		}
+
+		for i := range knobGroups[gi].Knobs.AttributeKnobs {
+			if knobGroups[gi].Knobs.AttributeKnobs[i].Description != "" {
+				knobGroups[gi].Knobs.AttributeKnobs[i].Description = template.HTML(markdownToHTML(string(knobGroups[gi].Knobs.AttributeKnobs[i].Description)))
+			}
+		}
+		for i := range knobGroups[gi].Knobs.PropertyKnobs {
+			if knobGroups[gi].Knobs.PropertyKnobs[i].Description != "" {
+				knobGroups[gi].Knobs.PropertyKnobs[i].Description = template.HTML(markdownToHTML(string(knobGroups[gi].Knobs.PropertyKnobs[i].Description)))
+			}
+		}
+		for i := range knobGroups[gi].Knobs.CSSPropertyKnobs {
+			if knobGroups[gi].Knobs.CSSPropertyKnobs[i].Description != "" {
+				knobGroups[gi].Knobs.CSSPropertyKnobs[i].Description = template.HTML(markdownToHTML(string(knobGroups[gi].Knobs.CSSPropertyKnobs[i].Description)))
+			}
+		}
+	}
+
+	var buf bytes.Buffer
+	err := KnobsMultiTemplate.Execute(&buf, knobGroups)
+	if err != nil {
+		return "", err
+	}
+
+	return template.HTML(buf.String()), nil
 }
