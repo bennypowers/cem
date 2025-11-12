@@ -497,7 +497,10 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 			// Find the custom element declaration
 			for _, renderableDemo := range pkg.RenderableDemos() {
 				if renderableDemo.CustomElementDeclaration.TagName == entry.TagName {
-					// Generate knobs for this declaration
+					// TODO(Phase 5b): Currently generates knobs for single element instance (Phase 5a).
+					// Will be updated to use GenerateMultiInstanceKnobs() + RenderMultiInstanceKnobsHTML()
+					// in subsequent commit to support multiple element instances with labels and grouping.
+					// See: serve/middleware/routes/knobs.go for multi-instance functions.
 					knobs, err := GenerateKnobs(renderableDemo.CustomElementDeclaration, demoHTML, enabledKnobs)
 					if err != nil {
 						config.Context.Logger().Warning("Failed to generate knobs for %s: %v", entry.TagName, err)

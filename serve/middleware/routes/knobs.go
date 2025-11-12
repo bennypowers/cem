@@ -68,7 +68,8 @@ type KnobData struct {
 	Default      string
 }
 
-// ElementInstance represents a discovered custom element instance in the demo HTML
+// ElementInstance represents a discovered custom element instance in the demo HTML.
+// Used by Phase 5b multi-instance knobs to track individual element instances.
 type ElementInstance struct {
 	Node        *html.Node
 	ID          string
@@ -77,11 +78,12 @@ type ElementInstance struct {
 	Attributes  map[string]string
 }
 
-// ElementKnobGroup represents knobs for a single element instance
+// ElementKnobGroup represents knobs for a single element instance.
+// Used by Phase 5b to render multiple knob groups with labels and collapsible structure.
 type ElementKnobGroup struct {
-	TagName   string
-	Label     string
-	IsPrimary bool
+	TagName   string // Element tag name (e.g., "my-card")
+	Label     string // Human-readable label for this instance (e.g., "#card-1", "User Settings")
+	IsPrimary bool   // Whether this is the primary instance (expanded by default)
 	Knobs     *KnobsData
 }
 
@@ -446,7 +448,14 @@ func generateElementLabel(instance ElementInstance, tagName string, index int) s
 	return fmt.Sprintf("%s No. %d", tagName, index+1)
 }
 
-// GenerateMultiInstanceKnobs generates knobs for all instances of an element in demo HTML
+// GenerateMultiInstanceKnobs generates knobs for all instances of an element in demo HTML.
+// This is the Phase 5b implementation that supports multiple element instances.
+// Each instance gets its own ElementKnobGroup with a unique label based on:
+// 1. ID attribute (#id)
+// 2. Text content (trimmed to 20 chars)
+// 3. aria-label
+// 4. Fallback (tag-name No. N)
+// The first instance is marked as primary (expanded by default in UI).
 func GenerateMultiInstanceKnobs(declaration *M.CustomElementDeclaration, demoHTML []byte, enabledKnobs string) ([]ElementKnobGroup, error) {
 	if declaration == nil {
 		return nil, fmt.Errorf("declaration is nil")
@@ -560,7 +569,13 @@ func generateKnobsForInstance(declaration *M.CustomElementDeclaration, currentVa
 	return knobs, nil
 }
 
-// RenderMultiInstanceKnobsHTML renders the multi-instance knobs HTML template
+// RenderMultiInstanceKnobsHTML renders the multi-instance knobs HTML template.
+// This is the Phase 5b implementation that renders knobs using <details> groups.
+// Uses the knobs-multi.html template with:
+// - One <details> element per instance
+// - Primary instance has 'open' attribute (expanded by default)
+// - Each group shows tag name and instance label in <summary>
+// - Knobs organized by category (attributes, properties, CSS properties) within each group
 func RenderMultiInstanceKnobsHTML(knobGroups []ElementKnobGroup) (template.HTML, error) {
 	if len(knobGroups) == 0 {
 		return "", nil
