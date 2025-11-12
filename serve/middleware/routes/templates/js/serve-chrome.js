@@ -210,7 +210,7 @@ class CemServeChrome extends HTMLElement {
   #setupKnobs() {
     // Listen for knob change events from knob custom elements
     // Phase 5b: Events bubble from knob elements through their <details> container
-    // The container has data-instance-index to identify which element instance
+    // The container has data-instance-index and data-tag-name to identify which element instance
     this.addEventListener('knob:attribute-change', (e) => {
       console.log('[cem-serve-chrome] knob:attribute-change event:', {
         target: e.target,
@@ -218,26 +218,28 @@ class CemServeChrome extends HTMLElement {
         composedPath: e.composedPath(),
         knobName: e.name
       });
-      const instanceIndex = this.#getKnobInstanceIndex(e.target, e);
-      this.#handleAttributeKnobChange(e.name, e.value, instanceIndex);
+      const { tagName, instanceIndex } = this.#getKnobTarget(e.target, e);
+      this.#handleAttributeKnobChange(e.name, e.value, tagName, instanceIndex);
     });
 
     this.addEventListener('knob:property-change', (e) => {
-      const instanceIndex = this.#getKnobInstanceIndex(e.target, e);
-      this.#handlePropertyKnobChange(e.name, e.value, instanceIndex);
+      const { tagName, instanceIndex } = this.#getKnobTarget(e.target, e);
+      this.#handlePropertyKnobChange(e.name, e.value, tagName, instanceIndex);
     });
 
     this.addEventListener('knob:css-property-change', (e) => {
-      const instanceIndex = this.#getKnobInstanceIndex(e.target, e);
-      this.#handleCSSPropertyKnobChange(e.name, e.value, instanceIndex);
+      const { tagName, instanceIndex } = this.#getKnobTarget(e.target, e);
+      this.#handleCSSPropertyKnobChange(e.name, e.value, tagName, instanceIndex);
     });
   }
 
   /**
-   * Get the instance index from a knob element by finding its parent <details> container
-   * Uses the event's composedPath to traverse through shadow boundaries
+   * Get the target element tag name and instance index from a knob element
+   * by finding its parent <details> container.
+   * Uses the event's composedPath to traverse through shadow boundaries.
+   * Returns {tagName, instanceIndex}
    */
-  #getKnobInstanceIndex(knobElement, event) {
+  #getKnobTarget(knobElement, event) {
     // If we have the event, use composedPath to traverse shadow boundaries
     if (event && event.composedPath) {
       const path = event.composedPath();
@@ -245,9 +247,10 @@ class CemServeChrome extends HTMLElement {
 
       for (const element of path) {
         if (element.classList && element.classList.contains('knob-group-instance')) {
-          const index = parseInt(element.dataset.instanceIndex, 10);
-          console.log('[cem-serve-chrome] Found instance index:', index, 'from element:', element);
-          return index;
+          const tagName = element.dataset.tagName;
+          const instanceIndex = parseInt(element.dataset.instanceIndex, 10);
+          console.log('[cem-serve-chrome] Found target:', { tagName, instanceIndex }, 'from element:', element);
+          return { tagName, instanceIndex };
         }
       }
     }
@@ -255,26 +258,27 @@ class CemServeChrome extends HTMLElement {
     // Fallback to closest() for non-shadow cases
     const details = knobElement.closest('.knob-group-instance');
     if (details && details.dataset.instanceIndex !== undefined) {
-      const index = parseInt(details.dataset.instanceIndex, 10);
-      console.log('[cem-serve-chrome] Found instance index via closest():', index);
-      return index;
+      const tagName = details.dataset.tagName;
+      const instanceIndex = parseInt(details.dataset.instanceIndex, 10);
+      console.log('[cem-serve-chrome] Found target via closest():', { tagName, instanceIndex });
+      return { tagName, instanceIndex };
     }
 
-    // Fallback - log warning
-    console.warn('[cem-serve-chrome] Could not find instance index, falling back to 0');
-    return 0;
+    // Fallback - log warning and use chrome's tag name
+    console.warn('[cem-serve-chrome] Could not find knob target, falling back to chrome tagName');
+    return { tagName: this.tagName, instanceIndex: 0 };
   }
 
-  #handleAttributeKnobChange(name, value, instanceIndex = 0) {
+  #handleAttributeKnobChange(name, value, tagName, instanceIndex = 0) {
     if (!this.demo) {
       console.warn('[cem-serve-chrome] Demo wrapper not found');
       return;
     }
 
-    // Phase 5b: Find the Nth element instance
-    const element = this.#getElementInstance(instanceIndex);
+    // Phase 5b: Find the Nth element instance of the specified tag
+    const element = this.#getElementInstance(tagName, instanceIndex);
     if (!element) {
-      console.warn('[cem-serve-chrome] Demo element not found:', this.tagName, 'at index', instanceIndex);
+      console.warn('[cem-serve-chrome] Demo element not found:', tagName, 'at index', instanceIndex);
       return;
     }
 
@@ -291,52 +295,52 @@ class CemServeChrome extends HTMLElement {
       element.setAttribute(name, value);
     }
 
-    console.log(`[cem-serve-chrome] Attribute changed on instance ${instanceIndex}: ${name} = ${value}`);
+    console.log(`[cem-serve-chrome] Attribute changed on ${tagName} instance ${instanceIndex}: ${name} = ${value}`);
   }
 
-  #handlePropertyKnobChange(name, value, instanceIndex = 0) {
+  #handlePropertyKnobChange(name, value, tagName, instanceIndex = 0) {
     if (!this.demo) {
       console.warn('[cem-serve-chrome] Demo wrapper not found');
       return;
     }
 
-    const element = this.#getElementInstance(instanceIndex);
+    const element = this.#getElementInstance(tagName, instanceIndex);
     if (!element) {
-      console.warn('[cem-serve-chrome] Demo element not found:', this.tagName, 'at index', instanceIndex);
+      console.warn('[cem-serve-chrome] Demo element not found:', tagName, 'at index', instanceIndex);
       return;
     }
 
     element[name] = value;
-    console.log(`[cem-serve-chrome] Property changed on instance ${instanceIndex}: ${name} = ${value}`);
+    console.log(`[cem-serve-chrome] Property changed on ${tagName} instance ${instanceIndex}: ${name} = ${value}`);
   }
 
-  #handleCSSPropertyKnobChange(name, value, instanceIndex = 0) {
+  #handleCSSPropertyKnobChange(name, value, tagName, instanceIndex = 0) {
     if (!this.demo) {
       console.warn('[cem-serve-chrome] Demo wrapper not found');
       return;
     }
 
-    const element = this.#getElementInstance(instanceIndex);
+    const element = this.#getElementInstance(tagName, instanceIndex);
     if (!element) {
-      console.warn('[cem-serve-chrome] Demo element not found:', this.tagName, 'at index', instanceIndex);
+      console.warn('[cem-serve-chrome] Demo element not found:', tagName, 'at index', instanceIndex);
       return;
     }
 
     const propertyName = name.startsWith('--') ? name : `--${name}`;
     element.style.setProperty(propertyName, value);
-    console.log(`[cem-serve-chrome] CSS property changed on instance ${instanceIndex}: ${propertyName} = ${value}`);
+    console.log(`[cem-serve-chrome] CSS property changed on ${tagName} instance ${instanceIndex}: ${propertyName} = ${value}`);
   }
 
   /**
-   * Get the Nth instance of the element from the demo
+   * Get the Nth instance of the specified element from the demo
    */
-  #getElementInstance(index) {
-    if (!this.demo || !this.tagName) return null;
+  #getElementInstance(tagName, index) {
+    if (!this.demo || !tagName) return null;
 
     const root = this.demo.shadowRoot ?? this.demo;
-    const elements = root.querySelectorAll(this.tagName);
+    const elements = root.querySelectorAll(tagName);
 
-    console.log(`[cem-serve-chrome] Getting element instance ${index} of ${this.tagName}:`, {
+    console.log(`[cem-serve-chrome] Getting element instance ${index} of ${tagName}:`, {
       totalElements: elements.length,
       requestedIndex: index,
       allElements: Array.from(elements).map(el => ({

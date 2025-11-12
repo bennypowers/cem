@@ -72,6 +72,7 @@ type KnobData struct {
 // Used by Phase 5b multi-instance knobs to track individual element instances.
 type ElementInstance struct {
 	Node        *html.Node
+	TagName     string
 	ID          string
 	AriaLabel   string
 	TextContent string
@@ -409,6 +410,7 @@ func discoverElementInstances(tagName string, demoHTML []byte) ([]ElementInstanc
 		if n.Type == html.ElementNode && n.Data == tagName {
 			instance := ElementInstance{
 				Node:       n,
+				TagName:    tagName,
 				Attributes: make(map[string]string),
 			}
 
@@ -596,36 +598,51 @@ func generateKnobsForInstance(declaration *M.CustomElementDeclaration, currentVa
 
 // GenerateKnobsForAllElements discovers all custom elements in demo HTML and generates knobs for each.
 // This supports compositional components (e.g., accordion + accordion-header + accordion-panel).
-// Returns knob groups for all discovered elements in source order.
+// Returns knob groups in depth-first source order (parent, then children left-to-right).
 func GenerateKnobsForAllElements(pkg *M.Package, demoHTML []byte, enabledKnobs string) ([]ElementKnobGroup, error) {
-	// Discover all unique custom element tag names in the demo
-	tagNames := discoverCustomElementTagNames(demoHTML)
-	if len(tagNames) == 0 {
-		return nil, nil
-	}
-
 	// Build a map of tag name -> declaration for quick lookup
+	// Use RenderableCustomElementDeclarations to get ALL elements in package, not just ones with demos
 	declarations := make(map[string]*M.CustomElementDeclaration)
-	for _, demo := range pkg.RenderableDemos() {
-		declarations[demo.CustomElementDeclaration.TagName] = demo.CustomElementDeclaration
+	for _, renderableDecl := range pkg.RenderableCustomElementDeclarations() {
+		declarations[renderableDecl.CustomElementDeclaration.TagName] = renderableDecl.CustomElementDeclaration
 	}
 
-	// Generate knobs for each custom element type found in demo
+	// Discover all custom element instances in depth-first source order
+	instances, err := discoverAllCustomElementInstances(demoHTML)
+	if err != nil {
+		return nil, err
+	}
+
+	// Generate knobs for each instance in order
 	var allGroups []ElementKnobGroup
-	for _, tagName := range tagNames {
-		declaration, ok := declarations[tagName]
+	instanceCounts := make(map[string]int) // Track instance index per tag name
+
+	for _, instance := range instances {
+		declaration, ok := declarations[instance.TagName]
 		if !ok {
 			// Skip elements not in manifest
 			continue
 		}
 
-		// Generate multi-instance knobs for this element type
-		groups, err := GenerateMultiInstanceKnobs(declaration, demoHTML, enabledKnobs)
+		// Generate label for this instance
+		instanceIndex := instanceCounts[instance.TagName]
+		label := generateElementLabel(instance, instance.TagName, instanceIndex)
+		instanceCounts[instance.TagName]++
+
+		// Generate knobs for this instance
+		knobs, err := generateKnobsForInstance(declaration, instance.Attributes, enabledKnobs)
 		if err != nil {
-			return nil, fmt.Errorf("failed to generate knobs for %s: %w", tagName, err)
+			return nil, fmt.Errorf("failed to generate knobs for %s instance %d: %w", instance.TagName, instanceIndex, err)
 		}
 
-		allGroups = append(allGroups, groups...)
+		group := ElementKnobGroup{
+			TagName:   instance.TagName,
+			Label:     label,
+			IsPrimary: len(allGroups) == 0, // First instance overall is primary
+			Knobs:     knobs,
+		}
+
+		allGroups = append(allGroups, group)
 	}
 
 	return allGroups, nil
@@ -660,6 +677,58 @@ func discoverCustomElementTagNames(demoHTML []byte) []string {
 	walk(doc)
 
 	return tagNames
+}
+
+// discoverAllCustomElementInstances finds all custom element instances in HTML
+// in depth-first source order (parent first, then children left-to-right).
+func discoverAllCustomElementInstances(demoHTML []byte) ([]ElementInstance, error) {
+	doc, err := html.Parse(bytes.NewReader(demoHTML))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse demo HTML: %w", err)
+	}
+
+	var instances []ElementInstance
+
+	// Walk DOM tree in depth-first order
+	var walk func(*html.Node)
+	walk = func(n *html.Node) {
+		if n.Type == html.ElementNode && strings.Contains(n.Data, "-") {
+			// This is a custom element
+			instance := ElementInstance{
+				Node:       n,
+				TagName:    n.Data,
+				Attributes: make(map[string]string),
+			}
+
+			// Extract attributes
+			for _, attr := range n.Attr {
+				instance.Attributes[attr.Key] = attr.Val
+
+				// Save important attributes for labeling
+				switch attr.Key {
+				case "id":
+					instance.ID = attr.Val
+				case "aria-label":
+					instance.AriaLabel = attr.Val
+				}
+			}
+
+			// Extract first non-empty text content
+			if text := firstTextContent(n); text != "" {
+				instance.TextContent = text
+			}
+
+			instances = append(instances, instance)
+		}
+
+		// Recurse through children (depth-first)
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			walk(c)
+		}
+	}
+	walk(doc)
+
+	return instances, nil
 }
 
 // RenderMultiInstanceKnobsHTML renders the multi-instance knobs HTML template.
