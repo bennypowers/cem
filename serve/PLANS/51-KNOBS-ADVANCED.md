@@ -1,8 +1,10 @@
 # Advanced Knobs: Multiple Elements & Complex Compositions
 
+**Status**: ❌ **NOT YET IMPLEMENTED**
+
 This document covers advanced knob features for handling complex demos with multiple custom elements, compositional components, and dynamic DOM manipulation.
 
-**Prerequisites**: Basic knobs (50-KNOBS-CORE.md) must be implemented first.
+**Prerequisites**: Basic knobs (50-KNOBS-CORE.md) must be implemented first. ✅ Done
 
 ## Multiple Elements on the Page
 

@@ -1,10 +1,12 @@
 # Basic Knobs
 
+**Status**: ✅ **COMPLETE** (with enhancements beyond original plan)
+
 ## TDD First Steps
 
 Phase 5 has no stubs in existing tests. Follow standard TDD: write tests first, implement to make them pass.
 
-**Prerequisites**: Complete Phase 4 remaining work (CSS glob filtering, YAML config) before starting Phase 5a.
+**Prerequisites**: Complete Phase 4 remaining work (CSS glob filtering, YAML config) before starting Phase 5a. ✅ Done
 
 **Approach**:
 1. Write failing tests using fixture/golden patterns
@@ -343,15 +345,47 @@ go test ./serve/middleware/knobs/... --update
 
 ## Acceptance Criteria
 
-- [ ] Knobs render for all element attributes in manifest
-- [ ] Knob types match CEM attribute types (boolean, string, number, enum)
-- [ ] Knob inputs reflect current demo values
-- [ ] Changing knob updates demo element in real-time
-- [ ] Boolean knobs: checkbox controls attribute presence
-- [ ] Enum knobs: select shows all union type options
-- [ ] Property knobs: can set JavaScript properties
-- [ ] CSS property knobs: can set CSS custom properties
-- [ ] Config `knobs.enabled` controls feature on/off
-- [ ] Query param `?disable-knobs=all` hides knobs
-- [ ] Knobs work with basic demos (single element)
-- [ ] Tests pass (server-side, client-side, integration)
+- [x] Knobs render for all element attributes in manifest ✅
+- [x] Knob types match CEM attribute types (boolean, string, number, enum) ✅
+- [x] Knob inputs reflect current demo values ✅
+- [x] Changing knob updates demo element in real-time ✅
+- [x] Boolean knobs: checkbox controls attribute presence ✅
+- [x] Enum knobs: select shows all union type options ✅
+- [x] Property knobs: can set JavaScript properties ✅
+- [x] CSS property knobs: can set CSS custom properties ✅
+- [x] Config `knobs.enabled` controls feature on/off ✅
+- [x] Query param `?disable-knobs=all` hides knobs ✅
+- [x] Knobs work with basic demos (single element) ✅
+- [x] Tests pass (server-side, client-side, integration) ✅
+
+## Features Beyond Original Plan
+
+The implementation includes several enhancements not in the original specification:
+
+### Type Badges
+Each knob displays a type badge (e.g., `string`, `enum`, `boolean`, `color`) next to the knob name, providing immediate visual feedback about the expected value type.
+
+### Dual Color Input
+Color-type knobs feature both a color picker and a parallel text input field, allowing users to:
+- Use the visual color picker for standard hex colors
+- Enter CSS variable names (design tokens) like `var(--color-primary)`
+- Input any valid CSS color value (rgb, hsl, named colors)
+
+### Automatic Deduplication
+Server-side logic prevents duplicate knobs when inheritance creates multiple manifest entries:
+- **Property-over-attribute**: Skips attributes when same-named properties exist
+- **Type specificity**: Prefers attributes with specific types over `null` types
+
+### State Synchronization
+Knobs intelligently sync with demo element state:
+- Read actual element values on page load (not just defaults)
+- Prevent browser form restoration conflicts via `autocomplete="off"`
+- No `name` attributes to avoid browser state persistence
+- Initialize to current state, then allow user control
+
+### Markdown Descriptions with Syntax Highlighting
+Knob descriptions support full GitHub-Flavored Markdown with:
+- Code blocks with syntax highlighting (chroma)
+- Themable highlighting via CSS custom properties
+- Inline code, lists, emphasis, links
+- Proper typography and spacing

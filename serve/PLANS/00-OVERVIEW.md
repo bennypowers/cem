@@ -182,16 +182,17 @@ feat/dev-server (staging)
   - Prerequisites: Phase 3 (chrome infrastructure)
   - **Implementation approach**: Complete each sub-phase fully before moving to the next
   - Sub-phases:
-    - [ ] **Phase 5a: Basic Knobs (REQUIRED)** - Implement first
+    - [x] **Phase 5a: Basic Knobs (REQUIRED)** ✅ - Implement first
       - Goal: Single element demos with basic control types
       - Provides: Knob UI in chrome sidebar
       - Consumes: Manifest data, demo chrome
       - Details: [50-KNOBS-CORE.md](./50-KNOBS-CORE.md)
+      - **Status**: Complete with enhancements (type badges, dual color input, deduplication, state sync, markdown descriptions)
     - [ ] **Phase 5b: Advanced Knobs (REQUIRED)** - Implement after 5a is complete
       - Goal: Multiple elements and complex compositions with mutation observers
       - Extends: Phase 5a
       - Details: [51-KNOBS-ADVANCED.md](./51-KNOBS-ADVANCED.md)
-    - [ ] **Phase 5c: Custom Templates (REQUIRED)** - Implement after 5b is complete
+    - [ ] **Phase 5c: Custom Templates (OPTIONAL)** - Implement after 5b is complete
       - Goal: User-provided knob templates for specialized controls
       - Extends: Phase 5a/5b
       - Details: [52-KNOBS-CUSTOM.md](./52-KNOBS-CUSTOM.md)
@@ -200,13 +201,14 @@ feat/dev-server (staging)
   - Goal: Documentation and examples
   - Prerequisites: All previous phases
   - Provides: Enhanced developer experience
-  - **Already implemented** (during Phases 1-4):
+  - **Already implemented** (during Phases 1-5):
     - ✅ Error overlay with source-mapped stack traces
     - ✅ Colored logging with structured badges (INFO, WARN, ERROR, DEBUG)
     - ✅ Navigation drawer for demo browsing
     - ✅ 404 error page with helpful navigation
     - ✅ View Transitions API support
     - ✅ Favicon support
+    - ✅ Color scheme toggle (light/system/dark with localStorage persistence)
   - **Remaining work**:
     - [ ] Comprehensive documentation
     - [ ] Example projects showcasing features
