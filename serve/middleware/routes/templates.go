@@ -94,8 +94,8 @@ var templateFuncs = template.FuncMap{
 		}
 		return template.CSS(content)
 	},
-	"renderElement": func(elementName string, attrs map[string]string) template.HTML {
-		html, err := renderElement(elementName, attrs)
+	"renderElementShadowRoot": func(elementName string, attrs map[string]string) template.HTML {
+		html, err := renderElementShadowRoot(elementName, attrs)
 		if err != nil {
 			errMsg := "<!-- Error rendering element " + elementName + ": " + err.Error() + " -->"
 

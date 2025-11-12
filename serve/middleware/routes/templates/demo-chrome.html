@@ -30,7 +30,7 @@
       <header>
         {{if .NavigationHTML}}
         <cem-nav-drawer>
-          {{renderElement "cem-nav-drawer" dict}}
+          {{renderElementShadowRoot "cem-nav-drawer" dict}}
           {{.NavigationHTML}}
         </cem-nav-drawer>
         {{end}}
@@ -135,9 +135,9 @@
           <slot name="description"></slot>
         </div>
         <cem-drawer class="initializing">
-          {{renderElement "cem-drawer" dict}}
+          {{renderElementShadowRoot "cem-drawer" dict}}
           <cem-tabs>
-            {{renderElement "cem-tabs" dict}}
+            {{renderElementShadowRoot "cem-tabs" dict}}
             <button slot="tab" class="tab" role="tab" aria-selected="false" aria-controls="panel-knobs">
               Knobs
             </button>
