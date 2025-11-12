@@ -1,10 +1,12 @@
 :host {
   display: block;
+  height: 100%;
 }
 
 .tabs-container {
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .tabs {
@@ -12,11 +14,13 @@
   gap: var(--cem-dev-server-spacing-sm, 8px);
   padding: var(--cem-dev-server-spacing-md, 16px);
   border-bottom: var(--cem-dev-server-border-width, 1px) solid var(--cem-dev-server-border-color, #cbd5e1);
+  flex-shrink: 0;
 }
 
 .panels {
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 
 /* Slotted tab button styles */
@@ -45,8 +49,9 @@
 ::slotted(.tab-panel) {
   display: none;
   padding: var(--cem-dev-server-spacing-md, 16px);
-  height: 300px;
+  height: 100%;
   overflow-y: auto;
+  box-sizing: border-box;
 }
 
 ::slotted(.tab-panel[active]) {

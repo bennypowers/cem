@@ -17,6 +17,7 @@
   <script type="module" src="/__cem/elements/cem-tabs/cem-tabs.js"></script>
   <script type="module" src="/__cem/elements/cem-nav-drawer/cem-nav-drawer.js"></script>
   <script type="module" src="/__cem/elements/cem-serve-demo/cem-serve-demo.js"></script>
+  <script type="module" src="/__cem/knob-events.js"></script>
   <script type="module" src="/__cem/serve-chrome.js"></script>
   <style>/* Enable cross-document view transitions for same-origin navigation */
 @view-transition {
@@ -80,6 +81,25 @@ html::view-transition-new(*) {
   /* Borders */
   --cem-dev-server-border-radius: 6px;
   --cem-dev-server-border-width: 1px;
+
+  /* Syntax highlighting (chroma) */
+  --cem-dev-server-syntax-keyword: light-dark(#d73a49, #ff7b72);
+  --cem-dev-server-syntax-type: light-dark(#445588, #79c0ff);
+  --cem-dev-server-syntax-name: light-dark(#008080, #79c0ff);
+  --cem-dev-server-syntax-class: light-dark(#445588, #ffa657);
+  --cem-dev-server-syntax-decorator: light-dark(#3c5d5d, #ffa657);
+  --cem-dev-server-syntax-special: light-dark(#800080, #d2a8ff);
+  --cem-dev-server-syntax-function: light-dark(#6f42c1, #d2a8ff);
+  --cem-dev-server-syntax-tag: light-dark(#22863a, #7ee787);
+  --cem-dev-server-syntax-string: light-dark(#032f62, #a5d6ff);
+  --cem-dev-server-syntax-number: light-dark(#005cc5, #79c0ff);
+  --cem-dev-server-syntax-error: light-dark(#d73a49, #ff7b72);
+  --cem-dev-server-syntax-error-bg: light-dark(#ffeef0, #490202);
+  --cem-dev-server-syntax-inserted: light-dark(#22863a, #7ee787);
+  --cem-dev-server-syntax-inserted-bg: light-dark(#f0fff4, #04260f);
+  --cem-dev-server-syntax-deleted: light-dark(#22863a, #ffa198);
+  --cem-dev-server-syntax-deleted-bg: light-dark(#f0fff4, #490202);
+  --cem-dev-server-syntax-highlight: light-dark(#ffffcc, #404040);
 }
 
 html {
@@ -363,24 +383,125 @@ nav {
   min-height: calc(100vh - var(--cem-dev-server-header-height));
 }
 
-aside#knobs {
-  view-transition-name: dev-server-knobs;
-  width: var(--cem-dev-server-knobs-width);
-  background: var(--cem-dev-server-bg-secondary);
-  border-right: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
-  padding: var(--cem-dev-server-spacing-lg);
-  overflow-y: auto;
-
-  p {
-    color: var(--cem-dev-server-text-muted);
-    font-size: var(--cem-dev-server-font-size-sm);
-  }
-}
-
 main {
   flex: 1;
   padding: var(--cem-dev-server-spacing-xl);
   overflow: auto;
+}
+
+/* Knobs controls styling */
+.knobs-container {
+  padding: var(--cem-dev-server-spacing-md);
+}
+
+.knobs-empty {
+  color: var(--cem-dev-server-text-muted);
+  font-size: var(--cem-dev-server-font-size-sm);
+  text-align: center;
+  padding: var(--cem-dev-server-spacing-lg);
+
+  code {
+    background: var(--cem-dev-server-bg-tertiary);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: var(--cem-dev-server-font-family-mono);
+  }
+}
+
+.knob-group {
+  margin-bottom: var(--cem-dev-server-spacing-lg);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.knob-group-title {
+  margin: 0 0 var(--cem-dev-server-spacing-md) 0;
+  color: var(--cem-dev-server-accent-color);
+  font-size: var(--cem-dev-server-font-size-base);
+  font-weight: 600;
+  border-bottom: 1px solid var(--cem-dev-server-border-color);
+  padding-bottom: var(--cem-dev-server-spacing-sm);
+}
+
+.knob-control {
+  margin-bottom: var(--cem-dev-server-spacing-md);
+}
+
+.knob-label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cem-dev-server-spacing-xs);
+  cursor: pointer;
+}
+
+.knob-name {
+  font-family: var(--cem-dev-server-font-family-mono);
+  font-size: var(--cem-dev-server-font-size-sm);
+  color: var(--cem-dev-server-text-primary);
+  font-weight: 500;
+}
+
+.knob-input {
+  padding: var(--cem-dev-server-spacing-sm);
+  border: 1px solid var(--cem-dev-server-border-color);
+  border-radius: var(--cem-dev-server-border-radius);
+  background: var(--cem-dev-server-bg-primary);
+  color: var(--cem-dev-server-text-primary);
+  font-family: var(--cem-dev-server-font-family);
+  font-size: var(--cem-dev-server-font-size-sm);
+
+  &:focus {
+    outline: 2px solid var(--cem-dev-server-accent-color);
+    outline-offset: 2px;
+  }
+
+  &[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+  }
+
+  &[type="color"] {
+    height: 40px;
+    cursor: pointer;
+  }
+}
+
+.knob-description {
+  color: var(--cem-dev-server-text-secondary);
+  font-size: var(--cem-dev-server-font-size-sm);
+  line-height: 1.5;
+
+  p {
+    margin: var(--cem-dev-server-spacing-xs) 0;
+  }
+
+  code {
+    background: var(--cem-dev-server-bg-tertiary);
+    border-radius: 3px;
+    font-family: var(--cem-dev-server-font-family-mono);
+  }
+
+  a {
+    color: var(--cem-dev-server-accent-color);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  strong {
+    font-weight: 600;
+    color: var(--cem-dev-server-text-primary);
+  }
+
+  ul, ol {
+    margin: var(--cem-dev-server-spacing-xs) 0;
+    padding-left: var(--cem-dev-server-spacing-lg);
+  }
 }
 
 footer {
@@ -592,6 +713,144 @@ footer ::slotted([slot="description"]) {
   color: var(--cem-dev-server-text-secondary);
   font-size: var(--cem-dev-server-font-size-sm);
 }
+
+/* Syntax highlighting (chroma - themable via CSS custom properties) */
+.knob-description {
+  .chroma {
+    background-color: var(--cem-dev-server-bg-tertiary);
+    padding: var(--cem-dev-server-spacing-sm);
+    border-radius: var(--cem-dev-server-border-radius);
+    overflow-x: auto;
+  }
+
+  .chroma .lntd { vertical-align: top; padding: 0; margin: 0; border: 0; }
+  .chroma .lntable { border-spacing: 0; padding: 0; margin: 0; border: 0; }
+  .chroma .hl { background-color: var(--cem-dev-server-syntax-highlight) }
+  .chroma .lnt,
+  .chroma .ln {
+    white-space: pre;
+    user-select: none;
+    margin-right: 0.4em;
+    padding: 0 0.4em 0 0.4em;
+    color: var(--cem-dev-server-text-muted);
+  }
+  .chroma .line { display: flex; }
+
+  /* Keywords */
+  .chroma .k,
+  .chroma .kc,
+  .chroma .kd,
+  .chroma .kn,
+  .chroma .kp,
+  .chroma .kr {
+    color: var(--cem-dev-server-syntax-keyword);
+    font-weight: bold;
+  }
+  .chroma .kt { color: var(--cem-dev-server-syntax-type); font-weight: bold; }
+
+  /* Names */
+  .chroma .na,
+  .chroma .nb,
+  .chroma .no,
+  .chroma .nv,
+  .chroma .vc,
+  .chroma .vg,
+  .chroma .vi {
+    color: var(--cem-dev-server-syntax-name);
+  }
+  .chroma .bp { color: var(--cem-dev-server-text-secondary) }
+  .chroma .nc { color: var(--cem-dev-server-syntax-class); font-weight: bold; }
+  .chroma .nd { color: var(--cem-dev-server-syntax-decorator); font-weight: bold; }
+  .chroma .ni,
+  .chroma .ss {
+    color: var(--cem-dev-server-syntax-special);
+  }
+  .chroma .ne,
+  .chroma .nl {
+    color: var(--cem-dev-server-syntax-keyword);
+    font-weight: bold;
+  }
+  .chroma .nf { color: var(--cem-dev-server-syntax-function); font-weight: bold; }
+  .chroma .nn { color: var(--cem-dev-server-text-secondary) }
+  .chroma .nt { color: var(--cem-dev-server-syntax-tag) }
+
+  /* Strings */
+  .chroma .s,
+  .chroma .sa,
+  .chroma .sb,
+  .chroma .sc,
+  .chroma .dl,
+  .chroma .sd,
+  .chroma .s2,
+  .chroma .se,
+  .chroma .sh,
+  .chroma .si,
+  .chroma .sx,
+  .chroma .s1 {
+    color: var(--cem-dev-server-syntax-string);
+  }
+  .chroma .sr { color: var(--cem-dev-server-syntax-tag) }
+
+  /* Numbers */
+  .chroma .m,
+  .chroma .mb,
+  .chroma .mf,
+  .chroma .mh,
+  .chroma .mi,
+  .chroma .il,
+  .chroma .mo {
+    color: var(--cem-dev-server-syntax-number);
+  }
+
+  /* Operators */
+  .chroma .o,
+  .chroma .ow {
+    color: var(--cem-dev-server-syntax-keyword);
+    font-weight: bold;
+  }
+
+  /* Comments */
+  .chroma .c,
+  .chroma .ch,
+  .chroma .cm,
+  .chroma .c1 {
+    color: var(--cem-dev-server-text-muted);
+    font-style: italic;
+  }
+  .chroma .cs,
+  .chroma .cp,
+  .chroma .cpf {
+    color: var(--cem-dev-server-text-muted);
+    font-weight: bold;
+    font-style: italic;
+  }
+
+  /* Errors */
+  .chroma .err {
+    color: var(--cem-dev-server-syntax-error);
+    background-color: var(--cem-dev-server-syntax-error-bg);
+  }
+
+  /* Generics */
+  .chroma .gd {
+    color: var(--cem-dev-server-syntax-deleted);
+    background-color: var(--cem-dev-server-syntax-deleted-bg);
+  }
+  .chroma .ge { font-style: italic; }
+  .chroma .gr { color: var(--cem-dev-server-syntax-error) }
+  .chroma .gh { color: var(--cem-dev-server-text-secondary) }
+  .chroma .gi {
+    color: var(--cem-dev-server-syntax-inserted);
+    background-color: var(--cem-dev-server-syntax-inserted-bg);
+  }
+  .chroma .go { color: var(--cem-dev-server-text-secondary) }
+  .chroma .gp { color: var(--cem-dev-server-text-secondary) }
+  .chroma .gs { font-weight: bold; }
+  .chroma .gu { color: var(--cem-dev-server-text-secondary) }
+  .chroma .gt { color: var(--cem-dev-server-syntax-error) }
+  .chroma .gl { text-decoration: underline; }
+  .chroma .w { color: var(--cem-dev-server-text-muted) }
+}
 </style>
 
       <header>
@@ -651,7 +910,6 @@ footer ::slotted([slot="description"]) {
       </div>
 
       <div class="layout">
-        
         <main>
           <slot></slot>
         </main>
@@ -664,7 +922,39 @@ footer ::slotted([slot="description"]) {
         <cem-drawer class="initializing">
           <template shadowrootmode="open">
   <style>:host {
-  display: block;
+  display: flex;
+  flex-direction: column;
+}
+
+#resize-handle {
+  height: 4px;
+  width: 100%;
+  cursor: ns-resize;
+  background: transparent;
+  position: relative;
+  display: none;
+
+  :host([open]) & {
+    display: block;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 4px;
+    background: var(--cem-dev-server-border-color, #cbd5e1);
+    border-radius: 2px;
+    transition: background 0.2s;
+  }
+
+  &:hover::before,
+  &:active::before {
+    background: var(--cem-dev-server-accent-color, #3b82f6);
+  }
 }
 
 #toggle {
@@ -696,17 +986,17 @@ footer ::slotted([slot="description"]) {
 
 #content {
   view-transition-name: dev-server-drawer;
-  max-height: 0;
+  height: 0;
   overflow: hidden;
-  :host([open]) & {
-    max-height: 400px;
-  }
+  display: flex;
+  flex-direction: column;
   &.transitions-enabled {
-    transition: max-height 0.3s ease;
+    transition: height 0.3s ease;
   }
 }
 
 </style>
+<div id="resize-handle" title="Drag to resize"></div>
 <button id="toggle"
         aria-label="Toggle drawer">
   <svg width="16"
@@ -726,11 +1016,13 @@ footer ::slotted([slot="description"]) {
             <template shadowrootmode="open">
   <style>:host {
   display: block;
+  height: 100%;
 }
 
 .tabs-container {
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .tabs {
@@ -738,11 +1030,13 @@ footer ::slotted([slot="description"]) {
   gap: var(--cem-dev-server-spacing-sm, 8px);
   padding: var(--cem-dev-server-spacing-md, 16px);
   border-bottom: var(--cem-dev-server-border-width, 1px) solid var(--cem-dev-server-border-color, #cbd5e1);
+  flex-shrink: 0;
 }
 
 .panels {
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 
 /* Slotted tab button styles */
@@ -771,8 +1065,9 @@ footer ::slotted([slot="description"]) {
 ::slotted(.tab-panel) {
   display: none;
   padding: var(--cem-dev-server-spacing-md, 16px);
-  height: 300px;
+  height: 100%;
   overflow-y: auto;
+  box-sizing: border-box;
 }
 
 ::slotted(.tab-panel[active]) {
@@ -796,7 +1091,11 @@ footer ::slotted([slot="description"]) {
               Server Logs
             </button>
             <div slot="panel" class="tab-panel" id="panel-knobs" role="tabpanel">
-              <div id="knobs-container"></div>
+              <div id="knobs-container">
+                
+                <p class="knobs-empty">No knobs available for this element.</p>
+                
+              </div>
             </div>
             <div slot="panel" class="tab-panel" id="panel-logs" role="tabpanel">
               <div id="log-container"></div>
@@ -807,8 +1106,6 @@ footer ::slotted([slot="description"]) {
     </template>
 
     <h1 slot="title">my-element</h1>
-
-    
 
     
     <section slot="description">
