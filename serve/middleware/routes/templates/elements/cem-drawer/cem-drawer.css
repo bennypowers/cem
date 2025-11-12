@@ -1,0 +1,43 @@
+:host {
+  display: block;
+}
+
+#toggle {
+  background: none;
+  border: none;
+  color: var(--cem-dev-server-text-secondary, #64748b);
+  padding: var(--cem-dev-server-spacing-sm, 8px);
+  border-radius: var(--cem-dev-server-border-radius, 4px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  transition: background 0.2s, transform 0.2s;
+  &:hover {
+    background: var(--cem-dev-server-bg-tertiary, #f1f5f9);
+  }
+
+  & svg {
+    transform: rotate(0deg);
+    transition: transform 0.2s;
+  }
+
+  :host([open]) & svg {
+    transform: rotate(180deg);
+  }
+
+}
+
+#content {
+  view-transition-name: dev-server-drawer;
+  max-height: 0;
+  overflow: hidden;
+  :host([open]) & {
+    max-height: 400px;
+  }
+  &.transitions-enabled {
+    transition: max-height 0.3s ease;
+  }
+}
+

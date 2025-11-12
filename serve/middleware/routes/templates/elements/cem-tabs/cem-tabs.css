@@ -1,0 +1,53 @@
+:host {
+  display: block;
+}
+
+.tabs-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.tabs {
+  display: flex;
+  gap: var(--cem-dev-server-spacing-sm, 8px);
+  padding: var(--cem-dev-server-spacing-md, 16px);
+  border-bottom: var(--cem-dev-server-border-width, 1px) solid var(--cem-dev-server-border-color, #cbd5e1);
+}
+
+.panels {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Slotted tab button styles */
+::slotted(.tab) {
+  background: none;
+  border: none;
+  color: var(--cem-dev-server-text-secondary, #64748b);
+  padding: var(--cem-dev-server-spacing-sm, 8px) var(--cem-dev-server-spacing-md, 16px);
+  border-radius: var(--cem-dev-server-border-radius, 4px);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+::slotted(.tab:hover) {
+  background: var(--cem-dev-server-bg-tertiary, #f1f5f9);
+}
+
+::slotted(.tab[aria-selected="true"]) {
+  background: var(--cem-dev-server-accent-color, #3b82f6);
+  color: white;
+}
+
+/* Slotted panel styles */
+::slotted(.tab-panel) {
+  display: none;
+  padding: var(--cem-dev-server-spacing-md, 16px);
+  height: 300px;
+  overflow-y: auto;
+}
+
+::slotted(.tab-panel[active]) {
+  display: block;
+}

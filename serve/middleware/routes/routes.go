@@ -140,9 +140,12 @@ func serveInternalModules(w http.ResponseWriter, r *http.Request, config Config)
 	// Request: /__cem/logo.svg -> templates/images/logo.svg in embed.FS
 	reqPath := strings.TrimPrefix(r.URL.Path, "/__cem/")
 
-	// Determine subdirectory based on file extension
+	// Determine subdirectory based on file extension and path
 	var path string
 	switch {
+	case strings.HasPrefix(reqPath, "elements/"):
+		// Element files (e.g., elements/cem-drawer/cem-drawer.js)
+		path = "templates/" + reqPath
 	case strings.HasSuffix(reqPath, ".js"):
 		path = "templates/js/" + reqPath
 	case strings.HasSuffix(reqPath, ".css"):

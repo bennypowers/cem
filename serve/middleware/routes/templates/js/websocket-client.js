@@ -2,10 +2,10 @@
 // Integrates WebSocket reconnection with UI components
 
 import { ReconnectingWebSocket } from '/__cem/reconnecting-websocket.js';
-import { CEMConnectionStatus } from '/__cem/connection-status.js';
-import { CEMErrorDialog } from '/__cem/error-dialog.js';
-import { CEMReconnectionContent } from '/__cem/reconnection-content.js';
-import { CEMTransformErrorOverlay } from '/__cem/transform-error-overlay.js';
+import { CEMConnectionStatus } from '/__cem/elements/cem-connection-status/cem-connection-status.js';
+import { CEMErrorDialog } from '/__cem/elements/cem-error-dialog/cem-error-dialog.js';
+import { CEMReconnectionContent } from '/__cem/elements/cem-reconnection-content/cem-reconnection-content.js';
+import { CEMTransformErrorOverlay } from '/__cem/elements/cem-transform-error-overlay/cem-transform-error-overlay.js';
 
 /**
  * Event dispatched when server logs are received

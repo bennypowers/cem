@@ -13,6 +13,9 @@
   </script>
   {{end}}
   <script type="module" src="/__cem/websocket-client.js"></script>
+  <script type="module" src="/__cem/elements/cem-drawer/cem-drawer.js"></script>
+  <script type="module" src="/__cem/elements/cem-tabs/cem-tabs.js"></script>
+  <script type="module" src="/__cem/elements/cem-nav-drawer/cem-nav-drawer.js"></script>
   <script type="module" src="/__cem/serve-chrome.js"></script>
   <style>{{include "css/demo-chrome.css"}}</style>
 </head>
@@ -25,11 +28,10 @@
 
       <header>
         {{if .NavigationHTML}}
-        <button class="nav-drawer-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-drawer">
-          <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
-            <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
-          </svg>
-        </button>
+        <cem-nav-drawer>
+          {{renderElement "cem-nav-drawer" dict}}
+          {{.NavigationHTML}}
+        </cem-nav-drawer>
         {{end}}
         <slot name="title"></slot>
         <nav>
@@ -116,21 +118,6 @@
         </div>
       </div>
 
-      {{if .NavigationHTML}}
-      <aside id="nav-drawer" class="nav-drawer" aria-label="Component navigation" aria-hidden="true">
-        <div class="nav-drawer-header">
-          <button class="nav-drawer-close" aria-label="Close navigation">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
-            </svg>
-          </button>
-          <h2>Components</h2>
-        </div>
-        {{.NavigationHTML}}
-      </aside>
-      <div class="nav-drawer-overlay" aria-hidden="true"></div>
-      {{end}}
-
       <div class="layout">
         {{if .EnabledKnobs}}
         <aside id="knobs">
@@ -146,27 +133,24 @@
         <div class="footer-description{{if not .Description}} empty{{end}}">
           <slot name="description"></slot>
         </div>
-        <button class="drawer-toggle" aria-label="Toggle debug drawer">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
-          </svg>
-        </button>
-        <div class="drawer-content">
-          <div class="tabs" role="tablist">
-            <button class="tab" role="tab" aria-selected="true" aria-controls="panel-knobs">
+        <cem-drawer class="initializing">
+          {{renderElement "cem-drawer" dict}}
+          <cem-tabs>
+            {{renderElement "cem-tabs" dict}}
+            <button slot="tab" class="tab" role="tab" aria-selected="false" aria-controls="panel-knobs">
               Knobs
             </button>
-            <button class="tab" role="tab" aria-selected="false" aria-controls="panel-logs">
+            <button slot="tab" class="tab" role="tab" aria-selected="false" aria-controls="panel-logs">
               Server Logs
             </button>
-          </div>
-          <div class="tab-panel" id="panel-knobs" role="tabpanel" active>
-            <div id="knobs-container"></div>
-          </div>
-          <div class="tab-panel" id="panel-logs" role="tabpanel">
-            <div id="log-container"></div>
-          </div>
-        </div>
+            <div slot="panel" class="tab-panel" id="panel-knobs" role="tabpanel">
+              <div id="knobs-container"></div>
+            </div>
+            <div slot="panel" class="tab-panel" id="panel-logs" role="tabpanel">
+              <div id="log-container"></div>
+            </div>
+          </cem-tabs>
+        </cem-drawer>
       </footer>
     </template>
 

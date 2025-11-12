@@ -19,6 +19,7 @@ package routes
 
 import (
 	"embed"
+	"fmt"
 	"html/template"
 	"strings"
 
@@ -40,10 +41,13 @@ var navigationTemplate string
 //go:embed templates/404.html
 var notFoundTemplate string
 
+//go:embed templates/element-wrapper.html
+var elementWrapperTemplate string
+
 //go:embed templates/**
 var templatesFS embed.FS
 
-//go:embed templates/js/*.js templates/css/*.css templates/images/*
+//go:embed templates/js/*.js templates/css/*.css templates/images/* templates/elements/**/*.js
 var InternalModules embed.FS
 
 // errorBroadcaster holds the error broadcaster for template errors
@@ -58,6 +62,20 @@ func SetErrorBroadcaster(ctx middleware.DevServerContext) {
 // Template functions available to templates
 var templateFuncs = template.FuncMap{
 	"contains": strings.Contains,
+	"dict": func(values ...interface{}) (map[string]string, error) {
+		if len(values)%2 != 0 {
+			return nil, fmt.Errorf("dict requires even number of arguments")
+		}
+		dict := make(map[string]string, len(values)/2)
+		for i := 0; i < len(values); i += 2 {
+			key, ok := values[i].(string)
+			if !ok {
+				return nil, fmt.Errorf("dict keys must be strings")
+			}
+			dict[key] = fmt.Sprint(values[i+1])
+		}
+		return dict, nil
+	},
 	"include": func(path string) template.CSS {
 		content, err := templatesFS.ReadFile("templates/" + path)
 		if err != nil {
@@ -76,6 +94,24 @@ var templateFuncs = template.FuncMap{
 		}
 		return template.CSS(content)
 	},
+	"renderElement": func(elementName string, attrs map[string]string) template.HTML {
+		html, err := renderElement(elementName, attrs)
+		if err != nil {
+			errMsg := "<!-- Error rendering element " + elementName + ": " + err.Error() + " -->"
+
+			// Broadcast error to connected clients via WebSocket overlay
+			if errorBroadcaster != nil {
+				_ = errorBroadcaster.BroadcastError(
+					"Element Render Error",
+					"Failed to render element: "+err.Error(),
+					elementName,
+				)
+			}
+
+			return template.HTML(errMsg)
+		}
+		return html
+	},
 }
 
 // DefaultIndexTemplate is the parsed template for the default index page
@@ -92,3 +128,6 @@ var NavigationTemplate = template.Must(template.New("navigation").Funcs(template
 
 // NotFoundTemplate is the parsed template for 404 page content
 var NotFoundTemplate = template.Must(template.New("404").Funcs(templateFuncs).Parse(notFoundTemplate))
+
+// ElementWrapperTemplate is the parsed template for wrapping custom elements with DSD
+var ElementWrapperTemplate = template.Must(template.New("element-wrapper").Parse(elementWrapperTemplate))
