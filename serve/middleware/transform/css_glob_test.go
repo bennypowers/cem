@@ -123,6 +123,46 @@ func TestCSSGlobFiltering(t *testing.T) {
 			expectTransformed: true,
 			description:       "Doublestar glob matches deeply nested file",
 		},
+		{
+			name:              "empty string in include patterns",
+			requestPath:       "/elements/button.css",
+			include:           []string{"", "elements/**/*.css"},
+			exclude:           nil,
+			expectTransformed: true,
+			description:       "Empty pattern in array is ignored, other patterns apply",
+		},
+		{
+			name:              "empty string in exclude patterns",
+			requestPath:       "/elements/button.css",
+			include:           nil,
+			exclude:           []string{"", "docs/**/*.css"},
+			expectTransformed: true,
+			description:       "Empty pattern in exclude array is ignored, other patterns apply",
+		},
+		{
+			name:              "very deeply nested path",
+			requestPath:       "/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/deep.css",
+			include:           []string{"**/deep.css"},
+			exclude:           nil,
+			expectTransformed: true,
+			description:       "Doublestar pattern matches very deeply nested file (26 levels)",
+		},
+		{
+			name:              "root-level CSS with include pattern",
+			requestPath:       "/styles.css",
+			include:           []string{"*.css"},
+			exclude:           nil,
+			expectTransformed: true,
+			description:       "Simple glob pattern matches root-level CSS file",
+		},
+		{
+			name:              "root-level CSS excluded",
+			requestPath:       "/styles.css",
+			include:           nil,
+			exclude:           []string{"*.css"},
+			expectTransformed: false,
+			description:       "Root-level CSS file can be excluded",
+		},
 	}
 
 	for _, tt := range tests {
@@ -183,6 +223,44 @@ func TestCSSGlobFiltering(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// TestCSSGlobFiltering_NonexistentFile tests that non-existent files are passed to next handler
+func TestCSSGlobFiltering_NonexistentFile(t *testing.T) {
+	// Create in-memory filesystem WITHOUT the requested file
+	mfs := platform.NewMapFileSystem(nil)
+	// Intentionally not adding /test-root/missing.css
+
+	middleware := transform.NewCSS(transform.CSSConfig{
+		WatchDirFunc:     func() string { return "/test-root" },
+		Logger:           &mockLogger{},
+		ErrorBroadcaster: &mockErrorBroadcaster{},
+		ConfigFile:       "cem.config.yaml",
+		Enabled:          true,
+		Include:          []string{"**/*.css"}, // Pattern would match if file existed
+		Exclude:          nil,
+		FS:               mfs,
+	})
+
+	nextCalled := false
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		nextCalled = true
+		http.NotFound(w, r)
+	})
+
+	handler := middleware(next)
+
+	req := httptest.NewRequest("GET", "/missing.css", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if !nextCalled {
+		t.Error("Expected next handler to be called for non-existent file")
+	}
+
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("Expected 404 status for non-existent file, got %d", rec.Code)
 	}
 }
 
