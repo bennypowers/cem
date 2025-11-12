@@ -32,6 +32,9 @@ export class CemColorSchemeToggle extends HTMLElement {
     this.#updateRadioButtons(saved);
 
     // Set up event listeners
+    // Note: No disconnectedCallback cleanup needed - this component is server-rendered
+    // in the header and never moved. Shadow DOM listeners are automatically cleaned up
+    // when the element is removed from the document.
     const radios = this.shadowRoot.querySelectorAll('input[type="radio"]');
     radios.forEach(radio => {
       radio.addEventListener('change', (e) => {

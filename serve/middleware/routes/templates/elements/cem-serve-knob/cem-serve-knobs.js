@@ -197,13 +197,18 @@ class CemServeKnobBase extends HTMLElement {
     if (input.type === 'checkbox') {
       value = input.checked;
     } else if (input.type === 'number') {
-      value = input.valueAsNumber;
+      // Handle cleared/invalid number inputs
+      if (input.value === '' || Number.isNaN(input.valueAsNumber)) {
+        value = null;
+      } else {
+        value = input.valueAsNumber;
+      }
     } else {
       value = input.value;
     }
 
-    // Update attribute
-    this.value = String(value);
+    // Update attribute (convert null to empty string for attributes)
+    this.value = value === null ? '' : String(value);
 
     // Let subclasses dispatch their specific event
     this.dispatchChangeEvent(this.name, value);
