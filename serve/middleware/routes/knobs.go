@@ -82,10 +82,11 @@ type ElementInstance struct {
 // ElementKnobGroup represents knobs for a single element instance.
 // Used by Phase 5b to render multiple knob groups with labels and collapsible structure.
 type ElementKnobGroup struct {
-	TagName   string // Element tag name (e.g., "my-card")
-	Label     string // Human-readable label for this instance (e.g., "#card-1", "User Settings")
-	IsPrimary bool   // Whether this is the primary instance (expanded by default)
-	Knobs     *KnobsData
+	TagName       string // Element tag name (e.g., "my-card")
+	Label         string // Human-readable label for this instance (e.g., "#card-1", "User Settings")
+	InstanceIndex int    // Per-tag-name instance index (0 for first rh-tab, 1 for second rh-tab, etc.)
+	IsPrimary     bool   // Whether this is the primary instance (expanded by default)
+	Knobs         *KnobsData
 }
 
 // GenerateKnobs generates knob controls from manifest and demo HTML
@@ -510,10 +511,11 @@ func GenerateMultiInstanceKnobs(declaration *M.CustomElementDeclaration, demoHTM
 		}
 
 		group := ElementKnobGroup{
-			TagName:   declaration.TagName,
-			Label:     label,
-			IsPrimary: i == 0, // First instance is primary
-			Knobs:     knobs,
+			TagName:       declaration.TagName,
+			Label:         label,
+			InstanceIndex: i,
+			IsPrimary:     i == 0, // First instance is primary
+			Knobs:         knobs,
 		}
 
 		groups = append(groups, group)
@@ -648,10 +650,11 @@ func GenerateKnobsForAllElements(pkg *M.Package, demoHTML []byte, enabledKnobs s
 		}
 
 		group := ElementKnobGroup{
-			TagName:   instance.TagName,
-			Label:     label,
-			IsPrimary: len(allGroups) == 0, // First instance overall is primary
-			Knobs:     knobs,
+			TagName:       instance.TagName,
+			Label:         label,
+			InstanceIndex: instanceIndex,
+			IsPrimary:     len(allGroups) == 0, // First instance overall is primary
+			Knobs:         knobs,
 		}
 
 		allGroups = append(allGroups, group)
