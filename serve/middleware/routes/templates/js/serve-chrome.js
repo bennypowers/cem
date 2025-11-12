@@ -209,62 +209,108 @@ class CemServeChrome extends HTMLElement {
 
   #setupKnobs() {
     // Listen for knob change events from knob custom elements
+    // Phase 5b: Events bubble from knob elements through their <details> container
+    // The container has data-instance-index to identify which element instance
     this.addEventListener('knob:attribute-change', (e) => {
-      this.#handleAttributeKnobChange(e.name, e.value);
+      const instanceIndex = this.#getKnobInstanceIndex(e.target);
+      this.#handleAttributeKnobChange(e.name, e.value, instanceIndex);
     });
 
     this.addEventListener('knob:property-change', (e) => {
-      this.#handlePropertyKnobChange(e.name, e.value);
+      const instanceIndex = this.#getKnobInstanceIndex(e.target);
+      this.#handlePropertyKnobChange(e.name, e.value, instanceIndex);
     });
 
     this.addEventListener('knob:css-property-change', (e) => {
-      this.#handleCSSPropertyKnobChange(e.name, e.value);
+      const instanceIndex = this.#getKnobInstanceIndex(e.target);
+      this.#handleCSSPropertyKnobChange(e.name, e.value, instanceIndex);
     });
   }
 
-  #handleAttributeKnobChange(name, value) {
-    if (!this.demo) {
-      console.warn('[cem-serve-chrome] Demo wrapper not found');
-      return;
+  /**
+   * Get the instance index from a knob element by finding its parent <details> container
+   */
+  #getKnobInstanceIndex(knobElement) {
+    const details = knobElement.closest('.knob-group-instance');
+    if (details && details.dataset.instanceIndex !== undefined) {
+      return parseInt(details.dataset.instanceIndex, 10);
     }
-
-    const success = this.demo.setDemoAttribute(this.tagName, name, value);
-    if (!success) {
-      console.warn('[cem-serve-chrome] Demo element not found:', this.tagName);
-      return;
-    }
-
-    console.log(`[cem-serve-chrome] Attribute changed: ${name} = ${value}`);
+    // Fallback to 0 (first element) for single-instance or error cases
+    return 0;
   }
 
-  #handlePropertyKnobChange(name, value) {
+  #handleAttributeKnobChange(name, value, instanceIndex = 0) {
     if (!this.demo) {
       console.warn('[cem-serve-chrome] Demo wrapper not found');
       return;
     }
 
-    const success = this.demo.setDemoProperty(this.tagName, name, value);
-    if (!success) {
-      console.warn('[cem-serve-chrome] Demo element not found:', this.tagName);
+    // Phase 5b: Find the Nth element instance
+    const element = this.#getElementInstance(instanceIndex);
+    if (!element) {
+      console.warn('[cem-serve-chrome] Demo element not found:', this.tagName, 'at index', instanceIndex);
       return;
     }
 
-    console.log(`[cem-serve-chrome] Property changed: ${name} = ${value}`);
+    // Directly manipulate the element instead of using selector-based approach
+    if (typeof value === 'boolean') {
+      if (value) {
+        element.setAttribute(name, '');
+      } else {
+        element.removeAttribute(name);
+      }
+    } else if (value === '' || value === null || value === undefined) {
+      element.removeAttribute(name);
+    } else {
+      element.setAttribute(name, value);
+    }
+
+    console.log(`[cem-serve-chrome] Attribute changed on instance ${instanceIndex}: ${name} = ${value}`);
   }
 
-  #handleCSSPropertyKnobChange(name, value) {
+  #handlePropertyKnobChange(name, value, instanceIndex = 0) {
     if (!this.demo) {
       console.warn('[cem-serve-chrome] Demo wrapper not found');
       return;
     }
 
-    const success = this.demo.setDemoCssCustomProperty(this.tagName, name, value);
-    if (!success) {
-      console.warn('[cem-serve-chrome] Demo element not found:', this.tagName);
+    const element = this.#getElementInstance(instanceIndex);
+    if (!element) {
+      console.warn('[cem-serve-chrome] Demo element not found:', this.tagName, 'at index', instanceIndex);
       return;
     }
 
-    console.log(`[cem-serve-chrome] CSS property changed: ${name} = ${value}`);
+    element[name] = value;
+    console.log(`[cem-serve-chrome] Property changed on instance ${instanceIndex}: ${name} = ${value}`);
+  }
+
+  #handleCSSPropertyKnobChange(name, value, instanceIndex = 0) {
+    if (!this.demo) {
+      console.warn('[cem-serve-chrome] Demo wrapper not found');
+      return;
+    }
+
+    const element = this.#getElementInstance(instanceIndex);
+    if (!element) {
+      console.warn('[cem-serve-chrome] Demo element not found:', this.tagName, 'at index', instanceIndex);
+      return;
+    }
+
+    const propertyName = name.startsWith('--') ? name : `--${name}`;
+    element.style.setProperty(propertyName, value);
+    console.log(`[cem-serve-chrome] CSS property changed on instance ${instanceIndex}: ${propertyName} = ${value}`);
+  }
+
+  /**
+   * Get the Nth instance of the element from the demo
+   */
+  #getElementInstance(index) {
+    if (!this.demo || !this.tagName) return null;
+
+    const root = this.demo.shadowRoot ?? this.demo;
+    const elements = root.querySelectorAll(this.tagName);
+
+    return elements[index] || null;
   }
 
   #detectBrowser() {

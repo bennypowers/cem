@@ -497,13 +497,10 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 			// Find the custom element declaration
 			for _, renderableDemo := range pkg.RenderableDemos() {
 				if renderableDemo.CustomElementDeclaration.TagName == entry.TagName {
-					// TODO(Phase 5b): Currently generates knobs for single element instance (Phase 5a).
-					// Will be updated to use GenerateMultiInstanceKnobs() + RenderMultiInstanceKnobsHTML()
-					// in subsequent commit to support multiple element instances with labels and grouping.
-					// See: serve/middleware/routes/knobs.go for multi-instance functions.
-					knobs, err := GenerateKnobs(renderableDemo.CustomElementDeclaration, demoHTML, enabledKnobs)
+					// Phase 5b: Generate knobs for all instances of the element
+					knobGroups, err := GenerateMultiInstanceKnobs(renderableDemo.CustomElementDeclaration, demoHTML, enabledKnobs)
 					if err != nil {
-						config.Context.Logger().Warning("Failed to generate knobs for %s: %v", entry.TagName, err)
+						config.Context.Logger().Warning("Failed to generate multi-instance knobs for %s: %v", entry.TagName, err)
 						_ = config.Context.BroadcastError(
 							"Knobs Generation Error",
 							fmt.Sprintf("Failed to generate knobs for <%s>: %v", entry.TagName, err),
@@ -512,9 +509,10 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 						break
 					}
 
-					knobsHTML, err = RenderKnobsHTML(knobs)
+					// Render multi-instance knobs HTML
+					knobsHTML, err = RenderMultiInstanceKnobsHTML(knobGroups)
 					if err != nil {
-						config.Context.Logger().Warning("Failed to render knobs HTML for %s: %v", entry.TagName, err)
+						config.Context.Logger().Warning("Failed to render multi-instance knobs HTML for %s: %v", entry.TagName, err)
 						_ = config.Context.BroadcastError(
 							"Knobs Render Error",
 							fmt.Sprintf("Failed to render knobs HTML for <%s>: %v", entry.TagName, err),

@@ -1,7 +1,7 @@
 {{if .}}
 <div class="knobs-container">
   {{range $index, $group := .}}
-  <details class="knob-group-instance" data-tag-name="{{$group.TagName}}" {{if $group.IsPrimary}}open{{end}}>
+  <details class="knob-group-instance" data-tag-name="{{$group.TagName}}" data-instance-index="{{$index}}" {{if $group.IsPrimary}}open{{end}}>
     <summary class="knob-group-instance-header">
       <span class="instance-tag">{{$group.TagName}}</span>: <span class="instance-label">{{$group.Label}}</span>
     </summary>
