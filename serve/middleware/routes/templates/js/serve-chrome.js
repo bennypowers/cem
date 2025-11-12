@@ -113,7 +113,7 @@ class CemServeChrome extends HTMLElement {
     }
 
     // Fetch server debug info
-    const data = await fetch('/__cem-debug')
+    const data = await fetch('/__cem/debug')
       .then(res => res.json())
       .catch(err => {
         console.error('[cem-serve-chrome] Failed to fetch debug info:', err);

@@ -103,10 +103,10 @@ func New(config Config) middleware.Middleware {
 			case r.URL.Path == "/custom-elements.json":
 				serveManifest(w, r, config)
 				return
-			case r.URL.Path == "/__cem-logs":
+			case r.URL.Path == "/__cem/logs":
 				serveLogs(w, r, config)
 				return
-			case r.URL.Path == "/__cem-debug":
+			case r.URL.Path == "/__cem/debug":
 				serveDebugInfo(w, r, config)
 				return
 			}

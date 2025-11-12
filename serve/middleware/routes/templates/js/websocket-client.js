@@ -43,7 +43,7 @@ class CEMReloadClient {
 
     // Fetch initial log history on page load
     try {
-      const response = await fetch('/__cem-logs');
+      const response = await fetch('/__cem/logs');
       if (response.ok) {
         const logs = await response.json();
         if (logs && logs.length > 0) {
