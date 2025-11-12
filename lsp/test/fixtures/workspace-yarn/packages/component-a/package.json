@@ -1,0 +1,8 @@
+{
+  "name": "@test/component-a",
+  "version": "1.0.0",
+  "customElements": "custom-elements.json",
+  "exports": {
+    "./my-element-a.js": "./my-element-a.js"
+  }
+}

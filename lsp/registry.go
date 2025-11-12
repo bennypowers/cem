@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package lsp
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -25,12 +26,16 @@ import (
 	"strings"
 	"sync"
 
+	"bennypowers.dev/cem/generate"
+	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp/helpers"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/modulegraph"
 	"bennypowers.dev/cem/queries"
 	"bennypowers.dev/cem/types"
+	"bennypowers.dev/cem/workspace"
+	"gopkg.in/yaml.v3" // Required for parsing pnpm-workspace.yaml files
 )
 
 // ElementDefinition stores a custom element with its source information
@@ -152,7 +157,7 @@ func NewRegistryWithDefaults() (*Registry, error) {
 // LoadFromWorkspace loads all available custom elements manifests from
 // the workspace context
 func (r *Registry) LoadFromWorkspace(workspace types.WorkspaceContext) error {
-	helpers.SafeDebugLog("Loading manifests from workspace...")
+	logging.Info("[REGISTRY] Loading manifests from workspace root: %s", workspace.Root())
 
 	// Clear existing data
 	r.clear()
@@ -162,17 +167,22 @@ func (r *Registry) LoadFromWorkspace(workspace types.WorkspaceContext) error {
 		helpers.SafeDebugLog("Warning: Could not load workspace manifest: %v", err)
 	}
 
-	// 2. Load manifests from node_modules packages
+	// 2. Load manifests from workspace packages (npm/yarn/pnpm workspaces)
+	if err := r.loadWorkspacePackageManifests(workspace); err != nil {
+		helpers.SafeDebugLog("Warning: Could not load workspace package manifests: %v", err)
+	}
+
+	// 3. Load manifests from node_modules packages
 	if err := r.loadNodeModulesManifests(workspace); err != nil {
 		helpers.SafeDebugLog("Warning: Could not load node_modules manifests: %v", err)
 	}
 
-	// 3. Load manifests specified in config
+	// 4. Load manifests specified in config
 	if err := r.loadConfigManifests(workspace); err != nil {
 		helpers.SafeDebugLog("Warning: Could not load config manifests: %v", err)
 	}
 
-	// 4. Initialize module graph for lazy building
+	// 5. Initialize module graph for lazy building
 	// Instead of scanning the entire workspace upfront (which was 5000+ files),
 	// we now build the module graph lazily as imports are discovered in open documents.
 	// This provides fast startup while maintaining accurate re-export resolution.
@@ -224,9 +234,33 @@ func (r *Registry) loadWorkspaceManifest(workspace types.WorkspaceContext) error
 	helpers.SafeDebugLog("Workspace root: %s", workspace.Root())
 	helpers.SafeDebugLog("Workspace manifest path: %s", workspace.CustomElementsManifestPath())
 
+	// Try to get package name from workspace package.json first
+	var packageName string
+	if packageJSON, err := workspace.PackageJSON(); err == nil && packageJSON != nil {
+		packageName = packageJSON.Name
+		helpers.SafeDebugLog("Package name from workspace package.json: '%s'", packageName)
+	} else {
+		helpers.SafeDebugLog("Could not read workspace package.json: %v", err)
+	}
+
 	pkg, err := workspace.Manifest()
 	if err != nil {
 		helpers.SafeDebugLog("Error loading workspace manifest: %v", err)
+
+		// If manifest loading failed, try to generate it in-memory
+		// This handles both cases:
+		// 1. package.json has "customElements" field but file doesn't exist
+		// 2. package.json has no "customElements" field (RHDS case)
+		helpers.SafeDebugLog("Workspace manifest not available, attempting in-memory generation")
+		if generatedPkg := r.generateInMemoryManifest(workspace.Root(), packageName); generatedPkg != nil {
+			r.addManifest(generatedPkg, packageName)
+			r.localWorkspace = workspace
+			helpers.SafeDebugLog("Successfully generated in-memory manifest for workspace")
+			return nil
+		}
+		helpers.SafeDebugLog("Failed to generate in-memory manifest for workspace")
+
+		// Return original error since in-memory generation also failed
 		return err
 	}
 
@@ -239,15 +273,6 @@ func (r *Registry) loadWorkspaceManifest(workspace types.WorkspaceContext) error
 					helpers.SafeDebugLog("    Declaration [%d]: %s (tag: %s)", j, customElementDecl.Name, customElementDecl.TagName)
 				}
 			}
-		}
-
-		// Try to get package name from workspace package.json
-		var packageName string
-		if packageJSON, err := workspace.PackageJSON(); err == nil && packageJSON != nil {
-			packageName = packageJSON.Name
-			helpers.SafeDebugLog("Package name from workspace package.json: '%s'", packageName)
-		} else {
-			helpers.SafeDebugLog("Could not read workspace package.json: %v", err)
 		}
 
 		r.addManifest(pkg, packageName)
@@ -265,10 +290,255 @@ func (r *Registry) loadWorkspaceManifest(workspace types.WorkspaceContext) error
 
 		helpers.SafeDebugLog("Loaded workspace manifest with %d modules", len(pkg.Modules))
 	} else {
-		helpers.SafeDebugLog("Workspace manifest is nil")
+		helpers.SafeDebugLog("Workspace manifest is nil, attempting in-memory generation")
+		// If no manifest but workspace exists, try to generate in-memory
+		if generatedPkg := r.generateInMemoryManifest(workspace.Root(), packageName); generatedPkg != nil {
+			r.addManifest(generatedPkg, packageName)
+			r.localWorkspace = workspace
+			helpers.SafeDebugLog("Successfully generated in-memory manifest for workspace")
+		} else {
+			helpers.SafeDebugLog("Failed to generate in-memory manifest for workspace")
+		}
 	}
 
 	return nil
+}
+
+// loadWorkspacePackageManifests loads manifests from workspace packages (npm/yarn/pnpm workspaces)
+func (r *Registry) loadWorkspacePackageManifests(workspace types.WorkspaceContext) error {
+	helpers.SafeDebugLog("Attempting to load workspace package manifests...")
+
+	// Detect package manager and get workspace configuration
+	workspacePackages, err := r.discoverWorkspacePackages(workspace)
+	if err != nil {
+		return fmt.Errorf("could not discover workspace packages: %w", err)
+	}
+
+	if len(workspacePackages) == 0 {
+		helpers.SafeDebugLog("No workspace packages found")
+		return nil
+	}
+
+	helpers.SafeDebugLog("Found %d workspace packages", len(workspacePackages))
+
+	// Load manifest from each workspace package
+	for _, pkgPath := range workspacePackages {
+		r.loadWorkspacePackage(pkgPath)
+	}
+
+	return nil
+}
+
+// discoverWorkspacePackages discovers workspace packages based on package manager config
+func (r *Registry) discoverWorkspacePackages(workspace types.WorkspaceContext) ([]string, error) {
+	root := workspace.Root()
+	var workspacePatterns []string
+
+	// Detect package manager and get workspace patterns
+	// 1. Try pnpm (pnpm-workspace.yaml)
+	// pnpm uses a separate YAML file for workspace configuration instead of package.json
+	pnpmWorkspaceFile := filepath.Join(root, "pnpm-workspace.yaml")
+	if _, err := os.Stat(pnpmWorkspaceFile); err == nil {
+		patterns, err := r.parsePnpmWorkspace(pnpmWorkspaceFile)
+		if err == nil {
+			workspacePatterns = patterns
+			helpers.SafeDebugLog("Detected pnpm workspace with %d patterns", len(patterns))
+		}
+	}
+
+	// 2. Try npm/yarn (package.json workspaces field)
+	// Only check package.json if we haven't found patterns yet (pnpm takes precedence)
+	if len(workspacePatterns) == 0 {
+		packageJSONPath := filepath.Join(root, "package.json")
+		if _, err := os.Stat(packageJSONPath); err == nil {
+			patterns, err := r.parseNpmYarnWorkspaces(packageJSONPath)
+			if err == nil && len(patterns) > 0 {
+				workspacePatterns = patterns
+				// Determine if npm or yarn based on lock file (for debug logging only)
+				if _, err := os.Stat(filepath.Join(root, "yarn.lock")); err == nil {
+					helpers.SafeDebugLog("Detected yarn workspace with %d patterns", len(patterns))
+				} else {
+					helpers.SafeDebugLog("Detected npm workspace with %d patterns", len(patterns))
+				}
+			}
+		}
+	}
+
+	if len(workspacePatterns) == 0 {
+		return nil, nil
+	}
+
+	// Separate positive and negative patterns
+	var positivePatterns []string
+	var negativePatterns []string
+	for _, pattern := range workspacePatterns {
+		if strings.HasPrefix(pattern, "!") {
+			// Remove the "!" prefix for negation patterns
+			negativePatterns = append(negativePatterns, strings.TrimPrefix(pattern, "!"))
+		} else {
+			positivePatterns = append(positivePatterns, pattern)
+		}
+	}
+
+	// Expand positive glob patterns to find actual workspace package directories
+	var packageDirs []string
+	for _, pattern := range positivePatterns {
+		matches, err := r.expandWorkspacePattern(workspace, pattern)
+		if err != nil {
+			helpers.SafeDebugLog("Warning: Could not expand pattern %s: %v", pattern, err)
+			continue
+		}
+		packageDirs = append(packageDirs, matches...)
+	}
+
+	// Filter out packages matching negation patterns
+	if len(negativePatterns) > 0 {
+		packageDirs = r.filterNegatedPackages(workspace, packageDirs, negativePatterns)
+	}
+
+	helpers.SafeDebugLog("Expanded %d patterns to %d package directories", len(workspacePatterns), len(packageDirs))
+	return packageDirs, nil
+}
+
+// parsePnpmWorkspace parses pnpm-workspace.yaml and returns workspace patterns
+func (r *Registry) parsePnpmWorkspace(path string) ([]string, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read pnpm-workspace.yaml: %w", err)
+	}
+
+	var config struct {
+		Packages []string `yaml:"packages"`
+	}
+
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		return nil, fmt.Errorf("failed to parse pnpm-workspace.yaml: %w", err)
+	}
+
+	return config.Packages, nil
+}
+
+// parseNpmYarnWorkspaces parses package.json workspaces field
+func (r *Registry) parseNpmYarnWorkspaces(path string) ([]string, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read package.json: %w", err)
+	}
+
+	var pkg struct {
+		Workspaces interface{} `json:"workspaces"`
+	}
+
+	if err := json.Unmarshal(data, &pkg); err != nil {
+		return nil, fmt.Errorf("failed to parse package.json: %w", err)
+	}
+
+	if pkg.Workspaces == nil {
+		return nil, nil
+	}
+
+	// Handle both array format and object format
+	switch w := pkg.Workspaces.(type) {
+	case []interface{}:
+		// Array format: ["packages/*"]
+		patterns := make([]string, 0, len(w))
+		for _, p := range w {
+			if str, ok := p.(string); ok {
+				patterns = append(patterns, str)
+			}
+		}
+		return patterns, nil
+	case map[string]interface{}:
+		// Object format: {"packages": ["packages/*"]}
+		if pkgs, ok := w["packages"].([]interface{}); ok {
+			patterns := make([]string, 0, len(pkgs))
+			for _, p := range pkgs {
+				if str, ok := p.(string); ok {
+					patterns = append(patterns, str)
+				}
+			}
+			return patterns, nil
+		}
+	}
+
+	return nil, nil
+}
+
+// expandWorkspacePattern expands a glob pattern to actual directories using workspace.Glob
+func (r *Registry) expandWorkspacePattern(workspace types.WorkspaceContext, pattern string) ([]string, error) {
+	// Use workspace.Glob which supports ** doublestar patterns
+	matches, err := workspace.Glob(pattern)
+	if err != nil {
+		return nil, fmt.Errorf("failed to expand pattern %s: %w", pattern, err)
+	}
+
+	root := workspace.Root()
+
+	// Filter to only directories that contain package.json
+	var packageDirs []string
+	for _, relPath := range matches {
+		absPath := filepath.Join(root, relPath)
+		info, err := os.Stat(absPath)
+		if err != nil || !info.IsDir() {
+			continue
+		}
+
+		// Check if this directory has a package.json
+		packageJSONPath := filepath.Join(absPath, "package.json")
+		if _, err := os.Stat(packageJSONPath); err == nil {
+			packageDirs = append(packageDirs, absPath)
+		}
+	}
+
+	return packageDirs, nil
+}
+
+// filterNegatedPackages removes packages matching negation patterns
+func (r *Registry) filterNegatedPackages(workspace types.WorkspaceContext, packageDirs []string, negativePatterns []string) []string {
+	root := workspace.Root()
+	var filtered []string
+
+	for _, pkgDir := range packageDirs {
+		// Convert to relative path for pattern matching
+		relPath, err := filepath.Rel(root, pkgDir)
+		if err != nil {
+			// If we can't get relative path, skip this package
+			continue
+		}
+
+		excluded := false
+		for _, negPattern := range negativePatterns {
+			// Try to match the negation pattern
+			matches, err := workspace.Glob(negPattern)
+			if err != nil {
+				continue
+			}
+
+			// Check if this package matches any negation pattern
+			for _, match := range matches {
+				if filepath.Clean(match) == filepath.Clean(relPath) {
+					excluded = true
+					helpers.SafeDebugLog("Excluding package %s (matched negation pattern %s)", relPath, negPattern)
+					break
+				}
+			}
+			if excluded {
+				break
+			}
+		}
+
+		if !excluded {
+			filtered = append(filtered, pkgDir)
+		}
+	}
+
+	return filtered
+}
+
+// loadWorkspacePackage loads a manifest from a single workspace package directory
+func (r *Registry) loadWorkspacePackage(pkgPath string) {
+	helpers.SafeDebugLog("Loading workspace package from: %s", pkgPath)
+	r.loadPackageManifest(pkgPath)
 }
 
 // loadNodeModulesManifests loads manifests from node_modules packages
@@ -308,6 +578,7 @@ func (r *Registry) loadNodeModulesManifests(workspace types.WorkspaceContext) er
 }
 
 // loadPackageManifest loads a manifest from a specific package directory
+// If the manifest file doesn't exist, it generates it in-memory
 func (r *Registry) loadPackageManifest(packagePath string) {
 	// Read package.json to find customElements field
 	packageJSONPath := filepath.Join(packagePath, "package.json")
@@ -326,13 +597,63 @@ func (r *Registry) loadPackageManifest(packagePath string) {
 		manifestPath = filepath.Join(packagePath, packageJSON.CustomElements)
 	}
 
-	// Load the manifest
+	// Try to load the manifest file
 	if pkg, err := r.loadManifestFileWithPackageName(manifestPath, packageJSON.Name); err == nil {
 		r.addManifest(pkg, packageJSON.Name)
 		helpers.SafeDebugLog("Loaded manifest from %s (%s)", packageJSON.Name, manifestPath)
-	} else {
-		helpers.SafeDebugLog("Failed to load manifest from %s (%s): %v", packageJSON.Name, manifestPath, err)
+		return
 	}
+
+	// If manifest file doesn't exist, generate it in-memory
+	if _, statErr := os.Stat(manifestPath); os.IsNotExist(statErr) {
+		helpers.SafeDebugLog("Manifest file %s doesn't exist, generating in-memory for %s", manifestPath, packageJSON.Name)
+		if pkg := r.generateInMemoryManifest(packagePath, packageJSON.Name); pkg != nil {
+			r.addManifest(pkg, packageJSON.Name)
+			helpers.SafeDebugLog("Generated in-memory manifest for %s with %d modules", packageJSON.Name, len(pkg.Modules))
+		} else {
+			helpers.SafeDebugLog("Failed to generate in-memory manifest for %s", packageJSON.Name)
+		}
+	} else {
+		helpers.SafeDebugLog("Failed to load manifest from %s (%s): file exists but couldn't be parsed", packageJSON.Name, manifestPath)
+	}
+}
+
+// generateInMemoryManifest generates a custom elements manifest in-memory for a package directory
+// This is used when a workspace package declares customElements but the file doesn't exist yet
+func (r *Registry) generateInMemoryManifest(packagePath string, packageName string) *M.Package {
+	logging.Info("[IN-MEMORY] Starting in-memory generation for package '%s' at path: %s", packageName, packagePath)
+
+	// Create a workspace context for the package directory
+	wsCtx := workspace.NewFileSystemWorkspaceContext(packagePath)
+
+	// Initialize the workspace context to load config
+	if err := wsCtx.Init(); err != nil {
+		logging.Warning("[IN-MEMORY] Failed to initialize workspace context for %s: %v", packageName, err)
+		return nil
+	}
+
+	logging.Info("[IN-MEMORY] Successfully initialized workspace context for %s", packageName)
+
+	// Create a generate session
+	session, err := generate.NewGenerateSession(wsCtx)
+	if err != nil {
+		logging.Warning("[IN-MEMORY] Failed to create generate session for %s: %v", packageName, err)
+		return nil
+	}
+	defer session.Close()
+
+	logging.Info("[IN-MEMORY] Created generate session, starting generation for %s...", packageName)
+
+	// Generate the manifest
+	pkg, err := session.GenerateFullManifest(context.Background())
+	if err != nil {
+		logging.Warning("[IN-MEMORY] Failed to generate manifest for %s: %v", packageName, err)
+		return nil
+	}
+
+	logging.Info("[IN-MEMORY] Successfully generated manifest for %s with %d modules", packageName, len(pkg.Modules))
+
+	return pkg
 }
 
 // loadConfigManifests loads manifests specified in the config
@@ -405,6 +726,9 @@ func (r *Registry) addManifest(manifest *M.Package, packageName string) {
 
 	r.Manifests = append(r.Manifests, manifest)
 
+	// Collect tag names for this manifest to log
+	var tagNames []string
+
 	// Index all custom elements from all modules
 	for _, module := range manifest.Modules {
 		for _, decl := range module.Declarations {
@@ -430,6 +754,9 @@ func (r *Registry) addManifest(manifest *M.Package, packageName string) {
 					helpers.SafeDebugLog("[REGISTRY] Registering element '%s' with packageName='%s', modulePath='%s'", element.TagName, packageName, module.Path)
 					r.ElementDefinitions[element.TagName] = elementDef
 
+					// Collect tag name for logging
+					tagNames = append(tagNames, element.TagName)
+
 					// Index attributes for this element
 					if element.Attributes != nil {
 						attrMap := make(map[string]*M.Attribute)
@@ -443,6 +770,14 @@ func (r *Registry) addManifest(manifest *M.Package, packageName string) {
 			}
 		}
 	}
+
+	// Log the manifest with all its elements
+	displayName := packageName
+	if displayName == "" {
+		displayName = "(unknown)"
+	}
+	elementsList := strings.Join(tagNames, ", ")
+	logging.Info("[REGISTRY] Loaded `%s` elements: %s", displayName, elementsList)
 }
 
 // Element returns the custom element definition for a tag name

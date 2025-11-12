@@ -1,0 +1,11 @@
+{
+  "name": "@test/component-b",
+  "version": "1.0.0",
+  "customElements": "custom-elements.json",
+  "exports": {
+    "./my-element-b.js": "./my-element-b.js"
+  },
+  "dependencies": {
+    "@test/component-a": "workspace:*"
+  }
+}
