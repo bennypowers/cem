@@ -118,6 +118,9 @@ class CemServeChrome extends HTMLElement {
     // Set up navigation drawer
     this.#setupNavigationDrawer(shadow);
 
+    // Set up footer drawer tabs
+    this.#setupTabs(shadow);
+
     // Set up debug overlay
     const debugButton = shadow.querySelector('.debug-button');
     const debugOverlay = shadow.querySelector('.debug-overlay');
@@ -462,6 +465,55 @@ Generated: ${new Date().toISOString()}`;
           details.setAttribute('open', '');
         }
       }
+    });
+  }
+
+  #setupTabs(shadow) {
+    const tabs = shadow.querySelectorAll('.tab');
+    const panels = shadow.querySelectorAll('.tab-panel');
+
+    if (tabs.length === 0 || panels.length === 0) {
+      // No tabs on this page
+      return;
+    }
+
+    // Restore active tab from localStorage (default to 'panel-knobs')
+    const savedTab = localStorage.getItem('cem-serve-active-tab') || 'panel-knobs';
+
+    // Set initial state based on saved tab
+    tabs.forEach(tab => {
+      const controlsId = tab.getAttribute('aria-controls');
+      if (controlsId === savedTab) {
+        tab.setAttribute('aria-selected', 'true');
+        shadow.getElementById(controlsId)?.setAttribute('active', '');
+      } else {
+        tab.setAttribute('aria-selected', 'false');
+        shadow.getElementById(controlsId)?.removeAttribute('active');
+      }
+    });
+
+    // Add click handlers for tab switching
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const targetId = tab.getAttribute('aria-controls');
+
+        // Update all tabs
+        tabs.forEach(t => t.setAttribute('aria-selected', 'false'));
+        tab.setAttribute('aria-selected', 'true');
+
+        // Update all panels
+        panels.forEach(p => p.removeAttribute('active'));
+        const targetPanel = shadow.getElementById(targetId);
+        targetPanel?.setAttribute('active', '');
+
+        // Save to localStorage
+        localStorage.setItem('cem-serve-active-tab', targetId);
+
+        // If switching to logs panel and drawer is open, scroll to bottom
+        if (targetId === 'panel-logs' && this.#drawerOpen) {
+          this.#scrollLogsToBottom();
+        }
+      });
     });
   }
 

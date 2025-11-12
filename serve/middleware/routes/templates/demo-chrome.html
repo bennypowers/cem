@@ -153,11 +153,17 @@
         </button>
         <div class="drawer-content">
           <div class="tabs" role="tablist">
-            <button class="tab" role="tab" aria-selected="true" aria-controls="panel-logs">
+            <button class="tab" role="tab" aria-selected="true" aria-controls="panel-knobs">
+              Knobs
+            </button>
+            <button class="tab" role="tab" aria-selected="false" aria-controls="panel-logs">
               Server Logs
             </button>
           </div>
-          <div class="tab-panel" id="panel-logs" role="tabpanel" active>
+          <div class="tab-panel" id="panel-knobs" role="tabpanel" active>
+            <div id="knobs-container"></div>
+          </div>
+          <div class="tab-panel" id="panel-logs" role="tabpanel">
             <div id="log-container"></div>
           </div>
         </div>
