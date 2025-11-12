@@ -84,34 +84,8 @@ func NewServer(port int) (*Server, error) {
 
 // NewServerWithConfig creates a new server with the given config
 func NewServerWithConfig(config Config) (*Server, error) {
-	// Apply default transform settings if not configured
-	// NOTE: This is a fallback for non-viper usage (e.g., tests that construct Config directly).
-	// cmd/serve.go handles defaulting correctly via viper.IsSet() which can distinguish
-	// between "not set" and "explicitly set to false". This zero-value detection cannot
-	// make that distinction, so it only applies defaults when ALL transform fields are unset.
-	transformsUnset := config.Transforms.TypeScript.Target == "" &&
-		!config.Transforms.TypeScript.Enabled &&
-		!config.Transforms.CSS.Enabled &&
-		len(config.Transforms.CSS.Include) == 0 &&
-		len(config.Transforms.CSS.Exclude) == 0
-
-	if transformsUnset {
-		// Apply defaults when transforms config is completely unset (test/non-viper usage)
-		config.Transforms.TypeScript.Enabled = true
-		config.Transforms.CSS.Enabled = true
-		config.Transforms.TypeScript.Target = config.Target
-		if config.Transforms.TypeScript.Target == "" {
-			config.Transforms.TypeScript.Target = transform.ES2022
-		}
-	} else {
-		// Partial config: fill in missing target only
-		if config.Transforms.TypeScript.Target == "" && config.Transforms.TypeScript.Enabled {
-			config.Transforms.TypeScript.Target = config.Target
-			if config.Transforms.TypeScript.Target == "" {
-				config.Transforms.TypeScript.Target = transform.ES2022
-			}
-		}
-	}
+	// No defaulting here - cmd/serve.go handles defaults via viper.IsSet()
+	// Tests must explicitly set transform config values
 
 	s := &Server{
 		port:   config.Port,
