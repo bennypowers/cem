@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package transform
 
 import (
+	"fmt"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -29,21 +30,39 @@ import (
 
 // CSSConfig holds configuration for CSS transformation
 type CSSConfig struct {
-	WatchDirFunc func() string         // Function to get current watch directory
-	Logger       Logger
-	Enabled      bool                   // Enable/disable CSS transformation
-	Include      []string               // Glob patterns to include (empty means all .css files)
-	Exclude      []string               // Glob patterns to exclude
-	FS           platform.FileSystem    // Filesystem abstraction for testability
+	WatchDirFunc     func() string      // Function to get current watch directory
+	Logger           Logger
+	ErrorBroadcaster ErrorBroadcaster   // Sends errors to browser error overlay
+	Enabled          bool               // Enable/disable CSS transformation
+	Include          []string           // Glob patterns to include (empty means all .css files)
+	Exclude          []string           // Glob patterns to exclude
+	FS               platform.FileSystem // Filesystem abstraction for testability
 }
 
 // shouldTransformCSS checks if a CSS file should be transformed based on include/exclude patterns
-func shouldTransformCSS(cssPath string, include []string, exclude []string) bool {
+func shouldTransformCSS(cssPath string, include []string, exclude []string, logger Logger, errorBroadcaster ErrorBroadcaster) bool {
 	// If include patterns are specified, file must match at least one
 	if len(include) > 0 {
 		matched := false
 		for _, pattern := range include {
-			if match, _ := DS.Match(pattern, cssPath); match {
+			match, err := DS.Match(pattern, cssPath)
+			if err != nil {
+				// Invalid glob pattern - log and broadcast error
+				errMsg := fmt.Sprintf("Invalid CSS include pattern '%s': %v", pattern, err)
+				if logger != nil {
+					logger.Error(errMsg)
+				}
+				if errorBroadcaster != nil {
+					errorBroadcaster.BroadcastError(
+						"CSS Transform Config Error",
+						errMsg,
+						"", // No specific file for config errors
+					)
+				}
+				// Treat invalid pattern as non-matching
+				continue
+			}
+			if match {
 				matched = true
 				break
 			}
@@ -56,7 +75,24 @@ func shouldTransformCSS(cssPath string, include []string, exclude []string) bool
 	// If exclude patterns are specified, file must not match any
 	if len(exclude) > 0 {
 		for _, pattern := range exclude {
-			if match, _ := DS.Match(pattern, cssPath); match {
+			match, err := DS.Match(pattern, cssPath)
+			if err != nil {
+				// Invalid glob pattern - log and broadcast error
+				errMsg := fmt.Sprintf("Invalid CSS exclude pattern '%s': %v", pattern, err)
+				if logger != nil {
+					logger.Error(errMsg)
+				}
+				if errorBroadcaster != nil {
+					errorBroadcaster.BroadcastError(
+						"CSS Transform Config Error",
+						errMsg,
+						"", // No specific file for config errors
+					)
+				}
+				// Treat invalid pattern as non-matching (don't exclude)
+				continue
+			}
+			if match {
 				return false
 			}
 		}
@@ -111,7 +147,7 @@ func NewCSS(config CSSConfig) middleware.Middleware {
 			}
 
 			// Check include/exclude patterns
-			if !shouldTransformCSS(cssPath, config.Include, config.Exclude) {
+			if !shouldTransformCSS(cssPath, config.Include, config.Exclude, config.Logger, config.ErrorBroadcaster) {
 				// Don't transform this CSS file, pass to next handler
 				next.ServeHTTP(w, r)
 				return

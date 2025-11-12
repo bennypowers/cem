@@ -26,6 +26,13 @@ import (
 	"bennypowers.dev/cem/serve/middleware/transform"
 )
 
+// mockErrorBroadcaster implements ErrorBroadcaster interface for testing
+type mockErrorBroadcaster struct{}
+
+func (m *mockErrorBroadcaster) BroadcastError(title, message, filename string) {
+	// No-op for testing
+}
+
 // TestCSSGlobFiltering tests that CSS include/exclude patterns work correctly
 func TestCSSGlobFiltering(t *testing.T) {
 	tests := []struct {
@@ -126,12 +133,13 @@ func TestCSSGlobFiltering(t *testing.T) {
 
 			// Create middleware with test config
 			middleware := transform.NewCSS(transform.CSSConfig{
-				WatchDirFunc: func() string { return "/test-root" },
-				Logger:       &mockLogger{},
-				Enabled:      true,
-				Include:      tt.include,
-				Exclude:      tt.exclude,
-				FS:           mfs,
+				WatchDirFunc:     func() string { return "/test-root" },
+				Logger:           &mockLogger{},
+				ErrorBroadcaster: &mockErrorBroadcaster{},
+				Enabled:          true,
+				Include:          tt.include,
+				Exclude:          tt.exclude,
+				FS:               mfs,
 			})
 
 			// Create test handler that the middleware wraps
@@ -187,12 +195,13 @@ func TestCSSGlobFiltering_E2E(t *testing.T) {
 
 	// Create middleware that only transforms elements/ CSS
 	middleware := transform.NewCSS(transform.CSSConfig{
-		WatchDirFunc: func() string { return "/test" },
-		Logger:       &mockLogger{},
-		Enabled:      true,
-		Include:      []string{"elements/**/*.css"},
-		Exclude:      nil,
-		FS:           mfs,
+		WatchDirFunc:     func() string { return "/test" },
+		Logger:           &mockLogger{},
+		ErrorBroadcaster: &mockErrorBroadcaster{},
+		Enabled:          true,
+		Include:          []string{"elements/**/*.css"},
+		Exclude:          nil,
+		FS:               mfs,
 	})
 
 	// Next handler (fallback for non-transformed files)
