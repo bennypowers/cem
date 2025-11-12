@@ -67,7 +67,9 @@ export class CemServeTabs extends HTMLElement {
   #setupKeyboardNavigation() {
     this.addEventListener('keydown', (e) => {
       const tabs = Array.from(this.querySelectorAll('[slot="tab"]'));
-      const currentTab = this.shadowRoot?.activeElement || document.activeElement;
+
+      // Get the actual focused element, checking through shadow roots
+      let currentTab = e.target;
 
       // Only handle if focus is on a tab
       if (!tabs.includes(currentTab)) return;
