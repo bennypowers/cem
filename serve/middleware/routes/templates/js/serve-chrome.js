@@ -238,7 +238,10 @@ class CemServeChrome extends HTMLElement {
     if (event && event.composedPath) {
       const path = event.composedPath();
       for (const element of path) {
-        if (element.classList && element.classList.contains('knob-group-instance')) {
+        // Skip non-Element nodes (text nodes, document, window, etc.)
+        if (!(element instanceof Element)) continue;
+
+        if (element.classList.contains('knob-group-instance')) {
           const tagName = element.dataset.tagName || this.tagName;
           let instanceIndex = Number.parseInt(element.dataset.instanceIndex ?? '', 10);
           if (Number.isNaN(instanceIndex)) instanceIndex = 0;
