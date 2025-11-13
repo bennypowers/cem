@@ -23,8 +23,8 @@ import (
 
 	chromahtml "github.com/alecthomas/chroma/v2/formatters/html"
 	"github.com/yuin/goldmark"
-	"github.com/yuin/goldmark/extension"
 	highlighting "github.com/yuin/goldmark-highlighting/v2"
+	"github.com/yuin/goldmark/extension"
 	goldmarkhtml "github.com/yuin/goldmark/renderer/html"
 )
 
@@ -38,7 +38,6 @@ type ChromeData struct {
 	ImportMap      template.HTML // Use HTML instead of JS for importmap script content
 	Description    template.HTML
 	ShadowMode     bool
-	DemoSwitcher   template.HTML
 	SourceURL      string        // Source file URL (e.g., GitHub blob URL)
 	CanonicalURL   string        // Canonical demo URL
 	PackageName    string        // Package name for title (listing pages)
@@ -58,7 +57,6 @@ var (
 			),
 		),
 		goldmark.WithRendererOptions(
-			goldmarkhtml.WithHardWraps(),
 			goldmarkhtml.WithXHTML(),
 		),
 	)

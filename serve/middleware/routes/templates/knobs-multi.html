@@ -16,7 +16,7 @@
                                   value="{{.CurrentValue}}"
                                   {{if .Default}}default="{{.Default}}"{{end}}
                                   {{if .EnumValues}}enum-values="{{join .EnumValues ","}}"{{end}}>
-          {{renderElementShadowRoot "cem-serve-knob" dict}}
+          {{renderElementShadowRoot "cem-serve-knob" (dict "type" .Type "name" .Name "enumValues" (join .EnumValues ","))}}
           {{if .Description}}
           <div slot="description">{{.Description}}</div>
           {{end}}
@@ -33,7 +33,7 @@
                                  type="{{.Type}}"
                                  value="{{.CurrentValue}}"
                                  {{if .Default}}default="{{.Default}}"{{end}}>
-          {{renderElementShadowRoot "cem-serve-knob" dict}}
+          {{renderElementShadowRoot "cem-serve-knob" (dict "type" .Type "name" .Name)}}
           {{if .Description}}
           <div slot="description">{{.Description}}</div>
           {{end}}
@@ -50,7 +50,7 @@
                                      type="{{.Type}}"
                                      value="{{.CurrentValue}}"
                                      {{if .Default}}default="{{.Default}}"{{end}}>
-          {{renderElementShadowRoot "cem-serve-knob" dict}}
+          {{renderElementShadowRoot "cem-serve-knob" (dict "type" .Type "name" .Name)}}
           {{if .Description}}
           <div slot="description">{{.Description}}</div>
           {{end}}

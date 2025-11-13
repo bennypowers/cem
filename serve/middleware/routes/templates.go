@@ -66,12 +66,15 @@ func SetErrorBroadcaster(ctx middleware.DevServerContext) {
 }
 
 // Template functions available to templates
-var templateFuncs = template.FuncMap{
-	"contains": strings.Contains,
-	"join": func(elems []string, sep string) string {
-		return strings.Join(elems, sep)
-	},
-	"dict": func(values ...interface{}) (map[string]string, error) {
+// getTemplateFuncs returns the template function map
+// This is a function to avoid initialization cycles with renderElementShadowRoot
+func getTemplateFuncs() template.FuncMap {
+	return template.FuncMap{
+		"contains": strings.Contains,
+		"join": func(elems []string, sep string) string {
+			return strings.Join(elems, sep)
+		},
+		"dict": func(values ...interface{}) (map[string]string, error) {
 		if len(values)%2 != 0 {
 			return nil, fmt.Errorf("dict requires even number of arguments")
 		}
@@ -121,28 +124,29 @@ var templateFuncs = template.FuncMap{
 		}
 		return html
 	},
+	}
 }
 
 // DefaultIndexTemplate is the parsed template for the default index page
 var DefaultIndexTemplate = template.Must(template.New("default-index").Parse(defaultIndexTemplate))
 
 // DemoChromeTemplate is the parsed template for demo chrome
-var DemoChromeTemplate = template.Must(template.New("demo-chrome").Funcs(templateFuncs).Parse(demoChromeTemplate))
+var DemoChromeTemplate = template.Must(template.New("demo-chrome").Funcs(getTemplateFuncs()).Parse(demoChromeTemplate))
 
 // WorkspaceListingTemplate is the parsed template for workspace package listing
-var WorkspaceListingTemplate = template.Must(template.New("workspace-listing").Funcs(templateFuncs).Parse(workspaceListingTemplate))
+var WorkspaceListingTemplate = template.Must(template.New("workspace-listing").Funcs(getTemplateFuncs()).Parse(workspaceListingTemplate))
 
 // NavigationTemplate is the parsed template for navigation drawer
-var NavigationTemplate = template.Must(template.New("navigation").Funcs(templateFuncs).Parse(navigationTemplate))
+var NavigationTemplate = template.Must(template.New("navigation").Funcs(getTemplateFuncs()).Parse(navigationTemplate))
 
 // NotFoundTemplate is the parsed template for 404 page content
-var NotFoundTemplate = template.Must(template.New("404").Funcs(templateFuncs).Parse(notFoundTemplate))
+var NotFoundTemplate = template.Must(template.New("404").Funcs(getTemplateFuncs()).Parse(notFoundTemplate))
 
 // ElementWrapperTemplate is the parsed template for wrapping custom elements with DSD
 var ElementWrapperTemplate = template.Must(template.New("element-wrapper").Parse(elementWrapperTemplate))
 
 // KnobsTemplate is the parsed template for knobs controls
-var KnobsTemplate = template.Must(template.New("knobs").Funcs(templateFuncs).Parse(knobsTemplate))
+var KnobsTemplate = template.Must(template.New("knobs").Funcs(getTemplateFuncs()).Parse(knobsTemplate))
 
 // KnobsMultiTemplate is the parsed template for multi-instance knobs controls
-var KnobsMultiTemplate = template.Must(template.New("knobs-multi").Funcs(templateFuncs).Parse(knobsMultiTemplate))
+var KnobsMultiTemplate = template.Must(template.New("knobs-multi").Funcs(getTemplateFuncs()).Parse(knobsMultiTemplate))
