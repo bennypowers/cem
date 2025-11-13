@@ -18,6 +18,12 @@
                    placeholder="{{.name}}">
     {{renderElementShadowRoot "pfv6-text-input" dict}}
   </pfv6-text-input>
+  {{else if eq .type "enum"}}
+  <pfv6-select id="input"
+               value="{{.value}}"
+               options="{{.enumValues}}">
+    {{renderElementShadowRoot "pfv6-select" dict}}
+  </pfv6-select>
   {{end}}
 </div>
 <div id="knob-description">

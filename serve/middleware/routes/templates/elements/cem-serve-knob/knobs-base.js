@@ -94,20 +94,10 @@ export class CemServeKnobAttribute extends CemServeKnobBase {
     switch (type) {
 
       case 'enum': {
-        input = document.createElement('select');
+        input = document.createElement('pfv6-select');
         input.id = 'input';
-        const emptyOpt = document.createElement('option');
-        emptyOpt.value = '';
-        emptyOpt.textContent = '-- Select --';
-        input.appendChild(emptyOpt);
-
-        this.enumValues.forEach(val => {
-          const opt = document.createElement('option');
-          opt.value = val;
-          opt.textContent = val;
-          if (val === value) opt.selected = true;
-          input.appendChild(opt);
-        });
+        input.setAttribute('options', this.enumValues.join(','));
+        input.value = value;
         break;
       }
 
@@ -238,20 +228,10 @@ export class CemServeKnobProperty extends CemServeKnobBase {
     switch (type) {
 
       case 'enum': {
-        input = document.createElement('select');
+        input = document.createElement('pfv6-select');
         input.id = 'input';
-        const emptyOpt = document.createElement('option');
-        emptyOpt.value = '';
-        emptyOpt.textContent = '-- Select --';
-        input.appendChild(emptyOpt);
-
-        this.enumValues.forEach(val => {
-          const opt = document.createElement('option');
-          opt.value = val;
-          opt.textContent = val;
-          if (val === value) opt.selected = true;
-          input.appendChild(opt);
-        });
+        input.setAttribute('options', this.enumValues.join(','));
+        input.value = value;
         break;
       }
 
@@ -382,20 +362,10 @@ export class CemServeKnobCSSProperty extends CemServeKnobBase {
     switch (type) {
 
       case 'enum': {
-        input = document.createElement('select');
+        input = document.createElement('pfv6-select');
         input.id = 'input';
-        const emptyOpt = document.createElement('option');
-        emptyOpt.value = '';
-        emptyOpt.textContent = '-- Select --';
-        input.appendChild(emptyOpt);
-
-        this.enumValues.forEach(val => {
-          const opt = document.createElement('option');
-          opt.value = val;
-          opt.textContent = val;
-          if (val === value) opt.selected = true;
-          input.appendChild(opt);
-        });
+        input.setAttribute('options', this.enumValues.join(','));
+        input.value = value;
         break;
       }
 
