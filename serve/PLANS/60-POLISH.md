@@ -175,6 +175,8 @@ serve:
     - No external dependencies - self-contained implementations
     - Maintain current accessibility features (aria-labels, keyboard nav, etc.)
     - Preserve light/dark mode support
+    - When implementing web components for patternfly, they must follow the 
+    patternfly designs, but the APIs do not have to be 1:1 with the react components, for example, we should prefer slots or events to render props.
 
 ## Testing Strategy
 

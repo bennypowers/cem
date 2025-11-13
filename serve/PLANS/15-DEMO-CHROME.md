@@ -25,7 +25,6 @@ Make sure to move client scripts (like web socket client, etc) from special inje
       <style>/*...*/</style>
       <header>
         <slot name="title"></slot>
-        <nav><!-- demo switcher --></nav>
         {{if .Demo.Source}}
         <a href="{{.Demo.Source}}"
            target="_blank"
