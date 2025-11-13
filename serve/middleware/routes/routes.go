@@ -489,36 +489,31 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 		enabledKnobs = "attributes properties css-properties"
 	}
 
-	// Fetch manifest and find declaration for this element
+	// Fetch manifest and generate knobs for ALL custom elements in demo
 	manifestBytes, err := config.Context.Manifest()
 	if err == nil && len(manifestBytes) > 0 {
 		var pkg M.Package
 		if err := json.Unmarshal(manifestBytes, &pkg); err == nil {
-			// Find the custom element declaration
-			for _, renderableDemo := range pkg.RenderableDemos() {
-				if renderableDemo.CustomElementDeclaration.TagName == entry.TagName {
-					// Generate knobs for this declaration
-					knobs, err := GenerateKnobs(renderableDemo.CustomElementDeclaration, demoHTML, enabledKnobs)
-					if err != nil {
-						config.Context.Logger().Warning("Failed to generate knobs for %s: %v", entry.TagName, err)
-						_ = config.Context.BroadcastError(
-							"Knobs Generation Error",
-							fmt.Sprintf("Failed to generate knobs for <%s>: %v", entry.TagName, err),
-							entry.TagName,
-						)
-						break
-					}
-
-					knobsHTML, err = RenderKnobsHTML(knobs)
-					if err != nil {
-						config.Context.Logger().Warning("Failed to render knobs HTML for %s: %v", entry.TagName, err)
-						_ = config.Context.BroadcastError(
-							"Knobs Render Error",
-							fmt.Sprintf("Failed to render knobs HTML for <%s>: %v", entry.TagName, err),
-							entry.TagName,
-						)
-					}
-					break
+			// Phase 5b: Discover all custom elements in demo (not just primary element)
+			// This supports compositional components like accordion > accordion-header + accordion-panel
+			allKnobGroups, err := GenerateKnobsForAllElements(&pkg, demoHTML, enabledKnobs)
+			if err != nil {
+				config.Context.Logger().Warning("Failed to generate knobs for demo elements: %v", err)
+				_ = config.Context.BroadcastError(
+					"Knobs Generation Error",
+					fmt.Sprintf("Failed to generate knobs: %v", err),
+					entry.TagName,
+				)
+			} else if len(allKnobGroups) > 0 {
+				// Render all knob groups
+				knobsHTML, err = RenderMultiInstanceKnobsHTML(allKnobGroups)
+				if err != nil {
+					config.Context.Logger().Warning("Failed to render knobs HTML: %v", err)
+					_ = config.Context.BroadcastError(
+						"Knobs Render Error",
+						fmt.Sprintf("Failed to render knobs HTML: %v", err),
+						entry.TagName,
+					)
 				}
 			}
 		}
