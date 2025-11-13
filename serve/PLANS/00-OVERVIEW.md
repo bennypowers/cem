@@ -177,7 +177,7 @@ feat/dev-server (staging)
   - Details: [30-TRANSFORMS.md](./30-TRANSFORMS.md)
   - **Status**: All features implemented, including CSS glob filtering and YAML config
 
-- [ ] **Phase 5: Knobs** (Sequential implementation: 5a → 5b → 5c)
+- [x] **Phase 5: Knobs** ✅ (Required phases complete: 5a ✅, 5b ✅; Optional: 5c)
   - Goal: Interactive controls for element attributes, properties, and CSS custom properties
   - Prerequisites: Phase 3 (chrome infrastructure)
   - **Implementation approach**: Complete each sub-phase fully before moving to the next
@@ -188,10 +188,11 @@ feat/dev-server (staging)
       - Consumes: Manifest data, demo chrome
       - Details: [50-KNOBS-CORE.md](./50-KNOBS-CORE.md)
       - **Status**: Complete with enhancements (type badges, dual color input, deduplication, state sync, markdown descriptions)
-    - [ ] **Phase 5b: Advanced Knobs (REQUIRED)** - Implement after 5a is complete
+    - [x] **Phase 5b: Advanced Knobs (REQUIRED)** ✅ - Implement after 5a is complete
       - Goal: Multiple elements and complex compositions with mutation observers
       - Extends: Phase 5a
       - Details: [51-KNOBS-ADVANCED.md](./51-KNOBS-ADVANCED.md)
+      - **Status**: Complete with multi-instance support, depth-first source ordering, instance labeling, mutation observers, and state synchronization
     - [ ] **Phase 5c: Custom Templates (OPTIONAL)** - Implement after 5b is complete
       - Goal: User-provided knob templates for specialized controls
       - Extends: Phase 5a/5b
