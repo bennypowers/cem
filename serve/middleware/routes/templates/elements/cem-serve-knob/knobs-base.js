@@ -112,7 +112,7 @@ export class CemServeKnobAttribute extends CemServeKnobBase {
       }
 
       case 'number':
-        input = document.createElement('input');
+        input = document.createElement('pfv6-text-input');
         input.type = 'number';
         input.id = 'input';
         input.value = value;
@@ -159,7 +159,7 @@ export class CemServeKnobAttribute extends CemServeKnobBase {
       }
 
       default: // string
-        input = document.createElement('input');
+        input = document.createElement('pfv6-text-input');
         input.type = 'text';
         input.id = 'input';
         input.value = value;
@@ -256,7 +256,7 @@ export class CemServeKnobProperty extends CemServeKnobBase {
       }
 
       case 'number':
-        input = document.createElement('input');
+        input = document.createElement('pfv6-text-input');
         input.type = 'number';
         input.id = 'input';
         input.value = value;
@@ -303,7 +303,7 @@ export class CemServeKnobProperty extends CemServeKnobBase {
       }
 
       default: // string
-        input = document.createElement('input');
+        input = document.createElement('pfv6-text-input');
         input.type = 'text';
         input.id = 'input';
         input.value = value;
@@ -400,7 +400,7 @@ export class CemServeKnobCSSProperty extends CemServeKnobBase {
       }
 
       case 'number':
-        input = document.createElement('input');
+        input = document.createElement('pfv6-text-input');
         input.type = 'number';
         input.id = 'input';
         input.value = value;
@@ -447,7 +447,7 @@ export class CemServeKnobCSSProperty extends CemServeKnobBase {
       }
 
       default: // string
-        input = document.createElement('input');
+        input = document.createElement('pfv6-text-input');
         input.type = 'text';
         input.id = 'input';
         input.value = value;

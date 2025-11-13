@@ -1,0 +1,58 @@
+:host {
+  display: inline-block;
+  width: 100%;
+}
+
+#text-input {
+  width: 100%;
+  padding: var(--pf-t--global--spacer--sm) var(--pf-t--global--spacer--md);
+  font-size: var(--pf-t--global--font--size--sm);
+  line-height: var(--pf-t--global--font--line-height--body);
+  font-family: inherit;
+  color: var(--pf-t--global--text--color--regular);
+  background-color: var(--pf-t--global--background--color--primary--default);
+  border: var(--pf-t--global--border--width--regular) solid var(--pf-t--global--border--color--default);
+  border-radius: var(--pf-t--global--border--radius--medium);
+  transition: border-color var(--pf-t--global--motion--duration--md) var(--pf-t--global--motion--timing-function--default);
+  box-sizing: border-box;
+}
+
+#text-input:hover:not(:disabled):not(:read-only) {
+  border-color: var(--pf-t--global--border--color--hover);
+}
+
+#text-input:focus {
+  border-color: var(--pf-t--global--border--color--clicked);
+  outline: 2px solid var(--pf-t--global--color--brand--default);
+  outline-offset: 2px;
+}
+
+#text-input::placeholder {
+  color: var(--pf-t--global--text--color--subtle);
+}
+
+#text-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+#text-input:read-only {
+  cursor: default;
+  background-color: var(--pf-t--global--background--color--disabled--default);
+}
+
+/* Number input specific styling */
+:host([type="number"]) #text-input {
+  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+}
+
+/* Invalid state */
+:host([invalid]) #text-input,
+#text-input:invalid {
+  border-color: var(--pf-t--global--color--status--danger--default);
+}
+
+:host([invalid]) #text-input:focus,
+#text-input:invalid:focus {
+  outline-color: var(--pf-t--global--color--status--danger--default);
+}

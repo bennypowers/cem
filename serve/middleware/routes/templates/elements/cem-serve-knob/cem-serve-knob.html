@@ -4,6 +4,20 @@
     {{renderElementShadowRoot "pfv6-switch" dict}}
     {{.name}}
   </pfv6-switch>
+  {{else if eq .type "string"}}
+  <pfv6-text-input id="input"
+                   type="text"
+                   value="{{.value}}"
+                   placeholder="{{.name}}">
+    {{renderElementShadowRoot "pfv6-text-input" dict}}
+  </pfv6-text-input>
+  {{else if eq .type "number"}}
+  <pfv6-text-input id="input"
+                   type="number"
+                   value="{{.value}}"
+                   placeholder="{{.name}}">
+    {{renderElementShadowRoot "pfv6-text-input" dict}}
+  </pfv6-text-input>
   {{end}}
 </div>
 <div id="knob-description">
