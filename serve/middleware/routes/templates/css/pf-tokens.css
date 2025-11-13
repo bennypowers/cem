@@ -1,0 +1,78 @@
+/* PatternFly v6 Design Tokens using light-dark() */
+:root {
+  /* Brand colors (same in both modes) */
+  --pf-t--global--color--brand--default: #0066cc;
+  --pf-t--global--color--brand--hover: #004d99;
+  --pf-t--global--color--brand--clicked: #003d7a;
+
+  /* Text colors */
+  --pf-t--global--text--color--regular: light-dark(#151515, #ffffff);
+  --pf-t--global--text--color--subtle: light-dark(#6a6e73, #c7c7c7);
+  --pf-t--global--text--color--on-brand: #ffffff;
+  --pf-t--global--text--color--disabled: light-dark(#d2d2d2, #6b6b6b);
+  --pf-t--global--text--color--on-disabled: light-dark(#6a6e73, #b0b0b0);
+
+  /* Background colors */
+  --pf-t--global--background--color--primary--default: light-dark(#ffffff, #1f1f1f);
+  --pf-t--global--background--color--primary--hover: light-dark(#f2f2f2, #3c3f42);
+  --pf-t--global--background--color--secondary--default: light-dark(#f0f0f0, #3c3f42);
+  --pf-t--global--background--color--secondary--hover: light-dark(#e6e6e6, #4d4d4d);
+  --pf-t--global--background--color--disabled--default: light-dark(#f0f0f0, #3c3f42);
+  --pf-t--global--background--color--control--default: light-dark(#f0f0f0, #4d4d4d);
+  --pf-t--global--background--color--action--plain--default: transparent;
+  --pf-t--global--background--color--action--plain--hover: light-dark(#f0f0f0, #3c3f42);
+
+  /* Border colors */
+  --pf-t--global--border--color--default: light-dark(#c7c7c7, #707070);
+  --pf-t--global--border--color--hover: light-dark(#4394e5, #0066cc);
+  --pf-t--global--border--color--clicked: #0066cc;
+  --pf-t--global--border--color--disabled: light-dark(#d2d2d2, #707070);
+  --pf-t--global--border--color--high-contrast: light-dark(#151515, #ffffff);
+
+  /* Icon colors */
+  --pf-t--global--icon--color--regular: light-dark(#6a6e73, #c7c7c7);
+  --pf-t--global--icon--color--subtle: light-dark(#6a6e73, #c7c7c7);
+  --pf-t--global--icon--color--on-brand--default: #ffffff;
+  --pf-t--global--icon--color--disabled: light-dark(#d2d2d2, #6b6b6b);
+  --pf-t--global--icon--color--inverse: #ffffff;
+
+  /* Status colors (same in both modes) */
+  --pf-t--global--color--status--success--default: #3d7317;
+  --pf-t--global--color--status--warning--default: #dca614;
+  --pf-t--global--color--status--danger--default: #b1380b;
+  --pf-t--global--color--status--info--default: #5e40be;
+
+  /* Border radius (same in both modes) */
+  --pf-t--global--border--radius--small: 3px;
+  --pf-t--global--border--radius--medium: 6px;
+  --pf-t--global--border--radius--large: 999px;
+  --pf-t--global--border--radius--pill: 999px;
+
+  /* Spacing (same in both modes) */
+  --pf-t--global--spacer--xs: 0.25rem;  /* 4px */
+  --pf-t--global--spacer--sm: 0.5rem;   /* 8px */
+  --pf-t--global--spacer--md: 1rem;     /* 16px */
+  --pf-t--global--spacer--lg: 1.5rem;   /* 24px */
+  --pf-t--global--spacer--xl: 2rem;     /* 32px */
+  --pf-t--global--spacer--2xl: 3rem;    /* 48px */
+
+  /* Typography (same in both modes) */
+  --pf-t--global--font--size--sm: 0.875rem;
+  --pf-t--global--font--size--md: 1rem;
+  --pf-t--global--font--size--lg: 1.125rem;
+  --pf-t--global--font--line-height--body: 1.5;
+
+  /* Motion (same in both modes) */
+  --pf-t--global--motion--duration--sm: 100ms;
+  --pf-t--global--motion--duration--md: 200ms;
+  --pf-t--global--motion--duration--fade--short: 100ms;
+  --pf-t--global--motion--timing-function--default: cubic-bezier(0.4, 0, 0.2, 1);
+  --pf-t--global--motion--timing-function--decelerate: cubic-bezier(0, 0, 0.2, 1);
+
+  /* Border widths (same in both modes) */
+  --pf-t--global--border--width--100: 1px;
+  --pf-t--global--border--width--regular: 1px;
+  --pf-t--global--border--width--strong: 2px;
+  --pf-t--global--border--width--extra-strong: 3px;
+  --pf-t--global--border--width--action--plain--hover: 0px;
+}

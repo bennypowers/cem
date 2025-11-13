@@ -13,13 +13,17 @@
   </script>
   {{end}}
   <script type="module" src="/__cem/websocket-client.js"></script>
+  <script type="module" src="/__cem/elements/pfv6-button/pfv6-button.js"></script>
+  <script type="module" src="/__cem/elements/pfv6-switch/pfv6-switch.js"></script>
+  <script type="module" src="/__cem/elements/pfv6-tab/pfv6-tab.js"></script>
+  <script type="module" src="/__cem/elements/pfv6-tabs/pfv6-tabs.js"></script>
   <script type="module" src="/__cem/elements/cem-drawer/cem-drawer.js"></script>
-  <script type="module" src="/__cem/elements/cem-tabs/cem-tabs.js"></script>
   <script type="module" src="/__cem/elements/cem-nav-drawer/cem-nav-drawer.js"></script>
   <script type="module" src="/__cem/elements/cem-serve-demo/cem-serve-demo.js"></script>
-  <script type="module" src="/__cem/elements/cem-serve-knob/cem-serve-knobs.js"></script>
+  <script type="module" src="/__cem/elements/cem-serve-knob/knobs-base.js"></script>
   <script type="module" src="/__cem/elements/cem-color-scheme-toggle/cem-color-scheme-toggle.js"></script>
   <script type="module" src="/__cem/serve-chrome.js"></script>
+  <style>{{include "css/pf-tokens.css"}}</style>
   <style>{{include "css/demo-chrome.css"}}</style>
 </head>
 <body>
@@ -37,9 +41,6 @@
         </cem-nav-drawer>
         {{end}}
         <slot name="title"></slot>
-        <nav>
-          {{.DemoSwitcher}}
-        </nav>
         {{if .CanonicalURL}}
         <a href="{{.CanonicalURL}}"
            target="_blank"
@@ -136,15 +137,10 @@
         </div>
         <cem-drawer class="initializing">
           {{renderElementShadowRoot "cem-drawer" dict}}
-          <cem-tabs>
-            {{renderElementShadowRoot "cem-tabs" dict}}
-            <button slot="tab" class="tab" role="tab" aria-selected="false" aria-controls="panel-knobs">
-              Knobs
-            </button>
-            <button slot="tab" class="tab" role="tab" aria-selected="false" aria-controls="panel-logs">
-              Server Logs
-            </button>
-            <div slot="panel" class="tab-panel" id="panel-knobs" role="tabpanel">
+          <pfv6-tabs>
+            {{renderElementShadowRoot "pfv6-tabs" dict}}
+            <pfv6-tab title="Knobs">
+              {{renderElementShadowRoot "pfv6-tab" dict}}
               <div id="knobs-container">
                 {{if .KnobsHTML}}
                 {{.KnobsHTML}}
@@ -152,11 +148,12 @@
                 <p class="knobs-empty">No knobs available for this element.</p>
                 {{end}}
               </div>
-            </div>
-            <div slot="panel" class="tab-panel" id="panel-logs" role="tabpanel">
+            </pfv6-tab>
+            <pfv6-tab title="Server Logs">
+              {{renderElementShadowRoot "pfv6-tab" dict}}
               <div id="log-container"></div>
-            </div>
-          </cem-tabs>
+            </pfv6-tab>
+          </pfv6-tabs>
         </cem-drawer>
       </footer>
     </template>
