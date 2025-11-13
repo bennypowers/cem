@@ -183,6 +183,9 @@ func (s *Server) Start() error {
 			return fmt.Errorf("failed to create file watcher: %w", err)
 		}
 
+		// Set custom ignore patterns from config
+		fw.SetIgnorePatterns(s.watchDir, s.config.WatchIgnore)
+
 		if err := fw.Watch(s.watchDir); err != nil {
 			if closeErr := fw.Close(); closeErr != nil {
 				s.logger.Error("Failed to close file watcher during cleanup: %v", closeErr)

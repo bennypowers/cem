@@ -20,7 +20,6 @@ package serve
 import (
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -40,6 +39,20 @@ type fileWatcher struct {
 	logger         Logger
 	done           chan struct{}
 	wg             sync.WaitGroup
+	ignorePatterns []string // Glob patterns to ignore
+	watchDir       string   // Root watch directory for relative path resolution
+}
+
+// getDefaultIgnorePatterns returns the default list of glob patterns to ignore
+func getDefaultIgnorePatterns() []string {
+	return []string{
+		".git",
+		"node_modules",
+		"dist",
+		"build",
+		"_site",
+		".cache",
+	}
 }
 
 // newFileWatcher creates a new file watcher with debouncing
@@ -56,6 +69,7 @@ func newFileWatcher(debounceWindow time.Duration, logger Logger) (FileWatcher, e
 		debouncedFiles: make(map[string]time.Time),
 		logger:         logger,
 		done:           make(chan struct{}),
+		ignorePatterns: getDefaultIgnorePatterns(),
 	}
 
 	// Start event processing loop
@@ -63,6 +77,18 @@ func newFileWatcher(debounceWindow time.Duration, logger Logger) (FileWatcher, e
 	go fw.processEvents()
 
 	return fw, nil
+}
+
+// SetIgnorePatterns sets custom ignore patterns (completely overrides defaults)
+func (fw *fileWatcher) SetIgnorePatterns(watchDir string, patterns []string) {
+	fw.mu.Lock()
+	defer fw.mu.Unlock()
+	fw.watchDir = watchDir
+	// If custom patterns provided, use them exclusively (override defaults)
+	// If no patterns provided, defaults remain active
+	if len(patterns) > 0 {
+		fw.ignorePatterns = patterns
+	}
 }
 
 // Watch adds a path to watch (recursively if directory)
@@ -89,8 +115,7 @@ func (fw *fileWatcher) Watch(path string) error {
 		}
 
 		// Skip ignored directories
-		name := filepath.Base(p)
-		if shouldIgnore(name) {
+		if fw.shouldIgnore(p) {
 			return filepath.SkipDir
 		}
 
@@ -145,8 +170,8 @@ func (fw *fileWatcher) processEvents() {
 				return
 			}
 
-			// Ignore .git and node_modules directories
-			if shouldIgnore(event.Name) {
+			// Ignore files and directories based on configured patterns
+			if fw.shouldIgnore(event.Name) {
 				continue
 			}
 
@@ -282,36 +307,80 @@ func (fw *fileWatcher) flushDebouncedEvents() {
 	}
 }
 
-// shouldIgnore checks if a file path should be ignored
-func shouldIgnore(path string) bool {
+// shouldIgnore checks if a file path should be ignored based on patterns
+func (fw *fileWatcher) shouldIgnore(path string) bool {
 	base := filepath.Base(path)
 
-	// Ignore hidden files and common directories
-	ignoredDirs := []string{".git", "node_modules", "dist", "build", ".cache"}
-	if slices.Contains(ignoredDirs, base) {
+	// Ignore editor temp files (always ignored regardless of patterns)
+	// Vim/Neovim: .swp, .swo, .swn, ~
+	// Emacs: #file#, .#file
+	if strings.HasPrefix(base, ".") && (strings.HasSuffix(base, ".swp") ||
+		strings.HasSuffix(base, ".swo") || strings.HasSuffix(base, ".swn")) {
+		return true
+	}
+	if strings.HasSuffix(base, "~") ||
+		(strings.HasPrefix(base, "#") && strings.HasSuffix(base, "#")) ||
+		strings.HasPrefix(base, ".#") {
 		return true
 	}
 
-	// Ignore editor temp files
-	// Vim/Neovim: .swp, .swo, .swn, ~
-	// Emacs: #file#, .#file
-	if strings.HasPrefix(base, ".") && strings.HasSuffix(base, ".swp") {
-		return true
+	// Check against configured ignore patterns
+	fw.mu.Lock()
+	patterns := fw.ignorePatterns
+	watchDir := fw.watchDir
+	fw.mu.Unlock()
+
+	// Convert path to relative if we have a watch directory
+	relPath := path
+	if watchDir != "" {
+		if rel, err := filepath.Rel(watchDir, path); err == nil {
+			relPath = rel
+		}
 	}
-	if strings.HasPrefix(base, ".") && strings.HasSuffix(base, ".swo") {
-		return true
-	}
-	if strings.HasPrefix(base, ".") && strings.HasSuffix(base, ".swn") {
-		return true
-	}
-	if strings.HasSuffix(base, "~") {
-		return true
-	}
-	if strings.HasPrefix(base, "#") && strings.HasSuffix(base, "#") {
-		return true
-	}
-	if strings.HasPrefix(base, ".#") {
-		return true
+
+	// Check each pattern
+	for _, pattern := range patterns {
+		// Direct basename match (for simple patterns like "node_modules", "_site")
+		if base == pattern {
+			if fw.logger != nil {
+				fw.logger.Debug("Ignoring %s (matches pattern: %s)", relPath, pattern)
+			}
+			return true
+		}
+
+		// Glob pattern match on relative path
+		if matched, err := filepath.Match(pattern, relPath); err == nil && matched {
+			if fw.logger != nil {
+				fw.logger.Debug("Ignoring %s (matches glob pattern: %s)", relPath, pattern)
+			}
+			return true
+		}
+
+		// Glob pattern match with ** wildcard (match any subdirectory)
+		// Convert glob pattern to prefix match for ** patterns
+		if strings.Contains(pattern, "**") {
+			// Simple ** handling: _site/** matches anything under _site/
+			prefix := strings.TrimSuffix(pattern, "/**")
+			if strings.HasPrefix(relPath, prefix+"/") || relPath == prefix {
+				if fw.logger != nil {
+					fw.logger.Debug("Ignoring %s (matches recursive pattern: %s)", relPath, pattern)
+				}
+				return true
+			}
+		}
+
+		// Check if any parent directory matches the pattern
+		dir := filepath.Dir(relPath)
+		for dir != "." && dir != "/" {
+			dirBase := filepath.Base(dir)
+			if dirBase == pattern {
+				if fw.logger != nil {
+					fw.logger.Debug("Ignoring %s (parent directory %s matches pattern: %s)", relPath, dirBase, pattern)
+				}
+				return true
+			}
+			dir = filepath.Dir(dir)
+		}
 	}
 
 	// Note: We don't filter numeric filenames here because that would incorrectly

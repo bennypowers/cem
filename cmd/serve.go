@@ -65,6 +65,9 @@ var serveCmd = &cobra.Command{
 		cssInclude := viper.GetStringSlice("serve.transforms.css.include")
 		cssExclude := viper.GetStringSlice("serve.transforms.css.exclude")
 
+		// Get watch ignore patterns from config or flag
+		watchIgnore := viper.GetStringSlice("serve.watchIgnore")
+
 		// Get target from transforms config or fallback to --target flag
 		configTarget := viper.GetString("serve.transforms.typescript.target")
 		if targetStr == "" && configTarget != "" {
@@ -84,9 +87,10 @@ var serveCmd = &cobra.Command{
 
 		// Create server config
 		config := serve.Config{
-			Port:   port,
-			Reload: reload,
-			Target: target,
+			Port:        port,
+			Reload:      reload,
+			Target:      target,
+			WatchIgnore: watchIgnore,
 			Transforms: serve.TransformConfig{
 				TypeScript: serve.TypeScriptConfig{
 					Enabled: tsEnabled,
@@ -202,6 +206,7 @@ func init() {
 	serveCmd.Flags().Int("port", 8000, "Port to serve on")
 	serveCmd.Flags().Bool("no-reload", false, "Disable live reload")
 	serveCmd.Flags().String("target", "es2022", "TypeScript/JavaScript transform target (es2015, es2016, es2017, es2018, es2019, es2020, es2021, es2022, es2023, esnext)")
+	serveCmd.Flags().StringSlice("watch-ignore", nil, "Glob patterns to ignore in file watcher (comma-separated, e.g., '_site/**,dist/**')")
 
 	if err := viper.BindPFlag("serve.port", serveCmd.Flags().Lookup("port")); err != nil {
 		panic(fmt.Sprintf("failed to bind flag serve.port: %v", err))
@@ -211,5 +216,8 @@ func init() {
 	}
 	if err := viper.BindPFlag("serve.target", serveCmd.Flags().Lookup("target")); err != nil {
 		panic(fmt.Sprintf("failed to bind flag serve.target: %v", err))
+	}
+	if err := viper.BindPFlag("serve.watchIgnore", serveCmd.Flags().Lookup("watch-ignore")); err != nil {
+		panic(fmt.Sprintf("failed to bind flag serve.watchIgnore: %v", err))
 	}
 }

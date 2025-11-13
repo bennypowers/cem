@@ -198,10 +198,11 @@ feat/dev-server (staging)
       - Extends: Phase 5a/5b
       - Details: [52-KNOBS-CUSTOM.md](./52-KNOBS-CUSTOM.md)
 
-- [ ] **Phase 6: Polish** (Partially implemented early)
-  - Goal: Documentation and examples
+- [ ] **Phase 6: Polish** 🚧 (Partially implemented early, now in active development)
+  - Goal: Bug fixes, documentation, and final polish
   - Prerequisites: All previous phases
   - Provides: Enhanced developer experience
+  - Details: [60-POLISH.md](./60-POLISH.md)
   - **Already implemented** (during Phases 1-5):
     - ✅ Error overlay with source-mapped stack traces
     - ✅ Colored logging with structured badges (INFO, WARN, ERROR, DEBUG)
@@ -211,6 +212,7 @@ feat/dev-server (staging)
     - ✅ Favicon support
     - ✅ Color scheme toggle (light/system/dark with localStorage persistence)
   - **Remaining work**:
+    - [ ] Fix file watcher to ignore build output directories (⭐ priority)
     - [ ] Comprehensive documentation
     - [ ] Example projects showcasing features
     - [ ] Performance tuning and final polish
