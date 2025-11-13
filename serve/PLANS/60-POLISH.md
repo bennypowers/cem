@@ -159,6 +159,22 @@ serve:
 - [ ] Browser compatibility testing
 - [ ] Mobile/responsive demo chrome
 - [ ] Accessibility audit of demo chrome UI
+- [ ] **PatternFly v6 UI Components Implementation**
+  - [ ] Implement PatternFly v6 designs for all dev server UI components
+    - [ ] **Buttons** - Replace button styles in nav drawer, debug panel, chrome controls (`cem-nav-drawer.html`, `demo-chrome.html`)
+    - [ ] **Drawer** - Apply PF v6 drawer pattern to `<cem-nav-drawer>` component (`templates/elements/cem-nav-drawer/`)
+    - [ ] **Header layout** - Apply PF v6 masthead/chrome pattern to `<cem-serve-chrome>` (`templates/demo-chrome.html`)
+    - [ ] **Disclosure/Details** - Apply PF v6 expandable section pattern to debug panel collapsibles
+    - [ ] **Switch** - Replace checkboxes with PF v6 switch component in knobs (`templates/knobs.html`)
+    - [ ] **Form controls** - Apply PF v6 form patterns to knob inputs (text, select, number)
+    - [ ] **Color scheme toggle** - Apply PF v6 toggle pattern
+  - **Implementation approach:**
+    - Create local web components in `serve/middleware/routes/templates/elements/`
+    - Use existing template/SSR setup (Declarative Shadow DOM)
+    - Follow PF v6 design tokens and patterns
+    - No external dependencies - self-contained implementations
+    - Maintain current accessibility features (aria-labels, keyboard nav, etc.)
+    - Preserve light/dark mode support
 
 ## Testing Strategy
 
@@ -186,7 +202,8 @@ Test the complete developer workflow:
 
 ### Critical (Must Complete)
 
-- [ ] File watcher ignores build output directories ⭐
+- [x] File watcher ignores build output directories ⭐ **DONE**
+- [ ] PatternFly v6 UI components implemented for all dev server elements
 - [ ] Documentation complete and reviewed
 - [ ] All known bugs fixed
 - [ ] Performance acceptable on large projects (100+ components)

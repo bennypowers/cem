@@ -212,7 +212,8 @@ feat/dev-server (staging)
     - ✅ Favicon support
     - ✅ Color scheme toggle (light/system/dark with localStorage persistence)
   - **Remaining work**:
-    - [ ] Fix file watcher to ignore build output directories (⭐ priority)
+    - [x] Fix file watcher to ignore build output directories (⭐ priority) **DONE**
+    - [ ] PatternFly v6 UI components implementation (⭐ pre-release requirement)
     - [ ] Comprehensive documentation
     - [ ] Example projects showcasing features
     - [ ] Performance tuning and final polish
