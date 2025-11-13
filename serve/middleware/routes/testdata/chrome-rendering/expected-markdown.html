@@ -13,13 +13,85 @@
   </script>
   
   <script type="module" src="/__cem/websocket-client.js"></script>
+  <script type="module" src="/__cem/elements/pfv6-button/pfv6-button.js"></script>
+  <script type="module" src="/__cem/elements/pfv6-switch/pfv6-switch.js"></script>
+  <script type="module" src="/__cem/elements/pfv6-tab/pfv6-tab.js"></script>
+  <script type="module" src="/__cem/elements/pfv6-tabs/pfv6-tabs.js"></script>
   <script type="module" src="/__cem/elements/cem-drawer/cem-drawer.js"></script>
-  <script type="module" src="/__cem/elements/cem-tabs/cem-tabs.js"></script>
   <script type="module" src="/__cem/elements/cem-nav-drawer/cem-nav-drawer.js"></script>
   <script type="module" src="/__cem/elements/cem-serve-demo/cem-serve-demo.js"></script>
-  <script type="module" src="/__cem/elements/cem-serve-knob/cem-serve-knobs.js"></script>
+  <script type="module" src="/__cem/elements/cem-serve-knob/knobs-base.js"></script>
   <script type="module" src="/__cem/elements/cem-color-scheme-toggle/cem-color-scheme-toggle.js"></script>
   <script type="module" src="/__cem/serve-chrome.js"></script>
+  <style>/* PatternFly v6 Design Tokens using light-dark() */
+:root {
+  /* Brand colors (same in both modes) */
+  --pf-t--global--color--brand--default: #0066cc;
+  --pf-t--global--color--brand--hover: #004d99;
+  --pf-t--global--color--brand--clicked: #003d7a;
+
+  /* Text colors */
+  --pf-t--global--text--color--regular: light-dark(#151515, #ffffff);
+  --pf-t--global--text--color--subtle: light-dark(#6a6e73, #c7c7c7);
+  --pf-t--global--text--color--on-brand: #ffffff;
+  --pf-t--global--text--color--disabled: light-dark(#d2d2d2, #6b6b6b);
+
+  /* Background colors */
+  --pf-t--global--background--color--primary--default: light-dark(#ffffff, #1f1f1f);
+  --pf-t--global--background--color--primary--hover: light-dark(#f2f2f2, #3c3f42);
+  --pf-t--global--background--color--secondary--default: light-dark(#f0f0f0, #3c3f42);
+  --pf-t--global--background--color--secondary--hover: light-dark(#e6e6e6, #4d4d4d);
+  --pf-t--global--background--color--disabled--default: light-dark(#f0f0f0, #3c3f42);
+  --pf-t--global--background--color--control--default: light-dark(#f0f0f0, #4d4d4d);
+
+  /* Border colors */
+  --pf-t--global--border--color--default: light-dark(#c7c7c7, #707070);
+  --pf-t--global--border--color--hover: light-dark(#4394e5, #0066cc);
+  --pf-t--global--border--color--clicked: #0066cc;
+  --pf-t--global--border--color--disabled: light-dark(#d2d2d2, #707070);
+
+  /* Icon colors */
+  --pf-t--global--icon--color--regular: light-dark(#6a6e73, #c7c7c7);
+  --pf-t--global--icon--color--subtle: light-dark(#6a6e73, #c7c7c7);
+  --pf-t--global--icon--color--on-brand--default: #ffffff;
+  --pf-t--global--icon--color--disabled: light-dark(#d2d2d2, #6b6b6b);
+  --pf-t--global--icon--color--inverse: #ffffff;
+
+  /* Status colors (same in both modes) */
+  --pf-t--global--color--status--success--default: #3d7317;
+  --pf-t--global--color--status--warning--default: #dca614;
+  --pf-t--global--color--status--danger--default: #b1380b;
+  --pf-t--global--color--status--info--default: #5e40be;
+
+  /* Border radius (same in both modes) */
+  --pf-t--global--border--radius--small: 3px;
+  --pf-t--global--border--radius--medium: 6px;
+  --pf-t--global--border--radius--large: 999px;
+  --pf-t--global--border--radius--pill: 999px;
+
+  /* Spacing (same in both modes) */
+  --pf-t--global--spacer--xs: 0.25rem;
+  --pf-t--global--spacer--sm: 0.5rem;
+  --pf-t--global--spacer--md: 1rem;
+  --pf-t--global--spacer--lg: 1.5rem;
+  --pf-t--global--spacer--xl: 2rem;
+
+  /* Typography (same in both modes) */
+  --pf-t--global--font--size--sm: 0.875rem;
+  --pf-t--global--font--size--md: 1rem;
+  --pf-t--global--font--size--lg: 1.125rem;
+  --pf-t--global--font--line-height--body: 1.5;
+
+  /* Motion (same in both modes) */
+  --pf-t--global--motion--duration--sm: 100ms;
+  --pf-t--global--motion--duration--md: 200ms;
+  --pf-t--global--motion--timing-function--default: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Border widths (same in both modes) */
+  --pf-t--global--border--width--regular: 1px;
+  --pf-t--global--border--width--strong: 2px;
+}
+</style>
   <style>/* Enable cross-document view transitions for same-origin navigation */
 @view-transition {
   navigation: auto;
@@ -47,18 +119,18 @@ html::view-transition-new(*) {
 }
 
 :root {
-  /* Base colors using light-dark() */
-  --cem-dev-server-bg-primary: light-dark(#ffffff, #0f172a);
-  --cem-dev-server-bg-secondary: light-dark(#f8fafc, #1e293b);
-  --cem-dev-server-bg-tertiary: light-dark(#f1f5f9, #334155);
+  /* Map to PatternFly tokens */
+  --cem-dev-server-bg-primary: var(--pf-t--global--background--color--primary--default);
+  --cem-dev-server-bg-secondary: var(--pf-t--global--background--color--secondary--default);
+  --cem-dev-server-bg-tertiary: var(--pf-t--global--background--color--primary--hover);
 
-  --cem-dev-server-text-primary: light-dark(#0f172a, #e2e8f0);
-  --cem-dev-server-text-secondary: light-dark(#475569, #94a3b8);
-  --cem-dev-server-text-muted: light-dark(#64748b, #64748b);
+  --cem-dev-server-text-primary: var(--pf-t--global--text--color--regular);
+  --cem-dev-server-text-secondary: var(--pf-t--global--text--color--subtle);
+  --cem-dev-server-text-muted: var(--pf-t--global--text--color--subtle);
 
-  --cem-dev-server-border-color: light-dark(#e2e8f0, #334155);
-  --cem-dev-server-accent-color: light-dark(#3b82f6, #60a5fa);
-  --cem-dev-server-accent-hover: light-dark(#2563eb, #93bbfd);
+  --cem-dev-server-border-color: var(--pf-t--global--border--color--default);
+  --cem-dev-server-accent-color: var(--pf-t--global--color--brand--default);
+  --cem-dev-server-accent-hover: var(--pf-t--global--color--brand--hover);
 
   /* Component-specific */
   --cem-dev-server-header-height: 56px;
@@ -174,10 +246,10 @@ cem-serve-listing {
 
     &:hover {
       background: var(--cem-dev-server-accent-color);
-      color: white;
+      color: var(--pf-t--global--text--color--on-brand);
 
       .package-name {
-        color: rgba(255, 255, 255, 0.8);
+        color: light-dark(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8));
       }
     }
 
@@ -217,76 +289,76 @@ header {
   view-transition-name: dev-server-header;
   position: sticky;
   top: 0;
-  height: var(--cem-dev-server-header-height);
-  background: var(--cem-dev-server-bg-secondary);
-  border-bottom: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
+  background: var(--pf-t--global--background--color--secondary--default);
+  border-bottom: 1px solid var(--pf-t--global--border--color--default);
   display: flex;
   align-items: center;
-  padding: 0 var(--cem-dev-server-spacing-lg);
-  gap: var(--cem-dev-server-spacing-md);
+  padding: 1rem 1.5rem;
+  gap: 1rem;
   z-index: 100;
 }
 
 header ::slotted([slot="title"]) {
   margin: 0;
-  font-size: var(--cem-dev-server-font-size-lg);
+  font-size: 1.125rem;
   font-weight: 600;
-  color: var(--cem-dev-server-accent-color);
+  color: var(--pf-t--global--text--color--regular);
   flex: 1;
 }
 
 nav {
   display: flex;
-  gap: var(--cem-dev-server-spacing-sm);
+  gap: 0.5rem;
 
   a {
-    color: var(--cem-dev-server-text-secondary);
+    color: var(--pf-t--global--text--color--subtle);
     text-decoration: none;
-    padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);
-    border-radius: var(--cem-dev-server-border-radius);
-    font-size: var(--cem-dev-server-font-size-sm);
-    transition: background 0.2s, color 0.2s;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    transition: all 200ms cubic-bezier(0.645, 0.045, 0.355, 1);
 
     &:hover {
-      background: var(--cem-dev-server-bg-tertiary);
-      color: var(--cem-dev-server-text-primary);
+      background: var(--pf-t--global--background--color--primary--hover);
+      color: var(--pf-t--global--text--color--regular);
     }
 
     &[aria-current="page"] {
-      background: var(--cem-dev-server-accent-color);
-      color: white;
+      background: var(--pf-t--global--color--brand--default);
+      color: var(--pf-t--global--text--color--on-brand);
     }
   }
 }
 
 .source-link {
-  color: var(--cem-dev-server-text-secondary);
+  color: var(--pf-t--global--text--color--subtle);
   text-decoration: none;
-  padding: var(--cem-dev-server-spacing-sm);
-  border-radius: var(--cem-dev-server-border-radius);
+  padding: 0.5rem;
+  border-radius: 6px;
   display: flex;
   align-items: center;
-  transition: color 0.2s;
+  transition: all 200ms cubic-bezier(0.645, 0.045, 0.355, 1);
 
   &:hover {
-    color: var(--cem-dev-server-accent-color);
+    background: var(--pf-t--global--background--color--primary--hover);
+    color: var(--pf-t--global--text--color--regular);
   }
 }
 
 .debug-button {
-  background: none;
+  background: transparent;
   border: none;
-  color: var(--cem-dev-server-text-secondary);
-  padding: var(--cem-dev-server-spacing-sm);
-  border-radius: var(--cem-dev-server-border-radius);
+  color: var(--pf-t--global--text--color--subtle);
+  padding: 0.5rem;
+  border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  transition: color 0.2s, background 0.2s;
+  transition: all 200ms cubic-bezier(0.645, 0.045, 0.355, 1);
 
   &:hover {
-    color: var(--cem-dev-server-accent-color);
-    background: var(--cem-dev-server-bg-tertiary);
+    background: var(--pf-t--global--background--color--primary--hover);
+    color: var(--pf-t--global--text--color--regular);
   }
 }
 
@@ -308,18 +380,20 @@ nav {
 }
 
 .debug-panel {
-  background: var(--cem-dev-server-bg-primary);
-  border: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
-  border-radius: var(--cem-dev-server-border-radius);
-  padding: var(--cem-dev-server-spacing-lg);
+  background: var(--pf-t--global--background--color--primary--default);
+  border: 1px solid var(--pf-t--global--border--color--default);
+  border-radius: 6px;
+  padding: 1.5rem;
   max-width: 600px;
   width: 90%;
   max-height: 80vh;
   overflow-y: auto;
 
   h2 {
-    margin: 0 0 var(--cem-dev-server-spacing-md) 0;
-    color: var(--cem-dev-server-accent-color);
+    margin: 0 0 1rem 0;
+    color: var(--pf-t--global--text--color--regular);
+    font-size: 1.125rem;
+    font-weight: 600;
   }
 
   dl {
@@ -327,61 +401,93 @@ nav {
   }
 
   dt {
-    color: var(--cem-dev-server-text-secondary);
-    font-size: var(--cem-dev-server-font-size-sm);
-    margin-top: var(--cem-dev-server-spacing-sm);
+    color: var(--pf-t--global--text--color--subtle);
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    font-weight: 500;
   }
 
   dd {
-    margin: 0 0 var(--cem-dev-server-spacing-sm) 0;
-    font-family: var(--cem-dev-server-font-family-mono);
-    font-size: var(--cem-dev-server-font-size-sm);
+    margin: 0 0 0.5rem 0;
+    font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+    font-size: 0.875rem;
+    color: var(--pf-t--global--text--color--regular);
   }
 
   details {
-    margin-top: var(--cem-dev-server-spacing-md);
+    margin-top: 1rem;
 
     summary {
       cursor: pointer;
-      color: var(--cem-dev-server-text-secondary);
-      font-size: var(--cem-dev-server-font-size-sm);
+      color: var(--pf-t--global--text--color--regular);
+      font-size: 0.875rem;
+      font-weight: 500;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      user-select: none;
+
+      &::-webkit-details-marker {
+        display: none;
+      }
+
+      &::before {
+        content: '▸';
+        display: inline-block;
+        transition: transform 100ms cubic-bezier(0.4, 0, 0.2, 1);
+        color: var(--pf-t--global--text--color--subtle);
+      }
+    }
+
+    &[open] summary::before {
+      transform: rotate(90deg);
     }
 
     pre {
-      margin-top: var(--cem-dev-server-spacing-sm);
-      padding: var(--cem-dev-server-spacing-sm);
-      background: var(--cem-dev-server-bg-tertiary);
-      border-radius: var(--cem-dev-server-border-radius);
-      font-size: var(--cem-dev-server-font-size-sm);
+      margin-top: 0.5rem;
+      margin-left: 1.5rem;
+      padding: 0.5rem;
+      background: var(--pf-t--global--background--color--secondary--default);
+      border-radius: 6px;
+      font-size: 0.875rem;
       overflow-x: auto;
+      color: var(--pf-t--global--text--color--regular);
     }
   }
 
   .button-container {
     display: flex;
-    gap: var(--cem-dev-server-spacing-sm);
-    margin-top: var(--cem-dev-server-spacing-md);
+    gap: 0.5rem;
+    margin-top: 1rem;
   }
 
   p {
-    color: var(--cem-dev-server-text-muted);
-    font-size: var(--cem-dev-server-font-size-sm);
+    color: var(--pf-t--global--text--color--subtle);
+    font-size: 0.875rem;
   }
 
   button {
-    margin-top: var(--cem-dev-server-spacing-md);
-    padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);
-    background: var(--cem-dev-server-accent-color);
-    color: white;
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background: var(--pf-t--global--color--brand--default);
+    color: var(--pf-t--global--text--color--on-brand);
     border: none;
-    border-radius: var(--cem-dev-server-border-radius);
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 400;
     cursor: pointer;
+    transition: all 200ms cubic-bezier(0.645, 0.045, 0.355, 1);
+
+    &:hover {
+      background: var(--pf-t--global--color--brand--hover);
+    }
   }
 }
 
 .layout {
   display: flex;
-  min-height: calc(100vh - var(--cem-dev-server-header-height));
+  min-height: calc(100vh - 4.5rem);
 }
 
 main {
@@ -471,7 +577,7 @@ main {
 
 .knob-group-title {
   margin: 0 0 var(--cem-dev-server-spacing-md) 0;
-  color: var(--cem-dev-server-accent-color);
+  color: var(--cem-dev-server-text-primary);
   font-size: var(--cem-dev-server-font-size-base);
   font-weight: 600;
   border-bottom: 1px solid var(--cem-dev-server-border-color);
@@ -494,32 +600,6 @@ main {
   font-size: var(--cem-dev-server-font-size-sm);
   color: var(--cem-dev-server-text-primary);
   font-weight: 500;
-}
-
-.knob-input {
-  padding: var(--cem-dev-server-spacing-sm);
-  border: 1px solid var(--cem-dev-server-border-color);
-  border-radius: var(--cem-dev-server-border-radius);
-  background: var(--cem-dev-server-bg-primary);
-  color: var(--cem-dev-server-text-primary);
-  font-family: var(--cem-dev-server-font-family);
-  font-size: var(--cem-dev-server-font-size-sm);
-
-  &:focus {
-    outline: 2px solid var(--cem-dev-server-accent-color);
-    outline-offset: 2px;
-  }
-
-  &[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-  }
-
-  &[type="color"] {
-    height: 40px;
-    cursor: pointer;
-  }
 }
 
 .knob-description {
@@ -563,13 +643,13 @@ footer {
   bottom: 0;
   left: 0;
   right: 0;
-  background: var(--cem-dev-server-bg-secondary);
-  border-top: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
+  background: var(--pf-t--global--background--color--secondary--default);
+  border-top: 1px solid var(--pf-t--global--border--color--default);
   z-index: 50;
 }
 
 .footer-description {
-  padding: var(--cem-dev-server-spacing-lg);
+  padding: 1.5rem;
 
   &.empty {
     display: none;
@@ -578,22 +658,23 @@ footer {
 
 footer ::slotted([slot="description"]) {
   margin: 0;
-  color: var(--cem-dev-server-text-secondary);
+  color: var(--pf-t--global--text--color--subtle);
   line-height: 1.6;
+  font-size: 0.875rem;
 
   code {
-    background: var(--cem-dev-server-bg-tertiary);
+    background: var(--pf-t--global--background--color--primary--hover);
     padding: 2px 6px;
     border-radius: 3px;
-    font-family: var(--cem-dev-server-font-family-mono);
-    font-size: var(--cem-dev-server-font-size-sm);
+    font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+    font-size: 0.875rem;
   }
 }
 
 /* Hide footer drawer components until localStorage state is restored (prevents flash) */
 :host(.initializing) {
   cem-drawer,
-  cem-tabs {
+  pfv6-tabs {
     visibility: hidden;
   }
 }
@@ -615,24 +696,28 @@ footer ::slotted([slot="description"]) {
   text-transform: uppercase;
   flex-shrink: 0;
 
-  &.info {
-    background: #3b82f6;
-    color: white;
+  &.info {.info {
+    
+background: var(--pf-t--global--color--status--info--default);
+color: var(--pf-t--global--text--color--on-brand);
   }
 
-  &.warning {
-    background: #f59e0b;
-    color: white;
+  &.warning {.warning {
+    
+background: var(--pf-t--global--color--status--warning--default);
+color: var(--pf-t--global--text--color--on-brand);
   }
 
-  &.error {
-    background: #ef4444;
-    color: white;
+  &.error {.error {
+    
+background: var(--pf-t--global--color--status--danger--default);
+color: var(--pf-t--global--text--color--on-brand);
   }
 
-  &.debug {
-    background: #6b7280;
-    color: white;
+  &.debug {.debug {
+    
+background: light-dark(#6b7280, #9ca3af);
+color: var(--pf-t--global--text--color--on-brand);
   }
 }
 
@@ -653,18 +738,22 @@ footer ::slotted([slot="description"]) {
 
   & > summary {
     cursor: pointer;
-    padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);
-    background: var(--cem-dev-server-bg-secondary);
-    border-radius: var(--cem-dev-server-border-radius);
-    color: var(--cem-dev-server-accent-color);
+    padding: 0.5rem 1rem;
+    background: var(--pf-t--global--background--color--secondary--default);
+    border-radius: 6px;
+    color: var(--pf-t--global--text--color--regular);
     font-weight: 600;
-    font-size: var(--cem-dev-server-font-size-base);
+    font-size: 0.875rem;
     list-style: none;
-    transition: background 0.2s;
-    margin-bottom: var(--cem-dev-server-spacing-sm);
+    transition: background 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    user-select: none;
 
     &:hover {
-      background: var(--cem-dev-server-bg-tertiary);
+      background: var(--pf-t--global--background--color--secondary--hover);
     }
 
     &::-webkit-details-marker {
@@ -674,8 +763,8 @@ footer ::slotted([slot="description"]) {
     &::before {
       content: '▸';
       display: inline-block;
-      margin-inline-end: var(--cem-dev-server-spacing-sm);
-      transition: transform 0.2s;
+      transition: transform 100ms cubic-bezier(0.4, 0, 0.2, 1);
+      color: var(--pf-t--global--text--color--subtle);
     }
   }
 
@@ -690,17 +779,21 @@ footer ::slotted([slot="description"]) {
 
   summary {
     cursor: pointer;
-    padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);
-    background: var(--cem-dev-server-bg-secondary);
-    border-radius: var(--cem-dev-server-border-radius);
-    color: var(--cem-dev-server-accent-color);
-    font-family: var(--cem-dev-server-font-family-mono);
-    font-size: var(--cem-dev-server-font-size-sm);
+    padding: 0.5rem 1rem;
+    background: var(--pf-t--global--background--color--secondary--default);
+    border-radius: 6px;
+    color: var(--pf-t--global--text--color--regular);
+    font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+    font-size: 0.875rem;
     list-style: none;
-    transition: background 0.2s;
+    transition: background 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    user-select: none;
 
     &:hover {
-      background: var(--cem-dev-server-bg-tertiary);
+      background: var(--pf-t--global--background--color--secondary--hover);
     }
 
     &::-webkit-details-marker {
@@ -710,8 +803,8 @@ footer ::slotted([slot="description"]) {
     &::before {
       content: '▸';
       display: inline-block;
-      margin-inline-end: var(--cem-dev-server-spacing-sm);
-      transition: transform 0.2s;
+      transition: transform 100ms cubic-bezier(0.4, 0, 0.2, 1);
+      color: var(--pf-t--global--text--color--subtle);
     }
   }
 
@@ -745,7 +838,7 @@ footer ::slotted([slot="description"]) {
 
   &:hover {
     background: var(--cem-dev-server-accent-color);
-    color: white;
+color: var(--pf-t--global--text--color--on-brand);
 
     .nav-package-name {
       color: rgba(255, 255, 255, 0.8);
@@ -754,7 +847,7 @@ footer ::slotted([slot="description"]) {
 
   &[aria-current="page"] {
     background: var(--cem-dev-server-accent-color);
-    color: white;
+color: var(--pf-t--global--text--color--on-brand);
 
     .nav-package-name {
       color: rgba(255, 255, 255, 0.8);
@@ -944,9 +1037,6 @@ cem-serve-knob-css-property [slot="description"] {
       <header>
         
         <slot name="title"></slot>
-        <nav>
-          
-        </nav>
         
         
         <button class="debug-button"
@@ -966,10 +1056,10 @@ cem-serve-knob-css-property [slot="description"] {
 #toggle-group {
   display: flex;
   gap: 2px;
-  background: var(--cem-dev-server-bg-tertiary);
-  border-radius: var(--cem-dev-server-border-radius);
+  background: var(--pf-t--global--background--color--secondary--hover);
+  border-radius: 6px;
   padding: 2px;
-  border: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
+  border: 1px solid var(--pf-t--global--border--color--default);
 }
 
 .toggle-option {
@@ -991,23 +1081,23 @@ cem-serve-knob-css-property [slot="description"] {
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: calc(var(--cem-dev-server-border-radius) - 2px);
-  color: var(--cem-dev-server-text-secondary);
-  transition: background-color 0.2s, color 0.2s;
+  border-radius: 4px;
+  color: var(--pf-t--global--icon--color--subtle);
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
-    background: var(--cem-dev-server-bg-primary);
-    color: var(--cem-dev-server-text-primary);
+    background: var(--pf-t--global--background--color--primary--default);
+    color: var(--pf-t--global--text--color--regular);
   }
 }
 
 .toggle-option input[type="radio"]:checked + .toggle-label {
-  background: var(--cem-dev-server-accent-color);
-  color: white;
+  background: var(--pf-t--global--color--brand--default);
+  color: var(--pf-t--global--text--color--on-brand);
 }
 
 .toggle-option input[type="radio"]:focus-visible + .toggle-label {
-  outline: 2px solid var(--cem-dev-server-accent-color);
+  outline: 2px solid var(--pf-t--global--color--brand--default);
   outline-offset: 2px;
 }
 
@@ -1132,42 +1222,47 @@ cem-serve-knob-css-property [slot="description"] {
     transform: translate(-50%, -50%);
     width: 40px;
     height: 4px;
-    background: var(--cem-dev-server-border-color, #cbd5e1);
-    border-radius: 2px;
-    transition: background 0.2s;
+    background: var(--pf-t--global--border--color--default);
+    border-radius: var(--pf-t--global--border--radius--small);
+    transition: background-color var(--pf-t--global--motion--duration--fade--short) var(--pf-t--global--motion--timing-function--default);
   }
 
   &:hover::before,
   &:active::before {
-    background: var(--cem-dev-server-accent-color, #3b82f6);
+    background: var(--pf-t--global--color--brand--default);
   }
 }
 
 #toggle {
-  background: none;
-  border: none;
-  color: var(--cem-dev-server-text-secondary, #64748b);
-  padding: var(--cem-dev-server-spacing-sm, 8px);
-  border-radius: var(--cem-dev-server-border-radius, 4px);
+  background: var(--pf-t--global--background--color--action--plain--default);
+  border: var(--pf-t--global--border--width--action--plain--hover) solid transparent;
+  border-radius: var(--pf-t--global--border--radius--small);
+  color: var(--pf-t--global--text--color--subtle);
+  padding: var(--pf-t--global--spacer--xs) var(--pf-t--global--spacer--sm);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-  transition: background 0.2s, transform 0.2s;
+  transition:
+    background-color var(--pf-t--global--motion--duration--fade--short) var(--pf-t--global--motion--timing-function--default),
+    color var(--pf-t--global--motion--duration--fade--short) var(--pf-t--global--motion--timing-function--default),
+    transform var(--pf-t--global--motion--duration--fade--short) var(--pf-t--global--motion--timing-function--default);
+
   &:hover {
-    background: var(--cem-dev-server-bg-tertiary, #f1f5f9);
+    background: var(--pf-t--global--background--color--action--plain--hover);
+    color: var(--pf-t--global--text--color--regular);
+    border-color: var(--pf-t--global--border--color--high-contrast);
   }
 
   & svg {
     transform: rotate(0deg);
-    transition: transform 0.2s;
+    transition: transform var(--pf-t--global--motion--duration--md) var(--pf-t--global--motion--timing-function--decelerate);
   }
 
   :host([open]) & svg {
     transform: rotate(180deg);
   }
-
 }
 
 #content {
@@ -1176,8 +1271,16 @@ cem-serve-knob-css-property [slot="description"] {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  opacity: 0;
+
   &.transitions-enabled {
-    transition: height 0.3s ease;
+    transition:
+      height var(--pf-t--global--motion--duration--slide-in--short) var(--pf-t--global--motion--timing-function--decelerate),
+      opacity var(--pf-t--global--motion--duration--fade--default) var(--pf-t--global--motion--timing-function--default);
+  }
+
+  :host([open]) & {
+    opacity: 1;
   }
 }
 
@@ -1198,11 +1301,13 @@ cem-serve-knob-css-property [slot="description"] {
 </div>
 </template>
 
-          <cem-tabs>
+          <pfv6-tabs>
             <template shadowrootmode="open">
   <style>:host {
   display: block;
   height: 100%;
+  position: relative;
+  overflow: hidden;
 }
 
 .tabs-container {
@@ -1212,11 +1317,24 @@ cem-serve-knob-css-property [slot="description"] {
 }
 
 .tabs {
+  position: relative;
   display: flex;
-  gap: var(--cem-dev-server-spacing-sm, 8px);
-  padding: var(--cem-dev-server-spacing-md, 16px);
-  border-bottom: var(--cem-dev-server-border-width, 1px) solid var(--cem-dev-server-border-color, #cbd5e1);
+  gap: var(--pf-t--global--spacer--sm);
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
   flex-shrink: 0;
+
+  /* Border at bottom of tabs container */
+  &::before {
+    content: '';
+    position: absolute;
+    inset-block-end: 0;
+    inset-inline-start: 0;
+    inset-inline-end: 0;
+    border-block-end: var(--pf-t--global--border--width--regular) solid var(--pf-t--global--border--color--default);
+  }
 }
 
 .panels {
@@ -1225,68 +1343,121 @@ cem-serve-knob-css-property [slot="description"] {
   overflow: hidden;
 }
 
-/* Slotted tab button styles */
-::slotted(.tab) {
-  background: none;
-  border: none;
-  border-bottom: 3px solid transparent;
-  color: var(--cem-dev-server-text-secondary, #64748b);
-  padding: var(--cem-dev-server-spacing-sm, 8px) var(--cem-dev-server-spacing-md, 16px);
-  cursor: pointer;
+/* Tab button styles - PatternFly v6 tabs__item + tabs__link combined */
+.tab {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  /* Combined padding: item (8px all sides) + link (4px 8px) = 12px 16px */
+  padding: 12px 16px;
   font-family: inherit;
-  font-size: inherit;
-  transition: border-color 0.2s, color 0.2s;
+  font-size: var(--pf-t--global--font--size--sm);
+  font-weight: 400;
+  color: var(--pf-t--global--text--color--subtle);
+  text-decoration: none;
+  background-color: transparent;
+  border: 0;
+  border-radius: var(--pf-t--global--border--radius--small);
+  cursor: pointer;
+  transition: background-color var(--pf-t--global--motion--duration--fade--short) var(--pf-t--global--motion--timing-function--default);
+
+  /* Bottom accent line pseudo-element */
+  &::after {
+    content: '';
+    position: absolute;
+    inset-block-start: auto;
+    inset-block-end: 0;
+    inset-inline-start: 0;
+    inset-inline-end: 0;
+    border-style: solid;
+    border-width: 0;
+    border-block-end-width: 0;
+    border-block-end-color: var(--pf-t--global--border--color--default);
+    transition:
+      border-block-end-width var(--pf-t--global--motion--duration--md) var(--pf-t--global--motion--timing-function--decelerate),
+      border-block-end-color var(--pf-t--global--motion--duration--md) var(--pf-t--global--motion--timing-function--decelerate);
+  }
 }
 
-::slotted(.tab:hover) {
-  color: var(--cem-dev-server-text-primary, #1e293b);
+.tab:hover {
+  background-color: var(--pf-t--global--background--color--action--plain--hover);
+  color: var(--pf-t--global--text--color--regular);
 }
 
-::slotted(.tab[aria-selected="true"]) {
-  border-bottom-color: var(--cem-dev-server-accent-color, #3b82f6);
-  color: var(--cem-dev-server-accent-color, #3b82f6);
+.tab[aria-selected="true"] {
+  color: var(--pf-t--global--text--color--regular);
+
+  /* Show blue accent line at bottom */
+  &::after {
+    border-block-end-width: var(--pf-t--global--border--width--extra-strong);
+    border-block-end-color: var(--pf-t--global--border--color--clicked);
+  }
 }
 
-/* Slotted panel styles */
-::slotted(.tab-panel) {
-  display: none;
-  padding: var(--cem-dev-server-spacing-md, 16px);
-  height: 100%;
-  overflow-y: auto;
-  box-sizing: border-box;
-}
-
-::slotted(.tab-panel[active]) {
-  display: block;
+.tab:disabled {
+  color: var(--pf-t--global--text--color--on-disabled);
+  background-color: var(--pf-t--global--background--color--disabled--default);
+  cursor: not-allowed;
+  pointer-events: none;
 }
 </style>
+<link rel="stylesheet" href="/__cem/elements/pfv6-tabs/pfv6-tabs.css">
 <div class="tabs-container">
   <div class="tabs" role="tablist">
-    <slot name="tab"></slot>
+    
   </div>
   <div class="panels">
-    <slot name="panel"></slot>
+    <slot></slot>
   </div>
 </div>
 </template>
 
-            <button slot="tab" class="tab" role="tab" aria-selected="false" aria-controls="panel-knobs">
-              Knobs
-            </button>
-            <button slot="tab" class="tab" role="tab" aria-selected="false" aria-controls="panel-logs">
-              Server Logs
-            </button>
-            <div slot="panel" class="tab-panel" id="panel-knobs" role="tabpanel">
+            <pfv6-tab title="Knobs">
+              <template shadowrootmode="open">
+  <style>:host {
+  display: none;
+}
+
+:host([active]) {
+  display: block;
+  padding: var(--pf-t--global--spacer--md);
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+</style>
+<link rel="stylesheet" href="/__cem/elements/pfv6-tab/pfv6-tab.css">
+<slot></slot>
+</template>
+
               <div id="knobs-container">
                 
                 <p class="knobs-empty">No knobs available for this element.</p>
                 
               </div>
-            </div>
-            <div slot="panel" class="tab-panel" id="panel-logs" role="tabpanel">
+            </pfv6-tab>
+            <pfv6-tab title="Server Logs">
+              <template shadowrootmode="open">
+  <style>:host {
+  display: none;
+}
+
+:host([active]) {
+  display: block;
+  padding: var(--pf-t--global--spacer--md);
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+</style>
+<link rel="stylesheet" href="/__cem/elements/pfv6-tab/pfv6-tab.css">
+<slot></slot>
+</template>
+
               <div id="log-container"></div>
-            </div>
-          </cem-tabs>
+            </pfv6-tab>
+          </pfv6-tabs>
         </cem-drawer>
       </footer>
     </template>
