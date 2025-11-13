@@ -1,10 +1,11 @@
-<label id="knob-label">
-  <div id="knob-header">
-    <span id="knob-name"></span>
-    <span id="knob-type"></span>
-  </div>
-  <div id="input-container"></div>
-  <div id="knob-description">
-    <slot name="description"></slot>
-  </div>
-</label>
+<div id="input-container">
+  {{if eq .type "boolean"}}
+  <pfv6-switch id="input">
+    {{renderElementShadowRoot "pfv6-switch" dict}}
+    {{.name}}
+  </pfv6-switch>
+  {{end}}
+</div>
+<div id="knob-description">
+  <slot name="description"></slot>
+</div>
