@@ -134,7 +134,7 @@ export class CEMTransformErrorOverlay extends HTMLElement {
             <span class="error-icon">⚠️</span>
             <span id="title"></span>
           </h2>
-          <button class="close-button" id="close">Dismiss</button>
+          <pfv6-button class="close-button" id="close" variant="secondary">Dismiss</pfv6-button>
         </div>
         <div class="overlay-body">
           <div class="error-file" id="file"></div>

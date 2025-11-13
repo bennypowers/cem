@@ -170,6 +170,8 @@ func serveInternalModules(w http.ResponseWriter, r *http.Request, config Config)
 		contentType = "application/javascript; charset=utf-8"
 	case strings.HasSuffix(reqPath, ".css"):
 		contentType = "text/css; charset=utf-8"
+	case strings.HasSuffix(reqPath, ".html"):
+		contentType = "text/html; charset=utf-8"
 	case strings.HasSuffix(reqPath, ".svg"):
 		contentType = "image/svg+xml"
 	case strings.HasSuffix(reqPath, ".png"):

@@ -23,8 +23,14 @@ class Pfv6Button extends HTMLElement {
     }
   }
 
-  connectedCallback() {
-    const button = this.shadowRoot?.querySelector('button');
+  async connectedCallback() {
+    // If shadow root is empty (client-side rendering), populate it
+    let button = this.shadowRoot?.querySelector('button');
+    if (!button && this.shadowRoot) {
+      await this.#populateShadowRoot();
+      button = this.shadowRoot.querySelector('button');
+    }
+
     if (!button) return;
 
     // Forward attributes to internal button
@@ -53,6 +59,25 @@ class Pfv6Button extends HTMLElement {
 
   disconnectedCallback() {
     this.#observer?.disconnect();
+  }
+
+  async #populateShadowRoot() {
+    // Fetch HTML template and CSS for client-side rendering
+    const [htmlResponse, cssResponse] = await Promise.all([
+      fetch('/__cem/elements/pfv6-button/pfv6-button.html'),
+      fetch('/__cem/elements/pfv6-button/pfv6-button.css')
+    ]);
+
+    const [html, css] = await Promise.all([
+      htmlResponse.text(),
+      cssResponse.text()
+    ]);
+
+    // Populate shadow root
+    this.shadowRoot.innerHTML = `
+      <style>${css}</style>
+      ${html}
+    `;
   }
 
   #syncAttributes(button) {
