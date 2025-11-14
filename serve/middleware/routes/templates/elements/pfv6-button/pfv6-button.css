@@ -1,5 +1,10 @@
 :host {
   display: inline-flex;
+
+  /* Base component variables - used by button element */
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: transparent;
 }
 
 button {
@@ -15,12 +20,14 @@ button {
   white-space: nowrap;
   vertical-align: middle;
   user-select: none;
-  border: 1px solid transparent;
+  border: 1px solid var(--pf-v6-c-button--BorderColor);
   border-radius: 6px;
   padding: 0.5rem 1rem;
   cursor: pointer;
   transition: all 200ms cubic-bezier(0.645, 0.045, 0.355, 1);
   position: relative;
+  color: var(--pf-v6-c-button--Color);
+  background-color: var(--pf-v6-c-button--BackgroundColor);
 }
 
 button:focus-visible {
@@ -29,103 +36,108 @@ button:focus-visible {
 }
 
 /* Primary variant */
-:host([variant="primary"]) button {
-  background-color: var(--pf-t--global--color--brand--default);
-  border-color: var(--pf-t--global--color--brand--default);
-  color: var(--pf-t--global--text--color--on-brand);
+:host([variant="primary"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--on-brand);
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--color--brand--default);
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--color--brand--default);
 }
 
 :host([variant="primary"]) button:hover:not(:disabled) {
-  background-color: var(--pf-t--global--color--brand--hover);
-  border-color: var(--pf-t--global--color--brand--hover);
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--color--brand--hover);
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--color--brand--hover);
 }
 
 :host([variant="primary"]) button:active:not(:disabled) {
-  background-color: var(--pf-t--global--color--brand--clicked);
-  border-color: var(--pf-t--global--color--brand--clicked);
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--color--brand--clicked);
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--color--brand--clicked);
 }
 
 /* Secondary variant */
-:host([variant="secondary"]) button {
-  background-color: transparent;
-  border-color: var(--pf-t--global--text--color--regular);
-  color: var(--pf-t--global--text--color--regular);
+:host([variant="secondary"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--text--color--regular);
 }
 
 :host([variant="secondary"]) button:hover:not(:disabled) {
-  background-color: var(--pf-t--global--background--color--primary--hover);
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--primary--hover);
 }
 
 :host([variant="secondary"]) button:active:not(:disabled) {
-  background-color: var(--pf-t--global--background--color--secondary--hover);
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--secondary--hover);
 }
 
 /* Tertiary variant (default) */
-:host,
-:host([variant="tertiary"]) button {
-  background-color: transparent;
-  border-color: transparent;
-  color: var(--pf-t--global--text--color--regular);
+:host([variant="tertiary"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: transparent;
 }
 
 :host([variant="tertiary"]) button:hover:not(:disabled) {
-  background-color: var(--pf-t--global--background--color--primary--hover);
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--primary--hover);
 }
 
 :host([variant="tertiary"]) button:active:not(:disabled) {
-  background-color: var(--pf-t--global--background--color--secondary--hover);
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--secondary--hover);
 }
 
 /* Danger variant */
-:host([variant="danger"]) button {
-  background-color: var(--pf-t--global--color--status--danger--default);
-  border-color: var(--pf-t--global--color--status--danger--default);
-  color: var(--pf-t--global--text--color--on-brand);
+:host([variant="danger"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--on-brand);
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--color--status--danger--default);
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--color--status--danger--default);
 }
 
 :host([variant="danger"]) button:hover:not(:disabled) {
-  background-color: light-dark(#8a2c08, #c7581c);
-  border-color: light-dark(#8a2c08, #c7581c);
+  --pf-v6-c-button--BackgroundColor: light-dark(#8a2c08, #c7581c);
+  --pf-v6-c-button--BorderColor: light-dark(#8a2c08, #c7581c);
 }
 
 :host([variant="danger"]) button:active:not(:disabled) {
-  background-color: light-dark(#6b2205, #a0421a);
-  border-color: light-dark(#6b2205, #a0421a);
+  --pf-v6-c-button--BackgroundColor: light-dark(#6b2205, #a0421a);
+  --pf-v6-c-button--BorderColor: light-dark(#6b2205, #a0421a);
 }
 
 /* Plain variant (icon-only) */
+:host([variant="plain"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--icon--color--subtle);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: transparent;
+}
+
 :host([variant="plain"]) button {
-  background-color: transparent;
-  border-color: transparent;
-  color: var(--pf-t--global--icon--color--subtle);
   padding: 0.5rem;
   min-width: auto;
 }
 
 :host([variant="plain"]) button:hover:not(:disabled) {
-  background-color: var(--pf-t--global--background--color--primary--hover);
-  color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--primary--hover);
 }
 
 :host([variant="plain"]) button:active:not(:disabled) {
-  background-color: var(--pf-t--global--background--color--secondary--hover);
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--secondary--hover);
 }
 
 /* Link variant */
+:host([variant="link"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--color--brand--default);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: transparent;
+}
+
 :host([variant="link"]) button {
-  background-color: transparent;
-  border-color: transparent;
-  color: var(--pf-t--global--color--brand--default);
   padding-inline: 0;
   text-decoration: underline;
 }
 
 :host([variant="link"]) button:hover:not(:disabled) {
-  color: var(--pf-t--global--color--brand--hover);
+  --pf-v6-c-button--Color: var(--pf-t--global--color--brand--hover);
 }
 
 :host([variant="link"]) button:active:not(:disabled) {
-  color: var(--pf-t--global--color--brand--clicked);
+  --pf-v6-c-button--Color: var(--pf-t--global--color--brand--clicked);
 }
 
 /* Size variants */

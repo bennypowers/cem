@@ -74,20 +74,14 @@ export class CEMTransformErrorOverlay extends HTMLElement {
           font-size: 24px;
         }
 
-        .close-button {
-          background: rgba(255, 255, 255, 0.2);
-          border: none;
-          color: white;
-          cursor: pointer;
-          padding: 8px 12px;
-          border-radius: 4px;
-          font-size: 14px;
-          font-weight: 500;
-          transition: background 0.2s;
+        #close {
+          --pf-v6-c-button--Color: white;
+          --pf-v6-c-button--BackgroundColor: rgba(255, 255, 255, 0.2);
+          --pf-v6-c-button--BorderColor: transparent;
         }
 
-        .close-button:hover {
-          background: rgba(255, 255, 255, 0.3);
+        #close:hover {
+          --pf-v6-c-button--BackgroundColor: rgba(255, 255, 255, 0.3);
         }
 
         .overlay-body {
