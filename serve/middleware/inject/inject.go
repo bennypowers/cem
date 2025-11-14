@@ -35,7 +35,12 @@ func New(enabled bool, scriptPath string) middleware.Middleware {
 			}
 
 			// Only inject into HTML responses
+			// Exclude component templates (/__cem/elements/**/*.html) - these are fetched for client-side rendering
 			if !strings.HasSuffix(r.URL.Path, ".html") && r.URL.Path != "/" {
+				next.ServeHTTP(w, r)
+				return
+			}
+			if strings.HasPrefix(r.URL.Path, "/__cem/elements/") && strings.HasSuffix(r.URL.Path, ".html") {
 				next.ServeHTTP(w, r)
 				return
 			}
