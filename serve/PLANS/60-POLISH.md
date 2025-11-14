@@ -159,23 +159,52 @@ serve:
 - [ ] Browser compatibility testing
 - [ ] Mobile/responsive demo chrome
 - [ ] Accessibility audit of demo chrome UI
-- [ ] **PatternFly v6 UI Components Implementation**
-  - [ ] Implement PatternFly v6 designs for all dev server UI components
-    - [ ] **Buttons** - Replace button styles in nav drawer, debug panel, chrome controls (`cem-nav-drawer.html`, `demo-chrome.html`)
-    - [ ] **Drawer** - Apply PF v6 drawer pattern to `<cem-nav-drawer>` component (`templates/elements/cem-nav-drawer/`)
-    - [ ] **Header layout** - Apply PF v6 masthead/chrome pattern to `<cem-serve-chrome>` (`templates/demo-chrome.html`)
-    - [ ] **Disclosure/Details** - Apply PF v6 expandable section pattern to debug panel collapsibles
-    - [ ] **Switch** - Replace checkboxes with PF v6 switch component in knobs (`templates/knobs.html`)
-    - [ ] **Form controls** - Apply PF v6 form patterns to knob inputs (text, select, number)
-    - [ ] **Color scheme toggle** - Apply PF v6 toggle pattern
-  - **Implementation approach:**
-    - Create local web components in `serve/middleware/routes/templates/elements/`
-    - Use existing template/SSR setup (Declarative Shadow DOM)
+- [ ] **PatternFly v6 UI Components Implementation** 🚧 **IN PROGRESS**
+
+  **Phase 1: Infrastructure & Core Components** ✅ **COMPLETE**
+  - [x] Hybrid SSR/client-side rendering infrastructure
+    - [x] Template transformation middleware (Go templates → HTML comments)
+    - [x] Constructable Stylesheets utility for CSS efficiency
+    - [x] Client-side fallback pattern with error handling
+    - [x] Transform tests (6 passing tests)
+  - [x] Core pfv6 components implemented with hybrid rendering:
+    - [x] `pfv6-button` - Button component with variants
+    - [x] `pfv6-switch` - Toggle switch component
+    - [x] `pfv6-text-input` - Text input component
+    - [x] `pfv6-select` - Select/dropdown component
+    - [x] `pfv6-tabs` - Tabs container component
+    - [x] `pfv6-tab` - Individual tab component
+
+  **Phase 2: Dev Server UI Integration** ⬅️ **NEXT STEP**
+  - [ ] Integrate existing pfv6 components into dev server UI:
+    - [ ] **Buttons** - Replace button styles with `<pfv6-button>` in:
+      - [ ] Nav drawer (`cem-nav-drawer.html`)
+      - [ ] Debug panel (`demo-chrome.html`)
+      - [ ] Chrome controls (`demo-chrome.html`)
+    - [ ] **Switch** - Replace checkboxes with `<pfv6-switch>` in:
+      - [ ] Knobs panel (`templates/knobs.html`)
+      - [ ] Color scheme toggle (if applicable)
+    - [ ] **Form controls** - Use `<pfv6-text-input>` and `<pfv6-select>` in:
+      - [ ] Knobs panel for text/number inputs
+      - [ ] Knobs panel for select/enum inputs
+    - [ ] **Tabs** - Use `<pfv6-tabs>` and `<pfv6-tab>` where applicable
+
+  **Phase 3: Additional Components** (after Phase 2)
+  - [ ] Develop missing pfv6 components:
+    - [ ] **pfv6-drawer** - For navigation drawer pattern (`<cem-nav-drawer>`)
+    - [ ] **pfv6-header** - Masthead/chrome pattern (`<cem-serve-chrome>`)
+    - [ ] **pfv6-disclosure** - Expandable sections for debug panel
+    - [ ] Other form controls as needed (checkbox, radio, etc.)
+  - [ ] Integrate new components into dev server UI
+
+  **Implementation approach:**
+    - ✅ Create local web components in `serve/middleware/routes/templates/elements/`
+    - ✅ Use existing template/SSR setup (Declarative Shadow DOM)
     - Follow PF v6 design tokens and patterns
     - No external dependencies - self-contained implementations
     - Maintain current accessibility features (aria-labels, keyboard nav, etc.)
     - Preserve light/dark mode support
-    - When implementing web components for patternfly, they must follow the 
+    - When implementing web components for patternfly, they must follow the
     patternfly designs, but the APIs do not have to be 1:1 with the react components, for example, we should prefer slots or events to render props.
 
 ## Testing Strategy
