@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package routes
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -29,6 +30,8 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+
+	"golang.org/x/net/html"
 
 	"bennypowers.dev/cem/serve/logger"
 	"bennypowers.dev/cem/serve/middleware"
@@ -135,13 +138,55 @@ func New(config Config) middleware.Middleware {
 }
 
 // transformTemplateForClient converts Go template syntax to HTML comments for client-side use
-// This allows a single source of truth in git while enabling client-side rendering
+// Uses proper HTML parsing instead of regex to safely handle template content
 func transformTemplateForClient(tmpl string) string {
+	// Parse the HTML template
+	doc, err := html.ParseFragment(strings.NewReader(tmpl), nil)
+	if err != nil {
+		// If parsing fails, return original (likely malformed HTML)
+		return tmpl
+	}
+
+	// Walk the tree and transform text nodes containing Go template syntax
+	var transform func(*html.Node)
+	transform = func(n *html.Node) {
+		if n.Type == html.TextNode {
+			// Transform Go template syntax in text nodes
+			transformed := transformGoTemplate(n.Data)
+			if transformed != n.Data {
+				n.Data = transformed
+			}
+		}
+
+		// Recurse for children
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			transform(c)
+		}
+	}
+
+	// Transform all nodes in the fragment
+	for _, node := range doc {
+		transform(node)
+	}
+
+	// Render back to HTML
+	var buf bytes.Buffer
+	for _, node := range doc {
+		if err := html.Render(&buf, node); err != nil {
+			return tmpl // Fallback to original on render error
+		}
+	}
+
+	return buf.String()
+}
+
+// transformGoTemplate processes Go template syntax in a text node
+func transformGoTemplate(text string) string {
 	// Remove simple interpolations like {{.VariantName}}
 	// Client-side code uses attributes directly instead
-	result := regexp.MustCompile(`\{\{\.(\w+)\}\}`).ReplaceAllString(tmpl, "")
+	result := regexp.MustCompile(`\{\{\.(\w+)\}\}`).ReplaceAllString(text, "")
 
-	// Convert control flow to tracking comments to help client-side JS
+	// Convert control flow to tracking comments
 	// {{if .Disabled}} -> <!-- if:disabled -->
 	result = regexp.MustCompile(`\{\{if\s+\.(\w+)\}\}`).ReplaceAllString(result, "<!-- if:$1 -->")
 
