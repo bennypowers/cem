@@ -53,7 +53,7 @@ var knobsMultiTemplate string
 //go:embed templates/**
 var templatesFS embed.FS
 
-//go:embed templates/js/*.js templates/css/*.css templates/images/* templates/elements/**/*.js
+//go:embed templates/js/*.js templates/css/*.css templates/images/* templates/elements/**/*
 var InternalModules embed.FS
 
 // errorBroadcaster holds the error broadcaster for template errors

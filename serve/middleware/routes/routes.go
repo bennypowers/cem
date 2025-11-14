@@ -25,6 +25,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"sort"
 	"strings"
@@ -133,6 +134,26 @@ func New(config Config) middleware.Middleware {
 	}
 }
 
+// transformTemplateForClient converts Go template syntax to HTML comments for client-side use
+// This allows a single source of truth in git while enabling client-side rendering
+func transformTemplateForClient(tmpl string) string {
+	// Remove simple interpolations like {{.VariantName}}
+	// Client-side code uses attributes directly instead
+	result := regexp.MustCompile(`\{\{\.(\w+)\}\}`).ReplaceAllString(tmpl, "")
+
+	// Convert control flow to tracking comments to help client-side JS
+	// {{if .Disabled}} -> <!-- if:disabled -->
+	result = regexp.MustCompile(`\{\{if\s+\.(\w+)\}\}`).ReplaceAllString(result, "<!-- if:$1 -->")
+
+	// {{range .Items}} -> <!-- range:items -->
+	result = regexp.MustCompile(`\{\{range\s+\.(\w+)\}\}`).ReplaceAllString(result, "<!-- range:$1 -->")
+
+	// {{end}} -> <!-- end -->
+	result = regexp.MustCompile(`\{\{end\}\}`).ReplaceAllString(result, "<!-- end -->")
+
+	return result
+}
+
 // serveInternalModules serves embedded static assets from embed.FS
 func serveInternalModules(w http.ResponseWriter, r *http.Request, config Config) {
 	// Strip /__cem/ prefix to get the file path within the embedded FS
@@ -161,6 +182,13 @@ func serveInternalModules(w http.ResponseWriter, r *http.Request, config Config)
 	if err != nil {
 		http.NotFound(w, r)
 		return
+	}
+
+	// Transform Go template syntax to HTML comments for client-side rendering
+	// Only apply to .html files from elements/ directory
+	if strings.HasSuffix(reqPath, ".html") && strings.HasPrefix(reqPath, "elements/") {
+		transformed := transformTemplateForClient(string(data))
+		data = []byte(transformed)
 	}
 
 	// Set content type based on file extension
