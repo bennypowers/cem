@@ -1,3 +1,5 @@
+import { loadComponentTemplate } from '/__cem/stylesheet-cache.js';
+
 /**
  * PatternFly v6 inspired button component
  *
@@ -65,22 +67,21 @@ class Pfv6Button extends HTMLElement {
   }
 
   async #populateShadowRoot() {
-    // Fetch HTML template and CSS for client-side rendering
-    const [htmlResponse, cssResponse] = await Promise.all([
-      fetch('/__cem/elements/pfv6-button/pfv6-button.html'),
-      fetch('/__cem/elements/pfv6-button/pfv6-button.css')
-    ]);
+    try {
+      // Load template using shared utility with Constructable Stylesheets
+      const { html, stylesheet } = await loadComponentTemplate('pfv6-button');
 
-    const [html, css] = await Promise.all([
-      htmlResponse.text(),
-      cssResponse.text()
-    ]);
+      // Apply stylesheet using Constructable Stylesheets API
+      // This allows stylesheet sharing across multiple button instances
+      this.shadowRoot.adoptedStyleSheets = [stylesheet];
 
-    // Populate shadow root
-    this.shadowRoot.innerHTML = `
-      <style>${css}</style>
-      ${html}
-    `;
+      // Populate shadow root with HTML
+      this.shadowRoot.innerHTML = html;
+    } catch (error) {
+      console.error('Failed to load pfv6-button template:', error);
+      // Fallback UI for when template loading fails
+      this.shadowRoot.innerHTML = '<button>Button (template failed to load)</button>';
+    }
   }
 
   #syncAttributes(button) {
