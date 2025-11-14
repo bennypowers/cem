@@ -15,6 +15,8 @@
   <script type="module" src="/__cem/websocket-client.js"></script>
   <script type="module" src="/__cem/elements/pfv6-button/pfv6-button.js"></script>
   <script type="module" src="/__cem/elements/pfv6-switch/pfv6-switch.js"></script>
+  <script type="module" src="/__cem/elements/pfv6-text-input/pfv6-text-input.js"></script>
+  <script type="module" src="/__cem/elements/pfv6-select/pfv6-select.js"></script>
   <script type="module" src="/__cem/elements/pfv6-tab/pfv6-tab.js"></script>
   <script type="module" src="/__cem/elements/pfv6-tabs/pfv6-tabs.js"></script>
   <script type="module" src="/__cem/elements/cem-drawer/cem-drawer.js"></script>
@@ -35,6 +37,7 @@
   --pf-t--global--text--color--subtle: light-dark(#6a6e73, #c7c7c7);
   --pf-t--global--text--color--on-brand: #ffffff;
   --pf-t--global--text--color--disabled: light-dark(#d2d2d2, #6b6b6b);
+  --pf-t--global--text--color--on-disabled: light-dark(#6a6e73, #b0b0b0);
 
   /* Background colors */
   --pf-t--global--background--color--primary--default: light-dark(#ffffff, #1f1f1f);
@@ -43,12 +46,15 @@
   --pf-t--global--background--color--secondary--hover: light-dark(#e6e6e6, #4d4d4d);
   --pf-t--global--background--color--disabled--default: light-dark(#f0f0f0, #3c3f42);
   --pf-t--global--background--color--control--default: light-dark(#f0f0f0, #4d4d4d);
+  --pf-t--global--background--color--action--plain--default: transparent;
+  --pf-t--global--background--color--action--plain--hover: light-dark(#f0f0f0, #3c3f42);
 
   /* Border colors */
   --pf-t--global--border--color--default: light-dark(#c7c7c7, #707070);
   --pf-t--global--border--color--hover: light-dark(#4394e5, #0066cc);
   --pf-t--global--border--color--clicked: #0066cc;
   --pf-t--global--border--color--disabled: light-dark(#d2d2d2, #707070);
+  --pf-t--global--border--color--high-contrast: light-dark(#151515, #ffffff);
 
   /* Icon colors */
   --pf-t--global--icon--color--regular: light-dark(#6a6e73, #c7c7c7);
@@ -70,11 +76,12 @@
   --pf-t--global--border--radius--pill: 999px;
 
   /* Spacing (same in both modes) */
-  --pf-t--global--spacer--xs: 0.25rem;
-  --pf-t--global--spacer--sm: 0.5rem;
-  --pf-t--global--spacer--md: 1rem;
-  --pf-t--global--spacer--lg: 1.5rem;
-  --pf-t--global--spacer--xl: 2rem;
+  --pf-t--global--spacer--xs: 0.25rem;  /* 4px */
+  --pf-t--global--spacer--sm: 0.5rem;   /* 8px */
+  --pf-t--global--spacer--md: 1rem;     /* 16px */
+  --pf-t--global--spacer--lg: 1.5rem;   /* 24px */
+  --pf-t--global--spacer--xl: 2rem;     /* 32px */
+  --pf-t--global--spacer--2xl: 3rem;    /* 48px */
 
   /* Typography (same in both modes) */
   --pf-t--global--font--size--sm: 0.875rem;
@@ -85,11 +92,21 @@
   /* Motion (same in both modes) */
   --pf-t--global--motion--duration--sm: 100ms;
   --pf-t--global--motion--duration--md: 200ms;
+  --pf-t--global--motion--duration--fade--short: 100ms;
   --pf-t--global--motion--timing-function--default: cubic-bezier(0.4, 0, 0.2, 1);
+  --pf-t--global--motion--timing-function--decelerate: cubic-bezier(0, 0, 0.2, 1);
 
   /* Border widths (same in both modes) */
+  --pf-t--global--border--width--100: 1px;
   --pf-t--global--border--width--regular: 1px;
   --pf-t--global--border--width--strong: 2px;
+  --pf-t--global--border--width--extra-strong: 3px;
+  --pf-t--global--border--width--action--plain--hover: 0px;
+
+  /* Box shadows */
+  --pf-t--global--box-shadow--sm: light-dark(0 0.125rem 0.25rem rgba(3, 3, 3, 0.12), 0 0.125rem 0.25rem rgba(0, 0, 0, 0.24));
+  --pf-t--global--box-shadow--md: light-dark(0 0.5rem 1rem rgba(3, 3, 3, 0.15), 0 0.5rem 1rem rgba(0, 0, 0, 0.3));
+  --pf-t--global--box-shadow--lg: light-dark(0 1rem 2rem rgba(3, 3, 3, 0.18), 0 1rem 2rem rgba(0, 0, 0, 0.36));
 }
 </style>
   <style>/* Enable cross-document view transitions for same-origin navigation */
@@ -643,7 +660,7 @@ footer {
   bottom: 0;
   left: 0;
   right: 0;
-  background: var(--pf-t--global--background--color--secondary--default);
+  background: var(--pf-t--global--background--color--primary--default);
   border-top: 1px solid var(--pf-t--global--border--color--default);
   z-index: 50;
 }
@@ -696,28 +713,24 @@ footer ::slotted([slot="description"]) {
   text-transform: uppercase;
   flex-shrink: 0;
 
-  &.info {.info {
-    
-background: var(--pf-t--global--color--status--info--default);
-color: var(--pf-t--global--text--color--on-brand);
+  &.info {
+    background: var(--pf-t--global--color--status--info--default);
+    color: var(--pf-t--global--text--color--on-brand);
   }
 
-  &.warning {.warning {
-    
-background: var(--pf-t--global--color--status--warning--default);
-color: var(--pf-t--global--text--color--on-brand);
+  &.warning {
+    background: var(--pf-t--global--color--status--warning--default);
+    color: var(--pf-t--global--text--color--on-brand);
   }
 
-  &.error {.error {
-    
-background: var(--pf-t--global--color--status--danger--default);
-color: var(--pf-t--global--text--color--on-brand);
+  &.error {
+    background: var(--pf-t--global--color--status--danger--default);
+    color: var(--pf-t--global--text--color--on-brand);
   }
 
-  &.debug {.debug {
-    
-background: light-dark(#6b7280, #9ca3af);
-color: var(--pf-t--global--text--color--on-brand);
+  &.debug {
+    background: light-dark(#6b7280, #9ca3af);
+    color: var(--pf-t--global--text--color--on-brand);
   }
 }
 
@@ -1039,14 +1052,199 @@ cem-serve-knob-css-property [slot="description"] {
         <slot name="title"></slot>
         
         
-        <button class="debug-button"
-                aria-label="Debug info"
-                title="Debug info">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+        <pfv6-button class="debug-button"
+                     variant="plain"
+                     aria-label="Debug info">
+          <template shadowrootmode="open">
+  <style>:host {
+  display: inline-flex;
+
+  /* Base component variables - used by button element */
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: transparent;
+}
+
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  font-weight: 400;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  user-select: none;
+  border: 1px solid var(--pf-v6-c-button--BorderColor);
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.645, 0.045, 0.355, 1);
+  position: relative;
+  color: var(--pf-v6-c-button--Color);
+  background-color: var(--pf-v6-c-button--BackgroundColor);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--pf-t--global--color--brand--default);
+  outline-offset: 2px;
+}
+
+/* Primary variant */
+:host([variant="primary"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--on-brand);
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--color--brand--default);
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--color--brand--default);
+}
+
+:host([variant="primary"]) button:hover:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--color--brand--hover);
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--color--brand--hover);
+}
+
+:host([variant="primary"]) button:active:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--color--brand--clicked);
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--color--brand--clicked);
+}
+
+/* Secondary variant */
+:host([variant="secondary"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--text--color--regular);
+}
+
+:host([variant="secondary"]) button:hover:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--primary--hover);
+}
+
+:host([variant="secondary"]) button:active:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--secondary--hover);
+}
+
+/* Tertiary variant (default) */
+:host([variant="tertiary"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: transparent;
+}
+
+:host([variant="tertiary"]) button:hover:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--primary--hover);
+}
+
+:host([variant="tertiary"]) button:active:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--secondary--hover);
+}
+
+/* Danger variant */
+:host([variant="danger"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--on-brand);
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--color--status--danger--default);
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--color--status--danger--default);
+}
+
+:host([variant="danger"]) button:hover:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: light-dark(#8a2c08, #c7581c);
+  --pf-v6-c-button--BorderColor: light-dark(#8a2c08, #c7581c);
+}
+
+:host([variant="danger"]) button:active:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: light-dark(#6b2205, #a0421a);
+  --pf-v6-c-button--BorderColor: light-dark(#6b2205, #a0421a);
+}
+
+/* Plain variant (icon-only) */
+:host([variant="plain"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--icon--color--subtle);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: transparent;
+}
+
+:host([variant="plain"]) button {
+  padding: 0.5rem;
+  min-width: auto;
+}
+
+:host([variant="plain"]) button:hover:not(:disabled) {
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--primary--hover);
+}
+
+:host([variant="plain"]) button:active:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--secondary--hover);
+}
+
+/* Link variant */
+:host([variant="link"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--color--brand--default);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: transparent;
+}
+
+:host([variant="link"]) button {
+  padding-inline: 0;
+  text-decoration: underline;
+}
+
+:host([variant="link"]) button:hover:not(:disabled) {
+  --pf-v6-c-button--Color: var(--pf-t--global--color--brand--hover);
+}
+
+:host([variant="link"]) button:active:not(:disabled) {
+  --pf-v6-c-button--Color: var(--pf-t--global--color--brand--clicked);
+}
+
+/* Size variants */
+:host([size="sm"]) button {
+  font-size: 0.75rem;
+  padding: 0.375rem 0.75rem;
+}
+
+:host([size="lg"]) button {
+  font-size: 1rem;
+  padding: 0.625rem 1.25rem;
+}
+
+/* Block variant */
+:host([block]) {
+  display: flex;
+  width: 100%;
+}
+
+:host([block]) button {
+  width: 100%;
+}
+
+/* Disabled state */
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Icon slot */
+::slotted(svg) {
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+}
+</style>
+<button type="button">
+  <slot name="icon-start"></slot>
+  <slot></slot>
+  <slot name="icon-end"></slot>
+</button>
+</template>
+
+          <svg slot="icon-start" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
             <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
             <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
           </svg>
-        </button>
+        </pfv6-button>
         <cem-color-scheme-toggle>
           <template shadowrootmode="open">
   <style>:host {
@@ -1179,8 +1377,382 @@ cem-serve-knob-css-property [slot="description"] {
             <pre id="debug-importmap">-</pre>
           </details>
           <div class="button-container">
-            <button class="debug-copy">Copy Debug Info</button>
-            <button class="debug-close">Close</button>
+            <pfv6-button class="debug-copy" variant="primary">
+              <template shadowrootmode="open">
+  <style>:host {
+  display: inline-flex;
+
+  /* Base component variables - used by button element */
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: transparent;
+}
+
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  font-weight: 400;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  user-select: none;
+  border: 1px solid var(--pf-v6-c-button--BorderColor);
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.645, 0.045, 0.355, 1);
+  position: relative;
+  color: var(--pf-v6-c-button--Color);
+  background-color: var(--pf-v6-c-button--BackgroundColor);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--pf-t--global--color--brand--default);
+  outline-offset: 2px;
+}
+
+/* Primary variant */
+:host([variant="primary"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--on-brand);
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--color--brand--default);
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--color--brand--default);
+}
+
+:host([variant="primary"]) button:hover:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--color--brand--hover);
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--color--brand--hover);
+}
+
+:host([variant="primary"]) button:active:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--color--brand--clicked);
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--color--brand--clicked);
+}
+
+/* Secondary variant */
+:host([variant="secondary"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--text--color--regular);
+}
+
+:host([variant="secondary"]) button:hover:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--primary--hover);
+}
+
+:host([variant="secondary"]) button:active:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--secondary--hover);
+}
+
+/* Tertiary variant (default) */
+:host([variant="tertiary"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: transparent;
+}
+
+:host([variant="tertiary"]) button:hover:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--primary--hover);
+}
+
+:host([variant="tertiary"]) button:active:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--secondary--hover);
+}
+
+/* Danger variant */
+:host([variant="danger"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--on-brand);
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--color--status--danger--default);
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--color--status--danger--default);
+}
+
+:host([variant="danger"]) button:hover:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: light-dark(#8a2c08, #c7581c);
+  --pf-v6-c-button--BorderColor: light-dark(#8a2c08, #c7581c);
+}
+
+:host([variant="danger"]) button:active:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: light-dark(#6b2205, #a0421a);
+  --pf-v6-c-button--BorderColor: light-dark(#6b2205, #a0421a);
+}
+
+/* Plain variant (icon-only) */
+:host([variant="plain"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--icon--color--subtle);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: transparent;
+}
+
+:host([variant="plain"]) button {
+  padding: 0.5rem;
+  min-width: auto;
+}
+
+:host([variant="plain"]) button:hover:not(:disabled) {
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--primary--hover);
+}
+
+:host([variant="plain"]) button:active:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--secondary--hover);
+}
+
+/* Link variant */
+:host([variant="link"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--color--brand--default);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: transparent;
+}
+
+:host([variant="link"]) button {
+  padding-inline: 0;
+  text-decoration: underline;
+}
+
+:host([variant="link"]) button:hover:not(:disabled) {
+  --pf-v6-c-button--Color: var(--pf-t--global--color--brand--hover);
+}
+
+:host([variant="link"]) button:active:not(:disabled) {
+  --pf-v6-c-button--Color: var(--pf-t--global--color--brand--clicked);
+}
+
+/* Size variants */
+:host([size="sm"]) button {
+  font-size: 0.75rem;
+  padding: 0.375rem 0.75rem;
+}
+
+:host([size="lg"]) button {
+  font-size: 1rem;
+  padding: 0.625rem 1.25rem;
+}
+
+/* Block variant */
+:host([block]) {
+  display: flex;
+  width: 100%;
+}
+
+:host([block]) button {
+  width: 100%;
+}
+
+/* Disabled state */
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Icon slot */
+::slotted(svg) {
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+}
+</style>
+<button type="button">
+  <slot name="icon-start"></slot>
+  <slot></slot>
+  <slot name="icon-end"></slot>
+</button>
+</template>
+
+              Copy Debug Info
+            </pfv6-button>
+            <pfv6-button class="debug-close" variant="secondary">
+              <template shadowrootmode="open">
+  <style>:host {
+  display: inline-flex;
+
+  /* Base component variables - used by button element */
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: transparent;
+}
+
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  font-weight: 400;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  user-select: none;
+  border: 1px solid var(--pf-v6-c-button--BorderColor);
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.645, 0.045, 0.355, 1);
+  position: relative;
+  color: var(--pf-v6-c-button--Color);
+  background-color: var(--pf-v6-c-button--BackgroundColor);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--pf-t--global--color--brand--default);
+  outline-offset: 2px;
+}
+
+/* Primary variant */
+:host([variant="primary"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--on-brand);
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--color--brand--default);
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--color--brand--default);
+}
+
+:host([variant="primary"]) button:hover:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--color--brand--hover);
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--color--brand--hover);
+}
+
+:host([variant="primary"]) button:active:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--color--brand--clicked);
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--color--brand--clicked);
+}
+
+/* Secondary variant */
+:host([variant="secondary"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--text--color--regular);
+}
+
+:host([variant="secondary"]) button:hover:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--primary--hover);
+}
+
+:host([variant="secondary"]) button:active:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--secondary--hover);
+}
+
+/* Tertiary variant (default) */
+:host([variant="tertiary"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: transparent;
+}
+
+:host([variant="tertiary"]) button:hover:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--primary--hover);
+}
+
+:host([variant="tertiary"]) button:active:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--secondary--hover);
+}
+
+/* Danger variant */
+:host([variant="danger"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--on-brand);
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--color--status--danger--default);
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--color--status--danger--default);
+}
+
+:host([variant="danger"]) button:hover:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: light-dark(#8a2c08, #c7581c);
+  --pf-v6-c-button--BorderColor: light-dark(#8a2c08, #c7581c);
+}
+
+:host([variant="danger"]) button:active:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: light-dark(#6b2205, #a0421a);
+  --pf-v6-c-button--BorderColor: light-dark(#6b2205, #a0421a);
+}
+
+/* Plain variant (icon-only) */
+:host([variant="plain"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--icon--color--subtle);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: transparent;
+}
+
+:host([variant="plain"]) button {
+  padding: 0.5rem;
+  min-width: auto;
+}
+
+:host([variant="plain"]) button:hover:not(:disabled) {
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--primary--hover);
+}
+
+:host([variant="plain"]) button:active:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--secondary--hover);
+}
+
+/* Link variant */
+:host([variant="link"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--color--brand--default);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: transparent;
+}
+
+:host([variant="link"]) button {
+  padding-inline: 0;
+  text-decoration: underline;
+}
+
+:host([variant="link"]) button:hover:not(:disabled) {
+  --pf-v6-c-button--Color: var(--pf-t--global--color--brand--hover);
+}
+
+:host([variant="link"]) button:active:not(:disabled) {
+  --pf-v6-c-button--Color: var(--pf-t--global--color--brand--clicked);
+}
+
+/* Size variants */
+:host([size="sm"]) button {
+  font-size: 0.75rem;
+  padding: 0.375rem 0.75rem;
+}
+
+:host([size="lg"]) button {
+  font-size: 1rem;
+  padding: 0.625rem 1.25rem;
+}
+
+/* Block variant */
+:host([block]) {
+  display: flex;
+  width: 100%;
+}
+
+:host([block]) button {
+  width: 100%;
+}
+
+/* Disabled state */
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Icon slot */
+::slotted(svg) {
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+}
+</style>
+<button type="button">
+  <slot name="icon-start"></slot>
+  <slot></slot>
+  <slot name="icon-end"></slot>
+</button>
+</template>
+
+              Close
+            </pfv6-button>
           </div>
         </div>
       </div>
@@ -1286,16 +1858,203 @@ cem-serve-knob-css-property [slot="description"] {
 
 </style>
 <div id="resize-handle" title="Drag to resize"></div>
-<button id="toggle"
-        aria-label="Toggle drawer">
-  <svg width="16"
+<pfv6-button id="toggle"
+             variant="plain"
+             aria-label="Toggle drawer">
+  <template shadowrootmode="open">
+  <style>:host {
+  display: inline-flex;
+
+  /* Base component variables - used by button element */
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: transparent;
+}
+
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  font-weight: 400;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  user-select: none;
+  border: 1px solid var(--pf-v6-c-button--BorderColor);
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.645, 0.045, 0.355, 1);
+  position: relative;
+  color: var(--pf-v6-c-button--Color);
+  background-color: var(--pf-v6-c-button--BackgroundColor);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--pf-t--global--color--brand--default);
+  outline-offset: 2px;
+}
+
+/* Primary variant */
+:host([variant="primary"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--on-brand);
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--color--brand--default);
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--color--brand--default);
+}
+
+:host([variant="primary"]) button:hover:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--color--brand--hover);
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--color--brand--hover);
+}
+
+:host([variant="primary"]) button:active:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--color--brand--clicked);
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--color--brand--clicked);
+}
+
+/* Secondary variant */
+:host([variant="secondary"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--text--color--regular);
+}
+
+:host([variant="secondary"]) button:hover:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--primary--hover);
+}
+
+:host([variant="secondary"]) button:active:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--secondary--hover);
+}
+
+/* Tertiary variant (default) */
+:host([variant="tertiary"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: transparent;
+}
+
+:host([variant="tertiary"]) button:hover:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--primary--hover);
+}
+
+:host([variant="tertiary"]) button:active:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--secondary--hover);
+}
+
+/* Danger variant */
+:host([variant="danger"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--on-brand);
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--color--status--danger--default);
+  --pf-v6-c-button--BorderColor: var(--pf-t--global--color--status--danger--default);
+}
+
+:host([variant="danger"]) button:hover:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: light-dark(#8a2c08, #c7581c);
+  --pf-v6-c-button--BorderColor: light-dark(#8a2c08, #c7581c);
+}
+
+:host([variant="danger"]) button:active:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: light-dark(#6b2205, #a0421a);
+  --pf-v6-c-button--BorderColor: light-dark(#6b2205, #a0421a);
+}
+
+/* Plain variant (icon-only) */
+:host([variant="plain"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--icon--color--subtle);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: transparent;
+}
+
+:host([variant="plain"]) button {
+  padding: 0.5rem;
+  min-width: auto;
+}
+
+:host([variant="plain"]) button:hover:not(:disabled) {
+  --pf-v6-c-button--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--primary--hover);
+}
+
+:host([variant="plain"]) button:active:not(:disabled) {
+  --pf-v6-c-button--BackgroundColor: var(--pf-t--global--background--color--secondary--hover);
+}
+
+/* Link variant */
+:host([variant="link"]) {
+  --pf-v6-c-button--Color: var(--pf-t--global--color--brand--default);
+  --pf-v6-c-button--BackgroundColor: transparent;
+  --pf-v6-c-button--BorderColor: transparent;
+}
+
+:host([variant="link"]) button {
+  padding-inline: 0;
+  text-decoration: underline;
+}
+
+:host([variant="link"]) button:hover:not(:disabled) {
+  --pf-v6-c-button--Color: var(--pf-t--global--color--brand--hover);
+}
+
+:host([variant="link"]) button:active:not(:disabled) {
+  --pf-v6-c-button--Color: var(--pf-t--global--color--brand--clicked);
+}
+
+/* Size variants */
+:host([size="sm"]) button {
+  font-size: 0.75rem;
+  padding: 0.375rem 0.75rem;
+}
+
+:host([size="lg"]) button {
+  font-size: 1rem;
+  padding: 0.625rem 1.25rem;
+}
+
+/* Block variant */
+:host([block]) {
+  display: flex;
+  width: 100%;
+}
+
+:host([block]) button {
+  width: 100%;
+}
+
+/* Disabled state */
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Icon slot */
+::slotted(svg) {
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+}
+</style>
+<button type="button">
+  <slot name="icon-start"></slot>
+  <slot></slot>
+  <slot name="icon-end"></slot>
+</button>
+</template>
+
+  <svg slot="icon-start"
+       width="16"
        height="16"
        viewBox="0 0 16 16"
        fill="currentColor">
     <path fill-rule="evenodd"
           d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
   </svg>
-</button>
+</pfv6-button>
 <div id="content">
   <slot></slot>
 </div>
@@ -1316,10 +2075,20 @@ cem-serve-knob-css-property [slot="description"] {
   height: 100%;
 }
 
+@property --_pfv6-tabs--link-accent--length {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
 .tabs {
+  --_pfv6-tabs--link-accent--start: 0px;
+  --_pfv6-tabs--link-accent--length: 0px;
+  --_pfv6-tabs--link-accent--color: var(--pf-t--global--border--color--clicked);
+  --_pfv6-tabs--link-accent--border-size: var(--pf-t--global--border--width--extra-strong);
+
   position: relative;
   display: flex;
-  gap: var(--pf-t--global--spacer--sm);
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
@@ -1335,6 +2104,24 @@ cem-serve-knob-css-property [slot="description"] {
     inset-inline-end: 0;
     border-block-end: var(--pf-t--global--border--width--regular) solid var(--pf-t--global--border--color--default);
   }
+
+  /* Animated accent line for active tab */
+  &::after {
+    content: '';
+    position: absolute;
+    inset-block-start: auto;
+    inset-block-end: 0;
+    inset-inline-start: 0;
+    width: var(--_pfv6-tabs--link-accent--length);
+    height: 0;
+    border: 0 solid var(--_pfv6-tabs--link-accent--color);
+    border-block-end-width: var(--_pfv6-tabs--link-accent--border-size);
+    transform-origin: 0 center;
+    translate: var(--_pfv6-tabs--link-accent--start) 0;
+    transition-property: width, translate;
+    transition-duration: var(--pf-t--global--motion--duration--md);
+    transition-timing-function: var(--pf-t--global--motion--timing-function--decelerate);
+  }
 }
 
 .panels {
@@ -1343,61 +2130,81 @@ cem-serve-knob-css-property [slot="description"] {
   overflow: hidden;
 }
 
-/* Tab button styles - PatternFly v6 tabs__item + tabs__link combined */
+.panel {
+  display: block;
+  padding: var(--pf-t--global--spacer--md);
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.panel[hidden] {
+  display: none;
+}
+
+/* Tab button styles - single element with pseudo-element background */
+.tabs {
+  /* Private component tokens (internal implementation) */
+  --_tab--Color: var(--pf-t--global--text--color--subtle);
+  --_tab--BackgroundColor: var(--pf-t--global--background--color--action--plain--default);
+  --_tab--BorderWidth: var(--pf-t--global--border--width--action--plain--hover);
+  --_tab--BorderColor: transparent;
+  --_tab--hover--Color: var(--pf-t--global--text--color--regular);
+  --_tab--hover--BackgroundColor: var(--pf-t--global--background--color--action--plain--hover);
+  --_tab--current--Color: var(--pf-t--global--text--color--regular);
+  --_tab--current--BackgroundColor: var(--pf-t--global--background--color--action--plain--default);
+  --_tab--disabled--Color: var(--pf-t--global--text--color--on-disabled);
+  --_tab--disabled--BackgroundColor: var(--pf-t--global--background--color--disabled--default);
+}
+
+/* Tab button - full clickable area with visual background via ::before */
 .tab {
   position: relative;
   display: flex;
   flex: none;
   align-items: center;
-  /* Combined padding: item (8px all sides) + link (4px 8px) = 12px 16px */
-  padding: 12px 16px;
+  /* Full padding (item + link) for large clickable area */
+  padding: calc(var(--pf-t--global--spacer--sm) + var(--pf-t--global--spacer--xs))
+           calc(var(--pf-t--global--spacer--sm) + var(--pf-t--global--spacer--sm));
   font-family: inherit;
   font-size: var(--pf-t--global--font--size--sm);
   font-weight: 400;
-  color: var(--pf-t--global--text--color--subtle);
+  color: var(--_tab--Color);
   text-decoration: none;
   background-color: transparent;
   border: 0;
-  border-radius: var(--pf-t--global--border--radius--small);
   cursor: pointer;
-  transition: background-color var(--pf-t--global--motion--duration--fade--short) var(--pf-t--global--motion--timing-function--default);
-
-  /* Bottom accent line pseudo-element */
-  &::after {
-    content: '';
-    position: absolute;
-    inset-block-start: auto;
-    inset-block-end: 0;
-    inset-inline-start: 0;
-    inset-inline-end: 0;
-    border-style: solid;
-    border-width: 0;
-    border-block-end-width: 0;
-    border-block-end-color: var(--pf-t--global--border--color--default);
-    transition:
-      border-block-end-width var(--pf-t--global--motion--duration--md) var(--pf-t--global--motion--timing-function--decelerate),
-      border-block-end-color var(--pf-t--global--motion--duration--md) var(--pf-t--global--motion--timing-function--decelerate);
-  }
 }
 
-.tab:hover {
-  background-color: var(--pf-t--global--background--color--action--plain--hover);
-  color: var(--pf-t--global--text--color--regular);
+/* Visual rounded background - inset to create spacing effect */
+.tab::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  width: calc(100% - calc(var(--pf-t--global--spacer--sm) * 2));
+  height: calc(100% - calc(var(--pf-t--global--spacer--sm) * 2));
+  translate: var(--pf-t--global--spacer--sm) var(--pf-t--global--spacer--sm);
+  background-color: var(--_tab--BackgroundColor);
+  border: var(--_tab--BorderWidth) solid var(--_tab--BorderColor);
+  border-radius: var(--pf-t--global--border--radius--small);
+  transition: background-color var(--pf-t--global--motion--duration--fade--short) var(--pf-t--global--motion--timing-function--default);
+  z-index: -1;
+}
+
+.tab:where(:hover, :focus) {
+  --_tab--Color: var(--_tab--hover--Color);
+  --_tab--BackgroundColor: var(--_tab--hover--BackgroundColor);
 }
 
 .tab[aria-selected="true"] {
-  color: var(--pf-t--global--text--color--regular);
-
-  /* Show blue accent line at bottom */
-  &::after {
-    border-block-end-width: var(--pf-t--global--border--width--extra-strong);
-    border-block-end-color: var(--pf-t--global--border--color--clicked);
-  }
+  --_tab--Color: var(--_tab--current--Color);
+  --_tab--BackgroundColor: var(--_tab--current--BackgroundColor);
 }
 
 .tab:disabled {
-  color: var(--pf-t--global--text--color--on-disabled);
-  background-color: var(--pf-t--global--background--color--disabled--default);
+  --_tab--Color: var(--_tab--disabled--Color);
+  --_tab--BackgroundColor: var(--_tab--disabled--BackgroundColor);
   cursor: not-allowed;
   pointer-events: none;
 }
@@ -1408,7 +2215,7 @@ cem-serve-knob-css-property [slot="description"] {
     
   </div>
   <div class="panels">
-    <slot></slot>
+    
   </div>
 </div>
 </template>
@@ -1416,15 +2223,7 @@ cem-serve-knob-css-property [slot="description"] {
             <pfv6-tab title="Knobs">
               <template shadowrootmode="open">
   <style>:host {
-  display: none;
-}
-
-:host([active]) {
-  display: block;
-  padding: var(--pf-t--global--spacer--md);
-  height: 100%;
-  overflow-y: auto;
-  box-sizing: border-box;
+  display: contents;
 }
 </style>
 <link rel="stylesheet" href="/__cem/elements/pfv6-tab/pfv6-tab.css">
@@ -1440,15 +2239,7 @@ cem-serve-knob-css-property [slot="description"] {
             <pfv6-tab title="Server Logs">
               <template shadowrootmode="open">
   <style>:host {
-  display: none;
-}
-
-:host([active]) {
-  display: block;
-  padding: var(--pf-t--global--spacer--md);
-  height: 100%;
-  overflow-y: auto;
-  box-sizing: border-box;
+  display: contents;
 }
 </style>
 <link rel="stylesheet" href="/__cem/elements/pfv6-tab/pfv6-tab.css">
