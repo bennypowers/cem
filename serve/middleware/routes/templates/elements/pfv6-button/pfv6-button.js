@@ -14,12 +14,21 @@
  * @fires click - Bubbles click events from internal button
  */
 class Pfv6Button extends HTMLElement {
+  static get observedAttributes() {
+    return ['disabled', 'aria-label', 'aria-expanded', 'aria-controls', 'aria-haspopup', 'type'];
+  }
+
+  #internals;
+
   constructor() {
     super();
 
+    // Attach ElementInternals for cross-root ARIA references
+    this.#internals = this.attachInternals();
+
     // Don't recreate shadow root if it already exists (from SSR)
     if (!this.shadowRoot) {
-      this.attachShadow({ mode: 'open' });
+      this.attachShadow({ mode: 'open', delegatesFocus: true });
     }
   }
 
@@ -45,20 +54,14 @@ class Pfv6Button extends HTMLElement {
       }
       // Event bubbles naturally through shadow DOM
     });
-
-    // Observe attribute changes
-    this.#observer = new MutationObserver(() => {
-      this.#syncAttributes(button);
-    });
-
-    this.#observer.observe(this, {
-      attributes: true,
-      attributeFilter: ['disabled', 'aria-label', 'aria-expanded', 'aria-controls']
-    });
   }
 
-  disconnectedCallback() {
-    this.#observer?.disconnect();
+  attributeChangedCallback(name, oldValue, newValue) {
+    // Only sync if shadow root is ready
+    const button = this.shadowRoot?.querySelector('button');
+    if (button) {
+      this.#syncAttributes(button);
+    }
   }
 
   async #populateShadowRoot() {
@@ -88,9 +91,18 @@ class Pfv6Button extends HTMLElement {
       button.disabled = false;
     }
 
-    // Sync aria attributes
-    const ariaAttrs = ['aria-label', 'aria-expanded', 'aria-controls', 'aria-haspopup'];
-    ariaAttrs.forEach(attr => {
+    // Cross-root ARIA references go on ElementInternals (host)
+    // This allows aria-controls to reference elements outside shadow root
+    if (this.hasAttribute('aria-controls')) {
+      this.#internals.ariaControls = this.getAttribute('aria-controls');
+    } else {
+      this.#internals.ariaControls = null;
+    }
+
+    // Non-reference ARIA attributes go on internal button
+    // These don't need to cross shadow boundaries
+    const buttonAriaAttrs = ['aria-label', 'aria-expanded', 'aria-haspopup'];
+    buttonAriaAttrs.forEach(attr => {
       if (this.hasAttribute(attr)) {
         button.setAttribute(attr, this.getAttribute(attr));
       } else {
@@ -115,8 +127,6 @@ class Pfv6Button extends HTMLElement {
       this.removeAttribute('disabled');
     }
   }
-
-  #observer;
 }
 
 customElements.define('pfv6-button', Pfv6Button);
