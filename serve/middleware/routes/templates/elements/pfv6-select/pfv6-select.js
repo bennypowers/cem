@@ -5,7 +5,10 @@ class Pfv6Select extends HTMLElement {
     this.#select = this.shadowRoot?.getElementById('select');
     if (!this.#select) return;
 
-    // Sync initial state
+    // Populate options first (in case attributeChangedCallback fired before connectedCallback)
+    this.#populateOptions();
+
+    // Then sync other attributes
     this.#syncAttributes();
 
     // Forward change events from internal select and sync value
