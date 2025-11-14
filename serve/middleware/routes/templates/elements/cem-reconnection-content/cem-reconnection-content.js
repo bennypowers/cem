@@ -49,31 +49,6 @@ export class CEMReconnectionContent extends HTMLElement {
           gap: 12px;
           justify-content: flex-end;
         }
-
-        button {
-          padding: 8px 16px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 14px;
-          font-weight: 500;
-          border: none;
-        }
-
-        #reload-btn {
-          background: #334155;
-          color: #e2e8f0;
-          border: 1px solid #475569;
-        }
-
-        #retry-btn {
-          background: #60a5fa;
-          color: #0f172a;
-          font-weight: 600;
-        }
-
-        button:hover {
-          opacity: 0.9;
-        }
       </style>
 
       <p>

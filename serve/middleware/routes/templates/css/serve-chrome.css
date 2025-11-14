@@ -414,28 +414,24 @@ footer ::slotted([slot="description"]) {
   text-transform: uppercase;
   flex-shrink: 0;
 
-  &.info {.info {
-    
-background: var(--pf-t--global--color--status--info--default);
-color: var(--pf-t--global--text--color--on-brand);
+  &.info {
+    background: var(--pf-t--global--color--status--info--default);
+    color: var(--pf-t--global--text--color--on-brand);
   }
 
-  &.warning {.warning {
-    
-background: var(--pf-t--global--color--status--warning--default);
-color: var(--pf-t--global--text--color--on-brand);
+  &.warning {
+    background: var(--pf-t--global--color--status--warning--default);
+    color: var(--pf-t--global--text--color--on-brand);
   }
 
-  &.error {.error {
-    
-background: var(--pf-t--global--color--status--danger--default);
-color: var(--pf-t--global--text--color--on-brand);
+  &.error {
+    background: var(--pf-t--global--color--status--danger--default);
+    color: var(--pf-t--global--text--color--on-brand);
   }
 
-  &.debug {.debug {
-    
-background: light-dark(#6b7280, #9ca3af);
-color: var(--pf-t--global--text--color--on-brand);
+  &.debug {
+    background: light-dark(#6b7280, #9ca3af);
+    color: var(--pf-t--global--text--color--on-brand);
   }
 }
 
