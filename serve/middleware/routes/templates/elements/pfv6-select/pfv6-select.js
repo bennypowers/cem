@@ -1,8 +1,25 @@
+import { loadComponentTemplate } from '/__cem/stylesheet-cache.js';
+
 class Pfv6Select extends HTMLElement {
   #select = null;
 
-  connectedCallback() {
+  constructor() {
+    super();
+
+    // Create shadow root if it doesn't exist (SSR provides it via DSD)
+    if (!this.shadowRoot) {
+      this.attachShadow({ mode: 'open' });
+    }
+  }
+
+  async connectedCallback() {
+    // If shadow root is empty (client-side rendering), populate it
     this.#select = this.shadowRoot?.getElementById('select');
+    if (!this.#select && this.shadowRoot) {
+      await this.#populateShadowRoot();
+      this.#select = this.shadowRoot.getElementById('select');
+    }
+
     if (!this.#select) return;
 
     // Populate options first (in case attributeChangedCallback fired before connectedCallback)
@@ -136,6 +153,24 @@ class Pfv6Select extends HTMLElement {
 
   blur() {
     this.#select?.blur();
+  }
+
+  async #populateShadowRoot() {
+    try {
+      // Load template using shared utility with Constructable Stylesheets
+      const { html, stylesheet } = await loadComponentTemplate('pfv6-select');
+
+      // Apply stylesheet using Constructable Stylesheets API
+      // This allows stylesheet sharing across multiple select instances
+      this.shadowRoot.adoptedStyleSheets = [stylesheet];
+
+      // Populate shadow root with HTML
+      this.shadowRoot.innerHTML = html;
+    } catch (error) {
+      console.error('Failed to load pfv6-select template:', error);
+      // Fallback UI for when template loading fails
+      this.shadowRoot.innerHTML = '<select id="select"></select> (template failed to load)';
+    }
   }
 }
 

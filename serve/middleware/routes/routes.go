@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package routes
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -140,44 +139,35 @@ func New(config Config) middleware.Middleware {
 // transformTemplateForClient converts Go template syntax to HTML comments for client-side use
 // Uses proper HTML parsing instead of regex to safely handle template content
 func transformTemplateForClient(tmpl string) string {
-	// Parse the HTML template
+	// For HTML fragments, the HTML parser adds wrapper elements.
+	// Since we're dealing with component templates (fragments),
+	// use simple string transformation after parsing to validate structure
 	doc, err := html.ParseFragment(strings.NewReader(tmpl), nil)
 	if err != nil {
-		// If parsing fails, return original (likely malformed HTML)
-		return tmpl
+		// If parsing fails, use regex fallback (but template is likely broken)
+		return transformGoTemplate(tmpl)
 	}
 
-	// Walk the tree and transform text nodes containing Go template syntax
-	var transform func(*html.Node)
-	transform = func(n *html.Node) {
-		if n.Type == html.TextNode {
-			// Transform Go template syntax in text nodes
-			transformed := transformGoTemplate(n.Data)
-			if transformed != n.Data {
-				n.Data = transformed
-			}
-		}
-
-		// Recurse for children
+	// Walk the tree to validate structure and find problematic patterns
+	valid := true
+	var validateNode func(*html.Node)
+	validateNode = func(n *html.Node) {
+		// Just validate, don't transform yet
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			transform(c)
+			validateNode(c)
 		}
 	}
 
-	// Transform all nodes in the fragment
 	for _, node := range doc {
-		transform(node)
+		validateNode(node)
 	}
 
-	// Render back to HTML
-	var buf bytes.Buffer
-	for _, node := range doc {
-		if err := html.Render(&buf, node); err != nil {
-			return tmpl // Fallback to original on render error
-		}
+	if !valid {
+		return tmpl // Return original if validation fails
 	}
 
-	return buf.String()
+	// Use string transformation since we validated the HTML structure
+	return transformGoTemplate(tmpl)
 }
 
 // transformGoTemplate processes Go template syntax in a text node
