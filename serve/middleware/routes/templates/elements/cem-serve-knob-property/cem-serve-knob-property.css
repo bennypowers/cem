@@ -1,0 +1,135 @@
+:host {
+  display: block;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pf-t--global--spacer--sm);
+  font-weight: 500;
+  font-size: var(--pf-t--global--font--size--sm);
+  color: var(--pf-t--global--text--color--regular);
+  cursor: pointer;
+}
+
+#knob-description {
+  font-size: var(--pf-t--global--font--size--sm);
+  color: var(--pf-t--global--text--color--subtle);
+  margin-top: var(--pf-t--global--spacer--xs);
+}
+
+/* Text inputs, selects, number inputs */
+input[type="text"],
+input[type="number"],
+select {
+  width: 100%;
+  padding: var(--pf-t--global--spacer--sm) var(--pf-t--global--spacer--md);
+  font-size: var(--pf-t--global--font--size--sm);
+  line-height: var(--pf-t--global--font--line-height--body);
+  color: var(--pf-t--global--text--color--regular);
+  background-color: var(--pf-t--global--background--color--primary--default);
+  border: var(--pf-t--global--border--width--regular) solid var(--pf-t--global--border--color--default);
+  border-radius: var(--pf-t--global--border--radius--medium);
+  transition: border-color var(--pf-t--global--motion--duration--md) var(--pf-t--global--motion--timing-function--default);
+
+  &:hover {
+    border-color: var(--pf-t--global--border--color--hover);
+  }
+
+  &:focus {
+    border-color: var(--pf-t--global--border--color--clicked);
+    outline: 2px solid var(--pf-t--global--color--brand--default);
+    outline-offset: 2px;
+  }
+
+  &::placeholder {
+    color: var(--pf-t--global--text--color--subtle);
+  }
+}
+
+input[type="number"] {
+  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+}
+
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%236a6e73' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--pf-t--global--spacer--md) center;
+  padding-right: 2.5rem;
+}
+
+/* Style slotted description content */
+::slotted([slot="description"]) {
+  display: block;
+  color: var(--pf-t--global--text--color--subtle);
+  line-height: var(--pf-t--global--font--line-height--body);
+  margin: 0;
+  font-size: var(--pf-t--global--font--size--sm);
+}
+
+/* Switches should not get form control styling */
+pfv6-switch {
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+pfv6-switch:focus {
+  outline: none;
+}
+
+/* Color input wrapper */
+.color-input-wrapper {
+  display: flex;
+  gap: var(--pf-t--global--spacer--sm);
+  align-items: center;
+}
+
+.color-picker {
+  width: 60px;
+  height: 40px;
+  border: var(--pf-t--global--border--width--regular) solid var(--pf-t--global--border--color--default);
+  border-radius: var(--pf-t--global--border--radius--medium);
+  cursor: pointer;
+  padding: 2px;
+  background: var(--pf-t--global--background--color--primary--default);
+  transition: border-color var(--pf-t--global--motion--duration--md) var(--pf-t--global--motion--timing-function--default);
+
+  &:hover {
+    border-color: var(--pf-t--global--border--color--hover);
+  }
+
+  &:focus {
+    border-color: var(--pf-t--global--border--color--clicked);
+    outline: 2px solid var(--pf-t--global--color--brand--default);
+    outline-offset: 2px;
+  }
+}
+
+.color-text {
+  flex: 1;
+  padding: var(--pf-t--global--spacer--sm) var(--pf-t--global--spacer--md);
+  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+  font-size: var(--pf-t--global--font--size--sm);
+  line-height: var(--pf-t--global--font--line-height--body);
+  color: var(--pf-t--global--text--color--regular);
+  background-color: var(--pf-t--global--background--color--primary--default);
+  border: var(--pf-t--global--border--width--regular) solid var(--pf-t--global--border--color--default);
+  border-radius: var(--pf-t--global--border--radius--medium);
+  transition: border-color var(--pf-t--global--motion--duration--md) var(--pf-t--global--motion--timing-function--default);
+
+  &::placeholder {
+    color: var(--pf-t--global--text--color--subtle);
+  }
+
+  &:hover {
+    border-color: var(--pf-t--global--border--color--hover);
+  }
+
+  &:focus {
+    border-color: var(--pf-t--global--border--color--clicked);
+    outline: 2px solid var(--pf-t--global--color--brand--default);
+    outline-offset: 2px;
+  }
+}
