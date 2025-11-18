@@ -77,11 +77,10 @@ class CemServeChrome extends HTMLElement {
     if (manifestSizeEl) manifestSizeEl.textContent = data.manifestSize || '-';
     if (demoCountEl) demoCountEl.textContent = data.demoCount || '0';
 
-    if (demosListEl && data.demos && data.demos.length > 0) {
-      const demosList = data.demos.map(demo =>
+    if (demosListEl && data.demos?.length) {
+      demosListEl.textContent = data.demos.map(demo =>
         `${demo.tagName}: ${demo.description || '(no description)'}\n  Canonical: ${demo.canonicalURL}\n  Local Route: ${demo.localRoute}`
       ).join('\n\n');
-      demosListEl.textContent = demosList;
     } else if (demosListEl) {
       demosListEl.textContent = 'No demos found in manifest';
     }
