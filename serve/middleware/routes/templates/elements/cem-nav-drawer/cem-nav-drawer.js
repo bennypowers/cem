@@ -138,24 +138,40 @@ export class CemServeNavDrawer extends HTMLElement {
     if (!drawer) return [];
 
     const elements = drawer.querySelectorAll(
-      'a[href], button:not([disabled]), details, [tabindex]:not([tabindex="-1"])'
+      'a[href], button:not([disabled]), pfv6-nav-link, [tabindex]:not([tabindex="-1"])'
     );
     return Array.from(elements);
   }
 
   #markCurrentPage() {
     const currentPath = window.location.pathname;
-    const navLinks = this.querySelectorAll('.nav-demo-link');
+    const navLinks = this.querySelectorAll('pfv6-nav-link[href]');
 
     navLinks.forEach(link => {
       const href = link.getAttribute('href');
       if (href === currentPath) {
+        link.setAttribute('current', '');
         link.setAttribute('aria-current', 'page');
 
-        // Open the parent details element
-        const details = link.closest('details');
-        if (details) {
-          details.setAttribute('open', '');
+        // Expand parent nav-items
+        let parent = link.closest('pfv6-nav-item');
+        while (parent) {
+          parent.setAttribute('expanded', '');
+
+          // Find and expand the nav-group
+          const navGroup = parent.querySelector('pfv6-nav-group');
+          if (navGroup) {
+            navGroup.removeAttribute('hidden');
+          }
+
+          // Update parent nav-link aria-expanded
+          const parentLink = parent.querySelector(':scope > pfv6-nav-link[expandable]');
+          if (parentLink) {
+            parentLink.setAttribute('aria-expanded', 'true');
+          }
+
+          // Move up to next parent nav-item
+          parent = parent.parentElement?.closest('pfv6-nav-item');
         }
       }
     });

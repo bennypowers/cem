@@ -1,18 +1,51 @@
-<nav class="nav-drawer-content{{if .SinglePackage}} single-package{{end}}"
-     aria-label="Component navigation">
-  {{range .Packages}}
-  <details class="nav-package" {{if $.SinglePackage}}open{{end}}>
-    <summary class="nav-package-title">{{.Name}}</summary>
-    {{range .Elements}}
-    <details class="nav-element">
-      <summary class="nav-element-title"><code>&lt;{{.TagName}}&gt;</code></summary>
-      <ul class="nav-demo-list">
-        {{range .Demos}}
-        <li><a href="{{.URL}}" class="nav-demo-link">{{.Name}}</a></li>
-        {{end}}
-      </ul>
-    </details>
+<pfv6-navigation aria-label="Component navigation" inset>
+  {{renderElementShadowRoot "pfv6-navigation" dict}}
+  <pfv6-nav-list>
+    {{renderElementShadowRoot "pfv6-nav-list" dict}}
+    {{range .Packages}}
+    <pfv6-nav-item {{if $.SinglePackage}}expanded{{end}}>
+      {{renderElementShadowRoot "pfv6-nav-item" dict}}
+      <pfv6-nav-link expandable aria-expanded="{{if $.SinglePackage}}true{{else}}false{{end}}">
+        {{renderElementShadowRoot "pfv6-nav-link" dict}}
+        {{.Name}}
+        <svg slot="toggle" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="display: inline-block; transition: transform 0.2s; transform: rotate({{if $.SinglePackage}}90deg{{else}}0deg{{end}});">
+          <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+        </svg>
+      </pfv6-nav-link>
+      <pfv6-nav-group {{if not $.SinglePackage}}hidden{{end}}>
+        {{renderElementShadowRoot "pfv6-nav-group" dict}}
+        <pfv6-nav-list>
+          {{renderElementShadowRoot "pfv6-nav-list" dict}}
+          {{range .Elements}}
+          <pfv6-nav-item>
+            {{renderElementShadowRoot "pfv6-nav-item" dict}}
+            <pfv6-nav-link expandable aria-expanded="false">
+              {{renderElementShadowRoot "pfv6-nav-link" dict}}
+              <code>&lt;{{.TagName}}&gt;</code>
+              <svg slot="toggle" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="display: inline-block; transition: transform 0.2s;">
+                <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+              </svg>
+            </pfv6-nav-link>
+            <pfv6-nav-group hidden>
+              {{renderElementShadowRoot "pfv6-nav-group" dict}}
+              <pfv6-nav-list>
+                {{renderElementShadowRoot "pfv6-nav-list" dict}}
+                {{range .Demos}}
+                <pfv6-nav-item>
+                  {{renderElementShadowRoot "pfv6-nav-item" dict}}
+                  <pfv6-nav-link href="{{.URL}}">
+                    {{renderElementShadowRoot "pfv6-nav-link" dict}}
+                    {{.Name}}
+                  </pfv6-nav-link>
+                </pfv6-nav-item>
+                {{end}}
+              </pfv6-nav-list>
+            </pfv6-nav-group>
+          </pfv6-nav-item>
+          {{end}}
+        </pfv6-nav-list>
+      </pfv6-nav-group>
+    </pfv6-nav-item>
     {{end}}
-  </details>
-  {{end}}
-</nav>
+  </pfv6-nav-list>
+</pfv6-navigation>

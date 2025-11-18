@@ -1,0 +1,58 @@
+/* PatternFly v6 Nav Link Styles */
+
+:host {
+  position: relative;
+  display: flex;
+  column-gap: var(--pf-v6-c-nav__link--ColumnGap, var(--pf-t--global--spacer--sm));
+  align-items: baseline;
+}
+
+#link {
+  position: relative;
+  display: flex;
+  column-gap: inherit;
+  align-items: inherit;
+  padding-block-start: var(--pf-v6-c-nav__link--PaddingBlockStart, var(--pf-t--global--spacer--sm));
+  padding-block-end: var(--pf-v6-c-nav__link--PaddingBlockEnd, var(--pf-t--global--spacer--sm));
+  padding-inline-start: var(--pf-v6-c-nav__link--PaddingInlineStart, var(--pf-t--global--spacer--md));
+  padding-inline-end: var(--pf-v6-c-nav__link--PaddingInlineEnd, var(--pf-t--global--spacer--md));
+  color: var(--pf-v6-c-nav__link--Color, var(--pf-t--global--text--color--subtle));
+  text-align: start;
+  text-decoration: none;
+  background-color: var(--pf-v6-c-nav__link--BackgroundColor, var(--pf-t--global--background--color--action--plain--default));
+  border: none;
+  border-radius: var(--pf-v6-c-nav__link--BorderRadius, var(--pf-t--global--border--radius--small));
+  transition: background-color var(--pf-t--global--motion--duration--fade--default) var(--pf-t--global--motion--timing-function--default),
+              color var(--pf-t--global--motion--duration--fade--short) var(--pf-t--global--motion--timing-function--default);
+  cursor: pointer;
+  width: 100%;
+  font: inherit;
+}
+
+#link::after {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  border: var(--pf-v6-c-nav__link--BorderWidth, var(--pf-t--global--border--width--action--plain--default)) solid var(--pf-v6-c-nav__link--BorderColor, var(--pf-t--global--border--color--high-contrast));
+  border-radius: inherit;
+}
+
+#link:hover,
+#link:focus {
+  --pf-v6-c-nav__link--BorderWidth: var(--pf-t--global--border--width--action--plain--hover);
+  color: var(--pf-v6-c-nav__link--hover--Color, var(--pf-t--global--text--color--regular));
+  background-color: var(--pf-v6-c-nav__link--hover--BackgroundColor, var(--pf-t--global--background--color--action--plain--alt--hover));
+}
+
+:host([current]) #link,
+:host([current]) #link:hover {
+  --pf-v6-c-nav__link--BorderWidth: var(--pf-t--global--border--width--action--plain--clicked);
+  --pf-v6-c-nav__link-icon--Color: var(--pf-t--global--icon--color--regular);
+  color: var(--pf-v6-c-nav__link--m-current--Color, var(--pf-t--global--text--color--regular));
+  background-color: var(--pf-v6-c-nav__link--m-current--BackgroundColor, var(--pf-t--global--background--color--action--plain--alt--clicked));
+}
+
+::slotted(svg) {
+  color: var(--pf-v6-c-nav__link-icon--Color, var(--pf-t--global--icon--color--subtle));
+}
