@@ -16,10 +16,17 @@ import { CemElement } from '/__cem/cem-element.js';
 class PfV6Page extends CemElement {
   static observedAttributes = ['sidebar-collapsed'];
   static is = 'pf-v6-page';
+  static match = window.matchMedia('(min-width: 75rem)');
 
-  async afterTemplateLoaded() {
-    this.#attachEventListeners();
-    this.#updateSidebarState();
+  /** Are we a wide layout, or a narrow layout? */
+  #wide = false;
+
+  get sidebarCollapsed() {
+    return this.hasAttribute('sidebar-collapsed');
+  }
+
+  set sidebarCollapsed(value) {
+    this.toggleAttribute('sidebar-collapsed', !!value);
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -28,10 +35,33 @@ class PfV6Page extends CemElement {
     }
   }
 
+  async afterTemplateLoaded() {
+    this.#attachEventListeners();
+    this.#updateSidebarState();
+  }
+
   #attachEventListeners() {
     // Listen for sidebar toggle events from masthead
     this.addEventListener('sidebar-toggle', (event) => {
       this.sidebarCollapsed = !event.expanded;
+    });
+    PfV6Page.match.addEventListener('change', (event) => {
+      if (event.matches) {
+        this.#wide = true;
+      }
+    });
+    this.addEventListener('click', (event) => {
+      if (!this.#wide &&
+          !this.sidebarCollapsed &&
+          !event
+            .composedPath()
+            .some(node =>
+              node === this.querySelector('pf-v6-page-sidebar') ||
+              // a little cheat, to avoid race when toggling open via button
+              node === this.querySelector('pf-v6-masthead')
+              .shadowRoot.getElementById('toggle-button'))) {
+        this.sidebarCollapsed = true;
+      }
     });
   }
 
@@ -46,14 +76,6 @@ class PfV6Page extends CemElement {
     // Update masthead element
     const masthead = this.querySelector('pf-v6-masthead');
     masthead?.toggleAttribute('sidebar-expanded', !isCollapsed);
-  }
-
-  get sidebarCollapsed() {
-    return this.hasAttribute('sidebar-collapsed');
-  }
-
-  set sidebarCollapsed(value) {
-    this.toggleAttribute('sidebar-collapsed', !!value);
   }
 
   static {
