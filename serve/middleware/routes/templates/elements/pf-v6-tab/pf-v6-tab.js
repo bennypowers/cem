@@ -1,7 +1,11 @@
 import { CemElement } from '/__cem/cem-element.js';
 
+/**
+ * @customElement pf-v6-tab
+ */
 class PfV6Tab extends CemElement {
   static observedAttributes = ['title'];
+  static is = 'pf-v6-tab';
 
   async afterTemplateLoaded() {
     // Notify parent tabs component that a tab was added
@@ -27,6 +31,9 @@ class PfV6Tab extends CemElement {
   set title(value) {
     this.setAttribute('title', value);
   }
+
+  static {
+    customElements.define(this.is, this);
+  }
 }
 
-customElements.define('pf-v6-tab', PfV6Tab);

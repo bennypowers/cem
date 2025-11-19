@@ -7,9 +7,11 @@ import { CemElement } from '/__cem/cem-element.js';
  * @attr {boolean} inset - Add horizontal padding
  *
  * @slot - Default slot for nav-list
+ * @customElement pf-v6-navigation
  */
 class PfV6Navigation extends CemElement {
   static observedAttributes = ['aria-label', 'inset'];
+  static is = 'pf-v6-navigation';
 
   #nav;
 
@@ -29,6 +31,9 @@ class PfV6Navigation extends CemElement {
       this.#nav.setAttribute('aria-label', this.getAttribute('aria-label'));
     }
   }
+
+  static {
+    customElements.define(this.is, this);
+  }
 }
 
-customElements.define('pf-v6-navigation', PfV6Navigation);

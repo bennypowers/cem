@@ -7,9 +7,11 @@ import { CemElement } from '/__cem/cem-element.js';
  * @attr {boolean} current - Whether this item is current
  *
  * @slot - Default slot for nav-link and optional nav-group
+ * @customElement pf-v6-nav-item
  */
 class PfV6NavItem extends CemElement {
   static observedAttributes = ['expanded', 'current'];
+  static is = 'pf-v6-nav-item';
 
   async afterTemplateLoaded() {
     this.setAttribute('role', 'listitem');
@@ -69,6 +71,9 @@ class PfV6NavItem extends CemElement {
       navLink.setAttribute('aria-expanded', String(isExpanded));
     }
   }
+
+  static {
+    customElements.define(this.is, this);
+  }
 }
 
-customElements.define('pf-v6-nav-item', PfV6NavItem);

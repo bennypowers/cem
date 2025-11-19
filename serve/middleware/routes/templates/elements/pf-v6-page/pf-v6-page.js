@@ -11,9 +11,11 @@ import { CemElement } from '/__cem/cem-element.js';
  * @slot main - Main content area (pf-v6-page-main)
  *
  * @listens sidebar-toggle - Responds to toggle events from masthead
+ * @customElement pf-v6-page
  */
 class PfV6Page extends CemElement {
   static observedAttributes = ['sidebar-collapsed'];
+  static is = 'pf-v6-page';
 
   async afterTemplateLoaded() {
     this.#attachEventListeners();
@@ -80,6 +82,9 @@ class PfV6Page extends CemElement {
       this.removeAttribute('sidebar-collapsed');
     }
   }
+
+  static {
+    customElements.define(this.is, this);
+  }
 }
 
-customElements.define('pf-v6-page', PfV6Page);

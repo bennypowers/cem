@@ -1,6 +1,11 @@
 import { CemElement } from '/__cem/cem-element.js';
 
+/**
+ * @customElement pf-v6-tabs
+ */
 class PfV6Tabs extends CemElement {
+  static is = 'pf-v6-tabs';
+
   #tabsContainer;
   #selectedIndex = 0;
   #tabs = [];
@@ -11,9 +16,9 @@ class PfV6Tabs extends CemElement {
     if (!this.#tabsContainer) return;
 
     // Listen for tab child changes
-    this.addEventListener('pf-v6-tab-connected', () => this.#updateTabs());
-    this.addEventListener('pf-v6-tab-disconnected', () => this.#updateTabs());
-    this.addEventListener('pf-v6-tab-title-changed', () => this.#updateTabs());
+    this.addEventListener('pf-v6-tab-connected', this.#updateTabs);
+    this.addEventListener('pf-v6-tab-disconnected', this.#updateTabs);
+    this.addEventListener('pf-v6-tab-title-changed', this.#updateTabs);
 
     // Observe child changes
     this.#mutationObserver = new MutationObserver(() => this.#updateTabs());
@@ -184,6 +189,8 @@ class PfV6Tabs extends CemElement {
     this.#tabsContainer.style.setProperty('--_pf-v6-tabs--link-accent--start', `${start}px`);
     this.#tabsContainer.style.setProperty('--_pf-v6-tabs--link-accent--length', `${length}px`);
   }
-}
 
-customElements.define('pf-v6-tabs', PfV6Tabs);
+  static {
+    customElements.define(this.is, this);
+  }
+}

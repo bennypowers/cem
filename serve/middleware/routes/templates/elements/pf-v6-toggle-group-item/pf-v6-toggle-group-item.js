@@ -10,10 +10,14 @@ export class ToggleGroupItemSelectEvent extends Event {
   }
 }
 
+/**
+ * @customElement pf-v6-toggle-group-item
+ */
 export class PfToggleGroupItem extends CemElement {
   #button;
 
   static observedAttributes = ['selected', 'disabled', 'value'];
+  static is = 'pf-v6-toggle-group-item';
 
   async afterTemplateLoaded() {
     this.addEventListener('slotchange', this.#updateSlotVisibility);
@@ -233,6 +237,9 @@ export class PfToggleGroupItem extends CemElement {
       text.hidden = !hasContent;
     }
   }
+
+  static {
+    customElements.define(this.is, this);
+  }
 }
 
-customElements.define('pf-v6-toggle-group-item', PfToggleGroupItem);

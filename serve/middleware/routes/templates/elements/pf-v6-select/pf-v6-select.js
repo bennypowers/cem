@@ -1,7 +1,11 @@
 import { CemElement } from '/__cem/cem-element.js';
 
+/**
+ * @customElement pf-v6-select
+ */
 class PfV6Select extends CemElement {
   static observedAttributes = ['value', 'options', 'disabled', 'invalid', 'aria-label', 'aria-labelledby'];
+  static is = 'pf-v6-select';
 
   #select;
 
@@ -137,6 +141,9 @@ class PfV6Select extends CemElement {
   blur() {
     this.#select?.blur();
   }
+
+  static {
+    customElements.define(this.is, this);
+  }
 }
 
-customElements.define('pf-v6-select', PfV6Select);

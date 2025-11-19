@@ -19,9 +19,11 @@ export class SidebarToggleEvent extends Event {
  * @slot toolbar - Toolbar content (actions, menus, etc.)
  *
  * @fires {SidebarToggleEvent} sidebar-toggle - When the hamburger toggle is clicked
+ * @customElement pf-v6-masthead
  */
 class PfV6Masthead extends CemElement {
   static observedAttributes = ['sidebar-expanded'];
+  static is = 'pf-v6-masthead';
 
   #internals = this.attachInternals();
 
@@ -70,6 +72,9 @@ class PfV6Masthead extends CemElement {
       this.removeAttribute('sidebar-expanded');
     }
   }
+
+  static {
+    customElements.define(this.is, this);
+  }
 }
 
-customElements.define('pf-v6-masthead', PfV6Masthead);

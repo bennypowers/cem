@@ -7,9 +7,11 @@ import { CemElement } from '/__cem/cem-element.js';
  * @attr {boolean} expanded - Whether the sidebar is expanded
  *
  * @slot - Default slot for sidebar content (typically pf-v6-navigation)
+ * @customElement pf-v6-page-sidebar
  */
 class PfV6PageSidebar extends CemElement {
   static observedAttributes = ['collapsed', 'expanded'];
+  static is = 'pf-v6-page-sidebar';
 
   #internals = this.attachInternals();
 
@@ -35,6 +37,9 @@ class PfV6PageSidebar extends CemElement {
     this.toggleAttribute('collapsed', !value);
     this.toggleAttribute('expanded', !!value);
   }
+
+  static {
+    customElements.define(this.is, this);
+  }
 }
 
-customElements.define('pf-v6-page-sidebar', PfV6PageSidebar);

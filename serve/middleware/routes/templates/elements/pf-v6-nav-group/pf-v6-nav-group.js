@@ -7,9 +7,11 @@ import { CemElement } from '/__cem/cem-element.js';
  * @attr {string} aria-labelledby - ID of element labeling this group
  *
  * @slot - Default slot for nav-list containing nav-items
+ * @customElement pf-v6-nav-group
  */
 class PfV6NavGroup extends CemElement {
   static observedAttributes = ['hidden', 'aria-labelledby'];
+  static is = 'pf-v6-nav-group';
 
   #subnav;
 
@@ -37,6 +39,9 @@ class PfV6NavGroup extends CemElement {
       this.#subnav.removeAttribute('inert');
     }
   }
+
+  static {
+    customElements.define(this.is, this);
+  }
 }
 
-customElements.define('pf-v6-nav-group', PfV6NavGroup);

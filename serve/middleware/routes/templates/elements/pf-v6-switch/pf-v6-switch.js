@@ -1,7 +1,11 @@
 import { CemElement } from '/__cem/cem-element.js';
 
+/**
+ * @customElement pf-v6-switch
+ */
 class PfV6Switch extends CemElement {
   static observedAttributes = ['checked', 'disabled', 'aria-label', 'aria-labelledby'];
+  static is = 'pf-v6-switch';
 
   #input;
 
@@ -90,6 +94,9 @@ class PfV6Switch extends CemElement {
   set value(val) {
     this.checked = val;
   }
+
+  static {
+    customElements.define(this.is, this);
+  }
 }
 
-customElements.define('pf-v6-switch', PfV6Switch);

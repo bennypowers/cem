@@ -14,9 +14,11 @@ import { CemElement } from '/__cem/cem-element.js';
  * @slot icon-end - Slot for icon after text
  *
  * @fires click - Bubbles click events from internal button
+ * @customElement pf-v6-button
  */
 class PfV6Button extends CemElement {
   static shadowRootOptions = { mode: 'open', delegatesFocus: true };
+  static is = 'pf-v6-button';
   static observedAttributes = ['disabled', 'aria-label', 'aria-expanded', 'aria-controls', 'aria-haspopup', 'type'];
 
   // Attach ElementInternals for cross-root ARIA references
@@ -89,6 +91,9 @@ class PfV6Button extends CemElement {
   set disabled(value) {
     this.toggleAttribute('disabled', !!value);
   }
+
+  static {
+    customElements.define(this.is, this);
+  }
 }
 
-customElements.define('pf-v6-button', PfV6Button);

@@ -6,9 +6,11 @@ import { CemElement } from '/__cem/cem-element.js';
  * @attr {string} id - ID for the main content area (defaults to "main-content")
  *
  * @slot - Default slot for main content
+ * @customElement pf-v6-page-main
  */
 class PfV6PageMain extends CemElement {
   static observedAttributes = ['id'];
+  static is = 'pf-v6-page-main';
 
   #main;
 
@@ -28,6 +30,9 @@ class PfV6PageMain extends CemElement {
     const id = this.getAttribute('id') || 'main-content';
     this.#main.setAttribute('id', id);
   }
+
+  static {
+    customElements.define(this.is, this);
+  }
 }
 
-customElements.define('pf-v6-page-main', PfV6PageMain);

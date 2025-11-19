@@ -1,7 +1,11 @@
 import { CemElement } from '/__cem/cem-element.js';
 
+/**
+ * @customElement pf-v6-text-input
+ */
 class PfV6TextInput extends CemElement {
   static observedAttributes = ['value', 'type', 'placeholder', 'disabled', 'readonly', 'invalid', 'min', 'max', 'step', 'aria-label', 'aria-labelledby'];
+  static is = 'pf-v6-text-input';
 
   #input;
 
@@ -148,6 +152,9 @@ class PfV6TextInput extends CemElement {
   select() {
     this.#input?.select();
   }
+
+  static {
+    customElements.define(this.is, this);
+  }
 }
 
-customElements.define('pf-v6-text-input', PfV6TextInput);

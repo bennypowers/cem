@@ -1,7 +1,15 @@
-/* PatternFly v6 Toolbar Group Component */
+/**
+ * PatternFly v6 Toolbar Group Component
+ * @customElement pf-v6-toolbar-group
+ */
 
 import { CemElement } from '/__cem/cem-element.js';
 
-export class PfV6ToolbarGroup extends CemElement {}
+export class PfV6ToolbarGroup extends CemElement {
+  static is = 'pf-v6-toolbar-group';
 
-customElements.define('pf-v6-toolbar-group', PfV6ToolbarGroup);
+  static {
+    customElements.define(this.is, this);
+  }
+}
+

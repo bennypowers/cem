@@ -25,9 +25,11 @@ export class PfNavToggleEvent extends Event {
  * @slot toggle - Toggle icon for expandable items
  *
  * @fires {PfNavToggleEvent} pf-nav-toggle - When expandable link is clicked
+ * @customElement pf-v6-nav-link
  */
 class PfV6NavLink extends CemElement {
   static observedAttributes = ['href', 'current', 'expandable', 'aria-expanded', 'aria-label'];
+  static is = 'pf-v6-nav-link';
 
   #internals = this.attachInternals();
   #link;
@@ -107,6 +109,9 @@ class PfV6NavLink extends CemElement {
       this.removeAttribute('aria-current');
     }
   }
+
+  static {
+    customElements.define(this.is, this);
+  }
 }
 
-customElements.define('pf-v6-nav-link', PfV6NavLink);

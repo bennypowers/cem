@@ -10,10 +10,14 @@ export class ToggleGroupChangeEvent extends Event {
   }
 }
 
+/**
+ * @customElement pf-v6-toggle-group
+ */
 export class PfToggleGroup extends CemElement {
   #container;
 
   static observedAttributes = ['aria-label', 'compact'];
+  static is = 'pf-v6-toggle-group';
 
   async afterTemplateLoaded() {
     this.#container = this.shadowRoot.getElementById('container');
@@ -65,6 +69,9 @@ export class PfToggleGroup extends CemElement {
       selectedItem.getAttribute('value')
     ));
   }
+
+  static {
+    customElements.define(this.is, this);
+  }
 }
 
-customElements.define('pf-v6-toggle-group', PfToggleGroup);

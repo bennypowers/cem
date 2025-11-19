@@ -2,8 +2,12 @@
 
 import { CemElement } from '/__cem/cem-element.js';
 
+/**
+ * @customElement pf-v6-toolbar
+ */
 export class PfV6Toolbar extends CemElement {
   static observedAttributes = ['sticky', 'full-height', 'color-variant', 'expandable', 'expanded'];
+  static is = 'pf-v6-toolbar';
 
   #expandableContent;
 
@@ -71,6 +75,9 @@ export class PfV6Toolbar extends CemElement {
       this._expandableContent.hidden = true;
     }
   }
+
+  static {
+    customElements.define(this.is, this);
+  }
 }
 
-customElements.define('pf-v6-toolbar', PfV6Toolbar);
