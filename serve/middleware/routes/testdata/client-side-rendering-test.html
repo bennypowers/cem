@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Client-Side Rendering Test</title>
-  <script type="module" src="/__cem/elements/pfv6-button/pfv6-button.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-switch/pfv6-switch.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-text-input/pfv6-text-input.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-select/pfv6-select.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-tabs/pfv6-tabs.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-tab/pfv6-tab.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-button/pf-v6-button.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-switch/pf-v6-switch.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-text-input/pf-v6-text-input.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-select/pf-v6-select.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-tabs/pf-v6-tabs.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-tab/pf-v6-tab.js"></script>
   <style>
     body {
       font-family: system-ui, -apple-system, sans-serif;
@@ -48,31 +48,31 @@
   <p>This page tests client-side rendering by dynamically creating components without SSR.</p>
 
   <section id="button-test">
-    <h2>pfv6-button</h2>
+    <h2>pf-v6-button</h2>
     <div id="button-container"></div>
     <div class="test-result" id="button-result">Testing...</div>
   </section>
 
   <section id="switch-test">
-    <h2>pfv6-switch</h2>
+    <h2>pf-v6-switch</h2>
     <div id="switch-container"></div>
     <div class="test-result" id="switch-result">Testing...</div>
   </section>
 
   <section id="text-input-test">
-    <h2>pfv6-text-input</h2>
+    <h2>pf-v6-text-input</h2>
     <div id="text-input-container"></div>
     <div class="test-result" id="text-input-result">Testing...</div>
   </section>
 
   <section id="select-test">
-    <h2>pfv6-select</h2>
+    <h2>pf-v6-select</h2>
     <div id="select-container"></div>
     <div class="test-result" id="select-result">Testing...</div>
   </section>
 
   <section id="tabs-test">
-    <h2>pfv6-tabs + pfv6-tab</h2>
+    <h2>pf-v6-tabs + pf-v6-tab</h2>
     <div id="tabs-container"></div>
     <div class="test-result" id="tabs-result">Testing...</div>
   </section>
@@ -114,51 +114,51 @@
 
     // Wait for all components to be defined
     await Promise.all([
-      customElements.whenDefined('pfv6-button'),
-      customElements.whenDefined('pfv6-switch'),
-      customElements.whenDefined('pfv6-text-input'),
-      customElements.whenDefined('pfv6-select'),
-      customElements.whenDefined('pfv6-tabs'),
-      customElements.whenDefined('pfv6-tab'),
+      customElements.whenDefined('pf-v6-button'),
+      customElements.whenDefined('pf-v6-switch'),
+      customElements.whenDefined('pf-v6-text-input'),
+      customElements.whenDefined('pf-v6-select'),
+      customElements.whenDefined('pf-v6-tabs'),
+      customElements.whenDefined('pf-v6-tab'),
     ]);
 
-    // Test pfv6-button
-    testComponent('pfv6-button', 'button-container', 'button-result', () => {
-      const btn = document.createElement('pfv6-button');
+    // Test pf-v6-button
+    testComponent('pf-v6-button', 'button-container', 'button-result', () => {
+      const btn = document.createElement('pf-v6-button');
       btn.textContent = 'Test Button';
       return btn;
     });
 
-    // Test pfv6-switch
-    testComponent('pfv6-switch', 'switch-container', 'switch-result', () => {
-      const sw = document.createElement('pfv6-switch');
+    // Test pf-v6-switch
+    testComponent('pf-v6-switch', 'switch-container', 'switch-result', () => {
+      const sw = document.createElement('pf-v6-switch');
       sw.setAttribute('label', 'Test Switch');
       return sw;
     });
 
-    // Test pfv6-text-input
-    testComponent('pfv6-text-input', 'text-input-container', 'text-input-result', () => {
-      const input = document.createElement('pfv6-text-input');
+    // Test pf-v6-text-input
+    testComponent('pf-v6-text-input', 'text-input-container', 'text-input-result', () => {
+      const input = document.createElement('pf-v6-text-input');
       input.setAttribute('placeholder', 'Test Input');
       return input;
     });
 
-    // Test pfv6-select
-    testComponent('pfv6-select', 'select-container', 'select-result', () => {
-      const select = document.createElement('pfv6-select');
+    // Test pf-v6-select
+    testComponent('pf-v6-select', 'select-container', 'select-result', () => {
+      const select = document.createElement('pf-v6-select');
       select.setAttribute('options', 'Option 1,Option 2,Option 3');
       return select;
     });
 
-    // Test pfv6-tabs + pfv6-tab
-    testComponent('pfv6-tabs', 'tabs-container', 'tabs-result', () => {
-      const tabs = document.createElement('pfv6-tabs');
+    // Test pf-v6-tabs + pf-v6-tab
+    testComponent('pf-v6-tabs', 'tabs-container', 'tabs-result', () => {
+      const tabs = document.createElement('pf-v6-tabs');
 
-      const tab1 = document.createElement('pfv6-tab');
+      const tab1 = document.createElement('pf-v6-tab');
       tab1.setAttribute('title', 'Tab 1');
       tab1.textContent = 'Content 1';
 
-      const tab2 = document.createElement('pfv6-tab');
+      const tab2 = document.createElement('pf-v6-tab');
       tab2.setAttribute('title', 'Tab 2');
       tab2.textContent = 'Content 2';
 

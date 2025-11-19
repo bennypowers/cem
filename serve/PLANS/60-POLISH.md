@@ -168,32 +168,32 @@ serve:
     - [x] Client-side fallback pattern with error handling
     - [x] Transform tests (6 passing tests)
   - [x] Core pfv6 components implemented with hybrid rendering:
-    - [x] `pfv6-button` - Button component with variants
-    - [x] `pfv6-switch` - Toggle switch component
-    - [x] `pfv6-text-input` - Text input component
-    - [x] `pfv6-select` - Select/dropdown component
-    - [x] `pfv6-tabs` - Tabs container component
-    - [x] `pfv6-tab` - Individual tab component
+    - [x] `pf-v6-button` - Button component with variants
+    - [x] `pf-v6-switch` - Toggle switch component
+    - [x] `pf-v6-text-input` - Text input component
+    - [x] `pf-v6-select` - Select/dropdown component
+    - [x] `pf-v6-tabs` - Tabs container component
+    - [x] `pf-v6-tab` - Individual tab component
 
   **Phase 2: Dev Server UI Integration** ⬅️ **NEXT STEP**
   - [ ] Integrate existing pfv6 components into dev server UI:
-    - [ ] **Buttons** - Replace button styles with `<pfv6-button>` in:
+    - [ ] **Buttons** - Replace button styles with `<pf-v6-button>` in:
       - [ ] Nav drawer (`cem-nav-drawer.html`)
       - [ ] Debug panel (`demo-chrome.html`)
       - [ ] Chrome controls (`demo-chrome.html`)
-    - [ ] **Switch** - Replace checkboxes with `<pfv6-switch>` in:
+    - [ ] **Switch** - Replace checkboxes with `<pf-v6-switch>` in:
       - [ ] Knobs panel (`templates/knobs.html`)
       - [ ] Color scheme toggle (if applicable)
-    - [ ] **Form controls** - Use `<pfv6-text-input>` and `<pfv6-select>` in:
+    - [ ] **Form controls** - Use `<pf-v6-text-input>` and `<pf-v6-select>` in:
       - [ ] Knobs panel for text/number inputs
       - [ ] Knobs panel for select/enum inputs
-    - [ ] **Tabs** - Use `<pfv6-tabs>` and `<pfv6-tab>` where applicable
+    - [ ] **Tabs** - Use `<pf-v6-tabs>` and `<pf-v6-tab>` where applicable
 
   **Phase 3: Additional Components** (after Phase 2)
   - [ ] Develop missing pfv6 components:
-    - [ ] **pfv6-drawer** - For navigation drawer pattern (`<cem-nav-drawer>`)
-    - [ ] **pfv6-header** - Masthead/chrome pattern (`<cem-serve-chrome>`)
-    - [ ] **pfv6-disclosure** - Expandable sections for debug panel
+    - [ ] **pf-v6-drawer** - For navigation drawer pattern (`<cem-nav-drawer>`)
+    - [ ] **pf-v6-header** - Masthead/chrome pattern (`<cem-serve-chrome>`)
+    - [ ] **pf-v6-disclosure** - Expandable sections for debug panel
     - [ ] Other form controls as needed (checkbox, radio, etc.)
   - [ ] Integrate new components into dev server UI
 

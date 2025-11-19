@@ -13,27 +13,27 @@
   </script>
   
   <script type="module" src="/__cem/websocket-client.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-button/pfv6-button.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-switch/pfv6-switch.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-text-input/pfv6-text-input.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-select/pfv6-select.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-tab/pfv6-tab.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-tabs/pfv6-tabs.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-navigation/pfv6-navigation.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-nav-list/pfv6-nav-list.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-nav-item/pfv6-nav-item.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-nav-link/pfv6-nav-link.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-nav-group/pfv6-nav-group.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-page/pfv6-page.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-page-main/pfv6-page-main.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-page-sidebar/pfv6-page-sidebar.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-masthead/pfv6-masthead.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-skip-to-content/pfv6-skip-to-content.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-toolbar/pfv6-toolbar.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-toolbar-group/pfv6-toolbar-group.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-toolbar-item/pfv6-toolbar-item.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-toggle-group/pfv6-toggle-group.js"></script>
-  <script type="module" src="/__cem/elements/pfv6-toggle-group-item/pfv6-toggle-group-item.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-button/pf-v6-button.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-switch/pf-v6-switch.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-text-input/pf-v6-text-input.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-select/pf-v6-select.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-tab/pf-v6-tab.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-tabs/pf-v6-tabs.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-navigation/pf-v6-navigation.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-nav-list/pf-v6-nav-list.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-nav-item/pf-v6-nav-item.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-nav-link/pf-v6-nav-link.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-nav-group/pf-v6-nav-group.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-page/pf-v6-page.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-page-main/pf-v6-page-main.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-page-sidebar/pf-v6-page-sidebar.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-masthead/pf-v6-masthead.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-skip-to-content/pf-v6-skip-to-content.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-toolbar/pf-v6-toolbar.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-toolbar-group/pf-v6-toolbar-group.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-toolbar-item/pf-v6-toolbar-item.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-toggle-group/pf-v6-toggle-group.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-toggle-group-item/pf-v6-toggle-group-item.js"></script>
   <script type="module" src="/__cem/elements/cem-drawer/cem-drawer.js"></script>
   <script type="module" src="/__cem/elements/cem-serve-demo/cem-serve-demo.js"></script>
   <script type="module" src="/__cem/elements/cem-serve-knob-attribute/cem-serve-knob-attribute.js"></script>
@@ -244,7 +244,7 @@ cem-serve-listing {
 }
 
 /* Toolbar group alignment */
-pfv6-toolbar-group {
+pf-v6-toolbar-group {
   margin-inline-start: auto;
 }
 
@@ -395,7 +395,7 @@ pfv6-toolbar-group {
 }
 
 /* Content area padding for demo */
-pfv6-page-main ::slotted(*) {
+pf-v6-page-main ::slotted(*) {
   padding: var(--pf-t--global--spacer--lg);
 }
 
@@ -577,7 +577,7 @@ footer ::slotted([slot="description"]) {
 /* Hide footer drawer components until localStorage state is restored (prevents flash) */
 :host(.initializing) {
   cem-drawer,
-  pfv6-tabs {
+  pf-v6-tabs {
     visibility: hidden;
   }
 }
@@ -631,7 +631,7 @@ footer ::slotted([slot="description"]) {
   word-break: break-word;
 }
 
-/* Navigation content (light DOM slotted content for pfv6-page-sidebar) */
+/* Navigation content (light DOM slotted content for pf-v6-page-sidebar) */
 .nav-package {
   margin-bottom: var(--cem-dev-server-spacing-md);
 
@@ -933,7 +933,7 @@ cem-serve-knob-css-property [slot="description"] {
 }
 </style>
 
-      <pfv6-page>
+      <pf-v6-page>
         <template shadowrootmode="open">
   <style>/* PatternFly v6 Page Styles */
 
@@ -955,7 +955,7 @@ cem-serve-knob-css-property [slot="description"] {
 
 /* When sidebar is not collapsed */
 .pf-v6-c-page:not(.pf-m-sidebar-collapsed) {
-  & ::slotted(pfv6-page-main) {
+  & ::slotted(pf-v6-page-main) {
     --pf-v6-c-page__main-container--MarginInlineStart: 0;
   }
 }
@@ -964,7 +964,7 @@ cem-serve-knob-css-property [slot="description"] {
 .pf-v6-c-page.pf-m-sidebar-collapsed {
   grid-template-columns: 0 1fr;
 
-  & ::slotted(pfv6-page-sidebar) {
+  & ::slotted(pf-v6-page-sidebar) {
     pointer-events: none;
   }
 }
@@ -1013,7 +1013,7 @@ cem-serve-knob-css-property [slot="description"] {
     --pf-v6-c-page__main-container--xs--BorderInlineEndWidth: 0px;
 
     /* Remove sidebar from grid flow - make it overlay */
-    & ::slotted(pfv6-page-sidebar) {
+    & ::slotted(pf-v6-page-sidebar) {
       position: fixed;
       inset-block-start: 0;
       inset-inline-start: 0;
@@ -1032,7 +1032,7 @@ cem-serve-knob-css-property [slot="description"] {
 </template>
 
 
-        <pfv6-skip-to-content slot="skip-to-content" href="#main-content">
+        <pf-v6-skip-to-content slot="skip-to-content" href="#main-content">
           <template shadowrootmode="open">
   <style>/* PatternFly v6 Skip to Content Styles */
 
@@ -1101,9 +1101,9 @@ cem-serve-knob-css-property [slot="description"] {
 </div>
 </template>
 
-        </pfv6-skip-to-content>
+        </pf-v6-skip-to-content>
 
-        <pfv6-masthead slot="masthead">
+        <pf-v6-masthead slot="masthead">
           <template shadowrootmode="open">
   <style>/* PatternFly v6 Masthead Styles */
 
@@ -1181,12 +1181,12 @@ cem-serve-knob-css-property [slot="description"] {
 }
 
 /* Toggle button sizing */
-.pf-v6-c-masthead__toggle pfv6-button {
+.pf-v6-c-masthead__toggle pf-v6-button {
   font-size: var(--pf-v6-c-masthead__toggle--Size);
 }
 
-/* Toolbar integration - styles for slotted pfv6-toolbar */
-::slotted(pfv6-toolbar) {
+/* Toolbar integration - styles for slotted pf-v6-toolbar */
+::slotted(pf-v6-toolbar) {
   --pf-v6-c-toolbar--Width: var(--pf-v6-c-masthead--c-toolbar--Width);
   --pf-v6-c-toolbar--PaddingBlockEnd: var(--pf-v6-c-masthead--c-toolbar--PaddingBlockEnd);
   --pf-v6-c-toolbar__content--MinWidth: var(--pf-v6-c-masthead--c-toolbar__content--MinWidth);
@@ -1216,7 +1216,7 @@ cem-serve-knob-css-property [slot="description"] {
 <header class="pf-v6-c-masthead">
   <div class="pf-v6-c-masthead__main">
     <div class="pf-v6-c-masthead__toggle">
-      <pfv6-button
+      <pf-v6-button
         id="toggle-button"
         variant="plain"
         type="button"
@@ -1234,7 +1234,7 @@ cem-serve-knob-css-property [slot="description"] {
           <path d="M1,5 L9,5" />
           <path d="M9,9 L1,9" />
         </svg>
-      </pfv6-button>
+      </pf-v6-button>
     </div>
     <div class="pf-v6-c-masthead__brand">
       <slot name="logo"></slot>
@@ -1247,7 +1247,7 @@ cem-serve-knob-css-property [slot="description"] {
 </template>
 
           <img slot="logo" alt="CEM Dev Server" src="/__cem/logo.svg">
-          <pfv6-toolbar slot="toolbar">
+          <pf-v6-toolbar slot="toolbar">
             <template shadowrootmode="open">
   <style>/* PatternFly v6 Toolbar Styles */
 
@@ -1375,7 +1375,7 @@ cem-serve-knob-css-property [slot="description"] {
 </div>
 </template>
 
-            <pfv6-toolbar-group variant="action-group">
+            <pf-v6-toolbar-group variant="action-group">
               <template shadowrootmode="open">
   <style>/* PatternFly v6 Toolbar Group Styles */
 
@@ -1430,7 +1430,7 @@ cem-serve-knob-css-property [slot="description"] {
 
               
               
-              <pfv6-toolbar-item>
+              <pf-v6-toolbar-item>
                 <template shadowrootmode="open">
   <style>/* PatternFly v6 Toolbar Item Styles */
 
@@ -1472,7 +1472,7 @@ cem-serve-knob-css-property [slot="description"] {
 <slot></slot>
 </template>
 
-                <pfv6-button id="debug-info"
+                <pf-v6-button id="debug-info"
                              variant="plain"
                              aria-label="Debug info">
                   <template shadowrootmode="open">
@@ -1891,9 +1891,9 @@ slot#content {
                     <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
                     <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
                   </svg>
-                </pfv6-button>
-              </pfv6-toolbar-item>
-              <pfv6-toolbar-item>
+                </pf-v6-button>
+              </pf-v6-toolbar-item>
+              <pf-v6-toolbar-item>
                 <template shadowrootmode="open">
   <style>/* PatternFly v6 Toolbar Item Styles */
 
@@ -1935,7 +1935,7 @@ slot#content {
 <slot></slot>
 </template>
 
-                <pfv6-toggle-group class="color-scheme-toggle" aria-label="Color scheme">
+                <pf-v6-toggle-group class="color-scheme-toggle" aria-label="Color scheme">
                   <template shadowrootmode="open">
   <style>:host {
   display: inline-flex;
@@ -1996,7 +1996,7 @@ slot#content {
 </div>
 </template>
 
-                  <pfv6-toggle-group-item value="light">
+                  <pf-v6-toggle-group-item value="light">
                     <template shadowrootmode="open">
   <style>:host {
   display: contents;
@@ -2134,8 +2134,8 @@ slot#content {
                     <svg slot="icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                       <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
                     </svg>
-                  </pfv6-toggle-group-item>
-                  <pfv6-toggle-group-item value="dark">
+                  </pf-v6-toggle-group-item>
+                  <pf-v6-toggle-group-item value="dark">
                     <template shadowrootmode="open">
   <style>:host {
   display: contents;
@@ -2273,8 +2273,8 @@ slot#content {
                     <svg slot="icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                       <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278zM4.858 1.311A7.269 7.269 0 0 0 1.025 7.71c0 4.02 3.279 7.276 7.319 7.276a7.316 7.316 0 0 0 5.205-2.162c-.337.042-.68.063-1.029.063-4.61 0-8.343-3.714-8.343-8.29 0-1.167.242-2.278.681-3.286z"/>
                     </svg>
-                  </pfv6-toggle-group-item>
-                  <pfv6-toggle-group-item value="system">
+                  </pf-v6-toggle-group-item>
+                  <pf-v6-toggle-group-item value="system">
                     <template shadowrootmode="open">
   <style>:host {
   display: contents;
@@ -2413,15 +2413,15 @@ slot#content {
                       <path d="M0 1.5A1.5 1.5 0 0 1 1.5 0h13A1.5 1.5 0 0 1 16 1.5v8a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 9.5v-8zM1.5 1a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-13z"/>
                       <path d="M2.5 12h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1 0-1zm0 2h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1 0-1z"/>
                     </svg>
-                  </pfv6-toggle-group-item>
-                </pfv6-toggle-group>
-              </pfv6-toolbar-item>
-            </pfv6-toolbar-group>
-          </pfv6-toolbar>
-        </pfv6-masthead>
+                  </pf-v6-toggle-group-item>
+                </pf-v6-toggle-group>
+              </pf-v6-toolbar-item>
+            </pf-v6-toolbar-group>
+          </pf-v6-toolbar>
+        </pf-v6-masthead>
 
         
-        <pfv6-page-sidebar slot="sidebar">
+        <pf-v6-page-sidebar slot="sidebar">
           <template shadowrootmode="open">
   <style>/* PatternFly v6 Page Sidebar Styles */
 
@@ -2488,7 +2488,7 @@ slot#content {
 </div>
 </template>
 
-          <pfv6-navigation>
+          <pf-v6-navigation>
             <template shadowrootmode="open">
   <style>/* PatternFly v6 Navigation Styles - Adapted for Web Components */
 
@@ -2560,7 +2560,7 @@ slot#content {
 </nav>
 </template>
 
-            <pfv6-navigation aria-label="Component navigation" inset>
+            <pf-v6-navigation aria-label="Component navigation" inset>
   <template shadowrootmode="open">
   <style>/* PatternFly v6 Navigation Styles - Adapted for Web Components */
 
@@ -2632,7 +2632,7 @@ slot#content {
 </nav>
 </template>
 
-  <pfv6-nav-list>
+  <pf-v6-nav-list>
     <template shadowrootmode="open">
   <style>/* PatternFly v6 Nav List Styles */
 
@@ -2647,7 +2647,7 @@ slot#content {
 </template>
 
     
-    <pfv6-nav-item expanded>
+    <pf-v6-nav-item expanded>
       <template shadowrootmode="open">
   <style>/* PatternFly v6 Nav Item Styles */
 
@@ -2662,7 +2662,7 @@ slot#content {
 <slot></slot>
 </template>
 
-      <pfv6-nav-link expandable aria-expanded="true">
+      <pf-v6-nav-link expandable aria-expanded="true">
         <template shadowrootmode="open">
   <style>/* PatternFly v6 Nav Link Styles */
 
@@ -2769,8 +2769,8 @@ slot#content {
 </template>
 
         test-package
-      </pfv6-nav-link>
-      <pfv6-nav-group >
+      </pf-v6-nav-link>
+      <pf-v6-nav-group >
         <template shadowrootmode="open">
   <style>/* PatternFly v6 Nav Group Styles (Expandable/Subnav) */
 
@@ -2826,7 +2826,7 @@ slot#content {
 </section>
 </template>
 
-        <pfv6-nav-list>
+        <pf-v6-nav-list>
           <template shadowrootmode="open">
   <style>/* PatternFly v6 Nav List Styles */
 
@@ -2841,7 +2841,7 @@ slot#content {
 </template>
 
           
-          <pfv6-nav-item>
+          <pf-v6-nav-item>
             <template shadowrootmode="open">
   <style>/* PatternFly v6 Nav Item Styles */
 
@@ -2856,7 +2856,7 @@ slot#content {
 <slot></slot>
 </template>
 
-            <pfv6-nav-link expandable aria-expanded="false">
+            <pf-v6-nav-link expandable aria-expanded="false">
               <template shadowrootmode="open">
   <style>/* PatternFly v6 Nav Link Styles */
 
@@ -2963,8 +2963,8 @@ slot#content {
 </template>
 
               <code>&lt;demo-subset-one&gt;</code>
-            </pfv6-nav-link>
-            <pfv6-nav-group hidden>
+            </pf-v6-nav-link>
+            <pf-v6-nav-group hidden>
               <template shadowrootmode="open">
   <style>/* PatternFly v6 Nav Group Styles (Expandable/Subnav) */
 
@@ -3020,7 +3020,7 @@ slot#content {
 </section>
 </template>
 
-              <pfv6-nav-list>
+              <pf-v6-nav-list>
                 <template shadowrootmode="open">
   <style>/* PatternFly v6 Nav List Styles */
 
@@ -3035,7 +3035,7 @@ slot#content {
 </template>
 
                 
-                <pfv6-nav-item>
+                <pf-v6-nav-item>
                   <template shadowrootmode="open">
   <style>/* PatternFly v6 Nav Item Styles */
 
@@ -3050,7 +3050,7 @@ slot#content {
 <slot></slot>
 </template>
 
-                  <pfv6-nav-link href="/cem-demos/demo-subset/subset/">
+                  <pf-v6-nav-link href="/cem-demos/demo-subset/subset/">
                     <template shadowrootmode="open">
   <style>/* PatternFly v6 Nav Link Styles */
 
@@ -3157,14 +3157,14 @@ slot#content {
 </template>
 
                     Subset
-                  </pfv6-nav-link>
-                </pfv6-nav-item>
+                  </pf-v6-nav-link>
+                </pf-v6-nav-item>
                 
-              </pfv6-nav-list>
-            </pfv6-nav-group>
-          </pfv6-nav-item>
+              </pf-v6-nav-list>
+            </pf-v6-nav-group>
+          </pf-v6-nav-item>
           
-          <pfv6-nav-item>
+          <pf-v6-nav-item>
             <template shadowrootmode="open">
   <style>/* PatternFly v6 Nav Item Styles */
 
@@ -3179,7 +3179,7 @@ slot#content {
 <slot></slot>
 </template>
 
-            <pfv6-nav-link expandable aria-expanded="false">
+            <pf-v6-nav-link expandable aria-expanded="false">
               <template shadowrootmode="open">
   <style>/* PatternFly v6 Nav Link Styles */
 
@@ -3286,8 +3286,8 @@ slot#content {
 </template>
 
               <code>&lt;demo-subset-two&gt;</code>
-            </pfv6-nav-link>
-            <pfv6-nav-group hidden>
+            </pf-v6-nav-link>
+            <pf-v6-nav-group hidden>
               <template shadowrootmode="open">
   <style>/* PatternFly v6 Nav Group Styles (Expandable/Subnav) */
 
@@ -3343,7 +3343,7 @@ slot#content {
 </section>
 </template>
 
-              <pfv6-nav-list>
+              <pf-v6-nav-list>
                 <template shadowrootmode="open">
   <style>/* PatternFly v6 Nav List Styles */
 
@@ -3358,7 +3358,7 @@ slot#content {
 </template>
 
                 
-                <pfv6-nav-item>
+                <pf-v6-nav-item>
                   <template shadowrootmode="open">
   <style>/* PatternFly v6 Nav Item Styles */
 
@@ -3373,7 +3373,7 @@ slot#content {
 <slot></slot>
 </template>
 
-                  <pfv6-nav-link href="/cem-demos/demo-subset/subset/">
+                  <pf-v6-nav-link href="/cem-demos/demo-subset/subset/">
                     <template shadowrootmode="open">
   <style>/* PatternFly v6 Nav Link Styles */
 
@@ -3480,25 +3480,25 @@ slot#content {
 </template>
 
                     Subset
-                  </pfv6-nav-link>
-                </pfv6-nav-item>
+                  </pf-v6-nav-link>
+                </pf-v6-nav-item>
                 
-              </pfv6-nav-list>
-            </pfv6-nav-group>
-          </pfv6-nav-item>
+              </pf-v6-nav-list>
+            </pf-v6-nav-group>
+          </pf-v6-nav-item>
           
-        </pfv6-nav-list>
-      </pfv6-nav-group>
-    </pfv6-nav-item>
+        </pf-v6-nav-list>
+      </pf-v6-nav-group>
+    </pf-v6-nav-item>
     
-  </pfv6-nav-list>
-</pfv6-navigation>
+  </pf-v6-nav-list>
+</pf-v6-navigation>
 
-          </pfv6-navigation>
-        </pfv6-page-sidebar>
+          </pf-v6-navigation>
+        </pf-v6-page-sidebar>
         
 
-        <pfv6-page-main slot="main" id="main-content">
+        <pf-v6-page-main slot="main" id="main-content">
           <template shadowrootmode="open">
   <style>/* PatternFly v6 Page Main Styles */
 
@@ -3542,8 +3542,8 @@ slot#content {
 </template>
 
           <slot></slot>
-        </pfv6-page-main>
-      </pfv6-page>
+        </pf-v6-page-main>
+      </pf-v6-page>
 
       <div class="debug-overlay">
         <div class="debug-panel">
@@ -3577,7 +3577,7 @@ slot#content {
             <pre id="debug-importmap">-</pre>
           </details>
           <div class="button-container">
-            <pfv6-button class="debug-copy" variant="primary">
+            <pf-v6-button class="debug-copy" variant="primary">
               <template shadowrootmode="open">
   <style>:host {
   display: var(--pf-v6-c-button--Display, inline-flex);
@@ -3991,8 +3991,8 @@ slot#content {
 </template>
 
               Copy Debug Info
-            </pfv6-button>
-            <pfv6-button class="debug-close" variant="secondary">
+            </pf-v6-button>
+            <pf-v6-button class="debug-close" variant="secondary">
               <template shadowrootmode="open">
   <style>:host {
   display: var(--pf-v6-c-button--Display, inline-flex);
@@ -4406,7 +4406,7 @@ slot#content {
 </template>
 
               Close
-            </pfv6-button>
+            </pf-v6-button>
           </div>
         </div>
       </div>
@@ -4506,7 +4506,7 @@ slot#content {
 
 </style>
 <div id="resize-handle" title="Drag to resize"></div>
-<pfv6-button id="toggle"
+<pf-v6-button id="toggle"
              variant="plain"
              aria-label="Toggle drawer">
   <template shadowrootmode="open">
@@ -4928,13 +4928,13 @@ slot#content {
     <path fill-rule="evenodd"
           d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
   </svg>
-</pfv6-button>
+</pf-v6-button>
 <div id="content">
   <slot></slot>
 </div>
 </template>
 
-          <pfv6-tabs>
+          <pf-v6-tabs>
             <template shadowrootmode="open">
   <style>:host {
   display: block;
@@ -4949,17 +4949,17 @@ slot#content {
   height: 100%;
 }
 
-@property --_pfv6-tabs--link-accent--length {
+@property --_pf-v6-tabs--link-accent--length {
   syntax: "<length>";
   inherits: true;
   initial-value: 0px;
 }
 
 .tabs {
-  --_pfv6-tabs--link-accent--start: 0px;
-  --_pfv6-tabs--link-accent--length: 0px;
-  --_pfv6-tabs--link-accent--color: var(--pf-t--global--border--color--clicked);
-  --_pfv6-tabs--link-accent--border-size: var(--pf-t--global--border--width--extra-strong);
+  --_pf-v6-tabs--link-accent--start: 0px;
+  --_pf-v6-tabs--link-accent--length: 0px;
+  --_pf-v6-tabs--link-accent--color: var(--pf-t--global--border--color--clicked);
+  --_pf-v6-tabs--link-accent--border-size: var(--pf-t--global--border--width--extra-strong);
 
   position: relative;
   display: flex;
@@ -4986,12 +4986,12 @@ slot#content {
     inset-block-start: auto;
     inset-block-end: 0;
     inset-inline-start: 0;
-    width: var(--_pfv6-tabs--link-accent--length);
+    width: var(--_pf-v6-tabs--link-accent--length);
     height: 0;
-    border: 0 solid var(--_pfv6-tabs--link-accent--color);
-    border-block-end-width: var(--_pfv6-tabs--link-accent--border-size);
+    border: 0 solid var(--_pf-v6-tabs--link-accent--color);
+    border-block-end-width: var(--_pf-v6-tabs--link-accent--border-size);
     transform-origin: 0 center;
-    translate: var(--_pfv6-tabs--link-accent--start) 0;
+    translate: var(--_pf-v6-tabs--link-accent--start) 0;
     transition-property: width, translate;
     transition-duration: var(--pf-t--global--motion--duration--md);
     transition-timing-function: var(--pf-t--global--motion--timing-function--decelerate);
@@ -5083,7 +5083,7 @@ slot#content {
   pointer-events: none;
 }
 </style>
-<link rel="stylesheet" href="/__cem/elements/pfv6-tabs/pfv6-tabs.css">
+<link rel="stylesheet" href="/__cem/elements/pf-v6-tabs/pf-v6-tabs.css">
 <div class="tabs-container">
   <div class="tabs" role="tablist">
     
@@ -5094,13 +5094,13 @@ slot#content {
 </div>
 </template>
 
-            <pfv6-tab title="Knobs">
+            <pf-v6-tab title="Knobs">
               <template shadowrootmode="open">
   <style>:host {
   display: contents;
 }
 </style>
-<link rel="stylesheet" href="/__cem/elements/pfv6-tab/pfv6-tab.css">
+<link rel="stylesheet" href="/__cem/elements/pf-v6-tab/pf-v6-tab.css">
 <slot></slot>
 </template>
 
@@ -5109,20 +5109,20 @@ slot#content {
                 <p class="knobs-empty">No knobs available for this element.</p>
                 
               </div>
-            </pfv6-tab>
-            <pfv6-tab title="Server Logs">
+            </pf-v6-tab>
+            <pf-v6-tab title="Server Logs">
               <template shadowrootmode="open">
   <style>:host {
   display: contents;
 }
 </style>
-<link rel="stylesheet" href="/__cem/elements/pfv6-tab/pfv6-tab.css">
+<link rel="stylesheet" href="/__cem/elements/pf-v6-tab/pf-v6-tab.css">
 <slot></slot>
 </template>
 
               <div id="log-container"></div>
-            </pfv6-tab>
-          </pfv6-tabs>
+            </pf-v6-tab>
+          </pf-v6-tabs>
         </cem-drawer>
       </footer>
     </template>

@@ -1,29 +1,29 @@
 <div id="input-container">
   {{if eq .type "boolean"}}
-  <pfv6-switch id="input">
-    {{renderElementShadowRoot "pfv6-switch" dict}}
+  <pf-v6-switch id="input">
+    {{renderElementShadowRoot "pf-v6-switch" dict}}
     {{.name}}
-  </pfv6-switch>
+  </pf-v6-switch>
   {{else if eq .type "string"}}
-  <pfv6-text-input id="input"
+  <pf-v6-text-input id="input"
                    type="text"
                    value="{{.value}}"
                    placeholder="{{.name}}">
-    {{renderElementShadowRoot "pfv6-text-input" dict}}
-  </pfv6-text-input>
+    {{renderElementShadowRoot "pf-v6-text-input" dict}}
+  </pf-v6-text-input>
   {{else if eq .type "number"}}
-  <pfv6-text-input id="input"
+  <pf-v6-text-input id="input"
                    type="number"
                    value="{{.value}}"
                    placeholder="{{.name}}">
-    {{renderElementShadowRoot "pfv6-text-input" dict}}
-  </pfv6-text-input>
+    {{renderElementShadowRoot "pf-v6-text-input" dict}}
+  </pf-v6-text-input>
   {{else if eq .type "enum"}}
-  <pfv6-select id="input"
+  <pf-v6-select id="input"
                value="{{.value}}"
                options="{{.enumValues}}">
-    {{renderElementShadowRoot "pfv6-select" dict}}
-  </pfv6-select>
+    {{renderElementShadowRoot "pf-v6-select" dict}}
+  </pf-v6-select>
   {{end}}
 </div>
 <div id="knob-description">

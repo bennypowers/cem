@@ -269,19 +269,19 @@ All chrome components use Declarative Shadow DOM (DSD) for SSR:
 **Template structure:**
 
 ```html
-<pfv6-tabs>
-  {{renderElementShadowRoot "pfv6-tabs" dict}}
-  <pfv6-tab title="Knobs">
-    {{renderElementShadowRoot "pfv6-tab" dict}}
+<pf-v6-tabs>
+  {{renderElementShadowRoot "pf-v6-tabs" dict}}
+  <pf-v6-tab title="Knobs">
+    {{renderElementShadowRoot "pf-v6-tab" dict}}
     <div>Tab content</div>
-  </pfv6-tab>
-</pfv6-tabs>
+  </pf-v6-tab>
+</pf-v6-tabs>
 ```
 
 **Component expects pre-attached shadow root:**
 
 ```javascript
-class Pfv6Tabs extends HTMLElement {
+class PfV6Tabs extends HTMLElement {
   connectedCallback() {
     if (!this.shadowRoot) {
       console.error('Shadow root not found. Use renderElementShadowRoot in templates.');
@@ -334,24 +334,24 @@ Instead of manual `<slot>` assignment:
 
 ```html
 <!-- ❌ Manual slot API -->
-<pfv6-tabs>
+<pf-v6-tabs>
   <button slot="tab-0">Tab 1</button>
   <div slot="panel-0">Panel 1</div>
-</pfv6-tabs>
+</pf-v6-tabs>
 ```
 
 Use declarative children:
 
 ```html
 <!-- ✅ Declarative API -->
-<pfv6-tabs>
-  <pfv6-tab title="Tab 1">
+<pf-v6-tabs>
+  <pf-v6-tab title="Tab 1">
     Panel content
-  </pfv6-tab>
-  <pfv6-tab title="Tab 2">
+  </pf-v6-tab>
+  <pf-v6-tab title="Tab 2">
     Panel content
-  </pfv6-tab>
-</pfv6-tabs>
+  </pf-v6-tab>
+</pf-v6-tabs>
 ```
 
 **Benefits:**
@@ -365,7 +365,7 @@ Use declarative children:
 
 ```javascript
 #updateTabs() {
-  this.#tabs = Array.from(this.querySelectorAll('pfv6-tab'));
+  this.#tabs = Array.from(this.querySelectorAll('pf-v6-tab'));
 
   this.#tabs.forEach((tab, index) => {
     const button = document.createElement('button');
@@ -379,7 +379,7 @@ Use declarative children:
 }
 ```
 
-Child element (`pfv6-tab`) is just a wrapper with `display: contents`:
+Child element (`pf-v6-tab`) is just a wrapper with `display: contents`:
 
 ```css
 :host {

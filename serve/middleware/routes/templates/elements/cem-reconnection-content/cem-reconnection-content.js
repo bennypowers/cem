@@ -59,8 +59,8 @@ export class CEMReconnectionContent extends HTMLElement {
       <div id="retry-info"></div>
 
       <div class="buttons">
-        <pfv6-button id="reload-btn" variant="secondary">Reload Page</pfv6-button>
-        <pfv6-button id="retry-btn" variant="primary">Retry Now</pfv6-button>
+        <pf-v6-button id="reload-btn" variant="secondary">Reload Page</pf-v6-button>
+        <pf-v6-button id="retry-btn" variant="primary">Retry Now</pf-v6-button>
       </div>
     `;
 

@@ -12,7 +12,7 @@
 }
 
 /* Toolbar group alignment */
-pfv6-toolbar-group {
+pf-v6-toolbar-group {
   margin-inline-start: auto;
 }
 
@@ -163,7 +163,7 @@ pfv6-toolbar-group {
 }
 
 /* Content area padding for demo */
-pfv6-page-main ::slotted(*) {
+pf-v6-page-main ::slotted(*) {
   padding: var(--pf-t--global--spacer--lg);
 }
 
@@ -345,7 +345,7 @@ footer ::slotted([slot="description"]) {
 /* Hide footer drawer components until localStorage state is restored (prevents flash) */
 :host(.initializing) {
   cem-drawer,
-  pfv6-tabs {
+  pf-v6-tabs {
     visibility: hidden;
   }
 }
@@ -399,7 +399,7 @@ footer ::slotted([slot="description"]) {
   word-break: break-word;
 }
 
-/* Navigation content (light DOM slotted content for pfv6-page-sidebar) */
+/* Navigation content (light DOM slotted content for pf-v6-page-sidebar) */
 .nav-package {
   margin-bottom: var(--cem-dev-server-spacing-md);
 

@@ -54,7 +54,7 @@ export class CemElement extends HTMLElement {
 
   /**
    * Fetch element HTML or CSS from the server
-   * @param {string} name - Component name (e.g., 'pfv6-button')
+   * @param {string} name - Component name (e.g., 'pf-v6-button')
    * @param {'html'|'css'} type - File type
    * @returns {Promise<string>} The content
    * @private
@@ -75,7 +75,7 @@ export class CemElement extends HTMLElement {
 
   /**
    * Gets an existing stylesheet from cache or creates a new one
-   * @param {string} name - Component name (e.g., 'pfv6-button')
+   * @param {string} name - Component name (e.g., 'pf-v6-button')
    * @returns {Promise<CSSStyleSheet>} The cached or newly created stylesheet
    * @private
    */
@@ -98,7 +98,7 @@ export class CemElement extends HTMLElement {
 
   /**
    * Gets an element template from client-side cache or from the server
-   * @param {string} name - Component name (e.g., 'pfv6-button')
+   * @param {string} name - Component name (e.g., 'pf-v6-button')
    * @returns {Promise<string>} The cached or fetched template string
    * @private
    */
@@ -113,7 +113,7 @@ export class CemElement extends HTMLElement {
 
   /**
    * Loads a complete component template (HTML and CSS)
-   * @param {string} name - Component name (e.g., 'pfv6-button')
+   * @param {string} name - Component name (e.g., 'pf-v6-button')
    * @returns {Promise<{html: string, stylesheet: CSSStyleSheet}>} The template HTML and stylesheet
    * @private
    */
@@ -145,7 +145,6 @@ export class CemElement extends HTMLElement {
   /**
    * Load and apply the component template.
    * Uses the element name from static elementName or falls back to this.localName.
-   * @private
    */
   async #populateShadowRoot() {
     const elementName = this.constructor.elementName || this.localName;
@@ -169,6 +168,8 @@ export class CemElement extends HTMLElement {
    *   this.button = this.shadowRoot.getElementById('button');
    *   this.button.addEventListener('click', () => console.log('clicked'));
    * }
+   *
+   * @protected
    */
   async afterTemplateLoaded() {
     // Subclasses can override this

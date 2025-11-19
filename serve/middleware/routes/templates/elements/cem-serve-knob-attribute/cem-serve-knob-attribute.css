@@ -69,13 +69,13 @@ select {
 }
 
 /* Switches should not get form control styling */
-pfv6-switch {
+pf-v6-switch {
   padding: 0;
   border: none;
   background: none;
 }
 
-pfv6-switch:focus {
+pf-v6-switch:focus {
   outline: none;
 }
 

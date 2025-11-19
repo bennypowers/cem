@@ -359,7 +359,7 @@ Generated: ${new Date().toISOString()}`;
 
     // Restore saved color scheme preference and mark item as selected
     const saved = getStorageItem('cem-serve-color-scheme', 'system');
-    const items = toggleGroup.querySelectorAll('pfv6-toggle-group-item');
+    const items = toggleGroup.querySelectorAll('pf-v6-toggle-group-item');
     items.forEach(item => {
       if (item.getAttribute('value') === saved) {
         item.setAttribute('selected', '');
@@ -368,7 +368,7 @@ Generated: ${new Date().toISOString()}`;
     this.#applyColorScheme(saved);
 
     // Listen for toggle group changes
-    toggleGroup.addEventListener('pfv6-toggle-group-change', (e) => {
+    toggleGroup.addEventListener('pf-v6-toggle-group-change', (e) => {
       const scheme = e.value;
       this.#applyColorScheme(scheme);
       setStorageItem('cem-serve-color-scheme', scheme);

@@ -49,22 +49,22 @@ export class CemServeKnobBase extends HTMLElement {
     this.setupInputListeners(input);
   }
 
-  // Factory method for creating pfv6-switch
-  createPfv6Switch(name, value) {
-    const input = document.createElement('pfv6-switch');
+  // Factory method for creating pf-v6-switch
+  createPfV6Switch(name, value) {
+    const input = document.createElement('pf-v6-switch');
     input.id = 'input';
     input.checked = false;
     input.textContent = name;
     return input;
   }
 
-  // Factory method for creating pfv6-select
-  createPfv6Select(name, value, defaultValue, enumValues) {
+  // Factory method for creating pf-v6-select
+  createPfV6Select(name, value, defaultValue, enumValues) {
     const label = document.createElement('label');
     label.textContent = name;
     label.htmlFor = 'input';
 
-    const input = document.createElement('pfv6-select');
+    const input = document.createElement('pf-v6-select');
     input.id = 'input';
     input.setAttribute('options', enumValues.join(','));
     input.value = value;
@@ -74,13 +74,13 @@ export class CemServeKnobBase extends HTMLElement {
     return label;
   }
 
-  // Factory method for creating pfv6-text-input (string or number)
-  createPfv6TextInput(name, value, defaultValue, inputType = 'text') {
+  // Factory method for creating pf-v6-text-input (string or number)
+  createPfV6TextInput(name, value, defaultValue, inputType = 'text') {
     const label = document.createElement('label');
     label.textContent = name;
     label.htmlFor = 'input';
 
-    const input = document.createElement('pfv6-text-input');
+    const input = document.createElement('pf-v6-text-input');
     input.type = inputType;
     input.id = 'input';
     input.value = value;
@@ -143,15 +143,15 @@ export class CemServeKnobBase extends HTMLElement {
 
     switch (type) {
       case 'boolean':
-        return this.createPfv6Switch(this.name, value);
+        return this.createPfV6Switch(this.name, value);
       case 'enum':
-        return this.createPfv6Select(this.name, value, defaultValue, this.enumValues);
+        return this.createPfV6Select(this.name, value, defaultValue, this.enumValues);
       case 'number':
-        return this.createPfv6TextInput(this.name, value, defaultValue, 'number');
+        return this.createPfV6TextInput(this.name, value, defaultValue, 'number');
       case 'color':
         return this.createColorInput(this.name, value, defaultValue);
       default: // string
-        return this.createPfv6TextInput(this.name, value, defaultValue, 'text');
+        return this.createPfV6TextInput(this.name, value, defaultValue, 'text');
     }
   }
 
