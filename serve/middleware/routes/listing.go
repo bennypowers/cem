@@ -53,7 +53,7 @@ func RenderElementListing(manifestBytes []byte, importMap string, packageName st
 			title = "Component Browser"
 		}
 		return renderDemoChrome(ChromeData{
-			TagName:   "cem-serve",
+			TagName:   "", // Empty for index page
 			DemoTitle: title,
 			DemoHTML: template.HTML(`
 				<div class="empty-state">
@@ -108,7 +108,7 @@ func RenderElementListing(manifestBytes []byte, importMap string, packageName st
 	}
 
 	return renderDemoChrome(ChromeData{
-		TagName:        "cem-serve",
+		TagName:        "", // Empty for index page
 		DemoTitle:      title,
 		DemoHTML:       template.HTML(buf.String()),
 		ImportMap:      template.HTML(importMap),

@@ -18,7 +18,7 @@
   {{else if eq .Attributes.type "enum"}}
   <pf-v6-select id="input"
                value="{{.Attributes.value}}"
-               options="{{.Attributes.enum-values}}">
+               options="{{.EnumValues}}">
   </pf-v6-select>
   {{end}}
 </div>

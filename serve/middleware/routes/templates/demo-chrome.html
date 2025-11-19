@@ -46,7 +46,7 @@
 <body>
   <cem-serve-chrome role="none"
                     {{if .EnabledKnobs}}knobs="{{.EnabledKnobs}}"{{end}}
-                    tag-name="{{.TagName}}"
+                    {{if .TagName}}tag-name="{{.TagName}}"{{end}}
                     {{if .DemoTitle}}demo-title="{{.DemoTitle}}"{{end}}
                     {{if .CanonicalURL}}canonical-url="{{.CanonicalURL}}"{{end}}
                     {{if .SourceURL}}source-url="{{.SourceURL}}"{{end}}>

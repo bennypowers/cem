@@ -316,12 +316,19 @@ func serveDebugInfo(w http.ResponseWriter, r *http.Request, config Config) {
 					localRoute = parsed.Path
 				}
 
-				demos = append(demos, map[string]interface{}{
+				demoInfo := map[string]interface{}{
 					"tagName":      renderableDemo.CustomElementDeclaration.TagName,
 					"description":  renderableDemo.Demo.Description,
 					"canonicalURL": demoURL,
 					"localRoute":   localRoute,
-				})
+				}
+
+				// Add filepath if available
+				if renderableDemo.Demo.Source != nil && renderableDemo.Demo.Source.Href != "" {
+					demoInfo["filepath"] = renderableDemo.Demo.Source.Href
+				}
+
+				demos = append(demos, demoInfo)
 			}
 		}
 	}

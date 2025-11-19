@@ -187,7 +187,7 @@ export class CemServeChrome extends CemElement {
     const watchDirEl = this.#$('#debug-watch-dir');
     const manifestSizeEl = this.#$('#debug-manifest-size');
     const demoCountEl = this.#$('#debug-demo-count');
-    const demosListEl = this.#$('#debug-demos-list');
+    const demoUrlsContainer = this.#$('#demo-urls-container');
     const importMapEl = this.#$('#debug-importmap');
 
     if (versionEl) versionEl.textContent = data.version || '-';
@@ -196,12 +196,9 @@ export class CemServeChrome extends CemElement {
     if (manifestSizeEl) manifestSizeEl.textContent = data.manifestSize || '-';
     if (demoCountEl) demoCountEl.textContent = data.demoCount || '0';
 
-    if (demosListEl && data.demos?.length) {
-      demosListEl.textContent = data.demos.map(demo =>
-        `${demo.tagName}: ${demo.description || '(no description)'}\n  Canonical: ${demo.canonicalURL}\n  Local Route: ${demo.localRoute}`
-      ).join('\n\n');
-    } else if (demosListEl) {
-      demosListEl.textContent = 'No demos found in manifest';
+    // Populate demo URLs section
+    if (demoUrlsContainer) {
+      this.#populateDemoUrls(demoUrlsContainer, data.demos);
     }
 
     if (importMapEl && data.importMap) {
@@ -216,6 +213,77 @@ export class CemServeChrome extends CemElement {
 
     // Store data for copy function
     this.#debugData = data;
+  }
+
+  #populateDemoUrls(container, demos) {
+    if (!demos?.length) {
+      container.innerHTML = '<p>No demos found in manifest</p>';
+      return;
+    }
+
+    const currentTagName = this.getAttribute('tag-name') || '';
+    const isOnDemoPage = !!currentTagName;
+
+    if (isOnDemoPage) {
+      // On demo page - show only current demo, not in details
+      const currentDemo = demos.find(demo => demo.tagName === currentTagName);
+      if (!currentDemo) {
+        container.innerHTML = '<p>Current demo not found in manifest</p>';
+        return;
+      }
+
+      container.innerHTML = `
+        <h3>Demo Information</h3>
+        <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+          <div class="pf-v6-c-description-list__group">
+            <dt class="pf-v6-c-description-list__term">Tag Name</dt>
+            <dd class="pf-v6-c-description-list__description">${currentDemo.tagName}</dd>
+          </div>
+          ${currentDemo.description ? `
+          <div class="pf-v6-c-description-list__group">
+            <dt class="pf-v6-c-description-list__term">Description</dt>
+            <dd class="pf-v6-c-description-list__description">${currentDemo.description}</dd>
+          </div>
+          ` : ''}
+          ${currentDemo.filepath ? `
+          <div class="pf-v6-c-description-list__group">
+            <dt class="pf-v6-c-description-list__term">File Path</dt>
+            <dd class="pf-v6-c-description-list__description">${currentDemo.filepath}</dd>
+          </div>
+          ` : ''}
+          <div class="pf-v6-c-description-list__group">
+            <dt class="pf-v6-c-description-list__term">Canonical URL</dt>
+            <dd class="pf-v6-c-description-list__description">${currentDemo.canonicalURL}</dd>
+          </div>
+          <div class="pf-v6-c-description-list__group">
+            <dt class="pf-v6-c-description-list__term">Local Route</dt>
+            <dd class="pf-v6-c-description-list__description">${currentDemo.localRoute}</dd>
+          </div>
+        </dl>
+      `;
+    } else {
+      // On index page - show all demos in details with description list
+      const demoGroups = demos.map(demo => `
+        <div class="pf-v6-c-description-list__group">
+          <dt class="pf-v6-c-description-list__term">${demo.tagName}</dt>
+          <dd class="pf-v6-c-description-list__description">
+            ${demo.description || '(no description)'}<br>
+            ${demo.filepath ? `<small>File: ${demo.filepath}</small><br>` : ''}
+            <small>Canonical: ${demo.canonicalURL}</small><br>
+            <small>Local: ${demo.localRoute}</small>
+          </dd>
+        </div>
+      `).join('');
+
+      container.innerHTML = `
+        <details id="debug-demos-details">
+          <summary>Show Demo URLs from Manifest (${demos.length})</summary>
+          <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+            ${demoGroups}
+          </dl>
+        </details>
+      `;
+    }
   }
 
   #setupLogListener() {
