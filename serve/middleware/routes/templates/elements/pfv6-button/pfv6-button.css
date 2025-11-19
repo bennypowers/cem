@@ -102,6 +102,11 @@
   --pf-v6-c-button--m-plain--BorderColor: transparent;
   --pf-v6-c-button--m-plain--m-clicked--BorderColor: var(--pf-t--global--border--color--high-contrast);
   --pf-v6-c-button--m-plain--hover--BorderColor: var(--pf-t--global--border--color--high-contrast);
+  --pf-v6-c-button--m-plain--m-no-padding--MinWidth: auto;
+  --pf-v6-c-button--m-plain--m-no-padding--PaddingBlockStart: 0;
+  --pf-v6-c-button--m-plain--m-no-padding--PaddingInlineEnd: 0;
+  --pf-v6-c-button--m-plain--m-no-padding--PaddingBlockEnd: 0;
+  --pf-v6-c-button--m-plain--m-no-padding--PaddingInlineStart: 0;
 
   /* Link variant variables */
   --pf-v6-c-button--m-link--BorderRadius: var(--pf-t--global--border--radius--small);
@@ -197,8 +202,7 @@ button::after {
   inset: var(--pf-v6-c-button--border--offset, 0);
   pointer-events: none;
   content: "";
-  border: var(--pf-v6-c-button--BorderWidth) solid;
-  border-color: var(--pf-v6-c-button--BorderColor);
+  border: var(--pf-v6-c-button--BorderWidth) solid var(--pf-v6-c-button--BorderColor);
   border-radius: inherit;
   transition: inherit;
 }
@@ -303,7 +307,6 @@ button:disabled {
   --pf-v6-c-button--BorderColor: var(--pf-v6-c-button--m-plain--BorderColor);
   --pf-v6-c-button--m-clicked--BorderColor: var(--pf-v6-c-button--m-plain--m-clicked--BorderColor);
   --pf-v6-c-button--hover--BorderColor: var(--pf-v6-c-button--m-plain--hover--BorderColor);
-  --pf-v6-c-button--MinWidth: auto;
 }
 
 /* Link variant */
@@ -360,6 +363,15 @@ button:disabled {
   --pf-v6-c-button--PaddingInlineStart: var(--pf-v6-c-button--m-plain--m-small--PaddingInlineStart);
 }
 
+/* Plain no-padding modifier (for icon-only buttons) */
+:host([variant="plain"][no-padding]) {
+  --pf-v6-c-button--MinWidth: var(--pf-v6-c-button--m-plain--m-no-padding--MinWidth);
+  --pf-v6-c-button--PaddingBlockStart: var(--pf-v6-c-button--m-plain--m-no-padding--PaddingBlockStart);
+  --pf-v6-c-button--PaddingInlineEnd: var(--pf-v6-c-button--m-plain--m-no-padding--PaddingInlineEnd);
+  --pf-v6-c-button--PaddingBlockEnd: var(--pf-v6-c-button--m-plain--m-no-padding--PaddingBlockEnd);
+  --pf-v6-c-button--PaddingInlineStart: var(--pf-v6-c-button--m-plain--m-no-padding--PaddingInlineStart);
+}
+
 :host([size="lg"]) {
   --pf-v6-c-button--PaddingBlockStart: var(--pf-v6-c-button--m-display-lg--PaddingBlockStart);
   --pf-v6-c-button--PaddingInlineEnd: var(--pf-v6-c-button--m-display-lg--PaddingInlineEnd);
@@ -376,6 +388,10 @@ button:disabled {
 
 :host([block]) button {
   width: 100%;
+}
+
+slot#content {
+  display: inline;
 }
 
 /* Icon slot styling */
