@@ -95,25 +95,43 @@
 
 <pf-v6-modal id="debug-modal" variant="large">
   <h2 slot="header">Debug Information</h2>
-  <dl>
-    <dt>Server Version</dt>
-    <dd id="debug-version">-</dd>
-    <dt>Server OS</dt>
-    <dd id="debug-os">-</dd>
-    <dt>Watch Directory</dt>
-    <dd id="debug-watch-dir">-</dd>
-    <dt>Manifest Size</dt>
-    <dd id="debug-manifest-size">-</dd>
-    <dt>Demos Found</dt>
-    <dd id="debug-demo-count">-</dd>
-    <dt>Tag Name</dt>
-    <dd>{{.TagName}}</dd>
-    <dt>Demo Title</dt>
-    <dd>{{.DemoTitle}}</dd>
-    <dt>Browser</dt>
-    <dd id="debug-browser">-</dd>
-    <dt>User Agent</dt>
-    <dd id="debug-ua">-</dd>
+  <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+    <div class="pf-v6-c-description-list__group">
+      <dt class="pf-v6-c-description-list__term">Server Version</dt>
+      <dd class="pf-v6-c-description-list__description" id="debug-version">-</dd>
+    </div>
+    <div class="pf-v6-c-description-list__group">
+      <dt class="pf-v6-c-description-list__term">Server OS</dt>
+      <dd class="pf-v6-c-description-list__description" id="debug-os">-</dd>
+    </div>
+    <div class="pf-v6-c-description-list__group">
+      <dt class="pf-v6-c-description-list__term">Watch Directory</dt>
+      <dd class="pf-v6-c-description-list__description" id="debug-watch-dir">-</dd>
+    </div>
+    <div class="pf-v6-c-description-list__group">
+      <dt class="pf-v6-c-description-list__term">Manifest Size</dt>
+      <dd class="pf-v6-c-description-list__description" id="debug-manifest-size">-</dd>
+    </div>
+    <div class="pf-v6-c-description-list__group">
+      <dt class="pf-v6-c-description-list__term">Demos Found</dt>
+      <dd class="pf-v6-c-description-list__description" id="debug-demo-count">-</dd>
+    </div>
+    <div class="pf-v6-c-description-list__group">
+      <dt class="pf-v6-c-description-list__term">Tag Name</dt>
+      <dd class="pf-v6-c-description-list__description">{{.TagName}}</dd>
+    </div>
+    <div class="pf-v6-c-description-list__group">
+      <dt class="pf-v6-c-description-list__term">Demo Title</dt>
+      <dd class="pf-v6-c-description-list__description">{{.DemoTitle}}</dd>
+    </div>
+    <div class="pf-v6-c-description-list__group">
+      <dt class="pf-v6-c-description-list__term">Browser</dt>
+      <dd class="pf-v6-c-description-list__description" id="debug-browser">-</dd>
+    </div>
+    <div class="pf-v6-c-description-list__group">
+      <dt class="pf-v6-c-description-list__term">User Agent</dt>
+      <dd class="pf-v6-c-description-list__description" id="debug-ua">-</dd>
+    </div>
   </dl>
   <details id="debug-demos-details">
     <summary>Show Demo URLs from Manifest</summary>
