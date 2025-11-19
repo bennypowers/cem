@@ -4,10 +4,10 @@
   container-type: inline-size;
   display: grid;
   grid-template-areas:
-    "header header"
-    "sidebar main";
-  grid-template-rows: auto 1fr;
-  grid-template-columns: auto 1fr;
+    "header"
+    "main";
+  grid-template-rows: max-content 1fr;
+  grid-template-columns: 1fr;
   height: 100vh;
 	--pf-v6-c-page--BackgroundColor: var(--pf-t--global--background--color--secondary--default);
 	--pf-v6-c-page--inset: var(--pf-t--global--spacer--inset--page-chrome);
@@ -34,7 +34,7 @@
 	--pf-v6-c-page__sidebar--PaddingInlineEnd: 0;
 	--pf-v6-c-page__sidebar--BorderInlineEndWidth: var(--pf-t--global--border--width--high-contrast--regular);
 	--pf-v6-c-page__sidebar--BorderInlineEndColor: var(--pf-t--global--border--color--high-contrast);
-	--pf-v6-c-page__sidebar-header--BorderBlockEndWidth: var(--pf-t--global--border--width--divider--default);
+    --pf-v6-c-page__sidebar-header--BorderBlockEndWidth: var(--pf-t--global--border--width--divider--default);
 	--pf-v6-c-page__sidebar-header--BorderBlockEndColor: var(--pf-t--global--border--color--default);
 	--pf-v6-c-page__sidebar-header--PaddingBlockStart: var(--pf-t--global--spacer--sm);
 	--pf-v6-c-page__sidebar-header--PaddingBlockEnd: var(--pf-t--global--spacer--md);
@@ -122,22 +122,8 @@
   background-color: var(--pf-v6-c-page--BackgroundColor);
 }
 
-/* When sidebar is not collapsed */
-:host(:not([sidebar-collapsed])) ::slotted(pf-v6-page-main) {
-  --pf-v6-c-page__main-container--MarginInlineStart: 0;
-}
-
-/* Sidebar collapsed state */
-:host([sidebar-collapsed]) {
-  grid-template-columns: 0 1fr;
-
-  & ::slotted(pf-v6-page-sidebar) {
-    pointer-events: none;
-  }
-}
-
 /* Extra small screens: apply xs-specific margins and borders to prevent layout shift */
-@container (max-width: calc(-1px + 48rem)) {
+@media screen and (max-width: calc(-1px + 48rem)) {
   :host {
     --pf-v6-c-page__main-container--MarginInlineStart: var(--pf-v6-c-page__main-container--xs--MarginInlineStart);
     --pf-v6-c-page__main-container--MarginInlineEnd: var(--pf-v6-c-page__main-container--xs--MarginInlineEnd);
@@ -147,17 +133,30 @@
   }
 }
 
+/* Responsive: masthead layout - inline at larger breakpoints */
 /* Responsive: at xl breakpoint, sidebar is always visible */
-@container (min-width: 1200px) {
+@media screen and (min-width: 75rem) {
   :host {
+    --pf-v6-c-page__sidebar--Width: var(--pf-v6-c-page__sidebar--xl--Width);
+    grid-template-areas:
+      "header header"
+      "sidebar main";
+    grid-template-columns: var(--pf-v6-c-page__sidebar--Width) 1fr;
     --pf-v6-c-page__sidebar--TranslateX: var(--pf-v6-c-page__sidebar--xl--TranslateX);
     --pf-v6-c-page__sidebar--Opacity: var(--pf-v6-c-page__sidebar--xl--Opacity);
     --pf-v6-c-page__sidebar--BorderInlineEndWidth: 0;
   }
-}
-
-/* Responsive: masthead layout - inline at larger breakpoints */
-@container (min-width: 1200px) {
+  /* Sidebar collapsed state */
+  :host([sidebar-collapsed]) {
+    grid-template-columns: 0 1fr;
+    & ::slotted(pf-v6-page-sidebar) {
+      pointer-events: none;
+    }
+  }
+  /* When sidebar is not collapsed */
+  :host(:not([sidebar-collapsed])) ::slotted(pf-v6-page-main) {
+    --pf-v6-c-page__main-container--MarginInlineStart: 0;
+  }
   ::slotted(pf-v6-masthead) {
     --pf-v6-c-masthead--ColumnGap: var(--pf-v6-c-masthead--m-display-inline--ColumnGap);
     --pf-v6-c-masthead--GridTemplateColumns: var(--pf-v6-c-masthead--m-display-inline--GridTemplateColumns);
@@ -171,39 +170,5 @@
     --pf-v6-c-masthead__content--Order: var(--pf-v6-c-masthead--m-display-inline__content--Order);
     --pf-v6-c-masthead__main--Display: var(--pf-v6-c-masthead--m-display-inline__main--Display);
     --pf-v6-c-masthead__main--ColumnGap: var(--pf-v6-c-masthead--m-display-inline__main--ColumnGap);
-  }
-}
-
-/* Smaller screens: sidebar is overlay (not part of grid) */
-@container (max-width: 1199px) {
-  :host([sidebar-collapsed]) {
-    grid-template-columns: 1fr;
-  }
-
-  :host {
-    /* Single column grid - no sidebar column */
-    grid-template-areas:
-      "header"
-      "main";
-    grid-template-columns: 1fr;
-
-    /* Remove main content margin on small screens */
-    --pf-v6-c-page__main-container--xs--AlignSelf: stretch;
-    --pf-v6-c-page__main-container--xs--BorderRadius: 0;
-    --pf-v6-c-page__main-container--xs--MarginInlineStart: 0;
-    --pf-v6-c-page__main-container--xs--MaxHeight: 100%;
-    --pf-v6-c-page__main-container--xs--MarginInlineEnd: 0;
-    --pf-v6-c-page__main-container--xs--BorderBlockEndWidth: 0;
-    --pf-v6-c-page__main-container--xs--BorderInlineStartWidth: 0px;
-    --pf-v6-c-page__main-container--xs--BorderInlineEndWidth: 0px;
-
-    /* Remove sidebar from grid flow - make it overlay */
-    & ::slotted(pf-v6-page-sidebar) {
-      position: fixed;
-      inset-block-start: 0;
-      inset-inline-start: 0;
-      height: 100%;
-      z-index: var(--pf-t--global--z-index--lg);
-    }
   }
 }
