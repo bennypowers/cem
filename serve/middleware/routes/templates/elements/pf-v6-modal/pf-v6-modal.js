@@ -73,11 +73,6 @@ export class PfV6Modal extends CemElement {
 
     if (!this.#dialog) return;
 
-    // Handle close button
-    this.#closeButton?.addEventListener('click', () => {
-      this.close();
-    });
-
     // Handle native dialog events
     this.#dialog.addEventListener('close', () => {
       this.#onDialogClose();

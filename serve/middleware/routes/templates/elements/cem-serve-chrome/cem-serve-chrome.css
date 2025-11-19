@@ -683,11 +683,6 @@ cem-serve-knob-css-property [slot="description"] {
   .chroma .w { color: var(--cem-dev-server-text-muted) }
 }
 
-pf-v6-modal {
-  overflow-y: auto;
-  max-height: 80vh;
-}
-
 #debug-modal {
   container-type: inline-size;
 }

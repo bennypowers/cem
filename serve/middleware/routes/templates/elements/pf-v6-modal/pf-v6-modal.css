@@ -74,36 +74,28 @@
 dialog {
   position: fixed;
   inset: 0;
-  width: fit-content;
-  height: fit-content;
+  z-index: var(--pf-v6-c-modal-box--ZIndex);
+  width: var(--pf-v6-c-modal-box--Width);
   max-width: min(var(--pf-v6-c-modal-box--MaxWidth), 100vw);
   max-height: min(var(--pf-v6-c-modal-box--MaxHeight), 100vh);
   margin: auto;
   padding: 0;
-  border: none;
-  background: transparent;
-  overflow: visible;
-}
-
-/* Native dialog backdrop */
-dialog::backdrop {
-  background-color: rgba(3, 3, 3, 0.62);
-}
-
-/* Modal box container */
-#container {
-  position: relative;
-  z-index: var(--pf-v6-c-modal-box--ZIndex);
-  display: flex;
-  flex-direction: column;
-  width: var(--pf-v6-c-modal-box--Width);
-  max-width: var(--pf-v6-c-modal-box--MaxWidth);
-  max-height: var(--pf-v6-c-modal-box--MaxHeight);
-  overflow: auto;
+  overflow: hidden;
   background-color: var(--pf-v6-c-modal-box--BackgroundColor);
   border: var(--pf-v6-c-modal-box--BorderWidth) solid var(--pf-v6-c-modal-box--BorderColor);
   border-radius: var(--pf-v6-c-modal-box--BorderRadius);
   box-shadow: var(--pf-v6-c-modal-box--BoxShadow);
+}
+
+/* Only apply flex layout when dialog is open */
+dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Native dialog backdrop */
+dialog::backdrop {
+  background-color: var(--pf-v6-c-backdrop--BackgroundColor, var(--pf-t--global--background--color--backdrop--default));
 }
 
 /* Header */
