@@ -66,11 +66,7 @@ class PfV6Masthead extends CemElement {
   }
 
   set sidebarExpanded(value) {
-    if (value) {
-      this.setAttribute('sidebar-expanded', '');
-    } else {
-      this.removeAttribute('sidebar-expanded');
-    }
+    this.toggleAttribute('sidebar-expanded', !!value);
   }
 
   static {

@@ -101,12 +101,10 @@ class PfV6NavLink extends CemElement {
   }
 
   set current(value) {
+    this.toggleAttribute('current', !!value);
+    this.toggleAttribute('aria-current', !!value);
     if (value) {
-      this.setAttribute('current', '');
       this.setAttribute('aria-current', 'page');
-    } else {
-      this.removeAttribute('current');
-      this.removeAttribute('aria-current');
     }
   }
 

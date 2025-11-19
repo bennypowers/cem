@@ -33,12 +33,7 @@ export class CemServeDrawer extends HTMLElement {
   }
 
   set open(value) {
-    const isOpen = Boolean(value);
-    if (isOpen) {
-      this.setAttribute('open', '');
-    } else {
-      this.removeAttribute('open');
-    }
+    this.toggleAttribute('open', !!value);
   }
 
   connectedCallback() {

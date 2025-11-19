@@ -31,11 +31,7 @@ export class PfV6Toolbar extends CemElement {
   }
 
   set sticky(value) {
-    if (value) {
-      this.setAttribute('sticky', '');
-    } else {
-      this.removeAttribute('sticky');
-    }
+    this.toggleAttribute('sticky', !!value);
   }
 
   get fullHeight() {
@@ -43,11 +39,7 @@ export class PfV6Toolbar extends CemElement {
   }
 
   set fullHeight(value) {
-    if (value) {
-      this.setAttribute('full-height', '');
-    } else {
-      this.removeAttribute('full-height');
-    }
+    this.toggleAttribute('full-height', !!value);
   }
 
   get colorVariant() {
@@ -63,16 +55,16 @@ export class PfV6Toolbar extends CemElement {
   }
 
   #updateExpandableContent() {
-    if (!this._expandableContent) return;
+    if (!this.#expandableContent) return;
 
     const expandable = this.hasAttribute('expandable');
     const expanded = this.hasAttribute('expanded');
 
     if (expandable) {
-      this._expandableContent.hidden = false;
-      this._expandableContent.classList.toggle('pf-m-expanded', expanded);
+      this.#expandableContent.hidden = false;
+      this.#expandableContent.classList.toggle('pf-m-expanded', expanded);
     } else {
-      this._expandableContent.hidden = true;
+      this.#expandableContent.hidden = true;
     }
   }
 
@@ -80,4 +72,3 @@ export class PfV6Toolbar extends CemElement {
     customElements.define(this.is, this);
   }
 }
-
