@@ -32,8 +32,10 @@ import (
 
 // ElementListing represents a custom element with its demos
 type ElementListing struct {
-	TagName string
-	Demos   []DemoListing
+	TagName     string
+	Summary     template.HTML
+	Description template.HTML
+	Demos       []DemoListing
 }
 
 // DemoListing represents a single demo
@@ -98,10 +100,18 @@ func RenderElementListing(manifestBytes []byte, importMap string, packageName st
 		return elements[i].TagName < elements[j].TagName
 	})
 
+	// Wrap in a single package for consistent template structure
+	packages := []PackageNavigation{
+		{
+			Name:     title,
+			Elements: elements,
+		},
+	}
+
 	// Render with template
 	var buf bytes.Buffer
 	err := WorkspaceListingTemplate.Execute(&buf, map[string]interface{}{
-		"Elements": elements,
+		"Packages": packages,
 	})
 	if err != nil {
 		return "", fmt.Errorf("executing element listing template: %w", err)
@@ -192,9 +202,13 @@ func extractElementListings(pkg *M.Package, packageName string) []ElementListing
 		// Get or create element listing
 		listing, exists := elementMap[tagName]
 		if !exists {
+			summary := template.HTML(markdownToHTML(renderableDemo.CustomElementDeclaration.Summary))
+			description := template.HTML(markdownToHTML(renderableDemo.CustomElementDeclaration.Description))
 			listing = &ElementListing{
-				TagName: tagName,
-				Demos:   make([]DemoListing, 0),
+				TagName:     tagName,
+				Summary:     summary,
+				Description: description,
+				Demos:       make([]DemoListing, 0),
 			}
 			elementMap[tagName] = listing
 		}
@@ -321,7 +335,14 @@ func BuildWorkspaceNavigation(packages []PackageContext) (template.HTML, error) 
 			})
 
 			var demoListings []DemoListing
+			var summary, description template.HTML
 			for _, route := range tagRoutes {
+				// Get summary and description from first route's declaration
+				if route.Declaration != nil && summary == "" {
+					summary = template.HTML(markdownToHTML(route.Declaration.Summary))
+					description = template.HTML(markdownToHTML(route.Declaration.Description))
+				}
+
 				demoName := route.Demo.Description
 				if demoName == "" {
 					demoName = prettifyRoute(route.LocalRoute)
@@ -335,8 +356,10 @@ func BuildWorkspaceNavigation(packages []PackageContext) (template.HTML, error) 
 			}
 
 			elementListings = append(elementListings, ElementListing{
-				TagName: tagName,
-				Demos:   demoListings,
+				TagName:     tagName,
+				Summary:     summary,
+				Description: description,
+				Demos:       demoListings,
 			})
 		}
 
@@ -409,49 +432,74 @@ func RenderWorkspaceListing(packages []PackageContext, importMap string) (string
 		return "", fmt.Errorf("building workspace routing table: %w", err)
 	}
 
-	// Group routes by element (tag name)
-	elementRoutes := make(map[string][]*DemoRouteEntry)
+	// Group routes by package, then by element
+	packageElements := make(map[string]map[string][]*DemoRouteEntry)
 	for _, route := range routes {
-		elementRoutes[route.TagName] = append(elementRoutes[route.TagName], route)
+		if packageElements[route.PackageName] == nil {
+			packageElements[route.PackageName] = make(map[string][]*DemoRouteEntry)
+		}
+		packageElements[route.PackageName][route.TagName] = append(packageElements[route.PackageName][route.TagName], route)
 	}
 
-	// Build element listings for main content
-	var elementListings []ElementListing
-	for tagName, tagRoutes := range elementRoutes {
-		// Sort demos by URL
-		sort.Slice(tagRoutes, func(i, j int) bool {
-			return tagRoutes[i].LocalRoute < tagRoutes[j].LocalRoute
-		})
+	// Build package listings for main content
+	var packageListings []PackageNavigation
+	for pkgName, elements := range packageElements {
+		var elementListings []ElementListing
+		for tagName, tagRoutes := range elements {
+			// Sort demos by URL
+			sort.Slice(tagRoutes, func(i, j int) bool {
+				return tagRoutes[i].LocalRoute < tagRoutes[j].LocalRoute
+			})
 
-		var demoListings []DemoListing
-		for _, route := range tagRoutes {
-			demoName := route.Demo.Description
-			if demoName == "" {
-				demoName = prettifyRoute(route.LocalRoute)
+			var demoListings []DemoListing
+			var summary, description template.HTML
+			for _, route := range tagRoutes {
+				// Get summary and description from first route's declaration
+				if route.Declaration != nil && summary == "" {
+					summary = template.HTML(markdownToHTML(route.Declaration.Summary))
+					description = template.HTML(markdownToHTML(route.Declaration.Description))
+				}
+
+				demoName := route.Demo.Description
+				if demoName == "" {
+					demoName = prettifyRoute(route.LocalRoute)
+				}
+				demoListings = append(demoListings, DemoListing{
+					Name:        demoName,
+					URL:         route.LocalRoute,
+					Slug:        slugify(demoName),
+					PackageName: route.PackageName,
+				})
 			}
-			demoListings = append(demoListings, DemoListing{
-				Name:        demoName,
-				URL:         route.LocalRoute,
-				Slug:        slugify(demoName),
-				PackageName: route.PackageName,
+
+			elementListings = append(elementListings, ElementListing{
+				TagName:     tagName,
+				Summary:     summary,
+				Description: description,
+				Demos:       demoListings,
 			})
 		}
 
-		elementListings = append(elementListings, ElementListing{
-			TagName: tagName,
-			Demos:   demoListings,
+		// Sort elements alphabetically
+		sort.Slice(elementListings, func(i, j int) bool {
+			return elementListings[i].TagName < elementListings[j].TagName
+		})
+
+		packageListings = append(packageListings, PackageNavigation{
+			Name:     pkgName,
+			Elements: elementListings,
 		})
 	}
 
-	// Sort elements alphabetically
-	sort.Slice(elementListings, func(i, j int) bool {
-		return elementListings[i].TagName < elementListings[j].TagName
+	// Sort packages alphabetically
+	sort.Slice(packageListings, func(i, j int) bool {
+		return packageListings[i].Name < packageListings[j].Name
 	})
 
 	// Render with template
 	var buf bytes.Buffer
 	err = WorkspaceListingTemplate.Execute(&buf, map[string]interface{}{
-		"Elements": elementListings,
+		"Packages": packageListings,
 	})
 	if err != nil {
 		return "", fmt.Errorf("executing workspace listing template: %w", err)

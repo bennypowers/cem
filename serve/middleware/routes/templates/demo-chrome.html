@@ -50,8 +50,6 @@
                     {{if .DemoTitle}}demo-title="{{.DemoTitle}}"{{end}}
                     {{if .CanonicalURL}}canonical-url="{{.CanonicalURL}}"{{end}}
                     {{if .SourceURL}}source-url="{{.SourceURL}}"{{end}}>
-    <h1 slot="title">{{if .PackageName}}{{.PackageName}}{{else}}{{.TagName}}{{end}}</h1>
-
     {{if .Description}}
     <section slot="description">
       {{.Description}}
@@ -65,14 +63,10 @@
     <!-- Demo in light DOM by default -->
     {{if .ShadowMode}}
     <cem-serve-demo id="demo">
-      <template shadowrootmode="open">
-{{.DemoHTML}}
-      </template>
+      <template shadowrootmode="open">{{.DemoHTML}}</template>
     </cem-serve-demo>
     {{else}}
-    <cem-serve-demo id="demo">
-{{.DemoHTML}}
-    </cem-serve-demo>
+    <cem-serve-demo id="demo">{{.DemoHTML}}</cem-serve-demo>
     {{end}}
 
     {{if .KnobsHTML}}

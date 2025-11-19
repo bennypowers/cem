@@ -292,17 +292,6 @@ func RenderKnobsHTML(knobs *KnobsData) (template.HTML, error) {
 	return template.HTML(buf.String()), nil
 }
 
-// markdownToHTML converts markdown text to HTML
-func markdownToHTML(text string) string {
-	var buf bytes.Buffer
-	// Use the same markdown renderer as chrome.go
-	err := md.Convert([]byte(text), &buf)
-	if err != nil {
-		return text // Return original text on error
-	}
-	return buf.String()
-}
-
 // firstTextContent extracts the first non-empty text node from an element's subtree.
 // This handles nested content like <my-card><h2>Title</h2></my-card> correctly.
 func firstTextContent(n *html.Node) string {

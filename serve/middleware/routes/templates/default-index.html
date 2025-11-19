@@ -6,7 +6,7 @@
   <title>CEM Dev Server</title>
   {{if .ImportMap}}
   <script type="importmap">
-{{.ImportMap}}
+    {{.ImportMap}}
   </script>
   {{end}}
   <style>
@@ -61,6 +61,15 @@
       background: #1e293b;
       margin: 0.25rem 0;
       border-radius: 4px;
+    }
+
+    /* Listing grid layout */
+    .listing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+      gap: var(--pf-t--global--spacer--gap--group-to-group--horizontal--default)
+           var(--pf-t--global--spacer--gap--group-to-group--vertical--default);
+      align-items: start;
     }
   </style>
 </head>

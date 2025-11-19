@@ -57,12 +57,12 @@
   }
 
   & svg {
-    transform: rotate(0deg);
+    rotate: 180deg;
     transition: transform var(--pf-t--global--motion--duration--md) var(--pf-t--global--motion--timing-function--decelerate);
   }
 
   :host([open]) & svg {
-    transform: rotate(180deg);
+    rotate: 0deg;
   }
 }
 

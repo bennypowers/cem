@@ -2,7 +2,7 @@
 <div slot="knobs" class="knobs-container">
   {{range $index, $group := .}}
   <pf-v6-card compact data-tag-name="{{$group.TagName}}" data-instance-index="{{$group.InstanceIndex}}">
-    <h3 slot="title">
+    <h3 slot="header">
       <span class="instance-tag">{{$group.TagName}}</span>: <span class="instance-label">{{$group.Label}}</span>
     </h3>
     {{with $group.Knobs}}

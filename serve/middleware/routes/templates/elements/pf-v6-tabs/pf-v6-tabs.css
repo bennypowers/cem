@@ -23,13 +23,16 @@
   --_pf-v6-tabs--link-accent--color: var(--pf-t--global--border--color--clicked);
   --_pf-v6-tabs--link-accent--border-size: var(--pf-t--global--border--width--extra-strong);
 
-  position: relative;
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--pf-t--global--z-index--md);
   display: flex;
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
   flex-shrink: 0;
+  background-color: var(--pf-t--global--background--color--primary--default);
 
   /* Border at bottom of tabs container */
   &::before {

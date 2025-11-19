@@ -9,6 +9,15 @@
 .masthead-logo {
   display: flex;
   align-items: center;
+  text-decoration: none;
+  color: inherit;
+  max-height: var(--pf-v6-c-masthead__logo--MaxHeight);
+}
+
+.masthead-logo img {
+  display: block;
+  max-height: var(--pf-v6-c-masthead__logo--MaxHeight);
+  width: auto;
 }
 
 .masthead-logo ::slotted([slot="title"]) {
@@ -150,9 +159,44 @@ pf-v6-page-main ::slotted(*) {
   padding: var(--pf-t--global--spacer--lg);
 }
 
+/* Element descriptions in listing */
+.element-summary {
+  margin: 0;
+  color: var(--pf-t--global--text--color--subtle);
+  font-size: var(--pf-t--global--font--size--body--sm);
+}
+
+.element-description {
+  margin: 0;
+  color: var(--pf-t--global--text--color--subtle);
+  font-size: var(--pf-t--global--font--size--body--sm);
+}
+
+/* Card footer demo navigation */
+.card-demos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pf-t--global--spacer--gap--action-to-action--default);
+  padding: 0;
+  margin: 0;
+}
+
+.package-name {
+  color: var(--pf-t--global--text--color--subtle);
+  font-size: var(--pf-t--global--font--size--body--sm);
+}
+
 /* Knobs controls styling */
-.knobs-container {
-  padding: var(--cem-dev-server-spacing-md);
+#knobs-container {
+  padding: var(--pf-t--global--spacer--lg);
+}
+
+/* Style slotted knobs container */
+#knobs-container ::slotted([slot="knobs"]) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: var(--pf-t--global--spacer--gap--group-to-group--horizontal--default) var(--pf-t--global--spacer--gap--group-to-group--vertical--default);
+  align-items: start;
 }
 
 .knobs-empty {
@@ -166,15 +210,6 @@ pf-v6-page-main ::slotted(*) {
     padding: 2px 6px;
     border-radius: 3px;
     font-family: var(--cem-dev-server-font-family-mono);
-  }
-}
-
-/* Knobs card styling */
-.knobs-container pf-v6-card {
-  margin-bottom: var(--cem-dev-server-spacing-md);
-
-  &:last-child {
-    margin-bottom: 0;
   }
 }
 

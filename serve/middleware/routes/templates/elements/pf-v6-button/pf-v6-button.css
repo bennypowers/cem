@@ -162,7 +162,8 @@
   --pf-v6-c-button--m-block--Width: 100%;
 }
 
-button {
+button,
+a {
   position: relative;
   display: var(--pf-v6-c-button--Display);
   gap: var(--pf-v6-c-button--Gap);
@@ -197,7 +198,8 @@ button {
   scale: var(--pf-v6-c-button--ScaleX) var(--pf-v6-c-button--ScaleY);
 }
 
-button::after {
+button::after,
+a::after {
   position: absolute;
   inset: var(--pf-v6-c-button--border--offset, 0);
   pointer-events: none;
@@ -207,7 +209,8 @@ button::after {
   transition: inherit;
 }
 
-button:hover:not(:disabled) {
+button:hover:not(:disabled),
+a:hover:not([aria-disabled="true"]) {
   --pf-v6-c-button--Color: var(--pf-v6-c-button--hover--Color);
   --pf-v6-c-button--BackgroundColor: var(--pf-v6-c-button--hover--BackgroundColor);
   --pf-v6-c-button--BorderColor: var(--pf-v6-c-button--hover--BorderColor);
@@ -218,7 +221,9 @@ button:hover:not(:disabled) {
 }
 
 button:active:not(:disabled),
-button.pf-m-clicked {
+button.pf-m-clicked,
+a:active:not([aria-disabled="true"]),
+a.pf-m-clicked {
   --pf-v6-c-button--Color: var(--pf-v6-c-button--m-clicked--Color);
   --pf-v6-c-button--BackgroundColor: var(--pf-v6-c-button--m-clicked--BackgroundColor);
   --pf-v6-c-button--BorderColor: var(--pf-v6-c-button--m-clicked--BorderColor);
@@ -226,17 +231,20 @@ button.pf-m-clicked {
   --pf-v6-c-button__icon--Color: var(--pf-v6-c-button--m-clicked__icon--Color);
 }
 
-button:active:not(:disabled) {
+button:active:not(:disabled),
+a:active:not([aria-disabled="true"]) {
   background-size: 100% 100%;
   transition: background 0s;
 }
 
-button:focus-visible {
+button:focus-visible,
+a:focus-visible {
   outline: 2px solid var(--pf-t--global--color--brand--default);
   outline-offset: 2px;
 }
 
-button:disabled {
+button:disabled,
+a[aria-disabled="true"] {
   --pf-v6-c-button--Color: var(--pf-v6-c-button--disabled--Color);
   --pf-v6-c-button--BackgroundColor: var(--pf-v6-c-button--disabled--BackgroundColor);
   --pf-v6-c-button--BorderColor: var(--pf-v6-c-button--disabled--BorderColor);

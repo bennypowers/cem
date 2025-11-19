@@ -82,9 +82,9 @@ func TestRootListing_ShowsAllElements(t *testing.T) {
 
 	body := w.Body.String()
 
-	// Should contain listing chrome
-	if !strings.Contains(body, "<cem-serve-listing") {
-		t.Error("Expected cem-serve-listing element")
+	// Should contain listing grid
+	if !strings.Contains(body, `class="listing-grid"`) {
+		t.Error("Expected listing-grid class")
 	}
 
 	// Should be grouped by element (sidebar nav)

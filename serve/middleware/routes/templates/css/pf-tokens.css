@@ -472,12 +472,22 @@
   --pf-t--global--spacer--action--horizontal--spacious: var(--pf-t--global--spacer--xl);
   --pf-t--global--spacer--action--horizontal--plain--compact: var(--pf-t--global--spacer--xs);
   --pf-t--global--spacer--action--horizontal--plain--default: var(--pf-t--global--spacer--sm);
+  --pf-t--global--spacer--action--horizontal--plain--spacious: var(--pf-t--global--spacer--md);
+  --pf-t--global--spacer--control--vertical--plain: var(--pf-t--global--spacer--xs);
+  --pf-t--global--spacer--control--horizontal--plain: var(--pf-t--global--spacer--sm);
   --pf-t--global--spacer--gap--text-to-element--compact: var(--pf-t--global--spacer--xs);
   --pf-t--global--spacer--gap--text-to-element--default: var(--pf-t--global--spacer--sm);
+  --pf-t--global--spacer--gap--text-to-element--spacious: var(--pf-t--global--spacer--md);
   --pf-t--global--spacer--gap--group--vertical: var(--pf-t--global--spacer--sm);
   --pf-t--global--spacer--gap--group--horizontal: var(--pf-t--global--spacer--md);
+  --pf-t--global--spacer--gap--group-to-group--vertical--default: var(--pf-t--global--spacer--md);
+  --pf-t--global--spacer--gap--group-to-group--horizontal--default: var(--pf-t--global--spacer--md);
+  --pf-t--global--spacer--gap--control-to-control--compact: var(--pf-t--global--spacer--xs);
   --pf-t--global--spacer--gap--control-to-control--default: var(--pf-t--global--spacer--sm);
+  --pf-t--global--spacer--gap--control-to-control--spacious: var(--pf-t--global--spacer--md);
+  --pf-t--global--spacer--gap--action-to-action--compact: var(--pf-t--global--spacer--xs);
   --pf-t--global--spacer--gap--action-to-action--default: var(--pf-t--global--spacer--sm);
+  --pf-t--global--spacer--gap--action-to-action--spacious: var(--pf-t--global--spacer--md);
   --pf-t--global--spacer--gap--action-to-action--plain: var(--pf-t--global--spacer--xs);
 
   /* Theme-dependent background colors using light-dark() */
