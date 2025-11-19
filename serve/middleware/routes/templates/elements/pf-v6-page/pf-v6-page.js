@@ -36,39 +36,16 @@ class PfV6Page extends CemElement {
   }
 
   #updateSidebarState() {
-    const pageDiv = this.shadowRoot?.querySelector('.pf-v6-c-page');
-    if (!pageDiv) return;
-
     const isCollapsed = this.hasAttribute('sidebar-collapsed');
-
-    // Update page container class
-    if (isCollapsed) {
-      pageDiv.classList.add('pf-m-sidebar-collapsed');
-    } else {
-      pageDiv.classList.remove('pf-m-sidebar-collapsed');
-    }
 
     // Update sidebar element
     const sidebar = this.querySelector('pf-v6-page-sidebar');
-    if (sidebar) {
-      if (isCollapsed) {
-        sidebar.setAttribute('collapsed', '');
-        sidebar.removeAttribute('expanded');
-      } else {
-        sidebar.setAttribute('expanded', '');
-        sidebar.removeAttribute('collapsed');
-      }
-    }
+    sidebar?.toggleAttribute('collapsed', !!isCollapsed);
+    sidebar?.toggleAttribute('expanded', !isCollapsed);
 
     // Update masthead element
     const masthead = this.querySelector('pf-v6-masthead');
-    if (masthead) {
-      if (isCollapsed) {
-        masthead.removeAttribute('sidebar-expanded');
-      } else {
-        masthead.setAttribute('sidebar-expanded', '');
-      }
-    }
+    masthead?.toggleAttribute('sidebar-expanded', !isCollapsed);
   }
 
   get sidebarCollapsed() {
@@ -76,15 +53,10 @@ class PfV6Page extends CemElement {
   }
 
   set sidebarCollapsed(value) {
-    if (value) {
-      this.setAttribute('sidebar-collapsed', '');
-    } else {
-      this.removeAttribute('sidebar-collapsed');
-    }
+    this.toggleAttribute('sidebar-collapsed', !!value);
   }
 
   static {
     customElements.define(this.is, this);
   }
 }
-

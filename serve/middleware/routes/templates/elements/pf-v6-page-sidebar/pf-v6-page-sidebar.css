@@ -1,10 +1,6 @@
 /* PatternFly v6 Page Sidebar Styles */
 
 :host {
-  display: contents;
-}
-
-.pf-v6-c-page__sidebar {
   z-index: var(--pf-v6-c-page__sidebar--ZIndex);
   display: flex;
   flex-direction: column;
@@ -27,31 +23,25 @@
   transform: translateX(var(--pf-v6-c-page__sidebar--TranslateX)) translateZ(var(--pf-v6-c-page__sidebar--TranslateZ));
 }
 
-.pf-v6-c-page__sidebar-body {
+#body {
   padding-inline-start: var(--pf-v6-c-page__sidebar-body--PaddingInlineStart);
   padding-inline-end: var(--pf-v6-c-page__sidebar-body--PaddingInlineEnd);
-}
-
-.pf-v6-c-page__sidebar-body:last-child {
   flex-grow: 1;
 }
 
 /* Expanded state */
-:host([expanded]) .pf-v6-c-page__sidebar {
+:host([expanded]) {
   --pf-v6-c-page__sidebar--Opacity: var(--pf-v6-c-page__sidebar--m-expanded--Opacity);
   --pf-v6-c-page__sidebar--TranslateX: var(--pf-v6-c-page__sidebar--m-expanded--TranslateX);
   box-shadow: var(--pf-v6-c-page__sidebar--BoxShadow);
+  @media screen and (min-width: 75rem) {
+    --pf-v6-c-page__sidebar--BoxShadow: 0;
+  }
 }
 
 /* Collapsed state */
-:host([collapsed]) .pf-v6-c-page__sidebar {
+:host([collapsed]) {
   --pf-v6-c-page__sidebar--Opacity: 0;
   --pf-v6-c-page__sidebar--TranslateX: -100%;
-}
-
-/* Apply .pf-m-collapsed class for consistency with PF patterns */
-:host([collapsed]) .pf-v6-c-page__sidebar {
-  & {
-    pointer-events: none;
-  }
+  pointer-events: none;
 }

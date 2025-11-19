@@ -938,30 +938,134 @@ cem-serve-knob-css-property [slot="description"] {
   <style>/* PatternFly v6 Page Styles */
 
 :host {
-  display: block;
-  height: 100vh;
-}
-
-.pf-v6-c-page {
+  container-type: inline-size;
   display: grid;
   grid-template-areas:
     "header header"
     "sidebar main";
   grid-template-rows: auto 1fr;
   grid-template-columns: auto 1fr;
-  height: 100%;
+  height: 100vh;
+	--pf-v6-c-page--BackgroundColor: var(--pf-t--global--background--color--secondary--default);
+	--pf-v6-c-page--inset: var(--pf-t--global--spacer--inset--page-chrome);
+	--pf-v6-c-page--c-masthead--ZIndex: var(--pf-t--global--z-index--md);
+	--pf-v6-c-page__sidebar--ZIndex: var(--pf-t--global--z-index--sm);
+	--pf-v6-c-page__sidebar--Width--base: 18.125rem;
+	--pf-v6-c-page__sidebar--Width: var(--pf-v6-c-page__sidebar--Width--base);
+	--pf-v6-c-page__sidebar--xl--Width: var(--pf-v6-c-page__sidebar--Width--base);
+	--pf-v6-c-page__sidebar--BackgroundColor: var(--pf-t--global--background--color--secondary--default);
+	--pf-v6-c-page__sidebar--BoxShadow: var(--pf-t--global--box-shadow--md--right);
+	--pf-v6-c-page__sidebar--TransitionProperty: opacity;
+	--pf-v6-c-page__sidebar--TransitionDuration: var(--pf-t--global--motion--duration--fade--default);
+	--pf-v6-c-page__sidebar--TransitionTimingFunction: var(--pf-t--global--motion--timing-function--decelerate);
+	--pf-v6-c-page__sidebar--TranslateX: -100%;
+	--pf-v6-c-page__sidebar--Opacity: 0;
+	--pf-v6-c-page__sidebar--m-expanded--Opacity: 1;
+	--pf-v6-c-page__sidebar--xl--Opacity: 1;
+	--pf-v6-c-page__sidebar--TranslateZ: 0;
+	--pf-v6-c-page__sidebar--m-expanded--TranslateX: 0;
+	--pf-v6-c-page__sidebar--xl--TranslateX: 0;
+	--pf-v6-c-page__sidebar--MarginInlineEnd: calc(var(--pf-t--global--spacer--inset--page-chrome) / 2);
+	--pf-v6-c-page__sidebar--PaddingBlockEnd: var(--pf-t--global--spacer--lg);
+	--pf-v6-c-page__sidebar--PaddingInlineStart: 0;
+	--pf-v6-c-page__sidebar--PaddingInlineEnd: 0;
+	--pf-v6-c-page__sidebar--BorderInlineEndWidth: var(--pf-t--global--border--width--high-contrast--regular);
+	--pf-v6-c-page__sidebar--BorderInlineEndColor: var(--pf-t--global--border--color--high-contrast);
+	--pf-v6-c-page__sidebar-header--BorderBlockEndWidth: var(--pf-t--global--border--width--divider--default);
+	--pf-v6-c-page__sidebar-header--BorderBlockEndColor: var(--pf-t--global--border--color--default);
+	--pf-v6-c-page__sidebar-header--PaddingBlockStart: var(--pf-t--global--spacer--sm);
+	--pf-v6-c-page__sidebar-header--PaddingBlockEnd: var(--pf-t--global--spacer--md);
+	--pf-v6-c-page__sidebar-title--PaddingInlineStart: var(--pf-t--global--spacer--lg);
+	--pf-v6-c-page__sidebar-title--FontSize: var(--pf-t--global--font--size--heading--xs);
+	--pf-v6-c-page__sidebar-title--LineHeight: var(--pf-t--global--font--line-height--heading);
+	--pf-v6-c-page__sidebar-title--FontFamily: var(--pf-t--global--font--family--heading);
+	--pf-v6-c-page__sidebar-title--FontWeight: var(--pf-t--global--font--weight--heading--default);
+	--pf-v6-c-page__sidebar-body--PaddingInlineEnd: calc(var(--pf-t--global--spacer--inset--page-chrome) / 2);
+	--pf-v6-c-page__sidebar-body--PaddingInlineStart: var(--pf-t--global--spacer--inset--page-chrome);
+	--pf-v6-c-page__sidebar-body--m-page-insets--PaddingInlineEnd: var(--pf-v6-c-page--inset);
+	--pf-v6-c-page__sidebar-body--m-page-insets--PaddingInlineStart: var(--pf-v6-c-page--inset);
+	--pf-v6-c-page__sidebar-body--m-context-selector--PaddingInlineEnd: var(--pf-t--global--spacer--md);
+	--pf-v6-c-page__sidebar-body--m-context-selector--PaddingInlineStart: var(--pf-t--global--spacer--md);
+	--pf-v6-c-page__main-container--ZIndex: var(--pf-t--global--z-index--xs);
+	--pf-v6-c-page__main-container--GridArea: main;
+	--pf-v6-c-page--masthead--main-container--GridArea: sidebar / sidebar / main / main;
+	--pf-v6-c-page__main-container--MaxHeight: calc(100% - var(--pf-t--global--spacer--lg));
+	--pf-v6-c-page__main-container--AlignSelf: start;
+	--pf-v6-c-page__main-container--BackgroundColor: var(--pf-t--global--background--color--primary--default);
+	--pf-v6-c-page__main-container--MarginInlineStart: var(--pf-v6-c-page--inset);
+	--pf-v6-c-page__main-container--MarginInlineEnd: var(--pf-v6-c-page--inset);
+	--pf-v6-c-page__main-container--BorderRadius: var(--pf-t--global--border--radius--medium);
+	--pf-v6-c-page__main-container--BorderBlockStartWidth: var(--pf-t--global--border--width--main--default);
+	--pf-v6-c-page__main-container--BorderBlockEndWidth: var(--pf-t--global--border--width--main--default);
+	--pf-v6-c-page__main-container--BorderInlineStartWidth: var(--pf-t--global--border--width--main--default);
+	--pf-v6-c-page__main-container--BorderInlineEndWidth: var(--pf-t--global--border--width--main--default);
+	--pf-v6-c-page__main-container--BorderColor: var(--pf-t--global--border--color--main--default);
+	--pf-v6-c-page__main-container--xs--AlignSelf: stretch;
+	--pf-v6-c-page__main-container--xs--BorderRadius: 0;
+	--pf-v6-c-page__main-container--xs--MarginInlineStart: 0;
+	--pf-v6-c-page__main-container--xs--MaxHeight: 100%;
+	--pf-v6-c-page__main-container--xs--MarginInlineEnd: 0;
+	--pf-v6-c-page__main-container--xs--BorderBlockEndWidth: 0;
+	--pf-v6-c-page__main-container--xs--BorderInlineStartWidth: 0px;
+	--pf-v6-c-page__main-container--xs--BorderInlineEndWidth: 0px;
+	--pf-v6-c-page__main-section--PaddingBlockStart: var(--pf-t--global--spacer--md);
+	--pf-v6-c-page__main-section--PaddingInlineEnd: var(--pf-t--global--spacer--lg);
+	--pf-v6-c-page__main-section--PaddingBlockEnd: var(--pf-t--global--spacer--md);
+	--pf-v6-c-page__main-section--PaddingInlineStart: var(--pf-t--global--spacer--lg);
+	--pf-v6-c-page__main-section--RowGap: var(--pf-t--global--spacer--lg);
+	--pf-v6-c-page__main-breadcrumb--main-section--PaddingBlockStart: var(--pf-t--global--spacer--md);
+	--pf-v6-c-page__main-section--BackgroundColor: var(--pf-t--global--background--color--primary--default);
+	--pf-v6-c-page__main-section--m-secondary--BackgroundColor: var(--pf-t--global--background--color--secondary--default);
+	--pf-v6-c-page__main-breadcrumb--page__main-tabs--PaddingBlockStart: var(--pf-t--global--spacer--md);
+	--pf-v6-c-page--section--m-limit-width--MaxWidth: calc(125rem - var(--pf-v6-c-page__sidebar--Width));
+	--pf-v6-c-page--section--m-sticky-top--ZIndex: var(--pf-t--global--z-index--md);
+	--pf-v6-c-page--section--m-sticky-top--BoxShadow: var(--pf-t--global--box-shadow--sm--bottom);
+	--pf-v6-c-page--section--m-sticky-top--BorderBlockEndWidth: var(--pf-t--global--border--width--high-contrast--regular);
+	--pf-v6-c-page--section--m-sticky-top--BorderBlockEndColor: var(--pf-t--global--border--color--high-contrast);
+	--pf-v6-c-page--section--m-sticky-bottom--ZIndex: var(--pf-t--global--z-index--md);
+	--pf-v6-c-page--section--m-sticky-bottom--BoxShadow: var(--pf-t--global--box-shadow--sm--top);
+	--pf-v6-c-page--section--m-sticky-bottom--BorderBlockStartWidth: var(--pf-t--global--border--width--high-contrast--regular);
+	--pf-v6-c-page--section--m-sticky-bottom--BorderBlockStartColor: var(--pf-t--global--border--color--high-contrast);
+	--pf-v6-c-page--section--m-shadow-bottom--BoxShadow: var(--pf-t--global--box-shadow--sm--bottom);
+	--pf-v6-c-page--section--m-shadow-bottom--ZIndex: var(--pf-t--global--z-index--xs);
+	--pf-v6-c-page--section--m-shadow-bottom--BorderBlockEndWidth: var(--pf-t--global--border--width--high-contrast--regular);
+	--pf-v6-c-page--section--m-shadow-bottom--BorderBlockEndColor: var(--pf-t--global--border--color--high-contrast);
+	--pf-v6-c-page--section--m-shadow-top--BoxShadow: var(--pf-t--global--box-shadow--sm--top);
+	--pf-v6-c-page--section--m-shadow-top--ZIndex: var(--pf-t--global--z-index--xs);
+	--pf-v6-c-page--section--m-shadow-top--BorderBlockStartWidth: var(--pf-t--global--border--width--high-contrast--regular);
+	--pf-v6-c-page--section--m-shadow-top--BorderBlockStartColor: var(--pf-t--global--border--color--high-contrast);
+	--pf-v6-c-page__main-subnav--BackgroundColor: var(--pf-t--global--background--color--primary--default);
+	--pf-v6-c-page__main-subnav--PaddingBlockStart: var(--pf-t--global--spacer--md);
+	--pf-v6-c-page__main-subnav--PaddingBlockEnd: 0;
+	--pf-v6-c-page__main-subnav--PaddingInlineStart: calc(var(--pf-t--global--spacer--lg) - var(--pf-v6-c-page__main-container--BorderInlineStartWidth));
+	--pf-v6-c-page__main-subnav--PaddingInlineEnd: calc(var(--pf-t--global--spacer--lg) - var(--pf-v6-c-page__main-container--BorderInlineEndWidth));
+	--pf-v6-c-page__main-subnav--m-sticky-top--PaddingBlockEnd: var(--pf-t--global--spacer--md);
+	--pf-v6-c-page__main-breadcrumb--PaddingBlockStart: var(--pf-t--global--spacer--md);
+	--pf-v6-c-page__main-breadcrumb--PaddingInlineEnd: calc(var(--pf-t--global--spacer--lg) - var(--pf-v6-c-page__main-container--BorderInlineEndWidth));
+	--pf-v6-c-page__main-breadcrumb--PaddingBlockEnd: 0;
+	--pf-v6-c-page__main-breadcrumb--PaddingInlineStart: calc(var(--pf-t--global--spacer--lg) - var(--pf-v6-c-page__main-container--BorderInlineStartWidth));
+	--pf-v6-c-page__main-breadcrumb--BackgroundColor: var(--pf-t--global--background--color--primary--default);
+	--pf-v6-c-page__main-breadcrumb--m-sticky-top--PaddingBlockEnd: var(--pf-t--global--spacer--md);
+	--pf-v6-c-page__main-tabs--PaddingBlockStart: 0;
+	--pf-v6-c-page__main-tabs--PaddingInlineEnd: 0;
+	--pf-v6-c-page__main-tabs--PaddingBlockEnd: 0;
+	--pf-v6-c-page__main-tabs--PaddingInlineStart: 0;
+	--pf-v6-c-page__main-tabs--BackgroundColor: var(--pf-t--global--background--color--primary--default);
+	--pf-v6-c-page__main-wizard--BackgroundColor: var(--pf-t--global--background--color--primary--default);
+	--pf-v6-c-page__main-wizard--BorderBlockStartColor: var(--pf-t--global--border--color--default);
+	--pf-v6-c-page__main-wizard--BorderBlockStartWidth: var(--pf-t--global--border--width--action--default);
+	--pf-v6-c-page__drawer--c-drawer--BorderBlockStartWidth: var(--pf-t--global--border--width--high-contrast--regular);
+	--pf-v6-c-page__drawer--c-drawer--BorderBlockStartColor: var(--pf-t--global--border--color--high-contrast);
   background-color: var(--pf-v6-c-page--BackgroundColor);
 }
 
 /* When sidebar is not collapsed */
-.pf-v6-c-page:not(.pf-m-sidebar-collapsed) {
-  & ::slotted(pf-v6-page-main) {
-    --pf-v6-c-page__main-container--MarginInlineStart: 0;
-  }
+:host(:not([sidebar-collapsed])) ::slotted(pf-v6-page-main) {
+  --pf-v6-c-page__main-container--MarginInlineStart: 0;
 }
 
-/* Sidebar collapsed state - managed via class */
-.pf-v6-c-page.pf-m-sidebar-collapsed {
+/* Sidebar collapsed state */
+:host([sidebar-collapsed]) {
   grid-template-columns: 0 1fr;
 
   & ::slotted(pf-v6-page-sidebar) {
@@ -970,8 +1074,8 @@ cem-serve-knob-css-property [slot="description"] {
 }
 
 /* Extra small screens: apply xs-specific margins and borders to prevent layout shift */
-@media screen and (max-width: calc(-1px + 48rem)) {
-  .pf-v6-c-page {
+@container (max-width: calc(-1px + 48rem)) {
+  :host {
     --pf-v6-c-page__main-container--MarginInlineStart: var(--pf-v6-c-page__main-container--xs--MarginInlineStart);
     --pf-v6-c-page__main-container--MarginInlineEnd: var(--pf-v6-c-page__main-container--xs--MarginInlineEnd);
     --pf-v6-c-page__main-container--BorderBlockEndWidth: var(--pf-v6-c-page__main-container--xs--BorderBlockEndWidth);
@@ -981,21 +1085,39 @@ cem-serve-knob-css-property [slot="description"] {
 }
 
 /* Responsive: at xl breakpoint, sidebar is always visible */
-@media (min-width: 1200px) {
-  .pf-v6-c-page {
+@container (min-width: 1200px) {
+  :host {
     --pf-v6-c-page__sidebar--TranslateX: var(--pf-v6-c-page__sidebar--xl--TranslateX);
     --pf-v6-c-page__sidebar--Opacity: var(--pf-v6-c-page__sidebar--xl--Opacity);
     --pf-v6-c-page__sidebar--BorderInlineEndWidth: 0;
   }
 }
 
+/* Responsive: masthead layout - inline at larger breakpoints */
+@container (min-width: 1200px) {
+  ::slotted(pf-v6-masthead) {
+    --pf-v6-c-masthead--ColumnGap: var(--pf-v6-c-masthead--m-display-inline--ColumnGap);
+    --pf-v6-c-masthead--GridTemplateColumns: var(--pf-v6-c-masthead--m-display-inline--GridTemplateColumns);
+    --pf-v6-c-masthead__toggle--GridColumn: var(--pf-v6-c-masthead--m-display-inline__toggle--GridColumn);
+    --pf-v6-c-masthead__brand--GridColumn: var(--pf-v6-c-masthead--m-display-inline__brand--GridColumn);
+    --pf-v6-c-masthead__brand--Order: var(--pf-v6-c-masthead--m-display-inline__brand--Order);
+    --pf-v6-c-masthead__brand--PaddingBlockEnd: var(--pf-v6-c-masthead--m-display-inline__brand--PaddingBlockEnd);
+    --pf-v6-c-masthead__brand--BorderBlockEnd: var(--pf-v6-c-masthead--m-display-inline__brand--BorderBlockEnd);
+    --pf-v6-c-masthead__main--GridColumn: var(--pf-v6-c-masthead--m-display-inline__main--GridColumn);
+    --pf-v6-c-masthead__content--GridColumn: var(--pf-v6-c-masthead--m-display-inline__content--GridColumn);
+    --pf-v6-c-masthead__content--Order: var(--pf-v6-c-masthead--m-display-inline__content--Order);
+    --pf-v6-c-masthead__main--Display: var(--pf-v6-c-masthead--m-display-inline__main--Display);
+    --pf-v6-c-masthead__main--ColumnGap: var(--pf-v6-c-masthead--m-display-inline__main--ColumnGap);
+  }
+}
+
 /* Smaller screens: sidebar is overlay (not part of grid) */
-@media (max-width: 1199px) {
-  .pf-v6-c-page.pf-m-sidebar-collapsed {
+@container (max-width: 1199px) {
+  :host([sidebar-collapsed]) {
     grid-template-columns: 1fr;
   }
 
-  .pf-v6-c-page {
+  :host {
     /* Single column grid - no sidebar column */
     grid-template-areas:
       "header"
@@ -1023,12 +1145,10 @@ cem-serve-knob-css-property [slot="description"] {
   }
 }
 </style>
-<div class="pf-v6-c-page">
-  <slot name="skip-to-content"></slot>
-  <slot name="masthead"></slot>
-  <slot name="sidebar"></slot>
-  <slot name="main"></slot>
-</div>
+<slot name="skip-to-content"></slot>
+<slot name="masthead"></slot>
+<slot name="sidebar"></slot>
+<slot name="main"></slot>
 </template>
 
 
@@ -1108,15 +1228,6 @@ cem-serve-knob-css-property [slot="description"] {
   <style>/* PatternFly v6 Masthead Styles */
 
 :host {
-  display: contents;
-}
-
-.pf-v6-c-masthead,
-.pf-v6-c-masthead__brand {
-  position: relative;
-}
-
-.pf-v6-c-masthead {
   --pf-v6-c-masthead--ColumnGap: var(--pf-v6-c-masthead--m-display-stack--ColumnGap);
   --pf-v6-c-masthead--GridTemplateColumns: var(--pf-v6-c-masthead--m-display-stack--GridTemplateColumns);
   --pf-v6-c-masthead__toggle--GridColumn: var(--pf-v6-c-masthead--m-display-stack__toggle--GridColumn);
@@ -1130,6 +1241,7 @@ cem-serve-knob-css-property [slot="description"] {
   --pf-v6-c-masthead__main--Display: var(--pf-v6-c-masthead--m-display-stack__main--Display);
   --pf-v6-c-masthead__main--ColumnGap: var(--pf-v6-c-masthead--m-display-stack__main--ColumnGap);
 
+  position: relative;
   z-index: var(--pf-v6-c-page--c-masthead--ZIndex);
   grid-area: header;
   display: grid;
@@ -1145,27 +1257,28 @@ cem-serve-knob-css-property [slot="description"] {
   background-color: var(--pf-v6-c-masthead--BackgroundColor);
 }
 
-.pf-v6-c-masthead__main {
+#main {
   display: var(--pf-v6-c-masthead__main--Display);
   grid-column: var(--pf-v6-c-masthead__main--GridColumn);
   column-gap: var(--pf-v6-c-masthead__main--ColumnGap);
   align-items: center;
 }
 
-.pf-v6-c-masthead__toggle {
+#toggle {
   grid-column: var(--pf-v6-c-masthead__toggle--GridColumn);
   display: flex;
   align-items: center;
 }
 
-.pf-v6-c-masthead__brand {
+#brand {
+  position: relative;
   grid-column: var(--pf-v6-c-masthead__brand--GridColumn);
   order: var(--pf-v6-c-masthead__brand--Order);
   padding-block-end: var(--pf-v6-c-masthead__brand--PaddingBlockEnd);
   border-block-end: var(--pf-v6-c-masthead__brand--BorderBlockEnd);
 }
 
-.pf-v6-c-masthead__content {
+#content {
   grid-column: var(--pf-v6-c-masthead__content--GridColumn);
   order: var(--pf-v6-c-masthead__content--Order);
   column-gap: var(--pf-v6-c-masthead__content--ColumnGap);
@@ -1181,7 +1294,7 @@ cem-serve-knob-css-property [slot="description"] {
 }
 
 /* Toggle button sizing */
-.pf-v6-c-masthead__toggle pf-v6-button {
+#toggle pf-v6-button {
   font-size: var(--pf-v6-c-masthead__toggle--Size);
 }
 
@@ -1194,56 +1307,36 @@ cem-serve-knob-css-property [slot="description"] {
   --pf-v6-c-toolbar__content--PaddingInlineEnd: var(--pf-v6-c-masthead--c-toolbar__content--PaddingInlineEnd);
   --pf-v6-c-toolbar__content-section--FlexWrap: var(--pf-v6-c-masthead--c-toolbar__content-section--FlexWrap);
 }
-
-/* Responsive layout - inline at larger breakpoints */
-@media (min-width: 1200px) {
-  :host(:not(.pf-m-resize-observer)) .pf-v6-c-masthead {
-    --pf-v6-c-masthead--ColumnGap: var(--pf-v6-c-masthead--m-display-inline--ColumnGap);
-    --pf-v6-c-masthead--GridTemplateColumns: var(--pf-v6-c-masthead--m-display-inline--GridTemplateColumns);
-    --pf-v6-c-masthead__toggle--GridColumn: var(--pf-v6-c-masthead--m-display-inline__toggle--GridColumn);
-    --pf-v6-c-masthead__brand--GridColumn: var(--pf-v6-c-masthead--m-display-inline__brand--GridColumn);
-    --pf-v6-c-masthead__brand--Order: var(--pf-v6-c-masthead--m-display-inline__brand--Order);
-    --pf-v6-c-masthead__brand--PaddingBlockEnd: var(--pf-v6-c-masthead--m-display-inline__brand--PaddingBlockEnd);
-    --pf-v6-c-masthead__brand--BorderBlockEnd: var(--pf-v6-c-masthead--m-display-inline__brand--BorderBlockEnd);
-    --pf-v6-c-masthead__main--GridColumn: var(--pf-v6-c-masthead--m-display-inline__main--GridColumn);
-    --pf-v6-c-masthead__content--GridColumn: var(--pf-v6-c-masthead--m-display-inline__content--GridColumn);
-    --pf-v6-c-masthead__content--Order: var(--pf-v6-c-masthead--m-display-inline__content--Order);
-    --pf-v6-c-masthead__main--Display: var(--pf-v6-c-masthead--m-display-inline__main--Display);
-    --pf-v6-c-masthead__main--ColumnGap: var(--pf-v6-c-masthead--m-display-inline__main--ColumnGap);
-  }
-}
 </style>
-<header class="pf-v6-c-masthead">
-  <div class="pf-v6-c-masthead__main">
-    <div class="pf-v6-c-masthead__toggle">
-      <pf-v6-button
-        id="toggle-button"
-        variant="plain"
-        type="button"
-        aria-label="Global navigation"
-        aria-expanded="false"
-      >
-        <svg viewBox="0 0 10 10"
-             width="1em"
-             height="1em"
-             fill="none"
-             stroke="currentColor"
-             stroke-width="1.5"
-             stroke-linecap="round">
-          <path d="M1,1 L9,1" />
-          <path d="M1,5 L9,5" />
-          <path d="M9,9 L1,9" />
-        </svg>
-      </pf-v6-button>
-    </div>
-    <div class="pf-v6-c-masthead__brand">
-      <slot name="logo"></slot>
-    </div>
+<div id="main">
+  <div id="toggle">
+    <pf-v6-button
+      id="toggle-button"
+      variant="plain"
+      type="button"
+      aria-label="Global navigation"
+      aria-expanded="false"
+    >
+      <svg viewBox="0 0 10 10"
+           width="1em"
+           height="1em"
+           fill="none"
+           stroke="currentColor"
+           stroke-width="1.5"
+           stroke-linecap="round">
+        <path d="M1,1 L9,1" />
+        <path d="M1,5 L9,5" />
+        <path d="M9,9 L1,9" />
+      </svg>
+    </pf-v6-button>
   </div>
-  <div class="pf-v6-c-masthead__content">
-    <slot name="toolbar"></slot>
+  <div id="brand">
+    <slot name="logo"></slot>
   </div>
-</header>
+</div>
+<div id="content">
+  <slot name="toolbar"></slot>
+</div>
 </template>
 
           <img slot="logo" alt="CEM Dev Server" src="/__cem/logo.svg">
@@ -2426,10 +2519,6 @@ slot#content {
   <style>/* PatternFly v6 Page Sidebar Styles */
 
 :host {
-  display: contents;
-}
-
-.pf-v6-c-page__sidebar {
   z-index: var(--pf-v6-c-page__sidebar--ZIndex);
   display: flex;
   flex-direction: column;
@@ -2452,39 +2541,31 @@ slot#content {
   transform: translateX(var(--pf-v6-c-page__sidebar--TranslateX)) translateZ(var(--pf-v6-c-page__sidebar--TranslateZ));
 }
 
-.pf-v6-c-page__sidebar-body {
+#body {
   padding-inline-start: var(--pf-v6-c-page__sidebar-body--PaddingInlineStart);
   padding-inline-end: var(--pf-v6-c-page__sidebar-body--PaddingInlineEnd);
-}
-
-.pf-v6-c-page__sidebar-body:last-child {
   flex-grow: 1;
 }
 
 /* Expanded state */
-:host([expanded]) .pf-v6-c-page__sidebar {
+:host([expanded]) {
   --pf-v6-c-page__sidebar--Opacity: var(--pf-v6-c-page__sidebar--m-expanded--Opacity);
   --pf-v6-c-page__sidebar--TranslateX: var(--pf-v6-c-page__sidebar--m-expanded--TranslateX);
   box-shadow: var(--pf-v6-c-page__sidebar--BoxShadow);
+  @media screen and (min-width: 75rem) {
+    --pf-v6-c-page__sidebar--BoxShadow: 0;
+  }
 }
 
 /* Collapsed state */
-:host([collapsed]) .pf-v6-c-page__sidebar {
+:host([collapsed]) {
   --pf-v6-c-page__sidebar--Opacity: 0;
   --pf-v6-c-page__sidebar--TranslateX: -100%;
-}
-
-/* Apply .pf-m-collapsed class for consistency with PF patterns */
-:host([collapsed]) .pf-v6-c-page__sidebar {
-  & {
-    pointer-events: none;
-  }
+  pointer-events: none;
 }
 </style>
-<div class="pf-v6-c-page__sidebar">
-  <div class="pf-v6-c-page__sidebar-body">
-    <slot></slot>
-  </div>
+<div id="body">
+  <slot></slot>
 </div>
 </template>
 
