@@ -85,16 +85,11 @@ class Pfv6NavItem extends HTMLElement {
       }
     }
 
-    // Update child nav-link aria-expanded and toggle icon
+    // Update child nav-link aria-expanded
+    // (CSS will handle toggle icon rotation via [aria-expanded] selector)
     const navLink = this.querySelector('pfv6-nav-link[expandable]');
     if (navLink) {
       navLink.setAttribute('aria-expanded', String(isExpanded));
-
-      // Update toggle icon rotation
-      const toggleIcon = navLink.querySelector('[slot="toggle"]');
-      if (toggleIcon) {
-        toggleIcon.style.transform = isExpanded ? 'rotate(90deg)' : 'rotate(0deg)';
-      }
     }
   }
 }

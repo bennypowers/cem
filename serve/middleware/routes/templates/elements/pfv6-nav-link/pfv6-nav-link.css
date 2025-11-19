@@ -56,3 +56,13 @@
 ::slotted(svg) {
   color: var(--pf-v6-c-nav__link-icon--Color, var(--pf-t--global--icon--color--subtle));
 }
+
+::slotted([slot="toggle"]) {
+  display: inline-block;
+  transition: transform var(--pf-t--global--motion--duration--icon--default, 0.2s) var(--pf-t--global--motion--timing-function--default, ease);
+  transform: rotate(0deg);
+}
+
+#link[aria-expanded="true"] ::slotted([slot="toggle"]) {
+  transform: rotate(90deg);
+}
