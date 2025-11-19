@@ -1,51 +1,28 @@
 :host {
   display: block;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+  --pf-v6-c-masthead__logo--Width: auto;
 }
 
-header {
-  view-transition-name: dev-server-header;
-  position: sticky;
-  top: 0;
-  background: var(--pf-t--global--background--color--secondary--default);
-  border-bottom: 1px solid var(--pf-t--global--border--color--default);
+/* Masthead toolbar and logo styles */
+.masthead-logo {
   display: flex;
   align-items: center;
-  padding: 1rem 1.5rem;
-  gap: 1rem;
-  z-index: 100;
 }
 
-header ::slotted([slot="title"]) {
+.masthead-logo ::slotted([slot="title"]) {
   margin: 0;
   font-size: 1.125rem;
   font-weight: 600;
   color: var(--pf-t--global--text--color--regular);
-  flex: 1;
 }
 
-nav {
+.masthead-toolbar {
   display: flex;
+  align-items: center;
   gap: 0.5rem;
-
-  a {
-    color: var(--pf-t--global--text--color--subtle);
-    text-decoration: none;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    font-size: 0.875rem;
-    transition: all 200ms cubic-bezier(0.645, 0.045, 0.355, 1);
-
-    &:hover {
-      background: var(--pf-t--global--background--color--primary--hover);
-      color: var(--pf-t--global--text--color--regular);
-    }
-
-    &[aria-current="page"] {
-      background: var(--pf-t--global--color--brand--default);
-      color: var(--pf-t--global--text--color--on-brand);
-    }
-  }
+  justify-content: end;
 }
 
 .source-link {
@@ -203,15 +180,9 @@ nav {
   }
 }
 
-.layout {
-  display: flex;
-  min-height: calc(100vh - 4.5rem);
-}
-
-main {
-  flex: 1;
-  padding: var(--cem-dev-server-spacing-xl);
-  overflow: auto;
+/* Content area padding for demo */
+pfv6-page-main ::slotted(*) {
+  padding: var(--pf-t--global--spacer--lg);
 }
 
 /* Knobs controls styling */
@@ -363,7 +334,7 @@ footer {
   right: 0;
   background: var(--pf-t--global--background--color--primary--default);
   border-top: 1px solid var(--pf-t--global--border--color--default);
-  z-index: 50;
+  z-index: calc(var(--pf-t--global--z-index--lg) + 100);
 }
 
 .footer-description {

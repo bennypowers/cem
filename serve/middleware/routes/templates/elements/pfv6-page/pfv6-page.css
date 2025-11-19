@@ -1,0 +1,87 @@
+/* PatternFly v6 Page Styles */
+
+:host {
+  display: block;
+  height: 100vh;
+}
+
+.pf-v6-c-page {
+  display: grid;
+  grid-template-areas:
+    "header header"
+    "sidebar main";
+  grid-template-rows: auto 1fr;
+  grid-template-columns: auto 1fr;
+  height: 100%;
+  background-color: var(--pf-v6-c-page--BackgroundColor);
+}
+
+/* When sidebar is not collapsed */
+.pf-v6-c-page:not(.pf-m-sidebar-collapsed) {
+  & ::slotted(pfv6-page-main) {
+    --pf-v6-c-page__main-container--MarginInlineStart: 0;
+  }
+}
+
+/* Sidebar collapsed state - managed via class */
+.pf-v6-c-page.pf-m-sidebar-collapsed {
+  grid-template-columns: 0 1fr;
+
+  & ::slotted(pfv6-page-sidebar) {
+    pointer-events: none;
+  }
+}
+
+/* Extra small screens: apply xs-specific margins and borders to prevent layout shift */
+@media screen and (max-width: calc(-1px + 48rem)) {
+  .pf-v6-c-page {
+    --pf-v6-c-page__main-container--MarginInlineStart: var(--pf-v6-c-page__main-container--xs--MarginInlineStart);
+    --pf-v6-c-page__main-container--MarginInlineEnd: var(--pf-v6-c-page__main-container--xs--MarginInlineEnd);
+    --pf-v6-c-page__main-container--BorderBlockEndWidth: var(--pf-v6-c-page__main-container--xs--BorderBlockEndWidth);
+    --pf-v6-c-page__main-container--BorderInlineStartWidth: var(--pf-v6-c-page__main-container--xs--BorderInlineStartWidth);
+    --pf-v6-c-page__main-container--BorderInlineEndWidth: var(--pf-v6-c-page__main-container--xs--BorderInlineEndWidth);
+  }
+}
+
+/* Responsive: at xl breakpoint, sidebar is always visible */
+@media (min-width: 1200px) {
+  .pf-v6-c-page {
+    --pf-v6-c-page__sidebar--TranslateX: var(--pf-v6-c-page__sidebar--xl--TranslateX);
+    --pf-v6-c-page__sidebar--Opacity: var(--pf-v6-c-page__sidebar--xl--Opacity);
+    --pf-v6-c-page__sidebar--BorderInlineEndWidth: 0;
+  }
+}
+
+/* Smaller screens: sidebar is overlay (not part of grid) */
+@media (max-width: 1199px) {
+  .pf-v6-c-page.pf-m-sidebar-collapsed {
+    grid-template-columns: 1fr;
+  }
+
+  .pf-v6-c-page {
+    /* Single column grid - no sidebar column */
+    grid-template-areas:
+      "header"
+      "main";
+    grid-template-columns: 1fr;
+
+    /* Remove main content margin on small screens */
+    --pf-v6-c-page__main-container--xs--AlignSelf: stretch;
+    --pf-v6-c-page__main-container--xs--BorderRadius: 0;
+    --pf-v6-c-page__main-container--xs--MarginInlineStart: 0;
+    --pf-v6-c-page__main-container--xs--MaxHeight: 100%;
+    --pf-v6-c-page__main-container--xs--MarginInlineEnd: 0;
+    --pf-v6-c-page__main-container--xs--BorderBlockEndWidth: 0;
+    --pf-v6-c-page__main-container--xs--BorderInlineStartWidth: 0px;
+    --pf-v6-c-page__main-container--xs--BorderInlineEndWidth: 0px;
+
+    /* Remove sidebar from grid flow - make it overlay */
+    & ::slotted(pfv6-page-sidebar) {
+      position: fixed;
+      inset-block-start: 0;
+      inset-inline-start: 0;
+      height: 100%;
+      z-index: var(--pf-t--global--z-index--lg);
+    }
+  }
+}
