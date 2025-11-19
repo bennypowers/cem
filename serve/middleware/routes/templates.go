@@ -51,7 +51,7 @@ var knobsMultiTemplate string
 var demoChromeTemplate string
 
 //go:embed templates/**
-var templatesFS embed.FS
+var TemplatesFS embed.FS
 
 //go:embed templates/js/*.js templates/css/*.css templates/images/* templates/elements/**/*
 var InternalModules embed.FS
@@ -89,7 +89,7 @@ func getTemplateFuncs() template.FuncMap {
 			return dict, nil
 		},
 		"include": func(path string) template.CSS {
-			content, err := templatesFS.ReadFile("templates/" + path)
+			content, err := TemplatesFS.ReadFile("templates/" + path)
 			if err != nil {
 				errMsg := "/* Error reading " + path + ": " + err.Error() + " */"
 
@@ -107,7 +107,7 @@ func getTemplateFuncs() template.FuncMap {
 			return template.CSS(content)
 		},
 		"renderElementShadowRoot": func(elementName string, data interface{}) template.HTML {
-			html, err := renderElementShadowRoot(elementName, data)
+			html, err := RenderElementShadowRoot(elementName, data)
 			if err != nil {
 				errMsg := "<!-- Error rendering element " + elementName + ": " + err.Error() + " -->"
 

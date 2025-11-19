@@ -46,15 +46,20 @@
 <body>
   <cem-serve-chrome role="none"
                     {{if .EnabledKnobs}}knobs="{{.EnabledKnobs}}"{{end}}
-                    tag-name="{{.TagName}}">
-    {{renderElementShadowRoot "cem-serve-chrome" .}}
-
+                    tag-name="{{.TagName}}"
+                    {{if .DemoTitle}}demo-title="{{.DemoTitle}}"{{end}}
+                    {{if .CanonicalURL}}canonical-url="{{.CanonicalURL}}"{{end}}
+                    {{if .SourceURL}}source-url="{{.SourceURL}}"{{end}}>
     <h1 slot="title">{{if .PackageName}}{{.PackageName}}{{else}}{{.TagName}}{{end}}</h1>
 
     {{if .Description}}
     <section slot="description">
       {{.Description}}
     </section>
+    {{end}}
+
+    {{if .NavigationHTML}}
+    {{.NavigationHTML}}
     {{end}}
 
     <!-- Demo in light DOM by default -->
@@ -68,6 +73,10 @@
     <cem-serve-demo id="demo">
 {{.DemoHTML}}
     </cem-serve-demo>
+    {{end}}
+
+    {{if .KnobsHTML}}
+    {{.KnobsHTML}}
     {{end}}
   </cem-serve-chrome>
 </body>

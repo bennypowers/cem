@@ -1,34 +1,22 @@
-<pf-v6-navigation aria-label="Component navigation" inset>
-  {{renderElementShadowRoot "pf-v6-navigation" dict}}
+<pf-v6-navigation slot="navigation" aria-label="Component navigation" inset>
   <pf-v6-nav-list>
-    {{renderElementShadowRoot "pf-v6-nav-list" dict}}
     {{range .Packages}}
     <pf-v6-nav-item {{if $.SinglePackage}}expanded{{end}}>
-      {{renderElementShadowRoot "pf-v6-nav-item" dict}}
       <pf-v6-nav-link expandable aria-expanded="{{if $.SinglePackage}}true{{else}}false{{end}}">
-        {{renderElementShadowRoot "pf-v6-nav-link" dict}}
         {{.Name}}
       </pf-v6-nav-link>
       <pf-v6-nav-group {{if not $.SinglePackage}}hidden{{end}}>
-        {{renderElementShadowRoot "pf-v6-nav-group" dict}}
         <pf-v6-nav-list>
-          {{renderElementShadowRoot "pf-v6-nav-list" dict}}
           {{range .Elements}}
           <pf-v6-nav-item>
-            {{renderElementShadowRoot "pf-v6-nav-item" dict}}
             <pf-v6-nav-link expandable aria-expanded="false">
-              {{renderElementShadowRoot "pf-v6-nav-link" dict}}
               <code>&lt;{{.TagName}}&gt;</code>
             </pf-v6-nav-link>
             <pf-v6-nav-group hidden>
-              {{renderElementShadowRoot "pf-v6-nav-group" dict}}
               <pf-v6-nav-list>
-                {{renderElementShadowRoot "pf-v6-nav-list" dict}}
                 {{range .Demos}}
                 <pf-v6-nav-item>
-                  {{renderElementShadowRoot "pf-v6-nav-item" dict}}
                   <pf-v6-nav-link href="{{.URL}}">
-                    {{renderElementShadowRoot "pf-v6-nav-link" dict}}
                     {{.Name}}
                   </pf-v6-nav-link>
                 </pf-v6-nav-item>

@@ -30,21 +30,21 @@ type ElementWrapperData struct {
 	LightDOM  template.HTML
 }
 
-// renderElementShadowRoot renders a custom element's shadow root with DSD
+// RenderElementShadowRoot renders a custom element's shadow root with DSD
 // Returns just the shadow root (template + styles + shadow DOM)
 // Light DOM content should be provided by the caller in the template
 // This function is recursive - it will render nested custom elements' shadow roots
-func renderElementShadowRoot(elementName string, data interface{}) (template.HTML, error) {
+func RenderElementShadowRoot(elementName string, data interface{}) (template.HTML, error) {
 	// Read the element's HTML template (shadow DOM structure)
 	templatePath := fmt.Sprintf("templates/elements/%s/%s.html", elementName, elementName)
-	templateContent, err := templatesFS.ReadFile(templatePath)
+	templateContent, err := TemplatesFS.ReadFile(templatePath)
 	if err != nil {
 		return "", fmt.Errorf("failed to read element template %s: %w", templatePath, err)
 	}
 
 	// Read the element's CSS
 	cssPath := fmt.Sprintf("templates/elements/%s/%s.css", elementName, elementName)
-	cssContent, err := templatesFS.ReadFile(cssPath)
+	cssContent, err := TemplatesFS.ReadFile(cssPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to read element CSS %s: %w", cssPath, err)
 	}

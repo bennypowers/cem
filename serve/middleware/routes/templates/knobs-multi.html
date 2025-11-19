@@ -1,5 +1,5 @@
 {{if .}}
-<div class="knobs-container">
+<div slot="knobs" class="knobs-container">
   {{range $index, $group := .}}
   <details class="knob-group-instance" data-tag-name="{{$group.TagName}}" data-instance-index="{{$group.InstanceIndex}}" {{if $group.IsPrimary}}open{{end}}>
     <summary class="knob-group-instance-header">
@@ -16,7 +16,6 @@
                                   value="{{.CurrentValue}}"
                                   {{if .Default}}default="{{.Default}}"{{end}}
                                   {{if .EnumValues}}enum-values="{{join .EnumValues ","}}"{{end}}>
-          {{renderElementShadowRoot "cem-serve-knob-attribute" (dict "type" .Type "name" .Name "enumValues" (join .EnumValues ","))}}
           {{if .Description}}
           <div slot="description">{{.Description}}</div>
           {{end}}
@@ -33,7 +32,6 @@
                                  type="{{.Type}}"
                                  value="{{.CurrentValue}}"
                                  {{if .Default}}default="{{.Default}}"{{end}}>
-          {{renderElementShadowRoot "cem-serve-knob-property" (dict "type" .Type "name" .Name)}}
           {{if .Description}}
           <div slot="description">{{.Description}}</div>
           {{end}}
@@ -50,7 +48,6 @@
                                      type="{{.Type}}"
                                      value="{{.CurrentValue}}"
                                      {{if .Default}}default="{{.Default}}"{{end}}>
-          {{renderElementShadowRoot "cem-serve-knob-css-property" (dict "type" .Type "name" .Name)}}
           {{if .Description}}
           <div slot="description">{{.Description}}</div>
           {{end}}

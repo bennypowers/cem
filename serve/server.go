@@ -40,6 +40,7 @@ import (
 	"bennypowers.dev/cem/serve/middleware/inject"
 	"bennypowers.dev/cem/serve/middleware/requestlogger"
 	"bennypowers.dev/cem/serve/middleware/routes"
+	"bennypowers.dev/cem/serve/middleware/shadowroot"
 	"bennypowers.dev/cem/serve/middleware/transform"
 	W "bennypowers.dev/cem/workspace"
 	"golang.org/x/net/html"
@@ -1231,6 +1232,10 @@ func (s *Server) setupMiddleware() {
 	// Terminal handler: static files
 	s.handler = middleware.Chain(
 		http.HandlerFunc(s.serveStaticFiles),                      // Static file server (terminal handler)
+		shadowroot.New(s.logger, errorBroadcaster{s}, routes.TemplatesFS, func(elementName string, data interface{}) (string, error) {
+			html, err := routes.RenderElementShadowRoot(elementName, data)
+			return string(html), err
+		}), // Shadow root injection (last - processes final HTML)
 		inject.New(s.config.Reload, "/__cem/websocket-client.js"), // WebSocket injection
 		importmappkg.New(importmappkg.MiddlewareConfig{ // Import map injection
 			Context: s,

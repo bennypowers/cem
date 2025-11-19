@@ -1,5 +1,5 @@
 {{if or .AttributeKnobs .PropertyKnobs .CSSPropertyKnobs}}
-<div class="knobs-container">
+<div slot="knobs" class="knobs-container">
   {{if .AttributeKnobs}}
   <section class="knob-group">
     <h3 class="knob-group-title">Attributes</h3>
@@ -9,7 +9,6 @@
                               value="{{.CurrentValue}}"
                               {{if .Default}}default="{{.Default}}"{{end}}
                               {{if .EnumValues}}enum-values="{{join .EnumValues ","}}"{{end}}>
-      {{renderElementShadowRoot "cem-serve-knob-attribute" (dict "type" .Type "name" .Name "enumValues" (join .EnumValues ","))}}
       {{if .Description}}
       <div slot="description">{{.Description}}</div>
       {{end}}
@@ -26,7 +25,6 @@
                              type="{{.Type}}"
                              value="{{.CurrentValue}}"
                              {{if .Default}}default="{{.Default}}"{{end}}>
-      {{renderElementShadowRoot "cem-serve-knob-property" (dict "type" .Type "name" .Name)}}
       {{if .Description}}
       <div slot="description">{{.Description}}</div>
       {{end}}
@@ -43,7 +41,6 @@
                                  type="{{.Type}}"
                                  value="{{.CurrentValue}}"
                                  {{if .Default}}default="{{.Default}}"{{end}}>
-      {{renderElementShadowRoot "cem-serve-knob-css-property" (dict "type" .Type "name" .Name)}}
       {{if .Description}}
       <div slot="description">{{.Description}}</div>
       {{end}}

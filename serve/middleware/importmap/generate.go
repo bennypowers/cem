@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/serve/middleware/types"
 	W "bennypowers.dev/cem/workspace"
 )
 
@@ -321,7 +322,7 @@ func readImportMapFile(path string, fs platform.FileSystem) (*ImportMap, error) 
 }
 
 // addPackageExportsToImportMap adds all exports from a package to the import map
-func addPackageExportsToImportMap(importMap *ImportMap, pkgName, pkgPath, rootDir string, logger Logger, fs platform.FileSystem) error {
+func addPackageExportsToImportMap(importMap *ImportMap, pkgName, pkgPath, rootDir string, logger types.Logger, fs platform.FileSystem) error {
 	pkgJSONPath := filepath.Join(pkgPath, "package.json")
 	pkg, err := readPackageJSON(pkgJSONPath, fs)
 	if err != nil {
@@ -467,7 +468,7 @@ func resolveExportValue(exportValue interface{}, pkgPath, rootDir string) (strin
 
 // addTransitiveDependenciesToScopes builds scopes for packages in the dependency tree
 // by recursively traversing dependencies from the root package
-func addTransitiveDependenciesToScopes(importMap *ImportMap, rootDir string, rootPkg *packageJSON, logger Logger, fs platform.FileSystem) error {
+func addTransitiveDependenciesToScopes(importMap *ImportMap, rootDir string, rootPkg *packageJSON, logger types.Logger, fs platform.FileSystem) error {
 	if rootPkg == nil {
 		return nil
 	}
@@ -647,7 +648,7 @@ func resolveSimpleExportValue(exportValue interface{}, depWebPath string) string
 // addWorkspaceScopesToImportMap adds scopes for workspace packages and root package
 // so they can resolve bare specifiers to dependencies
 // workspaceRoot is where node_modules is located, rootDir is for calculating relative paths
-func addWorkspaceScopesToImportMap(importMap *ImportMap, workspaceRoot, rootDir string, rootPkg *packageJSON, workspacePackages map[string]string, logger Logger, fs platform.FileSystem) error {
+func addWorkspaceScopesToImportMap(importMap *ImportMap, workspaceRoot, rootDir string, rootPkg *packageJSON, workspacePackages map[string]string, logger types.Logger, fs platform.FileSystem) error {
 	nodeModulesPath := filepath.Join(workspaceRoot, "node_modules")
 
 	// Helper function to add dependencies to a scope (including transitive dependencies)
@@ -745,7 +746,7 @@ func addWorkspaceScopesToImportMap(importMap *ImportMap, workspaceRoot, rootDir 
 // Only includes dependencies from packages with customElements fields
 // Global imports: workspace packages + their direct dependencies
 // Scopes: transitive dependencies
-func generateWorkspaceImportMap(workspaceRoot string, packages []WorkspacePackage, logger Logger, fs platform.FileSystem) (*ImportMap, error) {
+func generateWorkspaceImportMap(workspaceRoot string, packages []WorkspacePackage, logger types.Logger, fs platform.FileSystem) (*ImportMap, error) {
 	result := &ImportMap{
 		Imports: make(map[string]string),
 		Scopes:  make(map[string]map[string]string),

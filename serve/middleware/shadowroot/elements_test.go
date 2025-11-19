@@ -15,30 +15,30 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package transform
+package shadowroot
 
 import (
-	"time"
+	"embed"
+	"testing"
 )
 
-// CacheKey uniquely identifies a cached transform based on file metadata
-type CacheKey struct {
-	Path    string
-	ModTime time.Time
-	Size    int64
-}
+//go:embed testdata/**
+var testFS embed.FS
 
-// CacheEntry stores transformed code and its dependencies
-type CacheEntry struct {
-	Code         []byte
-	Dependencies []string
-	Size         int64
-	AccessTime   time.Time
-}
+func TestBuildKnownElements(t *testing.T) {
+	// Test with actual testFS using correct prefix
+	knownElements := buildKnownElementsWithPrefix(testFS, "testdata/templates/elements")
 
-// TransformResult contains the transformed code and dependencies
-type TransformResult struct {
-	Code         []byte
-	Map          []byte
-	Dependencies []string
+	// Check what we found
+	t.Logf("Found %d known elements", len(knownElements))
+
+	// Verify expected elements are found
+	expected := []string{"test-button", "outer-element", "inner-element", "test-icon"}
+	for _, elem := range expected {
+		if knownElements.Has(elem) {
+			t.Logf("✓ %s found", elem)
+		} else {
+			t.Errorf("✗ %s NOT found", elem)
+		}
+	}
 }
