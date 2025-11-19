@@ -20,6 +20,7 @@ import '/__cem/elements/pf-v6-toolbar-item/pf-v6-toolbar-item.js';
 import '/__cem/elements/pf-v6-toggle-group/pf-v6-toggle-group.js';
 import '/__cem/elements/pf-v6-toggle-group-item/pf-v6-toggle-group-item.js';
 import '/__cem/elements/pf-v6-modal/pf-v6-modal.js';
+import '/__cem/elements/pf-v6-card/pf-v6-card.js';
 import '/__cem/elements/cem-drawer/cem-drawer.js';
 import '/__cem/elements/cem-serve-demo/cem-serve-demo.js';
 import '/__cem/elements/cem-serve-knob-attribute/cem-serve-knob-attribute.js';

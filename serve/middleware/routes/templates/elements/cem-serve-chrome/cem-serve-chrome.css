@@ -169,56 +169,24 @@ pf-v6-page-main ::slotted(*) {
   }
 }
 
-.knob-group-instance {
+/* Knobs card styling */
+.knobs-container pf-v6-card {
   margin-bottom: var(--cem-dev-server-spacing-md);
-  border: 1px solid var(--cem-dev-server-border-color);
-  border-radius: var(--cem-dev-server-border-radius);
-  background: var(--cem-dev-server-bg-secondary);
 
   &:last-child {
     margin-bottom: 0;
   }
-
-  & summary {
-    cursor: pointer;
-    user-select: none;
-    list-style: none;
-
-    &::-webkit-details-marker {
-      display: none;
-    }
-  }
-
-  &[open] summary {
-    border-bottom: 1px solid var(--cem-dev-server-border-color);
-  }
 }
 
-.knob-group-instance-header {
-  padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: var(--cem-dev-server-spacing-xs);
-
-  &:hover {
-    background: light-dark(rgba(0, 0, 0, 0.03), rgba(255, 255, 255, 0.05));
-  }
-
-  .instance-tag {
-    font-family: var(--cem-dev-server-font-family-mono);
-    color: var(--cem-dev-server-accent-color);
-    font-size: var(--cem-dev-server-font-size-sm);
-  }
-
-  .instance-label {
-    color: var(--cem-dev-server-text-secondary);
-    font-size: var(--cem-dev-server-font-size-sm);
-  }
+.instance-tag {
+  font-family: var(--cem-dev-server-font-family-mono);
+  color: var(--cem-dev-server-accent-color);
+  font-size: var(--cem-dev-server-font-size-sm);
 }
 
-.knob-group-content {
-  padding: var(--cem-dev-server-spacing-md);
+.instance-label {
+  color: var(--cem-dev-server-text-secondary);
+  font-size: var(--cem-dev-server-font-size-sm);
 }
 
 .knob-group {

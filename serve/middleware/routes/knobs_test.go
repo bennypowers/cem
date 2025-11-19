@@ -689,17 +689,18 @@ func TestRenderMultiInstanceKnobsHTML(t *testing.T) {
 			detailsCount++
 		}
 	}
-	if detailsCount != 3 {
-		t.Errorf("Expected 3 <details> elements, found %d", detailsCount)
+	// Count pf-v6-card opening tags instead of details
+	cardCount := 0
+	for i := 0; i < len(htmlStr); i++ {
+		if i < len(htmlStr)-11 && htmlStr[i:i+11] == "<pf-v6-card" {
+			cardCount++
+		}
+	}
+	if cardCount != 3 {
+		t.Errorf("Expected 3 <pf-v6-card> elements, found %d", cardCount)
 	}
 
-	// Verify first group has 'open' attribute (primary)
-	// Look for 'open' attribute in the first details element
-	if !contains(htmlStr, " open>") && !contains(htmlStr, " open ") {
-		t.Error("Expected first <details> to have 'open' attribute")
-	}
-
-	// Verify labels appear in summaries
+	// Verify labels appear in card titles
 	expectedLabels := []string{"#card-1", "#card-2", "#card-3"}
 	for _, label := range expectedLabels {
 		if !contains(htmlStr, label) {

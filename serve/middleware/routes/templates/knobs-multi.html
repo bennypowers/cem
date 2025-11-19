@@ -1,12 +1,11 @@
 {{if .}}
 <div slot="knobs" class="knobs-container">
   {{range $index, $group := .}}
-  <details class="knob-group-instance" data-tag-name="{{$group.TagName}}" data-instance-index="{{$group.InstanceIndex}}" {{if $group.IsPrimary}}open{{end}}>
-    <summary class="knob-group-instance-header">
+  <pf-v6-card compact data-tag-name="{{$group.TagName}}" data-instance-index="{{$group.InstanceIndex}}">
+    <h3 slot="title">
       <span class="instance-tag">{{$group.TagName}}</span>: <span class="instance-label">{{$group.Label}}</span>
-    </summary>
+    </h3>
     {{with $group.Knobs}}
-    <div class="knob-group-content">
       {{if .AttributeKnobs}}
       <section class="knob-group">
         <h4 class="knob-group-title">Attributes</h4>
@@ -55,9 +54,8 @@
         {{end}}
       </section>
       {{end}}
-    </div>
     {{end}}
-  </details>
+  </pf-v6-card>
   {{end}}
 </div>
 {{else}}

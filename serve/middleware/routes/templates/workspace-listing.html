@@ -1,8 +1,8 @@
 <cem-serve-listing>
   <div class="listing-grid">
     {{range .Elements}}
-    <section class="element-section">
-      <h2 class="element-title"><code>&lt;{{.TagName}}&gt;</code></h2>
+    <pf-v6-card>
+      <h2 slot="title"><code>&lt;{{.TagName}}&gt;</code></h2>
       <ul class="demo-list">
         {{range .Demos}}
         <li>
@@ -12,7 +12,7 @@
         </li>
         {{end}}
       </ul>
-    </section>
+    </pf-v6-card>
     {{end}}
   </div>
 </cem-serve-listing>
