@@ -29,9 +29,6 @@ import (
 //go:embed templates/default-index.html
 var defaultIndexTemplate string
 
-//go:embed templates/demo-chrome.html
-var demoChromeTemplate string
-
 //go:embed templates/workspace-listing.html
 var workspaceListingTemplate string
 
@@ -49,6 +46,9 @@ var knobsTemplate string
 
 //go:embed templates/knobs-multi.html
 var knobsMultiTemplate string
+
+//go:embed templates/demo-chrome.html
+var demoChromeTemplate string
 
 //go:embed templates/**
 var templatesFS embed.FS
@@ -75,63 +75,60 @@ func getTemplateFuncs() template.FuncMap {
 			return strings.Join(elems, sep)
 		},
 		"dict": func(values ...interface{}) (map[string]string, error) {
-		if len(values)%2 != 0 {
-			return nil, fmt.Errorf("dict requires even number of arguments")
-		}
-		dict := make(map[string]string, len(values)/2)
-		for i := 0; i < len(values); i += 2 {
-			key, ok := values[i].(string)
-			if !ok {
-				return nil, fmt.Errorf("dict keys must be strings")
+			if len(values)%2 != 0 {
+				return nil, fmt.Errorf("dict requires even number of arguments")
 			}
-			dict[key] = fmt.Sprint(values[i+1])
-		}
-		return dict, nil
-	},
-	"include": func(path string) template.CSS {
-		content, err := templatesFS.ReadFile("templates/" + path)
-		if err != nil {
-			errMsg := "/* Error reading " + path + ": " + err.Error() + " */"
-
-			// Broadcast error to connected clients via WebSocket overlay
-			if errorBroadcaster != nil {
-				_ = errorBroadcaster.BroadcastError(
-					"Template Include Error",
-					"Failed to include template file: "+err.Error(),
-					path,
-				)
+			dict := make(map[string]string, len(values)/2)
+			for i := 0; i < len(values); i += 2 {
+				key, ok := values[i].(string)
+				if !ok {
+					return nil, fmt.Errorf("dict keys must be strings")
+				}
+				dict[key] = fmt.Sprint(values[i+1])
 			}
+			return dict, nil
+		},
+		"include": func(path string) template.CSS {
+			content, err := templatesFS.ReadFile("templates/" + path)
+			if err != nil {
+				errMsg := "/* Error reading " + path + ": " + err.Error() + " */"
 
-			return template.CSS(errMsg)
-		}
-		return template.CSS(content)
-	},
-	"renderElementShadowRoot": func(elementName string, attrs map[string]string) template.HTML {
-		html, err := renderElementShadowRoot(elementName, attrs)
-		if err != nil {
-			errMsg := "<!-- Error rendering element " + elementName + ": " + err.Error() + " -->"
+				// Broadcast error to connected clients via WebSocket overlay
+				if errorBroadcaster != nil {
+					_ = errorBroadcaster.BroadcastError(
+						"Template Include Error",
+						"Failed to include template file: "+err.Error(),
+						path,
+					)
+				}
 
-			// Broadcast error to connected clients via WebSocket overlay
-			if errorBroadcaster != nil {
-				_ = errorBroadcaster.BroadcastError(
-					"Element Render Error",
-					"Failed to render element: "+err.Error(),
-					elementName,
-				)
+				return template.CSS(errMsg)
 			}
+			return template.CSS(content)
+		},
+		"renderElementShadowRoot": func(elementName string, data interface{}) template.HTML {
+			html, err := renderElementShadowRoot(elementName, data)
+			if err != nil {
+				errMsg := "<!-- Error rendering element " + elementName + ": " + err.Error() + " -->"
 
-			return template.HTML(errMsg)
-		}
-		return html
-	},
+				// Broadcast error to connected clients via WebSocket overlay
+				if errorBroadcaster != nil {
+					_ = errorBroadcaster.BroadcastError(
+						"Element Render Error",
+						"Failed to render element: "+err.Error(),
+						elementName,
+					)
+				}
+
+				return template.HTML(errMsg)
+			}
+			return html
+		},
 	}
 }
 
 // DefaultIndexTemplate is the parsed template for the default index page
 var DefaultIndexTemplate = template.Must(template.New("default-index").Parse(defaultIndexTemplate))
-
-// DemoChromeTemplate is the parsed template for demo chrome
-var DemoChromeTemplate = template.Must(template.New("demo-chrome").Funcs(getTemplateFuncs()).Parse(demoChromeTemplate))
 
 // WorkspaceListingTemplate is the parsed template for workspace package listing
 var WorkspaceListingTemplate = template.Must(template.New("workspace-listing").Funcs(getTemplateFuncs()).Parse(workspaceListingTemplate))
@@ -150,3 +147,6 @@ var KnobsTemplate = template.Must(template.New("knobs").Funcs(getTemplateFuncs()
 
 // KnobsMultiTemplate is the parsed template for multi-instance knobs controls
 var KnobsMultiTemplate = template.Must(template.New("knobs-multi").Funcs(getTemplateFuncs()).Parse(knobsMultiTemplate))
+
+// DemoChromeTemplate is the parsed template for demo chrome wrapper
+var DemoChromeTemplate = template.Must(template.New("demo-chrome").Funcs(getTemplateFuncs()).Parse(demoChromeTemplate))

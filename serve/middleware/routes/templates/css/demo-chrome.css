@@ -30,7 +30,7 @@ html::view-transition-new(*) {
   --cem-dev-server-bg-secondary: var(--pf-t--global--background--color--secondary--default);
   --cem-dev-server-bg-tertiary: var(--pf-t--global--background--color--primary--hover);
 
-  --cem-dev-server-text-primary: var(--pf-t--global--text--color--regular);
+  --cem-dev-server-text-color-primary: var(--pf-t--global--text--color--regular);
   --cem-dev-server-text-secondary: var(--pf-t--global--text--color--subtle);
   --cem-dev-server-text-muted: var(--pf-t--global--text--color--subtle);
 
@@ -51,7 +51,8 @@ html::view-transition-new(*) {
   --cem-dev-server-spacing-xl: 2rem;
 
   /* Typography */
-  --cem-dev-server-font-family: system-ui, -apple-system, sans-serif;
+  --cem-dev-server-font-size-body: var(--pf-t--global--font--size--body--default);
+  --cem-dev-server-font-family-body: var(--pf-t--global--font--family--body);
   --cem-dev-server-font-family-mono: 'Courier New', monospace;
   --cem-dev-server-font-size-sm: 0.875rem;
   --cem-dev-server-font-size-base: 1rem;
@@ -88,9 +89,10 @@ html {
 body {
   margin: 0;
   padding: 0;
-  font-family: var(--cem-dev-server-font-family);
+  font-family: var(--cem-dev-server-font-family-body);
+  font-size: var(--cem-dev-server-font-size-body);
   background: var(--cem-dev-server-bg-primary);
-  color: var(--cem-dev-server-text-primary);
+  color: var(--cem-dev-server-text-color-primary);
   color-scheme: light dark;
 }
 
@@ -142,7 +144,7 @@ cem-serve-listing {
   }
 
   .demo-link {
-    color: var(--cem-dev-server-text-primary);
+    color: var(--cem-dev-server-text-color-primary);
     text-decoration: none;
     padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);
     background: var(--cem-dev-server-bg-tertiary);

@@ -26,6 +26,26 @@ class PfV6Button extends CemElement {
 
   #button;
 
+  get disabled() {
+    return this.hasAttribute('disabled');
+  }
+
+  set disabled(value) {
+    this.toggleAttribute('disabled', !!value);
+  }
+
+  get variant() {
+    return this.getAttribute('variant');
+  }
+
+  set variant(value) {
+    if (value) {
+      this.setAttribute('variant', value);
+    } else {
+      this.removeAttribute('variant');
+    }
+  }
+
   async afterTemplateLoaded() {
     this.#button = this.shadowRoot.querySelector('button');
     if (!this.#button) return;
@@ -84,16 +104,7 @@ class PfV6Button extends CemElement {
     }
   }
 
-  get disabled() {
-    return this.hasAttribute('disabled');
-  }
-
-  set disabled(value) {
-    this.toggleAttribute('disabled', !!value);
-  }
-
   static {
     customElements.define(this.is, this);
   }
 }
-

@@ -12,7 +12,6 @@
 {{.ImportMap}}
   </script>
   {{end}}
-  <script type="module" src="/__cem/websocket-client.js"></script>
   <script type="module" src="/__cem/elements/pf-v6-button/pf-v6-button.js"></script>
   <script type="module" src="/__cem/elements/pf-v6-switch/pf-v6-switch.js"></script>
   <script type="module" src="/__cem/elements/pf-v6-text-input/pf-v6-text-input.js"></script>
@@ -40,203 +39,15 @@
   <script type="module" src="/__cem/elements/cem-serve-knob-property/cem-serve-knob-property.js"></script>
   <script type="module" src="/__cem/elements/cem-serve-knob-css-property/cem-serve-knob-css-property.js"></script>
   <script type="module" src="/__cem/elements/cem-color-scheme-toggle/cem-color-scheme-toggle.js"></script>
-  <script type="module" src="/__cem/serve-chrome.js"></script>
+  <script type="module" src="/__cem/elements/cem-serve-chrome/cem-serve-chrome.js"></script>
   <link rel="stylesheet" href="/__cem/pf-tokens.css">
-  <style>{{include "css/demo-chrome.css"}}</style>
+  <link rel="stylesheet" href="/__cem/demo-chrome.css">
 </head>
 <body>
   <cem-serve-chrome role="none"
                     {{if .EnabledKnobs}}knobs="{{.EnabledKnobs}}"{{end}}
                     tag-name="{{.TagName}}">
-    <template shadowrootmode="open">
-      <style>{{include "css/serve-chrome.css"}}</style>
-
-      <pf-v6-page>
-        {{renderElementShadowRoot "pf-v6-page" dict}}
-
-        <pf-v6-skip-to-content slot="skip-to-content" href="#main-content">
-          {{renderElementShadowRoot "pf-v6-skip-to-content" dict}}
-        </pf-v6-skip-to-content>
-
-        <pf-v6-masthead slot="masthead">
-          {{renderElementShadowRoot "pf-v6-masthead" dict}}
-          <img slot="logo" alt="CEM Dev Server" src="/__cem/logo.svg">
-          <pf-v6-toolbar slot="toolbar">
-            {{renderElementShadowRoot "pf-v6-toolbar" dict}}
-            <pf-v6-toolbar-group variant="action-group">
-              {{renderElementShadowRoot "pf-v6-toolbar-group" dict}}
-              {{if .CanonicalURL}}
-              <pf-v6-toolbar-item>
-                {{renderElementShadowRoot "pf-v6-toolbar-item" dict}}
-                <a href="{{.CanonicalURL}}"
-                   target="_blank"
-                   class="source-link"
-                   title="View canonical demo">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M6.354 5.5H4a3 3 0 0 0 0 6h3a3 3 0 0 0 2.83-4H9c-.086 0-.17.01-.25.031A2 2 0 0 1 7 10.5H4a2 2 0 1 1 0-4h1.535c.218-.376.495-.714.82-1z"/>
-                    <path d="M9 5.5a3 3 0 0 0-2.83 4h1.098A2 2 0 0 1 9 6.5h3a2 2 0 1 1 0 4h-1.535a4.02 4.02 0 0 1-.82 1H12a3 3 0 1 0 0-6H9z"/>
-                  </svg>
-                </a>
-              </pf-v6-toolbar-item>
-              {{end}}
-              {{if .SourceURL}}
-              <pf-v6-toolbar-item>
-                {{renderElementShadowRoot "pf-v6-toolbar-item" dict}}
-                <a href="{{.SourceURL}}"
-                   target="_blank"
-                   class="source-link"
-                   title="View source file">
-                  {{if contains .SourceURL "github.com"}}
-                    <!-- GitHub icon -->
-                  <svg aria-label="GitHub.com" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
-                  </svg>
-                  {{else if contains .SourceURL "gitlab.com"}}
-                    <!-- GitLab icon -->
-                  <svg aria-label="GitLab" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="m15.734 6.1-.022-.058L13.534.358a.568.568 0 0 0-.563-.356.583.583 0 0 0-.328.122.582.582 0 0 0-.193.294l-1.47 4.499H5.025l-1.47-4.5A.572.572 0 0 0 3.360.174a.572.572 0 0 0-.328-.172.582.582 0 0 0-.563.357L.29 6.04l-.022.057A4.044 4.044 0 0 0 1.61 10.77l.007.006.02.014 3.318 2.485 1.64 1.242 1 .755a.673.673 0 0 0 .814 0l1-.755 1.64-1.242 3.338-2.5.009-.007a4.05 4.05 0 0 0 1.34-4.668Z"/>
-                  </svg>
-                  {{else if contains .SourceURL "bitbucket.org"}}
-                    <!-- Bitbucket icon -->
-                  <svg aria-label="Bitbucket" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M0 1.5A1.5 1.5 0 0 1 1.5 0h13A1.5 1.5 0 0 1 16 1.5v13a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5v-13zM2.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-11zm5.038 1.435a.5.5 0 0 1 .924 0l1.42 3.37H8.78l-.243.608-.243-.608H5.082l1.42-3.37zM8 9.143l-.743 1.857H4.743L6.076 7.608 8 9.143z"/>
-                  </svg>
-                  {{else}}
-                    <!-- Generic VCS icon (code brackets) -->
-                  <svg aria-label="Version Control" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M5.854 4.854a.5.5 0 1 0-.708-.708l-3.5 3.5a.5.5 0 0 0 0 .708l3.5 3.5a.5.5 0 0 0 .708-.708L2.707 8l3.147-3.146zm4.292 0a.5.5 0 0 1 .708-.708l3.5 3.5a.5.5 0 0 1 0 .708l-3.5 3.5a.5.5 0 0 1-.708-.708L13.293 8l-3.147-3.146z"/>
-                  </svg>
-                  {{end}}
-                </a>
-              </pf-v6-toolbar-item>
-              {{end}}
-              <pf-v6-toolbar-item>
-                {{renderElementShadowRoot "pf-v6-toolbar-item" dict}}
-                <pf-v6-button id="debug-info"
-                             variant="plain"
-                             aria-label="Debug info">
-                  {{renderElementShadowRoot "pf-v6-button" dict}}
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                    <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
-                  </svg>
-                </pf-v6-button>
-              </pf-v6-toolbar-item>
-              <pf-v6-toolbar-item>
-                {{renderElementShadowRoot "pf-v6-toolbar-item" dict}}
-                <pf-v6-toggle-group class="color-scheme-toggle" aria-label="Color scheme">
-                  {{renderElementShadowRoot "pf-v6-toggle-group" dict}}
-                  <pf-v6-toggle-group-item value="light">
-                    {{renderElementShadowRoot "pf-v6-toggle-group-item" dict}}
-                    <svg slot="icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                      <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
-                    </svg>
-                  </pf-v6-toggle-group-item>
-                  <pf-v6-toggle-group-item value="dark">
-                    {{renderElementShadowRoot "pf-v6-toggle-group-item" dict}}
-                    <svg slot="icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                      <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278zM4.858 1.311A7.269 7.269 0 0 0 1.025 7.71c0 4.02 3.279 7.276 7.319 7.276a7.316 7.316 0 0 0 5.205-2.162c-.337.042-.68.063-1.029.063-4.61 0-8.343-3.714-8.343-8.29 0-1.167.242-2.278.681-3.286z"/>
-                    </svg>
-                  </pf-v6-toggle-group-item>
-                  <pf-v6-toggle-group-item value="system">
-                    {{renderElementShadowRoot "pf-v6-toggle-group-item" dict}}
-                    <svg slot="icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                      <path d="M0 1.5A1.5 1.5 0 0 1 1.5 0h13A1.5 1.5 0 0 1 16 1.5v8a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 9.5v-8zM1.5 1a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-13z"/>
-                      <path d="M2.5 12h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1 0-1zm0 2h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1 0-1z"/>
-                    </svg>
-                  </pf-v6-toggle-group-item>
-                </pf-v6-toggle-group>
-              </pf-v6-toolbar-item>
-            </pf-v6-toolbar-group>
-          </pf-v6-toolbar>
-        </pf-v6-masthead>
-
-        {{if .NavigationHTML}}
-        <pf-v6-page-sidebar slot="sidebar">
-          {{renderElementShadowRoot "pf-v6-page-sidebar" dict}}
-          <pf-v6-navigation>
-            {{renderElementShadowRoot "pf-v6-navigation" dict}}
-            {{.NavigationHTML}}
-          </pf-v6-navigation>
-        </pf-v6-page-sidebar>
-        {{end}}
-
-        <pf-v6-page-main slot="main" id="main-content">
-          {{renderElementShadowRoot "pf-v6-page-main" dict}}
-          <slot></slot>
-        </pf-v6-page-main>
-      </pf-v6-page>
-
-      <div class="debug-overlay">
-        <div class="debug-panel">
-          <h2>Debug Information</h2>
-          <dl>
-            <dt>Server Version</dt>
-            <dd id="debug-version">-</dd>
-            <dt>Server OS</dt>
-            <dd id="debug-os">-</dd>
-            <dt>Watch Directory</dt>
-            <dd id="debug-watch-dir">-</dd>
-            <dt>Manifest Size</dt>
-            <dd id="debug-manifest-size">-</dd>
-            <dt>Demos Found</dt>
-            <dd id="debug-demo-count">-</dd>
-            <dt>Tag Name</dt>
-            <dd>{{.TagName}}</dd>
-            <dt>Demo Title</dt>
-            <dd>{{.DemoTitle}}</dd>
-            <dt>Browser</dt>
-            <dd id="debug-browser">-</dd>
-            <dt>User Agent</dt>
-            <dd id="debug-ua">-</dd>
-          </dl>
-          <details id="debug-demos-details">
-            <summary>Show Demo URLs from Manifest</summary>
-            <pre id="debug-demos-list">-</pre>
-          </details>
-          <details id="debug-importmap-details">
-            <summary>Show Import Map</summary>
-            <pre id="debug-importmap">-</pre>
-          </details>
-          <div class="button-container">
-            <pf-v6-button class="debug-copy" variant="primary">
-              {{renderElementShadowRoot "pf-v6-button" dict}}
-              Copy Debug Info
-            </pf-v6-button>
-            <pf-v6-button class="debug-close" variant="secondary">
-              {{renderElementShadowRoot "pf-v6-button" dict}}
-              Close
-            </pf-v6-button>
-          </div>
-        </div>
-      </div>
-
-      <footer>
-        <div class="footer-description{{if not .Description}} empty{{end}}">
-          <slot name="description"></slot>
-        </div>
-        <cem-drawer class="initializing">
-          {{renderElementShadowRoot "cem-drawer" dict}}
-          <pf-v6-tabs>
-            {{renderElementShadowRoot "pf-v6-tabs" dict}}
-            <pf-v6-tab title="Knobs">
-              {{renderElementShadowRoot "pf-v6-tab" dict}}
-              <div id="knobs-container">
-                {{if .KnobsHTML}}
-                {{.KnobsHTML}}
-                {{else}}
-                <p class="knobs-empty">No knobs available for this element.</p>
-                {{end}}
-              </div>
-            </pf-v6-tab>
-            <pf-v6-tab title="Server Logs">
-              {{renderElementShadowRoot "pf-v6-tab" dict}}
-              <div id="log-container"></div>
-            </pf-v6-tab>
-          </pf-v6-tabs>
-        </cem-drawer>
-      </footer>
-    </template>
+    {{renderElementShadowRoot "cem-serve-chrome" .}}
 
     <h1 slot="title">{{if .PackageName}}{{.PackageName}}{{else}}{{.TagName}}{{end}}</h1>
 

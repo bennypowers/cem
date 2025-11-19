@@ -406,6 +406,18 @@
   --pf-t--global--font--weight--body--bold: var(--pf-t--global--font--weight--200);
   --pf-t--global--font--weight--heading--default: var(--pf-t--global--font--weight--300);
   --pf-t--global--font--weight--heading--bold: var(--pf-t--global--font--weight--400);
+  --pf-t--global--font--size--heading--h1: var(--pf-t--global--font--size--2xl);
+  --pf-t--global--font--size--heading--h2: var(--pf-t--global--font--size--xl);
+  --pf-t--global--font--size--heading--h3: var(--pf-t--global--font--size--lg);
+  --pf-t--global--font--size--heading--h4: var(--pf-t--global--font--size--md);
+  --pf-t--global--font--size--heading--h5: var(--pf-t--global--font--size--md);
+  --pf-t--global--font--size--heading--h6: var(--pf-t--global--font--size--md);
+  --pf-t--global--font--size--heading--xs: var(--pf-t--global--font--size--md);
+  --pf-t--global--font--size--heading--sm: var(--pf-t--global--font--size--lg);
+  --pf-t--global--font--size--heading--md: var(--pf-t--global--font--size--xl);
+  --pf-t--global--font--size--heading--lg: var(--pf-t--global--font--size--2xl);
+  --pf-t--global--font--size--heading--xl: var(--pf-t--global--font--size--3xl);
+  --pf-t--global--font--size--heading--2xl: var(--pf-t--global--font--size--4xl);
 
   /* Icon Sizes */
   --pf-t--global--icon--size--100: 0.75rem;

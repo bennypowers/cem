@@ -1,124 +1,69 @@
-// Reconnection dialog content component
+import { CemElement } from '/__cem/cem-element.js';
 
 /**
- * Event dispatched when user clicks reload button
+ * Reconnection dialog content component
+ * Displays retry information and countdown when server connection is lost
+ *
+ * @customElement cem-reconnection-content
  */
-class ReloadEvent extends Event {
-  constructor() {
-    super('reload', { bubbles: true, composed: true });
-  }
-}
+export class CemReconnectionContent extends CemElement {
+  static shadowRootOptions = { mode: 'open' };
+  static is = 'cem-reconnection-content';
 
-/**
- * Event dispatched when user clicks retry button
- */
-class RetryEvent extends Event {
-  constructor() {
-    super('retry', { bubbles: true, composed: true });
-  }
-}
+  #retryInfo;
+  #countdownInterval = null;
+  #remainingMs = 0;
 
-export class CEMReconnectionContent extends HTMLElement {
-  static template;
-
-  static {
-    this.template = document.createElement('template');
-    this.template.innerHTML = `
-      <style>
-        :host {
-          display: block;
-        }
-
-        p {
-          margin: 0 0 16px 0;
-          line-height: 1.6;
-          color: #cbd5e1;
-        }
-
-        #retry-info {
-          background: #0f172a;
-          padding: 12px;
-          border-radius: 4px;
-          margin-bottom: 16px;
-          font-size: 14px;
-          color: #94a3b8;
-        }
-
-        .buttons {
-          display: flex;
-          gap: 12px;
-          justify-content: flex-end;
-        }
-      </style>
-
-      <p>
-        The connection to the development server was lost.
-        Automatically retrying connection...
-      </p>
-
-      <div id="retry-info"></div>
-
-      <div class="buttons">
-        <pf-v6-button id="reload-btn" variant="secondary">Reload Page</pf-v6-button>
-        <pf-v6-button id="retry-btn" variant="primary">Retry Now</pf-v6-button>
-      </div>
-    `;
-
-    customElements.define('cem-reconnection-content', this);
+  async afterTemplateLoaded() {
+    this.#retryInfo = this.shadowRoot.getElementById('retry-info');
   }
 
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-    this.shadowRoot.appendChild(CEMReconnectionContent.template.content.cloneNode(true));
-
-    this.countdownInterval = null;
-    this.remainingMs = 0;
-
-    // Set up event listeners
-    this.shadowRoot.getElementById('reload-btn').addEventListener('click', () => {
-      this.dispatchEvent(new ReloadEvent());
-    });
-
-    this.shadowRoot.getElementById('retry-btn').addEventListener('click', () => {
-      this.clearCountdown();
-      this.dispatchEvent(new RetryEvent());
-    });
-  }
-
+  /**
+   * Clear the countdown interval
+   */
   clearCountdown() {
-    if (this.countdownInterval) {
-      clearInterval(this.countdownInterval);
-      this.countdownInterval = null;
+    if (this.#countdownInterval) {
+      clearInterval(this.#countdownInterval);
+      this.#countdownInterval = null;
     }
   }
 
+  /**
+   * Update the retry information with countdown
+   * @param {number} attempt - Current retry attempt number
+   * @param {number} delay - Delay in milliseconds until next retry
+   */
   updateRetryInfo(attempt, delay) {
     this.clearCountdown();
 
-    const retryInfo = this.shadowRoot.getElementById('retry-info');
-    this.remainingMs = delay;
+    if (!this.#retryInfo) return;
+
+    this.#remainingMs = delay;
 
     // Update immediately
-    const seconds = Math.ceil(this.remainingMs / 1000);
-    retryInfo.textContent = `Attempt #${attempt}. Retrying in ${seconds}s...`;
+    const seconds = Math.ceil(this.#remainingMs / 1000);
+    this.#retryInfo.textContent = `Attempt #${attempt}. Retrying in ${seconds}s...`;
 
     // Update countdown every 100ms for smooth display
-    this.countdownInterval = setInterval(() => {
-      this.remainingMs -= 100;
+    this.#countdownInterval = setInterval(() => {
+      this.#remainingMs -= 100;
 
-      if (this.remainingMs <= 0) {
+      if (this.#remainingMs <= 0) {
         this.clearCountdown();
-        retryInfo.textContent = `Attempt #${attempt}. Connecting...`;
+        this.#retryInfo.textContent = `Attempt #${attempt}. Connecting...`;
         return;
       }
 
-      const seconds = Math.ceil(this.remainingMs / 1000);
-      retryInfo.textContent = `Attempt #${attempt}. Retrying in ${seconds}s...`;
+      const seconds = Math.ceil(this.#remainingMs / 1000);
+      this.#retryInfo.textContent = `Attempt #${attempt}. Retrying in ${seconds}s...`;
     }, 100);
   }
 
   disconnectedCallback() {
     this.clearCountdown();
+  }
+
+  static {
+    customElements.define(this.is, this);
   }
 }

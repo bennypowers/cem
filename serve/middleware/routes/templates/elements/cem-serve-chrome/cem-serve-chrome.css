@@ -11,11 +11,6 @@
   align-items: center;
 }
 
-/* Toolbar group alignment */
-pf-v6-toolbar-group {
-  margin-inline-start: auto;
-}
-
 .masthead-logo ::slotted([slot="title"]) {
   margin: 0;
   font-size: 1.125rem;
@@ -23,7 +18,12 @@ pf-v6-toolbar-group {
   color: var(--pf-t--global--text--color--regular);
 }
 
-/* Masthead toolbar item styles */
+/* Toolbar group alignment */
+pf-v6-toolbar-group[variant="action-group"] {
+  margin-inline-start: auto;
+}
+
+/* Toolbar link button styles */
 .source-link {
   color: var(--pf-t--global--text--color--subtle);
   text-decoration: none;
@@ -36,23 +36,6 @@ pf-v6-toolbar-group {
   &:hover {
     background: var(--pf-t--global--background--color--primary--hover);
     color: var(--pf-t--global--text--color--regular);
-  }
-}
-
-.debug-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-
-  &[open] {
-    display: flex;
   }
 }
 
