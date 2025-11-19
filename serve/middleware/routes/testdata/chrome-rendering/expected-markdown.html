@@ -243,6 +243,11 @@ cem-serve-listing {
   align-items: center;
 }
 
+/* Toolbar group alignment */
+pfv6-toolbar-group {
+  margin-inline-start: auto;
+}
+
 .masthead-logo ::slotted([slot="title"]) {
   margin: 0;
   font-size: 1.125rem;
@@ -256,23 +261,6 @@ cem-serve-listing {
   text-decoration: none;
   padding: 0.5rem;
   border-radius: 6px;
-  display: flex;
-  align-items: center;
-  transition: all 200ms cubic-bezier(0.645, 0.045, 0.355, 1);
-
-  &:hover {
-    background: var(--pf-t--global--background--color--primary--hover);
-    color: var(--pf-t--global--text--color--regular);
-  }
-}
-
-.debug-button {
-  background: transparent;
-  border: none;
-  color: var(--pf-t--global--text--color--subtle);
-  padding: 0.5rem;
-  border-radius: 6px;
-  cursor: pointer;
   display: flex;
   align-items: center;
   transition: all 200ms cubic-bezier(0.645, 0.045, 0.355, 1);
@@ -1264,15 +1252,7 @@ cem-serve-knob-css-property [slot="description"] {
   <style>/* PatternFly v6 Toolbar Styles */
 
 :host {
-  display: block;
-}
-
-.pf-v6-c-toolbar,
-.pf-v6-c-toolbar__content {
   position: relative;
-}
-
-.pf-v6-c-toolbar {
   display: grid;
   row-gap: var(--pf-v6-c-toolbar--RowGap);
   width: var(--pf-v6-c-toolbar--Width, auto);
@@ -1286,7 +1266,7 @@ cem-serve-knob-css-property [slot="description"] {
 }
 
 /* Sticky modifier */
-.pf-v6-c-toolbar.pf-m-sticky {
+:host([sticky]) {
   --pf-v6-c-toolbar--BackgroundColor: var(--pf-v6-c-toolbar--m-sticky--BackgroundColor);
 
   position: sticky;
@@ -1299,31 +1279,31 @@ cem-serve-knob-css-property [slot="description"] {
 }
 
 /* Static modifier */
-.pf-v6-c-toolbar.pf-m-static,
-.pf-v6-c-toolbar.pf-m-static .pf-v6-c-toolbar__content {
+:host([static]),
+:host([static]) .pf-v6-c-toolbar__content {
   position: static;
 }
 
-.pf-v6-c-toolbar.pf-m-static .pf-v6-c-toolbar__expandable-content {
+:host([static]) .pf-v6-c-toolbar__expandable-content {
   position: absolute;
 }
 
 /* Full height modifier */
-.pf-v6-c-toolbar.pf-m-full-height {
+:host([full-height]) {
   --pf-v6-c-toolbar--PaddingBlockStart: 0;
   --pf-v6-c-toolbar--PaddingBlockEnd: 0;
 }
 
-/* Background modifiers */
-.pf-v6-c-toolbar.pf-m-primary {
+/* Color variant modifiers */
+:host([color-variant="primary"]) {
   --pf-v6-c-toolbar--BackgroundColor: var(--pf-v6-c-toolbar--m-primary--BackgroundColor);
 }
 
-.pf-v6-c-toolbar.pf-m-secondary {
+:host([color-variant="secondary"]) {
   --pf-v6-c-toolbar--BackgroundColor: var(--pf-v6-c-toolbar--m-secondary--BackgroundColor);
 }
 
-.pf-v6-c-toolbar.pf-m-no-background {
+:host([color-variant="no-background"]) {
   --pf-v6-c-toolbar--BackgroundColor: var(--pf-v6-c-toolbar--m-no-background--BackgroundColor);
 }
 
@@ -1333,6 +1313,7 @@ cem-serve-knob-css-property [slot="description"] {
   --pf-v6-hidden-visible--hidden--Display: none;
   --pf-v6-hidden-visible--Display: var(--pf-v6-hidden-visible--visible--Display);
 
+  position: relative;
   display: var(--pf-v6-hidden-visible--Display);
   row-gap: var(--pf-v6-c-toolbar__content--RowGap);
   min-width: var(--pf-v6-c-toolbar__content--MinWidth, auto);
@@ -1384,14 +1365,12 @@ cem-serve-knob-css-property [slot="description"] {
   display: grid;
 }
 </style>
-<div class="pf-v6-c-toolbar" part="toolbar">
-  <div class="pf-v6-c-toolbar__content" part="content">
-    <div class="pf-v6-c-toolbar__content-section" part="content-section">
-      <slot></slot>
-    </div>
-    <div class="pf-v6-c-toolbar__expandable-content" part="expandable-content" hidden>
-      <slot name="expandable"></slot>
-    </div>
+<div class="pf-v6-c-toolbar__content" part="content">
+  <div class="pf-v6-c-toolbar__content-section" part="content-section">
+    <slot></slot>
+  </div>
+  <div class="pf-v6-c-toolbar__expandable-content" part="expandable-content" hidden>
+    <slot name="expandable"></slot>
   </div>
 </div>
 </template>
@@ -1401,10 +1380,6 @@ cem-serve-knob-css-property [slot="description"] {
   <style>/* PatternFly v6 Toolbar Group Styles */
 
 :host {
-  display: contents;
-}
-
-.pf-v6-c-toolbar__group {
   --pf-v6-hidden-visible--visible--Display: flex;
   --pf-v6-hidden-visible--hidden--Display: none;
   --pf-v6-hidden-visible--Display: var(--pf-v6-hidden-visible--visible--Display);
@@ -1416,43 +1391,41 @@ cem-serve-knob-css-property [slot="description"] {
 }
 
 /* Filter group variant */
-.pf-v6-c-toolbar__group.pf-m-filter-group {
+:host([variant="filter-group"]) {
   column-gap: var(--pf-v6-c-toolbar__group--m-filter-group--ColumnGap);
 }
 
 /* Label group variant */
-.pf-v6-c-toolbar__group.pf-m-label-group {
+:host([variant="label-group"]) {
   flex: 1;
   flex-wrap: wrap;
   column-gap: var(--pf-v6-c-toolbar__group--m-label-group--ColumnGap);
 }
 
 /* Action group variant */
-.pf-v6-c-toolbar__group.pf-m-action-group {
+:host([variant="action-group"]) {
   column-gap: var(--pf-v6-c-toolbar__group--m-action-group--ColumnGap);
 }
 
 /* Action group plain variant */
-.pf-v6-c-toolbar__group.pf-m-action-group-plain {
+:host([variant="action-group-plain"]) {
   column-gap: var(--pf-v6-c-toolbar__group--m-action-group-plain--ColumnGap);
 }
 
 /* Action group inline variant */
-.pf-v6-c-toolbar__group.pf-m-action-group-inline {
+:host([variant="action-group-inline"]) {
   flex-wrap: wrap;
   column-gap: var(--pf-v6-c-toolbar__group--m-action-group-inline--ColumnGap);
 }
 
 /* Overflow container variant */
-.pf-v6-c-toolbar__group.pf-m-overflow-container {
+:host([variant="overflow-container"]) {
   flex: 1;
   min-width: var(--pf-v6-c-toolbar__group--m-overflow-container--MinWidth);
   overflow: auto;
 }
 </style>
-<div class="pf-v6-c-toolbar__group" part="group">
-  <slot></slot>
-</div>
+<slot></slot>
 </template>
 
               
@@ -1462,10 +1435,6 @@ cem-serve-knob-css-property [slot="description"] {
   <style>/* PatternFly v6 Toolbar Item Styles */
 
 :host {
-  display: contents;
-}
-
-.pf-v6-c-toolbar__item {
   --pf-v6-hidden-visible--visible--Display: flex;
   --pf-v6-hidden-visible--hidden--Display: none;
   --pf-v6-hidden-visible--Display: var(--pf-v6-hidden-visible--visible--Display);
@@ -1479,33 +1448,31 @@ cem-serve-knob-css-property [slot="description"] {
 }
 
 /* Label variant */
-.pf-v6-c-toolbar__item.pf-m-label {
+:host([variant="label"]) {
   font-weight: var(--pf-v6-c-toolbar__item--m-label--FontWeight);
 }
 
 /* Pagination variant */
-.pf-v6-c-toolbar__item.pf-m-pagination {
+:host([variant="pagination"]) {
   margin-inline-start: auto;
 }
 
 /* Overflow container variant */
-.pf-v6-c-toolbar__item.pf-m-overflow-container {
+:host([variant="overflow-container"]) {
   flex: 1;
   min-width: var(--pf-v6-c-toolbar__item--m-overflow-container--MinWidth);
   overflow: auto;
 }
 
 /* Expand all variant (for expand icons) */
-.pf-v6-c-toolbar__item.pf-m-expand-all.pf-m-expanded ::slotted(.pf-v6-c-toolbar__expand-all-icon) {
+:host([variant="expand-all"][expanded]) ::slotted(.pf-v6-c-toolbar__expand-all-icon) {
   transform: rotate(var(--pf-v6-c-toolbar__item--m-expand-all--m-expanded__expand-all-icon--Rotate));
 }
 </style>
-<div class="pf-v6-c-toolbar__item" part="item">
-  <slot></slot>
-</div>
+<slot></slot>
 </template>
 
-                <pfv6-button class="debug-button"
+                <pfv6-button id="debug-info"
                              variant="plain"
                              aria-label="Debug info">
                   <template shadowrootmode="open">
@@ -1931,10 +1898,6 @@ slot#content {
   <style>/* PatternFly v6 Toolbar Item Styles */
 
 :host {
-  display: contents;
-}
-
-.pf-v6-c-toolbar__item {
   --pf-v6-hidden-visible--visible--Display: flex;
   --pf-v6-hidden-visible--hidden--Display: none;
   --pf-v6-hidden-visible--Display: var(--pf-v6-hidden-visible--visible--Display);
@@ -1948,30 +1911,28 @@ slot#content {
 }
 
 /* Label variant */
-.pf-v6-c-toolbar__item.pf-m-label {
+:host([variant="label"]) {
   font-weight: var(--pf-v6-c-toolbar__item--m-label--FontWeight);
 }
 
 /* Pagination variant */
-.pf-v6-c-toolbar__item.pf-m-pagination {
+:host([variant="pagination"]) {
   margin-inline-start: auto;
 }
 
 /* Overflow container variant */
-.pf-v6-c-toolbar__item.pf-m-overflow-container {
+:host([variant="overflow-container"]) {
   flex: 1;
   min-width: var(--pf-v6-c-toolbar__item--m-overflow-container--MinWidth);
   overflow: auto;
 }
 
 /* Expand all variant (for expand icons) */
-.pf-v6-c-toolbar__item.pf-m-expand-all.pf-m-expanded ::slotted(.pf-v6-c-toolbar__expand-all-icon) {
+:host([variant="expand-all"][expanded]) ::slotted(.pf-v6-c-toolbar__expand-all-icon) {
   transform: rotate(var(--pf-v6-c-toolbar__item--m-expand-all--m-expanded__expand-all-icon--Rotate));
 }
 </style>
-<div class="pf-v6-c-toolbar__item" part="item">
-  <slot></slot>
-</div>
+<slot></slot>
 </template>
 
                 <pfv6-toggle-group class="color-scheme-toggle" aria-label="Color scheme">

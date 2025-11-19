@@ -117,7 +117,7 @@ class CemServeChrome extends HTMLElement {
 
   #setupDebugOverlay() {
     // Set up debug overlay
-    const debugButton = this.#$('.debug-button');
+    const debugButton = this.#$('#debug-button');
     const debugOverlay = this.#$('.debug-overlay');
     const debugClose = this.#$('.debug-close');
     const debugCopy = this.#$('.debug-copy');

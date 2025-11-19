@@ -1,10 +1,6 @@
 /* PatternFly v6 Toolbar Group Styles */
 
 :host {
-  display: contents;
-}
-
-.pf-v6-c-toolbar__group {
   --pf-v6-hidden-visible--visible--Display: flex;
   --pf-v6-hidden-visible--hidden--Display: none;
   --pf-v6-hidden-visible--Display: var(--pf-v6-hidden-visible--visible--Display);
@@ -16,35 +12,35 @@
 }
 
 /* Filter group variant */
-.pf-v6-c-toolbar__group.pf-m-filter-group {
+:host([variant="filter-group"]) {
   column-gap: var(--pf-v6-c-toolbar__group--m-filter-group--ColumnGap);
 }
 
 /* Label group variant */
-.pf-v6-c-toolbar__group.pf-m-label-group {
+:host([variant="label-group"]) {
   flex: 1;
   flex-wrap: wrap;
   column-gap: var(--pf-v6-c-toolbar__group--m-label-group--ColumnGap);
 }
 
 /* Action group variant */
-.pf-v6-c-toolbar__group.pf-m-action-group {
+:host([variant="action-group"]) {
   column-gap: var(--pf-v6-c-toolbar__group--m-action-group--ColumnGap);
 }
 
 /* Action group plain variant */
-.pf-v6-c-toolbar__group.pf-m-action-group-plain {
+:host([variant="action-group-plain"]) {
   column-gap: var(--pf-v6-c-toolbar__group--m-action-group-plain--ColumnGap);
 }
 
 /* Action group inline variant */
-.pf-v6-c-toolbar__group.pf-m-action-group-inline {
+:host([variant="action-group-inline"]) {
   flex-wrap: wrap;
   column-gap: var(--pf-v6-c-toolbar__group--m-action-group-inline--ColumnGap);
 }
 
 /* Overflow container variant */
-.pf-v6-c-toolbar__group.pf-m-overflow-container {
+:host([variant="overflow-container"]) {
   flex: 1;
   min-width: var(--pf-v6-c-toolbar__group--m-overflow-container--MinWidth);
   overflow: auto;

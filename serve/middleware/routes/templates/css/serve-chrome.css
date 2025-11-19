@@ -11,6 +11,11 @@
   align-items: center;
 }
 
+/* Toolbar group alignment */
+pfv6-toolbar-group {
+  margin-inline-start: auto;
+}
+
 .masthead-logo ::slotted([slot="title"]) {
   margin: 0;
   font-size: 1.125rem;
@@ -24,23 +29,6 @@
   text-decoration: none;
   padding: 0.5rem;
   border-radius: 6px;
-  display: flex;
-  align-items: center;
-  transition: all 200ms cubic-bezier(0.645, 0.045, 0.355, 1);
-
-  &:hover {
-    background: var(--pf-t--global--background--color--primary--hover);
-    color: var(--pf-t--global--text--color--regular);
-  }
-}
-
-.debug-button {
-  background: transparent;
-  border: none;
-  color: var(--pf-t--global--text--color--subtle);
-  padding: 0.5rem;
-  border-radius: 6px;
-  cursor: pointer;
   display: flex;
   align-items: center;
   transition: all 200ms cubic-bezier(0.645, 0.045, 0.355, 1);

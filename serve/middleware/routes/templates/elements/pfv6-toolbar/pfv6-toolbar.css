@@ -1,15 +1,7 @@
 /* PatternFly v6 Toolbar Styles */
 
 :host {
-  display: block;
-}
-
-.pf-v6-c-toolbar,
-.pf-v6-c-toolbar__content {
   position: relative;
-}
-
-.pf-v6-c-toolbar {
   display: grid;
   row-gap: var(--pf-v6-c-toolbar--RowGap);
   width: var(--pf-v6-c-toolbar--Width, auto);
@@ -23,7 +15,7 @@
 }
 
 /* Sticky modifier */
-.pf-v6-c-toolbar.pf-m-sticky {
+:host([sticky]) {
   --pf-v6-c-toolbar--BackgroundColor: var(--pf-v6-c-toolbar--m-sticky--BackgroundColor);
 
   position: sticky;
@@ -36,31 +28,31 @@
 }
 
 /* Static modifier */
-.pf-v6-c-toolbar.pf-m-static,
-.pf-v6-c-toolbar.pf-m-static .pf-v6-c-toolbar__content {
+:host([static]),
+:host([static]) .pf-v6-c-toolbar__content {
   position: static;
 }
 
-.pf-v6-c-toolbar.pf-m-static .pf-v6-c-toolbar__expandable-content {
+:host([static]) .pf-v6-c-toolbar__expandable-content {
   position: absolute;
 }
 
 /* Full height modifier */
-.pf-v6-c-toolbar.pf-m-full-height {
+:host([full-height]) {
   --pf-v6-c-toolbar--PaddingBlockStart: 0;
   --pf-v6-c-toolbar--PaddingBlockEnd: 0;
 }
 
-/* Background modifiers */
-.pf-v6-c-toolbar.pf-m-primary {
+/* Color variant modifiers */
+:host([color-variant="primary"]) {
   --pf-v6-c-toolbar--BackgroundColor: var(--pf-v6-c-toolbar--m-primary--BackgroundColor);
 }
 
-.pf-v6-c-toolbar.pf-m-secondary {
+:host([color-variant="secondary"]) {
   --pf-v6-c-toolbar--BackgroundColor: var(--pf-v6-c-toolbar--m-secondary--BackgroundColor);
 }
 
-.pf-v6-c-toolbar.pf-m-no-background {
+:host([color-variant="no-background"]) {
   --pf-v6-c-toolbar--BackgroundColor: var(--pf-v6-c-toolbar--m-no-background--BackgroundColor);
 }
 
@@ -70,6 +62,7 @@
   --pf-v6-hidden-visible--hidden--Display: none;
   --pf-v6-hidden-visible--Display: var(--pf-v6-hidden-visible--visible--Display);
 
+  position: relative;
   display: var(--pf-v6-hidden-visible--Display);
   row-gap: var(--pf-v6-c-toolbar__content--RowGap);
   min-width: var(--pf-v6-c-toolbar__content--MinWidth, auto);

@@ -3,7 +3,7 @@
 import { loadComponentTemplate } from '/__cem/stylesheet-cache.js';
 
 export class Pfv6Toolbar extends HTMLElement {
-  static observedAttributes = ['sticky', 'full-height', 'background', 'expandable', 'expanded'];
+  static observedAttributes = ['sticky', 'full-height', 'color-variant', 'expandable', 'expanded'];
 
   constructor() {
     super();
@@ -13,12 +13,11 @@ export class Pfv6Toolbar extends HTMLElement {
   }
 
   async connectedCallback() {
-    if (!this.shadowRoot.querySelector('.pf-v6-c-toolbar')) {
+    if (!this.shadowRoot.firstChild) {
       await this.#populateShadowRoot();
     }
-    this._toolbar = this.shadowRoot.querySelector('.pf-v6-c-toolbar');
     this._expandableContent = this.shadowRoot.querySelector('.pf-v6-c-toolbar__expandable-content');
-    this._updateClasses();
+    this._updateExpandableContent();
   }
 
   async #populateShadowRoot() {
@@ -32,8 +31,8 @@ export class Pfv6Toolbar extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    if (oldValue !== newValue) {
-      this._updateClasses();
+    if (oldValue !== newValue && (name === 'expandable' || name === 'expanded')) {
+      this._updateExpandableContent();
     }
   }
 
@@ -61,75 +60,29 @@ export class Pfv6Toolbar extends HTMLElement {
     }
   }
 
-  get background() {
-    return this.getAttribute('background') || '';
+  get colorVariant() {
+    return this.getAttribute('color-variant') || '';
   }
 
-  set background(value) {
+  set colorVariant(value) {
     if (value) {
-      this.setAttribute('background', value);
+      this.setAttribute('color-variant', value);
     } else {
-      this.removeAttribute('background');
+      this.removeAttribute('color-variant');
     }
   }
 
-  get expandable() {
-    return this.hasAttribute('expandable');
-  }
+  _updateExpandableContent() {
+    if (!this._expandableContent) return;
 
-  set expandable(value) {
-    if (value) {
-      this.setAttribute('expandable', '');
+    const expandable = this.hasAttribute('expandable');
+    const expanded = this.hasAttribute('expanded');
+
+    if (expandable) {
+      this._expandableContent.hidden = false;
+      this._expandableContent.classList.toggle('pf-m-expanded', expanded);
     } else {
-      this.removeAttribute('expandable');
-    }
-  }
-
-  get expanded() {
-    return this.hasAttribute('expanded');
-  }
-
-  set expanded(value) {
-    if (value) {
-      this.setAttribute('expanded', '');
-    } else {
-      this.removeAttribute('expanded');
-    }
-  }
-
-  _updateClasses() {
-    if (!this._toolbar) return;
-
-    // Remove old modifier classes
-    this._toolbar.classList.remove('pf-m-sticky', 'pf-m-full-height', 'pf-m-primary', 'pf-m-secondary', 'pf-m-no-background', 'pf-m-static');
-
-    // Add sticky modifier
-    if (this.sticky) {
-      this._toolbar.classList.add('pf-m-sticky');
-    }
-
-    // Add full-height modifier
-    if (this.fullHeight) {
-      this._toolbar.classList.add('pf-m-full-height');
-    }
-
-    // Add background modifier
-    if (this.background === 'primary') {
-      this._toolbar.classList.add('pf-m-primary');
-    } else if (this.background === 'secondary') {
-      this._toolbar.classList.add('pf-m-secondary');
-    } else if (this.background === 'no-background') {
-      this._toolbar.classList.add('pf-m-no-background');
-    }
-
-    // Handle expandable content
-    if (this._expandableContent) {
-      if (this.expandable) {
-        this._expandableContent.hidden = false;
-        this._expandableContent.classList.toggle('pf-m-expanded', this.expanded);
-      } else {
-        this._expandableContent.hidden = true;
-      }
+      this._expandableContent.hidden = true;
     }
   }
 }
