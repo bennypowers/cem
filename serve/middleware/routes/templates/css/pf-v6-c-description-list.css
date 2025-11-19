@@ -1,0 +1,83 @@
+/* START: Description List Component (PatternFly v6) */
+/* Shared stylesheet for PatternFly v6 description list component */
+
+.pf-v6-c-description-list {
+  --pf-v6-c-description-list--RowGap: var(--pf-t--global--spacer--gap--group-to-group--vertical--default);
+  --pf-v6-c-description-list--ColumnGap: var(--pf-t--global--spacer--gap--group-to-group--horizontal--default);
+  --pf-v6-c-description-list--GridTemplateColumns--count: 1;
+  --pf-v6-c-description-list--GridTemplateColumns--width: 1fr;
+  --pf-v6-c-description-list--GridTemplateColumns--min: 0;
+  --pf-v6-c-description-list__group--RowGap: var(--pf-t--global--spacer--gap--group--vertical);
+  --pf-v6-c-description-list__group--ColumnGap: var(--pf-t--global--spacer--gap--group--horizontal);
+  --pf-v6-c-description-list__group--GridTemplateColumns: auto;
+  --pf-v6-c-description-list__group--GridTemplateRows: auto 1fr;
+  --pf-v6-c-description-list__group--GridColumn: auto;
+  --pf-v6-c-description-list--m-compact--RowGap: var(--pf-t--global--spacer--gap--group-to-group--vertical--compact);
+  --pf-v6-c-description-list--m-compact--ColumnGap: var(--pf-t--global--spacer--gap--group-to-group--horizontal--compact);
+  --pf-v6-c-description-list__term--Display: inline;
+  --pf-v6-c-description-list__term--sm--Display: flex;
+  --pf-v6-c-description-list__term--FontWeight: var(--pf-t--global--font--weight--body--bold);
+  --pf-v6-c-description-list__term--FontSize: var(--pf-t--global--font--size--body--default);
+  --pf-v6-c-description-list__term--LineHeight: var(--pf-t--global--font--line-height--body);
+  --pf-v6-c-description-list--m-horizontal__term--width: 12ch;
+  --pf-v6-c-description-list--m-horizontal__description--width: minmax(10ch, auto);
+  --pf-v6-c-description-list--m-horizontal__group--GridTemplateColumns: var(--pf-v6-c-description-list__term--width) var(--pf-v6-c-description-list--m-horizontal__description--width);
+  --pf-v6-c-description-list--m-horizontal__group--GridTemplateRows: auto;
+  --pf-v6-c-description-list__term--width: var(--pf-v6-c-description-list--m-horizontal__term--width);
+
+  display: grid;
+  grid-template-columns: repeat(var(--pf-v6-c-description-list--GridTemplateColumns--count), var(--pf-v6-c-description-list--GridTemplateColumns--width));
+  row-gap: var(--pf-v6-c-description-list--RowGap);
+  column-gap: var(--pf-v6-c-description-list--ColumnGap);
+  align-items: baseline;
+}
+
+.pf-v6-c-description-list.pf-m-horizontal {
+  --pf-v6-c-description-list__group--GridTemplateColumns: var(--pf-v6-c-description-list--m-horizontal__group--GridTemplateColumns);
+  --pf-v6-c-description-list__group--GridTemplateRows: var(--pf-v6-c-description-list--m-horizontal__group--GridTemplateRows);
+}
+
+.pf-v6-c-description-list.pf-m-compact {
+  --pf-v6-c-description-list--RowGap: var(--pf-v6-c-description-list--m-compact--RowGap);
+  --pf-v6-c-description-list--ColumnGap: var(--pf-v6-c-description-list--m-compact--ColumnGap);
+}
+
+.pf-v6-c-description-list__group {
+  display: grid;
+  grid-template-columns: var(--pf-v6-c-description-list__group--GridTemplateColumns);
+  grid-template-rows: var(--pf-v6-c-description-list__group--GridTemplateRows);
+  row-gap: var(--pf-v6-c-description-list__group--RowGap);
+  column-gap: var(--pf-v6-c-description-list__group--ColumnGap);
+  grid-column: var(--pf-v6-c-description-list__group--GridColumn);
+}
+
+.pf-v6-c-description-list__term {
+  display: var(--pf-v6-c-description-list__term--Display);
+  font-weight: var(--pf-v6-c-description-list__term--FontWeight);
+  font-size: var(--pf-v6-c-description-list__term--FontSize);
+  line-height: var(--pf-v6-c-description-list__term--LineHeight);
+}
+
+.pf-v6-c-description-list__description {
+  font-size: var(--pf-v6-c-description-list__description--FontSize, inherit);
+}
+
+.pf-v6-c-description-list__term,
+.pf-v6-c-description-list__description {
+  min-width: 0;
+  text-align: start;
+  overflow-wrap: break-word;
+}
+
+.pf-v6-c-description-list__text {
+  min-width: 0;
+}
+
+/* Container query breakpoints (using container queries instead of media queries) */
+@container (min-width: 36rem) {
+  .pf-v6-c-description-list {
+    --pf-v6-c-description-list__term--Display: var(--pf-v6-c-description-list__term--sm--Display);
+  }
+}
+
+/* END: Description List Component */
