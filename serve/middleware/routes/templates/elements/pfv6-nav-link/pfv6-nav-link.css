@@ -1,6 +1,8 @@
 /* PatternFly v6 Nav Link Styles */
 
 :host {
+  --pf-v6-c-nav__toggle--TranslateY: 0;
+
   position: relative;
   display: flex;
   column-gap: var(--pf-v6-c-nav__link--ColumnGap, var(--pf-t--global--spacer--sm));
@@ -57,12 +59,31 @@
   color: var(--pf-v6-c-nav__link-icon--Color, var(--pf-t--global--icon--color--subtle));
 }
 
-::slotted([slot="toggle"]) {
-  display: inline-block;
-  transition: transform var(--pf-t--global--motion--duration--icon--default, 0.2s) var(--pf-t--global--motion--timing-function--default, ease);
-  transform: rotate(0deg);
+/* Toggle wrapper for expandable items */
+#toggle {
+  flex: none;
+  align-self: start;
+  margin-inline-start: auto;
+  transform: translateY(var(--pf-v6-c-nav__toggle--TranslateY));
 }
 
-#link[aria-expanded="true"] ::slotted([slot="toggle"]) {
-  transform: rotate(90deg);
+/* Hide toggle wrapper when not expandable */
+:host(:not([expandable])) #toggle {
+  display: none;
+}
+
+#toggle-icon {
+  display: inline-flex;
+  transition: transform var(--pf-t--global--motion--duration--icon--default, 0.2s) var(--pf-t--global--motion--timing-function--default, ease);
+  transform: rotate(var(--pf-v6-c-nav__toggle-icon--Rotate, 0));
+}
+
+#link:where([aria-expanded="true"]) #toggle-icon {
+  transform: rotate(var(--pf-v6-c-nav__item--m-expanded__toggle-icon--Rotate, 90deg));
+}
+
+.pf-v6-svg {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
 }
