@@ -29,6 +29,9 @@
   <script type="module" src="/__cem/elements/pfv6-page-sidebar/pfv6-page-sidebar.js"></script>
   <script type="module" src="/__cem/elements/pfv6-masthead/pfv6-masthead.js"></script>
   <script type="module" src="/__cem/elements/pfv6-skip-to-content/pfv6-skip-to-content.js"></script>
+  <script type="module" src="/__cem/elements/pfv6-toolbar/pfv6-toolbar.js"></script>
+  <script type="module" src="/__cem/elements/pfv6-toolbar-group/pfv6-toolbar-group.js"></script>
+  <script type="module" src="/__cem/elements/pfv6-toolbar-item/pfv6-toolbar-item.js"></script>
   <script type="module" src="/__cem/elements/cem-drawer/cem-drawer.js"></script>
   <script type="module" src="/__cem/elements/cem-serve-demo/cem-serve-demo.js"></script>
   <script type="module" src="/__cem/elements/cem-serve-knob-attribute/cem-serve-knob-attribute.js"></script>
@@ -232,7 +235,7 @@ cem-serve-listing {
   --pf-v6-c-masthead__logo--Width: auto;
 }
 
-/* Masthead toolbar and logo styles */
+/* Masthead logo styles */
 .masthead-logo {
   display: flex;
   align-items: center;
@@ -245,13 +248,7 @@ cem-serve-listing {
   color: var(--pf-t--global--text--color--regular);
 }
 
-.masthead-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  justify-content: end;
-}
-
+/* Masthead toolbar item styles */
 .source-link {
   color: var(--pf-t--global--text--color--subtle);
   text-decoration: none;
@@ -1132,6 +1129,7 @@ cem-serve-knob-css-property [slot="description"] {
 .pf-v6-c-masthead {
   --pf-v6-c-masthead--ColumnGap: var(--pf-v6-c-masthead--m-display-stack--ColumnGap);
   --pf-v6-c-masthead--GridTemplateColumns: var(--pf-v6-c-masthead--m-display-stack--GridTemplateColumns);
+  --pf-v6-c-masthead__toggle--GridColumn: var(--pf-v6-c-masthead--m-display-stack__toggle--GridColumn);
   --pf-v6-c-masthead__brand--GridColumn: var(--pf-v6-c-masthead--m-display-stack__brand--GridColumn);
   --pf-v6-c-masthead__brand--Order: var(--pf-v6-c-masthead--m-display-stack__brand--Order);
   --pf-v6-c-masthead__brand--PaddingBlockEnd: var(--pf-v6-c-masthead--m-display-stack__brand--PaddingBlockEnd);
@@ -1139,7 +1137,6 @@ cem-serve-knob-css-property [slot="description"] {
   --pf-v6-c-masthead__main--GridColumn: unset;
   --pf-v6-c-masthead__content--GridColumn: var(--pf-v6-c-masthead--m-display-stack__content--GridColumn);
   --pf-v6-c-masthead__content--Order: var(--pf-v6-c-masthead--m-display-stack__content--Order);
-  --pf-v6-c-masthead__main--toggle--content--GridColumn: var(--pf-v6-c-masthead--m-display-stack__main--toggle--content--GridColumn);
   --pf-v6-c-masthead__main--Display: var(--pf-v6-c-masthead--m-display-stack__main--Display);
   --pf-v6-c-masthead__main--ColumnGap: var(--pf-v6-c-masthead--m-display-stack__main--ColumnGap);
 
@@ -1166,6 +1163,7 @@ cem-serve-knob-css-property [slot="description"] {
 }
 
 .pf-v6-c-masthead__toggle {
+  grid-column: var(--pf-v6-c-masthead__toggle--GridColumn);
   display: flex;
   align-items: center;
 }
@@ -1192,32 +1190,19 @@ cem-serve-knob-css-property [slot="description"] {
   max-height: var(--pf-v6-c-masthead__logo--MaxHeight);
 }
 
-/* Hamburger button styles */
-.pf-v6-c-button.pf-m-hamburger {
-  --pf-v6-c-button--FontSize: var(--pf-v6-c-masthead__toggle--Size);
-
-  padding: var(--pf-t--global--spacer--xs);
-  color: var(--pf-t--global--icon--color--regular);
-  background-color: transparent;
-  border: 0;
-  cursor: pointer;
+/* Toggle button sizing */
+.pf-v6-c-masthead__toggle pfv6-button {
+  font-size: var(--pf-v6-c-masthead__toggle--Size);
 }
 
-.pf-v6-c-button.pf-m-hamburger:hover {
-  color: var(--pf-t--global--icon--color--subtle);
-}
-
-.pf-v6-c-button__icon {
-  display: inline-flex;
-  align-items: center;
-}
-
-.pf-v6-c-button--hamburger-icon {
-  display: inline-block;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.5;
-  stroke-linecap: round;
+/* Toolbar integration - styles for slotted pfv6-toolbar */
+::slotted(pfv6-toolbar) {
+  --pf-v6-c-toolbar--Width: var(--pf-v6-c-masthead--c-toolbar--Width);
+  --pf-v6-c-toolbar--PaddingBlockEnd: var(--pf-v6-c-masthead--c-toolbar--PaddingBlockEnd);
+  --pf-v6-c-toolbar__content--MinWidth: var(--pf-v6-c-masthead--c-toolbar__content--MinWidth);
+  --pf-v6-c-toolbar__content--PaddingInlineStart: var(--pf-v6-c-masthead--c-toolbar__content--PaddingInlineStart);
+  --pf-v6-c-toolbar__content--PaddingInlineEnd: var(--pf-v6-c-masthead--c-toolbar__content--PaddingInlineEnd);
+  --pf-v6-c-toolbar__content-section--FlexWrap: var(--pf-v6-c-masthead--c-toolbar__content-section--FlexWrap);
 }
 
 /* Responsive layout - inline at larger breakpoints */
@@ -1225,6 +1210,7 @@ cem-serve-knob-css-property [slot="description"] {
   :host(:not(.pf-m-resize-observer)) .pf-v6-c-masthead {
     --pf-v6-c-masthead--ColumnGap: var(--pf-v6-c-masthead--m-display-inline--ColumnGap);
     --pf-v6-c-masthead--GridTemplateColumns: var(--pf-v6-c-masthead--m-display-inline--GridTemplateColumns);
+    --pf-v6-c-masthead__toggle--GridColumn: var(--pf-v6-c-masthead--m-display-inline__toggle--GridColumn);
     --pf-v6-c-masthead__brand--GridColumn: var(--pf-v6-c-masthead--m-display-inline__brand--GridColumn);
     --pf-v6-c-masthead__brand--Order: var(--pf-v6-c-masthead--m-display-inline__brand--Order);
     --pf-v6-c-masthead__brand--PaddingBlockEnd: var(--pf-v6-c-masthead--m-display-inline__brand--PaddingBlockEnd);
@@ -1239,29 +1225,30 @@ cem-serve-knob-css-property [slot="description"] {
 </style>
 <header class="pf-v6-c-masthead">
   <div class="pf-v6-c-masthead__main">
-    <span id="toggle" class="pf-v6-c-masthead__toggle">
-      <button
+    <div class="pf-v6-c-masthead__toggle">
+      <pfv6-button
         id="toggle-button"
-        class="pf-v6-c-button pf-m-hamburger pf-m-plain"
+        variant="plain"
         type="button"
         aria-label="Global navigation"
         aria-expanded="false"
       >
-        <span class="pf-v6-c-button__icon">
-          <svg
-            viewBox="0 0 10 10"
-            class="pf-v6-c-button--hamburger-icon pf-v6-svg"
-            width="1em"
-            height="1em"
-          >
-            <path class="pf-v6-c-button--hamburger-icon--top" d="M1,1 L9,1" />
-            <path class="pf-v6-c-button--hamburger-icon--middle" d="M1,5 L9,5" />
-            <path class="pf-v6-c-button--hamburger-icon--arrow" d="M1,5 L1,5 L1,5" />
-            <path class="pf-v6-c-button--hamburger-icon--bottom" d="M9,9 L1,9" />
-          </svg>
-        </span>
-      </button>
-    </span>
+        <svg
+          slot="icon-start"
+          viewBox="0 0 10 10"
+          width="1em"
+          height="1em"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        >
+          <path d="M1,1 L9,1" />
+          <path d="M1,5 L9,5" />
+          <path d="M9,9 L1,9" />
+        </svg>
+      </pfv6-button>
+    </div>
     <div class="pf-v6-c-masthead__brand">
       <slot name="logo"></slot>
     </div>
@@ -1273,13 +1260,256 @@ cem-serve-knob-css-property [slot="description"] {
 </template>
 
           <img slot="logo" alt="CEM Dev Server" src="/__cem/logo.svg">
-          <div slot="toolbar" class="masthead-toolbar">
-            
-            
-            <pfv6-button class="debug-button"
-                         variant="plain"
-                         aria-label="Debug info">
+          <pfv6-toolbar slot="toolbar">
+            <template shadowrootmode="open">
+  <style>/* PatternFly v6 Toolbar Styles */
+
+:host {
+  display: block;
+}
+
+.pf-v6-c-toolbar,
+.pf-v6-c-toolbar__content {
+  position: relative;
+}
+
+.pf-v6-c-toolbar {
+  display: grid;
+  row-gap: var(--pf-v6-c-toolbar--RowGap);
+  width: var(--pf-v6-c-toolbar--Width, auto);
+  padding-block-start: var(--pf-v6-c-toolbar--PaddingBlockStart);
+  padding-block-end: var(--pf-v6-c-toolbar--PaddingBlockEnd);
+  padding-inline-start: var(--pf-v6-c-toolbar--PaddingInlineStart);
+  padding-inline-end: var(--pf-v6-c-toolbar--PaddingInlineEnd);
+  font-size: var(--pf-v6-c-toolbar--FontSize);
+  line-height: var(--pf-v6-c-toolbar--LineHeight);
+  background-color: var(--pf-v6-c-toolbar--BackgroundColor);
+}
+
+/* Sticky modifier */
+.pf-v6-c-toolbar.pf-m-sticky {
+  --pf-v6-c-toolbar--BackgroundColor: var(--pf-v6-c-toolbar--m-sticky--BackgroundColor);
+
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--pf-v6-c-toolbar--m-sticky--ZIndex);
+  padding-block-start: var(--pf-v6-c-toolbar--m-sticky--PaddingBlockStart);
+  padding-block-end: var(--pf-v6-c-toolbar--m-sticky--PaddingBlockEnd);
+  border-block-end: var(--pf-v6-c-toolbar--m-sticky--BorderBlockEndWidth) solid var(--pf-v6-c-toolbar--m-sticky--BorderBlockEndColor);
+  box-shadow: var(--pf-v6-c-toolbar--m-sticky--BoxShadow);
+}
+
+/* Static modifier */
+.pf-v6-c-toolbar.pf-m-static,
+.pf-v6-c-toolbar.pf-m-static .pf-v6-c-toolbar__content {
+  position: static;
+}
+
+.pf-v6-c-toolbar.pf-m-static .pf-v6-c-toolbar__expandable-content {
+  position: absolute;
+}
+
+/* Full height modifier */
+.pf-v6-c-toolbar.pf-m-full-height {
+  --pf-v6-c-toolbar--PaddingBlockStart: 0;
+  --pf-v6-c-toolbar--PaddingBlockEnd: 0;
+}
+
+/* Background modifiers */
+.pf-v6-c-toolbar.pf-m-primary {
+  --pf-v6-c-toolbar--BackgroundColor: var(--pf-v6-c-toolbar--m-primary--BackgroundColor);
+}
+
+.pf-v6-c-toolbar.pf-m-secondary {
+  --pf-v6-c-toolbar--BackgroundColor: var(--pf-v6-c-toolbar--m-secondary--BackgroundColor);
+}
+
+.pf-v6-c-toolbar.pf-m-no-background {
+  --pf-v6-c-toolbar--BackgroundColor: var(--pf-v6-c-toolbar--m-no-background--BackgroundColor);
+}
+
+/* Toolbar content */
+.pf-v6-c-toolbar__content {
+  --pf-v6-hidden-visible--visible--Display: grid;
+  --pf-v6-hidden-visible--hidden--Display: none;
+  --pf-v6-hidden-visible--Display: var(--pf-v6-hidden-visible--visible--Display);
+
+  display: var(--pf-v6-hidden-visible--Display);
+  row-gap: var(--pf-v6-c-toolbar__content--RowGap);
+  min-width: var(--pf-v6-c-toolbar__content--MinWidth, auto);
+  padding-inline-start: var(--pf-v6-c-toolbar__content--PaddingInlineStart);
+  padding-inline-end: var(--pf-v6-c-toolbar__content--PaddingInlineEnd);
+}
+
+/* Toolbar content section */
+.pf-v6-c-toolbar__content-section {
+  display: flex;
+  flex-wrap: var(--pf-v6-c-toolbar__content-section--FlexWrap, wrap);
+  row-gap: var(--pf-v6-c-toolbar__content-section--RowGap);
+  column-gap: var(--pf-v6-c-toolbar__content-section--ColumnGap);
+  align-items: start;
+}
+
+/* Toolbar expandable content */
+.pf-v6-c-toolbar__expandable-content {
+  position: absolute;
+  inset-block-start: 100%;
+  inset-inline-start: 0;
+  z-index: var(--pf-v6-c-toolbar__expandable-content--ZIndex);
+  display: none;
+  row-gap: var(--pf-v6-c-toolbar__expandable-content--RowGap);
+  width: 100%;
+  padding-block-start: var(--pf-v6-c-toolbar__expandable-content--PaddingBlockStart);
+  padding-block-end: var(--pf-v6-c-toolbar__expandable-content--PaddingBlockEnd);
+  padding-inline-start: var(--pf-v6-c-toolbar__expandable-content--PaddingInlineStart);
+  padding-inline-end: var(--pf-v6-c-toolbar__expandable-content--PaddingInlineEnd);
+  background-color: var(--pf-v6-c-toolbar__expandable-content--BackgroundColor);
+  border-block-end: var(--pf-v6-c-toolbar__expandable-content--BorderBlockEndWidth) solid var(--pf-v6-c-toolbar__expandable-content--BorderBlockEndColor);
+  box-shadow: var(--pf-v6-c-toolbar__expandable-content--BoxShadow);
+}
+
+@media screen and (min-width: 992px) {
+  .pf-v6-c-toolbar__expandable-content {
+    position: static;
+    padding: 0;
+    border-block-end: 0;
+    box-shadow: none;
+  }
+}
+
+.pf-v6-c-toolbar__expandable-content.pf-m-expanded {
+  display: grid;
+}
+
+.pf-v6-c-toolbar__expandable-content:not([hidden]) {
+  display: grid;
+}
+</style>
+<div class="pf-v6-c-toolbar" part="toolbar">
+  <div class="pf-v6-c-toolbar__content" part="content">
+    <div class="pf-v6-c-toolbar__content-section" part="content-section">
+      <slot></slot>
+    </div>
+    <div class="pf-v6-c-toolbar__expandable-content" part="expandable-content" hidden>
+      <slot name="expandable"></slot>
+    </div>
+  </div>
+</div>
+</template>
+
+            <pfv6-toolbar-group variant="action-group">
               <template shadowrootmode="open">
+  <style>/* PatternFly v6 Toolbar Group Styles */
+
+:host {
+  display: contents;
+}
+
+.pf-v6-c-toolbar__group {
+  --pf-v6-hidden-visible--visible--Display: flex;
+  --pf-v6-hidden-visible--hidden--Display: none;
+  --pf-v6-hidden-visible--Display: var(--pf-v6-hidden-visible--visible--Display);
+
+  display: var(--pf-v6-hidden-visible--Display);
+  row-gap: var(--pf-v6-c-toolbar__group--RowGap);
+  column-gap: var(--pf-v6-c-toolbar__group--ColumnGap);
+  align-items: baseline;
+}
+
+/* Filter group variant */
+.pf-v6-c-toolbar__group.pf-m-filter-group {
+  column-gap: var(--pf-v6-c-toolbar__group--m-filter-group--ColumnGap);
+}
+
+/* Label group variant */
+.pf-v6-c-toolbar__group.pf-m-label-group {
+  flex: 1;
+  flex-wrap: wrap;
+  column-gap: var(--pf-v6-c-toolbar__group--m-label-group--ColumnGap);
+}
+
+/* Action group variant */
+.pf-v6-c-toolbar__group.pf-m-action-group {
+  column-gap: var(--pf-v6-c-toolbar__group--m-action-group--ColumnGap);
+}
+
+/* Action group plain variant */
+.pf-v6-c-toolbar__group.pf-m-action-group-plain {
+  column-gap: var(--pf-v6-c-toolbar__group--m-action-group-plain--ColumnGap);
+}
+
+/* Action group inline variant */
+.pf-v6-c-toolbar__group.pf-m-action-group-inline {
+  flex-wrap: wrap;
+  column-gap: var(--pf-v6-c-toolbar__group--m-action-group-inline--ColumnGap);
+}
+
+/* Overflow container variant */
+.pf-v6-c-toolbar__group.pf-m-overflow-container {
+  flex: 1;
+  min-width: var(--pf-v6-c-toolbar__group--m-overflow-container--MinWidth);
+  overflow: auto;
+}
+</style>
+<div class="pf-v6-c-toolbar__group" part="group">
+  <slot></slot>
+</div>
+</template>
+
+              
+              
+              <pfv6-toolbar-item>
+                <template shadowrootmode="open">
+  <style>/* PatternFly v6 Toolbar Item Styles */
+
+:host {
+  display: contents;
+}
+
+.pf-v6-c-toolbar__item {
+  --pf-v6-hidden-visible--visible--Display: flex;
+  --pf-v6-hidden-visible--hidden--Display: none;
+  --pf-v6-hidden-visible--Display: var(--pf-v6-hidden-visible--visible--Display);
+
+  display: var(--pf-v6-hidden-visible--Display);
+  row-gap: var(--pf-v6-c-toolbar__item--RowGap);
+  column-gap: var(--pf-v6-c-toolbar__item--ColumnGap);
+  width: var(--pf-v6-c-toolbar__item--Width);
+  min-width: var(--pf-v6-c-toolbar__item--MinWidth);
+  align-items: baseline;
+}
+
+/* Label variant */
+.pf-v6-c-toolbar__item.pf-m-label {
+  font-weight: var(--pf-v6-c-toolbar__item--m-label--FontWeight);
+}
+
+/* Pagination variant */
+.pf-v6-c-toolbar__item.pf-m-pagination {
+  margin-inline-start: auto;
+}
+
+/* Overflow container variant */
+.pf-v6-c-toolbar__item.pf-m-overflow-container {
+  flex: 1;
+  min-width: var(--pf-v6-c-toolbar__item--m-overflow-container--MinWidth);
+  overflow: auto;
+}
+
+/* Expand all variant (for expand icons) */
+.pf-v6-c-toolbar__item.pf-m-expand-all.pf-m-expanded ::slotted(.pf-v6-c-toolbar__expand-all-icon) {
+  transform: rotate(var(--pf-v6-c-toolbar__item--m-expand-all--m-expanded__expand-all-icon--Rotate));
+}
+</style>
+<div class="pf-v6-c-toolbar__item" part="item">
+  <slot></slot>
+</div>
+</template>
+
+                <pfv6-button class="debug-button"
+                             variant="plain"
+                             aria-label="Debug info">
+                  <template shadowrootmode="open">
   <style>:host {
   display: var(--pf-v6-c-button--Display, inline-flex);
 
@@ -1675,13 +1905,62 @@ button:disabled {
 </button>
 </template>
 
-              <svg slot="icon-start" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
-              </svg>
-            </pfv6-button>
-            <cem-color-scheme-toggle>
-              <template shadowrootmode="open">
+                  <svg slot="icon-start" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                    <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                  </svg>
+                </pfv6-button>
+              </pfv6-toolbar-item>
+              <pfv6-toolbar-item>
+                <template shadowrootmode="open">
+  <style>/* PatternFly v6 Toolbar Item Styles */
+
+:host {
+  display: contents;
+}
+
+.pf-v6-c-toolbar__item {
+  --pf-v6-hidden-visible--visible--Display: flex;
+  --pf-v6-hidden-visible--hidden--Display: none;
+  --pf-v6-hidden-visible--Display: var(--pf-v6-hidden-visible--visible--Display);
+
+  display: var(--pf-v6-hidden-visible--Display);
+  row-gap: var(--pf-v6-c-toolbar__item--RowGap);
+  column-gap: var(--pf-v6-c-toolbar__item--ColumnGap);
+  width: var(--pf-v6-c-toolbar__item--Width);
+  min-width: var(--pf-v6-c-toolbar__item--MinWidth);
+  align-items: baseline;
+}
+
+/* Label variant */
+.pf-v6-c-toolbar__item.pf-m-label {
+  font-weight: var(--pf-v6-c-toolbar__item--m-label--FontWeight);
+}
+
+/* Pagination variant */
+.pf-v6-c-toolbar__item.pf-m-pagination {
+  margin-inline-start: auto;
+}
+
+/* Overflow container variant */
+.pf-v6-c-toolbar__item.pf-m-overflow-container {
+  flex: 1;
+  min-width: var(--pf-v6-c-toolbar__item--m-overflow-container--MinWidth);
+  overflow: auto;
+}
+
+/* Expand all variant (for expand icons) */
+.pf-v6-c-toolbar__item.pf-m-expand-all.pf-m-expanded ::slotted(.pf-v6-c-toolbar__expand-all-icon) {
+  transform: rotate(var(--pf-v6-c-toolbar__item--m-expand-all--m-expanded__expand-all-icon--Rotate));
+}
+</style>
+<div class="pf-v6-c-toolbar__item" part="item">
+  <slot></slot>
+</div>
+</template>
+
+                <cem-color-scheme-toggle>
+                  <template shadowrootmode="open">
   <style>:host {
   display: block;
 }
@@ -1777,8 +2056,10 @@ button:disabled {
 </div>
 </template>
 
-            </cem-color-scheme-toggle>
-          </div>
+                </cem-color-scheme-toggle>
+              </pfv6-toolbar-item>
+            </pfv6-toolbar-group>
+          </pfv6-toolbar>
         </pfv6-masthead>
 
         

@@ -5,7 +5,7 @@
   --pf-v6-c-masthead__logo--Width: auto;
 }
 
-/* Masthead toolbar and logo styles */
+/* Masthead logo styles */
 .masthead-logo {
   display: flex;
   align-items: center;
@@ -18,13 +18,7 @@
   color: var(--pf-t--global--text--color--regular);
 }
 
-.masthead-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  justify-content: end;
-}
-
+/* Masthead toolbar item styles */
 .source-link {
   color: var(--pf-t--global--text--color--subtle);
   text-decoration: none;

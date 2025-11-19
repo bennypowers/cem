@@ -451,6 +451,11 @@
   --pf-t--global--spacer--action--horizontal--plain--default: var(--pf-t--global--spacer--sm);
   --pf-t--global--spacer--gap--text-to-element--compact: var(--pf-t--global--spacer--xs);
   --pf-t--global--spacer--gap--text-to-element--default: var(--pf-t--global--spacer--sm);
+  --pf-t--global--spacer--gap--group--vertical: var(--pf-t--global--spacer--sm);
+  --pf-t--global--spacer--gap--group--horizontal: var(--pf-t--global--spacer--md);
+  --pf-t--global--spacer--gap--control-to-control--default: var(--pf-t--global--spacer--sm);
+  --pf-t--global--spacer--gap--action-to-action--default: var(--pf-t--global--spacer--sm);
+  --pf-t--global--spacer--gap--action-to-action--plain: var(--pf-t--global--spacer--xs);
 
   /* Theme-dependent background colors using light-dark() */
   --pf-t--global--background--color--100: light-dark(var(--pf-t--color--white), var(--pf-t--color--gray--90));
@@ -470,6 +475,9 @@
   --pf-t--global--background--color--secondary--default: var(--pf-t--global--background--color--200);
   --pf-t--global--background--color--secondary--hover: var(--pf-t--global--background--color--300);
   --pf-t--global--background--color--disabled--default: light-dark(var(--pf-t--color--gray--30), var(--pf-t--color--gray--60));
+  --pf-t--global--background--color--floating--default: var(--pf-t--global--background--color--100);
+  --pf-t--global--background--color--floating--clicked: var(--pf-t--global--background--color--200);
+  --pf-t--global--background--color--floating--hover: var(--pf-t--global--background--color--200);
 
   /* Theme-dependent border colors using light-dark() */
   --pf-t--global--border--color--50: light-dark(var(--pf-t--color--gray--20), var(--pf-t--color--gray--60));
@@ -678,17 +686,18 @@
   --pf-v6-c-masthead__content--ColumnGap: var(--pf-t--global--spacer--md);
   --pf-v6-c-masthead--m-display-stack--ColumnGap: var(--pf-t--global--spacer--gutter--default);
   --pf-v6-c-masthead--m-display-stack--GridTemplateColumns: max-content 1fr;
+  --pf-v6-c-masthead--m-display-stack__toggle--GridColumn: 1;
   --pf-v6-c-masthead--m-display-stack__brand--GridColumn: -1 / 1;
   --pf-v6-c-masthead--m-display-stack__brand--Order: -1;
   --pf-v6-c-masthead--m-display-stack__brand--PaddingBlockEnd: var(--pf-v6-c-masthead--RowGap);
   --pf-v6-c-masthead--m-display-stack__brand--BorderBlockEnd: var(--pf-v6-c-masthead--BorderWidth) solid var(--pf-v6-c-masthead--BorderColor);
-  --pf-v6-c-masthead--m-display-stack__content--GridColumn: 1;
+  --pf-v6-c-masthead--m-display-stack__content--GridColumn: 2;
   --pf-v6-c-masthead--m-display-stack__content--Order: 1;
-  --pf-v6-c-masthead--m-display-stack__main--toggle--content--GridColumn: 2;
   --pf-v6-c-masthead--m-display-stack__main--Display: contents;
   --pf-v6-c-masthead--m-display-stack__main--ColumnGap: unset;
   --pf-v6-c-masthead--m-display-inline--ColumnGap: 0;
   --pf-v6-c-masthead--m-display-inline--GridTemplateColumns: min-content 1fr;
+  --pf-v6-c-masthead--m-display-inline__toggle--GridColumn: initial;
   --pf-v6-c-masthead--m-display-inline__brand--GridColumn: initial;
   --pf-v6-c-masthead--m-display-inline__brand--Order: initial;
   --pf-v6-c-masthead--m-display-inline__brand--PaddingBlockEnd: 0;
@@ -696,9 +705,69 @@
   --pf-v6-c-masthead--m-display-inline__main--GridColumn: 1;
   --pf-v6-c-masthead--m-display-inline__content--GridColumn: 2;
   --pf-v6-c-masthead--m-display-inline__content--Order: 0;
-  --pf-v6-c-masthead--m-display-inline__main--toggle--content--GridColumn: 2;
   --pf-v6-c-masthead--m-display-inline__main--Display: flex;
   --pf-v6-c-masthead--m-display-inline__main--ColumnGap: var(--pf-t--global--spacer--md);
+
+  /* Masthead Toolbar Integration */
+  --pf-v6-c-masthead--c-toolbar--Width: 100%;
+  --pf-v6-c-masthead--c-toolbar--PaddingBlockEnd: 0;
+  --pf-v6-c-masthead--c-toolbar__content--MinWidth: 0;
+  --pf-v6-c-masthead--c-toolbar__content--PaddingInlineStart: 0;
+  --pf-v6-c-masthead--c-toolbar__content--PaddingInlineEnd: 0;
+  --pf-v6-c-masthead--c-toolbar__content-section--FlexWrap: nowrap;
+
+  /* Toolbar Tokens */
+  --pf-v6-c-toolbar--RowGap: var(--pf-t--global--spacer--md);
+  --pf-v6-c-toolbar--PaddingBlockStart: 0;
+  --pf-v6-c-toolbar--PaddingBlockEnd: var(--pf-t--global--spacer--md);
+  --pf-v6-c-toolbar--PaddingInlineStart: 0;
+  --pf-v6-c-toolbar--PaddingInlineEnd: 0;
+  --pf-v6-c-toolbar--LineHeight: var(--pf-t--global--font--line-height--body);
+  --pf-v6-c-toolbar--FontSize: var(--pf-t--global--font--size--body--default);
+  --pf-v6-c-toolbar--BackgroundColor: transparent;
+  --pf-v6-c-toolbar--m-primary--BackgroundColor: var(--pf-t--global--background--color--primary--default);
+  --pf-v6-c-toolbar--m-secondary--BackgroundColor: var(--pf-t--global--background--color--secondary--default);
+  --pf-v6-c-toolbar--m-no-background--BackgroundColor: transparent;
+  --pf-v6-c-toolbar__item--Width: auto;
+  --pf-v6-c-toolbar__item--MinWidth: auto;
+  --pf-v6-c-toolbar__item--RowGap: var(--pf-t--global--spacer--gap--group--vertical);
+  --pf-v6-c-toolbar__item--ColumnGap: var(--pf-t--global--spacer--gap--group--horizontal);
+  --pf-v6-c-toolbar__item--m-overflow-container--MinWidth: 0;
+  --pf-v6-c-toolbar__group--RowGap: var(--pf-t--global--spacer--gap--group--vertical);
+  --pf-v6-c-toolbar__group--ColumnGap: var(--pf-t--global--spacer--gap--group--horizontal);
+  --pf-v6-c-toolbar__group--m-overflow-container--MinWidth: 0;
+  --pf-v6-c-toolbar__content--RowGap: var(--pf-t--global--spacer--md);
+  --pf-v6-c-toolbar__content--PaddingInlineStart: 0;
+  --pf-v6-c-toolbar__content--PaddingInlineEnd: 0;
+  --pf-v6-c-toolbar__content-section--RowGap: var(--pf-t--global--spacer--gap--group--vertical);
+  --pf-v6-c-toolbar__content-section--ColumnGap: var(--pf-t--global--spacer--gap--group--horizontal);
+  --pf-v6-c-toolbar__expandable-content--ZIndex: var(--pf-t--global--z-index--sm);
+  --pf-v6-c-toolbar__expandable-content--RowGap: var(--pf-t--global--spacer--gap--group--vertical);
+  --pf-v6-c-toolbar__expandable-content--PaddingBlockStart: var(--pf-t--global--spacer--md);
+  --pf-v6-c-toolbar__expandable-content--PaddingBlockEnd: var(--pf-t--global--spacer--md);
+  --pf-v6-c-toolbar__expandable-content--PaddingInlineStart: var(--pf-t--global--spacer--md);
+  --pf-v6-c-toolbar__expandable-content--PaddingInlineEnd: var(--pf-t--global--spacer--md);
+  --pf-v6-c-toolbar__expandable-content--BoxShadow: var(--pf-t--global--box-shadow--md--bottom);
+  --pf-v6-c-toolbar__expandable-content--BackgroundColor: var(--pf-t--global--background--color--floating--default);
+  --pf-v6-c-toolbar__expandable-content--BorderBlockEndWidth: var(--pf-t--global--border--width--high-contrast--regular);
+  --pf-v6-c-toolbar__expandable-content--BorderBlockEndColor: var(--pf-t--global--border--color--high-contrast);
+  --pf-v6-c-toolbar--m-sticky--ZIndex: var(--pf-t--global--z-index--xs);
+  --pf-v6-c-toolbar--m-sticky--PaddingBlockStart: var(--pf-t--global--spacer--md);
+  --pf-v6-c-toolbar--m-sticky--PaddingBlockEnd: var(--pf-t--global--spacer--md);
+  --pf-v6-c-toolbar--m-sticky--BoxShadow: var(--pf-t--global--box-shadow--md--bottom);
+  --pf-v6-c-toolbar--m-sticky--BackgroundColor: var(--pf-t--global--background--color--primary--default);
+  --pf-v6-c-toolbar--m-sticky--BorderBlockEndWidth: var(--pf-t--global--border--width--high-contrast--regular);
+  --pf-v6-c-toolbar--m-sticky--BorderBlockEndColor: var(--pf-t--global--border--color--high-contrast);
+  --pf-v6-c-toolbar__expand-all-icon--Rotate: 0;
+  --pf-v6-c-toolbar__expand-all-icon--TransitionDuration: var(--pf-t--global--motion--duration--icon--default);
+  --pf-v6-c-toolbar__expand-all-icon--TransitionTimingFunction: var(--pf-t--global--motion--timing-function--default);
+  --pf-v6-c-toolbar__item--m-expand-all--m-expanded__expand-all-icon--Rotate: 90deg;
+  --pf-v6-c-toolbar__group--m-filter-group--ColumnGap: var(--pf-t--global--spacer--gap--control-to-control--default);
+  --pf-v6-c-toolbar__item--m-label--FontWeight: var(--pf-t--global--font--weight--body--bold);
+  --pf-v6-c-toolbar__group--m-label-group--ColumnGap: var(--pf-t--global--spacer--gap--text-to-element--default);
+  --pf-v6-c-toolbar__group--m-action-group--ColumnGap: var(--pf-t--global--spacer--gap--action-to-action--default);
+  --pf-v6-c-toolbar__group--m-action-group-plain--ColumnGap: var(--pf-t--global--spacer--gap--action-to-action--plain);
+  --pf-v6-c-toolbar__group--m-action-group-inline--ColumnGap: var(--pf-t--global--spacer--gap--action-to-action--default);
 
   /* Spacer tokens */
   --pf-t--global--spacer--inset--page-chrome: var(--pf-t--global--spacer--lg);

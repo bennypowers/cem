@@ -1,0 +1,40 @@
+/* PatternFly v6 Toolbar Item Styles */
+
+:host {
+  display: contents;
+}
+
+.pf-v6-c-toolbar__item {
+  --pf-v6-hidden-visible--visible--Display: flex;
+  --pf-v6-hidden-visible--hidden--Display: none;
+  --pf-v6-hidden-visible--Display: var(--pf-v6-hidden-visible--visible--Display);
+
+  display: var(--pf-v6-hidden-visible--Display);
+  row-gap: var(--pf-v6-c-toolbar__item--RowGap);
+  column-gap: var(--pf-v6-c-toolbar__item--ColumnGap);
+  width: var(--pf-v6-c-toolbar__item--Width);
+  min-width: var(--pf-v6-c-toolbar__item--MinWidth);
+  align-items: baseline;
+}
+
+/* Label variant */
+.pf-v6-c-toolbar__item.pf-m-label {
+  font-weight: var(--pf-v6-c-toolbar__item--m-label--FontWeight);
+}
+
+/* Pagination variant */
+.pf-v6-c-toolbar__item.pf-m-pagination {
+  margin-inline-start: auto;
+}
+
+/* Overflow container variant */
+.pf-v6-c-toolbar__item.pf-m-overflow-container {
+  flex: 1;
+  min-width: var(--pf-v6-c-toolbar__item--m-overflow-container--MinWidth);
+  overflow: auto;
+}
+
+/* Expand all variant (for expand icons) */
+.pf-v6-c-toolbar__item.pf-m-expand-all.pf-m-expanded ::slotted(.pf-v6-c-toolbar__expand-all-icon) {
+  transform: rotate(var(--pf-v6-c-toolbar__item--m-expand-all--m-expanded__expand-all-icon--Rotate));
+}

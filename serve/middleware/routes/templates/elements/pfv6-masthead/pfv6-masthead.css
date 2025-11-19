@@ -12,6 +12,7 @@
 .pf-v6-c-masthead {
   --pf-v6-c-masthead--ColumnGap: var(--pf-v6-c-masthead--m-display-stack--ColumnGap);
   --pf-v6-c-masthead--GridTemplateColumns: var(--pf-v6-c-masthead--m-display-stack--GridTemplateColumns);
+  --pf-v6-c-masthead__toggle--GridColumn: var(--pf-v6-c-masthead--m-display-stack__toggle--GridColumn);
   --pf-v6-c-masthead__brand--GridColumn: var(--pf-v6-c-masthead--m-display-stack__brand--GridColumn);
   --pf-v6-c-masthead__brand--Order: var(--pf-v6-c-masthead--m-display-stack__brand--Order);
   --pf-v6-c-masthead__brand--PaddingBlockEnd: var(--pf-v6-c-masthead--m-display-stack__brand--PaddingBlockEnd);
@@ -19,7 +20,6 @@
   --pf-v6-c-masthead__main--GridColumn: unset;
   --pf-v6-c-masthead__content--GridColumn: var(--pf-v6-c-masthead--m-display-stack__content--GridColumn);
   --pf-v6-c-masthead__content--Order: var(--pf-v6-c-masthead--m-display-stack__content--Order);
-  --pf-v6-c-masthead__main--toggle--content--GridColumn: var(--pf-v6-c-masthead--m-display-stack__main--toggle--content--GridColumn);
   --pf-v6-c-masthead__main--Display: var(--pf-v6-c-masthead--m-display-stack__main--Display);
   --pf-v6-c-masthead__main--ColumnGap: var(--pf-v6-c-masthead--m-display-stack__main--ColumnGap);
 
@@ -46,6 +46,7 @@
 }
 
 .pf-v6-c-masthead__toggle {
+  grid-column: var(--pf-v6-c-masthead__toggle--GridColumn);
   display: flex;
   align-items: center;
 }
@@ -72,32 +73,19 @@
   max-height: var(--pf-v6-c-masthead__logo--MaxHeight);
 }
 
-/* Hamburger button styles */
-.pf-v6-c-button.pf-m-hamburger {
-  --pf-v6-c-button--FontSize: var(--pf-v6-c-masthead__toggle--Size);
-
-  padding: var(--pf-t--global--spacer--xs);
-  color: var(--pf-t--global--icon--color--regular);
-  background-color: transparent;
-  border: 0;
-  cursor: pointer;
+/* Toggle button sizing */
+.pf-v6-c-masthead__toggle pfv6-button {
+  font-size: var(--pf-v6-c-masthead__toggle--Size);
 }
 
-.pf-v6-c-button.pf-m-hamburger:hover {
-  color: var(--pf-t--global--icon--color--subtle);
-}
-
-.pf-v6-c-button__icon {
-  display: inline-flex;
-  align-items: center;
-}
-
-.pf-v6-c-button--hamburger-icon {
-  display: inline-block;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.5;
-  stroke-linecap: round;
+/* Toolbar integration - styles for slotted pfv6-toolbar */
+::slotted(pfv6-toolbar) {
+  --pf-v6-c-toolbar--Width: var(--pf-v6-c-masthead--c-toolbar--Width);
+  --pf-v6-c-toolbar--PaddingBlockEnd: var(--pf-v6-c-masthead--c-toolbar--PaddingBlockEnd);
+  --pf-v6-c-toolbar__content--MinWidth: var(--pf-v6-c-masthead--c-toolbar__content--MinWidth);
+  --pf-v6-c-toolbar__content--PaddingInlineStart: var(--pf-v6-c-masthead--c-toolbar__content--PaddingInlineStart);
+  --pf-v6-c-toolbar__content--PaddingInlineEnd: var(--pf-v6-c-masthead--c-toolbar__content--PaddingInlineEnd);
+  --pf-v6-c-toolbar__content-section--FlexWrap: var(--pf-v6-c-masthead--c-toolbar__content-section--FlexWrap);
 }
 
 /* Responsive layout - inline at larger breakpoints */
@@ -105,6 +93,7 @@
   :host(:not(.pf-m-resize-observer)) .pf-v6-c-masthead {
     --pf-v6-c-masthead--ColumnGap: var(--pf-v6-c-masthead--m-display-inline--ColumnGap);
     --pf-v6-c-masthead--GridTemplateColumns: var(--pf-v6-c-masthead--m-display-inline--GridTemplateColumns);
+    --pf-v6-c-masthead__toggle--GridColumn: var(--pf-v6-c-masthead--m-display-inline__toggle--GridColumn);
     --pf-v6-c-masthead__brand--GridColumn: var(--pf-v6-c-masthead--m-display-inline__brand--GridColumn);
     --pf-v6-c-masthead__brand--Order: var(--pf-v6-c-masthead--m-display-inline__brand--Order);
     --pf-v6-c-masthead__brand--PaddingBlockEnd: var(--pf-v6-c-masthead--m-display-inline__brand--PaddingBlockEnd);
