@@ -1,25 +1,12 @@
-import { loadComponentTemplate } from '/__cem/stylesheet-cache.js';
+import { CemElement } from '/__cem/cem-element.js';
 
-class Pfv6TextInput extends HTMLElement {
-  #input = null;
+class Pfv6TextInput extends CemElement {
+  static observedAttributes = ['value', 'type', 'placeholder', 'disabled', 'readonly', 'invalid', 'min', 'max', 'step', 'aria-label', 'aria-labelledby'];
 
-  constructor() {
-    super();
+  #input;
 
-    // Create shadow root if it doesn't exist (SSR provides it via DSD)
-    if (!this.shadowRoot) {
-      this.attachShadow({ mode: 'open' });
-    }
-  }
-
-  async connectedCallback() {
-    // If shadow root is empty (client-side rendering), populate it
-    this.#input = this.shadowRoot?.getElementById('text-input');
-    if (!this.#input && this.shadowRoot) {
-      await this.#populateShadowRoot();
-      this.#input = this.shadowRoot.getElementById('text-input');
-    }
-
+  async afterTemplateLoaded() {
+    this.#input = this.shadowRoot.getElementById('text-input');
     if (!this.#input) return;
 
     // Sync initial state
@@ -38,30 +25,8 @@ class Pfv6TextInput extends HTMLElement {
     });
   }
 
-  static get observedAttributes() {
-    return ['value', 'type', 'placeholder', 'disabled', 'readonly', 'invalid', 'min', 'max', 'step', 'aria-label', 'aria-labelledby'];
-  }
-
   attributeChangedCallback() {
     this.#syncAttributes();
-  }
-
-  async #populateShadowRoot() {
-    try {
-      // Load template using shared utility with Constructable Stylesheets
-      const { html, stylesheet } = await loadComponentTemplate('pfv6-text-input');
-
-      // Apply stylesheet using Constructable Stylesheets API
-      // This allows stylesheet sharing across multiple text-input instances
-      this.shadowRoot.adoptedStyleSheets = [stylesheet];
-
-      // Populate shadow root with HTML
-      this.shadowRoot.innerHTML = html;
-    } catch (error) {
-      console.error('Failed to load pfv6-text-input template:', error);
-      // Fallback UI for when template loading fails
-      this.shadowRoot.innerHTML = '<input type="text" id="text-input"> (template failed to load)';
-    }
   }
 
   #syncAttributes() {

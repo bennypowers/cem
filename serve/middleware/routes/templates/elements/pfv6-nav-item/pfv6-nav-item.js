@@ -1,4 +1,4 @@
-import { loadComponentTemplate } from '/__cem/stylesheet-cache.js';
+import { CemElement } from '/__cem/cem-element.js';
 
 /**
  * PatternFly v6 Navigation Item
@@ -8,22 +8,10 @@ import { loadComponentTemplate } from '/__cem/stylesheet-cache.js';
  *
  * @slot - Default slot for nav-link and optional nav-group
  */
-class Pfv6NavItem extends HTMLElement {
-  static get observedAttributes() {
-    return ['expanded', 'current'];
-  }
+class Pfv6NavItem extends CemElement {
+  static observedAttributes = ['expanded', 'current'];
 
-  constructor() {
-    super();
-    if (!this.shadowRoot) {
-      this.attachShadow({ mode: 'open' });
-    }
-  }
-
-  async connectedCallback() {
-    if (!this.shadowRoot.hasChildNodes()) {
-      await this.#populateShadowRoot();
-    }
+  async afterTemplateLoaded() {
     this.setAttribute('role', 'listitem');
 
     // Listen for toggle events from child nav-link with expandable group
@@ -40,17 +28,6 @@ class Pfv6NavItem extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === 'expanded' && oldValue !== newValue) {
       this.#updateExpandedState();
-    }
-  }
-
-  async #populateShadowRoot() {
-    try {
-      const { html, stylesheet } = await loadComponentTemplate('pfv6-nav-item');
-      this.shadowRoot.adoptedStyleSheets = [stylesheet];
-      this.shadowRoot.innerHTML = html;
-    } catch (error) {
-      console.error('Failed to load pfv6-nav-item template:', error);
-      this.shadowRoot.innerHTML = '<slot></slot>';
     }
   }
 

@@ -1,4 +1,4 @@
-import { loadComponentTemplate } from '/__cem/stylesheet-cache.js';
+import { CemElement } from '/__cem/cem-element.js';
 
 /**
  * PatternFly v6 Page Layout
@@ -12,22 +12,10 @@ import { loadComponentTemplate } from '/__cem/stylesheet-cache.js';
  *
  * @listens sidebar-toggle - Responds to toggle events from masthead
  */
-class Pfv6Page extends HTMLElement {
-  static get observedAttributes() {
-    return ['sidebar-collapsed'];
-  }
+class Pfv6Page extends CemElement {
+  static observedAttributes = ['sidebar-collapsed'];
 
-  constructor() {
-    super();
-    if (!this.shadowRoot) {
-      this.attachShadow({ mode: 'open' });
-    }
-  }
-
-  async connectedCallback() {
-    if (!this.shadowRoot.querySelector('.pf-v6-c-page')) {
-      await this.#populateShadowRoot();
-    }
+  async afterTemplateLoaded() {
     this.#attachEventListeners();
     this.#updateSidebarState();
   }
@@ -35,16 +23,6 @@ class Pfv6Page extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === 'sidebar-collapsed' && oldValue !== newValue) {
       this.#updateSidebarState();
-    }
-  }
-
-  async #populateShadowRoot() {
-    try {
-      const { html, stylesheet } = await loadComponentTemplate('pfv6-page');
-      this.shadowRoot.adoptedStyleSheets = [stylesheet];
-      this.shadowRoot.innerHTML = html;
-    } catch (error) {
-      console.error('Failed to load pfv6-page template:', error);
     }
   }
 

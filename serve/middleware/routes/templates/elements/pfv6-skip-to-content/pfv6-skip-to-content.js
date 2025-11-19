@@ -1,4 +1,4 @@
-import { loadComponentTemplate } from '/__cem/stylesheet-cache.js';
+import { CemElement } from '/__cem/cem-element.js';
 
 /**
  * PatternFly v6 Skip to Content
@@ -7,22 +7,13 @@ import { loadComponentTemplate } from '/__cem/stylesheet-cache.js';
  *
  * @slot - Default slot for skip link text (defaults to "Skip to content")
  */
-class Pfv6SkipToContent extends HTMLElement {
-  static get observedAttributes() {
-    return ['href'];
-  }
+class Pfv6SkipToContent extends CemElement {
+  static observedAttributes = ['href'];
 
-  constructor() {
-    super();
-    if (!this.shadowRoot) {
-      this.attachShadow({ mode: 'open' });
-    }
-  }
+  #link;
 
-  async connectedCallback() {
-    if (!this.shadowRoot.querySelector('#link')) {
-      await this.#populateShadowRoot();
-    }
+  async afterTemplateLoaded() {
+    this.#link = this.shadowRoot.querySelector('#link');
     this.#syncAttributes();
   }
 
@@ -30,24 +21,12 @@ class Pfv6SkipToContent extends HTMLElement {
     this.#syncAttributes();
   }
 
-  async #populateShadowRoot() {
-    try {
-      const { html, stylesheet } = await loadComponentTemplate('pfv6-skip-to-content');
-      this.shadowRoot.adoptedStyleSheets = [stylesheet];
-      this.shadowRoot.innerHTML = html;
-    } catch (error) {
-      console.error('Failed to load pfv6-skip-to-content template:', error);
-      this.shadowRoot.innerHTML = '<div class="pf-v6-c-skip-to-content"><a id="link"><slot>Skip to content</slot></a></div>';
-    }
-  }
-
   #syncAttributes() {
-    const link = this.shadowRoot?.querySelector('#link');
-    if (!link) return;
+    if (!this.#link) return;
 
     // Default to #main-content if no href is specified
     const href = this.getAttribute('href') || '#main-content';
-    link.setAttribute('href', href);
+    this.#link.setAttribute('href', href);
   }
 }
 

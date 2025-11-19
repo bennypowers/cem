@@ -1,4 +1,4 @@
-import { loadComponentTemplate } from '/__cem/stylesheet-cache.js';
+import { CemElement } from '/__cem/cem-element.js';
 
 // Custom event for toggle group item selection
 export class ToggleGroupItemSelectEvent extends Event {
@@ -10,21 +10,12 @@ export class ToggleGroupItemSelectEvent extends Event {
   }
 }
 
-export class PfToggleGroupItem extends HTMLElement {
+export class PfToggleGroupItem extends CemElement {
   #button;
 
   static observedAttributes = ['selected', 'disabled', 'value'];
 
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-  }
-
-  async connectedCallback() {
-    if (!this.shadowRoot.getElementById('button')) {
-      await this.#populateShadowRoot();
-    }
-
+  async afterTemplateLoaded() {
     this.addEventListener('slotchange', this.#updateSlotVisibility);
     this.#button = this.shadowRoot.getElementById('button');
 
@@ -58,16 +49,6 @@ export class PfToggleGroupItem extends HTMLElement {
       this.#updateTabindex();
     } else if (name === 'disabled') {
       this.#updateDisabled();
-    }
-  }
-
-  async #populateShadowRoot() {
-    try {
-      const { html, stylesheet } = await loadComponentTemplate('pfv6-toggle-group-item');
-      this.shadowRoot.adoptedStyleSheets = [stylesheet];
-      this.shadowRoot.innerHTML = html;
-    } catch (error) {
-      console.error('Failed to load pfv6-toggle-group-item template:', error);
     }
   }
 

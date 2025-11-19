@@ -1,4 +1,4 @@
-import { loadComponentTemplate } from '/__cem/stylesheet-cache.js';
+import { CemElement } from '/__cem/cem-element.js';
 
 /**
  * PatternFly v6 Page Sidebar
@@ -8,39 +8,14 @@ import { loadComponentTemplate } from '/__cem/stylesheet-cache.js';
  *
  * @slot - Default slot for sidebar content (typically pfv6-navigation)
  */
-class Pfv6PageSidebar extends HTMLElement {
-  static formAssociated = false;
+class Pfv6PageSidebar extends CemElement {
+  static observedAttributes = ['collapsed', 'expanded'];
 
-  #internals;
-
-  static get observedAttributes() {
-    return ['collapsed', 'expanded'];
-  }
+  #internals = this.attachInternals();
 
   constructor() {
     super();
-    if (!this.shadowRoot) {
-      this.attachShadow({ mode: 'open' });
-    }
-    this.#internals = this.attachInternals();
     this.#internals.role = 'navigation';
-  }
-
-  async connectedCallback() {
-    if (!this.shadowRoot.querySelector('.pf-v6-c-page__sidebar')) {
-      await this.#populateShadowRoot();
-    }
-  }
-
-  async #populateShadowRoot() {
-    try {
-      const { html, stylesheet } = await loadComponentTemplate('pfv6-page-sidebar');
-      this.shadowRoot.adoptedStyleSheets = [stylesheet];
-      this.shadowRoot.innerHTML = html;
-    } catch (error) {
-      console.error('Failed to load pfv6-page-sidebar template:', error);
-      this.shadowRoot.innerHTML = '<div class="pf-v6-c-page__sidebar"><div class="pf-v6-c-page__sidebar-body"><slot></slot></div></div>';
-    }
   }
 
   get collapsed() {
@@ -48,13 +23,8 @@ class Pfv6PageSidebar extends HTMLElement {
   }
 
   set collapsed(value) {
-    if (value) {
-      this.setAttribute('collapsed', '');
-      this.removeAttribute('expanded');
-    } else {
-      this.removeAttribute('collapsed');
-      this.setAttribute('expanded', '');
-    }
+    this.toggleAttribute('collapsed', !!value);
+    this.toggleAttribute('expanded', !value);
   }
 
   get expanded() {
@@ -62,13 +32,8 @@ class Pfv6PageSidebar extends HTMLElement {
   }
 
   set expanded(value) {
-    if (value) {
-      this.setAttribute('expanded', '');
-      this.removeAttribute('collapsed');
-    } else {
-      this.removeAttribute('expanded');
-      this.setAttribute('collapsed', '');
-    }
+    this.toggleAttribute('collapsed', !value);
+    this.toggleAttribute('expanded', !!value);
   }
 }
 

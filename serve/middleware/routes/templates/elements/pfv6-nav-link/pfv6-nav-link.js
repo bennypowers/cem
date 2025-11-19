@@ -1,4 +1,4 @@
-import { loadComponentTemplate } from '/__cem/stylesheet-cache.js';
+import { CemElement } from '/__cem/cem-element.js';
 
 /**
  * Custom event for navigation toggle
@@ -26,25 +26,14 @@ export class PfNavToggleEvent extends Event {
  *
  * @fires {PfNavToggleEvent} pf-nav-toggle - When expandable link is clicked
  */
-class Pfv6NavLink extends HTMLElement {
-  static get observedAttributes() {
-    return ['href', 'current', 'expandable', 'aria-expanded', 'aria-label'];
-  }
+class Pfv6NavLink extends CemElement {
+  static observedAttributes = ['href', 'current', 'expandable', 'aria-expanded', 'aria-label'];
 
-  #internals;
+  #internals = this.attachInternals();
+  #link;
 
-  constructor() {
-    super();
-    this.#internals = this.attachInternals();
-    if (!this.shadowRoot) {
-      this.attachShadow({ mode: 'open' });
-    }
-  }
-
-  async connectedCallback() {
-    if (!this.shadowRoot.querySelector('#link')) {
-      await this.#populateShadowRoot();
-    }
+  async afterTemplateLoaded() {
+    this.#link = this.shadowRoot.querySelector('#link');
     this.#syncAttributes();
     this.#attachEventListeners();
     this.#markCurrentIfMatches();
@@ -54,51 +43,38 @@ class Pfv6NavLink extends HTMLElement {
     this.#syncAttributes();
   }
 
-  async #populateShadowRoot() {
-    try {
-      const { html, stylesheet } = await loadComponentTemplate('pfv6-nav-link');
-      this.shadowRoot.adoptedStyleSheets = [stylesheet];
-      this.shadowRoot.innerHTML = html;
-    } catch (error) {
-      console.error('Failed to load pfv6-nav-link template:', error);
-      this.shadowRoot.innerHTML = '<a id="link"><slot></slot></a>';
-    }
-  }
-
   #syncAttributes() {
-    const link = this.shadowRoot?.querySelector('#link');
-    if (!link) return;
+    if (!this.#link) return;
 
     // Handle href
     if (this.hasAttribute('href')) {
-      link.setAttribute('href', this.getAttribute('href'));
+      this.#link.setAttribute('href', this.getAttribute('href'));
     } else {
-      link.removeAttribute('href');
+      this.#link.removeAttribute('href');
     }
 
     // Handle aria-label
     if (this.hasAttribute('aria-label')) {
-      link.setAttribute('aria-label', this.getAttribute('aria-label'));
+      this.#link.setAttribute('aria-label', this.getAttribute('aria-label'));
     } else {
-      link.removeAttribute('aria-label');
+      this.#link.removeAttribute('aria-label');
     }
 
     // Handle aria-expanded for expandable links
     if (this.hasAttribute('expandable')) {
       const expanded = this.getAttribute('aria-expanded') === 'true';
-      link.setAttribute('aria-expanded', String(expanded));
-      link.setAttribute('role', 'button');
+      this.#link.setAttribute('aria-expanded', String(expanded));
+      this.#link.setAttribute('role', 'button');
     } else {
-      link.removeAttribute('aria-expanded');
-      link.removeAttribute('role');
+      this.#link.removeAttribute('aria-expanded');
+      this.#link.removeAttribute('role');
     }
   }
 
   #attachEventListeners() {
-    const link = this.shadowRoot?.querySelector('#link');
-    if (!link) return;
+    if (!this.#link) return;
 
-    link.addEventListener('click', (e) => {
+    this.#link.addEventListener('click', (e) => {
       if (this.hasAttribute('expandable')) {
         e.preventDefault();
         const currentExpanded = this.getAttribute('aria-expanded') === 'true';

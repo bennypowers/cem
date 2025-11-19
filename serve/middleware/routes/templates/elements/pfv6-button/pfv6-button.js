@@ -1,4 +1,4 @@
-import { loadComponentTemplate } from '/__cem/stylesheet-cache.js';
+import { CemElement } from '/__cem/cem-element.js';
 
 /**
  * PatternFly v6 inspired button component
@@ -15,40 +15,24 @@ import { loadComponentTemplate } from '/__cem/stylesheet-cache.js';
  *
  * @fires click - Bubbles click events from internal button
  */
-class Pfv6Button extends HTMLElement {
-  static get observedAttributes() {
-    return ['disabled', 'aria-label', 'aria-expanded', 'aria-controls', 'aria-haspopup', 'type'];
-  }
+class Pfv6Button extends CemElement {
+  static shadowRootOptions = { mode: 'open', delegatesFocus: true };
+  static observedAttributes = ['disabled', 'aria-label', 'aria-expanded', 'aria-controls', 'aria-haspopup', 'type'];
 
-  #internals;
+  // Attach ElementInternals for cross-root ARIA references
+  #internals = this.attachInternals();
 
-  constructor() {
-    super();
+  #button;
 
-    // Attach ElementInternals for cross-root ARIA references
-    this.#internals = this.attachInternals();
-
-    // Don't recreate shadow root if it already exists (from SSR)
-    if (!this.shadowRoot) {
-      this.attachShadow({ mode: 'open', delegatesFocus: true });
-    }
-  }
-
-  async connectedCallback() {
-    // If shadow root is empty (client-side rendering), populate it
-    let button = this.shadowRoot?.querySelector('button');
-    if (!button && this.shadowRoot) {
-      await this.#populateShadowRoot();
-      button = this.shadowRoot.querySelector('button');
-    }
-
-    if (!button) return;
+  async afterTemplateLoaded() {
+    this.#button = this.shadowRoot.querySelector('button');
+    if (!this.#button) return;
 
     // Forward attributes to internal button
-    this.#syncAttributes(button);
+    this.#syncAttributes();
 
     // Delegate button events
-    button.addEventListener('click', (e) => {
+    this.#button.addEventListener('click', (e) => {
       if (this.disabled) {
         e.preventDefault();
         e.stopPropagation();
@@ -59,37 +43,18 @@ class Pfv6Button extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    // Only sync if shadow root is ready
-    const button = this.shadowRoot?.querySelector('button');
-    if (button) {
-      this.#syncAttributes(button);
+    // Only sync if button is ready
+    if (this.#button) {
+      this.#syncAttributes();
     }
   }
 
-  async #populateShadowRoot() {
-    try {
-      // Load template using shared utility with Constructable Stylesheets
-      const { html, stylesheet } = await loadComponentTemplate('pfv6-button');
-
-      // Apply stylesheet using Constructable Stylesheets API
-      // This allows stylesheet sharing across multiple button instances
-      this.shadowRoot.adoptedStyleSheets = [stylesheet];
-
-      // Populate shadow root with HTML
-      this.shadowRoot.innerHTML = html;
-    } catch (error) {
-      console.error('Failed to load pfv6-button template:', error);
-      // Fallback UI for when template loading fails
-      this.shadowRoot.innerHTML = '<button>Button (template failed to load)</button>';
-    }
-  }
-
-  #syncAttributes(button) {
+  #syncAttributes() {
     // Sync disabled
     if (this.hasAttribute('disabled')) {
-      button.disabled = true;
+      this.#button.disabled = true;
     } else {
-      button.disabled = false;
+      this.#button.disabled = false;
     }
 
     // Cross-root ARIA references go on ElementInternals (host)
@@ -105,15 +70,15 @@ class Pfv6Button extends HTMLElement {
     const buttonAriaAttrs = ['aria-label', 'aria-expanded', 'aria-haspopup'];
     buttonAriaAttrs.forEach(attr => {
       if (this.hasAttribute(attr)) {
-        button.setAttribute(attr, this.getAttribute(attr));
+        this.#button.setAttribute(attr, this.getAttribute(attr));
       } else {
-        button.removeAttribute(attr);
+        this.#button.removeAttribute(attr);
       }
     });
 
     // Sync type attribute
     if (this.hasAttribute('type')) {
-      button.setAttribute('type', this.getAttribute('type'));
+      this.#button.setAttribute('type', this.getAttribute('type'));
     }
   }
 
@@ -122,11 +87,7 @@ class Pfv6Button extends HTMLElement {
   }
 
   set disabled(value) {
-    if (value) {
-      this.setAttribute('disabled', '');
-    } else {
-      this.removeAttribute('disabled');
-    }
+    this.toggleAttribute('disabled', !!value);
   }
 }
 

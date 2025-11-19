@@ -1,4 +1,4 @@
-import { loadComponentTemplate } from '/__cem/stylesheet-cache.js';
+import { CemElement } from '/__cem/cem-element.js';
 
 /**
  * Custom event for sidebar toggle
@@ -20,28 +20,17 @@ export class SidebarToggleEvent extends Event {
  *
  * @fires {SidebarToggleEvent} sidebar-toggle - When the hamburger toggle is clicked
  */
-class Pfv6Masthead extends HTMLElement {
-  static formAssociated = false;
+class Pfv6Masthead extends CemElement {
+  static observedAttributes = ['sidebar-expanded'];
 
-  #internals;
-
-  static get observedAttributes() {
-    return ['sidebar-expanded'];
-  }
+  #internals = this.attachInternals();
 
   constructor() {
     super();
-    if (!this.shadowRoot) {
-      this.attachShadow({ mode: 'open' });
-    }
-    this.#internals = this.attachInternals();
     this.#internals.role = 'banner';
   }
 
-  async connectedCallback() {
-    if (!this.shadowRoot.querySelector('.pf-v6-c-masthead')) {
-      await this.#populateShadowRoot();
-    }
+  async afterTemplateLoaded() {
     this.#attachEventListeners();
     this.#updateToggleButton();
   }
@@ -49,16 +38,6 @@ class Pfv6Masthead extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === 'sidebar-expanded' && oldValue !== newValue) {
       this.#updateToggleButton();
-    }
-  }
-
-  async #populateShadowRoot() {
-    try {
-      const { html, stylesheet } = await loadComponentTemplate('pfv6-masthead');
-      this.shadowRoot.adoptedStyleSheets = [stylesheet];
-      this.shadowRoot.innerHTML = html;
-    } catch (error) {
-      console.error('Failed to load pfv6-masthead template:', error);
     }
   }
 

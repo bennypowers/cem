@@ -1,25 +1,12 @@
-import { loadComponentTemplate } from '/__cem/stylesheet-cache.js';
+import { CemElement } from '/__cem/cem-element.js';
 
-class Pfv6Select extends HTMLElement {
-  #select = null;
+class Pfv6Select extends CemElement {
+  static observedAttributes = ['value', 'options', 'disabled', 'invalid', 'aria-label', 'aria-labelledby'];
 
-  constructor() {
-    super();
+  #select;
 
-    // Create shadow root if it doesn't exist (SSR provides it via DSD)
-    if (!this.shadowRoot) {
-      this.attachShadow({ mode: 'open' });
-    }
-  }
-
-  async connectedCallback() {
-    // If shadow root is empty (client-side rendering), populate it
-    this.#select = this.shadowRoot?.getElementById('select');
-    if (!this.#select && this.shadowRoot) {
-      await this.#populateShadowRoot();
-      this.#select = this.shadowRoot.getElementById('select');
-    }
-
+  async afterTemplateLoaded() {
+    this.#select = this.shadowRoot.getElementById('select');
     if (!this.#select) return;
 
     // Populate options first (in case attributeChangedCallback fired before connectedCallback)
@@ -39,10 +26,6 @@ class Pfv6Select extends HTMLElement {
       this.setAttribute('value', this.#select.value);
       this.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
     });
-  }
-
-  static get observedAttributes() {
-    return ['value', 'options', 'disabled', 'invalid', 'aria-label', 'aria-labelledby'];
   }
 
   attributeChangedCallback(name) {
@@ -153,24 +136,6 @@ class Pfv6Select extends HTMLElement {
 
   blur() {
     this.#select?.blur();
-  }
-
-  async #populateShadowRoot() {
-    try {
-      // Load template using shared utility with Constructable Stylesheets
-      const { html, stylesheet } = await loadComponentTemplate('pfv6-select');
-
-      // Apply stylesheet using Constructable Stylesheets API
-      // This allows stylesheet sharing across multiple select instances
-      this.shadowRoot.adoptedStyleSheets = [stylesheet];
-
-      // Populate shadow root with HTML
-      this.shadowRoot.innerHTML = html;
-    } catch (error) {
-      console.error('Failed to load pfv6-select template:', error);
-      // Fallback UI for when template loading fails
-      this.shadowRoot.innerHTML = '<select id="select"></select> (template failed to load)';
-    }
   }
 }
 

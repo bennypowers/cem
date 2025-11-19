@@ -1,4 +1,4 @@
-import { loadComponentTemplate } from '/__cem/stylesheet-cache.js';
+import { CemElement } from '/__cem/cem-element.js';
 
 /**
  * PatternFly v6 Navigation Container
@@ -8,22 +8,13 @@ import { loadComponentTemplate } from '/__cem/stylesheet-cache.js';
  *
  * @slot - Default slot for nav-list
  */
-class Pfv6Navigation extends HTMLElement {
-  static get observedAttributes() {
-    return ['aria-label', 'inset'];
-  }
+class Pfv6Navigation extends CemElement {
+  static observedAttributes = ['aria-label', 'inset'];
 
-  constructor() {
-    super();
-    if (!this.shadowRoot) {
-      this.attachShadow({ mode: 'open' });
-    }
-  }
+  #nav;
 
-  async connectedCallback() {
-    if (!this.shadowRoot.querySelector('nav')) {
-      await this.#populateShadowRoot();
-    }
+  async afterTemplateLoaded() {
+    this.#nav = this.shadowRoot.querySelector('nav');
     this.#syncAttributes();
   }
 
@@ -31,23 +22,11 @@ class Pfv6Navigation extends HTMLElement {
     this.#syncAttributes();
   }
 
-  async #populateShadowRoot() {
-    try {
-      const { html, stylesheet } = await loadComponentTemplate('pfv6-navigation');
-      this.shadowRoot.adoptedStyleSheets = [stylesheet];
-      this.shadowRoot.innerHTML = html;
-    } catch (error) {
-      console.error('Failed to load pfv6-navigation template:', error);
-      this.shadowRoot.innerHTML = '<nav><slot></slot></nav>';
-    }
-  }
-
   #syncAttributes() {
-    const nav = this.shadowRoot?.querySelector('nav');
-    if (!nav) return;
+    if (!this.#nav) return;
 
     if (this.hasAttribute('aria-label')) {
-      nav.setAttribute('aria-label', this.getAttribute('aria-label'));
+      this.#nav.setAttribute('aria-label', this.getAttribute('aria-label'));
     }
   }
 }

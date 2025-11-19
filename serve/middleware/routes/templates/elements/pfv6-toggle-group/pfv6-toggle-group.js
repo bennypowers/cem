@@ -1,4 +1,4 @@
-import { loadComponentTemplate } from '/__cem/stylesheet-cache.js';
+import { CemElement } from '/__cem/cem-element.js';
 
 // Custom event for toggle group selection changes
 export class ToggleGroupChangeEvent extends Event {
@@ -10,21 +10,12 @@ export class ToggleGroupChangeEvent extends Event {
   }
 }
 
-export class PfToggleGroup extends HTMLElement {
+export class PfToggleGroup extends CemElement {
   #container;
 
   static observedAttributes = ['aria-label', 'compact'];
 
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-  }
-
-  async connectedCallback() {
-    if (!this.shadowRoot.getElementById('container')) {
-      await this.#populateShadowRoot();
-    }
-
+  async afterTemplateLoaded() {
     this.#container = this.shadowRoot.getElementById('container');
     this.#updateAriaLabel();
 
@@ -41,16 +32,6 @@ export class PfToggleGroup extends HTMLElement {
 
     if (name === 'aria-label') {
       this.#updateAriaLabel();
-    }
-  }
-
-  async #populateShadowRoot() {
-    try {
-      const { html, stylesheet } = await loadComponentTemplate('pfv6-toggle-group');
-      this.shadowRoot.adoptedStyleSheets = [stylesheet];
-      this.shadowRoot.innerHTML = html;
-    } catch (error) {
-      console.error('Failed to load pfv6-toggle-group template:', error);
     }
   }
 

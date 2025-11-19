@@ -1,4 +1,4 @@
-import { loadComponentTemplate } from '/__cem/stylesheet-cache.js';
+import { CemElement } from '/__cem/cem-element.js';
 
 /**
  * PatternFly v6 Navigation Group (Nested/Subnav)
@@ -8,22 +8,13 @@ import { loadComponentTemplate } from '/__cem/stylesheet-cache.js';
  *
  * @slot - Default slot for nav-list containing nav-items
  */
-class Pfv6NavGroup extends HTMLElement {
-  static get observedAttributes() {
-    return ['hidden', 'aria-labelledby'];
-  }
+class Pfv6NavGroup extends CemElement {
+  static observedAttributes = ['hidden', 'aria-labelledby'];
 
-  constructor() {
-    super();
-    if (!this.shadowRoot) {
-      this.attachShadow({ mode: 'open' });
-    }
-  }
+  #subnav;
 
-  async connectedCallback() {
-    if (!this.shadowRoot.querySelector('#subnav')) {
-      await this.#populateShadowRoot();
-    }
+  async afterTemplateLoaded() {
+    this.#subnav = this.shadowRoot.querySelector('#subnav');
     this.setAttribute('role', 'region');
     this.#syncAttributes();
   }
@@ -32,30 +23,18 @@ class Pfv6NavGroup extends HTMLElement {
     this.#syncAttributes();
   }
 
-  async #populateShadowRoot() {
-    try {
-      const { html, stylesheet } = await loadComponentTemplate('pfv6-nav-group');
-      this.shadowRoot.adoptedStyleSheets = [stylesheet];
-      this.shadowRoot.innerHTML = html;
-    } catch (error) {
-      console.error('Failed to load pfv6-nav-group template:', error);
-      this.shadowRoot.innerHTML = '<section id="subnav"><div id="list" role="list"><slot></slot></div></section>';
-    }
-  }
-
   #syncAttributes() {
-    const subnav = this.shadowRoot?.querySelector('#subnav');
-    if (!subnav) return;
+    if (!this.#subnav) return;
 
     if (this.hasAttribute('aria-labelledby')) {
-      subnav.setAttribute('aria-labelledby', this.getAttribute('aria-labelledby'));
+      this.#subnav.setAttribute('aria-labelledby', this.getAttribute('aria-labelledby'));
     }
 
     // Handle inert attribute when hidden
     if (this.hasAttribute('hidden')) {
-      subnav.setAttribute('inert', '');
+      this.#subnav.setAttribute('inert', '');
     } else {
-      subnav.removeAttribute('inert');
+      this.#subnav.removeAttribute('inert');
     }
   }
 }
