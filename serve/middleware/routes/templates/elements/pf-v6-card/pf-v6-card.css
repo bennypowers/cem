@@ -67,19 +67,34 @@ footer[hidden] {
   display: none;
 }
 
-/* Style headings in header slot */
-header ::slotted(h1),
-header ::slotted(h2),
-header ::slotted(h3),
-header ::slotted(h4),
-header ::slotted(h5),
-header ::slotted(h6) {
+#title[hidden] {
+  display: none;
+}
+
+/* Style headings in title slot */
+#title ::slotted(h1),
+#title ::slotted(h2),
+#title ::slotted(h3),
+#title ::slotted(h4),
+#title ::slotted(h5),
+#title ::slotted(h6) {
   margin: 0;
   color: var(--pf-v6-c-card__title-text--Color);
   font-family: var(--pf-v6-c-card__title-text--FontFamily);
   font-size: var(--pf-v6-c-card__title-text--FontSize);
   font-weight: var(--pf-v6-c-card__title-text--FontWeight);
   line-height: var(--pf-v6-c-card__title-text--LineHeight);
+  padding-block-start: var(--pf-v6-c-card--first-child--PaddingBlockStart);
+}
+
+/* Style summary span to display inline with heading */
+#title ::slotted(.element-summary) {
+  display: inline;
+  font-family: var(--pf-t--global--font--family--body);
+  font-size: var(--pf-t--global--font--size--body--default);
+  font-weight: var(--pf-t--global--font--weight--body--default);
+  line-height: var(--pf-t--global--font--line-height--body);
+  color: var(--pf-t--global--text--color--regular);
 }
 
 header:not([hidden]):not(:last-child) {

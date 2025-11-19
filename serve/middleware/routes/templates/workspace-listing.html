@@ -4,9 +4,9 @@
   <div class="listing-grid">
     {{range .Elements}}
     <pf-v6-card>
-      <h3 slot="header"><code>&lt;{{.TagName}}&gt;</code></h3>
+      <h3 slot="title"><code>&lt;{{.TagName}}&gt;</code></h3>
       {{if .Summary}}
-      <div slot="header" class="element-summary">{{.Summary}}</div>
+      <span slot="title" class="element-summary">{{.Summary}}</span>
       {{end}}
       {{if .Description}}
       <div class="element-description">{{.Description}}</div>

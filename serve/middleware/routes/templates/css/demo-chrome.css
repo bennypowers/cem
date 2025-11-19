@@ -210,6 +210,14 @@ cem-serve-listing {
 }
 
 .listing-grid h3 {
+  display: inline-block;
+  margin-inline-end: var(--pf-t--global--spacer--lg);
+}
+
+/* Element summary - make paragraphs inline */
+.element-summary,
+.element-summary > * {
   display: inline;
+  margin: 0;
 }
 
