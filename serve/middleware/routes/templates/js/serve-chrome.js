@@ -28,6 +28,9 @@ class CemServeChrome extends HTMLElement {
     // Set up debug overlay
     this.#setupDebugOverlay();
 
+    // Set up color scheme toggle
+    this.#setupColorSchemeToggle();
+
     // Set up footer drawer and tabs
     this.#setupFooterDrawer();
 
@@ -331,5 +334,61 @@ Generated: ${new Date().toISOString()}`;
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  #setupColorSchemeToggle() {
+    const toggleGroup = this.#$('.color-scheme-toggle');
+    if (!toggleGroup) return;
+
+    // Storage access gatekeeper - localStorage can throw in Safari private mode
+    const getStorageItem = (key, defaultValue) => {
+      try {
+        return localStorage.getItem(key) ?? defaultValue;
+      } catch (e) {
+        return defaultValue;
+      }
+    };
+
+    const setStorageItem = (key, value) => {
+      try {
+        localStorage.setItem(key, value);
+      } catch (e) {
+        // Storage unavailable (private mode), silently continue
+      }
+    };
+
+    // Restore saved color scheme preference and mark item as selected
+    const saved = getStorageItem('cem-serve-color-scheme', 'system');
+    const items = toggleGroup.querySelectorAll('pfv6-toggle-group-item');
+    items.forEach(item => {
+      if (item.getAttribute('value') === saved) {
+        item.setAttribute('selected', '');
+      }
+    });
+    this.#applyColorScheme(saved);
+
+    // Listen for toggle group changes
+    toggleGroup.addEventListener('pfv6-toggle-group-change', (e) => {
+      const scheme = e.value;
+      this.#applyColorScheme(scheme);
+      setStorageItem('cem-serve-color-scheme', scheme);
+    });
+  }
+
+  #applyColorScheme(scheme) {
+    const body = document.body;
+
+    switch (scheme) {
+      case 'light':
+        body.style.colorScheme = 'light';
+        break;
+      case 'dark':
+        body.style.colorScheme = 'dark';
+        break;
+      case 'system':
+      default:
+        body.style.colorScheme = 'light dark';
+        break;
+    }
   }
 }

@@ -1,0 +1,89 @@
+import { loadComponentTemplate } from '/__cem/stylesheet-cache.js';
+
+// Custom event for toggle group selection changes
+export class ToggleGroupChangeEvent extends Event {
+  constructor(item, selected, value) {
+    super('pfv6-toggle-group-change', { bubbles: true, composed: true });
+    this.item = item;
+    this.selected = selected;
+    this.value = value;
+  }
+}
+
+export class PfToggleGroup extends HTMLElement {
+  #container;
+
+  static observedAttributes = ['aria-label', 'compact'];
+
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+  }
+
+  async connectedCallback() {
+    if (!this.shadowRoot.getElementById('container')) {
+      await this.#populateShadowRoot();
+    }
+
+    this.#container = this.shadowRoot.getElementById('container');
+    this.#updateAriaLabel();
+
+    // Listen for selection events from items
+    this.addEventListener('pfv6-toggle-group-item-select', this.#handleItemSelect);
+  }
+
+  disconnectedCallback() {
+    this.removeEventListener('pfv6-toggle-group-item-select', this.#handleItemSelect);
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (!this.#container) return;
+
+    if (name === 'aria-label') {
+      this.#updateAriaLabel();
+    }
+  }
+
+  async #populateShadowRoot() {
+    try {
+      const { html, stylesheet } = await loadComponentTemplate('pfv6-toggle-group');
+      this.shadowRoot.adoptedStyleSheets = [stylesheet];
+      this.shadowRoot.innerHTML = html;
+    } catch (error) {
+      console.error('Failed to load pfv6-toggle-group template:', error);
+    }
+  }
+
+  #updateAriaLabel() {
+    const label = this.getAttribute('aria-label');
+    if (label) {
+      this.#container.setAttribute('aria-label', label);
+    } else {
+      this.#container.removeAttribute('aria-label');
+    }
+  }
+
+  #handleItemSelect = (event) => {
+    const selectedItem = event.item;
+    const isNowSelected = event.selected;
+
+    // Single-select mode: deselect all other items when one is selected
+    if (isNowSelected) {
+      const items = this.querySelectorAll('pfv6-toggle-group-item');
+      items.forEach(item => {
+        if (item !== selectedItem && item.hasAttribute('selected')) {
+          item.removeAttribute('selected');
+        }
+      });
+    }
+
+    // Dispatch change event from the group
+    this.dispatchEvent(new ToggleGroupChangeEvent(
+      selectedItem,
+      isNowSelected,
+      selectedItem.getAttribute('value')
+    ));
+  }
+}
+
+customElements.define('pfv6-toggle-group', PfToggleGroup);

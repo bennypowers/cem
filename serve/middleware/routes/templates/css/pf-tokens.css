@@ -769,6 +769,48 @@
   --pf-v6-c-toolbar__group--m-action-group-plain--ColumnGap: var(--pf-t--global--spacer--gap--action-to-action--plain);
   --pf-v6-c-toolbar__group--m-action-group-inline--ColumnGap: var(--pf-t--global--spacer--gap--action-to-action--default);
 
+  /* Toggle Group Tokens */
+  --pf-v6-c-toggle-group__button--PaddingBlockStart: var(--pf-t--global--spacer--sm);
+  --pf-v6-c-toggle-group__button--PaddingInlineEnd: var(--pf-t--global--spacer--md);
+  --pf-v6-c-toggle-group__button--PaddingBlockEnd: var(--pf-t--global--spacer--sm);
+  --pf-v6-c-toggle-group__button--PaddingInlineStart: var(--pf-t--global--spacer--md);
+  --pf-v6-c-toggle-group__button--FontSize: var(--pf-t--global--font--size--body--default);
+  --pf-v6-c-toggle-group__button--LineHeight: var(--pf-t--global--font--line-height--body);
+  --pf-v6-c-toggle-group__button--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-toggle-group__button--BackgroundColor: var(--pf-t--global--background--color--action--plain--default);
+  --pf-v6-c-toggle-group__button--ZIndex: auto;
+  --pf-v6-c-toggle-group__button--hover--BackgroundColor: var(--pf-t--global--background--color--primary--hover);
+  --pf-v6-c-toggle-group__button--hover--ZIndex: var(--pf-t--global--z-index--xs);
+  --pf-v6-c-toggle-group__button--hover--before--BorderColor: var(--pf-t--global--border--color--default);
+  --pf-v6-c-toggle-group__button--hover--after--BorderWidth: var(--pf-t--global--border--width--high-contrast--regular);
+  --pf-v6-c-toggle-group__button--before--BorderWidth: var(--pf-t--global--border--width--control--default);
+  --pf-v6-c-toggle-group__button--before--BorderColor: var(--pf-t--global--border--color--default);
+  --pf-v6-c-toggle-group__button--after--BorderWidth: 0;
+  --pf-v6-c-toggle-group__button--after--BorderColor: transparent;
+  --pf-v6-c-toggle-group__item--item--MarginInlineStart: calc(-1 * var(--pf-t--global--border--width--control--default));
+  --pf-v6-c-toggle-group__item--first-child__button--BorderStartStartRadius: var(--pf-t--global--border--radius--tiny);
+  --pf-v6-c-toggle-group__item--first-child__button--BorderEndStartRadius: var(--pf-t--global--border--radius--tiny);
+  --pf-v6-c-toggle-group__item--last-child__button--BorderStartEndRadius: var(--pf-t--global--border--radius--tiny);
+  --pf-v6-c-toggle-group__item--last-child__button--BorderEndEndRadius: var(--pf-t--global--border--radius--tiny);
+  --pf-v6-c-toggle-group__icon--text--MarginInlineStart: var(--pf-t--global--spacer--sm);
+  --pf-v6-c-toggle-group__text--icon--MarginInlineStart: var(--pf-t--global--spacer--sm);
+  --pf-v6-c-toggle-group__button--m-selected--BackgroundColor: var(--pf-t--global--color--brand--default);
+  --pf-v6-c-toggle-group__button--m-selected--Color: var(--pf-t--global--text--color--on-brand--default);
+  --pf-v6-c-toggle-group__button--m-selected--before--BorderColor: var(--pf-t--global--border--color--clicked);
+  --pf-v6-c-toggle-group__button--m-selected-selected--before--BorderInlineStartColor: var(--pf-t--global--border--color--alt);
+  --pf-v6-c-toggle-group__button--m-selected--ZIndex: var(--pf-t--global--z-index--xs);
+  --pf-v6-c-toggle-group__button--m-selected--after--BorderWidth: var(--pf-t--global--border--width--high-contrast--strong);
+  --pf-v6-c-toggle-group__button--disabled--BackgroundColor: var(--pf-t--global--background--color--disabled--default);
+  --pf-v6-c-toggle-group__button--disabled--Color: var(--pf-t--global--text--color--on-disabled);
+  --pf-v6-c-toggle-group__button--disabled--before--BorderColor: var(--pf-t--global--border--color--disabled);
+  --pf-v6-c-toggle-group__button--disabled-disabled--before--BorderInlineStartColor: var(--pf-t--global--border--color--disabled);
+  --pf-v6-c-toggle-group__button--disabled--ZIndex: var(--pf-t--global--z-index--xs);
+  --pf-v6-c-toggle-group--m-compact__button--PaddingBlockStart: 0;
+  --pf-v6-c-toggle-group--m-compact__button--PaddingInlineEnd: var(--pf-t--global--spacer--sm);
+  --pf-v6-c-toggle-group--m-compact__button--PaddingBlockEnd: 0;
+  --pf-v6-c-toggle-group--m-compact__button--PaddingInlineStart: var(--pf-t--global--spacer--sm);
+  --pf-v6-c-toggle-group--m-compact__button--FontSize: var(--pf-t--global--font--size--body--default);
+
   /* Spacer tokens */
   --pf-t--global--spacer--inset--page-chrome: var(--pf-t--global--spacer--lg);
   --pf-t--global--spacer--gutter--default: var(--pf-t--global--spacer--md);
