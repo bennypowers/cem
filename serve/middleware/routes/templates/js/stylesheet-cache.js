@@ -2,36 +2,66 @@
 // Provides utilities for loading and caching Constructable Stylesheets
 // This enables stylesheet sharing across multiple component instances
 
-// Cache for Constructable Stylesheet objects
+/** Cache for Constructable Stylesheet objects */
 const stylesheetCache = new Map();
+
+/** Cache for Element Templates */
+const templateCache = new Map();
+
+/**
+ * Fetch element html or css
+ * @param {string} name - Component name (e.g., 'pfv6-button')
+ * @param {'html'|'css'} type - file type
+ * @returns {Promise<string>} The content
+ */
+async function fetchText(name, type) {
+  const prettyType = type.toUpperCase();
+  try {
+    const html = await fetch(`/__cem/elements/${name}/${name}.${type}`).then(r => {
+      if (!r.ok) {
+        throw new Error(`Failed to fetch ${prettyType}: ${r.status} ${r.statusText}`);
+      }
+      return r.text();
+    });
+    return html;
+  } catch (error) {
+    console.error(`Failed to load ${prettyType} for ${name}:`, error);
+    throw error;
+  }
+}
 
 /**
  * Gets an existing stylesheet from cache or creates a new one
  * @param {string} name - Component name (e.g., 'pfv6-button')
- * @param {string} url - URL to fetch CSS from (e.g., '/__cem/elements/pfv6-button/pfv6-button.css')
  * @returns {Promise<CSSStyleSheet>} The cached or newly created stylesheet
  */
-export async function getOrCreateStylesheet(name, url) {
+async function loadCSS(name, url) {
   if (stylesheetCache.has(name)) {
     return stylesheetCache.get(name);
   }
 
+  const css = await fetchText(name, 'css');
   try {
-    const css = await fetch(url).then(r => {
-      if (!r.ok) {
-        throw new Error(`Failed to fetch CSS: ${r.status} ${r.statusText}`);
-      }
-      return r.text();
-    });
-
     const sheet = new CSSStyleSheet();
     await sheet.replace(css);
     stylesheetCache.set(name, sheet);
     return sheet;
-  } catch (error) {
-    console.error(`Failed to load stylesheet for ${name}:`, error);
+  } catch {
+    console.error(`Failed to construct stylesheet for ${name}:`, error);
     throw error;
   }
+}
+
+/**
+ * Gets an element template from client-side cache or from the server
+ * @param {string} name - Component name (e.g., 'pfv6-button')
+ * @returns {Promise<string>} The cached or fetched template string
+ */
+async function loadHTML(name) {
+  if (templateCache.has(name)) {
+    return templateCache.get(name);
+  }
+  return fetchText(name, 'html');
 }
 
 /**
@@ -40,20 +70,6 @@ export async function getOrCreateStylesheet(name, url) {
  * @returns {Promise<{html: string, stylesheet: CSSStyleSheet}>} The template HTML and stylesheet
  */
 export async function loadComponentTemplate(name) {
-  try {
-    const [html, stylesheet] = await Promise.all([
-      fetch(`/__cem/elements/${name}/${name}.html`).then(r => {
-        if (!r.ok) {
-          throw new Error(`Failed to fetch HTML: ${r.status} ${r.statusText}`);
-        }
-        return r.text();
-      }),
-      getOrCreateStylesheet(name, `/__cem/elements/${name}/${name}.css`)
-    ]);
-
-    return { html, stylesheet };
-  } catch (error) {
-    console.error(`Failed to load template for ${name}:`, error);
-    throw error;
-  }
+  const [html, stylesheet] = await Promise.all([loadHTML(name), loadCSS(name)]);
+  return { html, stylesheet };
 }
