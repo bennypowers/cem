@@ -172,30 +172,71 @@ serve:
     - [x] `pf-v6-switch` - Toggle switch component
     - [x] `pf-v6-text-input` - Text input component
     - [x] `pf-v6-select` - Select/dropdown component
-    - [x] `pf-v6-tabs` - Tabs container component
+    - [x] `pf-v6-tabs` - Tabs container component (refactored with IDs and parts)
     - [x] `pf-v6-tab` - Individual tab component
+    - [x] `pf-v6-card` - Card component for knobs panels
+    - [x] `pf-v6-label` - Label/badge component with status variants (used in server logs)
+    - [x] `pf-v6-navigation` - Horizontal navigation with scroll buttons
+    - [x] `pf-v6-nav-list`, `pf-v6-nav-item`, `pf-v6-nav-link`, `pf-v6-nav-group` - Navigation structure
+    - [x] `pf-v6-modal` - Modal dialog component
+    - [x] `pf-v6-page`, `pf-v6-page-main`, `pf-v6-page-sidebar` - Page layout structure
+    - [x] `pf-v6-masthead` - Application header
+    - [x] `pf-v6-skip-to-content` - Accessibility component
+    - [x] `pf-v6-toolbar`, `pf-v6-toolbar-group`, `pf-v6-toolbar-item` - Toolbar structure
+    - [x] `pf-v6-toggle-group`, `pf-v6-toggle-group-item` - Toggle button group
+  - [x] Custom CEM components:
+    - [x] `cem-drawer` - Drawer component for footer panel
+    - [x] `cem-serve-chrome` - Main dev server UI wrapper
+    - [x] `cem-serve-knobs` - Multi-instance knobs panel container
+    - [x] `cem-serve-knob-attribute`, `cem-serve-knob-property`, `cem-serve-knob-css-property` - Knob controls
+    - [x] `cem-color-scheme-toggle` - Light/dark mode toggle
+    - [x] `cem-connection-status` - WebSocket connection indicator
+    - [x] `cem-reconnection-content` - Reconnection modal content
+    - [x] `cem-transform-error-overlay` - Transform error display
 
-  **Phase 2: Dev Server UI Integration** ⬅️ **NEXT STEP**
-  - [ ] Integrate existing pfv6 components into dev server UI:
-    - [ ] **Buttons** - Replace button styles with `<pf-v6-button>` in:
-      - [ ] Nav drawer (`cem-nav-drawer.html`)
-      - [ ] Debug panel (`demo-chrome.html`)
-      - [ ] Chrome controls (`demo-chrome.html`)
-    - [ ] **Switch** - Replace checkboxes with `<pf-v6-switch>` in:
-      - [ ] Knobs panel (`templates/knobs.html`)
-      - [ ] Color scheme toggle (if applicable)
-    - [ ] **Form controls** - Use `<pf-v6-text-input>` and `<pf-v6-select>` in:
-      - [ ] Knobs panel for text/number inputs
-      - [ ] Knobs panel for select/enum inputs
-    - [ ] **Tabs** - Use `<pf-v6-tabs>` and `<pf-v6-tab>` where applicable
+  **Phase 2: Dev Server UI Integration** ✅ **COMPLETE**
+  - [x] Integrated pfv6 components into dev server UI:
+    - [x] **Page Layout** - `pf-v6-page`, `pf-v6-masthead`, `pf-v6-page-sidebar` for chrome structure
+    - [x] **Tabs** - `pf-v6-tabs` and `pf-v6-tab` in footer drawer (Knobs/Server Logs)
+    - [x] **Navigation** - `pf-v6-navigation` with horizontal scroll buttons in knobs panel
+    - [x] **Cards** - `pf-v6-card` for knobs group containers
+    - [x] **Labels** - `pf-v6-label` for server log badges (INFO/WARN/ERROR/DEBUG)
+    - [x] **Form controls** - `pf-v6-switch`, `pf-v6-text-input`, `pf-v6-select` in knobs
+    - [x] **Modal** - `pf-v6-modal` for reconnection dialog
+    - [x] **Drawer** - Custom `cem-drawer` for footer panel
+    - [x] **Toolbar** - `pf-v6-toolbar`, `pf-v6-toolbar-group`, `pf-v6-toolbar-item`
 
-  **Phase 3: Additional Components** (after Phase 2)
-  - [ ] Develop missing pfv6 components:
-    - [ ] **pf-v6-drawer** - For navigation drawer pattern (`<cem-nav-drawer>`)
-    - [ ] **pf-v6-header** - Masthead/chrome pattern (`<cem-serve-chrome>`)
-    - [ ] **pf-v6-disclosure** - Expandable sections for debug panel
-    - [ ] Other form controls as needed (checkbox, radio, etc.)
-  - [ ] Integrate new components into dev server UI
+  **Phase 2.5: Recent Polish Work** ✅ **COMPLETE**
+  - [x] Sticky navigation in knobs panel with proper positioning
+  - [x] Fixed WebSocket hijack errors in middleware chain
+  - [x] Removed debug logging from pf-v6-navigation
+  - [x] Optimized ResizeObserver to only observe necessary elements
+  - [x] Fixed knobs scrolling to only scroll within #knobs container
+  - [x] Refactored pf-v6-tabs to use IDs instead of classes and expose parts
+  - [x] Implemented pf-v6-label with all PatternFly v6 CSS custom properties
+  - [x] Converted log timestamps to semantic `<time>` elements with datetime attributes
+  - [x] Converted pf-tokens.css to use light-dark() CSS function
+
+  **Phase 3: Remaining Components & Polish** ⬅️ **CURRENT**
+  - [ ] **HIGH PRIORITY: pf-v6-text-input CSS polish** 🚨
+    - [ ] Current CSS is hallucinated, doesn't match actual PatternFly tokens/styles
+    - [ ] Needs manual implementation via iterative HTML/CSS inspection
+    - [ ] Process: paste rendered HTML/CSS from browser, rough into shape iteratively
+    - [ ] References:
+      - https://github.com/patternfly/patternfly/ (PatternFly Core CSS)
+      - https://github.com/patternfly/patternfly-react/ (React component API)
+      - https://patternfly.org/components/forms/text-input/ (Visual reference/docs)
+  - [ ] Additional PF v6 components (if needed):
+    - [ ] **pf-v6-number-input** - NumberInput component for number knobs with increment/decrement
+    - [ ] **pf-v6-expandable-section** - ExpandableSection for collapsible content
+    - [ ] Add `expanded` attribute to **pf-v6-card** for expandable cards
+  - [ ] UI/UX Polish:
+    - [ ] Mobile/responsive testing and fixes
+    - [ ] Accessibility audit (keyboard nav, screen readers, ARIA)
+    - [ ] Visual consistency check across all components
+  - [ ] Performance & Testing:
+    - [ ] Test with large projects (100+ components)
+    - [ ] Browser compatibility testing
 
   **Implementation approach:**
     - ✅ Create local web components in `serve/middleware/routes/templates/elements/`
