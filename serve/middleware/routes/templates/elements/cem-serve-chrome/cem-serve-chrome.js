@@ -447,11 +447,12 @@ Generated: ${new Date().toISOString()}`;
       // Log is now structured: { type: 'info'|'warning'|'error'|'debug', date: ISO8601, message: string }
       const date = new Date(log.date);
       const time = date.toLocaleTimeString();
-      const badge = this.#getLogBadge(log.type);
+      const labelText = this.#getLogBadge(log.type);
+      const labelAttrs = this.#getLogLabelAttrs(log.type);
 
       return `<div class="log-entry ${log.type}" data-log-id="${log.date}">
-        <span class="log-badge ${log.type}">${badge}</span>
-        <span class="log-time">${time}</span>
+        <pf-v6-label ${labelAttrs} compact>${labelText}</pf-v6-label>
+        <time class="log-time" datetime="${log.date}">${time}</time>
         <span class="log-message">${this.#escapeHtml(log.message)}</span>
       </div>`;
     }).join('');
@@ -480,11 +481,21 @@ Generated: ${new Date().toISOString()}`;
 
   #getLogBadge(type) {
     switch (type) {
-      case 'info': return 'INFO';
-      case 'warning': return 'WARN';
-      case 'error': return 'ERROR';
-      case 'debug': return 'DEBUG';
+      case 'info': return 'Info';
+      case 'warning': return 'Warn';
+      case 'error': return 'Error';
+      case 'debug': return 'Debug';
       default: return type.toUpperCase();
+    }
+  }
+
+  #getLogLabelAttrs(type) {
+    switch (type) {
+      case 'info': return 'status="info"';
+      case 'warning': return 'status="warning"';
+      case 'error': return 'status="danger"';
+      case 'debug': return 'color="purple"';
+      default: return 'color="grey"';
     }
   }
 
