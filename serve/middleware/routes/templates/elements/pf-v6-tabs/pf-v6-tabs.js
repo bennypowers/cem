@@ -6,13 +6,15 @@ import { CemElement } from '/__cem/cem-element.js';
 class PfV6Tabs extends CemElement {
   static is = 'pf-v6-tabs';
 
+  #$ = selector => this.shadowRoot.querySelector(selector);
+  #$$ = selector => this.shadowRoot.querySelectorAll(selector);
   #tabsContainer;
   #selectedIndex = 0;
   #tabs = [];
   #mutationObserver;
 
   async afterTemplateLoaded() {
-    this.#tabsContainer = this.shadowRoot.querySelector('.tabs');
+    this.#tabsContainer = this.#$('#tabs');
     if (!this.#tabsContainer) return;
 
     // Listen for tab child changes
@@ -48,7 +50,7 @@ class PfV6Tabs extends CemElement {
 
     // Clear existing buttons and panels
     this.#tabsContainer.innerHTML = '';
-    const panelsContainer = this.shadowRoot.querySelector('.panels');
+    const panelsContainer = this.#$('#panels');
     panelsContainer.innerHTML = '';
 
     // Generate buttons and panel slots for each tab
@@ -154,7 +156,7 @@ class PfV6Tabs extends CemElement {
     });
 
     // Update panel visibility
-    const panels = Array.from(this.shadowRoot.querySelectorAll('.panel'));
+    const panels = Array.from(this.#$$('.panel'));
     panels.forEach((panel, i) => {
       panel.hidden = i !== newIndex;
     });

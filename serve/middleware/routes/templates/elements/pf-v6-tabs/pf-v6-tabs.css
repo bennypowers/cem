@@ -5,7 +5,7 @@
   overflow: hidden;
 }
 
-.tabs-container {
+#tabs-container {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -17,7 +17,19 @@
   initial-value: 0px;
 }
 
-.tabs {
+#tabs {
+  /* Private component tokens (internal implementation) */
+  --_tab--Color: var(--pf-t--global--text--color--subtle);
+  --_tab--BackgroundColor: var(--pf-t--global--background--color--action--plain--default);
+  --_tab--BorderWidth: var(--pf-t--global--border--width--action--plain--hover);
+  --_tab--BorderColor: transparent;
+  --_tab--hover--Color: var(--pf-t--global--text--color--regular);
+  --_tab--hover--BackgroundColor: var(--pf-t--global--background--color--action--plain--hover);
+  --_tab--current--Color: var(--pf-t--global--text--color--regular);
+  --_tab--current--BackgroundColor: var(--pf-t--global--background--color--action--plain--default);
+  --_tab--disabled--Color: var(--pf-t--global--text--color--on-disabled);
+  --_tab--disabled--BackgroundColor: var(--pf-t--global--background--color--disabled--default);
+
   --_pf-v6-tabs--link-accent--start: 0px;
   --_pf-v6-tabs--link-accent--length: 0px;
   --_pf-v6-tabs--link-accent--color: var(--pf-t--global--border--color--clicked);
@@ -63,7 +75,7 @@
   }
 }
 
-.panels {
+#panels {
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -75,25 +87,9 @@
   height: 100%;
   overflow-y: auto;
   box-sizing: border-box;
-}
-
-.panel[hidden] {
-  display: none;
-}
-
-/* Tab button styles - single element with pseudo-element background */
-.tabs {
-  /* Private component tokens (internal implementation) */
-  --_tab--Color: var(--pf-t--global--text--color--subtle);
-  --_tab--BackgroundColor: var(--pf-t--global--background--color--action--plain--default);
-  --_tab--BorderWidth: var(--pf-t--global--border--width--action--plain--hover);
-  --_tab--BorderColor: transparent;
-  --_tab--hover--Color: var(--pf-t--global--text--color--regular);
-  --_tab--hover--BackgroundColor: var(--pf-t--global--background--color--action--plain--hover);
-  --_tab--current--Color: var(--pf-t--global--text--color--regular);
-  --_tab--current--BackgroundColor: var(--pf-t--global--background--color--action--plain--default);
-  --_tab--disabled--Color: var(--pf-t--global--text--color--on-disabled);
-  --_tab--disabled--BackgroundColor: var(--pf-t--global--background--color--disabled--default);
+  &[hidden] {
+    display: none;
+  }
 }
 
 /* Tab button - full clickable area with visual background via ::before */
@@ -113,37 +109,37 @@
   background-color: transparent;
   border: 0;
   cursor: pointer;
-}
 
-/* Visual rounded background - inset to create spacing effect */
-.tab::before {
-  content: '';
-  position: absolute;
-  inset-block-start: 0;
-  inset-inline-start: 0;
-  width: calc(100% - calc(var(--pf-t--global--spacer--sm) * 2));
-  height: calc(100% - calc(var(--pf-t--global--spacer--sm) * 2));
-  translate: var(--pf-t--global--spacer--sm) var(--pf-t--global--spacer--sm);
-  background-color: var(--_tab--BackgroundColor);
-  border: var(--_tab--BorderWidth) solid var(--_tab--BorderColor);
-  border-radius: var(--pf-t--global--border--radius--small);
-  transition: background-color var(--pf-t--global--motion--duration--fade--short) var(--pf-t--global--motion--timing-function--default);
-  z-index: -1;
-}
+  /* Visual rounded background - inset to create spacing effect */
+  &::before {
+    content: '';
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    width: calc(100% - calc(var(--pf-t--global--spacer--sm) * 2));
+    height: calc(100% - calc(var(--pf-t--global--spacer--sm) * 2));
+    translate: var(--pf-t--global--spacer--sm) var(--pf-t--global--spacer--sm);
+    background-color: var(--_tab--BackgroundColor);
+    border: var(--_tab--BorderWidth) solid var(--_tab--BorderColor);
+    border-radius: var(--pf-t--global--border--radius--small);
+    transition: background-color var(--pf-t--global--motion--duration--fade--short) var(--pf-t--global--motion--timing-function--default);
+    z-index: -1;
+  }
 
-.tab:where(:hover, :focus) {
-  --_tab--Color: var(--_tab--hover--Color);
-  --_tab--BackgroundColor: var(--_tab--hover--BackgroundColor);
-}
+  &:where(:hover, :focus) {
+    --_tab--Color: var(--_tab--hover--Color);
+    --_tab--BackgroundColor: var(--_tab--hover--BackgroundColor);
+  }
 
-.tab[aria-selected="true"] {
-  --_tab--Color: var(--_tab--current--Color);
-  --_tab--BackgroundColor: var(--_tab--current--BackgroundColor);
-}
+  &[aria-selected="true"] {
+    --_tab--Color: var(--_tab--current--Color);
+    --_tab--BackgroundColor: var(--_tab--current--BackgroundColor);
+  }
 
-.tab:disabled {
-  --_tab--Color: var(--_tab--disabled--Color);
-  --_tab--BackgroundColor: var(--_tab--disabled--BackgroundColor);
-  cursor: not-allowed;
-  pointer-events: none;
+  &:disabled {
+    --_tab--Color: var(--_tab--disabled--Color);
+    --_tab--BackgroundColor: var(--_tab--disabled--BackgroundColor);
+    cursor: not-allowed;
+    pointer-events: none;
+  }
 }
