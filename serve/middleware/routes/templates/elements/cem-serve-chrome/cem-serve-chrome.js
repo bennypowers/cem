@@ -21,6 +21,7 @@ import '/__cem/elements/pf-v6-toggle-group/pf-v6-toggle-group.js';
 import '/__cem/elements/pf-v6-toggle-group-item/pf-v6-toggle-group-item.js';
 import '/__cem/elements/pf-v6-modal/pf-v6-modal.js';
 import '/__cem/elements/pf-v6-card/pf-v6-card.js';
+import '/__cem/elements/pf-v6-label/pf-v6-label.js';
 import '/__cem/elements/cem-drawer/cem-drawer.js';
 import '/__cem/elements/cem-serve-demo/cem-serve-demo.js';
 import '/__cem/elements/cem-serve-knobs/cem-serve-knobs.js';
@@ -62,7 +63,7 @@ export class CemServeChrome extends CemElement {
     badgeFadeDelay: 2000,
     callbacks: {
       onOpen: () => {
-        console.log('[cem-serve] WebSocket connected');
+        console.debug('[cem-serve] WebSocket connected');
         // Only show "connected" toast if this is a reconnection
         if (this.#hasConnected) {
           this.#$('#connection-status')?.show('connected', 'Connected', { fadeDelay: 2000 });
@@ -71,7 +72,7 @@ export class CemServeChrome extends CemElement {
         this.#$('#reconnection-modal')?.close();
       },
       onClose: () => {
-        console.log('[cem-serve] Connection closed');
+        console.debug('[cem-serve] Connection closed');
       },
       onError: (errorData) => {
         // Handle both WebSocket errors and server error messages
@@ -85,7 +86,7 @@ export class CemServeChrome extends CemElement {
         }
       },
       onReconnecting: ({ attempt, delay }) => {
-        console.log(`[cem-serve] Reconnecting in ${Math.ceil(delay/1000)}s (attempt #${attempt})...`);
+        console.debug(`[cem-serve] Reconnecting in ${Math.ceil(delay/1000)}s (attempt #${attempt})...`);
         this.#$('#connection-status')?.show('reconnecting', `Reconnecting (attempt #${attempt})...`);
 
         // Show modal after threshold
@@ -95,7 +96,7 @@ export class CemServeChrome extends CemElement {
         }
       },
       onReload: (data) => {
-        console.log('[cem-serve] Reloading page:', data.reason, data.files);
+        console.debug('[cem-serve] Reloading page:', data.reason, data.files);
         // Hide error overlay on reload (error was fixed)
         const errorOverlay = this.#$('#error-overlay');
         if (errorOverlay?.hasAttribute('open')) {
@@ -161,7 +162,7 @@ export class CemServeChrome extends CemElement {
       this.classList.remove('initializing');
     });
 
-    console.log('[cem-serve-chrome] Demo chrome initialized for', this.tagName);
+    console.debug('[cem-serve-chrome] Demo chrome initialized for', this.tagName);
   }
 
   async #fetchDebugInfo() {

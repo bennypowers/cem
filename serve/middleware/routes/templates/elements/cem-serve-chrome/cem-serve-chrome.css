@@ -337,41 +337,19 @@ footer ::slotted([slot="description"]) {
 }
 
 .log-entry {
-  font-family: var(--cem-dev-server-font-family-mono);
-  font-size: var(--cem-dev-server-font-size-sm);
   padding: var(--cem-dev-server-spacing-xs) var(--cem-dev-server-spacing-md);
   display: flex;
   gap: var(--cem-dev-server-spacing-sm);
   align-items: baseline;
 }
 
-.log-badge {
-  font-weight: 600;
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 3px;
-  text-transform: uppercase;
+.log-entry pf-v6-label {
   flex-shrink: 0;
+}
 
-  &.info {
-    background: var(--pf-t--global--color--status--info--default);
-    color: var(--pf-t--global--text--color--on-brand);
-  }
-
-  &.warning {
-    background: var(--pf-t--global--color--status--warning--default);
-    color: var(--pf-t--global--text--color--on-brand);
-  }
-
-  &.error {
-    background: var(--pf-t--global--color--status--danger--default);
-    color: var(--pf-t--global--text--color--on-brand);
-  }
-
-  &.debug {
-    background: light-dark(#6b7280, #9ca3af);
-    color: var(--pf-t--global--text--color--on-brand);
-  }
+.log-time, .log-message {
+  font-family: var(--cem-dev-server-font-family-mono);
+  font-size: var(--cem-dev-server-font-size-sm);
 }
 
 .log-time {

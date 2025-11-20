@@ -44,7 +44,7 @@ export class CEMReloadClient {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const pageURL = encodeURIComponent(window.location.pathname);
     this.#url = protocol + '//' + window.location.host + '/__cem/reload?page=' + pageURL;
-    console.log('[cem-serve] Connecting to WebSocket:', this.#url, 'from page:', window.location.pathname);
+    console.debug('[cem-serve] Connecting to WebSocket:', this.#url, 'from page:', window.location.pathname);
 
     // Start connection
     this.#connect();
