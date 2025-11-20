@@ -2,16 +2,25 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  height: 100%;
 }
 
-#nav-container {
-  position: sticky;
-  z-index: 1;
-  grid-column: 1/-1;
-  background-color: var(--pf-t--global--background--color--primary--default);
-  inset-inline: 0;
-  inset-block-start: calc(1rem + 12px);
-  padding-block: .5rem;
+pf-v6-navigation {
+  flex-shrink: 0;
+}
+
+#knobs {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--pf-t--global--spacer--lg);
+}
+
+#knobs slot {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: var(--pf-t--global--spacer--gap--group-to-group--horizontal--default) var(--pf-t--global--spacer--gap--group-to-group--vertical--default);
+  align-items: start;
 }
 
 ::slotted(pf-v6-card.active) {

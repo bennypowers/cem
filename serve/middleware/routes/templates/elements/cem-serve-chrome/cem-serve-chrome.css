@@ -186,17 +186,16 @@ pf-v6-page-main ::slotted(*) {
   font-size: var(--pf-t--global--font--size--body--sm);
 }
 
-/* Knobs controls styling */
+/* Knobs container - fills tab panel height */
 #knobs-container {
-  padding: var(--pf-t--global--spacer--lg);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Style slotted knobs container */
 #knobs-container ::slotted([slot="knobs"]) {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-  gap: var(--pf-t--global--spacer--gap--group-to-group--horizontal--default) var(--pf-t--global--spacer--gap--group-to-group--vertical--default);
-  align-items: start;
+  flex: 1;
+  min-height: 0;
 }
 
 .knobs-empty {
