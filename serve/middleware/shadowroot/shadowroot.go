@@ -65,6 +65,12 @@ func newWithKnownElements(logger types.Logger, broadcaster types.ErrorBroadcaste
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Skip internal routes that need direct ResponseWriter access (WebSocket, etc.)
+			if strings.HasPrefix(r.URL.Path, "/__cem") {
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			// Capture response
 			rec := middleware.NewResponseRecorder()
 			next.ServeHTTP(rec, r)
