@@ -1,7 +1,13 @@
 {{if .}}
 <cem-serve-knobs slot="knobs">
   {{range $index, $group := .}}
-  <pf-v6-card class="knobs-panel" compact data-panel="instance-{{$index}}" data-label="{{$group.Label}}" data-tag-name="{{$group.TagName}}" data-instance-index="{{$group.InstanceIndex}}" {{if eq $index 0}}active{{end}}>
+  <pf-v6-card class="knobs-panel"
+              compact
+              data-card="instance-{{$index}}"
+              data-label="{{$group.Label}}"
+              data-tag-name="{{$group.TagName}}"
+              data-instance-index="{{$group.InstanceIndex}}"
+              {{if eq $index 0}}active{{end}}>
     <h3 slot="title">
       <span class="instance-tag">{{$group.TagName}}</span>: <span class="instance-label">{{$group.Label}}</span>
     </h3>

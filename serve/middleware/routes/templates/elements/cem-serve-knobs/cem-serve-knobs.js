@@ -13,17 +13,18 @@ import { CemElement } from '/__cem/cem-element.js';
 export class CemServeKnobs extends CemElement {
   static is = 'cem-serve-knobs';
 
+  #$ = selector => this.shadowRoot.querySelector(selector);
   #navList = null;
 
   async afterTemplateLoaded() {
-    this.#navList = this.shadowRoot.getElementById('nav-list');
+    this.#navList = this.#$('#nav-list');
     this.#setupNavigation();
-    this.#setupPanelSwitching();
+    this.#setupKnobGroupSwitching();
   }
 
   #setupNavigation() {
     // Get all slotted knobs panels (pf-v6-card elements)
-    const slot = this.shadowRoot.querySelector('slot');
+    const slot = this.#$('slot');
     if (!slot) return;
 
     const updateNavigation = () => {
@@ -40,7 +41,7 @@ export class CemServeKnobs extends CemElement {
         const navLink = document.createElement('pf-v6-nav-link');
         const label = document.createElement('span');
 
-        const panelId = panel.dataset.panel || `instance-${index}`;
+        const panelId = panel.dataset.card || `instance-${index}`;
         const labelText = panel.dataset.label || `Instance ${index + 1}`;
 
         label.className = 'instance-label';
@@ -64,7 +65,7 @@ export class CemServeKnobs extends CemElement {
     updateNavigation();
   }
 
-  #setupPanelSwitching() {
+  #setupKnobGroupSwitching() {
     // Delegate click handling to the nav list
     this.#navList?.addEventListener('click', (e) => {
       const navLink = e.target.closest('pf-v6-nav-link');
@@ -75,21 +76,32 @@ export class CemServeKnobs extends CemElement {
 
       e.preventDefault();
 
-      const panelId = href.substring(1); // Remove #
-      const panels = this.querySelectorAll('pf-v6-card');
+      const cardId = href.substring(1); // Remove #
+      const cards = this.querySelectorAll('pf-v6-card');
       const navLinks = this.#navList.querySelectorAll('pf-v6-nav-link');
+      const knobsContainer = this.#$('#knobs');
 
       // Update current states
       for (const link of navLinks) {
         link.toggleAttribute('current', link === navLink);
       }
 
-      // Update panel visibility
-      for (const panel of panels) {
-        const isActive = panel.dataset.panel === panelId
-        panel.classList.toggle('active', isActive);
-        if (isActive) {
-          panel.scrollIntoView();
+      // Update card visibility and scroll
+      for (const card of cards) {
+        const isActive = card.dataset.card === cardId;
+        card.classList.toggle('active', isActive);
+        if (isActive && knobsContainer) {
+          // Scroll the card into view within the #knobs container only
+          const cardRect = card.getBoundingClientRect();
+          const containerRect = knobsContainer.getBoundingClientRect();
+
+          // Calculate scroll offset needed to bring card into view
+          const scrollOffset = cardRect.top - containerRect.top + knobsContainer.scrollTop;
+
+          knobsContainer.scrollTo({
+            top: scrollOffset,
+            behavior: 'smooth'
+          });
         }
       }
     });

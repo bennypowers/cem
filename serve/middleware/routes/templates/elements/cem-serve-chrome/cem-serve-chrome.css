@@ -196,6 +196,7 @@ pf-v6-page-main ::slotted(*) {
 #knobs-container ::slotted([slot="knobs"]) {
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 
 .knobs-empty {
