@@ -96,45 +96,26 @@ class PfV6Navigation extends CemElement {
   #setupScrollObserver() {
     if (!this.#navList) return;
 
-    // Update button states on scroll - listen to nav element
+    // Update button states on scroll
     this.#nav.addEventListener('scroll', () => {
       this.#handleScrollButtons();
     });
 
-    // Observe size changes to detect when scrollable state should change
+    // Use single ResizeObserver for all size changes
+    // Container queries can't detect overflow state, so we need ResizeObserver
     this.#resizeObserver = new ResizeObserver(() => {
       this.#handleScrollButtons();
     });
 
+    // Observe the nav container (scrollable element)
+    this.#resizeObserver.observe(this.#nav);
+
+    // Observe the nav-list (content that may overflow)
     this.#resizeObserver.observe(this.#navList);
 
-    // Also observe the host element to catch window resizes
-    this.#resizeObserver.observe(this);
-
-    // Also observe each nav-item as they render
-    const navItems = this.#navList.querySelectorAll('pf-v6-nav-item');
-    navItems.forEach(item => {
-      this.#resizeObserver.observe(item);
-    });
-
-    // Watch for new nav-items being added
-    const itemObserver = new MutationObserver(() => {
-      this.#handleScrollButtons();
-
-      // Observe any new items
-      const newItems = this.#navList.querySelectorAll('pf-v6-nav-item');
-      newItems.forEach(item => {
-        this.#resizeObserver.observe(item);
-      });
-    });
-
-    itemObserver.observe(this.#navList, { childList: true, subtree: true });
-
-    // Initial check - wait for layout
+    // Initial check after layout
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        this.#handleScrollButtons();
-      });
+      this.#handleScrollButtons();
     });
   }
 
