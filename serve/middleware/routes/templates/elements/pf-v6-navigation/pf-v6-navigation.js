@@ -50,8 +50,6 @@ class PfV6Navigation extends CemElement {
     this.#scrollBackButton = this.shadowRoot.querySelector('#scroll-back');
     this.#scrollForwardButton = this.shadowRoot.querySelector('#scroll-forward');
 
-    console.log('[pf-v6-navigation] afterTemplateLoaded - variant:', this.variant, 'horizontal:', this.horizontal, 'parent:', this.parentElement?.tagName);
-
     this.#syncAttributes();
     this.#setupScrollButtons();
     this.#observeNavList();
@@ -72,16 +70,11 @@ class PfV6Navigation extends CemElement {
   #observeNavList() {
     // Wait for slotted content
     const slot = this.#nav?.querySelector('slot');
-    if (!slot) {
-      console.log('[pf-v6-navigation] No slot found');
-      return;
-    }
+    if (!slot) return;
 
     const initNavList = () => {
       const elements = slot.assignedElements();
-      console.log('[pf-v6-navigation] Slot assigned elements:', elements);
       this.#navList = elements.find(el => el.tagName === 'PF-V6-NAV-LIST');
-      console.log('[pf-v6-navigation] Nav list found:', this.#navList, 'horizontal:', this.horizontal);
       if (this.#navList && this.horizontal) {
         this.#setupScrollObserver();
       }
@@ -101,22 +94,15 @@ class PfV6Navigation extends CemElement {
   }
 
   #setupScrollObserver() {
-    if (!this.#navList) {
-      console.log('[pf-v6-navigation] setupScrollObserver: no navList');
-      return;
-    }
-
-    console.log('[pf-v6-navigation] Setting up scroll observer on navList:', this.#navList);
+    if (!this.#navList) return;
 
     // Update button states on scroll - listen to nav element
     this.#nav.addEventListener('scroll', () => {
-      console.log('[pf-v6-navigation] Scroll event fired');
       this.#handleScrollButtons();
     });
 
     // Observe size changes to detect when scrollable state should change
     this.#resizeObserver = new ResizeObserver(() => {
-      console.log('[pf-v6-navigation] ResizeObserver fired');
       this.#handleScrollButtons();
     });
 
@@ -133,7 +119,6 @@ class PfV6Navigation extends CemElement {
 
     // Watch for new nav-items being added
     const itemObserver = new MutationObserver(() => {
-      console.log('[pf-v6-navigation] Nav items mutated, re-checking');
       this.#handleScrollButtons();
 
       // Observe any new items
@@ -148,28 +133,16 @@ class PfV6Navigation extends CemElement {
     // Initial check - wait for layout
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        console.log('[pf-v6-navigation] Initial handleScrollButtons check (after 2 RAF)');
         this.#handleScrollButtons();
       });
     });
   }
 
   #handleScrollButtons() {
-    if (!this.#navList || !this.horizontal) {
-      console.log('[pf-v6-navigation] handleScrollButtons early exit - navList:', this.#navList, 'horizontal:', this.horizontal);
-      return;
-    }
+    if (!this.#navList || !this.horizontal) return;
 
     // Get scroll dimensions from the nav element (the scrollable container)
     const { scrollLeft, scrollWidth, clientWidth } = this.#nav;
-
-    console.log('[pf-v6-navigation] handleScrollButtons dimensions:',
-      `scrollLeft=${scrollLeft}`,
-      `scrollWidth=${scrollWidth}`,
-      `clientWidth=${clientWidth}`,
-      `nav.offsetWidth=${this.#nav.offsetWidth}`,
-      `isOverflowing=${scrollWidth > clientWidth}`
-    );
 
     // Check if scrollable - nav content overflows nav container
     const isOverflowing = scrollWidth > clientWidth;
@@ -178,17 +151,8 @@ class PfV6Navigation extends CemElement {
     const scrollViewAtStart = scrollLeft <= 1;
     const scrollViewAtEnd = scrollLeft + clientWidth >= scrollWidth - 1;
 
-    console.log('[pf-v6-navigation] Scroll state:',
-      `isOverflowing=${isOverflowing}`,
-      `scrollViewAtStart=${scrollViewAtStart}`,
-      `scrollViewAtEnd=${scrollViewAtEnd}`,
-      `shouldBeScrollable=${isOverflowing && (!scrollViewAtStart || !scrollViewAtEnd)}`
-    );
-
     // Update scrollable attribute (shows/hides buttons)
     this.scrollable = isOverflowing && (!scrollViewAtStart || !scrollViewAtEnd);
-
-    console.log('[pf-v6-navigation] Set scrollable to:', this.scrollable);
 
     // Update button disabled states
     if (this.#scrollBackButton) {
