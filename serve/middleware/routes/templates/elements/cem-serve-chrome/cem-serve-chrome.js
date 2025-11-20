@@ -23,6 +23,7 @@ import '/__cem/elements/pf-v6-modal/pf-v6-modal.js';
 import '/__cem/elements/pf-v6-card/pf-v6-card.js';
 import '/__cem/elements/cem-drawer/cem-drawer.js';
 import '/__cem/elements/cem-serve-demo/cem-serve-demo.js';
+import '/__cem/elements/cem-serve-knobs/cem-serve-knobs.js';
 import '/__cem/elements/cem-serve-knob-attribute/cem-serve-knob-attribute.js';
 import '/__cem/elements/cem-serve-knob-property/cem-serve-knob-property.js';
 import '/__cem/elements/cem-serve-knob-css-property/cem-serve-knob-css-property.js';

@@ -1,0 +1,21 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+#nav-container {
+  position: sticky;
+  z-index: 1;
+  grid-column: 1/-1;
+  background-color: var(--pf-t--global--background--color--primary--default);
+  inset-inline: 0;
+  inset-block-start: calc(1rem + 12px);
+  padding-block: .5rem;
+}
+
+::slotted(pf-v6-card.active) {
+  --pf-v6-c-card--BorderColor: var(--pf-v6-c-card--m-selectable--m-selected--BorderColor);
+  --pf-v6-c-card--BorderWidth: var(--pf-v6-c-card--m-selectable--m-selected--BorderWidth);
+}
+

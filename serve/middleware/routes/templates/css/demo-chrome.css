@@ -221,3 +221,15 @@ cem-serve-listing {
   margin: 0;
 }
 
+cem-serve-knobs {
+  .instance-tag {
+    font-family: var(--cem-dev-server-font-family-mono);
+    color: var(--cem-dev-server-accent-color);
+    font-size: var(--cem-dev-server-font-size-sm);
+  }
+
+  .instance-label {
+    color: var(--cem-dev-server-text-secondary);
+    font-size: var(--cem-dev-server-font-size-sm);
+  }
+}

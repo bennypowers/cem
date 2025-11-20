@@ -682,25 +682,22 @@ func TestRenderMultiInstanceKnobsHTML(t *testing.T) {
 		t.Error("Expected non-empty HTML output")
 	}
 
-	// Verify <details> elements exist (one per group)
-	detailsCount := 0
-	for i := 0; i < len(htmlStr); i++ {
-		if i+8 < len(htmlStr) && htmlStr[i:i+8] == "<details" {
-			detailsCount++
-		}
-	}
-	// Count pf-v6-card opening tags instead of details
-	cardCount := 0
-	for i := 0; i < len(htmlStr); i++ {
-		if i < len(htmlStr)-11 && htmlStr[i:i+11] == "<pf-v6-card" {
-			cardCount++
-		}
-	}
-	if cardCount != 3 {
-		t.Errorf("Expected 3 <pf-v6-card> elements, found %d", cardCount)
+	// Verify cem-serve-knobs wrapper exists
+	if !contains(htmlStr, "cem-serve-knobs") {
+		t.Error("Expected HTML to contain cem-serve-knobs element")
 	}
 
-	// Verify labels appear in card titles
+	// Count knobs-panel divs (one per instance)
+	if !contains(htmlStr, `class="knobs-panel"`) {
+		t.Error("Expected HTML to contain knobs-panel divs")
+	}
+
+	// Verify all three instances are present
+	if !contains(htmlStr, "instance-0") || !contains(htmlStr, "instance-1") || !contains(htmlStr, "instance-2") {
+		t.Error("Expected HTML to contain all three instance panels (instance-0, instance-1, instance-2)")
+	}
+
+	// Verify labels appear in nav links
 	expectedLabels := []string{"#card-1", "#card-2", "#card-3"}
 	for _, label := range expectedLabels {
 		if !contains(htmlStr, label) {

@@ -44,6 +44,25 @@
   --pf-v6-c-card--m-plain--BackgroundColor: transparent;
   --pf-v6-c-card--m-plain--BorderColor: transparent;
 
+  --pf-v6-c-card--m-selectable--BorderWidth: var(--pf-v6-c-card--BorderWidth);
+  --pf-v6-c-card--m-clickable--m-current--BorderColor: var(--pf-t--global--border--color--clicked);
+  --pf-v6-c-card--m-clickable--m-current--BorderWidth: var(--pf-t--global--border--width--box--clicked);
+  --pf-v6-c-card--m-selectable--m-selected--BorderColor: var(--pf-t--global--border--color--clicked);
+  --pf-v6-c-card--m-selectable--m-selected--BorderWidth: var(--pf-t--global--border--width--box--clicked);
+  --pf-v6-c-card--m-selectable--hover--BorderColor: var(--pf-t--global--border--color--hover);
+  --pf-v6-c-card--m-selectable--hover--BorderWidth: var(--pf-t--global--border--width--box--hover);
+  --pf-v6-c-card--m-selectable--focus--BorderColor: var(--pf-t--global--border--color--hover);
+  --pf-v6-c-card--m-selectable--focus--BorderWidth: var(--pf-t--global--border--width--box--hover);
+  --pf-v6-c-card--m-selectable--m-selected--focus--BorderColor: var(--pf-t--global--border--color--clicked);
+  --pf-v6-c-card--m-selectable--m-selected--focus--BorderWidth: var(--pf-t--global--border--width--box--clicked);
+  --pf-v6-c-card--m-selectable--m-disabled__title-text--Color: var(--pf-t--global--text--color--on-disabled);
+  --pf-v6-c-card--m-selectable--m-disabled__body--Color: var(--pf-t--global--text--color--on-disabled);
+  --pf-v6-c-card--m-selectable--m-disabled__footer--Color: var(--pf-t--global--text--color--on-disabled);
+  --pf-v6-c-card--m-selectable--m-disabled--BackgroundColor: var(--pf-t--global--background--color--disabled--default);
+  --pf-v6-c-card--m-selectable--m-disabled--BorderColor: transparent;
+  --pf-v6-c-card--m-selectable--m-clickable--m-current--BorderColor: var(--pf-t--global--border--color--clicked);
+  --pf-v6-c-card--m-selectable--m-clickable--m-current--BorderWidth: var(--pf-t--global--border--width--box--clicked);
+
   background-color: var(--pf-v6-c-card--BackgroundColor);
   border: var(--pf-v6-c-card--BorderWidth) var(--pf-v6-c-card--BorderStyle) var(--pf-v6-c-card--BorderColor);
   border-radius: var(--pf-v6-c-card--BorderRadius);
