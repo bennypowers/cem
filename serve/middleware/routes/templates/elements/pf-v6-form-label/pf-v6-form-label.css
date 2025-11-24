@@ -1,0 +1,11 @@
+.pf-v6-c-form__label {
+  font-weight: var(--pf-t--global--font--weight--body--bold);
+  font-size: var(--pf-t--global--font--size--body--default);
+  color: var(--pf-t--global--text--color--regular);
+  margin: 0;
+  cursor: pointer;
+}
+
+.pf-v6-c-form__label-text {
+  display: inline;
+}

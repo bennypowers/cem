@@ -1,0 +1,10 @@
+:host {
+  display: block;
+}
+
+:host([horizontal]) {
+  display: grid;
+  grid-template-columns: minmax(0, auto) 1fr;
+  column-gap: var(--pf-t--global--spacer--md);
+  row-gap: var(--pf-t--global--spacer--sm);
+}

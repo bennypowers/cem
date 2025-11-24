@@ -1,0 +1,27 @@
+:host {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  align-items: baseline;
+}
+
+#label {
+  grid-column: 1 / 2;
+}
+
+#control {
+  grid-column: 2 / 3;
+  display: flex;
+  gap: var(--pf-t--global--spacer--sm);
+  align-items: start;
+}
+
+#helper-text {
+  font-size: var(--pf-t--global--font--size--sm);
+  color: var(--pf-t--global--text--color--subtle);
+  margin-top: var(--pf-t--global--spacer--xs);
+}
+
+#helper-text:empty {
+  display: none;
+}

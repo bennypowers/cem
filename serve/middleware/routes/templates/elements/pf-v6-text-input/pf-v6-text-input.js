@@ -4,10 +4,18 @@ import { CemElement } from '/__cem/cem-element.js';
  * @customElement pf-v6-text-input
  */
 class PfV6TextInput extends CemElement {
+  static formAssociated = true;
   static observedAttributes = ['value', 'type', 'placeholder', 'disabled', 'readonly', 'invalid', 'min', 'max', 'step', 'aria-label', 'aria-labelledby'];
   static is = 'pf-v6-text-input';
 
   #input;
+  #internals;
+
+  constructor() {
+    super();
+    // Attach ElementInternals for form association
+    this.#internals = this.attachInternals();
+  }
 
   async afterTemplateLoaded() {
     this.#input = this.shadowRoot.getElementById('text-input');
@@ -20,11 +28,16 @@ class PfV6TextInput extends CemElement {
     this.#input.addEventListener('input', () => {
       // Sync the value attribute to match internal input
       this.setAttribute('value', this.#input.value);
+
+      // Update form value via ElementInternals
+      this.#internals.setFormValue(this.#input.value);
+
       this.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
     });
 
     this.#input.addEventListener('change', () => {
       this.setAttribute('value', this.#input.value);
+      this.#internals.setFormValue(this.#input.value);
       this.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
     });
   }

@@ -4,10 +4,18 @@ import { CemElement } from '/__cem/cem-element.js';
  * @customElement pf-v6-select
  */
 class PfV6Select extends CemElement {
+  static formAssociated = true;
   static observedAttributes = ['value', 'options', 'disabled', 'invalid', 'aria-label', 'aria-labelledby'];
   static is = 'pf-v6-select';
 
   #select;
+  #internals;
+
+  constructor() {
+    super();
+    // Attach ElementInternals for form association
+    this.#internals = this.attachInternals();
+  }
 
   async afterTemplateLoaded() {
     this.#select = this.shadowRoot.getElementById('select');
@@ -23,11 +31,16 @@ class PfV6Select extends CemElement {
     this.#select.addEventListener('change', () => {
       // Sync the value attribute to match internal select
       this.setAttribute('value', this.#select.value);
+
+      // Update form value via ElementInternals
+      this.#internals.setFormValue(this.#select.value);
+
       this.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
     });
 
     this.#select.addEventListener('input', () => {
       this.setAttribute('value', this.#select.value);
+      this.#internals.setFormValue(this.#select.value);
       this.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
     });
   }

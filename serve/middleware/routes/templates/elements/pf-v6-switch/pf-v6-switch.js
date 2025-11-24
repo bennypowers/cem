@@ -4,10 +4,18 @@ import { CemElement } from '/__cem/cem-element.js';
  * @customElement pf-v6-switch
  */
 class PfV6Switch extends CemElement {
+  static formAssociated = true;
   static observedAttributes = ['checked', 'disabled', 'aria-label', 'aria-labelledby'];
   static is = 'pf-v6-switch';
 
   #input;
+  #internals;
+
+  constructor() {
+    super();
+    // Attach ElementInternals for form association
+    this.#internals = this.attachInternals();
+  }
 
   async afterTemplateLoaded() {
     this.#input = this.shadowRoot.getElementById('switch-input');
@@ -24,12 +32,16 @@ class PfV6Switch extends CemElement {
       } else {
         this.removeAttribute('checked');
       }
-      this.dispatchEvent(new Event('change', { bubbles: true }));
+
+      // Update form value via ElementInternals
+      this.#internals.setFormValue(this.#input.checked ? 'on' : null);
+
+      this.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
     });
 
     // Forward input events from internal checkbox
     this.#input.addEventListener('input', () => {
-      this.dispatchEvent(new Event('input', { bubbles: true }));
+      this.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
     });
   }
 
@@ -93,6 +105,14 @@ class PfV6Switch extends CemElement {
 
   set value(val) {
     this.checked = val;
+  }
+
+  focus() {
+    this.#input?.focus();
+  }
+
+  blur() {
+    this.#input?.blur();
   }
 
   static {
