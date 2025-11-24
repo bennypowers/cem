@@ -16,10 +16,8 @@ import { CemElement } from '/__cem/cem-element.js';
 class PfV6Page extends CemElement {
   static observedAttributes = ['sidebar-collapsed'];
   static is = 'pf-v6-page';
-  static match = window.matchMedia('(min-width: 75rem)');
-
   /** Are we a wide layout, or a narrow layout? */
-  #wide = false;
+  static match = window.matchMedia('(min-width: 75rem)');
 
   get sidebarCollapsed() {
     return this.hasAttribute('sidebar-collapsed');
@@ -45,13 +43,8 @@ class PfV6Page extends CemElement {
     this.addEventListener('sidebar-toggle', (event) => {
       this.sidebarCollapsed = !event.expanded;
     });
-    PfV6Page.match.addEventListener('change', (event) => {
-      if (event.matches) {
-        this.#wide = true;
-      }
-    });
     this.addEventListener('click', (event) => {
-      if (!this.#wide &&
+      if (!PfV6Page.match.matches &&
           !this.sidebarCollapsed &&
           !event
             .composedPath()

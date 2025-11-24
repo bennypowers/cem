@@ -53,7 +53,7 @@ var demoChromeTemplate string
 //go:embed templates/**
 var TemplatesFS embed.FS
 
-//go:embed templates/js/*.js templates/css/*.css templates/images/* templates/elements/**/*
+//go:embed templates/js/*.js templates/css/*.css templates/images/* templates/elements/*.css templates/elements/**/*
 var InternalModules embed.FS
 
 // errorBroadcaster holds the error broadcaster for template errors
