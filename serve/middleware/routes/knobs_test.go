@@ -267,7 +267,8 @@ func TestParseType(t *testing.T) {
 func TestRenderKnobsHTML(t *testing.T) {
 	// Create sample knobs data
 	knobs := &KnobsData{
-		TagName: "my-button",
+		TagName:   "my-button",
+		ElementID: "my-button-0",
 		AttributeKnobs: []KnobData{
 			{
 				Name:         "disabled",
@@ -307,7 +308,19 @@ func TestRenderKnobsHTML(t *testing.T) {
 		},
 	}
 
-	html, err := RenderKnobsHTML(knobs)
+	// Wrap in ElementKnobGroup slice
+	knobGroups := []ElementKnobGroup{
+		{
+			TagName:       "my-button",
+			ElementID:     "my-button-0",
+			Label:         "#my-button-0",
+			InstanceIndex: 0,
+			IsPrimary:     true,
+			Knobs:         knobs,
+		},
+	}
+
+	html, err := RenderKnobsHTML(knobGroups)
 	if err != nil {
 		t.Fatalf("RenderKnobsHTML failed: %v", err)
 	}

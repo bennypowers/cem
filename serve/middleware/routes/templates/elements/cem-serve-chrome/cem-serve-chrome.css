@@ -232,7 +232,20 @@ pf-v6-page-main ::slotted(*) {
   }
 }
 
+/* PatternFly v6 form - horizontal layout */
+.pf-v6-c-form.pf-m-horizontal {
+  --pf-v6-c-form--m-horizontal--GridTemplateColumns: minmax(0, auto) 1fr;
+  --pf-v6-c-form--m-horizontal--ColumnGap: var(--pf-t--global--spacer--md);
+  --pf-v6-c-form--m-horizontal--RowGap: var(--pf-t--global--spacer--sm);
+
+  display: grid;
+  grid-template-columns: var(--pf-v6-c-form--m-horizontal--GridTemplateColumns);
+  column-gap: var(--pf-v6-c-form--m-horizontal--ColumnGap);
+  row-gap: var(--pf-v6-c-form--m-horizontal--RowGap);
+}
+
 .knob-group-title {
+  grid-column: 1 / -1;
   margin: 0 0 var(--cem-dev-server-spacing-md) 0;
   color: var(--cem-dev-server-text-primary);
   font-size: var(--cem-dev-server-font-size-base);
@@ -491,10 +504,15 @@ color: var(--pf-t--global--text--color--on-brand);
   font-size: var(--cem-dev-server-font-size-sm);
 }
 
-/* Knob description content (slotted in light DOM) */
-cem-serve-knob-attribute [slot="description"],
-cem-serve-knob-property [slot="description"],
-cem-serve-knob-css-property [slot="description"] {
+/* Info button popover triggers in knobs - override plain button padding */
+pf-v6-popover pf-v6-button[variant="plain"] {
+  --pf-v6-c-button--m-plain--PaddingInlineEnd: 0;
+  --pf-v6-c-button--m-plain--PaddingInlineStart: 0;
+  --pf-v6-c-button--MinWidth: auto;
+}
+
+/* Knob description content (slotted in form group helper) */
+pf-v6-form-group [slot="helper"] {
   p {
     margin: var(--cem-dev-server-spacing-xs) 0;
   }
@@ -525,9 +543,7 @@ cem-serve-knob-css-property [slot="description"] {
 }
 
 /* Syntax highlighting (chroma - themable via CSS custom properties) */
-cem-serve-knob-attribute [slot="description"],
-cem-serve-knob-property [slot="description"],
-cem-serve-knob-css-property [slot="description"] {
+pf-v6-form-group [slot="helper"] {
   .chroma {
     background-color: var(--cem-dev-server-bg-tertiary);
     padding: var(--cem-dev-server-spacing-sm);

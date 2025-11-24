@@ -578,7 +578,7 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 				)
 			} else if len(allKnobGroups) > 0 {
 				// Render all knob groups
-				knobsHTML, err = RenderMultiInstanceKnobsHTML(allKnobGroups)
+				knobsHTML, err = RenderKnobsHTML(allKnobGroups)
 				if err != nil {
 					config.Context.Logger().Warning("Failed to render knobs HTML: %v", err)
 					_ = config.Context.BroadcastError(

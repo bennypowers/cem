@@ -44,9 +44,6 @@ var elementWrapperTemplate string
 //go:embed templates/knobs.html
 var knobsTemplate string
 
-//go:embed templates/knobs-multi.html
-var knobsMultiTemplate string
-
 //go:embed templates/demo-chrome.html
 var demoChromeTemplate string
 
@@ -144,9 +141,6 @@ var ElementWrapperTemplate = template.Must(template.New("element-wrapper").Parse
 
 // KnobsTemplate is the parsed template for knobs controls
 var KnobsTemplate = template.Must(template.New("knobs").Funcs(getTemplateFuncs()).Parse(knobsTemplate))
-
-// KnobsMultiTemplate is the parsed template for multi-instance knobs controls
-var KnobsMultiTemplate = template.Must(template.New("knobs-multi").Funcs(getTemplateFuncs()).Parse(knobsMultiTemplate))
 
 // DemoChromeTemplate is the parsed template for demo chrome wrapper
 var DemoChromeTemplate = template.Must(template.New("demo-chrome").Funcs(getTemplateFuncs()).Parse(demoChromeTemplate))

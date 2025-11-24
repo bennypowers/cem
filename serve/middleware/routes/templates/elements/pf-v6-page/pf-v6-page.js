@@ -14,8 +14,10 @@ import { CemElement } from '/__cem/cem-element.js';
  * @customElement pf-v6-page
  */
 class PfV6Page extends CemElement {
-  static observedAttributes = ['sidebar-collapsed'];
   static is = 'pf-v6-page';
+
+  static observedAttributes = ['sidebar-collapsed'];
+
   /** Are we a wide layout, or a narrow layout? */
   static match = window.matchMedia('(min-width: 75rem)');
 
