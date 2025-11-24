@@ -35,8 +35,8 @@ class CemServeKnobGroup extends CemElement {
 
   #handleInput = (e) => {
     const control = e.target;
-    const knobType = control.getAttribute('data-knob-type');
-    const knobName = control.getAttribute('data-knob-name');
+    const knobType = control.dataset.knobType;
+    const knobName = control.dataset.knobName;
 
     if (!knobType || !knobName) return;
 
@@ -51,8 +51,8 @@ class CemServeKnobGroup extends CemElement {
 
   #handleChange = (e) => {
     const control = e.target;
-    const knobType = control.getAttribute('data-knob-type');
-    const knobName = control.getAttribute('data-knob-name');
+    const knobType = control.dataset.knobType;
+    const knobName = control.dataset.knobName;
 
     if (!knobType || !knobName) return;
 
@@ -63,74 +63,46 @@ class CemServeKnobGroup extends CemElement {
   }
 
   #applyChange(type, name, value, checked) {
-    const targetId = this.getAttribute('for');
-    if (!targetId) {
-      console.warn('cem-serve-knob-group has no "for" attribute');
-      return;
-    }
+    // Dispatch custom event that KnobsManager will catch
+    let eventName;
+    let eventValue = value;
 
-    const element = document.getElementById(targetId);
-    if (!element) {
-      console.warn(`Target element not found: ${targetId}`);
-      return;
+    // Handle boolean values from checkboxes
+    if (typeof checked === 'boolean') {
+      eventValue = checked;
     }
 
     switch (type) {
       case 'attribute':
-        this.#applyAttributeChange(element, name, value, checked);
+        eventName = 'knob:attribute-change';
         break;
 
       case 'property':
-        this.#applyPropertyChange(element, name, value, checked);
+        eventName = 'knob:property-change';
+        // Parse value for properties
+        eventValue = this.#parseValue(eventValue);
         break;
 
       case 'css-property':
-        this.#applyCSSPropertyChange(element, name, value);
+        eventName = 'knob:css-property-change';
         break;
 
       default:
-        console.warn(`Unknown knob type: ${type}`);
-    }
-  }
-
-  #applyAttributeChange(element, name, value, checked) {
-    // Handle boolean attributes (from switches)
-    if (typeof checked === 'boolean') {
-      if (checked) {
-        element.setAttribute(name, '');
-      } else {
-        element.removeAttribute(name);
-      }
-      return;
+        console.warn(`[KnobGroup] Unknown knob type: ${type}`);
+        return;
     }
 
-    // Handle value-based attributes
-    if (value === '' || value === 'false') {
-      element.removeAttribute(name);
-    } else if (value === 'true') {
-      element.setAttribute(name, '');
-    } else {
-      element.setAttribute(name, value);
-    }
-  }
+    const event = new CustomEvent(eventName, {
+      bubbles: true,
+      composed: true,
+      detail: { name, value: eventValue }
+    });
 
-  #applyPropertyChange(element, name, value, checked) {
-    // Handle boolean properties (from switches)
-    if (typeof checked === 'boolean') {
-      element[name] = checked;
-      return;
-    }
+    // Add name and value as properties for easier access
+    event.name = name;
+    event.value = eventValue;
 
-    // Parse value and set property
-    element[name] = this.#parseValue(value);
-  }
-
-  #applyCSSPropertyChange(element, name, value) {
-    if (value === '') {
-      element.style.removeProperty(name);
-    } else {
-      element.style.setProperty(name, value);
-    }
+    this.dispatchEvent(event);
   }
 
   #parseValue(value) {

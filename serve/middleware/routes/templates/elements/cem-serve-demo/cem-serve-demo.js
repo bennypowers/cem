@@ -39,7 +39,8 @@ export class CemServeDemo extends HTMLElement {
       for (const element of event.composedPath()) {
         if (!(element instanceof Element)) continue;
 
-        if (element.classList?.contains('knob-group-instance')) {
+        // Look for element with data-is-element-knob marker
+        if (element.dataset?.isElementKnob === 'true') {
           const tagName = element.dataset.tagName || defaultTagName;
           let instanceIndex = Number.parseInt(element.dataset.instanceIndex ?? '', 10);
           if (Number.isNaN(instanceIndex)) instanceIndex = 0;
