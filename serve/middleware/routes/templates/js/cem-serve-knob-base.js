@@ -34,125 +34,31 @@ export class CemServeKnobBase extends HTMLElement {
 
     // Get the input container
     const container = this.#$('input-container');
-    if (!container) return;
-
-    // Check if input already exists (from SSR)
-    let input = container.querySelector('#input');
-
-    if (!input) {
-      // No SSR input, create dynamically
-      input = this.createInput();
-      container.appendChild(input);
+    if (!container) {
+      this.#reportSSRError('Missing input-container element');
+      return;
     }
 
-    // Let subclasses set up their own event listeners
+    // Input should always exist from SSR
+    const input = container.querySelector('#input');
+    if (!input) {
+      this.#reportSSRError(
+        `Missing SSR input for type="${this.type}"`,
+        `Expected #input element to be server-rendered for ${this.constructor.is}`
+      );
+      return;
+    }
+
+    // Set up event listeners
     this.setupInputListeners(input);
   }
 
-  // Factory method for creating pf-v6-switch
-  createPfV6Switch(name, value) {
-    const input = document.createElement('pf-v6-switch');
-    input.id = 'input';
-    input.checked = false;
-    input.textContent = name;
-    return input;
-  }
-
-  // Factory method for creating pf-v6-select
-  createPfV6Select(name, value, defaultValue, enumValues) {
-    const label = document.createElement('label');
-    label.textContent = name;
-    label.htmlFor = 'input';
-
-    const input = document.createElement('pf-v6-select');
-    input.id = 'input';
-    input.setAttribute('options', enumValues.join(','));
-    input.value = value;
-    input.autocomplete = 'off';
-
-    label.appendChild(input);
-    return label;
-  }
-
-  // Factory method for creating pf-v6-text-input (string or number)
-  createPfV6TextInput(name, value, defaultValue, inputType = 'text') {
-    const label = document.createElement('label');
-    label.textContent = name;
-    label.htmlFor = 'input';
-
-    const input = document.createElement('pf-v6-text-input');
-    input.type = inputType;
-    input.id = 'input';
-    input.value = value;
-    if (defaultValue) input.placeholder = defaultValue;
-    input.autocomplete = 'off';
-
-    label.appendChild(input);
-    return label;
-  }
-
-  // Factory method for creating color input (with picker + text input)
-  createColorInput(name, value, defaultValue) {
-    const label = document.createElement('label');
-    label.textContent = name;
-    label.htmlFor = 'input';
-
-    const wrapper = document.createElement('div');
-    wrapper.classList.add('color-input-wrapper');
-
-    const colorPicker = document.createElement('input');
-    colorPicker.type = 'color';
-    colorPicker.classList.add('color-picker');
-    colorPicker.id = 'color-picker';
-    colorPicker.autocomplete = 'off';
-
-    const textInput = document.createElement('input');
-    textInput.type = 'text';
-    textInput.classList.add('color-text');
-    textInput.id = 'input';
-    textInput.autocomplete = 'off';
-    textInput.value = value || defaultValue || '';
-    textInput.placeholder = 'Color or CSS variable';
-
-    if (/^#[0-9A-Fa-f]{6}$/.test(textInput.value)) {
-      colorPicker.value = textInput.value;
+  #reportSSRError(title, message) {
+    const errorOverlay = document.querySelector('cem-transform-error-overlay');
+    if (errorOverlay) {
+      errorOverlay.show(title, message || '', '');
     }
-
-    colorPicker.addEventListener('input', () => {
-      textInput.value = colorPicker.value;
-      textInput.dispatchEvent(new Event('input', { bubbles: true }));
-    });
-
-    textInput.addEventListener('input', () => {
-      if (/^#[0-9A-Fa-f]{6}$/.test(textInput.value)) {
-        colorPicker.value = textInput.value;
-      }
-    });
-
-    wrapper.appendChild(colorPicker);
-    wrapper.appendChild(textInput);
-    label.appendChild(wrapper);
-    return label;
-  }
-
-  // Main createInput method that uses factory methods
-  createInput() {
-    const type = this.type;
-    const value = this.value;
-    const defaultValue = this.default;
-
-    switch (type) {
-      case 'boolean':
-        return this.createPfV6Switch(this.name, value);
-      case 'enum':
-        return this.createPfV6Select(this.name, value, defaultValue, this.enumValues);
-      case 'number':
-        return this.createPfV6TextInput(this.name, value, defaultValue, 'number');
-      case 'color':
-        return this.createColorInput(this.name, value, defaultValue);
-      default: // string
-        return this.createPfV6TextInput(this.name, value, defaultValue, 'text');
-    }
+    console.error(`[${this.constructor.is}] ${title}`, message);
   }
 
   // Main setupInputListeners method that calls abstract createChangeEvent
@@ -182,8 +88,33 @@ export class CemServeKnobBase extends HTMLElement {
         this.value = value;
         this.dispatchEvent(this.createChangeEvent(this.name, value));
       });
+    } else if (type === 'color') {
+      // Color input has both a color picker and text input that need to stay in sync
+      const colorPicker = this.shadowRoot.getElementById('color-picker');
+
+      // Sync color picker to text input
+      if (colorPicker) {
+        colorPicker.addEventListener('input', () => {
+          input.value = colorPicker.value;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+
+        // Sync text input to color picker (when valid hex)
+        input.addEventListener('input', () => {
+          if (/^#[0-9A-Fa-f]{6}$/.test(input.value)) {
+            colorPicker.value = input.value;
+          }
+        });
+      }
+
+      // Standard input handler for color text input
+      input.addEventListener('input', () => {
+        const value = input.value;
+        this.value = value;
+        this.dispatchEvent(this.createChangeEvent(this.name, value));
+      });
     } else {
-      // string, color
+      // string
       input.addEventListener('input', () => {
         const value = input.value;
         this.value = value;

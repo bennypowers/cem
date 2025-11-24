@@ -15,6 +15,17 @@
                    value="{{.Attributes.value}}"
                    placeholder="{{.Attributes.name}}">
   </pf-v6-text-input>
+  {{else if eq .Attributes.type "color"}}
+  <label class="color-input-wrapper">
+    <input type="color"
+           id="color-picker"
+           value="{{.Attributes.value}}">
+    <pf-v6-text-input id="input"
+                     type="text"
+                     value="{{.Attributes.value}}"
+                     placeholder="{{.Attributes.name}}">
+    </pf-v6-text-input>
+  </label>
   {{else if eq .Attributes.type "enum"}}
   <pf-v6-select id="input"
                value="{{.Attributes.value}}"
