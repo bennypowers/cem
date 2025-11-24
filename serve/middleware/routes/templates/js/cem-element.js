@@ -5,6 +5,7 @@
  * - SSR-aware shadow root creation
  * - Automatic template loading with caching
  * - Applying stylesheets via adoptedStyleSheets
+ * - CSS Anchor Positioning polyfill for cross-browser support
  * - Error handling with console warnings
  *
  * Subclasses can override:
@@ -38,6 +39,12 @@ export class CemElement extends HTMLElement {
   /** Cache for HTML templates shared across all instances */
   static #templateCache = new Map();
 
+  /** Promise for loading the anchor positioning polyfill */
+  static #anchorPolyfillPromise = null;
+
+  /** Whether anchor positioning is supported natively */
+  static #anchorPositioningSupported = null;
+
   /**
    * Shadow root options. Override in subclass to customize.
    * @type {{ mode: 'open' | 'closed', delegatesFocus?: boolean }}
@@ -51,6 +58,82 @@ export class CemElement extends HTMLElement {
    * @type {string | null}
    */
   static elementName = null;
+
+  /**
+   * Check if CSS Anchor Positioning is supported natively
+   * @returns {boolean} Whether anchor positioning is supported
+   * @private
+   */
+  static #supportsAnchorPositioning() {
+    if (this.#anchorPositioningSupported !== null) {
+      return this.#anchorPositioningSupported;
+    }
+
+    // Check for CSS.supports() API
+    if (!('CSS' in window) || typeof CSS.supports !== 'function') {
+      this.#anchorPositioningSupported = false;
+      return false;
+    }
+
+    // Check for anchor-name property support
+    this.#anchorPositioningSupported = CSS.supports('anchor-name', '--test');
+    return this.#anchorPositioningSupported;
+  }
+
+  /**
+   * Load the CSS Anchor Positioning polyfill if needed
+   * @returns {Promise<Function|null>} Resolves with polyfill function or null if not needed
+   * @private
+   */
+  static async #loadAnchorPolyfill() {
+    // If native support exists, no need for polyfill
+    if (this.#supportsAnchorPositioning()) {
+      return null;
+    }
+
+    // If polyfill is already loading/loaded, return that promise
+    if (this.#anchorPolyfillPromise) {
+      return this.#anchorPolyfillPromise;
+    }
+
+    // Load the polyfill script (function variant)
+    this.#anchorPolyfillPromise = (async () => {
+      try {
+        const module = await import('/__cem/css-anchor-positioning-fn.js');
+        // The -fn variant exports the polyfill function as default
+        return module.default || null;
+      } catch (error) {
+        console.error('Failed to load CSS Anchor Positioning polyfill:', error);
+        throw error;
+      }
+    })();
+
+    return this.#anchorPolyfillPromise;
+  }
+
+  /**
+   * Apply the anchor positioning polyfill to a shadow root
+   * @param {ShadowRoot} shadowRoot - The shadow root to polyfill
+   * @param {HTMLElement} element - The element for debugging context
+   * @private
+   */
+  static async #applyAnchorPolyfill(shadowRoot, element) {
+    // Only apply if polyfill is needed
+    if (this.#supportsAnchorPositioning()) {
+      return;
+    }
+
+    const polyfill = await this.#loadAnchorPolyfill();
+
+    // Apply polyfill to the shadow root if the function is available
+    if (typeof polyfill === 'function') {
+      try {
+        await polyfill({ roots: [shadowRoot] });
+      } catch (error) {
+        console.error('Failed to apply CSS Anchor Positioning polyfill:', error);
+      }
+    }
+  }
 
   /**
    * Fetch element HTML or CSS from the server
@@ -138,6 +221,9 @@ export class CemElement extends HTMLElement {
       await this.#populateShadowRoot();
     }
 
+    // Apply anchor positioning polyfill to this shadow root
+    await CemElement.#applyAnchorPolyfill(this.shadowRoot, this);
+
     // Call lifecycle hook for subclasses
     await this.afterTemplateLoaded?.();
   }
@@ -152,8 +238,18 @@ export class CemElement extends HTMLElement {
     try {
       // Use CemElement explicitly since private static methods aren't inherited
       const { html, stylesheet } = await CemElement.#loadComponentTemplate(elementName);
-      this.shadowRoot.adoptedStyleSheets = [stylesheet];
-      this.shadowRoot.innerHTML = html;
+
+      // If anchor positioning polyfill is needed, use <style> tag instead of adoptedStyleSheets
+      // because the polyfill doesn't support constructed stylesheets
+      if (!CemElement.#supportsAnchorPositioning()) {
+        // Get the CSS text from the stylesheet
+        const cssText = await CemElement.#fetchText(elementName, 'css');
+        this.shadowRoot.innerHTML = `<style>${cssText}</style>${html}`;
+      } else {
+        // Use adoptedStyleSheets for better performance when native support exists
+        this.shadowRoot.adoptedStyleSheets = [stylesheet];
+        this.shadowRoot.innerHTML = html;
+      }
     } catch (error) {
       console.error(`Failed to load ${elementName} template:`, error);
     }

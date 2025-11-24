@@ -1,0 +1,292 @@
+:host {
+  display: inline-block;
+  position: relative;
+  align-self: start;
+  justify-self: start;
+
+  /* CSS Custom Properties */
+  --distance: 8px;
+  --min-width: 100px;
+  --max-width: 300px;
+
+  /* PatternFly popover variables */
+  --pf-v6-c-popover--FontSize: var(--pf-t--global--font--size--body--sm);
+  --pf-v6-c-popover--BoxShadow: var(--pf-t--global--box-shadow--md);
+  --pf-v6-c-popover--BorderWidth: var(--pf-t--global--border--width--high-contrast--regular);
+  --pf-v6-c-popover--BorderColor: var(--pf-t--global--border--color--high-contrast);
+  --pf-v6-c-popover--BorderRadius: var(--pf-t--global--border--radius--medium);
+  --pf-v6-c-popover__content--BackgroundColor: var(--pf-t--global--background--color--floating--default);
+  --pf-v6-c-popover__content--PaddingBlockStart: var(--pf-t--global--spacer--md);
+  --pf-v6-c-popover__content--PaddingInlineEnd: var(--pf-t--global--spacer--md);
+  --pf-v6-c-popover__content--PaddingBlockEnd: var(--pf-t--global--spacer--md);
+  --pf-v6-c-popover__content--PaddingInlineStart: var(--pf-t--global--spacer--md);
+  --pf-v6-c-popover__close--InsetBlockStart: calc(var(--pf-v6-c-popover__content--PaddingBlockStart) - var(--pf-t--global--spacer--control--vertical--default));
+  --pf-v6-c-popover__close--InsetInlineEnd: var(--pf-v6-c-popover__content--PaddingInlineEnd);
+  --pf-v6-c-popover__close--sibling--PaddingInlineEnd: var(--pf-t--global--spacer--2xl);
+  --pf-v6-c-popover__header--MarginBlockEnd: var(--pf-t--global--spacer--sm);
+  --pf-v6-c-popover__title-text--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-popover__title-text--FontWeight: var(--pf-t--global--font--weight--body--bold);
+  --pf-v6-c-popover__title-text--FontSize: var(--pf-t--global--font--size--body--default);
+  --pf-v6-c-popover__footer--MarginBlockStart: var(--pf-t--global--spacer--md);
+  --pf-v6-c-popover__arrow--Width: 1.5rem;
+  --pf-v6-c-popover__arrow--Height: 1.5rem;
+  --pf-v6-c-popover__arrow--BackgroundColor: var(--pf-v6-c-popover__content--BackgroundColor);
+  --pf-v6-c-popover__arrow--BoxShadow: var(--pf-v6-c-popover--BoxShadow);
+}
+
+/* Anchor the trigger wrapper */
+#trigger {
+  anchor-name: --trigger;
+  display: inline-block;
+}
+
+/* Base popover styles */
+#content {
+  /* reset UA styles for [popover] */
+  background-color: transparent;
+  padding: 0;
+  overflow: initial;
+  /* end reset */
+
+  position: fixed;
+  position-anchor: --trigger;
+  min-width: var(--min-width);
+  max-width: var(--max-width);
+  margin: 0;
+  font-size: var(--pf-v6-c-popover--FontSize);
+  border: var(--pf-v6-c-popover--BorderWidth) solid var(--pf-v6-c-popover--BorderColor);
+  border-radius: var(--pf-v6-c-popover--BorderRadius);
+  box-shadow: var(--pf-v6-c-popover--BoxShadow);
+
+  /* Reset all positioning to prevent Popover API defaults from interfering */
+  top: auto;
+  bottom: auto;
+  left: auto;
+  right: auto;
+}
+
+#popover {
+  position: relative;
+  padding-block-start: var(--pf-v6-c-popover__content--PaddingBlockStart);
+  padding-block-end: var(--pf-v6-c-popover__content--PaddingBlockEnd);
+  padding-inline-start: var(--pf-v6-c-popover__content--PaddingInlineStart);
+  padding-inline-end: var(--pf-v6-c-popover__content--PaddingInlineEnd);
+  background-color: var(--pf-v6-c-popover__content--BackgroundColor);
+  border-radius: var(--pf-v6-c-popover--BorderRadius);
+}
+
+/* Arrow */
+#arrow {
+  position: absolute;
+  top: var(--pf-v6-c-popover__arrow--InsetBlockStart, auto);
+  right: var(--pf-v6-c-popover__arrow--InsetInlineEnd, auto);
+  bottom: var(--pf-v6-c-popover__arrow--InsetBlockEnd, auto);
+  left: var(--pf-v6-c-popover__arrow--InsetInlineStart, auto);
+  width: var(--pf-v6-c-popover__arrow--Width);
+  height: var(--pf-v6-c-popover__arrow--Height);
+  pointer-events: none;
+  background-color: var(--pf-v6-c-popover__arrow--BackgroundColor);
+  border: var(--pf-v6-c-popover--BorderWidth) solid var(--pf-v6-c-popover--BorderColor);
+  box-shadow: var(--pf-v6-c-popover__arrow--BoxShadow);
+  transform: translateX(var(--pf-v6-c-popover__arrow--TranslateX, 0)) translateY(var(--pf-v6-c-popover__arrow--TranslateY, 0)) rotate(var(--pf-v6-c-popover__arrow--Rotate, 0));
+}
+
+/* Close button */
+#close {
+  position: absolute;
+  inset-block-start: var(--pf-v6-c-popover__close--InsetBlockStart);
+  inset-inline-end: var(--pf-v6-c-popover__close--InsetInlineEnd);
+  padding: var(--pf-t--global--spacer--control--vertical--default) var(--pf-t--global--spacer--control--horizontal--plain--default);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--pf-t--global--icon--color--regular);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background-color: var(--pf-t--global--background--color--action--plain--hover);
+  }
+}
+
+/* Hide close button when not closeable */
+:host(:not([closeable])) #close,
+:host([closeable="false"]) #close {
+  display: none;
+}
+
+/* Adjust header padding when close button is present */
+:host([closeable]) #header,
+:host([closeable=""]) #header {
+  padding-inline-end: var(--pf-v6-c-popover__close--sibling--PaddingInlineEnd);
+}
+
+/* Header */
+#header {
+  margin-block-end: 0;
+
+  &.has-content {
+    margin-block-end: var(--pf-v6-c-popover__header--MarginBlockEnd);
+  }
+}
+
+#header-content {
+  display: flex;
+  flex: 0 0 auto;
+
+  .pf-v6-c-popover__title-text {
+    min-width: 0;
+    font-size: var(--pf-v6-c-popover__title-text--FontSize);
+    font-weight: var(--pf-v6-c-popover__title-text--FontWeight);
+    color: var(--pf-v6-c-popover__title-text--Color);
+    overflow-wrap: break-word;
+    margin: 0;
+  }
+}
+
+/* Body */
+#body {
+  word-wrap: break-word;
+}
+
+/* Footer */
+#footer {
+  margin-block-start: 0;
+
+  &.has-content {
+    margin-block-start: var(--pf-v6-c-popover__footer--MarginBlockStart);
+  }
+}
+
+/* Width modifiers */
+:host([has-auto-width]) #content {
+  min-width: unset;
+  max-width: unset;
+  width: max-content;
+}
+
+/* Position variants */
+/* Position: top (default) */
+/* Positioned above the trigger, horizontally centered */
+#content.position-top {
+  bottom: anchor(--trigger top);
+  left: anchor(--trigger center);
+  translate: -50% 0;
+  margin-bottom: var(--distance);
+  --pf-v6-c-popover__arrow--InsetBlockEnd: calc(var(--pf-v6-c-popover__arrow--Height) / -2);
+  --pf-v6-c-popover__arrow--InsetInlineStart: 50%;
+  --pf-v6-c-popover__arrow--TranslateX: -50%;
+  --pf-v6-c-popover__arrow--Rotate: 45deg;
+}
+
+/* Position: bottom */
+/* Positioned below the trigger, horizontally centered */
+#content.position-bottom {
+  top: anchor(--trigger bottom);
+  left: anchor(--trigger center);
+  translate: -50% 0;
+  margin-top: var(--distance);
+  --pf-v6-c-popover__arrow--InsetBlockStart: calc(var(--pf-v6-c-popover__arrow--Height) / -2);
+  --pf-v6-c-popover__arrow--InsetInlineStart: 50%;
+  --pf-v6-c-popover__arrow--TranslateX: -50%;
+  --pf-v6-c-popover__arrow--Rotate: 45deg;
+}
+
+/* Position: left */
+/* Positioned to the left of the trigger, vertically centered */
+#content.position-left {
+  top: anchor(--trigger center);
+  right: anchor(--trigger left);
+  translate: 0 -50%;
+  margin-right: var(--distance);
+  --pf-v6-c-popover__arrow--InsetBlockStart: 50%;
+  --pf-v6-c-popover__arrow--InsetInlineEnd: calc(var(--pf-v6-c-popover__arrow--Width) / -2);
+  --pf-v6-c-popover__arrow--TranslateY: -50%;
+  --pf-v6-c-popover__arrow--Rotate: 45deg;
+}
+
+/* Position: right */
+/* Positioned to the right of the trigger, vertically centered */
+#content.position-right {
+  top: anchor(--trigger center);
+  left: anchor(--trigger right);
+  translate: 0 -50%;
+  margin-left: var(--distance);
+  --pf-v6-c-popover__arrow--InsetBlockStart: 50%;
+  --pf-v6-c-popover__arrow--InsetInlineStart: calc(var(--pf-v6-c-popover__arrow--Width) / -2);
+  --pf-v6-c-popover__arrow--TranslateY: -50%;
+  --pf-v6-c-popover__arrow--Rotate: 45deg;
+}
+
+/* Position: top-start */
+/* Positioned above the trigger, aligned to the left edge */
+#content.position-top-start {
+  bottom: anchor(--trigger top);
+  left: anchor(--trigger left);
+  margin-bottom: var(--distance);
+}
+
+/* Position: top-end */
+/* Positioned above the trigger, aligned to the right edge */
+#content.position-top-end {
+  bottom: anchor(--trigger top);
+  right: anchor(--trigger right);
+  margin-bottom: var(--distance);
+}
+
+/* Position: bottom-start */
+/* Positioned below the trigger, aligned to the left edge */
+#content.position-bottom-start {
+  top: anchor(--trigger bottom);
+  left: anchor(--trigger left);
+  margin-top: var(--distance);
+}
+
+/* Position: bottom-end */
+/* Positioned below the trigger, aligned to the right edge */
+#content.position-bottom-end {
+  top: anchor(--trigger bottom);
+  right: anchor(--trigger right);
+  margin-top: var(--distance);
+}
+
+/* Position: left-start */
+/* Positioned to the left of the trigger, aligned to the top edge */
+#content.position-left-start {
+  top: anchor(--trigger top);
+  right: anchor(--trigger left);
+  margin-right: var(--distance);
+}
+
+/* Position: left-end */
+/* Positioned to the left of the trigger, aligned to the bottom edge */
+#content.position-left-end {
+  bottom: anchor(--trigger bottom);
+  right: anchor(--trigger left);
+  margin-right: var(--distance);
+}
+
+/* Position: right-start */
+/* Positioned to the right of the trigger, aligned to the top edge */
+#content.position-right-start {
+  top: anchor(--trigger top);
+  left: anchor(--trigger right);
+  margin-left: var(--distance);
+}
+
+/* Position: right-end */
+/* Positioned to the right of the trigger, aligned to the bottom edge */
+#content.position-right-end {
+  bottom: anchor(--trigger bottom);
+  left: anchor(--trigger right);
+  margin-left: var(--distance);
+}
+
+/* Position: auto - default to top position (no automatic fallback in polyfill) */
+#content.position-auto {
+  bottom: anchor(--trigger top);
+  left: anchor(--trigger center);
+  translate: -50% 0;
+  margin-bottom: var(--distance);
+}
