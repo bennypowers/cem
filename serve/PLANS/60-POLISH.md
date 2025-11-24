@@ -184,11 +184,14 @@ serve:
     - [x] `pf-v6-skip-to-content` - Accessibility component
     - [x] `pf-v6-toolbar`, `pf-v6-toolbar-group`, `pf-v6-toolbar-item` - Toolbar structure
     - [x] `pf-v6-toggle-group`, `pf-v6-toggle-group-item` - Toggle button group
+    - [x] `pf-v6-form`, `pf-v6-form-group`, `pf-v6-form-label` - Form layout components
+    - [x] `pf-v6-popover` - Popover component with CSS Anchor Positioning
   - [x] Custom CEM components:
     - [x] `cem-drawer` - Drawer component for footer panel
     - [x] `cem-serve-chrome` - Main dev server UI wrapper
     - [x] `cem-serve-knobs` - Multi-instance knobs panel container
-    - [x] `cem-serve-knob-attribute`, `cem-serve-knob-property`, `cem-serve-knob-css-property` - Knob controls
+    - [x] `cem-serve-knob-group` - Unified knob control component (consolidated from 3 separate components)
+    - [x] `cem-serve-demo` - Demo container with knob event handling
     - [x] `cem-color-scheme-toggle` - Light/dark mode toggle
     - [x] `cem-connection-status` - WebSocket connection indicator
     - [x] `cem-reconnection-content` - Reconnection modal content
@@ -217,19 +220,101 @@ serve:
   - [x] Converted log timestamps to semantic `<time>` elements with datetime attributes
   - [x] Converted pf-tokens.css to use light-dark() CSS function
 
+  **Phase 2.6: Form Components & Polish** ✅ **COMPLETE**
+  - [x] Fixed `pf-v6-select` styles
+    - [x] Cleaned up CSS to match PatternFly v6 design tokens
+    - [x] Added proper form control wrapper structure
+  - [x] Fixed `pf-v6-text-input` styles
+    - [x] Created shared `pf-v6-form-control.css` for common form control styles
+    - [x] Simplified component CSS to use shared form control base
+    - [x] Added proper wrapper structure
+  - [x] Fixed `pf-v6-page` sidebar on desktop
+    - [x] Corrected sidebar visibility logic for desktop viewport
+  - [x] Fixed knob templates
+    - [x] Refactored `cem-serve-knob-base.js` to be cleaner
+    - [x] Added proper HTML templates for knob components
+  - [x] Fixed floating/popup `light-dark()` tokens
+    - [x] Updated `pf-tokens.css` with proper light-dark tokens for floating elements
+    - [x] Added 261 lines of color tokens for modals, popovers, tooltips, etc.
+  - [x] Implemented form layout components
+    - [x] Created `pf-v6-form` component with horizontal layout support
+    - [x] Created `pf-v6-form-group` component for form field grouping
+    - [x] Created `pf-v6-form-label` component with required indicator
+    - [x] Added form control IDs to `pf-v6-select`, `pf-v6-switch`, `pf-v6-text-input`
+  - [x] Refactored knobs system (decruft)
+    - [x] Consolidated three separate knob components into unified `cem-serve-knob-group`
+    - [x] Removed `cem-serve-knob-attribute`, `cem-serve-knob-property`, `cem-serve-knob-css-property`
+    - [x] Removed unused `knobs-multi.html` template
+    - [x] Simplified knobs.html template with unified approach
+    - [x] Reduced codebase by 737 lines (deleted), added 564 lines (consolidated)
+
+  **Phase 2.7: Popover Component & Knobs System** ✅ **COMPLETE**
+  - [x] Implemented `pf-v6-popover` component with CSS Anchor Positioning
+    - [x] Shadow DOM with IDs instead of classes
+    - [x] CSS Anchor Positioning with polyfill support for Firefox
+    - [x] All position variants (top, bottom, left, right, and -start/-end variants)
+    - [x] Arrow positioning with PatternFly CSS variables
+    - [x] Closeable button with proper ARIA attributes
+    - [x] Empty slot handling (no margin when header/footer empty)
+    - [x] Dark mode support with `light-dark()` box-shadow tokens
+    - [x] Reset Firefox UA styles for `[popover]` attribute
+    - [x] Imported CSS Anchor Positioning polyfill (6,411 lines for function variant, 6,415 for auto)
+    - [x] Updated `CemElement` base class to support polyfill integration
+  - [x] Fixed knobs dataset binding
+    - [x] Changed from `getAttribute('data-*')` to `dataset` property access
+    - [x] Fixed multi-instance knob targeting (button knobs were applying to alert)
+    - [x] Updated `cem-serve-demo` to look for `data-is-element-knob="true"` marker
+    - [x] Removed unused/incomplete `KnobsManager` class (371 lines deleted)
+    - [x] Cleaned up knob system architecture
+
   **Phase 3: Remaining Components & Polish** ⬅️ **CURRENT**
-  - [ ] **HIGH PRIORITY: pf-v6-text-input CSS polish** 🚨
-    - [ ] Current CSS is hallucinated, doesn't match actual PatternFly tokens/styles
-    - [ ] Needs manual implementation via iterative HTML/CSS inspection
-    - [ ] Process: paste rendered HTML/CSS from browser, rough into shape iteratively
-    - [ ] References:
-      - https://github.com/patternfly/patternfly/ (PatternFly Core CSS)
-      - https://github.com/patternfly/patternfly-react/ (React component API)
-      - https://patternfly.org/components/forms/text-input/ (Visual reference/docs)
-  - [ ] Additional PF v6 components (if needed):
-    - [ ] **pf-v6-number-input** - NumberInput component for number knobs with increment/decrement
-    - [ ] **pf-v6-expandable-section** - ExpandableSection for collapsible content
-    - [ ] Add `expanded` attribute to **pf-v6-card** for expandable cards
+  - [x] **pf-v6-text-input CSS polish** ✅
+    - [x] Created shared `pf-v6-form-control.css` for common form control styles
+    - [x] Matches PatternFly v6 design tokens
+  - [ ] Additional PF v6 components needed:
+    - [ ] **pf-v6-expandable-section** - ExpandableSection/disclosure component
+      - **Use cases identified**:
+        - Debug Information modal: Import map disclosure (`<details id="debug-importmap-details">`)
+        - Listing page: Custom Elements list disclosure
+        - Knobs panel: CSS custom properties section (should be collapsed by default)
+      - Currently using native `<details>` elements, should be replaced with PF v6 component
+    - [ ] **pf-v6-number-input** - NumberInput component for number knobs with increment/decrement (nice to have)
+  - [ ] Template System Enhancement: Attribute-Dependent SSR
+    - [x] **Phase 1: Core Infrastructure** ✅ **ALREADY COMPLETE**
+      - [x] Shadowroot middleware already extracts attributes via `attributesToTemplateData()`
+      - [x] Templates receive `.Attributes` map (raw attributes) and camelCased keys (`.Href`, `.Variant`, etc.)
+      - [x] Supports nested component processing
+      - [x] No infrastructure changes needed!
+    - [ ] **Phase 2: Component Template Revisions**
+      - **Strategy**: Review each component's client-side JS code to identify DOM manipulations that should be moved to SSR templates
+      - [ ] **pf-v6-button** (`pf-v6-button.js` lines 52-71)
+        - Current: JS replaces `<button>` with `<a>` if `href` attribute exists
+        - Template: Conditional `<a>` vs `<button>` based on `.Attributes.href`
+        - Remove client-side DOM manipulation after SSR implemented
+      - [ ] **pf-v6-label** (check for removable/close button logic)
+        - Review JS for dynamic close button insertion
+        - Template: Conditional close button based on `.Attributes.removable`
+      - [ ] **pf-v6-switch** (check for attribute-dependent structure)
+        - Review JS for any attribute-based DOM changes
+        - Template: Add any conditional elements
+      - [ ] **pf-v6-select** (check for attribute-dependent structure)
+        - Review JS for any attribute-based DOM changes
+        - Template: Add any conditional elements
+      - [ ] **pf-v6-text-input** (check for attribute-dependent structure)
+        - Review JS for any attribute-based DOM changes
+        - Template: Add any conditional elements
+      - [ ] **pf-v6-card** (check for expandable/collapsible logic)
+        - Review JS for expanded state handling
+        - Template: Conditional `open` attribute on details if using native disclosure
+      - [ ] **All components**: Review for shadow DOM class management
+        - Identify classes added/removed based on attributes
+        - Move to template: `class="base-class {{if .Attributes.compact}}pf-m-compact{{end}}"`
+    - [ ] **Phase 3: Testing & Documentation**
+      - [ ] Create golden file tests for SSR output with various attribute combinations
+      - [ ] Verify client-side hydration doesn't conflict with SSR structure
+      - [ ] Update `16-PATTERNFLY-COMPONENTS.md` with SSR conditional rendering patterns
+      - [ ] Document template data structure (`.Attributes` map, camelCase keys)
+      - [ ] Performance comparison: SSR vs client-side rendering
   - [ ] UI/UX Polish:
     - [ ] Mobile/responsive testing and fixes
     - [ ] Accessibility audit (keyboard nav, screen readers, ARIA)
