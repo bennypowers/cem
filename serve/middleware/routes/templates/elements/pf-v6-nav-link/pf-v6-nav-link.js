@@ -48,28 +48,36 @@ class PfV6NavLink extends CemElement {
   #syncAttributes() {
     if (!this.#link) return;
 
-    // Handle href
-    if (this.hasAttribute('href')) {
-      this.#link.setAttribute('href', this.getAttribute('href'));
-    } else {
-      this.#link.removeAttribute('href');
+    // Only sync runtime-changeable attributes
+    // SSR handles initial href, aria-label, aria-current, aria-expanded
+
+    // Handle href changes at runtime (for <a> elements)
+    if (this.#link.tagName === 'A') {
+      if (this.hasAttribute('href')) {
+        this.#link.setAttribute('href', this.getAttribute('href'));
+      } else {
+        this.#link.removeAttribute('href');
+      }
     }
 
-    // Handle aria-label
+    // Handle aria-label changes at runtime
     if (this.hasAttribute('aria-label')) {
       this.#link.setAttribute('aria-label', this.getAttribute('aria-label'));
     } else {
       this.#link.removeAttribute('aria-label');
     }
 
-    // Handle aria-expanded for expandable links
-    if (this.hasAttribute('expandable')) {
+    // Handle aria-expanded for expandable buttons
+    if (this.hasAttribute('expandable') && this.#link.tagName === 'BUTTON') {
       const expanded = this.getAttribute('aria-expanded') === 'true';
       this.#link.setAttribute('aria-expanded', String(expanded));
-      this.#link.setAttribute('role', 'button');
+    }
+
+    // Handle aria-current for current links
+    if (this.hasAttribute('current')) {
+      this.#link.setAttribute('aria-current', 'page');
     } else {
-      this.#link.removeAttribute('aria-expanded');
-      this.#link.removeAttribute('role');
+      this.#link.removeAttribute('aria-current');
     }
   }
 
