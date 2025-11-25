@@ -303,7 +303,7 @@ serve:
       - [x] **pf-v6-text-input** (check for attribute-dependent structure)
         - Review JS for any attribute-based DOM changes
         - Template: Add any conditional elements
-      - [ ] **pf-v6-card** (check for expandable/collapsible logic)
+      - [x] **pf-v6-card** (check for expandable/collapsible logic)
         - Review JS for expanded state handling
         - Template: Conditional `open` attribute on details if using native disclosure
       - [ ] **All components**: Review for shadow DOM class management

@@ -6,41 +6,27 @@ import { CemElement } from '/__cem/cem-element.js';
  * @customElement pf-v6-toolbar
  */
 export class PfV6Toolbar extends CemElement {
-  static observedAttributes = ['sticky', 'full-height', 'color-variant', 'expandable', 'expanded'];
   static is = 'pf-v6-toolbar';
 
-  #expandableContent;
+  static observedAttributes = [
+    'expandable',
+    'expanded',
+    'sticky',
+    'full-height',
+    'color-variant',
+  ];
 
-  async afterTemplateLoaded() {
-    this.#expandableContent = this.shadowRoot.querySelector('.pf-v6-c-toolbar__expandable-content');
-    this.#updateExpandableContent();
-  }
+  get expandable() { return this.hasAttribute('expandable'); }
+  set expandable(value) { this.toggleAttribute('expandable', !!value); }
 
-  attributeChangedCallback(name, oldValue, newValue) {
-    switch (name) {
-      case 'expandable':
-      case 'expanded':
-        if (oldValue !== newValue) {
-          this.#updateExpandableContent();
-        }
-    }
-  }
+  get expanded() { return this.hasAttribute('expanded'); }
+  set expanded(value) { this.toggleAttribute('expanded', !!value); }
 
-  get sticky() {
-    return this.hasAttribute('sticky');
-  }
+  get sticky() { return this.hasAttribute('sticky'); }
+  set sticky(value) { this.toggleAttribute('sticky', !!value); }
 
-  set sticky(value) {
-    this.toggleAttribute('sticky', !!value);
-  }
-
-  get fullHeight() {
-    return this.hasAttribute('full-height');
-  }
-
-  set fullHeight(value) {
-    this.toggleAttribute('full-height', !!value);
-  }
+  get fullHeight() { return this.hasAttribute('full-height'); }
+  set fullHeight(value) { this.toggleAttribute('full-height', !!value); }
 
   get colorVariant() {
     return this.getAttribute('color-variant') || '';
@@ -51,20 +37,6 @@ export class PfV6Toolbar extends CemElement {
       this.setAttribute('color-variant', value);
     } else {
       this.removeAttribute('color-variant');
-    }
-  }
-
-  #updateExpandableContent() {
-    if (!this.#expandableContent) return;
-
-    const expandable = this.hasAttribute('expandable');
-    const expanded = this.hasAttribute('expanded');
-
-    if (expandable) {
-      this.#expandableContent.hidden = false;
-      this.#expandableContent.classList.toggle('pf-m-expanded', expanded);
-    } else {
-      this.#expandableContent.hidden = true;
     }
   }
 

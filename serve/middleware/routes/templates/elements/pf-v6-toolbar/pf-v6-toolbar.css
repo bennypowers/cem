@@ -29,11 +29,11 @@
 
 /* Static modifier */
 :host([static]),
-:host([static]) .pf-v6-c-toolbar__content {
+:host([static]) #content {
   position: static;
 }
 
-:host([static]) .pf-v6-c-toolbar__expandable-content {
+:host([static]) #expandable-content {
   position: absolute;
 }
 
@@ -57,7 +57,7 @@
 }
 
 /* Toolbar content */
-.pf-v6-c-toolbar__content {
+#content {
   --pf-v6-hidden-visible--visible--Display: grid;
   --pf-v6-hidden-visible--hidden--Display: none;
   --pf-v6-hidden-visible--Display: var(--pf-v6-hidden-visible--visible--Display);
@@ -71,7 +71,7 @@
 }
 
 /* Toolbar content section */
-.pf-v6-c-toolbar__content-section {
+#content-section {
   display: flex;
   flex-wrap: var(--pf-v6-c-toolbar__content-section--FlexWrap, wrap);
   row-gap: var(--pf-v6-c-toolbar__content-section--RowGap);
@@ -80,7 +80,7 @@
 }
 
 /* Toolbar expandable content */
-.pf-v6-c-toolbar__expandable-content {
+#expandable-content {
   position: absolute;
   inset-block-start: 100%;
   inset-inline-start: 0;
@@ -98,7 +98,7 @@
 }
 
 @media screen and (min-width: 992px) {
-  .pf-v6-c-toolbar__expandable-content {
+  #expandable-content {
     position: static;
     padding: 0;
     border-block-end: 0;
@@ -106,10 +106,7 @@
   }
 }
 
-.pf-v6-c-toolbar__expandable-content.pf-m-expanded {
-  display: grid;
-}
-
-.pf-v6-c-toolbar__expandable-content:not([hidden]) {
+/* Show expandable content only when both expandable AND expanded are set */
+:host([expandable][expanded]) #expandable-content {
   display: grid;
 }
