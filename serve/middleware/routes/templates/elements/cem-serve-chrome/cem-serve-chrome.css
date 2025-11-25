@@ -2,7 +2,7 @@
   display: block;
   height: 100vh;
   overflow: hidden;
-  --pf-v6-c-masthead__logo--Width: auto;
+  --pf-v6-c-masthead__logo--Width: max-content;
 }
 
 /* Masthead logo styles */
@@ -12,19 +12,22 @@
   text-decoration: none;
   color: inherit;
   max-height: var(--pf-v6-c-masthead__logo--MaxHeight);
-}
-
-.masthead-logo img {
-  display: block;
-  max-height: var(--pf-v6-c-masthead__logo--MaxHeight);
-  width: auto;
-}
-
-.masthead-logo ::slotted([slot="title"]) {
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--pf-t--global--text--color--regular);
+  gap: 4px;
+  & img {
+    display: block;
+    max-height: var(--pf-v6-c-masthead__logo--MaxHeight);
+    width: auto;
+  }
+  & ::slotted([slot="title"]) {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--pf-t--global--text--color--regular);
+  }
+  & h1 {
+    margin: 0;
+    font-size: 18px;
+  }
 }
 
 /* Toolbar group alignment */
@@ -191,12 +194,11 @@ pf-v6-page-main ::slotted(*) {
   height: 100%;
   display: flex;
   flex-direction: column;
-}
-
-#knobs-container ::slotted([slot="knobs"]) {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
+  & ::slotted([slot="knobs"]) {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
 }
 
 .knobs-empty {
@@ -482,7 +484,7 @@ footer ::slotted([slot="description"]) {
 
   &:hover {
     background: var(--cem-dev-server-accent-color);
-color: var(--pf-t--global--text--color--on-brand);
+    color: var(--pf-t--global--text--color--on-brand);
 
     .nav-package-name {
       color: rgba(255, 255, 255, 0.8);
@@ -491,7 +493,7 @@ color: var(--pf-t--global--text--color--on-brand);
 
   &[aria-current="page"] {
     background: var(--cem-dev-server-accent-color);
-color: var(--pf-t--global--text--color--on-brand);
+    color: var(--pf-t--global--text--color--on-brand);
 
     .nav-package-name {
       color: rgba(255, 255, 255, 0.8);
@@ -549,135 +551,135 @@ pf-v6-form-group [slot="helper"] {
     padding: var(--cem-dev-server-spacing-sm);
     border-radius: var(--cem-dev-server-border-radius);
     overflow-x: auto;
-  }
 
-  .chroma .lntd { vertical-align: top; padding: 0; margin: 0; border: 0; }
-  .chroma .lntable { border-spacing: 0; padding: 0; margin: 0; border: 0; }
-  .chroma .hl { background-color: var(--cem-dev-server-syntax-highlight) }
-  .chroma .lnt,
-  .chroma .ln {
-    white-space: pre;
-    user-select: none;
-    margin-right: 0.4em;
-    padding: 0 0.4em 0 0.4em;
-    color: var(--cem-dev-server-text-muted);
-  }
-  .chroma .line { display: flex; }
+    & .lntd { vertical-align: top; padding: 0; margin: 0; border: 0; }
+    & .lntable { border-spacing: 0; padding: 0; margin: 0; border: 0; }
+    & .hl { background-color: var(--cem-dev-server-syntax-highlight) }
+    & .lnt,
+    & .ln {
+      white-space: pre;
+      user-select: none;
+      margin-right: 0.4em;
+      padding: 0 0.4em 0 0.4em;
+      color: var(--cem-dev-server-text-muted);
+    }
+    & .line { display: flex; }
 
-  /* Keywords */
-  .chroma .k,
-  .chroma .kc,
-  .chroma .kd,
-  .chroma .kn,
-  .chroma .kp,
-  .chroma .kr {
-    color: var(--cem-dev-server-syntax-keyword);
-    font-weight: bold;
-  }
-  .chroma .kt { color: var(--cem-dev-server-syntax-type); font-weight: bold; }
+    /* Keywords */
+    & .k,
+    & .kc,
+    & .kd,
+    & .kn,
+    & .kp,
+    & .kr {
+      color: var(--cem-dev-server-syntax-keyword);
+      font-weight: bold;
+    }
+    & .kt { color: var(--cem-dev-server-syntax-type); font-weight: bold; }
 
-  /* Names */
-  .chroma .na,
-  .chroma .nb,
-  .chroma .no,
-  .chroma .nv,
-  .chroma .vc,
-  .chroma .vg,
-  .chroma .vi {
-    color: var(--cem-dev-server-syntax-name);
-  }
-  .chroma .bp { color: var(--cem-dev-server-text-secondary) }
-  .chroma .nc { color: var(--cem-dev-server-syntax-class); font-weight: bold; }
-  .chroma .nd { color: var(--cem-dev-server-syntax-decorator); font-weight: bold; }
-  .chroma .ni,
-  .chroma .ss {
-    color: var(--cem-dev-server-syntax-special);
-  }
-  .chroma .ne,
-  .chroma .nl {
-    color: var(--cem-dev-server-syntax-keyword);
-    font-weight: bold;
-  }
-  .chroma .nf { color: var(--cem-dev-server-syntax-function); font-weight: bold; }
-  .chroma .nn { color: var(--cem-dev-server-text-secondary) }
-  .chroma .nt { color: var(--cem-dev-server-syntax-tag) }
+    /* Names */
+    & .na,
+    & .nb,
+    & .no,
+    & .nv,
+    & .vc,
+    & .vg,
+    & .vi {
+      color: var(--cem-dev-server-syntax-name);
+    }
+    & .bp { color: var(--cem-dev-server-text-secondary) }
+    & .nc { color: var(--cem-dev-server-syntax-class); font-weight: bold; }
+    & .nd { color: var(--cem-dev-server-syntax-decorator); font-weight: bold; }
+    & .ni,
+    & .ss {
+      color: var(--cem-dev-server-syntax-special);
+    }
+    & .ne,
+    & .nl {
+      color: var(--cem-dev-server-syntax-keyword);
+      font-weight: bold;
+    }
+    & .nf { color: var(--cem-dev-server-syntax-function); font-weight: bold; }
+    & .nn { color: var(--cem-dev-server-text-secondary) }
+    & .nt { color: var(--cem-dev-server-syntax-tag) }
 
-  /* Strings */
-  .chroma .s,
-  .chroma .sa,
-  .chroma .sb,
-  .chroma .sc,
-  .chroma .dl,
-  .chroma .sd,
-  .chroma .s2,
-  .chroma .se,
-  .chroma .sh,
-  .chroma .si,
-  .chroma .sx,
-  .chroma .s1 {
-    color: var(--cem-dev-server-syntax-string);
-  }
-  .chroma .sr { color: var(--cem-dev-server-syntax-tag) }
+    /* Strings */
+    & .s,
+    & .sa,
+    & .sb,
+    & .sc,
+    & .dl,
+    & .sd,
+    & .s2,
+    & .se,
+    & .sh,
+    & .si,
+    & .sx,
+    & .s1 {
+      color: var(--cem-dev-server-syntax-string);
+    }
+    & .sr { color: var(--cem-dev-server-syntax-tag) }
 
-  /* Numbers */
-  .chroma .m,
-  .chroma .mb,
-  .chroma .mf,
-  .chroma .mh,
-  .chroma .mi,
-  .chroma .il,
-  .chroma .mo {
-    color: var(--cem-dev-server-syntax-number);
-  }
+    /* Numbers */
+    & .m,
+    & .mb,
+    & .mf,
+    & .mh,
+    & .mi,
+    & .il,
+    & .mo {
+      color: var(--cem-dev-server-syntax-number);
+    }
 
-  /* Operators */
-  .chroma .o,
-  .chroma .ow {
-    color: var(--cem-dev-server-syntax-keyword);
-    font-weight: bold;
-  }
+    /* Operators */
+    & .o,
+    & .ow {
+      color: var(--cem-dev-server-syntax-keyword);
+      font-weight: bold;
+    }
 
-  /* Comments */
-  .chroma .c,
-  .chroma .ch,
-  .chroma .cm,
-  .chroma .c1 {
-    color: var(--cem-dev-server-text-muted);
-    font-style: italic;
-  }
-  .chroma .cs,
-  .chroma .cp,
-  .chroma .cpf {
-    color: var(--cem-dev-server-text-muted);
-    font-weight: bold;
-    font-style: italic;
-  }
+    /* Comments */
+    & .c,
+    & .ch,
+    & .cm,
+    & .c1 {
+      color: var(--cem-dev-server-text-muted);
+      font-style: italic;
+    }
+    & .cs,
+    & .cp,
+    & .cpf {
+      color: var(--cem-dev-server-text-muted);
+      font-weight: bold;
+      font-style: italic;
+    }
 
-  /* Errors */
-  .chroma .err {
-    color: var(--cem-dev-server-syntax-error);
-    background-color: var(--cem-dev-server-syntax-error-bg);
-  }
+    /* Errors */
+    & .err {
+      color: var(--cem-dev-server-syntax-error);
+      background-color: var(--cem-dev-server-syntax-error-bg);
+    }
 
-  /* Generics */
-  .chroma .gd {
-    color: var(--cem-dev-server-syntax-deleted);
-    background-color: var(--cem-dev-server-syntax-deleted-bg);
+    /* Generics */
+    & .gd {
+      color: var(--cem-dev-server-syntax-deleted);
+      background-color: var(--cem-dev-server-syntax-deleted-bg);
+    }
+    & .ge { font-style: italic; }
+    & .gr { color: var(--cem-dev-server-syntax-error) }
+    & .gh { color: var(--cem-dev-server-text-secondary) }
+    & .gi {
+      color: var(--cem-dev-server-syntax-inserted);
+      background-color: var(--cem-dev-server-syntax-inserted-bg);
+    }
+    & .go { color: var(--cem-dev-server-text-secondary) }
+    & .gp { color: var(--cem-dev-server-text-secondary) }
+    & .gs { font-weight: bold; }
+    & .gu { color: var(--cem-dev-server-text-secondary) }
+    & .gt { color: var(--cem-dev-server-syntax-error) }
+    & .gl { text-decoration: underline; }
+    & .w { color: var(--cem-dev-server-text-muted) }
   }
-  .chroma .ge { font-style: italic; }
-  .chroma .gr { color: var(--cem-dev-server-syntax-error) }
-  .chroma .gh { color: var(--cem-dev-server-text-secondary) }
-  .chroma .gi {
-    color: var(--cem-dev-server-syntax-inserted);
-    background-color: var(--cem-dev-server-syntax-inserted-bg);
-  }
-  .chroma .go { color: var(--cem-dev-server-text-secondary) }
-  .chroma .gp { color: var(--cem-dev-server-text-secondary) }
-  .chroma .gs { font-weight: bold; }
-  .chroma .gu { color: var(--cem-dev-server-text-secondary) }
-  .chroma .gt { color: var(--cem-dev-server-syntax-error) }
-  .chroma .gl { text-decoration: underline; }
-  .chroma .w { color: var(--cem-dev-server-text-muted) }
 }
 
 

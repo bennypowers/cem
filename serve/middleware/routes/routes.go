@@ -463,6 +463,11 @@ func serveDemoRoute(w http.ResponseWriter, r *http.Request, config Config) bool 
 	var navigationHTML template.HTML
 	var packageName string
 
+	// Get package name from package.json for masthead
+	if pkg, err := config.Context.PackageJSON(); err == nil && pkg != nil && pkg.Name != "" {
+		packageName = pkg.Name
+	}
+
 	if config.Context.IsWorkspace() {
 		// Workspace mode: build navigation from all packages
 		middlewarePackages := config.Context.WorkspacePackages()
@@ -475,17 +480,12 @@ func serveDemoRoute(w http.ResponseWriter, r *http.Request, config Config) bool 
 			}
 		}
 		navigationHTML, _ = BuildWorkspaceNavigation(packages)
-		packageName = "Workspace"
+		// Keep packageName from package.json, don't override with "Workspace"
 	} else {
 		// Single-package mode: build navigation from manifest
 		manifestBytes, err := config.Context.Manifest()
 		if err == nil && len(manifestBytes) > 0 {
-			// Get package name from package.json
-			pkgName := ""
-			if pkg, err := config.Context.PackageJSON(); err == nil && pkg != nil {
-				pkgName = pkg.Name
-			}
-			navigationHTML, packageName = BuildSinglePackageNavigation(manifestBytes, pkgName)
+			navigationHTML, _ = BuildSinglePackageNavigation(manifestBytes, packageName)
 		}
 	}
 
