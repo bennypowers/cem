@@ -20,7 +20,7 @@
       <pf-v6-toolbar-group variant="action-group">
         {{if .Attributes.SourceUrl}}
         <pf-v6-toolbar-item>
-          <a href="{{.SourceUrl}}"
+          <a href="{{.Attributes.SourceUrl}}"
              target="_blank"
              class="source-link"
              title="View source file">
@@ -99,7 +99,8 @@
   </pf-v6-page-main>
 </pf-v6-page>
 
-<pf-v6-modal id="debug-modal" variant="large">
+<pf-v6-modal id="debug-modal"
+             variant="large">
   <h2 slot="header">Debug Information</h2>
   <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
     <div class="pf-v6-c-description-list__group">
@@ -124,11 +125,11 @@
     </div>
     <div class="pf-v6-c-description-list__group">
       <dt class="pf-v6-c-description-list__term">Tag Name</dt>
-      <dd class="pf-v6-c-description-list__description">{{.TagName}}</dd>
+      <dd class="pf-v6-c-description-list__description">{{.Attributes.TagName}}</dd>
     </div>
     <div class="pf-v6-c-description-list__group">
       <dt class="pf-v6-c-description-list__term">Demo Title</dt>
-      <dd class="pf-v6-c-description-list__description">{{.DemoTitle}}</dd>
+      <dd class="pf-v6-c-description-list__description">{{.Attributes.DemoTitle}}</dd>
     </div>
     <div class="pf-v6-c-description-list__group">
       <dt class="pf-v6-c-description-list__term">Browser</dt>
@@ -141,10 +142,9 @@
   </dl>
   <!-- Demo URLs section - shows single demo on demo pages, all demos on index -->
   <div id="demo-urls-container"></div>
-  <details id="debug-importmap-details">
-    <summary>Show Import Map</summary>
+  <pf-v6-expandable-section id="debug-importmap-details" toggle-text="Show Import Map">
     <pre id="debug-importmap">-</pre>
-  </details>
+  </pf-v6-expandable-section>
   <div slot="footer" class="button-container">
     <pf-v6-button class="debug-copy" variant="primary">
       Copy Debug Info
@@ -180,7 +180,8 @@
 </cem-connection-status>
 
 <!-- Reconnection modal -->
-<pf-v6-modal id="reconnection-modal">
+<pf-v6-modal id="reconnection-modal"
+             variant="large">
   <h2 slot="header">Development Server Disconnected</h2>
   <cem-reconnection-content id="reconnection-content">
   </cem-reconnection-content>
