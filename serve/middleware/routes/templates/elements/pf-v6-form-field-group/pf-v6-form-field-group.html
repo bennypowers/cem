@@ -1,21 +1,19 @@
 {{if or .Attributes.Expandable .Attributes.ToggleText}}
-<div id="toggle" part="toggle">
-  <div id="toggle-button-wrapper">
-    <pf-v6-button id="toggle-button"
-                  part="toggle-button"
-                  variant="plain"
-                  aria-expanded="{{if .Attributes.Expanded}}true{{else}}false{{end}}"
-                  aria-labelledby="header-title-text"
-                  aria-controls="body"
-                  aria-label="Details">
-      <span slot="icon-start" id="toggle-icon" part="toggle-icon">
-        <svg viewBox="0 0 256 512" fill="currentColor" aria-hidden="true" role="img" width="1em" height="1em">
-          <path d="M224.3 273l-136 136c-9.4 9.4-24.6 9.4-33.9 0l-22.6-22.6c-9.4-9.4-9.4-24.6 0-33.9l96.4-96.4-96.4-96.4c-9.4-9.4-9.4-24.6 0-33.9L54.3 103c9.4-9.4 24.6-9.4 33.9 0l136 136c9.5 9.4 9.5 24.6.1 34z"></path>
-        </svg>
-      </span>
-    </pf-v6-button>
-  </div>
-</div>
+<pf-v6-button id="toggle-button"
+              part="toggle-button"
+              variant="plain"
+              aria-expanded="{{if .Attributes.Expanded}}true{{else}}false{{end}}"
+              aria-labelledby="header-title-text"
+              aria-controls="body"
+              aria-label="Details">
+  <svg viewBox="0 0 256 512"
+       fill="currentColor"
+       role="presentation"
+       width="1em"
+       height="1em">
+    <path d="M224.3 273l-136 136c-9.4 9.4-24.6 9.4-33.9 0l-22.6-22.6c-9.4-9.4-9.4-24.6 0-33.9l96.4-96.4-96.4-96.4c-9.4-9.4-9.4-24.6 0-33.9L54.3 103c9.4-9.4 24.6-9.4 33.9 0l136 136c9.5 9.4 9.5 24.6.1 34z"></path>
+  </svg>
+</pf-v6-button>
 {{end}}
 {{if or .Attributes.ToggleText .Attributes.Description}}
 <div id="header" part="header">

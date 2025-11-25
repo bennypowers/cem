@@ -87,31 +87,36 @@
   translate: 0 var(--pf-v6-c-form__field-group--m-expanded__field-group-body--TranslateY);
 }
 
-/* Toggle */
-#toggle {
+/* Toggle button */
+#toggle-button {
   grid-row: 1/2;
   grid-column: 1/2;
-  padding-block-start: var(--pf-v6-c-form__field-group-toggle--PaddingBlockStart);
-  padding-inline-end: var(--pf-v6-c-form__field-group-toggle--PaddingInlineEnd);
+  padding: auto auto;
+  margin: auto auto;
+  /* padding-block-start: var(--pf-v6-c-form__field-group-toggle--PaddingBlockStart); */
+  /* padding-inline-end: var(--pf-v6-c-form__field-group-toggle--PaddingInlineEnd); */
+  /* margin-block-start: var(--pf-v6-c-form__field-group-toggle-button--MarginBlockStart); */
+  /* margin-block-end: var(--pf-v6-c-form__field-group-toggle-button--MarginBlockEnd); */
 }
 
-#toggle ~ #header {
+#toggle-button ~ #header {
   --pf-v6-c-form__field-group-header--GridColumn: var(--pf-v6-c-form__field-group-toggle--field-group-header--GridColumn);
 }
 
-#toggle-button-wrapper {
-  margin-block-start: var(--pf-v6-c-form__field-group-toggle-button--MarginBlockStart);
-  margin-block-end: var(--pf-v6-c-form__field-group-toggle-button--MarginBlockEnd);
+#toggle-button ~ #header ~ #body {
+  padding-inline-start: calc(2 * var(--pf-t--global--spacer--action--horizontal--plain--default) + 1em * var(--pf-t--global--font--line-height--body));
 }
 
 #toggle-icon {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: var(--pf-v6-c-form__field-group-toggle-icon--MinWidth);
-  text-align: center;
   transition-timing-function: var(--pf-v6-c-form__field-group-toggle-icon--TransitionTimingFunction);
   transition-duration: var(--pf-v6-c-form__field-group-toggle-icon--TransitionDuration);
   transition-property: transform;
   transform: rotate(var(--pf-v6-c-form__field-group-toggle-icon--Rotate));
+  transform-origin: center;
 }
 
 :host(:dir(rtl)) #toggle-icon {
