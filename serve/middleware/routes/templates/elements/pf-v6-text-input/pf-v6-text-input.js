@@ -5,7 +5,7 @@ import { CemElement } from '/__cem/cem-element.js';
  */
 class PfV6TextInput extends CemElement {
   static formAssociated = true;
-  static observedAttributes = ['value', 'type', 'placeholder', 'disabled', 'readonly', 'invalid', 'min', 'max', 'step', 'aria-label', 'aria-labelledby'];
+  static observedAttributes = ['value', 'type', 'placeholder', 'disabled', 'readonly', 'invalid', 'min', 'max', 'step'];
   static is = 'pf-v6-text-input';
 
   #input;
@@ -21,8 +21,8 @@ class PfV6TextInput extends CemElement {
     this.#input = this.shadowRoot.getElementById('text-input');
     if (!this.#input) return;
 
-    // Sync initial state
-    this.#syncAttributes();
+    // Note: Initial state is rendered server-side via template
+    // #syncAttributes only needed for runtime attribute changes
 
     // Forward change events from internal input and sync value
     this.#input.addEventListener('input', () => {
@@ -96,21 +96,6 @@ class PfV6TextInput extends CemElement {
       } else {
         this.#input.removeAttribute('step');
       }
-    }
-
-    // Sync aria attributes
-    const ariaLabel = this.getAttribute('aria-label');
-    if (ariaLabel) {
-      this.#input.setAttribute('aria-label', ariaLabel);
-    } else {
-      this.#input.removeAttribute('aria-label');
-    }
-
-    const ariaLabelledby = this.getAttribute('aria-labelledby');
-    if (ariaLabelledby) {
-      this.#input.setAttribute('aria-labelledby', ariaLabelledby);
-    } else {
-      this.#input.removeAttribute('aria-labelledby');
     }
 
     // Sync invalid state

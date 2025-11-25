@@ -300,7 +300,7 @@ serve:
       - [x] **pf-v6-select** (check for attribute-dependent structure)
         - Review JS for any attribute-based DOM changes
         - Template: Add any conditional elements
-      - [ ] **pf-v6-text-input** (check for attribute-dependent structure)
+      - [x] **pf-v6-text-input** (check for attribute-dependent structure)
         - Review JS for any attribute-based DOM changes
         - Template: Add any conditional elements
       - [ ] **pf-v6-card** (check for expandable/collapsible logic)

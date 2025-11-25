@@ -1,2 +1,11 @@
 <link rel="stylesheet" href="/__cem/elements/pf-v6-form-control.css">
-<input id="text-input" type="text">
+<input id="text-input"
+       type="{{if .Attributes.Type}}{{.Attributes.Type}}{{else}}text{{end}}"
+       {{if .Attributes.Value}}value="{{.Attributes.Value}}"{{end}}
+       {{if .Attributes.Placeholder}}placeholder="{{.Attributes.Placeholder}}"{{end}}
+       {{if .Attributes.Disabled}}disabled{{end}}
+       {{if .Attributes.Readonly}}readonly{{end}}
+       {{if .Attributes.Invalid}}aria-invalid="true"{{end}}
+       {{if .Attributes.Min}}min="{{.Attributes.Min}}"{{end}}
+       {{if .Attributes.Max}}max="{{.Attributes.Max}}"{{end}}
+       {{if .Attributes.Step}}step="{{.Attributes.Step}}"{{end}}>
