@@ -4,8 +4,8 @@
   <slot name="icon-end"></slot>
 {{- end -}}
 
-{{if .Attributes.href -}}
-<a href="{{.Href}}">
+{{if .Attributes.Href -}}
+<a href="{{.Attributes.Href}}">
   {{- template "button-content" . -}}
 </a>
 {{- else -}}
