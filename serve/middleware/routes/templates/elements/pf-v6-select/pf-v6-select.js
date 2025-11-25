@@ -5,11 +5,12 @@ import { CemElement } from '/__cem/cem-element.js';
  */
 class PfV6Select extends CemElement {
   static formAssociated = true;
-  static observedAttributes = ['value', 'disabled', 'invalid', 'aria-label', 'aria-labelledby'];
+  static observedAttributes = ['value', 'disabled', 'invalid'];
   static is = 'pf-v6-select';
 
   #select;
   #internals;
+  #observer = new MutationObserver(() => this.#cloneOptions());
 
   constructor() {
     super();
@@ -22,8 +23,15 @@ class PfV6Select extends CemElement {
     if (!this.#select) return;
 
     // Note: Initial state (disabled, invalid) is rendered server-side via template
-    // Options come from slotted light DOM content
-    // #syncAttributes only needed for runtime attribute changes
+    // Clone options from light DOM into shadow select
+    this.#cloneOptions();
+
+    // Watch for changes to light DOM options
+    this.#observer.observe(this, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+    });
 
     // Forward change events from internal select and sync value
     this.#select.addEventListener('change', () => {
@@ -43,8 +51,33 @@ class PfV6Select extends CemElement {
     });
   }
 
+  disconnectedCallback() {
+    this.#observer?.disconnect();
+  }
+
   attributeChangedCallback() {
     this.#syncAttributes();
+  }
+
+  #cloneOptions() {
+    if (!this.#select) return;
+
+    // Get current value before clearing
+    const currentValue = this.#select.value;
+
+    // Clear existing options
+    this.#select.innerHTML = '';
+
+    // Clone all option elements from light DOM
+    const options = this.querySelectorAll('option');
+    options.forEach(option => {
+      this.#select.appendChild(option.cloneNode(true));
+    });
+
+    // Restore value if it exists in new options
+    if (currentValue) {
+      this.#select.value = currentValue;
+    }
   }
 
   #syncAttributes() {
@@ -58,21 +91,6 @@ class PfV6Select extends CemElement {
 
     // Sync disabled state
     this.#select.disabled = this.hasAttribute('disabled');
-
-    // Sync aria attributes
-    const ariaLabel = this.getAttribute('aria-label');
-    if (ariaLabel) {
-      this.#select.setAttribute('aria-label', ariaLabel);
-    } else {
-      this.#select.removeAttribute('aria-label');
-    }
-
-    const ariaLabelledby = this.getAttribute('aria-labelledby');
-    if (ariaLabelledby) {
-      this.#select.setAttribute('aria-labelledby', ariaLabelledby);
-    } else {
-      this.#select.removeAttribute('aria-labelledby');
-    }
 
     // Sync invalid state
     if (this.hasAttribute('invalid')) {
@@ -116,4 +134,3 @@ class PfV6Select extends CemElement {
     customElements.define(this.is, this);
   }
 }
-
