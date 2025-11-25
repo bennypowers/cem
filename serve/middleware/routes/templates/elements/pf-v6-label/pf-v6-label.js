@@ -75,6 +75,9 @@ class PfV6Label extends CemElement {
     this.#text = this.#$('#text');
     this.#actions = this.#$('#actions');
 
+    // Sync href if we have an anchor element
+    this.#syncHref();
+
     // Hide actions if empty
     this.#updateActionsVisibility();
     this.#$('slot[name="actions"]')?.addEventListener('slotchange', () => {
@@ -83,6 +86,22 @@ class PfV6Label extends CemElement {
 
     // Set up click handler for clickable labels
     this.#setupClickHandler();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === 'href' && this.#content) {
+      this.#syncHref();
+    }
+  }
+
+  #syncHref() {
+    if (this.#content.tagName === 'A') {
+      if (this.hasAttribute('href')) {
+        this.#content.setAttribute('href', this.getAttribute('href'));
+      } else {
+        this.#content.removeAttribute('href');
+      }
+    }
   }
 
   #setupClickHandler() {

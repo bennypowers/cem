@@ -291,7 +291,7 @@ serve:
         - Current: JS replaces `<button>` with `<a>` if `href` attribute exists
         - Template: Conditional `<a>` vs `<button>` based on `.Attributes.href`
         - Remove client-side DOM manipulation after SSR implemented
-      - [ ] **pf-v6-label** (check for removable/close button logic)
+      - [x] **pf-v6-label** (check for removable/close button logic)
         - Review JS for dynamic close button insertion
         - Template: Conditional close button based on `.Attributes.removable`
       - [ ] **pf-v6-switch** (check for attribute-dependent structure)

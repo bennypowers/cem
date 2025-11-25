@@ -1,4 +1,4 @@
-<span id="content" part="content">
+{{- define "content" -}}
   <slot name="icon"></slot>
   <span id="text" part="text">
     <slot></slot>
@@ -6,4 +6,17 @@
   <span id="actions" part="actions">
     <slot name="actions"></slot>
   </span>
+{{- end -}}
+
+{{if .Attributes.Href -}}
+<a id="content"
+   part="content"
+   href="{{.Attributes.Href}}">
+  {{- template "content" . -}}
+</a>
+{{- else -}}
+<span id="content"
+      part="content">
+  {{- template "content" . -}}
 </span>
+{{- end}}
