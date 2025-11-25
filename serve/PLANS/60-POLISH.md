@@ -292,18 +292,45 @@ serve:
     - [x] Proper event dispatching to knob system
     - [x] Updated all 4 color input locations (attributes/CSS properties, with/without descriptions)
 
+  **Phase 2.9: Expandable Sections & Form Field Groups** ✅ **COMPLETE**
+  - [x] Implemented `pf-v6-expandable-section` component
+    - [x] Full PatternFly v6 CSS with all design tokens
+    - [x] Support for all variants (expanded, expand-top, display-lg, indented, limit-width, truncate)
+    - [x] Smooth animations with proper reduced motion support
+    - [x] IDs in shadow DOM instead of classes
+    - [x] Attr/slot pair pattern for toggle text with dynamic updates
+    - [x] Chevron icon rotation with RTL support
+    - [x] ARIA attributes for accessibility
+    - [x] Public API methods (toggle, show, hide)
+  - [x] Implemented `pf-v6-form-field-group` component
+    - [x] Full PatternFly v6 CSS matching form field group design
+    - [x] Grid-based layout integrating with horizontal forms
+    - [x] Support for expandable/collapsible sections
+    - [x] Optional toggle button, header with title/description, and actions slot
+    - [x] Private CSS variables for nested field group communication
+    - [x] Proper grid column spanning in parent forms
+    - [x] Sibling selector for conditional header positioning
+    - [x] Inert attribute management for collapsed sections
+  - [x] Knobs panel collapsible sections
+    - [x] Wrapped Attributes section in `pf-v6-form-field-group` (expanded by default)
+    - [x] Wrapped Properties section in `pf-v6-form-field-group` (expanded by default)
+    - [x] Wrapped CSS Custom Properties in `pf-v6-form-field-group` (collapsed by default)
+    - [x] Consistent UI across all knob types
+  - [x] Grid layout fixes
+    - [x] Field groups span both columns of horizontal form grid (`grid-column: 1 / -1`)
+    - [x] Field group body inherits parent form's grid template
+    - [x] Private CSS variable `--_form-column-gap` propagates column gap from form to field groups
+    - [x] Form groups inside field groups align properly with horizontal layout
+
   **Phase 3: Remaining Components & Polish** ⬅️ **CURRENT**
   - [x] **pf-v6-text-input CSS polish** ✅
     - [x] Created shared `pf-v6-form-control.css` for common form control styles
     - [x] Matches PatternFly v6 design tokens
-  - [ ] Additional PF v6 components needed:
-    - [x] **pf-v6-expandable-section** - ExpandableSection/disclosure component
-      - **Use cases identified**:
-        - Debug Information modal: Import map disclosure (`<details id="debug-importmap-details">`)
-        - Listing page: Custom Elements list disclosure
-        - Knobs panel: CSS custom properties section (should be collapsed by default)
-      - Currently using native `<details>` elements, should be replaced with PF v6 component
-    - [ ] **pf-v6-number-input** - NumberInput component for number knobs with increment/decrement (nice to have)
+  - [x] Additional PF v6 components needed:
+    - [x] **pf-v6-expandable-section** - ExpandableSection/disclosure component ✅ **COMPLETE**
+      - [x] Implemented with full PatternFly v6 design
+      - [x] Replaced `<details>` in Debug Information modal for import map disclosure
+      - [x] Used as basis for `pf-v6-form-field-group` in knobs panel
   - [x] Template System Enhancement: Attribute-Dependent SSR
     - [x] **Phase 1: Core Infrastructure** ✅ **ALREADY COMPLETE**
       - [x] Shadowroot middleware already extracts attributes via `attributesToTemplateData()`
@@ -341,9 +368,9 @@ serve:
       - [ ] Document template data structure (`.Attributes` map, camelCase keys)
       - [ ] Performance comparison: SSR vs client-side rendering
   - [ ] UI/UX Polish:
-    - [ ] Mobile/responsive testing and fixes
+    - [x] Mobile/responsive testing and fixes
     - [ ] Accessibility audit (keyboard nav, screen readers, ARIA)
-    - [ ] Visual consistency check across all components
+    - [x] Visual consistency check across all components
   - [ ] Performance & Testing:
     - [ ] Test with large projects (100+ components)
     - [ ] Browser compatibility testing
