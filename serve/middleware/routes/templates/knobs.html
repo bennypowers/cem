@@ -34,8 +34,10 @@
               <pf-v6-select slot="control"
                             data-knob-type="attribute"
                             data-knob-name="{{.Name}}"
-                            value="{{.CurrentValue}}"
-                            options="{{join .EnumValues ","}}">
+                            value="{{.CurrentValue}}">
+                {{range .EnumValues}}
+                <option value="{{.}}">{{.}}</option>
+                {{end}}
               </pf-v6-select>
 
               {{else if eq .Type "number"}}
@@ -87,8 +89,10 @@
             <pf-v6-select slot="control"
                           data-knob-type="attribute"
                           data-knob-name="{{.Name}}"
-                          value="{{.CurrentValue}}"
-                          options="{{join .EnumValues ","}}">
+                          value="{{.CurrentValue}}">
+              {{range .EnumValues}}
+              <option value="{{.}}">{{.}}</option>
+              {{end}}
             </pf-v6-select>
 
             {{else if eq .Type "number"}}
@@ -145,8 +149,10 @@
               <pf-v6-select slot="control"
                             data-knob-type="property"
                             data-knob-name="{{.Name}}"
-                            value="{{.CurrentValue}}"
-                            options="{{join .EnumValues ","}}">
+                            value="{{.CurrentValue}}">
+                {{range .EnumValues}}
+                <option value="{{.}}">{{.}}</option>
+                {{end}}
               </pf-v6-select>
 
               {{else if eq .Type "number"}}
@@ -186,8 +192,10 @@
             <pf-v6-select slot="control"
                           data-knob-type="property"
                           data-knob-name="{{.Name}}"
-                          value="{{.CurrentValue}}"
-                          options="{{join .EnumValues ","}}">
+                          value="{{.CurrentValue}}">
+              {{range .EnumValues}}
+              <option value="{{.}}">{{.}}</option>
+              {{end}}
             </pf-v6-select>
 
             {{else if eq .Type "number"}}

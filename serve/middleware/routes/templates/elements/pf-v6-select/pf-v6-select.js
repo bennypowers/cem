@@ -5,7 +5,7 @@ import { CemElement } from '/__cem/cem-element.js';
  */
 class PfV6Select extends CemElement {
   static formAssociated = true;
-  static observedAttributes = ['value', 'options', 'disabled', 'invalid', 'aria-label', 'aria-labelledby'];
+  static observedAttributes = ['value', 'disabled', 'invalid', 'aria-label', 'aria-labelledby'];
   static is = 'pf-v6-select';
 
   #select;
@@ -21,11 +21,9 @@ class PfV6Select extends CemElement {
     this.#select = this.shadowRoot.getElementById('select');
     if (!this.#select) return;
 
-    // Populate options first (in case attributeChangedCallback fired before connectedCallback)
-    this.#populateOptions();
-
-    // Then sync other attributes
-    this.#syncAttributes();
+    // Note: Initial state (disabled, invalid) is rendered server-side via template
+    // Options come from slotted light DOM content
+    // #syncAttributes only needed for runtime attribute changes
 
     // Forward change events from internal select and sync value
     this.#select.addEventListener('change', () => {
@@ -45,42 +43,8 @@ class PfV6Select extends CemElement {
     });
   }
 
-  attributeChangedCallback(name) {
-    if (name === 'options') {
-      this.#populateOptions();
-    }
+  attributeChangedCallback() {
     this.#syncAttributes();
-  }
-
-  #populateOptions() {
-    if (!this.#select) return;
-
-    const optionsAttr = this.getAttribute('options');
-    if (!optionsAttr) return;
-
-    // Clear existing options
-    this.#select.innerHTML = '';
-
-    // Add empty option
-    const emptyOpt = document.createElement('option');
-    emptyOpt.value = '';
-    emptyOpt.textContent = '-- Select --';
-    this.#select.appendChild(emptyOpt);
-
-    // Parse comma-separated options
-    const options = optionsAttr.split(',').map(o => o.trim());
-    options.forEach(opt => {
-      const option = document.createElement('option');
-      option.value = opt;
-      option.textContent = opt;
-      this.#select.appendChild(option);
-    });
-
-    // Set selected value if present
-    const value = this.getAttribute('value');
-    if (value) {
-      this.#select.value = value;
-    }
   }
 
   #syncAttributes() {
@@ -139,13 +103,6 @@ class PfV6Select extends CemElement {
     }
   }
 
-  get options() {
-    return this.getAttribute('options') || '';
-  }
-
-  set options(value) {
-    this.setAttribute('options', value);
-  }
 
   focus() {
     this.#select?.focus();
