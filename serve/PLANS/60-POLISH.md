@@ -287,7 +287,7 @@ serve:
       - [x] No infrastructure changes needed!
     - [ ] **Phase 2: Component Template Revisions**
       - **Strategy**: Review each component's client-side JS code to identify DOM manipulations that should be moved to SSR templates
-      - [ ] **pf-v6-button** (`pf-v6-button.js` lines 52-71)
+      - [x] **pf-v6-button** (`pf-v6-button.js` lines 52-71)
         - Current: JS replaces `<button>` with `<a>` if `href` attribute exists
         - Template: Conditional `<a>` vs `<button>` based on `.Attributes.href`
         - Remove client-side DOM manipulation after SSR implemented

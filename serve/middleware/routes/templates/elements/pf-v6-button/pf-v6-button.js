@@ -49,26 +49,11 @@ class PfV6Button extends CemElement {
   }
 
   async afterTemplateLoaded() {
-    // Check if we should render as anchor - automatically use <a> if href is present
+    // Check if we have an anchor or button (SSR renders the correct element)
     this.#isAnchor = this.hasAttribute('href');
-
-    // Get the button element
-    this.#button = this.shadowRoot.querySelector('button');
-
-    // If we need an anchor, replace the button
-    if (this.#isAnchor) {
-      const button = this.#button;
-      const anchor = document.createElement('a');
-
-      // Move all children (slots) from button to anchor
-      while (button.firstChild) {
-        anchor.appendChild(button.firstChild);
-      }
-
-      // Replace button with anchor
-      button.replaceWith(anchor);
-      this.#button = anchor;
-    }
+    this.#button = this.#isAnchor
+      ? this.shadowRoot.querySelector('a')
+      : this.shadowRoot.querySelector('button');
 
     // Forward attributes to internal element
     this.#syncAttributes();
