@@ -42,8 +42,7 @@ class PfV6Popover extends CemElement {
       'header-level',
       'min-width',
       'max-width',
-      'has-auto-width',
-      'aria-label'
+      'has-auto-width'
     ];
   }
 
@@ -67,9 +66,8 @@ class PfV6Popover extends CemElement {
 
     // The popover attribute is already set in HTML, no need to set it here
 
-    // Apply position class for polyfill compatibility
-    // The polyfill may have trouble with :host() selectors
-    this.#updatePositionClass();
+    // Note: We manually position popovers when native anchor positioning isn't supported
+    // See #showPopover() for the fallback positioning logic
 
     // Check for slotted content and apply classes
     this.#updateSlotClasses();
@@ -93,12 +91,6 @@ class PfV6Popover extends CemElement {
         this.#hidePopover();
       });
     }
-
-    // Update dynamic heading level
-    this.#updateHeaderLevel();
-
-    // Update ARIA attributes
-    this.#updateAriaAttributes();
 
     // Apply CSS custom properties for width/distance
     this.#updateCSSProperties();
@@ -193,17 +185,50 @@ class PfV6Popover extends CemElement {
   // Private methods
   async #showPopover() {
     try {
+      console.log('[popover] Showing popover');
       this.#popoverSlot?.showPopover();
 
-      // Re-apply polyfill when showing the popover, as it may need to calculate positions
-      // for the now-visible element
-      if (this.shadowRoot && !CSS.supports?.('anchor-name', '--test')) {
-        // Small delay to let the popover become visible
-        await new Promise(resolve => setTimeout(resolve, 0));
-        const module = await import('/__cem/css-anchor-positioning-fn.js');
-        if (module.default) {
-          await module.default({ roots: [this.shadowRoot] });
+      // Manually position the popover since the polyfill doesn't handle dynamic elements well
+      if (!CSS.supports?.('anchor-name', '--test')) {
+        // Small delay to let the popover layout
+        await new Promise(resolve => requestAnimationFrame(resolve));
+
+        const trigger = this.shadowRoot.getElementById('trigger');
+        const triggerRect = trigger.getBoundingClientRect();
+        const popoverRect = this.#popoverSlot.getBoundingClientRect();
+        const position = this.position;
+        const distance = parseInt(this.distance);
+
+        // Calculate position based on position attribute
+        let top, left, transform = '';
+
+        switch (position) {
+          case 'top':
+            top = triggerRect.top - popoverRect.height - distance;
+            left = triggerRect.left + (triggerRect.width / 2) - (popoverRect.width / 2);
+            break;
+          case 'bottom':
+            top = triggerRect.bottom + distance;
+            left = triggerRect.left + (triggerRect.width / 2) - (popoverRect.width / 2);
+            break;
+          case 'left':
+            top = triggerRect.top + (triggerRect.height / 2) - (popoverRect.height / 2);
+            left = triggerRect.left - popoverRect.width - distance;
+            break;
+          case 'right':
+            top = triggerRect.top + (triggerRect.height / 2) - (popoverRect.height / 2);
+            left = triggerRect.right + distance;
+            break;
+          default:
+            top = triggerRect.top - popoverRect.height - distance;
+            left = triggerRect.left + (triggerRect.width / 2) - (popoverRect.width / 2);
         }
+
+        this.#popoverSlot.style.top = `${top}px`;
+        this.#popoverSlot.style.left = `${left}px`;
+        this.#popoverSlot.style.bottom = 'auto';
+        this.#popoverSlot.style.right = 'auto';
+        this.#popoverSlot.style.translate = 'none'; // Override CSS translate for manual positioning
       }
     } catch (e) {
       // Popover might already be showing or not supported
@@ -301,11 +326,11 @@ class PfV6Popover extends CemElement {
     // Create new heading element with correct level
     const level = this.headerLevel;
     const newHeading = document.createElement(level);
-    newHeading.className = 'pf-v6-c-popover__title-text';
+    newHeading.id = 'title-text';
     newHeading.innerHTML = '<slot name="header"></slot>';
 
     // Replace existing heading
-    const oldHeading = this.#headerElement.querySelector('[class*="pf-v6-c-popover__title-text"]');
+    const oldHeading = this.#headerElement.querySelector('#title-text');
     if (oldHeading) {
       this.#headerElement.replaceChild(newHeading, oldHeading);
     } else {
@@ -313,33 +338,6 @@ class PfV6Popover extends CemElement {
     }
   }
 
-  #updateAriaAttributes() {
-    if (!this.#popoverSlot) return;
-
-    // Set role and aria-modal on the popover element
-    this.#popoverSlot.setAttribute('role', 'dialog');
-    this.#popoverSlot.setAttribute('aria-modal', 'true');
-
-    // Set aria-label or aria-labelledby
-    const headerSlot = this.shadowRoot.querySelector('slot[name="header"]');
-    const hasHeader = headerSlot?.assignedElements()?.length > 0;
-
-    if (hasHeader) {
-      this.#popoverSlot.setAttribute('aria-labelledby', 'header-content');
-      this.#popoverSlot.removeAttribute('aria-label');
-    } else if (this.ariaLabel) {
-      this.#popoverSlot.setAttribute('aria-label', this.ariaLabel);
-      this.#popoverSlot.removeAttribute('aria-labelledby');
-    }
-
-    // Always set aria-describedby
-    this.#popoverSlot.setAttribute('aria-describedby', 'body');
-
-    // Update close button aria-label
-    if (this.#closeButton) {
-      this.#closeButton.setAttribute('aria-label', this.closeButtonLabel);
-    }
-  }
 
   #updateCSSProperties() {
     const minWidth = this.getAttribute('min-width');
@@ -417,9 +415,11 @@ class PfV6Popover extends CemElement {
         this.#updateHeaderLevel();
         break;
 
-      case 'aria-label':
       case 'close-button-label':
-        this.#updateAriaAttributes();
+        // Update close button label
+        if (this.#closeButton) {
+          this.#closeButton.setAttribute('aria-label', this.closeButtonLabel);
+        }
         break;
 
       case 'min-width':

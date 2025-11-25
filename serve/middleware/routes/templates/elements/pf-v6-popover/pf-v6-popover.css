@@ -135,7 +135,7 @@
   display: flex;
   flex: 0 0 auto;
 
-  .pf-v6-c-popover__title-text {
+  #title-text {
     min-width: 0;
     font-size: var(--pf-v6-c-popover__title-text--FontSize);
     font-weight: var(--pf-v6-c-popover__title-text--FontWeight);
