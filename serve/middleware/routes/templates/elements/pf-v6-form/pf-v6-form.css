@@ -3,9 +3,10 @@
 }
 
 :host([horizontal]) {
+  --_form-column-gap: var(--pf-t--global--spacer--md);
   display: grid;
   grid-template-columns: minmax(0, auto) 1fr;
-  column-gap: var(--pf-t--global--spacer--md);
+  column-gap: var(--_form-column-gap);
   row-gap: var(--pf-t--global--spacer--sm);
   & ::slotted(pf-v6-form-field-group) {
     grid-column: 1 / -1;

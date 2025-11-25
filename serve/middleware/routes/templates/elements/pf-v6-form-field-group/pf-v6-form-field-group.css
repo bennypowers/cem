@@ -71,14 +71,6 @@
   --pf-v6-c-form__field-group-body--PaddingBlockStart: var(--_nested-body-padding-block-start, 0);
 }
 
-#body {
-  /* Set private vars for nested field groups */
-  --_nested-body-grid-column: var(--pf-v6-c-form__field-group__field-group__field-group-body--GridColumn);
-  --_nested-toggle-padding-block-start: var(--pf-v6-c-form__field-group__field-group__field-group-toggle--PaddingBlockStart);
-  --_nested-header-padding-block-start: var(--pf-v6-c-form__field-group__field-group__field-group-header--PaddingBlockStart);
-  --_nested-header-padding-block-end: var(--pf-v6-c-form__field-group__field-group__field-group-header--PaddingBlockEnd);
-  --_nested-body-padding-block-start: 0;
-}
 
 :host([expanded]) {
   --pf-v6-c-form__field-group-toggle-icon--Rotate: var(--pf-v6-c-form__field-group--m-expanded__toggle-icon--Rotate);
@@ -164,11 +156,20 @@
 
 /* Body */
 #body {
+  /* Set private vars for nested field groups */
+  --_nested-body-grid-column: var(--pf-v6-c-form__field-group__field-group__field-group-body--GridColumn);
+  --_nested-toggle-padding-block-start: var(--pf-v6-c-form__field-group__field-group__field-group-toggle--PaddingBlockStart);
+  --_nested-header-padding-block-start: var(--pf-v6-c-form__field-group__field-group__field-group-header--PaddingBlockStart);
+  --_nested-header-padding-block-end: var(--pf-v6-c-form__field-group__field-group__field-group-header--PaddingBlockEnd);
+  --_nested-body-padding-block-start: 0;
+
   display: grid;
   grid-column: var(--pf-v6-c-form__field-group-body--GridColumn);
-  gap: var(--pf-v6-c-form__field-group-body--Gap);
   padding-block-start: var(--pf-v6-c-form__field-group-body--PaddingBlockStart);
   padding-block-end: var(--pf-v6-c-form__field-group-body--PaddingBlockEnd);
+  grid-template-columns: inherit;
+  column-gap: var(--_form-column-gap, var(--pf-v6-c-form__field-group-body--Gap));
+  row-gap: var(--pf-t--global--spacer--sm);
 }
 
 :host([expandable]) #body {
