@@ -21,8 +21,8 @@ class PfV6Switch extends CemElement {
     this.#input = this.shadowRoot.getElementById('switch-input');
     if (!this.#input) return;
 
-    // Sync initial state
-    this.#syncAttributes();
+    // Note: Initial state is rendered server-side via template
+    // #syncAttributes only needed for runtime attribute changes
 
     // Forward change events from internal checkbox and sync checked state
     this.#input.addEventListener('change', () => {

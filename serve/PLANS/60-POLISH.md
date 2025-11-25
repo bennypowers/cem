@@ -294,7 +294,7 @@ serve:
       - [x] **pf-v6-label** (check for removable/close button logic)
         - Review JS for dynamic close button insertion
         - Template: Conditional close button based on `.Attributes.removable`
-      - [ ] **pf-v6-switch** (check for attribute-dependent structure)
+      - [x] **pf-v6-switch** (check for attribute-dependent structure)
         - Review JS for any attribute-based DOM changes
         - Template: Add any conditional elements
       - [ ] **pf-v6-select** (check for attribute-dependent structure)
