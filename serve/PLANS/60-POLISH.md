@@ -322,7 +322,7 @@ serve:
     - [x] Private CSS variable `--_form-column-gap` propagates column gap from form to field groups
     - [x] Form groups inside field groups align properly with horizontal layout
 
-  **Phase 3: Remaining Components & Polish** ⬅️ **CURRENT**
+  **Phase 3: Accessibility & Polish** ⬅️ **CURRENT**
   - [x] **pf-v6-text-input CSS polish** ✅
     - [x] Created shared `pf-v6-form-control.css` for common form control styles
     - [x] Matches PatternFly v6 design tokens
@@ -331,6 +331,48 @@ serve:
       - [x] Implemented with full PatternFly v6 design
       - [x] Replaced `<details>` in Debug Information modal for import map disclosure
       - [x] Used as basis for `pf-v6-form-field-group` in knobs panel
+  - [x] **Firefox Accessibility Audit Fixes** ✅ **COMPLETE**
+    - [x] Fixed `pf-v6-button` and `pf-v6-toggle-group-item` semantics
+      - [x] Removed shadow `<button>` elements to avoid nested button semantics
+      - [x] Added `role="button"` and `role="radio"` via ElementInternals on host
+      - [x] Implemented host-based focus management with tabindex
+      - [x] Kept shadow `<a>` for link variant (preserves native link behavior)
+      - [x] Fixed CSS to style both host (button) and shadow `<a>` (link)
+      - [x] Added `box-sizing: border-box` to fix icon-only button dimensions
+    - [x] Fixed `pf-v6-toggle-group-item` focus and keyboard navigation
+      - [x] Removed `display: contents` from host (was preventing focus)
+      - [x] Moved visual styles from `#wrapper` to `:host`
+      - [x] Made `#wrapper` transparent with `display: contents`
+      - [x] Fixed roving tabindex implementation
+      - [x] Added proper focus outline on `:host(:focus-visible)`
+      - [x] Implemented keyboard navigation (Arrow keys, Home, End)
+    - [x] Fixed `cem-serve-knobs` navigation
+      - [x] Replaced click listener delegation with `hashchange` event
+      - [x] Cleaner separation - nav links work as normal `<a>` elements
+      - [x] Browser back/forward buttons work automatically
+    - [x] Fixed `cem-serve-knob-group` color button accessibility
+      - [x] Removed delegated click listener on knob-group
+      - [x] Attached listeners directly to each `.color-picker-button`
+      - [x] Used WeakMap to track listeners for cleanup
+      - [x] Handle dynamic content via `slotchange` events
+    - [x] Fixed `cem-drawer` resize handle keyboard accessibility
+      - [x] Added `role="separator"` and `aria-orientation="horizontal"`
+      - [x] Made focusable with `tabindex="0"`
+      - [x] Added `aria-valuemin`, `aria-valuemax`, `aria-valuenow` for screen readers
+      - [x] Implemented keyboard controls (Arrow Up/Down, Home, End, Shift for larger steps)
+      - [x] Added focus-visible styles with outline
+      - [x] Updated toggle button with `aria-expanded` and `aria-controls`
+    - [x] Fixed `pf-v6-tabs` keyboard navigation (RTI)
+      - [x] Moved keyboard listener to `afterTemplateLoaded` (attach once, not on every update)
+      - [x] Fixed `currentIndex` detection using `shadowRoot.activeElement` instead of `document.activeElement`
+      - [x] Added `aria-label="Tabs"` to tablist container
+    - [x] Fixed `pf-v6-form-field-group` toggle button layout
+      - [x] Removed unnecessary `#toggle` and `#toggle-button-wrapper` divs
+      - [x] Simplified to direct `#toggle-button` in grid
+      - [x] Fixed icon rotation with `transform-origin: center`
+      - [x] Improved icon centering with `inline-flex` + `align-items`/`justify-content`
+      - [x] Added body padding to align content with header title
+      - [x] Calculated padding: `2 × plain button padding + 1em × line-height`
   - [x] Template System Enhancement: Attribute-Dependent SSR
     - [x] **Phase 1: Core Infrastructure** ✅ **ALREADY COMPLETE**
       - [x] Shadowroot middleware already extracts attributes via `attributesToTemplateData()`
@@ -367,9 +409,9 @@ serve:
       - [ ] Update `16-PATTERNFLY-COMPONENTS.md` with SSR conditional rendering patterns
       - [ ] Document template data structure (`.Attributes` map, camelCase keys)
       - [ ] Performance comparison: SSR vs client-side rendering
-  - [ ] UI/UX Polish:
+  - [x] UI/UX Polish:
     - [x] Mobile/responsive testing and fixes
-    - [ ] Accessibility audit (keyboard nav, screen readers, ARIA)
+    - [x] Accessibility audit (keyboard nav, screen readers, ARIA)
     - [x] Visual consistency check across all components
   - [ ] Performance & Testing:
     - [ ] Test with large projects (100+ components)
