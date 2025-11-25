@@ -84,6 +84,12 @@ export class PfV6Modal extends CemElement {
       this.close();
     });
 
+    // Close button dismisses with cancel
+    this.#closeButton?.addEventListener('click', () => {
+      this.#cancelling = true;
+      this.close('cancel');
+    });
+
     // Manage slot visibility
     this.#updateSlotVisibility();
 

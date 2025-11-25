@@ -64,6 +64,10 @@
   --pf-v6-c-modal-box__footer--Gap: var(--pf-t--global--spacer--md);
 }
 
+[hidden] {
+  display: none !important;
+}
+
 @media (min-width: 1200px) {
   :host {
     --pf-v6-c-modal-box--m-align-top--spacer: var(--pf-t--global--spacer--xl);
@@ -85,17 +89,32 @@ dialog {
   border: var(--pf-v6-c-modal-box--BorderWidth) solid var(--pf-v6-c-modal-box--BorderColor);
   border-radius: var(--pf-v6-c-modal-box--BorderRadius);
   box-shadow: var(--pf-v6-c-modal-box--BoxShadow);
-}
-
-/* Only apply flex layout when dialog is open */
-dialog[open] {
-  display: flex;
-  flex-direction: column;
-}
-
-/* Native dialog backdrop */
-dialog::backdrop {
-  background-color: var(--pf-v6-c-backdrop--BackgroundColor, var(--pf-t--global--background--color--backdrop--default));
+  /* Only apply flex layout when dialog is open */
+  &[open] {
+    display: flex;
+    flex-direction: column;
+  }
+  &::backdrop {
+    background-color: var(--pf-v6-c-backdrop--BackgroundColor, var(--pf-t--global--background--color--backdrop--default));
+  }
+  /* Variant: small */
+  :host([variant="small"]) & {
+    --pf-v6-c-modal-box--Width: var(--pf-v6-c-modal-box--m-sm--MaxWidth);
+  }
+  :host([variant="medium"]) & {
+    --pf-v6-c-modal-box--Width: var(--pf-v6-c-modal-box--m-md--Width);
+  }
+  /* Variant: large */
+  :host([variant="large"]) & {
+    --pf-v6-c-modal-box--Width: var(--pf-v6-c-modal-box--m-lg--MaxWidth);
+  }
+  /* Position: top */
+  :host([position="top"]) & {
+    margin-block-start: var(--pf-v6-c-modal-box--m-align-top--InsetBlockStart);
+    margin-block-end: auto;
+    --pf-v6-c-modal-box--MaxWidth: var(--pf-v6-c-modal-box--m-align-top--MaxWidth);
+    --pf-v6-c-modal-box--MaxHeight: var(--pf-v6-c-modal-box--m-align-top--MaxHeight);
+  }
 }
 
 /* Header */
@@ -108,10 +127,6 @@ dialog::backdrop {
   padding-inline-start: var(--pf-v6-c-modal-box__header--PaddingInlineStart);
   padding-inline-end: var(--pf-v6-c-modal-box__header--PaddingInlineEnd);
   gap: var(--pf-v6-c-modal-box__header--Gap);
-}
-
-#header[hidden] {
-  display: none;
 }
 
 #header-main {
@@ -139,10 +154,6 @@ dialog::backdrop {
 #description {
   font-size: var(--pf-v6-c-modal-box__description--FontSize);
   color: var(--pf-v6-c-modal-box__description--Color);
-}
-
-#description[hidden] {
-  display: none;
 }
 
 /* Body */
@@ -177,60 +188,15 @@ dialog::backdrop {
   padding-inline-start: var(--pf-v6-c-modal-box__footer--PaddingInlineStart);
 }
 
-#footer[hidden] {
-  display: none;
-}
-
 /* Close button */
 #close {
   position: absolute;
   inset-block-start: var(--pf-v6-c-modal-box__close--InsetBlockStart);
   inset-inline-end: var(--pf-v6-c-modal-box__close--InsetInlineEnd);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--pf-t--global--spacer--control--vertical--default) var(--pf-t--global--spacer--md);
-  color: var(--pf-t--global--icon--color--regular);
-  cursor: pointer;
-  background: transparent;
-  border: none;
-  border-radius: var(--pf-t--global--border--radius--small);
+  & svg {
+    width: 1rem;
+    height: 1rem;
+    fill: currentColor;
+  }
 }
 
-#close:hover {
-  color: var(--pf-t--global--icon--color--hover);
-  background-color: var(--pf-t--global--background--color--action--plain--hover);
-}
-
-#close:active {
-  background-color: var(--pf-t--global--background--color--action--plain--clicked);
-}
-
-#close svg {
-  width: 1rem;
-  height: 1rem;
-  fill: currentColor;
-}
-
-/* Variant: small */
-:host([variant="small"]) dialog {
-  --pf-v6-c-modal-box--Width: var(--pf-v6-c-modal-box--m-sm--MaxWidth);
-}
-
-/* Variant: medium */
-:host([variant="medium"]) dialog {
-  --pf-v6-c-modal-box--Width: var(--pf-v6-c-modal-box--m-md--Width);
-}
-
-/* Variant: large */
-:host([variant="large"]) dialog {
-  --pf-v6-c-modal-box--Width: var(--pf-v6-c-modal-box--m-lg--MaxWidth);
-}
-
-/* Position: top */
-:host([position="top"]) dialog {
-  margin-block-start: var(--pf-v6-c-modal-box--m-align-top--InsetBlockStart);
-  margin-block-end: auto;
-  --pf-v6-c-modal-box--MaxWidth: var(--pf-v6-c-modal-box--m-align-top--MaxWidth);
-  --pf-v6-c-modal-box--MaxHeight: var(--pf-v6-c-modal-box--m-align-top--MaxHeight);
-}
