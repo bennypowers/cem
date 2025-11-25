@@ -1,13 +1,4 @@
 :host {
-  display: contents;
-}
-
-/* Negative margin to overlap borders between adjacent items */
-:host(:not(:first-child)) #button {
-  margin-inline-start: var(--pf-v6-c-toggle-group__item--item--MarginInlineStart);
-}
-
-#button {
   position: relative;
   z-index: var(--pf-v6-c-toggle-group__button--ZIndex);
   display: inline-flex;
@@ -25,9 +16,18 @@
   user-select: none;
 }
 
+/* Negative margin to overlap borders between adjacent items */
+:host(:not(:first-child)) {
+  margin-inline-start: var(--pf-v6-c-toggle-group__item--item--MarginInlineStart);
+}
+
+#wrapper {
+  display: contents;
+}
+
 /* Border pseudo-elements */
-#button::before,
-#button::after {
+:host::before,
+:host::after {
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -36,7 +36,7 @@
   border-radius: inherit;
 }
 
-#button::before {
+:host::before {
   border-width: var(--pf-v6-c-toggle-group__button--before--BorderWidth);
   border-block-start-color: var(--pf-v6-c-toggle-group__button--before--BorderBlockStartColor, var(--pf-v6-c-toggle-group__button--before--BorderColor));
   border-block-end-color: var(--pf-v6-c-toggle-group__button--before--BorderBlockEndColor, var(--pf-v6-c-toggle-group__button--before--BorderColor));
@@ -44,22 +44,29 @@
   border-inline-end-color: var(--pf-v6-c-toggle-group__button--before--BorderInlineEndColor, var(--pf-v6-c-toggle-group__button--before--BorderColor));
 }
 
-#button::after {
+:host::after {
   inset: var(--pf-v6-c-toggle-group__button--before--BorderWidth);
   border-color: var(--pf-v6-c-toggle-group__button--after--BorderColor);
   border-width: var(--pf-v6-c-toggle-group__button--after--BorderWidth);
 }
 
 /* Hover state */
-#button:hover:not(:disabled) {
+:host(:hover:not([aria-disabled="true"])) {
   --pf-v6-c-toggle-group__button--BackgroundColor: var(--pf-v6-c-toggle-group__button--hover--BackgroundColor);
   --pf-v6-c-toggle-group__button--ZIndex: var(--pf-v6-c-toggle-group__button--hover--ZIndex);
   --pf-v6-c-toggle-group__button--before--BorderColor: var(--pf-v6-c-toggle-group__button--hover--before--BorderColor);
   --pf-v6-c-toggle-group__button--after--BorderWidth: var(--pf-v6-c-toggle-group__button--hover--after--BorderWidth);
 }
 
+/* Focus state - add outline on host */
+:host(:focus-visible) {
+  outline: 2px solid var(--pf-t--global--color--brand--default);
+  outline-offset: 2px;
+  --pf-v6-c-toggle-group__button--ZIndex: var(--pf-v6-c-toggle-group__button--hover--ZIndex);
+}
+
 /* Selected state */
-:host([selected]) #button {
+:host([selected]) {
   --pf-v6-c-toggle-group__button--BackgroundColor: var(--pf-v6-c-toggle-group__button--m-selected--BackgroundColor);
   --pf-v6-c-toggle-group__button--Color: var(--pf-v6-c-toggle-group__button--m-selected--Color);
   --pf-v6-c-toggle-group__button--before--BorderColor: var(--pf-v6-c-toggle-group__button--m-selected--before--BorderColor);
@@ -68,34 +75,33 @@
 }
 
 /* Adjacent selected items - special border handling */
-:host([selected]) + :host([selected]) #button {
+:host([selected]) + :host([selected]) {
   --pf-v6-c-toggle-group__button--before--BorderInlineStartColor: var(--pf-v6-c-toggle-group__button--m-selected-selected--before--BorderInlineStartColor);
 }
 
 /* Disabled state */
-:host([disabled]) #button {
+:host([aria-disabled="true"]) {
   --pf-v6-c-toggle-group__button--BackgroundColor: var(--pf-v6-c-toggle-group__button--disabled--BackgroundColor);
   --pf-v6-c-toggle-group__button--Color: var(--pf-v6-c-toggle-group__button--disabled--Color);
   --pf-v6-c-toggle-group__button--before--BorderColor: var(--pf-v6-c-toggle-group__button--disabled--before--BorderColor);
   --pf-v6-c-toggle-group__button--ZIndex: var(--pf-v6-c-toggle-group__button--disabled--ZIndex);
-
   cursor: not-allowed;
   pointer-events: none;
 }
 
 /* Adjacent disabled items - special border handling */
-:host([disabled]) + :host([disabled]) #button {
+:host([aria-disabled="true"]) + :host([aria-disabled="true"]) {
   --pf-v6-c-toggle-group__button--before--BorderInlineStartColor: var(--pf-v6-c-toggle-group__button--disabled-disabled--before--BorderInlineStartColor);
 }
 
 /* First child border radius */
-:host(:first-child) #button {
+:host(:first-child) {
   border-start-start-radius: var(--pf-v6-c-toggle-group__item--first-child__button--BorderStartStartRadius);
   border-end-start-radius: var(--pf-v6-c-toggle-group__item--first-child__button--BorderEndStartRadius);
 }
 
 /* Last child border radius */
-:host(:last-child) #button {
+:host(:last-child) {
   border-start-end-radius: var(--pf-v6-c-toggle-group__item--last-child__button--BorderStartEndRadius);
   border-end-end-radius: var(--pf-v6-c-toggle-group__item--last-child__button--BorderEndEndRadius);
 }

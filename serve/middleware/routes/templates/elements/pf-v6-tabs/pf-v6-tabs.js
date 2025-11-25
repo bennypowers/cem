@@ -17,6 +17,9 @@ class PfV6Tabs extends CemElement {
     this.#tabsContainer = this.#$('#tabs');
     if (!this.#tabsContainer) return;
 
+    // Handle keyboard navigation (attach once)
+    this.#tabsContainer.addEventListener('keydown', (e) => this.#handleKeyDown(e));
+
     // Listen for tab child changes
     this.addEventListener('pf-v6-tab-connected', this.#updateTabs);
     this.addEventListener('pf-v6-tab-disconnected', this.#updateTabs);
@@ -99,14 +102,12 @@ class PfV6Tabs extends CemElement {
       // Assign slot name to the pf-v6-tab element
       tab.setAttribute('slot', slotName);
     });
-
-    // Handle keyboard navigation
-    this.#tabsContainer.addEventListener('keydown', (e) => this.#handleKeyDown(e));
   }
 
   #handleKeyDown(e) {
     const buttons = Array.from(this.#tabsContainer.querySelectorAll('.tab'));
-    const currentIndex = buttons.findIndex(btn => btn === document.activeElement);
+    // Use shadowRoot.activeElement to get the focused element within shadow DOM
+    const currentIndex = buttons.findIndex(btn => btn === this.shadowRoot.activeElement);
 
     if (currentIndex === -1) return;
 

@@ -162,10 +162,12 @@
   --pf-v6-c-button--m-block--Width: 100%;
 }
 
-button,
+/* Shared styles for both button (host) and link (shadow a) */
+:host(:not([href])),
 a {
   position: relative;
   display: var(--pf-v6-c-button--Display);
+  box-sizing: border-box;
   gap: var(--pf-v6-c-button--Gap);
   align-items: var(--pf-v6-c-button--AlignItems);
   justify-content: var(--pf-v6-c-button--JustifyContent);
@@ -198,7 +200,12 @@ a {
   scale: var(--pf-v6-c-button--ScaleX) var(--pf-v6-c-button--ScaleY);
 }
 
-button::after,
+/* Wrapper for button variant (non-link) - uses display: contents to inherit everything */
+#wrapper {
+  display: contents;
+}
+
+:host(:not([href]))::after,
 a::after {
   position: absolute;
   inset: var(--pf-v6-c-button--border--offset, 0);
@@ -209,7 +216,7 @@ a::after {
   transition: inherit;
 }
 
-button:hover:not(:disabled),
+:host(:not([href]):hover:not([aria-disabled="true"])),
 a:hover:not([aria-disabled="true"]) {
   --pf-v6-c-button--Color: var(--pf-v6-c-button--hover--Color);
   --pf-v6-c-button--BackgroundColor: var(--pf-v6-c-button--hover--BackgroundColor);
@@ -220,8 +227,8 @@ a:hover:not([aria-disabled="true"]) {
   --pf-v6-c-button__icon--Color: var(--pf-v6-c-button--hover__icon--Color);
 }
 
-button:active:not(:disabled),
-button.pf-m-clicked,
+:host(:not([href]):active:not([aria-disabled="true"])),
+:host(:not([href]).pf-m-clicked),
 a:active:not([aria-disabled="true"]),
 a.pf-m-clicked {
   --pf-v6-c-button--Color: var(--pf-v6-c-button--m-clicked--Color);
@@ -231,19 +238,19 @@ a.pf-m-clicked {
   --pf-v6-c-button__icon--Color: var(--pf-v6-c-button--m-clicked__icon--Color);
 }
 
-button:active:not(:disabled),
+:host(:not([href]):active:not([aria-disabled="true"])),
 a:active:not([aria-disabled="true"]) {
   background-size: 100% 100%;
   transition: background 0s;
 }
 
-button:focus-visible,
+:host(:not([href]):focus-visible),
 a:focus-visible {
   outline: 2px solid var(--pf-t--global--color--brand--default);
   outline-offset: 2px;
 }
 
-button:disabled,
+:host(:not([href])[aria-disabled="true"]),
 a[aria-disabled="true"] {
   --pf-v6-c-button--Color: var(--pf-v6-c-button--disabled--Color);
   --pf-v6-c-button--BackgroundColor: var(--pf-v6-c-button--disabled--BackgroundColor);
@@ -398,12 +405,17 @@ a[aria-disabled="true"] {
   width: 100%;
 }
 
-slot#content {
+slot {
   display: inline;
 }
 
+slot[hidden] {
+  display: none;
+}
+
 /* Icon slot styling */
-::slotted([slot=icon]) {
+::slotted([slot=icon-start]),
+::slotted([slot=icon-end]) {
   width: 1em;
   height: 1em;
   fill: currentColor;

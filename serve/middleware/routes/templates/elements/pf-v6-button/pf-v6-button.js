@@ -18,28 +18,27 @@ import { CemElement } from '/__cem/cem-element.js';
  * @customElement pf-v6-button
  */
 class PfV6Button extends CemElement {
-  static shadowRootOptions = { mode: 'open', delegatesFocus: true };
   static is = 'pf-v6-button';
-  static observedAttributes = ['disabled', 'aria-label', 'aria-expanded', 'aria-controls', 'aria-haspopup', 'type', 'href'];
 
-  // Attach ElementInternals for cross-root ARIA references
+  static shadowRootOptions = { mode: 'open', delegatesFocus: true };
+
+  static observedAttributes = [
+    'disabled',
+    'variant',
+    'type',
+    'href',
+  ];
+
+  // Attach ElementInternals for role and ARIA management
   #internals = this.attachInternals();
 
-  #button;
-  #isAnchor = false;
+  #element; // Will be <a> or null (for host-based button)
+  #isLink = false;
 
-  get disabled() {
-    return this.hasAttribute('disabled');
-  }
+  get disabled() { return this.hasAttribute('disabled'); }
+  set disabled(value) { this.toggleAttribute('disabled', !!value); }
 
-  set disabled(value) {
-    this.toggleAttribute('disabled', !!value);
-  }
-
-  get variant() {
-    return this.getAttribute('variant');
-  }
-
+  get variant() { return this.getAttribute('variant'); }
   set variant(value) {
     if (value) {
       this.setAttribute('variant', value);
@@ -48,83 +47,201 @@ class PfV6Button extends CemElement {
     }
   }
 
-  async afterTemplateLoaded() {
-    // Check if we have an anchor or button (SSR renders the correct element)
-    this.#isAnchor = this.hasAttribute('href');
-    this.#button = this.#isAnchor
-      ? this.shadowRoot.querySelector('a')
-      : this.shadowRoot.querySelector('button');
-
-    // Forward attributes to internal element
-    this.#syncAttributes();
-
-    // Delegate events
-    this.#button.addEventListener('click', (e) => {
-      if (this.disabled && !this.#isAnchor) {
-        e.preventDefault();
-        e.stopPropagation();
-        return;
-      }
-      // Event bubbles naturally through shadow DOM
-    });
+  get href() { return this.getAttribute('href') || ''; }
+  set href(v) {
+    if (v) {
+      this.setAttribute('href', v);
+    } else {
+      this.removeAttribute('href');
+    }
   }
 
+  get type() { return this.getAttribute('type') || 'button'; }
+  set type(v) {
+    if (v) {
+      this.setAttribute('type', v);
+    } else {
+      this.removeAttribute('type');
+    }
+  }
+
+  async afterTemplateLoaded() {
+    // Check if we have a link
+    this.#isLink = this.hasAttribute('href');
+    this.#element = this.#isLink
+      ? this.shadowRoot.querySelector('a')
+      : null; // No shadow element for button variant
+
+    // Set up button or link behavior
+    if (!this.#isLink) {
+      this.#setupHostButton();
+    } else {
+      this.#setupShadowLink();
+    }
+
+    // Set up slot visibility management
+    this.shadowRoot.querySelectorAll('slot').forEach(slot => {
+      slot.addEventListener('slotchange', () => this.#updateSlotVisibility());
+    });
+    this.#updateSlotVisibility();
+
+    // Forward attributes
+    this.#syncAttributes();
+  }
+
+  #updateSlotVisibility() {
+    const iconStartSlot = this.shadowRoot.querySelector('slot[name="icon-start"]');
+    const iconEndSlot = this.shadowRoot.querySelector('slot[name="icon-end"]');
+
+    // Hide slots that have no content
+    if (iconStartSlot) {
+      iconStartSlot.hidden = iconStartSlot.assignedNodes().length === 0;
+    }
+    if (iconEndSlot) {
+      iconEndSlot.hidden = iconEndSlot.assignedNodes().length === 0;
+    }
+  }
+
+  #setupHostButton() {
+    // Set role on host for button variant
+    this.#internals.role = 'button';
+
+    // Make host focusable
+    if (!this.hasAttribute('tabindex')) {
+      this.setAttribute('tabindex', '0');
+    }
+
+    // Add event listeners on HOST
+    this.addEventListener('click', this.#handleClick);
+    this.addEventListener('keydown', this.#handleKeydown);
+  }
+
+  #setupShadowLink() {
+    // For links, rely on delegatesFocus and shadow <a>
+    // Add click handler to enforce disabled state
+    if (this.#element) {
+      this.#element.addEventListener('click', this.#handleLinkClick);
+    }
+  }
+
+  #handleClick = (event) => {
+    // For host-based buttons only
+    if (this.disabled) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      return;
+    }
+    // Event bubbles naturally
+  };
+
+  #handleKeydown = (event) => {
+    // For host-based buttons only
+    if (this.disabled) {
+      event.preventDefault();
+      return;
+    }
+
+    // Handle Space and Enter for button activation
+    if (event.key === ' ' || event.key === 'Enter') {
+      event.preventDefault();
+      this.click();
+    }
+  };
+
+  #handleLinkClick = (event) => {
+    // For shadow links only - enforce disabled
+    if (this.disabled) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+  };
+
   attributeChangedCallback(name, oldValue, newValue) {
-    // Only sync if button is ready
-    if (this.#button) {
+    switch (name) {
+      case 'disabled': this.#updateDisabled(); break;
+      case 'href':
+      case 'variant': this.#updateRole(); break;
+    }
+
+    // Sync other attributes
+    if (this.#element || !this.#isLink) {
       this.#syncAttributes();
     }
   }
 
-  #syncAttributes() {
-    if (this.#isAnchor) {
-      // Sync href for anchor elements
-      if (this.hasAttribute('href')) {
-        this.#button.setAttribute('href', this.getAttribute('href'));
-      } else {
-        this.#button.removeAttribute('href');
-      }
+  #updateRole() {
+    const hasHref = this.hasAttribute('href');
 
-      // Anchors can't be disabled in the same way, but we can prevent clicks
-      if (this.hasAttribute('disabled')) {
-        this.#button.setAttribute('aria-disabled', 'true');
-        this.#button.style.pointerEvents = 'none';
-      } else {
-        this.#button.removeAttribute('aria-disabled');
-        this.#button.style.pointerEvents = '';
+    if (hasHref) {
+      // Switching to link: remove button role
+      this.#internals.role = null;
+    } else {
+      // Switching to button: set button role
+      this.#internals.role = 'button';
+    }
+  }
+
+  #updateDisabled() {
+    if (this.#isLink) {
+      // For links, set aria-disabled and prevent interaction
+      if (this.#element) {
+        if (this.disabled) {
+          this.#element.setAttribute('aria-disabled', 'true');
+          this.#element.style.pointerEvents = 'none';
+        } else {
+          this.#element.removeAttribute('aria-disabled');
+          this.#element.style.pointerEvents = '';
+        }
       }
     } else {
-      // Sync disabled for button elements
-      if (this.hasAttribute('disabled')) {
-        this.#button.disabled = true;
+      // For host-based buttons, use ElementInternals
+      if (this.disabled) {
+        this.#internals.ariaDisabled = 'true';
+        this.setAttribute('tabindex', '-1');
       } else {
-        this.#button.disabled = false;
-      }
-
-      // Sync type attribute
-      if (this.hasAttribute('type')) {
-        this.#button.setAttribute('type', this.getAttribute('type'));
+        this.#internals.ariaDisabled = null;
+        this.setAttribute('tabindex', '0');
       }
     }
+  }
 
-    // Cross-root ARIA references go on ElementInternals (host)
-    // This allows aria-controls to reference elements outside shadow root
+  #syncAttributes() {
+    if (this.#isLink && this.#element) {
+      // Sync to shadow <a>
+      if (this.hasAttribute('href')) {
+        this.#element.setAttribute('href', this.getAttribute('href'));
+      }
+
+      // ARIA attributes on shadow link
+      const linkAriaAttrs = ['aria-label', 'aria-expanded', 'aria-haspopup'];
+      linkAriaAttrs.forEach(attr => {
+        if (this.hasAttribute(attr)) {
+          this.#element.setAttribute(attr, this.getAttribute(attr));
+        } else {
+          this.#element.removeAttribute(attr);
+        }
+      });
+    }
+    // For button variant: ARIA attrs stay on host, no syncing needed
+    // since we set role='button' on host via ElementInternals
+
+    // aria-controls always goes on host (cross-root reference)
     if (this.hasAttribute('aria-controls')) {
       this.#internals.ariaControls = this.getAttribute('aria-controls');
     } else {
       this.#internals.ariaControls = null;
     }
+  }
 
-    // Non-reference ARIA attributes go on internal button
-    // These don't need to cross shadow boundaries
-    const buttonAriaAttrs = ['aria-label', 'aria-expanded', 'aria-haspopup'];
-    buttonAriaAttrs.forEach(attr => {
-      if (this.hasAttribute(attr)) {
-        this.#button.setAttribute(attr, this.getAttribute(attr));
-      } else {
-        this.#button.removeAttribute(attr);
-      }
-    });
+  disconnectedCallback() {
+    if (!this.#isLink) {
+      this.removeEventListener('click', this.#handleClick);
+      this.removeEventListener('keydown', this.#handleKeydown);
+    }
+    if (this.#element) {
+      this.#element.removeEventListener('click', this.#handleLinkClick);
+    }
   }
 
   static {

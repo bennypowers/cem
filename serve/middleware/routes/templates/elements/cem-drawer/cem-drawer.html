@@ -1,7 +1,16 @@
-<div id="resize-handle" title="Drag to resize"></div>
+<div id="resize-handle"
+     role="separator"
+     aria-orientation="horizontal"
+     aria-label="Resize drawer"
+     tabindex="0"
+     aria-valuemin="100"
+     aria-valuemax="1000"
+     aria-valuenow="400"></div>
 <pf-v6-button id="toggle"
              variant="plain"
-             aria-label="Toggle drawer">
+             aria-label="Toggle drawer"
+             aria-expanded="false"
+             aria-controls="content">
   <svg width="16"
        height="16"
        viewBox="0 0 16 16"

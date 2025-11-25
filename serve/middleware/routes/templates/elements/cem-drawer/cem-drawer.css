@@ -32,6 +32,15 @@
   &:active::before {
     background: var(--pf-t--global--color--brand--default);
   }
+
+  &:focus-visible {
+    outline: 2px solid var(--pf-t--global--color--brand--default);
+    outline-offset: 2px;
+  }
+
+  &:focus-visible::before {
+    background: var(--pf-t--global--color--brand--default);
+  }
 }
 
 #toggle {

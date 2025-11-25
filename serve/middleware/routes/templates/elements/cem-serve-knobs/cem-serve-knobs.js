@@ -19,7 +19,14 @@ export class CemServeKnobs extends CemElement {
   async afterTemplateLoaded() {
     this.#navList = this.#$('#nav-list');
     this.#setupNavigation();
-    this.#setupKnobGroupSwitching();
+    this.#setupHashChangeListener();
+
+    // Handle initial hash on load
+    this.#handleHashChange();
+  }
+
+  disconnectedCallback() {
+    window.removeEventListener('hashchange', this.#handleHashChange);
   }
 
   #setupNavigation() {
@@ -65,46 +72,45 @@ export class CemServeKnobs extends CemElement {
     updateNavigation();
   }
 
-  #setupKnobGroupSwitching() {
-    // Delegate click handling to the nav list
-    this.#navList?.addEventListener('click', (e) => {
-      const navLink = e.target.closest('pf-v6-nav-link');
-      if (!navLink) return;
+  #setupHashChangeListener() {
+    window.addEventListener('hashchange', this.#handleHashChange);
+  }
 
-      const href = navLink.getAttribute('href');
-      if (!href || !href.startsWith('#')) return;
+  #handleHashChange = () => {
+    const hash = window.location.hash;
+    if (!hash || hash === '#') return;
 
-      e.preventDefault();
+    const cardId = hash.substring(1); // Remove #
+    const cards = this.querySelectorAll('pf-v6-card');
+    const navLinks = this.#navList?.querySelectorAll('pf-v6-nav-link');
+    const knobsContainer = this.#$('#knobs');
 
-      const cardId = href.substring(1); // Remove #
-      const cards = this.querySelectorAll('pf-v6-card');
-      const navLinks = this.#navList.querySelectorAll('pf-v6-nav-link');
-      const knobsContainer = this.#$('#knobs');
-
-      // Update current states
+    // Update current states for nav links
+    if (navLinks) {
       for (const link of navLinks) {
-        link.toggleAttribute('current', link === navLink);
+        const linkHref = link.getAttribute('href');
+        link.toggleAttribute('current', linkHref === hash);
       }
+    }
 
-      // Update card visibility and scroll
-      for (const card of cards) {
-        const isActive = card.dataset.card === cardId;
-        card.classList.toggle('active', isActive);
-        if (isActive && knobsContainer) {
-          // Scroll the card into view within the #knobs container only
-          const cardRect = card.getBoundingClientRect();
-          const containerRect = knobsContainer.getBoundingClientRect();
+    // Update card visibility and scroll
+    for (const card of cards) {
+      const isActive = card.dataset.card === cardId;
+      card.classList.toggle('active', isActive);
+      if (isActive && knobsContainer) {
+        // Scroll the card into view within the #knobs container only
+        const cardRect = card.getBoundingClientRect();
+        const containerRect = knobsContainer.getBoundingClientRect();
 
-          // Calculate scroll offset needed to bring card into view
-          const scrollOffset = cardRect.top - containerRect.top + knobsContainer.scrollTop;
+        // Calculate scroll offset needed to bring card into view
+        const scrollOffset = cardRect.top - containerRect.top + knobsContainer.scrollTop;
 
-          knobsContainer.scrollTo({
-            top: scrollOffset,
-            behavior: 'smooth'
-          });
-        }
+        knobsContainer.scrollTo({
+          top: scrollOffset,
+          behavior: 'smooth'
+        });
       }
-    });
+    }
   }
 
   static {

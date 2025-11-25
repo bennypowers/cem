@@ -15,12 +15,21 @@ class CemServeKnobGroup extends CemElement {
 
   #debounceTimers = new Map();
   #debounceDelay = 250; // milliseconds
+  #colorButtonListeners = new WeakMap(); // Track click listeners for cleanup
 
   async afterTemplateLoaded() {
     // Event delegation for input/change events
     this.addEventListener('input', this.#handleInput);
     this.addEventListener('change', this.#handleChange);
-    this.addEventListener('click', this.#handleClick);
+
+    // Attach click listeners to color picker buttons
+    this.#attachColorButtonListeners();
+
+    // Re-attach when slot content changes
+    const slot = this.shadowRoot?.querySelector('slot');
+    if (slot) {
+      slot.addEventListener('slotchange', () => this.#attachColorButtonListeners());
+    }
   }
 
   disconnectedCallback() {
@@ -32,7 +41,34 @@ class CemServeKnobGroup extends CemElement {
 
     this.removeEventListener('input', this.#handleInput);
     this.removeEventListener('change', this.#handleChange);
-    this.removeEventListener('click', this.#handleClick);
+
+    // Remove click listeners from color buttons
+    this.#removeColorButtonListeners();
+  }
+
+  #attachColorButtonListeners() {
+    const buttons = this.querySelectorAll('.color-picker-button');
+    for (const button of buttons) {
+      // Skip if already has listener
+      if (this.#colorButtonListeners.has(button)) continue;
+
+      // Create and store the bound handler
+      const handler = (e) => this.#handleColorButtonClick(e, button);
+      this.#colorButtonListeners.set(button, handler);
+
+      button.addEventListener('click', handler);
+    }
+  }
+
+  #removeColorButtonListeners() {
+    const buttons = this.querySelectorAll('.color-picker-button');
+    for (const button of buttons) {
+      const handler = this.#colorButtonListeners.get(button);
+      if (handler) {
+        button.removeEventListener('click', handler);
+        this.#colorButtonListeners.delete(button);
+      }
+    }
   }
 
   #handleInput = (e) => {
@@ -64,11 +100,7 @@ class CemServeKnobGroup extends CemElement {
     this.#applyChange(knobType, knobName, control.value, control.checked);
   }
 
-  #handleClick = async (e) => {
-    // Check if the clicked element is a color picker button
-    const button = e.target.closest('.color-picker-button');
-    if (!button) return;
-
+  #handleColorButtonClick = async (e, button) => {
     e.preventDefault();
 
     // Find the associated text input group

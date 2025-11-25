@@ -18,42 +18,69 @@ export class PfToggleGroupItem extends CemElement {
 
   static observedAttributes = ['selected', 'disabled', 'value'];
 
-  #button;
+  #internals = this.attachInternals();
+  #wrapper;
 
   #$ = id => this.shadowRoot.getElementById(id);
 
+  constructor() {
+    super();
+    // Set role immediately
+    this.#internals.role = 'radio';
+
+    // Set initial tabindex to -1 (will be updated in afterTemplateLoaded)
+    if (!this.hasAttribute('tabindex')) {
+      this.setAttribute('tabindex', '-1');
+    }
+  }
+
+  connectedCallback() {
+    super.connectedCallback?.();
+
+    // Update tabindex when connected to ensure proper roving tabindex
+    // Use setTimeout to ensure all siblings are in the DOM
+    setTimeout(() => {
+      const isSelected = this.hasAttribute('selected');
+      const parent = this.parentElement;
+      if (parent) {
+        const items = Array.from(parent.querySelectorAll('pf-v6-toggle-group-item'));
+        const isFirstItem = items[0] === this;
+        if (isSelected || isFirstItem) {
+          this.#updateRovingTabindex();
+        }
+      }
+    }, 0);
+  }
+
   async afterTemplateLoaded() {
     this.addEventListener('slotchange', this.#updateSlotVisibility);
-    this.#button = this.#$('button');
+    this.#wrapper = this.#$('wrapper');
 
-    // Set up event listeners
-    this.#button.addEventListener('click', this.#handleClick);
-    this.#button.addEventListener('keydown', this.#handleKeydown);
-    this.#button.addEventListener('focus', this.#handleFocus);
+    // Event listeners on HOST
+    this.addEventListener('click', this.#handleClick);
+    this.addEventListener('keydown', this.#handleKeydown);
+    this.addEventListener('focus', this.#handleFocus);
 
-    // Initial slot visibility update
+    // Initial state
     this.#updateSlotVisibility();
-
-    // Initialize aria-checked and tabindex
     this.#updateAriaChecked();
+
+    // Set initial tabindex immediately
     this.#updateTabindex();
   }
 
   disconnectedCallback() {
     this.removeEventListener('slotchange', this.#updateSlotVisibility);
-    if (this.#button) {
-      this.#button.removeEventListener('click', this.#handleClick);
-      this.#button.removeEventListener('keydown', this.#handleKeydown);
-      this.#button.removeEventListener('focus', this.#handleFocus);
-    }
+    this.removeEventListener('click', this.#handleClick);
+    this.removeEventListener('keydown', this.#handleKeydown);
+    this.removeEventListener('focus', this.#handleFocus);
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    if (!this.#button) return;
-
     if (name === 'selected') {
       this.#updateAriaChecked();
-      this.#updateTabindex();
+      // When selection changes, update tabindex for all siblings
+      this.#updateRovingTabindex();
     } else if (name === 'disabled') {
       this.#updateDisabled();
     }
@@ -61,11 +88,11 @@ export class PfToggleGroupItem extends CemElement {
 
   #updateAriaChecked() {
     const isSelected = this.hasAttribute('selected');
-    this.#button.setAttribute('aria-checked', isSelected.toString());
+    this.#internals.ariaChecked = isSelected.toString();
   }
 
   #updateTabindex() {
-    // Roving tabindex: selected item or first item gets tabindex="0"
+    // Roving tabindex on HOST
     const isSelected = this.hasAttribute('selected');
     const parent = this.parentElement;
 
@@ -79,23 +106,37 @@ export class PfToggleGroupItem extends CemElement {
     // - It's selected, OR
     // - It's the first item and nothing is selected
     const shouldBeTabbable = isSelected || (isFirstItem && !hasSelectedItem);
-    this.#button.setAttribute('tabindex', shouldBeTabbable ? '0' : '-1');
+    this.setAttribute('tabindex', shouldBeTabbable ? '0' : '-1');
   }
 
   #updateDisabled() {
     const isDisabled = this.hasAttribute('disabled');
-    this.#button.disabled = isDisabled;
+    this.#internals.ariaDisabled = isDisabled ? 'true' : null;
+
+    if (isDisabled) {
+      this.setAttribute('tabindex', '-1');
+    } else {
+      this.#updateTabindex();
+    }
   }
 
   #handleClick = (event) => {
-    event.preventDefault();
-    if (this.hasAttribute('disabled')) return;
+    if (this.hasAttribute('disabled')) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      return;
+    }
 
+    // Focus this item first
+    this.focus();
     this.#selectItem();
   }
 
   #handleKeydown = (event) => {
-    if (this.hasAttribute('disabled')) return;
+    if (this.hasAttribute('disabled')) {
+      event.preventDefault();
+      return;
+    }
 
     switch (event.key) {
       case ' ':
@@ -162,7 +203,7 @@ export class PfToggleGroupItem extends CemElement {
 
     const targetItem = items[newIndex];
     if (targetItem) {
-      targetItem.shadowRoot.getElementById('button').focus();
+      targetItem.focus(); // Focus HOST
       // Select the item when navigating (radio group behavior)
       targetItem.setAttribute('selected', '');
       targetItem.dispatchEvent(new ToggleGroupItemSelectEvent(
@@ -182,7 +223,7 @@ export class PfToggleGroupItem extends CemElement {
 
     const targetItem = toStart ? items[0] : items[items.length - 1];
     if (targetItem) {
-      targetItem.shadowRoot.getElementById('button').focus();
+      targetItem.focus(); // Focus HOST
       // Select the item when navigating (radio group behavior)
       targetItem.setAttribute('selected', '');
       targetItem.dispatchEvent(new ToggleGroupItemSelectEvent(
@@ -201,10 +242,7 @@ export class PfToggleGroupItem extends CemElement {
 
     // Set all items to tabindex="-1" except this one
     items.forEach(item => {
-      const button = item.shadowRoot?.getElementById('button');
-      if (button) {
-        button.setAttribute('tabindex', item === this ? '0' : '-1');
-      }
+      item.setAttribute('tabindex', item === this ? '0' : '-1');
     });
   }
 
@@ -239,6 +277,10 @@ export class PfToggleGroupItem extends CemElement {
       });
       text.hidden = !hasContent;
     }
+  }
+
+  focus(options) {
+    super.focus(options);
   }
 
   static {

@@ -52,6 +52,7 @@ export class CemServeDrawer extends HTMLElement {
     const content = this.#$('content');
     if (resizeHandle && content) {
       resizeHandle.addEventListener('mousedown', this.#startResize);
+      resizeHandle.addEventListener('keydown', this.#handleKeydown);
     }
 
     // Set initial height when open
@@ -88,6 +89,63 @@ export class CemServeDrawer extends HTMLElement {
 
     const content = this.#$('content');
     content.style.height = `${newHeight}px`;
+
+    // Update ARIA attribute
+    this.#updateAriaValueNow(newHeight);
+  }
+
+  #handleKeydown = (e) => {
+    const content = this.#$('content');
+    if (!content) return;
+
+    const step = e.shiftKey ? 50 : 10; // Larger steps with Shift
+    let currentHeight = parseInt(content.style.height, 10) || 400;
+    let newHeight = currentHeight;
+
+    switch (e.key) {
+      case 'ArrowUp':
+        e.preventDefault();
+        newHeight = currentHeight + step;
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        newHeight = currentHeight - step;
+        break;
+      case 'Home':
+        e.preventDefault();
+        newHeight = 100; // Minimum height
+        break;
+      case 'End':
+        e.preventDefault();
+        const headerHeight = 56;
+        newHeight = window.innerHeight - headerHeight; // Maximum height
+        break;
+      default:
+        return;
+    }
+
+    // Clamp to min/max
+    const headerHeight = 56;
+    const maxHeight = window.innerHeight - headerHeight;
+    newHeight = Math.max(100, Math.min(maxHeight, newHeight));
+
+    content.style.height = `${newHeight}px`;
+    this.#updateAriaValueNow(newHeight);
+
+    // Dispatch resize event
+    this.dispatchEvent(new CemDrawerResizeEvent(newHeight));
+  }
+
+  #updateAriaValueNow(height) {
+    const resizeHandle = this.#$('resize-handle');
+    if (resizeHandle) {
+      resizeHandle.setAttribute('aria-valuenow', Math.round(height));
+
+      // Update max based on window size
+      const headerHeight = 56;
+      const maxHeight = window.innerHeight - headerHeight;
+      resizeHandle.setAttribute('aria-valuemax', Math.round(maxHeight));
+    }
   }
 
   #stopResize = () => {
@@ -112,6 +170,8 @@ export class CemServeDrawer extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === 'open' && oldValue !== newValue) {
       const content = this.#$('content');
+      const toggleButton = this.#$('toggle');
+
       if (content) {
         if (this.open) {
           // Set default height when opening (if not already set by resize)
@@ -122,6 +182,11 @@ export class CemServeDrawer extends HTMLElement {
           // Reset to 0 when closing
           content.style.height = '0px';
         }
+      }
+
+      // Update aria-expanded on toggle button
+      if (toggleButton) {
+        toggleButton.setAttribute('aria-expanded', this.open.toString());
       }
 
       // Dispatch change event
