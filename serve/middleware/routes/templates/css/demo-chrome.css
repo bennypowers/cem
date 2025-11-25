@@ -222,14 +222,18 @@ cem-serve-listing {
 }
 
 cem-serve-knobs {
-  .instance-tag {
+  & .instance-tag {
     font-family: var(--cem-dev-server-font-family-mono);
     color: var(--cem-dev-server-accent-color);
     font-size: var(--cem-dev-server-font-size-sm);
   }
 
-  .instance-label {
+  & .instance-label {
     color: var(--cem-dev-server-text-secondary);
     font-size: var(--cem-dev-server-font-size-sm);
+  }
+
+  & pf-v6-switch {
+    align-self: center;
   }
 }

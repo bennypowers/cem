@@ -20,6 +20,7 @@ class CemServeKnobGroup extends CemElement {
     // Event delegation for input/change events
     this.addEventListener('input', this.#handleInput);
     this.addEventListener('change', this.#handleChange);
+    this.addEventListener('click', this.#handleClick);
   }
 
   disconnectedCallback() {
@@ -31,6 +32,7 @@ class CemServeKnobGroup extends CemElement {
 
     this.removeEventListener('input', this.#handleInput);
     this.removeEventListener('change', this.#handleChange);
+    this.removeEventListener('click', this.#handleClick);
   }
 
   #handleInput = (e) => {
@@ -60,6 +62,62 @@ class CemServeKnobGroup extends CemElement {
     const key = `${knobType}-${knobName}`;
     clearTimeout(this.#debounceTimers.get(key));
     this.#applyChange(knobType, knobName, control.value, control.checked);
+  }
+
+  #handleClick = async (e) => {
+    // Check if the clicked element is a color picker button
+    const button = e.target.closest('.color-picker-button');
+    if (!button) return;
+
+    e.preventDefault();
+
+    // Find the associated text input group
+    const textInputGroup = button.closest('pf-v6-text-input-group');
+    if (!textInputGroup) return;
+
+    const currentValue = textInputGroup.value || '#000000';
+
+    // Try to use EyeDropper API if available
+    if (window.EyeDropper) {
+      try {
+        const eyeDropper = new EyeDropper();
+        const result = await eyeDropper.open();
+
+        // Update the text input group value
+        textInputGroup.value = result.sRGBHex;
+
+        // Trigger input event so the knob system picks it up
+        textInputGroup.dispatchEvent(new Event('input', { bubbles: true }));
+      } catch (err) {
+        // User cancelled or error occurred
+        if (err.name !== 'AbortError') {
+          console.warn('[KnobGroup] EyeDropper error:', err);
+        }
+      }
+    } else {
+      // Fallback: create a temporary native color input
+      const colorInput = document.createElement('input');
+      colorInput.type = 'color';
+      colorInput.value = currentValue;
+      colorInput.style.position = 'absolute';
+      colorInput.style.opacity = '0';
+      colorInput.style.pointerEvents = 'none';
+
+      document.body.appendChild(colorInput);
+
+      colorInput.addEventListener('input', () => {
+        textInputGroup.value = colorInput.value;
+        textInputGroup.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+
+      colorInput.addEventListener('change', () => {
+        textInputGroup.value = colorInput.value;
+        textInputGroup.dispatchEvent(new Event('input', { bubbles: true }));
+        document.body.removeChild(colorInput);
+      });
+
+      colorInput.click();
+    }
   }
 
   #applyChange(type, name, value, checked) {
