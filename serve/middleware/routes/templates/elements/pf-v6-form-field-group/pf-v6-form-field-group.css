@@ -1,0 +1,184 @@
+/* PatternFly v6 Form Field Group Styles */
+
+:host {
+  --pf-v6-c-form__field-group--border-width-base: var(--pf-t--global--border--width--divider--default);
+  --pf-v6-c-form__field-group--BorderBlockStartWidth: var(--pf-v6-c-form__field-group--border-width-base);
+  --pf-v6-c-form__field-group--BorderBlockStartColor: var(--pf-t--global--border--color--default);
+  --pf-v6-c-form__field-group--BorderBlockEndWidth: 0;
+  --pf-v6-c-form__field-group--BorderBlockEndColor: var(--pf-t--global--border--color--default);
+  --pf-v6-c-form__field-group--field-group--MarginBlockStart: var(--pf-t--global--spacer--lg);
+  --pf-v6-c-form__field-group--GridTemplateColumns--toggle: var(--pf-t--global--spacer--action--horizontal--plain--default);
+  --pf-v6-c-form__field-group-toggle--PaddingBlockStart: var(--pf-t--global--spacer--md);
+  --pf-v6-c-form__field-group-toggle--PaddingInlineEnd: var(--pf-t--global--spacer--gap--text-to-element--default);
+  --pf-v6-c-form__field-group-toggle--field-group-header--GridColumn: 2 / 3;
+  --pf-v6-c-form__field-group-header--GridColumn: 1 / -1;
+  --pf-v6-c-form__field-group-header--PaddingBlockStart: var(--pf-t--global--spacer--md);
+  --pf-v6-c-form__field-group-header--PaddingBlockEnd: var(--pf-t--global--spacer--md);
+  --pf-v6-c-form__field-group-header-description--MarginBlockStart: var(--pf-t--global--spacer--xs);
+  --pf-v6-c-form__field-group-header-description--Color: var(--pf-t--global--text--color--subtle);
+  --pf-v6-c-form__field-group-header-actions--MarginBlockStart: calc(var(--pf-t--global--spacer--control--vertical--default) * -1);
+  --pf-v6-c-form__field-group-header-actions--MarginBlockEnd: calc(var(--pf-t--global--spacer--control--vertical--default) * -1);
+  --pf-v6-c-form__field-group-header-actions--MarginInlineStart: var(--pf-t--global--spacer--md);
+  --pf-v6-c-form__field-group-body--GridColumn: 1 / -1;
+  --pf-v6-c-form__field-group-body--Gap: var(--pf-t--global--spacer--gap--group-to-group--vertical--default);
+  --pf-v6-c-form__field-group-body--PaddingBlockStart: 0;
+  --pf-v6-c-form__field-group-body--PaddingBlockEnd: var(--pf-t--global--spacer--md);
+  --pf-v6-c-form__field-group-body--TranslateY: -.5rem;
+  --pf-v6-c-form__field-group-body--TransitionDuration--collapse--fade: var(--pf-t--global--motion--duration--fade--short);
+  --pf-v6-c-form__field-group-body--TransitionDuration--collapse--slide: var(--pf-t--global--motion--duration--fade--short);
+  --pf-v6-c-form__field-group-body--TransitionDuration--expand--fade: var(--pf-t--global--motion--duration--fade--default);
+  --pf-v6-c-form__field-group-body--TransitionDuration--expand--slide: var(--pf-t--global--motion--duration--fade--default);
+  --pf-v6-c-form__field-group--m-expanded__field-group-body--TranslateY: 0;
+  --pf-v6-c-form__field-group-toggle-icon--MinWidth: 1em;
+  --pf-v6-c-form__field-group-toggle-icon--Rotate: 0;
+  --pf-v6-c-form__field-group--m-expanded__toggle-icon--Rotate: 90deg;
+  --pf-v6-c-form__field-group-toggle-icon--TransitionTimingFunction: var(--pf-t--global--motion--timing-function--default);
+  --pf-v6-c-form__field-group-toggle-icon--TransitionDuration: var(--pf-t--global--motion--duration--icon--default);
+  --pf-v6-c-form__field-group-toggle-button--MarginBlockStart: calc(var(--pf-t--global--spacer--control--vertical--default) * -1);
+  --pf-v6-c-form__field-group-toggle-button--MarginBlockEnd: calc(var(--pf-t--global--spacer--control--vertical--default) * -1);
+  --pf-v6-c-form__field-group__field-group__field-group-body--GridColumn: 1 / -1;
+  --pf-v6-c-form__field-group__field-group__field-group-toggle--PaddingBlockStart: 0;
+  --pf-v6-c-form__field-group__field-group__field-group-header--PaddingBlockStart: 0;
+  --pf-v6-c-form__field-group__field-group__field-group-header--PaddingBlockEnd: var(--pf-t--global--spacer--sm);
+  --pf-v6-c-form__field-group__field-group__field-group-toggle--field-group-body--GridColumn: 2 / -1;
+  --pf-v6-c-form__field-group-body__field-group--last-child--MarginBlockEnd: calc(var(--pf-t--global--spacer--md) * -1);
+
+  display: grid;
+  grid-template-columns: minmax(var(--pf-v6-c-form__field-group--GridTemplateColumns--toggle), max-content) 1fr;
+  border-block-start: var(--pf-v6-c-form__field-group--BorderBlockStartWidth) solid var(--pf-v6-c-form__field-group--BorderBlockStartColor);
+  border-block-end: var(--pf-v6-c-form__field-group--BorderBlockEndWidth) solid var(--pf-v6-c-form__field-group--BorderBlockEndColor);
+}
+
+:host(:last-child) {
+  --pf-v6-c-form__field-group--BorderBlockEndWidth: 0;
+}
+
+:host + :host,
+:host(:first-child) {
+  --pf-v6-c-form__field-group--BorderBlockStartWidth: 0;
+}
+
+:host + :host {
+  margin-block-start: var(--pf-v6-c-form__field-group--field-group--MarginBlockStart);
+}
+
+/* Nested field groups - parent sets these via CSS vars on slotted children */
+:host {
+  --pf-v6-c-form__field-group-body--GridColumn: var(--_nested-body-grid-column, 1 / -1);
+  --pf-v6-c-form__field-group-toggle--PaddingBlockStart: var(--_nested-toggle-padding-block-start, var(--pf-t--global--spacer--md));
+  --pf-v6-c-form__field-group-header--PaddingBlockStart: var(--_nested-header-padding-block-start, var(--pf-t--global--spacer--md));
+  --pf-v6-c-form__field-group-header--PaddingBlockEnd: var(--_nested-header-padding-block-end, var(--pf-t--global--spacer--md));
+  --pf-v6-c-form__field-group-body--PaddingBlockStart: var(--_nested-body-padding-block-start, 0);
+}
+
+#body {
+  /* Set private vars for nested field groups */
+  --_nested-body-grid-column: var(--pf-v6-c-form__field-group__field-group__field-group-body--GridColumn);
+  --_nested-toggle-padding-block-start: var(--pf-v6-c-form__field-group__field-group__field-group-toggle--PaddingBlockStart);
+  --_nested-header-padding-block-start: var(--pf-v6-c-form__field-group__field-group__field-group-header--PaddingBlockStart);
+  --_nested-header-padding-block-end: var(--pf-v6-c-form__field-group__field-group__field-group-header--PaddingBlockEnd);
+  --_nested-body-padding-block-start: 0;
+}
+
+:host([expanded]) {
+  --pf-v6-c-form__field-group-toggle-icon--Rotate: var(--pf-v6-c-form__field-group--m-expanded__toggle-icon--Rotate);
+}
+
+:host([expanded][expandable]) #body {
+  max-height: 99999px;
+  padding-block-start: var(--pf-v6-c-form__field-group-body--PaddingBlockStart);
+  padding-block-end: var(--pf-v6-c-form__field-group-body--PaddingBlockEnd);
+  visibility: visible;
+  opacity: 1;
+  transition-delay: 0s;
+  transition-duration: var(--pf-v6-c-form__field-group-body--TransitionDuration--expand--fade), var(--pf-v6-c-form__field-group-body--TransitionDuration--expand--slide), 0s, 0s, 0s, 0s;
+  translate: 0 var(--pf-v6-c-form__field-group--m-expanded__field-group-body--TranslateY);
+}
+
+/* Toggle */
+#toggle {
+  grid-row: 1/2;
+  grid-column: 1/2;
+  padding-block-start: var(--pf-v6-c-form__field-group-toggle--PaddingBlockStart);
+  padding-inline-end: var(--pf-v6-c-form__field-group-toggle--PaddingInlineEnd);
+}
+
+#toggle ~ #header {
+  --pf-v6-c-form__field-group-header--GridColumn: var(--pf-v6-c-form__field-group-toggle--field-group-header--GridColumn);
+}
+
+#toggle-button-wrapper {
+  margin-block-start: var(--pf-v6-c-form__field-group-toggle-button--MarginBlockStart);
+  margin-block-end: var(--pf-v6-c-form__field-group-toggle-button--MarginBlockEnd);
+}
+
+#toggle-icon {
+  display: inline-block;
+  min-width: var(--pf-v6-c-form__field-group-toggle-icon--MinWidth);
+  text-align: center;
+  transition-timing-function: var(--pf-v6-c-form__field-group-toggle-icon--TransitionTimingFunction);
+  transition-duration: var(--pf-v6-c-form__field-group-toggle-icon--TransitionDuration);
+  transition-property: transform;
+  transform: rotate(var(--pf-v6-c-form__field-group-toggle-icon--Rotate));
+}
+
+:host(:dir(rtl)) #toggle-icon {
+  scale: -1 1;
+}
+
+/* Header */
+#header {
+  display: flex;
+  grid-row: 1/2;
+  grid-column: var(--pf-v6-c-form__field-group-header--GridColumn);
+  align-items: flex-start;
+  padding-block-start: var(--pf-v6-c-form__field-group-header--PaddingBlockStart);
+  padding-block-end: var(--pf-v6-c-form__field-group-header--PaddingBlockEnd);
+}
+
+#header-main {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+#header-title {
+  display: flex;
+}
+
+#header-title-text {
+  flex-grow: 1;
+}
+
+#header-description {
+  margin-block-start: var(--pf-v6-c-form__field-group-header-description--MarginBlockStart);
+  color: var(--pf-v6-c-form__field-group-header-description--Color);
+}
+
+#header-actions {
+  margin-block-start: var(--pf-v6-c-form__field-group-header-actions--MarginBlockStart);
+  margin-block-end: var(--pf-v6-c-form__field-group-header-actions--MarginBlockEnd);
+  margin-inline-start: var(--pf-v6-c-form__field-group-header-actions--MarginInlineStart);
+  white-space: nowrap;
+}
+
+/* Body */
+#body {
+  display: grid;
+  grid-column: var(--pf-v6-c-form__field-group-body--GridColumn);
+  gap: var(--pf-v6-c-form__field-group-body--Gap);
+  padding-block-start: var(--pf-v6-c-form__field-group-body--PaddingBlockStart);
+  padding-block-end: var(--pf-v6-c-form__field-group-body--PaddingBlockEnd);
+}
+
+:host([expandable]) #body {
+  max-height: 0;
+  padding-block-start: 0;
+  padding-block-end: 0;
+  visibility: hidden;
+  opacity: 0;
+  transition-delay: 0s, 0s, var(--pf-v6-c-form__field-group-body--TransitionDuration--collapse--fade), var(--pf-v6-c-form__field-group-body--TransitionDuration--collapse--fade), var(--pf-v6-c-form__field-group-body--TransitionDuration--collapse--fade), var(--pf-v6-c-form__field-group-body--TransitionDuration--collapse--fade);
+  transition-duration: var(--pf-v6-c-form__field-group-body--TransitionDuration--collapse--fade), var(--pf-v6-c-form__field-group-body--TransitionDuration--collapse--slide), 0s, 0s, 0s, 0s;
+  transition-property: opacity, translate, visibility, max-height, padding-block-start, padding-block-end;
+  translate: 0 var(--pf-v6-c-form__field-group-body--TranslateY);
+}

@@ -17,8 +17,10 @@
       <cem-serve-knob-group for="{{.ElementID}}">
         <pf-v6-form horizontal>
           {{if .AttributeKnobs}}
-          <h3 class="knob-section-title">Attributes</h3>
-          {{range .AttributeKnobs}}
+          <pf-v6-form-field-group expandable
+                                  expanded
+                                  toggle-text="Attributes">
+            {{range .AttributeKnobs}}
           <pf-v6-form-group>
             <pf-v6-form-label slot="label">{{.Name}}</pf-v6-form-label>
 
@@ -59,7 +61,11 @@
                               aria-label="Pick color for {{.Name}}"
                               class="color-picker-button"
                               data-color-input="{{.Name}}">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                  <svg width="16"
+                       height="16"
+                       viewBox="0 0 16 16"
+                       fill="currentColor"
+                       aria-hidden="true">
                     <path d="M13.354.646a1.207 1.207 0 0 0-1.708 0L8.5 3.793l-.646-.647a.5.5 0 1 0-.708.708L8.293 5l-7.147 7.146A.5.5 0 0 0 1 12.5v1.793l-.854.853a.5.5 0 1 0 .708.707L1.707 15H3.5a.5.5 0 0 0 .354-.146L11 7.707l1.146 1.147a.5.5 0 0 0 .708-.708l-.647-.646 3.147-3.146a1.207 1.207 0 0 0 0-1.708l-2-2zM2 12.707l7-7L10.293 7l-7 7H2v-1.293z"/>
                   </svg>
                 </pf-v6-button>
@@ -74,8 +80,16 @@
               {{end}}
 
               <pf-v6-popover slot="control">
-                <pf-v6-button slot="trigger" variant="plain" aria-label="More information about {{.Name}}">
-                  <svg class="pf-v6-svg" viewBox="0 0 512 512" fill="currentColor" aria-hidden="true" role="img" width="1em" height="1em">
+                <pf-v6-button slot="trigger"
+                              variant="plain"
+                              aria-label="More information about {{.Name}}">
+                  <svg class="pf-v6-svg"
+                       viewBox="0 0 512 512"
+                       fill="currentColor"
+                       aria-hidden="true"
+                       role="img"
+                       width="1em"
+                       height="1em">
                     <path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"></path>
                   </svg>
                 </pf-v6-button>
@@ -119,7 +133,11 @@
                             aria-label="Pick color for {{.Name}}"
                             class="color-picker-button"
                             data-color-input="{{.Name}}">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                <svg width="16"
+                     height="16"
+                     viewBox="0 0 16 16"
+                     fill="currentColor"
+                     aria-hidden="true">
                   <path d="M13.354.646a1.207 1.207 0 0 0-1.708 0L8.5 3.793l-.646-.647a.5.5 0 1 0-.708.708L8.293 5l-7.147 7.146A.5.5 0 0 0 1 12.5v1.793l-.854.853a.5.5 0 1 0 .708.707L1.707 15H3.5a.5.5 0 0 0 .354-.146L11 7.707l1.146 1.147a.5.5 0 0 0 .708-.708l-.647-.646 3.147-3.146a1.207 1.207 0 0 0 0-1.708l-2-2zM2 12.707l7-7L10.293 7l-7 7H2v-1.293z"/>
                 </svg>
               </pf-v6-button>
@@ -139,11 +157,14 @@
             {{end}}
           </pf-v6-form-group>
           {{end}}
+          </pf-v6-form-field-group>
           {{end}}
 
           {{if .PropertyKnobs}}
-          <h3 class="knob-section-title">Properties</h3>
-          {{range .PropertyKnobs}}
+          <pf-v6-form-field-group expandable
+                                  expanded
+                                  toggle-text="Properties">
+            {{range .PropertyKnobs}}
           <pf-v6-form-group>
             <pf-v6-form-label slot="label">{{.Name}}</pf-v6-form-label>
 
@@ -182,8 +203,16 @@
               {{end}}
 
               <pf-v6-popover slot="control">
-                <pf-v6-button slot="trigger" variant="plain" aria-label="More information about {{.Name}}">
-                  <svg class="pf-v6-svg" viewBox="0 0 512 512" fill="currentColor" aria-hidden="true" role="img" width="1em" height="1em">
+                <pf-v6-button slot="trigger"
+                              variant="plain"
+                              aria-label="More information about {{.Name}}">
+                  <svg class="pf-v6-svg"
+                       viewBox="0 0 512 512"
+                       fill="currentColor"
+                       aria-hidden="true"
+                       role="img"
+                       width="1em"
+                       height="1em">
                     <path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"></path>
                   </svg>
                 </pf-v6-button>
@@ -230,15 +259,56 @@
             {{end}}
           </pf-v6-form-group>
           {{end}}
+          </pf-v6-form-field-group>
           {{end}}
 
           {{if .CSSPropertyKnobs}}
-          <h3 class="knob-section-title">CSS Custom Properties</h3>
-          {{range .CSSPropertyKnobs}}
-          <pf-v6-form-group>
-            <pf-v6-form-label slot="label">{{.Name}}</pf-v6-form-label>
+          <pf-v6-form-field-group expandable
+                                  toggle-text="CSS Custom Properties">
+            {{range .CSSPropertyKnobs}}
+            <pf-v6-form-group>
+              <pf-v6-form-label slot="label">{{.Name}}</pf-v6-form-label>
 
-            {{if .Description}}
+              {{if .Description}}
+                {{if eq .Type "color"}}
+                <pf-v6-text-input-group slot="control"
+                                        type="text"
+                                        data-knob-type="css-property"
+                                        data-knob-name="{{.Name}}"
+                                        value="{{.CurrentValue}}">
+                  <pf-v6-button slot="utilities"
+                                variant="plain"
+                                aria-label="Pick color for {{.Name}}"
+                                class="color-picker-button"
+                                data-color-input="{{.Name}}">
+                    <svg width="16"
+                         height="16"
+                         viewBox="0 0 16 16"
+                         fill="currentColor"
+                         aria-hidden="true">
+                      <path d="M13.354.646a1.207 1.207 0 0 0-1.708 0L8.5 3.793l-.646-.647a.5.5 0 1 0-.708.708L8.293 5l-7.147 7.146A.5.5 0 0 0 1 12.5v1.793l-.854.853a.5.5 0 1 0 .708.707L1.707 15H3.5a.5.5 0 0 0 .354-.146L11 7.707l1.146 1.147a.5.5 0 0 0 .708-.708l-.647-.646 3.147-3.146a1.207 1.207 0 0 0 0-1.708l-2-2zM2 12.707l7-7L10.293 7l-7 7H2v-1.293z"/>
+                    </svg>
+                  </pf-v6-button>
+                </pf-v6-text-input-group>
+
+                {{else}}
+                <pf-v6-text-input slot="control"
+                                  data-knob-type="css-property"
+                                  data-knob-name="{{.Name}}"
+                                  value="{{.CurrentValue}}">
+                </pf-v6-text-input>
+                {{end}}
+
+                <pf-v6-popover slot="control">
+                  <pf-v6-button slot="trigger" variant="plain" aria-label="More information about {{.Name}}">
+                    <svg class="pf-v6-svg" viewBox="0 0 512 512" fill="currentColor" aria-hidden="true" role="img" width="1em" height="1em">
+                      <path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"></path>
+                    </svg>
+                  </pf-v6-button>
+                  {{.Description}}
+                </pf-v6-popover>
+
+              {{else}}
               {{if eq .Type "color"}}
               <pf-v6-text-input-group slot="control"
                                       type="text"
@@ -250,7 +320,11 @@
                               aria-label="Pick color for {{.Name}}"
                               class="color-picker-button"
                               data-color-input="{{.Name}}">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                  <svg width="16"
+                       height="16"
+                       viewBox="0 0 16 16"
+                       fill="currentColor"
+                       aria-hidden="true">
                     <path d="M13.354.646a1.207 1.207 0 0 0-1.708 0L8.5 3.793l-.646-.647a.5.5 0 1 0-.708.708L8.293 5l-7.147 7.146A.5.5 0 0 0 1 12.5v1.793l-.854.853a.5.5 0 1 0 .708.707L1.707 15H3.5a.5.5 0 0 0 .354-.146L11 7.707l1.146 1.147a.5.5 0 0 0 .708-.708l-.647-.646 3.147-3.146a1.207 1.207 0 0 0 0-1.708l-2-2zM2 12.707l7-7L10.293 7l-7 7H2v-1.293z"/>
                   </svg>
                 </pf-v6-button>
@@ -263,48 +337,14 @@
                                 value="{{.CurrentValue}}">
               </pf-v6-text-input>
               {{end}}
+              {{end}}
 
-              <pf-v6-popover slot="control">
-                <pf-v6-button slot="trigger" variant="plain" aria-label="More information about {{.Name}}">
-                  <svg class="pf-v6-svg" viewBox="0 0 512 512" fill="currentColor" aria-hidden="true" role="img" width="1em" height="1em">
-                    <path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"></path>
-                  </svg>
-                </pf-v6-button>
-                {{.Description}}
-              </pf-v6-popover>
-
-            {{else}}
-            {{if eq .Type "color"}}
-            <pf-v6-text-input-group slot="control"
-                                    type="text"
-                                    data-knob-type="css-property"
-                                    data-knob-name="{{.Name}}"
-                                    value="{{.CurrentValue}}">
-              <pf-v6-button slot="utilities"
-                            variant="plain"
-                            aria-label="Pick color for {{.Name}}"
-                            class="color-picker-button"
-                            data-color-input="{{.Name}}">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                  <path d="M13.354.646a1.207 1.207 0 0 0-1.708 0L8.5 3.793l-.646-.647a.5.5 0 1 0-.708.708L8.293 5l-7.147 7.146A.5.5 0 0 0 1 12.5v1.793l-.854.853a.5.5 0 1 0 .708.707L1.707 15H3.5a.5.5 0 0 0 .354-.146L11 7.707l1.146 1.147a.5.5 0 0 0 .708-.708l-.647-.646 3.147-3.146a1.207 1.207 0 0 0 0-1.708l-2-2zM2 12.707l7-7L10.293 7l-7 7H2v-1.293z"/>
-                </svg>
-              </pf-v6-button>
-            </pf-v6-text-input-group>
-
-            {{else}}
-            <pf-v6-text-input slot="control"
-                              data-knob-type="css-property"
-                              data-knob-name="{{.Name}}"
-                              value="{{.CurrentValue}}">
-            </pf-v6-text-input>
+              {{if .Summary}}
+              <span slot="helper">{{.Summary}}</span>
+              {{end}}
+            </pf-v6-form-group>
             {{end}}
-            {{end}}
-
-            {{if .Summary}}
-            <span slot="helper">{{.Summary}}</span>
-            {{end}}
-          </pf-v6-form-group>
-          {{end}}
+          </pf-v6-form-field-group>
           {{end}}
         </pf-v6-form>
       </cem-serve-knob-group>
