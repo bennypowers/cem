@@ -292,30 +292,18 @@ func TestAttributeExtraction(t *testing.T) {
 		t.Fatal("Expected Attributes map")
 	}
 
-	if attrs["aria-label"] != "Click me" {
-		t.Errorf("Expected aria-label='Click me', got %q", attrs["aria-label"])
+	// All attributes should be PascalCase in the Attributes map
+	if attrs["AriaLabel"] != "Click me" {
+		t.Errorf("Expected AriaLabel='Click me', got %q", attrs["AriaLabel"])
 	}
 
-	if attrs["data-foo"] != "bar" {
-		t.Errorf("Expected data-foo='bar', got %q", attrs["data-foo"])
+	if attrs["DataFoo"] != "bar" {
+		t.Errorf("Expected DataFoo='bar', got %q", attrs["DataFoo"])
 	}
 
 	// Boolean attribute should have empty value
-	if attrs["disabled"] != "" {
-		t.Errorf("Expected disabled='', got %q", attrs["disabled"])
-	}
-
-	// Check camelCased properties
-	if dataMap["AriaLabel"] != "Click me" {
-		t.Errorf("Expected AriaLabel='Click me', got %v", dataMap["AriaLabel"])
-	}
-
-	if dataMap["DataFoo"] != "bar" {
-		t.Errorf("Expected DataFoo='bar', got %v", dataMap["DataFoo"])
-	}
-
-	if dataMap["Disabled"] != "" {
-		t.Errorf("Expected Disabled='', got %v", dataMap["Disabled"])
+	if attrs["Disabled"] != "" {
+		t.Errorf("Expected Disabled='', got %q", attrs["Disabled"])
 	}
 }
 

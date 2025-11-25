@@ -329,12 +329,12 @@ func TestRenderKnobsHTML(t *testing.T) {
 
 	// Verify structure is present
 	if htmlStr == "" {
-		t.Error("Expected non-empty HTML output")
+		t.Fatal("Expected non-empty HTML output - template may have failed to render")
 	}
 
 	// Verify sections are present
 	expectedStrings := []string{
-		"knobs-container",
+		"cem-serve-knobs",
 		"Attributes",
 		"Properties",
 		"CSS Custom Properties",
@@ -683,9 +683,9 @@ func TestRenderMultiInstanceKnobsHTML(t *testing.T) {
 		},
 	}
 
-	html, err := RenderMultiInstanceKnobsHTML(knobGroups)
+	html, err := RenderKnobsHTML(knobGroups)
 	if err != nil {
-		t.Fatalf("RenderMultiInstanceKnobsHTML failed: %v", err)
+		t.Fatalf("RenderKnobsHTML failed: %v", err)
 	}
 
 	htmlStr := string(html)

@@ -219,13 +219,6 @@ func serveInternalModules(w http.ResponseWriter, r *http.Request, config Config)
 		return
 	}
 
-	// Transform Go template syntax to HTML comments for client-side rendering
-	// Only apply to .html files from elements/ directory
-	if strings.HasSuffix(reqPath, ".html") && strings.HasPrefix(reqPath, "elements/") {
-		transformed := transformTemplateForClient(string(data))
-		data = []byte(transformed)
-	}
-
 	// Set content type based on file extension
 	contentType := "application/octet-stream"
 	switch {
@@ -789,3 +782,4 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 		config.Context.Logger().Error("Failed to write 404 response: %v", err)
 	}
 }
+

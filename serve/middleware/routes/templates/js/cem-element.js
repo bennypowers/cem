@@ -182,26 +182,61 @@ export class CemElement extends HTMLElement {
   /**
    * Gets an element template from client-side cache or from the server
    * @param {string} name - Component name (e.g., 'pf-v6-button')
+   * @param {HTMLElement} element - The element instance with attributes
    * @returns {Promise<string>} The cached or fetched template string
    * @private
    */
-  static async #loadHTML(name) {
-    if (this.#templateCache.has(name)) {
-      return this.#templateCache.get(name);
+  static async #loadHTML(name, element) {
+    const cacheKey = `${name}:${this.#getAttrCacheKey(element)}`;
+
+    if (this.#templateCache.has(cacheKey)) {
+      return this.#templateCache.get(cacheKey);
     }
-    const html = await this.#fetchText(name, 'html');
-    this.#templateCache.set(name, html);
+
+    // Build URL with query parameters
+    const url = new URL(`/__cem/elements/${name}/${name}.html`, window.location.origin);
+    url.searchParams.set('content', 'shadow');
+
+    // Add element attributes to query
+    if (element) {
+      for (const attr of element.attributes) {
+        url.searchParams.set(`attrs[${attr.name}]`, attr.value);
+      }
+    }
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch HTML: ${response.status} ${response.statusText}`);
+    }
+    const html = await response.text();
+
+    this.#templateCache.set(cacheKey, html);
     return html;
+  }
+
+  /**
+   * Generate cache key from element attributes
+   * @param {HTMLElement} element - The element instance
+   * @returns {string} Cache key based on sorted attributes
+   * @private
+   */
+  static #getAttrCacheKey(element) {
+    if (!element) return '';
+    return Array.from(element.attributes)
+      .map(a => `${a.name}=${a.value}`)
+      .sort()
+      .join('&');
   }
 
   /**
    * Loads a complete component template (HTML and CSS)
    * @param {string} name - Component name (e.g., 'pf-v6-button')
+   * @param {HTMLElement} element - The element instance with attributes
    * @returns {Promise<{html: string, stylesheet: CSSStyleSheet}>} The template HTML and stylesheet
    * @private
    */
-  static async #loadComponentTemplate(name) {
-    const [html, stylesheet] = await Promise.all([this.#loadHTML(name), this.#loadCSS(name)]);
+  static async #loadComponentTemplate(name, element) {
+    const [html, stylesheet] = await Promise.all([this.#loadHTML(name, element), this.#loadCSS(name)]);
     return { html, stylesheet };
   }
 
@@ -237,7 +272,8 @@ export class CemElement extends HTMLElement {
 
     try {
       // Use CemElement explicitly since private static methods aren't inherited
-      const { html, stylesheet } = await CemElement.#loadComponentTemplate(elementName);
+      // Pass 'this' to load template with current element's attributes
+      const { html, stylesheet } = await CemElement.#loadComponentTemplate(elementName, this);
 
       // If anchor positioning polyfill is needed, use <style> tag instead of adoptedStyleSheets
       // because the polyfill doesn't support constructed stylesheets

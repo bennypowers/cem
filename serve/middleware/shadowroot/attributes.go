@@ -25,29 +25,29 @@ import (
 )
 
 // attributesToTemplateData converts HTML attributes to template data
-// Provides both raw map access (.Attributes["aria-label"]) and
-// camelCased properties (.AriaLabel)
+// All attributes are scoped under .Attributes with PascalCase keys
+// Example: <button href="/login" disabled> → .Attributes.Href, .Attributes.Disabled
 func attributesToTemplateData(attrs []html.Attribute) map[string]interface{} {
 	data := make(map[string]interface{})
 	attrMap := make(map[string]string)
 
+	// Convert all attribute keys to PascalCase and store under .Attributes
 	for _, attr := range attrs {
-		// Store raw attribute (boolean attrs get empty string)
+		// Store attribute value (boolean attrs get empty string)
 		value := attr.Val
 		if value == "" {
 			value = "" // Explicit: disabled → disabled=""
 		}
 
-		attrMap[attr.Key] = value
-
-		// Also add camelCased version for convenient template access
+		// Store with PascalCase key
 		// aria-label → AriaLabel
-		// data-foo-bar → DataFooBar
-		camelKey := dashToCamelCase(attr.Key)
-		data[camelKey] = value
+		// href → Href
+		// disabled → Disabled
+		pascalKey := dashToCamelCase(attr.Key)
+		attrMap[pascalKey] = value
 	}
 
-	// Make raw attributes available as .Attributes map
+	// All attributes scoped under .Attributes with PascalCase keys
 	data["Attributes"] = attrMap
 
 	return data

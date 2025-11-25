@@ -65,8 +65,14 @@ func newWithKnownElements(logger types.Logger, broadcaster types.ErrorBroadcaste
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Check if this is an element template request with attrs query params
+			isElementWithAttrs := strings.HasPrefix(r.URL.Path, "/__cem/elements/") &&
+				strings.HasSuffix(r.URL.Path, ".html") &&
+				hasAttrsQueryParams(r.URL.Query())
+
 			// Skip internal routes that need direct ResponseWriter access (WebSocket, etc.)
-			if strings.HasPrefix(r.URL.Path, "/__cem") {
+			// But allow element template requests with attrs to be processed
+			if strings.HasPrefix(r.URL.Path, "/__cem") && !isElementWithAttrs {
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -87,8 +93,23 @@ func newWithKnownElements(logger types.Logger, broadcaster types.ErrorBroadcaste
 				return
 			}
 
+			var htmlToProcess []byte
+
+			// If this is an element template request with attrs, construct element HTML
+			if isElementWithAttrs {
+				elementHTML, err := m.constructElementHTML(r)
+				if err != nil {
+					logger.Error("Failed to construct element HTML", "error", err)
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				htmlToProcess = elementHTML
+			} else {
+				htmlToProcess = rec.Body()
+			}
+
 			// Process HTML and inject shadow roots
-			processed, err := m.injectShadowRoots(rec.Body())
+			processed, err := m.injectShadowRoots(htmlToProcess)
 			if err != nil {
 				logger.Error("Failed to inject shadow roots", "error", err)
 				// Fall back to original HTML on error
@@ -98,6 +119,17 @@ func newWithKnownElements(logger types.Logger, broadcaster types.ErrorBroadcaste
 				w.WriteHeader(rec.StatusCode())
 				w.Write(rec.Body())
 				return
+			}
+
+			// If content=shadow, extract just the shadow root content
+			if r.URL.Query().Get("content") == "shadow" {
+				shadowContent, err := extractShadowContent(processed)
+				if err != nil {
+					logger.Error("Failed to extract shadow content", "error", err)
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				processed = shadowContent
 			}
 
 			// Write processed response
@@ -209,4 +241,98 @@ func (m *Middleware) logAndBroadcastError(elementName string, err error) {
 			elementName,
 		)
 	}
+}
+
+// hasAttrsQueryParams checks if the query has attrs[*] parameters
+func hasAttrsQueryParams(query map[string][]string) bool {
+	for key := range query {
+		if strings.HasPrefix(key, "attrs[") {
+			return true
+		}
+	}
+	return false
+}
+
+// constructElementHTML builds element HTML from request path and query params
+func (m *Middleware) constructElementHTML(r *http.Request) ([]byte, error) {
+	// Extract element name from path: /__cem/elements/pf-v6-button/pf-v6-button.html
+	path := strings.TrimPrefix(r.URL.Path, "/__cem/elements/")
+	parts := strings.Split(path, "/")
+	if len(parts) == 0 {
+		return nil, io.ErrUnexpectedEOF
+	}
+	elementName := parts[0]
+
+	// Parse attrs from query
+	query := r.URL.Query()
+	var attrPairs []string
+	for key, values := range query {
+		if strings.HasPrefix(key, "attrs[") && strings.HasSuffix(key, "]") {
+			attrName := key[6 : len(key)-1] // Extract "key" from "attrs[key]"
+			if len(values) > 0 {
+				value := values[0]
+				if value == "" {
+					attrPairs = append(attrPairs, attrName)
+				} else {
+					// HTML escape the value
+					escaped := strings.ReplaceAll(value, `"`, `&quot;`)
+					attrPairs = append(attrPairs, attrName+`="`+escaped+`"`)
+				}
+			}
+		}
+	}
+
+	attrString := strings.Join(attrPairs, " ")
+	var html string
+	if attrString != "" {
+		html = "<" + elementName + " " + attrString + "></" + elementName + ">"
+	} else {
+		html = "<" + elementName + "></" + elementName + ">"
+	}
+
+	return []byte(html), nil
+}
+
+// extractShadowContent extracts just the shadow root content from DSD HTML
+func extractShadowContent(dsdHTML []byte) ([]byte, error) {
+	doc, err := html.Parse(bytes.NewReader(dsdHTML))
+	if err != nil {
+		return nil, err
+	}
+
+	// Find <template shadowrootmode="open">
+	var templateNode *html.Node
+	var findTemplate func(*html.Node)
+	findTemplate = func(n *html.Node) {
+		if n.Type == html.ElementNode && n.Data == "template" {
+			for _, attr := range n.Attr {
+				if attr.Key == "shadowrootmode" && attr.Val == "open" {
+					templateNode = n
+					return
+				}
+			}
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			findTemplate(c)
+			if templateNode != nil {
+				return
+			}
+		}
+	}
+	findTemplate(doc)
+
+	if templateNode == nil {
+		return nil, io.ErrUnexpectedEOF
+	}
+
+	// Render the children of the template node
+	var buf bytes.Buffer
+	for c := templateNode.FirstChild; c != nil; c = c.NextSibling {
+		err := html.Render(&buf, c)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return buf.Bytes(), nil
 }
