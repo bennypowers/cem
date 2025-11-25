@@ -49,6 +49,11 @@ pf-v6-toolbar-group[variant="action-group"] {
     background: var(--pf-t--global--background--color--primary--hover);
     color: var(--pf-t--global--text--color--regular);
   }
+  & svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+  }
 }
 
 .debug-panel {

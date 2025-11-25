@@ -279,7 +279,7 @@ serve:
         - Knobs panel: CSS custom properties section (should be collapsed by default)
       - Currently using native `<details>` elements, should be replaced with PF v6 component
     - [ ] **pf-v6-number-input** - NumberInput component for number knobs with increment/decrement (nice to have)
-  - [ ] Template System Enhancement: Attribute-Dependent SSR
+  - [x] Template System Enhancement: Attribute-Dependent SSR
     - [x] **Phase 1: Core Infrastructure** ✅ **ALREADY COMPLETE**
       - [x] Shadowroot middleware already extracts attributes via `attributesToTemplateData()`
       - [x] Templates receive `.Attributes` map (raw attributes) and camelCased keys (`.Href`, `.Variant`, etc.)

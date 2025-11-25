@@ -21,6 +21,21 @@ class PfV6Page extends CemElement {
   /** Are we a wide layout, or a narrow layout? */
   static match = window.matchMedia('(min-width: 75rem)');
 
+  // Private field for click outside handler
+  #clickOutsideHandler = (event) => {
+    if (!PfV6Page.match.matches &&
+        !this.sidebarCollapsed &&
+        !event
+          .composedPath()
+          .some(node =>
+            node === this.querySelector('pf-v6-page-sidebar') ||
+            // a little cheat, to avoid race when toggling open via button
+            node === this.querySelector('pf-v6-masthead')
+            ?.shadowRoot?.getElementById('toggle-button'))) {
+      this.sidebarCollapsed = true;
+    }
+  };
+
   get sidebarCollapsed() {
     return this.hasAttribute('sidebar-collapsed');
   }
@@ -45,19 +60,10 @@ class PfV6Page extends CemElement {
     this.addEventListener('sidebar-toggle', (event) => {
       this.sidebarCollapsed = !event.expanded;
     });
-    this.addEventListener('click', (event) => {
-      if (!PfV6Page.match.matches &&
-          !this.sidebarCollapsed &&
-          !event
-            .composedPath()
-            .some(node =>
-              node === this.querySelector('pf-v6-page-sidebar') ||
-              // a little cheat, to avoid race when toggling open via button
-              node === this.querySelector('pf-v6-masthead')
-              .shadowRoot.getElementById('toggle-button'))) {
-        this.sidebarCollapsed = true;
-      }
-    });
+
+    // Listen for clicks on document body to close sidebar when clicking outside
+    // This is attached to body to avoid accessibility issues with clickable page elements
+    document.body.addEventListener('click', this.#clickOutsideHandler);
   }
 
   #updateSidebarState() {
@@ -71,6 +77,13 @@ class PfV6Page extends CemElement {
     // Update masthead element
     const masthead = this.querySelector('pf-v6-masthead');
     masthead?.toggleAttribute('sidebar-expanded', !isCollapsed);
+  }
+
+  disconnectedCallback() {
+    // Clean up click outside handler
+    if (this.#clickOutsideHandler) {
+      document.body.removeEventListener('click', this.#clickOutsideHandler);
+    }
   }
 
   static {
