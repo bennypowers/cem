@@ -75,7 +75,7 @@ func TestIntegration_AttributeMap(t *testing.T) {
 	// Handler returns button with variant attribute
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte(`<html><attr-button variant="primary" disabled></attr-button></html>`))
+		_, _ = w.Write([]byte(`<html><attr-button variant="primary" disabled></attr-button></html>`))
 	})
 
 	wrapped := mw(handler)
@@ -105,7 +105,7 @@ func TestIntegration_CamelCaseProperties(t *testing.T) {
 	// Handler returns button with aria-label
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte(`<html><camel-button aria-label="Click me" data-test-id="btn-1"></camel-button></html>`))
+		_, _ = w.Write([]byte(`<html><camel-button aria-label="Click me" data-test-id="btn-1"></camel-button></html>`))
 	})
 
 	wrapped := mw(handler)
@@ -154,7 +154,7 @@ func TestIntegration_ConditionalTemplate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "text/html")
-				w.Write([]byte(tt.html))
+				_, _ = w.Write([]byte(tt.html))
 			})
 
 			wrapped := mw(handler)
@@ -184,7 +184,7 @@ func TestIntegration_NestedWithAttributes(t *testing.T) {
 	// Parent contains child with attributes in its shadow template
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte(`<html><parent-element title="Parent"></parent-element></html>`))
+		_, _ = w.Write([]byte(`<html><parent-element title="Parent"></parent-element></html>`))
 	})
 
 	wrapped := mw(handler)
@@ -221,7 +221,7 @@ func TestIntegration_MissingTemplate(t *testing.T) {
 	// It should be silently skipped (no warning/broadcast)
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte(`<html><unknown-element foo="bar"></unknown-element></html>`))
+		_, _ = w.Write([]byte(`<html><unknown-element foo="bar"></unknown-element></html>`))
 	})
 
 	wrapped := mw(handler)

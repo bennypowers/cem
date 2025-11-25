@@ -7,43 +7,45 @@
   <meta name="theme-color" content="#1e293b" media="(prefers-color-scheme: dark)">
   <title>test-package - demo-subset-one</title>
   <link rel="icon" href="/__cem/logo.svg" type="image/svg+xml">
-  
-  <script type="importmap">
-{}
-  </script>
-  
-  <script type="module" src="/__cem/elements/pf-v6-button/pf-v6-button.js"></script>
-  <script type="module" src="/__cem/elements/pf-v6-switch/pf-v6-switch.js"></script>
-  <script type="module" src="/__cem/elements/pf-v6-text-input/pf-v6-text-input.js"></script>
-  <script type="module" src="/__cem/elements/pf-v6-select/pf-v6-select.js"></script>
-  <script type="module" src="/__cem/elements/pf-v6-tab/pf-v6-tab.js"></script>
-  <script type="module" src="/__cem/elements/pf-v6-tabs/pf-v6-tabs.js"></script>
-  <script type="module" src="/__cem/elements/pf-v6-navigation/pf-v6-navigation.js"></script>
-  <script type="module" src="/__cem/elements/pf-v6-nav-list/pf-v6-nav-list.js"></script>
-  <script type="module" src="/__cem/elements/pf-v6-nav-item/pf-v6-nav-item.js"></script>
-  <script type="module" src="/__cem/elements/pf-v6-nav-link/pf-v6-nav-link.js"></script>
-  <script type="module" src="/__cem/elements/pf-v6-nav-group/pf-v6-nav-group.js"></script>
-  <script type="module" src="/__cem/elements/pf-v6-page/pf-v6-page.js"></script>
-  <script type="module" src="/__cem/elements/pf-v6-page-main/pf-v6-page-main.js"></script>
-  <script type="module" src="/__cem/elements/pf-v6-page-sidebar/pf-v6-page-sidebar.js"></script>
-  <script type="module" src="/__cem/elements/pf-v6-masthead/pf-v6-masthead.js"></script>
-  <script type="module" src="/__cem/elements/pf-v6-skip-to-content/pf-v6-skip-to-content.js"></script>
-  <script type="module" src="/__cem/elements/pf-v6-toolbar/pf-v6-toolbar.js"></script>
-  <script type="module" src="/__cem/elements/pf-v6-toolbar-group/pf-v6-toolbar-group.js"></script>
-  <script type="module" src="/__cem/elements/pf-v6-toolbar-item/pf-v6-toolbar-item.js"></script>
-  <script type="module" src="/__cem/elements/pf-v6-toggle-group/pf-v6-toggle-group.js"></script>
-  <script type="module" src="/__cem/elements/pf-v6-toggle-group-item/pf-v6-toggle-group-item.js"></script>
-  <script type="module" src="/__cem/elements/cem-drawer/cem-drawer.js"></script>
-  <script type="module" src="/__cem/elements/pf-v6-form/pf-v6-form.js"></script>
-  <script type="module" src="/__cem/elements/pf-v6-form-group/pf-v6-form-group.js"></script>
-  <script type="module" src="/__cem/elements/pf-v6-form-label/pf-v6-form-label.js"></script>
-  <script type="module" src="/__cem/elements/pf-v6-popover/pf-v6-popover.js"></script>
-  <script type="module" src="/__cem/elements/cem-serve-demo/cem-serve-demo.js"></script>
-  <script type="module" src="/__cem/elements/cem-serve-knob-group/cem-serve-knob-group.js"></script>
-  <script type="module" src="/__cem/elements/cem-color-scheme-toggle/cem-color-scheme-toggle.js"></script>
-  <script type="module" src="/__cem/elements/cem-serve-chrome/cem-serve-chrome.js"></script>
   <link rel="stylesheet" href="/__cem/pf-tokens.css">
   <link rel="stylesheet" href="/__cem/demo-chrome.css">
+  
+  <script type="importmap">{}</script>
+  
+  <script type="module">
+    import '/__cem/elements/cem-color-scheme-toggle/cem-color-scheme-toggle.js';
+    import '/__cem/elements/cem-drawer/cem-drawer.js';
+    import '/__cem/elements/cem-serve-chrome/cem-serve-chrome.js';
+    import '/__cem/elements/cem-serve-demo/cem-serve-demo.js';
+    import '/__cem/elements/cem-serve-knob-group/cem-serve-knob-group.js';
+    import '/__cem/elements/pf-v6-button/pf-v6-button.js';
+    import '/__cem/elements/pf-v6-expandable-section/pf-v6-expandable-section.js';
+    import '/__cem/elements/pf-v6-form-group/pf-v6-form-group.js';
+    import '/__cem/elements/pf-v6-form-field-group/pf-v6-form-field-group.js';
+    import '/__cem/elements/pf-v6-form-label/pf-v6-form-label.js';
+    import '/__cem/elements/pf-v6-form/pf-v6-form.js';
+    import '/__cem/elements/pf-v6-masthead/pf-v6-masthead.js';
+    import '/__cem/elements/pf-v6-nav-group/pf-v6-nav-group.js';
+    import '/__cem/elements/pf-v6-nav-item/pf-v6-nav-item.js';
+    import '/__cem/elements/pf-v6-nav-link/pf-v6-nav-link.js';
+    import '/__cem/elements/pf-v6-nav-list/pf-v6-nav-list.js';
+    import '/__cem/elements/pf-v6-navigation/pf-v6-navigation.js';
+    import '/__cem/elements/pf-v6-page-main/pf-v6-page-main.js';
+    import '/__cem/elements/pf-v6-page-sidebar/pf-v6-page-sidebar.js';
+    import '/__cem/elements/pf-v6-page/pf-v6-page.js';
+    import '/__cem/elements/pf-v6-popover/pf-v6-popover.js';
+    import '/__cem/elements/pf-v6-select/pf-v6-select.js';
+    import '/__cem/elements/pf-v6-skip-to-content/pf-v6-skip-to-content.js';
+    import '/__cem/elements/pf-v6-switch/pf-v6-switch.js';
+    import '/__cem/elements/pf-v6-tab/pf-v6-tab.js';
+    import '/__cem/elements/pf-v6-tabs/pf-v6-tabs.js';
+    import '/__cem/elements/pf-v6-text-input/pf-v6-text-input.js';
+    import '/__cem/elements/pf-v6-toggle-group-item/pf-v6-toggle-group-item.js';
+    import '/__cem/elements/pf-v6-toggle-group/pf-v6-toggle-group.js';
+    import '/__cem/elements/pf-v6-toolbar-group/pf-v6-toolbar-group.js';
+    import '/__cem/elements/pf-v6-toolbar-item/pf-v6-toolbar-item.js';
+    import '/__cem/elements/pf-v6-toolbar/pf-v6-toolbar.js';
+  </script>
 </head>
 <body>
   <cem-serve-chrome role="none"

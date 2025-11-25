@@ -88,7 +88,7 @@ func TestShadowRootInjection_CustomElement(t *testing.T) {
 	// Handler that returns HTML with a custom element
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte(`<html><body><test-button></test-button></body></html>`))
+		_, _ = w.Write([]byte(`<html><body><test-button></test-button></body></html>`))
 	})
 
 	wrapped := mw(handler)
@@ -123,7 +123,7 @@ func TestShadowRootInjection_NonHTML(t *testing.T) {
 	// Handler that returns JSON
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"key": "value"}`))
+		_, _ = w.Write([]byte(`{"key": "value"}`))
 	})
 
 	wrapped := mw(handler)
@@ -150,7 +150,7 @@ func TestShadowRootInjection_NonCustomElement(t *testing.T) {
 	// Handler with standard HTML elements (no hyphens)
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte(`<html><body><div><p>Hello</p></div></body></html>`))
+		_, _ = w.Write([]byte(`<html><body><div><p>Hello</p></div></body></html>`))
 	})
 
 	wrapped := mw(handler)
@@ -181,7 +181,7 @@ func TestShadowRootInjection_UnknownCustomElement(t *testing.T) {
 	// Handler with unknown custom element (has hyphen but not in templates)
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte(`<html><body><unknown-element></unknown-element></body></html>`))
+		_, _ = w.Write([]byte(`<html><body><unknown-element></unknown-element></body></html>`))
 	})
 
 	wrapped := mw(handler)
@@ -213,7 +213,7 @@ func TestShadowRootInjection_Recursive(t *testing.T) {
 	// Handler with nested custom elements
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte(`<html><body><outer-element></outer-element></body></html>`))
+		_, _ = w.Write([]byte(`<html><body><outer-element></outer-element></body></html>`))
 	})
 
 	wrapped := mw(handler)
@@ -266,7 +266,7 @@ func TestAttributeExtraction(t *testing.T) {
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte(`<html><test-button aria-label="Click me" data-foo="bar" disabled></test-button></html>`))
+		_, _ = w.Write([]byte(`<html><test-button aria-label="Click me" data-foo="bar" disabled></test-button></html>`))
 	})
 
 	wrapped := mw(handler)
@@ -315,7 +315,7 @@ func TestSelfClosingTags(t *testing.T) {
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte(`<html><body><test-icon /></body></html>`))
+		_, _ = w.Write([]byte(`<html><body><test-icon /></body></html>`))
 	})
 
 	wrapped := mw(handler)
@@ -346,7 +346,7 @@ func TestPassThrough(t *testing.T) {
 	// Handler with mixed content
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		io.WriteString(w, `<!DOCTYPE html>
+		_, _ = io.WriteString(w, `<!DOCTYPE html>
 <html lang="en">
 <head><title>Test</title></head>
 <body>

@@ -89,7 +89,7 @@ func newWithKnownElements(logger types.Logger, broadcaster types.ErrorBroadcaste
 					w.Header()[k] = v
 				}
 				w.WriteHeader(rec.StatusCode())
-				w.Write(rec.Body())
+				_, _ = w.Write(rec.Body())
 				return
 			}
 
@@ -117,7 +117,7 @@ func newWithKnownElements(logger types.Logger, broadcaster types.ErrorBroadcaste
 					w.Header()[k] = v
 				}
 				w.WriteHeader(rec.StatusCode())
-				w.Write(rec.Body())
+				_, _ = w.Write(rec.Body())
 				return
 			}
 
@@ -137,7 +137,7 @@ func newWithKnownElements(logger types.Logger, broadcaster types.ErrorBroadcaste
 				w.Header()[k] = v
 			}
 			w.WriteHeader(rec.StatusCode())
-			w.Write(processed)
+			_, _ = w.Write(processed)
 		})
 	}
 }
@@ -166,7 +166,9 @@ func (m *Middleware) processHTML(reader io.Reader) ([]byte, error) {
 			token := z.Token()
 
 			// Write opening tag
-			writeToken(&out, token)
+			if err := writeToken(&out, token); err != nil {
+				return nil, err
+			}
 
 			// Check if this is a known custom element
 			if m.shouldInjectShadowRoot(token.Data) {
@@ -184,16 +186,22 @@ func (m *Middleware) processHTML(reader io.Reader) ([]byte, error) {
 							"element", token.Data,
 							"error", err)
 						// Write unprocessed shadow root on error
-						out.WriteString(shadowRootHTML)
+						if _, err := out.WriteString(shadowRootHTML); err != nil {
+							return nil, err
+						}
 					} else {
-						out.Write(processed)
+						if _, err := out.Write(processed); err != nil {
+							return nil, err
+						}
 					}
 				}
 			}
 
 		default:
 			// Write all other tokens as-is
-			out.Write(z.Raw())
+			if _, err := out.Write(z.Raw()); err != nil {
+				return nil, err
+			}
 		}
 	}
 }
@@ -205,27 +213,48 @@ func (m *Middleware) shouldInjectShadowRoot(tagName string) bool {
 }
 
 // writeToken writes an HTML token to the output buffer
-func writeToken(w io.Writer, token html.Token) {
-	w.Write([]byte("<"))
-	if token.Type == html.EndTagToken {
-		w.Write([]byte("/"))
+func writeToken(w io.Writer, token html.Token) error {
+	if _, err := w.Write([]byte("<")); err != nil {
+		return err
 	}
-	w.Write([]byte(token.Data))
+	if token.Type == html.EndTagToken {
+		if _, err := w.Write([]byte("/")); err != nil {
+			return err
+		}
+	}
+	if _, err := w.Write([]byte(token.Data)); err != nil {
+		return err
+	}
 
 	for _, attr := range token.Attr {
-		w.Write([]byte(" "))
-		w.Write([]byte(attr.Key))
+		if _, err := w.Write([]byte(" ")); err != nil {
+			return err
+		}
+		if _, err := w.Write([]byte(attr.Key)); err != nil {
+			return err
+		}
 		if attr.Val != "" {
-			w.Write([]byte(`="`))
-			w.Write([]byte(html.EscapeString(attr.Val)))
-			w.Write([]byte(`"`))
+			if _, err := w.Write([]byte(`="`)); err != nil {
+				return err
+			}
+			if _, err := w.Write([]byte(html.EscapeString(attr.Val))); err != nil {
+				return err
+			}
+			if _, err := w.Write([]byte(`"`)); err != nil {
+				return err
+			}
 		}
 	}
 
 	if token.Type == html.SelfClosingTagToken {
-		w.Write([]byte(" /"))
+		if _, err := w.Write([]byte(" /")); err != nil {
+			return err
+		}
 	}
-	w.Write([]byte(">"))
+	if _, err := w.Write([]byte(">")); err != nil {
+		return err
+	}
+	return nil
 }
 
 // logAndBroadcastError logs and broadcasts missing template errors
