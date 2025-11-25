@@ -186,6 +186,7 @@ serve:
     - [x] `pf-v6-toggle-group`, `pf-v6-toggle-group-item` - Toggle button group
     - [x] `pf-v6-form`, `pf-v6-form-group`, `pf-v6-form-label` - Form layout components
     - [x] `pf-v6-popover` - Popover component with CSS Anchor Positioning
+    - [x] `pf-v6-text-input-group` - Text input with icon and utilities slots
   - [x] Custom CEM components:
     - [x] `cem-drawer` - Drawer component for footer panel
     - [x] `cem-serve-chrome` - Main dev server UI wrapper
@@ -267,12 +268,36 @@ serve:
     - [x] Removed unused/incomplete `KnobsManager` class (371 lines deleted)
     - [x] Cleaned up knob system architecture
 
+  **Phase 2.8: Navigation Polish & Text Input Group** ✅ **COMPLETE**
+  - [x] Navigation template simplification
+    - [x] Hide top-level package disclosure when single package mode
+    - [x] Elements appear at top level in sidebar without package wrapper
+    - [x] Package name displays in masthead next to logo
+  - [x] Accessibility fixes
+    - [x] Moved page click listener from `pf-v6-page` to `document.body` (fixes Firefox a11y audit)
+    - [x] Added proper cleanup in `disconnectedCallback()`
+    - [x] Navigation links without href use `<button>` instead of `<a>`
+  - [x] Implemented `pf-v6-text-input-group` component
+    - [x] Full PatternFly v6 CSS with all design tokens
+    - [x] Support for leading icon, trailing status icon, and utilities slots
+    - [x] ElementInternals for form association and ARIA label support
+    - [x] Status variants (success, warning, error) with appropriate colors
+    - [x] Plain variant support
+    - [x] Public API methods (focus, blur, select)
+  - [x] Color knobs integration
+    - [x] Replaced old color input wrapper with `pf-v6-text-input-group`
+    - [x] Eyedropper button in utilities slot with plain variant styling
+    - [x] Uses EyeDropper API when available (Chromium browsers)
+    - [x] Falls back to native color input for other browsers
+    - [x] Proper event dispatching to knob system
+    - [x] Updated all 4 color input locations (attributes/CSS properties, with/without descriptions)
+
   **Phase 3: Remaining Components & Polish** ⬅️ **CURRENT**
   - [x] **pf-v6-text-input CSS polish** ✅
     - [x] Created shared `pf-v6-form-control.css` for common form control styles
     - [x] Matches PatternFly v6 design tokens
   - [ ] Additional PF v6 components needed:
-    - [ ] **pf-v6-expandable-section** - ExpandableSection/disclosure component
+    - [x] **pf-v6-expandable-section** - ExpandableSection/disclosure component
       - **Use cases identified**:
         - Debug Information modal: Import map disclosure (`<details id="debug-importmap-details">`)
         - Listing page: Custom Elements list disclosure
