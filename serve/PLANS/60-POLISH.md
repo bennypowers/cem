@@ -306,7 +306,7 @@ serve:
       - [x] **pf-v6-card** (check for expandable/collapsible logic)
         - Review JS for expanded state handling
         - Template: Conditional `open` attribute on details if using native disclosure
-      - [ ] **All components**: Review for shadow DOM class management
+      - [x] **All components**: Review for shadow DOM class management
         - Identify classes added/removed based on attributes
         - Move to template: `class="base-class {{if .Attributes.compact}}pf-m-compact{{end}}"`
     - [ ] **Phase 3: Testing & Documentation**
