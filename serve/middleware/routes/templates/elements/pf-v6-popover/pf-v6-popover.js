@@ -55,12 +55,14 @@ class PfV6Popover extends CemElement {
   #hoverHideTimeout;
   #popoverSlot;
 
+  #$ = id => this.shadowRoot.getElementById(id);
+
   async afterTemplateLoaded() {
     this.#triggerSlot = this.shadowRoot.querySelector('slot[name="trigger"]');
-    this.#popoverSlot = this.shadowRoot.getElementById('content');
-    this.#popover = this.shadowRoot.getElementById('popover');
-    this.#closeButton = this.shadowRoot.getElementById('close');
-    this.#headerElement = this.shadowRoot.getElementById('header-content');
+    this.#popoverSlot = this.#$('content');
+    this.#popover = this.#$('popover');
+    this.#closeButton = this.#$('close');
+    this.#headerElement = this.#$('header-content');
 
     if (!this.#triggerSlot || !this.#popoverSlot) return;
 
@@ -109,29 +111,14 @@ class PfV6Popover extends CemElement {
     }
   }
 
-  get position() {
-    return this.getAttribute('position') || 'top';
-  }
+  get position() { return this.getAttribute('position') || 'top'; }
+  set position(value) { this.setAttribute('position', value); }
 
-  set position(value) {
-    this.setAttribute('position', value);
-  }
+  get distance() { return parseInt(this.getAttribute('distance') || '8'); }
+  set distance(value) { this.setAttribute('distance', String(value)); }
 
-  get distance() {
-    return parseInt(this.getAttribute('distance') || '8');
-  }
-
-  set distance(value) {
-    this.setAttribute('distance', String(value));
-  }
-
-  get triggerAction() {
-    return this.getAttribute('trigger-action') || 'click';
-  }
-
-  set triggerAction(value) {
-    this.setAttribute('trigger-action', value);
-  }
+  get triggerAction() { return this.getAttribute('trigger-action') || 'click'; }
+  set triggerAction(value) { this.setAttribute('trigger-action', value); }
 
   get closeable() {
     return this.hasAttribute('closeable') !== false && this.getAttribute('closeable') !== 'false';
@@ -145,21 +132,11 @@ class PfV6Popover extends CemElement {
     }
   }
 
-  get closeButtonLabel() {
-    return this.getAttribute('close-button-label') || 'Close';
-  }
+  get closeButtonLabel() { return this.getAttribute('close-button-label') || 'Close'; }
+  set closeButtonLabel(value) { this.setAttribute('close-button-label', value); }
 
-  set closeButtonLabel(value) {
-    this.setAttribute('close-button-label', value);
-  }
-
-  get headerLevel() {
-    return this.getAttribute('header-level') || 'h6';
-  }
-
-  set headerLevel(value) {
-    this.setAttribute('header-level', value);
-  }
+  get headerLevel() { return this.getAttribute('header-level') || 'h6'; }
+  set headerLevel(value) { this.setAttribute('header-level', value); }
 
   get ariaLabel() {
     return this.getAttribute('aria-label');

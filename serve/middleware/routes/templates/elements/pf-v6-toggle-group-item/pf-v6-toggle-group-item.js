@@ -14,14 +14,17 @@ export class ToggleGroupItemSelectEvent extends Event {
  * @customElement pf-v6-toggle-group-item
  */
 export class PfToggleGroupItem extends CemElement {
-  #button;
+  static is = 'pf-v6-toggle-group-item';
 
   static observedAttributes = ['selected', 'disabled', 'value'];
-  static is = 'pf-v6-toggle-group-item';
+
+  #button;
+
+  #$ = id => this.shadowRoot.getElementById(id);
 
   async afterTemplateLoaded() {
     this.addEventListener('slotchange', this.#updateSlotVisibility);
-    this.#button = this.shadowRoot.getElementById('button');
+    this.#button = this.#$('button');
 
     // Set up event listeners
     this.#button.addEventListener('click', this.#handleClick);
@@ -212,7 +215,7 @@ export class PfToggleGroupItem extends CemElement {
 
     const iconStart = this.shadowRoot.getElementById('icon-start');
     const iconEnd = this.shadowRoot.getElementById('icon-end');
-    const text = this.shadowRoot.getElementById('text');
+    const text = this.#$('text');
 
     // Hide icon wrappers if slots have no assigned nodes
     if (iconStart && iconSlot) {
@@ -242,4 +245,3 @@ export class PfToggleGroupItem extends CemElement {
     customElements.define(this.is, this);
   }
 }
-
