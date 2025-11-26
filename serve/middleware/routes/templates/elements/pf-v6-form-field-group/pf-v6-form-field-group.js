@@ -129,8 +129,8 @@ class PfV6FormFieldGroup extends CemElement {
     // Update ARIA
     this.#toggleButton.setAttribute('aria-expanded', String(isExpanded));
 
-    // Update body inert state
-    this.#body.toggleAttribute('inert', !!isExpanded);
+    // Update body inert state (inert when collapsed, not when expanded)
+    this.#body.toggleAttribute('inert', !isExpanded);
 
     // Dispatch toggle event
     this.dispatchEvent(new PfFormFieldGroupToggleEvent(isExpanded));
