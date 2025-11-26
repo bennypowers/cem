@@ -46,11 +46,12 @@ var (
 )
 
 // markdownToHTML converts markdown text to HTML
-func markdownToHTML(text string) string {
+// Returns an error if markdown conversion fails, allowing callers to handle it appropriately
+func markdownToHTML(text string) (string, error) {
 	var buf bytes.Buffer
 	err := md.Convert([]byte(text), &buf)
 	if err != nil {
-		return text // Return original text on error
+		return "", err
 	}
-	return buf.String()
+	return buf.String(), nil
 }

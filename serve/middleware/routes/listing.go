@@ -75,10 +75,16 @@ func RenderElementListing(manifestBytes []byte, importMap string, packageName st
 	}
 
 	// Build navigation (this also extracts elements and sorts them)
-	navigationHTML, title := BuildSinglePackageNavigation(manifestBytes, packageName)
+	navigationHTML, title, err := BuildSinglePackageNavigation(manifestBytes, packageName)
+	if err != nil {
+		return "", fmt.Errorf("building navigation: %w", err)
+	}
 
 	// Extract elements for the main listing content
-	elements := extractElementListings(&pkg, packageName)
+	elements, err := extractElementListings(&pkg, packageName)
+	if err != nil {
+		return "", fmt.Errorf("extracting element listings: %w", err)
+	}
 
 	if len(elements) == 0 {
 		return renderDemoChrome(ChromeData{
@@ -110,7 +116,7 @@ func RenderElementListing(manifestBytes []byte, importMap string, packageName st
 
 	// Render with template
 	var buf bytes.Buffer
-	err := WorkspaceListingTemplate.Execute(&buf, map[string]interface{}{
+	err = WorkspaceListingTemplate.Execute(&buf, map[string]interface{}{
 		"Packages": packages,
 	})
 	if err != nil {
@@ -190,7 +196,7 @@ func extractLocalRoute(demoURL string) string {
 }
 
 // extractElementListings extracts element listings from manifest using RenderableDemos
-func extractElementListings(pkg *M.Package, packageName string) []ElementListing {
+func extractElementListings(pkg *M.Package, packageName string) ([]ElementListing, error) {
 	elements := []ElementListing{}
 	elementMap := make(map[string]*ElementListing)
 
@@ -202,12 +208,18 @@ func extractElementListings(pkg *M.Package, packageName string) []ElementListing
 		// Get or create element listing
 		listing, exists := elementMap[tagName]
 		if !exists {
-			summary := template.HTML(markdownToHTML(renderableDemo.CustomElementDeclaration.Summary))
-			description := template.HTML(markdownToHTML(renderableDemo.CustomElementDeclaration.Description))
+			summaryHTML, err := markdownToHTML(renderableDemo.CustomElementDeclaration.Summary)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert summary to HTML for %s: %w", tagName, err)
+			}
+			descriptionHTML, err := markdownToHTML(renderableDemo.CustomElementDeclaration.Description)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert description to HTML for %s: %w", tagName, err)
+			}
 			listing = &ElementListing{
 				TagName:     tagName,
-				Summary:     summary,
-				Description: description,
+				Summary:     template.HTML(summaryHTML),
+				Description: template.HTML(descriptionHTML),
 				Demos:       make([]DemoListing, 0),
 			}
 			elementMap[tagName] = listing
@@ -238,7 +250,7 @@ func extractElementListings(pkg *M.Package, packageName string) []ElementListing
 		elements = append(elements, *listing)
 	}
 
-	return elements
+	return elements, nil
 }
 
 // slugify converts a string to a URL-safe slug
@@ -266,19 +278,22 @@ type PackageNavigation struct {
 }
 
 // BuildSinglePackageNavigation builds navigation HTML for single-package mode
-func BuildSinglePackageNavigation(manifestBytes []byte, packageName string) (template.HTML, string) {
+func BuildSinglePackageNavigation(manifestBytes []byte, packageName string) (template.HTML, string, error) {
 	if len(manifestBytes) == 0 {
-		return "", packageName
+		return "", packageName, nil
 	}
 
 	var pkg M.Package
 	if err := json.Unmarshal(manifestBytes, &pkg); err != nil {
-		return "", packageName
+		return "", packageName, fmt.Errorf("parsing manifest: %w", err)
 	}
 
-	elements := extractElementListings(&pkg, packageName)
+	elements, err := extractElementListings(&pkg, packageName)
+	if err != nil {
+		return "", packageName, fmt.Errorf("extracting element listings: %w", err)
+	}
 	if len(elements) == 0 {
-		return "", packageName
+		return "", packageName, nil
 	}
 
 	// Sort elements alphabetically
@@ -300,7 +315,7 @@ func BuildSinglePackageNavigation(manifestBytes []byte, packageName string) (tem
 		},
 	}
 
-	return renderNavigationHTML(packages), title
+	return renderNavigationHTML(packages), title, nil
 }
 
 // BuildWorkspaceNavigation builds navigation HTML for workspace mode
@@ -339,8 +354,16 @@ func BuildWorkspaceNavigation(packages []PackageContext) (template.HTML, error) 
 			for _, route := range tagRoutes {
 				// Get summary and description from first route's declaration
 				if route.Declaration != nil && summary == "" {
-					summary = template.HTML(markdownToHTML(route.Declaration.Summary))
-					description = template.HTML(markdownToHTML(route.Declaration.Description))
+					summaryHTML, err := markdownToHTML(route.Declaration.Summary)
+					if err != nil {
+						return "", fmt.Errorf("failed to convert summary to HTML for %s: %w", tagName, err)
+					}
+					descriptionHTML, err := markdownToHTML(route.Declaration.Description)
+					if err != nil {
+						return "", fmt.Errorf("failed to convert description to HTML for %s: %w", tagName, err)
+					}
+					summary = template.HTML(summaryHTML)
+					description = template.HTML(descriptionHTML)
 				}
 
 				demoName := route.Demo.Description
@@ -456,8 +479,16 @@ func RenderWorkspaceListing(packages []PackageContext, importMap string) (string
 			for _, route := range tagRoutes {
 				// Get summary and description from first route's declaration
 				if route.Declaration != nil && summary == "" {
-					summary = template.HTML(markdownToHTML(route.Declaration.Summary))
-					description = template.HTML(markdownToHTML(route.Declaration.Description))
+					summaryHTML, err := markdownToHTML(route.Declaration.Summary)
+					if err != nil {
+						return "", fmt.Errorf("failed to convert summary to HTML for %s: %w", tagName, err)
+					}
+					descriptionHTML, err := markdownToHTML(route.Declaration.Description)
+					if err != nil {
+						return "", fmt.Errorf("failed to convert description to HTML for %s: %w", tagName, err)
+					}
+					summary = template.HTML(summaryHTML)
+					description = template.HTML(descriptionHTML)
 				}
 
 				demoName := route.Demo.Description

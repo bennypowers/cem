@@ -208,7 +208,10 @@ func TestChromeRendering_WithNavigation(t *testing.T) {
 	}
 
 	// Build navigation HTML using the same function as production code
-	navigationHTML, packageName := BuildSinglePackageNavigation(manifestBytes, "test-package")
+	navigationHTML, packageName, err := BuildSinglePackageNavigation(manifestBytes, "test-package")
+	if err != nil {
+		t.Fatalf("Failed to build navigation: %v", err)
+	}
 
 	// Render chrome with navigation
 	rendered, err := renderDemoChrome(ChromeData{

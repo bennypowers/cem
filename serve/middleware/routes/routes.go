@@ -485,7 +485,13 @@ func serveDemoRoute(w http.ResponseWriter, r *http.Request, config Config) bool 
 		// Single-package mode: build navigation from manifest
 		manifestBytes, err := config.Context.Manifest()
 		if err == nil && len(manifestBytes) > 0 {
-			navigationHTML, _ = BuildSinglePackageNavigation(manifestBytes, packageName)
+			var navErr error
+			navigationHTML, packageName, navErr = BuildSinglePackageNavigation(manifestBytes, packageName)
+			if navErr != nil {
+				config.Context.Logger().Error("Failed to build navigation: %v", navErr)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return true
+			}
 		}
 	}
 
@@ -747,7 +753,13 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 			if pkg, err := config.Context.PackageJSON(); err == nil && pkg != nil {
 				pkgName = pkg.Name
 			}
-			navigationHTML, packageName = BuildSinglePackageNavigation(manifestBytes, pkgName)
+			var navErr error
+			navigationHTML, packageName, navErr = BuildSinglePackageNavigation(manifestBytes, pkgName)
+			if navErr != nil {
+				config.Context.Logger().Error("Failed to build navigation: %v", navErr)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
 		}
 	}
 

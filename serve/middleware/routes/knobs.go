@@ -661,26 +661,50 @@ func RenderKnobsHTML(knobGroups []ElementKnobGroup) (template.HTML, error) {
 
 		for i := range knobGroups[gi].Knobs.AttributeKnobs {
 			if knobGroups[gi].Knobs.AttributeKnobs[i].Summary != "" {
-				knobGroups[gi].Knobs.AttributeKnobs[i].Summary = template.HTML(markdownToHTML(string(knobGroups[gi].Knobs.AttributeKnobs[i].Summary)))
+				html, err := markdownToHTML(string(knobGroups[gi].Knobs.AttributeKnobs[i].Summary))
+				if err != nil {
+					return "", fmt.Errorf("failed to convert attribute knob summary to HTML: %w", err)
+				}
+				knobGroups[gi].Knobs.AttributeKnobs[i].Summary = template.HTML(html)
 			}
 			if knobGroups[gi].Knobs.AttributeKnobs[i].Description != "" {
-				knobGroups[gi].Knobs.AttributeKnobs[i].Description = template.HTML(markdownToHTML(string(knobGroups[gi].Knobs.AttributeKnobs[i].Description)))
+				html, err := markdownToHTML(string(knobGroups[gi].Knobs.AttributeKnobs[i].Description))
+				if err != nil {
+					return "", fmt.Errorf("failed to convert attribute knob description to HTML: %w", err)
+				}
+				knobGroups[gi].Knobs.AttributeKnobs[i].Description = template.HTML(html)
 			}
 		}
 		for i := range knobGroups[gi].Knobs.PropertyKnobs {
 			if knobGroups[gi].Knobs.PropertyKnobs[i].Summary != "" {
-				knobGroups[gi].Knobs.PropertyKnobs[i].Summary = template.HTML(markdownToHTML(string(knobGroups[gi].Knobs.PropertyKnobs[i].Summary)))
+				html, err := markdownToHTML(string(knobGroups[gi].Knobs.PropertyKnobs[i].Summary))
+				if err != nil {
+					return "", fmt.Errorf("failed to convert property knob summary to HTML: %w", err)
+				}
+				knobGroups[gi].Knobs.PropertyKnobs[i].Summary = template.HTML(html)
 			}
 			if knobGroups[gi].Knobs.PropertyKnobs[i].Description != "" {
-				knobGroups[gi].Knobs.PropertyKnobs[i].Description = template.HTML(markdownToHTML(string(knobGroups[gi].Knobs.PropertyKnobs[i].Description)))
+				html, err := markdownToHTML(string(knobGroups[gi].Knobs.PropertyKnobs[i].Description))
+				if err != nil {
+					return "", fmt.Errorf("failed to convert property knob description to HTML: %w", err)
+				}
+				knobGroups[gi].Knobs.PropertyKnobs[i].Description = template.HTML(html)
 			}
 		}
 		for i := range knobGroups[gi].Knobs.CSSPropertyKnobs {
 			if knobGroups[gi].Knobs.CSSPropertyKnobs[i].Summary != "" {
-				knobGroups[gi].Knobs.CSSPropertyKnobs[i].Summary = template.HTML(markdownToHTML(string(knobGroups[gi].Knobs.CSSPropertyKnobs[i].Summary)))
+				html, err := markdownToHTML(string(knobGroups[gi].Knobs.CSSPropertyKnobs[i].Summary))
+				if err != nil {
+					return "", fmt.Errorf("failed to convert CSS property knob summary to HTML: %w", err)
+				}
+				knobGroups[gi].Knobs.CSSPropertyKnobs[i].Summary = template.HTML(html)
 			}
 			if knobGroups[gi].Knobs.CSSPropertyKnobs[i].Description != "" {
-				knobGroups[gi].Knobs.CSSPropertyKnobs[i].Description = template.HTML(markdownToHTML(string(knobGroups[gi].Knobs.CSSPropertyKnobs[i].Description)))
+				html, err := markdownToHTML(string(knobGroups[gi].Knobs.CSSPropertyKnobs[i].Description))
+				if err != nil {
+					return "", fmt.Errorf("failed to convert CSS property knob description to HTML: %w", err)
+				}
+				knobGroups[gi].Knobs.CSSPropertyKnobs[i].Description = template.HTML(html)
 			}
 		}
 	}

@@ -1069,6 +1069,25 @@ func (s *Server) handleFileChanges() {
 		affectedPageURLs := s.getAffectedPageURLs(changedPath, invalidatedFiles)
 
 		if len(affectedPageURLs) == 0 {
+			// If smart reload found no affected pages, check if we're in a "no routes" state
+			// (e.g. no manifest yet). In this case, fallback to broadcasting to all clients.
+			s.mu.RLock()
+			noRoutes := len(s.demoRoutes) == 0
+			s.mu.RUnlock()
+
+			if noRoutes {
+				s.logger.Debug("No demo routes found, falling back to broadcast all for %s", relPath)
+				// Create a "broadcast all" message (using empty affected list effectively broadcasts to all if we change logic,
+				// but here we just pass the file and rely on client side or simply assume all pages need reload)
+				// Actually BroadcastToPages with nil/empty list skips.
+				// We should use Broadcast() instead.
+				files := []string{relPath}
+				if err := s.BroadcastReload(files, "file-change-fallback"); err != nil {
+					s.logger.Error("Failed to broadcast reload: %v", err)
+				}
+				continue
+			}
+
 			s.logger.Debug("No pages affected by changes to %s", relPath)
 			continue
 		}
