@@ -30,6 +30,8 @@ class PfV6Page extends CemElement {
           .some(node =>
             node === this.querySelector('pf-v6-page-sidebar') ||
             // a little cheat, to avoid race when toggling open via button
+            // although normally, reaching into shadow dom is forbidden
+            // we do it here because page and masthead are meant to work together
             node === this.querySelector('pf-v6-masthead')
             ?.shadowRoot?.getElementById('toggle-button'))) {
       this.sidebarCollapsed = true;
@@ -45,7 +47,9 @@ class PfV6Page extends CemElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    if (name === 'sidebar-collapsed' && oldValue !== newValue) {
+    if (oldValue === newValue) return;
+
+    if (name === 'sidebar-collapsed') {
       this.#updateSidebarState();
     }
   }
@@ -80,6 +84,8 @@ class PfV6Page extends CemElement {
   }
 
   disconnectedCallback() {
+    super.disconnectedCallback?.();
+
     // Clean up click outside handler
     if (this.#clickOutsideHandler) {
       document.body.removeEventListener('click', this.#clickOutsideHandler);
