@@ -1,6 +1,16 @@
 import { CemElement } from '/__cem/cem-element.js';
 
 /**
+ * Custom event fired when expandable section toggles
+ */
+export class PfExpandableSectionToggleEvent extends Event {
+  constructor(expanded) {
+    super('toggle', { bubbles: true, composed: true });
+    this.expanded = expanded;
+  }
+}
+
+/**
  * PatternFly v6 Expandable Section
  *
  * A disclosure component that shows/hides content with smooth animations.
@@ -126,11 +136,7 @@ class PfV6ExpandableSection extends CemElement {
     this.#content.toggleAttribute('hidden', !isExpanded);
 
     // Dispatch toggle event
-    this.dispatchEvent(new CustomEvent('toggle', {
-      bubbles: true,
-      composed: true,
-      detail: { expanded: isExpanded }
-    }));
+    this.dispatchEvent(new PfExpandableSectionToggleEvent(isExpanded));
   }
 
   #updateToggleText() {

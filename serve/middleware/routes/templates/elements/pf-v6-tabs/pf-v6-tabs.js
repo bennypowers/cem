@@ -1,6 +1,17 @@
 import { CemElement } from '/__cem/cem-element.js';
 
 /**
+ * Custom event fired when tab selection changes
+ */
+export class PfTabsChangeEvent extends Event {
+  selectedIndex = -1;
+  constructor(selectedIndex) {
+    super('change', { bubbles: true, composed: true });
+    this.selectedIndex = selectedIndex;
+  }
+}
+
+/**
  * @customElement pf-v6-tabs
  */
 class PfV6Tabs extends CemElement {
@@ -166,11 +177,7 @@ class PfV6Tabs extends CemElement {
     this.#updateAccentLine(newIndex);
 
     // Dispatch change event
-    this.dispatchEvent(new CustomEvent('change', {
-      detail: { selectedIndex: newIndex },
-      bubbles: true,
-      composed: true
-    }));
+    this.dispatchEvent(new PfTabsChangeEvent(newIndex));
   }
 
   #updateAccentLine(index) {

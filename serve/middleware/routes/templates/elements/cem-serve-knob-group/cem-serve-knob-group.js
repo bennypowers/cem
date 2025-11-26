@@ -3,6 +3,39 @@ import '/__cem/elements/pf-v6-text-input-group/pf-v6-text-input-group.js';
 import { CemElement } from '/__cem/cem-element.js';
 
 /**
+ * Custom event fired when a knob attribute changes
+ */
+export class KnobAttributeChangeEvent extends Event {
+  constructor(name, value) {
+    super('knob:attribute-change', { bubbles: true, composed: true });
+    this.name = name;
+    this.value = value;
+  }
+}
+
+/**
+ * Custom event fired when a knob property changes
+ */
+export class KnobPropertyChangeEvent extends Event {
+  constructor(name, value) {
+    super('knob:property-change', { bubbles: true, composed: true });
+    this.name = name;
+    this.value = value;
+  }
+}
+
+/**
+ * Custom event fired when a knob CSS property changes
+ */
+export class KnobCssPropertyChangeEvent extends Event {
+  constructor(name, value) {
+    super('knob:css-property-change', { bubbles: true, composed: true });
+    this.name = name;
+    this.value = value;
+  }
+}
+
+/**
  * CEM Serve Knob Group Component
  *
  * Handles event delegation and debouncing for form controls that modify demo elements.
@@ -165,7 +198,6 @@ class CemServeKnobGroup extends CemElement {
 
   #applyChange(type, name, value, checked) {
     // Dispatch custom event that KnobsManager will catch
-    let eventName;
     let eventValue = value;
 
     // Handle boolean values from checkboxes
@@ -173,35 +205,26 @@ class CemServeKnobGroup extends CemElement {
       eventValue = checked;
     }
 
+    let event;
     switch (type) {
       case 'attribute':
-        eventName = 'knob:attribute-change';
+        event = new KnobAttributeChangeEvent(name, eventValue);
         break;
 
       case 'property':
-        eventName = 'knob:property-change';
         // Parse value for properties
         eventValue = this.#parseValue(eventValue);
+        event = new KnobPropertyChangeEvent(name, eventValue);
         break;
 
       case 'css-property':
-        eventName = 'knob:css-property-change';
+        event = new KnobCssPropertyChangeEvent(name, eventValue);
         break;
 
       default:
         console.warn(`[KnobGroup] Unknown knob type: ${type}`);
         return;
     }
-
-    const event = new CustomEvent(eventName, {
-      bubbles: true,
-      composed: true,
-      detail: { name, value: eventValue }
-    });
-
-    // Add name and value as properties for easier access
-    event.name = name;
-    event.value = eventValue;
 
     this.dispatchEvent(event);
   }

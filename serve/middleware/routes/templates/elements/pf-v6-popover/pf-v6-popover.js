@@ -1,6 +1,26 @@
 import { CemElement } from '/__cem/cem-element.js';
 
 /**
+ * Custom event fired when popover shows
+ */
+export class PfPopoverShowEvent extends Event {
+  constructor() {
+    super('pf-popover-show', { bubbles: true, composed: true });
+    this.open = true;
+  }
+}
+
+/**
+ * Custom event fired when popover hides
+ */
+export class PfPopoverHideEvent extends Event {
+  constructor() {
+    super('pf-popover-hide', { bubbles: true, composed: true });
+    this.open = false;
+  }
+}
+
+/**
  * PatternFly v6 Popover
  *
  * A popover component using the native Popover API and CSS Anchor Positioning.
@@ -317,11 +337,7 @@ class PfV6Popover extends CemElement {
     }
 
     // Dispatch custom events
-    this.dispatchEvent(new CustomEvent(`pf-popover-${isOpen ? 'show' : 'hide'}`, {
-      bubbles: true,
-      composed: true,
-      detail: { open: isOpen }
-    }));
+    this.dispatchEvent(isOpen ? new PfPopoverShowEvent() : new PfPopoverHideEvent());
   };
 
   #updateCSSProperties() {

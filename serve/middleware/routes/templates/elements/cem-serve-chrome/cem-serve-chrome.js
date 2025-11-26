@@ -40,6 +40,16 @@ import { CemElement } from '/__cem/cem-element.js';
 import { CEMReloadClient } from '/__cem/websocket-client.js';
 
 /**
+ * Custom event fired when logs are received
+ */
+export class CemLogsEvent extends Event {
+  constructor(logs) {
+    super('cem:logs', { bubbles: true, composed: true });
+    this.logs = logs;
+  }
+}
+
+/**
  * CEM Serve Chrome - Main demo wrapper component
  *
  * @customElement cem-serve-chrome
@@ -115,11 +125,7 @@ export class CemServeChrome extends CemElement {
       },
       onLogs: (logs) => {
         // Dispatch logs event for log container
-        window.dispatchEvent(new CustomEvent('cem:logs', {
-          detail: { logs },
-          bubbles: true,
-          composed: true
-        }));
+        window.dispatchEvent(new CemLogsEvent(logs));
       }
     }
   });
@@ -298,8 +304,7 @@ export class CemServeChrome extends CemElement {
 
     // Listen for server log messages from the WebSocket client
     // The websocket-client.js dispatches 'cem:logs' events with server logs
-    window.addEventListener('cem:logs', (event) => {
-      const logs = event.detail?.logs || event.logs;
+    window.addEventListener('cem:logs', ({ logs }) => {
       if (logs) {
         this.#renderLogs(logs);
       }

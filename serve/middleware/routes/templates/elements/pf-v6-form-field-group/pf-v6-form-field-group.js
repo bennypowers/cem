@@ -1,6 +1,16 @@
 import { CemElement } from '/__cem/cem-element.js';
 
 /**
+ * Custom event fired when form field group toggles
+ */
+export class PfFormFieldGroupToggleEvent extends Event {
+  constructor(expanded) {
+    super('toggle', { bubbles: true, composed: true });
+    this.expanded = expanded;
+  }
+}
+
+/**
  * PatternFly v6 Form Field Group
  *
  * A collapsible section within a form, with optional toggle and header.
@@ -120,18 +130,10 @@ class PfV6FormFieldGroup extends CemElement {
     this.#toggleButton.setAttribute('aria-expanded', String(isExpanded));
 
     // Update body inert state
-    if (isExpanded) {
-      this.#body.removeAttribute('inert');
-    } else {
-      this.#body.setAttribute('inert', '');
-    }
+    this.#body.toggleAttribute('inert', !!isExpanded);
 
     // Dispatch toggle event
-    this.dispatchEvent(new CustomEvent('toggle', {
-      bubbles: true,
-      composed: true,
-      detail: { expanded: isExpanded }
-    }));
+    this.dispatchEvent(new PfFormFieldGroupToggleEvent(isExpanded));
   }
 
   #updateToggleText() {
