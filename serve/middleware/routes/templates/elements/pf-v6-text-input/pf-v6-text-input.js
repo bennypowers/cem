@@ -1,15 +1,24 @@
-import { CemElement } from '/__cem/cem-element.js';
+import { CemFormControl } from '/__cem/cem-form-control.js';
 
 /**
  * @customElement pf-v6-text-input
  */
-class PfV6TextInput extends CemElement {
+class PfV6TextInput extends CemFormControl {
   static formAssociated = true;
   static observedAttributes = ['value', 'type', 'placeholder', 'disabled', 'readonly', 'invalid', 'min', 'max', 'step'];
   static is = 'pf-v6-text-input';
 
   #input;
   #internals;
+
+  /**
+   * Returns the internal input element for CemFormControl API.
+   * @protected
+   * @returns {HTMLInputElement|null}
+   */
+  get formControlElement() {
+    return this.#input;
+  }
 
   constructor() {
     super();
@@ -139,13 +148,7 @@ class PfV6TextInput extends CemElement {
     this.setAttribute('type', value);
   }
 
-  focus() {
-    this.#input?.focus();
-  }
-
-  blur() {
-    this.#input?.blur();
-  }
+  // Note: focus() and blur() delegated automatically via CemFormControl
 
   select() {
     this.#input?.select();

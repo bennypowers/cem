@@ -1,9 +1,9 @@
-import { CemElement } from '/__cem/cem-element.js';
+import { CemFormControl } from '/__cem/cem-form-control.js';
 
 /**
  * @customElement pf-v6-select
  */
-class PfV6Select extends CemElement {
+class PfV6Select extends CemFormControl {
   static is = 'pf-v6-select';
   static formAssociated = true;
   static observedAttributes = [
@@ -15,6 +15,15 @@ class PfV6Select extends CemElement {
   #select;
   #internals = this.attachInternals();
   #observer = new MutationObserver(() => this.#cloneOptions());
+
+  /**
+   * Returns the internal select element for CemFormControl API.
+   * @protected
+   * @returns {HTMLSelectElement|null}
+   */
+  get formControlElement() {
+    return this.#select;
+  }
 
   get disabled() { return this.hasAttribute('disabled'); }
   set disabled(b) { this.toggleAttribute('disabled', !!b); }
@@ -79,6 +88,7 @@ class PfV6Select extends CemElement {
   }
 
   disconnectedCallback() {
+    super.disconnectedCallback?.();
     this.#observer?.disconnect();
   }
 
@@ -125,13 +135,7 @@ class PfV6Select extends CemElement {
     }
   }
 
-  focus() {
-    this.#select?.focus();
-  }
-
-  blur() {
-    this.#select?.blur();
-  }
+  // Note: focus() and blur() delegated automatically via CemFormControl
 
   static {
     customElements.define(this.is, this);

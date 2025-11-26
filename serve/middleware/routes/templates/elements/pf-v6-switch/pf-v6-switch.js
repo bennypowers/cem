@@ -1,15 +1,24 @@
-import { CemElement } from '/__cem/cem-element.js';
+import { CemFormControl } from '/__cem/cem-form-control.js';
 
 /**
  * @customElement pf-v6-switch
  */
-class PfV6Switch extends CemElement {
+class PfV6Switch extends CemFormControl {
   static formAssociated = true;
   static observedAttributes = ['checked', 'disabled', 'aria-label', 'aria-labelledby'];
   static is = 'pf-v6-switch';
 
   #input;
   #internals;
+
+  /**
+   * Returns the internal checkbox input element for CemFormControl API.
+   * @protected
+   * @returns {HTMLInputElement|null}
+   */
+  get formControlElement() {
+    return this.#input;
+  }
 
   constructor() {
     super();
@@ -107,13 +116,7 @@ class PfV6Switch extends CemElement {
     this.checked = val;
   }
 
-  focus() {
-    this.#input?.focus();
-  }
-
-  blur() {
-    this.#input?.blur();
-  }
+  // Note: focus() and blur() delegated automatically via CemFormControl
 
   static {
     customElements.define(this.is, this);

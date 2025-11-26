@@ -31,6 +31,7 @@ class PfV6FormLabel extends CemElement {
   }
 
   disconnectedCallback() {
+    super.disconnectedCallback?.();
     this.#labelElement?.removeEventListener('click', this.#handleClick);
     this.#slot?.removeEventListener('slotchange', this.#updateControlLabel);
   }
@@ -43,26 +44,41 @@ class PfV6FormLabel extends CemElement {
     }
   }
 
+  /**
+   * Updates the aria-label on the control's internal input element.
+   *
+   * Supports two approaches:
+   * 1. Preferred: Control implements setAccessibleLabel(text) method (CemFormControl API)
+   * 2. Fallback: Direct shadowRoot access for legacy controls
+   *
+   * Compatible controls should extend CemFormControl or implement setAccessibleLabel().
+   */
   #updateControlLabel = () => {
     const control = this.#getControl();
     const labelText = this.textContent?.trim() || '';
 
-    if (control && labelText) {
-      // Access the shadow DOM of the control to set aria-label on internal input
-      const shadowRoot = control.shadowRoot;
-      if (!shadowRoot) {
-        console.warn('Control has no shadow root');
-        return;
-      }
+    if (!control || !labelText) {
+      return;
+    }
 
-      // Find the internal input/select element
-      // Different controls use different IDs: text-input, select, switch-input
-      const internalInput = shadowRoot.querySelector('input, select');
-      if (internalInput) {
-        internalInput.setAttribute('aria-label', labelText);
-      } else {
-        console.warn('Could not find internal input in control shadow DOM');
-      }
+    // Preferred: Use standard API if available
+    if (typeof control.setAccessibleLabel === 'function') {
+      control.setAccessibleLabel(labelText);
+      return;
+    }
+
+    // Fallback: Direct shadowRoot access for legacy controls
+    const shadowRoot = control.shadowRoot;
+    if (!shadowRoot) {
+      console.warn('Control has no shadow root and no setAccessibleLabel method');
+      return;
+    }
+
+    const internalInput = shadowRoot.querySelector('input, select, textarea');
+    if (internalInput) {
+      internalInput.setAttribute('aria-label', labelText);
+    } else {
+      console.warn('Could not find internal input in control shadow DOM');
     }
   }
 
