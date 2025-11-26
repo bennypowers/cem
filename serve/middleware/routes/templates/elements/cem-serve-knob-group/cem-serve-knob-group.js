@@ -147,7 +147,16 @@ class CemServeKnobGroup extends CemElement {
       colorInput.addEventListener('change', () => {
         textInputGroup.value = colorInput.value;
         textInputGroup.dispatchEvent(new Event('input', { bubbles: true }));
-        document.body.removeChild(colorInput);
+        if (colorInput.parentNode) {
+          document.body.removeChild(colorInput);
+        }
+      });
+
+      // Clean up if focus is lost without selection
+      colorInput.addEventListener('blur', () => {
+        if (colorInput.parentNode) {
+          document.body.removeChild(colorInput);
+        }
       });
 
       colorInput.click();
