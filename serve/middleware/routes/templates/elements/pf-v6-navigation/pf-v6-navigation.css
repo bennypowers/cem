@@ -37,7 +37,6 @@
   --pf-v6-c-nav__toggle-icon--Rotate: 0;
   --pf-v6-c-nav__item--m-expanded__toggle-icon--Rotate: 90deg;
 
-	--pf-v6-c-nav__list--RowGap: var(--pf-t--global--spacer--sm);
 	--pf-v6-c-nav--ColumnGap: 0;
 	--pf-v6-c-nav--AlignItems: baseline;
 	--pf-v6-c-nav--LineHeight: var(--pf-t--global--font--line-height--body);
