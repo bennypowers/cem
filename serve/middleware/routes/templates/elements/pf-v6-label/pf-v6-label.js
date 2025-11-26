@@ -25,14 +25,14 @@ class PfV6Label extends CemElement {
   #text;
   #actions;
 
-  get compact() { return this.getAttribute('compact') ?? false; }
-  set compact(value) { return this.toggleAttribute('compact', !!value); }
+  get compact() { return this.hasAttribute('compact'); }
+  set compact(value) { this.toggleAttribute('compact', !!value); }
 
-  get disabled() { return this.getAttribute('disabled') ?? false; }
-  set disabled(value) { return this.toggleAttribute('disabled', !!value); }
+  get disabled() { return this.hasAttribute('disabled'); }
+  set disabled(value) { this.toggleAttribute('disabled', !!value); }
 
-  get editable() { return this.getAttribute('editable') ?? false; }
-  set editable(value) { return this.toggleAttribute('editable', !!value); }
+  get editable() { return this.hasAttribute('editable'); }
+  set editable(value) { this.toggleAttribute('editable', !!value); }
 
   get color() {
     return this.getAttribute('color') || 'grey';
