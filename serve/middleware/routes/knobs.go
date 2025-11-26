@@ -644,6 +644,28 @@ func discoverAllCustomElementInstances(demoHTML []byte) ([]ElementInstance, erro
 	return instances, nil
 }
 
+// convertMarkdownFields converts Summary and Description fields from Markdown to HTML in-place.
+// The context parameter is used for error messages (e.g., "attribute knob", "property knob").
+func convertMarkdownFields(knobs []KnobData, context string) error {
+	for i := range knobs {
+		if knobs[i].Summary != "" {
+			html, err := markdownToHTML(string(knobs[i].Summary))
+			if err != nil {
+				return fmt.Errorf("failed to convert %s summary to HTML: %w", context, err)
+			}
+			knobs[i].Summary = template.HTML(html)
+		}
+		if knobs[i].Description != "" {
+			html, err := markdownToHTML(string(knobs[i].Description))
+			if err != nil {
+				return fmt.Errorf("failed to convert %s description to HTML: %w", context, err)
+			}
+			knobs[i].Description = template.HTML(html)
+		}
+	}
+	return nil
+}
+
 // RenderKnobsHTML renders the knobs HTML template.
 // Takes a slice of ElementKnobGroup (can be single or multiple instances).
 // Each group is rendered in a pf-v6-card with tag name and instance label.
@@ -662,53 +684,14 @@ func RenderKnobsHTML(knobGroups []ElementKnobGroup) (template.HTML, error) {
 			continue
 		}
 
-		for i := range knobGroups[gi].Knobs.AttributeKnobs {
-			if knobGroups[gi].Knobs.AttributeKnobs[i].Summary != "" {
-				html, err := markdownToHTML(string(knobGroups[gi].Knobs.AttributeKnobs[i].Summary))
-				if err != nil {
-					return "", fmt.Errorf("failed to convert attribute knob summary to HTML: %w", err)
-				}
-				knobGroups[gi].Knobs.AttributeKnobs[i].Summary = template.HTML(html)
-			}
-			if knobGroups[gi].Knobs.AttributeKnobs[i].Description != "" {
-				html, err := markdownToHTML(string(knobGroups[gi].Knobs.AttributeKnobs[i].Description))
-				if err != nil {
-					return "", fmt.Errorf("failed to convert attribute knob description to HTML: %w", err)
-				}
-				knobGroups[gi].Knobs.AttributeKnobs[i].Description = template.HTML(html)
-			}
+		if err := convertMarkdownFields(knobGroups[gi].Knobs.AttributeKnobs, "attribute knob"); err != nil {
+			return "", err
 		}
-		for i := range knobGroups[gi].Knobs.PropertyKnobs {
-			if knobGroups[gi].Knobs.PropertyKnobs[i].Summary != "" {
-				html, err := markdownToHTML(string(knobGroups[gi].Knobs.PropertyKnobs[i].Summary))
-				if err != nil {
-					return "", fmt.Errorf("failed to convert property knob summary to HTML: %w", err)
-				}
-				knobGroups[gi].Knobs.PropertyKnobs[i].Summary = template.HTML(html)
-			}
-			if knobGroups[gi].Knobs.PropertyKnobs[i].Description != "" {
-				html, err := markdownToHTML(string(knobGroups[gi].Knobs.PropertyKnobs[i].Description))
-				if err != nil {
-					return "", fmt.Errorf("failed to convert property knob description to HTML: %w", err)
-				}
-				knobGroups[gi].Knobs.PropertyKnobs[i].Description = template.HTML(html)
-			}
+		if err := convertMarkdownFields(knobGroups[gi].Knobs.PropertyKnobs, "property knob"); err != nil {
+			return "", err
 		}
-		for i := range knobGroups[gi].Knobs.CSSPropertyKnobs {
-			if knobGroups[gi].Knobs.CSSPropertyKnobs[i].Summary != "" {
-				html, err := markdownToHTML(string(knobGroups[gi].Knobs.CSSPropertyKnobs[i].Summary))
-				if err != nil {
-					return "", fmt.Errorf("failed to convert CSS property knob summary to HTML: %w", err)
-				}
-				knobGroups[gi].Knobs.CSSPropertyKnobs[i].Summary = template.HTML(html)
-			}
-			if knobGroups[gi].Knobs.CSSPropertyKnobs[i].Description != "" {
-				html, err := markdownToHTML(string(knobGroups[gi].Knobs.CSSPropertyKnobs[i].Description))
-				if err != nil {
-					return "", fmt.Errorf("failed to convert CSS property knob description to HTML: %w", err)
-				}
-				knobGroups[gi].Knobs.CSSPropertyKnobs[i].Description = template.HTML(html)
-			}
+		if err := convertMarkdownFields(knobGroups[gi].Knobs.CSSPropertyKnobs, "CSS property knob"); err != nil {
+			return "", err
 		}
 	}
 
