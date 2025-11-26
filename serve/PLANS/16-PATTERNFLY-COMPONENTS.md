@@ -500,7 +500,7 @@ Template (`pf-v6-button.html`):
 </pf-v6-button>
 ```
 
-**Key benefits:**
+#### Key benefits
 
 1. **No client-side DOM manipulation** - Structure is correct from SSR
 2. **Faster rendering** - Browser doesn't need to wait for JS to restructure
@@ -580,9 +580,9 @@ Never re-create structure that SSR already rendered—just enhance it with inter
 
 **SSR with attribute-dependent templates provides measurable performance benefits:**
 
-**Rendering Timeline Comparison:**
+#### Rendering Timeline Comparison
 
-```
+```text
 Client-Side Rendering:
 1. HTML arrives          (0ms)
 2. Parse HTML            (+5ms)
