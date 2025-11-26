@@ -59,6 +59,9 @@
 }
 
 .pf-v6-c-description-list__description {
+  /* Note: --pf-v6-c-description-list__description--FontSize is intentionally undefined in base case.
+     It's only defined when display modifiers (.pf-m-display-lg, .pf-m-display-2xl) are applied.
+     Fallback to 'inherit' is correct PatternFly behavior. */
   font-size: var(--pf-v6-c-description-list__description--FontSize, inherit);
 }
 
