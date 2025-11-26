@@ -99,7 +99,6 @@ class PfV6NavLink extends CemElement {
       const currentPath = window.location.pathname;
       if (href === currentPath) {
         this.setAttribute('current', '');
-        this.setAttribute('aria-current', 'page');
       }
     }
   }
@@ -110,10 +109,6 @@ class PfV6NavLink extends CemElement {
 
   set current(value) {
     this.toggleAttribute('current', !!value);
-    this.toggleAttribute('aria-current', !!value);
-    if (value) {
-      this.setAttribute('aria-current', 'page');
-    }
   }
 
   static {
