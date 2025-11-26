@@ -550,6 +550,8 @@
   --pf-t--global--spacer--gap--group--horizontal: var(--pf-t--global--spacer--md);
   --pf-t--global--spacer--gap--group-to-group--vertical--default: var(--pf-t--global--spacer--md);
   --pf-t--global--spacer--gap--group-to-group--horizontal--default: var(--pf-t--global--spacer--md);
+  --pf-t--global--spacer--gap--group-to-group--vertical--compact: var(--pf-t--global--spacer--sm);
+  --pf-t--global--spacer--gap--group-to-group--horizontal--compact: var(--pf-t--global--spacer--sm);
   --pf-t--global--spacer--gap--control-to-control--compact: var(--pf-t--global--spacer--xs);
   --pf-t--global--spacer--gap--control-to-control--default: var(--pf-t--global--spacer--sm);
   --pf-t--global--spacer--gap--control-to-control--spacious: var(--pf-t--global--spacer--md);
