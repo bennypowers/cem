@@ -1,10 +1,6 @@
 /* PatternFly v6 Page Main Styles */
 
 :host {
-  display: contents;
-}
-
-.pf-v6-c-page__main-container {
   z-index: var(--pf-v6-c-page__main-container--ZIndex);
   display: flex;
   flex-direction: column;
@@ -25,7 +21,7 @@
   border-radius: var(--pf-v6-c-page__main-container--BorderRadius);
 }
 
-.pf-v6-c-page__main {
+slot {
   display: flex;
   flex: 1;
   flex-direction: column;
