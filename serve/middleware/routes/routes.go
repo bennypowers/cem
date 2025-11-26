@@ -25,12 +25,9 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"sort"
 	"strings"
-
-	"golang.org/x/net/html"
 
 	"bennypowers.dev/cem/serve/logger"
 	"bennypowers.dev/cem/serve/middleware"
@@ -134,59 +131,6 @@ func New(config Config) middleware.Middleware {
 			}
 		})
 	}
-}
-
-// transformTemplateForClient converts Go template syntax to HTML comments for client-side use
-// Uses proper HTML parsing instead of regex to safely handle template content
-func transformTemplateForClient(tmpl string) string {
-	// For HTML fragments, the HTML parser adds wrapper elements.
-	// Since we're dealing with component templates (fragments),
-	// use simple string transformation after parsing to validate structure
-	doc, err := html.ParseFragment(strings.NewReader(tmpl), nil)
-	if err != nil {
-		// If parsing fails, use regex fallback (but template is likely broken)
-		return transformGoTemplate(tmpl)
-	}
-
-	// Walk the tree to validate structure and find problematic patterns
-	valid := true
-	var validateNode func(*html.Node)
-	validateNode = func(n *html.Node) {
-		// Just validate, don't transform yet
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			validateNode(c)
-		}
-	}
-
-	for _, node := range doc {
-		validateNode(node)
-	}
-
-	if !valid {
-		return tmpl // Return original if validation fails
-	}
-
-	// Use string transformation since we validated the HTML structure
-	return transformGoTemplate(tmpl)
-}
-
-// transformGoTemplate processes Go template syntax in a text node
-func transformGoTemplate(text string) string {
-	// Remove simple interpolations like {{.VariantName}}
-	// Client-side code uses attributes directly instead
-	result := regexp.MustCompile(`\{\{\.(\w+)\}\}`).ReplaceAllString(text, "")
-
-	// Convert control flow to tracking comments
-	// {{if .Disabled}} -> <!-- if:disabled -->
-	result = regexp.MustCompile(`\{\{if\s+\.(\w+)\}\}`).ReplaceAllString(result, "<!-- if:$1 -->")
-
-	// {{range .Items}} -> <!-- range:items -->
-	result = regexp.MustCompile(`\{\{range\s+\.(\w+)\}\}`).ReplaceAllString(result, "<!-- range:$1 -->")
-
-	// {{end}} -> <!-- end -->
-	result = regexp.MustCompile(`\{\{end\}\}`).ReplaceAllString(result, "<!-- end -->")
-
-	return result
 }
 
 // serveInternalModules serves embedded static assets from embed.FS
@@ -316,9 +260,9 @@ func serveDebugInfo(w http.ResponseWriter, r *http.Request, config Config) {
 					"localRoute":   localRoute,
 				}
 
-				// Add filepath if available
+				// Add file path if available
 				if renderableDemo.Demo.Source != nil && renderableDemo.Demo.Source.Href != "" {
-					demoInfo["filepath"] = renderableDemo.Demo.Source.Href
+					demoInfo["filePath"] = renderableDemo.Demo.Source.Href
 				}
 
 				demos = append(demos, demoInfo)
