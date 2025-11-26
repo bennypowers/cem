@@ -33,6 +33,7 @@
 /* Toolbar group alignment */
 pf-v6-toolbar-group[variant="action-group"] {
   margin-inline-start: auto;
+  align-items: center;
 }
 
 /* Toolbar link button styles */

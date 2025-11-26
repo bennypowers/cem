@@ -79,27 +79,8 @@ class PfV6Button extends CemElement {
       this.#setupShadowLink();
     }
 
-    // Set up slot visibility management
-    this.shadowRoot.querySelectorAll('slot').forEach(slot => {
-      slot.addEventListener('slotchange', () => this.#updateSlotVisibility());
-    });
-    this.#updateSlotVisibility();
-
     // Forward attributes
     this.#syncAttributes();
-  }
-
-  #updateSlotVisibility() {
-    const iconStartSlot = this.shadowRoot.querySelector('slot[name="icon-start"]');
-    const iconEndSlot = this.shadowRoot.querySelector('slot[name="icon-end"]');
-
-    // Hide slots that have no content
-    if (iconStartSlot) {
-      iconStartSlot.hidden = iconStartSlot.assignedNodes().length === 0;
-    }
-    if (iconEndSlot) {
-      iconEndSlot.hidden = iconEndSlot.assignedNodes().length === 0;
-    }
   }
 
   #setupHostButton() {

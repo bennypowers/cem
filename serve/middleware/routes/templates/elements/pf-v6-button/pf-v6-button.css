@@ -409,8 +409,13 @@ slot {
   display: inline;
 }
 
-slot[hidden] {
-  display: none;
+/* Slot visibility controlled by custom properties set from light DOM */
+slot[name="icon-start"] {
+  display: var(--_has-icon-start, inline);
+}
+
+slot[name="icon-end"] {
+  display: var(--_has-icon-end, inline);
 }
 
 /* Icon slot styling */

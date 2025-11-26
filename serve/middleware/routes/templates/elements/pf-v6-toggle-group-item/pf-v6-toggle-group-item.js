@@ -53,7 +53,6 @@ export class PfToggleGroupItem extends CemElement {
   }
 
   async afterTemplateLoaded() {
-    this.addEventListener('slotchange', this.#updateSlotVisibility);
     this.#wrapper = this.#$('wrapper');
 
     // Event listeners on HOST
@@ -62,7 +61,6 @@ export class PfToggleGroupItem extends CemElement {
     this.addEventListener('focus', this.#handleFocus);
 
     // Initial state
-    this.#updateSlotVisibility();
     this.#updateAriaChecked();
 
     // Set initial tabindex immediately
@@ -70,7 +68,6 @@ export class PfToggleGroupItem extends CemElement {
   }
 
   disconnectedCallback() {
-    this.removeEventListener('slotchange', this.#updateSlotVisibility);
     this.removeEventListener('click', this.#handleClick);
     this.removeEventListener('keydown', this.#handleKeydown);
     this.removeEventListener('focus', this.#handleFocus);
@@ -244,39 +241,6 @@ export class PfToggleGroupItem extends CemElement {
     items.forEach(item => {
       item.setAttribute('tabindex', item === this ? '0' : '-1');
     });
-  }
-
-  #updateSlotVisibility() {
-    const iconSlot = this.shadowRoot.querySelector('slot[name="icon"]');
-    const iconEndSlot = this.shadowRoot.querySelector('slot[name="icon-end"]');
-    const textSlot = this.shadowRoot.querySelector('slot:not([name])');
-
-    const iconStart = this.shadowRoot.getElementById('icon-start');
-    const iconEnd = this.shadowRoot.getElementById('icon-end');
-    const text = this.#$('text');
-
-    // Hide icon wrappers if slots have no assigned nodes
-    if (iconStart && iconSlot) {
-      const hasContent = iconSlot.assignedNodes().length > 0;
-      iconStart.hidden = !hasContent;
-    }
-
-    if (iconEnd && iconEndSlot) {
-      const hasContent = iconEndSlot.assignedNodes().length > 0;
-      iconEnd.hidden = !hasContent;
-    }
-
-    // Text slot - check for non-whitespace content
-    if (text && textSlot) {
-      const nodes = textSlot.assignedNodes();
-      const hasContent = nodes.some(node => {
-        if (node.nodeType === Node.TEXT_NODE) {
-          return node.textContent.trim().length > 0;
-        }
-        return true; // Non-text nodes count as content
-      });
-      text.hidden = !hasContent;
-    }
   }
 
   focus(options) {

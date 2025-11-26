@@ -106,18 +106,15 @@
   border-end-end-radius: var(--pf-v6-c-toggle-group__item--last-child__button--BorderEndEndRadius);
 }
 
-/* Icon spacing - adjacent combinator works because hidden elements are removed from layout */
-#icon-start:not([hidden]) + #text:not([hidden]) {
-  margin-inline-start: var(--pf-v6-c-toggle-group__icon--text--MarginInlineStart);
-}
-
-#text:not([hidden]) + #icon-end:not([hidden]) {
-  margin-inline-start: var(--pf-v6-c-toggle-group__text--icon--MarginInlineStart);
+/* Wrapper visibility controlled by custom property set from light DOM */
+#wrapper {
+  display: var(--_has-content, inline-flex);
+  gap: var(--pf-v6-c-toggle-group__icon--text--MarginInlineStart);
+  align-items: center;
 }
 
 /* Icon sizing */
-::slotted([slot="icon"]),
-::slotted([slot="icon-end"]) {
+::slotted(svg) {
   width: 1em;
   height: 1em;
   vertical-align: -0.125em;

@@ -76,18 +76,26 @@ footer {
   padding-block-end: var(--pf-v6-c-card--child--PaddingBlockEnd);
 }
 
-header:not([hidden]):first-child,
+header:first-child,
 #body:first-child {
   padding-block-start: var(--pf-v6-c-card--first-child--PaddingBlockStart);
 }
 
-header[hidden],
-footer[hidden] {
-  display: none;
+/* Slot visibility controlled by custom properties set from light DOM */
+#header {
+  display: var(--_has-header, block);
 }
 
-#title[hidden] {
-  display: none;
+#title {
+  display: var(--_has-title, block);
+}
+
+#body {
+  display: var(--_has-default, block);
+}
+
+#footer {
+  display: var(--_has-footer, block);
 }
 
 /* Style headings in title slot */

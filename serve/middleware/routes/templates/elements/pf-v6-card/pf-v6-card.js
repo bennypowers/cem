@@ -20,43 +20,6 @@ export class PfV6Card extends CemElement {
   static is = 'pf-v6-card';
   static observedAttributes = ['compact', 'variant', 'full-height'];
 
-  #header;
-  #title;
-  #footer;
-
-  async afterTemplateLoaded() {
-    this.#header = this.shadowRoot.querySelector('#header');
-    this.#title = this.shadowRoot.querySelector('#title');
-    this.#footer = this.shadowRoot.querySelector('#footer');
-
-    this.#updateSlotVisibility();
-
-    // Observe slot changes to update visibility
-    const slots = this.shadowRoot.querySelectorAll('slot');
-    slots.forEach(slot => {
-      slot.addEventListener('slotchange', () => this.#updateSlotVisibility());
-    });
-  }
-
-  #updateSlotVisibility() {
-    if (!this.#header || !this.#title || !this.#footer) return;
-
-    // Show/hide title based on slotted content
-    const titleSlot = this.shadowRoot.querySelector('slot[name="title"]');
-    const hasTitleContent = titleSlot && titleSlot.assignedNodes().length > 0;
-    this.#title.hidden = !hasTitleContent;
-
-    // Show/hide header based on slotted content (either title or header slot)
-    const headerSlot = this.shadowRoot.querySelector('slot[name="header"]');
-    const hasHeaderContent = headerSlot && headerSlot.assignedNodes().length > 0;
-    this.#header.hidden = !hasTitleContent && !hasHeaderContent;
-
-    // Show/hide footer based on slotted content
-    const footerSlot = this.shadowRoot.querySelector('slot[name="footer"]');
-    const hasFooterContent = footerSlot && footerSlot.assignedNodes().length > 0;
-    this.#footer.hidden = !hasFooterContent;
-  }
-
   static {
     customElements.define(this.is, this);
   }
