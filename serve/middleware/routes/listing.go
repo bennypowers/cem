@@ -318,18 +318,10 @@ func BuildSinglePackageNavigation(manifestBytes []byte, packageName string) (tem
 	return renderNavigationHTML(packages), title, nil
 }
 
-// BuildWorkspaceNavigation builds navigation HTML for workspace mode
-func BuildWorkspaceNavigation(packages []PackageContext) (template.HTML, error) {
-	if len(packages) == 0 {
-		return "", nil
-	}
-
-	// Build routing table
-	routes, err := BuildWorkspaceRoutingTable(packages)
-	if err != nil {
-		return "", err
-	}
-
+// buildPackageListingsFromRoutes groups routes by package and element, extracting
+// summaries and descriptions to build structured package navigation data.
+// Returns a sorted slice of PackageNavigation with alphabetically ordered packages and elements.
+func buildPackageListingsFromRoutes(routes map[string]*DemoRouteEntry) ([]PackageNavigation, error) {
 	// Group routes by package, then by element
 	packageElements := make(map[string]map[string][]*DemoRouteEntry)
 	for _, route := range routes {
@@ -356,11 +348,11 @@ func BuildWorkspaceNavigation(packages []PackageContext) (template.HTML, error) 
 				if route.Declaration != nil && summary == "" {
 					summaryHTML, err := markdownToHTML(route.Declaration.Summary)
 					if err != nil {
-						return "", fmt.Errorf("failed to convert summary to HTML for %s: %w", tagName, err)
+						return nil, fmt.Errorf("failed to convert summary to HTML for %s: %w", tagName, err)
 					}
 					descriptionHTML, err := markdownToHTML(route.Declaration.Description)
 					if err != nil {
-						return "", fmt.Errorf("failed to convert description to HTML for %s: %w", tagName, err)
+						return nil, fmt.Errorf("failed to convert description to HTML for %s: %w", tagName, err)
 					}
 					summary = template.HTML(summaryHTML)
 					description = template.HTML(descriptionHTML)
@@ -401,6 +393,27 @@ func BuildWorkspaceNavigation(packages []PackageContext) (template.HTML, error) 
 	sort.Slice(packageNav, func(i, j int) bool {
 		return packageNav[i].Name < packageNav[j].Name
 	})
+
+	return packageNav, nil
+}
+
+// BuildWorkspaceNavigation builds navigation HTML for workspace mode
+func BuildWorkspaceNavigation(packages []PackageContext) (template.HTML, error) {
+	if len(packages) == 0 {
+		return "", nil
+	}
+
+	// Build routing table
+	routes, err := BuildWorkspaceRoutingTable(packages)
+	if err != nil {
+		return "", err
+	}
+
+	// Build package listings from routes
+	packageNav, err := buildPackageListingsFromRoutes(routes)
+	if err != nil {
+		return "", err
+	}
 
 	return renderNavigationHTML(packageNav), nil
 }
@@ -455,77 +468,11 @@ func RenderWorkspaceListing(packages []PackageContext, importMap string) (string
 		return "", fmt.Errorf("building workspace routing table: %w", err)
 	}
 
-	// Group routes by package, then by element
-	packageElements := make(map[string]map[string][]*DemoRouteEntry)
-	for _, route := range routes {
-		if packageElements[route.PackageName] == nil {
-			packageElements[route.PackageName] = make(map[string][]*DemoRouteEntry)
-		}
-		packageElements[route.PackageName][route.TagName] = append(packageElements[route.PackageName][route.TagName], route)
+	// Build package listings from routes using shared helper
+	packageListings, err := buildPackageListingsFromRoutes(routes)
+	if err != nil {
+		return "", err
 	}
-
-	// Build package listings for main content
-	var packageListings []PackageNavigation
-	for pkgName, elements := range packageElements {
-		var elementListings []ElementListing
-		for tagName, tagRoutes := range elements {
-			// Sort demos by URL
-			sort.Slice(tagRoutes, func(i, j int) bool {
-				return tagRoutes[i].LocalRoute < tagRoutes[j].LocalRoute
-			})
-
-			var demoListings []DemoListing
-			var summary, description template.HTML
-			for _, route := range tagRoutes {
-				// Get summary and description from first route's declaration
-				if route.Declaration != nil && summary == "" {
-					summaryHTML, err := markdownToHTML(route.Declaration.Summary)
-					if err != nil {
-						return "", fmt.Errorf("failed to convert summary to HTML for %s: %w", tagName, err)
-					}
-					descriptionHTML, err := markdownToHTML(route.Declaration.Description)
-					if err != nil {
-						return "", fmt.Errorf("failed to convert description to HTML for %s: %w", tagName, err)
-					}
-					summary = template.HTML(summaryHTML)
-					description = template.HTML(descriptionHTML)
-				}
-
-				demoName := route.Demo.Description
-				if demoName == "" {
-					demoName = prettifyRoute(route.LocalRoute)
-				}
-				demoListings = append(demoListings, DemoListing{
-					Name:        demoName,
-					URL:         route.LocalRoute,
-					Slug:        slugify(demoName),
-					PackageName: route.PackageName,
-				})
-			}
-
-			elementListings = append(elementListings, ElementListing{
-				TagName:     tagName,
-				Summary:     summary,
-				Description: description,
-				Demos:       demoListings,
-			})
-		}
-
-		// Sort elements alphabetically
-		sort.Slice(elementListings, func(i, j int) bool {
-			return elementListings[i].TagName < elementListings[j].TagName
-		})
-
-		packageListings = append(packageListings, PackageNavigation{
-			Name:     pkgName,
-			Elements: elementListings,
-		})
-	}
-
-	// Sort packages alphabetically
-	sort.Slice(packageListings, func(i, j int) bool {
-		return packageListings[i].Name < packageListings[j].Name
-	})
 
 	// Render with template
 	var buf bytes.Buffer
