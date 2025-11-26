@@ -56,7 +56,68 @@ export class CemLogsEvent extends Event {
  */
 export class CemServeChrome extends CemElement {
   static is = 'cem-serve-chrome';
-  static observedAttributes = ['knobs', 'tag-name'];
+
+  static observedAttributes = [
+    'knobs',
+    'primary-tag-name',
+  ];
+
+  // Static templates for demo URL display
+  static #demoInfoTemplate = document.createElement('template');
+  static #demoGroupTemplate = document.createElement('template');
+  static #demoListTemplate = document.createElement('template');
+  static #logEntryTemplate = document.createElement('template');
+  static {
+    this.#demoInfoTemplate.innerHTML = `
+      <h3>Demo Information</h3>
+      <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+        <div class="pf-v6-c-description-list__group">
+          <dt class="pf-v6-c-description-list__term">Tag Name</dt>
+          <dd class="pf-v6-c-description-list__description" data-field="tagName"></dd>
+        </div>
+        <div class="pf-v6-c-description-list__group" data-field-group="description">
+          <dt class="pf-v6-c-description-list__term">Description</dt>
+          <dd class="pf-v6-c-description-list__description" data-field="description"></dd>
+        </div>
+        <div class="pf-v6-c-description-list__group" data-field-group="filepath">
+          <dt class="pf-v6-c-description-list__term">File Path</dt>
+          <dd class="pf-v6-c-description-list__description" data-field="filepath"></dd>
+        </div>
+        <div class="pf-v6-c-description-list__group">
+          <dt class="pf-v6-c-description-list__term">Canonical URL</dt>
+          <dd class="pf-v6-c-description-list__description" data-field="canonicalURL"></dd>
+        </div>
+        <div class="pf-v6-c-description-list__group">
+          <dt class="pf-v6-c-description-list__term">Local Route</dt>
+          <dd class="pf-v6-c-description-list__description" data-field="localRoute"></dd>
+        </div>
+      </dl>`;
+    this.#demoGroupTemplate.innerHTML = `
+      <div class="pf-v6-c-description-list__group">
+        <dt class="pf-v6-c-description-list__term" data-field="tagName"></dt>
+        <dd class="pf-v6-c-description-list__description">
+          <span data-field="description"></span><br>
+          <small data-field-group="filepath">File: <span data-field="filepath"></span></small>
+          <small>Canonical: <span data-field="canonicalURL"></span></small><br>
+          <small>Local: <span data-field="localRoute"></span></small>
+        </dd>
+      </div>
+    `;
+    this.#demoListTemplate.innerHTML = `
+      <details id="debug-demos-details">
+        <summary data-field="summary"></summary>
+        <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact" data-container="groups">
+        </dl>
+      </details>
+    `;
+    this.#logEntryTemplate.innerHTML = `
+      <div class="log-entry" data-field="container">
+        <pf-v6-label compact data-field="label"></pf-v6-label>
+        <time class="log-time" data-field="time"></time>
+        <span class="log-message" data-field="message"></span>
+      </div>
+    `;
+  }
 
   #$ = (selector) => this.shadowRoot.querySelector(selector);
   #$$ = (selector) => this.shadowRoot.querySelectorAll(selector);
@@ -68,7 +129,6 @@ export class CemServeChrome extends CemElement {
   #debugData = null;
   // Track ws connection state
   #hasConnected = false;
-
 
   #wsClient = new CEMReloadClient({
     jitterMax: 1000,
@@ -134,7 +194,7 @@ export class CemServeChrome extends CemElement {
 
   get knobs() { return this.getAttribute('knobs') || ''; }
 
-  get tagName() { return this.getAttribute('tag-name') || ''; }
+  get primaryTagName() { return this.getAttribute('primary-tag-name') || ''; }
 
   async afterTemplateLoaded() {
     // Add initializing class to prevent flash during state restoration
@@ -174,7 +234,7 @@ export class CemServeChrome extends CemElement {
       this.classList.remove('initializing');
     });
 
-    console.debug('[cem-serve-chrome] Demo chrome initialized for', this.tagName);
+    console.debug('[cem-serve-chrome] Demo chrome initialized for', this.primaryTagName);
   }
 
   async #fetchDebugInfo() {
@@ -232,72 +292,73 @@ export class CemServeChrome extends CemElement {
 
   #populateDemoUrls(container, demos) {
     if (!demos?.length) {
-      container.innerHTML = '<p>No demos found in manifest</p>';
+      container.textContent = 'No demos found in manifest';
       return;
     }
 
-    const currentTagName = this.getAttribute('tag-name') || '';
+    const currentTagName = this.primaryTagName || '';
     const isOnDemoPage = !!currentTagName;
 
     if (isOnDemoPage) {
       // On demo page - show only current demo, not in details
       const currentDemo = demos.find(demo => demo.tagName === currentTagName);
       if (!currentDemo) {
-        container.innerHTML = '<p>Current demo not found in manifest</p>';
+        container.textContent = 'Current demo not found in manifest';
         return;
       }
 
-      container.innerHTML = `
-        <h3>Demo Information</h3>
-        <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-          <div class="pf-v6-c-description-list__group">
-            <dt class="pf-v6-c-description-list__term">Tag Name</dt>
-            <dd class="pf-v6-c-description-list__description">${this.#escapeHtml(currentDemo.tagName)}</dd>
-          </div>
-          ${currentDemo.description ? `
-          <div class="pf-v6-c-description-list__group">
-            <dt class="pf-v6-c-description-list__term">Description</dt>
-            <dd class="pf-v6-c-description-list__description">${this.#escapeHtml(currentDemo.description)}</dd>
-          </div>
-          ` : ''}
-          ${currentDemo.filepath ? `
-          <div class="pf-v6-c-description-list__group">
-            <dt class="pf-v6-c-description-list__term">File Path</dt>
-            <dd class="pf-v6-c-description-list__description">${this.#escapeHtml(currentDemo.filepath)}</dd>
-          </div>
-          ` : ''}
-          <div class="pf-v6-c-description-list__group">
-            <dt class="pf-v6-c-description-list__term">Canonical URL</dt>
-            <dd class="pf-v6-c-description-list__description">${this.#escapeHtml(currentDemo.canonicalURL)}</dd>
-          </div>
-          <div class="pf-v6-c-description-list__group">
-            <dt class="pf-v6-c-description-list__term">Local Route</dt>
-            <dd class="pf-v6-c-description-list__description">${this.#escapeHtml(currentDemo.localRoute)}</dd>
-          </div>
-        </dl>
-      `;
+      const fragment = CemServeChrome.#demoInfoTemplate.content.cloneNode(true);
+
+      // Fill in required fields
+      fragment.querySelector('[data-field="tagName"]').textContent = currentDemo.tagName;
+      fragment.querySelector('[data-field="canonicalURL"]').textContent = currentDemo.canonicalURL;
+      fragment.querySelector('[data-field="localRoute"]').textContent = currentDemo.localRoute;
+
+      // Conditionally show/hide optional fields
+      const descriptionGroup = fragment.querySelector('[data-field-group="description"]');
+      if (currentDemo.description) {
+        fragment.querySelector('[data-field="description"]').textContent = currentDemo.description;
+      } else {
+        descriptionGroup.remove();
+      }
+
+      const filepathGroup = fragment.querySelector('[data-field-group="filepath"]');
+      if (currentDemo.filepath) {
+        fragment.querySelector('[data-field="filepath"]').textContent = currentDemo.filepath;
+      } else {
+        filepathGroup.remove();
+      }
+
+      container.replaceChildren(fragment);
     } else {
       // On index page - show all demos in details with description list
-      const demoGroups = demos.map(demo => `
-        <div class="pf-v6-c-description-list__group">
-          <dt class="pf-v6-c-description-list__term">${this.#escapeHtml(demo.tagName)}</dt>
-          <dd class="pf-v6-c-description-list__description">
-            ${demo.description ? this.#escapeHtml(demo.description) : '(no description)'}<br>
-            ${demo.filepath ? `<small>File: ${this.#escapeHtml(demo.filepath)}</small><br>` : ''}
-            <small>Canonical: ${this.#escapeHtml(demo.canonicalURL)}</small><br>
-            <small>Local: ${this.#escapeHtml(demo.localRoute)}</small>
-          </dd>
-        </div>
-      `).join('');
+      const listFragment = CemServeChrome.#demoListTemplate.content.cloneNode(true);
 
-      container.innerHTML = `
-        <details id="debug-demos-details">
-          <summary>Show Demo URLs from Manifest (${demos.length})</summary>
-          <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-            ${demoGroups}
-          </dl>
-        </details>
-      `;
+      listFragment.querySelector('[data-field="summary"]').textContent =
+        `Show Demo URLs from Manifest (${demos.length})`;
+
+      const groupsContainer = listFragment.querySelector('[data-container="groups"]');
+
+      for (const demo of demos) {
+        const groupFragment = CemServeChrome.#demoGroupTemplate.content.cloneNode(true);
+
+        groupFragment.querySelector('[data-field="tagName"]').textContent = demo.tagName;
+        groupFragment.querySelector('[data-field="description"]').textContent =
+          demo.description || '(no description)';
+        groupFragment.querySelector('[data-field="canonicalURL"]').textContent = demo.canonicalURL;
+        groupFragment.querySelector('[data-field="localRoute"]').textContent = demo.localRoute;
+
+        const filepathGroup = groupFragment.querySelector('[data-field-group="filepath"]');
+        if (demo.filepath) {
+          groupFragment.querySelector('[data-field="filepath"]').textContent = demo.filepath;
+        } else {
+          filepathGroup.remove();
+        }
+
+        groupsContainer.appendChild(groupFragment);
+      }
+
+      container.replaceChildren(listFragment);
     }
   }
 
@@ -327,9 +388,7 @@ export class CemServeChrome extends CemElement {
         debugModal.showModal();
       });
 
-      debugClose?.addEventListener('click', () => {
-        debugModal.close();
-      });
+      debugClose?.addEventListener('click', () => debugModal.close());
 
       debugCopy?.addEventListener('click', () => {
         this.#copyDebugInfo();
@@ -347,14 +406,31 @@ export class CemServeChrome extends CemElement {
       return;
     }
 
+    // Storage access gatekeeper - localStorage can throw in Safari private mode
+    const getStorageItem = (key, defaultValue) => {
+      try {
+        return localStorage.getItem(key) ?? defaultValue;
+      } catch (e) {
+        return defaultValue;
+      }
+    };
+
+    const setStorageItem = (key, value) => {
+      try {
+        localStorage.setItem(key, value);
+      } catch (e) {
+        // Storage unavailable (private mode), silently continue
+      }
+    };
+
     // Restore drawer state from localStorage
-    const savedDrawerOpen = localStorage.getItem('cem-serve-drawer-open');
+    const savedDrawerOpen = getStorageItem('cem-serve-drawer-open', null);
     if (savedDrawerOpen === 'true') {
       drawer.open = true;
     }
 
     // Restore drawer height from localStorage
-    const savedDrawerHeight = localStorage.getItem('cem-serve-drawer-height');
+    const savedDrawerHeight = getStorageItem('cem-serve-drawer-height', null);
     if (savedDrawerHeight && drawer.open) {
       const content = drawer.shadowRoot.getElementById('content');
       if (content) {
@@ -363,14 +439,14 @@ export class CemServeChrome extends CemElement {
     }
 
     // Restore tabs state from localStorage (default to first tab)
-    const savedTab = localStorage.getItem('cem-serve-active-tab');
+    const savedTab = getStorageItem('cem-serve-active-tab', null);
     if (savedTab) {
       tabs.value = savedTab;
     }
 
     // Listen for drawer changes and persist to localStorage
     drawer.addEventListener('change', (e) => {
-      localStorage.setItem('cem-serve-drawer-open', String(e.open));
+      setStorageItem('cem-serve-drawer-open', String(e.open));
       this.#drawerOpen = e.open;
 
       // Scroll logs when drawer opens
@@ -381,12 +457,12 @@ export class CemServeChrome extends CemElement {
 
     // Listen for drawer resize and persist to localStorage
     drawer.addEventListener('resize', (e) => {
-      localStorage.setItem('cem-serve-drawer-height', String(e.height));
+      setStorageItem('cem-serve-drawer-height', String(e.height));
     });
 
     // Listen for tab changes and persist to localStorage
     tabs.addEventListener('change', (e) => {
-      localStorage.setItem('cem-serve-active-tab', e.value);
+      setStorageItem('cem-serve-active-tab', e.value);
 
       // Scroll logs if switching to logs panel and drawer is open
       if (e.value === 'panel-logs' && drawer.open) {
@@ -413,15 +489,14 @@ export class CemServeChrome extends CemElement {
     return 'Unknown';
   }
 
-  #copyDebugInfo() {
+  async #copyDebugInfo() {
     // Collect all debug info
-    const info = [];
-    this.#$$('#debug-modal dl dt').forEach(dt => {
+    const info = Array.from(this.#$$('#debug-modal dl dt'), dt => {
       const dd = dt.nextElementSibling;
       if (dd && dd.tagName === 'DD') {
-        info.push(`${dt.textContent}: ${dd.textContent}`);
+        return `${dt.textContent}: ${dd.textContent}`;
       }
-    });
+    }).join('\n');
 
     // Include import map if available
     let importMapSection = '';
@@ -431,49 +506,61 @@ export class CemServeChrome extends CemElement {
 
     const debugText = `CEM Serve Debug Information
 ${'='.repeat(40)}
-${info.join('\n')}${importMapSection}
+${info}${importMapSection}
 ${'='.repeat(40)}
 Generated: ${new Date().toISOString()}`;
 
-    navigator.clipboard.writeText(debugText)
-      .then(() => {
-        const copyButton = this.#$('.debug-copy');
-        if (copyButton) {
-          const originalText = copyButton.textContent;
-          copyButton.textContent = 'Copied!';
-          setTimeout(() => {
-            copyButton.textContent = originalText;
-          }, 2000);
-        }
-      })
-      .catch(err => {
-        console.error('[cem-serve-chrome] Failed to copy debug info:', err);
-        alert('Failed to copy to clipboard');
-      });
+    try {
+      await navigator.clipboard.writeText(debugText);
+      const copyButton = this.#$('.debug-copy');
+      if (copyButton) {
+        const originalText = copyButton.textContent;
+        copyButton.textContent = 'Copied!';
+        setTimeout(() => {
+          copyButton.textContent = originalText;
+        }, 2000);
+      }
+    } catch (err) {
+      console.error('[cem-serve-chrome] Failed to copy debug info:', err);
+    }
   }
 
   #renderLogs(logs) {
     if (!this.#logContainer) return;
 
-    const logEntries = logs.map(log => {
+    const logElements = logs.map(log => {
       // Log is now structured: { type: 'info'|'warning'|'error'|'debug', date: ISO8601, message: string }
+      const fragment = CemServeChrome.#logEntryTemplate.content.cloneNode(true);
+
       const date = new Date(log.date);
       const time = date.toLocaleTimeString();
-      const labelText = this.#getLogBadge(log.type);
-      const labelAttrs = this.#getLogLabelAttrs(log.type);
 
-      return `<div class="log-entry ${log.type}" data-log-id="${log.date}">
-        <pf-v6-label ${labelAttrs} compact>${labelText}</pf-v6-label>
-        <time class="log-time" datetime="${log.date}">${time}</time>
-        <span class="log-message">${this.#escapeHtml(log.message)}</span>
-      </div>`;
-    }).join('');
+      // Get container and add type class and data attribute
+      const container = fragment.querySelector('[data-field="container"]');
+      container.classList.add(log.type);
+      container.setAttribute('data-log-id', log.date);
+
+      // Set label text and attributes based on type
+      const label = fragment.querySelector('[data-field="label"]');
+      label.textContent = this.#getLogBadge(log.type);
+      this.#applyLogLabelAttrs(label, log.type);
+
+      // Set time
+      const timeEl = fragment.querySelector('[data-field="time"]');
+      timeEl.setAttribute('datetime', log.date);
+      timeEl.textContent = time;
+
+      // Set message (textContent automatically escapes)
+      fragment.querySelector('[data-field="message"]').textContent = log.message;
+
+      return fragment;
+    });
 
     // Initial load: replace all logs (from fetch on page load - container is empty)
     // Individual logs: append to existing logs (from WebSocket stream - container has content)
     if (!this.#initialLogsFetched) {
       // First batch of logs from initial fetch - replace
-      this.#logContainer.innerHTML = logEntries;
+      this.#logContainer.replaceChildren(...logElements);
       this.#initialLogsFetched = true;
 
       // Scroll latest log into view after initial logs are rendered (if drawer is open)
@@ -482,7 +569,7 @@ Generated: ${new Date().toISOString()}`;
       }
     } else {
       // Individual log from WebSocket or subsequent updates - append
-      this.#logContainer.insertAdjacentHTML('beforeend', logEntries);
+      this.#logContainer.append(...logElements);
 
       // Auto-scroll latest log into view if drawer is open (for streaming logs)
       if (this.#drawerOpen) {
@@ -501,13 +588,22 @@ Generated: ${new Date().toISOString()}`;
     }
   }
 
-  #getLogLabelAttrs(type) {
+  #applyLogLabelAttrs(label, type) {
     switch (type) {
-      case 'info': return 'status="info"';
-      case 'warning': return 'status="warning"';
-      case 'error': return 'status="danger"';
-      case 'debug': return 'color="purple"';
-      default: return 'color="grey"';
+      case 'info':
+        label.setAttribute('status', 'info');
+        break;
+      case 'warning':
+        label.setAttribute('status', 'warning');
+        break;
+      case 'error':
+        label.setAttribute('status', 'danger');
+        break;
+      case 'debug':
+        label.setAttribute('color', 'purple');
+        break;
+      default:
+        label.setAttribute('color', 'grey');
     }
   }
 
@@ -534,12 +630,6 @@ Generated: ${new Date().toISOString()}`;
         this.#scrollLatestIntoView();
       }, 350);
     }
-  }
-
-  #escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
   }
 
   #setupColorSchemeToggle() {
@@ -649,7 +739,7 @@ Generated: ${new Date().toISOString()}`;
    * to find the pf-v6-card with data-tag-name and data-instance-index
    */
   #getKnobTarget(event) {
-    const defaultTagName = this.getAttribute('tag-name') || '';
+    const defaultTagName = this.primaryTagName || '';
 
     if (event.composedPath) {
       for (const element of event.composedPath()) {
