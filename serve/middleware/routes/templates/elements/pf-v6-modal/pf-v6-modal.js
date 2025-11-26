@@ -146,9 +146,6 @@ export class PfV6Modal extends CemElement {
       this.removeAttribute('open');
     }
 
-    // Restore body scroll
-    document.body.style.overflow = '';
-
     // Dispatch appropriate event
     if (this.#cancelling) {
       this.dispatchEvent(new PfModalCancelEvent());
@@ -170,9 +167,6 @@ export class PfV6Modal extends CemElement {
    */
   showModal() {
     if (!this.#dialog || this.#dialog.open) return;
-
-    // Prevent body scroll
-    document.body.style.overflow = 'hidden';
 
     // Open dialog
     this.#dialog.showModal();
