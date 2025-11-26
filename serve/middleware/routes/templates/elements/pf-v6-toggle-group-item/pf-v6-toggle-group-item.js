@@ -93,7 +93,7 @@ export class PfToggleGroupItem extends CemElement {
   }
 
   #updateTabindex() {
-    if (isDisabled) {
+    if (this.disabled) {
       return this.setAttribute('tabindex', '-1');
     }
 
@@ -115,8 +115,7 @@ export class PfToggleGroupItem extends CemElement {
   }
 
   #updateDisabled() {
-    const isDisabled = this.hasAttribute('disabled');
-    this.#internals.ariaDisabled = isDisabled ? 'true' : null;
+    this.#internals.ariaDisabled = String(!!this.disabled);
     this.#updateTabindex();
   }
 

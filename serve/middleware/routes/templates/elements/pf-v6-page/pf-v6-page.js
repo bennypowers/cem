@@ -52,7 +52,7 @@ class PfV6Page extends CemElement {
     }
   }
 
-  async afterTemplateLoaded() {
+  afterTemplateLoaded() {
     this.#attachEventListeners();
     this.#updateSidebarState();
   }
