@@ -29,8 +29,8 @@ class PfV6TextInput extends CemFormControl {
   get formControlElement() { return this.#input; }
 
   // Public API
-  get value() { return this.getAttribute('value') || ''; }
-  set value(val) { this.setAttribute('value', val ?? ''); }
+  get value() { return this.#input.value; }
+  set value(val) { this.#input.value = val; }
 
   get valueAsNumber() { return this.#input?.valueAsNumber ?? NaN; }
 

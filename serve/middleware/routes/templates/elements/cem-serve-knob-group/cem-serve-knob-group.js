@@ -118,7 +118,8 @@ class CemServeKnobGroup extends CemElement {
     clearTimeout(this.#debounceTimers.get(key));
 
     this.#debounceTimers.set(key, setTimeout(() => {
-      this.#applyChange(knobType, knobName, control.value, control.checked);
+      const checked = this.#isBooleanControl(control) ? control.checked : undefined;
+      this.#applyChange(knobType, knobName, control.value, checked);
     }, this.#debounceDelay));
   }
 
@@ -132,7 +133,29 @@ class CemServeKnobGroup extends CemElement {
     // Immediate update on change (for select, checkbox)
     const key = `${knobType}-${knobName}`;
     clearTimeout(this.#debounceTimers.get(key));
-    this.#applyChange(knobType, knobName, control.value, control.checked);
+    const checked = this.#isBooleanControl(control) ? control.checked : undefined;
+    this.#applyChange(knobType, knobName, control.value, checked);
+  }
+
+  /**
+   * Check if a control is a boolean-type control (checkbox, switch, etc.)
+   * Only these controls should pass their checked state to #applyChange
+   * @param {HTMLElement} control
+   * @returns {boolean}
+   */
+  #isBooleanControl(control) {
+    // Check for pf-v6-switch custom element
+    if (control.tagName === 'PF-V6-SWITCH') {
+      return true;
+    }
+
+    // Check for native checkbox input
+    if (control.tagName === 'INPUT' && control.type === 'checkbox') {
+      return true;
+    }
+
+    // Add other boolean control types here as needed
+    return false;
   }
 
   #handleColorButtonClick = async (e, button) => {
@@ -200,8 +223,9 @@ class CemServeKnobGroup extends CemElement {
     // Dispatch custom event that KnobsManager will catch
     let eventValue = value;
 
-    // Handle boolean values from checkboxes
-    if (typeof checked === 'boolean') {
+    // Handle boolean values from checkboxes/switches
+    // Only use checked if explicitly provided (not undefined)
+    if (checked !== undefined) {
       eventValue = checked;
     }
 

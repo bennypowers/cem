@@ -15,28 +15,28 @@ The core philosophy is that **Go HTML Templates** (`.html` files with `{{.}}` sy
 *   **Role**: The Orchestrator and Renderer.
 *   **Location**: `serve/middleware/routes/`
 *   **Responsibility**:
-    *   Intercepts requests for demo pages.
-    *   Parses the demo HTML to find custom elements.
-    *   **`RenderElementShadowRoot` (`element.go`)**: The critical function that loads a component's template, executes it with the specific attributes found in the demo HTML, and generates the `<template shadowrootmode="open">` block.
-    *   Serves the component assets (HTML/CSS) via the `/__cem/elements/` endpoints for client-side access.
+  *   Intercepts requests for demo pages.
+  *   Parses the demo HTML to find custom elements.
+  *   **`RenderElementShadowRoot` (`element.go`)**: The critical function that loads a component's template, executes it with the specific attributes found in the demo HTML, and generates the `<template shadowrootmode="open">` block.
+  *   Serves the component assets (HTML/CSS) via the `/__cem/elements/` endpoints for client-side access.
 
 ### 2. Component Definition: Templates
 *   **Role**: The Single Source of Truth.
 *   **Location**: `serve/middleware/routes/templates/elements/{tag}/{tag}.html`
 *   **Format**: Standard HTML fragments using Go `text/template` syntax.
 *   **Usage**:
-    *   **Server**: Executed with a data context (e.g., `.Attributes.Variant`).
-    *   **Client**: Served to the client (potentially transformed) to be used as `innerHTML`.
+  *   **Server**: Executed with a data context (e.g., `.Attributes.Variant`).
+  *   **Client**: Served to the client (potentially transformed) to be used as `innerHTML`.
 
 ### 3. Client-Side: `CemElement` (`cem-element.js`)
 *   **Role**: The Client-Side Base Class.
 *   **Location**: `serve/middleware/routes/templates/js/cem-element.js`
 *   **Responsibility**:
-    *   Extends `HTMLElement`.
-    *   **Hydration**: In `connectedCallback`, it checks if `this.shadowRoot` is already populated (by SSR).
-    *   **Fallback**: If the shadow root is empty, it constructs a fetch request to the server (e.g., `/__cem/elements/my-el/my-el.html`) to get the template.
-    *   **Caching**: Caches templates and stylesheets to minimize network requests for multiple instances of the same component.
-    *   **Internals**: Manages `ElementInternals` for form participation and accessibility, bridging the gap between the SSR'd DOM and client-side state.
+  *   Extends `HTMLElement`.
+  *   **Hydration**: In `connectedCallback`, it checks if `this.shadowRoot` is already populated (by SSR).
+  *   **Fallback**: If the shadow root is empty, it constructs a fetch request to the server (e.g., `/__cem/elements/my-el/my-el.html`) to get the template.
+  *   **Caching**: Caches templates and stylesheets to minimize network requests for multiple instances of the same component.
+  *   **Internals**: Manages `ElementInternals` for form participation and accessibility, bridging the gap between the SSR'd DOM and client-side state.
 
 ## Data Flow
 

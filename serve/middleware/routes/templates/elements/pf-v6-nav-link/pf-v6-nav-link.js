@@ -43,6 +43,14 @@ class PfV6NavLink extends CemElement {
 
   #link;
 
+  #clickHandler = (e) => {
+    if (this.hasAttribute('expandable')) {
+      e.preventDefault();
+      const currentExpanded = this.hasAttribute('expanded');
+      this.dispatchEvent(new PfNavToggleEvent(!currentExpanded));
+    }
+  };
+
   afterTemplateLoaded() {
     this.#link = this.shadowRoot.querySelector('#link');
     this.#syncAttributes();
@@ -95,14 +103,12 @@ class PfV6NavLink extends CemElement {
 
   #attachEventListeners() {
     if (!this.#link) return;
+    this.#link.addEventListener('click', this.#clickHandler);
+  }
 
-    this.#link.addEventListener('click', (e) => {
-      if (this.hasAttribute('expandable')) {
-        e.preventDefault();
-        const currentExpanded = this.hasAttribute('expanded');
-        this.dispatchEvent(new PfNavToggleEvent(!currentExpanded));
-      }
-    });
+  disconnectedCallback() {
+    super.disconnectedCallback?.();
+    this.#link?.removeEventListener('click', this.#clickHandler);
   }
 
   #markCurrentIfMatches() {

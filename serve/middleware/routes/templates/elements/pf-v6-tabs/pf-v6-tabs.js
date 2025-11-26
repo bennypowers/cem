@@ -24,20 +24,21 @@ class PfV6Tabs extends CemElement {
   #tabs = [];
   #mutationObserver;
 
+  #keydownHandler = (e) => this.#handleKeyDown(e);
+  #updateTabsBound = () => this.#updateTabs();
+
   async afterTemplateLoaded() {
     this.#tabsContainer = this.#$('#tabs');
     if (!this.#tabsContainer) return;
 
     // Handle keyboard navigation (attach once)
-    this.#tabsContainer.addEventListener('keydown', (e) => this.#handleKeyDown(e));
+    this.#tabsContainer.addEventListener('keydown', this.#keydownHandler);
 
-    // Listen for tab child changes
-    this.addEventListener('pf-v6-tab-connected', this.#updateTabs);
-    this.addEventListener('pf-v6-tab-disconnected', this.#updateTabs);
-    this.addEventListener('pf-v6-tab-title-changed', this.#updateTabs);
+    // Listen for tab title changes (connect/disconnect handled by MutationObserver)
+    this.addEventListener('pf-v6-tab-title-changed', this.#updateTabsBound);
 
-    // Observe child changes
-    this.#mutationObserver = new MutationObserver(() => this.#updateTabs());
+    // Observe child changes (handles connect/disconnect)
+    this.#mutationObserver = new MutationObserver(this.#updateTabsBound);
     this.#mutationObserver.observe(this, { childList: true });
 
     // Initial render
@@ -56,6 +57,8 @@ class PfV6Tabs extends CemElement {
 
   disconnectedCallback() {
     this.#mutationObserver?.disconnect();
+    this.#tabsContainer?.removeEventListener('keydown', this.#keydownHandler);
+    this.removeEventListener('pf-v6-tab-title-changed', this.#updateTabsBound);
   }
 
   #updateTabs() {

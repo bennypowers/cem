@@ -51,14 +51,10 @@ class PfV6ExpandableSection extends CemElement {
   #toggleButton;
   #content;
 
-  async afterTemplateLoaded() {
+  afterTemplateLoaded() {
     this.#toggleButton = this.#$('toggle-button');
     this.#content = this.#$('content');
-
-    // Handle toggle button clicks
-    this.#toggleButton?.addEventListener('click', () => {
-      this.toggle();
-    });
+    this.#toggleButton?.addEventListener('click', () => this.toggle());
   }
 
   // Getters and setters

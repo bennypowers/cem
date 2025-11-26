@@ -18,11 +18,19 @@ import { CemElement } from '/__cem/cem-element.js';
  */
 class PfV6Label extends CemElement {
   static is = 'pf-v6-label';
-  static observedAttributes = ['color', 'variant', 'status', 'compact', 'disabled', 'editable', 'href'];
+
+  static observedAttributes = [
+    'color',
+    'compact',
+    'disabled',
+    'editable',
+    'href',
+    'status',
+    'variant',
+  ];
 
   #$ = selector => this.shadowRoot.querySelector(selector);
   #content;
-  #text;
   #actions;
 
   get compact() { return this.hasAttribute('compact'); }
@@ -34,10 +42,7 @@ class PfV6Label extends CemElement {
   get editable() { return this.hasAttribute('editable'); }
   set editable(value) { this.toggleAttribute('editable', !!value); }
 
-  get color() {
-    return this.getAttribute('color') || 'grey';
-  }
-
+  get color() { return this.getAttribute('color') || 'grey'; }
   set color(value) {
     if (value) {
       this.setAttribute('color', value);
@@ -75,7 +80,6 @@ class PfV6Label extends CemElement {
 
   async afterTemplateLoaded() {
     this.#content = this.#$('#content');
-    this.#text = this.#$('#text');
     this.#actions = this.#$('#actions');
 
     // Sync href if we have an anchor element

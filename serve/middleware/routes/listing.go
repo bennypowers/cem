@@ -257,7 +257,6 @@ func extractElementListings(pkg *M.Package, packageName string) ([]ElementListin
 func slugify(s string) string {
 	// Simple slugification - lowercase and replace spaces with hyphens
 	// TODO: More robust slugification
-	s = template.HTMLEscapeString(s)
 	result := ""
 	for _, r := range s {
 		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
@@ -267,8 +266,7 @@ func slugify(s string) string {
 		}
 	}
 	// Convert to lowercase
-	result = template.HTMLEscapeString(result)
-	return result
+	return strings.ToLower(result)
 }
 
 // PackageNavigation represents a package with its elements for navigation

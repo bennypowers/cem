@@ -16,6 +16,22 @@ class PfV6Select extends CemFormControl {
   #internals = this.attachInternals();
   #observer = new MutationObserver(() => this.#cloneOptions());
 
+  #onChange = () => {
+    // Sync the value attribute to match internal select
+    this.setAttribute('value', this.#select.value);
+
+    // Update form value via ElementInternals
+    this.#internals.setFormValue(this.#select.value);
+
+    this.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+  };
+
+  #onInput = () => {
+    this.setAttribute('value', this.#select.value);
+    this.#internals.setFormValue(this.#select.value);
+    this.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+  };
+
   /**
    * Returns the internal select element for CemFormControl API.
    * @protected
@@ -36,7 +52,7 @@ class PfV6Select extends CemFormControl {
     this.#internals.setFormValue(this.#select.value);
   }
 
-  async afterTemplateLoaded() {
+  afterTemplateLoaded() {
     this.#select = this.shadowRoot.getElementById('select');
     if (!this.#select) return;
 
@@ -69,26 +85,19 @@ class PfV6Select extends CemFormControl {
     });
 
     // Forward change events from internal select and sync value
-    this.#select.addEventListener('change', () => {
-      // Sync the value attribute to match internal select
-      this.setAttribute('value', this.#select.value);
-
-      // Update form value via ElementInternals
-      this.#internals.setFormValue(this.#select.value);
-
-      this.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
-    });
-
-    this.#select.addEventListener('input', () => {
-      this.setAttribute('value', this.#select.value);
-      this.#internals.setFormValue(this.#select.value);
-      this.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-    });
+    this.#select.addEventListener('change', this.#onChange);
+    this.#select.addEventListener('input', this.#onInput);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback?.();
     this.#observer?.disconnect();
+
+    // Clean up event listeners
+    if (this.#select) {
+      this.#select.removeEventListener('change', this.#onChange);
+      this.#select.removeEventListener('input', this.#onInput);
+    }
   }
 
   attributeChangedCallback() {

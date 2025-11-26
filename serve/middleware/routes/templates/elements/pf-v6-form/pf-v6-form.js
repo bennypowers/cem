@@ -15,22 +15,25 @@ class PfV6Form extends CemElement {
 
   #formElement;
 
+  #submitHandler = (e) => {
+    this.dispatchEvent(new SubmitEvent('submit', {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      submitter: e.submitter
+    }));
+  };
+
   async afterTemplateLoaded() {
     this.#formElement = this.shadowRoot.getElementById('form');
 
     // Forward submit event to host
-    this.#formElement.addEventListener('submit', (e) => {
-      this.dispatchEvent(new SubmitEvent('submit', {
-        bubbles: true,
-        cancelable: true,
-        composed: true,
-        submitter: e.submitter
-      }));
-    });
+    this.#formElement?.addEventListener('submit', this.#submitHandler);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback?.();
+    this.#formElement?.removeEventListener('submit', this.#submitHandler);
   }
 
   /**

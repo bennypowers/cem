@@ -21,10 +21,6 @@
   margin-inline-start: var(--pf-v6-c-toggle-group__item--item--MarginInlineStart);
 }
 
-#wrapper {
-  display: contents;
-}
-
 /* Border pseudo-elements */
 :host::before,
 :host::after {

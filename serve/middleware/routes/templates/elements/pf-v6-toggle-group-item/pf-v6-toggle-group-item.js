@@ -43,7 +43,7 @@ export class PfToggleGroupItem extends CemElement {
 
     // Update tabindex when connected to ensure proper roving tabindex
     // Use setTimeout to ensure all siblings are in the DOM
-    setTimeout(() => {
+    queueMicrotask(() => {
       const isSelected = this.hasAttribute('selected');
       const parent = this.parentElement;
       if (parent) {
@@ -53,10 +53,10 @@ export class PfToggleGroupItem extends CemElement {
           this.#updateRovingTabindex();
         }
       }
-    }, 0);
+    });
   }
 
-  async afterTemplateLoaded() {
+  afterTemplateLoaded() {
     this.#wrapper = this.#$('wrapper');
 
     // Event listeners on HOST
@@ -182,6 +182,17 @@ export class PfToggleGroupItem extends CemElement {
     }
   }
 
+  #focusAndSelect(item) {
+    item.focus();
+    // Select the item when navigating (radio group behavior)
+    item.setAttribute('selected', '');
+    item.dispatchEvent(new ToggleGroupItemSelectEvent(
+      item,
+      true,
+      item.getAttribute('value')
+    ));
+  }
+
   #navigateItems(direction) {
     const parent = this.parentElement;
     if (!parent) return;
@@ -203,14 +214,7 @@ export class PfToggleGroupItem extends CemElement {
 
     const targetItem = items[newIndex];
     if (targetItem) {
-      targetItem.focus(); // Focus HOST
-      // Select the item when navigating (radio group behavior)
-      targetItem.setAttribute('selected', '');
-      targetItem.dispatchEvent(new ToggleGroupItemSelectEvent(
-        targetItem,
-        true,
-        targetItem.getAttribute('value')
-      ));
+      this.#focusAndSelect(targetItem);
     }
   }
 
@@ -223,14 +227,7 @@ export class PfToggleGroupItem extends CemElement {
 
     const targetItem = toStart ? items[0] : items[items.length - 1];
     if (targetItem) {
-      targetItem.focus(); // Focus HOST
-      // Select the item when navigating (radio group behavior)
-      targetItem.setAttribute('selected', '');
-      targetItem.dispatchEvent(new ToggleGroupItemSelectEvent(
-        targetItem,
-        true,
-        targetItem.getAttribute('value')
-      ));
+      this.#focusAndSelect(targetItem);
     }
   }
 
@@ -244,10 +241,6 @@ export class PfToggleGroupItem extends CemElement {
     items.forEach(item => {
       item.setAttribute('tabindex', item === this ? '0' : '-1');
     });
-  }
-
-  focus(options) {
-    super.focus(options);
   }
 
   static {
