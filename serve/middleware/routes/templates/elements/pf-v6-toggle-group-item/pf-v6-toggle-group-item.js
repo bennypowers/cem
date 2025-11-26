@@ -16,7 +16,11 @@ export class ToggleGroupItemSelectEvent extends Event {
 export class PfToggleGroupItem extends CemElement {
   static is = 'pf-v6-toggle-group-item';
 
-  static observedAttributes = ['selected', 'disabled', 'value'];
+  static observedAttributes = [
+    'selected',
+    'disabled',
+    'value',
+  ];
 
   #internals = this.attachInternals();
   #wrapper;
@@ -89,6 +93,10 @@ export class PfToggleGroupItem extends CemElement {
   }
 
   #updateTabindex() {
+    if (isDisabled) {
+      return this.setAttribute('tabindex', '-1');
+    }
+
     // Roving tabindex on HOST
     const isSelected = this.hasAttribute('selected');
     const parent = this.parentElement;
@@ -109,12 +117,7 @@ export class PfToggleGroupItem extends CemElement {
   #updateDisabled() {
     const isDisabled = this.hasAttribute('disabled');
     this.#internals.ariaDisabled = isDisabled ? 'true' : null;
-
-    if (isDisabled) {
-      this.setAttribute('tabindex', '-1');
-    } else {
-      this.#updateTabindex();
-    }
+    this.#updateTabindex();
   }
 
   #handleClick = (event) => {

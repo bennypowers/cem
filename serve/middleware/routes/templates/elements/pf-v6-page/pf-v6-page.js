@@ -23,18 +23,16 @@ class PfV6Page extends CemElement {
 
   // Private field for click outside handler
   #clickOutsideHandler = (event) => {
-    if (!PfV6Page.match.matches &&
-        !this.sidebarCollapsed &&
-        !event
-          .composedPath()
-          .some(node =>
-            node === this.querySelector('pf-v6-page-sidebar') ||
-            // a little cheat, to avoid race when toggling open via button
-            // although normally, reaching into shadow dom is forbidden
-            // we do it here because page and masthead are meant to work together
-            node === this.querySelector('pf-v6-masthead')
-            ?.shadowRoot?.getElementById('toggle-button'))) {
-      this.sidebarCollapsed = true;
+    if (!PfV6Page.match.matches && !this.sidebarCollapsed) {
+      const sidebar = this.querySelector('pf-v6-page-sidebar');
+      // a little cheat, to avoid race when toggling open via button
+      // although normally, reaching into shadow dom is forbidden
+      // we do it here because page and masthead are meant to work together
+      const mastheadToggle = this.querySelector('pf-v6-masthead')?.shadowRoot?.getElementById('toggle-button');
+
+      if (!event.composedPath().some(node => node === sidebar || node === mastheadToggle)) {
+        this.sidebarCollapsed = true;
+      }
     }
   };
 

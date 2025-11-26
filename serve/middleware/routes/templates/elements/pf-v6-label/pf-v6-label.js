@@ -79,12 +79,19 @@ class PfV6Label extends CemElement {
     this.#actions = this.#$('#actions');
 
     // Sync href if we have an anchor element
-    this.#syncHref();
+    if (this.#content) {
+      this.#syncHref();
+    }
 
     // Hide actions if empty
     this.#updateActionsVisibility();
-    this.#slotchangeListener = () => this.#updateActionsVisibility();
-    this.#$('slot[name="actions"]')?.addEventListener('slotchange', this.#slotchangeListener);
+
+    // Only attach slotchange listener if actions slot exists
+    const actionsSlot = this.#$('slot[name="actions"]');
+    if (actionsSlot) {
+      this.#slotchangeListener = () => this.#updateActionsVisibility();
+      actionsSlot.addEventListener('slotchange', this.#slotchangeListener);
+    }
 
     // Set up click handler (always attached, checks disabled state dynamically)
     this.#setupClickHandler();
@@ -99,6 +106,8 @@ class PfV6Label extends CemElement {
   }
 
   #syncHref() {
+    if (!this.#content || !this.#content.tagName) return;
+
     if (this.#content.tagName === 'A') {
       if (this.hasAttribute('href')) {
         this.#content.setAttribute('href', this.getAttribute('href'));
@@ -124,11 +133,11 @@ class PfV6Label extends CemElement {
   }
 
   #updateActionsVisibility() {
+    if (!this.#actions) return;
+
     const actionsSlot = this.#$('slot[name="actions"]');
     const hasActions = actionsSlot?.assignedElements().length > 0;
-    if (this.#actions) {
-      this.#actions.hidden = !hasActions;
-    }
+    this.#actions.hidden = !hasActions;
   }
 
   disconnectedCallback() {

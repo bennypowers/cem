@@ -1,9 +1,12 @@
-/* pf-v6-card slot visibility rules
+/**
+ * pf-v6-card slot visibility rules
  * Sets custom properties that shadow DOM reads to conditionally hide slot containers
  */
 
-/* Hide header container only when BOTH header and title slots are empty
- * (title is nested inside header, so header should show if either has content) */
+/**
+ * Hide header container only when BOTH header and title slots are empty
+ * (title is nested inside header, so header should show if either has content)
+ */
 pf-v6-card:not(:has([slot="header"])):not(:has([slot="title"])) {
   --_has-header: none;
 }

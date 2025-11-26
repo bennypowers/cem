@@ -4,9 +4,19 @@ import { CemFormControl } from '/__cem/cem-form-control.js';
  * @customElement pf-v6-text-input
  */
 class PfV6TextInput extends CemFormControl {
-  static formAssociated = true;
-  static observedAttributes = ['value', 'type', 'placeholder', 'disabled', 'readonly', 'invalid', 'min', 'max', 'step'];
   static is = 'pf-v6-text-input';
+
+  static observedAttributes = [
+    'disabled',
+    'invalid',
+    'max',
+    'min',
+    'placeholder',
+    'readonly',
+    'step',
+    'type',
+    'value',
+  ];
 
   #input;
   #internals;
@@ -16,9 +26,20 @@ class PfV6TextInput extends CemFormControl {
    * @protected
    * @returns {HTMLInputElement|null}
    */
-  get formControlElement() {
-    return this.#input;
-  }
+  get formControlElement() { return this.#input; }
+
+  // Public API
+  get value() { return this.getAttribute('value') || ''; }
+  set value(val) { this.setAttribute('value', val ?? ''); }
+
+  get valueAsNumber() { return this.#input?.valueAsNumber ?? NaN; }
+
+  get disabled() { return this.hasAttribute('disabled'); }
+  set disabled(value) { this.toggleAttribute('disabled', !!value); }
+
+  get type() { return this.getAttribute('type') || 'text'; }
+
+  set type(value) { this.setAttribute('type', value); }
 
   constructor() {
     super();
@@ -26,12 +47,9 @@ class PfV6TextInput extends CemFormControl {
     this.#internals = this.attachInternals();
   }
 
-  async afterTemplateLoaded() {
+  afterTemplateLoaded() {
     this.#input = this.shadowRoot.getElementById('text-input');
     if (!this.#input) return;
-
-    // Note: Initial state is rendered server-side via template
-    // #syncAttributes only needed for runtime attribute changes
 
     // Forward change events from internal input and sync value
     this.#input.addEventListener('input', () => {
@@ -51,104 +69,72 @@ class PfV6TextInput extends CemFormControl {
     });
   }
 
-  attributeChangedCallback() {
-    this.#syncAttributes();
-  }
-
-  #syncAttributes() {
+  attributeChangedCallback(name, oldValue, newValue) {
     if (!this.#input) return;
+    if (oldValue === newValue) return;
 
-    // Sync value
-    const value = this.getAttribute('value') || '';
-    if (this.#input.value !== value) {
-      this.#input.value = value;
-    }
-
-    // Sync type
-    const type = this.getAttribute('type') || 'text';
-    this.#input.type = type;
-
-    // Sync placeholder
-    const placeholder = this.getAttribute('placeholder');
-    if (placeholder) {
-      this.#input.placeholder = placeholder;
-    } else {
-      this.#input.removeAttribute('placeholder');
-    }
-
-    // Sync disabled state
-    this.#input.disabled = this.hasAttribute('disabled');
-
-    // Sync readonly state
-    this.#input.readOnly = this.hasAttribute('readonly');
-
-    // Sync number input attributes
-    if (type === 'number') {
-      const min = this.getAttribute('min');
-      const max = this.getAttribute('max');
-      const step = this.getAttribute('step');
-
-      if (min !== null) {
-        this.#input.setAttribute('min', min);
-      } else {
-        this.#input.removeAttribute('min');
+    switch (name) {
+      case 'value': {
+        const value = newValue || '';
+        if (this.#input.value !== value) {
+          this.#input.value = value;
+        }
+        break;
       }
 
-      if (max !== null) {
-        this.#input.setAttribute('max', max);
-      } else {
-        this.#input.removeAttribute('max');
+      case 'type': {
+        const type = newValue || 'text';
+        this.#input.type = type;
+
+        // When changing away from 'number', remove number-specific attributes
+        if (oldValue === 'number' && type !== 'number') {
+          this.#input.removeAttribute('min');
+          this.#input.removeAttribute('max');
+          this.#input.removeAttribute('step');
+        }
+        break;
       }
 
-      if (step !== null) {
-        this.#input.setAttribute('step', step);
-      } else {
-        this.#input.removeAttribute('step');
+      case 'placeholder':
+        if (newValue) {
+          this.#input.placeholder = newValue;
+        } else {
+          this.#input.removeAttribute('placeholder');
+        }
+        break;
+
+      case 'disabled':
+        this.#input.disabled = this.hasAttribute('disabled');
+        break;
+
+      case 'readonly':
+        this.#input.readOnly = this.hasAttribute('readonly');
+        break;
+
+      case 'min':
+      case 'max':
+      case 'step': {
+        // Only apply these attributes when input type is 'number'
+        const type = this.getAttribute('type') || 'text';
+        if (type === 'number') {
+          if (newValue !== null) {
+            this.#input.setAttribute(name, newValue);
+          } else {
+            this.#input.removeAttribute(name);
+          }
+        }
+        break;
       }
-    }
 
-    // Sync invalid state
-    if (this.hasAttribute('invalid')) {
-      this.#input.setAttribute('aria-invalid', 'true');
-    } else {
-      this.#input.removeAttribute('aria-invalid');
-    }
-  }
-
-  // Public API
-  get value() {
-    return this.getAttribute('value') || '';
-  }
-
-  set value(val) {
-    this.setAttribute('value', val);
-  }
-
-  get valueAsNumber() {
-    return this.#input?.valueAsNumber ?? NaN;
-  }
-
-  get disabled() {
-    return this.hasAttribute('disabled');
-  }
-
-  set disabled(value) {
-    if (value) {
-      this.setAttribute('disabled', '');
-    } else {
-      this.removeAttribute('disabled');
+      case 'invalid':
+        if (this.hasAttribute('invalid')) {
+          this.#input.setAttribute('aria-invalid', 'true');
+        } else {
+          this.#input.removeAttribute('aria-invalid');
+        }
+        break;
     }
   }
-
-  get type() {
-    return this.getAttribute('type') || 'text';
-  }
-
-  set type(value) {
-    this.setAttribute('type', value);
-  }
-
-  // Note: focus() and blur() delegated automatically via CemFormControl
 
   select() {
     this.#input?.select();
@@ -158,4 +144,3 @@ class PfV6TextInput extends CemFormControl {
     customElements.define(this.is, this);
   }
 }
-

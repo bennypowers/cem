@@ -5,7 +5,7 @@ import { CemFormControl } from '/__cem/cem-form-control.js';
  */
 class PfV6Select extends CemFormControl {
   static is = 'pf-v6-select';
-  static formAssociated = true;
+
   static observedAttributes = [
     'value',
     'disabled',
@@ -21,9 +21,7 @@ class PfV6Select extends CemFormControl {
    * @protected
    * @returns {HTMLSelectElement|null}
    */
-  get formControlElement() {
-    return this.#select;
-  }
+  get formControlElement() { return this.#select; }
 
   get disabled() { return this.hasAttribute('disabled'); }
   set disabled(b) { this.toggleAttribute('disabled', !!b); }
@@ -33,8 +31,9 @@ class PfV6Select extends CemFormControl {
 
   get value() { return this.#select?.value ?? ''; }
   set value(v) {
+    if (!this.#select) return;
     this.#select.value = v ?? '';
-    this.#internals.setFormValue(v);
+    this.#internals.setFormValue(this.#select.value);
   }
 
   async afterTemplateLoaded() {

@@ -42,7 +42,8 @@ class PfV6Form extends CemElement {
 
   /**
    * Requests form submission with validation
-   * @returns {boolean} True if validation passed
+   * @param {HTMLElement} [submitter] - Optional submitter element
+   * @returns {void|undefined} Returns nothing; undefined if form element doesn't exist
    */
   requestSubmit(submitter) {
     return this.#formElement?.requestSubmit(submitter);

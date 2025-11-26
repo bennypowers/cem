@@ -45,7 +45,7 @@ class PfV6NavItem extends CemElement {
 
     // Update child nav-group
     this.querySelector('pf-v6-nav-group')
-      ?.toggleAttribute('hidden', isExpanded);
+      ?.toggleAttribute('hidden', !isExpanded);
 
     // Update child nav-link expanded state
     // The nav-link will forward this to aria-expanded on its internal element

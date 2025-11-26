@@ -20,7 +20,10 @@ import { CemElement } from '/__cem/cem-element.js';
  * }
  */
 export class CemFormControl extends CemElement {
+  static formAssociated = true;
+
   static shadowRootOptions = { mode: 'open', delegatesFocus: true };
+
   /**
    * Override in subclasses to return the internal input/select/textarea element.
    * This element will receive aria-label and be the target of focus() calls.

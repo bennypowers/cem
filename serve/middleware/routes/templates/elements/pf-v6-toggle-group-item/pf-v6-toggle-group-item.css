@@ -51,7 +51,7 @@
 }
 
 /* Hover state */
-:host(:hover:not([aria-disabled="true"])) {
+:host(:hover:not([disabled])) {
   --pf-v6-c-toggle-group__button--BackgroundColor: var(--pf-v6-c-toggle-group__button--hover--BackgroundColor);
   --pf-v6-c-toggle-group__button--ZIndex: var(--pf-v6-c-toggle-group__button--hover--ZIndex);
   --pf-v6-c-toggle-group__button--before--BorderColor: var(--pf-v6-c-toggle-group__button--hover--before--BorderColor);
@@ -80,7 +80,7 @@
 }
 
 /* Disabled state */
-:host([aria-disabled="true"]) {
+:host([disabled]) {
   --pf-v6-c-toggle-group__button--BackgroundColor: var(--pf-v6-c-toggle-group__button--disabled--BackgroundColor);
   --pf-v6-c-toggle-group__button--Color: var(--pf-v6-c-toggle-group__button--disabled--Color);
   --pf-v6-c-toggle-group__button--before--BorderColor: var(--pf-v6-c-toggle-group__button--disabled--before--BorderColor);
@@ -90,7 +90,8 @@
 }
 
 /* Adjacent disabled items - special border handling */
-:host([aria-disabled="true"]) + :host([aria-disabled="true"]) {
+/* FIXME: this is unlikely to work with :host */
+:host([disabled]) + :host([disabled]) {
   --pf-v6-c-toggle-group__button--before--BorderInlineStartColor: var(--pf-v6-c-toggle-group__button--disabled-disabled--before--BorderInlineStartColor);
 }
 
