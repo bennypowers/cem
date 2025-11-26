@@ -178,19 +178,52 @@ class PfV6Popover extends CemElement {
             top = triggerRect.top - popoverRect.height - distance;
             left = triggerRect.left + (triggerRect.width / 2) - (popoverRect.width / 2);
             break;
+          case 'top-start':
+            top = triggerRect.top - popoverRect.height - distance;
+            left = triggerRect.left;
+            break;
+          case 'top-end':
+            top = triggerRect.top - popoverRect.height - distance;
+            left = triggerRect.right - popoverRect.width;
+            break;
           case 'bottom':
             top = triggerRect.bottom + distance;
             left = triggerRect.left + (triggerRect.width / 2) - (popoverRect.width / 2);
             break;
+          case 'bottom-start':
+            top = triggerRect.bottom + distance;
+            left = triggerRect.left;
+            break;
+          case 'bottom-end':
+            top = triggerRect.bottom + distance;
+            left = triggerRect.right - popoverRect.width;
+            break;
           case 'left':
             top = triggerRect.top + (triggerRect.height / 2) - (popoverRect.height / 2);
+            left = triggerRect.left - popoverRect.width - distance;
+            break;
+          case 'left-start':
+            top = triggerRect.top;
+            left = triggerRect.left - popoverRect.width - distance;
+            break;
+          case 'left-end':
+            top = triggerRect.bottom - popoverRect.height;
             left = triggerRect.left - popoverRect.width - distance;
             break;
           case 'right':
             top = triggerRect.top + (triggerRect.height / 2) - (popoverRect.height / 2);
             left = triggerRect.right + distance;
             break;
+          case 'right-start':
+            top = triggerRect.top;
+            left = triggerRect.right + distance;
+            break;
+          case 'right-end':
+            top = triggerRect.bottom - popoverRect.height;
+            left = triggerRect.right + distance;
+            break;
           default:
+            // Default to top center if position is invalid
             top = triggerRect.top - popoverRect.height - distance;
             left = triggerRect.left + (triggerRect.width / 2) - (popoverRect.width / 2);
         }

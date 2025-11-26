@@ -35,6 +35,8 @@
 }
 
 /* Anchor the trigger wrapper */
+/* Note: CSS Anchor Positioning requires Chromium 125+, Edge 125+, or Safari (with limited support).
+   Firefox is not supported. Browsers without native support fall back to manual JS positioning. */
 #trigger {
   anchor-name: --trigger;
   display: inline-block;
@@ -230,6 +232,9 @@
   bottom: anchor(--trigger top);
   left: anchor(--trigger left);
   margin-bottom: var(--distance);
+  --pf-v6-c-popover__arrow--InsetBlockEnd: calc(var(--pf-v6-c-popover__arrow--Height) / -2);
+  --pf-v6-c-popover__arrow--InsetInlineStart: var(--pf-t--global--spacer--lg);
+  --pf-v6-c-popover__arrow--Rotate: 45deg;
 }
 
 /* Position: top-end */
@@ -238,6 +243,9 @@
   bottom: anchor(--trigger top);
   right: anchor(--trigger right);
   margin-bottom: var(--distance);
+  --pf-v6-c-popover__arrow--InsetBlockEnd: calc(var(--pf-v6-c-popover__arrow--Height) / -2);
+  --pf-v6-c-popover__arrow--InsetInlineEnd: var(--pf-t--global--spacer--lg);
+  --pf-v6-c-popover__arrow--Rotate: 45deg;
 }
 
 /* Position: bottom-start */
@@ -246,6 +254,9 @@
   top: anchor(--trigger bottom);
   left: anchor(--trigger left);
   margin-top: var(--distance);
+  --pf-v6-c-popover__arrow--InsetBlockStart: calc(var(--pf-v6-c-popover__arrow--Height) / -2);
+  --pf-v6-c-popover__arrow--InsetInlineStart: var(--pf-t--global--spacer--lg);
+  --pf-v6-c-popover__arrow--Rotate: 45deg;
 }
 
 /* Position: bottom-end */
@@ -254,6 +265,9 @@
   top: anchor(--trigger bottom);
   right: anchor(--trigger right);
   margin-top: var(--distance);
+  --pf-v6-c-popover__arrow--InsetBlockStart: calc(var(--pf-v6-c-popover__arrow--Height) / -2);
+  --pf-v6-c-popover__arrow--InsetInlineEnd: var(--pf-t--global--spacer--lg);
+  --pf-v6-c-popover__arrow--Rotate: 45deg;
 }
 
 /* Position: left-start */
@@ -262,6 +276,9 @@
   top: anchor(--trigger top);
   right: anchor(--trigger left);
   margin-right: var(--distance);
+  --pf-v6-c-popover__arrow--InsetBlockStart: var(--pf-t--global--spacer--lg);
+  --pf-v6-c-popover__arrow--InsetInlineEnd: calc(var(--pf-v6-c-popover__arrow--Width) / -2);
+  --pf-v6-c-popover__arrow--Rotate: 45deg;
 }
 
 /* Position: left-end */
@@ -270,6 +287,9 @@
   bottom: anchor(--trigger bottom);
   right: anchor(--trigger left);
   margin-right: var(--distance);
+  --pf-v6-c-popover__arrow--InsetBlockEnd: var(--pf-t--global--spacer--lg);
+  --pf-v6-c-popover__arrow--InsetInlineEnd: calc(var(--pf-v6-c-popover__arrow--Width) / -2);
+  --pf-v6-c-popover__arrow--Rotate: 45deg;
 }
 
 /* Position: right-start */
@@ -278,6 +298,9 @@
   top: anchor(--trigger top);
   left: anchor(--trigger right);
   margin-left: var(--distance);
+  --pf-v6-c-popover__arrow--InsetBlockStart: var(--pf-t--global--spacer--lg);
+  --pf-v6-c-popover__arrow--InsetInlineStart: calc(var(--pf-v6-c-popover__arrow--Width) / -2);
+  --pf-v6-c-popover__arrow--Rotate: 45deg;
 }
 
 /* Position: right-end */
@@ -286,6 +309,9 @@
   bottom: anchor(--trigger bottom);
   left: anchor(--trigger right);
   margin-left: var(--distance);
+  --pf-v6-c-popover__arrow--InsetBlockEnd: var(--pf-t--global--spacer--lg);
+  --pf-v6-c-popover__arrow--InsetInlineStart: calc(var(--pf-v6-c-popover__arrow--Width) / -2);
+  --pf-v6-c-popover__arrow--Rotate: 45deg;
 }
 
 /* Position: auto - default to top position (no automatic fallback in polyfill) */
