@@ -1,10 +1,32 @@
+{{- $p := "top" -}}
+{{- if eq .Attributes.Position "auto"
+                               "top"
+                               "bottom"
+                               "left"
+                               "right"
+                               "top-start"
+                               "top-end"
+                               "bottom-start"
+                               "bottom-end"
+                               "left-start"
+                               "left-end"
+                               "right-start"
+                               "right-end" -}}
+  {{- $p = .Attributes.Position -}}
+{{- end -}}
+
+{{$cbl := "Close"}}
+{{- if .Attributes.CloseButtonLabel }}
+  {{- $cbl = .Attributes.CloseButtonLabel -}}
+{{- end -}}
+
 <div id="trigger"
      style="anchor-name: --trigger">
   <slot name="trigger"></slot>
 </div>
 
 <div id="content"
-     class="position-{{if .Attributes.Position}}{{.Attributes.Position}}{{else}}top{{end}}"
+     class="position-{{$p}}"
      popover="manual"
      part="popover">
   <div id="arrow"></div>
@@ -12,8 +34,13 @@
        part="content">
     <button id="close"
             part="close-button"
-            aria-label="{{if .Attributes.CloseButtonLabel}}{{.Attributes.CloseButtonLabel}}{{else}}Close{{end}}">
-      <svg class="pf-v6-svg" viewBox="0 0 352 512" fill="currentColor" aria-hidden="true" role="img" width="1em" height="1em">
+            aria-label="{{$cbl}}">
+      <svg class="pf-v6-svg"
+           viewBox="0 0 352 512"
+           fill="currentColor"
+           role="presentation"
+           width="1em"
+           height="1em">
         <path d="M242.72 256l100.07-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44.48 0L176 189.28 75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28 12.28-12.28 32.19 0 44.48L109.28 256 9.21 356.07c-12.28 12.28-12.28 32.19 0 44.48l22.24 22.24c12.28 12.28 32.2 12.28 44.48 0L176 322.72l100.07 100.07c12.28 12.28 32.2 12.28 44.48 0l22.24-22.24c12.28-12.28 12.28-32.19 0-44.48L242.72 256z"></path>
       </svg>
     </button>
@@ -22,15 +49,7 @@
             part="header">
       <div id="title">
         <div id="header-content">
-          {{if .Attributes.HeaderLevel}}
-          <{{.Attributes.HeaderLevel}} class="pf-v6-c-popover__title-text">
-            <slot name="header"></slot>
-          </{{.Attributes.HeaderLevel}}>
-          {{else}}
-          <h6 id="title-text">
-            <slot name="header"></slot>
-          </h6>
-          {{end}}
+          <slot name="header"></slot>
         </div>
       </div>
     </header>

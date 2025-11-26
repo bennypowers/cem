@@ -11,17 +11,15 @@ import { CemElement } from '/__cem/cem-element.js';
  * @slot - Default slot for popover body content
  * @slot footer - Footer content
  *
- * @attr {string} position - Position relative to trigger: auto|top|bottom|left|right|top-start|top-end|bottom-start|bottom-end|left-start|left-end|right-start|right-end (default: "top")
- * @attr {number} distance - Distance from trigger in pixels (default: 8)
- * @attr {string} trigger-action - How to trigger: click|hover (default: "click")
  * @attr {boolean} closeable - Show close button (default: true)
+ * @attr {boolean} has-auto-width - Remove width constraints
+ * @attr {boolean} open - Whether the popover is currently open (reflects state)
+ * @attr {number} distance - Distance from trigger in pixels (default: 8)
+ * @attr {'auto'|'top'|'bottom'|'left'|'right'|'top-start'|'top-end'|'bottom-start'|'bottom-end'|'left-start'|'left-end'|'right-start'|'right-end'} position - Position relative to trigger (default: "top")
+ * @attr {'click'|'hover'} trigger-action - How to trigger: click|hover (default: "click")
  * @attr {string} close-button-label - Aria label for close button (default: "Close")
- * @attr {string} header-level - Heading level: h1-h6 (default: "h6")
  * @attr {string} min-width - Minimum width CSS value
  * @attr {string} max-width - Maximum width CSS value
- * @attr {boolean} has-auto-width - Remove width constraints
- * @attr {string} aria-label - Accessible label (required when no header)
- * @attr {boolean} open - Whether the popover is currently open (reflects state)
  *
  * @fires pf-popover-show - Fired when popover opens
  * @fires pf-popover-hide - Fired when popover closes
@@ -39,7 +37,6 @@ class PfV6Popover extends CemElement {
       'trigger-action',
       'closeable',
       'close-button-label',
-      'header-level',
       'min-width',
       'max-width',
       'has-auto-width'
@@ -134,9 +131,6 @@ class PfV6Popover extends CemElement {
 
   get closeButtonLabel() { return this.getAttribute('close-button-label') || 'Close'; }
   set closeButtonLabel(value) { this.setAttribute('close-button-label', value); }
-
-  get headerLevel() { return this.getAttribute('header-level') || 'h6'; }
-  set headerLevel(value) { this.setAttribute('header-level', value); }
 
   get ariaLabel() {
     return this.getAttribute('aria-label');
@@ -297,25 +291,6 @@ class PfV6Popover extends CemElement {
     }));
   };
 
-  #updateHeaderLevel() {
-    if (!this.#headerElement) return;
-
-    // Create new heading element with correct level
-    const level = this.headerLevel;
-    const newHeading = document.createElement(level);
-    newHeading.id = 'title-text';
-    newHeading.innerHTML = '<slot name="header"></slot>';
-
-    // Replace existing heading
-    const oldHeading = this.#headerElement.querySelector('#title-text');
-    if (oldHeading) {
-      this.#headerElement.replaceChild(newHeading, oldHeading);
-    } else {
-      this.#headerElement.appendChild(newHeading);
-    }
-  }
-
-
   #updateCSSProperties() {
     const minWidth = this.getAttribute('min-width');
     const maxWidth = this.getAttribute('max-width');
@@ -386,10 +361,6 @@ class PfV6Popover extends CemElement {
 
       case 'trigger-action':
         this.#setupTriggerListeners();
-        break;
-
-      case 'header-level':
-        this.#updateHeaderLevel();
         break;
 
       case 'close-button-label':
