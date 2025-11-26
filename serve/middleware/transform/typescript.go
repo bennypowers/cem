@@ -25,6 +25,7 @@ import (
 
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/middleware"
+	"bennypowers.dev/cem/serve/middleware/types"
 )
 
 // DefaultTarget is the default TypeScript transformation target.
@@ -35,8 +36,8 @@ type TypeScriptConfig struct {
 	WatchDirFunc     func() string // Function to get current watch directory
 	TsconfigRawFunc  func() string // Function to get current tsconfig.json content
 	Cache            *Cache
-	Logger           Logger
-	ErrorBroadcaster ErrorBroadcaster
+	Logger           types.Logger
+	ErrorBroadcaster types.ErrorBroadcaster
 	Target           string
 	Enabled          bool                // Enable/disable TypeScript transformation
 	FS               platform.FileSystem // Filesystem abstraction for testability

@@ -1,0 +1,112 @@
+/* PatternFly v6 Toolbar Styles */
+
+:host {
+  position: relative;
+  display: grid;
+  row-gap: var(--pf-v6-c-toolbar--RowGap);
+  width: var(--pf-v6-c-toolbar--Width, auto);
+  padding-block-start: var(--pf-v6-c-toolbar--PaddingBlockStart);
+  padding-block-end: var(--pf-v6-c-toolbar--PaddingBlockEnd);
+  padding-inline-start: var(--pf-v6-c-toolbar--PaddingInlineStart);
+  padding-inline-end: var(--pf-v6-c-toolbar--PaddingInlineEnd);
+  font-size: var(--pf-v6-c-toolbar--FontSize);
+  line-height: var(--pf-v6-c-toolbar--LineHeight);
+  background-color: var(--pf-v6-c-toolbar--BackgroundColor);
+}
+
+/* Sticky modifier */
+:host([sticky]) {
+  --pf-v6-c-toolbar--BackgroundColor: var(--pf-v6-c-toolbar--m-sticky--BackgroundColor);
+
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--pf-v6-c-toolbar--m-sticky--ZIndex);
+  padding-block-start: var(--pf-v6-c-toolbar--m-sticky--PaddingBlockStart);
+  padding-block-end: var(--pf-v6-c-toolbar--m-sticky--PaddingBlockEnd);
+  border-block-end: var(--pf-v6-c-toolbar--m-sticky--BorderBlockEndWidth) solid var(--pf-v6-c-toolbar--m-sticky--BorderBlockEndColor);
+  box-shadow: var(--pf-v6-c-toolbar--m-sticky--BoxShadow);
+}
+
+/* Static modifier */
+:host([static]),
+:host([static]) #content {
+  position: static;
+}
+
+:host([static]) #expandable-content {
+  position: absolute;
+}
+
+/* Full height modifier */
+:host([full-height]) {
+  --pf-v6-c-toolbar--PaddingBlockStart: 0;
+  --pf-v6-c-toolbar--PaddingBlockEnd: 0;
+}
+
+/* Color variant modifiers */
+:host([color-variant="primary"]) {
+  --pf-v6-c-toolbar--BackgroundColor: var(--pf-v6-c-toolbar--m-primary--BackgroundColor);
+}
+
+:host([color-variant="secondary"]) {
+  --pf-v6-c-toolbar--BackgroundColor: var(--pf-v6-c-toolbar--m-secondary--BackgroundColor);
+}
+
+:host([color-variant="no-background"]) {
+  --pf-v6-c-toolbar--BackgroundColor: var(--pf-v6-c-toolbar--m-no-background--BackgroundColor);
+}
+
+/* Toolbar content */
+#content {
+  --pf-v6-hidden-visible--visible--Display: grid;
+  --pf-v6-hidden-visible--hidden--Display: none;
+  --pf-v6-hidden-visible--Display: var(--pf-v6-hidden-visible--visible--Display);
+
+  position: relative;
+  display: var(--pf-v6-hidden-visible--Display);
+  row-gap: var(--pf-v6-c-toolbar__content--RowGap);
+  min-width: var(--pf-v6-c-toolbar__content--MinWidth, auto);
+  padding-inline-start: var(--pf-v6-c-toolbar__content--PaddingInlineStart);
+  padding-inline-end: var(--pf-v6-c-toolbar__content--PaddingInlineEnd);
+}
+
+/* Toolbar content section */
+#content-section {
+  display: flex;
+  flex-wrap: var(--pf-v6-c-toolbar__content-section--FlexWrap, wrap);
+  row-gap: var(--pf-v6-c-toolbar__content-section--RowGap);
+  column-gap: var(--pf-v6-c-toolbar__content-section--ColumnGap);
+  align-items: start;
+}
+
+/* Toolbar expandable content */
+#expandable-content {
+  position: absolute;
+  inset-block-start: 100%;
+  inset-inline-start: 0;
+  z-index: var(--pf-v6-c-toolbar__expandable-content--ZIndex);
+  display: none;
+  row-gap: var(--pf-v6-c-toolbar__expandable-content--RowGap);
+  width: 100%;
+  padding-block-start: var(--pf-v6-c-toolbar__expandable-content--PaddingBlockStart);
+  padding-block-end: var(--pf-v6-c-toolbar__expandable-content--PaddingBlockEnd);
+  padding-inline-start: var(--pf-v6-c-toolbar__expandable-content--PaddingInlineStart);
+  padding-inline-end: var(--pf-v6-c-toolbar__expandable-content--PaddingInlineEnd);
+  background-color: var(--pf-v6-c-toolbar__expandable-content--BackgroundColor);
+  border-block-end: var(--pf-v6-c-toolbar__expandable-content--BorderBlockEndWidth) solid var(--pf-v6-c-toolbar__expandable-content--BorderBlockEndColor);
+  box-shadow: var(--pf-v6-c-toolbar__expandable-content--BoxShadow);
+}
+
+@media screen and (min-width: 992px) {
+  #expandable-content {
+    position: static;
+    padding: 0;
+    border-block-end: 0;
+    box-shadow: none;
+  }
+}
+
+/* Show expandable content only when both expandable AND expanded are set */
+:host([expandable][expanded]) #expandable-content {
+  display: grid;
+}

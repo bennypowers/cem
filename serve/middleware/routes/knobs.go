@@ -51,9 +51,10 @@ const (
 
 // KnobsData represents all knobs for an element
 type KnobsData struct {
-	TagName         string
-	AttributeKnobs  []KnobData
-	PropertyKnobs   []KnobData
+	TagName          string
+	ElementID        string // ID of the target element (for cem-serve-knob-group "for" attribute)
+	AttributeKnobs   []KnobData
+	PropertyKnobs    []KnobData
 	CSSPropertyKnobs []KnobData
 }
 
@@ -64,7 +65,8 @@ type KnobData struct {
 	Type         KnobType
 	CurrentValue string
 	EnumValues   []string
-	Description  template.HTML
+	Summary      template.HTML // Brief summary for helper text
+	Description  template.HTML // Full description for popover
 	Default      string
 }
 
@@ -83,6 +85,7 @@ type ElementInstance struct {
 // Used by Phase 5b to render multiple knob groups with labels and collapsible structure.
 type ElementKnobGroup struct {
 	TagName       string // Element tag name (e.g., "my-card")
+	ElementID     string // ID of the element instance
 	Label         string // Human-readable label for this instance (e.g., "#card-1", "User Settings")
 	InstanceIndex int    // Per-tag-name instance index (0 for first rh-tab, 1 for second rh-tab, etc.)
 	IsPrimary     bool   // Whether this is the primary instance (expanded by default)
@@ -98,8 +101,29 @@ func GenerateKnobs(declaration *M.CustomElementDeclaration, demoHTML []byte, ena
 	// Parse demo HTML to extract current values
 	currentValues := extractCurrentValues(declaration.TagName, demoHTML)
 
+	// Try to discover element instances to get ID
+	instances, err := discoverElementInstances(declaration.TagName, demoHTML)
+	var elementID string
+	if err == nil && len(instances) > 0 {
+		// Use first instance's ID
+		elementID = instances[0].ID
+	}
+
+	// Auto-generate ID if not present
+	if elementID == "" {
+		elementID = fmt.Sprintf("%s-0", declaration.TagName)
+	}
+
 	// Delegate to generateKnobsForInstance
-	return generateKnobsForInstance(declaration, currentValues, enabledKnobs)
+	knobs, err := generateKnobsForInstance(declaration, currentValues, enabledKnobs)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set ElementID on knobs
+	knobs.ElementID = elementID
+
+	return knobs, nil
 }
 
 // parseEnabledKnobs converts a space-separated list into a map
@@ -128,6 +152,7 @@ func attributeToKnob(attr M.Attribute, currentValues map[string]string) KnobData
 	knob := KnobData{
 		Name:         attr.Name,
 		Category:     KnobCategoryAttribute,
+		Summary:      template.HTML(attr.Summary),
 		Description:  template.HTML(attr.Description),
 		Default:      attr.Default,
 		CurrentValue: currentValues[attr.Name],
@@ -148,6 +173,7 @@ func propertyToKnob(field *M.ClassField, currentValues map[string]string) KnobDa
 	knob := KnobData{
 		Name:         field.Name,
 		Category:     KnobCategoryProperty,
+		Summary:      template.HTML(field.Summary),
 		Description:  template.HTML(field.Description),
 		Default:      field.Default,
 		CurrentValue: currentValues["prop:"+field.Name],
@@ -168,6 +194,7 @@ func cssPropertyToKnob(cssProp M.CssCustomProperty, currentValues map[string]str
 	knob := KnobData{
 		Name:         cssProp.Name,
 		Category:     KnobCategoryCSSProperty,
+		Summary:      template.HTML(cssProp.Summary),
 		Description:  template.HTML(cssProp.Description),
 		Default:      cssProp.Default,
 		CurrentValue: currentValues["css:"+cssProp.Name],
@@ -260,48 +287,6 @@ func extractCurrentValues(tagName string, demoHTML []byte) map[string]string {
 	return values
 }
 
-// RenderKnobsHTML renders the knobs HTML template
-func RenderKnobsHTML(knobs *KnobsData) (template.HTML, error) {
-	if knobs == nil {
-		return "", nil
-	}
-
-	// Convert markdown descriptions to HTML for all knobs
-	for i := range knobs.AttributeKnobs {
-		if knobs.AttributeKnobs[i].Description != "" {
-			knobs.AttributeKnobs[i].Description = template.HTML(markdownToHTML(string(knobs.AttributeKnobs[i].Description)))
-		}
-	}
-	for i := range knobs.PropertyKnobs {
-		if knobs.PropertyKnobs[i].Description != "" {
-			knobs.PropertyKnobs[i].Description = template.HTML(markdownToHTML(string(knobs.PropertyKnobs[i].Description)))
-		}
-	}
-	for i := range knobs.CSSPropertyKnobs {
-		if knobs.CSSPropertyKnobs[i].Description != "" {
-			knobs.CSSPropertyKnobs[i].Description = template.HTML(markdownToHTML(string(knobs.CSSPropertyKnobs[i].Description)))
-		}
-	}
-
-	var buf bytes.Buffer
-	err := KnobsTemplate.Execute(&buf, knobs)
-	if err != nil {
-		return "", err
-	}
-
-	return template.HTML(buf.String()), nil
-}
-
-// markdownToHTML converts markdown text to HTML
-func markdownToHTML(text string) string {
-	var buf bytes.Buffer
-	// Use the same markdown renderer as chrome.go
-	err := md.Convert([]byte(text), &buf)
-	if err != nil {
-		return text // Return original text on error
-	}
-	return buf.String()
-}
 
 // firstTextContent extracts the first non-empty text node from an element's subtree.
 // This handles nested content like <my-card><h2>Title</h2></my-card> correctly.
@@ -435,6 +420,13 @@ func GenerateMultiInstanceKnobs(declaration *M.CustomElementDeclaration, demoHTM
 		// Generate label for this instance
 		label := generateElementLabel(instance, declaration.TagName, i)
 
+		// Generate or use existing ID
+		elementID := instance.ID
+		if elementID == "" {
+			// Auto-generate ID if not present: tagname-instance-index
+			elementID = fmt.Sprintf("%s-%d", declaration.TagName, i)
+		}
+
 		// Extract current values for this specific instance
 		currentValues := instance.Attributes
 
@@ -444,8 +436,12 @@ func GenerateMultiInstanceKnobs(declaration *M.CustomElementDeclaration, demoHTM
 			return nil, fmt.Errorf("failed to generate knobs for instance %d: %w", i, err)
 		}
 
+		// Set ElementID on knobs
+		knobs.ElementID = elementID
+
 		group := ElementKnobGroup{
 			TagName:       declaration.TagName,
+			ElementID:     elementID,
 			Label:         label,
 			InstanceIndex: i,
 			IsPrimary:     i == 0, // First instance is primary
@@ -571,8 +567,19 @@ func GenerateKnobsForAllElements(pkg *M.Package, demoHTML []byte, enabledKnobs s
 			return nil, fmt.Errorf("failed to generate knobs for %s instance %d: %w", instance.TagName, instanceIndex, err)
 		}
 
+		// Generate or use existing ID
+		elementID := instance.ID
+		if elementID == "" {
+			// Auto-generate ID if not present: tagname-instance-index
+			elementID = fmt.Sprintf("%s-%d", instance.TagName, instanceIndex)
+		}
+
+		// Set ElementID on knobs
+		knobs.ElementID = elementID
+
 		group := ElementKnobGroup{
 			TagName:       instance.TagName,
+			ElementID:     elementID,
 			Label:         label,
 			InstanceIndex: instanceIndex,
 			IsPrimary:     len(allGroups) == 0, // First instance overall is primary
@@ -637,43 +644,59 @@ func discoverAllCustomElementInstances(demoHTML []byte) ([]ElementInstance, erro
 	return instances, nil
 }
 
-// RenderMultiInstanceKnobsHTML renders the multi-instance knobs HTML template.
-// This is the Phase 5b implementation that renders knobs using <details> groups.
-// Uses the knobs-multi.html template with:
-// - One <details> element per instance
-// - Primary instance has 'open' attribute (expanded by default)
-// - Each group shows tag name and instance label in <summary>
-// - Knobs organized by category (attributes, properties, CSS properties) within each group
-func RenderMultiInstanceKnobsHTML(knobGroups []ElementKnobGroup) (template.HTML, error) {
+// convertMarkdownFields converts Summary and Description fields from Markdown to HTML in-place.
+// The context parameter is used for error messages (e.g., "attribute knob", "property knob").
+func convertMarkdownFields(knobs []KnobData, context string) error {
+	for i := range knobs {
+		if knobs[i].Summary != "" {
+			html, err := markdownToHTML(string(knobs[i].Summary))
+			if err != nil {
+				return fmt.Errorf("failed to convert %s summary to HTML: %w", context, err)
+			}
+			knobs[i].Summary = template.HTML(html)
+		}
+		if knobs[i].Description != "" {
+			html, err := markdownToHTML(string(knobs[i].Description))
+			if err != nil {
+				return fmt.Errorf("failed to convert %s description to HTML: %w", context, err)
+			}
+			knobs[i].Description = template.HTML(html)
+		}
+	}
+	return nil
+}
+
+// RenderKnobsHTML renders the knobs HTML template.
+// Takes a slice of ElementKnobGroup (can be single or multiple instances).
+// Each group is rendered in a pf-v6-card with tag name and instance label.
+// Knobs are organized by category (attributes, properties, CSS properties) within each group.
+//
+// Note: This function modifies the Summary and Description fields of knobGroups in-place,
+// converting Markdown to HTML. Callers should not reuse the slice after calling this function.
+func RenderKnobsHTML(knobGroups []ElementKnobGroup) (template.HTML, error) {
 	if len(knobGroups) == 0 {
 		return "", nil
 	}
 
-	// Convert markdown descriptions to HTML for all knobs in all groups
+	// Convert markdown summary and description to HTML for all knobs in all groups
 	for gi := range knobGroups {
 		if knobGroups[gi].Knobs == nil {
 			continue
 		}
 
-		for i := range knobGroups[gi].Knobs.AttributeKnobs {
-			if knobGroups[gi].Knobs.AttributeKnobs[i].Description != "" {
-				knobGroups[gi].Knobs.AttributeKnobs[i].Description = template.HTML(markdownToHTML(string(knobGroups[gi].Knobs.AttributeKnobs[i].Description)))
-			}
+		if err := convertMarkdownFields(knobGroups[gi].Knobs.AttributeKnobs, "attribute knob"); err != nil {
+			return "", err
 		}
-		for i := range knobGroups[gi].Knobs.PropertyKnobs {
-			if knobGroups[gi].Knobs.PropertyKnobs[i].Description != "" {
-				knobGroups[gi].Knobs.PropertyKnobs[i].Description = template.HTML(markdownToHTML(string(knobGroups[gi].Knobs.PropertyKnobs[i].Description)))
-			}
+		if err := convertMarkdownFields(knobGroups[gi].Knobs.PropertyKnobs, "property knob"); err != nil {
+			return "", err
 		}
-		for i := range knobGroups[gi].Knobs.CSSPropertyKnobs {
-			if knobGroups[gi].Knobs.CSSPropertyKnobs[i].Description != "" {
-				knobGroups[gi].Knobs.CSSPropertyKnobs[i].Description = template.HTML(markdownToHTML(string(knobGroups[gi].Knobs.CSSPropertyKnobs[i].Description)))
-			}
+		if err := convertMarkdownFields(knobGroups[gi].Knobs.CSSPropertyKnobs, "CSS property knob"); err != nil {
+			return "", err
 		}
 	}
 
 	var buf bytes.Buffer
-	err := KnobsMultiTemplate.Execute(&buf, knobGroups)
+	err := KnobsTemplate.Execute(&buf, knobGroups)
 	if err != nil {
 		return "", err
 	}

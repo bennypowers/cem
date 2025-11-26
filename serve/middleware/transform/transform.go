@@ -21,19 +21,6 @@ import (
 	"time"
 )
 
-// Logger is a minimal logging interface for the transform middleware
-type Logger interface {
-	Info(msg string, args ...any)
-	Warning(msg string, args ...any)
-	Error(msg string, args ...any)
-	Debug(msg string, args ...any)
-}
-
-// ErrorBroadcaster sends errors to browser error overlay
-type ErrorBroadcaster interface {
-	BroadcastError(title, message, filename string)
-}
-
 // CacheKey uniquely identifies a cached transform based on file metadata
 type CacheKey struct {
 	Path    string

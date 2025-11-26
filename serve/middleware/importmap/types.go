@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 
 	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/serve/middleware/types"
 )
 
 // ImportMap represents an ES module import map
@@ -50,17 +51,11 @@ func (im *ImportMap) ToJSON() string {
 type Config struct {
 	InputMapPath      string              // Path to user override file
 	CLIOverrides      map[string]string   // CLI flag overrides (highest priority)
-	Logger            Logger              // Logger for warnings
+	Logger            types.Logger // Logger for warnings
 	WorkspacePackages []WorkspacePackage  // If set, generate workspace-mode import map (flattened scopes)
 	FS                platform.FileSystem // Filesystem abstraction (defaults to OS filesystem if nil)
 }
 
-// Logger is a minimal logging interface
-type Logger interface {
-	Error(msg string, args ...any)
-	Debug(msg string, args ...any)
-	Warning(msg string, args ...any)
-}
 
 // WorkspacePackage holds information about a package in the workspace
 type WorkspacePackage struct {

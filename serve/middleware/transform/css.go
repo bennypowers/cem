@@ -25,14 +25,15 @@ import (
 
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/middleware"
+	"bennypowers.dev/cem/serve/middleware/types"
 	DS "github.com/bmatcuk/doublestar/v4"
 )
 
 // CSSConfig holds configuration for CSS transformation
 type CSSConfig struct {
 	WatchDirFunc     func() string      // Function to get current watch directory
-	Logger           Logger
-	ErrorBroadcaster ErrorBroadcaster   // Sends errors to browser error overlay
+	Logger           types.Logger
+	ErrorBroadcaster types.ErrorBroadcaster // Sends errors to browser error overlay
 	ConfigFile       string             // Path to config file (for error reporting)
 	Enabled          bool               // Enable/disable CSS transformation
 	Include          []string           // Glob patterns to include (empty means all .css files)
@@ -41,7 +42,7 @@ type CSSConfig struct {
 }
 
 // shouldTransformCSS checks if a CSS file should be transformed based on include/exclude patterns
-func shouldTransformCSS(cssPath string, include []string, exclude []string, logger Logger, errorBroadcaster ErrorBroadcaster, configFile string) bool {
+func shouldTransformCSS(cssPath string, include []string, exclude []string, logger types.Logger, errorBroadcaster types.ErrorBroadcaster, configFile string) bool {
 	// If include patterns are specified, file must match at least one
 	if len(include) > 0 {
 		matched := false

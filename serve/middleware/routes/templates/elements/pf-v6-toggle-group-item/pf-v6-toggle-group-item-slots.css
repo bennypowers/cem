@@ -1,0 +1,8 @@
+/* pf-v6-toggle-group-item slot visibility rules
+ * Sets custom properties that shadow DOM reads to conditionally hide slot containers
+ */
+
+/* Hide wrapper when element is empty (no content at all) */
+pf-v6-toggle-group-item:empty {
+  --_has-content: none;
+}

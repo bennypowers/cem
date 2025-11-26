@@ -1,0 +1,35 @@
+{{define "link-content"}}
+  <slot name="icon-start"></slot>
+  <slot></slot>
+  <slot name="icon-end"></slot>
+  <span id="toggle"
+        part="toggle">
+    <span id="toggle-icon"
+          part="toggle-icon">
+      <svg class="pf-v6-svg"
+           viewBox="0 0 256 512"
+           fill="currentColor"
+           role="presentation">
+        <path d="M224.3 273l-136 136c-9.4 9.4-24.6 9.4-33.9 0l-22.6-22.6c-9.4-9.4-9.4-24.6 0-33.9l96.4-96.4-96.4-96.4c-9.4-9.4-9.4-24.6 0-33.9L54.3 103c9.4-9.4 24.6-9.4 33.9 0l136 136c9.5 9.4 9.5 24.6.1 34z"></path>
+      </svg>
+    </span>
+  </span>
+{{end}}
+
+{{if .Attributes.Href}}
+<a id="link"
+   part="link"
+   href="{{.Attributes.Href}}"
+   {{if .Attributes.Label}}aria-label="{{.Attributes.Label}}"{{end}}
+   {{if .Attributes.Current}}aria-current="page"{{end}}>
+  {{template "link-content"}}
+</a>
+{{else}}
+<button id="link"
+        part="link"
+        type="button"
+        {{if .Attributes.Label}}aria-label="{{.Attributes.Label}}"{{end}}
+        {{if .Attributes.Expandable}}aria-expanded="{{if .Attributes.Expanded}}true{{else}}false{{end}}"{{end}}>
+  {{template "link-content"}}
+</button>
+{{end}}

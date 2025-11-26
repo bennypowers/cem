@@ -40,6 +40,7 @@ import (
 	"bennypowers.dev/cem/serve/middleware/inject"
 	"bennypowers.dev/cem/serve/middleware/requestlogger"
 	"bennypowers.dev/cem/serve/middleware/routes"
+	"bennypowers.dev/cem/serve/middleware/shadowroot"
 	"bennypowers.dev/cem/serve/middleware/transform"
 	W "bennypowers.dev/cem/workspace"
 	"golang.org/x/net/html"
@@ -182,6 +183,9 @@ func (s *Server) Start() error {
 			_ = listener.Close()
 			return fmt.Errorf("failed to create file watcher: %w", err)
 		}
+
+		// Set custom ignore patterns from config
+		fw.SetIgnorePatterns(s.watchDir, s.config.WatchIgnore)
 
 		if err := fw.Watch(s.watchDir); err != nil {
 			if closeErr := fw.Close(); closeErr != nil {
@@ -1065,6 +1069,25 @@ func (s *Server) handleFileChanges() {
 		affectedPageURLs := s.getAffectedPageURLs(changedPath, invalidatedFiles)
 
 		if len(affectedPageURLs) == 0 {
+			// If smart reload found no affected pages, check if we're in a "no routes" state
+			// (e.g. no manifest yet). In this case, fallback to broadcasting to all clients.
+			s.mu.RLock()
+			noRoutes := len(s.demoRoutes) == 0
+			s.mu.RUnlock()
+
+			if noRoutes {
+				s.logger.Debug("No demo routes found, falling back to broadcast all for %s", relPath)
+				// Create a "broadcast all" message (using empty affected list effectively broadcasts to all if we change logic,
+				// but here we just pass the file and rely on client side or simply assume all pages need reload)
+				// Actually BroadcastToPages with nil/empty list skips.
+				// We should use Broadcast() instead.
+				files := []string{relPath}
+				if err := s.BroadcastReload(files, "file-change-fallback"); err != nil {
+					s.logger.Error("Failed to broadcast reload: %v", err)
+				}
+				continue
+			}
+
 			s.logger.Debug("No pages affected by changes to %s", relPath)
 			continue
 		}
@@ -1228,6 +1251,10 @@ func (s *Server) setupMiddleware() {
 	// Terminal handler: static files
 	s.handler = middleware.Chain(
 		http.HandlerFunc(s.serveStaticFiles),                      // Static file server (terminal handler)
+		shadowroot.New(s.logger, errorBroadcaster{s}, routes.TemplatesFS, func(elementName string, data interface{}) (string, error) {
+			html, err := routes.RenderElementShadowRoot(elementName, data)
+			return string(html), err
+		}), // Shadow root injection (last - processes final HTML)
 		inject.New(s.config.Reload, "/__cem/websocket-client.js"), // WebSocket injection
 		importmappkg.New(importmappkg.MiddlewareConfig{ // Import map injection
 			Context: s,

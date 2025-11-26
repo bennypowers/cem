@@ -30,33 +30,36 @@ type ElementWrapperData struct {
 	LightDOM  template.HTML
 }
 
-// renderElementShadowRoot renders a custom element's shadow root with DSD
+// RenderElementShadowRoot renders a custom element's shadow root with DSD
 // Returns just the shadow root (template + styles + shadow DOM)
 // Light DOM content should be provided by the caller in the template
-func renderElementShadowRoot(elementName string, attrs map[string]string) (template.HTML, error) {
+// This function is recursive - it will render nested custom elements' shadow roots
+func RenderElementShadowRoot(elementName string, data interface{}) (template.HTML, error) {
 	// Read the element's HTML template (shadow DOM structure)
 	templatePath := fmt.Sprintf("templates/elements/%s/%s.html", elementName, elementName)
-	templateContent, err := templatesFS.ReadFile(templatePath)
+	templateContent, err := TemplatesFS.ReadFile(templatePath)
 	if err != nil {
 		return "", fmt.Errorf("failed to read element template %s: %w", templatePath, err)
 	}
 
 	// Read the element's CSS
 	cssPath := fmt.Sprintf("templates/elements/%s/%s.css", elementName, elementName)
-	cssContent, err := templatesFS.ReadFile(cssPath)
+	cssContent, err := TemplatesFS.ReadFile(cssPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to read element CSS %s: %w", cssPath, err)
 	}
 
-	// Parse the shadow DOM template
-	shadowTmpl, err := template.New(elementName).Parse(string(templateContent))
+	// Parse the shadow DOM template with template functions available
+	// Note: getTemplateFuncs() includes renderElementShadowRoot, enabling recursion
+	shadowTmpl, err := template.New(elementName).Funcs(getTemplateFuncs()).Parse(string(templateContent))
 	if err != nil {
 		return "", fmt.Errorf("failed to parse element template %s: %w", elementName, err)
 	}
 
-	// Execute shadow DOM template with attrs
+	// Execute shadow DOM template with data
+	// If the template contains {{renderElementShadowRoot "nested-element" dict}}, it will recurse
 	var shadowBuf bytes.Buffer
-	err = shadowTmpl.Execute(&shadowBuf, attrs)
+	err = shadowTmpl.Execute(&shadowBuf, data)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute element template %s: %w", elementName, err)
 	}

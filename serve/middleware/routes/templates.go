@@ -29,9 +29,6 @@ import (
 //go:embed templates/default-index.html
 var defaultIndexTemplate string
 
-//go:embed templates/demo-chrome.html
-var demoChromeTemplate string
-
 //go:embed templates/workspace-listing.html
 var workspaceListingTemplate string
 
@@ -47,13 +44,13 @@ var elementWrapperTemplate string
 //go:embed templates/knobs.html
 var knobsTemplate string
 
-//go:embed templates/knobs-multi.html
-var knobsMultiTemplate string
+//go:embed templates/demo-chrome.html
+var demoChromeTemplate string
 
 //go:embed templates/**
-var templatesFS embed.FS
+var TemplatesFS embed.FS
 
-//go:embed templates/js/*.js templates/css/*.css templates/images/* templates/elements/**/*.js
+//go:embed templates/js/*.js templates/css/*.css templates/images/* templates/elements/*.css templates/elements/**/*
 var InternalModules embed.FS
 
 // errorBroadcaster holds the error broadcaster for template errors
@@ -66,83 +63,84 @@ func SetErrorBroadcaster(ctx middleware.DevServerContext) {
 }
 
 // Template functions available to templates
-var templateFuncs = template.FuncMap{
-	"contains": strings.Contains,
-	"join": func(elems []string, sep string) string {
-		return strings.Join(elems, sep)
-	},
-	"dict": func(values ...interface{}) (map[string]string, error) {
-		if len(values)%2 != 0 {
-			return nil, fmt.Errorf("dict requires even number of arguments")
-		}
-		dict := make(map[string]string, len(values)/2)
-		for i := 0; i < len(values); i += 2 {
-			key, ok := values[i].(string)
-			if !ok {
-				return nil, fmt.Errorf("dict keys must be strings")
+// getTemplateFuncs returns the template function map
+// This is a function to avoid initialization cycles with renderElementShadowRoot
+func getTemplateFuncs() template.FuncMap {
+	return template.FuncMap{
+		"contains": strings.Contains,
+		"join": func(elems []string, sep string) string {
+			return strings.Join(elems, sep)
+		},
+		"dict": func(values ...interface{}) (map[string]string, error) {
+			if len(values)%2 != 0 {
+				return nil, fmt.Errorf("dict requires even number of arguments")
 			}
-			dict[key] = fmt.Sprint(values[i+1])
-		}
-		return dict, nil
-	},
-	"include": func(path string) template.CSS {
-		content, err := templatesFS.ReadFile("templates/" + path)
-		if err != nil {
-			errMsg := "/* Error reading " + path + ": " + err.Error() + " */"
-
-			// Broadcast error to connected clients via WebSocket overlay
-			if errorBroadcaster != nil {
-				_ = errorBroadcaster.BroadcastError(
-					"Template Include Error",
-					"Failed to include template file: "+err.Error(),
-					path,
-				)
+			dict := make(map[string]string, len(values)/2)
+			for i := 0; i < len(values); i += 2 {
+				key, ok := values[i].(string)
+				if !ok {
+					return nil, fmt.Errorf("dict keys must be strings")
+				}
+				dict[key] = fmt.Sprint(values[i+1])
 			}
+			return dict, nil
+		},
+		"include": func(path string) template.CSS {
+			content, err := TemplatesFS.ReadFile("templates/" + path)
+			if err != nil {
+				errMsg := "/* Error reading " + path + ": " + err.Error() + " */"
 
-			return template.CSS(errMsg)
-		}
-		return template.CSS(content)
-	},
-	"renderElementShadowRoot": func(elementName string, attrs map[string]string) template.HTML {
-		html, err := renderElementShadowRoot(elementName, attrs)
-		if err != nil {
-			errMsg := "<!-- Error rendering element " + elementName + ": " + err.Error() + " -->"
+				// Broadcast error to connected clients via WebSocket overlay
+				if errorBroadcaster != nil {
+					_ = errorBroadcaster.BroadcastError(
+						"Template Include Error",
+						"Failed to include template file: "+err.Error(),
+						path,
+					)
+				}
 
-			// Broadcast error to connected clients via WebSocket overlay
-			if errorBroadcaster != nil {
-				_ = errorBroadcaster.BroadcastError(
-					"Element Render Error",
-					"Failed to render element: "+err.Error(),
-					elementName,
-				)
+				return template.CSS(errMsg)
 			}
+			return template.CSS(content)
+		},
+		"renderElementShadowRoot": func(elementName string, data interface{}) template.HTML {
+			html, err := RenderElementShadowRoot(elementName, data)
+			if err != nil {
+				errMsg := "<!-- Error rendering element " + elementName + ": " + err.Error() + " -->"
 
-			return template.HTML(errMsg)
-		}
-		return html
-	},
+				// Broadcast error to connected clients via WebSocket overlay
+				if errorBroadcaster != nil {
+					_ = errorBroadcaster.BroadcastError(
+						"Element Render Error",
+						"Failed to render element: "+err.Error(),
+						elementName,
+					)
+				}
+
+				return template.HTML(errMsg)
+			}
+			return html
+		},
+	}
 }
 
 // DefaultIndexTemplate is the parsed template for the default index page
 var DefaultIndexTemplate = template.Must(template.New("default-index").Parse(defaultIndexTemplate))
 
-// DemoChromeTemplate is the parsed template for demo chrome
-var DemoChromeTemplate = template.Must(template.New("demo-chrome").Funcs(templateFuncs).Parse(demoChromeTemplate))
-
 // WorkspaceListingTemplate is the parsed template for workspace package listing
-var WorkspaceListingTemplate = template.Must(template.New("workspace-listing").Funcs(templateFuncs).Parse(workspaceListingTemplate))
+var WorkspaceListingTemplate = template.Must(template.New("workspace-listing").Funcs(getTemplateFuncs()).Parse(workspaceListingTemplate))
 
 // NavigationTemplate is the parsed template for navigation drawer
-var NavigationTemplate = template.Must(template.New("navigation").Funcs(templateFuncs).Parse(navigationTemplate))
+var NavigationTemplate = template.Must(template.New("navigation").Funcs(getTemplateFuncs()).Parse(navigationTemplate))
 
 // NotFoundTemplate is the parsed template for 404 page content
-var NotFoundTemplate = template.Must(template.New("404").Funcs(templateFuncs).Parse(notFoundTemplate))
+var NotFoundTemplate = template.Must(template.New("404").Funcs(getTemplateFuncs()).Parse(notFoundTemplate))
 
 // ElementWrapperTemplate is the parsed template for wrapping custom elements with DSD
 var ElementWrapperTemplate = template.Must(template.New("element-wrapper").Parse(elementWrapperTemplate))
 
 // KnobsTemplate is the parsed template for knobs controls
-var KnobsTemplate = template.Must(template.New("knobs").Funcs(templateFuncs).Parse(knobsTemplate))
+var KnobsTemplate = template.Must(template.New("knobs").Funcs(getTemplateFuncs()).Parse(knobsTemplate))
 
-// KnobsMultiTemplate is the parsed template for multi-instance knobs controls
-var KnobsMultiTemplate = template.Must(template.New("knobs-multi").Funcs(templateFuncs).Parse(knobsMultiTemplate))
+// DemoChromeTemplate is the parsed template for demo chrome wrapper
+var DemoChromeTemplate = template.Must(template.New("demo-chrome").Funcs(getTemplateFuncs()).Parse(demoChromeTemplate))

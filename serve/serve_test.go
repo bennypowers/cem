@@ -20,10 +20,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package serve_test
 
 import (
+	"encoding/json"
+	"fmt"
+	"net"
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
+	"bennypowers.dev/cem/serve"
 	"bennypowers.dev/cem/serve/testutil"
 )
 
@@ -104,19 +109,88 @@ func TestTransformCacheTestDouble(t *testing.T) {
 	}
 }
 
-// TestWebSocketTestClient_PlaceholderForPhase1 is a placeholder test
-// This test will fail until Phase 1 (Core Server with WebSocket) is implemented
-func TestWebSocketTestClient_PlaceholderForPhase1(t *testing.T) {
-	t.Skip("Skipping until Phase 1 implements WebSocket server")
+// TestWebSocketReload verifies WebSocket live reload functionality
+func TestWebSocketReload(t *testing.T) {
+	// Find available port
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("Failed to find available port: %v", err)
+	}
+	port := listener.Addr().(*net.TCPAddr).Port
+	listener.Close()
 
-	// TODO: This test will be implemented in Phase 1
-	// For now, it serves as documentation of what needs to be tested
+	// Create temp dir for watch
+	tmpDir := t.TempDir()
 
-	// Expected test:
-	// 1. Start server with WebSocket endpoint
-	// 2. Connect WebSocket test client
-	// 3. Verify client can receive messages
-	// 4. Verify client can send messages
+	// Configure server
+	config := serve.Config{
+		Port:   port,
+		Reload: true,
+	}
+
+	server, err := serve.NewServerWithConfig(config)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+
+	if err := server.SetWatchDir(tmpDir); err != nil {
+		t.Fatalf("Failed to set watch dir: %v", err)
+	}
+
+	// Start server
+	if err := server.Start(); err != nil {
+		t.Fatalf("Failed to start server: %v", err)
+	}
+	defer server.Close()
+
+	// Wait a bit for server to be fully up
+	// In a real scenario we'd want a more robust readiness check,
+	// but sleep is acceptable for this level of E2E test.
+	time.Sleep(100 * time.Millisecond)
+
+	// Connect WebSocket client
+	wsURL := fmt.Sprintf("ws://127.0.0.1:%d/__cem/reload", port)
+	client := testutil.NewWebSocketTestClient(t, wsURL)
+	defer client.Close()
+
+	// Test BroadcastReload
+	files := []string{"test.js", "style.css"}
+	reason := "file-change"
+	if err := server.BroadcastReload(files, reason); err != nil {
+		t.Fatalf("Failed to broadcast reload: %v", err)
+	}
+
+	// Receive message
+	msgBytes := client.ReceiveMessage(t, time.Second)
+	if msgBytes == nil {
+		t.Fatal("Did not receive expected reload message")
+	}
+
+	// Parse and verify
+	var msg serve.ReloadMessage
+	if err := json.Unmarshal(msgBytes, &msg); err != nil {
+		t.Fatalf("Failed to unmarshal reload message: %v", err)
+	}
+
+	if msg.Type != "reload" {
+		t.Errorf("Expected message type 'reload', got '%s'", msg.Type)
+	}
+	if msg.Reason != reason {
+		t.Errorf("Expected reason '%s', got '%s'", reason, msg.Reason)
+	}
+	if len(msg.Files) != len(files) {
+		t.Errorf("Expected %d files, got %d", len(files), len(msg.Files))
+	} else {
+		// Verify file list content
+		for i, f := range files {
+			if msg.Files[i] != f {
+				t.Errorf("Expected file %d to be '%s', got '%s'", i, f, msg.Files[i])
+			}
+		}
+	}
+
+	// Test ExpectNoMessage (wait and ensure quiet)
+	client.ExpectNoMessage(t, 200*time.Millisecond)
 }
 
 // TestFixturePattern verifies the fixture pattern is established

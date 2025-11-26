@@ -1,0 +1,28 @@
+<div id="main"
+     part="main"
+     class="{{if .Attributes.Icon}}pf-m-icon{{end}}{{if .Attributes.Status}} pf-m-{{.Attributes.Status}}{{end}}">
+  <span id="text" part="text">
+    {{if .Attributes.Icon}}
+    <span id="icon" part="icon">
+      <slot name="icon"></slot>
+    </span>
+    {{end}}
+    {{if .Attributes.Status}}
+    <span id="status-icon" part="status-icon" class="pf-m-status">
+      <slot name="status-icon"></slot>
+    </span>
+    {{end}}
+    <input id="input"
+           part="input"
+           type="{{if .Attributes.Type}}{{.Attributes.Type}}{{else}}text{{end}}"
+           {{if .Attributes.Value}}value="{{.Attributes.Value}}"{{end}}
+           {{if .Attributes.Placeholder}}placeholder="{{.Attributes.Placeholder}}"{{end}}
+           {{if .Attributes.AriaLabel}}aria-label="{{.Attributes.AriaLabel}}"{{end}}
+           {{if .Attributes.Disabled}}disabled{{end}}
+           {{if .Attributes.Readonly}}readonly{{end}}
+           {{if .Attributes.Required}}required{{end}} />
+  </span>
+</div>
+<div id="utilities" part="utilities">
+  <slot name="utilities"></slot>
+</div>

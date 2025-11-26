@@ -47,12 +47,13 @@ type CSSConfig struct {
 
 // Config represents the dev server configuration
 type Config struct {
-	Port       int
-	Reload     bool
-	Target     transform.Target // Transform target (default: ES2022) - deprecated, use Transforms.TypeScript.Target
-	Transforms TransformConfig  // Transform configuration
-	ConfigFile string           // Path to config file (for error reporting)
-	FS         platform.FileSystem // Optional filesystem for testing (defaults to os package)
+	Port        int
+	Reload      bool
+	Target      transform.Target    // Transform target (default: ES2022) - deprecated, use Transforms.TypeScript.Target
+	Transforms  TransformConfig     // Transform configuration
+	ConfigFile  string              // Path to config file (for error reporting)
+	WatchIgnore []string            // Glob patterns to ignore in file watcher (e.g., ["_site/**", "dist/**"])
+	FS          platform.FileSystem // Optional filesystem for testing (defaults to os package)
 }
 
 // ReloadMessage represents a WebSocket reload event
@@ -94,6 +95,7 @@ type FileWatcher interface {
 	Watch(path string) error
 	Events() <-chan FileEvent
 	Close() error
+	SetIgnorePatterns(watchDir string, patterns []string)
 }
 
 // FileEvent represents a file system event

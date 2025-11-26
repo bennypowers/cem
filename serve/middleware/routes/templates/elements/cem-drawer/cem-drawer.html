@@ -1,14 +1,26 @@
-<div id="resize-handle" title="Drag to resize"></div>
-<button id="toggle"
-        aria-label="Toggle drawer">
+<div id="resize-handle"
+     role="separator"
+     aria-orientation="horizontal"
+     aria-label="Resize drawer"
+     tabindex="0"
+     aria-controls="content"
+     aria-valuemin="100"
+     aria-valuemax="1000"
+     aria-valuenow="400"></div>
+<pf-v6-button id="toggle"
+             variant="plain"
+             aria-label="Toggle drawer"
+             aria-expanded="false"
+             aria-controls="content">
   <svg width="16"
        height="16"
        viewBox="0 0 16 16"
-       fill="currentColor">
+       fill="currentColor"
+       role="presentation">
     <path fill-rule="evenodd"
           d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
   </svg>
-</button>
+</pf-v6-button>
 <div id="content">
   <slot></slot>
 </div>

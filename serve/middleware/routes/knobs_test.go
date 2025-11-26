@@ -267,7 +267,8 @@ func TestParseType(t *testing.T) {
 func TestRenderKnobsHTML(t *testing.T) {
 	// Create sample knobs data
 	knobs := &KnobsData{
-		TagName: "my-button",
+		TagName:   "my-button",
+		ElementID: "my-button-0",
 		AttributeKnobs: []KnobData{
 			{
 				Name:         "disabled",
@@ -307,7 +308,19 @@ func TestRenderKnobsHTML(t *testing.T) {
 		},
 	}
 
-	html, err := RenderKnobsHTML(knobs)
+	// Wrap in ElementKnobGroup slice
+	knobGroups := []ElementKnobGroup{
+		{
+			TagName:       "my-button",
+			ElementID:     "my-button-0",
+			Label:         "#my-button-0",
+			InstanceIndex: 0,
+			IsPrimary:     true,
+			Knobs:         knobs,
+		},
+	}
+
+	html, err := RenderKnobsHTML(knobGroups)
 	if err != nil {
 		t.Fatalf("RenderKnobsHTML failed: %v", err)
 	}
@@ -316,12 +329,12 @@ func TestRenderKnobsHTML(t *testing.T) {
 
 	// Verify structure is present
 	if htmlStr == "" {
-		t.Error("Expected non-empty HTML output")
+		t.Fatal("Expected non-empty HTML output - template may have failed to render")
 	}
 
 	// Verify sections are present
 	expectedStrings := []string{
-		"knobs-container",
+		"cem-serve-knobs",
 		"Attributes",
 		"Properties",
 		"CSS Custom Properties",
@@ -670,9 +683,9 @@ func TestRenderMultiInstanceKnobsHTML(t *testing.T) {
 		},
 	}
 
-	html, err := RenderMultiInstanceKnobsHTML(knobGroups)
+	html, err := RenderKnobsHTML(knobGroups)
 	if err != nil {
-		t.Fatalf("RenderMultiInstanceKnobsHTML failed: %v", err)
+		t.Fatalf("RenderKnobsHTML failed: %v", err)
 	}
 
 	htmlStr := string(html)
@@ -682,24 +695,22 @@ func TestRenderMultiInstanceKnobsHTML(t *testing.T) {
 		t.Error("Expected non-empty HTML output")
 	}
 
-	// Verify <details> elements exist (one per group)
-	detailsCount := 0
-	for i := 0; i < len(htmlStr); i++ {
-		if i+8 < len(htmlStr) && htmlStr[i:i+8] == "<details" {
-			detailsCount++
-		}
-	}
-	if detailsCount != 3 {
-		t.Errorf("Expected 3 <details> elements, found %d", detailsCount)
+	// Verify cem-serve-knobs wrapper exists
+	if !contains(htmlStr, "cem-serve-knobs") {
+		t.Error("Expected HTML to contain cem-serve-knobs element")
 	}
 
-	// Verify first group has 'open' attribute (primary)
-	// Look for 'open' attribute in the first details element
-	if !contains(htmlStr, " open>") && !contains(htmlStr, " open ") {
-		t.Error("Expected first <details> to have 'open' attribute")
+	// Count knobs-panel divs (one per instance)
+	if !contains(htmlStr, `class="knobs-panel"`) {
+		t.Error("Expected HTML to contain knobs-panel divs")
 	}
 
-	// Verify labels appear in summaries
+	// Verify all three instances are present
+	if !contains(htmlStr, "instance-0") || !contains(htmlStr, "instance-1") || !contains(htmlStr, "instance-2") {
+		t.Error("Expected HTML to contain all three instance panels (instance-0, instance-1, instance-2)")
+	}
+
+	// Verify labels appear in nav links
 	expectedLabels := []string{"#card-1", "#card-2", "#card-3"}
 	for _, label := range expectedLabels {
 		if !contains(htmlStr, label) {

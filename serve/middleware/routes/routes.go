@@ -170,6 +170,8 @@ func serveInternalModules(w http.ResponseWriter, r *http.Request, config Config)
 		contentType = "application/javascript; charset=utf-8"
 	case strings.HasSuffix(reqPath, ".css"):
 		contentType = "text/css; charset=utf-8"
+	case strings.HasSuffix(reqPath, ".html"):
+		contentType = "text/html; charset=utf-8"
 	case strings.HasSuffix(reqPath, ".svg"):
 		contentType = "image/svg+xml"
 	case strings.HasSuffix(reqPath, ".png"):
@@ -251,12 +253,19 @@ func serveDebugInfo(w http.ResponseWriter, r *http.Request, config Config) {
 					localRoute = parsed.Path
 				}
 
-				demos = append(demos, map[string]interface{}{
+				demoInfo := map[string]interface{}{
 					"tagName":      renderableDemo.CustomElementDeclaration.TagName,
 					"description":  renderableDemo.Demo.Description,
 					"canonicalURL": demoURL,
 					"localRoute":   localRoute,
-				})
+				}
+
+				// Add file path if available
+				if renderableDemo.Demo.Source != nil && renderableDemo.Demo.Source.Href != "" {
+					demoInfo["filePath"] = renderableDemo.Demo.Source.Href
+				}
+
+				demos = append(demos, demoInfo)
 			}
 		}
 	}
@@ -398,6 +407,11 @@ func serveDemoRoute(w http.ResponseWriter, r *http.Request, config Config) bool 
 	var navigationHTML template.HTML
 	var packageName string
 
+	// Get package name from package.json for masthead
+	if pkg, err := config.Context.PackageJSON(); err == nil && pkg != nil && pkg.Name != "" {
+		packageName = pkg.Name
+	}
+
 	if config.Context.IsWorkspace() {
 		// Workspace mode: build navigation from all packages
 		middlewarePackages := config.Context.WorkspacePackages()
@@ -410,17 +424,18 @@ func serveDemoRoute(w http.ResponseWriter, r *http.Request, config Config) bool 
 			}
 		}
 		navigationHTML, _ = BuildWorkspaceNavigation(packages)
-		packageName = "Workspace"
+		// Keep packageName from package.json, don't override with "Workspace"
 	} else {
 		// Single-package mode: build navigation from manifest
 		manifestBytes, err := config.Context.Manifest()
 		if err == nil && len(manifestBytes) > 0 {
-			// Get package name from package.json
-			pkgName := ""
-			if pkg, err := config.Context.PackageJSON(); err == nil && pkg != nil {
-				pkgName = pkg.Name
+			var navErr error
+			navigationHTML, packageName, navErr = BuildSinglePackageNavigation(manifestBytes, packageName)
+			if navErr != nil {
+				config.Context.Logger().Error("Failed to build navigation: %v", navErr)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return true
 			}
-			navigationHTML, packageName = BuildSinglePackageNavigation(manifestBytes, pkgName)
 		}
 	}
 
@@ -506,7 +521,7 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 				)
 			} else if len(allKnobGroups) > 0 {
 				// Render all knob groups
-				knobsHTML, err = RenderMultiInstanceKnobsHTML(allKnobGroups)
+				knobsHTML, err = RenderKnobsHTML(allKnobGroups)
 				if err != nil {
 					config.Context.Logger().Warning("Failed to render knobs HTML: %v", err)
 					_ = config.Context.BroadcastError(
@@ -682,7 +697,13 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 			if pkg, err := config.Context.PackageJSON(); err == nil && pkg != nil {
 				pkgName = pkg.Name
 			}
-			navigationHTML, packageName = BuildSinglePackageNavigation(manifestBytes, pkgName)
+			var navErr error
+			navigationHTML, packageName, navErr = BuildSinglePackageNavigation(manifestBytes, pkgName)
+			if navErr != nil {
+				config.Context.Logger().Error("Failed to build navigation: %v", navErr)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
 		}
 	}
 
@@ -717,3 +738,4 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 		config.Context.Logger().Error("Failed to write 404 response: %v", err)
 	}
 }
+

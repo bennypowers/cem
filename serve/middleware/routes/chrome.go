@@ -21,11 +21,6 @@ import (
 	"bytes"
 	"html/template"
 
-	chromahtml "github.com/alecthomas/chroma/v2/formatters/html"
-	"github.com/yuin/goldmark"
-	"github.com/yuin/goldmark/extension"
-	highlighting "github.com/yuin/goldmark-highlighting/v2"
-	goldmarkhtml "github.com/yuin/goldmark/renderer/html"
 )
 
 // ChromeData represents template data for demo chrome
@@ -38,31 +33,11 @@ type ChromeData struct {
 	ImportMap      template.HTML // Use HTML instead of JS for importmap script content
 	Description    template.HTML
 	ShadowMode     bool
-	DemoSwitcher   template.HTML
 	SourceURL      string        // Source file URL (e.g., GitHub blob URL)
 	CanonicalURL   string        // Canonical demo URL
 	PackageName    string        // Package name for title (listing pages)
 	NavigationHTML template.HTML // Navigation drawer HTML (listing pages)
 }
-
-var (
-	// Markdown renderer with GFM, syntax highlighting, and HTML escaping
-	md = goldmark.New(
-		goldmark.WithExtensions(
-			extension.GFM,
-			highlighting.NewHighlighting(
-				highlighting.WithStyle("github"),
-				highlighting.WithFormatOptions(
-					chromahtml.WithClasses(true),
-				),
-			),
-		),
-		goldmark.WithRendererOptions(
-			goldmarkhtml.WithHardWraps(),
-			goldmarkhtml.WithXHTML(),
-		),
-	)
-)
 
 // renderDemoChrome renders the demo chrome template with given data
 func renderDemoChrome(data ChromeData) (string, error) {

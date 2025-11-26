@@ -6,6 +6,71 @@ export class CemServeDemo extends HTMLElement {
   static { customElements.define(this.is, this); }
 
   /**
+   * Find the Nth instance of an element by tag name
+   */
+  #getElementInstance(tagName, instanceIndex = 0) {
+    const root = this.shadowRoot ?? this;
+    const elements = root.querySelectorAll(tagName);
+    return elements[instanceIndex] || null;
+  }
+
+  /**
+   * Apply a knob change to an element in the demo
+   * Called by parent chrome element when knob events occur
+   * @param {string} type - 'attribute', 'property', or 'css-property'
+   * @param {string} name - Attribute/property/CSS name
+   * @param {*} value - Value to apply
+   * @param {string} tagName - Target element tag name
+   * @param {number} instanceIndex - Which instance of the element (0-based)
+   * @returns {boolean} - Whether the operation succeeded
+   */
+  applyKnobChange(type, name, value, tagName, instanceIndex = 0) {
+    const element = this.#getElementInstance(tagName, instanceIndex);
+    if (!element) {
+      console.warn('[cem-serve-demo] Element not found:', tagName, 'at index', instanceIndex);
+      return false;
+    }
+
+    switch (type) {
+      case 'attribute':
+        return this.#applyAttributeChange(element, name, value);
+      case 'property':
+        return this.#applyPropertyChange(element, name, value);
+      case 'css-property':
+        return this.#applyCSSPropertyChange(element, name, value);
+      default:
+        console.warn('[cem-serve-demo] Unknown knob type:', type);
+        return false;
+    }
+  }
+
+  #applyAttributeChange(element, name, value) {
+    if (typeof value === 'boolean') {
+      element.toggleAttribute(name, value);
+    } else if (value === '' || value === null || value === undefined) {
+      element.removeAttribute(name);
+    } else {
+      element.setAttribute(name, value);
+    }
+    return true;
+  }
+
+  #applyPropertyChange(element, name, value) {
+    element[name] = value;
+    return true;
+  }
+
+  #applyCSSPropertyChange(element, name, value) {
+    const propertyName = name.startsWith('--') ? name : `--${name}`;
+    if (value === '' || value === null || value === undefined) {
+      element.style.removeProperty(propertyName);
+    } else {
+      element.style.setProperty(propertyName, value);
+    }
+    return true;
+  }
+
+  /**
    * Set an attribute on an element in the demo
    * @param {string} selector - CSS selector for target element
    * @param {string} attribute - Attribute name

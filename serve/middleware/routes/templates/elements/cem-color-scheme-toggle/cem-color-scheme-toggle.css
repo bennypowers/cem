@@ -5,10 +5,10 @@
 #toggle-group {
   display: flex;
   gap: 2px;
-  background: var(--cem-dev-server-bg-tertiary);
-  border-radius: var(--cem-dev-server-border-radius);
+  background: var(--pf-t--global--background--color--secondary--hover);
+  border-radius: 6px;
   padding: 2px;
-  border: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
+  border: 1px solid var(--pf-t--global--border--color--default);
 }
 
 .toggle-option {
@@ -30,23 +30,23 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: calc(var(--cem-dev-server-border-radius) - 2px);
-  color: var(--cem-dev-server-text-secondary);
-  transition: background-color 0.2s, color 0.2s;
+  border-radius: 4px;
+  color: var(--pf-t--global--icon--color--subtle);
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
-    background: var(--cem-dev-server-bg-primary);
-    color: var(--cem-dev-server-text-primary);
+    background: var(--pf-t--global--background--color--primary--default);
+    color: var(--pf-t--global--text--color--regular);
   }
 }
 
 .toggle-option input[type="radio"]:checked + .toggle-label {
-  background: var(--cem-dev-server-accent-color);
-  color: white;
+  background: var(--pf-t--global--color--brand--default);
+  color: var(--pf-t--global--text--color--on-brand);
 }
 
 .toggle-option input[type="radio"]:focus-visible + .toggle-label {
-  outline: 2px solid var(--cem-dev-server-accent-color);
+  outline: 2px solid var(--pf-t--global--color--brand--default);
   outline-offset: 2px;
 }
 

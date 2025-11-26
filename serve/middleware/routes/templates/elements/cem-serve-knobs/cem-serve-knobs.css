@@ -1,0 +1,30 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  height: 100%;
+}
+
+pf-v6-navigation {
+  flex-shrink: 0;
+}
+
+#knobs {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--pf-t--global--spacer--lg);
+}
+
+#knobs slot {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: var(--pf-t--global--spacer--gap--group-to-group--horizontal--default) var(--pf-t--global--spacer--gap--group-to-group--vertical--default);
+  align-items: start;
+}
+
+::slotted(pf-v6-card.active) {
+  --pf-v6-c-card--BorderColor: var(--pf-v6-c-card--m-selectable--m-selected--BorderColor);
+  --pf-v6-c-card--BorderWidth: var(--pf-v6-c-card--m-selectable--m-selected--BorderWidth);
+}
+

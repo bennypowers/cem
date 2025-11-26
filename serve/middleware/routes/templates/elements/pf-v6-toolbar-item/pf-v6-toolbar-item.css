@@ -1,0 +1,36 @@
+/* PatternFly v6 Toolbar Item Styles */
+
+:host {
+  --pf-v6-hidden-visible--visible--Display: flex;
+  --pf-v6-hidden-visible--hidden--Display: none;
+  --pf-v6-hidden-visible--Display: var(--pf-v6-hidden-visible--visible--Display);
+
+  display: var(--pf-v6-hidden-visible--Display);
+  row-gap: var(--pf-v6-c-toolbar__item--RowGap);
+  column-gap: var(--pf-v6-c-toolbar__item--ColumnGap);
+  width: var(--pf-v6-c-toolbar__item--Width);
+  min-width: var(--pf-v6-c-toolbar__item--MinWidth);
+  align-items: baseline;
+}
+
+/* Label variant */
+:host([variant="label"]) {
+  font-weight: var(--pf-v6-c-toolbar__item--m-label--FontWeight);
+}
+
+/* Pagination variant */
+:host([variant="pagination"]) {
+  margin-inline-start: auto;
+}
+
+/* Overflow container variant */
+:host([variant="overflow-container"]) {
+  flex: 1;
+  min-width: var(--pf-v6-c-toolbar__item--m-overflow-container--MinWidth);
+  overflow: auto;
+}
+
+/* Expand all variant (for expand icons) */
+:host([variant="expand-all"][expanded]) ::slotted(.pf-v6-c-toolbar__expand-all-icon) {
+  transform: rotate(var(--pf-v6-c-toolbar__item--m-expand-all--m-expanded__expand-all-icon--Rotate));
+}

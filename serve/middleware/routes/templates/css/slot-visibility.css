@@ -1,0 +1,19 @@
+/* Slot visibility styles
+ * Aggregates all *-slots.css files for elements with conditional slot visibility
+ * These rules set custom properties that shadow DOM reads to hide empty slot containers
+ */
+
+/* pf-v6-card */
+@import url('/__cem/elements/pf-v6-card/pf-v6-card-slots.css');
+
+/* pf-v6-button */
+@import url('/__cem/elements/pf-v6-button/pf-v6-button-slots.css');
+
+/* pf-v6-toggle-group-item */
+@import url('/__cem/elements/pf-v6-toggle-group-item/pf-v6-toggle-group-item-slots.css');
+
+/* Additional elements will be added as they are migrated:
+ * @import url('/__cem/elements/pf-v6-modal/pf-v6-modal-slots.css');
+ * @import url('/__cem/elements/pf-v6-label/pf-v6-label-slots.css');
+ * etc.
+ */

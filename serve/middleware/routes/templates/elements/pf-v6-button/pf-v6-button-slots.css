@@ -1,0 +1,13 @@
+/* pf-v6-button slot visibility rules
+ * Sets custom properties that shadow DOM reads to conditionally hide slot containers
+ */
+
+/* Hide icon-start slot when no content */
+pf-v6-button:not(:has([slot="icon-start"])) {
+  --_has-icon-start: none;
+}
+
+/* Hide icon-end slot when no content */
+pf-v6-button:not(:has([slot="icon-end"])) {
+  --_has-icon-end: none;
+}
