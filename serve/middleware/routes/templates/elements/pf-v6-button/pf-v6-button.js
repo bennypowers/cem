@@ -225,13 +225,6 @@ class PfV6Button extends CemElement {
     }
     // For button variant: ARIA attrs stay on host, no syncing needed
     // since we set role='button' on host via ElementInternals
-
-    // aria-controls always goes on host (cross-root reference)
-    if (this.hasAttribute('aria-controls')) {
-      this.#internals.ariaControls = this.getAttribute('aria-controls');
-    } else {
-      this.#internals.ariaControls = null;
-    }
   }
 
   disconnectedCallback() {
