@@ -11,20 +11,9 @@ export class CemServeDemo extends HTMLElement {
     const chrome = this.closest('cem-serve-chrome');
     if (!chrome) return;
 
-    chrome.addEventListener('knob:attribute-change', (e) => {
-      const { tagName, instanceIndex } = this.#getKnobTarget(e);
-      this.#handleAttributeChange(e.name, e.value, tagName, instanceIndex);
-    });
-
-    chrome.addEventListener('knob:property-change', (e) => {
-      const { tagName, instanceIndex } = this.#getKnobTarget(e);
-      this.#handlePropertyChange(e.name, e.value, tagName, instanceIndex);
-    });
-
-    chrome.addEventListener('knob:css-property-change', (e) => {
-      const { tagName, instanceIndex } = this.#getKnobTarget(e);
-      this.#handleCSSPropertyChange(e.name, e.value, tagName, instanceIndex);
-    });
+    chrome.addEventListener('knob:attribute-change', this.#handleAttributeChange);
+    chrome.addEventListener('knob:property-change', this.#handlePropertyChange);
+    chrome.addEventListener('knob:css-property-change', this.#handleCSSPropertyChange);
   }
 
   /**
@@ -61,50 +50,52 @@ export class CemServeDemo extends HTMLElement {
     return elements[instanceIndex] || null;
   }
 
-  #handleAttributeChange(name, value, tagName, instanceIndex = 0) {
+  #handleAttributeChange = (e) => {
+    const { tagName, instanceIndex } = this.#getKnobTarget(e);
     const element = this.#getElementInstance(tagName, instanceIndex);
     if (!element) {
       console.warn('[cem-serve-demo] Element not found:', tagName, 'at index', instanceIndex);
       return;
     }
 
+    const { name, value } = e;
     if (typeof value === 'boolean') {
-      if (value) {
-        element.setAttribute(name, '');
-      } else {
-        element.removeAttribute(name);
-      }
+      element.toggleAttribute(name, value);
     } else if (value === '' || value === null || value === undefined) {
       element.removeAttribute(name);
     } else {
       element.setAttribute(name, value);
     }
-  }
+  };
 
-  #handlePropertyChange(name, value, tagName, instanceIndex = 0) {
+  #handlePropertyChange = (e) => {
+    const { tagName, instanceIndex } = this.#getKnobTarget(e);
     const element = this.#getElementInstance(tagName, instanceIndex);
     if (!element) {
       console.warn('[cem-serve-demo] Element not found:', tagName, 'at index', instanceIndex);
       return;
     }
 
+    const { name, value } = e;
     element[name] = value;
-  }
+  };
 
-  #handleCSSPropertyChange(name, value, tagName, instanceIndex = 0) {
+  #handleCSSPropertyChange = (e) => {
+    const { tagName, instanceIndex } = this.#getKnobTarget(e);
     const element = this.#getElementInstance(tagName, instanceIndex);
     if (!element) {
       console.warn('[cem-serve-demo] Element not found:', tagName, 'at index', instanceIndex);
       return;
     }
 
+    const { name, value } = e;
     const propertyName = name.startsWith('--') ? name : `--${name}`;
     if (value === '' || value === null || value === undefined) {
       element.style.removeProperty(propertyName);
     } else {
       element.style.setProperty(propertyName, value);
     }
-  }
+  };
 
   /**
    * Set an attribute on an element in the demo
