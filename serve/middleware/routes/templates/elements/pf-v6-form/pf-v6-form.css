@@ -2,7 +2,11 @@
   display: block;
 }
 
-:host([horizontal]) {
+#form {
+  display: block;
+}
+
+:host([horizontal]) #form {
   --_form-column-gap: var(--pf-t--global--spacer--md);
   display: grid;
   grid-template-columns: minmax(0, auto) 1fr;
