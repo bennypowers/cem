@@ -49,6 +49,9 @@ export class PfPopoverHideEvent extends Event {
 class PfV6Popover extends CemElement {
   static is = 'pf-v6-popover';
 
+  // Cache feature detection for CSS Anchor Positioning
+  static #supportsAnchorPositioning = CSS.supports?.('anchor-name: --test') ?? false;
+
   static get observedAttributes() {
     return [
       'open',
@@ -176,11 +179,10 @@ class PfV6Popover extends CemElement {
   // Private methods
   async #showPopover() {
     try {
-      console.log('[popover] Showing popover');
       this.#popoverSlot?.showPopover();
 
       // Manually position the popover since the polyfill doesn't handle dynamic elements well
-      if (!CSS.supports?.('anchor-name', '--test')) {
+      if (!PfV6Popover.#supportsAnchorPositioning) {
         // Small delay to let the popover layout
         await new Promise(resolve => requestAnimationFrame(resolve));
 
