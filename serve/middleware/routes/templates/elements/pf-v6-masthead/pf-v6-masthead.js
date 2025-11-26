@@ -26,6 +26,8 @@ class PfV6Masthead extends CemElement {
   static is = 'pf-v6-masthead';
 
   #internals = this.attachInternals();
+  #toggleButton;
+  #toggleListener;
 
   constructor() {
     super();
@@ -33,6 +35,7 @@ class PfV6Masthead extends CemElement {
   }
 
   async afterTemplateLoaded() {
+    this.#toggleButton = this.shadowRoot?.querySelector('#toggle-button');
     this.#attachEventListeners();
     this.#updateToggleButton();
   }
@@ -44,21 +47,30 @@ class PfV6Masthead extends CemElement {
   }
 
   #attachEventListeners() {
-    const toggleButton = this.shadowRoot?.querySelector('#toggle-button');
-    if (!toggleButton) return;
+    if (!this.#toggleButton) return;
 
-    toggleButton.addEventListener('click', () => {
+    this.#toggleListener = () => {
       const isExpanded = this.hasAttribute('sidebar-expanded');
       this.dispatchEvent(new SidebarToggleEvent(!isExpanded));
-    });
+    };
+
+    this.#toggleButton.addEventListener('click', this.#toggleListener);
   }
 
   #updateToggleButton() {
-    const toggleButton = this.shadowRoot?.querySelector('#toggle-button');
-    if (!toggleButton) return;
+    if (!this.#toggleButton) return;
 
     const isExpanded = this.hasAttribute('sidebar-expanded');
-    toggleButton.setAttribute('aria-expanded', String(isExpanded));
+    this.#toggleButton.setAttribute('aria-expanded', String(isExpanded));
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback?.();
+
+    if (this.#toggleListener && this.#toggleButton) {
+      this.#toggleButton.removeEventListener('click', this.#toggleListener);
+      this.#toggleListener = null;
+    }
   }
 
   get sidebarExpanded() {
