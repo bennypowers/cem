@@ -20,7 +20,7 @@
 <a id="link"
    part="link"
    href="{{.Attributes.Href}}"
-   {{if .Attributes.AriaLabel}}aria-label="{{.Attributes.AriaLabel}}"{{end}}
+   {{if .Attributes.Label}}aria-label="{{.Attributes.Label}}"{{end}}
    {{if .Attributes.Current}}aria-current="page"{{end}}>
   {{template "link-content"}}
 </a>
@@ -28,8 +28,8 @@
 <button id="link"
         part="link"
         type="button"
-        {{if .Attributes.AriaLabel}}aria-label="{{.Attributes.AriaLabel}}"{{end}}
-        {{if .Attributes.Expandable}}aria-expanded="{{if .Attributes.AriaExpanded}}{{.Attributes.AriaExpanded}}{{else}}false{{end}}"{{end}}>
+        {{if .Attributes.Label}}aria-label="{{.Attributes.Label}}"{{end}}
+        {{if .Attributes.Expandable}}aria-expanded="{{if .Attributes.Expanded}}true{{else}}false{{end}}"{{end}}>
   {{template "link-content"}}
 </button>
 {{end}}

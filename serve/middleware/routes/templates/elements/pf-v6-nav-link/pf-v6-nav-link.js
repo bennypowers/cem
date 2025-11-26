@@ -14,10 +14,10 @@ export class PfNavToggleEvent extends Event {
  * PatternFly v6 Navigation Link
  *
  * @attr {string} href - Link URL
+ * @attr {string} label - Accessible label for the link
  * @attr {boolean} current - Whether this link is current/active
  * @attr {boolean} expandable - Whether this link toggles a nav-group
- * @attr {string} aria-expanded - Expanded state for expandable links
- * @attr {string} aria-label - Accessible label
+ * @attr {boolean} expanded - Whether the expandable group is expanded (for expandable links)
  *
  * @slot - Default slot for link text
  * @slot icon-start - Icon before text
@@ -28,20 +28,32 @@ export class PfNavToggleEvent extends Event {
  * @customElement pf-v6-nav-link
  */
 class PfV6NavLink extends CemElement {
-  static observedAttributes = ['href', 'current', 'expandable', 'aria-expanded', 'aria-label'];
   static is = 'pf-v6-nav-link';
 
-  #internals = this.attachInternals();
+  static observedAttributes = [
+    'href',
+    'label',
+    'current',
+    'expandable',
+    'expanded',
+  ];
+
+  get current() { return this.hasAttribute('current'); }
+  set current(value) { this.toggleAttribute('current', !!value); }
+
   #link;
 
-  async afterTemplateLoaded() {
+  afterTemplateLoaded() {
     this.#link = this.shadowRoot.querySelector('#link');
     this.#syncAttributes();
     this.#attachEventListeners();
     this.#markCurrentIfMatches();
   }
 
-  attributeChangedCallback() {
+  attributeChangedCallback(name, oldValue, newValue) {
+    // Skip if value hasn't actually changed
+    if (oldValue === newValue) return;
+
     this.#syncAttributes();
   }
 
@@ -60,16 +72,16 @@ class PfV6NavLink extends CemElement {
       }
     }
 
-    // Handle aria-label changes at runtime
-    if (this.hasAttribute('aria-label')) {
-      this.#link.setAttribute('aria-label', this.getAttribute('aria-label'));
+    // Handle label -> aria-label
+    if (this.hasAttribute('label')) {
+      this.#link.setAttribute('aria-label', this.getAttribute('label'));
     } else {
       this.#link.removeAttribute('aria-label');
     }
 
-    // Handle aria-expanded for expandable buttons
+    // Handle expanded -> aria-expanded for expandable buttons
     if (this.hasAttribute('expandable') && this.#link.tagName === 'BUTTON') {
-      const expanded = this.getAttribute('aria-expanded') === 'true';
+      const expanded = this.hasAttribute('expanded');
       this.#link.setAttribute('aria-expanded', String(expanded));
     }
 
@@ -87,7 +99,7 @@ class PfV6NavLink extends CemElement {
     this.#link.addEventListener('click', (e) => {
       if (this.hasAttribute('expandable')) {
         e.preventDefault();
-        const currentExpanded = this.getAttribute('aria-expanded') === 'true';
+        const currentExpanded = this.hasAttribute('expanded');
         this.dispatchEvent(new PfNavToggleEvent(!currentExpanded));
       }
     });
@@ -103,16 +115,7 @@ class PfV6NavLink extends CemElement {
     }
   }
 
-  get current() {
-    return this.hasAttribute('current');
-  }
-
-  set current(value) {
-    this.toggleAttribute('current', !!value);
-  }
-
   static {
     customElements.define(this.is, this);
   }
 }
-

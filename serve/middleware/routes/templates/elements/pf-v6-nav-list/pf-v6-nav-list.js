@@ -9,8 +9,11 @@ import { CemElement } from '/__cem/cem-element.js';
 class PfV6NavList extends CemElement {
   static is = 'pf-v6-nav-list';
 
-  async afterTemplateLoaded() {
-    this.setAttribute('role', 'list');
+  #internals = this.attachInternals();
+
+  constructor() {
+    super();
+    this.#internals.role = 'list';
   }
 
   static {

@@ -14,10 +14,15 @@ class PfV6NavGroup extends CemElement {
   static is = 'pf-v6-nav-group';
 
   #subnav;
+  #internals = this.attachInternals();
 
-  async afterTemplateLoaded() {
+  constructor() {
+    super();
+    this.#internals.role = 'region';
+  }
+
+  afterTemplateLoaded() {
     this.#subnav = this.shadowRoot.querySelector('#subnav');
-    this.setAttribute('role', 'region');
     this.#syncAttributes();
   }
 
@@ -44,4 +49,3 @@ class PfV6NavGroup extends CemElement {
     customElements.define(this.is, this);
   }
 }
-

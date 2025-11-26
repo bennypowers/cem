@@ -3,27 +3,29 @@ import { CemElement } from '/__cem/cem-element.js';
 /**
  * PatternFly v6 Navigation Item
  *
+ * Container for navigation links with optional expandable groups.
+ * The child pf-v6-nav-link handles the current state independently.
+ *
  * @attr {boolean} expanded - Whether nested group is expanded
- * @attr {boolean} current - Whether this item is current
  *
  * @slot - Default slot for nav-link and optional nav-group
  * @customElement pf-v6-nav-item
  */
 class PfV6NavItem extends CemElement {
-  static observedAttributes = ['expanded', 'current'];
+  static observedAttributes = ['expanded'];
   static is = 'pf-v6-nav-item';
 
-  async afterTemplateLoaded() {
+  get expanded() { return this.hasAttribute('expanded'); }
+  set expanded(value) { this.toggleAttribute('expanded', !!value); }
+
+  afterTemplateLoaded() {
     this.setAttribute('role', 'listitem');
-
-    // Listen for toggle events from child nav-link with expandable group
     this.addEventListener('pf-nav-toggle', this.#handleToggle);
-
-    // Initialize state on connection
     this.#updateExpandedState();
   }
 
   disconnectedCallback() {
+    super.disconnectedCallback?.();
     this.removeEventListener('pf-nav-toggle', this.#handleToggle);
   }
 
@@ -38,42 +40,20 @@ class PfV6NavItem extends CemElement {
     this.expanded = !this.expanded;
   };
 
-  get expanded() {
-    return this.hasAttribute('expanded');
-  }
-
-  set expanded(value) {
-    const isExpanded = Boolean(value);
-    if (isExpanded) {
-      this.setAttribute('expanded', '');
-    } else {
-      this.removeAttribute('expanded');
-    }
-  }
-
   #updateExpandedState() {
     const isExpanded = this.hasAttribute('expanded');
 
     // Update child nav-group
-    const navGroup = this.querySelector('pf-v6-nav-group');
-    if (navGroup) {
-      if (isExpanded) {
-        navGroup.removeAttribute('hidden');
-      } else {
-        navGroup.setAttribute('hidden', '');
-      }
-    }
+    this.querySelector('pf-v6-nav-group')
+      ?.toggleAttribute('hidden', isExpanded);
 
-    // Update child nav-link aria-expanded
-    // (CSS will handle toggle icon rotation via [aria-expanded] selector)
-    const navLink = this.querySelector('pf-v6-nav-link[expandable]');
-    if (navLink) {
-      navLink.setAttribute('aria-expanded', String(isExpanded));
-    }
+    // Update child nav-link expanded state
+    // The nav-link will forward this to aria-expanded on its internal element
+    this.querySelector('pf-v6-nav-link[expandable]')
+      ?.toggleAttribute('expanded', isExpanded);
   }
 
   static {
     customElements.define(this.is, this);
   }
 }
-

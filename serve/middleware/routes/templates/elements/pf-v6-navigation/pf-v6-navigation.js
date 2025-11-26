@@ -20,6 +20,10 @@ class PfV6Navigation extends CemElement {
   #scrollBackButton;
   #scrollForwardButton;
   #resizeObserver;
+  #scrollListener;
+  #scrollBackListener;
+  #scrollForwardListener;
+  #slotchangeListener;
 
   get variant() {
     return this.getAttribute('variant') ?? '';
@@ -55,8 +59,17 @@ class PfV6Navigation extends CemElement {
     this.#observeNavList();
   }
 
-  attributeChangedCallback() {
+  attributeChangedCallback(name, oldValue, newValue) {
     this.#syncAttributes();
+
+    // Re-setup scroll observer when horizontal attribute changes
+    if (name === 'horizontal' && oldValue !== newValue) {
+      if (newValue !== null && this.#navList) {
+        this.#setupScrollObserver();
+      } else {
+        this.#teardownScrollObserver();
+      }
+    }
   }
 
   #syncAttributes() {
@@ -72,7 +85,7 @@ class PfV6Navigation extends CemElement {
     const slot = this.#nav?.querySelector('slot');
     if (!slot) return;
 
-    const initNavList = () => {
+    this.#slotchangeListener = () => {
       const elements = slot.assignedElements();
       this.#navList = elements.find(el => el.tagName === 'PF-V6-NAV-LIST');
       if (this.#navList && this.horizontal) {
@@ -80,26 +93,36 @@ class PfV6Navigation extends CemElement {
       }
     };
 
-    slot.addEventListener('slotchange', initNavList);
+    slot.addEventListener('slotchange', this.#slotchangeListener);
 
     // Also check immediately in case elements are already slotted
-    initNavList();
+    this.#slotchangeListener();
   }
 
   #setupScrollButtons() {
     if (!this.#scrollBackButton || !this.#scrollForwardButton) return;
 
-    this.#scrollBackButton.addEventListener('click', () => this.#scrollBack());
-    this.#scrollForwardButton.addEventListener('click', () => this.#scrollForward());
+    // Guard against duplicate listeners
+    if (this.#scrollBackListener) return;
+
+    this.#scrollBackListener = () => this.#scrollBack();
+    this.#scrollForwardListener = () => this.#scrollForward();
+
+    this.#scrollBackButton.addEventListener('click', this.#scrollBackListener);
+    this.#scrollForwardButton.addEventListener('click', this.#scrollForwardListener);
   }
 
   #setupScrollObserver() {
     if (!this.#navList) return;
 
+    // Guard against duplicate initialization
+    if (this.#resizeObserver) return;
+
+    // Store scroll listener reference
+    this.#scrollListener = () => this.#handleScrollButtons();
+
     // Update button states on scroll
-    this.#nav.addEventListener('scroll', () => {
-      this.#handleScrollButtons();
-    });
+    this.#nav.addEventListener('scroll', this.#scrollListener);
 
     // Use single ResizeObserver for all size changes
     // Container queries can't detect overflow state, so we need ResizeObserver
@@ -155,9 +178,44 @@ class PfV6Navigation extends CemElement {
     this.#nav.scrollBy({ left: 200, behavior: 'smooth' });
   }
 
-  disconnectedCallback() {
+  #teardownScrollObserver() {
+    // Clean up scroll listener
+    if (this.#scrollListener && this.#nav) {
+      this.#nav.removeEventListener('scroll', this.#scrollListener);
+      this.#scrollListener = null;
+    }
+
+    // Clean up ResizeObserver
     if (this.#resizeObserver) {
       this.#resizeObserver.disconnect();
+      this.#resizeObserver = null;
+    }
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback?.();
+
+    // Clean up scroll observer
+    this.#teardownScrollObserver();
+
+    // Clean up button listeners
+    if (this.#scrollBackListener && this.#scrollBackButton) {
+      this.#scrollBackButton.removeEventListener('click', this.#scrollBackListener);
+      this.#scrollBackListener = null;
+    }
+
+    if (this.#scrollForwardListener && this.#scrollForwardButton) {
+      this.#scrollForwardButton.removeEventListener('click', this.#scrollForwardListener);
+      this.#scrollForwardListener = null;
+    }
+
+    // Clean up slotchange listener
+    if (this.#slotchangeListener && this.#nav) {
+      const slot = this.#nav.querySelector('slot');
+      if (slot) {
+        slot.removeEventListener('slotchange', this.#slotchangeListener);
+        this.#slotchangeListener = null;
+      }
     }
   }
 
