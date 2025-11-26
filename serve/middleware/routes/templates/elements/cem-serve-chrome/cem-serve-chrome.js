@@ -243,27 +243,27 @@ export class CemServeChrome extends CemElement {
         <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
           <div class="pf-v6-c-description-list__group">
             <dt class="pf-v6-c-description-list__term">Tag Name</dt>
-            <dd class="pf-v6-c-description-list__description">${currentDemo.tagName}</dd>
+            <dd class="pf-v6-c-description-list__description">${this.#escapeHtml(currentDemo.tagName)}</dd>
           </div>
           ${currentDemo.description ? `
           <div class="pf-v6-c-description-list__group">
             <dt class="pf-v6-c-description-list__term">Description</dt>
-            <dd class="pf-v6-c-description-list__description">${currentDemo.description}</dd>
+            <dd class="pf-v6-c-description-list__description">${this.#escapeHtml(currentDemo.description)}</dd>
           </div>
           ` : ''}
           ${currentDemo.filepath ? `
           <div class="pf-v6-c-description-list__group">
             <dt class="pf-v6-c-description-list__term">File Path</dt>
-            <dd class="pf-v6-c-description-list__description">${currentDemo.filepath}</dd>
+            <dd class="pf-v6-c-description-list__description">${this.#escapeHtml(currentDemo.filepath)}</dd>
           </div>
           ` : ''}
           <div class="pf-v6-c-description-list__group">
             <dt class="pf-v6-c-description-list__term">Canonical URL</dt>
-            <dd class="pf-v6-c-description-list__description">${currentDemo.canonicalURL}</dd>
+            <dd class="pf-v6-c-description-list__description">${this.#escapeHtml(currentDemo.canonicalURL)}</dd>
           </div>
           <div class="pf-v6-c-description-list__group">
             <dt class="pf-v6-c-description-list__term">Local Route</dt>
-            <dd class="pf-v6-c-description-list__description">${currentDemo.localRoute}</dd>
+            <dd class="pf-v6-c-description-list__description">${this.#escapeHtml(currentDemo.localRoute)}</dd>
           </div>
         </dl>
       `;
@@ -271,12 +271,12 @@ export class CemServeChrome extends CemElement {
       // On index page - show all demos in details with description list
       const demoGroups = demos.map(demo => `
         <div class="pf-v6-c-description-list__group">
-          <dt class="pf-v6-c-description-list__term">${demo.tagName}</dt>
+          <dt class="pf-v6-c-description-list__term">${this.#escapeHtml(demo.tagName)}</dt>
           <dd class="pf-v6-c-description-list__description">
-            ${demo.description || '(no description)'}<br>
-            ${demo.filepath ? `<small>File: ${demo.filepath}</small><br>` : ''}
-            <small>Canonical: ${demo.canonicalURL}</small><br>
-            <small>Local: ${demo.localRoute}</small>
+            ${demo.description ? this.#escapeHtml(demo.description) : '(no description)'}<br>
+            ${demo.filepath ? `<small>File: ${this.#escapeHtml(demo.filepath)}</small><br>` : ''}
+            <small>Canonical: ${this.#escapeHtml(demo.canonicalURL)}</small><br>
+            <small>Local: ${this.#escapeHtml(demo.localRoute)}</small>
           </dd>
         </div>
       `).join('');
