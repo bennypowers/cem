@@ -4,27 +4,54 @@ import { CemElement } from '/__cem/cem-element.js';
  * @customElement pf-v6-select
  */
 class PfV6Select extends CemElement {
-  static formAssociated = true;
-  static observedAttributes = ['value', 'disabled', 'invalid'];
   static is = 'pf-v6-select';
+  static formAssociated = true;
+  static observedAttributes = [
+    'value',
+    'disabled',
+    'invalid',
+  ];
 
   #select;
-  #internals;
+  #internals = this.attachInternals();
   #observer = new MutationObserver(() => this.#cloneOptions());
 
-  constructor() {
-    super();
-    // Attach ElementInternals for form association
-    this.#internals = this.attachInternals();
+  get disabled() { return this.hasAttribute('disabled'); }
+  set disabled(b) { this.toggleAttribute('disabled', !!b); }
+
+  get invalid() { return this.hasAttribute('invalid'); }
+  set invalid(b) { this.toggleAttribute('invalid', !!b); }
+
+  get value() { return this.#select?.value ?? ''; }
+  set value(v) {
+    this.#select.value = v ?? '';
+    this.#internals.setFormValue(v);
   }
 
   async afterTemplateLoaded() {
     this.#select = this.shadowRoot.getElementById('select');
     if (!this.#select) return;
 
-    // Note: Initial state (disabled, invalid) is rendered server-side via template
     // Clone options from light DOM into shadow select
     this.#cloneOptions();
+
+    // Sync initial attributes from host to internal select
+    // (attributeChangedCallback may have run before this.#select was set)
+    const initialValue = this.getAttribute('value');
+    if (initialValue) {
+      this.#select.value = initialValue;
+    }
+
+    if (this.disabled) {
+      this.#select.disabled = true;
+    }
+
+    if (this.invalid) {
+      this.#select.setAttribute('aria-invalid', 'true');
+    }
+
+    // Set initial form value
+    this.#internals.setFormValue(this.#select.value || null);
 
     // Watch for changes to light DOM options
     this.#observer.observe(this, {
@@ -74,10 +101,8 @@ class PfV6Select extends CemElement {
       this.#select.appendChild(option.cloneNode(true));
     });
 
-    // Restore value if it exists in new options
-    if (currentValue) {
-      this.#select.value = currentValue;
-    }
+    // Restore previous value (including empty string for placeholder options)
+    this.#select.value = currentValue;
   }
 
   #syncAttributes() {
@@ -99,28 +124,6 @@ class PfV6Select extends CemElement {
       this.#select.removeAttribute('aria-invalid');
     }
   }
-
-  // Public API
-  get value() {
-    return this.getAttribute('value') || '';
-  }
-
-  set value(val) {
-    this.setAttribute('value', val);
-  }
-
-  get disabled() {
-    return this.hasAttribute('disabled');
-  }
-
-  set disabled(value) {
-    if (value) {
-      this.setAttribute('disabled', '');
-    } else {
-      this.removeAttribute('disabled');
-    }
-  }
-
 
   focus() {
     this.#select?.focus();
