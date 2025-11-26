@@ -152,6 +152,9 @@ export class CemServeChrome extends CemElement {
     // Listen for server log messages from WebSocket
     this.#setupLogListener();
 
+    // Set up knob event coordination
+    this.#setupKnobCoordination();
+
     // Set up reconnection modal button handlers
     this.#$('#reload-button')?.addEventListener('click', () => {
       window.location.reload();
@@ -593,6 +596,96 @@ Generated: ${new Date().toISOString()}`;
         body.style.colorScheme = 'light dark';
         break;
     }
+  }
+
+  #setupKnobCoordination() {
+    // Listen for knob events from cem-serve-knob-group elements
+    this.addEventListener('knob:attribute-change', this.#handleKnobChange);
+    this.addEventListener('knob:property-change', this.#handleKnobChange);
+    this.addEventListener('knob:css-property-change', this.#handleKnobChange);
+  }
+
+  #handleKnobChange = (event) => {
+    // Extract targeting info from event path
+    const target = this.#getKnobTarget(event);
+    if (!target) {
+      console.warn('[cem-serve-chrome] Could not find knob target info in event path');
+      return;
+    }
+
+    const { tagName, instanceIndex } = target;
+
+    // Find the demo element
+    const demo = this.demo;
+    if (!demo) {
+      console.warn('[cem-serve-chrome] No demo element found');
+      return;
+    }
+
+    // Determine knob type from event type
+    const knobType = this.#getKnobTypeFromEvent(event);
+
+    // Delegate to demo
+    const success = demo.applyKnobChange(
+      knobType,
+      event.name,
+      event.value,
+      tagName,
+      instanceIndex
+    );
+
+    if (!success) {
+      console.warn('[cem-serve-chrome] Failed to apply knob change:', {
+        type: knobType,
+        name: event.name,
+        tagName,
+        instanceIndex
+      });
+    }
+  };
+
+  /**
+   * Extract target element info from knob event by traversing composed path
+   * to find the pf-v6-card with data-tag-name and data-instance-index
+   */
+  #getKnobTarget(event) {
+    const defaultTagName = this.getAttribute('tag-name') || '';
+
+    if (event.composedPath) {
+      for (const element of event.composedPath()) {
+        if (!(element instanceof Element)) continue;
+
+        // Look for element with data-is-element-knob marker
+        if (element.dataset?.isElementKnob === 'true') {
+          const tagName = element.dataset.tagName || defaultTagName;
+          let instanceIndex = Number.parseInt(element.dataset.instanceIndex ?? '', 10);
+          if (Number.isNaN(instanceIndex)) instanceIndex = 0;
+          return { tagName, instanceIndex };
+        }
+      }
+    }
+
+    return { tagName: defaultTagName, instanceIndex: 0 };
+  }
+
+  #getKnobTypeFromEvent(event) {
+    switch (event.type) {
+      case 'knob:attribute-change':
+        return 'attribute';
+      case 'knob:property-change':
+        return 'property';
+      case 'knob:css-property-change':
+        return 'css-property';
+      default:
+        return 'unknown';
+    }
+  }
+
+  disconnectedCallback() {
+    // Clean up knob listeners
+    this.removeEventListener('knob:attribute-change', this.#handleKnobChange);
+    this.removeEventListener('knob:property-change', this.#handleKnobChange);
+    this.removeEventListener('knob:css-property-change', this.#handleKnobChange);
   }
 
   static {

@@ -5,42 +5,6 @@ export class CemServeDemo extends HTMLElement {
   static is = 'cem-serve-demo';
   static { customElements.define(this.is, this); }
 
-  connectedCallback() {
-    // Listen for knob change events from parent chrome element
-    // Events bubble up through shadow DOM (composed: true)
-    const chrome = this.closest('cem-serve-chrome');
-    if (!chrome) return;
-
-    chrome.addEventListener('knob:attribute-change', this.#handleAttributeChange);
-    chrome.addEventListener('knob:property-change', this.#handlePropertyChange);
-    chrome.addEventListener('knob:css-property-change', this.#handleCSSPropertyChange);
-  }
-
-  /**
-   * Extract target element info from knob event by traversing composed path
-   * to find the knob group container with data-tag-name and data-instance-index
-   */
-  #getKnobTarget(event) {
-    const chrome = this.closest('cem-serve-chrome');
-    const defaultTagName = chrome?.getAttribute('tag-name') || '';
-
-    if (event.composedPath) {
-      for (const element of event.composedPath()) {
-        if (!(element instanceof Element)) continue;
-
-        // Look for element with data-is-element-knob marker
-        if (element.dataset?.isElementKnob === 'true') {
-          const tagName = element.dataset.tagName || defaultTagName;
-          let instanceIndex = Number.parseInt(element.dataset.instanceIndex ?? '', 10);
-          if (Number.isNaN(instanceIndex)) instanceIndex = 0;
-          return { tagName, instanceIndex };
-        }
-      }
-    }
-
-    return { tagName: defaultTagName, instanceIndex: 0 };
-  }
-
   /**
    * Find the Nth instance of an element by tag name
    */
@@ -50,15 +14,37 @@ export class CemServeDemo extends HTMLElement {
     return elements[instanceIndex] || null;
   }
 
-  #handleAttributeChange = (e) => {
-    const { tagName, instanceIndex } = this.#getKnobTarget(e);
+  /**
+   * Apply a knob change to an element in the demo
+   * Called by parent chrome element when knob events occur
+   * @param {string} type - 'attribute', 'property', or 'css-property'
+   * @param {string} name - Attribute/property/CSS name
+   * @param {*} value - Value to apply
+   * @param {string} tagName - Target element tag name
+   * @param {number} instanceIndex - Which instance of the element (0-based)
+   * @returns {boolean} - Whether the operation succeeded
+   */
+  applyKnobChange(type, name, value, tagName, instanceIndex = 0) {
     const element = this.#getElementInstance(tagName, instanceIndex);
     if (!element) {
       console.warn('[cem-serve-demo] Element not found:', tagName, 'at index', instanceIndex);
-      return;
+      return false;
     }
 
-    const { name, value } = e;
+    switch (type) {
+      case 'attribute':
+        return this.#applyAttributeChange(element, name, value);
+      case 'property':
+        return this.#applyPropertyChange(element, name, value);
+      case 'css-property':
+        return this.#applyCSSPropertyChange(element, name, value);
+      default:
+        console.warn('[cem-serve-demo] Unknown knob type:', type);
+        return false;
+    }
+  }
+
+  #applyAttributeChange(element, name, value) {
     if (typeof value === 'boolean') {
       element.toggleAttribute(name, value);
     } else if (value === '' || value === null || value === undefined) {
@@ -66,36 +52,23 @@ export class CemServeDemo extends HTMLElement {
     } else {
       element.setAttribute(name, value);
     }
-  };
+    return true;
+  }
 
-  #handlePropertyChange = (e) => {
-    const { tagName, instanceIndex } = this.#getKnobTarget(e);
-    const element = this.#getElementInstance(tagName, instanceIndex);
-    if (!element) {
-      console.warn('[cem-serve-demo] Element not found:', tagName, 'at index', instanceIndex);
-      return;
-    }
-
-    const { name, value } = e;
+  #applyPropertyChange(element, name, value) {
     element[name] = value;
-  };
+    return true;
+  }
 
-  #handleCSSPropertyChange = (e) => {
-    const { tagName, instanceIndex } = this.#getKnobTarget(e);
-    const element = this.#getElementInstance(tagName, instanceIndex);
-    if (!element) {
-      console.warn('[cem-serve-demo] Element not found:', tagName, 'at index', instanceIndex);
-      return;
-    }
-
-    const { name, value } = e;
+  #applyCSSPropertyChange(element, name, value) {
     const propertyName = name.startsWith('--') ? name : `--${name}`;
     if (value === '' || value === null || value === undefined) {
       element.style.removeProperty(propertyName);
     } else {
       element.style.setProperty(propertyName, value);
     }
-  };
+    return true;
+  }
 
   /**
    * Set an attribute on an element in the demo
