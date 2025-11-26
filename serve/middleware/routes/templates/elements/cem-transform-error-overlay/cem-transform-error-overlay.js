@@ -1,3 +1,5 @@
+import '/__cem/elements/pf-v6-button/pf-v6-button.js';
+
 import { CemElement } from '/__cem/cem-element.js';
 
 /**

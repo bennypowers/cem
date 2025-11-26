@@ -22,6 +22,7 @@ import '/__cem/elements/pf-v6-toggle-group-item/pf-v6-toggle-group-item.js';
 import '/__cem/elements/pf-v6-modal/pf-v6-modal.js';
 import '/__cem/elements/pf-v6-card/pf-v6-card.js';
 import '/__cem/elements/pf-v6-label/pf-v6-label.js';
+import '/__cem/elements/pf-v6-expandable-section/pf-v6-expandable-section.js';
 import '/__cem/elements/cem-drawer/cem-drawer.js';
 import '/__cem/elements/pf-v6-form/pf-v6-form.js';
 import '/__cem/elements/pf-v6-form-group/pf-v6-form-group.js';

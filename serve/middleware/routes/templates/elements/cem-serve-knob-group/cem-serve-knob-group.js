@@ -1,3 +1,5 @@
+import '/__cem/elements/pf-v6-text-input-group/pf-v6-text-input-group.js';
+
 import { CemElement } from '/__cem/cem-element.js';
 
 /**

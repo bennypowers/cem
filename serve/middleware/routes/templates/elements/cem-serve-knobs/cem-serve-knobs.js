@@ -2,6 +2,7 @@ import '/__cem/elements/pf-v6-navigation/pf-v6-navigation.js';
 import '/__cem/elements/pf-v6-nav-list/pf-v6-nav-list.js';
 import '/__cem/elements/pf-v6-nav-item/pf-v6-nav-item.js';
 import '/__cem/elements/pf-v6-nav-link/pf-v6-nav-link.js';
+import '/__cem/elements/pf-v6-card/pf-v6-card.js';
 
 import { CemElement } from '/__cem/cem-element.js';
 

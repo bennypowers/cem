@@ -1,3 +1,5 @@
+import '/__cem/elements/pf-v6-button/pf-v6-button.js';
+
 // CEM Serve Drawer - Collapsible drawer component
 
 export class CemDrawerChangeEvent extends Event {
