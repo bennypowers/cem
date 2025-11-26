@@ -648,6 +648,9 @@ func discoverAllCustomElementInstances(demoHTML []byte) ([]ElementInstance, erro
 // Takes a slice of ElementKnobGroup (can be single or multiple instances).
 // Each group is rendered in a pf-v6-card with tag name and instance label.
 // Knobs are organized by category (attributes, properties, CSS properties) within each group.
+//
+// Note: This function modifies the Summary and Description fields of knobGroups in-place,
+// converting Markdown to HTML. Callers should not reuse the slice after calling this function.
 func RenderKnobsHTML(knobGroups []ElementKnobGroup) (template.HTML, error) {
 	if len(knobGroups) == 0 {
 		return "", nil
