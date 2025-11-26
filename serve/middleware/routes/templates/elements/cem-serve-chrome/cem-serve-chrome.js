@@ -60,6 +60,10 @@ export class CemServeChrome extends CemElement {
   static observedAttributes = [
     'knobs',
     'primary-tag-name',
+    'demo-title',
+    'package-name',
+    'canonical-url',
+    'source-url',
   ];
 
   // Static templates for demo URL display
@@ -195,6 +199,14 @@ export class CemServeChrome extends CemElement {
   get knobs() { return this.getAttribute('knobs') || ''; }
 
   get primaryTagName() { return this.getAttribute('primary-tag-name') || ''; }
+
+  get demoTitle() { return this.getAttribute('demo-title') || ''; }
+
+  get packageName() { return this.getAttribute('package-name') || ''; }
+
+  get canonicalURL() { return this.getAttribute('canonical-url') || ''; }
+
+  get sourceURL() { return this.getAttribute('source-url') || ''; }
 
   async afterTemplateLoaded() {
     // Add initializing class to prevent flash during state restoration
