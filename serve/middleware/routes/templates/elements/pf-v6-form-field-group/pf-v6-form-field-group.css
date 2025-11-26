@@ -183,8 +183,22 @@
   padding-block-end: 0;
   visibility: hidden;
   opacity: 0;
+  /* Staggered collapse: opacity/translate animate first, then visibility/layout snap after fade completes */
   transition-delay: 0s, 0s, var(--pf-v6-c-form__field-group-body--TransitionDuration--collapse--fade), var(--pf-v6-c-form__field-group-body--TransitionDuration--collapse--fade), var(--pf-v6-c-form__field-group-body--TransitionDuration--collapse--fade), var(--pf-v6-c-form__field-group-body--TransitionDuration--collapse--fade);
   transition-duration: var(--pf-v6-c-form__field-group-body--TransitionDuration--collapse--fade), var(--pf-v6-c-form__field-group-body--TransitionDuration--collapse--slide), 0s, 0s, 0s, 0s;
   transition-property: opacity, translate, visibility, max-height, padding-block-start, padding-block-end;
   translate: 0 var(--pf-v6-c-form__field-group-body--TranslateY);
+}
+
+/* Accessibility: disable animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  :host([expandable]) #body,
+  :host([expanded][expandable]) #body {
+    transition-duration: 0s;
+    transition-delay: 0s;
+  }
+
+  #toggle-icon {
+    transition-duration: 0s;
+  }
 }

@@ -3,7 +3,7 @@
               part="toggle-button"
               variant="plain"
               aria-expanded="{{if .Attributes.Expanded}}true{{else}}false{{end}}"
-              aria-labelledby="header-title-text"
+              {{if .Attributes.ToggleText}}aria-labelledby="header-title-text"{{end}}
               aria-controls="body"
               aria-label="Details">
   <svg viewBox="0 0 256 512"
