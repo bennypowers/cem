@@ -93,6 +93,7 @@
   grid-column: 1/2;
   padding: auto auto;
   margin: auto auto;
+  /* disabling these upstream tokens for now to allow groups to participate in the form grid */
   /* padding-block-start: var(--pf-v6-c-form__field-group-toggle--PaddingBlockStart); */
   /* padding-inline-end: var(--pf-v6-c-form__field-group-toggle--PaddingInlineEnd); */
   /* margin-block-start: var(--pf-v6-c-form__field-group-toggle-button--MarginBlockStart); */
