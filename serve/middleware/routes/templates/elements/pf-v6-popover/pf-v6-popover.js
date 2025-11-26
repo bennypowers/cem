@@ -430,6 +430,8 @@ class PfV6Popover extends CemElement {
   }
 
   disconnectedCallback() {
+    super.disconnectedCallback?.();
+
     // Clean up timeouts
     clearTimeout(this.#hoverShowTimeout);
     clearTimeout(this.#hoverHideTimeout);
