@@ -124,6 +124,24 @@ class PfV6Button extends CemElement {
     }
   }
 
+  #teardownHostButton() {
+    // Remove host event listeners
+    this.removeEventListener('click', this.#handleClick);
+    this.removeEventListener('keydown', this.#handleKeydown);
+
+    // Remove tabindex if we added it
+    if (this.getAttribute('tabindex') === '0') {
+      this.removeAttribute('tabindex');
+    }
+  }
+
+  #teardownShadowLink() {
+    // Remove shadow link event listener
+    if (this.#element) {
+      this.#element.removeEventListener('click', this.#handleLinkClick);
+    }
+  }
+
   #handleClick = (event) => {
     // For host-based buttons only
     if (this.disabled) {
@@ -161,6 +179,8 @@ class PfV6Button extends CemElement {
     switch (name) {
       case 'disabled': this.#updateDisabled(); break;
       case 'href':
+        this.#handleHrefChange(oldValue, newValue);
+        break;
       case 'variant': this.#updateRole(); break;
     }
 
@@ -179,6 +199,37 @@ class PfV6Button extends CemElement {
     } else {
       // Switching to button: set button role
       this.#internals.role = 'button';
+    }
+  }
+
+  #handleHrefChange(oldValue, newValue) {
+    const wasLink = this.#isLink;
+    const isNowLink = newValue !== null;
+
+    // Update role
+    this.#updateRole();
+
+    // If mode changed, reconfigure the component
+    if (wasLink !== isNowLink) {
+      this.#isLink = isNowLink;
+
+      if (isNowLink) {
+        // Switching from button to link
+        this.#element = this.shadowRoot.querySelector('a');
+        this.#teardownHostButton();
+        this.#setupShadowLink();
+      } else {
+        // Switching from link to button
+        this.#teardownShadowLink();
+        this.#element = null;
+        this.#setupHostButton();
+      }
+
+      // Reapply disabled state with new mode
+      this.#updateDisabled();
+    } else if (isNowLink && this.#element) {
+      // Still a link, just update the href on the shadow link
+      this.#element.setAttribute('href', newValue);
     }
   }
 
@@ -228,12 +279,10 @@ class PfV6Button extends CemElement {
   }
 
   disconnectedCallback() {
-    if (!this.#isLink) {
-      this.removeEventListener('click', this.#handleClick);
-      this.removeEventListener('keydown', this.#handleKeydown);
-    }
-    if (this.#element) {
-      this.#element.removeEventListener('click', this.#handleLinkClick);
+    if (this.#isLink) {
+      this.#teardownShadowLink();
+    } else {
+      this.#teardownHostButton();
     }
   }
 
