@@ -70,6 +70,9 @@ class PfV6Label extends CemElement {
     }
   }
 
+  #clickListener;
+  #slotchangeListener;
+
   async afterTemplateLoaded() {
     this.#content = this.#$('#content');
     this.#text = this.#$('#text');
@@ -80,15 +83,16 @@ class PfV6Label extends CemElement {
 
     // Hide actions if empty
     this.#updateActionsVisibility();
-    this.#$('slot[name="actions"]')?.addEventListener('slotchange', () => {
-      this.#updateActionsVisibility();
-    });
+    this.#slotchangeListener = () => this.#updateActionsVisibility();
+    this.#$('slot[name="actions"]')?.addEventListener('slotchange', this.#slotchangeListener);
 
-    // Set up click handler for clickable labels
+    // Set up click handler (always attached, checks disabled state dynamically)
     this.#setupClickHandler();
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+
     if (name === 'href' && this.#content) {
       this.#syncHref();
     }
@@ -105,17 +109,18 @@ class PfV6Label extends CemElement {
   }
 
   #setupClickHandler() {
-    // Label is clickable if it has href or onclick
-    const isClickable = this.hasAttribute('href') || this.onclick;
+    if (!this.#content) return;
 
-    if (isClickable && this.#content) {
-      this.#content.addEventListener('click', (e) => {
-        if (this.hasAttribute('disabled')) {
-          e.preventDefault();
-          return;
-        }
-      });
-    }
+    // Always attach click handler to prevent clicks when disabled
+    // This works regardless of when href is added/removed
+    this.#clickListener = (e) => {
+      if (this.hasAttribute('disabled')) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    this.#content.addEventListener('click', this.#clickListener);
   }
 
   #updateActionsVisibility() {
@@ -123,6 +128,21 @@ class PfV6Label extends CemElement {
     const hasActions = actionsSlot?.assignedElements().length > 0;
     if (this.#actions) {
       this.#actions.hidden = !hasActions;
+    }
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback?.();
+
+    // Clean up event listeners
+    if (this.#clickListener && this.#content) {
+      this.#content.removeEventListener('click', this.#clickListener);
+      this.#clickListener = null;
+    }
+
+    if (this.#slotchangeListener) {
+      this.#$('slot[name="actions"]')?.removeEventListener('slotchange', this.#slotchangeListener);
+      this.#slotchangeListener = null;
     }
   }
 
