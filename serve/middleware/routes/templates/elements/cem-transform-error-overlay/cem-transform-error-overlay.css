@@ -84,7 +84,7 @@
   margin-bottom: var(--pf-t--global--spacer--md);
   font-size: var(--pf-t--global--font--size--body--sm);
   color: var(--pf-t--global--color--brand--default);
-  border-inline-start: 3px solid var(--pf-t--global--color--status--danger--default);
+  border-inline-start: var(--pf-t--global--border--width--strong, 3px) solid var(--pf-t--global--color--status--danger--default);
 }
 
 #file:empty {
