@@ -113,15 +113,17 @@ export class CemServeDrawer extends HTMLElement {
         e.preventDefault();
         newHeight = currentHeight - step;
         break;
-      case 'Home':
+      case 'Home': {
         e.preventDefault();
         newHeight = 100; // Minimum height
         break;
-      case 'End':
+      }
+      case 'End': {
         e.preventDefault();
         const headerHeight = 56;
         newHeight = window.innerHeight - headerHeight; // Maximum height
         break;
+      }
       default:
         return;
     }

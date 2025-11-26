@@ -67,7 +67,7 @@
 
   & svg {
     rotate: 180deg;
-    transition: transform var(--pf-t--global--motion--duration--md) var(--pf-t--global--motion--timing-function--decelerate);
+    transition: rotate var(--pf-t--global--motion--duration--md) var(--pf-t--global--motion--timing-function--decelerate);
   }
 
   :host([open]) & svg {
