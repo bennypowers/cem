@@ -98,7 +98,7 @@ func Generate(rootDir string, config *Config) (*ImportMap, error) {
 	}
 
 	// Default logger to no-op if not provided
-	logger := config
+	cfg := config
 
 	// 1. Parse root package.json
 	rootPkgPath := filepath.Join(rootDir, "package.json")
@@ -115,8 +115,8 @@ func Generate(rootDir string, config *Config) (*ImportMap, error) {
 	// This handles the case where serve is run from a subdirectory in a monorepo
 	workspaceRoot := findWorkspaceRoot(rootDir, fs)
 	if workspaceRoot != rootDir {
-		if logger.Logger != nil {
-			logger.Logger.Debug("Detected workspace subdirectory, using workspace root: %s", workspaceRoot)
+		if cfg.Logger != nil {
+			cfg.Logger.Debug("Detected workspace subdirectory, using workspace root: %s", workspaceRoot)
 		}
 	}
 
@@ -134,8 +134,8 @@ func Generate(rootDir string, config *Config) (*ImportMap, error) {
 	if workspacePkg.Workspaces != nil {
 		workspaces, err := W.DiscoverWorkspacePackages(workspaceRoot, workspacePkg.Workspaces)
 		if err != nil {
-			if logger.Logger != nil {
-				logger.Logger.Warning("Failed to discover workspaces: %v", err)
+			if cfg.Logger != nil {
+				cfg.Logger.Warning("Failed to discover workspaces: %v", err)
 			}
 		} else {
 			workspacePackages = workspaces
@@ -144,18 +144,18 @@ func Generate(rootDir string, config *Config) (*ImportMap, error) {
 
 	// 2.5. If not a monorepo (no workspaces), process root package's own exports
 	if rootPkg.Workspaces == nil && rootPkg.Name != "" {
-		if err := addPackageExportsToImportMap(result, rootPkg.Name, rootDir, rootDir, logger.Logger, fs); err != nil {
-			if logger.Logger != nil {
-				logger.Logger.Warning("Failed to add root package %s exports: %v", rootPkg.Name, err)
+		if err := addPackageExportsToImportMap(result, rootPkg.Name, rootDir, rootDir, cfg.Logger, fs); err != nil {
+			if cfg.Logger != nil {
+				cfg.Logger.Warning("Failed to add root package %s exports: %v", rootPkg.Name, err)
 			}
 		}
 	}
 
 	// 3. Resolve workspace packages first (they have priority over node_modules)
 	for name, pkgPath := range workspacePackages {
-		if err := addPackageExportsToImportMap(result, name, pkgPath, rootDir, logger.Logger, fs); err != nil {
-			if logger.Logger != nil {
-				logger.Logger.Warning("Failed to add workspace package %s exports: %v", name, err)
+		if err := addPackageExportsToImportMap(result, name, pkgPath, rootDir, cfg.Logger, fs); err != nil {
+			if cfg.Logger != nil {
+				cfg.Logger.Warning("Failed to add workspace package %s exports: %v", name, err)
 			}
 		}
 	}
@@ -174,15 +174,15 @@ func Generate(rootDir string, config *Config) (*ImportMap, error) {
 
 			// Check if package exists
 			if !fs.Exists(depPath) {
-				if logger.Logger != nil {
-					logger.Logger.Warning("Dependency %s listed in package.json but not found in node_modules", depName)
+				if cfg.Logger != nil {
+					cfg.Logger.Warning("Dependency %s listed in package.json but not found in node_modules", depName)
 				}
 				continue
 			}
 
-			if err := addPackageExportsToImportMap(result, depName, depPath, rootDir, logger.Logger, fs); err != nil {
-				if logger.Logger != nil {
-					logger.Logger.Warning("Failed to add package %s exports: %v", depName, err)
+			if err := addPackageExportsToImportMap(result, depName, depPath, rootDir, cfg.Logger, fs); err != nil {
+				if cfg.Logger != nil {
+					cfg.Logger.Warning("Failed to add package %s exports: %v", depName, err)
 				}
 			}
 		}
@@ -191,24 +191,24 @@ func Generate(rootDir string, config *Config) (*ImportMap, error) {
 	// 4.5. Add scopes for transitive dependencies in node_modules
 	// For each package in the dependency tree, add scopes for their dependencies
 	// Use workspaceRoot for node_modules location (handles monorepo case)
-	if err := addTransitiveDependenciesToScopes(result, workspaceRoot, rootPkg, logger.Logger, fs); err != nil {
-		if logger.Logger != nil {
-			logger.Logger.Warning("Failed to add transitive dependencies: %v", err)
+	if err := addTransitiveDependenciesToScopes(result, workspaceRoot, rootPkg, cfg.Logger, fs); err != nil {
+		if cfg.Logger != nil {
+			cfg.Logger.Warning("Failed to add transitive dependencies: %v", err)
 		}
 	}
 
 	// 4.6. Add scopes for workspace packages and root package
 	// Workspace packages and root package also need to resolve bare specifiers
 	// Use workspaceRoot for node_modules location (handles monorepo case)
-	if err := addWorkspaceScopesToImportMap(result, workspaceRoot, rootDir, rootPkg, workspacePackages, logger.Logger, fs); err != nil {
-		if logger.Logger != nil {
-			logger.Logger.Warning("Failed to add workspace scopes: %v", err)
+	if err := addWorkspaceScopesToImportMap(result, workspaceRoot, rootDir, rootPkg, workspacePackages, cfg.Logger, fs); err != nil {
+		if cfg.Logger != nil {
+			cfg.Logger.Warning("Failed to add workspace scopes: %v", err)
 		}
 	}
 
 	// 5. Merge with user override file (if provided)
-	if logger.InputMapPath != "" {
-		userMap, err := readImportMapFile(logger.InputMapPath, fs)
+	if cfg.InputMapPath != "" {
+		userMap, err := readImportMapFile(cfg.InputMapPath, fs)
 		if err != nil {
 			return nil, fmt.Errorf("reading user override file: %w", err)
 		}
@@ -236,8 +236,8 @@ func Generate(rootDir string, config *Config) (*ImportMap, error) {
 	}
 
 	// 6. Apply CLI overrides (highest priority)
-	if logger.CLIOverrides != nil {
-		for key, value := range logger.CLIOverrides {
+	if cfg.CLIOverrides != nil {
+		for key, value := range cfg.CLIOverrides {
 			result.Imports[key] = value
 		}
 	}
