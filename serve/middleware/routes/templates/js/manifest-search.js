@@ -195,7 +195,7 @@ export class ManifestSearchIndex {
       }
 
       // Type contains term
-      if (entry.type.includes(term)) {
+      if (entry.type?.includes(term)) {
         score += 5;
       }
     });
