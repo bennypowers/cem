@@ -86,6 +86,7 @@ type WebSocketManager interface {
 	Broadcast(message []byte) error
 	BroadcastToPages(message []byte, pageURLs []string) error
 	BroadcastShutdown() error
+	CloseAll() error
 	HandleConnection(w http.ResponseWriter, r *http.Request)
 	SetLogger(logger Logger)
 }

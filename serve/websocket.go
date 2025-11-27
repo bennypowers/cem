@@ -104,6 +104,21 @@ func (wm *websocketManager) BroadcastShutdown() error {
 	return wm.Broadcast(shutdownMsg)
 }
 
+// CloseAll forcefully closes all WebSocket connections
+func (wm *websocketManager) CloseAll() error {
+	wm.mu.Lock()
+	defer wm.mu.Unlock()
+
+	for conn := range wm.connections {
+		_ = conn.Close()
+	}
+
+	// Clear the connections map
+	wm.connections = make(map[*websocket.Conn]*connWrapper)
+
+	return nil
+}
+
 // BroadcastToPages sends a message only to clients viewing specific page URLs
 // pageURLs can contain partial matches (e.g., "/elements/accordion/demo/" will match all accordion demos)
 func (wm *websocketManager) BroadcastToPages(message []byte, pageURLs []string) error {

@@ -65,6 +65,7 @@ type Server struct {
 	mu              sync.RWMutex
 	generateSession *G.GenerateSession
 	fs              platform.FileSystem // Filesystem abstraction for testability
+	shutdown        chan struct{}       // Signal channel for graceful shutdown
 	// Workspace mode fields
 	isWorkspace       bool                          // True if serving a monorepo workspace
 	workspaceRoot     string                        // Root directory of workspace
@@ -89,9 +90,10 @@ func NewServerWithConfig(config Config) (*Server, error) {
 	// Tests must explicitly set transform config values
 
 	s := &Server{
-		port:   config.Port,
-		config: config,
-		logger: logger.NewDefaultLogger(),
+		port:     config.Port,
+		config:   config,
+		logger:   logger.NewDefaultLogger(),
+		shutdown: make(chan struct{}),
 	}
 
 	// Use provided filesystem or default to os package
@@ -165,6 +167,14 @@ func (s *Server) Start() error {
 		return fmt.Errorf("server already running")
 	}
 
+	// Reinitialize shutdown channel if server was previously stopped
+	select {
+	case <-s.shutdown:
+		s.shutdown = make(chan struct{})
+	default:
+		// Channel is still open
+	}
+
 	// Bind the socket first to catch port binding errors before returning success
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", s.port))
 	if err != nil {
@@ -234,6 +244,10 @@ func (s *Server) Close() error {
 		}
 		// Give clients a moment to receive the shutdown message
 		time.Sleep(100 * time.Millisecond)
+		// Forcefully close all WebSocket connections
+		if err := s.wsManager.CloseAll(); err != nil {
+			s.logger.Error("Failed to close WebSocket connections: %v", err)
+		}
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -259,6 +273,10 @@ func (s *Server) Close() error {
 	}
 
 	s.running = false
+
+	// Signal shutdown to all goroutines
+	close(s.shutdown)
+
 	s.logger.Info("Server stopped")
 	return nil
 }
@@ -897,19 +915,7 @@ func (s *Server) logCacheStats(interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
-	checkTicker := time.NewTicker(1 * time.Second)
-	defer checkTicker.Stop()
-
 	for {
-		// Check if server is still running
-		s.mu.RLock()
-		running := s.running
-		s.mu.RUnlock()
-
-		if !running {
-			return
-		}
-
 		select {
 		case <-ticker.C:
 			if s.transformCache != nil {
@@ -921,9 +927,8 @@ func (s *Server) logCacheStats(interval time.Duration) {
 					stats.MaxSize/(1024*1024),
 				)
 			}
-		case <-checkTicker.C:
-			// Check running status periodically
-			continue
+		case <-s.shutdown:
+			return
 		}
 	}
 }
