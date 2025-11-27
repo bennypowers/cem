@@ -919,15 +919,23 @@ Generated: ${new Date().toISOString()}`;
     const parts = nodeId.split(':');
     const [type, modulePath, tagName, name] = parts;
 
-    let selector = `pf-v6-tree-item[data-type="${type}"]`;
-    if (modulePath) {
-      selector += `[data-module-path="${modulePath}"], pf-v6-tree-item[data-type="${type}"][data-path="${modulePath}"]`;
-    }
+    // Build attribute suffix for tag name and name
+    let attrSuffix = '';
     if (tagName) {
-      selector += `[data-tag-name="${tagName}"]`;
+      attrSuffix += `[data-tag-name="${tagName}"]`;
     }
     if (name) {
-      selector += `[data-name="${name}"]`;
+      attrSuffix += `[data-name="${name}"]`;
+    }
+
+    // Build complete selectors with all attributes
+    let selector = `pf-v6-tree-item[data-type="${type}"]`;
+    if (modulePath) {
+      const selector1 = `pf-v6-tree-item[data-type="${type}"][data-module-path="${modulePath}"]${attrSuffix}`;
+      const selector2 = `pf-v6-tree-item[data-type="${type}"][data-path="${modulePath}"]${attrSuffix}`;
+      selector = `${selector1}, ${selector2}`;
+    } else {
+      selector += attrSuffix;
     }
 
     return this.querySelector(selector);
