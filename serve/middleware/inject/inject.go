@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package inject
 
 import (
+	"html"
 	"net/http"
 	"strings"
 
@@ -77,7 +78,7 @@ func New(enabled bool, scriptPath string) middleware.Middleware {
 
 			// Inject script before </head> or at start of <body>
 			htmlStr := string(bodyBytes)
-			script := "<script type=\"module\" src=\"" + scriptPath + "\"></script>"
+			script := "<script type=\"module\" src=\"" + html.EscapeString(scriptPath) + "\"></script>"
 			injected := InjectScript(htmlStr, script)
 
 			// Copy headers (except Content-Length, it will be wrong)
