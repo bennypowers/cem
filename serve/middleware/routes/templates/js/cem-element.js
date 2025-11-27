@@ -158,9 +158,18 @@ export class CemElement extends HTMLElement {
     return { html, stylesheet };
   }
 
+  /** @type {Promise<void>} Promise that resolves after first render completes */
+  rendered;
+  #resolveRendered;
+
   constructor() {
     super();
     const options = this.constructor.shadowRootOptions ?? { mode: 'open' };
+
+    // Create rendered promise for testing
+    this.rendered = new Promise(resolve => {
+      this.#resolveRendered = resolve;
+    });
 
     // SSR-aware: only create shadow root if it doesn't exist
     if (!this.shadowRoot) {
@@ -172,10 +181,12 @@ export class CemElement extends HTMLElement {
     // Only populate if shadow root is empty
     if (!this.shadowRoot.firstChild) {
       await this.#populateShadowRoot();
+      // Call lifecycle hook for subclasses
+      await this.afterTemplateLoaded?.();
     }
 
-    // Call lifecycle hook for subclasses
-    await this.afterTemplateLoaded?.();
+    // Resolve rendered promise for testing (works for both SSR and CSR)
+    this.#resolveRendered?.();
   }
 
   /**
