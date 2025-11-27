@@ -1,6 +1,6 @@
 ---
 title: Language Server
-weight: 20
+weight: 23
 ---
 
 The CEM Language Server provides intelligent IDE features for custom elements in

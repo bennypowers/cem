@@ -128,9 +128,9 @@ serve:
 
 ### Documentation
 
-- [ ] Comprehensive README for `cem serve`
-- [ ] Flag reference documentation
-- [ ] Configuration file schema and examples
+- [x] Comprehensive README for `cem serve`
+- [x] Flag reference documentation
+- [x] Configuration file schema and examples
 - [ ] Troubleshooting guide
 - [ ] Architecture documentation (linking to PLANS/)
 - [ ] Migration guide from other dev servers
@@ -159,7 +159,7 @@ serve:
 - [ ] Browser compatibility testing
 - [ ] Mobile/responsive demo chrome
 - [ ] Accessibility audit of demo chrome UI
-- [ ] **PatternFly v6 UI Components Implementation** 🚧 **IN PROGRESS**
+- [x] **PatternFly v6 UI Components Implementation** 🚧 **IN PROGRESS**
 
   **Phase 1: Infrastructure & Core Components** ✅ **COMPLETE**
   - [x] Hybrid SSR/client-side rendering infrastructure

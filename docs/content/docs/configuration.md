@@ -61,6 +61,39 @@ warnings:
     # Or disable specific warning rules
     - "lifecycle-lit-render"
     - "implementation-static-styles"
+
+# Configuration for the `serve` command.
+serve:
+  # Port to listen on
+  port: 8000
+
+  # Disable live reload
+  no-reload: false
+
+  # Glob patterns to ignore in file watcher
+  watchIgnore:
+    - 'dist/**'
+    - '_site/**'
+    - 'node_modules/**'
+
+  # Transform configuration
+  transforms:
+    # TypeScript transformation
+    typescript:
+      enabled: true
+      target: es2022  # es2015, es2016, es2017, es2018, es2019, es2020, es2021, es2022, es2023, esnext
+
+    # CSS transformation (opt-in)
+    css:
+      enabled: true
+      # Glob patterns for CSS files to transform to JavaScript modules
+      include:
+        - 'src/**/*.css'
+        - 'elements/**/*.css'
+      # Glob patterns to exclude from transformation
+      exclude:
+        - 'demo/**/*.css'
+        - '**/*.min.css'
 ```
 
 ## Demo Discovery Features
