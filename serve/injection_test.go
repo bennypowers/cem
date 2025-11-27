@@ -72,13 +72,13 @@ func TestHTMLInjection_WebSocketClient(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		t.Logf("Response status: %d", resp.StatusCode)
-	}
-
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatalf("Failed to read response: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("Expected status 200, got %d. Response body: %s", resp.StatusCode, string(body))
 	}
 
 	bodyStr := string(body)

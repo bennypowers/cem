@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	M "bennypowers.dev/cem/manifest"
@@ -345,24 +346,10 @@ func TestRenderKnobsHTML(t *testing.T) {
 	}
 
 	for _, expected := range expectedStrings {
-		if !contains(htmlStr, expected) {
+		if !strings.Contains(htmlStr, expected) {
 			t.Errorf("Expected HTML to contain '%s'", expected)
 		}
 	}
-}
-
-// Helper function for string contains
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(substr) == 0 || (len(s) > 0 && len(substr) > 0 && hasSubstring(s, substr)))
-}
-
-func hasSubstring(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
 
 // TestDiscoverElementInstances tests multi-element discovery
@@ -696,30 +683,30 @@ func TestRenderMultiInstanceKnobsHTML(t *testing.T) {
 	}
 
 	// Verify cem-serve-knobs wrapper exists
-	if !contains(htmlStr, "cem-serve-knobs") {
+	if !strings.Contains(htmlStr, "cem-serve-knobs") {
 		t.Error("Expected HTML to contain cem-serve-knobs element")
 	}
 
 	// Count knobs-panel divs (one per instance)
-	if !contains(htmlStr, `class="knobs-panel"`) {
+	if !strings.Contains(htmlStr, `class="knobs-panel"`) {
 		t.Error("Expected HTML to contain knobs-panel divs")
 	}
 
 	// Verify all three instances are present
-	if !contains(htmlStr, "instance-0") || !contains(htmlStr, "instance-1") || !contains(htmlStr, "instance-2") {
+	if !strings.Contains(htmlStr, "instance-0") || !strings.Contains(htmlStr, "instance-1") || !strings.Contains(htmlStr, "instance-2") {
 		t.Error("Expected HTML to contain all three instance panels (instance-0, instance-1, instance-2)")
 	}
 
 	// Verify labels appear in nav links
 	expectedLabels := []string{"#card-1", "#card-2", "#card-3"}
 	for _, label := range expectedLabels {
-		if !contains(htmlStr, label) {
+		if !strings.Contains(htmlStr, label) {
 			t.Errorf("Expected HTML to contain label '%s'", label)
 		}
 	}
 
 	// Verify tag name appears
-	if !contains(htmlStr, "my-card") {
+	if !strings.Contains(htmlStr, "my-card") {
 		t.Error("Expected HTML to contain tag name 'my-card'")
 	}
 }
