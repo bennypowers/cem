@@ -99,45 +99,46 @@
     {{if .Manifest}}
     <pf-v6-tree-view slot="manifest-tree" aria-label="Component manifest">
       {{range .Manifest.Modules}}
-      <pf-v6-tree-item label="{{.Path}}" badge="{{len .Declarations}}">
+      {{$modulePath := .Path}}
+      <pf-v6-tree-item label="{{.Path}}" badge="{{len .Declarations}}" data-type="module" data-path="{{.Path}}">
         {{range .Declarations}}
         {{$ce := asCustomElement .}}
         {{if $ce}}
-        <pf-v6-tree-item label="&lt;{{$ce.TagName}}&gt;">
+        <pf-v6-tree-item label="&lt;{{$ce.TagName}}&gt;" data-type="custom-element" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}">
           {{if $ce.Attributes}}
-          <pf-v6-tree-item label="Attributes" badge="{{len $ce.Attributes}}">
+          <pf-v6-tree-item label="Attributes" badge="{{len $ce.Attributes}}" data-type="category" data-category="attributes">
             {{range $ce.Attributes}}
-            <pf-v6-tree-item label="{{.Name}}"></pf-v6-tree-item>
+            <pf-v6-tree-item label="{{.Name}}" data-type="attribute" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}"></pf-v6-tree-item>
             {{end}}
           </pf-v6-tree-item>
           {{end}}
           {{if $ce.Members}}
-          <pf-v6-tree-item label="Properties" badge="{{len $ce.Members}}">
+          <pf-v6-tree-item label="Properties" badge="{{len $ce.Members}}" data-type="category" data-category="properties">
             {{range $ce.Members}}
             {{if eq .Kind "field"}}
-            <pf-v6-tree-item label="{{.Name}}"></pf-v6-tree-item>
+            <pf-v6-tree-item label="{{.Name}}" data-type="property" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}"></pf-v6-tree-item>
             {{end}}
             {{end}}
           </pf-v6-tree-item>
-          <pf-v6-tree-item label="Methods">
+          <pf-v6-tree-item label="Methods" data-type="category" data-category="methods">
             {{range $ce.Members}}
             {{if eq .Kind "method"}}
-            <pf-v6-tree-item label="{{.Name}}()"></pf-v6-tree-item>
+            <pf-v6-tree-item label="{{.Name}}()" data-type="method" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}"></pf-v6-tree-item>
             {{end}}
             {{end}}
           </pf-v6-tree-item>
           {{end}}
           {{if $ce.Events}}
-          <pf-v6-tree-item label="Events" badge="{{len $ce.Events}}">
+          <pf-v6-tree-item label="Events" badge="{{len $ce.Events}}" data-type="category" data-category="events">
             {{range $ce.Events}}
-            <pf-v6-tree-item label="{{.Name}}"></pf-v6-tree-item>
+            <pf-v6-tree-item label="{{.Name}}" data-type="event" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}"></pf-v6-tree-item>
             {{end}}
           </pf-v6-tree-item>
           {{end}}
           {{if $ce.Slots}}
-          <pf-v6-tree-item label="Slots" badge="{{len $ce.Slots}}">
+          <pf-v6-tree-item label="Slots" badge="{{len $ce.Slots}}" data-type="category" data-category="slots">
             {{range $ce.Slots}}
-            <pf-v6-tree-item label="{{.Name}}"></pf-v6-tree-item>
+            <pf-v6-tree-item label="{{.Name}}" data-type="slot" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}"></pf-v6-tree-item>
             {{end}}
           </pf-v6-tree-item>
           {{end}}
@@ -147,6 +148,89 @@
       </pf-v6-tree-item>
       {{end}}
     </pf-v6-tree-view>
+
+    {{/* SSR detail panels */}}
+    {{range .Manifest.Modules}}
+    {{$modulePath := .Path}}
+    <div slot="manifest-details" data-type="module" data-module-path="{{$modulePath}}" data-title="{{.Path}}" hidden>
+      <dl>
+        {{if .Summary}}<dt>Summary</dt><dd>{{markdown .Summary}}</dd>{{end}}
+        {{if .Description}}<dt>Description</dt><dd>{{markdown .Description}}</dd>{{end}}
+        <dt>Declarations</dt><dd>{{len .Declarations}}</dd>
+      </dl>
+    </div>
+    {{range .Declarations}}
+    {{$ce := asCustomElement .}}
+    {{if $ce}}
+    <div slot="manifest-details" data-type="custom-element" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}" data-title="&lt;{{$ce.TagName}}&gt;" hidden>
+      <dl>
+        <dt>Name</dt><dd>{{$ce.Name}}</dd>
+        {{if $ce.Summary}}<dt>Summary</dt><dd>{{markdown $ce.Summary}}</dd>{{end}}
+        {{if $ce.Description}}<dt>Description</dt><dd>{{markdown $ce.Description}}</dd>{{end}}
+        {{if $ce.Superclass}}<dt>Extends</dt><dd><code>{{$ce.Superclass.Name}}</code></dd>{{end}}
+        <dt>Attributes</dt><dd>{{len $ce.Attributes}}</dd>
+        <dt>Events</dt><dd>{{len $ce.Events}}</dd>
+        <dt>Slots</dt><dd>{{len $ce.Slots}}</dd>
+      </dl>
+    </div>
+    {{range $ce.Attributes}}
+    <div slot="manifest-details" data-type="attribute" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}" data-title="{{.Name}}" hidden>
+      <dl>
+        <dt>Element</dt><dd><code>&lt;{{$ce.TagName}}&gt;</code></dd>
+        {{if .Type}}{{if .Type.Text}}<dt>Type</dt><dd><code>{{.Type.Text}}</code></dd>{{end}}{{end}}
+        {{if .Summary}}<dt>Summary</dt><dd>{{markdown .Summary}}</dd>{{end}}
+        {{if .Description}}<dt>Description</dt><dd>{{markdown .Description}}</dd>{{end}}
+        {{if .Default}}<dt>Default</dt><dd><code>{{.Default}}</code></dd>{{end}}
+        {{if .FieldName}}<dt>Reflects to</dt><dd><code>{{.FieldName}}</code></dd>{{end}}
+      </dl>
+    </div>
+    {{end}}
+    {{range $ce.Members}}
+    {{if eq .Kind "field"}}
+    <div slot="manifest-details" data-type="property" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}" data-title="{{.Name}}" hidden>
+      <dl>
+        <dt>Element</dt><dd><code>&lt;{{$ce.TagName}}&gt;</code></dd>
+        {{if .Type}}{{if .Type.Text}}<dt>Type</dt><dd><code>{{.Type.Text}}</code></dd>{{end}}{{end}}
+        {{if .Summary}}<dt>Summary</dt><dd>{{markdown .Summary}}</dd>{{end}}
+        {{if .Description}}<dt>Description</dt><dd>{{markdown .Description}}</dd>{{end}}
+        {{if .Default}}<dt>Default</dt><dd><code>{{.Default}}</code></dd>{{end}}
+        {{if .Privacy}}<dt>Privacy</dt><dd>{{.Privacy}}</dd>{{end}}
+      </dl>
+    </div>
+    {{else if eq .Kind "method"}}
+    <div slot="manifest-details" data-type="method" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}" data-title="{{.Name}}()" hidden>
+      <dl>
+        <dt>Element</dt><dd><code>&lt;{{$ce.TagName}}&gt;</code></dd>
+        {{if .Summary}}<dt>Summary</dt><dd>{{markdown .Summary}}</dd>{{end}}
+        {{if .Description}}<dt>Description</dt><dd>{{markdown .Description}}</dd>{{end}}
+        {{if .Return}}{{if .Return.Type}}{{if .Return.Type.Text}}<dt>Returns</dt><dd><code>{{.Return.Type.Text}}</code></dd>{{end}}{{end}}{{end}}
+        {{if .Privacy}}<dt>Privacy</dt><dd>{{.Privacy}}</dd>{{end}}
+      </dl>
+    </div>
+    {{end}}
+    {{end}}
+    {{range $ce.Events}}
+    <div slot="manifest-details" data-type="event" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}" data-title="{{.Name}}" hidden>
+      <dl>
+        <dt>Element</dt><dd><code>&lt;{{$ce.TagName}}&gt;</code></dd>
+        {{if .Type}}{{if .Type.Text}}<dt>Detail Type</dt><dd><code>{{.Type.Text}}</code></dd>{{end}}{{end}}
+        {{if .Summary}}<dt>Summary</dt><dd>{{markdown .Summary}}</dd>{{end}}
+        {{if .Description}}<dt>Description</dt><dd>{{markdown .Description}}</dd>{{end}}
+      </dl>
+    </div>
+    {{end}}
+    {{range $ce.Slots}}
+    <div slot="manifest-details" data-type="slot" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}" data-title="{{if .Name}}{{.Name}}{{else}}(default){{end}}" hidden>
+      <dl>
+        <dt>Element</dt><dd><code>&lt;{{$ce.TagName}}&gt;</code></dd>
+        {{if .Summary}}<dt>Summary</dt><dd>{{markdown .Summary}}</dd>{{end}}
+        {{if .Description}}<dt>Description</dt><dd>{{markdown .Description}}</dd>{{end}}
+      </dl>
+    </div>
+    {{end}}
+    {{end}}
+    {{end}}
+    {{end}}
     {{end}}
   </cem-serve-chrome>
 </body>

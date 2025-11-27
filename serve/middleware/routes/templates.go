@@ -48,6 +48,9 @@ var knobsTemplate string
 //go:embed templates/demo-chrome.html
 var demoChromeTemplate string
 
+//go:embed templates/template-error.html
+var templateErrorTemplate string
+
 //go:embed templates/**
 var TemplatesFS embed.FS
 
@@ -122,6 +125,14 @@ func getTemplateFuncs() template.FuncMap {
 			}
 			return html
 		},
+		"markdown": func(text string) template.HTML {
+			html, err := markdownToHTML(text)
+			if err != nil {
+				// If markdown conversion fails, return escaped plain text
+				return template.HTML(template.HTMLEscapeString(text))
+			}
+			return template.HTML(html)
+		},
 		"asCustomElement": asCustomElement,
 	}
 }
@@ -146,6 +157,9 @@ var KnobsTemplate = template.Must(template.New("knobs").Funcs(getTemplateFuncs()
 
 // DemoChromeTemplate is the parsed template for demo chrome wrapper
 var DemoChromeTemplate = template.Must(template.New("demo-chrome").Funcs(getTemplateFuncs()).Parse(demoChromeTemplate))
+
+// TemplateErrorTemplate is the parsed template for template rendering errors
+var TemplateErrorTemplate = template.Must(template.New("template-error").Funcs(getTemplateFuncs()).Parse(templateErrorTemplate))
 
 // asCustomElement performs type assertion to extract CustomElementDeclaration from Declaration interface.
 // Returns nil if the declaration is not a custom element.

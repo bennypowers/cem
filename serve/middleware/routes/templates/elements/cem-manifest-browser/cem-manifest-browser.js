@@ -1,14 +1,95 @@
+import '/__cem/elements/pf-v6-drawer/pf-v6-drawer.js';
 import { CemElement } from '/__cem/cem-element.js';
 
 /**
- * Placeholder for CemManifestBrowser
+ * Manifest Browser with tree navigation and detail drawer
  * @customElement cem-manifest-browser
  */
 export class CemManifestBrowser extends CemElement {
   static is = 'cem-manifest-browser';
 
+  #panelTitle;
+  #drawer;
+  #currentDetail;
+
+  afterTemplateLoaded() {
+    this.#panelTitle = this.shadowRoot.getElementById('panel-title');
+    this.#drawer = this.shadowRoot.getElementById('drawer');
+
+    // Listen for tree item selections
+    this.addEventListener('select', (e) => {
+      const treeItem = e.target;
+      if (treeItem.tagName !== 'PF-V6-TREE-ITEM') return;
+
+      this.#handleItemSelect(treeItem);
+    });
+  }
+
+  #handleItemSelect(treeItem) {
+    console.log('handleItemSelect called');
+    const type = treeItem.getAttribute('data-type');
+    console.log('type: ' + type);
+
+    if (!type || type === 'category') {
+      console.log('Skipping category or no type');
+      return;
+    }
+
+    // Build selector from tree item attributes
+    const selector = this.#buildSelector(type, treeItem);
+    console.log('Built selector: ' + selector);
+
+    // Find the matching detail panel
+    const detailPanel = this.querySelector(`[slot="manifest-details"]${selector}`);
+    console.log('Found detail panel: ' + (detailPanel ? 'yes' : 'no'));
+
+    if (!detailPanel) {
+      console.warn('No detail panel found for selector: ' + selector);
+      return;
+    }
+
+    // Hide current detail if exists
+    if (this.#currentDetail) {
+      console.log('Hiding previous detail');
+      this.#currentDetail.hidden = true;
+    }
+
+    // Show new detail
+    console.log('Showing new detail panel');
+    detailPanel.hidden = false;
+    this.#currentDetail = detailPanel;
+
+    // Update panel title and open drawer
+    const title = detailPanel.getAttribute('data-title') || '';
+    console.log('Panel title: ' + title);
+    this.#panelTitle.textContent = title;
+    this.#drawer.expanded = true;
+    console.log('Drawer expanded');
+  }
+
+  #buildSelector(type, treeItem) {
+    const selectors = [`[data-type="${type}"]`];
+
+    const modulePath = treeItem.getAttribute('data-module-path') || treeItem.getAttribute('data-path');
+    const tagName = treeItem.getAttribute('data-tag-name');
+    const name = treeItem.getAttribute('data-name');
+
+    console.log('Building selector - modulePath: ' + modulePath + ', tagName: ' + tagName + ', name: ' + name);
+
+    if (modulePath) {
+      selectors.push(`[data-module-path="${modulePath}"]`);
+    }
+    if (tagName) {
+      selectors.push(`[data-tag-name="${tagName}"]`);
+    }
+    if (name) {
+      selectors.push(`[data-name="${name}"]`);
+    }
+
+    return selectors.join('');
+  }
+
   static {
     customElements.define(this.is, this);
   }
 }
-

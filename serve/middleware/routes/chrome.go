@@ -42,6 +42,14 @@ type ChromeData struct {
 	Manifest       *M.Package    // Parsed manifest for server-side tree rendering
 }
 
+// TemplateErrorData represents template data for the error page
+type TemplateErrorData struct {
+	ErrorMessage string
+	Title        string
+	Message      string
+	File         string
+}
+
 // renderDemoChrome renders the demo chrome template with given data.
 // If template execution fails, it broadcasts the error and returns a minimal page with error overlay.
 func renderDemoChrome(data ChromeData) (string, error) {
@@ -68,39 +76,43 @@ func renderDemoChrome(data ChromeData) (string, error) {
 	err := DemoChromeTemplate.Execute(&buf, data)
 	if err != nil {
 		// Template execution failed - broadcast error and return minimal error page
+		title := "Template Execution Error"
+		message := "Failed to render page template: " + err.Error()
 		if errorBroadcaster != nil {
 			_ = errorBroadcaster.BroadcastError(
-				"Template Execution Error",
-				"Failed to render page template: "+err.Error(),
+				title,
+				message,
 				data.TagName,
 			)
 		}
 
-		// Return minimal HTML with error message instead of failing completely
-		// This allows the error overlay to display the error
-		errorHTML := `<!DOCTYPE html>
+		// Render error page using template with SSR-rendered error overlay
+		errorData := TemplateErrorData{
+			ErrorMessage: err.Error(),
+			Title:        title,
+			Message:      message,
+			File:         data.TagName,
+		}
+
+		var errorBuf bytes.Buffer
+		if templateErr := TemplateErrorTemplate.Execute(&errorBuf, errorData); templateErr != nil {
+			// If even the error template fails, fall back to absolute minimal HTML
+			return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Template Error</title>
-  <link rel="stylesheet" href="/__cem/pf-tokens.css">
-  <link rel="stylesheet" href="/__cem/demo-chrome.css">
-  <script type="module">
-    import '/__cem/elements/cem-transform-error-overlay/cem-transform-error-overlay.js';
-  </script>
+  <title>Critical Template Error</title>
 </head>
 <body>
-  <div style="padding: 2rem; max-width: 60rem; margin: 0 auto;">
-    <h1>Template Rendering Error</h1>
-    <p>The page template failed to render. Check the error overlay and server logs for details.</p>
-    <pre style="background: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto;">` +
-			template.HTMLEscapeString(err.Error()) +
-			`</pre>
-  </div>
-  <cem-transform-error-overlay id="error-overlay"></cem-transform-error-overlay>
+  <h1>Critical Template Error</h1>
+  <p>Both the page template and error template failed to render.</p>
+  <pre>Original error: ` + template.HTMLEscapeString(err.Error()) + `</pre>
+  <pre>Error template error: ` + template.HTMLEscapeString(templateErr.Error()) + `</pre>
 </body>
-</html>`
-		return errorHTML, nil
+</html>`, nil
+		}
+
+		return errorBuf.String(), nil
 	}
 
 	return buf.String(), nil
