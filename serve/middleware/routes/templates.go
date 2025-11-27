@@ -169,6 +169,15 @@ func getTemplateFuncs() template.FuncMap {
 			}
 			return false
 		},
+		"hasMethodMembers": func(members []M.ClassMember) bool {
+			// Check if any member is a method
+			for _, member := range members {
+				if member.Kind == "method" {
+					return true
+				}
+			}
+			return false
+		},
 	}
 }
 

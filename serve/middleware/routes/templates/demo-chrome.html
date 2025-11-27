@@ -131,6 +131,7 @@
             {{end}}
             {{end}}
           </pf-v6-tree-item>
+          {{if hasMethodMembers $ce.Members}}
           {{$methodsId := printf "category:%s:%s:methods" $modulePath $ce.TagName}}
           <pf-v6-tree-item label="Methods" data-type="category" data-category="methods" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}">
             {{range $ce.Members}}
@@ -140,6 +141,7 @@
             {{end}}
             {{end}}
           </pf-v6-tree-item>
+          {{end}}
           {{end}}
           {{if $ce.Events}}
           {{$eventsId := printf "category:%s:%s:events" $modulePath $ce.TagName}}
