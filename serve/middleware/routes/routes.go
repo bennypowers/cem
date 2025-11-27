@@ -696,17 +696,23 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 	case strings.HasSuffix(requestedPath, ".css"):
 		w.Header().Set("Content-Type", "text/css; charset=utf-8")
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("/* 404 Not Found */\n"))
+		if _, err := w.Write([]byte("/* 404 Not Found */\n")); err != nil {
+			config.Context.Logger().Error("Failed to write CSS 404 response: %v", err)
+		}
 		return
 	case strings.HasSuffix(requestedPath, ".js"):
 		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("// 404 Not Found\n"))
+		if _, err := w.Write([]byte("// 404 Not Found\n")); err != nil {
+			config.Context.Logger().Error("Failed to write JS 404 response: %v", err)
+		}
 		return
 	case strings.HasSuffix(requestedPath, ".json"):
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("{}\n"))
+		if _, err := w.Write([]byte("{}\n")); err != nil {
+			config.Context.Logger().Error("Failed to write JSON 404 response: %v", err)
+		}
 		return
 	case strings.HasSuffix(requestedPath, ".svg"):
 		w.Header().Set("Content-Type", "image/svg+xml")
