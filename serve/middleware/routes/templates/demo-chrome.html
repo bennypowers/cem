@@ -107,6 +107,7 @@
       {{$moduleId := printf "module:%s" .Path}}
       <pf-v6-tree-item label="{{.Path}}" badge="{{len .Declarations}}" data-type="module" data-path="{{.Path}}">
         {{range .Declarations}}
+        {{/* Custom Elements */}}
         {{$ce := asCustomElement .}}
         {{if $ce}}
         {{$ceId := printf "custom-element:%s:%s" $modulePath $ce.TagName}}
@@ -158,6 +159,30 @@
             {{end}}
           </pf-v6-tree-item>
           {{end}}
+        </pf-v6-tree-item>
+        {{end}}
+        {{/* Classes */}}
+        {{$class := asClass .}}
+        {{if $class}}
+        <pf-v6-tree-item label="{{$class.Name}}" data-type="class" data-name="{{$class.Name}}" data-module-path="{{$modulePath}}">
+        </pf-v6-tree-item>
+        {{end}}
+        {{/* Functions */}}
+        {{$func := asFunction .}}
+        {{if $func}}
+        <pf-v6-tree-item label="{{$func.Name}}()" data-type="function" data-name="{{$func.Name}}" data-module-path="{{$modulePath}}">
+        </pf-v6-tree-item>
+        {{end}}
+        {{/* Variables */}}
+        {{$var := asVariable .}}
+        {{if $var}}
+        <pf-v6-tree-item label="{{$var.Name}}" data-type="variable" data-name="{{$var.Name}}" data-module-path="{{$modulePath}}">
+        </pf-v6-tree-item>
+        {{end}}
+        {{/* Mixins */}}
+        {{$mixin := asMixin .}}
+        {{if $mixin}}
+        <pf-v6-tree-item label="{{$mixin.Name}}()" data-type="mixin" data-name="{{$mixin.Name}}" data-module-path="{{$modulePath}}">
         </pf-v6-tree-item>
         {{end}}
         {{end}}
@@ -309,6 +334,85 @@
       {{if .Description}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">{{markdown .Description}}</dd></div>{{end}}
     </dl>
     {{end}}
+    {{/* Class detail panels */}}
+    {{$class := asClass .}}
+    {{if $class}}
+    <h3 slot="manifest-name"
+        data-type="class"
+        data-name="{{$class.Name}}"
+        data-module-path="{{$modulePath}}"
+        hidden>{{$class.Name}}</h3>
+    <dl slot="manifest-details"
+        class="pf-v6-c-description-list pf-m-horizontal pf-m-compact"
+        data-type="class"
+        data-name="{{$class.Name}}"
+        data-module-path="{{$modulePath}}"
+        hidden>
+      <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Type</dt><dd class="pf-v6-c-description-list__description">Class</dd></div>
+      {{if $class.Summary}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">{{markdown $class.Summary}}</dd></div>{{end}}
+      {{if $class.Description}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">{{markdown $class.Description}}</dd></div>{{end}}
+      {{if $class.Superclass}}{{if $class.Superclass.Name}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Extends</dt><dd class="pf-v6-c-description-list__description"><code>{{$class.Superclass.Name}}</code></dd></div>{{end}}{{end}}
+    </dl>
+    {{end}}
+    {{/* Function detail panels */}}
+    {{$func := asFunction .}}
+    {{if $func}}
+    <h3 slot="manifest-name"
+        data-type="function"
+        data-name="{{$func.Name}}"
+        data-module-path="{{$modulePath}}"
+        hidden>{{$func.Name}}()</h3>
+    <dl slot="manifest-details"
+        class="pf-v6-c-description-list pf-m-horizontal pf-m-compact"
+        data-type="function"
+        data-name="{{$func.Name}}"
+        data-module-path="{{$modulePath}}"
+        hidden>
+      <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Type</dt><dd class="pf-v6-c-description-list__description">Function</dd></div>
+      {{if $func.Summary}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">{{markdown $func.Summary}}</dd></div>{{end}}
+      {{if $func.Description}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">{{markdown $func.Description}}</dd></div>{{end}}
+      {{if $func.Return}}{{if $func.Return.Type}}{{if $func.Return.Type.Text}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Returns</dt><dd class="pf-v6-c-description-list__description"><code>{{$func.Return.Type.Text}}</code></dd></div>{{end}}{{end}}{{end}}
+    </dl>
+    {{end}}
+    {{/* Variable detail panels */}}
+    {{$var := asVariable .}}
+    {{if $var}}
+    <h3 slot="manifest-name"
+        data-type="variable"
+        data-name="{{$var.Name}}"
+        data-module-path="{{$modulePath}}"
+        hidden>{{$var.Name}}</h3>
+    <dl slot="manifest-details"
+        class="pf-v6-c-description-list pf-m-horizontal pf-m-compact"
+        data-type="variable"
+        data-name="{{$var.Name}}"
+        data-module-path="{{$modulePath}}"
+        hidden>
+      <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Type</dt><dd class="pf-v6-c-description-list__description">Variable</dd></div>
+      {{if $var.Type}}{{if $var.Type.Text}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Value Type</dt><dd class="pf-v6-c-description-list__description"><code>{{$var.Type.Text}}</code></dd></div>{{end}}{{end}}
+      {{if $var.Summary}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">{{markdown $var.Summary}}</dd></div>{{end}}
+      {{if $var.Description}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">{{markdown $var.Description}}</dd></div>{{end}}
+      {{if $var.Default}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Default</dt><dd class="pf-v6-c-description-list__description"><code>{{$var.Default}}</code></dd></div>{{end}}
+    </dl>
+    {{end}}
+    {{/* Mixin detail panels */}}
+    {{$mixin := asMixin .}}
+    {{if $mixin}}
+    <h3 slot="manifest-name"
+        data-type="mixin"
+        data-name="{{$mixin.Name}}"
+        data-module-path="{{$modulePath}}"
+        hidden>{{$mixin.Name}}()</h3>
+    <dl slot="manifest-details"
+        class="pf-v6-c-description-list pf-m-horizontal pf-m-compact"
+        data-type="mixin"
+        data-name="{{$mixin.Name}}"
+        data-module-path="{{$modulePath}}"
+        hidden>
+      <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Type</dt><dd class="pf-v6-c-description-list__description">Mixin</dd></div>
+      {{if $mixin.Summary}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">{{markdown $mixin.Summary}}</dd></div>{{end}}
+      {{if $mixin.Description}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">{{markdown $mixin.Description}}</dd></div>{{end}}
+    </dl>
     {{end}}
     {{end}}
     {{end}}

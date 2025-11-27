@@ -155,6 +155,10 @@ func getTemplateFuncs() template.FuncMap {
 		"prettifyRoute":     prettifyRoute,
 		"extractLocalRoute": extractLocalRoute,
 		"asCustomElement":   asCustomElement,
+		"asClass":           asClass,
+		"asFunction":        asFunction,
+		"asVariable":        asVariable,
+		"asMixin":           asMixin,
 		"hasAttr": func(data interface{}, attrName string) bool {
 			// Check if an attribute exists in .Attributes map
 			if dataMap, ok := data.(map[string]interface{}); ok {
@@ -198,6 +202,42 @@ var TemplateErrorTemplate = template.Must(template.New("template-error").Funcs(g
 func asCustomElement(decl M.Declaration) *M.CustomElementDeclaration {
 	if ce, ok := decl.(*M.CustomElementDeclaration); ok {
 		return ce
+	}
+	return nil
+}
+
+// asClass performs type assertion to extract ClassDeclaration from Declaration interface.
+// Returns nil if the declaration is not a class.
+func asClass(decl M.Declaration) *M.ClassDeclaration {
+	if c, ok := decl.(*M.ClassDeclaration); ok {
+		return c
+	}
+	return nil
+}
+
+// asFunction performs type assertion to extract FunctionDeclaration from Declaration interface.
+// Returns nil if the declaration is not a function.
+func asFunction(decl M.Declaration) *M.FunctionDeclaration {
+	if f, ok := decl.(*M.FunctionDeclaration); ok {
+		return f
+	}
+	return nil
+}
+
+// asVariable performs type assertion to extract VariableDeclaration from Declaration interface.
+// Returns nil if the declaration is not a variable.
+func asVariable(decl M.Declaration) *M.VariableDeclaration {
+	if v, ok := decl.(*M.VariableDeclaration); ok {
+		return v
+	}
+	return nil
+}
+
+// asMixin performs type assertion to extract MixinDeclaration from Declaration interface.
+// Returns nil if the declaration is not a mixin.
+func asMixin(decl M.Declaration) *M.MixinDeclaration {
+	if m, ok := decl.(*M.MixinDeclaration); ok {
+		return m
 	}
 	return nil
 }
