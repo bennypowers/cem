@@ -46,7 +46,7 @@ Add manifest browser as **third tab** in `cem-drawer` (alongside Knobs and Serve
   <pf-v6-tabs>
     <pf-v6-tab title="Knobs">...</pf-v6-tab>
     <pf-v6-tab title="Server Logs">...</pf-v6-tab>
-    <pf-v6-tab title="Manifest">
+    <pf-v6-tab title="Manifest Browser">
       <cem-manifest-browser></cem-manifest-browser>
     </pf-v6-tab>
   </pf-v6-tabs>

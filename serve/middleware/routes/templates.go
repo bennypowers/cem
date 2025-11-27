@@ -71,7 +71,26 @@ func SetErrorBroadcaster(ctx middleware.DevServerContext) {
 // This is a function to avoid initialization cycles with renderElementShadowRoot
 func getTemplateFuncs() template.FuncMap {
 	return template.FuncMap{
-		"contains": strings.Contains,
+		"contains": func(haystack, needle interface{}) bool {
+			// Handle string contains (substring search)
+			if h, ok := haystack.(string); ok {
+				if n, ok := needle.(string); ok {
+					return strings.Contains(h, n)
+				}
+			}
+			// Handle slice contains (element search)
+			if slice, ok := haystack.([]string); ok {
+				if str, ok := needle.(string); ok {
+					for _, s := range slice {
+						if s == str {
+							return true
+						}
+					}
+					return false
+				}
+			}
+			return false
+		},
 		"join": func(elems []string, sep string) string {
 			return strings.Join(elems, sep)
 		},
@@ -133,7 +152,9 @@ func getTemplateFuncs() template.FuncMap {
 			}
 			return template.HTML(html)
 		},
-		"asCustomElement": asCustomElement,
+		"prettifyRoute":     prettifyRoute,
+		"extractLocalRoute": extractLocalRoute,
+		"asCustomElement":   asCustomElement,
 	}
 }
 

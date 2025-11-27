@@ -1,4 +1,5 @@
 import '/__cem/elements/pf-v6-button/pf-v6-button.js';
+import { StatePersistence } from '/__cem/state-persistence.js';
 
 // CEM Serve Drawer - Collapsible drawer component
 
@@ -55,11 +56,6 @@ export class CemServeDrawer extends HTMLElement {
     if (resizeHandle && content) {
       resizeHandle.addEventListener('mousedown', this.#startResize);
       resizeHandle.addEventListener('keydown', this.#handleKeydown);
-    }
-
-    // Set initial height when open
-    if (this.open) {
-      content.style.height = '400px';
     }
   }
 
@@ -136,8 +132,16 @@ export class CemServeDrawer extends HTMLElement {
     content.style.height = `${newHeight}px`;
     this.#updateAriaValueNow(newHeight);
 
-    // Dispatch resize event
-    this.dispatchEvent(new CemDrawerResizeEvent(newHeight));
+    // Debounce resize event and cookie persistence (300ms)
+    clearTimeout(this.#resizeDebounceTimer);
+    this.#resizeDebounceTimer = setTimeout(() => {
+      this.dispatchEvent(new CemDrawerResizeEvent(newHeight));
+
+      // Persist to cookie
+      StatePersistence.updateState({
+        drawer: { height: newHeight }
+      });
+    }, 300);
   }
 
   #updateAriaValueNow(height) {
@@ -164,6 +168,11 @@ export class CemServeDrawer extends HTMLElement {
     this.#resizeDebounceTimer = setTimeout(() => {
       const height = parseInt(content.style.height, 10);
       this.dispatchEvent(new CemDrawerResizeEvent(height));
+
+      // Persist to cookie
+      StatePersistence.updateState({
+        drawer: { height }
+      });
     }, 300);
 
     // Remove global event listeners
@@ -180,7 +189,8 @@ export class CemServeDrawer extends HTMLElement {
         if (this.open) {
           // Set default height when opening (if not already set by resize)
           if (!content.style.height || content.style.height === '0px') {
-            content.style.height = '400px';
+            const state = StatePersistence.getState();
+            content.style.height = `${state.drawer.height}px`;
           }
         } else {
           // Reset to 0 when closing
@@ -195,6 +205,11 @@ export class CemServeDrawer extends HTMLElement {
 
       // Dispatch change event
       this.dispatchEvent(new CemDrawerChangeEvent(this.open));
+
+      // Update cookie with new open state
+      StatePersistence.updateState({
+        drawer: { open: this.open }
+      });
     }
   }
 

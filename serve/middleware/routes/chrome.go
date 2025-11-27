@@ -40,6 +40,7 @@ type ChromeData struct {
 	NavigationHTML template.HTML // Navigation drawer HTML (listing pages)
 	ManifestJSON   template.JS   // Full manifest JSON for client-side tools
 	Manifest       *M.Package    // Parsed manifest for server-side tree rendering
+	State          CemServeState // Persisted UI state for SSR (color scheme, drawer, tree)
 }
 
 // TemplateErrorData represents template data for the error page

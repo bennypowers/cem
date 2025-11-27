@@ -28,6 +28,27 @@ html::view-transition-new(*) {
   to { opacity: 0; }
 }
 
+/* Stable transition names for persistent elements */
+pf-v6-masthead {
+  view-transition-name: masthead;
+}
+
+pf-v6-page-sidebar {
+  view-transition-name: sidebar;
+}
+
+cem-drawer {
+  view-transition-name: drawer;
+}
+
+pf-v6-page-main {
+  view-transition-name: main-content;
+}
+
+pf-v6-tree-view {
+  view-transition-name: tree-view;
+}
+
 :root {
   /* Map to PatternFly tokens */
   --cem-dev-server-bg-primary: var(--pf-t--global--background--color--primary--default);

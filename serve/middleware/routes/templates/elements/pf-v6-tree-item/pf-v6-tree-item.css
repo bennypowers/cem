@@ -1,5 +1,9 @@
 /* Tree Item - Individual node in tree */
 
+:host([hidden]) {
+  display: none !important;
+}
+
 :host {
   /* Spacing */
   --_node-padding-block: var(--pf-t--global--spacer--sm, 0.5rem);

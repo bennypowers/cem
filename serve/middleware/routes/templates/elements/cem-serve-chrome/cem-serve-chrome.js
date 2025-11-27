@@ -39,6 +39,7 @@ import '/__cem/elements/pf-v6-tree-view/pf-v6-tree-view.js';
 
 import { CemElement } from '/__cem/cem-element.js';
 import { CEMReloadClient } from '/__cem/websocket-client.js';
+import { StatePersistence } from '/__cem/state-persistence.js';
 
 /**
  * Custom event fired when logs are received
@@ -65,6 +66,9 @@ export class CemServeChrome extends CemElement {
     'package-name',
     'canonical-url',
     'source-url',
+    'drawer-open',
+    'drawer-height',
+    'tabs-selected',
   ];
 
   // Static templates for demo URL display
@@ -210,8 +214,8 @@ export class CemServeChrome extends CemElement {
   get sourceURL() { return this.getAttribute('source-url') || ''; }
 
   async afterTemplateLoaded() {
-    // Add initializing class to prevent flash during state restoration
-    this.classList.add('initializing');
+    // Check if we need to migrate from localStorage
+    this.#migrateFromLocalStorageIfNeeded();
 
     // Set up debug overlay
     this.#setupDebugOverlay();
@@ -228,6 +232,9 @@ export class CemServeChrome extends CemElement {
     // Set up knob event coordination
     this.#setupKnobCoordination();
 
+    // Set up tree state persistence
+    this.#setupTreeStatePersistence();
+
     // Set up reconnection modal button handlers
     this.#$('#reload-button')?.addEventListener('click', () => {
       window.location.reload();
@@ -240,12 +247,6 @@ export class CemServeChrome extends CemElement {
 
     // Initialize WebSocket connection
     this.#wsClient.init();
-
-    // Remove initializing class after all state is restored (prevents flash)
-    // Wait for browser to apply DOM changes before revealing tabs
-    requestAnimationFrame(() => {
-      this.classList.remove('initializing');
-    });
 
     console.debug('[cem-serve-chrome] Demo chrome initialized for', this.primaryTagName);
   }
@@ -376,15 +377,25 @@ export class CemServeChrome extends CemElement {
   }
 
   #logsFilterValue = '';
+  #logsFilterDebounceTimer = null;
 
   #setupLogListener() {
     // Set up log container
     this.#logContainer = this.#$('#log-container');
 
-    // Set up filter input
-    this.#$('#logs-filter')?.addEventListener('input', (e) => {
-      this.#filterLogs(e.target.value);
-    });
+    // Set up filter input with debouncing
+    const logsFilter = this.#$('#logs-filter');
+    if (logsFilter) {
+      logsFilter.addEventListener('input', () => {
+        const value = logsFilter.getAttribute('value') || '';
+
+        // Debounce filter - wait 300ms after user stops typing
+        clearTimeout(this.#logsFilterDebounceTimer);
+        this.#logsFilterDebounceTimer = setTimeout(() => {
+          this.#filterLogs(value);
+        }, 300);
+      });
+    }
 
     // Set up copy logs button
     this.#$('#copy-logs')?.addEventListener('click', () => {
@@ -402,15 +413,15 @@ export class CemServeChrome extends CemElement {
 
   #filterLogs(query) {
     this.#logsFilterValue = query.toLowerCase();
-    
+
     if (!this.#logContainer) return;
 
     for (const entry of this.#logContainer.children) {
       const text = entry.textContent.toLowerCase();
       if (this.#logsFilterValue && !text.includes(this.#logsFilterValue)) {
-        entry.setAttribute('hidden', '');
+        entry.hidden = true;
       } else {
-        entry.removeAttribute('hidden');
+        entry.hidden = false;
       }
     }
   }
@@ -420,7 +431,7 @@ export class CemServeChrome extends CemElement {
 
     // Filter visible logs if there is a filter
     const logs = Array.from(this.#logContainer.children)
-      .filter(entry => !entry.hasAttribute('hidden'))
+      .filter(entry => !entry.hidden)
       .map(entry => {
       const type = entry.querySelector('[data-field="label"]')?.textContent?.trim() || 'INFO';
       const time = entry.querySelector('[data-field="time"]')?.textContent?.trim() || '';
@@ -479,47 +490,11 @@ export class CemServeChrome extends CemElement {
       return;
     }
 
-    // Storage access gatekeeper - localStorage can throw in Safari private mode
-    const getStorageItem = (key, defaultValue) => {
-      try {
-        return localStorage.getItem(key) ?? defaultValue;
-      } catch (e) {
-        return defaultValue;
-      }
-    };
+    // Track drawer open state for logs scrolling (state already restored in afterTemplateLoaded)
+    this.#drawerOpen = drawer.open;
 
-    const setStorageItem = (key, value) => {
-      try {
-        localStorage.setItem(key, value);
-      } catch (e) {
-        // Storage unavailable (private mode), silently continue
-      }
-    };
-
-    // Restore drawer state from localStorage
-    const savedDrawerOpen = getStorageItem('cem-serve-drawer-open', null);
-    if (savedDrawerOpen === 'true') {
-      drawer.open = true;
-    }
-
-    // Restore drawer height from localStorage
-    const savedDrawerHeight = getStorageItem('cem-serve-drawer-height', null);
-    if (savedDrawerHeight && drawer.open) {
-      const content = drawer.shadowRoot.getElementById('content');
-      if (content) {
-        content.style.height = `${savedDrawerHeight}px`;
-      }
-    }
-
-    // Restore tabs state from localStorage (default to first tab)
-    const savedTab = getStorageItem('cem-serve-active-tab', null);
-    if (savedTab) {
-      tabs.value = savedTab;
-    }
-
-    // Listen for drawer changes and persist to localStorage
+    // Listen for drawer changes and update tracked state
     drawer.addEventListener('change', (e) => {
-      setStorageItem('cem-serve-drawer-open', String(e.open));
       this.#drawerOpen = e.open;
 
       // Scroll logs when drawer opens
@@ -528,17 +503,14 @@ export class CemServeChrome extends CemElement {
       }
     });
 
-    // Listen for drawer resize and persist to localStorage
-    drawer.addEventListener('resize', (e) => {
-      setStorageItem('cem-serve-drawer-height', String(e.height));
-    });
-
-    // Listen for tab changes and persist to localStorage
+    // Listen for tab changes and persist to cookie
     tabs.addEventListener('change', (e) => {
-      setStorageItem('cem-serve-active-tab', e.value);
+      StatePersistence.updateState({
+        tabs: { selectedIndex: e.selectedIndex }
+      });
 
-      // Scroll logs if switching to logs panel and drawer is open
-      if (e.value === 'panel-logs' && drawer.open) {
+      // Scroll logs if switching to logs panel (index 2) and drawer is open
+      if (e.selectedIndex === 2 && drawer.open) {
         this.#scrollLogsToBottom();
       }
     });
@@ -718,42 +690,56 @@ Generated: ${new Date().toISOString()}`;
     }
   }
 
+  #migrateFromLocalStorageIfNeeded() {
+    // Check if localStorage has any values we should migrate
+    try {
+      const hasLocalStorage =
+        localStorage.getItem('cem-serve-color-scheme') !== null ||
+        localStorage.getItem('cem-serve-drawer-open') !== null ||
+        localStorage.getItem('cem-serve-drawer-height') !== null ||
+        localStorage.getItem('cem-serve-active-tab') !== null;
+
+      if (hasLocalStorage) {
+        // Check if we've already migrated (look for a migration marker)
+        const migrated = localStorage.getItem('cem-serve-migrated-to-cookies');
+        if (!migrated) {
+          console.log('[cem-serve] Migrating state from localStorage to cookies');
+          StatePersistence.migrateFromLocalStorage();
+          localStorage.setItem('cem-serve-migrated-to-cookies', 'true');
+
+          // Reload to apply migrated state via SSR
+          // Use setTimeout to avoid blocking
+          setTimeout(() => window.location.reload(), 100);
+        }
+      }
+    } catch (e) {
+      // localStorage not available, skip migration
+    }
+  }
+
   #setupColorSchemeToggle() {
     const toggleGroup = this.#$('.color-scheme-toggle');
     if (!toggleGroup) return;
 
-    // Storage access gatekeeper - localStorage can throw in Safari private mode
-    const getStorageItem = (key, defaultValue) => {
-      try {
-        return localStorage.getItem(key) ?? defaultValue;
-      } catch (e) {
-        return defaultValue;
-      }
-    };
+    // Get state from cookie (already SSR'd, this is for client-side updates)
+    const state = StatePersistence.getState();
 
-    const setStorageItem = (key, value) => {
-      try {
-        localStorage.setItem(key, value);
-      } catch (e) {
-        // Storage unavailable (private mode), silently continue
-      }
-    };
+    // Apply current scheme
+    this.#applyColorScheme(state.colorScheme);
 
-    // Restore saved color scheme preference and mark item as selected
-    const saved = getStorageItem('cem-serve-color-scheme', 'system');
+    // Mark correct toggle as selected (SSR should have done this via body style, but ensure it)
     const items = toggleGroup.querySelectorAll('pf-v6-toggle-group-item');
     items.forEach(item => {
-      if (item.getAttribute('value') === saved) {
+      if (item.getAttribute('value') === state.colorScheme) {
         item.setAttribute('selected', '');
       }
     });
-    this.#applyColorScheme(saved);
 
-    // Listen for toggle group changes
+    // Listen for toggle group changes and update cookie
     toggleGroup.addEventListener('pf-v6-toggle-group-change', (e) => {
       const scheme = e.value;
       this.#applyColorScheme(scheme);
-      setStorageItem('cem-serve-color-scheme', scheme);
+      StatePersistence.updateState({ colorScheme: scheme });
     });
   }
 
@@ -855,6 +841,60 @@ Generated: ${new Date().toISOString()}`;
       default:
         return 'unknown';
     }
+  }
+
+  #setupTreeStatePersistence() {
+    // Listen for tree item events and persist state
+    this.addEventListener('expand', (e) => {
+      if (e.target.tagName !== 'PF-V6-TREE-ITEM') return;
+
+      const nodeId = this.#getTreeNodeId(e.target);
+      const state = StatePersistence.getState();
+      if (!state.tree.expanded.includes(nodeId)) {
+        state.tree.expanded.push(nodeId);
+        StatePersistence.setState(state);
+      }
+    });
+
+    this.addEventListener('collapse', (e) => {
+      if (e.target.tagName !== 'PF-V6-TREE-ITEM') return;
+
+      const nodeId = this.#getTreeNodeId(e.target);
+      const state = StatePersistence.getState();
+      const index = state.tree.expanded.indexOf(nodeId);
+      if (index > -1) {
+        state.tree.expanded.splice(index, 1);
+        StatePersistence.setState(state);
+      }
+    });
+
+    this.addEventListener('select', (e) => {
+      if (e.target.tagName !== 'PF-V6-TREE-ITEM') return;
+
+      const nodeId = this.#getTreeNodeId(e.target);
+      StatePersistence.updateState({
+        tree: { selected: nodeId }
+      });
+    });
+  }
+
+  #getTreeNodeId(treeItem) {
+    const type = treeItem.getAttribute('data-type');
+    const modulePath = treeItem.getAttribute('data-module-path') || treeItem.getAttribute('data-path');
+    const tagName = treeItem.getAttribute('data-tag-name');
+    const name = treeItem.getAttribute('data-name');
+    const category = treeItem.getAttribute('data-category');
+
+    const parts = [type];
+    if (modulePath) parts.push(modulePath);
+    if (tagName) parts.push(tagName);
+    if (category) {
+      parts.push(category);
+    } else if (name) {
+      parts.push(name);
+    }
+
+    return parts.join(':');
   }
 
   disconnectedCallback() {

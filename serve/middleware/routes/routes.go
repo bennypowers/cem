@@ -448,7 +448,7 @@ func serveDemoRoute(w http.ResponseWriter, r *http.Request, config Config) bool 
 	}
 
 	// Render the demo
-	html, err := renderDemoFromRoute(entry, queryParams, config, navigationHTML, packageName)
+	html, err := renderDemoFromRoute(entry, queryParams, config, navigationHTML, packageName, r)
 	if err != nil {
 		config.Context.Logger().Error("Failed to render demo: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -463,7 +463,7 @@ func serveDemoRoute(w http.ResponseWriter, r *http.Request, config Config) bool 
 }
 
 // renderDemoFromRoute renders a demo page with chrome using routing table entry
-func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, config Config, navigationHTML template.HTML, packageName string) (string, error) {
+func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, config Config, navigationHTML template.HTML, packageName string, r *http.Request) (string, error) {
 	// Determine base directory for file path
 	var baseDir string
 	if config.Context.IsWorkspace() && entry.PackagePath != "" {
@@ -544,6 +544,9 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 		}
 	}
 
+	// Extract state from request cookie for SSR
+	state := GetStateFromRequest(r)
+
 	chromeData := ChromeData{
 		TagName:        entry.TagName,
 		DemoTitle:      demoTitle,
@@ -559,6 +562,7 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 		NavigationHTML: navigationHTML,
 		ManifestJSON:   template.JS(manifestBytes),
 		Manifest:       parsedManifest,
+		State:          state, // Persisted UI state for SSR
 	}
 
 	// Render with chrome
@@ -727,6 +731,9 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 		}
 	}
 
+	// Extract state from request cookie for SSR
+	state := GetStateFromRequest(r)
+
 	// Render 404 page with chrome
 	chromeData := ChromeData{
 		TagName:        "cem-serve",
@@ -735,6 +742,7 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 		ImportMap:      template.HTML(importMapJSON),
 		PackageName:    packageName,
 		NavigationHTML: navigationHTML,
+		State:          state, // Persisted UI state for SSR
 	}
 
 	html, err := renderDemoChrome(chromeData)

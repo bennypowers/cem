@@ -5,6 +5,10 @@
   --pf-v6-c-masthead__logo--Width: max-content;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 /* Masthead logo styles */
 .masthead-logo {
   display: flex;
@@ -325,14 +329,6 @@ footer ::slotted([slot="description"]) {
     border-radius: 3px;
     font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
     font-size: 0.875rem;
-  }
-}
-
-/* Hide footer drawer components until localStorage state is restored (prevents flash) */
-:host(.initializing) {
-  cem-drawer,
-  pf-v6-tabs {
-    visibility: hidden;
   }
 }
 
