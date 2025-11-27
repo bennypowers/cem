@@ -1,8 +1,8 @@
 /**
- * State persistence via cookies for SSR hydration
+ * State persistence for UI state
  *
- * Manages UI state (color scheme, drawer, tree) in a single JSON cookie
- * for server-side rendering and client-side updates.
+ * - Cookie (SSR-compatible): color scheme, drawer, tabs
+ * - localStorage (client-only): tree expansion/selection (due to size)
  */
 export class StatePersistence {
   static COOKIE_NAME = 'cem-serve-state';
@@ -36,25 +36,16 @@ export class StatePersistence {
   }
 
   /**
-   * Write state to cookie with size validation
+   * Write state to cookie
    */
-  static setState(state, retryCount = 0) {
+  static setState(state) {
     const json = JSON.stringify(state);
     const encoded = encodeURIComponent(json);
 
-    // Check size (4KB limit)
+    // Warn if cookie is getting large (4KB limit)
     if (encoded.length > 4000) {
-      // Prevent infinite recursion - only try trimming once
-      if (retryCount > 0) {
-        console.error('[state-persistence] Cookie still too large after trimming, clearing tree state');
-        state.tree.expanded = [];
-        state.tree.selected = null;
-      } else {
-        console.warn('[state-persistence] Cookie size exceeds limit, trimming expanded nodes');
-        // Keep only first 20 expanded nodes
-        state.tree.expanded = state.tree.expanded.slice(0, 20);
-      }
-      return this.setState(state, retryCount + 1);
+      console.error('[state-persistence] Cookie size exceeds 4KB limit!', encoded.length);
+      return;
     }
 
     document.cookie = `${this.COOKIE_NAME}=${encoded}; Path=/; SameSite=Lax; Max-Age=${this.MAX_AGE}`;
@@ -70,13 +61,12 @@ export class StatePersistence {
   }
 
   /**
-   * Default state factory
+   * Default state factory (cookie state only)
    */
   static getDefaultState() {
     return {
       colorScheme: 'system',
       drawer: { open: false, height: 400 },
-      tree: { expanded: [], selected: '' },
       tabs: { selectedIndex: 0 },
       version: this.VERSION
     };
@@ -98,7 +88,7 @@ export class StatePersistence {
   }
 
   /**
-   * Migrate from localStorage (one-time migration)
+   * Migrate from localStorage and old cookie format (one-time migration)
    */
   static migrateFromLocalStorage() {
     const state = this.getDefaultState();
@@ -133,6 +123,24 @@ export class StatePersistence {
       }
     } catch (e) { /* ignore */ }
 
+    // Check if tree state exists in old cookie format and migrate to localStorage
+    try {
+      const cookie = document.cookie
+        .split('; ')
+        .find(row => row.startsWith(this.COOKIE_NAME + '='));
+
+      if (cookie) {
+        const json = decodeURIComponent(cookie.split('=')[1]);
+        const oldState = JSON.parse(json);
+
+        // If old cookie has tree state, migrate it to localStorage
+        if (oldState.tree) {
+          this.setTreeState(oldState.tree);
+          console.log('[state-persistence] Migrated tree state from cookie to localStorage');
+        }
+      }
+    } catch (e) { /* ignore */ }
+
     this.setState(state);
   }
 
@@ -143,6 +151,46 @@ export class StatePersistence {
     // For now, just return default and log
     console.warn('[state-persistence] Migrating from version', oldState.version, 'to', this.VERSION);
     return this.getDefaultState();
+  }
+
+  // ============================================================================
+  // Tree State (localStorage - separate from cookie due to size)
+  // ============================================================================
+
+  static TREE_STORAGE_KEY = 'cem-serve-tree-state';
+
+  /**
+   * Get tree state from localStorage
+   */
+  static getTreeState() {
+    try {
+      const json = localStorage.getItem(this.TREE_STORAGE_KEY);
+      if (!json) return { expanded: [], selected: '' };
+      return JSON.parse(json);
+    } catch (e) {
+      console.warn('[state-persistence] Failed to parse tree state:', e);
+      return { expanded: [], selected: '' };
+    }
+  }
+
+  /**
+   * Set tree state in localStorage
+   */
+  static setTreeState(treeState) {
+    try {
+      localStorage.setItem(this.TREE_STORAGE_KEY, JSON.stringify(treeState));
+    } catch (e) {
+      console.error('[state-persistence] Failed to save tree state:', e);
+    }
+  }
+
+  /**
+   * Update partial tree state
+   */
+  static updateTreeState(partial) {
+    const current = this.getTreeState();
+    const updated = { ...current, ...partial };
+    this.setTreeState(updated);
   }
 }
 

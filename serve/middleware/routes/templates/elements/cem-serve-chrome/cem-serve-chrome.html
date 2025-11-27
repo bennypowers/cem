@@ -169,8 +169,8 @@
   <div class="footer-description{{if not .Description}} empty{{end}}">
     <slot name="description"></slot>
   </div>
-  <cem-drawer {{if index . "drawer-open"}}open{{end}} {{if index . "drawer-height"}}drawer-height="{{index . "drawer-height"}}"{{end}}>
-    <pf-v6-tabs {{if index . "tabs-selected"}}selected="{{index . "tabs-selected"}}"{{end}}>
+  <cem-drawer {{if hasAttr . "DrawerOpen"}}open{{end}} {{if .Attributes.DrawerHeight}}drawer-height="{{.Attributes.DrawerHeight}}"{{end}}>
+    <pf-v6-tabs {{if .Attributes.TabsSelected}}selected="{{.Attributes.TabsSelected}}"{{end}}>
       <pf-v6-tab title="Knobs">
         <div id="knobs-container">
           <slot name="knobs">

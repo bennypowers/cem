@@ -155,6 +155,16 @@ func getTemplateFuncs() template.FuncMap {
 		"prettifyRoute":     prettifyRoute,
 		"extractLocalRoute": extractLocalRoute,
 		"asCustomElement":   asCustomElement,
+		"hasAttr": func(data interface{}, attrName string) bool {
+			// Check if an attribute exists in .Attributes map
+			if dataMap, ok := data.(map[string]interface{}); ok {
+				if attrs, ok := dataMap["Attributes"].(map[string]string); ok {
+					_, exists := attrs[attrName]
+					return exists
+				}
+			}
+			return false
+		},
 	}
 }
 

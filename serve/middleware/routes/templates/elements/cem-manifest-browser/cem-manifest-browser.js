@@ -1,3 +1,4 @@
+import '/__cem/elements/pf-v6-badge/pf-v6-badge.js';
 import '/__cem/elements/pf-v6-button/pf-v6-button.js';
 import '/__cem/elements/pf-v6-drawer/pf-v6-drawer.js';
 import '/__cem/elements/pf-v6-text-input-group/pf-v6-text-input-group.js';
@@ -17,10 +18,16 @@ export class CemManifestBrowser extends CemElement {
   #drawer;
   #currentDetail;
   #searchDebounceTimer = null;
+  #searchInput;
+  #searchCount;
+  #searchClear;
 
   afterTemplateLoaded() {
     this.#panelTitle = this.shadowRoot.getElementById('panel-title');
     this.#drawer = this.shadowRoot.getElementById('drawer');
+    this.#searchInput = this.shadowRoot.getElementById('search');
+    this.#searchCount = this.shadowRoot.getElementById('search-count');
+    this.#searchClear = this.shadowRoot.getElementById('search-clear');
 
     // Listen for tree item selections
     this.addEventListener('select', (e) => {
@@ -31,12 +38,16 @@ export class CemManifestBrowser extends CemElement {
     });
 
     // Listen for search input with debouncing
-    const searchInput = this.shadowRoot.getElementById('search');
-    if (searchInput) {
-      searchInput.addEventListener('input', () => {
+    if (this.#searchInput) {
+      this.#searchInput.addEventListener('input', () => {
         // Use getAttribute since the value property reads from the attribute
         // and might not be updated yet in the event handler
-        const value = searchInput.getAttribute('value') || '';
+        const value = this.#searchInput.getAttribute('value') || '';
+
+        // Show/hide clear button based on whether there's a value
+        if (this.#searchClear) {
+          this.#searchClear.hidden = !value;
+        }
 
         // Debounce search - wait 300ms after user stops typing
         clearTimeout(this.#searchDebounceTimer);
@@ -44,8 +55,23 @@ export class CemManifestBrowser extends CemElement {
           this.#handleSearch(value);
         }, 300);
       });
-    } else {
-      console.warn('[manifest search] search input not found');
+    }
+
+    // Listen for clear button
+    if (this.#searchClear) {
+      this.#searchClear.addEventListener('click', () => {
+        // Clear the input
+        if (this.#searchInput) {
+          this.#searchInput.value = '';
+        }
+        // Hide clear button and badge
+        this.#searchClear.hidden = true;
+        if (this.#searchCount) {
+          this.#searchCount.hidden = true;
+        }
+        // Reset search
+        this.#handleSearch('');
+      });
     }
 
     // Listen for expand/collapse all buttons
@@ -154,6 +180,10 @@ export class CemManifestBrowser extends CemElement {
       items.forEach(item => {
         item.hidden = false;
       });
+      // Hide badge when no search
+      if (this.#searchCount) {
+        this.#searchCount.hidden = true;
+      }
       return;
     }
 
@@ -181,6 +211,18 @@ export class CemManifestBrowser extends CemElement {
         parent = parent.parentElement;
       }
     });
+
+    // Update badge count
+    if (this.#searchCount) {
+      const count = matchingItems.size;
+      // Update the text node (first child before the screen reader span)
+      const textNode = Array.from(this.#searchCount.childNodes).find(n => n.nodeType === Node.TEXT_NODE);
+      if (textNode) {
+        textNode.textContent = count.toString();
+      }
+      // Only show badge if there are results
+      this.#searchCount.hidden = count === 0;
+    }
   }
 
   #expandAll() {

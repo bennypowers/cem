@@ -23,12 +23,6 @@ import (
 	"net/url"
 )
 
-// TreeState represents tree expansion/selection state
-type TreeState struct {
-	Expanded []string `json:"expanded"`
-	Selected string   `json:"selected"` // Empty string means no selection
-}
-
 // DrawerState represents drawer open/closed and height
 type DrawerState struct {
 	Open   bool `json:"open"`
@@ -40,11 +34,11 @@ type TabsState struct {
 	SelectedIndex int `json:"selectedIndex"` // 0-based tab index
 }
 
-// CemServeState represents the persisted UI state
+// CemServeState represents the persisted UI state (stored in cookie)
+// Note: Tree state is stored separately in localStorage due to size constraints
 type CemServeState struct {
 	ColorScheme string      `json:"colorScheme"`
 	Drawer      DrawerState `json:"drawer"`
-	Tree        TreeState   `json:"tree"`
 	Tabs        TabsState   `json:"tabs"`
 	Version     int         `json:"version"`
 }
@@ -56,10 +50,6 @@ func DefaultState() CemServeState {
 		Drawer: DrawerState{
 			Open:   false,
 			Height: 400,
-		},
-		Tree: TreeState{
-			Expanded: []string{},
-			Selected: "",
 		},
 		Tabs: TabsState{
 			SelectedIndex: 0,
@@ -108,11 +98,6 @@ func validateState(state CemServeState) CemServeState {
 	// Clamp drawer height to reasonable range
 	if state.Drawer.Height < 100 || state.Drawer.Height > 2000 {
 		state.Drawer.Height = 400
-	}
-
-	// Limit expanded nodes to prevent cookie size issues
-	if len(state.Tree.Expanded) > 200 {
-		state.Tree.Expanded = state.Tree.Expanded[:200]
 	}
 
 	return state

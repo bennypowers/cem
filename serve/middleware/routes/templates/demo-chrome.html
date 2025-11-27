@@ -105,56 +105,56 @@
       {{range .Manifest.Modules}}
       {{$modulePath := .Path}}
       {{$moduleId := printf "module:%s" .Path}}
-      <pf-v6-tree-item label="{{.Path}}" badge="{{len .Declarations}}" data-type="module" data-path="{{.Path}}" {{if contains $.State.Tree.Expanded $moduleId}}expanded{{end}}{{if eq $.State.Tree.Selected $moduleId}} current{{end}}>
+      <pf-v6-tree-item label="{{.Path}}" badge="{{len .Declarations}}" data-type="module" data-path="{{.Path}}">
         {{range .Declarations}}
         {{$ce := asCustomElement .}}
         {{if $ce}}
         {{$ceId := printf "custom-element:%s:%s" $modulePath $ce.TagName}}
-        <pf-v6-tree-item label="&lt;{{$ce.TagName}}&gt;" data-type="custom-element" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}" {{if contains $.State.Tree.Expanded $ceId}}expanded{{end}}{{if eq $.State.Tree.Selected $ceId}} current{{end}}>
+        <pf-v6-tree-item label="&lt;{{$ce.TagName}}&gt;" data-type="custom-element" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}">
           {{if $ce.Attributes}}
           {{$categoryId := printf "category:%s:%s:attributes" $modulePath $ce.TagName}}
-          <pf-v6-tree-item label="Attributes" badge="{{len $ce.Attributes}}" data-type="category" data-category="attributes" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}" {{if contains $.State.Tree.Expanded $categoryId}}expanded{{end}}{{if eq $.State.Tree.Selected $categoryId}} current{{end}}>
+          <pf-v6-tree-item label="Attributes" badge="{{len $ce.Attributes}}" data-type="category" data-category="attributes" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}">
             {{range $ce.Attributes}}
             {{$attrId := printf "attribute:%s:%s:%s" $modulePath $ce.TagName .Name}}
-            <pf-v6-tree-item label="{{.Name}}" data-type="attribute" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}" {{if eq $.State.Tree.Selected $attrId}}current{{end}}></pf-v6-tree-item>
+            <pf-v6-tree-item label="{{.Name}}" data-type="attribute" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}"></pf-v6-tree-item>
             {{end}}
           </pf-v6-tree-item>
           {{end}}
           {{if $ce.Members}}
           {{$propsId := printf "category:%s:%s:properties" $modulePath $ce.TagName}}
-          <pf-v6-tree-item label="Properties" badge="{{len $ce.Members}}" data-type="category" data-category="properties" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}" {{if contains $.State.Tree.Expanded $propsId}}expanded{{end}}{{if eq $.State.Tree.Selected $propsId}} current{{end}}>
+          <pf-v6-tree-item label="Properties" badge="{{len $ce.Members}}" data-type="category" data-category="properties" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}">
             {{range $ce.Members}}
             {{if eq .Kind "field"}}
             {{$propId := printf "property:%s:%s:%s" $modulePath $ce.TagName .Name}}
-            <pf-v6-tree-item label="{{.Name}}" data-type="property" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}" {{if eq $.State.Tree.Selected $propId}}current{{end}}></pf-v6-tree-item>
+            <pf-v6-tree-item label="{{.Name}}" data-type="property" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}"></pf-v6-tree-item>
             {{end}}
             {{end}}
           </pf-v6-tree-item>
           {{$methodsId := printf "category:%s:%s:methods" $modulePath $ce.TagName}}
-          <pf-v6-tree-item label="Methods" data-type="category" data-category="methods" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}" {{if contains $.State.Tree.Expanded $methodsId}}expanded{{end}}{{if eq $.State.Tree.Selected $methodsId}} current{{end}}>
+          <pf-v6-tree-item label="Methods" data-type="category" data-category="methods" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}">
             {{range $ce.Members}}
             {{if eq .Kind "method"}}
             {{$methodId := printf "method:%s:%s:%s" $modulePath $ce.TagName .Name}}
-            <pf-v6-tree-item label="{{.Name}}()" data-type="method" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}" {{if eq $.State.Tree.Selected $methodId}}current{{end}}></pf-v6-tree-item>
+            <pf-v6-tree-item label="{{.Name}}()" data-type="method" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}"></pf-v6-tree-item>
             {{end}}
             {{end}}
           </pf-v6-tree-item>
           {{end}}
           {{if $ce.Events}}
           {{$eventsId := printf "category:%s:%s:events" $modulePath $ce.TagName}}
-          <pf-v6-tree-item label="Events" badge="{{len $ce.Events}}" data-type="category" data-category="events" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}" {{if contains $.State.Tree.Expanded $eventsId}}expanded{{end}}{{if eq $.State.Tree.Selected $eventsId}} current{{end}}>
+          <pf-v6-tree-item label="Events" badge="{{len $ce.Events}}" data-type="category" data-category="events" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}">
             {{range $ce.Events}}
             {{$eventId := printf "event:%s:%s:%s" $modulePath $ce.TagName .Name}}
-            <pf-v6-tree-item label="{{.Name}}" data-type="event" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}" {{if eq $.State.Tree.Selected $eventId}}current{{end}}></pf-v6-tree-item>
+            <pf-v6-tree-item label="{{.Name}}" data-type="event" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}"></pf-v6-tree-item>
             {{end}}
           </pf-v6-tree-item>
           {{end}}
           {{if $ce.Slots}}
           {{$slotsId := printf "category:%s:%s:slots" $modulePath $ce.TagName}}
-          <pf-v6-tree-item label="Slots" badge="{{len $ce.Slots}}" data-type="category" data-category="slots" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}" {{if contains $.State.Tree.Expanded $slotsId}}expanded{{end}}{{if eq $.State.Tree.Selected $slotsId}} current{{end}}>
+          <pf-v6-tree-item label="Slots" badge="{{len $ce.Slots}}" data-type="category" data-category="slots" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}">
             {{range $ce.Slots}}
             {{$slotId := printf "slot:%s:%s:%s" $modulePath $ce.TagName .Name}}
-            <pf-v6-tree-item label="{{.Name}}" data-type="slot" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}" {{if eq $.State.Tree.Selected $slotId}}current{{end}}></pf-v6-tree-item>
+            <pf-v6-tree-item label="{{.Name}}" data-type="slot" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}"></pf-v6-tree-item>
             {{end}}
           </pf-v6-tree-item>
           {{end}}

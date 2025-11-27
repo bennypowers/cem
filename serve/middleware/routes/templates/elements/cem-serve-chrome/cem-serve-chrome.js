@@ -497,10 +497,26 @@ export class CemServeChrome extends CemElement {
     drawer.addEventListener('change', (e) => {
       this.#drawerOpen = e.open;
 
+      // Persist drawer open state
+      StatePersistence.updateState({
+        drawer: { open: e.open }
+      });
+
       // Scroll logs when drawer opens
       if (e.open) {
         this.#scrollLogsToBottom();
       }
+    });
+
+    // Listen for drawer resize events
+    drawer.addEventListener('resize', (e) => {
+      // Update drawer-height attribute
+      drawer.setAttribute('drawer-height', e.height);
+
+      // Persist drawer height
+      StatePersistence.updateState({
+        drawer: { height: e.height }
+      });
     });
 
     // Listen for tab changes and persist to cookie
@@ -844,15 +860,15 @@ Generated: ${new Date().toISOString()}`;
   }
 
   #setupTreeStatePersistence() {
-    // Listen for tree item events and persist state
+    // Listen for tree item events and persist state to localStorage
     this.addEventListener('expand', (e) => {
       if (e.target.tagName !== 'PF-V6-TREE-ITEM') return;
 
       const nodeId = this.#getTreeNodeId(e.target);
-      const state = StatePersistence.getState();
-      if (!state.tree.expanded.includes(nodeId)) {
-        state.tree.expanded.push(nodeId);
-        StatePersistence.setState(state);
+      const treeState = StatePersistence.getTreeState();
+      if (!treeState.expanded.includes(nodeId)) {
+        treeState.expanded.push(nodeId);
+        StatePersistence.setTreeState(treeState);
       }
     });
 
@@ -860,11 +876,11 @@ Generated: ${new Date().toISOString()}`;
       if (e.target.tagName !== 'PF-V6-TREE-ITEM') return;
 
       const nodeId = this.#getTreeNodeId(e.target);
-      const state = StatePersistence.getState();
-      const index = state.tree.expanded.indexOf(nodeId);
+      const treeState = StatePersistence.getTreeState();
+      const index = treeState.expanded.indexOf(nodeId);
       if (index > -1) {
-        state.tree.expanded.splice(index, 1);
-        StatePersistence.setState(state);
+        treeState.expanded.splice(index, 1);
+        StatePersistence.setTreeState(treeState);
       }
     });
 
@@ -872,10 +888,49 @@ Generated: ${new Date().toISOString()}`;
       if (e.target.tagName !== 'PF-V6-TREE-ITEM') return;
 
       const nodeId = this.#getTreeNodeId(e.target);
-      StatePersistence.updateState({
-        tree: { selected: nodeId }
-      });
+      StatePersistence.updateTreeState({ selected: nodeId });
     });
+
+    // Apply tree state from localStorage on load
+    this.#applyTreeState();
+  }
+
+  #applyTreeState() {
+    const treeState = StatePersistence.getTreeState();
+
+    // Expand nodes
+    for (const nodeId of treeState.expanded) {
+      const treeItem = this.#findTreeItemById(nodeId);
+      if (treeItem && !treeItem.hasAttribute('expanded')) {
+        treeItem.setAttribute('expanded', '');
+      }
+    }
+
+    // Select node
+    if (treeState.selected) {
+      const treeItem = this.#findTreeItemById(treeState.selected);
+      if (treeItem && !treeItem.hasAttribute('current')) {
+        treeItem.setAttribute('current', '');
+      }
+    }
+  }
+
+  #findTreeItemById(nodeId) {
+    const parts = nodeId.split(':');
+    const [type, modulePath, tagName, name] = parts;
+
+    let selector = `pf-v6-tree-item[data-type="${type}"]`;
+    if (modulePath) {
+      selector += `[data-module-path="${modulePath}"], pf-v6-tree-item[data-type="${type}"][data-path="${modulePath}"]`;
+    }
+    if (tagName) {
+      selector += `[data-tag-name="${tagName}"]`;
+    }
+    if (name) {
+      selector += `[data-name="${name}"]`;
+    }
+
+    return this.querySelector(selector);
   }
 
   #getTreeNodeId(treeItem) {
