@@ -290,7 +290,7 @@ func resolvePackageEntryPoint(pkgPath string, fs platform.FileSystem) (string, e
 			// Try nested conditions
 			if rootValue, ok := exportsMap["."]; ok {
 				if resolved := resolveSimpleExportValue(rootValue, ""); resolved != "" {
-					return strings.TrimPrefix(resolved, "/"), nil
+					return strings.TrimPrefix(resolved, "./"), nil
 				}
 			}
 		}
@@ -628,12 +628,20 @@ func addDependencyExportsToScope(scope map[string]string, depName, depWebPath st
 func resolveSimpleExportValue(exportValue interface{}, depWebPath string) string {
 	switch v := exportValue.(type) {
 	case string:
-		return depWebPath + "/" + strings.TrimPrefix(v, "./")
+		trimmed := strings.TrimPrefix(v, "./")
+		if depWebPath == "" {
+			return "./" + trimmed
+		}
+		return depWebPath + "/" + trimmed
 	case map[string]interface{}:
 		// Try import condition first
 		if importValue, ok := v["import"]; ok {
 			if importPath, ok := importValue.(string); ok {
-				return depWebPath + "/" + strings.TrimPrefix(importPath, "./")
+				trimmed := strings.TrimPrefix(importPath, "./")
+				if depWebPath == "" {
+					return "./" + trimmed
+				}
+				return depWebPath + "/" + trimmed
 			}
 			// Recursively resolve nested import conditions
 			if importMap, ok := importValue.(map[string]interface{}); ok {
@@ -643,7 +651,11 @@ func resolveSimpleExportValue(exportValue interface{}, depWebPath string) string
 		// Try default condition
 		if defaultValue, ok := v["default"]; ok {
 			if defaultPath, ok := defaultValue.(string); ok {
-				return depWebPath + "/" + strings.TrimPrefix(defaultPath, "./")
+				trimmed := strings.TrimPrefix(defaultPath, "./")
+				if depWebPath == "" {
+					return "./" + trimmed
+				}
+				return depWebPath + "/" + trimmed
 			}
 			// Recursively resolve nested default
 			if defaultMap, ok := defaultValue.(map[string]interface{}); ok {
@@ -769,27 +781,39 @@ func generateWorkspaceImportMap(workspaceRoot string, packages []middleware.Work
 
 	// Add all workspace packages to global imports with their exports
 	for _, pkg := range packages {
-		logger.Debug("Processing workspace package: %s at %s", pkg.Name, pkg.Path)
+		if logger != nil {
+			logger.Debug("Processing workspace package: %s at %s", pkg.Name, pkg.Path)
+		}
 		// Add package exports to import map (this handles subpaths like @patternfly/elements/pf-avatar/pf-avatar.js)
 		if err := addPackageExportsToImportMap(result, pkg.Name, pkg.Path, workspaceRoot, logger, fs); err != nil {
-			logger.Warning("Failed to add exports for %s: %v - using fallback", pkg.Name, err)
+			if logger != nil {
+				logger.Warning("Failed to add exports for %s: %v - using fallback", pkg.Name, err)
+			}
 			// If exports resolution fails, add basic mapping as fallback
 			pkgRelPath, err := filepath.Rel(workspaceRoot, pkg.Path)
 			if err != nil {
-				logger.Warning("Failed to compute relative path for %s: %v", pkg.Name, err)
+				if logger != nil {
+					logger.Warning("Failed to compute relative path for %s: %v", pkg.Name, err)
+				}
 				continue
 			}
 			pkgWebPath := "/" + filepath.ToSlash(pkgRelPath)
 
 			if entryPoint, err := resolvePackageEntryPoint(pkg.Path, fs); err == nil && entryPoint != "" {
 				result.Imports[pkg.Name] = pkgWebPath + "/" + entryPoint
-				logger.Debug("Added fallback mapping: %s -> %s", pkg.Name, pkgWebPath+"/"+entryPoint)
+				if logger != nil {
+					logger.Debug("Added fallback mapping: %s -> %s", pkg.Name, pkgWebPath+"/"+entryPoint)
+				}
 			} else {
 				result.Imports[pkg.Name+"/"] = pkgWebPath + "/"
-				logger.Debug("Added fallback trailing slash mapping: %s/ -> %s/", pkg.Name, pkgWebPath)
+				if logger != nil {
+					logger.Debug("Added fallback trailing slash mapping: %s/ -> %s/", pkg.Name, pkgWebPath)
+				}
 			}
 		} else {
-			logger.Debug("Successfully added exports for %s (%d imports)", pkg.Name, len(result.Imports))
+			if logger != nil {
+				logger.Debug("Successfully added exports for %s (%d imports)", pkg.Name, len(result.Imports))
+			}
 		}
 	}
 
