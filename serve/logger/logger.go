@@ -226,10 +226,7 @@ func (l *ptermLogger) log(level, color, msg string, args ...interface{}) {
 	// Capture wsManager reference while holding lock to avoid race with SetWebSocketManager
 	ws := l.wsManager
 
-	shouldPrint := true
-	if color == "debug" && !l.verbose {
-		shouldPrint = false
-	}
+	shouldPrint := color != "debug" || l.verbose
 
 	if shouldPrint {
 		if l.interactive && l.area != nil {
