@@ -42,6 +42,9 @@ class PfV6TreeView extends CemElement {
 
     // Set up keyboard navigation at tree level
     this.#setupKeyboardNavigation();
+
+    // Initialize roving tabindex: first item should be focusable
+    this.#initializeTabindex();
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -92,29 +95,81 @@ class PfV6TreeView extends CemElement {
         case 'ArrowDown':
           e.preventDefault();
           if (currentIndex < items.length - 1) {
-            items[currentIndex + 1].focus();
+            this.#focusItem(items[currentIndex + 1]);
           }
           break;
 
         case 'ArrowUp':
           e.preventDefault();
           if (currentIndex > 0) {
-            items[currentIndex - 1].focus();
+            this.#focusItem(items[currentIndex - 1]);
+          }
+          break;
+
+        case 'ArrowRight':
+          e.preventDefault();
+          if (target.hasChildren) {
+            if (!target.expanded) {
+              // Collapsed with children: expand it
+              target.expand();
+            } else {
+              // Already expanded: move to first child
+              const children = this.#getDirectChildren(target);
+              if (children.length > 0) {
+                this.#focusItem(children[0]);
+              }
+            }
+          }
+          // If no children, do nothing
+          break;
+
+        case 'ArrowLeft':
+          e.preventDefault();
+          if (target.hasChildren && target.expanded) {
+            // Expanded: collapse it
+            target.collapse();
+          } else {
+            // Collapsed or no children: move to parent
+            const parent = this.#getParentItem(target);
+            if (parent) {
+              this.#focusItem(parent);
+            }
           }
           break;
 
         case 'Home':
           e.preventDefault();
           if (items.length > 0) {
-            items[0].focus();
+            this.#focusItem(items[0]);
           }
           break;
 
         case 'End':
           e.preventDefault();
           if (items.length > 0) {
-            items[items.length - 1].focus();
+            this.#focusItem(items[items.length - 1]);
           }
+          break;
+
+        case 'Enter':
+        case ' ':
+          e.preventDefault();
+          target.select();
+          if (target.hasChildren) {
+            target.toggle();
+          }
+          break;
+
+        case '*':
+          e.preventDefault();
+          // Expand all siblings at the same level
+          const parent = this.#getParentItem(target);
+          const siblings = parent ? this.#getDirectChildren(parent) : this.#getTopLevelItems();
+          siblings.forEach(item => {
+            if (item.hasChildren) {
+              item.expand();
+            }
+          });
           break;
       }
     });
@@ -122,9 +177,83 @@ class PfV6TreeView extends CemElement {
 
   /**
    * Get all visible tree items in document order
+   * Only returns items that are visible (not inside collapsed parents)
    */
   #getAllVisibleItems() {
-    return Array.from(this.querySelectorAll('pf-v6-tree-item'));
+    const visible = [];
+    const walk = (parent) => {
+      const children = Array.from(parent.children).filter(el => el.tagName === 'PF-V6-TREE-ITEM');
+      for (const item of children) {
+        visible.push(item);
+        // Only recurse into children if this item is expanded
+        if (item.expanded && item.hasChildren) {
+          walk(item);
+        }
+      }
+    };
+    walk(this);
+    return visible;
+  }
+
+  /**
+   * Get direct children of a tree item
+   */
+  #getDirectChildren(item) {
+    return Array.from(item.children).filter(el => el.tagName === 'PF-V6-TREE-ITEM');
+  }
+
+  /**
+   * Get top-level items (direct children of tree view)
+   */
+  #getTopLevelItems() {
+    return Array.from(this.children).filter(el => el.tagName === 'PF-V6-TREE-ITEM');
+  }
+
+  /**
+   * Get the parent tree item, or null if at top level
+   */
+  #getParentItem(item) {
+    const parent = item.parentElement;
+    if (!parent) return null;
+
+    // Walk up to find parent tree item
+    let current = parent;
+    while (current && current !== this) {
+      if (current.tagName === 'PF-V6-TREE-ITEM') {
+        return current;
+      }
+      current = current.parentElement;
+    }
+    return null;
+  }
+
+  /**
+   * Initialize roving tabindex pattern
+   * First item gets tabindex="0", all others get tabindex="-1"
+   */
+  #initializeTabindex() {
+    const items = this.#getTopLevelItems();
+    if (items.length === 0) return;
+
+    // Set first item to tabindex="0", rest to "-1"
+    items[0].setTabindex(0);
+    const allOtherItems = this.querySelectorAll('pf-v6-tree-item:not(:first-child)');
+    allOtherItems.forEach(item => item.setTabindex(-1));
+  }
+
+  /**
+   * Focus an item and manage roving tabindex
+   */
+  #focusItem(item) {
+    if (!item) return;
+
+    // Update tabindex: only focused item should have tabindex="0"
+    const allItems = this.querySelectorAll('pf-v6-tree-item');
+    allItems.forEach(i => i.setTabindex(-1));
+    item.setTabindex(0);
+
+    // Focus the item
+    item.focusItem();
   }
 
   /**

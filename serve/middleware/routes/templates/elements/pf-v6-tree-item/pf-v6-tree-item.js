@@ -274,6 +274,22 @@ class PfV6TreeItem extends CemElement {
     this.current = false;
   }
 
+  /**
+   * Set tabindex for roving tabindex pattern
+   */
+  setTabindex(value) {
+    if (!this.#item) return;
+    this.#item.setAttribute('tabindex', String(value));
+  }
+
+  /**
+   * Focus this item
+   */
+  focusItem() {
+    if (!this.#item) return;
+    this.#item.focus();
+  }
+
   static {
     customElements.define(this.is, this);
   }
