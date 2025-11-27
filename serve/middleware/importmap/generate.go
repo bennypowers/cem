@@ -19,6 +19,7 @@ package importmap
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -106,7 +107,7 @@ func Generate(rootDir string, config *Config) (*ImportMap, error) {
 	rootPkg, err := readPackageJSON(rootPkgPath, fs)
 	if err != nil {
 		// Empty package.json is OK - just return empty import map
-		if os.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			return result, nil
 		}
 		return nil, fmt.Errorf("reading package.json: %w", err)
