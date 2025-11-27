@@ -24,11 +24,15 @@ export class CemServeDrawer extends HTMLElement {
     'drawer-height',
   ];
 
-  #$ = id => this.shadowRoot.getElementById(id);
+  #$(id) {
+    return this.shadowRoot?.getElementById(id);
+  }
+
   #isDragging = false;
   #startY = 0;
   #startHeight = 0;
   #resizeDebounceTimer = null;
+  #initialized = false;
 
   get open() {
     return this.hasAttribute('open');
@@ -39,12 +43,29 @@ export class CemServeDrawer extends HTMLElement {
   }
 
   connectedCallback() {
+    // Guard against calling before shadowRoot is populated
+    if (!this.shadowRoot?.firstChild) {
+      return;
+    }
+
+    // Only initialize once
+    if (this.#initialized) {
+      return;
+    }
+    this.#initialized = true;
+
+    // Apply initial attribute states that may have been set before shadowRoot was ready
+    this.#applyInitialState();
+
     // Set up toggle button
     const toggleButton = this.#$('toggle');
     if (toggleButton) {
       toggleButton.addEventListener('click', () => {
         // Enable transitions on first click
-        this.#$('content').classList.add('transitions-enabled');
+        const content = this.#$('content');
+        if (content) {
+          content.classList.add('transitions-enabled');
+        }
         this.toggle();
       });
     }
@@ -55,6 +76,23 @@ export class CemServeDrawer extends HTMLElement {
     if (resizeHandle && content) {
       resizeHandle.addEventListener('mousedown', this.#startResize);
       resizeHandle.addEventListener('keydown', this.#handleKeydown);
+    }
+  }
+
+  #applyInitialState() {
+    // Apply open attribute state if present
+    if (this.hasAttribute('open')) {
+      const content = this.#$('content');
+      const toggleButton = this.#$('toggle');
+
+      if (content) {
+        const height = parseInt(this.getAttribute('drawer-height') || '400', 10);
+        content.style.height = `${height}px`;
+      }
+
+      if (toggleButton) {
+        toggleButton.setAttribute('aria-expanded', 'true');
+      }
     }
   }
 
@@ -170,6 +208,11 @@ export class CemServeDrawer extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
+    // Guard against calling before shadowRoot is populated
+    if (!this.shadowRoot?.firstChild) {
+      return;
+    }
+
     if (name === 'open' && oldValue !== newValue) {
       const content = this.#$('content');
       const toggleButton = this.#$('toggle');

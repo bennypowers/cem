@@ -34,3 +34,7 @@ jobs:
         run: make test-unit
       - name: Run E2E tests
         run: make test-e2e
+      - name: Install frontend dependencies
+        run: cd serve && npm ci
+      - name: Run frontend tests
+        run: make test-frontend

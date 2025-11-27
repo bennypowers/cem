@@ -19,7 +19,7 @@ else
     RACE_LDFLAGS :=
 endif
 
-.PHONY: build test test-unit test-e2e update watch bench bench-lookup profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major
+.PHONY: build test test-unit test-e2e test-frontend test-frontend-watch test-frontend-update install-frontend update watch bench bench-lookup profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major
 
 # NOTE: this is a non-traditional install target, which installs to ~/.local/bin/
 # It's mostly intended for local development, not for distribution
@@ -72,7 +72,26 @@ test-unit: generate
 test-e2e: generate
 	gotestsum -- -race $(RACE_LDFLAGS) -tags=e2e ./cmd/
 
-test: test-unit test-e2e
+install-frontend:
+	cd serve && npm ci
+
+test-frontend: install-frontend build
+	@echo "Starting cem serve on port 9876 for tests..."
+	@cd serve/testdata/demo-routing && ../../../dist/cem serve --port 9876 > /tmp/cem-serve-test.log 2>&1 & echo $$! > /tmp/cem-serve-test.pid
+	@sleep 3
+	@echo "Running frontend tests..."
+	@cd serve && npm test || (kill `cat /tmp/cem-serve-test.pid` 2>/dev/null; rm -f /tmp/cem-serve-test.pid; exit 1)
+	@echo "Stopping cem serve..."
+	@kill `cat /tmp/cem-serve-test.pid` 2>/dev/null || true
+	@rm -f /tmp/cem-serve-test.pid
+
+test-frontend-watch: install-frontend
+	cd serve && npm run test:watch
+
+test-frontend-update: install-frontend
+	cd serve && npm run test:update
+
+test: test-unit test-e2e test-frontend
 
 # Flexible test target that accepts TEST_ARGS for filtering
 # Usage: make test-pkg TEST_ARGS="-v ./lsp/methods/textDocument/definition/ -run TestDefinition"
@@ -85,6 +104,7 @@ test-pkg:
 
 update:
 	go test -race $(RACE_LDFLAGS) -json ./... --update | go tool tparse -all
+	make test-frontend-update
 
 lint:
 	golangci-lint run

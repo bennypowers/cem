@@ -10,7 +10,9 @@ export class CemServeDemo extends HTMLElement {
    */
   #getElementInstance(tagName, instanceIndex = 0) {
     const root = this.shadowRoot ?? this;
-    const elements = root.querySelectorAll(tagName);
+    // Use :scope > to limit to direct children only
+    const selector = this.shadowRoot ? tagName : `:scope > ${tagName}`;
+    const elements = root.querySelectorAll(selector);
     return elements[instanceIndex] || null;
   }
 

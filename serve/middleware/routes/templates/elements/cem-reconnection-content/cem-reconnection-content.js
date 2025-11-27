@@ -40,6 +40,12 @@ export class CemReconnectionContent extends CemElement {
 
     this.#remainingMs = delay;
 
+    // If delay is 0 or negative, show connecting immediately
+    if (this.#remainingMs <= 0) {
+      this.#retryInfo.textContent = `Attempt #${attempt}. Connecting...`;
+      return;
+    }
+
     // Update immediately
     const seconds = Math.ceil(this.#remainingMs / 1000);
     this.#retryInfo.textContent = `Attempt #${attempt}. Retrying in ${seconds}s...`;
@@ -48,7 +54,9 @@ export class CemReconnectionContent extends CemElement {
     this.#countdownInterval = setInterval(() => {
       this.#remainingMs -= 100;
 
-      if (this.#remainingMs <= 0) {
+      // Use < 100 instead of <= 0 to handle cases where remaining time
+      // is less than one interval period (avoids showing "Retrying in 1s" when < 100ms left)
+      if (this.#remainingMs < 100) {
         this.clearCountdown();
         this.#retryInfo.textContent = `Attempt #${attempt}. Connecting...`;
         return;

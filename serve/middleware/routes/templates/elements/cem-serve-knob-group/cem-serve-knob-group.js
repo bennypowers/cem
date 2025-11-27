@@ -254,6 +254,11 @@ class CemServeKnobGroup extends CemElement {
   }
 
   #parseValue(value) {
+    // If already a boolean, return as-is (from checkbox/switch checked state)
+    if (typeof value === 'boolean') {
+      return value;
+    }
+
     // Try to parse as JSON for complex types
     if (value === 'true') return true;
     if (value === 'false') return false;
