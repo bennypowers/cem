@@ -24,6 +24,12 @@ import (
 	M "bennypowers.dev/cem/manifest"
 )
 
+// PackageWithManifest represents a package with its modules for workspace tree organization
+type PackageWithManifest struct {
+	Name    string
+	Modules []M.Module
+}
+
 // ChromeData represents template data for demo chrome
 type ChromeData struct {
 	TagName        string
@@ -40,6 +46,7 @@ type ChromeData struct {
 	NavigationHTML template.HTML // Navigation drawer HTML (listing pages)
 	ManifestJSON   template.JS   // Full manifest JSON for client-side tools
 	Manifest       *M.Package    // Parsed manifest for server-side tree rendering
+	Packages       []PackageWithManifest // Workspace packages with modules (for package-level tree)
 	State          CemServeState // Persisted UI state for SSR (color scheme, drawer, tree)
 }
 

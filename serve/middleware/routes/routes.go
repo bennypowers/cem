@@ -520,6 +520,7 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 	// Fetch manifest and generate knobs for ALL custom elements in demo
 	var manifestBytes []byte
 	var parsedManifest *M.Package // Declare parsedManifest here
+	var packages []PackageWithManifest // For workspace mode package-level tree
 
 	if config.Context.IsWorkspace() {
 		// Workspace mode: aggregate manifests from all packages
@@ -533,6 +534,14 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 			var parsed M.Package
 			if err := json.Unmarshal(pkg.Manifest, &parsed); err != nil {
 				continue
+			}
+
+			// Track packages with their modules for tree organization
+			if len(parsed.Modules) > 0 {
+				packages = append(packages, PackageWithManifest{
+					Name:    pkg.Name,
+					Modules: parsed.Modules,
+				})
 			}
 
 			if aggregatedManifest == nil {
@@ -605,7 +614,8 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 		NavigationHTML: navigationHTML,
 		ManifestJSON:   template.JS(manifestBytes),
 		Manifest:       parsedManifest,
-		State:          state, // Persisted UI state for SSR
+		Packages:       packages, // Workspace packages with modules (for package-level tree)
+		State:          state,    // Persisted UI state for SSR
 	}
 
 	// Render with chrome

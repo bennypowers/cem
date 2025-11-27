@@ -490,6 +490,7 @@ func RenderWorkspaceListing(packages []PackageContext, importMap string) (string
 
 	// Aggregate all package manifests for the manifest browser
 	var aggregatedManifest *M.Package
+	var packagesWithManifests []PackageWithManifest
 	for _, pkg := range packages {
 		if len(pkg.Manifest) == 0 {
 			continue
@@ -498,6 +499,14 @@ func RenderWorkspaceListing(packages []PackageContext, importMap string) (string
 		var parsed M.Package
 		if err := json.Unmarshal(pkg.Manifest, &parsed); err != nil {
 			continue
+		}
+
+		// Track packages with their modules for tree organization
+		if len(parsed.Modules) > 0 {
+			packagesWithManifests = append(packagesWithManifests, PackageWithManifest{
+				Name:    pkg.Name,
+				Modules: parsed.Modules,
+			})
 		}
 
 		if aggregatedManifest == nil {
@@ -526,5 +535,6 @@ func RenderWorkspaceListing(packages []PackageContext, importMap string) (string
 		NavigationHTML: navigationHTML,
 		Manifest:       aggregatedManifest,
 		ManifestJSON:   manifestJSON,
+		Packages:       packagesWithManifests, // Workspace packages with modules (for package-level tree)
 	})
 }
