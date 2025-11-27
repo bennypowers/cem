@@ -160,7 +160,7 @@ class PfV6TreeView extends CemElement {
           }
           break;
 
-        case '*':
+        case '*': {
           e.preventDefault();
           // Expand all siblings at the same level
           const parent = this.#getParentItem(target);
@@ -171,6 +171,7 @@ class PfV6TreeView extends CemElement {
             }
           });
           break;
+        }
       }
     });
   }
