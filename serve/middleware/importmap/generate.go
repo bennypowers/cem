@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/serve/middleware"
 	"bennypowers.dev/cem/serve/middleware/types"
 	W "bennypowers.dev/cem/workspace"
 )
@@ -746,7 +747,7 @@ func addWorkspaceScopesToImportMap(importMap *ImportMap, workspaceRoot, rootDir 
 // Only includes dependencies from packages with customElements fields
 // Global imports: workspace packages + their direct dependencies
 // Scopes: transitive dependencies
-func generateWorkspaceImportMap(workspaceRoot string, packages []WorkspacePackage, logger types.Logger, fs platform.FileSystem) (*ImportMap, error) {
+func generateWorkspaceImportMap(workspaceRoot string, packages []middleware.WorkspacePackage, logger types.Logger, fs platform.FileSystem) (*ImportMap, error) {
 	result := &ImportMap{
 		Imports: make(map[string]string),
 		Scopes:  make(map[string]map[string]string),

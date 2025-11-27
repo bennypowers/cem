@@ -685,19 +685,9 @@ func (s *Server) InitializeWorkspaceMode() error {
 	s.demoRoutes = workspaceRoutingTable
 	s.logger.Info("Built routing table with %d demo routes", len(workspaceRoutingTable))
 
-	// Convert middleware.WorkspacePackage to importmappkg.WorkspacePackage
-	workspacePkgs := make([]importmappkg.WorkspacePackage, len(packages))
-	for i, pkg := range packages {
-		workspacePkgs[i] = importmappkg.WorkspacePackage{
-			Name:     pkg.Name,
-			Path:     pkg.Path,
-			Manifest: pkg.Manifest,
-		}
-	}
-
 	// Generate workspace import map using middleware package
 	importMap, err := importmappkg.Generate(s.workspaceRoot, &importmappkg.Config{
-		WorkspacePackages: workspacePkgs,
+		WorkspacePackages: packages,
 		Logger:            s.logger,
 		FS:                s.fs,
 	})
@@ -1029,16 +1019,8 @@ func (s *Server) handleFileChanges() {
 			s.mu.Lock()
 			if s.isWorkspace {
 				// Workspace mode: regenerate workspace import map
-				workspacePkgs := make([]importmappkg.WorkspacePackage, len(s.workspacePackages))
-				for i, pkg := range s.workspacePackages {
-					workspacePkgs[i] = importmappkg.WorkspacePackage{
-						Name:     pkg.Name,
-						Path:     pkg.Path,
-						Manifest: pkg.Manifest,
-					}
-				}
 				importMap, err := importmappkg.Generate(s.workspaceRoot, &importmappkg.Config{
-					WorkspacePackages: workspacePkgs,
+					WorkspacePackages: s.workspacePackages,
 					Logger:            s.logger,
 					FS:                s.fs,
 				})

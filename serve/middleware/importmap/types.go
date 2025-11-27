@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 
 	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/serve/middleware"
 	"bennypowers.dev/cem/serve/middleware/types"
 )
 
@@ -49,17 +50,9 @@ func (im *ImportMap) ToJSON() string {
 
 // Config configures import map generation
 type Config struct {
-	InputMapPath      string              // Path to user override file
-	CLIOverrides      map[string]string   // CLI flag overrides (highest priority)
-	Logger            types.Logger // Logger for warnings
-	WorkspacePackages []WorkspacePackage  // If set, generate workspace-mode import map (flattened scopes)
-	FS                platform.FileSystem // Filesystem abstraction (defaults to OS filesystem if nil)
-}
-
-
-// WorkspacePackage holds information about a package in the workspace
-type WorkspacePackage struct {
-	Name     string // Package name from package.json
-	Path     string // Absolute path to package directory
-	Manifest []byte // Generated custom elements manifest
+	InputMapPath      string                       // Path to user override file
+	CLIOverrides      map[string]string            // CLI flag overrides (highest priority)
+	Logger            types.Logger                 // Logger for warnings
+	WorkspacePackages []middleware.WorkspacePackage // If set, generate workspace-mode import map (flattened scopes)
+	FS                platform.FileSystem          // Filesystem abstraction (defaults to OS filesystem if nil)
 }
