@@ -922,17 +922,19 @@ Generated: ${new Date().toISOString()}`;
     // Build attribute suffix for tag name and name
     let attrSuffix = '';
     if (tagName) {
-      attrSuffix += `[data-tag-name="${tagName}"]`;
+      attrSuffix += `[data-tag-name="${CSS.escape(tagName)}"]`;
     }
     if (name) {
-      attrSuffix += `[data-name="${name}"]`;
+      attrSuffix += `[data-name="${CSS.escape(name)}"]`;
     }
 
     // Build complete selectors with all attributes
-    let selector = `pf-v6-tree-item[data-type="${type}"]`;
+    let selector = `pf-v6-tree-item[data-type="${CSS.escape(type)}"]`;
     if (modulePath) {
-      const selector1 = `pf-v6-tree-item[data-type="${type}"][data-module-path="${modulePath}"]${attrSuffix}`;
-      const selector2 = `pf-v6-tree-item[data-type="${type}"][data-path="${modulePath}"]${attrSuffix}`;
+      const escapedModulePath = CSS.escape(modulePath);
+      const escapedType = CSS.escape(type);
+      const selector1 = `pf-v6-tree-item[data-type="${escapedType}"][data-module-path="${escapedModulePath}"]${attrSuffix}`;
+      const selector2 = `pf-v6-tree-item[data-type="${escapedType}"][data-path="${escapedModulePath}"]${attrSuffix}`;
       selector = `${selector1}, ${selector2}`;
     } else {
       selector += attrSuffix;

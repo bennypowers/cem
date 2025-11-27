@@ -213,6 +213,50 @@ export function getTreeNodeId(treeItem) {
 }
 
 /**
+ * Polyfill for CSS.escape
+ * Escapes special characters in CSS selectors
+ */
+if (!window.CSS || !window.CSS.escape) {
+  if (!window.CSS) window.CSS = {};
+  window.CSS.escape = function(value) {
+    const string = String(value);
+    const length = string.length;
+    let result = '';
+    let i = 0;
+    while (i < length) {
+      const char = string.charAt(i);
+      const code = string.charCodeAt(i);
+      // NULL character
+      if (code === 0x0000) {
+        result += '\uFFFD';
+      }
+      // Control characters and certain punctuation
+      else if ((code >= 0x0001 && code <= 0x001F) || code === 0x007F ||
+               (i === 0 && code >= 0x0030 && code <= 0x0039) ||
+               (i === 1 && code >= 0x0030 && code <= 0x0039 && string.charCodeAt(0) === 0x002D)) {
+        result += '\\' + code.toString(16) + ' ';
+      }
+      // Dash at start
+      else if (i === 0 && length === 1 && code === 0x002D) {
+        result += '\\' + char;
+      }
+      // Special CSS characters
+      else if (code >= 0x0080 || char === '-' || char === '_' ||
+               (code >= 0x0030 && code <= 0x0039) ||
+               (code >= 0x0041 && code <= 0x005A) ||
+               (code >= 0x0061 && code <= 0x007A)) {
+        result += char;
+      }
+      else {
+        result += '\\' + char;
+      }
+      i++;
+    }
+    return result;
+  };
+}
+
+/**
  * Find tree item by node ID
  * Builds a selector from the node ID parts
  */
@@ -220,15 +264,15 @@ export function findTreeItemById(nodeId, rootElement = document) {
   const parts = nodeId.split(':');
   const [type, modulePath, tagName, name] = parts;
 
-  let selector = `pf-v6-tree-item[data-type="${type}"]`;
+  let selector = `pf-v6-tree-item[data-type="${CSS.escape(type)}"]`;
   if (modulePath) {
-    selector += `[data-module-path="${modulePath}"]`;
+    selector += `[data-module-path="${CSS.escape(modulePath)}"]`;
   }
   if (tagName) {
-    selector += `[data-tag-name="${tagName}"]`;
+    selector += `[data-tag-name="${CSS.escape(tagName)}"]`;
   }
   if (name) {
-    selector += `[data-name="${name}"]`;
+    selector += `[data-name="${CSS.escape(name)}"]`;
   }
 
   return rootElement.querySelector(selector);
