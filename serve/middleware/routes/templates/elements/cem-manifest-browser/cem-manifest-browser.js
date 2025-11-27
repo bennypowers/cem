@@ -16,6 +16,26 @@ export class CemManifestBrowser extends CemElement {
     this.#panelTitle = this.shadowRoot.getElementById('panel-title');
     this.#drawer = this.shadowRoot.getElementById('drawer');
 
+    // Debug: Check how many detail panels exist
+    const allDetailPanels = this.querySelectorAll('[slot="manifest-details"]');
+    console.log('Total detail panels found: ' + allDetailPanels.length);
+    if (allDetailPanels.length > 0) {
+      const first = allDetailPanels[0];
+      console.log('First panel tagName: ' + first.tagName);
+      console.log('First panel outerHTML: ' + first.outerHTML.substring(0, 200));
+      console.log('First panel data-type: ' + first.getAttribute('data-type'));
+      console.log('First panel data-module-path: ' + first.getAttribute('data-module-path'));
+      console.log('First panel data-tag-name: ' + first.getAttribute('data-tag-name'));
+      console.log('First panel data-name: ' + first.getAttribute('data-name'));
+    }
+
+    // Also check all elements with data-type
+    const allDataTypeElements = this.querySelectorAll('[data-type]');
+    console.log('Total elements with data-type: ' + allDataTypeElements.length);
+    if (allDataTypeElements.length > 0) {
+      console.log('First data-type element: ' + allDataTypeElements[0].tagName + ' with data-type=' + allDataTypeElements[0].getAttribute('data-type'));
+    }
+
     // Listen for tree item selections
     this.addEventListener('select', (e) => {
       const treeItem = e.target;
@@ -39,30 +59,27 @@ export class CemManifestBrowser extends CemElement {
     const selector = this.#buildSelector(type, treeItem);
     console.log('Built selector: ' + selector);
 
-    // Find the matching detail panel
-    const detailPanel = this.querySelector(`[slot="manifest-details"]${selector}`);
-    console.log('Found detail panel: ' + (detailPanel ? 'yes' : 'no'));
+    // Find all matching elements (both h3 and dl)
+    const matchingElements = document.body.querySelectorAll(selector);
+    console.log('Found matching elements: ' + matchingElements.length);
 
-    if (!detailPanel) {
-      console.warn('No detail panel found for selector: ' + selector);
+    if (matchingElements.length === 0) {
+      console.warn('No elements found for selector: ' + selector);
       return;
     }
 
-    // Hide current detail if exists
-    if (this.#currentDetail) {
-      console.log('Hiding previous detail');
-      this.#currentDetail.hidden = true;
+    // Hide current detail elements if exist
+    if (this.#currentDetail && this.#currentDetail.length > 0) {
+      console.log('Hiding previous detail elements: ' + this.#currentDetail.length);
+      this.#currentDetail.forEach(el => el.hidden = true);
     }
 
-    // Show new detail
-    console.log('Showing new detail panel');
-    detailPanel.hidden = false;
-    this.#currentDetail = detailPanel;
+    // Show new detail elements
+    console.log('Showing new detail elements');
+    matchingElements.forEach(el => el.hidden = false);
+    this.#currentDetail = matchingElements;
 
-    // Update panel title and open drawer
-    const title = detailPanel.getAttribute('data-title') || '';
-    console.log('Panel title: ' + title);
-    this.#panelTitle.textContent = title;
+    // Open drawer
     this.#drawer.expanded = true;
     console.log('Drawer expanded');
   }

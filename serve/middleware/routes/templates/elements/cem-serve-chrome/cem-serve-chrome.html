@@ -13,7 +13,8 @@
     <a class="masthead-logo"
        href="/"
        slot="logo">
-      <img alt="CEM Dev Server" src="/__cem/logo.svg">
+      <img alt="CEM Dev Server"
+           src="/__cem/logo.svg">
       {{if .Attributes.PackageName}}
       <h1>{{.Attributes.PackageName}}</h1>
       {{end}}
@@ -63,7 +64,8 @@
           </pf-v6-button>
         </pf-v6-toolbar-item>
         <pf-v6-toolbar-item>
-          <pf-v6-toggle-group class="color-scheme-toggle" aria-label="Color scheme">
+          <pf-v6-toggle-group class="color-scheme-toggle"
+                              aria-label="Color scheme">
             <pf-v6-toggle-group-item value="light">
               <svg width="16"
                    height="16"
@@ -176,12 +178,24 @@
           </slot>
         </div>
       </pf-v6-tab>
+      <pf-v6-tab title="Manifest">
+        <cem-manifest-browser>
+          <slot name="manifest-tree"
+                slot="manifest-tree"></slot>
+          <slot name="manifest-name"
+                slot="manifest-name"></slot>
+          <slot name="manifest-details"
+                slot="manifest-details"></slot>
+        </cem-manifest-browser>
+      </pf-v6-tab>
       <pf-v6-tab title="Server Logs">
         <div class="logs-wrapper">
           <pf-v6-toolbar sticky>
             <pf-v6-toolbar-group>
               <pf-v6-toolbar-item>
-                <pf-v6-text-input-group id="logs-filter" placeholder="Filter logs..." icon>
+                <pf-v6-text-input-group id="logs-filter"
+                                        placeholder="Filter logs..."
+                                        icon>
                   <svg slot="icon"
                        role="presentation"
                        fill="currentColor"
@@ -195,8 +209,14 @@
             </pf-v6-toolbar-group>
             <pf-v6-toolbar-group variant="action-group">
               <pf-v6-toolbar-item>
-                <pf-v6-button id="copy-logs" variant="tertiary" size="small">
-                  <svg slot="icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <pf-v6-button id="copy-logs"
+                              variant="tertiary"
+                              size="small">
+                  <svg slot="icon"
+                       width="16"
+                       height="16"
+                       viewBox="0 0 16 16"
+                       fill="currentColor">
                     <path d="M13 0H6a2 2 0 0 0-2 2 2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2 2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm0 13V4a2 2 0 0 0-2-2H5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1zM3 13V4a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/>
                   </svg>
                   Copy Logs
@@ -206,14 +226,6 @@
           </pf-v6-toolbar>
           <div id="log-container"></div>
         </div>
-      </pf-v6-tab>
-      <pf-v6-tab title="Manifest">
-        <cem-manifest-browser>
-          <slot name="manifest-tree"
-                slot="manifest-tree"></slot>
-          <slot name="manifest-details"
-                slot="manifest-details"></slot>
-        </cem-manifest-browser>
       </pf-v6-tab>
     </pf-v6-tabs>
   </cem-drawer>

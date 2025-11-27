@@ -66,6 +66,7 @@
   </script>
 </head>
 <body>
+  <link rel="stylesheet" href="/__cem/pf-v6-c-description-list.css">
   <cem-serve-chrome role="none"
                     {{if .EnabledKnobs}}knobs="{{.EnabledKnobs}}"{{end}}
                     {{if .TagName}}primary-tag-name="{{.TagName}}"{{end}}
@@ -152,81 +153,145 @@
     {{/* SSR detail panels */}}
     {{range .Manifest.Modules}}
     {{$modulePath := .Path}}
-    <div slot="manifest-details" data-type="module" data-module-path="{{$modulePath}}" data-title="{{.Path}}" hidden>
-      <dl>
-        {{if .Summary}}<dt>Summary</dt><dd>{{markdown .Summary}}</dd>{{end}}
-        {{if .Description}}<dt>Description</dt><dd>{{markdown .Description}}</dd>{{end}}
-        <dt>Declarations</dt><dd>{{len .Declarations}}</dd>
-      </dl>
-    </div>
+    <h3 slot="manifest-name"
+        data-type="module"
+        data-module-path="{{$modulePath}}"
+        hidden>{{.Path}}</h3>
+    <dl slot="manifest-details"
+        class="pf-v6-c-description-list pf-m-horizontal pf-m-compact"
+        data-type="module"
+        data-module-path="{{$modulePath}}"
+        hidden>
+      {{if .Summary}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">{{markdown .Summary}}</dd></div>{{end}}
+      {{if .Description}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">{{markdown .Description}}</dd></div>{{end}}
+      <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Declarations</dt><dd class="pf-v6-c-description-list__description">{{len .Declarations}}</dd></div>
+    </dl>
     {{range .Declarations}}
     {{$ce := asCustomElement .}}
     {{if $ce}}
-    <div slot="manifest-details" data-type="custom-element" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}" data-title="&lt;{{$ce.TagName}}&gt;" hidden>
-      <dl>
-        <dt>Name</dt><dd>{{$ce.Name}}</dd>
-        {{if $ce.Summary}}<dt>Summary</dt><dd>{{markdown $ce.Summary}}</dd>{{end}}
-        {{if $ce.Description}}<dt>Description</dt><dd>{{markdown $ce.Description}}</dd>{{end}}
-        {{if $ce.Superclass}}<dt>Extends</dt><dd><code>{{$ce.Superclass.Name}}</code></dd>{{end}}
-        <dt>Attributes</dt><dd>{{len $ce.Attributes}}</dd>
-        <dt>Events</dt><dd>{{len $ce.Events}}</dd>
-        <dt>Slots</dt><dd>{{len $ce.Slots}}</dd>
-      </dl>
-    </div>
+    <h3 slot="manifest-name"
+        data-type="custom-element"
+        data-tag-name="{{$ce.TagName}}"
+        data-module-path="{{$modulePath}}"
+        hidden>&lt;{{$ce.TagName}}&gt;</h3>
+    <dl slot="manifest-details"
+        class="pf-v6-c-description-list pf-m-horizontal pf-m-compact"
+        data-type="custom-element"
+        data-tag-name="{{$ce.TagName}}"
+        data-module-path="{{$modulePath}}"
+        hidden>
+      <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Name</dt><dd class="pf-v6-c-description-list__description">{{$ce.Name}}</dd></div>
+      {{if $ce.Summary}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">{{markdown $ce.Summary}}</dd></div>{{end}}
+      {{if $ce.Description}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">{{markdown $ce.Description}}</dd></div>{{end}}
+      {{if $ce.Superclass}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Extends</dt><dd class="pf-v6-c-description-list__description"><code>{{$ce.Superclass.Name}}</code></dd></div>{{end}}
+      <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Attributes</dt><dd class="pf-v6-c-description-list__description">{{len $ce.Attributes}}</dd></div>
+      <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Events</dt><dd class="pf-v6-c-description-list__description">{{len $ce.Events}}</dd></div>
+      <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Slots</dt><dd class="pf-v6-c-description-list__description">{{len $ce.Slots}}</dd></div>
+    </dl>
     {{range $ce.Attributes}}
-    <div slot="manifest-details" data-type="attribute" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}" data-title="{{.Name}}" hidden>
-      <dl>
-        <dt>Element</dt><dd><code>&lt;{{$ce.TagName}}&gt;</code></dd>
-        {{if .Type}}{{if .Type.Text}}<dt>Type</dt><dd><code>{{.Type.Text}}</code></dd>{{end}}{{end}}
-        {{if .Summary}}<dt>Summary</dt><dd>{{markdown .Summary}}</dd>{{end}}
-        {{if .Description}}<dt>Description</dt><dd>{{markdown .Description}}</dd>{{end}}
-        {{if .Default}}<dt>Default</dt><dd><code>{{.Default}}</code></dd>{{end}}
-        {{if .FieldName}}<dt>Reflects to</dt><dd><code>{{.FieldName}}</code></dd>{{end}}
-      </dl>
-    </div>
+    <h3 slot="manifest-name"
+        data-type="attribute"
+        data-name="{{.Name}}"
+        data-tag-name="{{$ce.TagName}}"
+        data-module-path="{{$modulePath}}"
+        hidden>{{.Name}}</h3>
+    <dl slot="manifest-details"
+        class="pf-v6-c-description-list pf-m-horizontal pf-m-compact"
+        data-type="attribute"
+        data-name="{{.Name}}"
+        data-tag-name="{{$ce.TagName}}"
+        data-module-path="{{$modulePath}}"
+        hidden>
+      <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;{{$ce.TagName}}&gt;</code></dd></div>
+      {{if .Type}}{{if .Type.Text}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Type</dt><dd class="pf-v6-c-description-list__description"><code>{{.Type.Text}}</code></dd></div>{{end}}{{end}}
+      {{if .Summary}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">{{markdown .Summary}}</dd></div>{{end}}
+      {{if .Description}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">{{markdown .Description}}</dd></div>{{end}}
+      {{if .Default}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Default</dt><dd class="pf-v6-c-description-list__description"><code>{{.Default}}</code></dd></div>{{end}}
+      {{if .FieldName}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Reflects to</dt><dd class="pf-v6-c-description-list__description"><code>{{.FieldName}}</code></dd></div>{{end}}
+    </dl>
     {{end}}
     {{range $ce.Members}}
     {{if eq .Kind "field"}}
-    <div slot="manifest-details" data-type="property" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}" data-title="{{.Name}}" hidden>
-      <dl>
-        <dt>Element</dt><dd><code>&lt;{{$ce.TagName}}&gt;</code></dd>
-        {{if .Type}}{{if .Type.Text}}<dt>Type</dt><dd><code>{{.Type.Text}}</code></dd>{{end}}{{end}}
-        {{if .Summary}}<dt>Summary</dt><dd>{{markdown .Summary}}</dd>{{end}}
-        {{if .Description}}<dt>Description</dt><dd>{{markdown .Description}}</dd>{{end}}
-        {{if .Default}}<dt>Default</dt><dd><code>{{.Default}}</code></dd>{{end}}
-        {{if .Privacy}}<dt>Privacy</dt><dd>{{.Privacy}}</dd>{{end}}
-      </dl>
-    </div>
+    <h3 slot="manifest-name"
+        data-type="property"
+        data-name="{{.Name}}"
+        data-tag-name="{{$ce.TagName}}"
+        data-module-path="{{$modulePath}}"
+        hidden>{{.Name}}</h3>
+    <dl slot="manifest-details"
+        class="pf-v6-c-description-list pf-m-horizontal pf-m-compact"
+        data-type="property"
+        data-name="{{.Name}}"
+        data-tag-name="{{$ce.TagName}}"
+        data-module-path="{{$modulePath}}"
+        hidden>
+      <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;{{$ce.TagName}}&gt;</code></dd></div>
+      {{if .Type}}{{if .Type.Text}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Type</dt><dd class="pf-v6-c-description-list__description"><code>{{.Type.Text}}</code></dd></div>{{end}}{{end}}
+      {{if .Summary}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">{{markdown .Summary}}</dd></div>{{end}}
+      {{if .Description}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">{{markdown .Description}}</dd></div>{{end}}
+      {{if .Default}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Default</dt><dd class="pf-v6-c-description-list__description"><code>{{.Default}}</code></dd></div>{{end}}
+      {{if .Privacy}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Privacy</dt><dd class="pf-v6-c-description-list__description">{{.Privacy}}</dd></div>{{end}}
+    </dl>
     {{else if eq .Kind "method"}}
-    <div slot="manifest-details" data-type="method" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}" data-title="{{.Name}}()" hidden>
-      <dl>
-        <dt>Element</dt><dd><code>&lt;{{$ce.TagName}}&gt;</code></dd>
-        {{if .Summary}}<dt>Summary</dt><dd>{{markdown .Summary}}</dd>{{end}}
-        {{if .Description}}<dt>Description</dt><dd>{{markdown .Description}}</dd>{{end}}
-        {{if .Return}}{{if .Return.Type}}{{if .Return.Type.Text}}<dt>Returns</dt><dd><code>{{.Return.Type.Text}}</code></dd>{{end}}{{end}}{{end}}
-        {{if .Privacy}}<dt>Privacy</dt><dd>{{.Privacy}}</dd>{{end}}
-      </dl>
-    </div>
+    <h3 slot="manifest-name"
+        data-type="method"
+        data-name="{{.Name}}"
+        data-tag-name="{{$ce.TagName}}"
+        data-module-path="{{$modulePath}}"
+        hidden>{{.Name}}()</h3>
+    <dl slot="manifest-details"
+        class="pf-v6-c-description-list pf-m-horizontal pf-m-compact"
+        data-type="method"
+        data-name="{{.Name}}"
+        data-tag-name="{{$ce.TagName}}"
+        data-module-path="{{$modulePath}}"
+        hidden>
+      <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;{{$ce.TagName}}&gt;</code></dd></div>
+      {{if .Summary}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">{{markdown .Summary}}</dd></div>{{end}}
+      {{if .Description}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">{{markdown .Description}}</dd></div>{{end}}
+      {{if .Return}}{{if .Return.Type}}{{if .Return.Type.Text}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Returns</dt><dd class="pf-v6-c-description-list__description"><code>{{.Return.Type.Text}}</code></dd></div>{{end}}{{end}}{{end}}
+      {{if .Privacy}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Privacy</dt><dd class="pf-v6-c-description-list__description">{{.Privacy}}</dd></div>{{end}}
+    </dl>
     {{end}}
     {{end}}
     {{range $ce.Events}}
-    <div slot="manifest-details" data-type="event" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}" data-title="{{.Name}}" hidden>
-      <dl>
-        <dt>Element</dt><dd><code>&lt;{{$ce.TagName}}&gt;</code></dd>
-        {{if .Type}}{{if .Type.Text}}<dt>Detail Type</dt><dd><code>{{.Type.Text}}</code></dd>{{end}}{{end}}
-        {{if .Summary}}<dt>Summary</dt><dd>{{markdown .Summary}}</dd>{{end}}
-        {{if .Description}}<dt>Description</dt><dd>{{markdown .Description}}</dd>{{end}}
-      </dl>
-    </div>
+    <h3 slot="manifest-name"
+        data-type="event"
+        data-name="{{.Name}}"
+        data-tag-name="{{$ce.TagName}}"
+        data-module-path="{{$modulePath}}"
+        hidden>{{.Name}}</h3>
+    <dl slot="manifest-details"
+        class="pf-v6-c-description-list pf-m-horizontal pf-m-compact"
+        data-type="event"
+        data-name="{{.Name}}"
+        data-tag-name="{{$ce.TagName}}"
+        data-module-path="{{$modulePath}}"
+        hidden>
+      <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;{{$ce.TagName}}&gt;</code></dd></div>
+      {{if .Type}}{{if .Type.Text}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Detail Type</dt><dd class="pf-v6-c-description-list__description"><code>{{.Type.Text}}</code></dd></div>{{end}}{{end}}
+      {{if .Summary}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">{{markdown .Summary}}</dd></div>{{end}}
+      {{if .Description}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">{{markdown .Description}}</dd></div>{{end}}
+    </dl>
     {{end}}
     {{range $ce.Slots}}
-    <div slot="manifest-details" data-type="slot" data-name="{{.Name}}" data-tag-name="{{$ce.TagName}}" data-module-path="{{$modulePath}}" data-title="{{if .Name}}{{.Name}}{{else}}(default){{end}}" hidden>
-      <dl>
-        <dt>Element</dt><dd><code>&lt;{{$ce.TagName}}&gt;</code></dd>
-        {{if .Summary}}<dt>Summary</dt><dd>{{markdown .Summary}}</dd>{{end}}
-        {{if .Description}}<dt>Description</dt><dd>{{markdown .Description}}</dd>{{end}}
-      </dl>
-    </div>
+    <h3 slot="manifest-name"
+        data-type="slot"
+        data-name="{{.Name}}"
+        data-tag-name="{{$ce.TagName}}"
+        data-module-path="{{$modulePath}}"
+        hidden>{{if .Name}}{{.Name}}{{else}}(default){{end}}</h3>
+    <dl slot="manifest-details"
+        class="pf-v6-c-description-list pf-m-horizontal pf-m-compact"
+        data-type="slot"
+        data-name="{{.Name}}"
+        data-tag-name="{{$ce.TagName}}"
+        data-module-path="{{$modulePath}}"
+        hidden>
+      <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;{{$ce.TagName}}&gt;</code></dd></div>
+      {{if .Summary}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">{{markdown .Summary}}</dd></div>{{end}}
+      {{if .Description}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">{{markdown .Description}}</dd></div>{{end}}
+    </dl>
     {{end}}
     {{end}}
     {{end}}
