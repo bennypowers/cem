@@ -1,5 +1,9 @@
 /* Manifest Browser - Component API navigation tree */
 
+[hidden] {
+  display: none !important;
+}
+
 :host {
   display: block;
   height: 100%;

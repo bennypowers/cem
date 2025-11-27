@@ -40,9 +40,7 @@ export class CemManifestBrowser extends CemElement {
     // Listen for search input with debouncing
     if (this.#searchInput) {
       this.#searchInput.addEventListener('input', () => {
-        // Use getAttribute since the value property reads from the attribute
-        // and might not be updated yet in the event handler
-        const value = this.#searchInput.getAttribute('value') || '';
+        const value = this.#searchInput.value || '';
 
         // Show/hide clear button based on whether there's a value
         if (this.#searchClear) {
