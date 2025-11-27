@@ -44,12 +44,12 @@ func TestCSSGlobFiltering(t *testing.T) {
 		description        string
 	}{
 		{
-			name:              "no patterns - transforms all CSS",
+			name:              "no patterns - opt-in required",
 			requestPath:       "/styles/main.css",
 			include:           nil,
 			exclude:           nil,
-			expectTransformed: true,
-			description:       "When no patterns specified, all CSS files are transformed",
+			expectTransformed: false,
+			description:       "When no include patterns specified, CSS transformation is opt-in (disabled)",
 		},
 		{
 			name:              "include pattern matches",
@@ -70,7 +70,7 @@ func TestCSSGlobFiltering(t *testing.T) {
 		{
 			name:              "exclude pattern matches",
 			requestPath:       "/docs/styles.css",
-			include:           nil,
+			include:           []string{"**/*.css"},
 			exclude:           []string{"docs/**/*.css"},
 			expectTransformed: false,
 			description:       "File matches exclude pattern, should not be transformed",
@@ -78,7 +78,7 @@ func TestCSSGlobFiltering(t *testing.T) {
 		{
 			name:              "exclude pattern doesn't match",
 			requestPath:       "/elements/button.css",
-			include:           nil,
+			include:           []string{"**/*.css"},
 			exclude:           []string{"docs/**/*.css"},
 			expectTransformed: true,
 			description:       "File doesn't match exclude pattern, should be transformed",
@@ -134,7 +134,7 @@ func TestCSSGlobFiltering(t *testing.T) {
 		{
 			name:              "empty string in exclude patterns",
 			requestPath:       "/elements/button.css",
-			include:           nil,
+			include:           []string{"**/*.css"},
 			exclude:           []string{"", "docs/**/*.css"},
 			expectTransformed: true,
 			description:       "Empty pattern in exclude array is ignored, other patterns apply",
@@ -158,7 +158,7 @@ func TestCSSGlobFiltering(t *testing.T) {
 		{
 			name:              "root-level CSS excluded",
 			requestPath:       "/styles.css",
-			include:           nil,
+			include:           []string{"**/*.css"},
 			exclude:           []string{"*.css"},
 			expectTransformed: false,
 			description:       "Root-level CSS file can be excluded",

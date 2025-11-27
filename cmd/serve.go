@@ -207,6 +207,8 @@ func init() {
 	serveCmd.Flags().Bool("no-reload", false, "Disable live reload")
 	serveCmd.Flags().String("target", "es2022", "TypeScript/JavaScript transform target (es2015, es2016, es2017, es2018, es2019, es2020, es2021, es2022, es2023, esnext)")
 	serveCmd.Flags().StringSlice("watch-ignore", nil, "Glob patterns to ignore in file watcher (comma-separated, e.g., '_site/**,dist/**')")
+	serveCmd.Flags().StringSlice("css-transform", nil, "Glob patterns for CSS files to transform to JavaScript modules (e.g., 'src/**/*.css,elements/**/*.css')")
+	serveCmd.Flags().StringSlice("css-transform-exclude", nil, "Glob patterns for CSS files to exclude from transformation (e.g., 'demo/**/*.css')")
 
 	if err := viper.BindPFlag("serve.port", serveCmd.Flags().Lookup("port")); err != nil {
 		panic(fmt.Sprintf("failed to bind flag serve.port: %v", err))
@@ -219,5 +221,11 @@ func init() {
 	}
 	if err := viper.BindPFlag("serve.watchIgnore", serveCmd.Flags().Lookup("watch-ignore")); err != nil {
 		panic(fmt.Sprintf("failed to bind flag serve.watchIgnore: %v", err))
+	}
+	if err := viper.BindPFlag("serve.transforms.css.include", serveCmd.Flags().Lookup("css-transform")); err != nil {
+		panic(fmt.Sprintf("failed to bind flag serve.transforms.css.include: %v", err))
+	}
+	if err := viper.BindPFlag("serve.transforms.css.exclude", serveCmd.Flags().Lookup("css-transform-exclude")); err != nil {
+		panic(fmt.Sprintf("failed to bind flag serve.transforms.css.exclude: %v", err))
 	}
 }

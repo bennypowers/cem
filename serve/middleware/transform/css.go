@@ -43,6 +43,11 @@ type CSSConfig struct {
 
 // shouldTransformCSS checks if a CSS file should be transformed based on include/exclude patterns
 func shouldTransformCSS(cssPath string, include []string, exclude []string, logger types.Logger, errorBroadcaster types.ErrorBroadcaster, configFile string) bool {
+	// Opt-in behavior: if no include patterns specified, don't transform
+	if len(include) == 0 {
+		return false
+	}
+
 	// If include patterns are specified, file must match at least one
 	if len(include) > 0 {
 		matched := false
@@ -100,7 +105,7 @@ func shouldTransformCSS(cssPath string, include []string, exclude []string, logg
 		}
 	}
 
-	// If no patterns specified, or file passed all checks, transform it
+	// File matched include patterns and didn't match exclude patterns - transform it
 	return true
 }
 

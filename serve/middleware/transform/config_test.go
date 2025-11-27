@@ -140,10 +140,11 @@ func TestCSS_EnabledByConfig(t *testing.T) {
 	// Load fixtures into in-memory filesystem
 	mfs := testutil.NewFixtureFS(t, "transforms/config-test", "/test")
 
-	// Create middleware with Enabled=true
+	// Create middleware with Enabled=true and include pattern
 	middleware := NewCSS(CSSConfig{
 		WatchDirFunc: func() string { return "/test" },
 		Enabled:      true,
+		Include:      []string{"**/*.css"}, // Opt-in to transform CSS
 		Logger:       &mockLogger{},
 		FS:           mfs,
 	})

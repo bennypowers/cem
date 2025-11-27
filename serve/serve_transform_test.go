@@ -38,6 +38,7 @@ func defaultTransformConfig() serve.TransformConfig {
 		},
 		CSS: serve.CSSConfig{
 			Enabled: true,
+			Include: []string{"**/*.css"}, // Opt-in: transform all CSS for tests
 		},
 	}
 }
