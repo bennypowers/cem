@@ -73,7 +73,7 @@ func BuildDemoRoutingTable(manifestBytes []byte) (map[string]*DemoRouteEntry, er
 		}
 
 		// Normalize: ensure trailing slash for directory-style URLs
-		if localRoute != "/" && localRoute[len(localRoute)-1] != '/' && filepath.Ext(localRoute) == "" {
+		if localRoute != "/" && !strings.HasSuffix(localRoute, "/") && filepath.Ext(localRoute) == "" {
 			localRoute += "/"
 		}
 
