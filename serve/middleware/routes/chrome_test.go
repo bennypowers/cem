@@ -22,6 +22,7 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -247,5 +248,42 @@ func TestChromeRendering_WithNavigation(t *testing.T) {
 	if rendered != string(expected) {
 		t.Errorf("Rendered chrome does not match golden file.\nGot:\n%s\n\nExpected:\n%s", rendered, string(expected))
 		t.Log("Run 'make update' to update golden files")
+	}
+}
+// TestChromeRendering_NilManifest tests that chrome renders without crashing when Manifest is nil
+// This is the case in workspace mode where there's no single manifest for the whole workspace
+func TestChromeRendering_NilManifest(t *testing.T) {
+	demoHTML := `<my-element id="example"></my-element>`
+
+	// Render chrome with nil manifest (workspace mode scenario)
+	rendered, err := renderDemoChrome(ChromeData{
+		TagName:      "my-element",
+		DemoTitle:    "Workspace Mode Demo",
+		DemoHTML:     template.HTML(demoHTML),
+		ImportMap:    "{}",
+		Description:  "Testing nil manifest handling",
+		PackageName:  "workspace-package",
+		Manifest:     nil, // Explicitly nil - this should not crash
+	})
+	if err != nil {
+		t.Fatalf("Failed to render chrome with nil manifest: %v", err)
+	}
+
+	// Verify it rendered something
+	if len(rendered) == 0 {
+		t.Error("Rendered chrome is empty")
+	}
+
+	// Verify essential elements are present
+	if !strings.Contains(rendered, "my-element") {
+		t.Error("Rendered chrome doesn't contain element tag name")
+	}
+	if !strings.Contains(rendered, "Workspace Mode Demo") {
+		t.Error("Rendered chrome doesn't contain demo title")
+	}
+
+	// Verify it doesn't have manifest tree element (should be skipped, though modulepreload in head is OK)
+	if strings.Contains(rendered, `<pf-v6-tree-view`) {
+		t.Error("Rendered chrome contains <pf-v6-tree-view> element when manifest is nil")
 	}
 }

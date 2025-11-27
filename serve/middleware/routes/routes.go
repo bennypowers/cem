@@ -121,6 +121,11 @@ func New(config Config) middleware.Middleware {
 				return
 			}
 
+			// Try to serve static assets from demo package directories (works in both workspace and single-package mode)
+			if servePackageStaticAsset(w, r, config) {
+				return
+			}
+
 			// Not a special route - try static files with 404 detection
 			detector := &notFoundDetector{ResponseWriter: w}
 			next.ServeHTTP(detector, r)
@@ -637,6 +642,33 @@ type URLSuggestion struct {
 func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 	requestedPath := r.URL.Path
 
+	// For non-HTML resources (CSS, JS, images, etc.), return simple 404 with correct MIME type
+	// This prevents MIME type mismatches with X-Content-Type-Options: nosniff
+	switch {
+	case strings.HasSuffix(requestedPath, ".css"):
+		w.Header().Set("Content-Type", "text/css; charset=utf-8")
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("/* 404 Not Found */\n"))
+		return
+	case strings.HasSuffix(requestedPath, ".js"):
+		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("// 404 Not Found\n"))
+		return
+	case strings.HasSuffix(requestedPath, ".json"):
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("{}\n"))
+		return
+	case strings.HasSuffix(requestedPath, ".svg"):
+		w.Header().Set("Content-Type", "image/svg+xml")
+		w.WriteHeader(http.StatusNotFound)
+		return
+	case strings.HasSuffix(requestedPath, ".png"), strings.HasSuffix(requestedPath, ".jpg"), strings.HasSuffix(requestedPath, ".jpeg"), strings.HasSuffix(requestedPath, ".gif"), strings.HasSuffix(requestedPath, ".webp"):
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
 	// Get all available demo routes
 	routesAny := config.Context.DemoRoutes()
 	if routesAny == nil {
@@ -757,5 +789,119 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 	if _, err := w.Write([]byte(html)); err != nil {
 		config.Context.Logger().Error("Failed to write 404 response: %v", err)
 	}
+}
+
+// servePackageStaticAsset serves static assets (CSS, JS, images) from demo package directories.
+// Resolves URL paths like /elements/announcement/foo.css to the correct package directory (elements/rh-announcement/).
+// Works in both workspace and single-package mode by using the routing table's PackagePath.
+func servePackageStaticAsset(w http.ResponseWriter, r *http.Request, config Config) bool {
+	// Get routing table
+	routesAny := config.Context.DemoRoutes()
+	if routesAny == nil {
+		return false
+	}
+
+	routes, ok := routesAny.(map[string]*DemoRouteEntry)
+	if !ok {
+		return false
+	}
+
+	requestPath := r.URL.Path
+
+	// Find the longest matching demo route prefix
+	// e.g., /elements/announcement/rh-announcement-lightdom.css should match /elements/announcement/demo/
+	var matchedEntry *DemoRouteEntry
+	var matchedPrefix string
+
+	for route, entry := range routes {
+		// Extract the package/element prefix from the demo route
+		// e.g., /elements/announcement/demo/ -> /elements/announcement/
+		if !strings.Contains(route, "/demo/") {
+			continue
+		}
+
+		prefix := route[:strings.Index(route, "/demo/")+1] // Include trailing slash: /elements/announcement/
+
+		// Check if request path starts with this prefix
+		if strings.HasPrefix(requestPath, prefix) && len(prefix) > len(matchedPrefix) {
+			matchedEntry = entry
+			matchedPrefix = prefix
+		}
+	}
+
+	if matchedEntry == nil {
+		config.Context.Logger().Debug("servePackageStaticAsset: no matching route for %s", requestPath)
+		return false
+	}
+
+	// Extract the relative path after the prefix
+	// e.g., /elements/announcement/rh-announcement-lightdom.css -> rh-announcement-lightdom.css
+	relativePath := strings.TrimPrefix(requestPath, matchedPrefix)
+	if relativePath == "" {
+		return false
+	}
+
+	// Build full path - different logic for workspace vs single-package mode
+	var fullPath string
+	if config.Context.IsWorkspace() && matchedEntry.PackagePath != "" {
+		// Workspace mode: use PackagePath directly
+		fullPath = filepath.Join(matchedEntry.PackagePath, relativePath)
+		config.Context.Logger().Debug("servePackageStaticAsset (workspace): trying %s (package=%s, relative=%s)", fullPath, matchedEntry.PackagePath, relativePath)
+	} else {
+		// Single-package mode: extract package directory from FilePath
+		// e.g., FilePath="elements/rh-announcement/demo/index.html" -> packageDir="elements/rh-announcement"
+		packageDir := matchedEntry.FilePath
+		if idx := strings.Index(packageDir, "/demo/"); idx >= 0 {
+			packageDir = packageDir[:idx]
+		} else {
+			// Fallback: use directory of FilePath
+			packageDir = filepath.Dir(matchedEntry.FilePath)
+		}
+		fullPath = filepath.Join(config.Context.WatchDir(), packageDir, relativePath)
+		config.Context.Logger().Debug("servePackageStaticAsset (single-package): trying %s (watchDir=%s, packageDir=%s, relative=%s)",
+			fullPath, config.Context.WatchDir(), packageDir, relativePath)
+	}
+
+	// Try to read the file
+	content, err := config.Context.FileSystem().ReadFile(fullPath)
+	if err != nil {
+		// File doesn't exist in package directory
+		config.Context.Logger().Debug("servePackageStaticAsset: file not found: %v", err)
+		return false
+	}
+
+	config.Context.Logger().Debug("servePackageStaticAsset: successfully serving %s (%d bytes)", fullPath, len(content))
+
+	// Set correct MIME type based on file extension
+	ext := filepath.Ext(fullPath)
+	switch ext {
+	case ".js", ".mjs", ".cjs":
+		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+	case ".css":
+		w.Header().Set("Content-Type", "text/css; charset=utf-8")
+	case ".html":
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	case ".json":
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	case ".svg":
+		w.Header().Set("Content-Type", "image/svg+xml")
+	case ".png":
+		w.Header().Set("Content-Type", "image/png")
+	case ".jpg", ".jpeg":
+		w.Header().Set("Content-Type", "image/jpeg")
+	case ".gif":
+		w.Header().Set("Content-Type", "image/gif")
+	case ".webp":
+		w.Header().Set("Content-Type", "image/webp")
+	default:
+		w.Header().Set("Content-Type", "application/octet-stream")
+	}
+
+	w.Header().Set("Cache-Control", "no-cache")
+	if _, err := w.Write(content); err != nil {
+		config.Context.Logger().Error("Failed to write static asset response: %v", err)
+	}
+
+	return true
 }
 

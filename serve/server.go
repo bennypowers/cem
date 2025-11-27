@@ -279,13 +279,19 @@ func (s *Server) WebSocketManager() WebSocketManager {
 func (s *Server) SetWatchDir(dir string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.watchDir = dir
+
+	// Convert to absolute path for consistent behavior
+	absDir, err := filepath.Abs(dir)
+	if err != nil {
+		return fmt.Errorf("converting to absolute path: %w", err)
+	}
+	s.watchDir = absDir
 
 	// Load tsconfig - try tsconfig.settings.json first (common in monorepos),
 	// then fall back to tsconfig.json
 	tsconfigPaths := []string{
-		filepath.Join(dir, "tsconfig.settings.json"),
-		filepath.Join(dir, "tsconfig.json"),
+		filepath.Join(absDir, "tsconfig.settings.json"),
+		filepath.Join(absDir, "tsconfig.json"),
 	}
 
 	loaded := false

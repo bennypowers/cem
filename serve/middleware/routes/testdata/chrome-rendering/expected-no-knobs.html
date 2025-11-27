@@ -3,35 +3,100 @@
 <head>
   <meta charset="utf-8">
   <meta name="color-scheme" content="light dark">
-  <title>Template Error</title>
+  <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1e293b" media="(prefers-color-scheme: dark)">
+  <title>Basic Example - my-element</title>
+  <link rel="icon" href="/__cem/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/__cem/pf-tokens.css">
-  <style>
-    body {
-      font-family: var(--pf-t--global--font--family--body, system-ui, -apple-system, sans-serif);
-      padding: 2rem;
-      max-width: 60rem;
-      margin: 0 auto;
-      background: var(--pf-t--global--background--color--primary--default, #fff);
-      color: var(--pf-t--global--text--color--regular, #000);
-    }
-    h1 {
-      color: var(--pf-t--global--color--status--danger--default, #c9190b);
-      margin-bottom: 1rem;
-    }
-    pre {
-      background: var(--pf-t--global--background--color--secondary--default, #f5f5f5);
-      padding: 1rem;
-      border-radius: var(--pf-t--global--border--radius--medium, 4px);
-      overflow-x: auto;
-      border: 1px solid var(--pf-t--global--border--color--default, #ddd);
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-  </style>
+  <link rel="stylesheet" href="/__cem/demo-chrome.css">
+  <link rel="stylesheet" href="/__cem/slot-visibility.css">
+  
+  <script type="importmap">{}</script>
+  
+  
+  
+  <link rel="modulepreload" href="/__cem/elements/cem-color-scheme-toggle/cem-color-scheme-toggle.js">
+  <link rel="modulepreload" href="/__cem/elements/cem-connection-status/cem-connection-status.js">
+  <link rel="modulepreload" href="/__cem/elements/cem-drawer/cem-drawer.js">
+  <link rel="modulepreload" href="/__cem/elements/cem-manifest-browser/cem-manifest-browser.js">
+  <link rel="modulepreload" href="/__cem/elements/cem-reconnection-content/cem-reconnection-content.js">
+  <link rel="modulepreload" href="/__cem/elements/cem-serve-chrome/cem-serve-chrome.js">
+  <link rel="modulepreload" href="/__cem/elements/cem-serve-demo/cem-serve-demo.js">
+  <link rel="modulepreload" href="/__cem/elements/cem-serve-knob-group/cem-serve-knob-group.js">
+  <link rel="modulepreload" href="/__cem/elements/cem-serve-knobs/cem-serve-knobs.js">
+  <link rel="modulepreload" href="/__cem/elements/cem-transform-error-overlay/cem-transform-error-overlay.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-button/pf-v6-button.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-badge/pf-v6-badge.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-card/pf-v6-card.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-expandable-section/pf-v6-expandable-section.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-form-group/pf-v6-form-group.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-form-label/pf-v6-form-label.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-form/pf-v6-form.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-label/pf-v6-label.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-masthead/pf-v6-masthead.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-modal/pf-v6-modal.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-nav-group/pf-v6-nav-group.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-nav-item/pf-v6-nav-item.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-nav-link/pf-v6-nav-link.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-nav-list/pf-v6-nav-list.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-navigation/pf-v6-navigation.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-page-main/pf-v6-page-main.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-page-sidebar/pf-v6-page-sidebar.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-page/pf-v6-page.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-popover/pf-v6-popover.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-select/pf-v6-select.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-skip-to-content/pf-v6-skip-to-content.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-switch/pf-v6-switch.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-tab/pf-v6-tab.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-tabs/pf-v6-tabs.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-text-input-group/pf-v6-text-input-group.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-text-input/pf-v6-text-input.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-toggle-group-item/pf-v6-toggle-group-item.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-toggle-group/pf-v6-toggle-group.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-toolbar-group/pf-v6-toolbar-group.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-toolbar-item/pf-v6-toolbar-item.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-toolbar/pf-v6-toolbar.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-tree-item/pf-v6-tree-item.js">
+  <link rel="modulepreload" href="/__cem/elements/pf-v6-tree-view/pf-v6-tree-view.js">
+  <script type="module">
+    
+    import '/__cem/elements/cem-serve-chrome/cem-serve-chrome.js';
+  </script>
 </head>
-<body>
-  <h1>Template Rendering Error</h1>
-  <p>The page template failed to render. Check the server logs for details.</p>
-  <pre>template: demo-chrome:197:21: executing &#34;demo-chrome&#34; at &lt;.Manifest.Modules&gt;: nil pointer evaluating *manifest.Package.Modules</pre>
+<body style="color-scheme: light dark">
+  <link rel="stylesheet" href="/__cem/pf-v6-c-description-list.css">
+  <cem-serve-chrome role="none"
+                    
+                    primary-tag-name="my-element"
+                    demo-title="Basic Example"
+                    
+                    
+                    
+                    
+                    drawer-height="0"
+                    tabs-selected="0">
+    
+
+    
+
+    
+    
+    <cem-serve-demo id="demo"><meta itemprop="name" content="Basic Example">
+<meta itemprop="description" content="A simple example showing basic usage">
+
+<my-element id="example" variant="primary">
+  <span slot="label">Hello World</span>
+</my-element>
+</cem-serve-demo>
+    
+
+    
+
+    
+    </pf-v6-tree-view>
+
+    
+    
+  </cem-serve-chrome>
 </body>
 </html>

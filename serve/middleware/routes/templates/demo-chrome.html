@@ -194,6 +194,7 @@
     </pf-v6-tree-view>
 
     {{/* SSR detail panels */}}
+    {{if .Manifest}}
     {{range .Manifest.Modules}}
     {{$modulePath := .Path}}
     <h3 slot="manifest-name"
@@ -416,6 +417,7 @@
       {{if $mixin.Summary}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">{{markdown $mixin.Summary}}</dd></div>{{end}}
       {{if $mixin.Description}}<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">{{markdown $mixin.Description}}</dd></div>{{end}}
     </dl>
+    {{end}}
     {{end}}
     {{end}}
     {{end}}
