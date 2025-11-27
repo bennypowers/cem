@@ -145,7 +145,8 @@ func Generate(rootDir string, config *Config) (*ImportMap, error) {
 	}
 
 	// 2.5. If not a monorepo (no workspaces), process root package's own exports
-	if rootPkg.Workspaces == nil && rootPkg.Name != "" {
+	// Only add if the package has exports or main field (skip packages that are just dependency containers)
+	if rootPkg.Workspaces == nil && rootPkg.Name != "" && (rootPkg.Exports != nil || rootPkg.Main != "") {
 		if err := addPackageExportsToImportMap(result, rootPkg.Name, rootDir, rootDir, cfg.Logger, fs); err != nil {
 			if cfg.Logger != nil {
 				cfg.Logger.Warning("Failed to add root package %s exports: %v", rootPkg.Name, err)
@@ -424,7 +425,7 @@ func addPackageExportsToImportMap(importMap *ImportMap, pkgName, pkgPath, rootDi
 	// e.g., @patternfly/icons/fas/copy.js -> /node_modules/@patternfly/icons/fas/copy.js
 	importMap.Imports[pkgName+"/"] = pkgWebPath + "/"
 	if logger != nil {
-		logger.Debug("Package %s has no exports or main, added trailing slash mapping: %s/ -> %s/", pkgName, pkgName, pkgWebPath)
+		logger.Warning("Package %s has no exports or main field, added trailing slash mapping: %s/ -> %s/", pkgName, pkgName, pkgWebPath)
 	}
 	return nil
 }
