@@ -1,5 +1,5 @@
 ---
-title: Writing Effective Descriptions for AI
+title: Effective Writing for AI
 weight: 45
 ---
 

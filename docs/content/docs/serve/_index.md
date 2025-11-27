@@ -54,6 +54,10 @@ The server lists all elements at the root (`/`) and provides a persistent drawer
 ## See Also
 
 {{< card-grid >}}
+  {{< card title="Command Reference" href="reference/" icon="/images/sections/reference.svg" >}}
+  Command flags and usage examples
+  {{< /card >}}
+
   {{< card title="Generate Docs" href="/docs/commands/generate/" icon="/images/sections/generate.svg" >}}
   Document components
   {{< /card >}}
