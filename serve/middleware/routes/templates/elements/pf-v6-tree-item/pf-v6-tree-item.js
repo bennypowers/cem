@@ -119,6 +119,9 @@ class PfV6TreeItem extends CemElement {
 
     // Node click handler
     this.#node.addEventListener('click', () => {
+      if (this.hasChildren) {
+        this.toggle();
+      }
       this.select();
     });
 
