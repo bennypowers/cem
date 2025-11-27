@@ -28,11 +28,11 @@ Create a sidebar panel component (`cem-manifest-browser`) that displays a search
    - Reference: `../patternfly/patternfly-react/packages/react-core/src/components/TreeView/TreeView.tsx`
    - CSS: `../patternfly/patternfly/src/patternfly/components/TreeView/tree-view.scss`
 
-3. **`pf-v6-tree-view-list-item`** - Individual tree item
-   - Location: `serve/middleware/routes/templates/elements/pf-v6-tree-view/` (same directory)
+3. **`pf-v6-tree-item`** - Individual tree item
+   - Location: `serve/middleware/routes/templates/elements/pf-v6-tree-item/`
    - Translated from PatternFly React TreeViewListItem
    - Handles node rendering, expansion, selection, checkboxes
-   - Files: Part of pf-v6-tree-view implementation
+   - Files: `.js`, `.css`
    - Reference: `../patternfly/patternfly-react/packages/react-core/src/components/TreeView/TreeViewListItem.tsx`
 
 ### Integration with cem-drawer
@@ -183,31 +183,31 @@ class PfTreeViewCollapseEvent extends Event {
 
 <pf-v6-tree-view variant="compact" guides>
   {{range .Modules}}
-  <pf-v6-tree-view-list-item name="{{.Path}}">
+  <pf-v6-tree-item name="{{.Path}}">
     <svg slot="icon"><!-- module icon --></svg>
     <span slot="badge">{{len .Declarations}}</span>
 
     {{range .Declarations}}
-    <pf-v6-tree-view-list-item name="{{.TagName}}">
+    <pf-v6-tree-item name="{{.TagName}}">
       <svg slot="icon"><!-- element icon --></svg>
       <span slot="badge">{{.APICount}}</span>
 
       {{if .Attributes}}
-      <pf-v6-tree-view-list-item name="Attributes">
+      <pf-v6-tree-item name="Attributes">
         <svg slot="icon"><!-- folder icon --></svg>
         <span slot="badge">{{len .Attributes}}</span>
 
         {{range .Attributes}}
-        <pf-v6-tree-view-list-item name="{{.Name}}">
+        <pf-v6-tree-item name="{{.Name}}">
           <svg slot="icon"><!-- attr icon --></svg>
           {{if .Deprecated}}<pf-v6-label compact status="warning">deprecated</pf-v6-label>{{end}}
-        </pf-v6-tree-view-list-item>
+        </pf-v6-tree-item>
         {{end}}
-      </pf-v6-tree-view-list-item>
+      </pf-v6-tree-item>
       {{end}}
-    </pf-v6-tree-view-list-item>
+    </pf-v6-tree-item>
     {{end}}
-  </pf-v6-tree-view-list-item>
+  </pf-v6-tree-item>
   {{end}}
 </pf-v6-tree-view>
 ```
@@ -227,17 +227,17 @@ treeView.data = manifestTreeBuilder.build(manifest);
 ### PatternFly CSS Structure
 
 **Classes from PatternFly (compiled CSS from patternfly.org):**
-- `.pf-v-c-tree-view` - Root container
-- `.pf-v-c-tree-view__list` - List container (ul)
-- `.pf-v-c-tree-view__list-item` - List item (li)
-- `.pf-v-c-tree-view__node` - Node wrapper
-- `.pf-v-c-tree-view__node-toggle` - Expand/collapse button
-- `.pf-v-c-tree-view__node-toggle-icon` - Chevron icon
-- `.pf-v-c-tree-view__node-container` - Content container
-- `.pf-v-c-tree-view__node-icon` - Node icon
-- `.pf-v-c-tree-view__node-text` - Node text/name
-- `.pf-v-c-tree-view__node-count` - Badge/count
-- `.pf-v-c-tree-view__action` - Action slot
+- `.pf-v6-c-tree-view` - Root container
+- `.pf-v6-c-tree-view__list` - List container (ul)
+- `.pf-v6-c-tree-view__list-item` - List item (li)
+- `.pf-v6-c-tree-view__node` - Node wrapper
+- `.pf-v6-c-tree-view__node-toggle` - Expand/collapse button
+- `.pf-v6-c-tree-view__node-toggle-icon` - Chevron icon
+- `.pf-v6-c-tree-view__node-container` - Content container
+- `.pf-v6-c-tree-view__node-icon` - Node icon
+- `.pf-v6-c-tree-view__node-text` - Node text/name
+- `.pf-v6-c-tree-view__node-count` - Badge/count
+- `.pf-v6-c-tree-view__action` - Action slot
 
 **Modifiers:**
 - `.pf-m-compact` - Compact variant
@@ -534,7 +534,7 @@ class ManifestTreeBuilder {
 1. **Extract PatternFly tree view CSS**
    - Download compiled CSS from patternfly.org for tree-view component
    - Reference: ../patternfly/patternfly/src/patternfly/components/TreeView/tree-view.scss
-   - Copy all `.pf-v-c-tree-view*` classes and associated styles
+   - Copy all `.pf-v6-c-tree-view*` classes and associated styles
    - Preserve all CSS tokens and variables
 
 2. **Implement pf-v6-tree-view web component**
@@ -544,7 +544,7 @@ class ManifestTreeBuilder {
    - Implement event dispatching: `pf-tree-view:select`, `pf-tree-view:check`, `pf-tree-view:expand`, `pf-tree-view:collapse`
    - Render proper PatternFly HTML structure with correct CSS classes
 
-3. **Implement pf-v6-tree-view-list-item (internal)**
+3. **Implement pf-v6-tree-item**
    - Node rendering with PatternFly classes
    - Expand/collapse toggle button
    - Support for icon, name, badge, action slots
