@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"html/template"
 
+	M "bennypowers.dev/cem/manifest"
 )
 
 // ChromeData represents template data for demo chrome
@@ -37,24 +38,82 @@ type ChromeData struct {
 	CanonicalURL   string        // Canonical demo URL
 	PackageName    string        // Package name for title (listing pages)
 	NavigationHTML template.HTML // Navigation drawer HTML (listing pages)
+	ManifestJSON   template.JS   // Full manifest JSON for client-side tools
+	Manifest       *M.Package    // Parsed manifest for server-side tree rendering
+	State          CemServeState // Persisted UI state for SSR (color scheme, drawer, tree)
 }
 
-// renderDemoChrome renders the demo chrome template with given data
+// TemplateErrorData represents template data for the error page
+type TemplateErrorData struct {
+	ErrorMessage string
+	Title        string
+	Message      string
+	File         string
+}
+
+// renderDemoChrome renders the demo chrome template with given data.
+// If template execution fails, it broadcasts the error and returns a minimal page with error overlay.
 func renderDemoChrome(data ChromeData) (string, error) {
 	// Render markdown description if present
 	if data.Description != "" {
 		var buf bytes.Buffer
 		err := md.Convert([]byte(data.Description), &buf)
 		if err != nil {
-			return "", err
+			// Markdown conversion error - broadcast and continue with plain text
+			if errorBroadcaster != nil {
+				_ = errorBroadcaster.BroadcastError(
+					"Markdown Conversion Error",
+					"Failed to convert description markdown: "+err.Error(),
+					data.TagName,
+				)
+			}
+			// Keep original text as-is
+		} else {
+			data.Description = template.HTML(buf.String())
 		}
-		data.Description = template.HTML(buf.String())
 	}
 
 	var buf bytes.Buffer
 	err := DemoChromeTemplate.Execute(&buf, data)
 	if err != nil {
-		return "", err
+		// Template execution failed - broadcast error and return minimal error page
+		title := "Template Execution Error"
+		message := "Failed to render page template: " + err.Error()
+		if errorBroadcaster != nil {
+			_ = errorBroadcaster.BroadcastError(
+				title,
+				message,
+				data.TagName,
+			)
+		}
+
+		// Render error page using template with SSR-rendered error overlay
+		errorData := TemplateErrorData{
+			ErrorMessage: err.Error(),
+			Title:        title,
+			Message:      message,
+			File:         data.TagName,
+		}
+
+		var errorBuf bytes.Buffer
+		if templateErr := TemplateErrorTemplate.Execute(&errorBuf, errorData); templateErr != nil {
+			// If even the error template fails, fall back to absolute minimal HTML
+			return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Critical Template Error</title>
+</head>
+<body>
+  <h1>Critical Template Error</h1>
+  <p>Both the page template and error template failed to render.</p>
+  <pre>Original error: ` + template.HTMLEscapeString(err.Error()) + `</pre>
+  <pre>Error template error: ` + template.HTMLEscapeString(templateErr.Error()) + `</pre>
+</body>
+</html>`, nil
+		}
+
+		return errorBuf.String(), nil
 	}
 
 	return buf.String(), nil

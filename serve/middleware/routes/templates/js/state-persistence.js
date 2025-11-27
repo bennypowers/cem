@@ -1,0 +1,279 @@
+/**
+ * State persistence for UI state
+ *
+ * - Cookie (SSR-compatible): color scheme, drawer, tabs
+ * - localStorage (client-only): tree expansion/selection (due to size)
+ */
+export class StatePersistence {
+  static COOKIE_NAME = 'cem-serve-state';
+  static MAX_AGE = 2592000; // 30 days
+  static VERSION = 1;
+
+  /**
+   * Read state from cookie
+   */
+  static getState() {
+    const cookie = document.cookie
+      .split('; ')
+      .find(row => row.startsWith(this.COOKIE_NAME + '='));
+
+    if (!cookie) return this.getDefaultState();
+
+    try {
+      const json = decodeURIComponent(cookie.split('=')[1]);
+      const state = JSON.parse(json);
+
+      // Validate version and structure
+      if (state.version !== this.VERSION) {
+        return this.migrateState(state);
+      }
+
+      return state;
+    } catch (e) {
+      console.warn('[state-persistence] Failed to parse state cookie:', e);
+      return this.getDefaultState();
+    }
+  }
+
+  /**
+   * Write state to cookie
+   */
+  static setState(state) {
+    const json = JSON.stringify(state);
+    const encoded = encodeURIComponent(json);
+
+    // Warn if cookie is getting large (4KB limit)
+    if (encoded.length > 4000) {
+      console.error('[state-persistence] Cookie size exceeds 4KB limit!', encoded.length);
+      return;
+    }
+
+    document.cookie = `${this.COOKIE_NAME}=${encoded}; Path=/; SameSite=Lax; Max-Age=${this.MAX_AGE}`;
+  }
+
+  /**
+   * Update partial state (deep merge)
+   */
+  static updateState(partial) {
+    const current = this.getState();
+    const updated = this.deepMerge(current, partial);
+    this.setState(updated);
+  }
+
+  /**
+   * Default state factory (cookie state only)
+   */
+  static getDefaultState() {
+    return {
+      colorScheme: 'system',
+      drawer: { open: false, height: 400 },
+      tabs: { selectedIndex: 0 },
+      version: this.VERSION
+    };
+  }
+
+  /**
+   * Deep merge helper
+   */
+  static deepMerge(target, source) {
+    const result = { ...target };
+    for (const key in source) {
+      if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+        result[key] = this.deepMerge(target[key] || {}, source[key]);
+      } else {
+        result[key] = source[key];
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Migrate from localStorage and old cookie format (one-time migration)
+   */
+  static migrateFromLocalStorage() {
+    const state = this.getDefaultState();
+
+    // Migrate color scheme
+    try {
+      const colorScheme = localStorage.getItem('cem-serve-color-scheme');
+      if (colorScheme) state.colorScheme = colorScheme;
+    } catch (e) { /* ignore */ }
+
+    // Migrate drawer state
+    try {
+      const drawerOpen = localStorage.getItem('cem-serve-drawer-open');
+      if (drawerOpen !== null) state.drawer.open = drawerOpen === 'true';
+
+      const drawerHeight = localStorage.getItem('cem-serve-drawer-height');
+      if (drawerHeight !== null) state.drawer.height = parseInt(drawerHeight, 10);
+    } catch (e) { /* ignore */ }
+
+    // Migrate tabs state
+    try {
+      const activeTab = localStorage.getItem('cem-serve-active-tab');
+      if (activeTab !== null) {
+        // Old localStorage stored panel IDs like 'panel-logs', 'panel-knobs', etc.
+        // Map to selectedIndex (0 = Knobs, 1 = Manifest Browser, 2 = Server Logs)
+        const indexMap = {
+          'panel-knobs': 0,
+          'panel-manifest': 1,
+          'panel-logs': 2
+        };
+        state.tabs.selectedIndex = indexMap[activeTab] ?? 0;
+      }
+    } catch (e) { /* ignore */ }
+
+    // Check if tree state exists in old cookie format and migrate to localStorage
+    try {
+      const cookie = document.cookie
+        .split('; ')
+        .find(row => row.startsWith(this.COOKIE_NAME + '='));
+
+      if (cookie) {
+        const json = decodeURIComponent(cookie.split('=')[1]);
+        const oldState = JSON.parse(json);
+
+        // If old cookie has tree state, migrate it to localStorage
+        if (oldState.tree) {
+          this.setTreeState(oldState.tree);
+          console.log('[state-persistence] Migrated tree state from cookie to localStorage');
+        }
+      }
+    } catch (e) { /* ignore */ }
+
+    this.setState(state);
+  }
+
+  /**
+   * Future: migrate state schema versions
+   */
+  static migrateState(oldState) {
+    // For now, just return default and log
+    console.warn('[state-persistence] Migrating from version', oldState.version, 'to', this.VERSION);
+    return this.getDefaultState();
+  }
+
+  // ============================================================================
+  // Tree State (localStorage - separate from cookie due to size)
+  // ============================================================================
+
+  static TREE_STORAGE_KEY = 'cem-serve-tree-state';
+
+  /**
+   * Get tree state from localStorage
+   */
+  static getTreeState() {
+    try {
+      const json = localStorage.getItem(this.TREE_STORAGE_KEY);
+      if (!json) return { expanded: [], selected: '' };
+      return JSON.parse(json);
+    } catch (e) {
+      console.warn('[state-persistence] Failed to parse tree state:', e);
+      return { expanded: [], selected: '' };
+    }
+  }
+
+  /**
+   * Set tree state in localStorage
+   */
+  static setTreeState(treeState) {
+    try {
+      localStorage.setItem(this.TREE_STORAGE_KEY, JSON.stringify(treeState));
+    } catch (e) {
+      console.error('[state-persistence] Failed to save tree state:', e);
+    }
+  }
+
+  /**
+   * Update partial tree state
+   */
+  static updateTreeState(partial) {
+    const current = this.getTreeState();
+    const updated = { ...current, ...partial };
+    this.setTreeState(updated);
+  }
+}
+
+/**
+ * Generate tree node ID from data attributes
+ * Format: {type}:{module-path}:{tag-name}:{member-name}
+ */
+export function getTreeNodeId(treeItem) {
+  const type = treeItem.getAttribute('data-type');
+  const modulePath = treeItem.getAttribute('data-module-path') || treeItem.getAttribute('data-path');
+  const tagName = treeItem.getAttribute('data-tag-name');
+  const name = treeItem.getAttribute('data-name');
+
+  const parts = [type];
+  if (modulePath) parts.push(modulePath);
+  if (tagName) parts.push(tagName);
+  if (name) parts.push(name);
+
+  return parts.join(':');
+}
+
+/**
+ * Polyfill for CSS.escape
+ * Escapes special characters in CSS selectors
+ */
+if (!window.CSS || !window.CSS.escape) {
+  if (!window.CSS) window.CSS = {};
+  window.CSS.escape = function(value) {
+    const string = String(value);
+    const length = string.length;
+    let result = '';
+    let i = 0;
+    while (i < length) {
+      const char = string.charAt(i);
+      const code = string.charCodeAt(i);
+      // NULL character
+      if (code === 0x0000) {
+        result += '\uFFFD';
+      }
+      // Control characters and certain punctuation
+      else if ((code >= 0x0001 && code <= 0x001F) || code === 0x007F ||
+               (i === 0 && code >= 0x0030 && code <= 0x0039) ||
+               (i === 1 && code >= 0x0030 && code <= 0x0039 && string.charCodeAt(0) === 0x002D)) {
+        result += '\\' + code.toString(16) + ' ';
+      }
+      // Dash at start
+      else if (i === 0 && length === 1 && code === 0x002D) {
+        result += '\\' + char;
+      }
+      // Special CSS characters
+      else if (code >= 0x0080 || char === '-' || char === '_' ||
+               (code >= 0x0030 && code <= 0x0039) ||
+               (code >= 0x0041 && code <= 0x005A) ||
+               (code >= 0x0061 && code <= 0x007A)) {
+        result += char;
+      }
+      else {
+        result += '\\' + char;
+      }
+      i++;
+    }
+    return result;
+  };
+}
+
+/**
+ * Find tree item by node ID
+ * Builds a selector from the node ID parts
+ */
+export function findTreeItemById(nodeId, rootElement = document) {
+  const parts = nodeId.split(':');
+  const [type, modulePath, tagName, name] = parts;
+
+  let selector = `pf-v6-tree-item[data-type="${CSS.escape(type)}"]`;
+  if (modulePath) {
+    selector += `[data-module-path="${CSS.escape(modulePath)}"]`;
+  }
+  if (tagName) {
+    selector += `[data-tag-name="${CSS.escape(tagName)}"]`;
+  }
+  if (name) {
+    selector += `[data-name="${CSS.escape(name)}"]`;
+  }
+
+  return rootElement.querySelector(selector);
+}

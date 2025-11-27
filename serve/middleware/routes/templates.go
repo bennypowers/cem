@@ -23,6 +23,7 @@ import (
 	"html/template"
 	"strings"
 
+	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/serve/middleware"
 )
 
@@ -47,6 +48,9 @@ var knobsTemplate string
 //go:embed templates/demo-chrome.html
 var demoChromeTemplate string
 
+//go:embed templates/template-error.html
+var templateErrorTemplate string
+
 //go:embed templates/**
 var TemplatesFS embed.FS
 
@@ -67,7 +71,26 @@ func SetErrorBroadcaster(ctx middleware.DevServerContext) {
 // This is a function to avoid initialization cycles with renderElementShadowRoot
 func getTemplateFuncs() template.FuncMap {
 	return template.FuncMap{
-		"contains": strings.Contains,
+		"contains": func(haystack, needle interface{}) bool {
+			// Handle string contains (substring search)
+			if h, ok := haystack.(string); ok {
+				if n, ok := needle.(string); ok {
+					return strings.Contains(h, n)
+				}
+			}
+			// Handle slice contains (element search)
+			if slice, ok := haystack.([]string); ok {
+				if str, ok := needle.(string); ok {
+					for _, s := range slice {
+						if s == str {
+							return true
+						}
+					}
+					return false
+				}
+			}
+			return false
+		},
 		"join": func(elems []string, sep string) string {
 			return strings.Join(elems, sep)
 		},
@@ -121,6 +144,40 @@ func getTemplateFuncs() template.FuncMap {
 			}
 			return html
 		},
+		"markdown": func(text string) template.HTML {
+			html, err := markdownToHTML(text)
+			if err != nil {
+				// If markdown conversion fails, return escaped plain text
+				return template.HTML(template.HTMLEscapeString(text))
+			}
+			return template.HTML(html)
+		},
+		"prettifyRoute":     prettifyRoute,
+		"extractLocalRoute": extractLocalRoute,
+		"asCustomElement":   asCustomElement,
+		"asClass":           asClass,
+		"asFunction":        asFunction,
+		"asVariable":        asVariable,
+		"asMixin":           asMixin,
+		"hasAttr": func(data interface{}, attrName string) bool {
+			// Check if an attribute exists in .Attributes map
+			if dataMap, ok := data.(map[string]interface{}); ok {
+				if attrs, ok := dataMap["Attributes"].(map[string]string); ok {
+					_, exists := attrs[attrName]
+					return exists
+				}
+			}
+			return false
+		},
+		"hasMethodMembers": func(members []M.ClassMember) bool {
+			// Check if any member is a method
+			for _, member := range members {
+				if member.Kind == "method" {
+					return true
+				}
+			}
+			return false
+		},
 	}
 }
 
@@ -144,3 +201,52 @@ var KnobsTemplate = template.Must(template.New("knobs").Funcs(getTemplateFuncs()
 
 // DemoChromeTemplate is the parsed template for demo chrome wrapper
 var DemoChromeTemplate = template.Must(template.New("demo-chrome").Funcs(getTemplateFuncs()).Parse(demoChromeTemplate))
+
+// TemplateErrorTemplate is the parsed template for template rendering errors
+var TemplateErrorTemplate = template.Must(template.New("template-error").Funcs(getTemplateFuncs()).Parse(templateErrorTemplate))
+
+// asCustomElement performs type assertion to extract CustomElementDeclaration from Declaration interface.
+// Returns nil if the declaration is not a custom element.
+// Template usage: {{$ce := asCustomElement .}} {{if $ce}}...{{end}}
+func asCustomElement(decl M.Declaration) *M.CustomElementDeclaration {
+	if ce, ok := decl.(*M.CustomElementDeclaration); ok {
+		return ce
+	}
+	return nil
+}
+
+// asClass performs type assertion to extract ClassDeclaration from Declaration interface.
+// Returns nil if the declaration is not a class.
+func asClass(decl M.Declaration) *M.ClassDeclaration {
+	if c, ok := decl.(*M.ClassDeclaration); ok {
+		return c
+	}
+	return nil
+}
+
+// asFunction performs type assertion to extract FunctionDeclaration from Declaration interface.
+// Returns nil if the declaration is not a function.
+func asFunction(decl M.Declaration) *M.FunctionDeclaration {
+	if f, ok := decl.(*M.FunctionDeclaration); ok {
+		return f
+	}
+	return nil
+}
+
+// asVariable performs type assertion to extract VariableDeclaration from Declaration interface.
+// Returns nil if the declaration is not a variable.
+func asVariable(decl M.Declaration) *M.VariableDeclaration {
+	if v, ok := decl.(*M.VariableDeclaration); ok {
+		return v
+	}
+	return nil
+}
+
+// asMixin performs type assertion to extract MixinDeclaration from Declaration interface.
+// Returns nil if the declaration is not a mixin.
+func asMixin(decl M.Declaration) *M.MixinDeclaration {
+	if m, ok := decl.(*M.MixinDeclaration); ok {
+		return m
+	}
+	return nil
+}

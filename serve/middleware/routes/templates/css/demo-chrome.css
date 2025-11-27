@@ -1,3 +1,7 @@
+[hidden] {
+  display: none !important;
+}
+
 /* Enable cross-document view transitions for same-origin navigation */
 @view-transition {
   navigation: auto;
@@ -22,6 +26,27 @@ html::view-transition-new(*) {
 
 @keyframes fade-out {
   to { opacity: 0; }
+}
+
+/* Stable transition names for persistent elements */
+pf-v6-masthead {
+  view-transition-name: masthead;
+}
+
+pf-v6-page-sidebar {
+  view-transition-name: sidebar;
+}
+
+cem-drawer {
+  view-transition-name: drawer;
+}
+
+pf-v6-page-main {
+  view-transition-name: main-content;
+}
+
+pf-v6-tree-view {
+  view-transition-name: tree-view;
 }
 
 :root {
@@ -235,5 +260,16 @@ cem-serve-knobs {
 
   & pf-v6-switch {
     align-self: center;
+  }
+}
+
+h3[slot=manifest-name],
+dl[slot=manifest-details] {
+  margin-block: 0;
+  & dd p:first-child {
+    margin-block-start: 0;
+  }
+  & dd p:last-child {
+    margin-block-end: 0;
   }
 }

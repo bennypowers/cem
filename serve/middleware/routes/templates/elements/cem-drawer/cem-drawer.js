@@ -18,11 +18,11 @@ export class CemDrawerResizeEvent extends Event {
 
 export class CemServeDrawer extends HTMLElement {
   static is = 'cem-drawer';
-  static { customElements.define(this.is, this); }
 
-  static get observedAttributes() {
-    return ['open'];
-  }
+  static observedAttributes = [
+    'open',
+    'drawer-height',
+  ];
 
   #$ = id => this.shadowRoot.getElementById(id);
   #isDragging = false;
@@ -55,11 +55,6 @@ export class CemServeDrawer extends HTMLElement {
     if (resizeHandle && content) {
       resizeHandle.addEventListener('mousedown', this.#startResize);
       resizeHandle.addEventListener('keydown', this.#handleKeydown);
-    }
-
-    // Set initial height when open
-    if (this.open) {
-      content.style.height = '400px';
     }
   }
 
@@ -136,8 +131,11 @@ export class CemServeDrawer extends HTMLElement {
     content.style.height = `${newHeight}px`;
     this.#updateAriaValueNow(newHeight);
 
-    // Dispatch resize event
-    this.dispatchEvent(new CemDrawerResizeEvent(newHeight));
+    // Debounce resize event (300ms)
+    clearTimeout(this.#resizeDebounceTimer);
+    this.#resizeDebounceTimer = setTimeout(() => {
+      this.dispatchEvent(new CemDrawerResizeEvent(newHeight));
+    }, 300);
   }
 
   #updateAriaValueNow(height) {
@@ -176,12 +174,12 @@ export class CemServeDrawer extends HTMLElement {
       const content = this.#$('content');
       const toggleButton = this.#$('toggle');
 
+      const {open} = this;
       if (content) {
-        if (this.open) {
-          // Set default height when opening (if not already set by resize)
-          if (!content.style.height || content.style.height === '0px') {
-            content.style.height = '400px';
-          }
+        if (open) {
+          // Restore height from drawer-height attribute (default 400 if not set)
+          const height = parseInt(this.getAttribute('drawer-height') || '400', 10);
+          content.style.height = `${height}px`;
         } else {
           // Reset to 0 when closing
           content.style.height = '0px';
@@ -190,11 +188,11 @@ export class CemServeDrawer extends HTMLElement {
 
       // Update aria-expanded on toggle button
       if (toggleButton) {
-        toggleButton.setAttribute('aria-expanded', this.open.toString());
+        toggleButton.setAttribute('aria-expanded', open.toString());
       }
 
       // Dispatch change event
-      this.dispatchEvent(new CemDrawerChangeEvent(this.open));
+      this.dispatchEvent(new CemDrawerChangeEvent(open));
     }
   }
 
@@ -208,5 +206,9 @@ export class CemServeDrawer extends HTMLElement {
 
   close() {
     this.open = false;
+  }
+
+  static {
+    customElements.define(this.is, this);
   }
 }

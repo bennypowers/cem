@@ -55,8 +55,8 @@ func RenderElementListing(manifestBytes []byte, importMap string, packageName st
 			title = "Component Browser"
 		}
 		return renderDemoChrome(ChromeData{
-			TagName:   "", // Empty for index page
-			DemoTitle: title,
+			TagName:     "", // Empty for index page
+			DemoTitle:   title,
 			DemoHTML: template.HTML(`
 				<div class="empty-state">
 					<p>No custom elements found in manifest.</p>
@@ -87,18 +87,23 @@ func RenderElementListing(manifestBytes []byte, importMap string, packageName st
 	}
 
 	if len(elements) == 0 {
-		return renderDemoChrome(ChromeData{
-			TagName:   "cem-serve",
-			DemoTitle: title,
+		// This path shouldn't be hit if there are elements with demos
+		chromeData := ChromeData{
+			TagName:        "cem-serve",
+			DemoTitle:      title,
 			DemoHTML: template.HTML(`
 				<div class="empty-state">
 					<p>No demos found.</p>
 					<p class="help-text">Add demo files to your components and they'll appear here.</p>
 				</div>
 			`),
-			ImportMap:   template.HTML(importMap),
-			PackageName: title,
-		})
+			ImportMap:      template.HTML(importMap),
+			PackageName:    title,
+			NavigationHTML: navigationHTML,
+			Manifest:       &pkg,
+			ManifestJSON:   template.JS(manifestBytes),
+		}
+		return renderDemoChrome(chromeData)
 	}
 
 	// Sort elements alphabetically
@@ -130,6 +135,8 @@ func RenderElementListing(manifestBytes []byte, importMap string, packageName st
 		ImportMap:      template.HTML(importMap),
 		PackageName:    title,
 		NavigationHTML: navigationHTML,
+		Manifest:       &pkg,
+		ManifestJSON:   template.JS(manifestBytes),
 	})
 }
 
@@ -481,6 +488,35 @@ func RenderWorkspaceListing(packages []PackageContext, importMap string) (string
 		return "", fmt.Errorf("executing workspace listing template: %w", err)
 	}
 
+	// Aggregate all package manifests for the manifest browser
+	var aggregatedManifest *M.Package
+	for _, pkg := range packages {
+		if len(pkg.Manifest) == 0 {
+			continue
+		}
+
+		var parsed M.Package
+		if err := json.Unmarshal(pkg.Manifest, &parsed); err != nil {
+			continue
+		}
+
+		if aggregatedManifest == nil {
+			aggregatedManifest = &parsed
+		} else {
+			// Merge modules from this package into the aggregated manifest
+			aggregatedManifest.Modules = append(aggregatedManifest.Modules, parsed.Modules...)
+		}
+	}
+
+	// Serialize manifest to JSON for client-side tools
+	var manifestJSON template.JS
+	if aggregatedManifest != nil {
+		manifestBytes, err := M.SerializeToBytes(aggregatedManifest)
+		if err == nil {
+			manifestJSON = template.JS(manifestBytes)
+		}
+	}
+
 	return renderDemoChrome(ChromeData{
 		TagName:        "cem-serve",
 		DemoTitle:      "Workspace Browser",
@@ -488,5 +524,7 @@ func RenderWorkspaceListing(packages []PackageContext, importMap string) (string
 		ImportMap:      template.HTML(importMap),
 		PackageName:    "Workspace",
 		NavigationHTML: navigationHTML,
+		Manifest:       aggregatedManifest,
+		ManifestJSON:   manifestJSON,
 	})
 }

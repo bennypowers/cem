@@ -293,6 +293,8 @@ func serveIndexListing(w http.ResponseWriter, r *http.Request, config Config) bo
 		return false
 	}
 
+	config.Context.Logger().Debug("serveIndexListing: handling root path /")
+
 	// Get import map as JSON
 	var importMapJSON string
 	if im := config.Context.ImportMap(); im != nil {
@@ -307,8 +309,10 @@ func serveIndexListing(w http.ResponseWriter, r *http.Request, config Config) bo
 	if config.Context.IsWorkspace() {
 		// Workspace mode: always render workspace listing
 		middlewarePackages := config.Context.WorkspacePackages()
+		config.Context.Logger().Debug("serveIndexListing: IsWorkspace=true, got %d middleware packages", len(middlewarePackages))
 		packages := make([]PackageContext, len(middlewarePackages))
 		for i, pkg := range middlewarePackages {
+			config.Context.Logger().Debug("serveIndexListing: Package %d: Name=%s, Manifest len=%d", i, pkg.Name, len(pkg.Manifest))
 			packages[i] = PackageContext{
 				Name:     pkg.Name,
 				Path:     pkg.Path,
@@ -317,6 +321,7 @@ func serveIndexListing(w http.ResponseWriter, r *http.Request, config Config) bo
 		}
 		html, err = RenderWorkspaceListing(packages, importMapJSON)
 	} else {
+		config.Context.Logger().Debug("serveIndexListing: NOT in workspace mode, single-package mode")
 		// Single-package mode: check if index.html exists
 		watchDir := config.Context.WatchDir()
 		if watchDir != "" {
@@ -342,12 +347,15 @@ func serveIndexListing(w http.ResponseWriter, r *http.Request, config Config) bo
 			config.Context.Logger().Warning("Failed to get manifest for index listing: %v", err2)
 			return false
 		}
+		config.Context.Logger().Debug("serveIndexListing: got manifest bytes, len=%d", len(manifestBytes))
 		// Get package name from package.json
 		pkgName := ""
 		if pkg, err := config.Context.PackageJSON(); err == nil && pkg != nil {
 			pkgName = pkg.Name
 		}
+		config.Context.Logger().Debug("serveIndexListing: calling RenderElementListing with package name=%s", pkgName)
 		html, err = RenderElementListing(manifestBytes, importMapJSON, pkgName)
+		config.Context.Logger().Debug("serveIndexListing: RenderElementListing returned, err=%v, html len=%d", err, len(html))
 	}
 
 	if err != nil {
@@ -440,7 +448,7 @@ func serveDemoRoute(w http.ResponseWriter, r *http.Request, config Config) bool 
 	}
 
 	// Render the demo
-	html, err := renderDemoFromRoute(entry, queryParams, config, navigationHTML, packageName)
+	html, err := renderDemoFromRoute(entry, queryParams, config, navigationHTML, packageName, r)
 	if err != nil {
 		config.Context.Logger().Error("Failed to render demo: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -455,7 +463,7 @@ func serveDemoRoute(w http.ResponseWriter, r *http.Request, config Config) bool 
 }
 
 // renderDemoFromRoute renders a demo page with chrome using routing table entry
-func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, config Config, navigationHTML template.HTML, packageName string) (string, error) {
+func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, config Config, navigationHTML template.HTML, packageName string, r *http.Request) (string, error) {
 	// Determine base directory for file path
 	var baseDir string
 	if config.Context.IsWorkspace() && entry.PackagePath != "" {
@@ -506,9 +514,11 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 
 	// Fetch manifest and generate knobs for ALL custom elements in demo
 	manifestBytes, err := config.Context.Manifest()
+	var parsedManifest *M.Package // Declare parsedManifest here
 	if err == nil && len(manifestBytes) > 0 {
 		var pkg M.Package
 		if err := json.Unmarshal(manifestBytes, &pkg); err == nil {
+			parsedManifest = &pkg // Assign the parsed manifest
 			// Phase 5b: Discover all custom elements in demo (not just primary element)
 			// This supports compositional components like accordion > accordion-header + accordion-panel
 			allKnobGroups, err := GenerateKnobsForAllElements(&pkg, demoHTML, enabledKnobs)
@@ -534,6 +544,9 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 		}
 	}
 
+	// Extract state from request cookie for SSR
+	state := GetStateFromRequest(r)
+
 	chromeData := ChromeData{
 		TagName:        entry.TagName,
 		DemoTitle:      demoTitle,
@@ -547,6 +560,9 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 		CanonicalURL:   entry.Demo.URL, // Link to canonical demo
 		PackageName:    packageName,
 		NavigationHTML: navigationHTML,
+		ManifestJSON:   template.JS(manifestBytes),
+		Manifest:       parsedManifest,
+		State:          state, // Persisted UI state for SSR
 	}
 
 	// Render with chrome
@@ -715,6 +731,9 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 		}
 	}
 
+	// Extract state from request cookie for SSR
+	state := GetStateFromRequest(r)
+
 	// Render 404 page with chrome
 	chromeData := ChromeData{
 		TagName:        "cem-serve",
@@ -723,6 +742,7 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 		ImportMap:      template.HTML(importMapJSON),
 		PackageName:    packageName,
 		NavigationHTML: navigationHTML,
+		State:          state, // Persisted UI state for SSR
 	}
 
 	html, err := renderDemoChrome(chromeData)

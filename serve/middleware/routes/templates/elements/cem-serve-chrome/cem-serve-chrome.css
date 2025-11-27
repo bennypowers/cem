@@ -5,6 +5,10 @@
   --pf-v6-c-masthead__logo--Width: max-content;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 /* Masthead logo styles */
 .masthead-logo {
   display: flex;
@@ -328,12 +332,15 @@ footer ::slotted([slot="description"]) {
   }
 }
 
-/* Hide footer drawer components until localStorage state is restored (prevents flash) */
-:host(.initializing) {
-  cem-drawer,
-  pf-v6-tabs {
-    visibility: hidden;
-  }
+.logs-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+#log-container {
+  flex-grow: 1;
+  overflow-y: auto;
 }
 
 .log-entry {
@@ -341,13 +348,13 @@ footer ::slotted([slot="description"]) {
   display: flex;
   gap: var(--cem-dev-server-spacing-sm);
   align-items: baseline;
+  pf-v6-label {
+    flex-shrink: 0;
+  }
 }
 
-.log-entry pf-v6-label {
-  flex-shrink: 0;
-}
-
-.log-time, .log-message {
+.log-time,
+.log-message {
   font-family: var(--cem-dev-server-font-family-mono);
   font-size: var(--cem-dev-server-font-size-sm);
 }
