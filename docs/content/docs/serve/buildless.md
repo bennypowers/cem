@@ -165,6 +165,6 @@ See **[Configuration](/docs/configuration/)** for all options.
 
 ## What's Next?
 
-- **[Import Maps](import-maps/)** - Use npm packages without bundling
+- **[Import Maps](/docs/serve/import-maps/)** - Use npm packages without bundling
 - **[Configuration](/docs/configuration/)** - Configuration reference
-- **[Getting Started](getting-started/)** - Set up your first demo
+- **[Getting Started](/docs/serve/getting-started/)** - Set up your first demo

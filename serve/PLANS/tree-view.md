@@ -522,7 +522,7 @@ class ManifestTreeBuilder {
 
 **Component tests:**
 - `serve/middleware/routes/templates/elements/cem-manifest-browser/cem-manifest-browser_test.js`
-- `serve/middleware/routes/templates/elements/cem-tree-view/cem-tree-view_test.js`
+- `serve/middleware/routes/templates/elements/pf-v6-tree-view/pf-v6-tree-view_test.js`
 
 **Go tests:**
 - `serve/middleware/routes/manifest_test.go` - Test manifest enrichment (fixture/golden pattern)

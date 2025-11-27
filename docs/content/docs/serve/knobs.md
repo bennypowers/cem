@@ -241,5 +241,5 @@ This generates:
 ## What's Next?
 
 - **[Generate Docs](/docs/commands/generate/)** - Learn JSDoc syntax for documentation
-- **[Buildless Development](buildless/)** - Write TypeScript and import CSS without build steps
-- **[Getting Started](getting-started/)** - Set up your first demo
+- **[Buildless Development](/docs/serve/buildless/)** - Write TypeScript and import CSS without build steps
+- **[Getting Started](/docs/serve/getting-started/)** - Set up your first demo

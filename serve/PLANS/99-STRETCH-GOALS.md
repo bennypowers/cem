@@ -13,9 +13,9 @@
 - **HMR** - inject Open-WC HMR code into ce classes
 The idea would be to inject the necessary HMR code into custom element classes, rather than rely on the authors to provide it
 see:
-- https://open-wc.org/docs/development/hot-module-replacement/
-- https://github.com/fi3ework/vite-plugin-web-components-hmr
-- https://modern-web.dev/docs/dev-server/plugins/hmr/
+- [Open-WC HMR documentation](https://open-wc.org/docs/development/hot-module-replacement/)
+- [vite-plugin-web-components-hmr](https://github.com/fi3ework/vite-plugin-web-components-hmr)
+- [Modern Web Dev Server HMR plugin](https://modern-web.dev/docs/dev-server/plugins/hmr/)
 
 ### Logging
 - **Performance metrics** - Render timing, reflow counts

@@ -322,7 +322,6 @@ Use `--update` flag to regenerate golden files (like Phase 3/4 tests):
 ```bash
 go test ./serve/middleware/knobs/... --update
 ```
-```
 
 ### Test Coverage
 
