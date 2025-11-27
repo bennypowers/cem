@@ -233,13 +233,20 @@ class PfV6TreeView extends CemElement {
    * First item gets tabindex="0", all others get tabindex="-1"
    */
   #initializeTabindex() {
-    const items = this.#getTopLevelItems();
-    if (items.length === 0) return;
+    const topLevelItems = this.#getTopLevelItems();
+    if (topLevelItems.length === 0) return;
 
-    // Set first item to tabindex="0", rest to "-1"
-    items[0].setTabindex(0);
-    const allOtherItems = this.querySelectorAll('pf-v6-tree-item:not(:first-child)');
-    allOtherItems.forEach(item => item.setTabindex(-1));
+    const firstItem = topLevelItems[0];
+    // Set first item to tabindex="0"
+    firstItem.setTabindex(0);
+
+    // Set all other items (including nested) to tabindex="-1"
+    const allItems = this.querySelectorAll('pf-v6-tree-item');
+    allItems.forEach(item => {
+      if (item !== firstItem) {
+        item.setTabindex(-1);
+      }
+    });
   }
 
   /**
