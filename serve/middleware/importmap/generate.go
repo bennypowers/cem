@@ -419,7 +419,14 @@ func addPackageExportsToImportMap(importMap *ImportMap, pkgName, pkgPath, rootDi
 		return nil
 	}
 
-	return fmt.Errorf("no exports or main field")
+	// No exports or main field - add fallback trailing slash mapping
+	// This allows packages like @patternfly/icons to work with subpath imports
+	// e.g., @patternfly/icons/fas/copy.js -> /node_modules/@patternfly/icons/fas/copy.js
+	importMap.Imports[pkgName+"/"] = pkgWebPath + "/"
+	if logger != nil {
+		logger.Debug("Package %s has no exports or main, added trailing slash mapping: %s/ -> %s/", pkgName, pkgName, pkgWebPath)
+	}
+	return nil
 }
 
 // resolveExportValue resolves an export value to a web path

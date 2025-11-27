@@ -518,33 +518,71 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 	}
 
 	// Fetch manifest and generate knobs for ALL custom elements in demo
-	manifestBytes, err := config.Context.Manifest()
+	var manifestBytes []byte
 	var parsedManifest *M.Package // Declare parsedManifest here
-	if err == nil && len(manifestBytes) > 0 {
-		var pkg M.Package
-		if err := json.Unmarshal(manifestBytes, &pkg); err == nil {
-			parsedManifest = &pkg // Assign the parsed manifest
-			// Phase 5b: Discover all custom elements in demo (not just primary element)
-			// This supports compositional components like accordion > accordion-header + accordion-panel
-			allKnobGroups, err := GenerateKnobsForAllElements(&pkg, demoHTML, enabledKnobs)
+
+	if config.Context.IsWorkspace() {
+		// Workspace mode: aggregate manifests from all packages
+		middlewarePackages := config.Context.WorkspacePackages()
+		var aggregatedManifest *M.Package
+		for _, pkg := range middlewarePackages {
+			if len(pkg.Manifest) == 0 {
+				continue
+			}
+
+			var parsed M.Package
+			if err := json.Unmarshal(pkg.Manifest, &parsed); err != nil {
+				continue
+			}
+
+			if aggregatedManifest == nil {
+				aggregatedManifest = &parsed
+			} else {
+				// Merge modules from this package into the aggregated manifest
+				aggregatedManifest.Modules = append(aggregatedManifest.Modules, parsed.Modules...)
+			}
+		}
+
+		if aggregatedManifest != nil {
+			parsedManifest = aggregatedManifest
+			manifestBytes, err = M.SerializeToBytes(aggregatedManifest)
 			if err != nil {
-				config.Context.Logger().Warning("Failed to generate knobs for demo elements: %v", err)
+				config.Context.Logger().Warning("Failed to serialize aggregated manifest: %v", err)
+			}
+		}
+	} else {
+		// Single-package mode: use context manifest
+		manifestBytes, err = config.Context.Manifest()
+		if err == nil && len(manifestBytes) > 0 {
+			var pkg M.Package
+			if err := json.Unmarshal(manifestBytes, &pkg); err == nil {
+				parsedManifest = &pkg
+			}
+		}
+	}
+
+	// Generate knobs if we have a manifest
+	if parsedManifest != nil {
+		// Phase 5b: Discover all custom elements in demo (not just primary element)
+		// This supports compositional components like accordion > accordion-header + accordion-panel
+		allKnobGroups, err := GenerateKnobsForAllElements(parsedManifest, demoHTML, enabledKnobs)
+		if err != nil {
+			config.Context.Logger().Warning("Failed to generate knobs for demo elements: %v", err)
+			_ = config.Context.BroadcastError(
+				"Knobs Generation Error",
+				fmt.Sprintf("Failed to generate knobs: %v", err),
+				entry.TagName,
+			)
+		} else if len(allKnobGroups) > 0 {
+			// Render all knob groups
+			knobsHTML, err = RenderKnobsHTML(allKnobGroups)
+			if err != nil {
+				config.Context.Logger().Warning("Failed to render knobs HTML: %v", err)
 				_ = config.Context.BroadcastError(
-					"Knobs Generation Error",
-					fmt.Sprintf("Failed to generate knobs: %v", err),
+					"Knobs Render Error",
+					fmt.Sprintf("Failed to render knobs HTML: %v", err),
 					entry.TagName,
 				)
-			} else if len(allKnobGroups) > 0 {
-				// Render all knob groups
-				knobsHTML, err = RenderKnobsHTML(allKnobGroups)
-				if err != nil {
-					config.Context.Logger().Warning("Failed to render knobs HTML: %v", err)
-					_ = config.Context.BroadcastError(
-						"Knobs Render Error",
-						fmt.Sprintf("Failed to render knobs HTML: %v", err),
-						entry.TagName,
-					)
-				}
 			}
 		}
 	}
