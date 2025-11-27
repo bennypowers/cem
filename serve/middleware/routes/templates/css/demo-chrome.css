@@ -31,6 +31,8 @@ html::view-transition-new(*) {
 /* Stable transition names for persistent elements */
 pf-v6-masthead {
   view-transition-name: masthead;
+  /* Match toggle button size to toolbar icons */
+  --pf-v6-c-masthead__toggle--Size: 0.875rem;
 }
 
 pf-v6-page-sidebar {

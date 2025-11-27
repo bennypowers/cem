@@ -3,6 +3,7 @@
   height: 100vh;
   overflow: hidden;
   --pf-v6-c-masthead__logo--Width: max-content;
+  --pf-v6-c-masthead__toggle--Size: 1rem;
 }
 
 [hidden] {
