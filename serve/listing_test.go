@@ -209,13 +209,19 @@ func TestRootListing_SortedByElement(t *testing.T) {
 
 	body := w.Body.String()
 
-	// Find positions of elements
-	applePos := strings.Index(body, "my-apple")
-	mangoPos := strings.Index(body, "my-mango")
-	zebraPos := strings.Index(body, "my-zebra")
+	// Find positions of elements in the main content area (skip embedded manifest in head)
+	contentStart := strings.Index(body, "<cem-serve-demo")
+	if contentStart == -1 {
+		t.Fatal("Expected cem-serve-demo in output")
+	}
+	content := body[contentStart:]
+
+	applePos := strings.Index(content, "my-apple")
+	mangoPos := strings.Index(content, "my-mango")
+	zebraPos := strings.Index(content, "my-zebra")
 
 	if applePos == -1 || mangoPos == -1 || zebraPos == -1 {
-		t.Fatal("Expected all elements in output")
+		t.Fatal("Expected all elements in output content")
 	}
 
 	// Should be in alphabetical order

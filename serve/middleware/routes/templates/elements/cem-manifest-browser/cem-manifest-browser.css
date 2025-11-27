@@ -1,0 +1,11 @@
+/* Manifest Browser - Component API navigation tree */
+
+:host {
+  display: block;
+  height: 100%;
+  overflow: auto;
+}
+
+pf-v6-tree-view {
+  margin: var(--pf-t--global--spacer--md, 1rem);
+}

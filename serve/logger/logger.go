@@ -226,62 +226,71 @@ func (l *ptermLogger) log(level, color, msg string, args ...interface{}) {
 	// Capture wsManager reference while holding lock to avoid race with SetWebSocketManager
 	ws := l.wsManager
 
-	if l.interactive && l.area != nil {
-		// Interactive mode with live area started: store colored logs and render
-		var prefix, coloredMsg string
-		timestampStr := pterm.FgGray.Sprint(timestamp)
+	shouldPrint := true
+	if color == "debug" && !l.verbose {
+		shouldPrint = false
+	}
 
-		switch color {
-		case "info":
-			prefix = pterm.FgCyan.Sprint("INFO ")
-			coloredMsg = formatted
-		case "warning":
-			prefix = pterm.FgYellow.Sprint("WARN ")
-			coloredMsg = pterm.FgYellow.Sprint(formatted)
-		case "error":
-			prefix = pterm.FgRed.Sprint("ERROR")
-			coloredMsg = pterm.FgRed.Sprint(formatted)
-		case "debug":
-			prefix = pterm.FgGray.Sprint("DEBUG")
-			coloredMsg = pterm.FgGray.Sprint(formatted)
+	if shouldPrint {
+		if l.interactive && l.area != nil {
+			// Interactive mode with live area started: store colored logs and render
+			var prefix, coloredMsg string
+			timestampStr := pterm.FgGray.Sprint(timestamp)
+
+			switch color {
+			case "info":
+				prefix = pterm.FgCyan.Sprint("INFO ")
+				coloredMsg = formatted
+			case "warning":
+				prefix = pterm.FgYellow.Sprint("WARN ")
+				coloredMsg = pterm.FgYellow.Sprint(formatted)
+			case "error":
+				prefix = pterm.FgRed.Sprint("ERROR")
+				coloredMsg = pterm.FgRed.Sprint(formatted)
+			case "debug":
+				prefix = pterm.FgGray.Sprint("DEBUG")
+				coloredMsg = pterm.FgGray.Sprint(formatted)
+			}
+
+			// Calculate padding for right-aligned timestamp
+			// Use visual width (uncolored text length) not string length (which includes ANSI codes)
+			width := 80
+			if w, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil && w > 0 {
+				width = w
+			}
+
+			// Visual length is just the actual text without ANSI codes
+			visualLen := len(level) + 1 + len(formatted)
+			padding := width - visualLen - 10 // 10 to prevent overflow (1 leading space + 8 for timestamp + 1 buffer)
+			if padding < 1 {
+				padding = 1
+			}
+
+			terminalLog := fmt.Sprintf(" %s %s%s%s", prefix, coloredMsg, strings.Repeat(" ", padding), timestampStr)
+			l.terminalLogs = append(l.terminalLogs, terminalLog)
+
+			if len(l.terminalLogs) > l.maxTermLogs {
+				l.terminalLogs = l.terminalLogs[len(l.terminalLogs)-l.maxTermLogs:]
+			}
+
+			l.mu.Unlock()
+			l.render()
+		} else {
+			l.mu.Unlock()
+			// Non-interactive OR area not started yet: standard pterm output
+			switch color {
+			case "info":
+				pterm.Info.Println(formatted)
+			case "warning":
+				pterm.Warning.Println(formatted)
+			case "error":
+				pterm.Error.Println(formatted)
+			case "debug":
+				pterm.Debug.Println(formatted)
+			}
 		}
-
-		// Calculate padding for right-aligned timestamp
-		// Use visual width (uncolored text length) not string length (which includes ANSI codes)
-		width := 80
-		if w, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil && w > 0 {
-			width = w
-		}
-
-		// Visual length is just the actual text without ANSI codes
-		visualLen := len(level) + 1 + len(formatted)
-		padding := width - visualLen - 10 // 10 to prevent overflow (1 leading space + 8 for timestamp + 1 buffer)
-		if padding < 1 {
-			padding = 1
-		}
-
-		terminalLog := fmt.Sprintf(" %s %s%s%s", prefix, coloredMsg, strings.Repeat(" ", padding), timestampStr)
-		l.terminalLogs = append(l.terminalLogs, terminalLog)
-
-		if len(l.terminalLogs) > l.maxTermLogs {
-			l.terminalLogs = l.terminalLogs[len(l.terminalLogs)-l.maxTermLogs:]
-		}
-
-		l.mu.Unlock()
-		l.render()
 	} else {
 		l.mu.Unlock()
-		// Non-interactive OR area not started yet: standard pterm output
-		switch color {
-		case "info":
-			pterm.Info.Println(formatted)
-		case "warning":
-			pterm.Warning.Println(formatted)
-		case "error":
-			pterm.Error.Println(formatted)
-		case "debug":
-			pterm.Debug.Println(formatted)
-		}
 	}
 
 	// Broadcast just this individual log entry to WebSocket clients
@@ -329,7 +338,5 @@ func (l *ptermLogger) Error(msg string, args ...interface{}) {
 }
 
 func (l *ptermLogger) Debug(msg string, args ...interface{}) {
-	if l.verbose {
-		l.log("DEBUG", "debug", msg, args...)
-	}
+	l.log("DEBUG", "debug", msg, args...)
 }

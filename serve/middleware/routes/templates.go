@@ -23,6 +23,7 @@ import (
 	"html/template"
 	"strings"
 
+	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/serve/middleware"
 )
 
@@ -121,6 +122,7 @@ func getTemplateFuncs() template.FuncMap {
 			}
 			return html
 		},
+		"asCustomElement": asCustomElement,
 	}
 }
 
@@ -144,3 +146,13 @@ var KnobsTemplate = template.Must(template.New("knobs").Funcs(getTemplateFuncs()
 
 // DemoChromeTemplate is the parsed template for demo chrome wrapper
 var DemoChromeTemplate = template.Must(template.New("demo-chrome").Funcs(getTemplateFuncs()).Parse(demoChromeTemplate))
+
+// asCustomElement performs type assertion to extract CustomElementDeclaration from Declaration interface.
+// Returns nil if the declaration is not a custom element.
+// Template usage: {{$ce := asCustomElement .}} {{if $ce}}...{{end}}
+func asCustomElement(decl M.Declaration) *M.CustomElementDeclaration {
+	if ce, ok := decl.(*M.CustomElementDeclaration); ok {
+		return ce
+	}
+	return nil
+}

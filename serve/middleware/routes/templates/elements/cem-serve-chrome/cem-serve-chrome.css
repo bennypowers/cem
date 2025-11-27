@@ -336,18 +336,29 @@ footer ::slotted([slot="description"]) {
   }
 }
 
+.logs-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+#log-container {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
 .log-entry {
   padding: var(--cem-dev-server-spacing-xs) var(--cem-dev-server-spacing-md);
   display: flex;
   gap: var(--cem-dev-server-spacing-sm);
   align-items: baseline;
+  pf-v6-label {
+    flex-shrink: 0;
+  }
 }
 
-.log-entry pf-v6-label {
-  flex-shrink: 0;
-}
-
-.log-time, .log-message {
+.log-time,
+.log-message {
   font-family: var(--cem-dev-server-font-family-mono);
   font-size: var(--cem-dev-server-font-size-sm);
 }

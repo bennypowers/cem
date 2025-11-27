@@ -177,7 +177,40 @@
         </div>
       </pf-v6-tab>
       <pf-v6-tab title="Server Logs">
-        <div id="log-container"></div>
+        <div class="logs-wrapper">
+          <pf-v6-toolbar sticky>
+            <pf-v6-toolbar-group>
+              <pf-v6-toolbar-item>
+                <pf-v6-text-input-group id="logs-filter" placeholder="Filter logs..." icon>
+                  <svg slot="icon"
+                       role="presentation"
+                       fill="currentColor"
+                       height="1em"
+                       width="1em"
+                       viewBox="0 0 512 512">
+                    <path d="M505 442.7L405.3 343c-4.5-4.5-10.6-7-17-7H372c27.6-35.3 44-79.7 44-128C416 93.1 322.9 0 208 0S0 93.1 0 208s93.1 208 208 208c48.3 0 92.7-16.4 128-44v16.3c0 6.4 2.5 12.5 7 17l99.7 99.7c9.4 9.4 24.6 9.4 33.9 0l28.3-28.3c9.4-9.4 9.4-24.6.1-34zM208 336c-70.7 0-128-57.2-128-128 0-70.7 57.2-128 128-128 70.7 0 128 57.2 128 128 0 70.7-57.2 128-128 128z"></path>
+                  </svg>
+                </pf-v6-text-input-group>
+              </pf-v6-toolbar-item>
+            </pf-v6-toolbar-group>
+            <pf-v6-toolbar-group variant="action-group">
+              <pf-v6-toolbar-item>
+                <pf-v6-button id="copy-logs" variant="tertiary" size="small">
+                  <svg slot="icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M13 0H6a2 2 0 0 0-2 2 2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2 2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm0 13V4a2 2 0 0 0-2-2H5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1zM3 13V4a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/>
+                  </svg>
+                  Copy Logs
+                </pf-v6-button>
+              </pf-v6-toolbar-item>
+            </pf-v6-toolbar-group>
+          </pf-v6-toolbar>
+          <div id="log-container"></div>
+        </div>
+      </pf-v6-tab>
+      <pf-v6-tab title="Manifest">
+        <cem-manifest-browser>
+          <slot name="manifest-tree" slot="tree"></slot>
+        </cem-manifest-browser>
       </pf-v6-tab>
     </pf-v6-tabs>
   </cem-drawer>

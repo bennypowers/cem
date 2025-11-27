@@ -1,40 +1,41 @@
-import '/__cem/elements/pf-v6-button/pf-v6-button.js';
-import '/__cem/elements/pf-v6-switch/pf-v6-switch.js';
-import '/__cem/elements/pf-v6-text-input/pf-v6-text-input.js';
-import '/__cem/elements/pf-v6-select/pf-v6-select.js';
-import '/__cem/elements/pf-v6-tab/pf-v6-tab.js';
-import '/__cem/elements/pf-v6-tabs/pf-v6-tabs.js';
-import '/__cem/elements/pf-v6-navigation/pf-v6-navigation.js';
-import '/__cem/elements/pf-v6-nav-list/pf-v6-nav-list.js';
-import '/__cem/elements/pf-v6-nav-item/pf-v6-nav-item.js';
-import '/__cem/elements/pf-v6-nav-link/pf-v6-nav-link.js';
-import '/__cem/elements/pf-v6-nav-group/pf-v6-nav-group.js';
-import '/__cem/elements/pf-v6-page/pf-v6-page.js';
-import '/__cem/elements/pf-v6-page-main/pf-v6-page-main.js';
-import '/__cem/elements/pf-v6-page-sidebar/pf-v6-page-sidebar.js';
-import '/__cem/elements/pf-v6-masthead/pf-v6-masthead.js';
-import '/__cem/elements/pf-v6-skip-to-content/pf-v6-skip-to-content.js';
-import '/__cem/elements/pf-v6-toolbar/pf-v6-toolbar.js';
-import '/__cem/elements/pf-v6-toolbar-group/pf-v6-toolbar-group.js';
-import '/__cem/elements/pf-v6-toolbar-item/pf-v6-toolbar-item.js';
-import '/__cem/elements/pf-v6-toggle-group/pf-v6-toggle-group.js';
-import '/__cem/elements/pf-v6-toggle-group-item/pf-v6-toggle-group-item.js';
-import '/__cem/elements/pf-v6-modal/pf-v6-modal.js';
-import '/__cem/elements/pf-v6-card/pf-v6-card.js';
-import '/__cem/elements/pf-v6-label/pf-v6-label.js';
-import '/__cem/elements/pf-v6-expandable-section/pf-v6-expandable-section.js';
-import '/__cem/elements/cem-drawer/cem-drawer.js';
-import '/__cem/elements/pf-v6-form/pf-v6-form.js';
-import '/__cem/elements/pf-v6-form-group/pf-v6-form-group.js';
-import '/__cem/elements/pf-v6-form-label/pf-v6-form-label.js';
-import '/__cem/elements/pf-v6-popover/pf-v6-popover.js';
-import '/__cem/elements/cem-serve-demo/cem-serve-demo.js';
-import '/__cem/elements/cem-serve-knobs/cem-serve-knobs.js';
-import '/__cem/elements/cem-serve-knob-group/cem-serve-knob-group.js';
 import '/__cem/elements/cem-color-scheme-toggle/cem-color-scheme-toggle.js';
 import '/__cem/elements/cem-connection-status/cem-connection-status.js';
+import '/__cem/elements/cem-drawer/cem-drawer.js';
+import '/__cem/elements/cem-manifest-browser/cem-manifest-browser.js';
 import '/__cem/elements/cem-reconnection-content/cem-reconnection-content.js';
+import '/__cem/elements/cem-serve-demo/cem-serve-demo.js';
+import '/__cem/elements/cem-serve-knob-group/cem-serve-knob-group.js';
+import '/__cem/elements/cem-serve-knobs/cem-serve-knobs.js';
 import '/__cem/elements/cem-transform-error-overlay/cem-transform-error-overlay.js';
+import '/__cem/elements/pf-v6-button/pf-v6-button.js';
+import '/__cem/elements/pf-v6-card/pf-v6-card.js';
+import '/__cem/elements/pf-v6-badge/pf-v6-badge.js';
+import '/__cem/elements/pf-v6-label/pf-v6-label.js';
+import '/__cem/elements/pf-v6-masthead/pf-v6-masthead.js';
+import '/__cem/elements/pf-v6-modal/pf-v6-modal.js';
+import '/__cem/elements/pf-v6-nav-group/pf-v6-nav-group.js';
+import '/__cem/elements/pf-v6-nav-item/pf-v6-nav-item.js';
+import '/__cem/elements/pf-v6-nav-link/pf-v6-nav-link.js';
+import '/__cem/elements/pf-v6-nav-list/pf-v6-nav-list.js';
+import '/__cem/elements/pf-v6-navigation/pf-v6-navigation.js';
+import '/__cem/elements/pf-v6-page-main/pf-v6-page-main.js';
+import '/__cem/elements/pf-v6-page-sidebar/pf-v6-page-sidebar.js';
+import '/__cem/elements/pf-v6-page/pf-v6-page.js';
+import '/__cem/elements/pf-v6-popover/pf-v6-popover.js';
+import '/__cem/elements/pf-v6-select/pf-v6-select.js';
+import '/__cem/elements/pf-v6-skip-to-content/pf-v6-skip-to-content.js';
+import '/__cem/elements/pf-v6-switch/pf-v6-switch.js';
+import '/__cem/elements/pf-v6-tab/pf-v6-tab.js';
+import '/__cem/elements/pf-v6-tabs/pf-v6-tabs.js';
+import '/__cem/elements/pf-v6-text-input-group/pf-v6-text-input-group.js';
+import '/__cem/elements/pf-v6-text-input/pf-v6-text-input.js';
+import '/__cem/elements/pf-v6-toggle-group-item/pf-v6-toggle-group-item.js';
+import '/__cem/elements/pf-v6-toggle-group/pf-v6-toggle-group.js';
+import '/__cem/elements/pf-v6-toolbar-group/pf-v6-toolbar-group.js';
+import '/__cem/elements/pf-v6-toolbar-item/pf-v6-toolbar-item.js';
+import '/__cem/elements/pf-v6-toolbar/pf-v6-toolbar.js';
+import '/__cem/elements/pf-v6-tree-item/pf-v6-tree-item.js';
+import '/__cem/elements/pf-v6-tree-view/pf-v6-tree-view.js';
 
 import { CemElement } from '/__cem/cem-element.js';
 import { CEMReloadClient } from '/__cem/websocket-client.js';
@@ -374,9 +375,21 @@ export class CemServeChrome extends CemElement {
     }
   }
 
+  #logsFilterValue = '';
+
   #setupLogListener() {
     // Set up log container
     this.#logContainer = this.#$('#log-container');
+
+    // Set up filter input
+    this.#$('#logs-filter')?.addEventListener('input', (e) => {
+      this.#filterLogs(e.target.value);
+    });
+
+    // Set up copy logs button
+    this.#$('#copy-logs')?.addEventListener('click', () => {
+      this.#copyLogs();
+    });
 
     // Listen for server log messages from the WebSocket client
     // The websocket-client.js dispatches 'cem:logs' events with server logs
@@ -385,6 +398,54 @@ export class CemServeChrome extends CemElement {
         this.#renderLogs(logs);
       }
     });
+  }
+
+  #filterLogs(query) {
+    this.#logsFilterValue = query.toLowerCase();
+    
+    if (!this.#logContainer) return;
+
+    for (const entry of this.#logContainer.children) {
+      const text = entry.textContent.toLowerCase();
+      if (this.#logsFilterValue && !text.includes(this.#logsFilterValue)) {
+        entry.setAttribute('hidden', '');
+      } else {
+        entry.removeAttribute('hidden');
+      }
+    }
+  }
+
+  async #copyLogs() {
+    if (!this.#logContainer) return;
+
+    // Filter visible logs if there is a filter
+    const logs = Array.from(this.#logContainer.children)
+      .filter(entry => !entry.hasAttribute('hidden'))
+      .map(entry => {
+      const type = entry.querySelector('[data-field="label"]')?.textContent?.trim() || 'INFO';
+      const time = entry.querySelector('[data-field="time"]')?.textContent?.trim() || '';
+      const message = entry.querySelector('[data-field="message"]')?.textContent?.trim() || '';
+      return `[${type}] ${time} ${message}`;
+    }).join('\n');
+
+    if (!logs) return;
+
+    try {
+      await navigator.clipboard.writeText(logs);
+      const btn = this.#$('#copy-logs');
+      if (btn) {
+        const textNode = Array.from(btn.childNodes).find(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim().length > 0);
+        if (textNode) {
+          const original = textNode.textContent;
+          textNode.textContent = '\n              Copied!\n            ';
+          setTimeout(() => {
+            textNode.textContent = original;
+          }, 2000);
+        }
+      }
+    } catch (err) {
+      console.error('[cem-serve-chrome] Failed to copy logs:', err);
+    }
   }
 
   #setupDebugOverlay() {
@@ -551,6 +612,19 @@ Generated: ${new Date().toISOString()}`;
       const container = fragment.querySelector('[data-field="container"]');
       container.classList.add(log.type);
       container.setAttribute('data-log-id', log.date);
+
+      // Apply current filter
+      if (this.#logsFilterValue) {
+        // Construct text content for checking
+        // Note: we're checking against raw message here, which matches what's displayed
+        // We also check against type label implicitly in #filterLogs, but here we can just check message + type
+        const typeLabel = this.#getLogBadge(log.type);
+        const searchText = `${typeLabel} ${time} ${log.message}`.toLowerCase();
+        
+        if (!searchText.includes(this.#logsFilterValue)) {
+          container.setAttribute('hidden', '');
+        }
+      }
 
       // Set label text and attributes based on type
       const label = fragment.querySelector('[data-field="label"]');
