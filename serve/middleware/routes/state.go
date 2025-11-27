@@ -100,5 +100,10 @@ func validateState(state CemServeState) CemServeState {
 		state.Drawer.Height = 400
 	}
 
+	// Ensure tab index is not negative
+	if state.Tabs.SelectedIndex < 0 {
+		state.Tabs.SelectedIndex = 0
+	}
+
 	return state
 }
