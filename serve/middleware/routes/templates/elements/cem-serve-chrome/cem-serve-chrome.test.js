@@ -231,7 +231,7 @@ describe('cem-serve-chrome', () => {
     });
 
     it('handles knob:attribute-change events', () => {
-      const event = new Event('knob:attribute-change', { bubbles: true, composed: true });
+      const event = new Event('knob:attribute-change', { bubbles: true });
       event.name = 'label';
       event.value = 'Click me';
 
@@ -248,7 +248,7 @@ describe('cem-serve-chrome', () => {
     });
 
     it('handles knob:property-change events', () => {
-      const event = new Event('knob:property-change', { bubbles: true, composed: true });
+      const event = new Event('knob:property-change', { bubbles: true });
       event.name = 'variant';
       event.value = 'primary';
 
@@ -265,7 +265,7 @@ describe('cem-serve-chrome', () => {
     });
 
     it('handles knob:css-property-change events', () => {
-      const event = new Event('knob:css-property-change', { bubbles: true, composed: true });
+      const event = new Event('knob:css-property-change', { bubbles: true });
       event.name = '--color';
       event.value = 'red';
 
@@ -284,7 +284,7 @@ describe('cem-serve-chrome', () => {
     it('uses default tag name when not specified', () => {
       el.removeAttribute('primary-tag-name');
 
-      const event = new Event('knob:attribute-change', { bubbles: true, composed: true });
+      const event = new Event('knob:attribute-change', { bubbles: true });
       event.name = 'label';
       event.value = 'Test';
 
@@ -296,7 +296,7 @@ describe('cem-serve-chrome', () => {
     it('handles missing demo element gracefully', () => {
       el.removeChild(demo);
 
-      const event = new Event('knob:attribute-change', { bubbles: true, composed: true });
+      const event = new Event('knob:attribute-change', { bubbles: true });
       event.name = 'label';
       event.value = 'Test';
 
@@ -505,19 +505,19 @@ describe('cem-serve-chrome', () => {
       el.setAttribute('primary-tag-name', 'my-button');
 
       // User changes attribute knob
-      const attrEvent = new Event('knob:attribute-change', { bubbles: true, composed: true });
+      const attrEvent = new Event('knob:attribute-change', { bubbles: true });
       attrEvent.name = 'label';
       attrEvent.value = 'Submit';
       el.dispatchEvent(attrEvent);
 
       // User changes property knob
-      const propEvent = new Event('knob:property-change', { bubbles: true, composed: true });
+      const propEvent = new Event('knob:property-change', { bubbles: true });
       propEvent.name = 'variant';
       propEvent.value = 'primary';
       el.dispatchEvent(propEvent);
 
       // User changes CSS knob
-      const cssEvent = new Event('knob:css-property-change', { bubbles: true, composed: true });
+      const cssEvent = new Event('knob:css-property-change', { bubbles: true });
       cssEvent.name = '--color';
       cssEvent.value = 'red';
       el.dispatchEvent(cssEvent);

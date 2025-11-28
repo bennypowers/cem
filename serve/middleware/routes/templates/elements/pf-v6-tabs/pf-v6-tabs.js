@@ -6,7 +6,7 @@ import { CemElement } from '/__cem/cem-element.js';
 export class PfTabsChangeEvent extends Event {
   selectedIndex = -1;
   constructor(selectedIndex) {
-    super('change', { bubbles: true, composed: true });
+    super('change', { bubbles: true });
     this.selectedIndex = selectedIndex;
   }
 }

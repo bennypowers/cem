@@ -4,14 +4,14 @@ import '/__cem/elements/pf-v6-button/pf-v6-button.js';
 
 export class CemDrawerChangeEvent extends Event {
   constructor(open) {
-    super('change', { bubbles: true, composed: true });
+    super('change', { bubbles: true });
     this.open = open;
   }
 }
 
 export class CemDrawerResizeEvent extends Event {
   constructor(height) {
-    super('resize', { bubbles: true, composed: true });
+    super('resize', { bubbles: true });
     this.height = height;
   }
 }

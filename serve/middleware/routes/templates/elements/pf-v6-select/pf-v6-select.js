@@ -23,13 +23,13 @@ class PfV6Select extends CemFormControl {
     // Update form value via ElementInternals
     this.#internals.setFormValue(this.#select.value);
 
-    this.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+    this.dispatchEvent(new Event('change', { bubbles: true }));
   };
 
   #onInput = () => {
     this.setAttribute('value', this.#select.value);
     this.#internals.setFormValue(this.#select.value);
-    this.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+    this.dispatchEvent(new Event('input', { bubbles: true }));
   };
 
   /**

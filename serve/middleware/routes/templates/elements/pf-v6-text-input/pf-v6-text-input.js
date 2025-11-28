@@ -59,13 +59,13 @@ class PfV6TextInput extends CemFormControl {
       // Update form value via ElementInternals
       this.#internals.setFormValue(this.#input.value);
 
-      this.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+      this.dispatchEvent(new Event('input', { bubbles: true }));
     });
 
     this.#input.addEventListener('change', () => {
       this.setAttribute('value', this.#input.value);
       this.#internals.setFormValue(this.#input.value);
-      this.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+      this.dispatchEvent(new Event('change', { bubbles: true }));
     });
   }
 

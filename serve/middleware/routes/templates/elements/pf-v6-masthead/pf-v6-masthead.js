@@ -5,7 +5,7 @@ import { CemElement } from '/__cem/cem-element.js';
  */
 export class SidebarToggleEvent extends Event {
   constructor(expanded) {
-    super('sidebar-toggle', { bubbles: true, composed: true });
+    super('sidebar-toggle', { bubbles: true });
     this.expanded = expanded;
   }
 }
@@ -85,4 +85,3 @@ class PfV6Masthead extends CemElement {
     customElements.define(this.is, this);
   }
 }
-

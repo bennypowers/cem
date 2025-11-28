@@ -6,19 +6,19 @@ import { CemElement } from '/__cem/cem-element.js';
  */
 export class PfTreeItemSelectEvent extends Event {
   constructor() {
-    super('select', { bubbles: true, composed: true });
+    super('select', { bubbles: true });
   }
 }
 
 export class PfTreeItemExpandEvent extends Event {
   constructor() {
-    super('expand', { bubbles: true, composed: true });
+    super('expand', { bubbles: true });
   }
 }
 
 export class PfTreeItemCollapseEvent extends Event {
   constructor() {
-    super('collapse', { bubbles: true, composed: true });
+    super('collapse', { bubbles: true });
   }
 }
 

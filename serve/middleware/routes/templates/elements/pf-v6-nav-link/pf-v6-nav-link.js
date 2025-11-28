@@ -5,7 +5,7 @@ import { CemElement } from '/__cem/cem-element.js';
  */
 export class PfNavToggleEvent extends Event {
   constructor(expanded) {
-    super('pf-nav-toggle', { bubbles: true, composed: true });
+    super('pf-nav-toggle', { bubbles: true });
     this.expanded = expanded;
   }
 }

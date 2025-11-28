@@ -62,7 +62,6 @@ class PfV6TextInputGroup extends CemElement {
       // Re-dispatch event for external listeners
       this.dispatchEvent(new InputEvent('input', {
         bubbles: true,
-        composed: true,
         data: e.data,
         inputType: e.inputType
       }));
@@ -71,7 +70,6 @@ class PfV6TextInputGroup extends CemElement {
     this.#input?.addEventListener('change', (e) => {
       this.dispatchEvent(new Event('change', {
         bubbles: true,
-        composed: true
       }));
     });
   }

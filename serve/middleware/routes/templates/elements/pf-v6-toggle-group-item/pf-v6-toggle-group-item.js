@@ -3,7 +3,7 @@ import { CemElement } from '/__cem/cem-element.js';
 // Custom event for toggle group item selection
 export class ToggleGroupItemSelectEvent extends Event {
   constructor(item, selected, value) {
-    super('pf-v6-toggle-group-item-select', { bubbles: true, composed: true });
+    super('pf-v6-toggle-group-item-select', { bubbles: true });
     this.item = item;
     this.selected = selected;
     this.value = value;

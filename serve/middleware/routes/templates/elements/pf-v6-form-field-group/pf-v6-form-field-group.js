@@ -5,7 +5,7 @@ import { CemElement } from '/__cem/cem-element.js';
  */
 export class PfFormFieldGroupToggleEvent extends Event {
   constructor(expanded) {
-    super('toggle', { bubbles: true, composed: true });
+    super('toggle', { bubbles: true });
     this.expanded = expanded;
   }
 }

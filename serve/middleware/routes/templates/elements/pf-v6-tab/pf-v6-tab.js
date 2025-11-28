@@ -9,18 +9,18 @@ class PfV6Tab extends CemElement {
 
   async afterTemplateLoaded() {
     // Notify parent tabs component that a tab was added
-    this.dispatchEvent(new Event('pf-v6-tab-connected', { bubbles: true, composed: true }));
+    this.dispatchEvent(new Event('pf-v6-tab-connected', { bubbles: true }));
   }
 
   disconnectedCallback() {
     // Notify parent tabs component that a tab was removed
-    this.dispatchEvent(new Event('pf-v6-tab-disconnected', { bubbles: true, composed: true }));
+    this.dispatchEvent(new Event('pf-v6-tab-disconnected', { bubbles: true }));
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === 'title' && oldValue !== newValue) {
       // Notify parent that title changed
-      this.dispatchEvent(new Event('pf-v6-tab-title-changed', { bubbles: true, composed: true }));
+      this.dispatchEvent(new Event('pf-v6-tab-title-changed', { bubbles: true }));
     }
   }
 
@@ -36,4 +36,3 @@ class PfV6Tab extends CemElement {
     customElements.define(this.is, this);
   }
 }
-

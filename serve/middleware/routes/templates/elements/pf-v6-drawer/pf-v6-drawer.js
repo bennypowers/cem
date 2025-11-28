@@ -5,7 +5,7 @@ import { CemElement } from '/__cem/cem-element.js';
  */
 export class PfDrawerExpandEvent extends Event {
   constructor() {
-    super('expand', { bubbles: true, composed: true });
+    super('expand', { bubbles: true });
   }
 }
 
@@ -14,7 +14,7 @@ export class PfDrawerExpandEvent extends Event {
  */
 export class PfDrawerCollapseEvent extends Event {
   constructor() {
-    super('collapse', { bubbles: true, composed: true });
+    super('collapse', { bubbles: true });
   }
 }
 
@@ -23,7 +23,7 @@ export class PfDrawerCollapseEvent extends Event {
  */
 export class PfDrawerCloseEvent extends Event {
   constructor() {
-    super('close', { bubbles: true, composed: true });
+    super('close', { bubbles: true });
   }
 }
 

@@ -19,7 +19,6 @@ class PfV6Form extends CemElement {
     this.dispatchEvent(new SubmitEvent('submit', {
       bubbles: true,
       cancelable: true,
-      composed: true,
       submitter: e.submitter
     }));
   };

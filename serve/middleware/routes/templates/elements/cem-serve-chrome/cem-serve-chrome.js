@@ -1,5 +1,4 @@
 import '/__cem/elements/cem-color-scheme-toggle/cem-color-scheme-toggle.js';
-import '/__cem/elements/cem-connection-status/cem-connection-status.js';
 import '/__cem/elements/cem-drawer/cem-drawer.js';
 import '/__cem/elements/cem-manifest-browser/cem-manifest-browser.js';
 import '/__cem/elements/cem-reconnection-content/cem-reconnection-content.js';
@@ -7,6 +6,8 @@ import '/__cem/elements/cem-serve-demo/cem-serve-demo.js';
 import '/__cem/elements/cem-serve-knob-group/cem-serve-knob-group.js';
 import '/__cem/elements/cem-serve-knobs/cem-serve-knobs.js';
 import '/__cem/elements/cem-transform-error-overlay/cem-transform-error-overlay.js';
+import '/__cem/elements/pf-v6-alert/pf-v6-alert.js';
+import '/__cem/elements/pf-v6-alert-group/pf-v6-alert-group.js';
 import '/__cem/elements/pf-v6-button/pf-v6-button.js';
 import '/__cem/elements/pf-v6-card/pf-v6-card.js';
 import '/__cem/elements/pf-v6-badge/pf-v6-badge.js';
@@ -46,7 +47,7 @@ import { StatePersistence } from '/__cem/state-persistence.js';
  */
 export class CemLogsEvent extends Event {
   constructor(logs) {
-    super('cem:logs', { bubbles: true, composed: true });
+    super('cem:logs', { bubbles: true });
     this.logs = logs;
   }
 }
@@ -146,9 +147,12 @@ export class CemServeChrome extends CemElement {
     callbacks: {
       onOpen: () => {
         console.debug('[cem-serve] WebSocket connected');
+        // Clear any reconnecting/restarting alerts
+        this.#clearConnectionAlerts();
+
         // Only show "connected" toast if this is a reconnection
         if (this.#hasConnected) {
-          this.#$('#connection-status')?.show('connected', 'Connected', { fadeDelay: 2000 });
+          this.#showConnectionAlert('success', 'Connected', 'Connection to development server restored.');
         }
         this.#hasConnected = true;
         this.#$('#reconnection-modal')?.close();
@@ -169,7 +173,7 @@ export class CemServeChrome extends CemElement {
       },
       onReconnecting: ({ attempt, delay }) => {
         console.debug(`[cem-serve] Reconnecting in ${Math.ceil(delay/1000)}s (attempt #${attempt})...`);
-        this.#$('#connection-status')?.show('reconnecting', `Reconnecting (attempt #${attempt})...`);
+        this.#showConnectionAlert('warning', 'Reconnecting', `Reconnecting (attempt #${attempt})...`);
 
         // Show modal after threshold
         if (attempt >= 15) {
@@ -188,7 +192,7 @@ export class CemServeChrome extends CemElement {
       },
       onShutdown: () => {
         console.log('[cem-serve] Server shutting down gracefully');
-        this.#$('#connection-status')?.show('reconnecting', 'Server restarting...');
+        this.#showConnectionAlert('info', 'Server Restarting', 'Development server is restarting...');
         this.#$('#reconnection-modal')?.showModal();
         this.#$('#reconnection-content')?.updateRetryInfo(30, 30000);
       },
@@ -960,6 +964,91 @@ Generated: ${new Date().toISOString()}`;
     }
 
     return parts.join(':');
+  }
+
+  #showConnectionAlert(variant, title, message) {
+    const alertGroup = this.#$('#connection-alerts');
+    if (!alertGroup) return;
+
+    const alert = document.createElement('pf-v6-alert');
+    alert.setAttribute('variant', variant);
+    alert.dataset.connectionAlert = variant; // Mark for clearing
+
+    const titleEl = document.createElement('span');
+    titleEl.slot = 'title';
+    titleEl.textContent = title;
+    alert.appendChild(titleEl);
+
+    if (message) {
+      const messageEl = document.createElement('div');
+      messageEl.textContent = message;
+      alert.appendChild(messageEl);
+    }
+
+    // Auto-dismiss timeouts per PatternFly guidelines
+    let timeout;
+    let isHovered = false;
+    let timeoutExpired = false;
+
+    const dismiss = () => {
+      alert.dispatchEvent(new Event('close', { bubbles: true }));
+    };
+
+    const scheduleTimeout = (duration) => {
+      timeout = setTimeout(() => {
+        timeoutExpired = true;
+        // If user is hovering, delay dismissal
+        if (!isHovered) {
+          dismiss();
+        }
+      }, duration);
+    };
+
+    // Hover handling - pause dismissal while hovering
+    alert.addEventListener('mouseenter', () => {
+      isHovered = true;
+    });
+
+    alert.addEventListener('mouseleave', () => {
+      isHovered = false;
+      // If timeout already expired while hovering, dismiss after animation delay
+      if (timeoutExpired) {
+        setTimeout(dismiss, 3000); // 3s hover delay per PF
+      }
+    });
+
+    // Set timeout based on variant
+    if (variant === 'success') {
+      // Success: 8s (PatternFly default for success toasts)
+      scheduleTimeout(8000);
+    } else if (variant === 'warning') {
+      // Warning (reconnecting): Don't auto-dismiss, user needs to know
+      // Will be cleared manually on reconnect
+    } else if (variant === 'info') {
+      // Info (server restart): Don't auto-dismiss
+      // Will be cleared manually on reconnect
+    }
+
+    // Clear any existing alerts of the same type
+    const existingAlerts = alertGroup.querySelectorAll(`[data-connection-alert="${variant}"]`);
+    existingAlerts.forEach(existing => {
+      if (existing !== alert) {
+        existing.dispatchEvent(new Event('close', { bubbles: true }));
+      }
+    });
+
+    alertGroup.addAlert(alert);
+  }
+
+  #clearConnectionAlerts() {
+    const alertGroup = this.#$('#connection-alerts');
+    if (!alertGroup) return;
+
+    // Clear warning and info alerts (not success - let those auto-dismiss)
+    const alerts = alertGroup.querySelectorAll('[data-connection-alert="warning"], [data-connection-alert="info"]');
+    alerts.forEach(alert => {
+      alert.dispatchEvent(new Event('close', { bubbles: true }));
+    });
   }
 
   disconnectedCallback() {

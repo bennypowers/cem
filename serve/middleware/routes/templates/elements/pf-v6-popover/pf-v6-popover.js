@@ -5,7 +5,7 @@ import { CemElement } from '/__cem/cem-element.js';
  */
 export class PfPopoverShowEvent extends Event {
   constructor() {
-    super('pf-popover-show', { bubbles: true, composed: true });
+    super('pf-popover-show', { bubbles: true });
     this.open = true;
   }
 }
@@ -15,7 +15,7 @@ export class PfPopoverShowEvent extends Event {
  */
 export class PfPopoverHideEvent extends Event {
   constructor() {
-    super('pf-popover-hide', { bubbles: true, composed: true });
+    super('pf-popover-hide', { bubbles: true });
     this.open = false;
   }
 }

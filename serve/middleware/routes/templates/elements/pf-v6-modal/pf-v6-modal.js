@@ -5,7 +5,7 @@ import { CemElement } from '/__cem/cem-element.js';
  */
 export class PfModalOpenEvent extends Event {
   constructor() {
-    super('open', { bubbles: true, composed: true });
+    super('open', { bubbles: true });
   }
 }
 
@@ -14,7 +14,7 @@ export class PfModalOpenEvent extends Event {
  */
 export class PfModalCloseEvent extends Event {
   constructor(returnValue) {
-    super('close', { bubbles: true, composed: true });
+    super('close', { bubbles: true });
     this.returnValue = returnValue;
   }
 }
@@ -24,7 +24,7 @@ export class PfModalCloseEvent extends Event {
  */
 export class PfModalCancelEvent extends Event {
   constructor() {
-    super('cancel', { bubbles: true, composed: true });
+    super('cancel', { bubbles: true });
   }
 }
 

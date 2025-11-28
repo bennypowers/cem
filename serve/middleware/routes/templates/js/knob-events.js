@@ -9,7 +9,7 @@ export class KnobAttributeChangeEvent extends Event {
    * @param {string} value - New attribute value
    */
   constructor(name, value) {
-    super('knob:attribute-change', { bubbles: true, composed: true });
+    super('knob:attribute-change', { bubbles: true });
     this.name = name;
     this.value = value;
   }
@@ -24,7 +24,7 @@ export class KnobPropertyChangeEvent extends Event {
    * @param {*} value - New property value (typed based on property type)
    */
   constructor(name, value) {
-    super('knob:property-change', { bubbles: true, composed: true });
+    super('knob:property-change', { bubbles: true });
     this.name = name;
     this.value = value;
   }
@@ -39,7 +39,7 @@ export class KnobCSSPropertyChangeEvent extends Event {
    * @param {string} value - New CSS custom property value
    */
   constructor(name, value) {
-    super('knob:css-property-change', { bubbles: true, composed: true });
+    super('knob:css-property-change', { bubbles: true });
     this.name = name;
     this.value = value;
   }

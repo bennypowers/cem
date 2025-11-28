@@ -181,9 +181,10 @@ export class CemElement extends HTMLElement {
     // Only populate if shadow root is empty
     if (!this.shadowRoot.firstChild) {
       await this.#populateShadowRoot();
-      // Call lifecycle hook for subclasses
-      await this.afterTemplateLoaded?.();
     }
+
+    // Call lifecycle hook for subclasses (works for both SSR and CSR)
+    await this.afterTemplateLoaded?.();
 
     // Resolve rendered promise for testing (works for both SSR and CSR)
     this.#resolveRendered?.();
