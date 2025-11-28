@@ -25,6 +25,8 @@ import (
 	"syscall"
 	"time"
 
+	"atomicgo.dev/keyboard"
+	"atomicgo.dev/keyboard/keys"
 	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/serve"
 	"bennypowers.dev/cem/serve/logger"
@@ -33,7 +35,6 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"golang.org/x/term"
 )
 
 var serveCmd = &cobra.Command{
@@ -274,13 +275,14 @@ func openBrowser(url string) error {
 
 // showHelp displays the keyboard shortcuts help menu
 func showHelp(log logger.Logger) {
-	log.Info("Keyboard Shortcuts (press key + Enter):")
+	log.Info("Keyboard Shortcuts:")
 	log.Info("  m - Force rebuild manifest")
 	log.Info("  v - Cycle log levels (normal/verbose/debug/quiet)")
 	log.Info("  o - Open in browser")
 	log.Info("  c - Clear console")
 	log.Info("  h - Show this help")
 	log.Info("  q - Quit server")
+	log.Info("  Ctrl+C - Also quits server")
 }
 
 // logLevel tracks the current log verbosity level
@@ -308,44 +310,28 @@ func (l logLevel) String() string {
 	}
 }
 
-// handleKeyboardInput reads keyboard input and handles commands
-// Note: Requires pressing Enter after each command to maintain compatibility with pterm
+// handleKeyboardInput reads keyboard input and handles commands using atomicgo/keyboard
 func handleKeyboardInput(server *serve.Server, log logger.Logger, port int, quitChan chan struct{}) {
-	// Check if stdin is a terminal
-	if !term.IsTerminal(int(os.Stdin.Fd())) {
-		return // Not a terminal, skip keyboard handling
-	}
-
 	currentLogLevel := logLevelNormal
-	buf := make([]byte, 32) // Buffer for reading input
 
-	for {
-		n, err := os.Stdin.Read(buf)
-		if err != nil {
-			continue
-		}
-		if n == 0 {
-			continue
+	// Handle all keyboard input
+	err := keyboard.Listen(func(key keys.Key) (stop bool, err error) {
+		// Handle Ctrl+C
+		if key.Code == keys.CtrlC {
+			close(quitChan)
+			return true, nil // Stop listening
 		}
 
-		// Read first non-whitespace character
-		var key byte
-		for i := 0; i < n; i++ {
-			if buf[i] != '\n' && buf[i] != '\r' && buf[i] != ' ' && buf[i] != '\t' {
-				key = buf[i]
-				break
-			}
+		// Only handle rune key presses (regular characters)
+		if key.Code != keys.RuneKey || len(key.Runes) == 0 {
+			return false, nil
 		}
 
-		if key == 0 {
-			continue
-		}
-
-		switch key {
+		switch key.Runes[0] {
 		case 'q', 'Q':
 			log.Info("Quitting...")
 			close(quitChan)
-			return
+			return true, nil // Stop listening
 
 		case 'm', 'M':
 			log.Info("Force rebuilding manifest...")
@@ -407,6 +393,12 @@ func handleKeyboardInput(server *serve.Server, log logger.Logger, port int, quit
 		case 'h', 'H', '?':
 			showHelp(log)
 		}
+
+		return false, nil
+	})
+
+	if err != nil {
+		log.Warning("Keyboard input disabled: %v", err)
 	}
 }
 
