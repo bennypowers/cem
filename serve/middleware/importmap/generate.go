@@ -88,6 +88,11 @@ func Generate(rootDir string, config *Config) (*ImportMap, error) {
 		fs = platform.NewOSFileSystem()
 	}
 
+	// Normalize rootDir for workspace discovery and relative path calculations
+	if absRoot, err := filepath.Abs(rootDir); err == nil {
+		rootDir = absRoot
+	}
+
 	// Workspace mode: generate flattened import map from packages
 	if len(config.WorkspacePackages) > 0 {
 		return generateWorkspaceImportMap(rootDir, config.WorkspacePackages, config.Logger, fs)
@@ -99,7 +104,7 @@ func Generate(rootDir string, config *Config) (*ImportMap, error) {
 		Scopes:  make(map[string]map[string]string),
 	}
 
-	// Default logger to no-op if not provided
+	// Alias config for easier access (logger may be nil, checked before use)
 	cfg := config
 
 	// 1. Parse root package.json
@@ -477,7 +482,14 @@ func resolveExportValue(exportValue interface{}, pkgPath, rootDir string) (strin
 }
 
 // addTransitiveDependenciesToScopes builds scopes for packages in the dependency tree
-// by recursively traversing dependencies from the root package
+// by recursively traversing dependencies from the root package.
+//
+// Note: This function only considers dependencies installed in the top-level node_modules
+// directory (rootDir/node_modules). Dependencies in nested node_modules directories
+// (e.g., node_modules/foo/node_modules/bar) are not traversed unless they're hoisted to
+// the root. This is generally acceptable for modern package managers (npm, pnpm, yarn)
+// which hoist dependencies by default, but may result in incomplete scopes for
+// non-hoisted layouts.
 func addTransitiveDependenciesToScopes(importMap *ImportMap, rootDir string, rootPkg *packageJSON, logger types.Logger, fs platform.FileSystem) error {
 	if rootPkg == nil {
 		return nil
@@ -668,8 +680,15 @@ func resolveSimpleExportValue(exportValue interface{}, depWebPath string) string
 }
 
 // addWorkspaceScopesToImportMap adds scopes for workspace packages and root package
-// so they can resolve bare specifiers to dependencies
-// workspaceRoot is where node_modules is located, rootDir is for calculating relative paths
+// so they can resolve bare specifiers to dependencies.
+//
+// workspaceRoot is where node_modules is located, rootDir is for calculating relative paths.
+//
+// Note: Scope prefixes are computed from filepath.Rel(rootDir, pkgPath). When rootDir is a
+// subdirectory of workspaceRoot, workspace packages outside rootDir will yield prefixes
+// containing ".." (e.g., "/../packages/components/"). This is consistent with how
+// addPackageExportsToImportMap computes URLs when given the same rootDir, and relies on
+// the HTTP handler properly normalizing such paths.
 func addWorkspaceScopesToImportMap(importMap *ImportMap, workspaceRoot, rootDir string, rootPkg *packageJSON, workspacePackages map[string]string, logger types.Logger, fs platform.FileSystem) error {
 	nodeModulesPath := filepath.Join(workspaceRoot, "node_modules")
 
@@ -696,12 +715,18 @@ func addWorkspaceScopesToImportMap(importMap *ImportMap, workspaceRoot, rootDir 
 
 			depPath := filepath.Join(nodeModulesPath, depName)
 			if !fs.Exists(depPath) {
+				if logger != nil {
+					logger.Debug("Dependency %s not found in node_modules, skipping", depName)
+				}
 				return // Dependency not installed
 			}
 
 			depPkgPath := filepath.Join(depPath, "package.json")
 			depPkg, err := readPackageJSON(depPkgPath, fs)
 			if err != nil {
+				if logger != nil {
+					logger.Warning("Failed to read package.json for %s: %v", depName, err)
+				}
 				return
 			}
 
@@ -738,16 +763,25 @@ func addWorkspaceScopesToImportMap(importMap *ImportMap, workspaceRoot, rootDir 
 	}
 
 	// Add scopes for each workspace package
-	for _, pkgPath := range workspacePackages {
+	for pkgName, pkgPath := range workspacePackages {
 		pkgJSONPath := filepath.Join(pkgPath, "package.json")
 		pkg, err := readPackageJSON(pkgJSONPath, fs)
-		if err != nil || pkg.Dependencies == nil {
+		if err != nil {
+			if logger != nil {
+				logger.Warning("Failed to read package.json for workspace package %s: %v", pkgName, err)
+			}
+			continue
+		}
+		if pkg.Dependencies == nil {
 			continue
 		}
 
 		// Calculate web path for this workspace package
 		pkgRelPath, err := filepath.Rel(rootDir, pkgPath)
 		if err != nil {
+			if logger != nil {
+				logger.Warning("Failed to compute relative path for workspace package %s: %v", pkgName, err)
+			}
 			continue
 		}
 
@@ -846,12 +880,18 @@ func generateWorkspaceImportMap(workspaceRoot string, packages []middleware.Work
 	for depName := range allDeps {
 		depPath := filepath.Join(workspaceRoot, "node_modules", depName)
 		if !fs.Exists(depPath) {
+			if logger != nil {
+				logger.Debug("Dependency %s not found in workspace node_modules", depName)
+			}
 			continue
 		}
 
 		// Add to global imports with proper exports resolution
 		if err := addPackageExportsToImportMap(result, depName, depPath, workspaceRoot, logger, fs); err != nil {
 			// Skip packages that fail to resolve
+			if logger != nil {
+				logger.Warning("Failed to resolve exports for dependency %s in workspace mode: %v", depName, err)
+			}
 			continue
 		}
 	}

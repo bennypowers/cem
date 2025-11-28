@@ -19,7 +19,7 @@ else
     RACE_LDFLAGS :=
 endif
 
-.PHONY: build test test-unit test-e2e test-frontend test-frontend-watch test-frontend-update install-frontend update watch bench bench-lookup profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major
+.PHONY: all build test test-unit test-e2e test-frontend test-frontend-watch test-frontend-update install-frontend update watch bench bench-lookup profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major
 
 # NOTE: this is a non-traditional install target, which installs to ~/.local/bin/
 # It's mostly intended for local development, not for distribution
