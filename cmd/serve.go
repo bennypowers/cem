@@ -229,9 +229,13 @@ var serveCmd = &cobra.Command{
 			l.SetStatus(statusMsg)
 		}
 
-		// Start keyboard input handler
+		// Start keyboard input handler after a brief delay
+		// This allows pterm's live area to stabilize before we enable raw mode
 		quitChan := make(chan struct{})
-		go handleKeyboardInput(server, log, port, quitChan)
+		go func() {
+			time.Sleep(100 * time.Millisecond)
+			handleKeyboardInput(server, log, port, quitChan)
+		}()
 
 		// Wait for quit signal (keyboard or interrupt)
 		sigChan := make(chan os.Signal, 1)
@@ -270,7 +274,7 @@ func openBrowser(url string) error {
 
 // showHelp displays the keyboard shortcuts help menu
 func showHelp(log logger.Logger) {
-	log.Info("Keyboard Shortcuts:")
+	log.Info("Keyboard Shortcuts (press key + Enter):")
 	log.Info("  m - Force rebuild manifest")
 	log.Info("  v - Cycle log levels (normal/verbose/debug/quiet)")
 	log.Info("  o - Open in browser")
@@ -305,38 +309,36 @@ func (l logLevel) String() string {
 }
 
 // handleKeyboardInput reads keyboard input and handles commands
+// Note: Requires pressing Enter after each command to maintain compatibility with pterm
 func handleKeyboardInput(server *serve.Server, log logger.Logger, port int, quitChan chan struct{}) {
 	// Check if stdin is a terminal
 	if !term.IsTerminal(int(os.Stdin.Fd())) {
 		return // Not a terminal, skip keyboard handling
 	}
 
-	// Save the current terminal state
-	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
-	if err != nil {
-		log.Warning("Failed to enable raw mode for keyboard input: %v", err)
-		return
-	}
-	defer func() {
-		_ = term.Restore(int(os.Stdin.Fd()), oldState)
-	}()
-
 	currentLogLevel := logLevelNormal
-	buf := make([]byte, 1)
+	buf := make([]byte, 32) // Buffer for reading input
 
 	for {
-		// Read single character
 		n, err := os.Stdin.Read(buf)
-		if err != nil || n == 0 {
+		if err != nil {
+			continue
+		}
+		if n == 0 {
 			continue
 		}
 
-		key := buf[0]
+		// Read first non-whitespace character
+		var key byte
+		for i := 0; i < n; i++ {
+			if buf[i] != '\n' && buf[i] != '\r' && buf[i] != ' ' && buf[i] != '\t' {
+				key = buf[i]
+				break
+			}
+		}
 
-		// Handle Ctrl+C (ASCII 3)
-		if key == 3 {
-			close(quitChan)
-			return
+		if key == 0 {
+			continue
 		}
 
 		switch key {
