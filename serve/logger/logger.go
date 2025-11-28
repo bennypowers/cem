@@ -337,3 +337,14 @@ func (l *ptermLogger) Error(msg string, args ...interface{}) {
 func (l *ptermLogger) Debug(msg string, args ...interface{}) {
 	l.log("DEBUG", "debug", msg, args...)
 }
+
+// Clear clears all logs from the buffer
+func (l *ptermLogger) Clear() {
+	l.mu.Lock()
+	l.logs = make([]LogEntry, 0)
+	l.terminalLogs = make([]string, 0)
+	l.mu.Unlock()
+	if l.interactive {
+		l.render()
+	}
+}

@@ -19,7 +19,9 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -31,6 +33,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/term"
 )
 
 var serveCmd = &cobra.Command{
@@ -214,21 +217,32 @@ var serveCmd = &cobra.Command{
 		if reload {
 			reloadColor = pterm.FgGreen.Sprint("true")
 		}
-		statusMsg := fmt.Sprintf("Running on %s%s Live reload: %s %s Press %s to stop",
+		statusMsg := fmt.Sprintf("Running on %s%s Live reload: %s %s Press %s for help, %s to quit",
 			pterm.FgCyan.Sprintf("http://localhost:%d", port),
 			pterm.FgGray.Sprint(" |"),
 			reloadColor,
 			pterm.FgGray.Sprint("|"),
-			pterm.FgYellow.Sprint("Ctrl+C"),
+			pterm.FgYellow.Sprint("'h'"),
+			pterm.FgYellow.Sprint("'q'"),
 		)
 		if l, ok := log.(interface{ SetStatus(string) }); ok {
 			l.SetStatus(statusMsg)
 		}
 
-		// Wait for interrupt signal
+		// Start keyboard input handler
+		quitChan := make(chan struct{})
+		go handleKeyboardInput(server, log, port, quitChan)
+
+		// Wait for quit signal (keyboard or interrupt)
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-		<-sigChan
+
+		select {
+		case <-quitChan:
+			// User pressed 'q' or Ctrl+C in keyboard handler
+		case <-sigChan:
+			// Received system interrupt signal
+		}
 
 		if l, ok := log.(interface{ SetStatus(string) }); ok {
 			l.SetStatus("Shutting down...")
@@ -236,6 +250,162 @@ var serveCmd = &cobra.Command{
 		log.Info("Shutting down server...")
 		return nil
 	},
+}
+
+// openBrowser opens the given URL in the default browser
+func openBrowser(url string) error {
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "darwin":
+		cmd = exec.Command("open", url)
+	case "linux":
+		cmd = exec.Command("xdg-open", url)
+	case "windows":
+		cmd = exec.Command("cmd", "/c", "start", url)
+	default:
+		return fmt.Errorf("unsupported platform: %s", runtime.GOOS)
+	}
+	return cmd.Start()
+}
+
+// showHelp displays the keyboard shortcuts help menu
+func showHelp(log logger.Logger) {
+	log.Info("Keyboard Shortcuts:")
+	log.Info("  m - Force rebuild manifest")
+	log.Info("  v - Cycle log levels (normal/verbose/debug/quiet)")
+	log.Info("  o - Open in browser")
+	log.Info("  c - Clear console")
+	log.Info("  h - Show this help")
+	log.Info("  q - Quit server")
+}
+
+// logLevel tracks the current log verbosity level
+type logLevel int
+
+const (
+	logLevelNormal logLevel = iota
+	logLevelVerbose
+	logLevelDebug
+	logLevelQuiet
+)
+
+func (l logLevel) String() string {
+	switch l {
+	case logLevelNormal:
+		return "normal"
+	case logLevelVerbose:
+		return "verbose"
+	case logLevelDebug:
+		return "debug"
+	case logLevelQuiet:
+		return "quiet"
+	default:
+		return "unknown"
+	}
+}
+
+// handleKeyboardInput reads keyboard input and handles commands
+func handleKeyboardInput(server *serve.Server, log logger.Logger, port int, quitChan chan struct{}) {
+	// Check if stdin is a terminal
+	if !term.IsTerminal(int(os.Stdin.Fd())) {
+		return // Not a terminal, skip keyboard handling
+	}
+
+	// Save the current terminal state
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	if err != nil {
+		log.Warning("Failed to enable raw mode for keyboard input: %v", err)
+		return
+	}
+	defer func() {
+		_ = term.Restore(int(os.Stdin.Fd()), oldState)
+	}()
+
+	currentLogLevel := logLevelNormal
+	buf := make([]byte, 1)
+
+	for {
+		// Read single character
+		n, err := os.Stdin.Read(buf)
+		if err != nil || n == 0 {
+			continue
+		}
+
+		key := buf[0]
+
+		// Handle Ctrl+C (ASCII 3)
+		if key == 3 {
+			close(quitChan)
+			return
+		}
+
+		switch key {
+		case 'q', 'Q':
+			log.Info("Quitting...")
+			close(quitChan)
+			return
+
+		case 'm', 'M':
+			log.Info("Force rebuilding manifest...")
+			if _, err := server.RegenerateManifest(); err != nil {
+				log.Warning("Failed to rebuild manifest: %v", err)
+			} else {
+				log.Info("Manifest rebuilt successfully")
+			}
+
+		case 'v', 'V':
+			// Cycle through log levels
+			currentLogLevel = (currentLogLevel + 1) % 4
+			internalLogger := logging.GetLogger()
+
+			switch currentLogLevel {
+			case logLevelNormal:
+				internalLogger.SetQuietEnabled(true) // Keep generation logs quiet
+				internalLogger.SetDebugEnabled(false)
+				if setter, ok := log.(interface{ SetVerbose(bool) }); ok {
+					setter.SetVerbose(false)
+				}
+			case logLevelVerbose:
+				internalLogger.SetQuietEnabled(false)
+				internalLogger.SetDebugEnabled(false)
+				if setter, ok := log.(interface{ SetVerbose(bool) }); ok {
+					setter.SetVerbose(true)
+				}
+			case logLevelDebug:
+				internalLogger.SetQuietEnabled(false)
+				internalLogger.SetDebugEnabled(true)
+				if setter, ok := log.(interface{ SetVerbose(bool) }); ok {
+					setter.SetVerbose(true)
+				}
+			case logLevelQuiet:
+				internalLogger.SetQuietEnabled(true)
+				internalLogger.SetDebugEnabled(false)
+				if setter, ok := log.(interface{ SetVerbose(bool) }); ok {
+					setter.SetVerbose(false)
+				}
+			}
+			log.Info("Log level: %s", currentLogLevel.String())
+
+		case 'o', 'O':
+			url := fmt.Sprintf("http://localhost:%d", port)
+			log.Info("Opening %s in browser...", url)
+			if err := openBrowser(url); err != nil {
+				log.Warning("Failed to open browser: %v", err)
+			}
+
+		case 'c', 'C':
+			// Clear console by clearing the log buffer
+			if clearer, ok := log.(interface{ Clear() }); ok {
+				clearer.Clear()
+				log.Info("Console cleared")
+			} else {
+				log.Warning("Clear not supported by current logger")
+			}
+
+		case 'h', 'H', '?':
+			showHelp(log)
+		}
+	}
 }
 
 func init() {
