@@ -21,7 +21,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
+	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/serve"
 	"bennypowers.dev/cem/serve/logger"
 	"bennypowers.dev/cem/serve/middleware/transform"
@@ -112,6 +114,10 @@ var serveCmd = &cobra.Command{
 			}
 		}()
 
+		// Enable quiet mode on internal logger to suppress generation progress messages
+		// These would otherwise appear below the status line
+		logging.GetLogger().SetQuietEnabled(true)
+
 		// Create server
 		server, err := serve.NewServerWithConfig(config)
 		if err != nil {
@@ -139,15 +145,47 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("failed to initialize workspace mode: %w", err)
 		}
 
-		// If not workspace mode, generate single-package manifest
+		// If not workspace mode, try to load existing manifest or generate new one
 		if !server.IsWorkspace() {
-			pterm.Info.Println("Generating initial manifest...")
-			_, err = server.RegenerateManifest()
+			// Try to load existing manifest from disk first for faster startup
+			size, err := server.TryLoadExistingManifest()
 			if err != nil {
-				pterm.Error.Printf("Failed to generate initial manifest: %v\n", err)
-				pterm.Info.Println("Server will continue, but manifest may be unavailable")
+				// Failed to load, generate fresh manifest
+				pterm.Warning.Printf("Could not load cached manifest: %v\n", err)
+				pterm.Info.Println("Generating initial manifest...")
+				_, err = server.RegenerateManifest()
+				if err != nil {
+					pterm.Error.Printf("Failed to generate initial manifest: %v\n", err)
+					pterm.Info.Println("Server will continue, but manifest may be unavailable")
+				} else {
+					pterm.Success.Println("Initial manifest generated")
+				}
+			} else if size > 0 {
+				// Successfully loaded existing manifest
+				pterm.Success.Printf("Loaded cached manifest from disk (%d bytes)\n", size)
+
+				// Schedule background regeneration to ensure it's up-to-date
+				go func(log logger.Logger) {
+					// Wait a moment for server to fully start and become idle
+					time.Sleep(2 * time.Second)
+					log.Info("Regenerating manifest in background...")
+					newSize, err := server.RegenerateManifest()
+					if err != nil {
+						log.Warning("Background manifest regeneration failed: %v", err)
+					} else {
+						log.Info("Background manifest regeneration complete (%d bytes)", newSize)
+					}
+				}(log)
 			} else {
-				pterm.Success.Println("Initial manifest generated")
+				// No existing manifest found, generate fresh one
+				pterm.Info.Println("Generating initial manifest...")
+				_, err = server.RegenerateManifest()
+				if err != nil {
+					pterm.Error.Printf("Failed to generate initial manifest: %v\n", err)
+					pterm.Info.Println("Server will continue, but manifest may be unavailable")
+				} else {
+					pterm.Success.Println("Initial manifest generated")
+				}
 			}
 		} else {
 			pterm.Success.Println("Workspace mode initialized")

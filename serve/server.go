@@ -515,6 +515,64 @@ func (s *Server) BroadcastError(title, message, file string) error {
 	return s.wsManager.Broadcast(msgBytes)
 }
 
+// TryLoadExistingManifest attempts to load a manifest from disk
+// Returns the manifest size in bytes and any error
+// Returns 0, nil if no manifest file exists (not an error condition)
+func (s *Server) TryLoadExistingManifest() (int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.watchDir == "" {
+		return 0, fmt.Errorf("no watch directory set")
+	}
+
+	// Determine manifest path
+	workspace := W.NewFileSystemWorkspaceContext(s.watchDir)
+	if err := workspace.Init(); err != nil {
+		return 0, fmt.Errorf("initializing workspace: %w", err)
+	}
+
+	manifestPath := workspace.CustomElementsManifestPath()
+	if manifestPath == "" {
+		return 0, nil // No manifest path configured
+	}
+
+	// Check if manifest file exists
+	if _, err := s.fs.Stat(manifestPath); err != nil {
+		if os.IsNotExist(err) {
+			return 0, nil // File doesn't exist, not an error
+		}
+		return 0, fmt.Errorf("checking manifest file: %w", err)
+	}
+
+	// Read existing manifest
+	manifestBytes, err := s.fs.ReadFile(manifestPath)
+	if err != nil {
+		return 0, fmt.Errorf("reading manifest file: %w", err)
+	}
+
+	// Validate it's valid JSON
+	var pkg interface{}
+	if err := json.Unmarshal(manifestBytes, &pkg); err != nil {
+		return 0, fmt.Errorf("invalid manifest JSON: %w", err)
+	}
+
+	// Store the manifest
+	s.manifest = manifestBytes
+
+	// Build routing table from manifest
+	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes)
+	if err != nil {
+		s.logger.Warning("Failed to build demo routing table from cached manifest: %v", err)
+		s.demoRoutes = nil
+	} else {
+		s.demoRoutes = routingTable
+		s.logger.Debug("Built routing table with %d demo routes from cached manifest", len(routingTable))
+	}
+
+	return len(manifestBytes), nil
+}
+
 // RegenerateManifest triggers manifest regeneration
 // RegenerateManifest performs a full manifest regeneration
 // Returns the manifest size in bytes and any error
