@@ -242,20 +242,26 @@ func (s *Server) Close() error {
 		if err := s.wsManager.BroadcastShutdown(); err != nil {
 			s.logger.Error("Failed to broadcast shutdown notification: %v", err)
 		}
-		// Give clients a moment to receive the shutdown message
-		time.Sleep(100 * time.Millisecond)
-		// Forcefully close all WebSocket connections
+		// Give clients time to receive the shutdown message and close gracefully
+		time.Sleep(250 * time.Millisecond)
+		// Send close frames and close all WebSocket connections
 		if err := s.wsManager.CloseAll(); err != nil {
 			s.logger.Error("Failed to close WebSocket connections: %v", err)
 		}
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
 	if s.server != nil {
+		// Shutdown waits for connections to finish, but with active browser sessions
+		// this can timeout. Just log the error and continue with cleanup.
 		if err := s.server.Shutdown(ctx); err != nil {
-			return err
+			s.logger.Warning("Server shutdown timeout (active connections): %v", err)
+			// Force close by closing the listener
+			if s.listener != nil {
+				_ = s.listener.Close()
+			}
 		}
 	}
 

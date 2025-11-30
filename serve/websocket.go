@@ -104,12 +104,19 @@ func (wm *websocketManager) BroadcastShutdown() error {
 	return wm.Broadcast(shutdownMsg)
 }
 
-// CloseAll forcefully closes all WebSocket connections
+// CloseAll gracefully closes all WebSocket connections
 func (wm *websocketManager) CloseAll() error {
 	wm.mu.Lock()
 	defer wm.mu.Unlock()
 
-	for conn := range wm.connections {
+	for conn, wrapper := range wm.connections {
+		// Send close frame with normal closure code
+		wrapper.mu.Lock()
+		_ = conn.WriteMessage(websocket.CloseMessage,
+			websocket.FormatCloseMessage(websocket.CloseNormalClosure, "server shutting down"))
+		wrapper.mu.Unlock()
+
+		// Close the underlying connection
 		_ = conn.Close()
 	}
 
