@@ -111,8 +111,11 @@ func Generate(rootDir string, config *Config) (*ImportMap, error) {
 	rootPkgPath := filepath.Join(rootDir, "package.json")
 	rootPkg, err := readPackageJSON(rootPkgPath, fs)
 	if err != nil {
-		// Empty package.json is OK - just return empty import map
+		// Empty package.json is OK - apply user/CLI overrides and return
 		if errors.Is(err, os.ErrNotExist) {
+			if err := applyOverrides(result, cfg, fs); err != nil {
+				return nil, err
+			}
 			return result, nil
 		}
 		return nil, fmt.Errorf("reading package.json: %w", err)
@@ -214,11 +217,22 @@ func Generate(rootDir string, config *Config) (*ImportMap, error) {
 		}
 	}
 
-	// 5. Merge with user override file (if provided)
+	// 5. Apply user overrides and CLI overrides
+	if err := applyOverrides(result, cfg, fs); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// applyOverrides merges user import map file and CLI overrides into the result
+// This is called both in the normal flow and when package.json is missing
+func applyOverrides(result *ImportMap, cfg *Config, fs platform.FileSystem) error {
+	// Merge with user override file (if provided)
 	if cfg.InputMapPath != "" {
 		userMap, err := readImportMapFile(cfg.InputMapPath, fs)
 		if err != nil {
-			return nil, fmt.Errorf("reading user override file: %w", err)
+			return fmt.Errorf("reading user override file: %w", err)
 		}
 		// User overrides win - deep merge
 		for key, value := range userMap.Imports {
@@ -243,14 +257,14 @@ func Generate(rootDir string, config *Config) (*ImportMap, error) {
 		}
 	}
 
-	// 6. Apply CLI overrides (highest priority)
+	// Apply CLI overrides (highest priority)
 	if cfg.CLIOverrides != nil {
 		for key, value := range cfg.CLIOverrides {
 			result.Imports[key] = value
 		}
 	}
 
-	return result, nil
+	return nil
 }
 
 // readPackageJSON reads and parses a package.json file

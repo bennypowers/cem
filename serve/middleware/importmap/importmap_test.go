@@ -1173,6 +1173,55 @@ func TestImportMap_ScopedPackages(t *testing.T) {
 	}
 }
 
+// TestImportMap_MissingPackageJSON_WithOverrides tests that CLI and user overrides
+// are still applied when package.json is missing
+func TestImportMap_MissingPackageJSON_WithOverrides(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create user import map file
+	userMapPath := filepath.Join(tmpDir, "importmap.json")
+	userMapContent := `{
+		"imports": {
+			"lit": "/vendor/lit.js",
+			"lit/": "/vendor/lit/"
+		}
+	}`
+	err := os.WriteFile(userMapPath, []byte(userMapContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write user import map: %v", err)
+	}
+
+	// Test with both user import map and CLI overrides (no package.json)
+	config := &Config{
+		InputMapPath: userMapPath,
+		CLIOverrides: map[string]string{
+			"react": "/vendor/react.js",
+		},
+	}
+
+	importMap, err := Generate(tmpDir, config)
+	if err != nil {
+		t.Fatalf("Generate returned error: %v", err)
+	}
+
+	if importMap == nil {
+		t.Fatal("Expected import map, got nil")
+	}
+
+	// Verify user import map was applied
+	if importMap.Imports["lit"] != "/vendor/lit.js" {
+		t.Errorf("Expected lit mapping from user import map, got: %s", importMap.Imports["lit"])
+	}
+	if importMap.Imports["lit/"] != "/vendor/lit/" {
+		t.Errorf("Expected lit/ mapping from user import map, got: %s", importMap.Imports["lit/"])
+	}
+
+	// Verify CLI override was applied (highest priority)
+	if importMap.Imports["react"] != "/vendor/react.js" {
+		t.Errorf("Expected react mapping from CLI override, got: %s", importMap.Imports["react"])
+	}
+}
+
 // getKeys returns all keys from a map for debugging purposes
 func getKeys(m map[string]string) []string {
 	keys := make([]string, 0, len(m))
