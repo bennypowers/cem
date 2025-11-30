@@ -975,7 +975,11 @@ func (s *Server) resolveImportToPath(importSpec string, contextDir string) []str
 			}
 		}
 
-		// TODO: Check scopes section for more precise resolution
+		// TODO(enhancement): Add support for scoped imports for path-specific resolution.
+		// The import map spec supports a 'scopes' section for context-dependent module resolution.
+		// This would allow different import resolutions based on the importing file's path.
+		// Currently, we only resolve from the global 'imports' section, which handles most cases.
+		// Ref: https://github.com/WICG/import-maps#scoping-examples
 	} else {
 		s.logger.Debug("No import map available to resolve %s", importSpec)
 	}
