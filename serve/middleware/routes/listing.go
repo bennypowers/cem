@@ -47,7 +47,7 @@ type DemoListing struct {
 }
 
 // RenderElementListing renders the root listing page with all elements
-func RenderElementListing(manifestBytes []byte, importMap string, packageName string) (string, error) {
+func RenderElementListing(manifestBytes []byte, importMap string, packageName string, state CemServeState) (string, error) {
 	if len(manifestBytes) == 0 {
 		// Empty manifest - show helpful message
 		title := packageName
@@ -65,6 +65,7 @@ func RenderElementListing(manifestBytes []byte, importMap string, packageName st
 			`),
 			ImportMap:   template.HTML(importMap),
 			PackageName: title,
+			State:       state,
 		})
 	}
 
@@ -102,6 +103,7 @@ func RenderElementListing(manifestBytes []byte, importMap string, packageName st
 			NavigationHTML: navigationHTML,
 			Manifest:       &pkg,
 			ManifestJSON:   template.JS(manifestBytes),
+			State:          state,
 		}
 		return renderDemoChrome(chromeData)
 	}
@@ -137,6 +139,7 @@ func RenderElementListing(manifestBytes []byte, importMap string, packageName st
 		NavigationHTML: navigationHTML,
 		Manifest:       &pkg,
 		ManifestJSON:   template.JS(manifestBytes),
+		State:          state,
 	})
 }
 
@@ -446,7 +449,7 @@ func renderNavigationHTML(packages []PackageNavigation) template.HTML {
 }
 
 // RenderWorkspaceListing renders the workspace index page with all packages
-func RenderWorkspaceListing(packages []PackageContext, importMap string) (string, error) {
+func RenderWorkspaceListing(packages []PackageContext, importMap string, state CemServeState) (string, error) {
 	if len(packages) == 0 {
 		return renderDemoChrome(ChromeData{
 			TagName:     "cem-serve",
@@ -458,6 +461,7 @@ func RenderWorkspaceListing(packages []PackageContext, importMap string) (string
 				</div>
 			`),
 			ImportMap: template.HTML(importMap),
+			State:     state,
 		})
 	}
 
@@ -536,5 +540,6 @@ func RenderWorkspaceListing(packages []PackageContext, importMap string) (string
 		Manifest:       aggregatedManifest,
 		ManifestJSON:   manifestJSON,
 		Packages:       packagesWithManifests, // Workspace packages with modules (for package-level tree)
+		State:          state,
 	})
 }

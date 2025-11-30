@@ -308,6 +308,9 @@ func serveIndexListing(w http.ResponseWriter, r *http.Request, config Config) bo
 		}
 	}
 
+	// Extract state from request cookie for SSR
+	state := GetStateFromRequest(r, config.Context.Logger())
+
 	var html string
 	var err error
 
@@ -324,7 +327,7 @@ func serveIndexListing(w http.ResponseWriter, r *http.Request, config Config) bo
 				Manifest: pkg.Manifest,
 			}
 		}
-		html, err = RenderWorkspaceListing(packages, importMapJSON)
+		html, err = RenderWorkspaceListing(packages, importMapJSON, state)
 	} else {
 		config.Context.Logger().Debug("serveIndexListing: NOT in workspace mode, single-package mode")
 		// Single-package mode: check if index.html exists
@@ -359,7 +362,7 @@ func serveIndexListing(w http.ResponseWriter, r *http.Request, config Config) bo
 			pkgName = pkg.Name
 		}
 		config.Context.Logger().Debug("serveIndexListing: calling RenderElementListing with package name=%s", pkgName)
-		html, err = RenderElementListing(manifestBytes, importMapJSON, pkgName)
+		html, err = RenderElementListing(manifestBytes, importMapJSON, pkgName, state)
 		config.Context.Logger().Debug("serveIndexListing: RenderElementListing returned, err=%v, html len=%d", err, len(html))
 	}
 
@@ -597,7 +600,7 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 	}
 
 	// Extract state from request cookie for SSR
-	state := GetStateFromRequest(r)
+	state := GetStateFromRequest(r, config.Context.Logger())
 
 	chromeData := ChromeData{
 		TagName:        entry.TagName,
@@ -818,7 +821,7 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 	}
 
 	// Extract state from request cookie for SSR
-	state := GetStateFromRequest(r)
+	state := GetStateFromRequest(r, config.Context.Logger())
 
 	// Render 404 page with chrome
 	chromeData := ChromeData{

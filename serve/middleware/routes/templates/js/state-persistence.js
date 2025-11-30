@@ -17,7 +17,9 @@ export class StatePersistence {
       .split('; ')
       .find(row => row.startsWith(this.COOKIE_NAME + '='));
 
-    if (!cookie) return this.getDefaultState();
+    if (!cookie) {
+      return this.getDefaultState();
+    }
 
     try {
       const json = decodeURIComponent(cookie.split('=')[1]);
@@ -28,7 +30,22 @@ export class StatePersistence {
         return this.migrateState(state);
       }
 
-      return state;
+      // Ensure all required fields exist with defaults
+      const defaults = this.getDefaultState();
+      const normalized = {
+        ...defaults,
+        ...state,
+        drawer: {
+          ...defaults.drawer,
+          ...state.drawer
+        },
+        tabs: {
+          ...defaults.tabs,
+          ...state.tabs
+        }
+      };
+
+      return normalized;
     } catch (e) {
       console.warn('[state-persistence] Failed to parse state cookie:', e);
       return this.getDefaultState();
@@ -136,7 +153,6 @@ export class StatePersistence {
         // If old cookie has tree state, migrate it to localStorage
         if (oldState.tree) {
           this.setTreeState(oldState.tree);
-          console.log('[state-persistence] Migrated tree state from cookie to localStorage');
         }
       }
     } catch (e) { /* ignore */ }

@@ -23,6 +23,12 @@ import (
 	"net/url"
 )
 
+// Logger interface for state persistence logging
+type Logger interface {
+	Debug(format string, args ...interface{})
+	Warning(format string, args ...interface{})
+}
+
 // DrawerState represents drawer open/closed and height
 type DrawerState struct {
 	Open   bool `json:"open"`
@@ -59,7 +65,7 @@ func DefaultState() CemServeState {
 }
 
 // GetStateFromRequest extracts and parses the state cookie from request
-func GetStateFromRequest(r *http.Request) CemServeState {
+func GetStateFromRequest(r *http.Request, logger Logger) CemServeState {
 	cookie, err := r.Cookie("cem-serve-state")
 	if err != nil {
 		// Cookie not found, return default
@@ -69,23 +75,51 @@ func GetStateFromRequest(r *http.Request) CemServeState {
 	// Decode URL-encoded JSON
 	decoded, err := url.QueryUnescape(cookie.Value)
 	if err != nil {
+		logger.Warning("[state] Failed to decode cookie value: %v", err)
 		return DefaultState()
 	}
 
 	// Parse JSON
 	var state CemServeState
 	if err := json.Unmarshal([]byte(decoded), &state); err != nil {
+		logger.Warning("[state] Failed to parse cookie JSON: %v", err)
 		return DefaultState()
 	}
 
 	// Validate version
 	if state.Version != 1 {
 		// Future: handle migration
+		logger.Warning("[state] Invalid state version: %d", state.Version)
 		return DefaultState()
 	}
 
+	// Normalize state by merging with defaults (handles old cookies with missing fields)
+	// This is necessary because json.Unmarshal sets missing fields to zero values
+	normalized := normalizeState(state)
+
 	// Validate and sanitize state values
-	return validateState(state)
+	validated := validateState(normalized)
+	return validated
+}
+
+// normalizeState ensures all fields exist by merging with defaults
+// This handles backward compatibility with old cookie formats that may be missing fields
+func normalizeState(state CemServeState) CemServeState {
+	defaults := DefaultState()
+
+	// Note: In Go, we can't distinguish between missing JSON fields and zero values
+	// This normalization ensures the structure is complete, but can't "fill in" missing booleans
+	// that were set to false by json.Unmarshal
+
+	// Preserve non-zero values from parsed state, use defaults for zero values
+	if state.ColorScheme == "" {
+		state.ColorScheme = defaults.ColorScheme
+	}
+
+	// For drawer height, if it's outside valid range or zero, it will be fixed by validateState
+	// We don't normalize the open field here since we can't distinguish missing from explicitly false
+
+	return state
 }
 
 // validateState ensures state values are within acceptable ranges
