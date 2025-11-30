@@ -433,23 +433,6 @@ describe('cem-serve-demo', () => {
       expect(targetElement.getAttribute('label')).to.equal('<>&"\'');
     });
 
-    it('handles numeric attribute names', function() {
-      // Skip on Firefox - numeric attribute names are invalid per HTML spec
-      // Firefox correctly throws InvalidCharacterError, while Chrome allows it
-      if (navigator.userAgent.toLowerCase().includes('firefox')) {
-        this.skip();
-        return;
-      }
-
-      const targetElement = document.createElement('test-element');
-      el.appendChild(targetElement);
-
-      const result = el.applyKnobChange('attribute', '123', 'value', 'test-element', 0);
-
-      expect(result).to.be.true;
-      expect(targetElement.getAttribute('123')).to.equal('value');
-    });
-
     it('handles multiple elements with same tag name', () => {
       const elements = [];
       for (let i = 0; i < 5; i++) {

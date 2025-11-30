@@ -405,14 +405,6 @@ describe('cem-serve-chrome', () => {
   });
 
   describe('reconnection modal buttons', () => {
-    it.skip('reloads page when reload button clicked', () => {
-      // Cannot test: window.location.reload is non-configurable in browsers for security
-      // This would require E2E testing with tools like Playwright that can intercept navigation
-      const reloadButton = el.shadowRoot.getElementById('reload-button');
-      expect(reloadButton).to.exist;
-      expect(reloadButton.onclick).to.be.a('function');
-    });
-
     it('closes modal and retries when retry button clicked', () => {
       const retryButton = el.shadowRoot.getElementById('retry-button');
       const reconnectionModal = el.shadowRoot.getElementById('reconnection-modal');

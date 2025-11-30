@@ -439,13 +439,6 @@ describe('CEMReloadClient', () => {
 
       expect(client.ws).to.be.null;
     });
-
-    it.skip('cancels pending reconnection attempts', async () => {
-      // Skipped: This test is flaky due to race conditions with async reconnection logic
-      // The reconnection timeout may fire before destroy() is called, depending on timing
-      // Would require refactoring the client to expose testable hooks for timer management
-      // or using fake timers (which conflicts with waitUntil() async behavior)
-    });
   });
 
   describe('configuration', () => {
