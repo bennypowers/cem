@@ -17,6 +17,3 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 // Package serve implements the development server for custom element demos
 package serve
-
-// TODO: This is a placeholder file for Phase 0 (Test Infrastructure)
-// Actual server implementation will be added in Phase 1 (Core Server)

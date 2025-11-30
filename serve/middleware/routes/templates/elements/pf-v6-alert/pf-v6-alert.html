@@ -1,0 +1,52 @@
+{{if hasAttr . "Expandable"}}
+<div class="pf-v6-c-alert__toggle">
+  <pf-v6-button id="toggle"
+                variant="plain"
+                aria-expanded="{{if hasAttr . "Expanded"}}true{{else}}false{{end}}"
+                aria-label="Toggle alert">
+    <svg class="pf-v6-c-alert__toggle-icon"
+         aria-hidden="true"
+         fill="currentColor"
+         height="1em"
+         width="1em"
+         viewBox="0 0 320 512">
+      <path d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"></path>
+    </svg>
+  </pf-v6-button>
+</div>
+{{end}}
+
+<div class="pf-v6-c-alert__icon">
+  <slot name="icon">
+    <!-- Default icon based on variant will be set by JS -->
+    <svg class="pf-v6-svg" viewBox="0 0 512 512" fill="currentColor" aria-hidden="true" role="img" width="1em" height="1em">
+      <path id="default-icon-path"></path>
+    </svg>
+  </slot>
+</div>
+
+<h4 class="pf-v6-c-alert__title{{if .Attributes.Truncate}} pf-m-truncate{{end}}"
+    id="title">
+  <span class="pf-v6-screen-reader">{{.Attributes.VariantLabel}}</span>
+  <slot name="title"></slot>
+</h4>
+
+<div class="pf-v6-c-alert__action">
+  <slot name="action"></slot>
+</div>
+
+{{if not (hasAttr . "Expandable")}}
+<div class="pf-v6-c-alert__description">
+  <slot></slot>
+</div>
+{{else}}
+{{if hasAttr . "Expanded"}}
+<div class="pf-v6-c-alert__description">
+  <slot></slot>
+</div>
+{{end}}
+{{end}}
+
+<div class="pf-v6-c-alert__action-group">
+  <slot name="actions"></slot>
+</div>

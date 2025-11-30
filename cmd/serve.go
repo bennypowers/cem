@@ -223,8 +223,8 @@ var serveCmd = &cobra.Command{
 			pterm.FgGray.Sprint(" |"),
 			reloadColor,
 			pterm.FgGray.Sprint("|"),
-			pterm.FgYellow.Sprint("'h'"),
-			pterm.FgYellow.Sprint("'q'"),
+			pterm.FgYellow.Sprint("h"),
+			pterm.FgYellow.Sprint("q"),
 		)
 		if l, ok := log.(interface{ SetStatus(string) }); ok {
 			l.SetStatus(statusMsg)
