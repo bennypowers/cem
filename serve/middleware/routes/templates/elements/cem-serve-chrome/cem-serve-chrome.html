@@ -206,6 +206,15 @@
                   </svg>
                 </pf-v6-text-input-group>
               </pf-v6-toolbar-item>
+              <pf-v6-toolbar-item>
+                <pf-v6-dropdown id="log-level-filter" label="Filter log levels">
+                  <span slot="toggle-text">Log Levels</span>
+                  <pf-v6-menu-item variant="checkbox" value="info" checked>Info</pf-v6-menu-item>
+                  <pf-v6-menu-item variant="checkbox" value="warn" checked>Warnings</pf-v6-menu-item>
+                  <pf-v6-menu-item variant="checkbox" value="error" checked>Errors</pf-v6-menu-item>
+                  <pf-v6-menu-item variant="checkbox" value="debug" checked>Debug</pf-v6-menu-item>
+                </pf-v6-dropdown>
+              </pf-v6-toolbar-item>
             </pf-v6-toolbar-group>
             <pf-v6-toolbar-group variant="action-group">
               <pf-v6-toolbar-item>

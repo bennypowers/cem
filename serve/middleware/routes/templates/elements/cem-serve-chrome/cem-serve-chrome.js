@@ -11,6 +11,7 @@ import '/__cem/elements/pf-v6-alert-group/pf-v6-alert-group.js';
 import '/__cem/elements/pf-v6-button/pf-v6-button.js';
 import '/__cem/elements/pf-v6-card/pf-v6-card.js';
 import '/__cem/elements/pf-v6-badge/pf-v6-badge.js';
+import '/__cem/elements/pf-v6-dropdown/pf-v6-dropdown.js';
 import '/__cem/elements/pf-v6-label/pf-v6-label.js';
 import '/__cem/elements/pf-v6-masthead/pf-v6-masthead.js';
 import '/__cem/elements/pf-v6-modal/pf-v6-modal.js';
@@ -382,6 +383,8 @@ export class CemServeChrome extends CemElement {
 
   #logsFilterValue = '';
   #logsFilterDebounceTimer = null;
+  #logLevelFilters = new Set(['info', 'warn', 'error', 'debug']);
+  #logLevelDropdown = null;
 
   #setupLogListener() {
     // Set up log container
@@ -399,6 +402,19 @@ export class CemServeChrome extends CemElement {
           this.#filterLogs(value);
         }, 300);
       });
+    }
+
+    // Set up log level filter dropdown
+    this.#logLevelDropdown = this.#$('#log-level-filter');
+    if (this.#logLevelDropdown) {
+      // Load saved filter state and sync checkboxes
+      // Use requestAnimationFrame to ensure menu items are fully rendered
+      requestAnimationFrame(() => {
+        this.#loadLogFilterState();
+      });
+
+      // Listen for filter changes
+      this.#logLevelDropdown.addEventListener('select', this.#handleLogFilterChange);
     }
 
     // Set up copy logs button
@@ -421,14 +437,76 @@ export class CemServeChrome extends CemElement {
     if (!this.#logContainer) return;
 
     for (const entry of this.#logContainer.children) {
+      // Check text filter
       const text = entry.textContent.toLowerCase();
-      if (this.#logsFilterValue && !text.includes(this.#logsFilterValue)) {
-        entry.hidden = true;
-      } else {
-        entry.hidden = false;
-      }
+      const textMatch = !this.#logsFilterValue || text.includes(this.#logsFilterValue);
+
+      // Check log level filter
+      const logType = this.#getLogTypeFromEntry(entry);
+      const levelMatch = this.#logLevelFilters.has(logType);
+
+      entry.hidden = !(textMatch && levelMatch);
     }
   }
+
+  #getLogTypeFromEntry(entry) {
+    // Extract log type from classList (info, warning, error, debug)
+    for (const cls of entry.classList) {
+      if (['info', 'warning', 'error', 'debug'].includes(cls)) {
+        // Map 'warning' to 'warn' for consistency with log.type
+        return cls === 'warning' ? 'warn' : cls;
+      }
+    }
+    return 'info'; // Default
+  }
+
+  #loadLogFilterState() {
+    try {
+      const saved = localStorage.getItem('cem-serve-log-filters');
+      if (saved) {
+        this.#logLevelFilters = new Set(JSON.parse(saved));
+      }
+    } catch (e) {
+      // localStorage unavailable (private mode), use defaults
+      console.debug('[cem-serve-chrome] localStorage unavailable, using default log filters');
+    }
+
+    // Always sync checkbox states with current filter Set
+    this.#syncCheckboxStates();
+  }
+
+  #syncCheckboxStates() {
+    if (!this.#logLevelDropdown) return;
+
+    const menuItems = this.#logLevelDropdown.querySelectorAll('pf-v6-menu-item');
+    menuItems.forEach(item => {
+      const value = item.getAttribute('value');
+      item.checked = this.#logLevelFilters.has(value);
+    });
+  }
+
+  #saveLogFilterState() {
+    try {
+      localStorage.setItem('cem-serve-log-filters',
+        JSON.stringify([...this.#logLevelFilters]));
+    } catch (e) {
+      // localStorage unavailable (private mode), silently continue
+    }
+  }
+
+  #handleLogFilterChange = (event) => {
+    // Event is PfMenuItemSelectEvent with value and checked properties
+    const { value, checked } = event;
+
+    if (checked) {
+      this.#logLevelFilters.add(value);
+    } else {
+      this.#logLevelFilters.delete(value);
+    }
+
+    this.#saveLogFilterState();
+    this.#filterLogs(this.#logsFilterValue);
+  };
 
   async #copyLogs() {
     if (!this.#logContainer) return;
@@ -605,17 +683,18 @@ Generated: ${new Date().toISOString()}`;
       container.classList.add(log.type);
       container.setAttribute('data-log-id', log.date);
 
-      // Apply current filter
-      if (this.#logsFilterValue) {
-        // Construct text content for checking
-        // Note: we're checking against raw message here, which matches what's displayed
-        // We also check against type label implicitly in #filterLogs, but here we can just check message + type
-        const typeLabel = this.#getLogBadge(log.type);
-        const searchText = `${typeLabel} ${time} ${log.message}`.toLowerCase();
-        
-        if (!searchText.includes(this.#logsFilterValue)) {
-          container.setAttribute('hidden', '');
-        }
+      // Apply current filters
+      // Check text filter
+      const typeLabel = this.#getLogBadge(log.type);
+      const searchText = `${typeLabel} ${time} ${log.message}`.toLowerCase();
+      const textMatch = !this.#logsFilterValue || searchText.includes(this.#logsFilterValue);
+
+      // Check log level filter (map 'warning' to 'warn')
+      const logTypeForFilter = log.type === 'warning' ? 'warn' : log.type;
+      const levelMatch = this.#logLevelFilters.has(logTypeForFilter);
+
+      if (!(textMatch && levelMatch)) {
+        container.setAttribute('hidden', '');
       }
 
       // Set label text and attributes based on type
