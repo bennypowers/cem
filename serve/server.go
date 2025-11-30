@@ -1068,17 +1068,38 @@ func (s *Server) handleFileChanges() {
 
 		ext := filepath.Ext(changedPath)
 
-		// Invalidate transform cache for this file and its dependents
-		// Save the list of invalidated files for smart reload
-		var invalidatedFiles []string
+		// Collect all affected files from both transform cache and module graph
+		// This gives us complete dependency tracking:
+		// - Transform cache: tracks dependencies from esbuild transforms
+		// - Module graph: tracks ALL module imports from manifest generation
+		affectedFiles := make(map[string]bool)
+
+		// Add transform cache invalidations
 		if s.transformCache != nil {
-			invalidatedFiles = s.transformCache.Invalidate(changedPath)
+			invalidatedFiles := s.transformCache.Invalidate(changedPath)
 			if len(invalidatedFiles) > 0 {
-				s.logger.Debug("Invalidated %d cached transforms: %v", len(invalidatedFiles), invalidatedFiles)
-			} else {
-				s.logger.Debug("No cached transforms invalidated for %s", changedPath)
+				s.logger.Debug("Transform cache invalidated %d files: %v", len(invalidatedFiles), invalidatedFiles)
+				for _, file := range invalidatedFiles {
+					affectedFiles[file] = true
+				}
 			}
 		}
+
+		// Add module graph affected files (includes non-transformed .js files)
+		moduleGraphFiles := s.getModuleGraphAffectedFiles(changedPath)
+		if len(moduleGraphFiles) > 0 {
+			for _, file := range moduleGraphFiles {
+				affectedFiles[file] = true
+			}
+		}
+
+		// Convert map to slice for downstream use
+		var invalidatedFiles []string
+		for file := range affectedFiles {
+			invalidatedFiles = append(invalidatedFiles, file)
+		}
+
+		s.logger.Debug("Total affected files: %d (transform cache + module graph)", len(invalidatedFiles))
 
 		// Regenerate manifest if a source file changed
 		if ext == ".ts" || ext == ".js" {
@@ -1177,6 +1198,54 @@ func (s *Server) handleFileChanges() {
 			}
 		}
 	}
+}
+
+// getModuleGraphAffectedFiles queries the generate session's dependency tracker
+// to find all modules transitively affected by a file change.
+// Returns filesystem paths of affected modules.
+func (s *Server) getModuleGraphAffectedFiles(changedPath string) []string {
+	s.mu.RLock()
+	session := s.generateSession
+	watchDir := s.watchDir
+	s.mu.RUnlock()
+
+	if session == nil || watchDir == "" {
+		return nil
+	}
+
+	// Get the workspace context from the session
+	ctx := session.WorkspaceContext()
+	if ctx == nil {
+		return nil
+	}
+
+	// Convert filesystem path to module path
+	modulePath, err := ctx.FSPathToModule(changedPath)
+	if err != nil {
+		s.logger.Debug("Failed to convert FS path to module path for %s: %v", changedPath, err)
+		return nil
+	}
+
+	// Query the dependency tracker
+	depTracker := session.DependencyTracker()
+	if depTracker == nil {
+		return nil
+	}
+
+	affectedModulePaths := depTracker.GetModulesAffectedByFiles([]string{modulePath})
+	if len(affectedModulePaths) == 0 {
+		return nil
+	}
+
+	// Convert module paths back to filesystem paths
+	affectedFSPaths := make([]string, 0, len(affectedModulePaths))
+	for _, modPath := range affectedModulePaths {
+		fsPath := ctx.ModulePathToFS(modPath)
+		affectedFSPaths = append(affectedFSPaths, fsPath)
+	}
+
+	s.logger.Debug("Module graph analysis: %d modules affected by %s", len(affectedFSPaths), modulePath)
+	return affectedFSPaths
 }
 
 // getAffectedPageURLs returns page URLs that import the changed file or its dependents
