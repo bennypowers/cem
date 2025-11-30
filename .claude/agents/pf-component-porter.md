@@ -244,7 +244,7 @@ See the implementation in `serve/middleware/routes/templates/elements/pf-v6-aler
 ❌ Don't use aria-attrs as public APIs. Implement default semantics using `ElementInternals`.
 
 ## Accessibility
-- Use element internals and ARIA IDL attributes for cross root aria support 
+- Use element internals and ARIA IDL attributes for cross-root ARIA support 
 where available e.g. `#internals.ariaLabelledByElements = [...]`;
 ## Resources
 
