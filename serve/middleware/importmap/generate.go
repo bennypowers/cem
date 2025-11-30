@@ -595,11 +595,15 @@ func addDependencyExportsToScope(scope map[string]string, depName, depWebPath st
 		}
 
 		if !hasSubpaths {
-			// Condition-only export, resolve it
-			if importPath, ok := exp["import"].(string); ok {
-				scope[depName] = depWebPath + "/" + strings.TrimPrefix(importPath, "./")
-			} else if defaultPath, ok := exp["default"].(string); ok {
-				scope[depName] = depWebPath + "/" + strings.TrimPrefix(defaultPath, "./")
+			// Condition-only export, resolve it (handles nested conditions recursively)
+			if importValue, ok := exp["import"]; ok {
+				if resolved := resolveSimpleExportValue(importValue, depWebPath); resolved != "" {
+					scope[depName] = resolved
+				}
+			} else if defaultValue, ok := exp["default"]; ok {
+				if resolved := resolveSimpleExportValue(defaultValue, depWebPath); resolved != "" {
+					scope[depName] = resolved
+				}
 			}
 		} else {
 			// Has subpaths - process each export path
