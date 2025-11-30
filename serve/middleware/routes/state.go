@@ -21,13 +21,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+
+	"bennypowers.dev/cem/serve/logger"
 )
 
-// Logger interface for state persistence logging
-type Logger interface {
-	Debug(format string, args ...interface{})
-	Warning(format string, args ...interface{})
-}
+// Logger is an alias to the serve/logger.Logger interface
+type Logger = logger.Logger
 
 // DrawerState represents drawer open/closed and height
 type DrawerState struct {
