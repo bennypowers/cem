@@ -206,7 +206,7 @@ func (l *ptermLogger) Stop() {
 	}
 }
 
-func (l *ptermLogger) log(level, color, msg string, args ...interface{}) {
+func (l *ptermLogger) log(level, levelType, msg string, args ...interface{}) {
 	formatted := fmt.Sprintf(msg, args...)
 	now := time.Now()
 	timestamp := now.Format("15:04:05")
@@ -214,7 +214,7 @@ func (l *ptermLogger) log(level, color, msg string, args ...interface{}) {
 	// Store structured log entry for web interface
 	l.mu.Lock()
 	logEntry := LogEntry{
-		Type:    color, // "info", "warning", "error", "debug"
+		Type:    levelType, // "info", "warning", "error", "debug"
 		Date:    now.Format(time.RFC3339),
 		Message: formatted,
 	}
@@ -226,7 +226,7 @@ func (l *ptermLogger) log(level, color, msg string, args ...interface{}) {
 	// Capture wsManager reference while holding lock to avoid race with SetWebSocketManager
 	ws := l.wsManager
 
-	shouldPrint := color != "debug" || l.verbose
+	shouldPrint := levelType != "debug" || l.verbose
 
 	if shouldPrint {
 		if l.interactive && l.area != nil {
@@ -234,7 +234,7 @@ func (l *ptermLogger) log(level, color, msg string, args ...interface{}) {
 			var prefix, coloredMsg string
 			timestampStr := pterm.FgGray.Sprint(timestamp)
 
-			switch color {
+			switch levelType {
 			case "info":
 				prefix = pterm.FgCyan.Sprint("INFO ")
 				coloredMsg = formatted
@@ -275,7 +275,7 @@ func (l *ptermLogger) log(level, color, msg string, args ...interface{}) {
 		} else {
 			l.mu.Unlock()
 			// Non-interactive OR area not started yet: standard pterm output
-			switch color {
+			switch levelType {
 			case "info":
 				pterm.Info.Println(formatted)
 			case "warning":
