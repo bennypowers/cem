@@ -688,11 +688,12 @@ func resolveSimpleExportValue(exportValue interface{}, depWebPath string) string
 //
 // workspaceRoot is where node_modules is located, rootDir is for calculating relative paths.
 //
-// Note: Scope prefixes are computed from filepath.Rel(rootDir, pkgPath). When rootDir is a
+// Security: Scope prefixes are computed from filepath.Rel(rootDir, pkgPath). When rootDir is a
 // subdirectory of workspaceRoot, workspace packages outside rootDir will yield prefixes
-// containing ".." (e.g., "/../packages/components/"). This is consistent with how
-// addPackageExportsToImportMap computes URLs when given the same rootDir, and relies on
-// the HTTP handler properly normalizing such paths.
+// containing ".." (e.g., "/../packages/components/"). This is safe because the HTTP handler
+// (serve/server.go:1370-1372) normalizes all request paths and rejects path traversal attempts
+// that would escape the workspace root. The ".." segments in import map scopes are merely
+// browser-relative URLs that get validated server-side before serving any files.
 func addWorkspaceScopesToImportMap(importMap *ImportMap, workspaceRoot, rootDir string, rootPkg *packageJSON, workspacePackages map[string]string, logger types.Logger, fs platform.FileSystem) error {
 	nodeModulesPath := filepath.Join(workspaceRoot, "node_modules")
 
