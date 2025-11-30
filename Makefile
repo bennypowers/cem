@@ -77,6 +77,7 @@ install-frontend:
 
 test-frontend: install-frontend build
 	@set -e; \
+	WORKDIR=$$(pwd); \
 	PIDFILE=$$(mktemp); \
 	LOGFILE=$$(mktemp); \
 	cleanup() { \
@@ -96,7 +97,7 @@ test-frontend: install-frontend build
 	trap cleanup EXIT INT TERM; \
 	echo "Starting cem serve on port 9876 for tests..."; \
 	cd serve/testdata/demo-routing && ../../../dist/cem serve --port 9876 > "$$LOGFILE" 2>&1 & echo $$! > "$$PIDFILE"; \
-	cd ../../..; \
+	cd "$$WORKDIR"; \
 	echo "Waiting for server to be ready..."; \
 	TIMEOUT=30; \
 	ELAPSED=0; \
