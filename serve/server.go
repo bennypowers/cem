@@ -71,8 +71,9 @@ type Server struct {
 	workspaceRoot     string                        // Root directory of workspace
 	workspacePackages []middleware.WorkspacePackage // Discovered packages with manifests
 	// Cached routing table for demo routes (both workspace and single-package mode)
-	demoRoutes map[string]*routes.DemoRouteEntry
-	importMap  *importmappkg.ImportMap // Cached import map (workspace or single-package)
+	demoRoutes           map[string]*routes.DemoRouteEntry
+	importMap            *importmappkg.ImportMap // Cached import map (workspace or single-package)
+	sourceControlRootURL string                  // Source control root URL for demo routing
 }
 
 // NewServer creates a new server with the given port
@@ -90,10 +91,11 @@ func NewServerWithConfig(config Config) (*Server, error) {
 	// Tests must explicitly set transform config values
 
 	s := &Server{
-		port:     config.Port,
-		config:   config,
-		logger:   logger.NewDefaultLogger(),
-		shutdown: make(chan struct{}),
+		port:                 config.Port,
+		config:               config,
+		logger:               logger.NewDefaultLogger(),
+		shutdown:             make(chan struct{}),
+		sourceControlRootURL: config.SourceControlRootURL,
 	}
 
 	// Use provided filesystem or default to os package
@@ -149,6 +151,13 @@ func (s *Server) DemoRoutes() any {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.demoRoutes
+}
+
+// SourceControlRootURL returns the source control root URL for demo routing
+func (s *Server) SourceControlRootURL() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.sourceControlRootURL
 }
 
 // FileSystem returns the filesystem abstraction
@@ -374,7 +383,7 @@ func (s *Server) SetManifest(manifest []byte) error {
 	copy(s.manifest, manifest)
 
 	// Build routing table from manifest
-	routingTable, err := routes.BuildDemoRoutingTable(manifest)
+	routingTable, err := routes.BuildDemoRoutingTable(manifest, s.sourceControlRootURL)
 	if err != nil {
 		s.logger.Warning("Failed to build demo routing table: %v", err)
 		s.demoRoutes = nil
@@ -567,7 +576,7 @@ func (s *Server) TryLoadExistingManifest() (int, error) {
 	s.manifest = manifestBytes
 
 	// Build routing table from manifest
-	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes)
+	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, s.sourceControlRootURL)
 	if err != nil {
 		s.logger.Warning("Failed to build demo routing table from cached manifest: %v", err)
 		s.demoRoutes = nil
@@ -635,7 +644,7 @@ func (s *Server) RegenerateManifest() (int, error) {
 	s.manifest = manifestBytes
 
 	// Build routing table from manifest
-	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes)
+	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, s.sourceControlRootURL)
 	if err != nil {
 		s.logger.Warning("Failed to build demo routing table: %v", err)
 		s.demoRoutes = nil
@@ -692,7 +701,7 @@ func (s *Server) RegenerateManifestIncremental(changedFiles []string) (int, erro
 	s.manifest = manifestBytes
 
 	// Build routing table from manifest
-	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes)
+	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, s.sourceControlRootURL)
 	if err != nil {
 		s.logger.Warning("Failed to build demo routing table: %v", err)
 		s.demoRoutes = nil

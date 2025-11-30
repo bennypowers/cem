@@ -64,6 +64,9 @@ type DevServerContext interface {
 	// The return type is map[string]*routes.DemoRouteEntry but we use any to avoid circular imports
 	DemoRoutes() any
 
+	// SourceControlRootURL returns the source control root URL for demo routing
+	SourceControlRootURL() string
+
 	// Logger returns the server's logger
 	Logger() Logger
 

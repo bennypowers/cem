@@ -91,12 +91,16 @@ var serveCmd = &cobra.Command{
 			target = transform.ES2022
 		}
 
+		// Get source control root URL from config
+		sourceControlRootURL := viper.GetString("sourceControlRootUrl")
+
 		// Create server config
 		config := serve.Config{
-			Port:        port,
-			Reload:      reload,
-			Target:      target,
-			WatchIgnore: watchIgnore,
+			Port:                 port,
+			Reload:               reload,
+			Target:               target,
+			WatchIgnore:          watchIgnore,
+			SourceControlRootURL: sourceControlRootURL,
 			Transforms: serve.TransformConfig{
 				TypeScript: serve.TypeScriptConfig{
 					Enabled: tsEnabled,

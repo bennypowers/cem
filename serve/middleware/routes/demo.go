@@ -39,7 +39,7 @@ type DemoRouteEntry struct {
 }
 
 // BuildDemoRoutingTable creates a routing table from manifest
-func BuildDemoRoutingTable(manifestBytes []byte) (map[string]*DemoRouteEntry, error) {
+func BuildDemoRoutingTable(manifestBytes []byte, sourceControlRootURL string) (map[string]*DemoRouteEntry, error) {
 	if len(manifestBytes) == 0 {
 		return nil, fmt.Errorf("no manifest available")
 	}
@@ -48,10 +48,6 @@ func BuildDemoRoutingTable(manifestBytes []byte) (map[string]*DemoRouteEntry, er
 	if err := json.Unmarshal(manifestBytes, &pkg); err != nil {
 		return nil, fmt.Errorf("parsing manifest: %w", err)
 	}
-
-	// TODO: Get source control root URL from config
-	// For now, we'll extract it from the demo source.href if needed
-	var sourceControlRootURL string
 
 	routes := make(map[string]*DemoRouteEntry)
 
