@@ -12,6 +12,12 @@
 /* pf-v6-toggle-group-item */
 @import url('/__cem/elements/pf-v6-toggle-group-item/pf-v6-toggle-group-item-slots.css');
 
+/* pf-v6-alert */
+@import url('/__cem/elements/pf-v6-alert/pf-v6-alert-slots.css');
+
+/* pf-v6-alert-group */
+@import url('/__cem/elements/pf-v6-alert-group/pf-v6-alert-group.lightdom.css');
+
 /* Additional elements will be added as they are migrated:
  * @import url('/__cem/elements/pf-v6-modal/pf-v6-modal-slots.css');
  * @import url('/__cem/elements/pf-v6-label/pf-v6-label-slots.css');
