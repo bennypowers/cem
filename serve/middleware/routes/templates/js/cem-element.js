@@ -39,6 +39,9 @@ export class CemElement extends HTMLElement {
   /** Cache for HTML templates shared across all instances */
   static #templateCache = new Map();
 
+  /** Cache for complete component templates (HTML + stylesheet) by tag name and attrs */
+  static #componentCache = new Map();
+
   /**
    * Shadow root options. Override in subclass to customize.
    * @type {{ mode: 'open' | 'closed', delegatesFocus?: boolean }}
@@ -154,8 +157,21 @@ export class CemElement extends HTMLElement {
    * @private
    */
   static async #loadComponentTemplate(name, element) {
+    const cacheKey = `${name}:${this.#getAttrCacheKey(element)}`;
+
+    // Check unified component cache first
+    if (this.#componentCache.has(cacheKey)) {
+      return this.#componentCache.get(cacheKey);
+    }
+
+    // Load HTML and CSS in parallel
     const [html, stylesheet] = await Promise.all([this.#loadHTML(name, element), this.#loadCSS(name)]);
-    return { html, stylesheet };
+    const template = { html, stylesheet };
+
+    // Cache the complete component template
+    this.#componentCache.set(cacheKey, template);
+
+    return template;
   }
 
   /** @type {Promise<void>} Promise that resolves after first render completes */
