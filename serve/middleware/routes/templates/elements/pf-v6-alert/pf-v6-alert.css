@@ -155,67 +155,76 @@
   margin-inline-end: var(--pf-v6-c-alert__toggle--MarginInlineEnd);
 }
 
-.pf-v6-c-alert__toggle-icon {
+#toggle-icon {
   display: inline-block;
   transition: transform var(--pf-v6-c-alert__toggle-icon--TransitionDuration) var(--pf-v6-c-alert__toggle-icon--TransitionTimingFunction);
   transform: rotate(var(--pf-v6-c-alert__toggle-icon--Rotate));
 }
 
-:host(:dir(rtl)) .pf-v6-c-alert__toggle-icon {
+:host(:dir(rtl)) #toggle-icon {
   scale: -1 1;
 }
 
-.pf-v6-c-alert__icon {
+#icon-container {
   grid-area: icon;
   margin-inline-end: var(--pf-v6-c-alert__icon--MarginInlineEnd);
   font-size: var(--pf-v6-c-alert__icon--FontSize);
   color: var(--pf-v6-c-alert__icon--Color);
 }
 
-.pf-v6-c-alert__title {
+#title {
+  display: var(--_has-title, block);
   grid-area: title;
   font-weight: var(--pf-v6-c-alert__title--FontWeight);
   color: var(--pf-v6-c-alert__title--Color);
   word-break: break-word;
 }
 
-.pf-v6-c-alert__title.pf-m-truncate {
-  display: -webkit-box;
+#title.pf-m-truncate {
+  display: var(--_has-title, -webkit-box);
   -webkit-box-orient: vertical;
   -webkit-line-clamp: var(--pf-v6-c-alert__title--max-lines);
   overflow: hidden;
 }
 
-.pf-v6-c-alert__description {
+#description {
+  display: var(--_has-description, block);
   grid-area: description;
   padding-block-start: var(--pf-v6-c-alert__description--PaddingBlockStart);
   word-break: break-word;
 }
 
-.pf-v6-c-alert__description + .pf-v6-c-alert__action-group {
+#description + #action-group {
   --pf-v6-c-alert__action-group--PaddingBlockStart: var(--pf-v6-c-alert__description--action-group--PaddingBlockStart);
 }
 
-.pf-v6-c-alert__action {
+#action {
+  display: var(--_has-action, block);
   grid-area: action;
   margin-block-start: var(--pf-v6-c-alert__action--MarginBlockStart);
   margin-block-end: var(--pf-v6-c-alert__action--MarginBlockEnd);
   margin-inline-end: var(--pf-v6-c-alert__action--MarginInlineEnd);
 }
 
-.pf-v6-c-alert__action-group {
+#action-group {
+  display: var(--_has-actions, block);
   grid-area: actiongroup;
   padding-block-start: var(--pf-v6-c-alert__action-group--PaddingBlockStart);
 }
 
-.pf-v6-c-alert__action-group > .pf-v6-c-button:not(:last-child) {
+#action-group > :is(pf-v6-button, .pf-v6-c-button):not(:last-child) {
   margin-inline-end: var(--pf-v6-c-alert__action-group__c-button--not-last-child--MarginInlineEnd);
 }
 
-.pf-v6-screen-reader {
+#sr-variant {
   position: absolute;
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+:is(h1, h2, h3, h4, h5, h6),
+::slotted(:is(h1, h2, h3, h4, h5, h6)) {
+  margin: 0 !important;
 }

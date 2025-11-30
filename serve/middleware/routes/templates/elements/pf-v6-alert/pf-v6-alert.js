@@ -36,10 +36,10 @@ export class PfAlertCloseEvent extends Event {
  * @fires close - Fired when alert close action is triggered
  *
  * @slot icon - Custom icon (overrides default variant icon)
- * @slot title - Alert title text
- * @slot - Default slot for alert description
- * @slot action - Alert action button (typically close button)
- * @slot actions - Alert action group (action links/buttons)
+ * @slot - Default slot for alert title text
+ * @slot description - Alert description text
+ * @slot action - Single action button/link (not available when dismissable - close button renders in shadow)
+ * @slot actions - Action group for multiple action links/buttons
  */
 export class PfAlert extends CemElement {
   static is = 'pf-v6-alert';
@@ -51,6 +51,7 @@ export class PfAlert extends CemElement {
     'expandable',
     'expanded',
     'truncate',
+    'dismissable',
     'live-region'
   ];
 
@@ -122,28 +123,35 @@ export class PfAlert extends CemElement {
       }
     }
 
+    // Set up close button for dismissable alerts
+    if (this.hasAttribute('dismissable')) {
+      const closeButton = this.#$('close');
+      if (closeButton) {
+        // Update aria-label with variant and title
+        this.#updateCloseButtonLabel();
+
+        closeButton.addEventListener('click', () => {
+          if (this.dispatchEvent(new PfAlertCloseEvent())) {
+            this.remove();
+          }
+        });
+
+        // Update close button label when title slot changes
+        const titleSlot = this.shadowRoot.querySelector('slot:not([name])');
+        if (titleSlot) {
+          titleSlot.addEventListener('slotchange', () => {
+            this.#updateCloseButtonLabel();
+          });
+        }
+      }
+    }
+
     // Apply truncate styles if specified
     if (this.truncate > 0) {
       const title = this.#$('title');
       if (title) {
         title.style.setProperty('--pf-v6-c-alert__title--max-lines', this.truncate.toString());
       }
-    }
-
-    // Set up action slot listener for close events
-    const actionSlot = this.shadowRoot.querySelector('slot[name="action"]');
-    if (actionSlot) {
-      actionSlot.addEventListener('slotchange', () => {
-        const actions = actionSlot.assignedElements();
-        actions.forEach(action => {
-          action.addEventListener('click', (e) => {
-            // Check if this is a close action
-            if (action.hasAttribute('close') || action.getAttribute('aria-label')?.includes('Close')) {
-              this.dispatchEvent(new PfAlertCloseEvent());
-            }
-          });
-        });
-      });
     }
   }
 
@@ -152,6 +160,10 @@ export class PfAlert extends CemElement {
 
     if (name === 'variant' && oldValue !== newValue) {
       this.#updateDefaultIcon();
+      // Update close button label if dismissable
+      if (this.hasAttribute('dismissable')) {
+        this.#updateCloseButtonLabel();
+      }
     }
 
     if (name === 'truncate' && oldValue !== newValue) {
@@ -168,6 +180,20 @@ export class PfAlert extends CemElement {
       const pathData = PfAlert.#iconPaths[this.variant] || PfAlert.#iconPaths.custom;
       iconPath.setAttribute('d', pathData);
     }
+  }
+
+  #updateCloseButtonLabel() {
+    const closeButton = this.#$('close');
+    if (!closeButton) return;
+
+    const variantLabel = PfAlert.#variantLabels[this.variant] || PfAlert.#variantLabels.custom;
+    const titleText = this.textContent?.trim() || '';
+
+    const label = titleText
+      ? `Close ${variantLabel} ${titleText}`
+      : `Close ${variantLabel.replace(':', '')}`;
+
+    closeButton.setAttribute('aria-label', label);
   }
 
   /**
