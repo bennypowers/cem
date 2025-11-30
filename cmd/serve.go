@@ -129,7 +129,8 @@ var serveCmd = &cobra.Command{
 		}
 		defer func() {
 			if err := server.Close(); err != nil {
-				log.Error("Failed to close server: %v", err)
+				// Shutdown timeouts are expected with active browser sessions
+				log.Warning("Server close: %v", err)
 			}
 		}()
 
@@ -275,14 +276,14 @@ func openBrowser(url string) error {
 
 // showHelp displays the keyboard shortcuts help menu
 func showHelp(log logger.Logger) {
-	log.Info("Keyboard Shortcuts:")
-	log.Info("  m - Force rebuild manifest")
-	log.Info("  v - Cycle log levels (normal/verbose/debug/quiet)")
-	log.Info("  o - Open in browser")
-	log.Info("  c - Clear console")
-	log.Info("  h - Show this help")
-	log.Info("  q - Quit server")
-	log.Info("  Ctrl+C - Also quits server")
+	log.Info(`Keyboard Shortcuts
+	m - Force rebuild manifest
+	v - Cycle log levels (normal/verbose/debug/quiet)
+	o - Open in browser
+	c - Clear console
+	h - Show this help
+	q - Quit server
+	Ctrl+C - Also quits server                      `)
 }
 
 // logLevel tracks the current log verbosity level
