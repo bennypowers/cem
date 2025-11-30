@@ -12,6 +12,7 @@ import '/__cem/elements/pf-v6-button/pf-v6-button.js';
 import '/__cem/elements/pf-v6-card/pf-v6-card.js';
 import '/__cem/elements/pf-v6-badge/pf-v6-badge.js';
 import '/__cem/elements/pf-v6-dropdown/pf-v6-dropdown.js';
+import '/__cem/elements/pf-v6-expandable-section/pf-v6-expandable-section.js';
 import '/__cem/elements/pf-v6-label/pf-v6-label.js';
 import '/__cem/elements/pf-v6-masthead/pf-v6-masthead.js';
 import '/__cem/elements/pf-v6-modal/pf-v6-modal.js';
@@ -78,6 +79,7 @@ export class CemServeChrome extends CemElement {
   static #demoGroupTemplate = document.createElement('template');
   static #demoListTemplate = document.createElement('template');
   static #logEntryTemplate = document.createElement('template');
+  static #connectionAlertTemplate = document.createElement('template');
   static {
     this.#demoInfoTemplate.innerHTML = `
       <h3>Demo Information</h3>
@@ -115,11 +117,11 @@ export class CemServeChrome extends CemElement {
       </div>
     `;
     this.#demoListTemplate.innerHTML = `
-      <details id="debug-demos-details">
-        <summary data-field="summary"></summary>
+      <pf-v6-expandable-section id="debug-demos-section">
+        <span slot="toggle" data-field="summary"></span>
         <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact" data-container="groups">
         </dl>
-      </details>
+      </pf-v6-expandable-section>
     `;
     this.#logEntryTemplate.innerHTML = `
       <div class="log-entry" data-field="container">
@@ -127,6 +129,9 @@ export class CemServeChrome extends CemElement {
         <time class="log-time" data-field="time"></time>
         <span class="log-message" data-field="message"></span>
       </div>
+    `;
+    this.#connectionAlertTemplate.innerHTML = `
+      <pf-v6-alert dismissable data-field="alert"></pf-v6-alert>
     `;
   }
 
@@ -153,7 +158,7 @@ export class CemServeChrome extends CemElement {
 
         // Only show "connected" toast if this is a reconnection
         if (this.#hasConnected) {
-          this.#showConnectionAlert('success', 'Connected', 'Connection to development server restored.');
+          this.#showConnectionAlert('success', 'Connected');
         }
         this.#hasConnected = true;
         this.#$('#reconnection-modal')?.close();
@@ -174,7 +179,7 @@ export class CemServeChrome extends CemElement {
       },
       onReconnecting: ({ attempt, delay }) => {
         console.debug(`[cem-serve] Reconnecting in ${Math.ceil(delay/1000)}s (attempt #${attempt})...`);
-        this.#showConnectionAlert('warning', 'Reconnecting', `Reconnecting (attempt #${attempt})...`);
+        this.#showConnectionAlert('warning', 'Reconnecting');
 
         // Show modal after threshold
         if (attempt >= 15) {
@@ -193,7 +198,7 @@ export class CemServeChrome extends CemElement {
       },
       onShutdown: () => {
         console.log('[cem-serve] Server shutting down gracefully');
-        this.#showConnectionAlert('info', 'Server Restarting', 'Development server is restarting...');
+        this.#showConnectionAlert('info', 'Server Restarting');
         this.#$('#reconnection-modal')?.showModal();
         this.#$('#reconnection-content')?.updateRetryInfo(30, 30000);
       },
@@ -252,6 +257,11 @@ export class CemServeChrome extends CemElement {
 
     // Initialize WebSocket connection
     this.#wsClient.init();
+
+    // Pre-cache connection alert template in idle time
+    requestIdleCallback(() => {
+      CemServeChrome.#connectionAlertTemplate.content.cloneNode(true);
+    });
 
     console.debug('[cem-serve-chrome] Demo chrome initialized for', this.primaryTagName);
   }
@@ -353,7 +363,7 @@ export class CemServeChrome extends CemElement {
       // On index page - show all demos in details with description list
       const listFragment = CemServeChrome.#demoListTemplate.content.cloneNode(true);
 
-      listFragment.querySelector('[data-field="summary"]').textContent =
+      listFragment.querySelector('[data-field="summary"]').toggleText =
         `Show Demo URLs from Manifest (${demos.length})`;
 
       const groupsContainer = listFragment.querySelector('[data-container="groups"]');
@@ -802,7 +812,6 @@ Generated: ${new Date().toISOString()}`;
         // Check if we've already migrated (look for a migration marker)
         const migrated = localStorage.getItem('cem-serve-migrated-to-cookies');
         if (!migrated) {
-          console.log('[cem-serve] Migrating state from localStorage to cookies');
           StatePersistence.migrateFromLocalStorage();
           localStorage.setItem('cem-serve-migrated-to-cookies', 'true');
 
@@ -1045,75 +1054,64 @@ Generated: ${new Date().toISOString()}`;
     return parts.join(':');
   }
 
-  #showConnectionAlert(variant, title, message) {
+  #showConnectionAlert(variant, title) {
     const alertGroup = this.#$('#connection-alerts');
     if (!alertGroup) return;
 
-    const alert = document.createElement('pf-v6-alert');
+    // Clone template
+    const fragment = CemServeChrome.#connectionAlertTemplate.content.cloneNode(true);
+    const alert = fragment.querySelector('[data-field="alert"]');
+
+    // Set variant and title
     alert.setAttribute('variant', variant);
-    alert.dataset.connectionAlert = variant; // Mark for clearing
+    alert.dataset.connectionAlert = variant;
+    alert.textContent = title;
 
-    const titleEl = document.createElement('span');
-    titleEl.slot = 'title';
-    titleEl.textContent = title;
-    alert.appendChild(titleEl);
-
-    if (message) {
-      const messageEl = document.createElement('div');
-      messageEl.textContent = message;
-      alert.appendChild(messageEl);
-    }
-
-    // Auto-dismiss timeouts per PatternFly guidelines
+    // Auto-remove timeouts per PatternFly guidelines
     let timeout;
     let isHovered = false;
     let timeoutExpired = false;
 
-    const dismiss = () => {
-      alert.dispatchEvent(new Event('close', { bubbles: true }));
+    const remove = () => {
+      alert.remove();
     };
 
     const scheduleTimeout = (duration) => {
       timeout = setTimeout(() => {
         timeoutExpired = true;
-        // If user is hovering, delay dismissal
+        // If user is hovering, delay removal
         if (!isHovered) {
-          dismiss();
+          remove();
         }
       }, duration);
     };
 
-    // Hover handling - pause dismissal while hovering
+    // Hover handling - pause removal while hovering
     alert.addEventListener('mouseenter', () => {
       isHovered = true;
     });
 
     alert.addEventListener('mouseleave', () => {
       isHovered = false;
-      // If timeout already expired while hovering, dismiss after animation delay
+      // If timeout already expired while hovering, remove after hover delay
       if (timeoutExpired) {
-        setTimeout(dismiss, 3000); // 3s hover delay per PF
+        setTimeout(remove, 3000); // 3s hover delay per PF
       }
     });
 
-    // Set timeout based on variant
+    // Set timeout for all variants
     if (variant === 'success') {
-      // Success: 8s (PatternFly default for success toasts)
-      scheduleTimeout(8000);
+      scheduleTimeout(8000); // 8s for success
     } else if (variant === 'warning') {
-      // Warning (reconnecting): Don't auto-dismiss, user needs to know
-      // Will be cleared manually on reconnect
+      scheduleTimeout(15000); // 15s for warning
     } else if (variant === 'info') {
-      // Info (server restart): Don't auto-dismiss
-      // Will be cleared manually on reconnect
+      scheduleTimeout(15000); // 15s for info
     }
 
     // Clear any existing alerts of the same type
     const existingAlerts = alertGroup.querySelectorAll(`[data-connection-alert="${variant}"]`);
     existingAlerts.forEach(existing => {
-      if (existing !== alert) {
-        existing.dispatchEvent(new Event('close', { bubbles: true }));
-      }
+      existing.remove();
     });
 
     alertGroup.addAlert(alert);
@@ -1123,10 +1121,10 @@ Generated: ${new Date().toISOString()}`;
     const alertGroup = this.#$('#connection-alerts');
     if (!alertGroup) return;
 
-    // Clear warning and info alerts (not success - let those auto-dismiss)
+    // Clear warning and info alerts (not success - let those auto-remove)
     const alerts = alertGroup.querySelectorAll('[data-connection-alert="warning"], [data-connection-alert="info"]');
     alerts.forEach(alert => {
-      alert.dispatchEvent(new Event('close', { bubbles: true }));
+      alert.remove();
     });
   }
 
