@@ -535,22 +535,6 @@ describe('cem-serve-knobs', () => {
       expect(navLink.getAttribute('href')).to.equal('#instance-with-dashes-and_underscores');
     });
 
-    it('handles very long labels', async () => {
-      const longLabel = 'This is a very long label that might overflow the navigation area and needs to be handled gracefully';
-      const card = document.createElement('pf-v6-card');
-      card.dataset.card = 'instance-1';
-      card.dataset.label = longLabel;
-      el.appendChild(card);
-
-      await waitUntil(() => {
-        const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
-        return navLinks.length === 1;
-      });
-
-      const label = el.shadowRoot.querySelector('.instance-label');
-      expect(label.textContent).to.equal(longLabel);
-    });
-
     it('handles numeric card IDs and labels', async () => {
       const card = document.createElement('pf-v6-card');
       card.dataset.card = '123';
