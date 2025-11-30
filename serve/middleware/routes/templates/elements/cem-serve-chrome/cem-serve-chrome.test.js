@@ -13,18 +13,26 @@ describe('cem-serve-chrome', () => {
     // Wait for CemElement to load template from real server
     await el.rendered;
 
-    // Now stub fetch for debug endpoint (after template loads)
-    sinon.stub(window, 'fetch');
-    window.fetch.withArgs('/__cem/debug').resolves({
-      json: () => Promise.resolve({
-        version: '1.0.0',
-        os: 'darwin/arm64',
-        watchDir: '/test',
-        manifestSize: '100KB',
-        demoCount: 5,
-        demos: [],
-        importMap: {}
-      })
+    // Store original fetch before stubbing
+    const originalFetch = window.fetch;
+
+    // Now stub fetch for debug endpoint only (after template loads)
+    sinon.stub(window, 'fetch').callsFake((url, ...args) => {
+      if (url === '/__cem/debug') {
+        return Promise.resolve({
+          json: () => Promise.resolve({
+            version: '1.0.0',
+            os: 'darwin/arm64',
+            watchDir: '/test',
+            manifestSize: '100KB',
+            demoCount: 5,
+            demos: [],
+            importMap: {}
+          })
+        });
+      }
+      // Pass through all other fetches to the original implementation
+      return originalFetch.call(window, url, ...args);
     });
   });
 
@@ -56,9 +64,9 @@ describe('cem-serve-chrome', () => {
       expect(tabs).to.exist;
     });
 
-    it('renders connection status component', () => {
-      const connectionStatus = el.shadowRoot.getElementById('connection-status');
-      expect(connectionStatus).to.exist;
+    it('renders connection alerts component', () => {
+      const connectionAlerts = el.shadowRoot.getElementById('connection-alerts');
+      expect(connectionAlerts).to.exist;
     });
 
     it('renders error overlay component', () => {
