@@ -266,7 +266,6 @@ func extractElementListings(pkg *M.Package, packageName string) ([]ElementListin
 // slugify converts a string to a URL-safe slug
 func slugify(s string) string {
 	// Simple slugification - lowercase and replace spaces with hyphens
-	// TODO: More robust slugification
 	result := ""
 	for _, r := range s {
 		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
@@ -276,7 +275,12 @@ func slugify(s string) string {
 		}
 	}
 	// Convert to lowercase
-	return strings.ToLower(result)
+	result = strings.ToLower(result)
+	// Collapse consecutive hyphens
+	for strings.Contains(result, "--") {
+		result = strings.ReplaceAll(result, "--", "-")
+	}
+	return strings.Trim(result, "-")
 }
 
 // PackageNavigation represents a package with its elements for navigation
@@ -465,13 +469,7 @@ func RenderWorkspaceListing(packages []PackageContext, importMap string, state C
 		})
 	}
 
-	// Build navigation (this also builds element listings)
-	navigationHTML, err := BuildWorkspaceNavigation(packages)
-	if err != nil {
-		return "", fmt.Errorf("building workspace navigation: %w", err)
-	}
-
-	// Build routing table for element listings in main content
+	// Build routing table once
 	routes, err := BuildWorkspaceRoutingTable(packages)
 	if err != nil {
 		return "", fmt.Errorf("building workspace routing table: %w", err)
@@ -482,6 +480,9 @@ func RenderWorkspaceListing(packages []PackageContext, importMap string, state C
 	if err != nil {
 		return "", err
 	}
+
+	// Build navigation HTML from package listings
+	navigationHTML := renderNavigationHTML(packageListings)
 
 	// Render with template
 	var buf bytes.Buffer
