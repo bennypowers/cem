@@ -90,7 +90,7 @@ describe('cem-serve-chrome', () => {
       expect(event.type).to.equal('cem:logs');
       expect(event.logs).to.equal(logs);
       expect(event.bubbles).to.be.true;
-      expect(event.composed).to.be.true;
+      expect(event.composed).to.be.false;
     });
   });
 

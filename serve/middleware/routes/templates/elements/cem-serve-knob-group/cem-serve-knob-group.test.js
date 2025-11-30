@@ -46,7 +46,7 @@ describe('cem-serve-knob-group', () => {
       expect(event.name).to.equal('disabled');
       expect(event.value).to.equal(true);
       expect(event.bubbles).to.be.true;
-      expect(event.composed).to.be.true;
+      expect(event.composed).to.be.false;
     });
 
     it('KnobPropertyChangeEvent has correct properties', () => {
@@ -55,7 +55,7 @@ describe('cem-serve-knob-group', () => {
       expect(event.name).to.equal('variant');
       expect(event.value).to.equal('primary');
       expect(event.bubbles).to.be.true;
-      expect(event.composed).to.be.true;
+      expect(event.composed).to.be.false;
     });
 
     it('KnobCssPropertyChangeEvent has correct properties', () => {
@@ -64,7 +64,7 @@ describe('cem-serve-knob-group', () => {
       expect(event.name).to.equal('--color');
       expect(event.value).to.equal('#ff0000');
       expect(event.bubbles).to.be.true;
-      expect(event.composed).to.be.true;
+      expect(event.composed).to.be.false;
     });
   });
 
