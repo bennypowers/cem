@@ -56,18 +56,11 @@ describe('CEMReloadClient', () => {
       client.destroy();
     });
 
-    it.skip('uses wss:// protocol for HTTPS pages', async () => {
-      // Skip: Cannot redefine window.location.protocol in modern browsers
-      // This test would need to use a different approach (e.g., injecting a mock location)
-      const originalProtocol = window.location.protocol;
-      Object.defineProperty(window.location, 'protocol', {
-        writable: true,
-        value: 'https:'
-      });
-
+    it('uses wss:// protocol for HTTPS pages', async () => {
       globalThis.fetch.resolves(new Response('[]', { status: 200 }));
 
-      const client = new CEMReloadClient();
+      // Use protocol option to simulate HTTPS
+      const client = new CEMReloadClient({ protocol: 'https:' });
       await client.init();
 
       await waitUntil(() => MockWebSocket.instances.length > 0);
@@ -76,12 +69,6 @@ describe('CEMReloadClient', () => {
       expect(ws.url).to.include('wss://');
 
       client.destroy();
-
-      // Restore
-      Object.defineProperty(window.location, 'protocol', {
-        writable: true,
-        value: originalProtocol
-      });
     });
   });
 
@@ -454,45 +441,10 @@ describe('CEMReloadClient', () => {
     });
 
     it.skip('cancels pending reconnection attempts', async () => {
-      // Skipped: This test is flaky due to race conditions with async reconnection logic.
-      // The timing-based approach doesn't reliably test the cancellation behavior.
-      globalThis.fetch.resolves(new Response('[]', { status: 200 }));
-
-      const onOpen = sinon.spy();
-      const onClose = sinon.spy();
-      const client = new CEMReloadClient({
-        jitterMax: 10,
-        callbacks: { onOpen, onClose }
-      });
-
-      await client.init();
-      await waitUntil(() => MockWebSocket.instances.length > 0);
-
-      const ws = MockWebSocket.instances[0];
-      ws.simulateOpen();
-
-      // Wait for connection to be fully established
-      await waitUntil(() => onOpen.called);
-
-      ws.simulateClose();
-
-      // Wait for close to complete
-      await waitUntil(() => onClose.called);
-
-      // Wait a bit to ensure all async operations from close have completed
-      await new Promise(resolve => setTimeout(resolve, 50));
-
-      // Record current instance count (should be 1)
-      const instanceCount = MockWebSocket.instances.length;
-
-      // Destroy to cancel pending reconnection
-      client.destroy();
-
-      // Wait longer than reconnection delay (but less than 1000ms actual delay)
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      // Should not have created new connection
-      expect(MockWebSocket.instances.length).to.equal(instanceCount);
+      // Skipped: This test is flaky due to race conditions with async reconnection logic
+      // The reconnection timeout may fire before destroy() is called, depending on timing
+      // Would require refactoring the client to expose testable hooks for timer management
+      // or using fake timers (which conflicts with waitUntil() async behavior)
     });
   });
 

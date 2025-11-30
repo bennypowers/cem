@@ -406,15 +406,11 @@ describe('cem-serve-chrome', () => {
 
   describe('reconnection modal buttons', () => {
     it.skip('reloads page when reload button clicked', () => {
-      // Skipped: window.location.reload is non-configurable and cannot be stubbed in modern browsers
+      // Cannot test: window.location.reload is non-configurable in browsers for security
+      // This would require E2E testing with tools like Playwright that can intercept navigation
       const reloadButton = el.shadowRoot.getElementById('reload-button');
-      const reloadStub = sinon.stub(window.location, 'reload');
-
-      reloadButton.click();
-
-      expect(reloadStub.called).to.be.true;
-
-      reloadStub.restore();
+      expect(reloadButton).to.exist;
+      expect(reloadButton.onclick).to.be.a('function');
     });
 
     it('closes modal and retries when retry button clicked', () => {

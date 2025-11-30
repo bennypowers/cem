@@ -17,7 +17,8 @@ export class CEMReloadClient {
     this.config = {
       jitterMax: options.jitterMax ?? 1000,
       overlayThreshold: options.overlayThreshold ?? 15,
-      badgeFadeDelay: options.badgeFadeDelay ?? 2000
+      badgeFadeDelay: options.badgeFadeDelay ?? 2000,
+      protocol: options.protocol // Optional protocol override for testing
     };
 
     this.#jitterMax = this.config.jitterMax;
@@ -41,7 +42,8 @@ export class CEMReloadClient {
 
     // Build WebSocket URL with current page as query parameter
     // Browsers don't send Referer header for WebSocket connections, so we pass it explicitly
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const httpProtocol = this.config.protocol ?? window.location.protocol;
+    const protocol = httpProtocol === 'https:' ? 'wss:' : 'ws:';
     const pageURL = encodeURIComponent(window.location.pathname);
     this.#url = protocol + '//' + window.location.host + '/__cem/reload?page=' + pageURL;
     console.debug('[cem-serve] Connecting to WebSocket:', this.#url, 'from page:', window.location.pathname);
