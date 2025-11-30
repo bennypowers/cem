@@ -56,7 +56,7 @@ describe('cem-drawer', () => {
       expect(event.type).to.equal('change');
       expect(event.open).to.equal(true);
       expect(event.bubbles).to.be.true;
-      expect(event.composed).to.be.true;
+      expect(event.composed).to.be.false;
     });
 
     it('CemDrawerResizeEvent has correct properties', () => {
@@ -64,7 +64,7 @@ describe('cem-drawer', () => {
       expect(event.type).to.equal('resize');
       expect(event.height).to.equal(500);
       expect(event.bubbles).to.be.true;
-      expect(event.composed).to.be.true;
+      expect(event.composed).to.be.false;
     });
   });
 

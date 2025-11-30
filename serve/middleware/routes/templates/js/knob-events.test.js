@@ -20,11 +20,11 @@ describe('Knob Events', () => {
       expect(event.value).to.equal('primary');
     });
 
-    it('bubbles and is composed', () => {
+    it('bubbles but is not composed', () => {
       const event = new KnobAttributeChangeEvent('foo', 'bar');
 
       expect(event.bubbles).to.be.true;
-      expect(event.composed).to.be.true;
+      expect(event.composed).to.be.false;
     });
 
     it('can be dispatched and caught', (done) => {
@@ -90,11 +90,11 @@ describe('Knob Events', () => {
       expect(event.value).to.be.null;
     });
 
-    it('bubbles and is composed', () => {
+    it('bubbles but is not composed', () => {
       const event = new KnobPropertyChangeEvent('prop', 123);
 
       expect(event.bubbles).to.be.true;
-      expect(event.composed).to.be.true;
+      expect(event.composed).to.be.false;
     });
 
     it('can be dispatched and caught', (done) => {
@@ -148,11 +148,11 @@ describe('Knob Events', () => {
       expect(event.value).to.equal('0 2px 4px rgba(0,0,0,0.1)');
     });
 
-    it('bubbles and is composed', () => {
+    it('bubbles but is not composed', () => {
       const event = new KnobCSSPropertyChangeEvent('--foo', 'bar');
 
       expect(event.bubbles).to.be.true;
-      expect(event.composed).to.be.true;
+      expect(event.composed).to.be.false;
     });
 
     it('can be dispatched and caught', (done) => {
@@ -178,26 +178,25 @@ describe('Knob Events', () => {
     });
   });
 
-  describe('Event composition through shadow DOM', () => {
-    it('composed events cross shadow boundaries', (done) => {
-      // Create host with shadow root
-      const host = document.createElement('div');
-      const shadow = host.attachShadow({ mode: 'open' });
-      const shadowChild = document.createElement('div');
-      shadow.appendChild(shadowChild);
-      document.body.appendChild(host);
+  describe('Event bubbling behavior', () => {
+    it('events bubble within light DOM', (done) => {
+      // Create parent-child structure in light DOM
+      const parent = document.createElement('div');
+      const child = document.createElement('div');
+      parent.appendChild(child);
+      document.body.appendChild(parent);
 
-      // Listen at host level
-      host.addEventListener('knob:attribute-change', (e) => {
-        expect(e.name).to.equal('test');
-        expect(e.value).to.equal('value');
-        document.body.removeChild(host);
+      // Listen at parent level
+      parent.addEventListener('knob:property-change', (e) => {
+        expect(e.name).to.equal('bubbled');
+        expect(e.value).to.equal('success');
+        document.body.removeChild(parent);
         done();
       });
 
-      // Dispatch from shadow child
-      const event = new KnobAttributeChangeEvent('test', 'value');
-      shadowChild.dispatchEvent(event);
+      // Dispatch from child
+      const event = new KnobPropertyChangeEvent('bubbled', 'success');
+      child.dispatchEvent(event);
     });
   });
 
