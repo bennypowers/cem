@@ -76,14 +76,49 @@ install-frontend:
 	cd serve && npm ci
 
 test-frontend: install-frontend build
-	@echo "Starting cem serve on port 9876 for tests..."
-	@cd serve/testdata/demo-routing && ../../../dist/cem serve --port 9876 > /tmp/cem-serve-test.log 2>&1 & echo $$! > /tmp/cem-serve-test.pid
-	@sleep 3
-	@echo "Running frontend tests..."
-	@cd serve && npm test || (kill `cat /tmp/cem-serve-test.pid` 2>/dev/null; rm -f /tmp/cem-serve-test.pid; exit 1)
-	@echo "Stopping cem serve..."
-	@kill `cat /tmp/cem-serve-test.pid` 2>/dev/null || true
-	@rm -f /tmp/cem-serve-test.pid
+	@set -e; \
+	PIDFILE=$$(mktemp); \
+	LOGFILE=$$(mktemp); \
+	cleanup() { \
+		if [ -f "$$PIDFILE" ] && [ -s "$$PIDFILE" ]; then \
+			PID=$$(cat "$$PIDFILE"); \
+			if [ -n "$$PID" ] && kill -0 "$$PID" 2>/dev/null; then \
+				if ps -p "$$PID" -o comm= 2>/dev/null | grep -q '^cem$$'; then \
+					echo "Stopping cem serve (PID $$PID)..."; \
+					kill "$$PID" 2>/dev/null || true; \
+					sleep 0.5; \
+					kill -0 "$$PID" 2>/dev/null && kill -9 "$$PID" 2>/dev/null || true; \
+				fi; \
+			fi; \
+		fi; \
+		rm -f "$$PIDFILE" "$$LOGFILE"; \
+	}; \
+	trap cleanup EXIT INT TERM; \
+	echo "Starting cem serve on port 9876 for tests..."; \
+	cd serve/testdata/demo-routing && ../../../dist/cem serve --port 9876 > "$$LOGFILE" 2>&1 & echo $$! > "$$PIDFILE"; \
+	cd ../../..; \
+	echo "Waiting for server to be ready..."; \
+	TIMEOUT=30; \
+	ELAPSED=0; \
+	while [ $$ELAPSED -lt $$TIMEOUT ]; do \
+		if nc -z localhost 9876 2>/dev/null || \
+		   (command -v curl >/dev/null 2>&1 && curl -s http://localhost:9876 >/dev/null 2>&1); then \
+			echo "Server is ready."; \
+			break; \
+		fi; \
+		sleep 0.5; \
+		ELAPSED=$$((ELAPSED + 1)); \
+	done; \
+	if [ $$ELAPSED -ge $$TIMEOUT ]; then \
+		echo "ERROR: Server failed to start within $${TIMEOUT}s"; \
+		echo "Server log:"; \
+		cat "$$LOGFILE"; \
+		exit 1; \
+	fi; \
+	echo "Running frontend tests..."; \
+	cd serve && npm test; \
+	TEST_EXIT=$$?; \
+	exit $$TEST_EXIT
 
 test-frontend-watch: install-frontend
 	cd serve && npm run test:watch
