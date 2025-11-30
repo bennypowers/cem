@@ -86,7 +86,13 @@ export class CemServeDrawer extends HTMLElement {
       const toggleButton = this.#$('toggle');
 
       if (content) {
-        const height = parseInt(this.getAttribute('drawer-height') || '400', 10);
+        let height = parseInt(this.getAttribute('drawer-height') || '400', 10);
+        // If height is 0 or invalid, reset to default
+        if (height <= 0 || isNaN(height)) {
+          height = 400;
+          // Update the attribute to reflect the reset
+          this.setAttribute('drawer-height', '400');
+        }
         content.style.height = `${height}px`;
       }
 
@@ -220,8 +226,14 @@ export class CemServeDrawer extends HTMLElement {
       const {open} = this;
       if (content) {
         if (open) {
-          // Restore height from drawer-height attribute (default 400 if not set)
-          const height = parseInt(this.getAttribute('drawer-height') || '400', 10);
+          // Restore height from drawer-height attribute (default 400 if not set or 0)
+          let height = parseInt(this.getAttribute('drawer-height') || '400', 10);
+          // If height is 0 or invalid, reset to default
+          if (height <= 0 || isNaN(height)) {
+            height = 400;
+            // Update the attribute to reflect the reset
+            this.setAttribute('drawer-height', '400');
+          }
           content.style.height = `${height}px`;
         } else {
           // Reset to 0 when closing
