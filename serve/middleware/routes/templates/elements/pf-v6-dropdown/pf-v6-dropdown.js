@@ -18,7 +18,7 @@ import '/__cem/elements/pf-v6-menu-item/pf-v6-menu-item.js';
  *
  * @customElement pf-v6-dropdown
  */
-class PfV6Dropdown extends CemElement {
+export class PfV6Dropdown extends CemElement {
   static is = 'pf-v6-dropdown';
 
   static shadowRootOptions = { mode: 'open' };
@@ -29,30 +29,32 @@ class PfV6Dropdown extends CemElement {
     'label',
   ];
 
+  static #instances = new Set();
+
+  static #onDocumentClick = (event) => {
+    for (const instance of PfV6Dropdown.#instances) {
+      // Use composedPath for shadow DOM
+      if (instance.expanded && !event.composedPath().includes(instance)) {
+        instance.collapse();
+      }
+    }
+  };
+
+  static {
+    document.addEventListener('click', PfV6Dropdown.#onDocumentClick);
+  }
+
   #toggle;
   #menu;
   #menuContainer;
 
-  get expanded() {
-    return this.hasAttribute('expanded');
-  }
+  get expanded() { return this.hasAttribute('expanded'); }
+  set expanded(value) { this.toggleAttribute('expanded', !!value); }
 
-  set expanded(value) {
-    this.toggleAttribute('expanded', !!value);
-  }
+  get disabled() { return this.hasAttribute('disabled'); }
+  set disabled(value) { this.toggleAttribute('disabled', !!value); }
 
-  get disabled() {
-    return this.hasAttribute('disabled');
-  }
-
-  set disabled(value) {
-    this.toggleAttribute('disabled', !!value);
-  }
-
-  get label() {
-    return this.getAttribute('label') || '';
-  }
-
+  get label() { return this.getAttribute('label') || ''; }
   set label(value) {
     if (value) {
       this.setAttribute('label', value);
@@ -69,52 +71,17 @@ class PfV6Dropdown extends CemElement {
     if (!this.#toggle || !this.#menu || !this.#menuContainer) return;
 
     // Set up toggle button
-    this.#toggle.addEventListener('click', this.#handleToggleClick);
+    this.#toggle.addEventListener('click', this.#onToggleClick);
 
     // Set up keyboard handlers
-    this.addEventListener('keydown', this.#handleKeydown);
+    this.addEventListener('keydown', this.#onKeydown);
 
-    // Set up menu select handler
-    this.#menu.addEventListener('select', this.#handleMenuSelect);
-
-    // Initialize ARIA attributes
+    // Sync initial attribute state (in case attributes were set before template loaded)
     this.#updateToggleAria();
-
-    // Pass label to menu
-    if (this.label) {
-      this.#menu.setAttribute('label', this.label);
-    }
+    this.#updateDisabled();
+    this.#updateExpanded();
+    this.#updateLabel();
   }
-
-  #handleToggleClick = (event) => {
-    if (this.disabled) {
-      event.preventDefault();
-      return;
-    }
-
-    this.toggle();
-  };
-
-  #handleKeydown = (event) => {
-    // Handle Escape to close
-    if (event.key === 'Escape' && this.expanded) {
-      event.preventDefault();
-      this.collapse();
-      this.#toggle?.focus();
-    }
-  };
-
-  #handleMenuSelect = (event) => {
-    // Just let the event bubble naturally
-    // Event already has value and checked properties
-  };
-
-  #handleOutsideClick = (event) => {
-    // Use composedPath for shadow DOM
-    if (!event.composedPath().includes(this)) {
-      this.collapse();
-    }
-  };
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (!this.shadowRoot?.firstChild || oldValue === newValue) {
@@ -134,6 +101,34 @@ class PfV6Dropdown extends CemElement {
     }
   }
 
+  connectedCallback() {
+    super.connectedCallback();
+    PfV6Dropdown.#instances.add(this);
+  }
+
+  disconnectedCallback() {
+    this.#toggle?.removeEventListener('click', this.#onToggleClick);
+    this.removeEventListener('keydown', this.#onKeydown);
+    PfV6Dropdown.#instances.delete(this);
+  }
+
+  #onKeydown(event) {
+    // Handle Escape to close
+    if (event.key === 'Escape' && this.expanded) {
+      event.preventDefault();
+      this.collapse();
+      this.#toggle?.focus();
+    }
+  }
+
+  #onToggleClick = (event) => {
+    if (this.disabled) {
+      event.preventDefault();
+      return;
+    }
+    this.toggle();
+  };
+
   #updateExpanded() {
     this.#updateToggleAria();
 
@@ -148,9 +143,6 @@ class PfV6Dropdown extends CemElement {
         this.#menu?.focusFirstItem();
       });
 
-      // Register click-outside handler
-      document.addEventListener('click', this.#handleOutsideClick);
-
       // Dispatch expand event
       this.dispatchEvent(new Event('expand', { bubbles: true }));
     } else {
@@ -158,9 +150,6 @@ class PfV6Dropdown extends CemElement {
       if (this.#menuContainer) {
         this.#menuContainer.style.display = 'none';
       }
-
-      // Remove click-outside handler
-      document.removeEventListener('click', this.#handleOutsideClick);
 
       // Dispatch collapse event
       this.dispatchEvent(new Event('collapse', { bubbles: true }));
@@ -184,10 +173,7 @@ class PfV6Dropdown extends CemElement {
   }
 
   #updateToggleAria() {
-    if (this.#toggle) {
-      this.#toggle.setAttribute('aria-expanded', this.expanded.toString());
-      this.#toggle.setAttribute('aria-haspopup', 'true');
-    }
+    this.#toggle?.setAttribute('aria-expanded', this.expanded.toString());
   }
 
   toggle() {
@@ -200,13 +186,6 @@ class PfV6Dropdown extends CemElement {
 
   collapse() {
     this.expanded = false;
-  }
-
-  disconnectedCallback() {
-    this.#toggle?.removeEventListener('click', this.#handleToggleClick);
-    this.removeEventListener('keydown', this.#handleKeydown);
-    this.#menu?.removeEventListener('select', this.#handleMenuSelect);
-    document.removeEventListener('click', this.#handleOutsideClick);
   }
 
   static {
