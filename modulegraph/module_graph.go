@@ -395,9 +395,9 @@ func (mg *ModuleGraph) calculateTransitiveElementsDirect(modulePath string) []st
 }
 
 // PopulateFromManifests populates the module graph with custom element definitions from manifests
-func (mg *ModuleGraph) PopulateFromManifests(elements map[string]interface{}) {
+func (mg *ModuleGraph) PopulateFromManifests(elements map[string]any) {
 	// elements is expected to be a map[string]*ElementDefinition from registry
-	// but we use interface{} to avoid circular imports
+	// but we use any to avoid circular imports
 	for tagName, element := range elements {
 		if elementDef, ok := element.(interface {
 			GetModulePath() string
@@ -553,7 +553,7 @@ func (mg *ModuleGraph) SetManifestResolver(manifestResolver ManifestResolver) {
 // This should be called when module graph structure changes to prevent stale data
 func (mg *ModuleGraph) ClearTransitiveElementsCache() {
 	// Safely clear all entries from the sync.Map
-	mg.TransitiveElementsCache.Range(func(key, value interface{}) bool {
+	mg.TransitiveElementsCache.Range(func(key, value any) bool {
 		mg.TransitiveElementsCache.Delete(key)
 		return true // continue iteration
 	})
