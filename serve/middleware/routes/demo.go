@@ -145,16 +145,23 @@ func BuildDemoRoutingTable(manifestBytes []byte, sourceControlRootURL string) (m
 
 
 // BuildWorkspaceRoutingTable builds a combined routing table from all packages
-// Returns error if route conflicts are detected
+// Returns error if route conflicts are detected or if package routing errors occurred
 func BuildWorkspaceRoutingTable(packages []PackageContext) (map[string]*DemoRouteEntry, error) {
 	routes := make(map[string]*DemoRouteEntry)
 	conflicts := make(map[string][]routeConflict)
+	var packageErrors []packageRoutingError
 
 	for _, pkg := range packages {
 		// Build routing table for this package
 		pkgRoutes, err := buildPackageRoutingTable(pkg)
 		if err != nil {
-			// Skip packages with routing errors
+			// Collect package routing errors for reporting
+			packageErrors = append(packageErrors, packageRoutingError{
+				PackageName: pkg.Name,
+				PackagePath: pkg.Path,
+				Error:       err,
+			})
+			// Skip packages with routing errors but continue processing others
 			continue
 		}
 
@@ -185,6 +192,18 @@ func BuildWorkspaceRoutingTable(packages []PackageContext) (map[string]*DemoRout
 		}
 	}
 
+	// Report package routing errors (non-fatal warnings)
+	if len(packageErrors) > 0 {
+		// If there are also conflicts, combine both errors
+		if len(conflicts) > 0 {
+			pkgErr := formatPackageRoutingErrors(packageErrors)
+			conflictErr := formatRouteConflictsError(conflicts)
+			return nil, fmt.Errorf("%w\n\n%w", pkgErr, conflictErr)
+		}
+		// Only package errors - return as error so callers are aware
+		return routes, formatPackageRoutingErrors(packageErrors)
+	}
+
 	// If conflicts detected, return detailed error
 	if len(conflicts) > 0 {
 		return nil, formatRouteConflictsError(conflicts)
@@ -193,12 +212,32 @@ func BuildWorkspaceRoutingTable(packages []PackageContext) (map[string]*DemoRout
 	return routes, nil
 }
 
+// packageRoutingError represents a package that failed to build routing table
+type packageRoutingError struct {
+	PackageName string
+	PackagePath string
+	Error       error
+}
+
 // routeConflict represents a routing conflict between packages
 type routeConflict struct {
 	Route       string
 	PackageName string
 	PackagePath string
 	FilePath    string
+}
+
+// formatPackageRoutingErrors creates a detailed error message for package routing failures
+func formatPackageRoutingErrors(errors []packageRoutingError) error {
+	var msg strings.Builder
+	msg.WriteString("Package routing errors detected (packages skipped):\n\n")
+
+	for _, pkgErr := range errors {
+		msg.WriteString(fmt.Sprintf("Package '%s' (%s):\n", pkgErr.PackageName, pkgErr.PackagePath))
+		msg.WriteString(fmt.Sprintf("  Error: %v\n\n", pkgErr.Error))
+	}
+
+	return fmt.Errorf("%s", msg.String())
 }
 
 // formatRouteConflictsError creates a detailed error message for route conflicts
@@ -247,7 +286,7 @@ func buildPackageRoutingTable(pkg PackageContext) (map[string]*DemoRouteEntry, e
 		}
 
 		// Ensure trailing slash for directory-style URLs
-		if !strings.HasSuffix(localRoute, "/") && !strings.Contains(filepath.Base(localRoute), ".") {
+		if !strings.HasSuffix(localRoute, "/") && filepath.Ext(localRoute) == "" {
 			localRoute += "/"
 		}
 
