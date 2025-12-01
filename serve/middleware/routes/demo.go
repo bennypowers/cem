@@ -115,10 +115,18 @@ func BuildDemoRoutingTable(manifestBytes []byte, sourceControlRootURL string) (m
 		}
 
 		// Normalize filePath to ensure it's always relative (security: prevent directory traversal)
-		// Strip leading "./" and "/" repeatedly to ensure relative path
-		for strings.HasPrefix(filePath, "./") || strings.HasPrefix(filePath, "/") {
-			filePath = strings.TrimPrefix(filePath, "./")
-			filePath = strings.TrimPrefix(filePath, "/")
+		// Clean the path to resolve any ".." or "." segments
+		filePath = filepath.Clean(filePath)
+
+		// Strip leading slash if present (we want relative paths)
+		filePath = strings.TrimPrefix(filePath, "/")
+
+		// Reject paths that attempt to traverse above the root
+		if strings.HasPrefix(filePath, "..") || filepath.IsAbs(filePath) {
+			return nil, fmt.Errorf("security: demo file path %q attempts directory traversal (tagName: %s, demo: %s)",
+				filePath,
+				renderableDemo.CustomElementDeclaration.TagName,
+				demoURL)
 		}
 
 		// Check for duplicate routes before assignment

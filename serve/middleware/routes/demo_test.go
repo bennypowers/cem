@@ -1,0 +1,124 @@
+/*
+Copyright © 2025 Benny Powers <web@bennypowers.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+package routes
+
+import (
+	"fmt"
+	"strings"
+	"testing"
+)
+
+// TestBuildDemoRoutingTable_DirectoryTraversalPrevention tests that malicious
+// file paths attempting directory traversal are rejected
+func TestBuildDemoRoutingTable_DirectoryTraversalPrevention(t *testing.T) {
+	tests := []struct {
+		name          string
+		demoURL       string
+		shouldReject  bool
+		description   string
+	}{
+		{
+			name:         "relative path with parent traversal",
+			demoURL:      "../../etc/passwd",
+			shouldReject: true,
+			description:  "Should reject paths with .. attempting to escape root",
+		},
+		{
+			name:         "absolute path",
+			demoURL:      "/etc/passwd",
+			shouldReject: false, // Absolute paths get leading slash stripped, then become relative
+			description:  "Absolute paths should be converted to relative",
+		},
+		{
+			name:         "mixed traversal",
+			demoURL:      "valid/path/../../../escape.html",
+			shouldReject: true,
+			description:  "Should reject paths that resolve to parent directories",
+		},
+		{
+			name:         "legitimate relative path",
+			demoURL:      "./demo/index.html",
+			shouldReject: false,
+			description:  "Should accept normal relative paths",
+		},
+		{
+			name:         "legitimate path without prefix",
+			demoURL:      "demo/index.html",
+			shouldReject: false,
+			description:  "Should accept paths without ./ prefix",
+		},
+		{
+			name:         "path with internal parent reference",
+			demoURL:      "components/../demo/index.html",
+			shouldReject: false,
+			description:  "Should accept paths that resolve within the root",
+		},
+		{
+			name:         "sneaky double-dot at start",
+			demoURL:      "../demo/index.html",
+			shouldReject: true,
+			description:  "Should reject single-level parent traversal",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a minimal manifest JSON directly with a demo using the test URL
+			manifestJSON := fmt.Sprintf(`{
+				"schemaVersion": "1.0.0",
+				"modules": [
+					{
+						"kind": "javascript-module",
+						"path": "src/my-element.js",
+						"declarations": [
+							{
+								"kind": "class",
+								"name": "MyElement",
+								"tagName": "my-element",
+								"customElement": true,
+								"demos": [
+									{
+										"url": %q
+									}
+								]
+							}
+						]
+					}
+				]
+			}`, tt.demoURL)
+
+			// Call BuildDemoRoutingTable
+			routes, err := BuildDemoRoutingTable([]byte(manifestJSON), "")
+
+			if tt.shouldReject {
+				if err == nil {
+					t.Errorf("Expected error for %s, but got none. Routes: %+v", tt.description, routes)
+				} else if !strings.Contains(err.Error(), "directory traversal") {
+					t.Errorf("Expected directory traversal error for %s, got: %v", tt.description, err)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Expected no error for %s, but got: %v", tt.description, err)
+				}
+				if len(routes) == 0 {
+					t.Errorf("Expected routes to be created for %s", tt.description)
+				}
+			}
+		})
+	}
+}
