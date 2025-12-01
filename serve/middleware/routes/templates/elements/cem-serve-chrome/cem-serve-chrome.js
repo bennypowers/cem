@@ -117,10 +117,9 @@ export class CemServeChrome extends CemElement {
       </div>
     `;
     this.#demoListTemplate.innerHTML = `
-      <pf-v6-expandable-section id="debug-demos-section">
-        <span slot="toggle" data-field="summary"></span>
-        <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact" data-container="groups">
-        </dl>
+      <pf-v6-expandable-section id="debug-demos-section"
+                                toggle-text="Show Demos Info">
+        <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact" data-container="groups"></dl>
       </pf-v6-expandable-section>
     `;
     this.#logEntryTemplate.innerHTML = `
