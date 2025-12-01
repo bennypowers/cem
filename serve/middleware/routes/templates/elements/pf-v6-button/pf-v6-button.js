@@ -8,7 +8,6 @@ import { CemElement } from '/__cem/cem-element.js';
  * @attr {boolean} block - Make button full width
  * @attr {boolean} disabled - Disable the button
  * @attr {string} href - URL for anchor links (automatically renders as <a> when present)
- * @attr {string} aria-label - Accessible label for the button
  *
  * @slot - Default slot for button text/content
  * @slot icon-start - Slot for icon before text
@@ -17,7 +16,7 @@ import { CemElement } from '/__cem/cem-element.js';
  * @fires click - Bubbles click events from internal button
  * @customElement pf-v6-button
  */
-class PfV6Button extends CemElement {
+export class PfV6Button extends CemElement {
   static is = 'pf-v6-button';
 
   static shadowRootOptions = { mode: 'open', delegatesFocus: true };
@@ -65,6 +64,21 @@ class PfV6Button extends CemElement {
     }
   }
 
+  attributeChangedCallback(name, oldValue, newValue) {
+    switch (name) {
+      case 'disabled': this.#updateDisabled(); break;
+      case 'href':
+        this.#handleHrefChange(oldValue, newValue);
+        break;
+      case 'variant': this.#updateRole(); break;
+    }
+
+    // Sync other attributes
+    if (this.#element || !this.#isLink) {
+      this.#syncAttributes();
+    }
+  }
+
   async afterTemplateLoaded() {
     // Check if we have a link
     this.#isLink = this.hasAttribute('href');
@@ -93,22 +107,22 @@ class PfV6Button extends CemElement {
     }
 
     // Add event listeners on HOST
-    this.addEventListener('click', this.#handleClick);
-    this.addEventListener('keydown', this.#handleKeydown);
+    this.addEventListener('click', this.#onClick);
+    this.addEventListener('keydown', this.#onKeydown);
   }
 
   #setupShadowLink() {
     // For links, rely on delegatesFocus and shadow <a>
     // Add click handler to enforce disabled state
     if (this.#element) {
-      this.#element.addEventListener('click', this.#handleLinkClick);
+      this.#element.addEventListener('click', this.#onLinkClick);
     }
   }
 
   #teardownHostButton() {
     // Remove host event listeners
-    this.removeEventListener('click', this.#handleClick);
-    this.removeEventListener('keydown', this.#handleKeydown);
+    this.removeEventListener('click', this.#onClick);
+    this.removeEventListener('keydown', this.#onKeydown);
 
     // Remove tabindex if we added it
     if (this.getAttribute('tabindex') === '0') {
@@ -119,11 +133,11 @@ class PfV6Button extends CemElement {
   #teardownShadowLink() {
     // Remove shadow link event listener
     if (this.#element) {
-      this.#element.removeEventListener('click', this.#handleLinkClick);
+      this.#element.removeEventListener('click', this.#onLinkClick);
     }
   }
 
-  #handleClick = (event) => {
+  #onClick(event) {
     // For host-based buttons only
     if (this.disabled) {
       event.preventDefault();
@@ -131,9 +145,9 @@ class PfV6Button extends CemElement {
       return;
     }
     // Event bubbles naturally
-  };
+  }
 
-  #handleKeydown = (event) => {
+  #onKeydown(event) {
     // For host-based buttons only
     if (this.disabled) {
       event.preventDefault();
@@ -145,9 +159,9 @@ class PfV6Button extends CemElement {
       event.preventDefault();
       this.click();
     }
-  };
+  }
 
-  #handleLinkClick = (event) => {
+  #onLinkClick = (event) => {
     // For shadow links only - enforce disabled
     if (this.disabled) {
       event.preventDefault();
@@ -155,21 +169,6 @@ class PfV6Button extends CemElement {
       return;
     }
   };
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    switch (name) {
-      case 'disabled': this.#updateDisabled(); break;
-      case 'href':
-        this.#handleHrefChange(oldValue, newValue);
-        break;
-      case 'variant': this.#updateRole(); break;
-    }
-
-    // Sync other attributes
-    if (this.#element || !this.#isLink) {
-      this.#syncAttributes();
-    }
-  }
 
   #updateRole() {
     const hasHref = this.hasAttribute('href');
@@ -183,7 +182,7 @@ class PfV6Button extends CemElement {
     }
   }
 
-  #handleHrefChange(oldValue, newValue) {
+  #handleHrefChange(_, newValue) {
     const wasLink = this.#isLink;
     const isNowLink = newValue !== null;
 
@@ -251,6 +250,7 @@ class PfV6Button extends CemElement {
         if (this.hasAttribute(attr)) {
           this.#element.setAttribute(attr, this.getAttribute(attr));
         } else {
+          console.log('button remove',attr);
           this.#element.removeAttribute(attr);
         }
       });
