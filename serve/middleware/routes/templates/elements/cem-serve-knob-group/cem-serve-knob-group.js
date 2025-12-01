@@ -113,10 +113,18 @@ class CemServeKnobGroup extends CemElement {
 
     if (!knobType || !knobName) return;
 
-    // Only debounce text-like inputs (not checkboxes, selects, etc)
-    // Checkboxes and selects should use the change event for immediate updates
-    if (this.#isBooleanControl(control) || control.tagName === 'SELECT') {
-      return; // Let change event handle these
+    // Boolean controls (checkboxes, switches) should be handled immediately
+    // Selects use change event only, skip them here
+    if (this.#isBooleanControl(control)) {
+      const key = `${knobType}-${knobName}`;
+      clearTimeout(this.#debounceTimers.get(key));
+      const checked = control.checked !== undefined ? control.checked : undefined;
+      this.#applyChange(knobType, knobName, control.value, checked);
+      return;
+    }
+
+    if (control.tagName === 'SELECT') {
+      return; // Let change event handle selects
     }
 
     // Debounce updates for text inputs only

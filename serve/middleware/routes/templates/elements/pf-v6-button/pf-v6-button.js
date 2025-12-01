@@ -250,7 +250,6 @@ export class PfV6Button extends CemElement {
         if (this.hasAttribute(attr)) {
           this.#element.setAttribute(attr, this.getAttribute(attr));
         } else {
-          console.log('button remove',attr);
           this.#element.removeAttribute(attr);
         }
       });

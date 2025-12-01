@@ -3,14 +3,12 @@ import { CemFormControl } from '/__cem/cem-form-control.js';
 /**
  * @customElement pf-v6-switch
  */
-class PfV6Switch extends CemFormControl {
+export class PfV6Switch extends CemFormControl {
   static is = 'pf-v6-switch';
 
   static observedAttributes = [
     'checked',
     'disabled',
-    'aria-label',
-    'aria-labelledby',
   ];
 
   #input;
