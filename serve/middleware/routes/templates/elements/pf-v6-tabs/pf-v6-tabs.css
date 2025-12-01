@@ -86,8 +86,10 @@
   height: 100%;
   overflow-y: auto;
   box-sizing: border-box;
+  contain: layout style paint;
   &[hidden] {
     display: none;
+    content-visibility: hidden;
   }
 }
 

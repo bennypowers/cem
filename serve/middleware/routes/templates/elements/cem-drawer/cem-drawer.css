@@ -82,11 +82,17 @@
   display: flex;
   flex-direction: column;
   opacity: 0;
+  contain: layout style paint;
 
   &.transitions-enabled {
     transition:
       height var(--pf-t--global--motion--duration--slide-in--short) var(--pf-t--global--motion--timing-function--decelerate),
       opacity var(--pf-t--global--motion--duration--fade--default) var(--pf-t--global--motion--timing-function--default);
+  }
+
+  &.resizing {
+    will-change: height;
+    contain: layout style paint size;
   }
 
   :host([open]) & {

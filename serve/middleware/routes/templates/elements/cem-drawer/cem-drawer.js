@@ -33,6 +33,8 @@ export class CemServeDrawer extends HTMLElement {
   #startHeight = 0;
   #resizeDebounceTimer = null;
   #initialized = false;
+  #rafId = null;
+  #pendingHeight = null;
 
   get open() {
     return this.hasAttribute('open');
@@ -110,9 +112,10 @@ export class CemServeDrawer extends HTMLElement {
 
     // Disable transitions during drag
     content.classList.remove('transitions-enabled');
+    content.classList.add('resizing');
 
     // Add global event listeners
-    document.addEventListener('mousemove', this.#handleResize);
+    document.addEventListener('mousemove', this.#handleResize, { passive: true });
     document.addEventListener('mouseup', this.#stopResize);
 
     // Prevent text selection during drag
@@ -128,11 +131,22 @@ export class CemServeDrawer extends HTMLElement {
     const maxHeight = window.innerHeight - headerHeight;
     const newHeight = Math.max(100, Math.min(maxHeight, this.#startHeight + deltaY));
 
-    const content = this.#$('content');
-    content.style.height = `${newHeight}px`;
+    // Store pending height and schedule RAF update
+    this.#pendingHeight = newHeight;
 
-    // Update ARIA attribute
-    this.#updateAriaValueNow(newHeight);
+    if (!this.#rafId) {
+      this.#rafId = requestAnimationFrame(this.#applyResize);
+    }
+  }
+
+  #applyResize = () => {
+    if (this.#pendingHeight === null) return;
+
+    const content = this.#$('content');
+    content.style.height = `${this.#pendingHeight}px`;
+
+    this.#pendingHeight = null;
+    this.#rafId = null;
   }
 
   #handleKeydown = (e) => {
@@ -174,12 +188,7 @@ export class CemServeDrawer extends HTMLElement {
 
     content.style.height = `${newHeight}px`;
     this.#updateAriaValueNow(newHeight);
-
-    // Debounce resize event (300ms)
-    clearTimeout(this.#resizeDebounceTimer);
-    this.#resizeDebounceTimer = setTimeout(() => {
-      this.dispatchEvent(new CemDrawerResizeEvent(newHeight));
-    }, 300);
+    this.dispatchEvent(new CemDrawerResizeEvent(newHeight));
   }
 
   #updateAriaValueNow(height) {
@@ -197,16 +206,23 @@ export class CemServeDrawer extends HTMLElement {
   #stopResize = () => {
     this.#isDragging = false;
 
+    // Cancel any pending RAF
+    if (this.#rafId) {
+      cancelAnimationFrame(this.#rafId);
+      this.#rafId = null;
+    }
+
     // Re-enable transitions
     const content = this.#$('content');
     content.classList.add('transitions-enabled');
+    content.classList.remove('resizing');
 
-    // Debounce the resize event dispatch (300ms)
-    clearTimeout(this.#resizeDebounceTimer);
-    this.#resizeDebounceTimer = setTimeout(() => {
-      const height = parseInt(content.style.height, 10);
-      this.dispatchEvent(new CemDrawerResizeEvent(height));
-    }, 300);
+    // Get final height and update ARIA
+    const height = parseInt(content.style.height, 10);
+    this.#updateAriaValueNow(height);
+
+    // Dispatch resize event
+    this.dispatchEvent(new CemDrawerResizeEvent(height));
 
     // Remove global event listeners
     document.removeEventListener('mousemove', this.#handleResize);
