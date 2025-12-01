@@ -3,6 +3,10 @@
   position: relative;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 /* Map .pf-v6-c-menu-toggle to #toggle button */
 #toggle {
   /* CSS custom properties from upstream .pf-v6-c-menu-toggle */
