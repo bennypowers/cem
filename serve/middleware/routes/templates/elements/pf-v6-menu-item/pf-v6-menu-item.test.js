@@ -20,6 +20,7 @@ describe('pf-v6-menu-item', () => {
 
     beforeEach(async () => {
       el = await fixture('<pf-v6-menu-item></pf-v6-menu-item>');
+      await el.rendered;
     });
 
     it('is defined as custom element', () => {
@@ -368,6 +369,7 @@ describe('pf-v6-menu-item', () => {
         </div>
       `);
       const items = [...container.querySelectorAll('pf-v6-menu-item')];
+      await Promise.all(items.map(item => item.rendered));
 
       // User unchecks 'debug'
       items[3].click();
