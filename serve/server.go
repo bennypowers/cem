@@ -303,6 +303,12 @@ func (s *Server) IsRunning() bool {
 	return s.running
 }
 
+// Done returns a channel that's closed when the server shuts down.
+// This allows goroutines to gracefully cancel work during shutdown.
+func (s *Server) Done() <-chan struct{} {
+	return s.shutdown
+}
+
 // WebSocketManager returns the WebSocket manager (nil if reload disabled)
 func (s *Server) WebSocketManager() WebSocketManager {
 	return s.wsManager
