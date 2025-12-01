@@ -10,7 +10,7 @@
  *
  * Subclasses can override:
  * - static shadowRootOptions = { mode: 'open', delegatesFocus: false }
- * - static elementName = 'custom-name' (defaults to this.localName)
+ * - static is = 'custom-name'
  * - async afterTemplateLoaded() - called after template is loaded and applied
  *
  * @example
@@ -54,19 +54,25 @@ export class CemElement extends HTMLElement {
    * Override if the template name differs from the tag name.
    * @type {string | null}
    */
-  static elementName = null;
+  static is = null;
 
   /**
    * Fetch element HTML or CSS from the server
    * @param {string} name - Component name (e.g., 'pf-v6-button')
    * @param {'html'|'css'} type - File type
+   * @param {URLSearchParams} [params] - Request Params
    * @returns {Promise<string>} The content
-   * @private
    */
-  static async #fetchText(name, type) {
+  static async #fetchText(name, type, params) {
     const prettyType = type.toUpperCase();
     try {
-      const response = await fetch(`/__cem/elements/${name}/${name}.${type}`);
+      const url = new URL(`/__cem/elements/${name}/${name}.${type}`, window.location.origin);
+      if (params) {
+        for (const [key, value] of params) {
+          url.searchParams.append(key, value);
+        }
+      }
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`Failed to fetch ${prettyType}: ${response.status} ${response.statusText}`);
       }
@@ -81,7 +87,6 @@ export class CemElement extends HTMLElement {
    * Gets an existing stylesheet from cache or creates a new one
    * @param {string} name - Component name (e.g., 'pf-v6-button')
    * @returns {Promise<CSSStyleSheet>} The cached or newly created stylesheet
-   * @private
    */
   static async #loadCSS(name) {
     if (this.#stylesheetCache.has(name)) {
@@ -105,7 +110,6 @@ export class CemElement extends HTMLElement {
    * @param {string} name - Component name (e.g., 'pf-v6-button')
    * @param {HTMLElement} element - The element instance with attributes
    * @returns {Promise<string>} The cached or fetched template string
-   * @private
    */
   static async #loadHTML(name, element) {
     const cacheKey = `${name}:${this.#getAttrCacheKey(element)}`;
@@ -115,21 +119,17 @@ export class CemElement extends HTMLElement {
     }
 
     // Build URL with query parameters
-    const url = new URL(`/__cem/elements/${name}/${name}.html`, window.location.origin);
-    url.searchParams.set('content', 'shadow');
+    const params = new URLSearchParams();
+    params.set('content', 'shadow');
 
     // Add element attributes to query
     if (element) {
       for (const attr of element.attributes) {
-        url.searchParams.set(`attrs[${attr.name}]`, attr.value);
+        params.set(`attrs[${attr.name}]`, attr.value);
       }
     }
 
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch HTML: ${response.status} ${response.statusText}`);
-    }
-    const html = await response.text();
+    const html = await this.#fetchText(name, 'html', params)
 
     this.#templateCache.set(cacheKey, html);
     return html;
@@ -139,7 +139,6 @@ export class CemElement extends HTMLElement {
    * Generate cache key from element attributes
    * @param {HTMLElement} element - The element instance
    * @returns {string} Cache key based on sorted attributes
-   * @private
    */
   static #getAttrCacheKey(element) {
     if (!element) return '';
@@ -154,7 +153,6 @@ export class CemElement extends HTMLElement {
    * @param {string} name - Component name (e.g., 'pf-v6-button')
    * @param {HTMLElement} element - The element instance with attributes
    * @returns {Promise<{html: string, stylesheet: CSSStyleSheet}>} The template HTML and stylesheet
-   * @private
    */
   static async #loadComponentTemplate(name, element) {
     const cacheKey = `${name}:${this.#getAttrCacheKey(element)}`;
@@ -165,7 +163,10 @@ export class CemElement extends HTMLElement {
     }
 
     // Load HTML and CSS in parallel
-    const [html, stylesheet] = await Promise.all([this.#loadHTML(name, element), this.#loadCSS(name)]);
+    const [html, stylesheet] = await Promise.all([
+      this.#loadHTML(name, element),
+      this.#loadCSS(name),
+    ]);
     const template = { html, stylesheet };
 
     // Cache the complete component template
@@ -208,10 +209,10 @@ export class CemElement extends HTMLElement {
 
   /**
    * Load and apply the component template.
-   * Uses the element name from static elementName or falls back to this.localName.
+   * Uses the element name from `static is` or falls back to this.localName.
    */
   async #populateShadowRoot() {
-    const elementName = this.constructor.elementName || this.localName;
+    const elementName = this.constructor.is || this.localName;
 
     try {
       // Use CemElement explicitly since private static methods aren't inherited
