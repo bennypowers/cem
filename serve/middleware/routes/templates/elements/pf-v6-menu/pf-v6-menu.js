@@ -12,14 +12,13 @@ import { CemElement } from '/__cem/cem-element.js';
  *
  * @customElement pf-v6-menu
  */
-class PfV6Menu extends CemElement {
+export class PfV6Menu extends CemElement {
   static is = 'pf-v6-menu';
 
   static observedAttributes = ['label'];
 
   #internals = this.attachInternals();
   #slot;
-  #initialized = false;
 
   get label() {
     return this.getAttribute('label') || '';
@@ -42,15 +41,11 @@ class PfV6Menu extends CemElement {
     this.#updateAriaLabel();
 
     // Listen for keyboard events
-    this.addEventListener('keydown', this.#handleKeydown);
-
-    // Listen for select events from menu items
-    this.addEventListener('select', this.#handleItemSelect);
+    this.addEventListener('keydown', this.#onKeydown);
 
     // Initialize roving tabindex after a delay to allow menu items to be added
     requestAnimationFrame(() => {
       this.#initializeTabindex();
-      this.#initialized = true;
     });
   }
 
@@ -64,21 +59,16 @@ class PfV6Menu extends CemElement {
     }
   }
 
-  #updateAriaLabel() {
-    if (this.label) {
-      this.#internals.ariaLabel = this.label;
-    } else {
-      this.#internals.ariaLabel = null;
-    }
+  disconnectedCallback() {
+    this.removeEventListener('keydown', this.#onKeydown);
   }
 
-  #handleItemSelect = (event) => {
-    // Just let the event bubble naturally
-    // Event already has value and checked properties
-  };
+  #updateAriaLabel() {
+    this.#internals.ariaLabel = this.label || null;
+  }
 
-  #handleKeydown = (event) => {
-    const target = event.target;
+  #onKeydown(event) {
+    const { key, target } = event;
 
     // Only handle if target is a menu item
     if (target.tagName !== 'PF-V6-MENU-ITEM') return;
@@ -86,7 +76,7 @@ class PfV6Menu extends CemElement {
     const items = this.#getMenuItems();
     const currentIndex = items.indexOf(target);
 
-    switch (event.key) {
+    switch (key) {
       case 'ArrowDown':
         event.preventDefault();
         if (currentIndex < items.length - 1) {
@@ -123,7 +113,7 @@ class PfV6Menu extends CemElement {
 
       // Space and Enter are handled by menu items themselves
     }
-  };
+  }
 
   /**
    * Get all menu items in the default slot
@@ -174,11 +164,6 @@ class PfV6Menu extends CemElement {
     if (items.length > 0) {
       this.#focusItem(items[0]);
     }
-  }
-
-  disconnectedCallback() {
-    this.removeEventListener('keydown', this.#handleKeydown);
-    this.removeEventListener('select', this.#handleItemSelect);
   }
 
   static {
