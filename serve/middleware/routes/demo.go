@@ -114,19 +114,11 @@ func BuildDemoRoutingTable(manifestBytes []byte, sourceControlRootURL string) (m
 			filePath = strings.TrimPrefix(filePath, "/")
 		}
 
-		// Normalize filePath to ensure it's always relative (security: prevent directory traversal)
-		// Clean the path to resolve any ".." or "." segments
-		filePath = filepath.Clean(filePath)
-
-		// Strip leading slash if present (we want relative paths)
-		filePath = strings.TrimPrefix(filePath, "/")
-
-		// Reject paths that attempt to traverse above the root
-		if strings.HasPrefix(filePath, "..") || filepath.IsAbs(filePath) {
-			return nil, fmt.Errorf("security: demo file path %q attempts directory traversal (tagName: %s, demo: %s)",
-				filePath,
-				renderableDemo.CustomElementDeclaration.TagName,
-				demoURL)
+		// Normalize and validate filePath (security: prevent directory traversal)
+		var err error
+		filePath, err = normalizeAndValidateDemoPath(filePath, renderableDemo.CustomElementDeclaration.TagName, demoURL)
+		if err != nil {
+			return nil, err
 		}
 
 		// Check for duplicate routes before assignment
@@ -151,6 +143,26 @@ func BuildDemoRoutingTable(manifestBytes []byte, sourceControlRootURL string) (m
 	return routes, nil
 }
 
+// normalizeAndValidateDemoPath normalizes and validates a demo file path to prevent directory traversal.
+// It cleans the path, ensures it's relative, and rejects paths that attempt to traverse above the root.
+// Returns an error if the path is invalid or attempts directory traversal.
+func normalizeAndValidateDemoPath(filePath, tagName, demoURL string) (string, error) {
+	// Clean the path to resolve any ".." or "." segments
+	filePath = filepath.Clean(filePath)
+
+	// Strip leading slash if present (we want relative paths)
+	filePath = strings.TrimPrefix(filePath, "/")
+
+	// Reject paths that attempt to traverse above the root
+	if strings.HasPrefix(filePath, "..") || filepath.IsAbs(filePath) {
+		return "", fmt.Errorf("security: demo file path %q attempts directory traversal (tagName: %s, demo: %s)",
+			filePath,
+			tagName,
+			demoURL)
+	}
+
+	return filePath, nil
+}
 
 // BuildWorkspaceRoutingTable builds a combined routing table from all packages
 // Returns error if route conflicts are detected or if package routing errors occurred
@@ -333,6 +345,13 @@ func buildPackageRoutingTable(pkg PackageContext) (map[string]*DemoRouteEntry, e
 			// Fallback: try to find demo file in module directory
 			moduleDir := filepath.Dir(renderableDemo.Module.Path)
 			filePath = filepath.Join(moduleDir, "demo", "index.html")
+		}
+
+		// Normalize and validate filePath (security: prevent directory traversal)
+		var err error
+		filePath, err = normalizeAndValidateDemoPath(filePath, renderableDemo.CustomElementDeclaration.TagName, demoURL)
+		if err != nil {
+			return nil, err
 		}
 
 		entry := &DemoRouteEntry{
