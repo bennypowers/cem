@@ -148,8 +148,14 @@ pf-v6-toolbar-group[variant="action-group"] {
 }
 
 /* Content area padding for demo */
-pf-v6-page-main ::slotted(*) {
-  padding: var(--pf-t--global--spacer--lg);
+pf-v6-page-main {
+  min-height: calc(100dvh - 72px - var(--pf-t--global--spacer--inset--page-chrome));
+  display: flex;
+  flex-direction: column;
+  ::slotted(*) {
+    padding: var(--pf-t--global--spacer--lg);
+    flex: 1;
+  }
 }
 
 /* Element descriptions in listing */
@@ -299,15 +305,14 @@ pf-v6-page-main ::slotted(*) {
   }
 }
 
-footer {
+footer.pf-m-sticky-bottom {
   view-transition-name: dev-server-footer;
-  position: fixed;
+  position: sticky;
   bottom: 0;
-  left: 0;
-  right: 0;
   background: var(--pf-t--global--background--color--primary--default);
   border-top: 1px solid var(--pf-t--global--border--color--default);
-  z-index: calc(var(--pf-t--global--z-index--lg) + 100);
+  z-index: var(--pf-v6-c-page--section--m-sticky-bottom--ZIndex, var(--pf-t--global--z-index--md));
+  box-shadow: var(--pf-v6-c-page--section--m-sticky-bottom--BoxShadow, var(--pf-t--global--box-shadow--sm--top));
 }
 
 .footer-description {

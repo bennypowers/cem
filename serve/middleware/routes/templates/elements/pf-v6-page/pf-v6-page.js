@@ -13,7 +13,7 @@ import { CemElement } from '/__cem/cem-element.js';
  * @listens sidebar-toggle - Responds to toggle events from masthead
  * @customElement pf-v6-page
  */
-class PfV6Page extends CemElement {
+export class PfV6Page extends CemElement {
   static is = 'pf-v6-page';
 
   static observedAttributes = ['sidebar-collapsed'];
