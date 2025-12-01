@@ -23,10 +23,8 @@ export class PfMenuItemSelectEvent extends Event {
   }
 }
 
-class PfV6MenuItem extends CemElement {
+export class PfV6MenuItem extends CemElement {
   static is = 'pf-v6-menu-item';
-
-  static shadowRootOptions = { mode: 'open', delegatesFocus: true };
 
   static observedAttributes = [
     'disabled',
@@ -129,7 +127,7 @@ class PfV6MenuItem extends CemElement {
     }
   };
 
-  attributeChangedCallback(name, oldValue, newValue) {
+  attributeChangedCallback(name) {
     if (!this.shadowRoot?.firstChild) {
       return;
     }
@@ -166,7 +164,7 @@ class PfV6MenuItem extends CemElement {
 
   #updateAriaChecked() {
     if (this.variant === 'checkbox') {
-      this.#internals.ariaChecked = this.checked ? 'true' : 'false';
+      this.#internals.ariaChecked = String(this.checked);
     } else {
       this.#internals.ariaChecked = null;
     }
