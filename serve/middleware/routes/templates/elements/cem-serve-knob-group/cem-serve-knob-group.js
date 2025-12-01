@@ -44,8 +44,9 @@ export class KnobCssPropertyChangeEvent extends Event {
  * @attr {string} for - ID of the target element to control
  * @customElement cem-serve-knob-group
  */
-class CemServeKnobGroup extends CemElement {
+export class CemServeKnobGroup extends CemElement {
   static is = 'cem-serve-knob-group';
+
   static observedAttributes = ['for'];
 
   #debounceTimers = new Map();
@@ -116,11 +117,7 @@ class CemServeKnobGroup extends CemElement {
     // Boolean controls (checkboxes, switches) should be handled immediately
     // Selects use change event only, skip them here
     if (this.#isBooleanControl(control)) {
-      const key = `${knobType}-${knobName}`;
-      clearTimeout(this.#debounceTimers.get(key));
-      const checked = control.checked !== undefined ? control.checked : undefined;
-      this.#applyChange(knobType, knobName, control.value, checked);
-      return;
+      return this.#applyChange(knobType, knobName, control.checked);
     }
 
     if (control.tagName === 'SELECT') {
@@ -140,14 +137,16 @@ class CemServeKnobGroup extends CemElement {
     const control = e.target;
     const knobType = control.dataset.knobType;
     const knobName = control.dataset.knobName;
-
     if (!knobType || !knobName) return;
-
     // Immediate update on change (for select, checkbox)
     const key = `${knobType}-${knobName}`;
     clearTimeout(this.#debounceTimers.get(key));
-    const checked = this.#isBooleanControl(control) ? control.checked : undefined;
-    this.#applyChange(knobType, knobName, control.value, checked);
+    const value = this.#isBooleanControl(control) ? control.checked : control.value;
+    this.#applyChange(
+      knobType,
+      knobName,
+      value,
+    );
   }
 
   /**
@@ -232,38 +231,22 @@ class CemServeKnobGroup extends CemElement {
     }
   }
 
-  #applyChange(type, name, value, checked) {
-    // Dispatch custom event that KnobsManager will catch
-    let eventValue = value;
-
-    // Handle boolean values from checkboxes/switches
-    // Only use checked if explicitly provided (not undefined)
-    if (checked !== undefined) {
-      eventValue = checked;
-    }
-
-    let event;
+  #applyChange(type, name, value) {
     switch (type) {
       case 'attribute':
-        event = new KnobAttributeChangeEvent(name, eventValue);
+        this.dispatchEvent(new KnobAttributeChangeEvent(name, value));
         break;
-
       case 'property':
         // Parse value for properties
-        eventValue = this.#parseValue(eventValue);
-        event = new KnobPropertyChangeEvent(name, eventValue);
+        this.dispatchEvent(new KnobPropertyChangeEvent(name, this.#parseValue(value)));
         break;
-
       case 'css-property':
-        event = new KnobCssPropertyChangeEvent(name, eventValue);
+        this.dispatchEvent(new KnobCssPropertyChangeEvent(name, value));
         break;
-
       default:
         console.warn(`[KnobGroup] Unknown knob type: ${type}`);
         return;
     }
-
-    this.dispatchEvent(event);
   }
 
   #parseValue(value) {

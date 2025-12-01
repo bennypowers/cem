@@ -24,22 +24,24 @@ export class PfV6Switch extends CemFormControl {
   get checked() { return this.hasAttribute('checked'); }
   set checked(value) { this.toggleAttribute('checked', !!value); }
 
-  get value() { return this.checked; }
-  set value(val) { this.checked = val; }
-
-  afterTemplateLoaded() {
-    this.#input = this.shadowRoot.getElementById('switch-input');
-    if (!this.#input) return;
-    this.#input.addEventListener('change', () => {
-      this.toggleAttribute('checked', this.#input.checked);
-      this.#internals.setFormValue(this.#input.checked ? 'on' : null);
-    });
+  constructor() {
+    super()
+    this.addEventListener('input', this.#onChange);
   }
 
   attributeChangedCallback() {
     if (!this.#input) return;
     this.#input.checked = this.hasAttribute('checked');
     this.#input.disabled = this.hasAttribute('disabled');
+  }
+
+  afterTemplateLoaded() {
+    this.#input = this.shadowRoot.getElementById('switch-input');
+  }
+
+  #onChange() {
+    this.checked = this.#input.checked;
+    this.#internals.setFormValue(this.#input.checked ? 'on' : null);
   }
 
   static {
