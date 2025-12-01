@@ -129,16 +129,11 @@ export class CEMReloadClient {
 
   handleMessage(event) {
     const data = JSON.parse(event.data);
-    console.debug('[cem-serve] Received message:', data);
-
-    if (data.type === 'reload') {
-      this.callbacks.onReload?.(data);
-    } else if (data.type === 'shutdown') {
-      this.callbacks.onShutdown?.();
-    } else if (data.type === 'logs') {
-      this.callbacks.onLogs?.(data.logs);
-    } else if (data.type === 'error') {
-      this.callbacks.onError?.(data);
+    switch(data.type) {
+      case 'reload': return this.callbacks.onReload?.(data);
+      case 'shutdown': return this.callbacks.onShutdown?.();
+      case 'logs': return this.callbacks.onLogs?.(data.logs)
+      case 'error': return this.callbacks.onError?.(data);
     }
   }
 
