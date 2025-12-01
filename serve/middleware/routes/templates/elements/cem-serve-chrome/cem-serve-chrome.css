@@ -152,9 +152,17 @@ pf-v6-page-main {
   min-height: calc(100dvh - 72px - var(--pf-t--global--spacer--inset--page-chrome));
   display: flex;
   flex-direction: column;
-  ::slotted(*) {
+  & > ::slotted(:not([slot=knobs])) {
     padding: var(--pf-t--global--spacer--lg);
     flex: 1;
+  }
+}
+
+cem-drawer {
+  pf-v6-tabs {
+    pf-v6-tab {
+      padding-block-end: 0;
+    }
   }
 }
 
