@@ -49,6 +49,11 @@ const (
 	KnobCategoryCSSProperty  KnobCategory = "css-properties"
 )
 
+var (
+	singleLiteralRe = regexp.MustCompile(`^'([^']+)'$|^"([^"]+)"$`)
+	stringLiteralRe = regexp.MustCompile(`'([^']+)'`)
+)
+
 // KnobsData represents all knobs for an element
 type KnobsData struct {
 	TagName          string
@@ -227,7 +232,6 @@ func parseType(typeText string) (KnobType, []string) {
 	}
 
 	// Check for single string literal: 'value' or "value"
-	singleLiteralRe := regexp.MustCompile(`^'([^']+)'$|^"([^"]+)"$`)
 	if match := singleLiteralRe.FindStringSubmatch(normalized); match != nil {
 		value := match[1]
 		if value == "" {
@@ -239,8 +243,7 @@ func parseType(typeText string) (KnobType, []string) {
 	// Check for string literal union (enum): 'a' | 'b' | 'c'
 	if strings.Contains(normalized, "|") && strings.Contains(normalized, "'") {
 		// Extract string literals
-		re := regexp.MustCompile(`'([^']+)'`)
-		matches := re.FindAllStringSubmatch(normalized, -1)
+		matches := stringLiteralRe.FindAllStringSubmatch(normalized, -1)
 		if len(matches) > 0 {
 			var enumValues []string
 			for _, match := range matches {
