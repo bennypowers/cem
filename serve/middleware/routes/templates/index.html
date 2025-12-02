@@ -118,17 +118,20 @@
 
           // Handle both reload and log messages
           window.__cemReloadSocket.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-
-            if (data.type === 'logs') {
-              // Update logs display
-              messagesDiv.textContent = data.logs.length > 0 ? data.logs.join('\n') : 'No logs yet...';
-              messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            } else if (data.type === 'reload') {
-              // Call original handler for reload
-              if (originalOnMessage) {
-                originalOnMessage.call(this, event);
+            try {
+              const data = JSON.parse(event.data);
+              if (data.type === 'logs') {
+                // Update logs display
+                messagesDiv.textContent = data.logs.length > 0 ? data.logs.join('\n') : 'No logs yet...';
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+              } else if (data.type === 'reload') {
+                // Call original handler for reload
+                if (originalOnMessage) {
+                  originalOnMessage.call(this, event);
+                }
               }
+            } catch (err) {
+              console.error('Failed to parse WebSocket message:', err, event.data);
             }
           };
         }

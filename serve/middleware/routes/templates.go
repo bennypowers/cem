@@ -27,8 +27,8 @@ import (
 	"bennypowers.dev/cem/serve/middleware"
 )
 
-//go:embed templates/default-index.html
-var defaultIndexTemplate string
+//go:embed templates/index.html
+var indexTemplate string
 
 //go:embed templates/workspace-listing.html
 var workspaceListingTemplate string
@@ -181,8 +181,8 @@ func getTemplateFuncs() template.FuncMap {
 	}
 }
 
-// DefaultIndexTemplate is the parsed template for the default index page
-var DefaultIndexTemplate = template.Must(template.New("default-index").Parse(defaultIndexTemplate))
+// IndexTemplate is the parsed template for the default index page
+var IndexTemplate = template.Must(template.New("index").Parse(indexTemplate))
 
 // WorkspaceListingTemplate is the parsed template for workspace package listing
 var WorkspaceListingTemplate = template.Must(template.New("workspace-listing").Funcs(getTemplateFuncs()).Parse(workspaceListingTemplate))
