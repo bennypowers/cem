@@ -63,6 +63,7 @@ type KnobData struct {
 	Name         string
 	Category     KnobCategory
 	Type         KnobType
+	TypeText     string        // Original TypeScript type string for display
 	CurrentValue string
 	EnumValues   []string
 	Summary      template.HTML // Brief summary for helper text
@@ -160,6 +161,7 @@ func attributeToKnob(attr M.Attribute, currentValues map[string]string) KnobData
 
 	// Determine knob type from CEM type
 	if attr.Type != nil {
+		knob.TypeText = attr.Type.Text
 		knob.Type, knob.EnumValues = parseType(attr.Type.Text)
 	} else {
 		knob.Type = KnobTypeString
@@ -181,6 +183,7 @@ func propertyToKnob(field *M.ClassField, currentValues map[string]string) KnobDa
 
 	// Determine knob type from CEM type
 	if field.Type != nil {
+		knob.TypeText = field.Type.Text
 		knob.Type, knob.EnumValues = parseType(field.Type.Text)
 	} else {
 		knob.Type = KnobTypeUnknown
@@ -221,6 +224,16 @@ func parseType(typeText string) (KnobType, []string) {
 	// Check for number
 	if normalized == "number" {
 		return KnobTypeNumber, nil
+	}
+
+	// Check for single string literal: 'value' or "value"
+	singleLiteralRe := regexp.MustCompile(`^'([^']+)'$|^"([^"]+)"$`)
+	if match := singleLiteralRe.FindStringSubmatch(normalized); match != nil {
+		value := match[1]
+		if value == "" {
+			value = match[2]
+		}
+		return KnobTypeEnum, []string{value}
 	}
 
 	// Check for string literal union (enum): 'a' | 'b' | 'c'

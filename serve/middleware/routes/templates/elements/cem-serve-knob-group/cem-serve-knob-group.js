@@ -36,6 +36,36 @@ export class KnobCssPropertyChangeEvent extends Event {
 }
 
 /**
+ * Custom event fired when a knob attribute is cleared
+ */
+export class KnobAttributeClearEvent extends Event {
+  constructor(name) {
+    super('knob:attribute-clear', { bubbles: true });
+    this.name = name;
+  }
+}
+
+/**
+ * Custom event fired when a knob property is cleared
+ */
+export class KnobPropertyClearEvent extends Event {
+  constructor(name) {
+    super('knob:property-clear', { bubbles: true });
+    this.name = name;
+  }
+}
+
+/**
+ * Custom event fired when a knob CSS property is cleared
+ */
+export class KnobCssPropertyClearEvent extends Event {
+  constructor(name) {
+    super('knob:css-property-clear', { bubbles: true });
+    this.name = name;
+  }
+}
+
+/**
  * CEM Serve Knob Group Component
  *
  * Handles event delegation and debouncing for form controls that modify demo elements.
@@ -52,6 +82,7 @@ export class CemServeKnobGroup extends CemElement {
   #debounceTimers = new Map();
   #debounceDelay = 250; // milliseconds
   #colorButtonListeners = new WeakMap(); // Track click listeners for cleanup
+  #clearButtonListeners = new WeakMap(); // Track clear button click listeners
 
   async afterTemplateLoaded() {
     // Event delegation for input/change events
@@ -61,10 +92,16 @@ export class CemServeKnobGroup extends CemElement {
     // Attach click listeners to color picker buttons
     this.#attachColorButtonListeners();
 
+    // Attach click listeners to clear buttons
+    this.#attachClearButtonListeners();
+
     // Re-attach when slot content changes
     const slot = this.shadowRoot?.querySelector('slot');
     if (slot) {
-      slot.addEventListener('slotchange', () => this.#attachColorButtonListeners());
+      slot.addEventListener('slotchange', () => {
+        this.#attachColorButtonListeners();
+        this.#attachClearButtonListeners();
+      });
     }
   }
 
@@ -80,6 +117,9 @@ export class CemServeKnobGroup extends CemElement {
 
     // Remove click listeners from color buttons
     this.#removeColorButtonListeners();
+
+    // Remove click listeners from clear buttons
+    this.#removeClearButtonListeners();
   }
 
   #attachColorButtonListeners() {
@@ -107,12 +147,104 @@ export class CemServeKnobGroup extends CemElement {
     }
   }
 
+  #attachClearButtonListeners() {
+    const buttons = this.querySelectorAll('.knob-clear-button');
+    for (const button of buttons) {
+      // Skip if already has listener
+      if (this.#clearButtonListeners.has(button)) continue;
+
+      // Create and store the bound handler
+      const handler = (e) => this.#handleClearButtonClick(e, button);
+      this.#clearButtonListeners.set(button, handler);
+
+      button.addEventListener('click', handler);
+    }
+  }
+
+  #removeClearButtonListeners() {
+    const buttons = this.querySelectorAll('.knob-clear-button');
+    for (const button of buttons) {
+      const handler = this.#clearButtonListeners.get(button);
+      if (handler) {
+        button.removeEventListener('click', handler);
+        this.#clearButtonListeners.delete(button);
+      }
+    }
+  }
+
+  #handleClearButtonClick = (e, button) => {
+    e.preventDefault();
+
+    const knobType = button.dataset.knobType;
+    const knobName = button.dataset.knobName;
+
+    if (!knobType || !knobName) return;
+
+    // Find the associated control (input/select) within the same form-group
+    const formGroup = button.closest('pf-v6-form-group');
+    if (!formGroup) return;
+
+    // Find the control with matching knob type and name
+    const control = formGroup.querySelector(`[data-knob-type="${knobType}"][data-knob-name="${knobName}"]`);
+    if (!control) return;
+
+    // Clear the control value
+    if (this.#isBooleanControl(control)) {
+      control.checked = false;
+    } else {
+      control.value = '';
+    }
+
+    // Hide the clear button
+    button.hidden = true;
+
+    // Dispatch input event so the change is processed
+    control.dispatchEvent(new Event('input', { bubbles: true }));
+
+    // Dispatch the appropriate clear event
+    switch (knobType) {
+      case 'attribute':
+        this.dispatchEvent(new KnobAttributeClearEvent(knobName));
+        break;
+      case 'property':
+        this.dispatchEvent(new KnobPropertyClearEvent(knobName));
+        break;
+      case 'css-property':
+        this.dispatchEvent(new KnobCssPropertyClearEvent(knobName));
+        break;
+    }
+  }
+
+  #updateClearButtonVisibility(control) {
+    const knobType = control.dataset.knobType;
+    const knobName = control.dataset.knobName;
+
+    if (!knobType || !knobName) return;
+
+    // Find the associated clear button
+    const formGroup = control.closest('pf-v6-form-group');
+    if (!formGroup) return;
+
+    const clearButton = formGroup.querySelector(`.knob-clear-button[data-knob-type="${knobType}"][data-knob-name="${knobName}"]`);
+    if (!clearButton) return;
+
+    // Show/hide based on whether control has a value
+    const hasValue = this.#isBooleanControl(control)
+      ? control.checked
+      : control.value !== '';
+
+    clearButton.hidden = !hasValue;
+  }
+
   #handleInput = (e) => {
     const control = e.target;
     const knobType = control.dataset.knobType;
     const knobName = control.dataset.knobName;
 
     if (!knobType || !knobName) return;
+
+    // Update clear button visibility
+    this.#updateClearButtonVisibility(control);
 
     // Boolean controls (checkboxes, switches) should be handled immediately
     // Selects use change event only, skip them here
@@ -138,6 +270,10 @@ export class CemServeKnobGroup extends CemElement {
     const knobType = control.dataset.knobType;
     const knobName = control.dataset.knobName;
     if (!knobType || !knobName) return;
+
+    // Update clear button visibility
+    this.#updateClearButtonVisibility(control);
+
     // Immediate update on change (for select, checkbox)
     const key = `${knobType}-${knobName}`;
     clearTimeout(this.#debounceTimers.get(key));

@@ -57,7 +57,17 @@ export class CemServeDemo extends HTMLElement {
   }
 
   #applyPropertyChange(element, name, value) {
-    element[name] = value;
+    if (value === undefined) {
+      // Try to delete the property, fall back to setting undefined if that fails
+      try {
+        delete element[name];
+      } catch (e) {
+        // Some properties can't be deleted, just set to undefined
+        element[name] = undefined;
+      }
+    } else {
+      element[name] = value;
+    }
     return true;
   }
 

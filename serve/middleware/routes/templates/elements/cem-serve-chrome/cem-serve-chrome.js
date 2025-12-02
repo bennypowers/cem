@@ -747,17 +747,13 @@ Generated: ${new Date().toISOString()}`;
   #applyLogLabelAttrs(label, type) {
     switch (type) {
       case 'info':
-        label.setAttribute('status', 'info');
-        break;
+        return label.setAttribute('status', 'info');
       case 'warning':
-        label.setAttribute('status', 'warning');
-        break;
+        return label.setAttribute('status', 'warning');
       case 'error':
-        label.setAttribute('status', 'danger');
-        break;
+        return label.setAttribute('status', 'danger');
       case 'debug':
-        label.setAttribute('color', 'purple');
-        break;
+        return label.setAttribute('color', 'purple');
       default:
         label.setAttribute('color', 'grey');
     }
@@ -859,12 +855,15 @@ Generated: ${new Date().toISOString()}`;
 
   #setupKnobCoordination() {
     // Listen for knob events from cem-serve-knob-group elements
-    this.addEventListener('knob:attribute-change', this.#handleKnobChange);
-    this.addEventListener('knob:property-change', this.#handleKnobChange);
-    this.addEventListener('knob:css-property-change', this.#handleKnobChange);
+    this.addEventListener('knob:attribute-change', this.#onKnobChange);
+    this.addEventListener('knob:property-change', this.#onKnobChange);
+    this.addEventListener('knob:css-property-change', this.#onKnobChange);
+    this.addEventListener('knob:attribute-clear', this.#onKnobClear);
+    this.addEventListener('knob:property-clear', this.#onKnobClear);
+    this.addEventListener('knob:css-property-clear', this.#onKnobClear);
   }
 
-  #handleKnobChange = (event) => {
+  #onKnobChange = (event) => {
     // Extract targeting info from event path
     const target = this.#getKnobTarget(event);
     if (!target) {
@@ -894,6 +893,48 @@ Generated: ${new Date().toISOString()}`;
 
     if (!success) {
       console.warn('[cem-serve-chrome] Failed to apply knob change:', {
+        type: knobType,
+        name: event.name,
+        tagName,
+        instanceIndex
+      });
+    }
+  };
+
+  #onKnobClear = (event) => {
+    // Extract targeting info from event path
+    const target = this.#getKnobTarget(event);
+    if (!target) {
+      console.warn('[cem-serve-chrome] Could not find knob target info in event path');
+      return;
+    }
+
+    const { tagName, instanceIndex } = target;
+
+    // Find the demo element
+    const demo = this.demo;
+    if (!demo) {
+      return;
+    }
+
+    // Determine knob type from event type
+    const knobType = this.#getKnobTypeFromClearEvent(event);
+
+    // For properties, pass undefined to trigger deletion
+    // For attributes and CSS properties, pass empty string to remove
+    const clearValue = knobType === 'property' ? undefined : '';
+
+    // Delegate to demo
+    const success = demo.applyKnobChange(
+      knobType,
+      event.name,
+      clearValue,
+      tagName,
+      instanceIndex
+    );
+
+    if (!success) {
+      console.warn('[cem-serve-chrome] Failed to clear knob:', {
         type: knobType,
         name: event.name,
         tagName,
@@ -933,6 +974,19 @@ Generated: ${new Date().toISOString()}`;
       case 'knob:property-change':
         return 'property';
       case 'knob:css-property-change':
+        return 'css-property';
+      default:
+        return 'unknown';
+    }
+  }
+
+  #getKnobTypeFromClearEvent(event) {
+    switch (event.type) {
+      case 'knob:attribute-clear':
+        return 'attribute';
+      case 'knob:property-clear':
+        return 'property';
+      case 'knob:css-property-clear':
         return 'css-property';
       default:
         return 'unknown';
@@ -1118,9 +1172,12 @@ Generated: ${new Date().toISOString()}`;
 
   disconnectedCallback() {
     // Clean up knob listeners
-    this.removeEventListener('knob:attribute-change', this.#handleKnobChange);
-    this.removeEventListener('knob:property-change', this.#handleKnobChange);
-    this.removeEventListener('knob:css-property-change', this.#handleKnobChange);
+    this.removeEventListener('knob:attribute-change', this.#onKnobChange);
+    this.removeEventListener('knob:property-change', this.#onKnobChange);
+    this.removeEventListener('knob:css-property-change', this.#onKnobChange);
+    this.removeEventListener('knob:attribute-clear', this.#onKnobClear);
+    this.removeEventListener('knob:property-clear', this.#onKnobClear);
+    this.removeEventListener('knob:css-property-clear', this.#onKnobClear);
   }
 
   static {

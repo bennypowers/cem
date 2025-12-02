@@ -243,6 +243,24 @@ func TestParseType(t *testing.T) {
 			wantEnumValues: []string{"a", "b"},
 		},
 		{
+			name:           "single literal single quotes",
+			typeText:       "'bordered'",
+			wantType:       KnobTypeEnum,
+			wantEnumValues: []string{"bordered"},
+		},
+		{
+			name:           "single literal double quotes",
+			typeText:       "\"solid\"",
+			wantType:       KnobTypeEnum,
+			wantEnumValues: []string{"solid"},
+		},
+		{
+			name:           "single literal with spaces",
+			typeText:       " 'compact' ",
+			wantType:       KnobTypeEnum,
+			wantEnumValues: []string{"compact"},
+		},
+		{
 			name:           "empty",
 			typeText:       "",
 			wantType:       KnobTypeString,
