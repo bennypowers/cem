@@ -154,10 +154,6 @@ func prettifyRoute(route string) string {
 
 	// Get the last path segment
 	parts := strings.Split(route, "/")
-	if len(parts) == 0 {
-		return "Demo"
-	}
-
 	lastPart := parts[len(parts)-1]
 
 	// Remove file extension if present
@@ -261,27 +257,32 @@ func extractElementListings(pkg *M.Package, packageName string) ([]ElementListin
 		elements = append(elements, *listing)
 	}
 
+	// Sort for deterministic output
+	sort.Slice(elements, func(i, j int) bool {
+		return elements[i].TagName < elements[j].TagName
+	})
+
 	return elements, nil
 }
 
 // slugify converts a string to a URL-safe slug
 func slugify(s string) string {
-	// Simple slugification - lowercase and replace spaces with hyphens
-	result := ""
+	var result strings.Builder
+	result.Grow(len(s))
 	for _, r := range s {
 		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
-			result += string(r)
+			result.WriteRune(r)
 		} else if r == ' ' || r == '-' {
-			result += "-"
+			result.WriteRune('-')
 		}
 	}
 	// Convert to lowercase
-	result = strings.ToLower(result)
+	slug := strings.ToLower(result.String())
 	// Collapse consecutive hyphens
-	for strings.Contains(result, "--") {
-		result = strings.ReplaceAll(result, "--", "-")
+	for strings.Contains(slug, "--") {
+		slug = strings.ReplaceAll(slug, "--", "-")
 	}
-	return strings.Trim(result, "-")
+	return strings.Trim(slug, "-")
 }
 
 // PackageNavigation represents a package with its elements for navigation
@@ -446,7 +447,14 @@ func renderNavigationHTML(templates *TemplateRegistry, packages []PackageNavigat
 	}
 
 	if err := templates.NavigationTemplate.Execute(&buf, data); err != nil {
-		// Fail gracefully on template error
+		// Broadcast error to connected clients
+		if templates.context != nil {
+			_ = templates.context.BroadcastError(
+				"Navigation Template Error",
+				"Failed to execute navigation template: "+err.Error(),
+				"",
+			)
+		}
 		return template.HTML("")
 	}
 
@@ -504,6 +512,11 @@ func RenderWorkspaceListing(templates *TemplateRegistry, ctx middleware.DevServe
 
 		var parsed M.Package
 		if err := json.Unmarshal(pkg.Manifest, &parsed); err != nil {
+			_ = ctx.BroadcastError(
+				"Manifest Parse Error",
+				fmt.Sprintf("Failed to parse manifest for package %s: %s", pkg.Name, err.Error()),
+				pkg.Name,
+			)
 			continue
 		}
 
