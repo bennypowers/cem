@@ -21,6 +21,7 @@ import (
 	"bytes"
 
 	chromahtml "github.com/alecthomas/chroma/v2/formatters/html"
+	"github.com/microcosm-cc/bluemonday"
 	"github.com/yuin/goldmark"
 	highlighting "github.com/yuin/goldmark-highlighting/v2"
 	"github.com/yuin/goldmark/extension"
@@ -43,9 +44,14 @@ var (
 			goldmarkhtml.WithXHTML(),
 		),
 	)
+
+	// HTML sanitization policy for user-generated content
+	// Allows safe HTML elements while stripping dangerous tags and attributes
+	htmlSanitizer = bluemonday.UGCPolicy()
 )
 
-// markdownToHTML converts markdown text to HTML
+// markdownToHTML converts markdown text to sanitized HTML
+// The output is sanitized using bluemonday to prevent XSS attacks
 // Returns an error if markdown conversion fails, allowing callers to handle it appropriately
 func markdownToHTML(text string) (string, error) {
 	var buf bytes.Buffer
@@ -53,5 +59,7 @@ func markdownToHTML(text string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return buf.String(), nil
+	// Sanitize the HTML output to prevent XSS attacks
+	sanitized := htmlSanitizer.Sanitize(buf.String())
+	return sanitized, nil
 }
