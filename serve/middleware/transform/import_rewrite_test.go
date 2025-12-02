@@ -132,6 +132,49 @@ func TestRewriteImportAttributes_DoubleQuotes(t *testing.T) {
 	}
 }
 
+// TestRewriteImportAttributes_QuotedKey tests import with quoted key
+func TestRewriteImportAttributes_QuotedKey(t *testing.T) {
+	input := []byte(`import styles from './foo.css' with { 'type': 'css' };`)
+
+	result, err := transform.RewriteImportAttributes(input)
+	if err != nil {
+		t.Fatalf("RewriteImportAttributes failed: %v", err)
+	}
+
+	output := string(result)
+
+	// Should handle quoted keys correctly
+	if !strings.Contains(output, "__cem-import-attrs[type]=css") {
+		t.Errorf("Expected query parameter in output, got: %s", output)
+	}
+
+	// Should preserve the rest of the import statement
+	if !strings.Contains(output, "import styles from") {
+		t.Errorf("Import statement structure changed: %s", output)
+	}
+}
+
+// TestRewriteImportAttributes_MixedQuotingStyles tests both quoted and unquoted keys
+func TestRewriteImportAttributes_MixedQuotingStyles(t *testing.T) {
+	input := []byte(`import style from './foo.css' with { 'type': 'css' };
+import other from './bar.css' with { type: 'css' };`)
+
+	result, err := transform.RewriteImportAttributes(input)
+	if err != nil {
+		t.Fatalf("RewriteImportAttributes failed: %v", err)
+	}
+
+	output := string(result)
+
+	// Both should be rewritten correctly
+	if !strings.Contains(output, "./foo.css?__cem-import-attrs[type]=css") {
+		t.Errorf("Expected rewritten first import, got: %s", output)
+	}
+	if !strings.Contains(output, "./bar.css?__cem-import-attrs[type]=css") {
+		t.Errorf("Expected rewritten second import, got: %s", output)
+	}
+}
+
 // TestRewriteImportAttributes_CompleteFile tests rewriting in a complete TypeScript file
 func TestRewriteImportAttributes_CompleteFile(t *testing.T) {
 	input := []byte("import { LitElement, html } from 'lit';\n" +

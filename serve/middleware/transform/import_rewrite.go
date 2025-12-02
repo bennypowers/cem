@@ -143,14 +143,13 @@ func findImportsWithAttributes(root *ts.Node, source []byte, matcher *queries.Qu
 		if attrKeys, ok := captureMap["import.attr.key"]; ok {
 			if attrValues, ok := captureMap["import.attr.value"]; ok {
 				// Match up keys and values
+				// Note: The tree-sitter query captures string_fragment nodes,
+				// so we get the content without quotes
 				for i := range attrKeys {
 					if i < len(attrValues) {
 						key := attrKeys[i].Text
 						value := attrValues[i].Text
-						// Remove quotes from value
-						if len(value) >= 2 && (value[0] == '"' || value[0] == '\'') {
-							value = value[1 : len(value)-1]
-						}
+
 						rewrite.Attributes = append(rewrite.Attributes, ImportAttribute{
 							Key:   key,
 							Value: value,
