@@ -4,6 +4,9 @@ import './cem-drawer.js';
 import { CemDrawerChangeEvent, CemDrawerResizeEvent } from './cem-drawer.js';
 import { loadSSRTemplate } from '../../../testdata/frontend/helpers/ssr-template-loader.js';
 
+// Helper to flush requestAnimationFrame
+const flushRAF = () => new Promise(resolve => requestAnimationFrame(resolve));
+
 describe('cem-drawer', () => {
   let el;
 
@@ -258,19 +261,22 @@ describe('cem-drawer', () => {
       expect(content.classList.contains('transitions-enabled')).to.be.false;
     });
 
-    it('resizes drawer upward on mousemove', () => {
+    it('resizes drawer upward on mousemove', async () => {
       // Start dragging
       resizeHandle.dispatchEvent(new MouseEvent('mousedown', { clientY: 500 }));
 
       // Move mouse up (decrease Y)
       document.dispatchEvent(new MouseEvent('mousemove', { clientY: 400 }));
 
+      // Wait for RAF to apply the resize
+      await flushRAF();
+
       // Height should increase (drawer grows upward)
       const height = parseInt(content.style.height, 10);
       expect(height).to.be.greaterThan(400);
     });
 
-    it('resizes drawer downward on mousemove', () => {
+    it('resizes drawer downward on mousemove', async () => {
       content.style.height = '500px';
 
       // Start dragging
@@ -278,6 +284,9 @@ describe('cem-drawer', () => {
 
       // Move mouse down (increase Y)
       document.dispatchEvent(new MouseEvent('mousemove', { clientY: 400 }));
+
+      // Wait for RAF to apply the resize
+      await flushRAF();
 
       // Height should decrease
       const height = parseInt(content.style.height, 10);
@@ -519,25 +528,19 @@ describe('cem-drawer', () => {
       expect(content.style.height).to.equal(initialHeight);
     });
 
-    it('debounces resize events', async () => {
+    it('fires resize events immediately for keyboard', () => {
       const resizeHandle = el.shadowRoot.getElementById('resize-handle');
       const spy = sinon.spy();
       el.addEventListener('resize', spy);
 
-      // Trigger multiple resizes rapidly
+      // Trigger multiple resizes rapidly with keyboard
       for (let i = 0; i < 5; i++) {
         const event = new KeyboardEvent('keydown', { key: 'ArrowUp' });
         resizeHandle.dispatchEvent(event);
       }
 
-      // Should not have fired immediately
-      expect(spy.called).to.be.false;
-
-      // Wait for debounce
-      await new Promise(resolve => setTimeout(resolve, 350));
-
-      // Should have fired only once
-      expect(spy.calledOnce).to.be.true;
+      // Keyboard resizing fires events immediately (not debounced)
+      expect(spy.callCount).to.equal(5);
     });
   });
 
@@ -553,7 +556,7 @@ describe('cem-drawer', () => {
       expect(content.style.height).to.equal('400px');
     });
 
-    it('simulates user resizing drawer with mouse', () => {
+    it('simulates user resizing drawer with mouse', async () => {
       const resizeHandle = el.shadowRoot.getElementById('resize-handle');
       const content = el.shadowRoot.getElementById('content');
 
@@ -564,6 +567,9 @@ describe('cem-drawer', () => {
 
       // User drags up
       document.dispatchEvent(new MouseEvent('mousemove', { clientY: 300 }));
+
+      // Wait for RAF to apply the resize
+      await flushRAF();
 
       // User releases
       document.dispatchEvent(new MouseEvent('mouseup'));
