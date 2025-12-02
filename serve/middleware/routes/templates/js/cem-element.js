@@ -93,16 +93,21 @@ export class CemElement extends HTMLElement {
       return this.#stylesheetCache.get(name);
     }
 
-    const css = await this.#fetchText(name, 'css');
-    try {
-      const sheet = new CSSStyleSheet();
-      await sheet.replace(css);
-      this.#stylesheetCache.set(name, sheet);
-      return sheet;
-    } catch (error) {
-      console.error(`Failed to construct stylesheet for ${name}:`, error);
-      throw error;
-    }
+    // Cache the Promise immediately to prevent race conditions
+    const promise = (async () => {
+      const css = await this.#fetchText(name, 'css');
+      try {
+        const sheet = new CSSStyleSheet();
+        await sheet.replace(css);
+        return sheet;
+      } catch (error) {
+        console.error(`Failed to construct stylesheet for ${name}:`, error);
+        throw error;
+      }
+    })();
+
+    this.#stylesheetCache.set(name, promise);
+    return promise;
   }
 
   /**
@@ -118,21 +123,24 @@ export class CemElement extends HTMLElement {
       return this.#templateCache.get(cacheKey);
     }
 
-    // Build URL with query parameters
-    const params = new URLSearchParams();
-    params.set('content', 'shadow');
+    // Cache the Promise immediately to prevent race conditions
+    const promise = (async () => {
+      // Build URL with query parameters
+      const params = new URLSearchParams();
+      params.set('content', 'shadow');
 
-    // Add element attributes to query
-    if (element) {
-      for (const attr of element.attributes) {
-        params.set(`attrs[${attr.name}]`, attr.value);
+      // Add element attributes to query
+      if (element) {
+        for (const attr of element.attributes) {
+          params.set(`attrs[${attr.name}]`, attr.value);
+        }
       }
-    }
 
-    const html = await this.#fetchText(name, 'html', params)
+      return await this.#fetchText(name, 'html', params);
+    })();
 
-    this.#templateCache.set(cacheKey, html);
-    return html;
+    this.#templateCache.set(cacheKey, promise);
+    return promise;
   }
 
   /**
@@ -162,17 +170,20 @@ export class CemElement extends HTMLElement {
       return this.#componentCache.get(cacheKey);
     }
 
-    // Load HTML and CSS in parallel
-    const [html, stylesheet] = await Promise.all([
-      this.#loadHTML(name, element),
-      this.#loadCSS(name),
-    ]);
-    const template = { html, stylesheet };
+    // Cache the Promise immediately to prevent race conditions
+    const promise = (async () => {
+      // Load HTML and CSS in parallel
+      const [html, stylesheet] = await Promise.all([
+        this.#loadHTML(name, element),
+        this.#loadCSS(name),
+      ]);
+      return { html, stylesheet };
+    })();
 
     // Cache the complete component template
-    this.#componentCache.set(cacheKey, template);
+    this.#componentCache.set(cacheKey, promise);
 
-    return template;
+    return promise;
   }
 
   /** @type {Promise<void>} Promise that resolves after first render completes */
