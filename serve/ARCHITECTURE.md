@@ -11,16 +11,25 @@ The core philosophy is that **Go HTML Templates** (`.html` files with `{{.}}` sy
 
 ## Key Components
 
-### 1. Server-Side: `routes.go` & `element.go`
-*   **Role**: The Orchestrator and Renderer.
-*   **Location**: `serve/middleware/routes/`
+### 1. Server-Side: Shadow Root Middleware
+*   **Role**: HTML Response Interceptor and SSR Orchestrator
+*   **Location**: `serve/middleware/shadowroot/`
 *   **Responsibility**:
-  *   Intercepts requests for demo pages.
-  *   Parses the demo HTML to find custom elements.
-  *   **`RenderElementShadowRoot` (`element.go`)**: The critical function that loads a component's template, executes it with the specific attributes found in the demo HTML, and generates the `<template shadowrootmode="open">` block.
-  *   Serves the component assets (HTML/CSS) via the `/__cem/elements/` endpoints for client-side access.
+  *   Intercepts all HTML responses from the server
+  *   Parses HTML to find custom elements (elements with hyphens in tag names)
+  *   For each known custom element, calls the renderer to inject Declarative Shadow DOM
+  *   Recursively processes nested custom elements
+  *   Wired up in `serve/server.go` with `routes.RenderElementShadowRoot` as the renderer function
 
-### 2. Component Definition: Templates
+### 2. Server-Side: Template Renderer
+*   **Role**: Component Template Executor
+*   **Location**: `serve/middleware/routes/element.go`
+*   **Responsibility**:
+  *   **`RenderElementShadowRoot`**: Loads a component's template and CSS, executes the template with attribute data, and generates the `<template shadowrootmode="open">...</template>` block
+  *   Supports recursive rendering for nested custom elements via template functions
+  *   Serves component assets (HTML/CSS) via the `/__cem/elements/` endpoints for client-side access
+
+### 3. Component Definition: Templates
 *   **Role**: The Single Source of Truth.
 *   **Location**: `serve/middleware/routes/templates/elements/{tag}/{tag}.html`
 *   **Format**: Standard HTML fragments using Go `text/template` syntax.
@@ -28,7 +37,7 @@ The core philosophy is that **Go HTML Templates** (`.html` files with `{{.}}` sy
   *   **Server**: Executed with a data context (e.g., `.Attributes.Variant`).
   *   **Client**: Served to the client (potentially transformed) to be used as `innerHTML`.
 
-### 3. Client-Side: `CemElement` (`cem-element.js`)
+### 4. Client-Side: `CemElement` (`cem-element.js`)
 *   **Role**: The Client-Side Base Class.
 *   **Location**: `serve/middleware/routes/templates/js/cem-element.js`
 *   **Responsibility**:
@@ -45,18 +54,21 @@ The core philosophy is that **Go HTML Templates** (`.html` files with `{{.}}` sy
 ```mermaid
 sequenceDiagram
     participant Browser
-    participant Server (Routes)
-    participant ElementRenderer
+    participant Server
+    participant ShadowRootMiddleware
+    participant RenderElementShadowRoot
     participant FileSystem
 
     Browser->>Server: GET /demo/my-component.html
     Server->>FileSystem: Read demo.html
-    Server->>Server: Parse HTML, find <my-component variant="primary">
-    Server->>ElementRenderer: RenderElementShadowRoot("my-component", {Variant: "primary"})
-    ElementRenderer->>FileSystem: Read my-component.html & my-component.css
-    ElementRenderer->>ElementRenderer: Execute Template (Go)
-    ElementRenderer->>Server: Return <template shadowrootmode="open">...</template>
-    Server->>Browser: Return full HTML with DSD
+    Server->>ShadowRootMiddleware: HTML response (intercept)
+    ShadowRootMiddleware->>ShadowRootMiddleware: Parse HTML, find <my-component variant="primary">
+    ShadowRootMiddleware->>RenderElementShadowRoot: Call renderer("my-component", {Variant: "primary"})
+    RenderElementShadowRoot->>FileSystem: Read my-component.html & my-component.css
+    RenderElementShadowRoot->>RenderElementShadowRoot: Execute Go template
+    RenderElementShadowRoot->>ShadowRootMiddleware: Return <template shadowrootmode="open">...</template>
+    ShadowRootMiddleware->>ShadowRootMiddleware: Inject DSD into HTML
+    ShadowRootMiddleware->>Browser: Return full HTML with DSD
     Browser->>Browser: Parse DSD (Paint Component)
     Browser->>Browser: Load JS (Hydrate)
 ```
@@ -81,16 +93,42 @@ sequenceDiagram
 ## Directory Structure
 
 ```text
-serve/middleware/routes/
-├── routes.go           # HTTP handler, serves /__cem/ endpoints
-├── element.go          # SSR logic (RenderElementShadowRoot)
-└── templates/
-    └── elements/       # Component definitions
-        └── pf-v6-button/
-            ├── pf-v6-button.html  # The Template (Go syntax)
-            ├── pf-v6-button.css   # Styles
-            └── pf-v6-button.js    # Logic (extends CemElement)
+serve/
+├── server.go                    # Wires up middleware chain
+├── middleware/
+│   ├── shadowroot/
+│   │   └── shadowroot.go        # HTML interceptor, SSR orchestrator
+│   └── routes/
+│       ├── routes.go            # HTTP handler, serves /__cem/ endpoints
+│       ├── element.go           # Template renderer (RenderElementShadowRoot)
+│       └── templates/
+│           ├── js/
+│           │   └── cem-element.js  # Client-side base class
+│           └── elements/           # Component definitions
+│               └── pf-v6-button/
+│                   ├── pf-v6-button.html  # Shadow DOM template (Go syntax)
+│                   ├── pf-v6-button.css   # Styles
+│                   └── pf-v6-button.js    # Logic (extends CemElement)
 ```
+
+## Middleware Chain
+
+The server sets up a middleware chain in `server.go:1397` (applied in reverse order, so requests flow through them top-to-bottom):
+
+1. **Routes** (`serve/middleware/routes/`) - Handles `/__cem/*` endpoints (demos, elements, manifest, WebSocket, etc.)
+2. **TypeScript Transform** (`serve/middleware/transform/`) - Transpiles `.ts` files to JavaScript on-the-fly
+3. **CSS Transform** (`serve/middleware/transform/`) - Transpiles CSS with `@import` resolution
+4. **Import Map Injection** (`serve/middleware/importmap/`) - Generates and injects import maps into HTML
+5. **WebSocket Injection** (`serve/middleware/inject/`) - Adds live reload client script to HTML
+6. **Shadow Root Injection** (`serve/middleware/shadowroot/`) - **Intercepts HTML responses, parses them, and injects Declarative Shadow DOM for custom elements**
+7. **Static Files** (terminal handler) - Serves files from the watch directory
+
+**Key insight**: The shadowroot middleware is the final layer before HTML reaches the browser. This means:
+- Demo HTML files are served by the static handler
+- Import maps and WebSocket scripts are injected
+- Finally, shadowroot middleware parses the complete HTML and adds `<template shadowrootmode="open">` blocks for all custom elements
+
+This architecture ensures SSR happens transparently without modifying the original demo files.
 
 ## Benefits
 
