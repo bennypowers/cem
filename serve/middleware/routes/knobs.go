@@ -511,9 +511,20 @@ func generateKnobsForInstance(declaration *M.CustomElementDeclaration, currentVa
 			seenAttrs[attr.Name] = attr
 		}
 
-		// Convert deduplicated attributes to knobs
-		for _, attr := range seenAttrs {
-			knob := attributeToKnob(*attr, currentValues)
+		// Convert deduplicated attributes to knobs in source order
+		seen := make(map[string]bool)
+		for i := range declaration.Attributes {
+			attr := &declaration.Attributes[i]
+			// Skip if already processed or not in deduplicated set
+			if seen[attr.Name] {
+				continue
+			}
+			deduped, exists := seenAttrs[attr.Name]
+			if !exists {
+				continue
+			}
+			seen[attr.Name] = true
+			knob := attributeToKnob(*deduped, currentValues)
 			knobs.AttributeKnobs = append(knobs.AttributeKnobs, knob)
 		}
 	}
