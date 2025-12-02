@@ -354,6 +354,18 @@ func buildPackageRoutingTable(pkg PackageContext) (map[string]*DemoRouteEntry, e
 			return nil, err
 		}
 
+		// Check for duplicate routes before assignment
+		if existing, exists := routes[localRoute]; exists {
+			return nil, fmt.Errorf("duplicate demo route %q in package %s (%s): %s (tagName: %s) conflicts with existing %s (tagName: %s)",
+				localRoute,
+				pkg.Name,
+				pkg.Path,
+				filePath,
+				renderableDemo.CustomElementDeclaration.TagName,
+				existing.FilePath,
+				existing.TagName)
+		}
+
 		entry := &DemoRouteEntry{
 			LocalRoute:  localRoute,
 			TagName:     renderableDemo.CustomElementDeclaration.TagName,

@@ -122,3 +122,138 @@ func TestBuildDemoRoutingTable_DirectoryTraversalPrevention(t *testing.T) {
 		})
 	}
 }
+
+// TestBuildDemoRoutingTable_DuplicateDetection tests that duplicate routes are detected
+func TestBuildDemoRoutingTable_DuplicateDetection(t *testing.T) {
+	// Create manifest with two demos that have the same URL
+	manifestJSON := `{
+		"schemaVersion": "1.0.0",
+		"modules": [
+			{
+				"kind": "javascript-module",
+				"path": "src/element-a.js",
+				"declarations": [
+					{
+						"kind": "class",
+						"name": "ElementA",
+						"tagName": "element-a",
+						"customElement": true,
+						"demos": [
+							{
+								"url": "/demo/test/"
+							}
+						]
+					}
+				]
+			},
+			{
+				"kind": "javascript-module",
+				"path": "src/element-b.js",
+				"declarations": [
+					{
+						"kind": "class",
+						"name": "ElementB",
+						"tagName": "element-b",
+						"customElement": true,
+						"demos": [
+							{
+								"url": "/demo/test/"
+							}
+						]
+					}
+				]
+			}
+		]
+	}`
+
+	_, err := BuildDemoRoutingTable([]byte(manifestJSON), "")
+
+	if err == nil {
+		t.Fatal("Expected error for duplicate routes, but got none")
+	}
+
+	expectedSubstrings := []string{
+		"duplicate demo route",
+		"/demo/test/",
+		"element-a",
+		"element-b",
+	}
+
+	for _, substr := range expectedSubstrings {
+		if !strings.Contains(err.Error(), substr) {
+			t.Errorf("Expected error to contain %q, got: %v", substr, err)
+		}
+	}
+}
+
+// TestBuildPackageRoutingTable_DuplicateDetection tests that duplicate routes
+// within a single package are detected
+func TestBuildPackageRoutingTable_DuplicateDetection(t *testing.T) {
+	// Create manifest with two demos that have the same URL
+	manifestJSON := `{
+		"schemaVersion": "1.0.0",
+		"modules": [
+			{
+				"kind": "javascript-module",
+				"path": "src/element-a.js",
+				"declarations": [
+					{
+						"kind": "class",
+						"name": "ElementA",
+						"tagName": "element-a",
+						"customElement": true,
+						"demos": [
+							{
+								"url": "/demo/test/"
+							}
+						]
+					}
+				]
+			},
+			{
+				"kind": "javascript-module",
+				"path": "src/element-b.js",
+				"declarations": [
+					{
+						"kind": "class",
+						"name": "ElementB",
+						"tagName": "element-b",
+						"customElement": true,
+						"demos": [
+							{
+								"url": "/demo/test/"
+							}
+						]
+					}
+				]
+			}
+		]
+	}`
+
+	pkg := PackageContext{
+		Name:     "test-package",
+		Path:     "/path/to/test-package",
+		Manifest: []byte(manifestJSON),
+	}
+
+	_, err := buildPackageRoutingTable(pkg)
+
+	if err == nil {
+		t.Fatal("Expected error for duplicate routes, but got none")
+	}
+
+	expectedSubstrings := []string{
+		"duplicate demo route",
+		"/demo/test/",
+		"test-package",
+		"/path/to/test-package",
+		"element-a",
+		"element-b",
+	}
+
+	for _, substr := range expectedSubstrings {
+		if !strings.Contains(err.Error(), substr) {
+			t.Errorf("Expected error to contain %q, got: %v", substr, err)
+		}
+	}
+}
