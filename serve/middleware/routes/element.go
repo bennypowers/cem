@@ -34,7 +34,7 @@ type ElementWrapperData struct {
 // Returns just the shadow root (template + styles + shadow DOM)
 // Light DOM content should be provided by the caller in the template
 // This function is recursive - it will render nested custom elements' shadow roots
-func RenderElementShadowRoot(elementName string, data interface{}) (template.HTML, error) {
+func RenderElementShadowRoot(templates *TemplateRegistry, elementName string, data interface{}) (template.HTML, error) {
 	// Read the element's HTML template (shadow DOM structure)
 	templatePath := fmt.Sprintf("templates/elements/%s/%s.html", elementName, elementName)
 	templateContent, err := TemplatesFS.ReadFile(templatePath)
@@ -50,8 +50,8 @@ func RenderElementShadowRoot(elementName string, data interface{}) (template.HTM
 	}
 
 	// Parse the shadow DOM template with template functions available
-	// Note: getTemplateFuncs() includes renderElementShadowRoot, enabling recursion
-	shadowTmpl, err := template.New(elementName).Funcs(getTemplateFuncs()).Parse(string(templateContent))
+	// Note: templates.getTemplateFuncs() includes renderElementShadowRoot, enabling recursion
+	shadowTmpl, err := template.New(elementName).Funcs(templates.getTemplateFuncs()).Parse(string(templateContent))
 	if err != nil {
 		return "", fmt.Errorf("failed to parse element template %s: %w", elementName, err)
 	}
@@ -72,7 +72,7 @@ func RenderElementShadowRoot(elementName string, data interface{}) (template.HTM
 	}
 
 	var wrapperBuf bytes.Buffer
-	err = ElementWrapperTemplate.Execute(&wrapperBuf, wrapperData)
+	err = templates.ElementWrapperTemplate.Execute(&wrapperBuf, wrapperData)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute wrapper template: %w", err)
 	}

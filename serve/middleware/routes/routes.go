@@ -78,12 +78,17 @@ type Config struct {
 
 	// WebSocketHandler handles WebSocket upgrade requests for live reload
 	WebSocketHandler http.HandlerFunc
+
+	// Templates holds the parsed template registry with context
+	Templates *TemplateRegistry
 }
 
 // New creates a middleware that handles internal CEM routes and demo routing
 func New(config Config) middleware.Middleware {
-	// Set error broadcaster for template error reporting
-	SetErrorBroadcaster(config.Context)
+	// Create template registry if not provided
+	if config.Templates == nil {
+		config.Templates = NewTemplateRegistry(config.Context)
+	}
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -327,7 +332,7 @@ func serveIndexListing(w http.ResponseWriter, r *http.Request, config Config) bo
 				Manifest: pkg.Manifest,
 			}
 		}
-		html, err = RenderWorkspaceListing(packages, importMapJSON, state)
+		html, err = RenderWorkspaceListing(config.Templates, config.Context, packages, importMapJSON, state)
 	} else {
 		config.Context.Logger().Debug("serveIndexListing: NOT in workspace mode, single-package mode")
 		// Single-package mode: check if index.html exists
@@ -362,7 +367,7 @@ func serveIndexListing(w http.ResponseWriter, r *http.Request, config Config) bo
 			pkgName = pkg.Name
 		}
 		config.Context.Logger().Debug("serveIndexListing: calling RenderElementListing with package name=%s", pkgName)
-		html, err = RenderElementListing(manifestBytes, importMapJSON, pkgName, state)
+		html, err = RenderElementListing(config.Templates, config.Context, manifestBytes, importMapJSON, pkgName, state)
 		config.Context.Logger().Debug("serveIndexListing: RenderElementListing returned, err=%v, html len=%d", err, len(html))
 	}
 
@@ -439,14 +444,14 @@ func serveDemoRoute(w http.ResponseWriter, r *http.Request, config Config) bool 
 				Manifest: pkg.Manifest,
 			}
 		}
-		navigationHTML, _ = BuildWorkspaceNavigation(packages)
+		navigationHTML, _ = BuildWorkspaceNavigation(config.Templates, packages)
 		// Keep packageName from package.json, don't override with "Workspace"
 	} else {
 		// Single-package mode: build navigation from manifest
 		manifestBytes, err := config.Context.Manifest()
 		if err == nil && len(manifestBytes) > 0 {
 			var navErr error
-			navigationHTML, packageName, navErr = BuildSinglePackageNavigation(manifestBytes, packageName)
+			navigationHTML, packageName, navErr = BuildSinglePackageNavigation(config.Templates, manifestBytes, packageName)
 			if navErr != nil {
 				config.Context.Logger().Error("Failed to build navigation: %v", navErr)
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -587,7 +592,7 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 			)
 		} else if len(allKnobGroups) > 0 {
 			// Render all knob groups
-			knobsHTML, err = RenderKnobsHTML(allKnobGroups)
+			knobsHTML, err = RenderKnobsHTML(config.Templates, allKnobGroups)
 			if err != nil {
 				config.Context.Logger().Warning("Failed to render knobs HTML: %v", err)
 				_ = config.Context.BroadcastError(
@@ -622,7 +627,7 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 	}
 
 	// Render with chrome
-	return renderDemoChrome(chromeData)
+	return renderDemoChrome(config.Templates, config.Context, chromeData)
 }
 
 // levenshteinDistance computes the Levenshtein distance between two strings
@@ -759,7 +764,7 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 		"RequestedPath": requestedPath,
 		"Suggestions":   suggestions,
 	}
-	if err := NotFoundTemplate.Execute(&notFoundHTML, notFoundData); err != nil {
+	if err := config.Templates.NotFoundTemplate.Execute(&notFoundHTML, notFoundData); err != nil {
 		config.Context.Logger().Error("Failed to execute 404 template: %v", err)
 		http.Error(w, "Not Found", http.StatusNotFound)
 		return
@@ -779,7 +784,7 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 				Manifest: pkg.Manifest,
 			}
 		}
-		navigationHTML, _ = BuildWorkspaceNavigation(packages)
+		navigationHTML, _ = BuildWorkspaceNavigation(config.Templates, packages)
 		packageName = "Workspace"
 	} else {
 		manifestBytes, err := config.Context.Manifest()
@@ -789,7 +794,7 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 				pkgName = pkg.Name
 			}
 			var navErr error
-			navigationHTML, packageName, navErr = BuildSinglePackageNavigation(manifestBytes, pkgName)
+			navigationHTML, packageName, navErr = BuildSinglePackageNavigation(config.Templates, manifestBytes, pkgName)
 			if navErr != nil {
 				config.Context.Logger().Error("Failed to build navigation: %v", navErr)
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -820,7 +825,7 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 		State:          state, // Persisted UI state for SSR
 	}
 
-	html, err := renderDemoChrome(chromeData)
+	html, err := renderDemoChrome(config.Templates, config.Context, chromeData)
 	if err != nil {
 		config.Context.Logger().Error("Failed to render 404 page: %v", err)
 		http.Error(w, "Not Found", http.StatusNotFound)

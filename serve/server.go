@@ -74,6 +74,7 @@ type Server struct {
 	demoRoutes           map[string]*routes.DemoRouteEntry
 	importMap            *importmappkg.ImportMap // Cached import map (workspace or single-package)
 	sourceControlRootURL string                  // Source control root URL for demo routing
+	templates            *routes.TemplateRegistry // Template registry for HTML rendering
 }
 
 // NewServer creates a new server with the given port
@@ -1392,12 +1393,15 @@ func (s *Server) setupMiddleware() {
 	}
 
 	// Apply middleware using Chain helper
+	// Initialize template registry for HTML rendering
+	s.templates = routes.NewTemplateRegistry(s)
+
 	// Middlewares are applied in reverse order (last to first in the chain)
 	// Terminal handler: static files
 	s.handler = middleware.Chain(
 		http.HandlerFunc(s.serveStaticFiles),                      // Static file server (terminal handler)
 		shadowroot.New(s.logger, errorBroadcaster{s}, routes.TemplatesFS, func(elementName string, data interface{}) (string, error) {
-			html, err := routes.RenderElementShadowRoot(elementName, data)
+			html, err := routes.RenderElementShadowRoot(s.templates, elementName, data)
 			return string(html), err
 		}), // Shadow root injection (last - processes final HTML)
 		inject.New(s.config.Reload, "/__cem/websocket-client.js"), // WebSocket injection
@@ -1428,6 +1432,7 @@ func (s *Server) setupMiddleware() {
 			Context:          s,
 			LogsFunc:         s.getLogs,
 			WebSocketHandler: wsHandler,
+			Templates:        s.templates,
 		}),
 		cors.New(),                  // CORS headers
 		requestlogger.New(s.logger), // HTTP request logging

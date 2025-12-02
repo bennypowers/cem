@@ -28,6 +28,11 @@ import (
 
 var update = flag.Bool("update", false, "update golden files")
 
+// testTemplates creates a template registry for testing (with nil context)
+func testTemplates() *TemplateRegistry {
+	return NewTemplateRegistry(nil)
+}
+
 // TestChromeRendering_BasicDemo verifies chrome template wraps demo HTML
 func TestChromeRendering_BasicDemo(t *testing.T) {
 	// Read demo partial
@@ -38,7 +43,7 @@ func TestChromeRendering_BasicDemo(t *testing.T) {
 	}
 
 	// Render chrome with demo
-	rendered, err := renderDemoChrome(ChromeData{
+	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
 		TagName:      "my-element",
 		DemoTitle:    "Basic Example",
 		DemoHTML:     template.HTML(demoHTML),
@@ -81,7 +86,7 @@ func TestChromeRendering_NoKnobs(t *testing.T) {
 		t.Fatalf("Failed to read demo fixture: %v", err)
 	}
 
-	rendered, err := renderDemoChrome(ChromeData{
+	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
 		TagName:      "my-element",
 		DemoTitle:    "Basic Example",
 		DemoHTML:     template.HTML(demoHTML),
@@ -122,7 +127,7 @@ func TestChromeRendering_ShadowMode(t *testing.T) {
 		t.Fatalf("Failed to read demo fixture: %v", err)
 	}
 
-	rendered, err := renderDemoChrome(ChromeData{
+	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
 		TagName:    "my-element",
 		DemoTitle:  "Basic Example",
 		DemoHTML:   template.HTML(demoHTML),
@@ -159,7 +164,7 @@ func TestChromeRendering_ShadowMode(t *testing.T) {
 func TestChromeRendering_MarkdownDescription(t *testing.T) {
 	demoHTML := `<my-element></my-element>`
 
-	rendered, err := renderDemoChrome(ChromeData{
+	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
 		TagName:     "my-element",
 		DemoTitle:   "Test",
 		DemoHTML:    template.HTML(demoHTML),
@@ -209,13 +214,13 @@ func TestChromeRendering_WithNavigation(t *testing.T) {
 	}
 
 	// Build navigation HTML using the same function as production code
-	navigationHTML, packageName, err := BuildSinglePackageNavigation(manifestBytes, "test-package")
+	navigationHTML, packageName, err := BuildSinglePackageNavigation(testTemplates(), manifestBytes, "test-package")
 	if err != nil {
 		t.Fatalf("Failed to build navigation: %v", err)
 	}
 
 	// Render chrome with navigation
-	rendered, err := renderDemoChrome(ChromeData{
+	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
 		TagName:        "demo-subset-one",
 		DemoTitle:      "Demo with Navigation",
 		DemoHTML:       template.HTML(demoHTML),
@@ -256,7 +261,7 @@ func TestChromeRendering_NilManifest(t *testing.T) {
 	demoHTML := `<my-element id="example"></my-element>`
 
 	// Render chrome with nil manifest (workspace mode scenario)
-	rendered, err := renderDemoChrome(ChromeData{
+	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
 		TagName:      "my-element",
 		DemoTitle:    "Workspace Mode Demo",
 		DemoHTML:     template.HTML(demoHTML),

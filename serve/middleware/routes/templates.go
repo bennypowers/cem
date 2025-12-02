@@ -54,19 +54,42 @@ var TemplatesFS embed.FS
 //go:embed templates/js/*.js templates/css/*.css templates/images/* templates/elements/*.css templates/elements/**/*
 var InternalModules embed.FS
 
-// errorBroadcaster holds the error broadcaster for template errors
-// Set by SetErrorBroadcaster when routes middleware is initialized
-var errorBroadcaster middleware.DevServerContext
-
-// SetErrorBroadcaster sets the error broadcaster for template error reporting
-func SetErrorBroadcaster(ctx middleware.DevServerContext) {
-	errorBroadcaster = ctx
+// TemplateRegistry holds parsed templates and the context for error broadcasting
+type TemplateRegistry struct {
+	WorkspaceListingTemplate *template.Template
+	NavigationTemplate       *template.Template
+	NotFoundTemplate         *template.Template
+	ElementWrapperTemplate   *template.Template
+	KnobsTemplate            *template.Template
+	DemoChromeTemplate       *template.Template
+	TemplateErrorTemplate    *template.Template
+	context                  middleware.DevServerContext
 }
 
-// Template functions available to templates
-// getTemplateFuncs returns the template function map
-// This is a function to avoid initialization cycles with renderElementShadowRoot
-func getTemplateFuncs() template.FuncMap {
+// NewTemplateRegistry creates a new template registry with the given context
+func NewTemplateRegistry(ctx middleware.DevServerContext) *TemplateRegistry {
+	registry := &TemplateRegistry{
+		context: ctx,
+	}
+
+	// Create template function map with the context
+	funcs := registry.getTemplateFuncs()
+
+	// Parse all templates with the function map
+	registry.WorkspaceListingTemplate = template.Must(template.New("workspace-listing").Funcs(funcs).Parse(workspaceListingTemplate))
+	registry.NavigationTemplate = template.Must(template.New("navigation").Funcs(funcs).Parse(navigationTemplate))
+	registry.NotFoundTemplate = template.Must(template.New("404").Funcs(funcs).Parse(notFoundTemplate))
+	registry.ElementWrapperTemplate = template.Must(template.New("element-wrapper").Parse(elementWrapperTemplate))
+	registry.KnobsTemplate = template.Must(template.New("knobs").Funcs(funcs).Parse(knobsTemplate))
+	registry.DemoChromeTemplate = template.Must(template.New("demo-chrome").Funcs(funcs).Parse(demoChromeTemplate))
+	registry.TemplateErrorTemplate = template.Must(template.New("template-error").Funcs(funcs).Parse(templateErrorTemplate))
+
+	return registry
+}
+
+// getTemplateFuncs returns the template function map with access to the registry's context
+// This is a method to provide the context for error broadcasting
+func (registry *TemplateRegistry) getTemplateFuncs() template.FuncMap {
 	return template.FuncMap{
 		"contains": func(haystack, needle interface{}) bool {
 			// Handle string contains (substring search)
@@ -111,8 +134,8 @@ func getTemplateFuncs() template.FuncMap {
 				errMsg := "/* Error reading " + path + ": " + err.Error() + " */"
 
 				// Broadcast error to connected clients via WebSocket overlay
-				if errorBroadcaster != nil {
-					_ = errorBroadcaster.BroadcastError(
+				if registry.context != nil {
+					_ = registry.context.BroadcastError(
 						"Template Include Error",
 						"Failed to include template file: "+err.Error(),
 						path,
@@ -124,13 +147,13 @@ func getTemplateFuncs() template.FuncMap {
 			return template.CSS(content)
 		},
 		"renderElementShadowRoot": func(elementName string, data interface{}) template.HTML {
-			html, err := RenderElementShadowRoot(elementName, data)
+			html, err := RenderElementShadowRoot(registry, elementName, data)
 			if err != nil {
 				errMsg := "<!-- Error rendering element " + elementName + ": " + err.Error() + " -->"
 
 				// Broadcast error to connected clients via WebSocket overlay
-				if errorBroadcaster != nil {
-					_ = errorBroadcaster.BroadcastError(
+				if registry.context != nil {
+					_ = registry.context.BroadcastError(
 						"Element Render Error",
 						"Failed to render element: "+err.Error(),
 						elementName,
@@ -177,27 +200,6 @@ func getTemplateFuncs() template.FuncMap {
 		},
 	}
 }
-
-// WorkspaceListingTemplate is the parsed template for workspace package listing
-var WorkspaceListingTemplate = template.Must(template.New("workspace-listing").Funcs(getTemplateFuncs()).Parse(workspaceListingTemplate))
-
-// NavigationTemplate is the parsed template for navigation drawer
-var NavigationTemplate = template.Must(template.New("navigation").Funcs(getTemplateFuncs()).Parse(navigationTemplate))
-
-// NotFoundTemplate is the parsed template for 404 page content
-var NotFoundTemplate = template.Must(template.New("404").Funcs(getTemplateFuncs()).Parse(notFoundTemplate))
-
-// ElementWrapperTemplate is the parsed template for wrapping custom elements with DSD
-var ElementWrapperTemplate = template.Must(template.New("element-wrapper").Parse(elementWrapperTemplate))
-
-// KnobsTemplate is the parsed template for knobs controls
-var KnobsTemplate = template.Must(template.New("knobs").Funcs(getTemplateFuncs()).Parse(knobsTemplate))
-
-// DemoChromeTemplate is the parsed template for demo chrome wrapper
-var DemoChromeTemplate = template.Must(template.New("demo-chrome").Funcs(getTemplateFuncs()).Parse(demoChromeTemplate))
-
-// TemplateErrorTemplate is the parsed template for template rendering errors
-var TemplateErrorTemplate = template.Must(template.New("template-error").Funcs(getTemplateFuncs()).Parse(templateErrorTemplate))
 
 // asCustomElement performs type assertion to extract CustomElementDeclaration from Declaration interface.
 // Returns nil if the declaration is not a custom element.

@@ -28,6 +28,11 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
+// testTemplatesForKnobs creates a template registry for testing (with nil context)
+func testTemplatesForKnobs() *TemplateRegistry {
+	return NewTemplateRegistry(nil)
+}
+
 func TestGenerateKnobs_SimpleButton(t *testing.T) {
 	// Load manifest fixture
 	manifestPath := filepath.Join("testdata", "knobs", "simple-button-manifest.json")
@@ -339,7 +344,7 @@ func TestRenderKnobsHTML(t *testing.T) {
 		},
 	}
 
-	html, err := RenderKnobsHTML(knobGroups)
+	html, err := RenderKnobsHTML(testTemplatesForKnobs(), knobGroups)
 	if err != nil {
 		t.Fatalf("RenderKnobsHTML failed: %v", err)
 	}
@@ -688,7 +693,7 @@ func TestRenderMultiInstanceKnobsHTML(t *testing.T) {
 		},
 	}
 
-	html, err := RenderKnobsHTML(knobGroups)
+	html, err := RenderKnobsHTML(testTemplatesForKnobs(), knobGroups)
 	if err != nil {
 		t.Fatalf("RenderKnobsHTML failed: %v", err)
 	}

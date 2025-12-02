@@ -28,6 +28,7 @@ import (
 	"strings"
 
 	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/serve/middleware"
 )
 
 // ElementListing represents a custom element with its demos
@@ -47,14 +48,14 @@ type DemoListing struct {
 }
 
 // RenderElementListing renders the root listing page with all elements
-func RenderElementListing(manifestBytes []byte, importMap string, packageName string, state CemServeState) (string, error) {
+func RenderElementListing(templates *TemplateRegistry, ctx middleware.DevServerContext, manifestBytes []byte, importMap string, packageName string, state CemServeState) (string, error) {
 	if len(manifestBytes) == 0 {
 		// Empty manifest - show helpful message
 		title := packageName
 		if title == "" {
 			title = "Component Browser"
 		}
-		return renderDemoChrome(ChromeData{
+		return renderDemoChrome(templates, ctx, ChromeData{
 			TagName:     "", // Empty for index page
 			DemoTitle:   title,
 			DemoHTML: template.HTML(`
@@ -76,7 +77,7 @@ func RenderElementListing(manifestBytes []byte, importMap string, packageName st
 	}
 
 	// Build navigation (this also extracts elements and sorts them)
-	navigationHTML, title, err := BuildSinglePackageNavigation(manifestBytes, packageName)
+	navigationHTML, title, err := BuildSinglePackageNavigation(templates, manifestBytes, packageName)
 	if err != nil {
 		return "", fmt.Errorf("building navigation: %w", err)
 	}
@@ -105,7 +106,7 @@ func RenderElementListing(manifestBytes []byte, importMap string, packageName st
 			ManifestJSON:   template.JS(manifestBytes),
 			State:          state,
 		}
-		return renderDemoChrome(chromeData)
+		return renderDemoChrome(templates, ctx, chromeData)
 	}
 
 	// Sort elements alphabetically
@@ -123,14 +124,14 @@ func RenderElementListing(manifestBytes []byte, importMap string, packageName st
 
 	// Render with template
 	var buf bytes.Buffer
-	err = WorkspaceListingTemplate.Execute(&buf, map[string]interface{}{
+	err = templates.WorkspaceListingTemplate.Execute(&buf, map[string]interface{}{
 		"Packages": packages,
 	})
 	if err != nil {
 		return "", fmt.Errorf("executing element listing template: %w", err)
 	}
 
-	return renderDemoChrome(ChromeData{
+	return renderDemoChrome(templates, ctx, ChromeData{
 		TagName:        "", // Empty for index page
 		DemoTitle:      title,
 		DemoHTML:       template.HTML(buf.String()),
@@ -290,7 +291,7 @@ type PackageNavigation struct {
 }
 
 // BuildSinglePackageNavigation builds navigation HTML for single-package mode
-func BuildSinglePackageNavigation(manifestBytes []byte, packageName string) (template.HTML, string, error) {
+func BuildSinglePackageNavigation(templates *TemplateRegistry, manifestBytes []byte, packageName string) (template.HTML, string, error) {
 	if len(manifestBytes) == 0 {
 		return "", packageName, nil
 	}
@@ -327,7 +328,7 @@ func BuildSinglePackageNavigation(manifestBytes []byte, packageName string) (tem
 		},
 	}
 
-	return renderNavigationHTML(packages), title, nil
+	return renderNavigationHTML(templates, packages), title, nil
 }
 
 // buildPackageListingsFromRoutes groups routes by package and element, extracting
@@ -410,7 +411,7 @@ func buildPackageListingsFromRoutes(routes map[string]*DemoRouteEntry) ([]Packag
 }
 
 // BuildWorkspaceNavigation builds navigation HTML for workspace mode
-func BuildWorkspaceNavigation(packages []PackageContext) (template.HTML, error) {
+func BuildWorkspaceNavigation(templates *TemplateRegistry, packages []PackageContext) (template.HTML, error) {
 	if len(packages) == 0 {
 		return "", nil
 	}
@@ -427,11 +428,11 @@ func BuildWorkspaceNavigation(packages []PackageContext) (template.HTML, error) 
 		return "", err
 	}
 
-	return renderNavigationHTML(packageNav), nil
+	return renderNavigationHTML(templates, packageNav), nil
 }
 
 // renderNavigationHTML generates navigation drawer HTML from package navigation data
-func renderNavigationHTML(packages []PackageNavigation) template.HTML {
+func renderNavigationHTML(templates *TemplateRegistry, packages []PackageNavigation) template.HTML {
 	// Return empty if no packages
 	if len(packages) == 0 {
 		return template.HTML("")
@@ -444,7 +445,7 @@ func renderNavigationHTML(packages []PackageNavigation) template.HTML {
 		"SinglePackage": len(packages) == 1,
 	}
 
-	if err := NavigationTemplate.Execute(&buf, data); err != nil {
+	if err := templates.NavigationTemplate.Execute(&buf, data); err != nil {
 		// Fail gracefully on template error
 		return template.HTML("")
 	}
@@ -453,9 +454,9 @@ func renderNavigationHTML(packages []PackageNavigation) template.HTML {
 }
 
 // RenderWorkspaceListing renders the workspace index page with all packages
-func RenderWorkspaceListing(packages []PackageContext, importMap string, state CemServeState) (string, error) {
+func RenderWorkspaceListing(templates *TemplateRegistry, ctx middleware.DevServerContext, packages []PackageContext, importMap string, state CemServeState) (string, error) {
 	if len(packages) == 0 {
-		return renderDemoChrome(ChromeData{
+		return renderDemoChrome(templates, ctx, ChromeData{
 			TagName:     "cem-serve",
 			DemoTitle:   "Workspace Browser",
 			PackageName: "Workspace",
@@ -482,11 +483,11 @@ func RenderWorkspaceListing(packages []PackageContext, importMap string, state C
 	}
 
 	// Build navigation HTML from package listings
-	navigationHTML := renderNavigationHTML(packageListings)
+	navigationHTML := renderNavigationHTML(templates, packageListings)
 
 	// Render with template
 	var buf bytes.Buffer
-	err = WorkspaceListingTemplate.Execute(&buf, map[string]interface{}{
+	err = templates.WorkspaceListingTemplate.Execute(&buf, map[string]interface{}{
 		"Packages": packageListings,
 	})
 	if err != nil {
@@ -531,7 +532,7 @@ func RenderWorkspaceListing(packages []PackageContext, importMap string, state C
 		}
 	}
 
-	return renderDemoChrome(ChromeData{
+	return renderDemoChrome(templates, ctx, ChromeData{
 		TagName:        "cem-serve",
 		DemoTitle:      "Workspace Browser",
 		DemoHTML:       template.HTML(buf.String()),

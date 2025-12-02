@@ -697,7 +697,7 @@ func convertMarkdownFields(knobs []KnobData, context string) error {
 //
 // Note: This function modifies the Summary and Description fields of knobGroups in-place,
 // converting Markdown to HTML. Callers should not reuse the slice after calling this function.
-func RenderKnobsHTML(knobGroups []ElementKnobGroup) (template.HTML, error) {
+func RenderKnobsHTML(templates *TemplateRegistry, knobGroups []ElementKnobGroup) (template.HTML, error) {
 	if len(knobGroups) == 0 {
 		return "", nil
 	}
@@ -720,7 +720,7 @@ func RenderKnobsHTML(knobGroups []ElementKnobGroup) (template.HTML, error) {
 	}
 
 	var buf bytes.Buffer
-	err := KnobsTemplate.Execute(&buf, knobGroups)
+	err := templates.KnobsTemplate.Execute(&buf, knobGroups)
 	if err != nil {
 		return "", err
 	}
