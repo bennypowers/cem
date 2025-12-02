@@ -91,7 +91,7 @@ class PfV6FormLabel extends CemElement {
     }
 
     // Get the control slot
-    const control = formGroup.querySelector('[slot="control"]');
+    const control = formGroup.querySelector(':not([slot])');
     if (!control) {
       console.warn('No control found in pf-v6-form-group');
       return null;

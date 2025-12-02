@@ -26,37 +26,32 @@
 
             {{if .Description}}
               {{if eq .Type "boolean"}}
-              <pf-v6-switch slot="control"
-                            data-knob-type="attribute"
+              <pf-v6-switch data-knob-type="attribute"
                             data-knob-name="{{.Name}}"
                             {{if eq .CurrentValue "true"}}checked{{end}}>
               </pf-v6-switch>
 
               {{else if eq .Type "enum"}}
-              <div slot="control" style="display: flex; gap: var(--pf-v6-global--spacer--sm); align-items: center;">
-                <pf-v6-select style="flex: 1;"
-                              data-knob-type="attribute"
-                              data-knob-name="{{.Name}}"
-                              value="{{.CurrentValue}}">
-                  {{range .EnumValues}}
-                  <option value="{{.}}">{{.}}</option>
-                  {{end}}
-                </pf-v6-select>
-                <pf-v6-button variant="plain"
-                              aria-label="Clear {{.Name}}"
-                              class="knob-clear-button"
-                              data-knob-type="attribute"
-                              data-knob-name="{{.Name}}"
-                              {{if not .CurrentValue}}hidden{{end}}>
-                  <svg width="1em" height="1em" viewBox="0 0 352 512" fill="currentColor" aria-hidden="true">
-                    <path d="M242.72 256l100.07-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44.48 0L176 189.28 75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28 12.28-12.28 32.19 0 44.48L109.28 256 9.21 356.07c-12.28 12.28-12.28 32.19 0 44.48l22.24 22.24c12.28 12.28 32.2 12.28 44.48 0L176 322.72l100.07 100.07c12.28 12.28 32.2 12.28 44.48 0l22.24-22.24c12.28-12.28 12.28-32.19 0-44.48L242.72 256z"></path>
-                  </svg>
-                </pf-v6-button>
-              </div>
+              <pf-v6-select data-knob-type="attribute"
+                            data-knob-name="{{.Name}}"
+                            value="{{.CurrentValue}}">
+                {{range .EnumValues}}
+                <option value="{{.}}">{{.}}</option>
+                {{end}}
+              </pf-v6-select>
+              <pf-v6-button variant="plain"
+                            aria-label="Clear {{.Name}}"
+                            class="knob-clear-button"
+                            data-knob-type="attribute"
+                            data-knob-name="{{.Name}}"
+                            {{if not .CurrentValue}}hidden{{end}}>
+                <svg width="1em" height="1em" viewBox="0 0 352 512" fill="currentColor" aria-hidden="true">
+                  <path d="M242.72 256l100.07-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44.48 0L176 189.28 75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28 12.28-12.28 32.19 0 44.48L109.28 256 9.21 356.07c-12.28 12.28-12.28 32.19 0 44.48l22.24 22.24c12.28 12.28 32.2 12.28 44.48 0L176 322.72l100.07 100.07c12.28 12.28 32.2 12.28 44.48 0l22.24-22.24c12.28-12.28 12.28-32.19 0-44.48L242.72 256z"></path>
+                </svg>
+              </pf-v6-button>
 
               {{else if eq .Type "number"}}
-              <pf-v6-text-input-group slot="control"
-                                      type="number"
+              <pf-v6-text-input-group type="number"
                                       data-knob-type="attribute"
                                       data-knob-name="{{.Name}}"
                                       value="{{.CurrentValue}}">
@@ -74,8 +69,7 @@
               </pf-v6-text-input-group>
 
               {{else if eq .Type "color"}}
-              <pf-v6-text-input-group slot="control"
-                                      type="text"
+              <pf-v6-text-input-group type="text"
                                       data-knob-type="attribute"
                                       data-knob-name="{{.Name}}"
                                       value="{{.CurrentValue}}">
@@ -106,8 +100,7 @@
               </pf-v6-text-input-group>
 
               {{else}}
-              <pf-v6-text-input-group slot="control"
-                                      data-knob-type="attribute"
+              <pf-v6-text-input-group data-knob-type="attribute"
                                       data-knob-name="{{.Name}}"
                                       value="{{.CurrentValue}}">
                 <pf-v6-button slot="utilities"
@@ -124,7 +117,7 @@
               </pf-v6-text-input-group>
               {{end}}
 
-              <pf-v6-popover slot="control">
+              <pf-v6-popover>
                 <pf-v6-button slot="trigger"
                               variant="plain"
                               aria-label="More information about {{.Name}}">
@@ -144,37 +137,32 @@
 
             {{else}}
             {{if eq .Type "boolean"}}
-            <pf-v6-switch slot="control"
-                          data-knob-type="attribute"
+            <pf-v6-switch data-knob-type="attribute"
                           data-knob-name="{{.Name}}"
                           {{if eq .CurrentValue "true"}}checked{{end}}>
             </pf-v6-switch>
 
             {{else if eq .Type "enum"}}
-            <div slot="control" style="display: flex; gap: var(--pf-v6-global--spacer--sm); align-items: center;">
-              <pf-v6-select style="flex: 1;"
-                            data-knob-type="attribute"
-                            data-knob-name="{{.Name}}"
-                            value="{{.CurrentValue}}">
-                {{range .EnumValues}}
-                <option value="{{.}}">{{.}}</option>
-                {{end}}
-              </pf-v6-select>
-              <pf-v6-button variant="plain"
-                            aria-label="Clear {{.Name}}"
-                            class="knob-clear-button"
-                            data-knob-type="attribute"
-                            data-knob-name="{{.Name}}"
-                            {{if not .CurrentValue}}hidden{{end}}>
-                <svg width="1em" height="1em" viewBox="0 0 352 512" fill="currentColor" aria-hidden="true">
-                  <path d="M242.72 256l100.07-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44.48 0L176 189.28 75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28 12.28-12.28 32.19 0 44.48L109.28 256 9.21 356.07c-12.28 12.28-12.28 32.19 0 44.48l22.24 22.24c12.28 12.28 32.2 12.28 44.48 0L176 322.72l100.07 100.07c12.28 12.28 32.2 12.28 44.48 0l22.24-22.24c12.28-12.28 12.28-32.19 0-44.48L242.72 256z"></path>
-                </svg>
-              </pf-v6-button>
-            </div>
+            <pf-v6-select data-knob-type="attribute"
+                          data-knob-name="{{.Name}}"
+                          value="{{.CurrentValue}}">
+              {{range .EnumValues}}
+              <option value="{{.}}">{{.}}</option>
+              {{end}}
+            </pf-v6-select>
+            <pf-v6-button variant="plain"
+                          aria-label="Clear {{.Name}}"
+                          class="knob-clear-button"
+                          data-knob-type="attribute"
+                          data-knob-name="{{.Name}}"
+                          {{if not .CurrentValue}}hidden{{end}}>
+              <svg width="1em" height="1em" viewBox="0 0 352 512" fill="currentColor" aria-hidden="true">
+                <path d="M242.72 256l100.07-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44.48 0L176 189.28 75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28 12.28-12.28 32.19 0 44.48L109.28 256 9.21 356.07c-12.28 12.28-12.28 32.19 0 44.48l22.24 22.24c12.28 12.28 32.2 12.28 44.48 0L176 322.72l100.07 100.07c12.28 12.28 32.2 12.28 44.48 0l22.24-22.24c12.28-12.28 12.28-32.19 0-44.48L242.72 256z"></path>
+              </svg>
+            </pf-v6-button>
 
             {{else if eq .Type "number"}}
-            <pf-v6-text-input-group slot="control"
-                                    type="number"
+            <pf-v6-text-input-group type="number"
                                     data-knob-type="attribute"
                                     data-knob-name="{{.Name}}"
                                     value="{{.CurrentValue}}">
@@ -192,8 +180,7 @@
             </pf-v6-text-input-group>
 
             {{else if eq .Type "color"}}
-            <pf-v6-text-input-group slot="control"
-                                    type="text"
+            <pf-v6-text-input-group type="text"
                                     data-knob-type="attribute"
                                     data-knob-name="{{.Name}}"
                                     value="{{.CurrentValue}}">
@@ -224,8 +211,7 @@
             </pf-v6-text-input-group>
 
             {{else}}
-            <pf-v6-text-input-group slot="control"
-                                    data-knob-type="attribute"
+            <pf-v6-text-input-group data-knob-type="attribute"
                                     data-knob-name="{{.Name}}"
                                     value="{{.CurrentValue}}">
               <pf-v6-button slot="utilities"
@@ -261,37 +247,34 @@
 
             {{if .Description}}
               {{if eq .Type "boolean"}}
-              <pf-v6-switch slot="control"
-                            data-knob-type="property"
+              <pf-v6-switch data-knob-type="property"
                             data-knob-name="{{.Name}}"
                             {{if eq .CurrentValue "true"}}checked{{end}}>
               </pf-v6-switch>
 
               {{else if eq .Type "enum"}}
-              <div slot="control" style="display: flex; gap: var(--pf-v6-global--spacer--sm); align-items: center;">
-                <pf-v6-select style="flex: 1;"
-                              data-knob-type="property"
-                              data-knob-name="{{.Name}}"
-                              value="{{.CurrentValue}}">
-                  {{range .EnumValues}}
-                  <option value="{{.}}">{{.}}</option>
-                  {{end}}
-                </pf-v6-select>
-                <pf-v6-button variant="plain"
-                              aria-label="Clear {{.Name}}"
-                              class="knob-clear-button"
-                              data-knob-type="property"
-                              data-knob-name="{{.Name}}"
-                              {{if not .CurrentValue}}hidden{{end}}>
-                  <svg width="1em" height="1em" viewBox="0 0 352 512" fill="currentColor" aria-hidden="true">
-                    <path d="M242.72 256l100.07-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44.48 0L176 189.28 75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28 12.28-12.28 32.19 0 44.48L109.28 256 9.21 356.07c-12.28 12.28-12.28 32.19 0 44.48l22.24 22.24c12.28 12.28 32.2 12.28 44.48 0L176 322.72l100.07 100.07c12.28 12.28 32.2 12.28 44.48 0l22.24-22.24c12.28-12.28 12.28-32.19 0-44.48L242.72 256z"></path>
-                  </svg>
-                </pf-v6-button>
-              </div>
+
+              <pf-v6-select data-knob-type="property"
+                            data-knob-name="{{.Name}}"
+                            value="{{.CurrentValue}}">
+                {{range .EnumValues}}
+                <option value="{{.}}">{{.}}</option>
+                {{end}}
+              </pf-v6-select>
+              <pf-v6-button variant="plain"
+                            aria-label="Clear {{.Name}}"
+                            class="knob-clear-button"
+                            data-knob-type="property"
+                            data-knob-name="{{.Name}}"
+                            {{if not .CurrentValue}}hidden{{end}}>
+                <svg width="1em" height="1em" viewBox="0 0 352 512" fill="currentColor" aria-hidden="true">
+                  <path d="M242.72 256l100.07-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44.48 0L176 189.28 75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28 12.28-12.28 32.19 0 44.48L109.28 256 9.21 356.07c-12.28 12.28-12.28 32.19 0 44.48l22.24 22.24c12.28 12.28 32.2 12.28 44.48 0L176 322.72l100.07 100.07c12.28 12.28 32.2 12.28 44.48 0l22.24-22.24c12.28-12.28 12.28-32.19 0-44.48L242.72 256z"></path>
+                </svg>
+              </pf-v6-button>
+
 
               {{else if eq .Type "number"}}
-              <pf-v6-text-input-group slot="control"
-                                      type="number"
+              <pf-v6-text-input-group type="number"
                                       data-knob-type="property"
                                       data-knob-name="{{.Name}}"
                                       value="{{.CurrentValue}}">
@@ -309,8 +292,7 @@
               </pf-v6-text-input-group>
 
               {{else}}
-              <pf-v6-text-input-group slot="control"
-                                      data-knob-type="property"
+              <pf-v6-text-input-group data-knob-type="property"
                                       data-knob-name="{{.Name}}"
                                       value="{{.CurrentValue}}">
                 <pf-v6-button slot="utilities"
@@ -327,7 +309,7 @@
               </pf-v6-text-input-group>
               {{end}}
 
-              <pf-v6-popover slot="control">
+              <pf-v6-popover>
                 <pf-v6-button slot="trigger"
                               variant="plain"
                               aria-label="More information about {{.Name}}">
@@ -344,19 +326,16 @@
                 {{if .TypeText}}<p><strong>Type:</strong> <code>{{.TypeText}}</code></p>{{end}}
                 {{.Description}}
               </pf-v6-popover>
-
             {{else}}
             {{if eq .Type "boolean"}}
-            <pf-v6-switch slot="control"
-                          data-knob-type="property"
-                          data-knob-name="{{.Name}}"
-                          {{if eq .CurrentValue "true"}}checked{{end}}>
-            </pf-v6-switch>
+              <pf-v6-switch data-knob-type="property"
+                            data-knob-name="{{.Name}}"
+                            {{if eq .CurrentValue "true"}}checked{{end}}>
+              </pf-v6-switch>
 
-            {{else if eq .Type "enum"}}
-            <div slot="control" style="display: flex; gap: var(--pf-v6-global--spacer--sm); align-items: center;">
-              <pf-v6-select style="flex: 1;"
-                            data-knob-type="property"
+              {{else if eq .Type "enum"}}
+
+              <pf-v6-select data-knob-type="property"
                             data-knob-name="{{.Name}}"
                             value="{{.CurrentValue}}">
                 {{range .EnumValues}}
@@ -368,16 +347,15 @@
                             class="knob-clear-button"
                             data-knob-type="property"
                             data-knob-name="{{.Name}}"
-                            {{if not .CurrentValue}}hidden{{end}}>
+                            {{if
+                            not
+                            .CurrentValue}}hidden{{end}}>
                 <svg width="1em" height="1em" viewBox="0 0 352 512" fill="currentColor" aria-hidden="true">
                   <path d="M242.72 256l100.07-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44.48 0L176 189.28 75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28 12.28-12.28 32.19 0 44.48L109.28 256 9.21 356.07c-12.28 12.28-12.28 32.19 0 44.48l22.24 22.24c12.28 12.28 32.2 12.28 44.48 0L176 322.72l100.07 100.07c12.28 12.28 32.2 12.28 44.48 0l22.24-22.24c12.28-12.28 12.28-32.19 0-44.48L242.72 256z"></path>
                 </svg>
               </pf-v6-button>
-            </div>
-
             {{else if eq .Type "number"}}
-            <pf-v6-text-input-group slot="control"
-                                    type="number"
+            <pf-v6-text-input-group type="number"
                                     data-knob-type="property"
                                     data-knob-name="{{.Name}}"
                                     value="{{.CurrentValue}}">
@@ -395,8 +373,7 @@
             </pf-v6-text-input-group>
 
             {{else}}
-            <pf-v6-text-input-group slot="control"
-                                    data-knob-type="property"
+            <pf-v6-text-input-group data-knob-type="property"
                                     data-knob-name="{{.Name}}"
                                     value="{{.CurrentValue}}">
               <pf-v6-button slot="utilities"
@@ -431,8 +408,7 @@
 
               {{if .Description}}
                 {{if eq .Type "color"}}
-                <pf-v6-text-input-group slot="control"
-                                        type="text"
+                <pf-v6-text-input-group type="text"
                                         data-knob-type="css-property"
                                         data-knob-name="{{.Name}}"
                                         value="{{.CurrentValue}}">
@@ -461,10 +437,8 @@
                     </svg>
                   </pf-v6-button>
                 </pf-v6-text-input-group>
-
                 {{else}}
-                <pf-v6-text-input-group slot="control"
-                                        data-knob-type="css-property"
+                <pf-v6-text-input-group data-knob-type="css-property"
                                         data-knob-name="{{.Name}}"
                                         value="{{.CurrentValue}}">
                   <pf-v6-button slot="utilities"
@@ -480,8 +454,7 @@
                   </pf-v6-button>
                 </pf-v6-text-input-group>
                 {{end}}
-
-                <pf-v6-popover slot="control">
+                <pf-v6-popover>
                   <pf-v6-button slot="trigger" variant="plain" aria-label="More information about {{.Name}}">
                     <svg class="pf-v6-svg" viewBox="0 0 512 512" fill="currentColor" aria-hidden="true" role="img" width="1em" height="1em">
                       <path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"></path>
@@ -493,8 +466,7 @@
 
               {{else}}
               {{if eq .Type "color"}}
-              <pf-v6-text-input-group slot="control"
-                                      type="text"
+              <pf-v6-text-input-group type="text"
                                       data-knob-type="css-property"
                                       data-knob-name="{{.Name}}"
                                       value="{{.CurrentValue}}">
@@ -525,8 +497,7 @@
               </pf-v6-text-input-group>
 
               {{else}}
-              <pf-v6-text-input-group slot="control"
-                                      data-knob-type="css-property"
+              <pf-v6-text-input-group data-knob-type="css-property"
                                       data-knob-name="{{.Name}}"
                                       value="{{.CurrentValue}}">
                 <pf-v6-button slot="utilities"

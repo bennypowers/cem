@@ -26,3 +26,7 @@
 #helper-text:empty {
   display: none;
 }
+
+::slotted([slot=control]:first-child) {
+  flex: 1;
+}
