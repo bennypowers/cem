@@ -306,7 +306,7 @@ func buildPackageRoutingTable(pkg PackageContext) (map[string]*DemoRouteEntry, e
 		}
 
 		// Ensure trailing slash for directory-style URLs
-		if !strings.HasSuffix(localRoute, "/") && filepath.Ext(localRoute) == "" {
+		if localRoute != "/" && !strings.HasSuffix(localRoute, "/") && filepath.Ext(localRoute) == "" {
 			localRoute += "/"
 		}
 
