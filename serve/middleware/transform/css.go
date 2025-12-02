@@ -153,8 +153,19 @@ func NewCSS(config CSSConfig) middleware.Middleware {
 				return
 			}
 
-			// Check include/exclude patterns
-			if !shouldTransformCSS(cssPath, config.Include, config.Exclude, config.Logger, config.ErrorBroadcaster, config.ConfigFile) {
+			// Check if this CSS file has import attributes query parameter
+			// If so, we should always transform it regardless of include/exclude patterns
+			hasImportAttrs := false
+			queryParams := r.URL.Query()
+			for key := range queryParams {
+				if strings.HasPrefix(key, "__cem-import-attrs[") {
+					hasImportAttrs = true
+					break
+				}
+			}
+
+			// If no import attributes, check include/exclude patterns
+			if !hasImportAttrs && !shouldTransformCSS(cssPath, config.Include, config.Exclude, config.Logger, config.ErrorBroadcaster, config.ConfigFile) {
 				// Don't transform this CSS file, pass to next handler
 				next.ServeHTTP(w, r)
 				return

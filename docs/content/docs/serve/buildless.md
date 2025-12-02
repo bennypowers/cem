@@ -69,6 +69,37 @@ No need to:
 
 Your imported CSS becomes a [Constructable Stylesheet](https://web.dev/constructable-stylesheets/) automatically, giving you better performance than inline styles.
 
+### Import Attributes (Modern Syntax)
+
+Use the standard [import attributes](https://github.com/tc39/proposal-import-attributes) syntax with the `with` keyword:
+
+```js
+import styles from './my-element.css' with { type: 'css' };
+
+class MyElement extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+    this.shadowRoot.adoptedStyleSheets = [styles];
+  }
+}
+```
+
+This is the modern, standards-based syntax for importing CSS as modules. The dev server automatically handles this syntax during TypeScript transformation - import attributes are preserved and CSS files are transformed to JavaScript modules that export `CSSStyleSheet` objects.
+
+{{<tip "info">}}
+Import attributes with `with { type: 'css' }` **bypass** include/exclude patterns. When you use this syntax, the dev server knows you want that CSS file transformed to a module, regardless of glob patterns.
+{{</tip>}}
+
+**How it works:**
+
+1. You write: `import styles from './foo.css' with { type: 'css' }`
+2. The dev server rewrites it to: `import styles from './foo.css?__cem-import-attrs[type]=css'`
+3. When the browser requests the CSS file with those query parameters, the server transforms it to a JavaScript module
+4. Your code receives a ready-to-use `CSSStyleSheet` object
+
+This approach works around esbuild's current limitation with CSS import attributes while preserving the standard syntax in your source code.
+
 ### Opt-In for Safety
 
 CSS module transformation is opt-in to protect traditional `<link>` stylesheets. Specify which CSS files to transform:
@@ -91,8 +122,14 @@ serve:
         - 'demo/**/*.css'
 ```
 
+**Via import attributes:**
+```js
+// This CSS file will be transformed regardless of include/exclude patterns
+import styles from './my-styles.css' with { type: 'css' };
+```
+
 {{<tip "warning">}}
-Without include patterns, **no CSS files are transformed**. This prevents `<link rel="stylesheet">` tags from breaking unexpectedly.
+Without include patterns or import attributes, **no CSS files are transformed**. This prevents `<link rel="stylesheet">` tags from breaking unexpectedly.
 {{</tip>}}
 
 ### Example: CSS Module Import

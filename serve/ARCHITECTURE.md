@@ -130,6 +130,54 @@ The server sets up a middleware chain in `server.go:1397` (applied in reverse or
 
 This architecture ensures SSR happens transparently without modifying the original demo files.
 
+## TypeScript and CSS Transformations
+
+### Import Attributes Rewriting
+
+**Location**: `serve/middleware/transform/import_rewrite.go`
+
+The dev server supports standard [import attributes](https://github.com/tc39/proposal-import-attributes) syntax (e.g., `import styles from './foo.css' with { type: 'css' }`) despite esbuild's current limitation with this syntax.
+
+**Implementation**:
+
+1. **Tree-sitter Query** (`queries/typescript/importAttributes.scm`): Captures import statements with `with { ... }` attributes, extracting both the import path and all attribute key-value pairs.
+
+2. **Pre-transform Rewriting** (`transform/engine.go:91-97`): Before esbuild processes TypeScript source:
+   - `RewriteImportAttributes()` parses the source with tree-sitter
+   - Detects imports with attributes
+   - Rewrites paths to include query parameters: `'./foo.css' with { type: 'css' }` → `'./foo.css?__cem-import-attrs[type]=css'`
+   - Falls back gracefully to original source if rewriting fails
+
+3. **Server-side Handling** (`transform/css.go:156-172`): The CSS middleware:
+   - Checks for `__cem-import-attrs` query parameters in requests
+   - If present, transforms the CSS file to a JavaScript module (bypassing include/exclude patterns)
+   - Returns a `CSSStyleSheet` object wrapped in a JavaScript module
+
+**Data Flow**:
+
+```mermaid
+sequenceDiagram
+    participant Source as TypeScript Source
+    participant Rewriter as Import Rewriter
+    participant esbuild as esbuild Transform
+    participant Browser as Browser
+    participant CSSMiddleware as CSS Middleware
+
+    Source->>Rewriter: import styles from './foo.css' with { type: 'css' }
+    Rewriter->>Rewriter: Parse with tree-sitter
+    Rewriter->>esbuild: import styles from './foo.css?__cem-import-attrs[type]=css'
+    esbuild->>Browser: Transformed JS with query params
+    Browser->>CSSMiddleware: GET /foo.css?__cem-import-attrs[type]=css
+    CSSMiddleware->>CSSMiddleware: Detect import attrs, transform CSS
+    CSSMiddleware->>Browser: JavaScript module with CSSStyleSheet
+```
+
+**Benefits**:
+- Preserves standard import attributes syntax in source code
+- Works around esbuild's current limitation
+- Future-proof: supports any import attribute (not just `type: 'css'`)
+- Explicit intent: import attributes bypass include/exclude glob patterns
+
 ## Benefits
 
 1.  **Performance**: First Contentful Paint (FCP) includes the rendered component. No Layout Shift (CLS) waiting for JS to define the element.

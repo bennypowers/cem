@@ -88,6 +88,14 @@ type TransformOptions struct {
 
 // TransformTypeScript transforms TypeScript source code to JavaScript using esbuild
 func TransformTypeScript(source []byte, opts TransformOptions) (*TransformResult, error) {
+	// Rewrite import attributes to query parameters before esbuild sees them
+	// This preserves import attributes like `with { type: 'css' }` through the transform
+	rewrittenSource, err := RewriteImportAttributes(source)
+	if err != nil {
+		// If rewriting fails, continue with original source
+		rewrittenSource = source
+	}
+
 	// Convert our options to esbuild options
 	loader := api.LoaderTS
 	switch opts.Loader {
@@ -142,8 +150,8 @@ func TransformTypeScript(source []byte, opts TransformOptions) (*TransformResult
 		}`
 	}
 
-	// Transform using esbuild
-	result := api.Transform(string(source), api.TransformOptions{
+	// Transform using esbuild with rewritten source
+	result := api.Transform(string(rewrittenSource), api.TransformOptions{
 		Loader:      loader,
 		Target:      target,
 		Format:      api.FormatESModule,
@@ -162,8 +170,8 @@ func TransformTypeScript(source []byte, opts TransformOptions) (*TransformResult
 		return nil, fmt.Errorf("%s", errMsg)
 	}
 
-	// Extract dependencies from source code using tree-sitter
-	dependencies := extractDependencies(source, opts.Sourcefile)
+	// Extract dependencies from rewritten source code using tree-sitter
+	dependencies := extractDependencies(rewrittenSource, opts.Sourcefile)
 
 	// Return result
 	return &TransformResult{
