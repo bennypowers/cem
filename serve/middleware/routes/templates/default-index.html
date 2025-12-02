@@ -113,8 +113,6 @@
     window.addEventListener('load', () => {
       setTimeout(() => {
         if (window.__cemReloadSocket) {
-          console.debug('[cem-serve] WebSocket client connected');
-
           // Store original onmessage handler
           const originalOnMessage = window.__cemReloadSocket.onmessage;
 

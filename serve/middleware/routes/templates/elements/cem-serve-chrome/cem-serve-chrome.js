@@ -151,7 +151,6 @@ export class CemServeChrome extends CemElement {
     badgeFadeDelay: 2000,
     callbacks: {
       onOpen: () => {
-        console.debug('[cem-serve] WebSocket connected');
         // Clear any reconnecting/restarting alerts
         this.#clearConnectionAlerts();
 
@@ -161,9 +160,6 @@ export class CemServeChrome extends CemElement {
         }
         this.#hasConnected = true;
         this.#$('#reconnection-modal')?.close();
-      },
-      onClose: () => {
-        console.debug('[cem-serve] Connection closed');
       },
       onError: (errorData) => {
         // Handle both WebSocket errors and server error messages
@@ -177,17 +173,14 @@ export class CemServeChrome extends CemElement {
         }
       },
       onReconnecting: ({ attempt, delay }) => {
-        console.debug(`[cem-serve] Reconnecting in ${Math.ceil(delay/1000)}s (attempt #${attempt})...`);
         this.#showConnectionAlert('warning', 'Reconnecting');
-
         // Show modal after threshold
         if (attempt >= 15) {
           this.#$('#reconnection-modal')?.showModal();
           this.#$('#reconnection-content')?.updateRetryInfo(attempt, delay);
         }
       },
-      onReload: (data) => {
-        console.debug('[cem-serve] Reloading page:', data.reason, data.files);
+      onReload: () => {
         // Hide error overlay on reload (error was fixed)
         const errorOverlay = this.#$('#error-overlay');
         if (errorOverlay?.hasAttribute('open')) {
@@ -196,7 +189,6 @@ export class CemServeChrome extends CemElement {
         window.location.reload();
       },
       onShutdown: () => {
-        console.log('[cem-serve] Server shutting down gracefully');
         this.#showConnectionAlert('info', 'Server Restarting');
         this.#$('#reconnection-modal')?.showModal();
         this.#$('#reconnection-content')?.updateRetryInfo(30, 30000);
@@ -261,8 +253,6 @@ export class CemServeChrome extends CemElement {
     requestIdleCallback(() => {
       CemServeChrome.#connectionAlertTemplate.content.cloneNode(true);
     });
-
-    console.debug('[cem-serve-chrome] Demo chrome initialized for', this.primaryTagName);
   }
 
   async #fetchDebugInfo() {
@@ -887,7 +877,6 @@ Generated: ${new Date().toISOString()}`;
     // Find the demo element
     const demo = this.demo;
     if (!demo) {
-      console.warn('[cem-serve-chrome] No demo element found');
       return;
     }
 
