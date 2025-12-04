@@ -21,8 +21,6 @@ import '/__cem/elements/pf-v6-menu-item/pf-v6-menu-item.js';
 export class PfV6Dropdown extends CemElement {
   static is = 'pf-v6-dropdown';
 
-  static shadowRootOptions = { mode: 'open' };
-
   static observedAttributes = [
     'expanded',
     'disabled',
@@ -132,27 +130,16 @@ export class PfV6Dropdown extends CemElement {
   #updateExpanded() {
     this.#updateToggleAria();
 
+    if (this.#menuContainer) {
+      this.#menuContainer.hidden = !this.expanded;
+    }
+    // Dispatch expand/collapse event
+    this.dispatchEvent(new Event(this.expanded? 'expand' : 'collapse', { bubbles: true }));
     if (this.expanded) {
-      // Show menu
-      if (this.#menuContainer) {
-        this.#menuContainer.style.display = 'block';
-      }
-
       // Focus first menu item after DOM update
       requestAnimationFrame(() => {
         this.#menu?.focusFirstItem();
       });
-
-      // Dispatch expand event
-      this.dispatchEvent(new Event('expand', { bubbles: true }));
-    } else {
-      // Hide menu
-      if (this.#menuContainer) {
-        this.#menuContainer.style.display = 'none';
-      }
-
-      // Dispatch collapse event
-      this.dispatchEvent(new Event('collapse', { bubbles: true }));
     }
   }
 

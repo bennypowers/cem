@@ -35,14 +35,19 @@
   transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
-    background: var(--pf-t--global--background--color--primary--default);
-    color: var(--pf-t--global--text--color--regular);
+    background: var(--pf-t--global--background--color--primary--hover);
+    color: var(--pf-t--global--icon--color--regular);
   }
 }
 
 .toggle-option input[type="radio"]:checked + .toggle-label {
   background: var(--pf-t--global--color--brand--default);
-  color: var(--pf-t--global--text--color--on-brand);
+  color: var(--pf-t--global--icon--color--on-brand--default);
+
+  &:hover {
+    background: var(--pf-t--global--color--brand--hover);
+    color: var(--pf-t--global--icon--color--on-brand--hover);
+  }
 }
 
 .toggle-option input[type="radio"]:focus-visible + .toggle-label {
