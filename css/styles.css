@@ -224,6 +224,7 @@ a {
 }
 
 docs-sidebar {
+  background-color: var(--color-accent);
   li ul {
     margin-inline-start: .5em;
   }
@@ -1054,6 +1055,10 @@ code-highlighter {
   display: block;
 }
 
+.goat svg {
+  font-family: 'Roboto Mono', monospace !important;
+}
+
 /* Custom Page Styles */
 .page-home {
   .main {
@@ -1340,4 +1345,71 @@ code-highlighter .language-shell .line:first-of-type .cl::before {
   color: light-dark(oklch(from #1a5fb4 calc(l * 0.7) calc(c * 0.8) h), var(--color-text-muted));
   user-select: none;
 }
+
+
+
+/* Documentation Landing Page Grid */
+
+
+
+.doc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+  list-style: none;
+  padding: 0;
+
+  .doc-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background: var(--color-overlay);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    height: 100%;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px var(--color-shadow-light);
+      border-color: var(--color-theme);
+      text-decoration: none;
+    }
+
+    .doc-card-icon {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 1rem;
+      /* Ensure SVGs render nicely */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+    }
+
+    h3 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.2rem;
+      color: var(--color-text);
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--color-text-muted);
+      line-height: 1.4;
+    }
+  }
+}
+
 
