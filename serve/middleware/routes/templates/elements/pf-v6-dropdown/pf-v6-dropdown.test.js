@@ -120,7 +120,7 @@ describe('pf-v6-dropdown', () => {
 
     it('shows menu container', () => {
       const menuContainer = el.shadowRoot.getElementById('menu-container');
-      expect(menuContainer.style.display).to.equal('block');
+      expect(menuContainer.hidden).to.be.false
     });
 
     it('sets aria-expanded to true', () => {

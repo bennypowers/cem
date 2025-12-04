@@ -340,7 +340,7 @@ describe('pf-v6-menu', () => {
       expect(items[2].getAttribute('tabindex')).to.equal('0');
     });
 
-    it.only('simulates checkbox menu interaction', async () => {
+    it('simulates checkbox menu interaction', async () => {
       const el = await fixture(`
         <pf-v6-menu label="Log level filters">
           <pf-v6-menu-item variant="checkbox" value="info" checked></pf-v6-menu-item>
