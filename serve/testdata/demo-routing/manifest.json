@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/my-element.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "name": "MyElement",
+          "tagName": "my-element",
+          "demos": [
+            {
+              "description": "Basic Demo",
+              "url": "./demo/basic.html"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

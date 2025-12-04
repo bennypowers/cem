@@ -1,0 +1,8 @@
+/* PatternFly v6 Nav List Styles */
+
+:host {
+  display: grid;
+  row-gap: var(--pf-v6-c-nav__list--RowGap, var(--pf-t--global--spacer--sm));
+  column-gap: var(--pf-v6-c-nav__list--ColumnGap, var(--pf-t--global--spacer--xs));
+  min-height: 0;
+}

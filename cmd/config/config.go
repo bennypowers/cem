@@ -54,6 +54,36 @@ type MCPConfig struct {
 	MaxDescriptionLength int `mapstructure:"maxDescriptionLength" yaml:"maxDescriptionLength"`
 }
 
+type ServeConfig struct {
+	// Port to run the development server on (default: 8000)
+	Port int `mapstructure:"port" yaml:"port"`
+	// Whether to automatically open browser on server start
+	OpenBrowser bool `mapstructure:"openBrowser" yaml:"openBrowser"`
+	// Transform configuration
+	Transforms TransformsConfig `mapstructure:"transforms" yaml:"transforms"`
+}
+
+type TransformsConfig struct {
+	TypeScript TypeScriptTransformConfig `mapstructure:"typescript" yaml:"typescript"`
+	CSS        CSSTransformConfig        `mapstructure:"css" yaml:"css"`
+}
+
+type TypeScriptTransformConfig struct {
+	// Enable TypeScript transformation (default: true)
+	Enabled bool `mapstructure:"enabled" yaml:"enabled"`
+	// Transform target (e.g., "es2022", "es2020") - overridden by --target flag
+	Target string `mapstructure:"target" yaml:"target"`
+}
+
+type CSSTransformConfig struct {
+	// Enable CSS transformation (default: true)
+	Enabled bool `mapstructure:"enabled" yaml:"enabled"`
+	// Glob patterns for CSS files to include (default: all .css files)
+	Include []string `mapstructure:"include" yaml:"include"`
+	// Glob patterns for CSS files to exclude
+	Exclude []string `mapstructure:"exclude" yaml:"exclude"`
+}
+
 type CemConfig struct {
 	ProjectDir string `mapstructure:"projectDir" yaml:"projectDir"`
 	ConfigFile string `mapstructure:"configFile" yaml:"configFile"`
@@ -63,6 +93,8 @@ type CemConfig struct {
 	Generate GenerateConfig `mapstructure:"generate" yaml:"generate"`
 	// MCP server options
 	MCP MCPConfig `mapstructure:"mcp" yaml:"mcp"`
+	// Serve command options
+	Serve ServeConfig `mapstructure:"serve" yaml:"serve"`
 	// Canonical public source control URL corresponding to project root on primary branch.
 	// e.g. https://github.com/bennypowers/cem/tree/main/
 	SourceControlRootUrl string `mapstructure:"sourceControlRootUrl" yaml:"sourceControlRootUrl"`

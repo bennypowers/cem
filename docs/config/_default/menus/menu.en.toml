@@ -6,11 +6,5 @@
   pageRef = "/docs/commands/"
   identifier = "commands"
 [[main]]
-  name = "LSP"
-  pageRef = "/docs/lsp/"
-[[main]]
-  name = "MCP"
-  pageRef = "/docs/mcp/"
-[[main]]
   name = "Configuration"
   pageRef = "/docs/configuration/"

@@ -1,27 +1,17 @@
-- Always use Makefile targets for running tests or builds, since they export the necessary env vars
+Practice TDD. When writing tests, always use the fixture/golden patterns we've established:
 
-## Performance Optimizations
+- **Fixtures**: Input test data - the content directories/files your code operates on (e.g., `serve/testdata/transforms/http-typescript/simple-greeting.ts`). Use `NewFixtureFS()` helper from `internal/platform/testutil` instead of `os.ReadFile()` to load fixtures into in-memory file systems.
+- **Goldens**: Expected output files to compare against (e.g., `serve/middleware/routes/testdata/chrome-rendering/expected-basic.html`). Tests should support `--update` flag to regenerate golden files when intentional changes occur.
 
-### Attribute/Element Lookup Maps
+Getter methods should be named Foo(), not GetFoo().
 
-The codebase uses map-based lookups for performance-critical operations in the manifest package:
+Always use Makefile targets for running tests or builds, since they export the necessary env vars.
 
-- **Attribute field lookups**: `CustomElementDeclaration.LookupAttributeField(attrName)`
-  - O(1) map lookup vs O(n) linear search through Members
-  - Lazy-initialized cache in `attributeFieldMap` field
-  - 1.2x-17.7x faster depending on member count
+When commit messages mention AI agents, always use `Assisted-By`, never use `Co-Authored-By`.
 
-- **Export lookups**: `Module.LookupCustomElementExport(name)` / `LookupJavaScriptExport(name)`
-  - O(1) map lookup vs O(n) linear search through Exports
-  - Lazy-initialized caches in `customElementExportMap` and `jsExportMap` fields
-  - 4.4x-11.4x faster for medium/large export counts
+When writing CSS, use modern native syntax including nesting, :has, layers, and light-dark()
 
-**Implementation details**:
-- Maps are `json:"-"` tagged (won't affect JSON serialization)
-- Built on-demand via lazy initialization with `sync.Once` (minimal memory overhead)
-- Thread-safe for concurrent reads and initialization
-- Helper functions exported for testing: `BuildAttributeFieldMap()`, `BuildExportMaps()`
-
-**Benchmarks**: Run `make bench-lookup` to see A/B comparison
-**Memory impact**: Negligible for small structures, beneficial for large
-**Thread safety**: Uses sync.Once to ensure safe concurrent initialization
+When writing web components (e.g. for the dev server)
+- prefer ids to classes in shadow roots for unique elements
+- don't use `class` on the host as a public api, use attributes instead
+- don't dispatch new CustomEvent with details, instead create custom classes which extend Event, and have class fields for attached state.

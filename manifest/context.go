@@ -148,6 +148,22 @@ func (x *Package) RenderableCustomElementDeclarations() (tags []*RenderableCusto
 	return tags
 }
 
+// RenderableDemos returns a slice of RenderableDemo for all demos in all custom elements.
+func (x *Package) RenderableDemos() (demos []*RenderableDemo) {
+	for i := range x.Modules {
+		module := &x.Modules[i]
+		for _, decl := range module.Declarations {
+			if ced, ok := decl.(*CustomElementDeclaration); ok && ced.TagName != "" {
+				for j := range ced.Demos {
+					demo := &ced.Demos[j]
+					demos = append(demos, NewRenderableDemo(demo, ced, module, x))
+				}
+			}
+		}
+	}
+	return demos
+}
+
 // FindCustomElementContext locates the first CustomElementDeclaration, CustomElementExport, and JavaScriptModule for a given tagName.
 func (x *Package) FindCustomElementContext(tagName string) (*CustomElementDeclaration, *CustomElementExport, *JavaScriptModule, error) {
 	for _, m := range x.Modules {
@@ -313,6 +329,19 @@ func (x *Package) TagRenderableClassMethods(tagName string) (methods []*Renderab
 		}
 	}
 	return methods, nil
+}
+
+// TagRenderableDemos returns demos for a given tag name with context.
+func (x *Package) TagRenderableDemos(tagName string) (demos []*RenderableDemo, err error) {
+	ced, _, m, err := x.FindCustomElementContext(tagName)
+	if err != nil {
+		return nil, err
+	}
+	for i := range ced.Demos {
+		demo := &ced.Demos[i]
+		demos = append(demos, NewRenderableDemo(demo, ced, m, x))
+	}
+	return demos, nil
 }
 
 func toTreeChildren(xs []Renderable, p PredicateFunc) (nodes []pterm.TreeNode) {

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client-Side Rendering Test</title>
+  <script type="module" src="/__cem/elements/pf-v6-button/pf-v6-button.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-switch/pf-v6-switch.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-text-input/pf-v6-text-input.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-select/pf-v6-select.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-tabs/pf-v6-tabs.js"></script>
+  <script type="module" src="/__cem/elements/pf-v6-tab/pf-v6-tab.js"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    section {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    h2 {
+      margin-top: 0;
+    }
+    .test-result {
+      margin-top: 0.5rem;
+      padding: 0.5rem;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.875rem;
+    }
+    .success {
+      background: #d4edda;
+      color: #155724;
+    }
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+  </style>
+</head>
+<body>
+  <h1>Client-Side Rendering Test</h1>
+  <p>This page tests client-side rendering by dynamically creating components without SSR.</p>
+
+  <section id="button-test">
+    <h2>pf-v6-button</h2>
+    <div id="button-container"></div>
+    <div class="test-result" id="button-result">Testing...</div>
+  </section>
+
+  <section id="switch-test">
+    <h2>pf-v6-switch</h2>
+    <div id="switch-container"></div>
+    <div class="test-result" id="switch-result">Testing...</div>
+  </section>
+
+  <section id="text-input-test">
+    <h2>pf-v6-text-input</h2>
+    <div id="text-input-container"></div>
+    <div class="test-result" id="text-input-result">Testing...</div>
+  </section>
+
+  <section id="select-test">
+    <h2>pf-v6-select</h2>
+    <div id="select-container"></div>
+    <div class="test-result" id="select-result">Testing...</div>
+  </section>
+
+  <section id="tabs-test">
+    <h2>pf-v6-tabs + pf-v6-tab</h2>
+    <div id="tabs-container"></div>
+    <div class="test-result" id="tabs-result">Testing...</div>
+  </section>
+
+  <script type="module">
+    async function testComponent(name, containerId, resultId, createElement) {
+      const container = document.getElementById(containerId);
+      const resultDiv = document.getElementById(resultId);
+
+      try {
+        // Create component dynamically (client-side rendering)
+        const element = createElement();
+        container.appendChild(element);
+
+        // Wait for component to render
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Check if shadow root exists and has content
+        if (!element.shadowRoot) {
+          throw new Error('Shadow root not created');
+        }
+
+        if (!element.shadowRoot.innerHTML.trim()) {
+          throw new Error('Shadow root is empty');
+        }
+
+        // Check for error messages in shadow root
+        if (element.shadowRoot.innerHTML.includes('template failed to load')) {
+          throw new Error('Template failed to load');
+        }
+
+        resultDiv.textContent = `✓ ${name} rendered successfully`;
+        resultDiv.className = 'test-result success';
+      } catch (error) {
+        resultDiv.textContent = `✗ ${name} failed: ${error.message}`;
+        resultDiv.className = 'test-result error';
+      }
+    }
+
+    // Wait for all components to be defined
+    await Promise.all([
+      customElements.whenDefined('pf-v6-button'),
+      customElements.whenDefined('pf-v6-switch'),
+      customElements.whenDefined('pf-v6-text-input'),
+      customElements.whenDefined('pf-v6-select'),
+      customElements.whenDefined('pf-v6-tabs'),
+      customElements.whenDefined('pf-v6-tab'),
+    ]);
+
+    // Test pf-v6-button
+    testComponent('pf-v6-button', 'button-container', 'button-result', () => {
+      const btn = document.createElement('pf-v6-button');
+      btn.textContent = 'Test Button';
+      return btn;
+    });
+
+    // Test pf-v6-switch
+    testComponent('pf-v6-switch', 'switch-container', 'switch-result', () => {
+      const sw = document.createElement('pf-v6-switch');
+      sw.setAttribute('label', 'Test Switch');
+      return sw;
+    });
+
+    // Test pf-v6-text-input
+    testComponent('pf-v6-text-input', 'text-input-container', 'text-input-result', () => {
+      const input = document.createElement('pf-v6-text-input');
+      input.setAttribute('placeholder', 'Test Input');
+      return input;
+    });
+
+    // Test pf-v6-select
+    testComponent('pf-v6-select', 'select-container', 'select-result', () => {
+      const select = document.createElement('pf-v6-select');
+      select.setAttribute('options', 'Option 1,Option 2,Option 3');
+      return select;
+    });
+
+    // Test pf-v6-tabs + pf-v6-tab
+    testComponent('pf-v6-tabs', 'tabs-container', 'tabs-result', () => {
+      const tabs = document.createElement('pf-v6-tabs');
+
+      const tab1 = document.createElement('pf-v6-tab');
+      tab1.setAttribute('title', 'Tab 1');
+      tab1.textContent = 'Content 1';
+
+      const tab2 = document.createElement('pf-v6-tab');
+      tab2.setAttribute('title', 'Tab 2');
+      tab2.textContent = 'Content 2';
+
+      tabs.appendChild(tab1);
+      tabs.appendChild(tab2);
+
+      return tabs;
+    });
+  </script>
+</body>
+</html>

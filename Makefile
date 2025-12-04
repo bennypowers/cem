@@ -3,13 +3,23 @@ SHELL := /bin/bash
 CONTRIBUTING_PATH = docs/content/docs/contributing.md
 WINDOWS_CC_IMAGE := cem-windows-cc-image
 
-# Use Go 1.25 toolchain automatically with JSON v2 experiment
-export GOEXPERIMENT := jsonv2
-
 # Extract version from goals if present (e.g., "make release v0.6.6" or "make release patch")
 VERSION ?= $(filter v% patch minor major,$(MAKECMDGOALS))
 
-.PHONY: build test test-unit test-e2e update watch bench bench-lookup profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major
+# Use Go 1.25 toolchain automatically with JSON v2 experiment
+export GOEXPERIMENT := jsonv2
+
+# Workaround for Gentoo Linux "hole in findfunctab" error with race detector
+# See: https://bugs.gentoo.org/961618
+# Gentoo's Go build has issues with the race detector and internal linker.
+# Using external linker resolves the issue.
+ifeq ($(shell test -f /etc/gentoo-release && echo yes),yes)
+    RACE_LDFLAGS := -ldflags="-linkmode=external"
+else
+    RACE_LDFLAGS :=
+endif
+
+.PHONY: all build test test-unit test-e2e test-frontend test-frontend-watch test-frontend-update install-frontend update watch bench bench-lookup profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major
 
 # NOTE: this is a non-traditional install target, which installs to ~/.local/bin/
 # It's mostly intended for local development, not for distribution
@@ -57,12 +67,67 @@ generate:
 install-bindings: generate
 
 test-unit: generate
-	gotestsum -- -race ./...
+	gotestsum -- -race $(RACE_LDFLAGS) ./...
 
 test-e2e: generate
-	gotestsum -- -race -tags=e2e ./cmd/
+	gotestsum -- -race $(RACE_LDFLAGS) -tags=e2e ./cmd/
 
-test: test-unit test-e2e
+install-frontend:
+	cd serve && npm ci
+
+test-frontend: install-frontend build
+	@set -e; \
+	WORKDIR=$$(pwd); \
+	PIDFILE=$$(mktemp); \
+	LOGFILE=$$(mktemp); \
+	cleanup() { \
+		if [ -f "$$PIDFILE" ] && [ -s "$$PIDFILE" ]; then \
+			PID=$$(cat "$$PIDFILE"); \
+			if [ -n "$$PID" ] && kill -0 "$$PID" 2>/dev/null; then \
+				if ps -p "$$PID" -o comm= 2>/dev/null | grep -q '^cem$$'; then \
+					echo "Stopping cem serve (PID $$PID)..."; \
+					kill "$$PID" 2>/dev/null || true; \
+					sleep 0.5; \
+					kill -0 "$$PID" 2>/dev/null && kill -9 "$$PID" 2>/dev/null || true; \
+				fi; \
+			fi; \
+		fi; \
+		rm -f "$$PIDFILE" "$$LOGFILE"; \
+	}; \
+	trap cleanup EXIT INT TERM; \
+	echo "Starting cem serve on port 9876 for tests..."; \
+	cd serve/testdata/demo-routing && ../../../dist/cem serve --port 9876 > "$$LOGFILE" 2>&1 & echo $$! > "$$PIDFILE"; \
+	cd "$$WORKDIR"; \
+	echo "Waiting for server to be ready..."; \
+	TIMEOUT=30; \
+	ELAPSED=0; \
+	while [ $$ELAPSED -lt $$TIMEOUT ]; do \
+		if nc -z localhost 9876 2>/dev/null || \
+		   (command -v curl >/dev/null 2>&1 && curl -s http://localhost:9876 >/dev/null 2>&1); then \
+			echo "Server is ready."; \
+			break; \
+		fi; \
+		sleep 0.5; \
+		ELAPSED=$$((ELAPSED + 1)); \
+	done; \
+	if [ $$ELAPSED -ge $$TIMEOUT ]; then \
+		echo "ERROR: Server failed to start within $${TIMEOUT}s"; \
+		echo "Server log:"; \
+		cat "$$LOGFILE"; \
+		exit 1; \
+	fi; \
+	echo "Running frontend tests..."; \
+	cd serve && npm test; \
+	TEST_EXIT=$$?; \
+	exit $$TEST_EXIT
+
+test-frontend-watch: install-frontend
+	cd serve && npm run test:watch
+
+test-frontend-update: install-frontend
+	cd serve && npm run test:update
+
+test: test-unit test-e2e test-frontend
 
 # Flexible test target that accepts TEST_ARGS for filtering
 # Usage: make test-pkg TEST_ARGS="-v ./lsp/methods/textDocument/definition/ -run TestDefinition"
@@ -71,10 +136,11 @@ test-pkg:
 		echo "Usage: make test-pkg TEST_ARGS=\"-v ./path/to/package/ -run TestName\""; \
 		exit 1; \
 	fi
-	go test -race $(TEST_ARGS)
+	go test -race $(RACE_LDFLAGS) $(TEST_ARGS)
 
 update:
-	go test -race -json ./... --update | go tool tparse -all
+	go test -race $(RACE_LDFLAGS) -json ./... --update | go tool tparse -all
+	make test-frontend-update
 
 lint:
 	golangci-lint run

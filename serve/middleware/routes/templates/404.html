@@ -1,0 +1,23 @@
+<div style="text-align: center; padding: var(--cem-dev-server-spacing-xl);">
+  <h1 style="font-size: 4rem; margin: 0; color: var(--cem-dev-server-text-muted);">404</h1>
+  <p style="font-size: var(--cem-dev-server-font-size-lg); color: var(--cem-dev-server-text-secondary); margin: var(--cem-dev-server-spacing-md) 0;">
+    Page not found: <code style="background: var(--cem-dev-server-bg-tertiary); padding: var(--cem-dev-server-spacing-xs) var(--cem-dev-server-spacing-sm); border-radius: 3px;">{{.RequestedPath}}</code>
+  </p>
+
+  {{if .Suggestions}}
+  <h2 style="margin-top: var(--cem-dev-server-spacing-xl);">Did you mean?</h2>
+  <ul style="list-style: none; padding: 0; margin: var(--cem-dev-server-spacing-md) 0;">
+    {{range .Suggestions}}
+    <li style="margin-bottom: var(--cem-dev-server-spacing-sm);">
+      <a href="{{.URL}}" style="color: var(--cem-dev-server-accent-color); text-decoration: none; padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md); background: var(--cem-dev-server-bg-tertiary); border-radius: var(--cem-dev-server-border-radius); display: block; transition: background 0.2s;">
+        <code>&lt;{{.TagName}}&gt;</code> - {{.DemoName}}
+      </a>
+    </li>
+    {{end}}
+  </ul>
+  {{end}}
+
+  <p style="margin-top: var(--cem-dev-server-spacing-xl);">
+    <a href="/" style="color: var(--cem-dev-server-accent-color); text-decoration: none;">← Back to home</a>
+  </p>
+</div>

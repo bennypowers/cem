@@ -1,0 +1,126 @@
+:host {
+  /* CSS custom properties from upstream .pf-v6-c-menu__list-item and .pf-v6-c-menu__item */
+  --pf-v6-c-menu__list-item--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-menu__list-item--BackgroundColor: var(--pf-t--global--background--color--action--plain--default);
+  --pf-v6-c-menu__list-item--BorderWidth: var(--pf-t--global--border--width--action--plain--default);
+  --pf-v6-c-menu__list-item--hover--BorderWidth: var(--pf-t--global--border--width--action--plain--hover);
+  --pf-v6-c-menu__list-item--BorderColor: var(--pf-t--global--border--color--high-contrast);
+  --pf-v6-c-menu__list-item--TransitionDuration: var(--pf-t--global--motion--duration--fade--short);
+  --pf-v6-c-menu__list-item--TransitionTimingFunction: var(--pf-t--global--motion--timing-function--default);
+  --pf-v6-c-menu__list-item--TransitionProperty: background-color;
+  --pf-v6-c-menu__list-item--hover--BackgroundColor: var(--pf-t--global--background--color--action--plain--hover);
+  --pf-v6-c-menu__item--PaddingBlockStart: var(--pf-t--global--spacer--sm);
+  --pf-v6-c-menu__item--PaddingBlockEnd: var(--pf-t--global--spacer--sm);
+  --pf-v6-c-menu__item--PaddingInlineStart: var(--pf-t--global--spacer--lg);
+  --pf-v6-c-menu__item--PaddingInlineEnd: var(--pf-t--global--spacer--lg);
+  --pf-v6-c-menu__item--FontSize: var(--pf-t--global--font--size--body--default);
+  --pf-v6-c-menu__item--LineHeight: var(--pf-t--global--font--line-height--body);
+  --pf-v6-c-menu__item--FontWeight: var(--pf-t--global--font--weight--body--default);
+  --pf-v6-c-menu__item--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-menu__item--BackgroundColor: var(--pf-t--global--background--color--action--plain--default);
+  --pf-v6-c-menu__item--m-disabled--Color: var(--pf-t--global--text--color--disabled);
+  --pf-v6-c-menu__item-main--ColumnGap: var(--pf-t--global--spacer--sm);
+  --pf-v6-c-menu__item-description--FontSize: var(--pf-t--global--font--size--body--sm);
+  --pf-v6-c-menu__item-description--Color: var(--pf-t--global--text--color--subtle);
+  --pf-v6-c-menu--OutlineOffset: calc(var(--pf-t--global--border--width--control--default) * -3);
+
+  /* Layout - merging list-item and item styles */
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+  padding-block-start: var(--pf-v6-c-menu__item--PaddingBlockStart);
+  padding-block-end: var(--pf-v6-c-menu__item--PaddingBlockEnd);
+  padding-inline-start: var(--pf-v6-c-menu__item--PaddingInlineStart);
+  padding-inline-end: var(--pf-v6-c-menu__item--PaddingInlineEnd);
+  font-size: var(--pf-v6-c-menu__item--FontSize);
+  font-weight: var(--pf-v6-c-menu__item--FontWeight);
+  line-height: var(--pf-v6-c-menu__item--LineHeight);
+  color: var(--pf-v6-c-menu__item--Color);
+  text-align: start;
+  text-decoration-line: none;
+  background-color: transparent;
+  border: 0;
+  outline-offset: var(--pf-v6-c-menu--OutlineOffset);
+  cursor: pointer;
+  user-select: none;
+  transition-timing-function: var(--pf-v6-c-menu__list-item--TransitionTimingFunction);
+  transition-duration: var(--pf-v6-c-menu__list-item--TransitionDuration);
+  transition-property: var(--pf-v6-c-menu__list-item--TransitionProperty);
+}
+
+/* Background pseudo-element (from .pf-v6-c-menu__list-item::before) */
+:host::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background-color: var(--pf-v6-c-menu__list-item--BackgroundColor);
+  border-block-start: var(--pf-v6-c-menu__list-item--BorderWidth) solid var(--pf-v6-c-menu__list-item--BorderColor);
+  border-block-end: var(--pf-v6-c-menu__list-item--BorderWidth) solid var(--pf-v6-c-menu__list-item--BorderColor);
+  transition: inherit;
+}
+
+/* Hover/focus states */
+:host(:hover:not([disabled])),
+:host(:focus-visible) {
+  --pf-v6-c-menu__list-item--BackgroundColor: var(--pf-v6-c-menu__list-item--hover--BackgroundColor);
+  --pf-v6-c-menu__list-item--BorderWidth: var(--pf-v6-c-menu__list-item--hover--BorderWidth);
+}
+
+:host(:focus-visible) {
+  outline: 2px solid var(--pf-t--global--color--brand--default);
+  outline-offset: -2px;
+}
+
+/* Disabled state */
+:host([disabled]) {
+  --pf-v6-c-menu__item--Color: var(--pf-v6-c-menu__item--m-disabled--Color);
+  --pf-v6-c-menu__list-item--BackgroundColor: transparent;
+  --pf-v6-c-menu__list-item--hover--BackgroundColor: transparent;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Shadow DOM elements - using IDs */
+#check,
+#text,
+#description {
+  position: relative;
+  z-index: 1;
+}
+
+/* Checkbox spacing (from .pf-v6-c-menu__item-main) */
+#check {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+
+  /* Reset checkbox translateY (from .pf-v6-c-menu__item-check .pf-v6-c-check) */
+  & .pf-v6-c-check {
+    --pf-v6-c-check__input--TranslateY: none;
+  }
+}
+
+#text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-grow: 1;
+}
+
+#description {
+  display: block;
+  font-size: var(--pf-v6-c-menu__item-description--FontSize);
+  color: var(--pf-v6-c-menu__item-description--Color);
+  word-break: break-word;
+  margin-block-start: 0.25rem;
+}
+
+/* Main content uses column gap */
+:host {
+  gap: var(--pf-v6-c-menu__item-main--ColumnGap);
+}
+
+slot {
+  display: inline;
+}

@@ -1,0 +1,102 @@
+:host {
+  display: flex;
+  flex-direction: column;
+}
+
+#resize-handle {
+  height: 4px;
+  width: 100%;
+  cursor: ns-resize;
+  background: transparent;
+  position: relative;
+  display: none;
+
+  :host([open]) & {
+    display: block;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 4px;
+    background: var(--pf-t--global--border--color--default);
+    border-radius: var(--pf-t--global--border--radius--small);
+    transition: background-color var(--pf-t--global--motion--duration--fade--short) var(--pf-t--global--motion--timing-function--default);
+  }
+
+  &:hover::before,
+  &:active::before {
+    background: var(--pf-t--global--color--brand--default);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--pf-t--global--color--brand--default);
+    outline-offset: 2px;
+  }
+
+  &:focus-visible::before {
+    background: var(--pf-t--global--color--brand--default);
+  }
+}
+
+#toggle {
+  background: var(--pf-t--global--background--color--action--plain--default);
+  border: var(--pf-t--global--border--width--action--plain--hover) solid transparent;
+  border-radius: var(--pf-t--global--border--radius--small);
+  color: var(--pf-t--global--text--color--subtle);
+  padding: var(--pf-t--global--spacer--xs) var(--pf-t--global--spacer--sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  transition:
+    background-color var(--pf-t--global--motion--duration--fade--short) var(--pf-t--global--motion--timing-function--default),
+    color var(--pf-t--global--motion--duration--fade--short) var(--pf-t--global--motion--timing-function--default),
+    transform var(--pf-t--global--motion--duration--fade--short) var(--pf-t--global--motion--timing-function--default);
+
+  &:hover {
+    background: var(--pf-t--global--background--color--action--plain--hover);
+    color: var(--pf-t--global--text--color--regular);
+    border-color: var(--pf-t--global--border--color--high-contrast);
+  }
+
+  & svg {
+    rotate: 180deg;
+    transition: rotate var(--pf-t--global--motion--duration--md) var(--pf-t--global--motion--timing-function--decelerate);
+  }
+
+  :host([open]) & svg {
+    rotate: 0deg;
+  }
+}
+
+#content {
+  view-transition-name: dev-server-drawer;
+  height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  contain: layout style paint;
+
+  &.transitions-enabled {
+    transition:
+      height var(--pf-t--global--motion--duration--slide-in--short) var(--pf-t--global--motion--timing-function--decelerate),
+      opacity var(--pf-t--global--motion--duration--fade--default) var(--pf-t--global--motion--timing-function--default);
+  }
+
+  &.resizing {
+    will-change: height;
+    contain: layout style paint size;
+  }
+
+  :host([open]) & {
+    opacity: 1;
+  }
+}
+

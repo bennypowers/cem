@@ -1,0 +1,43 @@
+{{if or .Attributes.Expandable .Attributes.ToggleText}}
+<pf-v6-button id="toggle-button"
+              part="toggle-button"
+              variant="plain"
+              aria-expanded="{{if .Attributes.Expanded}}true{{else}}false{{end}}"
+              {{if .Attributes.ToggleText}}aria-labelledby="header-title-text"{{end}}
+              aria-controls="body"
+              aria-label="Details">
+  <svg viewBox="0 0 256 512"
+       fill="currentColor"
+       role="presentation"
+       width="1em"
+       height="1em">
+    <path d="M224.3 273l-136 136c-9.4 9.4-24.6 9.4-33.9 0l-22.6-22.6c-9.4-9.4-9.4-24.6 0-33.9l96.4-96.4-96.4-96.4c-9.4-9.4-9.4-24.6 0-33.9L54.3 103c9.4-9.4 24.6-9.4 33.9 0l136 136c9.5 9.4 9.5 24.6.1 34z"></path>
+  </svg>
+</pf-v6-button>
+{{end}}
+{{if or .Attributes.ToggleText .Attributes.Description}}
+<div id="header" part="header">
+  <div id="header-main">
+    {{if .Attributes.ToggleText}}
+    <div id="header-title">
+      <div id="header-title-text">
+        <span id="toggle-text-default">{{.Attributes.ToggleText}}</span>
+      </div>
+    </div>
+    {{end}}
+    {{if .Attributes.Description}}
+    <div id="header-description">
+      {{.Attributes.Description}}
+    </div>
+    {{end}}
+  </div>
+  <div id="header-actions">
+    <slot name="header-actions"></slot>
+  </div>
+</div>
+{{end}}
+<div id="body"
+     part="body"
+     {{if and .Attributes.Expandable (not .Attributes.Expanded)}}inert{{end}}>
+  <slot></slot>
+</div>

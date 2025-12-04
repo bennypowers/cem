@@ -1,0 +1,202 @@
+/* PatternFly v6 Modal Styles */
+
+:host {
+  display: block;
+
+  /* Modal box */
+  --pf-v6-c-modal-box--BackgroundColor: var(--pf-t--global--background--color--floating--default);
+  --pf-v6-c-modal-box--BorderColor: var(--pf-t--global--border--color--high-contrast);
+  --pf-v6-c-modal-box--BorderWidth: var(--pf-t--global--border--width--high-contrast--regular);
+  --pf-v6-c-modal-box--BorderRadius: var(--pf-t--global--border--radius--large);
+  --pf-v6-c-modal-box--BoxShadow: var(--pf-t--global--box-shadow--lg);
+  --pf-v6-c-modal-box--ZIndex: var(--pf-t--global--z-index--xl);
+  --pf-v6-c-modal-box--Width: 100%;
+  --pf-v6-c-modal-box--MaxWidth: calc(100% - var(--pf-t--global--spacer--xl));
+  --pf-v6-c-modal-box--m-sm--MaxWidth: 35rem;
+  --pf-v6-c-modal-box--m-md--Width: 52.5rem;
+  --pf-v6-c-modal-box--m-lg--MaxWidth: 70rem;
+  --pf-v6-c-modal-box--MaxHeight: calc(100% - var(--pf-t--global--spacer--2xl));
+
+  /* Align top position */
+  --pf-v6-c-modal-box--m-align-top--spacer: var(--pf-t--global--spacer--sm);
+  --pf-v6-c-modal-box--m-align-top--InsetBlockStart: var(--pf-v6-c-modal-box--m-align-top--spacer);
+  --pf-v6-c-modal-box--m-align-top--MaxHeight: calc(100% - min(var(--pf-v6-c-modal-box--m-align-top--spacer), var(--pf-t--global--spacer--2xl)) - var(--pf-v6-c-modal-box--m-align-top--spacer));
+  --pf-v6-c-modal-box--m-align-top--MaxWidth: calc(100% - min(var(--pf-v6-c-modal-box--m-align-top--spacer) * 2, var(--pf-t--global--spacer--xl)));
+
+  /* Header */
+  --pf-v6-c-modal-box__header--PaddingBlockStart: var(--pf-t--global--spacer--lg);
+  --pf-v6-c-modal-box__header--PaddingBlockEnd: var(--pf-t--global--spacer--sm);
+  --pf-v6-c-modal-box__header--PaddingInlineEnd: var(--pf-t--global--spacer--lg);
+  --pf-v6-c-modal-box__header--PaddingInlineStart: var(--pf-t--global--spacer--lg);
+  --pf-v6-c-modal-box__header--Gap: var(--pf-t--global--spacer--md);
+
+  /* Header main */
+  --pf-v6-c-modal-box__header-main--Gap: var(--pf-t--global--spacer--md);
+  --pf-v6-c-modal-box__header-main--PaddingBlockStart: var(--pf-t--global--spacer--control--vertical--default);
+
+  /* Title */
+  --pf-v6-c-modal-box__title--LineHeight: var(--pf-t--global--font--line-height--heading);
+  --pf-v6-c-modal-box__title--FontFamily: var(--pf-t--global--font--family--heading);
+  --pf-v6-c-modal-box__title--FontWeight: var(--pf-t--global--font--weight--heading--default);
+  --pf-v6-c-modal-box__title--FontSize: var(--pf-t--global--font--size--heading--md);
+
+  /* Description */
+  --pf-v6-c-modal-box__description--FontSize: var(--pf-t--global--font--size--body--sm);
+  --pf-v6-c-modal-box__description--Color: var(--pf-t--global--text--color--subtle);
+
+  /* Body */
+  --pf-v6-c-modal-box__body--MinHeight: calc(var(--pf-t--global--font--size--body--default) * var(--pf-t--global--font--line-height--body));
+  --pf-v6-c-modal-box__body--PaddingBlockStart: var(--pf-t--global--spacer--lg);
+  --pf-v6-c-modal-box__body--PaddingInlineEnd: var(--pf-t--global--spacer--lg);
+  --pf-v6-c-modal-box__body--PaddingInlineStart: var(--pf-t--global--spacer--lg);
+  --pf-v6-c-modal-box__body--PaddingBlockEnd: var(--pf-t--global--spacer--lg);
+  --pf-v6-c-modal-box__header--body--PaddingBlockStart: var(--pf-t--global--spacer--sm);
+
+  /* Close button */
+  --pf-v6-c-modal-box__close--InsetBlockStart: var(--pf-v6-c-modal-box__header--PaddingBlockStart);
+  --pf-v6-c-modal-box__close--InsetInlineEnd: var(--pf-v6-c-modal-box__header--PaddingInlineEnd);
+
+  /* Footer */
+  --pf-v6-c-modal-box__footer--PaddingBlockStart: var(--pf-t--global--spacer--lg);
+  --pf-v6-c-modal-box__footer--PaddingInlineEnd: var(--pf-t--global--spacer--lg);
+  --pf-v6-c-modal-box__footer--PaddingBlockEnd: var(--pf-t--global--spacer--lg);
+  --pf-v6-c-modal-box__footer--PaddingInlineStart: var(--pf-t--global--spacer--lg);
+  --pf-v6-c-modal-box__footer--Gap: var(--pf-t--global--spacer--md);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+@media (min-width: 1200px) {
+  :host {
+    --pf-v6-c-modal-box--m-align-top--spacer: var(--pf-t--global--spacer--xl);
+  }
+}
+
+/* Native dialog element */
+dialog {
+  position: fixed;
+  inset: 0;
+  z-index: var(--pf-v6-c-modal-box--ZIndex);
+  width: var(--pf-v6-c-modal-box--Width);
+  max-width: min(var(--pf-v6-c-modal-box--MaxWidth), 100vw);
+  max-height: min(var(--pf-v6-c-modal-box--MaxHeight), 100vh);
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  background-color: var(--pf-v6-c-modal-box--BackgroundColor);
+  border: var(--pf-v6-c-modal-box--BorderWidth) solid var(--pf-v6-c-modal-box--BorderColor);
+  border-radius: var(--pf-v6-c-modal-box--BorderRadius);
+  box-shadow: var(--pf-v6-c-modal-box--BoxShadow);
+  /* Only apply flex layout when dialog is open */
+  &[open] {
+    display: flex;
+    flex-direction: column;
+  }
+  &::backdrop {
+    background-color: var(--pf-v6-c-backdrop--BackgroundColor, var(--pf-t--global--background--color--backdrop--default));
+  }
+  /* Variant: small */
+  :host([variant="small"]) & {
+    --pf-v6-c-modal-box--Width: var(--pf-v6-c-modal-box--m-sm--MaxWidth);
+  }
+  :host([variant="medium"]) & {
+    --pf-v6-c-modal-box--Width: var(--pf-v6-c-modal-box--m-md--Width);
+  }
+  /* Variant: large */
+  :host([variant="large"]) & {
+    --pf-v6-c-modal-box--Width: var(--pf-v6-c-modal-box--m-lg--MaxWidth);
+  }
+  /* Position: top */
+  :host([position="top"]) & {
+    margin-block-start: var(--pf-v6-c-modal-box--m-align-top--InsetBlockStart);
+    margin-block-end: auto;
+    --pf-v6-c-modal-box--MaxWidth: var(--pf-v6-c-modal-box--m-align-top--MaxWidth);
+    --pf-v6-c-modal-box--MaxHeight: var(--pf-v6-c-modal-box--m-align-top--MaxHeight);
+  }
+}
+
+/* Header */
+#header {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  padding-block-start: var(--pf-v6-c-modal-box__header--PaddingBlockStart);
+  padding-block-end: var(--pf-v6-c-modal-box__header--PaddingBlockEnd);
+  padding-inline-start: var(--pf-v6-c-modal-box__header--PaddingInlineStart);
+  padding-inline-end: var(--pf-v6-c-modal-box__header--PaddingInlineEnd);
+  gap: var(--pf-v6-c-modal-box__header--Gap);
+}
+
+#header-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pf-v6-c-modal-box__header-main--Gap);
+  padding-block-start: var(--pf-v6-c-modal-box__header-main--PaddingBlockStart);
+  flex-grow: 1;
+  min-width: 0;
+}
+
+/* Title styling */
+::slotted([slot="header"]) {
+  margin: 0 !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--pf-v6-c-modal-box__title--FontFamily);
+  font-size: var(--pf-v6-c-modal-box__title--FontSize);
+  font-weight: var(--pf-v6-c-modal-box__title--FontWeight);
+  line-height: var(--pf-v6-c-modal-box__title--LineHeight);
+}
+
+/* Description */
+#description {
+  font-size: var(--pf-v6-c-modal-box__description--FontSize);
+  color: var(--pf-v6-c-modal-box__description--Color);
+}
+
+/* Body */
+#body {
+  flex: 1 1 auto;
+  min-height: var(--pf-v6-c-modal-box__body--MinHeight);
+  padding-block-start: var(--pf-v6-c-modal-box__body--PaddingBlockStart);
+  padding-inline-end: var(--pf-v6-c-modal-box__body--PaddingInlineEnd);
+  padding-inline-start: var(--pf-v6-c-modal-box__body--PaddingInlineStart);
+  padding-block-end: var(--pf-v6-c-modal-box__body--PaddingBlockEnd);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  word-break: break-word;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Adjust body padding when header is present */
+#header:not([hidden]) ~ #body {
+  --pf-v6-c-modal-box__body--PaddingBlockStart: var(--pf-v6-c-modal-box__header--body--PaddingBlockStart);
+}
+
+/* Footer */
+#footer {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--pf-v6-c-modal-box__footer--Gap);
+  padding-block-start: var(--pf-v6-c-modal-box__footer--PaddingBlockStart);
+  padding-inline-end: var(--pf-v6-c-modal-box__footer--PaddingInlineEnd);
+  padding-block-end: var(--pf-v6-c-modal-box__footer--PaddingBlockEnd);
+  padding-inline-start: var(--pf-v6-c-modal-box__footer--PaddingInlineStart);
+}
+
+/* Close button */
+#close {
+  position: absolute;
+  inset-block-start: var(--pf-v6-c-modal-box__close--InsetBlockStart);
+  inset-inline-end: var(--pf-v6-c-modal-box__close--InsetInlineEnd);
+  & svg {
+    width: 1rem;
+    height: 1rem;
+    fill: currentColor;
+  }
+}
+

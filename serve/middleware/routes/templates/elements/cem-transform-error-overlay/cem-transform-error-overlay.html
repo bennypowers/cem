@@ -1,0 +1,16 @@
+<div id="overlay-content">
+  <div id="header">
+    <h2 id="title-container">
+      <span id="error-icon">⚠️</span>
+      <span id="title">{{if .Title}}{{.Title}}{{end}}</span>
+    </h2>
+    <pf-v6-button id="close" variant="plain">Dismiss</pf-v6-button>
+  </div>
+  <div id="body">
+    <div id="file">{{if .File}}File: {{.File}}{{end}}</div>
+    <div id="message">{{if .Message}}{{.Message}}{{end}}</div>
+  </div>
+  <div id="footer">
+    This error will automatically dismiss when the issue is fixed.
+  </div>
+</div>

@@ -10,10 +10,11 @@ The blazing-fast **CLI** tool for generating and working with
 **[Custom Elements Manifests][schema]**.
 {.subheading}
 
-Use `cem` to [generate][generate], [validate][validate], and [query][search] 
-custom elements manifests. Then, use the built-in [LSP][lsp] and [MCP][mcp]
-servers to activate powerful, AI-native editor features like hover 
-documentation, autocomplete, and more.
+Use `cem` to [generate][generate], [validate][validate], and [query][search]
+custom elements manifests. Develop with the [dev server][serve] featuring
+live reload, interactive knobs, and buildless TypeScript. Then, use the
+built-in [LSP][lsp] and [MCP][mcp] servers to activate powerful, AI-native
+editor features like hover documentation, autocomplete, and more.
 
 ```bash
 npm install --save-dev @pwrs/cem
@@ -29,5 +30,6 @@ npm install --save-dev @pwrs/cem
 [generate]: ./docs/commands/generate/
 [validate]: ./docs/commands/validate/
 [search]: ./docs/commands/search/
+[serve]: ./docs/serve/
 [lsp]: ./docs/lsp/
 [mcp]: ./docs/mcp/

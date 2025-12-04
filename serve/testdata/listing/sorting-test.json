@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/zebra.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "name": "MyZebra",
+          "tagName": "my-zebra",
+          "demos": [
+            {
+              "description": "Demo",
+              "url": "./zebra-demo.html"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/apple.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "name": "MyApple",
+          "tagName": "my-apple",
+          "demos": [
+            {
+              "description": "Demo",
+              "url": "./apple-demo.html"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/mango.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "name": "MyMango",
+          "tagName": "my-mango",
+          "demos": [
+            {
+              "description": "Demo",
+              "url": "./mango-demo.html"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/my-card.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "name": "MyCard",
+          "tagName": "my-card",
+          "attributes": [
+            {
+              "name": "variant",
+              "type": {
+                "text": "'default' | 'primary' | 'warning'"
+              },
+              "description": "Card visual variant",
+              "default": "default"
+            },
+            {
+              "name": "elevated",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Whether the card has elevation shadow"
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "title",
+              "type": {
+                "text": "string"
+              },
+              "description": "Card title"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--card-background",
+              "description": "Card background color",
+              "default": "#ffffff"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

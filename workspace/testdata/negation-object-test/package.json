@@ -1,0 +1,9 @@
+{
+  "name": "test-workspace-object",
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "!apps/internal-*"
+    ]
+  }
+}

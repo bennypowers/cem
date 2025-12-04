@@ -1,0 +1,42 @@
+:host {
+  /* CSS custom properties from upstream .pf-v6-c-menu */
+  --pf-v6-c-menu--RowGap: var(--pf-t--global--spacer--sm);
+  --pf-v6-c-menu--Width: auto;
+  --pf-v6-c-menu--MinWidth: auto;
+  --pf-v6-c-menu--PaddingBlockStart: var(--pf-t--global--spacer--sm);
+  --pf-v6-c-menu--PaddingBlockEnd: var(--pf-t--global--spacer--sm);
+  --pf-v6-c-menu--BackgroundColor: var(--pf-t--global--background--color--floating--default);
+  --pf-v6-c-menu--BoxShadow: var(--pf-t--global--box-shadow--md);
+  --pf-v6-c-menu--Color: var(--pf-t--global--text--color--regular);
+  --pf-v6-c-menu--BorderWidth: var(--pf-t--global--border--width--high-contrast--regular);
+  --pf-v6-c-menu--BorderColor: var(--pf-t--global--border--color--high-contrast);
+  --pf-v6-c-menu--BorderRadius: var(--pf-t--global--border--radius--small);
+  --pf-v6-c-menu--OutlineOffset: calc(var(--pf-t--global--border--width--control--default) * -3);
+  --pf-v6-c-menu--ZIndex: var(--pf-t--global--z-index--sm);
+  --pf-v6-c-menu--TransitionDuration: 0s;
+  --pf-v6-c-menu--TransitionTimingFunction: var(--pf-t--global--motion--timing-function--default);
+
+  @media (prefers-reduced-motion: no-preference) {
+    --pf-v6-c-menu--TransitionDuration: var(--pf-t--global--motion--duration--fade--default);
+  }
+
+  /* Layout */
+  display: grid;
+  row-gap: var(--pf-v6-c-menu--RowGap);
+  width: var(--pf-v6-c-menu--Width);
+  min-width: var(--pf-v6-c-menu--MinWidth);
+  padding-block-start: var(--pf-v6-c-menu--PaddingBlockStart);
+  padding-block-end: var(--pf-v6-c-menu--PaddingBlockEnd);
+  overflow: hidden;
+  color: var(--pf-v6-c-menu--Color);
+  background-color: var(--pf-v6-c-menu--BackgroundColor);
+  border: var(--pf-v6-c-menu--BorderWidth) solid var(--pf-v6-c-menu--BorderColor);
+  border-radius: var(--pf-v6-c-menu--BorderRadius);
+  box-shadow: var(--pf-v6-c-menu--BoxShadow);
+  transition-timing-function: var(--pf-v6-c-menu--TransitionTimingFunction) !important;
+  transition-duration: var(--pf-v6-c-menu--TransitionDuration) !important;
+}
+
+slot {
+  display: contents;
+}

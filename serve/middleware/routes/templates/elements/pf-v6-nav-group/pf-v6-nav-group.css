@@ -1,0 +1,46 @@
+/* PatternFly v6 Nav Group Styles (Expandable/Subnav) */
+
+:host {
+  display: grid;
+  max-height: 99999px;
+  padding-block-start: var(--pf-v6-c-nav__subnav--PaddingBlockStart, var(--pf-t--global--spacer--sm));
+  padding-block-end: var(--pf-v6-c-nav__subnav--PaddingBlockEnd, var(--pf-t--global--spacer--sm));
+  padding-inline-start: var(--pf-v6-c-nav__subnav--PaddingInlineStart, var(--pf-t--global--spacer--md));
+  overflow-y: clip;
+  visibility: visible;
+  opacity: 1;
+  translate: 0 var(--pf-v6-c-nav__subnav--TranslateY, 0);
+  transition: opacity var(--pf-t--global--motion--duration--fade--default) var(--pf-t--global--motion--timing-function--default),
+              translate var(--pf-t--global--motion--duration--fade--default) var(--pf-t--global--motion--timing-function--default),
+              visibility 0s 0s,
+              max-height 0s 0s,
+              padding-block-start 0s 0s,
+              padding-block-end 0s 0s;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :host {
+    --pf-v6-c-nav__subnav--TranslateY: 0;
+  }
+
+  :host([hidden]) {
+    --pf-v6-c-nav__subnav--TranslateY: var(--pf-v6-c-nav__subnav--hidden--TranslateY, -.5rem);
+  }
+}
+
+:host([hidden]) {
+  --pf-v6-c-nav__subnav--PaddingBlockStart: 0;
+  --pf-v6-c-nav__subnav--PaddingBlockEnd: 0;
+
+  display: grid;
+  max-height: 0;
+  visibility: hidden;
+  opacity: 0;
+  transition-delay: var(--pf-t--global--motion--duration--fade--default), var(--pf-t--global--motion--duration--fade--default), var(--pf-t--global--motion--duration--fade--default), var(--pf-t--global--motion--duration--fade--default), var(--pf-t--global--motion--duration--fade--default), var(--pf-t--global--motion--duration--fade--default);
+  transition-duration: var(--pf-t--global--motion--duration--fade--short), var(--pf-t--global--motion--duration--fade--short), 0s, 0s, 0s, 0s;
+}
+
+#list {
+  display: grid;
+  row-gap: var(--pf-v6-c-nav__subnav--RowGap, var(--pf-t--global--border--width--extra-strong));
+}

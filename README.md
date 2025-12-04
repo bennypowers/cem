@@ -27,6 +27,22 @@ See more in the [Generate docs][generatedocs]
 
 ---
 
+### `cem serve`
+
+The `cem serve` command starts a development server specifically for custom element development. It provides an opinionated, manifest-driven workflow with live reload, interactive knobs for testing attributes and properties, and a PatternFly-designed UI for component isolation.
+
+**Features:**
+- Live reload with WebSocket-based updates
+- Interactive knobs auto-generated from manifest
+- TypeScript transformation on-the-fly
+- Automatic import map generation
+- npm workspaces support for monorepos
+- Demo discovery from manifest `demos` field
+
+See more in the [Serve docs][servedocs]
+
+---
+
 ### `cem lsp`
 
 The `cem lsp` command starts a Language Server Protocol (LSP) server that provides intelligent IDE features for custom elements in HTML and TypeScript files. It offers contextual autocomplete, hover documentation, and other editor enhancements by analyzing your custom elements manifests.
@@ -115,6 +131,7 @@ the terms of the [GNU General Public License v3.0][gpl3].
 [listdocs]:         https://bennypowers.dev/cem/docs/commands/list/
 [searchdocs]:       https://bennypowers.dev/cem/docs/commands/search/
 [validatedocs]:     https://bennypowers.dev/cem/docs/commands/validate/
+[servedocs]:        https://bennypowers.dev/cem/docs/commands/serve/
 [lspdocs]:          https://bennypowers.dev/cem/docs/lsp/
 [mcpdocs]:          https://bennypowers.dev/cem/docs/mcp/
 [configdocs]:       https://bennypowers.dev/cem/docs/configuration/

@@ -1,0 +1,18 @@
+{{- $isCheckbox := eq .Attributes.Variant "checkbox" -}}
+{{- if $isCheckbox -}}
+<span id="check" class="pf-v6-c-check pf-m-standalone">
+  <input id="input"
+         class="pf-v6-c-check__input"
+         role="presentation"
+         tabindex="-1"
+         type="checkbox"
+         {{if .Attributes.Checked}}checked{{end}}
+         {{if .Attributes.Disabled}}disabled{{end}}>
+</span>
+{{- end}}
+<span id="text">
+  <slot></slot>
+</span>
+{{- if .Attributes.Description}}
+<span id="description">{{.Attributes.Description}}</span>
+{{- end}}

@@ -1,7 +1,7 @@
 ---
 title: Benchmarks
 description: Performance benchmarks of analyzers, generated from scripts/benchmark.sh.
-weight: 30
+weight: 22
 ---
 
 **Number of runs per tool**: {{<benchmark-runs>}}  

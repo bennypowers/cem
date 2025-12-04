@@ -1,0 +1,20 @@
+<div class="component">
+  <label for="input">
+    {{.Label}}
+    {{if .Required}}
+    <span class="required">*</span>
+    {{end}}
+  </label>
+  <input
+    id="input"
+    type="{{.Type}}"
+    value="{{.Value}}"
+    placeholder="{{.Placeholder}}"
+  >
+  {{if .ShowHelp}}
+  <p class="help-text">{{.HelpText}}</p>
+  {{end}}
+  {{range .ValidationErrors}}
+  <span class="error">{{.Message}}</span>
+  {{end}}
+</div>

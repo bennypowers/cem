@@ -1,0 +1,56 @@
+<pf-v6-navigation slot="navigation" aria-label="Component navigation" inset>
+  <pf-v6-nav-list>
+    {{range .Packages}}
+    {{if $.SinglePackage}}
+    {{/* Single package: show elements directly without package disclosure */}}
+    {{range .Elements}}
+    <pf-v6-nav-item>
+      <pf-v6-nav-link expandable aria-expanded="false">
+        <code>&lt;{{.TagName}}&gt;</code>
+      </pf-v6-nav-link>
+      <pf-v6-nav-group hidden>
+        <pf-v6-nav-list>
+          {{range .Demos}}
+          <pf-v6-nav-item>
+            <pf-v6-nav-link href="{{.URL}}">
+              {{.Name}}
+            </pf-v6-nav-link>
+          </pf-v6-nav-item>
+          {{end}}
+        </pf-v6-nav-list>
+      </pf-v6-nav-group>
+    </pf-v6-nav-item>
+    {{end}}
+    {{else}}
+    {{/* Multiple packages: show package disclosure */}}
+    <pf-v6-nav-item>
+      <pf-v6-nav-link expandable aria-expanded="false">
+        {{.Name}}
+      </pf-v6-nav-link>
+      <pf-v6-nav-group hidden>
+        <pf-v6-nav-list>
+          {{range .Elements}}
+          <pf-v6-nav-item>
+            <pf-v6-nav-link expandable aria-expanded="false">
+              <code>&lt;{{.TagName}}&gt;</code>
+            </pf-v6-nav-link>
+            <pf-v6-nav-group hidden>
+              <pf-v6-nav-list>
+                {{range .Demos}}
+                <pf-v6-nav-item>
+                  <pf-v6-nav-link href="{{.URL}}">
+                    {{.Name}}
+                  </pf-v6-nav-link>
+                </pf-v6-nav-item>
+                {{end}}
+              </pf-v6-nav-list>
+            </pf-v6-nav-group>
+          </pf-v6-nav-item>
+          {{end}}
+        </pf-v6-nav-list>
+      </pf-v6-nav-group>
+    </pf-v6-nav-item>
+    {{end}}
+    {{end}}
+  </pf-v6-nav-list>
+</pf-v6-navigation>

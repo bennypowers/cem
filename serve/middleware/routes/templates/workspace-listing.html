@@ -1,0 +1,23 @@
+{{range .Packages}}
+<section class="package-section">
+  <h2 class="package-heading">{{.Name}}</h2>
+  <div class="listing-grid">
+    {{range .Elements}}
+    <pf-v6-card>
+      <h3 slot="title"><code>&lt;{{.TagName}}&gt;</code></h3>
+      {{if .Summary}}
+      <span slot="title" class="element-summary">{{.Summary}}</span>
+      {{end}}
+      {{if .Description}}
+      <div class="element-description">{{.Description}}</div>
+      {{end}}
+      {{range .Demos}}
+      <pf-v6-button slot="footer" href="{{.URL}}" variant="link">
+        {{.Name}}
+      </pf-v6-button>
+      {{end}}
+    </pf-v6-card>
+    {{end}}
+  </div>
+</section>
+{{end}}

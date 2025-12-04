@@ -69,6 +69,22 @@ func (gs *GenerateSession) Close() {
 	}
 }
 
+// WorkspaceContext returns the workspace context for this session
+func (gs *GenerateSession) WorkspaceContext() types.WorkspaceContext {
+	if gs.setupCtx == nil {
+		return nil
+	}
+	return gs.setupCtx.WorkspaceContext
+}
+
+// DependencyTracker returns the file dependency tracker for this session
+func (gs *GenerateSession) DependencyTracker() *FileDependencyTracker {
+	if gs.setupCtx == nil {
+		return nil
+	}
+	return gs.setupCtx.DependencyTracker()
+}
+
 // GenerateFullManifest performs a complete generation using the existing logic.
 // This is used for the initial generation in watch mode and for regular generate command.
 func (gs *GenerateSession) GenerateFullManifest(ctx context.Context) (*M.Package, error) {

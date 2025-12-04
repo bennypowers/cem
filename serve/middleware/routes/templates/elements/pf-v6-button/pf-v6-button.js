@@ -1,0 +1,272 @@
+import { CemElement } from '/__cem/cem-element.js';
+
+/**
+ * PatternFly v6 inspired button component
+ *
+ * @attr {string} variant - Button variant: primary, secondary, tertiary (default), danger, plain, link
+ * @attr {string} size - Button size: sm, md (default), lg
+ * @attr {boolean} block - Make button full width
+ * @attr {boolean} disabled - Disable the button
+ * @attr {string} href - URL for anchor links (automatically renders as <a> when present)
+ *
+ * @slot - Default slot for button text/content
+ * @slot icon-start - Slot for icon before text
+ * @slot icon-end - Slot for icon after text
+ *
+ * @fires click - Bubbles click events from internal button
+ * @customElement pf-v6-button
+ */
+export class PfV6Button extends CemElement {
+  static is = 'pf-v6-button';
+
+  static shadowRootOptions = { mode: 'open', delegatesFocus: true };
+
+  static observedAttributes = [
+    'disabled',
+    'variant',
+    'type',
+    'href',
+  ];
+
+  // Attach ElementInternals for role and ARIA management
+  #internals = this.attachInternals();
+
+  #element; // Will be <a> or null (for host-based button)
+  #isLink = false;
+
+  get disabled() { return this.hasAttribute('disabled'); }
+  set disabled(value) { this.toggleAttribute('disabled', !!value); }
+
+  get variant() { return this.getAttribute('variant'); }
+  set variant(value) {
+    if (value) {
+      this.setAttribute('variant', value);
+    } else {
+      this.removeAttribute('variant');
+    }
+  }
+
+  get href() { return this.getAttribute('href') || ''; }
+  set href(v) {
+    if (v) {
+      this.setAttribute('href', v);
+    } else {
+      this.removeAttribute('href');
+    }
+  }
+
+  get type() { return this.getAttribute('type') || 'button'; }
+  set type(v) {
+    if (v) {
+      this.setAttribute('type', v);
+    } else {
+      this.removeAttribute('type');
+    }
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    switch (name) {
+      case 'disabled': this.#updateDisabled(); break;
+      case 'href':
+        this.#handleHrefChange(oldValue, newValue);
+        break;
+      case 'variant': this.#updateRole(); break;
+    }
+
+    // Sync other attributes
+    if (this.#element || !this.#isLink) {
+      this.#syncAttributes();
+    }
+  }
+
+  async afterTemplateLoaded() {
+    // Check if we have a link
+    this.#isLink = this.hasAttribute('href');
+    this.#element = this.#isLink
+      ? this.shadowRoot.querySelector('a')
+      : null; // No shadow element for button variant
+
+    // Set up button or link behavior
+    if (!this.#isLink) {
+      this.#setupHostButton();
+    } else {
+      this.#setupShadowLink();
+    }
+
+    // Forward attributes
+    this.#syncAttributes();
+  }
+
+  #setupHostButton() {
+    // Set role on host for button variant
+    this.#internals.role = 'button';
+
+    // Make host focusable
+    if (!this.hasAttribute('tabindex')) {
+      this.setAttribute('tabindex', '0');
+    }
+
+    // Add event listeners on HOST
+    this.addEventListener('click', this.#onClick);
+    this.addEventListener('keydown', this.#onKeydown);
+  }
+
+  #setupShadowLink() {
+    // For links, rely on delegatesFocus and shadow <a>
+    // Add click handler to enforce disabled state
+    if (this.#element) {
+      this.#element.addEventListener('click', this.#onLinkClick);
+    }
+  }
+
+  #teardownHostButton() {
+    // Remove host event listeners
+    this.removeEventListener('click', this.#onClick);
+    this.removeEventListener('keydown', this.#onKeydown);
+
+    // Remove tabindex if we added it
+    if (this.getAttribute('tabindex') === '0') {
+      this.removeAttribute('tabindex');
+    }
+  }
+
+  #teardownShadowLink() {
+    // Remove shadow link event listener
+    if (this.#element) {
+      this.#element.removeEventListener('click', this.#onLinkClick);
+    }
+  }
+
+  #onClick(event) {
+    // For host-based buttons only
+    if (this.disabled) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      return;
+    }
+    // Event bubbles naturally
+  }
+
+  #onKeydown(event) {
+    // For host-based buttons only
+    if (this.disabled) {
+      event.preventDefault();
+      return;
+    }
+
+    // Handle Space and Enter for button activation
+    if (event.key === ' ' || event.key === 'Enter') {
+      event.preventDefault();
+      this.click();
+    }
+  }
+
+  #onLinkClick = (event) => {
+    // For shadow links only - enforce disabled
+    if (this.disabled) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+  };
+
+  #updateRole() {
+    const hasHref = this.hasAttribute('href');
+
+    if (hasHref) {
+      // Switching to link: remove button role
+      this.#internals.role = null;
+    } else {
+      // Switching to button: set button role
+      this.#internals.role = 'button';
+    }
+  }
+
+  #handleHrefChange(_, newValue) {
+    const wasLink = this.#isLink;
+    const isNowLink = newValue !== null;
+
+    // Update role
+    this.#updateRole();
+
+    // If mode changed, reconfigure the component
+    if (wasLink !== isNowLink) {
+      this.#isLink = isNowLink;
+
+      if (isNowLink) {
+        // Switching from button to link
+        this.#element = this.shadowRoot.querySelector('a');
+        this.#teardownHostButton();
+        this.#setupShadowLink();
+      } else {
+        // Switching from link to button
+        this.#teardownShadowLink();
+        this.#element = null;
+        this.#setupHostButton();
+      }
+
+      // Reapply disabled state with new mode
+      this.#updateDisabled();
+    } else if (isNowLink && this.#element) {
+      // Still a link, just update the href on the shadow link
+      this.#element.setAttribute('href', newValue);
+    }
+  }
+
+  #updateDisabled() {
+    if (this.#isLink) {
+      // For links, set aria-disabled and prevent interaction
+      if (this.#element) {
+        if (this.disabled) {
+          this.#element.setAttribute('aria-disabled', 'true');
+          this.#element.style.pointerEvents = 'none';
+        } else {
+          this.#element.removeAttribute('aria-disabled');
+          this.#element.style.pointerEvents = '';
+        }
+      }
+    } else {
+      // For host-based buttons, use ElementInternals
+      if (this.disabled) {
+        this.#internals.ariaDisabled = 'true';
+        this.setAttribute('tabindex', '-1');
+      } else {
+        this.#internals.ariaDisabled = null;
+        this.setAttribute('tabindex', '0');
+      }
+    }
+  }
+
+  #syncAttributes() {
+    if (this.#isLink && this.#element) {
+      // Sync to shadow <a>
+      if (this.hasAttribute('href')) {
+        this.#element.setAttribute('href', this.getAttribute('href'));
+      }
+
+      // ARIA attributes on shadow link
+      const linkAriaAttrs = ['aria-label', 'aria-expanded', 'aria-haspopup'];
+      linkAriaAttrs.forEach(attr => {
+        if (this.hasAttribute(attr)) {
+          this.#element.setAttribute(attr, this.getAttribute(attr));
+        } else {
+          this.#element.removeAttribute(attr);
+        }
+      });
+    }
+    // For button variant: ARIA attrs stay on host, no syncing needed
+    // since we set role='button' on host via ElementInternals
+  }
+
+  disconnectedCallback() {
+    if (this.#isLink) {
+      this.#teardownShadowLink();
+    } else {
+      this.#teardownHostButton();
+    }
+  }
+
+  static {
+    customElements.define(this.is, this);
+  }
+}

@@ -1,0 +1,47 @@
+/* PatternFly v6 Toolbar Group Styles */
+
+:host {
+  --pf-v6-hidden-visible--visible--Display: flex;
+  --pf-v6-hidden-visible--hidden--Display: none;
+  --pf-v6-hidden-visible--Display: var(--pf-v6-hidden-visible--visible--Display);
+
+  display: var(--pf-v6-hidden-visible--Display);
+  row-gap: var(--pf-v6-c-toolbar__group--RowGap);
+  column-gap: var(--pf-v6-c-toolbar__group--ColumnGap);
+  align-items: baseline;
+}
+
+/* Filter group variant */
+:host([variant="filter-group"]) {
+  column-gap: var(--pf-v6-c-toolbar__group--m-filter-group--ColumnGap);
+}
+
+/* Label group variant */
+:host([variant="label-group"]) {
+  flex: 1;
+  flex-wrap: wrap;
+  column-gap: var(--pf-v6-c-toolbar__group--m-label-group--ColumnGap);
+}
+
+/* Action group variant */
+:host([variant="action-group"]) {
+  column-gap: var(--pf-v6-c-toolbar__group--m-action-group--ColumnGap);
+}
+
+/* Action group plain variant */
+:host([variant="action-group-plain"]) {
+  column-gap: var(--pf-v6-c-toolbar__group--m-action-group-plain--ColumnGap);
+}
+
+/* Action group inline variant */
+:host([variant="action-group-inline"]) {
+  flex-wrap: wrap;
+  column-gap: var(--pf-v6-c-toolbar__group--m-action-group-inline--ColumnGap);
+}
+
+/* Overflow container variant */
+:host([variant="overflow-container"]) {
+  flex: 1;
+  min-width: var(--pf-v6-c-toolbar__group--m-overflow-container--MinWidth);
+  overflow: auto;
+}
