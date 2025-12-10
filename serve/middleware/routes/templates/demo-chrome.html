@@ -79,7 +79,8 @@
                     {{if .SourceURL}}source-url="{{.SourceURL}}"{{end}}
                     {{if .State.Drawer.Open}}drawer-open{{end}}
                     drawer-height="{{.State.Drawer.Height}}"
-                    tabs-selected="{{.State.Tabs.SelectedIndex}}">
+                    tabs-selected="{{.State.Tabs.SelectedIndex}}"
+                    {{if .State.Sidebar.Collapsed}}sidebar-collapsed{{end}}>
     {{if .Description}}
     <section slot="description">
       {{.Description}}

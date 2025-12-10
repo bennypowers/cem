@@ -3,7 +3,7 @@
 <link rel="stylesheet"
       href="/__cem/pf-lightdom.css">
 
-<pf-v6-page>
+<pf-v6-page {{if hasAttr . "SidebarCollapsed"}}sidebar-collapsed{{end}}>
   <pf-v6-skip-to-content slot="skip-to-content"
                          href="#main-content">
     Skip to content
@@ -100,7 +100,7 @@
     </pf-v6-toolbar>
   </pf-v6-masthead>
 
-  <pf-v6-page-sidebar slot="sidebar">
+  <pf-v6-page-sidebar slot="sidebar" {{if not (hasAttr . "SidebarCollapsed")}}expanded{{end}}{{ if hasAttr . "SidebarCollapsed"}}collapsed{{end}}>
     <slot name="navigation"></slot>
   </pf-v6-page-sidebar>
 

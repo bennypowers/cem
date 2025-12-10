@@ -42,6 +42,10 @@ export class StatePersistence {
         tabs: {
           ...defaults.tabs,
           ...state.tabs
+        },
+        sidebar: {
+          ...defaults.sidebar,
+          ...state.sidebar
         }
       };
 
@@ -85,6 +89,7 @@ export class StatePersistence {
       colorScheme: 'system',
       drawer: { open: false, height: 400 },
       tabs: { selectedIndex: 0 },
+      sidebar: { collapsed: false },
       version: this.VERSION
     };
   }
