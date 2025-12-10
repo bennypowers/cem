@@ -19,7 +19,6 @@ package routes
 
 import (
 	"embed"
-	"fmt"
 	"html/template"
 	"strings"
 
@@ -91,158 +90,47 @@ func NewTemplateRegistry(ctx middleware.DevServerContext) *TemplateRegistry {
 // This is a method to provide the context for error broadcasting
 func (registry *TemplateRegistry) getTemplateFuncs() template.FuncMap {
 	return template.FuncMap{
-		"contains": func(haystack, needle interface{}) bool {
-			// Handle string contains (substring search)
-			if h, ok := haystack.(string); ok {
-				if n, ok := needle.(string); ok {
-					return strings.Contains(h, n)
-				}
-			}
-			// Handle slice contains (element search)
-			if slice, ok := haystack.([]string); ok {
-				if str, ok := needle.(string); ok {
-					for _, s := range slice {
-						if s == str {
-							return true
-						}
-					}
-					return false
-				}
-			}
-			return false
-		},
-		"join": func(elems []string, sep string) string {
-			return strings.Join(elems, sep)
-		},
-		"dict": func(values ...interface{}) (map[string]string, error) {
-			if len(values)%2 != 0 {
-				return nil, fmt.Errorf("dict requires even number of arguments")
-			}
-			dict := make(map[string]string, len(values)/2)
-			for i := 0; i < len(values); i += 2 {
-				key, ok := values[i].(string)
-				if !ok {
-					return nil, fmt.Errorf("dict keys must be strings")
-				}
-				dict[key] = fmt.Sprint(values[i+1])
-			}
-			return dict, nil
-		},
-		"include": func(path string) template.CSS {
-			content, err := TemplatesFS.ReadFile("templates/" + path)
-			if err != nil {
-				errMsg := "/* Error reading " + path + ": " + err.Error() + " */"
-
-				// Broadcast error to connected clients via WebSocket overlay
-				if registry.context != nil {
-					_ = registry.context.BroadcastError(
-						"Template Include Error",
-						"Failed to include template file: "+err.Error(),
-						path,
-					)
-				}
-
-				return template.CSS(errMsg)
-			}
-			return template.CSS(content)
-		},
-		"renderElementShadowRoot": func(elementName string, data interface{}) template.HTML {
-			html, err := RenderElementShadowRoot(registry, elementName, data)
-			if err != nil {
-				errMsg := "<!-- Error rendering element " + elementName + ": " + err.Error() + " -->"
-
-				// Broadcast error to connected clients via WebSocket overlay
-				if registry.context != nil {
-					_ = registry.context.BroadcastError(
-						"Element Render Error",
-						"Failed to render element: "+err.Error(),
-						elementName,
-					)
-				}
-
-				return template.HTML(errMsg)
-			}
-			return html
-		},
-		"markdown": func(text string) template.HTML {
-			html, err := markdownToHTML(text)
-			if err != nil {
-				// If markdown conversion fails, return escaped plain text
-				return template.HTML(template.HTMLEscapeString(text))
-			}
-			return template.HTML(html)
-		},
-		"prettifyRoute":     prettifyRoute,
+		"asClass":           declarationAsKind[*M.ClassDeclaration],
+		"asCustomElement":   declarationAsKind[*M.CustomElementDeclaration],
+		"asFunction":        declarationAsKind[*M.FunctionDeclaration],
+		"asMixin":           declarationAsKind[*M.MixinDeclaration],
+		"asVariable":        declarationAsKind[*M.VariableDeclaration],
+		"contains":          strings.Contains,
 		"extractLocalRoute": extractLocalRoute,
-		"asCustomElement":   asCustomElement,
-		"asClass":           asClass,
-		"asFunction":        asFunction,
-		"asVariable":        asVariable,
-		"asMixin":           asMixin,
-		"hasAttr": func(data interface{}, attrName string) bool {
-			// Check if an attribute exists in .Attributes map
-			if dataMap, ok := data.(map[string]interface{}); ok {
-				if attrs, ok := dataMap["Attributes"].(map[string]string); ok {
-					_, exists := attrs[attrName]
-					return exists
-				}
-			}
-			return false
-		},
-		"hasMethodMembers": func(members []M.ClassMember) bool {
-			// Check if any member is a method
-			for _, member := range members {
-				if _, ok := member.(*M.ClassMethod); ok {
-					return true
-				}
-			}
-			return false
-		},
+		"hasMethodMembers":  hasMethodMembers,
+		"markdown":          markdown,
+		"prettifyRoute":     prettifyRoute,
 	}
 }
 
-// asCustomElement performs type assertion to extract CustomElementDeclaration from Declaration interface.
-// Returns nil if the declaration is not a custom element.
-// Template usage: {{$ce := asCustomElement .}} {{if $ce}}...{{end}}
-func asCustomElement(decl M.Declaration) *M.CustomElementDeclaration {
-	if ce, ok := decl.(*M.CustomElementDeclaration); ok {
-		return ce
+// markdown processes markdown text (e.g. a summary or description) into HTML
+func markdown(text string) template.HTML {
+	html, err := markdownToHTML(text)
+	if err != nil {
+		// If markdown conversion fails, return escaped plain text
+		return template.HTML(template.HTMLEscapeString(text))
 	}
-	return nil
+	return template.HTML(html)
 }
 
-// asClass performs type assertion to extract ClassDeclaration from Declaration interface.
-// Returns nil if the declaration is not a class.
-func asClass(decl M.Declaration) *M.ClassDeclaration {
-	if c, ok := decl.(*M.ClassDeclaration); ok {
-		return c
+// hasMethodMembers checks if a class' `members` list contains at least one method
+// recall that `members` consists of both fields (properties) and methods
+func hasMethodMembers(members []M.ClassMember) bool {
+	// Check if any member is a method
+	for _, member := range members {
+		if _, ok := member.(*M.ClassMethod); ok {
+			return true
+		}
 	}
-	return nil
+	return false
 }
 
-// asFunction performs type assertion to extract FunctionDeclaration from Declaration interface.
-// Returns nil if the declaration is not a function.
-func asFunction(decl M.Declaration) *M.FunctionDeclaration {
-	if f, ok := decl.(*M.FunctionDeclaration); ok {
-		return f
-	}
-	return nil
-}
-
-// asVariable performs type assertion to extract VariableDeclaration from Declaration interface.
-// Returns nil if the declaration is not a variable.
-func asVariable(decl M.Declaration) *M.VariableDeclaration {
-	if v, ok := decl.(*M.VariableDeclaration); ok {
-		return v
-	}
-	return nil
-}
-
-// asMixin performs type assertion to extract MixinDeclaration from Declaration interface.
-// Returns nil if the declaration is not a mixin.
-func asMixin(decl M.Declaration) *M.MixinDeclaration {
-	if m, ok := decl.(*M.MixinDeclaration); ok {
+// declarationAsKind() performs type assertion to extract a subtype from Declaration interface.
+// Returns nil if the declaration is not an instance of that subtype.
+func declarationAsKind[K M.Declaration](decl M.Declaration) K {
+	if m, ok := decl.(K); ok {
 		return m
 	}
-	return nil
+	var zero K // For pointer types (all Declarations), this is nil
+	return zero
 }

@@ -1,8 +1,8 @@
-{{if hasAttr . "Expandable"}}
+{{if .Attributes.Expandable}}
 <div id="toggle-container">
   <pf-v6-button id="toggle"
                 variant="plain"
-                aria-expanded="{{if hasAttr . "Expanded"}}true{{else}}false{{end}}"
+                aria-expanded="{{if .Attributes.Expanded}}true{{else}}false{{end}}"
                 aria-label="Toggle alert">
     <svg id="toggle-icon"
          aria-hidden="true"
@@ -30,7 +30,7 @@
   <slot></slot>
 </h4>
 
-{{if hasAttr . "Dismissable"}}
+{{if .Attributes.Dismissable}}
 <div id="action">
   <pf-v6-button id="close"
                 variant="plain"
@@ -52,12 +52,12 @@
 </div>
 {{end}}
 
-{{if not (hasAttr . "Expandable")}}
+{{if not .Attributes.Expandable}}
 <div id="description">
   <slot name="description"></slot>
 </div>
 {{else}}
-{{if hasAttr . "Expanded"}}
+{{if .Attributes.Expanded}}
 <div id="description">
   <slot name="description"></slot>
 </div>
