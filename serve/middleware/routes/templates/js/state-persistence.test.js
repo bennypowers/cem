@@ -20,6 +20,7 @@ describe('StatePersistence', () => {
         colorScheme: 'system',
         drawer: { open: false, height: 400 },
         tabs: { selectedIndex: 0 },
+        sidebar: { collapsed: false },
         version: 1
       });
     });
@@ -29,6 +30,7 @@ describe('StatePersistence', () => {
         colorScheme: 'dark',
         drawer: { open: true, height: 500 },
         tabs: { selectedIndex: 1 },
+        sidebar: { collapsed: true },
         version: 1
       };
 
@@ -43,6 +45,7 @@ describe('StatePersistence', () => {
         colorScheme: 'light',
         drawer: { open: false, height: 400 },
         tabs: { selectedIndex: 0 },
+        sidebar: { collapsed: false },
         version: 1
       });
 
@@ -57,6 +60,7 @@ describe('StatePersistence', () => {
       expect(state.drawer.open).to.equal(false); // Unchanged
       expect(state.drawer.height).to.equal(600); // Updated
       expect(state.tabs.selectedIndex).to.equal(0); // Unchanged
+      expect(state.sidebar.collapsed).to.equal(false); // Unchanged
     });
 
     it('handles invalid JSON in cookie gracefully', () => {
@@ -191,6 +195,62 @@ describe('StatePersistence', () => {
         expanded: [],
         selected: ''
       });
+    });
+  });
+
+  describe('sidebar state management', () => {
+    it('persists sidebar collapsed state', () => {
+      StatePersistence.setState({
+        colorScheme: 'system',
+        drawer: { open: false, height: 400 },
+        tabs: { selectedIndex: 0 },
+        sidebar: { collapsed: true },
+        version: 1
+      });
+
+      const state = StatePersistence.getState();
+
+      expect(state.sidebar.collapsed).to.equal(true);
+    });
+
+    it('persists sidebar expanded state', () => {
+      StatePersistence.setState({
+        colorScheme: 'system',
+        drawer: { open: false, height: 400 },
+        tabs: { selectedIndex: 0 },
+        sidebar: { collapsed: false },
+        version: 1
+      });
+
+      const state = StatePersistence.getState();
+
+      expect(state.sidebar.collapsed).to.equal(false);
+    });
+
+    it('updates sidebar state via partial update', () => {
+      StatePersistence.setState({
+        colorScheme: 'system',
+        drawer: { open: false, height: 400 },
+        tabs: { selectedIndex: 0 },
+        sidebar: { collapsed: false },
+        version: 1
+      });
+
+      // Update sidebar state
+      StatePersistence.updateState({
+        sidebar: { collapsed: true }
+      });
+
+      const state = StatePersistence.getState();
+
+      expect(state.sidebar.collapsed).to.equal(true);
+    });
+
+    it('provides default expanded state', () => {
+      const state = StatePersistence.getDefaultState();
+
+      // Sidebar expanded by default
+      expect(state.sidebar.collapsed).to.equal(false);
     });
   });
 

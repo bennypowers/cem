@@ -39,13 +39,19 @@ type TabsState struct {
 	SelectedIndex int `json:"selectedIndex"` // 0-based tab index
 }
 
+// SidebarState represents sidebar collapsed state
+type SidebarState struct {
+	Collapsed bool `json:"collapsed"` // Whether the sidebar is collapsed
+}
+
 // CemServeState represents the persisted UI state (stored in cookie)
 // Note: Tree state is stored separately in localStorage due to size constraints
 type CemServeState struct {
-	ColorScheme string      `json:"colorScheme"`
-	Drawer      DrawerState `json:"drawer"`
-	Tabs        TabsState   `json:"tabs"`
-	Version     int         `json:"version"`
+	ColorScheme string       `json:"colorScheme"`
+	Drawer      DrawerState  `json:"drawer"`
+	Tabs        TabsState    `json:"tabs"`
+	Sidebar     SidebarState `json:"sidebar"`
+	Version     int          `json:"version"`
 }
 
 // DefaultState returns the default state
@@ -58,6 +64,9 @@ func DefaultState() CemServeState {
 		},
 		Tabs: TabsState{
 			SelectedIndex: 0,
+		},
+		Sidebar: SidebarState{
+			Collapsed: false, // Sidebar expanded by default at wide viewports
 		},
 		Version: 1,
 	}

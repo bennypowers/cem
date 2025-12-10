@@ -69,9 +69,10 @@ export class CemServeChrome extends CemElement {
     'package-name',
     'canonical-url',
     'source-url',
-    'drawer-open',
+    'drawer',
     'drawer-height',
     'tabs-selected',
+    'sidebar',
   ];
 
   // Static templates for demo URL display
@@ -235,6 +236,9 @@ export class CemServeChrome extends CemElement {
 
     // Set up tree state persistence
     this.#setupTreeStatePersistence();
+
+    // Set up sidebar state persistence
+    this.#setupSidebarStatePersistence();
 
     // Set up reconnection modal button handlers
     this.#$('#reload-button')?.addEventListener('click', () => {
@@ -578,7 +582,7 @@ export class CemServeChrome extends CemElement {
     drawer.addEventListener('change', (e) => {
       this.#drawerOpen = e.open;
 
-      // Persist drawer open state
+      // Persist drawer state as enum
       StatePersistence.updateState({
         drawer: { open: e.open }
       });
@@ -1047,6 +1051,27 @@ Generated: ${new Date().toISOString()}`;
         treeItem.setAttribute('current', '');
       }
     }
+  }
+
+  #setupSidebarStatePersistence() {
+    // Get the page component
+    const page = this.#$('pf-v6-page');
+
+    if (!page) {
+      return;
+    }
+
+    // Listen for sidebar-toggle events from pf-v6-masthead
+    page.addEventListener('sidebar-toggle', (event) => {
+      // The event.expanded property indicates the new state (true = expanded, false = collapsed)
+      // We persist the collapsed state, so invert the expanded value
+      const collapsed = !event.expanded;
+
+      // Persist sidebar state to cookie
+      StatePersistence.updateState({
+        sidebar: { collapsed }
+      });
+    });
   }
 
   #findTreeItemById(nodeId) {

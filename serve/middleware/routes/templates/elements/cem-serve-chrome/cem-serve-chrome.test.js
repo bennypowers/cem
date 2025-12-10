@@ -133,9 +133,9 @@ describe('cem-serve-chrome', () => {
       expect(attrs).to.include('source-url');
     });
 
-    it('observes drawer-open attribute', () => {
+    it('observes drawer attribute', () => {
       const attrs = el.constructor.observedAttributes;
-      expect(attrs).to.include('drawer-open');
+      expect(attrs).to.include('drawer');
     });
 
     it('observes drawer-height attribute', () => {
