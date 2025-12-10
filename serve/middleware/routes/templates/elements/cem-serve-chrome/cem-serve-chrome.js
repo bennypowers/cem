@@ -69,10 +69,10 @@ export class CemServeChrome extends CemElement {
     'package-name',
     'canonical-url',
     'source-url',
-    'drawer-open',
+    'drawer',
     'drawer-height',
     'tabs-selected',
-    'sidebar-collapsed',
+    'sidebar',
   ];
 
   // Static templates for demo URL display
@@ -582,7 +582,7 @@ export class CemServeChrome extends CemElement {
     drawer.addEventListener('change', (e) => {
       this.#drawerOpen = e.open;
 
-      // Persist drawer open state
+      // Persist drawer state as enum
       StatePersistence.updateState({
         drawer: { open: e.open }
       });
@@ -1056,7 +1056,7 @@ Generated: ${new Date().toISOString()}`;
   #setupSidebarStatePersistence() {
     // Get the page component
     const page = this.#$('pf-v6-page');
-    
+
     if (!page) {
       return;
     }

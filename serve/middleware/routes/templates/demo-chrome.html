@@ -77,10 +77,10 @@
                     {{if .PackageName}}package-name="{{.PackageName}}"{{end}}
                     {{if .CanonicalURL}}canonical-url="{{.CanonicalURL}}"{{end}}
                     {{if .SourceURL}}source-url="{{.SourceURL}}"{{end}}
-                    {{if .State.Drawer.Open}}drawer-open{{end}}
+                    drawer="{{if .State.Drawer.Open}}expanded{{else}}collapsed{{end}}"
                     drawer-height="{{.State.Drawer.Height}}"
                     tabs-selected="{{.State.Tabs.SelectedIndex}}"
-                    {{if .State.Sidebar.Collapsed}}sidebar-collapsed{{end}}>
+                    sidebar="{{if .State.Sidebar.Collapsed}}collapsed{{else}}expanded{{end}}">
     {{if .Description}}
     <section slot="description">
       {{.Description}}
