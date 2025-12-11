@@ -160,16 +160,27 @@ func (wm *websocketManager) BroadcastToPages(message []byte, pageURLs []string) 
 	wm.mu.RUnlock()
 
 	// Write to matched connections without holding manager lock
+	var failedConnections []*websocket.Conn
 	for _, wrapper := range snapshot {
 		wrapper.mu.Lock()
 		err := wrapper.conn.WriteMessage(websocket.TextMessage, message)
 		wrapper.mu.Unlock()
 
 		if err != nil {
-			if wm.logger != nil {
-				wm.logger.Error("Failed to send WebSocket message: %v", err)
-			}
+			// Connection is dead, mark for cleanup
+			failedConnections = append(failedConnections, wrapper.conn)
+			// Continue broadcasting to other clients
 		}
+	}
+
+	// Clean up failed connections
+	if len(failedConnections) > 0 {
+		wm.mu.Lock()
+		for _, conn := range failedConnections {
+			delete(wm.connections, conn)
+			_ = conn.Close()
+		}
+		wm.mu.Unlock()
 	}
 
 	if wm.logger != nil && len(snapshot) > 0 {
