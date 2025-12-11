@@ -495,6 +495,92 @@ func BenchmarkGenerateSession_SingleGeneration(b *testing.B) {
 	}
 }
 
+func TestSetMaxWorkers(t *testing.T) {
+	ctx := setupTestContext(t, "test/fixtures/project-classes")
+
+	session, err := NewGenerateSession(ctx)
+	require.NoError(t, err)
+	defer session.Close()
+
+	// Test setting max workers
+	session.SetMaxWorkers(4)
+
+	// Verify worker count is set correctly
+	workerCount := session.WorkerCount()
+	assert.Equal(t, 4, workerCount, "WorkerCount should return the configured value")
+}
+
+func TestSetMaxWorkers_BeforeProcessing(t *testing.T) {
+	ctx := setupTestContext(t, "test/fixtures/project-classes")
+
+	cfg, err := ctx.Config()
+	require.NoError(t, err)
+	cfg.Generate.Files = []string{"src/class-fields.ts"}
+
+	session, err := NewGenerateSession(ctx)
+	require.NoError(t, err)
+	defer session.Close()
+
+	// Set max workers immediately after creation, before any processing
+	session.SetMaxWorkers(2)
+
+	// Generate manifest - this should use the configured worker count
+	pkg, err := session.GenerateFullManifest(context.Background())
+	require.NoError(t, err)
+	assert.NotNil(t, pkg)
+
+	// Verify the worker count is still configured correctly
+	assert.Equal(t, 2, session.WorkerCount())
+}
+
+func TestSetMaxWorkers_ConcurrentAccess(t *testing.T) {
+	ctx := setupTestContext(t, "test/fixtures/project-classes")
+
+	session, err := NewGenerateSession(ctx)
+	require.NoError(t, err)
+	defer session.Close()
+
+	// Test concurrent access using virtual time
+	synctest.Test(t, func(t *testing.T) {
+		done := make(chan bool, 2)
+
+		// Goroutine 1: Set max workers
+		go func() {
+			session.SetMaxWorkers(4)
+			done <- true
+		}()
+
+		// Goroutine 2: Read worker count
+		go func() {
+			_ = session.WorkerCount()
+			done <- true
+		}()
+
+		// Wait for both to complete - should not deadlock or panic
+		<-done
+		<-done
+	})
+
+	// Verify final state is consistent
+	workerCount := session.WorkerCount()
+	assert.Greater(t, workerCount, 0, "WorkerCount should be positive")
+}
+
+func TestSetMaxWorkers_ZeroValue(t *testing.T) {
+	ctx := setupTestContext(t, "test/fixtures/project-classes")
+
+	session, err := NewGenerateSession(ctx)
+	require.NoError(t, err)
+	defer session.Close()
+
+	// Setting to 0 should use default (NumCPU)
+	session.SetMaxWorkers(0)
+
+	// WorkerCount should fall back to default behavior
+	workerCount := session.WorkerCount()
+	assert.Greater(t, workerCount, 0, "WorkerCount should fall back to default when set to 0")
+}
+
 func BenchmarkGenerateSession_ReusedSession(b *testing.B) {
 	ctx := W.NewFileSystemWorkspaceContext("test/fixtures/project-classes")
 	require.NoError(b, ctx.Init())

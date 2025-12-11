@@ -114,6 +114,35 @@ func (p *Pool) Submit(fn func() error) error {
 	}
 }
 
+// SubmitSync adds a task to the pool and waits for completion
+// Returns the result of the task function or a pool error
+// This is a synchronous wrapper around Submit for HTTP handler use cases
+func (p *Pool) SubmitSync(fn func() error) error {
+	// Create channel to receive result
+	done := make(chan error, 1)
+
+	// Wrap task to signal completion
+	wrappedFn := func() error {
+		result := fn()
+		done <- result
+		return result
+	}
+
+	// Submit task (non-blocking queue check)
+	if err := p.Submit(wrappedFn); err != nil {
+		return err // ErrPoolQueueFull or ErrPoolClosed
+	}
+
+	// Wait for task completion or pool closure
+	// If pool closes after submit but before execution, return immediately
+	select {
+	case err := <-done:
+		return err
+	case <-p.closed:
+		return ErrPoolClosed
+	}
+}
+
 // Close stops the pool from accepting new tasks
 func (p *Pool) Close() {
 	p.closeOnce.Do(func() {

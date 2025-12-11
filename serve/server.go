@@ -27,9 +27,13 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/net/http2"
+	"golang.org/x/net/netutil"
 
 	G "bennypowers.dev/cem/generate"
 	"bennypowers.dev/cem/internal/platform"
@@ -61,6 +65,7 @@ type Server struct {
 	sourceFiles     map[string]bool  // Set of source files to watch
 	tsconfigRaw     string           // Cached tsconfig.json for transforms
 	transformCache  *transform.Cache // LRU cache for transformed files
+	transformPool   *transform.Pool  // Worker pool for transforms with backpressure
 	running         bool
 	mu              sync.RWMutex
 	generateSession *G.GenerateSession
@@ -114,6 +119,16 @@ func NewServerWithConfig(config Config) (*Server, error) {
 
 	// Initialize transform cache (500MB default)
 	s.transformCache = transform.NewCache(500 * 1024 * 1024)
+
+	// Initialize transform pool with adaptive sizing based on available CPUs
+	// NumCPU/2 leaves headroom for HTTP serving, manifest generation, file watching
+	// Cap at 8 to prevent thread explosion (esbuild creates ~3 OS threads per worker)
+	maxWorkers := max(runtime.NumCPU()/2, 2)
+	if maxWorkers > 8 {
+		maxWorkers = 8
+	}
+	queueDepth := maxWorkers * 12 // Proportional buffering for burst traffic
+	s.transformPool = transform.NewPool(maxWorkers, queueDepth)
 
 	// Set up handler with middleware pipeline
 	s.setupMiddleware()
@@ -190,11 +205,27 @@ func (s *Server) Start() error {
 	if err != nil {
 		return fmt.Errorf("failed to bind port %d: %w", s.port, err)
 	}
+
+	// Limit total concurrent connections to prevent resource exhaustion
+	// This caps HTTP handler goroutines even with HTTP/2 multiplexing
+	listener = netutil.LimitListener(listener, 100)
 	s.listener = listener
 
-	s.server = &http.Server{
-		Handler: s.handler,
+	// Configure HTTP/2 to limit concurrent streams per connection
+	// This prevents goroutine explosion when browsers multiplex many requests
+	http2Server := &http2.Server{
+		MaxConcurrentStreams: 250, // Standard HTTP/2 limit
 	}
+
+	s.server = &http.Server{
+		Handler:      s.handler,
+		ReadTimeout:  30 * time.Second, // Protects against slow-read attacks
+		WriteTimeout: 60 * time.Second, // Sufficient for transforms + manifest generation
+		IdleTimeout:  90 * time.Second, // Balances keep-alive reuse vs resource cleanup
+	}
+
+	// Configure HTTP/2 with concurrent stream limits
+	_ = http2.ConfigureServer(s.server, http2Server)
 
 	// Start file watcher if watch directory is set
 	if s.watchDir != "" {
@@ -282,6 +313,11 @@ func (s *Server) Close() error {
 		if err := s.watcher.Close(); err != nil {
 			s.logger.Error("Failed to close file watcher: %v", err)
 		}
+	}
+
+	// Close transform pool to stop accepting new tasks
+	if s.transformPool != nil {
+		s.transformPool.Close()
 	}
 
 	if s.generateSession != nil {
@@ -623,6 +659,15 @@ func (s *Server) RegenerateManifest() (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("creating generate session: %w", err)
 	}
+
+	// Configure adaptive worker count to prevent goroutine explosion under concurrent load
+	// Use same formula as transform pool for consistency
+	maxWorkers := max(runtime.NumCPU()/2, 2)
+	if maxWorkers > 8 {
+		maxWorkers = 8
+	}
+	session.SetMaxWorkers(maxWorkers)
+
 	s.generateSession = session
 
 	// Generate manifest
@@ -1422,6 +1467,7 @@ func (s *Server) setupMiddleware() {
 			WatchDirFunc:     s.WatchDir,
 			TsconfigRawFunc:  s.TsconfigRaw,
 			Cache:            s.transformCache,
+			Pool:             s.transformPool,
 			Logger:           s.logger,
 			ErrorBroadcaster: errorBroadcaster{s},
 			Target:           string(s.config.Transforms.TypeScript.Target),
