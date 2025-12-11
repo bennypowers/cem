@@ -27,6 +27,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -119,12 +120,15 @@ func NewServerWithConfig(config Config) (*Server, error) {
 	// Initialize transform cache (500MB default)
 	s.transformCache = transform.NewCache(500 * 1024 * 1024)
 
-	// Get environment-aware resource limits
-	// Detects containers and adjusts limits accordingly
-	limits := getResourceLimits()
-
-	// Initialize transform pool with environment-aware sizing
-	s.transformPool = transform.NewPool(limits.MaxWorkers, limits.QueueDepth)
+	// Initialize transform pool with adaptive sizing based on available CPUs
+	// NumCPU/2 leaves headroom for HTTP serving, manifest generation, file watching
+	// Cap at 8 to prevent thread explosion (esbuild creates ~3 OS threads per worker)
+	maxWorkers := max(runtime.NumCPU()/2, 2)
+	if maxWorkers > 8 {
+		maxWorkers = 8
+	}
+	queueDepth := maxWorkers * 12 // Proportional buffering for burst traffic
+	s.transformPool = transform.NewPool(maxWorkers, queueDepth)
 
 	// Set up handler with middleware pipeline
 	s.setupMiddleware()
@@ -202,18 +206,15 @@ func (s *Server) Start() error {
 		return fmt.Errorf("failed to bind port %d: %w", s.port, err)
 	}
 
-	// Get environment-aware resource limits
-	limits := getResourceLimits()
-
 	// Limit total concurrent connections to prevent resource exhaustion
 	// This caps HTTP handler goroutines even with HTTP/2 multiplexing
-	listener = netutil.LimitListener(listener, limits.MaxConnections)
+	listener = netutil.LimitListener(listener, 100)
 	s.listener = listener
 
-	// Configure HTTP/2 to limit concurrent streams
+	// Configure HTTP/2 to limit concurrent streams per connection
 	// This prevents goroutine explosion when browsers multiplex many requests
 	http2Server := &http2.Server{
-		MaxConcurrentStreams: limits.MaxConcurrentStreams,
+		MaxConcurrentStreams: 250, // Standard HTTP/2 limit
 	}
 
 	s.server = &http.Server{
@@ -660,9 +661,12 @@ func (s *Server) RegenerateManifest() (int, error) {
 	}
 
 	// Configure adaptive worker count to prevent goroutine explosion under concurrent load
-	// Use same limits as transform pool for consistency
-	limits := getResourceLimits()
-	session.SetMaxWorkers(limits.MaxWorkers)
+	// Use same formula as transform pool for consistency
+	maxWorkers := max(runtime.NumCPU()/2, 2)
+	if maxWorkers > 8 {
+		maxWorkers = 8
+	}
+	session.SetMaxWorkers(maxWorkers)
 
 	s.generateSession = session
 

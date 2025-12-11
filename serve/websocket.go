@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"net/url"
 	"sync"
+	"time"
 
 	"bennypowers.dev/cem/serve/internal/urlutil"
 	"github.com/gorilla/websocket"
@@ -81,6 +82,7 @@ func (wm *websocketManager) Broadcast(message []byte) error {
 
 	// Write to all connections without holding manager lock
 	// so slow clients don't block connects/disconnects
+	var failedConnections []*websocket.Conn
 	for _, wrapper := range snapshot {
 		// Lock this connection's write mutex to prevent concurrent writes
 		wrapper.mu.Lock()
@@ -88,11 +90,20 @@ func (wm *websocketManager) Broadcast(message []byte) error {
 		wrapper.mu.Unlock()
 
 		if err != nil {
-			if wm.logger != nil {
-				wm.logger.Error("Failed to send WebSocket message: %v", err)
-			}
-			// Continue broadcasting to other clients even if one fails
+			// Connection is dead, mark for cleanup
+			failedConnections = append(failedConnections, wrapper.conn)
+			// Continue broadcasting to other clients
 		}
+	}
+
+	// Clean up failed connections
+	if len(failedConnections) > 0 {
+		wm.mu.Lock()
+		for _, conn := range failedConnections {
+			delete(wm.connections, conn)
+			_ = conn.Close()
+		}
+		wm.mu.Unlock()
 	}
 
 	return nil
@@ -176,6 +187,14 @@ func (wm *websocketManager) HandleConnection(w http.ResponseWriter, r *http.Requ
 			wm.logger.Error("Failed to upgrade WebSocket: %v", err)
 		}
 		return
+	}
+
+	// Remove HTTP server timeouts for WebSocket connections
+	// WebSockets are long-lived connections that should not be subject to write/read timeouts
+	if err := conn.UnderlyingConn().SetDeadline(time.Time{}); err != nil {
+		if wm.logger != nil {
+			wm.logger.Warning("Failed to clear deadline on WebSocket connection: %v", err)
+		}
 	}
 
 	// Extract page URL from query parameter (preferred) or Referer header (fallback)
