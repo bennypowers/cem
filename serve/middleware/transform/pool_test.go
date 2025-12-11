@@ -315,3 +315,42 @@ func TestPool_SubmitSyncReturnsClosedError(t *testing.T) {
 		t.Errorf("Expected ErrPoolClosed, got %v", err)
 	}
 }
+
+func TestPool_SubmitSyncUnblocksOnClose(t *testing.T) {
+	pool := transform.NewPool(1, 5)
+
+	// Block the worker with a long-running task
+	blocker := make(chan struct{})
+	_ = pool.Submit(func() error {
+		<-blocker
+		return nil
+	})
+
+	// Submit a task that will be queued and waiting for worker
+	done := make(chan error, 1)
+	go func() {
+		done <- pool.SubmitSync(func() error {
+			t.Log("Task executed (should not happen if pool closes first)")
+			return nil
+		})
+	}()
+
+	// Give SubmitSync time to enqueue and start waiting
+	time.Sleep(100 * time.Millisecond)
+
+	// Close the pool while task is waiting in queue
+	pool.Close()
+
+	// SubmitSync should unblock immediately with ErrPoolClosed
+	select {
+	case err := <-done:
+		if err != transform.ErrPoolClosed {
+			t.Errorf("Expected ErrPoolClosed when pool closes during wait, got %v", err)
+		}
+	case <-time.After(1 * time.Second):
+		t.Error("SubmitSync blocked indefinitely after pool close - should have returned ErrPoolClosed")
+	}
+
+	// Cleanup
+	close(blocker)
+}

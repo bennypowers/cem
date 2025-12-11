@@ -133,8 +133,14 @@ func (p *Pool) SubmitSync(fn func() error) error {
 		return err // ErrPoolQueueFull or ErrPoolClosed
 	}
 
-	// Wait for task completion
-	return <-done
+	// Wait for task completion or pool closure
+	// If pool closes after submit but before execution, return immediately
+	select {
+	case err := <-done:
+		return err
+	case <-p.closed:
+		return ErrPoolClosed
+	}
 }
 
 // Close stops the pool from accepting new tasks
