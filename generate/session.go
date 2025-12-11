@@ -39,6 +39,7 @@ type GenerateSession struct {
 	inMemoryManifest *M.Package           // protected by mu
 	moduleIndex      map[string]*M.Module // path -> module for O(1) lookups, protected by mu
 	mu               sync.RWMutex         // protects inMemoryManifest and moduleIndex
+	maxWorkers       int                  // configured max workers for batch processing (0 = use NumCPU)
 }
 
 // NewGenerateSession creates a new session with initialized setup context.
@@ -209,10 +210,25 @@ func (gs *GenerateSession) CssCache() CssCache {
 	return gs.setupCtx.CssCache()
 }
 
+// SetMaxWorkers configures the maximum number of workers for batch processing.
+// Set to 0 to use runtime.NumCPU() (default).
+// This should be called immediately after NewGenerateSession() if customization is needed.
+func (gs *GenerateSession) SetMaxWorkers(count int) {
+	gs.mu.Lock()
+	defer gs.mu.Unlock()
+	gs.maxWorkers = count
+}
+
 // WorkerCount returns the number of workers that would be used for parallel processing.
 // This creates a temporary processor to get the actual configured worker count.
 func (gs *GenerateSession) WorkerCount() int {
 	processor := NewModuleBatchProcessor(gs.setupCtx.QueryManager(), gs.setupCtx.DependencyTracker(), gs.setupCtx.CssCache())
+	gs.mu.RLock()
+	maxWorkers := gs.maxWorkers
+	gs.mu.RUnlock()
+	if maxWorkers > 0 {
+		processor.SetWorkerCount(maxWorkers)
+	}
 	return processor.WorkerCount()
 }
 
@@ -249,6 +265,15 @@ func (gs *GenerateSession) processWithDeps(ctx context.Context, result preproces
 
 	// Use parallel processor with dependency tracking
 	processor := NewModuleBatchProcessor(gs.setupCtx.QueryManager(), gs.setupCtx.DependencyTracker(), gs.setupCtx.CssCache())
+
+	// Apply configured worker limit if set
+	gs.mu.RLock()
+	maxWorkers := gs.maxWorkers
+	gs.mu.RUnlock()
+	if maxWorkers > 0 {
+		processor.SetWorkerCount(maxWorkers)
+	}
+
 	processingResult := processor.ProcessModules(ctx, jobs, ModuleProcessorFunc(processModule))
 
 	return processingResult.Modules, processingResult.Logs, processingResult.Aliases, processingResult.Errors

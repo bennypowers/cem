@@ -36,6 +36,7 @@ type TypeScriptConfig struct {
 	WatchDirFunc     func() string // Function to get current watch directory
 	TsconfigRawFunc  func() string // Function to get current tsconfig.json content
 	Cache            *Cache
+	Pool             *Pool                // Worker pool for limiting concurrent transforms
 	Logger           types.Logger
 	ErrorBroadcaster types.ErrorBroadcaster
 	Target           string
@@ -137,26 +138,56 @@ func NewTypeScript(config TypeScriptConfig) middleware.Middleware {
 					}
 
 					// Transform TypeScript to JavaScript
-					result, err := TransformTypeScript(source, TransformOptions{
-						Loader:      LoaderTS,
-						Target:      Target(target),
-						Sourcemap:   SourceMapInline,
-						Sourcefile:  fullTsPath, // Use absolute path for dependency resolution
-						TsconfigRaw: tsconfigRaw,
-					})
-					if err != nil {
-						config.Logger.Error("Failed to transform TypeScript file %s: %v", tsPathNorm, err)
+					// Use pool if available to limit concurrent transforms and prevent thread exhaustion
+					var result *TransformResult
+					var transformErr error
+
+					transformTask := func() error {
+						result, transformErr = TransformTypeScript(source, TransformOptions{
+							Loader:      LoaderTS,
+							Target:      Target(target),
+							Sourcemap:   SourceMapInline,
+							Sourcefile:  fullTsPath, // Use absolute path for dependency resolution
+							TsconfigRaw: tsconfigRaw,
+						})
+						return transformErr
+					}
+
+					// Submit to pool if available, otherwise run directly
+					if config.Pool != nil {
+						if poolErr := config.Pool.SubmitSync(transformTask); poolErr != nil {
+							// Handle pool errors (queue full or pool closed)
+							if poolErr == ErrPoolQueueFull {
+								config.Logger.Warning("Transform pool queue full for %s", tsPathNorm)
+								http.Error(w, "Server busy - too many concurrent transforms", http.StatusServiceUnavailable)
+								return
+							}
+							if poolErr == ErrPoolClosed {
+								config.Logger.Error("Transform pool closed for %s", tsPathNorm)
+								http.Error(w, "Service unavailable", http.StatusServiceUnavailable)
+								return
+							}
+							// transformErr is set by transformTask and returned by SubmitSync
+							transformErr = poolErr
+						}
+					} else {
+						// No pool configured - run transform directly (backwards compatibility for tests)
+						_ = transformTask()
+					}
+
+					if transformErr != nil {
+						config.Logger.Error("Failed to transform TypeScript file %s: %v", tsPathNorm, transformErr)
 
 						// Broadcast error to browser overlay
 						if config.ErrorBroadcaster != nil {
 							config.ErrorBroadcaster.BroadcastError(
 								"TypeScript Transform Error",
-								err.Error(),
+								transformErr.Error(),
 								tsPathNorm,
 							)
 						}
 
-						http.Error(w, fmt.Sprintf("Transform error: %v", err), http.StatusInternalServerError)
+						http.Error(w, fmt.Sprintf("Transform error: %v", transformErr), http.StatusInternalServerError)
 						return
 					}
 
