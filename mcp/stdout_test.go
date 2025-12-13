@@ -43,6 +43,7 @@ func TestMCPServerStdoutClean(t *testing.T) {
 	require.NoError(t, err)
 	os.Stdout = w
 	defer func() { os.Stdout = originalStdout }()
+	defer w.Close() // Ensure pipe is closed even if test fails early
 
 	// Buffer to capture stdout
 	var stdoutBuf bytes.Buffer
@@ -103,6 +104,7 @@ func TestMCPServerStderrAllowed(t *testing.T) {
 	require.NoError(t, err)
 	os.Stderr = w
 	defer func() { os.Stderr = originalStderr }()
+	defer w.Close() // Ensure pipe is closed even if test fails early
 
 	var stderrBuf bytes.Buffer
 	done := make(chan struct{})
