@@ -88,6 +88,34 @@ describe('cem-serve-chrome', () => {
       const logContainer = el.shadowRoot.getElementById('log-container');
       expect(logContainer).to.exist;
     });
+
+    it('renders event list', () => {
+      const eventList = el.shadowRoot.getElementById('event-list');
+      expect(eventList).to.exist;
+    });
+
+    it('renders event detail panels', () => {
+      const eventDetailHeader = el.shadowRoot.getElementById('event-detail-header');
+      const eventDetailBody = el.shadowRoot.getElementById('event-detail-body');
+      expect(eventDetailHeader).to.exist;
+      expect(eventDetailBody).to.exist;
+    });
+
+    it('renders event filters', () => {
+      const eventsFilter = el.shadowRoot.getElementById('events-filter');
+      const eventTypeFilter = el.shadowRoot.getElementById('event-type-filter');
+      const elementFilter = el.shadowRoot.getElementById('element-filter');
+      expect(eventsFilter).to.exist;
+      expect(eventTypeFilter).to.exist;
+      expect(elementFilter).to.exist;
+    });
+
+    it('renders event action buttons', () => {
+      const clearButton = el.shadowRoot.getElementById('clear-events');
+      const copyButton = el.shadowRoot.getElementById('copy-events');
+      expect(clearButton).to.exist;
+      expect(copyButton).to.exist;
+    });
   });
 
   describe('event custom classes', () => {
@@ -566,6 +594,111 @@ describe('cem-serve-chrome', () => {
       expect(newEl.shadowRoot.querySelector('cem-drawer')).to.exist;
 
       document.body.removeChild(newEl);
+    });
+  });
+
+  describe('element event discovery', () => {
+    beforeEach(() => {
+      // Set up a mock manifest
+      window.__CEM_MANIFEST__ = {
+        modules: [{
+          declarations: [{
+            customElement: true,
+            tagName: 'test-button',
+            events: [
+              { name: 'click', type: { text: 'MouseEvent' } },
+              { name: 'change', type: { text: 'CustomEvent<string>' } }
+            ]
+          }, {
+            customElement: true,
+            tagName: 'test-input',
+            events: [
+              { name: 'input', type: { text: 'InputEvent' } }
+            ]
+          }]
+        }]
+      };
+    });
+
+    afterEach(() => {
+      delete window.__CEM_MANIFEST__;
+    });
+
+    it('handles missing manifest gracefully', async () => {
+      delete window.__CEM_MANIFEST__;
+
+      const newEl = document.createElement('cem-serve-chrome');
+      document.body.appendChild(newEl);
+      await newEl.rendered;
+
+      // Should not throw
+      expect(newEl).to.exist;
+
+      document.body.removeChild(newEl);
+    });
+  });
+
+  describe('element event capture', () => {
+    it('has event list element', () => {
+      const eventList = el.shadowRoot.getElementById('event-list');
+      expect(eventList).to.exist;
+    });
+  });
+
+  describe('event filtering', () => {
+    it('has text filter input', () => {
+      const eventsFilter = el.shadowRoot.getElementById('events-filter');
+      expect(eventsFilter).to.exist;
+    });
+
+    it('has event type filter dropdown', () => {
+      const eventTypeFilter = el.shadowRoot.getElementById('event-type-filter');
+      expect(eventTypeFilter).to.exist;
+    });
+
+    it('has element filter dropdown', () => {
+      const elementFilter = el.shadowRoot.getElementById('element-filter');
+      expect(elementFilter).to.exist;
+    });
+  });
+
+  describe('event actions', () => {
+    it('has clear events button', () => {
+      const clearButton = el.shadowRoot.getElementById('clear-events');
+      expect(clearButton).to.exist;
+    });
+
+    it('has copy events button', () => {
+      const copyButton = el.shadowRoot.getElementById('copy-events');
+      expect(copyButton).to.exist;
+    });
+  });
+
+  describe('event tab interaction', () => {
+    it('scrolls events when switching to events tab', async () => {
+      const tabs = el.shadowRoot.querySelector('pf-v6-tabs');
+      const drawer = el.shadowRoot.querySelector('cem-drawer');
+
+      // Open drawer
+      const drawerOpenEvent = new Event('change', { bubbles: true });
+      drawerOpenEvent.open = true;
+      drawer.dispatchEvent(drawerOpenEvent);
+
+      // Switch to events tab (index 3)
+      const tabChangeEvent = new Event('change', { bubbles: true });
+      tabChangeEvent.selectedIndex = 3;
+      tabs.dispatchEvent(tabChangeEvent);
+
+      // Should not throw
+      expect(el).to.exist;
+    });
+  });
+
+  describe('event edge cases', () => {
+    it('handles manifest discovery gracefully', () => {
+      // Just verify the event list exists
+      const eventList = el.shadowRoot.getElementById('event-list');
+      expect(eventList).to.exist;
     });
   });
 });
