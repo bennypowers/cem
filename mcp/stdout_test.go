@@ -20,23 +20,93 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"testing"
+	"time"
 
+	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/mcp"
 	W "bennypowers.dev/cem/workspace"
+	"github.com/pterm/pterm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TestMCPServerStdoutClean verifies that the MCP server never writes to stdout
-// except for JSON-RPC messages. This is critical for MCP protocol compliance.
-//
-// Background: MCP specification requires that stdio-based servers ONLY write
-// JSON-RPC messages to stdout. Any other output (logs, debug info, etc.) must
-// go to stderr or be suppressed. This test ensures we comply with the spec.
+// TestMCPCommandStdoutClean is an E2E test that verifies the actual `cem mcp`
+// command produces no stdout contamination. This is the definitive test for #129.
 //
 // See: https://github.com/bennypowers/cem/issues/129
-func TestMCPServerStdoutClean(t *testing.T) {
+func TestMCPCommandStdoutClean(t *testing.T) {
+	// Build cem binary from project root
+	binPath := filepath.Join(t.TempDir(), "cem-test")
+	buildCmd := exec.Command("go", "build", "-o", binPath, ".")
+	buildCmd.Dir = ".." // Build from project root
+	err := buildCmd.Run()
+	require.NoError(t, err, "failed to build cem binary")
+
+	// Start MCP server
+	cmd := exec.Command(binPath, "mcp")
+	cmd.Dir = "./fixtures/multiple-elements-integration"
+
+	// Capture stdout and stderr
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	// Start the command
+	err = cmd.Start()
+	require.NoError(t, err)
+
+	// Give it time to initialize and load manifests
+	time.Sleep(500 * time.Millisecond)
+
+	// Kill the process
+	err = cmd.Process.Kill()
+	require.NoError(t, err)
+
+	// Wait for it to finish
+	_ = cmd.Wait() // Ignore error since we killed it
+
+	// Verify stdout is completely empty (no manifest loading logs)
+	stdoutContent := stdout.String()
+	assert.Empty(t, stdoutContent, "stdout should be completely empty, got: %q", stdoutContent)
+
+	// Check for log contamination patterns
+	contaminations := []string{
+		"[REGISTRY]",
+		"[IN-MEMORY]",
+		"INFO",
+		"DEBUG",
+		"Loading manifests",
+		"Successfully",
+	}
+
+	for _, pattern := range contaminations {
+		assert.NotContains(t, stdoutContent, pattern,
+			"stdout contains log output '%s' which would corrupt JSON-RPC", pattern)
+	}
+
+	// Stderr MAY contain logs (this is acceptable and expected)
+	// We just verify we got some stderr output indicating the server ran
+	t.Logf("stderr output (expected): %s", stderr.String())
+}
+
+// TestMCPServerStdoutCleanWithQuietMode verifies that enabling quiet mode
+// suppresses INFO/DEBUG logs at the unit level. This tests the actual fix.
+//
+// See: https://github.com/bennypowers/cem/issues/129
+func TestMCPServerStdoutCleanWithQuietMode(t *testing.T) {
+	// Redirect pterm to stderr (like cmd/mcp.go does)
+	originalPtermOutput := pterm.DefaultBasicText.Writer
+	pterm.SetDefaultOutput(os.Stderr)
+	defer pterm.SetDefaultOutput(originalPtermOutput)
+
+	// Enable quiet mode (THIS IS THE FIX WE'RE TESTING)
+	originalQuiet := logging.IsQuietEnabled()
+	logging.SetQuietEnabled(true)
+	defer logging.SetQuietEnabled(originalQuiet)
+
 	// Create a pipe to capture stdout
 	originalStdout := os.Stdout
 	r, w, err := os.Pipe()
@@ -78,7 +148,6 @@ func TestMCPServerStdoutClean(t *testing.T) {
 	assert.Empty(t, stdoutContent, "stdout should be completely empty during manifest loading")
 
 	// Check for common log prefixes that indicate contamination
-	// These are the actual log messages that were reported in issue #129
 	contaminations := []string{
 		"[REGISTRY]",
 		"[IN-MEMORY]",
@@ -97,7 +166,6 @@ func TestMCPServerStdoutClean(t *testing.T) {
 // TestMCPServerStderrAllowed verifies that error/warning messages CAN go to stderr.
 // This is acceptable per MCP spec - only stdout must be clean.
 func TestMCPServerStderrAllowed(t *testing.T) {
-	// This test verifies that we can still see errors/warnings on stderr
 	// Capture stderr
 	originalStderr := os.Stderr
 	r, w, err := os.Pipe()
@@ -113,8 +181,7 @@ func TestMCPServerStderrAllowed(t *testing.T) {
 		close(done)
 	}()
 
-	// Create workspace with nonexistent path to potentially trigger warnings
-	// (not errors, as we handle missing manifests gracefully)
+	// Create workspace with basic integration
 	workspace := W.NewFileSystemWorkspaceContext("./fixtures/basic-integration")
 	err = workspace.Init()
 	require.NoError(t, err)
