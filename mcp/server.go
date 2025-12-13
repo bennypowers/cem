@@ -101,6 +101,12 @@ func (s *Server) GetInfo() ServerInfo {
 	}
 }
 
+// GetRegistry returns the MCP registry for testing
+// This is used by tests to verify stdout cleanliness
+func (s *Server) GetRegistry() *MCPContext {
+	return s.registry
+}
+
 // Run starts the MCP server with stdio transport
 func (s *Server) Run(ctx context.Context) error {
 	helpers.SafeDebugLog("Starting CEM MCP server with stdio transport")
