@@ -133,7 +133,7 @@ func TestMCPServerStdoutCleanWithQuietMode(t *testing.T) {
 
 	// Load manifests (this is where logging happens)
 	// We don't run the full server because that blocks on stdio
-	registry := server.GetRegistry()
+	registry := server.Registry()
 	err = registry.LoadManifests()
 	require.NoError(t, err)
 
@@ -189,7 +189,7 @@ func TestMCPServerStderrAllowed(t *testing.T) {
 	server, err := mcp.NewServer(workspace)
 	require.NoError(t, err)
 
-	registry := server.GetRegistry()
+	registry := server.Registry()
 	err = registry.LoadManifests()
 	require.NoError(t, err)
 

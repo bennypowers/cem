@@ -101,9 +101,9 @@ func (s *Server) GetInfo() ServerInfo {
 	}
 }
 
-// GetRegistry returns the MCP registry for testing
+// Registry returns the MCP registry for testing
 // This is used by tests to verify stdout cleanliness
-func (s *Server) GetRegistry() *MCPContext {
+func (s *Server) Registry() *MCPContext {
 	return s.registry
 }
 
