@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 
+	"bennypowers.dev/cem/internal/logging"
 	MCP "bennypowers.dev/cem/mcp"
 	"bennypowers.dev/cem/types"
 	"bennypowers.dev/cem/workspace"
@@ -55,6 +56,11 @@ Tools provided:
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// CRITICAL: Redirect all pterm output to stderr immediately to prevent MCP stdout contamination
 		pterm.SetDefaultOutput(os.Stderr)
+
+		// Enable quiet mode to suppress INFO and DEBUG logs (prevents stdout contamination)
+		// Per MCP specification, stdio-based servers must ONLY write JSON-RPC to stdout
+		// See: https://github.com/bennypowers/cem/issues/129
+		logging.SetQuietEnabled(true)
 
 		// Bind flags to viper
 		if err := viper.BindPFlag("mcp.maxDescriptionLength", cmd.Flags().Lookup("max-description-length")); err != nil {
