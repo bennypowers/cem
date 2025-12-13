@@ -113,13 +113,13 @@ func TestMCPServerStdoutCleanWithQuietMode(t *testing.T) {
 	require.NoError(t, err)
 	os.Stdout = w
 	defer func() { os.Stdout = originalStdout }()
-	defer w.Close() // Ensure pipe is closed even if test fails early
+	defer func() { _ = w.Close() }() // Ensure pipe is closed even if test fails early
 
 	// Buffer to capture stdout
 	var stdoutBuf bytes.Buffer
 	done := make(chan struct{})
 	go func() {
-		io.Copy(&stdoutBuf, r)
+		_, _ = io.Copy(&stdoutBuf, r)
 		close(done)
 	}()
 
@@ -138,7 +138,7 @@ func TestMCPServerStdoutCleanWithQuietMode(t *testing.T) {
 	require.NoError(t, err)
 
 	// Close stdout pipe
-	w.Close()
+	_ = w.Close()
 	<-done
 
 	// Verify stdout is clean
@@ -172,12 +172,12 @@ func TestMCPServerStderrAllowed(t *testing.T) {
 	require.NoError(t, err)
 	os.Stderr = w
 	defer func() { os.Stderr = originalStderr }()
-	defer w.Close() // Ensure pipe is closed even if test fails early
+	defer func() { _ = w.Close() }() // Ensure pipe is closed even if test fails early
 
 	var stderrBuf bytes.Buffer
 	done := make(chan struct{})
 	go func() {
-		io.Copy(&stderrBuf, r)
+		_, _ = io.Copy(&stderrBuf, r)
 		close(done)
 	}()
 
@@ -193,7 +193,7 @@ func TestMCPServerStderrAllowed(t *testing.T) {
 	err = registry.LoadManifests()
 	require.NoError(t, err)
 
-	w.Close()
+	_ = w.Close()
 	<-done
 
 	// stderr MAY contain error/warning messages (this is acceptable and desired for debugging)
