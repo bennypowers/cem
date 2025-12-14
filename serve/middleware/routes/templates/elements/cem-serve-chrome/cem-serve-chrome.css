@@ -403,12 +403,23 @@ footer ::slotted([slot="description"]) {
 }
 
 .event-list-item {
+  /* Reset button styles */
+  appearance: none;
+  background: none;
+  border: none;
+  border-left: 3px solid transparent;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  width: 100%;
+
+  /* Component styles */
   padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);
   display: flex;
   gap: var(--cem-dev-server-spacing-sm);
   align-items: center;
   cursor: pointer;
-  border-left: 3px solid transparent;
   transition: background 100ms ease-in-out, border-color 100ms ease-in-out;
 
   pf-v6-label {

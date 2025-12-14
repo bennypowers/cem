@@ -135,11 +135,11 @@ export class CemServeChrome extends CemElement {
       <pf-v6-alert dismissable data-field="alert"></pf-v6-alert>
     `;
     this.#eventEntryTemplate.innerHTML = `
-      <div class="event-list-item" data-field="container" tabindex="0" role="button">
+      <button class="event-list-item" data-field="container">
         <pf-v6-label compact data-field="label"></pf-v6-label>
         <time class="event-time" data-field="time"></time>
         <span class="event-element" data-field="element"></span>
-      </div>
+      </button>
     `;
   }
 
@@ -1724,6 +1724,9 @@ Generated: ${new Date().toISOString()}`;
   }
 
   #updateEventFilters() {
+    // Load saved filter preferences first
+    const savedPreferences = this.#loadEventFiltersFromStorage();
+
     // Populate event type filter
     const eventTypeFilter = this.#$('#event-type-filter');
     if (eventTypeFilter && this.#elementEventMap) {
@@ -1746,16 +1749,22 @@ Generated: ${new Date().toISOString()}`;
         }
       }
 
+      // Initialize filter set from saved preferences or default to all checked
+      if (savedPreferences.eventTypes) {
+        this.#eventTypeFilters = savedPreferences.eventTypes;
+      } else {
+        this.#eventTypeFilters = new Set(allEventTypes);
+      }
+
       for (const eventName of allEventTypes) {
         const item = document.createElement('pf-v6-menu-item');
         item.setAttribute('variant', 'checkbox');
         item.setAttribute('value', eventName);
-        item.setAttribute('checked', '');
+        if (this.#eventTypeFilters.has(eventName)) {
+          item.setAttribute('checked', '');
+        }
         item.textContent = eventName;
         menu.appendChild(item);
-
-        // Initialize filter set (all checked by default)
-        this.#eventTypeFilters.add(eventName);
       }
     }
 
@@ -1773,21 +1782,26 @@ Generated: ${new Date().toISOString()}`;
       const existingItems = menu.querySelectorAll('pf-v6-menu-item');
       existingItems.forEach(item => item.remove());
 
-      for (const tagName of this.#elementEventMap.keys()) {
+      const allElements = new Set(this.#elementEventMap.keys());
+
+      // Initialize filter set from saved preferences or default to all checked
+      if (savedPreferences.elements) {
+        this.#elementFilters = savedPreferences.elements;
+      } else {
+        this.#elementFilters = new Set(allElements);
+      }
+
+      for (const tagName of allElements) {
         const item = document.createElement('pf-v6-menu-item');
         item.setAttribute('variant', 'checkbox');
         item.setAttribute('value', tagName);
-        item.setAttribute('checked', '');
+        if (this.#elementFilters.has(tagName)) {
+          item.setAttribute('checked', '');
+        }
         item.textContent = `<${tagName}>`;
         menu.appendChild(item);
-
-        // Initialize filter set (all checked by default)
-        this.#elementFilters.add(tagName);
       }
     }
-
-    // Load saved filter preferences
-    this.#loadEventFilters();
   }
 
   #handleEventTypeFilterChange = (event) => {
@@ -1820,23 +1834,27 @@ Generated: ${new Date().toISOString()}`;
     this.#filterEvents(this.#eventsFilterValue);
   };
 
-  #loadEventFilters() {
+  #loadEventFiltersFromStorage() {
+    const preferences = {
+      eventTypes: null,
+      elements: null
+    };
+
     try {
       const savedEventTypes = localStorage.getItem('cem-serve-event-type-filters');
       if (savedEventTypes) {
-        this.#eventTypeFilters = new Set(JSON.parse(savedEventTypes));
+        preferences.eventTypes = new Set(JSON.parse(savedEventTypes));
       }
 
       const savedElements = localStorage.getItem('cem-serve-element-filters');
       if (savedElements) {
-        this.#elementFilters = new Set(JSON.parse(savedElements));
+        preferences.elements = new Set(JSON.parse(savedElements));
       }
     } catch (e) {
       console.debug('[cem-serve-chrome] localStorage unavailable for event filters');
     }
 
-    // Sync checkbox states
-    this.#syncEventFilterCheckboxes();
+    return preferences;
   }
 
   #saveEventFilters() {
@@ -1847,28 +1865,6 @@ Generated: ${new Date().toISOString()}`;
         JSON.stringify([...this.#elementFilters]));
     } catch (e) {
       // localStorage unavailable (private mode), silently continue
-    }
-  }
-
-  #syncEventFilterCheckboxes() {
-    // Sync event type checkboxes
-    const eventTypeFilter = this.#$('#event-type-filter');
-    if (eventTypeFilter) {
-      const menuItems = eventTypeFilter.querySelectorAll('pf-v6-menu-item');
-      menuItems.forEach(item => {
-        const { value } = item;
-        item.toggleAttribute('checked', this.#eventTypeFilters.has(value));
-      });
-    }
-
-    // Sync element checkboxes
-    const elementFilter = this.#$('#element-filter');
-    if (elementFilter) {
-      const menuItems = elementFilter.querySelectorAll('pf-v6-menu-item');
-      menuItems.forEach(item => {
-        const { value } = item;
-        item.toggleAttribute('checked', this.#elementFilters.has(value));
-      });
     }
   }
 
@@ -1934,24 +1930,13 @@ Generated: ${new Date().toISOString()}`;
     this.#eventDetailBody = this.#$('#event-detail-body');
 
     // Set up click delegation for event selection
+    // Buttons handle keyboard events (Enter/Space) natively via click events
     if (this.#eventList) {
       this.#eventList.addEventListener('click', (e) => {
         const listItem = e.target.closest('.event-list-item');
         if (listItem) {
           const eventId = listItem.dataset.eventId;
           this.#selectEvent(eventId);
-        }
-      });
-
-      // Keyboard support for selection
-      this.#eventList.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          const listItem = e.target.closest('.event-list-item');
-          if (listItem) {
-            e.preventDefault();
-            const eventId = listItem.dataset.eventId;
-            this.#selectEvent(eventId);
-          }
         }
       });
     }
