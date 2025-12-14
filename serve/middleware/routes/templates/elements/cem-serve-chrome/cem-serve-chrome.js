@@ -1984,7 +1984,7 @@ Generated: ${new Date().toISOString()}`;
     this.removeEventListener('knob:attribute-clear', this.#onKnobClear);
     this.removeEventListener('knob:property-clear', this.#onKnobClear);
     this.removeEventListener('knob:css-property-clear', this.#onKnobClear);
-    this.#observer.disconnect()
+    this.#observer.disconnect();
   }
 
   static {
