@@ -1985,6 +1985,10 @@ Generated: ${new Date().toISOString()}`;
     this.removeEventListener('knob:property-clear', this.#onKnobClear);
     this.removeEventListener('knob:css-property-clear', this.#onKnobClear);
     this.#observer.disconnect();
+    // Close WebSocket connection
+    if (this.#wsClient) {
+      this.#wsClient.destroy();
+    }
   }
 
   static {
