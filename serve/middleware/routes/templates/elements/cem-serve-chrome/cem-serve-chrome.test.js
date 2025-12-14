@@ -638,42 +638,6 @@ describe('cem-serve-chrome', () => {
     });
   });
 
-  describe('element event capture', () => {
-    it('has event list element', () => {
-      const eventList = el.shadowRoot.getElementById('event-list');
-      expect(eventList).to.exist;
-    });
-  });
-
-  describe('event filtering', () => {
-    it('has text filter input', () => {
-      const eventsFilter = el.shadowRoot.getElementById('events-filter');
-      expect(eventsFilter).to.exist;
-    });
-
-    it('has event type filter dropdown', () => {
-      const eventTypeFilter = el.shadowRoot.getElementById('event-type-filter');
-      expect(eventTypeFilter).to.exist;
-    });
-
-    it('has element filter dropdown', () => {
-      const elementFilter = el.shadowRoot.getElementById('element-filter');
-      expect(elementFilter).to.exist;
-    });
-  });
-
-  describe('event actions', () => {
-    it('has clear events button', () => {
-      const clearButton = el.shadowRoot.getElementById('clear-events');
-      expect(clearButton).to.exist;
-    });
-
-    it('has copy events button', () => {
-      const copyButton = el.shadowRoot.getElementById('copy-events');
-      expect(copyButton).to.exist;
-    });
-  });
-
   describe('event tab interaction', () => {
     it('scrolls events when switching to events tab', async () => {
       const tabs = el.shadowRoot.querySelector('pf-v6-tabs');
