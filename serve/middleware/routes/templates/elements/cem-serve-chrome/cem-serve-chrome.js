@@ -179,7 +179,7 @@ export class CemServeChrome extends CemElement {
           if (this.#elementEventMap.has(tagName) && !node.dataset.cemEventsAttached) {
             const eventInfo = this.#elementEventMap.get(tagName);
             for (const eventName of eventInfo.eventNames) {
-              node.addEventListener(eventName, this.#handleElementEvent);
+              node.addEventListener(eventName, this.#handleElementEvent, { capture: true });
             }
             node.dataset.cemEventsAttached = 'true';
             this.#discoveredElements.add(tagName);
@@ -449,7 +449,7 @@ export class CemServeChrome extends CemElement {
     const logsFilter = this.#$('#logs-filter');
     if (logsFilter) {
       logsFilter.addEventListener('input', () => {
-        const value = logsFilter.getAttribute('value') || '';
+        const { value = '' } = logsFilter;
 
         // Debounce filter - wait 300ms after user stops typing
         clearTimeout(this.#logsFilterDebounceTimer);
@@ -535,7 +535,7 @@ export class CemServeChrome extends CemElement {
 
     const menuItems = this.#logLevelDropdown.querySelectorAll('pf-v6-menu-item');
     menuItems.forEach(item => {
-      const value = item.getAttribute('value');
+      const { value } = item;
       item.checked = this.#logLevelFilters.has(value);
     });
   }
@@ -884,7 +884,7 @@ Generated: ${new Date().toISOString()}`;
     // Mark correct toggle as selected (SSR should have done this via body style, but ensure it)
     const items = toggleGroup.querySelectorAll('pf-v6-toggle-group-item');
     items.forEach(item => {
-      if (item.getAttribute('value') === state.colorScheme) {
+      if (item.value === state.colorScheme) {
         item.setAttribute('selected', '');
       }
     });
@@ -1317,7 +1317,7 @@ Generated: ${new Date().toISOString()}`;
         // Attach listeners for each event on this specific element
         for (const eventName of eventInfo.eventNames) {
           // Use capture phase to catch events even if they don't bubble
-          element.addEventListener(eventName, this.#handleElementEvent);
+          element.addEventListener(eventName, this.#handleElementEvent, { capture: true });
         }
 
         // Mark this element as having listeners attached
@@ -1791,7 +1791,7 @@ Generated: ${new Date().toISOString()}`;
   }
 
   #handleEventTypeFilterChange = (event) => {
-    const { value, checked } = event.detail || {};
+    const { value, checked } = event;
 
     if (!value) return;
 
@@ -1806,7 +1806,7 @@ Generated: ${new Date().toISOString()}`;
   };
 
   #handleElementFilterChange = (event) => {
-    const { value, checked } = event.detail || {};
+    const { value, checked } = event;
 
     if (!value) return;
 
@@ -1856,12 +1856,8 @@ Generated: ${new Date().toISOString()}`;
     if (eventTypeFilter) {
       const menuItems = eventTypeFilter.querySelectorAll('pf-v6-menu-item');
       menuItems.forEach(item => {
-        const value = item.getAttribute('value');
-        if (this.#eventTypeFilters.has(value)) {
-          item.setAttribute('checked', '');
-        } else {
-          item.removeAttribute('checked');
-        }
+        const { value } = item;
+        item.toggleAttribute('checked', this.#eventTypeFilters.has(value));
       });
     }
 
@@ -1870,12 +1866,8 @@ Generated: ${new Date().toISOString()}`;
     if (elementFilter) {
       const menuItems = elementFilter.querySelectorAll('pf-v6-menu-item');
       menuItems.forEach(item => {
-        const value = item.getAttribute('value');
-        if (this.#elementFilters.has(value)) {
-          item.setAttribute('checked', '');
-        } else {
-          item.removeAttribute('checked');
-        }
+        const { value } = item;
+        item.toggleAttribute('checked', this.#elementFilters.has(value));
       });
     }
   }
@@ -1925,7 +1917,7 @@ Generated: ${new Date().toISOString()}`;
         );
         if (textNode) {
           const original = textNode.textContent;
-          textNode.textContent = '\n              Copied!\n            ';
+          textNode.textContent = 'Copied!';
           setTimeout(() => {
             textNode.textContent = original;
           }, 2000);
@@ -1968,7 +1960,7 @@ Generated: ${new Date().toISOString()}`;
     const eventsFilter = this.#$('#events-filter');
     if (eventsFilter) {
       eventsFilter.addEventListener('input', (e) => {
-        const value = e.target.getAttribute('value') || '';
+        const { value = '' } = e.target;
         clearTimeout(this.#eventsFilterDebounceTimer);
         this.#eventsFilterDebounceTimer = setTimeout(() => {
           this.#filterEvents(value);
