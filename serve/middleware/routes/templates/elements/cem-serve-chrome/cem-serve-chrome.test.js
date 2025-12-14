@@ -642,8 +642,21 @@ describe('cem-serve-chrome', () => {
     it('scrolls events when switching to events tab', async () => {
       const tabs = el.shadowRoot.querySelector('pf-v6-tabs');
       const drawer = el.shadowRoot.querySelector('cem-drawer');
+      const eventList = el.shadowRoot.querySelector('#event-list');
 
-      // Open drawer
+      // Add a mock event button to the event list
+      const mockButton = document.createElement('button');
+      mockButton.className = 'event-list-item';
+      mockButton.dataset.eventId = 'test-event';
+      eventList.appendChild(mockButton);
+
+      // Stub scrollIntoView on the mock button
+      const scrollStub = sinon.stub(mockButton, 'scrollIntoView');
+
+      // Set drawer.open property directly (tab handler checks drawer.open, not event.open)
+      drawer.open = true;
+
+      // Open drawer event to update internal state
       const drawerOpenEvent = new Event('change', { bubbles: true });
       drawerOpenEvent.open = true;
       drawer.dispatchEvent(drawerOpenEvent);
@@ -653,8 +666,19 @@ describe('cem-serve-chrome', () => {
       tabChangeEvent.selectedIndex = 3;
       tabs.dispatchEvent(tabChangeEvent);
 
-      // Should not throw
-      expect(el).to.exist;
+      await el.updateComplete;
+
+      // Wait for requestAnimationFrame to complete
+      await new Promise(resolve => requestAnimationFrame(resolve));
+
+      // Verify scrollIntoView was called
+      expect(scrollStub.called).to.be.true;
+      expect(scrollStub.firstCall.args[0]).to.deep.include({
+        behavior: 'auto',
+        block: 'end'
+      });
+
+      scrollStub.restore();
     });
   });
 
@@ -864,41 +888,81 @@ describe('cem-serve-chrome', () => {
         originalUA = navigator.userAgent;
       });
 
-      it('detects Firefox with version', () => {
+      it('detects Firefox with version', async () => {
         Object.defineProperty(navigator, 'userAgent', {
           value: 'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0',
           configurable: true
         });
-        // Access private method through instance - tests execution path
-        const browser = el.shadowRoot.querySelector('#debug-browser');
-        expect(browser).to.exist; // Confirms setup works
+
+        // Trigger debug modal open to populate browser info
+        const debugButton = el.shadowRoot.querySelector('#debug-info');
+        if (debugButton) {
+          debugButton.click();
+          await el.updateComplete;
+
+          const browser = el.shadowRoot.querySelector('#debug-browser');
+          expect(browser).to.exist;
+          expect(browser.textContent).to.equal('Firefox 115');
+        } else {
+          expect(el).to.exist;
+        }
       });
 
-      it('detects Edge with version', () => {
+      it('detects Edge with version', async () => {
         Object.defineProperty(navigator, 'userAgent', {
           value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
           configurable: true
         });
-        const browser = el.shadowRoot.querySelector('#debug-browser');
-        expect(browser).to.exist;
+
+        const debugButton = el.shadowRoot.querySelector('#debug-info');
+        if (debugButton) {
+          debugButton.click();
+          await el.updateComplete;
+
+          const browser = el.shadowRoot.querySelector('#debug-browser');
+          expect(browser).to.exist;
+          expect(browser.textContent).to.equal('Edge 120');
+        } else {
+          expect(el).to.exist;
+        }
       });
 
-      it('detects Chrome with version', () => {
+      it('detects Chrome with version', async () => {
         Object.defineProperty(navigator, 'userAgent', {
           value: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           configurable: true
         });
-        const browser = el.shadowRoot.querySelector('#debug-browser');
-        expect(browser).to.exist;
+
+        const debugButton = el.shadowRoot.querySelector('#debug-info');
+        if (debugButton) {
+          debugButton.click();
+          await el.updateComplete;
+
+          const browser = el.shadowRoot.querySelector('#debug-browser');
+          expect(browser).to.exist;
+          expect(browser.textContent).to.equal('Chrome 120');
+        } else {
+          expect(el).to.exist;
+        }
       });
 
-      it('detects Safari with version', () => {
+      it('detects Safari with version', async () => {
         Object.defineProperty(navigator, 'userAgent', {
           value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
           configurable: true
         });
-        const browser = el.shadowRoot.querySelector('#debug-browser');
-        expect(browser).to.exist;
+
+        const debugButton = el.shadowRoot.querySelector('#debug-info');
+        if (debugButton) {
+          debugButton.click();
+          await el.updateComplete;
+
+          const browser = el.shadowRoot.querySelector('#debug-browser');
+          expect(browser).to.exist;
+          expect(browser.textContent).to.equal('Safari 17');
+        } else {
+          expect(el).to.exist;
+        }
       });
 
       afterEach(() => {
@@ -1214,16 +1278,49 @@ describe('cem-serve-chrome', () => {
     });
 
     describe('clear events', () => {
-      it('clears all captured events', () => {
+      it('clears all captured events', async () => {
+        const eventList = el.shadowRoot.querySelector('#event-list');
+        const eventDetailHeader = el.shadowRoot.querySelector('#event-detail-header');
+        const eventDetailBody = el.shadowRoot.querySelector('#event-detail-body');
         const clearButton = el.shadowRoot.querySelector('#clear-events');
-        if (clearButton) {
-          clearButton.click();
 
-          const eventList = el.shadowRoot.querySelector('#event-list');
-          expect(eventList.children.length).to.equal(0);
-        } else {
+        if (!clearButton) {
           expect(el).to.exist;
+          return;
         }
+
+        // Seed multiple mock event entries
+        const mockEvent1 = document.createElement('button');
+        mockEvent1.className = 'event-list-item';
+        mockEvent1.dataset.eventId = 'event-1';
+        mockEvent1.innerHTML = '<pf-v6-label compact>click</pf-v6-label>';
+        eventList.appendChild(mockEvent1);
+
+        const mockEvent2 = document.createElement('button');
+        mockEvent2.className = 'event-list-item';
+        mockEvent2.dataset.eventId = 'event-2';
+        mockEvent2.innerHTML = '<pf-v6-label compact>change</pf-v6-label>';
+        eventList.appendChild(mockEvent2);
+
+        // Add some detail panel content to simulate a selected event
+        eventDetailHeader.innerHTML = '<h3>Test Event</h3>';
+        eventDetailBody.innerHTML = '<div>Event details</div>';
+
+        // Verify events and details exist
+        expect(eventList.children.length).to.be.at.least(2);
+        expect(eventDetailHeader.innerHTML).to.not.equal('');
+        expect(eventDetailBody.innerHTML).to.not.equal('');
+
+        // Click clear button
+        clearButton.click();
+        await el.updateComplete;
+
+        // Verify all events are cleared
+        expect(eventList.children.length).to.equal(0);
+
+        // Verify detail panels are cleared
+        expect(eventDetailHeader.innerHTML).to.equal('');
+        expect(eventDetailBody.innerHTML).to.equal('');
       });
     });
   });
