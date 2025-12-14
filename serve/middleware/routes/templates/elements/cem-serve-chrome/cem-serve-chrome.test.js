@@ -659,8 +659,7 @@ describe('cem-serve-chrome', () => {
   });
 
   describe('event edge cases', () => {
-    it('handles manifest discovery gracefully', () => {
-      // Just verify the event list exists
+    it('renders event list element', () => {
       const eventList = el.shadowRoot.getElementById('event-list');
       expect(eventList).to.exist;
     });
@@ -706,20 +705,60 @@ describe('cem-serve-chrome', () => {
   });
 
   describe('event filter persistence', () => {
-    it('handles filter changes', () => {
-      // Verify filter dropdowns exist
-      const eventTypeFilter = el.shadowRoot.getElementById('event-type-filter');
-      const elementFilter = el.shadowRoot.getElementById('element-filter');
+    let setItemStub;
 
-      // These may not exist if no manifest, which is fine
-      expect(el.shadowRoot).to.exist;
+    beforeEach(() => {
+      setItemStub = sinon.stub(Storage.prototype, 'setItem');
+    });
+
+    afterEach(() => {
+      setItemStub.restore();
+    });
+
+    it('saves filter changes to localStorage', () => {
+      const eventTypeFilter = el.shadowRoot.getElementById('event-type-filter');
+      if (!eventTypeFilter) {
+        // Skip if no manifest available
+        expect(el.shadowRoot).to.exist;
+        return;
+      }
+
+      // Create and dispatch a select event with value and checked properties
+      const selectEvent = new Event('select', { bubbles: true });
+      selectEvent.value = 'click';
+      selectEvent.checked = false;
+
+      eventTypeFilter.dispatchEvent(selectEvent);
+
+      // Verify localStorage.setItem was called with event type filters key
+      expect(setItemStub.calledWith('cem-serve-event-type-filters')).to.be.true;
     });
 
     it('handles localStorage errors gracefully', () => {
-      // Element should handle localStorage unavailability
-      // This is tested implicitly through normal operation
-      expect(el).to.exist;
-      expect(el.shadowRoot).to.exist;
+      // Stub localStorage to throw errors
+      const getItemStub = sinon.stub(Storage.prototype, 'getItem').throws(new Error('localStorage unavailable'));
+      setItemStub.throws(new Error('localStorage unavailable'));
+
+      let errorThrown = false;
+      try {
+        // Create a new element that will try to access localStorage during initialization
+        const newEl = document.createElement('cem-serve-chrome');
+        document.body.appendChild(newEl);
+
+        // Element should still render despite localStorage errors
+        expect(newEl).to.exist;
+        expect(newEl.shadowRoot).to.exist;
+
+        document.body.removeChild(newEl);
+      } catch (e) {
+        errorThrown = true;
+      }
+
+      // Verify no errors were thrown to the test
+      expect(errorThrown).to.be.false;
+
+      // Cleanup
+      getItemStub.restore();
     });
   });
 });
