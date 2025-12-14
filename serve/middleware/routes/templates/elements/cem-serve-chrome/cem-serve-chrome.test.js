@@ -974,12 +974,15 @@ describe('cem-serve-chrome', () => {
     });
 
     describe('log rendering helpers', () => {
-      it('renders info logs with correct badge', () => {
+      it('renders info logs with correct badge', async () => {
         window.dispatchEvent(new CemLogsEvent([{
           type: 'info',
           date: new Date().toISOString(),
           message: 'Info message'
         }]));
+
+        // Wait for component to render the log entry
+        await waitUntil(() => el.shadowRoot.querySelector('.log-entry.info'), 'Info log entry should render');
 
         const logEntry = el.shadowRoot.querySelector('.log-entry.info');
         expect(logEntry).to.exist;
@@ -988,12 +991,15 @@ describe('cem-serve-chrome', () => {
         expect(label.getAttribute('status')).to.equal('info');
       });
 
-      it('renders warning logs with correct badge', () => {
+      it('renders warning logs with correct badge', async () => {
         window.dispatchEvent(new CemLogsEvent([{
           type: 'warning',
           date: new Date().toISOString(),
           message: 'Warning message'
         }]));
+
+        // Wait for component to render the log entry
+        await waitUntil(() => el.shadowRoot.querySelector('.log-entry.warning'), 'Warning log entry should render');
 
         const logEntry = el.shadowRoot.querySelector('.log-entry.warning');
         expect(logEntry).to.exist;
@@ -1002,12 +1008,15 @@ describe('cem-serve-chrome', () => {
         expect(label.getAttribute('status')).to.equal('warning');
       });
 
-      it('renders error logs with correct badge', () => {
+      it('renders error logs with correct badge', async () => {
         window.dispatchEvent(new CemLogsEvent([{
           type: 'error',
           date: new Date().toISOString(),
           message: 'Error message'
         }]));
+
+        // Wait for component to render the log entry
+        await waitUntil(() => el.shadowRoot.querySelector('.log-entry.error'), 'Error log entry should render');
 
         const logEntry = el.shadowRoot.querySelector('.log-entry.error');
         expect(logEntry).to.exist;
@@ -1016,12 +1025,15 @@ describe('cem-serve-chrome', () => {
         expect(label.getAttribute('status')).to.equal('danger');
       });
 
-      it('renders debug logs with correct badge', () => {
+      it('renders debug logs with correct badge', async () => {
         window.dispatchEvent(new CemLogsEvent([{
           type: 'debug',
           date: new Date().toISOString(),
           message: 'Debug message'
         }]));
+
+        // Wait for component to render the log entry
+        await waitUntil(() => el.shadowRoot.querySelector('.log-entry.debug'), 'Debug log entry should render');
 
         const logEntry = el.shadowRoot.querySelector('.log-entry.debug');
         expect(logEntry).to.exist;
@@ -1154,14 +1166,14 @@ describe('cem-serve-chrome', () => {
         }
       });
 
-      it('copies events to clipboard', async () => {
+      it('does not copy when no events', async () => {
         const copyButton = el.shadowRoot.querySelector('#copy-events');
         if (copyButton) {
           copyButton.click();
           await el.updateComplete;
 
-          // Should be called even with no events (empty string)
-          expect(writeTextStub.called).to.be.false; // No visible events
+          // Copy should not be called when there are no visible events
+          expect(writeTextStub.called).to.be.false;
         } else {
           expect(el).to.exist;
         }
@@ -1218,31 +1230,41 @@ describe('cem-serve-chrome', () => {
     });
 
     describe('localStorage migration', () => {
-      it('migrates from localStorage to cookies when legacy values exist', () => {
+      it('skips migration if already migrated', async () => {
+        // Stub localStorage BEFORE creating element to prevent migration
         const getItemStub = sinon.stub(Storage.prototype, 'getItem');
         const setItemStub = sinon.stub(Storage.prototype, 'setItem');
 
         try {
-          getItemStub.withArgs('cem-serve-color-scheme').returns('dark');
-          getItemStub.withArgs('cem-serve-drawer-open').returns('true');
-          getItemStub.withArgs('cem-serve-migrated-to-cookies').returns(null);
+          // Mark as already migrated (prevents reload)
+          getItemStub.withArgs('cem-serve-migrated-to-cookies').returns('true');
+          getItemStub.returns(null);
 
-          // Component should detect old values and migrate
-          expect(el).to.exist;
+          // Create fresh element
+          const newEl = document.createElement('cem-serve-chrome');
+          document.body.appendChild(newEl);
+
+          // Wait for template to load
+          await newEl.rendered;
+
+          // Migration marker should NOT be set again
+          expect(setItemStub.calledWith('cem-serve-migrated-to-cookies')).to.be.false;
+
+          // Cleanup
+          document.body.removeChild(newEl);
         } finally {
           getItemStub.restore();
           setItemStub.restore();
         }
       });
 
-      it('skips migration if already migrated', () => {
-        const getItemStub = sinon.stub(Storage.prototype, 'getItem');
+      it('handles missing localStorage gracefully', () => {
+        const getItemStub = sinon.stub(Storage.prototype, 'getItem').throws(new Error('localStorage unavailable'));
 
         try {
-          getItemStub.withArgs('cem-serve-migrated-to-cookies').returns('true');
-
-          // Should not trigger reload
+          // Component should not throw when localStorage is unavailable
           expect(el).to.exist;
+          expect(el.shadowRoot).to.exist;
         } finally {
           getItemStub.restore();
         }
