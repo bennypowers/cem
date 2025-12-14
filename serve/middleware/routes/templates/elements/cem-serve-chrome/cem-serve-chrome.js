@@ -1309,9 +1309,7 @@ Generated: ${new Date().toISOString()}`;
         // Attach listeners for each event on this specific element
         for (const eventName of eventInfo.eventNames) {
           // Use capture phase to catch events even if they don't bubble
-          element.addEventListener(eventName, this.#handleElementEvent, {
-            capture: true
-          });
+          element.addEventListener(eventName, this.#handleElementEvent);
         }
 
         // Mark this element as having listeners attached
@@ -1340,9 +1338,7 @@ Generated: ${new Date().toISOString()}`;
             if (this.#elementEventMap.has(tagName) && !node.dataset.cemEventsAttached) {
               const eventInfo = this.#elementEventMap.get(tagName);
               for (const eventName of eventInfo.eventNames) {
-                node.addEventListener(eventName, this.#handleElementEvent, {
-                  capture: false
-                });
+                node.addEventListener(eventName, this.#handleElementEvent);
               }
               node.dataset.cemEventsAttached = 'true';
               this.#discoveredElements.add(tagName);
