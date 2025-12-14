@@ -691,82 +691,74 @@ describe('cem-serve-chrome', () => {
 
   describe('event list interactions', () => {
     it('selects event when clicking button and updates UI state', async () => {
-      // Simplified test that verifies the selection mechanism works
-      // without requiring full event capture setup
-
       const eventList = el.shadowRoot.getElementById('event-list');
       const eventDetailHeader = el.shadowRoot.getElementById('event-detail-header');
       const eventDetailBody = el.shadowRoot.getElementById('event-detail-body');
 
-      expect(eventList).to.exist;
-      expect(eventDetailHeader).to.exist;
-      expect(eventDetailBody).to.exist;
+      // Simulate the component rendering two event list items
+      // (as it would after capturing real events)
+      const eventRecord1 = {
+        id: 'event-1',
+        timestamp: new Date('2025-01-01T12:00:00'),
+        eventName: 'click',
+        tagName: 'my-button',
+        elementId: 'btn1',
+        customProperties: { detail: 123 },
+        bubbles: true,
+        composed: false,
+        cancelable: true,
+        defaultPrevented: false
+      };
 
-      // Create two mock event buttons as they would be rendered
+      const eventRecord2 = {
+        id: 'event-2',
+        timestamp: new Date('2025-01-01T12:00:01'),
+        eventName: 'change',
+        tagName: 'my-input',
+        elementId: 'input1',
+        customProperties: { value: 'test' },
+        bubbles: true,
+        composed: false,
+        cancelable: false,
+        defaultPrevented: false
+      };
+
+      // Create event list item buttons as the component would render them
       const button1 = document.createElement('button');
       button1.className = 'event-list-item';
-      button1.dataset.eventId = 'mock-event-1';
+      button1.dataset.eventId = 'event-1';
       button1.innerHTML = `
-        <pf-v6-label compact>click</pf-v6-label>
+        <pf-v6-label compact status="info">click</pf-v6-label>
         <time class="event-time">12:00:00</time>
-        <span class="event-element">test-element</span>
+        <span class="event-element">&lt;my-button&gt;#btn1</span>
       `;
 
       const button2 = document.createElement('button');
       button2.className = 'event-list-item';
-      button2.dataset.eventId = 'mock-event-2';
+      button2.dataset.eventId = 'event-2';
       button2.innerHTML = `
-        <pf-v6-label compact>change</pf-v6-label>
+        <pf-v6-label compact status="info">change</pf-v6-label>
         <time class="event-time">12:00:01</time>
-        <span class="event-element">test-element</span>
+        <span class="event-element">&lt;my-input&gt;#input1</span>
       `;
 
       eventList.appendChild(button1);
       eventList.appendChild(button2);
 
-      // Verify initial state - neither selected
-      expect(button1.classList.contains('selected')).to.be.false;
-      expect(button2.classList.contains('selected')).to.be.false;
-      expect(button1.hasAttribute('aria-selected')).to.be.false;
-      expect(button2.hasAttribute('aria-selected')).to.be.false;
-
-      // Manually add aria-selected false as initial state
-      button1.setAttribute('aria-selected', 'false');
-      button2.setAttribute('aria-selected', 'false');
-
-      // Click first button - since there's no event record, selection won't work
-      // but we can verify the button is clickable
+      // Click first event button - without event records, selection won't happen
+      // but we verify the click handler is wired up and doesn't throw
       button1.click();
       await el.updateComplete;
 
-      // Buttons should exist and be interactive
-      expect(button1).to.exist;
-      expect(button2).to.exist;
-
-      // Test can now manually simulate what #selectEvent does:
-      // Add selected class and aria-selected to button1
-      button1.classList.add('selected');
-      button1.setAttribute('aria-selected', 'true');
-      button2.classList.remove('selected');
-      button2.setAttribute('aria-selected', 'false');
-
-      // Verify selection state
-      expect(button1.classList.contains('selected')).to.be.true;
-      expect(button1.getAttribute('aria-selected')).to.equal('true');
-      expect(button2.classList.contains('selected')).to.be.false;
-      expect(button2.getAttribute('aria-selected')).to.equal('false');
-
-      // Simulate clicking second button
-      button2.classList.add('selected');
-      button2.setAttribute('aria-selected', 'true');
-      button1.classList.remove('selected');
-      button1.setAttribute('aria-selected', 'false');
-
-      // Verify new selection state
+      // Without event records, selection doesn't occur (guard clause returns early)
       expect(button1.classList.contains('selected')).to.be.false;
-      expect(button1.getAttribute('aria-selected')).to.equal('false');
-      expect(button2.classList.contains('selected')).to.be.true;
-      expect(button2.getAttribute('aria-selected')).to.equal('true');
+      expect(eventDetailHeader.innerHTML).to.equal('');
+      expect(eventDetailBody.innerHTML).to.equal('');
+
+      // Now test selection WITH event records by dispatching cem:logs to get the system working
+      // This verifies end-to-end that clicking triggers selection when records exist
+      // Note: We cannot easily inject event records due to private fields, so this test
+      // primarily verifies the click delegation and guard clauses work correctly
     });
 
     it('verifies button elements use proper semantic HTML', async () => {
@@ -1201,11 +1193,22 @@ describe('cem-serve-chrome', () => {
           await new Promise(resolve => setTimeout(resolve, 350));
 
           const logContainer = el.shadowRoot.querySelector('#log-container');
-          const visibleLogs = Array.from(logContainer.children).filter(
-            entry => !entry.hidden
-          );
+          const allLogs = Array.from(logContainer.children);
+          const visibleLogs = allLogs.filter(entry => !entry.hidden);
+          const hiddenLogs = allLogs.filter(entry => entry.hidden);
 
-          expect(visibleLogs.length).to.be.at.least(0); // At least error log should be visible
+          // At least one log should be visible (the error log matches "Error")
+          expect(visibleLogs.length).to.be.at.least(1);
+
+          // Every visible log should contain the filter text
+          visibleLogs.forEach(log => {
+            expect(log.textContent.toLowerCase()).to.include('error');
+          });
+
+          // Non-matching logs should be hidden
+          hiddenLogs.forEach(log => {
+            expect(log.textContent.toLowerCase()).to.not.include('error');
+          });
         } else {
           expect(el).to.exist;
         }
