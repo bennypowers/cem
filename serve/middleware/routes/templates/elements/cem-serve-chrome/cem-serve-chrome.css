@@ -533,15 +533,15 @@ footer ::slotted([slot="description"]) {
   }
 
   &.boolean {
-    color: #569cd6; /* Blue for booleans */
+    color: var(--cem-dev-server-color-boolean);
   }
 
   &.number {
-    color: #b5cea8; /* Green for numbers */
+    color: var(--cem-dev-server-color-number);
   }
 
   &.string {
-    color: #ce9178; /* Orange for strings */
+    color: var(--cem-dev-server-color-string);
   }
 
   &.array,
