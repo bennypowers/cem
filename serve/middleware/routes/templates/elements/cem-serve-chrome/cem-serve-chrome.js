@@ -168,6 +168,32 @@ export class CemServeChrome extends CemElement {
   #elementFilters = new Set();       // Selected elements
   #discoveredElements = new Set();   // Set of tagName strings
 
+  // Watch for dynamically added elements
+  #observer = new MutationObserver((mutations) => {
+    let needsUpdate = false;
+
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if (node instanceof HTMLElement) {
+          const tagName = node.tagName.toLowerCase();
+          if (this.#elementEventMap.has(tagName) && !node.dataset.cemEventsAttached) {
+            const eventInfo = this.#elementEventMap.get(tagName);
+            for (const eventName of eventInfo.eventNames) {
+              node.addEventListener(eventName, this.#handleElementEvent);
+            }
+            node.dataset.cemEventsAttached = 'true';
+            this.#discoveredElements.add(tagName);
+            needsUpdate = true;
+          }
+        }
+      }
+    }
+
+    if (needsUpdate) {
+      this.#updateEventFilters();
+    }
+  });
+
   #wsClient = new CEMReloadClient({
     jitterMax: 1000,
     overlayThreshold: 15,
@@ -1259,24 +1285,6 @@ Generated: ${new Date().toISOString()}`;
     return eventMap;
   }
 
-  #scanDemoForElements() {
-    const demo = this.demo;
-    if (!demo) return;
-
-    const root = demo.shadowRoot ?? demo;
-    const eventMap = this.#elementEventMap;
-
-    if (!eventMap) return;
-
-    // Find all elements in demo that have events in manifest
-    for (const [tagName] of eventMap) {
-      const elements = root.querySelectorAll(tagName);
-      if (elements.length > 0) {
-        this.#discoveredElements.add(tagName);
-      }
-    }
-  }
-
   #setupEventCapture() {
     // Build event map from manifest
     this.#elementEventMap = this.#discoverElementEvents();
@@ -1327,33 +1335,7 @@ Generated: ${new Date().toISOString()}`;
 
     const root = demo.shadowRoot ?? demo;
 
-    // Watch for dynamically added elements
-    const observer = new MutationObserver((mutations) => {
-      let needsUpdate = false;
-
-      for (const mutation of mutations) {
-        for (const node of mutation.addedNodes) {
-          if (node instanceof HTMLElement) {
-            const tagName = node.tagName.toLowerCase();
-            if (this.#elementEventMap.has(tagName) && !node.dataset.cemEventsAttached) {
-              const eventInfo = this.#elementEventMap.get(tagName);
-              for (const eventName of eventInfo.eventNames) {
-                node.addEventListener(eventName, this.#handleElementEvent);
-              }
-              node.dataset.cemEventsAttached = 'true';
-              this.#discoveredElements.add(tagName);
-              needsUpdate = true;
-            }
-          }
-        }
-      }
-
-      if (needsUpdate) {
-        this.#updateEventFilters();
-      }
-    });
-
-    observer.observe(root, {
+    this.#observer.observe(root, {
       childList: true,
       subtree: true
     });
@@ -2025,6 +2007,7 @@ Generated: ${new Date().toISOString()}`;
     this.removeEventListener('knob:attribute-clear', this.#onKnobClear);
     this.removeEventListener('knob:property-clear', this.#onKnobClear);
     this.removeEventListener('knob:css-property-clear', this.#onKnobClear);
+    this.#observer.disconnect()
   }
 
   static {
