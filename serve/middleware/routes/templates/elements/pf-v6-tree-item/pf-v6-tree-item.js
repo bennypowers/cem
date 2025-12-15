@@ -43,7 +43,7 @@ export class PfTreeItemCollapseEvent extends Event {
  *
  * @customElement pf-v6-tree-item
  */
-class PfV6TreeItem extends CemElement {
+export class PfV6TreeItem extends CemElement {
   static is = 'pf-v6-tree-item';
 
   static observedAttributes = [
@@ -98,6 +98,9 @@ class PfV6TreeItem extends CemElement {
 
   get hasChildren() { return this.hasAttribute('has-children'); }
 
+  // Track if has-children was explicitly set by user
+  #explicitHasChildren = false;
+
   afterTemplateLoaded() {
     this.#item = this.#$('item');
     this.#toggle = this.#$('toggle');
@@ -107,6 +110,9 @@ class PfV6TreeItem extends CemElement {
     this.#children = this.#$('children');
 
     if (!this.#item || !this.#toggle || !this.#node) return;
+
+    // Check if has-children was explicitly set before we started observing
+    this.#explicitHasChildren = this.hasAttribute('has-children');
 
     // Set up ARIA
     this.#updateAriaAttributes();
@@ -127,13 +133,8 @@ class PfV6TreeItem extends CemElement {
 
     // Watch for children via slot
     this.#childrenSlot = this.#children.querySelector('slot');
-    if (this.#childrenSlot) {
-      this.#childrenSlot.addEventListener('slotchange', () => {
-        this.#updateHasChildren();
-      });
-      // Initial check
-      this.#updateHasChildren();
-    }
+    this.#childrenSlot?.addEventListener('slotchange', () => this.#updateHasChildren());
+    this.#updateHasChildren();
 
     // Update icon and badge
     this.#updateIcon();
@@ -196,6 +197,10 @@ class PfV6TreeItem extends CemElement {
 
   #updateHasChildren() {
     if (!this.#childrenSlot) return;
+
+    // If has-children was explicitly set, don't auto-update it
+    // This allows lazy rendering where children aren't in DOM until expanded
+    if (this.#explicitHasChildren) return;
 
     const children = this.#childrenSlot.assignedElements();
     const hasChildren = children.length > 0;

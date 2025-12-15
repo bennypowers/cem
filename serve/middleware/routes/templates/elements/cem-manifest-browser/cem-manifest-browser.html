@@ -53,15 +53,10 @@
       </pf-v6-toolbar-item>
     </pf-v6-toolbar-group>
   </pf-v6-toolbar>
-  <pf-v6-drawer id="drawer" expanded>
+  <pf-v6-drawer id="drawer">
     <div id="tree-wrapper">
-      <slot name="manifest-tree"></slot>
+      <cem-virtual-tree id="virtual-tree"></cem-virtual-tree>
     </div>
-    <slot id="panel-title"
-          name="manifest-name"
-          slot="panel-header"></slot>
-    <slot id="details-content"
-          slot="panel-body"
-          name="manifest-details"></slot>
+    <cem-detail-panel id="detail-panel" slot="panel-body"></cem-detail-panel>
   </pf-v6-drawer>
 </div>

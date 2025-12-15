@@ -107,11 +107,6 @@ pf-v6-tree-view {
   --cem-dev-server-syntax-deleted: light-dark(#22863a, #ffa198);
   --cem-dev-server-syntax-deleted-bg: light-dark(#f0fff4, #490202);
   --cem-dev-server-syntax-highlight: light-dark(#ffffcc, #404040);
-
-  /* JSON value type colors */
-  --cem-dev-server-color-boolean: light-dark(#0000ff, #569cd6);
-  --cem-dev-server-color-number: light-dark(#098658, #b5cea8);
-  --cem-dev-server-color-string: light-dark(#a31515, #ce9178);
 }
 
 html {

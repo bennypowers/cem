@@ -56,9 +56,11 @@
   &:hover {
     background-color: var(--_node-hover-bg);
   }
-  &:has(.current) {
-    background-color: var(--_node-current-bg);
-  }
+}
+
+/* Apply current background only to direct child, not ancestors */
+#content:has(> #node.current) {
+  background-color: var(--_node-current-bg);
 }
 
 #node {

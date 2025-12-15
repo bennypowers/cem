@@ -351,3 +351,198 @@ func TestManifestIcons_Coverage(t *testing.T) {
 
 	t.Log("✓ Manifest icons library has all required icon types")
 }
+
+// TestVirtualTreeComponent verifies virtual tree component exists and has required content
+func TestVirtualTreeComponent(t *testing.T) {
+	tests := []struct {
+		name        string
+		path        string
+		mustContain []string
+		description string
+	}{
+		{
+			name: "cem-virtual-tree.js",
+			path: "templates/elements/cem-virtual-tree/cem-virtual-tree.js",
+			mustContain: []string{
+				"CemVirtualTree",
+				"extends CemElement",
+				"cem-virtual-tree",
+				"buildFlatList",
+				"search",
+				"expandAll",
+				"collapseAll",
+				"ItemSelectEvent",
+			},
+			description: "Virtual tree component JavaScript",
+		},
+		{
+			name: "cem-virtual-tree.html",
+			path: "templates/elements/cem-virtual-tree/cem-virtual-tree.html",
+			mustContain: []string{
+				"tree-container",
+				"viewport",
+			},
+			description: "Virtual tree component template",
+		},
+		{
+			name: "cem-virtual-tree.css",
+			path: "templates/elements/cem-virtual-tree/cem-virtual-tree.css",
+			mustContain: []string{
+				":host",
+				"#tree-container",
+				"#viewport",
+			},
+			description: "Virtual tree component styles",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fullPath := filepath.Join(".", tt.path)
+			content, err := os.ReadFile(fullPath)
+			if err != nil {
+				t.Fatalf("Failed to read %s (%s): %v", tt.description, fullPath, err)
+			}
+
+			contentStr := string(content)
+			for _, mustContain := range tt.mustContain {
+				if !strings.Contains(contentStr, mustContain) {
+					t.Errorf("%s (%s) must contain %q", tt.description, tt.name, mustContain)
+				}
+			}
+
+			t.Logf("✓ %s contains all required content", tt.description)
+		})
+	}
+}
+
+// TestDetailPanelComponent verifies detail panel component exists and has required content
+func TestDetailPanelComponent(t *testing.T) {
+	tests := []struct {
+		name        string
+		path        string
+		mustContain []string
+		description string
+	}{
+		{
+			name: "cem-detail-panel.js",
+			path: "templates/elements/cem-detail-panel/cem-detail-panel.js",
+			mustContain: []string{
+				"CemDetailPanel",
+				"extends CemElement",
+				"cem-detail-panel",
+				"renderItem",
+				"renderMarkdown",
+				"buildDetailHTML",
+			},
+			description: "Detail panel component JavaScript",
+		},
+		{
+			name: "cem-detail-panel.html",
+			path: "templates/elements/cem-detail-panel/cem-detail-panel.html",
+			mustContain: []string{
+				"details-content",
+			},
+			description: "Detail panel component template",
+		},
+		{
+			name: "cem-detail-panel.css",
+			path: "templates/elements/cem-detail-panel/cem-detail-panel.css",
+			mustContain: []string{
+				":host",
+				"#details-content",
+			},
+			description: "Detail panel component styles",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fullPath := filepath.Join(".", tt.path)
+			content, err := os.ReadFile(fullPath)
+			if err != nil {
+				t.Fatalf("Failed to read %s (%s): %v", tt.description, fullPath, err)
+			}
+
+			contentStr := string(content)
+			for _, mustContain := range tt.mustContain {
+				if !strings.Contains(contentStr, mustContain) {
+					t.Errorf("%s (%s) must contain %q", tt.description, tt.name, mustContain)
+				}
+			}
+
+			t.Logf("✓ %s contains all required content", tt.description)
+		})
+	}
+}
+
+// TestManifestBrowserIntegration verifies manifest browser uses new components
+func TestManifestBrowserIntegration(t *testing.T) {
+	jsPath := filepath.Join(".", "templates/elements/cem-manifest-browser/cem-manifest-browser.js")
+	content, err := os.ReadFile(jsPath)
+	if err != nil {
+		t.Fatalf("Failed to read manifest browser JS: %v", err)
+	}
+
+	contentStr := string(content)
+
+	// Verify imports
+	requiredImports := []string{
+		"cem-virtual-tree/cem-virtual-tree.js",
+		"cem-detail-panel/cem-detail-panel.js",
+	}
+
+	for _, imp := range requiredImports {
+		if !strings.Contains(contentStr, imp) {
+			t.Errorf("Manifest browser must import: %s", imp)
+		}
+	}
+
+	// Verify integration methods
+	requiredContent := []string{
+		"#virtualTree",
+		"#detailPanel",
+		"item-select",
+		"renderItem",
+	}
+
+	for _, content := range requiredContent {
+		if !strings.Contains(contentStr, content) {
+			t.Errorf("Manifest browser must contain: %s", content)
+		}
+	}
+
+	t.Log("✓ Manifest browser properly integrates virtual tree and detail panel")
+}
+
+// TestDemoChromeNoSSR verifies demo chrome template no longer has SSR tree
+func TestDemoChromeNoSSR(t *testing.T) {
+	htmlPath := filepath.Join(".", "templates/demo-chrome.html")
+	content, err := os.ReadFile(htmlPath)
+	if err != nil {
+		t.Fatalf("Failed to read demo-chrome.html: %v", err)
+	}
+
+	contentStr := string(content)
+
+	// Verify SSR tree elements are NOT present
+	shouldNotContain := []string{
+		"<pf-v6-tree-view slot=\"manifest-tree\"",
+		"slot=\"manifest-details\"",
+		"data-type=\"custom-element\"",
+		"data-type=\"attribute\"",
+		"{{range .Manifest.Modules}}",
+	}
+
+	for _, text := range shouldNotContain {
+		if strings.Contains(contentStr, text) {
+			t.Errorf("Demo chrome template should NOT contain SSR'd: %s", text)
+		}
+	}
+
+	// Manifest is now loaded client-side via fetch from /custom-elements.json
+	// The conditional at lines 104-107 is intentionally empty because the client
+	// components (cem-virtual-tree, cem-detail-panel) fetch the manifest on demand
+
+	t.Log("✓ Demo chrome template no longer SSRs manifest tree or injects window.__CEM_MANIFEST__")
+}

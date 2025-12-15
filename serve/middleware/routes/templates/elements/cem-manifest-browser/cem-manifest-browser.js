@@ -5,7 +5,9 @@ import '/__cem/elements/pf-v6-text-input-group/pf-v6-text-input-group.js';
 import '/__cem/elements/pf-v6-toolbar/pf-v6-toolbar.js';
 import '/__cem/elements/pf-v6-toolbar-group/pf-v6-toolbar-group.js';
 import '/__cem/elements/pf-v6-toolbar-item/pf-v6-toolbar-item.js';
+import '/__cem/elements/cem-detail-panel/cem-detail-panel.js';
 import { CemElement } from '/__cem/cem-element.js';
+import { CemVirtualTree } from '/__cem/elements/cem-virtual-tree/cem-virtual-tree.js';
 
 /**
  * Manifest Browser with tree navigation and detail drawer
@@ -14,27 +16,25 @@ import { CemElement } from '/__cem/cem-element.js';
 export class CemManifestBrowser extends CemElement {
   static is = 'cem-manifest-browser';
 
-  #panelTitle;
   #drawer;
-  #currentDetail;
+  #virtualTree;
+  #detailPanel;
   #searchDebounceTimer = null;
   #searchInput;
   #searchCount;
   #searchClear;
 
   afterTemplateLoaded() {
-    this.#panelTitle = this.shadowRoot.getElementById('panel-title');
     this.#drawer = this.shadowRoot.getElementById('drawer');
+    this.#virtualTree = this.shadowRoot.getElementById('virtual-tree');
+    this.#detailPanel = this.shadowRoot.getElementById('detail-panel');
     this.#searchInput = this.shadowRoot.getElementById('search');
     this.#searchCount = this.shadowRoot.getElementById('search-count');
     this.#searchClear = this.shadowRoot.getElementById('search-clear');
 
-    // Listen for tree item selections
-    this.addEventListener('select', (e) => {
-      const treeItem = e.target;
-      if (treeItem.tagName !== 'PF-V6-TREE-ITEM') return;
-
-      this.#handleItemSelect(treeItem);
+    // Listen for item selection from virtual tree
+    this.#virtualTree?.addEventListener('item-select', (e) => {
+      this.#handleItemSelect(e.item);
     });
 
     // Listen for search input with debouncing
@@ -89,158 +89,44 @@ export class CemManifestBrowser extends CemElement {
     }
   }
 
-  #handleItemSelect(treeItem) {
-    const type = treeItem.getAttribute('data-type');
+  async #handleItemSelect(item) {
+    if (!item) return;
 
-    if (!type || type === 'category') {
-      return;
+    // Get manifest from virtual tree's shared static cache
+    const manifest = await CemVirtualTree.loadManifest();
+    if (this.#detailPanel && manifest) {
+      await this.#detailPanel.renderItem(item, manifest);
+      // Open drawer
+      if (this.#drawer) {
+        this.#drawer.expanded = true;
+      }
     }
-
-    // Build selector from tree item attributes
-    const selector = this.#buildSelector(type, treeItem);
-
-    // Find all matching elements (both h3 and dl)
-    const matchingElements = document.body.querySelectorAll(selector);
-
-    if (matchingElements.length === 0) {
-      return;
-    }
-
-    // Hide current detail elements if exist
-    if (this.#currentDetail && this.#currentDetail.length > 0) {
-      this.#currentDetail.forEach(el => el.hidden = true);
-    }
-
-    // Show new detail elements
-    matchingElements.forEach(el => el.hidden = false);
-    this.#currentDetail = matchingElements;
-
-    // Open drawer
-    this.#drawer.expanded = true;
-  }
-
-  #buildSelector(type, treeItem) {
-    const selectors = [`[data-type="${type}"]`];
-
-    const modulePath = treeItem.getAttribute('data-module-path') || treeItem.getAttribute('data-path');
-    const tagName = treeItem.getAttribute('data-tag-name');
-    const name = treeItem.getAttribute('data-name');
-
-    if (modulePath) {
-      selectors.push(`[data-module-path="${modulePath}"]`);
-    }
-    if (tagName) {
-      selectors.push(`[data-tag-name="${tagName}"]`);
-    }
-    if (name) {
-      selectors.push(`[data-name="${name}"]`);
-    }
-
-    return selectors.join('');
-  }
-
-  #getTreeView() {
-    // Get the slot in shadow DOM and access its assigned elements
-    const slot = this.shadowRoot.querySelector('slot[name="manifest-tree"]');
-    if (!slot) {
-      console.warn('[manifest browser] manifest-tree slot not found');
-      return null;
-    }
-
-    // Get the slotted element (might be another slot due to slot forwarding)
-    let assignedElements = slot.assignedElements();
-    let element = assignedElements[0];
-
-    // If we got a slot element (slot forwarding), get ITS assigned elements
-    if (element && element.tagName === 'SLOT') {
-      assignedElements = element.assignedElements();
-      element = assignedElements[0];
-    }
-
-    if (!element) {
-      console.warn('[manifest browser] no tree-view assigned to slot');
-      return null;
-    }
-
-    return element;
   }
 
   #handleSearch(query) {
-    const normalizedQuery = query.toLowerCase().trim();
-    const treeView = this.#getTreeView();
-    if (!treeView) return;
-
-    // Query tree items from the slotted tree-view
-    const items = treeView.querySelectorAll('pf-v6-tree-item');
-
-    if (!normalizedQuery) {
-      // Show all items when search is empty
-      items.forEach(item => {
-        item.hidden = false;
-      });
-      // Hide badge when no search
-      if (this.#searchCount) {
-        this.#searchCount.hidden = true;
-      }
-      return;
+    // Delegate search to virtual tree
+    if (this.#virtualTree) {
+      this.#virtualTree.search(query);
     }
 
-    // First pass: hide all items and find matches
-    const matchingItems = new Set();
-    items.forEach(item => {
-      const label = item.getAttribute('label') || '';
-      const matches = label.toLowerCase().includes(normalizedQuery);
-      item.hidden = true;
-      if (matches) {
-        matchingItems.add(item);
-      }
-    });
-
-    // Second pass: for each matching item, show it and all ancestors
-    matchingItems.forEach(item => {
-      // Show the matching item
-      item.hidden = false;
-
-      // Walk up the tree, showing and expanding all ancestors
-      let parent = item.parentElement;
-      while (parent && parent.tagName === 'PF-V6-TREE-ITEM') {
-        parent.hidden = false;
-        parent.expanded = true;
-        parent = parent.parentElement;
-      }
-    });
-
-    // Update badge count
+    // Update search count badge (optional - could be handled by virtual tree)
     if (this.#searchCount) {
-      const count = matchingItems.size;
-      // Update the text node (first child before the screen reader span)
-      const textNode = Array.from(this.#searchCount.childNodes).find(n => n.nodeType === Node.TEXT_NODE);
-      if (textNode) {
-        textNode.textContent = count.toString();
-      }
-      // Only show badge if there are results
-      this.#searchCount.hidden = count === 0;
+      // For now, hide the count badge as we're delegating to virtual tree
+      // Virtual tree could emit events with count if needed
+      this.#searchCount.hidden = !query;
     }
   }
 
   #expandAll() {
-    const treeView = this.#getTreeView();
-    if (!treeView) return;
-
-    const items = treeView.querySelectorAll('pf-v6-tree-item');
-    items.forEach(item => {
-      item.expanded = true;
-    });
+    if (this.#virtualTree) {
+      this.#virtualTree.expandAll();
+    }
   }
 
   #collapseAll() {
-    const treeView = this.#getTreeView();
-    if (!treeView) return;
-
-    const items = treeView.querySelectorAll('pf-v6-tree-item');
-    items.forEach(item => {
-      item.expanded = false;
-    });
+    if (this.#virtualTree) {
+      this.#virtualTree.collapseAll();
+    }
   }
 
   static {
