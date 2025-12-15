@@ -13,9 +13,6 @@
   {{if .ImportMap}}
   <script type="importmap">{{.ImportMap}}</script>
   {{end}}
-  {{if .ManifestJSON}}
-  <script>window.__CEM_MANIFEST__ = {{.ManifestJSON}};</script>
-  {{end}}
   <!-- Modulepreload hints for all elements -->
   <link rel="modulepreload" href="/__cem/elements/cem-color-scheme-toggle/cem-color-scheme-toggle.js">
   <link rel="modulepreload" href="/__cem/elements/cem-connection-status/cem-connection-status.js">

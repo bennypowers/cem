@@ -92,14 +92,31 @@ export class CemManifestBrowser extends CemElement {
   async #handleItemSelect(item) {
     if (!item) return;
 
-    // Render detail panel for this item
-    const manifest = window.__CEM_MANIFEST__;
+    // Get manifest from virtual tree's cache
+    const manifest = await this.#loadManifest();
     if (this.#detailPanel && manifest) {
       await this.#detailPanel.renderItem(item, manifest);
       // Open drawer
       if (this.#drawer) {
         this.#drawer.expanded = true;
       }
+    }
+  }
+
+  /**
+   * Load manifest from server with caching
+   * Reuses the same fetch/cache as cem-virtual-tree
+   */
+  async #loadManifest() {
+    try {
+      const response = await fetch('/custom-elements.json');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch manifest: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('[manifest-browser] Error loading manifest:', error);
+      return null;
     }
   }
 

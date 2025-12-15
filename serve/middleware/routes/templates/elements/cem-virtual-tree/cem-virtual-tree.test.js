@@ -1,32 +1,40 @@
 import { expect } from '@open-wc/testing';
+import sinon from 'sinon';
 import './cem-virtual-tree.js';
 
 describe('cem-virtual-tree', () => {
   let el;
+  let fetchStub;
+
+  const testManifest = {
+    modules: [{
+      path: './rh-accordion/rh-accordion-header.js',
+      declarations: [{
+        kind: 'class',
+        name: 'RhAccordionHeader',
+        customElement: true,
+        tagName: 'rh-accordion-header',
+        members: [
+          { kind: 'field', name: 'expanded', type: { text: 'boolean' } },
+          { kind: 'field', name: 'disabled', type: { text: 'boolean' } },
+        ],
+        events: [
+          { name: 'expand', type: { text: 'Event' } },
+        ],
+      }]
+    }]
+  };
 
   beforeEach(async () => {
+    // Mock fetch to return test manifest
+    fetchStub = sinon.stub(window, 'fetch');
+    fetchStub.withArgs('/custom-elements.json').resolves({
+      ok: true,
+      json: async () => testManifest
+    });
+
     el = document.createElement('cem-virtual-tree');
     document.body.appendChild(el);
-
-    // Set up a test manifest with nested structure
-    window.__CEM_MANIFEST__ = {
-      modules: [{
-        path: './rh-accordion/rh-accordion-header.js',
-        declarations: [{
-          kind: 'class',
-          name: 'RhAccordionHeader',
-          customElement: true,
-          tagName: 'rh-accordion-header',
-          members: [
-            { kind: 'field', name: 'expanded', type: { text: 'boolean' } },
-            { kind: 'field', name: 'disabled', type: { text: 'boolean' } },
-          ],
-          events: [
-            { name: 'expand', type: { text: 'Event' } },
-          ],
-        }]
-      }]
-    };
 
     // Wait for CemElement to load template from real server
     await el.rendered;
@@ -39,7 +47,7 @@ describe('cem-virtual-tree', () => {
     if (el && el.parentNode) {
       el.parentNode.removeChild(el);
     }
-    delete window.__CEM_MANIFEST__;
+    fetchStub.restore();
   });
 
   describe('initialization', () => {

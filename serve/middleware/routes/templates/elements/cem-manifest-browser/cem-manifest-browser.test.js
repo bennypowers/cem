@@ -84,32 +84,38 @@ describe('cem-manifest-browser', () => {
   });
 
   describe('virtual tree integration', () => {
-    let virtualTree, detailPanel, drawer;
+    let virtualTree, detailPanel, drawer, fetchStub;
+
+    const testManifest = {
+      modules: [{
+        path: './test.js',
+        declarations: [{
+          kind: 'class',
+          name: 'TestElement',
+          customElement: true,
+          tagName: 'test-element'
+        }]
+      }]
+    };
 
     beforeEach(async () => {
+      // Mock fetch to return test manifest
+      fetchStub = sinon.stub(window, 'fetch');
+      fetchStub.withArgs('/custom-elements.json').resolves({
+        ok: true,
+        json: async () => testManifest
+      });
+
       virtualTree = el.shadowRoot.getElementById('virtual-tree');
       detailPanel = el.shadowRoot.getElementById('detail-panel');
       drawer = el.shadowRoot.getElementById('drawer');
-
-      // Set up a test manifest
-      window.__CEM_MANIFEST__ = {
-        modules: [{
-          path: './test.js',
-          declarations: [{
-            kind: 'class',
-            name: 'TestElement',
-            customElement: true,
-            tagName: 'test-element'
-          }]
-        }]
-      };
 
       // Wait for virtual tree to load the manifest
       await virtualTree.rendered;
     });
 
     afterEach(() => {
-      delete window.__CEM_MANIFEST__;
+      fetchStub.restore();
     });
 
     it('listens for item-select events from virtual tree', async () => {
@@ -127,11 +133,11 @@ describe('cem-manifest-browser', () => {
       event.item = itemData;
       virtualTree.dispatchEvent(event);
 
-      // Wait for async render
-      await new Promise(resolve => setTimeout(resolve, 10));
+      // Wait for async render and manifest fetch
+      await new Promise(resolve => setTimeout(resolve, 50));
 
       expect(renderSpy.calledOnce).to.be.true;
-      expect(renderSpy.calledWith(itemData, window.__CEM_MANIFEST__)).to.be.true;
+      expect(renderSpy.calledWith(itemData, testManifest)).to.be.true;
 
       renderSpy.restore();
     });

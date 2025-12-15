@@ -18,6 +18,10 @@ export class ItemSelectEvent extends Event {
 export class CemVirtualTree extends CemElement {
   static is = 'cem-virtual-tree';
 
+  // Static cache for manifest (shared across all instances)
+  static #manifestCache = null;
+  static #manifestPromise = null;
+
   #manifest = null;
   #flatItems = [];
   #visibleItems = [];
@@ -25,13 +29,13 @@ export class CemVirtualTree extends CemElement {
   #viewport = null;
   #currentSelectedElement = null;
 
-  afterTemplateLoaded() {
+  async afterTemplateLoaded() {
     this.#viewport = this.shadowRoot.getElementById('viewport');
 
-    // Load manifest
-    this.#manifest = window.__CEM_MANIFEST__;
+    // Load manifest from server with caching
+    this.#manifest = await this.#loadManifest();
     if (!this.#manifest) {
-      console.warn('[virtual-tree] No manifest found in window.__CEM_MANIFEST__');
+      console.warn('[virtual-tree] Failed to load manifest');
       return;
     }
 
@@ -40,6 +44,40 @@ export class CemVirtualTree extends CemElement {
 
     // Initial render
     this.#render();
+  }
+
+  /**
+   * Load manifest from server with static caching
+   * Ensures the manifest is only fetched once across all instances
+   */
+  async #loadManifest() {
+    // Return cached manifest if available
+    if (CemVirtualTree.#manifestCache) {
+      return CemVirtualTree.#manifestCache;
+    }
+
+    // If already fetching, wait for existing promise
+    if (CemVirtualTree.#manifestPromise) {
+      return CemVirtualTree.#manifestPromise;
+    }
+
+    // Fetch manifest
+    CemVirtualTree.#manifestPromise = fetch('/custom-elements.json')
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`Failed to fetch manifest: ${response.status}`);
+        }
+        const manifest = await response.json();
+        CemVirtualTree.#manifestCache = manifest;
+        return manifest;
+      })
+      .catch((error) => {
+        console.error('[virtual-tree] Error loading manifest:', error);
+        CemVirtualTree.#manifestPromise = null;
+        return null;
+      });
+
+    return CemVirtualTree.#manifestPromise;
   }
 
   /**
