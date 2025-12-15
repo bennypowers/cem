@@ -540,10 +540,9 @@ func TestDemoChromeNoSSR(t *testing.T) {
 		}
 	}
 
-	// Verify __CEM_MANIFEST__ is still injected
-	if !strings.Contains(contentStr, "window.__CEM_MANIFEST__") {
-		t.Error("Demo chrome must still inject window.__CEM_MANIFEST__")
-	}
+	// Manifest is now loaded client-side via fetch from /custom-elements.json
+	// The conditional at lines 104-107 is intentionally empty because the client
+	// components (cem-virtual-tree, cem-detail-panel) fetch the manifest on demand
 
-	t.Log("✓ Demo chrome template no longer SSRs manifest tree")
+	t.Log("✓ Demo chrome template no longer SSRs manifest tree or injects window.__CEM_MANIFEST__")
 }
