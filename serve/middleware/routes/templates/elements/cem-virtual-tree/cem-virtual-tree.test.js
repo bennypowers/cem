@@ -1,4 +1,4 @@
-import { expect, waitUntil } from '@open-wc/testing';
+import { expect } from '@open-wc/testing';
 import './cem-virtual-tree.js';
 
 describe('cem-virtual-tree', () => {
