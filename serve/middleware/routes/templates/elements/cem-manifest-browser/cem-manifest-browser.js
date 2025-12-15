@@ -5,7 +5,6 @@ import '/__cem/elements/pf-v6-text-input-group/pf-v6-text-input-group.js';
 import '/__cem/elements/pf-v6-toolbar/pf-v6-toolbar.js';
 import '/__cem/elements/pf-v6-toolbar-group/pf-v6-toolbar-group.js';
 import '/__cem/elements/pf-v6-toolbar-item/pf-v6-toolbar-item.js';
-import '/__cem/elements/cem-virtual-tree/cem-virtual-tree.js';
 import '/__cem/elements/cem-detail-panel/cem-detail-panel.js';
 import { CemElement } from '/__cem/cem-element.js';
 import { CemVirtualTree } from '/__cem/elements/cem-virtual-tree/cem-virtual-tree.js';

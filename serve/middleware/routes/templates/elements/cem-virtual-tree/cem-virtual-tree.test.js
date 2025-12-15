@@ -26,11 +26,22 @@ describe('cem-virtual-tree', () => {
   };
 
   beforeEach(async () => {
-    // Mock fetch to return test manifest
-    fetchStub = sinon.stub(window, 'fetch');
-    fetchStub.withArgs('/custom-elements.json').resolves({
-      ok: true,
-      json: async () => testManifest
+    // Clear static cache before each test
+    const { CemVirtualTree } = await import('./cem-virtual-tree.js');
+    CemVirtualTree.clearCache();
+
+    // Store original fetch before stubbing
+    const originalFetch = window.fetch.bind(window);
+
+    // Mock fetch to return test manifest, but call through for other URLs
+    fetchStub = sinon.stub(window, 'fetch').callsFake((url, ...args) => {
+      if (url === '/custom-elements.json') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => testManifest
+        });
+      }
+      return originalFetch(url, ...args);
     });
 
     el = document.createElement('cem-virtual-tree');

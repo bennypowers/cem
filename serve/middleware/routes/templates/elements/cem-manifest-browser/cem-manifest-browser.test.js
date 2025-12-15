@@ -1,11 +1,15 @@
 import { expect, waitUntil } from '@open-wc/testing';
 import sinon from 'sinon';
 import './cem-manifest-browser.js';
+import { CemVirtualTree } from '/__cem/elements/cem-virtual-tree/cem-virtual-tree.js';
 
 describe('cem-manifest-browser', () => {
   let el;
 
   beforeEach(async () => {
+    // Clear static cache before each test
+    CemVirtualTree.clearCache();
+
     el = document.createElement('cem-manifest-browser');
     document.body.appendChild(el);
 
@@ -99,11 +103,18 @@ describe('cem-manifest-browser', () => {
     };
 
     beforeEach(async () => {
-      // Mock fetch to return test manifest
-      fetchStub = sinon.stub(window, 'fetch');
-      fetchStub.withArgs('/custom-elements.json').resolves({
-        ok: true,
-        json: async () => testManifest
+      // Store original fetch before stubbing
+      const originalFetch = window.fetch.bind(window);
+
+      // Mock fetch to return test manifest, but call through for other URLs
+      fetchStub = sinon.stub(window, 'fetch').callsFake((url, ...args) => {
+        if (url === '/custom-elements.json') {
+          return Promise.resolve({
+            ok: true,
+            json: async () => testManifest
+          });
+        }
+        return originalFetch(url, ...args);
       });
 
       virtualTree = el.shadowRoot.getElementById('virtual-tree');

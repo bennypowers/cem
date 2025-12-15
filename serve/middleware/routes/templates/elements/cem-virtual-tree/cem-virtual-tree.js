@@ -28,6 +28,7 @@ export class CemVirtualTree extends CemElement {
   #searchQuery = '';
   #viewport = null;
   #currentSelectedElement = null;
+  #currentSelectedItemId = null;
 
   async afterTemplateLoaded() {
     this.#viewport = this.shadowRoot.getElementById('viewport');
@@ -79,6 +80,14 @@ export class CemVirtualTree extends CemElement {
       });
 
     return CemVirtualTree.#manifestPromise;
+  }
+
+  /**
+   * Clear the static manifest cache (for testing)
+   */
+  static clearCache() {
+    CemVirtualTree.#manifestCache = null;
+    CemVirtualTree.#manifestPromise = null;
   }
 
   /**
@@ -177,7 +186,6 @@ export class CemVirtualTree extends CemElement {
           }
 
           // Properties
-          const properties = decl.members?.filter(m => m.kind === 'field') || [];
           if (properties.length) {
             const propCatId = id++;
             this.#flatItems.push({
@@ -211,7 +219,6 @@ export class CemVirtualTree extends CemElement {
           }
 
           // Methods
-          const methods = decl.members?.filter(m => m.kind === 'method') || [];
           if (methods.length) {
             const methodCatId = id++;
             this.#flatItems.push({
@@ -412,6 +419,12 @@ export class CemVirtualTree extends CemElement {
     el.dataset.itemId = item.id;
     el.dataset.type = item.type;
 
+    // Restore selection state if this item was selected
+    if (this.#currentSelectedItemId === item.id) {
+      el.setAttribute('current', '');
+      this.#currentSelectedElement = el;
+    }
+
     // Set has-children attribute for items with children (shows toggle button)
     if (item.hasChildren) {
       el.setAttribute('has-children', '');
@@ -492,6 +505,7 @@ export class CemVirtualTree extends CemElement {
     // Set new selection
     element.setAttribute('current', '');
     this.#currentSelectedElement = element;
+    this.#currentSelectedItemId = item.id;
 
     // Dispatch custom event
     this.dispatchEvent(new ItemSelectEvent(item));

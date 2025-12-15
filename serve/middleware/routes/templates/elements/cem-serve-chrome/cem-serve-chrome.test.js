@@ -2,11 +2,15 @@ import { expect, waitUntil } from '@open-wc/testing';
 import sinon from 'sinon';
 import './cem-serve-chrome.js';
 import { CemLogsEvent } from './cem-serve-chrome.js';
+import { CemVirtualTree } from '/__cem/elements/cem-virtual-tree/cem-virtual-tree.js';
 
 describe('cem-serve-chrome', () => {
   let el;
 
   beforeEach(async () => {
+    // Clear static cache before each test
+    CemVirtualTree.clearCache();
+
     el = document.createElement('cem-serve-chrome');
     document.body.appendChild(el);
 
