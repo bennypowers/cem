@@ -87,8 +87,12 @@ export class CemDetailPanel extends CemElement {
     const module = this.#findModule(manifest, item.modulePath);
     if (!module) return '<div class="empty-state">Module not found</div>';
 
-    const summary = module.summary ? await this.#renderMarkdown(module.summary) : '';
-    const description = module.description ? await this.#renderMarkdown(module.description) : '';
+    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const summaryPath = module.summary ? `modules.#(path=="${escapedPath}").summary` : '';
+    const descriptionPath = module.description ? `modules.#(path=="${escapedPath}").description` : '';
+
+    const summary = await this.#renderMarkdown(summaryPath);
+    const description = await this.#renderMarkdown(descriptionPath);
 
     return `
       <h3>${this.#escapeHtml(module.path)}</h3>
@@ -104,8 +108,13 @@ export class CemDetailPanel extends CemElement {
     const ce = this.#findCustomElement(manifest, item.modulePath, item.tagName);
     if (!ce) return '<div class="empty-state">Custom element not found</div>';
 
-    const summary = ce.summary ? await this.#renderMarkdown(ce.summary) : '';
-    const description = ce.description ? await this.#renderMarkdown(ce.description) : '';
+    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedTagName = item.tagName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const summaryPath = ce.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").summary` : '';
+    const descriptionPath = ce.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").description` : '';
+
+    const summary = await this.#renderMarkdown(summaryPath);
+    const description = await this.#renderMarkdown(descriptionPath);
 
     return `
       <h3>&lt;${this.#escapeHtml(ce.tagName)}&gt;</h3>
@@ -128,8 +137,14 @@ export class CemDetailPanel extends CemElement {
     const attr = ce.attributes?.find(a => a.name === item.name);
     if (!attr) return '<div class="empty-state">Attribute not found</div>';
 
-    const summary = attr.summary ? await this.#renderMarkdown(attr.summary) : '';
-    const description = attr.description ? await this.#renderMarkdown(attr.description) : '';
+    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedTagName = item.tagName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedName = item.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const summaryPath = attr.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").attributes.#(name=="${escapedName}").summary` : '';
+    const descriptionPath = attr.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").attributes.#(name=="${escapedName}").description` : '';
+
+    const summary = await this.#renderMarkdown(summaryPath);
+    const description = await this.#renderMarkdown(descriptionPath);
 
     return `
       <h3>${this.#escapeHtml(attr.name)}</h3>
@@ -151,8 +166,14 @@ export class CemDetailPanel extends CemElement {
     const prop = ce.members?.find(m => m.kind === 'field' && m.name === item.name);
     if (!prop) return '<div class="empty-state">Property not found</div>';
 
-    const summary = prop.summary ? await this.#renderMarkdown(prop.summary) : '';
-    const description = prop.description ? await this.#renderMarkdown(prop.description) : '';
+    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedTagName = item.tagName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedName = item.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const summaryPath = prop.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").members.#(name=="${escapedName}").summary` : '';
+    const descriptionPath = prop.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").members.#(name=="${escapedName}").description` : '';
+
+    const summary = await this.#renderMarkdown(summaryPath);
+    const description = await this.#renderMarkdown(descriptionPath);
 
     return `
       <h3>${this.#escapeHtml(prop.name)}</h3>
@@ -174,8 +195,14 @@ export class CemDetailPanel extends CemElement {
     const method = ce.members?.find(m => m.kind === 'method' && m.name === item.name);
     if (!method) return '<div class="empty-state">Method not found</div>';
 
-    const summary = method.summary ? await this.#renderMarkdown(method.summary) : '';
-    const description = method.description ? await this.#renderMarkdown(method.description) : '';
+    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedTagName = item.tagName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedName = item.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const summaryPath = method.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").members.#(name=="${escapedName}").summary` : '';
+    const descriptionPath = method.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").members.#(name=="${escapedName}").description` : '';
+
+    const summary = await this.#renderMarkdown(summaryPath);
+    const description = await this.#renderMarkdown(descriptionPath);
 
     return `
       <h3>${this.#escapeHtml(method.name)}()</h3>
@@ -196,8 +223,14 @@ export class CemDetailPanel extends CemElement {
     const event = ce.events?.find(e => e.name === item.name);
     if (!event) return '<div class="empty-state">Event not found</div>';
 
-    const summary = event.summary ? await this.#renderMarkdown(event.summary) : '';
-    const description = event.description ? await this.#renderMarkdown(event.description) : '';
+    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedTagName = item.tagName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedName = item.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const summaryPath = event.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").events.#(name=="${escapedName}").summary` : '';
+    const descriptionPath = event.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").events.#(name=="${escapedName}").description` : '';
+
+    const summary = await this.#renderMarkdown(summaryPath);
+    const description = await this.#renderMarkdown(descriptionPath);
 
     return `
       <h3>${this.#escapeHtml(event.name)}</h3>
@@ -217,8 +250,14 @@ export class CemDetailPanel extends CemElement {
     const slot = ce.slots?.find(s => s.name === item.name);
     if (!slot) return '<div class="empty-state">Slot not found</div>';
 
-    const summary = slot.summary ? await this.#renderMarkdown(slot.summary) : '';
-    const description = slot.description ? await this.#renderMarkdown(slot.description) : '';
+    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedTagName = item.tagName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedName = item.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const summaryPath = slot.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").slots.#(name=="${escapedName}").summary` : '';
+    const descriptionPath = slot.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").slots.#(name=="${escapedName}").description` : '';
+
+    const summary = await this.#renderMarkdown(summaryPath);
+    const description = await this.#renderMarkdown(descriptionPath);
 
     return `
       <h3>${this.#escapeHtml(slot.name) || '(default)'}</h3>
@@ -234,8 +273,13 @@ export class CemDetailPanel extends CemElement {
     const cls = this.#findDeclaration(manifest, item.modulePath, item.name, 'class');
     if (!cls) return '<div class="empty-state">Class not found</div>';
 
-    const summary = cls.summary ? await this.#renderMarkdown(cls.summary) : '';
-    const description = cls.description ? await this.#renderMarkdown(cls.description) : '';
+    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedName = item.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const summaryPath = cls.summary ? `modules.#(path=="${escapedPath}").declarations.#(name=="${escapedName}").summary` : '';
+    const descriptionPath = cls.description ? `modules.#(path=="${escapedPath}").declarations.#(name=="${escapedName}").description` : '';
+
+    const summary = await this.#renderMarkdown(summaryPath);
+    const description = await this.#renderMarkdown(descriptionPath);
 
     return `
       <h3>${this.#escapeHtml(cls.name)}</h3>
@@ -252,8 +296,13 @@ export class CemDetailPanel extends CemElement {
     const func = this.#findDeclaration(manifest, item.modulePath, item.name, 'function');
     if (!func) return '<div class="empty-state">Function not found</div>';
 
-    const summary = func.summary ? await this.#renderMarkdown(func.summary) : '';
-    const description = func.description ? await this.#renderMarkdown(func.description) : '';
+    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedName = item.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const summaryPath = func.summary ? `modules.#(path=="${escapedPath}").declarations.#(name=="${escapedName}").summary` : '';
+    const descriptionPath = func.description ? `modules.#(path=="${escapedPath}").declarations.#(name=="${escapedName}").description` : '';
+
+    const summary = await this.#renderMarkdown(summaryPath);
+    const description = await this.#renderMarkdown(descriptionPath);
 
     return `
       <h3>${this.#escapeHtml(func.name)}()</h3>
@@ -270,8 +319,13 @@ export class CemDetailPanel extends CemElement {
     const variable = this.#findDeclaration(manifest, item.modulePath, item.name, 'variable');
     if (!variable) return '<div class="empty-state">Variable not found</div>';
 
-    const summary = variable.summary ? await this.#renderMarkdown(variable.summary) : '';
-    const description = variable.description ? await this.#renderMarkdown(variable.description) : '';
+    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedName = item.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const summaryPath = variable.summary ? `modules.#(path=="${escapedPath}").declarations.#(name=="${escapedName}").summary` : '';
+    const descriptionPath = variable.description ? `modules.#(path=="${escapedPath}").declarations.#(name=="${escapedName}").description` : '';
+
+    const summary = await this.#renderMarkdown(summaryPath);
+    const description = await this.#renderMarkdown(descriptionPath);
 
     return `
       <h3>${this.#escapeHtml(variable.name)}</h3>
@@ -289,8 +343,13 @@ export class CemDetailPanel extends CemElement {
     const mixin = this.#findDeclaration(manifest, item.modulePath, item.name, 'mixin');
     if (!mixin) return '<div class="empty-state">Mixin not found</div>';
 
-    const summary = mixin.summary ? await this.#renderMarkdown(mixin.summary) : '';
-    const description = mixin.description ? await this.#renderMarkdown(mixin.description) : '';
+    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedName = item.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const summaryPath = mixin.summary ? `modules.#(path=="${escapedPath}").declarations.#(name=="${escapedName}").summary` : '';
+    const descriptionPath = mixin.description ? `modules.#(path=="${escapedPath}").declarations.#(name=="${escapedName}").description` : '';
+
+    const summary = await this.#renderMarkdown(summaryPath);
+    const description = await this.#renderMarkdown(descriptionPath);
 
     return `
       <h3>${this.#escapeHtml(mixin.name)}()</h3>
@@ -303,28 +362,28 @@ export class CemDetailPanel extends CemElement {
   }
 
   /**
-   * Call markdown API to render markdown to HTML
+   * Call markdown API to render markdown from a manifest path
    */
-  async #renderMarkdown(text) {
-    if (!text) return '';
+  async #renderMarkdown(path) {
+    if (!path) return '';
 
     try {
       const response = await fetch('/__cem/api/markdown', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text })
+        body: JSON.stringify({ path })
       });
 
       if (!response.ok) {
         console.error('Markdown API returned error:', response.status);
-        return this.#escapeHtml(text);
+        return '';
       }
 
       const data = await response.json();
       return data.html;
     } catch (error) {
       console.error('Failed to render markdown:', error);
-      return this.#escapeHtml(text);
+      return '';
     }
   }
 
