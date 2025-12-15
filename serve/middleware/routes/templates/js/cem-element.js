@@ -1,3 +1,11 @@
+const hideElementSheet = new CSSStyleSheet();
+hideElementSheet.replaceSync(`
+  :host {
+    visibility: hidden;
+    opacity: 0;
+  }
+`);
+
 /**
  * Base class for CEM web components that use template loading.
  *
@@ -203,13 +211,25 @@ export class CemElement extends HTMLElement {
     if (!this.shadowRoot) {
       this.attachShadow(options);
     }
+    this.shadowRoot.adoptedStyleSheets = [
+      ...this.shadowRoot.adoptedStyleSheets,
+      hideElementSheet,
+    ];
   }
 
   async connectedCallback() {
     // Only populate if shadow root is empty
     if (!this.shadowRoot.firstChild) {
+      // Hide element to prevent FOUC while stylesheets load
       await this.#populateShadowRoot();
     }
+
+    // Wait for any <link rel="stylesheet"> elements to load before proceeding
+    await this.#waitForStylesheets();
+
+    // Show element now that styles are loaded
+    this.shadowRoot.adoptedStyleSheets =
+      this.shadowRoot.adoptedStyleSheets.filter(x => x !== hideElementSheet);
 
     // Call lifecycle hook for subclasses (works for both SSR and CSR)
     await this.afterTemplateLoaded?.();
@@ -234,6 +254,30 @@ export class CemElement extends HTMLElement {
     } catch (error) {
       console.error(`Failed to load ${elementName} template:`, error);
     }
+  }
+
+  /**
+   * Wait for any <link rel="stylesheet"> elements in the shadow root to load.
+   * This prevents FOUC by ensuring styles are applied before showing content.
+   * @private
+   */
+  async #waitForStylesheets() {
+    const links = this.shadowRoot.querySelectorAll('link[rel="stylesheet"]');
+    if (links.length === 0) return;
+
+    // Wait for all stylesheet links to load
+    await Promise.all(
+      Array.from(links).map(link => {
+        // If already loaded (sheet property exists), resolve immediately
+        if (link.sheet) return Promise.resolve();
+
+        // Otherwise wait for load event
+        return new Promise((resolve, reject) => {
+          link.addEventListener('load', resolve, { once: true });
+          link.addEventListener('error', reject, { once: true });
+        });
+      })
+    );
   }
 
   /**
