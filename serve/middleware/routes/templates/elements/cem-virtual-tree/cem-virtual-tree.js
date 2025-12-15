@@ -47,10 +47,11 @@ export class CemVirtualTree extends CemElement {
   }
 
   /**
-   * Load manifest from server with static caching
-   * Ensures the manifest is only fetched once across all instances
+   * Public static method to load manifest with caching
+   * Can be called by other components to reuse the same cached manifest
+   * @returns {Promise<Object|null>} The manifest object or null on error
    */
-  async #loadManifest() {
+  static async loadManifest() {
     // Return cached manifest if available
     if (CemVirtualTree.#manifestCache) {
       return CemVirtualTree.#manifestCache;
@@ -78,6 +79,14 @@ export class CemVirtualTree extends CemElement {
       });
 
     return CemVirtualTree.#manifestPromise;
+  }
+
+  /**
+   * Load manifest from server with static caching
+   * Ensures the manifest is only fetched once across all instances
+   */
+  async #loadManifest() {
+    return CemVirtualTree.loadManifest();
   }
 
   /**
@@ -110,13 +119,23 @@ export class CemVirtualTree extends CemElement {
         // Custom Element
         if (decl.kind === 'class' && decl.customElement) {
           const ceId = id++;
+
+          // Compute hasChildren based on presence of any child arrays
+          const properties = decl.members?.filter(m => m.kind === 'field') || [];
+          const methods = decl.members?.filter(m => m.kind === 'method') || [];
+          const hasChildren = (decl.attributes?.length > 0) ||
+                              (properties.length > 0) ||
+                              (methods.length > 0) ||
+                              (decl.events?.length > 0) ||
+                              (decl.slots?.length > 0);
+
           const ceItem = {
             id: ceId,
             type: 'custom-element',
             label: `<${decl.tagName}>`,
             depth: 1,
             parentId: moduleId,
-            hasChildren: true,
+            hasChildren,
             expanded: false,
             visible: false,
             modulePath: module.path,

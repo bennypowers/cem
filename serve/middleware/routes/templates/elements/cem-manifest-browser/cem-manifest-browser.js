@@ -8,6 +8,7 @@ import '/__cem/elements/pf-v6-toolbar-item/pf-v6-toolbar-item.js';
 import '/__cem/elements/cem-virtual-tree/cem-virtual-tree.js';
 import '/__cem/elements/cem-detail-panel/cem-detail-panel.js';
 import { CemElement } from '/__cem/cem-element.js';
+import { CemVirtualTree } from '/__cem/elements/cem-virtual-tree/cem-virtual-tree.js';
 
 /**
  * Manifest Browser with tree navigation and detail drawer
@@ -92,31 +93,14 @@ export class CemManifestBrowser extends CemElement {
   async #handleItemSelect(item) {
     if (!item) return;
 
-    // Get manifest from virtual tree's cache
-    const manifest = await this.#loadManifest();
+    // Get manifest from virtual tree's shared static cache
+    const manifest = await CemVirtualTree.loadManifest();
     if (this.#detailPanel && manifest) {
       await this.#detailPanel.renderItem(item, manifest);
       // Open drawer
       if (this.#drawer) {
         this.#drawer.expanded = true;
       }
-    }
-  }
-
-  /**
-   * Load manifest from server with caching
-   * Reuses the same fetch/cache as cem-virtual-tree
-   */
-  async #loadManifest() {
-    try {
-      const response = await fetch('/custom-elements.json');
-      if (!response.ok) {
-        throw new Error(`Failed to fetch manifest: ${response.status}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('[manifest-browser] Error loading manifest:', error);
-      return null;
     }
   }
 
