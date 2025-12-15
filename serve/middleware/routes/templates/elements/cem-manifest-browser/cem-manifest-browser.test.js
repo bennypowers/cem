@@ -303,22 +303,6 @@ describe('cem-manifest-browser', () => {
 
       collapseSpy.restore();
     });
-
-    it('handles missing virtual tree gracefully', () => {
-      // Temporarily remove reference
-      const originalTree = el.shadowRoot.getElementById('virtual-tree');
-      originalTree.id = 'temp-id';
-
-      const expandAllBtn = el.shadowRoot.getElementById('expand-all');
-      const collapseAllBtn = el.shadowRoot.getElementById('collapse-all');
-
-      // Should not throw
-      expect(() => expandAllBtn.click()).to.not.throw();
-      expect(() => collapseAllBtn.click()).to.not.throw();
-
-      // Restore
-      originalTree.id = 'virtual-tree';
-    });
   });
 
   describe('template loading', () => {

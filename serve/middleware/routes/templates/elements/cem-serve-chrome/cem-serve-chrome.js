@@ -397,7 +397,7 @@ export class CemServeChrome extends CemElement {
     const logsFilter = this.#$('#logs-filter');
     if (logsFilter) {
       logsFilter.addEventListener('input', () => {
-        const value = logsFilter.getAttribute('value') || '';
+        const value = logsFilter.value || '';
 
         // Debounce filter - wait 300ms after user stops typing
         clearTimeout(this.#logsFilterDebounceTimer);
@@ -533,7 +533,7 @@ export class CemServeChrome extends CemElement {
         const textNode = Array.from(btn.childNodes).find(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim().length > 0);
         if (textNode) {
           const original = textNode.textContent;
-          textNode.textContent = '\n              Copied!\n            ';
+          textNode.textContent = 'Copied!';
           setTimeout(() => {
             textNode.textContent = original;
           }, 2000);
@@ -1196,6 +1196,9 @@ Generated: ${new Date().toISOString()}`;
   }
 
   disconnectedCallback() {
+    // Clean up WebSocket connection to prevent memory leaks
+    this.#wsClient?.destroy();
+
     // Clean up knob listeners
     this.removeEventListener('knob:attribute-change', this.#onKnobChange);
     this.removeEventListener('knob:property-change', this.#onKnobChange);

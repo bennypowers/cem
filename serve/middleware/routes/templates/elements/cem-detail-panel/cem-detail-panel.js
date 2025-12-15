@@ -8,7 +8,6 @@ export class CemDetailPanel extends CemElement {
   static is = 'cem-detail-panel';
 
   #cache = new Map();
-  #currentItemId = null;
 
   afterTemplateLoaded() {
     // Template is loaded, ready to render items
@@ -26,7 +25,6 @@ export class CemDetailPanel extends CemElement {
     }
 
     const itemId = this.#getItemId(item);
-    this.#currentItemId = itemId;
 
     // Check cache first
     if (this.#cache.has(itemId)) {
@@ -223,7 +221,7 @@ export class CemDetailPanel extends CemElement {
     const description = slot.description ? await this.#renderMarkdown(slot.description) : '';
 
     return `
-      <h3>${slot.name || '(default)'}</h3>
+      <h3>${this.#escapeHtml(slot.name) || '(default)'}</h3>
       <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
         <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName)}&gt;</code></dd></div>
         ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
