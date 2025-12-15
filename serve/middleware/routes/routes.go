@@ -105,6 +105,9 @@ func New(config Config) middleware.Middleware {
 			case r.URL.Path == "/__cem/logs":
 				serveLogs(w, r, config)
 				return
+			case r.URL.Path == "/__cem/api/markdown":
+				serveMarkdownAPI(w, r)
+				return
 			case r.URL.Path == "/__cem/debug":
 				serveDebugInfo(w, r, config)
 				return

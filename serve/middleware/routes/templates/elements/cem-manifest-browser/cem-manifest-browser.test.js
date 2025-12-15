@@ -50,6 +50,18 @@ describe('cem-manifest-browser', () => {
       expect(drawer).to.exist;
     });
 
+    it('renders virtual tree component', () => {
+      const virtualTree = el.shadowRoot.getElementById('virtual-tree');
+      expect(virtualTree).to.exist;
+      expect(virtualTree.tagName.toLowerCase()).to.equal('cem-virtual-tree');
+    });
+
+    it('renders detail panel component', () => {
+      const detailPanel = el.shadowRoot.getElementById('detail-panel');
+      expect(detailPanel).to.exist;
+      expect(detailPanel.tagName.toLowerCase()).to.equal('cem-detail-panel');
+    });
+
     it('renders expand all button', () => {
       const expandAllBtn = el.shadowRoot.getElementById('expand-all');
       expect(expandAllBtn).to.exist;
@@ -71,127 +83,86 @@ describe('cem-manifest-browser', () => {
     });
   });
 
-  describe('tree item selection', () => {
-    let treeItem, detailElement;
+  describe('virtual tree integration', () => {
+    let virtualTree, detailPanel, drawer;
 
-    beforeEach(() => {
-      // Create a mock tree item
-      treeItem = document.createElement('pf-v6-tree-item');
-      treeItem.setAttribute('data-type', 'class');
-      treeItem.setAttribute('data-module-path', '/components/button');
-      treeItem.setAttribute('data-name', 'Button');
+    beforeEach(async () => {
+      virtualTree = el.shadowRoot.getElementById('virtual-tree');
+      detailPanel = el.shadowRoot.getElementById('detail-panel');
+      drawer = el.shadowRoot.getElementById('drawer');
 
-      // Create a matching detail element in body
-      detailElement = document.createElement('div');
-      detailElement.setAttribute('data-type', 'class');
-      detailElement.setAttribute('data-module-path', '/components/button');
-      detailElement.setAttribute('data-name', 'Button');
-      detailElement.hidden = true;
-      document.body.appendChild(detailElement);
+      // Set up a test manifest
+      window.__CEM_MANIFEST__ = {
+        modules: [{
+          path: './test.js',
+          declarations: [{
+            kind: 'class',
+            name: 'TestElement',
+            customElement: true,
+            tagName: 'test-element'
+          }]
+        }]
+      };
+
+      // Wait for virtual tree to load the manifest
+      await virtualTree.rendered;
     });
 
     afterEach(() => {
-      if (detailElement && detailElement.parentNode) {
-        document.body.removeChild(detailElement);
-      }
+      delete window.__CEM_MANIFEST__;
     });
 
-    it('opens drawer when tree item is selected', () => {
-      const drawer = el.shadowRoot.getElementById('drawer');
+    it('listens for item-select events from virtual tree', async () => {
+      const renderSpy = sinon.spy(detailPanel, 'renderItem');
 
-      const selectEvent = new Event('select', { bubbles: true });
-      Object.defineProperty(selectEvent, 'target', { value: treeItem });
-      el.dispatchEvent(selectEvent);
+      const itemData = {
+        id: 1,
+        type: 'custom-element',
+        tagName: 'test-element',
+        modulePath: './test.js'
+      };
+
+      // Simulate virtual tree emitting item-select event
+      const event = new CustomEvent('item-select', { bubbles: true, composed: true });
+      event.item = itemData;
+      virtualTree.dispatchEvent(event);
+
+      // Wait for async render
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      expect(renderSpy.calledOnce).to.be.true;
+      expect(renderSpy.calledWith(itemData, window.__CEM_MANIFEST__)).to.be.true;
+
+      renderSpy.restore();
+    });
+
+    it('opens drawer when item is selected', async () => {
+      const itemData = {
+        id: 1,
+        type: 'custom-element',
+        tagName: 'test-element',
+        modulePath: './test.js'
+      };
+
+      expect(drawer.expanded).to.be.false;
+
+      const event = new CustomEvent('item-select', { bubbles: true, composed: true });
+      event.item = itemData;
+      virtualTree.dispatchEvent(event);
+
+      await new Promise(resolve => setTimeout(resolve, 10));
 
       expect(drawer.expanded).to.be.true;
-    });
-
-    it('shows detail element when tree item is selected', () => {
-      const selectEvent = new Event('select', { bubbles: true });
-      Object.defineProperty(selectEvent, 'target', { value: treeItem });
-      el.dispatchEvent(selectEvent);
-
-      expect(detailElement.hidden).to.be.false;
-    });
-
-    it('hides previous detail when selecting new item', () => {
-      const detailElement2 = document.createElement('div');
-      detailElement2.setAttribute('data-type', 'class');
-      detailElement2.setAttribute('data-module-path', '/components/input');
-      detailElement2.setAttribute('data-name', 'Input');
-      detailElement2.hidden = true;
-      document.body.appendChild(detailElement2);
-
-      // Select first item
-      const selectEvent1 = new Event('select', { bubbles: true });
-      Object.defineProperty(selectEvent1, 'target', { value: treeItem });
-      el.dispatchEvent(selectEvent1);
-
-      expect(detailElement.hidden).to.be.false;
-
-      // Select second item
-      const treeItem2 = document.createElement('pf-v6-tree-item');
-      treeItem2.setAttribute('data-type', 'class');
-      treeItem2.setAttribute('data-module-path', '/components/input');
-      treeItem2.setAttribute('data-name', 'Input');
-
-      const selectEvent2 = new Event('select', { bubbles: true });
-      Object.defineProperty(selectEvent2, 'target', { value: treeItem2 });
-      el.dispatchEvent(selectEvent2);
-
-      // First should be hidden, second should be visible
-      expect(detailElement.hidden).to.be.true;
-      expect(detailElement2.hidden).to.be.false;
-
-      document.body.removeChild(detailElement2);
-    });
-
-    it('ignores category items', () => {
-      const categoryItem = document.createElement('pf-v6-tree-item');
-      categoryItem.setAttribute('data-type', 'category');
-
-      const drawer = el.shadowRoot.getElementById('drawer');
-      const initialExpanded = drawer.expanded;
-
-      const selectEvent = new Event('select', { bubbles: true });
-      Object.defineProperty(selectEvent, 'target', { value: categoryItem });
-      el.dispatchEvent(selectEvent);
-
-      // Drawer state should not change
-      expect(drawer.expanded).to.equal(initialExpanded);
-    });
-
-    it('ignores non-tree-item events', () => {
-      const div = document.createElement('div');
-
-      const selectEvent = new Event('select', { bubbles: true });
-      Object.defineProperty(selectEvent, 'target', { value: div });
-
-      // Should not throw
-      expect(() => el.dispatchEvent(selectEvent)).to.not.throw();
     });
   });
 
   describe('search functionality', () => {
-    let searchInput, treeView, treeItem1, treeItem2;
+    let searchInput, virtualTree;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       searchInput = el.shadowRoot.getElementById('search');
-
-      // Create a mock tree view with items
-      treeView = document.createElement('pf-v6-tree-view');
-      treeView.setAttribute('slot', 'manifest-tree');
-
-      treeItem1 = document.createElement('pf-v6-tree-item');
-      treeItem1.setAttribute('label', 'Button Component');
-
-      treeItem2 = document.createElement('pf-v6-tree-item');
-      treeItem2.setAttribute('label', 'Input Component');
-
-      treeView.appendChild(treeItem1);
-      treeView.appendChild(treeItem2);
-
-      el.appendChild(treeView);
+      virtualTree = el.shadowRoot.getElementById('virtual-tree');
+      await virtualTree.rendered;
     });
 
     it('shows clear button when search has value', () => {
@@ -216,16 +187,7 @@ describe('cem-manifest-browser', () => {
     });
 
     it('debounces search input', async () => {
-      const spy = sinon.spy();
-
-      // Spy on querySelector to detect when search runs
-      const originalQuerySelectorAll = Element.prototype.querySelectorAll;
-      sinon.stub(Element.prototype, 'querySelectorAll').callsFake(function(...args) {
-        if (args[0] === 'pf-v6-tree-item') {
-          spy();
-        }
-        return originalQuerySelectorAll.apply(this, args);
-      });
+      const searchSpy = sinon.spy(virtualTree, 'search');
 
       searchInput.value = 'B';
       searchInput.dispatchEvent(new Event('input'));
@@ -236,30 +198,51 @@ describe('cem-manifest-browser', () => {
       searchInput.value = 'But';
       searchInput.dispatchEvent(new Event('input'));
 
-      // Should not have run search yet
-      expect(spy.called).to.be.false;
+      // Should not have called search yet
+      expect(searchSpy.called).to.be.false;
 
-      // Wait for debounce
+      // Wait for debounce (300ms)
       await new Promise(resolve => setTimeout(resolve, 350));
 
-      // Should have run search once
-      expect(spy.called).to.be.true;
+      // Should have called search once with final value
+      expect(searchSpy.calledOnce).to.be.true;
+      expect(searchSpy.calledWith('But')).to.be.true;
 
-      Element.prototype.querySelectorAll.restore();
+      searchSpy.restore();
     });
 
-    it('clears search when clear button clicked', async () => {
-      const searchClear = el.shadowRoot.getElementById('search-clear');
+    it('delegates search to virtual tree', async () => {
+      const searchSpy = sinon.spy(virtualTree, 'search');
 
       searchInput.value = 'test';
       searchInput.dispatchEvent(new Event('input'));
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise(resolve => setTimeout(resolve, 350));
+
+      expect(searchSpy.calledOnce).to.be.true;
+      expect(searchSpy.calledWith('test')).to.be.true;
+
+      searchSpy.restore();
+    });
+
+    it('clears search when clear button clicked', async () => {
+      const searchClear = el.shadowRoot.getElementById('search-clear');
+      const searchSpy = sinon.spy(virtualTree, 'search');
+
+      searchInput.value = 'test';
+      searchInput.dispatchEvent(new Event('input'));
+
+      await new Promise(resolve => setTimeout(resolve, 350));
 
       searchClear.click();
 
+      await new Promise(resolve => setTimeout(resolve, 350));
+
       expect(searchInput.value).to.equal('');
       expect(searchClear.hidden).to.be.true;
+      expect(searchSpy.calledWith('')).to.be.true;
+
+      searchSpy.restore();
     });
 
     it('hides search count when search is cleared', async () => {
@@ -277,229 +260,8 @@ describe('cem-manifest-browser', () => {
 
       expect(searchCount.hidden).to.be.true;
     });
-  });
-
-  describe('expand/collapse functionality', () => {
-    let treeView, treeItem1, treeItem2;
-
-    beforeEach(() => {
-      // Create mock tree view
-      treeView = document.createElement('pf-v6-tree-view');
-      treeView.setAttribute('slot', 'manifest-tree');
-
-      treeItem1 = document.createElement('pf-v6-tree-item');
-      treeItem1.expanded = false;
-
-      treeItem2 = document.createElement('pf-v6-tree-item');
-      treeItem2.expanded = false;
-
-      treeView.appendChild(treeItem1);
-      treeView.appendChild(treeItem2);
-
-      el.appendChild(treeView);
-    });
-
-    it('expands all items when expand all button clicked', () => {
-      const expandAllBtn = el.shadowRoot.getElementById('expand-all');
-
-      expandAllBtn.click();
-
-      expect(treeItem1.expanded).to.be.true;
-      expect(treeItem2.expanded).to.be.true;
-    });
-
-    it('collapses all items when collapse all button clicked', () => {
-      const collapseAllBtn = el.shadowRoot.getElementById('collapse-all');
-
-      treeItem1.expanded = true;
-      treeItem2.expanded = true;
-
-      collapseAllBtn.click();
-
-      expect(treeItem1.expanded).to.be.false;
-      expect(treeItem2.expanded).to.be.false;
-    });
-
-    it('handles missing tree view gracefully', () => {
-      // Remove tree view
-      if (treeView.parentNode) {
-        treeView.parentNode.removeChild(treeView);
-      }
-
-      const expandAllBtn = el.shadowRoot.getElementById('expand-all');
-      const collapseAllBtn = el.shadowRoot.getElementById('collapse-all');
-
-      // Should not throw
-      expect(() => expandAllBtn.click()).to.not.throw();
-      expect(() => collapseAllBtn.click()).to.not.throw();
-    });
-  });
-
-  describe('selector building', () => {
-    it('builds selector with type only', () => {
-      const treeItem = document.createElement('pf-v6-tree-item');
-      treeItem.setAttribute('data-type', 'class');
-
-      const detailElement = document.createElement('div');
-      detailElement.setAttribute('data-type', 'class');
-      document.body.appendChild(detailElement);
-      detailElement.hidden = true;
-
-      const selectEvent = new Event('select', { bubbles: true });
-      Object.defineProperty(selectEvent, 'target', { value: treeItem });
-      el.dispatchEvent(selectEvent);
-
-      expect(detailElement.hidden).to.be.false;
-
-      document.body.removeChild(detailElement);
-    });
-
-    it('builds selector with type and module-path', () => {
-      const treeItem = document.createElement('pf-v6-tree-item');
-      treeItem.setAttribute('data-type', 'class');
-      treeItem.setAttribute('data-module-path', '/components/button');
-
-      const detailElement = document.createElement('div');
-      detailElement.setAttribute('data-type', 'class');
-      detailElement.setAttribute('data-module-path', '/components/button');
-      document.body.appendChild(detailElement);
-      detailElement.hidden = true;
-
-      const selectEvent = new Event('select', { bubbles: true });
-      Object.defineProperty(selectEvent, 'target', { value: treeItem });
-      el.dispatchEvent(selectEvent);
-
-      expect(detailElement.hidden).to.be.false;
-
-      document.body.removeChild(detailElement);
-    });
-
-    it('builds selector with type and tag-name', () => {
-      const treeItem = document.createElement('pf-v6-tree-item');
-      treeItem.setAttribute('data-type', 'custom-element');
-      treeItem.setAttribute('data-tag-name', 'my-button');
-
-      const detailElement = document.createElement('div');
-      detailElement.setAttribute('data-type', 'custom-element');
-      detailElement.setAttribute('data-tag-name', 'my-button');
-      document.body.appendChild(detailElement);
-      detailElement.hidden = true;
-
-      const selectEvent = new Event('select', { bubbles: true });
-      Object.defineProperty(selectEvent, 'target', { value: treeItem });
-      el.dispatchEvent(selectEvent);
-
-      expect(detailElement.hidden).to.be.false;
-
-      document.body.removeChild(detailElement);
-    });
-
-    it('builds selector with all attributes', () => {
-      const treeItem = document.createElement('pf-v6-tree-item');
-      treeItem.setAttribute('data-type', 'method');
-      treeItem.setAttribute('data-module-path', '/components/button');
-      treeItem.setAttribute('data-tag-name', 'my-button');
-      treeItem.setAttribute('data-name', 'onClick');
-
-      const detailElement = document.createElement('div');
-      detailElement.setAttribute('data-type', 'method');
-      detailElement.setAttribute('data-module-path', '/components/button');
-      detailElement.setAttribute('data-tag-name', 'my-button');
-      detailElement.setAttribute('data-name', 'onClick');
-      document.body.appendChild(detailElement);
-      detailElement.hidden = true;
-
-      const selectEvent = new Event('select', { bubbles: true });
-      Object.defineProperty(selectEvent, 'target', { value: treeItem });
-      el.dispatchEvent(selectEvent);
-
-      expect(detailElement.hidden).to.be.false;
-
-      document.body.removeChild(detailElement);
-    });
-
-    it('handles data-path as fallback for data-module-path', () => {
-      const treeItem = document.createElement('pf-v6-tree-item');
-      treeItem.setAttribute('data-type', 'class');
-      treeItem.setAttribute('data-path', '/components/input');
-
-      const detailElement = document.createElement('div');
-      detailElement.setAttribute('data-type', 'class');
-      detailElement.setAttribute('data-module-path', '/components/input');
-      document.body.appendChild(detailElement);
-      detailElement.hidden = true;
-
-      const selectEvent = new Event('select', { bubbles: true });
-      Object.defineProperty(selectEvent, 'target', { value: treeItem });
-      el.dispatchEvent(selectEvent);
-
-      expect(detailElement.hidden).to.be.false;
-
-      document.body.removeChild(detailElement);
-    });
-  });
-
-  describe('edge cases', () => {
-    it('handles selecting item with no matching details', () => {
-      const treeItem = document.createElement('pf-v6-tree-item');
-      treeItem.setAttribute('data-type', 'class');
-      treeItem.setAttribute('data-name', 'NonExistent');
-
-      const selectEvent = new Event('select', { bubbles: true });
-      Object.defineProperty(selectEvent, 'target', { value: treeItem });
-
-      // Should not throw
-      expect(() => el.dispatchEvent(selectEvent)).to.not.throw();
-    });
-
-    it('handles multiple detail elements matching selector', () => {
-      const treeItem = document.createElement('pf-v6-tree-item');
-      treeItem.setAttribute('data-type', 'class');
-
-      const detail1 = document.createElement('div');
-      detail1.setAttribute('data-type', 'class');
-      detail1.hidden = true;
-      document.body.appendChild(detail1);
-
-      const detail2 = document.createElement('div');
-      detail2.setAttribute('data-type', 'class');
-      detail2.hidden = true;
-      document.body.appendChild(detail2);
-
-      const selectEvent = new Event('select', { bubbles: true });
-      Object.defineProperty(selectEvent, 'target', { value: treeItem });
-      el.dispatchEvent(selectEvent);
-
-      // Both should be shown
-      expect(detail1.hidden).to.be.false;
-      expect(detail2.hidden).to.be.false;
-
-      document.body.removeChild(detail1);
-      document.body.removeChild(detail2);
-    });
-
-    it('handles special characters in attribute values', () => {
-      const treeItem = document.createElement('pf-v6-tree-item');
-      treeItem.setAttribute('data-type', 'class');
-      treeItem.setAttribute('data-name', 'Class<T>');
-
-      const detailElement = document.createElement('div');
-      detailElement.setAttribute('data-type', 'class');
-      detailElement.setAttribute('data-name', 'Class<T>');
-      detailElement.hidden = true;
-      document.body.appendChild(detailElement);
-
-      const selectEvent = new Event('select', { bubbles: true });
-      Object.defineProperty(selectEvent, 'target', { value: treeItem });
-      el.dispatchEvent(selectEvent);
-
-      expect(detailElement.hidden).to.be.false;
-
-      document.body.removeChild(detailElement);
-    });
 
     it('handles very long search queries', async () => {
-      const searchInput = el.shadowRoot.getElementById('search');
       const longQuery = 'x'.repeat(1000);
 
       searchInput.value = longQuery;
@@ -510,9 +272,42 @@ describe('cem-manifest-browser', () => {
       // Should not throw or crash
       expect(el).to.exist;
     });
+  });
 
-    it('handles empty tree view', () => {
-      const treeView = document.createElement('pf-v6-tree-view');
+  describe('expand/collapse functionality', () => {
+    let virtualTree;
+
+    beforeEach(async () => {
+      virtualTree = el.shadowRoot.getElementById('virtual-tree');
+      await virtualTree.rendered;
+    });
+
+    it('delegates expandAll to virtual tree', () => {
+      const expandSpy = sinon.spy(virtualTree, 'expandAll');
+      const expandAllBtn = el.shadowRoot.getElementById('expand-all');
+
+      expandAllBtn.click();
+
+      expect(expandSpy.calledOnce).to.be.true;
+
+      expandSpy.restore();
+    });
+
+    it('delegates collapseAll to virtual tree', () => {
+      const collapseSpy = sinon.spy(virtualTree, 'collapseAll');
+      const collapseAllBtn = el.shadowRoot.getElementById('collapse-all');
+
+      collapseAllBtn.click();
+
+      expect(collapseSpy.calledOnce).to.be.true;
+
+      collapseSpy.restore();
+    });
+
+    it('handles missing virtual tree gracefully', () => {
+      // Temporarily remove reference
+      const originalTree = el.shadowRoot.getElementById('virtual-tree');
+      originalTree.id = 'temp-id';
 
       const expandAllBtn = el.shadowRoot.getElementById('expand-all');
       const collapseAllBtn = el.shadowRoot.getElementById('collapse-all');
@@ -520,98 +315,9 @@ describe('cem-manifest-browser', () => {
       // Should not throw
       expect(() => expandAllBtn.click()).to.not.throw();
       expect(() => collapseAllBtn.click()).to.not.throw();
-    });
-  });
 
-  describe('real-world usage', () => {
-    it('simulates browsing manifest and viewing details', () => {
-      const treeItem = document.createElement('pf-v6-tree-item');
-      treeItem.setAttribute('data-type', 'class');
-      treeItem.setAttribute('data-module-path', '/components/button');
-      treeItem.setAttribute('data-name', 'Button');
-
-      const detailElement = document.createElement('div');
-      detailElement.setAttribute('data-type', 'class');
-      detailElement.setAttribute('data-module-path', '/components/button');
-      detailElement.setAttribute('data-name', 'Button');
-      detailElement.hidden = true;
-      document.body.appendChild(detailElement);
-
-      const drawer = el.shadowRoot.getElementById('drawer');
-
-      // User clicks tree item
-      const selectEvent = new Event('select', { bubbles: true });
-      Object.defineProperty(selectEvent, 'target', { value: treeItem });
-      el.dispatchEvent(selectEvent);
-
-      // Drawer opens and detail is shown
-      expect(drawer.expanded).to.be.true;
-      expect(detailElement.hidden).to.be.false;
-
-      document.body.removeChild(detailElement);
-    });
-
-    it('simulates searching for a component', async () => {
-      const searchInput = el.shadowRoot.getElementById('search');
-      const searchClear = el.shadowRoot.getElementById('search-clear');
-
-      // User types in search
-      searchInput.value = 'button';
-      searchInput.dispatchEvent(new Event('input'));
-
-      // Clear button appears
-      expect(searchClear.hidden).to.be.false;
-
-      // User clears search
-      searchClear.click();
-
-      // Input is cleared
-      expect(searchInput.value).to.equal('');
-      expect(searchClear.hidden).to.be.true;
-    });
-
-    it('simulates expanding all tree items', () => {
-      const treeView = document.createElement('pf-v6-tree-view');
-      treeView.setAttribute('slot', 'manifest-tree');
-      const items = [];
-
-      for (let i = 0; i < 5; i++) {
-        const item = document.createElement('pf-v6-tree-item');
-        item.expanded = false;
-        items.push(item);
-        treeView.appendChild(item);
-      }
-
-      el.appendChild(treeView);
-
-      const expandAllBtn = el.shadowRoot.getElementById('expand-all');
-      expandAllBtn.click();
-
-      items.forEach(item => {
-        expect(item.expanded).to.be.true;
-      });
-    });
-
-    it('simulates collapsing all tree items', () => {
-      const treeView = document.createElement('pf-v6-tree-view');
-      treeView.setAttribute('slot', 'manifest-tree');
-      const items = [];
-
-      for (let i = 0; i < 5; i++) {
-        const item = document.createElement('pf-v6-tree-item');
-        item.expanded = true;
-        items.push(item);
-        treeView.appendChild(item);
-      }
-
-      el.appendChild(treeView);
-
-      const collapseAllBtn = el.shadowRoot.getElementById('collapse-all');
-      collapseAllBtn.click();
-
-      items.forEach(item => {
-        expect(item.expanded).to.be.false;
-      });
+      // Restore
+      originalTree.id = 'virtual-tree';
     });
   });
 
@@ -626,6 +332,8 @@ describe('cem-manifest-browser', () => {
 
       expect(newEl.shadowRoot).to.exist;
       expect(newEl.shadowRoot.getElementById('search')).to.exist;
+      expect(newEl.shadowRoot.getElementById('virtual-tree')).to.exist;
+      expect(newEl.shadowRoot.getElementById('detail-panel')).to.exist;
 
       document.body.removeChild(newEl);
     });
