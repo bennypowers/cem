@@ -99,7 +99,17 @@ func NewModuleProcessor(
 	// to package.json exports block, if it exists
 	resolvedPath, err := M.ResolveExportPath(packageJson, module.Path)
 	if err != nil {
-		return nil, err
+		// If the file is not exported by package.json, log a warning but continue processing
+		// This allows packages with selective exports to still generate manifests for internal files
+		if errors.Is(err, M.ErrNotExported) {
+			logger.Warn("%v", err)
+			// Keep the original path - file is internal/not exported
+			// Clear the error so processing continues
+			err = nil
+		} else {
+			// Other errors are actual failures
+			return nil, err
+		}
 	} else {
 		module.Path = resolvedPath
 	}

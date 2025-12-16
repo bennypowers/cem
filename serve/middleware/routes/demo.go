@@ -82,7 +82,7 @@ func BuildDemoRoutingTable(manifestBytes []byte, sourceControlRootURL string) (m
 			// everything after the root URL is the file path
 			if sourceControlRootURL != "" && strings.HasPrefix(sourceHref, sourceControlRootURL) {
 				filePath = strings.TrimPrefix(sourceHref, sourceControlRootURL)
-			} else if parsed, err := url.Parse(sourceHref); err == nil && parsed.Path != "" {
+			} else if parsed, err := url.Parse(sourceHref); err == nil && parsed.Scheme != "" && parsed.Path != "" {
 				// Try to extract file path from GitHub/GitLab URLs
 				// URLs like: https://github.com/org/repo/tree/main/path/to/file.html
 				// or:        https://github.com/org/repo/blob/main/path/to/file.html
@@ -107,6 +107,9 @@ func BuildDemoRoutingTable(manifestBytes []byte, sourceControlRootURL string) (m
 					filename := filepath.Base(parsed.Path)
 					filePath = filepath.Join(moduleDir, "demo", filename)
 				}
+			} else {
+				// Not a URL, treat as file path
+				filePath = strings.TrimPrefix(sourceHref, "/")
 			}
 		} else if strings.HasPrefix(demoURL, "./") || strings.HasPrefix(demoURL, "/") {
 			// Relative path - use as-is (strip leading ./ if present)
@@ -316,7 +319,7 @@ func buildPackageRoutingTable(pkg PackageContext) (map[string]*DemoRouteEntry, e
 			sourceHref := renderableDemo.Demo.Source.Href
 			// Try to extract file path from GitHub/GitLab URLs
 			// URLs like: https://github.com/org/repo/tree/main/path/to/file.html
-			if parsed, err := url.Parse(sourceHref); err == nil && parsed.Path != "" {
+			if parsed, err := url.Parse(sourceHref); err == nil && parsed.Scheme != "" && parsed.Path != "" {
 				extractedPath := ""
 				path := parsed.Path
 				for _, prefix := range []string{"/tree/", "/blob/"} {
@@ -339,7 +342,8 @@ func buildPackageRoutingTable(pkg PackageContext) (map[string]*DemoRouteEntry, e
 					filePath = filepath.Join(moduleDir, "demo", filename)
 				}
 			} else {
-				filePath = sourceHref
+				// Not a URL, treat as file path
+				filePath = strings.TrimPrefix(sourceHref, "/")
 			}
 		} else {
 			// Fallback: try to find demo file in module directory

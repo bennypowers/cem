@@ -192,20 +192,44 @@ func (c *FileSystemWorkspaceContext) Glob(pattern string) ([]string, error) {
 	pattern = filepath.Clean(pattern)
 
 	if isGlobPattern(pattern) {
-		// For glob patterns, join with root and execute glob
-		globPath := filepath.Join(c.root, pattern)
+		// Determine the base directory for resolving relative patterns.
+		// In monorepos, patterns in a package config should resolve relative
+		// to the package directory (where the config is), not the monorepo root.
+		baseDir := c.root
+		if c.config != nil && c.config.ProjectDir != "" {
+			// Use ProjectDir from config if available (handles package subdirectories)
+			baseDir = c.config.ProjectDir
+		}
+
+		// Ensure baseDir is absolute
+		if !filepath.IsAbs(baseDir) {
+			cwd, err := os.Getwd()
+			if err != nil {
+				return nil, fmt.Errorf("failed to get current directory: %w", err)
+			}
+			baseDir = filepath.Join(cwd, baseDir)
+		}
+
+		// For glob patterns, join with base directory and execute glob
+		globPath := filepath.Join(baseDir, pattern)
 		result, err := doublestar.Glob(globPath)
 		if err != nil {
 			return nil, fmt.Errorf("glob pattern %q failed: %w", pattern, err)
 		}
 
-		// Convert absolute paths back to relative paths within project
+		// Convert absolute paths back to relative paths within base directory
 		relativeResult := make([]string, 0, len(result))
 		for _, absPath := range result {
-			if rel, err := c.makeRelativeToRoot(absPath); err == nil {
-				relativeResult = append(relativeResult, rel)
+			rel, err := filepath.Rel(baseDir, absPath)
+			if err != nil {
+				// Skip files that can't be made relative
+				continue
 			}
-			// Skip files outside project root (don't include them in results)
+			// Skip files outside base directory
+			if strings.HasPrefix(rel, ".."+string(filepath.Separator)) || rel == ".." {
+				continue
+			}
+			relativeResult = append(relativeResult, rel)
 		}
 		return relativeResult, nil
 	}
