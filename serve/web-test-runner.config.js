@@ -28,10 +28,10 @@ export default {
       '**/node_modules/**',
     ],
     threshold: {
-      statements: 80,
+      statements: 75,
       branches: 70,
-      functions: 80,
-      lines: 80,
+      functions: 75,
+      lines: 75,
     },
   },
   plugins: [

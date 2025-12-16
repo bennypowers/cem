@@ -688,6 +688,191 @@ pf-v6-form-group [slot="helper"] {
   }
 }
 
+/* Events tab styling - Primary-detail layout */
+.events-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+#event-drawer {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Event list (primary panel) */
+#event-list {
+  overflow-y: auto;
+  height: 100%;
+}
+
+.event-list-item {
+  /* Reset button styles */
+  appearance: none;
+  background: none;
+  border: none;
+  border-left: 3px solid transparent;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  width: 100%;
+
+  /* Component styles */
+  padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);
+  display: flex;
+  gap: var(--cem-dev-server-spacing-sm);
+  align-items: center;
+  cursor: pointer;
+  transition: background 100ms ease-in-out, border-color 100ms ease-in-out;
+
+  pf-v6-label {
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background: var(--pf-t--global--background--color--primary--hover);
+  }
+
+  &:focus {
+    outline: 2px solid var(--pf-t--global--border--color--clicked);
+    outline-offset: -2px;
+  }
+
+  &.selected {
+    background: var(--pf-t--global--background--color--action--plain--selected);
+    border-left-color: var(--pf-t--global--border--color--brand--default);
+  }
+}
+
+.event-time,
+.event-element {
+  font-family: var(--cem-dev-server-font-family-mono);
+  font-size: var(--cem-dev-server-font-size-sm);
+}
+
+.event-time {
+  color: var(--cem-dev-server-text-muted);
+  flex-shrink: 0;
+  font-size: 11px;
+}
+
+.event-element {
+  color: var(--cem-dev-server-text-muted);
+  font-weight: 400;
+}
+
+/* Event detail panel */
+.event-detail-header-content {
+  padding: var(--cem-dev-server-spacing-md);
+  border-bottom: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
+}
+
+.event-detail-name {
+  margin: 0 0 var(--cem-dev-server-spacing-sm) 0;
+  font-size: var(--cem-dev-server-font-size-lg);
+  font-weight: 600;
+  color: var(--cem-dev-server-text-primary);
+}
+
+.event-detail-summary {
+  margin: 0 0 var(--cem-dev-server-spacing-sm) 0;
+  font-size: var(--cem-dev-server-font-size-sm);
+  color: var(--cem-dev-server-text-secondary);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.event-detail-description {
+  margin: 0 0 var(--cem-dev-server-spacing-sm) 0;
+  font-size: var(--cem-dev-server-font-size-sm);
+  color: var(--cem-dev-server-text-secondary);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.event-detail-meta {
+  display: flex;
+  gap: var(--cem-dev-server-spacing-md);
+  font-size: var(--cem-dev-server-font-size-sm);
+}
+
+.event-detail-time {
+  color: var(--cem-dev-server-text-muted);
+  font-family: var(--cem-dev-server-font-family-mono);
+}
+
+.event-detail-element {
+  color: var(--cem-dev-server-text-secondary);
+  font-family: var(--cem-dev-server-font-family-mono);
+}
+
+.event-detail-properties-heading {
+  margin: var(--cem-dev-server-spacing-md) var(--cem-dev-server-spacing-md) var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);
+  font-size: var(--cem-dev-server-font-size-base);
+  font-weight: 600;
+  color: var(--cem-dev-server-text-primary);
+}
+
+.event-detail-properties {
+  padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);
+  background: var(--cem-dev-server-bg-secondary);
+  border: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
+  border-radius: var(--cem-dev-server-border-radius);
+  font-family: var(--cem-dev-server-font-family-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0 var(--cem-dev-server-spacing-md) var(--cem-dev-server-spacing-md) var(--cem-dev-server-spacing-md);
+}
+
+.event-property-tree {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  &.nested {
+    padding-left: 1.5em;
+    margin-top: 0.25em;
+  }
+}
+
+.property-item {
+  padding: 0.125em 0;
+}
+
+.property-key {
+  color: var(--cem-dev-server-accent-color);
+  font-weight: 500;
+}
+
+.property-colon {
+  color: var(--cem-dev-server-text-muted);
+}
+
+.property-value {
+  &.null,
+  &.undefined {
+    color: var(--cem-dev-server-text-muted);
+    font-style: italic;
+  }
+
+  &.boolean {
+    color: var(--cem-dev-server-color-boolean);
+  }
+
+  &.number {
+    color: var(--cem-dev-server-color-number);
+  }
+
+  &.string {
+    color: var(--cem-dev-server-color-string);
+  }
+
+  &.array,
+  &.object {
+    color: var(--cem-dev-server-text-secondary);
+  }
+}
 
 #debug-modal {
   container-type: inline-size;

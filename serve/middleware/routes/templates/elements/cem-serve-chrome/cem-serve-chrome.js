@@ -81,6 +81,7 @@ export class CemServeChrome extends CemElement {
   static #demoListTemplate = document.createElement('template');
   static #logEntryTemplate = document.createElement('template');
   static #connectionAlertTemplate = document.createElement('template');
+  static #eventEntryTemplate = document.createElement('template');
   static {
     this.#demoInfoTemplate.innerHTML = `
       <h3>Demo Information</h3>
@@ -133,6 +134,13 @@ export class CemServeChrome extends CemElement {
     this.#connectionAlertTemplate.innerHTML = `
       <pf-v6-alert dismissable data-field="alert"></pf-v6-alert>
     `;
+    this.#eventEntryTemplate.innerHTML = `
+      <button class="event-list-item" data-field="container">
+        <pf-v6-label compact data-field="label"></pf-v6-label>
+        <time class="event-time" data-field="time"></time>
+        <span class="event-element" data-field="element"></span>
+      </button>
+    `;
   }
 
   #$ = (selector) => this.shadowRoot.querySelector(selector);
@@ -146,10 +154,65 @@ export class CemServeChrome extends CemElement {
   // Track ws connection state
   #hasConnected = false;
 
+  // Element event tracking
+  #elementEventMap = null;           // Map<tagName, {eventNames: Set, events: []}>
+  #manifest = null;                  // Full manifest for type lookups
+  #capturedEvents = [];              // Array of event records
+  #maxCapturedEvents = 1000;         // Memory limit
+  #eventList = null;                 // Reference to event list container
+  #eventDetailHeader = null;         // Reference to detail header
+  #eventDetailBody = null;           // Reference to detail body
+  #selectedEventId = null;           // Currently selected event ID
+  #eventsFilterValue = '';           // Text filter
+  #eventsFilterDebounceTimer = null; // Debounce timer
+  #eventTypeFilters = new Set();     // Selected event types
+  #elementFilters = new Set();       // Selected elements
+  #discoveredElements = new Set();   // Set of tagName strings
+
+  // Event listener references for cleanup
+  #handleLogsEvent = null;
+  #handleTreeExpand = null;
+  #handleTreeCollapse = null;
+  #handleTreeSelect = null;
+
+  // Timeout IDs for cleanup
+  #copyLogsFeedbackTimeout = null;
+  #copyDebugFeedbackTimeout = null;
+  #copyEventsFeedbackTimeout = null;
+
+  // Watch for dynamically added elements
+  /* c8 ignore start - MutationObserver callback tested via integration */
+  #observer = new MutationObserver((mutations) => {
+    let needsUpdate = false;
+
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if (node instanceof HTMLElement) {
+          const tagName = node.tagName.toLowerCase();
+          if (this.#elementEventMap.has(tagName) && !node.dataset.cemEventsAttached) {
+            const eventInfo = this.#elementEventMap.get(tagName);
+            for (const eventName of eventInfo.eventNames) {
+              node.addEventListener(eventName, this.#handleElementEvent, { capture: true });
+            }
+            node.dataset.cemEventsAttached = 'true';
+            this.#discoveredElements.add(tagName);
+            needsUpdate = true;
+          }
+        }
+      }
+    }
+
+    if (needsUpdate) {
+      this.#updateEventFilters();
+    }
+  });
+  /* c8 ignore stop */
+
   #wsClient = new CEMReloadClient({
     jitterMax: 1000,
     overlayThreshold: 15,
     badgeFadeDelay: 2000,
+    /* c8 ignore start - WebSocket callbacks tested via integration */
     callbacks: {
       onOpen: () => {
         // Clear any reconnecting/restarting alerts
@@ -199,6 +262,7 @@ export class CemServeChrome extends CemElement {
         window.dispatchEvent(new CemLogsEvent(logs));
       }
     }
+    /* c8 ignore stop */
   });
 
   get demo() { return this.querySelector('cem-serve-demo'); }
@@ -240,10 +304,16 @@ export class CemServeChrome extends CemElement {
     // Set up sidebar state persistence
     this.#setupSidebarStatePersistence();
 
+    // Set up element event capture
+    await this.#setupEventCapture();
+    this.#setupEventListeners();
+
     // Set up reconnection modal button handlers
+    /* c8 ignore start - window.location.reload would reload test page */
     this.#$('#reload-button')?.addEventListener('click', () => {
       window.location.reload();
     });
+    /* c8 ignore stop */
 
     this.#$('#retry-button')?.addEventListener('click', () => {
       this.#$('#reconnection-modal')?.close();
@@ -397,7 +467,7 @@ export class CemServeChrome extends CemElement {
     const logsFilter = this.#$('#logs-filter');
     if (logsFilter) {
       logsFilter.addEventListener('input', () => {
-        const value = logsFilter.value || '';
+        const { value = '' } = logsFilter;
 
         // Debounce filter - wait 300ms after user stops typing
         clearTimeout(this.#logsFilterDebounceTimer);
@@ -427,11 +497,12 @@ export class CemServeChrome extends CemElement {
 
     // Listen for server log messages from the WebSocket client
     // The websocket-client.js dispatches 'cem:logs' events with server logs
-    window.addEventListener('cem:logs', ({ logs }) => {
+    this.#handleLogsEvent = ({ logs }) => {
       if (logs) {
         this.#renderLogs(logs);
       }
-    });
+    };
+    window.addEventListener('cem:logs', this.#handleLogsEvent);
   }
 
   #filterLogs(query) {
@@ -483,7 +554,7 @@ export class CemServeChrome extends CemElement {
 
     const menuItems = this.#logLevelDropdown.querySelectorAll('pf-v6-menu-item');
     menuItems.forEach(item => {
-      const value = item.getAttribute('value');
+      const { value } = item;
       item.checked = this.#logLevelFilters.has(value);
     });
   }
@@ -534,8 +605,18 @@ export class CemServeChrome extends CemElement {
         if (textNode) {
           const original = textNode.textContent;
           textNode.textContent = 'Copied!';
-          setTimeout(() => {
-            textNode.textContent = original;
+
+          // Clear any existing feedback timeout
+          if (this.#copyLogsFeedbackTimeout) {
+            clearTimeout(this.#copyLogsFeedbackTimeout);
+          }
+
+          this.#copyLogsFeedbackTimeout = setTimeout(() => {
+            // Check if element is still connected before modifying
+            if (this.isConnected && textNode.parentNode) {
+              textNode.textContent = original;
+            }
+            this.#copyLogsFeedbackTimeout = null;
           }, 2000);
         }
       }
@@ -614,6 +695,11 @@ export class CemServeChrome extends CemElement {
       if (e.selectedIndex === 2 && drawer.open) {
         this.#scrollLogsToBottom();
       }
+
+      // Scroll events if switching to events panel (index 3) and drawer is open
+      if (e.selectedIndex === 3 && drawer.open) {
+        this.#scrollEventsToBottom();
+      }
     });
   }
 
@@ -662,8 +748,18 @@ Generated: ${new Date().toISOString()}`;
       if (copyButton) {
         const originalText = copyButton.textContent;
         copyButton.textContent = 'Copied!';
-        setTimeout(() => {
-          copyButton.textContent = originalText;
+
+        // Clear any existing feedback timeout
+        if (this.#copyDebugFeedbackTimeout) {
+          clearTimeout(this.#copyDebugFeedbackTimeout);
+        }
+
+        this.#copyDebugFeedbackTimeout = setTimeout(() => {
+          // Check if element is still connected before modifying
+          if (this.isConnected && copyButton.parentNode) {
+            copyButton.textContent = originalText;
+          }
+          this.#copyDebugFeedbackTimeout = null;
         }, 2000);
       }
     } catch (err) {
@@ -827,7 +923,7 @@ Generated: ${new Date().toISOString()}`;
     // Mark correct toggle as selected (SSR should have done this via body style, but ensure it)
     const items = toggleGroup.querySelectorAll('pf-v6-toggle-group-item');
     items.forEach(item => {
-      if (item.getAttribute('value') === state.colorScheme) {
+      if (item.value === state.colorScheme) {
         item.setAttribute('selected', '');
       }
     });
@@ -999,7 +1095,7 @@ Generated: ${new Date().toISOString()}`;
 
   #setupTreeStatePersistence() {
     // Listen for tree item events and persist state to localStorage
-    this.addEventListener('expand', (e) => {
+    this.#handleTreeExpand = (e) => {
       if (e.target.tagName !== 'PF-V6-TREE-ITEM') return;
 
       const nodeId = this.#getTreeNodeId(e.target);
@@ -1008,9 +1104,10 @@ Generated: ${new Date().toISOString()}`;
         treeState.expanded.push(nodeId);
         StatePersistence.setTreeState(treeState);
       }
-    });
+    };
+    this.addEventListener('expand', this.#handleTreeExpand);
 
-    this.addEventListener('collapse', (e) => {
+    this.#handleTreeCollapse = (e) => {
       if (e.target.tagName !== 'PF-V6-TREE-ITEM') return;
 
       const nodeId = this.#getTreeNodeId(e.target);
@@ -1020,14 +1117,16 @@ Generated: ${new Date().toISOString()}`;
         treeState.expanded.splice(index, 1);
         StatePersistence.setTreeState(treeState);
       }
-    });
+    };
+    this.addEventListener('collapse', this.#handleTreeCollapse);
 
-    this.addEventListener('select', (e) => {
+    this.#handleTreeSelect = (e) => {
       if (e.target.tagName !== 'PF-V6-TREE-ITEM') return;
 
       const nodeId = this.#getTreeNodeId(e.target);
       StatePersistence.updateTreeState({ selected: nodeId });
-    });
+    };
+    this.addEventListener('select', this.#handleTreeSelect);
 
     // Apply tree state from localStorage on load
     this.#applyTreeState();
@@ -1195,10 +1294,830 @@ Generated: ${new Date().toISOString()}`;
     });
   }
 
-  disconnectedCallback() {
-    // Clean up WebSocket connection to prevent memory leaks
-    this.#wsClient?.destroy();
+  // Event Discovery & Capture Methods
 
+  async #discoverElementEvents() {
+    try {
+      const response = await fetch('/custom-elements.json');
+      if (!response.ok) {
+        console.warn('[cem-serve-chrome] No manifest available for event discovery');
+        return new Map();
+      }
+
+      const manifest = await response.json();
+      this.#manifest = manifest; // Store manifest for type lookups
+
+      const eventMap = new Map();
+
+      // Traverse manifest to build event map
+      for (const module of manifest.modules || []) {
+        for (const declaration of module.declarations || []) {
+          // Check if this is a CustomElement declaration
+          if (declaration.customElement && declaration.tagName) {
+            const tagName = declaration.tagName;
+            const events = declaration.events || [];
+
+            if (events.length > 0) {
+              const eventNames = new Set(events.map(e => e.name));
+              eventMap.set(tagName, {
+                eventNames,
+                events: events // Store full event objects for metadata
+              });
+            }
+          }
+        }
+      }
+
+      return eventMap;
+    } catch (error) {
+      console.warn('[cem-serve-chrome] Error loading manifest for event discovery:', error);
+      return new Map();
+    }
+  }
+
+  async #setupEventCapture() {
+    // Build event map from manifest
+    this.#elementEventMap = await this.#discoverElementEvents();
+
+    if (this.#elementEventMap.size === 0) {
+      return;
+    }
+
+    // Attach listeners directly to elements in the demo
+    this.#attachEventListeners();
+
+    // Update filter dropdowns with discovered event types
+    this.#updateEventFilters();
+
+    // Set up mutation observer to handle dynamically added elements
+    this.#observeDemoMutations();
+  }
+
+  #attachEventListeners() {
+    const demo = this.demo;
+    if (!demo) return;
+
+    const root = demo.shadowRoot ?? demo;
+
+    // Find all custom elements in the demo that have events in the manifest
+    for (const [tagName, eventInfo] of this.#elementEventMap) {
+      const elements = root.querySelectorAll(tagName);
+
+      for (const element of elements) {
+        // Attach listeners for each event on this specific element
+        for (const eventName of eventInfo.eventNames) {
+          // Use capture phase to catch events even if they don't bubble
+          element.addEventListener(eventName, this.#handleElementEvent, { capture: true });
+        }
+
+        // Mark this element as having listeners attached
+        element.dataset.cemEventsAttached = 'true';
+
+        // Add to discovered elements
+        this.#discoveredElements.add(tagName);
+      }
+    }
+  }
+
+  #observeDemoMutations() {
+    const demo = this.demo;
+    if (!demo) return;
+
+    const root = demo.shadowRoot ?? demo;
+
+    this.#observer.observe(root, {
+      childList: true,
+      subtree: true
+    });
+  }
+
+  #handleElementEvent = (event) => {
+    // Use currentTarget (the element with the listener) not target (which could be a child)
+    const element = event.currentTarget;
+    if (!(element instanceof HTMLElement)) return;
+
+    const tagName = element.tagName.toLowerCase();
+    const eventInfo = this.#elementEventMap.get(tagName);
+
+    // Check if this event is in the manifest for this element
+    if (!eventInfo || !eventInfo.eventNames.has(event.type)) {
+      return;
+    }
+
+    // Add element to discovered set
+    this.#discoveredElements.add(tagName);
+
+    // Capture event data
+    this.#captureEvent(event, element, tagName, eventInfo);
+  };
+
+  #getEventDocumentation(manifestEvent) {
+    if (!manifestEvent) {
+      return { summary: null, description: null };
+    }
+
+    let summary = manifestEvent.summary || null;
+    let description = manifestEvent.description || null;
+
+    // If event has a type reference, try to find the type declaration
+    if (manifestEvent.type?.text && this.#manifest) {
+      const typeName = manifestEvent.type.text;
+      const typeDeclaration = this.#findTypeDeclaration(typeName);
+
+      if (typeDeclaration) {
+        // Combine documentation from type declaration if available
+        // Type declaration docs take precedence if event doesn't have its own
+        if (!summary && typeDeclaration.summary) {
+          summary = typeDeclaration.summary;
+        } else if (typeDeclaration.summary && typeDeclaration.summary !== summary) {
+          // If both exist and are different, append type docs
+          summary = summary ? `${summary}\n\nFrom ${typeName}: ${typeDeclaration.summary}` : typeDeclaration.summary;
+        }
+
+        if (!description && typeDeclaration.description) {
+          description = typeDeclaration.description;
+        } else if (typeDeclaration.description && typeDeclaration.description !== description) {
+          // If both exist and are different, append type docs
+          description = description ? `${description}\n\n${typeDeclaration.description}` : typeDeclaration.description;
+        }
+      }
+    }
+
+    return { summary, description };
+  }
+
+  #findTypeDeclaration(typeName) {
+    if (!this.#manifest) return null;
+
+    for (const module of this.#manifest.modules || []) {
+      for (const declaration of module.declarations || []) {
+        if (declaration.name === typeName &&
+            (declaration.kind === 'class' || declaration.kind === 'interface')) {
+          return declaration;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  #captureEvent(event, target, tagName, eventInfo) {
+    // Extract event metadata from manifest
+    const manifestEvent = eventInfo.events.find(e => e.name === event.type);
+
+    // Get documentation from both the event declaration and type declaration
+    const eventDocs = this.#getEventDocumentation(manifestEvent);
+
+    // Extract all custom properties from event (excluding Event.prototype properties)
+    const customProperties = this.#extractEventProperties(event);
+
+    // Build event record
+    const eventRecord = {
+      id: `${Date.now()}-${Math.random()}`,
+      timestamp: new Date(),
+      eventName: event.type,
+      tagName: tagName,
+      elementId: target.id || null,
+      elementClass: target.className || null,
+      customProperties: customProperties, // All custom props from the event object
+      manifestType: manifestEvent?.type?.text || null,
+      summary: eventDocs.summary,
+      description: eventDocs.description,
+      bubbles: event.bubbles,
+      composed: event.composed,
+      cancelable: event.cancelable,
+      defaultPrevented: event.defaultPrevented
+    };
+
+    // Add to captured events (with limit)
+    this.#capturedEvents.push(eventRecord);
+
+    // Trim old events if over limit
+    if (this.#capturedEvents.length > this.#maxCapturedEvents) {
+      this.#capturedEvents.shift();
+    }
+
+    // Render new event
+    this.#renderEvent(eventRecord);
+  }
+
+  #extractEventProperties(event) {
+    // Extract all custom properties from the event object
+    // Exclude Event.prototype properties to only show custom additions
+    const properties = {};
+    const eventPrototypeKeys = new Set(Object.getOwnPropertyNames(Event.prototype));
+
+    // Helper to safely serialize a value
+    const serializeValue = (value) => {
+      try {
+        return JSON.parse(JSON.stringify(value));
+      } catch (e) {
+        try {
+          return String(value);
+        } catch (stringErr) {
+          return '[Not serializable]';
+        }
+      }
+    };
+
+    // For CustomEvent, always include detail if present (common pattern)
+    if (event instanceof CustomEvent && event.detail !== undefined) {
+      properties.detail = serializeValue(event.detail);
+    }
+
+    // Get all own properties of the event (including non-enumerable)
+    // This captures custom properties from classes that extend Event
+    for (const key of Object.getOwnPropertyNames(event)) {
+      // Skip Event.prototype properties, private/internal ones, and already-captured detail
+      if (!eventPrototypeKeys.has(key) && !key.startsWith('_') && !properties.hasOwnProperty(key)) {
+        properties[key] = serializeValue(event[key]);
+      }
+    }
+
+    return properties;
+  }
+
+  #renderEvent(eventRecord) {
+    if (!this.#eventList) return;
+
+    const fragment = CemServeChrome.#eventEntryTemplate.content.cloneNode(true);
+
+    const time = eventRecord.timestamp.toLocaleTimeString();
+
+    // Get container and set data attributes
+    const container = fragment.querySelector('[data-field="container"]');
+    container.dataset.eventId = eventRecord.id;
+    container.dataset.eventType = eventRecord.eventName;
+    container.dataset.elementType = eventRecord.tagName;
+
+    // Apply current filters
+    const textMatch = this.#eventMatchesTextFilter(eventRecord);
+    const typeMatch = this.#eventTypeFilters.size === 0 || this.#eventTypeFilters.has(eventRecord.eventName);
+    const elementMatch = this.#elementFilters.size === 0 || this.#elementFilters.has(eventRecord.tagName);
+
+    if (!(textMatch && typeMatch && elementMatch)) {
+      container.setAttribute('hidden', '');
+    }
+
+    // Set label (event name as badge) - use status="info" for better contrast
+    const label = fragment.querySelector('[data-field="label"]');
+    label.textContent = eventRecord.eventName;
+    label.setAttribute('status', 'info');
+
+    // Set time
+    const timeEl = fragment.querySelector('[data-field="time"]');
+    timeEl.setAttribute('datetime', eventRecord.timestamp.toISOString());
+    timeEl.textContent = time;
+
+    // Set element info (tag name and ID if present)
+    const elementEl = fragment.querySelector('[data-field="element"]');
+    let elementText = `<${eventRecord.tagName}>`;
+    if (eventRecord.elementId) {
+      elementText += `#${eventRecord.elementId}`;
+    }
+    elementEl.textContent = elementText;
+
+    // Append to list
+    this.#eventList.append(fragment);
+
+    // Auto-select first event if none selected
+    if (!this.#selectedEventId) {
+      this.#selectEvent(eventRecord.id);
+    }
+
+    // Auto-scroll if drawer is open and on events tab
+    if (this.#drawerOpen && this.#isEventsTabActive()) {
+      this.#scrollEventsToBottom();
+    }
+  }
+
+  #selectEvent(eventId) {
+    // Find the event record
+    const eventRecord = this.#getEventRecordById(eventId);
+    if (!eventRecord) return;
+
+    // Update selection state
+    this.#selectedEventId = eventId;
+
+    // Update UI - mark selected in list
+    const allItems = this.#eventList?.querySelectorAll('.event-list-item');
+    allItems?.forEach(item => {
+      if (item.dataset.eventId === eventId) {
+        item.classList.add('selected');
+        item.setAttribute('aria-selected', 'true');
+      } else {
+        item.classList.remove('selected');
+        item.setAttribute('aria-selected', 'false');
+      }
+    });
+
+    // Populate detail header
+    if (this.#eventDetailHeader) {
+      this.#eventDetailHeader.innerHTML = '';
+
+      const headerContent = document.createElement('div');
+      headerContent.className = 'event-detail-header-content';
+
+      const eventName = document.createElement('h3');
+      eventName.textContent = eventRecord.eventName;
+      eventName.className = 'event-detail-name';
+      headerContent.appendChild(eventName);
+
+      // Add event summary if available
+      if (eventRecord.summary) {
+        const summary = document.createElement('p');
+        summary.textContent = eventRecord.summary;
+        summary.className = 'event-detail-summary';
+        headerContent.appendChild(summary);
+      }
+
+      // Add event description if available
+      if (eventRecord.description) {
+        const description = document.createElement('p');
+        description.textContent = eventRecord.description;
+        description.className = 'event-detail-description';
+        headerContent.appendChild(description);
+      }
+
+      const meta = document.createElement('div');
+      meta.className = 'event-detail-meta';
+
+      const time = document.createElement('time');
+      time.setAttribute('datetime', eventRecord.timestamp.toISOString());
+      time.textContent = eventRecord.timestamp.toLocaleTimeString();
+      time.className = 'event-detail-time';
+
+      const element = document.createElement('span');
+      let elementText = `<${eventRecord.tagName}>`;
+      if (eventRecord.elementId) {
+        elementText += `#${eventRecord.elementId}`;
+      }
+      element.textContent = elementText;
+      element.className = 'event-detail-element';
+
+      meta.appendChild(time);
+      meta.appendChild(element);
+
+      headerContent.appendChild(meta);
+
+      this.#eventDetailHeader.appendChild(headerContent);
+    }
+
+    // Populate detail body with property tree
+    if (this.#eventDetailBody) {
+      this.#eventDetailBody.innerHTML = '';
+
+      const propertiesHeading = document.createElement('h4');
+      propertiesHeading.textContent = 'Properties';
+      propertiesHeading.className = 'event-detail-properties-heading';
+
+      const propertiesContainer = document.createElement('div');
+      propertiesContainer.className = 'event-detail-properties';
+
+      const eventProperties = this.#buildPropertiesForDisplay(eventRecord);
+      if (Object.keys(eventProperties).length > 0) {
+        propertiesContainer.appendChild(this.#buildPropertyTree(eventProperties));
+      } else {
+        propertiesContainer.textContent = 'No properties to display';
+      }
+
+      this.#eventDetailBody.appendChild(propertiesHeading);
+      this.#eventDetailBody.appendChild(propertiesContainer);
+    }
+  }
+
+  #buildPropertiesForDisplay(eventRecord) {
+    const properties = {};
+
+    // Include all custom properties from the event object
+    if (eventRecord.customProperties) {
+      Object.assign(properties, eventRecord.customProperties);
+    }
+
+    // Always include these standard Event properties
+    properties.bubbles = eventRecord.bubbles;
+    properties.cancelable = eventRecord.cancelable;
+    properties.defaultPrevented = eventRecord.defaultPrevented;
+    properties.composed = eventRecord.composed;
+
+    // Include manifest type if available
+    if (eventRecord.manifestType) {
+      properties.type = eventRecord.manifestType;
+    }
+
+    return properties;
+  }
+
+  #buildPropertyTree(obj, depth = 0) {
+    const ul = document.createElement('ul');
+    ul.className = 'event-property-tree';
+    if (depth > 0) {
+      ul.classList.add('nested');
+    }
+
+    for (const [key, value] of Object.entries(obj)) {
+      const li = document.createElement('li');
+      li.className = 'property-item';
+
+      const keySpan = document.createElement('span');
+      keySpan.className = 'property-key';
+      keySpan.textContent = key;
+
+      const colonSpan = document.createElement('span');
+      colonSpan.className = 'property-colon';
+      colonSpan.textContent = ': ';
+
+      li.appendChild(keySpan);
+      li.appendChild(colonSpan);
+
+      // Handle different value types
+      if (value === null || value === undefined) {
+        const valueSpan = document.createElement('span');
+        valueSpan.className = 'property-value null';
+        valueSpan.textContent = String(value);
+        li.appendChild(valueSpan);
+      } else if (typeof value === 'boolean') {
+        const valueSpan = document.createElement('span');
+        valueSpan.className = 'property-value boolean';
+        valueSpan.textContent = String(value);
+        li.appendChild(valueSpan);
+      } else if (typeof value === 'number') {
+        const valueSpan = document.createElement('span');
+        valueSpan.className = 'property-value number';
+        valueSpan.textContent = String(value);
+        li.appendChild(valueSpan);
+      } else if (typeof value === 'string') {
+        const valueSpan = document.createElement('span');
+        valueSpan.className = 'property-value string';
+        valueSpan.textContent = `"${value}"`;
+        li.appendChild(valueSpan);
+      } else if (Array.isArray(value)) {
+        const valueSpan = document.createElement('span');
+        valueSpan.className = 'property-value array';
+        valueSpan.textContent = `Array(${value.length})`;
+        li.appendChild(valueSpan);
+
+        if (value.length > 0 && depth < 3) {
+          const nestedObj = {};
+          value.forEach((item, index) => {
+            nestedObj[index] = item;
+          });
+          li.appendChild(this.#buildPropertyTree(nestedObj, depth + 1));
+        }
+      } else if (typeof value === 'object') {
+        const valueSpan = document.createElement('span');
+        valueSpan.className = 'property-value object';
+        const keys = Object.keys(value);
+        valueSpan.textContent = keys.length > 0 ? `Object` : `{}`;
+        li.appendChild(valueSpan);
+
+        if (keys.length > 0 && depth < 3) {
+          li.appendChild(this.#buildPropertyTree(value, depth + 1));
+        }
+      } else {
+        const valueSpan = document.createElement('span');
+        valueSpan.className = 'property-value';
+        valueSpan.textContent = String(value);
+        li.appendChild(valueSpan);
+      }
+
+      ul.appendChild(li);
+    }
+
+    return ul;
+  }
+
+  #scrollEventsToBottom() {
+    if (!this.#eventList) return;
+
+    requestAnimationFrame(() => {
+      const lastEvent = this.#eventList.lastElementChild;
+      if (lastEvent) {
+        lastEvent.scrollIntoView({ behavior: 'auto', block: 'end' });
+      }
+    });
+  }
+
+  #isEventsTabActive() {
+    const tabs = this.#$('pf-v6-tabs');
+    if (!tabs) return false;
+
+    const selectedIndex = parseInt(tabs.getAttribute('selected') || '0', 10);
+    return selectedIndex === 3; // Events tab is index 3
+  }
+
+  #filterEvents(query) {
+    this.#eventsFilterValue = query.toLowerCase();
+
+    if (!this.#eventList) return;
+
+    for (const entry of this.#eventList.children) {
+      const eventRecord = this.#getEventRecordById(entry.dataset.eventId);
+
+      if (!eventRecord) continue;
+
+      const textMatch = this.#eventMatchesTextFilter(eventRecord);
+      const typeMatch = this.#eventTypeFilters.size === 0 || this.#eventTypeFilters.has(eventRecord.eventName);
+      const elementMatch = this.#elementFilters.size === 0 || this.#elementFilters.has(eventRecord.tagName);
+
+      entry.hidden = !(textMatch && typeMatch && elementMatch);
+    }
+  }
+
+  #eventMatchesTextFilter(eventRecord) {
+    if (!this.#eventsFilterValue) return true;
+
+    const searchText = [
+      eventRecord.tagName,
+      eventRecord.eventName,
+      eventRecord.elementId || '',
+      JSON.stringify(eventRecord.customProperties || {})
+    ].join(' ').toLowerCase();
+
+    return searchText.includes(this.#eventsFilterValue);
+  }
+
+  #getEventRecordById(id) {
+    return this.#capturedEvents.find(e => e.id === id);
+  }
+
+  #updateEventFilters() {
+    // Load saved filter preferences first
+    const savedPreferences = this.#loadEventFiltersFromStorage();
+
+    // Populate event type filter
+    const eventTypeFilter = this.#$('#event-type-filter');
+    if (eventTypeFilter && this.#elementEventMap) {
+      // Get or create menu
+      let menu = eventTypeFilter.querySelector('pf-v6-menu');
+      if (!menu) {
+        menu = document.createElement('pf-v6-menu');
+        eventTypeFilter.appendChild(menu);
+      }
+
+      // Clear existing items
+      const existingItems = menu.querySelectorAll('pf-v6-menu-item');
+      existingItems.forEach(item => item.remove());
+
+      // Add menu items for event types from elements that exist in the demo
+      const allEventTypes = new Set();
+      for (const [tagName, eventInfo] of this.#elementEventMap) {
+        // Only include events from elements that actually exist in the demo
+        if (this.#discoveredElements.has(tagName)) {
+          for (const eventName of eventInfo.eventNames) {
+            allEventTypes.add(eventName);
+          }
+        }
+      }
+
+      // Initialize filter set from saved preferences or default to all checked
+      if (savedPreferences.eventTypes) {
+        // Intersect saved preferences with currently available event types
+        // to filter out stale values from previous sessions
+        this.#eventTypeFilters = savedPreferences.eventTypes.intersection(allEventTypes);
+      } else {
+        this.#eventTypeFilters = new Set(allEventTypes);
+      }
+
+      for (const eventName of allEventTypes) {
+        const item = document.createElement('pf-v6-menu-item');
+        item.setAttribute('variant', 'checkbox');
+        item.setAttribute('value', eventName);
+        if (this.#eventTypeFilters.has(eventName)) {
+          item.setAttribute('checked', '');
+        }
+        item.textContent = eventName;
+        menu.appendChild(item);
+      }
+    }
+
+    // Populate element filter
+    const elementFilter = this.#$('#element-filter');
+    if (elementFilter && this.#elementEventMap) {
+      // Get or create menu
+      let menu = elementFilter.querySelector('pf-v6-menu');
+      if (!menu) {
+        menu = document.createElement('pf-v6-menu');
+        elementFilter.appendChild(menu);
+      }
+
+      // Clear existing items
+      const existingItems = menu.querySelectorAll('pf-v6-menu-item');
+      existingItems.forEach(item => item.remove());
+
+      // Only show elements that actually exist in the demo
+      const allElements = new Set();
+      for (const tagName of this.#elementEventMap.keys()) {
+        if (this.#discoveredElements.has(tagName)) {
+          allElements.add(tagName);
+        }
+      }
+
+      // Initialize filter set from saved preferences or default to all checked
+      if (savedPreferences.elements) {
+        // Intersect saved preferences with currently available elements
+        // to filter out stale values from previous sessions
+        this.#elementFilters = savedPreferences.elements.intersection(allElements);
+      } else {
+        this.#elementFilters = new Set(allElements);
+      }
+
+      for (const tagName of allElements) {
+        const item = document.createElement('pf-v6-menu-item');
+        item.setAttribute('variant', 'checkbox');
+        item.setAttribute('value', tagName);
+        if (this.#elementFilters.has(tagName)) {
+          item.setAttribute('checked', '');
+        }
+        item.textContent = `<${tagName}>`;
+        menu.appendChild(item);
+      }
+    }
+  }
+
+  #handleEventTypeFilterChange = (event) => {
+    const { value, checked } = event;
+
+    if (!value) return;
+
+    if (checked) {
+      this.#eventTypeFilters.add(value);
+    } else {
+      this.#eventTypeFilters.delete(value);
+    }
+
+    this.#saveEventFilters();
+    this.#filterEvents(this.#eventsFilterValue);
+  };
+
+  #handleElementFilterChange = (event) => {
+    const { value, checked } = event;
+
+    if (!value) return;
+
+    if (checked) {
+      this.#elementFilters.add(value);
+    } else {
+      this.#elementFilters.delete(value);
+    }
+
+    this.#saveEventFilters();
+    this.#filterEvents(this.#eventsFilterValue);
+  };
+
+  #loadEventFiltersFromStorage() {
+    const preferences = {
+      eventTypes: null,
+      elements: null
+    };
+
+    try {
+      const savedEventTypes = localStorage.getItem('cem-serve-event-type-filters');
+      if (savedEventTypes) {
+        preferences.eventTypes = new Set(JSON.parse(savedEventTypes));
+      }
+
+      const savedElements = localStorage.getItem('cem-serve-element-filters');
+      if (savedElements) {
+        preferences.elements = new Set(JSON.parse(savedElements));
+      }
+    } catch (e) {
+      console.debug('[cem-serve-chrome] localStorage unavailable for event filters');
+    }
+
+    return preferences;
+  }
+
+  #saveEventFilters() {
+    try {
+      localStorage.setItem('cem-serve-event-type-filters',
+        JSON.stringify([...this.#eventTypeFilters]));
+      localStorage.setItem('cem-serve-element-filters',
+        JSON.stringify([...this.#elementFilters]));
+    } catch (e) {
+      // localStorage unavailable (private mode), silently continue
+    }
+  }
+
+  #clearEvents() {
+    this.#capturedEvents = [];
+    this.#selectedEventId = null;
+    if (this.#eventList) {
+      this.#eventList.replaceChildren();
+    }
+    if (this.#eventDetailHeader) {
+      this.#eventDetailHeader.innerHTML = '';
+    }
+    if (this.#eventDetailBody) {
+      this.#eventDetailBody.innerHTML = '';
+    }
+  }
+
+  async #copyEvents() {
+    if (!this.#eventList) return;
+
+    const visibleEvents = Array.from(this.#eventList.children)
+      .filter(entry => !entry.hidden)
+      .map(entry => {
+        const id = entry.dataset.eventId;
+        return this.#getEventRecordById(id);
+      })
+      .filter(Boolean)
+      .map(event => {
+        const time = event.timestamp.toLocaleTimeString();
+        const element = event.elementId ? `#${event.elementId}` : event.tagName;
+        const props = event.customProperties && Object.keys(event.customProperties).length > 0
+          ? ` - ${JSON.stringify(event.customProperties)}`
+          : '';
+        return `[${time}] <${event.tagName}> ${element} → ${event.eventName}${props}`;
+      })
+      .join('\n');
+
+    if (!visibleEvents) return;
+
+    try {
+      await navigator.clipboard.writeText(visibleEvents);
+      const btn = this.#$('#copy-events');
+      if (btn) {
+        const textNode = Array.from(btn.childNodes).find(
+          n => n.nodeType === Node.TEXT_NODE && n.textContent.trim().length > 0
+        );
+        if (textNode) {
+          const original = textNode.textContent;
+          textNode.textContent = 'Copied!';
+
+          // Clear any existing feedback timeout
+          if (this.#copyEventsFeedbackTimeout) {
+            clearTimeout(this.#copyEventsFeedbackTimeout);
+          }
+
+          this.#copyEventsFeedbackTimeout = setTimeout(() => {
+            // Check if element is still connected before modifying
+            if (this.isConnected && textNode.parentNode) {
+              textNode.textContent = original;
+            }
+            this.#copyEventsFeedbackTimeout = null;
+          }, 2000);
+        }
+      }
+    } catch (err) {
+      console.error('[cem-serve-chrome] Failed to copy events:', err);
+    }
+  }
+
+  #setupEventListeners() {
+    this.#eventList = this.#$('#event-list');
+    this.#eventDetailHeader = this.#$('#event-detail-header');
+    this.#eventDetailBody = this.#$('#event-detail-body');
+
+    // Set up click delegation for event selection
+    // Buttons handle keyboard events (Enter/Space) natively via click events
+    if (this.#eventList) {
+      this.#eventList.addEventListener('click', (e) => {
+        const listItem = e.target.closest('.event-list-item');
+        if (listItem) {
+          const eventId = listItem.dataset.eventId;
+          this.#selectEvent(eventId);
+        }
+      });
+    }
+
+    // Set up filter input with debouncing
+    const eventsFilter = this.#$('#events-filter');
+    if (eventsFilter) {
+      eventsFilter.addEventListener('input', (e) => {
+        const { value = '' } = e.target;
+        clearTimeout(this.#eventsFilterDebounceTimer);
+        this.#eventsFilterDebounceTimer = setTimeout(() => {
+          this.#filterEvents(value);
+        }, 300);
+      });
+    }
+
+    // Set up event type filter dropdown
+    const eventTypeFilter = this.#$('#event-type-filter');
+    if (eventTypeFilter) {
+      eventTypeFilter.addEventListener('select', this.#handleEventTypeFilterChange);
+    }
+
+    // Set up element filter dropdown
+    const elementFilter = this.#$('#element-filter');
+    if (elementFilter) {
+      elementFilter.addEventListener('select', this.#handleElementFilterChange);
+    }
+
+    // Set up clear button
+    this.#$('#clear-events')?.addEventListener('click', () => {
+      this.#clearEvents();
+    });
+
+    // Set up copy button
+    this.#$('#copy-events')?.addEventListener('click', () => {
+      this.#copyEvents();
+    });
+  }
+
+  disconnectedCallback() {
     // Clean up knob listeners
     this.removeEventListener('knob:attribute-change', this.#onKnobChange);
     this.removeEventListener('knob:property-change', this.#onKnobChange);
@@ -1206,6 +2125,44 @@ Generated: ${new Date().toISOString()}`;
     this.removeEventListener('knob:attribute-clear', this.#onKnobClear);
     this.removeEventListener('knob:property-clear', this.#onKnobClear);
     this.removeEventListener('knob:css-property-clear', this.#onKnobClear);
+
+    // Clean up tree state listeners
+    if (this.#handleTreeExpand) {
+      this.removeEventListener('expand', this.#handleTreeExpand);
+    }
+    if (this.#handleTreeCollapse) {
+      this.removeEventListener('collapse', this.#handleTreeCollapse);
+    }
+    if (this.#handleTreeSelect) {
+      this.removeEventListener('select', this.#handleTreeSelect);
+    }
+
+    // Clean up window listener
+    if (this.#handleLogsEvent) {
+      window.removeEventListener('cem:logs', this.#handleLogsEvent);
+    }
+
+    // Clear pending feedback timeouts
+    if (this.#copyLogsFeedbackTimeout) {
+      clearTimeout(this.#copyLogsFeedbackTimeout);
+      this.#copyLogsFeedbackTimeout = null;
+    }
+    if (this.#copyDebugFeedbackTimeout) {
+      clearTimeout(this.#copyDebugFeedbackTimeout);
+      this.#copyDebugFeedbackTimeout = null;
+    }
+    if (this.#copyEventsFeedbackTimeout) {
+      clearTimeout(this.#copyEventsFeedbackTimeout);
+      this.#copyEventsFeedbackTimeout = null;
+    }
+
+    // Disconnect mutation observer
+    this.#observer.disconnect();
+
+    // Close WebSocket connection
+    if (this.#wsClient) {
+      this.#wsClient.destroy();
+    }
   }
 
   static {

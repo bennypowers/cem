@@ -21,6 +21,10 @@ endif
 
 .PHONY: all build test test-unit test-e2e test-frontend test-frontend-watch test-frontend-update install-frontend update watch bench bench-lookup profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major
 
+build: generate
+	@mkdir -p dist
+	go build -ldflags="$(shell ./scripts/ldflags.sh)" -o dist/cem .
+
 # NOTE: this is a non-traditional install target, which installs to ~/.local/bin/
 # It's mostly intended for local development, not for distribution
 install: build
@@ -31,10 +35,6 @@ all: windows
 
 clean:
 	rm -rf dist/ cpu.out cover.out coverage/ cmd/coverage.e2e/ artifacts platforms
-
-build: generate
-	@mkdir -p dist
-	go build -ldflags="$(shell ./scripts/ldflags.sh)" -o dist/cem .
 
 # Convenience target to build both Windows variants
 windows: windows-x64 windows-arm64
