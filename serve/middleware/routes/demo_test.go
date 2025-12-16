@@ -257,3 +257,82 @@ func TestBuildPackageRoutingTable_DuplicateDetection(t *testing.T) {
 		}
 	}
 }
+
+// TestBuildDemoRoutingTable_SourceHrefPaths tests that demo source.href paths
+// are correctly resolved, especially when they are file paths rather than URLs
+func TestBuildDemoRoutingTable_SourceHrefPaths(t *testing.T) {
+	tests := []struct {
+		name           string
+		sourceHref     string
+		expectedPath   string
+		description    string
+	}{
+		{
+			name:         "absolute path with leading slash",
+			sourceHref:   "/src/components/button/demos/index.html",
+			expectedPath: "src/components/button/demos/index.html",
+			description:  "Leading slash should be stripped from file paths",
+		},
+		{
+			name:         "relative path without leading slash",
+			sourceHref:   "src/components/button/demos/index.html",
+			expectedPath: "src/components/button/demos/index.html",
+			description:  "Relative paths should be used as-is",
+		},
+		{
+			name:         "path with dot-slash prefix",
+			sourceHref:   "./demos/index.html",
+			expectedPath: "demos/index.html",
+			description:  "Dot-slash prefix should be handled",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create manifest with source.href
+			manifestJSON := fmt.Sprintf(`{
+				"schemaVersion": "1.0.0",
+				"modules": [
+					{
+						"kind": "javascript-module",
+						"path": "src/components/button/button.js",
+						"declarations": [
+							{
+								"kind": "class",
+								"name": "WaButton",
+								"tagName": "wa-button",
+								"customElement": true,
+								"demos": [
+									{
+										"url": "https://example.com/demos/button/",
+										"source": {
+											"href": %q
+										}
+									}
+								]
+							}
+						]
+					}
+				]
+			}`, tt.sourceHref)
+
+			routes, err := BuildDemoRoutingTable([]byte(manifestJSON), "")
+			if err != nil {
+				t.Fatalf("BuildDemoRoutingTable failed: %v", err)
+			}
+
+			// Find the route
+			var foundPath string
+			for _, entry := range routes {
+				if entry != nil {
+					foundPath = entry.FilePath
+					break
+				}
+			}
+
+			if foundPath != tt.expectedPath {
+				t.Errorf("%s: expected path %q, got %q", tt.description, tt.expectedPath, foundPath)
+			}
+		})
+	}
+}
