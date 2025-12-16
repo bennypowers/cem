@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-export-default-custom-base.js",
+      "declarations": [
+        {
+          "name": "CustomBase",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/class-export-default-custom-base.ts#L3"
+          },
+          "kind": "class"
+        },
+        {
+          "name": "ClassExportDefaultCustomBaseCe",
+          "summary": "Export default with custom base",
+          "superclass": {
+            "name": "CustomBase"
+          },
+          "members": [
+            {
+              "name": "render",
+              "kind": "method"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/class-export-default-custom-base.ts#L9"
+          },
+          "kind": "class",
+          "tagName": "class-export-default-custom-base-ce",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-export-default-custom-base-ce",
+          "declaration": {
+            "name": "ClassExportDefaultCustomBaseCe",
+            "module": "src/class-export-default-custom-base.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ClassExportDefaultCustomBaseCe",
+          "declaration": {
+            "name": "ClassExportDefaultCustomBaseCe",
+            "module": "src/class-export-default-custom-base.js"
+          }
+        }
+      ]
+    }
+  ]
+}

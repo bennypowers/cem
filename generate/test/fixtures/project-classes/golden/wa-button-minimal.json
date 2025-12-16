@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/wa-button-minimal.js",
+      "declarations": [
+        {
+          "name": "WebAwesomeFormAssociatedElement",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/wa-button-minimal.ts#L3"
+          },
+          "kind": "class"
+        },
+        {
+          "name": "WaButton",
+          "summary": "Buttons represent actions that are available to the user.",
+          "superclass": {
+            "name": "WebAwesomeFormAssociatedElement"
+          },
+          "members": [
+            {
+              "name": "render",
+              "kind": "method"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/wa-button-minimal.ts#L9"
+          },
+          "kind": "class",
+          "tagName": "wa-button",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "wa-button",
+          "declaration": {
+            "name": "WaButton",
+            "module": "src/wa-button-minimal.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "WaButton",
+          "declaration": {
+            "name": "WaButton",
+            "module": "src/wa-button-minimal.js"
+          }
+        }
+      ]
+    }
+  ]
+}
