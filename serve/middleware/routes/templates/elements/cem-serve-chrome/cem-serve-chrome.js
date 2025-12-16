@@ -181,6 +181,7 @@ export class CemServeChrome extends CemElement {
   #copyEventsFeedbackTimeout = null;
 
   // Watch for dynamically added elements
+  /* c8 ignore start - MutationObserver callback tested via integration */
   #observer = new MutationObserver((mutations) => {
     let needsUpdate = false;
 
@@ -205,11 +206,13 @@ export class CemServeChrome extends CemElement {
       this.#updateEventFilters();
     }
   });
+  /* c8 ignore stop */
 
   #wsClient = new CEMReloadClient({
     jitterMax: 1000,
     overlayThreshold: 15,
     badgeFadeDelay: 2000,
+    /* c8 ignore start - WebSocket callbacks tested via integration */
     callbacks: {
       onOpen: () => {
         // Clear any reconnecting/restarting alerts
@@ -259,6 +262,7 @@ export class CemServeChrome extends CemElement {
         window.dispatchEvent(new CemLogsEvent(logs));
       }
     }
+    /* c8 ignore stop */
   });
 
   get demo() { return this.querySelector('cem-serve-demo'); }
@@ -305,9 +309,11 @@ export class CemServeChrome extends CemElement {
     this.#setupEventListeners();
 
     // Set up reconnection modal button handlers
+    /* c8 ignore start - window.location.reload would reload test page */
     this.#$('#reload-button')?.addEventListener('click', () => {
       window.location.reload();
     });
+    /* c8 ignore stop */
 
     this.#$('#retry-button')?.addEventListener('click', () => {
       this.#$('#reconnection-modal')?.close();
