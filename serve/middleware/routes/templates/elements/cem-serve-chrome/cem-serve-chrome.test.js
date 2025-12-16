@@ -666,7 +666,7 @@ describe('cem-serve-chrome', () => {
       tabChangeEvent.selectedIndex = 3;
       tabs.dispatchEvent(tabChangeEvent);
 
-      await el.updateComplete;
+      await el.rendered;
 
       // Wait for requestAnimationFrame to complete
       await new Promise(resolve => requestAnimationFrame(resolve));
@@ -695,34 +695,6 @@ describe('cem-serve-chrome', () => {
       const eventDetailHeader = el.shadowRoot.getElementById('event-detail-header');
       const eventDetailBody = el.shadowRoot.getElementById('event-detail-body');
 
-      // Simulate the component rendering two event list items
-      // (as it would after capturing real events)
-      const eventRecord1 = {
-        id: 'event-1',
-        timestamp: new Date('2025-01-01T12:00:00'),
-        eventName: 'click',
-        tagName: 'my-button',
-        elementId: 'btn1',
-        customProperties: { detail: 123 },
-        bubbles: true,
-        composed: false,
-        cancelable: true,
-        defaultPrevented: false
-      };
-
-      const eventRecord2 = {
-        id: 'event-2',
-        timestamp: new Date('2025-01-01T12:00:01'),
-        eventName: 'change',
-        tagName: 'my-input',
-        elementId: 'input1',
-        customProperties: { value: 'test' },
-        bubbles: true,
-        composed: false,
-        cancelable: false,
-        defaultPrevented: false
-      };
-
       // Create event list item buttons as the component would render them
       const button1 = document.createElement('button');
       button1.className = 'event-list-item';
@@ -748,7 +720,7 @@ describe('cem-serve-chrome', () => {
       // Click first event button - without event records, selection won't happen
       // but we verify the click handler is wired up and doesn't throw
       button1.click();
-      await el.updateComplete;
+      await el.rendered;
 
       // Without event records, selection doesn't occur (guard clause returns early)
       expect(button1.classList.contains('selected')).to.be.false;
@@ -770,7 +742,7 @@ describe('cem-serve-chrome', () => {
       button.dataset.eventId = 'mock-event';
 
       eventList.appendChild(button);
-      await el.updateComplete;
+      await el.rendered;
 
       // Verify it's a proper button element
       expect(button.tagName.toLowerCase()).to.equal('button');
@@ -808,7 +780,7 @@ describe('cem-serve-chrome', () => {
       // Buttons natively handle Enter/Space keypresses by dispatching click events
       // Simulate a click (which is what happens on Enter/Space)
       button.click();
-      await el.updateComplete;
+      await el.rendered;
 
       // Button should be interactive
       expect(button).to.exist;
@@ -890,7 +862,7 @@ describe('cem-serve-chrome', () => {
         const debugButton = el.shadowRoot.querySelector('#debug-info');
         if (debugButton) {
           debugButton.click();
-          await el.updateComplete;
+          await el.rendered;
 
           const browser = el.shadowRoot.querySelector('#debug-browser');
           expect(browser).to.exist;
@@ -909,7 +881,7 @@ describe('cem-serve-chrome', () => {
         const debugButton = el.shadowRoot.querySelector('#debug-info');
         if (debugButton) {
           debugButton.click();
-          await el.updateComplete;
+          await el.rendered;
 
           const browser = el.shadowRoot.querySelector('#debug-browser');
           expect(browser).to.exist;
@@ -928,7 +900,7 @@ describe('cem-serve-chrome', () => {
         const debugButton = el.shadowRoot.querySelector('#debug-info');
         if (debugButton) {
           debugButton.click();
-          await el.updateComplete;
+          await el.rendered;
 
           const browser = el.shadowRoot.querySelector('#debug-browser');
           expect(browser).to.exist;
@@ -947,7 +919,7 @@ describe('cem-serve-chrome', () => {
         const debugButton = el.shadowRoot.querySelector('#debug-info');
         if (debugButton) {
           debugButton.click();
-          await el.updateComplete;
+          await el.rendered;
 
           const browser = el.shadowRoot.querySelector('#debug-browser');
           expect(browser).to.exist;
@@ -1084,7 +1056,7 @@ describe('cem-serve-chrome', () => {
 
         if (debugButton && debugModal) {
           debugButton.click();
-          await el.updateComplete;
+          await el.rendered;
 
           // Modal should be triggered to open (showModal called)
           expect(debugModal).to.exist;
@@ -1100,10 +1072,10 @@ describe('cem-serve-chrome', () => {
 
         if (debugButton && debugModal && closeButton) {
           debugButton.click();
-          await el.updateComplete;
+          await el.rendered;
 
           closeButton.click();
-          await el.updateComplete;
+          await el.rendered;
 
           expect(debugModal).to.exist;
         } else {
@@ -1145,12 +1117,12 @@ describe('cem-serve-chrome', () => {
           message: 'Test log message'
         }]));
 
-        await el.updateComplete;
+        await el.rendered;
 
         const copyButton = el.shadowRoot.querySelector('#copy-logs');
         if (copyButton) {
           copyButton.click();
-          await el.updateComplete;
+          await el.rendered;
 
           expect(writeTextStub.called).to.be.true;
         } else {
@@ -1162,7 +1134,7 @@ describe('cem-serve-chrome', () => {
         const copyButton = el.shadowRoot.querySelector('#copy-events');
         if (copyButton) {
           copyButton.click();
-          await el.updateComplete;
+          await el.rendered;
 
           // Copy should not be called when there are no visible events
           expect(writeTextStub.called).to.be.false;
@@ -1223,7 +1195,7 @@ describe('cem-serve-chrome', () => {
           selectEvent.checked = true;
           logLevelFilter.dispatchEvent(selectEvent);
 
-          await el.updateComplete;
+          await el.rendered;
 
           expect(el.shadowRoot.querySelector('#log-container')).to.exist;
         } else {
@@ -1338,7 +1310,7 @@ describe('cem-serve-chrome', () => {
 
         // Click clear button
         clearButton.click();
-        await el.updateComplete;
+        await el.rendered;
 
         // Verify all events are cleared
         expect(eventList.children.length).to.equal(0);

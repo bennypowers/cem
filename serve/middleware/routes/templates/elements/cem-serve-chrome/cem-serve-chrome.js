@@ -169,6 +169,17 @@ export class CemServeChrome extends CemElement {
   #elementFilters = new Set();       // Selected elements
   #discoveredElements = new Set();   // Set of tagName strings
 
+  // Event listener references for cleanup
+  #handleLogsEvent = null;
+  #handleTreeExpand = null;
+  #handleTreeCollapse = null;
+  #handleTreeSelect = null;
+
+  // Timeout IDs for cleanup
+  #copyLogsFeedbackTimeout = null;
+  #copyDebugFeedbackTimeout = null;
+  #copyEventsFeedbackTimeout = null;
+
   // Watch for dynamically added elements
   #observer = new MutationObserver((mutations) => {
     let needsUpdate = false;
@@ -480,11 +491,12 @@ export class CemServeChrome extends CemElement {
 
     // Listen for server log messages from the WebSocket client
     // The websocket-client.js dispatches 'cem:logs' events with server logs
-    window.addEventListener('cem:logs', ({ logs }) => {
+    this.#handleLogsEvent = ({ logs }) => {
       if (logs) {
         this.#renderLogs(logs);
       }
-    });
+    };
+    window.addEventListener('cem:logs', this.#handleLogsEvent);
   }
 
   #filterLogs(query) {
@@ -587,8 +599,18 @@ export class CemServeChrome extends CemElement {
         if (textNode) {
           const original = textNode.textContent;
           textNode.textContent = 'Copied!';
-          setTimeout(() => {
-            textNode.textContent = original;
+
+          // Clear any existing feedback timeout
+          if (this.#copyLogsFeedbackTimeout) {
+            clearTimeout(this.#copyLogsFeedbackTimeout);
+          }
+
+          this.#copyLogsFeedbackTimeout = setTimeout(() => {
+            // Check if element is still connected before modifying
+            if (this.isConnected && textNode.parentNode) {
+              textNode.textContent = original;
+            }
+            this.#copyLogsFeedbackTimeout = null;
           }, 2000);
         }
       }
@@ -720,8 +742,18 @@ Generated: ${new Date().toISOString()}`;
       if (copyButton) {
         const originalText = copyButton.textContent;
         copyButton.textContent = 'Copied!';
-        setTimeout(() => {
-          copyButton.textContent = originalText;
+
+        // Clear any existing feedback timeout
+        if (this.#copyDebugFeedbackTimeout) {
+          clearTimeout(this.#copyDebugFeedbackTimeout);
+        }
+
+        this.#copyDebugFeedbackTimeout = setTimeout(() => {
+          // Check if element is still connected before modifying
+          if (this.isConnected && copyButton.parentNode) {
+            copyButton.textContent = originalText;
+          }
+          this.#copyDebugFeedbackTimeout = null;
         }, 2000);
       }
     } catch (err) {
@@ -1057,7 +1089,7 @@ Generated: ${new Date().toISOString()}`;
 
   #setupTreeStatePersistence() {
     // Listen for tree item events and persist state to localStorage
-    this.addEventListener('expand', (e) => {
+    this.#handleTreeExpand = (e) => {
       if (e.target.tagName !== 'PF-V6-TREE-ITEM') return;
 
       const nodeId = this.#getTreeNodeId(e.target);
@@ -1066,9 +1098,10 @@ Generated: ${new Date().toISOString()}`;
         treeState.expanded.push(nodeId);
         StatePersistence.setTreeState(treeState);
       }
-    });
+    };
+    this.addEventListener('expand', this.#handleTreeExpand);
 
-    this.addEventListener('collapse', (e) => {
+    this.#handleTreeCollapse = (e) => {
       if (e.target.tagName !== 'PF-V6-TREE-ITEM') return;
 
       const nodeId = this.#getTreeNodeId(e.target);
@@ -1078,14 +1111,16 @@ Generated: ${new Date().toISOString()}`;
         treeState.expanded.splice(index, 1);
         StatePersistence.setTreeState(treeState);
       }
-    });
+    };
+    this.addEventListener('collapse', this.#handleTreeCollapse);
 
-    this.addEventListener('select', (e) => {
+    this.#handleTreeSelect = (e) => {
       if (e.target.tagName !== 'PF-V6-TREE-ITEM') return;
 
       const nodeId = this.#getTreeNodeId(e.target);
       StatePersistence.updateTreeState({ selected: nodeId });
-    });
+    };
+    this.addEventListener('select', this.#handleTreeSelect);
 
     // Apply tree state from localStorage on load
     this.#applyTreeState();
@@ -1466,22 +1501,30 @@ Generated: ${new Date().toISOString()}`;
     const properties = {};
     const eventPrototypeKeys = new Set(Object.getOwnPropertyNames(Event.prototype));
 
-    // Get all own properties of the event
-    for (const key of Object.keys(event)) {
-      // Skip Event.prototype properties and private/internal ones
-      if (!eventPrototypeKeys.has(key) && !key.startsWith('_')) {
+    // Helper to safely serialize a value
+    const serializeValue = (value) => {
+      try {
+        return JSON.parse(JSON.stringify(value));
+      } catch (e) {
         try {
-          const value = event[key];
-          // Attempt to serialize the value
-          properties[key] = JSON.parse(JSON.stringify(value));
-        } catch (e) {
-          // If not serializable, use string representation
-          try {
-            properties[key] = String(event[key]);
-          } catch (stringErr) {
-            properties[key] = '[Not serializable]';
-          }
+          return String(value);
+        } catch (stringErr) {
+          return '[Not serializable]';
         }
+      }
+    };
+
+    // For CustomEvent, always include detail if present (common pattern)
+    if (event instanceof CustomEvent && event.detail !== undefined) {
+      properties.detail = serializeValue(event.detail);
+    }
+
+    // Get all own properties of the event (including non-enumerable)
+    // This captures custom properties from classes that extend Event
+    for (const key of Object.getOwnPropertyNames(event)) {
+      // Skip Event.prototype properties, private/internal ones, and already-captured detail
+      if (!eventPrototypeKeys.has(key) && !key.startsWith('_') && !properties.hasOwnProperty(key)) {
+        properties[key] = serializeValue(event[key]);
       }
     }
 
@@ -1823,7 +1866,9 @@ Generated: ${new Date().toISOString()}`;
 
       // Initialize filter set from saved preferences or default to all checked
       if (savedPreferences.eventTypes) {
-        this.#eventTypeFilters = savedPreferences.eventTypes;
+        // Intersect saved preferences with currently available event types
+        // to filter out stale values from previous sessions
+        this.#eventTypeFilters = savedPreferences.eventTypes.intersection(allEventTypes);
       } else {
         this.#eventTypeFilters = new Set(allEventTypes);
       }
@@ -1864,7 +1909,9 @@ Generated: ${new Date().toISOString()}`;
 
       // Initialize filter set from saved preferences or default to all checked
       if (savedPreferences.elements) {
-        this.#elementFilters = savedPreferences.elements;
+        // Intersect saved preferences with currently available elements
+        // to filter out stale values from previous sessions
+        this.#elementFilters = savedPreferences.elements.intersection(allElements);
       } else {
         this.#elementFilters = new Set(allElements);
       }
@@ -1992,8 +2039,18 @@ Generated: ${new Date().toISOString()}`;
         if (textNode) {
           const original = textNode.textContent;
           textNode.textContent = 'Copied!';
-          setTimeout(() => {
-            textNode.textContent = original;
+
+          // Clear any existing feedback timeout
+          if (this.#copyEventsFeedbackTimeout) {
+            clearTimeout(this.#copyEventsFeedbackTimeout);
+          }
+
+          this.#copyEventsFeedbackTimeout = setTimeout(() => {
+            // Check if element is still connected before modifying
+            if (this.isConnected && textNode.parentNode) {
+              textNode.textContent = original;
+            }
+            this.#copyEventsFeedbackTimeout = null;
           }, 2000);
         }
       }
@@ -2062,7 +2119,40 @@ Generated: ${new Date().toISOString()}`;
     this.removeEventListener('knob:attribute-clear', this.#onKnobClear);
     this.removeEventListener('knob:property-clear', this.#onKnobClear);
     this.removeEventListener('knob:css-property-clear', this.#onKnobClear);
+
+    // Clean up tree state listeners
+    if (this.#handleTreeExpand) {
+      this.removeEventListener('expand', this.#handleTreeExpand);
+    }
+    if (this.#handleTreeCollapse) {
+      this.removeEventListener('collapse', this.#handleTreeCollapse);
+    }
+    if (this.#handleTreeSelect) {
+      this.removeEventListener('select', this.#handleTreeSelect);
+    }
+
+    // Clean up window listener
+    if (this.#handleLogsEvent) {
+      window.removeEventListener('cem:logs', this.#handleLogsEvent);
+    }
+
+    // Clear pending feedback timeouts
+    if (this.#copyLogsFeedbackTimeout) {
+      clearTimeout(this.#copyLogsFeedbackTimeout);
+      this.#copyLogsFeedbackTimeout = null;
+    }
+    if (this.#copyDebugFeedbackTimeout) {
+      clearTimeout(this.#copyDebugFeedbackTimeout);
+      this.#copyDebugFeedbackTimeout = null;
+    }
+    if (this.#copyEventsFeedbackTimeout) {
+      clearTimeout(this.#copyEventsFeedbackTimeout);
+      this.#copyEventsFeedbackTimeout = null;
+    }
+
+    // Disconnect mutation observer
     this.#observer.disconnect();
+
     // Close WebSocket connection
     if (this.#wsClient) {
       this.#wsClient.destroy();
