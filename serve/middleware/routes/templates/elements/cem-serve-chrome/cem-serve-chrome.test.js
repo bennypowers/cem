@@ -6,6 +6,41 @@ import { CemLogsEvent } from './cem-serve-chrome.js';
 describe('cem-serve-chrome', () => {
   let el;
 
+  /**
+   * Helper to stub fetch for manifest endpoint
+   * @param {object} manifest - The manifest to return, or null for 404
+   * @returns {sinon.SinonStub} The fetch stub
+   */
+  function stubManifestFetch(manifest = null) {
+    const originalFetch = window.fetch;
+    return sinon.stub(window, 'fetch').callsFake((url, ...args) => {
+      if (url === '/custom-elements.json') {
+        if (manifest === null) {
+          return Promise.resolve({ ok: false, status: 404 });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(manifest)
+        });
+      }
+      if (url === '/__cem/debug') {
+        return Promise.resolve({
+          json: () => Promise.resolve({
+            version: '1.0.0',
+            os: 'darwin/arm64',
+            watchDir: '/test',
+            manifestSize: '100KB',
+            demoCount: 5,
+            demos: [],
+            importMap: {}
+          })
+        });
+      }
+      // Pass through all other fetches
+      return originalFetch.call(window, url, ...args);
+    });
+  }
+
   beforeEach(async () => {
     el = document.createElement('cem-serve-chrome');
     document.body.appendChild(el);
@@ -598,34 +633,46 @@ describe('cem-serve-chrome', () => {
   });
 
   describe('element event discovery', () => {
-    beforeEach(() => {
-      // Set up a mock manifest
-      window.__CEM_MANIFEST__ = {
-        modules: [{
-          declarations: [{
-            customElement: true,
-            tagName: 'test-button',
-            events: [
-              { name: 'click', type: { text: 'MouseEvent' } },
-              { name: 'change', type: { text: 'CustomEvent<string>' } }
-            ]
-          }, {
-            customElement: true,
-            tagName: 'test-input',
-            events: [
-              { name: 'input', type: { text: 'InputEvent' } }
-            ]
-          }]
+    let fetchStub;
+
+    const testManifest = {
+      modules: [{
+        declarations: [{
+          customElement: true,
+          tagName: 'test-button',
+          events: [
+            { name: 'click', type: { text: 'MouseEvent' } },
+            { name: 'change', type: { text: 'CustomEvent<string>' } }
+          ]
+        }, {
+          customElement: true,
+          tagName: 'test-input',
+          events: [
+            { name: 'input', type: { text: 'InputEvent' } }
+          ]
         }]
-      };
+      }]
+    };
+
+    beforeEach(() => {
+      // Restore the outer fetch stub
+      window.fetch.restore();
+
+      // Stub fetch to return test manifest
+      fetchStub = stubManifestFetch(testManifest);
     });
 
     afterEach(() => {
-      delete window.__CEM_MANIFEST__;
+      // Restore our stub
+      if (fetchStub) {
+        fetchStub.restore();
+      }
     });
 
     it('handles missing manifest gracefully', async () => {
-      delete window.__CEM_MANIFEST__;
+      // Temporarily restore fetch and stub to return 404
+      fetchStub.restore();
+      fetchStub = stubManifestFetch(null);
 
       const newEl = document.createElement('cem-serve-chrome');
       document.body.appendChild(newEl);
