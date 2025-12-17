@@ -74,6 +74,80 @@ See **[Buildless Development](buildless/)** for details on CSS module imports.
 cem serve --watch-ignore 'dist/**,_site/**'
 ```
 
+## Demo Rendering Modes
+
+The dev server supports three rendering modes for demo pages, which affect how demo content is rendered in the browser.
+
+### Available Modes
+
+| Mode | Description | When to Use |
+| ---- | ----------- | ----------- |
+| `light` | Renders demo content in the light DOM (default) | Most demos, allows CSS from parent document to affect demo |
+| `shadow` | Wraps demo in declarative shadow DOM (`<template shadowrootmode="open">`) | Testing encapsulation, isolated styling, shadow DOM behavior |
+| `iframe` | *(Not yet implemented)* Renders demo in an isolated iframe | Future support for complete document isolation |
+
+### Configuring Default Mode
+
+Set the default rendering mode in your `.config/cem.yaml`:
+
+```yaml
+serve:
+  demos:
+    rendering: shadow  # or "light" (default)
+```
+
+If the `rendering` option is omitted or empty, demos default to `light` mode.
+
+**Note:** Specifying `iframe` mode in the config will cause the server to fail at startup since it's not yet implemented.
+
+### Per-Demo Override
+
+Override the rendering mode for a specific demo using the `?rendering` query parameter:
+
+```
+http://localhost:8000/demos/my-element/basic.html?rendering=shadow
+```
+
+Valid values: `shadow`, `light`
+
+- Invalid values are ignored and the config default is used
+- If `iframe` is requested via query parameter, the server logs a warning, broadcasts an error overlay, and falls back to `shadow` mode
+
+### Backward Compatibility
+
+The legacy `?shadow=true` query parameter is still supported and will override to shadow mode:
+
+```
+http://localhost:8000/demos/my-element/basic.html?shadow=true
+```
+
+### Use Cases
+
+**Light DOM (default):**
+- General component testing
+- Demos that rely on global styles
+- Testing how components integrate with the parent page
+
+**Shadow DOM:**
+- Testing encapsulation behavior
+- Verifying CSS custom properties penetrate shadow boundaries
+- Testing `::part()` and `::slotted()` selectors
+- Ensuring styles don't leak in or out
+
+**Example Configuration:**
+
+```yaml
+# Default all demos to shadow mode
+serve:
+  demos:
+    rendering: shadow
+```
+
+Then override specific demos back to light mode when needed:
+```
+/demos/integration-test.html?rendering=light
+```
+
 ## See Also
 
 - **[Getting Started](getting-started/)** - Set up your first demo
