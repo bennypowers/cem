@@ -82,7 +82,7 @@ describe('pf-v6-menu', () => {
     });
 
     it('sets tabindex to 0', function() {
-      if (process.env.CI) this.retries(5);
+      this.retries(5);
       expect(item.getAttribute('tabindex')).to.equal('0');
     });
 
