@@ -89,13 +89,19 @@ export class CemServeDrawer extends HTMLElement {
 
       if (content) {
         let height = parseInt(this.getAttribute('drawer-height') || '400', 10);
+        let wasInvalid = false;
         // If height is 0 or invalid, reset to default
         if (height <= 0 || isNaN(height)) {
           height = 400;
+          wasInvalid = true;
           // Update the attribute to reflect the reset
           this.setAttribute('drawer-height', '400');
         }
         content.style.height = `${height}px`;
+        // Dispatch resize event if we corrected an invalid height so parent can persist it
+        if (wasInvalid) {
+          this.dispatchEvent(new CemDrawerResizeEvent(height));
+        }
       }
 
       if (toggleButton) {
@@ -244,13 +250,19 @@ export class CemServeDrawer extends HTMLElement {
         if (open) {
           // Restore height from drawer-height attribute (default 400 if not set or 0)
           let height = parseInt(this.getAttribute('drawer-height') || '400', 10);
+          let wasInvalid = false;
           // If height is 0 or invalid, reset to default
           if (height <= 0 || isNaN(height)) {
             height = 400;
+            wasInvalid = true;
             // Update the attribute to reflect the reset
             this.setAttribute('drawer-height', '400');
           }
           content.style.height = `${height}px`;
+          // Dispatch resize event if we corrected an invalid height so parent can persist it
+          if (wasInvalid) {
+            this.dispatchEvent(new CemDrawerResizeEvent(height));
+          }
         } else {
           // Reset to 0 when closing
           content.style.height = '0px';
