@@ -206,20 +206,63 @@ func serveManifest(
 	_ *http.Request,
 	config Config,
 ) {
-	manifest, err := config.Context.Manifest()
-	if err != nil {
-		config.Context.Logger().Error("Failed to get manifest: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	var manifestBytes []byte
 
-	if len(manifest) == 0 {
-		http.Error(w, "Manifest not available", http.StatusNotFound)
-		return
+	if config.Context.IsWorkspace() {
+		// Workspace mode: aggregate manifests from all packages
+		middlewarePackages := config.Context.WorkspacePackages()
+		var aggregatedManifest *M.Package
+
+		for _, pkg := range middlewarePackages {
+			if len(pkg.Manifest) == 0 {
+				continue
+			}
+
+			var parsed M.Package
+			if err := json.Unmarshal(pkg.Manifest, &parsed); err != nil {
+				config.Context.Logger().Warning("Failed to parse manifest for package %s: %v", pkg.Name, err)
+				continue
+			}
+
+			if aggregatedManifest == nil {
+				aggregatedManifest = &parsed
+			} else {
+				// Merge modules from this package into the aggregated manifest
+				aggregatedManifest.Modules = append(aggregatedManifest.Modules, parsed.Modules...)
+			}
+		}
+
+		if aggregatedManifest == nil {
+			http.Error(w, "No manifests available in workspace", http.StatusNotFound)
+			return
+		}
+
+		// Serialize aggregated manifest
+		var err error
+		manifestBytes, err = M.SerializeToBytes(aggregatedManifest)
+		if err != nil {
+			config.Context.Logger().Error("Failed to serialize aggregated manifest: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		// Single-package mode: use regular manifest
+		var err error
+		manifestBytes, err = config.Context.Manifest()
+		if err != nil {
+			config.Context.Logger().Error("Failed to get manifest: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		if len(manifestBytes) == 0 {
+			http.Error(w, "Manifest not available", http.StatusNotFound)
+			return
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	if _, err := w.Write(manifest); err != nil {
+	if _, err := w.Write(manifestBytes); err != nil {
 		config.Context.Logger().Error("Failed to write manifest response: %v", err)
 	}
 }
