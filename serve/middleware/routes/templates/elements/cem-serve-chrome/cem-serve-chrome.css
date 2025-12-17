@@ -239,15 +239,8 @@ cem-drawer {
 }
 
 /* PatternFly v6 form - horizontal layout */
-.pf-v6-c-form.pf-m-horizontal {
-  --pf-v6-c-form--m-horizontal--GridTemplateColumns: minmax(0, auto) 1fr;
-  --pf-v6-c-form--m-horizontal--ColumnGap: var(--pf-t--global--spacer--md);
-  --pf-v6-c-form--m-horizontal--RowGap: var(--pf-t--global--spacer--sm);
-
-  display: grid;
-  grid-template-columns: var(--pf-v6-c-form--m-horizontal--GridTemplateColumns);
-  column-gap: var(--pf-v6-c-form--m-horizontal--ColumnGap);
-  row-gap: var(--pf-v6-c-form--m-horizontal--RowGap);
+pf-v6-form[horizontal] pf-v6-form-field-group {
+  grid-column: span 2
 }
 
 .knob-group-title {

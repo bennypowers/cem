@@ -263,6 +263,10 @@ cem-serve-knobs {
   & pf-v6-switch {
     align-self: center;
   }
+
+  pf-v6-form[horizontal] pf-v6-form-field-group {
+    grid-column: span 2;
+  }
 }
 
 h3[slot=manifest-name],
