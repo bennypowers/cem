@@ -17,6 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package config
 
 import (
+	"maps"
+
 	"bennypowers.dev/cem/serve/middleware/types"
 )
 
@@ -133,17 +135,13 @@ func (c *CemConfig) Clone() *CemConfig {
 	// Deep copy import map config override
 	if c.Serve.ImportMap.Override.Imports != nil {
 		clone.Serve.ImportMap.Override.Imports = make(map[string]string, len(c.Serve.ImportMap.Override.Imports))
-		for k, v := range c.Serve.ImportMap.Override.Imports {
-			clone.Serve.ImportMap.Override.Imports[k] = v
-		}
+		maps.Copy(clone.Serve.ImportMap.Override.Imports, c.Serve.ImportMap.Override.Imports)
 	}
 	if c.Serve.ImportMap.Override.Scopes != nil {
 		clone.Serve.ImportMap.Override.Scopes = make(map[string]map[string]string, len(c.Serve.ImportMap.Override.Scopes))
 		for scopeKey, scopeMap := range c.Serve.ImportMap.Override.Scopes {
 			clone.Serve.ImportMap.Override.Scopes[scopeKey] = make(map[string]string, len(scopeMap))
-			for k, v := range scopeMap {
-				clone.Serve.ImportMap.Override.Scopes[scopeKey][k] = v
-			}
+			maps.Copy(clone.Serve.ImportMap.Override.Scopes[scopeKey], scopeMap)
 		}
 	}
 	return &clone

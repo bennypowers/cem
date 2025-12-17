@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net"
 	"net/http"
 	"net/url"
@@ -123,10 +124,7 @@ func NewServerWithConfig(config Config) (*Server, error) {
 	// Initialize transform pool with adaptive sizing based on available CPUs
 	// NumCPU/2 leaves headroom for HTTP serving, manifest generation, file watching
 	// Cap at 8 to prevent thread explosion (esbuild creates ~3 OS threads per worker)
-	maxWorkers := max(runtime.NumCPU()/2, 2)
-	if maxWorkers > 8 {
-		maxWorkers = 8
-	}
+	maxWorkers := min(max(runtime.NumCPU()/2, 2), 8)
 	queueDepth := maxWorkers * 12 // Proportional buffering for burst traffic
 	s.transformPool = transform.NewPool(maxWorkers, queueDepth)
 
@@ -175,16 +173,12 @@ func (s *Server) buildConfigOverride() *importmappkg.ImportMap {
 	}
 
 	// Copy imports
-	for k, v := range s.config.ImportMap.Override.Imports {
-		result.Imports[k] = v
-	}
+	maps.Copy(result.Imports, s.config.ImportMap.Override.Imports)
 
 	// Deep copy scopes
 	for scopeKey, scopeMap := range s.config.ImportMap.Override.Scopes {
 		result.Scopes[scopeKey] = make(map[string]string, len(scopeMap))
-		for k, v := range scopeMap {
-			result.Scopes[scopeKey][k] = v
-		}
+		maps.Copy(result.Scopes[scopeKey], scopeMap)
 	}
 
 	return result
@@ -654,7 +648,7 @@ func (s *Server) TryLoadExistingManifest() (int, error) {
 	}
 
 	// Validate it's valid JSON
-	var pkg interface{}
+	var pkg any
 	if err := json.Unmarshal(manifestBytes, &pkg); err != nil {
 		return 0, fmt.Errorf("invalid manifest JSON: %w", err)
 	}
@@ -706,10 +700,7 @@ func (s *Server) RegenerateManifest() (int, error) {
 
 	// Configure adaptive worker count to prevent goroutine explosion under concurrent load
 	// Use same formula as transform pool for consistency
-	maxWorkers := max(runtime.NumCPU()/2, 2)
-	if maxWorkers > 8 {
-		maxWorkers = 8
-	}
+	maxWorkers := min(max(runtime.NumCPU()/2, 2), 8)
 	session.SetMaxWorkers(maxWorkers)
 
 	s.generateSession = session
@@ -1501,7 +1492,10 @@ func (s *Server) setupMiddleware() {
 	// Terminal handler: static files
 	s.handler = middleware.Chain(
 		http.HandlerFunc(s.serveStaticFiles), // Static file server (terminal handler)
-		shadowroot.New(s.logger, errorBroadcaster{s}, routes.TemplatesFS, func(elementName string, data interface{}) (string, error) {
+		shadowroot.New(s.logger, errorBroadcaster{s}, routes.TemplatesFS, func(
+			elementName string,
+			data any,
+		) (string, error) {
 			html, err := routes.RenderElementShadowRoot(s.templates, elementName, data)
 			return string(html), err
 		}), // Shadow root injection (last - processes final HTML)

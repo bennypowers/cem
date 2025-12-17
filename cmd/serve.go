@@ -95,7 +95,7 @@ var serveCmd = &cobra.Command{
 			if len(scopes) > 0 {
 				importMapOverride.Scopes = make(map[string]map[string]string)
 				for scopeKey, scopeVal := range scopes {
-					if scopeMap, ok := scopeVal.(map[string]interface{}); ok {
+					if scopeMap, ok := scopeVal.(map[string]any); ok {
 						importMapOverride.Scopes[scopeKey] = make(map[string]string)
 						for k, v := range scopeMap {
 							if str, ok := v.(string); ok {

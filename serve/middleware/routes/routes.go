@@ -29,11 +29,11 @@ import (
 	"sort"
 	"strings"
 
+	V "bennypowers.dev/cem/internal/version"
+	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/serve/logger"
 	"bennypowers.dev/cem/serve/middleware"
 	importmappkg "bennypowers.dev/cem/serve/middleware/importmap"
-	V "bennypowers.dev/cem/internal/version"
-	M "bennypowers.dev/cem/manifest"
 )
 
 // notFoundDetector wraps http.ResponseWriter to detect and intercept 404 status codes
@@ -201,7 +201,11 @@ func serveInternalModules(w http.ResponseWriter, r *http.Request, config Config)
 }
 
 // serveManifest serves the custom elements manifest
-func serveManifest(w http.ResponseWriter, r *http.Request, config Config) {
+func serveManifest(
+	w http.ResponseWriter,
+	_ *http.Request,
+	config Config,
+) {
 	manifest, err := config.Context.Manifest()
 	if err != nil {
 		config.Context.Logger().Error("Failed to get manifest: %v", err)
@@ -221,7 +225,11 @@ func serveManifest(w http.ResponseWriter, r *http.Request, config Config) {
 }
 
 // serveLogs serves the plain text logs for the debug console
-func serveLogs(w http.ResponseWriter, r *http.Request, config Config) {
+func serveLogs(
+	w http.ResponseWriter,
+	_ *http.Request,
+	config Config,
+) {
 	var logs []logger.LogEntry
 	if config.LogsFunc != nil {
 		logs = config.LogsFunc()
@@ -238,7 +246,11 @@ func serveLogs(w http.ResponseWriter, r *http.Request, config Config) {
 }
 
 // serveDebugInfo serves debug information for the debug overlay
-func serveDebugInfo(w http.ResponseWriter, r *http.Request, config Config) {
+func serveDebugInfo(
+	w http.ResponseWriter,
+	_ *http.Request,
+	config Config,
+) {
 	// Get watch directory from context
 	watchDir := config.Context.WatchDir()
 
@@ -253,7 +265,7 @@ func serveDebugInfo(w http.ResponseWriter, r *http.Request, config Config) {
 	}
 
 	// Parse manifest to get demo info
-	var demos []map[string]interface{}
+	var demos []map[string]any
 	if len(manifestBytes) > 0 {
 		var pkg M.Package
 		if err := json.Unmarshal(manifestBytes, &pkg); err == nil {
@@ -266,7 +278,7 @@ func serveDebugInfo(w http.ResponseWriter, r *http.Request, config Config) {
 					localRoute = parsed.Path
 				}
 
-				demoInfo := map[string]interface{}{
+				demoInfo := map[string]any{
 					"tagName":      renderableDemo.CustomElementDeclaration.TagName,
 					"description":  renderableDemo.Demo.Description,
 					"canonicalURL": demoURL,
@@ -283,7 +295,7 @@ func serveDebugInfo(w http.ResponseWriter, r *http.Request, config Config) {
 		}
 	}
 
-	debugInfo := map[string]interface{}{
+	debugInfo := map[string]any{
 		"watchDir":     watchDir,
 		"manifestSize": fmt.Sprintf("%d bytes", len(manifestBytes)),
 		"version":      V.GetVersion(),
@@ -530,7 +542,7 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 
 	// Fetch manifest and generate knobs for ALL custom elements in demo
 	var manifestBytes []byte
-	var parsedManifest *M.Package // Declare parsedManifest here
+	var parsedManifest *M.Package      // Declare parsedManifest here
 	var packages []PackageWithManifest // For workspace mode package-level tree
 
 	if config.Context.IsWorkspace() {
@@ -614,9 +626,10 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 	renderingMode := config.Context.DemoRenderingMode()
 	if renderingParam, ok := queryParams["rendering"]; ok {
 		// Validate query parameter
-		if renderingParam == "light" || renderingParam == "shadow" {
+		switch renderingParam {
+		case "light", "shadow":
 			renderingMode = renderingParam
-		} else if renderingParam == "iframe" {
+		case "iframe":
 			// Iframe not yet implemented - broadcast error and fallback to shadow
 			config.Context.Logger().Warning("iframe rendering mode requested but not implemented, falling back to shadow")
 			_ = config.Context.BroadcastError(
@@ -625,7 +638,7 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 				entry.TagName,
 			)
 			renderingMode = "shadow"
-		} else {
+		default:
 			config.Context.Logger().Warning("invalid rendering mode '%s', using config default '%s'", renderingParam, renderingMode)
 		}
 	}
@@ -787,7 +800,7 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 
 	// Render 404 content with template
 	var notFoundHTML strings.Builder
-	notFoundData := map[string]interface{}{
+	notFoundData := map[string]any{
 		"RequestedPath": requestedPath,
 		"Suggestions":   suggestions,
 	}
@@ -979,4 +992,3 @@ func servePackageStaticAsset(w http.ResponseWriter, r *http.Request, config Conf
 
 	return true
 }
-
