@@ -31,14 +31,15 @@ import (
 
 // CSSConfig holds configuration for CSS transformation
 type CSSConfig struct {
-	WatchDirFunc     func() string      // Function to get current watch directory
+	WatchDirFunc     func() string // Function to get current watch directory
 	Logger           types.Logger
 	ErrorBroadcaster types.ErrorBroadcaster // Sends errors to browser error overlay
-	ConfigFile       string             // Path to config file (for error reporting)
-	Enabled          bool               // Enable/disable CSS transformation
-	Include          []string           // Glob patterns to include (empty means all .css files)
-	Exclude          []string           // Glob patterns to exclude
-	FS               platform.FileSystem // Filesystem abstraction for testability
+	ConfigFile       string                 // Path to config file (for error reporting)
+	Enabled          bool                   // Enable/disable CSS transformation
+	Include          []string               // Glob patterns to include (empty means all .css files)
+	Exclude          []string               // Glob patterns to exclude
+	FS               platform.FileSystem    // Filesystem abstraction for testability
+	PathMappings     map[string]string      // Path mappings for src/dist separation
 }
 
 // shouldTransformCSS checks if a CSS file should be transformed based on include/exclude patterns
@@ -109,6 +110,14 @@ func shouldTransformCSS(cssPath string, include []string, exclude []string, logg
 	return true
 }
 
+// resolveCssPath resolves the actual file path for a CSS file request
+// Uses the shared PathResolver with CSS-specific extension handling (.css -> .css)
+func resolveCssPath(requestPath string, watchDir string, pathMappings map[string]string, fs platform.FileSystem, logger types.Logger) string {
+	resolver := NewPathResolver(watchDir, pathMappings, fs, logger)
+	// CSS files don't transform extensions (.css -> .css)
+	return resolver.ResolveSourcePath(requestPath, ".css", ".css")
+}
+
 // NewCSS creates a middleware that transforms CSS files to JavaScript modules
 func NewCSS(config CSSConfig) middleware.Middleware {
 	// Default to real filesystem if not provided
@@ -119,8 +128,27 @@ func NewCSS(config CSSConfig) middleware.Middleware {
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Skip if transformation is disabled
-			if !config.Enabled {
+			requestPath := r.URL.Path
+
+			// Only handle .css files
+			if filepath.Ext(requestPath) != ".css" {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			// Check if this CSS file has import attributes query parameter
+			// These should ALWAYS be transformed, regardless of enabled status
+			hasImportAttrs := false
+			queryParams := r.URL.Query()
+			for key := range queryParams {
+				if strings.HasPrefix(key, "__cem-import-attrs[") {
+					hasImportAttrs = true
+					break
+				}
+			}
+
+			// Skip if transformation is disabled AND no import attributes
+			if !config.Enabled && !hasImportAttrs {
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -133,39 +161,43 @@ func NewCSS(config CSSConfig) middleware.Middleware {
 				return
 			}
 
-			requestPath := r.URL.Path
-
-			// Only handle .css files
-			if filepath.Ext(requestPath) != ".css" {
-				next.ServeHTTP(w, r)
-				return
-			}
-
-			// Strip leading slash and normalize
+			// Normalize paths and check for path traversal FIRST
 			watchDirClean := filepath.Clean(watchDir)
-			cssPath := strings.TrimPrefix(requestPath, "/")
-			cssPath = filepath.Clean(filepath.FromSlash(cssPath))
-			fullCssPath := filepath.Join(watchDirClean, cssPath)
+			cssPathNorm := strings.TrimPrefix(requestPath, "/")
+			cssPathNorm = filepath.Clean(filepath.FromSlash(cssPathNorm))
+			fullCssPath := filepath.Join(watchDirClean, cssPathNorm)
 
-			// Reject attempts to escape the watch directory
+			// Reject attempts to escape the watch directory (check original path first)
 			if rel, err := filepath.Rel(watchDirClean, fullCssPath); err != nil || strings.HasPrefix(rel, "..") {
 				http.NotFound(w, r)
 				return
 			}
 
-			// Check if this CSS file has import attributes query parameter
-			// If so, we should always transform it regardless of include/exclude patterns
-			hasImportAttrs := false
-			queryParams := r.URL.Query()
-			for key := range queryParams {
-				if strings.HasPrefix(key, "__cem-import-attrs[") {
-					hasImportAttrs = true
-					break
+			// Check if file exists at requested path
+			_, err := fs.Stat(fullCssPath)
+
+			// If file doesn't exist, try path mappings
+			if err != nil {
+				resolvedPath := resolveCssPath(requestPath, watchDir, config.PathMappings, fs, config.Logger)
+				if resolvedPath == "" {
+					// Not found, pass to next handler
+					next.ServeHTTP(w, r)
+					return
+				}
+				// Use resolved path
+				cssPathNorm = strings.TrimPrefix(resolvedPath, "/")
+				cssPathNorm = filepath.Clean(filepath.FromSlash(cssPathNorm))
+				fullCssPath = filepath.Join(watchDirClean, cssPathNorm)
+
+				// Check resolved path doesn't escape watch directory
+				if rel, err := filepath.Rel(watchDirClean, fullCssPath); err != nil || strings.HasPrefix(rel, "..") {
+					http.NotFound(w, r)
+					return
 				}
 			}
 
-			// If no import attributes, check include/exclude patterns
-			if !hasImportAttrs && !shouldTransformCSS(cssPath, config.Include, config.Exclude, config.Logger, config.ErrorBroadcaster, config.ConfigFile) {
+			// If no import attributes, check include/exclude patterns (when enabled)
+			if !hasImportAttrs && config.Enabled && !shouldTransformCSS(cssPathNorm, config.Include, config.Exclude, config.Logger, config.ErrorBroadcaster, config.ConfigFile) {
 				// Don't transform this CSS file, pass to next handler
 				next.ServeHTTP(w, r)
 				return

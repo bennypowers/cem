@@ -70,6 +70,8 @@ type ServeConfig struct {
 	ImportMap types.ImportMapConfig `mapstructure:"importMap" yaml:"importMap"`
 	// Transform configuration
 	Transforms TransformsConfig `mapstructure:"transforms" yaml:"transforms"`
+	// Path mappings for src/dist separation (e.g., {"/dist/": "./src/"})
+	PathMappings map[string]string `mapstructure:"pathMappings" yaml:"pathMappings"`
 	// Demo configuration
 	Demos DemosConfig `mapstructure:"demos" yaml:"demos"`
 }
@@ -165,6 +167,13 @@ func (c *CemConfig) Clone() *CemConfig {
 		for scopeKey, scopeMap := range c.Serve.ImportMap.Override.Scopes {
 			clone.Serve.ImportMap.Override.Scopes[scopeKey] = make(map[string]string, len(scopeMap))
 			maps.Copy(clone.Serve.ImportMap.Override.Scopes[scopeKey], scopeMap)
+		}
+	}
+	// Deep copy path mappings
+	if c.Serve.PathMappings != nil {
+		clone.Serve.PathMappings = make(map[string]string, len(c.Serve.PathMappings))
+		for k, v := range c.Serve.PathMappings {
+			clone.Serve.PathMappings[k] = v
 		}
 	}
 	return &clone

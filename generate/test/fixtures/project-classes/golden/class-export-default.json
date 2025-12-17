@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-export-default.js",
+      "declarations": [
+        {
+          "name": "ClassDefaultCe",
+          "summary": "A default exported custom element",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/class-export-default.ts#L8"
+          },
+          "kind": "class",
+          "tagName": "class-default-ce",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-default-ce",
+          "declaration": {
+            "name": "ClassDefaultCe",
+            "module": "src/class-export-default.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ClassDefaultCe",
+          "declaration": {
+            "name": "ClassDefaultCe",
+            "module": "src/class-export-default.js"
+          }
+        }
+      ]
+    }
+  ]
+}

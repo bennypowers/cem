@@ -67,12 +67,12 @@
               (string
                 (string_fragment) @observedAttributes.attributeName)))))? @observedAttributes)) @class.declaration) @class
 
-( ; exported litelement class
+( ; exported custom element class (any base class)
   ;
   ; example:
   ; ```ts
   ; @customElement('custom-element')
-  ; export class CustomElement extends LitElement {}
+  ; export class CustomElement extends CustomBase {}
   ; ```
   (comment)* @class.jsdoc . (#match? @class.jsdoc "^/\\*\\*") .
   (export_statement
@@ -105,7 +105,7 @@
                           function: (identifier) @func
                           arguments: (template_string
                             (string_fragment) @style.string (#eq? @func "css")))
-                       ] @customElement.styles (#eq? @_fieldname "styles"))?
+                       ] @customElement.styles (#match? @_fieldname "^(styles|css)$"))?
               (method_definition ; render method
                 name: (_) @_method_name (#eq? @_method_name "render")
                 body: (_ [
@@ -243,5 +243,5 @@
                         function: (identifier) @func
                         arguments: (template_string
                           (string_fragment) @style.string (#eq? @func "css")))
-                     ] @customElement.styles (#eq? @_fieldname "styles"))?)
+                     ] @customElement.styles (#match? @_fieldname "^(styles|css)$"))?)
     ) @class.declaration) @customElement @class

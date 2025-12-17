@@ -76,38 +76,8 @@ func BuildDemoRoutingTable(manifestBytes []byte, sourceControlRootURL string) (m
 		// Determine file path from Source.Href
 		filePath := demoURL
 		if renderableDemo.Demo.Source != nil && renderableDemo.Demo.Source.Href != "" {
-			sourceHref := renderableDemo.Demo.Source.Href
-
-			// If we have a sourceControlRootURL and the source href starts with it,
-			// everything after the root URL is the file path
-			if sourceControlRootURL != "" && strings.HasPrefix(sourceHref, sourceControlRootURL) {
-				filePath = strings.TrimPrefix(sourceHref, sourceControlRootURL)
-			} else if parsed, err := url.Parse(sourceHref); err == nil && parsed.Path != "" {
-				// Try to extract file path from GitHub/GitLab URLs
-				// URLs like: https://github.com/org/repo/tree/main/path/to/file.html
-				// or:        https://github.com/org/repo/blob/main/path/to/file.html
-				extractedPath := ""
-				path := parsed.Path
-				for _, prefix := range []string{"/tree/", "/blob/"} {
-					if idx := strings.Index(path, prefix); idx >= 0 {
-						// Find next slash after the branch name
-						branchStart := idx + len(prefix)
-						if slashIdx := strings.Index(path[branchStart:], "/"); slashIdx >= 0 {
-							extractedPath = path[branchStart+slashIdx+1:]
-							break
-						}
-					}
-				}
-
-				if extractedPath != "" {
-					filePath = extractedPath
-				} else {
-					// Fallback: extract the filename and combine with module directory
-					moduleDir := filepath.Dir(renderableDemo.Module.Path)
-					filename := filepath.Base(parsed.Path)
-					filePath = filepath.Join(moduleDir, "demo", filename)
-				}
-			}
+			moduleDir := filepath.Dir(renderableDemo.Module.Path)
+			filePath = resolveSourceHrefToFilePath(renderableDemo.Demo.Source.Href, moduleDir, sourceControlRootURL)
 		} else if strings.HasPrefix(demoURL, "./") || strings.HasPrefix(demoURL, "/") {
 			// Relative path - use as-is (strip leading ./ if present)
 			filePath = strings.TrimPrefix(demoURL, "./")
@@ -141,6 +111,51 @@ func BuildDemoRoutingTable(manifestBytes []byte, sourceControlRootURL string) (m
 	}
 
 	return routes, nil
+}
+
+// resolveSourceHrefToFilePath extracts a file path from a source href.
+// Handles URLs (GitHub/GitLab) and relative file paths.
+// If sourceControlRootURL is provided and the href starts with it, returns the path relative to that root.
+// For GitHub/GitLab URLs, extracts the file path after /tree/branch/ or /blob/branch/.
+// For non-URL hrefs, treats them as file paths.
+// Falls back to moduleDir/demo/filename for URLs without recognized patterns.
+func resolveSourceHrefToFilePath(sourceHref, moduleDir, sourceControlRootURL string) string {
+	// If we have a sourceControlRootURL and the source href starts with it,
+	// everything after the root URL is the file path
+	if sourceControlRootURL != "" && strings.HasPrefix(sourceHref, sourceControlRootURL) {
+		return strings.TrimPrefix(sourceHref, sourceControlRootURL)
+	}
+
+	// Try to parse as URL
+	parsed, err := url.Parse(sourceHref)
+	if err == nil && parsed.Scheme != "" && parsed.Path != "" {
+		// Try to extract file path from GitHub/GitLab URLs
+		// URLs like: https://github.com/org/repo/tree/main/path/to/file.html
+		// or:        https://github.com/org/repo/blob/main/path/to/file.html
+		extractedPath := ""
+		path := parsed.Path
+		for _, prefix := range []string{"/tree/", "/blob/"} {
+			if idx := strings.Index(path, prefix); idx >= 0 {
+				// Find next slash after the branch name
+				branchStart := idx + len(prefix)
+				if slashIdx := strings.Index(path[branchStart:], "/"); slashIdx >= 0 {
+					extractedPath = path[branchStart+slashIdx+1:]
+					break
+				}
+			}
+		}
+
+		if extractedPath != "" {
+			return extractedPath
+		}
+
+		// Fallback: extract the filename and combine with module directory
+		filename := filepath.Base(parsed.Path)
+		return filepath.Join(moduleDir, "demo", filename)
+	}
+
+	// Not a URL, treat as file path
+	return strings.TrimPrefix(sourceHref, "/")
 }
 
 // normalizeAndValidateDemoPath normalizes and validates a demo file path to prevent directory traversal.
@@ -311,39 +326,12 @@ func buildPackageRoutingTable(pkg PackageContext) (map[string]*DemoRouteEntry, e
 		}
 
 		// Resolve file path
+		moduleDir := filepath.Dir(renderableDemo.Module.Path)
 		var filePath string
 		if renderableDemo.Demo.Source != nil && renderableDemo.Demo.Source.Href != "" {
-			sourceHref := renderableDemo.Demo.Source.Href
-			// Try to extract file path from GitHub/GitLab URLs
-			// URLs like: https://github.com/org/repo/tree/main/path/to/file.html
-			if parsed, err := url.Parse(sourceHref); err == nil && parsed.Path != "" {
-				extractedPath := ""
-				path := parsed.Path
-				for _, prefix := range []string{"/tree/", "/blob/"} {
-					if idx := strings.Index(path, prefix); idx >= 0 {
-						// Find next slash after the branch name
-						branchStart := idx + len(prefix)
-						if slashIdx := strings.Index(path[branchStart:], "/"); slashIdx >= 0 {
-							extractedPath = path[branchStart+slashIdx+1:]
-							break
-						}
-					}
-				}
-
-				if extractedPath != "" {
-					filePath = extractedPath
-				} else {
-					// Fallback: extract filename and combine with module directory
-					moduleDir := filepath.Dir(renderableDemo.Module.Path)
-					filename := filepath.Base(parsed.Path)
-					filePath = filepath.Join(moduleDir, "demo", filename)
-				}
-			} else {
-				filePath = sourceHref
-			}
+			filePath = resolveSourceHrefToFilePath(renderableDemo.Demo.Source.Href, moduleDir, "")
 		} else {
 			// Fallback: try to find demo file in module directory
-			moduleDir := filepath.Dir(renderableDemo.Module.Path)
 			filePath = filepath.Join(moduleDir, "demo", "index.html")
 		}
 

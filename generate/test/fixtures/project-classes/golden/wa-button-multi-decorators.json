@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/wa-button-multi-decorators.js",
+      "declarations": [
+        {
+          "name": "WebAwesomeFormAssociatedElement",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/wa-button-multi-decorators.ts#L3"
+          },
+          "kind": "class"
+        },
+        {
+          "name": "WaButtonMulti",
+          "summary": "Test with multiple decorator imports",
+          "superclass": {
+            "name": "WebAwesomeFormAssociatedElement"
+          },
+          "members": [
+            {
+              "name": "name",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field"
+            },
+            {
+              "name": "render",
+              "kind": "method"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/wa-button-multi-decorators.ts#L9"
+          },
+          "kind": "class",
+          "tagName": "wa-button-multi",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "wa-button-multi",
+          "declaration": {
+            "name": "WaButtonMulti",
+            "module": "src/wa-button-multi-decorators.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "WaButtonMulti",
+          "declaration": {
+            "name": "WaButtonMulti",
+            "module": "src/wa-button-multi-decorators.js"
+          }
+        }
+      ]
+    }
+  ]
+}

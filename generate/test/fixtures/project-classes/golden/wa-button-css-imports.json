@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/wa-button-css-imports.js",
+      "declarations": [
+        {
+          "name": "WebAwesomeFormAssociatedElement",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/wa-button-css-imports.ts#L5"
+          },
+          "kind": "class"
+        },
+        {
+          "name": "WaButtonCss",
+          "summary": "Test with CSS imports",
+          "superclass": {
+            "name": "WebAwesomeFormAssociatedElement"
+          },
+          "members": [
+            {
+              "name": "render",
+              "kind": "method"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/wa-button-css-imports.ts#L11"
+          },
+          "kind": "class",
+          "tagName": "wa-button-css",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "wa-button-css",
+          "declaration": {
+            "name": "WaButtonCss",
+            "module": "src/wa-button-css-imports.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "WaButtonCss",
+          "declaration": {
+            "name": "WaButtonCss",
+            "module": "src/wa-button-css-imports.js"
+          }
+        }
+      ]
+    }
+  ]
+}

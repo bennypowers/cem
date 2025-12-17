@@ -145,3 +145,45 @@ func TestDiscoverWorkspacePackages_NoNegation(t *testing.T) {
 		t.Errorf("Expected 3 packages, found %d: %v", len(packages), packages)
 	}
 }
+
+// TestIsWorkspaceMode_SinglePackageWorkspace tests that workspace mode is detected
+// even when only one package has a customElements manifest
+func TestIsWorkspaceMode_SinglePackageWorkspace(t *testing.T) {
+	rootDir := filepath.Join("testdata", "workspace-mode-single-package")
+
+	// Should return true because workspaces field exists in package.json
+	if !IsWorkspaceMode(rootDir) {
+		t.Error("Expected IsWorkspaceMode to return true for workspace with single package")
+	}
+}
+
+// TestIsWorkspaceMode_NoManifests tests that workspace mode is detected
+// even when no packages have customElements manifests
+func TestIsWorkspaceMode_NoManifests(t *testing.T) {
+	rootDir := filepath.Join("testdata", "workspace-mode-no-manifest")
+
+	// Should return true because workspaces field exists, even with no manifests
+	if !IsWorkspaceMode(rootDir) {
+		t.Error("Expected IsWorkspaceMode to return true for workspace without manifests")
+	}
+}
+
+// TestIsWorkspaceMode_NonWorkspace tests that non-workspace directories are detected
+func TestIsWorkspaceMode_NonWorkspace(t *testing.T) {
+	rootDir := filepath.Join("testdata", "non-workspace")
+
+	// Should return false because no workspaces field exists
+	if IsWorkspaceMode(rootDir) {
+		t.Error("Expected IsWorkspaceMode to return false for non-workspace directory")
+	}
+}
+
+// TestIsWorkspaceMode_MultiplePackages tests that workspace mode works with multiple packages
+func TestIsWorkspaceMode_MultiplePackages(t *testing.T) {
+	rootDir := filepath.Join("testdata", "negation-test")
+
+	// Should return true because workspaces field exists
+	if !IsWorkspaceMode(rootDir) {
+		t.Error("Expected IsWorkspaceMode to return true for workspace with multiple packages")
+	}
+}

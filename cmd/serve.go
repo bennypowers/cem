@@ -130,6 +130,9 @@ var serveCmd = &cobra.Command{
 		// Get source control root URL from config
 		sourceControlRootURL := viper.GetString("sourceControlRootUrl")
 
+		// Get path mappings from config
+		pathMappings := viper.GetStringMapString("serve.pathMappings")
+
 		// Get demo rendering mode from config (default: "light")
 		demoRendering := viper.GetString("serve.demos.rendering")
 		if demoRendering == "" {
@@ -150,6 +153,7 @@ var serveCmd = &cobra.Command{
 			Target:               target,
 			WatchIgnore:          watchIgnore,
 			SourceControlRootURL: sourceControlRootURL,
+			PathMappings:         pathMappings,
 			ImportMap: types.ImportMapConfig{
 				Generate:     importMapGenerate,
 				OverrideFile: importMapOverrideFile,

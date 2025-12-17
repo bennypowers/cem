@@ -19,6 +19,7 @@ package transform
 
 import (
 	"container/list"
+	"slices"
 	"sync"
 	"time"
 
@@ -163,10 +164,8 @@ func (c *Cache) addDependent(dep, dependent string) {
 	deps := c.dependents[dep]
 
 	// Check if already present
-	for _, d := range deps {
-		if d == dependent {
-			return
-		}
+	if slices.Contains(deps, dependent) {
+		return
 	}
 
 	// Add to list

@@ -1,0 +1,12 @@
+/* Variant utilities */
+.neutral {
+  color: gray;
+}
+
+.brand {
+  color: blue;
+}
+
+.success {
+  color: green;
+}

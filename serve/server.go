@@ -81,6 +81,7 @@ type Server struct {
 	importMap            *importmappkg.ImportMap  // Cached import map (workspace or single-package)
 	sourceControlRootURL string                   // Source control root URL for demo routing
 	templates            *routes.TemplateRegistry // Template registry for HTML rendering
+	pathMappings         map[string]string        // Path mappings for src/dist separation
 }
 
 // NewServer creates a new server with the given port
@@ -417,6 +418,31 @@ func (s *Server) SetWatchDir(dir string) error {
 		s.tsconfigRaw = ""
 		s.logger.Debug("No tsconfig found, using default transform settings")
 	}
+
+	// Parse tsconfig for path mappings (supports src/dist separation)
+	var pathMappings map[string]string
+	for _, tsconfigPath := range tsconfigPaths {
+		if mappings, err := transform.ParseTsConfig(tsconfigPath, s.fs); err == nil {
+			pathMappings = mappings
+			if len(mappings) > 0 {
+				s.logger.Debug("Extracted path mappings from %s: %v", tsconfigPath, mappings)
+			}
+			break
+		}
+	}
+
+	// Merge with explicit config overrides (config takes precedence)
+	if s.config.PathMappings != nil {
+		if pathMappings == nil {
+			pathMappings = make(map[string]string)
+		}
+		for k, v := range s.config.PathMappings {
+			pathMappings[k] = v
+			s.logger.Debug("Config override path mapping: %s -> %s", k, v)
+		}
+	}
+
+	s.pathMappings = pathMappings
 
 	// Generate import map for single-package mode
 	// (Workspace mode generates in InitializeWorkspaceMode instead)
@@ -836,21 +862,23 @@ func (s *Server) InitializeWorkspaceMode() error {
 		return nil
 	}
 
-	s.logger.Info("Detected workspace mode - discovering packages...")
-	s.isWorkspace = true
-	s.workspaceRoot = s.watchDir
-
 	// Discover packages with manifests
 	packages, err := discoverWorkspacePackages(s.watchDir)
 	if err != nil {
 		return fmt.Errorf("discovering workspace packages: %w", err)
 	}
 
+	// If no packages have customElements field, fall back to single-package mode
+	// This handles workspaces where packages haven't been configured yet
 	if len(packages) == 0 {
-		return fmt.Errorf("no packages with customElements field found in workspace")
+		s.logger.Debug("Workspace detected but no packages have customElements field - using single-package mode")
+		s.isWorkspace = false
+		return nil
 	}
 
-	s.logger.Info("Found %d packages with manifests", len(packages))
+	s.logger.Debug("Detected workspace mode - found %d packages with manifests", len(packages))
+	s.isWorkspace = true
+	s.workspaceRoot = s.watchDir
 	s.workspacePackages = packages
 
 	// Build routing table from workspace packages
@@ -867,7 +895,7 @@ func (s *Server) InitializeWorkspaceMode() error {
 		return fmt.Errorf("building workspace routing table: %w", err)
 	}
 	s.demoRoutes = workspaceRoutingTable
-	s.logger.Info("Built routing table with %d demo routes", len(workspaceRoutingTable))
+	s.logger.Debug("Built routing table with %d demo routes", len(workspaceRoutingTable))
 
 	// Generate workspace import map using middleware package
 	if s.config.ImportMap.Generate {
@@ -1492,13 +1520,15 @@ func (s *Server) setupMiddleware() {
 	// Terminal handler: static files
 	s.handler = middleware.Chain(
 		http.HandlerFunc(s.serveStaticFiles), // Static file server (terminal handler)
-		shadowroot.New(s.logger, errorBroadcaster{s}, routes.TemplatesFS, func(
-			elementName string,
-			data any,
-		) (string, error) {
-			html, err := routes.RenderElementShadowRoot(s.templates, elementName, data)
-			return string(html), err
-		}), // Shadow root injection (last - processes final HTML)
+		shadowroot.New(
+			s.logger,
+			errorBroadcaster{s},
+			routes.TemplatesFS,
+			func(elementName string, data any) (string, error) {
+				html, err := routes.RenderElementShadowRoot(s.templates, elementName, data)
+				return string(html), err
+			},
+		), // Shadow root injection (last - processes final HTML)
 		inject.New(s.config.Reload, "/__cem/websocket-client.js"), // WebSocket injection
 		importmappkg.New(importmappkg.MiddlewareConfig{ // Import map injection
 			Context: s,
@@ -1512,6 +1542,7 @@ func (s *Server) setupMiddleware() {
 			Include:          s.config.Transforms.CSS.Include,
 			Exclude:          s.config.Transforms.CSS.Exclude,
 			FS:               s.fs,
+			PathMappings:     s.pathMappings,
 		}),
 		transform.NewTypeScript(transform.TypeScriptConfig{ // TypeScript transform
 			WatchDirFunc:     s.WatchDir,
@@ -1523,6 +1554,7 @@ func (s *Server) setupMiddleware() {
 			Target:           string(s.config.Transforms.TypeScript.Target),
 			Enabled:          s.config.Transforms.TypeScript.Enabled,
 			FS:               s.fs,
+			PathMappings:     s.pathMappings,
 		}),
 		routes.New(routes.Config{ // Internal CEM routes (includes WebSocket, demos, listings)
 			Context:          s,

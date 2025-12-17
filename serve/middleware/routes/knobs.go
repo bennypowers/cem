@@ -32,21 +32,21 @@ import (
 type KnobType string
 
 const (
-	KnobTypeBoolean    KnobType = "boolean"
-	KnobTypeString     KnobType = "string"
-	KnobTypeNumber     KnobType = "number"
-	KnobTypeEnum       KnobType = "enum"
-	KnobTypeColor      KnobType = "color"
-	KnobTypeUnknown    KnobType = "unknown"
+	KnobTypeBoolean KnobType = "boolean"
+	KnobTypeString  KnobType = "string"
+	KnobTypeNumber  KnobType = "number"
+	KnobTypeEnum    KnobType = "enum"
+	KnobTypeColor   KnobType = "color"
+	KnobTypeUnknown KnobType = "unknown"
 )
 
 // KnobCategory represents which category a knob belongs to
 type KnobCategory string
 
 const (
-	KnobCategoryAttribute    KnobCategory = "attributes"
-	KnobCategoryProperty     KnobCategory = "properties"
-	KnobCategoryCSSProperty  KnobCategory = "css-properties"
+	KnobCategoryAttribute   KnobCategory = "attributes"
+	KnobCategoryProperty    KnobCategory = "properties"
+	KnobCategoryCSSProperty KnobCategory = "css-properties"
 )
 
 var (
@@ -68,7 +68,7 @@ type KnobData struct {
 	Name         string
 	Category     KnobCategory
 	Type         KnobType
-	TypeText     string        // Original TypeScript type string for display
+	TypeText     string // Original TypeScript type string for display
 	CurrentValue string
 	EnumValues   []string
 	Summary      template.HTML // Brief summary for helper text
@@ -139,8 +139,8 @@ func parseEnabledKnobs(enabledKnobs string) map[KnobCategory]bool {
 		return enabled
 	}
 
-	parts := strings.Fields(enabledKnobs)
-	for _, part := range parts {
+	parts := strings.FieldsSeq(enabledKnobs)
+	for part := range parts {
 		switch KnobCategory(part) {
 		case KnobCategoryAttribute:
 			enabled[KnobCategoryAttribute] = true
@@ -302,7 +302,6 @@ func extractCurrentValues(tagName string, demoHTML []byte) map[string]string {
 
 	return values
 }
-
 
 // firstTextContent extracts the first non-empty text node from an element's subtree.
 // This handles nested content like <my-card><h2>Title</h2></my-card> correctly.

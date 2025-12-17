@@ -56,8 +56,8 @@ func RenderElementListing(templates *TemplateRegistry, ctx middleware.DevServerC
 			title = "Component Browser"
 		}
 		return renderDemoChrome(templates, ctx, ChromeData{
-			TagName:     "", // Empty for index page
-			DemoTitle:   title,
+			TagName:   "", // Empty for index page
+			DemoTitle: title,
 			DemoHTML: template.HTML(`
 				<div class="empty-state">
 					<p>No custom elements found in manifest.</p>
@@ -91,8 +91,8 @@ func RenderElementListing(templates *TemplateRegistry, ctx middleware.DevServerC
 	if len(elements) == 0 {
 		// This path shouldn't be hit if there are elements with demos
 		chromeData := ChromeData{
-			TagName:        "cem-serve",
-			DemoTitle:      title,
+			TagName:   "cem-serve",
+			DemoTitle: title,
 			DemoHTML: template.HTML(`
 				<div class="empty-state">
 					<p>No demos found.</p>
@@ -124,7 +124,7 @@ func RenderElementListing(templates *TemplateRegistry, ctx middleware.DevServerC
 
 	// Render with template
 	var buf bytes.Buffer
-	err = templates.WorkspaceListingTemplate.Execute(&buf, map[string]interface{}{
+	err = templates.WorkspaceListingTemplate.Execute(&buf, map[string]any{
 		"Packages": packages,
 	})
 	if err != nil {
@@ -441,7 +441,7 @@ func renderNavigationHTML(templates *TemplateRegistry, packages []PackageNavigat
 
 	var buf bytes.Buffer
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"Packages":      packages,
 		"SinglePackage": len(packages) == 1,
 	}
@@ -495,7 +495,7 @@ func RenderWorkspaceListing(templates *TemplateRegistry, ctx middleware.DevServe
 
 	// Render with template
 	var buf bytes.Buffer
-	err = templates.WorkspaceListingTemplate.Execute(&buf, map[string]interface{}{
+	err = templates.WorkspaceListingTemplate.Execute(&buf, map[string]any{
 		"Packages": packageListings,
 	})
 	if err != nil {

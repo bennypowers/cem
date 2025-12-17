@@ -1,0 +1,5 @@
+/* Button styles */
+.button {
+  display: inline-flex;
+  align-items: center;
+}

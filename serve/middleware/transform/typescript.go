@@ -42,6 +42,7 @@ type TypeScriptConfig struct {
 	Target           string
 	Enabled          bool                // Enable/disable TypeScript transformation
 	FS               platform.FileSystem // Filesystem abstraction for testability
+	PathMappings     map[string]string   // Path mappings for src/dist separation
 }
 
 // NewTypeScript creates a middleware that transforms TypeScript files to JavaScript
@@ -75,8 +76,14 @@ func NewTypeScript(config TypeScriptConfig) middleware.Middleware {
 			var tsPath string
 			switch ext {
 			case ".js":
-				// Check if .ts file exists for .js request
-				tsPath = requestPath[:len(requestPath)-3] + ".ts"
+				// Use PathResolver to find TypeScript source
+				resolver := NewPathResolver(watchDir, config.PathMappings, fs, config.Logger)
+				tsPath = resolver.ResolveTsSource(requestPath)
+				if tsPath == "" {
+					// No TypeScript source found, pass to next handler
+					next.ServeHTTP(w, r)
+					return
+				}
 			case ".ts":
 				// Direct .ts request
 				tsPath = requestPath
@@ -107,20 +114,28 @@ func NewTypeScript(config TypeScriptConfig) middleware.Middleware {
 
 					// Try to get from cache
 					if cached, found := config.Cache.Get(cacheKey); found {
-						config.Logger.Debug("Cache hit for %s", tsPathNorm)
+						if config.Logger != nil {
+							config.Logger.Debug("Cache hit for %s", tsPathNorm)
+						}
 						// Serve cached transformed JavaScript
 						w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
 						if _, err := w.Write(cached.Code); err != nil {
-							config.Logger.Error("Failed to write cached transform response: %v", err)
+							if config.Logger != nil {
+								config.Logger.Error("Failed to write cached transform response: %v", err)
+							}
 						}
 						return
 					}
 
 					// Cache miss - read file and transform
-					config.Logger.Debug("Cache miss for %s", tsPathNorm)
+					if config.Logger != nil {
+						config.Logger.Debug("Cache miss for %s", tsPathNorm)
+					}
 					source, err := fs.ReadFile(fullTsPath)
 					if err != nil {
-						config.Logger.Error("Failed to read TypeScript file %s: %v", tsPathNorm, err)
+						if config.Logger != nil {
+							config.Logger.Error("Failed to read TypeScript file %s: %v", tsPathNorm, err)
+						}
 						http.Error(w, "Failed to read file", http.StatusInternalServerError)
 						return
 					}
@@ -158,12 +173,16 @@ func NewTypeScript(config TypeScriptConfig) middleware.Middleware {
 						if poolErr := config.Pool.SubmitSync(transformTask); poolErr != nil {
 							// Handle pool errors (queue full or pool closed)
 							if poolErr == ErrPoolQueueFull {
-								config.Logger.Warning("Transform pool queue full for %s", tsPathNorm)
+								if config.Logger != nil {
+									config.Logger.Warning("Transform pool queue full for %s", tsPathNorm)
+								}
 								http.Error(w, "Server busy - too many concurrent transforms", http.StatusServiceUnavailable)
 								return
 							}
 							if poolErr == ErrPoolClosed {
-								config.Logger.Error("Transform pool closed for %s", tsPathNorm)
+								if config.Logger != nil {
+									config.Logger.Error("Transform pool closed for %s", tsPathNorm)
+								}
 								http.Error(w, "Service unavailable", http.StatusServiceUnavailable)
 								return
 							}
@@ -176,7 +195,9 @@ func NewTypeScript(config TypeScriptConfig) middleware.Middleware {
 					}
 
 					if transformErr != nil {
-						config.Logger.Error("Failed to transform TypeScript file %s: %v", tsPathNorm, transformErr)
+						if config.Logger != nil {
+							config.Logger.Error("Failed to transform TypeScript file %s: %v", tsPathNorm, transformErr)
+						}
 
 						// Broadcast error to browser overlay
 						if config.ErrorBroadcaster != nil {
@@ -193,14 +214,18 @@ func NewTypeScript(config TypeScriptConfig) middleware.Middleware {
 
 					// Store in cache
 					if len(result.Dependencies) > 0 {
-						config.Logger.Debug("Caching %s with %d dependencies: %v", tsPathNorm, len(result.Dependencies), result.Dependencies)
+						if config.Logger != nil {
+							config.Logger.Debug("Caching %s with %d dependencies: %v", tsPathNorm, len(result.Dependencies), result.Dependencies)
+						}
 					}
 					config.Cache.Set(cacheKey, result.Code, result.Dependencies)
 
 					// Serve transformed JavaScript
 					w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
 					if _, err := w.Write(result.Code); err != nil {
-						config.Logger.Error("Failed to write transform response: %v", err)
+						if config.Logger != nil {
+							config.Logger.Error("Failed to write transform response: %v", err)
+						}
 					}
 					return
 				}

@@ -136,6 +136,55 @@ func TestCSS_DisabledByConfig(t *testing.T) {
 	}
 }
 
+func TestCSS_ImportAttributesWorkWhenDisabled(t *testing.T) {
+	// Load fixtures into in-memory filesystem
+	mfs := testutil.NewFixtureFS(t, "transforms/config-test", "/test")
+
+	// Create middleware with Enabled=false
+	middleware := NewCSS(CSSConfig{
+		WatchDirFunc: func() string { return "/test" },
+		Enabled:      false,
+		Logger:       &mockLogger{},
+		FS:           mfs,
+	})
+
+	// Create test handler
+	called := false
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+		w.WriteHeader(http.StatusOK)
+	})
+
+	// Request .css URL with import attributes query parameter
+	// This simulates: import styles from './test.css' with { type: 'css' }
+	req := httptest.NewRequest("GET", "/test.css?__cem-import-attrs[type]=css", nil)
+	rec := httptest.NewRecorder()
+
+	handler := middleware(next)
+	handler.ServeHTTP(rec, req)
+
+	// Even when disabled, CSS files with import attributes should be transformed
+	if called {
+		t.Fatal("Expected CSS transform middleware to handle import attribute request even when disabled")
+	}
+
+	// Should return JavaScript module
+	result := rec.Result()
+	if result.StatusCode != http.StatusOK {
+		t.Fatalf("Expected status 200, got %d", result.StatusCode)
+	}
+
+	contentType := result.Header.Get("Content-Type")
+	if contentType != "application/javascript; charset=utf-8" {
+		t.Errorf("Expected JavaScript content-type, got %s", contentType)
+	}
+
+	body, _ := io.ReadAll(result.Body)
+	if len(body) == 0 {
+		t.Fatal("Expected transformed JavaScript content")
+	}
+}
+
 func TestCSS_EnabledByConfig(t *testing.T) {
 	// Load fixtures into in-memory filesystem
 	mfs := testutil.NewFixtureFS(t, "transforms/config-test", "/test")

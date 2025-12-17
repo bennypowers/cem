@@ -27,8 +27,8 @@ import (
 // attributesToTemplateData converts HTML attributes to template data
 // All attributes are scoped under .Attributes with PascalCase keys
 // Example: <button href="/login" disabled> → .Attributes.Href, .Attributes.Disabled
-func attributesToTemplateData(attrs []html.Attribute) map[string]interface{} {
-	data := make(map[string]interface{})
+func attributesToTemplateData(attrs []html.Attribute) map[string]any {
+	data := make(map[string]any)
 	attrMap := make(map[string]string)
 
 	// Convert all attribute keys to PascalCase and store under .Attributes
