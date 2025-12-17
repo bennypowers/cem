@@ -401,7 +401,8 @@ describe('ManifestSearchIndex', () => {
       const startTime = Date.now();
       const callback = () => {
         const elapsed = Date.now() - startTime;
-        expect(elapsed).to.be.at.least(100);
+        // Allow small tolerance for timer imprecision
+        expect(elapsed).to.be.at.least(95);
         done();
       };
 

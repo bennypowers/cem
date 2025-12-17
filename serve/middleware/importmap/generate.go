@@ -225,43 +225,106 @@ func Generate(rootDir string, config *Config) (*ImportMap, error) {
 	return result, nil
 }
 
-// applyOverrides merges user import map file and CLI overrides into the result
-// This is called both in the normal flow and when package.json is missing
-func applyOverrides(result *ImportMap, cfg *Config, fs platform.FileSystem) error {
-	// Merge with user override file (if provided)
-	if cfg.InputMapPath != "" {
-		userMap, err := readImportMapFile(cfg.InputMapPath, fs)
-		if err != nil {
-			return fmt.Errorf("reading user override file: %w", err)
-		}
-		// User overrides win - deep merge
-		for key, value := range userMap.Imports {
-			result.Imports[key] = value
-		}
-		// Merge scopes from user import map
-		if len(userMap.Scopes) > 0 {
-			if result.Scopes == nil {
-				result.Scopes = make(map[string]map[string]string)
+// isValidImportKey returns true if the key is valid for import maps.
+// Keys must not contain control characters that could break import map parsing.
+func isValidImportKey(key string) bool {
+	return !strings.ContainsAny(key, "\x00\n\r")
+}
+
+// mergeImportsIntoResult merges imports from source into result, validating keys.
+// Invalid keys are skipped and logged if logger is provided.
+func mergeImportsIntoResult(result *ImportMap, source map[string]string, sourceName string, logger types.Logger) {
+	for key, value := range source {
+		if !isValidImportKey(key) {
+			if logger != nil {
+				logger.Warning("Skipping invalid import map key from %s (contains control characters): %q", sourceName, key)
 			}
-			for scopeKey, userScopeMap := range userMap.Scopes {
-				if result.Scopes[scopeKey] == nil {
-					// No existing scope for this key, use the entire user scope map
-					result.Scopes[scopeKey] = userScopeMap
-				} else {
-					// Merge individual import entries, user entries override existing
-					for importKey, importValue := range userScopeMap {
-						result.Scopes[scopeKey][importKey] = importValue
+			continue
+		}
+		result.Imports[key] = value
+	}
+}
+
+// mergeScopesIntoResult merges scopes from source into result, validating all keys.
+// Invalid scope keys or import keys within scopes are skipped and logged if logger is provided.
+func mergeScopesIntoResult(result *ImportMap, source map[string]map[string]string, sourceName string, logger types.Logger) {
+	if len(source) == 0 {
+		return
+	}
+
+	if result.Scopes == nil {
+		result.Scopes = make(map[string]map[string]string)
+	}
+
+	for scopeKey, sourceScopeMap := range source {
+		// Validate scope key
+		if !isValidImportKey(scopeKey) {
+			if logger != nil {
+				logger.Warning("Skipping invalid scope key from %s (contains control characters): %q", sourceName, scopeKey)
+			}
+			continue
+		}
+
+		if result.Scopes[scopeKey] == nil {
+			// No existing scope for this key, validate and copy the source scope map
+			validatedScopeMap := make(map[string]string)
+			for importKey, importValue := range sourceScopeMap {
+				if !isValidImportKey(importKey) {
+					if logger != nil {
+						logger.Warning("Skipping invalid import key in scope %q from %s: %q", scopeKey, sourceName, importKey)
 					}
+					continue
 				}
+				validatedScopeMap[importKey] = importValue
+			}
+			result.Scopes[scopeKey] = validatedScopeMap
+		} else {
+			// Merge individual import entries, source entries override existing
+			for importKey, importValue := range sourceScopeMap {
+				if !isValidImportKey(importKey) {
+					if logger != nil {
+						logger.Warning("Skipping invalid import key in scope %q from %s: %q", scopeKey, sourceName, importKey)
+					}
+					continue
+				}
+				result.Scopes[scopeKey][importKey] = importValue
 			}
 		}
 	}
+}
 
-	// Apply CLI overrides (highest priority)
-	if cfg.CLIOverrides != nil {
-		for key, value := range cfg.CLIOverrides {
-			result.Imports[key] = value
+// applyOverrides merges user override file and config overrides into the result
+// This is called both in the normal flow and when package.json is missing
+// Priority (highest wins): Config override > Override file > Auto-generated
+func applyOverrides(result *ImportMap, cfg *Config, fs platform.FileSystem) error {
+	// Merge with user override file (if provided)
+	if cfg.InputMapPath != "" {
+		// Validate override file path to prevent common mistakes and improve error messages
+		// Note: Path traversal is allowed here since this is a config file path specified by
+		// the server owner/developer, not user input from web clients.
+		cleanPath := filepath.Clean(cfg.InputMapPath)
+
+		// Check if file exists before attempting to read
+		if _, err := fs.Stat(cleanPath); err != nil {
+			if os.IsNotExist(err) {
+				return fmt.Errorf("import map override file not found: %s", cleanPath)
+			}
+			return fmt.Errorf("cannot access import map override file %s: %w", cleanPath, err)
 		}
+
+		userMap, err := readImportMapFile(cleanPath, fs)
+		if err != nil {
+			return fmt.Errorf("reading user override file %s: %w", cleanPath, err)
+		}
+		// User overrides win - deep merge
+		mergeImportsIntoResult(result, userMap.Imports, "override file", cfg.Logger)
+		mergeScopesIntoResult(result, userMap.Scopes, "override file", cfg.Logger)
+	}
+
+	// Apply config overrides (highest priority)
+	if cfg.ConfigOverride != nil {
+		mergeImportsIntoResult(result, cfg.ConfigOverride.Imports, "config override", cfg.Logger)
+		mergeScopesIntoResult(result, cfg.ConfigOverride.Scopes, "config override", cfg.Logger)
 	}
 
 	return nil
