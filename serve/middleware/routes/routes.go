@@ -624,6 +624,21 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 
 	// Determine rendering mode: config default, overridden by query parameter
 	renderingMode := config.Context.DemoRenderingMode()
+
+	// Check for conflicting query parameters
+	hasRendering := queryParams["rendering"] != ""
+	hasShadow := queryParams["shadow"] != ""
+
+	if hasRendering && hasShadow {
+		// Both parameters present - broadcast error and prefer ?rendering
+		config.Context.Logger().Warning("Both ?rendering and ?shadow query parameters present - using ?rendering value")
+		_ = config.Context.BroadcastError(
+			"Query Parameter Conflict",
+			"Both ?rendering and ?shadow query parameters are present. Using ?rendering value. Remove ?shadow to avoid this warning.",
+			entry.TagName,
+		)
+	}
+
 	if renderingParam, ok := queryParams["rendering"]; ok {
 		// Validate query parameter
 		switch renderingParam {
@@ -640,10 +655,15 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 			renderingMode = "shadow"
 		default:
 			config.Context.Logger().Warning("invalid rendering mode '%s', using config default '%s'", renderingParam, renderingMode)
+			_ = config.Context.BroadcastError(
+				"Invalid Rendering Mode",
+				fmt.Sprintf("Invalid rendering mode '%s'. Valid values are 'light', 'shadow', or 'iframe'. Using config default '%s'.", renderingParam, renderingMode),
+				entry.TagName,
+			)
 		}
-	}
-	// Backward compatibility: ?shadow=true overrides to shadow mode
-	if queryParams["shadow"] == "true" {
+	} else if queryParams["shadow"] == "true" {
+		// Backward compatibility: ?shadow=true overrides to shadow mode
+		// Only apply if ?rendering is not present (checked above)
 		renderingMode = "shadow"
 	}
 

@@ -109,19 +109,28 @@ func TestDemoRenderingMode_ThreadSafety(t *testing.T) {
 	}()
 
 	// Call from multiple goroutines concurrently
-	done := make(chan bool, 10)
+	type result struct {
+		mode string
+		err  string
+	}
+	results := make(chan result, 10)
+
 	for i := 0; i < 10; i++ {
 		go func() {
 			mode := server.DemoRenderingMode()
+			r := result{mode: mode}
 			if mode != "shadow" {
-				t.Errorf("Expected 'shadow', got '%s'", mode)
+				r.err = "Expected 'shadow', got '" + mode + "'"
 			}
-			done <- true
+			results <- r
 		}()
 	}
 
-	// Wait for all goroutines
+	// Wait for all goroutines and check results in main test goroutine
 	for i := 0; i < 10; i++ {
-		<-done
+		r := <-results
+		if r.err != "" {
+			t.Errorf("Goroutine %d: %s", i, r.err)
+		}
 	}
 }

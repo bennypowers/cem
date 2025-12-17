@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package config
 
 import (
+	"fmt"
 	"maps"
 
 	"bennypowers.dev/cem/serve/middleware/types"
@@ -116,6 +117,28 @@ type CemConfig struct {
 	SourceControlRootUrl string `mapstructure:"sourceControlRootUrl" yaml:"sourceControlRootUrl"`
 	// Verbose logging output
 	Verbose bool `mapstructure:"verbose" yaml:"verbose"`
+}
+
+// Validate validates the configuration and returns an error if invalid
+func (c *CemConfig) Validate() error {
+	if c == nil {
+		return nil
+	}
+
+	// Validate demo rendering mode
+	rendering := c.Serve.Demos.Rendering
+	if rendering != "" {
+		switch rendering {
+		case "light", "shadow":
+			// Valid modes
+		case "iframe":
+			return fmt.Errorf("serve.demos.rendering: 'iframe' mode is not yet implemented - use 'light' or 'shadow'")
+		default:
+			return fmt.Errorf("serve.demos.rendering: invalid value '%s' - must be 'light', 'shadow', or 'iframe'", rendering)
+		}
+	}
+
+	return nil
 }
 
 func (c *CemConfig) Clone() *CemConfig {
