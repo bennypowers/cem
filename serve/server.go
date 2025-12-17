@@ -211,6 +211,17 @@ func (s *Server) FileSystem() platform.FileSystem {
 	return s.fs
 }
 
+// DemoRenderingMode returns the configured default rendering mode for demos
+func (s *Server) DemoRenderingMode() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	rendering := s.config.Demos.Rendering
+	if rendering == "" {
+		return "light" // default
+	}
+	return rendering
+}
+
 // Start starts the HTTP server
 func (s *Server) Start() error {
 	s.mu.Lock()

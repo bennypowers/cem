@@ -67,6 +67,8 @@ type ServeConfig struct {
 	ImportMap types.ImportMapConfig `mapstructure:"importMap" yaml:"importMap"`
 	// Transform configuration
 	Transforms TransformsConfig `mapstructure:"transforms" yaml:"transforms"`
+	// Demo configuration
+	Demos DemosConfig `mapstructure:"demos" yaml:"demos"`
 }
 
 type TransformsConfig struct {
@@ -88,6 +90,12 @@ type CSSTransformConfig struct {
 	Include []string `mapstructure:"include" yaml:"include"`
 	// Glob patterns for CSS files to exclude
 	Exclude []string `mapstructure:"exclude" yaml:"exclude"`
+}
+
+type DemosConfig struct {
+	// Default rendering mode for demos: "light", "shadow", or "iframe" (default: "light")
+	// Can be overridden per-demo with ?rendering=shadow|light|iframe query parameter
+	Rendering string `mapstructure:"rendering" yaml:"rendering"`
 }
 
 type CemConfig struct {

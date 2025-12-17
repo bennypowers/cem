@@ -610,6 +610,30 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 	// Extract state from request cookie for SSR
 	state := GetStateFromRequest(r, config.Context.Logger())
 
+	// Determine rendering mode: config default, overridden by query parameter
+	renderingMode := config.Context.DemoRenderingMode()
+	if renderingParam, ok := queryParams["rendering"]; ok {
+		// Validate query parameter
+		if renderingParam == "light" || renderingParam == "shadow" {
+			renderingMode = renderingParam
+		} else if renderingParam == "iframe" {
+			// Iframe not yet implemented - broadcast error and fallback to shadow
+			config.Context.Logger().Warning("iframe rendering mode requested but not implemented, falling back to shadow")
+			_ = config.Context.BroadcastError(
+				"Rendering Mode Error",
+				"iframe rendering mode is not yet implemented. Falling back to shadow mode.",
+				entry.TagName,
+			)
+			renderingMode = "shadow"
+		} else {
+			config.Context.Logger().Warning("invalid rendering mode '%s', using config default '%s'", renderingParam, renderingMode)
+		}
+	}
+	// Backward compatibility: ?shadow=true overrides to shadow mode
+	if queryParams["shadow"] == "true" {
+		renderingMode = "shadow"
+	}
+
 	chromeData := ChromeData{
 		TagName:        entry.TagName,
 		DemoTitle:      demoTitle,
@@ -618,7 +642,7 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 		ImportMap:      template.HTML(importMapJSON),
 		EnabledKnobs:   enabledKnobs,
 		KnobsHTML:      knobsHTML,
-		ShadowMode:     queryParams["shadow"] == "true",
+		RenderingMode:  renderingMode,
 		SourceURL:      sourceURL,      // Link to source file
 		CanonicalURL:   entry.Demo.URL, // Link to canonical demo
 		PackageName:    packageName,

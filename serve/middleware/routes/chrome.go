@@ -40,7 +40,7 @@ type ChromeData struct {
 	KnobsHTML      template.HTML // Rendered knobs controls HTML
 	ImportMap      template.HTML // Use HTML instead of JS for importmap script content
 	Description    template.HTML
-	ShadowMode     bool
+	RenderingMode  string        // "light", "shadow", or "iframe"
 	SourceURL      string        // Source file URL (e.g., GitHub blob URL)
 	CanonicalURL   string        // Canonical demo URL
 	PackageName    string        // Package name for title (listing pages)

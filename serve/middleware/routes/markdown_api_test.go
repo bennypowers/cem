@@ -46,6 +46,7 @@ func (m *mockContext) Logger() logger.Logger                             { retur
 func (m *mockContext) FileSystem() platform.FileSystem                   { return nil }
 func (m *mockContext) PackageJSON() (*middleware.PackageJSON, error)     { return nil, nil }
 func (m *mockContext) BroadcastError(title, message, file string) error  { return nil }
+func (m *mockContext) DemoRenderingMode() string                         { return "light" }
 
 func TestServeMarkdownAPI_ValidPaths(t *testing.T) {
 	// Create test manifest with markdown content
