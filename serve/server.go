@@ -77,8 +77,8 @@ type Server struct {
 	workspacePackages []middleware.WorkspacePackage // Discovered packages with manifests
 	// Cached routing table for demo routes (both workspace and single-package mode)
 	demoRoutes           map[string]*routes.DemoRouteEntry
-	importMap            *importmappkg.ImportMap // Cached import map (workspace or single-package)
-	sourceControlRootURL string                  // Source control root URL for demo routing
+	importMap            *importmappkg.ImportMap  // Cached import map (workspace or single-package)
+	sourceControlRootURL string                   // Source control root URL for demo routing
 	templates            *routes.TemplateRegistry // Template registry for HTML rendering
 }
 
@@ -160,6 +160,17 @@ func (s *Server) ImportMap() middleware.ImportMap {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.importMap
+}
+
+// buildConfigOverride converts serve config override to import map config override
+func (s *Server) buildConfigOverride() *importmappkg.ConfigOverride {
+	if len(s.config.ImportMap.Override.Imports) == 0 && len(s.config.ImportMap.Override.Scopes) == 0 {
+		return nil
+	}
+	return &importmappkg.ConfigOverride{
+		Imports: s.config.ImportMap.Override.Imports,
+		Scopes:  s.config.ImportMap.Override.Scopes,
+	}
 }
 
 // DemoRoutes returns the pre-computed demo routing table (both workspace and single-package mode)
@@ -387,9 +398,12 @@ func (s *Server) SetWatchDir(dir string) error {
 
 	// Generate import map for single-package mode
 	// (Workspace mode generates in InitializeWorkspaceMode instead)
-	if !s.isWorkspace {
+	if !s.isWorkspace && s.config.ImportMap.Generate {
 		importMap, err := importmappkg.Generate(dir, &importmappkg.Config{
-			FS: s.fs,
+			InputMapPath:   s.config.ImportMap.OverrideFile,
+			ConfigOverride: s.buildConfigOverride(),
+			Logger:         s.logger,
+			FS:             s.fs,
 		})
 		if err != nil {
 			s.logger.Warning("Failed to generate import map: %v", err)
@@ -398,6 +412,8 @@ func (s *Server) SetWatchDir(dir string) error {
 			s.importMap = importMap
 			s.logger.Debug("Generated import map for single-package mode")
 		}
+	} else if !s.config.ImportMap.Generate {
+		s.logger.Debug("Import map generation disabled")
 	}
 
 	return nil
@@ -835,17 +851,23 @@ func (s *Server) InitializeWorkspaceMode() error {
 	s.logger.Info("Built routing table with %d demo routes", len(workspaceRoutingTable))
 
 	// Generate workspace import map using middleware package
-	importMap, err := importmappkg.Generate(s.workspaceRoot, &importmappkg.Config{
-		WorkspacePackages: packages,
-		Logger:            s.logger,
-		FS:                s.fs,
-	})
-	if err != nil {
-		return fmt.Errorf("generating workspace import map: %w", err)
-	}
+	if s.config.ImportMap.Generate {
+		importMap, err := importmappkg.Generate(s.workspaceRoot, &importmappkg.Config{
+			InputMapPath:      s.config.ImportMap.OverrideFile,
+			ConfigOverride:    s.buildConfigOverride(),
+			WorkspacePackages: packages,
+			Logger:            s.logger,
+			FS:                s.fs,
+		})
+		if err != nil {
+			return fmt.Errorf("generating workspace import map: %w", err)
+		}
 
-	s.importMap = importMap
-	s.logger.Info("Generated workspace import map")
+		s.importMap = importMap
+		s.logger.Info("Generated workspace import map")
+	} else {
+		s.logger.Debug("Import map generation disabled")
+	}
 
 	return nil
 }
@@ -1171,16 +1193,18 @@ func (s *Server) handleFileChanges() {
 			// They only need to be regenerated when package.json changes
 		}
 
-		// Regenerate import map only when necessary:
+		// Regenerate import map only when necessary and enabled:
 		// - package.json was modified (exports may have changed)
 		// - files were created (new modules may need to be mapped)
 		// - files were deleted (old modules may need to be unmapped)
-		if event.HasPackageJSON || event.HasCreates || event.HasDeletes {
+		if s.config.ImportMap.Generate && (event.HasPackageJSON || event.HasCreates || event.HasDeletes) {
 			importMapStart := time.Now()
 			s.mu.Lock()
 			if s.isWorkspace {
 				// Workspace mode: regenerate workspace import map
 				importMap, err := importmappkg.Generate(s.workspaceRoot, &importmappkg.Config{
+					InputMapPath:      s.config.ImportMap.OverrideFile,
+					ConfigOverride:    s.buildConfigOverride(),
 					WorkspacePackages: s.workspacePackages,
 					Logger:            s.logger,
 					FS:                s.fs,
@@ -1195,7 +1219,10 @@ func (s *Server) handleFileChanges() {
 			} else {
 				// Single-package mode: regenerate import map
 				importMap, err := importmappkg.Generate(s.watchDir, &importmappkg.Config{
-					FS: s.fs,
+					InputMapPath:   s.config.ImportMap.OverrideFile,
+					ConfigOverride: s.buildConfigOverride(),
+					Logger:         s.logger,
+					FS:             s.fs,
 				})
 				if err != nil {
 					s.logger.Warning("Failed to regenerate import map: %v", err)
@@ -1444,7 +1471,7 @@ func (s *Server) setupMiddleware() {
 	// Middlewares are applied in reverse order (last to first in the chain)
 	// Terminal handler: static files
 	s.handler = middleware.Chain(
-		http.HandlerFunc(s.serveStaticFiles),                      // Static file server (terminal handler)
+		http.HandlerFunc(s.serveStaticFiles), // Static file server (terminal handler)
 		shadowroot.New(s.logger, errorBroadcaster{s}, routes.TemplatesFS, func(elementName string, data interface{}) (string, error) {
 			html, err := routes.RenderElementShadowRoot(s.templates, elementName, data)
 			return string(html), err

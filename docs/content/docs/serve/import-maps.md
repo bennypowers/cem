@@ -142,7 +142,176 @@ Look for log entries like:
 
 ## Custom Overrides
 
-You can customize the import map behavior in your config file (see **[Configuration](/docs/configuration/)**).
+The dev server provides multiple ways to customize import map entries, allowing you to override auto-generated mappings for specific packages.
+
+### Overview
+
+Import map entries are resolved with the following priority (highest priority wins):
+
+1. **Auto-generated** - Automatically created from `package.json` dependencies
+2. **Override file** - Custom JSON file with import map entries
+3. **Config overrides** - Individual overrides specified in `.config/cem.yaml`
+
+### Using an Override File
+
+Create a JSON file containing custom import map entries. This file follows the standard [import map format](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap).
+
+**.config/importmap.json:**
+```json
+{
+  "imports": {
+    "lit": "https://cdn.jsdelivr.net/npm/lit@3/+esm",
+    "lit/": "https://cdn.jsdelivr.net/npm/lit@3/",
+    "@patternfly/elements/": "/node_modules/@patternfly/elements/"
+  },
+  "scopes": {
+    "/demos/": {
+      "lit": "/node_modules/lit/index.js"
+    }
+  }
+}
+```
+
+Then reference it in your config:
+
+**.config/cem.yaml:**
+```yaml
+serve:
+  importMap:
+    overrideFile: '.config/importmap.json'
+```
+
+The entries in this file will be deep-merged with the auto-generated import map, with your entries taking precedence.
+
+### Using Config Overrides
+
+You can specify overrides directly in your config using the full import map structure:
+
+**.config/cem.yaml:**
+```yaml
+serve:
+  importMap:
+    override:
+      imports:
+        'lit': 'https://cdn.jsdelivr.net/npm/lit@3/+esm'
+        'lit/': 'https://cdn.jsdelivr.net/npm/lit@3/'
+        '@custom/library': '/vendor/custom-library.js'
+      scopes:
+        '/demos/legacy/':
+          'lit': 'https://cdn.jsdelivr.net/npm/lit@2/+esm'
+```
+
+Config overrides have the highest priority and will override both auto-generated and file-based entries. They support both `imports` and `scopes`.
+
+### Common Use Cases
+
+#### Use CDN for Specific Packages
+
+Useful for testing against different versions or reducing local bundle size:
+
+```yaml
+serve:
+  importMap:
+    override:
+      imports:
+        'lit': 'https://cdn.jsdelivr.net/npm/lit@3/+esm'
+        'lit/': 'https://cdn.jsdelivr.net/npm/lit@3/'
+```
+
+#### Point to Local Development Build
+
+Override a workspace package to use a built version:
+
+```yaml
+serve:
+  importMap:
+    override:
+      imports:
+        '@my-org/components': '/dist/components.js'
+```
+
+#### Fix Broken Package Exports
+
+Some packages have incorrect or missing `package.json` exports. Override them:
+
+```yaml
+serve:
+  importMap:
+    override:
+      imports:
+        'some-lib/utils': '/node_modules/some-lib/src/utils/index.js'
+```
+
+#### Use Scoped Overrides
+
+For scenarios where different paths need different resolutions, you can use scopes in either the override file or config:
+
+**.config/cem.yaml:**
+```yaml
+serve:
+  importMap:
+    override:
+      imports:
+        'react': 'https://esm.sh/react@18'
+      scopes:
+        '/demos/legacy/':
+          'react': 'https://esm.sh/react@17'
+```
+
+Or via override file:
+
+**.config/importmap.json:**
+```json
+{
+  "imports": {
+    "react": "https://esm.sh/react@18"
+  },
+  "scopes": {
+    "/demos/legacy/": {
+      "react": "https://esm.sh/react@17"
+    }
+  }
+}
+```
+
+#### Disable Automatic Generation
+
+If you want complete control via an override file:
+
+```yaml
+serve:
+  importMap:
+    generate: false
+    overrideFile: '.config/importmap.json'
+```
+
+Use the `--no-import-map-generate` flag to disable temporarily:
+```sh
+cem serve --no-import-map-generate --import-map-override-file .config/importmap.json
+```
+
+### Debugging Overrides
+
+To verify your overrides are applied correctly:
+
+1. **View the generated import map** in your browser's DevTools:
+   - Open any demo page
+   - View source (Ctrl+U or Cmd+U)
+   - Find the `<script type="importmap">` tag
+   - Verify your overrides appear in the `imports` or `scopes` sections
+
+2. **Check server logs** with the `--verbose` flag:
+   ```sh
+   cem serve --verbose
+   ```
+
+   Look for entries like:
+   ```
+   [DEBUG] Applied 2 import map overrides
+   [DEBUG] Import map entry: lit -> https://cdn.jsdelivr.net/npm/lit@3/+esm
+   ```
+
+For complete configuration reference, see **[Configuration](/docs/configuration/)**.
 
 ## Benefits
 

@@ -548,6 +548,9 @@ func TestImportResolution(t *testing.T) {
 		Port:   8015,
 		Reload: true,
 		FS:     mfs,
+		ImportMap: serve.ImportMapConfig{
+			Generate: true,
+		},
 	})
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)

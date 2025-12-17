@@ -225,8 +225,9 @@ func Generate(rootDir string, config *Config) (*ImportMap, error) {
 	return result, nil
 }
 
-// applyOverrides merges user import map file and CLI overrides into the result
+// applyOverrides merges user override file and config overrides into the result
 // This is called both in the normal flow and when package.json is missing
+// Priority (highest wins): Config override > Override file > Auto-generated
 func applyOverrides(result *ImportMap, cfg *Config, fs platform.FileSystem) error {
 	// Merge with user override file (if provided)
 	if cfg.InputMapPath != "" {
@@ -257,10 +258,28 @@ func applyOverrides(result *ImportMap, cfg *Config, fs platform.FileSystem) erro
 		}
 	}
 
-	// Apply CLI overrides (highest priority)
-	if cfg.CLIOverrides != nil {
-		for key, value := range cfg.CLIOverrides {
+	// Apply config overrides (highest priority)
+	if cfg.ConfigOverride != nil {
+		// Merge imports
+		for key, value := range cfg.ConfigOverride.Imports {
 			result.Imports[key] = value
+		}
+		// Merge scopes
+		if len(cfg.ConfigOverride.Scopes) > 0 {
+			if result.Scopes == nil {
+				result.Scopes = make(map[string]map[string]string)
+			}
+			for scopeKey, configScopeMap := range cfg.ConfigOverride.Scopes {
+				if result.Scopes[scopeKey] == nil {
+					// No existing scope for this key, use the entire config scope map
+					result.Scopes[scopeKey] = configScopeMap
+				} else {
+					// Merge individual import entries, config entries override existing
+					for importKey, importValue := range configScopeMap {
+						result.Scopes[scopeKey][importKey] = importValue
+					}
+				}
+			}
 		}
 	}
 

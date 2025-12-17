@@ -54,11 +54,29 @@ type MCPConfig struct {
 	MaxDescriptionLength int `mapstructure:"maxDescriptionLength" yaml:"maxDescriptionLength"`
 }
 
+type ImportMapOverride struct {
+	// Import mappings (package name -> URL)
+	Imports map[string]string `mapstructure:"imports" yaml:"imports"`
+	// Scoped import mappings (scope path -> imports)
+	Scopes map[string]map[string]string `mapstructure:"scopes" yaml:"scopes"`
+}
+
+type ImportMapConfig struct {
+	// Enable automatic import map generation (default: true)
+	Generate bool `mapstructure:"generate" yaml:"generate"`
+	// Path to a JSON file containing custom import map entries
+	OverrideFile string `mapstructure:"overrideFile" yaml:"overrideFile"`
+	// Import map override (imports and scopes) from config file
+	Override ImportMapOverride `mapstructure:"override" yaml:"override"`
+}
+
 type ServeConfig struct {
 	// Port to run the development server on (default: 8000)
 	Port int `mapstructure:"port" yaml:"port"`
 	// Whether to automatically open browser on server start
 	OpenBrowser bool `mapstructure:"openBrowser" yaml:"openBrowser"`
+	// Import map configuration
+	ImportMap ImportMapConfig `mapstructure:"importMap" yaml:"importMap"`
 	// Transform configuration
 	Transforms TransformsConfig `mapstructure:"transforms" yaml:"transforms"`
 }
@@ -115,6 +133,22 @@ func (c *CemConfig) Clone() *CemConfig {
 	if c.Generate.Exclude != nil {
 		clone.Generate.Exclude = make([]string, len(c.Generate.Exclude))
 		copy(clone.Generate.Exclude, c.Generate.Exclude)
+	}
+	// Deep copy import map config override
+	if c.Serve.ImportMap.Override.Imports != nil {
+		clone.Serve.ImportMap.Override.Imports = make(map[string]string, len(c.Serve.ImportMap.Override.Imports))
+		for k, v := range c.Serve.ImportMap.Override.Imports {
+			clone.Serve.ImportMap.Override.Imports[k] = v
+		}
+	}
+	if c.Serve.ImportMap.Override.Scopes != nil {
+		clone.Serve.ImportMap.Override.Scopes = make(map[string]map[string]string, len(c.Serve.ImportMap.Override.Scopes))
+		for scopeKey, scopeMap := range c.Serve.ImportMap.Override.Scopes {
+			clone.Serve.ImportMap.Override.Scopes[scopeKey] = make(map[string]string, len(scopeMap))
+			for k, v := range scopeMap {
+				clone.Serve.ImportMap.Override.Scopes[scopeKey][k] = v
+			}
+		}
 	}
 	return &clone
 }

@@ -45,12 +45,26 @@ type CSSConfig struct {
 	Exclude []string // Glob patterns to exclude
 }
 
+// ImportMapOverride represents an import map with imports and scopes
+type ImportMapOverride struct {
+	Imports map[string]string            // Import mappings (package name -> URL)
+	Scopes  map[string]map[string]string // Scoped import mappings (scope path -> imports)
+}
+
+// ImportMapConfig holds import map override configuration
+type ImportMapConfig struct {
+	Generate     bool              // Enable automatic import map generation (default: true)
+	OverrideFile string            // Path to a JSON file with custom import map entries
+	Override     ImportMapOverride // Import map override from config (imports and scopes)
+}
+
 // Config represents the dev server configuration
 type Config struct {
 	Port                 int
 	Reload               bool
 	Target               transform.Target    // Transform target (default: ES2022) - deprecated, use Transforms.TypeScript.Target
 	Transforms           TransformConfig     // Transform configuration
+	ImportMap            ImportMapConfig     // Import map override configuration
 	ConfigFile           string              // Path to config file (for error reporting)
 	WatchIgnore          []string            // Glob patterns to ignore in file watcher (e.g., ["_site/**", "dist/**"])
 	SourceControlRootURL string              // Source control root URL for demo routing (e.g., "https://github.com/user/repo/tree/main/")
