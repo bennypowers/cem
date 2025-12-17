@@ -16,6 +16,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package config
 
+import (
+	"bennypowers.dev/cem/serve/middleware/types"
+)
+
 type DemoDiscoveryConfig struct {
 	FileGlob string `mapstructure:"fileGlob" yaml:"fileGlob"`
 	// URLPattern uses standard URLPattern syntax (e.g., "/components/:element/demo/:demo.html")
@@ -59,6 +63,8 @@ type ServeConfig struct {
 	Port int `mapstructure:"port" yaml:"port"`
 	// Whether to automatically open browser on server start
 	OpenBrowser bool `mapstructure:"openBrowser" yaml:"openBrowser"`
+	// Import map configuration
+	ImportMap types.ImportMapConfig `mapstructure:"importMap" yaml:"importMap"`
 	// Transform configuration
 	Transforms TransformsConfig `mapstructure:"transforms" yaml:"transforms"`
 }
@@ -115,6 +121,22 @@ func (c *CemConfig) Clone() *CemConfig {
 	if c.Generate.Exclude != nil {
 		clone.Generate.Exclude = make([]string, len(c.Generate.Exclude))
 		copy(clone.Generate.Exclude, c.Generate.Exclude)
+	}
+	// Deep copy import map config override
+	if c.Serve.ImportMap.Override.Imports != nil {
+		clone.Serve.ImportMap.Override.Imports = make(map[string]string, len(c.Serve.ImportMap.Override.Imports))
+		for k, v := range c.Serve.ImportMap.Override.Imports {
+			clone.Serve.ImportMap.Override.Imports[k] = v
+		}
+	}
+	if c.Serve.ImportMap.Override.Scopes != nil {
+		clone.Serve.ImportMap.Override.Scopes = make(map[string]map[string]string, len(c.Serve.ImportMap.Override.Scopes))
+		for scopeKey, scopeMap := range c.Serve.ImportMap.Override.Scopes {
+			clone.Serve.ImportMap.Override.Scopes[scopeKey] = make(map[string]string, len(scopeMap))
+			for k, v := range scopeMap {
+				clone.Serve.ImportMap.Override.Scopes[scopeKey][k] = v
+			}
+		}
 	}
 	return &clone
 }

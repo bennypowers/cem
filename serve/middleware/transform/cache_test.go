@@ -82,7 +82,7 @@ func TestCache_LogsStatsWhenCalled(t *testing.T) {
 	logged := false
 	var logMessage string
 	mockLogger := &mockLogger{
-		infoFunc: func(msg string, args ...any) {
+		debugFunc: func(msg string, args ...any) {
 			logged = true
 			logMessage = msg
 		},
@@ -204,7 +204,7 @@ func TestCache_TransitiveInvalidation(t *testing.T) {
 	keyB := transform.CacheKey{Path: "/test/b.ts", ModTime: time.Now(), Size: 100}
 	keyC := transform.CacheKey{Path: "/test/c.ts", ModTime: time.Now(), Size: 100}
 
-	cache.Set(keyC, []byte("// c.ts"), []string{})              // c has no deps
+	cache.Set(keyC, []byte("// c.ts"), []string{})             // c has no deps
 	cache.Set(keyB, []byte("// b.ts"), []string{"/test/c.ts"}) // b imports c
 	cache.Set(keyA, []byte("// a.ts"), []string{"/test/b.ts"}) // a imports b
 

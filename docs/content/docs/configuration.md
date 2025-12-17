@@ -76,6 +76,25 @@ serve:
     - '_site/**'
     - 'node_modules/**'
 
+  # Import map configuration
+  importMap:
+    # Enable automatic import map generation (default: true)
+    generate: true
+
+    # Path to a JSON file containing custom import map entries
+    # These entries are merged with auto-generated imports
+    overrideFile: '.config/importmap.json'
+
+    # Import map override from config (highest priority)
+    # Full import map structure with imports and scopes
+    override:
+      imports:
+        'lit': 'https://cdn.jsdelivr.net/npm/lit@3/+esm'
+        'lit/': 'https://cdn.jsdelivr.net/npm/lit@3/'
+      scopes:
+        '/demos/':
+          'lit': '/node_modules/lit/index.js'
+
   # Transform configuration
   transforms:
     # TypeScript transformation
@@ -94,6 +113,115 @@ serve:
       exclude:
         - 'demo/**/*.css'
         - '**/*.min.css'
+```
+
+## Import Map Overrides
+
+The dev server automatically generates import maps from `package.json`, but you can customize or override these mappings.
+
+### Override Priority
+
+Import map entries are merged with the following priority (highest wins):
+
+1. **Auto-generated** - From `package.json` dependencies
+2. **Override file** - Custom import map JSON file (via `serve.importMap.overrideFile`)
+3. **Config overrides** - Individual overrides in config (via `serve.importMap.override`)
+
+### Override File
+
+Create a JSON file with custom import map entries:
+
+**.config/importmap.json:**
+```json
+{
+  "imports": {
+    "lit": "https://cdn.jsdelivr.net/npm/lit@3/+esm",
+    "lit/": "https://cdn.jsdelivr.net/npm/lit@3/",
+    "@patternfly/elements/": "/node_modules/@patternfly/elements/"
+  },
+  "scopes": {
+    "/demos/": {
+      "lit": "/node_modules/lit/index.js"
+    }
+  }
+}
+```
+
+Then reference it in your config:
+
+```yaml
+serve:
+  importMap:
+    overrideFile: '.config/importmap.json'
+```
+
+### Config Overrides
+
+Specify overrides directly in your config using the full import map structure:
+
+```yaml
+serve:
+  importMap:
+    override:
+      imports:
+        'lit': 'https://cdn.jsdelivr.net/npm/lit@3/+esm'
+        'lit/': 'https://cdn.jsdelivr.net/npm/lit@3/'
+        '@custom/library': '/vendor/custom-library.js'
+      scopes:
+        '/demos/legacy/':
+          'lit': 'https://cdn.jsdelivr.net/npm/lit@2/+esm'
+```
+
+Config overrides support both `imports` and `scopes`, giving you full control over the import map structure.
+
+### Use Cases
+
+**Use CDN instead of local modules:**
+```yaml
+serve:
+  importMap:
+    override:
+      imports:
+        'lit': 'https://cdn.jsdelivr.net/npm/lit@3/+esm'
+        'lit/': 'https://cdn.jsdelivr.net/npm/lit@3/'
+```
+
+**Point to local development version:**
+```yaml
+serve:
+  importMap:
+    override:
+      imports:
+        '@my-org/components': '/packages/components/src/index.js'
+```
+
+**Override specific subpaths:**
+```yaml
+serve:
+  importMap:
+    override:
+      imports:
+        'some-lib/broken-export': '/local-fixes/fixed-export.js'
+```
+
+**Use scoped overrides for different contexts:**
+```yaml
+serve:
+  importMap:
+    override:
+      imports:
+        'react': 'https://esm.sh/react@18'
+      scopes:
+        '/demos/legacy/':
+          'react': 'https://esm.sh/react@17'
+```
+
+**Disable automatic generation (use only override file):**
+```yaml
+serve:
+  importMap:
+    generate: false
+    overrideFile: '.config/importmap.json'
 ```
 
 ## Demo Discovery Features

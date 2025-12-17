@@ -51,7 +51,7 @@ func (im *ImportMap) ToJSON() string {
 // Config configures import map generation
 type Config struct {
 	InputMapPath      string                       // Path to user override file
-	CLIOverrides      map[string]string            // CLI flag overrides (highest priority)
+	ConfigOverride    *ImportMap                   // Config file overrides (imports and scopes) - uses ImportMap directly
 	Logger            types.Logger                 // Logger for warnings
 	WorkspacePackages []middleware.WorkspacePackage // If set, generate workspace-mode import map (flattened scopes)
 	FS                platform.FileSystem          // Filesystem abstraction (defaults to OS filesystem if nil)

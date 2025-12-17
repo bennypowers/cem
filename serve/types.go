@@ -24,6 +24,7 @@ import (
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/logger"
 	"bennypowers.dev/cem/serve/middleware/transform"
+	"bennypowers.dev/cem/serve/middleware/types"
 )
 
 // TransformConfig holds transform-specific configuration
@@ -49,10 +50,11 @@ type CSSConfig struct {
 type Config struct {
 	Port                 int
 	Reload               bool
-	Target               transform.Target    // Transform target (default: ES2022) - deprecated, use Transforms.TypeScript.Target
-	Transforms           TransformConfig     // Transform configuration
-	ConfigFile           string              // Path to config file (for error reporting)
-	WatchIgnore          []string            // Glob patterns to ignore in file watcher (e.g., ["_site/**", "dist/**"])
+	Target               transform.Target       // Transform target (default: ES2022) - deprecated, use Transforms.TypeScript.Target
+	Transforms           TransformConfig        // Transform configuration
+	ImportMap            types.ImportMapConfig  // Import map override configuration
+	ConfigFile           string                 // Path to config file (for error reporting)
+	WatchIgnore          []string               // Glob patterns to ignore in file watcher (e.g., ["_site/**", "dist/**"])
 	SourceControlRootURL string              // Source control root URL for demo routing (e.g., "https://github.com/user/repo/tree/main/")
 	FS                   platform.FileSystem // Optional filesystem for testing (defaults to os package)
 }
