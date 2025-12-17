@@ -48,16 +48,10 @@ func (im *ImportMap) ToJSON() string {
 	return string(bytes)
 }
 
-// ConfigOverride represents import map overrides from config file
-type ConfigOverride struct {
-	Imports map[string]string            // Import mappings
-	Scopes  map[string]map[string]string // Scoped mappings
-}
-
 // Config configures import map generation
 type Config struct {
 	InputMapPath      string                       // Path to user override file
-	ConfigOverride    *ConfigOverride              // Config file overrides (imports and scopes)
+	ConfigOverride    *ImportMap                   // Config file overrides (imports and scopes) - uses ImportMap directly
 	Logger            types.Logger                 // Logger for warnings
 	WorkspacePackages []middleware.WorkspacePackage // If set, generate workspace-mode import map (flattened scopes)
 	FS                platform.FileSystem          // Filesystem abstraction (defaults to OS filesystem if nil)

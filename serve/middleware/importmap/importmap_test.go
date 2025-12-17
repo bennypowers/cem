@@ -803,7 +803,7 @@ func TestImportMap_ConfigPriorityConfigOverride(t *testing.T) {
 	// Config overrides should win over both
 	config := &Config{
 		InputMapPath: overridePath,
-		ConfigOverride: &ConfigOverride{
+		ConfigOverride: &ImportMap{
 			Imports: map[string]string{
 				"lit": "https://cdn.jsdelivr.net/npm/lit@3",
 			},
@@ -1196,7 +1196,7 @@ func TestImportMap_MissingPackageJSON_WithOverrides(t *testing.T) {
 	// Test with both user import map and config overrides (no package.json)
 	config := &Config{
 		InputMapPath: userMapPath,
-		ConfigOverride: &ConfigOverride{
+		ConfigOverride: &ImportMap{
 			Imports: map[string]string{
 				"react": "/vendor/react.js",
 			},

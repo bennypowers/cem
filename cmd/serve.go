@@ -31,6 +31,7 @@ import (
 	"bennypowers.dev/cem/serve"
 	"bennypowers.dev/cem/serve/logger"
 	"bennypowers.dev/cem/serve/middleware/transform"
+	"bennypowers.dev/cem/serve/middleware/types"
 	W "bennypowers.dev/cem/workspace"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -81,7 +82,7 @@ var serveCmd = &cobra.Command{
 		importMapOverrideFile := viper.GetString("serve.importMap.overrideFile")
 
 		// Load config-based override (full import map structure)
-		var importMapOverride serve.ImportMapOverride
+		var importMapOverride types.ImportMapOverride
 		if viper.IsSet("serve.importMap.override.imports") {
 			importMapOverride.Imports = viper.GetStringMapString("serve.importMap.override.imports")
 		}
@@ -132,7 +133,7 @@ var serveCmd = &cobra.Command{
 			Target:               target,
 			WatchIgnore:          watchIgnore,
 			SourceControlRootURL: sourceControlRootURL,
-			ImportMap: serve.ImportMapConfig{
+			ImportMap: types.ImportMapConfig{
 				Generate:     importMapGenerate,
 				OverrideFile: importMapOverrideFile,
 				Override:     importMapOverride,

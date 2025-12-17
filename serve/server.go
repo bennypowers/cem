@@ -163,11 +163,11 @@ func (s *Server) ImportMap() middleware.ImportMap {
 }
 
 // buildConfigOverride converts serve config override to import map config override
-func (s *Server) buildConfigOverride() *importmappkg.ConfigOverride {
+func (s *Server) buildConfigOverride() *importmappkg.ImportMap {
 	if len(s.config.ImportMap.Override.Imports) == 0 && len(s.config.ImportMap.Override.Scopes) == 0 {
 		return nil
 	}
-	return &importmappkg.ConfigOverride{
+	return &importmappkg.ImportMap{
 		Imports: s.config.ImportMap.Override.Imports,
 		Scopes:  s.config.ImportMap.Override.Scopes,
 	}

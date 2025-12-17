@@ -231,12 +231,32 @@ func Generate(rootDir string, config *Config) (*ImportMap, error) {
 func applyOverrides(result *ImportMap, cfg *Config, fs platform.FileSystem) error {
 	// Merge with user override file (if provided)
 	if cfg.InputMapPath != "" {
-		userMap, err := readImportMapFile(cfg.InputMapPath, fs)
+		// Validate override file path to prevent common mistakes and improve error messages
+		// Note: Path traversal is allowed here since this is a config file path specified by
+		// the server owner/developer, not user input from web clients.
+		cleanPath := filepath.Clean(cfg.InputMapPath)
+
+		// Check if file exists before attempting to read
+		if _, err := fs.Stat(cleanPath); err != nil {
+			if os.IsNotExist(err) {
+				return fmt.Errorf("import map override file not found: %s", cleanPath)
+			}
+			return fmt.Errorf("cannot access import map override file %s: %w", cleanPath, err)
+		}
+
+		userMap, err := readImportMapFile(cleanPath, fs)
 		if err != nil {
-			return fmt.Errorf("reading user override file: %w", err)
+			return fmt.Errorf("reading user override file %s: %w", cleanPath, err)
 		}
 		// User overrides win - deep merge
 		for key, value := range userMap.Imports {
+			// Validate key doesn't contain problematic characters
+			if strings.ContainsAny(key, "\x00\n\r") {
+				if cfg.Logger != nil {
+					cfg.Logger.Warning("Skipping invalid import map key from override file (contains control characters): %q", key)
+				}
+				continue
+			}
 			result.Imports[key] = value
 		}
 		// Merge scopes from user import map
@@ -245,12 +265,36 @@ func applyOverrides(result *ImportMap, cfg *Config, fs platform.FileSystem) erro
 				result.Scopes = make(map[string]map[string]string)
 			}
 			for scopeKey, userScopeMap := range userMap.Scopes {
+				// Validate scope key
+				if strings.ContainsAny(scopeKey, "\x00\n\r") {
+					if cfg.Logger != nil {
+						cfg.Logger.Warning("Skipping invalid scope key from override file (contains control characters): %q", scopeKey)
+					}
+					continue
+				}
+
 				if result.Scopes[scopeKey] == nil {
-					// No existing scope for this key, use the entire user scope map
-					result.Scopes[scopeKey] = userScopeMap
+					// No existing scope for this key, validate and copy the user scope map
+					validatedScopeMap := make(map[string]string)
+					for importKey, importValue := range userScopeMap {
+						if strings.ContainsAny(importKey, "\x00\n\r") {
+							if cfg.Logger != nil {
+								cfg.Logger.Warning("Skipping invalid import key in scope %q from override file: %q", scopeKey, importKey)
+							}
+							continue
+						}
+						validatedScopeMap[importKey] = importValue
+					}
+					result.Scopes[scopeKey] = validatedScopeMap
 				} else {
 					// Merge individual import entries, user entries override existing
 					for importKey, importValue := range userScopeMap {
+						if strings.ContainsAny(importKey, "\x00\n\r") {
+							if cfg.Logger != nil {
+								cfg.Logger.Warning("Skipping invalid import key in scope %q from override file: %q", scopeKey, importKey)
+							}
+							continue
+						}
 						result.Scopes[scopeKey][importKey] = importValue
 					}
 				}
@@ -262,6 +306,13 @@ func applyOverrides(result *ImportMap, cfg *Config, fs platform.FileSystem) erro
 	if cfg.ConfigOverride != nil {
 		// Merge imports
 		for key, value := range cfg.ConfigOverride.Imports {
+			// Validate key doesn't contain problematic characters
+			if strings.ContainsAny(key, "\x00\n\r") {
+				if cfg.Logger != nil {
+					cfg.Logger.Warning("Skipping invalid import map key from config override (contains control characters): %q", key)
+				}
+				continue
+			}
 			result.Imports[key] = value
 		}
 		// Merge scopes
@@ -270,12 +321,36 @@ func applyOverrides(result *ImportMap, cfg *Config, fs platform.FileSystem) erro
 				result.Scopes = make(map[string]map[string]string)
 			}
 			for scopeKey, configScopeMap := range cfg.ConfigOverride.Scopes {
+				// Validate scope key
+				if strings.ContainsAny(scopeKey, "\x00\n\r") {
+					if cfg.Logger != nil {
+						cfg.Logger.Warning("Skipping invalid scope key from config override (contains control characters): %q", scopeKey)
+					}
+					continue
+				}
+
 				if result.Scopes[scopeKey] == nil {
-					// No existing scope for this key, use the entire config scope map
-					result.Scopes[scopeKey] = configScopeMap
+					// No existing scope for this key, validate and copy the config scope map
+					validatedScopeMap := make(map[string]string)
+					for importKey, importValue := range configScopeMap {
+						if strings.ContainsAny(importKey, "\x00\n\r") {
+							if cfg.Logger != nil {
+								cfg.Logger.Warning("Skipping invalid import key in scope %q from config override: %q", scopeKey, importKey)
+							}
+							continue
+						}
+						validatedScopeMap[importKey] = importValue
+					}
+					result.Scopes[scopeKey] = validatedScopeMap
 				} else {
 					// Merge individual import entries, config entries override existing
 					for importKey, importValue := range configScopeMap {
+						if strings.ContainsAny(importKey, "\x00\n\r") {
+							if cfg.Logger != nil {
+								cfg.Logger.Warning("Skipping invalid import key in scope %q from config override: %q", scopeKey, importKey)
+							}
+							continue
+						}
 						result.Scopes[scopeKey][importKey] = importValue
 					}
 				}

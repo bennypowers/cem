@@ -33,6 +33,7 @@ import (
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve"
 	importmappkg "bennypowers.dev/cem/serve/middleware/importmap"
+	"bennypowers.dev/cem/serve/middleware/types"
 )
 
 // newTestFS creates an in-memory filesystem with manifest-regen fixture data
@@ -548,7 +549,7 @@ func TestImportResolution(t *testing.T) {
 		Port:   8015,
 		Reload: true,
 		FS:     mfs,
-		ImportMap: serve.ImportMapConfig{
+		ImportMap: types.ImportMapConfig{
 			Generate: true,
 		},
 	})

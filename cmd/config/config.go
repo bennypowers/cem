@@ -16,6 +16,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package config
 
+import (
+	"bennypowers.dev/cem/serve/middleware/types"
+)
+
 type DemoDiscoveryConfig struct {
 	FileGlob string `mapstructure:"fileGlob" yaml:"fileGlob"`
 	// URLPattern uses standard URLPattern syntax (e.g., "/components/:element/demo/:demo.html")
@@ -54,29 +58,13 @@ type MCPConfig struct {
 	MaxDescriptionLength int `mapstructure:"maxDescriptionLength" yaml:"maxDescriptionLength"`
 }
 
-type ImportMapOverride struct {
-	// Import mappings (package name -> URL)
-	Imports map[string]string `mapstructure:"imports" yaml:"imports"`
-	// Scoped import mappings (scope path -> imports)
-	Scopes map[string]map[string]string `mapstructure:"scopes" yaml:"scopes"`
-}
-
-type ImportMapConfig struct {
-	// Enable automatic import map generation (default: true)
-	Generate bool `mapstructure:"generate" yaml:"generate"`
-	// Path to a JSON file containing custom import map entries
-	OverrideFile string `mapstructure:"overrideFile" yaml:"overrideFile"`
-	// Import map override (imports and scopes) from config file
-	Override ImportMapOverride `mapstructure:"override" yaml:"override"`
-}
-
 type ServeConfig struct {
 	// Port to run the development server on (default: 8000)
 	Port int `mapstructure:"port" yaml:"port"`
 	// Whether to automatically open browser on server start
 	OpenBrowser bool `mapstructure:"openBrowser" yaml:"openBrowser"`
 	// Import map configuration
-	ImportMap ImportMapConfig `mapstructure:"importMap" yaml:"importMap"`
+	ImportMap types.ImportMapConfig `mapstructure:"importMap" yaml:"importMap"`
 	// Transform configuration
 	Transforms TransformsConfig `mapstructure:"transforms" yaml:"transforms"`
 }

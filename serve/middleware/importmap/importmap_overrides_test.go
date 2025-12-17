@@ -20,6 +20,7 @@ package importmap
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -57,7 +58,7 @@ func TestImportMap_ConfigOverrideImportsOnly(t *testing.T) {
 
 	// Config override with imports only (no scopes)
 	config := &Config{
-		ConfigOverride: &ConfigOverride{
+		ConfigOverride: &ImportMap{
 			Imports: map[string]string{
 				"lit":  "https://cdn.jsdelivr.net/npm/lit@3/+esm",
 				"lit/": "https://cdn.jsdelivr.net/npm/lit@3/",
@@ -117,7 +118,7 @@ func TestImportMap_ConfigOverrideScopesOnly(t *testing.T) {
 
 	// Config override with scopes only (no imports override)
 	config := &Config{
-		ConfigOverride: &ConfigOverride{
+		ConfigOverride: &ImportMap{
 			Scopes: map[string]map[string]string{
 				"/demos/": {
 					"lit": "/node_modules/lit/index.js",
@@ -189,7 +190,7 @@ func TestImportMap_ConfigOverrideBothImportsAndScopes(t *testing.T) {
 
 	// Config override with both imports and scopes
 	config := &Config{
-		ConfigOverride: &ConfigOverride{
+		ConfigOverride: &ImportMap{
 			Imports: map[string]string{
 				"react":  "https://esm.sh/react@18",
 				"react/": "https://esm.sh/react@18/",
@@ -279,7 +280,7 @@ func TestImportMap_ConfigOverridePriorityOverFile(t *testing.T) {
 	// Config override should win over file override
 	config := &Config{
 		InputMapPath: overridePath,
-		ConfigOverride: &ConfigOverride{
+		ConfigOverride: &ImportMap{
 			Imports: map[string]string{
 				"lit": "https://cdn.jsdelivr.net/npm/lit@3/+esm",
 			},
@@ -354,7 +355,7 @@ func TestImportMap_ConfigOverrideDeepMergeScopes(t *testing.T) {
 	// Config override adds another entry to the same scope
 	config := &Config{
 		InputMapPath: overridePath,
-		ConfigOverride: &ConfigOverride{
+		ConfigOverride: &ImportMap{
 			Scopes: map[string]map[string]string{
 				"/demos/": {
 					"react": "/vendor/react.js",
@@ -419,7 +420,7 @@ func TestImportMap_ConfigOverrideReplacesFileScope(t *testing.T) {
 	// Config override for same key in same scope (should replace)
 	config := &Config{
 		InputMapPath: overridePath,
-		ConfigOverride: &ConfigOverride{
+		ConfigOverride: &ImportMap{
 			Scopes: map[string]map[string]string{
 				"/demos/": {
 					"lit": "https://cdn.jsdelivr.net/npm/lit@3/+esm",
@@ -504,7 +505,7 @@ func TestImportMap_ConfigOverrideEmptyDoesNotCrash(t *testing.T) {
 
 	// Test with empty ConfigOverride
 	config2 := &Config{
-		ConfigOverride: &ConfigOverride{
+		ConfigOverride: &ImportMap{
 			Imports: map[string]string{},
 			Scopes:  map[string]map[string]string{},
 		},
@@ -531,7 +532,7 @@ func TestImportMap_ConfigOverrideWithNoPackageJSON(t *testing.T) {
 
 	// No package.json - only config override
 	config := &Config{
-		ConfigOverride: &ConfigOverride{
+		ConfigOverride: &ImportMap{
 			Imports: map[string]string{
 				"lit":    "https://cdn.jsdelivr.net/npm/lit@3/+esm",
 				"react":  "https://esm.sh/react@18",
@@ -570,5 +571,107 @@ func TestImportMap_ConfigOverrideWithNoPackageJSON(t *testing.T) {
 		t.Error("Expected /demos/ scope")
 	} else if demoScope["lit"] != "/vendor/lit.js" {
 		t.Errorf("Expected scoped lit override, got: %s", demoScope["lit"])
+	}
+}
+
+// TestImportMap_ConfigOverrideValidation verifies control characters are rejected
+func TestImportMap_ConfigOverrideValidation(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	packageJSON := `{
+  "name": "test-project"
+}`
+	err := os.WriteFile(filepath.Join(tmpDir, "package.json"), []byte(packageJSON), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write package.json: %v", err)
+	}
+
+	warnings := []string{}
+	config := &Config{
+		Logger: &testLogger{warnings: &warnings},
+		ConfigOverride: &ImportMap{
+			Imports: map[string]string{
+				"valid-key":        "/valid/path.js",
+				"key\nwith\nnewline": "/bad/path.js",     // Should be rejected
+				"key\x00with\x00null": "/bad/path2.js",   // Should be rejected
+				"another-valid":    "https://example.com", // Should be kept
+			},
+			Scopes: map[string]map[string]string{
+				"/valid-scope/": {
+					"lit":                   "/vendor/lit.js",
+					"react\rwith\rcarriage": "/bad/react.js", // Should be rejected
+				},
+				"/scope\nwith\nnewline/": { // Scope key should be rejected
+					"lit": "/vendor/lit2.js",
+				},
+			},
+		},
+	}
+
+	importMap, err := Generate(tmpDir, config)
+	if err != nil {
+		t.Fatalf("Generate returned error: %v", err)
+	}
+
+	if importMap == nil {
+		t.Fatal("Expected import map, got nil")
+	}
+
+	// Valid keys should be present
+	if _, exists := importMap.Imports["valid-key"]; !exists {
+		t.Error("Expected valid-key to be present")
+	}
+	if _, exists := importMap.Imports["another-valid"]; !exists {
+		t.Error("Expected another-valid to be present")
+	}
+
+	// Invalid keys should be rejected
+	if _, exists := importMap.Imports["key\nwith\nnewline"]; exists {
+		t.Error("Expected key with newline to be rejected")
+	}
+	if _, exists := importMap.Imports["key\x00with\x00null"]; exists {
+		t.Error("Expected key with null bytes to be rejected")
+	}
+
+	// Valid scope should be present with valid import
+	if validScope, exists := importMap.Scopes["/valid-scope/"]; !exists {
+		t.Error("Expected /valid-scope/ to be present")
+	} else {
+		if _, exists := validScope["lit"]; !exists {
+			t.Error("Expected lit in /valid-scope/")
+		}
+		if _, exists := validScope["react\rwith\rcarriage"]; exists {
+			t.Error("Expected import key with carriage return to be rejected")
+		}
+	}
+
+	// Invalid scope key should be rejected
+	if _, exists := importMap.Scopes["/scope\nwith\nnewline/"]; exists {
+		t.Error("Expected scope key with newline to be rejected")
+	}
+
+	// Should have logged warnings
+	if len(warnings) == 0 {
+		t.Error("Expected warnings to be logged for invalid keys")
+	}
+
+	// Verify specific warnings were logged
+	foundInvalidImport := false
+	foundInvalidScope := false
+	for _, w := range warnings {
+		if strings.Contains(w, "control characters") {
+			if strings.Contains(w, "import map key") {
+				foundInvalidImport = true
+			}
+			if strings.Contains(w, "scope key") {
+				foundInvalidScope = true
+			}
+		}
+	}
+	if !foundInvalidImport {
+		t.Errorf("Expected warning about invalid import key, got warnings: %v", warnings)
+	}
+	if !foundInvalidScope {
+		t.Errorf("Expected warning about invalid scope key, got warnings: %v", warnings)
 	}
 }
