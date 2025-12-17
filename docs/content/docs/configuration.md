@@ -83,6 +83,14 @@ serve:
     # Note: "iframe" mode is not yet implemented
     rendering: light
 
+  # Path mappings for src/dist separation
+  # Maps URL prefixes to source directories for TypeScript resolution
+  # Automatically detected from tsconfig.json (rootDir/outDir)
+  # Manual mappings override automatic detection
+  pathMappings:
+    "/dist/": "/src/"
+    "/lib/": "/sources/"
+
   # Import map configuration
   importMap:
     # Enable automatic import map generation (default: true)
@@ -229,6 +237,173 @@ serve:
   importMap:
     generate: false
     overrideFile: '.config/importmap.json'
+```
+
+## Path Mappings
+
+Path mappings enable buildless TypeScript development with src/dist separation. The dev server automatically resolves requests to compiled output paths (e.g., `/dist/foo.js`) to their TypeScript source files (e.g., `/src/foo.ts`).
+
+### Automatic Detection from tsconfig.json
+
+The dev server automatically reads your `tsconfig.json` and creates path mappings based on `rootDir` and `outDir`:
+
+**tsconfig.json:**
+```json
+{
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist"
+  }
+}
+```
+
+This automatically creates the mapping: `"/dist/" → "/src/"`
+
+**How it works:**
+
+1. Request arrives: `GET /dist/components/button.js`
+2. Dev server checks path mappings: `/dist/` maps to `/src/`
+3. Resolves to source file: `/src/components/button.ts`
+4. Transforms TypeScript to JavaScript on-demand
+5. Serves transformed code with source maps
+
+### Manual Configuration
+
+Override or extend automatic mappings in your config:
+
+```yaml
+serve:
+  pathMappings:
+    "/dist/": "/src/"
+    "/lib/": "/sources/"
+    "/build/": "/typescript/"
+```
+
+Manual mappings take precedence over automatic detection from `tsconfig.json`.
+
+### Resolution Strategy
+
+The dev server uses a multi-strategy approach to find source files:
+
+1. **Co-located files** (backward compatibility)
+   - Tries `/dist/button.ts` alongside `/dist/button.js`
+   - Supports in-place compilation workflows
+
+2. **Path mappings** (src/dist separation)
+   - Applies configured mappings: `/dist/` → `/src/`
+   - Resolves `/dist/button.js` to `/src/button.ts`
+
+If neither strategy finds a source file, the request falls through to static file serving.
+
+### tsconfig.json Inheritance
+
+Path mappings work with TypeScript's `extends` feature:
+
+**tsconfig.base.json:**
+```json
+{
+  "compilerOptions": {
+    "rootDir": "./src"
+  }
+}
+```
+
+**tsconfig.json:**
+```json
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist"
+  }
+}
+```
+
+The dev server correctly merges inherited values and creates the mapping `"/dist/" → "/src/"`.
+
+### Workspace Mode
+
+In workspace/monorepo setups, each package can have its own `tsconfig.json` with different path mappings:
+
+```
+packages/
+  components/
+    tsconfig.json  # rootDir: "src", outDir: "dist"
+    src/
+    dist/
+  elements/
+    tsconfig.json  # rootDir: "lib", outDir: "build"
+    lib/
+    build/
+```
+
+Each package's mappings are discovered independently and applied to requests within that package's path.
+
+### Edge Cases
+
+**Default rootDir with custom outDir:**
+
+```json
+{
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "dist"
+  }
+}
+```
+
+Creates mapping: `"/dist/" → "/./"`
+
+The dev server normalizes this correctly via `filepath.Join()`, resolving `/dist/foo.js` to `/foo.ts` at the project root.
+
+**Same rootDir and outDir:**
+
+```json
+{
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "."
+  }
+}
+```
+
+No path mapping is created (in-place compilation). The dev server falls back to co-located file resolution.
+
+### Use Cases
+
+**Standard src/dist separation:**
+```yaml
+# Automatic from tsconfig.json
+# No config needed - just works!
+```
+
+**Custom build output directories:**
+```yaml
+serve:
+  pathMappings:
+    "/lib/": "/src/"
+    "/esm/": "/src/"
+    "/cjs/": "/src/"
+```
+
+**Legacy projects with non-standard structure:**
+```yaml
+serve:
+  pathMappings:
+    "/compiled/": "/source/typescript/"
+    "/js/": "/ts/"
+```
+
+### Debugging Path Mappings
+
+Use verbose logging to see path resolution in action:
+
+```sh
+cem serve --verbose
+```
+
+Look for log messages like:
+```
+PathResolver: mapped source found: /dist/button.js -> /src/button.ts (mapping: /dist/ -> /src/)
 ```
 
 ## Demo Discovery Features

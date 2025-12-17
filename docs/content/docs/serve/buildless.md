@@ -38,11 +38,65 @@ The default target is `es2022`. See [esbuild's target documentation](https://esb
 The dev server respects your existing TypeScript configuration:
 - `compilerOptions.target`
 - `compilerOptions.module`
+- `compilerOptions.rootDir` and `compilerOptions.outDir` (for src/dist separation)
 - `include` and `exclude` patterns
-- Path mappings (via import maps)
 
 {{<tip "info">}}
 Command-line `--target` flag overrides `tsconfig.json` settings.
+{{</tip>}}
+
+### Separate `dist` Directory
+
+If your project uses separate source and output directories (e.g., `src/` and `dist/`), the dev server automatically handles path resolution so you can reference compiled output paths while serving source files.
+
+**How it works:**
+
+1. The dev server reads your `tsconfig.json` to detect `rootDir` and `outDir`
+2. It creates path mappings automatically (e.g., `"/dist/" → "/src/"`)
+3. Requests to `/dist/components/button.js` resolve to `/src/components/button.ts`
+4. Your demos can reference the output path, but the server serves the source
+
+**Example tsconfig.json:**
+```json
+{
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "target": "ES2022"
+  }
+}
+```
+
+With this configuration:
+- Request: `/dist/components/button.js`
+- Resolves to: `/src/components/button.ts`
+- Server transforms and serves the TypeScript source
+
+**Benefits:**
+- Write demos using the same paths your production build uses
+- No need to change import paths between development and production
+- Works seamlessly with TypeScript's project references
+- Supports monorepo/workspace setups with per-package `tsconfig.json` files
+
+**Fallback behavior:**
+
+If the dev server can't find a source file via path mappings, it tries co-located files (in-place compilation). This ensures backward compatibility with projects that compile TypeScript in the same directory as source files.
+
+**Manual configuration:**
+
+If you need custom path mappings beyond what `tsconfig.json` provides, configure them explicitly:
+
+```yaml
+serve:
+  pathMappings:
+    "/lib/": "/sources/"
+    "/build/": "/typescript/"
+```
+
+See **[Configuration](/docs/configuration/)** for details.
+
+{{<tip "warning">}}
+Path mappings only apply to TypeScript transformation. They don't affect static file serving or import map generation.
 {{</tip>}}
 
 ## Import CSS as Modules
@@ -50,7 +104,7 @@ Command-line `--target` flag overrides `tsconfig.json` settings.
 Import CSS files directly in your components using modern CSS module syntax:
 
 ```js
-import styles from './my-element.css';
+import styles from './my-element.css' with { type: 'css' };
 
 class MyElement extends HTMLElement {
   constructor() {
