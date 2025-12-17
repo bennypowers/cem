@@ -877,11 +877,12 @@ func (s *Server) InitializeWorkspaceMode() error {
 			FS:                s.fs,
 		})
 		if err != nil {
-			return fmt.Errorf("generating workspace import map: %w", err)
+			s.logger.Warning("Failed to generate workspace import map: %v", err)
+			s.importMap = nil
+		} else {
+			s.importMap = importMap
+			s.logger.Info("Generated workspace import map")
 		}
-
-		s.importMap = importMap
-		s.logger.Info("Generated workspace import map")
 	} else {
 		s.logger.Debug("Import map generation disabled")
 	}
