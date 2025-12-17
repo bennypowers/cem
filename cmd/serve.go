@@ -73,11 +73,15 @@ var serveCmd = &cobra.Command{
 		cssExclude := viper.GetStringSlice("serve.transforms.css.exclude")
 
 		// Load import map configuration
-		noImportMapGenerate, _ := cmd.Flags().GetBool("no-import-map-generate")
-		importMapGenerate := !noImportMapGenerate
-		// Config file can also set this
+		importMapGenerate := true
+		// Config file sets the default value if present
 		if viper.IsSet("serve.importMap.generate") {
 			importMapGenerate = viper.GetBool("serve.importMap.generate")
+		}
+		// CLI flag overrides config if explicitly set
+		if cmd.Flags().Changed("no-import-map-generate") {
+			noGenerate, _ := cmd.Flags().GetBool("no-import-map-generate")
+			importMapGenerate = !noGenerate
 		}
 		importMapOverrideFile := viper.GetString("serve.importMap.overrideFile")
 
