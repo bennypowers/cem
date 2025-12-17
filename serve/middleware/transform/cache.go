@@ -332,7 +332,7 @@ func (c *Cache) LogStats() {
 	}
 
 	stats := c.Stats()
-	c.logger.Info(
+	c.logger.Debug(
 		"Transform cache stats: %d hits, %d misses, %d evictions, %.1f%% hit rate, %d entries, %d/%d bytes",
 		stats.Hits,
 		stats.Misses,
