@@ -665,6 +665,51 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 	// Extract state from request cookie for SSR
 	state := GetStateFromRequest(r, config.Context.Logger())
 
+	// Determine rendering mode: config default, overridden by query parameter
+	renderingMode := config.Context.DemoRenderingMode()
+
+	// Check for conflicting query parameters
+	hasRendering := queryParams["rendering"] != ""
+	hasShadow := queryParams["shadow"] != ""
+
+	if hasRendering && hasShadow {
+		// Both parameters present - broadcast error and prefer ?rendering
+		config.Context.Logger().Warning("Both ?rendering and ?shadow query parameters present - using ?rendering value")
+		_ = config.Context.BroadcastError(
+			"Query Parameter Conflict",
+			"Both ?rendering and ?shadow query parameters are present. Using ?rendering value. Remove ?shadow to avoid this warning.",
+			entry.TagName,
+		)
+	}
+
+	if renderingParam, ok := queryParams["rendering"]; ok {
+		// Validate query parameter
+		switch renderingParam {
+		case "light", "shadow":
+			renderingMode = renderingParam
+		case "iframe":
+			// Iframe not yet implemented - broadcast error and fallback to shadow
+			config.Context.Logger().Warning("iframe rendering mode requested but not implemented, falling back to shadow")
+			_ = config.Context.BroadcastError(
+				"Rendering Mode Error",
+				"iframe rendering mode is not yet implemented. Falling back to shadow mode.",
+				entry.TagName,
+			)
+			renderingMode = "shadow"
+		default:
+			config.Context.Logger().Warning("invalid rendering mode '%s', using config default '%s'", renderingParam, renderingMode)
+			_ = config.Context.BroadcastError(
+				"Invalid Rendering Mode",
+				fmt.Sprintf("Invalid rendering mode '%s'. Valid values are 'light', 'shadow', or 'iframe'. Using config default '%s'.", renderingParam, renderingMode),
+				entry.TagName,
+			)
+		}
+	} else if queryParams["shadow"] == "true" {
+		// Backward compatibility: ?shadow=true overrides to shadow mode
+		// Only apply if ?rendering is not present (checked above)
+		renderingMode = "shadow"
+	}
+
 	chromeData := ChromeData{
 		TagName:        entry.TagName,
 		DemoTitle:      demoTitle,
@@ -673,7 +718,7 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 		ImportMap:      template.HTML(importMapJSON),
 		EnabledKnobs:   enabledKnobs,
 		KnobsHTML:      knobsHTML,
-		ShadowMode:     queryParams["shadow"] == "true",
+		RenderingMode:  renderingMode,
 		SourceURL:      sourceURL,      // Link to source file
 		CanonicalURL:   entry.Demo.URL, // Link to canonical demo
 		PackageName:    packageName,

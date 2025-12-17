@@ -78,10 +78,10 @@ type Server struct {
 	workspacePackages []middleware.WorkspacePackage // Discovered packages with manifests
 	// Cached routing table for demo routes (both workspace and single-package mode)
 	demoRoutes           map[string]*routes.DemoRouteEntry
-	importMap            *importmappkg.ImportMap     // Cached import map (workspace or single-package)
-	sourceControlRootURL string                      // Source control root URL for demo routing
-	templates            *routes.TemplateRegistry    // Template registry for HTML rendering
-	pathMappings         map[string]string           // Path mappings for src/dist separation
+	importMap            *importmappkg.ImportMap  // Cached import map (workspace or single-package)
+	sourceControlRootURL string                   // Source control root URL for demo routing
+	templates            *routes.TemplateRegistry // Template registry for HTML rendering
+	pathMappings         map[string]string        // Path mappings for src/dist separation
 }
 
 // NewServer creates a new server with the given port
@@ -204,6 +204,17 @@ func (s *Server) FileSystem() platform.FileSystem {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.fs
+}
+
+// DemoRenderingMode returns the configured default rendering mode for demos
+func (s *Server) DemoRenderingMode() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	rendering := s.config.Demos.Rendering
+	if rendering == "" {
+		return "light" // default
+	}
+	return rendering
 }
 
 // Start starts the HTTP server
@@ -1509,10 +1520,15 @@ func (s *Server) setupMiddleware() {
 	// Terminal handler: static files
 	s.handler = middleware.Chain(
 		http.HandlerFunc(s.serveStaticFiles), // Static file server (terminal handler)
-		shadowroot.New(s.logger, errorBroadcaster{s}, routes.TemplatesFS, func(elementName string, data any) (string, error) {
-			html, err := routes.RenderElementShadowRoot(s.templates, elementName, data)
-			return string(html), err
-		}), // Shadow root injection (last - processes final HTML)
+		shadowroot.New(
+			s.logger,
+			errorBroadcaster{s},
+			routes.TemplatesFS,
+			func(elementName string, data any) (string, error) {
+				html, err := routes.RenderElementShadowRoot(s.templates, elementName, data)
+				return string(html), err
+			},
+		), // Shadow root injection (last - processes final HTML)
 		inject.New(s.config.Reload, "/__cem/websocket-client.js"), // WebSocket injection
 		importmappkg.New(importmappkg.MiddlewareConfig{ // Import map injection
 			Context: s,

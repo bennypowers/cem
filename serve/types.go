@@ -46,6 +46,11 @@ type CSSConfig struct {
 	Exclude []string // Glob patterns to exclude
 }
 
+// DemosConfig holds demo rendering configuration
+type DemosConfig struct {
+	Rendering string // Default rendering mode: "light", "shadow", or "iframe"
+}
+
 // Config represents the dev server configuration
 type Config struct {
 	Port                 int
@@ -53,6 +58,7 @@ type Config struct {
 	Target               transform.Target      // Transform target (default: ES2022) - deprecated, use Transforms.TypeScript.Target
 	Transforms           TransformConfig       // Transform configuration
 	ImportMap            types.ImportMapConfig // Import map override configuration
+	Demos                DemosConfig           // Demo rendering configuration
 	ConfigFile           string                // Path to config file (for error reporting)
 	WatchIgnore          []string              // Glob patterns to ignore in file watcher (e.g., ["_site/**", "dist/**"])
 	SourceControlRootURL string                // Source control root URL for demo routing (e.g., "https://github.com/user/repo/tree/main/")

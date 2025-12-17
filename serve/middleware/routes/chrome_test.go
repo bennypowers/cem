@@ -128,11 +128,11 @@ func TestChromeRendering_ShadowMode(t *testing.T) {
 	}
 
 	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
-		TagName:    "my-element",
-		DemoTitle:  "Basic Example",
-		DemoHTML:   template.HTML(demoHTML),
-		ImportMap:  "{}",
-		ShadowMode: true,
+		TagName:       "my-element",
+		DemoTitle:     "Basic Example",
+		DemoHTML:      template.HTML(demoHTML),
+		ImportMap:     "{}",
+		RenderingMode: "shadow",
 	})
 	if err != nil {
 		t.Fatalf("Failed to render chrome: %v", err)

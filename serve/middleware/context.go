@@ -78,4 +78,8 @@ type DevServerContext interface {
 
 	// BroadcastError broadcasts an error notification to all WebSocket clients
 	BroadcastError(title, message, file string) error
+
+	// DemoRenderingMode returns the configured default rendering mode for demos
+	// Returns "light", "shadow", or "iframe"
+	DemoRenderingMode() string
 }

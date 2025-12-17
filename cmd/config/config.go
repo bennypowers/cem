@@ -17,6 +17,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package config
 
 import (
+	"fmt"
+	"maps"
+
 	"bennypowers.dev/cem/serve/middleware/types"
 )
 
@@ -69,6 +72,8 @@ type ServeConfig struct {
 	Transforms TransformsConfig `mapstructure:"transforms" yaml:"transforms"`
 	// Path mappings for src/dist separation (e.g., {"/dist/": "./src/"})
 	PathMappings map[string]string `mapstructure:"pathMappings" yaml:"pathMappings"`
+	// Demo configuration
+	Demos DemosConfig `mapstructure:"demos" yaml:"demos"`
 }
 
 type TransformsConfig struct {
@@ -92,6 +97,12 @@ type CSSTransformConfig struct {
 	Exclude []string `mapstructure:"exclude" yaml:"exclude"`
 }
 
+type DemosConfig struct {
+	// Default rendering mode for demos: "light", "shadow", or "iframe" (default: "light")
+	// Can be overridden per-demo with ?rendering=shadow|light|iframe query parameter
+	Rendering string `mapstructure:"rendering" yaml:"rendering"`
+}
+
 type CemConfig struct {
 	ProjectDir string `mapstructure:"projectDir" yaml:"projectDir"`
 	ConfigFile string `mapstructure:"configFile" yaml:"configFile"`
@@ -108,6 +119,28 @@ type CemConfig struct {
 	SourceControlRootUrl string `mapstructure:"sourceControlRootUrl" yaml:"sourceControlRootUrl"`
 	// Verbose logging output
 	Verbose bool `mapstructure:"verbose" yaml:"verbose"`
+}
+
+// Validate validates the configuration and returns an error if invalid
+func (c *CemConfig) Validate() error {
+	if c == nil {
+		return nil
+	}
+
+	// Validate demo rendering mode
+	rendering := c.Serve.Demos.Rendering
+	if rendering != "" {
+		switch rendering {
+		case "light", "shadow":
+			// Valid modes
+		case "iframe":
+			return fmt.Errorf("serve.demos.rendering: 'iframe' mode is not yet implemented - use 'light' or 'shadow'")
+		default:
+			return fmt.Errorf("serve.demos.rendering: invalid value '%s' - must be 'light', 'shadow', or 'iframe'", rendering)
+		}
+	}
+
+	return nil
 }
 
 func (c *CemConfig) Clone() *CemConfig {
@@ -127,17 +160,13 @@ func (c *CemConfig) Clone() *CemConfig {
 	// Deep copy import map config override
 	if c.Serve.ImportMap.Override.Imports != nil {
 		clone.Serve.ImportMap.Override.Imports = make(map[string]string, len(c.Serve.ImportMap.Override.Imports))
-		for k, v := range c.Serve.ImportMap.Override.Imports {
-			clone.Serve.ImportMap.Override.Imports[k] = v
-		}
+		maps.Copy(clone.Serve.ImportMap.Override.Imports, c.Serve.ImportMap.Override.Imports)
 	}
 	if c.Serve.ImportMap.Override.Scopes != nil {
 		clone.Serve.ImportMap.Override.Scopes = make(map[string]map[string]string, len(c.Serve.ImportMap.Override.Scopes))
 		for scopeKey, scopeMap := range c.Serve.ImportMap.Override.Scopes {
 			clone.Serve.ImportMap.Override.Scopes[scopeKey] = make(map[string]string, len(scopeMap))
-			for k, v := range scopeMap {
-				clone.Serve.ImportMap.Override.Scopes[scopeKey][k] = v
-			}
+			maps.Copy(clone.Serve.ImportMap.Override.Scopes[scopeKey], scopeMap)
 		}
 	}
 	// Deep copy path mappings
