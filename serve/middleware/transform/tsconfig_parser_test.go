@@ -265,3 +265,39 @@ func TestParseTsConfig_OverrideInheritedValues(t *testing.T) {
 		}
 	}
 }
+
+// TestParseTsConfig_DefaultRootDirWithCustomOutDir tests edge case where rootDir="." with different outDir
+func TestParseTsConfig_DefaultRootDirWithCustomOutDir(t *testing.T) {
+	fs := testutil.NewFixtureFS(t, "path-mappings/in-place", "/test")
+
+	// Create tsconfig with rootDir="." and outDir="dist"
+	fs.AddFile("/test/tsconfig.json", `{
+		"compilerOptions": {
+			"rootDir": ".",
+			"outDir": "dist"
+		}
+	}`, 0644)
+
+	mappings, err := transform.ParseTsConfig("/test/tsconfig.json", fs)
+	if err != nil {
+		t.Fatalf("ParseTsConfig failed: %v", err)
+	}
+
+	// Should create mapping from /dist/ to /./
+	// PathResolver.fileExists() normalizes this correctly via filepath.Clean()
+	expected := map[string]string{
+		"/dist/": "/./",
+	}
+
+	if len(mappings) != len(expected) {
+		t.Errorf("Expected %d mappings, got %d", len(expected), len(mappings))
+	}
+
+	for key, expectedVal := range expected {
+		if actualVal, ok := mappings[key]; !ok {
+			t.Errorf("Missing mapping for %s", key)
+		} else if actualVal != expectedVal {
+			t.Errorf("For key %s: expected %s, got %s", key, expectedVal, actualVal)
+		}
+	}
+}
