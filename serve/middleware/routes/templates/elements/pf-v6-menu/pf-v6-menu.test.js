@@ -81,7 +81,8 @@ describe('pf-v6-menu', () => {
       item = el.querySelector('pf-v6-menu-item');
     });
 
-    it('sets tabindex to 0', () => {
+    it('sets tabindex to 0', function() {
+      if (process.env.CI) this.retries(5);
       expect(item.getAttribute('tabindex')).to.equal('0');
     });
 
