@@ -50,13 +50,13 @@ type CSSConfig struct {
 type Config struct {
 	Port                 int
 	Reload               bool
-	Target               transform.Target       // Transform target (default: ES2022) - deprecated, use Transforms.TypeScript.Target
-	Transforms           TransformConfig        // Transform configuration
-	ImportMap            types.ImportMapConfig  // Import map override configuration
-	ConfigFile           string                 // Path to config file (for error reporting)
-	WatchIgnore          []string               // Glob patterns to ignore in file watcher (e.g., ["_site/**", "dist/**"])
-	SourceControlRootURL string              // Source control root URL for demo routing (e.g., "https://github.com/user/repo/tree/main/")
-	FS                   platform.FileSystem // Optional filesystem for testing (defaults to os package)
+	Target               transform.Target      // Transform target (default: ES2022) - deprecated, use Transforms.TypeScript.Target
+	Transforms           TransformConfig       // Transform configuration
+	ImportMap            types.ImportMapConfig // Import map override configuration
+	ConfigFile           string                // Path to config file (for error reporting)
+	WatchIgnore          []string              // Glob patterns to ignore in file watcher (e.g., ["_site/**", "dist/**"])
+	SourceControlRootURL string                // Source control root URL for demo routing (e.g., "https://github.com/user/repo/tree/main/")
+	FS                   platform.FileSystem   // Optional filesystem for testing (defaults to os package)
 }
 
 // ReloadMessage represents a WebSocket reload event
@@ -104,11 +104,11 @@ type FileWatcher interface {
 
 // FileEvent represents a file system event
 type FileEvent struct {
-	Path             string   // Primary file path (for single file events)
-	Paths            []string // All changed file paths (for batched events)
-	EventType        string   // Event type for primary file (create/delete/modify)
-	HasCreates       bool     // True if any files were created
-	HasDeletes       bool     // True if any files were deleted
-	HasPackageJSON   bool     // True if package.json was modified
-	Timestamp        time.Time
+	Path           string   // Primary file path (for single file events)
+	Paths          []string // All changed file paths (for batched events)
+	EventType      string   // Event type for primary file (create/delete/modify)
+	HasCreates     bool     // True if any files were created
+	HasDeletes     bool     // True if any files were deleted
+	HasPackageJSON bool     // True if package.json was modified
+	Timestamp      time.Time
 }

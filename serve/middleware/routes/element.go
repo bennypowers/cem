@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"slices"
 
 	"github.com/tdewolff/minify/v2"
 	"github.com/tdewolff/minify/v2/css"
@@ -48,7 +49,7 @@ var InlineStyleElements []string = nil // nil = inline all (minified)
 // ElementWrapperData holds data for rendering the element wrapper template
 type ElementWrapperData struct {
 	ElementName string
-	CSS         template.CSS  // Only populated for elements in InlineStyleElements
+	CSS         template.CSS // Only populated for elements in InlineStyleElements
 	ShadowDOM   template.HTML
 	LightDOM    template.HTML
 }
@@ -61,19 +62,18 @@ func shouldInlineCSS(elementName string) bool {
 	}
 
 	// Otherwise check if element is in the list
-	for _, name := range InlineStyleElements {
-		if name == elementName {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(InlineStyleElements, elementName)
 }
 
 // RenderElementShadowRoot renders a custom element's shadow root with DSD
 // Returns just the shadow root (template + styles + shadow DOM)
 // Light DOM content should be provided by the caller in the template
 // This function is recursive - it will render nested custom elements' shadow roots
-func RenderElementShadowRoot(templates *TemplateRegistry, elementName string, data interface{}) (template.HTML, error) {
+func RenderElementShadowRoot(
+	templates *TemplateRegistry,
+	elementName string,
+	data any,
+) (template.HTML, error) {
 	// Read the element's HTML template (shadow DOM structure)
 	templatePath := fmt.Sprintf("templates/elements/%s/%s.html", elementName, elementName)
 	templateContent, err := TemplatesFS.ReadFile(templatePath)

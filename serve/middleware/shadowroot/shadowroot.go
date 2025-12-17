@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"embed"
 	"io"
+	"maps"
 	"net/http"
 	"strings"
 
@@ -33,14 +34,14 @@ import (
 
 // Middleware injects declarative shadow DOM for custom elements
 type Middleware struct {
-	logger         types.Logger
-	broadcaster    types.ErrorBroadcaster
-	knownElements  set.Set[string]
-	renderShadow   ShadowRootRenderer
+	logger        types.Logger
+	broadcaster   types.ErrorBroadcaster
+	knownElements set.Set[string]
+	renderShadow  ShadowRootRenderer
 }
 
 // ShadowRootRenderer renders shadow DOM template for an element
-type ShadowRootRenderer func(elementName string, data interface{}) (string, error)
+type ShadowRootRenderer func(elementName string, data any) (string, error)
 
 // New creates a new shadow root injection middleware
 func New(logger types.Logger, broadcaster types.ErrorBroadcaster, templatesFS embed.FS, renderer ShadowRootRenderer) middleware.Middleware {
@@ -85,9 +86,7 @@ func newWithKnownElements(logger types.Logger, broadcaster types.ErrorBroadcaste
 			contentType := rec.Header().Get("Content-Type")
 			if !middleware.IsHTMLResponse(contentType) {
 				// Pass through non-HTML responses
-				for k, v := range rec.Header() {
-					w.Header()[k] = v
-				}
+				maps.Copy(w.Header(), rec.Header())
 				w.WriteHeader(rec.StatusCode())
 				_, _ = w.Write(rec.Body())
 				return
@@ -113,9 +112,7 @@ func newWithKnownElements(logger types.Logger, broadcaster types.ErrorBroadcaste
 			if err != nil {
 				logger.Error("Failed to inject shadow roots", "error", err)
 				// Fall back to original HTML on error
-				for k, v := range rec.Header() {
-					w.Header()[k] = v
-				}
+				maps.Copy(w.Header(), rec.Header())
 				w.WriteHeader(rec.StatusCode())
 				_, _ = w.Write(rec.Body())
 				return
@@ -133,9 +130,7 @@ func newWithKnownElements(logger types.Logger, broadcaster types.ErrorBroadcaste
 			}
 
 			// Write processed response
-			for k, v := range rec.Header() {
-				w.Header()[k] = v
-			}
+			maps.Copy(w.Header(), rec.Header())
 			w.WriteHeader(rec.StatusCode())
 			_, _ = w.Write(processed)
 		})

@@ -8,6 +8,7 @@ Run `go vet` to surface gopls suggestions. Common examples:
 - replace `interface{}` with `any`
 - replace `if/else` with `min`
 - replace `m[k]=v` loop with `maps.Copy` [mapsloop]
+- Loop can be simplified using slices.Contains [slicescontains]
 
 ## Testing
 

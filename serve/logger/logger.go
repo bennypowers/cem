@@ -40,7 +40,7 @@ type Logger interface {
 
 // LogMessage represents a log message broadcast to clients
 type LogMessage struct {
-	Type string      `json:"type"`
+	Type string     `json:"type"`
 	Logs []LogEntry `json:"logs"`
 }
 
@@ -206,7 +206,7 @@ func (l *ptermLogger) Stop() {
 	}
 }
 
-func (l *ptermLogger) log(level, levelType, msg string, args ...interface{}) {
+func (l *ptermLogger) log(level, levelType, msg string, args ...any) {
 	formatted := fmt.Sprintf(msg, args...)
 	now := time.Now()
 	timestamp := now.Format("15:04:05")
@@ -258,10 +258,9 @@ func (l *ptermLogger) log(level, levelType, msg string, args ...interface{}) {
 
 			// Visual length is just the actual text without ANSI codes
 			visualLen := len(level) + 1 + len(formatted)
-			padding := width - visualLen - 10 // 10 to prevent overflow (1 leading space + 8 for timestamp + 1 buffer)
-			if padding < 1 {
-				padding = 1
-			}
+			// 10 to prevent overflow (1 leading space + 8 for timestamp + 1 buffer)
+			timestampBuffer := 10
+			padding := max(width-visualLen-timestampBuffer, 1)
 
 			terminalLog := fmt.Sprintf(" %s %s%s%s", prefix, coloredMsg, strings.Repeat(" ", padding), timestampStr)
 			l.terminalLogs = append(l.terminalLogs, terminalLog)
@@ -322,19 +321,19 @@ func (l *ptermLogger) Logs() []LogEntry {
 	return logsCopy
 }
 
-func (l *ptermLogger) Info(msg string, args ...interface{}) {
+func (l *ptermLogger) Info(msg string, args ...any) {
 	l.log("INFO", "info", msg, args...)
 }
 
-func (l *ptermLogger) Warning(msg string, args ...interface{}) {
+func (l *ptermLogger) Warning(msg string, args ...any) {
 	l.log("WARN", "warning", msg, args...)
 }
 
-func (l *ptermLogger) Error(msg string, args ...interface{}) {
+func (l *ptermLogger) Error(msg string, args ...any) {
 	l.log("ERROR", "error", msg, args...)
 }
 
-func (l *ptermLogger) Debug(msg string, args ...interface{}) {
+func (l *ptermLogger) Debug(msg string, args ...any) {
 	l.log("DEBUG", "debug", msg, args...)
 }
 
@@ -348,3 +347,4 @@ func (l *ptermLogger) Clear() {
 		l.render()
 	}
 }
+

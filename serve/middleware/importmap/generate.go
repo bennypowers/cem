@@ -33,11 +33,11 @@ import (
 
 // packageJSON represents the structure we need from package.json
 type packageJSON struct {
-	Name         string                 `json:"name"`
-	Dependencies map[string]string      `json:"dependencies"`
-	Workspaces   interface{}            `json:"workspaces"` // Can be []string or object with "packages" field
-	Exports      interface{}            `json:"exports"`
-	Main         string                 `json:"main"`
+	Name         string            `json:"name"`
+	Dependencies map[string]string `json:"dependencies"`
+	Workspaces   any               `json:"workspaces"` // Can be []string or object with "packages" field
+	Exports      any               `json:"exports"`
+	Main         string            `json:"main"`
 }
 
 // findWorkspaceRoot walks up the directory tree to find the workspace root
@@ -356,8 +356,8 @@ func resolvePackageEntryPoint(pkgPath string, fs platform.FileSystem) (string, e
 	}
 
 	var pkg struct {
-		Exports interface{} `json:"exports"`
-		Main    string      `json:"main"`
+		Exports any    `json:"exports"`
+		Main    string `json:"main"`
 	}
 	if err := json.Unmarshal(data, &pkg); err != nil {
 		return "", err
@@ -366,7 +366,7 @@ func resolvePackageEntryPoint(pkgPath string, fs platform.FileSystem) (string, e
 	// Try exports field first
 	if pkg.Exports != nil {
 		// Try to resolve the "." export
-		if exportsMap, ok := pkg.Exports.(map[string]interface{}); ok {
+		if exportsMap, ok := pkg.Exports.(map[string]any); ok {
 			if rootExport, ok := exportsMap["."].(string); ok {
 				return strings.TrimPrefix(rootExport, "./"), nil
 			}
@@ -433,7 +433,7 @@ func addPackageExportsToImportMap(importMap *ImportMap, pkgName, pkgPath, rootDi
 			// Simple string export: "exports": "./index.js"
 			importMap.Imports[pkgName] = pkgWebPath + "/" + strings.TrimPrefix(exports, "./")
 
-		case map[string]interface{}:
+		case map[string]any:
 			// Check if this is a condition-only export (no subpaths)
 			// e.g., { "import": "./dist/index.mjs", "require": "./dist/index.cjs" }
 			hasSubpaths := false
@@ -513,7 +513,7 @@ func addPackageExportsToImportMap(importMap *ImportMap, pkgName, pkgPath, rootDi
 }
 
 // resolveExportValue resolves an export value to a web path
-func resolveExportValue(exportValue interface{}, pkgPath, rootDir string) (string, error) {
+func resolveExportValue(exportValue any, pkgPath, rootDir string) (string, error) {
 	// Calculate relative path and handle root package case
 	pkgRelPath, err := filepath.Rel(rootDir, pkgPath)
 	if err != nil {
@@ -531,7 +531,7 @@ func resolveExportValue(exportValue interface{}, pkgPath, rootDir string) (strin
 		// Direct string path
 		return pkgWebPath + "/" + strings.TrimPrefix(v, "./"), nil
 
-	case map[string]interface{}:
+	case map[string]any:
 		// Conditional exports - prioritize "import" condition
 		if importValue, ok := v["import"]; ok {
 			// Recursively resolve if it's a nested condition
@@ -539,7 +539,7 @@ func resolveExportValue(exportValue interface{}, pkgPath, rootDir string) (strin
 				return pkgWebPath + "/" + strings.TrimPrefix(importPath, "./"), nil
 			}
 			// Recursively resolve nested conditions
-			if importMap, ok := importValue.(map[string]interface{}); ok {
+			if importMap, ok := importValue.(map[string]any); ok {
 				return resolveExportValue(importMap, pkgPath, rootDir)
 			}
 		}
@@ -549,7 +549,7 @@ func resolveExportValue(exportValue interface{}, pkgPath, rootDir string) (strin
 				return pkgWebPath + "/" + strings.TrimPrefix(defaultPath, "./"), nil
 			}
 			// Recursively resolve nested default
-			if defaultMap, ok := defaultValue.(map[string]interface{}); ok {
+			if defaultMap, ok := defaultValue.(map[string]any); ok {
 				return resolveExportValue(defaultMap, pkgPath, rootDir)
 			}
 		}
@@ -655,13 +655,17 @@ func buildScopesForPackage(importMap *ImportMap, pkgName string, nodeModulesPath
 }
 
 // addDependencyExportsToScope adds dependency exports to a scope map
-func addDependencyExportsToScope(scope map[string]string, depName, depWebPath string, exports interface{}) {
+func addDependencyExportsToScope(
+	scope map[string]string,
+	depName, depWebPath string,
+	exports any,
+) {
 	switch exp := exports.(type) {
 	case string:
 		// Simple string export
 		scope[depName] = depWebPath + "/" + strings.TrimPrefix(exp, "./")
 
-	case map[string]interface{}:
+	case map[string]any:
 		// Check if this is condition-only (no subpaths)
 		hasSubpaths := false
 		for exportPath := range exp {
@@ -719,7 +723,7 @@ func addDependencyExportsToScope(scope map[string]string, depName, depWebPath st
 }
 
 // resolveSimpleExportValue resolves an export value to a path (simplified version for scopes)
-func resolveSimpleExportValue(exportValue interface{}, depWebPath string) string {
+func resolveSimpleExportValue(exportValue any, depWebPath string) string {
 	switch v := exportValue.(type) {
 	case string:
 		trimmed := strings.TrimPrefix(v, "./")
@@ -727,7 +731,7 @@ func resolveSimpleExportValue(exportValue interface{}, depWebPath string) string
 			return "./" + trimmed
 		}
 		return depWebPath + "/" + trimmed
-	case map[string]interface{}:
+	case map[string]any:
 		// Try import condition first
 		if importValue, ok := v["import"]; ok {
 			if importPath, ok := importValue.(string); ok {
@@ -738,7 +742,7 @@ func resolveSimpleExportValue(exportValue interface{}, depWebPath string) string
 				return depWebPath + "/" + trimmed
 			}
 			// Recursively resolve nested import conditions
-			if importMap, ok := importValue.(map[string]interface{}); ok {
+			if importMap, ok := importValue.(map[string]any); ok {
 				return resolveSimpleExportValue(importMap, depWebPath)
 			}
 		}
@@ -752,7 +756,7 @@ func resolveSimpleExportValue(exportValue interface{}, depWebPath string) string
 				return depWebPath + "/" + trimmed
 			}
 			// Recursively resolve nested default
-			if defaultMap, ok := defaultValue.(map[string]interface{}); ok {
+			if defaultMap, ok := defaultValue.(map[string]any); ok {
 				return resolveSimpleExportValue(defaultMap, depWebPath)
 			}
 		}
