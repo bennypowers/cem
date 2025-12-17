@@ -756,8 +756,8 @@ func TestImportMap_OnlyBareSpecifiers(t *testing.T) {
 	// The actual filtering happens in auto-generation logic, not user overrides
 }
 
-// TestImportMap_ConfigPriorityCLI verifies CLI overrides have highest priority
-func TestImportMap_ConfigPriorityCLI(t *testing.T) {
+// TestImportMap_ConfigPriorityConfigOverride verifies config overrides have highest priority
+func TestImportMap_ConfigPriorityConfigOverride(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	packageJSON := `{
@@ -800,11 +800,13 @@ func TestImportMap_ConfigPriorityCLI(t *testing.T) {
 		t.Fatalf("Failed to write override file: %v", err)
 	}
 
-	// CLI overrides should win over both
+	// Config overrides should win over both
 	config := &Config{
 		InputMapPath: overridePath,
-		CLIOverrides: map[string]string{
-			"lit": "https://cdn.jsdelivr.net/npm/lit@3",
+		ConfigOverride: &ImportMap{
+			Imports: map[string]string{
+				"lit": "https://cdn.jsdelivr.net/npm/lit@3",
+			},
 		},
 	}
 
@@ -817,9 +819,9 @@ func TestImportMap_ConfigPriorityCLI(t *testing.T) {
 		t.Fatal("Expected import map, got nil")
 	}
 
-	// CLI override should win
+	// Config override should win
 	if importMap.Imports["lit"] != "https://cdn.jsdelivr.net/npm/lit@3" {
-		t.Errorf("Expected CLI override to win, got: %s", importMap.Imports["lit"])
+		t.Errorf("Expected config override to win, got: %s", importMap.Imports["lit"])
 	}
 }
 
@@ -1191,11 +1193,13 @@ func TestImportMap_MissingPackageJSON_WithOverrides(t *testing.T) {
 		t.Fatalf("Failed to write user import map: %v", err)
 	}
 
-	// Test with both user import map and CLI overrides (no package.json)
+	// Test with both user import map and config overrides (no package.json)
 	config := &Config{
 		InputMapPath: userMapPath,
-		CLIOverrides: map[string]string{
-			"react": "/vendor/react.js",
+		ConfigOverride: &ImportMap{
+			Imports: map[string]string{
+				"react": "/vendor/react.js",
+			},
 		},
 	}
 
@@ -1216,9 +1220,9 @@ func TestImportMap_MissingPackageJSON_WithOverrides(t *testing.T) {
 		t.Errorf("Expected lit/ mapping from user import map, got: %s", importMap.Imports["lit/"])
 	}
 
-	// Verify CLI override was applied (highest priority)
+	// Verify config override was applied (highest priority)
 	if importMap.Imports["react"] != "/vendor/react.js" {
-		t.Errorf("Expected react mapping from CLI override, got: %s", importMap.Imports["react"])
+		t.Errorf("Expected react mapping from config override, got: %s", importMap.Imports["react"])
 	}
 }
 

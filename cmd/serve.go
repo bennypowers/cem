@@ -31,6 +31,7 @@ import (
 	"bennypowers.dev/cem/serve"
 	"bennypowers.dev/cem/serve/logger"
 	"bennypowers.dev/cem/serve/middleware/transform"
+	"bennypowers.dev/cem/serve/middleware/types"
 	W "bennypowers.dev/cem/workspace"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -71,6 +72,41 @@ var serveCmd = &cobra.Command{
 		cssInclude := viper.GetStringSlice("serve.transforms.css.include")
 		cssExclude := viper.GetStringSlice("serve.transforms.css.exclude")
 
+		// Load import map configuration
+		importMapGenerate := true
+		// Config file sets the default value if present
+		if viper.IsSet("serve.importMap.generate") {
+			importMapGenerate = viper.GetBool("serve.importMap.generate")
+		}
+		// CLI flag overrides config if explicitly set
+		if cmd.Flags().Changed("no-import-map-generate") {
+			noGenerate, _ := cmd.Flags().GetBool("no-import-map-generate")
+			importMapGenerate = !noGenerate
+		}
+		importMapOverrideFile := viper.GetString("serve.importMap.overrideFile")
+
+		// Load config-based override (full import map structure)
+		var importMapOverride types.ImportMapOverride
+		if viper.IsSet("serve.importMap.override.imports") {
+			importMapOverride.Imports = viper.GetStringMapString("serve.importMap.override.imports")
+		}
+		if viper.IsSet("serve.importMap.override.scopes") {
+			scopes := viper.GetStringMap("serve.importMap.override.scopes")
+			if len(scopes) > 0 {
+				importMapOverride.Scopes = make(map[string]map[string]string)
+				for scopeKey, scopeVal := range scopes {
+					if scopeMap, ok := scopeVal.(map[string]interface{}); ok {
+						importMapOverride.Scopes[scopeKey] = make(map[string]string)
+						for k, v := range scopeMap {
+							if str, ok := v.(string); ok {
+								importMapOverride.Scopes[scopeKey][k] = str
+							}
+						}
+					}
+				}
+			}
+		}
+
 		// Get watch ignore patterns from config or flag
 		watchIgnore := viper.GetStringSlice("serve.watchIgnore")
 
@@ -101,6 +137,11 @@ var serveCmd = &cobra.Command{
 			Target:               target,
 			WatchIgnore:          watchIgnore,
 			SourceControlRootURL: sourceControlRootURL,
+			ImportMap: types.ImportMapConfig{
+				Generate:     importMapGenerate,
+				OverrideFile: importMapOverrideFile,
+				Override:     importMapOverride,
+			},
 			Transforms: serve.TransformConfig{
 				TypeScript: serve.TypeScriptConfig{
 					Enabled: tsEnabled,
@@ -419,6 +460,8 @@ func init() {
 
 	serveCmd.Flags().Int("port", 8000, "Port to serve on")
 	serveCmd.Flags().Bool("no-reload", false, "Disable live reload")
+	serveCmd.Flags().Bool("no-import-map-generate", false, "Disable automatic import map generation")
+	serveCmd.Flags().String("import-map-override-file", "", "Path to JSON file with custom import map entries")
 	serveCmd.Flags().String("target", "", "TypeScript/JavaScript transform target (es2015, es2016, es2017, es2018, es2019, es2020, es2021, es2022, es2023, esnext)")
 	serveCmd.Flags().StringSlice("watch-ignore", nil, "Glob patterns to ignore in file watcher (comma-separated, e.g., '_site/**,dist/**')")
 	serveCmd.Flags().StringSlice("css-transform", nil, "Glob patterns for CSS files to transform to JavaScript modules (e.g., 'src/**/*.css,elements/**/*.css')")
@@ -429,6 +472,10 @@ func init() {
 	}
 	if err := viper.BindPFlag("serve.no-reload", serveCmd.Flags().Lookup("no-reload")); err != nil {
 		panic(fmt.Sprintf("failed to bind flag serve.no-reload: %v", err))
+	}
+	// Bind import map flags (note: --no-import-map-generate is handled specially in RunE to invert to serve.importMap.generate)
+	if err := viper.BindPFlag("serve.importMap.overrideFile", serveCmd.Flags().Lookup("import-map-override-file")); err != nil {
+		panic(fmt.Sprintf("failed to bind flag serve.importMap.overrideFile: %v", err))
 	}
 	if err := viper.BindPFlag("serve.target", serveCmd.Flags().Lookup("target")); err != nil {
 		panic(fmt.Sprintf("failed to bind flag serve.target: %v", err))
