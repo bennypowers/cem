@@ -95,7 +95,7 @@ var serveCmd = &cobra.Command{
 			if len(scopes) > 0 {
 				importMapOverride.Scopes = make(map[string]map[string]string)
 				for scopeKey, scopeVal := range scopes {
-					if scopeMap, ok := scopeVal.(map[string]interface{}); ok {
+					if scopeMap, ok := scopeVal.(map[string]any); ok {
 						importMapOverride.Scopes[scopeKey] = make(map[string]string)
 						for k, v := range scopeMap {
 							if str, ok := v.(string); ok {
@@ -130,6 +130,19 @@ var serveCmd = &cobra.Command{
 		// Get source control root URL from config
 		sourceControlRootURL := viper.GetString("sourceControlRootUrl")
 
+		// Get demo rendering mode from config (default: "light")
+		demoRendering := viper.GetString("serve.demos.rendering")
+		if demoRendering == "" {
+			demoRendering = "light"
+		}
+		// Validate rendering mode - reject "iframe" since it's not implemented yet
+		if demoRendering != "light" && demoRendering != "shadow" && demoRendering != "iframe" {
+			return fmt.Errorf("invalid demo rendering mode '%s': must be 'light', 'shadow', or 'iframe'", demoRendering)
+		}
+		if demoRendering == "iframe" {
+			return fmt.Errorf("iframe rendering mode is not yet implemented - use 'light' or 'shadow'")
+		}
+
 		// Create server config
 		config := serve.Config{
 			Port:                 port,
@@ -141,6 +154,9 @@ var serveCmd = &cobra.Command{
 				Generate:     importMapGenerate,
 				OverrideFile: importMapOverrideFile,
 				Override:     importMapOverride,
+			},
+			Demos: serve.DemosConfig{
+				Rendering: demoRendering,
 			},
 			Transforms: serve.TransformConfig{
 				TypeScript: serve.TypeScriptConfig{

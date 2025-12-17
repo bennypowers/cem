@@ -89,10 +89,15 @@
     {{.NavigationHTML}}
     {{end}}
 
-    <!-- Demo in light DOM by default -->
-    {{if .ShadowMode}}
+    <!-- Demo rendering: light DOM (default), shadow DOM, or iframe -->
+    {{if eq .RenderingMode "shadow"}}
     <cem-serve-demo id="demo">
       <template shadowrootmode="open">{{.DemoHTML}}</template>
+    </cem-serve-demo>
+    {{else if eq .RenderingMode "iframe"}}
+    <!-- iframe mode not yet implemented, this should not be reached -->
+    <cem-serve-demo id="demo">
+      <p>Error: iframe rendering mode is not yet implemented.</p>
     </cem-serve-demo>
     {{else}}
     <cem-serve-demo id="demo">{{.DemoHTML}}</cem-serve-demo>

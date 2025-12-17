@@ -76,6 +76,13 @@ serve:
     - '_site/**'
     - 'node_modules/**'
 
+  # Demo rendering configuration
+  demos:
+    # Default rendering mode for demos: "light" (default), "shadow", or "iframe"
+    # Can be overridden per-demo with ?rendering=shadow|light query parameter
+    # Note: "iframe" mode is not yet implemented
+    rendering: light
+
   # Import map configuration
   importMap:
     # Enable automatic import map generation (default: true)
