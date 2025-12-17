@@ -1049,7 +1049,7 @@ func (s *Server) logCacheStats(interval time.Duration) {
 		case <-ticker.C:
 			if s.transformCache != nil {
 				stats := s.transformCache.Stats()
-				s.logger.Info("Transform cache stats: %d entries, %.1f%% hit rate, %d MB / %d MB",
+				s.logger.Debug("Transform cache stats: %d entries, %.1f%% hit rate, %d MB / %d MB",
 					stats.Entries,
 					stats.HitRate,
 					stats.SizeBytes/(1024*1024),
