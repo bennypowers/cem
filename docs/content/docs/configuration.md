@@ -125,7 +125,7 @@ Import map entries are merged with the following priority (highest wins):
 
 1. **Auto-generated** - From `package.json` dependencies
 2. **Override file** - Custom import map JSON file (via `serve.importMap.overrideFile`)
-3. **Config overrides** - Individual overrides in config (via `serve.importMap.overrides`)
+3. **Config overrides** - Individual overrides in config (via `serve.importMap.override`)
 
 ### Override File
 
