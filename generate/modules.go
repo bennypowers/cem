@@ -104,8 +104,6 @@ func NewModuleProcessor(
 		if errors.Is(err, M.ErrNotExported) {
 			logger.Warn("%v", err)
 			// Keep the original path - file is internal/not exported
-			// Clear the error so processing continues
-			err = nil
 		} else {
 			// Other errors are actual failures
 			return nil, err

@@ -1,0 +1,12 @@
+/* Size utilities */
+.small {
+  font-size: 0.875rem;
+}
+
+.medium {
+  font-size: 1rem;
+}
+
+.large {
+  font-size: 1.125rem;
+}

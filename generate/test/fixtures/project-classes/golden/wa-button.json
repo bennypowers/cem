@@ -295,10 +295,74 @@
           "source": {
             "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/wa-button.ts#L43"
           },
-          "kind": "class"
+          "kind": "class",
+          "tagName": "wa-button",
+          "events": [
+            {
+              "name": "blur",
+              "description": "Emitted when the button loses focus."
+            },
+            {
+              "name": "focus",
+              "description": "Emitted when the button gains focus."
+            },
+            {
+              "name": "wa-invalid",
+              "description": "Emitted when the form control has been checked for validity and its constraints aren't satisfied."
+            }
+          ],
+          "slots": [
+            {
+              "name": "start",
+              "description": "An element, such as `\u003cwa-icon\u003e`, placed before the label."
+            },
+            {
+              "name": "",
+              "description": "The button's label."
+            },
+            {
+              "name": "end",
+              "description": "An element, such as `\u003cwa-icon\u003e`, placed after the label."
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "base",
+              "description": "The component's base wrapper."
+            },
+            {
+              "name": "start",
+              "description": "The container that wraps the `start` slot."
+            },
+            {
+              "name": "label",
+              "description": "The button's label."
+            },
+            {
+              "name": "end",
+              "description": "The container that wraps the `end` slot."
+            },
+            {
+              "name": "caret",
+              "description": "The button's caret icon, a `\u003cwa-icon\u003e` element."
+            },
+            {
+              "name": "spinner",
+              "description": "The spinner that shows when the button is in the loading state."
+            }
+          ],
+          "customElement": true
         }
       ],
       "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "wa-button",
+          "declaration": {
+            "name": "WaButton",
+            "module": "src/wa-button.js"
+          }
+        },
         {
           "kind": "js",
           "name": "WaButton",
