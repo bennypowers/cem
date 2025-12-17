@@ -46,20 +46,22 @@ type TsConfigCompilerOptions struct {
 // Missing rootDir or outDir default to ".".
 // Relative paths are normalized to the tsconfig directory.
 func ParseTsConfig(path string, fs platform.FileSystem) (map[string]string, error) {
-	return parseTsConfigRecursive(path, fs, 0, make(map[string]bool))
+	mappings, _, err := parseTsConfigRecursive(path, fs, 0, make(map[string]bool))
+	return mappings, err
 }
 
-// parseTsConfigRecursive handles tsconfig parsing with inheritance support
+// parseTsConfigRecursive handles tsconfig parsing with inheritance support.
+// Returns both the path mappings and the parsed config for efficiency.
 func parseTsConfigRecursive(
 	path string,
 	fs platform.FileSystem,
 	depth int,
 	visited map[string]bool,
-) (map[string]string, error) {
+) (map[string]string, *TsConfig, error) {
 	// Prevent infinite recursion
 	const maxDepth = 5
 	if depth > maxDepth {
-		return nil, fmt.Errorf("tsconfig extends depth exceeded (max: %d)", maxDepth)
+		return nil, nil, fmt.Errorf("tsconfig extends depth exceeded (max: %d)", maxDepth)
 	}
 
 	// Prevent circular extends
@@ -68,20 +70,20 @@ func parseTsConfigRecursive(
 		absPath = path
 	}
 	if visited[absPath] {
-		return nil, fmt.Errorf("circular tsconfig extends detected: %s", absPath)
+		return nil, nil, fmt.Errorf("circular tsconfig extends detected: %s", absPath)
 	}
 	visited[absPath] = true
 
 	// Read tsconfig file
 	data, err := fs.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("reading tsconfig: %w", err)
+		return nil, nil, fmt.Errorf("reading tsconfig: %w", err)
 	}
 
 	// Parse JSON
 	var config TsConfig
 	if err := json.Unmarshal(data, &config); err != nil {
-		return nil, fmt.Errorf("parsing tsconfig JSON: %w", err)
+		return nil, nil, fmt.Errorf("parsing tsconfig JSON: %w", err)
 	}
 
 	// Merge compiler options from base config if extends is present
@@ -98,31 +100,17 @@ func parseTsConfigRecursive(
 		}
 
 		// Recursively parse base config (handles chained inheritance and depth tracking)
-		baseMappings, err := parseTsConfigRecursive(extendsPath, fs, depth+1, visited)
+		// Returns both mappings and the parsed config to avoid re-reading
+		_, baseConfig, err := parseTsConfigRecursive(extendsPath, fs, depth+1, visited)
 		if err != nil {
-			return nil, err
-		}
-
-		// Parse base config to get compiler options
-		baseData, err := fs.ReadFile(extendsPath)
-		if err != nil {
-			return nil, fmt.Errorf("reading extended tsconfig %s: %w", extendsPath, err)
-		}
-
-		var baseConfig TsConfig
-		if err := json.Unmarshal(baseData, &baseConfig); err != nil {
-			return nil, fmt.Errorf("parsing extended tsconfig JSON %s: %w", extendsPath, err)
+			return nil, nil, err
 		}
 
 		// Start with base values
-		if baseConfig.CompilerOptions != nil {
+		if baseConfig != nil && baseConfig.CompilerOptions != nil {
 			rootDir = baseConfig.CompilerOptions.RootDir
 			outDir = baseConfig.CompilerOptions.OutDir
 		}
-
-		// If base had mappings from further extends, we would merge them here
-		// For now, we just handle direct rootDir/outDir inheritance
-		_ = baseMappings
 	}
 
 	// Override with current config values
@@ -146,7 +134,7 @@ func parseTsConfigRecursive(
 	// If rootDir and outDir are the same, this is in-place compilation
 	// No path mapping needed
 	if rootDir == outDir {
-		return make(map[string]string), nil
+		return make(map[string]string), &config, nil
 	}
 
 	// Normalize paths relative to tsconfig directory
@@ -191,5 +179,5 @@ func parseTsConfigRecursive(
 	result := make(map[string]string)
 	result[relOutDir] = relRootDir
 
-	return result, nil
+	return result, &config, nil
 }
