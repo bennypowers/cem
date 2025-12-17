@@ -57,6 +57,7 @@ type Config struct {
 	WatchIgnore          []string              // Glob patterns to ignore in file watcher (e.g., ["_site/**", "dist/**"])
 	SourceControlRootURL string                // Source control root URL for demo routing (e.g., "https://github.com/user/repo/tree/main/")
 	FS                   platform.FileSystem   // Optional filesystem for testing (defaults to os package)
+	PathMappings         map[string]string     // Path mappings for src/dist separation (e.g., {"/dist/": "./src/"})
 }
 
 // ReloadMessage represents a WebSocket reload event

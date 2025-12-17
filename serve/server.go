@@ -78,9 +78,10 @@ type Server struct {
 	workspacePackages []middleware.WorkspacePackage // Discovered packages with manifests
 	// Cached routing table for demo routes (both workspace and single-package mode)
 	demoRoutes           map[string]*routes.DemoRouteEntry
-	importMap            *importmappkg.ImportMap  // Cached import map (workspace or single-package)
-	sourceControlRootURL string                   // Source control root URL for demo routing
-	templates            *routes.TemplateRegistry // Template registry for HTML rendering
+	importMap            *importmappkg.ImportMap     // Cached import map (workspace or single-package)
+	sourceControlRootURL string                      // Source control root URL for demo routing
+	templates            *routes.TemplateRegistry    // Template registry for HTML rendering
+	pathMappings         map[string]string           // Path mappings for src/dist separation
 }
 
 // NewServer creates a new server with the given port
@@ -406,6 +407,31 @@ func (s *Server) SetWatchDir(dir string) error {
 		s.tsconfigRaw = ""
 		s.logger.Debug("No tsconfig found, using default transform settings")
 	}
+
+	// Parse tsconfig for path mappings (supports src/dist separation)
+	var pathMappings map[string]string
+	for _, tsconfigPath := range tsconfigPaths {
+		if mappings, err := transform.ParseTsConfig(tsconfigPath, s.fs); err == nil {
+			pathMappings = mappings
+			if len(mappings) > 0 {
+				s.logger.Debug("Extracted path mappings from %s: %v", tsconfigPath, mappings)
+			}
+			break
+		}
+	}
+
+	// Merge with explicit config overrides (config takes precedence)
+	if s.config.PathMappings != nil {
+		if pathMappings == nil {
+			pathMappings = make(map[string]string)
+		}
+		for k, v := range s.config.PathMappings {
+			pathMappings[k] = v
+			s.logger.Debug("Config override path mapping: %s -> %s", k, v)
+		}
+	}
+
+	s.pathMappings = pathMappings
 
 	// Generate import map for single-package mode
 	// (Workspace mode generates in InitializeWorkspaceMode instead)
@@ -1500,6 +1526,7 @@ func (s *Server) setupMiddleware() {
 			Include:          s.config.Transforms.CSS.Include,
 			Exclude:          s.config.Transforms.CSS.Exclude,
 			FS:               s.fs,
+			PathMappings:     s.pathMappings,
 		}),
 		transform.NewTypeScript(transform.TypeScriptConfig{ // TypeScript transform
 			WatchDirFunc:     s.WatchDir,
@@ -1511,6 +1538,7 @@ func (s *Server) setupMiddleware() {
 			Target:           string(s.config.Transforms.TypeScript.Target),
 			Enabled:          s.config.Transforms.TypeScript.Enabled,
 			FS:               s.fs,
+			PathMappings:     s.pathMappings,
 		}),
 		routes.New(routes.Config{ // Internal CEM routes (includes WebSocket, demos, listings)
 			Context:          s,
