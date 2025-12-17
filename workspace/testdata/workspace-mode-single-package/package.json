@@ -1,0 +1,6 @@
+{
+  "name": "single-package-workspace",
+  "workspaces": [
+    "packages/*"
+  ]
+}

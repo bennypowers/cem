@@ -1,0 +1,6 @@
+{
+  "name": "workspace-no-manifests",
+  "workspaces": [
+    "packages/*"
+  ]
+}

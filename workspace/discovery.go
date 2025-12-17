@@ -293,15 +293,17 @@ func findWorkspaceRootWithWorkspaces(startDir string) string {
 }
 
 // IsWorkspaceMode determines if a directory is a monorepo workspace
-// Returns true if multiple packages with customElements manifests are found
+// Returns true if the directory has a workspaces field in package.json
 func IsWorkspaceMode(dir string) bool {
-	packages, err := FindPackagesWithManifests(dir)
+	// Read root package.json to check for workspaces field
+	rootPkgPath := filepath.Join(dir, "package.json")
+	rootPkg, err := readPackageJSON(rootPkgPath)
 	if err != nil {
 		return false
 	}
 
-	// Workspace mode requires multiple packages with manifests
-	return len(packages) > 1
+	// Workspace mode is determined by presence of workspaces field
+	return rootPkg.Workspaces != nil
 }
 
 // PackageWithManifest represents a workspace package with its loaded manifest
