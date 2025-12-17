@@ -236,3 +236,31 @@ func TestPathResolver_ExplicitMappingPriorityOverFallback(t *testing.T) {
 		t.Errorf("Explicit mapping should have priority. Expected %s, got %s", expected, result)
 	}
 }
+
+// TestPathResolver_DefaultRootDirMapping tests edge case where rootDir="." produces "/./" prefix
+// This tests that PathResolver correctly handles the "/./" mapping through filepath.Join() normalization
+func TestPathResolver_DefaultRootDirMapping(t *testing.T) {
+	// Create empty fixture to avoid co-located files interfering
+	fs := testutil.NewFixtureFS(t, "path-mappings/explicit-mappings", "/test")
+	// Add a source file at root level that only the mapping can find
+	fs.AddFile("/test/button.ts", "// root level source", 0644)
+	// Add a dist output file to make the request realistic
+	fs.AddFile("/test/dist/button.js", "// compiled output", 0644)
+
+	// Create resolver with mapping that would be generated from tsconfig with rootDir="." and outDir="dist"
+	// This produces the edge case mapping: "/dist/" -> "/./"
+	// filepath.Join() in PathResolver normalizes "/./" + "button.js" to "button.js"
+	resolver := transform.NewPathResolver("/test", map[string]string{
+		"/dist/": "/./",
+	}, fs, nil)
+
+	// Request /dist/button.js
+	// The mapping "/dist/" -> "/./" combined with filepath.Join() normalization
+	// produces /button.ts (filepath.Join("/./", "button") normalizes to "button")
+	result := resolver.ResolveTsSource("/dist/button.js")
+	expected := "/button.ts"
+
+	if result != expected {
+		t.Errorf("Expected %s, got %s", expected, result)
+	}
+}
