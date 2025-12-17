@@ -163,14 +163,31 @@ func (s *Server) ImportMap() middleware.ImportMap {
 }
 
 // buildConfigOverride converts serve config override to import map config override
+// Creates defensive copies to prevent shared mutable state.
 func (s *Server) buildConfigOverride() *importmappkg.ImportMap {
 	if len(s.config.ImportMap.Override.Imports) == 0 && len(s.config.ImportMap.Override.Scopes) == 0 {
 		return nil
 	}
-	return &importmappkg.ImportMap{
-		Imports: s.config.ImportMap.Override.Imports,
-		Scopes:  s.config.ImportMap.Override.Scopes,
+
+	result := &importmappkg.ImportMap{
+		Imports: make(map[string]string, len(s.config.ImportMap.Override.Imports)),
+		Scopes:  make(map[string]map[string]string, len(s.config.ImportMap.Override.Scopes)),
 	}
+
+	// Copy imports
+	for k, v := range s.config.ImportMap.Override.Imports {
+		result.Imports[k] = v
+	}
+
+	// Deep copy scopes
+	for scopeKey, scopeMap := range s.config.ImportMap.Override.Scopes {
+		result.Scopes[scopeKey] = make(map[string]string, len(scopeMap))
+		for k, v := range scopeMap {
+			result.Scopes[scopeKey][k] = v
+		}
+	}
+
+	return result
 }
 
 // DemoRoutes returns the pre-computed demo routing table (both workspace and single-package mode)
