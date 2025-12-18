@@ -133,12 +133,40 @@ func resolveType(typ *M.Type, module *M.Module, pkg *M.Package, typeAliases modu
 	}
 }
 
+// resolveUnionType resolves each constituent of a union type
+func resolveUnionType(typeText string, module *M.Module, pkg *M.Package, typeAliases moduleTypeAliasesMap, imports moduleImportsMap, ctx *resolutionContext) (string, []M.TypeReference) {
+	parts := strings.Split(typeText, "|")
+	resolvedParts := make([]string, 0, len(parts))
+	allRefs := make([]M.TypeReference, 0)
+
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+
+		// Recursively resolve each part
+		resolved, refs := resolveTypeText(part, module, pkg, typeAliases, imports, ctx)
+		resolvedParts = append(resolvedParts, resolved)
+		allRefs = append(allRefs, refs...)
+	}
+
+	// Reconstruct the union
+	result := strings.Join(resolvedParts, " | ")
+	return result, allRefs
+}
+
 func resolveTypeText(typeText string, module *M.Module, pkg *M.Package, typeAliases moduleTypeAliasesMap, imports moduleImportsMap, ctx *resolutionContext) (string, []M.TypeReference) {
 	typeText = strings.TrimSpace(typeText)
 
+	// Handle union types by resolving each constituent
+	if strings.Contains(typeText, "|") {
+		return resolveUnionType(typeText, module, pkg, typeAliases, imports, ctx)
+	}
+
 	// Check if it's a simple type identifier that could be an alias
 	if !typeIdentifierPattern.MatchString(typeText) {
-		// Not a simple identifier, could be a union/complex type - don't resolve
+		// Not a simple identifier, could be a complex type (generics, etc.) - don't resolve
 		return typeText, nil
 	}
 

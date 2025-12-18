@@ -15,10 +15,14 @@
             {
               "name": "value",
               "type": {
-                "text": "B | 'x'",
+                "text": "A | 'y' | 'x'",
                 "references": [
                   {
                     "name": "A",
+                    "module": "src/circular-alias.js"
+                  },
+                  {
+                    "name": "B",
                     "module": "src/circular-alias.js"
                   }
                 ]
@@ -204,10 +208,18 @@
             {
               "name": "type",
               "type": {
-                "text": "SubmitType | ResetType | 'button'",
+                "text": "'submit' | 'reset' | 'button'",
                 "references": [
                   {
                     "name": "ButtonType",
+                    "module": "src/nested-alias.js"
+                  },
+                  {
+                    "name": "SubmitType",
+                    "module": "src/nested-alias.js"
+                  },
+                  {
+                    "name": "ResetType",
                     "module": "src/nested-alias.js"
                   }
                 ]
@@ -350,6 +362,133 @@
     {
       "kind": "javascript-module",
       "path": "src/types.js"
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/union-alias.js",
+      "declarations": [
+        {
+          "name": "MyButton",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "type",
+              "type": {
+                "text": "'submit' | 'reset' | 'button'",
+                "references": [
+                  {
+                    "name": "ButtonType",
+                    "module": "src/union-alias.js"
+                  },
+                  {
+                    "name": "SubmitType",
+                    "module": "src/union-alias.js"
+                  },
+                  {
+                    "name": "ResetType",
+                    "module": "src/union-alias.js"
+                  }
+                ]
+              },
+              "default": "'submit'",
+              "kind": "field"
+            },
+            {
+              "name": "nullableType",
+              "type": {
+                "text": "'submit' | 'reset' | 'button' | null",
+                "references": [
+                  {
+                    "name": "NullableButtonType",
+                    "module": "src/union-alias.js"
+                  },
+                  {
+                    "name": "ButtonType",
+                    "module": "src/union-alias.js"
+                  },
+                  {
+                    "name": "SubmitType",
+                    "module": "src/union-alias.js"
+                  },
+                  {
+                    "name": "ResetType",
+                    "module": "src/union-alias.js"
+                  }
+                ]
+              },
+              "default": "null",
+              "kind": "field"
+            },
+            {
+              "name": "optionalType",
+              "type": {
+                "text": "'submit' | 'reset' | 'button' | undefined",
+                "references": [
+                  {
+                    "name": "OptionalButtonType",
+                    "module": "src/union-alias.js"
+                  },
+                  {
+                    "name": "ButtonType",
+                    "module": "src/union-alias.js"
+                  },
+                  {
+                    "name": "SubmitType",
+                    "module": "src/union-alias.js"
+                  },
+                  {
+                    "name": "ResetType",
+                    "module": "src/union-alias.js"
+                  }
+                ]
+              },
+              "default": "undefined",
+              "kind": "field"
+            },
+            {
+              "name": "complexType",
+              "type": {
+                "text": "'submit' | 'custom' | null",
+                "references": [
+                  {
+                    "name": "ComplexUnion",
+                    "module": "src/union-alias.js"
+                  },
+                  {
+                    "name": "SubmitType",
+                    "module": "src/union-alias.js"
+                  }
+                ]
+              },
+              "default": "'submit'",
+              "kind": "field"
+            }
+          ],
+          "kind": "class",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "",
+          "declaration": {
+            "name": "MyButton",
+            "module": "src/union-alias.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "MyButton",
+          "declaration": {
+            "name": "MyButton",
+            "module": "src/union-alias.js"
+          }
+        }
+      ]
     }
   ]
 }
