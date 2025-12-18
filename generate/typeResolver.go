@@ -253,14 +253,33 @@ func resolveTypeText(typeText string, module *M.Module, pkg *M.Package, typeAlia
 // relative to the current module's path
 func findModuleBySpec(pkg *M.Package, currentModulePath string, importSpec string) *M.Module {
 	// Resolve the import spec relative to the current module
-	// currentModulePath is like "src/button.js"
-	// importSpec is like "./types" or "./types.js"
+	// currentModulePath is like "rh-accordion/rh-accordion.js"
+	// importSpec can be:
+	// - "./types" or "./types.js" (relative)
+	// - "@rhds/elements/lib/types.js" (package-scoped, same package)
 
-	// Get the directory of the current module
-	currentDir := path.Dir(currentModulePath)
+	var resolvedPath string
 
-	// Resolve the import spec relative to current directory
-	resolvedPath := path.Join(currentDir, importSpec)
+	// Handle package-scoped imports (e.g., "@rhds/elements/lib/types.js")
+	if strings.HasPrefix(importSpec, "@") {
+		// Split into segments: ["@rhds", "elements", "lib", "types.js"]
+		segments := strings.Split(importSpec, "/")
+		if len(segments) >= 3 {
+			// Strip the package scope and name (first two segments)
+			// "@rhds/elements/lib/types.js" -> "lib/types.js"
+			pathWithoutPackage := strings.Join(segments[2:], "/")
+			resolvedPath = pathWithoutPackage
+			L.Debug("Package-scoped import '%s' -> '%s'", importSpec, resolvedPath)
+		} else {
+			// Invalid package path, skip
+			L.Debug("Invalid package-scoped import: %s", importSpec)
+			return nil
+		}
+	} else {
+		// Relative import - resolve relative to current module directory
+		currentDir := path.Dir(currentModulePath)
+		resolvedPath = path.Join(currentDir, importSpec)
+	}
 
 	// Clean the path (remove . and .. segments)
 	resolvedPath = path.Clean(resolvedPath)
