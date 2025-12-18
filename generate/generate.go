@@ -116,21 +116,21 @@ func processModule(
 	parser *ts.Parser,
 	depTracker *FileDependencyTracker,
 	cssCache CssCache,
-) (module *M.Module, tagAliases map[string]string, logCtx *LogCtx, errs error) {
+) (module *M.Module, tagAliases map[string]string, typeAliases map[string]string, imports map[string]importInfo, logCtx *LogCtx, errs error) {
 	defer parser.Reset()
 	mp, err := NewModuleProcessor(job.ctx, job.file, parser, qm, cssCache)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 	defer mp.Close()
 	cfg, err := job.ctx.Config()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 	if cfg.Verbose {
 		mp.logger.Section.Printf("Module: %s", mp.logger.File)
 	}
-	module, tagAliases, err = mp.Collect()
+	module, tagAliases, typeAliases, imports, err = mp.Collect()
 
 	// Record dependencies for incremental rebuilds
 	if depTracker != nil && module != nil {
@@ -150,13 +150,15 @@ func processModule(
 		}
 	}
 
-	return module, tagAliases, mp.logger, err
+	return module, tagAliases, typeAliases, imports, mp.logger, err
 }
 
 func postprocess(
 	ctx types.WorkspaceContext,
 	result preprocessResult,
 	allTagAliases map[string]string,
+	typeAliases moduleTypeAliasesMap,
+	imports moduleImportsMap,
 	qm *Q.QueryManager,
 	modules []M.Module,
 ) (pkg M.Package, errs error) {
@@ -203,6 +205,10 @@ func postprocess(
 	slices.SortStableFunc(pkg.Modules, func(a, b M.Module) int {
 		return cmp.Compare(a.Path, b.Path)
 	})
+	// Resolve type aliases
+	if err := ResolveTypeAliases(&pkg, typeAliases, imports); err != nil {
+		errsList = append(errsList, fmt.Errorf("type resolution failed: %w", err))
+	}
 	if len(errsList) > 0 {
 		errs = errors.Join(errsList...)
 	}

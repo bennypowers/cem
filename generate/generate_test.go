@@ -78,34 +78,63 @@ func TestGenerate(t *testing.T) {
 				t.Fatalf("TestGenerate: %v", err)
 			}
 
-			var cases []testcase
-			if err := filepath.WalkDir(filepath.Join(projectDir, "src"), func(path string, d os.DirEntry, err error) error {
-				if err != nil {
-					return err
+			// Check if config file has recursive glob patterns (for cross-module tests)
+			// Only process all files together if config has recursive wildcards like "src/**/*.ts"
+			hasRecursiveGlobs := false
+			for _, pattern := range cfg.Generate.Files {
+				if strings.Contains(pattern, "**") {
+					hasRecursiveGlobs = true
+					break
 				}
-				if !d.IsDir() && strings.HasSuffix(d.Name(), ".ts") {
-					name := strings.TrimSuffix(d.Name(), ".ts")
-					if re != nil && !re.MatchString(name) {
-						return nil
-					}
-					rel, err := filepath.Rel(filepath.Join(projectDir, "src"), path)
+			}
+
+			// Save original files list to restore after each test
+			originalFiles := cfg.Generate.Files
+
+			var cases []testcase
+			if !hasRecursiveGlobs {
+				// Standard per-file testing: walk directory and create test cases for each file
+				if err := filepath.WalkDir(filepath.Join(projectDir, "src"), func(path string, d os.DirEntry, err error) error {
 					if err != nil {
 						return err
 					}
-					cases = append(cases, testcase{
-						name: name,
-						path: filepath.Join("src", rel),
-					})
+					if !d.IsDir() && strings.HasSuffix(d.Name(), ".ts") {
+						name := strings.TrimSuffix(d.Name(), ".ts")
+						if re != nil && !re.MatchString(name) {
+							return nil
+						}
+						rel, err := filepath.Rel(filepath.Join(projectDir, "src"), path)
+						if err != nil {
+							return err
+						}
+						cases = append(cases, testcase{
+							name: name,
+							path: filepath.Join("src", rel),
+						})
+					}
+					return nil
+				}); err != nil {
+					t.Fatalf("Error walking directory: %v", err)
 				}
-				return nil
-			}); err != nil {
-				t.Fatalf("Error walking directory: %v", err)
+			} else {
+				// Config has file patterns: process all files together
+				cases = append(cases, testcase{
+					name: "all",
+					path: "", // Use config file patterns
+				})
 			}
 
 			for _, tc := range cases {
 				// capture range variable
 				t.Run(tc.name, func(t *testing.T) {
-					cfg.Generate.Files = []string{tc.path}
+					// Restore original files before each test to avoid config mutation issues
+					cfg.Generate.Files = originalFiles
+
+					if tc.path != "" {
+						// Override config for per-file tests
+						cfg.Generate.Files = []string{tc.path}
+					}
+					// else: use config file patterns
 					actual, err := generate.Generate(ctx)
 					if err != nil {
 						t.Fatal(err)

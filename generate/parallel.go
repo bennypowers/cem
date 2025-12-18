@@ -31,10 +31,10 @@ import (
 )
 
 // ModuleProcessorFunc represents a function that processes a single module
-type ModuleProcessorFunc func(job processJob, qm *Q.QueryManager, parser *ts.Parser, depTracker *FileDependencyTracker, cssCache CssCache) (*M.Module, map[string]string, *LogCtx, error)
+type ModuleProcessorFunc func(job processJob, qm *Q.QueryManager, parser *ts.Parser, depTracker *FileDependencyTracker, cssCache CssCache) (*M.Module, map[string]string, map[string]string, map[string]importInfo, *LogCtx, error)
 
 // ModuleProcessorSimpleFunc represents a function that processes a single module (without dependency tracking)
-type ModuleProcessorSimpleFunc func(job processJob, qm *Q.QueryManager, parser *ts.Parser, cssCache CssCache) (*M.Module, map[string]string, *LogCtx, error)
+type ModuleProcessorSimpleFunc func(job processJob, qm *Q.QueryManager, parser *ts.Parser, cssCache CssCache) (*M.Module, map[string]string, map[string]string, map[string]importInfo, *LogCtx, error)
 
 // ModuleBatchProcessor handles batch/parallel processing of modules with common patterns.
 // Abstracts the worker pool pattern used throughout the codebase for module processing.
@@ -58,11 +58,16 @@ type ModuleBatchProcessor struct {
 //
 // Usage: Returned by all ModuleBatchProcessor.Process* methods
 type ProcessingResult struct {
-	Modules []M.Module
-	Logs    []*LogCtx
-	Aliases map[string]string
-	Errors  error
+	Modules     []M.Module
+	Logs        []*LogCtx
+	Aliases     map[string]string
+	TypeAliases moduleTypeAliasesMap
+	Imports     moduleImportsMap
+	Errors      error
 }
+
+// moduleTypeAliasesMap tracks type aliases for each module (key: module path)
+type moduleTypeAliasesMap map[string]map[string]string
 
 // NewModuleBatchProcessor creates a new batch/parallel processor.
 //
@@ -102,7 +107,7 @@ func (mbp *ModuleBatchProcessor) ProcessModules(
 	jobs []processJob,
 	processor ModuleProcessorFunc,
 ) ProcessingResult {
-	return mbp.processModulesInternal(ctx, jobs, func(job processJob, qm *Q.QueryManager, parser *ts.Parser) (*M.Module, map[string]string, *LogCtx, error) {
+	return mbp.processModulesInternal(ctx, jobs, func(job processJob, qm *Q.QueryManager, parser *ts.Parser) (*M.Module, map[string]string, map[string]string, map[string]importInfo, *LogCtx, error) {
 		return processor(job, qm, parser, mbp.depTracker, mbp.cssCache)
 	})
 }
@@ -113,7 +118,7 @@ func (mbp *ModuleBatchProcessor) ProcessModulesSimple(
 	jobs []processJob,
 	processor ModuleProcessorSimpleFunc,
 ) ProcessingResult {
-	return mbp.processModulesInternal(ctx, jobs, func(job processJob, qm *Q.QueryManager, parser *ts.Parser) (*M.Module, map[string]string, *LogCtx, error) {
+	return mbp.processModulesInternal(ctx, jobs, func(job processJob, qm *Q.QueryManager, parser *ts.Parser) (*M.Module, map[string]string, map[string]string, map[string]importInfo, *LogCtx, error) {
 		return processor(job, qm, parser, mbp.cssCache)
 	})
 }
@@ -122,7 +127,7 @@ func (mbp *ModuleBatchProcessor) ProcessModulesSimple(
 func (mbp *ModuleBatchProcessor) processModulesInternal(
 	ctx context.Context,
 	jobs []processJob,
-	processor func(processJob, *Q.QueryManager, *ts.Parser) (*M.Module, map[string]string, *LogCtx, error),
+	processor func(processJob, *Q.QueryManager, *ts.Parser) (*M.Module, map[string]string, map[string]string, map[string]importInfo, *LogCtx, error),
 ) ProcessingResult {
 	// Check for cancellation
 	select {
@@ -133,9 +138,11 @@ func (mbp *ModuleBatchProcessor) processModulesInternal(
 
 	if len(jobs) == 0 {
 		return ProcessingResult{
-			Modules: make([]M.Module, 0),
-			Logs:    make([]*LogCtx, 0),
-			Aliases: make(map[string]string),
+			Modules:     make([]M.Module, 0),
+			Logs:        make([]*LogCtx, 0),
+			Aliases:     make(map[string]string),
+			TypeAliases: make(moduleTypeAliasesMap),
+			Imports:     make(moduleImportsMap),
 		}
 	}
 
@@ -146,6 +153,8 @@ func (mbp *ModuleBatchProcessor) processModulesInternal(
 	// Initialize result collection
 	var wg sync.WaitGroup
 	var aliasesMu sync.Mutex
+	var typeAliasesMu sync.Mutex
+	var importsMu sync.Mutex
 	var modulesMu sync.Mutex
 	var errsMu sync.Mutex
 	var logsMu sync.Mutex
@@ -153,6 +162,8 @@ func (mbp *ModuleBatchProcessor) processModulesInternal(
 	errsList := make([]error, 0)
 	logs := make([]*LogCtx, 0, len(jobs))
 	aliases := make(map[string]string)
+	typeAliasesMap := make(moduleTypeAliasesMap)
+	importsMap := make(moduleImportsMap)
 	var modules []M.Module
 
 	jobsChan := make(chan processJob, len(jobs))
@@ -179,7 +190,7 @@ func (mbp *ModuleBatchProcessor) processModulesInternal(
 				default:
 				}
 
-				module, tagAliases, logger, err := processor(job, mbp.queryManager, parser)
+				module, tagAliases, typeAliases, imports, logger, err := processor(job, mbp.queryManager, parser)
 
 				// Handle errors
 				if err != nil {
@@ -193,11 +204,25 @@ func (mbp *ModuleBatchProcessor) processModulesInternal(
 				logs = append(logs, logger)
 				logsMu.Unlock()
 
-				// Merge aliases thread-safely
+				// Merge tag aliases thread-safely
 				if len(tagAliases) > 0 {
 					aliasesMu.Lock()
 					maps.Copy(aliases, tagAliases)
 					aliasesMu.Unlock()
+				}
+
+				// Collect type aliases thread-safely
+				if module != nil && len(typeAliases) > 0 {
+					typeAliasesMu.Lock()
+					typeAliasesMap[module.Path] = typeAliases
+					typeAliasesMu.Unlock()
+				}
+
+				// Collect imports thread-safely
+				if module != nil && len(imports) > 0 {
+					importsMu.Lock()
+					importsMap[module.Path] = imports
+					importsMu.Unlock()
 				}
 
 				// Collect modules
@@ -219,9 +244,11 @@ func (mbp *ModuleBatchProcessor) processModulesInternal(
 	}
 
 	return ProcessingResult{
-		Modules: modules,
-		Logs:    logs,
-		Aliases: aliases,
-		Errors:  errs,
+		Modules:     modules,
+		Logs:        logs,
+		Aliases:     aliases,
+		TypeAliases: typeAliasesMap,
+		Imports:     importsMap,
+		Errors:      errs,
 	}
 }

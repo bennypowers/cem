@@ -10,6 +10,11 @@ Run `go vet` to surface gopls suggestions. Common examples:
 - replace `m[k]=v` loop with `maps.Copy` [mapsloop]
 - Loop can be simplified using slices.Contains [slicescontains]
 
+## Debugging
+
+When debugging Go code, always use the logger `logger.Debug`, etc. Don't use `fmt.Printf`, which pollutes stdio, breaking the LSP and MCP commands.
+To print debug logs to the console, pass `-vvv`
+
 ## Testing
 
 Practice TDD. When writing tests, always use the fixture/golden patterns we've established:

@@ -222,7 +222,7 @@ func LSPQueries() QuerySelector {
 func GenerateQueries() QuerySelector {
 	return QuerySelector{
 		HTML:       []string{"slotsAndParts"},
-		TypeScript: []string{"classMemberDeclaration", "classes", "declarations", "imports"},
+		TypeScript: []string{"classMemberDeclaration", "classes", "declarations", "imports", "typeAliases"},
 		CSS:        []string{"cssCustomProperties"},
 		JSDoc:      []string{"jsdoc"},
 	}
