@@ -108,7 +108,7 @@ func (gs *GenerateSession) GenerateFullManifest(ctx context.Context) (*M.Package
 	default:
 	}
 
-	modules, logs, aliases, err := gs.processWithContext(ctx, result)
+	modules, logs, aliases, typeAliases, imports, err := gs.processWithContext(ctx, result)
 	if err != nil {
 		return nil, WrapProcessError(err)
 	}
@@ -119,7 +119,7 @@ func (gs *GenerateSession) GenerateFullManifest(ctx context.Context) (*M.Package
 	default:
 	}
 
-	pkg, err := gs.postprocessWithContext(ctx, result, aliases, modules)
+	pkg, err := gs.postprocessWithContext(ctx, result, aliases, typeAliases, imports, modules)
 	if err != nil {
 		return nil, WrapPostprocessError(err)
 	}
@@ -244,10 +244,10 @@ func (gs *GenerateSession) preprocessWithContext(ctx context.Context) (preproces
 }
 
 // processWithContext is the existing process logic with cancellation support
-func (gs *GenerateSession) processWithContext(ctx context.Context, result preprocessResult) ([]M.Module, []*LogCtx, map[string]string, error) {
+func (gs *GenerateSession) processWithContext(ctx context.Context, result preprocessResult) ([]M.Module, []*LogCtx, map[string]string, moduleTypeAliasesMap, moduleImportsMap, error) {
 	select {
 	case <-ctx.Done():
-		return nil, nil, nil, ctx.Err()
+		return nil, nil, nil, nil, nil, ctx.Err()
 	default:
 	}
 
@@ -256,7 +256,7 @@ func (gs *GenerateSession) processWithContext(ctx context.Context, result prepro
 }
 
 // processWithDeps processes files while tracking dependencies for incremental rebuilds
-func (gs *GenerateSession) processWithDeps(ctx context.Context, result preprocessResult) ([]M.Module, []*LogCtx, map[string]string, error) {
+func (gs *GenerateSession) processWithDeps(ctx context.Context, result preprocessResult) ([]M.Module, []*LogCtx, map[string]string, moduleTypeAliasesMap, moduleImportsMap, error) {
 	// Create jobs for all included files
 	jobs := make([]processJob, 0, len(result.includedFiles))
 	for _, file := range result.includedFiles {
@@ -276,11 +276,11 @@ func (gs *GenerateSession) processWithDeps(ctx context.Context, result preproces
 
 	processingResult := processor.ProcessModules(ctx, jobs, ModuleProcessorFunc(processModule))
 
-	return processingResult.Modules, processingResult.Logs, processingResult.Aliases, processingResult.Errors
+	return processingResult.Modules, processingResult.Logs, processingResult.Aliases, processingResult.TypeAliases, processingResult.Imports, processingResult.Errors
 }
 
 // postprocessWithContext is the existing postprocess logic with cancellation support
-func (gs *GenerateSession) postprocessWithContext(ctx context.Context, result preprocessResult, aliases map[string]string, modules []M.Module) (M.Package, error) {
+func (gs *GenerateSession) postprocessWithContext(ctx context.Context, result preprocessResult, aliases map[string]string, typeAliases moduleTypeAliasesMap, imports moduleImportsMap, modules []M.Module) (M.Package, error) {
 	select {
 	case <-ctx.Done():
 		return M.Package{}, ctx.Err()
@@ -289,5 +289,5 @@ func (gs *GenerateSession) postprocessWithContext(ctx context.Context, result pr
 
 	// TODO: Add cancellation points within the postprocess function
 	// For now, we'll use the existing postprocess function
-	return postprocess(gs.setupCtx.WorkspaceContext, result, aliases, gs.setupCtx.QueryManager(), modules)
+	return postprocess(gs.setupCtx.WorkspaceContext, result, aliases, typeAliases, imports, gs.setupCtx.QueryManager(), modules)
 }

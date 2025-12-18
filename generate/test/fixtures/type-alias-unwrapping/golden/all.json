@@ -1,0 +1,278 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/circular-alias.js",
+      "declarations": [
+        {
+          "name": "MyElement",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "value",
+              "type": {
+                "text": "B | 'x'",
+                "references": [
+                  {
+                    "name": "A",
+                    "module": "src/circular-alias.js"
+                  }
+                ]
+              },
+              "default": "'x'",
+              "kind": "field"
+            }
+          ],
+          "kind": "class",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "",
+          "declaration": {
+            "name": "MyElement",
+            "module": "src/circular-alias.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "MyElement",
+          "declaration": {
+            "name": "MyElement",
+            "module": "src/circular-alias.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/cross-module.js",
+      "declarations": [
+        {
+          "name": "MyComponent",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "variant",
+              "type": {
+                "text": "'primary' | 'secondary' | 'success'",
+                "references": [
+                  {
+                    "name": "Variant",
+                    "module": "src/types.js"
+                  }
+                ]
+              },
+              "default": "'primary'",
+              "kind": "field"
+            },
+            {
+              "name": "size",
+              "type": {
+                "text": "'small' | 'medium' | 'large'",
+                "references": [
+                  {
+                    "name": "Size",
+                    "module": "src/types.js"
+                  }
+                ]
+              },
+              "default": "'medium'",
+              "kind": "field"
+            }
+          ],
+          "kind": "class",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "",
+          "declaration": {
+            "name": "MyComponent",
+            "module": "src/cross-module.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "MyComponent",
+          "declaration": {
+            "name": "MyComponent",
+            "module": "src/cross-module.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/nested-alias.js",
+      "declarations": [
+        {
+          "name": "MyButton",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "type",
+              "type": {
+                "text": "SubmitType | ResetType | 'button'",
+                "references": [
+                  {
+                    "name": "ButtonType",
+                    "module": "src/nested-alias.js"
+                  }
+                ]
+              },
+              "default": "'submit'",
+              "kind": "field"
+            }
+          ],
+          "kind": "class",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "",
+          "declaration": {
+            "name": "MyButton",
+            "module": "src/nested-alias.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "MyButton",
+          "declaration": {
+            "name": "MyButton",
+            "module": "src/nested-alias.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/no-alias.js",
+      "declarations": [
+        {
+          "name": "MyElement",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "count",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field"
+            },
+            {
+              "name": "variant",
+              "type": {
+                "text": "'primary' | 'secondary'"
+              },
+              "default": "'primary'",
+              "kind": "field"
+            },
+            {
+              "name": "name",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field"
+            }
+          ],
+          "kind": "class",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "",
+          "declaration": {
+            "name": "MyElement",
+            "module": "src/no-alias.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "MyElement",
+          "declaration": {
+            "name": "MyElement",
+            "module": "src/no-alias.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/simple-alias.js",
+      "declarations": [
+        {
+          "name": "MyButton",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "type",
+              "type": {
+                "text": "'submit' | 'reset' | 'button'",
+                "references": [
+                  {
+                    "name": "ButtonType",
+                    "module": "src/simple-alias.js"
+                  }
+                ]
+              },
+              "default": "'submit'",
+              "kind": "field"
+            }
+          ],
+          "kind": "class",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "",
+          "declaration": {
+            "name": "MyButton",
+            "module": "src/simple-alias.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "MyButton",
+          "declaration": {
+            "name": "MyButton",
+            "module": "src/simple-alias.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/types.js"
+    }
+  ]
+}

@@ -48,6 +48,7 @@ type ModuleProcessor struct {
 	tree                   *ts.Tree
 	root                   *ts.Node
 	tagAliases             map[string]string
+	typeAliasMap           map[string]string // type name -> definition
 	importBindingToSpecMap map[string]struct {
 		name string
 		spec string
@@ -153,9 +154,15 @@ func (mp *ModuleProcessor) Close() {
 func (mp *ModuleProcessor) Collect() (
 	module *M.Module,
 	tagAliases map[string]string,
+	typeAliases map[string]string,
+	imports map[string]importInfo,
 	errs error,
 ) {
 	err := mp.step("Processing imports", 0, mp.processImports)
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
+	err = mp.step("Processing type aliases", 0, mp.processTypeAliases)
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
@@ -181,7 +188,25 @@ func (mp *ModuleProcessor) Collect() (
 	slices.SortStableFunc(mp.module.Declarations, func(a, b M.Declaration) int {
 		return int(a.GetStartByte() - b.GetStartByte())
 	})
-	return mp.module, mp.tagAliases, allErrors
+
+	// Return type aliases (stays in generate package, not in manifest)
+	var typeAliasesCopy map[string]string
+	if len(mp.typeAliasMap) > 0 {
+		typeAliasesCopy = maps.Clone(mp.typeAliasMap)
+	}
+
+	// Build imports map for type resolution (stays in generate package)
+	var importsCopy map[string]importInfo
+	if len(mp.importBindingToSpecMap) > 0 {
+		importsCopy = make(map[string]importInfo)
+		for k, v := range mp.importBindingToSpecMap {
+			importsCopy[k] = importInfo{
+				name: v.name,
+				spec: v.spec,
+			}
+		}
+	}
+	return mp.module, mp.tagAliases, typeAliasesCopy, importsCopy, allErrors
 }
 
 func (mp *ModuleProcessor) processImports() error {
@@ -198,13 +223,48 @@ func (mp *ModuleProcessor) processImports() error {
 	}
 
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "import") {
-		original := captures["import.name"][0].Text
-		binding := captures["import.binding"][0].Text
-		spec := captures["import.spec"][0].Text
-		mp.importBindingToSpecMap[binding] = struct {
-			name string
-			spec string
-		}{original, spec}
+		// Process each import specifier
+		for i := range captures["import.name"] {
+			original := captures["import.name"][i].Text
+			binding := captures["import.binding"][i].Text
+			spec := captures["import.spec"][0].Text // Spec is the same for all imports in this statement
+
+			mp.importBindingToSpecMap[binding] = struct {
+				name string
+				spec string
+			}{original, spec}
+		}
+	}
+
+	return nil
+}
+
+func (mp *ModuleProcessor) processTypeAliases() error {
+	// Initialize the type alias map
+	mp.typeAliasMap = make(map[string]string)
+
+	qm, err := Q.NewQueryMatcher(mp.queryManager, "typescript", "typeAliases")
+	if err != nil {
+		mp.errors = errors.Join(mp.errors, err)
+		return err
+	}
+	defer qm.Close()
+
+	for captures := range qm.ParentCaptures(mp.root, mp.code, "alias.declaration") {
+		nameCaptures, hasName := captures["alias.name"]
+		defCaptures, hasDef := captures["alias.definition"]
+
+		if !hasName || !hasDef || len(nameCaptures) == 0 || len(defCaptures) == 0 {
+			continue
+		}
+
+		name := nameCaptures[0].Text
+		definition := defCaptures[0].Text
+
+		if name != "" && definition != "" {
+			mp.typeAliasMap[name] = definition
+			mp.logger.Debug("Found type alias: %s = %s", name, definition)
+		}
 	}
 
 	return nil
