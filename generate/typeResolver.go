@@ -32,8 +32,10 @@ var primitiveTypes = map[string]bool{
 	"unknown": true, "object": true, "symbol": true, "bigint": true,
 }
 
-// Type identifier pattern (TypeScript identifier rules - starts with uppercase)
-var typeIdentifierPattern = regexp.MustCompile(`^[A-Z][a-zA-Z0-9_]*$`)
+// Type identifier pattern (TypeScript identifier rules - all valid identifiers)
+// Matches identifiers that start with letter, underscore, or dollar sign,
+// followed by letters, digits, underscores, or dollar signs
+var typeIdentifierPattern = regexp.MustCompile(`^[A-Za-z_$][A-Za-z0-9_$]*$`)
 
 // importInfo represents an import statement (internal to generate package)
 type importInfo struct {

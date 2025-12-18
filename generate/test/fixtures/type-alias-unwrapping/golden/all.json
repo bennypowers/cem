@@ -115,6 +115,83 @@
     },
     {
       "kind": "javascript-module",
+      "path": "src/lowercase-alias.js",
+      "declarations": [
+        {
+          "name": "MyElement",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "type",
+              "type": {
+                "text": "'submit' | 'reset' | 'button'",
+                "references": [
+                  {
+                    "name": "buttonType",
+                    "module": "src/lowercase-alias.js"
+                  }
+                ]
+              },
+              "default": "'submit'",
+              "kind": "field"
+            },
+            {
+              "name": "visibility",
+              "type": {
+                "text": "'internal' | 'external'",
+                "references": [
+                  {
+                    "name": "_privateType",
+                    "module": "src/lowercase-alias.js"
+                  }
+                ]
+              },
+              "default": "'external'",
+              "kind": "field"
+            },
+            {
+              "name": "currency",
+              "type": {
+                "text": "'usd' | 'eur'",
+                "references": [
+                  {
+                    "name": "$dollarType",
+                    "module": "src/lowercase-alias.js"
+                  }
+                ]
+              },
+              "default": "'usd'",
+              "kind": "field"
+            }
+          ],
+          "kind": "class",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "",
+          "declaration": {
+            "name": "MyElement",
+            "module": "src/lowercase-alias.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "MyElement",
+          "declaration": {
+            "name": "MyElement",
+            "module": "src/lowercase-alias.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
       "path": "src/nested-alias.js",
       "declarations": [
         {
