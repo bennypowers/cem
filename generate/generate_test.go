@@ -88,6 +88,9 @@ func TestGenerate(t *testing.T) {
 				}
 			}
 
+			// Save original files list to restore after each test
+			originalFiles := cfg.Generate.Files
+
 			var cases []testcase
 			if !hasRecursiveGlobs {
 				// Standard per-file testing: walk directory and create test cases for each file
@@ -124,6 +127,9 @@ func TestGenerate(t *testing.T) {
 			for _, tc := range cases {
 				// capture range variable
 				t.Run(tc.name, func(t *testing.T) {
+					// Restore original files before each test to avoid config mutation issues
+					cfg.Generate.Files = originalFiles
+
 					if tc.path != "" {
 						// Override config for per-file tests
 						cfg.Generate.Files = []string{tc.path}
