@@ -243,8 +243,12 @@ func findModuleBySpec(pkg *M.Package, currentModulePath string, importSpec strin
 		resolvedPath,
 		resolvedPath + ".js",
 		resolvedPath + ".ts",
+		resolvedPath + ".tsx",
+		resolvedPath + ".jsx",
 		resolvedPath + "/index.js",
 		resolvedPath + "/index.ts",
+		resolvedPath + "/index.tsx",
+		resolvedPath + "/index.jsx",
 	}
 
 	for _, modulePath := range possiblePaths {

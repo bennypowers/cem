@@ -223,11 +223,28 @@ func (mp *ModuleProcessor) processImports() error {
 	}
 
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "import") {
-		// Process each import specifier
-		for i := range captures["import.name"] {
-			original := captures["import.name"][i].Text
-			binding := captures["import.binding"][i].Text
-			spec := captures["import.spec"][0].Text // Spec is the same for all imports in this statement
+		// Defensively check that we have import spec
+		specCaptures, hasSpec := captures["import.spec"]
+		if !hasSpec || len(specCaptures) == 0 {
+			mp.logger.Debug("Skipping import with missing spec")
+			continue
+		}
+		spec := specCaptures[0].Text
+
+		// Process each import specifier with bounds checking
+		nameCaptures := captures["import.name"]
+		bindingCaptures := captures["import.binding"]
+
+		// Iterate only up to the minimum length to prevent index out of bounds
+		minLen := min(len(nameCaptures), len(bindingCaptures))
+		if minLen == 0 {
+			mp.logger.Debug("Skipping import with no name/binding captures")
+			continue
+		}
+
+		for i := 0; i < minLen; i++ {
+			original := nameCaptures[i].Text
+			binding := bindingCaptures[i].Text
 
 			mp.importBindingToSpecMap[binding] = struct {
 				name string
