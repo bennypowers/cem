@@ -1,279 +1,46 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Development Server on cem</title><link>https://bennypowers.dev/cem/docs/serve/</link><description>Recent content in Development Server on cem</description><generator>Hugo</generator><language>en</language><atom:link href="https://bennypowers.dev/cem/docs/serve/index.xml" rel="self" type="application/rss+xml"/><item><title>Getting Started</title><link>https://bennypowers.dev/cem/docs/serve/getting-started/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/serve/getting-started/</guid><description>&lt;p>This guide will walk you through setting up &lt;code>cem serve&lt;/code> for your custom element project.&lt;/p>
-&lt;h2 id="prerequisites">Prerequisites&lt;/h2>
-&lt;p>Before using &lt;code>cem serve&lt;/code>, you need:&lt;/p>
-&lt;ol>
-&lt;li>&lt;strong>Custom elements manifest&lt;/strong> - Generate one with 
-&lt;a href="https://bennypowers.dev/cem/docs/commands/generate/">&lt;code>cem generate&lt;/code>
-&lt;/a>&lt;/li>
-&lt;li>&lt;strong>Demo files&lt;/strong> - HTML files in &lt;code>demo/&lt;/code> directories or named &lt;code>*.demo.html&lt;/code>&lt;/li>
-&lt;/ol>
-&lt;h2 id="the-workflow">The Workflow&lt;/h2>
-&lt;p>&lt;code>cem serve&lt;/code> follows a manifest-driven development workflow:&lt;/p>
-&lt;ol>
-&lt;li>&lt;strong>Write your component&lt;/strong> with JSDoc documentation&lt;/li>
-&lt;li>&lt;strong>Generate manifest&lt;/strong> with &lt;code>cem generate&lt;/code>&lt;/li>
-&lt;li>&lt;strong>Add demos&lt;/strong> in &lt;code>demo/&lt;/code> directories (automatically discovered)&lt;/li>
-&lt;li>&lt;strong>Run serve&lt;/strong> with &lt;code>cem serve&lt;/code>&lt;/li>
-&lt;li>&lt;strong>Iterate&lt;/strong> - edit, test, and changes trigger live reload&lt;/li>
-&lt;/ol>
-&lt;h2 id="quick-start">Quick Start&lt;/h2>
-&lt;h3 id="1-install-cem">1. Install cem&lt;/h3>
-
-&lt;code-highlighter>
- &lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">&lt;span class="line">&lt;span class="cl">npm install --save-dev @pwrs/cem&lt;/span>&lt;/span>&lt;/code>&lt;/pre>
-&lt;/code-highlighter>&lt;h3 id="2-generate-a-manifest">2. Generate a manifest&lt;/h3>
-
-&lt;code-highlighter>
- &lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">&lt;span class="line">&lt;span class="cl">cem generate&lt;/span>&lt;/span>&lt;/code>&lt;/pre>
-&lt;/code-highlighter>&lt;p>This creates &lt;code>custom-elements.json&lt;/code> with your component metadata.&lt;/p></description></item><item><title>Buildless Development</title><link>https://bennypowers.dev/cem/docs/serve/buildless/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/serve/buildless/</guid><description>&lt;p>Write TypeScript and import CSS directly in your browser - no build step required. &lt;code>cem serve&lt;/code> lets you develop without running &lt;code>tsc&lt;/code>, CSS watchers, or bundlers.&lt;/p>
-&lt;h2 id="write-typescript-directly">Write TypeScript Directly&lt;/h2>
-&lt;p>Import TypeScript files directly in your demos without compilation:&lt;/p>
-
-&lt;code-highlighter>
- &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-html" data-lang="html">&lt;span class="line">&lt;span class="cl">&lt;span class="c">&amp;lt;!-- In your demo --&amp;gt;&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">&amp;lt;&lt;/span>&lt;span class="nt">script&lt;/span> &lt;span class="na">type&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s">&amp;#34;module&amp;#34;&lt;/span> &lt;span class="na">src&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s">&amp;#34;../src/my-element.ts&amp;#34;&lt;/span>&lt;span class="p">&amp;gt;&amp;lt;/&lt;/span>&lt;span class="nt">script&lt;/span>&lt;span class="p">&amp;gt;&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>
-&lt;/code-highlighter>&lt;p>No need to:&lt;/p>
-&lt;ul>
-&lt;li>Run &lt;code>tsc --watch&lt;/code>&lt;/li>
-&lt;li>Set up a build pipeline&lt;/li>
-&lt;li>Wait for compilation before testing&lt;/li>
-&lt;li>Manage separate source and output directories&lt;/li>
-&lt;/ul>
-&lt;p>The dev server handles TypeScript on-demand with full source map support for debugging.&lt;/p></description></item><item><title>Knobs</title><link>https://bennypowers.dev/cem/docs/serve/knobs/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/serve/knobs/</guid><description>&lt;p>Knobs are interactive controls that let you test your custom elements by manipulating their attributes, properties, and CSS custom properties in real-time.&lt;/p>
-&lt;h2 id="how-knobs-work">How Knobs Work&lt;/h2>
-&lt;p>Knobs are automatically generated from your &lt;strong>Custom Elements Manifest&lt;/strong>. The dev server reads your component&amp;rsquo;s API documentation and creates appropriate controls for each attribute, property, and CSS variable.&lt;/p>
-&lt;h3 id="the-workflow">The Workflow&lt;/h3>
-
-
-
-&lt;div class="goat svg-container ">
- 
- &lt;svg
- xmlns="http://www.w3.org/2000/svg"
- font-family="Menlo,Lucida Console,monospace"
- 
- viewBox="0 0 296 249"
- >
- &lt;g transform='translate(8,16)'>
-&lt;path d='M 0,16 L 96,16' fill='none' stroke='currentColor'>&lt;/path>
-&lt;path d='M 160,16 L 248,16' fill='none' stroke='currentColor'>&lt;/path>
-&lt;path d='M 112,48 L 144,48' fill='none' stroke='currentColor'>&lt;/path>
-&lt;path d='M 0,80 L 96,80' fill='none' stroke='currentColor'>&lt;/path>
-&lt;path d='M 160,80 L 200,80' fill='none' stroke='currentColor'>&lt;/path>
-&lt;path d='M 200,80 L 248,80' fill='none' stroke='currentColor'>&lt;/path>
-&lt;path d='M 160,144 L 240,144' fill='none' stroke='currentColor'>&lt;/path>
-&lt;path d='M 160,208 L 240,208' fill='none' stroke='currentColor'>&lt;/path>
-&lt;path d='M 0,16 L 0,80' fill='none' stroke='currentColor'>&lt;/path>
-&lt;path d='M 96,16 L 96,80' fill='none' stroke='currentColor'>&lt;/path>
-&lt;path d='M 160,16 L 160,80' fill='none' stroke='currentColor'>&lt;/path>
-&lt;path d='M 160,144 L 160,208' fill='none' stroke='currentColor'>&lt;/path>
-&lt;path d='M 200,80 L 200,128' fill='none' stroke='currentColor'>&lt;/path>
-&lt;path d='M 240,144 L 240,208' fill='none' stroke='currentColor'>&lt;/path>
-&lt;path d='M 248,16 L 248,80' fill='none' stroke='currentColor'>&lt;/path>
-&lt;polygon points='152.000000,48.000000 140.000000,42.400002 140.000000,53.599998' fill='currentColor' transform='rotate(0.000000, 144.000000, 48.000000)'>&lt;/polygon>
-&lt;path d='M 200,128 L 200,136' fill='none' stroke='currentColor'>&lt;/path>
-&lt;polygon points='216.000000,128.000000 204.000000,122.400002 204.000000,133.600006' fill='currentColor' transform='rotate(90.000000, 200.000000, 128.000000)'>&lt;/polygon>
-&lt;text text-anchor='middle' x='8' y='116' fill='currentColor' style='font-size:1em'>c&lt;/text>
-&lt;text text-anchor='middle' x='16' y='4' fill='currentColor' style='font-size:1em'>C&lt;/text>
-&lt;text text-anchor='middle' x='16' y='116' fill='currentColor' style='font-size:1em'>e&lt;/text>
-&lt;text text-anchor='middle' x='24' y='4' fill='currentColor' style='font-size:1em'>o&lt;/text>
-&lt;text text-anchor='middle' x='24' y='36' fill='currentColor' style='font-size:1em'>@&lt;/text>
-&lt;text text-anchor='middle' x='24' y='52' fill='currentColor' style='font-size:1em'>@&lt;/text>
-&lt;text text-anchor='middle' x='24' y='68' fill='currentColor' style='font-size:1em'>@&lt;/text>
-&lt;text text-anchor='middle' x='24' y='116' fill='currentColor' style='font-size:1em'>m&lt;/text>
-&lt;text text-anchor='middle' x='32' y='4' fill='currentColor' style='font-size:1em'>m&lt;/text>
-&lt;text text-anchor='middle' x='32' y='36' fill='currentColor' style='font-size:1em'>a&lt;/text>
-&lt;text text-anchor='middle' x='32' y='52' fill='currentColor' style='font-size:1em'>p&lt;/text>
-&lt;text text-anchor='middle' x='32' y='68' fill='currentColor' style='font-size:1em'>c&lt;/text>
-&lt;text text-anchor='middle' x='40' y='4' fill='currentColor' style='font-size:1em'>p&lt;/text>
-&lt;text text-anchor='middle' x='40' y='36' fill='currentColor' style='font-size:1em'>t&lt;/text>
-&lt;text text-anchor='middle' x='40' y='52' fill='currentColor' style='font-size:1em'>r&lt;/text>
-&lt;text text-anchor='middle' x='40' y='68' fill='currentColor' style='font-size:1em'>s&lt;/text>
-&lt;text text-anchor='middle' x='40' y='116' fill='currentColor' style='font-size:1em'>g&lt;/text>
-&lt;text text-anchor='middle' x='48' y='4' fill='currentColor' style='font-size:1em'>o&lt;/text>
-&lt;text text-anchor='middle' x='48' y='36' fill='currentColor' style='font-size:1em'>t&lt;/text>
-&lt;text text-anchor='middle' x='48' y='52' fill='currentColor' style='font-size:1em'>o&lt;/text>
-&lt;text text-anchor='middle' x='48' y='68' fill='currentColor' style='font-size:1em'>s&lt;/text>
-&lt;text text-anchor='middle' x='48' y='116' fill='currentColor' style='font-size:1em'>e&lt;/text>
-&lt;text text-anchor='middle' x='56' y='4' fill='currentColor' style='font-size:1em'>n&lt;/text>
-&lt;text text-anchor='middle' x='56' y='36' fill='currentColor' style='font-size:1em'>r&lt;/text>
-&lt;text text-anchor='middle' x='56' y='52' fill='currentColor' style='font-size:1em'>p&lt;/text>
-&lt;text text-anchor='middle' x='56' y='68' fill='currentColor' style='font-size:1em'>p&lt;/text>
-&lt;text text-anchor='middle' x='56' y='116' fill='currentColor' style='font-size:1em'>n&lt;/text>
-&lt;text text-anchor='middle' x='64' y='4' fill='currentColor' style='font-size:1em'>e&lt;/text>
-&lt;text text-anchor='middle' x='64' y='68' fill='currentColor' style='font-size:1em'>r&lt;/text>
-&lt;text text-anchor='middle' x='64' y='116' fill='currentColor' style='font-size:1em'>e&lt;/text>
-&lt;text text-anchor='middle' x='72' y='4' fill='currentColor' style='font-size:1em'>n&lt;/text>
-&lt;text text-anchor='middle' x='72' y='68' fill='currentColor' style='font-size:1em'>o&lt;/text>
-&lt;text text-anchor='middle' x='72' y='116' fill='currentColor' style='font-size:1em'>r&lt;/text>
-&lt;text text-anchor='middle' x='80' y='4' fill='currentColor' style='font-size:1em'>t&lt;/text>
-&lt;text text-anchor='middle' x='80' y='68' fill='currentColor' style='font-size:1em'>p&lt;/text>
-&lt;text text-anchor='middle' x='80' y='116' fill='currentColor' style='font-size:1em'>a&lt;/text>
-&lt;text text-anchor='middle' x='88' y='116' fill='currentColor' style='font-size:1em'>t&lt;/text>
-&lt;text text-anchor='middle' x='96' y='116' fill='currentColor' style='font-size:1em'>e&lt;/text>
-&lt;text text-anchor='middle' x='176' y='36' fill='currentColor' style='font-size:1em'>a&lt;/text>
-&lt;text text-anchor='middle' x='176' y='52' fill='currentColor' style='font-size:1em'>m&lt;/text>
-&lt;text text-anchor='middle' x='176' y='68' fill='currentColor' style='font-size:1em'>c&lt;/text>
-&lt;text text-anchor='middle' x='176' y='164' fill='currentColor' style='font-size:1em'>S&lt;/text>
-&lt;text text-anchor='middle' x='176' y='180' fill='currentColor' style='font-size:1em'>I&lt;/text>
-&lt;text text-anchor='middle' x='176' y='196' fill='currentColor' style='font-size:1em'>S&lt;/text>
-&lt;text text-anchor='middle' x='176' y='228' fill='currentColor' style='font-size:1em'>K&lt;/text>
-&lt;text text-anchor='middle' x='184' y='4' fill='currentColor' style='font-size:1em'>M&lt;/text>
-&lt;text text-anchor='middle' x='184' y='36' fill='currentColor' style='font-size:1em'>t&lt;/text>
-&lt;text text-anchor='middle' x='184' y='52' fill='currentColor' style='font-size:1em'>e&lt;/text>
-&lt;text text-anchor='middle' x='184' y='68' fill='currentColor' style='font-size:1em'>s&lt;/text>
-&lt;text text-anchor='middle' x='184' y='164' fill='currentColor' style='font-size:1em'>w&lt;/text>
-&lt;text text-anchor='middle' x='184' y='180' fill='currentColor' style='font-size:1em'>n&lt;/text>
-&lt;text text-anchor='middle' x='184' y='196' fill='currentColor' style='font-size:1em'>e&lt;/text>
-&lt;text text-anchor='middle' x='184' y='228' fill='currentColor' style='font-size:1em'>n&lt;/text>
-&lt;text text-anchor='middle' x='192' y='4' fill='currentColor' style='font-size:1em'>a&lt;/text>
-&lt;text text-anchor='middle' x='192' y='36' fill='currentColor' style='font-size:1em'>t&lt;/text>
-&lt;text text-anchor='middle' x='192' y='52' fill='currentColor' style='font-size:1em'>m&lt;/text>
-&lt;text text-anchor='middle' x='192' y='68' fill='currentColor' style='font-size:1em'>s&lt;/text>
-&lt;text text-anchor='middle' x='192' y='164' fill='currentColor' style='font-size:1em'>i&lt;/text>
-&lt;text text-anchor='middle' x='192' y='180' fill='currentColor' style='font-size:1em'>p&lt;/text>
-&lt;text text-anchor='middle' x='192' y='196' fill='currentColor' style='font-size:1em'>l&lt;/text>
-&lt;text text-anchor='middle' x='192' y='228' fill='currentColor' style='font-size:1em'>o&lt;/text>
-&lt;text text-anchor='middle' x='200' y='4' fill='currentColor' style='font-size:1em'>n&lt;/text>
-&lt;text text-anchor='middle' x='200' y='36' fill='currentColor' style='font-size:1em'>r&lt;/text>
-&lt;text text-anchor='middle' x='200' y='52' fill='currentColor' style='font-size:1em'>b&lt;/text>
-&lt;text text-anchor='middle' x='200' y='68' fill='currentColor' style='font-size:1em'>P&lt;/text>
-&lt;text text-anchor='middle' x='200' y='164' fill='currentColor' style='font-size:1em'>t&lt;/text>
-&lt;text text-anchor='middle' x='200' y='180' fill='currentColor' style='font-size:1em'>u&lt;/text>
-&lt;text text-anchor='middle' x='200' y='196' fill='currentColor' style='font-size:1em'>e&lt;/text>
-&lt;text text-anchor='middle' x='200' y='228' fill='currentColor' style='font-size:1em'>b&lt;/text>
-&lt;text text-anchor='middle' x='208' y='4' fill='currentColor' style='font-size:1em'>i&lt;/text>
-&lt;text text-anchor='middle' x='208' y='36' fill='currentColor' style='font-size:1em'>s&lt;/text>
-&lt;text text-anchor='middle' x='208' y='52' fill='currentColor' style='font-size:1em'>e&lt;/text>
-&lt;text text-anchor='middle' x='208' y='68' fill='currentColor' style='font-size:1em'>r&lt;/text>
-&lt;text text-anchor='middle' x='208' y='164' fill='currentColor' style='font-size:1em'>c&lt;/text>
-&lt;text text-anchor='middle' x='208' y='180' fill='currentColor' style='font-size:1em'>t&lt;/text>
-&lt;text text-anchor='middle' x='208' y='196' fill='currentColor' style='font-size:1em'>c&lt;/text>
-&lt;text text-anchor='middle' x='208' y='228' fill='currentColor' style='font-size:1em'>s&lt;/text>
-&lt;text text-anchor='middle' x='216' y='4' fill='currentColor' style='font-size:1em'>f&lt;/text>
-&lt;text text-anchor='middle' x='216' y='36' fill='currentColor' style='font-size:1em'>[&lt;/text>
-&lt;text text-anchor='middle' x='216' y='52' fill='currentColor' style='font-size:1em'>r&lt;/text>
-&lt;text text-anchor='middle' x='216' y='68' fill='currentColor' style='font-size:1em'>o&lt;/text>
-&lt;text text-anchor='middle' x='216' y='116' fill='currentColor' style='font-size:1em'>c&lt;/text>
-&lt;text text-anchor='middle' x='216' y='164' fill='currentColor' style='font-size:1em'>h&lt;/text>
-&lt;text text-anchor='middle' x='216' y='196' fill='currentColor' style='font-size:1em'>t&lt;/text>
-&lt;text text-anchor='middle' x='224' y='4' fill='currentColor' style='font-size:1em'>e&lt;/text>
-&lt;text text-anchor='middle' x='224' y='36' fill='currentColor' style='font-size:1em'>]&lt;/text>
-&lt;text text-anchor='middle' x='224' y='52' fill='currentColor' style='font-size:1em'>s&lt;/text>
-&lt;text text-anchor='middle' x='224' y='68' fill='currentColor' style='font-size:1em'>p&lt;/text>
-&lt;text text-anchor='middle' x='224' y='116' fill='currentColor' style='font-size:1em'>e&lt;/text>
-&lt;text text-anchor='middle' x='232' y='4' fill='currentColor' style='font-size:1em'>s&lt;/text>
-&lt;text text-anchor='middle' x='232' y='68' fill='currentColor' style='font-size:1em'>s&lt;/text>
-&lt;text text-anchor='middle' x='232' y='116' fill='currentColor' style='font-size:1em'>m&lt;/text>
-&lt;text text-anchor='middle' x='240' y='4' fill='currentColor' style='font-size:1em'>t&lt;/text>
-&lt;text text-anchor='middle' x='248' y='116' fill='currentColor' style='font-size:1em'>s&lt;/text>
-&lt;text text-anchor='middle' x='256' y='116' fill='currentColor' style='font-size:1em'>e&lt;/text>
-&lt;text text-anchor='middle' x='264' y='116' fill='currentColor' style='font-size:1em'>r&lt;/text>
-&lt;text text-anchor='middle' x='272' y='116' fill='currentColor' style='font-size:1em'>v&lt;/text>
-&lt;text text-anchor='middle' x='280' y='116' fill='currentColor' style='font-size:1em'>e&lt;/text>
-&lt;/g>
-
- &lt;/svg>
- 
-&lt;/div>
-&lt;p>Everything derives from your component documentation - the manifest is the single source of truth.&lt;/p></description></item><item><title>Import Maps</title><link>https://bennypowers.dev/cem/docs/serve/import-maps/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/serve/import-maps/</guid><description>&lt;p>&lt;code>cem serve&lt;/code> automatically generates 
-&lt;a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap" 
- target="_blank" 
- rel="noopener">import maps
-&lt;/a> from your &lt;code>package.json&lt;/code>, enabling bare module specifiers in your demos.&lt;/p>
-&lt;h2 id="what-are-import-maps">What Are Import Maps?&lt;/h2>
-&lt;p>Import maps let you use package names in imports instead of full paths:&lt;/p>
-
-&lt;code-highlighter>
- &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-js" data-lang="js">&lt;span class="line">&lt;span class="cl">&lt;span class="c1">// With import maps:
-&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span>&lt;span class="kr">import&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="nx">LitElement&lt;/span> &lt;span class="p">}&lt;/span> &lt;span class="nx">from&lt;/span> &lt;span class="s1">&amp;#39;lit&amp;#39;&lt;/span>&lt;span class="p">;&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">// Without import maps:
-&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span>&lt;span class="kr">import&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="nx">LitElement&lt;/span> &lt;span class="p">}&lt;/span> &lt;span class="nx">from&lt;/span> &lt;span class="s1">&amp;#39;../node_modules/lit/index.js&amp;#39;&lt;/span>&lt;span class="p">;&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>
-&lt;/code-highlighter>&lt;h2 id="automatic-generation">Automatic Generation&lt;/h2>
-&lt;p>The dev server reads your &lt;code>package.json&lt;/code> and generates an import map for all dependencies:&lt;/p>
-&lt;p>&lt;strong>package.json:&lt;/strong>&lt;/p>
-
-&lt;code-highlighter>
- &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-json" data-lang="json">&lt;span class="line">&lt;span class="cl">&lt;span class="p">{&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;dependencies&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;lit&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;^3.0.0&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;@patternfly/elements&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;^3.0.0&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>
-&lt;/code-highlighter>&lt;p>&lt;strong>Generated import map:&lt;/strong>&lt;/p></description></item><item><title>Command Reference</title><link>https://bennypowers.dev/cem/docs/serve/reference/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/serve/reference/</guid><description>&lt;p>The &lt;code>cem serve&lt;/code> command starts a development server specifically designed for custom element development.&lt;/p>
-
-&lt;code-highlighter>
- &lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">&lt;span class="line">&lt;span class="cl">cem serve &lt;span class="o">[&lt;/span>flags&lt;span class="o">]&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>
-&lt;/code-highlighter>&lt;h2 id="command-flags">Command Flags&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Flag&lt;/th>
- &lt;th>Description&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;code>--port&lt;/code>&lt;/td>
- &lt;td>Port to listen on (default: &lt;code>8000&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;code>--no-reload&lt;/code>&lt;/td>
- &lt;td>Disable live reload&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;code>--target&lt;/code>&lt;/td>
- &lt;td>TypeScript/JavaScript transform target: &lt;code>es2015&lt;/code>, &lt;code>es2016&lt;/code>, &lt;code>es2017&lt;/code>, &lt;code>es2018&lt;/code>, &lt;code>es2019&lt;/code>, &lt;code>es2020&lt;/code>, &lt;code>es2021&lt;/code>, &lt;code>es2022&lt;/code>, &lt;code>es2023&lt;/code>, &lt;code>esnext&lt;/code> (default: &lt;code>es2022&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;code>--css-transform&lt;/code>&lt;/td>
- &lt;td>Glob patterns for CSS files to transform to JavaScript modules (opt-in, e.g., &lt;code>src/**/*.css,elements/**/*.css&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;code>--css-transform-exclude&lt;/code>&lt;/td>
- &lt;td>Glob patterns for CSS files to exclude from transformation (e.g., &lt;code>demo/**/*.css&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;code>--watch-ignore&lt;/code>&lt;/td>
- &lt;td>Glob patterns to ignore in file watcher (comma-separated, e.g., &lt;code>_site/**,dist/**&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;h3 id="global-flags">Global Flags&lt;/h3>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Flag&lt;/th>
- &lt;th>Description&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;code>--config&lt;/code>&lt;/td>
- &lt;td>Path to config file (default: &lt;code>.config/cem.yaml&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;code>--package&lt;/code>, &lt;code>-p&lt;/code>&lt;/td>
- &lt;td>Deno-style package specifier (e.g., &lt;code>npm:@scope/package&lt;/code>) or path to package directory&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;code>--source-control-root-url&lt;/code>&lt;/td>
- &lt;td>Canonical public source control URL for primary branch (e.g., &lt;code>https://github.com/user/repo/tree/main/&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;code>--quiet&lt;/code>, &lt;code>-q&lt;/code>&lt;/td>
- &lt;td>Quiet output (only warnings and errors)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;code>--verbose&lt;/code>, &lt;code>-v&lt;/code>&lt;/td>
- &lt;td>Verbose logging output&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;h2 id="usage-examples">Usage Examples&lt;/h2>
-&lt;h3 id="start-the-dev-server">Start the dev server&lt;/h3>
-
-&lt;code-highlighter>
- &lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">&lt;span class="line">&lt;span class="cl">cem serve&lt;/span>&lt;/span>&lt;/code>&lt;/pre>
-&lt;/code-highlighter>&lt;p>Starts the server on &lt;code>http://localhost:8000&lt;/code> and opens your default browser to the element listing page.&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Development Server on cem</title>
+    <link>https://bennypowers.dev/cem/docs/serve/</link>
+    <description>Recent content in Development Server on cem</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <atom:link href="https://bennypowers.dev/cem/docs/serve/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Getting Started</title>
+      <link>https://bennypowers.dev/cem/docs/serve/getting-started/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://bennypowers.dev/cem/docs/serve/getting-started/</guid>
+      <description>&lt;p&gt;This guide will walk you through setting up &lt;code&gt;cem serve&lt;/code&gt; for your custom element project.&lt;/p&gt;&#xA;&lt;h2 id=&#34;prerequisites&#34;&gt;Prerequisites&lt;/h2&gt;&#xA;&lt;p&gt;Before using &lt;code&gt;cem serve&lt;/code&gt;, you need:&lt;/p&gt;&#xA;&lt;ol&gt;&#xA;&lt;li&gt;&lt;strong&gt;Custom elements manifest&lt;/strong&gt; - Generate one with &#xA;&lt;a href=&#34;https://bennypowers.dev/cem/docs/commands/generate/&#34;&gt;&lt;code&gt;cem generate&lt;/code&gt;&#xA;&lt;/a&gt;&lt;/li&gt;&#xA;&lt;li&gt;&lt;strong&gt;Demo files&lt;/strong&gt; - HTML files in &lt;code&gt;demo/&lt;/code&gt; directories or named &lt;code&gt;*.demo.html&lt;/code&gt;&lt;/li&gt;&#xA;&lt;/ol&gt;&#xA;&lt;h2 id=&#34;the-workflow&#34;&gt;The Workflow&lt;/h2&gt;&#xA;&lt;p&gt;&lt;code&gt;cem serve&lt;/code&gt; follows a manifest-driven development workflow:&lt;/p&gt;&#xA;&lt;ol&gt;&#xA;&lt;li&gt;&lt;strong&gt;Write your component&lt;/strong&gt; with JSDoc documentation&lt;/li&gt;&#xA;&lt;li&gt;&lt;strong&gt;Generate manifest&lt;/strong&gt; with &lt;code&gt;cem generate&lt;/code&gt;&lt;/li&gt;&#xA;&lt;li&gt;&lt;strong&gt;Add demos&lt;/strong&gt; in &lt;code&gt;demo/&lt;/code&gt; directories (automatically discovered)&lt;/li&gt;&#xA;&lt;li&gt;&lt;strong&gt;Run serve&lt;/strong&gt; with &lt;code&gt;cem serve&lt;/code&gt;&lt;/li&gt;&#xA;&lt;li&gt;&lt;strong&gt;Iterate&lt;/strong&gt; - edit, test, and changes trigger live reload&lt;/li&gt;&#xA;&lt;/ol&gt;&#xA;&lt;h2 id=&#34;quick-start&#34;&gt;Quick Start&lt;/h2&gt;&#xA;&lt;h3 id=&#34;1-install-cem&#34;&gt;1. Install cem&lt;/h3&gt;&#xA;&#xA;&lt;code-highlighter&gt;&#xA;  &lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;npm install --save-dev @pwrs/cem&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&#xA;&lt;/code-highlighter&gt;&lt;h3 id=&#34;2-generate-a-manifest&#34;&gt;2. Generate a manifest&lt;/h3&gt;&#xA;&#xA;&lt;code-highlighter&gt;&#xA;  &lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;cem generate&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&#xA;&lt;/code-highlighter&gt;&lt;p&gt;This creates &lt;code&gt;custom-elements.json&lt;/code&gt; with your component metadata.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Buildless Development</title>
+      <link>https://bennypowers.dev/cem/docs/serve/buildless/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://bennypowers.dev/cem/docs/serve/buildless/</guid>
+      <description>&lt;p&gt;Write TypeScript and import CSS directly in your browser - no build step required. &lt;code&gt;cem serve&lt;/code&gt; lets you develop without running &lt;code&gt;tsc&lt;/code&gt;, CSS watchers, or bundlers.&lt;/p&gt;&#xA;&lt;h2 id=&#34;write-typescript-directly&#34;&gt;Write TypeScript Directly&lt;/h2&gt;&#xA;&lt;p&gt;Import TypeScript files directly in your demos without compilation:&lt;/p&gt;&#xA;&#xA;&lt;code-highlighter&gt;&#xA;  &lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-html&#34; data-lang=&#34;html&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c&#34;&gt;&amp;lt;!-- In your demo --&amp;gt;&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;p&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;script&lt;/span&gt; &lt;span class=&#34;na&#34;&gt;type&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;s&#34;&gt;&amp;#34;module&amp;#34;&lt;/span&gt; &lt;span class=&#34;na&#34;&gt;src&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;s&#34;&gt;&amp;#34;../src/my-element.ts&amp;#34;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;&amp;gt;&amp;lt;/&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;script&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;&amp;gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&#xA;&lt;/code-highlighter&gt;&lt;p&gt;No need to:&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Run &lt;code&gt;tsc --watch&lt;/code&gt;&lt;/li&gt;&#xA;&lt;li&gt;Set up a build pipeline&lt;/li&gt;&#xA;&lt;li&gt;Wait for compilation before testing&lt;/li&gt;&#xA;&lt;li&gt;Manage separate source and output directories&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;The dev server handles TypeScript on-demand with full source map support for debugging.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Knobs</title>
+      <link>https://bennypowers.dev/cem/docs/serve/knobs/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://bennypowers.dev/cem/docs/serve/knobs/</guid>
+      <description>&lt;p&gt;Knobs are interactive controls that let you test your custom elements by manipulating their attributes, properties, and CSS custom properties in real-time.&lt;/p&gt;&#xA;&lt;h2 id=&#34;how-knobs-work&#34;&gt;How Knobs Work&lt;/h2&gt;&#xA;&lt;p&gt;Knobs are automatically generated from your &lt;strong&gt;Custom Elements Manifest&lt;/strong&gt;. The dev server reads your component&amp;rsquo;s API documentation and creates appropriate controls for each attribute, property, and CSS variable.&lt;/p&gt;&#xA;&lt;h3 id=&#34;the-workflow&#34;&gt;The Workflow&lt;/h3&gt;&#xA;&#xA;&#xA;&#xA;&lt;div class=&#34;goat svg-container &#34;&gt;&#xA;  &#xA;    &lt;svg&#xA;      xmlns=&#34;http://www.w3.org/2000/svg&#34;&#xA;      font-family=&#34;Menlo,Lucida Console,monospace&#34;&#xA;      &#xA;        viewBox=&#34;0 0 296 249&#34;&#xA;      &gt;&#xA;      &lt;g transform=&#39;translate(8,16)&#39;&gt;&#xA;&lt;path d=&#39;M 0,16 L 96,16&#39; fill=&#39;none&#39; stroke=&#39;currentColor&#39;&gt;&lt;/path&gt;&#xA;&lt;path d=&#39;M 160,16 L 248,16&#39; fill=&#39;none&#39; stroke=&#39;currentColor&#39;&gt;&lt;/path&gt;&#xA;&lt;path d=&#39;M 112,48 L 144,48&#39; fill=&#39;none&#39; stroke=&#39;currentColor&#39;&gt;&lt;/path&gt;&#xA;&lt;path d=&#39;M 0,80 L 96,80&#39; fill=&#39;none&#39; stroke=&#39;currentColor&#39;&gt;&lt;/path&gt;&#xA;&lt;path d=&#39;M 160,80 L 200,80&#39; fill=&#39;none&#39; stroke=&#39;currentColor&#39;&gt;&lt;/path&gt;&#xA;&lt;path d=&#39;M 200,80 L 248,80&#39; fill=&#39;none&#39; stroke=&#39;currentColor&#39;&gt;&lt;/path&gt;&#xA;&lt;path d=&#39;M 160,144 L 240,144&#39; fill=&#39;none&#39; stroke=&#39;currentColor&#39;&gt;&lt;/path&gt;&#xA;&lt;path d=&#39;M 160,208 L 240,208&#39; fill=&#39;none&#39; stroke=&#39;currentColor&#39;&gt;&lt;/path&gt;&#xA;&lt;path d=&#39;M 0,16 L 0,80&#39; fill=&#39;none&#39; stroke=&#39;currentColor&#39;&gt;&lt;/path&gt;&#xA;&lt;path d=&#39;M 96,16 L 96,80&#39; fill=&#39;none&#39; stroke=&#39;currentColor&#39;&gt;&lt;/path&gt;&#xA;&lt;path d=&#39;M 160,16 L 160,80&#39; fill=&#39;none&#39; stroke=&#39;currentColor&#39;&gt;&lt;/path&gt;&#xA;&lt;path d=&#39;M 160,144 L 160,208&#39; fill=&#39;none&#39; stroke=&#39;currentColor&#39;&gt;&lt;/path&gt;&#xA;&lt;path d=&#39;M 200,80 L 200,128&#39; fill=&#39;none&#39; stroke=&#39;currentColor&#39;&gt;&lt;/path&gt;&#xA;&lt;path d=&#39;M 240,144 L 240,208&#39; fill=&#39;none&#39; stroke=&#39;currentColor&#39;&gt;&lt;/path&gt;&#xA;&lt;path d=&#39;M 248,16 L 248,80&#39; fill=&#39;none&#39; stroke=&#39;currentColor&#39;&gt;&lt;/path&gt;&#xA;&lt;polygon points=&#39;152.000000,48.000000 140.000000,42.400002 140.000000,53.599998&#39; fill=&#39;currentColor&#39; transform=&#39;rotate(0.000000, 144.000000, 48.000000)&#39;&gt;&lt;/polygon&gt;&#xA;&lt;path d=&#39;M 200,128 L 200,136&#39; fill=&#39;none&#39; stroke=&#39;currentColor&#39;&gt;&lt;/path&gt;&#xA;&lt;polygon points=&#39;216.000000,128.000000 204.000000,122.400002 204.000000,133.600006&#39; fill=&#39;currentColor&#39; transform=&#39;rotate(90.000000, 200.000000, 128.000000)&#39;&gt;&lt;/polygon&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;8&#39; y=&#39;116&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;c&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;16&#39; y=&#39;4&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;C&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;16&#39; y=&#39;116&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;e&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;24&#39; y=&#39;4&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;o&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;24&#39; y=&#39;36&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;@&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;24&#39; y=&#39;52&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;@&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;24&#39; y=&#39;68&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;@&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;24&#39; y=&#39;116&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;m&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;32&#39; y=&#39;4&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;m&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;32&#39; y=&#39;36&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;a&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;32&#39; y=&#39;52&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;p&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;32&#39; y=&#39;68&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;c&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;40&#39; y=&#39;4&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;p&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;40&#39; y=&#39;36&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;t&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;40&#39; y=&#39;52&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;r&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;40&#39; y=&#39;68&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;s&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;40&#39; y=&#39;116&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;g&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;48&#39; y=&#39;4&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;o&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;48&#39; y=&#39;36&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;t&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;48&#39; y=&#39;52&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;o&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;48&#39; y=&#39;68&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;s&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;48&#39; y=&#39;116&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;e&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;56&#39; y=&#39;4&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;n&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;56&#39; y=&#39;36&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;r&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;56&#39; y=&#39;52&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;p&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;56&#39; y=&#39;68&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;p&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;56&#39; y=&#39;116&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;n&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;64&#39; y=&#39;4&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;e&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;64&#39; y=&#39;68&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;r&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;64&#39; y=&#39;116&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;e&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;72&#39; y=&#39;4&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;n&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;72&#39; y=&#39;68&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;o&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;72&#39; y=&#39;116&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;r&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;80&#39; y=&#39;4&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;t&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;80&#39; y=&#39;68&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;p&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;80&#39; y=&#39;116&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;a&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;88&#39; y=&#39;116&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;t&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;96&#39; y=&#39;116&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;e&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;176&#39; y=&#39;36&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;a&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;176&#39; y=&#39;52&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;m&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;176&#39; y=&#39;68&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;c&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;176&#39; y=&#39;164&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;S&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;176&#39; y=&#39;180&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;I&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;176&#39; y=&#39;196&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;S&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;176&#39; y=&#39;228&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;K&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;184&#39; y=&#39;4&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;M&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;184&#39; y=&#39;36&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;t&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;184&#39; y=&#39;52&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;e&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;184&#39; y=&#39;68&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;s&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;184&#39; y=&#39;164&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;w&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;184&#39; y=&#39;180&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;n&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;184&#39; y=&#39;196&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;e&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;184&#39; y=&#39;228&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;n&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;192&#39; y=&#39;4&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;a&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;192&#39; y=&#39;36&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;t&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;192&#39; y=&#39;52&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;m&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;192&#39; y=&#39;68&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;s&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;192&#39; y=&#39;164&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;i&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;192&#39; y=&#39;180&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;p&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;192&#39; y=&#39;196&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;l&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;192&#39; y=&#39;228&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;o&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;200&#39; y=&#39;4&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;n&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;200&#39; y=&#39;36&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;r&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;200&#39; y=&#39;52&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;b&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;200&#39; y=&#39;68&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;P&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;200&#39; y=&#39;164&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;t&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;200&#39; y=&#39;180&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;u&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;200&#39; y=&#39;196&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;e&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;200&#39; y=&#39;228&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;b&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;208&#39; y=&#39;4&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;i&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;208&#39; y=&#39;36&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;s&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;208&#39; y=&#39;52&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;e&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;208&#39; y=&#39;68&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;r&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;208&#39; y=&#39;164&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;c&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;208&#39; y=&#39;180&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;t&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;208&#39; y=&#39;196&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;c&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;208&#39; y=&#39;228&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;s&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;216&#39; y=&#39;4&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;f&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;216&#39; y=&#39;36&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;[&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;216&#39; y=&#39;52&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;r&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;216&#39; y=&#39;68&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;o&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;216&#39; y=&#39;116&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;c&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;216&#39; y=&#39;164&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;h&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;216&#39; y=&#39;196&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;t&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;224&#39; y=&#39;4&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;e&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;224&#39; y=&#39;36&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;]&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;224&#39; y=&#39;52&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;s&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;224&#39; y=&#39;68&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;p&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;224&#39; y=&#39;116&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;e&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;232&#39; y=&#39;4&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;s&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;232&#39; y=&#39;68&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;s&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;232&#39; y=&#39;116&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;m&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;240&#39; y=&#39;4&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;t&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;248&#39; y=&#39;116&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;s&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;256&#39; y=&#39;116&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;e&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;264&#39; y=&#39;116&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;r&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;272&#39; y=&#39;116&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;v&lt;/text&gt;&#xA;&lt;text text-anchor=&#39;middle&#39; x=&#39;280&#39; y=&#39;116&#39; fill=&#39;currentColor&#39; style=&#39;font-size:1em&#39;&gt;e&lt;/text&gt;&#xA;&lt;/g&gt;&#xA;&#xA;    &lt;/svg&gt;&#xA;  &#xA;&lt;/div&gt;&#xA;&lt;p&gt;Everything derives from your component documentation - the manifest is the single source of truth.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Import Maps</title>
+      <link>https://bennypowers.dev/cem/docs/serve/import-maps/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://bennypowers.dev/cem/docs/serve/import-maps/</guid>
+      <description>&lt;p&gt;&lt;code&gt;cem serve&lt;/code&gt; automatically generates &#xA;&lt;a href=&#34;https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap&#34; &#xA;   target=&#34;_blank&#34; &#xA;   rel=&#34;noopener&#34;&gt;import maps&#xA;&lt;/a&gt; from your &lt;code&gt;package.json&lt;/code&gt;, enabling bare module specifiers in your demos.&lt;/p&gt;&#xA;&lt;h2 id=&#34;what-are-import-maps&#34;&gt;What Are Import Maps?&lt;/h2&gt;&#xA;&lt;p&gt;Import maps let you use package names in imports instead of full paths:&lt;/p&gt;&#xA;&#xA;&lt;code-highlighter&gt;&#xA;  &lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-js&#34; data-lang=&#34;js&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;// With import maps:&#xA;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;&lt;/span&gt;&lt;span class=&#34;kr&#34;&gt;import&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;LitElement&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;}&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;from&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;lit&amp;#39;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;// Without import maps:&#xA;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;&lt;/span&gt;&lt;span class=&#34;kr&#34;&gt;import&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;LitElement&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;}&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;from&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;../node_modules/lit/index.js&amp;#39;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&#xA;&lt;/code-highlighter&gt;&lt;h2 id=&#34;automatic-generation&#34;&gt;Automatic Generation&lt;/h2&gt;&#xA;&lt;p&gt;The dev server reads your &lt;code&gt;package.json&lt;/code&gt; and generates an import map for all dependencies:&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;package.json:&lt;/strong&gt;&lt;/p&gt;&#xA;&#xA;&lt;code-highlighter&gt;&#xA;  &lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-json&#34; data-lang=&#34;json&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;  &lt;span class=&#34;nt&#34;&gt;&amp;#34;dependencies&amp;#34;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;    &lt;span class=&#34;nt&#34;&gt;&amp;#34;lit&amp;#34;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt; &lt;span class=&#34;s2&#34;&gt;&amp;#34;^3.0.0&amp;#34;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;    &lt;span class=&#34;nt&#34;&gt;&amp;#34;@patternfly/elements&amp;#34;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt; &lt;span class=&#34;s2&#34;&gt;&amp;#34;^3.0.0&amp;#34;&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;  &lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&#xA;&lt;/code-highlighter&gt;&lt;p&gt;&lt;strong&gt;Generated import map:&lt;/strong&gt;&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Command Reference</title>
+      <link>https://bennypowers.dev/cem/docs/serve/reference/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://bennypowers.dev/cem/docs/serve/reference/</guid>
+      <description>&lt;p&gt;The &lt;code&gt;cem serve&lt;/code&gt; command starts a development server specifically designed for custom element development.&lt;/p&gt;&#xA;&#xA;&lt;code-highlighter&gt;&#xA;  &lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;cem serve &lt;span class=&#34;o&#34;&gt;[&lt;/span&gt;flags&lt;span class=&#34;o&#34;&gt;]&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&#xA;&lt;/code-highlighter&gt;&lt;h2 id=&#34;command-flags&#34;&gt;Command Flags&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Flag&lt;/th&gt;&#xA;          &lt;th&gt;Description&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;code&gt;--port&lt;/code&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Port to listen on (default: &lt;code&gt;8000&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;code&gt;--no-reload&lt;/code&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Disable live reload&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;code&gt;--target&lt;/code&gt;&lt;/td&gt;&#xA;          &lt;td&gt;TypeScript/JavaScript transform target: &lt;code&gt;es2015&lt;/code&gt;, &lt;code&gt;es2016&lt;/code&gt;, &lt;code&gt;es2017&lt;/code&gt;, &lt;code&gt;es2018&lt;/code&gt;, &lt;code&gt;es2019&lt;/code&gt;, &lt;code&gt;es2020&lt;/code&gt;, &lt;code&gt;es2021&lt;/code&gt;, &lt;code&gt;es2022&lt;/code&gt;, &lt;code&gt;es2023&lt;/code&gt;, &lt;code&gt;esnext&lt;/code&gt; (default: &lt;code&gt;es2022&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;code&gt;--css-transform&lt;/code&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Glob patterns for CSS files to transform to JavaScript modules (opt-in, e.g., &lt;code&gt;src/**/*.css,elements/**/*.css&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;code&gt;--css-transform-exclude&lt;/code&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Glob patterns for CSS files to exclude from transformation (e.g., &lt;code&gt;demo/**/*.css&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;code&gt;--watch-ignore&lt;/code&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Glob patterns to ignore in file watcher (comma-separated, e.g., &lt;code&gt;_site/**,dist/**&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;h3 id=&#34;global-flags&#34;&gt;Global Flags&lt;/h3&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Flag&lt;/th&gt;&#xA;          &lt;th&gt;Description&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;code&gt;--config&lt;/code&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Path to config file (default: &lt;code&gt;.config/cem.yaml&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;code&gt;--package&lt;/code&gt;, &lt;code&gt;-p&lt;/code&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Deno-style package specifier (e.g., &lt;code&gt;npm:@scope/package&lt;/code&gt;) or path to package directory&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;code&gt;--source-control-root-url&lt;/code&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Canonical public source control URL for primary branch (e.g., &lt;code&gt;https://github.com/user/repo/tree/main/&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;code&gt;--quiet&lt;/code&gt;, &lt;code&gt;-q&lt;/code&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Quiet output (only warnings and errors)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;code&gt;--verbose&lt;/code&gt;, &lt;code&gt;-v&lt;/code&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Verbose logging output&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;h2 id=&#34;usage-examples&#34;&gt;Usage Examples&lt;/h2&gt;&#xA;&lt;h3 id=&#34;start-the-dev-server&#34;&gt;Start the dev server&lt;/h3&gt;&#xA;&#xA;&lt;code-highlighter&gt;&#xA;  &lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;cem serve&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&#xA;&lt;/code-highlighter&gt;&lt;p&gt;Starts the server on &lt;code&gt;http://localhost:8000&lt;/code&gt; and opens your default browser to the element listing page.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>
