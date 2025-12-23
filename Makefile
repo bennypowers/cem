@@ -219,7 +219,7 @@ docs-ci: update-html-attributes
 	cp -f "$(CONTRIBUTING_PATH)" /tmp/cem-contributing.md
 	cat CONTRIBUTING.md >> "$(CONTRIBUTING_PATH)"
 	hugo mod clean
-	hugo --gc --source docs
+	hugo --gc --minify --source docs
 	mv /tmp/cem-contributing.md "$(CONTRIBUTING_PATH)"
 
 vscode-build:

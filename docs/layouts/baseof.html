@@ -6,14 +6,7 @@
 {{- $default_mode := $config.defaultLightingMode -}}
 <!doctype html>
 <html lang={{ $lang }}{{ with $is_dark }} class=dark{{ end }}{{ with $default_mode }} data-mode={{ . }}{{ end }} itemscope itemtype={{ $item_type }}>
-<head>
-  {{- partial "head" . }}
-  {{- if .IsHome -}}
-  {{/* Do not remove trailing slash - although that's valid HTML, go's XML parser doesn't like */}}
-  <meta name="go-import" content="bennypowers.dev/cem git https://github.com/bennypowers/cem" />
-  <meta name="go-source" content="bennypowers.dev/cem https://github.com/bennypowers/cem https://github.com/bennypowers/cem/tree/main{/dir} https://github.com/bennypowers/cem/blob/main{/dir}/{file}#L{line}" />
-  {{- end }}
-</head>
+<head>{{- partial "head" . -}}{{- end -}}</head>
 <body class="page-{{ .Kind }}" id="pagetop">
   <header id="header">
     {{- partial "nav" . }}
