@@ -56,3 +56,14 @@ security:
 search:
   on: true
   global: true
+minify:
+  minifyOutput: false
+  tdewolff:
+    # necessary to preserve trailing slash in go-import meta tags, which go requires
+    html:
+      keepEndTags: true
+      keepQuotes: true
+    css:
+      decimals: -1
+    js:
+      keepVarNames: false
