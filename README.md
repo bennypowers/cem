@@ -38,6 +38,23 @@ The `cem serve` command starts a development server specifically for custom elem
 - Automatic import map generation
 - npm workspaces support for monorepos
 - Demo discovery from manifest `demos` field
+- Multiple rendering modes: full UI, shadow DOM, or chromeless (for testing/embedding)
+
+**Rendering Modes:**
+- **Light** (default): Full PatternFly UI with sidebar, knobs, logs, and event monitoring
+- **Shadow**: Same UI as light, but renders demos in Shadow DOM for testing shadow root behavior
+- **Chromeless**: Minimal HTML with live reload only - no UI chrome. Perfect for Playwright tests, isolated development, embedding in docs, or capturing clean screenshots
+
+```bash
+# Full UI with development tools
+cem serve
+
+# Shadow DOM testing
+cem serve --rendering=shadow
+
+# Chromeless for automated testing
+cem serve --rendering=chromeless
+```
 
 See more in the [Serve docs][servedocs]
 

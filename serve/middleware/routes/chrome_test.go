@@ -24,6 +24,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"bennypowers.dev/cem/internal/platform/testutil"
 )
 
 var update = flag.Bool("update", false, "update golden files")
@@ -36,14 +38,10 @@ func testTemplates() *TemplateRegistry {
 // TestChromeRendering_BasicDemo verifies chrome template wraps demo HTML
 func TestChromeRendering_BasicDemo(t *testing.T) {
 	// Read demo partial
-	demoPath := filepath.Join("testdata", "chrome-rendering", "basic-demo.html")
-	demoHTML, err := os.ReadFile(demoPath)
-	if err != nil {
-		t.Fatalf("Failed to read demo fixture: %v", err)
-	}
+	demoHTML := testutil.LoadFixtureFile(t, filepath.Join("chrome-rendering", "basic-demo.html"))
 
 	// Render chrome with demo
-	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
 		TagName:      "my-element",
 		DemoTitle:    "Basic Example",
 		DemoHTML:     template.HTML(demoHTML),
@@ -67,10 +65,7 @@ func TestChromeRendering_BasicDemo(t *testing.T) {
 		return
 	}
 
-	expected, err := os.ReadFile(goldenPath)
-	if err != nil {
-		t.Fatalf("Failed to read golden file: %v", err)
-	}
+	expected := testutil.LoadFixtureFile(t, filepath.Join("chrome-rendering", "expected-basic.html"))
 
 	if rendered != string(expected) {
 		t.Errorf("Rendered chrome does not match golden file.\nGot:\n%s\n\nExpected:\n%s", rendered, string(expected))
@@ -80,13 +75,9 @@ func TestChromeRendering_BasicDemo(t *testing.T) {
 
 // TestChromeRendering_NoKnobs verifies chrome without knobs
 func TestChromeRendering_NoKnobs(t *testing.T) {
-	demoPath := filepath.Join("testdata", "chrome-rendering", "basic-demo.html")
-	demoHTML, err := os.ReadFile(demoPath)
-	if err != nil {
-		t.Fatalf("Failed to read demo fixture: %v", err)
-	}
+	demoHTML := testutil.LoadFixtureFile(t, filepath.Join("chrome-rendering", "basic-demo.html"))
 
-	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
 		TagName:      "my-element",
 		DemoTitle:    "Basic Example",
 		DemoHTML:     template.HTML(demoHTML),
@@ -108,10 +99,7 @@ func TestChromeRendering_NoKnobs(t *testing.T) {
 		return
 	}
 
-	expected, err := os.ReadFile(goldenPath)
-	if err != nil {
-		t.Fatalf("Failed to read golden file: %v", err)
-	}
+	expected := testutil.LoadFixtureFile(t, filepath.Join("chrome-rendering", "expected-no-knobs.html"))
 
 	if rendered != string(expected) {
 		t.Errorf("Rendered chrome does not match golden file.\nGot:\n%s\n\nExpected:\n%s", rendered, string(expected))
@@ -121,13 +109,9 @@ func TestChromeRendering_NoKnobs(t *testing.T) {
 
 // TestChromeRendering_ShadowMode verifies ?shadow=true wraps demo
 func TestChromeRendering_ShadowMode(t *testing.T) {
-	demoPath := filepath.Join("testdata", "chrome-rendering", "basic-demo.html")
-	demoHTML, err := os.ReadFile(demoPath)
-	if err != nil {
-		t.Fatalf("Failed to read demo fixture: %v", err)
-	}
+	demoHTML := testutil.LoadFixtureFile(t, filepath.Join("chrome-rendering", "basic-demo.html"))
 
-	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
 		TagName:       "my-element",
 		DemoTitle:     "Basic Example",
 		DemoHTML:      template.HTML(demoHTML),
@@ -149,10 +133,7 @@ func TestChromeRendering_ShadowMode(t *testing.T) {
 		return
 	}
 
-	expected, err := os.ReadFile(goldenPath)
-	if err != nil {
-		t.Fatalf("Failed to read golden file: %v", err)
-	}
+	expected := testutil.LoadFixtureFile(t, filepath.Join("chrome-rendering", "expected-shadow-mode.html"))
 
 	if rendered != string(expected) {
 		t.Errorf("Rendered chrome does not match golden file.\nGot:\n%s\n\nExpected:\n%s", rendered, string(expected))
@@ -164,7 +145,7 @@ func TestChromeRendering_ShadowMode(t *testing.T) {
 func TestChromeRendering_MarkdownDescription(t *testing.T) {
 	demoHTML := `<my-element></my-element>`
 
-	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
 		TagName:     "my-element",
 		DemoTitle:   "Test",
 		DemoHTML:    template.HTML(demoHTML),
@@ -186,10 +167,7 @@ func TestChromeRendering_MarkdownDescription(t *testing.T) {
 		return
 	}
 
-	expected, err := os.ReadFile(goldenPath)
-	if err != nil {
-		t.Fatalf("Failed to read golden file: %v", err)
-	}
+	expected := testutil.LoadFixtureFile(t, filepath.Join("chrome-rendering", "expected-markdown.html"))
 
 	if rendered != string(expected) {
 		t.Errorf("Rendered chrome does not match golden file.\nGot:\n%s\n\nExpected:\n%s", rendered, string(expected))
@@ -200,18 +178,10 @@ func TestChromeRendering_MarkdownDescription(t *testing.T) {
 // TestChromeRendering_WithNavigation verifies navigation drawer rendering
 func TestChromeRendering_WithNavigation(t *testing.T) {
 	// Read demo partial
-	demoPath := filepath.Join("testdata", "chrome-rendering", "basic-demo.html")
-	demoHTML, err := os.ReadFile(demoPath)
-	if err != nil {
-		t.Fatalf("Failed to read demo fixture: %v", err)
-	}
+	demoHTML := testutil.LoadFixtureFile(t, filepath.Join("chrome-rendering", "basic-demo.html"))
 
 	// Read manifest with multiple elements
-	manifestPath := filepath.Join("testdata", "chrome-rendering", "manifest-with-navigation.json")
-	manifestBytes, err := os.ReadFile(manifestPath)
-	if err != nil {
-		t.Fatalf("Failed to read manifest fixture: %v", err)
-	}
+	manifestBytes := testutil.LoadFixtureFile(t, filepath.Join("chrome-rendering", "manifest-with-navigation.json"))
 
 	// Build navigation HTML using the same function as production code
 	navigationHTML, packageName, err := BuildSinglePackageNavigation(testTemplates(), manifestBytes, "test-package")
@@ -220,7 +190,7 @@ func TestChromeRendering_WithNavigation(t *testing.T) {
 	}
 
 	// Render chrome with navigation
-	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
 		TagName:        "demo-subset-one",
 		DemoTitle:      "Demo with Navigation",
 		DemoHTML:       template.HTML(demoHTML),
@@ -245,23 +215,57 @@ func TestChromeRendering_WithNavigation(t *testing.T) {
 		return
 	}
 
-	expected, err := os.ReadFile(goldenPath)
-	if err != nil {
-		t.Fatalf("Failed to read golden file: %v", err)
-	}
+	expected := testutil.LoadFixtureFile(t, filepath.Join("chrome-rendering", "expected-with-navigation.html"))
 
 	if rendered != string(expected) {
 		t.Errorf("Rendered chrome does not match golden file.\nGot:\n%s\n\nExpected:\n%s", rendered, string(expected))
 		t.Log("Run 'make update' to update golden files")
 	}
 }
+// TestChromeRendering_Chromeless verifies chromeless mode renders minimal HTML
+func TestChromeRendering_Chromeless(t *testing.T) {
+	// Read demo partial
+	demoHTML := testutil.LoadFixtureFile(t, filepath.Join("chrome-rendering", "basic-demo.html"))
+
+	// Render in chromeless mode
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
+		TagName:       "my-element",
+		DemoTitle:     "Chromeless Example",
+		DemoHTML:      template.HTML(demoHTML),
+		ImportMap:     `{"imports":{"lit":"https://cdn.jsdelivr.net/npm/lit@3/index.js"}}`,
+		RenderingMode: "chromeless",
+	})
+	if err != nil {
+		t.Fatalf("Failed to render chromeless: %v", err)
+	}
+
+	// Compare with golden file
+	goldenPath := filepath.Join("testdata", "chrome-rendering", "expected-chromeless.html")
+
+	if *update {
+		err := os.WriteFile(goldenPath, []byte(rendered), 0644)
+		if err != nil {
+			t.Fatalf("Failed to update golden file: %v", err)
+		}
+		t.Log("Updated golden file:", goldenPath)
+		return
+	}
+
+	expected := testutil.LoadFixtureFile(t, filepath.Join("chrome-rendering", "expected-chromeless.html"))
+
+	if rendered != string(expected) {
+		t.Errorf("Rendered chromeless does not match golden file.\nGot:\n%s\n\nExpected:\n%s", rendered, string(expected))
+		t.Log("Run 'make update' to update golden files")
+	}
+}
+
 // TestChromeRendering_NilManifest tests that chrome renders without crashing when Manifest is nil
 // This is the case in workspace mode where there's no single manifest for the whole workspace
 func TestChromeRendering_NilManifest(t *testing.T) {
 	demoHTML := `<my-element id="example"></my-element>`
 
 	// Render chrome with nil manifest (workspace mode scenario)
-	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
 		TagName:      "my-element",
 		DemoTitle:    "Workspace Mode Demo",
 		DemoHTML:     template.HTML(demoHTML),

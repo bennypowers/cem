@@ -27,7 +27,7 @@ import (
 func TestRenderingMode_Default(t *testing.T) {
 	demoHTML := `<my-element></my-element>`
 
-	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
 		TagName:       "my-element",
 		DemoTitle:     "Default Rendering",
 		DemoHTML:      template.HTML(demoHTML),
@@ -53,7 +53,7 @@ func TestRenderingMode_Default(t *testing.T) {
 func TestRenderingMode_Light(t *testing.T) {
 	demoHTML := `<my-element></my-element>`
 
-	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
 		TagName:       "my-element",
 		DemoTitle:     "Light Rendering",
 		DemoHTML:      template.HTML(demoHTML),
@@ -79,7 +79,7 @@ func TestRenderingMode_Light(t *testing.T) {
 func TestRenderingMode_Shadow(t *testing.T) {
 	demoHTML := `<my-element></my-element>`
 
-	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
 		TagName:       "my-element",
 		DemoTitle:     "Shadow Rendering",
 		DemoHTML:      template.HTML(demoHTML),
@@ -105,7 +105,7 @@ func TestRenderingMode_Shadow(t *testing.T) {
 func TestRenderingMode_IframeFallback(t *testing.T) {
 	demoHTML := `<my-element></my-element>`
 
-	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
 		TagName:       "my-element",
 		DemoTitle:     "Iframe Rendering",
 		DemoHTML:      template.HTML(demoHTML),
@@ -132,7 +132,7 @@ func TestRenderingMode_InvalidValue(t *testing.T) {
 	demoHTML := `<my-element></my-element>`
 
 	// Invalid value should degrade to light mode (template should handle gracefully)
-	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
 		TagName:       "my-element",
 		DemoTitle:     "Invalid Rendering",
 		DemoHTML:      template.HTML(demoHTML),
@@ -152,4 +152,32 @@ func TestRenderingMode_InvalidValue(t *testing.T) {
 	if !strings.Contains(rendered, `<cem-serve-demo id="demo"><my-element></my-element></cem-serve-demo>`) {
 		t.Error("Invalid rendering mode should render demo in light DOM")
 	}
+}
+
+// TestRenderingMode_Chromeless verifies chromeless mode uses minimal template
+func TestRenderingMode_Chromeless(t *testing.T) {
+	demoHTML := `<my-element></my-element>`
+
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
+		TagName:       "my-element",
+		DemoTitle:     "Chromeless Rendering",
+		DemoHTML:      template.HTML(demoHTML),
+		ImportMap:     "{}",
+		RenderingMode: "chromeless",
+	})
+	if err != nil {
+		t.Fatalf("Failed to render chromeless: %v", err)
+	}
+
+	// Chromeless mode: should NOT have chrome UI
+	if strings.Contains(rendered, `<cem-serve-chrome`) {
+		t.Error("Chromeless rendering should not include chrome wrapper")
+	}
+
+	// Should contain demo HTML
+	if !strings.Contains(rendered, `<my-element></my-element>`) {
+		t.Error("Chromeless rendering should contain demo HTML")
+	}
+
+	// Note: Full HTML structure is verified in TestChromeRendering_Chromeless with golden files
 }

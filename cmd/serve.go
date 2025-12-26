@@ -22,6 +22,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"runtime"
+	"slices"
 	"syscall"
 	"time"
 
@@ -45,6 +46,7 @@ var serveCmd = &cobra.Command{
 - Live reload on file changes
 - Automatic manifest regeneration
 - WebSocket-based browser refresh
+- Multiple rendering modes (full UI, shadow DOM, or chromeless)
 - Static file serving with CORS`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Get workspace context
@@ -138,12 +140,13 @@ var serveCmd = &cobra.Command{
 		if demoRendering == "" {
 			demoRendering = "light"
 		}
-		// Validate rendering mode - reject "iframe" since it's not implemented yet
-		if demoRendering != "light" && demoRendering != "shadow" && demoRendering != "iframe" {
-			return fmt.Errorf("invalid demo rendering mode '%s': must be 'light', 'shadow', or 'iframe'", demoRendering)
+		// Validate rendering mode
+		validModes := []string{"light", "shadow", "iframe", "chromeless"}
+		if !slices.Contains(validModes, demoRendering) {
+			return fmt.Errorf("invalid demo rendering mode '%s': must be 'light', 'shadow', 'iframe', or 'chromeless'", demoRendering)
 		}
 		if demoRendering == "iframe" {
-			return fmt.Errorf("iframe rendering mode is not yet implemented - use 'light' or 'shadow'")
+			return fmt.Errorf("iframe rendering mode is not yet implemented - use 'light', 'shadow', or 'chromeless'")
 		}
 
 		// Create server config
@@ -483,6 +486,7 @@ func init() {
 	serveCmd.Flags().Bool("no-import-map-generate", false, "Disable automatic import map generation")
 	serveCmd.Flags().String("import-map-override-file", "", "Path to JSON file with custom import map entries")
 	serveCmd.Flags().String("target", "", "TypeScript/JavaScript transform target (es2015, es2016, es2017, es2018, es2019, es2020, es2021, es2022, es2023, esnext)")
+	serveCmd.Flags().String("rendering", "", "Demo rendering mode: light (full UI), shadow (Shadow DOM), or chromeless (minimal, no UI)")
 	serveCmd.Flags().StringSlice("watch-ignore", nil, "Glob patterns to ignore in file watcher (comma-separated, e.g., '_site/**,dist/**')")
 	serveCmd.Flags().StringSlice("css-transform", nil, "Glob patterns for CSS files to transform to JavaScript modules (e.g., 'src/**/*.css,elements/**/*.css')")
 	serveCmd.Flags().StringSlice("css-transform-exclude", nil, "Glob patterns for CSS files to exclude from transformation (e.g., 'demo/**/*.css')")
@@ -499,6 +503,9 @@ func init() {
 	}
 	if err := viper.BindPFlag("serve.target", serveCmd.Flags().Lookup("target")); err != nil {
 		panic(fmt.Sprintf("failed to bind flag serve.target: %v", err))
+	}
+	if err := viper.BindPFlag("serve.demos.rendering", serveCmd.Flags().Lookup("rendering")); err != nil {
+		panic(fmt.Sprintf("failed to bind flag serve.demos.rendering: %v", err))
 	}
 	if err := viper.BindPFlag("serve.watchIgnore", serveCmd.Flags().Lookup("watch-ignore")); err != nil {
 		panic(fmt.Sprintf("failed to bind flag serve.watchIgnore: %v", err))

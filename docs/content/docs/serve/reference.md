@@ -15,6 +15,7 @@ cem serve [flags]
 | Flag | Description |
 | ---- | ----------- |
 | `--port` | Port to listen on (default: `8000`) |
+| `--rendering` | Demo rendering mode: `light` (full UI), `shadow` (Shadow DOM), or `chromeless` (minimal, no UI) (default: `light`) |
 | `--no-reload` | Disable live reload |
 | `--target` | TypeScript/JavaScript transform target: `es2015`, `es2016`, `es2017`, `es2018`, `es2019`, `es2020`, `es2021`, `es2022`, `es2023`, `esnext` (default: `es2022`) |
 | `--css-transform` | Glob patterns for CSS files to transform to JavaScript modules (opt-in, e.g., `src/**/*.css,elements/**/*.css`) |
@@ -74,17 +75,34 @@ See **[Buildless Development](buildless/)** for details on CSS module imports.
 cem serve --watch-ignore 'dist/**,_site/**'
 ```
 
+### Use chromeless mode for testing
+
+```sh
+# Perfect for Playwright/Puppeteer tests
+cem serve --rendering=chromeless
+```
+
+### Test with Shadow DOM
+
+```sh
+# Verify Shadow DOM encapsulation
+cem serve --rendering=shadow
+```
+
 ## Demo Rendering Modes
 
-The dev server supports three rendering modes for demo pages, which affect how demo content is rendered in the browser.
+The dev server supports multiple rendering modes for demo pages, affecting both the UI chrome and how demo content is rendered.
 
 ### Available Modes
 
 | Mode | Description | When to Use |
 | ---- | ----------- | ----------- |
-| `light` | Renders demo content in the light DOM (default) | Most demos, allows CSS from parent document to affect demo |
-| `shadow` | Wraps demo in declarative shadow DOM (`<template shadowrootmode="open">`) | Testing encapsulation, isolated styling, shadow DOM behavior |
-| `iframe` | *(Not yet implemented)* Renders demo in an isolated iframe | Future support for complete document isolation |
+| `light` | Full dev UI with demo in light DOM (default) | Standard development with all features enabled |
+| `shadow` | Full dev UI with demo in shadow DOM | Testing encapsulation, isolated styling, shadow DOM behavior |
+| `chromeless` | Minimal HTML with live reload, no UI chrome | Automated testing, embedding, clean screenshots, isolated development |
+| `iframe` | *(Not yet implemented)* Full UI with demo in iframe | Future support for complete document isolation |
+
+See **[Rendering Modes](rendering-modes/)** for detailed documentation.
 
 ### Configuring Default Mode
 
@@ -93,7 +111,7 @@ Set the default rendering mode in your `.config/cem.yaml`:
 ```yaml
 serve:
   demos:
-    rendering: shadow  # or "light" (default)
+    rendering: chromeless  # or "light" (default), "shadow"
 ```
 
 If the `rendering` option is omitted or empty, demos default to `light` mode.
@@ -105,10 +123,10 @@ If the `rendering` option is omitted or empty, demos default to `light` mode.
 Override the rendering mode for a specific demo using the `?rendering` query parameter:
 
 ```
-http://localhost:8000/demos/my-element/basic.html?rendering=shadow
+http://localhost:8000/demos/my-element/basic.html?rendering=chromeless
 ```
 
-Valid values: `shadow`, `light`
+Valid values: `light`, `shadow`, `chromeless`
 
 - Invalid values are ignored and the config default is used
 - If `iframe` is requested via query parameter, the server logs a warning, broadcasts an error overlay, and falls back to `shadow` mode

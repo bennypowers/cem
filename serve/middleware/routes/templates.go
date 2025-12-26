@@ -44,6 +44,9 @@ var knobsTemplate string
 //go:embed templates/demo-chrome.html
 var demoChromeTemplate string
 
+//go:embed templates/demo-chromeless.html
+var demoChromelessTemplate string
+
 //go:embed templates/template-error.html
 var templateErrorTemplate string
 
@@ -61,6 +64,7 @@ type TemplateRegistry struct {
 	ElementWrapperTemplate   *template.Template
 	KnobsTemplate            *template.Template
 	DemoChromeTemplate       *template.Template
+	DemoChromelessTemplate   *template.Template
 	TemplateErrorTemplate    *template.Template
 	context                  middleware.DevServerContext
 }
@@ -81,6 +85,7 @@ func NewTemplateRegistry(ctx middleware.DevServerContext) *TemplateRegistry {
 	registry.ElementWrapperTemplate = template.Must(template.New("element-wrapper").Parse(elementWrapperTemplate))
 	registry.KnobsTemplate = template.Must(template.New("knobs").Funcs(funcs).Parse(knobsTemplate))
 	registry.DemoChromeTemplate = template.Must(template.New("demo-chrome").Funcs(funcs).Parse(demoChromeTemplate))
+	registry.DemoChromelessTemplate = template.Must(template.New("demo-chromeless").Parse(demoChromelessTemplate))
 	registry.TemplateErrorTemplate = template.Must(template.New("template-error").Funcs(funcs).Parse(templateErrorTemplate))
 
 	return registry

@@ -19,6 +19,7 @@ package routes
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 
 	M "bennypowers.dev/cem/manifest"
@@ -59,54 +60,74 @@ type TemplateErrorData struct {
 	File         string
 }
 
-// renderDemoChrome renders the demo chrome template with given data.
-// If template execution fails, it broadcasts the error and returns a minimal page with error overlay.
-func renderDemoChrome(templates *TemplateRegistry, ctx middleware.DevServerContext, data ChromeData) (string, error) {
-	// Render markdown description if present
-	if data.Description != "" {
-		var buf bytes.Buffer
-		err := md.Convert([]byte(data.Description), &buf)
+// executeTemplate executes a template and returns the result as a string
+func executeTemplate(tmpl *template.Template, data any) (string, error) {
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
+// renderDemo renders a demo page in the specified mode.
+// For chromeless mode, renders minimal HTML with live reload.
+// For chrome modes (light/shadow), renders full dev UI with PatternFly chrome.
+func renderDemo(templates *TemplateRegistry, ctx middleware.DevServerContext, data ChromeData) (string, error) {
+	switch data.RenderingMode {
+	case "chromeless":
+		// Chromeless mode: minimal template, no markdown conversion
+		html, err := executeTemplate(templates.DemoChromelessTemplate, data)
 		if err != nil {
-			// Markdown conversion error - broadcast and continue with plain text
+			return "", fmt.Errorf("executing chromeless template: %w", err)
+		}
+		return html, nil
+
+	default:
+		// Chrome modes (light, shadow): full UI with markdown conversion
+		// Render markdown description if present
+		if data.Description != "" {
+			var buf bytes.Buffer
+			err := md.Convert([]byte(data.Description), &buf)
+			if err != nil {
+				// Markdown conversion error - broadcast and continue with plain text
+				if ctx != nil {
+					_ = ctx.BroadcastError(
+						"Markdown Conversion Error",
+						"Failed to convert description markdown: "+err.Error(),
+						data.TagName,
+					)
+				}
+				// Keep original text as-is
+			} else {
+				data.Description = template.HTML(buf.String())
+			}
+		}
+
+		html, err := executeTemplate(templates.DemoChromeTemplate, data)
+		if err != nil {
+			// Template execution failed - broadcast error and return minimal error page
+			title := "Template Execution Error"
+			message := "Failed to render page template: " + err.Error()
 			if ctx != nil {
 				_ = ctx.BroadcastError(
-					"Markdown Conversion Error",
-					"Failed to convert description markdown: "+err.Error(),
+					title,
+					message,
 					data.TagName,
 				)
 			}
-			// Keep original text as-is
-		} else {
-			data.Description = template.HTML(buf.String())
-		}
-	}
 
-	var buf bytes.Buffer
-	err := templates.DemoChromeTemplate.Execute(&buf, data)
-	if err != nil {
-		// Template execution failed - broadcast error and return minimal error page
-		title := "Template Execution Error"
-		message := "Failed to render page template: " + err.Error()
-		if ctx != nil {
-			_ = ctx.BroadcastError(
-				title,
-				message,
-				data.TagName,
-			)
-		}
+			// Render error page using template with SSR-rendered error overlay
+			errorData := TemplateErrorData{
+				ErrorMessage: err.Error(),
+				Title:        title,
+				Message:      message,
+				File:         data.TagName,
+			}
 
-		// Render error page using template with SSR-rendered error overlay
-		errorData := TemplateErrorData{
-			ErrorMessage: err.Error(),
-			Title:        title,
-			Message:      message,
-			File:         data.TagName,
-		}
-
-		var errorBuf bytes.Buffer
-		if templateErr := templates.TemplateErrorTemplate.Execute(&errorBuf, errorData); templateErr != nil {
-			// If even the error template fails, fall back to absolute minimal HTML
-			return `<!DOCTYPE html>
+			errorHTML, templateErr := executeTemplate(templates.TemplateErrorTemplate, errorData)
+			if templateErr != nil {
+				// If even the error template fails, fall back to absolute minimal HTML
+				return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -119,10 +140,11 @@ func renderDemoChrome(templates *TemplateRegistry, ctx middleware.DevServerConte
   <pre>Error template error: ` + template.HTMLEscapeString(templateErr.Error()) + `</pre>
 </body>
 </html>`, nil
+			}
+
+			return errorHTML, nil
 		}
 
-		return errorBuf.String(), nil
+		return html, nil
 	}
-
-	return buf.String(), nil
 }
