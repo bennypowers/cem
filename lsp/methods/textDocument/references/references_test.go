@@ -101,10 +101,9 @@ func TestReferences_Fixtures(t *testing.T) {
 			workspaceFiles[relPath] = string(contentBytes)
 			return nil
 		})
-		if err != nil && err != filepath.SkipDir {
-			// Workspace directory might not exist for some tests (like no-element)
-			// That's okay
-		}
+		// Workspace directory might not exist for some tests (like no-element)
+		// That's okay - ignore any errors from WalkDir
+		_ = err
 
 		// Create MapFS and set it on the context
 		mapFS := platform.NewMapFS(workspaceFiles)

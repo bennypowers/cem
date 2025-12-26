@@ -481,6 +481,20 @@ func (mfs *MapFileSystem) Exists(path string) bool {
 	return false
 }
 
+func (mfs *MapFileSystem) ReadDir(name string) ([]fs.DirEntry, error) {
+	mfs.mu.RLock()
+	defer mfs.mu.RUnlock()
+
+	return fs.ReadDir(mfs.mapFS, mfs.cleanPath(name))
+}
+
+func (mfs *MapFileSystem) Open(name string) (fs.File, error) {
+	mfs.mu.RLock()
+	defer mfs.mu.RUnlock()
+
+	return mfs.mapFS.Open(mfs.cleanPath(name))
+}
+
 // Helper methods
 
 func (mfs *MapFileSystem) cleanPath(path string) string {

@@ -368,11 +368,6 @@ func findReferencesInWorkspaceWithFS(workspaceRoot string, elementName string, o
 	return locations
 }
 
-// findReferencesInFile searches for references in a single file on disk using tree-sitter
-func findReferencesInFile(filePath string, fileURI string, elementName string) []protocol.Location {
-	return findReferencesInFileWithFS(filePath, fileURI, elementName, platform.NewOSFileSystem())
-}
-
 // findReferencesInFileWithFS searches for references using a provided filesystem
 func findReferencesInFileWithFS(filePath string, fileURI string, elementName string, fs platform.FileSystem) []protocol.Location {
 	var locations []protocol.Location
