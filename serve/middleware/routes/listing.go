@@ -540,7 +540,13 @@ func RenderWorkspaceListing(templates *TemplateRegistry, ctx middleware.DevServe
 	var manifestJSON template.JS
 	if aggregatedManifest != nil {
 		manifestBytes, err := M.SerializeToBytes(aggregatedManifest)
-		if err == nil {
+		if err != nil {
+			_ = ctx.BroadcastError(
+				"Manifest Serialization Error",
+				"Failed to serialize aggregated manifest: "+err.Error(),
+				"",
+			)
+		} else {
 			manifestJSON = template.JS(manifestBytes)
 		}
 	}
