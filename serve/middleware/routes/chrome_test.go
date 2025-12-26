@@ -43,7 +43,7 @@ func TestChromeRendering_BasicDemo(t *testing.T) {
 	}
 
 	// Render chrome with demo
-	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
 		TagName:      "my-element",
 		DemoTitle:    "Basic Example",
 		DemoHTML:     template.HTML(demoHTML),
@@ -86,7 +86,7 @@ func TestChromeRendering_NoKnobs(t *testing.T) {
 		t.Fatalf("Failed to read demo fixture: %v", err)
 	}
 
-	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
 		TagName:      "my-element",
 		DemoTitle:    "Basic Example",
 		DemoHTML:     template.HTML(demoHTML),
@@ -127,7 +127,7 @@ func TestChromeRendering_ShadowMode(t *testing.T) {
 		t.Fatalf("Failed to read demo fixture: %v", err)
 	}
 
-	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
 		TagName:       "my-element",
 		DemoTitle:     "Basic Example",
 		DemoHTML:      template.HTML(demoHTML),
@@ -164,7 +164,7 @@ func TestChromeRendering_ShadowMode(t *testing.T) {
 func TestChromeRendering_MarkdownDescription(t *testing.T) {
 	demoHTML := `<my-element></my-element>`
 
-	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
 		TagName:     "my-element",
 		DemoTitle:   "Test",
 		DemoHTML:    template.HTML(demoHTML),
@@ -220,7 +220,7 @@ func TestChromeRendering_WithNavigation(t *testing.T) {
 	}
 
 	// Render chrome with navigation
-	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
 		TagName:        "demo-subset-one",
 		DemoTitle:      "Demo with Navigation",
 		DemoHTML:       template.HTML(demoHTML),
@@ -261,7 +261,7 @@ func TestChromeRendering_NilManifest(t *testing.T) {
 	demoHTML := `<my-element id="example"></my-element>`
 
 	// Render chrome with nil manifest (workspace mode scenario)
-	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
 		TagName:      "my-element",
 		DemoTitle:    "Workspace Mode Demo",
 		DemoHTML:     template.HTML(demoHTML),

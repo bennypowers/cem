@@ -14,6 +14,10 @@ weight: 25
   TypeScript and CSS without build steps
   {{< /card >}}
 
+  {{< card title="Rendering Modes" href="rendering-modes/" icon="/images/sections/knobs.svg" >}}
+  Full UI, shadow DOM, or chromeless
+  {{< /card >}}
+
   {{< card title="Knobs" href="knobs/" icon="/images/sections/knobs.svg" >}}
   Interactive testing controls
   {{< /card >}}
@@ -44,6 +48,7 @@ Starts the server on `http://localhost:8000`.
 - **Manifest-Driven:** Demos derive directly from your `custom-elements.json`.
 - **Demo Chrome:** A PatternFly-based UI with a navigation drawer, component documentation, and theme toggles.
 - **Interactive Knobs:** Auto-generated controls for attributes, properties, and CSS variables.
+- **Rendering Modes:** Choose between full UI (light/shadow DOM) or chromeless mode for testing and embedding.
 - **TypeScript Support:** On-the-fly compilation with source maps.
 - **Workspace Support:** Seamlessly handles multi-package repositories.
 

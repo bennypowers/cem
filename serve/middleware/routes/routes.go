@@ -685,7 +685,7 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 	if renderingParam, ok := queryParams["rendering"]; ok {
 		// Validate query parameter
 		switch renderingParam {
-		case "light", "shadow":
+		case "light", "shadow", "chromeless":
 			renderingMode = renderingParam
 		case "iframe":
 			// Iframe not yet implemented - broadcast error and fallback to shadow
@@ -700,7 +700,7 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 			config.Context.Logger().Warning("invalid rendering mode '%s', using config default '%s'", renderingParam, renderingMode)
 			_ = config.Context.BroadcastError(
 				"Invalid Rendering Mode",
-				fmt.Sprintf("Invalid rendering mode '%s'. Valid values are 'light', 'shadow', or 'iframe'. Using config default '%s'.", renderingParam, renderingMode),
+				fmt.Sprintf("Invalid rendering mode '%s'. Valid values are 'light', 'shadow', 'chromeless', or 'iframe'. Using config default '%s'.", renderingParam, renderingMode),
 				entry.TagName,
 			)
 		}
@@ -729,8 +729,8 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 		State:          state,    // Persisted UI state for SSR
 	}
 
-	// Render with chrome
-	return renderDemoChrome(config.Templates, config.Context, chromeData)
+	// Render demo in the appropriate mode
+	return renderDemo(config.Templates, config.Context, chromeData)
 }
 
 // levenshteinDistance computes the Levenshtein distance between two strings
@@ -928,7 +928,7 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 		State:          state, // Persisted UI state for SSR
 	}
 
-	html, err := renderDemoChrome(config.Templates, config.Context, chromeData)
+	html, err := renderDemo(config.Templates, config.Context, chromeData)
 	if err != nil {
 		config.Context.Logger().Error("Failed to render 404 page: %v", err)
 		http.Error(w, "Not Found", http.StatusNotFound)

@@ -27,7 +27,7 @@ import (
 func TestRenderingMode_Default(t *testing.T) {
 	demoHTML := `<my-element></my-element>`
 
-	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
 		TagName:       "my-element",
 		DemoTitle:     "Default Rendering",
 		DemoHTML:      template.HTML(demoHTML),
@@ -53,7 +53,7 @@ func TestRenderingMode_Default(t *testing.T) {
 func TestRenderingMode_Light(t *testing.T) {
 	demoHTML := `<my-element></my-element>`
 
-	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
 		TagName:       "my-element",
 		DemoTitle:     "Light Rendering",
 		DemoHTML:      template.HTML(demoHTML),
@@ -79,7 +79,7 @@ func TestRenderingMode_Light(t *testing.T) {
 func TestRenderingMode_Shadow(t *testing.T) {
 	demoHTML := `<my-element></my-element>`
 
-	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
 		TagName:       "my-element",
 		DemoTitle:     "Shadow Rendering",
 		DemoHTML:      template.HTML(demoHTML),
@@ -105,7 +105,7 @@ func TestRenderingMode_Shadow(t *testing.T) {
 func TestRenderingMode_IframeFallback(t *testing.T) {
 	demoHTML := `<my-element></my-element>`
 
-	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
 		TagName:       "my-element",
 		DemoTitle:     "Iframe Rendering",
 		DemoHTML:      template.HTML(demoHTML),
@@ -132,7 +132,7 @@ func TestRenderingMode_InvalidValue(t *testing.T) {
 	demoHTML := `<my-element></my-element>`
 
 	// Invalid value should degrade to light mode (template should handle gracefully)
-	rendered, err := renderDemoChrome(testTemplates(), nil, ChromeData{
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
 		TagName:       "my-element",
 		DemoTitle:     "Invalid Rendering",
 		DemoHTML:      template.HTML(demoHTML),

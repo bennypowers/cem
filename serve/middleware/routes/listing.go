@@ -55,7 +55,7 @@ func RenderElementListing(templates *TemplateRegistry, ctx middleware.DevServerC
 		if title == "" {
 			title = "Component Browser"
 		}
-		return renderDemoChrome(templates, ctx, ChromeData{
+		return renderDemo(templates, ctx, ChromeData{
 			TagName:   "", // Empty for index page
 			DemoTitle: title,
 			DemoHTML: template.HTML(`
@@ -106,7 +106,7 @@ func RenderElementListing(templates *TemplateRegistry, ctx middleware.DevServerC
 			ManifestJSON:   template.JS(manifestBytes),
 			State:          state,
 		}
-		return renderDemoChrome(templates, ctx, chromeData)
+		return renderDemo(templates, ctx, chromeData)
 	}
 
 	// Sort elements alphabetically
@@ -131,7 +131,7 @@ func RenderElementListing(templates *TemplateRegistry, ctx middleware.DevServerC
 		return "", fmt.Errorf("executing element listing template: %w", err)
 	}
 
-	return renderDemoChrome(templates, ctx, ChromeData{
+	return renderDemo(templates, ctx, ChromeData{
 		TagName:        "", // Empty for index page
 		DemoTitle:      title,
 		DemoHTML:       template.HTML(buf.String()),
@@ -464,7 +464,7 @@ func renderNavigationHTML(templates *TemplateRegistry, packages []PackageNavigat
 // RenderWorkspaceListing renders the workspace index page with all packages
 func RenderWorkspaceListing(templates *TemplateRegistry, ctx middleware.DevServerContext, packages []PackageContext, importMap string, state CemServeState) (string, error) {
 	if len(packages) == 0 {
-		return renderDemoChrome(templates, ctx, ChromeData{
+		return renderDemo(templates, ctx, ChromeData{
 			TagName:     "cem-serve",
 			DemoTitle:   "Workspace Browser",
 			PackageName: "Workspace",
@@ -545,7 +545,7 @@ func RenderWorkspaceListing(templates *TemplateRegistry, ctx middleware.DevServe
 		}
 	}
 
-	return renderDemoChrome(templates, ctx, ChromeData{
+	return renderDemo(templates, ctx, ChromeData{
 		TagName:        "cem-serve",
 		DemoTitle:      "Workspace Browser",
 		DemoHTML:       template.HTML(buf.String()),

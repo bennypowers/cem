@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.DemoTitle}}</title>
+    {{if .ImportMap}}
+    <script type="importmap">{{.ImportMap}}</script>
+    {{end}}
+    <script type="module">
+        // Import WebSocket client
+        import { CEMReloadClient } from '/__cem/websocket-client.js';
+
+        // Initialize with console-only callbacks (no UI)
+        const client = new CEMReloadClient({
+            onReload: () => {
+                console.log('[CEM] Reloading page...');
+                window.location.reload();
+            },
+            onOpen: () => console.log('[CEM] Connected'),
+            onClose: () => console.log('[CEM] Disconnected'),
+            onReconnecting: (delay) => console.log(`[CEM] Reconnecting in ${delay}ms...`),
+            onError: (error) => console.error('[CEM] Error:', error),
+            onLogs: (logs) => {
+                // Optional: log server logs to console
+                logs.forEach(log => {
+                    const level = log.level || 'info';
+                    console[level]?.(`[CEM Server] ${log.message}`) || console.log(`[CEM Server] ${log.message}`);
+                });
+            },
+            onTransformError: (error) => {
+                console.error('[CEM] Transform Error:', error.title, error.message, error.file);
+            }
+        });
+
+        client.connect(new URL('/__cem/reload', window.location.origin).toString() + `?page=${encodeURIComponent(window.location.pathname)}`);
+    </script>
+</head>
+<body>
+    {{.DemoHTML}}
+</body>
+</html>
