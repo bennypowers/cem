@@ -25,7 +25,21 @@
 
 &lt;code-highlighter>
  &lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">&lt;span class="line">&lt;span class="cl">cem generate&lt;/span>&lt;/span>&lt;/code>&lt;/pre>
-&lt;/code-highlighter>&lt;p>This creates &lt;code>custom-elements.json&lt;/code> with your component metadata.&lt;/p></description></item><item><title>Buildless Development</title><link>https://bennypowers.dev/cem/docs/serve/buildless/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/serve/buildless/</guid><description>&lt;p>Write TypeScript and import CSS directly in your browser - no build step required. &lt;code>cem serve&lt;/code> lets you develop without running &lt;code>tsc&lt;/code>, CSS watchers, or bundlers.&lt;/p>
+&lt;/code-highlighter>&lt;p>This creates &lt;code>custom-elements.json&lt;/code> with your component metadata.&lt;/p></description></item><item><title>Rendering Modes</title><link>https://bennypowers.dev/cem/docs/serve/rendering-modes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/serve/rendering-modes/</guid><description>&lt;p>The dev server supports three rendering modes for serving demos, allowing you to choose the right environment for your workflow.&lt;/p>
+&lt;h2 id="light-mode-default">Light Mode (Default)&lt;/h2>
+&lt;p>Full development UI with all features enabled. This is the standard mode for component development.&lt;/p>
+&lt;p>&lt;strong>Features:&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>PatternFly-based UI with sidebar navigation&lt;/li>
+&lt;li>Header with branding, theme toggle, and debug info&lt;/li>
+&lt;li>Interactive knobs for attributes, properties, and CSS custom properties&lt;/li>
+&lt;li>Real-time event monitoring tab&lt;/li>
+&lt;li>Server logs viewer with filtering&lt;/li>
+&lt;li>Manifest browser&lt;/li>
+&lt;li>Live reload with visual connection status&lt;/li>
+&lt;li>Error overlays for transform failures&lt;/li>
+&lt;/ul>
+&lt;p>&lt;strong>Usage:&lt;/strong>&lt;/p></description></item><item><title>Buildless Development</title><link>https://bennypowers.dev/cem/docs/serve/buildless/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/serve/buildless/</guid><description>&lt;p>Write TypeScript and import CSS directly in your browser - no build step required. &lt;code>cem serve&lt;/code> lets you develop without running &lt;code>tsc&lt;/code>, CSS watchers, or bundlers.&lt;/p>
 &lt;h2 id="write-typescript-directly">Write TypeScript Directly&lt;/h2>
 &lt;p>Import TypeScript files directly in your demos without compilation:&lt;/p>
 
@@ -217,6 +231,10 @@
  &lt;tr>
  &lt;td>&lt;code>--port&lt;/code>&lt;/td>
  &lt;td>Port to listen on (default: &lt;code>8000&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;code>--rendering&lt;/code>&lt;/td>
+ &lt;td>Demo rendering mode: &lt;code>light&lt;/code> (full UI), &lt;code>shadow&lt;/code> (Shadow DOM), or &lt;code>chromeless&lt;/code> (minimal, no UI) (default: &lt;code>light&lt;/code>)&lt;/td>
  &lt;/tr>
  &lt;tr>
  &lt;td>&lt;code>--no-reload&lt;/code>&lt;/td>
