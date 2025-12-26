@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package types
 
 import (
+	"bennypowers.dev/cem/internal/platform"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/modulegraph"
 	"bennypowers.dev/cem/queries"
@@ -68,6 +69,9 @@ type ServerContext interface {
 	// Workspace operations
 	Workspace() Workspace
 	WorkspaceRoot() string
+
+	// Filesystem operations
+	FileSystem() platform.FileSystem
 
 	// Logging
 	DebugLog(format string, args ...any)

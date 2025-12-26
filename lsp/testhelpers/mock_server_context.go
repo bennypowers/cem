@@ -21,6 +21,7 @@ import (
 	"slices"
 	"sync"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/modulegraph"
@@ -42,6 +43,7 @@ type MockServerContext struct {
 	DocumentMgr      types.DocumentManager
 	QueryMgr         *queries.QueryManager
 	ModuleGraphInst  *modulegraph.ModuleGraph
+	FS               platform.FileSystem
 	types.Registry
 }
 
@@ -201,6 +203,13 @@ func (m *MockServerContext) Workspace() types.Workspace {
 
 func (m *MockServerContext) WorkspaceRoot() string {
 	return m.WorkspaceRootStr
+}
+
+func (m *MockServerContext) FileSystem() platform.FileSystem {
+	if m.FS != nil {
+		return m.FS
+	}
+	return platform.NewOSFileSystem()
 }
 
 // Logging
@@ -426,6 +435,11 @@ func (m *MockServerContext) AddElementDescription(tagName string, description st
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.DescriptionsMap[tagName] = description
+}
+
+// SetFileSystem sets the filesystem for tests
+func (m *MockServerContext) SetFileSystem(fs platform.FileSystem) {
+	m.FS = fs
 }
 
 // MockWorkspace provides a simple workspace implementation for tests
