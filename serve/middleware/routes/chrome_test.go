@@ -255,6 +255,50 @@ func TestChromeRendering_WithNavigation(t *testing.T) {
 		t.Log("Run 'make update' to update golden files")
 	}
 }
+// TestChromeRendering_Chromeless verifies chromeless mode renders minimal HTML
+func TestChromeRendering_Chromeless(t *testing.T) {
+	// Read demo partial
+	demoPath := filepath.Join("testdata", "chrome-rendering", "basic-demo.html")
+	demoHTML, err := os.ReadFile(demoPath)
+	if err != nil {
+		t.Fatalf("Failed to read demo fixture: %v", err)
+	}
+
+	// Render in chromeless mode
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
+		TagName:       "my-element",
+		DemoTitle:     "Chromeless Example",
+		DemoHTML:      template.HTML(demoHTML),
+		ImportMap:     `{"imports":{"lit":"https://cdn.jsdelivr.net/npm/lit@3/index.js"}}`,
+		RenderingMode: "chromeless",
+	})
+	if err != nil {
+		t.Fatalf("Failed to render chromeless: %v", err)
+	}
+
+	// Compare with golden file
+	goldenPath := filepath.Join("testdata", "chrome-rendering", "expected-chromeless.html")
+
+	if *update {
+		err := os.WriteFile(goldenPath, []byte(rendered), 0644)
+		if err != nil {
+			t.Fatalf("Failed to update golden file: %v", err)
+		}
+		t.Log("Updated golden file:", goldenPath)
+		return
+	}
+
+	expected, err := os.ReadFile(goldenPath)
+	if err != nil {
+		t.Fatalf("Failed to read golden file: %v", err)
+	}
+
+	if rendered != string(expected) {
+		t.Errorf("Rendered chromeless does not match golden file.\nGot:\n%s\n\nExpected:\n%s", rendered, string(expected))
+		t.Log("Run 'make test update' to update golden files")
+	}
+}
+
 // TestChromeRendering_NilManifest tests that chrome renders without crashing when Manifest is nil
 // This is the case in workspace mode where there's no single manifest for the whole workspace
 func TestChromeRendering_NilManifest(t *testing.T) {

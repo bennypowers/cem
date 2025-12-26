@@ -153,3 +153,31 @@ func TestRenderingMode_InvalidValue(t *testing.T) {
 		t.Error("Invalid rendering mode should render demo in light DOM")
 	}
 }
+
+// TestRenderingMode_Chromeless verifies chromeless mode uses minimal template
+func TestRenderingMode_Chromeless(t *testing.T) {
+	demoHTML := `<my-element></my-element>`
+
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
+		TagName:       "my-element",
+		DemoTitle:     "Chromeless Rendering",
+		DemoHTML:      template.HTML(demoHTML),
+		ImportMap:     "{}",
+		RenderingMode: "chromeless",
+	})
+	if err != nil {
+		t.Fatalf("Failed to render chromeless: %v", err)
+	}
+
+	// Chromeless mode: should NOT have chrome UI
+	if strings.Contains(rendered, `<cem-serve-chrome`) {
+		t.Error("Chromeless rendering should not include chrome wrapper")
+	}
+
+	// Should contain demo HTML
+	if !strings.Contains(rendered, `<my-element></my-element>`) {
+		t.Error("Chromeless rendering should contain demo HTML")
+	}
+
+	// Note: Full HTML structure is verified in TestChromeRendering_Chromeless with golden files
+}
