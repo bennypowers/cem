@@ -1,0 +1,14 @@
+{
+  "elements": {
+    "test-component": {
+      "tagName": "test-component",
+      "attributes": {
+        "size": {
+          "name": "size",
+          "type": { "text": "string" },
+          "default": "medium"
+        }
+      }
+    }
+  }
+}

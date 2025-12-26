@@ -1,0 +1,16 @@
+{
+  "elements": {
+    "test-alert": {
+      "tagName": "test-alert",
+      "attributes": {
+        "state": {
+          "name": "state",
+          "type": {
+            "text": "\"info\" | \"success\" | \"warning\" | \"error\""
+          },
+          "default": "\"info\""
+        }
+      }
+    }
+  }
+}

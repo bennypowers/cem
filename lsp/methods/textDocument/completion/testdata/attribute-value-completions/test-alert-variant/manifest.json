@@ -1,0 +1,16 @@
+{
+  "elements": {
+    "test-alert": {
+      "tagName": "test-alert",
+      "attributes": {
+        "variant": {
+          "name": "variant",
+          "type": {
+            "text": "\"primary\" | \"secondary\" | \"ghost\""
+          },
+          "default": "\"primary\""
+        }
+      }
+    }
+  }
+}

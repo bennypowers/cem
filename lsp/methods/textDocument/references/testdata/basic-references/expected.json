@@ -1,0 +1,23 @@
+[
+  {
+    "uri": "file:///test1.html",
+    "range": {
+      "start": {"line": 0, "character": 1},
+      "end": {"line": 0, "character": 8}
+    }
+  },
+  {
+    "uri": "file://test2.ts",
+    "range": {
+      "start": {"line": 0, "character": 6},
+      "end": {"line": 0, "character": 13}
+    }
+  },
+  {
+    "uri": "file://test2.ts",
+    "range": {
+      "start": {"line": 0, "character": 6},
+      "end": {"line": 0, "character": 13}
+    }
+  }
+]

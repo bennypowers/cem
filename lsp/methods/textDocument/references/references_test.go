@@ -17,10 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package references_test
 
 import (
+	"io/fs"
+	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/references"
 	"bennypowers.dev/cem/lsp/testhelpers"
@@ -28,267 +31,135 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-func TestReferences(t *testing.T) {
-	// Create MockServerContext with proper DocumentManager
-	ctx := testhelpers.NewMockServerContext()
+// Cursor positions for each test fixture (in Go code, not JSON)
+var cursorPositions = map[string]protocol.Position{
+	"basic-references":      {Line: 0, Character: 5},
+	"workspace-search":      {Line: 0, Character: 5},
+	"gitignore-filtering":   {Line: 0, Character: 5},
+	"no-element":            {Line: 0, Character: 5},
+}
 
-	// Create DocumentManager and add documents
-	dm, err := document.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create DocumentManager: %v", err)
-	}
-	defer dm.Close()
-	ctx.SetDocumentManager(dm)
+func TestReferences_Fixtures(t *testing.T) {
+	testutil.RunLSPFixtures(t, "testdata", func(t *testing.T, fixture *testutil.LSPFixture) {
+		// Get cursor position from map
+		cursor, ok := cursorPositions[fixture.Name]
+		if !ok {
+			t.Fatalf("No cursor position defined for fixture %s", fixture.Name)
+		}
 
-	// Add documents using real DocumentManager
-	doc1 := dm.OpenDocument("file:///test1.html", `<rh-card>content</rh-card>`, 1)
-	doc2 := dm.OpenDocument("file:///test2.ts", "html`<rh-card variant=\"primary\"></rh-card>`", 1)
+		// Create MockServerContext with proper DocumentManager
+		ctx := testhelpers.NewMockServerContext()
 
-	ctx.AddDocument("file:///test1.html", doc1)
-	ctx.AddDocument("file:///test2.ts", doc2)
-	ctx.SetWorkspaceRoot("/test/workspace")
+		// Create DocumentManager and add documents
+		dm, err := document.NewDocumentManager()
+		if err != nil {
+			t.Fatalf("Failed to create DocumentManager: %v", err)
+		}
+		defer dm.Close()
+		ctx.SetDocumentManager(dm)
 
-	// Create request for references to rh-card
-	params := &protocol.ReferenceParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{
-				URI: "file:///test1.html",
-			},
-			Position: protocol.Position{Line: 0, Character: 5}, // Inside rh-card
-		},
-		Context: protocol.ReferenceContext{
-			IncludeDeclaration: true,
-		},
-	}
-
-	// Call References function
-	locations, err := references.References(ctx, &glsp.Context{}, params)
-
-	// Verify results
-	if err != nil {
-		t.Fatalf("Expected no error, got %v", err)
-	}
-
-	if len(locations) != 2 {
-		t.Fatalf("Expected 2 locations, got %d", len(locations))
-	}
-
-	// Check that both expected URIs are present (order doesn't matter)
-	expectedURIs := map[string]bool{
-		"file:///test1.html": false,
-		"file:///test2.ts":   false,
-	}
-
-	for _, location := range locations {
-		if _, exists := expectedURIs[location.URI]; exists {
-			expectedURIs[location.URI] = true
+		// Determine URI based on input type and scenario
+		var uri string
+		if fixture.InputType == "ts" {
+			uri = "file:///test.ts"
 		} else {
-			t.Errorf("Unexpected URI: %s", location.URI)
+			// Use scenario-specific filename for HTML
+			if fixture.Name == "workspace-search" || fixture.Name == "gitignore-filtering" {
+				uri = "file:///index.html"
+			} else {
+				uri = "file:///test1.html"
+			}
 		}
-	}
 
-	// Verify all expected URIs were found
-	for uri, found := range expectedURIs {
-		if !found {
-			t.Errorf("Expected URI %s not found in results", uri)
+		// Open the main document
+		doc := dm.OpenDocument(uri, fixture.InputContent, 1)
+		ctx.AddDocument(uri, doc)
+
+		// Create in-memory filesystem with predictable paths
+		workspaceFiles := make(map[string]string)
+		workspaceDir := filepath.Join("testdata", fixture.Name, "workspace")
+
+		// Load all workspace files into the in-memory filesystem
+		err = filepath.WalkDir(workspaceDir, func(path string, d fs.DirEntry, err error) error {
+			if err != nil || d.IsDir() {
+				return err
+			}
+
+			// Read file content from disk
+			contentBytes, readErr := os.ReadFile(path)
+			if readErr != nil {
+				return readErr
+			}
+
+			// Get relative path from workspace directory
+			relPath, err := filepath.Rel(workspaceDir, path)
+			if err != nil {
+				return err
+			}
+
+			// Store in map with clean path (e.g., "component.ts", "ignored/should-be-skipped.html")
+			workspaceFiles[relPath] = string(contentBytes)
+			return nil
+		})
+		if err != nil && err != filepath.SkipDir {
+			// Workspace directory might not exist for some tests (like no-element)
+			// That's okay
 		}
-	}
-}
 
-func TestReferences_WorkspaceSearch(t *testing.T) {
-	// Create MockServerContext
-	ctx := testhelpers.NewMockServerContext()
+		// Create MapFS and set it on the context
+		mapFS := platform.NewMapFS(workspaceFiles)
+		ctx.SetFileSystem(mapFS)
+		ctx.SetWorkspaceRoot(".")
 
-	// Create DocumentManager
-	dm, err := document.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create DocumentManager: %v", err)
-	}
-	defer dm.Close()
-	ctx.SetDocumentManager(dm)
+		// Load expected LSP response (Location[])
+		var expectedLocations []protocol.Location
+		err = fixture.GetExpected("expected", &expectedLocations)
+		if err != nil {
+			t.Fatalf("Failed to get expected locations: %v", err)
+		}
 
-	// Set workspace root to test fixtures directory
-	ctx.SetWorkspaceRoot("test-fixtures/workspace-search")
-
-	// Open one document (the others will be searched from disk)
-	doc := dm.OpenDocument("file:///test-fixtures/workspace-search/index.html", `<rh-card>test</rh-card>`, 1)
-	ctx.AddDocument("file:///test-fixtures/workspace-search/index.html", doc)
-
-	// Create request for references to rh-card
-	params := &protocol.ReferenceParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{
-				URI: "file:///test-fixtures/workspace-search/index.html",
+		// Create reference params
+		params := &protocol.ReferenceParams{
+			TextDocumentPositionParams: protocol.TextDocumentPositionParams{
+				TextDocument: protocol.TextDocumentIdentifier{
+					URI: uri,
+				},
+				Position: cursor,
 			},
-			Position: protocol.Position{Line: 0, Character: 5}, // Inside rh-card
-		},
-		Context: protocol.ReferenceContext{
-			IncludeDeclaration: true,
-		},
-	}
-
-	// Call References function - should search both open doc and workspace files
-	locations, err := references.References(ctx, &glsp.Context{}, params)
-
-	// Verify results
-	if err != nil {
-		t.Fatalf("Expected no error, got %v", err)
-	}
-
-	// Should find references in:
-	// 1. Open document (index.html)
-	// 2. component.ts (found via workspace search)
-	// Note: We expect at least 2 references, but might find more depending on file contents
-	if len(locations) < 2 {
-		t.Errorf("Expected at least 2 locations (open doc + workspace), got %d", len(locations))
-	}
-
-	// Verify we found references in both HTML and TypeScript files
-	// Note: URIs will be absolute paths since workspace root gets converted to absolute
-	foundHTML := false
-	foundTS := false
-	for _, location := range locations {
-		// Check by filename since URIs will be absolute paths
-		if filepath.Base(string(location.URI)) == "index.html" {
-			foundHTML = true
-		}
-		if filepath.Base(string(location.URI)) == "component.ts" {
-			foundTS = true
-		}
-	}
-
-	if !foundHTML {
-		t.Error("Expected to find references in index.html")
-	}
-	if !foundTS {
-		t.Error("Expected to find references in component.ts via workspace search")
-	}
-}
-
-func TestReferences_GitignoreFiltering(t *testing.T) {
-	// Create MockServerContext
-	ctx := testhelpers.NewMockServerContext()
-
-	// Create DocumentManager
-	dm, err := document.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create DocumentManager: %v", err)
-	}
-	defer dm.Close()
-	ctx.SetDocumentManager(dm)
-
-	// Set workspace root to test fixtures directory (has .gitignore)
-	ctx.SetWorkspaceRoot("test-fixtures/workspace-search")
-
-	// Open a document to trigger search
-	doc := dm.OpenDocument("file:///test-fixtures/workspace-search/index.html", `<rh-card>test</rh-card>`, 1)
-	ctx.AddDocument("file:///test-fixtures/workspace-search/index.html", doc)
-
-	// Create request
-	params := &protocol.ReferenceParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{
-				URI: "file:///test-fixtures/workspace-search/index.html",
+			Context: protocol.ReferenceContext{
+				IncludeDeclaration: true,
 			},
-			Position: protocol.Position{Line: 0, Character: 5},
-		},
-		Context: protocol.ReferenceContext{
-			IncludeDeclaration: true,
-		},
-	}
-
-	// Call References function
-	locations, err := references.References(ctx, &glsp.Context{}, params)
-
-	if err != nil {
-		t.Fatalf("Expected no error, got %v", err)
-	}
-
-	// Verify that ignored/should-be-skipped.html is NOT in results
-	for _, location := range locations {
-		// Check path component to handle both relative and absolute URIs
-		if strings.Contains(string(location.URI), "ignored/should-be-skipped.html") {
-			t.Error("Found reference in gitignored file - should have been filtered out")
 		}
-	}
-}
 
-func TestReferences_NoElement(t *testing.T) {
-	// Create MockServerContext
-	ctx := testhelpers.NewMockServerContext()
+		// Call References function
+		locations, err := references.References(ctx, &glsp.Context{}, params)
 
-	// Create DocumentManager
-	dm, err := document.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create DocumentManager: %v", err)
-	}
-	defer dm.Close()
-	ctx.SetDocumentManager(dm)
+		// Verify results
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
 
-	// Open document with no custom elements at cursor
-	doc := dm.OpenDocument("file:///test.html", `<div>regular html</div>`, 1)
-	ctx.AddDocument("file:///test.html", doc)
+		// Verify count matches
+		if len(locations) != len(expectedLocations) {
+			t.Errorf("Expected %d locations, got %d", len(expectedLocations), len(locations))
+			t.Logf("Actual locations: %+v", locations)
+		}
 
-	// Create request at position with no element
-	params := &protocol.ReferenceParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{
-				URI: "file:///test.html",
-			},
-			Position: protocol.Position{Line: 0, Character: 2}, // Inside <div>
-		},
-		Context: protocol.ReferenceContext{
-			IncludeDeclaration: true,
-		},
-	}
-
-	// Call References function
-	locations, err := references.References(ctx, &glsp.Context{}, params)
-
-	// Should return empty array, not error
-	if err != nil {
-		t.Fatalf("Expected no error, got %v", err)
-	}
-
-	if len(locations) != 0 {
-		t.Errorf("Expected 0 locations for non-custom-element, got %d", len(locations))
-	}
-}
-
-func TestReferences_DocumentNotFound(t *testing.T) {
-	// Create MockServerContext without adding document
-	ctx := testhelpers.NewMockServerContext()
-
-	// Create DocumentManager
-	dm, err := document.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create DocumentManager: %v", err)
-	}
-	defer dm.Close()
-	ctx.SetDocumentManager(dm)
-
-	// Create request for non-existent document
-	params := &protocol.ReferenceParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{
-				URI: "file:///non-existent.html",
-			},
-			Position: protocol.Position{Line: 0, Character: 5},
-		},
-		Context: protocol.ReferenceContext{
-			IncludeDeclaration: true,
-		},
-	}
-
-	// Call References function
-	locations, err := references.References(ctx, &glsp.Context{}, params)
-
-	// Should return empty array, not error
-	if err != nil {
-		t.Fatalf("Expected no error, got %v", err)
-	}
-
-	if len(locations) != 0 {
-		t.Errorf("Expected 0 locations for non-existent document, got %d", len(locations))
-	}
+		// Verify each expected location is present
+		for _, expected := range expectedLocations {
+			found := false
+			for _, actual := range locations {
+				if actual.URI == expected.URI &&
+					actual.Range.Start.Line == expected.Range.Start.Line &&
+					actual.Range.Start.Character == expected.Range.Start.Character {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Errorf("Expected location not found: %s at %d:%d",
+					expected.URI, expected.Range.Start.Line, expected.Range.Start.Character)
+			}
+		}
+	})
 }

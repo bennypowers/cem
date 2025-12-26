@@ -1,0 +1,16 @@
+{
+  "contents": {
+    "kind": "markdown",
+    "value": "## `test-attr` attribute\n\n**On `\u003ctest-element\u003e` element**\n\n**Type:** `string`\n\nA test attribute\n\n"
+  },
+  "range": {
+    "start": {
+      "line": 6,
+      "character": 16
+    },
+    "end": {
+      "line": 6,
+      "character": 25
+    }
+  }
+}

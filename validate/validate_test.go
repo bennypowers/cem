@@ -18,45 +18,12 @@ package validate
 
 import (
 	"encoding/json"
-	"flag"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/nsf/jsondiff"
+	"bennypowers.dev/cem/internal/platform/testutil"
 )
-
-var update = flag.Bool("update", false, "update golden files")
-
-func checkGolden(t *testing.T, name string, actual []byte) {
-	t.Helper()
-	goldenPath := filepath.Join("goldens", name+".json")
-	if *update {
-		if err := os.MkdirAll(filepath.Dir(goldenPath), 0755); err != nil {
-			t.Fatalf("failed to create goldens directory: %v", err)
-		}
-		err := os.WriteFile(goldenPath, actual, 0644)
-		if err != nil {
-			t.Fatalf("failed to update golden file: %v", err)
-		}
-		return
-	}
-
-	expected, err := os.ReadFile(goldenPath)
-	if err != nil {
-		t.Fatalf("failed to read golden file %s: %v", goldenPath, err)
-	}
-
-	if string(expected) != string(actual) {
-		options := jsondiff.DefaultConsoleOptions()
-		diff, str := jsondiff.Compare(expected, actual, &options)
-		if diff == jsondiff.FullMatch {
-			t.Logf("Semantic match, string mismatch: %s", str)
-		} else {
-			t.Error(diff, str)
-		}
-	}
-}
 
 func TestValidateGolden(t *testing.T) {
 	testCases := []struct {
@@ -109,7 +76,11 @@ func TestValidateGolden(t *testing.T) {
 			}
 
 			// Check against golden file
-			checkGolden(t, tc.name, jsonBytes)
+			testutil.CheckGolden(t, tc.name, jsonBytes, testutil.GoldenOptions{
+				Dir:         "goldens",
+				Extension:   ".json",
+				UseJSONDiff: true,
+			})
 		})
 	}
 }

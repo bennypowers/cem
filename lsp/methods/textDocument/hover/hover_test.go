@@ -18,313 +18,114 @@ package hover_test
 
 import (
 	"encoding/json"
-	"os"
-	"path/filepath"
-	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/hover"
 	"bennypowers.dev/cem/lsp/testhelpers"
-	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-type HoverTestConfig struct {
-	Tests []struct {
-		Name            string `json:"name"`
-		Description     string `json:"description"`
-		InputFile       string `json:"inputFile"`
-		ElementPosition struct {
-			Line      uint32 `json:"line"`
-			Character uint32 `json:"character"`
-		} `json:"elementPosition"`
-		ElementMatch struct {
-			TagName string `json:"tagName"`
-			Range   struct {
-				Start struct {
-					Line      uint32 `json:"line"`
-					Character uint32 `json:"character"`
-				} `json:"start"`
-				End struct {
-					Line      uint32 `json:"line"`
-					Character uint32 `json:"character"`
-				} `json:"end"`
-			} `json:"range"`
-			Attributes map[string]struct {
-				Name  string `json:"name"`
-				Value string `json:"value"`
-				Range struct {
-					Start struct {
-						Line      uint32 `json:"line"`
-						Character uint32 `json:"character"`
-					} `json:"start"`
-					End struct {
-						Line      uint32 `json:"line"`
-						Character uint32 `json:"character"`
-					} `json:"end"`
-				} `json:"range"`
-			} `json:"attributes,omitempty"`
-		} `json:"elementMatch"`
-		AttributePosition *struct {
-			Line      uint32 `json:"line"`
-			Character uint32 `json:"character"`
-		} `json:"attributePosition,omitempty"`
-	} `json:"tests"`
+// Cursor positions for each test fixture
+var cursorPositions = map[string]protocol.Position{
+	"element-hover-html":       {Line: 6, Character: 5},
+	"element-hover-typescript": {Line: 5, Character: 10},
+	"attribute-hover-html":     {Line: 6, Character: 20},
 }
 
-func TestHoverIntegrationWithDocumentChanges(t *testing.T) {
-	fixturePath := filepath.Join("fixtures", "hover-integration")
+func TestHover_Fixtures(t *testing.T) {
+	testutil.RunLSPFixtures(t, "testdata", func(t *testing.T, fixture *testutil.LSPFixture) {
+		// Get cursor position from map
+		cursor, ok := cursorPositions[fixture.Name]
+		if !ok {
+			t.Fatalf("No cursor position defined for fixture %s", fixture.Name)
+		}
 
-	ctx := testhelpers.NewMockServerContext()
-
-	// Load the manifest manually for testing
-	manifestPath := filepath.Join("..", "..", "..", "test", "fixtures", "hover-integration", "custom-elements.json")
-	manifestBytes, err := os.ReadFile(manifestPath)
-	if err != nil {
-		t.Fatalf("Failed to read manifest: %v", err)
-	}
-
-	var pkg M.Package
-	err = json.Unmarshal(manifestBytes, &pkg)
-	if err != nil {
-		t.Fatalf("Failed to parse manifest: %v", err)
-	}
-
-	ctx.AddManifest(&pkg)
-
-	dm, err := document.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create DocumentManager: %v", err)
-	}
-	defer dm.Close()
-	ctx.SetDocumentManager(dm)
-
-	// Load test configuration
-	configPath := filepath.Join(fixturePath, "test-config.json")
-	configBytes, err := os.ReadFile(configPath)
-	if err != nil {
-		t.Fatalf("Failed to read test config: %v", err)
-	}
-
-	var config HoverTestConfig
-	err = json.Unmarshal(configBytes, &config)
-	if err != nil {
-		t.Fatalf("Failed to parse test config: %v", err)
-	}
-
-	for _, testCase := range config.Tests {
-		t.Run(testCase.Description, func(t *testing.T) {
-			// Load test fixture content
-			contentPath := filepath.Join(fixturePath, testCase.InputFile)
-			content, err := os.ReadFile(contentPath)
+		// Parse manifest if present
+		ctx := testhelpers.NewMockServerContext()
+		if fixture.Manifest != nil {
+			var pkg M.Package
+			err := json.Unmarshal(fixture.Manifest, &pkg)
 			if err != nil {
-				t.Fatalf("Failed to read test fixture %s: %v", testCase.InputFile, err)
+				t.Fatalf("Failed to parse manifest: %v", err)
 			}
+			ctx.AddManifest(&pkg)
+		}
 
-			uri := "file://" + contentPath
+		// Create document manager
+		dm, err := document.NewDocumentManager()
+		if err != nil {
+			t.Fatalf("Failed to create DocumentManager: %v", err)
+		}
+		defer dm.Close()
+		ctx.SetDocumentManager(dm)
 
-			// Create element match from config
-			elementMatch := types.CustomElementMatch{
-				TagName: testCase.ElementMatch.TagName,
-				Range: protocol.Range{
-					Start: protocol.Position{
-						Line:      testCase.ElementMatch.Range.Start.Line,
-						Character: testCase.ElementMatch.Range.Start.Character,
-					},
-					End: protocol.Position{
-						Line:      testCase.ElementMatch.Range.End.Line,
-						Character: testCase.ElementMatch.Range.End.Character,
-					},
-				},
+		// Determine URI based on input type
+		var uri string
+		if fixture.InputType == "ts" {
+			uri = "file:///test.ts"
+		} else {
+			uri = "file:///test.html"
+		}
+
+		// Open document
+		doc := dm.OpenDocument(uri, fixture.InputContent, 1)
+		ctx.AddDocument(uri, doc)
+
+		// Load expected Hover response
+		var expected protocol.Hover
+		err = fixture.GetExpected("expected", &expected)
+		if err != nil {
+			t.Fatalf("Failed to get expected hover: %v", err)
+		}
+
+		// Create hover params
+		params := &protocol.HoverParams{
+			TextDocumentPositionParams: protocol.TextDocumentPositionParams{
+				TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+				Position:     cursor,
+			},
+		}
+
+		// Call hover
+		result, err := hover.Hover(ctx, nil, params)
+		if err != nil {
+			t.Fatalf("Hover failed: %v", err)
+		}
+
+		if result == nil {
+			t.Fatal("Expected hover result, got nil")
+		}
+
+		// Verify hover matches expected
+		actualContents, ok := result.Contents.(protocol.MarkupContent)
+		if !ok {
+			t.Fatalf("Expected Contents to be MarkupContent, got %T", result.Contents)
+		}
+
+		expectedContents, ok := expected.Contents.(protocol.MarkupContent)
+		if !ok {
+			t.Fatalf("Expected Contents in expected.json to be MarkupContent, got %T", expected.Contents)
+		}
+
+		if actualContents.Kind != expectedContents.Kind {
+			t.Errorf("Expected kind %s, got %s", expectedContents.Kind, actualContents.Kind)
+		}
+
+		if actualContents.Value != expectedContents.Value {
+			t.Errorf("Expected value:\n%s\n\nGot:\n%s", expectedContents.Value, actualContents.Value)
+		}
+
+		// Verify range if provided in expected
+		if expected.Range != nil && result.Range != nil {
+			if result.Range.Start.Line != expected.Range.Start.Line ||
+				result.Range.Start.Character != expected.Range.Start.Character ||
+				result.Range.End.Line != expected.Range.End.Line ||
+				result.Range.End.Character != expected.Range.End.Character {
+				t.Errorf("Range mismatch.\nExpected: %+v\nGot: %+v", expected.Range, result.Range)
 			}
-
-			// Add attributes if present
-			if len(testCase.ElementMatch.Attributes) > 0 {
-				elementMatch.Attributes = make(map[string]types.AttributeMatch)
-				for attrName, attrData := range testCase.ElementMatch.Attributes {
-					elementMatch.Attributes[attrName] = types.AttributeMatch{
-						Name:  attrData.Name,
-						Value: attrData.Value,
-						Range: protocol.Range{
-							Start: protocol.Position{
-								Line:      attrData.Range.Start.Line,
-								Character: attrData.Range.Start.Character,
-							},
-							End: protocol.Position{
-								Line:      attrData.Range.End.Line,
-								Character: attrData.Range.End.Character,
-							},
-						},
-					}
-				}
-			}
-
-			// Add document to the mock context using DocumentManager
-			dm, err := document.NewDocumentManager()
-			if err != nil {
-				t.Fatalf("Failed to create DocumentManager: %v", err)
-			}
-			defer dm.Close()
-			ctx.SetDocumentManager(dm)
-
-			doc := dm.OpenDocument(uri, string(content), 1)
-			ctx.AddDocument(uri, doc)
-
-			// Test element hover
-			pos := protocol.Position{
-				Line:      testCase.ElementPosition.Line,
-				Character: testCase.ElementPosition.Character,
-			}
-			params := &protocol.HoverParams{
-				TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-					TextDocument: protocol.TextDocumentIdentifier{URI: uri},
-					Position:     pos,
-				},
-			}
-
-			result, err := hover.Hover(ctx, nil, params)
-			if err != nil {
-				t.Fatalf("Hover failed: %v", err)
-			}
-
-			if result == nil {
-				t.Fatal("Expected hover result, got nil")
-			}
-
-			hoverContent := result.Contents.(protocol.MarkupContent)
-			if hoverContent.Value == "" {
-				t.Error("Expected hover content, got empty string")
-			}
-
-			if !strings.Contains(hoverContent.Value, testCase.ElementMatch.TagName) {
-				t.Errorf("Expected hover content to contain '%s', got: %s", testCase.ElementMatch.TagName, hoverContent.Value)
-			}
-
-			// Test attribute hover if position specified
-			if testCase.AttributePosition != nil {
-				attrPos := protocol.Position{
-					Line:      testCase.AttributePosition.Line,
-					Character: testCase.AttributePosition.Character,
-				}
-				attrParams := &protocol.HoverParams{
-					TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-						TextDocument: protocol.TextDocumentIdentifier{URI: uri},
-						Position:     attrPos,
-					},
-				}
-
-				attrResult, err := hover.Hover(ctx, nil, attrParams)
-				if err != nil {
-					t.Fatalf("Hover on attribute failed: %v", err)
-				}
-
-				if attrResult == nil {
-					t.Fatal("Expected hover result on attribute, got nil")
-				}
-
-				attrContent := attrResult.Contents.(protocol.MarkupContent)
-				if attrContent.Value == "" {
-					t.Error("Expected hover content on attribute, got empty string")
-				}
-
-				if !strings.Contains(attrContent.Value, "test-attr") {
-					t.Errorf("Expected hover content to contain 'test-attr', got: %s", attrContent.Value)
-				}
-			}
-		})
-	}
-
-}
-
-func TestHoverWithTypeScriptTemplates(t *testing.T) {
-	fixturePath := filepath.Join("fixtures", "typescript-templates")
-
-	ctx := testhelpers.NewMockServerContext()
-
-	// Load the manifest manually for testing
-	manifestPath := filepath.Join("test", "fixtures", "typescript-templates", "manifest.json")
-	manifestBytes, err := os.ReadFile(manifestPath)
-	if err != nil {
-		t.Fatalf("Failed to read manifest: %v", err)
-	}
-
-	var pkg M.Package
-	err = json.Unmarshal(manifestBytes, &pkg)
-	if err != nil {
-		t.Fatalf("Failed to parse manifest: %v", err)
-	}
-
-	ctx.AddManifest(&pkg)
-
-	dm, err := document.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create DocumentManager: %v", err)
-	}
-	defer dm.Close()
-	ctx.SetDocumentManager(dm)
-
-	// Load test configuration
-	configPath := filepath.Join(fixturePath, "test-config.json")
-	configBytes, err := os.ReadFile(configPath)
-	if err != nil {
-		t.Fatalf("Failed to read test config: %v", err)
-	}
-
-	var config HoverTestConfig
-	err = json.Unmarshal(configBytes, &config)
-	if err != nil {
-		t.Fatalf("Failed to parse test config: %v", err)
-	}
-
-	for _, testCase := range config.Tests {
-		t.Run(testCase.Description, func(t *testing.T) {
-			// Load test fixture content
-			contentPath := filepath.Join(fixturePath, testCase.InputFile)
-			content, err := os.ReadFile(contentPath)
-			if err != nil {
-				t.Fatalf("Failed to read test fixture %s: %v", testCase.InputFile, err)
-			}
-
-			uri := "file:///test.ts"
-
-			// Add document to the mock context using DocumentManager
-			dm, err := document.NewDocumentManager()
-			if err != nil {
-				t.Fatalf("Failed to create DocumentManager: %v", err)
-			}
-			defer dm.Close()
-			ctx.SetDocumentManager(dm)
-
-			doc := dm.OpenDocument(uri, string(content), 1)
-			ctx.AddDocument(uri, doc)
-
-			// Test hover
-			pos := protocol.Position{
-				Line:      testCase.ElementPosition.Line,
-				Character: testCase.ElementPosition.Character,
-			}
-			params := &protocol.HoverParams{
-				TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-					TextDocument: protocol.TextDocumentIdentifier{URI: uri},
-					Position:     pos,
-				},
-			}
-
-			result, err := hover.Hover(ctx, nil, params)
-			if err != nil {
-				t.Fatalf("Hover failed: %v", err)
-			}
-
-			if result == nil {
-				t.Fatal("Expected hover result, got nil")
-			}
-
-			hoverContent := result.Contents.(protocol.MarkupContent)
-			if !strings.Contains(hoverContent.Value, testCase.ElementMatch.TagName) {
-				t.Errorf("Expected hover content to contain '%s', got: %s", testCase.ElementMatch.TagName, hoverContent.Value)
-			}
-		})
-	}
+		}
+	})
 }
