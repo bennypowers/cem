@@ -51,7 +51,7 @@ describe('cem-serve-chrome', () => {
     // Store original fetch before stubbing
     const originalFetch = window.fetch;
 
-    // Now stub fetch for debug endpoint only (after template loads)
+    // Stub fetch for both debug and manifest endpoints (after template loads)
     sinon.stub(window, 'fetch').callsFake((url, ...args) => {
       if (url === '/__cem/debug') {
         return Promise.resolve({
@@ -64,6 +64,13 @@ describe('cem-serve-chrome', () => {
             demos: [],
             importMap: {}
           })
+        });
+      }
+      if (url === '/custom-elements.json') {
+        // Return empty manifest to avoid 404 errors in console
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ modules: [] })
         });
       }
       // Pass through all other fetches to the original implementation

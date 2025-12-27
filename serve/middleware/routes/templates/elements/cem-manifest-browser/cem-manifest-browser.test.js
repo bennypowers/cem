@@ -5,10 +5,25 @@ import { CemVirtualTree } from '/__cem/elements/cem-virtual-tree/cem-virtual-tre
 
 describe('cem-manifest-browser', () => {
   let el;
+  let fetchStub;
 
   beforeEach(async () => {
     // Clear static cache before each test
     CemVirtualTree.clearCache();
+
+    // Store original fetch before stubbing
+    const originalFetch = window.fetch.bind(window);
+
+    // Mock fetch to return empty manifest by default to avoid 404 errors
+    fetchStub = sinon.stub(window, 'fetch').callsFake((url, ...args) => {
+      if (url === '/custom-elements.json') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ modules: [] })
+        });
+      }
+      return originalFetch(url, ...args);
+    });
 
     el = document.createElement('cem-manifest-browser');
     document.body.appendChild(el);
@@ -20,6 +35,9 @@ describe('cem-manifest-browser', () => {
   afterEach(() => {
     if (el && el.parentNode) {
       el.parentNode.removeChild(el);
+    }
+    if (fetchStub) {
+      fetchStub.restore();
     }
   });
 
@@ -88,7 +106,7 @@ describe('cem-manifest-browser', () => {
   });
 
   describe('virtual tree integration', () => {
-    let virtualTree, detailPanel, drawer, fetchStub;
+    let virtualTree, detailPanel, drawer, localFetchStub;
 
     const testManifest = {
       modules: [{
@@ -103,11 +121,14 @@ describe('cem-manifest-browser', () => {
     };
 
     beforeEach(async () => {
+      // Restore the outer stub and replace with test manifest stub
+      fetchStub.restore();
+
       // Store original fetch before stubbing
       const originalFetch = window.fetch.bind(window);
 
       // Mock fetch to return test manifest, but call through for other URLs
-      fetchStub = sinon.stub(window, 'fetch').callsFake((url, ...args) => {
+      localFetchStub = sinon.stub(window, 'fetch').callsFake((url, ...args) => {
         if (url === '/custom-elements.json') {
           return Promise.resolve({
             ok: true,
@@ -126,7 +147,20 @@ describe('cem-manifest-browser', () => {
     });
 
     afterEach(() => {
-      fetchStub.restore();
+      if (localFetchStub) {
+        localFetchStub.restore();
+      }
+      // Restore the outer stub for other tests
+      const originalFetch = window.fetch.bind(window);
+      fetchStub = sinon.stub(window, 'fetch').callsFake((url, ...args) => {
+        if (url === '/custom-elements.json') {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ modules: [] })
+          });
+        }
+        return originalFetch(url, ...args);
+      });
     });
 
     it('listens for item-select events from virtual tree', async () => {
