@@ -348,7 +348,7 @@ func findReferencesInWorkspaceWithFS(workspaceRoot string, elementName string, o
 		}
 
 		// Skip if this file is already open (already searched)
-		fileURI := fmt.Sprintf("file://%s", filepath.ToSlash(path))
+		fileURI := fmt.Sprintf("file:///%s", filepath.ToSlash(path))
 		if openFiles[fileURI] {
 			return nil
 		}

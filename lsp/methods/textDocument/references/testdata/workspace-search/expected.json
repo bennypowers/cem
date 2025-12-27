@@ -7,14 +7,14 @@
     }
   },
   {
-    "uri": "file://component.ts",
+    "uri": "file:///component.ts",
     "range": {
       "start": {"line": 0, "character": 6},
       "end": {"line": 0, "character": 13}
     }
   },
   {
-    "uri": "file://component.ts",
+    "uri": "file:///component.ts",
     "range": {
       "start": {"line": 0, "character": 6},
       "end": {"line": 0, "character": 13}
