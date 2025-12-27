@@ -11,10 +11,10 @@ describe('cem-manifest-browser', () => {
     // Clear static cache before each test
     CemVirtualTree.clearCache();
 
-    // Store original fetch before stubbing
+    // Store original fetch BEFORE creating element
     const originalFetch = window.fetch.bind(window);
 
-    // Mock fetch to return empty manifest by default to avoid 404 errors
+    // Stub fetch BEFORE creating element (so child components get mocked fetch)
     fetchStub = sinon.stub(window, 'fetch').callsFake((url, ...args) => {
       if (url === '/custom-elements.json') {
         return Promise.resolve({
