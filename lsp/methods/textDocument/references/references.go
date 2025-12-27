@@ -17,7 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package references
 
 import (
-	"fmt"
 	"io/fs"
 	"path/filepath"
 	"strings"
@@ -347,8 +346,19 @@ func findReferencesInWorkspaceWithFS(workspaceRoot string, elementName string, o
 			return nil
 		}
 
+		// Create file URI - ensure path is absolute
+		absPath := path
+		if !filepath.IsAbs(path) {
+			// Relative path - join with workspace root to make absolute
+			absPath = filepath.Join(workspaceRoot, path)
+			// If still relative after joining (e.g., workspace root is "."), prepend / for URI
+			if !filepath.IsAbs(absPath) {
+				absPath = "/" + absPath
+			}
+		}
+		fileURI := "file://" + filepath.ToSlash(absPath)
+
 		// Skip if this file is already open (already searched)
-		fileURI := fmt.Sprintf("file:///%s", filepath.ToSlash(path))
 		if openFiles[fileURI] {
 			return nil
 		}

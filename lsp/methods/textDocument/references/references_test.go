@@ -17,7 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package references_test
 
 import (
-	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -75,39 +74,22 @@ func TestReferences_Fixtures(t *testing.T) {
 		doc := dm.OpenDocument(uri, fixture.InputContent, 1)
 		ctx.AddDocument(uri, doc)
 
-		// Create in-memory filesystem with predictable paths
-		workspaceFiles := make(map[string]string)
+		// Create in-memory filesystem with workspace files
+		// Check if workspace directory exists first
 		workspaceDir := filepath.Join("testdata", fixture.Name, "workspace")
-
-		// Load all workspace files into the in-memory filesystem
-		err = filepath.WalkDir(workspaceDir, func(path string, d fs.DirEntry, err error) error {
-			if err != nil || d.IsDir() {
-				return err
-			}
-
-			// Read file content from disk
-			contentBytes, readErr := os.ReadFile(path)
-			if readErr != nil {
-				return readErr
-			}
-
-			// Get relative path from workspace directory
-			relPath, err := filepath.Rel(workspaceDir, path)
-			if err != nil {
-				return err
-			}
-
-			// Store in map with clean path (e.g., "component.ts", "ignored/should-be-skipped.html")
-			workspaceFiles[relPath] = string(contentBytes)
-			return nil
-		})
-		// Workspace directory might not exist for some tests (like no-element)
-		if err != nil && !os.IsNotExist(err) {
-			t.Logf("Warning: error walking workspace directory: %v", err)
+		var mapFS platform.FileSystem
+		if _, err := os.Stat(workspaceDir); os.IsNotExist(err) {
+			// Workspace directory doesn't exist (e.g., no-element test) - use empty filesystem
+			mapFS = platform.NewMapFS(nil)
+		} else if err != nil {
+			// Other stat error
+			t.Logf("Warning: error checking workspace directory: %v", err)
+			mapFS = platform.NewMapFS(nil)
+		} else {
+			// Workspace exists - load fixtures using testutil helper
+			mapFS = testutil.NewFixtureFS(t, filepath.Join(fixture.Name, "workspace"), ".")
 		}
 
-		// Create MapFS and set it on the context
-		mapFS := platform.NewMapFS(workspaceFiles)
 		ctx.SetFileSystem(mapFS)
 		ctx.SetWorkspaceRoot(".")
 
