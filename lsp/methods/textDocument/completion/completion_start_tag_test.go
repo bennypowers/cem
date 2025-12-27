@@ -18,10 +18,9 @@ package completion_test
 
 import (
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
@@ -35,11 +34,9 @@ import (
 // TestStartTagCompletion tests start tag completion scenarios
 // Consolidated from TestEndToEndStartTagCompletion and TestStartTagCompletionRegression
 func TestStartTagCompletion(t *testing.T) {
-	// Load test manifest with custom elements
-	fixtureDir := filepath.Join("slot-completions-test")
-	manifestPath := filepath.Join(fixtureDir, "manifest.json")
-
-	manifestBytes, err := os.ReadFile(manifestPath)
+	// Load test manifest with custom elements using fixture helper
+	fs := testutil.NewFixtureFS(t, "slot-completions-test", "/test")
+	manifestBytes, err := fs.ReadFile("/test/manifest.json")
 	if err != nil {
 		t.Fatalf("Failed to read test manifest: %v", err)
 	}
