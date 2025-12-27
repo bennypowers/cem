@@ -167,11 +167,3 @@ type CompletionManifestFixture struct {
 		} `json:"attributes"`
 	} `json:"elements"`
 }
-
-// ExpectedCompletions represents the OLD expected completions format (for migration)
-type ExpectedCompletions struct {
-	TagName        string   `json:"tagName"`
-	AttributeName  string   `json:"attributeName"`
-	ExpectedLabels []string `json:"expectedLabels"`
-	Description    string   `json:"description"`
-}
