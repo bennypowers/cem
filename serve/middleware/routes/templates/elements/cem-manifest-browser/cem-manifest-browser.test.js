@@ -106,7 +106,7 @@ describe('cem-manifest-browser', () => {
   });
 
   describe('virtual tree integration', () => {
-    let virtualTree, detailPanel, drawer, localFetchStub;
+    let virtualTree, detailPanel, drawer;
 
     const testManifest = {
       modules: [{
