@@ -102,8 +102,9 @@ func TestReferences_Fixtures(t *testing.T) {
 			return nil
 		})
 		// Workspace directory might not exist for some tests (like no-element)
-		// That's okay - ignore any errors from WalkDir
-		_ = err
+		if err != nil && !os.IsNotExist(err) {
+			t.Logf("Warning: error walking workspace directory: %v", err)
+		}
 
 		// Create MapFS and set it on the context
 		mapFS := platform.NewMapFS(workspaceFiles)
