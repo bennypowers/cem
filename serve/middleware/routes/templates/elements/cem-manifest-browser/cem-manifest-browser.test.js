@@ -121,14 +121,14 @@ describe('cem-manifest-browser', () => {
     };
 
     beforeEach(async () => {
-      // Restore the outer stub and replace with test manifest stub
+      // Clear the cache so virtual tree will reload manifest
+      const { CemVirtualTree } = await import('/__cem/elements/cem-virtual-tree/cem-virtual-tree.js');
+      CemVirtualTree.clearCache();
+
+      // Replace the existing stub with one that returns testManifest
       fetchStub.restore();
-
-      // Store original fetch before stubbing
       const originalFetch = window.fetch.bind(window);
-
-      // Mock fetch to return test manifest, but call through for other URLs
-      localFetchStub = sinon.stub(window, 'fetch').callsFake((url, ...args) => {
+      fetchStub = sinon.stub(window, 'fetch').callsFake((url, ...args) => {
         if (url === '/custom-elements.json') {
           return Promise.resolve({
             ok: true,
@@ -142,25 +142,12 @@ describe('cem-manifest-browser', () => {
       detailPanel = el.shadowRoot.getElementById('detail-panel');
       drawer = el.shadowRoot.getElementById('drawer');
 
-      // Wait for virtual tree to load the manifest
+      // Trigger manifest reload
       await virtualTree.rendered;
     });
 
     afterEach(() => {
-      if (localFetchStub) {
-        localFetchStub.restore();
-      }
-      // Restore the outer stub for other tests
-      const originalFetch = window.fetch.bind(window);
-      fetchStub = sinon.stub(window, 'fetch').callsFake((url, ...args) => {
-        if (url === '/custom-elements.json') {
-          return Promise.resolve({
-            ok: true,
-            json: async () => ({ modules: [] })
-          });
-        }
-        return originalFetch(url, ...args);
-      });
+      // No need to restore here - the outer afterEach will handle it
     });
 
     it('listens for item-select events from virtual tree', async () => {
