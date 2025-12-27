@@ -64,8 +64,8 @@ func References(ctx types.ServerContext, context *glsp.Context, params *protocol
 	helpers.SafeDebugLog("[REFERENCES] Found element: %s", request.ElementName)
 
 	// Search for all references across all documents
-	fs := ctx.FileSystem()
-	return findAllReferences(ctx, request, fs), nil
+	filesystem := ctx.FileSystem()
+	return findAllReferences(ctx, request, filesystem), nil
 }
 
 // ReferenceRequest contains information about what to search for
@@ -227,7 +227,7 @@ func containsHyphen(s string) bool {
 }
 
 // findAllReferences searches for all occurrences of the element across workspace
-func findAllReferences(ctx types.ServerContext, request *ReferenceRequest, fs platform.FileSystem) []protocol.Location {
+func findAllReferences(ctx types.ServerContext, request *ReferenceRequest, filesystem platform.FileSystem) []protocol.Location {
 	var locations []protocol.Location
 
 	// First, search in all tracked (open) documents
@@ -242,7 +242,7 @@ func findAllReferences(ctx types.ServerContext, request *ReferenceRequest, fs pl
 	// Also search workspace files that aren't currently open
 	workspaceRoot := ctx.WorkspaceRoot()
 	if workspaceRoot != "" {
-		workspaceLocations := findReferencesInWorkspaceWithFS(workspaceRoot, request.ElementName, allDocuments, fs)
+		workspaceLocations := findReferencesInWorkspaceWithFS(workspaceRoot, request.ElementName, allDocuments, filesystem)
 		locations = append(locations, workspaceLocations...)
 	}
 
@@ -369,11 +369,11 @@ func findReferencesInWorkspaceWithFS(workspaceRoot string, elementName string, o
 }
 
 // findReferencesInFileWithFS searches for references using a provided filesystem
-func findReferencesInFileWithFS(filePath string, fileURI string, elementName string, fs platform.FileSystem) []protocol.Location {
+func findReferencesInFileWithFS(filePath string, fileURI string, elementName string, filesystem platform.FileSystem) []protocol.Location {
 	var locations []protocol.Location
 
 	// Read file content
-	content, err := fs.ReadFile(filePath)
+	content, err := filesystem.ReadFile(filePath)
 	if err != nil {
 		helpers.SafeDebugLog("[REFERENCES] Failed to read file %s: %v", filePath, err)
 		return locations
