@@ -5,9 +5,9 @@
   "type": "module",
   "description": "Frontend tests for CEM dev server",
   "scripts": {
-    "test": "web-test-runner",
-    "test:watch": "web-test-runner --watch",
-    "test:update": "web-test-runner --update-goldens"
+    "test": "NODE_ENV=production web-test-runner",
+    "test:watch": "NODE_ENV=production web-test-runner --watch",
+    "test:update": "NODE_ENV=production web-test-runner --update-goldens"
   },
   "devDependencies": {
     "@open-wc/testing": "^4.0.0",
