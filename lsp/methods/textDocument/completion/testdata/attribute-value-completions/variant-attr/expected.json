@@ -1,0 +1,24 @@
+[
+  {
+    "label": "\"\"",
+    "kind": 12,
+    "detail": "Empty string",
+    "documentation": {
+      "kind": "markdown",
+      "value": "Empty string value"
+    },
+    "insertText": "\"\""
+  },
+  {
+    "label": "primary",
+    "kind": 12,
+    "detail": "Variant value",
+    "insertText": "primary"
+  },
+  {
+    "label": "secondary",
+    "kind": 12,
+    "detail": "Variant value",
+    "insertText": "secondary"
+  }
+]

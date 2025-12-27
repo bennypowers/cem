@@ -35,11 +35,15 @@ type FileSystem interface {
 
 	// Directory operations
 	MkdirAll(path string, perm fs.FileMode) error
+	ReadDir(name string) ([]fs.DirEntry, error)
 	TempDir() string
 
 	// File system queries
 	Stat(name string) (fs.FileInfo, error)
 	Exists(path string) bool
+
+	// fs.FS compatibility - allows use with fs.WalkDir
+	Open(name string) (fs.File, error)
 }
 
 // OSFileSystem implements FileSystem using the standard os package.
@@ -78,4 +82,12 @@ func (fs *OSFileSystem) Stat(name string) (fs.FileInfo, error) {
 func (fs *OSFileSystem) Exists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
+}
+
+func (fs *OSFileSystem) ReadDir(name string) ([]fs.DirEntry, error) {
+	return os.ReadDir(name)
+}
+
+func (fs *OSFileSystem) Open(name string) (fs.File, error) {
+	return os.Open(name)
 }

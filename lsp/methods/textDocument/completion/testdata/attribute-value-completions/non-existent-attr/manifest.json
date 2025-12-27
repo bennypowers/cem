@@ -1,0 +1,8 @@
+{
+  "elements": {
+    "test-component": {
+      "tagName": "test-component",
+      "attributes": {}
+    }
+  }
+}

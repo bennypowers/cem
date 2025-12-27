@@ -17,51 +17,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package manifest_test
 
 import (
-	"encoding/json"
-	"flag"
-	"os"
-	"path/filepath"
-	"regexp"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/manifest"
 	"github.com/pterm/pterm"
-	"github.com/stretchr/testify/assert"
 )
 
-var update = flag.Bool("update", false, "update golden files")
-var ansiRegexp = regexp.MustCompile(`\x1b\[[0-9;]*m`)
-
-func stripANSI(s string) string {
-	return ansiRegexp.ReplaceAllString(s, "")
-}
-
-func loadTestFixture(t *testing.T, path string) *manifest.Package {
-	t.Helper()
-	bytes, err := os.ReadFile(filepath.Join("fixtures", path))
-	assert.NoError(t, err)
-	var pkg manifest.Package
-	err = json.Unmarshal(bytes, &pkg)
-	assert.NoError(t, err)
-	return &pkg
-}
-
-func checkGolden(t *testing.T, name string, actual []byte) {
-	t.Helper()
-	goldenPath := filepath.Join("fixtures", name+".md")
-	if *update {
-		err := os.WriteFile(goldenPath, actual, 0644)
-		assert.NoError(t, err, "failed to update golden file")
-		return
-	}
-
-	expected, err := os.ReadFile(goldenPath)
-	assert.NoError(t, err, "failed to read golden file")
-	assert.Equal(t, string(expected), string(actual))
-}
-
 func TestAttributeToTableRowGolden(t *testing.T) {
-	pkg := loadTestFixture(t, "custom_element_attributes.json")
+	var pkg manifest.Package
+	testutil.LoadJSONFixture(t, "custom_element_attributes.json", &pkg)
+
 	ced := pkg.Modules[0].Declarations[0].(*manifest.CustomElementDeclaration)
 	renderable := manifest.NewRenderableAttribute(&ced.Attributes[0], ced, nil, &pkg.Modules[0])
 
@@ -69,11 +35,17 @@ func TestAttributeToTableRowGolden(t *testing.T) {
 	row := renderable.ToTableRow()
 
 	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	checkGolden(t, "attribute_row", []byte(stripANSI(table)))
+	testutil.CheckGolden(t, "attribute_row", []byte(table), testutil.GoldenOptions{
+		Dir:       "fixtures",
+		Extension: ".md",
+		StripANSI: true,
+	})
 }
 
 func TestSlotToTableRowGolden(t *testing.T) {
-	pkg := loadTestFixture(t, "custom_element_slots.json")
+	var pkg manifest.Package
+	testutil.LoadJSONFixture(t, "custom_element_slots.json", &pkg)
+
 	ced := pkg.Modules[0].Declarations[0].(*manifest.CustomElementDeclaration)
 	renderable := manifest.NewRenderableSlot(&ced.Slots[0], ced, nil, &pkg.Modules[0])
 
@@ -81,11 +53,17 @@ func TestSlotToTableRowGolden(t *testing.T) {
 	row := renderable.ToTableRow()
 
 	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	checkGolden(t, "slot_row", []byte(stripANSI(table)))
+	testutil.CheckGolden(t, "slot_row", []byte(table), testutil.GoldenOptions{
+		Dir:       "fixtures",
+		Extension: ".md",
+		StripANSI: true,
+	})
 }
 
 func TestEventToTableRowGolden(t *testing.T) {
-	pkg := loadTestFixture(t, "custom_element_events.json")
+	var pkg manifest.Package
+	testutil.LoadJSONFixture(t, "custom_element_events.json", &pkg)
+
 	ced := pkg.Modules[0].Declarations[0].(*manifest.CustomElementDeclaration)
 	renderable := manifest.NewRenderableEvent(&ced.Events[0], ced, nil, &pkg.Modules[0])
 
@@ -93,11 +71,17 @@ func TestEventToTableRowGolden(t *testing.T) {
 	row := renderable.ToTableRow()
 
 	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	checkGolden(t, "event_row", []byte(stripANSI(table)))
+	testutil.CheckGolden(t, "event_row", []byte(table), testutil.GoldenOptions{
+		Dir:       "fixtures",
+		Extension: ".md",
+		StripANSI: true,
+	})
 }
 
 func TestCssPropertyToTableRowGolden(t *testing.T) {
-	pkg := loadTestFixture(t, "custom_element_css_parts_properties_states.json")
+	var pkg manifest.Package
+	testutil.LoadJSONFixture(t, "custom_element_css_parts_properties_states.json", &pkg)
+
 	ced := pkg.Modules[0].Declarations[0].(*manifest.CustomElementDeclaration)
 	renderable := manifest.NewRenderableCssCustomProperty(&ced.CssProperties[0], ced, nil, &pkg.Modules[0])
 
@@ -105,11 +89,17 @@ func TestCssPropertyToTableRowGolden(t *testing.T) {
 	row := renderable.ToTableRow()
 
 	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	checkGolden(t, "css_property_row", []byte(stripANSI(table)))
+	testutil.CheckGolden(t, "css_property_row", []byte(table), testutil.GoldenOptions{
+		Dir:       "fixtures",
+		Extension: ".md",
+		StripANSI: true,
+	})
 }
 
 func TestCssPartToTableRowGolden(t *testing.T) {
-	pkg := loadTestFixture(t, "custom_element_css_parts_properties_states.json")
+	var pkg manifest.Package
+	testutil.LoadJSONFixture(t, "custom_element_css_parts_properties_states.json", &pkg)
+
 	ced := pkg.Modules[0].Declarations[0].(*manifest.CustomElementDeclaration)
 	renderable := manifest.NewRenderableCssPart(&ced.CssParts[0], ced, nil, &pkg.Modules[0])
 
@@ -117,11 +107,17 @@ func TestCssPartToTableRowGolden(t *testing.T) {
 	row := renderable.ToTableRow()
 
 	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	checkGolden(t, "css_part_row", []byte(stripANSI(table)))
+	testutil.CheckGolden(t, "css_part_row", []byte(table), testutil.GoldenOptions{
+		Dir:       "fixtures",
+		Extension: ".md",
+		StripANSI: true,
+	})
 }
 
 func TestClassMethodToTableRowGolden(t *testing.T) {
-	pkg := loadTestFixture(t, "class.json")
+	var pkg manifest.Package
+	testutil.LoadJSONFixture(t, "class.json", &pkg)
+
 	cd := pkg.Modules[0].Declarations[0].(*manifest.ClassDeclaration)
 	method := &manifest.ClassMethod{
 		FullyQualified: manifest.FullyQualified{
@@ -129,11 +125,15 @@ func TestClassMethodToTableRowGolden(t *testing.T) {
 			Summary: "A test method.",
 		},
 	}
-	renderable := manifest.NewRenderableClassMethod(method, cd, nil, &pkg.Modules[0], pkg)
+	renderable := manifest.NewRenderableClassMethod(method, cd, nil, &pkg.Modules[0], &pkg)
 
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
 	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	checkGolden(t, "class_method_row", []byte(stripANSI(table)))
+	testutil.CheckGolden(t, "class_method_row", []byte(table), testutil.GoldenOptions{
+		Dir:       "fixtures",
+		Extension: ".md",
+		StripANSI: true,
+	})
 }

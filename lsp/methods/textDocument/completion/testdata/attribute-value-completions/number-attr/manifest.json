@@ -1,0 +1,13 @@
+{
+  "elements": {
+    "test-component": {
+      "tagName": "test-component",
+      "attributes": {
+        "count": {
+          "name": "count",
+          "type": { "text": "number" }
+        }
+      }
+    }
+  }
+}

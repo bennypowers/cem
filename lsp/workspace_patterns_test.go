@@ -140,16 +140,4 @@ func TestWorkspacePatterns_EdgeCases(t *testing.T) {
 		err = registry.LoadFromWorkspace(wsCtx)
 		assert.NoError(t, err, "Should handle empty workspace gracefully")
 	})
-
-	t.Run("pattern matching non-directories", func(t *testing.T) {
-		// This is implicitly tested - our implementation filters to directories only
-		// Just documenting that this case is handled
-		t.Skip("Implicitly tested by directory filtering in expandWorkspacePattern")
-	})
-
-	t.Run("pattern matching directories without package.json", func(t *testing.T) {
-		// This is implicitly tested - our implementation requires package.json
-		// Just documenting that this case is handled
-		t.Skip("Implicitly tested by package.json requirement in expandWorkspacePattern")
-	})
 }

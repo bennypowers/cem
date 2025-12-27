@@ -1,0 +1,16 @@
+{
+  "elements": {
+    "test-alert": {
+      "tagName": "test-alert",
+      "attributes": {
+        "disabled": {
+          "name": "disabled",
+          "type": {
+            "text": "boolean"
+          },
+          "default": "false"
+        }
+      }
+    }
+  }
+}

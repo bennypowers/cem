@@ -1,0 +1,8 @@
+{
+  "attributes": {
+    "my-element": {
+      "size": {"name": "size"},
+      "color": {"name": "color"}
+    }
+  }
+}

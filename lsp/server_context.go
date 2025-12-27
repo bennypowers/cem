@@ -21,6 +21,7 @@ import (
 	"path"
 	"strings"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
@@ -170,6 +171,10 @@ func (s *Server) WorkspaceRoot() string {
 		return s.workspace.Root()
 	}
 	return ""
+}
+
+func (s *Server) FileSystem() platform.FileSystem {
+	return platform.NewOSFileSystem()
 }
 
 func (s *Server) QueryManager() (*queries.QueryManager, error) {

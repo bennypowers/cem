@@ -1,0 +1,62 @@
+[
+  {
+    "range": {
+      "start": {
+        "line": 0,
+        "character": 19
+      },
+      "end": {
+        "line": 0,
+        "character": 23
+      }
+    },
+    "severity": 2,
+    "source": "cem-lsp",
+    "message": "Unknown attribute 'clas'. Did you mean 'class'?",
+    "data": {
+      "original": "clas",
+      "range": {
+        "start": {
+          "line": 0,
+          "character": 19
+        },
+        "end": {
+          "line": 0,
+          "character": 23
+        }
+      },
+      "suggestion": "class",
+      "type": "attribute-suggestion"
+    }
+  },
+  {
+    "range": {
+      "start": {
+        "line": 0,
+        "character": 31
+      },
+      "end": {
+        "line": 0,
+        "character": 35
+      }
+    },
+    "severity": 2,
+    "source": "cem-lsp",
+    "message": "Unknown attribute 'titl'. Did you mean 'title'?",
+    "data": {
+      "original": "titl",
+      "range": {
+        "start": {
+          "line": 0,
+          "character": 31
+        },
+        "end": {
+          "line": 0,
+          "character": 35
+        }
+      },
+      "suggestion": "title",
+      "type": "attribute-suggestion"
+    }
+  }
+]

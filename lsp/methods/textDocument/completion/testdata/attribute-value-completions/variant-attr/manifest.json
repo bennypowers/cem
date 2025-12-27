@@ -1,0 +1,13 @@
+{
+  "elements": {
+    "test-component": {
+      "tagName": "test-component",
+      "attributes": {
+        "variant": {
+          "name": "variant",
+          "type": { "text": "string" }
+        }
+      }
+    }
+  }
+}

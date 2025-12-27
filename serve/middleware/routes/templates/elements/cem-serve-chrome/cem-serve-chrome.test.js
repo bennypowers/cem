@@ -42,16 +42,10 @@ describe('cem-serve-chrome', () => {
   }
 
   beforeEach(async () => {
-    el = document.createElement('cem-serve-chrome');
-    document.body.appendChild(el);
-
-    // Wait for CemElement to load template from real server
-    await el.rendered;
-
-    // Store original fetch before stubbing
+    // Store original fetch BEFORE creating element
     const originalFetch = window.fetch;
 
-    // Now stub fetch for debug endpoint only (after template loads)
+    // Stub fetch BEFORE creating element (so child components get mocked fetch)
     sinon.stub(window, 'fetch').callsFake((url, ...args) => {
       if (url === '/__cem/debug') {
         return Promise.resolve({
@@ -66,9 +60,22 @@ describe('cem-serve-chrome', () => {
           })
         });
       }
+      if (url === '/custom-elements.json') {
+        // Return empty manifest to avoid 404 errors in console
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ modules: [] })
+        });
+      }
       // Pass through all other fetches to the original implementation
       return originalFetch.call(window, url, ...args);
     });
+
+    el = document.createElement('cem-serve-chrome');
+    document.body.appendChild(el);
+
+    // Wait for CemElement to load template from real server
+    await el.rendered;
   });
 
   afterEach(() => {

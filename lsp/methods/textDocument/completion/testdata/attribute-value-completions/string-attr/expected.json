@@ -1,0 +1,30 @@
+[
+  {
+    "label": "\"\"",
+    "kind": 12,
+    "detail": "Empty string",
+    "documentation": {
+      "kind": "markdown",
+      "value": "Empty string value"
+    },
+    "insertText": "\"\""
+  },
+  {
+    "label": "red",
+    "kind": 12,
+    "detail": "Color value",
+    "insertText": "red"
+  },
+  {
+    "label": "blue",
+    "kind": 12,
+    "detail": "Color value",
+    "insertText": "blue"
+  },
+  {
+    "label": "green",
+    "kind": 12,
+    "detail": "Color value",
+    "insertText": "green"
+  }
+]

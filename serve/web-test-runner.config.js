@@ -9,6 +9,8 @@ export default {
     'frontend-tests/**/*.test.js'
   ],
   nodeResolve: true,
+  // Only show errors in browser logs, filter out dev mode warnings
+  filterBrowserLogs: ({ type }) => type === 'error',
   browsers: [
     playwrightLauncher({ product: 'chromium' }),
     playwrightLauncher({ product: 'firefox' }),

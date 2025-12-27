@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package routes
 
 import (
-	"flag"
 	"html/template"
 	"os"
 	"path/filepath"
@@ -27,8 +26,6 @@ import (
 
 	"bennypowers.dev/cem/internal/platform/testutil"
 )
-
-var update = flag.Bool("update", false, "update golden files")
 
 // testTemplates creates a template registry for testing (with nil context)
 func testTemplates() *TemplateRegistry {
@@ -56,7 +53,7 @@ func TestChromeRendering_BasicDemo(t *testing.T) {
 	// Compare with golden file
 	goldenPath := filepath.Join("testdata", "chrome-rendering", "expected-basic.html")
 
-	if *update {
+	if *testutil.Update {
 		err := os.WriteFile(goldenPath, []byte(rendered), 0644)
 		if err != nil {
 			t.Fatalf("Failed to update golden file: %v", err)
@@ -90,7 +87,7 @@ func TestChromeRendering_NoKnobs(t *testing.T) {
 
 	goldenPath := filepath.Join("testdata", "chrome-rendering", "expected-no-knobs.html")
 
-	if *update {
+	if *testutil.Update {
 		err := os.WriteFile(goldenPath, []byte(rendered), 0644)
 		if err != nil {
 			t.Fatalf("Failed to update golden file: %v", err)
@@ -124,7 +121,7 @@ func TestChromeRendering_ShadowMode(t *testing.T) {
 
 	goldenPath := filepath.Join("testdata", "chrome-rendering", "expected-shadow-mode.html")
 
-	if *update {
+	if *testutil.Update {
 		err := os.WriteFile(goldenPath, []byte(rendered), 0644)
 		if err != nil {
 			t.Fatalf("Failed to update golden file: %v", err)
@@ -158,7 +155,7 @@ func TestChromeRendering_MarkdownDescription(t *testing.T) {
 
 	goldenPath := filepath.Join("testdata", "chrome-rendering", "expected-markdown.html")
 
-	if *update {
+	if *testutil.Update {
 		err := os.WriteFile(goldenPath, []byte(rendered), 0644)
 		if err != nil {
 			t.Fatalf("Failed to update golden file: %v", err)
@@ -206,7 +203,7 @@ func TestChromeRendering_WithNavigation(t *testing.T) {
 
 	goldenPath := filepath.Join("testdata", "chrome-rendering", "expected-with-navigation.html")
 
-	if *update {
+	if *testutil.Update {
 		err := os.WriteFile(goldenPath, []byte(rendered), 0644)
 		if err != nil {
 			t.Fatalf("Failed to update golden file: %v", err)
@@ -242,7 +239,7 @@ func TestChromeRendering_Chromeless(t *testing.T) {
 	// Compare with golden file
 	goldenPath := filepath.Join("testdata", "chrome-rendering", "expected-chromeless.html")
 
-	if *update {
+	if *testutil.Update {
 		err := os.WriteFile(goldenPath, []byte(rendered), 0644)
 		if err != nil {
 			t.Fatalf("Failed to update golden file: %v", err)

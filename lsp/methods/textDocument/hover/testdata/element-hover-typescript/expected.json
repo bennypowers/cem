@@ -1,0 +1,16 @@
+{
+  "contents": {
+    "kind": "markdown",
+    "value": "## `\u003ctest-component\u003e`\n\n**Custom Element**\n\n### Attributes\n\n- **`prop`** _string_ - A test property\n\n"
+  },
+  "range": {
+    "start": {
+      "line": 4,
+      "character": 15
+    },
+    "end": {
+      "line": 6,
+      "character": 5
+    }
+  }
+}

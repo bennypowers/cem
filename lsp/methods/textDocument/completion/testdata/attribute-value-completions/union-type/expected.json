@@ -1,0 +1,20 @@
+[
+  {
+    "label": "light",
+    "kind": 12,
+    "detail": "Union type value",
+    "insertText": "light"
+  },
+  {
+    "label": "dark",
+    "kind": 12,
+    "detail": "Union type value",
+    "insertText": "dark"
+  },
+  {
+    "label": "auto",
+    "kind": 12,
+    "detail": "Union type value",
+    "insertText": "auto"
+  }
+]
