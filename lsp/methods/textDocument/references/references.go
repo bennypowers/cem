@@ -17,9 +17,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package references
 
 import (
-	"fmt"
-	"os"
+	"io/fs"
 	"path/filepath"
+	"strings"
 
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp/helpers"
@@ -63,7 +63,8 @@ func References(ctx types.ServerContext, context *glsp.Context, params *protocol
 	helpers.SafeDebugLog("[REFERENCES] Found element: %s", request.ElementName)
 
 	// Search for all references across all documents
-	return findAllReferences(ctx, request), nil
+	filesystem := ctx.FileSystem()
+	return findAllReferences(ctx, request, filesystem), nil
 }
 
 // ReferenceRequest contains information about what to search for
@@ -225,7 +226,7 @@ func containsHyphen(s string) bool {
 }
 
 // findAllReferences searches for all occurrences of the element across workspace
-func findAllReferences(ctx types.ServerContext, request *ReferenceRequest) []protocol.Location {
+func findAllReferences(ctx types.ServerContext, request *ReferenceRequest, filesystem platform.FileSystem) []protocol.Location {
 	var locations []protocol.Location
 
 	// First, search in all tracked (open) documents
@@ -240,7 +241,7 @@ func findAllReferences(ctx types.ServerContext, request *ReferenceRequest) []pro
 	// Also search workspace files that aren't currently open
 	workspaceRoot := ctx.WorkspaceRoot()
 	if workspaceRoot != "" {
-		workspaceLocations := findReferencesInWorkspace(workspaceRoot, request.ElementName, allDocuments)
+		workspaceLocations := findReferencesInWorkspaceWithFS(workspaceRoot, request.ElementName, allDocuments, filesystem)
 		locations = append(locations, workspaceLocations...)
 	}
 
@@ -284,17 +285,14 @@ func findReferencesInDocument(ctx types.ServerContext, doc types.Document, eleme
 	return locations
 }
 
-// findReferencesInWorkspace searches for references in all workspace files
-func findReferencesInWorkspace(workspaceRoot string, elementName string, openDocuments []types.Document) []protocol.Location {
+
+// findReferencesInWorkspaceWithFS searches for references using a provided filesystem
+// This allows for testability with mock filesystems
+func findReferencesInWorkspaceWithFS(workspaceRoot string, elementName string, openDocuments []types.Document, filesystem platform.FileSystem) []protocol.Location {
 	var locations []protocol.Location
 
-	// Ensure workspace root is absolute
-	absWorkspaceRoot, err := filepath.Abs(workspaceRoot)
-	if err != nil {
-		helpers.SafeDebugLog("[REFERENCES] Failed to get absolute workspace path: %v", err)
-		return locations
-	}
-	workspaceRoot = absWorkspaceRoot
+	// Normalize workspace root - remove trailing slashes for consistent path handling
+	workspaceRoot = strings.TrimSuffix(workspaceRoot, "/")
 
 	// Create a set of open document URIs to avoid duplicates
 	openFiles := make(map[string]bool)
@@ -305,12 +303,13 @@ func findReferencesInWorkspace(workspaceRoot string, elementName string, openDoc
 	// Load .gitignore if it exists
 	var gitignoreMatcher *ignore.GitIgnore
 	gitignorePath := filepath.Join(workspaceRoot, ".gitignore")
-	if _, err := os.Stat(gitignorePath); err == nil {
-		gitignoreMatcher, _ = ignore.CompileIgnoreFile(gitignorePath)
+	if gitignoreContent, err := filesystem.ReadFile(gitignorePath); err == nil {
+		// Parse gitignore content directly (works with in-memory filesystems)
+		gitignoreMatcher = ignore.CompileIgnoreLines(strings.Split(string(gitignoreContent), "\n")...)
 	}
 
-	// Find all relevant files in workspace
-	walkErr := filepath.Walk(workspaceRoot, func(path string, info os.FileInfo, err error) error {
+	// Find all relevant files in workspace using fs.WalkDir
+	walkErr := fs.WalkDir(filesystem, workspaceRoot, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return nil // Skip errors and continue
 		}
@@ -322,15 +321,15 @@ func findReferencesInWorkspace(workspaceRoot string, elementName string, openDoc
 		}
 
 		// Skip directories that should be ignored
-		if info.IsDir() {
+		if d.IsDir() {
 			// Always skip .git directory
-			if filepath.Base(path) == ".git" {
-				return filepath.SkipDir
+			if d.Name() == ".git" {
+				return fs.SkipDir
 			}
 
 			// Check gitignore for directories
 			if gitignoreMatcher != nil && gitignoreMatcher.MatchesPath(relPath+"/") {
-				return filepath.SkipDir
+				return fs.SkipDir
 			}
 
 			return nil
@@ -347,14 +346,25 @@ func findReferencesInWorkspace(workspaceRoot string, elementName string, openDoc
 			return nil
 		}
 
+		// Create file URI - ensure path is absolute
+		absPath := path
+		if !filepath.IsAbs(path) {
+			// Relative path - join with workspace root to make absolute
+			absPath = filepath.Join(workspaceRoot, path)
+			// If still relative after joining (e.g., workspace root is "."), prepend / for URI
+			if !filepath.IsAbs(absPath) {
+				absPath = "/" + absPath
+			}
+		}
+		fileURI := "file://" + filepath.ToSlash(absPath)
+
 		// Skip if this file is already open (already searched)
-		fileURI := fmt.Sprintf("file://%s", filepath.ToSlash(path))
 		if openFiles[fileURI] {
 			return nil
 		}
 
 		// Search for references in this file
-		fileLocations := findReferencesInFile(path, fileURI, elementName)
+		fileLocations := findReferencesInFileWithFS(path, fileURI, elementName, filesystem)
 		locations = append(locations, fileLocations...)
 
 		return nil
@@ -368,13 +378,12 @@ func findReferencesInWorkspace(workspaceRoot string, elementName string, openDoc
 	return locations
 }
 
-// findReferencesInFile searches for references in a single file on disk using tree-sitter
-func findReferencesInFile(filePath string, fileURI string, elementName string) []protocol.Location {
+// findReferencesInFileWithFS searches for references using a provided filesystem
+func findReferencesInFileWithFS(filePath string, fileURI string, elementName string, filesystem platform.FileSystem) []protocol.Location {
 	var locations []protocol.Location
 
 	// Read file content
-	fs := platform.NewOSFileSystem()
-	content, err := fs.ReadFile(filePath)
+	content, err := filesystem.ReadFile(filePath)
 	if err != nil {
 		helpers.SafeDebugLog("[REFERENCES] Failed to read file %s: %v", filePath, err)
 		return locations

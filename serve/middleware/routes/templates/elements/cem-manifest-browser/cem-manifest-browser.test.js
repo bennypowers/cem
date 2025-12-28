@@ -5,10 +5,25 @@ import { CemVirtualTree } from '/__cem/elements/cem-virtual-tree/cem-virtual-tre
 
 describe('cem-manifest-browser', () => {
   let el;
+  let fetchStub;
 
   beforeEach(async () => {
     // Clear static cache before each test
     CemVirtualTree.clearCache();
+
+    // Store original fetch BEFORE creating element
+    const originalFetch = window.fetch.bind(window);
+
+    // Stub fetch BEFORE creating element (so child components get mocked fetch)
+    fetchStub = sinon.stub(window, 'fetch').callsFake((url, ...args) => {
+      if (url === '/custom-elements.json') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ modules: [] })
+        });
+      }
+      return originalFetch(url, ...args);
+    });
 
     el = document.createElement('cem-manifest-browser');
     document.body.appendChild(el);
@@ -20,6 +35,9 @@ describe('cem-manifest-browser', () => {
   afterEach(() => {
     if (el && el.parentNode) {
       el.parentNode.removeChild(el);
+    }
+    if (fetchStub) {
+      fetchStub.restore();
     }
   });
 
@@ -88,7 +106,7 @@ describe('cem-manifest-browser', () => {
   });
 
   describe('virtual tree integration', () => {
-    let virtualTree, detailPanel, drawer, fetchStub;
+    let virtualTree, detailPanel, drawer;
 
     const testManifest = {
       modules: [{
@@ -103,10 +121,12 @@ describe('cem-manifest-browser', () => {
     };
 
     beforeEach(async () => {
-      // Store original fetch before stubbing
-      const originalFetch = window.fetch.bind(window);
+      // Clear the cache so virtual tree will reload manifest
+      CemVirtualTree.clearCache();
 
-      // Mock fetch to return test manifest, but call through for other URLs
+      // Replace the existing stub with one that returns testManifest
+      fetchStub.restore();
+      const originalFetch = window.fetch.bind(window);
       fetchStub = sinon.stub(window, 'fetch').callsFake((url, ...args) => {
         if (url === '/custom-elements.json') {
           return Promise.resolve({
@@ -121,12 +141,8 @@ describe('cem-manifest-browser', () => {
       detailPanel = el.shadowRoot.getElementById('detail-panel');
       drawer = el.shadowRoot.getElementById('drawer');
 
-      // Wait for virtual tree to load the manifest
+      // Trigger manifest reload
       await virtualTree.rendered;
-    });
-
-    afterEach(() => {
-      fetchStub.restore();
     });
 
     it('listens for item-select events from virtual tree', async () => {

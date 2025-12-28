@@ -31,7 +31,7 @@ import (
 
 func TestSlotAttributeCompletions(t *testing.T) {
 	// Load test manifest with slot definitions
-	fixtureDir := filepath.Join("slot-completions-test")
+	fixtureDir := filepath.Join("testdata", "slot-completions-test")
 	manifestPath := filepath.Join(fixtureDir, "manifest.json")
 
 	manifestBytes, err := os.ReadFile(manifestPath)
@@ -140,7 +140,7 @@ func TestSlotAttributeCompletions(t *testing.T) {
 
 func TestSlotCompletionDetails(t *testing.T) {
 	// Load test manifest
-	fixtureDir := filepath.Join("slot-completions-test")
+	fixtureDir := filepath.Join("testdata", "slot-completions-test")
 	manifestPath := filepath.Join(fixtureDir, "manifest.json")
 
 	manifestBytes, err := os.ReadFile(manifestPath)
@@ -205,7 +205,7 @@ func getSlotCompletionLabels(completions []protocol.CompletionItem) []string {
 // For comprehensive regression testing, see TestSlotAttributeNameSuggestionRegression
 func TestSlotAttributeNameSuggestion(t *testing.T) {
 	// Load test manifest with slot definitions
-	fixtureDir := filepath.Join("slot-completions-test")
+	fixtureDir := filepath.Join("testdata", "slot-completions-test")
 	manifestPath := filepath.Join(fixtureDir, "manifest.json")
 
 	manifestBytes, err := os.ReadFile(manifestPath)
