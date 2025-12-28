@@ -44,6 +44,18 @@ type PackageJSON struct {
 	Version string
 }
 
+// PathResolver resolves source file paths using URL rewrites and path mappings
+type PathResolver interface {
+	// ResolveTsSource resolves TypeScript source files from JavaScript request paths
+	// Returns empty string if no TypeScript source is found
+	ResolveTsSource(requestPath string) string
+
+	// ResolveSourcePath resolves a source file path using path mappings
+	// Parameters: requestPath, sourceExt, requestExt
+	// Returns the resolved source path, or empty string if not found
+	ResolveSourcePath(requestPath string, sourceExt string, requestExt string) string
+}
+
 // DevServerContext provides middlewares access to dev server state and functionality
 type DevServerContext interface {
 	// WatchDir returns the directory being watched for changes
@@ -86,4 +98,7 @@ type DevServerContext interface {
 
 	// URLRewrites returns the configured URL rewrites for request path resolution
 	URLRewrites() []config.URLRewrite
+
+	// PathResolver returns the cached path resolver for efficient URL rewriting
+	PathResolver() PathResolver
 }

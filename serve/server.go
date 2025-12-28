@@ -83,6 +83,7 @@ type Server struct {
 	sourceControlRootURL string                   // Source control root URL for demo routing
 	templates            *routes.TemplateRegistry // Template registry for HTML rendering
 	urlRewrites          []config.URLRewrite      // URL rewrites for request path mapping
+	pathResolver         *transform.PathResolver  // Cached path resolver (initialized once)
 }
 
 // NewServer creates a new server with the given port
@@ -230,6 +231,13 @@ func (s *Server) URLRewrites() []config.URLRewrite {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.urlRewrites
+}
+
+// PathResolver returns the cached path resolver for efficient URL rewriting
+func (s *Server) PathResolver() middleware.PathResolver {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.pathResolver
 }
 
 // Start starts the HTTP server
@@ -462,6 +470,9 @@ func (s *Server) SetWatchDir(dir string) error {
 
 	s.urlRewrites = urlRewrites
 
+	// Initialize path resolver once (cached for all requests)
+	s.pathResolver = transform.NewPathResolver(s.watchDir, s.urlRewrites, s.fs, s.logger)
+
 	// Generate import map for single-package mode
 	// (Workspace mode generates in InitializeWorkspaceMode instead)
 	if !s.isWorkspace && s.config.ImportMap.Generate {
@@ -481,6 +492,9 @@ func (s *Server) SetWatchDir(dir string) error {
 	} else if !s.config.ImportMap.Generate {
 		s.logger.Debug("Import map generation disabled")
 	}
+
+	// Rebuild middleware pipeline with new pathResolver
+	s.setupMiddleware()
 
 	return nil
 }
@@ -1560,7 +1574,7 @@ func (s *Server) setupMiddleware() {
 			Include:          s.config.Transforms.CSS.Include,
 			Exclude:          s.config.Transforms.CSS.Exclude,
 			FS:               s.fs,
-			URLRewrites:      s.urlRewrites,
+			PathResolver:     s.pathResolver,
 		}),
 		transform.NewTypeScript(transform.TypeScriptConfig{ // TypeScript transform
 			WatchDirFunc:     s.WatchDir,
@@ -1572,7 +1586,7 @@ func (s *Server) setupMiddleware() {
 			Target:           string(s.config.Transforms.TypeScript.Target),
 			Enabled:          s.config.Transforms.TypeScript.Enabled,
 			FS:               s.fs,
-			URLRewrites:      s.urlRewrites,
+			PathResolver:     s.pathResolver,
 		}),
 		routes.New(routes.Config{ // Internal CEM routes (includes WebSocket, demos, listings)
 			Context:          s,

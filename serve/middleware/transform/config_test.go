@@ -72,6 +72,7 @@ func TestTypeScript_EnabledByConfig(t *testing.T) {
 		Target:           "ES2022",
 		ErrorBroadcaster: &mockErrorBroadcaster{},
 		FS:               mfs,
+		PathResolver:     NewPathResolver("/test", nil, mfs, nil),
 	})
 
 	// Create test handler
