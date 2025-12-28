@@ -36,6 +36,7 @@ var cursorPositions = map[string]protocol.Position{
 	"workspace-search":      {Line: 0, Character: 5},
 	"gitignore-filtering":   {Line: 0, Character: 5},
 	"no-element":            {Line: 0, Character: 5},
+	"missing-document":      {Line: 0, Character: 0},
 }
 
 func TestReferences_Fixtures(t *testing.T) {
@@ -65,14 +66,18 @@ func TestReferences_Fixtures(t *testing.T) {
 			// Use scenario-specific filename for HTML
 			if fixture.Name == "workspace-search" || fixture.Name == "gitignore-filtering" {
 				uri = "file:///index.html"
+			} else if fixture.Name == "missing-document" {
+				uri = "file:///missing.html"
 			} else {
 				uri = "file:///test1.html"
 			}
 		}
 
-		// Open the main document
-		doc := dm.OpenDocument(uri, fixture.InputContent, 1)
-		ctx.AddDocument(uri, doc)
+		// Open the main document (except for missing-document fixture)
+		if fixture.Name != "missing-document" {
+			doc := dm.OpenDocument(uri, fixture.InputContent, 1)
+			ctx.AddDocument(uri, doc)
+		}
 
 		// Create in-memory filesystem with workspace files
 		// Check if workspace directory exists first
@@ -133,14 +138,17 @@ func TestReferences_Fixtures(t *testing.T) {
 			for _, actual := range locations {
 				if actual.URI == expected.URI &&
 					actual.Range.Start.Line == expected.Range.Start.Line &&
-					actual.Range.Start.Character == expected.Range.Start.Character {
+					actual.Range.Start.Character == expected.Range.Start.Character &&
+					actual.Range.End.Line == expected.Range.End.Line &&
+					actual.Range.End.Character == expected.Range.End.Character {
 					found = true
 					break
 				}
 			}
 			if !found {
-				t.Errorf("Expected location not found: %s at %d:%d",
-					expected.URI, expected.Range.Start.Line, expected.Range.Start.Character)
+				t.Errorf("Expected location not found: %s at %d:%d-%d:%d",
+					expected.URI, expected.Range.Start.Line, expected.Range.Start.Character,
+					expected.Range.End.Line, expected.Range.End.Character)
 			}
 		}
 	})
