@@ -122,7 +122,6 @@ describe('cem-manifest-browser', () => {
 
     beforeEach(async () => {
       // Clear the cache so virtual tree will reload manifest
-      const { CemVirtualTree } = await import('/__cem/elements/cem-virtual-tree/cem-virtual-tree.js');
       CemVirtualTree.clearCache();
 
       // Replace the existing stub with one that returns testManifest
@@ -144,10 +143,6 @@ describe('cem-manifest-browser', () => {
 
       // Trigger manifest reload
       await virtualTree.rendered;
-    });
-
-    afterEach(() => {
-      // No need to restore here - the outer afterEach will handle it
     });
 
     it('listens for item-select events from virtual tree', async () => {
