@@ -64,11 +64,12 @@ func TestReferences_Fixtures(t *testing.T) {
 			uri = "file:///test.ts"
 		} else {
 			// Use scenario-specific filename for HTML
-			if fixture.Name == "workspace-search" || fixture.Name == "gitignore-filtering" {
+			switch fixture.Name {
+			case "workspace-search", "gitignore-filtering":
 				uri = "file:///index.html"
-			} else if fixture.Name == "missing-document" {
+			case "missing-document":
 				uri = "file:///missing.html"
-			} else {
+			default:
 				uri = "file:///test1.html"
 			}
 		}
