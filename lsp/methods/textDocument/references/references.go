@@ -495,11 +495,28 @@ func findTypeScriptReferencesInContent(content []byte, fileURI string, elementNa
 	defer matcher.Close()
 
 	// Find template literals, then search within them for HTML elements
+	// Track seen templates to avoid duplicates
+	seenTemplates := make(map[string]bool)
+
 	for match := range matcher.AllQueryMatches(tree.RootNode(), content) {
 		for _, capture := range match.Captures {
+			captureName := matcher.GetCaptureNameByIndex(capture.Index)
+
+			// Only process template literal captures (skip tag/function captures)
+			if !strings.HasSuffix(captureName, ".literal") && captureName != "innerHTML.template" {
+				continue
+			}
+
 			// Get template content
 			templateContent := content[capture.Node.StartByte():capture.Node.EndByte()]
 			templateOffset := capture.Node.StartByte()
+
+			// Skip if we've already processed this template (same offset)
+			templateKey := fileURI + ":" + string(rune(templateOffset))
+			if seenTemplates[templateKey] {
+				continue
+			}
+			seenTemplates[templateKey] = true
 
 			// Parse template content as HTML
 			htmlLocations := findHTMLReferencesInTemplate(templateContent, templateOffset, fileURI, elementName)
