@@ -496,7 +496,11 @@ func findTypeScriptReferencesInContent(content []byte, fileURI string, elementNa
 
 	// Find template literals, then search within them for HTML elements
 	// Track seen templates to avoid duplicates
-	seenTemplates := make(map[string]bool)
+	type templateKey struct {
+		uri    string
+		offset uint
+	}
+	seenTemplates := make(map[templateKey]bool)
 
 	for match := range matcher.AllQueryMatches(tree.RootNode(), content) {
 		for _, capture := range match.Captures {
@@ -512,11 +516,11 @@ func findTypeScriptReferencesInContent(content []byte, fileURI string, elementNa
 			templateOffset := capture.Node.StartByte()
 
 			// Skip if we've already processed this template (same offset)
-			templateKey := fileURI + ":" + string(rune(templateOffset))
-			if seenTemplates[templateKey] {
+			key := templateKey{uri: fileURI, offset: templateOffset}
+			if seenTemplates[key] {
 				continue
 			}
-			seenTemplates[templateKey] = true
+			seenTemplates[key] = true
 
 			// Parse template content as HTML
 			htmlLocations := findHTMLReferencesInTemplate(templateContent, templateOffset, fileURI, elementName)
