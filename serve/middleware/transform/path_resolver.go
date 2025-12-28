@@ -31,6 +31,13 @@ import (
 	"github.com/gosimple/slug"
 )
 
+// According to the WHATWG URLPattern specification, the URLPattern constructor requires
+// a valid absolute base URL to resolve relative patterns, even if only pattern matching
+// (and not actual URL resolution) is needed. We use the RFC-defined example domain
+// "https://example.com" as a standard placeholder, since it is guaranteed to be a valid,
+// non-resolvable URL. The actual value does not matter as long as it is a valid absolute URL.
+const urlPatternBaseURL = "https://example.com"
+
 // patternMapping represents a compiled URL pattern and Go template mapping
 type patternMapping struct {
 	pattern  *urlpattern.URLPattern // Compiled URL pattern
@@ -184,11 +191,8 @@ func (pr *PathResolver) fileExists(requestPath string) bool {
 // compilePatternMapping creates a patternMapping from pattern/template strings.
 // Both the pattern and template are compiled and validated.
 func compilePatternMapping(from, to string) (*patternMapping, error) {
-	// Use same base URL as demo discovery for URLPattern resolution
-	const baseURL = "https://example.com"
-
 	// Compile URLPattern
-	pattern, err := urlpattern.New(from, baseURL, nil)
+	pattern, err := urlpattern.New(from, urlPatternBaseURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("invalid URL pattern %q: %w", from, err)
 	}
@@ -218,7 +222,7 @@ func compilePatternMapping(from, to string) (*patternMapping, error) {
 // Returns the resolved path and true if successful, empty string and false otherwise.
 func (pr *PathResolver) resolvePatternMapping(requestPath string, pm *patternMapping) (string, bool) {
 	// Match pattern using URLPattern
-	testURL := "https://example.com" + requestPath
+	testURL := urlPatternBaseURL + requestPath
 	result := pm.pattern.Exec(testURL, "")
 	if result == nil {
 		return "", false // Pattern didn't match
