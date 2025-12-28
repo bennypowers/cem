@@ -1073,6 +1073,11 @@ func resolveViaRoutingTable(requestPath string, config Config) string {
 	if config.Context.IsWorkspace() && matchedEntry.PackagePath != "" {
 		// Workspace mode: use PackagePath directly
 		fullPath = filepath.Join(matchedEntry.PackagePath, relativePath)
+		// Security: Reject path traversal attempts
+		if rel, err := filepath.Rel(matchedEntry.PackagePath, fullPath); err != nil || strings.HasPrefix(rel, "..") {
+			config.Context.Logger().Debug("resolveViaRoutingTable: path traversal rejected for %s", requestPath)
+			return ""
+		}
 		config.Context.Logger().Debug("resolveViaRoutingTable (workspace): trying %s (package=%s, relative=%s)", fullPath, matchedEntry.PackagePath, relativePath)
 	} else {
 		// Single-package mode: extract package directory from FilePath
@@ -1085,6 +1090,12 @@ func resolveViaRoutingTable(requestPath string, config Config) string {
 			packageDir = filepath.Dir(matchedEntry.FilePath)
 		}
 		fullPath = filepath.Join(config.Context.WatchDir(), packageDir, relativePath)
+		// Security: Reject path traversal attempts
+		expectedBase := filepath.Join(config.Context.WatchDir(), packageDir)
+		if rel, err := filepath.Rel(expectedBase, fullPath); err != nil || strings.HasPrefix(rel, "..") {
+			config.Context.Logger().Debug("resolveViaRoutingTable: path traversal rejected for %s", requestPath)
+			return ""
+		}
 		config.Context.Logger().Debug("resolveViaRoutingTable (single-package): trying %s (watchDir=%s, packageDir=%s, relative=%s)",
 			fullPath, config.Context.WatchDir(), packageDir, relativePath)
 	}
