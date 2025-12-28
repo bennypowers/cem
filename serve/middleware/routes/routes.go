@@ -34,6 +34,7 @@ import (
 	"bennypowers.dev/cem/serve/logger"
 	"bennypowers.dev/cem/serve/middleware"
 	importmappkg "bennypowers.dev/cem/serve/middleware/importmap"
+	"bennypowers.dev/cem/serve/middleware/transform"
 )
 
 // notFoundDetector wraps http.ResponseWriter to detect and intercept 404 status codes
@@ -944,79 +945,43 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 
 // servePackageStaticAsset serves static assets (CSS, JS, images) from demo package directories.
 // Resolves URL paths like /elements/announcement/foo.css to the correct package directory (elements/rh-announcement/).
-// Works in both workspace and single-package mode by using the routing table's PackagePath.
+// Works in both workspace and single-package mode by using path mappings and routing table.
 func servePackageStaticAsset(w http.ResponseWriter, r *http.Request, config Config) bool {
-	// Get routing table
-	routesAny := config.Context.DemoRoutes()
-	if routesAny == nil {
-		return false
-	}
-
-	routes, ok := routesAny.(map[string]*DemoRouteEntry)
-	if !ok {
-		return false
-	}
-
 	requestPath := r.URL.Path
-
-	// Find the longest matching demo route prefix
-	// e.g., /elements/announcement/rh-announcement-lightdom.css should match /elements/announcement/demo/
-	var matchedEntry *DemoRouteEntry
-	var matchedPrefix string
-
-	for route, entry := range routes {
-		// Extract the package/element prefix from the demo route
-		// e.g., /elements/announcement/demo/ -> /elements/announcement/
-		if !strings.Contains(route, "/demo/") {
-			continue
-		}
-
-		prefix := route[:strings.Index(route, "/demo/")+1] // Include trailing slash: /elements/announcement/
-
-		// Check if request path starts with this prefix
-		if strings.HasPrefix(requestPath, prefix) && len(prefix) > len(matchedPrefix) {
-			matchedEntry = entry
-			matchedPrefix = prefix
-		}
-	}
-
-	if matchedEntry == nil {
-		config.Context.Logger().Debug("servePackageStaticAsset: no matching route for %s", requestPath)
-		return false
-	}
-
-	// Extract the relative path after the prefix
-	// e.g., /elements/announcement/rh-announcement-lightdom.css -> rh-announcement-lightdom.css
-	relativePath := strings.TrimPrefix(requestPath, matchedPrefix)
-	if relativePath == "" {
-		return false
-	}
-
-	// Build full path - different logic for workspace vs single-package mode
+	ext := filepath.Ext(requestPath)
 	var fullPath string
-	if config.Context.IsWorkspace() && matchedEntry.PackagePath != "" {
-		// Workspace mode: use PackagePath directly
-		fullPath = filepath.Join(matchedEntry.PackagePath, relativePath)
-		config.Context.Logger().Debug("servePackageStaticAsset (workspace): trying %s (package=%s, relative=%s)", fullPath, matchedEntry.PackagePath, relativePath)
-	} else {
-		// Single-package mode: extract package directory from FilePath
-		// e.g., FilePath="elements/rh-announcement/demo/index.html" -> packageDir="elements/rh-announcement"
-		packageDir := matchedEntry.FilePath
-		if idx := strings.Index(packageDir, "/demo/"); idx >= 0 {
-			packageDir = packageDir[:idx]
-		} else {
-			// Fallback: use directory of FilePath
-			packageDir = filepath.Dir(matchedEntry.FilePath)
+
+	// Strategy 1: Try PathResolver with URL rewrites
+	if len(config.Context.URLRewrites()) > 0 {
+		resolver := transform.NewPathResolver(
+			config.Context.WatchDir(),
+			config.Context.URLRewrites(),
+			config.Context.FileSystem(),
+			config.Context.Logger(),
+		)
+
+		// For static assets, source ext == request ext
+		resolvedPath := resolver.ResolveSourcePath(requestPath, ext, ext)
+		if resolvedPath != "" {
+			// Convert relative path to absolute path
+			fullPath = filepath.Join(config.Context.WatchDir(), strings.TrimPrefix(resolvedPath, "/"))
+			config.Context.Logger().Debug("servePackageStaticAsset: resolved via URL rewrites: %s -> %s", requestPath, fullPath)
 		}
-		fullPath = filepath.Join(config.Context.WatchDir(), packageDir, relativePath)
-		config.Context.Logger().Debug("servePackageStaticAsset (single-package): trying %s (watchDir=%s, packageDir=%s, relative=%s)",
-			fullPath, config.Context.WatchDir(), packageDir, relativePath)
+	}
+
+	// Strategy 2: Fall back to routing table resolution
+	if fullPath == "" {
+		fullPath = resolveViaRoutingTable(requestPath, config)
+	}
+
+	if fullPath == "" {
+		return false
 	}
 
 	// Try to read the file
 	content, err := config.Context.FileSystem().ReadFile(fullPath)
 	if err != nil {
-		// File doesn't exist in package directory
+		// File doesn't exist
 		config.Context.Logger().Debug("servePackageStaticAsset: file not found: %v", err)
 		return false
 	}
@@ -1024,7 +989,7 @@ func servePackageStaticAsset(w http.ResponseWriter, r *http.Request, config Conf
 	config.Context.Logger().Debug("servePackageStaticAsset: successfully serving %s (%d bytes)", fullPath, len(content))
 
 	// Set correct MIME type based on file extension
-	ext := filepath.Ext(fullPath)
+	ext = filepath.Ext(fullPath)
 	switch ext {
 	case ".js", ".mjs", ".cjs":
 		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
@@ -1054,4 +1019,86 @@ func servePackageStaticAsset(w http.ResponseWriter, r *http.Request, config Conf
 	}
 
 	return true
+}
+
+// resolveViaRoutingTable resolves static assets using the demo routing table.
+// Returns the full file path or empty string if not found.
+func resolveViaRoutingTable(requestPath string, config Config) string {
+	// Get routing table
+	routesAny := config.Context.DemoRoutes()
+	if routesAny == nil {
+		return ""
+	}
+
+	routes, ok := routesAny.(map[string]*DemoRouteEntry)
+	if !ok {
+		return ""
+	}
+
+	// Find the longest matching demo route prefix
+	// e.g., /elements/announcement/rh-announcement-lightdom.css should match /elements/announcement/demo/
+	var matchedEntry *DemoRouteEntry
+	var matchedPrefix string
+
+	for route, entry := range routes {
+		// Extract the package/element prefix from the demo route
+		// e.g., /elements/announcement/demo/ -> /elements/announcement/
+		if !strings.Contains(route, "/demo/") {
+			continue
+		}
+
+		prefix := route[:strings.Index(route, "/demo/")+1] // Include trailing slash: /elements/announcement/
+
+		// Check if request path starts with this prefix
+		if strings.HasPrefix(requestPath, prefix) && len(prefix) > len(matchedPrefix) {
+			matchedEntry = entry
+			matchedPrefix = prefix
+		}
+	}
+
+	if matchedEntry == nil {
+		config.Context.Logger().Debug("resolveViaRoutingTable: no matching route for %s", requestPath)
+		return ""
+	}
+
+	// Extract the relative path after the prefix
+	// e.g., /elements/announcement/rh-announcement-lightdom.css -> rh-announcement-lightdom.css
+	relativePath := strings.TrimPrefix(requestPath, matchedPrefix)
+	if relativePath == "" {
+		return ""
+	}
+
+	// Build full path - different logic for workspace vs single-package mode
+	var fullPath string
+	if config.Context.IsWorkspace() && matchedEntry.PackagePath != "" {
+		// Workspace mode: use PackagePath directly
+		fullPath = filepath.Join(matchedEntry.PackagePath, relativePath)
+		// Security: Reject path traversal attempts
+		if rel, err := filepath.Rel(matchedEntry.PackagePath, fullPath); err != nil || strings.HasPrefix(rel, "..") {
+			config.Context.Logger().Debug("resolveViaRoutingTable: path traversal rejected for %s", requestPath)
+			return ""
+		}
+		config.Context.Logger().Debug("resolveViaRoutingTable (workspace): trying %s (package=%s, relative=%s)", fullPath, matchedEntry.PackagePath, relativePath)
+	} else {
+		// Single-package mode: extract package directory from FilePath
+		// e.g., FilePath="elements/rh-announcement/demo/index.html" -> packageDir="elements/rh-announcement"
+		packageDir := matchedEntry.FilePath
+		if idx := strings.Index(packageDir, "/demo/"); idx >= 0 {
+			packageDir = packageDir[:idx]
+		} else {
+			// Fallback: use directory of FilePath
+			packageDir = filepath.Dir(matchedEntry.FilePath)
+		}
+		fullPath = filepath.Join(config.Context.WatchDir(), packageDir, relativePath)
+		// Security: Reject path traversal attempts
+		expectedBase := filepath.Join(config.Context.WatchDir(), packageDir)
+		if rel, err := filepath.Rel(expectedBase, fullPath); err != nil || strings.HasPrefix(rel, "..") {
+			config.Context.Logger().Debug("resolveViaRoutingTable: path traversal rejected for %s", requestPath)
+			return ""
+		}
+		config.Context.Logger().Debug("resolveViaRoutingTable (single-package): trying %s (watchDir=%s, packageDir=%s, relative=%s)",
+			fullPath, config.Context.WatchDir(), packageDir, relativePath)
+	}
+
+	return fullPath
 }

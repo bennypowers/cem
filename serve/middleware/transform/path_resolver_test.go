@@ -20,6 +20,7 @@ package transform_test
 import (
 	"testing"
 
+	"bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/serve/middleware/transform"
 )
@@ -44,9 +45,9 @@ func TestPathResolver_CoLocated(t *testing.T) {
 func TestPathResolver_ExplicitSrcDistMapping(t *testing.T) {
 	fs := testutil.NewFixtureFS(t, "path-mappings/src-dist", "/test")
 
-	// Explicit mapping (from tsconfig.json parsing)
-	resolver := transform.NewPathResolver("/test", map[string]string{
-		"/dist/": "/src/",
+	// Explicit pattern mapping
+	resolver := transform.NewPathResolver("/test", []config.URLRewrite{
+		{URLPattern: "/dist/:path*", URLTemplate: "/src/{{.path}}"},
 	}, fs, nil)
 
 	// Test explicit mapping: /dist/ -> /src/
@@ -62,9 +63,9 @@ func TestPathResolver_ExplicitSrcDistMapping(t *testing.T) {
 func TestPathResolver_WorkspaceMode(t *testing.T) {
 	fs := testutil.NewFixtureFS(t, "path-mappings/workspace-mode", "/test")
 
-	// Explicit mapping handles workspace paths
-	resolver := transform.NewPathResolver("/test", map[string]string{
-		"/packages/webawesome/dist/": "/packages/webawesome/src/",
+	// Explicit pattern mapping handles workspace paths
+	resolver := transform.NewPathResolver("/test", []config.URLRewrite{
+		{URLPattern: "/packages/webawesome/dist/:path*", URLTemplate: "/packages/webawesome/src/{{.path}}"},
 	}, fs, nil)
 
 	// Test workspace mode with package prefix
@@ -82,8 +83,8 @@ func TestPathResolver_WorkspaceMode(t *testing.T) {
 func TestPathResolver_ExplicitMappings(t *testing.T) {
 	fs := testutil.NewFixtureFS(t, "path-mappings/explicit-mappings", "/test")
 
-	resolver := transform.NewPathResolver("/test", map[string]string{
-		"/lib/": "/sources/",
+	resolver := transform.NewPathResolver("/test", []config.URLRewrite{
+		{URLPattern: "/lib/:path*", URLTemplate: "/sources/{{.path}}"},
 	}, fs, nil)
 
 	// Test explicit mapping: /lib/ -> /sources/
@@ -99,10 +100,10 @@ func TestPathResolver_ExplicitMappings(t *testing.T) {
 func TestPathResolver_MultipleOutputDirs(t *testing.T) {
 	fs := testutil.NewFixtureFS(t, "path-mappings/src-dist", "/test")
 
-	// Explicit mappings for both output directories
-	resolver := transform.NewPathResolver("/test", map[string]string{
-		"/dist/":     "/src/",
-		"/dist-cdn/": "/src/",
+	// Explicit pattern mappings for both output directories
+	resolver := transform.NewPathResolver("/test", []config.URLRewrite{
+		{URLPattern: "/dist/:path*", URLTemplate: "/src/{{.path}}"},
+		{URLPattern: "/dist-cdn/:path*", URLTemplate: "/src/{{.path}}"},
 	}, fs, nil)
 
 	// Test both /dist/ and /dist-cdn/ resolve to /src/
@@ -222,8 +223,8 @@ func TestPathResolver_ExplicitMappingPriorityOverFallback(t *testing.T) {
 	// Also add a file that would match fallback pattern
 	fs.AddFile("/test/src/helpers/formatter.ts", "// fallback version", 0644)
 
-	resolver := transform.NewPathResolver("/test", map[string]string{
-		"/lib/": "/sources/",
+	resolver := transform.NewPathResolver("/test", []config.URLRewrite{
+		{URLPattern: "/lib/:path*", URLTemplate: "/sources/{{.path}}"},
 	}, fs, nil)
 
 	// Request /lib/helpers/formatter.js
@@ -247,11 +248,10 @@ func TestPathResolver_DefaultRootDirMapping(t *testing.T) {
 	// Add a dist output file to make the request realistic
 	fs.AddFile("/test/dist/button.js", "// compiled output", 0644)
 
-	// Create resolver with mapping that would be generated from tsconfig with rootDir="." and outDir="dist"
-	// This produces the edge case mapping: "/dist/" -> "/./"
-	// filepath.Join() in PathResolver normalizes "/./" + "button.js" to "button.js"
-	resolver := transform.NewPathResolver("/test", map[string]string{
-		"/dist/": "/./",
+	// Create resolver with pattern mapping for rootDir="." and outDir="dist"
+	// Edge case: root directory mapping
+	resolver := transform.NewPathResolver("/test", []config.URLRewrite{
+		{URLPattern: "/dist/:path*", URLTemplate: "/{{.path}}"},
 	}, fs, nil)
 
 	// Request /dist/button.js
@@ -262,5 +262,37 @@ func TestPathResolver_DefaultRootDirMapping(t *testing.T) {
 
 	if result != expected {
 		t.Errorf("Expected %s, got %s", expected, result)
+	}
+}
+
+// TestPathResolver_ExtensionlessFiles tests that extensionless files work with pattern matching
+// This covers the case in servePackageStaticAsset() where ext is empty string
+func TestPathResolver_ExtensionlessFiles(t *testing.T) {
+	fs := testutil.NewFixtureFS(t, "path-mappings/explicit-mappings", "/test")
+
+	// Create extensionless files like README, LICENSE, Makefile
+	fs.AddFile("/test/docs/README", "# Readme", 0644)
+	fs.AddFile("/test/docs/LICENSE", "MIT License", 0644)
+
+	// Pattern that maps /public/:rest* to /docs/{{.rest}}
+	resolver := transform.NewPathResolver("/test", []config.URLRewrite{
+		{URLPattern: "/public/:rest*", URLTemplate: "/docs/{{.rest}}"},
+	}, fs, nil)
+
+	// Test extensionless file with pattern matching
+	// ResolveSourcePath(requestPath, sourceExt, requestExt) where both exts are empty
+	result := resolver.ResolveSourcePath("/public/README", "", "")
+	expected := "/docs/README"
+
+	if result != expected {
+		t.Errorf("Expected extensionless file %s, got %s", expected, result)
+	}
+
+	// Test nested extensionless file
+	result = resolver.ResolveSourcePath("/public/LICENSE", "", "")
+	expected = "/docs/LICENSE"
+
+	if result != expected {
+		t.Errorf("Expected extensionless file %s, got %s", expected, result)
 	}
 }

@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/middleware"
 	"bennypowers.dev/cem/serve/middleware/types"
@@ -39,7 +40,7 @@ type CSSConfig struct {
 	Include          []string               // Glob patterns to include (empty means all .css files)
 	Exclude          []string               // Glob patterns to exclude
 	FS               platform.FileSystem    // Filesystem abstraction for testability
-	PathMappings     map[string]string      // Path mappings for src/dist separation
+	URLRewrites      []config.URLRewrite    // URL rewrites for request path resolution
 }
 
 // shouldTransformCSS checks if a CSS file should be transformed based on include/exclude patterns
@@ -112,8 +113,8 @@ func shouldTransformCSS(cssPath string, include []string, exclude []string, logg
 
 // resolveCssPath resolves the actual file path for a CSS file request
 // Uses the shared PathResolver with CSS-specific extension handling (.css -> .css)
-func resolveCssPath(requestPath string, watchDir string, pathMappings map[string]string, fs platform.FileSystem, logger types.Logger) string {
-	resolver := NewPathResolver(watchDir, pathMappings, fs, logger)
+func resolveCssPath(requestPath string, watchDir string, urlRewrites []config.URLRewrite, fs platform.FileSystem, logger types.Logger) string {
+	resolver := NewPathResolver(watchDir, urlRewrites, fs, logger)
 	// CSS files don't transform extensions (.css -> .css)
 	return resolver.ResolveSourcePath(requestPath, ".css", ".css")
 }
@@ -176,9 +177,9 @@ func NewCSS(config CSSConfig) middleware.Middleware {
 			// Check if file exists at requested path
 			_, err := fs.Stat(fullCssPath)
 
-			// If file doesn't exist, try path mappings
+			// If file doesn't exist, try URL rewrites
 			if err != nil {
-				resolvedPath := resolveCssPath(requestPath, watchDir, config.PathMappings, fs, config.Logger)
+				resolvedPath := resolveCssPath(requestPath, watchDir, config.URLRewrites, fs, config.Logger)
 				if resolvedPath == "" {
 					// Not found, pass to next handler
 					next.ServeHTTP(w, r)

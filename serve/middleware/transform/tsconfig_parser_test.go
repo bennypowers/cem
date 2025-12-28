@@ -21,6 +21,7 @@ import (
 	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/serve/middleware/transform"
 )
@@ -34,20 +35,25 @@ func TestParseTsConfig_SrcDist(t *testing.T) {
 		t.Fatalf("ParseTsConfig failed: %v", err)
 	}
 
-	// Should create mapping: /dist/ -> /src/
-	expected := map[string]string{
-		"/dist/": "/src/",
+	// Should create mapping: /dist/:path* -> /src/{{.path}}
+	expected := []config.URLRewrite{
+		{URLPattern: "/dist/:path*", URLTemplate: "/src/{{.path}}"},
 	}
 
 	if len(mappings) != len(expected) {
 		t.Errorf("Expected %d mappings, got %d", len(expected), len(mappings))
 	}
 
-	for key, expectedVal := range expected {
-		if actualVal, ok := mappings[key]; !ok {
-			t.Errorf("Missing mapping for %s", key)
-		} else if actualVal != expectedVal {
-			t.Errorf("For key %s: expected %s, got %s", key, expectedVal, actualVal)
+	for i, exp := range expected {
+		if i >= len(mappings) {
+			t.Errorf("Missing mapping for %s", exp.URLPattern)
+			continue
+		}
+		if mappings[i].URLPattern != exp.URLPattern {
+			t.Errorf("Expected URLPattern %s, got %s", exp.URLPattern, mappings[i].URLPattern)
+		}
+		if mappings[i].URLTemplate != exp.URLTemplate {
+			t.Errorf("Expected URLTemplate %s, got %s", exp.URLTemplate, mappings[i].URLTemplate)
 		}
 	}
 }
@@ -63,20 +69,25 @@ func TestParseTsConfig_Extends(t *testing.T) {
 
 	// Base config has rootDir: "./source"
 	// Extending config has outDir: "./build"
-	// Should create mapping: /build/ -> /source/
-	expected := map[string]string{
-		"/build/": "/source/",
+	// Should create mapping: /build/:path* -> /source/{{.path}}
+	expected := []config.URLRewrite{
+		{URLPattern: "/build/:path*", URLTemplate: "/source/{{.path}}"},
 	}
 
 	if len(mappings) != len(expected) {
 		t.Errorf("Expected %d mappings, got %d", len(expected), len(mappings))
 	}
 
-	for key, expectedVal := range expected {
-		if actualVal, ok := mappings[key]; !ok {
-			t.Errorf("Missing mapping for %s", key)
-		} else if actualVal != expectedVal {
-			t.Errorf("For key %s: expected %s, got %s", key, expectedVal, actualVal)
+	for i, exp := range expected {
+		if i >= len(mappings) {
+			t.Errorf("Missing mapping for %s", exp.URLPattern)
+			continue
+		}
+		if mappings[i].URLPattern != exp.URLPattern {
+			t.Errorf("Expected URLPattern %s, got %s", exp.URLPattern, mappings[i].URLPattern)
+		}
+		if mappings[i].URLTemplate != exp.URLTemplate {
+			t.Errorf("Expected URLTemplate %s, got %s", exp.URLTemplate, mappings[i].URLTemplate)
 		}
 	}
 }
@@ -117,16 +128,21 @@ func TestParseTsConfig_RelativePaths(t *testing.T) {
 		t.Fatalf("ParseTsConfig failed: %v", err)
 	}
 
-	// Paths should be normalized to /dist/ and /src/
-	expected := map[string]string{
-		"/dist/": "/src/",
+	// Paths should be normalized to /dist/:path* and /src/{{.path}}
+	expected := []config.URLRewrite{
+		{URLPattern: "/dist/:path*", URLTemplate: "/src/{{.path}}"},
 	}
 
-	for key, expectedVal := range expected {
-		if actualVal, ok := mappings[key]; !ok {
-			t.Errorf("Missing mapping for %s", key)
-		} else if actualVal != expectedVal {
-			t.Errorf("For key %s: expected %s, got %s", key, expectedVal, actualVal)
+	for i, exp := range expected {
+		if i >= len(mappings) {
+			t.Errorf("Missing mapping for %s", exp.URLPattern)
+			continue
+		}
+		if mappings[i].URLPattern != exp.URLPattern {
+			t.Errorf("Expected URLPattern %s, got %s", exp.URLPattern, mappings[i].URLPattern)
+		}
+		if mappings[i].URLTemplate != exp.URLTemplate {
+			t.Errorf("Expected URLTemplate %s, got %s", exp.URLTemplate, mappings[i].URLTemplate)
 		}
 	}
 }
@@ -214,15 +230,20 @@ func TestParseTsConfig_ExtendsPathResolution(t *testing.T) {
 	}
 
 	// Should inherit rootDir and outDir from base
-	expected := map[string]string{
-		"/dist/": "/src/",
+	expected := []config.URLRewrite{
+		{URLPattern: "/dist/:path*", URLTemplate: "/src/{{.path}}"},
 	}
 
-	for key, expectedVal := range expected {
-		if actualVal, ok := mappings[key]; !ok {
-			t.Errorf("Missing mapping for %s", key)
-		} else if actualVal != expectedVal {
-			t.Errorf("For key %s: expected %s, got %s", key, expectedVal, actualVal)
+	for i, exp := range expected {
+		if i >= len(mappings) {
+			t.Errorf("Missing mapping for %s", exp.URLPattern)
+			continue
+		}
+		if mappings[i].URLPattern != exp.URLPattern {
+			t.Errorf("Expected URLPattern %s, got %s", exp.URLPattern, mappings[i].URLPattern)
+		}
+		if mappings[i].URLTemplate != exp.URLTemplate {
+			t.Errorf("Expected URLTemplate %s, got %s", exp.URLTemplate, mappings[i].URLTemplate)
 		}
 	}
 }
@@ -253,15 +274,20 @@ func TestParseTsConfig_OverrideInheritedValues(t *testing.T) {
 	}
 
 	// Should use overridden outDir with inherited rootDir
-	expected := map[string]string{
-		"/build/": "/source/",
+	expected := []config.URLRewrite{
+		{URLPattern: "/build/:path*", URLTemplate: "/source/{{.path}}"},
 	}
 
-	for key, expectedVal := range expected {
-		if actualVal, ok := mappings[key]; !ok {
-			t.Errorf("Missing mapping for %s", key)
-		} else if actualVal != expectedVal {
-			t.Errorf("For key %s: expected %s, got %s", key, expectedVal, actualVal)
+	for i, exp := range expected {
+		if i >= len(mappings) {
+			t.Errorf("Missing mapping for %s", exp.URLPattern)
+			continue
+		}
+		if mappings[i].URLPattern != exp.URLPattern {
+			t.Errorf("Expected URLPattern %s, got %s", exp.URLPattern, mappings[i].URLPattern)
+		}
+		if mappings[i].URLTemplate != exp.URLTemplate {
+			t.Errorf("Expected URLTemplate %s, got %s", exp.URLTemplate, mappings[i].URLTemplate)
 		}
 	}
 }
@@ -283,21 +309,26 @@ func TestParseTsConfig_DefaultRootDirWithCustomOutDir(t *testing.T) {
 		t.Fatalf("ParseTsConfig failed: %v", err)
 	}
 
-	// Should create mapping from /dist/ to /./
+	// Should create mapping from /dist/:path* to /./{{.path}}
 	// PathResolver.fileExists() normalizes this correctly via filepath.Clean()
-	expected := map[string]string{
-		"/dist/": "/./",
+	expected := []config.URLRewrite{
+		{URLPattern: "/dist/:path*", URLTemplate: "/./{{.path}}"},
 	}
 
 	if len(mappings) != len(expected) {
 		t.Errorf("Expected %d mappings, got %d", len(expected), len(mappings))
 	}
 
-	for key, expectedVal := range expected {
-		if actualVal, ok := mappings[key]; !ok {
-			t.Errorf("Missing mapping for %s", key)
-		} else if actualVal != expectedVal {
-			t.Errorf("For key %s: expected %s, got %s", key, expectedVal, actualVal)
+	for i, exp := range expected {
+		if i >= len(mappings) {
+			t.Errorf("Missing mapping for %s", exp.URLPattern)
+			continue
+		}
+		if mappings[i].URLPattern != exp.URLPattern {
+			t.Errorf("Expected URLPattern %s, got %s", exp.URLPattern, mappings[i].URLPattern)
+		}
+		if mappings[i].URLTemplate != exp.URLTemplate {
+			t.Errorf("Expected URLTemplate %s, got %s", exp.URLTemplate, mappings[i].URLTemplate)
 		}
 	}
 }

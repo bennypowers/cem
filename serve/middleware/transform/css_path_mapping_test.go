@@ -23,6 +23,7 @@ import (
 	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/serve/middleware/transform"
 )
@@ -45,8 +46,8 @@ func TestCSSMiddleware_SrcDistPattern(t *testing.T) {
 		Logger:       nil,
 		Enabled:      false, // Disabled, but import attributes should still work
 		FS:           fs,
-		PathMappings: map[string]string{
-			"/dist/": "/src/",
+		URLRewrites: []config.URLRewrite{
+			{URLPattern: "/dist/:path*", URLTemplate: "/src/{{.path}}"},
 		},
 	})
 
@@ -99,8 +100,8 @@ func TestCSSMiddleware_WorkspaceMode(t *testing.T) {
 		Logger:       nil,
 		Enabled:      false,
 		FS:           fs,
-		PathMappings: map[string]string{
-			"/packages/webawesome/dist/": "/packages/webawesome/src/",
+		URLRewrites: []config.URLRewrite{
+			{URLPattern: "/packages/webawesome/dist/:path*", URLTemplate: "/packages/webawesome/src/{{.path}}"},
 		},
 	})
 
@@ -146,8 +147,8 @@ func TestCSSMiddleware_ExplicitPathMappings(t *testing.T) {
 		Logger:       nil,
 		Enabled:      false,
 		FS:           fs,
-		PathMappings: map[string]string{
-			"/lib/": "/sources/",
+		URLRewrites: []config.URLRewrite{
+			{URLPattern: "/lib/:path*", URLTemplate: "/sources/{{.path}}"},
 		},
 	})
 
@@ -186,7 +187,7 @@ func TestCSSMiddleware_CoLocated(t *testing.T) {
 		Logger:       nil,
 		Enabled:      false,
 		FS:           fs,
-		PathMappings: nil,
+		URLRewrites:  nil,
 	})
 
 	req := httptest.NewRequest("GET", "/components/button.css?__cem-import-attrs[type]=css", nil)
@@ -218,7 +219,7 @@ func TestCSSMiddleware_NotFound(t *testing.T) {
 		Logger:       nil,
 		Enabled:      false,
 		FS:           fs,
-		PathMappings: nil,
+		URLRewrites:  nil,
 	})
 
 	// Request non-existent file
@@ -250,7 +251,7 @@ func TestCSSMiddleware_WithoutImportAttributes(t *testing.T) {
 		Logger:       nil,
 		Enabled:      false, // Disabled and no import attributes
 		FS:           fs,
-		PathMappings: nil,
+		URLRewrites:  nil,
 	})
 
 	// Request without import attributes - should pass through
@@ -282,8 +283,8 @@ func TestCSSMiddleware_EnabledWithIncludePattern(t *testing.T) {
 		Enabled:      true,
 		Include:      []string{"**/*.css"},
 		FS:           fs,
-		PathMappings: map[string]string{
-			"/dist/": "/src/",
+		URLRewrites: []config.URLRewrite{
+			{URLPattern: "/dist/:path*", URLTemplate: "/src/{{.path}}"},
 		},
 	})
 

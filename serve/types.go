@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"time"
 
+	"bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/logger"
 	"bennypowers.dev/cem/serve/middleware/transform"
@@ -63,7 +64,7 @@ type Config struct {
 	WatchIgnore          []string              // Glob patterns to ignore in file watcher (e.g., ["_site/**", "dist/**"])
 	SourceControlRootURL string                // Source control root URL for demo routing (e.g., "https://github.com/user/repo/tree/main/")
 	FS                   platform.FileSystem   // Optional filesystem for testing (defaults to os package)
-	PathMappings         map[string]string     // Path mappings for src/dist separation (e.g., {"/dist/": "./src/"})
+	URLRewrites          []config.URLRewrite   // URL rewrites for request path mapping (e.g., "/dist/:path*" -> "/src/{{.path}}")
 }
 
 // ReloadMessage represents a WebSocket reload event

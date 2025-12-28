@@ -25,6 +25,7 @@ import (
 	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/logger"
 	"bennypowers.dev/cem/serve/middleware"
@@ -47,6 +48,7 @@ func (m *mockContext) FileSystem() platform.FileSystem                   { retur
 func (m *mockContext) PackageJSON() (*middleware.PackageJSON, error)     { return nil, nil }
 func (m *mockContext) BroadcastError(title, message, file string) error  { return nil }
 func (m *mockContext) DemoRenderingMode() string                         { return "light" }
+func (m *mockContext) URLRewrites() []config.URLRewrite                  { return nil }
 
 func TestServeMarkdownAPI_ValidPaths(t *testing.T) {
 	// Create test manifest with markdown content

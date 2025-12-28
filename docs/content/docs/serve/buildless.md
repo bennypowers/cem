@@ -84,20 +84,57 @@ If the dev server can't find a source file via path mappings, it tries co-locate
 
 **Manual configuration:**
 
-If you need custom path mappings beyond what `tsconfig.json` provides, configure them explicitly:
+If you need custom URL rewrites beyond what `tsconfig.json` provides, configure them using URLPattern syntax and Go templates:
 
 ```yaml
 serve:
-  pathMappings:
-    "/lib/": "/sources/"
-    "/build/": "/typescript/"
+  urlRewrites:
+    # Simple prefix mapping
+    - urlPattern: "/dist/:path*"
+      urlTemplate: "/src/{{.path}}"
+
+    # Custom library paths
+    - urlPattern: "/lib/:path*"
+      urlTemplate: "/sources/{{.path}}"
+
+    # Pattern with template function
+    - urlPattern: "/api/:version/:endpoint*"
+      urlTemplate: "/{{.version | lower}}/api/{{.endpoint}}"
 ```
 
-See **[Configuration](/docs/configuration/)** for details.
+**Pattern syntax:**
 
-{{<tip "warning">}}
-Path mappings only apply to TypeScript transformation. They don't affect static file serving or import map generation.
-{{</tip>}}
+URL patterns use [URLPattern](https://developer.mozilla.org/en-US/docs/Web/API/URL_Pattern_API) syntax:
+- `:param` - Matches a single path segment and captures it as a named parameter
+- `**` - Matches any number of path segments (wildcard)
+- `*` - Matches characters within a single segment
+
+URL templates use Go template syntax:
+- `{{.param}}` - Inserts a captured parameter
+- `{{.param | lower}}` - Applies the `lower` function (converts to lowercase)
+- `{{.param | upper}}` - Applies the `upper` function (converts to uppercase)
+- `{{.param | slug}}` - Applies the `slug` function (URL-safe slug)
+
+**Example:** Element name transformation for demos
+
+If your project serves demos at URLs that don't match the on-disk structure:
+- **On disk**: `elements/rh-alert/demo/toast.html`
+- **Served URL**: `/elements/alert/demo/toast/`
+- **CSS reference in demo**: `<link rel="stylesheet" href="../rh-alert-toast-styles.css">`
+- **Browser resolves to**: `/elements/alert/rh-alert-toast-styles.css` ❌
+
+Configure URL rewrites to fix the mismatch:
+
+```yaml
+serve:
+  urlRewrites:
+    - urlPattern: "/elements/:slug/:rest*"
+      urlTemplate: "/elements/rh-{{.slug}}/{{.rest}}"
+```
+
+This resolves `/elements/alert/rh-alert-toast-styles.css` → `elements/rh-alert/rh-alert-toast-styles.css` ✓
+
+See **[Configuration](/docs/configuration/)** for details.
 
 ## Import CSS as Modules
 

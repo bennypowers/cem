@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/middleware"
 	"bennypowers.dev/cem/serve/middleware/types"
@@ -42,7 +43,7 @@ type TypeScriptConfig struct {
 	Target           string
 	Enabled          bool                // Enable/disable TypeScript transformation
 	FS               platform.FileSystem // Filesystem abstraction for testability
-	PathMappings     map[string]string   // Path mappings for src/dist separation
+	URLRewrites      []config.URLRewrite // URL rewrites for request path resolution
 }
 
 // NewTypeScript creates a middleware that transforms TypeScript files to JavaScript
@@ -77,7 +78,7 @@ func NewTypeScript(config TypeScriptConfig) middleware.Middleware {
 			switch ext {
 			case ".js":
 				// Use PathResolver to find TypeScript source
-				resolver := NewPathResolver(watchDir, config.PathMappings, fs, config.Logger)
+				resolver := NewPathResolver(watchDir, config.URLRewrites, fs, config.Logger)
 				tsPath = resolver.ResolveTsSource(requestPath)
 				if tsPath == "" {
 					// No TypeScript source found, pass to next handler
