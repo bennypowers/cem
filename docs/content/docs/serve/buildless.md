@@ -97,9 +97,9 @@ serve:
     - urlPattern: "/lib/:path*"
       urlTemplate: "/sources/{{.path}}"
 
-    # Advanced pattern with named parameters
-    - urlPattern: "/elements/:slug/**/:file.css"
-      urlTemplate: "/elements/rh-{{.slug}}/{{.file}}.css"
+    # Pattern with template function
+    - urlPattern: "/api/:version/:endpoint*"
+      urlTemplate: "/{{.version | lower}}/api/{{.endpoint}}"
 ```
 
 **Pattern syntax:**
@@ -128,8 +128,8 @@ Configure URL rewrites to fix the mismatch:
 ```yaml
 serve:
   urlRewrites:
-    - urlPattern: "/elements/:slug/**/*"
-      urlTemplate: "/elements/rh-{{.slug}}/**/*"
+    - urlPattern: "/elements/:slug/:rest*"
+      urlTemplate: "/elements/rh-{{.slug}}/{{.rest}}"
 ```
 
 This resolves `/elements/alert/rh-alert-toast-styles.css` → `elements/rh-alert/rh-alert-toast-styles.css` ✓

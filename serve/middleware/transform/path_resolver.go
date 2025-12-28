@@ -41,7 +41,7 @@ type patternMapping struct {
 
 // PathResolver resolves TypeScript source files from JavaScript request paths.
 // It handles both in-place compilation (co-located .ts/.js files) and
-// pattern-based path mappings (e.g., /elements/:slug/**/* -> /elements/rh-{{.slug}}/**/*).
+// pattern-based path mappings (e.g., /elements/:slug/:rest* -> /elements/rh-{{.slug}}/{{.rest}}).
 type PathResolver struct {
 	watchDir        string
 	patternMappings []patternMapping // All path mappings as URLPattern + template
