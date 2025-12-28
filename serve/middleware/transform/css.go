@@ -23,7 +23,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/middleware"
 	"bennypowers.dev/cem/serve/middleware/types"
@@ -32,15 +31,15 @@ import (
 
 // CSSConfig holds configuration for CSS transformation
 type CSSConfig struct {
-	WatchDirFunc     func() string // Function to get current watch directory
+	WatchDirFunc     func() string           // Function to get current watch directory
 	Logger           types.Logger
-	ErrorBroadcaster types.ErrorBroadcaster // Sends errors to browser error overlay
-	ConfigFile       string                 // Path to config file (for error reporting)
-	Enabled          bool                   // Enable/disable CSS transformation
-	Include          []string               // Glob patterns to include (empty means all .css files)
-	Exclude          []string               // Glob patterns to exclude
-	FS               platform.FileSystem    // Filesystem abstraction for testability
-	URLRewrites      []config.URLRewrite    // URL rewrites for request path resolution
+	ErrorBroadcaster types.ErrorBroadcaster  // Sends errors to browser error overlay
+	ConfigFile       string                   // Path to config file (for error reporting)
+	Enabled          bool                     // Enable/disable CSS transformation
+	Include          []string                 // Glob patterns to include (empty means all .css files)
+	Exclude          []string                 // Glob patterns to exclude
+	FS               platform.FileSystem      // Filesystem abstraction for testability
+	PathResolver     middleware.PathResolver  // Cached path resolver for efficient URL rewriting
 }
 
 // shouldTransformCSS checks if a CSS file should be transformed based on include/exclude patterns
@@ -112,11 +111,13 @@ func shouldTransformCSS(cssPath string, include []string, exclude []string, logg
 }
 
 // resolveCssPath resolves the actual file path for a CSS file request
-// Uses the shared PathResolver with CSS-specific extension handling (.css -> .css)
-func resolveCssPath(requestPath string, watchDir string, urlRewrites []config.URLRewrite, fs platform.FileSystem, logger types.Logger) string {
-	resolver := NewPathResolver(watchDir, urlRewrites, fs, logger)
+// Uses the PathResolver with CSS-specific extension handling (.css -> .css)
+func resolveCssPath(requestPath string, pathResolver middleware.PathResolver) string {
+	if pathResolver == nil {
+		return ""
+	}
 	// CSS files don't transform extensions (.css -> .css)
-	return resolver.ResolveSourcePath(requestPath, ".css", ".css")
+	return pathResolver.ResolveSourcePath(requestPath, ".css", ".css")
 }
 
 // NewCSS creates a middleware that transforms CSS files to JavaScript modules
@@ -179,7 +180,7 @@ func NewCSS(config CSSConfig) middleware.Middleware {
 
 			// If file doesn't exist, try URL rewrites
 			if err != nil {
-				resolvedPath := resolveCssPath(requestPath, watchDir, config.URLRewrites, fs, config.Logger)
+				resolvedPath := resolveCssPath(requestPath, config.PathResolver)
 				if resolvedPath == "" {
 					// Not found, pass to next handler
 					next.ServeHTTP(w, r)

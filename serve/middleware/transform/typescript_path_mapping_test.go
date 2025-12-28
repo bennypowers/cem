@@ -45,9 +45,9 @@ func TestTypeScriptMiddleware_SrcDistPattern(t *testing.T) {
 		Logger:  nil,
 		Enabled: true,
 		FS:      fs,
-		URLRewrites: []config.URLRewrite{
+		PathResolver: transform.NewPathResolver("/test", []config.URLRewrite{
 			{URLPattern: "/dist/:path*", URLTemplate: "/src/{{.path}}"},
-		},
+		}, fs, nil),
 	})
 
 	// Create test request for /dist/components/widget.js
@@ -104,9 +104,9 @@ func TestTypeScriptMiddleware_WorkspaceMode(t *testing.T) {
 		Logger:          nil,
 		Enabled:         true,
 		FS:              fs,
-		URLRewrites: []config.URLRewrite{
+		PathResolver: transform.NewPathResolver("/test", []config.URLRewrite{
 			{URLPattern: "/packages/webawesome/dist/:path*", URLTemplate: "/packages/webawesome/src/{{.path}}"},
-		},
+		}, fs, nil),
 	})
 
 	// Request with package prefix: /packages/webawesome/dist/components/alert.js
@@ -149,9 +149,9 @@ func TestTypeScriptMiddleware_ExplicitPathMappings(t *testing.T) {
 		Logger:          nil,
 		Enabled:         true,
 		FS:              fs,
-		URLRewrites: []config.URLRewrite{
+		PathResolver: transform.NewPathResolver("/test", []config.URLRewrite{
 			{URLPattern: "/lib/:path*", URLTemplate: "/sources/{{.path}}"}, // Custom mapping
-		},
+		}, fs, nil),
 	})
 
 	// Request using custom mapping
@@ -193,9 +193,9 @@ func TestTypeScriptMiddleware_Caching(t *testing.T) {
 		Logger:          nil,
 		Enabled:         true,
 		FS:              fs,
-		URLRewrites: []config.URLRewrite{
+		PathResolver: transform.NewPathResolver("/test", []config.URLRewrite{
 			{URLPattern: "/dist/:path*", URLTemplate: "/src/{{.path}}"},
-		},
+		}, fs, nil),
 	})
 
 	terminalHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
@@ -239,7 +239,7 @@ func TestTypeScriptMiddleware_Disabled(t *testing.T) {
 		Logger:          nil,
 		Enabled:         false, // Disabled
 		FS:              fs,
-		URLRewrites:     nil,
+		PathResolver:    nil,
 	})
 
 	terminalCalled := false
@@ -273,7 +273,7 @@ func TestTypeScriptMiddleware_PassthroughNonTypeScript(t *testing.T) {
 		Logger:          nil,
 		Enabled:         true,
 		FS:              fs,
-		URLRewrites:     nil,
+		PathResolver:    nil,
 	})
 
 	terminalCalled := false
@@ -307,7 +307,7 @@ func TestTypeScriptMiddleware_BackwardCompatibility(t *testing.T) {
 		Logger:          nil,
 		Enabled:         true,
 		FS:              fs,
-		URLRewrites:     nil, // No explicit mappings
+		PathResolver:    transform.NewPathResolver("/test", nil, fs, nil), // No explicit mappings, but still handles co-located
 	})
 
 	// Request co-located file

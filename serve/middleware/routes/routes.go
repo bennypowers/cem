@@ -34,7 +34,6 @@ import (
 	"bennypowers.dev/cem/serve/logger"
 	"bennypowers.dev/cem/serve/middleware"
 	importmappkg "bennypowers.dev/cem/serve/middleware/importmap"
-	"bennypowers.dev/cem/serve/middleware/transform"
 )
 
 // notFoundDetector wraps http.ResponseWriter to detect and intercept 404 status codes
@@ -952,14 +951,8 @@ func servePackageStaticAsset(w http.ResponseWriter, r *http.Request, config Conf
 	var fullPath string
 
 	// Strategy 1: Try PathResolver with URL rewrites
-	if len(config.Context.URLRewrites()) > 0 {
-		resolver := transform.NewPathResolver(
-			config.Context.WatchDir(),
-			config.Context.URLRewrites(),
-			config.Context.FileSystem(),
-			config.Context.Logger(),
-		)
-
+	resolver := config.Context.PathResolver()
+	if resolver != nil {
 		// For static assets, source ext == request ext
 		resolvedPath := resolver.ResolveSourcePath(requestPath, ext, ext)
 		if resolvedPath != "" {

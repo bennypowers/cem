@@ -49,6 +49,7 @@ func (m *mockContext) PackageJSON() (*middleware.PackageJSON, error)     { retur
 func (m *mockContext) BroadcastError(title, message, file string) error  { return nil }
 func (m *mockContext) DemoRenderingMode() string                         { return "light" }
 func (m *mockContext) URLRewrites() []config.URLRewrite                  { return nil }
+func (m *mockContext) PathResolver() middleware.PathResolver             { return nil }
 
 func TestServeMarkdownAPI_ValidPaths(t *testing.T) {
 	// Create test manifest with markdown content

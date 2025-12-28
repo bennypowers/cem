@@ -23,7 +23,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/middleware"
 	"bennypowers.dev/cem/serve/middleware/types"
@@ -34,16 +33,16 @@ const DefaultTarget = "ES2022"
 
 // TypeScriptConfig holds configuration for TypeScript transformation
 type TypeScriptConfig struct {
-	WatchDirFunc     func() string // Function to get current watch directory
-	TsconfigRawFunc  func() string // Function to get current tsconfig.json content
+	WatchDirFunc     func() string           // Function to get current watch directory
+	TsconfigRawFunc  func() string           // Function to get current tsconfig.json content
 	Cache            *Cache
-	Pool             *Pool                // Worker pool for limiting concurrent transforms
+	Pool             *Pool                    // Worker pool for limiting concurrent transforms
 	Logger           types.Logger
 	ErrorBroadcaster types.ErrorBroadcaster
 	Target           string
-	Enabled          bool                // Enable/disable TypeScript transformation
-	FS               platform.FileSystem // Filesystem abstraction for testability
-	URLRewrites      []config.URLRewrite // URL rewrites for request path resolution
+	Enabled          bool                     // Enable/disable TypeScript transformation
+	FS               platform.FileSystem      // Filesystem abstraction for testability
+	PathResolver     middleware.PathResolver  // Cached path resolver for efficient URL rewriting
 }
 
 // NewTypeScript creates a middleware that transforms TypeScript files to JavaScript
@@ -78,8 +77,12 @@ func NewTypeScript(config TypeScriptConfig) middleware.Middleware {
 			switch ext {
 			case ".js":
 				// Use PathResolver to find TypeScript source
-				resolver := NewPathResolver(watchDir, config.URLRewrites, fs, config.Logger)
-				tsPath = resolver.ResolveTsSource(requestPath)
+				if config.PathResolver == nil {
+					// No path resolver, pass to next handler
+					next.ServeHTTP(w, r)
+					return
+				}
+				tsPath = config.PathResolver.ResolveTsSource(requestPath)
 				if tsPath == "" {
 					// No TypeScript source found, pass to next handler
 					next.ServeHTTP(w, r)

@@ -46,9 +46,9 @@ func TestCSSMiddleware_SrcDistPattern(t *testing.T) {
 		Logger:       nil,
 		Enabled:      false, // Disabled, but import attributes should still work
 		FS:           fs,
-		URLRewrites: []config.URLRewrite{
+		PathResolver: transform.NewPathResolver("/test", []config.URLRewrite{
 			{URLPattern: "/dist/:path*", URLTemplate: "/src/{{.path}}"},
-		},
+		}, fs, nil),
 	})
 
 	// Request /dist/components/button.css with import attributes
@@ -100,9 +100,9 @@ func TestCSSMiddleware_WorkspaceMode(t *testing.T) {
 		Logger:       nil,
 		Enabled:      false,
 		FS:           fs,
-		URLRewrites: []config.URLRewrite{
+		PathResolver: transform.NewPathResolver("/test", []config.URLRewrite{
 			{URLPattern: "/packages/webawesome/dist/:path*", URLTemplate: "/packages/webawesome/src/{{.path}}"},
-		},
+		}, fs, nil),
 	})
 
 	// Request with workspace path: /packages/webawesome/dist/components/alert/alert.css
@@ -147,9 +147,9 @@ func TestCSSMiddleware_ExplicitPathMappings(t *testing.T) {
 		Logger:       nil,
 		Enabled:      false,
 		FS:           fs,
-		URLRewrites: []config.URLRewrite{
+		PathResolver: transform.NewPathResolver("/test", []config.URLRewrite{
 			{URLPattern: "/lib/:path*", URLTemplate: "/sources/{{.path}}"},
-		},
+		}, fs, nil),
 	})
 
 	// Request using custom mapping: /lib/styles/theme.css -> /sources/styles/theme.css
@@ -187,7 +187,7 @@ func TestCSSMiddleware_CoLocated(t *testing.T) {
 		Logger:       nil,
 		Enabled:      false,
 		FS:           fs,
-		URLRewrites:  nil,
+		PathResolver: nil,
 	})
 
 	req := httptest.NewRequest("GET", "/components/button.css?__cem-import-attrs[type]=css", nil)
@@ -219,7 +219,7 @@ func TestCSSMiddleware_NotFound(t *testing.T) {
 		Logger:       nil,
 		Enabled:      false,
 		FS:           fs,
-		URLRewrites:  nil,
+		PathResolver: nil,
 	})
 
 	// Request non-existent file
@@ -251,7 +251,7 @@ func TestCSSMiddleware_WithoutImportAttributes(t *testing.T) {
 		Logger:       nil,
 		Enabled:      false, // Disabled and no import attributes
 		FS:           fs,
-		URLRewrites:  nil,
+		PathResolver: nil,
 	})
 
 	// Request without import attributes - should pass through
@@ -283,9 +283,9 @@ func TestCSSMiddleware_EnabledWithIncludePattern(t *testing.T) {
 		Enabled:      true,
 		Include:      []string{"**/*.css"},
 		FS:           fs,
-		URLRewrites: []config.URLRewrite{
+		PathResolver: transform.NewPathResolver("/test", []config.URLRewrite{
 			{URLPattern: "/dist/:path*", URLTemplate: "/src/{{.path}}"},
-		},
+		}, fs, nil),
 	})
 
 	// Request without import attributes, but should transform due to enabled + include pattern
