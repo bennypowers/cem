@@ -264,3 +264,35 @@ func TestPathResolver_DefaultRootDirMapping(t *testing.T) {
 		t.Errorf("Expected %s, got %s", expected, result)
 	}
 }
+
+// TestPathResolver_ExtensionlessFiles tests that extensionless files work with pattern matching
+// This covers the case in servePackageStaticAsset() where ext is empty string
+func TestPathResolver_ExtensionlessFiles(t *testing.T) {
+	fs := testutil.NewFixtureFS(t, "path-mappings/explicit-mappings", "/test")
+
+	// Create extensionless files like README, LICENSE, Makefile
+	fs.AddFile("/test/docs/README", "# Readme", 0644)
+	fs.AddFile("/test/docs/LICENSE", "MIT License", 0644)
+
+	// Pattern that maps /public/:rest* to /docs/{{.rest}}
+	resolver := transform.NewPathResolver("/test", []config.URLRewrite{
+		{URLPattern: "/public/:rest*", URLTemplate: "/docs/{{.rest}}"},
+	}, fs, nil)
+
+	// Test extensionless file with pattern matching
+	// ResolveSourcePath(requestPath, sourceExt, requestExt) where both exts are empty
+	result := resolver.ResolveSourcePath("/public/README", "", "")
+	expected := "/docs/README"
+
+	if result != expected {
+		t.Errorf("Expected extensionless file %s, got %s", expected, result)
+	}
+
+	// Test nested extensionless file
+	result = resolver.ResolveSourcePath("/public/LICENSE", "", "")
+	expected = "/docs/LICENSE"
+
+	if result != expected {
+		t.Errorf("Expected extensionless file %s, got %s", expected, result)
+	}
+}

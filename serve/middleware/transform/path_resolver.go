@@ -85,6 +85,9 @@ func NewPathResolver(watchDir string, urlRewrites []config.URLRewrite, fs platfo
 //
 // Returns the resolved source path, or empty string if not found.
 //
+// For extensionless files (requestExt == ""), the path is used as-is without modification.
+// This allows pattern matching on paths like /README or /docs/guide.
+//
 // Resolution strategy:
 // 1. Try co-located file (in-place compilation)
 // 2. Try pattern-based path mappings (URLPattern + templates)
@@ -94,12 +97,13 @@ func (pr *PathResolver) ResolveSourcePath(requestPath string, sourceExt string, 
 		return ""
 	}
 
-	// Check request has expected extension
+	// Check request has expected extension (empty string is valid - matches extensionless files)
 	if !strings.HasSuffix(requestPath, requestExt) {
 		return ""
 	}
 
 	// Replace request extension with source extension
+	// For extensionless files (requestExt == ""), this is a no-op that returns requestPath unchanged
 	sourceFileName := requestPath[:len(requestPath)-len(requestExt)] + sourceExt
 
 	// Strategy 1: Co-located file
