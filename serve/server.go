@@ -450,13 +450,14 @@ func (s *Server) SetWatchDir(dir string) error {
 	}
 
 	// Merge with explicit config URL rewrites (config takes precedence)
-	// Config rewrites are appended after tsconfig rewrites so they override
+	// Config rewrites are prepended before tsconfig rewrites so they're tried first
 	if len(s.config.URLRewrites) > 0 {
-		s.logger.Debug("Adding %d URL rewrites from config", len(s.config.URLRewrites))
+		s.logger.Debug("Adding %d URL rewrites from config (will override tsconfig)", len(s.config.URLRewrites))
 		for _, r := range s.config.URLRewrites {
 			s.logger.Debug("  %s -> %s", r.URLPattern, r.URLTemplate)
 		}
-		urlRewrites = append(urlRewrites, s.config.URLRewrites...)
+		// Prepend config rewrites so they're tried first (first-match-wins in resolver)
+		urlRewrites = append(s.config.URLRewrites, urlRewrites...)
 	}
 
 	s.urlRewrites = urlRewrites
