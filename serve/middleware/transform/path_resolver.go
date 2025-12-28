@@ -233,7 +233,7 @@ func (pr *PathResolver) resolvePatternMapping(requestPath string, pm *patternMap
 	var buf bytes.Buffer
 	if err := pm.template.Execute(&buf, data); err != nil {
 		if pr.logger != nil {
-			pr.logger.Debug("PathResolver: template execution failed for %s (pattern: %s): %v",
+			pr.logger.Warning("PathResolver: template execution failed for %s (pattern: %s): %v",
 				requestPath, pm.fromStr, err)
 		}
 		return "", false
