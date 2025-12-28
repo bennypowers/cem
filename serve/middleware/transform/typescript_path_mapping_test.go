@@ -23,6 +23,7 @@ import (
 	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/serve/middleware/transform"
 )
@@ -44,8 +45,8 @@ func TestTypeScriptMiddleware_SrcDistPattern(t *testing.T) {
 		Logger:  nil,
 		Enabled: true,
 		FS:      fs,
-		PathMappings: map[string]string{
-			"/dist/": "/src/",
+		URLRewrites: []config.URLRewrite{
+			{URLPattern: "/dist/:path*", URLTemplate: "/src/{{.path}}"},
 		},
 	})
 
@@ -103,8 +104,8 @@ func TestTypeScriptMiddleware_WorkspaceMode(t *testing.T) {
 		Logger:          nil,
 		Enabled:         true,
 		FS:              fs,
-		PathMappings: map[string]string{
-			"/packages/webawesome/dist/": "/packages/webawesome/src/",
+		URLRewrites: []config.URLRewrite{
+			{URLPattern: "/packages/webawesome/dist/:path*", URLTemplate: "/packages/webawesome/src/{{.path}}"},
 		},
 	})
 
@@ -148,8 +149,8 @@ func TestTypeScriptMiddleware_ExplicitPathMappings(t *testing.T) {
 		Logger:          nil,
 		Enabled:         true,
 		FS:              fs,
-		PathMappings: map[string]string{
-			"/lib/": "/sources/", // Custom mapping
+		URLRewrites: []config.URLRewrite{
+			{URLPattern: "/lib/:path*", URLTemplate: "/sources/{{.path}}"}, // Custom mapping
 		},
 	})
 
@@ -192,8 +193,8 @@ func TestTypeScriptMiddleware_Caching(t *testing.T) {
 		Logger:          nil,
 		Enabled:         true,
 		FS:              fs,
-		PathMappings: map[string]string{
-			"/dist/": "/src/",
+		URLRewrites: []config.URLRewrite{
+			{URLPattern: "/dist/:path*", URLTemplate: "/src/{{.path}}"},
 		},
 	})
 
@@ -238,7 +239,7 @@ func TestTypeScriptMiddleware_Disabled(t *testing.T) {
 		Logger:          nil,
 		Enabled:         false, // Disabled
 		FS:              fs,
-		PathMappings:    nil,
+		URLRewrites:     nil,
 	})
 
 	terminalCalled := false
@@ -272,7 +273,7 @@ func TestTypeScriptMiddleware_PassthroughNonTypeScript(t *testing.T) {
 		Logger:          nil,
 		Enabled:         true,
 		FS:              fs,
-		PathMappings:    nil,
+		URLRewrites:     nil,
 	})
 
 	terminalCalled := false
@@ -306,7 +307,7 @@ func TestTypeScriptMiddleware_BackwardCompatibility(t *testing.T) {
 		Logger:          nil,
 		Enabled:         true,
 		FS:              fs,
-		PathMappings:    nil, // No explicit mappings
+		URLRewrites:     nil, // No explicit mappings
 	})
 
 	// Request co-located file

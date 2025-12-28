@@ -61,6 +61,13 @@ type MCPConfig struct {
 	MaxDescriptionLength int `mapstructure:"maxDescriptionLength" yaml:"maxDescriptionLength"`
 }
 
+type URLRewrite struct {
+	// URLPattern uses standard URLPattern syntax (e.g., "/dist/:path*")
+	URLPattern string `mapstructure:"urlPattern" yaml:"urlPattern"`
+	// URLTemplate defines the filesystem path using Go template syntax (e.g., "/src/{{.path}}")
+	URLTemplate string `mapstructure:"urlTemplate" yaml:"urlTemplate"`
+}
+
 type ServeConfig struct {
 	// Port to run the development server on (default: 8000)
 	Port int `mapstructure:"port" yaml:"port"`
@@ -70,8 +77,8 @@ type ServeConfig struct {
 	ImportMap types.ImportMapConfig `mapstructure:"importMap" yaml:"importMap"`
 	// Transform configuration
 	Transforms TransformsConfig `mapstructure:"transforms" yaml:"transforms"`
-	// Path mappings for src/dist separation (e.g., {"/dist/": "./src/"})
-	PathMappings map[string]string `mapstructure:"pathMappings" yaml:"pathMappings"`
+	// URL rewrites for transforming request URLs to filesystem paths
+	URLRewrites []URLRewrite `mapstructure:"urlRewrites" yaml:"urlRewrites"`
 	// Demo configuration
 	Demos DemosConfig `mapstructure:"demos" yaml:"demos"`
 }
@@ -169,12 +176,10 @@ func (c *CemConfig) Clone() *CemConfig {
 			maps.Copy(clone.Serve.ImportMap.Override.Scopes[scopeKey], scopeMap)
 		}
 	}
-	// Deep copy path mappings
-	if c.Serve.PathMappings != nil {
-		clone.Serve.PathMappings = make(map[string]string, len(c.Serve.PathMappings))
-		for k, v := range c.Serve.PathMappings {
-			clone.Serve.PathMappings[k] = v
-		}
+	// Deep copy URL rewrites
+	if c.Serve.URLRewrites != nil {
+		clone.Serve.URLRewrites = make([]URLRewrite, len(c.Serve.URLRewrites))
+		copy(clone.Serve.URLRewrites, c.Serve.URLRewrites)
 	}
 	return &clone
 }

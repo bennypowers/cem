@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	cfg "bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/internal/platform"
 )
 
@@ -39,25 +40,28 @@ type TsConfigCompilerOptions struct {
 	OutDir  string `json:"outDir"`
 }
 
-// ParseTsConfig reads a tsconfig.json file and extracts path mappings.
-// Returns a map of URL prefix -> source directory (e.g., {"/dist/": "/src/"}).
+// ParseTsConfig reads a tsconfig.json file and extracts URL rewrites.
+// Returns a slice of URLRewrite objects for src/dist separation.
 //
 // Handles tsconfig inheritance via the "extends" field (max depth: 5).
 // Missing rootDir or outDir default to ".".
 // Relative paths are normalized to the tsconfig directory.
-func ParseTsConfig(path string, fs platform.FileSystem) (map[string]string, error) {
-	mappings, _, err := parseTsConfigRecursive(path, fs, 0, make(map[string]bool))
-	return mappings, err
+//
+// Example: rootDir="./src", outDir="./dist" produces:
+//   URLRewrite{URLPattern: "/dist/:path*", URLTemplate: "/src/{{.path}}"}
+func ParseTsConfig(path string, fs platform.FileSystem) ([]cfg.URLRewrite, error) {
+	rewrites, _, err := parseTsConfigRecursive(path, fs, 0, make(map[string]bool))
+	return rewrites, err
 }
 
 // parseTsConfigRecursive handles tsconfig parsing with inheritance support.
-// Returns both the path mappings and the parsed config for efficiency.
+// Returns both the URL rewrites and the parsed config for efficiency.
 func parseTsConfigRecursive(
 	path string,
 	fs platform.FileSystem,
 	depth int,
 	visited map[string]bool,
-) (map[string]string, *TsConfig, error) {
+) ([]cfg.URLRewrite, *TsConfig, error) {
 	// Prevent infinite recursion
 	const maxDepth = 5
 	if depth > maxDepth {
@@ -132,9 +136,9 @@ func parseTsConfigRecursive(
 	}
 
 	// If rootDir and outDir are the same, this is in-place compilation
-	// No path mapping needed
+	// No URL rewrite needed
 	if rootDir == outDir {
-		return make(map[string]string), &config, nil
+		return []cfg.URLRewrite{}, &config, nil
 	}
 
 	// Normalize paths relative to tsconfig directory
@@ -171,13 +175,21 @@ func parseTsConfigRecursive(
 	if !strings.HasPrefix(relRootDir, "/") {
 		relRootDir = "/" + relRootDir
 	}
-	if !strings.HasSuffix(relRootDir, "/") {
-		relRootDir = relRootDir + "/"
-	}
 
-	// Create mapping from the merged compiler options
-	result := make(map[string]string)
-	result[relOutDir] = relRootDir
+	// Remove trailing slash from relRootDir for template (we'll add it in the template)
+	relRootDir = strings.TrimSuffix(relRootDir, "/")
+
+	// Create URL rewrite from the merged compiler options
+	// Convert "/dist/" -> "/dist/:path*" and "/src/" -> "/src/{{.path}}"
+	urlPattern := strings.TrimSuffix(relOutDir, "/") + "/:path*"
+	urlTemplate := relRootDir + "/{{.path}}"
+
+	result := []cfg.URLRewrite{
+		{
+			URLPattern:  urlPattern,
+			URLTemplate: urlTemplate,
+		},
+	}
 
 	return result, &config, nil
 }

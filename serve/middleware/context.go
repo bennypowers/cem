@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package middleware
 
 import (
+	"bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/logger"
 )
@@ -82,4 +83,7 @@ type DevServerContext interface {
 	// DemoRenderingMode returns the configured default rendering mode for demos
 	// Returns "light", "shadow", or "iframe"
 	DemoRenderingMode() string
+
+	// URLRewrites returns the configured URL rewrites for request path resolution
+	URLRewrites() []config.URLRewrite
 }

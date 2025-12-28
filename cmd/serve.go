@@ -28,6 +28,7 @@ import (
 
 	"atomicgo.dev/keyboard"
 	"atomicgo.dev/keyboard/keys"
+	"bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/serve"
 	"bennypowers.dev/cem/serve/logger"
@@ -132,8 +133,11 @@ var serveCmd = &cobra.Command{
 		// Get source control root URL from config
 		sourceControlRootURL := viper.GetString("sourceControlRootUrl")
 
-		// Get path mappings from config
-		pathMappings := viper.GetStringMapString("serve.pathMappings")
+		// Get URL rewrites from config
+		var urlRewrites []config.URLRewrite
+		if err := viper.UnmarshalKey("serve.urlRewrites", &urlRewrites); err != nil {
+			return fmt.Errorf("failed to parse serve.urlRewrites: %w", err)
+		}
 
 		// Get demo rendering mode from config (default: "light")
 		demoRendering := viper.GetString("serve.demos.rendering")
@@ -156,7 +160,7 @@ var serveCmd = &cobra.Command{
 			Target:               target,
 			WatchIgnore:          watchIgnore,
 			SourceControlRootURL: sourceControlRootURL,
-			PathMappings:         pathMappings,
+			URLRewrites:          urlRewrites,
 			ImportMap: types.ImportMapConfig{
 				Generate:     importMapGenerate,
 				OverrideFile: importMapOverrideFile,
