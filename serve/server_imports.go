@@ -28,6 +28,15 @@ import (
 	"golang.org/x/net/html"
 )
 
+var (
+	// importFromRe matches ES module import statements with specifiers
+	// Example: import { foo } from 'module-name'
+	importFromRe = regexp.MustCompile(`import\s+(?:[^'"]*?)\s*from\s*['"]([^'"]+)['"]`)
+	// importRe matches bare ES module import statements
+	// Example: import 'module-name'
+	importRe = regexp.MustCompile(`import\s*['"]([^'"]+)['"]`)
+)
+
 // ImportMap returns the cached import map (may be nil)
 func (s *Server) ImportMap() middleware.ImportMap {
 	s.mu.RLock()
@@ -72,10 +81,6 @@ func (s *Server) extractModuleImports(htmlPath string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// Import regex patterns
-	importFromRe := regexp.MustCompile(`import\s+(?:[^'"]*?)\s*from\s*['"]([^'"]+)['"]`)
-	importRe := regexp.MustCompile(`import\s*['"]([^'"]+)['"]`)
 
 	var visit func(*html.Node)
 	visit = func(n *html.Node) {
