@@ -23,6 +23,15 @@ vim.opt.ruler = false
 vim.opt.laststatus = 0
 vim.opt.signcolumn = "no"
 
+-- Suppress LSP info messages (prevents "No information available" spam during benchmarks)
+local original_notify = vim.notify
+vim.notify = function(msg, level, opts)
+  -- Only suppress INFO level messages, keep warnings and errors visible
+  if level ~= vim.log.levels.INFO then
+    original_notify(msg, level, opts)
+  end
+end
+
 -- wc-toolkit LSP configuration (using Mason-installed binary)
 local wc_toolkit_config = {
   name = 'wc-language-server',

@@ -23,6 +23,15 @@ vim.opt.ruler = false
 vim.opt.laststatus = 0
 vim.opt.signcolumn = "no"
 
+-- Suppress LSP info messages (prevents "No information available" spam during benchmarks)
+local original_notify = vim.notify
+vim.notify = function(msg, level, opts)
+  -- Only suppress INFO level messages, keep warnings and errors visible
+  if level ~= vim.log.levels.INFO then
+    original_notify(msg, level, opts)
+  end
+end
+
 -- Minimal LSP configuration for cem
 local cem_config = {
   name = 'cem-lsp',
