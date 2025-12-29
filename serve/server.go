@@ -190,7 +190,6 @@ func (s *Server) Logger() middleware.Logger {
 // SetLogger sets the server's logger
 func (s *Server) SetLogger(log Logger) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	s.logger = log
 	if s.wsManager != nil {
 		s.wsManager.SetLogger(log)
@@ -199,7 +198,12 @@ func (s *Server) SetLogger(log Logger) {
 			wsSetter.SetWebSocketManager(s.wsManager)
 		}
 	}
-	// Rebuild middleware pipeline with new logger
+
+	// Unlock before calling setupMiddleware to avoid deadlock
+	// setupMiddleware calls accessor methods that acquire s.mu.RLock()
+	s.mu.Unlock()
+
+	// Rebuild middleware pipeline with new logger (no lock needed)
 	s.setupMiddleware()
 }
 
