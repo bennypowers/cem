@@ -62,7 +62,7 @@ func TestParseTsConfig_SrcDist(t *testing.T) {
 func TestParseTsConfig_Extends(t *testing.T) {
 	fs := testutil.NewFixtureFS(t, "path-mappings/tsconfig-extends", "/test")
 
-	mappings, _, err := transform.ParseTsConfig("/test/tsconfig.json", fs)
+	mappings, visitedFiles, err := transform.ParseTsConfig("/test/tsconfig.json", fs)
 	if err != nil {
 		t.Fatalf("ParseTsConfig failed: %v", err)
 	}
@@ -89,6 +89,31 @@ func TestParseTsConfig_Extends(t *testing.T) {
 		if mappings[i].URLTemplate != exp.URLTemplate {
 			t.Errorf("Expected URLTemplate %s, got %s", exp.URLTemplate, mappings[i].URLTemplate)
 		}
+	}
+
+	// Verify visitedFiles contains both the main tsconfig and the base tsconfig
+	// The order is deterministic due to sort.Strings in the implementation
+	if len(visitedFiles) != 2 {
+		t.Errorf("Expected visitedFiles to contain 2 files (main + base), got %d: %v", len(visitedFiles), visitedFiles)
+	}
+
+	// Check that both tsconfig files are present (use Contains since paths might be absolute)
+	foundMain := false
+	foundBase := false
+	for _, file := range visitedFiles {
+		if strings.Contains(file, "tsconfig.json") && !strings.Contains(file, "tsconfig.base.json") {
+			foundMain = true
+		}
+		if strings.Contains(file, "tsconfig.base.json") {
+			foundBase = true
+		}
+	}
+
+	if !foundMain {
+		t.Errorf("Expected visitedFiles to contain tsconfig.json, got: %v", visitedFiles)
+	}
+	if !foundBase {
+		t.Errorf("Expected visitedFiles to contain tsconfig.base.json, got: %v", visitedFiles)
 	}
 }
 
