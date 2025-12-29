@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	cfg "bennypowers.dev/cem/cmd/config"
@@ -143,6 +144,7 @@ func parseTsConfigRecursive(
 	for file := range visited {
 		visitedFiles = append(visitedFiles, file)
 	}
+	sort.Strings(visitedFiles)
 
 	// If rootDir and outDir are the same, this is in-place compilation
 	// No URL rewrite needed
