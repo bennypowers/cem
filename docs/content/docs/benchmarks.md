@@ -295,6 +295,9 @@ json-viewer {
   <figcaption id="lsp-chart-caption" style="font-weight:bold;margin-bottom:0.5em;">
     LSP performance comparison: lower is better (milliseconds)
   </figcaption>
+  <p style="font-size:0.9em;color:var(--sl-color-gray-3);margin-bottom:1em;">
+    <em>Hover over benchmark names for detailed descriptions of what each test measures.</em>
+  </p>
   {{<lsp-benchmark-chart>}}
 </figure>
 
