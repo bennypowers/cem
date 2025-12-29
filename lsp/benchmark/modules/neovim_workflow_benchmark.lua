@@ -106,31 +106,34 @@ function M.run_neovim_workflow_benchmark(config, fixture_dir)
         
         -- Set cursor position
         pcall(vim.api.nvim_win_set_cursor, 0, {scenario.line, scenario.col})
-        
+
         local comp_start = vim.fn.reltime()
-        
+
         -- Enter insert mode and trigger completion like a user would
         vim.cmd('startinsert')
         vim.wait(50, function() return false end)
-        
+
         -- Trigger LSP completion with Ctrl-X Ctrl-O
         local completion_received = false
         vim.schedule(function()
-          vim.lsp.buf.completion()
+          pcall(vim.lsp.buf.completion)
           completion_received = true
         end)
-        
+
         -- Wait for completion response
         vim.wait(500, function() return completion_received end)
-        
+
+        -- Additional wait to let async completion handler finish before exiting insert mode
+        vim.wait(200, function() return false end)
+
         -- Exit insert mode
         vim.cmd('stopinsert')
-        
+
         if completion_received then
           local comp_time = tonumber(vim.fn.reltimestr(vim.fn.reltime(comp_start)))
           table.insert(results.completion_times, comp_time)
           results.successful_completions = results.successful_completions + 1
-          
+
           print(string.format("[NEOVIM_WORKFLOW] Completion in %s: %.2fms", scenario.context, comp_time))
         end
         
