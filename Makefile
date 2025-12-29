@@ -19,7 +19,7 @@ else
     RACE_LDFLAGS :=
 endif
 
-.PHONY: all build test test-unit test-e2e test-frontend test-frontend-watch test-frontend-update install-frontend update watch bench bench-lookup bench-lsp bench-lsp-cem bench-lsp-wc profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major
+.PHONY: all build test test-unit test-e2e test-frontend test-frontend-watch test-frontend-update install-frontend update watch bench bench-lookup setup-wc-toolkit bench-lsp bench-lsp-cem bench-lsp-wc profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major
 
 build: generate
 	@mkdir -p dist
@@ -170,7 +170,12 @@ bench-lookup:
 	go test -bench=BenchmarkRenderableCreation -benchmem -count=5 -run=^$$ ./manifest/
 
 # LSP server benchmarks
-bench-lsp: build
+# Setup wc-toolkit language server wrapper (isolated, doesn't affect Mason)
+setup-wc-toolkit:
+	@echo "Setting up wc-toolkit language server..."
+	@cd lsp/benchmark && ./setup_wc_toolkit.sh
+
+bench-lsp: build setup-wc-toolkit
 	@echo "Running LSP server benchmarks..."
 	@cd lsp/benchmark && \
 	echo "Testing cem LSP server..." && \
@@ -184,7 +189,7 @@ bench-lsp-cem: build
 	@echo "Running benchmarks for cem LSP server only..."
 	@cd lsp/benchmark && nvim --headless --clean -u configs/cem-minimal.lua -l run_modular_benchmark.lua
 
-bench-lsp-wc: build
+bench-lsp-wc: build setup-wc-toolkit
 	@echo "Running benchmarks for wc-toolkit LSP server only..."
 	@cd lsp/benchmark && nvim --headless --clean -u configs/wc-toolkit-minimal.lua -l run_modular_benchmark.lua
 
