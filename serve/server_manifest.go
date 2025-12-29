@@ -35,24 +35,36 @@ import (
 
 // SetManifest sets the current manifest and builds the routing table
 func (s *Server) SetManifest(manifest []byte) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	// Defensive copy to prevent caller from mutating our internal state
-	s.manifest = make([]byte, len(manifest))
-	copy(s.manifest, manifest)
+	// Extract state under read lock
+	s.mu.RLock()
+	sourceControlURL := s.sourceControlRootURL
+	s.mu.RUnlock()
 
-	// Build routing table from manifest
-	routingTable, err := routes.BuildDemoRoutingTable(manifest, s.sourceControlRootURL)
+	// Defensive copy to prevent caller from mutating our internal state
+	manifestCopy := make([]byte, len(manifest))
+	copy(manifestCopy, manifest)
+
+	// Build routing table from manifest (expensive - no lock held)
+	routingTable, err := routes.BuildDemoRoutingTable(manifestCopy, sourceControlURL)
 	if err != nil {
 		s.logger.Warning("Failed to build demo routing table: %v", err)
-		s.demoRoutes = nil
+		routingTable = nil
+	} else {
+		s.logger.Debug("Built routing table with %d demo routes", len(routingTable))
+	}
+
+	// Update state under write lock
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.manifest = manifestCopy
+	s.demoRoutes = routingTable
+
+	if err != nil {
 		// Return error wrapped to indicate partial success
 		// The manifest was stored successfully, but routing table construction failed
 		return fmt.Errorf("manifest stored but routing table failed: %w", err)
 	}
-
-	s.demoRoutes = routingTable
-	s.logger.Debug("Built routing table with %d demo routes", len(routingTable))
 	return nil
 }
 
