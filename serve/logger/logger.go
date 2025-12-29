@@ -38,6 +38,11 @@ type Logger interface {
 	Debug(msg string, args ...any)
 }
 
+// Broadcaster defines the interface for broadcasting log messages to WebSocket clients
+type Broadcaster interface {
+	Broadcast([]byte) error
+}
+
 // LogMessage represents a log message broadcast to clients
 type LogMessage struct {
 	Type string     `json:"type"`
@@ -88,7 +93,7 @@ type ptermLogger struct {
 	interactive   bool
 	area          *pterm.AreaPrinter
 	status        string
-	wsManager     any // WebSocket manager for broadcasting logs (any type with Broadcast method)
+	wsManager     Broadcaster // WebSocket manager for broadcasting logs
 }
 
 // pendingLog represents a log entry waiting to be displayed
@@ -176,8 +181,7 @@ func (l *ptermLogger) SetStatus(status string) {
 }
 
 // SetWebSocketManager sets the WebSocket manager for broadcasting logs
-// Accepts any type that has a Broadcast([]byte) error method
-func (l *ptermLogger) SetWebSocketManager(wsManager any) {
+func (l *ptermLogger) SetWebSocketManager(wsManager Broadcaster) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.wsManager = wsManager
@@ -334,21 +338,15 @@ func (l *ptermLogger) log(level, levelType, msg string, args ...any) {
 	// Full log history is sent on page load via /__cem/logs endpoint
 
 	if ws != nil {
-		// Type assert to interface with Broadcast method
-		type broadcaster interface {
-			Broadcast([]byte) error
+		// Send only the new log entry (not the entire history)
+		msg := LogMessage{
+			Type: "logs",
+			Logs: []LogEntry{logEntry},
 		}
-		if bc, ok := ws.(broadcaster); ok {
-			// Send only the new log entry (not the entire history)
-			msg := LogMessage{
-				Type: "logs",
-				Logs: []LogEntry{logEntry},
-			}
-			if msgBytes, err := json.Marshal(msg); err == nil {
-				// Broadcast error intentionally ignored - failures occur when clients
-				// disconnect and we can't log them here without causing infinite recursion
-				_ = bc.Broadcast(msgBytes)
-			}
+		if msgBytes, err := json.Marshal(msg); err == nil {
+			// Broadcast error intentionally ignored - failures occur when clients
+			// disconnect and we can't log them here without causing infinite recursion
+			_ = ws.Broadcast(msgBytes)
 		}
 	}
 }
