@@ -178,22 +178,20 @@ func (s *Server) TryLoadExistingManifest() (int, error) {
 // RegenerateManifest performs a full manifest regeneration
 // Returns the manifest size in bytes and any error
 func (s *Server) RegenerateManifest() (int, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	// Extract state under read lock to avoid blocking during I/O
+	s.mu.RLock()
+	watchDir := s.watchDir
+	sourceControlURL := s.sourceControlRootURL
+	s.mu.RUnlock()
 
-	if s.watchDir == "" {
+	if watchDir == "" {
 		return 0, fmt.Errorf("no watch directory set")
 	}
 
-	// Close old session if it exists
-	if s.generateSession != nil {
-		s.generateSession.Close()
-		s.generateSession = nil
-	}
-
+	// Perform expensive operations without holding lock
 	// Create fresh workspace context and session for live reload
 	// This ensures we always read the latest file contents
-	workspace := W.NewFileSystemWorkspaceContext(s.watchDir)
+	workspace := W.NewFileSystemWorkspaceContext(watchDir)
 	if err := workspace.Init(); err != nil {
 		return 0, fmt.Errorf("initializing workspace: %w", err)
 	}
@@ -208,11 +206,9 @@ func (s *Server) RegenerateManifest() (int, error) {
 	maxWorkers := min(max(runtime.NumCPU()/2, 2), 8)
 	session.SetMaxWorkers(maxWorkers)
 
-	s.generateSession = session
-
-	// Generate manifest
+	// Generate manifest (expensive - no lock held)
 	ctx := context.Background()
-	pkg, err := s.generateSession.GenerateFullManifest(ctx)
+	pkg, err := session.GenerateFullManifest(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("generating manifest: %w", err)
 	}
@@ -224,28 +220,40 @@ func (s *Server) RegenerateManifest() (int, error) {
 			sourceFiles[module.Path] = true
 		}
 	}
-	s.sourceFiles = sourceFiles
-	s.logger.Debug("Tracking %d source files from manifest", len(sourceFiles))
 
-	// Marshal to JSON
+	// Marshal to JSON (expensive - no lock held)
 	manifestBytes, err := json.MarshalIndent(pkg, "", "  ")
 	if err != nil {
 		return 0, fmt.Errorf("marshaling manifest: %w", err)
 	}
 
+	// Build routing table from manifest (expensive - no lock held)
+	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, sourceControlURL)
+	if err != nil {
+		s.logger.Warning("Failed to build demo routing table: %v", err)
+		routingTable = nil
+	} else {
+		s.logger.Debug("Built routing table with %d demo routes", len(routingTable))
+	}
+
+	// Update server state under write lock
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Close old session if it exists
+	if s.generateSession != nil {
+		s.generateSession.Close()
+	}
+
+	s.generateSession = session
+	s.sourceFiles = sourceFiles
+	s.logger.Debug("Tracking %d source files from manifest", len(sourceFiles))
+
 	// Defensive copy (though json.MarshalIndent already returns a new slice)
 	s.manifest = make([]byte, len(manifestBytes))
 	copy(s.manifest, manifestBytes)
+	s.demoRoutes = routingTable
 
-	// Build routing table from manifest
-	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, s.sourceControlRootURL)
-	if err != nil {
-		s.logger.Warning("Failed to build demo routing table: %v", err)
-		s.demoRoutes = nil
-	} else {
-		s.demoRoutes = routingTable
-		s.logger.Debug("Built routing table with %d demo routes", len(routingTable))
-	}
 	return len(manifestBytes), nil
 }
 
