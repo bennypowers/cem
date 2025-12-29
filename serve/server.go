@@ -35,6 +35,7 @@ import (
 
 	"golang.org/x/net/http2"
 	"golang.org/x/net/netutil"
+	"gopkg.in/yaml.v3"
 
 	G "bennypowers.dev/cem/generate"
 	"bennypowers.dev/cem/cmd/config"
@@ -79,11 +80,12 @@ type Server struct {
 	workspacePackages []middleware.WorkspacePackage // Discovered packages with manifests
 	// Cached routing table for demo routes (both workspace and single-package mode)
 	demoRoutes           map[string]*routes.DemoRouteEntry
-	importMap            *importmappkg.ImportMap  // Cached import map (workspace or single-package)
-	sourceControlRootURL string                   // Source control root URL for demo routing
-	templates            *routes.TemplateRegistry // Template registry for HTML rendering
-	urlRewrites          []config.URLRewrite      // URL rewrites for request path mapping
-	pathResolver         *transform.PathResolver  // Cached path resolver (initialized once)
+	importMap               *importmappkg.ImportMap  // Cached import map (workspace or single-package)
+	sourceControlRootURL    string                   // Source control root URL for demo routing
+	templates               *routes.TemplateRegistry // Template registry for HTML rendering
+	urlRewrites             []config.URLRewrite      // URL rewrites for request path mapping
+	pathResolver            *transform.PathResolver  // Cached path resolver (initialized once)
+	pathResolverSourceFiles []string                 // Files that pathResolver depends on (for hot-reload)
 }
 
 // NewServer creates a new server with the given port
@@ -238,6 +240,99 @@ func (s *Server) PathResolver() middleware.PathResolver {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.pathResolver
+}
+
+// RebuildPathResolverForTest exposes rebuildPathResolver for testing.
+// This is a test-only wrapper that allows tests to trigger path resolver rebuilds.
+func (s *Server) RebuildPathResolverForTest() error {
+	return s.rebuildPathResolver()
+}
+
+// rebuildPathResolver rebuilds the path resolver when tsconfig or config files change.
+// This method is called during hot-reload to update URL rewrites without restarting the server.
+func (s *Server) rebuildPathResolver() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.watchDir == "" {
+		return fmt.Errorf("no watch directory set")
+	}
+
+	// Re-parse tsconfig files (same logic as SetWatchDir)
+	tsconfigPaths := []string{
+		filepath.Join(s.watchDir, "tsconfig.settings.json"),
+		filepath.Join(s.watchDir, "tsconfig.json"),
+	}
+
+	var urlRewrites []config.URLRewrite
+	var tsconfigSourceFiles []string
+
+	for _, tsconfigPath := range tsconfigPaths {
+		rewrites, sourceFiles, err := transform.ParseTsConfig(tsconfigPath, s.fs)
+		if err == nil {
+			urlRewrites = rewrites
+			tsconfigSourceFiles = sourceFiles
+			if len(rewrites) > 0 {
+				s.logger.Debug("Rebuilt URL rewrites from %s", tsconfigPath)
+				for _, r := range rewrites {
+					s.logger.Debug("  %s -> %s", r.URLPattern, r.URLTemplate)
+				}
+			}
+			break
+		}
+	}
+
+	// Re-load config urlRewrites from file if config file is set
+	var configRewrites []config.URLRewrite
+	if s.config.ConfigFile != "" {
+		data, err := s.fs.ReadFile(s.config.ConfigFile)
+		if err == nil {
+			var cfg struct {
+				Serve struct {
+					URLRewrites []config.URLRewrite `yaml:"urlRewrites"`
+				} `yaml:"serve"`
+			}
+			if err := yaml.Unmarshal(data, &cfg); err == nil {
+				configRewrites = cfg.Serve.URLRewrites
+				if len(configRewrites) > 0 {
+					s.logger.Debug("Reloaded %d URL rewrites from config file", len(configRewrites))
+					for _, r := range configRewrites {
+						s.logger.Debug("  %s -> %s", r.URLPattern, r.URLTemplate)
+					}
+				}
+			} else {
+				s.logger.Warning("Failed to parse config file for URL rewrites: %v", err)
+			}
+		}
+	}
+
+	// Prepend config rewrites (they take precedence - first-match-wins)
+	if len(configRewrites) > 0 {
+		urlRewrites = append(configRewrites, urlRewrites...)
+	}
+
+	s.logger.Info("Rebuilding path resolver with %d URL rewrites", len(urlRewrites))
+	s.urlRewrites = urlRewrites
+
+	// Update source files list
+	s.pathResolverSourceFiles = tsconfigSourceFiles
+	if s.config.ConfigFile != "" {
+		s.pathResolverSourceFiles = append(s.pathResolverSourceFiles, s.config.ConfigFile)
+	}
+
+	// Rebuild path resolver
+	s.pathResolver = transform.NewPathResolver(s.watchDir, s.urlRewrites, s.fs, s.logger)
+
+	// Invalidate transform cache (path resolution changed, so cached transforms may be stale)
+	if s.transformCache != nil {
+		s.transformCache.Clear()
+		s.logger.Debug("Cleared transform cache after path resolver rebuild")
+	}
+
+	// Rebuild middleware pipeline with new pathResolver
+	s.setupMiddleware()
+
+	return nil
 }
 
 // Start starts the HTTP server
@@ -444,9 +539,12 @@ func (s *Server) SetWatchDir(dir string) error {
 
 	// Parse tsconfig for URL rewrites (supports src/dist separation)
 	var urlRewrites []config.URLRewrite
+	var tsconfigSourceFiles []string // Track all files used
 	for _, tsconfigPath := range tsconfigPaths {
-		if rewrites, err := transform.ParseTsConfig(tsconfigPath, s.fs); err == nil {
+		rewrites, sourceFiles, err := transform.ParseTsConfig(tsconfigPath, s.fs)
+		if err == nil {
 			urlRewrites = rewrites
+			tsconfigSourceFiles = sourceFiles // Store the files
 			if len(rewrites) > 0 {
 				s.logger.Debug("Extracted URL rewrites from %s", tsconfigPath)
 				for _, r := range rewrites {
@@ -469,6 +567,12 @@ func (s *Server) SetWatchDir(dir string) error {
 	}
 
 	s.urlRewrites = urlRewrites
+
+	// Build list of all source files that pathResolver depends on
+	s.pathResolverSourceFiles = tsconfigSourceFiles
+	if s.config.ConfigFile != "" {
+		s.pathResolverSourceFiles = append(s.pathResolverSourceFiles, s.config.ConfigFile)
+	}
 
 	// Initialize path resolver once (cached for all requests)
 	s.pathResolver = transform.NewPathResolver(s.watchDir, s.urlRewrites, s.fs, s.logger)
@@ -1175,6 +1279,34 @@ func (s *Server) handleFileChanges() {
 		filesToProcess := event.Paths
 		if len(filesToProcess) == 0 {
 			filesToProcess = []string{event.Path}
+		}
+
+		// Check if any changed files are pathResolver source files (tsconfig.json, config files)
+		// If so, rebuild the pathResolver with updated URL rewrites
+		pathResolverNeedsRebuild := false
+		s.mu.RLock()
+		pathResolverSourceFiles := s.pathResolverSourceFiles
+		s.mu.RUnlock()
+
+		for _, changedFile := range filesToProcess {
+			for _, sourceFile := range pathResolverSourceFiles {
+				if changedFile == sourceFile {
+					pathResolverNeedsRebuild = true
+					s.logger.Debug("PathResolver source file changed: %s", sourceFile)
+					break
+				}
+			}
+			if pathResolverNeedsRebuild {
+				break
+			}
+		}
+
+		if pathResolverNeedsRebuild {
+			s.logger.Info("Rebuilding path resolver due to source file change")
+			if err := s.rebuildPathResolver(); err != nil {
+				s.logger.Error("Failed to rebuild path resolver: %v", err)
+				// Continue processing - don't block other hot-reload logic
+			}
 		}
 
 		// Filter to only relevant source files

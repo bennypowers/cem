@@ -33,6 +33,7 @@ import (
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve"
 	importmappkg "bennypowers.dev/cem/serve/middleware/importmap"
+	"bennypowers.dev/cem/serve/middleware/transform"
 	"bennypowers.dev/cem/serve/middleware/types"
 )
 
@@ -774,5 +775,132 @@ func TestStaticFileMIMETypes_NodeModules(t *testing.T) {
 				t.Errorf("Expected Content-Type %q, got %q (regression: .mjs/.cjs should not be text/plain)", tt.expectedMIME, contentType)
 			}
 		})
+	}
+}
+
+// TestPathResolverHotReload verifies that pathResolver rebuilds when tsconfig changes
+func TestPathResolverHotReload(t *testing.T) {
+	// Create in-memory filesystem with initial tsconfig
+	mfs := platform.NewMapFileSystem(nil)
+
+	// Initial tsconfig: src -> dist
+	initialTsconfig := `{
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist"
+  }
+}`
+	mfs.AddFile("/test-package/tsconfig.json", initialTsconfig, 0644)
+	mfs.AddFile("/test-package/package.json", `{"name": "test"}`, 0644)
+
+	// Create source file in src/
+	sourceContent := `export class TestElement extends HTMLElement {
+  constructor() {
+    super();
+  }
+}`
+	mfs.AddFile("/test-package/src/test-element.ts", sourceContent, 0644)
+
+	// Create TypeScript transform config
+	config := serve.Config{
+		Port: 0,
+		FS:   mfs,
+		Transforms: serve.TransformConfig{
+			TypeScript: serve.TypeScriptConfig{
+				Enabled: true,
+				Target:  transform.ES2022,
+			},
+		},
+	}
+
+	server, err := serve.NewServerWithConfig(config)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	err = server.SetWatchDir("/test-package")
+	if err != nil {
+		t.Fatalf("Failed to set watch directory: %v", err)
+	}
+
+	// Verify initial path resolver configuration
+	urlRewrites := server.URLRewrites()
+	if len(urlRewrites) != 1 {
+		t.Fatalf("Expected 1 URL rewrite, got %d", len(urlRewrites))
+	}
+
+	if urlRewrites[0].URLPattern != "/dist/:path*" {
+		t.Errorf("Expected initial URLPattern '/dist/:path*', got %q", urlRewrites[0].URLPattern)
+	}
+
+	if urlRewrites[0].URLTemplate != "/src/{{.path}}" {
+		t.Errorf("Expected initial URLTemplate '/src/{{.path}}', got %q", urlRewrites[0].URLTemplate)
+	}
+
+	// Request /dist/test-element.js should resolve to /src/test-element.ts via pathResolver
+	req := httptest.NewRequest("GET", "/dist/test-element.js", nil)
+	rec := httptest.NewRecorder()
+
+	server.Handler().ServeHTTP(rec, req)
+
+	// Should get 200 OK (the TypeScript transform middleware should handle this)
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status 200 for initial request, got %d", rec.Code)
+	}
+
+	// Update tsconfig to use different paths: source -> build
+	updatedTsconfig := `{
+  "compilerOptions": {
+    "rootDir": "./source",
+    "outDir": "./build"
+  }
+}`
+	mfs.AddFile("/test-package/tsconfig.json", updatedTsconfig, 0644)
+
+	// Create source file in new location
+	mfs.AddFile("/test-package/source/test-element.ts", sourceContent, 0644)
+
+	// Trigger pathResolver rebuild (simulates file change event)
+	// Note: We're calling this directly instead of simulating the file watcher
+	// because that would require starting the server and waiting for events
+	err = server.RebuildPathResolverForTest()
+	if err != nil {
+		t.Fatalf("Failed to rebuild path resolver: %v", err)
+	}
+
+	// Verify new path resolver configuration
+	urlRewritesAfter := server.URLRewrites()
+	if len(urlRewritesAfter) != 1 {
+		t.Fatalf("Expected 1 URL rewrite after rebuild, got %d", len(urlRewritesAfter))
+	}
+
+	if urlRewritesAfter[0].URLPattern != "/build/:path*" {
+		t.Errorf("Expected updated URLPattern '/build/:path*', got %q", urlRewritesAfter[0].URLPattern)
+	}
+
+	if urlRewritesAfter[0].URLTemplate != "/source/{{.path}}" {
+		t.Errorf("Expected updated URLTemplate '/source/{{.path}}', got %q", urlRewritesAfter[0].URLTemplate)
+	}
+
+	// Request /build/test-element.js should now resolve to /source/test-element.ts
+	req2 := httptest.NewRequest("GET", "/build/test-element.js", nil)
+	rec2 := httptest.NewRecorder()
+
+	server.Handler().ServeHTTP(rec2, req2)
+
+	// Should get 200 OK with new path resolution
+	if rec2.Code != http.StatusOK {
+		t.Errorf("Expected status 200 for request after rebuild, got %d", rec2.Code)
+	}
+
+	// Old path /dist/test-element.js should now return 404
+	req3 := httptest.NewRequest("GET", "/dist/test-element.js", nil)
+	rec3 := httptest.NewRecorder()
+
+	server.Handler().ServeHTTP(rec3, req3)
+
+	if rec3.Code != http.StatusNotFound {
+		t.Errorf("Expected status 404 for old path after rebuild, got %d", rec3.Code)
 	}
 }

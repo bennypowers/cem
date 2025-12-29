@@ -41,7 +41,8 @@ type TsConfigCompilerOptions struct {
 }
 
 // ParseTsConfig reads a tsconfig.json file and extracts URL rewrites.
-// Returns a slice of URLRewrite objects for src/dist separation.
+// Returns a slice of URLRewrite objects for src/dist separation and a list of all
+// visited tsconfig files (for dependency tracking).
 //
 // Handles tsconfig inheritance via the "extends" field (max depth: 5).
 // Missing rootDir or outDir default to ".".
@@ -49,23 +50,24 @@ type TsConfigCompilerOptions struct {
 //
 // Example: rootDir="./src", outDir="./dist" produces:
 //   URLRewrite{URLPattern: "/dist/:path*", URLTemplate: "/src/{{.path}}"}
-func ParseTsConfig(path string, fs platform.FileSystem) ([]cfg.URLRewrite, error) {
-	rewrites, _, err := parseTsConfigRecursive(path, fs, 0, make(map[string]bool))
-	return rewrites, err
+func ParseTsConfig(path string, fs platform.FileSystem) ([]cfg.URLRewrite, []string, error) {
+	visited := make(map[string]bool)
+	rewrites, _, visitedFiles, err := parseTsConfigRecursive(path, fs, 0, visited)
+	return rewrites, visitedFiles, err
 }
 
 // parseTsConfigRecursive handles tsconfig parsing with inheritance support.
-// Returns both the URL rewrites and the parsed config for efficiency.
+// Returns the URL rewrites, the parsed config, and a list of all visited files.
 func parseTsConfigRecursive(
 	path string,
 	fs platform.FileSystem,
 	depth int,
 	visited map[string]bool,
-) ([]cfg.URLRewrite, *TsConfig, error) {
+) ([]cfg.URLRewrite, *TsConfig, []string, error) {
 	// Prevent infinite recursion
 	const maxDepth = 5
 	if depth > maxDepth {
-		return nil, nil, fmt.Errorf("tsconfig extends depth exceeded (max: %d)", maxDepth)
+		return nil, nil, nil, fmt.Errorf("tsconfig extends depth exceeded (max: %d)", maxDepth)
 	}
 
 	// Prevent circular extends
@@ -74,20 +76,20 @@ func parseTsConfigRecursive(
 		absPath = path
 	}
 	if visited[absPath] {
-		return nil, nil, fmt.Errorf("circular tsconfig extends detected: %s", absPath)
+		return nil, nil, nil, fmt.Errorf("circular tsconfig extends detected: %s", absPath)
 	}
 	visited[absPath] = true
 
 	// Read tsconfig file
 	data, err := fs.ReadFile(path)
 	if err != nil {
-		return nil, nil, fmt.Errorf("reading tsconfig: %w", err)
+		return nil, nil, nil, fmt.Errorf("reading tsconfig: %w", err)
 	}
 
 	// Parse JSON
 	var config TsConfig
 	if err := json.Unmarshal(data, &config); err != nil {
-		return nil, nil, fmt.Errorf("parsing tsconfig JSON: %w", err)
+		return nil, nil, nil, fmt.Errorf("parsing tsconfig JSON: %w", err)
 	}
 
 	// Merge compiler options from base config if extends is present
@@ -105,9 +107,10 @@ func parseTsConfigRecursive(
 
 		// Recursively parse base config (handles chained inheritance and depth tracking)
 		// Returns both mappings and the parsed config to avoid re-reading
-		_, baseConfig, err := parseTsConfigRecursive(extendsPath, fs, depth+1, visited)
+		// Note: visited map is shared, so all files will be tracked
+		_, baseConfig, _, err := parseTsConfigRecursive(extendsPath, fs, depth+1, visited)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 
 		// Start with base values
@@ -135,10 +138,16 @@ func parseTsConfigRecursive(
 		outDir = "."
 	}
 
+	// Convert visited map to slice
+	var visitedFiles []string
+	for file := range visited {
+		visitedFiles = append(visitedFiles, file)
+	}
+
 	// If rootDir and outDir are the same, this is in-place compilation
 	// No URL rewrite needed
 	if rootDir == outDir {
-		return []cfg.URLRewrite{}, &config, nil
+		return []cfg.URLRewrite{}, &config, visitedFiles, nil
 	}
 
 	// Normalize paths relative to tsconfig directory
@@ -191,5 +200,5 @@ func parseTsConfigRecursive(
 		},
 	}
 
-	return result, &config, nil
+	return result, &config, visitedFiles, nil
 }
