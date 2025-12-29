@@ -1,0 +1,145 @@
+{{ $cem := index .Site.Data "lsp-benchmark-results-cem" | default dict }}
+{{ $wc := index .Site.Data "lsp-benchmark-results-wc-toolkit" | default dict }}
+
+{{ if and $cem.benchmarks $wc.benchmarks }}
+{{ $cemLit := index $cem.benchmarks "lit_template" }}
+{{ $wcLit := index $wc.benchmarks "lit_template" }}
+
+{{ if and $cemLit $wcLit }}
+{{ $bar_height := 40 }}
+{{ $bar_spacing := 60 }}
+{{ $max_value_label_width := 70 }}
+{{ $chart_width := 530 }}
+{{ $label_width := 220 }}
+{{ $total_width := add (add $chart_width $label_width) $max_value_label_width }}
+
+{{/* Human-readable labels for template scenarios */}}
+{{ $scenarioLabels := dict
+  "element_hover" "Element Hover"
+  "attribute_completion" "Attribute Completion"
+  "tag_completion" "Tag Completion"
+  "template_interpolation" "Interpolation Awareness"
+  "event_binding" "Event Binding (@click)"
+}}
+
+<div class="lsp-template-benchmark-chart">
+  <svg viewBox="0 0 {{ $total_width }} {{ add (mul 5 $bar_spacing) 40 }}" style="width: 100%; height: auto;">
+    <defs>
+      <linearGradient id="cem-gradient-template" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" style="stop-color:var(--cem-start);stop-opacity:1" />
+        <stop offset="100%" style="stop-color:var(--cem-end);stop-opacity:1" />
+      </linearGradient>
+      <linearGradient id="wc-gradient-template" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" style="stop-color:var(--wc-start);stop-opacity:1" />
+        <stop offset="100%" style="stop-color:var(--wc-end);stop-opacity:1" />
+      </linearGradient>
+    </defs>
+
+    {{ $y := 20 }}
+    {{ range $cemLit.scenario_results }}
+      {{ $scenarioName := .scenario }}
+      {{ $cemScenario := . }}
+
+      {{/* Find matching wc-toolkit scenario */}}
+      {{ $wcScenario := dict }}
+      {{ range $wcLit.scenario_results }}
+        {{ if eq .scenario $scenarioName }}
+          {{ $wcScenario = . }}
+        {{ end }}
+      {{ end }}
+
+      {{ if and $cemScenario.statistics $wcScenario.statistics }}
+        {{ $cemTime := $cemScenario.statistics.mean }}
+        {{ $wcTime := $wcScenario.statistics.mean }}
+        {{ $maxTime := cond (gt $cemTime $wcTime) $cemTime $wcTime }}
+
+        {{ if gt $maxTime 0 }}
+        {{ $cemWidth := div (mul $chart_width $cemTime) $maxTime }}
+        {{ $wcWidth := div (mul $chart_width $wcTime) $maxTime }}
+
+        {{ $cemText := printf "%.2fms" $cemTime }}
+        {{ $wcText := printf "%.2fms" $wcTime }}
+
+        {{ $displayLabel := index $scenarioLabels $scenarioName }}
+
+        <!-- Scenario label -->
+        <text x="0" y="{{ add $y 12 }}"
+              font-size="14"
+              font-weight="600"
+              fill="var(--label-color)">
+          {{ $displayLabel }}
+        </text>
+
+        <!-- CEM bar -->
+        <rect x="{{ $label_width }}"
+              y="{{ $y }}"
+              width="{{ $cemWidth }}"
+              height="16"
+              rx="3"
+              fill="url(#cem-gradient-template)">
+          <title>CEM: {{ $cemText }}</title>
+        </rect>
+        <text x="{{ add $label_width $chart_width 8 }}"
+              y="{{ add $y 12 }}"
+              font-size="12"
+              fill="var(--value-color)">
+          {{ $cemText }}
+        </text>
+
+        <!-- wc-toolkit bar -->
+        <rect x="{{ $label_width }}"
+              y="{{ add $y 22 }}"
+              width="{{ $wcWidth }}"
+              height="16"
+              rx="3"
+              fill="url(#wc-gradient-template)">
+          <title>wc-toolkit: {{ $wcText }}</title>
+        </rect>
+        <text x="{{ add $label_width $chart_width 8 }}"
+              y="{{ add $y 34 }}"
+              font-size="12"
+              fill="var(--value-color)">
+          {{ $wcText }}
+        </text>
+
+        {{ $y = add $y $bar_spacing }}
+        {{ end }}
+      {{ end }}
+    {{ end }}
+
+    <!-- Legend -->
+    {{ $legendY := sub $y 10 }}
+    <rect x="{{ $label_width }}" y="{{ $legendY }}" width="80" height="14" rx="3" fill="url(#cem-gradient-template)" />
+    <text x="{{ add $label_width 88 }}" y="{{ add $legendY 11 }}" font-size="12" fill="var(--label-color)">CEM LSP</text>
+
+    <rect x="{{ add $label_width 180 }}" y="{{ $legendY }}" width="80" height="14" rx="3" fill="url(#wc-gradient-template)" />
+    <text x="{{ add $label_width 268 }}" y="{{ add $legendY 11 }}" font-size="12" fill="var(--label-color)">wc-toolkit</text>
+  </svg>
+</div>
+
+<style>
+.lsp-template-benchmark-chart {
+  margin: 2em 0;
+  padding: 1em;
+  background: var(--sl-color-bg-nav);
+  border-radius: 0.5rem;
+
+  --cem-start: light-dark(#3b82f6, #60a5fa);
+  --cem-end: light-dark(#60a5fa, #93c5fd);
+  --wc-start: light-dark(#8b5cf6, #a78bfa);
+  --wc-end: light-dark(#a78bfa, #c4b5fd);
+
+  --label-color: light-dark(#1f2937, #f3f4f6);
+  --value-color: light-dark(#6b7280, #d1d5db);
+}
+
+.lsp-template-benchmark-chart svg {
+  background: transparent;
+}
+</style>
+{{ else }}
+<p><em>Run <code>make bench-lsp</code> to generate template benchmark data.</em></p>
+{{ end }}
+{{ else }}
+<p><em>Run <code>make bench-lsp</code> to generate comparison charts.</em></p>
+{{ end }}

@@ -7,23 +7,24 @@
 local script_dir = vim.fn.getcwd()
 package.path = script_dir .. '/?.lua;' .. package.path
 
--- Import benchmark modules
+-- Import core protocol benchmark modules (pure LSP timing without editor overhead)
 local startup_benchmark = require('modules.startup_benchmark')
 local hover_benchmark = require('modules.hover_benchmark')
 local completion_benchmark = require('modules.completion_benchmark')
 local diagnostics_benchmark = require('modules.diagnostics_benchmark')
-local file_lifecycle_benchmark = require('modules.file_lifecycle_benchmark')
-local stress_test_benchmark = require('modules.stress_test_benchmark')
 local attribute_hover_benchmark = require('modules.attribute_hover_benchmark')
-local edit_cycles_benchmark = require('modules.edit_cycles_benchmark')
 local lit_template_benchmark = require('modules.lit_template_benchmark')
 local references_performance_benchmark = require('modules.references_performance_benchmark')
 
--- Import enhanced benchmark modules
-local multi_buffer_benchmark = require('modules.multi_buffer_benchmark')
-local neovim_workflow_benchmark = require('modules.neovim_workflow_benchmark')
-local incremental_parsing_benchmark = require('modules.incremental_parsing_benchmark')
-local large_project_benchmark = require('modules.large_project_benchmark')
+-- Deprecated workflow benchmarks (removed due to artificial delays dominating results)
+-- These modules are kept in the codebase but not executed:
+-- - file_lifecycle_benchmark: 1000ms+ artificial wait periods
+-- - stress_test_benchmark: Bulk operations not representative of real usage
+-- - edit_cycles_benchmark: Synthetic edit patterns with 50ms delays
+-- - incremental_parsing_benchmark: Neovim buffer overhead obscures LSP timing
+-- - multi_buffer_benchmark: 2000ms initialization waits
+-- - neovim_workflow_benchmark: Editor commands, not LSP protocol
+-- - large_project_benchmark: Only 5 files, not truly "large"
 
 local function run_all_benchmarks()
   local overall_start_time = vim.fn.reltime()
@@ -58,23 +59,15 @@ local function run_all_benchmarks()
     benchmarks = {}
   }
   
-  -- Run each benchmark module
+  -- Core protocol benchmarks (pure LSP timing without editor overhead)
   local benchmarks = {
     {name = "startup", module = startup_benchmark},
     {name = "hover", module = hover_benchmark},
     {name = "completion", module = completion_benchmark},
     {name = "diagnostics", module = diagnostics_benchmark},
-    {name = "file_lifecycle", module = file_lifecycle_benchmark},
-    {name = "stress_test", module = stress_test_benchmark},
     {name = "attribute_hover", module = attribute_hover_benchmark},
-    {name = "edit_cycles", module = edit_cycles_benchmark},
     {name = "lit_template", module = lit_template_benchmark},
-    {name = "references_performance", module = references_performance_benchmark},
-    -- Enhanced benchmarks for real-world performance testing (120s total time limit)
-    {name = "multi_buffer", module = multi_buffer_benchmark},
-    {name = "neovim_workflow", module = neovim_workflow_benchmark},
-    {name = "incremental_parsing", module = incremental_parsing_benchmark},
-    {name = "large_project", module = large_project_benchmark}
+    {name = "references_performance", module = references_performance_benchmark}
   }
   
   for _, benchmark in ipairs(benchmarks) do

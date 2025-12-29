@@ -291,16 +291,17 @@ json-viewer {
 
 {{<lsp-benchmark-summary>}}
 
-<figure class="lsp-benchmarks-comparison" role="group" aria-labelledby="lsp-chart-caption">
-  <figcaption id="lsp-chart-caption" style="font-weight:bold;margin-bottom:0.5em;">
-    LSP performance comparison: lower is better (milliseconds)
-  </figcaption>
-  <p style="font-size:0.9em;color:var(--sl-color-gray-3);margin-bottom:1em;">
-    <em>Hover over benchmark names for detailed descriptions of what each test measures.</em>
-  </p>
-  {{<lsp-benchmark-chart>}}
-</figure>
+#### HTML File Operations
 
+Pure LSP protocol timing in `.html` files. Each benchmark measures the time from LSP request to response completion, using multiple iterations to calculate statistical distributions (mean, median, P95, P99).
+
+{{<lsp-simple-benchmark-chart>}}
+
+#### TypeScript Template Operations
+
+LSP functionality within TypeScript template literals (Lit `html\`\``). Tests parsing, completion, and interpolation awareness in embedded HTML contexts.
+
+{{<lsp-template-benchmark-chart>}}
 
 ---
 

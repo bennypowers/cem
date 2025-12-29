@@ -10,10 +10,10 @@
   "diagnostics" "Time to analyze code and report errors/warnings"
   "lit_template" "HTML embedded in JavaScript template strings (e.g., html`<div>...</div>`)"
   "attribute_hover" "Hover info for element attributes in templates"
-  "edit_cycles" "Performance during repeated edit operations"
-  "file_lifecycle" "Time to open, edit, and close files"
+  "edit_cycles" "Rapid HTML editing with real-time LSP feedback (adding attributes, inserting elements, modifying content)"
+  "file_lifecycle" "Complete editing workflow from opening an HTML file to closing it, including edits and hover requests"
   "references_performance" "Speed of finding all references to an element"
-  "incremental_parsing" "Performance of incremental document updates (character edits, element insertions, etc.)"
+  "incremental_parsing" "How fast the LSP processes your keystrokes as you type (character edits, element insertions, attribute changes, pasting blocks)"
   "large_project" "Performance in large codebases (file operations, workspace symbols)"
   "multi_buffer" "Performance with multiple files open (buffer switching, concurrent requests)"
   "neovim_workflow" "Real-world editor workflow simulation (navigation, buffer operations)"
@@ -25,7 +25,7 @@
   "lit_template" "Template String HTML"
   "attribute_hover" "Attribute Hover"
   "edit_cycles" "Repeated Edits"
-  "file_lifecycle" "Opening & Closing Files"
+  "file_lifecycle" "File Editing Session"
   "references_performance" "Find References"
   "incremental_parsing" "Typing & Editing"
   "large_project" "Large Codebase"
@@ -216,8 +216,19 @@
             {{ $cemStatTime := $stat.cemVal.mean }}
             {{ $wcStatTime := $stat.wcVal.mean }}
             {{ $statMaxTime := cond (gt $cemStatTime $wcStatTime) $cemStatTime $wcStatTime }}
+            {{ $statMinTime := cond (lt $cemStatTime $wcStatTime) $cemStatTime $wcStatTime }}
 
+            {{/* Only show sub-metric if there's a meaningful difference (>20% or >5ms) */}}
+            {{ $showSubMetric := false }}
             {{ if gt $statMaxTime 0 }}
+              {{ $percentDiff := div (sub $statMaxTime $statMinTime) $statMaxTime }}
+              {{ $absDiff := sub $statMaxTime $statMinTime }}
+              {{ if or (gt $percentDiff 0.2) (gt $absDiff 5) }}
+                {{ $showSubMetric = true }}
+              {{ end }}
+            {{ end }}
+
+            {{ if and (gt $statMaxTime 0) $showSubMetric }}
               {{ $cemStatWidth := div (mul $chart_width $cemStatTime) $statMaxTime }}
               {{ $wcStatWidth := div (mul $chart_width $wcStatTime) $statMaxTime }}
 
