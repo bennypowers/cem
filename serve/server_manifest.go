@@ -241,26 +241,28 @@ func (s *Server) RegenerateManifest() (int, error) {
 // RegenerateManifestIncremental incrementally updates the manifest for changed files
 // Returns the manifest size in bytes and any error
 func (s *Server) RegenerateManifestIncremental(changedFiles []string) (int, error) {
-	s.mu.Lock()
+	// Read required state under read lock
+	s.mu.RLock()
+	watchDir := s.watchDir
+	session := s.generateSession
+	sourceControlURL := s.sourceControlRootURL
+	s.mu.RUnlock()
 
-	if s.watchDir == "" {
-		s.mu.Unlock()
+	if watchDir == "" {
 		return 0, fmt.Errorf("no watch directory set")
 	}
 
 	// If no generate session exists yet, do a full regeneration
-	if s.generateSession == nil {
-		s.mu.Unlock() // Unlock before calling RegenerateManifest which will lock
+	if session == nil {
 		return s.RegenerateManifest()
 	}
 
-	// Use incremental processing with existing session
+	// Use incremental processing with existing session (no locks held)
 	ctx := context.Background()
-	pkg, err := s.generateSession.ProcessChangedFiles(ctx, changedFiles)
+	pkg, err := session.ProcessChangedFiles(ctx, changedFiles)
 	if err != nil {
 		// If incremental processing fails, fall back to full regeneration
 		s.logger.Warning("Incremental manifest generation failed, falling back to full regeneration: %v", err)
-		s.mu.Unlock() // Unlock before calling RegenerateManifest which will lock
 		return s.RegenerateManifest()
 	}
 
@@ -271,28 +273,32 @@ func (s *Server) RegenerateManifestIncremental(changedFiles []string) (int, erro
 			sourceFiles[module.Path] = true
 		}
 	}
-	s.sourceFiles = sourceFiles
 	s.logger.Debug("Tracking %d source files from manifest", len(sourceFiles))
 
 	// Marshal to JSON
 	manifestBytes, err := json.MarshalIndent(pkg, "", "  ")
 	if err != nil {
-		s.mu.Unlock()
 		return 0, fmt.Errorf("marshaling manifest: %w", err)
 	}
 
-	s.manifest = manifestBytes
-
 	// Build routing table from manifest
-	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, s.sourceControlRootURL)
+	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, sourceControlURL)
 	if err != nil {
 		s.logger.Warning("Failed to build demo routing table: %v", err)
-		s.demoRoutes = nil
+		routingTable = nil
 	} else {
-		s.demoRoutes = routingTable
 		s.logger.Debug("Built routing table with %d demo routes", len(routingTable))
 	}
 
-	s.mu.Unlock()
+	// Update server state under write lock
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.sourceFiles = sourceFiles
+	// Defensive copy (though json.MarshalIndent already returns a new slice)
+	s.manifest = make([]byte, len(manifestBytes))
+	copy(s.manifest, manifestBytes)
+	s.demoRoutes = routingTable
+
 	return len(manifestBytes), nil
 }
