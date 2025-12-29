@@ -1325,6 +1325,12 @@ func (s *Server) handleFileChanges() {
 			if err := s.rebuildPathResolver(); err != nil {
 				s.logger.Error("Failed to rebuild path resolver: %v", err)
 				// Continue processing - don't block other hot-reload logic
+			} else {
+				// URL rewrites changed - reload all pages
+				s.logger.Info("URL rewrites changed, reloading all pages")
+				if err := s.BroadcastReload([]string{"config"}, "url-rewrites-changed"); err != nil {
+					s.logger.Error("Failed to broadcast reload after path resolver rebuild: %v", err)
+				}
 			}
 		}
 
