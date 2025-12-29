@@ -173,10 +173,15 @@ func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/css; charset=utf-8")
 	case ".html":
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	case ".map":
 	case ".json":
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	case ".svg":
 		w.Header().Set("Content-Type", "image/svg+xml")
+	case ".woff":
+		w.Header().Set("Content-Type", "font/woff")
+	case ".woff2":
+		w.Header().Set("Content-Type", "font/woff2")
 	}
 
 	// Write the content
