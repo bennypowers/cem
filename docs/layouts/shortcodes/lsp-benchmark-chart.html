@@ -58,7 +58,7 @@
         <text x="0" y="{{ add $y 12 }}"
               font-size="14"
               font-weight="600"
-              fill="var(--sl-color-white)">
+              fill="var(--label-color)">
           {{ humanize $benchmarkName }}
         </text>
 
@@ -74,7 +74,7 @@
         <text x="{{ add $label_width $cemWidth 8 }}"
               y="{{ add $y 12 }}"
               font-size="12"
-              fill="var(--sl-color-gray-2)">
+              fill="var(--value-color)">
           {{ printf "%.2fms" $cemTime }}
         </text>
 
@@ -90,7 +90,7 @@
         <text x="{{ add $label_width $wcWidth 8 }}"
               y="{{ add $y 34 }}"
               font-size="12"
-              fill="var(--sl-color-gray-2)">
+              fill="var(--value-color)">
           {{ printf "%.2fms" $wcTime }}
         </text>
 
@@ -102,10 +102,10 @@
     <!-- Legend -->
     {{ $legendY := sub $y 10 }}
     <rect x="{{ $label_width }}" y="{{ $legendY }}" width="80" height="14" rx="3" fill="url(#cem-gradient)" />
-    <text x="{{ add $label_width 88 }}" y="{{ add $legendY 11 }}" font-size="12" fill="var(--sl-color-white)">CEM LSP</text>
+    <text x="{{ add $label_width 88 }}" y="{{ add $legendY 11 }}" font-size="12" fill="var(--label-color)">CEM LSP</text>
 
     <rect x="{{ add $label_width 180 }}" y="{{ $legendY }}" width="80" height="14" rx="3" fill="url(#wc-gradient)" />
-    <text x="{{ add $label_width 268 }}" y="{{ add $legendY 11 }}" font-size="12" fill="var(--sl-color-white)">wc-toolkit</text>
+    <text x="{{ add $label_width 268 }}" y="{{ add $legendY 11 }}" font-size="12" fill="var(--label-color)">wc-toolkit</text>
   </svg>
 </div>
 
@@ -121,6 +121,10 @@
   --cem-end: light-dark(#60a5fa, #93c5fd);
   --wc-start: light-dark(#8b5cf6, #a78bfa);
   --wc-end: light-dark(#a78bfa, #c4b5fd);
+
+  /* Text colors with light-dark() for readability */
+  --label-color: light-dark(#1f2937, #f3f4f6);
+  --value-color: light-dark(#6b7280, #d1d5db);
 }
 
 .lsp-comparison-chart svg {
