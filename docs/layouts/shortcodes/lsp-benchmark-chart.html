@@ -1,5 +1,5 @@
-{{ $cem := .Site.Data.lsp_benchmark_results_cem | default dict }}
-{{ $wc := .Site.Data.lsp_benchmark_results_wc_toolkit | default dict }}
+{{ $cem := index .Site.Data "lsp-benchmark-results-cem" | default dict }}
+{{ $wc := index .Site.Data "lsp-benchmark-results-wc-toolkit" | default dict }}
 
 {{ if and $cem.benchmarks $wc.benchmarks }}
 {{ $benchmarks := slice "startup" "hover" "completion" "diagnostics" }}
