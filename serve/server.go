@@ -181,6 +181,8 @@ func (s *Server) DebounceDuration() time.Duration {
 
 // Logger returns the server logger
 func (s *Server) Logger() middleware.Logger {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	return s.logger
 }
 

@@ -294,10 +294,10 @@ func (s *Server) handleFileChanges() {
 			// If smart reload found no affected pages, check if we're in a "no routes" state
 			// (e.g. no manifest yet). In this case, fallback to broadcasting to all clients.
 			s.mu.RLock()
-			noRoutes := len(s.demoRoutes) == 0
+			noDemoRoutes := len(s.demoRoutes) == 0
 			s.mu.RUnlock()
 
-			if noRoutes {
+			if noDemoRoutes {
 				s.logger.Debug("No demo routes found, falling back to broadcast all for %s", relPath)
 				// Create a "broadcast all" message (using empty affected list effectively broadcasts to all if we change logic,
 				// but here we just pass the file and rely on client side or simply assume all pages need reload)

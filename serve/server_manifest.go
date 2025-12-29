@@ -163,7 +163,6 @@ func (s *Server) TryLoadExistingManifest() (int, error) {
 	return len(manifestBytes), nil
 }
 
-// RegenerateManifest triggers manifest regeneration
 // RegenerateManifest performs a full manifest regeneration
 // Returns the manifest size in bytes and any error
 func (s *Server) RegenerateManifest() (int, error) {
