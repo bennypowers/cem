@@ -8,7 +8,7 @@
   "hover" "Response time for hover documentation popups"
   "completion" "Speed of autocomplete suggestions"
   "diagnostics" "Time to analyze code and report errors/warnings"
-  "lit_template" "Performance parsing Lit template literals with embedded HTML"
+  "lit_template" "HTML embedded in JavaScript template strings (e.g., html`<div>...</div>`)"
   "attribute_hover" "Hover info for element attributes in templates"
   "edit_cycles" "Performance during repeated edit operations"
   "file_lifecycle" "Time to open, edit, and close files"
@@ -18,6 +18,20 @@
   "multi_buffer" "Performance with multiple files open (buffer switching, concurrent requests)"
   "neovim_workflow" "Real-world editor workflow simulation (navigation, buffer operations)"
   "stress_test" "Performance under heavy load (bulk operations, rapid requests)"
+}}
+
+{{/* Human-readable labels for benchmark names */}}
+{{ $benchmarkLabels := dict
+  "lit_template" "Template String HTML"
+  "attribute_hover" "Attribute Hover"
+  "edit_cycles" "Edit Cycles"
+  "file_lifecycle" "File Lifecycle"
+  "references_performance" "Find References"
+  "incremental_parsing" "Incremental Parsing"
+  "large_project" "Large Project"
+  "multi_buffer" "Multiple Files"
+  "neovim_workflow" "Editor Workflow"
+  "stress_test" "Stress Test"
 }}
 
 {{/* Human-readable labels for nested stats */}}
@@ -130,13 +144,19 @@
         {{ $cemText := printf "%.2fms" $cemTime }}
         {{ $wcText := printf "%.2fms" $wcTime }}
 
+        {{/* Get display label from dictionary, fallback to humanized name */}}
+        {{ $displayLabel := index $benchmarkLabels $benchmarkName }}
+        {{ if not $displayLabel }}
+          {{ $displayLabel = humanize $benchmarkName }}
+        {{ end }}
+
         <!-- Benchmark label -->
         <text x="0" y="{{ add $y 12 }}"
               font-size="14"
               font-weight="600"
               fill="var(--label-color)">
           <title>{{ index $descriptions $benchmarkName }}</title>
-          {{ humanize $benchmarkName }}
+          {{ $displayLabel }}
         </text>
 
         <!-- CEM bar -->
@@ -175,13 +195,19 @@
         {{ else if $hasNestedStats }}
         {{/* Render nested statistics as grouped sub-bars */}}
 
+        {{/* Get display label from dictionary, fallback to humanized name */}}
+        {{ $displayLabel := index $benchmarkLabels $benchmarkName }}
+        {{ if not $displayLabel }}
+          {{ $displayLabel = humanize $benchmarkName }}
+        {{ end }}
+
         <!-- Benchmark label (parent category) -->
         <text x="0" y="{{ add $y 12 }}"
               font-size="14"
               font-weight="600"
               fill="var(--label-color)">
           <title>{{ index $descriptions $benchmarkName }}</title>
-          {{ humanize $benchmarkName }}
+          {{ $displayLabel }}
         </text>
 
         {{ $y = add $y 30 }}
