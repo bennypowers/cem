@@ -64,7 +64,7 @@ function M.run_lit_template_benchmark(config, fixture_dir)
         {line = 83, character = 15, element = "my-button-primary", expected_content = "button"},
         {line = 96, character = 12, element = "my-nav-tabs", expected_content = "navigation"},
         {line = 113, character = 15, element = "my-card-stats", expected_content = "card"},
-        {line = 194, character = 15, element = "my-table-sortable", expected_content = "table"}
+        {line = 204, character = 15, element = "my-table-sortable", expected_content = "table"}
       }
     },
     {
@@ -73,8 +73,8 @@ function M.run_lit_template_benchmark(config, fixture_dir)
       tests = {
         {line = 76, character = 45, element = "my-container-flex", attr_context = "gap", expected_min = 3},
         {line = 83, character = 35, element = "my-button-primary", attr_context = "variant", expected_min = 2},
-        {line = 118, character = 35, element = "my-badge-primary", attr_context = "size", expected_min = 3},
-        {line = 140, character = 30, element = "my-input-search", attr_context = "placeholder", expected_min = 1},
+        {line = 197, character = 40, element = "my-button-group", attr_context = "size", expected_min = 3},
+        {line = 136, character = 30, element = "my-input-search", attr_context = "placeholder", expected_min = 1},
         {line = 204, character = 40, element = "my-table-sortable", attr_context = "striped", expected_min = 1}
       }
     },
@@ -82,11 +82,11 @@ function M.run_lit_template_benchmark(config, fixture_dir)
       name = "tag_completion",
       description = "Tag name completions in template contexts",
       tests = {
-        {line = 100, character = 15, context = "nav", expected_min = 5, expected_contains = "my-nav"},
-        {line = 150, character = 20, context = "button", expected_min = 8, expected_contains = "my-button"},
-        {line = 200, character = 18, context = "input", expected_min = 10, expected_contains = "my-input"},
-        {line = 250, character = 16, context = "card", expected_min = 7, expected_contains = "my-card"},
-        {line = 300, character = 20, context = "image", expected_min = 5, expected_contains = "my-image"}
+        {line = 96, character = 15, context = "nav", expected_min = 5, expected_contains = "my-nav"},
+        {line = 82, character = 16, context = "button", expected_min = 8, expected_contains = "my-button"},
+        {line = 135, character = 18, context = "input", expected_min = 10, expected_contains = "my-input"},
+        {line = 132, character = 17, context = "card", expected_min = 7, expected_contains = "my-card"},
+        {line = 307, character = 18, context = "chart", expected_min = 3, expected_contains = "my-chart"}
       }
     },
     {
@@ -107,8 +107,8 @@ function M.run_lit_template_benchmark(config, fixture_dir)
         {line = 83, character = 50, element = "my-button-primary", event_context = "@click", expected_min = 1},
         {line = 87, character = 45, element = "my-button-secondary", event_context = "@click", expected_min = 1},
         {line = 137, character = 40, element = "my-input-search", event_context = "@input", expected_min = 1},
-        {line = 154, character = 35, element = "my-button-outline", event_context = "@click", expected_min = 1},
-        {line = 198, character = 30, element = "my-button-icon", event_context = "@click", expected_min = 1}
+        {line = 154, character = 50, element = "my-button-outline", event_context = "@click", expected_min = 1},
+        {line = 198, character = 55, element = "my-button-icon", event_context = "@click", expected_min = 1}
       }
     }
   }
@@ -281,9 +281,8 @@ function M.run_lit_template_benchmark(config, fixture_dir)
         if client.is_stopped() then
           break
         end
-        
-        -- Small delay between tests
-        vim.wait(100)
+
+        -- No artificial delay - real-world usage is rapid successive requests
       end
       
       local scenario_duration = (vim.uv.hrtime() - scenario_start) / 1e6
@@ -340,9 +339,8 @@ function M.run_lit_template_benchmark(config, fixture_dir)
     if client.is_stopped() then
       break
     end
-    
-    -- Small delay between scenarios
-    vim.wait(200)
+
+    -- No artificial delay between scenarios
   end
   
   -- Clean up

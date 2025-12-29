@@ -147,9 +147,8 @@ function M.run_hover_benchmark(config, fixture_dir)
     if client.is_stopped() then
       break
     end
-    
-    -- Small delay between different elements
-    vim.wait(100)
+
+    -- No artificial delay - real-world usage is rapid successive requests
   end
   
   -- Clean up

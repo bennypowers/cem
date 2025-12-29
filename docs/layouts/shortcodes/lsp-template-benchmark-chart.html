@@ -48,9 +48,9 @@
         {{ end }}
       {{ end }}
 
-      {{ if and $cemScenario.statistics $wcScenario.statistics }}
-        {{ $cemTime := $cemScenario.statistics.mean }}
-        {{ $wcTime := $wcScenario.statistics.mean }}
+      {{ if and $cemScenario.avg_test_duration $wcScenario.avg_test_duration }}
+        {{ $cemTime := $cemScenario.avg_test_duration }}
+        {{ $wcTime := $wcScenario.avg_test_duration }}
         {{ $maxTime := cond (gt $cemTime $wcTime) $cemTime $wcTime }}
 
         {{ if gt $maxTime 0 }}
