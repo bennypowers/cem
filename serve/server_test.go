@@ -1227,7 +1227,10 @@ func TestConfigFileRemovedHotReload(t *testing.T) {
 	}
 
 	// Remove config file
-	mfs.Remove("/test-package/.config/cem.yaml")
+	err = mfs.Remove("/test-package/.config/cem.yaml")
+	if err != nil {
+		t.Fatalf("Failed to remove config file: %v", err)
+	}
 
 	// Trigger rebuild
 	err = server.RebuildPathResolverForTest()
