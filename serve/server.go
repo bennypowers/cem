@@ -204,6 +204,8 @@ func (s *Server) SetLogger(log Logger) {
 
 // WebSocketManager returns the WebSocket manager (nil if reload disabled)
 func (s *Server) WebSocketManager() WebSocketManager {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	return s.wsManager
 }
 
@@ -367,5 +369,7 @@ func (s *Server) IsRunning() bool {
 // Done returns a channel that's closed when the server shuts down.
 // This allows goroutines to gracefully cancel work during shutdown.
 func (s *Server) Done() <-chan struct{} {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	return s.shutdown
 }
