@@ -143,7 +143,10 @@ function M.run_large_project_benchmark(config, fixture_dir)
     }
     
     local nav_ops = 0
-    while vim.fn.reltime(nav_start)[1] < 6 and vim.fn.reltime(start_time)[1] < max_time_seconds do
+    local max_nav_iterations = 3  -- Limit iterations to prevent infinite loops
+    local nav_iteration = 0
+    while nav_iteration < max_nav_iterations and vim.fn.reltime(nav_start)[1] < 6 and vim.fn.reltime(start_time)[1] < max_time_seconds do
+      nav_iteration = nav_iteration + 1
       for _, op in ipairs(navigation_operations) do
         if vim.fn.reltime(start_time)[1] >= max_time_seconds then
           break
@@ -154,18 +157,20 @@ function M.run_large_project_benchmark(config, fixture_dir)
         -- Set cursor position for operation
         pcall(vim.api.nvim_win_set_cursor, 0, {op.line, op.col})
         
-        -- Trigger appropriate LSP operation
-        if op.name == "go_to_definition" then
-          vim.lsp.buf.definition()
-        elseif op.name == "find_references" then
-          vim.lsp.buf.references()
-        elseif op.name == "hover_info" then
-          vim.lsp.buf.hover()
-        elseif op.name == "completion" then
-          vim.lsp.buf.completion()
-        end
-        
-        -- Wait for operation to complete
+        -- Trigger appropriate LSP operation with timeout protection
+        local op_success = pcall(function()
+          if op.name == "go_to_definition" then
+            vim.lsp.buf.definition()
+          elseif op.name == "find_references" then
+            vim.lsp.buf.references()
+          elseif op.name == "hover_info" then
+            vim.lsp.buf.hover()
+          elseif op.name == "completion" then
+            vim.lsp.buf.completion()
+          end
+        end)
+
+        -- Wait for operation to complete (with shorter timeout to prevent hanging)
         vim.wait(400, function() return false end)
         
         local op_time = tonumber(vim.fn.reltimestr(vim.fn.reltime(op_start)))

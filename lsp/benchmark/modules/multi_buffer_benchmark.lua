@@ -43,7 +43,7 @@ function M.run_multi_buffer_benchmark(config, fixture_dir)
       local buf_start = vim.fn.reltime()
       local buf = vim.fn.bufnr(file, true)
       vim.api.nvim_buf_call(buf, function()
-        vim.cmd('edit ' .. file)
+        vim.cmd('edit! ' .. file)  -- Force edit to avoid E37 error
       end)
       
       if vim.api.nvim_buf_is_loaded(buf) then
