@@ -125,7 +125,12 @@ func NewServerWithConfig(config Config) (*Server, error) {
 
 	// Create WebSocket manager if reload is enabled
 	if config.Reload {
-		s.wsManager = newWebSocketManager()
+		// Use provided WebSocketManager (for testing) or create default
+		if config.WebSocketManager != nil {
+			s.wsManager = config.WebSocketManager
+		} else {
+			s.wsManager = newWebSocketManager()
+		}
 		s.wsManager.SetLogger(s.logger)
 	}
 
@@ -353,6 +358,13 @@ func (s *Server) rebuildPathResolver() error {
 
 	// Rebuild middleware pipeline with new pathResolver (no lock needed)
 	s.setupMiddleware()
+
+	// Broadcast reload to connected clients (URL rewrites changed)
+	// This happens after successful rebuild to notify browsers to refresh
+	if err := s.BroadcastReload([]string{"config"}, "url-rewrites-changed"); err != nil {
+		s.logger.Error("Failed to broadcast reload after path resolver rebuild: %v", err)
+		// Don't return error - rebuild succeeded, broadcast failure is not critical
+	}
 
 	return nil
 }
@@ -1326,6 +1338,7 @@ func (s *Server) handleFileChanges() {
 				s.logger.Error("Failed to rebuild path resolver: %v", err)
 				// Continue processing - don't block other hot-reload logic
 			}
+			// Note: rebuildPathResolver() handles broadcasting reload message
 		}
 
 		// Filter to only relevant source files

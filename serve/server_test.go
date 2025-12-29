@@ -28,6 +28,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform"
@@ -950,6 +951,43 @@ func TestConfigFileURLRewritesParsing(t *testing.T) {
 	}
 }
 
+// mockWebSocketManager records broadcast calls for testing
+type mockWebSocketManager struct {
+	broadcasts []mockBroadcast
+	mu         sync.Mutex
+}
+
+type mockBroadcast struct {
+	message []byte
+	pages   []string
+}
+
+func (m *mockWebSocketManager) ConnectionCount() int                                    { return 0 }
+func (m *mockWebSocketManager) BroadcastShutdown() error                                { return nil }
+func (m *mockWebSocketManager) CloseAll() error                                         { return nil }
+func (m *mockWebSocketManager) HandleConnection(w http.ResponseWriter, r *http.Request) {}
+func (m *mockWebSocketManager) SetLogger(logger serve.Logger)                           {}
+
+func (m *mockWebSocketManager) Broadcast(message []byte) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.broadcasts = append(m.broadcasts, mockBroadcast{message: message})
+	return nil
+}
+
+func (m *mockWebSocketManager) BroadcastToPages(message []byte, pageURLs []string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.broadcasts = append(m.broadcasts, mockBroadcast{message: message, pages: pageURLs})
+	return nil
+}
+
+func (m *mockWebSocketManager) getBroadcasts() []mockBroadcast {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return append([]mockBroadcast{}, m.broadcasts...)
+}
+
 // TestConfigFileHotReload verifies config file changes trigger path resolver rebuild
 func TestConfigFileHotReload(t *testing.T) {
 	// Create in-memory filesystem with initial config
@@ -967,10 +1005,15 @@ func TestConfigFileHotReload(t *testing.T) {
 	sourceContent := `export class TestElement extends HTMLElement {}`
 	mfs.AddFile("/test-package/src/test.ts", sourceContent, 0644)
 
+	// Create mock WebSocket manager to verify broadcasts
+	mockWS := &mockWebSocketManager{}
+
 	config := serve.Config{
-		Port:       0,
-		FS:         mfs,
-		ConfigFile: "/test-package/.config/cem.yaml",
+		Port:             0,
+		Reload:           true,
+		FS:               mfs,
+		ConfigFile:       "/test-package/.config/cem.yaml",
+		WebSocketManager: mockWS,
 		Transforms: serve.TransformConfig{
 			TypeScript: serve.TypeScriptConfig{
 				Enabled: true,
@@ -1020,10 +1063,39 @@ func TestConfigFileHotReload(t *testing.T) {
 	// Create source file in new location
 	mfs.AddFile("/test-package/source/test.ts", sourceContent, 0644)
 
-	// Trigger rebuild
+	// Clear any previous broadcasts
+	mockWS.mu.Lock()
+	mockWS.broadcasts = nil
+	mockWS.mu.Unlock()
+
+	// Trigger rebuild (simulates file watcher detecting config change)
 	err = server.RebuildPathResolverForTest()
 	if err != nil {
 		t.Fatalf("Failed to rebuild path resolver: %v", err)
+	}
+
+	// Verify that a reload broadcast was sent after PathResolver rebuild
+	broadcasts := mockWS.getBroadcasts()
+	if len(broadcasts) != 1 {
+		t.Fatalf("Expected 1 broadcast after config change, got %d", len(broadcasts))
+	}
+
+	// Parse and verify the broadcast message
+	var reloadMsg serve.ReloadMessage
+	if err := json.Unmarshal(broadcasts[0].message, &reloadMsg); err != nil {
+		t.Fatalf("Failed to parse reload message: %v", err)
+	}
+
+	if reloadMsg.Type != "reload" {
+		t.Errorf("Expected reload message type 'reload', got %q", reloadMsg.Type)
+	}
+
+	if reloadMsg.Reason != "url-rewrites-changed" {
+		t.Errorf("Expected reload reason 'url-rewrites-changed', got %q", reloadMsg.Reason)
+	}
+
+	if len(reloadMsg.Files) != 1 || reloadMsg.Files[0] != "config" {
+		t.Errorf("Expected reload files ['config'], got %v", reloadMsg.Files)
 	}
 
 	// Verify new rewrites are active

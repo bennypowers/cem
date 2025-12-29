@@ -31,3 +31,4 @@ You are a Go expert specializing in concurrent, performant, and idiomatic Go cod
 
 Prefer standard library. Minimize external dependencies. Include go.mod setup.
 
+Use `make format` to format files after each round of writes.
