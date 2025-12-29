@@ -65,6 +65,7 @@ type Config struct {
 	SourceControlRootURL string                // Source control root URL for demo routing (e.g., "https://github.com/user/repo/tree/main/")
 	FS                   platform.FileSystem   // Optional filesystem for testing (defaults to os package)
 	URLRewrites          []config.URLRewrite   // URL rewrites for request path mapping (e.g., "/dist/:path*" -> "/src/{{.path}}")
+	WebSocketManager     WebSocketManager      // Optional WebSocket manager for testing (created automatically if nil and Reload=true)
 }
 
 // ReloadMessage represents a WebSocket reload event
