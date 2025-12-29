@@ -2,11 +2,16 @@
 {{ $wc := index .Site.Data "lsp-benchmark-results-wc-toolkit" | default dict }}
 
 {{ if and $cem.benchmarks $wc.benchmarks }}
-{{ $benchmarks := slice "startup" "hover" "completion" "diagnostics" }}
+{{/* Dynamically get all benchmark names from cem results */}}
+{{ $benchmarks := slice }}
+{{ range $name, $bench := $cem.benchmarks }}
+  {{ $benchmarks = $benchmarks | append $name }}
+{{ end }}
+{{ $benchmarks = sort $benchmarks }}
 {{ $bar_height := 40 }}
 {{ $bar_spacing := 60 }}
 {{ $chart_width := 600 }}
-{{ $label_width := 180 }}
+{{ $label_width := 220 }}
 {{ $total_width := add $chart_width $label_width }}
 
 <div class="lsp-comparison-chart">
@@ -34,18 +39,26 @@
         {{/* Try different data structure patterns */}}
         {{ if $cemBench.statistics }}
           {{ $cemTime = $cemBench.statistics.mean }}
+        {{ else if $cemBench.overall_statistics }}
+          {{ $cemTime = $cemBench.overall_statistics.mean }}
         {{ else if $cemBench.average_duration_ms }}
           {{ $cemTime = $cemBench.average_duration_ms }}
         {{ else if $cemBench.duration_ms }}
           {{ $cemTime = $cemBench.duration_ms }}
+        {{ else if $cemBench.average_search_time }}
+          {{ $cemTime = $cemBench.average_search_time }}
         {{ end }}
 
         {{ if $wcBench.statistics }}
           {{ $wcTime = $wcBench.statistics.mean }}
+        {{ else if $wcBench.overall_statistics }}
+          {{ $wcTime = $wcBench.overall_statistics.mean }}
         {{ else if $wcBench.average_duration_ms }}
           {{ $wcTime = $wcBench.average_duration_ms }}
         {{ else if $wcBench.duration_ms }}
           {{ $wcTime = $wcBench.duration_ms }}
+        {{ else if $wcBench.average_search_time }}
+          {{ $wcTime = $wcBench.average_search_time }}
         {{ end }}
 
         {{ $maxTime := cond (gt $cemTime $wcTime) $cemTime $wcTime }}
