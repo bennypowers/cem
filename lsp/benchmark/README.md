@@ -27,7 +27,8 @@ benchmark/
 │   ├── stress_test_benchmark.lua        # Large workload scenarios
 │   ├── attribute_hover_benchmark.lua    # Attribute hover correctness (21 attributes)
 │   ├── edit_cycles_benchmark.lua        # Edit responsiveness (rapid HTML editing)
-│   └── lit_template_benchmark.lua       # Lit-html template support testing
+│   ├── lit_template_benchmark.lua       # Lit-html template support testing
+│   └── references_performance_benchmark.lua  # Go-to-references workspace search
 ├── utils/                      # Measurement and reporting utilities
 │   ├── measurement.lua        # Statistical analysis functions
 │   ├── reporting.lua          # Output formatting
@@ -49,9 +50,9 @@ benchmark/
 
 ### Prerequisites
 
-- **cem LSP**: Install with `go install bennypowers.dev/cem@latest`
-- **wc-toolkit LSP**: Run `./scripts/setup_wc_toolkit.sh` to extract from VS Code extension
-- **Neovim**: Recent version with LSP support
+- **cem LSP**: Install with `go install bennypowers.dev/cem@latest` or build from source (`make build`)
+- **wc-toolkit LSP**: Install via Mason (`:MasonInstall wc-language-server`) - See [wc-toolkit Neovim integration](https://wc-toolkit.com/integrations/neovim/)
+- **Neovim**: Version 0.9+ with LSP support and Mason plugin
 
 ### Run Benchmarks
 

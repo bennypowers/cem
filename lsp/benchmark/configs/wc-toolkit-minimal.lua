@@ -1,7 +1,7 @@
 -- Minimal Neovim configuration for wc-toolkit LSP benchmarking
--- This config starts headless Neovim with only wc-toolkit LSP support
+-- Assumes wc-language-server installed via Mason: :MasonInstall wc-language-server
+-- See: https://wc-toolkit.com/integrations/neovim/
 
--- Set up runtime path to include benchmark directory  
 local benchmark_dir = vim.fn.getcwd()
 vim.opt.runtimepath:prepend(benchmark_dir)
 
@@ -23,20 +23,10 @@ vim.opt.ruler = false
 vim.opt.laststatus = 0
 vim.opt.signcolumn = "no"
 
--- Find wc-toolkit server path (use the built VS Code extension server)
-local function get_wc_toolkit_server_path()
-  local current_dir = vim.fn.getcwd()
-  local server_path = current_dir .. '/servers/wc-language-server/packages/vscode/dist/server.js'
-  if vim.fn.filereadable(server_path) == 1 then
-    return {'node', server_path, '--stdio'}
-  end
-  error("wc-toolkit LSP server not found at " .. server_path .. ". Please build the VS Code extension first.")
-end
-
--- Minimal LSP configuration for wc-toolkit (matching VS Code extension)
+-- wc-toolkit LSP configuration (using Mason-installed binary)
 local wc_toolkit_config = {
-  name = 'wc-toolkit-lsp',
-  cmd = get_wc_toolkit_server_path(),
+  name = 'wc-language-server',
+  cmd = { 'wc-language-server', '--stdio' },  -- Mason-installed binary
   root_markers = {
     'custom-elements.json',
     'wc.config.js',
@@ -50,12 +40,6 @@ local wc_toolkit_config = {
   },
   single_file_support = true,
   capabilities = vim.lsp.protocol.make_client_capabilities(),
-  init_options = {
-    typescript = {
-      tsdk = vim.fn.system('npm list typescript --depth=0 --silent 2>/dev/null | grep typescript | head -1'):match('typescript@[^%s]+') and 
-             vim.fn.trim(vim.fn.system('npm root')) .. '/typescript/lib' or nil
-    }
-  },
   on_attach = function(client, bufnr)
     -- Minimal attach - no keybindings or fancy features
   end,

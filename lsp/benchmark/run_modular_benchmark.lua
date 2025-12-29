@@ -17,6 +17,7 @@ local stress_test_benchmark = require('modules.stress_test_benchmark')
 local attribute_hover_benchmark = require('modules.attribute_hover_benchmark')
 local edit_cycles_benchmark = require('modules.edit_cycles_benchmark')
 local lit_template_benchmark = require('modules.lit_template_benchmark')
+local references_performance_benchmark = require('modules.references_performance_benchmark')
 
 -- Import enhanced benchmark modules
 local multi_buffer_benchmark = require('modules.multi_buffer_benchmark')
@@ -68,6 +69,7 @@ local function run_all_benchmarks()
     {name = "attribute_hover", module = attribute_hover_benchmark},
     {name = "edit_cycles", module = edit_cycles_benchmark},
     {name = "lit_template", module = lit_template_benchmark},
+    {name = "references_performance", module = references_performance_benchmark},
     -- Enhanced benchmarks for real-world performance testing (120s total time limit)
     {name = "multi_buffer", module = multi_buffer_benchmark},
     {name = "neovim_workflow", module = neovim_workflow_benchmark},
