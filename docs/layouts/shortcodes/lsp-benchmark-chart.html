@@ -20,6 +20,24 @@
   "stress_test" "Performance under heavy load (bulk operations, rapid requests)"
 }}
 
+{{/* Human-readable labels for nested stats */}}
+{{ $statLabels := dict
+  "character_edit_stats" "Typing single characters"
+  "element_insertion_stats" "Inserting HTML elements"
+  "attribute_edit_stats" "Editing attributes"
+  "large_paste_stats" "Pasting large blocks"
+  "file_open_stats" "Opening files"
+  "symbol_search_stats" "Searching symbols"
+  "workspace_operation_stats" "Workspace operations"
+  "buffer_switch_stats" "Switching between files"
+  "concurrent_request_stats" "Concurrent LSP requests"
+  "navigation_stats" "Code navigation"
+  "buffer_open_stats" "Opening buffers"
+  "bulk_hover" "Bulk hover requests"
+  "rapid_completion" "Rapid completion requests"
+  "document_modifications" "Document modifications"
+}}
+
 {{/* Dynamically get all benchmark names from cem results */}}
 {{ $benchmarks := slice }}
 {{ range $name, $bench := $cem.benchmarks }}
@@ -180,19 +198,23 @@
               {{ $cemStatText := printf "%.2fms" $cemStatTime }}
               {{ $wcStatText := printf "%.2fms" $wcStatTime }}
 
-              {{/* Clean up stat name: remove _stats suffix (if present), replace _ with space */}}
-              {{ $statLabel := $stat.name }}
-              {{ if strings.HasSuffix $statLabel "_stats" }}
-                {{ $statLabel = strings.TrimSuffix $statLabel "_stats" }}
+              {{/* Get human-readable label from dictionary, fallback to cleaned name */}}
+              {{ $statLabel := index $statLabels $stat.name }}
+              {{ if not $statLabel }}
+                {{ $statLabel = $stat.name }}
+                {{ if strings.HasSuffix $statLabel "_stats" }}
+                  {{ $statLabel = strings.TrimSuffix $statLabel "_stats" }}
+                {{ end }}
+                {{ $statLabel = replace $statLabel "_" " " }}
+                {{ $statLabel = humanize $statLabel }}
               {{ end }}
-              {{ $statLabel = replace $statLabel "_" " " }}
 
               <!-- Stat sublabel -->
               <text x="20" y="{{ add $y 12 }}"
                     font-size="12"
                     font-style="italic"
                     fill="var(--value-color)">
-                {{ humanize $statLabel }}
+                {{ $statLabel }}
               </text>
 
               <!-- CEM sub-bar -->
