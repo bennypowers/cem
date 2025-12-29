@@ -24,6 +24,7 @@ import (
 	"time"
 
 	importmappkg "bennypowers.dev/cem/serve/middleware/importmap"
+	"bennypowers.dev/cem/serve/middleware/types"
 )
 
 // CreateReloadMessage creates a reload message JSON
@@ -410,15 +411,10 @@ func (s *Server) getModuleGraphAffectedFiles(changedPath string) []string {
 	return affectedFSPaths
 }
 
-// getAffectedPageURLs returns page URLs that import the changed file or its dependents
-func (s *Server) getAffectedPageURLs(changedPath string, invalidatedFiles []string) []string {
-	s.logger.Debug("getAffectedPageURLs called with changedPath=%s, invalidatedFiles=%d", changedPath, len(invalidatedFiles))
-	s.mu.RLock()
-	watchDir := s.watchDir
-	s.mu.RUnlock()
-
-	// Get all files affected by this change (from cache invalidation)
-	// Convert absolute paths to relative paths for comparison
+// buildAffectedFilesMap creates a map of all files affected by a change
+// Includes the changed file and all transitively invalidated files
+// Stores both relative and absolute forms for matching flexibility
+func (s *Server) buildAffectedFilesMap(changedPath string, invalidatedFiles []string, watchDir string) map[string]bool {
 	affectedFiles := make(map[string]bool)
 
 	// Convert changed path to relative
@@ -426,7 +422,6 @@ func (s *Server) getAffectedPageURLs(changedPath string, invalidatedFiles []stri
 		affectedFiles[rel] = true
 		affectedFiles["/"+rel] = true // Also store with leading slash
 		s.logger.Debug("Changed file (relative): %s", rel)
-		s.logger.Debug("Affected files map keys: %v", affectedFiles)
 	} else {
 		affectedFiles[changedPath] = true
 		s.logger.Debug("Could not make relative, using absolute: %s", changedPath)
@@ -442,10 +437,76 @@ func (s *Server) getAffectedPageURLs(changedPath string, invalidatedFiles []stri
 		}
 	}
 
+	s.logger.Debug("Affected files map keys: %v", affectedFiles)
 	s.logger.Debug("Found %d affected file paths to check", len(affectedFiles))
 
-	// Get demo routes to find HTML file paths
+	return affectedFiles
+}
+
+// isRouteAffectedByFile checks if a demo route is affected by any of the changed files
+// Returns true if the route's HTML file is affected or if it imports any affected files
+func (s *Server) isRouteAffectedByFile(routePath string, routeEntry *types.DemoRouteEntry, affectedFiles map[string]bool, watchDir string) bool {
+	// First, check if the changed file IS this demo HTML file
+	if affectedFiles[routeEntry.FilePath] ||
+		affectedFiles["/"+routeEntry.FilePath] ||
+		affectedFiles[strings.TrimPrefix(routeEntry.FilePath, "/")] {
+		s.logger.Debug("Page %s is the changed file itself", routePath)
+		return true
+	}
+
+	htmlPath := filepath.Join(watchDir, routeEntry.FilePath)
+
+	// Extract imports from HTML
+	imports, err := s.extractModuleImports(htmlPath)
+	if err != nil {
+		s.logger.Debug("Failed to parse %s: %v", routeEntry.FilePath, err)
+		return false
+	}
+
+	if len(imports) == 0 {
+		return false // No imports to check
+	}
+
+	// Get the directory of the HTML file for resolving relative imports
+	demoDir := filepath.Dir(routeEntry.FilePath)
+
+	// Resolve imports to file paths and check if any match affected files
+	for _, importSpec := range imports {
+		resolvedPaths := s.resolveImportToPath(importSpec, demoDir)
+		if len(resolvedPaths) == 0 {
+			continue
+		}
+
+		for _, resolvedPath := range resolvedPaths {
+			// Normalize the resolved path
+			normalizedResolved := filepath.Clean(resolvedPath)
+
+			// Also try with .ts extension instead of .js
+			normalizedResolvedTS := normalizedResolved
+			if strings.HasSuffix(normalizedResolved, ".js") {
+				normalizedResolvedTS = normalizedResolved[:len(normalizedResolved)-3] + ".ts"
+			}
+
+			// Check if this resolved path matches any affected file
+			if affectedFiles[normalizedResolved] ||
+				affectedFiles[normalizedResolvedTS] ||
+				affectedFiles[strings.TrimPrefix(normalizedResolved, "/")] ||
+				affectedFiles[strings.TrimPrefix(normalizedResolvedTS, "/")] {
+				s.logger.Debug("Page %s imports affected file %s (via %s)", routePath, normalizedResolved, importSpec)
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// getAffectedPageURLs returns page URLs that import the changed file or its dependents
+func (s *Server) getAffectedPageURLs(changedPath string, invalidatedFiles []string) []string {
+	s.logger.Debug("getAffectedPageURLs called with changedPath=%s, invalidatedFiles=%d", changedPath, len(invalidatedFiles))
+
 	s.mu.RLock()
+	watchDir := s.watchDir
 	demoRoutes := s.demoRoutes
 	s.mu.RUnlock()
 
@@ -454,65 +515,17 @@ func (s *Server) getAffectedPageURLs(changedPath string, invalidatedFiles []stri
 		return nil
 	}
 
+	// Build map of affected files with all path variants
+	affectedFiles := s.buildAffectedFilesMap(changedPath, invalidatedFiles, watchDir)
+
 	s.logger.Debug("Checking %d demo routes for affected imports", len(demoRoutes))
 	affectedPages := make([]string, 0)
 
-	// For each demo route, check if it imports any affected files
+	// Check each route to see if it's affected
 	for routePath, routeEntry := range demoRoutes {
-		// First, check if the changed file IS this demo HTML file
-		if affectedFiles[routeEntry.FilePath] ||
-			affectedFiles["/"+routeEntry.FilePath] ||
-			affectedFiles[strings.TrimPrefix(routeEntry.FilePath, "/")] {
+		if s.isRouteAffectedByFile(routePath, routeEntry, affectedFiles, watchDir) {
 			affectedPages = append(affectedPages, routePath)
-			s.logger.Debug("Page %s is the changed file itself", routePath)
-			continue // Already added, skip import checking for this route
 		}
-
-		htmlPath := filepath.Join(watchDir, routeEntry.FilePath)
-
-		// Extract imports from HTML
-		imports, err := s.extractModuleImports(htmlPath)
-		if err != nil {
-			s.logger.Debug("Failed to parse %s: %v", routeEntry.FilePath, err)
-			continue
-		}
-
-		if len(imports) == 0 {
-			continue // Skip routes with no imports
-		}
-
-		// Get the directory of the HTML file for resolving relative imports
-		demoDir := filepath.Dir(routeEntry.FilePath)
-
-		// Resolve imports to file paths and check if any match affected files
-		for _, importSpec := range imports {
-			resolvedPaths := s.resolveImportToPath(importSpec, demoDir)
-			if len(resolvedPaths) == 0 {
-				continue
-			}
-
-			for _, resolvedPath := range resolvedPaths {
-				// Normalize the resolved path
-				normalizedResolved := filepath.Clean(resolvedPath)
-
-				// Also try with .ts extension instead of .js
-				normalizedResolvedTS := normalizedResolved
-				if strings.HasSuffix(normalizedResolved, ".js") {
-					normalizedResolvedTS = normalizedResolved[:len(normalizedResolved)-3] + ".ts"
-				}
-
-				// Check if this resolved path matches any affected file
-				if affectedFiles[normalizedResolved] ||
-					affectedFiles[normalizedResolvedTS] ||
-					affectedFiles[strings.TrimPrefix(normalizedResolved, "/")] ||
-					affectedFiles[strings.TrimPrefix(normalizedResolvedTS, "/")] {
-					affectedPages = append(affectedPages, routePath)
-					s.logger.Debug("Page %s imports affected file %s (via %s)", routePath, normalizedResolved, importSpec)
-					goto nextRoute // Found a match, move to next route
-				}
-			}
-		}
-	nextRoute:
 	}
 
 	if len(affectedPages) == 0 {
