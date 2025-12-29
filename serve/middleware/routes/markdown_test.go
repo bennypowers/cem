@@ -24,70 +24,70 @@ import (
 
 func TestMarkdownToHTML_XSSSanitization(t *testing.T) {
 	tests := []struct {
-		name           string
-		input          string
+		name             string
+		input            string
 		shouldNotContain string
-		description    string
+		description      string
 	}{
 		{
-			name:           "script tag injection",
-			input:          `<script>alert('xss')</script>`,
+			name:             "script tag injection",
+			input:            `<script>alert('xss')</script>`,
 			shouldNotContain: "<script>",
-			description:    "Script tags should be stripped to prevent XSS",
+			description:      "Script tags should be stripped to prevent XSS",
 		},
 		{
-			name:           "img onerror injection",
-			input:          `<img src=x onerror="alert('xss')">`,
+			name:             "img onerror injection",
+			input:            `<img src=x onerror="alert('xss')">`,
 			shouldNotContain: "onerror",
-			description:    "Event handlers should be stripped from tags",
+			description:      "Event handlers should be stripped from tags",
 		},
 		{
-			name:           "javascript protocol in link",
-			input:          `[click me](javascript:alert('xss'))`,
+			name:             "javascript protocol in link",
+			input:            `[click me](javascript:alert('xss'))`,
 			shouldNotContain: "javascript:",
-			description:    "JavaScript protocol in links should be stripped",
+			description:      "JavaScript protocol in links should be stripped",
 		},
 		{
-			name:           "onclick event handler",
-			input:          `<a href="#" onclick="alert('xss')">click</a>`,
+			name:             "onclick event handler",
+			input:            `<a href="#" onclick="alert('xss')">click</a>`,
 			shouldNotContain: "onclick",
-			description:    "Event handlers should be stripped",
+			description:      "Event handlers should be stripped",
 		},
 		{
-			name:           "iframe injection",
-			input:          `<iframe src="evil.com"></iframe>`,
+			name:             "iframe injection",
+			input:            `<iframe src="evil.com"></iframe>`,
 			shouldNotContain: "<iframe",
-			description:    "iframes should be stripped",
+			description:      "iframes should be stripped",
 		},
 		{
-			name:           "object tag injection",
-			input:          `<object data="evil.swf"></object>`,
+			name:             "object tag injection",
+			input:            `<object data="evil.swf"></object>`,
 			shouldNotContain: "<object",
-			description:    "Object tags should be stripped",
+			description:      "Object tags should be stripped",
 		},
 		{
-			name:           "embed tag injection",
-			input:          `<embed src="evil.swf">`,
+			name:             "embed tag injection",
+			input:            `<embed src="evil.swf">`,
 			shouldNotContain: "<embed",
-			description:    "Embed tags should be stripped",
+			description:      "Embed tags should be stripped",
 		},
 		{
-			name:           "data URI in image",
-			input:          `<img src="data:text/html,<script>alert('xss')</script>">`,
+			name:             "data URI in image",
+			input:            `<img src="data:text/html,<script>alert('xss')</script>">`,
 			shouldNotContain: "data:text/html",
-			description:    "Dangerous data URIs should be stripped",
+			description:      "Dangerous data URIs should be stripped",
 		},
 		{
-			name:           "style tag injection",
-			input:          `<style>body { background: url('javascript:alert(1)'); }</style>`,
+			name:             "style tag injection",
+			input:            `<style>body { background: url('javascript:alert(1)'); }</style>`,
 			shouldNotContain: "<style>",
-			description:    "Style tags should be stripped",
+			description:      "Style tags should be stripped",
 		},
 		{
-			name:           "mixed markdown and XSS",
-			input:          `# Heading\n\n<script>alert('xss')</script>\n\nNormal text`,
+			name:             "mixed markdown and XSS",
+			input:            `# Heading\n\n<script>alert('xss')</script>\n\nNormal text`,
 			shouldNotContain: "<script>",
-			description:    "XSS should be stripped even when mixed with valid markdown",
+			description:      "XSS should be stripped even when mixed with valid markdown",
 		},
 	}
 
@@ -108,40 +108,40 @@ func TestMarkdownToHTML_XSSSanitization(t *testing.T) {
 
 func TestMarkdownToHTML_SafeMarkdown(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    string
+		name          string
+		input         string
 		shouldContain []string
-		description string
+		description   string
 	}{
 		{
-			name:  "basic markdown heading",
-			input: "# Hello World",
+			name:          "basic markdown heading",
+			input:         "# Hello World",
 			shouldContain: []string{"<h1>", "Hello World", "</h1>"},
-			description: "Basic markdown should render correctly",
+			description:   "Basic markdown should render correctly",
 		},
 		{
-			name:  "emphasis and strong",
-			input: "This is *italic* and **bold**",
+			name:          "emphasis and strong",
+			input:         "This is *italic* and **bold**",
 			shouldContain: []string{"<em>italic</em>", "<strong>bold</strong>"},
-			description: "Emphasis markdown should render correctly",
+			description:   "Emphasis markdown should render correctly",
 		},
 		{
-			name:  "code blocks",
-			input: "```js\nconst x = 1;\n```",
+			name:          "code blocks",
+			input:         "```js\nconst x = 1;\n```",
 			shouldContain: []string{"<code>", "const", "</code>"},
-			description: "Code blocks should render correctly",
+			description:   "Code blocks should render correctly",
 		},
 		{
-			name:  "safe links",
-			input: "[example](https://example.com)",
+			name:          "safe links",
+			input:         "[example](https://example.com)",
 			shouldContain: []string{"<a", "href=\"https://example.com\"", "example</a>"},
-			description: "Safe links should render correctly",
+			description:   "Safe links should render correctly",
 		},
 		{
-			name:  "lists",
-			input: "- Item 1\n- Item 2",
+			name:          "lists",
+			input:         "- Item 1\n- Item 2",
 			shouldContain: []string{"<ul>", "<li>Item 1</li>", "<li>Item 2</li>", "</ul>"},
-			description: "Lists should render correctly",
+			description:   "Lists should render correctly",
 		},
 	}
 

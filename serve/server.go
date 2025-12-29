@@ -36,8 +36,8 @@ import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/netutil"
 
-	G "bennypowers.dev/cem/generate"
 	"bennypowers.dev/cem/cmd/config"
+	G "bennypowers.dev/cem/generate"
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/logger"
 	"bennypowers.dev/cem/serve/middleware"
@@ -78,7 +78,7 @@ type Server struct {
 	workspaceRoot     string                        // Root directory of workspace
 	workspacePackages []middleware.WorkspacePackage // Discovered packages with manifests
 	// Cached routing table for demo routes (both workspace and single-package mode)
-	demoRoutes           map[string]*routes.DemoRouteEntry
+	demoRoutes              map[string]*routes.DemoRouteEntry
 	importMap               *importmappkg.ImportMap  // Cached import map (workspace or single-package)
 	sourceControlRootURL    string                   // Source control root URL for demo routing
 	templates               *routes.TemplateRegistry // Template registry for HTML rendering

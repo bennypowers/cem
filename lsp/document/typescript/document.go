@@ -670,7 +670,9 @@ func (d *TypeScriptDocument) FindCustomElements(
 			results := method.Call([]reflect.Value{reflect.ValueOf("typescript")})
 			if len(results) > 0 && !results[0].IsNil() {
 				handler := results[0].Interface()
-				if h, ok := handler.(interface{ FindCustomElements(types.Document) ([]types.CustomElementMatch, error) }); ok {
+				if h, ok := handler.(interface {
+					FindCustomElements(types.Document) ([]types.CustomElementMatch, error)
+				}); ok {
 					return h.FindCustomElements(d)
 				}
 			}
@@ -701,4 +703,3 @@ func (d *TypeScriptDocument) FindHeadInsertionPoint(dm any) (protocol.Position, 
 	// TypeScript files don't have <head> sections
 	return protocol.Position{}, false
 }
-

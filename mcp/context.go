@@ -35,7 +35,6 @@ import (
 	V "bennypowers.dev/cem/validate"
 )
 
-
 // MCPContext manages custom elements manifests for MCP context
 // This is a lightweight wrapper around the LSP registry for reuse
 type MCPContext struct {
@@ -81,14 +80,13 @@ func NewMCPCustomElementDeclaration(element *M.CustomElement, tagName string) *M
 	return &MCPCustomElementDeclaration{
 		RenderableCustomElementDeclaration: renderable,
 		Guidelines:                         guidelines,
-		CacheKey:                          generateCacheKey(tagName, element),
-		ModulePath:                        "",  // Set by registry when available
-		PackageName:                       "",  // Set by registry when available
+		CacheKey:                           generateCacheKey(tagName, element),
+		ModulePath:                         "", // Set by registry when available
+		PackageName:                        "", // Set by registry when available
 	}
 }
 
 // Use the interface from mcp/types instead of struct alias
-
 
 // Helper functions
 
@@ -462,13 +460,11 @@ func extractGuidelinesFromElement(element *M.CustomElement) []string {
 	return guidelines
 }
 
-
 // generateCacheKey generates a unique cache key for the element
 func generateCacheKey(tagName string, element *M.CustomElement) string {
 	// Use tag name for basic cache key
 	return tagName
 }
-
 
 // MCPContextAdapter implements MCPTypes.MCPContext interface for tools package
 type MCPContextAdapter struct {

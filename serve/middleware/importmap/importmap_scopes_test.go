@@ -55,7 +55,7 @@ func TestImportMap_TransitiveDependenciesWithScopes(t *testing.T) {
 			"@lit/reactive-element": "^2.0.0",
 		},
 		"exports": map[string]interface{}{
-			".": "./index.js",
+			".":               "./index.js",
 			"./decorators.js": "./decorators.js",
 		},
 	}
@@ -73,7 +73,7 @@ func TestImportMap_TransitiveDependenciesWithScopes(t *testing.T) {
 	reactiveElementPkg := map[string]interface{}{
 		"name": "@lit/reactive-element",
 		"exports": map[string]interface{}{
-			".": "./reactive-element.js",
+			".":              "./reactive-element.js",
 			"./decorators/*": "./decorators/*.js",
 		},
 	}

@@ -28,10 +28,10 @@ import (
 // TestTreeViewComponentFiles verifies tree view component files exist and have required content
 func TestTreeViewComponentFiles(t *testing.T) {
 	tests := []struct {
-		name         string
-		path         string
-		mustContain  []string
-		description  string
+		name        string
+		path        string
+		mustContain []string
+		description string
 	}{
 		{
 			name: "pf-v6-tree-view.js",

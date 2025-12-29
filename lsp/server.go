@@ -229,4 +229,3 @@ func (s *Server) InitializeForTesting() error {
 
 	return nil
 }
-

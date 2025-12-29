@@ -193,4 +193,3 @@ func TestWorkspaceDiagnostics_NoFalsePositives_pnpm(t *testing.T) {
 		assert.Equal(t, "my-element-a", element.TagName)
 	}
 }
-

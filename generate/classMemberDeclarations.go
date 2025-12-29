@@ -22,10 +22,10 @@ import (
 	"slices"
 	"strings"
 
+	"bennypowers.dev/cem/generate/jsdoc"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
 	S "bennypowers.dev/cem/set"
-	"bennypowers.dev/cem/generate/jsdoc"
 
 	ts "github.com/tree-sitter/go-tree-sitter"
 )

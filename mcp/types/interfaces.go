@@ -23,10 +23,10 @@ import (
 // DataFetcher represents a declarative data source for tools
 type DataFetcher struct {
 	Name     string `yaml:"name"`
-	Type     string `yaml:"type"`     // Legacy: will be deprecated
-	Source   string `yaml:"source"`   // New: data source name (registry, args, previous fetcher name)
-	Path     string `yaml:"path"`     // JSONPath/gjson expression
-	Filter   string `yaml:"filter"`   // Optional: first, count, exists
+	Type     string `yaml:"type"`   // Legacy: will be deprecated
+	Source   string `yaml:"source"` // New: data source name (registry, args, previous fetcher name)
+	Path     string `yaml:"path"`   // JSONPath/gjson expression
+	Filter   string `yaml:"filter"` // Optional: first, count, exists
 	Required bool   `yaml:"required,omitempty"`
 }
 

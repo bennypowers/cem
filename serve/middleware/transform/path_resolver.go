@@ -41,9 +41,9 @@ const urlPatternBaseURL = "https://example.com"
 // patternMapping represents a compiled URL pattern and Go template mapping
 type patternMapping struct {
 	pattern  *urlpattern.URLPattern // Compiled URL pattern
-	template *template.Template      // Compiled Go template
-	fromStr  string                  // Original pattern string (for logging)
-	toStr    string                  // Original template string (for logging)
+	template *template.Template     // Compiled Go template
+	fromStr  string                 // Original pattern string (for logging)
+	toStr    string                 // Original template string (for logging)
 }
 
 // PathResolver resolves TypeScript source files from JavaScript request paths.

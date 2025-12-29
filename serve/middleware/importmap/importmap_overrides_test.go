@@ -591,10 +591,10 @@ func TestImportMap_ConfigOverrideValidation(t *testing.T) {
 		Logger: &testLogger{warnings: &warnings},
 		ConfigOverride: &ImportMap{
 			Imports: map[string]string{
-				"valid-key":        "/valid/path.js",
-				"key\nwith\nnewline": "/bad/path.js",     // Should be rejected
-				"key\x00with\x00null": "/bad/path2.js",   // Should be rejected
-				"another-valid":    "https://example.com", // Should be kept
+				"valid-key":           "/valid/path.js",
+				"key\nwith\nnewline":  "/bad/path.js",        // Should be rejected
+				"key\x00with\x00null": "/bad/path2.js",       // Should be rejected
+				"another-valid":       "https://example.com", // Should be kept
 			},
 			Scopes: map[string]map[string]string{
 				"/valid-scope/": {

@@ -293,11 +293,11 @@ func TestServer_AddManifest(t *testing.T) {
 
 func TestServer_ElementSource(t *testing.T) {
 	tests := []struct {
-		name            string
-		fixtureFile     string
-		tagName         string
-		expectedSource  string
-		expectedExists  bool
+		name           string
+		fixtureFile    string
+		tagName        string
+		expectedSource string
+		expectedExists bool
 	}{
 		{
 			name:           "ElementWithModulePath",

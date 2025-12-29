@@ -93,7 +93,7 @@ type FSNotifyFileWatcher struct {
 	errors  chan error
 	mu      sync.RWMutex
 	closed  bool
-	done    chan struct{} // Signal to stop translateEvents goroutine
+	done    chan struct{}  // Signal to stop translateEvents goroutine
 	wg      sync.WaitGroup // Wait for goroutine to exit
 }
 

@@ -26,12 +26,12 @@ import (
 
 // LSPFixture represents a single LSP test scenario loaded from fixtures
 type LSPFixture struct {
-	Name        string          // Test scenario name (directory name)
-	InputHTML   string          // HTML content from input.html (deprecated: use InputContent)
-	InputContent string         // Content from input.html or input.ts
-	InputType   string          // File type: "html" or "ts"
-	Manifest    json.RawMessage // Optional manifest data from manifest.json
-	ExpectedMap map[string]any  // Expected results from expected-*.json or expected.json
+	Name         string          // Test scenario name (directory name)
+	InputHTML    string          // HTML content from input.html (deprecated: use InputContent)
+	InputContent string          // Content from input.html or input.ts
+	InputType    string          // File type: "html" or "ts"
+	Manifest     json.RawMessage // Optional manifest data from manifest.json
+	ExpectedMap  map[string]any  // Expected results from expected-*.json or expected.json
 }
 
 // RunLSPFixtures discovers and runs LSP tests from a testdata directory.

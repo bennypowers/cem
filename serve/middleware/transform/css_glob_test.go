@@ -36,12 +36,12 @@ func (m *mockErrorBroadcaster) BroadcastError(title, message, filename string) {
 // TestCSSGlobFiltering tests that CSS include/exclude patterns work correctly
 func TestCSSGlobFiltering(t *testing.T) {
 	tests := []struct {
-		name               string
-		requestPath        string
-		include            []string
-		exclude            []string
-		expectTransformed  bool
-		description        string
+		name              string
+		requestPath       string
+		include           []string
+		exclude           []string
+		expectTransformed bool
+		description       string
 	}{
 		{
 			name:              "no patterns - opt-in required",
@@ -294,8 +294,8 @@ func TestCSSGlobFiltering_E2E(t *testing.T) {
 	handler := middleware(next)
 
 	tests := []struct {
-		path                string
-		expectTransformed   bool
+		path              string
+		expectTransformed bool
 	}{
 		{"/elements/button.css", true},
 		{"/docs/styles.css", false},

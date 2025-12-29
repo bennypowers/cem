@@ -34,9 +34,9 @@ func MockManifest() ([]byte, error) {
 				"path": "my-element.js",
 				"declarations": []map[string]interface{}{
 					{
-						"kind":    "class",
-						"name":    "MyElement",
-						"tagName": "my-element",
+						"kind":          "class",
+						"name":          "MyElement",
+						"tagName":       "my-element",
 						"customElement": true,
 						"attributes": []map[string]interface{}{
 							{

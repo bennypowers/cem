@@ -31,15 +31,15 @@ import (
 
 // documentManager implements the types.Manager interface
 type documentManager struct {
-	documents          map[string]types.Document
-	queryManager       *Q.QueryManager
-	languageHandlers   map[string]types.LanguageHandler
-	incrementalParser  types.IncrementalParser
-	mu                 sync.RWMutex
+	documents         map[string]types.Document
+	queryManager      *Q.QueryManager
+	languageHandlers  map[string]types.LanguageHandler
+	incrementalParser types.IncrementalParser
+	mu                sync.RWMutex
 	// Per-URI locks to serialize tree-sitter operations on the same document
 	// Tree-sitter C objects are NOT thread-safe - concurrent access causes segfaults
-	uriLocks           map[string]*sync.Mutex
-	uriLocksMu         sync.Mutex
+	uriLocks   map[string]*sync.Mutex
+	uriLocksMu sync.Mutex
 }
 
 // NewDocumentManager creates a new document manager with language handlers

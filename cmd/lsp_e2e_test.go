@@ -63,13 +63,13 @@ type jsonrpcError struct {
 
 // lspClient implements a minimal LSP client over stdin/stdout
 type lspClient struct {
-	stdin      io.WriteCloser
-	stdout     *bufio.Reader
-	cmd        *exec.Cmd
-	mu         sync.Mutex
-	nextID     atomic.Int64
-	pending    map[int64]chan jsonrpcResponse
-	pendingMu  sync.Mutex
+	stdin     io.WriteCloser
+	stdout    *bufio.Reader
+	cmd       *exec.Cmd
+	mu        sync.Mutex
+	nextID    atomic.Int64
+	pending   map[int64]chan jsonrpcResponse
+	pendingMu sync.Mutex
 }
 
 func (c *lspClient) readMessage() (json.RawMessage, error) {
@@ -383,7 +383,7 @@ func TestLSPHover(t *testing.T) {
 				URI: protocol.DocumentUri("file://" + jsFile),
 			},
 			Position: protocol.Position{
-				Line:      3, // 0-indexed, so line 4 in the file
+				Line:      3,  // 0-indexed, so line 4 in the file
 				Character: 15, // Position on "MyElement" in "export class MyElement"
 			},
 		},

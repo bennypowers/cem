@@ -166,12 +166,12 @@ func TestJSXCompletionContext(t *testing.T) {
 	fixtureDir := filepath.Join("test", "fixtures", "jsx-support-test")
 
 	tests := []struct {
-		name           string
-		fixtureFile    string
-		position       protocol.Position
-		expectedType   types.CompletionContextType
-		expectedTag    string
-		expectedAttr   string
+		name         string
+		fixtureFile  string
+		position     protocol.Position
+		expectedType types.CompletionContextType
+		expectedTag  string
+		expectedAttr string
 	}{
 		{
 			name:         "Tag name completion in JSX",

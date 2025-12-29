@@ -242,4 +242,3 @@ export class TestElement extends LitElement {
 		t.Logf("✅ Fast completion update cycle test completed instantly (eliminated 15-second delay)")
 	})
 }
-

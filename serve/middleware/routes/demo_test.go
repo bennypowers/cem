@@ -27,10 +27,10 @@ import (
 // file paths attempting directory traversal are rejected
 func TestBuildDemoRoutingTable_DirectoryTraversalPrevention(t *testing.T) {
 	tests := []struct {
-		name          string
-		demoURL       string
-		shouldReject  bool
-		description   string
+		name         string
+		demoURL      string
+		shouldReject bool
+		description  string
 	}{
 		{
 			name:         "relative path with parent traversal",
@@ -262,10 +262,10 @@ func TestBuildPackageRoutingTable_DuplicateDetection(t *testing.T) {
 // are correctly resolved, especially when they are file paths rather than URLs
 func TestBuildDemoRoutingTable_SourceHrefPaths(t *testing.T) {
 	tests := []struct {
-		name           string
-		sourceHref     string
-		expectedPath   string
-		description    string
+		name         string
+		sourceHref   string
+		expectedPath string
+		description  string
 	}{
 		{
 			name:         "absolute path with leading slash",

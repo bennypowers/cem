@@ -50,7 +50,8 @@ type TsConfigCompilerOptions struct {
 // Relative paths are normalized to the tsconfig directory.
 //
 // Example: rootDir="./src", outDir="./dist" produces:
-//   URLRewrite{URLPattern: "/dist/:path*", URLTemplate: "/src/{{.path}}"}
+//
+//	URLRewrite{URLPattern: "/dist/:path*", URLTemplate: "/src/{{.path}}"}
 func ParseTsConfig(path string, fs platform.FileSystem) ([]cfg.URLRewrite, []string, error) {
 	visited := make(map[string]bool)
 	rewrites, _, visitedFiles, err := parseTsConfigRecursive(path, fs, 0, visited)

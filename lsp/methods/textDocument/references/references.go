@@ -285,7 +285,6 @@ func findReferencesInDocument(ctx types.ServerContext, doc types.Document, eleme
 	return locations
 }
 
-
 // findReferencesInWorkspaceWithFS searches for references using a provided filesystem
 // This allows for testability with mock filesystems
 func findReferencesInWorkspaceWithFS(workspaceRoot string, elementName string, openDocuments []types.Document, filesystem platform.FileSystem) []protocol.Location {

@@ -281,4 +281,3 @@ func TestSidebarStatePersistence_Expanded(t *testing.T) {
 		t.Errorf("Expected Sidebar.Collapsed false, got %v", state.Sidebar.Collapsed)
 	}
 }
-

@@ -65,7 +65,6 @@ func Completion(ctx types.ServerContext, context *glsp.Context, params *protocol
 	helpers.SafeDebugLog("[COMPLETION] Analysis result: Type=%d, TagName='%s', AttributeName='%s'",
 		analysis.Type, analysis.TagName, analysis.AttributeName)
 
-
 	// Return appropriate completions based on context
 	switch analysis.Type {
 	case types.CompletionTagName:

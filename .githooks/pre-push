@@ -1,0 +1,32 @@
+#!/bin/bash
+# Pre-push hook that runs formatting check and linting before allowing push
+# To install: make install-git-hooks
+# To bypass: git push --no-verify
+
+set -e
+
+echo "Running pre-push checks..."
+
+# Check formatting
+echo "Checking Go formatting..."
+unformatted_files=$(gofmt -l .)
+if [ -n "$unformatted_files" ]; then
+    echo "✗ The following files are not formatted:"
+    echo "$unformatted_files"
+    echo ""
+    echo "Run 'make format' to fix formatting issues"
+    exit 1
+fi
+echo "✓ Formatting check passed"
+
+# Run linter
+echo "Running linter..."
+if make lint; then
+    echo "✓ Linting passed"
+else
+    echo "✗ Linting failed - fix issues or use --no-verify to bypass"
+    exit 1
+fi
+
+echo ""
+echo "✓ All pre-push checks passed"
