@@ -51,8 +51,19 @@ benchmark/
 ### Prerequisites
 
 - **cem LSP**: Install with `go install bennypowers.dev/cem@latest` or build from source (`make build`)
-- **wc-toolkit LSP**: Install via Mason (`:MasonInstall wc-language-server`) - See [wc-toolkit Neovim integration](https://wc-toolkit.com/integrations/neovim/)
-- **Neovim**: Version 0.9+ with LSP support and Mason plugin
+- **wc-toolkit LSP**: Run `./setup_wc_toolkit.sh` to create an isolated npx wrapper (requires Node.js/npx)
+- **Neovim**: Version 0.9+ with LSP support
+
+### Setup wc-toolkit
+
+The setup script creates an isolated npx wrapper that won't affect your Mason configuration:
+
+```bash
+cd lsp/benchmark
+./setup_wc_toolkit.sh
+```
+
+This creates `bin/wc-language-server` which uses `npx @wc-toolkit/language-server` on demand.
 
 ### Run Benchmarks
 

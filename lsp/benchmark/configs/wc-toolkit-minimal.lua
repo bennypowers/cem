@@ -32,10 +32,13 @@ vim.notify = function(msg, level, opts)
   end
 end
 
--- wc-toolkit LSP configuration (using Mason-installed binary)
+-- wc-toolkit LSP configuration (using local npx wrapper)
+local benchmark_dir = vim.fn.getcwd()
+local wc_server_path = benchmark_dir .. '/bin/wc-language-server'
+
 local wc_toolkit_config = {
   name = 'wc-language-server',
-  cmd = { 'wc-language-server', '--stdio' },  -- Mason-installed binary
+  cmd = { wc_server_path, '--stdio' },  -- Local npx wrapper
   root_markers = {
     'custom-elements.json',
     'wc.config.js',

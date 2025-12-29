@@ -1,0 +1,10 @@
+# Benchmark-specific ignores
+
+# Local wc-toolkit server wrapper
+bin/
+
+# Isolated Mason installation (if used)
+.mason/
+
+# Mason setup temp files
+.mason-setup.lua
