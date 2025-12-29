@@ -39,6 +39,11 @@ type TypeScriptDocument struct {
 	parser     *ts.Parser
 	scriptTags []types.ScriptTag
 	mu         sync.RWMutex
+
+	// Performance cache: parsed templates and custom elements
+	cachedTemplates       []TemplateContext
+	cachedCustomElements  []types.CustomElementMatch
+	cacheVersion          int32 // Version when cache was populated
 }
 
 // Base document interface methods
@@ -89,8 +94,14 @@ func (d *TypeScriptDocument) ScriptTags() []types.ScriptTag {
 func (d *TypeScriptDocument) UpdateContent(content string, version int32) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
+	oldVersion := d.version
 	d.content = content
 	d.version = version
+	// Invalidate cache when content changes
+	d.cachedTemplates = nil
+	d.cachedCustomElements = nil
+	d.cacheVersion = 0
+	helpers.SafeDebugLog("[CACHE] UpdateContent: cache INVALIDATED (old version %d -> new version %d)", oldVersion, version)
 }
 
 // SetTree sets the document's syntax tree
@@ -101,6 +112,11 @@ func (d *TypeScriptDocument) SetTree(tree *ts.Tree) {
 		d.tree.Close()
 	}
 	d.tree = tree
+	// Invalidate cache when tree is replaced
+	d.cachedTemplates = nil
+	d.cachedCustomElements = nil
+	d.cacheVersion = 0
+	helpers.SafeDebugLog("[CACHE] SetTree: cache INVALIDATED (version %d)", d.version)
 }
 
 // Parser returns the document's parser
@@ -173,6 +189,7 @@ func (d *TypeScriptDocument) byteOffsetToPosition(offset uint) protocol.Position
 
 // Parse parses the TypeScript content using tree-sitter
 func (d *TypeScriptDocument) Parse(content string) error {
+	helpers.SafeDebugLog("[CACHE] Parse() called for document version %d - THIS INVALIDATES CACHE", d.version)
 	d.UpdateContent(content, d.version)
 
 	parser := Q.RetrieveTypeScriptParser()
@@ -189,6 +206,19 @@ func (d *TypeScriptDocument) Parse(content string) error {
 
 // findCustomElements finds custom elements in TypeScript template literals
 func (d *TypeScriptDocument) findCustomElements(handler *Handler) ([]types.CustomElementMatch, error) {
+	// Check cache first
+	d.mu.RLock()
+	currentVersion := d.version
+	if d.cachedCustomElements != nil && d.cacheVersion == currentVersion {
+		cachedElements := d.cachedCustomElements
+		d.mu.RUnlock()
+		helpers.SafeDebugLog("[CACHE] findCustomElements: cache HIT (version %d, %d elements)", currentVersion, len(cachedElements))
+		return cachedElements, nil
+	}
+	helpers.SafeDebugLog("[CACHE] findCustomElements: cache MISS (version %d, cached version %d, cached nil: %v)",
+		currentVersion, d.cacheVersion, d.cachedCustomElements == nil)
+	d.mu.RUnlock()
+
 	tree := d.Tree()
 	if tree == nil {
 		return nil, fmt.Errorf("no tree available for document")
@@ -217,11 +247,31 @@ func (d *TypeScriptDocument) findCustomElements(handler *Handler) ([]types.Custo
 		elements = append(elements, templateElements...)
 	}
 
+	// Populate cache before returning
+	d.mu.Lock()
+	d.cachedCustomElements = elements
+	d.cacheVersion = currentVersion
+	d.mu.Unlock()
+	helpers.SafeDebugLog("[CACHE] findCustomElements: cache POPULATED (version %d, %d elements)", currentVersion, len(elements))
+
 	return elements, nil
 }
 
 // findHTMLTemplates finds HTML template literals in the TypeScript document
 func (d *TypeScriptDocument) findHTMLTemplates(handler *Handler) ([]TemplateContext, error) {
+	// Check cache first
+	d.mu.RLock()
+	currentVersion := d.version
+	if d.cachedTemplates != nil && d.cacheVersion == currentVersion {
+		cachedTemplates := d.cachedTemplates
+		d.mu.RUnlock()
+		helpers.SafeDebugLog("[CACHE] findHTMLTemplates: cache HIT (version %d, %d templates)", currentVersion, len(cachedTemplates))
+		return cachedTemplates, nil
+	}
+	helpers.SafeDebugLog("[CACHE] findHTMLTemplates: cache MISS (version %d, cached version %d, cached nil: %v)",
+		currentVersion, d.cacheVersion, d.cachedTemplates == nil)
+	d.mu.RUnlock()
+
 	tree := d.Tree()
 	if tree == nil {
 		return nil, fmt.Errorf("no tree available")
@@ -263,6 +313,13 @@ func (d *TypeScriptDocument) findHTMLTemplates(handler *Handler) ([]TemplateCont
 			}
 		}
 	}
+
+	// Populate cache before returning
+	d.mu.Lock()
+	d.cachedTemplates = templates
+	d.cacheVersion = currentVersion
+	d.mu.Unlock()
+	helpers.SafeDebugLog("[CACHE] findHTMLTemplates: cache POPULATED (version %d, %d templates)", currentVersion, len(templates))
 
 	return templates, nil
 }
