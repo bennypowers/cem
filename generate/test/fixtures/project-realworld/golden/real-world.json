@@ -43,6 +43,9 @@
               "reflects": true
             }
           ],
+          "source": {
+            "href": "https://github.com/realworld-ux/realworld-design-system/tree/main/src/real-world.ts#L3"
+          },
           "kind": "class",
           "tagName": "real-world",
           "attributes": [

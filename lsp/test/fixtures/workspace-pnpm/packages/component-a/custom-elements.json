@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "my-element-a.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "Component A element",
+          "name": "MyElementA",
+          "tagName": "my-element-a",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "label",
+              "type": {
+                "text": "string"
+              },
+              "description": "Label text",
+              "fieldName": "label"
+            }
+          ],
+          "slots": [
+            {
+              "name": "",
+              "description": "Default slot"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "my-element-a",
+          "declaration": {
+            "name": "MyElementA"
+          }
+        }
+      ]
+    }
+  ]
+}

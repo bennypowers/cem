@@ -28,7 +28,7 @@ import (
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
 	S "bennypowers.dev/cem/set"
-	W "bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/types"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -48,6 +48,7 @@ type ModuleProcessor struct {
 	tree                   *ts.Tree
 	root                   *ts.Node
 	tagAliases             map[string]string
+	typeAliasMap           map[string]string // type name -> definition
 	importBindingToSpecMap map[string]struct {
 		name string
 		spec string
@@ -57,12 +58,13 @@ type ModuleProcessor struct {
 	module                       *M.Module
 	errors                       error
 	packageJSON                  *M.PackageJSON
-	ctx                          W.WorkspaceContext
+	ctx                          types.WorkspaceContext
 	cssCache                     CssCache // CSS parsing cache for performance
+	lineOffsets                  []uint   // Cache of newline byte offsets for fast line number lookup
 }
 
 func NewModuleProcessor(
-	ctx W.WorkspaceContext,
+	ctx types.WorkspaceContext,
 	file string,
 	parser *ts.Parser,
 	queryManager *Q.QueryManager,
@@ -84,7 +86,7 @@ func NewModuleProcessor(
 	logger := NewLogCtx(file, cfg)
 
 	// Debug: log module creation/reuse
-	fmt.Fprintf(os.Stderr, "[DEBUG] Processing module: %s (address: %p)\n", file, module)
+	logger.Debug("Processing module: %s (address: %p)", file, module)
 
 	tree := parser.Parse(code, nil)
 	root := tree.RootNode()
@@ -98,7 +100,15 @@ func NewModuleProcessor(
 	// to package.json exports block, if it exists
 	resolvedPath, err := M.ResolveExportPath(packageJson, module.Path)
 	if err != nil {
-		return nil, err
+		// If the file is not exported by package.json, log a warning but continue processing
+		// This allows packages with selective exports to still generate manifests for internal files
+		if errors.Is(err, M.ErrNotExported) {
+			logger.Warn("%v", err)
+			// Keep the original path - file is internal/not exported
+		} else {
+			// Other errors are actual failures
+			return nil, err
+		}
 	} else {
 		module.Path = resolvedPath
 	}
@@ -144,9 +154,15 @@ func (mp *ModuleProcessor) Close() {
 func (mp *ModuleProcessor) Collect() (
 	module *M.Module,
 	tagAliases map[string]string,
+	typeAliases map[string]string,
+	imports map[string]importInfo,
 	errs error,
 ) {
 	err := mp.step("Processing imports", 0, mp.processImports)
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
+	err = mp.step("Processing type aliases", 0, mp.processTypeAliases)
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
@@ -172,7 +188,25 @@ func (mp *ModuleProcessor) Collect() (
 	slices.SortStableFunc(mp.module.Declarations, func(a, b M.Declaration) int {
 		return int(a.GetStartByte() - b.GetStartByte())
 	})
-	return mp.module, mp.tagAliases, allErrors
+
+	// Return type aliases (stays in generate package, not in manifest)
+	var typeAliasesCopy map[string]string
+	if len(mp.typeAliasMap) > 0 {
+		typeAliasesCopy = maps.Clone(mp.typeAliasMap)
+	}
+
+	// Build imports map for type resolution (stays in generate package)
+	var importsCopy map[string]importInfo
+	if len(mp.importBindingToSpecMap) > 0 {
+		importsCopy = make(map[string]importInfo)
+		for k, v := range mp.importBindingToSpecMap {
+			importsCopy[k] = importInfo{
+				name: v.name,
+				spec: v.spec,
+			}
+		}
+	}
+	return mp.module, mp.tagAliases, typeAliasesCopy, importsCopy, allErrors
 }
 
 func (mp *ModuleProcessor) processImports() error {
@@ -189,13 +223,65 @@ func (mp *ModuleProcessor) processImports() error {
 	}
 
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "import") {
-		original := captures["import.name"][0].Text
-		binding := captures["import.binding"][0].Text
-		spec := captures["import.spec"][0].Text
-		mp.importBindingToSpecMap[binding] = struct {
-			name string
-			spec string
-		}{original, spec}
+		// Defensively check that we have import spec
+		specCaptures, hasSpec := captures["import.spec"]
+		if !hasSpec || len(specCaptures) == 0 {
+			mp.logger.Debug("Skipping import with missing spec")
+			continue
+		}
+		spec := specCaptures[0].Text
+
+		// Process each import specifier with bounds checking
+		nameCaptures := captures["import.name"]
+		bindingCaptures := captures["import.binding"]
+
+		// Iterate only up to the minimum length to prevent index out of bounds
+		minLen := min(len(nameCaptures), len(bindingCaptures))
+		if minLen == 0 {
+			mp.logger.Debug("Skipping import with no name/binding captures")
+			continue
+		}
+
+		for i := 0; i < minLen; i++ {
+			original := nameCaptures[i].Text
+			binding := bindingCaptures[i].Text
+
+			mp.importBindingToSpecMap[binding] = struct {
+				name string
+				spec string
+			}{original, spec}
+		}
+	}
+
+	return nil
+}
+
+func (mp *ModuleProcessor) processTypeAliases() error {
+	// Initialize the type alias map
+	mp.typeAliasMap = make(map[string]string)
+
+	qm, err := Q.NewQueryMatcher(mp.queryManager, "typescript", "typeAliases")
+	if err != nil {
+		mp.errors = errors.Join(mp.errors, err)
+		return err
+	}
+	defer qm.Close()
+
+	for captures := range qm.ParentCaptures(mp.root, mp.code, "alias.declaration") {
+		nameCaptures, hasName := captures["alias.name"]
+		defCaptures, hasDef := captures["alias.definition"]
+
+		if !hasName || !hasDef || len(nameCaptures) == 0 || len(defCaptures) == 0 {
+			continue
+		}
+
+		name := nameCaptures[0].Text
+		definition := defCaptures[0].Text
+
+		if name != "" && definition != "" {
+			mp.typeAliasMap[name] = definition
+			mp.logger.Debug("Found type alias: %s = %s", name, definition)
+		}
 	}
 
 	return nil
@@ -246,7 +332,7 @@ func (mp *ModuleProcessor) processClasses() error {
 		// If it's a CustomElementDeclaration, handle styles
 		if ce, ok := d.(*M.CustomElementDeclaration); ok {
 			var props CssPropsMap
-			mp.step("Processing styles", 2, func() error {
+			_ = mp.step("Processing styles", 2, func() error {
 				props, err = mp.processStyles(captures)
 				if err != nil {
 					mp.errors = errors.Join(mp.errors, err)
@@ -296,7 +382,7 @@ func (mp *ModuleProcessor) processDeclarations() error {
 
 	// variable declarations
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "variable") {
-		declaration, err := generateVarDeclaration(captures, mp.queryManager)
+		declaration, err := mp.generateVarDeclaration(captures)
 		if err != nil {
 			mp.errors = errors.Join(mp.errors, err)
 		} else {
@@ -306,7 +392,7 @@ func (mp *ModuleProcessor) processDeclarations() error {
 
 	// function declarations
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "function") {
-		declaration, err := generateFunctionDeclaration(captures, mp.root, mp.code, mp.queryManager)
+		declaration, err := mp.generateFunctionDeclaration(captures)
 		if err != nil {
 			mp.errors = errors.Join(mp.errors, err)
 		} else {

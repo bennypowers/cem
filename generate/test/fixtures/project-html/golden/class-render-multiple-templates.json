@@ -11,6 +11,9 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-html/src/class-render-multiple-templates.ts#L4"
+          },
           "kind": "class",
           "tagName": "class-render-multiple-templates",
           "slots": [
@@ -40,6 +43,9 @@
           "superclass": {
             "name": "LitElement",
             "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-html/src/class-render-multiple-templates.ts#L24"
           },
           "kind": "class",
           "tagName": "class-render-composed-templates",

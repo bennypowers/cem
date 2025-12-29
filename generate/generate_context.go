@@ -20,7 +20,7 @@ import (
 	"fmt"
 
 	Q "bennypowers.dev/cem/queries"
-	W "bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/types"
 )
 
 // GenerateContext wraps WorkspaceContext with setup objects for generation.
@@ -39,10 +39,10 @@ import (
 // - Testing with mock implementations
 // - Future extension points for additional setup objects
 type GenerateContext struct {
-	W.WorkspaceContext                        // Embedded workspace context
-	cssCache           CssCache               // CSS parsing cache for performance
-	queryManager       *Q.QueryManager        // Tree-sitter query manager (expensive to initialize)
-	depTracker         *FileDependencyTracker // File dependency tracker for incremental builds
+	types.WorkspaceContext                        // Embedded workspace context
+	cssCache               CssCache               // CSS parsing cache for performance
+	queryManager           *Q.QueryManager        // Tree-sitter query manager (expensive to initialize)
+	depTracker             *FileDependencyTracker // File dependency tracker for incremental builds
 }
 
 // NewGenerateContext creates a new generate context with initialized components.
@@ -50,7 +50,7 @@ type GenerateContext struct {
 // and should be done once per generation session.
 //
 // Performance: Expensive operation (~10-50ms) due to tree-sitter query compilation
-func NewGenerateContext(ctx W.WorkspaceContext) (*GenerateContext, error) {
+func NewGenerateContext(ctx types.WorkspaceContext) (*GenerateContext, error) {
 	qm, err := Q.NewQueryManager(Q.GenerateQueries())
 	if err != nil {
 		return nil, fmt.Errorf("initialize QueryManager: %w", err)

@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "rootDir": "./source",
+    "target": "ES2020",
+    "module": "ESNext"
+  }
+}

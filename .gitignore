@@ -1,8 +1,12 @@
+.DS_store
 cem
 __debug*
 *.out
+*.log
 cover.*.out
 coverage.html
+coverage
+coverage.e2e
 *.test
 dist
 docs/resources

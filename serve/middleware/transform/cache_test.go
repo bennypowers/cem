@@ -1,0 +1,343 @@
+/*
+Copyright © 2025 Benny Powers <web@bennypowers.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+package transform_test
+
+import (
+	"slices"
+	"testing"
+	"time"
+
+	"bennypowers.dev/cem/serve/middleware/transform"
+)
+
+func TestCacheStats_TracksHitsAndMisses(t *testing.T) {
+	cache := transform.NewCache(1024 * 1024) // 1MB cache
+
+	key := transform.CacheKey{Path: "test.ts", ModTime: time.Now(), Size: 100}
+
+	// Miss on first get
+	_, found := cache.Get(key)
+	if found {
+		t.Fatal("Expected cache miss, got hit")
+	}
+
+	// Add entry
+	cache.Set(key, []byte("code"), nil)
+
+	// Hit on second get
+	_, found = cache.Get(key)
+	if !found {
+		t.Fatal("Expected cache hit, got miss")
+	}
+
+	// Check stats
+	stats := cache.Stats()
+	if stats.Hits != 1 {
+		t.Errorf("Expected 1 hit, got %d", stats.Hits)
+	}
+	if stats.Misses != 1 {
+		t.Errorf("Expected 1 miss, got %d", stats.Misses)
+	}
+	if stats.HitRate < 49.9 || stats.HitRate > 50.1 {
+		t.Errorf("Expected ~50%% hit rate, got %.2f%%", stats.HitRate)
+	}
+}
+
+func TestCacheStats_TracksEvictions(t *testing.T) {
+	cache := transform.NewCache(100) // Tiny cache to force evictions
+
+	// Add entries that exceed cache size
+	for i := range 5 {
+		key := transform.CacheKey{Path: "test.ts", ModTime: time.Now().Add(time.Duration(i) * time.Second), Size: 50}
+		cache.Set(key, make([]byte, 50), nil)
+	}
+
+	// Check that evictions occurred
+	stats := cache.Stats()
+	if stats.Evictions == 0 {
+		t.Fatal("Expected evictions to be tracked, got 0")
+	}
+	if stats.SizeBytes > 100 {
+		t.Errorf("Cache size %d exceeds max size 100", stats.SizeBytes)
+	}
+}
+
+func TestCache_LogsStatsWhenCalled(t *testing.T) {
+	// Create mock logger
+	logged := false
+	var logMessage string
+	mockLogger := &mockLogger{
+		debugFunc: func(msg string, args ...any) {
+			logged = true
+			logMessage = msg
+		},
+	}
+
+	cache := transform.NewCacheWithLogger(1024, mockLogger)
+
+	// Add some entries
+	key := transform.CacheKey{Path: "test.ts", ModTime: time.Now(), Size: 100}
+	cache.Set(key, []byte("code"), nil)
+	cache.Get(key)
+
+	// Log stats
+	cache.LogStats()
+
+	// Verify logger was called
+	if !logged {
+		t.Fatal("Expected stats to be logged")
+	}
+	if logMessage == "" {
+		t.Fatal("Expected log message to be set")
+	}
+}
+
+// mockLogger implements logger.Logger interface for testing
+type mockLogger struct {
+	infoFunc    func(msg string, args ...any)
+	warningFunc func(msg string, args ...any)
+	errorFunc   func(msg string, args ...any)
+	debugFunc   func(msg string, args ...any)
+}
+
+func (m *mockLogger) Info(msg string, args ...any) {
+	if m.infoFunc != nil {
+		m.infoFunc(msg, args...)
+	}
+}
+
+func (m *mockLogger) Warning(msg string, args ...any) {
+	if m.warningFunc != nil {
+		m.warningFunc(msg, args...)
+	}
+}
+
+func (m *mockLogger) Error(msg string, args ...any) {
+	if m.errorFunc != nil {
+		m.errorFunc(msg, args...)
+	}
+}
+
+func (m *mockLogger) Debug(msg string, args ...any) {
+	if m.debugFunc != nil {
+		m.debugFunc(msg, args...)
+	}
+}
+
+func TestCache_CSSImportDependencies(t *testing.T) {
+	cache := transform.NewCache(10 * 1024 * 1024) // 10MB cache
+
+	// Simulate a TypeScript file that imports a CSS file
+	tsPath := "/test/component.ts"
+	cssPath := "/test/component.css"
+	tsCode := []byte(`import './component.css';\nexport class Component {}`)
+
+	// Set the TS file with CSS as a dependency
+	key := transform.CacheKey{Path: tsPath, ModTime: time.Now(), Size: int64(len(tsCode))}
+	cache.Set(key, tsCode, []string{cssPath})
+
+	// Now when component.css changes, it should invalidate component.ts
+	invalidated := cache.Invalidate(cssPath)
+
+	if len(invalidated) == 0 {
+		t.Fatal("Expected CSS file change to invalidate TypeScript file, got 0 invalidations")
+	}
+
+	found := slices.Contains(invalidated, tsPath)
+
+	if !found {
+		t.Errorf("Expected %s to be invalidated when %s changes, got: %v", tsPath, cssPath, invalidated)
+	}
+}
+
+// TestCache_Invalidation tests cache invalidation
+func TestCache_Invalidation(t *testing.T) {
+	cache := transform.NewCache(1024 * 1024)
+
+	// Create cache entry
+	key := transform.CacheKey{
+		Path:    "/test/file.ts",
+		ModTime: time.Now(),
+		Size:    100,
+	}
+
+	cache.Set(key, []byte("code"), []string{})
+
+	// Verify it's cached
+	if _, found := cache.Get(key); !found {
+		t.Fatal("Expected cache hit before invalidation")
+	}
+
+	// Invalidate
+	invalidated := cache.Invalidate("/test/file.ts")
+	if len(invalidated) != 1 || invalidated[0] != "/test/file.ts" {
+		t.Errorf("Expected invalidated [/test/file.ts], got %v", invalidated)
+	}
+
+	// Verify it's no longer cached
+	if _, found := cache.Get(key); found {
+		t.Error("Expected cache miss after invalidation")
+	}
+}
+
+// TestCache_TransitiveInvalidation tests transitive dependency invalidation
+func TestCache_TransitiveInvalidation(t *testing.T) {
+	cache := transform.NewCache(1024 * 1024)
+
+	// Create dependency chain: a.ts imports b.ts imports c.ts
+	keyA := transform.CacheKey{Path: "/test/a.ts", ModTime: time.Now(), Size: 100}
+	keyB := transform.CacheKey{Path: "/test/b.ts", ModTime: time.Now(), Size: 100}
+	keyC := transform.CacheKey{Path: "/test/c.ts", ModTime: time.Now(), Size: 100}
+
+	cache.Set(keyC, []byte("// c.ts"), []string{})             // c has no deps
+	cache.Set(keyB, []byte("// b.ts"), []string{"/test/c.ts"}) // b imports c
+	cache.Set(keyA, []byte("// a.ts"), []string{"/test/b.ts"}) // a imports b
+
+	// Verify all are cached
+	if _, found := cache.Get(keyA); !found {
+		t.Fatal("Expected a.ts to be cached")
+	}
+	if _, found := cache.Get(keyB); !found {
+		t.Fatal("Expected b.ts to be cached")
+	}
+	if _, found := cache.Get(keyC); !found {
+		t.Fatal("Expected c.ts to be cached")
+	}
+
+	// Invalidate c.ts - should also invalidate b.ts and a.ts
+	invalidated := cache.Invalidate("/test/c.ts")
+
+	// Check that all three files were invalidated
+	expectedInvalidated := map[string]bool{
+		"/test/a.ts": true,
+		"/test/b.ts": true,
+		"/test/c.ts": true,
+	}
+
+	if len(invalidated) != 3 {
+		t.Errorf("Expected 3 invalidated files, got %d: %v", len(invalidated), invalidated)
+	}
+
+	for _, path := range invalidated {
+		if !expectedInvalidated[path] {
+			t.Errorf("Unexpected invalidated path: %s", path)
+		}
+		delete(expectedInvalidated, path)
+	}
+
+	if len(expectedInvalidated) > 0 {
+		t.Errorf("Missing invalidated paths: %v", expectedInvalidated)
+	}
+
+	// Verify all entries were removed from cache
+	if _, found := cache.Get(keyA); found {
+		t.Error("Expected a.ts to be invalidated")
+	}
+	if _, found := cache.Get(keyB); found {
+		t.Error("Expected b.ts to be invalidated")
+	}
+	if _, found := cache.Get(keyC); found {
+		t.Error("Expected c.ts to be invalidated")
+	}
+}
+
+// TestCache_CircularDependency tests circular dependency handling
+func TestCache_CircularDependency(t *testing.T) {
+	cache := transform.NewCache(1024 * 1024)
+
+	// Create circular dependency: a.ts -> b.ts -> a.ts
+	keyA := transform.CacheKey{Path: "/test/a.ts", ModTime: time.Now(), Size: 100}
+	keyB := transform.CacheKey{Path: "/test/b.ts", ModTime: time.Now(), Size: 100}
+
+	cache.Set(keyA, []byte("// a.ts"), []string{"/test/b.ts"}) // a imports b
+	cache.Set(keyB, []byte("// b.ts"), []string{"/test/a.ts"}) // b imports a (circular!)
+
+	// Invalidate a.ts - should handle circular dependency gracefully
+	invalidated := cache.Invalidate("/test/a.ts")
+
+	// Both files should be invalidated exactly once
+	if len(invalidated) != 2 {
+		t.Errorf("Expected 2 invalidated files, got %d: %v", len(invalidated), invalidated)
+	}
+
+	// Verify both entries were removed from cache
+	if _, found := cache.Get(keyA); found {
+		t.Error("Expected a.ts to be invalidated")
+	}
+	if _, found := cache.Get(keyB); found {
+		t.Error("Expected b.ts to be invalidated")
+	}
+}
+
+// TestCache_MultipleEntriesSamePath tests that all cache entries with the same path are invalidated
+func TestCache_MultipleEntriesSamePath(t *testing.T) {
+	cache := transform.NewCache(1024 * 1024)
+
+	// Create multiple cache entries for same path with different mod times
+	// This simulates rapid file changes where old entries haven't been evicted yet
+	path := "/test/file.ts"
+	baseTime := time.Now()
+
+	key1 := transform.CacheKey{Path: path, ModTime: baseTime, Size: 100}
+	key2 := transform.CacheKey{Path: path, ModTime: baseTime.Add(1 * time.Second), Size: 100}
+	key3 := transform.CacheKey{Path: path, ModTime: baseTime.Add(2 * time.Second), Size: 100}
+
+	// Set all three entries (different keys, same path)
+	cache.Set(key1, []byte("version 1"), []string{})
+	cache.Set(key2, []byte("version 2"), []string{})
+	cache.Set(key3, []byte("version 3"), []string{})
+
+	// Verify all are in cache
+	if _, found := cache.Get(key1); !found {
+		t.Error("Expected key1 to be cached")
+	}
+	if _, found := cache.Get(key2); !found {
+		t.Error("Expected key2 to be cached")
+	}
+	if _, found := cache.Get(key3); !found {
+		t.Error("Expected key3 to be cached")
+	}
+
+	// Invalidate the path - should remove ALL entries with this path
+	invalidated := cache.Invalidate(path)
+
+	// Should report path only once in invalidated list
+	if len(invalidated) != 1 {
+		t.Errorf("Expected path to appear once in invalidated list, got %d times: %v", len(invalidated), invalidated)
+	}
+	if invalidated[0] != path {
+		t.Errorf("Expected invalidated path %q, got %q", path, invalidated[0])
+	}
+
+	// Verify ALL entries were removed from cache
+	if _, found := cache.Get(key1); found {
+		t.Error("Expected key1 to be invalidated")
+	}
+	if _, found := cache.Get(key2); found {
+		t.Error("Expected key2 to be invalidated")
+	}
+	if _, found := cache.Get(key3); found {
+		t.Error("Expected key3 to be invalidated")
+	}
+
+	// Verify cache is empty
+	stats := cache.Stats()
+	if stats.Entries != 0 {
+		t.Errorf("Expected 0 cache entries after invalidation, got %d", stats.Entries)
+	}
+}

@@ -11,6 +11,9 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-deprecated-reason-multiline.ts#L5"
+          },
           "kind": "class",
           "deprecated": "multiline\ndeprecation reason",
           "tagName": "jsdoc-deprecated-reason-multiline",

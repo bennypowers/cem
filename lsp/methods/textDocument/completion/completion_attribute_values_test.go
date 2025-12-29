@@ -1,3 +1,19 @@
+/*
+Copyright © 2025 Benny Powers <web@bennypowers.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
 package completion_test
 
 import (
@@ -7,7 +23,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/testhelpers"
@@ -16,195 +32,8 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-func TestAttributeValueCompletions(t *testing.T) {
-	// Load test manifest
-	fixtureDir := filepath.Join("attribute-values-test")
-	manifestPath := filepath.Join(fixtureDir, "manifest.json")
-
-	manifestBytes, err := os.ReadFile(manifestPath)
-	if err != nil {
-		t.Fatalf("Failed to read test manifest: %v", err)
-	}
-
-	var pkg M.Package
-	err = json.Unmarshal(manifestBytes, &pkg)
-	if err != nil {
-		t.Fatalf("Failed to parse manifest: %v", err)
-	}
-
-	// Create a completion context using MockServerContext and add the test manifest
-	ctx := testhelpers.NewMockServerContext()
-	ctx.AddManifest(&pkg)
-
-	// Create and set a real DocumentManager
-	dm, err := lsp.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create DocumentManager: %v", err)
-	}
-	defer dm.Close()
-	ctx.SetDocumentManager(dm)
-
-	tests := []struct {
-		name           string
-		tagName        string
-		attributeName  string
-		expectedLabels []string
-		description    string
-	}{
-		{
-			name:           "Boolean attribute completions",
-			tagName:        "test-component",
-			attributeName:  "disabled",
-			expectedLabels: []string{},
-			description:    "Should provide no completions for boolean attributes (presence=true, absence=false)",
-		},
-		{
-			name:           "Number attribute completions",
-			tagName:        "test-component",
-			attributeName:  "count",
-			expectedLabels: []string{},
-			description:    "Should provide no automatic numeric suggestions for number attributes",
-		},
-		{
-			name:           "String attribute completions",
-			tagName:        "test-component",
-			attributeName:  "color",
-			expectedLabels: []string{`""`, "red", "blue", "green"},
-			description:    "Should provide empty string and color suggestions for color attributes",
-		},
-		{
-			name:           "Union type completions",
-			tagName:        "test-component",
-			attributeName:  "theme",
-			expectedLabels: []string{"light", "dark", "auto"},
-			description:    "Should parse union types and provide individual options",
-		},
-		{
-			name:           "Size attribute context-aware completions",
-			tagName:        "test-component",
-			attributeName:  "size",
-			expectedLabels: []string{"medium (default)", "small", "medium", "large"},
-			description:    "Should provide size suggestions and default value",
-		},
-		{
-			name:           "Variant attribute context-aware completions",
-			tagName:        "test-component",
-			attributeName:  "variant",
-			expectedLabels: []string{`""`, "primary", "secondary"},
-			description:    "Should provide variant suggestions for variant attributes",
-		},
-		{
-			name:           "Array type completions",
-			tagName:        "test-component",
-			attributeName:  "items",
-			expectedLabels: []string{},
-			description:    "Should provide no automatic completions for array attributes (ambiguous syntax)",
-		},
-		{
-			name:           "Non-existent attribute",
-			tagName:        "test-component",
-			attributeName:  "non-existent",
-			expectedLabels: []string{},
-			description:    "Should return empty completions for non-existent attributes",
-		},
-		{
-			name:           "Non-custom element",
-			tagName:        "div",
-			attributeName:  "class",
-			expectedLabels: []string{},
-			description:    "Should return empty completions for standard HTML elements",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Call the attribute value completion function directly
-			completions := completion.GetAttributeValueCompletions(ctx, tt.tagName, tt.attributeName)
-
-			// Check if we got the expected completions
-			if len(tt.expectedLabels) == 0 {
-				if len(completions) != 0 {
-					t.Errorf("Expected no completions, but got %d", len(completions))
-				}
-				return
-			}
-
-			// Create a map of found labels for easy checking
-			foundLabels := make(map[string]bool)
-			for _, completion := range completions {
-				foundLabels[completion.Label] = true
-			}
-
-			// Check that all expected labels are present
-			for _, expectedLabel := range tt.expectedLabels {
-				if !foundLabels[expectedLabel] {
-					t.Errorf("Expected completion label '%s' not found. Got labels: %v",
-						expectedLabel, testhelpers.GetCompletionLabels(completions))
-				}
-			}
-
-			// Log completion details for debugging
-			t.Logf("Test: %s", tt.description)
-			t.Logf("Found %d completions: %v", len(completions), testhelpers.GetCompletionLabels(completions))
-		})
-	}
-}
-
-func TestUnionTypeParser(t *testing.T) {
-	tests := []struct {
-		name           string
-		typeText       string
-		expectedLabels []string
-	}{
-		{
-			name:           "Simple union type",
-			typeText:       `"red" | "green" | "blue"`,
-			expectedLabels: []string{"red", "green", "blue"},
-		},
-		{
-			name:           "Union type with spaces",
-			typeText:       `"small" | "medium" | "large"`,
-			expectedLabels: []string{"small", "medium", "large"},
-		},
-		{
-			name:           "Union type with single quotes",
-			typeText:       `'left' | 'center' | 'right'`,
-			expectedLabels: []string{"left", "center", "right"},
-		},
-		{
-			name:           "Mixed quotes",
-			typeText:       `"auto" | 'manual'`,
-			expectedLabels: []string{"auto", "manual"},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Create a test attribute with the union type
-			attr := &M.Attribute{
-				Type: &M.Type{
-					Text: tt.typeText,
-				},
-			}
-
-			// Get type-based completions (which should include union type parsing)
-			completions := completion.GetTypeBasedCompletions(attr)
-
-			// Check that we got the expected labels
-			foundLabels := make(map[string]bool)
-			for _, completion := range completions {
-				foundLabels[completion.Label] = true
-			}
-
-			for _, expectedLabel := range tt.expectedLabels {
-				if !foundLabels[expectedLabel] {
-					t.Errorf("Expected union type label '%s' not found. Got labels: %v",
-						expectedLabel, testhelpers.GetCompletionLabels(completions))
-				}
-			}
-		})
-	}
-}
+// TestUnionTypeParser has been consolidated into completion_type_parsing_test.go
+// as part of TestTypeBasedCompletions
 
 func TestAttributeCompletionAfterSpaces(t *testing.T) {
 	// Load test manifest
@@ -227,7 +56,7 @@ func TestAttributeCompletionAfterSpaces(t *testing.T) {
 	ctx.AddManifest(&pkg)
 
 	// Create and set a real DocumentManager
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}

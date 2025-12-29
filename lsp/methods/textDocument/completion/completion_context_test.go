@@ -24,7 +24,7 @@ import (
 	"strings"
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/testhelpers"
@@ -100,7 +100,7 @@ func TestCompletionContextAnalysis(t *testing.T) {
 	}
 
 	// Create real DocumentManager for tree-sitter parsing
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}
@@ -121,12 +121,6 @@ func TestCompletionContextAnalysis(t *testing.T) {
 			analysis := doc.AnalyzeCompletionContextTS(position, dm)
 			if analysis == nil {
 				analysis = &types.CompletionAnalysis{Type: types.CompletionUnknown}
-			}
-
-			// Debug output for failing tests
-			if tt.name == "Attribute value completion" {
-				t.Logf("DEBUG: Content='%s', Position=%+v", tt.content, position)
-				t.Logf("DEBUG: Analysis=%+v", analysis)
 			}
 
 			if analysis.Type != tt.expectedType {
@@ -191,7 +185,7 @@ func TestCompletionPrefixExtraction(t *testing.T) {
 			}
 
 			// Create a document using DocumentManager to test completion prefix
-			dm, err := lsp.NewDocumentManager()
+			dm, err := document.NewDocumentManager()
 			if err != nil {
 				t.Fatalf("Failed to create DocumentManager: %v", err)
 			}
@@ -257,7 +251,7 @@ func TestCompletionIntegration(t *testing.T) {
 	ctx.AddManifest(&pkg)
 
 	// Create real DocumentManager for tree-sitter parsing
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}
@@ -654,7 +648,7 @@ func TestCompletionContextBehavior(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create document manager for tree-sitter analysis
-			dm, err := lsp.NewDocumentManager()
+			dm, err := document.NewDocumentManager()
 			if err != nil {
 				t.Fatalf("Failed to create document manager: %v", err)
 			}
@@ -779,7 +773,7 @@ func TestTemplateContextBehavior(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a real document using DocumentManager
-			dm, err := lsp.NewDocumentManager()
+			dm, err := document.NewDocumentManager()
 			if err != nil {
 				t.Fatalf("Failed to create DocumentManager: %v", err)
 			}

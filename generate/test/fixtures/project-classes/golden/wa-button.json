@@ -1,0 +1,377 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/wa-button.js",
+      "declarations": [
+        {
+          "name": "WaButton",
+          "summary": "Buttons represent actions that are available to the user.",
+          "superclass": {
+            "name": "WebAwesomeFormAssociatedElement"
+          },
+          "members": [
+            {
+              "name": "shadowRootOptions",
+              "default": "{ ...WebAwesomeFormAssociatedElement.shadowRootOptions, delegatesFocus: true }",
+              "kind": "field",
+              "static": true
+            },
+            {
+              "name": "css",
+              "default": "[styles]",
+              "kind": "field",
+              "static": true
+            },
+            {
+              "name": "validators",
+              "readonly": true,
+              "kind": "field",
+              "static": true
+            },
+            {
+              "name": "assumeInteractionOn",
+              "default": "['click']",
+              "kind": "field"
+            },
+            {
+              "name": "hasSlotController",
+              "default": "new HasSlotController(this, '[default]', 'start', 'end')",
+              "readonly": true,
+              "kind": "field",
+              "privacy": "private"
+            },
+            {
+              "name": "localize",
+              "default": "new LocalizeController(this)",
+              "readonly": true,
+              "kind": "field",
+              "privacy": "private"
+            },
+            {
+              "name": "title",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field"
+            },
+            {
+              "name": "variant",
+              "description": "The button's theme variant. Defaults to `neutral` if not within another element with a variant.",
+              "type": {
+                "text": "'neutral' | 'brand' | 'success' | 'warning' | 'danger'"
+              },
+              "default": "'neutral'",
+              "kind": "field"
+            },
+            {
+              "name": "appearance",
+              "description": "The button's visual appearance.",
+              "type": {
+                "text": "'accent' | 'filled' | 'outlined' | 'filled-outlined' | 'plain'"
+              },
+              "default": "'accent'",
+              "kind": "field"
+            },
+            {
+              "name": "size",
+              "description": "The button's size.",
+              "type": {
+                "text": "'small' | 'medium' | 'large'"
+              },
+              "default": "'medium'",
+              "kind": "field"
+            },
+            {
+              "name": "withCaret",
+              "description": "Draws the button with a caret. Used to indicate that the button triggers a dropdown menu or similar behavior.",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field"
+            },
+            {
+              "name": "loading",
+              "description": "Draws the button in a loading state.",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field"
+            },
+            {
+              "name": "pill",
+              "description": "Draws a pill-style button with rounded edges.",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field"
+            },
+            {
+              "name": "type",
+              "description": "The type of button. Note that the default value is `button` instead of `submit`, which is opposite of how native\n`\u003cbutton\u003e` elements behave. When the type is `submit`, the button will submit the surrounding form.",
+              "type": {
+                "text": "'button' | 'submit' | 'reset'"
+              },
+              "default": "'button'",
+              "kind": "field"
+            },
+            {
+              "name": "name",
+              "description": "The name of the button, submitted as a name/value pair with form data, but only when this button is the submitter.\nThis attribute is ignored when `href` is present.",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "value",
+              "description": "The value of the button, submitted as a pair with the button's name as part of the form data, but only when this\nbutton is the submitter. This attribute is ignored when `href` is present.",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "href",
+              "description": "When set, the underlying button will be rendered as an `\u003ca\u003e` with this `href` instead of a `\u003cbutton\u003e`.",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "target",
+              "description": "Tells the browser where to open the link. Only used when `href` is present.",
+              "type": {
+                "text": "'_blank' | '_parent' | '_self' | '_top'"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "rel",
+              "description": "When using `href`, this attribute will map to the underlying link's `rel` attribute.",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "download",
+              "description": "Tells the browser to download the linked file as this filename. Only used when `href` is present.",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "form",
+              "description": "The \"form owner\" to associate the button with. If omitted, the closest containing form will be used instead. The\nvalue of this attribute must be an id of a form in the same document or shadow root as the button.",
+              "type": {
+                "text": "string | null"
+              },
+              "default": "null",
+              "kind": "field"
+            },
+            {
+              "name": "formAction",
+              "description": "Used to override the form owner's `action` attribute.",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "formEnctype",
+              "description": "Used to override the form owner's `enctype` attribute.",
+              "type": {
+                "text": "'application/x-www-form-urlencoded' | 'multipart/form-data' | 'text/plain'"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "formMethod",
+              "description": "Used to override the form owner's `method` attribute.",
+              "type": {
+                "text": "'post' | 'get'"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "formNoValidate",
+              "description": "Used to override the form owner's `novalidate` attribute.",
+              "type": {
+                "text": "boolean"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "formTarget",
+              "description": "Used to override the form owner's `target` attribute.",
+              "type": {
+                "text": "'_self' | '_blank' | '_parent' | '_top' | string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "constructLightDOMButton",
+              "kind": "method",
+              "privacy": "private"
+            },
+            {
+              "name": "handleClick",
+              "kind": "method",
+              "privacy": "private"
+            },
+            {
+              "name": "handleInvalid",
+              "kind": "method",
+              "privacy": "private"
+            },
+            {
+              "name": "handleLabelSlotChange",
+              "kind": "method",
+              "privacy": "private"
+            },
+            {
+              "name": "isButton",
+              "kind": "method",
+              "privacy": "private"
+            },
+            {
+              "name": "isLink",
+              "kind": "method",
+              "privacy": "private"
+            },
+            {
+              "name": "handleDisabledChange",
+              "kind": "method"
+            },
+            {
+              "parameters": [
+                {
+                  "name": "_args",
+                  "type": {
+                    "text": "Parameters\u003cWebAwesomeFormAssociatedElement['setValue']\u003e"
+                  },
+                  "rest": true
+                }
+              ],
+              "name": "setValue",
+              "kind": "method"
+            },
+            {
+              "name": "click",
+              "description": "Simulates a click on the button.",
+              "kind": "method"
+            },
+            {
+              "parameters": [
+                {
+                  "name": "options",
+                  "type": {
+                    "text": "FocusOptions"
+                  }
+                }
+              ],
+              "name": "focus",
+              "description": "Sets focus on the button.",
+              "kind": "method"
+            },
+            {
+              "name": "blur",
+              "description": "Removes focus from the button.",
+              "kind": "method"
+            },
+            {
+              "name": "render",
+              "kind": "method"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/wa-button.ts#L43"
+          },
+          "kind": "class",
+          "tagName": "wa-button",
+          "events": [
+            {
+              "name": "blur",
+              "description": "Emitted when the button loses focus."
+            },
+            {
+              "name": "focus",
+              "description": "Emitted when the button gains focus."
+            },
+            {
+              "name": "wa-invalid",
+              "description": "Emitted when the form control has been checked for validity and its constraints aren't satisfied."
+            }
+          ],
+          "slots": [
+            {
+              "name": "start",
+              "description": "An element, such as `\u003cwa-icon\u003e`, placed before the label."
+            },
+            {
+              "name": "",
+              "description": "The button's label."
+            },
+            {
+              "name": "end",
+              "description": "An element, such as `\u003cwa-icon\u003e`, placed after the label."
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "base",
+              "description": "The component's base wrapper."
+            },
+            {
+              "name": "start",
+              "description": "The container that wraps the `start` slot."
+            },
+            {
+              "name": "label",
+              "description": "The button's label."
+            },
+            {
+              "name": "end",
+              "description": "The container that wraps the `end` slot."
+            },
+            {
+              "name": "caret",
+              "description": "The button's caret icon, a `\u003cwa-icon\u003e` element."
+            },
+            {
+              "name": "spinner",
+              "description": "The spinner that shows when the button is in the loading state."
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "wa-button",
+          "declaration": {
+            "name": "WaButton",
+            "module": "src/wa-button.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "WaButton",
+          "declaration": {
+            "name": "WaButton",
+            "module": "src/wa-button.js"
+          }
+        }
+      ]
+    }
+  ]
+}

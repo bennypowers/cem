@@ -1,0 +1,33 @@
+/* Virtual Tree - Efficiently renders large tree structures */
+
+:host {
+  display: block;
+  height: 100%;
+  overflow: hidden;
+}
+
+#tree-container {
+  position: relative;
+  width: 100%;
+}
+
+#viewport {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+
+  pf-v6-tree-item {
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--pf-t--global--background--color--secondary--hover, #f5f5f5);
+    }
+
+    /* Only outline the actually focused item, not ancestors */
+    &:focus-visible {
+      outline: 2px solid var(--pf-t--global--color--brand--default, #0066cc);
+      outline-offset: -2px;
+    }
+  }
+}

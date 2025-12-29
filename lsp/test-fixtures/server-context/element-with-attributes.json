@@ -1,0 +1,21 @@
+{
+	"schemaVersion": "1.0.0",
+	"modules": [{
+		"path": "test.js",
+		"declarations": [{
+			"kind": "class",
+			"name": "TestElement",
+			"customElement": true,
+			"tagName": "test-element",
+			"attributes": [
+				{"name": "variant", "type": {"text": "string"}},
+				{"name": "size", "type": {"text": "string"}}
+			]
+		}],
+		"exports": [{
+			"kind": "custom-element-definition",
+			"name": "test-element",
+			"declaration": {"name": "TestElement"}
+		}]
+	}]
+}

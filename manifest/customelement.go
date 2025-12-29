@@ -249,25 +249,10 @@ func NewRenderableCustomElementDeclaration(
 	mod *Module,
 	pkg *Package,
 ) *RenderableCustomElementDeclaration {
-	// TODO use a map
+	// Use O(1) map lookups instead of O(n) linear search
 	// TODO get je, cee from other modules
-	var cee *CustomElementExport
-	var je *JavaScriptExport
-	for i, exp := range mod.Exports {
-		if ecee, ok := exp.(*CustomElementExport); ok {
-			if ecee != nil && ecee.Declaration != nil && ecee.Declaration.Name == ced.Name && (ecee.Declaration.Module == "" || ecee.Declaration.Module == mod.Path) {
-				cee = mod.Exports[i].(*CustomElementExport)
-			}
-		}
-		if eje, ok := exp.(*JavaScriptExport); ok {
-			if eje.Declaration.Name == ced.Name && (eje.Declaration.Module == "" || eje.Declaration.Module == mod.Path) {
-				je = mod.Exports[i].(*JavaScriptExport)
-			}
-		}
-		if je != nil && cee != nil {
-			break
-		}
-	}
+	cee := mod.LookupCustomElementExport(ced.Name)
+	je := mod.LookupJavaScriptExport(ced.Name)
 	r := RenderableCustomElementDeclaration{
 		CustomElementDeclaration: ced,
 		CustomElementExport:      cee,

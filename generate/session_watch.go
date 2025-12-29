@@ -30,7 +30,7 @@ import (
 	C "bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/internal/logging"
 	M "bennypowers.dev/cem/manifest"
-	W "bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/types"
 	DS "github.com/bmatcuk/doublestar"
 	"github.com/fsnotify/fsnotify"
 	"github.com/pterm/pterm"
@@ -38,7 +38,7 @@ import (
 
 // WatchSession manages the long-lived watch mode state
 type WatchSession struct {
-	ctx             W.WorkspaceContext
+	ctx             types.WorkspaceContext
 	globs           []string
 	generateSession *GenerateSession
 	debounceTimer   *time.Timer
@@ -53,7 +53,7 @@ type WatchSession struct {
 }
 
 // NewWatchSession creates a new watch session with the given workspace context and globs
-func NewWatchSession(ctx W.WorkspaceContext, globs []string) (*WatchSession, error) {
+func NewWatchSession(ctx types.WorkspaceContext, globs []string) (*WatchSession, error) {
 	generateSession, err := NewGenerateSession(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("create generate session: %w", err)
@@ -98,7 +98,7 @@ func (ws *WatchSession) RunWatch() error {
 	if err != nil {
 		return fmt.Errorf("setup file watcher: %w", err)
 	}
-	defer watcher.Close()
+	defer func() { _ = watcher.Close() }()
 
 	logging.Info("Watching for file changes... (Ctrl+C to stop)")
 
@@ -260,7 +260,7 @@ func (ws *WatchSession) isOurWrite(filePath string) bool {
 	if err != nil {
 		return false // If we can't read it, assume it's not our write
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	hasher := sha256.New()
 	if _, err := io.Copy(hasher, file); err != nil {
@@ -458,7 +458,7 @@ func (ws *WatchSession) writeManifest(manifestStr string) error {
 
 	_, err = writer.Write(contentBytes)
 	if err != nil {
-		writer.Close()
+		_ = writer.Close()
 		return err
 	}
 

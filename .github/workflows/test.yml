@@ -1,6 +1,13 @@
 name: Test
 on:
-  - push
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 jobs:
   test:
@@ -8,19 +15,37 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
-          go-version: '1.24.x'
-      - name: Install dependencies
-        run: go get .
-      - name: Install Go tools
+          go-version-file: go.mod
+        env:
+          GOTOOLCHAIN: auto
+          GOEXPERIMENT: jsonv2
+      - name: Install Go dependencies and tools
         run: |
+          go get .
           go install gotest.tools/gotestsum@latest
-          go install github.com/mfridman/tparse@latest 
+          go install github.com/mfridman/tparse@latest
+      - name: Generate code
+        run: make generate
       - name: Build
         run: go build -v ./...
       - name: Run unit tests
         run: make test-unit
       - name: Run E2E tests
         run: make test-e2e
+      - name: Install frontend dependencies
+        run: cd serve && npm ci
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('serve/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: cd serve && npx playwright install --with-deps
+      - name: Run frontend tests
+        run: make test-frontend

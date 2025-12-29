@@ -11,6 +11,9 @@
             "name": "HTMLElement",
             "package": "global:"
           },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-vanilla/src/vanilla-attributes.ts#L2"
+          },
           "kind": "class",
           "tagName": "vanilla-attributes",
           "attributes": [

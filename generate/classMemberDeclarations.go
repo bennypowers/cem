@@ -18,12 +18,11 @@ package generate
 
 import (
 	"errors"
-	"fmt"
-	"os"
 	"regexp"
 	"slices"
 	"strings"
 
+	"bennypowers.dev/cem/generate/jsdoc"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
 	S "bennypowers.dev/cem/set"
@@ -95,13 +94,13 @@ func isPropertyField(captures Q.CaptureMap) bool {
 	return false
 }
 
-func amendFieldTypeWithCaptures(captures Q.CaptureMap, field *M.ClassField) {
+func amendFieldTypeWithCaptures(captures Q.CaptureMap, field *M.ClassField, logger *LogCtx) {
 	for _, capture := range captures["field.type"] {
 		typeText := capture.Text
 		if typeText != "" {
 			// Debug: log type extraction for variant property
 			if field.Name == "variant" {
-				fmt.Fprintf(os.Stderr, "[DEBUG] Extracted type for variant property: '%s'\n", typeText)
+				logger.Debug("Extracted type for variant property: '%s'", typeText)
 			}
 			field.Type = &M.Type{
 				Text: typeText,
@@ -123,12 +122,12 @@ func amendFieldPrivacyWithCaptures(captures Q.CaptureMap, field *M.ClassField) {
 
 func (mp ModuleProcessor) amendFieldWithJsdoc(captures Q.CaptureMap, field *M.ClassField) error {
 	for _, x := range captures["member"] {
-		jsdoc := GetJSDocForNode(Q.GetDescendantById(mp.root, x.NodeId), mp.code)
-		info, err := NewPropertyInfo(jsdoc, mp.queryManager)
-		if err != nil {
-			return err
-		} else {
-			info.MergeToPropertyLike(&field.PropertyLike)
+		jsdocText := jsdoc.ExtractFromNode(Q.GetDescendantById(mp.root, x.NodeId), mp.code)
+		if jsdocText != "" {
+			err := jsdoc.EnrichPropertyWithJSDoc(jsdocText, &field.PropertyLike, mp.queryManager)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -138,12 +137,12 @@ func (mp ModuleProcessor) amendMethodWithJsdoc(captures Q.CaptureMap, method *M.
 	// JSDoc
 	if members, ok := captures["member"]; ok {
 		for _, member := range members {
-			jsdoc := GetJSDocForNode(Q.GetDescendantById(mp.root, member.NodeId), mp.code)
-			err, info := NewMethodInfo(jsdoc, mp.queryManager)
-			if err != nil {
-				return err
-			} else {
-				info.MergeToMethod(method)
+			jsdocText := jsdoc.ExtractFromNode(Q.GetDescendantById(mp.root, member.NodeId), mp.code)
+			if jsdocText != "" {
+				err := jsdoc.EnrichMethodWithJSDoc(jsdocText, method, mp.queryManager)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -186,7 +185,7 @@ func (mp *ModuleProcessor) createClassFieldFromAccessorMatch(
 	field.Name = fieldName
 	field.Readonly = isReadonly
 
-	amendFieldTypeWithCaptures(captures, &field.ClassField)
+	amendFieldTypeWithCaptures(captures, &field.ClassField, mp.logger)
 	amendFieldPrivacyWithCaptures(captures, &field.ClassField)
 	isCustomElement := classType == "HTMLElement" || classType == "LitElement"
 	isProperty := isCustomElement && !isStatic && isPropertyField(captures)
@@ -195,7 +194,7 @@ func (mp *ModuleProcessor) createClassFieldFromAccessorMatch(
 		amendFieldWithPropertyConfigCaptures(captures, &field)
 	}
 
-	field.ClassField.StartByte = captures["accessor"][0].StartByte
+	field.StartByte = captures["accessor"][0].StartByte
 	err = mp.amendFieldWithJsdoc(captures, &field.ClassField)
 	return field, err
 }
@@ -220,7 +219,7 @@ func (mp *ModuleProcessor) createClassFieldFromConstructorParameterMatch(
 		},
 	}
 
-	amendFieldTypeWithCaptures(captures, &field.ClassField)
+	amendFieldTypeWithCaptures(captures, &field.ClassField, mp.logger)
 	amendFieldPrivacyWithCaptures(captures, &field.ClassField)
 
 	// Constructor parameters on non-CE classes typically don't have @property decorators
@@ -241,7 +240,7 @@ func (mp *ModuleProcessor) createClassFieldFromFieldMatch(
 	isStatic bool,
 	superclass string,
 	captures Q.CaptureMap,
-) (err error, field M.CustomElementField) {
+) (field M.CustomElementField, err error) {
 	_, readonly := captures["field.readonly"]
 
 	field = M.CustomElementField{
@@ -257,7 +256,7 @@ func (mp *ModuleProcessor) createClassFieldFromFieldMatch(
 		},
 	}
 
-	amendFieldTypeWithCaptures(captures, &field.ClassField)
+	amendFieldTypeWithCaptures(captures, &field.ClassField, mp.logger)
 	amendFieldPrivacyWithCaptures(captures, &field.ClassField)
 
 	for _, x := range captures["field.initializer"] {
@@ -281,8 +280,8 @@ func (mp *ModuleProcessor) createClassFieldFromFieldMatch(
 		amendFieldWithPropertyConfigCaptures(captures, &field)
 	}
 
-	mp.amendFieldWithJsdoc(captures, &field.ClassField)
-	return nil, field
+	_ = mp.amendFieldWithJsdoc(captures, &field.ClassField)
+	return field, nil
 }
 
 // Identify kind and key
@@ -336,13 +335,13 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 
 		// Debug: log all variant property processing
 		if memberName == "variant" {
-			fmt.Fprintf(os.Stderr, "[DEBUG] Processing variant member: kind=%s, static=%v\n", kind, isStatic)
+			mp.logger.Debug("Processing variant member: kind=%s, static=%v", kind, isStatic)
 		}
 
 		switch kind {
 		case "field":
-			error, field := mp.createClassFieldFromFieldMatch(memberName, isStatic, superclass, captures)
-			field.ClassField.StartByte = captures["field"][0].StartByte
+			field, error := mp.createClassFieldFromFieldMatch(memberName, isStatic, superclass, captures)
+			field.StartByte = captures["field"][0].StartByte
 			if error != nil {
 				errs = errors.Join(errs, error)
 			} else {
@@ -350,7 +349,7 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 			}
 		case "constructor-parameter":
 			field, err := mp.createClassFieldFromConstructorParameterMatch(memberName, superclass, captures)
-			field.ClassField.StartByte = captures["constructor.parameter"][0].StartByte
+			field.StartByte = captures["constructor.parameter"][0].StartByte
 			if err != nil {
 				errs = errors.Join(errs, err)
 			} else {
@@ -381,8 +380,8 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 					existing.Privacy = field.Privacy
 				}
 				// Merge jsdoc, attribute, etc. as needed
-				if field.PropertyLike.Description != "" && existing.PropertyLike.Description == "" {
-					existing.PropertyLike.Description = field.PropertyLike.Description
+				if field.Description != "" && existing.Description == "" {
+					existing.Description = field.Description
 				}
 				memberMap[prevKey] = existing
 			} else {

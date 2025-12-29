@@ -2,7 +2,7 @@ baseURL: https://bennypowers.dev/cem/
 languageCode: en-us
 title: cem
 enableRobotsTXT: true
-relativeURLs: true
+relativeURLs: false
 canonifyURLs: true
 enableGitInfo: true
 params:

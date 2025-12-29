@@ -26,7 +26,7 @@ import (
 	"sync"
 	"time"
 
-	W "bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/types"
 )
 
 // Type aliases for dependency tracking maps
@@ -64,7 +64,7 @@ type FileDependencyTracker struct {
 	moduleDeps    ModuleDependencyMap // Module path -> dependencies (forward mapping)
 	cssDepReverse CssReverseDepMap    // CSS FS path -> module paths that depend on it (reverse mapping)
 	lastScanTime  time.Time
-	ctx           W.WorkspaceContext
+	ctx           types.WorkspaceContext
 }
 
 // ModuleDependencies tracks dependencies for a specific module
@@ -81,7 +81,7 @@ type ModuleDependencies struct {
 // - session_core.go:55 (GenerateSession initialization)
 //
 // Returns: Initialized tracker with empty dependency maps
-func NewFileDependencyTracker(ctx W.WorkspaceContext) *FileDependencyTracker {
+func NewFileDependencyTracker(ctx types.WorkspaceContext) *FileDependencyTracker {
 	return &FileDependencyTracker{
 		fileHashes:    make(FileHashMap),
 		moduleDeps:    make(ModuleDependencyMap),
@@ -113,7 +113,7 @@ func (fdt *FileDependencyTracker) UpdateFileHash(fsPath string) ([32]byte, error
 	if err != nil {
 		return [32]byte{}, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	hasher := sha256.New()
 	if _, err := io.Copy(hasher, file); err != nil {

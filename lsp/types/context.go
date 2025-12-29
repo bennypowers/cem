@@ -17,7 +17,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package types
 
 import (
+	"bennypowers.dev/cem/internal/platform"
 	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/modulegraph"
 	"bennypowers.dev/cem/queries"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
@@ -57,6 +59,7 @@ type ServerContext interface {
 	// Server lifecycle
 	InitializeManifests() error
 	UpdateWorkspaceFromLSP(rootURI *string, workspaceFolders []protocol.WorkspaceFolder) error
+	Close() error
 
 	// Document operations
 	DocumentManager() (DocumentManager, error)
@@ -66,6 +69,9 @@ type ServerContext interface {
 	// Workspace operations
 	Workspace() Workspace
 	WorkspaceRoot() string
+
+	// Filesystem operations
+	FileSystem() platform.FileSystem
 
 	// Logging
 	DebugLog(format string, args ...any)
@@ -79,4 +85,7 @@ type ServerContext interface {
 
 	// Query operations for tree-sitter
 	QueryManager() (*queries.QueryManager, error)
+
+	// Module graph operations for re-export analysis
+	ModuleGraph() *modulegraph.ModuleGraph
 }

@@ -1,0 +1,8 @@
+{
+  "name": "workspace-elements-single",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "./elements"
+  ]
+}

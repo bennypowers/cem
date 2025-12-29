@@ -19,12 +19,12 @@ package textDocument_test
 import (
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 func TestDocumentChangeHandling(t *testing.T) {
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create document manager: %v", err)
 	}
@@ -103,7 +103,7 @@ func TestDocumentChangeHandling(t *testing.T) {
 // TestNilDocumentManagerHandling tests the regression fix for nil pointer dereference
 // when AnalyzeCompletionContextTS is called with nil document manager (e.g., from diagnostics)
 func TestNilDocumentManagerHandling(t *testing.T) {
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create document manager: %v", err)
 	}

@@ -1,0 +1,1376 @@
+/*
+Copyright © 2025 Benny Powers <web@bennypowers.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+// PHASE 1 TESTS - Core Server & Live Reload
+// These tests verify HTTP server, WebSocket endpoint, and file watching functionality
+// using the fixture/golden pattern
+
+package serve_test
+
+import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
+	"sync"
+	"testing"
+
+	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/serve"
+	importmappkg "bennypowers.dev/cem/serve/middleware/importmap"
+	"bennypowers.dev/cem/serve/middleware/transform"
+	"bennypowers.dev/cem/serve/middleware/types"
+)
+
+// newTestFS creates an in-memory filesystem with manifest-regen fixture data
+func newTestFS(t *testing.T) platform.FileSystem {
+	t.Helper()
+
+	mfs := platform.NewMapFileSystem(nil)
+
+	// Load fixture data from testdata/manifest-regen
+	mfs.AddFile("/test-package/package.json", `{
+  "name": "test-package",
+  "customElements": "custom-elements.json"
+}`, 0644)
+
+	mfs.AddFile("/test-package/.config/cem.yaml", `generate:
+  files:
+    - "src/*.ts"
+`, 0644)
+
+	mfs.AddFile("/test-package/src/test.ts", `export class TestElement extends HTMLElement {}`, 0644)
+
+	return mfs
+}
+
+// TestReloadMessageFormat verifies reload message structure matches expected format
+func TestReloadMessageFormat(t *testing.T) {
+	// Read expected golden file
+	goldenPath := filepath.Join("testdata", "websocket-reload", "expected-reload-message.json")
+	expectedBytes, err := os.ReadFile(goldenPath)
+	if err != nil {
+		t.Fatalf("Failed to read golden file: %v", err)
+	}
+
+	// Parse expected message
+	var expected map[string]any
+	if err := json.Unmarshal(expectedBytes, &expected); err != nil {
+		t.Fatalf("Failed to parse expected message: %v", err)
+	}
+
+	// Create server and generate message
+	server, err := serve.NewServer(8000)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	// Create reload message
+	msgBytes, err := server.CreateReloadMessage([]string{"test.ts", "foo.ts"}, "file-change")
+	if err != nil {
+		t.Fatalf("Failed to create reload message: %v", err)
+	}
+
+	// Parse actual message
+	var actual map[string]any
+	if err := json.Unmarshal(msgBytes, &actual); err != nil {
+		t.Fatalf("Failed to parse actual message: %v", err)
+	}
+
+	// Verify structure matches expected
+	if actual["type"] != expected["type"] {
+		t.Errorf("Expected type %v, got %v", expected["type"], actual["type"])
+	}
+
+	if actual["reason"] != expected["reason"] {
+		t.Errorf("Expected reason %v, got %v", expected["reason"], actual["reason"])
+	}
+
+	// Verify files array
+	actualFiles, ok := actual["files"].([]any)
+	if !ok {
+		t.Fatal("Expected files to be an array")
+	}
+
+	expectedFiles, ok := expected["files"].([]any)
+	if !ok {
+		t.Fatal("Expected files in golden to be an array")
+	}
+
+	if len(actualFiles) != len(expectedFiles) {
+		t.Errorf("Expected %d files, got %d", len(expectedFiles), len(actualFiles))
+	}
+}
+
+// TestServerCreation verifies basic server creation
+func TestServerCreation(t *testing.T) {
+	server, err := serve.NewServer(8001)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	if server.Port() != 8001 {
+		t.Errorf("Expected port 8001, got %d", server.Port())
+	}
+}
+
+// TestServerConfig verifies config-based server creation
+func TestServerConfig(t *testing.T) {
+	config := serve.Config{
+		Port:   8002,
+		Reload: true,
+	}
+
+	server, err := serve.NewServerWithConfig(config)
+	if err != nil {
+		t.Fatalf("Failed to create server with config: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	if server.Port() != 8002 {
+		t.Errorf("Expected port 8002, got %d", server.Port())
+	}
+}
+
+// TestServerLifecycle verifies start/stop behavior
+func TestServerLifecycle(t *testing.T) {
+	server, err := serve.NewServer(8003)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+
+	// Should not be running initially
+	if server.IsRunning() {
+		t.Error("Expected server to not be running before Start()")
+	}
+
+	// Start server
+	err = server.Start()
+	if err != nil {
+		t.Fatalf("Failed to start server: %v", err)
+	}
+
+	// Should be running after start
+	if !server.IsRunning() {
+		t.Error("Expected server to be running after Start()")
+	}
+
+	// Close server
+	err = server.Close()
+	if err != nil {
+		t.Fatalf("Failed to close server: %v", err)
+	}
+
+	// Should not be running after close
+	if server.IsRunning() {
+		t.Error("Expected server to not be running after Close()")
+	}
+}
+
+// TestWebSocketManager verifies WebSocket manager exists and has correct interface
+func TestWebSocketManager(t *testing.T) {
+	server, err := serve.NewServer(8004)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	wsManager := server.WebSocketManager()
+	if wsManager == nil {
+		t.Fatal("Expected WebSocket manager to exist")
+	}
+
+	// Should have zero connections initially
+	if wsManager.ConnectionCount() != 0 {
+		t.Errorf("Expected 0 connections initially, got %d", wsManager.ConnectionCount())
+	}
+}
+
+// TestFileWatcherSetup verifies file watcher can be configured
+func TestFileWatcherSetup(t *testing.T) {
+	mfs := newTestFS(t)
+	server, err := serve.NewServerWithConfig(serve.Config{
+		Port:   8005,
+		Reload: true,
+		FS:     mfs,
+	})
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	testDir := "/test-package"
+	err = server.SetWatchDir(testDir)
+	if err != nil {
+		t.Fatalf("Failed to set watch directory: %v", err)
+	}
+
+	watchDir := server.WatchDir()
+	if watchDir != testDir {
+		t.Errorf("Expected watch dir %s, got %s", testDir, watchDir)
+	}
+}
+
+// TestManifestAccessors verifies manifest get/set interface
+func TestManifestAccessors(t *testing.T) {
+	server, err := serve.NewServer(8006)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	testManifest := []byte(`{"schemaVersion":"1.0.0","modules":[]}`)
+	err = server.SetManifest(testManifest)
+	if err != nil {
+		t.Fatalf("Failed to set manifest: %v", err)
+	}
+
+	manifest, err := server.Manifest()
+	if err != nil {
+		t.Fatalf("Failed to get manifest: %v", err)
+	}
+
+	if string(manifest) != string(testManifest) {
+		t.Error("Expected manifest to match what was set")
+	}
+}
+
+// TestManifestDefensiveCopy verifies that manifest uses defensive copying
+func TestManifestDefensiveCopy(t *testing.T) {
+	server, err := serve.NewServer(8014)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	// Create a manifest and modify it after setting
+	original := []byte(`{"schemaVersion":"1.0.0"}`)
+	err = server.SetManifest(original)
+	if err != nil {
+		t.Fatalf("Failed to set manifest: %v", err)
+	}
+
+	// Modify the original slice
+	original[0] = 'X'
+
+	// Get manifest and verify it wasn't affected
+	retrieved, err := server.Manifest()
+	if err != nil {
+		t.Fatalf("Failed to get manifest: %v", err)
+	}
+
+	if retrieved[0] != '{' {
+		t.Error("SetManifest didn't make defensive copy - caller mutation affected internal state")
+	}
+
+	// Modify the retrieved slice
+	retrieved[0] = 'Y'
+
+	// Get manifest again and verify it wasn't affected
+	retrieved2, err := server.Manifest()
+	if err != nil {
+		t.Fatalf("Failed to get manifest second time: %v", err)
+	}
+
+	if retrieved2[0] != '{' {
+		t.Error("Manifest didn't make defensive copy - caller mutation affected internal state")
+	}
+}
+
+// TestDebounceDuration verifies 50ms debounce duration
+func TestDebounceDuration(t *testing.T) {
+	server, err := serve.NewServer(8007)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	duration := server.DebounceDuration()
+	expected := "50ms"
+
+	if duration.String() != expected {
+		t.Errorf("Expected debounce duration %s, got %s", expected, duration.String())
+	}
+}
+
+// TestConfigReloadDisabled verifies reload can be disabled
+func TestConfigReloadDisabled(t *testing.T) {
+	config := serve.Config{
+		Port:   8008,
+		Reload: false,
+	}
+
+	server, err := serve.NewServerWithConfig(config)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	// WebSocket manager should be nil when reload disabled
+	wsManager := server.WebSocketManager()
+	if wsManager != nil {
+		t.Error("Expected WebSocket manager to be nil when reload disabled")
+	}
+}
+
+// TestCORSHeaders verifies CORS middleware exists
+func TestCORSHeaders(t *testing.T) {
+	server, err := serve.NewServer(8009)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	// Server should have CORS middleware configured
+	// This is tested more thoroughly in e2e tests
+	if server.Handler() == nil {
+		t.Error("Expected server to have handler configured")
+	}
+}
+
+// TestLogging verifies logger exists
+func TestLogging(t *testing.T) {
+	server, err := serve.NewServer(8010)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	logger := server.Logger()
+	if logger == nil {
+		t.Error("Expected server to have a logger")
+	}
+}
+
+// TestBroadcastReload verifies broadcast method exists and accepts correct parameters
+func TestBroadcastReload(t *testing.T) {
+	server, err := serve.NewServer(8011)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	// Should accept files and reason
+	err = server.BroadcastReload([]string{"test.ts"}, "file-change")
+	if err != nil {
+		t.Fatalf("BroadcastReload failed: %v", err)
+	}
+}
+
+// TestManifestRegenerationTrigger verifies regeneration can be triggered
+func TestManifestRegenerationTrigger(t *testing.T) {
+	mfs := newTestFS(t)
+	server, err := serve.NewServerWithConfig(serve.Config{
+		Port:   8012,
+		Reload: true,
+		FS:     mfs,
+	})
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	err = server.SetWatchDir("/test-package")
+	if err != nil {
+		t.Fatalf("Failed to set watch directory: %v", err)
+	}
+
+	// Should be able to trigger regeneration
+	_, err = server.RegenerateManifest()
+	if err != nil {
+		// Error is expected if no source files exist, but method should exist
+		if !strings.Contains(err.Error(), "no source files") &&
+			!strings.Contains(err.Error(), "not implemented") {
+			t.Fatalf("Unexpected error from RegenerateManifest: %v", err)
+		}
+	}
+}
+
+// TestManifestGeneration_WithTempDir verifies manifest generation with temp directory
+func TestManifestGeneration_WithTempDir(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create package.json
+	packageJSON := `{
+  "name": "manifest-test",
+  "customElements": "custom-elements.json"
+}`
+	err := os.WriteFile(filepath.Join(tmpDir, "package.json"), []byte(packageJSON), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write package.json: %v", err)
+	}
+
+	// Create .config directory and cem.yaml
+	configDir := filepath.Join(tmpDir, ".config")
+	err = os.Mkdir(configDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create .config directory: %v", err)
+	}
+
+	cemConfig := `generate:
+  files:
+    - "src/*.ts"
+`
+	err = os.WriteFile(filepath.Join(configDir, "cem.yaml"), []byte(cemConfig), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write cem.yaml: %v", err)
+	}
+
+	// Create src directory
+	srcDir := filepath.Join(tmpDir, "src")
+	err = os.Mkdir(srcDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create src directory: %v", err)
+	}
+
+	// Create a simple TypeScript file
+	tsContent := `/**
+ * A test element
+ * @element test-element
+ */
+export class TestElement extends HTMLElement {}
+`
+	err = os.WriteFile(filepath.Join(srcDir, "test-element.ts"), []byte(tsContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write TypeScript file: %v", err)
+	}
+
+	server, err := serve.NewServer(8013)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	err = server.SetWatchDir(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to set watch directory: %v", err)
+	}
+
+	// Regenerate manifest
+	_, err = server.RegenerateManifest()
+	if err != nil {
+		t.Fatalf("Failed to regenerate manifest: %v", err)
+	}
+
+	// Get manifest
+	manifest, err := server.Manifest()
+	if err != nil {
+		t.Fatalf("Failed to get manifest: %v", err)
+	}
+
+	// Verify manifest is not empty
+	if len(manifest) == 0 {
+		t.Error("Expected manifest to be generated, got empty")
+	}
+
+	// Verify manifest is valid JSON
+	var manifestObj map[string]any
+	if err := json.Unmarshal(manifest, &manifestObj); err != nil {
+		t.Fatalf("Expected valid JSON manifest, got error: %v", err)
+	}
+
+	// Verify manifest has schemaVersion
+	if _, ok := manifestObj["schemaVersion"]; !ok {
+		t.Error("Expected manifest to have schemaVersion field")
+	}
+
+	// Verify manifest has modules
+	if _, ok := manifestObj["modules"]; !ok {
+		t.Error("Expected manifest to have modules field")
+	}
+}
+
+// TestPortBindingError verifies that port binding errors are detected immediately
+func TestPortBindingError(t *testing.T) {
+	// Create and start first server
+	server1, err := serve.NewServer(8888)
+	if err != nil {
+		t.Fatalf("Failed to create first server: %v", err)
+	}
+
+	err = server1.Start()
+	if err != nil {
+		t.Fatalf("Failed to start first server: %v", err)
+	}
+	defer func() { _ = server1.Close() }()
+
+	// Try to start second server on same port - should fail immediately
+	server2, err := serve.NewServer(8888)
+	if err != nil {
+		t.Fatalf("Failed to create second server: %v", err)
+	}
+
+	err = server2.Start()
+	if err == nil {
+		_ = server2.Close()
+		t.Fatal("Expected port binding error, but Start() succeeded")
+	}
+
+	// Verify error message mentions port binding
+	if !strings.Contains(err.Error(), "bind") && !strings.Contains(err.Error(), "address already in use") {
+		t.Errorf("Expected error about port binding, got: %v", err)
+	}
+
+	// Verify second server is not running
+	if server2.IsRunning() {
+		t.Error("Expected second server to not be running after bind failure")
+	}
+}
+
+// TestImportResolution verifies import map resolution with prefix matching
+func TestImportResolution(t *testing.T) {
+	// Create in-memory filesystem with test package
+	mfs := platform.NewMapFileSystem(nil)
+	packageJSON := `{
+  "name": "@test/elements",
+  "exports": {
+    "./*": "./src/*"
+  }
+}`
+	mfs.AddFile("/test-package/package.json", packageJSON, 0644)
+
+	server, err := serve.NewServerWithConfig(serve.Config{
+		Port:   8015,
+		Reload: true,
+		FS:     mfs,
+		ImportMap: types.ImportMapConfig{
+			Generate: true,
+		},
+	})
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	err = server.SetWatchDir("/test-package")
+	if err != nil {
+		t.Fatalf("Failed to set watch directory: %v", err)
+	}
+
+	// The server should have generated an import map with the prefix entry
+	// @test/elements/ -> /src/
+	// This would allow @test/elements/foo/bar.js to resolve to /src/foo/bar.js
+
+	importMap := server.ImportMap()
+	if importMap == nil {
+		t.Fatal("Expected import map to be generated, got nil")
+	}
+
+	// Type assert to concrete import map type to inspect entries
+	im, ok := importMap.(*importmappkg.ImportMap)
+	if !ok {
+		t.Fatalf("Expected *importmap.ImportMap, got %T", importMap)
+	}
+
+	// Verify the prefix entry exists
+	expectedPrefix := "@test/elements/"
+	expectedTarget := "/src/"
+
+	actualTarget, exists := im.Imports[expectedPrefix]
+	if !exists {
+		t.Errorf("Expected import map to contain prefix entry %q, but it was missing. Imports: %v", expectedPrefix, im.Imports)
+	}
+
+	if actualTarget != expectedTarget {
+		t.Errorf("Expected prefix entry %q to map to %q, got %q", expectedPrefix, expectedTarget, actualTarget)
+	}
+}
+
+// TestRegenerateManifestIncremental_NoDoubleLockPanic verifies that calling
+// RegenerateManifestIncremental when generateSession is nil doesn't cause
+// a double-unlock panic
+func TestRegenerateManifestIncremental_NoDoubleLockPanic(t *testing.T) {
+	// Create in-memory filesystem with fixture data
+	mfs := newTestFS(t)
+
+	server, err := serve.NewServerWithConfig(serve.Config{
+		Port:   0,
+		Reload: true,
+		FS:     mfs,
+	})
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	err = server.SetWatchDir("/test-package")
+	if err != nil {
+		t.Fatalf("Failed to set watch directory: %v", err)
+	}
+
+	// Call RegenerateManifestIncremental WITHOUT calling RegenerateManifest first
+	// This means generateSession will be nil, triggering the fallback path
+	// With the bug, this will cause a double-unlock panic
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("Double-unlock panic detected: %v", r)
+		}
+	}()
+
+	srcFile := "/test-package/src/test.ts"
+	_, err = server.RegenerateManifestIncremental([]string{srcFile})
+	// Error is expected (since we're calling incremental without a session),
+	// but no panic should occur
+	if err != nil {
+		// This is acceptable - we're just checking for panic
+		t.Logf("RegenerateManifestIncremental returned error (expected): %v", err)
+	}
+}
+
+// TestStaticFileMIMETypes_JSModules verifies that JavaScript module files are served with correct MIME types
+func TestStaticFileMIMETypes_JSModules(t *testing.T) {
+	tests := []struct {
+		name         string
+		path         string
+		fileContent  string
+		expectedMIME string
+	}{
+		{
+			name:         ".mjs file",
+			path:         "/test.mjs",
+			fileContent:  "export const foo = 'bar';",
+			expectedMIME: "application/javascript; charset=utf-8",
+		},
+		{
+			name:         ".cjs file",
+			path:         "/test.cjs",
+			fileContent:  "module.exports = { foo: 'bar' };",
+			expectedMIME: "application/javascript; charset=utf-8",
+		},
+		{
+			name:         ".json file",
+			path:         "/test.json",
+			fileContent:  `{"foo": "bar"}`,
+			expectedMIME: "application/json; charset=utf-8",
+		},
+		{
+			name:         ".svg file",
+			path:         "/test.svg",
+			fileContent:  `<svg xmlns="http://www.w3.org/2000/svg"></svg>`,
+			expectedMIME: "image/svg+xml",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create in-memory filesystem with test file
+			mfs := platform.NewMapFileSystem(nil)
+			mfs.AddFile("/test-package"+tt.path, tt.fileContent, 0644)
+			mfs.AddFile("/test-package/package.json", `{"name": "test"}`, 0644)
+
+			server, err := serve.NewServerWithConfig(serve.Config{
+				Port: 0,
+				FS:   mfs,
+			})
+			if err != nil {
+				t.Fatalf("Failed to create server: %v", err)
+			}
+			defer func() { _ = server.Close() }()
+
+			err = server.SetWatchDir("/test-package")
+			if err != nil {
+				t.Fatalf("Failed to set watch directory: %v", err)
+			}
+
+			// Make request for static file (no need to start the server, just use the handler)
+			req := httptest.NewRequest("GET", tt.path, nil)
+			rec := httptest.NewRecorder()
+
+			server.Handler().ServeHTTP(rec, req)
+
+			// Verify status code
+			if rec.Code != http.StatusOK {
+				t.Errorf("Expected status 200, got %d", rec.Code)
+			}
+
+			// Verify MIME type
+			contentType := rec.Header().Get("Content-Type")
+			if contentType != tt.expectedMIME {
+				t.Errorf("Expected Content-Type %q, got %q", tt.expectedMIME, contentType)
+			}
+		})
+	}
+}
+
+// TestStaticFileMIMETypes_NodeModules verifies MIME types for node_modules files (regression test)
+func TestStaticFileMIMETypes_NodeModules(t *testing.T) {
+	tests := []struct {
+		name         string
+		path         string
+		fileContent  string
+		expectedMIME string
+	}{
+		{
+			name:         "tslib .mjs in node_modules",
+			path:         "/node_modules/tslib/tslib.es6.mjs",
+			fileContent:  "export function __extends() {}",
+			expectedMIME: "application/javascript; charset=utf-8",
+		},
+		{
+			name:         "package .mjs in node_modules",
+			path:         "/node_modules/some-package/index.mjs",
+			fileContent:  "export default {}",
+			expectedMIME: "application/javascript; charset=utf-8",
+		},
+		{
+			name:         "package .cjs in node_modules",
+			path:         "/node_modules/some-package/index.cjs",
+			fileContent:  "module.exports = {}",
+			expectedMIME: "application/javascript; charset=utf-8",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create in-memory filesystem with test file
+			mfs := platform.NewMapFileSystem(nil)
+			mfs.AddFile("/test-package"+tt.path, tt.fileContent, 0644)
+			mfs.AddFile("/test-package/package.json", `{"name": "test"}`, 0644)
+
+			server, err := serve.NewServerWithConfig(serve.Config{
+				Port: 0,
+				FS:   mfs,
+			})
+			if err != nil {
+				t.Fatalf("Failed to create server: %v", err)
+			}
+			defer func() { _ = server.Close() }()
+
+			err = server.SetWatchDir("/test-package")
+			if err != nil {
+				t.Fatalf("Failed to set watch directory: %v", err)
+			}
+
+			// Make request for static file (no need to start the server, just use the handler)
+			req := httptest.NewRequest("GET", tt.path, nil)
+			rec := httptest.NewRecorder()
+
+			server.Handler().ServeHTTP(rec, req)
+
+			// Verify status code
+			if rec.Code != http.StatusOK {
+				t.Errorf("Expected status 200, got %d", rec.Code)
+			}
+
+			// Verify MIME type - this is the critical regression test
+			contentType := rec.Header().Get("Content-Type")
+			if contentType != tt.expectedMIME {
+				t.Errorf("Expected Content-Type %q, got %q (regression: .mjs/.cjs should not be text/plain)", tt.expectedMIME, contentType)
+			}
+		})
+	}
+}
+
+// TestPathResolverHotReload verifies that pathResolver rebuilds when tsconfig changes
+func TestPathResolverHotReload(t *testing.T) {
+	// Create in-memory filesystem with initial tsconfig
+	mfs := platform.NewMapFileSystem(nil)
+
+	// Initial tsconfig: src -> dist
+	initialTsconfig := `{
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist"
+  }
+}`
+	mfs.AddFile("/test-package/tsconfig.json", initialTsconfig, 0644)
+	mfs.AddFile("/test-package/package.json", `{"name": "test"}`, 0644)
+
+	// Create source file in src/
+	sourceContent := `export class TestElement extends HTMLElement {
+  constructor() {
+    super();
+  }
+}`
+	mfs.AddFile("/test-package/src/test-element.ts", sourceContent, 0644)
+
+	// Create TypeScript transform config
+	config := serve.Config{
+		Port: 0,
+		FS:   mfs,
+		Transforms: serve.TransformConfig{
+			TypeScript: serve.TypeScriptConfig{
+				Enabled: true,
+				Target:  transform.ES2022,
+			},
+		},
+	}
+
+	server, err := serve.NewServerWithConfig(config)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	err = server.SetWatchDir("/test-package")
+	if err != nil {
+		t.Fatalf("Failed to set watch directory: %v", err)
+	}
+
+	// Verify initial path resolver configuration
+	urlRewrites := server.URLRewrites()
+	if len(urlRewrites) != 1 {
+		t.Fatalf("Expected 1 URL rewrite, got %d", len(urlRewrites))
+	}
+
+	if urlRewrites[0].URLPattern != "/dist/:path*" {
+		t.Errorf("Expected initial URLPattern '/dist/:path*', got %q", urlRewrites[0].URLPattern)
+	}
+
+	if urlRewrites[0].URLTemplate != "/src/{{.path}}" {
+		t.Errorf("Expected initial URLTemplate '/src/{{.path}}', got %q", urlRewrites[0].URLTemplate)
+	}
+
+	// Request /dist/test-element.js should resolve to /src/test-element.ts via pathResolver
+	req := httptest.NewRequest("GET", "/dist/test-element.js", nil)
+	rec := httptest.NewRecorder()
+
+	server.Handler().ServeHTTP(rec, req)
+
+	// Should get 200 OK (the TypeScript transform middleware should handle this)
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status 200 for initial request, got %d", rec.Code)
+	}
+
+	// Update tsconfig to use different paths: source -> build
+	updatedTsconfig := `{
+  "compilerOptions": {
+    "rootDir": "./source",
+    "outDir": "./build"
+  }
+}`
+	mfs.AddFile("/test-package/tsconfig.json", updatedTsconfig, 0644)
+
+	// Create source file in new location
+	mfs.AddFile("/test-package/source/test-element.ts", sourceContent, 0644)
+
+	// Trigger pathResolver rebuild (simulates file change event)
+	// Note: We're calling this directly instead of simulating the file watcher
+	// because that would require starting the server and waiting for events
+	err = server.RebuildPathResolverForTest()
+	if err != nil {
+		t.Fatalf("Failed to rebuild path resolver: %v", err)
+	}
+
+	// Verify new path resolver configuration
+	urlRewritesAfter := server.URLRewrites()
+	if len(urlRewritesAfter) != 1 {
+		t.Fatalf("Expected 1 URL rewrite after rebuild, got %d", len(urlRewritesAfter))
+	}
+
+	if urlRewritesAfter[0].URLPattern != "/build/:path*" {
+		t.Errorf("Expected updated URLPattern '/build/:path*', got %q", urlRewritesAfter[0].URLPattern)
+	}
+
+	if urlRewritesAfter[0].URLTemplate != "/source/{{.path}}" {
+		t.Errorf("Expected updated URLTemplate '/source/{{.path}}', got %q", urlRewritesAfter[0].URLTemplate)
+	}
+
+	// Request /build/test-element.js should now resolve to /source/test-element.ts
+	req2 := httptest.NewRequest("GET", "/build/test-element.js", nil)
+	rec2 := httptest.NewRecorder()
+
+	server.Handler().ServeHTTP(rec2, req2)
+
+	// Should get 200 OK with new path resolution
+	if rec2.Code != http.StatusOK {
+		t.Errorf("Expected status 200 for request after rebuild, got %d", rec2.Code)
+	}
+
+	// Old path /dist/test-element.js should now return 404
+	req3 := httptest.NewRequest("GET", "/dist/test-element.js", nil)
+	rec3 := httptest.NewRecorder()
+
+	server.Handler().ServeHTTP(rec3, req3)
+
+	if rec3.Code != http.StatusNotFound {
+		t.Errorf("Expected status 404 for old path after rebuild, got %d", rec3.Code)
+	}
+}
+
+// TestConfigFileURLRewritesParsing verifies config file URL rewrites are parsed correctly
+func TestConfigFileURLRewritesParsing(t *testing.T) {
+	// Create in-memory filesystem with config file
+	mfs := platform.NewMapFileSystem(nil)
+
+	configContent := `serve:
+  urlRewrites:
+    - urlPattern: "/api/:version/:endpoint"
+      urlTemplate: "/v1/{{.version}}/{{.endpoint}}"
+`
+	mfs.AddFile("/test-package/.config/cem.yaml", configContent, 0644)
+	mfs.AddFile("/test-package/package.json", `{"name": "test"}`, 0644)
+
+	config := serve.Config{
+		Port:       0,
+		FS:         mfs,
+		ConfigFile: "/test-package/.config/cem.yaml",
+	}
+
+	server, err := serve.NewServerWithConfig(config)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	err = server.SetWatchDir("/test-package")
+	if err != nil {
+		t.Fatalf("Failed to set watch directory: %v", err)
+	}
+
+	// Verify config file URL rewrites were parsed
+	urlRewrites := server.URLRewrites()
+	if len(urlRewrites) != 1 {
+		t.Fatalf("Expected 1 URL rewrite from config file, got %d", len(urlRewrites))
+	}
+
+	if urlRewrites[0].URLPattern != "/api/:version/:endpoint" {
+		t.Errorf("Expected URLPattern '/api/:version/:endpoint', got %q", urlRewrites[0].URLPattern)
+	}
+
+	if urlRewrites[0].URLTemplate != "/v1/{{.version}}/{{.endpoint}}" {
+		t.Errorf("Expected URLTemplate '/v1/{{.version}}/{{.endpoint}}', got %q", urlRewrites[0].URLTemplate)
+	}
+}
+
+// mockWebSocketManager records broadcast calls for testing
+type mockWebSocketManager struct {
+	broadcasts []mockBroadcast
+	mu         sync.Mutex
+}
+
+type mockBroadcast struct {
+	message []byte
+	pages   []string
+}
+
+func (m *mockWebSocketManager) ConnectionCount() int                                    { return 0 }
+func (m *mockWebSocketManager) BroadcastShutdown() error                                { return nil }
+func (m *mockWebSocketManager) CloseAll() error                                         { return nil }
+func (m *mockWebSocketManager) HandleConnection(w http.ResponseWriter, r *http.Request) {}
+func (m *mockWebSocketManager) SetLogger(logger serve.Logger)                           {}
+
+func (m *mockWebSocketManager) Broadcast(message []byte) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.broadcasts = append(m.broadcasts, mockBroadcast{message: message})
+	return nil
+}
+
+func (m *mockWebSocketManager) BroadcastToPages(message []byte, pageURLs []string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.broadcasts = append(m.broadcasts, mockBroadcast{message: message, pages: pageURLs})
+	return nil
+}
+
+func (m *mockWebSocketManager) getBroadcasts() []mockBroadcast {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return append([]mockBroadcast{}, m.broadcasts...)
+}
+
+// TestConfigFileHotReload verifies config file changes trigger path resolver rebuild
+func TestConfigFileHotReload(t *testing.T) {
+	// Create in-memory filesystem with initial config
+	mfs := platform.NewMapFileSystem(nil)
+
+	initialConfig := `serve:
+  urlRewrites:
+    - urlPattern: "/dist/:path*"
+      urlTemplate: "/src/{{.path}}"
+`
+	mfs.AddFile("/test-package/.config/cem.yaml", initialConfig, 0644)
+	mfs.AddFile("/test-package/package.json", `{"name": "test"}`, 0644)
+
+	// Create source file
+	sourceContent := `export class TestElement extends HTMLElement {}`
+	mfs.AddFile("/test-package/src/test.ts", sourceContent, 0644)
+
+	// Create mock WebSocket manager to verify broadcasts
+	mockWS := &mockWebSocketManager{}
+
+	config := serve.Config{
+		Port:             0,
+		Reload:           true,
+		FS:               mfs,
+		ConfigFile:       "/test-package/.config/cem.yaml",
+		WebSocketManager: mockWS,
+		Transforms: serve.TransformConfig{
+			TypeScript: serve.TypeScriptConfig{
+				Enabled: true,
+				Target:  transform.ES2022,
+			},
+		},
+	}
+
+	server, err := serve.NewServerWithConfig(config)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	err = server.SetWatchDir("/test-package")
+	if err != nil {
+		t.Fatalf("Failed to set watch directory: %v", err)
+	}
+
+	// Verify initial rewrites
+	urlRewrites := server.URLRewrites()
+	if len(urlRewrites) != 1 {
+		t.Fatalf("Expected 1 URL rewrite initially, got %d", len(urlRewrites))
+	}
+
+	if urlRewrites[0].URLPattern != "/dist/:path*" {
+		t.Errorf("Expected initial URLPattern '/dist/:path*', got %q", urlRewrites[0].URLPattern)
+	}
+
+	// Verify initial rewrite works
+	req := httptest.NewRequest("GET", "/dist/test.js", nil)
+	rec := httptest.NewRecorder()
+	server.Handler().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status 200 for initial request, got %d", rec.Code)
+	}
+
+	// Update config file with different URL rewrites
+	updatedConfig := `serve:
+  urlRewrites:
+    - urlPattern: "/build/:path*"
+      urlTemplate: "/source/{{.path}}"
+`
+	mfs.AddFile("/test-package/.config/cem.yaml", updatedConfig, 0644)
+
+	// Create source file in new location
+	mfs.AddFile("/test-package/source/test.ts", sourceContent, 0644)
+
+	// Clear any previous broadcasts
+	mockWS.mu.Lock()
+	mockWS.broadcasts = nil
+	mockWS.mu.Unlock()
+
+	// Trigger rebuild (simulates file watcher detecting config change)
+	err = server.RebuildPathResolverForTest()
+	if err != nil {
+		t.Fatalf("Failed to rebuild path resolver: %v", err)
+	}
+
+	// Verify that a reload broadcast was sent after PathResolver rebuild
+	broadcasts := mockWS.getBroadcasts()
+	if len(broadcasts) != 1 {
+		t.Fatalf("Expected 1 broadcast after config change, got %d", len(broadcasts))
+	}
+
+	// Parse and verify the broadcast message
+	var reloadMsg serve.ReloadMessage
+	if err := json.Unmarshal(broadcasts[0].message, &reloadMsg); err != nil {
+		t.Fatalf("Failed to parse reload message: %v", err)
+	}
+
+	if reloadMsg.Type != "reload" {
+		t.Errorf("Expected reload message type 'reload', got %q", reloadMsg.Type)
+	}
+
+	if reloadMsg.Reason != "url-rewrites-changed" {
+		t.Errorf("Expected reload reason 'url-rewrites-changed', got %q", reloadMsg.Reason)
+	}
+
+	if len(reloadMsg.Files) != 1 || reloadMsg.Files[0] != "config" {
+		t.Errorf("Expected reload files ['config'], got %v", reloadMsg.Files)
+	}
+
+	// Verify new rewrites are active
+	urlRewritesAfter := server.URLRewrites()
+	if len(urlRewritesAfter) != 1 {
+		t.Fatalf("Expected 1 URL rewrite after rebuild, got %d", len(urlRewritesAfter))
+	}
+
+	if urlRewritesAfter[0].URLPattern != "/build/:path*" {
+		t.Errorf("Expected updated URLPattern '/build/:path*', got %q", urlRewritesAfter[0].URLPattern)
+	}
+
+	// Verify new rewrite works
+	req2 := httptest.NewRequest("GET", "/build/test.js", nil)
+	rec2 := httptest.NewRecorder()
+	server.Handler().ServeHTTP(rec2, req2)
+
+	if rec2.Code != http.StatusOK {
+		t.Errorf("Expected status 200 for request after rebuild, got %d", rec2.Code)
+	}
+
+	// Verify old rewrite no longer works
+	req3 := httptest.NewRequest("GET", "/dist/test.js", nil)
+	rec3 := httptest.NewRecorder()
+	server.Handler().ServeHTTP(rec3, req3)
+
+	if rec3.Code != http.StatusNotFound {
+		t.Errorf("Expected status 404 for old path after rebuild, got %d", rec3.Code)
+	}
+}
+
+// TestConfigPrecedenceOverTsconfig verifies config file rewrites take precedence
+func TestConfigPrecedenceOverTsconfig(t *testing.T) {
+	// Create in-memory filesystem with both config and tsconfig
+	mfs := platform.NewMapFileSystem(nil)
+
+	// Config file with /dist mapping
+	configContent := `serve:
+  urlRewrites:
+    - urlPattern: "/dist/:path*"
+      urlTemplate: "/config-src/{{.path}}"
+`
+	mfs.AddFile("/test-package/.config/cem.yaml", configContent, 0644)
+
+	// Tsconfig with overlapping /dist mapping
+	tsconfigContent := `{
+  "compilerOptions": {
+    "rootDir": "./tsconfig-src",
+    "outDir": "./dist"
+  }
+}`
+	mfs.AddFile("/test-package/tsconfig.json", tsconfigContent, 0644)
+	mfs.AddFile("/test-package/package.json", `{"name": "test"}`, 0644)
+
+	// Create source files in both locations
+	sourceContent := `export class Test {}`
+	mfs.AddFile("/test-package/config-src/test.ts", sourceContent, 0644)
+	mfs.AddFile("/test-package/tsconfig-src/test.ts", "// different content", 0644)
+
+	config := serve.Config{
+		Port:       0,
+		FS:         mfs,
+		ConfigFile: "/test-package/.config/cem.yaml",
+		Transforms: serve.TransformConfig{
+			TypeScript: serve.TypeScriptConfig{
+				Enabled: true,
+				Target:  transform.ES2022,
+			},
+		},
+	}
+
+	server, err := serve.NewServerWithConfig(config)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	err = server.SetWatchDir("/test-package")
+	if err != nil {
+		t.Fatalf("Failed to set watch directory: %v", err)
+	}
+
+	// Verify both rewrites are present
+	urlRewrites := server.URLRewrites()
+	if len(urlRewrites) != 2 {
+		t.Fatalf("Expected 2 URL rewrites (config + tsconfig), got %d", len(urlRewrites))
+	}
+
+	// Config file rewrite should be first (higher precedence)
+	if urlRewrites[0].URLTemplate != "/config-src/{{.path}}" {
+		t.Errorf("Expected config file rewrite first, got %q", urlRewrites[0].URLTemplate)
+	}
+
+	// Request /dist/test.js should resolve via config file mapping (not tsconfig)
+	req := httptest.NewRequest("GET", "/dist/test.js", nil)
+	rec := httptest.NewRecorder()
+	server.Handler().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", rec.Code)
+	}
+
+	// Verify it used config-src (contains "export class Test")
+	// Not verifying exact content, just that it resolved successfully
+}
+
+// TestInvalidConfigFileRewrites verifies invalid rewrites are rejected gracefully
+func TestInvalidConfigFileRewrites(t *testing.T) {
+	// Create in-memory filesystem with invalid config
+	mfs := platform.NewMapFileSystem(nil)
+
+	// Invalid template syntax
+	invalidConfig := `serve:
+  urlRewrites:
+    - urlPattern: "/dist/:path*"
+      urlTemplate: "/src/{{.path"
+`
+	mfs.AddFile("/test-package/.config/cem.yaml", invalidConfig, 0644)
+
+	// Also have tsconfig for fallback
+	tsconfigContent := `{
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./build"
+  }
+}`
+	mfs.AddFile("/test-package/tsconfig.json", tsconfigContent, 0644)
+	mfs.AddFile("/test-package/package.json", `{"name": "test"}`, 0644)
+
+	config := serve.Config{
+		Port:       0,
+		FS:         mfs,
+		ConfigFile: "/test-package/.config/cem.yaml",
+	}
+
+	server, err := serve.NewServerWithConfig(config)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	err = server.SetWatchDir("/test-package")
+	if err != nil {
+		t.Fatalf("Failed to set watch directory: %v", err)
+	}
+
+	// Should have tsconfig rewrites only (invalid config rewrites rejected)
+	urlRewrites := server.URLRewrites()
+	if len(urlRewrites) != 1 {
+		t.Fatalf("Expected 1 URL rewrite (tsconfig only), got %d", len(urlRewrites))
+	}
+
+	if urlRewrites[0].URLPattern != "/build/:path*" {
+		t.Errorf("Expected tsconfig rewrite, got %q", urlRewrites[0].URLPattern)
+	}
+}
+
+// TestConfigFileRemovedHotReload verifies removal of config file is handled
+func TestConfigFileRemovedHotReload(t *testing.T) {
+	// Create in-memory filesystem with config file initially
+	mfs := platform.NewMapFileSystem(nil)
+
+	configContent := `serve:
+  urlRewrites:
+    - urlPattern: "/api/:path*"
+      urlTemplate: "/endpoints/{{.path}}"
+`
+	mfs.AddFile("/test-package/.config/cem.yaml", configContent, 0644)
+
+	// Also have tsconfig for fallback
+	tsconfigContent := `{
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist"
+  }
+}`
+	mfs.AddFile("/test-package/tsconfig.json", tsconfigContent, 0644)
+	mfs.AddFile("/test-package/package.json", `{"name": "test"}`, 0644)
+
+	config := serve.Config{
+		Port:       0,
+		FS:         mfs,
+		ConfigFile: "/test-package/.config/cem.yaml",
+	}
+
+	server, err := serve.NewServerWithConfig(config)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	err = server.SetWatchDir("/test-package")
+	if err != nil {
+		t.Fatalf("Failed to set watch directory: %v", err)
+	}
+
+	// Initially should have both config and tsconfig rewrites
+	urlRewrites := server.URLRewrites()
+	if len(urlRewrites) != 2 {
+		t.Fatalf("Expected 2 URL rewrites initially, got %d", len(urlRewrites))
+	}
+
+	// Remove config file
+	err = mfs.Remove("/test-package/.config/cem.yaml")
+	if err != nil {
+		t.Fatalf("Failed to remove config file: %v", err)
+	}
+
+	// Trigger rebuild
+	err = server.RebuildPathResolverForTest()
+	if err != nil {
+		t.Fatalf("Failed to rebuild path resolver: %v", err)
+	}
+
+	// Should fall back to tsconfig rewrites only
+	urlRewritesAfter := server.URLRewrites()
+	if len(urlRewritesAfter) != 1 {
+		t.Fatalf("Expected 1 URL rewrite after config removal, got %d", len(urlRewritesAfter))
+	}
+
+	if urlRewritesAfter[0].URLPattern != "/dist/:path*" {
+		t.Errorf("Expected tsconfig rewrite after config removal, got %q", urlRewritesAfter[0].URLPattern)
+	}
+}
+
+// TestNoConfigFilePath verifies behavior when ConfigFile is not set
+func TestNoConfigFilePath(t *testing.T) {
+	// Create in-memory filesystem with tsconfig only
+	mfs := platform.NewMapFileSystem(nil)
+
+	tsconfigContent := `{
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist"
+  }
+}`
+	mfs.AddFile("/test-package/tsconfig.json", tsconfigContent, 0644)
+	mfs.AddFile("/test-package/package.json", `{"name": "test"}`, 0644)
+
+	// No ConfigFile set
+	config := serve.Config{
+		Port: 0,
+		FS:   mfs,
+	}
+
+	server, err := serve.NewServerWithConfig(config)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	err = server.SetWatchDir("/test-package")
+	if err != nil {
+		t.Fatalf("Failed to set watch directory: %v", err)
+	}
+
+	// Should have tsconfig rewrites only
+	urlRewrites := server.URLRewrites()
+	if len(urlRewrites) != 1 {
+		t.Fatalf("Expected 1 URL rewrite from tsconfig, got %d", len(urlRewrites))
+	}
+
+	if urlRewrites[0].URLPattern != "/dist/:path*" {
+		t.Errorf("Expected tsconfig rewrite, got %q", urlRewrites[0].URLPattern)
+	}
+
+	// RebuildPathResolver should also work
+	err = server.RebuildPathResolverForTest()
+	if err != nil {
+		t.Fatalf("RebuildPathResolverForTest failed: %v", err)
+	}
+
+	// Still should have tsconfig rewrites
+	urlRewritesAfter := server.URLRewrites()
+	if len(urlRewritesAfter) != 1 {
+		t.Fatalf("Expected 1 URL rewrite after rebuild, got %d", len(urlRewritesAfter))
+	}
+}

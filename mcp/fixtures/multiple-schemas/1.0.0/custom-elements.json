@@ -1,0 +1,40 @@
+{
+  "version": "experimental",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "button.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "Button",
+          "tagName": "old-button",
+          "customElement": true,
+          "description": "A button element for schema 1.0.0",
+          "attributes": [
+            {
+              "name": "disabled",
+              "type": "boolean",
+              "description": "Whether button is disabled"
+            }
+          ],
+          "slots": [
+            {
+              "name": "",
+              "description": "Button content"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "old-button",
+          "declaration": {
+            "name": "Button"
+          }
+        }
+      ]
+    }
+  ]
+}

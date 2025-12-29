@@ -23,6 +23,9 @@
               "reflects": true
             }
           ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/class-reflecting-attribute.ts#L1"
+          },
           "kind": "class",
           "tagName": "class-reflecting-attr",
           "attributes": [

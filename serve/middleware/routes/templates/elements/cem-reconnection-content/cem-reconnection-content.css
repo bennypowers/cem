@@ -1,0 +1,21 @@
+/* Reconnection dialog content styles */
+
+:host {
+  display: block;
+}
+
+p {
+  margin: 0 0 var(--pf-t--global--spacer--md) 0;
+  line-height: var(--pf-t--global--font--line-height--body);
+  color: var(--pf-t--global--text--color--regular);
+}
+
+#retry-info {
+  background: var(--pf-t--global--background--color--secondary--default);
+  padding: var(--pf-t--global--spacer--md);
+  border-radius: var(--pf-t--global--border--radius--small);
+  margin: 0;
+  font-size: var(--pf-t--global--font--size--body--sm);
+  color: var(--pf-t--global--text--color--subtle);
+  border: var(--pf-t--global--border--width--regular) solid var(--pf-t--global--border--color--default);
+}

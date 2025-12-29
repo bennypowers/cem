@@ -1,0 +1,31 @@
+[
+  {
+    "label": "primary",
+    "kind": 12,
+    "detail": "Union type value",
+    "insertText": "primary"
+  },
+  {
+    "label": "secondary",
+    "kind": 12,
+    "detail": "Union type value",
+    "insertText": "secondary"
+  },
+  {
+    "label": "ghost",
+    "kind": 12,
+    "detail": "Union type value",
+    "insertText": "ghost"
+  },
+  {
+    "label": "\"primary\" (default)",
+    "kind": 12,
+    "detail": "Default value",
+    "documentation": {
+      "kind": "markdown",
+      "value": "Default value for this attribute: `\"primary\"`"
+    },
+    "sortText": "0",
+    "insertText": "\"primary\""
+  }
+]

@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-custom-base.js",
+      "declarations": [
+        {
+          "name": "CustomBase",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/class-custom-base.ts#L3"
+          },
+          "kind": "class"
+        },
+        {
+          "name": "ClassCustomBaseCe",
+          "summary": "A custom element with custom base class",
+          "superclass": {
+            "name": "CustomBase"
+          },
+          "members": [
+            {
+              "name": "render",
+              "kind": "method"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/class-custom-base.ts#L9"
+          },
+          "kind": "class",
+          "tagName": "class-custom-base-ce",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-custom-base-ce",
+          "declaration": {
+            "name": "ClassCustomBaseCe",
+            "module": "src/class-custom-base.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ClassCustomBaseCe",
+          "declaration": {
+            "name": "ClassCustomBaseCe",
+            "module": "src/class-custom-base.js"
+          }
+        }
+      ]
+    }
+  ]
+}

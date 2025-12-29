@@ -11,6 +11,9 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-html/src/class-render-parts-docs.ts#L1"
+          },
           "kind": "class",
           "tagName": "class-render-parts-docs",
           "cssParts": [

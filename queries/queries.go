@@ -1,3 +1,19 @@
+/*
+Copyright © 2025 Benny Powers <web@bennypowers.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
 package queries
 
 import (
@@ -40,11 +56,13 @@ var languages = struct {
 	jsdoc      *ts.Language
 	css        *ts.Language
 	html       *ts.Language
+	tsx        *ts.Language
 }{
 	ts.NewLanguage(tsTypescript.LanguageTypescript()),
 	ts.NewLanguage(tsJsdoc.Language()),
 	ts.NewLanguage(tsCss.Language()),
 	ts.NewLanguage(tsHtml.Language()),
+	ts.NewLanguage(tsTypescript.LanguageTSX()), // TSX uses TypeScript's TSX dialect
 }
 
 // ---- Parser Pooling Section ----
@@ -92,6 +110,21 @@ var typescriptParserPool = sync.Pool{
 		return parser
 	},
 }
+
+// TSX parser pool
+var tsxParserPool = sync.Pool{
+	New: func() any {
+		parser := ts.NewParser()
+		if err := parser.SetLanguage(languages.tsx); err != nil {
+			panic(fmt.Sprintf("failed to set TSX language: %v", err))
+		}
+		return parser
+	},
+}
+
+// Note: Removed cursor pooling due to stateful nature of QueryCursor objects.
+// Cursors maintain internal state that can affect subsequent queries,
+// leading to unpredictable behavior. Always create fresh cursors.
 
 // GetHTMLParser returns a pooled HTML parser.
 // Always call PutHTMLParser when done.
@@ -141,6 +174,18 @@ func PutTypeScriptParser(parser *ts.Parser) {
 	typescriptParserPool.Put(parser)
 }
 
+// GetTSXParser returns a pooled TSX parser.
+// Always call PutTSXParser when done.
+func GetTSXParser() *ts.Parser {
+	return tsxParserPool.Get().(*ts.Parser)
+}
+
+// PutTSXParser returns a parser to the TSX pool.
+func PutTSXParser(parser *ts.Parser) {
+	parser.Reset()
+	tsxParserPool.Put(parser)
+}
+
 // ---- End Parser Pooling Section ----
 
 // QuerySelector defines which queries to load for performance
@@ -149,6 +194,7 @@ type QuerySelector struct {
 	TypeScript []string // TypeScript query names to load
 	CSS        []string // CSS query names to load
 	JSDoc      []string // JSDoc query names to load
+	TSX        []string // TSX query names to load
 }
 
 // AllQueries returns a selector that loads all available queries
@@ -164,10 +210,11 @@ func AllQueries() QuerySelector {
 // LSPQueries returns a selector that loads only queries needed for LSP
 func LSPQueries() QuerySelector {
 	return QuerySelector{
-		HTML:       []string{"customElements", "completionContext", "scriptTags", "headElements"},
-		TypeScript: []string{"htmlTemplates", "completionContext", "imports", "classes"},
+		HTML:       []string{"customElements", "completionContext", "scriptTags", "headElements", "attributes"},
+		TypeScript: []string{"htmlTemplates", "completionContext", "imports", "classes", "exports", "importAttributes"},
 		CSS:        []string{},
 		JSDoc:      []string{},
+		TSX:        []string{"customElements", "completionContext"}, // TSX queries for custom element detection
 	}
 }
 
@@ -175,7 +222,7 @@ func LSPQueries() QuerySelector {
 func GenerateQueries() QuerySelector {
 	return QuerySelector{
 		HTML:       []string{"slotsAndParts"},
-		TypeScript: []string{"classMemberDeclaration", "classes", "declarations", "imports"},
+		TypeScript: []string{"classMemberDeclaration", "classes", "declarations", "imports", "typeAliases"},
 		CSS:        []string{"cssCustomProperties"},
 		JSDoc:      []string{"jsdoc"},
 	}
@@ -191,6 +238,7 @@ type QueryManager struct {
 	jsdoc      map[string]*ts.Query
 	css        map[string]*ts.Query
 	html       map[string]*ts.Query
+	tsx        map[string]*ts.Query
 }
 
 func NewQueryManager(selector QuerySelector) (*QueryManager, error) {
@@ -200,6 +248,7 @@ func NewQueryManager(selector QuerySelector) (*QueryManager, error) {
 		jsdoc:      make(map[string]*ts.Query),
 		css:        make(map[string]*ts.Query),
 		html:       make(map[string]*ts.Query),
+		tsx:        make(map[string]*ts.Query),
 	}
 
 	// Load only the requested queries
@@ -231,12 +280,20 @@ func NewQueryManager(selector QuerySelector) (*QueryManager, error) {
 		}
 	}
 
+	for _, queryName := range selector.TSX {
+		if err := qm.loadQuery("tsx", queryName); err != nil {
+			qm.Close()
+			return nil, fmt.Errorf("failed to load TSX query %s: %w", queryName, err)
+		}
+	}
+
 	pterm.Debug.Println("Constructing selected queries took", time.Since(start))
 	return qm, nil
 }
 
 func (qm *QueryManager) loadQuery(language, queryName string) error {
 	// Read the query file
+	// Use path.Join (not filepath.Join) - embed.FS requires POSIX / separators
 	queryPath := path.Join(language, queryName+".scm")
 	data, err := queries.ReadFile(queryPath)
 	if err != nil {
@@ -254,6 +311,8 @@ func (qm *QueryManager) loadQuery(language, queryName string) error {
 		tsLang = languages.css
 	case "html":
 		tsLang = languages.html
+	case "tsx":
+		tsLang = languages.tsx
 	default:
 		return fmt.Errorf("unknown language %s", language)
 	}
@@ -272,6 +331,8 @@ func (qm *QueryManager) loadQuery(language, queryName string) error {
 		qm.css[queryName] = query
 	case "html":
 		qm.html[queryName] = query
+	case "tsx":
+		qm.tsx[queryName] = query
 	}
 
 	return nil
@@ -290,6 +351,9 @@ func (qm *QueryManager) Close() {
 	for _, query := range qm.html {
 		query.Close()
 	}
+	for _, query := range qm.tsx {
+		query.Close()
+	}
 }
 
 func (qm *QueryManager) getQuery(queryName string, language string) (*ts.Query, error) {
@@ -304,6 +368,8 @@ func (qm *QueryManager) getQuery(queryName string, language string) (*ts.Query, 
 		q, ok = qm.css[queryName]
 	case "html":
 		q, ok = qm.html[queryName]
+	case "tsx":
+		q, ok = qm.tsx[queryName]
 	}
 	if !ok {
 		return nil, fmt.Errorf("unknown query %s", queryName)
@@ -332,11 +398,16 @@ type QueryMatcher struct {
 
 func (qm QueryMatcher) Close() {
 	// NOTE: we don't close queries here, only at the end of execution in QueryManager.Close
+	// Close the cursor since we're not pooling
 	qm.cursor.Close()
 }
 
 func (qm QueryMatcher) GetCaptureNameByIndex(index uint32) string {
 	return qm.query.CaptureNames()[index]
+}
+
+func (qm QueryMatcher) CaptureCount() int {
+	return len(qm.query.CaptureNames())
 }
 
 func (qm QueryMatcher) GetCaptureIndexForName(name string) (uint, bool) {
@@ -772,4 +843,52 @@ func adjustTemplateRange(templateRange *Range, templateNode *ts.Node, content []
 			Character: templateStart.Character + templateRange.End.Character,
 		},
 	}
+}
+
+// Thread-safe singleton QueryManager (there can be only one!)
+var (
+	globalQueryManager *QueryManager
+	globalQueryOnce    sync.Once
+	globalQueryError   error
+)
+
+// GetGlobalQueryManager returns the singleton QueryManager instance
+func GetGlobalQueryManager() (*QueryManager, error) {
+	globalQueryOnce.Do(func() {
+		manager, err := NewQueryManager(LSPQueries())
+		if err != nil {
+			globalQueryError = err
+			return
+		}
+		globalQueryManager = manager
+	})
+
+	if globalQueryError != nil {
+		return nil, globalQueryError
+	}
+
+	if globalQueryManager == nil {
+		return nil, fmt.Errorf("failed to initialize global query manager")
+	}
+
+	return globalQueryManager, nil
+}
+
+// GetCachedQueryMatcher returns a query matcher with cached query but fresh cursor
+// This prevents concurrent access to the same cursor which causes segmentation faults
+func GetCachedQueryMatcher(manager *QueryManager, language, queryName string) (*QueryMatcher, error) {
+	if manager == nil {
+		return nil, ErrNoQueryManager
+	}
+
+	// Get the cached query (thread-safe to share)
+	query, err := manager.getQuery(queryName, language)
+	if err != nil {
+		return nil, err
+	}
+
+	// Always create a fresh cursor (NOT thread-safe to share)
+	cursor := ts.NewQueryCursor()
+	matcher := QueryMatcher{query, cursor}
+	return &matcher, nil
 }

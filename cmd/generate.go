@@ -24,6 +24,8 @@ import (
 
 	G "bennypowers.dev/cem/generate"
 	DD "bennypowers.dev/cem/generate/demodiscovery"
+	"bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/types"
 	W "bennypowers.dev/cem/workspace"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -38,9 +40,17 @@ var generateCmd = &cobra.Command{
 	Short: "Generates a custom elements manifest",
 	RunE: func(cmd *cobra.Command, args []string) (errs error) {
 		start = time.Now()
-		ctx, err := W.GetWorkspaceContext(cmd)
+
+		// Create workspace context with design tokens loader for generate command
+		baseCtx, err := W.GetWorkspaceContext(cmd)
 		if err != nil {
 			return fmt.Errorf("project context not initialized: %w", err)
+		}
+
+		// Create a new context with design tokens functionality
+		ctx := W.NewFileSystemWorkspaceContext(baseCtx.Root())
+		if err := ctx.Init(); err != nil {
+			return fmt.Errorf("failed to initialize workspace context with design tokens: %w", err)
 		}
 
 		// de-dupe globs
@@ -83,6 +93,21 @@ var generateCmd = &cobra.Command{
 		cfg.Generate.Files = files
 		cfg.Generate.Exclude = exclude
 
+		// Merge design tokens config from flags
+		if designTokensSpec := viper.GetString("generate.designTokens.spec"); designTokensSpec != "" {
+			cfg.Generate.DesignTokens.Spec = designTokensSpec
+		}
+		if designTokensPrefix := viper.GetString("generate.designTokens.prefix"); designTokensPrefix != "" {
+			cfg.Generate.DesignTokens.Prefix = designTokensPrefix
+		}
+
+		// Early validation: if design tokens are specified, validate they can be loaded
+		if cfg.Generate.DesignTokens.Spec != "" {
+			if _, err := ctx.DesignTokensCache().LoadOrReuse(ctx); err != nil {
+				return fmt.Errorf("failed to load design tokens from '%s': %w", cfg.Generate.DesignTokens.Spec, err)
+			}
+		}
+
 		// Check if watch mode is enabled
 		watch, err := cmd.Flags().GetBool("watch")
 		if err != nil {
@@ -122,27 +147,36 @@ var generateCmd = &cobra.Command{
 			printErrorsAsWarnings(err)
 		}
 
+		// Check if manifestStr is nil before dereferencing
+		if manifestStr == nil {
+			return errs
+		}
+
 		if outputPath != "" {
 			writer, err := ctx.OutputWriter(outputPath)
 			if err != nil {
 				errs = errors.Join(errs, err)
 			} else {
-				defer writer.Close()
+				defer func() {
+					if err := writer.Close(); err != nil {
+						errs = errors.Join(errs, err)
+					}
+				}()
 				_, err := writer.Write([]byte(*manifestStr + "\n"))
 				if err != nil {
 					errs = errors.Join(errs, err)
 				} else {
+					// Only print success/timing message when write actually succeeds
 					end := time.Since(start)
 					reloutputpath, err := filepath.Rel(ctx.Root(), outputPath)
 					if err != nil {
 						reloutputpath = outputPath
 					}
-					fmtstr := "Wrote manifest to %s in %s\n"
-					args := []any{reloutputpath, G.ColorizeDuration(end).Sprint(end)}
+					message := fmt.Sprintf("Wrote manifest to %s in %s", reloutputpath, G.ColorizeDuration(end).Sprint(end))
 					if errs != nil {
-						pterm.Warning.Printf(fmtstr, args...)
+						logging.Warning("%s", message)
 					} else {
-						pterm.Success.Printf(fmtstr, args...)
+						logging.Success("%s", message)
 					}
 				}
 			}
@@ -154,7 +188,7 @@ var generateCmd = &cobra.Command{
 }
 
 // Use WorkspaceContext to expand globs
-func expand(ctx W.WorkspaceContext, globs []string) (files []string, errs error) {
+func expand(ctx types.WorkspaceContext, globs []string) (files []string, errs error) {
 	for _, pattern := range globs {
 		matches, err := ctx.Glob(pattern)
 		if err != nil {
@@ -208,18 +242,18 @@ func init() {
 	generateCmd.Flags().String("demo-discovery-url-pattern", "", "Go Regexp pattern with named capture groups for generating canonical demo urls")
 	generateCmd.Flags().String("demo-discovery-url-template", "", "URL pattern string using {groupName} syntax to interpolate named captures from the URL pattern")
 	generateCmd.Flags().BoolP("watch", "w", false, "watch files for changes and regenerate")
-	viper.BindPFlag("generate.noDefaultExcludes", generateCmd.Flags().Lookup("no-default-excludes"))
-	viper.BindPFlag("generate.output", generateCmd.Flags().Lookup("output"))
-	viper.BindPFlag("generate.exclude", generateCmd.Flags().Lookup("exclude"))
-	viper.BindPFlag("generate.designTokens.spec", generateCmd.Flags().Lookup("design-tokens"))
-	viper.BindPFlag("generate.designTokens.prefix", generateCmd.Flags().Lookup("design-tokens-prefix"))
-	viper.BindPFlag("generate.demoDiscovery.fileGlob", generateCmd.Flags().Lookup("demo-discovery-file-glob"))
-	viper.BindPFlag("generate.demoDiscovery.urlPattern", generateCmd.Flags().Lookup("demo-discovery-url-pattern"))
-	viper.BindPFlag("generate.demoDiscovery.urlTemplate", generateCmd.Flags().Lookup("demo-discovery-url-template"))
+	_ = viper.BindPFlag("generate.noDefaultExcludes", generateCmd.Flags().Lookup("no-default-excludes"))
+	_ = viper.BindPFlag("generate.output", generateCmd.Flags().Lookup("output"))
+	_ = viper.BindPFlag("generate.exclude", generateCmd.Flags().Lookup("exclude"))
+	_ = viper.BindPFlag("generate.designTokens.spec", generateCmd.Flags().Lookup("design-tokens"))
+	_ = viper.BindPFlag("generate.designTokens.prefix", generateCmd.Flags().Lookup("design-tokens-prefix"))
+	_ = viper.BindPFlag("generate.demoDiscovery.fileGlob", generateCmd.Flags().Lookup("demo-discovery-file-glob"))
+	_ = viper.BindPFlag("generate.demoDiscovery.urlPattern", generateCmd.Flags().Lookup("demo-discovery-url-pattern"))
+	_ = viper.BindPFlag("generate.demoDiscovery.urlTemplate", generateCmd.Flags().Lookup("demo-discovery-url-template"))
 }
 
 // runWatchMode starts the file watching mode - delegates to generate package
-func runWatchMode(ctx W.WorkspaceContext, globs []string) error {
+func runWatchMode(ctx types.WorkspaceContext, globs []string) error {
 	session, err := G.NewWatchSession(ctx, globs)
 	if err != nil {
 		return err

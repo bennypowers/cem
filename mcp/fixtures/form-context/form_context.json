@@ -1,0 +1,16 @@
+{
+  "context": "form",
+  "elements": [
+    {
+      "tagName": "input-element",
+      "type": "text",
+      "required": true,
+      "placeholder": "Enter text..."
+    },
+    {
+      "tagName": "button-element",
+      "type": "submit",
+      "label": "Submit Form"
+    }
+  ]
+}

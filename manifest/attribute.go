@@ -19,6 +19,7 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/pterm/pterm"
 )
@@ -96,6 +97,71 @@ func (a Attribute) Clone() Attribute {
 	return cloned
 }
 
+// Validation methods for attribute values
+
+// IsEnum returns true if this attribute has enum/union type constraints
+func (a *Attribute) IsEnum() bool {
+	if a.Type == nil || a.Type.Text == "" {
+		return false
+	}
+	return strings.Contains(a.Type.Text, "|")
+}
+
+// EnumValues extracts enum values from union type definitions
+// Returns empty slice if not an enum type
+func (a *Attribute) EnumValues() []string {
+	if !a.IsEnum() {
+		return nil
+	}
+
+	// Split on | and trim whitespace from each part
+	parts := strings.Split(a.Type.Text, "|")
+	values := make([]string, 0, len(parts))
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+		if trimmed != "" {
+			values = append(values, trimmed)
+		}
+	}
+	return values
+}
+
+// IsValidValue checks if a value is valid for this attribute
+func (a *Attribute) IsValidValue(value string) bool {
+	if !a.IsEnum() {
+		return true // Non-enum attributes accept any value
+	}
+
+	enumValues := a.EnumValues()
+	for _, validValue := range enumValues {
+		// Check both quoted and unquoted versions
+		// HTML attributes are unquoted but TypeScript values may be quoted
+		unquoted := validValue
+		if len(validValue) >= 2 && validValue[0] == '"' && validValue[len(validValue)-1] == '"' {
+			unquoted = validValue[1 : len(validValue)-1]
+		}
+		if value == validValue || value == unquoted {
+			return true
+		}
+	}
+	return false
+}
+
+// GetValidationError returns a descriptive error for invalid values
+func (a *Attribute) GetValidationError(value string) error {
+	if a.IsValidValue(value) {
+		return nil
+	}
+
+	if !a.IsEnum() {
+		return nil // Non-enum attributes don't have validation errors
+	}
+
+	enumValues := a.EnumValues()
+	return fmt.Errorf("invalid value %q for attribute %q. Valid values: %v",
+		value, a.Name, enumValues)
+}
+
 // RenderableAttribute adds context and render/traversal methods.
 type RenderableAttribute struct {
 	Attribute                *Attribute
@@ -112,18 +178,8 @@ func NewRenderableAttribute(
 	cee *CustomElementExport,
 	mod *Module,
 ) *RenderableAttribute {
-	var field *CustomElementField
-	// TODO: perf: use a map
-	// reuse the one from TagRenderableAttributes, maybe refactor so it goes
-	// from Field to Attr or something
-	for _, f := range ced.Members {
-		if cef, ok := f.(*CustomElementField); ok {
-			if cef.Attribute == attr.Name {
-				field = cef
-				break
-			}
-		}
-	}
+	// Use O(1) map lookup instead of O(n) linear search
+	field := ced.LookupAttributeField(attr.Name)
 	return &RenderableAttribute{
 		Attribute:                attr,
 		CustomElementField:       field,

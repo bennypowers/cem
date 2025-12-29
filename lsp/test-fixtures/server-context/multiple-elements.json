@@ -1,0 +1,14 @@
+{
+	"schemaVersion": "1.0.0",
+	"modules": [{
+		"path": "test.js",
+		"declarations": [
+			{"kind": "class", "name": "ElementOne", "customElement": true, "tagName": "element-one"},
+			{"kind": "class", "name": "ElementTwo", "customElement": true, "tagName": "element-two"}
+		],
+		"exports": [
+			{"kind": "custom-element-definition", "name": "element-one", "declaration": {"name": "ElementOne"}},
+			{"kind": "custom-element-definition", "name": "element-two", "declaration": {"name": "ElementTwo"}}
+		]
+	}]
+}

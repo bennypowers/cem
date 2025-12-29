@@ -17,189 +17,105 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package publishDiagnostics_test
 
 import (
+	"encoding/json"
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/internal/platform/testutil"
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
+	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-func TestAttributeDiagnostics_GlobalAttributes(t *testing.T) {
-	ctx := testhelpers.NewMockServerContext()
-	content := `<div class="test" id="main" data-value="42">Hello</div>`
-	// Create DocumentManager and document
-	dm, err := lsp.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create DocumentManager: %v", err)
-	}
-	defer dm.Close()
-	ctx.SetDocumentManager(dm)
-	doc := dm.OpenDocument("test.html", content, 1)
-	ctx.AddDocument("test.html", doc)
-
-	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
-
-	// Should have no diagnostics for global attributes
-	if len(diagnostics) != 0 {
-		t.Errorf("Expected 0 diagnostics for global attributes, got %d", len(diagnostics))
-	}
+// ManifestFixture represents simplified manifest data for tests
+type ManifestFixture struct {
+	Attributes map[string]map[string]M.Attribute `json:"attributes"`
 }
 
-func TestAttributeDiagnostics_CustomElementValidAttribute(t *testing.T) {
-	ctx := testhelpers.NewMockServerContext()
-	content := `<my-element size="large" color="red">Content</my-element>`
-	// Create DocumentManager and document
-	dm, err := lsp.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create DocumentManager: %v", err)
-	}
-	defer dm.Close()
-	ctx.SetDocumentManager(dm)
-	doc := dm.OpenDocument("test.html", content, 1)
-	ctx.AddDocument("test.html", doc)
+// TestAttributeDiagnostics_Fixtures runs all attribute diagnostics tests from fixtures
+func TestAttributeDiagnostics_Fixtures(t *testing.T) {
+	testutil.RunLSPFixtures(t, "testdata/attribute-diagnostics", func(t *testing.T, fixture *testutil.LSPFixture) {
+		// Create mock server context
+		ctx := testhelpers.NewMockServerContext()
 
-	// Set up attributes for my-element
-	ctx.AddAttributes("my-element", map[string]*M.Attribute{
-		"size":  {FullyQualified: M.FullyQualified{Name: "size"}},
-		"color": {FullyQualified: M.FullyQualified{Name: "color"}},
+		// Create DocumentManager and document
+		dm, err := document.NewDocumentManager()
+		if err != nil {
+			t.Fatalf("Failed to create DocumentManager: %v", err)
+		}
+		defer dm.Close()
+		ctx.SetDocumentManager(dm)
+
+		// Open document with fixture content
+		doc := dm.OpenDocument("test.html", fixture.InputHTML, 1)
+		ctx.AddDocument("test.html", doc)
+
+		// Load manifest if present
+		if len(fixture.Manifest) > 0 {
+			var manifestData ManifestFixture
+			if err := json.Unmarshal(fixture.Manifest, &manifestData); err != nil {
+				t.Fatalf("Failed to parse manifest.json: %v", err)
+			}
+
+			// Add attributes to context
+			for tagName, attrs := range manifestData.Attributes {
+				attrMap := make(map[string]*M.Attribute)
+				for attrName, attr := range attrs {
+					attr.Name = attrName
+					attrCopy := attr
+					attrMap[attrName] = &attrCopy
+				}
+				ctx.AddAttributes(tagName, attrMap)
+			}
+		}
+
+		// Run diagnostics analysis
+		diagnostics, err := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
+		if err != nil {
+			t.Fatalf("Failed to analyze attributes: %v", err)
+		}
+
+		// Load expected Diagnostic[] from expected.json
+		var expected []protocol.Diagnostic
+		if err := fixture.GetExpected("expected", &expected); err != nil {
+			t.Fatalf("Failed to load expected diagnostics: %v", err)
+		}
+
+		// Verify diagnostic count
+		if len(diagnostics) != len(expected) {
+			t.Errorf("Expected %d diagnostics, got %d", len(expected), len(diagnostics))
+			for i, diag := range diagnostics {
+				t.Errorf("  Diagnostic %d: %s", i, diag.Message)
+			}
+			return
+		}
+
+		// Verify each diagnostic matches expected
+		for i, exp := range expected {
+			if i >= len(diagnostics) {
+				break
+			}
+			act := diagnostics[i]
+
+			// Verify message
+			if exp.Message != act.Message {
+				t.Errorf("Diagnostic %d message mismatch:\n  expected: %s\n  got: %s", i, exp.Message, act.Message)
+			}
+
+			// Verify range
+			if exp.Range.Start.Line != act.Range.Start.Line || exp.Range.Start.Character != act.Range.Start.Character {
+				t.Errorf("Diagnostic %d range start mismatch:\n  expected: line %d, char %d\n  got: line %d, char %d",
+					i, exp.Range.Start.Line, exp.Range.Start.Character, act.Range.Start.Line, act.Range.Start.Character)
+			}
+
+			// Verify severity (compare values, not pointers)
+			if (exp.Severity == nil) != (act.Severity == nil) {
+				t.Errorf("Diagnostic %d severity nil mismatch:\n  expected nil: %v\n  got nil: %v",
+					i, exp.Severity == nil, act.Severity == nil)
+			} else if exp.Severity != nil && act.Severity != nil && *exp.Severity != *act.Severity {
+				t.Errorf("Diagnostic %d severity mismatch:\n  expected: %d\n  got: %d", i, *exp.Severity, *act.Severity)
+			}
+		}
 	})
-
-	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
-
-	// Should have no diagnostics for valid custom element attributes
-	if len(diagnostics) != 0 {
-		t.Errorf("Expected 0 diagnostics for valid custom element attributes, got %d", len(diagnostics))
-	}
-}
-
-func TestAttributeDiagnostics_CustomElementInvalidAttribute(t *testing.T) {
-	ctx := testhelpers.NewMockServerContext()
-	content := `<my-element siz="large" colour="red">Content</my-element>`
-	// Create DocumentManager and document
-	dm, err := lsp.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create DocumentManager: %v", err)
-	}
-	defer dm.Close()
-	ctx.SetDocumentManager(dm)
-	doc := dm.OpenDocument("test.html", content, 1)
-	ctx.AddDocument("test.html", doc)
-
-	// Set up attributes for my-element
-	ctx.AddAttributes("my-element", map[string]*M.Attribute{
-		"size":  {FullyQualified: M.FullyQualified{Name: "size"}},
-		"color": {FullyQualified: M.FullyQualified{Name: "color"}},
-	})
-
-	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
-
-	// Should have 2 diagnostics for invalid attributes
-	if len(diagnostics) != 2 {
-		t.Errorf("Expected 2 diagnostics for invalid attributes, got %d", len(diagnostics))
-		return
-	}
-
-	// Check first diagnostic (siz -> size)
-	if diagnostics[0].Message != "Unknown attribute 'siz'. Did you mean 'size'?" {
-		t.Errorf("Unexpected diagnostic message: %s", diagnostics[0].Message)
-	}
-
-	// Check second diagnostic (colour -> color)
-	if diagnostics[1].Message != "Unknown attribute 'colour'. Did you mean 'color'?" {
-		t.Errorf("Unexpected diagnostic message: %s", diagnostics[1].Message)
-	}
-}
-
-func TestAttributeDiagnostics_ScriptTypeModule(t *testing.T) {
-	ctx := testhelpers.NewMockServerContext()
-	content := `<script type="module">import './my-element.js';</script>`
-	// Create DocumentManager and document
-	dm, err := lsp.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create DocumentManager: %v", err)
-	}
-	defer dm.Close()
-	ctx.SetDocumentManager(dm)
-	doc := dm.OpenDocument("test.html", content, 1)
-	ctx.AddDocument("test.html", doc)
-
-	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
-
-	// Should have 0 diagnostics - script[type] is outside CEM scope
-	if len(diagnostics) != 0 {
-		t.Errorf("Expected 0 diagnostics for script[type] (outside CEM scope), got %d", len(diagnostics))
-		for _, diag := range diagnostics {
-			t.Errorf("Unexpected diagnostic: %s", diag.Message)
-		}
-	}
-}
-
-func TestAttributeDiagnostics_GlobalAttributeTypoOnCustomElement(t *testing.T) {
-	ctx := testhelpers.NewMockServerContext()
-	content := `<my-custom-element clas="test" titl="tooltip">Hello</my-custom-element>`
-	// Create DocumentManager and document
-	dm, err := lsp.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create DocumentManager: %v", err)
-	}
-	defer dm.Close()
-	ctx.SetDocumentManager(dm)
-	doc := dm.OpenDocument("test.html", content, 1)
-	ctx.AddDocument("test.html", doc)
-
-	// Custom element with no defined attributes
-	ctx.AddAttributes("my-custom-element", map[string]*M.Attribute{})
-
-	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
-
-	// Should have 2 diagnostics for global attribute typos on custom elements
-	if len(diagnostics) != 2 {
-		t.Errorf("Expected 2 diagnostics for global attribute typos on custom element, got %d", len(diagnostics))
-		for i, diag := range diagnostics {
-			t.Errorf("Diagnostic %d: %s", i, diag.Message)
-		}
-		return
-	}
-
-	// Check diagnostic messages
-	found := make(map[string]bool)
-	for _, diag := range diagnostics {
-		found[diag.Message] = true
-	}
-
-	expected := []string{
-		"Unknown attribute 'clas'. Did you mean 'class'?",
-		"Unknown attribute 'titl'. Did you mean 'title'?",
-	}
-
-	for _, exp := range expected {
-		if !found[exp] {
-			t.Errorf("Expected diagnostic message not found: %s", exp)
-		}
-	}
-}
-
-func TestAttributeDiagnostics_StandardElementIgnored(t *testing.T) {
-	ctx := testhelpers.NewMockServerContext()
-	content := `<div clas="test" titl="tooltip">Hello</div>`
-	// Create DocumentManager and document
-	dm, err := lsp.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create DocumentManager: %v", err)
-	}
-	defer dm.Close()
-	ctx.SetDocumentManager(dm)
-	doc := dm.OpenDocument("test.html", content, 1)
-	ctx.AddDocument("test.html", doc)
-
-	diagnostics := publishDiagnostics.AnalyzeAttributeDiagnosticsForTest(ctx, doc)
-
-	// Should have 0 diagnostics - standard HTML elements are outside CEM scope (except slot)
-	if len(diagnostics) != 0 {
-		t.Errorf("Expected 0 diagnostics for standard HTML elements (outside CEM scope), got %d", len(diagnostics))
-		for _, diag := range diagnostics {
-			t.Errorf("Unexpected diagnostic: %s", diag.Message)
-		}
-	}
 }

@@ -16,6 +16,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package config
 
+import (
+	"fmt"
+	"maps"
+
+	"bennypowers.dev/cem/serve/middleware/types"
+)
+
 type DemoDiscoveryConfig struct {
 	FileGlob string `mapstructure:"fileGlob" yaml:"fileGlob"`
 	// URLPattern uses standard URLPattern syntax (e.g., "/components/:element/demo/:demo.html")
@@ -49,6 +56,60 @@ type GenerateConfig struct {
 	DemoDiscovery DemoDiscoveryConfig `mapstructure:"demoDiscovery" yaml:"demoDiscovery"`
 }
 
+type MCPConfig struct {
+	// Maximum length for description fields before truncation (default: 2000)
+	MaxDescriptionLength int `mapstructure:"maxDescriptionLength" yaml:"maxDescriptionLength"`
+}
+
+type URLRewrite struct {
+	// URLPattern uses standard URLPattern syntax (e.g., "/dist/:path*")
+	URLPattern string `mapstructure:"urlPattern" yaml:"urlPattern"`
+	// URLTemplate defines the filesystem path using Go template syntax (e.g., "/src/{{.path}}")
+	URLTemplate string `mapstructure:"urlTemplate" yaml:"urlTemplate"`
+}
+
+type ServeConfig struct {
+	// Port to run the development server on (default: 8000)
+	Port int `mapstructure:"port" yaml:"port"`
+	// Whether to automatically open browser on server start
+	OpenBrowser bool `mapstructure:"openBrowser" yaml:"openBrowser"`
+	// Import map configuration
+	ImportMap types.ImportMapConfig `mapstructure:"importMap" yaml:"importMap"`
+	// Transform configuration
+	Transforms TransformsConfig `mapstructure:"transforms" yaml:"transforms"`
+	// URL rewrites for transforming request URLs to filesystem paths
+	URLRewrites []URLRewrite `mapstructure:"urlRewrites" yaml:"urlRewrites"`
+	// Demo configuration
+	Demos DemosConfig `mapstructure:"demos" yaml:"demos"`
+}
+
+type TransformsConfig struct {
+	TypeScript TypeScriptTransformConfig `mapstructure:"typescript" yaml:"typescript"`
+	CSS        CSSTransformConfig        `mapstructure:"css" yaml:"css"`
+}
+
+type TypeScriptTransformConfig struct {
+	// Enable TypeScript transformation (default: true)
+	Enabled bool `mapstructure:"enabled" yaml:"enabled"`
+	// Transform target (e.g., "es2022", "es2020") - overridden by --target flag
+	Target string `mapstructure:"target" yaml:"target"`
+}
+
+type CSSTransformConfig struct {
+	// Enable CSS transformation (default: true)
+	Enabled bool `mapstructure:"enabled" yaml:"enabled"`
+	// Glob patterns for CSS files to include (default: all .css files)
+	Include []string `mapstructure:"include" yaml:"include"`
+	// Glob patterns for CSS files to exclude
+	Exclude []string `mapstructure:"exclude" yaml:"exclude"`
+}
+
+type DemosConfig struct {
+	// Default rendering mode for demos: "light", "shadow", or "iframe" (default: "light")
+	// Can be overridden per-demo with ?rendering=shadow|light|iframe query parameter
+	Rendering string `mapstructure:"rendering" yaml:"rendering"`
+}
+
 type CemConfig struct {
 	ProjectDir string `mapstructure:"projectDir" yaml:"projectDir"`
 	ConfigFile string `mapstructure:"configFile" yaml:"configFile"`
@@ -56,11 +117,37 @@ type CemConfig struct {
 	PackageName string `mapstructure:"packageName" yaml:"packageName"`
 	// Generate command options
 	Generate GenerateConfig `mapstructure:"generate" yaml:"generate"`
+	// MCP server options
+	MCP MCPConfig `mapstructure:"mcp" yaml:"mcp"`
+	// Serve command options
+	Serve ServeConfig `mapstructure:"serve" yaml:"serve"`
 	// Canonical public source control URL corresponding to project root on primary branch.
 	// e.g. https://github.com/bennypowers/cem/tree/main/
 	SourceControlRootUrl string `mapstructure:"sourceControlRootUrl" yaml:"sourceControlRootUrl"`
 	// Verbose logging output
 	Verbose bool `mapstructure:"verbose" yaml:"verbose"`
+}
+
+// Validate validates the configuration and returns an error if invalid
+func (c *CemConfig) Validate() error {
+	if c == nil {
+		return nil
+	}
+
+	// Validate demo rendering mode
+	rendering := c.Serve.Demos.Rendering
+	if rendering != "" {
+		switch rendering {
+		case "light", "shadow":
+			// Valid modes
+		case "iframe":
+			return fmt.Errorf("serve.demos.rendering: 'iframe' mode is not yet implemented - use 'light' or 'shadow'")
+		default:
+			return fmt.Errorf("serve.demos.rendering: invalid value '%s' - must be 'light', 'shadow', or 'iframe'", rendering)
+		}
+	}
+
+	return nil
 }
 
 func (c *CemConfig) Clone() *CemConfig {
@@ -76,6 +163,23 @@ func (c *CemConfig) Clone() *CemConfig {
 	if c.Generate.Exclude != nil {
 		clone.Generate.Exclude = make([]string, len(c.Generate.Exclude))
 		copy(clone.Generate.Exclude, c.Generate.Exclude)
+	}
+	// Deep copy import map config override
+	if c.Serve.ImportMap.Override.Imports != nil {
+		clone.Serve.ImportMap.Override.Imports = make(map[string]string, len(c.Serve.ImportMap.Override.Imports))
+		maps.Copy(clone.Serve.ImportMap.Override.Imports, c.Serve.ImportMap.Override.Imports)
+	}
+	if c.Serve.ImportMap.Override.Scopes != nil {
+		clone.Serve.ImportMap.Override.Scopes = make(map[string]map[string]string, len(c.Serve.ImportMap.Override.Scopes))
+		for scopeKey, scopeMap := range c.Serve.ImportMap.Override.Scopes {
+			clone.Serve.ImportMap.Override.Scopes[scopeKey] = make(map[string]string, len(scopeMap))
+			maps.Copy(clone.Serve.ImportMap.Override.Scopes[scopeKey], scopeMap)
+		}
+	}
+	// Deep copy URL rewrites
+	if c.Serve.URLRewrites != nil {
+		clone.Serve.URLRewrites = make([]URLRewrite, len(c.Serve.URLRewrites))
+		copy(clone.Serve.URLRewrites, c.Serve.URLRewrites)
 	}
 	return &clone
 }

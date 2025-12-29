@@ -11,6 +11,9 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-css-part.ts#L7"
+          },
           "kind": "class",
           "tagName": "jsdoc-css-part",
           "cssParts": [

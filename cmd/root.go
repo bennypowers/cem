@@ -23,6 +23,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"bennypowers.dev/cem/internal/logging"
 	W "bennypowers.dev/cem/workspace"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -36,12 +37,12 @@ var rootCmd = &cobra.Command{
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		_, err := os.Getwd()
 		if err != nil {
-			return fmt.Errorf("Unable to get current working directory: %v", err)
+			return fmt.Errorf("unable to get current working directory: %v", err)
 		}
 
 		wctx, err := W.GetWorkspaceContext(cmd)
 		if err != nil {
-			return fmt.Errorf("Failed to create project context: %v", err)
+			return fmt.Errorf("failed to create project context: %v", err)
 		}
 
 		// Store the project context in the Cobra context
@@ -56,9 +57,23 @@ var rootCmd = &cobra.Command{
 		viper.SetConfigType("yaml")
 		viper.SetConfigName("cem")
 
-		if viper.GetBool("verbose") {
+		// Handle verbose and quiet flags (mutually exclusive)
+		verbose := viper.GetBool("verbose")
+		quiet := viper.GetBool("quiet")
+
+		if verbose && quiet {
+			return fmt.Errorf("cannot use both --verbose and --quiet flags together")
+		}
+
+		if verbose {
 			pterm.EnableDebugMessages()
 		}
+
+		// Configure quiet mode to suppress INFO and DEBUG messages
+		if quiet {
+			logging.SetQuietEnabled(true)
+		}
+
 		pterm.Debug.Printfln("Project directory: %q", rootDir)
 
 		cfgFile := wctx.ConfigFile()
@@ -88,12 +103,14 @@ func init() {
 	rootCmd.PersistentFlags().String("config", "", "config file (default is $CWD/.config/cem.yaml)")
 	rootCmd.PersistentFlags().StringP("package", "p", "", "deno-style package specifier e.g. npm:@scope/package, or path to package directory")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "verbose logging output")
+	rootCmd.PersistentFlags().BoolP("quiet", "q", false, "quiet output (only warnings and errors)")
 
-	viper.BindPFlag("configFile", rootCmd.PersistentFlags().Lookup("config"))
-	viper.BindPFlag("package", rootCmd.PersistentFlags().Lookup("package"))
-	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
-	viper.BindPFlag("sourceControlRootUrl", rootCmd.PersistentFlags().Lookup("source-control-root-url"))
+	_ = viper.BindPFlag("configFile", rootCmd.PersistentFlags().Lookup("config"))
+	_ = viper.BindPFlag("package", rootCmd.PersistentFlags().Lookup("package"))
+	_ = viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
+	_ = viper.BindPFlag("quiet", rootCmd.PersistentFlags().Lookup("quiet"))
+	_ = viper.BindPFlag("sourceControlRootUrl", rootCmd.PersistentFlags().Lookup("source-control-root-url"))
 
 	rootCmd.PersistentFlags().String("project-dir", "", "Path to project directory (default: parent directory of .config/cem.yaml)")
-	rootCmd.PersistentFlags().MarkDeprecated("project-dir", "Will be removed, use --package instead")
+	_ = rootCmd.PersistentFlags().MarkDeprecated("project-dir", "Will be removed, use --package instead")
 }

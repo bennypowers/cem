@@ -20,8 +20,9 @@ import (
 	"fmt"
 	"os"
 
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/helpers"
-	serverMethods "bennypowers.dev/cem/lsp/methods/server"
+	"bennypowers.dev/cem/lsp/methods/lifecycle"
 	"bennypowers.dev/cem/lsp/methods/textDocument"
 	"bennypowers.dev/cem/lsp/methods/textDocument/codeAction"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
@@ -29,9 +30,9 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/hover"
 	"bennypowers.dev/cem/lsp/methods/textDocument/references"
 	"bennypowers.dev/cem/lsp/methods/workspace/symbol"
-	W "bennypowers.dev/cem/workspace"
+	lspTypes "bennypowers.dev/cem/lsp/types"
+	"bennypowers.dev/cem/types"
 	"github.com/pterm/pterm"
-	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 	"github.com/tliron/glsp/server"
 )
@@ -48,19 +49,19 @@ const (
 
 // Server represents the CEM LSP server
 type Server struct {
-	workspace W.WorkspaceContext
+	workspace types.WorkspaceContext
 	registry  *Registry
-	documents *DocumentManager
+	documents lspTypes.Manager
 	server    *server.Server
 	transport TransportKind
 }
 
 // NewServer creates a new CEM LSP server
-func NewServer(workspace W.WorkspaceContext, transport TransportKind) (*Server, error) {
+func NewServer(workspace types.WorkspaceContext, transport TransportKind) (*Server, error) {
 	// Configure pterm to output to stderr to avoid contaminating LSP stdout stream
 	pterm.SetDefaultOutput(os.Stderr)
 
-	documents, err := NewDocumentManager()
+	documents, err := document.NewDocumentManager()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create document manager: %w", err)
 	}
@@ -81,20 +82,21 @@ func NewServer(workspace W.WorkspaceContext, transport TransportKind) (*Server, 
 	// Server now directly implements all context interfaces
 
 	// Create the GLSP server with our handler
+	// Handlers are wrapped with middleware for logging, error handling, and panic recovery
 	handler := protocol.Handler{
-		Initialize:             s.initialize,
-		Initialized:            s.initialized,
-		Shutdown:               s.shutdown,
-		SetTrace:               s.setTrace,
-		TextDocumentHover:      s.hover,
-		TextDocumentCompletion: s.completion,
-		TextDocumentDefinition: s.definition,
-		TextDocumentReferences: s.references,
-		TextDocumentCodeAction: s.codeAction,
-		TextDocumentDidOpen:    s.didOpen,
-		TextDocumentDidChange:  s.didChange,
-		TextDocumentDidClose:   s.didClose,
-		WorkspaceSymbol:        s.workspaceSymbol,
+		Initialize:             method(s, "initialize", lifecycle.Initialize),
+		Initialized:            notify(s, "initialized", lifecycle.Initialized),
+		Shutdown:               noParam(s, "shutdown", lifecycle.Shutdown),
+		SetTrace:               notify(s, "$/setTrace", lifecycle.SetTrace),
+		TextDocumentHover:      method(s, "textDocument/hover", hover.Hover),
+		TextDocumentCompletion: method(s, "textDocument/completion", completion.Completion),
+		TextDocumentDefinition: method(s, "textDocument/definition", definition.Definition),
+		TextDocumentReferences: method(s, "textDocument/references", references.References),
+		TextDocumentCodeAction: method(s, "textDocument/codeAction", codeAction.CodeAction),
+		TextDocumentDidOpen:    notify(s, "textDocument/didOpen", textDocument.DidOpen),
+		TextDocumentDidChange:  notify(s, "textDocument/didChange", textDocument.DidChange),
+		TextDocumentDidClose:   notify(s, "textDocument/didClose", textDocument.DidClose),
+		WorkspaceSymbol:        method(s, "workspace/symbol", symbol.Symbol),
 	}
 
 	// Enable debug mode when using stdio to help with VSCode troubleshooting
@@ -226,69 +228,4 @@ func (s *Server) InitializeForTesting() error {
 	}
 
 	return nil
-}
-
-// initialize handles the LSP initialize request
-func (s *Server) initialize(context *glsp.Context, params *protocol.InitializeParams) (any, error) {
-	return serverMethods.Initialize(s, context, params)
-}
-
-// initialized handles the LSP initialized notification
-func (s *Server) initialized(context *glsp.Context, params *protocol.InitializedParams) error {
-	return serverMethods.Initialized(s, context, params)
-}
-
-// shutdown handles the LSP shutdown request
-func (s *Server) shutdown(context *glsp.Context) error {
-	return serverMethods.Shutdown(s, context)
-}
-
-// setTrace handles the $/setTrace notification
-func (s *Server) setTrace(context *glsp.Context, params *protocol.SetTraceParams) error {
-	return serverMethods.SetTrace(s, context, params)
-}
-
-// hover handles textDocument/hover requests
-func (s *Server) hover(context *glsp.Context, params *protocol.HoverParams) (*protocol.Hover, error) {
-	return hover.Hover(s, context, params)
-}
-
-// completion handles textDocument/completion requests
-func (s *Server) completion(context *glsp.Context, params *protocol.CompletionParams) (any, error) {
-	return completion.Completion(s, context, params)
-}
-
-// definition handles textDocument/definition requests
-func (s *Server) definition(context *glsp.Context, params *protocol.DefinitionParams) (any, error) {
-	return definition.Definition(s, context, params)
-}
-
-// references handles textDocument/references requests
-func (s *Server) references(context *glsp.Context, params *protocol.ReferenceParams) ([]protocol.Location, error) {
-	return references.References(s, context, params)
-}
-
-// codeAction handles textDocument/codeAction requests
-func (s *Server) codeAction(context *glsp.Context, params *protocol.CodeActionParams) (any, error) {
-	return codeAction.CodeAction(s, context, params)
-}
-
-// workspaceSymbol handles workspace/symbol requests
-func (s *Server) workspaceSymbol(context *glsp.Context, params *protocol.WorkspaceSymbolParams) ([]protocol.SymbolInformation, error) {
-	return symbol.Symbol(s, context, params)
-}
-
-// didOpen handles textDocument/didOpen notifications
-func (s *Server) didOpen(context *glsp.Context, params *protocol.DidOpenTextDocumentParams) error {
-	return textDocument.DidOpen(s, context, params)
-}
-
-// didChange handles textDocument/didChange notifications
-func (s *Server) didChange(context *glsp.Context, params *protocol.DidChangeTextDocumentParams) error {
-	return textDocument.DidChange(s, context, params)
-}
-
-// didClose handles textDocument/didClose notifications
-func (s *Server) didClose(context *glsp.Context, params *protocol.DidCloseTextDocumentParams) error {
-	return textDocument.DidClose(s, context, params)
 }

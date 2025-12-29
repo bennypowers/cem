@@ -22,7 +22,7 @@ import (
 	"sync"
 
 	M "bennypowers.dev/cem/manifest"
-	W "bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/types"
 )
 
 // GenerateSession holds reusable state for efficient generation cycles.
@@ -39,6 +39,7 @@ type GenerateSession struct {
 	inMemoryManifest *M.Package           // protected by mu
 	moduleIndex      map[string]*M.Module // path -> module for O(1) lookups, protected by mu
 	mu               sync.RWMutex         // protects inMemoryManifest and moduleIndex
+	maxWorkers       int                  // configured max workers for batch processing (0 = use NumCPU)
 }
 
 // NewGenerateSession creates a new session with initialized setup context.
@@ -50,7 +51,7 @@ type GenerateSession struct {
 // - generate/generate.go:234 (single generation)
 //
 // Performance: Expensive operation (~10-50ms) due to tree-sitter query compilation
-func NewGenerateSession(ctx W.WorkspaceContext) (*GenerateSession, error) {
+func NewGenerateSession(ctx types.WorkspaceContext) (*GenerateSession, error) {
 	setupCtx, err := NewGenerateContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("initialize setup context: %w", err)
@@ -67,6 +68,22 @@ func (gs *GenerateSession) Close() {
 	if gs.setupCtx != nil {
 		gs.setupCtx.Close()
 	}
+}
+
+// WorkspaceContext returns the workspace context for this session
+func (gs *GenerateSession) WorkspaceContext() types.WorkspaceContext {
+	if gs.setupCtx == nil {
+		return nil
+	}
+	return gs.setupCtx.WorkspaceContext
+}
+
+// DependencyTracker returns the file dependency tracker for this session
+func (gs *GenerateSession) DependencyTracker() *FileDependencyTracker {
+	if gs.setupCtx == nil {
+		return nil
+	}
+	return gs.setupCtx.DependencyTracker()
 }
 
 // GenerateFullManifest performs a complete generation using the existing logic.
@@ -91,7 +108,7 @@ func (gs *GenerateSession) GenerateFullManifest(ctx context.Context) (*M.Package
 	default:
 	}
 
-	modules, logs, aliases, err := gs.processWithContext(ctx, result)
+	modules, logs, aliases, typeAliases, imports, err := gs.processWithContext(ctx, result)
 	if err != nil {
 		return nil, WrapProcessError(err)
 	}
@@ -102,7 +119,7 @@ func (gs *GenerateSession) GenerateFullManifest(ctx context.Context) (*M.Package
 	default:
 	}
 
-	pkg, err := gs.postprocessWithContext(ctx, result, aliases, modules)
+	pkg, err := gs.postprocessWithContext(ctx, result, aliases, typeAliases, imports, modules)
 	if err != nil {
 		return nil, WrapPostprocessError(err)
 	}
@@ -193,10 +210,25 @@ func (gs *GenerateSession) CssCache() CssCache {
 	return gs.setupCtx.CssCache()
 }
 
+// SetMaxWorkers configures the maximum number of workers for batch processing.
+// Set to 0 to use runtime.NumCPU() (default).
+// This should be called immediately after NewGenerateSession() if customization is needed.
+func (gs *GenerateSession) SetMaxWorkers(count int) {
+	gs.mu.Lock()
+	defer gs.mu.Unlock()
+	gs.maxWorkers = count
+}
+
 // WorkerCount returns the number of workers that would be used for parallel processing.
 // This creates a temporary processor to get the actual configured worker count.
 func (gs *GenerateSession) WorkerCount() int {
 	processor := NewModuleBatchProcessor(gs.setupCtx.QueryManager(), gs.setupCtx.DependencyTracker(), gs.setupCtx.CssCache())
+	gs.mu.RLock()
+	maxWorkers := gs.maxWorkers
+	gs.mu.RUnlock()
+	if maxWorkers > 0 {
+		processor.SetWorkerCount(maxWorkers)
+	}
 	return processor.WorkerCount()
 }
 
@@ -212,10 +244,10 @@ func (gs *GenerateSession) preprocessWithContext(ctx context.Context) (preproces
 }
 
 // processWithContext is the existing process logic with cancellation support
-func (gs *GenerateSession) processWithContext(ctx context.Context, result preprocessResult) ([]M.Module, []*LogCtx, map[string]string, error) {
+func (gs *GenerateSession) processWithContext(ctx context.Context, result preprocessResult) ([]M.Module, []*LogCtx, map[string]string, moduleTypeAliasesMap, moduleImportsMap, error) {
 	select {
 	case <-ctx.Done():
-		return nil, nil, nil, ctx.Err()
+		return nil, nil, nil, nil, nil, ctx.Err()
 	default:
 	}
 
@@ -224,7 +256,7 @@ func (gs *GenerateSession) processWithContext(ctx context.Context, result prepro
 }
 
 // processWithDeps processes files while tracking dependencies for incremental rebuilds
-func (gs *GenerateSession) processWithDeps(ctx context.Context, result preprocessResult) ([]M.Module, []*LogCtx, map[string]string, error) {
+func (gs *GenerateSession) processWithDeps(ctx context.Context, result preprocessResult) ([]M.Module, []*LogCtx, map[string]string, moduleTypeAliasesMap, moduleImportsMap, error) {
 	// Create jobs for all included files
 	jobs := make([]processJob, 0, len(result.includedFiles))
 	for _, file := range result.includedFiles {
@@ -233,13 +265,22 @@ func (gs *GenerateSession) processWithDeps(ctx context.Context, result preproces
 
 	// Use parallel processor with dependency tracking
 	processor := NewModuleBatchProcessor(gs.setupCtx.QueryManager(), gs.setupCtx.DependencyTracker(), gs.setupCtx.CssCache())
+
+	// Apply configured worker limit if set
+	gs.mu.RLock()
+	maxWorkers := gs.maxWorkers
+	gs.mu.RUnlock()
+	if maxWorkers > 0 {
+		processor.SetWorkerCount(maxWorkers)
+	}
+
 	processingResult := processor.ProcessModules(ctx, jobs, ModuleProcessorFunc(processModule))
 
-	return processingResult.Modules, processingResult.Logs, processingResult.Aliases, processingResult.Errors
+	return processingResult.Modules, processingResult.Logs, processingResult.Aliases, processingResult.TypeAliases, processingResult.Imports, processingResult.Errors
 }
 
 // postprocessWithContext is the existing postprocess logic with cancellation support
-func (gs *GenerateSession) postprocessWithContext(ctx context.Context, result preprocessResult, aliases map[string]string, modules []M.Module) (M.Package, error) {
+func (gs *GenerateSession) postprocessWithContext(ctx context.Context, result preprocessResult, aliases map[string]string, typeAliases moduleTypeAliasesMap, imports moduleImportsMap, modules []M.Module) (M.Package, error) {
 	select {
 	case <-ctx.Done():
 		return M.Package{}, ctx.Err()
@@ -248,5 +289,5 @@ func (gs *GenerateSession) postprocessWithContext(ctx context.Context, result pr
 
 	// TODO: Add cancellation points within the postprocess function
 	// For now, we'll use the existing postprocess function
-	return postprocess(gs.setupCtx.WorkspaceContext, result, aliases, gs.setupCtx.QueryManager(), modules)
+	return postprocess(gs.setupCtx.WorkspaceContext, result, aliases, typeAliases, imports, gs.setupCtx.QueryManager(), modules)
 }

@@ -55,6 +55,9 @@
               "kind": "field"
             }
           ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/class-constructor-properties.ts#L1"
+          },
           "kind": "class"
         }
       ],

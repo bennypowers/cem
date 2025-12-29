@@ -1,3 +1,19 @@
+/*
+Copyright © 2025 Benny Powers <web@bennypowers.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
 package completion_test
 
 import (
@@ -6,7 +22,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
@@ -15,7 +31,7 @@ import (
 
 func TestSlotAttributeCompletions(t *testing.T) {
 	// Load test manifest with slot definitions
-	fixtureDir := filepath.Join("slot-completions-test")
+	fixtureDir := filepath.Join("testdata", "slot-completions-test")
 	manifestPath := filepath.Join(fixtureDir, "manifest.json")
 
 	manifestBytes, err := os.ReadFile(manifestPath)
@@ -34,7 +50,7 @@ func TestSlotAttributeCompletions(t *testing.T) {
 	ctx.AddManifest(&pkg)
 
 	// Create a real document manager
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create document manager: %v", err)
 	}
@@ -124,7 +140,7 @@ func TestSlotAttributeCompletions(t *testing.T) {
 
 func TestSlotCompletionDetails(t *testing.T) {
 	// Load test manifest
-	fixtureDir := filepath.Join("slot-completions-test")
+	fixtureDir := filepath.Join("testdata", "slot-completions-test")
 	manifestPath := filepath.Join(fixtureDir, "manifest.json")
 
 	manifestBytes, err := os.ReadFile(manifestPath)
@@ -142,7 +158,7 @@ func TestSlotCompletionDetails(t *testing.T) {
 	ctx.AddManifest(&pkg)
 
 	// Create and set a real DocumentManager
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}
@@ -189,7 +205,7 @@ func getSlotCompletionLabels(completions []protocol.CompletionItem) []string {
 // For comprehensive regression testing, see TestSlotAttributeNameSuggestionRegression
 func TestSlotAttributeNameSuggestion(t *testing.T) {
 	// Load test manifest with slot definitions
-	fixtureDir := filepath.Join("slot-completions-test")
+	fixtureDir := filepath.Join("testdata", "slot-completions-test")
 	manifestPath := filepath.Join(fixtureDir, "manifest.json")
 
 	manifestBytes, err := os.ReadFile(manifestPath)
@@ -208,7 +224,7 @@ func TestSlotAttributeNameSuggestion(t *testing.T) {
 	ctx.AddManifest(&pkg)
 
 	// Create and set a real DocumentManager
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
 	}

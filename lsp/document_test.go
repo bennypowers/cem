@@ -1,3 +1,19 @@
+/*
+Copyright © 2025 Benny Powers <web@bennypowers.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
 package lsp_test
 
 import (
@@ -5,11 +21,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 )
 
 func TestDocument_ScriptTagParsing_ModuleStaticImports(t *testing.T) {
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create document manager: %v", err)
 	}
@@ -27,7 +43,7 @@ func TestDocument_ScriptTagParsing_ModuleStaticImports(t *testing.T) {
 	doc := dm.OpenDocument("test://test.html", content, 1)
 
 	// Get script tags
-	scriptTags := doc.GetScriptTags()
+	scriptTags := doc.ScriptTags()
 
 	// Should find one script tag
 	if len(scriptTags) != 1 {
@@ -80,7 +96,7 @@ func TestDocument_ScriptTagParsing_ModuleStaticImports(t *testing.T) {
 }
 
 func TestDocument_ScriptTagParsing_ModuleDynamicImports(t *testing.T) {
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create document manager: %v", err)
 	}
@@ -98,7 +114,7 @@ func TestDocument_ScriptTagParsing_ModuleDynamicImports(t *testing.T) {
 	doc := dm.OpenDocument("test://test.html", content, 1)
 
 	// Get script tags
-	scriptTags := doc.GetScriptTags()
+	scriptTags := doc.ScriptTags()
 
 	// Should find one script tag
 	if len(scriptTags) != 1 {
@@ -144,7 +160,7 @@ func TestDocument_ScriptTagParsing_ModuleDynamicImports(t *testing.T) {
 }
 
 func TestDocument_ScriptTagParsing_NonModuleDynamicImports(t *testing.T) {
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create document manager: %v", err)
 	}
@@ -162,7 +178,7 @@ func TestDocument_ScriptTagParsing_NonModuleDynamicImports(t *testing.T) {
 	doc := dm.OpenDocument("test://test.html", content, 1)
 
 	// Get script tags
-	scriptTags := doc.GetScriptTags()
+	scriptTags := doc.ScriptTags()
 
 	// Should find one script tag
 	if len(scriptTags) != 1 {
@@ -213,7 +229,7 @@ func TestDocument_ScriptTagParsing_NonModuleDynamicImports(t *testing.T) {
 }
 
 func TestDocument_ScriptTagParsing_SimpleModuleScript(t *testing.T) {
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create document manager: %v", err)
 	}
@@ -231,7 +247,7 @@ func TestDocument_ScriptTagParsing_SimpleModuleScript(t *testing.T) {
 	doc := dm.OpenDocument("test://test.html", content, 1)
 
 	// Get script tags
-	scriptTags := doc.GetScriptTags()
+	scriptTags := doc.ScriptTags()
 
 	// Should find one script tag
 	if len(scriptTags) != 1 {
@@ -272,7 +288,7 @@ func TestDocument_ScriptTagParsing_SimpleModuleScript(t *testing.T) {
 }
 
 func TestDocument_ScriptTagParsing_FullHtmlWithModule(t *testing.T) {
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create document manager: %v", err)
 	}
@@ -290,7 +306,7 @@ func TestDocument_ScriptTagParsing_FullHtmlWithModule(t *testing.T) {
 	doc := dm.OpenDocument("test://test.html", content, 1)
 
 	// Get script tags
-	scriptTags := doc.GetScriptTags()
+	scriptTags := doc.ScriptTags()
 
 	// Should find one script tag
 	if len(scriptTags) != 1 {
@@ -336,7 +352,7 @@ func TestDocument_ScriptTagParsing_FullHtmlWithModule(t *testing.T) {
 
 func TestDocument_ScriptTagParsing_NoModuleScript(t *testing.T) {
 	// Create a document manager for HTML parsing
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create document manager: %v", err)
 	}
@@ -354,7 +370,7 @@ func TestDocument_ScriptTagParsing_NoModuleScript(t *testing.T) {
 	doc := dm.OpenDocument("test://test.html", content, 1)
 
 	// Get script tags
-	scriptTags := doc.GetScriptTags()
+	scriptTags := doc.ScriptTags()
 
 	// Should find one script tag but it's not a module
 	if len(scriptTags) != 1 {

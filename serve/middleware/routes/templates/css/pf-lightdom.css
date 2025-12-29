@@ -1,0 +1,25 @@
+/* Slot visibility styles
+ * Aggregates all *-lightdom.css files for elements with conditional slot visibility
+ * These rules set custom properties that shadow DOM reads to hide empty slot containers
+ */
+
+/* pf-v6-card */
+@import url('/__cem/elements/pf-v6-card/pf-v6-card-lightdom.css');
+
+/* pf-v6-button */
+@import url('/__cem/elements/pf-v6-button/pf-v6-button-lightdom.css');
+
+/* pf-v6-toggle-group-item */
+@import url('/__cem/elements/pf-v6-toggle-group-item/pf-v6-toggle-group-item-lightdom.css');
+
+/* pf-v6-alert */
+@import url('/__cem/elements/pf-v6-alert/pf-v6-alert-lightdom.css');
+
+/* pf-v6-alert-group */
+@import url('/__cem/elements/pf-v6-alert-group/pf-v6-alert-group.lightdom.css');
+
+/* Additional elements will be added as they are migrated:
+ * @import url('/__cem/elements/pf-v6-modal/pf-v6-modal-lightdom.css');
+ * @import url('/__cem/elements/pf-v6-label/pf-v6-label-lightdom.css');
+ * etc.
+ */

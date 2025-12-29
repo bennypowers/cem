@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "my-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyElement",
+          "tagName": "my-element",
+          "customElement": true,
+          "demos": [
+            {
+              "name": "Basic Usage",
+              "url": "./demo.html",
+              "description": "Basic example showing default state"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

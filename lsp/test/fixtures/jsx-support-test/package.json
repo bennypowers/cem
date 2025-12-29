@@ -1,0 +1,9 @@
+{
+  "name": "jsx-support-test",
+  "version": "1.0.0",
+  "customElements": "./custom-elements.json",
+  "dependencies": {
+    "react": "^18.0.0",
+    "@types/react": "^18.0.0"
+  }
+}

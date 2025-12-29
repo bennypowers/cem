@@ -15,24 +15,3 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package textDocument
-
-import (
-	"bennypowers.dev/cem/lsp/types"
-	protocol "github.com/tliron/glsp/protocol_3_16"
-)
-
-// Document interface for textDocument operations - uses shared types
-type Document interface {
-	FindElementAtPosition(position protocol.Position, dm any) *types.CustomElementMatch
-	FindAttributeAtPosition(position protocol.Position, dm any) (*types.AttributeMatch, string)
-}
-
-// Type aliases for backward compatibility
-type CustomElementMatch = types.CustomElementMatch
-type AttributeMatch = types.AttributeMatch
-
-// ElementDefinition represents a custom element with its source information
-type ElementDefinition interface {
-	GetModulePath() string
-	GetSourceHref() string
-}

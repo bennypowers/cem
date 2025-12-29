@@ -1,0 +1,26 @@
+:host {
+  display: block;
+
+  /* CSS variables from pf-v6-c-alert-group */
+  --pf-v6-c-alert-group__item--MarginBlockStart: var(--pf-t--global--spacer--gap--group--vertical);
+  --pf-v6-c-alert-group--m-toast--InsetBlockStart: var(--pf-t--global--spacer--2xl);
+  --pf-v6-c-alert-group--m-toast--InsetInlineEnd: var(--pf-t--global--spacer--xl);
+  --pf-v6-c-alert-group--m-toast--MaxWidth: 37.5rem;
+  --pf-v6-c-alert-group--m-toast--ZIndex: var(--pf-t--global--z-index--2xl);
+}
+
+/* Toast modifier - fixed positioning */
+:host([toast]) {
+  position: fixed;
+  inset-block-start: var(--pf-v6-c-alert-group--m-toast--InsetBlockStart);
+  inset-inline-end: var(--pf-v6-c-alert-group--m-toast--InsetInlineEnd);
+  z-index: var(--pf-v6-c-alert-group--m-toast--ZIndex);
+  width: calc(100% - var(--pf-v6-c-alert-group--m-toast--InsetInlineEnd) * 2);
+  max-width: var(--pf-v6-c-alert-group--m-toast--MaxWidth);
+}
+
+/* Item spacing using slotted content */
+:host ::slotted(*:not(:first-child)),
+:host ::slotted(.pf-v6-c-alert-group__item:not(:first-child)) {
+  margin-block-start: var(--pf-v6-c-alert-group__item--MarginBlockStart);
+}

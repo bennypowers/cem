@@ -1,0 +1,1341 @@
+{
+  "$ref": "#/definitions/Package",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Attribute": {
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "description": "The default value of the attribute, if any.\n\nAs attributes are always strings, this is the actual value, not a human readable description.",
+          "type": "string"
+        },
+        "deprecated": {
+          "description": "Whether the attribute is deprecated. If the value is a string, it's the reason for the deprecation.",
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "description": {
+          "description": "A markdown description.",
+          "type": "string"
+        },
+        "fieldName": {
+          "description": "The name of the field this attribute is associated with, if any.",
+          "type": "string"
+        },
+        "inheritedFrom": {
+          "$ref": "#/definitions/Reference"
+        },
+        "name": {
+          "type": "string"
+        },
+        "summary": {
+          "description": "A markdown summary suitable for display in a listing.",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/Type",
+          "description": "The type that the attribute will be serialized/deserialized as."
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "ClassDeclaration": {
+      "additionalProperties": false,
+      "properties": {
+        "deprecated": {
+          "description": "Whether the class or mixin is deprecated. If the value is a string, it's the reason for the deprecation.",
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "description": {
+          "description": "A markdown description of the class.",
+          "type": "string"
+        },
+        "kind": {
+          "const": "class",
+          "type": "string"
+        },
+        "members": {
+          "items": {
+            "$ref": "#/definitions/ClassMember"
+          },
+          "type": "array"
+        },
+        "mixins": {
+          "description": "Any class mixins applied in the extends clause of this class.\n\nIf mixins are applied in the class definition, then the true superclass of this class is the result of applying mixins in order to the superclass.\n\nMixins must be listed in order of their application to the superclass or previous mixin application. This means that the innermost mixin is listed first. This may read backwards from the common order in JavaScript, but matches the order of language used to describe mixin application, like \"S with A, B\".",
+          "items": {
+            "$ref": "#/definitions/Reference"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/definitions/SourceReference"
+        },
+        "summary": {
+          "description": "A markdown summary suitable for display in a listing.",
+          "type": "string"
+        },
+        "superclass": {
+          "$ref": "#/definitions/Reference",
+          "description": "The superclass of this class.\n\nIf this class is defined with mixin applications, the prototype chain includes the mixin applications and the true superclass is computed from them."
+        }
+      },
+      "required": [
+        "kind",
+        "name"
+      ],
+      "type": "object"
+    },
+    "ClassField": {
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "type": "string"
+        },
+        "deprecated": {
+          "description": "Whether the property is deprecated. If the value is a string, it's the reason for the deprecation.",
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "description": {
+          "description": "A markdown description of the field.",
+          "type": "string"
+        },
+        "inheritedFrom": {
+          "$ref": "#/definitions/Reference"
+        },
+        "kind": {
+          "const": "field",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "privacy": {
+          "$ref": "#/definitions/Privacy"
+        },
+        "readonly": {
+          "description": "Whether the property is read-only.",
+          "type": "boolean"
+        },
+        "source": {
+          "$ref": "#/definitions/SourceReference"
+        },
+        "static": {
+          "type": "boolean"
+        },
+        "summary": {
+          "description": "A markdown summary suitable for display in a listing.",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/Type"
+        }
+      },
+      "required": [
+        "kind",
+        "name"
+      ],
+      "type": "object"
+    },
+    "ClassMember": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ClassField"
+        },
+        {
+          "$ref": "#/definitions/ClassMethod"
+        }
+      ]
+    },
+    "ClassMethod": {
+      "additionalProperties": false,
+      "properties": {
+        "deprecated": {
+          "description": "Whether the function is deprecated. If the value is a string, it's the reason for the deprecation.",
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "description": {
+          "description": "A markdown description.",
+          "type": "string"
+        },
+        "inheritedFrom": {
+          "$ref": "#/definitions/Reference"
+        },
+        "kind": {
+          "const": "method",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "parameters": {
+          "items": {
+            "$ref": "#/definitions/Parameter"
+          },
+          "type": "array"
+        },
+        "privacy": {
+          "$ref": "#/definitions/Privacy"
+        },
+        "return": {
+          "additionalProperties": false,
+          "properties": {
+            "description": {
+              "description": "A markdown description.",
+              "type": "string"
+            },
+            "summary": {
+              "description": "A markdown summary suitable for display in a listing.",
+              "type": "string"
+            },
+            "type": {
+              "$ref": "#/definitions/Type"
+            }
+          },
+          "type": "object"
+        },
+        "source": {
+          "$ref": "#/definitions/SourceReference"
+        },
+        "static": {
+          "type": "boolean"
+        },
+        "summary": {
+          "description": "A markdown summary suitable for display in a listing.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "name"
+      ],
+      "type": "object"
+    },
+    "CssCustomProperty": {
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "type": "string"
+        },
+        "deprecated": {
+          "description": "Whether the CSS custom property is deprecated. If the value is a string, it's the reason for the deprecation.",
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "description": {
+          "description": "A markdown description.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of the property, including leading `--`.",
+          "type": "string"
+        },
+        "summary": {
+          "description": "A markdown summary suitable for display in a listing.",
+          "type": "string"
+        },
+        "syntax": {
+          "description": "The expected syntax of the defined property. Defaults to \"*\".\n\nThe syntax must be a valid CSS [syntax string](https://developer.mozilla.org/en-US/docs/Web/CSS/@property/syntax) as defined in the CSS Properties and Values API.\n\nExamples:\n\n\"\u003ccolor\u003e\": accepts a color \"\u003clength\u003e | \u003cpercentage\u003e\": accepts lengths or percentages but not calc expressions with a combination of the two \"small | medium | large\": accepts one of these values set as custom idents. \"*\": any valid token",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "CssCustomState": {
+      "additionalProperties": false,
+      "description": "The description of a CSS Custom State https://developer.mozilla.org/en-US/docs/Web/API/CustomStateSet",
+      "properties": {
+        "deprecated": {
+          "description": "Whether the CSS custom state is deprecated. If the value is a string, it's the reason for the deprecation.",
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "description": {
+          "description": "A markdown description.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of the state. Note: Unlike CSS custom properties, custom states do not have a leading `--`.",
+          "type": "string"
+        },
+        "summary": {
+          "description": "A markdown summary suitable for display in a listing.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "CssPart": {
+      "additionalProperties": false,
+      "description": "The description of a CSS Part",
+      "properties": {
+        "deprecated": {
+          "description": "Whether the CSS shadow part is deprecated. If the value is a string, it's the reason for the deprecation.",
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "description": {
+          "description": "A markdown description.",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "summary": {
+          "description": "A markdown summary suitable for display in a listing.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "CustomElementDeclaration": {
+      "additionalProperties": false,
+      "description": "A description of a custom element class.\n\nCustom elements are JavaScript classes, so this extends from `ClassDeclaration` and adds custom-element-specific features like attributes, events, and slots.\n\nNote that `tagName` in this interface is optional. Tag names are not neccessarily part of a custom element class, but belong to the definition (often called the \"registration\") or the `customElements.define()` call.\n\nBecause classes and tag names can only be registered once, there's a one-to-one relationship between classes and tag names. For ease of use, we allow the tag name here.\n\nSome packages define and register custom elements in separate modules. In these cases one `Module` should contain the `CustomElement` without a tagName, and another `Module` should contain the `CustomElementExport`.",
+      "properties": {
+        "attributes": {
+          "description": "The attributes that this element is known to understand.",
+          "items": {
+            "$ref": "#/definitions/Attribute"
+          },
+          "type": "array"
+        },
+        "cssParts": {
+          "items": {
+            "$ref": "#/definitions/CssPart"
+          },
+          "type": "array"
+        },
+        "cssProperties": {
+          "items": {
+            "$ref": "#/definitions/CssCustomProperty"
+          },
+          "type": "array"
+        },
+        "cssStates": {
+          "items": {
+            "$ref": "#/definitions/CssCustomState"
+          },
+          "type": "array"
+        },
+        "customElement": {
+          "const": true,
+          "description": "Distinguishes a regular JavaScript class from a custom element class",
+          "type": "boolean"
+        },
+        "demos": {
+          "items": {
+            "$ref": "#/definitions/Demo"
+          },
+          "type": "array"
+        },
+        "deprecated": {
+          "description": "Whether the class or mixin is deprecated. If the value is a string, it's the reason for the deprecation.",
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "description": {
+          "description": "A markdown description of the class.",
+          "type": "string"
+        },
+        "events": {
+          "description": "The events that this element fires.",
+          "items": {
+            "$ref": "#/definitions/Event"
+          },
+          "type": "array"
+        },
+        "kind": {
+          "const": "class",
+          "type": "string"
+        },
+        "members": {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/ClassMethod"
+              },
+              {
+                "$ref": "#/definitions/CustomElementField"
+              },
+              {
+                "$ref": "#/definitions/ClassField"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "mixins": {
+          "description": "Any class mixins applied in the extends clause of this class.\n\nIf mixins are applied in the class definition, then the true superclass of this class is the result of applying mixins in order to the superclass.\n\nMixins must be listed in order of their application to the superclass or previous mixin application. This means that the innermost mixin is listed first. This may read backwards from the common order in JavaScript, but matches the order of language used to describe mixin application, like \"S with A, B\".",
+          "items": {
+            "$ref": "#/definitions/Reference"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "slots": {
+          "description": "The shadow dom content slots that this element accepts.",
+          "items": {
+            "$ref": "#/definitions/Slot"
+          },
+          "type": "array"
+        },
+        "source": {
+          "$ref": "#/definitions/SourceReference"
+        },
+        "summary": {
+          "description": "A markdown summary suitable for display in a listing.",
+          "type": "string"
+        },
+        "superclass": {
+          "$ref": "#/definitions/Reference",
+          "description": "The superclass of this class.\n\nIf this class is defined with mixin applications, the prototype chain includes the mixin applications and the true superclass is computed from them."
+        },
+        "tagName": {
+          "description": "An optional tag name that should be specified if this is a self-registering element.\n\nSelf-registering elements must also include a CustomElementExport in the module's exports.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "customElement",
+        "kind",
+        "name"
+      ],
+      "type": "object"
+    },
+    "CustomElementExport": {
+      "additionalProperties": false,
+      "description": "A global custom element defintion, ie the result of a `customElements.define()` call.\n\nThis is represented as an export because a definition makes the element available outside of the module it's defined it.",
+      "properties": {
+        "declaration": {
+          "$ref": "#/definitions/Reference",
+          "description": "A reference to the class or other declaration that implements the custom element."
+        },
+        "deprecated": {
+          "description": "Whether the custom-element export is deprecated. For example, a future version will not register the custom element in this file. If the value is a string, it's the reason for the deprecation.",
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "kind": {
+          "const": "custom-element-definition",
+          "type": "string"
+        },
+        "name": {
+          "description": "The tag name of the custom element.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "name",
+        "declaration"
+      ],
+      "type": "object"
+    },
+    "CustomElementField": {
+      "additionalProperties": false,
+      "description": "Additional metadata for fields on custom elements.",
+      "properties": {
+        "attribute": {
+          "description": "The corresponding attribute name if there is one.\n\nIf this property is defined, the attribute must be listed in the classes' `attributes` array.",
+          "type": "string"
+        },
+        "default": {
+          "type": "string"
+        },
+        "deprecated": {
+          "description": "Whether the property is deprecated. If the value is a string, it's the reason for the deprecation.",
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "description": {
+          "description": "A markdown description of the field.",
+          "type": "string"
+        },
+        "inheritedFrom": {
+          "$ref": "#/definitions/Reference"
+        },
+        "kind": {
+          "const": "field",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "privacy": {
+          "$ref": "#/definitions/Privacy"
+        },
+        "readonly": {
+          "description": "Whether the property is read-only.",
+          "type": "boolean"
+        },
+        "reflects": {
+          "description": "If the property reflects to an attribute.\n\nIf this is true, the `attribute` property must be defined.",
+          "type": "boolean"
+        },
+        "source": {
+          "$ref": "#/definitions/SourceReference"
+        },
+        "static": {
+          "type": "boolean"
+        },
+        "summary": {
+          "description": "A markdown summary suitable for display in a listing.",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/Type"
+        }
+      },
+      "required": [
+        "kind",
+        "name"
+      ],
+      "type": "object"
+    },
+    "CustomElementMixinDeclaration": {
+      "additionalProperties": false,
+      "description": "A class mixin that also adds custom element related properties.",
+      "properties": {
+        "attributes": {
+          "description": "The attributes that this element is known to understand.",
+          "items": {
+            "$ref": "#/definitions/Attribute"
+          },
+          "type": "array"
+        },
+        "cssParts": {
+          "items": {
+            "$ref": "#/definitions/CssPart"
+          },
+          "type": "array"
+        },
+        "cssProperties": {
+          "items": {
+            "$ref": "#/definitions/CssCustomProperty"
+          },
+          "type": "array"
+        },
+        "cssStates": {
+          "items": {
+            "$ref": "#/definitions/CssCustomState"
+          },
+          "type": "array"
+        },
+        "customElement": {
+          "const": true,
+          "description": "Distinguishes a regular JavaScript class from a custom element class",
+          "type": "boolean"
+        },
+        "demos": {
+          "items": {
+            "$ref": "#/definitions/Demo"
+          },
+          "type": "array"
+        },
+        "deprecated": {
+          "description": "Whether the class or mixin is deprecated. If the value is a string, it's the reason for the deprecation.",
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "description": {
+          "description": "A markdown description of the class.",
+          "type": "string"
+        },
+        "events": {
+          "description": "The events that this element fires.",
+          "items": {
+            "$ref": "#/definitions/Event"
+          },
+          "type": "array"
+        },
+        "kind": {
+          "const": "mixin",
+          "type": "string"
+        },
+        "members": {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/ClassMethod"
+              },
+              {
+                "$ref": "#/definitions/CustomElementField"
+              },
+              {
+                "$ref": "#/definitions/ClassField"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "mixins": {
+          "description": "Any class mixins applied in the extends clause of this class.\n\nIf mixins are applied in the class definition, then the true superclass of this class is the result of applying mixins in order to the superclass.\n\nMixins must be listed in order of their application to the superclass or previous mixin application. This means that the innermost mixin is listed first. This may read backwards from the common order in JavaScript, but matches the order of language used to describe mixin application, like \"S with A, B\".",
+          "items": {
+            "$ref": "#/definitions/Reference"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "parameters": {
+          "items": {
+            "$ref": "#/definitions/Parameter"
+          },
+          "type": "array"
+        },
+        "return": {
+          "additionalProperties": false,
+          "properties": {
+            "description": {
+              "description": "A markdown description.",
+              "type": "string"
+            },
+            "summary": {
+              "description": "A markdown summary suitable for display in a listing.",
+              "type": "string"
+            },
+            "type": {
+              "$ref": "#/definitions/Type"
+            }
+          },
+          "type": "object"
+        },
+        "slots": {
+          "description": "The shadow dom content slots that this element accepts.",
+          "items": {
+            "$ref": "#/definitions/Slot"
+          },
+          "type": "array"
+        },
+        "source": {
+          "$ref": "#/definitions/SourceReference"
+        },
+        "summary": {
+          "description": "A markdown summary suitable for display in a listing.",
+          "type": "string"
+        },
+        "superclass": {
+          "$ref": "#/definitions/Reference",
+          "description": "The superclass of this class.\n\nIf this class is defined with mixin applications, the prototype chain includes the mixin applications and the true superclass is computed from them."
+        },
+        "tagName": {
+          "description": "An optional tag name that should be specified if this is a self-registering element.\n\nSelf-registering elements must also include a CustomElementExport in the module's exports.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "customElement",
+        "kind",
+        "name"
+      ],
+      "type": "object"
+    },
+    "Declaration": {
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "function",
+                "type": "string"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/FunctionDeclaration"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "variable",
+                "type": "string"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/VariableDeclaration"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "kind": {
+                    "const": "mixin",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "customElement": {}
+                  },
+                  "required": [
+                    "customElement"
+                  ]
+                }
+              }
+            ]
+          },
+          "then": {
+            "$ref": "#/definitions/MixinDeclaration"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "customElement": {
+                "const": true
+              },
+              "kind": {
+                "const": "mixin",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "customElement"
+            ]
+          },
+          "then": {
+            "$ref": "#/definitions/CustomElementMixinDeclaration"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "kind": {
+                    "const": "class",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "customElement": {}
+                  },
+                  "required": [
+                    "customElement"
+                  ]
+                }
+              }
+            ]
+          },
+          "then": {
+            "$ref": "#/definitions/ClassDeclaration"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "customElement": {
+                "const": true
+              },
+              "kind": {
+                "const": "class",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "customElement"
+            ]
+          },
+          "then": {
+            "$ref": "#/definitions/CustomElementDeclaration"
+          }
+        }
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "function",
+            "variable",
+            "mixin",
+            "class"
+          ]
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "type": "object"
+    },
+    "Demo": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "description": "A markdown description of the demo.",
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/definitions/SourceReference"
+        },
+        "url": {
+          "description": "Relative URL of the demo if it's published with the package. Absolute URL if it's hosted.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "type": "object"
+    },
+    "Event": {
+      "additionalProperties": false,
+      "properties": {
+        "deprecated": {
+          "description": "Whether the event is deprecated. If the value is a string, it's the reason for the deprecation.",
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "description": {
+          "description": "A markdown description.",
+          "type": "string"
+        },
+        "inheritedFrom": {
+          "$ref": "#/definitions/Reference"
+        },
+        "name": {
+          "type": "string"
+        },
+        "summary": {
+          "description": "A markdown summary suitable for display in a listing.",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/Type",
+          "description": "The type of the event object that's fired."
+        }
+      },
+      "required": [
+        "name",
+        "type"
+      ],
+      "type": "object"
+    },
+    "Export": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/JavaScriptExport"
+        },
+        {
+          "$ref": "#/definitions/CustomElementExport"
+        }
+      ]
+    },
+    "FunctionDeclaration": {
+      "additionalProperties": false,
+      "properties": {
+        "deprecated": {
+          "description": "Whether the function is deprecated. If the value is a string, it's the reason for the deprecation.",
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "description": {
+          "description": "A markdown description.",
+          "type": "string"
+        },
+        "kind": {
+          "const": "function",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "parameters": {
+          "items": {
+            "$ref": "#/definitions/Parameter"
+          },
+          "type": "array"
+        },
+        "return": {
+          "additionalProperties": false,
+          "properties": {
+            "description": {
+              "description": "A markdown description.",
+              "type": "string"
+            },
+            "summary": {
+              "description": "A markdown summary suitable for display in a listing.",
+              "type": "string"
+            },
+            "type": {
+              "$ref": "#/definitions/Type"
+            }
+          },
+          "type": "object"
+        },
+        "source": {
+          "$ref": "#/definitions/SourceReference"
+        },
+        "summary": {
+          "description": "A markdown summary suitable for display in a listing.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "name"
+      ],
+      "type": "object"
+    },
+    "JavaScriptExport": {
+      "additionalProperties": false,
+      "properties": {
+        "declaration": {
+          "$ref": "#/definitions/Reference",
+          "description": "A reference to the exported declaration.\n\nIn the case of aggregating exports, the reference's `module` field must be defined and the `name` field must be `\"*\"`."
+        },
+        "deprecated": {
+          "description": "Whether the export is deprecated. For example, the name of the export was changed. If the value is a string, it's the reason for the deprecation.",
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "kind": {
+          "const": "js",
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of the exported symbol.\n\nJavaScript has a number of ways to export objects which determine the correct name to use.\n\n- Default exports must use the name \"default\".\n- Named exports use the name that is exported. If the export is renamed   with the \"as\" clause, use the exported name.\n- Aggregating exports (`* from`) should use the name `*`",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "name",
+        "declaration"
+      ],
+      "type": "object"
+    },
+    "JavaScriptModule": {
+      "additionalProperties": false,
+      "properties": {
+        "declarations": {
+          "description": "The declarations of a module.\n\nFor documentation purposes, all declarations that are reachable from exports should be described here. Ie, functions and objects that may be properties of exported objects, or passed as arguments to functions.",
+          "items": {
+            "$ref": "#/definitions/Declaration"
+          },
+          "type": "array"
+        },
+        "deprecated": {
+          "description": "Whether the module is deprecated. If the value is a string, it's the reason for the deprecation.",
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "description": {
+          "description": "A markdown description of the module.",
+          "type": "string"
+        },
+        "exports": {
+          "description": "The exports of a module. This includes JavaScript exports and custom element definitions.",
+          "items": {
+            "$ref": "#/definitions/Export"
+          },
+          "type": "array"
+        },
+        "kind": {
+          "const": "javascript-module",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path to the javascript file needed to be imported. (not the path for example to a typescript file.)",
+          "type": "string"
+        },
+        "summary": {
+          "description": "A markdown summary suitable for display in a listing.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "path"
+      ],
+      "type": "object"
+    },
+    "MixinDeclaration": {
+      "additionalProperties": false,
+      "description": "A description of a class mixin.\n\nMixins are functions which generate a new subclass of a given superclass. This interfaces describes the class and custom element features that are added by the mixin. As such, it extends the CustomElement interface and ClassLike interface.\n\nSince mixins are functions, it also extends the FunctionLike interface. This means a mixin is callable, and has parameters and a return type.\n\nThe return type is often hard or impossible to accurately describe in type systems like TypeScript. It requires generics and an `extends` operator that TypeScript lacks. Therefore it's recommended that the return type is left empty. The most common form of a mixin function takes a single argument, so consumers of this interface should assume that the return type is the single argument subclassed by this declaration.\n\nA mixin should not have a superclass. If a mixins composes other mixins, they should be listed in the `mixins` field.\n\nSee [this article] {@link  https://justinfagnani.com/2015/12/21/real-mixins-with-javascript-classes/ }  for more information on the classmixin pattern in JavaScript.",
+      "properties": {
+        "deprecated": {
+          "description": "Whether the class or mixin is deprecated. If the value is a string, it's the reason for the deprecation.",
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "description": {
+          "description": "A markdown description of the class.",
+          "type": "string"
+        },
+        "kind": {
+          "const": "mixin",
+          "type": "string"
+        },
+        "members": {
+          "items": {
+            "$ref": "#/definitions/ClassMember"
+          },
+          "type": "array"
+        },
+        "mixins": {
+          "description": "Any class mixins applied in the extends clause of this class.\n\nIf mixins are applied in the class definition, then the true superclass of this class is the result of applying mixins in order to the superclass.\n\nMixins must be listed in order of their application to the superclass or previous mixin application. This means that the innermost mixin is listed first. This may read backwards from the common order in JavaScript, but matches the order of language used to describe mixin application, like \"S with A, B\".",
+          "items": {
+            "$ref": "#/definitions/Reference"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "parameters": {
+          "items": {
+            "$ref": "#/definitions/Parameter"
+          },
+          "type": "array"
+        },
+        "return": {
+          "additionalProperties": false,
+          "properties": {
+            "description": {
+              "description": "A markdown description.",
+              "type": "string"
+            },
+            "summary": {
+              "description": "A markdown summary suitable for display in a listing.",
+              "type": "string"
+            },
+            "type": {
+              "$ref": "#/definitions/Type"
+            }
+          },
+          "type": "object"
+        },
+        "source": {
+          "$ref": "#/definitions/SourceReference"
+        },
+        "summary": {
+          "description": "A markdown summary suitable for display in a listing.",
+          "type": "string"
+        },
+        "superclass": {
+          "$ref": "#/definitions/Reference",
+          "description": "The superclass of this class.\n\nIf this class is defined with mixin applications, the prototype chain includes the mixin applications and the true superclass is computed from them."
+        }
+      },
+      "required": [
+        "kind",
+        "name"
+      ],
+      "type": "object"
+    },
+    "Module": {
+      "$ref": "#/definitions/JavaScriptModule"
+    },
+    "Package": {
+      "additionalProperties": false,
+      "description": "The top-level interface of a custom elements manifest file.\n\nBecause custom elements are JavaScript classes, describing a custom element may require describing arbitrary JavaScript concepts like modules, classes, functions, etc. So custom elements manifests are capable of documenting the elements in a package, as well as those JavaScript concepts.\n\nThe modules described in a package should be the public entrypoints that other packages may import from. Multiple modules may export the same object via re-exports, but in most cases a package should document the single canonical export that should be used.",
+      "properties": {
+        "deprecated": {
+          "description": "Whether the package is deprecated. If the value is a string, it's the reason for the deprecation.",
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "modules": {
+          "description": "An array of the modules this package contains.",
+          "items": {
+            "$ref": "#/definitions/Module"
+          },
+          "type": "array"
+        },
+        "readme": {
+          "description": "The Markdown to use for the main readme of this package.\n\nThis can be used to override the readme used by Github or npm if that file contains information irrelevant to custom element catalogs and documentation viewers.",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "description": "The version of the schema used in this file.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "modules"
+      ],
+      "type": "object"
+    },
+    "Parameter": {
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "type": "string"
+        },
+        "deprecated": {
+          "description": "Whether the property is deprecated. If the value is a string, it's the reason for the deprecation.",
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "description": {
+          "description": "A markdown description of the field.",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "optional": {
+          "description": "Whether the parameter is optional. Undefined implies non-optional.",
+          "type": "boolean"
+        },
+        "readonly": {
+          "description": "Whether the property is read-only.",
+          "type": "boolean"
+        },
+        "rest": {
+          "description": "Whether the parameter is a rest parameter. Only the last parameter may be a rest parameter. Undefined implies single parameter.",
+          "type": "boolean"
+        },
+        "summary": {
+          "description": "A markdown summary suitable for display in a listing.",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/Type"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "Privacy": {
+      "enum": [
+        "public",
+        "private",
+        "protected"
+      ],
+      "type": "string"
+    },
+    "Reference": {
+      "additionalProperties": false,
+      "description": "A reference to an export of a module.\n\nAll references are required to be publically accessible, so the canonical representation of a reference is the export it's available from.\n\n`package` should generally refer to an npm package name. If `package` is undefined then the reference is local to this package. If `module` is undefined the reference is local to the containing module.\n\nReferences to global symbols like `Array`, `HTMLElement`, or `Event` should use a `package` name of `\"global:\"`.",
+      "properties": {
+        "module": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "package": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "Slot": {
+      "additionalProperties": false,
+      "properties": {
+        "deprecated": {
+          "description": "Whether the slot is deprecated. If the value is a string, it's the reason for the deprecation.",
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "description": {
+          "description": "A markdown description.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The slot name, or the empty string for an unnamed slot.",
+          "type": "string"
+        },
+        "summary": {
+          "description": "A markdown summary suitable for display in a listing.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "SourceReference": {
+      "additionalProperties": false,
+      "description": "A reference to the source of a declaration or member.",
+      "properties": {
+        "href": {
+          "description": "An absolute URL to the source (ie. a GitHub URL).",
+          "type": "string"
+        }
+      },
+      "required": [
+        "href"
+      ],
+      "type": "object"
+    },
+    "Type": {
+      "additionalProperties": false,
+      "properties": {
+        "references": {
+          "description": "An array of references to the types in the type string.\n\nThese references have optional indices into the type string so that tools can understand the references in the type string independently of the type system and syntax. For example, a documentation viewer could display the type `Array\u003cFooElement | BarElement\u003e` with cross-references to `FooElement` and `BarElement` without understanding arrays, generics, or union types.",
+          "items": {
+            "$ref": "#/definitions/TypeReference"
+          },
+          "type": "array"
+        },
+        "source": {
+          "$ref": "#/definitions/SourceReference"
+        },
+        "text": {
+          "description": "The full string representation of the type, in whatever type syntax is used, such as JSDoc, Closure, or TypeScript.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "type": "object"
+    },
+    "TypeReference": {
+      "additionalProperties": false,
+      "description": "A reference that is associated with a type string and optionally a range within the string.\n\nStart and end must both be present or not present. If they're present, they are indices into the associated type string. If they are missing, the entire type string is the symbol referenced and the name should match the type string.",
+      "properties": {
+        "end": {
+          "type": "number"
+        },
+        "module": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "package": {
+          "type": "string"
+        },
+        "start": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "VariableDeclaration": {
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "type": "string"
+        },
+        "deprecated": {
+          "description": "Whether the property is deprecated. If the value is a string, it's the reason for the deprecation.",
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "description": {
+          "description": "A markdown description of the field.",
+          "type": "string"
+        },
+        "kind": {
+          "const": "variable",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "readonly": {
+          "description": "Whether the property is read-only.",
+          "type": "boolean"
+        },
+        "source": {
+          "$ref": "#/definitions/SourceReference"
+        },
+        "summary": {
+          "description": "A markdown summary suitable for display in a listing.",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/Type"
+        }
+      },
+      "required": [
+        "kind",
+        "name"
+      ],
+      "type": "object"
+    }
+  },
+  "description": "This is a speculative schema for 2.1.1 based on 2.1.0, with workarounds for known issues. See: https://github.com/webcomponents/custom-elements-manifest/issues/138 and https://github.com/vega/ts-json-schema-generator/pull/2323",
+  "title": "Custom Elements Manifest Schema 2.1.1-speculative"
+}

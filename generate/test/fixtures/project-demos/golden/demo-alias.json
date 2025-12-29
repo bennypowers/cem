@@ -11,19 +11,28 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-alias/demo-alias.ts#L4"
+          },
           "kind": "class",
           "tagName": "demo-alias",
           "demos": [
             {
               "url": "https://bennypowers.dev/cem-demos/aliased/alias/",
               "source": {
-                "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-demos/src/demo-alias/demos/alias.html"
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-alias/demos/alias.html"
               }
             },
             {
               "url": "https://bennypowers.dev/cem-demos/aliased/multiple/",
               "source": {
-                "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-demos/src/demo-alias/demos/multiple.html"
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-alias/demos/multiple.html"
+              }
+            },
+            {
+              "url": "https://bennypowers.dev/cem-demos/aliased/slugified/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-alias/demos/slugified.html"
               }
             }
           ],
@@ -36,16 +45,11 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-alias/demo-alias.ts#L10"
+          },
           "kind": "class",
           "tagName": "demo-slugify-alias",
-          "demos": [
-            {
-              "url": "https://bennypowers.dev/cem-demos/aliased/slugified/",
-              "source": {
-                "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-demos/src/demo-alias/demos/slugified.html"
-              }
-            }
-          ],
           "customElement": true
         }
       ],

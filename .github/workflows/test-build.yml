@@ -46,9 +46,12 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
-          go-version: '1.24.x'
+          go-version-file: go.mod
+        env:
+          GOTOOLCHAIN: auto
+          GOEXPERIMENT: jsonv2
 
       - name: Install tree
         run: |
@@ -64,6 +67,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-aarch64-linux-gnu gcc-mingw-w64 mingw-w64
+
+      - name: Generate code
+        run: make generate
 
       - name: Build with special toolchain for windows/arm
         if: ${{ (matrix.goos == 'windows' && matrix.goarch == 'arm64') }}

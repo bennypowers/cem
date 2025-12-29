@@ -1,3 +1,19 @@
+/*
+Copyright © 2025 Benny Powers <web@bennypowers.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
 package demodiscovery
 
 import (
@@ -10,6 +26,7 @@ import (
 
 	Q "bennypowers.dev/cem/queries"
 	S "bennypowers.dev/cem/set"
+	"bennypowers.dev/cem/types"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -18,15 +35,24 @@ type DemoMap map[string][]string
 
 // NewDemoMap builds the index using microdata, magic comments, and fallback to tag parsing.
 // Uses URLPattern-aware precise matching when urlPattern is provided.
-func NewDemoMap(demoFiles []string, elementAliases map[string]string) (demoMap DemoMap, errs error) {
-	return NewDemoMapWithPattern(demoFiles, "", elementAliases)
+func NewDemoMap(
+	ctx types.WorkspaceContext,
+	demoFiles []string,
+	elementAliases map[string]string,
+) (demoMap DemoMap, errs error) {
+	return NewDemoMapWithPattern(ctx, demoFiles, "", elementAliases)
 }
 
 // NewDemoMapWithPattern builds the index like NewDemoMap but uses URLPattern for precise path matching.
-func NewDemoMapWithPattern(demoFiles []string, urlPattern string, elementAliases map[string]string) (demoMap DemoMap, errs error) {
+func NewDemoMapWithPattern(
+	ctx types.WorkspaceContext,
+	demoFiles []string,
+	urlPattern string,
+	elementAliases map[string]string,
+) (demoMap DemoMap, errs error) {
 	demoMap = make(DemoMap)
 	for _, file := range demoFiles {
-		tags, err := extractDemoTagsWithPattern(file, urlPattern, elementAliases)
+		tags, err := extractDemoTagsWithPattern(ctx, file, urlPattern, elementAliases)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		} else {
@@ -42,8 +68,12 @@ func NewDemoMapWithPattern(demoFiles []string, urlPattern string, elementAliases
 // Priority:
 //  1. Explicit microdata: <meta itemprop="demo-for" content="element-name" />
 //  2. Content-based: All custom element tag names found in the file.
-func extractDemoTags(path string, elementAliases map[string]string) ([]string, error) {
-	return extractDemoTagsWithPattern(path, "", elementAliases)
+func extractDemoTags(
+	ctx types.WorkspaceContext,
+	path string,
+	elementAliases map[string]string,
+) ([]string, error) {
+	return extractDemoTagsWithPattern(ctx, path, "", elementAliases)
 }
 
 // extractDemoTagsWithPattern extracts element associations using explicit methods only.
@@ -51,8 +81,20 @@ func extractDemoTags(path string, elementAliases map[string]string) ([]string, e
 //  1. Explicit microdata: <meta itemprop="demo-for" content="element-name" />
 //  2. URLPattern parameter matching: Extract parameters and match against element tagNames
 //  3. Content-based: All custom element tag names found in the file.
-func extractDemoTagsWithPattern(path, urlPattern string, elementAliases map[string]string) ([]string, error) {
-	code, err := os.ReadFile(path)
+func extractDemoTagsWithPattern(
+	ctx types.WorkspaceContext,
+	path, urlPattern string,
+	elementAliases map[string]string,
+) ([]string, error) {
+	// Resolve path relative to workspace root if it's not absolute
+	var absPath string
+	if filepath.IsAbs(path) {
+		absPath = path
+	} else {
+		absPath = filepath.Join(ctx.Root(), path)
+	}
+
+	code, err := os.ReadFile(absPath)
 	if err != nil {
 		return nil, fmt.Errorf("could not extract demo tags from file: %w", err)
 	}

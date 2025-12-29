@@ -1,0 +1,11 @@
+/* Tree View - Simple container for tree items */
+
+:host {
+  display: block;
+}
+
+#tree {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

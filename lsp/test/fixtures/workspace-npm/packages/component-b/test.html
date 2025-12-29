@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script type="module">
+    import '@test/component-a/my-element-a.js';
+  </script>
+</head>
+<body>
+  <!-- This should NOT show "unknown element" diagnostic -->
+  <!-- component-a is a workspace sibling that IS imported -->
+  <my-element-a label="Test"></my-element-a>
+</body>
+</html>

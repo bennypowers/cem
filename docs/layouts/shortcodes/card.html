@@ -1,0 +1,9 @@
+<a href="{{ .Get "href" }}" class="doc-card">
+  {{ with .Get "icon" }}
+  <div class="doc-card-icon">
+    <img src="{{ . }}" alt="">
+  </div>
+  {{ end }}
+  <h3>{{ .Get "title" }}</h3>
+  <p>{{ .Inner }}</p>
+</a>

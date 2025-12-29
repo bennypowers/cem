@@ -1,62 +1,79 @@
-# CEM LSP Server Implementation Plan
+# CEM LSP Development Guidelines
 
 ## Instructions to Claude
-- whenever making major updates like new features, make sure docs in 
-../docs/content/docs/lsp.md and ../README.md are up to date.
-- **LSP STANDARDS PRINCIPLE**: Use LSP standards first, custom config only for domain-specific features
-  - Prefer `$/setTrace` for debug logging control over custom configuration
-  - Use standard `window/logMessage` and `window/showMessage` for LSP protocol compliance
-  - Only add custom configuration for CEM-specific behaviors not covered by LSP protocol
-- **ARCHITECTURE REQUIREMENTS**:
-  - Each LSP method implemented should be it's own package, arranged in dir 
-  structures mirroring method names.
-- **DOCUMENTATION REQUIREMENTS**:
-  - new user-facing features should be documented on ../docs/content/docs/lsp.md
-  - new features should be briefly reflected in README.md
-  - docs should avoid discussing internal implementation details
-  - docs may discuss performance improvements or potential issues for users
-  - docs must describe the benefits of the new feature
-  - docs must update config blocks as necessary
-  - when completing tasks, update lsp/CLAUDE.md and lsp/ARCHITECTURE.md as 
-  needed
 
-- **TESTING REQUIREMENTS**: 
-  - All new features MUST include comprehensive integration tests
-  - All bug fixes MUST include regression tests  
-  - Follow the established testing patterns in hover_integration_test.go and completion_test.go
-  - **PUBLIC API TESTING**: All tests MUST use `package lsp_test` to ensure only public APIs are tested
-  - **NO PRIVATE METHOD TESTING**: Do not test private methods directly - test behavior through public interfaces
-  - **AVOID MAKING METHODS PUBLIC FOR TESTS**: Only make methods public if they have genuine API value, not just for testing. e.g. When testing LSP methods like textDocument/completion - only the public method should be tested.
-  - **USE FIXTURE FILES**: Always use fixture files instead of inline content. Store test fixtures in organized directories like `test-fixtures/` or `slot-completions-test/`
-  - **USE CANONICAL TEST HELPERS**: Always use the canonical MockDocument from `lsp/testhelpers` package instead of creating new mock implementations. Use `testhelpers.NewMockDocument(content)` for mock documents.
+### LSP Standards Principle
+- Use LSP standards first, custom config only for domain-specific features
+- Prefer `$/setTrace` for debug logging control over custom configuration
+- Use standard `window/logMessage` and `window/showMessage` for LSP protocol compliance
+- Only add custom configuration for CEM-specific behaviors not covered by LSP protocol
+
+### Architecture Requirements
+- Each LSP method should be its own package, arranged in directory structures mirroring method names
+- Follow the established pattern: `methods/textDocument/methodName/`
+- Use adapter pattern (ServerAdapter) for testable method implementations
+- Keep context interfaces focused on specific method requirements
+
+### Documentation Requirements
+- New user-facing features should be documented in `../docs/content/docs/lsp.md`
+- New features should be briefly reflected in `README.md`
+- Docs should avoid discussing internal implementation details
+- Docs must describe the benefits and usage of new features
+- Update config blocks as necessary
+- Update `lsp/CLAUDE.md` and `lsp/ARCHITECTURE.md` when completing major changes
+
+### Testing Requirements
+- All new features MUST include comprehensive integration tests
+- All bug fixes MUST include regression tests
+- **PUBLIC API TESTING**: All tests MUST use `package lsp_test` to ensure only public APIs are tested
+- **NO PRIVATE METHOD TESTING**: Test behavior through public interfaces only
+- **AVOID MAKING METHODS PUBLIC FOR TESTS**: Only make methods public if they have genuine API value
+- **USE FIXTURE FILES**: Always use fixture files instead of inline content in organized directories
+- **USE CANONICAL TEST HELPERS**: Use `testhelpers.NewMockDocument(content)` for mock documents
 
 ## Common LSP Implementation Pitfalls
 
-**Nil Pointer Safety**:
-- Always check for nil DocumentManager in completion context analysis functions
-- Add nil checks before accessing DocumentManager methods like `dm.htmlCompletionContext`
+### Nil Pointer Safety
+- Always check for nil DocumentManager in context analysis functions
+- Add nil checks before accessing DocumentManager methods
 - Test document analysis functions with nil DocumentManager parameters
 
-**Protocol Compliance**:
+### Protocol Compliance
 - LSP method return types must match protocol exactly (`any` vs `[]protocol.CodeAction`)
 - Check protocol specifications for exact function signatures in glsp library
 - Server capabilities must declare ALL supported features in `initialize` response
 
-**Context Interface Patterns**:
-- Use adapter pattern (ServerAdapter) for testable method implementations
-- Ensure all method contexts inherit from appropriate base interfaces
-- Keep context interfaces focused on specific method requirements
+### Tree-Sitter Concurrency Safety
+- **CRITICAL**: Never cache or share `QueryMatcher` instances between goroutines
+- Query cursors are NOT thread-safe - each operation needs a fresh cursor
+- **Safe Pattern**: Cache queries, create fresh cursors per matcher
+- **Debugging**: Individual test passes + concurrent segfaults = shared cursor issue
 
-**Integration Points**:
+### Integration Points
 - Diagnostics + Code Actions: Always implement together for complete autofix workflows
 - Document lifecycle integration: Hook diagnostics into didOpen/didChange events
 - Capability declaration: Update server capabilities when adding new method support
 
-## Overview
-Implementation of `cem lsp` - a Language Server Protocol (LSP) server for custom elements manifests. This LSP server will provide IDE features for HTML files and TypeScript template literals containing custom elements.
+## Repository Conventions
 
-## Architecture
-Detailed architectural information is available in [ARCHITECTURE.md](./ARCHITECTURE.md)
+### File Organization
+- LSP methods: `methods/textDocument/methodName/methodName.go`
+- Tests: `methodName_test.go` in same package, using `package methodName_test`
+- Fixtures: Organized in `test-fixtures/` or `methodName-test/` directories
+- Types: Shared types in `lsp/types/` package
+- Helpers: Utility functions in `lsp/helpers/` package
+
+### Code Style
+- Use `defer func() { _ = resource.Close() }()` for resource cleanup
+- Error strings should be lowercase and not end with punctuation
+- Function parameters: error should be last parameter
+- Prefer built-in functions (e.g., `max()` in Go 1.25+) over custom implementations
+
+### Tree-Sitter Patterns
+- Cache queries at startup, create fresh cursors per operation
+- Use `queries.GetGlobalQueryManager()` for shared query infrastructure
+- Prefer tree-sitter parsing over regex for HTML/TypeScript content
+- Use parser pools for performance
 
 ## Implementation Status
 
@@ -162,7 +179,7 @@ lsp/
 ├── helpers/               # Utility functions
 │   └── debug.go           # Debug logging utilities
 ├── methods/               # Organized LSP method implementations
-│   ├── server.go          # Server lifecycle (initialize, shutdown)
+│   ├── lifecycle/         # LSP lifecycle methods (initialize, initialized, shutdown, setTrace)
 │   └── textDocument/      # Text document methods
 │       ├── completion/    # Completion feature package
 │       │   ├── completion.go           # Main completion implementation
@@ -468,7 +485,7 @@ func analyzeDocument(dm *DocumentManager) {
 
 ### Server Capability Declaration Pattern
 **When**: Adding any new LSP method support
-**Required**: Update `methods/server/initialize.go` ServerCapabilities
+**Required**: Update `methods/lifecycle/initialize.go` ServerCapabilities
 **Example**: Adding `CodeActionProvider` when implementing `textDocument/codeAction`
 **Testing**: Verify capabilities are declared in initialization response
 
@@ -480,7 +497,6 @@ func analyzeDocument(dm *DocumentManager) {
   - Issue: Refactoring created interface mismatches between test contexts and actual interfaces
   - Solution: Updated test implementations to use unified `types.Document` interface
   - Impact: All completion tests now pass with proper type safety
-- **Definition Context Enhancement**: Added `GetRawDocumentManager()` method to `DefinitionContext` interface
   - Issue: Nil pointer dereference in definition tests when `FindElementAtPosition` called with nil DocumentManager
   - Solution: Extended `DefinitionContext` interface to include DocumentManager access (matching `HoverContext` pattern)
   - Impact: Definition tests now pass without crashes, proper DocumentManager threading
@@ -683,7 +699,7 @@ All tree-sitter HTML script tag parsing and import detection functionality is no
 - **Performance optimized** - Uses parser pooling from existing `Q.RetrieveTypeScriptParser()`
 
 #### ✅ **Missing Import Detection Integration** - COMPLETED  
-- **Updated `parseModuleScriptImports()`** - Now uses tree-sitter tracked data from `Document.GetScriptTags()`
+- **Updated `parseModuleScriptImports()`** - Now uses tree-sitter tracked data from `Document.ScriptTags()`
 - **Leverages parsed data** - Uses `ImportStatement[]` from tree-sitter instead of regex re-parsing
 - **Maintains compatibility** - Keeps regex fallback for edge cases
 - **All tests passing** - Full diagnostics test suite validates integration
@@ -709,7 +725,7 @@ All tree-sitter HTML script tag parsing and import detection functionality is no
 ### 🚀 **Performance & Architecture Benefits**
 - **Accuracy**: Tree-sitter understands actual AST structure vs regex patterns
 - **Performance**: Leverages parser pools and cached query matchers 
-- **Maintainability**: Single source of truth for script tag data via `Document.GetScriptTags()`
+- **Maintainability**: Single source of truth for script tag data via `Document.ScriptTags()`
 - **Extensibility**: Easy to add new import detection patterns with tree-sitter queries
 - **Reliability**: Comprehensive test coverage ensures stability across all scenarios
 

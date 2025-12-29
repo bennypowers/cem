@@ -1,0 +1,41 @@
+[
+  {
+    "label": "\"\"",
+    "kind": 12,
+    "detail": "Empty string",
+    "documentation": {
+      "kind": "markdown",
+      "value": "Empty string value"
+    },
+    "insertText": "\"\""
+  },
+  {
+    "label": "small",
+    "kind": 12,
+    "detail": "Size value",
+    "insertText": "small"
+  },
+  {
+    "label": "medium",
+    "kind": 12,
+    "detail": "Size value",
+    "insertText": "medium"
+  },
+  {
+    "label": "large",
+    "kind": 12,
+    "detail": "Size value",
+    "insertText": "large"
+  },
+  {
+    "label": "medium (default)",
+    "kind": 12,
+    "detail": "Default value",
+    "documentation": {
+      "kind": "markdown",
+      "value": "Default value for this attribute: `medium`"
+    },
+    "sortText": "0",
+    "insertText": "medium"
+  }
+]

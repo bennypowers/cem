@@ -165,7 +165,6 @@ func NewRenderableClassDeclaration(
 		exp := mod.Exports[i]
 		if je, ok := exp.(*JavaScriptExport); ok {
 			if je.Declaration.Name == class.Name && (je.Declaration.Module == "" || je.Declaration.Module == mod.Path) {
-				exp = je
 				break
 			}
 		}

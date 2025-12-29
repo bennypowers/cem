@@ -1,0 +1,13 @@
+{
+  "elements": {
+    "test-component": {
+      "tagName": "test-component",
+      "attributes": {
+        "color": {
+          "name": "color",
+          "type": { "text": "string" }
+        }
+      }
+    }
+  }
+}

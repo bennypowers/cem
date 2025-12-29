@@ -1,3 +1,19 @@
+/*
+Copyright © 2025 Benny Powers <web@bennypowers.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
 package demodiscovery
 
 import (
@@ -101,7 +117,8 @@ Showcases different card variants with accessibility features.
 			}
 
 			// Extract metadata
-			result, err := extractDemoMetadata(filePath)
+			ctx := W.NewFileSystemWorkspaceContext(tmpDir)
+			result, err := extractDemoMetadata(ctx, filePath)
 			if err != nil {
 				t.Fatalf("extractDemoMetadata failed: %v", err)
 			}
@@ -354,7 +371,8 @@ func TestExtractDemoTags(t *testing.T) {
 			}
 
 			// Extract tags
-			result, err := extractDemoTags(filePath, tt.elementAliases)
+			ctx := W.NewFileSystemWorkspaceContext(tmpDir)
+			result, err := extractDemoTags(ctx, filePath, tt.elementAliases)
 			if err != nil {
 				t.Fatalf("extractDemoTags failed: %v", err)
 			}
@@ -498,7 +516,10 @@ func TestNewDemoMap(t *testing.T) {
 		"rh-card":   "card",
 	}
 
-	demoMap, err := NewDemoMap([]string{demo1Path, demo2Path}, elementAliases)
+	// Create workspace context for test
+	ctx := W.NewFileSystemWorkspaceContext(tmpDir)
+
+	demoMap, err := NewDemoMap(ctx, []string{demo1Path, demo2Path}, elementAliases)
 	if err != nil {
 		t.Fatalf("NewDemoMap failed: %v", err)
 	}
@@ -625,7 +646,7 @@ func TestValidateDemoDiscoveryConfig(t *testing.T) {
 			},
 			tagAliases:    map[string]string{},
 			expectError:   true,
-			errorContains: "Invalid demo discovery urlPattern",
+			errorContains: "invalid demo discovery urlPattern",
 		},
 		{
 			name: "invalid template syntax",

@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "ui-button.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "UiButton",
+          "tagName": "ui-button",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "ui-button",
+          "declaration": {
+            "name": "UiButton"
+          }
+        }
+      ]
+    }
+  ]
+}

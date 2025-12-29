@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "legacy-comp.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "LegacyComp",
+          "tagName": "legacy-comp",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "legacy-comp",
+          "declaration": {
+            "name": "LegacyComp"
+          }
+        }
+      ]
+    }
+  ]
+}

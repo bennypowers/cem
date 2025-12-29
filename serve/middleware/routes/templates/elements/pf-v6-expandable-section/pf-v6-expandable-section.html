@@ -1,0 +1,31 @@
+<div id="toggle" part="toggle">
+  <pf-v6-button id="toggle-button"
+                part="toggle-button"
+                variant="link"
+                aria-expanded="{{if .Attributes.Expanded}}true{{else}}false{{end}}"
+                aria-controls="content">
+    <span id="toggle-icon"
+          slot="icon-start"
+          part="toggle-icon"
+          class="{{if .Attributes.ExpandTop}}pf-m-expand-top{{end}}">
+      <slot name="toggle-icon">
+        <svg viewBox="0 0 256 512"
+             fill="currentColor"
+             aria-hidden="true"
+             role="img"
+             width="1em"
+             height="1em">
+          <path d="M224.3 273l-136 136c-9.4 9.4-24.6 9.4-33.9 0l-22.6-22.6c-9.4-9.4-9.4-24.6 0-33.9l96.4-96.4-96.4-96.4c-9.4-9.4-9.4-24.6 0-33.9L54.3 103c9.4-9.4 24.6-9.4 33.9 0l136 136c9.5 9.4 9.5 24.6.1 34z"></path>
+        </svg>
+      </slot>
+    </span>
+    <slot name="toggle-text"><span id="toggle-text-default">{{.Attributes.ToggleText}}</span></slot>
+  </pf-v6-button>
+</div>
+<div id="content"
+     part="content"
+     {{if not .Attributes.Expanded}}hidden{{end}}
+     role="region"
+     aria-labelledby="toggle-button">
+  <slot></slot>
+</div>

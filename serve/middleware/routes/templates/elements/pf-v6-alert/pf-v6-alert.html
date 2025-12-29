@@ -1,0 +1,69 @@
+{{if .Attributes.Expandable}}
+<div id="toggle-container">
+  <pf-v6-button id="toggle"
+                variant="plain"
+                aria-expanded="{{if .Attributes.Expanded}}true{{else}}false{{end}}"
+                aria-label="Toggle alert">
+    <svg id="toggle-icon"
+         aria-hidden="true"
+         fill="currentColor"
+         height="1em"
+         width="1em"
+         viewBox="0 0 320 512">
+      <path d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"></path>
+    </svg>
+  </pf-v6-button>
+</div>
+{{end}}
+
+<div id="icon-container">
+  <slot name="icon">
+    <!-- Default icon based on variant will be set by JS -->
+    <svg class="pf-v6-svg" viewBox="0 0 512 512" fill="currentColor" aria-hidden="true" role="img" width="1em" height="1em">
+      <path id="default-icon-path"></path>
+    </svg>
+  </slot>
+</div>
+
+<h4 id="title"{{if .Attributes.Truncate}} class="pf-m-truncate"{{end}}>
+  <span id="sr-variant">{{.Attributes.VariantLabel}}</span>
+  <slot></slot>
+</h4>
+
+{{if .Attributes.Dismissable}}
+<div id="action">
+  <pf-v6-button id="close"
+                variant="plain"
+                aria-label="Close">
+    <svg class="pf-v6-svg"
+         viewBox="0 0 352 512"
+         fill="currentColor"
+         aria-hidden="true"
+         role="img"
+         width="1em"
+         height="1em">
+      <path d="M242.72 256l100.07-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44.48 0L176 189.28 75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28 12.28-12.28 32.19 0 44.48L109.28 256 9.21 356.07c-12.28 12.28-12.28 32.19 0 44.48l22.24 22.24c12.28 12.28 32.2 12.28 44.48 0L176 322.72l100.07 100.07c12.28 12.28 32.2 12.28 44.48 0l22.24-22.24c12.28-12.28 12.28-32.19 0-44.48L242.72 256z"></path>
+    </svg>
+  </pf-v6-button>
+</div>
+{{else}}
+<div id="action">
+  <slot name="action"></slot>
+</div>
+{{end}}
+
+{{if not .Attributes.Expandable}}
+<div id="description">
+  <slot name="description"></slot>
+</div>
+{{else}}
+{{if .Attributes.Expanded}}
+<div id="description">
+  <slot name="description"></slot>
+</div>
+{{end}}
+{{end}}
+
+<div id="action-group">
+  <slot name="actions"></slot>
+</div>

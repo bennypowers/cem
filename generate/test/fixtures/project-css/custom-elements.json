@@ -1,4 +1,227 @@
 {
   "schemaVersion": "2.1.0",
-  "modules": null
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-css-default-description.js",
+      "declarations": [
+        {
+          "name": "ClassCssDefaultDescription",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-css/src/class-css-default-description.ts#L2"
+          },
+          "kind": "class",
+          "tagName": "class-css-default-description",
+          "cssProperties": [
+            {
+              "name": "--a",
+              "description": "a",
+              "default": "var(--b) var(--c) var(--d) var(--e)"
+            },
+            {
+              "name": "--b",
+              "description": "b"
+            },
+            {
+              "name": "--c",
+              "description": "c"
+            },
+            {
+              "name": "--d",
+              "description": "d",
+              "deprecated": true
+            },
+            {
+              "name": "--e",
+              "description": "e",
+              "deprecated": "use --a"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-css-default-description",
+          "declaration": {
+            "name": "ClassCssDefaultDescription",
+            "module": "src/class-css-default-description.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/class-css-described-declaration.js",
+      "declarations": [
+        {
+          "name": "ClassCssDescribedDeclaration",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-css/src/class-css-described-declaration.ts#L2"
+          },
+          "kind": "class",
+          "tagName": "class-css-described-declaration",
+          "cssProperties": [
+            {
+              "name": "--single-call",
+              "description": "single var call in declaration"
+            },
+            {
+              "name": "--another-call",
+              "description": "another var call in declaration"
+            },
+            {
+              "name": "--a"
+            },
+            {
+              "name": "--b"
+            },
+            {
+              "name": "--c"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-css-described-declaration",
+          "declaration": {
+            "name": "ClassCssDescribedDeclaration",
+            "module": "src/class-css-described-declaration.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/class-css-described-declaration.js",
+      "declarations": [
+        {
+          "name": "ClassCssDescribedDeclaration",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-css/src/class-css-described-declaration.ts#L2"
+          },
+          "kind": "class",
+          "tagName": "class-css-described-declaration",
+          "cssProperties": [
+            {
+              "name": "--single-call",
+              "description": "single var call in declaration"
+            },
+            {
+              "name": "--another-call",
+              "description": "another var call in declaration"
+            },
+            {
+              "name": "--a"
+            },
+            {
+              "name": "--b"
+            },
+            {
+              "name": "--c"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-css-described-declaration",
+          "declaration": {
+            "name": "ClassCssDescribedDeclaration",
+            "module": "src/class-css-described-declaration.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/class-css-host-props.js",
+      "declarations": [
+        {
+          "name": "ClassCssHostProps",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-css/src/class-css-host-props.ts#L2"
+          },
+          "kind": "class",
+          "tagName": "class-css-host-props",
+          "cssProperties": [
+            {
+              "name": "--defined-on-host",
+              "description": "defined on host",
+              "default": "blue"
+            },
+            {
+              "name": "--also-defined-on-host",
+              "description": "also defined on host",
+              "default": "blue"
+            },
+            {
+              "name": "--defined-on-host-with-var",
+              "description": "defined on host with var call",
+              "default": "var(--expect-this-to-not-have-description)"
+            },
+            {
+              "name": "--expect-this-to-not-have-description"
+            },
+            {
+              "name": "--defined-on-host-with-light-dark",
+              "description": "defined on host with light-dark call",
+              "default": "light-dark(blue, red)"
+            },
+            {
+              "name": "--defined-on-host-call",
+              "description": "defined on host()",
+              "default": "blue"
+            },
+            {
+              "name": "--also-defined-on-host-call",
+              "description": "also defined on host()",
+              "default": "blue"
+            },
+            {
+              "name": "--defined-in-var-call",
+              "description": "defined in var call"
+            },
+            {
+              "name": "--also-defined-in-var-call",
+              "description": "also defined in var call"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-css-host-props",
+          "declaration": {
+            "name": "ClassCssHostProps",
+            "module": "src/class-css-host-props.js"
+          }
+        }
+      ]
+    }
+  ]
 }

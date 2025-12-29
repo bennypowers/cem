@@ -1,0 +1,133 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "./src/components/my-card.tsx",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "A reusable card component",
+          "name": "MyCard",
+          "tagName": "my-card",
+          "customElement": true,
+          "members": [
+            {
+              "kind": "field",
+              "name": "title",
+              "type": {
+                "text": "string"
+              },
+              "description": "Card title text",
+              "attribute": "title"
+            },
+            {
+              "kind": "field",
+              "name": "variant",
+              "type": {
+                "text": "\"primary\" | \"secondary\" | \"danger\""
+              },
+              "description": "Card styling variant",
+              "attribute": "variant",
+              "default": "\"primary\""
+            },
+            {
+              "kind": "field",
+              "name": "disabled",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Whether the card is disabled",
+              "attribute": "disabled"
+            }
+          ],
+          "events": [
+            {
+              "name": "card-click",
+              "type": {
+                "text": "CustomEvent<{title: string}>"
+              },
+              "description": "Fired when card is clicked"
+            }
+          ],
+          "slots": [
+            {
+              "name": "",
+              "description": "Default slot for card content"
+            },
+            {
+              "name": "header",
+              "description": "Slot for card header content"
+            },
+            {
+              "name": "footer",
+              "description": "Slot for card footer content"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "my-card",
+          "declaration": {
+            "name": "MyCard"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "./src/components/ui-button.tsx",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "A customizable button component",
+          "name": "UIButton",
+          "tagName": "ui-button",
+          "customElement": true,
+          "members": [
+            {
+              "kind": "field",
+              "name": "size",
+              "type": {
+                "text": "\"small\" | \"medium\" | \"large\""
+              },
+              "description": "Button size",
+              "attribute": "size",
+              "default": "\"medium\""
+            },
+            {
+              "kind": "field",
+              "name": "loading",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Whether button shows loading state",
+              "attribute": "loading"
+            }
+          ],
+          "events": [
+            {
+              "name": "button-click",
+              "type": {
+                "text": "CustomEvent<MouseEvent>"
+              },
+              "description": "Fired when button is clicked"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "ui-button",
+          "declaration": {
+            "name": "UIButton"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -6,12 +6,7 @@
 {{- $default_mode := $config.defaultLightingMode -}}
 <!doctype html>
 <html lang={{ $lang }}{{ with $is_dark }} class=dark{{ end }}{{ with $default_mode }} data-mode={{ . }}{{ end }} itemscope itemtype={{ $item_type }}>
-<head>
-  {{- partial "head" . }}
-  {{- if .IsHome -}}
-  <meta name="go-import" content="bennypowers.dev/cem git https://github.com/bennypowers/cem">
-  {{- end }}
-</head>
+<head>{{ partial "head" . }}</head>
 <body class="page-{{ .Kind }}" id="pagetop">
   <header id="header">
     {{- partial "nav" . }}

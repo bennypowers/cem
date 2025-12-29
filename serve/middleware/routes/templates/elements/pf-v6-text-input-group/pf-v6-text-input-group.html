@@ -1,0 +1,16 @@
+<div id="main">
+  <span id="text">
+    <span id="icon">
+      <slot name="icon"></slot>
+    </span>
+    <span id="status-icon">
+      <slot name="status-icon"></slot>
+    </span>
+    <input id="input"
+           type="text"
+           value="{{.Attributes.Value}}">
+  </span>
+</div>
+<div id="utilities">
+  <slot name="utilities"></slot>
+</div>

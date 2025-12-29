@@ -1,0 +1,62 @@
+[
+  {
+    "range": {
+      "start": {
+        "line": 0,
+        "character": 12
+      },
+      "end": {
+        "line": 0,
+        "character": 15
+      }
+    },
+    "severity": 2,
+    "source": "cem-lsp",
+    "message": "Unknown attribute 'siz'. Did you mean 'size'?",
+    "data": {
+      "original": "siz",
+      "range": {
+        "start": {
+          "line": 0,
+          "character": 12
+        },
+        "end": {
+          "line": 0,
+          "character": 15
+        }
+      },
+      "suggestion": "size",
+      "type": "attribute-suggestion"
+    }
+  },
+  {
+    "range": {
+      "start": {
+        "line": 0,
+        "character": 24
+      },
+      "end": {
+        "line": 0,
+        "character": 30
+      }
+    },
+    "severity": 2,
+    "source": "cem-lsp",
+    "message": "Unknown attribute 'colour'. Did you mean 'color'?",
+    "data": {
+      "original": "colour",
+      "range": {
+        "start": {
+          "line": 0,
+          "character": 24
+        },
+        "end": {
+          "line": 0,
+          "character": 30
+        }
+      },
+      "suggestion": "color",
+      "type": "attribute-suggestion"
+    }
+  }
+]

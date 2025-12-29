@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/calc-with-token.js",
+      "declarations": [
+        {
+          "name": "CalcWithToken",
+          "description": "Element that demonstrates CSS comments in calc() with design tokens",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-css-design-token-comments/src/calc-with-token.ts#L9"
+          },
+          "kind": "class",
+          "tagName": "calc-with-token",
+          "cssProperties": [
+            {
+              "name": "--cem-length-xl",
+              "summary": "Base icon container size",
+              "description": "DESIGN TOKEN description for XL length",
+              "default": "24px",
+              "syntax": "\u003clength\u003e"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "calc-with-token",
+          "declaration": {
+            "name": "CalcWithToken",
+            "module": "src/calc-with-token.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "CalcWithToken",
+          "declaration": {
+            "name": "CalcWithToken",
+            "module": "src/calc-with-token.js"
+          }
+        }
+      ]
+    }
+  ]
+}

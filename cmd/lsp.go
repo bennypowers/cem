@@ -18,9 +18,12 @@ package cmd
 
 import (
 	"fmt"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 
 	LSP "bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/types"
 	W "bennypowers.dev/cem/workspace"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -48,11 +51,20 @@ Features provided:
 		// CRITICAL: Redirect all pterm output to stderr immediately to prevent LSP stdout contamination
 		pterm.SetDefaultOutput(os.Stderr)
 
+		// Start pprof server if enabled
+		pprofFlag, _ := cmd.Flags().GetBool("pprof")
+		if pprofFlag {
+			go func() {
+				fmt.Fprintln(os.Stderr, "Starting pprof server on :6060")
+				fmt.Fprintln(os.Stderr, http.ListenAndServe(":6060", nil))
+			}()
+		}
+
 		ctx := cmd.Context()
-		wctx := ctx.Value(W.WorkspaceContextKey).(W.WorkspaceContext)
+		wctx := ctx.Value(W.WorkspaceContextKey).(types.WorkspaceContext)
 
 		// Determine transport based on boolean flags
-		var transport LSP.TransportKind = LSP.TransportStdio // default
+		var transport = LSP.TransportStdio // default
 
 		stdioFlag, _ := cmd.Flags().GetBool("stdio")
 		tcpFlag, _ := cmd.Flags().GetBool("tcp")
@@ -98,4 +110,5 @@ func init() {
 	lspCmd.Flags().Bool("tcp", false, "Use TCP transport")
 	lspCmd.Flags().Bool("websocket", false, "Use WebSocket transport")
 	lspCmd.Flags().Bool("nodejs", false, "Use Node.js transport")
+	lspCmd.Flags().Bool("pprof", false, "Enable pprof server on :6060 for profiling")
 }

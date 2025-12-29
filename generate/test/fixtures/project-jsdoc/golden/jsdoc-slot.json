@@ -11,6 +11,9 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-slot.ts#L6"
+          },
           "kind": "class",
           "tagName": "jsdoc-slot",
           "slots": [

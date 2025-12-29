@@ -1,0 +1,13 @@
+{
+  "tagName": "button-element",
+  "content": "Submit",
+  "attributes": {
+    "size": "large",
+    "variant": "primary",
+    "id": "test-btn",
+    "class": "my-button",
+    "title": "Click me",
+    "tabindex": "0"
+  },
+  "context": "test"
+}

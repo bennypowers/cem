@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"slices"
 
+	"bennypowers.dev/cem/generate/jsdoc"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
 
@@ -41,7 +42,7 @@ func (mp *ModuleProcessor) generateClassDeclarationParsed(
 	}
 	isCustomElement := hasCustomElementDecorator || isHTMLElement
 	classDeclarationCaptures, hasClassDeclaration := captures["class.declaration"]
-	if !(hasClassDeclaration && len(classDeclarationCaptures) > 0) {
+	if !hasClassDeclaration || len(classDeclarationCaptures) <= 0 {
 		return nil, NewError("could not find class declaration")
 	}
 
@@ -120,6 +121,14 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 		},
 	}
 
+	// Add source reference if available
+	sourceRef, sourceErr := mp.generateSourceReference(classDeclarationNode)
+	if sourceErr != nil {
+		errs = errors.Join(errs, fmt.Errorf("failed to generate source reference for class %s: %w", className, sourceErr))
+	} else {
+		declaration.Source = sourceRef
+	}
+
 	var superclassName string
 	err := mp.step("Processing heritage", 1, func() error {
 		superClassNameNodes, ok := captures["superclass.name"]
@@ -151,7 +160,7 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 
 	err = mp.step("Processing members", 1, func() error {
 		members, err := mp.getClassMembersFromClassDeclarationNode(
-			declaration.ClassLike.Name,
+			declaration.Name,
 			classDeclarationNode,
 			superclassName,
 		)
@@ -169,13 +178,11 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 	}
 
 	err = mp.step("Processing jsdoc", 1, func() error {
-		jsdoc, ok := captures["class.jsdoc"]
-		if ok && len(jsdoc) > 0 {
-			info, err := NewClassInfo(jsdoc[0].Text, mp.queryManager)
+		jsdocNodes, ok := captures["class.jsdoc"]
+		if ok && len(jsdocNodes) > 0 {
+			err := jsdoc.EnrichClassWithJSDoc(jsdocNodes[0].Text, declaration, mp.queryManager)
 			if err != nil {
 				return err
-			} else {
-				info.MergeToClassDeclaration(declaration)
 			}
 		}
 		return nil
@@ -207,7 +214,7 @@ func (mp *ModuleProcessor) generateHTMLElementClassDeclaration(
 
 	err = mp.step("Processing observedAttributes", 1, func() error {
 		for _, name := range captures["observedAttributes.attributeName"] {
-			declaration.CustomElement.Attributes = append(declaration.CustomElement.Attributes, M.Attribute{
+			declaration.Attributes = append(declaration.Attributes, M.Attribute{
 				StartByte: name.StartByte,
 				FullyQualified: M.FullyQualified{
 					Name: name.Text,
@@ -221,14 +228,15 @@ func (mp *ModuleProcessor) generateHTMLElementClassDeclaration(
 	}
 
 	err = mp.step("Processing class jsdoc", 1, func() error {
-		jsdoc, ok := captures["class.jsdoc"]
-		if ok && len(jsdoc) > 0 {
-			info, err := NewClassInfo(jsdoc[0].Text, mp.queryManager)
+		jsdocNodes, ok := captures["class.jsdoc"]
+		if ok && len(jsdocNodes) > 0 {
+			err := jsdoc.EnrichCustomElementWithJSDoc(jsdocNodes[0].Text, declaration, mp.queryManager)
 			if err != nil {
 				return err
-			} else {
-				info.MergeToCustomElementDeclaration(declaration)
-				alias = info.Alias
+			}
+			alias, err = jsdoc.ExtractAliasFromJSDoc(jsdocNodes[0].Text, mp.queryManager)
+			if err != nil {
+				return err
 			}
 		}
 		slices.SortStableFunc(declaration.Attributes, func(a M.Attribute, b M.Attribute) int {
@@ -265,13 +273,13 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 	if ok && len(tagNameNodes) > 0 {
 		tagName := tagNameNodes[0].Text
 		if tagName != "" {
-			declaration.CustomElement.TagName = tagName
+			declaration.TagName = tagName
 		}
 	} else {
 		errs = errors.Join(errs, &Q.NoCaptureError{Capture: "tag-name", Query: "classes"})
 	}
 
-	declaration.CustomElement.Attributes = A.Chain(func(member M.ClassMember) []M.Attribute {
+	declaration.Attributes = A.Chain(func(member M.ClassMember) []M.Attribute {
 		field, ok := (member).(*M.CustomElementField)
 		if ok && field.Attribute != "" {
 			return []M.Attribute{{
@@ -292,14 +300,15 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 	})(declaration.Members)
 
 	err = mp.step("Processing class jsdoc", 2, func() error {
-		jsdoc, ok := captures["class.jsdoc"]
-		if ok && len(jsdoc) > 0 {
-			classInfo, err := NewClassInfo(jsdoc[0].Text, mp.queryManager)
+		jsdocNodes, ok := captures["class.jsdoc"]
+		if ok && len(jsdocNodes) > 0 {
+			err := jsdoc.EnrichCustomElementWithJSDoc(jsdocNodes[0].Text, declaration, mp.queryManager)
 			if err != nil {
 				return err
-			} else {
-				classInfo.MergeToCustomElementDeclaration(declaration)
-				alias = classInfo.Alias
+			}
+			alias, err = jsdoc.ExtractAliasFromJSDoc(jsdocNodes[0].Text, mp.queryManager)
+			if err != nil {
+				return err
 			}
 		}
 		slices.SortStableFunc(declaration.Attributes, func(a M.Attribute, b M.Attribute) int {

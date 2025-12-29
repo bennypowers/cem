@@ -1,0 +1,15 @@
+{{- define "button-content" -}}
+  <slot name="icon-start"></slot>
+  <slot id="content"></slot>
+  <slot name="icon-end"></slot>
+{{- end -}}
+
+{{if .Attributes.Href -}}
+<a href="{{.Attributes.Href}}">
+  {{- template "button-content" . -}}
+</a>
+{{- else -}}
+<span id="wrapper" part="wrapper">
+  {{- template "button-content" . -}}
+</span>
+{{- end}}

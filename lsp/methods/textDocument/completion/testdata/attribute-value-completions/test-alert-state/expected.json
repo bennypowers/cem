@@ -1,0 +1,37 @@
+[
+  {
+    "label": "info",
+    "kind": 12,
+    "detail": "Union type value",
+    "insertText": "info"
+  },
+  {
+    "label": "success",
+    "kind": 12,
+    "detail": "Union type value",
+    "insertText": "success"
+  },
+  {
+    "label": "warning",
+    "kind": 12,
+    "detail": "Union type value",
+    "insertText": "warning"
+  },
+  {
+    "label": "error",
+    "kind": 12,
+    "detail": "Union type value",
+    "insertText": "error"
+  },
+  {
+    "label": "\"info\" (default)",
+    "kind": 12,
+    "detail": "Default value",
+    "documentation": {
+      "kind": "markdown",
+      "value": "Default value for this attribute: `\"info\"`"
+    },
+    "sortText": "0",
+    "insertText": "\"info\""
+  }
+]

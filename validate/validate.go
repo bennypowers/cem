@@ -346,6 +346,12 @@ func isWarningDisabled(warning ValidationWarning, disabledRules []string) bool {
 	return false
 }
 
+// GetSchema returns the JSON schema for a given version, using embedded schemas
+// and falling back to fetching from external sources if needed
+func GetSchema(version string) ([]byte, error) {
+	return getSchema(version)
+}
+
 func getSchema(version string) ([]byte, error) {
 	// First try to use embedded schema
 	if schemaData, err := getEmbeddedSchema(version); err == nil {
@@ -384,7 +390,7 @@ func tryFetchSchema(version string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch schema from %s: %w", url, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("bad status fetching schema from %s: %s", url, resp.Status)

@@ -21,9 +21,11 @@ import (
 	"path"
 	"strings"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/modulegraph"
 	"bennypowers.dev/cem/queries"
 	W "bennypowers.dev/cem/workspace"
 	protocol "github.com/tliron/glsp/protocol_3_16"
@@ -62,6 +64,7 @@ func (s *Server) InitializeManifests() error {
 	}
 
 	// Start generate watcher for local project source file changes
+	// Note: Uses a grace period to ignore initial event flood from fsnotify
 	if err := s.registry.StartGenerateWatcher(); err != nil {
 		helpers.SafeDebugLog("Warning: Could not start generate watcher: %v", err)
 		// Don't fail startup if generate watcher fails
@@ -170,11 +173,22 @@ func (s *Server) WorkspaceRoot() string {
 	return ""
 }
 
+func (s *Server) FileSystem() platform.FileSystem {
+	return platform.NewOSFileSystem()
+}
+
 func (s *Server) QueryManager() (*queries.QueryManager, error) {
 	if s.documents == nil {
 		return nil, fmt.Errorf("document manager not initialized")
 	}
 	return s.documents.QueryManager(), nil
+}
+
+func (s *Server) ModuleGraph() *modulegraph.ModuleGraph {
+	if s.registry == nil {
+		return nil
+	}
+	return s.registry.GetModuleGraph()
 }
 
 // UpdateWorkspaceFromLSP updates the workspace context based on LSP initialize parameters
@@ -202,6 +216,18 @@ func (s *Server) UpdateWorkspaceFromLSP(rootURI *string, workspaceFolders []prot
 	if strings.HasPrefix(newRoot, "file://") {
 		newRoot = strings.TrimPrefix(newRoot, "file://")
 		helpers.SafeDebugLog("[SERVER_ADAPTER] Converted URI to path: %s", newRoot)
+	}
+
+	// Search upward for the actual workspace root
+	// This handles cases where the LSP client opens a file in a subdirectory
+	// like /path/to/repo/elements/ instead of /path/to/repo/
+	workspaceRoot, err := W.FindWorkspaceRoot(newRoot)
+	if err != nil {
+		helpers.SafeDebugLog("[SERVER_ADAPTER] Warning: Could not find workspace root, using provided path: %v", err)
+		// Keep newRoot as-is when search fails
+	} else if workspaceRoot != newRoot {
+		helpers.SafeDebugLog("[SERVER_ADAPTER] Found workspace root: %s (original: %s)", workspaceRoot, newRoot)
+		newRoot = workspaceRoot
 	}
 
 	// Create new workspace context with the correct root

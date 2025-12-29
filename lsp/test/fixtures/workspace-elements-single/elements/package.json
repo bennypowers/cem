@@ -1,0 +1,6 @@
+{
+  "name": "@test/elements",
+  "version": "1.0.0",
+  "type": "module",
+  "customElements": "custom-elements.json"
+}

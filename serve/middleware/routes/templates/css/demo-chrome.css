@@ -1,0 +1,281 @@
+[hidden] {
+  display: none !important;
+}
+
+/* Enable cross-document view transitions for same-origin navigation */
+@view-transition {
+  navigation: auto;
+}
+
+/* Debug: verify view transitions are active */
+html::view-transition-group(*) {
+  animation-duration: 0.3s;
+}
+
+html::view-transition-old(*) {
+  animation: 90ms cubic-bezier(0.4, 0, 1, 1) both fade-out;
+}
+
+html::view-transition-new(*) {
+  animation: 210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+}
+
+@keyframes fade-out {
+  to { opacity: 0; }
+}
+
+/* Stable transition names for persistent elements */
+pf-v6-masthead {
+  view-transition-name: masthead;
+  /* Match toggle button size to toolbar icons */
+  --pf-v6-c-masthead__toggle--Size: 0.875rem;
+}
+
+pf-v6-page-sidebar {
+  view-transition-name: sidebar;
+}
+
+cem-drawer {
+  view-transition-name: drawer;
+}
+
+pf-v6-page-main {
+  view-transition-name: main-content;
+}
+
+pf-v6-tree-view {
+  view-transition-name: tree-view;
+}
+
+:root {
+  /* Map to PatternFly tokens */
+  --cem-dev-server-bg-primary: var(--pf-t--global--background--color--primary--default);
+  --cem-dev-server-bg-secondary: var(--pf-t--global--background--color--secondary--default);
+  --cem-dev-server-bg-tertiary: var(--pf-t--global--background--color--primary--hover);
+
+  --cem-dev-server-text-color-primary: var(--pf-t--global--text--color--regular);
+  --cem-dev-server-text-secondary: var(--pf-t--global--text--color--subtle);
+  --cem-dev-server-text-muted: var(--pf-t--global--text--color--subtle);
+
+  --cem-dev-server-border-color: var(--pf-t--global--border--color--default);
+  --cem-dev-server-accent-color: var(--pf-t--global--color--brand--default);
+  --cem-dev-server-accent-hover: var(--pf-t--global--color--brand--hover);
+
+  /* Component-specific */
+  --cem-dev-server-header-height: 56px;
+  --cem-dev-server-sidebar-width: 280px;
+  --cem-dev-server-knobs-width: 320px;
+
+  /* Spacing */
+  --cem-dev-server-spacing-xs: 0.25rem;
+  --cem-dev-server-spacing-sm: 0.5rem;
+  --cem-dev-server-spacing-md: 1rem;
+  --cem-dev-server-spacing-lg: 1.5rem;
+  --cem-dev-server-spacing-xl: 2rem;
+
+  /* Typography */
+  --cem-dev-server-font-size-body: var(--pf-t--global--font--size--body--default);
+  --cem-dev-server-font-family-body: var(--pf-t--global--font--family--body);
+  --cem-dev-server-font-family-mono: 'Courier New', monospace;
+  --cem-dev-server-font-size-sm: 0.875rem;
+  --cem-dev-server-font-size-base: 1rem;
+  --cem-dev-server-font-size-lg: 1.125rem;
+
+  /* Borders */
+  --cem-dev-server-border-radius: 6px;
+  --cem-dev-server-border-width: 1px;
+
+  /* Syntax highlighting (chroma) */
+  --cem-dev-server-syntax-keyword: light-dark(#d73a49, #ff7b72);
+  --cem-dev-server-syntax-type: light-dark(#445588, #79c0ff);
+  --cem-dev-server-syntax-name: light-dark(#008080, #79c0ff);
+  --cem-dev-server-syntax-class: light-dark(#445588, #ffa657);
+  --cem-dev-server-syntax-decorator: light-dark(#3c5d5d, #ffa657);
+  --cem-dev-server-syntax-special: light-dark(#800080, #d2a8ff);
+  --cem-dev-server-syntax-function: light-dark(#6f42c1, #d2a8ff);
+  --cem-dev-server-syntax-tag: light-dark(#22863a, #7ee787);
+  --cem-dev-server-syntax-string: light-dark(#032f62, #a5d6ff);
+  --cem-dev-server-syntax-number: light-dark(#005cc5, #79c0ff);
+  --cem-dev-server-syntax-error: light-dark(#d73a49, #ff7b72);
+  --cem-dev-server-syntax-error-bg: light-dark(#ffeef0, #490202);
+  --cem-dev-server-syntax-inserted: light-dark(#22863a, #7ee787);
+  --cem-dev-server-syntax-inserted-bg: light-dark(#f0fff4, #04260f);
+  --cem-dev-server-syntax-deleted: light-dark(#22863a, #ffa198);
+  --cem-dev-server-syntax-deleted-bg: light-dark(#f0fff4, #490202);
+  --cem-dev-server-syntax-highlight: light-dark(#ffffcc, #404040);
+}
+
+html {
+  background: var(--cem-dev-server-bg-secondary);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--cem-dev-server-font-family-body);
+  font-size: var(--cem-dev-server-font-size-body);
+  background: var(--cem-dev-server-bg-primary);
+  color: var(--cem-dev-server-text-color-primary);
+  color-scheme: light dark;
+}
+
+/* View Transition: Make chrome appear persistent, fade content */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 150ms;
+}
+
+::view-transition-old(dev-server-header),
+::view-transition-new(dev-server-header),
+::view-transition-old(dev-server-footer),
+::view-transition-new(dev-server-footer),
+::view-transition-old(dev-server-drawer),
+::view-transition-new(dev-server-drawer),
+::view-transition-old(dev-server-knobs),
+::view-transition-new(dev-server-knobs) {
+  animation-duration: 0s;
+}
+
+/* Listing component styles (light DOM) */
+cem-serve-listing {
+  display: block;
+
+  .listing-grid {
+    display: grid;
+    gap: var(--cem-dev-server-spacing-lg);
+  }
+
+  .element-section {
+    background: var(--cem-dev-server-bg-secondary);
+    border: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);
+    border-radius: var(--cem-dev-server-border-radius);
+    padding: var(--cem-dev-server-spacing-lg);
+  }
+
+  .element-title {
+    margin: 0 0 var(--cem-dev-server-spacing-md) 0;
+    color: var(--cem-dev-server-accent-color);
+    font-size: var(--cem-dev-server-font-size-lg);
+  }
+
+  .demo-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: var(--cem-dev-server-spacing-sm);
+  }
+
+  .demo-link {
+    color: var(--cem-dev-server-text-color-primary);
+    text-decoration: none;
+    padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);
+    background: var(--cem-dev-server-bg-tertiary);
+    border-radius: var(--cem-dev-server-border-radius);
+    display: block;
+    transition: background 0.2s, color 0.2s;
+
+    &:hover {
+      background: var(--cem-dev-server-accent-color);
+      color: var(--pf-t--global--text--color--on-brand);
+
+      .package-name {
+        color: light-dark(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8));
+      }
+    }
+
+    .package-name {
+      color: var(--cem-dev-server-text-secondary);
+      font-size: var(--cem-dev-server-font-size-sm);
+    }
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: var(--cem-dev-server-spacing-xl);
+    color: var(--cem-dev-server-text-secondary);
+
+    p {
+      margin: var(--cem-dev-server-spacing-sm) 0;
+    }
+
+    .help-text {
+      font-size: var(--cem-dev-server-font-size-sm);
+    }
+  }
+}
+
+/* Package section */
+.package-section {
+  margin-block-end: var(--pf-t--global--spacer--2xl);
+}
+
+.package-section:last-child {
+  margin-block-end: 0;
+}
+
+.package-heading {
+  margin: 0 0 var(--pf-t--global--spacer--lg) 0;
+  color: var(--pf-t--global--text--color--regular);
+  font-family: var(--pf-t--global--font--family--heading);
+  font-size: var(--pf-t--global--font--size--heading--md);
+  font-weight: var(--pf-t--global--font--weight--heading--default);
+  line-height: var(--pf-t--global--font--line-height--heading);
+}
+
+/* Listing grid layout */
+.listing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: var(--pf-t--global--spacer--gap--group-to-group--horizontal--default)
+       var(--pf-t--global--spacer--gap--group-to-group--vertical--default);
+  align-items: start;
+}
+
+.listing-grid h3 {
+  display: inline-block;
+  margin-inline-end: var(--pf-t--global--spacer--lg);
+}
+
+/* Element summary - make paragraphs inline */
+.element-summary,
+.element-summary > * {
+  display: inline;
+  margin: 0;
+}
+
+cem-serve-knobs {
+  & .instance-tag {
+    font-family: var(--cem-dev-server-font-family-mono);
+    color: var(--cem-dev-server-accent-color);
+    font-size: var(--cem-dev-server-font-size-sm);
+  }
+
+  & .instance-label {
+    color: var(--cem-dev-server-text-secondary);
+    font-size: var(--cem-dev-server-font-size-sm);
+  }
+
+  & pf-v6-switch {
+    align-self: center;
+  }
+
+  pf-v6-form[horizontal] pf-v6-form-field-group {
+    grid-column: span 2;
+  }
+}
+
+h3[slot=manifest-name],
+dl[slot=manifest-details] {
+  margin-block: 0;
+  & dd p:first-child {
+    margin-block-start: 0;
+  }
+  & dd p:last-child {
+    margin-block-end: 0;
+  }
+}

@@ -1,10 +1,25 @@
+/*
+Copyright © 2025 Benny Powers <web@bennypowers.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
 package lsp_test
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/testhelpers"
@@ -17,7 +32,7 @@ func TestGenerateWatcherIntegration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	// Copy fixture files to create a realistic project structure
 	fixtureDir := filepath.Join("test", "fixtures", "generate-watch-test")
@@ -60,11 +75,9 @@ func TestGenerateWatcherIntegration(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to start generate watcher: %v", err)
 		}
-		defer registry.StopGenerateWatcher()
+		defer func() { _ = registry.StopGenerateWatcher() }()
 
-		// Give the watcher a moment to start
-		time.Sleep(500 * time.Millisecond)
-
+		// No delay needed - Go 1.25 eliminates timing dependencies
 		// The watcher should be running (we can't easily test the actual process without complex setup)
 		// For now, just verify that StartGenerateWatcher didn't error
 		// In a real scenario, we would modify the source file and check if the manifest gets updated
@@ -92,7 +105,7 @@ func TestGenerateWatcherIntegration(t *testing.T) {
 			t.Fatalf("Failed to start generate watcher: %v", err)
 		}
 
-		time.Sleep(200 * time.Millisecond)
+		// No delay needed - Go 1.25 eliminates timing dependencies between start and stop
 
 		err = registry.StopGenerateWatcher()
 		if err != nil {
@@ -147,6 +160,6 @@ func TestGenerateWatcherIntegration(t *testing.T) {
 			t.Errorf("Second StartGenerateWatcher should not error when already running: %v", err2)
 		}
 
-		defer registry.StopGenerateWatcher()
+		defer func() { _ = registry.StopGenerateWatcher() }()
 	})
 }

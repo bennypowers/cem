@@ -1,0 +1,32 @@
+<li id="item"
+    role="treeitem"
+    tabindex="-1">
+  <div id="content">
+    <button id="toggle"
+            type="button"
+            aria-label="Toggle">
+      <span id="toggle-icon">
+        <svg class="pf-v6-svg"
+             viewBox="0 0 256 512"
+             fill="currentColor"
+             role="presentation"
+             width="1em"
+             height="1em">
+          <path d="M224.3 273l-136 136c-9.4 9.4-24.6 9.4-33.9 0l-22.6-22.6c-9.4-9.4-9.4-24.6 0-33.9l96.4-96.4-96.4-96.4c-9.4-9.4-9.4-24.6 0-33.9L54.3 103c9.4-9.4 24.6-9.4 33.9 0l136 136c9.5 9.4 9.5 24.6.1 34z"></path>
+        </svg>
+      </span>
+    </button>
+    <button id="node">
+      <span id="node-container">
+        <span id="icon"></span>
+        <span id="node-text">
+          <slot name="label">{{.Attributes.Label}}</slot>
+        </span>
+        <pf-v6-badge id="badge"><slot name="badge"></slot></pf-v6-badge>
+      </span>
+    </button>
+  </div>
+  <ul id="children" role="group">
+    <slot></slot>
+  </ul>
+</li>

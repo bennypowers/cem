@@ -18,7 +18,6 @@ package completion_test
 
 import (
 	"context"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -26,65 +25,12 @@ import (
 
 	G "bennypowers.dev/cem/generate"
 	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
 	W "bennypowers.dev/cem/workspace"
 )
-
-// copyFixtureFiles copies files from the fixture directory to the target directory,
-// preserving directory structure
-func copyFixtureFiles(t *testing.T, fixtureDir, targetDir string) {
-	t.Helper()
-
-	err := filepath.Walk(fixtureDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		// Skip README files
-		if strings.HasSuffix(path, "README.md") {
-			return nil
-		}
-
-		// Get relative path from fixture directory
-		relPath, err := filepath.Rel(fixtureDir, path)
-		if err != nil {
-			return err
-		}
-
-		targetPath := filepath.Join(targetDir, relPath)
-
-		if info.IsDir() {
-			return os.MkdirAll(targetPath, info.Mode())
-		}
-
-		// Copy file
-		src, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer src.Close()
-
-		err = os.MkdirAll(filepath.Dir(targetPath), 0755)
-		if err != nil {
-			return err
-		}
-
-		dst, err := os.Create(targetPath)
-		if err != nil {
-			return err
-		}
-		defer dst.Close()
-
-		_, err = io.Copy(dst, src)
-		return err
-	})
-
-	if err != nil {
-		t.Fatalf("Failed to copy fixture files: %v", err)
-	}
-}
 
 // TestServerLevelIntegration tests the complete server integration including
 // manifest reloading behavior exactly as it would work in real usage
@@ -142,7 +88,7 @@ func TestServerLevelIntegration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create LSP server: %v", err)
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 
 	// Initialize the server (this loads manifests and starts file watching)
 	err = server.InitializeForTesting()
@@ -151,7 +97,7 @@ func TestServerLevelIntegration(t *testing.T) {
 	}
 
 	// Create document manager
-	dm, err := lsp.NewDocumentManager()
+	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create document manager: %v", err)
 	}

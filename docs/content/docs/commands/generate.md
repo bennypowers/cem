@@ -29,6 +29,7 @@ tools. Add a description by separating the name of the item with ` - `
 - `@demo` — Demo URL
 - `@deprecated` — Marks a feature or member as deprecated
 - `@event` — Custom events dispatched by the element
+- `@example` — Code examples with optional captions
 - `@slot` — Named or default slots. See [Slots and Parts](#slots-and-parts)
 - `@summary` — Short summary for documentation
 
@@ -93,6 +94,9 @@ e.g. `var(--_private)`
 finds in your elements
 - You can use jsdoc-like comment syntax before each var call to document your
 variables
+- When both user comments and design token descriptions exist for the same CSS 
+custom property, `cem` uses the user's variable description first, then the 
+design token's description, separated by two new lines.
 
 ### Example
 
@@ -140,6 +144,21 @@ Bad:
 /** comment for --d */
 --c: var(--d);
 ```
+
+### JSON Output Format
+
+The generated manifest uses Go's JSON marshaling, which escapes HTML-sensitive characters for security reasons. Characters like `<` and `>` are converted to `\u003c` and `\u003e` respectively to prevent XSS attacks when JSON is embedded in HTML script tags.
+
+This means CSS syntax values in your manifest will appear escaped:
+
+```json
+{
+  "name": "--primary-color",
+  "syntax": "\u003ccolor\u003e"
+}
+```
+
+This is the expected behavior and doesn't affect the functionality of the manifest. Tools consuming the manifest should handle these standard JSON escape sequences correctly.
 
 ---
 
@@ -195,7 +214,7 @@ generate:
 The `urlTemplate` supports Go template syntax with built-in functions:
 
 - `alias` - Apply element alias mapping
-- `slug` - Convert to URL-friendly format  
+- `slug` - Convert to URL-friendly format
 - `lower` - Convert to lowercase
 - `upper` - Convert to uppercase
 
@@ -209,6 +228,91 @@ Use pipeline syntax (`{{.param | function}}`) or function calls (`{{function .pa
 | `sourceControlRootUrl` | string | Canonical public source control URL for your repository root (on the main branch).           |
 | `urlPattern`           | string | URLPattern with named parameters (`:param`) for matching demo file paths.                   |
 | `urlTemplate`          | string | Go template with functions for generating canonical demo URLs.                               |
+
+<a id="code-examples"></a>
+## Code Examples
+
+`cem generate` supports documenting code examples using the `@example` JSDoc tag. Examples are appended to the `description` field in the manifest with semantic HTML formatting.
+
+### JSDoc `@example` Tag
+
+Add code examples to your element classes, methods, or properties with the `@example` tag:
+
+#### Inline Caption
+
+```ts
+/**
+ * @example Basic usage
+ *          ```html
+ *          <my-element></my-element>
+ *          ```
+ */
+@customElement('my-element')
+class MyElement extends LitElement { }
+```
+
+#### Explicit Caption Tag
+
+```ts
+/**
+ * @example
+ * <caption>Advanced usage with properties</caption>
+ * ```html
+ * <my-element color="primary" size="large"></my-element>
+ * ```
+ */
+@customElement('my-element')
+class MyElement extends LitElement { }
+```
+
+#### No Caption (Code Only)
+
+```ts
+/**
+ * @example
+ * ```html
+ * <my-element></my-element>
+ * ```
+ */
+@customElement('my-element')
+class MyElement extends LitElement { }
+```
+
+#### Multiple Examples
+
+You can include multiple `@example` tags, and each will be appended to the description:
+
+```ts
+/**
+ * A flexible element
+ * @example Simple case
+ *          ```html
+ *          <my-element></my-element>
+ *          ```
+ * @example With attributes
+ *          ```html
+ *          <my-element foo="bar"></my-element>
+ *          ```
+ */
+@customElement('my-element')
+class MyElement extends LitElement { }
+```
+
+### Output Format
+
+Examples with captions are wrapped in `<figure>/<figcaption>` HTML elements for semantic markup and accessibility:
+
+```html
+<figure>
+<figcaption>Basic usage</figcaption>
+
+```html
+<my-element></my-element>
+```
+</figure>
+```
+
+Examples without captions are appended as plain markdown code blocks. All HTML characters in the generated manifest are escaped using standard JSON unicode sequences (e.g., `<` becomes `\u003c`) for security.
 
 ## Monorepos
 
