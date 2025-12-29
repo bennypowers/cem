@@ -118,21 +118,24 @@ URL templates use Go template syntax:
 **Example:** Element name transformation for demos
 
 If your project serves demos at URLs that don't match the on-disk structure:
-- **On disk**: `elements/my-card/demo/toast.html`
-- **Served URL**: `/elements/card/demo/toast/`
+- **On disk**: `elements/my-card/demo/card.html`
+- **Served URL**: `/elements/card/demo/card/`
 - **CSS reference in demo**: `<link rel="stylesheet" href="../my-card-lightdom.css">`
 - **Browser resolves to**: `/elements/card/demo/my-card-lightdom.css` ❌
+
+This can happen when your demo files load files by relative path from, since the
+dev server prettifies their URLs (`card.html` => `card/index.html`).
 
 Configure URL rewrites to fix the mismatch:
 
 ```yaml
 serve:
   urlRewrites:
-    - urlPattern: "/elements/:slug/:rest*"
-      urlTemplate: "/elements/my-{{.slug}}/{{.rest}}"
+    - urlPattern: "/elements/:slug/demo/:rest*.css"
+      urlTemplate: "/elements/my-{{.slug}}/{{.rest}}.css"
 ```
 
-This resolves `/elements/card/my-card-lightdom.css` → `elements/my-card/my-card-lightdom.css` ✓
+This resolves `/elements/card/demo/my-card-lightdom.css` → `elements/my-card/my-card-lightdom.css` ✓
 
 See **[Configuration](/docs/configuration/)** for details.
 
