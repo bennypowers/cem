@@ -453,15 +453,9 @@ func serveDemoRoute(w http.ResponseWriter, r *http.Request, config Config) bool 
 	}
 
 	// Get pre-computed routing table from context (used in both workspace and single-package mode)
-	routesAny := config.Context.DemoRoutes()
-	if routesAny == nil {
+	routes := config.Context.DemoRoutes()
+	if routes == nil {
 		// No routes available - not a demo route
-		return false
-	}
-
-	routes, ok := routesAny.(map[string]*DemoRouteEntry)
-	if !ok {
-		config.Context.Logger().Error("Demo routes has unexpected type")
 		return false
 	}
 
@@ -821,15 +815,9 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 	}
 
 	// Get all available demo routes
-	routesAny := config.Context.DemoRoutes()
-	if routesAny == nil {
+	routes := config.Context.DemoRoutes()
+	if routes == nil {
 		// No routes available - render simple 404
-		http.Error(w, "Not Found", http.StatusNotFound)
-		return
-	}
-
-	routes, ok := routesAny.(map[string]*DemoRouteEntry)
-	if !ok {
 		http.Error(w, "Not Found", http.StatusNotFound)
 		return
 	}
@@ -1018,13 +1006,8 @@ func servePackageStaticAsset(w http.ResponseWriter, r *http.Request, config Conf
 // Returns the full file path or empty string if not found.
 func resolveViaRoutingTable(requestPath string, config Config) string {
 	// Get routing table
-	routesAny := config.Context.DemoRoutes()
-	if routesAny == nil {
-		return ""
-	}
-
-	routes, ok := routesAny.(map[string]*DemoRouteEntry)
-	if !ok {
+	routes := config.Context.DemoRoutes()
+	if routes == nil {
 		return ""
 	}
 
