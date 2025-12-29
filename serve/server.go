@@ -719,14 +719,14 @@ func (s *Server) Logger() middleware.Logger {
 }
 
 // SetLogger sets the server's logger
-func (s *Server) SetLogger(logger Logger) {
+func (s *Server) SetLogger(log Logger) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.logger = logger
+	s.logger = log
 	if s.wsManager != nil {
-		s.wsManager.SetLogger(logger)
+		s.wsManager.SetLogger(log)
 		// Set WebSocket manager on logger for broadcasting logs
-		if wsSetter, ok := logger.(interface{ SetWebSocketManager(any) }); ok {
+		if wsSetter, ok := log.(interface{ SetWebSocketManager(logger.Broadcaster) }); ok {
 			wsSetter.SetWebSocketManager(s.wsManager)
 		}
 	}

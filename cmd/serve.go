@@ -161,6 +161,7 @@ var serveCmd = &cobra.Command{
 			WatchIgnore:          watchIgnore,
 			SourceControlRootURL: sourceControlRootURL,
 			URLRewrites:          urlRewrites,
+			ConfigFile:           ctx.ConfigFile(),
 			ImportMap: types.ImportMapConfig{
 				Generate:     importMapGenerate,
 				OverrideFile: importMapOverrideFile,

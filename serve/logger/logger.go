@@ -38,6 +38,11 @@ type Logger interface {
 	Debug(msg string, args ...any)
 }
 
+// Broadcaster defines the interface for broadcasting log messages to WebSocket clients
+type Broadcaster interface {
+	Broadcast([]byte) error
+}
+
 // LogMessage represents a log message broadcast to clients
 type LogMessage struct {
 	Type string     `json:"type"`
@@ -77,16 +82,26 @@ func NewDefaultLogger() Logger {
 
 // ptermLogger implements Logger interface using pterm live rendering
 type ptermLogger struct {
-	verbose      bool
-	logs         []LogEntry // Structured logs for web interface
-	terminalLogs []string   // Colored logs for terminal display
-	maxLogs      int
-	maxTermLogs  int
-	mu           sync.Mutex
-	interactive  bool
-	area         *pterm.AreaPrinter
-	status       string
-	wsManager    any // WebSocket manager for broadcasting logs (any type with Broadcast method)
+	verbose       bool
+	logs          []LogEntry // Structured logs for web interface
+	terminalLogs  []string   // Colored logs for terminal display
+	pendingLogs   []pendingLog // Logs buffered before area starts
+	maxLogs       int
+	maxTermLogs   int
+	mu            sync.Mutex
+	renderMu      sync.Mutex // Serializes area.Update() calls to prevent interleaved output
+	interactive   bool
+	area          *pterm.AreaPrinter
+	status        string
+	wsManager     Broadcaster // WebSocket manager for broadcasting logs
+}
+
+// pendingLog represents a log entry waiting to be displayed
+type pendingLog struct {
+	level     string
+	levelType string
+	message   string
+	timestamp string
 }
 
 // NewPtermLogger creates a new pterm-based logger with live rendering
@@ -97,6 +112,7 @@ func NewPtermLogger(verbose bool) Logger {
 		verbose:      verbose,
 		logs:         make([]LogEntry, 0),
 		terminalLogs: make([]string, 0),
+		pendingLogs:  make([]pendingLog, 0),
 		maxLogs:      100,
 		maxTermLogs:  50, // Keep last 50 logs visible in terminal
 		interactive:  interactive,
@@ -122,6 +138,11 @@ func (l *ptermLogger) Start() {
 		l.render()
 		return
 	}
+
+	// Capture pending logs before unlocking
+	pending := l.pendingLogs
+	l.pendingLogs = nil // Clear the pending buffer
+
 	l.mu.Unlock()
 
 	area, _ := pterm.DefaultArea.Start()
@@ -136,6 +157,12 @@ func (l *ptermLogger) Start() {
 	}
 
 	l.area = area
+
+	// Format and add all pending logs now that area is ready
+	for _, p := range pending {
+		l.formatAndBufferLog(p.level, p.levelType, p.message, p.timestamp)
+	}
+
 	l.mu.Unlock()
 
 	if area != nil {
@@ -154,8 +181,7 @@ func (l *ptermLogger) SetStatus(status string) {
 }
 
 // SetWebSocketManager sets the WebSocket manager for broadcasting logs
-// Accepts any type that has a Broadcast([]byte) error method
-func (l *ptermLogger) SetWebSocketManager(wsManager any) {
+func (l *ptermLogger) SetWebSocketManager(wsManager Broadcaster) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.wsManager = wsManager
@@ -186,9 +212,53 @@ func (l *ptermLogger) render() {
 
 	// Hand off pointer before calling into pterm API
 	area := l.area
+	output := sb.String()
 	l.mu.Unlock()
 
-	area.Update(sb.String())
+	// Serialize area.Update() calls to prevent concurrent renders from interleaving output
+	l.renderMu.Lock()
+	area.Update(output)
+	l.renderMu.Unlock()
+}
+
+// formatAndBufferLog formats a log entry and adds it to terminalLogs buffer.
+// Must be called with lock held.
+func (l *ptermLogger) formatAndBufferLog(level, levelType, message, timestamp string) {
+	var prefix, coloredMsg string
+	timestampStr := pterm.FgGray.Sprint(timestamp)
+
+	switch levelType {
+	case "info":
+		prefix = pterm.FgCyan.Sprint("INFO ")
+		coloredMsg = message
+	case "warning":
+		prefix = pterm.FgYellow.Sprint("WARN ")
+		coloredMsg = pterm.FgYellow.Sprint(message)
+	case "error":
+		prefix = pterm.FgRed.Sprint("ERROR")
+		coloredMsg = pterm.FgRed.Sprint(message)
+	case "debug":
+		prefix = pterm.FgGray.Sprint("DEBUG")
+		coloredMsg = pterm.FgGray.Sprint(message)
+	}
+
+	// Calculate padding for right-aligned timestamp
+	width := 80
+	if w, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil && w > 0 {
+		width = w
+	}
+
+	// Visual length is just the actual text without ANSI codes
+	visualLen := len(level) + 1 + len(message)
+	timestampBuffer := 10
+	padding := max(width-visualLen-timestampBuffer, 1)
+
+	terminalLog := fmt.Sprintf(" %s %s%s%s", prefix, coloredMsg, strings.Repeat(" ", padding), timestampStr)
+	l.terminalLogs = append(l.terminalLogs, terminalLog)
+
+	if len(l.terminalLogs) > l.maxTermLogs {
+		l.terminalLogs = l.terminalLogs[len(l.terminalLogs)-l.maxTermLogs:]
+	}
 }
 
 // Stop stops the live rendering
@@ -229,51 +299,26 @@ func (l *ptermLogger) log(level, levelType, msg string, args ...any) {
 	shouldPrint := levelType != "debug" || l.verbose
 
 	if shouldPrint {
-		if l.interactive && l.area != nil {
-			// Interactive mode with live area started: store colored logs and render
-			var prefix, coloredMsg string
-			timestampStr := pterm.FgGray.Sprint(timestamp)
-
-			switch levelType {
-			case "info":
-				prefix = pterm.FgCyan.Sprint("INFO ")
-				coloredMsg = formatted
-			case "warning":
-				prefix = pterm.FgYellow.Sprint("WARN ")
-				coloredMsg = pterm.FgYellow.Sprint(formatted)
-			case "error":
-				prefix = pterm.FgRed.Sprint("ERROR")
-				coloredMsg = pterm.FgRed.Sprint(formatted)
-			case "debug":
-				prefix = pterm.FgGray.Sprint("DEBUG")
-				coloredMsg = pterm.FgGray.Sprint(formatted)
+		if l.interactive {
+			// Interactive mode: either buffer semantic data or format+render
+			if l.area != nil {
+				// Area is ready: format and render immediately
+				l.formatAndBufferLog(level, levelType, formatted, timestamp)
+				l.mu.Unlock()
+				l.render()
+			} else {
+				// Area not ready yet: buffer semantic data for later formatting
+				l.pendingLogs = append(l.pendingLogs, pendingLog{
+					level:     level,
+					levelType: levelType,
+					message:   formatted,
+					timestamp: timestamp,
+				})
+				l.mu.Unlock()
 			}
-
-			// Calculate padding for right-aligned timestamp
-			// Use visual width (uncolored text length) not string length (which includes ANSI codes)
-			width := 80
-			if w, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil && w > 0 {
-				width = w
-			}
-
-			// Visual length is just the actual text without ANSI codes
-			visualLen := len(level) + 1 + len(formatted)
-			// 10 to prevent overflow (1 leading space + 8 for timestamp + 1 buffer)
-			timestampBuffer := 10
-			padding := max(width-visualLen-timestampBuffer, 1)
-
-			terminalLog := fmt.Sprintf(" %s %s%s%s", prefix, coloredMsg, strings.Repeat(" ", padding), timestampStr)
-			l.terminalLogs = append(l.terminalLogs, terminalLog)
-
-			if len(l.terminalLogs) > l.maxTermLogs {
-				l.terminalLogs = l.terminalLogs[len(l.terminalLogs)-l.maxTermLogs:]
-			}
-
-			l.mu.Unlock()
-			l.render()
 		} else {
 			l.mu.Unlock()
-			// Non-interactive OR area not started yet: standard pterm output
+			// Non-interactive: standard pterm output
 			switch levelType {
 			case "info":
 				pterm.Info.Println(formatted)
@@ -293,21 +338,15 @@ func (l *ptermLogger) log(level, levelType, msg string, args ...any) {
 	// Full log history is sent on page load via /__cem/logs endpoint
 
 	if ws != nil {
-		// Type assert to interface with Broadcast method
-		type broadcaster interface {
-			Broadcast([]byte) error
+		// Send only the new log entry (not the entire history)
+		msg := LogMessage{
+			Type: "logs",
+			Logs: []LogEntry{logEntry},
 		}
-		if bc, ok := ws.(broadcaster); ok {
-			// Send only the new log entry (not the entire history)
-			msg := LogMessage{
-				Type: "logs",
-				Logs: []LogEntry{logEntry},
-			}
-			if msgBytes, err := json.Marshal(msg); err == nil {
-				// Broadcast error intentionally ignored - failures occur when clients
-				// disconnect and we can't log them here without causing infinite recursion
-				_ = bc.Broadcast(msgBytes)
-			}
+		if msgBytes, err := json.Marshal(msg); err == nil {
+			// Broadcast error intentionally ignored - failures occur when clients
+			// disconnect and we can't log them here without causing infinite recursion
+			_ = ws.Broadcast(msgBytes)
 		}
 	}
 }

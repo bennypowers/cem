@@ -19,7 +19,7 @@ func TestDebugLogging(t *testing.T) {
 		l := NewPtermLogger(false) // verbose=false
 		mockWS := &mockBroadcaster{}
 
-		if setter, ok := l.(interface{ SetWebSocketManager(any) }); ok {
+		if setter, ok := l.(interface{ SetWebSocketManager(Broadcaster) }); ok {
 			setter.SetWebSocketManager(mockWS)
 		}
 
@@ -57,7 +57,7 @@ func TestDebugLogging(t *testing.T) {
 		l := NewPtermLogger(true) // verbose=true
 		mockWS := &mockBroadcaster{}
 
-		if setter, ok := l.(interface{ SetWebSocketManager(any) }); ok {
+		if setter, ok := l.(interface{ SetWebSocketManager(Broadcaster) }); ok {
 			setter.SetWebSocketManager(mockWS)
 		}
 
