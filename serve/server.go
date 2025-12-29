@@ -257,6 +257,29 @@ func (s *Server) rebuildPathResolver() error {
 		return fmt.Errorf("no watch directory set")
 	}
 
+	// Re-parse config file URL rewrites from disk (hot-reload needs fresh file contents)
+	var configURLRewrites []config.URLRewrite
+	var configSourceFiles []string
+
+	if s.config.ConfigFile != "" {
+		rewrites, sourceFiles, err := transform.ParseConfigFileURLRewrites(s.config.ConfigFile, s.fs)
+		if err == nil && len(rewrites) > 0 {
+			// Validate URL rewrites to prevent runtime panics
+			if err := transform.ValidateURLRewrites(rewrites); err != nil {
+				s.logger.Warning("Invalid URL rewrites in config file: %v", err)
+			} else {
+				configURLRewrites = rewrites
+				configSourceFiles = sourceFiles
+				s.logger.Debug("Rebuilt %d URL rewrites from %s", len(rewrites), s.config.ConfigFile)
+				for _, r := range rewrites {
+					s.logger.Debug("  %s -> %s", r.URLPattern, r.URLTemplate)
+				}
+			}
+		} else if err != nil {
+			s.logger.Debug("No config file URL rewrites: %v", err)
+		}
+	}
+
 	// Re-parse tsconfig files from disk (hot-reload needs fresh file contents)
 	// Similar to SetWatchDir, but we re-read files instead of using cached config
 	tsconfigPaths := []string{
@@ -282,23 +305,19 @@ func (s *Server) rebuildPathResolver() error {
 		}
 	}
 
-	// Merge with explicit config URL rewrites (same as SetWatchDir)
+	// Merge URL rewrites: config file takes precedence over tsconfig
 	// Config rewrites are prepended before tsconfig rewrites so they're tried first
-	if len(s.config.URLRewrites) > 0 {
-		s.logger.Debug("Adding %d URL rewrites from config (will override tsconfig)", len(s.config.URLRewrites))
-		for _, r := range s.config.URLRewrites {
-			s.logger.Debug("  %s -> %s", r.URLPattern, r.URLTemplate)
-		}
+	if len(configURLRewrites) > 0 {
+		s.logger.Debug("Adding %d URL rewrites from config file (will override tsconfig)", len(configURLRewrites))
 		// Prepend config rewrites so they're tried first (first-match-wins in resolver)
-		urlRewrites = append(s.config.URLRewrites, urlRewrites...)
+		urlRewrites = append(configURLRewrites, urlRewrites...)
 	}
 
 	s.logger.Info("Rebuilding path resolver with %d URL rewrites", len(urlRewrites))
 	s.urlRewrites = urlRewrites
 
-	// Track only tsconfig source files for hot-reload
-	// Config file URL rewrite hot-reload will be added in a future PR
-	s.pathResolverSourceFiles = tsconfigSourceFiles
+	// Track both config file and tsconfig source files for hot-reload
+	s.pathResolverSourceFiles = append(configSourceFiles, tsconfigSourceFiles...)
 
 	// Rebuild path resolver
 	s.pathResolver = transform.NewPathResolver(s.watchDir, s.urlRewrites, s.fs, s.logger)
@@ -499,6 +518,29 @@ func (s *Server) SetWatchDir(dir string) error {
 	}
 	s.watchDir = absDir
 
+	// Parse config file for URL rewrites (if config file path was set)
+	var configURLRewrites []config.URLRewrite
+	var configSourceFiles []string
+
+	if s.config.ConfigFile != "" {
+		rewrites, sourceFiles, err := transform.ParseConfigFileURLRewrites(s.config.ConfigFile, s.fs)
+		if err == nil && len(rewrites) > 0 {
+			// Validate URL rewrites to prevent runtime panics
+			if err := transform.ValidateURLRewrites(rewrites); err != nil {
+				s.logger.Warning("Invalid URL rewrites in config file: %v", err)
+			} else {
+				configURLRewrites = rewrites
+				configSourceFiles = sourceFiles
+				s.logger.Debug("Extracted %d URL rewrites from %s", len(rewrites), s.config.ConfigFile)
+				for _, r := range rewrites {
+					s.logger.Debug("  %s -> %s", r.URLPattern, r.URLTemplate)
+				}
+			}
+		} else if err != nil {
+			s.logger.Debug("No config file URL rewrites: %v", err)
+		}
+	}
+
 	// Load tsconfig - try tsconfig.settings.json first (common in monorepos),
 	// then fall back to tsconfig.json
 	tsconfigPaths := []string{
@@ -539,22 +581,18 @@ func (s *Server) SetWatchDir(dir string) error {
 		}
 	}
 
-	// Merge with explicit config URL rewrites (config takes precedence)
+	// Merge URL rewrites: config file takes precedence over tsconfig
 	// Config rewrites are prepended before tsconfig rewrites so they're tried first
-	if len(s.config.URLRewrites) > 0 {
-		s.logger.Debug("Adding %d URL rewrites from config (will override tsconfig)", len(s.config.URLRewrites))
-		for _, r := range s.config.URLRewrites {
-			s.logger.Debug("  %s -> %s", r.URLPattern, r.URLTemplate)
-		}
+	if len(configURLRewrites) > 0 {
+		s.logger.Debug("Adding %d URL rewrites from config file (will override tsconfig)", len(configURLRewrites))
 		// Prepend config rewrites so they're tried first (first-match-wins in resolver)
-		urlRewrites = append(s.config.URLRewrites, urlRewrites...)
+		urlRewrites = append(configURLRewrites, urlRewrites...)
 	}
 
 	s.urlRewrites = urlRewrites
 
-	// Track only tsconfig source files for hot-reload
-	// Config file URL rewrite hot-reload will be added in a future PR
-	s.pathResolverSourceFiles = tsconfigSourceFiles
+	// Track both config file and tsconfig source files for hot-reload
+	s.pathResolverSourceFiles = append(configSourceFiles, tsconfigSourceFiles...)
 
 	// Initialize path resolver once (cached for all requests)
 	s.pathResolver = transform.NewPathResolver(s.watchDir, s.urlRewrites, s.fs, s.logger)

@@ -904,3 +904,398 @@ func TestPathResolverHotReload(t *testing.T) {
 		t.Errorf("Expected status 404 for old path after rebuild, got %d", rec3.Code)
 	}
 }
+
+// TestConfigFileURLRewritesParsing verifies config file URL rewrites are parsed correctly
+func TestConfigFileURLRewritesParsing(t *testing.T) {
+	// Create in-memory filesystem with config file
+	mfs := platform.NewMapFileSystem(nil)
+
+	configContent := `serve:
+  urlRewrites:
+    - urlPattern: "/api/:version/:endpoint"
+      urlTemplate: "/v1/{{.version}}/{{.endpoint}}"
+`
+	mfs.AddFile("/test-package/.config/cem.yaml", configContent, 0644)
+	mfs.AddFile("/test-package/package.json", `{"name": "test"}`, 0644)
+
+	config := serve.Config{
+		Port:       0,
+		FS:         mfs,
+		ConfigFile: "/test-package/.config/cem.yaml",
+	}
+
+	server, err := serve.NewServerWithConfig(config)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	err = server.SetWatchDir("/test-package")
+	if err != nil {
+		t.Fatalf("Failed to set watch directory: %v", err)
+	}
+
+	// Verify config file URL rewrites were parsed
+	urlRewrites := server.URLRewrites()
+	if len(urlRewrites) != 1 {
+		t.Fatalf("Expected 1 URL rewrite from config file, got %d", len(urlRewrites))
+	}
+
+	if urlRewrites[0].URLPattern != "/api/:version/:endpoint" {
+		t.Errorf("Expected URLPattern '/api/:version/:endpoint', got %q", urlRewrites[0].URLPattern)
+	}
+
+	if urlRewrites[0].URLTemplate != "/v1/{{.version}}/{{.endpoint}}" {
+		t.Errorf("Expected URLTemplate '/v1/{{.version}}/{{.endpoint}}', got %q", urlRewrites[0].URLTemplate)
+	}
+}
+
+// TestConfigFileHotReload verifies config file changes trigger path resolver rebuild
+func TestConfigFileHotReload(t *testing.T) {
+	// Create in-memory filesystem with initial config
+	mfs := platform.NewMapFileSystem(nil)
+
+	initialConfig := `serve:
+  urlRewrites:
+    - urlPattern: "/dist/:path*"
+      urlTemplate: "/src/{{.path}}"
+`
+	mfs.AddFile("/test-package/.config/cem.yaml", initialConfig, 0644)
+	mfs.AddFile("/test-package/package.json", `{"name": "test"}`, 0644)
+
+	// Create source file
+	sourceContent := `export class TestElement extends HTMLElement {}`
+	mfs.AddFile("/test-package/src/test.ts", sourceContent, 0644)
+
+	config := serve.Config{
+		Port:       0,
+		FS:         mfs,
+		ConfigFile: "/test-package/.config/cem.yaml",
+		Transforms: serve.TransformConfig{
+			TypeScript: serve.TypeScriptConfig{
+				Enabled: true,
+				Target:  transform.ES2022,
+			},
+		},
+	}
+
+	server, err := serve.NewServerWithConfig(config)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	err = server.SetWatchDir("/test-package")
+	if err != nil {
+		t.Fatalf("Failed to set watch directory: %v", err)
+	}
+
+	// Verify initial rewrites
+	urlRewrites := server.URLRewrites()
+	if len(urlRewrites) != 1 {
+		t.Fatalf("Expected 1 URL rewrite initially, got %d", len(urlRewrites))
+	}
+
+	if urlRewrites[0].URLPattern != "/dist/:path*" {
+		t.Errorf("Expected initial URLPattern '/dist/:path*', got %q", urlRewrites[0].URLPattern)
+	}
+
+	// Verify initial rewrite works
+	req := httptest.NewRequest("GET", "/dist/test.js", nil)
+	rec := httptest.NewRecorder()
+	server.Handler().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status 200 for initial request, got %d", rec.Code)
+	}
+
+	// Update config file with different URL rewrites
+	updatedConfig := `serve:
+  urlRewrites:
+    - urlPattern: "/build/:path*"
+      urlTemplate: "/source/{{.path}}"
+`
+	mfs.AddFile("/test-package/.config/cem.yaml", updatedConfig, 0644)
+
+	// Create source file in new location
+	mfs.AddFile("/test-package/source/test.ts", sourceContent, 0644)
+
+	// Trigger rebuild
+	err = server.RebuildPathResolverForTest()
+	if err != nil {
+		t.Fatalf("Failed to rebuild path resolver: %v", err)
+	}
+
+	// Verify new rewrites are active
+	urlRewritesAfter := server.URLRewrites()
+	if len(urlRewritesAfter) != 1 {
+		t.Fatalf("Expected 1 URL rewrite after rebuild, got %d", len(urlRewritesAfter))
+	}
+
+	if urlRewritesAfter[0].URLPattern != "/build/:path*" {
+		t.Errorf("Expected updated URLPattern '/build/:path*', got %q", urlRewritesAfter[0].URLPattern)
+	}
+
+	// Verify new rewrite works
+	req2 := httptest.NewRequest("GET", "/build/test.js", nil)
+	rec2 := httptest.NewRecorder()
+	server.Handler().ServeHTTP(rec2, req2)
+
+	if rec2.Code != http.StatusOK {
+		t.Errorf("Expected status 200 for request after rebuild, got %d", rec2.Code)
+	}
+
+	// Verify old rewrite no longer works
+	req3 := httptest.NewRequest("GET", "/dist/test.js", nil)
+	rec3 := httptest.NewRecorder()
+	server.Handler().ServeHTTP(rec3, req3)
+
+	if rec3.Code != http.StatusNotFound {
+		t.Errorf("Expected status 404 for old path after rebuild, got %d", rec3.Code)
+	}
+}
+
+// TestConfigPrecedenceOverTsconfig verifies config file rewrites take precedence
+func TestConfigPrecedenceOverTsconfig(t *testing.T) {
+	// Create in-memory filesystem with both config and tsconfig
+	mfs := platform.NewMapFileSystem(nil)
+
+	// Config file with /dist mapping
+	configContent := `serve:
+  urlRewrites:
+    - urlPattern: "/dist/:path*"
+      urlTemplate: "/config-src/{{.path}}"
+`
+	mfs.AddFile("/test-package/.config/cem.yaml", configContent, 0644)
+
+	// Tsconfig with overlapping /dist mapping
+	tsconfigContent := `{
+  "compilerOptions": {
+    "rootDir": "./tsconfig-src",
+    "outDir": "./dist"
+  }
+}`
+	mfs.AddFile("/test-package/tsconfig.json", tsconfigContent, 0644)
+	mfs.AddFile("/test-package/package.json", `{"name": "test"}`, 0644)
+
+	// Create source files in both locations
+	sourceContent := `export class Test {}`
+	mfs.AddFile("/test-package/config-src/test.ts", sourceContent, 0644)
+	mfs.AddFile("/test-package/tsconfig-src/test.ts", "// different content", 0644)
+
+	config := serve.Config{
+		Port:       0,
+		FS:         mfs,
+		ConfigFile: "/test-package/.config/cem.yaml",
+		Transforms: serve.TransformConfig{
+			TypeScript: serve.TypeScriptConfig{
+				Enabled: true,
+				Target:  transform.ES2022,
+			},
+		},
+	}
+
+	server, err := serve.NewServerWithConfig(config)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	err = server.SetWatchDir("/test-package")
+	if err != nil {
+		t.Fatalf("Failed to set watch directory: %v", err)
+	}
+
+	// Verify both rewrites are present
+	urlRewrites := server.URLRewrites()
+	if len(urlRewrites) != 2 {
+		t.Fatalf("Expected 2 URL rewrites (config + tsconfig), got %d", len(urlRewrites))
+	}
+
+	// Config file rewrite should be first (higher precedence)
+	if urlRewrites[0].URLTemplate != "/config-src/{{.path}}" {
+		t.Errorf("Expected config file rewrite first, got %q", urlRewrites[0].URLTemplate)
+	}
+
+	// Request /dist/test.js should resolve via config file mapping (not tsconfig)
+	req := httptest.NewRequest("GET", "/dist/test.js", nil)
+	rec := httptest.NewRecorder()
+	server.Handler().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", rec.Code)
+	}
+
+	// Verify it used config-src (contains "export class Test")
+	// Not verifying exact content, just that it resolved successfully
+}
+
+// TestInvalidConfigFileRewrites verifies invalid rewrites are rejected gracefully
+func TestInvalidConfigFileRewrites(t *testing.T) {
+	// Create in-memory filesystem with invalid config
+	mfs := platform.NewMapFileSystem(nil)
+
+	// Invalid template syntax
+	invalidConfig := `serve:
+  urlRewrites:
+    - urlPattern: "/dist/:path*"
+      urlTemplate: "/src/{{.path"
+`
+	mfs.AddFile("/test-package/.config/cem.yaml", invalidConfig, 0644)
+
+	// Also have tsconfig for fallback
+	tsconfigContent := `{
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./build"
+  }
+}`
+	mfs.AddFile("/test-package/tsconfig.json", tsconfigContent, 0644)
+	mfs.AddFile("/test-package/package.json", `{"name": "test"}`, 0644)
+
+	config := serve.Config{
+		Port:       0,
+		FS:         mfs,
+		ConfigFile: "/test-package/.config/cem.yaml",
+	}
+
+	server, err := serve.NewServerWithConfig(config)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	err = server.SetWatchDir("/test-package")
+	if err != nil {
+		t.Fatalf("Failed to set watch directory: %v", err)
+	}
+
+	// Should have tsconfig rewrites only (invalid config rewrites rejected)
+	urlRewrites := server.URLRewrites()
+	if len(urlRewrites) != 1 {
+		t.Fatalf("Expected 1 URL rewrite (tsconfig only), got %d", len(urlRewrites))
+	}
+
+	if urlRewrites[0].URLPattern != "/build/:path*" {
+		t.Errorf("Expected tsconfig rewrite, got %q", urlRewrites[0].URLPattern)
+	}
+}
+
+// TestConfigFileRemovedHotReload verifies removal of config file is handled
+func TestConfigFileRemovedHotReload(t *testing.T) {
+	// Create in-memory filesystem with config file initially
+	mfs := platform.NewMapFileSystem(nil)
+
+	configContent := `serve:
+  urlRewrites:
+    - urlPattern: "/api/:path*"
+      urlTemplate: "/endpoints/{{.path}}"
+`
+	mfs.AddFile("/test-package/.config/cem.yaml", configContent, 0644)
+
+	// Also have tsconfig for fallback
+	tsconfigContent := `{
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist"
+  }
+}`
+	mfs.AddFile("/test-package/tsconfig.json", tsconfigContent, 0644)
+	mfs.AddFile("/test-package/package.json", `{"name": "test"}`, 0644)
+
+	config := serve.Config{
+		Port:       0,
+		FS:         mfs,
+		ConfigFile: "/test-package/.config/cem.yaml",
+	}
+
+	server, err := serve.NewServerWithConfig(config)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	err = server.SetWatchDir("/test-package")
+	if err != nil {
+		t.Fatalf("Failed to set watch directory: %v", err)
+	}
+
+	// Initially should have both config and tsconfig rewrites
+	urlRewrites := server.URLRewrites()
+	if len(urlRewrites) != 2 {
+		t.Fatalf("Expected 2 URL rewrites initially, got %d", len(urlRewrites))
+	}
+
+	// Remove config file
+	mfs.Remove("/test-package/.config/cem.yaml")
+
+	// Trigger rebuild
+	err = server.RebuildPathResolverForTest()
+	if err != nil {
+		t.Fatalf("Failed to rebuild path resolver: %v", err)
+	}
+
+	// Should fall back to tsconfig rewrites only
+	urlRewritesAfter := server.URLRewrites()
+	if len(urlRewritesAfter) != 1 {
+		t.Fatalf("Expected 1 URL rewrite after config removal, got %d", len(urlRewritesAfter))
+	}
+
+	if urlRewritesAfter[0].URLPattern != "/dist/:path*" {
+		t.Errorf("Expected tsconfig rewrite after config removal, got %q", urlRewritesAfter[0].URLPattern)
+	}
+}
+
+// TestNoConfigFilePath verifies behavior when ConfigFile is not set
+func TestNoConfigFilePath(t *testing.T) {
+	// Create in-memory filesystem with tsconfig only
+	mfs := platform.NewMapFileSystem(nil)
+
+	tsconfigContent := `{
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist"
+  }
+}`
+	mfs.AddFile("/test-package/tsconfig.json", tsconfigContent, 0644)
+	mfs.AddFile("/test-package/package.json", `{"name": "test"}`, 0644)
+
+	// No ConfigFile set
+	config := serve.Config{
+		Port: 0,
+		FS:   mfs,
+	}
+
+	server, err := serve.NewServerWithConfig(config)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	err = server.SetWatchDir("/test-package")
+	if err != nil {
+		t.Fatalf("Failed to set watch directory: %v", err)
+	}
+
+	// Should have tsconfig rewrites only
+	urlRewrites := server.URLRewrites()
+	if len(urlRewrites) != 1 {
+		t.Fatalf("Expected 1 URL rewrite from tsconfig, got %d", len(urlRewrites))
+	}
+
+	if urlRewrites[0].URLPattern != "/dist/:path*" {
+		t.Errorf("Expected tsconfig rewrite, got %q", urlRewrites[0].URLPattern)
+	}
+
+	// RebuildPathResolver should also work
+	err = server.RebuildPathResolverForTest()
+	if err != nil {
+		t.Fatalf("RebuildPathResolverForTest failed: %v", err)
+	}
+
+	// Still should have tsconfig rewrites
+	urlRewritesAfter := server.URLRewrites()
+	if len(urlRewritesAfter) != 1 {
+		t.Fatalf("Expected 1 URL rewrite after rebuild, got %d", len(urlRewritesAfter))
+	}
+}
