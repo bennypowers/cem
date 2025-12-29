@@ -295,9 +295,15 @@ func (s *Server) rebuildPathResolver() error {
 			if err := yaml.Unmarshal(data, &cfg); err == nil {
 				configRewrites = cfg.Serve.URLRewrites
 				if len(configRewrites) > 0 {
-					s.logger.Debug("Reloaded %d URL rewrites from config file", len(configRewrites))
-					for _, r := range configRewrites {
-						s.logger.Debug("  %s -> %s", r.URLPattern, r.URLTemplate)
+					// Validate URL rewrites to prevent runtime panics
+					if err := transform.ValidateURLRewrites(configRewrites); err != nil {
+						s.logger.Warning("Invalid URL rewrites in config file: %v", err)
+						configRewrites = nil // Skip invalid rewrites
+					} else {
+						s.logger.Debug("Reloaded %d URL rewrites from config file", len(configRewrites))
+						for _, r := range configRewrites {
+							s.logger.Debug("  %s -> %s", r.URLPattern, r.URLTemplate)
+						}
 					}
 				}
 			} else {
@@ -1293,8 +1299,15 @@ func (s *Server) handleFileChanges() {
 		s.mu.RUnlock()
 
 		for _, changedFile := range filesToProcess {
+			// Normalize changed file to absolute path for comparison
+			// pathResolverSourceFiles contains absolute paths from ParseTsConfig
+			absChangedFile, err := filepath.Abs(changedFile)
+			if err != nil {
+				absChangedFile = changedFile // Fall back to original if Abs fails
+			}
+
 			for _, sourceFile := range pathResolverSourceFiles {
-				if changedFile == sourceFile {
+				if absChangedFile == sourceFile {
 					pathResolverNeedsRebuild = true
 					s.logger.Debug("PathResolver source file changed: %s", sourceFile)
 					break
