@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package serve
 
 import (
+	"mime"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -32,6 +33,21 @@ import (
 	"bennypowers.dev/cem/serve/middleware/shadowroot"
 	"bennypowers.dev/cem/serve/middleware/transform"
 )
+
+func init() {
+	// Register MIME types for container compatibility (minimal containers may lack /etc/mime.types)
+	// AddExtensionType only sets if not already registered, so safe to call redundantly
+	_ = mime.AddExtensionType(".js", "text/javascript; charset=utf-8")
+	_ = mime.AddExtensionType(".mjs", "text/javascript; charset=utf-8") // ES modules
+	_ = mime.AddExtensionType(".cjs", "text/javascript; charset=utf-8") // CommonJS modules
+	_ = mime.AddExtensionType(".css", "text/css; charset=utf-8")
+	_ = mime.AddExtensionType(".html", "text/html; charset=utf-8")
+	_ = mime.AddExtensionType(".json", "application/json")
+	_ = mime.AddExtensionType(".map", "application/json") // Source maps
+	_ = mime.AddExtensionType(".svg", "image/svg+xml")
+	_ = mime.AddExtensionType(".woff", "font/woff")
+	_ = mime.AddExtensionType(".woff2", "font/woff2")
+}
 
 // Handler returns the HTTP handler
 func (s *Server) Handler() http.Handler {
@@ -164,24 +180,9 @@ func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Set correct MIME type
-	ext := filepath.Ext(fullPath)
-	switch ext {
-	case ".js", ".mjs", ".cjs":
-		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
-	case ".css":
-		w.Header().Set("Content-Type", "text/css; charset=utf-8")
-	case ".html":
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	case ".map":
-	case ".json":
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	case ".svg":
-		w.Header().Set("Content-Type", "image/svg+xml")
-	case ".woff":
-		w.Header().Set("Content-Type", "font/woff")
-	case ".woff2":
-		w.Header().Set("Content-Type", "font/woff2")
+	// Set correct MIME type using stdlib
+	if contentType := mime.TypeByExtension(filepath.Ext(fullPath)); contentType != "" {
+		w.Header().Set("Content-Type", contentType)
 	}
 
 	// Write the content
