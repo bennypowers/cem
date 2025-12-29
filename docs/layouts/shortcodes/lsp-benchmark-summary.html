@@ -1,0 +1,97 @@
+{{ $cem := .Site.Data.lsp_benchmark_results_cem | default dict }}
+{{ $wc := .Site.Data.lsp_benchmark_results_wc_toolkit | default dict }}
+
+<div class="lsp-benchmark-summary">
+  {{ if and $cem.timestamp $wc.timestamp }}
+  <div class="benchmark-servers">
+    <div class="server-card">
+      <h3>CEM LSP</h3>
+      <dl>
+        <dt>Last Updated</dt>
+        <dd>{{ $cem.timestamp }}</dd>
+        <dt>Success Rate</dt>
+        <dd>{{ if $cem.benchmarks }}
+          {{ $total := 0 }}
+          {{ $success := 0 }}
+          {{ range $name, $bench := $cem.benchmarks }}
+            {{ $total = add $total 1 }}
+            {{ if $bench.success }}
+              {{ $success = add $success 1 }}
+            {{ end }}
+          {{ end }}
+          {{ printf "%.1f%%" (mul (div (float $success) (float $total)) 100) }} ({{ $success }}/{{ $total }})
+        {{ end }}</dd>
+        <dt>Startup Time (Mean)</dt>
+        <dd>{{ if $cem.benchmarks.startup }}{{ printf "%.2fms" $cem.benchmarks.startup.statistics.mean }}{{ end }}</dd>
+      </dl>
+    </div>
+
+    <div class="server-card">
+      <h3>wc-toolkit LSP</h3>
+      <dl>
+        <dt>Last Updated</dt>
+        <dd>{{ $wc.timestamp }}</dd>
+        <dt>Success Rate</dt>
+        <dd>{{ if $wc.benchmarks }}
+          {{ $total := 0 }}
+          {{ $success := 0 }}
+          {{ range $name, $bench := $wc.benchmarks }}
+            {{ $total = add $total 1 }}
+            {{ if $bench.success }}
+              {{ $success = add $success 1 }}
+            {{ end }}
+          {{ end }}
+          {{ printf "%.1f%%" (mul (div (float $success) (float $total)) 100) }} ({{ $success }}/{{ $total }})
+        {{ end }}</dd>
+        <dt>Startup Time (Mean)</dt>
+        <dd>{{ if $wc.benchmarks.startup }}{{ printf "%.2fms" $wc.benchmarks.startup.statistics.mean }}{{ end }}</dd>
+      </dl>
+    </div>
+  </div>
+  {{ else }}
+  <p><em>No LSP benchmark data available. Run <code>make bench-lsp</code> to generate results.</em></p>
+  {{ end }}
+</div>
+
+<style>
+.lsp-benchmark-summary {
+  margin: 2em 0;
+}
+
+.benchmark-servers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5em;
+  margin: 1em 0;
+}
+
+.server-card {
+  background: var(--sl-color-bg-nav);
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.5rem;
+  padding: 1.5em;
+}
+
+.server-card h3 {
+  margin-top: 0;
+  color: var(--sl-color-white);
+}
+
+.server-card dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.5em 1em;
+  margin: 0;
+}
+
+.server-card dt {
+  font-weight: 600;
+  color: var(--sl-color-gray-2);
+}
+
+.server-card dd {
+  margin: 0;
+  color: var(--sl-color-white);
+  font-variant-numeric: tabular-nums;
+}
+</style>

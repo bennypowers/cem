@@ -302,6 +302,17 @@ make bench-lsp-cem        # CEM LSP only
 make bench-lsp-wc         # wc-toolkit LSP only
 ```
 
+#### Latest Results
+
+{{<lsp-benchmark-summary>}}
+
+<figure class="lsp-benchmarks-comparison" role="group" aria-labelledby="lsp-chart-caption">
+  <figcaption id="lsp-chart-caption" style="font-weight:bold;margin-bottom:0.5em;">
+    LSP performance comparison: lower is better (milliseconds)
+  </figcaption>
+  {{<lsp-benchmark-chart>}}
+</figure>
+
 #### Benchmark Categories
 
 The benchmark suite tests LSP servers across **9 critical dimensions**:

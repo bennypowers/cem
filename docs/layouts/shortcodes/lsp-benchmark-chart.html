@@ -1,0 +1,118 @@
+{{ $cem := .Site.Data.lsp_benchmark_results_cem | default dict }}
+{{ $wc := .Site.Data.lsp_benchmark_results_wc_toolkit | default dict }}
+
+{{ if and $cem.benchmarks $wc.benchmarks }}
+{{ $benchmarks := slice "startup" "hover" "completion" "diagnostics" }}
+{{ $bar_height := 40 }}
+{{ $bar_spacing := 60 }}
+{{ $chart_width := 600 }}
+{{ $label_width := 180 }}
+{{ $total_width := add $chart_width $label_width }}
+
+<div class="lsp-comparison-chart">
+  <svg viewBox="0 0 {{ $total_width }} {{ add (mul (len $benchmarks) $bar_spacing) 40 }}" style="width: 100%; height: auto;">
+    <defs>
+      <linearGradient id="cem-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#60a5fa;stop-opacity:1" />
+      </linearGradient>
+      <linearGradient id="wc-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#a78bfa;stop-opacity:1" />
+      </linearGradient>
+    </defs>
+
+    {{ $y := 20 }}
+    {{ range $i, $benchmarkName := $benchmarks }}
+      {{ $cemBench := index $cem.benchmarks $benchmarkName }}
+      {{ $wcBench := index $wc.benchmarks $benchmarkName }}
+
+      {{ if and $cemBench $wcBench }}
+        {{ $cemTime := 0.0 }}
+        {{ $wcTime := 0.0 }}
+
+        {{ if $cemBench.statistics }}
+          {{ $cemTime = $cemBench.statistics.mean }}
+        {{ else if $cemBench.duration_ms }}
+          {{ $cemTime = $cemBench.duration_ms }}
+        {{ end }}
+
+        {{ if $wcBench.statistics }}
+          {{ $wcTime = $wcBench.statistics.mean }}
+        {{ else if $wcBench.duration_ms }}
+          {{ $wcTime = $wcBench.duration_ms }}
+        {{ end }}
+
+        {{ $maxTime := cond (gt $cemTime $wcTime) $cemTime $wcTime }}
+        {{ $cemWidth := div (mul $chart_width $cemTime) $maxTime }}
+        {{ $wcWidth := div (mul $chart_width $wcTime) $maxTime }}
+
+        <!-- Benchmark label -->
+        <text x="0" y="{{ add $y 12 }}"
+              font-size="14"
+              font-weight="600"
+              fill="var(--sl-color-white)">
+          {{ humanize $benchmarkName }}
+        </text>
+
+        <!-- CEM bar -->
+        <rect x="{{ $label_width }}"
+              y="{{ $y }}"
+              width="{{ $cemWidth }}"
+              height="16"
+              rx="3"
+              fill="url(#cem-gradient)">
+          <title>CEM: {{ printf "%.2fms" $cemTime }}</title>
+        </rect>
+        <text x="{{ add $label_width $cemWidth 8 }}"
+              y="{{ add $y 12 }}"
+              font-size="12"
+              fill="var(--sl-color-gray-2)">
+          {{ printf "%.2fms" $cemTime }}
+        </text>
+
+        <!-- wc-toolkit bar -->
+        <rect x="{{ $label_width }}"
+              y="{{ add $y 22 }}"
+              width="{{ $wcWidth }}"
+              height="16"
+              rx="3"
+              fill="url(#wc-gradient)">
+          <title>wc-toolkit: {{ printf "%.2fms" $wcTime }}</title>
+        </rect>
+        <text x="{{ add $label_width $wcWidth 8 }}"
+              y="{{ add $y 34 }}"
+              font-size="12"
+              fill="var(--sl-color-gray-2)">
+          {{ printf "%.2fms" $wcTime }}
+        </text>
+
+        {{ $y = add $y $bar_spacing }}
+      {{ end }}
+    {{ end }}
+
+    <!-- Legend -->
+    {{ $legendY := sub $y 10 }}
+    <rect x="{{ $label_width }}" y="{{ $legendY }}" width="80" height="14" rx="3" fill="url(#cem-gradient)" />
+    <text x="{{ add $label_width 88 }}" y="{{ add $legendY 11 }}" font-size="12" fill="var(--sl-color-white)">CEM LSP</text>
+
+    <rect x="{{ add $label_width 180 }}" y="{{ $legendY }}" width="80" height="14" rx="3" fill="url(#wc-gradient)" />
+    <text x="{{ add $label_width 268 }}" y="{{ add $legendY 11 }}" font-size="12" fill="var(--sl-color-white)">wc-toolkit</text>
+  </svg>
+</div>
+
+<style>
+.lsp-comparison-chart {
+  margin: 2em 0;
+  padding: 1em;
+  background: var(--sl-color-bg-nav);
+  border-radius: 0.5rem;
+}
+
+.lsp-comparison-chart svg {
+  background: transparent;
+}
+</style>
+{{ else }}
+<p><em>Run <code>make bench-lsp</code> to generate comparison charts.</em></p>
+{{ end }}

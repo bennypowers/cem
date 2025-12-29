@@ -191,17 +191,26 @@ local function run_all_benchmarks()
     print("🚨 Server performance is POOR")
   end
   
-  -- Save results to file
-  local results_file = string.format('results/%s_modular_results_%s.json', 
+  -- Save results to timestamped file in results/
+  local results_file = string.format('results/%s_modular_results_%s.json',
     server_name, os.date("%Y%m%d_%H%M%S"))
-  
+
   -- Ensure results directory exists
   vim.fn.mkdir(script_dir .. '/results', 'p')
-  
+
   local json_content = vim.fn.json_encode(all_results)
   vim.fn.writefile({json_content}, script_dir .. '/' .. results_file)
-  
+
   print(string.format("\nResults saved to: %s", results_file))
+
+  -- Also save to docs/data/ for docs site visualization
+  local docs_data_dir = script_dir .. '/../../docs/data'
+  if vim.fn.isdirectory(docs_data_dir) == 1 then
+    vim.fn.mkdir(docs_data_dir, 'p')
+    local docs_file = string.format('%s/lsp-benchmark-results-%s.json', docs_data_dir, server_name)
+    vim.fn.writefile({json_content}, docs_file)
+    print(string.format("Docs copy saved to: docs/data/lsp-benchmark-results-%s.json", server_name))
+  end
   
   -- Final timing report
   local total_elapsed_time = vim.fn.reltime(overall_start_time)[1]
