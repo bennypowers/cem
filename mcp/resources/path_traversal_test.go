@@ -196,7 +196,7 @@ func TestDataTraversal_CrossReference(t *testing.T) {
 				"attrName": "color",
 			},
 			expected: map[string]any{"name": "color", "type": "string"},
-			wantErr: false,
+			wantErr:  false,
 		},
 		{
 			name:   "missing variable in args",
@@ -476,12 +476,12 @@ func TestDataFetcher_NewFormat(t *testing.T) {
 // TestDataTraversal_SubResource tests sub-resource filtering with the new system
 func TestDataTraversal_SubResource(t *testing.T) {
 	tests := []struct {
-		name        string
-		fetchers    []types.DataFetcher
-		args        map[string]any
-		registry    map[string]any
-		expected    map[string]any
-		wantErr     bool
+		name     string
+		fetchers []types.DataFetcher
+		args     map[string]any
+		registry map[string]any
+		expected map[string]any
+		wantErr  bool
 	}{
 		{
 			name: "sub-resource attribute filtering",

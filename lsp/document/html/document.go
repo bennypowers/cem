@@ -204,12 +204,12 @@ func (d *HTMLDocument) findCustomElements(handler *Handler) ([]types.CustomEleme
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
-	tree := d.tree  // Access tree directly while holding lock
+	tree := d.tree // Access tree directly while holding lock
 	if tree == nil {
 		return elements, nil
 	}
 
-	content := d.content  // Access content directly while holding lock
+	content := d.content // Access content directly while holding lock
 
 	// Create a fresh query matcher for thread safety
 	matcher, err := Q.GetCachedQueryMatcher(handler.queryManager, "html", "customElements")
@@ -702,7 +702,9 @@ func (d *HTMLDocument) FindCustomElements(dm any) ([]types.CustomElementMatch, e
 			results := method.Call([]reflect.Value{reflect.ValueOf("html")})
 			if len(results) > 0 && !results[0].IsNil() {
 				handler := results[0].Interface()
-				if h, ok := handler.(interface{ FindCustomElements(types.Document) ([]types.CustomElementMatch, error) }); ok {
+				if h, ok := handler.(interface {
+					FindCustomElements(types.Document) ([]types.CustomElementMatch, error)
+				}); ok {
 					return h.FindCustomElements(d)
 				}
 			}
@@ -746,4 +748,3 @@ func (d *HTMLDocument) FindHeadInsertionPoint(dm any) (protocol.Position, bool) 
 	}
 	return protocol.Position{}, false
 }
-

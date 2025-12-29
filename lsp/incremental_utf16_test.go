@@ -26,11 +26,11 @@ import (
 // TestUTF16ToByteOffset tests conversion from LSP UTF-16 positions to UTF-8 byte offsets
 func TestUTF16ToByteOffset(t *testing.T) {
 	tests := []struct {
-		name           string
-		text           string
-		utf16Offset    uint32
-		expectedByte   uint
-		description    string
+		name         string
+		text         string
+		utf16Offset  uint32
+		expectedByte uint
+		description  string
 	}{
 		{
 			name:         "ASCII only",
@@ -49,7 +49,7 @@ func TestUTF16ToByteOffset(t *testing.T) {
 		{
 			name:         "Emoji in middle",
 			text:         "hello 😀 world",
-			utf16Offset:  8, // "hello " (6) + emoji (2)
+			utf16Offset:  8,  // "hello " (6) + emoji (2)
 			expectedByte: 10, // "hello " (6 bytes) + emoji (4 bytes)
 			description:  "Emoji in the middle of text",
 		},
@@ -70,7 +70,7 @@ func TestUTF16ToByteOffset(t *testing.T) {
 		{
 			name:         "Mixed ASCII and emoji",
 			text:         "Hello 🌍 World",
-			utf16Offset:  8, // "Hello " (6) + emoji (2)
+			utf16Offset:  8,  // "Hello " (6) + emoji (2)
 			expectedByte: 10, // "Hello " (6 bytes) + emoji (4 bytes)
 			description:  "Mixed ASCII and emoji",
 		},
@@ -98,8 +98,8 @@ func TestUTF16ToByteOffset(t *testing.T) {
 		{
 			name:         "Replacement char U+FFFD (valid)",
 			text:         "�x", // U+FFFD followed by ASCII
-			utf16Offset:  1,   // after U+FFFD (1 UTF-16 unit)
-			expectedByte: 3,   // U+FFFD is 3 bytes in UTF-8
+			utf16Offset:  1,    // after U+FFFD (1 UTF-16 unit)
+			expectedByte: 3,    // U+FFFD is 3 bytes in UTF-8
 			description:  "Valid U+FFFD should count as one UTF-16 unit, three bytes",
 		},
 	}
@@ -118,11 +118,11 @@ func TestUTF16ToByteOffset(t *testing.T) {
 // TestByteOffsetToUTF16 tests conversion from UTF-8 byte offsets to LSP UTF-16 positions
 func TestByteOffsetToUTF16(t *testing.T) {
 	tests := []struct {
-		name           string
-		text           string
-		byteOffset     uint
-		expectedUTF16  uint32
-		description    string
+		name          string
+		text          string
+		byteOffset    uint
+		expectedUTF16 uint32
+		description   string
 	}{
 		{
 			name:          "ASCII only",
@@ -148,8 +148,8 @@ func TestByteOffsetToUTF16(t *testing.T) {
 		{
 			name:          "Replacement char U+FFFD (valid)",
 			text:          "�x",
-			byteOffset:    3,  // after U+FFFD's 3 bytes
-			expectedUTF16: 1,  // one UTF-16 code unit
+			byteOffset:    3, // after U+FFFD's 3 bytes
+			expectedUTF16: 1, // one UTF-16 code unit
 			description:   "Valid U+FFFD should map 3 bytes -> 1 UTF-16 unit",
 		},
 	}
@@ -193,8 +193,8 @@ func TestIncrementalParseWithUTF16(t *testing.T) {
 			initial: "Hello XX World",
 			change: protocol.TextDocumentContentChangeEvent{
 				Range: &protocol.Range{
-					Start: protocol.Position{Line: 0, Character: 6},  // "XX" starts at position 6
-					End:   protocol.Position{Line: 0, Character: 8},  // "XX" ends at position 8
+					Start: protocol.Position{Line: 0, Character: 6}, // "XX" starts at position 6
+					End:   protocol.Position{Line: 0, Character: 8}, // "XX" ends at position 8
 				},
 				Text: "😀",
 			},

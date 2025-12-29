@@ -34,18 +34,18 @@ type Document interface {
 	FindCustomElements(dm any) ([]CustomElementMatch, error)
 	AnalyzeCompletionContextTS(position protocol.Position, dm any) *CompletionAnalysis
 	CompletionPrefix(analysis *CompletionAnalysis) string                            // Get completion prefix using tree-sitter
-	ScriptTags() []ScriptTag                                                      // Get parsed script tags
+	ScriptTags() []ScriptTag                                                         // Get parsed script tags
 	FindModuleScript() (protocol.Position, bool)                                     // Find insertion point in module script
 	FindInlineModuleScript() (protocol.Position, bool)                               // Find insertion point in inline module script (no src)
 	FindHeadInsertionPoint(dm any) (protocol.Position, bool)                         // Find insertion point in <head> section
 	ByteRangeToProtocolRange(content string, startByte, endByte uint) protocol.Range // Convert byte range to protocol range
-	Close()                                                                           // Clean up document resources
+	Close()                                                                          // Clean up document resources
 
 	// Tree-sitter methods for incremental parsing support
-	Tree() *ts.Tree                   // Get the current syntax tree
-	SetTree(tree *ts.Tree)            // Set the syntax tree
-	Parser() *ts.Parser               // Get the tree-sitter parser
-	SetParser(parser *ts.Parser)      // Set the tree-sitter parser
+	Tree() *ts.Tree                              // Get the current syntax tree
+	SetTree(tree *ts.Tree)                       // Set the syntax tree
+	Parser() *ts.Parser                          // Get the tree-sitter parser
+	SetParser(parser *ts.Parser)                 // Set the tree-sitter parser
 	UpdateContent(content string, version int32) // Update document content
 }
 

@@ -133,9 +133,9 @@ func TestIntegration_ConditionalTemplate(t *testing.T) {
 	mw := shadowroot.NewWithPrefix(logger, broadcaster, integrationFS, "integration_testdata/templates/elements", realTemplateRenderer)
 
 	tests := []struct {
-		name     string
-		html     string
-		contains string
+		name        string
+		html        string
+		contains    string
 		notContains string
 	}{
 		{

@@ -32,11 +32,11 @@ import (
 
 // Cursor positions for each test fixture (in Go code, not JSON)
 var cursorPositions = map[string]protocol.Position{
-	"basic-references":      {Line: 0, Character: 5},
-	"workspace-search":      {Line: 0, Character: 5},
-	"gitignore-filtering":   {Line: 0, Character: 5},
-	"no-element":            {Line: 0, Character: 5},
-	"missing-document":      {Line: 0, Character: 0},
+	"basic-references":    {Line: 0, Character: 5},
+	"workspace-search":    {Line: 0, Character: 5},
+	"gitignore-filtering": {Line: 0, Character: 5},
+	"no-element":          {Line: 0, Character: 5},
+	"missing-document":    {Line: 0, Character: 0},
 }
 
 func TestReferences_Fixtures(t *testing.T) {

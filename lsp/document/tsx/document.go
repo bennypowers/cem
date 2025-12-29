@@ -31,12 +31,12 @@ import (
 // Completion scoring constants for prioritizing tree-sitter captures
 const (
 	// Base scores for different completion types (lower scores are more specific)
-	SCORE_TAG_NAME_BASE       = 10 // Most specific: tag name completion
-	SCORE_ATTR_NAME_BASE      = 20 // Medium specificity: attribute name completion
-	SCORE_ATTR_VALUE_BASE     = 30 // Least specific: attribute value completion
+	SCORE_TAG_NAME_BASE   = 10 // Most specific: tag name completion
+	SCORE_ATTR_NAME_BASE  = 20 // Medium specificity: attribute name completion
+	SCORE_ATTR_VALUE_BASE = 30 // Least specific: attribute value completion
 
 	// Bonus/penalty scoring factors
-	SCORE_CURSOR_BONUS        = 50 // Large bonus for captures containing cursor
+	SCORE_CURSOR_BONUS          = 50 // Large bonus for captures containing cursor
 	SCORE_BROAD_CAPTURE_PENALTY = 5  // Penalty multiplier for broad captures (ERROR nodes)
 
 	// Thresholds for completion analysis

@@ -43,12 +43,12 @@ type InProcessGenerateWatcher struct {
 	ctx             context.Context
 	cancel          context.CancelFunc
 	mu              sync.RWMutex
-	done            chan struct{} // Signal to stop file watching
+	done            chan struct{}  // Signal to stop file watching
 	wg              sync.WaitGroup // Wait for goroutine to exit
 	workspace       types.WorkspaceContext
 	globs           []string
 	callback        ManifestUpdateCallback
-	debounceTimer   *time.Timer  // Track debounce timer for cleanup
+	debounceTimer   *time.Timer // Track debounce timer for cleanup
 }
 
 // NewInProcessGenerateWatcher creates a new in-process generate watcher

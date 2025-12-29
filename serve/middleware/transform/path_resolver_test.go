@@ -180,8 +180,8 @@ func TestPathResolver_NonJsExtension(t *testing.T) {
 
 	// Test non-.js extensions
 	testCases := []string{
-		"/components/button.ts",  // Already TypeScript
-		"/components/button.css", // CSS file
+		"/components/button.ts",   // Already TypeScript
+		"/components/button.css",  // CSS file
 		"/components/button.html", // HTML file
 		"/components/button",      // No extension
 	}

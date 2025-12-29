@@ -82,18 +82,18 @@ func NewDefaultLogger() Logger {
 
 // ptermLogger implements Logger interface using pterm live rendering
 type ptermLogger struct {
-	verbose       bool
-	logs          []LogEntry // Structured logs for web interface
-	terminalLogs  []string   // Colored logs for terminal display
-	pendingLogs   []pendingLog // Logs buffered before area starts
-	maxLogs       int
-	maxTermLogs   int
-	mu            sync.Mutex
-	renderMu      sync.Mutex // Serializes area.Update() calls to prevent interleaved output
-	interactive   bool
-	area          *pterm.AreaPrinter
-	status        string
-	wsManager     Broadcaster // WebSocket manager for broadcasting logs
+	verbose      bool
+	logs         []LogEntry   // Structured logs for web interface
+	terminalLogs []string     // Colored logs for terminal display
+	pendingLogs  []pendingLog // Logs buffered before area starts
+	maxLogs      int
+	maxTermLogs  int
+	mu           sync.Mutex
+	renderMu     sync.Mutex // Serializes area.Update() calls to prevent interleaved output
+	interactive  bool
+	area         *pterm.AreaPrinter
+	status       string
+	wsManager    Broadcaster // WebSocket manager for broadcasting logs
 }
 
 // pendingLog represents a log entry waiting to be displayed
@@ -386,4 +386,3 @@ func (l *ptermLogger) Clear() {
 		l.render()
 	}
 }
-

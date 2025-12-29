@@ -123,7 +123,6 @@ func TestCompletionContextAnalysis(t *testing.T) {
 				analysis = &types.CompletionAnalysis{Type: types.CompletionUnknown}
 			}
 
-
 			if analysis.Type != tt.expectedType {
 				t.Errorf("Expected completion type %d, got %d", tt.expectedType, analysis.Type)
 			}

@@ -54,8 +54,9 @@ type GoldenOptions struct {
 // If --update flag is set, it updates the golden file instead of comparing.
 //
 // Example:
-//   CheckGolden(t, "output", actual, GoldenOptions{Dir: "testdata", Extension: ".html"})
-//   CheckGolden(t, "", actual, GoldenOptions{AutoName: true, StripANSI: true})
+//
+//	CheckGolden(t, "output", actual, GoldenOptions{Dir: "testdata", Extension: ".html"})
+//	CheckGolden(t, "", actual, GoldenOptions{AutoName: true, StripANSI: true})
 func CheckGolden(t *testing.T, name string, actual []byte, opts ...GoldenOptions) {
 	t.Helper()
 
@@ -154,7 +155,8 @@ func CheckGolden(t *testing.T, name string, actual []byte, opts ...GoldenOptions
 // Returns the file contents or fails the test if not found.
 //
 // Example:
-//   data := LoadFixture(t, "chrome-rendering/basic-demo.html")
+//
+//	data := LoadFixture(t, "chrome-rendering/basic-demo.html")
 func LoadFixture(t *testing.T, path string) []byte {
 	t.Helper()
 
@@ -181,8 +183,9 @@ func LoadFixture(t *testing.T, path string) []byte {
 // LoadJSONFixture loads and unmarshals a JSON fixture into the provided value.
 //
 // Example:
-//   var pkg manifest.Package
-//   LoadJSONFixture(t, "custom-elements.json", &pkg)
+//
+//	var pkg manifest.Package
+//	LoadJSONFixture(t, "custom-elements.json", &pkg)
 func LoadJSONFixture(t *testing.T, path string, v any) {
 	t.Helper()
 

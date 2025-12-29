@@ -307,4 +307,3 @@ func isPositionInRange(pos protocol.Position, r protocol.Range) bool {
 
 	return true
 }
-

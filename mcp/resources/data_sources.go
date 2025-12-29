@@ -81,16 +81,16 @@ func (p *DataSourceProvider) createRegistryDataSource() (map[string]any, error) 
 	elementsMap := make(map[string]any)
 	for tagName, element := range allElements {
 		elementData := map[string]any{
-			"tagName":     element.TagName(),
-			"name":        element.Name(),
-			"description": element.Description(),
-			"module":      element.Module(),
-			"attributes":  convertAttributes(element.Attributes()),
-			"slots":       convertSlots(element.Slots()),
-			"events":      convertEvents(element.Events()),
+			"tagName":       element.TagName(),
+			"name":          element.Name(),
+			"description":   element.Description(),
+			"module":        element.Module(),
+			"attributes":    convertAttributes(element.Attributes()),
+			"slots":         convertSlots(element.Slots()),
+			"events":        convertEvents(element.Events()),
 			"cssProperties": convertCssProperties(element.CssProperties()),
-			"cssParts":    convertCssParts(element.CssParts()),
-			"cssStates":   convertCssStates(element.CssStates()),
+			"cssParts":      convertCssParts(element.CssParts()),
+			"cssStates":     convertCssStates(element.CssStates()),
 		}
 		elementsMap[tagName] = elementData
 	}
@@ -179,16 +179,16 @@ func (p *DataSourceProvider) createElementsSummary(allElements map[string]types.
 		}
 
 		elementSummary := map[string]any{
-			"tagName":            element.TagName(),
-			"name":               element.Name(),
-			"package":            packageName,
-			"attributeCount":     attributeCount,
-			"slotCount":          slotCount,
-			"eventCount":         eventCount,
-			"cssPropertyCount":   cssPropertyCount,
-			"cssPartCount":       cssPartCount,
-			"cssStateCount":      cssStateCount,
-			"capabilities":       capabilities,
+			"tagName":          element.TagName(),
+			"name":             element.Name(),
+			"package":          packageName,
+			"attributeCount":   attributeCount,
+			"slotCount":        slotCount,
+			"eventCount":       eventCount,
+			"cssPropertyCount": cssPropertyCount,
+			"cssPartCount":     cssPartCount,
+			"cssStateCount":    cssStateCount,
+			"capabilities":     capabilities,
 		}
 
 		elements = append(elements, elementSummary)
@@ -209,13 +209,13 @@ func (p *DataSourceProvider) createElementsSummary(allElements map[string]types.
 	summary := map[string]any{
 		"elements": elements,
 		"metadata": map[string]any{
-			"categories":     categoryCounts,
+			"categories":    categoryCounts,
 			"totalElements": len(elements),
 		},
 	}
 
 	metadata := map[string]any{
-		"categories":     categoryCounts,
+		"categories":    categoryCounts,
 		"totalElements": len(elements),
 	}
 
@@ -257,8 +257,8 @@ func (p *DataSourceProvider) createSchemaDataSource() (map[string]any, error) {
 		"version":           selectedVersion,
 		"availableVersions": versions,
 		"definitions":       schema["definitions"],
-		"full":             schema,
-		"json":             string(jsonBytes),
+		"full":              schema,
+		"json":              string(jsonBytes),
 	}, nil
 }
 

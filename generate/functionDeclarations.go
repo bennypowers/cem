@@ -20,9 +20,9 @@ import (
 	"errors"
 	"fmt"
 
+	"bennypowers.dev/cem/generate/jsdoc"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
-	"bennypowers.dev/cem/generate/jsdoc"
 )
 
 func (mp *ModuleProcessor) generateFunctionDeclaration(

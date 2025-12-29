@@ -159,8 +159,8 @@ type CompletionManifestFixture struct {
 	Elements map[string]struct {
 		TagName    string `json:"tagName"`
 		Attributes map[string]struct {
-			Name    string `json:"name"`
-			Type    *struct {
+			Name string `json:"name"`
+			Type *struct {
 				Text string `json:"text"`
 			} `json:"type,omitempty"`
 			Default string `json:"default,omitempty"`

@@ -345,10 +345,10 @@ func (c *FileSystemWorkspaceContext) ResolveModuleDependency(
 // If the path is already inside a workspace package subdirectory, it will find the parent workspace root.
 //
 // VCS Boundary Handling:
-// - If a directory has ONLY VCS markers (.git) without workspace metadata, treat it as a hard boundary
-// - This prevents crossing Git submodule boundaries
-// - If a directory has workspace metadata (pnpm-workspace.yaml, package.json with workspaces),
-//   continue climbing to find the topmost workspace root
+//   - If a directory has ONLY VCS markers (.git) without workspace metadata, treat it as a hard boundary
+//   - This prevents crossing Git submodule boundaries
+//   - If a directory has workspace metadata (pnpm-workspace.yaml, package.json with workspaces),
+//     continue climbing to find the topmost workspace root
 func FindWorkspaceRoot(startPath string) (string, error) {
 	// Resolve to absolute path
 	absPath, err := filepath.Abs(startPath)

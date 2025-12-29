@@ -31,15 +31,15 @@ import (
 
 // CSSConfig holds configuration for CSS transformation
 type CSSConfig struct {
-	WatchDirFunc     func() string           // Function to get current watch directory
+	WatchDirFunc     func() string // Function to get current watch directory
 	Logger           types.Logger
 	ErrorBroadcaster types.ErrorBroadcaster  // Sends errors to browser error overlay
-	ConfigFile       string                   // Path to config file (for error reporting)
-	Enabled          bool                     // Enable/disable CSS transformation
-	Include          []string                 // Glob patterns to include (empty means all .css files)
-	Exclude          []string                 // Glob patterns to exclude
-	FS               platform.FileSystem      // Filesystem abstraction for testability
-	PathResolver     middleware.PathResolver  // Cached path resolver for efficient URL rewriting
+	ConfigFile       string                  // Path to config file (for error reporting)
+	Enabled          bool                    // Enable/disable CSS transformation
+	Include          []string                // Glob patterns to include (empty means all .css files)
+	Exclude          []string                // Glob patterns to exclude
+	FS               platform.FileSystem     // Filesystem abstraction for testability
+	PathResolver     middleware.PathResolver // Cached path resolver for efficient URL rewriting
 }
 
 // shouldTransformCSS checks if a CSS file should be transformed based on include/exclude patterns

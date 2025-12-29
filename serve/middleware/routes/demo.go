@@ -29,13 +29,13 @@ import (
 
 // DemoRouteEntry maps a local route to demo metadata
 type DemoRouteEntry struct {
-	LocalRoute  string                        // e.g., "/elements/accordion/demo/"
-	TagName     string                        // e.g., "rh-accordion"
-	Demo        *M.Demo                       // Demo metadata from manifest
-	Declaration *M.CustomElementDeclaration   // Custom element declaration (for descriptions)
-	FilePath    string                        // Relative file path from watch dir
-	PackageName string                        // Package name (for workspace mode)
-	PackagePath string                        // Absolute path to package directory (for workspace mode)
+	LocalRoute  string                      // e.g., "/elements/accordion/demo/"
+	TagName     string                      // e.g., "rh-accordion"
+	Demo        *M.Demo                     // Demo metadata from manifest
+	Declaration *M.CustomElementDeclaration // Custom element declaration (for descriptions)
+	FilePath    string                      // Relative file path from watch dir
+	PackageName string                      // Package name (for workspace mode)
+	PackagePath string                      // Absolute path to package directory (for workspace mode)
 }
 
 // BuildDemoRoutingTable creates a routing table from manifest

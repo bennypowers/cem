@@ -33,10 +33,11 @@ import (
 // Returns empty slice if config file doesn't exist or has no URL rewrites.
 //
 // Example config file:
-//   serve:
-//     urlRewrites:
-//       - urlPattern: "/dist/:path*"
-//         urlTemplate: "/src/{{.path}}"
+//
+//	serve:
+//	  urlRewrites:
+//	    - urlPattern: "/dist/:path*"
+//	      urlTemplate: "/src/{{.path}}"
 func ParseConfigFileURLRewrites(configPath string, fs platform.FileSystem) ([]cfg.URLRewrite, []string, error) {
 	// Convert to absolute path for consistent tracking
 	absPath, err := filepath.Abs(configPath)

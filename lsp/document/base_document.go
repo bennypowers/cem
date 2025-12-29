@@ -271,4 +271,3 @@ func (d *BaseDocument) byteOffsetToPosition(offset uint) protocol.Position {
 		Character: char,
 	}
 }
-

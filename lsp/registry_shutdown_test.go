@@ -217,4 +217,3 @@ func TestGenerateWatcherDoubleStart(t *testing.T) {
 	// Cleanup
 	_ = watcher.Stop()
 }
-

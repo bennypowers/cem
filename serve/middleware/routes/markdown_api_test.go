@@ -36,20 +36,20 @@ type mockContext struct {
 	manifestBytes []byte
 }
 
-func (m *mockContext) WatchDir() string                                  { return "" }
-func (m *mockContext) IsWorkspace() bool                                 { return false }
-func (m *mockContext) WorkspacePackages() []middleware.WorkspacePackage  { return nil }
-func (m *mockContext) Manifest() ([]byte, error)                         { return m.manifestBytes, nil }
-func (m *mockContext) ImportMap() middleware.ImportMap                   { return nil }
-func (m *mockContext) DemoRoutes() any                                   { return nil }
-func (m *mockContext) SourceControlRootURL() string                      { return "" }
-func (m *mockContext) Logger() logger.Logger                             { return logger.NewDefaultLogger() }
-func (m *mockContext) FileSystem() platform.FileSystem                   { return nil }
-func (m *mockContext) PackageJSON() (*middleware.PackageJSON, error)     { return nil, nil }
-func (m *mockContext) BroadcastError(title, message, file string) error  { return nil }
-func (m *mockContext) DemoRenderingMode() string                         { return "light" }
-func (m *mockContext) URLRewrites() []config.URLRewrite                  { return nil }
-func (m *mockContext) PathResolver() middleware.PathResolver             { return nil }
+func (m *mockContext) WatchDir() string                                 { return "" }
+func (m *mockContext) IsWorkspace() bool                                { return false }
+func (m *mockContext) WorkspacePackages() []middleware.WorkspacePackage { return nil }
+func (m *mockContext) Manifest() ([]byte, error)                        { return m.manifestBytes, nil }
+func (m *mockContext) ImportMap() middleware.ImportMap                  { return nil }
+func (m *mockContext) DemoRoutes() any                                  { return nil }
+func (m *mockContext) SourceControlRootURL() string                     { return "" }
+func (m *mockContext) Logger() logger.Logger                            { return logger.NewDefaultLogger() }
+func (m *mockContext) FileSystem() platform.FileSystem                  { return nil }
+func (m *mockContext) PackageJSON() (*middleware.PackageJSON, error)    { return nil, nil }
+func (m *mockContext) BroadcastError(title, message, file string) error { return nil }
+func (m *mockContext) DemoRenderingMode() string                        { return "light" }
+func (m *mockContext) URLRewrites() []config.URLRewrite                 { return nil }
+func (m *mockContext) PathResolver() middleware.PathResolver            { return nil }
 
 func TestServeMarkdownAPI_ValidPaths(t *testing.T) {
 	// Create test manifest with markdown content

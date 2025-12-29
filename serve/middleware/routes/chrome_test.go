@@ -219,6 +219,7 @@ func TestChromeRendering_WithNavigation(t *testing.T) {
 		t.Log("Run 'make update' to update golden files")
 	}
 }
+
 // TestChromeRendering_Chromeless verifies chromeless mode renders minimal HTML
 func TestChromeRendering_Chromeless(t *testing.T) {
 	// Read demo partial
@@ -263,13 +264,13 @@ func TestChromeRendering_NilManifest(t *testing.T) {
 
 	// Render chrome with nil manifest (workspace mode scenario)
 	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
-		TagName:      "my-element",
-		DemoTitle:    "Workspace Mode Demo",
-		DemoHTML:     template.HTML(demoHTML),
-		ImportMap:    "{}",
-		Description:  "Testing nil manifest handling",
-		PackageName:  "workspace-package",
-		Manifest:     nil, // Explicitly nil - this should not crash
+		TagName:     "my-element",
+		DemoTitle:   "Workspace Mode Demo",
+		DemoHTML:    template.HTML(demoHTML),
+		ImportMap:   "{}",
+		Description: "Testing nil manifest handling",
+		PackageName: "workspace-package",
+		Manifest:    nil, // Explicitly nil - this should not crash
 	})
 	if err != nil {
 		t.Fatalf("Failed to render chrome with nil manifest: %v", err)

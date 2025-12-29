@@ -41,15 +41,15 @@ type ChromeData struct {
 	KnobsHTML      template.HTML // Rendered knobs controls HTML
 	ImportMap      template.HTML // Use HTML instead of JS for importmap script content
 	Description    template.HTML
-	RenderingMode  string        // "light", "shadow", or "iframe"
-	SourceURL      string        // Source file URL (e.g., GitHub blob URL)
-	CanonicalURL   string        // Canonical demo URL
-	PackageName    string        // Package name for title (listing pages)
-	NavigationHTML template.HTML // Navigation drawer HTML (listing pages)
-	ManifestJSON   template.JS   // Full manifest JSON for client-side tools
-	Manifest       *M.Package    // Parsed manifest for server-side tree rendering
+	RenderingMode  string                // "light", "shadow", or "iframe"
+	SourceURL      string                // Source file URL (e.g., GitHub blob URL)
+	CanonicalURL   string                // Canonical demo URL
+	PackageName    string                // Package name for title (listing pages)
+	NavigationHTML template.HTML         // Navigation drawer HTML (listing pages)
+	ManifestJSON   template.JS           // Full manifest JSON for client-side tools
+	Manifest       *M.Package            // Parsed manifest for server-side tree rendering
 	Packages       []PackageWithManifest // Workspace packages with modules (for package-level tree)
-	State          CemServeState // Persisted UI state for SSR (color scheme, drawer, tree)
+	State          CemServeState         // Persisted UI state for SSR (color scheme, drawer, tree)
 }
 
 // TemplateErrorData represents template data for the error page

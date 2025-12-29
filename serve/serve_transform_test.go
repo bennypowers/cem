@@ -166,11 +166,11 @@ func TestServeTypeScript_RejectsPathTraversal(t *testing.T) {
 	// Path traversal to access file in parent directory
 	// Request .js but the server should check for .ts
 	attacks := []string{
-		"/../secret.js",                     // Direct parent access (.js request)
-		"/../secret.ts",                     // Direct parent access (.ts request)
-		"/subdir/../../secret.js",           // Via non-existent subdir
-		"/./../secret.ts",                   // Mixed with current dir
-		"/./../../project/../secret.js",     // Complex traversal
+		"/../secret.js",                 // Direct parent access (.js request)
+		"/../secret.ts",                 // Direct parent access (.ts request)
+		"/subdir/../../secret.js",       // Via non-existent subdir
+		"/./../secret.ts",               // Mixed with current dir
+		"/./../../project/../secret.js", // Complex traversal
 	}
 
 	for _, attack := range attacks {
@@ -295,10 +295,10 @@ func TestServeCSS_RejectsPathTraversal(t *testing.T) {
 
 	// Path traversal to access file in parent directory
 	attacks := []string{
-		"/../secret.css",                    // Direct parent access
-		"/subdir/../../secret.css",          // Via non-existent subdir
-		"/./../secret.css",                  // Mixed with current dir
-		"/./../../parent/../secret.css",     // Complex traversal
+		"/../secret.css",                // Direct parent access
+		"/subdir/../../secret.css",      // Via non-existent subdir
+		"/./../secret.css",              // Mixed with current dir
+		"/./../../parent/../secret.css", // Complex traversal
 	}
 
 	for _, attack := range attacks {

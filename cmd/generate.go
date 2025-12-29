@@ -158,10 +158,10 @@ var generateCmd = &cobra.Command{
 				errs = errors.Join(errs, err)
 			} else {
 				defer func() {
-				if err := writer.Close(); err != nil {
-					errs = errors.Join(errs, err)
-				}
-			}()
+					if err := writer.Close(); err != nil {
+						errs = errors.Join(errs, err)
+					}
+				}()
 				_, err := writer.Write([]byte(*manifestStr + "\n"))
 				if err != nil {
 					errs = errors.Join(errs, err)

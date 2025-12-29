@@ -33,16 +33,16 @@ const DefaultTarget = "ES2022"
 
 // TypeScriptConfig holds configuration for TypeScript transformation
 type TypeScriptConfig struct {
-	WatchDirFunc     func() string           // Function to get current watch directory
-	TsconfigRawFunc  func() string           // Function to get current tsconfig.json content
+	WatchDirFunc     func() string // Function to get current watch directory
+	TsconfigRawFunc  func() string // Function to get current tsconfig.json content
 	Cache            *Cache
-	Pool             *Pool                    // Worker pool for limiting concurrent transforms
+	Pool             *Pool // Worker pool for limiting concurrent transforms
 	Logger           types.Logger
 	ErrorBroadcaster types.ErrorBroadcaster
 	Target           string
-	Enabled          bool                     // Enable/disable TypeScript transformation
-	FS               platform.FileSystem      // Filesystem abstraction for testability
-	PathResolver     middleware.PathResolver  // Cached path resolver for efficient URL rewriting
+	Enabled          bool                    // Enable/disable TypeScript transformation
+	FS               platform.FileSystem     // Filesystem abstraction for testability
+	PathResolver     middleware.PathResolver // Cached path resolver for efficient URL rewriting
 }
 
 // NewTypeScript creates a middleware that transforms TypeScript files to JavaScript
