@@ -252,9 +252,9 @@ func (s *Server) RebuildPathResolverForTest() error {
 // This method is called during hot-reload to update URL rewrites without restarting the server.
 func (s *Server) rebuildPathResolver() error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if s.watchDir == "" {
+		s.mu.Unlock()
 		return fmt.Errorf("no watch directory set")
 	}
 
@@ -329,7 +329,11 @@ func (s *Server) rebuildPathResolver() error {
 		s.logger.Debug("Cleared transform cache after path resolver rebuild")
 	}
 
-	// Rebuild middleware pipeline with new pathResolver
+	// Unlock before calling setupMiddleware to avoid deadlock
+	// setupMiddleware calls accessor methods that acquire s.mu.RLock()
+	s.mu.Unlock()
+
+	// Rebuild middleware pipeline with new pathResolver (no lock needed)
 	s.setupMiddleware()
 
 	return nil
