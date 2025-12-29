@@ -13,12 +13,12 @@
   <svg viewBox="0 0 {{ $total_width }} {{ add (mul (len $benchmarks) $bar_spacing) 40 }}" style="width: 100%; height: auto;">
     <defs>
       <linearGradient id="cem-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
-        <stop offset="100%" style="stop-color:#60a5fa;stop-opacity:1" />
+        <stop offset="0%" style="stop-color:var(--cem-start);stop-opacity:1" />
+        <stop offset="100%" style="stop-color:var(--cem-end);stop-opacity:1" />
       </linearGradient>
       <linearGradient id="wc-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
-        <stop offset="100%" style="stop-color:#a78bfa;stop-opacity:1" />
+        <stop offset="0%" style="stop-color:var(--wc-start);stop-opacity:1" />
+        <stop offset="100%" style="stop-color:var(--wc-end);stop-opacity:1" />
       </linearGradient>
     </defs>
 
@@ -31,14 +31,19 @@
         {{ $cemTime := 0.0 }}
         {{ $wcTime := 0.0 }}
 
+        {{/* Try different data structure patterns */}}
         {{ if $cemBench.statistics }}
           {{ $cemTime = $cemBench.statistics.mean }}
+        {{ else if $cemBench.average_duration_ms }}
+          {{ $cemTime = $cemBench.average_duration_ms }}
         {{ else if $cemBench.duration_ms }}
           {{ $cemTime = $cemBench.duration_ms }}
         {{ end }}
 
         {{ if $wcBench.statistics }}
           {{ $wcTime = $wcBench.statistics.mean }}
+        {{ else if $wcBench.average_duration_ms }}
+          {{ $wcTime = $wcBench.average_duration_ms }}
         {{ else if $wcBench.duration_ms }}
           {{ $wcTime = $wcBench.duration_ms }}
         {{ end }}
@@ -110,6 +115,12 @@
   padding: 1em;
   background: var(--sl-color-bg-nav);
   border-radius: 0.5rem;
+
+  /* Gradient colors with light-dark() for proper contrast */
+  --cem-start: light-dark(#3b82f6, #60a5fa);
+  --cem-end: light-dark(#60a5fa, #93c5fd);
+  --wc-start: light-dark(#8b5cf6, #a78bfa);
+  --wc-end: light-dark(#a78bfa, #c4b5fd);
 }
 
 .lsp-comparison-chart svg {
