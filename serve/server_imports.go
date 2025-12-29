@@ -21,20 +21,11 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
+	Q "bennypowers.dev/cem/queries"
 	"bennypowers.dev/cem/serve/middleware"
 	"golang.org/x/net/html"
-)
-
-var (
-	// importFromRe matches ES module import statements with specifiers
-	// Example: import { foo } from 'module-name'
-	importFromRe = regexp.MustCompile(`import\s+(?:[^'"]*?)\s*from\s*['"]([^'"]+)['"]`)
-	// importRe matches bare ES module import statements
-	// Example: import 'module-name'
-	importRe = regexp.MustCompile(`import\s*['"]([^'"]+)['"]`)
 )
 
 // ImportMap returns the cached import map (may be nil)
@@ -62,6 +53,68 @@ func (s *Server) resolveSourceFile(path string) string {
 		}
 	}
 	return path
+}
+
+// extractImportsFromScript uses tree-sitter to extract import specifiers from JavaScript/TypeScript code
+func extractImportsFromScript(scriptContent string) ([]string, error) {
+	if strings.TrimSpace(scriptContent) == "" {
+		return nil, nil
+	}
+
+	// Get TypeScript parser from pool
+	parser := Q.RetrieveTypeScriptParser()
+	defer Q.PutTypeScriptParser(parser)
+
+	// Parse the script content
+	tree := parser.Parse([]byte(scriptContent), nil)
+	if tree == nil {
+		return nil, nil
+	}
+	defer tree.Close()
+
+	// Get the global query manager (loads queries once)
+	queryManager, err := Q.GetGlobalQueryManager()
+	if err != nil {
+		return nil, err
+	}
+
+	// Create query matcher for imports
+	importQueries, err := Q.GetCachedQueryMatcher(queryManager, "typescript", "imports")
+	if err != nil {
+		return nil, err
+	}
+	defer importQueries.Close()
+
+	// Extract import specifiers using tree-sitter queries
+	imports := make(map[string]bool)
+	scriptBytes := []byte(scriptContent)
+
+	// Iterate over all query matches
+	for match := range importQueries.AllQueryMatches(tree.RootNode(), scriptBytes) {
+		for _, capture := range match.Captures {
+			captureName := importQueries.GetCaptureNameByIndex(capture.Index)
+
+			// Extract import specifiers from captures
+			// The queries/typescript/imports.scm query captures:
+			// - staticImport.spec: import 'module-name'
+			// - import.spec: import { foo } from 'module-name'
+			// - dynamicImport.spec: import('module-name')
+			if captureName == "staticImport.spec" || captureName == "import.spec" || captureName == "dynamicImport.spec" {
+				specifier := capture.Node.Utf8Text(scriptBytes)
+				if specifier != "" {
+					imports[specifier] = true
+				}
+			}
+		}
+	}
+
+	// Convert map to slice
+	result := make([]string, 0, len(imports))
+	for imp := range imports {
+		result = append(result, imp)
+	}
+
+	return result, nil
 }
 
 // extractModuleImports parses an HTML file and extracts ES module import specifiers
@@ -103,23 +156,15 @@ func (s *Server) extractModuleImports(htmlPath string) ([]string, error) {
 					imports[srcAttr] = true
 				}
 
-				// Inline module script - extract import statements
+				// Inline module script - extract import statements using tree-sitter
 				if n.FirstChild != nil && n.FirstChild.Type == html.TextNode {
 					scriptContent := n.FirstChild.Data
-
-					// Extract "import ... from 'specifier'" statements
-					matches := importFromRe.FindAllStringSubmatch(scriptContent, -1)
-					for _, match := range matches {
-						if len(match) > 1 {
-							imports[match[1]] = true
-						}
-					}
-
-					// Extract "import 'specifier'" statements
-					matches = importRe.FindAllStringSubmatch(scriptContent, -1)
-					for _, match := range matches {
-						if len(match) > 1 && !strings.Contains(match[0], " from ") {
-							imports[match[1]] = true
+					scriptImports, err := extractImportsFromScript(scriptContent)
+					if err != nil {
+						s.logger.Warning("Failed to parse inline script imports: %v", err)
+					} else {
+						for _, imp := range scriptImports {
+							imports[imp] = true
 						}
 					}
 				}
