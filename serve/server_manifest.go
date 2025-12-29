@@ -250,6 +250,7 @@ func (s *Server) RegenerateManifest() (int, error) {
 		s.logger.Debug("Built routing table with %d demo routes", len(routingTable))
 	}
 
+	s.logger.Debug("Tracking %d source files from manifest", len(sourceFiles))
 	// Update server state under write lock
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -261,7 +262,6 @@ func (s *Server) RegenerateManifest() (int, error) {
 
 	s.generateSession = session
 	s.sourceFiles = sourceFiles
-	s.logger.Debug("Tracking %d source files from manifest", len(sourceFiles))
 
 	// Defensive copy (though json.MarshalIndent already returns a new slice)
 	s.manifest = make([]byte, len(manifestBytes))
