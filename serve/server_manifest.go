@@ -20,7 +20,9 @@ package serve
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -87,7 +89,7 @@ func (s *Server) PackageJSON() (*middleware.PackageJSON, error) {
 	}
 
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return nil, nil
 		}
 		return nil, err
@@ -115,7 +117,7 @@ func (s *Server) TryLoadExistingManifest() (int, error) {
 	s.mu.RLock()
 	watchDir := s.watchDir
 	sourceControlURL := s.sourceControlRootURL
-	fs := s.fs
+	filesystem := s.fs
 	s.mu.RUnlock()
 
 	if watchDir == "" {
@@ -135,15 +137,15 @@ func (s *Server) TryLoadExistingManifest() (int, error) {
 	}
 
 	// Check if manifest file exists
-	if _, err := fs.Stat(manifestPath); err != nil {
-		if os.IsNotExist(err) {
+	if _, err := filesystem.Stat(manifestPath); err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
 			return 0, nil // File doesn't exist, not an error
 		}
 		return 0, fmt.Errorf("checking manifest file: %w", err)
 	}
 
 	// Read existing manifest
-	manifestBytes, err := fs.ReadFile(manifestPath)
+	manifestBytes, err := filesystem.ReadFile(manifestPath)
 	if err != nil {
 		return 0, fmt.Errorf("reading manifest file: %w", err)
 	}
