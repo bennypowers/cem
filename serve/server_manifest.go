@@ -44,11 +44,13 @@ func (s *Server) SetManifest(manifest []byte) error {
 	if err != nil {
 		s.logger.Warning("Failed to build demo routing table: %v", err)
 		s.demoRoutes = nil
-	} else {
-		s.demoRoutes = routingTable
-		s.logger.Debug("Built routing table with %d demo routes", len(routingTable))
+		// Return error wrapped to indicate partial success
+		// The manifest was stored successfully, but routing table construction failed
+		return fmt.Errorf("manifest stored but routing table failed: %w", err)
 	}
 
+	s.demoRoutes = routingTable
+	s.logger.Debug("Built routing table with %d demo routes", len(routingTable))
 	return nil
 }
 
@@ -109,15 +111,20 @@ func (s *Server) PackageJSON() (*middleware.PackageJSON, error) {
 // Returns the manifest size in bytes and any error
 // Returns 0, nil if no manifest file exists (not an error condition)
 func (s *Server) TryLoadExistingManifest() (int, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	// Extract state under read lock to avoid blocking during I/O
+	s.mu.RLock()
+	watchDir := s.watchDir
+	sourceControlURL := s.sourceControlRootURL
+	fs := s.fs
+	s.mu.RUnlock()
 
-	if s.watchDir == "" {
+	if watchDir == "" {
 		return 0, fmt.Errorf("no watch directory set")
 	}
 
+	// Perform I/O operations without holding lock
 	// Determine manifest path
-	workspace := W.NewFileSystemWorkspaceContext(s.watchDir)
+	workspace := W.NewFileSystemWorkspaceContext(watchDir)
 	if err := workspace.Init(); err != nil {
 		return 0, fmt.Errorf("initializing workspace: %w", err)
 	}
@@ -128,7 +135,7 @@ func (s *Server) TryLoadExistingManifest() (int, error) {
 	}
 
 	// Check if manifest file exists
-	if _, err := s.fs.Stat(manifestPath); err != nil {
+	if _, err := fs.Stat(manifestPath); err != nil {
 		if os.IsNotExist(err) {
 			return 0, nil // File doesn't exist, not an error
 		}
@@ -136,7 +143,7 @@ func (s *Server) TryLoadExistingManifest() (int, error) {
 	}
 
 	// Read existing manifest
-	manifestBytes, err := s.fs.ReadFile(manifestPath)
+	manifestBytes, err := fs.ReadFile(manifestPath)
 	if err != nil {
 		return 0, fmt.Errorf("reading manifest file: %w", err)
 	}
@@ -147,19 +154,23 @@ func (s *Server) TryLoadExistingManifest() (int, error) {
 		return 0, fmt.Errorf("invalid manifest JSON: %w", err)
 	}
 
+	// Build routing table from manifest
+	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, sourceControlURL)
+	if err != nil {
+		s.logger.Warning("Failed to build demo routing table from cached manifest: %v", err)
+		routingTable = nil
+	} else {
+		s.logger.Debug("Built routing table with %d demo routes from cached manifest", len(routingTable))
+	}
+
+	// Update state under write lock
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	// Store the manifest (defensive copy to prevent external mutation)
 	s.manifest = make([]byte, len(manifestBytes))
 	copy(s.manifest, manifestBytes)
-
-	// Build routing table from manifest
-	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, s.sourceControlRootURL)
-	if err != nil {
-		s.logger.Warning("Failed to build demo routing table from cached manifest: %v", err)
-		s.demoRoutes = nil
-	} else {
-		s.demoRoutes = routingTable
-		s.logger.Debug("Built routing table with %d demo routes from cached manifest", len(routingTable))
-	}
+	s.demoRoutes = routingTable
 
 	return len(manifestBytes), nil
 }
