@@ -44,6 +44,8 @@
         {{ end }}
 
         {{ $maxTime := cond (gt $cemTime $wcTime) $cemTime $wcTime }}
+
+        {{ if gt $maxTime 0 }}
         {{ $cemWidth := div (mul $chart_width $cemTime) $maxTime }}
         {{ $wcWidth := div (mul $chart_width $wcTime) $maxTime }}
 
@@ -88,6 +90,7 @@
         </text>
 
         {{ $y = add $y $bar_spacing }}
+        {{ end }}
       {{ end }}
     {{ end }}
 
