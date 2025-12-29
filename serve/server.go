@@ -37,6 +37,7 @@ import (
 	importmappkg "bennypowers.dev/cem/serve/middleware/importmap"
 	"bennypowers.dev/cem/serve/middleware/routes"
 	"bennypowers.dev/cem/serve/middleware/transform"
+	"bennypowers.dev/cem/serve/middleware/types"
 )
 
 // Server represents the development server
@@ -65,7 +66,7 @@ type Server struct {
 	workspaceRoot     string                        // Root directory of workspace
 	workspacePackages []middleware.WorkspacePackage // Discovered packages with manifests
 	// Cached routing table for demo routes (both workspace and single-package mode)
-	demoRoutes              map[string]*routes.DemoRouteEntry
+	demoRoutes              map[string]*types.DemoRouteEntry
 	importMap               *importmappkg.ImportMap  // Cached import map (workspace or single-package)
 	sourceControlRootURL    string                   // Source control root URL for demo routing
 	templates               *routes.TemplateRegistry // Template registry for HTML rendering

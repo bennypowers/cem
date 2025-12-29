@@ -21,10 +21,14 @@ import (
 	"bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/logger"
+	"bennypowers.dev/cem/serve/middleware/types"
 )
 
 // Logger is a type alias for the logger.Logger interface
 type Logger = logger.Logger
+
+// DemoRouteEntry is a type alias for types.DemoRouteEntry
+type DemoRouteEntry = types.DemoRouteEntry
 
 // ImportMap is a marker interface for import map types
 type ImportMap interface {
@@ -74,8 +78,7 @@ type DevServerContext interface {
 	ImportMap() ImportMap
 
 	// DemoRoutes returns the pre-computed demo routing table (both workspace and single-package mode)
-	// The return type is map[string]*routes.DemoRouteEntry but we use any to avoid circular imports
-	DemoRoutes() any
+	DemoRoutes() map[string]*DemoRouteEntry
 
 	// SourceControlRootURL returns the source control root URL for demo routing
 	SourceControlRootURL() string

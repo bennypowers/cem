@@ -41,7 +41,7 @@ func (s *Server) WorkspacePackages() []middleware.WorkspacePackage {
 }
 
 // DemoRoutes returns the pre-computed demo routing table (both workspace and single-package mode)
-func (s *Server) DemoRoutes() any {
+func (s *Server) DemoRoutes() map[string]*middleware.DemoRouteEntry {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.demoRoutes
