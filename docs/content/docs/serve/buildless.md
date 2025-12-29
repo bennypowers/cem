@@ -118,10 +118,10 @@ URL templates use Go template syntax:
 **Example:** Element name transformation for demos
 
 If your project serves demos at URLs that don't match the on-disk structure:
-- **On disk**: `elements/rh-alert/demo/toast.html`
-- **Served URL**: `/elements/alert/demo/toast/`
-- **CSS reference in demo**: `<link rel="stylesheet" href="../rh-alert-toast-styles.css">`
-- **Browser resolves to**: `/elements/alert/rh-alert-toast-styles.css` ❌
+- **On disk**: `elements/my-card/demo/toast.html`
+- **Served URL**: `/elements/card/demo/toast/`
+- **CSS reference in demo**: `<link rel="stylesheet" href="../my-card-lightdom.css">`
+- **Browser resolves to**: `/elements/card/demo/my-card-lightdom.css` ❌
 
 Configure URL rewrites to fix the mismatch:
 
@@ -129,10 +129,10 @@ Configure URL rewrites to fix the mismatch:
 serve:
   urlRewrites:
     - urlPattern: "/elements/:slug/:rest*"
-      urlTemplate: "/elements/rh-{{.slug}}/{{.rest}}"
+      urlTemplate: "/elements/my-{{.slug}}/{{.rest}}"
 ```
 
-This resolves `/elements/alert/rh-alert-toast-styles.css` → `elements/rh-alert/rh-alert-toast-styles.css` ✓
+This resolves `/elements/card/my-card-lightdom.css` → `elements/my-card/my-card-lightdom.css` ✓
 
 See **[Configuration](/docs/configuration/)** for details.
 
