@@ -35,7 +35,6 @@ import (
 
 	"golang.org/x/net/http2"
 	"golang.org/x/net/netutil"
-	"gopkg.in/yaml.v3"
 
 	G "bennypowers.dev/cem/generate"
 	"bennypowers.dev/cem/cmd/config"
@@ -258,7 +257,8 @@ func (s *Server) rebuildPathResolver() error {
 		return fmt.Errorf("no watch directory set")
 	}
 
-	// Re-parse tsconfig files (same logic as SetWatchDir)
+	// Re-parse tsconfig files from disk (hot-reload needs fresh file contents)
+	// Similar to SetWatchDir, but we re-read files instead of using cached config
 	tsconfigPaths := []string{
 		filepath.Join(s.watchDir, "tsconfig.settings.json"),
 		filepath.Join(s.watchDir, "tsconfig.json"),
@@ -282,49 +282,23 @@ func (s *Server) rebuildPathResolver() error {
 		}
 	}
 
-	// Re-load config urlRewrites from file if config file is set
-	var configRewrites []config.URLRewrite
-	if s.config.ConfigFile != "" {
-		data, err := s.fs.ReadFile(s.config.ConfigFile)
-		if err == nil {
-			var cfg struct {
-				Serve struct {
-					URLRewrites []config.URLRewrite `yaml:"urlRewrites"`
-				} `yaml:"serve"`
-			}
-			if err := yaml.Unmarshal(data, &cfg); err == nil {
-				configRewrites = cfg.Serve.URLRewrites
-				if len(configRewrites) > 0 {
-					// Validate URL rewrites to prevent runtime panics
-					if err := transform.ValidateURLRewrites(configRewrites); err != nil {
-						s.logger.Warning("Invalid URL rewrites in config file: %v", err)
-						configRewrites = nil // Skip invalid rewrites
-					} else {
-						s.logger.Debug("Reloaded %d URL rewrites from config file", len(configRewrites))
-						for _, r := range configRewrites {
-							s.logger.Debug("  %s -> %s", r.URLPattern, r.URLTemplate)
-						}
-					}
-				}
-			} else {
-				s.logger.Warning("Failed to parse config file for URL rewrites: %v", err)
-			}
+	// Merge with explicit config URL rewrites (same as SetWatchDir)
+	// Config rewrites are prepended before tsconfig rewrites so they're tried first
+	if len(s.config.URLRewrites) > 0 {
+		s.logger.Debug("Adding %d URL rewrites from config (will override tsconfig)", len(s.config.URLRewrites))
+		for _, r := range s.config.URLRewrites {
+			s.logger.Debug("  %s -> %s", r.URLPattern, r.URLTemplate)
 		}
-	}
-
-	// Prepend config rewrites (they take precedence - first-match-wins)
-	if len(configRewrites) > 0 {
-		urlRewrites = append(configRewrites, urlRewrites...)
+		// Prepend config rewrites so they're tried first (first-match-wins in resolver)
+		urlRewrites = append(s.config.URLRewrites, urlRewrites...)
 	}
 
 	s.logger.Info("Rebuilding path resolver with %d URL rewrites", len(urlRewrites))
 	s.urlRewrites = urlRewrites
 
-	// Update source files list
+	// Track only tsconfig source files for hot-reload
+	// Config file URL rewrite hot-reload will be added in a future PR
 	s.pathResolverSourceFiles = tsconfigSourceFiles
-	if s.config.ConfigFile != "" {
-		s.pathResolverSourceFiles = append(s.pathResolverSourceFiles, s.config.ConfigFile)
-	}
 
 	// Rebuild path resolver
 	s.pathResolver = transform.NewPathResolver(s.watchDir, s.urlRewrites, s.fs, s.logger)
@@ -578,11 +552,9 @@ func (s *Server) SetWatchDir(dir string) error {
 
 	s.urlRewrites = urlRewrites
 
-	// Build list of all source files that pathResolver depends on
+	// Track only tsconfig source files for hot-reload
+	// Config file URL rewrite hot-reload will be added in a future PR
 	s.pathResolverSourceFiles = tsconfigSourceFiles
-	if s.config.ConfigFile != "" {
-		s.pathResolverSourceFiles = append(s.pathResolverSourceFiles, s.config.ConfigFile)
-	}
 
 	// Initialize path resolver once (cached for all requests)
 	s.pathResolver = transform.NewPathResolver(s.watchDir, s.urlRewrites, s.fs, s.logger)
