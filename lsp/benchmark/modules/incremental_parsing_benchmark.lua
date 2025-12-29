@@ -93,9 +93,15 @@ function M.run_incremental_parsing_benchmark(config, fixture_dir)
         end
         
         local insert_start = vim.fn.reltime()
-        
-        -- Insert entire element
+
+        -- Insert entire element at safe position
         local line = base_line + element_edits
+        local bufnr = vim.api.nvim_get_current_buf()
+        local line_count = vim.api.nvim_buf_line_count(bufnr)
+
+        -- Clamp line to valid buffer range
+        line = math.min(line, line_count)
+
         vim.api.nvim_win_set_cursor(0, {line, 0})
         vim.api.nvim_put({template}, 'l', true, true)
         
@@ -191,9 +197,15 @@ function M.run_incremental_parsing_benchmark(config, fixture_dir)
         end
         
         local paste_edit_start = vim.fn.reltime()
-        
-        -- Paste large block
+
+        -- Paste large block at safe position
         local line = base_line + element_edits + paste_edits * 10
+        local bufnr = vim.api.nvim_get_current_buf()
+        local line_count = vim.api.nvim_buf_line_count(bufnr)
+
+        -- Clamp line to valid buffer range
+        line = math.min(line, line_count)
+
         vim.api.nvim_win_set_cursor(0, {line, 0})
         vim.api.nvim_put(vim.split(block, '\n'), 'l', true, true)
         
