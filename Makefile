@@ -200,11 +200,11 @@ show-coverage:
 
 install-git-hooks:
 	@echo "Installing git hooks..."
-	@mkdir -p .git/hooks
-	@cp scripts/pre-commit .git/hooks/pre-commit
-	@chmod +x .git/hooks/pre-commit
+	@git config core.hooksPath .githooks
 	@echo "Git hooks installed successfully!"
-	@echo "The pre-commit hook will run 'go fmt' on staged .go files."
+	@echo "  - pre-push: checks formatting and runs linting before push"
+	@echo ""
+	@echo "To bypass hooks, use --no-verify flag (e.g., 'git push --no-verify')"
 
 update-html-attributes:
 	@echo "Updating HTML global attributes from MDN browser-compat-data..."
