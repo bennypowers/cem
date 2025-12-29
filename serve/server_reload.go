@@ -100,6 +100,212 @@ func (s *Server) logCacheStats(interval time.Duration) {
 	}
 }
 
+// shouldRebuildPathResolver checks if any changed files require path resolver rebuild
+func (s *Server) shouldRebuildPathResolver(filesToProcess []string) bool {
+	s.mu.RLock()
+	pathResolverSourceFiles := s.pathResolverSourceFiles
+	s.mu.RUnlock()
+
+	for _, changedFile := range filesToProcess {
+		// Normalize changed file to absolute path for comparison
+		// pathResolverSourceFiles contains absolute paths from ParseTsConfig
+		absChangedFile, err := filepath.Abs(changedFile)
+		if err != nil {
+			absChangedFile = changedFile // Fall back to original if Abs fails
+		}
+
+		for _, sourceFile := range pathResolverSourceFiles {
+			if absChangedFile == sourceFile {
+				s.logger.Debug("PathResolver source file changed: %s", sourceFile)
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// filterRelevantFiles filters source files and separates TS/JS files for manifest regeneration
+func (s *Server) filterRelevantFiles(filesToProcess []string) (relevantFiles, tsJsFiles []string) {
+	relevantFiles = make([]string, 0, len(filesToProcess))
+	tsJsFiles = make([]string, 0, len(filesToProcess))
+
+	for _, filePath := range filesToProcess {
+		ext := filepath.Ext(filePath)
+		isRelevant := ext == ".ts" || ext == ".js" || ext == ".css" || ext == ".html"
+
+		if !isRelevant {
+			var relPath string
+			if s.watchDir != "" {
+				if rel, err := filepath.Rel(s.watchDir, filePath); err == nil {
+					relPath = rel
+				} else {
+					relPath = filePath
+				}
+			} else {
+				relPath = filePath
+			}
+			s.logger.Debug("Ignoring non-source file: %s", relPath)
+			continue
+		}
+
+		relevantFiles = append(relevantFiles, filePath)
+
+		// Collect TS/JS files for manifest regeneration
+		if ext == ".ts" || ext == ".js" {
+			tsJsFiles = append(tsJsFiles, filePath)
+		}
+	}
+
+	return relevantFiles, tsJsFiles
+}
+
+// collectAffectedFiles collects files from transform cache and module graph
+func (s *Server) collectAffectedFiles(changedPath string) []string {
+	affectedFiles := make(map[string]bool)
+
+	// Add transform cache invalidations
+	if s.transformCache != nil {
+		invalidatedFiles := s.transformCache.Invalidate(changedPath)
+		if len(invalidatedFiles) > 0 {
+			s.logger.Debug("Transform cache invalidated %d files: %v", len(invalidatedFiles), invalidatedFiles)
+			for _, file := range invalidatedFiles {
+				affectedFiles[file] = true
+			}
+		}
+	}
+
+	// Add module graph affected files (includes non-transformed .js files)
+	moduleGraphFiles := s.getModuleGraphAffectedFiles(changedPath)
+	if len(moduleGraphFiles) > 0 {
+		for _, file := range moduleGraphFiles {
+			affectedFiles[file] = true
+		}
+	}
+
+	// Convert map to slice for downstream use
+	var result []string
+	for file := range affectedFiles {
+		result = append(result, file)
+	}
+
+	s.logger.Debug("Total affected files: %d (transform cache + module graph)", len(result))
+	return result
+}
+
+// regenerateManifestIfNeeded regenerates manifest when TS/JS files change
+func (s *Server) regenerateManifestIfNeeded(tsJsFiles []string) {
+	if len(tsJsFiles) == 0 {
+		return
+	}
+
+	manifestStart := time.Now()
+	s.logger.Debug("Regenerating manifest incrementally for %d file(s)...", len(tsJsFiles))
+	manifestSize, err := s.RegenerateManifestIncremental(tsJsFiles)
+	manifestDuration := time.Since(manifestStart)
+	if err != nil {
+		s.logger.Error("Failed to regenerate manifest incrementally: %v", err)
+		// Continue anyway - we still want to reload the page
+	} else {
+		s.logger.Info("Manifest regenerated incrementally (%d bytes) in %v", manifestSize, manifestDuration)
+	}
+}
+
+// regenerateImportMapIfNeeded regenerates import map when package.json or file structure changes
+func (s *Server) regenerateImportMapIfNeeded(event FileEvent) {
+	// Only regenerate when necessary and enabled:
+	// - package.json was modified (exports may have changed)
+	// - files were created (new modules may need to be mapped)
+	// - files were deleted (old modules may need to be unmapped)
+	if !s.config.ImportMap.Generate || (!event.HasPackageJSON && !event.HasCreates && !event.HasDeletes) {
+		return
+	}
+
+	importMapStart := time.Now()
+
+	// Extract state under read lock to avoid blocking during I/O
+	s.mu.RLock()
+	isWorkspace := s.isWorkspace
+	workspaceRoot := s.workspaceRoot
+	workspacePackages := s.workspacePackages
+	watchDir := s.watchDir
+	configOverride := s.buildConfigOverride()
+	s.mu.RUnlock()
+
+	// Perform I/O without lock to avoid blocking other operations
+	var importMap *importmappkg.ImportMap
+	var err error
+	if isWorkspace {
+		// Workspace mode: regenerate workspace import map
+		importMap, err = importmappkg.Generate(workspaceRoot, &importmappkg.Config{
+			InputMapPath:      s.config.ImportMap.OverrideFile,
+			ConfigOverride:    configOverride,
+			WorkspacePackages: workspacePackages,
+			Logger:            s.logger,
+			FS:                s.fs,
+		})
+	} else {
+		// Single-package mode: regenerate import map
+		importMap, err = importmappkg.Generate(watchDir, &importmappkg.Config{
+			InputMapPath:   s.config.ImportMap.OverrideFile,
+			ConfigOverride: configOverride,
+			Logger:         s.logger,
+			FS:             s.fs,
+		})
+	}
+
+	// Update state under write lock
+	importMapDuration := time.Since(importMapStart)
+	s.mu.Lock()
+	if err != nil {
+		s.logger.Warning("Failed to regenerate import map: %v", err)
+	} else {
+		s.importMap = importMap
+		s.logger.Info("Regenerated import map in %v", importMapDuration)
+	}
+	s.mu.Unlock()
+}
+
+// broadcastSmartReload sends reload messages to affected pages or all clients
+func (s *Server) broadcastSmartReload(changedPath, relPath string, invalidatedFiles []string) {
+	// Smart reload: only reload pages that import the changed file or its dependents
+	affectedPageURLs := s.getAffectedPageURLs(changedPath, invalidatedFiles)
+
+	if len(affectedPageURLs) == 0 {
+		// If smart reload found no affected pages, check if we're in a "no routes" state
+		// (e.g. no manifest yet). In this case, fallback to broadcasting to all clients.
+		s.mu.RLock()
+		noDemoRoutes := len(s.demoRoutes) == 0
+		s.mu.RUnlock()
+
+		if noDemoRoutes {
+			s.logger.Debug("No demo routes found, falling back to broadcast all for %s", relPath)
+			files := []string{relPath}
+			if err := s.BroadcastReload(files, "file-change-fallback"); err != nil {
+				s.logger.Error("Failed to broadcast reload: %v", err)
+			}
+			return
+		}
+
+		s.logger.Debug("No pages affected by changes to %s", relPath)
+		return
+	}
+
+	// Broadcast reload only to affected pages
+	files := []string{relPath}
+	msgBytes, err := s.CreateReloadMessage(files, "file-change")
+	if err != nil {
+		s.logger.Error("Failed to create reload message: %v", err)
+		return
+	}
+
+	if s.wsManager != nil {
+		err = s.wsManager.BroadcastToPages(msgBytes, affectedPageURLs)
+		if err != nil {
+			s.logger.Error("Failed to broadcast reload: %v", err)
+		}
+	}
+}
+
 // handleFileChanges listens for file change events and triggers reload
 func (s *Server) handleFileChanges() {
 	if s.watcher == nil {
@@ -113,34 +319,8 @@ func (s *Server) handleFileChanges() {
 			filesToProcess = []string{event.Path}
 		}
 
-		// Check if any changed files are pathResolver source files (tsconfig.json, config files)
-		// If so, rebuild the pathResolver with updated URL rewrites
-		pathResolverNeedsRebuild := false
-		s.mu.RLock()
-		pathResolverSourceFiles := s.pathResolverSourceFiles
-		s.mu.RUnlock()
-
-		for _, changedFile := range filesToProcess {
-			// Normalize changed file to absolute path for comparison
-			// pathResolverSourceFiles contains absolute paths from ParseTsConfig
-			absChangedFile, err := filepath.Abs(changedFile)
-			if err != nil {
-				absChangedFile = changedFile // Fall back to original if Abs fails
-			}
-
-			for _, sourceFile := range pathResolverSourceFiles {
-				if absChangedFile == sourceFile {
-					pathResolverNeedsRebuild = true
-					s.logger.Debug("PathResolver source file changed: %s", sourceFile)
-					break
-				}
-			}
-			if pathResolverNeedsRebuild {
-				break
-			}
-		}
-
-		if pathResolverNeedsRebuild {
+		// Check if path resolver needs rebuild (tsconfig.json, config files changed)
+		if s.shouldRebuildPathResolver(filesToProcess) {
 			s.logger.Info("Rebuilding path resolver due to source file change")
 			if err := s.rebuildPathResolver(); err != nil {
 				s.logger.Error("Failed to rebuild path resolver: %v", err)
@@ -149,37 +329,13 @@ func (s *Server) handleFileChanges() {
 			// Note: rebuildPathResolver() handles broadcasting reload message
 		}
 
-		// Filter to only relevant source files
-		relevantFiles := make([]string, 0, len(filesToProcess))
-		for _, filePath := range filesToProcess {
-			ext := filepath.Ext(filePath)
-			isRelevant := ext == ".ts" || ext == ".js" || ext == ".css" || ext == ".html"
-
-			if !isRelevant {
-				var relPath string
-				if s.watchDir != "" {
-					if rel, err := filepath.Rel(s.watchDir, filePath); err == nil {
-						relPath = rel
-					} else {
-						relPath = filePath
-					}
-				} else {
-					relPath = filePath
-				}
-				s.logger.Debug("Ignoring non-source file: %s", relPath)
-				continue
-			}
-
-			relevantFiles = append(relevantFiles, filePath)
-		}
-
-		// Skip if no relevant files
+		// Filter to only relevant source files and collect TS/JS files
+		relevantFiles, tsJsFiles := s.filterRelevantFiles(filesToProcess)
 		if len(relevantFiles) == 0 {
 			continue
 		}
 
-		// Process the first relevant file (for manifest regeneration, etc.)
-		// In the future, we could optimize to only regenerate once for multiple files
+		// Use first file for display/logging purposes
 		changedPath := relevantFiles[0]
 		relPath := changedPath
 		if s.watchDir != "" {
@@ -188,146 +344,21 @@ func (s *Server) handleFileChanges() {
 			}
 		}
 
-		// Resolve .js to .ts if source exists
+		// Resolve .js to .ts if source exists and log
 		displayPath := s.resolveSourceFile(relPath)
 		s.logger.Info("File changed: %s", displayPath)
 
-		ext := filepath.Ext(changedPath)
+		// Collect affected files from transform cache and module graph
+		invalidatedFiles := s.collectAffectedFiles(changedPath)
 
-		// Collect all affected files from both transform cache and module graph
-		// This gives us complete dependency tracking:
-		// - Transform cache: tracks dependencies from esbuild transforms
-		// - Module graph: tracks ALL module imports from manifest generation
-		affectedFiles := make(map[string]bool)
+		// Regenerate manifest if TS/JS files changed
+		s.regenerateManifestIfNeeded(tsJsFiles)
 
-		// Add transform cache invalidations
-		if s.transformCache != nil {
-			invalidatedFiles := s.transformCache.Invalidate(changedPath)
-			if len(invalidatedFiles) > 0 {
-				s.logger.Debug("Transform cache invalidated %d files: %v", len(invalidatedFiles), invalidatedFiles)
-				for _, file := range invalidatedFiles {
-					affectedFiles[file] = true
-				}
-			}
-		}
+		// Regenerate import map if package.json or file structure changed
+		s.regenerateImportMapIfNeeded(event)
 
-		// Add module graph affected files (includes non-transformed .js files)
-		moduleGraphFiles := s.getModuleGraphAffectedFiles(changedPath)
-		if len(moduleGraphFiles) > 0 {
-			for _, file := range moduleGraphFiles {
-				affectedFiles[file] = true
-			}
-		}
-
-		// Convert map to slice for downstream use
-		var invalidatedFiles []string
-		for file := range affectedFiles {
-			invalidatedFiles = append(invalidatedFiles, file)
-		}
-
-		s.logger.Debug("Total affected files: %d (transform cache + module graph)", len(invalidatedFiles))
-
-		// Regenerate manifest if a source file changed
-		if ext == ".ts" || ext == ".js" {
-			manifestStart := time.Now()
-			s.logger.Debug("Regenerating manifest incrementally for %s file change...", ext)
-			manifestSize, err := s.RegenerateManifestIncremental([]string{changedPath})
-			manifestDuration := time.Since(manifestStart)
-			if err != nil {
-				s.logger.Error("Failed to regenerate manifest incrementally: %v", err)
-				// Continue anyway - we still want to reload the page
-			} else {
-				s.logger.Info("Manifest regenerated incrementally (%d bytes) in %v", manifestSize, manifestDuration)
-			}
-
-			// Note: Import map regeneration is skipped for .ts/.js changes
-			// Import maps are built from package.json exports, not source files
-			// They only need to be regenerated when package.json changes
-		}
-
-		// Regenerate import map only when necessary and enabled:
-		// - package.json was modified (exports may have changed)
-		// - files were created (new modules may need to be mapped)
-		// - files were deleted (old modules may need to be unmapped)
-		if s.config.ImportMap.Generate && (event.HasPackageJSON || event.HasCreates || event.HasDeletes) {
-			importMapStart := time.Now()
-			s.mu.Lock()
-			if s.isWorkspace {
-				// Workspace mode: regenerate workspace import map
-				importMap, err := importmappkg.Generate(s.workspaceRoot, &importmappkg.Config{
-					InputMapPath:      s.config.ImportMap.OverrideFile,
-					ConfigOverride:    s.buildConfigOverride(),
-					WorkspacePackages: s.workspacePackages,
-					Logger:            s.logger,
-					FS:                s.fs,
-				})
-				if err != nil {
-					s.logger.Warning("Failed to regenerate workspace import map: %v", err)
-				} else {
-					s.importMap = importMap
-					importMapDuration := time.Since(importMapStart)
-					s.logger.Info("Regenerated workspace import map in %v", importMapDuration)
-				}
-			} else {
-				// Single-package mode: regenerate import map
-				importMap, err := importmappkg.Generate(s.watchDir, &importmappkg.Config{
-					InputMapPath:   s.config.ImportMap.OverrideFile,
-					ConfigOverride: s.buildConfigOverride(),
-					Logger:         s.logger,
-					FS:             s.fs,
-				})
-				if err != nil {
-					s.logger.Warning("Failed to regenerate import map: %v", err)
-				} else {
-					s.importMap = importMap
-					importMapDuration := time.Since(importMapStart)
-					s.logger.Info("Regenerated import map in %v", importMapDuration)
-				}
-			}
-			s.mu.Unlock()
-		}
-
-		// Smart reload: only reload pages that import the changed file or its dependents
-		affectedPageURLs := s.getAffectedPageURLs(changedPath, invalidatedFiles)
-
-		if len(affectedPageURLs) == 0 {
-			// If smart reload found no affected pages, check if we're in a "no routes" state
-			// (e.g. no manifest yet). In this case, fallback to broadcasting to all clients.
-			s.mu.RLock()
-			noDemoRoutes := len(s.demoRoutes) == 0
-			s.mu.RUnlock()
-
-			if noDemoRoutes {
-				s.logger.Debug("No demo routes found, falling back to broadcast all for %s", relPath)
-				// Create a "broadcast all" message (using empty affected list effectively broadcasts to all if we change logic,
-				// but here we just pass the file and rely on client side or simply assume all pages need reload)
-				// Actually BroadcastToPages with nil/empty list skips.
-				// We should use Broadcast() instead.
-				files := []string{relPath}
-				if err := s.BroadcastReload(files, "file-change-fallback"); err != nil {
-					s.logger.Error("Failed to broadcast reload: %v", err)
-				}
-				continue
-			}
-
-			s.logger.Debug("No pages affected by changes to %s", relPath)
-			continue
-		}
-
-		// Broadcast reload only to affected pages
-		files := []string{relPath}
-		msgBytes, err := s.CreateReloadMessage(files, "file-change")
-		if err != nil {
-			s.logger.Error("Failed to create reload message: %v", err)
-			continue
-		}
-
-		if s.wsManager != nil {
-			err = s.wsManager.BroadcastToPages(msgBytes, affectedPageURLs)
-			if err != nil {
-				s.logger.Error("Failed to broadcast reload: %v", err)
-			}
-		}
+		// Broadcast smart reload to affected pages
+		s.broadcastSmartReload(changedPath, relPath, invalidatedFiles)
 	}
 }
 
