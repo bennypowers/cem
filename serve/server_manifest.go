@@ -147,8 +147,9 @@ func (s *Server) TryLoadExistingManifest() (int, error) {
 		return 0, fmt.Errorf("invalid manifest JSON: %w", err)
 	}
 
-	// Store the manifest
-	s.manifest = manifestBytes
+	// Store the manifest (defensive copy to prevent external mutation)
+	s.manifest = make([]byte, len(manifestBytes))
+	copy(s.manifest, manifestBytes)
 
 	// Build routing table from manifest
 	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, s.sourceControlRootURL)
@@ -221,7 +222,9 @@ func (s *Server) RegenerateManifest() (int, error) {
 		return 0, fmt.Errorf("marshaling manifest: %w", err)
 	}
 
-	s.manifest = manifestBytes
+	// Defensive copy (though json.MarshalIndent already returns a new slice)
+	s.manifest = make([]byte, len(manifestBytes))
+	copy(s.manifest, manifestBytes)
 
 	// Build routing table from manifest
 	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, s.sourceControlRootURL)
