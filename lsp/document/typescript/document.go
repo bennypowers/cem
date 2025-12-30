@@ -43,7 +43,8 @@ type TypeScriptDocument struct {
 	// Performance cache: parsed templates and custom elements
 	cachedTemplates       []TemplateContext
 	cachedCustomElements  []types.CustomElementMatch
-	cacheVersion          int32 // Version when cache was populated
+	cachedHTMLTrees       map[string]*ts.Tree // HTML parse trees indexed by template content hash
+	cacheVersion          int32               // Version when cache was populated
 }
 
 // Base document interface methods
@@ -100,6 +101,7 @@ func (d *TypeScriptDocument) UpdateContent(content string, version int32) {
 	// Invalidate cache when content changes
 	d.cachedTemplates = nil
 	d.cachedCustomElements = nil
+	d.invalidateHTMLTreeCache()
 	d.cacheVersion = 0
 	helpers.SafeDebugLog("[CACHE] UpdateContent: cache INVALIDATED (old version %d -> new version %d)", oldVersion, version)
 }
@@ -115,6 +117,7 @@ func (d *TypeScriptDocument) SetTree(tree *ts.Tree) {
 	// Invalidate cache when tree is replaced
 	d.cachedTemplates = nil
 	d.cachedCustomElements = nil
+	d.invalidateHTMLTreeCache()
 	d.cacheVersion = 0
 	helpers.SafeDebugLog("[CACHE] SetTree: cache INVALIDATED (version %d)", d.version)
 }
@@ -153,6 +156,60 @@ func (d *TypeScriptDocument) Close() {
 	if d.parser != nil {
 		d.parser = nil
 	}
+
+	// Clean up cached HTML trees
+	d.invalidateHTMLTreeCache()
+}
+
+// invalidateHTMLTreeCache closes and clears all cached HTML parse trees
+// Must be called with d.mu lock held
+func (d *TypeScriptDocument) invalidateHTMLTreeCache() {
+	if d.cachedHTMLTrees != nil {
+		for _, tree := range d.cachedHTMLTrees {
+			if tree != nil {
+				tree.Close()
+			}
+		}
+		d.cachedHTMLTrees = nil
+		helpers.SafeDebugLog("[CACHE] HTML tree cache cleared")
+	}
+}
+
+// getCachedHTMLTree gets or creates a cached HTML parse tree for template content
+func (d *TypeScriptDocument) getCachedHTMLTree(templateContent string) *ts.Tree {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	// Initialize cache map if needed
+	if d.cachedHTMLTrees == nil {
+		d.cachedHTMLTrees = make(map[string]*ts.Tree)
+	}
+
+	// Check if we already have a cached tree for this content
+	if tree, exists := d.cachedHTMLTrees[templateContent]; exists && tree != nil {
+		helpers.SafeDebugLog("[CACHE] HTML tree cache HIT (content length=%d)", len(templateContent))
+		return tree
+	}
+
+	helpers.SafeDebugLog("[CACHE] HTML tree cache MISS (content length=%d)", len(templateContent))
+
+	// Parse the HTML content
+	htmlParser := Q.GetHTMLParser()
+	if htmlParser == nil {
+		return nil
+	}
+	defer Q.PutHTMLParser(htmlParser)
+
+	htmlTree := htmlParser.Parse([]byte(templateContent), nil)
+	if htmlTree == nil {
+		return nil
+	}
+
+	// Cache the tree for future use
+	d.cachedHTMLTrees[templateContent] = htmlTree
+	helpers.SafeDebugLog("[CACHE] HTML tree cache POPULATED (content length=%d, total cached=%d)", len(templateContent), len(d.cachedHTMLTrees))
+
+	return htmlTree
 }
 
 // ByteRangeToProtocolRange converts byte range to protocol range
@@ -511,18 +568,12 @@ func (d *TypeScriptDocument) analyzeTemplateContentAsHTML(
 	analysis *types.CompletionAnalysis,
 	handler *Handler,
 ) *types.CompletionAnalysis {
-	// Create temporary HTML parser
-	htmlParser := Q.GetHTMLParser()
-	if htmlParser == nil {
-		return analysis
-	}
-	defer Q.PutHTMLParser(htmlParser)
-
-	htmlTree := htmlParser.Parse([]byte(templateContent), nil)
+	// Get or create cached HTML parse tree for this template content
+	htmlTree := d.getCachedHTMLTree(templateContent)
 	if htmlTree == nil {
 		return analysis
 	}
-	defer htmlTree.Close()
+	// NOTE: Don't close the tree - it's cached and reused
 
 	// Get HTML completion context query
 	htmlCompletionContext, err := Q.GetCachedQueryMatcher(handler.queryManager, "html", "completionContext")
