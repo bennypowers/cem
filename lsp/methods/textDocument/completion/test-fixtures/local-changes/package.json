@@ -1,7 +1,0 @@
-{
-  "name": "test-package",
-  "customElements": "dist/custom-elements.json",
-  "scripts": {
-    "analyze": "cem analyze --litelement --globs \"src/**/*.{js,ts}\""
-  }
-}
