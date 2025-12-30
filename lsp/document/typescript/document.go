@@ -231,24 +231,31 @@ func (d *TypeScriptDocument) getCachedHTMLTree(templateContent string) *ts.Tree 
 	// Compute SHA-256 hash of template content for cache key
 	contentHash := sha256.Sum256([]byte(templateContent))
 
-	d.mu.Lock()
-	defer d.mu.Unlock()
+	// Fast path: check cache under read lock for better concurrency
+	d.mu.RLock()
+	if d.cachedHTMLTrees != nil {
+		if cached, exists := d.cachedHTMLTrees[contentHash]; exists && cached != nil && cached.tree != nil {
+			d.mu.RUnlock()
 
-	// Initialize cache map if needed
-	if d.cachedHTMLTrees == nil {
-		d.cachedHTMLTrees = make(map[[32]byte]*cachedTree)
+			// Upgrade to write lock to safely increment refs
+			// Note: We must re-check after acquiring write lock in case cache was invalidated
+			d.mu.Lock()
+			if cached, exists := d.cachedHTMLTrees[contentHash]; exists && cached != nil && cached.tree != nil {
+				cached.refs++
+				tree := cached.tree
+				d.mu.Unlock()
+				helpers.SafeDebugLog("[CACHE] HTML tree cache HIT (hash=%x, refs=%d)", contentHash[:8], cached.refs)
+				return tree
+			}
+			d.mu.Unlock()
+			// Fall through to parse - cache was invalidated between locks
+		}
 	}
-
-	// Check if we already have a cached tree for this content hash
-	if cached, exists := d.cachedHTMLTrees[contentHash]; exists && cached != nil && cached.tree != nil {
-		cached.refs++
-		helpers.SafeDebugLog("[CACHE] HTML tree cache HIT (hash=%x, refs=%d)", contentHash[:8], cached.refs)
-		return cached.tree
-	}
+	d.mu.RUnlock()
 
 	helpers.SafeDebugLog("[CACHE] HTML tree cache MISS (hash=%x, content length=%d)", contentHash[:8], len(templateContent))
 
-	// Parse the HTML content
+	// Parse outside lock to allow concurrent document operations
 	htmlParser := Q.GetHTMLParser()
 	if htmlParser == nil {
 		return nil
@@ -258,6 +265,24 @@ func (d *TypeScriptDocument) getCachedHTMLTree(templateContent string) *ts.Tree 
 	htmlTree := htmlParser.Parse([]byte(templateContent), nil)
 	if htmlTree == nil {
 		return nil
+	}
+
+	// Re-check and populate under write lock
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	// Initialize cache map if needed
+	if d.cachedHTMLTrees == nil {
+		d.cachedHTMLTrees = make(map[[32]byte]*cachedTree)
+	}
+
+	// Another goroutine may have populated the cache while we were parsing
+	if cached, exists := d.cachedHTMLTrees[contentHash]; exists && cached != nil && cached.tree != nil {
+		// Discard our parsed tree since another goroutine already cached one
+		htmlTree.Close()
+		cached.refs++
+		helpers.SafeDebugLog("[CACHE] HTML tree cache HIT after concurrent parse (hash=%x, refs=%d)", contentHash[:8], cached.refs)
+		return cached.tree
 	}
 
 	// Cache the tree for future use with initial ref count of 1
