@@ -29,56 +29,11 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-func TestCreateCompletionData(t *testing.T) {
-	tests := []struct {
-		name          string
-		itemType      string
-		tagName       string
-		attributeName string
-	}{
-		{
-			name:          "tag completion data",
-			itemType:      "tag",
-			tagName:       "my-button",
-			attributeName: "",
-		},
-		{
-			name:          "attribute completion data",
-			itemType:      "attribute",
-			tagName:       "my-button",
-			attributeName: "variant",
-		},
-		{
-			name:          "event completion data",
-			itemType:      "event",
-			tagName:       "my-button",
-			attributeName: "click",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// This tests that createCompletionData is exported and usable
-			// Actual resolution testing would require a full ServerContext mock
-			// which is better tested in integration tests
-			item := protocol.CompletionItem{
-				Label: tt.tagName,
-			}
-
-			// In real usage, the Data field would be set by completion.go using createCompletionData
-			// and then resolved by calling Resolve
-
-			if item.Documentation != nil {
-				t.Error("Expected no documentation on initial completion item")
-			}
-		})
-	}
-}
+// Note: createCompletionData is not exported, so it's tested indirectly through
+// the comprehensive resolve tests below that exercise the full completion -> resolve flow
 
 func TestResolve_HandlesNilData(t *testing.T) {
-	// Create a minimal mock that satisfies enough of ServerContext for this test
-	// Note: In practice, resolve is called with a full ServerContext, but for
-	// this specific test we just need to verify nil handling
+	ctx := testhelpers.NewMockServerContext()
 
 	item := &protocol.CompletionItem{
 		Label: "test",
@@ -86,16 +41,20 @@ func TestResolve_HandlesNilData(t *testing.T) {
 	}
 
 	// Resolve should handle nil data gracefully without crashing
-	// Since we can't easily mock the full ServerContext interface,
-	// this test just verifies the data structure is correct
-	// Full integration testing happens in the LSP integration test suite
+	resolved, err := completion.Resolve(ctx, &glsp.Context{}, item)
+	if err != nil {
+		t.Fatalf("Resolve failed with nil data: %v", err)
+	}
 
-	if item.Documentation != nil {
+	// Should return the item unchanged when data is nil
+	if resolved.Documentation != nil {
 		t.Error("Expected no documentation when data is nil")
 	}
 }
 
 func TestResolve_PreservesExistingDocumentation(t *testing.T) {
+	ctx := testhelpers.NewMockServerContext()
+
 	existingDoc := &protocol.MarkupContent{
 		Kind:  protocol.MarkupKindMarkdown,
 		Value: "Existing documentation",
@@ -111,18 +70,24 @@ func TestResolve_PreservesExistingDocumentation(t *testing.T) {
 		},
 	}
 
-	// Verify the item structure
-	if item.Documentation == nil {
-		t.Fatal("Documentation should not be nil")
+	// Call Resolve - should preserve existing documentation and not generate new docs
+	resolved, err := completion.Resolve(ctx, &glsp.Context{}, item)
+	if err != nil {
+		t.Fatalf("Resolve failed: %v", err)
 	}
 
-	markupContent, ok := item.Documentation.(*protocol.MarkupContent)
+	// Verify documentation was preserved
+	if resolved.Documentation == nil {
+		t.Fatal("Documentation should not be nil after resolve")
+	}
+
+	markupContent, ok := resolved.Documentation.(*protocol.MarkupContent)
 	if !ok {
 		t.Fatal("Expected documentation to be MarkupContent")
 	}
 
 	if markupContent.Value != "Existing documentation" {
-		t.Errorf("Documentation was modified: %s", markupContent.Value)
+		t.Errorf("Documentation was modified: expected 'Existing documentation', got '%s'", markupContent.Value)
 	}
 }
 

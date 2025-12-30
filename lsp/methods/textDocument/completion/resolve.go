@@ -36,7 +36,7 @@ type CompletionItemData struct {
 }
 
 // Resolve handles completionItem/resolve requests to lazily generate documentation
-func Resolve(ctx types.ServerContext, context *glsp.Context, params *protocol.CompletionItem) (*protocol.CompletionItem, error) {
+func Resolve(ctx types.ServerContext, _ *glsp.Context, params *protocol.CompletionItem) (*protocol.CompletionItem, error) {
 	helpers.SafeDebugLog("[RESOLVE] Request for completion item: %s", params.Label)
 
 	// If item already has documentation, just return it
