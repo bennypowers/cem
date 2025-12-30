@@ -37,7 +37,7 @@ import (
 
 func TestAttributeCompletionAfterSpaces(t *testing.T) {
 	// Load test manifest
-	fixtureDir := filepath.Join("attribute-values-test")
+	fixtureDir := filepath.Join("testdata", "legacy", "attribute-values")
 	manifestPath := filepath.Join(fixtureDir, "manifest.json")
 
 	manifestBytes, err := os.ReadFile(manifestPath)

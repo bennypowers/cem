@@ -33,7 +33,7 @@ import (
 // and prevents future regressions of this critical completion feature
 func TestSlotAttributeNameSuggestionRegression(t *testing.T) {
 	// Load test manifest with multiple elements that have different slot configurations
-	fixtureDir := filepath.Join("slot-attribute-regression-test")
+	fixtureDir := filepath.Join("testdata", "legacy", "slot-attribute-regression")
 	manifestPath := filepath.Join(fixtureDir, "manifest.json")
 
 	manifestBytes, err := os.ReadFile(manifestPath)
@@ -267,7 +267,7 @@ func TestSlotAttributeParentDetectionRegression(t *testing.T) {
 	// This is a focused regression test for the specific bug that was fixed:
 	// findParentElementTag was returning the current element instead of parent element
 
-	fixtureDir := filepath.Join("slot-attribute-regression-test")
+	fixtureDir := filepath.Join("testdata", "legacy", "slot-attribute-regression")
 	manifestPath := filepath.Join(fixtureDir, "manifest.json")
 
 	manifestBytes, err := os.ReadFile(manifestPath)
@@ -365,7 +365,7 @@ func TestSlotAttributeParentDetectionRegression(t *testing.T) {
 
 // TestSlotAttributeCompletionStructureRegression ensures slot completions have proper LSP structure
 func TestSlotAttributeCompletionStructureRegression(t *testing.T) {
-	fixtureDir := filepath.Join("slot-attribute-regression-test")
+	fixtureDir := filepath.Join("testdata", "legacy", "slot-attribute-regression")
 	manifestPath := filepath.Join(fixtureDir, "manifest.json")
 
 	manifestBytes, err := os.ReadFile(manifestPath)

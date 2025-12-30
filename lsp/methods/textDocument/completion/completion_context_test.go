@@ -232,7 +232,7 @@ func TestCustomElementTagValidation(t *testing.T) {
 func TestCompletionIntegration(t *testing.T) {
 	// Create test registry with custom elements using proper factory
 	// Load manifest from existing fixture file to avoid type complexity
-	fixtureDir := filepath.Join("attribute-values-test")
+	fixtureDir := filepath.Join("testdata", "legacy", "attribute-values")
 	manifestPath := filepath.Join(fixtureDir, "manifest.json")
 
 	manifestBytes, err := os.ReadFile(manifestPath)
