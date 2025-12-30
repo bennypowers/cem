@@ -138,6 +138,10 @@ func CreateElementHoverContent(element *M.CustomElement) string {
 // CreateElementHoverContentFromDeclaration creates markdown content for custom element hover
 // using the full CustomElementDeclaration which includes summary and description
 func CreateElementHoverContentFromDeclaration(decl *M.CustomElementDeclaration) string {
+	if decl == nil {
+		return ""
+	}
+
 	var content strings.Builder
 
 	// 1. Tag name first (as title)
