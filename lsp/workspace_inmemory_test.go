@@ -37,7 +37,7 @@ func TestWorkspaceInMemoryGeneration_MissingManifest(t *testing.T) {
 	// - Workspace package declares "customElements": "custom-elements.json"
 	// - But the file doesn't exist yet (hasn't been built)
 	// - LSP should generate the manifest in-memory and use it for diagnostics
-	fixturePath, err := filepath.Abs(filepath.Join("test", "fixtures", "workspace-missing-manifest"))
+	fixturePath, err := filepath.Abs(filepath.Join("testdata", "integration", "workspace-missing-manifest"))
 	require.NoError(t, err, "Failed to get absolute path")
 
 	wsCtx := workspace.NewFileSystemWorkspaceContext(fixturePath)
@@ -100,7 +100,7 @@ func TestWorkspaceInMemoryGeneration_MissingManifest(t *testing.T) {
 // it's used instead of generating in-memory (existing behavior preserved)
 func TestWorkspaceInMemoryGeneration_WithExistingManifest(t *testing.T) {
 	// This test verifies that existing manifests still work as before
-	fixturePath, err := filepath.Abs(filepath.Join("test", "fixtures", "workspace-npm"))
+	fixturePath, err := filepath.Abs(filepath.Join("testdata", "integration", "workspace-npm"))
 	require.NoError(t, err, "Failed to get absolute path")
 
 	wsCtx := workspace.NewFileSystemWorkspaceContext(fixturePath)
@@ -125,7 +125,7 @@ func TestWorkspaceInMemoryGeneration_WithExistingManifest(t *testing.T) {
 // - package.json has "customElements" but the file doesn't exist
 func TestWorkspaceRootInMemoryGeneration(t *testing.T) {
 	// Use the existing workspace-missing-manifest fixture which simulates a workspace root
-	fixturePath, err := filepath.Abs(filepath.Join("test", "fixtures", "workspace-missing-manifest"))
+	fixturePath, err := filepath.Abs(filepath.Join("testdata", "integration", "workspace-missing-manifest"))
 	require.NoError(t, err, "Failed to get absolute path")
 
 	wsCtx := workspace.NewFileSystemWorkspaceContext(fixturePath)

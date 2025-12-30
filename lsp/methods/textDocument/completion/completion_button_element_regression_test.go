@@ -34,7 +34,7 @@ import (
 // attribute value completions in the demo-project context
 func TestButtonElementAttributeValueRegression(t *testing.T) {
 	// Load the demo-project manifest to test with real data
-	manifestPath := filepath.Join("..", "definition", "definition-test-fixtures", "custom-elements.json")
+	manifestPath := filepath.Join("..", "definition", "testdata", "integration", "definition-test-fixtures", "custom-elements.json")
 
 	manifestBytes, err := os.ReadFile(manifestPath)
 	if err != nil {
@@ -150,7 +150,7 @@ func TestButtonElementAttributeValueRegression(t *testing.T) {
 // TestButtonElementIntegrationContext tests the full integration with actual HTML context
 func TestButtonElementIntegrationContext(t *testing.T) {
 	// Load the demo-project manifest
-	manifestPath := filepath.Join("..", "definition", "definition-test-fixtures", "custom-elements.json")
+	manifestPath := filepath.Join("..", "definition", "testdata", "integration", "definition-test-fixtures", "custom-elements.json")
 
 	manifestBytes, err := os.ReadFile(manifestPath)
 	if err != nil {

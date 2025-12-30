@@ -33,7 +33,7 @@ import (
 // TestWorkspaceSinglePackage tests a workspace with a single package directly (like PatternFly Elements)
 // Pattern: workspaces: ["./elements"] where ./elements is the package itself
 func TestWorkspaceSinglePackage(t *testing.T) {
-	fixturePath, err := filepath.Abs(filepath.Join("test", "fixtures", "workspace-elements-single"))
+	fixturePath, err := filepath.Abs(filepath.Join("testdata", "integration", "workspace-elements-single"))
 	require.NoError(t, err, "Failed to get absolute path")
 
 	wsCtx := workspace.NewFileSystemWorkspaceContext(fixturePath)

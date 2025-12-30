@@ -28,7 +28,7 @@ import (
 )
 
 func TestIncrementalParsingIntegration(t *testing.T) {
-	fixtureDir := filepath.Join("test", "fixtures", "incremental-parsing-test")
+	fixtureDir := filepath.Join("testdata", "integration", "incremental-parsing-test")
 
 	// Setup document manager
 	dm, err := document.NewDocumentManager()
@@ -157,7 +157,7 @@ func TestIncrementalParsingIntegration(t *testing.T) {
 }
 
 func TestIncrementalParsingFallback(t *testing.T) {
-	fixtureDir := filepath.Join("test", "fixtures", "incremental-parsing-test")
+	fixtureDir := filepath.Join("testdata", "integration", "incremental-parsing-test")
 
 	dm, err := document.NewDocumentManager()
 	require.NoError(t, err, "Should create document manager")
@@ -236,7 +236,7 @@ func TestIncrementalParsingFallback(t *testing.T) {
 }
 
 func TestIncrementalParsingValidation(t *testing.T) {
-	fixtureDir := filepath.Join("test", "fixtures", "incremental-parsing-test")
+	fixtureDir := filepath.Join("testdata", "integration", "incremental-parsing-test")
 
 	dm, err := document.NewDocumentManager()
 	require.NoError(t, err, "Should create document manager")
