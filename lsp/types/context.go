@@ -49,6 +49,7 @@ type Registry interface {
 	Attributes(tagName string) (map[string]*M.Attribute, bool)
 	Slots(tagName string) ([]M.Slot, bool)
 	ElementDefinition(tagName string) (ElementDefinition, bool)
+	FindCustomElementDeclaration(tagName string) *M.CustomElementDeclaration
 	ManifestCount() int
 	ElementCount() int
 }

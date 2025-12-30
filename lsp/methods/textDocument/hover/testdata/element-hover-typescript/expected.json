@@ -1,7 +1,7 @@
 {
   "contents": {
     "kind": "markdown",
-    "value": "## `\u003ctest-component\u003e`\n\n**Custom Element**\n\n### Attributes\n\n- **`prop`** _string_ - A test property\n\n"
+    "value": "## `\u003ctest-component\u003e`\n\nA test component for TypeScript hover testing\n\n### Attributes\n\n- **`prop`** _string_ - A test property\n\n"
   },
   "range": {
     "start": {

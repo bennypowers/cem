@@ -84,6 +84,38 @@ func (p *Package) Clone() *Package {
 	return cloned
 }
 
+// FindCustomElementDeclaration finds the CustomElementDeclaration for a given tag name.
+// This provides access to the full declaration including summary and description,
+// which are not available on the CustomElement struct alone.
+//
+// Returns nil if the package is nil, the tag name is empty, or no matching element is found.
+//
+// Usage:
+//
+//	decl := pkg.FindCustomElementDeclaration("my-button")
+//	if decl != nil {
+//		fmt.Println(decl.Summary)
+//		fmt.Println(decl.Description)
+//	}
+func (p *Package) FindCustomElementDeclaration(tagName string) *CustomElementDeclaration {
+	if p == nil || tagName == "" {
+		return nil
+	}
+
+	for i := range p.Modules {
+		for j := range p.Modules[i].Declarations {
+			// Check if this is a CustomElementDeclaration with matching tagName
+			if customEl, ok := p.Modules[i].Declarations[j].(*CustomElementDeclaration); ok {
+				if customEl.TagName == tagName {
+					return customEl
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 func (x *Package) UnmarshalJSON(data []byte) error {
 	type Rest Package
 	aux := &struct {

@@ -27,8 +27,9 @@ literals.
 
 Get element API documentation close to where you use them with Hover docs.
 
-- Element descriptions, properties, and usage examples
-- Attribute documentation with type information
+- **Element summary and description** from custom element manifests
+- **Complete API documentation**: attributes, events, and slots with type information
+- **Attribute-specific hover**: Shows type, description, default values, and deprecation warnings
 - Links to source code and external documentation
 
 ### Go-to-Definition
