@@ -132,6 +132,28 @@ func AnalyzeTagNameDiagnosticsForTest(ctx types.ServerContext, doc types.Documen
 			diagnostics = append(diagnostics, diagnostic)
 			helpers.SafeDebugLog("[DIAGNOSTICS] Added diagnostic for unknown tag '%s'", tagName)
 		} else if existsInManifest && !isImported {
+			// Check if element is defined in the current file - if so, skip import check
+			if elementDef, hasDefinition := ctx.ElementDefinition(tagName); hasDefinition {
+				modulePath := elementDef.ModulePath()
+				docURI := doc.URI()
+
+				// Convert file:// URI to path for comparison
+				docPath := strings.TrimPrefix(docURI, "file://")
+
+				// Normalize paths by removing extensions (.ts, .js, .tsx, .jsx)
+				// This handles the case where TypeScript source files (.ts) are compiled to .js in manifests
+				docPathWithoutExt := strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(
+					docPath, ".ts"), ".js"), ".tsx"), ".jsx")
+				modulePathWithoutExt := strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(
+					modulePath, ".ts"), ".js"), ".tsx"), ".jsx")
+
+				// Check if the element is defined in this file (comparing paths without extensions)
+				if strings.HasSuffix(docPathWithoutExt, modulePathWithoutExt) || strings.HasSuffix(modulePathWithoutExt, docPathWithoutExt) {
+					helpers.SafeDebugLog("[DIAGNOSTICS] Element '%s' is defined in current file '%s' (module path '%s'), skipping import check", tagName, docPath, modulePath)
+					continue // Skip this element - it's defined locally
+				}
+			}
+
 			// Element exists in manifest but is not imported
 			if importPath, hasSource := ctx.ElementSource(tagName); hasSource {
 				severity := protocol.DiagnosticSeverityError
