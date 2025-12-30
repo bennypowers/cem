@@ -18,6 +18,7 @@ package publishDiagnostics_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -776,5 +777,126 @@ func TestTagDiagnostics_JsDocExamples(t *testing.T) {
 	// Verify it's a missing import diagnostic (my-foo exists in manifest but not imported)
 	if !strings.Contains(diag.Message, "not imported") {
 		t.Errorf("Expected 'not imported' diagnostic for my-foo, got: %s", diag.Message)
+	}
+}
+
+// TestTagDiagnostics_SameFileDefinition tests that elements defined in the same file
+// don't get "missing import" diagnostics (e.g., rh-alert.ts using <rh-alert> in its own template)
+func TestTagDiagnostics_SameFileDefinition(t *testing.T) {
+	tests := []struct {
+		name         string
+		docURI       string
+		manifestPath string
+		description  string
+	}{
+		{
+			name:         "exact_extension_match",
+			docURI:       "file:///workspace/elements/my-button/my-button.ts",
+			manifestPath: "elements/my-button/my-button.ts",
+			description:  "Document and manifest both use .ts extension",
+		},
+		{
+			name:         "ts_source_js_manifest",
+			docURI:       "file:///workspace/elements/my-button/my-button.ts",
+			manifestPath: "elements/my-button/my-button.js",
+			description:  "TypeScript source (.ts) but manifest shows .js (common case)",
+		},
+		{
+			name:         "tsx_source_js_manifest",
+			docURI:       "file:///workspace/elements/my-button/my-button.tsx",
+			manifestPath: "elements/my-button/my-button.js",
+			description:  "TSX source but manifest shows .js",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a manifest with my-button element
+			manifestJSON := fmt.Sprintf(`{
+				"schemaVersion": "2.1.0",
+				"modules": [{
+					"kind": "javascript-module",
+					"path": "%s",
+					"declarations": [{
+						"kind": "class",
+						"name": "MyButton",
+						"tagName": "my-button",
+						"customElement": true,
+						"attributes": [{
+							"name": "variant",
+							"type": {"text": "string"}
+						}]
+					}],
+					"exports": [{
+						"kind": "custom-element-definition",
+						"name": "my-button",
+						"declaration": {
+							"name": "MyButton"
+						}
+					}]
+				}]
+			}`, tt.manifestPath)
+
+			var pkg M.Package
+			if err := json.Unmarshal([]byte(manifestJSON), &pkg); err != nil {
+				t.Fatalf("Failed to parse manifest: %v", err)
+			}
+
+			// Create mock server context
+			ctx := testhelpers.NewMockServerContext()
+			ctx.AddManifest(&pkg)
+
+			// TypeScript content that defines my-button and uses it in the same file
+			// This simulates rh-alert.ts defining and using <rh-alert>
+			content := `import { LitElement, html } from 'lit';
+
+class MyButton extends LitElement {
+  render() {
+    return html` + "`" + ` <my-button variant="primary">Click me</my-button> ` + "`" + `;
+  }
+}
+
+customElements.define('my-button', MyButton);`
+
+			// Create document manager
+			dm, err := document.NewDocumentManager()
+			if err != nil {
+				t.Fatalf("Failed to create document manager: %v", err)
+			}
+			defer dm.Close()
+
+			// Set document manager in context
+			ctx.SetDocumentManager(dm)
+
+			// Create document with URI matching the test case
+			doc := dm.OpenDocument(tt.docURI, content, 1)
+			if doc == nil {
+				t.Fatal("Failed to open document")
+			}
+
+			// Add document to the mock context
+			ctx.AddDocument(tt.docURI, doc)
+
+			// Get diagnostics
+			diagnostics := publishDiagnostics.AnalyzeTagNameDiagnosticsForTest(ctx, doc)
+
+			// Debug: Print all diagnostics
+			t.Logf("[%s] Found %d diagnostics:", tt.description, len(diagnostics))
+			for i, diag := range diagnostics {
+				t.Logf("  Diagnostic %d: %s (line %d, char %d-%d)",
+					i, diag.Message,
+					diag.Range.Start.Line,
+					diag.Range.Start.Character,
+					diag.Range.End.Character)
+			}
+
+			// Should have NO diagnostics because my-button is defined in the same file
+			if len(diagnostics) != 0 {
+				t.Errorf("[%s] Expected 0 diagnostics for element defined in same file, got %d", tt.description, len(diagnostics))
+				for i, diag := range diagnostics {
+					t.Errorf("  Unexpected diagnostic %d: %s", i, diag.Message)
+				}
+			}
+		})
 	}
 }
