@@ -76,7 +76,23 @@ func Resolve(ctx types.ServerContext, context *glsp.Context, params *protocol.Co
 			helpers.SafeDebugLog("[RESOLVE] Generated tag documentation for %s", data.TagName)
 		}
 
-	case "attribute", "event", "property", "booleanAttribute":
+	case "event":
+		// Generate event documentation
+		if element, exists := ctx.Element(data.TagName); exists {
+			// Find the specific event in the element's events
+			for _, event := range element.Events {
+				if event.Name == data.AttributeName {
+					params.Documentation = &protocol.MarkupContent{
+						Kind:  protocol.MarkupKindMarkdown,
+						Value: hover.CreateEventHoverContent(&event, data.TagName),
+					}
+					helpers.SafeDebugLog("[RESOLVE] Generated event documentation for %s.%s", data.TagName, data.AttributeName)
+					break
+				}
+			}
+		}
+
+	case "attribute", "property", "booleanAttribute":
 		// Generate attribute documentation
 		if attrs, exists := ctx.Attributes(data.TagName); exists {
 			if attr, attrExists := attrs[data.AttributeName]; attrExists {

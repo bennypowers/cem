@@ -17,8 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package completion_test
 
 import (
+	"encoding/json"
+	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
+	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
+	"bennypowers.dev/cem/lsp/testhelpers"
+	M "bennypowers.dev/cem/manifest"
+	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
@@ -116,5 +123,142 @@ func TestResolve_PreservesExistingDocumentation(t *testing.T) {
 
 	if markupContent.Value != "Existing documentation" {
 		t.Errorf("Documentation was modified: %s", markupContent.Value)
+	}
+}
+
+// TestResolve_EventDocumentation tests that event completions are properly resolved
+// with event-specific documentation using CreateEventHoverContent
+func TestResolve_EventDocumentation(t *testing.T) {
+	ctx := testhelpers.NewMockServerContext()
+
+	// Create a custom element with an event for testing
+	cardElement := &M.CustomElement{
+		TagName: "card-element",
+		Events: []M.Event{
+			{
+				FullyQualified: M.FullyQualified{
+					Name:        "card-click",
+					Description: "Fired when the card is clicked",
+				},
+				Type: &M.Type{
+					Text: "CustomEvent<{x: number, y: number}>",
+				},
+			},
+		},
+	}
+	ctx.AddElement("card-element", cardElement)
+
+	// Create a completion item for an event with deferred documentation
+	item := &protocol.CompletionItem{
+		Label: "@card-click",
+		Kind:  &[]protocol.CompletionItemKind{protocol.CompletionItemKindEvent}[0],
+		Data: map[string]any{
+			"type":          "event",
+			"tagName":       "card-element",
+			"attributeName": "card-click",
+		},
+	}
+
+	// Verify no documentation initially
+	if item.Documentation != nil {
+		t.Fatal("Expected no documentation initially (deferred)")
+	}
+
+	// Resolve the completion item
+	resolved, err := completion.Resolve(ctx, &glsp.Context{}, item)
+	if err != nil {
+		t.Fatalf("Resolve failed: %v", err)
+	}
+
+	// Verify documentation was generated
+	if resolved.Documentation == nil {
+		t.Fatal("Expected documentation after resolution")
+	}
+
+	markupContent, ok := resolved.Documentation.(*protocol.MarkupContent)
+	if !ok {
+		t.Fatal("Expected documentation to be MarkupContent")
+	}
+
+	// Verify it contains event-specific content
+	expectedContents := []string{
+		"## `card-click` event",
+		"**On `<card-element>` element**",
+		"**Type:** `CustomEvent<{x: number, y: number}>`",
+		"Fired when the card is clicked",
+	}
+
+	for _, expected := range expectedContents {
+		if !strings.Contains(markupContent.Value, expected) {
+			t.Errorf("Expected documentation to contain %q, got:\n%s", expected, markupContent.Value)
+		}
+	}
+
+	// Verify it's NOT using attribute-style documentation
+	if strings.Contains(markupContent.Value, "attribute") {
+		t.Error("Event documentation should not mention 'attribute'")
+	}
+}
+
+// TestResolve_AttributeDocumentation tests that attribute completions still work correctly
+func TestResolve_AttributeDocumentation(t *testing.T) {
+	// Load a test manifest with attributes
+	fs := testutil.NewFixtureFS(t, "slot-completions-test", "/test")
+	manifestBytes, err := fs.ReadFile("/test/manifest.json")
+	if err != nil {
+		t.Fatalf("Failed to read test manifest: %v", err)
+	}
+
+	var pkg M.Package
+	err = json.Unmarshal(manifestBytes, &pkg)
+	if err != nil {
+		t.Fatalf("Failed to parse manifest: %v", err)
+	}
+
+	ctx := testhelpers.NewMockServerContext()
+	ctx.AddManifest(&pkg)
+
+	// Create a completion item for an attribute with deferred documentation
+	item := &protocol.CompletionItem{
+		Label: "variant",
+		Kind:  &[]protocol.CompletionItemKind{protocol.CompletionItemKindProperty}[0],
+		Data: map[string]any{
+			"type":          "attribute",
+			"tagName":       "my-custom-element",
+			"attributeName": "variant",
+		},
+	}
+
+	// Verify no documentation initially
+	if item.Documentation != nil {
+		t.Fatal("Expected no documentation initially (deferred)")
+	}
+
+	// Resolve the completion item
+	resolved, err := completion.Resolve(ctx, &glsp.Context{}, item)
+	if err != nil {
+		t.Fatalf("Resolve failed: %v", err)
+	}
+
+	// Verify documentation was generated
+	if resolved.Documentation == nil {
+		t.Fatal("Expected documentation after resolution")
+	}
+
+	markupContent, ok := resolved.Documentation.(*protocol.MarkupContent)
+	if !ok {
+		t.Fatal("Expected documentation to be MarkupContent")
+	}
+
+	// Verify it contains attribute-specific content
+	expectedContents := []string{
+		"## `variant` attribute",
+		"**On `<my-custom-element>` element**",
+	}
+
+	for _, expected := range expectedContents {
+		if !strings.Contains(markupContent.Value, expected) {
+			t.Errorf("Expected documentation to contain %q, got:\n%s", expected, markupContent.Value)
+		}
 	}
 }
