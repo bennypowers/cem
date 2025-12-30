@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/my-button.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyButton",
+          "summary": "Primary button component",
+          "description": "A versatile button component for user interactions. Supports multiple variants, sizes, and states to match your design system.",
+          "tagName": "my-button",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "variant",
+              "type": {
+                "text": "\"primary\" | \"secondary\""
+              },
+              "description": "Button variant"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/my-card.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyCard",
+          "summary": "Card container component",
+          "description": "A flexible card layout component with slots for header, content, and footer sections.",
+          "tagName": "my-card",
+          "customElement": true,
+          "slots": [
+            {
+              "name": "header",
+              "description": "Card header content"
+            },
+            {
+              "name": "",
+              "description": "Default card content"
+            },
+            {
+              "name": "footer",
+              "description": "Card footer content"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/my-input.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyInput",
+          "tagName": "my-input",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "placeholder",
+              "type": {
+                "text": "string"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

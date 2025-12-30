@@ -1,7 +1,7 @@
 {
   "contents": {
     "kind": "markdown",
-    "value": "## `\u003ctest-element\u003e`\n\n**Custom Element**\n\n### Attributes\n\n- **`test-attr`** _string_ - A test attribute\n\n"
+    "value": "## `\u003ctest-element\u003e`\n\nA test custom element for hover testing\n\n### Attributes\n\n- **`test-attr`** _string_ - A test attribute\n\n"
   },
   "range": {
     "start": {
