@@ -18,10 +18,9 @@ package completion_test
 
 import (
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/testhelpers"
@@ -31,10 +30,8 @@ import (
 
 func TestSlotAttributeCompletions(t *testing.T) {
 	// Load test manifest with slot definitions
-	fixtureDir := filepath.Join("testdata", "slot-completions-test")
-	manifestPath := filepath.Join(fixtureDir, "manifest.json")
-
-	manifestBytes, err := os.ReadFile(manifestPath)
+	fs := testutil.NewFixtureFS(t, "slot-completions-test", "/test")
+	manifestBytes, err := fs.ReadFile("/test/manifest.json")
 	if err != nil {
 		t.Fatalf("Failed to read test manifest: %v", err)
 	}
@@ -140,10 +137,8 @@ func TestSlotAttributeCompletions(t *testing.T) {
 
 func TestSlotCompletionDetails(t *testing.T) {
 	// Load test manifest
-	fixtureDir := filepath.Join("testdata", "slot-completions-test")
-	manifestPath := filepath.Join(fixtureDir, "manifest.json")
-
-	manifestBytes, err := os.ReadFile(manifestPath)
+	fs := testutil.NewFixtureFS(t, "slot-completions-test", "/test")
+	manifestBytes, err := fs.ReadFile("/test/manifest.json")
 	if err != nil {
 		t.Fatalf("Failed to read test manifest: %v", err)
 	}
@@ -205,10 +200,8 @@ func getSlotCompletionLabels(completions []protocol.CompletionItem) []string {
 // For comprehensive regression testing, see TestSlotAttributeNameSuggestionRegression
 func TestSlotAttributeNameSuggestion(t *testing.T) {
 	// Load test manifest with slot definitions
-	fixtureDir := filepath.Join("testdata", "slot-completions-test")
-	manifestPath := filepath.Join(fixtureDir, "manifest.json")
-
-	manifestBytes, err := os.ReadFile(manifestPath)
+	fs := testutil.NewFixtureFS(t, "slot-completions-test", "/test")
+	manifestBytes, err := fs.ReadFile("/test/manifest.json")
 	if err != nil {
 		t.Fatalf("Failed to read test manifest: %v", err)
 	}

@@ -19,11 +19,10 @@ package completion_test
 import (
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
@@ -232,10 +231,8 @@ func TestCustomElementTagValidation(t *testing.T) {
 func TestCompletionIntegration(t *testing.T) {
 	// Create test registry with custom elements using proper factory
 	// Load manifest from existing fixture file to avoid type complexity
-	fixtureDir := filepath.Join("testdata", "legacy", "attribute-values")
-	manifestPath := filepath.Join(fixtureDir, "manifest.json")
-
-	manifestBytes, err := os.ReadFile(manifestPath)
+	fs := testutil.NewFixtureFS(t, "legacy/attribute-values", "/test")
+	manifestBytes, err := fs.ReadFile("/test/manifest.json")
 	if err != nil {
 		t.Fatalf("Failed to read test manifest: %v", err)
 	}

@@ -133,21 +133,16 @@ func TestHTMLTagCompletions_Fixtures(t *testing.T) {
 			expectedLabels[exp.Label] = true
 		}
 
+		actualLabels := make(map[string]bool)
 		for _, act := range actual {
+			actualLabels[act.Label] = true
 			if !expectedLabels[act.Label] {
 				t.Errorf("Unexpected completion: %s", act.Label)
 			}
 		}
 
 		for _, exp := range expected {
-			found := false
-			for _, act := range actual {
-				if act.Label == exp.Label {
-					found = true
-					break
-				}
-			}
-			if !found {
+			if !actualLabels[exp.Label] {
 				t.Errorf("Missing expected completion: %s", exp.Label)
 			}
 		}
