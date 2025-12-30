@@ -466,11 +466,11 @@ func TestSlotAttributeCompletionStructureRegression(t *testing.T) {
 			}(),
 		},
 		{
-			name: "Documentation should be present",
+			name: "Documentation should be deferred (nil initially)",
 			test: func() bool {
-				return slotCompletion.Documentation != nil
+				return slotCompletion.Documentation == nil
 			},
-			expected: "present",
+			expected: "nil",
 			actual: func() string {
 				if slotCompletion.Documentation == nil {
 					return "nil"

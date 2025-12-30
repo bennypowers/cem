@@ -90,6 +90,7 @@ func NewServer(workspace types.WorkspaceContext, transport TransportKind) (*Serv
 		SetTrace:               notify(s, "$/setTrace", lifecycle.SetTrace),
 		TextDocumentHover:      method(s, "textDocument/hover", hover.Hover),
 		TextDocumentCompletion: method(s, "textDocument/completion", completion.Completion),
+		CompletionItemResolve:  method(s, "completionItem/resolve", completion.Resolve),
 		TextDocumentDefinition: method(s, "textDocument/definition", definition.Definition),
 		TextDocumentReferences: method(s, "textDocument/references", references.References),
 		TextDocumentCodeAction: method(s, "textDocument/codeAction", codeAction.CodeAction),
