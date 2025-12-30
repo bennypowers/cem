@@ -30,6 +30,12 @@ jobs:
         id: bench-pr
         run: scripts/benchmark-ci-run.sh pr
 
+      - name: Run LSP benchmarks on PR branch
+        id: bench-lsp-pr
+        timeout-minutes: 5
+        continue-on-error: true
+        run: scripts/lsp-benchmark-ci-run.sh pr
+
       - name: Checkout target branch (base)
         uses: actions/checkout@v4
         with:
@@ -43,6 +49,12 @@ jobs:
         id: bench-base
         run: scripts/benchmark-ci-run.sh base
 
+      - name: Run LSP benchmarks on base branch
+        id: bench-lsp-base
+        timeout-minutes: 5
+        continue-on-error: true
+        run: scripts/lsp-benchmark-ci-run.sh base
+
       - name: Restore PR context for comparison
         uses: actions/checkout@v4
         with:
@@ -51,6 +63,12 @@ jobs:
 
       - name: Compare benchmark results
         run: scripts/compare-benchmarks.sh
+
+      - name: Compare LSP benchmark results
+        run: scripts/compare-lsp-benchmarks.sh
+
+      - name: Combine benchmark reports
+        run: scripts/combine-benchmark-reports.sh
 
       - name: Find previous benchmark comment
         id: find-comment
@@ -64,7 +82,7 @@ jobs:
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
-          body-file: bench_report.md
+          body-file: combined_bench_report.md
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           edit-mode: replace
 
@@ -79,3 +97,8 @@ jobs:
             base_bench_time.txt
             pr_bench.json
             base_bench.json
+            pr_lsp_bench.json
+            base_lsp_bench.json
+            bench_report.md
+            lsp_bench_report.md
+            combined_bench_report.md
