@@ -697,12 +697,6 @@ func findParentElementTag(doc types.Document, position protocol.Position) string
 			// Convert position to byte offset
 			lines := strings.Split(content, "\n")
 			if int(position.Line) < len(lines) {
-				offset := uint(0)
-				for i := 0; i < int(position.Line); i++ {
-					offset += uint(len(lines[i])) + 1 // +1 for newline
-				}
-				offset += uint(position.Character)
-
 				// Get node at position
 				node := tree.RootNode().NamedDescendantForPointRange(
 					ts.Point{Row: uint(position.Line), Column: uint(position.Character)},
