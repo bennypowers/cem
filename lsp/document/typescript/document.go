@@ -349,6 +349,12 @@ func (d *TypeScriptDocument) findCustomElements(handler *Handler) ([]types.Custo
 
 	// Populate cache before returning
 	d.mu.Lock()
+	if d.version != currentVersion {
+		// Document was updated during computation, discard stale result
+		d.mu.Unlock()
+		helpers.SafeDebugLog("[CACHE] findCustomElements: version changed during computation (was %d, now %d), discarding stale results", currentVersion, d.version)
+		return elements, nil
+	}
 	d.cachedCustomElements = elements
 	d.cacheVersion = currentVersion
 	d.mu.Unlock()
@@ -416,6 +422,12 @@ func (d *TypeScriptDocument) findHTMLTemplates(handler *Handler) ([]TemplateCont
 
 	// Populate cache before returning
 	d.mu.Lock()
+	if d.version != currentVersion {
+		// Document was updated during computation, discard stale result
+		d.mu.Unlock()
+		helpers.SafeDebugLog("[CACHE] findHTMLTemplates: version changed during computation (was %d, now %d), discarding stale results", currentVersion, d.version)
+		return templates, nil
+	}
 	d.cachedTemplates = templates
 	d.cacheVersion = currentVersion
 	d.mu.Unlock()
