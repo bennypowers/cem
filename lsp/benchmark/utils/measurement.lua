@@ -215,7 +215,7 @@ function M.make_position_params(bufnr, line, col)
 	if line and col then
 		vim.api.nvim_win_set_cursor(0, { line, col })
 	end
-	return vim.lsp.util.make_position_params(0, nil)
+	return vim.lsp.util.make_position_params(0, "utf-8")
 end
 
 -- Create LSP range parameters

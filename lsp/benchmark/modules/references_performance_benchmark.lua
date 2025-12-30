@@ -247,7 +247,7 @@ function test_references_during_editing()
 		-- Make actual LSP textDocument/references request
 		local references_found = 0
 		local bufnr = vim.api.nvim_get_current_buf()
-		local params = vim.lsp.util.make_position_params(0, nil)
+		local params = vim.lsp.util.make_position_params(0, "utf-8")
 		params.context = { includeDeclaration = true }
 
 		-- Request references from LSP server
@@ -313,7 +313,7 @@ function test_template_literal_references()
 		-- Make actual LSP textDocument/references request
 		local references_found = 0
 		local bufnr = vim.api.nvim_get_current_buf()
-		local params = vim.lsp.util.make_position_params(0, nil)
+		local params = vim.lsp.util.make_position_params(0, "utf-8")
 		params.context = { includeDeclaration = true }
 
 		-- Request references from LSP server
