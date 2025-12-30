@@ -287,7 +287,7 @@ json-viewer {
 
 </div>
 
-### **LSP Server Benchmarks**
+### LSP Server Benchmarks
 
 {{<lsp-benchmark-summary>}}
 
