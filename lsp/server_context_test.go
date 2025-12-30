@@ -116,7 +116,7 @@ func TestServer_Element(t *testing.T) {
 	defer func() { _ = server.Close() }()
 
 	// Load manifest from fixture file
-	manifestJSON, err := os.ReadFile("test-fixtures/server-context/test-element.json")
+	manifestJSON, err := os.ReadFile("testdata/server-context/test-element.json")
 	if err != nil {
 		t.Fatalf("Failed to read manifest fixture: %v", err)
 	}
@@ -158,7 +158,7 @@ func TestServer_Attributes(t *testing.T) {
 	defer func() { _ = server.Close() }()
 
 	// Load manifest from fixture file
-	manifestJSON, err := os.ReadFile("test-fixtures/server-context/element-with-attributes.json")
+	manifestJSON, err := os.ReadFile("testdata/server-context/element-with-attributes.json")
 	if err != nil {
 		t.Fatalf("Failed to read manifest fixture: %v", err)
 	}
@@ -208,7 +208,7 @@ func TestServer_Slots(t *testing.T) {
 	defer func() { _ = server.Close() }()
 
 	// Load manifest from fixture file
-	manifestJSON, err := os.ReadFile("test-fixtures/server-context/element-with-slots.json")
+	manifestJSON, err := os.ReadFile("testdata/server-context/element-with-slots.json")
 	if err != nil {
 		t.Fatalf("Failed to read manifest fixture: %v", err)
 	}
@@ -261,7 +261,7 @@ func TestServer_AddManifest(t *testing.T) {
 	initialCount := server.ElementCount()
 
 	// Load manifest from fixture file
-	manifestJSON, err := os.ReadFile("test-fixtures/server-context/multiple-elements.json")
+	manifestJSON, err := os.ReadFile("testdata/server-context/multiple-elements.json")
 	if err != nil {
 		t.Fatalf("Failed to read manifest fixture: %v", err)
 	}
@@ -301,21 +301,21 @@ func TestServer_ElementSource(t *testing.T) {
 	}{
 		{
 			name:           "ElementWithModulePath",
-			fixtureFile:    "test-fixtures/server-context/package-with-module-path.json",
+			fixtureFile:    "testdata/server-context/package-with-module-path.json",
 			tagName:        "test-button",
 			expectedSource: "button/button-element.js",
 			expectedExists: true,
 		},
 		{
 			name:           "ElementWithSimplePath",
-			fixtureFile:    "test-fixtures/server-context/package-only.json",
+			fixtureFile:    "testdata/server-context/package-only.json",
 			tagName:        "test-card",
 			expectedSource: "test-card.js",
 			expectedExists: true,
 		},
 		{
 			name:           "NonExistentElement",
-			fixtureFile:    "test-fixtures/server-context/empty-manifest.json",
+			fixtureFile:    "testdata/server-context/empty-manifest.json",
 			tagName:        "non-existent",
 			expectedSource: "",
 			expectedExists: false,
@@ -395,7 +395,7 @@ func TestServer_ElementDescription(t *testing.T) {
 	defer func() { _ = server.Close() }()
 
 	// Load manifest from fixture file
-	manifestJSON, err := os.ReadFile("test-fixtures/server-context/test-element.json")
+	manifestJSON, err := os.ReadFile("testdata/server-context/test-element.json")
 	if err != nil {
 		t.Fatalf("Failed to read manifest fixture: %v", err)
 	}

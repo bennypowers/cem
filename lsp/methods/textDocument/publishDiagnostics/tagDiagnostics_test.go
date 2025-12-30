@@ -35,7 +35,7 @@ import (
 
 func TestTagDiagnostics_WithImports(t *testing.T) {
 	// Setup fixture workspace
-	fixtureDir, err := filepath.Abs("test-fixtures/tag-diagnostics")
+	fixtureDir, err := filepath.Abs("testdata/integration/tag-diagnostics")
 	if err != nil {
 		t.Fatalf("Failed to get fixture path: %v", err)
 	}
@@ -137,7 +137,7 @@ func TestTagDiagnostics_WithImports(t *testing.T) {
 
 func TestTagDiagnostics_TypeScriptImports(t *testing.T) {
 	// Setup fixture workspace
-	fixtureDir, err := filepath.Abs("test-fixtures/tag-diagnostics")
+	fixtureDir, err := filepath.Abs("testdata/integration/tag-diagnostics")
 	if err != nil {
 		t.Fatalf("Failed to get fixture path: %v", err)
 	}
@@ -274,7 +274,7 @@ func TestTagDiagnostics_TypeScriptImports(t *testing.T) {
 
 func TestTagDiagnostics_MissingImports(t *testing.T) {
 	// Setup fixture workspace
-	fixtureDir, err := filepath.Abs("test-fixtures/tag-diagnostics")
+	fixtureDir, err := filepath.Abs("testdata/integration/tag-diagnostics")
 	if err != nil {
 		t.Fatalf("Failed to get fixture path: %v", err)
 	}
@@ -361,7 +361,7 @@ func TestTagDiagnostics_MissingImports(t *testing.T) {
 
 func TestTagDiagnostics_IgnoreComment(t *testing.T) {
 	// Setup fixture workspace
-	fixtureDir, err := filepath.Abs("test-fixtures/tag-diagnostics")
+	fixtureDir, err := filepath.Abs("testdata/integration/tag-diagnostics")
 	if err != nil {
 		t.Fatalf("Failed to get fixture path: %v", err)
 	}
@@ -448,7 +448,7 @@ func TestTagDiagnostics_IgnoreComment(t *testing.T) {
 
 func TestTagDiagnostics_ActualMissingImports(t *testing.T) {
 	// Setup fixture workspace
-	fixtureDir, err := filepath.Abs("test-fixtures/tag-diagnostics")
+	fixtureDir, err := filepath.Abs("testdata/integration/tag-diagnostics")
 	if err != nil {
 		t.Fatalf("Failed to get fixture path: %v", err)
 	}
@@ -535,7 +535,7 @@ func TestTagDiagnostics_ActualMissingImports(t *testing.T) {
 // through side-effect imports (importing a module registers elements without explicit re-exports)
 func TestTagDiagnostics_SideEffectImports(t *testing.T) {
 	// Setup fixture workspace with rh-tabs elements
-	fixtureDir, err := filepath.Abs("test-fixtures/rh-tabs-side-effect")
+	fixtureDir, err := filepath.Abs("testdata/integration/rh-tabs-side-effect")
 	if err != nil {
 		t.Fatalf("Failed to get fixture path: %v", err)
 	}
@@ -675,7 +675,7 @@ func TestTagDiagnostics_SideEffectImports(t *testing.T) {
 // don't trigger missing import errors (since they're documentation, not actual code)
 func TestTagDiagnostics_JsDocExamples(t *testing.T) {
 	// Setup fixture workspace
-	fixtureDir, err := filepath.Abs("test-fixtures/tag-diagnostics")
+	fixtureDir, err := filepath.Abs("testdata/integration/tag-diagnostics")
 	if err != nil {
 		t.Fatalf("Failed to get fixture path: %v", err)
 	}

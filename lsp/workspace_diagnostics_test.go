@@ -33,7 +33,7 @@ import (
 // TestWorkspaceDiagnostics_NoFalsePositives_npm tests that workspace sibling elements
 // do NOT produce "unknown element" diagnostics when properly imported
 func TestWorkspaceDiagnostics_NoFalsePositives_npm(t *testing.T) {
-	fixturePath, err := filepath.Abs(filepath.Join("test", "fixtures", "workspace-npm"))
+	fixturePath, err := filepath.Abs(filepath.Join("testdata", "integration", "workspace-npm"))
 	require.NoError(t, err, "Failed to get absolute path")
 
 	// Create workspace context
@@ -88,7 +88,7 @@ func TestWorkspaceDiagnostics_NoFalsePositives_npm(t *testing.T) {
 
 // TestWorkspaceDiagnostics_NoFalsePositives_yarn tests yarn workspace sibling elements
 func TestWorkspaceDiagnostics_NoFalsePositives_yarn(t *testing.T) {
-	fixturePath, err := filepath.Abs(filepath.Join("test", "fixtures", "workspace-yarn"))
+	fixturePath, err := filepath.Abs(filepath.Join("testdata", "integration", "workspace-yarn"))
 	require.NoError(t, err, "Failed to get absolute path")
 
 	// Create workspace context
@@ -142,7 +142,7 @@ func TestWorkspaceDiagnostics_NoFalsePositives_yarn(t *testing.T) {
 
 // TestWorkspaceDiagnostics_NoFalsePositives_pnpm tests pnpm workspace sibling elements
 func TestWorkspaceDiagnostics_NoFalsePositives_pnpm(t *testing.T) {
-	fixturePath, err := filepath.Abs(filepath.Join("test", "fixtures", "workspace-pnpm"))
+	fixturePath, err := filepath.Abs(filepath.Join("testdata", "integration", "workspace-pnpm"))
 	require.NoError(t, err, "Failed to get absolute path")
 
 	// Create workspace context

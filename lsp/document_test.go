@@ -34,7 +34,7 @@ func TestDocument_ScriptTagParsing_ModuleStaticImports(t *testing.T) {
 	defer dm.Close()
 
 	// Load test fixture
-	fixtureDir := "test/fixtures/script-tag-parsing"
+	fixtureDir := "testdata/integration/script-tag-parsing"
 	contentBytes, err := os.ReadFile(filepath.Join(fixtureDir, "module-static-imports.html"))
 	if err != nil {
 		t.Fatalf("Failed to read test fixture: %v", err)
@@ -105,7 +105,7 @@ func TestDocument_ScriptTagParsing_ModuleDynamicImports(t *testing.T) {
 	defer dm.Close()
 
 	// Load test fixture
-	fixtureDir := "test/fixtures/script-tag-parsing"
+	fixtureDir := "testdata/integration/script-tag-parsing"
 	contentBytes, err := os.ReadFile(filepath.Join(fixtureDir, "module-dynamic-imports.html"))
 	if err != nil {
 		t.Fatalf("Failed to read test fixture: %v", err)
@@ -169,7 +169,7 @@ func TestDocument_ScriptTagParsing_NonModuleDynamicImports(t *testing.T) {
 	defer dm.Close()
 
 	// Load test fixture
-	fixtureDir := "test/fixtures/script-tag-parsing"
+	fixtureDir := "testdata/integration/script-tag-parsing"
 	contentBytes, err := os.ReadFile(filepath.Join(fixtureDir, "non-module-dynamic-imports.html"))
 	if err != nil {
 		t.Fatalf("Failed to read test fixture: %v", err)
@@ -238,7 +238,7 @@ func TestDocument_ScriptTagParsing_SimpleModuleScript(t *testing.T) {
 	defer dm.Close()
 
 	// Load test fixture
-	fixtureDir := "test/fixtures/script-tag-parsing"
+	fixtureDir := "testdata/integration/script-tag-parsing"
 	contentBytes, err := os.ReadFile(filepath.Join(fixtureDir, "simple-module-script.html"))
 	if err != nil {
 		t.Fatalf("Failed to read test fixture: %v", err)
@@ -297,7 +297,7 @@ func TestDocument_ScriptTagParsing_FullHtmlWithModule(t *testing.T) {
 	defer dm.Close()
 
 	// Load test fixture
-	fixtureDir := "test/fixtures/script-tag-parsing"
+	fixtureDir := "testdata/integration/script-tag-parsing"
 	contentBytes, err := os.ReadFile(filepath.Join(fixtureDir, "full-html-with-module.html"))
 	if err != nil {
 		t.Fatalf("Failed to read test fixture: %v", err)
@@ -361,7 +361,7 @@ func TestDocument_ScriptTagParsing_NoModuleScript(t *testing.T) {
 	defer dm.Close()
 
 	// Load test fixture
-	fixtureDir := "test/fixtures/script-tag-parsing"
+	fixtureDir := "testdata/integration/script-tag-parsing"
 	contentBytes, err := os.ReadFile(filepath.Join(fixtureDir, "non-module-script.html"))
 	if err != nil {
 		t.Fatalf("Failed to read test fixture: %v", err)

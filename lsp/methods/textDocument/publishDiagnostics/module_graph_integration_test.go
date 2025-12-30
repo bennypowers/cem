@@ -28,7 +28,7 @@ import (
 
 func TestModuleGraphIntegration_DirectVsReExport(t *testing.T) {
 	// Use the fixture directory with proper manifest
-	fixtureDir, err := filepath.Abs(filepath.Join("..", "..", "..", "test", "fixtures", "direct-vs-reexport"))
+	fixtureDir, err := filepath.Abs(filepath.Join("..", "..", "..", "testdata", "integration", "direct-vs-reexport"))
 	if err != nil {
 		t.Fatalf("Failed to get absolute fixture path: %v", err)
 	}

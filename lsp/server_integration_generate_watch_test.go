@@ -35,7 +35,7 @@ func TestGenerateWatcherIntegration(t *testing.T) {
 	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	// Copy fixture files to create a realistic project structure
-	fixtureDir := filepath.Join("test", "fixtures", "generate-watch-test")
+	fixtureDir := filepath.Join("testdata", "integration", "generate-watch-test")
 
 	sourceFixture := filepath.Join(fixtureDir, "test-element.ts")
 	sourceFile := filepath.Join(tempDir, "test-element.ts")

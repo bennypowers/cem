@@ -43,7 +43,7 @@ type TestConfig struct {
 }
 
 func TestCreateMissingImportAction(t *testing.T) {
-	fixturesPath := filepath.Join("fixtures", "missing-import")
+	fixturesPath := filepath.Join("testdata", "missing-import")
 
 	// Read test configuration
 	configPath := filepath.Join(fixturesPath, "test-config.json")
