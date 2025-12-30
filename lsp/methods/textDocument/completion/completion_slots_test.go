@@ -181,8 +181,10 @@ func TestSlotCompletionDetails(t *testing.T) {
 			t.Errorf("Completion '%s' should have detail", completion.Label)
 		}
 
-		if completion.Documentation == nil {
-			t.Errorf("Completion '%s' should have documentation", completion.Label)
+		// Documentation is now deferred to completionItem/resolve
+		// Initial completion items should not have documentation
+		if completion.Documentation != nil {
+			t.Errorf("Completion '%s' should NOT have documentation initially (should be deferred)", completion.Label)
 		}
 	}
 }

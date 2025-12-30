@@ -72,6 +72,7 @@ func Initialize(ctx types.ServerContext, context *glsp.Context, params *protocol
 				".",
 				"?",
 			},
+			ResolveProvider: &[]bool{true}[0],
 		},
 		DefinitionProvider: &protocol.DefinitionOptions{},
 		ReferencesProvider: &protocol.ReferenceOptions{},

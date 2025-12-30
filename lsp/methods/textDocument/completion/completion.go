@@ -22,7 +22,6 @@ import (
 
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/methods/textDocument"
-	"bennypowers.dev/cem/lsp/methods/textDocument/hover"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
 	"github.com/tliron/glsp"
@@ -107,13 +106,10 @@ func getDefaultCompletions(ctx types.ServerContext) []protocol.CompletionItem {
 			}
 
 			items = append(items, protocol.CompletionItem{
-				Label:  tagName,
-				Kind:   &[]protocol.CompletionItemKind{protocol.CompletionItemKindClass}[0],
-				Detail: &description,
-				Documentation: &protocol.MarkupContent{
-					Kind:  protocol.MarkupKindMarkdown,
-					Value: hover.CreateElementHoverContent(element),
-				},
+				Label:      tagName,
+				Kind:       &[]protocol.CompletionItemKind{protocol.CompletionItemKindClass}[0],
+				Detail:     &description,
+				Data:       createCompletionData("tag", tagName, ""),
 				InsertText: &tagName,
 			})
 		}
@@ -155,13 +151,10 @@ func getTagNameCompletions(ctx types.ServerContext, doc types.Document, analysis
 			}
 
 			items = append(items, protocol.CompletionItem{
-				Label:  tagName,
-				Kind:   &[]protocol.CompletionItemKind{protocol.CompletionItemKindClass}[0],
-				Detail: &description,
-				Documentation: &protocol.MarkupContent{
-					Kind:  protocol.MarkupKindMarkdown,
-					Value: hover.CreateElementHoverContent(element),
-				},
+				Label:            tagName,
+				Kind:             &[]protocol.CompletionItemKind{protocol.CompletionItemKindClass}[0],
+				Detail:           &description,
+				Data:             createCompletionData("tag", tagName, ""),
 				InsertText:       &snippet,
 				InsertTextFormat: &[]protocol.InsertTextFormat{protocol.InsertTextFormatSnippet}[0],
 			})
@@ -220,13 +213,10 @@ func GetAttributeCompletionsWithContext(ctx types.ServerContext, doc types.Docum
 
 			helpers.SafeDebugLog("[COMPLETION] Adding attribute completion: '%s' for element '%s'", attrName, tagName)
 			item := protocol.CompletionItem{
-				Label:  attrName,
-				Kind:   &[]protocol.CompletionItemKind{protocol.CompletionItemKindProperty}[0],
-				Detail: &description,
-				Documentation: &protocol.MarkupContent{
-					Kind:  protocol.MarkupKindMarkdown,
-					Value: hover.CreateAttributeHoverContent(attr, tagName),
-				},
+				Label:      attrName,
+				Kind:       &[]protocol.CompletionItemKind{protocol.CompletionItemKindProperty}[0],
+				Detail:     &description,
+				Data:       createCompletionData("attribute", tagName, attrName),
 				InsertText: &snippet,
 			}
 
@@ -318,10 +308,6 @@ func GetTypeBasedCompletions(attr *M.Attribute) []protocol.CompletionItem {
 				Kind:       &valueKind,
 				Detail:     &[]string{"Empty string"}[0],
 				InsertText: &[]string{`""`}[0],
-				Documentation: &protocol.MarkupContent{
-					Kind:  protocol.MarkupKindMarkdown,
-					Value: "Empty string value",
-				},
 			},
 		)
 
@@ -339,10 +325,6 @@ func GetTypeBasedCompletions(attr *M.Attribute) []protocol.CompletionItem {
 				Kind:       &valueKind,
 				Detail:     &[]string{"Literal type value"}[0],
 				InsertText: &[]string{literalValue}[0],
-				Documentation: &protocol.MarkupContent{
-					Kind:  protocol.MarkupKindMarkdown,
-					Value: "Literal type value from TypeScript definition",
-				},
 			})
 		}
 	}
@@ -455,11 +437,7 @@ func getDefaultValueCompletion(attr *M.Attribute) *protocol.CompletionItem {
 		Kind:       &valueKind,
 		Detail:     &[]string{"Default value"}[0],
 		InsertText: &[]string{attr.Default}[0],
-		Documentation: &protocol.MarkupContent{
-			Kind:  protocol.MarkupKindMarkdown,
-			Value: fmt.Sprintf("Default value for this attribute: `%s`", attr.Default),
-		},
-		SortText: &[]string{"0"}[0], // Sort defaults to the top
+		SortText:   &[]string{"0"}[0], // Sort defaults to the top
 	}
 }
 
@@ -579,13 +557,10 @@ func getLitEventCompletions(ctx types.ServerContext, tagName string) []protocol.
 			}
 
 			items = append(items, protocol.CompletionItem{
-				Label:  "@" + event.Name,
-				Kind:   &[]protocol.CompletionItemKind{protocol.CompletionItemKindEvent}[0],
-				Detail: &description,
-				Documentation: &protocol.MarkupContent{
-					Kind:  protocol.MarkupKindMarkdown,
-					Value: fmt.Sprintf("**Event binding**: `@%s`\n\n%s", event.Name, event.Description),
-				},
+				Label:      "@" + event.Name,
+				Kind:       &[]protocol.CompletionItemKind{protocol.CompletionItemKindEvent}[0],
+				Detail:     &description,
+				Data:       createCompletionData("event", tagName, event.Name),
 				InsertText: &event.Name, // Just insert the event name, @ is already typed
 			})
 		}
@@ -612,13 +587,10 @@ func getLitPropertyCompletions(ctx types.ServerContext, tagName string) []protoc
 			}
 
 			items = append(items, protocol.CompletionItem{
-				Label:  "." + attrName,
-				Kind:   &[]protocol.CompletionItemKind{protocol.CompletionItemKindProperty}[0],
-				Detail: &description,
-				Documentation: &protocol.MarkupContent{
-					Kind:  protocol.MarkupKindMarkdown,
-					Value: fmt.Sprintf("**Property binding**: `.%s`\n\n%s", attrName, attr.Description),
-				},
+				Label:      "." + attrName,
+				Kind:       &[]protocol.CompletionItemKind{protocol.CompletionItemKindProperty}[0],
+				Detail:     &description,
+				Data:       createCompletionData("property", tagName, attrName),
 				InsertText: &attrName, // Just insert the property name, . is already typed
 			})
 		}
@@ -643,13 +615,10 @@ func getLitBooleanAttributeCompletions(ctx types.ServerContext, tagName string) 
 				description := fmt.Sprintf("Boolean attribute for <%s>", tagName)
 
 				items = append(items, protocol.CompletionItem{
-					Label:  "?" + attrName,
-					Kind:   &[]protocol.CompletionItemKind{protocol.CompletionItemKindProperty}[0],
-					Detail: &description,
-					Documentation: &protocol.MarkupContent{
-						Kind:  protocol.MarkupKindMarkdown,
-						Value: fmt.Sprintf("**Boolean attribute**: `?%s`\n\n%s", attrName, attr.Description),
-					},
+					Label:      "?" + attrName,
+					Kind:       &[]protocol.CompletionItemKind{protocol.CompletionItemKindProperty}[0],
+					Detail:     &description,
+					Data:       createCompletionData("booleanAttribute", tagName, attrName),
 					InsertText: &attrName, // Just insert the attribute name, ? is already typed
 				})
 			}
@@ -712,10 +681,6 @@ func getSlotAttributeCompletions(ctx types.ServerContext, doc types.Document, po
 			Kind:       &valueKind,
 			Detail:     &detail,
 			InsertText: &[]string{slot.Name}[0],
-			Documentation: &protocol.MarkupContent{
-				Kind:  protocol.MarkupKindMarkdown,
-				Value: fmt.Sprintf("**Slot**: `%s`\n\n%s", slot.Name, slot.Description),
-			},
 		})
 	}
 
@@ -895,13 +860,9 @@ func createSlotAttributeCompletion() protocol.CompletionItem {
 	insertTextFormat := protocol.InsertTextFormatSnippet
 
 	return protocol.CompletionItem{
-		Label:  "slot",
-		Kind:   &[]protocol.CompletionItemKind{protocol.CompletionItemKindProperty}[0],
-		Detail: &[]string{"HTML slot attribute"}[0],
-		Documentation: &protocol.MarkupContent{
-			Kind:  protocol.MarkupKindMarkdown,
-			Value: "Assigns this element to a named slot in the parent custom element",
-		},
+		Label:            "slot",
+		Kind:             &[]protocol.CompletionItemKind{protocol.CompletionItemKindProperty}[0],
+		Detail:           &[]string{"HTML slot attribute"}[0],
 		InsertText:       &snippet,
 		InsertTextFormat: &insertTextFormat,
 	}
