@@ -867,6 +867,25 @@ func (r *Registry) ElementDefinition(tagName string) (*ElementDefinition, bool) 
 	return nil, false
 }
 
+// FindCustomElementDeclaration finds the full CustomElementDeclaration for a given tag name.
+// This provides access to the complete declaration including summary and description,
+// which are not available on the CustomElement struct alone.
+//
+// Returns nil if no matching element is found.
+func (r *Registry) FindCustomElementDeclaration(tagName string) *M.CustomElementDeclaration {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	// Search through all loaded manifests
+	for _, pkg := range r.Manifests {
+		if decl := pkg.FindCustomElementDeclaration(tagName); decl != nil {
+			return decl
+		}
+	}
+
+	return nil
+}
+
 // AllTagNames returns all registered custom element tag names
 func (r *Registry) AllTagNames() []string {
 	r.mu.RLock()

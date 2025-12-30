@@ -39,6 +39,7 @@ type MockServerContext struct {
 	SlotsMap         map[string][]M.Slot
 	ElementDefsMap   map[string]types.ElementDefinition
 	DescriptionsMap  map[string]string
+	Manifests        []*M.Package
 	WorkspaceRootStr string
 	DocumentMgr      types.DocumentManager
 	QueryMgr         *queries.QueryManager
@@ -151,6 +152,7 @@ func NewMockServerContext() *MockServerContext {
 		SlotsMap:         make(map[string][]M.Slot),
 		ElementDefsMap:   make(map[string]types.ElementDefinition),
 		DescriptionsMap:  make(map[string]string),
+		Manifests:        []*M.Package{},
 		WorkspaceRootStr: "/test/workspace",
 	}
 }
@@ -267,11 +269,31 @@ func (m *MockServerContext) ElementDefinition(tagName string) (types.ElementDefi
 	return def, exists
 }
 
+func (m *MockServerContext) FindCustomElementDeclaration(tagName string) *M.CustomElementDeclaration {
+	if m.Registry != nil {
+		return m.Registry.FindCustomElementDeclaration(tagName)
+	}
+	// For mock, we can search through the manifests if they exist
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	for _, pkg := range m.Manifests {
+		if decl := pkg.FindCustomElementDeclaration(tagName); decl != nil {
+			return decl
+		}
+	}
+	return nil
+}
+
 func (m *MockServerContext) AddManifest(manifest *M.Package) {
 	if m.Registry != nil {
 		m.Registry.AddManifest(manifest)
 		return
 	}
+
+	// Add manifest to the list
+	m.mu.Lock()
+	m.Manifests = append(m.Manifests, manifest)
+	m.mu.Unlock()
 
 	// If no Registry is set, populate the internal maps directly
 	for _, module := range manifest.Modules {

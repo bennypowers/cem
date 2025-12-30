@@ -105,6 +105,10 @@ func (s *Server) ElementDefinition(tagName string) (types.ElementDefinition, boo
 	return s.registry.ElementDefinition(tagName)
 }
 
+func (s *Server) FindCustomElementDeclaration(tagName string) *M.CustomElementDeclaration {
+	return s.registry.FindCustomElementDeclaration(tagName)
+}
+
 // ManifestCount returns the number of loaded manifests
 func (s *Server) ManifestCount() int {
 	s.registry.mu.RLock()
@@ -248,16 +252,19 @@ func (s *Server) UpdateWorkspaceFromLSP(rootURI *string, workspaceFolders []prot
 }
 
 func (s *Server) ElementDescription(tagName string) (string, bool) {
-	// For now, use a simple approach to get basic element info
-	// This can be enhanced later to pull from the full declaration data
-	element, exists := s.registry.Element(tagName)
-	if !exists {
+	// Use FindCustomElementDeclaration to get the full declaration with summary/description
+	decl := s.registry.FindCustomElementDeclaration(tagName)
+	if decl == nil {
 		return "", false
 	}
 
-	// Check if we have basic element information that could serve as description
-	// For now, return empty since CustomElement doesn't directly have description
-	// but this establishes the interface for when more detailed data is available
-	_ = element
+	// Prefer description over summary
+	if decl.Description != "" {
+		return decl.Description, true
+	}
+	if decl.Summary != "" {
+		return decl.Summary, true
+	}
+
 	return "", false
 }
