@@ -92,17 +92,65 @@ local function run_all_benchmarks()
         -- Display statistical information
         if result.statistics then
           local stats = result.statistics
-          print(string.format("   Stats: Mean=%.2fms, P95=%.2fms, P99=%.2fms, StdDev=%.2fms", 
+          print(string.format("   Stats: Mean=%.2fms, P95=%.2fms, P99=%.2fms, StdDev=%.2fms",
             stats.mean, stats.p95, stats.p99, stats.stddev))
         elseif result.duration_ms then
           print(string.format("   Duration: %.2fms", result.duration_ms))
         end
-        
+
         if result.success_rate then
-          print(string.format("   Success rate: %.1f%% (%d/%d)", 
-            result.success_rate * 100, 
+          print(string.format("   Success rate: %.1f%% (%d/%d)",
+            result.success_rate * 100,
             result.successful_runs or result.successful_hovers or result.successful_completions or 0,
             result.iterations or result.total_attempts or 1))
+        end
+
+        -- Display correctness metrics
+        if result.hover_results then
+          -- Show average content length for hover results
+          local total_content = 0
+          local count = 0
+          for _, hover_result in ipairs(result.hover_results) do
+            if hover_result.avg_content_length then
+              total_content = total_content + hover_result.avg_content_length
+              count = count + 1
+            end
+          end
+          if count > 0 then
+            print(string.format("   Correctness: Avg hover content length=%.0f chars", total_content / count))
+          end
+        end
+
+        if result.completion_results then
+          -- Show average item count for completion results
+          local total_items = 0
+          local count = 0
+          for _, comp_result in ipairs(result.completion_results) do
+            if comp_result.avg_item_count then
+              total_items = total_items + comp_result.avg_item_count
+              count = count + 1
+            end
+          end
+          if count > 0 then
+            print(string.format("   Correctness: Avg completion items=%.1f", total_items / count))
+          end
+        end
+
+        if result.scenario_results then
+          -- Show test success rate for scenario-based benchmarks
+          local total_tests = 0
+          local successful_tests = 0
+          for _, scenario in ipairs(result.scenario_results) do
+            if scenario.total_tests and scenario.successful_tests then
+              total_tests = total_tests + scenario.total_tests
+              successful_tests = successful_tests + scenario.successful_tests
+            end
+          end
+          if total_tests > 0 then
+            local test_success_pct = (successful_tests / total_tests) * 100
+            print(string.format("   Correctness: %.1f%% tests passed (%d/%d)",
+              test_success_pct, successful_tests, total_tests))
+          end
         end
         
         -- Enhanced benchmark specific reporting
@@ -157,15 +205,58 @@ local function run_all_benchmarks()
       successful_benchmarks = successful_benchmarks + 1
       local status = "✅ PASS"
       local details = ""
-      
+
       if result.duration_ms then
         details = details .. string.format(" (%.2fms)", result.duration_ms)
       end
       if result.success_rate then
         details = details .. string.format(" [%.0f%% success]", result.success_rate * 100)
       end
-      
-      print(string.format("%-20s %s%s", benchmark_name, status, details))
+
+      -- Add correctness information to summary
+      local correctness = ""
+      if result.scenario_results then
+        -- Lit template benchmark with test correctness
+        local total_tests = 0
+        local successful_tests = 0
+        for _, scenario in ipairs(result.scenario_results) do
+          if scenario.total_tests and scenario.successful_tests then
+            total_tests = total_tests + scenario.total_tests
+            successful_tests = successful_tests + scenario.successful_tests
+          end
+        end
+        if total_tests > 0 then
+          correctness = string.format(" [%.0f%% correct]", (successful_tests / total_tests) * 100)
+        end
+      elseif result.completion_results then
+        -- Completion benchmark - show avg items
+        local total_items = 0
+        local count = 0
+        for _, comp_result in ipairs(result.completion_results) do
+          if comp_result.avg_item_count then
+            total_items = total_items + comp_result.avg_item_count
+            count = count + 1
+          end
+        end
+        if count > 0 then
+          correctness = string.format(" [%.1f items]", total_items / count)
+        end
+      elseif result.hover_results then
+        -- Hover benchmark - show avg content length
+        local total_content = 0
+        local count = 0
+        for _, hover_result in ipairs(result.hover_results) do
+          if hover_result.avg_content_length then
+            total_content = total_content + hover_result.avg_content_length
+            count = count + 1
+          end
+        end
+        if count > 0 then
+          correctness = string.format(" [%.0f chars]", total_content / count)
+        end
+      end
+
+      print(string.format("%-20s %s%s%s", benchmark_name, status, details, correctness))
     else
       print(string.format("%-20s ❌ FAIL - %s", benchmark_name, result.error or "unknown"))
     end

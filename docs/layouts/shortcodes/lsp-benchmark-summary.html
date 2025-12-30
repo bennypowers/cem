@@ -23,6 +23,54 @@
         {{ end }}</dd>
         <dt>Startup Time (Mean)</dt>
         <dd>{{ if $cem.benchmarks.startup }}{{ printf "%.2fms" $cem.benchmarks.startup.statistics.mean }}{{ end }}</dd>
+        {{ if $cem.benchmarks.hover }}
+          {{ if $cem.benchmarks.hover.hover_results }}
+            <dt>Hover Correctness</dt>
+            <dd>
+              {{ $totalContent := 0.0 }}
+              {{ $count := 0 }}
+              {{ range $cem.benchmarks.hover.hover_results }}
+                {{ if .avg_content_length }}
+                  {{ $totalContent = add $totalContent .avg_content_length }}
+                  {{ $count = add $count 1 }}
+                {{ end }}
+              {{ end }}
+              {{ if gt $count 0 }}{{ printf "%.0f chars" (div $totalContent (float $count)) }}{{ end }}
+            </dd>
+          {{ end }}
+        {{ end }}
+        {{ if $cem.benchmarks.completion }}
+          {{ if $cem.benchmarks.completion.completion_results }}
+            <dt>Completion Correctness</dt>
+            <dd>
+              {{ $totalItems := 0.0 }}
+              {{ $count := 0 }}
+              {{ range $cem.benchmarks.completion.completion_results }}
+                {{ if .avg_item_count }}
+                  {{ $totalItems = add $totalItems .avg_item_count }}
+                  {{ $count = add $count 1 }}
+                {{ end }}
+              {{ end }}
+              {{ if gt $count 0 }}{{ printf "%.1f items" (div $totalItems (float $count)) }}{{ end }}
+            </dd>
+          {{ end }}
+        {{ end }}
+        {{ if $cem.benchmarks.lit_template }}
+          {{ if $cem.benchmarks.lit_template.scenario_results }}
+            <dt>Template Test Pass Rate</dt>
+            <dd>
+              {{ $totalTests := 0 }}
+              {{ $successfulTests := 0 }}
+              {{ range $cem.benchmarks.lit_template.scenario_results }}
+                {{ if and .total_tests .successful_tests }}
+                  {{ $totalTests = add $totalTests .total_tests }}
+                  {{ $successfulTests = add $successfulTests .successful_tests }}
+                {{ end }}
+              {{ end }}
+              {{ if gt $totalTests 0 }}{{ printf "%.0f%%" (mul (div (float $successfulTests) (float $totalTests)) 100) }} ({{ $successfulTests }}/{{ $totalTests }}){{ end }}
+            </dd>
+          {{ end }}
+        {{ end }}
       </dl>
     </div>
 
@@ -45,6 +93,54 @@
         {{ end }}</dd>
         <dt>Startup Time (Mean)</dt>
         <dd>{{ if $wc.benchmarks.startup }}{{ printf "%.2fms" $wc.benchmarks.startup.statistics.mean }}{{ end }}</dd>
+        {{ if $wc.benchmarks.hover }}
+          {{ if $wc.benchmarks.hover.hover_results }}
+            <dt>Hover Correctness</dt>
+            <dd>
+              {{ $totalContent := 0.0 }}
+              {{ $count := 0 }}
+              {{ range $wc.benchmarks.hover.hover_results }}
+                {{ if .avg_content_length }}
+                  {{ $totalContent = add $totalContent .avg_content_length }}
+                  {{ $count = add $count 1 }}
+                {{ end }}
+              {{ end }}
+              {{ if gt $count 0 }}{{ printf "%.0f chars" (div $totalContent (float $count)) }}{{ end }}
+            </dd>
+          {{ end }}
+        {{ end }}
+        {{ if $wc.benchmarks.completion }}
+          {{ if $wc.benchmarks.completion.completion_results }}
+            <dt>Completion Correctness</dt>
+            <dd>
+              {{ $totalItems := 0.0 }}
+              {{ $count := 0 }}
+              {{ range $wc.benchmarks.completion.completion_results }}
+                {{ if .avg_item_count }}
+                  {{ $totalItems = add $totalItems .avg_item_count }}
+                  {{ $count = add $count 1 }}
+                {{ end }}
+              {{ end }}
+              {{ if gt $count 0 }}{{ printf "%.1f items" (div $totalItems (float $count)) }}{{ end }}
+            </dd>
+          {{ end }}
+        {{ end }}
+        {{ if $wc.benchmarks.lit_template }}
+          {{ if $wc.benchmarks.lit_template.scenario_results }}
+            <dt>Template Test Pass Rate</dt>
+            <dd>
+              {{ $totalTests := 0 }}
+              {{ $successfulTests := 0 }}
+              {{ range $wc.benchmarks.lit_template.scenario_results }}
+                {{ if and .total_tests .successful_tests }}
+                  {{ $totalTests = add $totalTests .total_tests }}
+                  {{ $successfulTests = add $successfulTests .successful_tests }}
+                {{ end }}
+              {{ end }}
+              {{ if gt $totalTests 0 }}{{ printf "%.0f%%" (mul (div (float $successfulTests) (float $totalTests)) 100) }} ({{ $successfulTests }}/{{ $totalTests }}){{ end }}
+            </dd>
+          {{ end }}
+        {{ end }}
       </dl>
     </div>
   </div>

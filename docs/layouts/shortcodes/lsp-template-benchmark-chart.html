@@ -70,6 +70,42 @@
           {{ $displayLabel }}
         </text>
 
+        {{/* Add test correctness percentages */}}
+        {{ $cemCorrectness := "" }}
+        {{ $wcCorrectness := "" }}
+
+        {{ if and $cemScenario.total_tests $cemScenario.successful_tests }}
+          {{ if gt $cemScenario.total_tests 0 }}
+            {{ $cemCorrectness = printf "%.0f%%" (mul (div (float $cemScenario.successful_tests) (float $cemScenario.total_tests)) 100) }}
+          {{ end }}
+        {{ end }}
+
+        {{ if and $wcScenario.total_tests $wcScenario.successful_tests }}
+          {{ if gt $wcScenario.total_tests 0 }}
+            {{ $wcCorrectness = printf "%.0f%%" (mul (div (float $wcScenario.successful_tests) (float $wcScenario.total_tests)) 100) }}
+          {{ end }}
+        {{ end }}
+
+        {{ if $cemCorrectness }}
+        <!-- CEM correctness annotation -->
+        <text x="{{ add $label_width $cemWidth 4 }}"
+              y="{{ add $y 12 }}"
+              font-size="10"
+              fill="var(--correctness-color)">
+          ({{ $cemCorrectness }})
+        </text>
+        {{ end }}
+
+        {{ if $wcCorrectness }}
+        <!-- wc-toolkit correctness annotation -->
+        <text x="{{ add $label_width $wcWidth 4 }}"
+              y="{{ add $y 34 }}"
+              font-size="10"
+              fill="var(--correctness-color)">
+          ({{ $wcCorrectness }})
+        </text>
+        {{ end }}
+
         <!-- CEM bar -->
         <rect x="{{ $label_width }}"
               y="{{ $y }}"
@@ -131,6 +167,7 @@
 
   --label-color: light-dark(#1f2937, #f3f4f6);
   --value-color: light-dark(#6b7280, #d1d5db);
+  --correctness-color: light-dark(#10b981, #34d399);
 }
 
 .lsp-template-benchmark-chart svg {

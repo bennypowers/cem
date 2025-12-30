@@ -2,9 +2,10 @@ local measurement = require('utils.measurement')
 
 local M = {}
 
--- Go-to-references performance benchmark: Tests reference finding across various project sizes
+-- Go-to-references performance benchmark: Tests real LSP reference finding across various project sizes
 -- Time limit: 45 seconds total
 -- Focus: Workspace traversal, reference accuracy, and scalability
+-- Implementation: Uses actual vim.lsp.buf_request_sync() calls to measure real LSP performance
 
 function M.run_references_performance_benchmark(config, fixture_dir)
   local start_time = vim.fn.reltime()
@@ -169,51 +170,54 @@ function test_references_for_elements(elements, test_name)
     total_references = 0,
     avg_search_time = 0
   }
-  
+
   local total_time = 0
-  
+
   for _, element_test in ipairs(elements) do
     local search_start = vim.fn.reltime()
-    
+
     -- Position cursor on element
     pcall(vim.api.nvim_win_set_cursor, 0, {element_test.line, element_test.col})
-    
-    -- Trigger go-to-references
+
+    -- Make actual LSP textDocument/references request
     local references_found = 0
-    local references_received = false
-    
-    -- Use LSP references command
-    pcall(function()
-      vim.lsp.buf.references()
-      references_received = true
-    end)
-    
-    -- Wait for references to be processed
-    vim.wait(2000, function() return references_received end)
-    
-    -- Simulate counting references (in real implementation, would parse LSP response)
-    references_found = math.random(element_test.expected_min, element_test.expected_min + 5)
-    
+    local params = vim.lsp.util.make_position_params()
+    params.context = { includeDeclaration = true }
+
+    -- Request references from LSP server
+    local lsp_results, err = vim.lsp.buf_request_sync(0, 'textDocument/references', params, 5000)
+
+    if lsp_results then
+      -- Count references from all LSP clients
+      for _, client_result in pairs(lsp_results) do
+        if client_result.result then
+          references_found = references_found + #client_result.result
+        end
+      end
+    end
+
     local search_time = tonumber(vim.fn.reltimestr(vim.fn.reltime(search_start)))
-    
+
     local test_result = {
       element = element_test.element,
       search_time_ms = search_time,
       references_found = references_found,
       expected_min = element_test.expected_min,
-      success = references_found >= element_test.expected_min
+      success = references_found >= element_test.expected_min,
+      lsp_error = err
     }
-    
+
     table.insert(results.tests, test_result)
     results.total_references = results.total_references + references_found
     total_time = total_time + search_time
-    
-    print(string.format("[REFERENCES] %s <%s>: %d refs in %.0fms", 
-      test_name, element_test.element, references_found, search_time))
+
+    print(string.format("[REFERENCES] %s <%s>: %d refs in %.0fms%s",
+      test_name, element_test.element, references_found, search_time,
+      err and " (error)" or ""))
   end
-  
+
   results.avg_search_time = #elements > 0 and (total_time / #elements) or 0
-  
+
   return results
 end
 
@@ -225,60 +229,70 @@ function test_references_during_editing()
     avg_search_time = 0,
     editing_interference = {}
   }
-  
+
   -- Start editing document while triggering references
   local test_elements = {
     {element = "my-button", line = 21, col = 8},
     {element = "my-card", line = 24, col = 8}
   }
-  
+
   for _, element_test in ipairs(test_elements) do
     -- Start typing to simulate active editing
     local typing_start = vim.fn.reltime()
-    
+
     -- Add some content to simulate active editing
     vim.api.nvim_win_set_cursor(0, {element_test.line + 2, 0})
     vim.api.nvim_put({'  <!-- Added during reference test -->'}, 'l', true, true)
-    
+
     local typing_time = tonumber(vim.fn.reltimestr(vim.fn.reltime(typing_start)))
-    
+
     -- Now trigger references while document is "dirty"
     local search_start = vim.fn.reltime()
     vim.api.nvim_win_set_cursor(0, {element_test.line, element_test.col})
-    
+
+    -- Make actual LSP textDocument/references request
     local references_found = 0
-    pcall(function()
-      vim.lsp.buf.references()
-      references_found = math.random(2, 6)
-    end)
-    
-    vim.wait(1500, function() return false end)
-    
+    local params = vim.lsp.util.make_position_params()
+    params.context = { includeDeclaration = true }
+
+    -- Request references from LSP server
+    local lsp_results, err = vim.lsp.buf_request_sync(0, 'textDocument/references', params, 5000)
+
+    if lsp_results then
+      -- Count references from all LSP clients
+      for _, client_result in pairs(lsp_results) do
+        if client_result.result then
+          references_found = references_found + #client_result.result
+        end
+      end
+    end
+
     local search_time = tonumber(vim.fn.reltimestr(vim.fn.reltime(search_start)))
-    
+
     local test_result = {
       element = element_test.element,
       search_time_ms = search_time,
       references_found = references_found,
       editing_time_ms = typing_time,
-      success = references_found >= 2
+      success = references_found >= 2,
+      lsp_error = err
     }
-    
+
     table.insert(results.tests, test_result)
     table.insert(results.editing_interference, {
       element = element_test.element,
       performance_impact = search_time / 1000 -- Convert to seconds for impact assessment
     })
-    
+
     results.total_references = results.total_references + references_found
   end
-  
+
   local total_time = 0
   for _, test in ipairs(results.tests) do
     total_time = total_time + test.search_time_ms
   end
   results.avg_search_time = #results.tests > 0 and (total_time / #results.tests) or 0
-  
+
   return results
 end
 
@@ -289,46 +303,56 @@ function test_template_literal_references()
     total_references = 0,
     avg_search_time = 0
   }
-  
+
   -- Test references within template literals (if the file has them)
   local template_elements = {
     {element = "my-card", line = 20, col = 15}, -- Approximate position in template
     {element = "my-button", line = 25, col = 15}
   }
-  
+
   for _, element_test in ipairs(template_elements) do
     local search_start = vim.fn.reltime()
-    
+
     pcall(vim.api.nvim_win_set_cursor, 0, {element_test.line, element_test.col})
-    
+
+    -- Make actual LSP textDocument/references request
     local references_found = 0
-    pcall(function()
-      vim.lsp.buf.references()
-      references_found = math.random(1, 4) -- Template references typically fewer
-    end)
-    
-    vim.wait(1500, function() return false end)
-    
+    local params = vim.lsp.util.make_position_params()
+    params.context = { includeDeclaration = true }
+
+    -- Request references from LSP server
+    local lsp_results, err = vim.lsp.buf_request_sync(0, 'textDocument/references', params, 5000)
+
+    if lsp_results then
+      -- Count references from all LSP clients
+      for _, client_result in pairs(lsp_results) do
+        if client_result.result then
+          references_found = references_found + #client_result.result
+        end
+      end
+    end
+
     local search_time = tonumber(vim.fn.reltimestr(vim.fn.reltime(search_start)))
-    
+
     local test_result = {
       element = element_test.element,
       search_time_ms = search_time,
       references_found = references_found,
       context = "template_literal",
-      success = references_found >= 1
+      success = references_found >= 1,
+      lsp_error = err
     }
-    
+
     table.insert(results.tests, test_result)
     results.total_references = results.total_references + references_found
   end
-  
+
   local total_time = 0
   for _, test in ipairs(results.tests) do
     total_time = total_time + test.search_time_ms
   end
   results.avg_search_time = #results.tests > 0 and (total_time / #results.tests) or 0
-  
+
   return results
 end
 

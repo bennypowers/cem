@@ -86,6 +86,78 @@
           {{ $displayLabel }}
         </text>
 
+        {{/* Add correctness annotation */}}
+        {{ $cemCorrectness := "" }}
+        {{ $wcCorrectness := "" }}
+
+        {{ if eq $benchmarkName "hover" }}
+          {{ if $cemBench.hover_results }}
+            {{ $totalContent := 0.0 }}
+            {{ $count := 0 }}
+            {{ range $cemBench.hover_results }}
+              {{ if .avg_content_length }}
+                {{ $totalContent = add $totalContent .avg_content_length }}
+                {{ $count = add $count 1 }}
+              {{ end }}
+            {{ end }}
+            {{ if gt $count 0 }}{{ $cemCorrectness = printf "%.0f chars" (div $totalContent (float $count)) }}{{ end }}
+          {{ end }}
+          {{ if $wcBench.hover_results }}
+            {{ $totalContent := 0.0 }}
+            {{ $count := 0 }}
+            {{ range $wcBench.hover_results }}
+              {{ if .avg_content_length }}
+                {{ $totalContent = add $totalContent .avg_content_length }}
+                {{ $count = add $count 1 }}
+              {{ end }}
+            {{ end }}
+            {{ if gt $count 0 }}{{ $wcCorrectness = printf "%.0f chars" (div $totalContent (float $count)) }}{{ end }}
+          {{ end }}
+        {{ else if eq $benchmarkName "completion" }}
+          {{ if $cemBench.completion_results }}
+            {{ $totalItems := 0.0 }}
+            {{ $count := 0 }}
+            {{ range $cemBench.completion_results }}
+              {{ if .avg_item_count }}
+                {{ $totalItems = add $totalItems .avg_item_count }}
+                {{ $count = add $count 1 }}
+              {{ end }}
+            {{ end }}
+            {{ if gt $count 0 }}{{ $cemCorrectness = printf "%.1f items" (div $totalItems (float $count)) }}{{ end }}
+          {{ end }}
+          {{ if $wcBench.completion_results }}
+            {{ $totalItems := 0.0 }}
+            {{ $count := 0 }}
+            {{ range $wcBench.completion_results }}
+              {{ if .avg_item_count }}
+                {{ $totalItems = add $totalItems .avg_item_count }}
+                {{ $count = add $count 1 }}
+              {{ end }}
+            {{ end }}
+            {{ if gt $count 0 }}{{ $wcCorrectness = printf "%.1f items" (div $totalItems (float $count)) }}{{ end }}
+          {{ end }}
+        {{ end }}
+
+        {{ if $cemCorrectness }}
+        <!-- CEM correctness annotation -->
+        <text x="{{ add $label_width $cemWidth 4 }}"
+              y="{{ add $y 12 }}"
+              font-size="10"
+              fill="var(--correctness-color)">
+          ({{ $cemCorrectness }})
+        </text>
+        {{ end }}
+
+        {{ if $wcCorrectness }}
+        <!-- wc-toolkit correctness annotation -->
+        <text x="{{ add $label_width $wcWidth 4 }}"
+              y="{{ add $y 34 }}"
+              font-size="10"
+              fill="var(--correctness-color)">
+          ({{ $wcCorrectness }})
+        </text>
+        {{ end }}
+
         <!-- CEM bar -->
         <rect x="{{ $label_width }}"
               y="{{ $y }}"
@@ -147,6 +219,7 @@
 
   --label-color: light-dark(#1f2937, #f3f4f6);
   --value-color: light-dark(#6b7280, #d1d5db);
+  --correctness-color: light-dark(#10b981, #34d399);
 }
 
 .lsp-simple-benchmark-chart svg {
