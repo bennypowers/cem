@@ -443,18 +443,13 @@ func (d *TypeScriptDocument) parseHTMLInTemplate(template TemplateContext, handl
 		return nil, err
 	}
 
-	// Create a temporary HTML parser to parse the template content
-	htmlParser := Q.GetHTMLParser()
-	if htmlParser == nil {
-		return nil, fmt.Errorf("failed to get HTML parser")
-	}
-	defer Q.PutHTMLParser(htmlParser)
-
-	htmlTree := htmlParser.Parse([]byte(templateContent), nil)
+	// Get or create cached HTML parse tree for this template content
+	htmlTree := d.getCachedHTMLTree(templateContent)
 	if htmlTree == nil {
 		return nil, fmt.Errorf("failed to parse HTML template")
 	}
-	defer htmlTree.Close()
+	// Release the tree when done to decrement reference count
+	defer d.ReleaseCachedHTMLTree(htmlTree)
 
 	var elements []types.CustomElementMatch
 
