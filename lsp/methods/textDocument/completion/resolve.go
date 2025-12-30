@@ -18,6 +18,8 @@ package completion
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
 
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/methods/textDocument/hover"
@@ -93,14 +95,43 @@ func Resolve(ctx types.ServerContext, context *glsp.Context, params *protocol.Co
 		}
 
 	case "attribute", "property", "booleanAttribute":
-		// Generate attribute documentation
-		if attrs, exists := ctx.Attributes(data.TagName); exists {
-			if attr, attrExists := attrs[data.AttributeName]; attrExists {
-				params.Documentation = &protocol.MarkupContent{
-					Kind:  protocol.MarkupKindMarkdown,
-					Value: hover.CreateAttributeHoverContent(attr, data.TagName),
+		// Special handling for slot attribute (standard HTML attribute)
+		if data.AttributeName == "slot" {
+			// Generate slot attribute documentation
+			var docContent strings.Builder
+			docContent.WriteString("## `slot` attribute\n\n")
+			docContent.WriteString(fmt.Sprintf("**Slot content into `<%s>` element**\n\n", data.TagName))
+			docContent.WriteString("The `slot` attribute assigns this element to a named slot in the parent custom element's shadow DOM.\n\n")
+
+			// List available slots from the parent element
+			if slots, exists := ctx.Slots(data.TagName); exists && len(slots) > 0 {
+				docContent.WriteString("**Available slots:**\n\n")
+				for _, slot := range slots {
+					if slot.Name != "" { // Skip default slot
+						docContent.WriteString(fmt.Sprintf("- `%s`", slot.Name))
+						if slot.Description != "" {
+							docContent.WriteString(fmt.Sprintf(" - %s", slot.Description))
+						}
+						docContent.WriteString("\n")
+					}
 				}
-				helpers.SafeDebugLog("[RESOLVE] Generated attribute documentation for %s.%s", data.TagName, data.AttributeName)
+			}
+
+			params.Documentation = &protocol.MarkupContent{
+				Kind:  protocol.MarkupKindMarkdown,
+				Value: docContent.String(),
+			}
+			helpers.SafeDebugLog("[RESOLVE] Generated slot attribute documentation for parent element %s", data.TagName)
+		} else {
+			// Generate regular attribute documentation
+			if attrs, exists := ctx.Attributes(data.TagName); exists {
+				if attr, attrExists := attrs[data.AttributeName]; attrExists {
+					params.Documentation = &protocol.MarkupContent{
+						Kind:  protocol.MarkupKindMarkdown,
+						Value: hover.CreateAttributeHoverContent(attr, data.TagName),
+					}
+					helpers.SafeDebugLog("[RESOLVE] Generated attribute documentation for %s.%s", data.TagName, data.AttributeName)
+				}
 			}
 		}
 

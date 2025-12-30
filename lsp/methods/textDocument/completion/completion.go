@@ -181,9 +181,11 @@ func GetAttributeCompletionsWithContext(ctx types.ServerContext, doc types.Docum
 
 		// However, we should still check for slot attribute if we have document context
 		// and this element is a child of a custom element with slots
-		if doc != nil && shouldSuggestSlotAttribute(ctx, doc, position) {
-			helpers.SafeDebugLog("[COMPLETION] Adding slot attribute suggestion for non-custom element")
-			items = append(items, createSlotAttributeCompletion())
+		if doc != nil {
+			if shouldSuggest, parentTagName := shouldSuggestSlotAttribute(ctx, doc, position); shouldSuggest {
+				helpers.SafeDebugLog("[COMPLETION] Adding slot attribute suggestion for non-custom element")
+				items = append(items, createSlotAttributeCompletion(parentTagName))
+			}
 		}
 
 		return items
@@ -232,9 +234,11 @@ func GetAttributeCompletionsWithContext(ctx types.ServerContext, doc types.Docum
 	}
 
 	// Add slot attribute suggestion if this element is a child of a custom element with slots
-	if doc != nil && shouldSuggestSlotAttribute(ctx, doc, position) {
-		helpers.SafeDebugLog("[COMPLETION] Adding slot attribute suggestion for custom element")
-		items = append(items, createSlotAttributeCompletion())
+	if doc != nil {
+		if shouldSuggest, parentTagName := shouldSuggestSlotAttribute(ctx, doc, position); shouldSuggest {
+			helpers.SafeDebugLog("[COMPLETION] Adding slot attribute suggestion for custom element")
+			items = append(items, createSlotAttributeCompletion(parentTagName))
+		}
 	}
 
 	helpers.SafeDebugLog("[COMPLETION] Returning %d attribute completions for '%s'", len(items), tagName)
@@ -873,32 +877,33 @@ func findParentElementTagFallback(doc types.Document, position protocol.Position
 }
 
 // shouldSuggestSlotAttribute checks if we should suggest slot attribute for the current element
-func shouldSuggestSlotAttribute(ctx types.ServerContext, doc types.Document, position protocol.Position) bool {
+// Returns (shouldSuggest, parentTagName)
+func shouldSuggestSlotAttribute(ctx types.ServerContext, doc types.Document, position protocol.Position) (bool, string) {
 	// Find the parent element
 	parentTagName := findParentElementTag(doc, position)
 	if parentTagName == "" {
-		return false
+		return false, ""
 	}
 
 	// Check if the parent element is a custom element
 	if !textDocument.IsCustomElementTag(parentTagName) {
-		return false
+		return false, ""
 	}
 
 	// Check if the parent element has non-anonymous slots
 	if slots, exists := ctx.Slots(parentTagName); exists {
 		for _, slot := range slots {
 			if slot.Name != "" { // Non-anonymous slot
-				return true
+				return true, parentTagName
 			}
 		}
 	}
 
-	return false
+	return false, ""
 }
 
 // createSlotAttributeCompletion creates a completion item for the slot attribute
-func createSlotAttributeCompletion() protocol.CompletionItem {
+func createSlotAttributeCompletion(parentTagName string) protocol.CompletionItem {
 	snippet := `slot="$0"`
 	insertTextFormat := protocol.InsertTextFormatSnippet
 
@@ -906,6 +911,7 @@ func createSlotAttributeCompletion() protocol.CompletionItem {
 		Label:            "slot",
 		Kind:             &[]protocol.CompletionItemKind{protocol.CompletionItemKindProperty}[0],
 		Detail:           &[]string{"HTML slot attribute"}[0],
+		Data:             createCompletionData("attribute", parentTagName, "slot"),
 		InsertText:       &snippet,
 		InsertTextFormat: &insertTextFormat,
 	}

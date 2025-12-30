@@ -262,3 +262,90 @@ func TestResolve_AttributeDocumentation(t *testing.T) {
 		}
 	}
 }
+
+// TestResolve_SlotAttributeDocumentation tests that slot attribute completions are properly resolved
+// with slot-specific documentation listing available parent slots
+func TestResolve_SlotAttributeDocumentation(t *testing.T) {
+	ctx := testhelpers.NewMockServerContext()
+
+	// Create a custom element with named slots for testing
+	slots := []M.Slot{
+		{
+			FullyQualified: M.FullyQualified{
+				Name:        "",
+				Description: "Default slot for main content",
+			},
+		},
+		{
+			FullyQualified: M.FullyQualified{
+				Name:        "header",
+				Description: "Slot for header content",
+			},
+		},
+		{
+			FullyQualified: M.FullyQualified{
+				Name:        "footer",
+				Description: "Slot for footer content",
+			},
+		},
+	}
+	cardElement := &M.CustomElement{
+		TagName: "card-element",
+		Slots:   slots,
+	}
+	ctx.AddElement("card-element", cardElement)
+	ctx.AddSlots("card-element", slots)
+
+	// Create a completion item for slot attribute with deferred documentation
+	item := &protocol.CompletionItem{
+		Label: "slot",
+		Kind:  &[]protocol.CompletionItemKind{protocol.CompletionItemKindProperty}[0],
+		Data: map[string]any{
+			"type":          "attribute",
+			"tagName":       "card-element",
+			"attributeName": "slot",
+		},
+	}
+
+	// Verify no documentation initially
+	if item.Documentation != nil {
+		t.Fatal("Expected no documentation initially (deferred)")
+	}
+
+	// Resolve the completion item
+	resolved, err := completion.Resolve(ctx, &glsp.Context{}, item)
+	if err != nil {
+		t.Fatalf("Resolve failed: %v", err)
+	}
+
+	// Verify documentation was generated
+	if resolved.Documentation == nil {
+		t.Fatal("Expected documentation after resolution")
+	}
+
+	markupContent, ok := resolved.Documentation.(*protocol.MarkupContent)
+	if !ok {
+		t.Fatal("Expected documentation to be MarkupContent")
+	}
+
+	// Verify it contains slot-specific content
+	expectedContents := []string{
+		"## `slot` attribute",
+		"**Slot content into `<card-element>` element**",
+		"The `slot` attribute assigns this element to a named slot",
+		"**Available slots:**",
+		"- `header` - Slot for header content",
+		"- `footer` - Slot for footer content",
+	}
+
+	for _, expected := range expectedContents {
+		if !strings.Contains(markupContent.Value, expected) {
+			t.Errorf("Expected documentation to contain %q, got:\n%s", expected, markupContent.Value)
+		}
+	}
+
+	// Verify default slot is not listed (empty name slots are skipped)
+	if strings.Contains(markupContent.Value, "Default slot for main content") {
+		t.Error("Default slot should not be listed in documentation")
+	}
+}
