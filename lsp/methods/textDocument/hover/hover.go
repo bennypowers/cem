@@ -42,7 +42,7 @@ func Hover(ctx types.ServerContext, context *glsp.Context, params *protocol.Hove
 
 	dm, err := ctx.DocumentManager()
 	if err != nil {
-		helpers.SafeDebugLog("[COMPLETION] Failed to get DocumentManager: %v", err)
+		helpers.SafeDebugLog("[HOVER] Failed to get DocumentManager: %v", err)
 		return nil, err
 	}
 
@@ -127,50 +127,10 @@ func CreateElementHoverContent(element *M.CustomElement) string {
 	// Show that it's a custom element
 	content.WriteString("**Custom Element**\n\n")
 
-	// Attributes
-	if len(element.Attributes) > 0 {
-		content.WriteString("### Attributes\n\n")
-		for _, attr := range element.Attributes {
-			content.WriteString(fmt.Sprintf("- **`%s`**", attr.Name))
-			if attr.Type != nil && attr.Type.Text != "" {
-				content.WriteString(fmt.Sprintf(" _%s_", attr.Type.Text))
-			}
-			if attr.Description != "" {
-				content.WriteString(fmt.Sprintf(" - %s", attr.Description))
-			}
-			content.WriteString("\n")
-		}
-		content.WriteString("\n")
-	}
-
-	// Events
-	if len(element.Events) > 0 {
-		content.WriteString("### Events\n\n")
-		for _, event := range element.Events {
-			content.WriteString(fmt.Sprintf("- **`%s`**", event.Name))
-			if event.Type != nil && event.Type.Text != "" {
-				content.WriteString(fmt.Sprintf(" _%s_", event.Type.Text))
-			}
-			if event.Description != "" {
-				content.WriteString(fmt.Sprintf(" - %s", event.Description))
-			}
-			content.WriteString("\n")
-		}
-		content.WriteString("\n")
-	}
-
-	// Slots
-	if len(element.Slots) > 0 {
-		content.WriteString("### Slots\n\n")
-		for _, slot := range element.Slots {
-			content.WriteString(fmt.Sprintf("- **`%s`**", slot.Name))
-			if slot.Description != "" {
-				content.WriteString(fmt.Sprintf(" - %s", slot.Description))
-			}
-			content.WriteString("\n")
-		}
-		content.WriteString("\n")
-	}
+	// Attributes, Events, Slots using shared formatters
+	content.WriteString(formatAttributes(element.Attributes))
+	content.WriteString(formatEvents(element.Events))
+	content.WriteString(formatSlots(element.Slots))
 
 	return content.String()
 }
@@ -193,51 +153,74 @@ func CreateElementHoverContentFromDeclaration(decl *M.CustomElementDeclaration) 
 		content.WriteString(fmt.Sprintf("%s\n\n", decl.Description))
 	}
 
-	// 4. Attributes
-	if len(decl.Attributes) > 0 {
-		content.WriteString("### Attributes\n\n")
-		for _, attr := range decl.Attributes {
-			content.WriteString(fmt.Sprintf("- **`%s`**", attr.Name))
-			if attr.Type != nil && attr.Type.Text != "" {
-				content.WriteString(fmt.Sprintf(" _%s_", attr.Type.Text))
-			}
-			if attr.Description != "" {
-				content.WriteString(fmt.Sprintf(" - %s", attr.Description))
-			}
-			content.WriteString("\n")
+	// 4. Attributes, Events, Slots using shared formatters
+	content.WriteString(formatAttributes(decl.Attributes))
+	content.WriteString(formatEvents(decl.Events))
+	content.WriteString(formatSlots(decl.Slots))
+
+	return content.String()
+}
+
+// formatAttributes creates markdown content for an attributes list
+func formatAttributes(attrs []M.Attribute) string {
+	if len(attrs) == 0 {
+		return ""
+	}
+
+	var content strings.Builder
+	content.WriteString("### Attributes\n\n")
+	for _, attr := range attrs {
+		content.WriteString(fmt.Sprintf("- **`%s`**", attr.Name))
+		if attr.Type != nil && attr.Type.Text != "" {
+			content.WriteString(fmt.Sprintf(" _%s_", attr.Type.Text))
+		}
+		if attr.Description != "" {
+			content.WriteString(fmt.Sprintf(" - %s", attr.Description))
 		}
 		content.WriteString("\n")
 	}
+	content.WriteString("\n")
+	return content.String()
+}
 
-	// 5. Events
-	if len(decl.Events) > 0 {
-		content.WriteString("### Events\n\n")
-		for _, event := range decl.Events {
-			content.WriteString(fmt.Sprintf("- **`%s`**", event.Name))
-			if event.Type != nil && event.Type.Text != "" {
-				content.WriteString(fmt.Sprintf(" _%s_", event.Type.Text))
-			}
-			if event.Description != "" {
-				content.WriteString(fmt.Sprintf(" - %s", event.Description))
-			}
-			content.WriteString("\n")
+// formatEvents creates markdown content for an events list
+func formatEvents(events []M.Event) string {
+	if len(events) == 0 {
+		return ""
+	}
+
+	var content strings.Builder
+	content.WriteString("### Events\n\n")
+	for _, event := range events {
+		content.WriteString(fmt.Sprintf("- **`%s`**", event.Name))
+		if event.Type != nil && event.Type.Text != "" {
+			content.WriteString(fmt.Sprintf(" _%s_", event.Type.Text))
+		}
+		if event.Description != "" {
+			content.WriteString(fmt.Sprintf(" - %s", event.Description))
 		}
 		content.WriteString("\n")
 	}
+	content.WriteString("\n")
+	return content.String()
+}
 
-	// 6. Slots
-	if len(decl.Slots) > 0 {
-		content.WriteString("### Slots\n\n")
-		for _, slot := range decl.Slots {
-			content.WriteString(fmt.Sprintf("- **`%s`**", slot.Name))
-			if slot.Description != "" {
-				content.WriteString(fmt.Sprintf(" - %s", slot.Description))
-			}
-			content.WriteString("\n")
+// formatSlots creates markdown content for a slots list
+func formatSlots(slots []M.Slot) string {
+	if len(slots) == 0 {
+		return ""
+	}
+
+	var content strings.Builder
+	content.WriteString("### Slots\n\n")
+	for _, slot := range slots {
+		content.WriteString(fmt.Sprintf("- **`%s`**", slot.Name))
+		if slot.Description != "" {
+			content.WriteString(fmt.Sprintf(" - %s", slot.Description))
 		}
 		content.WriteString("\n")
 	}
-
+	content.WriteString("\n")
 	return content.String()
 }
 
