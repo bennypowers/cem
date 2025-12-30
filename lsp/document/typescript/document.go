@@ -166,20 +166,30 @@ func (d *TypeScriptDocument) Close() {
 // Must be called with d.mu lock held
 func (d *TypeScriptDocument) invalidateHTMLTreeCache() {
 	if d.cachedHTMLTrees != nil {
+		treesRemaining := 0
 		for key, cached := range d.cachedHTMLTrees {
 			if cached != nil {
-				// Only close trees with no active references
+				// Only close and delete trees with no active references
 				if cached.refs == 0 {
 					if cached.tree != nil {
 						cached.tree.Close()
 					}
+					delete(d.cachedHTMLTrees, key)
+				} else {
+					// Keep trees with active references in the map so ReleaseCachedHTMLTree can find them
+					treesRemaining++
+					helpers.SafeDebugLog("[CACHE] Keeping tree with %d active references (content length=%d)", cached.refs, len(key))
 				}
-				// Note: trees with refs > 0 will be closed when ReleaseCachedHTMLTree decrements refs to 0
 			}
-			delete(d.cachedHTMLTrees, key)
 		}
-		d.cachedHTMLTrees = nil
-		helpers.SafeDebugLog("[CACHE] HTML tree cache cleared")
+
+		// Only nil the map if all trees were closed
+		if treesRemaining == 0 {
+			d.cachedHTMLTrees = nil
+			helpers.SafeDebugLog("[CACHE] HTML tree cache cleared completely")
+		} else {
+			helpers.SafeDebugLog("[CACHE] HTML tree cache partially cleared (%d trees remaining with active refs)", treesRemaining)
+		}
 	}
 }
 
@@ -199,18 +209,19 @@ func (d *TypeScriptDocument) ReleaseCachedHTMLTree(tree *ts.Tree) {
 			cached.refs--
 			helpers.SafeDebugLog("[CACHE] HTML tree ref count decremented (content length=%d, refs=%d)", len(key), cached.refs)
 
-			// If refs reach 0 and cache was invalidated (cachedHTMLTrees is nil or tree not in cache),
-			// close the tree now
+			// When refs reach 0, close the tree and remove from cache
 			if cached.refs == 0 {
 				tree.Close()
-				if d.cachedHTMLTrees != nil {
-					delete(d.cachedHTMLTrees, key)
-				}
-				helpers.SafeDebugLog("[CACHE] HTML tree closed (content length=%d)", len(key))
+				delete(d.cachedHTMLTrees, key)
+				helpers.SafeDebugLog("[CACHE] HTML tree closed and removed (content length=%d)", len(key))
 			}
 			return
 		}
 	}
+
+	// Tree not found in cache - this can happen if the tree was already closed
+	// or if it was created outside the cache. This is not an error.
+	helpers.SafeDebugLog("[CACHE] ReleaseCachedHTMLTree called but tree not found in cache")
 }
 
 // getCachedHTMLTree gets or creates a cached HTML parse tree for template content
