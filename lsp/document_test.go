@@ -17,8 +17,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package lsp_test
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 
 	"bennypowers.dev/cem/lsp/document"
@@ -451,4 +453,56 @@ const template = html` + "`" + `
 	// the use-after-free bug that would occur if invalidateHTMLTreeCache
 	// closed trees that were still in use
 	t.Log("Reference counting test passed - no use-after-free detected")
+}
+
+func TestDocument_CachedHTMLTreeRefCounting_Concurrent(t *testing.T) {
+	// This test verifies that reference counting prevents use-after-free bugs
+	// when multiple goroutines access cached HTML trees while cache is being invalidated
+	dm, err := document.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create document manager: %v", err)
+	}
+	defer dm.Close()
+
+	content := `const template = html` + "`<my-element slot=\"test\"><span>Content</span></my-element>`;"
+
+	doc := dm.OpenDocument("test://test.ts", content, 1)
+	if doc == nil {
+		t.Fatal("Expected document to be created")
+	}
+
+	var wg sync.WaitGroup
+
+	// Reader goroutines that access cached HTML trees through FindCustomElements
+	// This triggers getCachedHTMLTree -> parseHTMLInTemplate flow
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			for j := 0; j < 100; j++ {
+				// FindCustomElements internally uses getCachedHTMLTree
+				_, err := doc.FindCustomElements(dm)
+				if err != nil {
+					// Errors are ok during concurrent access, we just want to ensure no panics
+					t.Logf("Reader %d iteration %d got error: %v", id, j, err)
+				}
+			}
+		}(i)
+	}
+
+	// Writer goroutine that invalidates cache by updating document
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for v := int32(2); v < 50; v++ {
+			newContent := fmt.Sprintf(`const template = html`+"`<my-element slot=\"version-%d\"><span>Version %d</span></my-element>`;", v, v)
+			dm.UpdateDocument("test://test.ts", newContent, v)
+		}
+	}()
+
+	// Wait for all goroutines to complete
+	// If reference counting is broken, this will likely crash or race detector will catch it
+	wg.Wait()
+
+	t.Log("Concurrent reference counting test passed - no crashes or race conditions detected")
 }
