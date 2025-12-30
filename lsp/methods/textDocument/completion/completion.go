@@ -181,9 +181,11 @@ func GetAttributeCompletionsWithContext(ctx types.ServerContext, doc types.Docum
 
 		// However, we should still check for slot attribute if we have document context
 		// and this element is a child of a custom element with slots
-		if doc != nil && shouldSuggestSlotAttribute(ctx, doc, position) {
-			helpers.SafeDebugLog("[COMPLETION] Adding slot attribute suggestion for non-custom element")
-			items = append(items, createSlotAttributeCompletion())
+		if doc != nil {
+			if shouldSuggest, parentTagName := shouldSuggestSlotAttribute(ctx, doc, position); shouldSuggest {
+				helpers.SafeDebugLog("[COMPLETION] Adding slot attribute suggestion for non-custom element")
+				items = append(items, createSlotAttributeCompletion(parentTagName))
+			}
 		}
 
 		return items
@@ -232,9 +234,11 @@ func GetAttributeCompletionsWithContext(ctx types.ServerContext, doc types.Docum
 	}
 
 	// Add slot attribute suggestion if this element is a child of a custom element with slots
-	if doc != nil && shouldSuggestSlotAttribute(ctx, doc, position) {
-		helpers.SafeDebugLog("[COMPLETION] Adding slot attribute suggestion for custom element")
-		items = append(items, createSlotAttributeCompletion())
+	if doc != nil {
+		if shouldSuggest, parentTagName := shouldSuggestSlotAttribute(ctx, doc, position); shouldSuggest {
+			helpers.SafeDebugLog("[COMPLETION] Adding slot attribute suggestion for custom element")
+			items = append(items, createSlotAttributeCompletion(parentTagName))
+		}
 	}
 
 	helpers.SafeDebugLog("[COMPLETION] Returning %d attribute completions for '%s'", len(items), tagName)
@@ -697,12 +701,6 @@ func findParentElementTag(doc types.Document, position protocol.Position) string
 			// Convert position to byte offset
 			lines := strings.Split(content, "\n")
 			if int(position.Line) < len(lines) {
-				offset := uint(0)
-				for i := 0; i < int(position.Line); i++ {
-					offset += uint(len(lines[i])) + 1 // +1 for newline
-				}
-				offset += uint(position.Character)
-
 				// Get node at position
 				node := tree.RootNode().NamedDescendantForPointRange(
 					ts.Point{Row: uint(position.Line), Column: uint(position.Character)},
@@ -766,12 +764,32 @@ func findParentElementTagFallback(doc types.Document, position protocol.Position
 	}
 	offset += int(position.Character)
 
+	// Clamp offset to content length to prevent out of bounds access
+	if offset > len(content) {
+		offset = len(content)
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
 	// Track if we've found any element to determine if we should skip or return
 	foundAnyElement := false
 
 	// Look backwards from the current position to find the nearest opening tag
 	for i := offset - 1; i >= 0; i-- {
+		if i >= len(content) {
+			continue
+		}
 		if content[i] == '<' {
+			// Check if this is the start of an HTML comment
+			if i+4 <= len(content) && content[i:i+4] == "<!--" {
+				helpers.SafeDebugLog("[COMPLETION] Found comment start at position %d, skipping comment", i)
+				// We're scanning backward and found <!--, so just skip it
+				// The content between <!-- and --> should already have been skipped
+				// when we scanned past the -->
+				continue
+			}
+
 			// Found a potential opening tag, extract the tag name
 			endIdx := i + 1
 			for endIdx < len(content) && content[endIdx] != ' ' && content[endIdx] != '>' && content[endIdx] != '\n' && content[endIdx] != '\t' {
@@ -782,6 +800,20 @@ func findParentElementTagFallback(doc types.Document, position protocol.Position
 				tagName := content[i+1 : endIdx]
 				// Skip closing tags
 				if !strings.HasPrefix(tagName, "/") {
+					// Check if this is a self-closing tag by looking for /> after the tag name
+					isSelfClosing := false
+					for j := endIdx; j < len(content) && content[j] != '>'; j++ {
+						if content[j] == '/' && j+1 < len(content) && content[j+1] == '>' {
+							isSelfClosing = true
+							break
+						}
+					}
+
+					if isSelfClosing {
+						helpers.SafeDebugLog("[COMPLETION] Skipping self-closing tag: %s", tagName)
+						continue
+					}
+
 					// If this is a custom element
 					if textDocument.IsCustomElementTag(tagName) {
 						// If this is the first element we found (any element), it's likely the current element
@@ -811,8 +843,23 @@ func findParentElementTagFallback(doc types.Document, position protocol.Position
 			}
 		}
 
-		// If we encounter a closing tag, we need to track tag depth
+		// If we encounter a closing tag or comment end, we need to handle it
 		if content[i] == '>' && i > 0 {
+			// Check if this is the end of a comment -->
+			if i >= 2 && content[i-2:i+1] == "-->" {
+				helpers.SafeDebugLog("[COMPLETION] Found comment end at position %d, looking for comment start", i)
+				// Find the start of the comment <!-- by scanning backward
+				for j := i - 3; j >= 0; j-- {
+					if j+4 <= len(content) && content[j:j+4] == "<!--" {
+						// Skip to just before the comment start
+						i = j - 1
+						helpers.SafeDebugLog("[COMPLETION] Skipped comment region from %d to %d, continuing from %d", j, i+2, i)
+						break
+					}
+				}
+				continue
+			}
+
 			// Check if this is a closing tag
 			j := i - 1
 			for j >= 0 && content[j] != '<' {
@@ -830,32 +877,33 @@ func findParentElementTagFallback(doc types.Document, position protocol.Position
 }
 
 // shouldSuggestSlotAttribute checks if we should suggest slot attribute for the current element
-func shouldSuggestSlotAttribute(ctx types.ServerContext, doc types.Document, position protocol.Position) bool {
+// Returns (shouldSuggest, parentTagName)
+func shouldSuggestSlotAttribute(ctx types.ServerContext, doc types.Document, position protocol.Position) (bool, string) {
 	// Find the parent element
 	parentTagName := findParentElementTag(doc, position)
 	if parentTagName == "" {
-		return false
+		return false, ""
 	}
 
 	// Check if the parent element is a custom element
 	if !textDocument.IsCustomElementTag(parentTagName) {
-		return false
+		return false, ""
 	}
 
 	// Check if the parent element has non-anonymous slots
 	if slots, exists := ctx.Slots(parentTagName); exists {
 		for _, slot := range slots {
 			if slot.Name != "" { // Non-anonymous slot
-				return true
+				return true, parentTagName
 			}
 		}
 	}
 
-	return false
+	return false, ""
 }
 
 // createSlotAttributeCompletion creates a completion item for the slot attribute
-func createSlotAttributeCompletion() protocol.CompletionItem {
+func createSlotAttributeCompletion(parentTagName string) protocol.CompletionItem {
 	snippet := `slot="$0"`
 	insertTextFormat := protocol.InsertTextFormatSnippet
 
@@ -863,6 +911,7 @@ func createSlotAttributeCompletion() protocol.CompletionItem {
 		Label:            "slot",
 		Kind:             &[]protocol.CompletionItemKind{protocol.CompletionItemKindProperty}[0],
 		Detail:           &[]string{"HTML slot attribute"}[0],
+		Data:             createCompletionData("attribute", parentTagName, "slot"),
 		InsertText:       &snippet,
 		InsertTextFormat: &insertTextFormat,
 	}

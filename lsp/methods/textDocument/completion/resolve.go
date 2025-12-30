@@ -18,6 +18,8 @@ package completion
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
 
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/methods/textDocument/hover"
@@ -34,7 +36,7 @@ type CompletionItemData struct {
 }
 
 // Resolve handles completionItem/resolve requests to lazily generate documentation
-func Resolve(ctx types.ServerContext, context *glsp.Context, params *protocol.CompletionItem) (*protocol.CompletionItem, error) {
+func Resolve(ctx types.ServerContext, _ *glsp.Context, params *protocol.CompletionItem) (*protocol.CompletionItem, error) {
 	helpers.SafeDebugLog("[RESOLVE] Request for completion item: %s", params.Label)
 
 	// If item already has documentation, just return it
@@ -76,15 +78,60 @@ func Resolve(ctx types.ServerContext, context *glsp.Context, params *protocol.Co
 			helpers.SafeDebugLog("[RESOLVE] Generated tag documentation for %s", data.TagName)
 		}
 
-	case "attribute", "event", "property", "booleanAttribute":
-		// Generate attribute documentation
-		if attrs, exists := ctx.Attributes(data.TagName); exists {
-			if attr, attrExists := attrs[data.AttributeName]; attrExists {
-				params.Documentation = &protocol.MarkupContent{
-					Kind:  protocol.MarkupKindMarkdown,
-					Value: hover.CreateAttributeHoverContent(attr, data.TagName),
+	case "event":
+		// Generate event documentation
+		if element, exists := ctx.Element(data.TagName); exists {
+			// Find the specific event in the element's events
+			for _, event := range element.Events {
+				if event.Name == data.AttributeName {
+					params.Documentation = &protocol.MarkupContent{
+						Kind:  protocol.MarkupKindMarkdown,
+						Value: hover.CreateEventHoverContent(&event, data.TagName),
+					}
+					helpers.SafeDebugLog("[RESOLVE] Generated event documentation for %s.%s", data.TagName, data.AttributeName)
+					break
 				}
-				helpers.SafeDebugLog("[RESOLVE] Generated attribute documentation for %s.%s", data.TagName, data.AttributeName)
+			}
+		}
+
+	case "attribute", "property", "booleanAttribute":
+		// Special handling for slot attribute (standard HTML attribute)
+		if data.AttributeName == "slot" {
+			// Generate slot attribute documentation
+			var docContent strings.Builder
+			docContent.WriteString("## `slot` attribute\n\n")
+			docContent.WriteString(fmt.Sprintf("**Slot content into `<%s>` element**\n\n", data.TagName))
+			docContent.WriteString("The `slot` attribute assigns this element to a named slot in the parent custom element's shadow DOM.\n\n")
+
+			// List available slots from the parent element
+			if slots, exists := ctx.Slots(data.TagName); exists && len(slots) > 0 {
+				docContent.WriteString("**Available slots:**\n\n")
+				for _, slot := range slots {
+					if slot.Name != "" { // Skip default slot
+						docContent.WriteString(fmt.Sprintf("- `%s`", slot.Name))
+						if slot.Description != "" {
+							docContent.WriteString(fmt.Sprintf(" - %s", slot.Description))
+						}
+						docContent.WriteString("\n")
+					}
+				}
+			}
+
+			params.Documentation = &protocol.MarkupContent{
+				Kind:  protocol.MarkupKindMarkdown,
+				Value: docContent.String(),
+			}
+			helpers.SafeDebugLog("[RESOLVE] Generated slot attribute documentation for parent element %s", data.TagName)
+		} else {
+			// Generate regular attribute documentation
+			if attrs, exists := ctx.Attributes(data.TagName); exists {
+				if attr, attrExists := attrs[data.AttributeName]; attrExists {
+					params.Documentation = &protocol.MarkupContent{
+						Kind:  protocol.MarkupKindMarkdown,
+						Value: hover.CreateAttributeHoverContent(attr, data.TagName),
+					}
+					helpers.SafeDebugLog("[RESOLVE] Generated attribute documentation for %s.%s", data.TagName, data.AttributeName)
+				}
 			}
 		}
 

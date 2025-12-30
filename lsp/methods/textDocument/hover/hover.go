@@ -210,3 +210,34 @@ func CreateAttributeHoverContent(attr *M.Attribute, tagName string) string {
 
 	return content.String()
 }
+
+// CreateEventHoverContent creates markdown content for event hover
+func CreateEventHoverContent(event *M.Event, tagName string) string {
+	var content strings.Builder
+
+	// Title
+	content.WriteString(fmt.Sprintf("## `%s` event\n\n", event.Name))
+	content.WriteString(fmt.Sprintf("**On `<%s>` element**\n\n", tagName))
+
+	// Type (event detail type)
+	if event.Type != nil && event.Type.Text != "" {
+		content.WriteString(fmt.Sprintf("**Type:** `%s`\n\n", event.Type.Text))
+	}
+
+	// Description
+	if event.Description != "" {
+		content.WriteString(fmt.Sprintf("%s\n\n", event.Description))
+	}
+
+	// Deprecated warning
+	if event.IsDeprecated() {
+		switch event.Deprecated.(type) {
+		case M.DeprecatedFlag:
+			content.WriteString("⚠️ **Deprecated**\n\n")
+		case M.DeprecatedReason:
+			content.WriteString(fmt.Sprintf("⚠️ **Deprecated**: %s\n\n", event.Deprecated))
+		}
+	}
+
+	return content.String()
+}
