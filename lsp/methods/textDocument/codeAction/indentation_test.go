@@ -29,14 +29,14 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-// TestIndentationDetection tests the indentation detection functionality using fixtures
+// TestIndentationDetection tests the indentation detection functionality using testdata
 func TestIndentationDetection(t *testing.T) {
-	fixturesPath := filepath.Join("fixtures", "indentation-detection")
+	fixturesPath := filepath.Join("testdata", "indentation-detection")
 
 	// Get all HTML fixture files
 	entries, err := os.ReadDir(fixturesPath)
 	if err != nil {
-		t.Fatalf("Failed to read fixtures directory: %v", err)
+		t.Fatalf("Failed to read testdata directory: %v", err)
 	}
 
 	for _, entry := range entries {

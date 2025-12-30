@@ -29,7 +29,7 @@ import (
 // TestWorkspacePatterns_NestedDoublestar tests that "**" doublestar patterns
 // find deeply nested workspace packages
 func TestWorkspacePatterns_NestedDoublestar(t *testing.T) {
-	fixturePath := filepath.Join("test", "fixtures", "workspace-nested")
+	fixturePath := filepath.Join("testdata", "integration", "workspace-nested")
 
 	// Create workspace context
 	wsCtx := workspace.NewFileSystemWorkspaceContext(fixturePath)
@@ -82,7 +82,7 @@ func TestWorkspacePatterns_NestedDoublestar(t *testing.T) {
 // TestWorkspacePatterns_Negation tests that "!" negation patterns
 // exclude matching packages from being loaded
 func TestWorkspacePatterns_Negation(t *testing.T) {
-	fixturePath := filepath.Join("test", "fixtures", "workspace-negation")
+	fixturePath := filepath.Join("testdata", "integration", "workspace-negation")
 
 	// Create workspace context
 	wsCtx := workspace.NewFileSystemWorkspaceContext(fixturePath)
@@ -130,7 +130,7 @@ func TestWorkspacePatterns_Negation(t *testing.T) {
 func TestWorkspacePatterns_EdgeCases(t *testing.T) {
 	t.Run("empty workspace patterns", func(t *testing.T) {
 		// Create a temporary fixture without workspaces
-		fixturePath := filepath.Join("test", "fixtures", "workspace-npm")
+		fixturePath := filepath.Join("testdata", "integration", "workspace-npm")
 
 		wsCtx := workspace.NewFileSystemWorkspaceContext(fixturePath)
 		registry, err := lsp.NewRegistryWithDefaults()

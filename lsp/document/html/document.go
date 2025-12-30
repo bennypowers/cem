@@ -362,7 +362,10 @@ func (d *HTMLDocument) analyzeCompletionContext(position protocol.Position, hand
 				!strings.Contains(captureText, "\n") {
 				// This looks like a pure tag name without attributes or other syntax
 				analysis.Type = types.CompletionTagName
-				analysis.TagName = captureText
+				// Don't set TagName if it's just "<" or contains "<" - let CompletionPrefix extract it
+				if !strings.Contains(captureText, "<") {
+					analysis.TagName = captureText
+				}
 				return analysis
 			}
 		}
@@ -568,8 +571,14 @@ func (d *HTMLDocument) CompletionPrefix(analysis *types.CompletionAnalysis) stri
 	switch analysis.Type {
 	case types.CompletionTagName:
 		// Extract the tag name being typed (after the last "<")
-		if lastOpenBracket := strings.LastIndex(content, "<"); lastOpenBracket != -1 {
-			afterBracket := content[lastOpenBracket+1:]
+		// Use LineContent if available to avoid searching the entire document
+		searchContent := content
+		if analysis.LineContent != "" {
+			searchContent = analysis.LineContent
+		}
+
+		if lastOpenBracket := strings.LastIndex(searchContent, "<"); lastOpenBracket != -1 {
+			afterBracket := searchContent[lastOpenBracket+1:]
 			// Extract up to first space, >, or end of content
 			for i, r := range afterBracket {
 				if r == ' ' || r == '>' || r == '\n' || r == '\t' {

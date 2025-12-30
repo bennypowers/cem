@@ -28,7 +28,7 @@ import (
 
 // TestWorkspaceManifestLoading_npm tests that npm workspace packages are loaded into the registry
 func TestWorkspaceManifestLoading_npm(t *testing.T) {
-	fixturePath := filepath.Join("test", "fixtures", "workspace-npm")
+	fixturePath := filepath.Join("testdata", "integration", "workspace-npm")
 
 	// Create workspace context
 	wsCtx := workspace.NewFileSystemWorkspaceContext(fixturePath)
@@ -70,7 +70,7 @@ func TestWorkspaceManifestLoading_npm(t *testing.T) {
 
 // TestWorkspaceManifestLoading_yarn tests that yarn workspace packages are loaded into the registry
 func TestWorkspaceManifestLoading_yarn(t *testing.T) {
-	fixturePath := filepath.Join("test", "fixtures", "workspace-yarn")
+	fixturePath := filepath.Join("testdata", "integration", "workspace-yarn")
 
 	// Create workspace context
 	wsCtx := workspace.NewFileSystemWorkspaceContext(fixturePath)
@@ -108,7 +108,7 @@ func TestWorkspaceManifestLoading_yarn(t *testing.T) {
 
 // TestWorkspaceManifestLoading_pnpm tests that pnpm workspace packages are loaded into the registry
 func TestWorkspaceManifestLoading_pnpm(t *testing.T) {
-	fixturePath := filepath.Join("test", "fixtures", "workspace-pnpm")
+	fixturePath := filepath.Join("testdata", "integration", "workspace-pnpm")
 
 	// Create workspace context
 	wsCtx := workspace.NewFileSystemWorkspaceContext(fixturePath)

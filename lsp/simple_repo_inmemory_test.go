@@ -36,7 +36,7 @@ import (
 // - TypeScript source files with custom elements exist
 // - LSP should generate manifest in-memory for the workspace root
 func TestSimpleRepoInMemoryGeneration(t *testing.T) {
-	fixturePath, err := filepath.Abs(filepath.Join("test", "fixtures", "simple-repo-no-manifest"))
+	fixturePath, err := filepath.Abs(filepath.Join("testdata", "integration", "simple-repo-no-manifest"))
 	require.NoError(t, err, "Failed to get absolute path")
 
 	// Verify this is a simple repo (no workspaces in package.json)
@@ -146,7 +146,7 @@ func TestSimpleRepoInMemoryGeneration(t *testing.T) {
 
 // TestSimpleRepoInMemoryGeneration_ManifestCount verifies manifest statistics
 func TestSimpleRepoInMemoryGeneration_ManifestCount(t *testing.T) {
-	fixturePath, err := filepath.Abs(filepath.Join("test", "fixtures", "simple-repo-no-manifest"))
+	fixturePath, err := filepath.Abs(filepath.Join("testdata", "integration", "simple-repo-no-manifest"))
 	require.NoError(t, err, "Failed to get absolute path")
 
 	wsCtx := workspace.NewFileSystemWorkspaceContext(fixturePath)

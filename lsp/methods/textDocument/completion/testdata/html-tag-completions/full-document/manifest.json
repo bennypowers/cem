@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "test-elements.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "CardElement",
+          "tagName": "card-element",
+          "customElement": true
+        },
+        {
+          "kind": "class",
+          "name": "DialogElement",
+          "tagName": "dialog-element",
+          "customElement": true
+        },
+        {
+          "kind": "class",
+          "name": "MyCustomElement",
+          "tagName": "my-custom-element",
+          "customElement": true
+        }
+      ]
+    }
+  ]
+}

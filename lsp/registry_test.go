@@ -51,7 +51,7 @@ func TestRegistryElementLookup(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 
 	// Load the basic test manifest
-	manifest := loadTestManifest(t, filepath.Join("test", "fixtures", "registry-basic", "manifest.json"))
+	manifest := loadTestManifest(t, filepath.Join("testdata", "integration", "registry-basic", "manifest.json"))
 	ctx.AddManifest(manifest)
 
 	t.Run("Get existing element", func(t *testing.T) {
@@ -165,8 +165,8 @@ func TestRegistryMultipleManifests(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 
 	// Load two different manifests
-	manifest1 := loadTestManifest(t, filepath.Join("test", "fixtures", "registry-multiple", "manifest-1.json"))
-	manifest2 := loadTestManifest(t, filepath.Join("test", "fixtures", "registry-multiple", "manifest-2.json"))
+	manifest1 := loadTestManifest(t, filepath.Join("testdata", "integration", "registry-multiple", "manifest-1.json"))
+	manifest2 := loadTestManifest(t, filepath.Join("testdata", "integration", "registry-multiple", "manifest-2.json"))
 
 	// Add both manifests
 	ctx.AddManifest(manifest1)

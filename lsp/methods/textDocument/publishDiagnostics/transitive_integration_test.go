@@ -39,7 +39,7 @@ func TestTransitiveIntegration_ThreeLevelDependency(t *testing.T) {
 	defer helpers.SetDebugLoggingEnabled(false)
 
 	// Use the fixture directory with predefined transitive dependency chain
-	fixtureDir, err := filepath.Abs(filepath.Join("..", "..", "..", "test", "fixtures", "transitive-integration"))
+	fixtureDir, err := filepath.Abs(filepath.Join("..", "..", "..", "testdata", "integration", "transitive-integration"))
 	if err != nil {
 		t.Fatalf("Failed to get absolute fixture path: %v", err)
 	}
@@ -262,7 +262,7 @@ func TestTransitiveIntegration_ThreeLevelDependency(t *testing.T) {
 
 func TestTransitiveIntegration_PartialImport(t *testing.T) {
 	// Use the fixture directory with predefined transitive dependency chain
-	fixtureDir := filepath.Join("..", "..", "..", "test", "fixtures", "transitive-integration")
+	fixtureDir := filepath.Join("..", "..", "..", "testdata", "integration", "transitive-integration")
 
 	// Create workspace and server
 	workspace := W.NewFileSystemWorkspaceContext(fixtureDir)

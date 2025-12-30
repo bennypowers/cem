@@ -60,7 +60,7 @@ func TestJSXDocumentSupport(t *testing.T) {
 
 func TestJSXCustomElementDetection(t *testing.T) {
 	// Setup test registry with JSX fixtures
-	fixtureDir := filepath.Join("test", "fixtures", "jsx-support-test")
+	fixtureDir := filepath.Join("testdata", "integration", "jsx-support-test")
 
 	// Create mock file watcher for testing
 	mockWatcher := platform.NewMockFileWatcher()
@@ -115,7 +115,7 @@ func TestJSXCustomElementDetection(t *testing.T) {
 
 func TestJSXAttributeDetection(t *testing.T) {
 	// Setup test registry
-	fixtureDir := filepath.Join("test", "fixtures", "jsx-support-test")
+	fixtureDir := filepath.Join("testdata", "integration", "jsx-support-test")
 
 	// Create mock file watcher for testing
 	mockWatcher := platform.NewMockFileWatcher()
@@ -163,7 +163,7 @@ func TestJSXCompletionContext(t *testing.T) {
 	require.NoError(t, err, "Should create document manager")
 	defer dm.Close()
 
-	fixtureDir := filepath.Join("test", "fixtures", "jsx-support-test")
+	fixtureDir := filepath.Join("testdata", "integration", "jsx-support-test")
 
 	tests := []struct {
 		name         string

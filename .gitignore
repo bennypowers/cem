@@ -12,6 +12,7 @@ dist
 docs/resources
 .claude/*.local.json
 node_modules
+!**/testdata/**/node_modules
 
 platforms/**/package.json
 temp-binaries
