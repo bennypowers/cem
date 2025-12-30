@@ -27,6 +27,7 @@ import (
 	M "bennypowers.dev/cem/manifest"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
+	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
 // Completion handles textDocument/completion requests
@@ -724,7 +725,65 @@ func getSlotAttributeCompletions(ctx types.ServerContext, doc types.Document, po
 
 // findParentElementTag attempts to find the parent element tag name containing the current position
 func findParentElementTag(doc types.Document, position protocol.Position) string {
-	// Get document content
+	// Try tree-sitter approach first (fast O(log n))
+	if tree := doc.Tree(); tree != nil {
+		content, err := doc.Content()
+		if err == nil {
+			// Convert position to byte offset
+			lines := strings.Split(content, "\n")
+			if int(position.Line) < len(lines) {
+				offset := uint(0)
+				for i := 0; i < int(position.Line); i++ {
+					offset += uint(len(lines[i])) + 1 // +1 for newline
+				}
+				offset += uint(position.Character)
+
+				// Get node at position
+				node := tree.RootNode().NamedDescendantForPointRange(
+					ts.Point{Row: uint(position.Line), Column: uint(position.Character)},
+					ts.Point{Row: uint(position.Line), Column: uint(position.Character)},
+				)
+
+				// Walk up the tree to find the first element node
+				skipFirst := false
+				contentBytes := []byte(content)
+				for node != nil {
+					nodeKind := node.Kind()
+
+					// Check for HTML element nodes (works for both HTML and template contexts)
+					if nodeKind == "element" || nodeKind == "start_tag" || nodeKind == "self_closing_tag" {
+						// Skip the first element (that's the current element we're in)
+						if !skipFirst {
+							skipFirst = true
+							node = node.Parent()
+							continue
+						}
+
+						// Found parent element - extract tag name
+						tagNameNode := node.ChildByFieldName("name")
+						if tagNameNode != nil {
+							start, end := tagNameNode.ByteRange()
+							if start < end && end <= uint(len(contentBytes)) {
+								tagName := string(contentBytes[start:end])
+								if textDocument.IsCustomElementTag(tagName) {
+									return tagName
+								}
+							}
+						}
+					}
+
+					node = node.Parent()
+				}
+			}
+		}
+	}
+
+	// Fallback to string scanning if tree-sitter fails (rare)
+	return findParentElementTagFallback(doc, position)
+}
+
+// findParentElementTagFallback is the O(n) string-scanning fallback
+func findParentElementTagFallback(doc types.Document, position protocol.Position) string {
 	content, err := doc.Content()
 	if err != nil {
 		return ""
