@@ -1,5 +1,6 @@
-{{ $cem := index .Site.Data "lsp-benchmark-results-cem" | default dict }}
-{{ $wc := index .Site.Data "lsp-benchmark-results-wc-toolkit" | default dict }}
+{{ $combined := index .Site.Data "lsp-benchmark-results" | default dict }}
+{{ $cem := index $combined.servers "cem" | default dict }}
+{{ $wc := index $combined.servers "wc-toolkit" | default dict }}
 
 {{ if and $cem.benchmarks $wc.benchmarks }}
 {{/* Only show simple protocol operations */}}

@@ -241,8 +241,12 @@ update-html-attributes:
 
 docs-ci: update-html-attributes
 	make build
-	@echo "Running benchmarks with $(RUNS) runs"
+	@echo "Running generate benchmarks with $(RUNS) runs"
 	./scripts/benchmark.sh $(RUNS)
+	@echo "Running LSP benchmarks..."
+	make bench-lsp
+	@echo "Combining LSP benchmark results..."
+	@cd lsp/benchmark && nvim --headless --clean -l combine_results.lua
 	cp -f "$(CONTRIBUTING_PATH)" /tmp/cem-contributing.md
 	cat CONTRIBUTING.md >> "$(CONTRIBUTING_PATH)"
 	hugo mod clean

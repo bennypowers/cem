@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head><title>Attribute Hover Test</title></head>
+<body>
+  <!-- Button attributes -->
+  <my-button variant="primary" size="large" disabled loading icon="star">Primary Button</my-button>
+  <my-button-secondary variant="outline" size="medium">Secondary</my-button-secondary>
+  <my-button-icon icon="save" size="small" disabled></my-button-icon>
+
+  <!-- Form attributes -->
+  <my-input-text value="test" placeholder="Enter text" required readonly></my-input-text>
+  <my-input-email placeholder="user@example.com" disabled></my-input-email>
+  <my-input-select multiple searchable size="large">
+    <option value="1">Option 1</option>
+  </my-input-select>
+
+  <!-- Layout attributes -->
+  <my-container-flex gap="large" padding="medium" justify="space-between" align="center">
+    <my-card-basic variant="elevated" clickable selected>
+      <h3 slot="header">Card Title</h3>
+      <p>Card content</p>
+    </my-card-basic>
+  </my-container-flex>
+
+  <!-- Complex attributes -->
+  <my-chart-line data='[{"x": 1, "y": 10}]' responsive animated></my-chart-line>
+  <my-table-sortable striped bordered paginated page-size="20"></my-table-sortable>
+
+  <!-- Media attributes -->
+  <my-image-responsive src="/test.jpg" alt="Test image" loading="lazy" fit="cover" ratio="16:9"></my-image-responsive>
+  <my-image-avatar src="/avatar.jpg" size="large"></my-image-avatar>
+
+  <!-- Overlay attributes -->
+  <my-modal-dialog open size="medium" closable backdrop-close="true">
+    <h2 slot="header">Modal Title</h2>
+    <p>Modal content</p>
+  </my-modal-dialog>
+
+  <!-- Feedback attributes -->
+  <my-alert-info dismissible icon="info" timeout="5000">Alert message</my-alert-info>
+  <my-progress-linear value="75" variant="success"></my-progress-linear>
+  <my-spinner-primary size="medium" color="blue"></my-spinner-primary>
+</body>
+</html>

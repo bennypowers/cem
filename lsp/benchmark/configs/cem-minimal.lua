@@ -26,42 +26,42 @@ vim.opt.signcolumn = "no"
 -- Suppress LSP info messages (prevents "No information available" spam during benchmarks)
 local original_notify = vim.notify
 vim.notify = function(msg, level, opts)
-  -- Only suppress INFO level messages, keep warnings and errors visible
-  if level ~= vim.log.levels.INFO then
-    original_notify(msg, level, opts)
-  end
+	-- Only suppress INFO level messages, keep warnings and errors visible
+	if level ~= vim.log.levels.INFO then
+		original_notify(msg, level, opts)
+	end
 end
 
 -- Minimal LSP configuration for cem
 local cem_config = {
-  name = 'cem-lsp',
-  cmd = { 'cem', 'lsp' },
-  root_markers = {
-    'custom-elements.json',
-    'package.json',
-    '.git',
-  },
-  filetypes = {
-    'html',
-    'typescript',
-    'javascript',
-  },
-  single_file_support = true,
-  capabilities = vim.lsp.protocol.make_client_capabilities(),
-  on_attach = function(client, bufnr)
-    -- Minimal attach - no keybindings or fancy features
-  end,
-  on_init = function(client, initialize_result)
-    -- Minimal init
-  end,
+	name = "cem-lsp",
+	cmd = { "cem", "lsp" },
+	root_markers = {
+		"custom-elements.json",
+		"package.json",
+		".git",
+	},
+	filetypes = {
+		"html",
+		"typescript",
+		"javascript",
+	},
+	single_file_support = true,
+	capabilities = vim.lsp.protocol.make_client_capabilities(),
+	on_attach = function(client, bufnr)
+		-- Minimal attach - no keybindings or fancy features
+	end,
+	on_init = function(client, initialize_result)
+		-- Minimal init
+	end,
 }
 
 -- Auto-start cem LSP for supported filetypes
 vim.api.nvim_create_autocmd("FileType", {
-  pattern = cem_config.filetypes,
-  callback = function()
-    vim.lsp.start(cem_config)
-  end,
+	pattern = cem_config.filetypes,
+	callback = function()
+		vim.lsp.start(cem_config)
+	end,
 })
 
 -- Export config for benchmark modules

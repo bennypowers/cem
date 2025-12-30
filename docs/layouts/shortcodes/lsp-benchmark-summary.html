@@ -1,5 +1,6 @@
-{{ $cem := index .Site.Data "lsp-benchmark-results-cem" | default dict }}
-{{ $wc := index .Site.Data "lsp-benchmark-results-wc-toolkit" | default dict }}
+{{ $combined := index .Site.Data "lsp-benchmark-results" | default dict }}
+{{ $cem := index $combined.servers "cem" | default dict }}
+{{ $wc := index $combined.servers "wc-toolkit" | default dict }}
 
 <div class="lsp-benchmark-summary">
   {{ if and $cem.timestamp $wc.timestamp }}
@@ -55,22 +56,6 @@
             </dd>
           {{ end }}
         {{ end }}
-        {{ if $cem.benchmarks.lit_template }}
-          {{ if $cem.benchmarks.lit_template.scenario_results }}
-            <dt>Template Test Pass Rate</dt>
-            <dd>
-              {{ $totalTests := 0 }}
-              {{ $successfulTests := 0 }}
-              {{ range $cem.benchmarks.lit_template.scenario_results }}
-                {{ if and .total_tests .successful_tests }}
-                  {{ $totalTests = add $totalTests .total_tests }}
-                  {{ $successfulTests = add $successfulTests .successful_tests }}
-                {{ end }}
-              {{ end }}
-              {{ if gt $totalTests 0 }}{{ printf "%.0f%%" (mul (div (float $successfulTests) (float $totalTests)) 100) }} ({{ $successfulTests }}/{{ $totalTests }}){{ end }}
-            </dd>
-          {{ end }}
-        {{ end }}
       </dl>
     </div>
 
@@ -122,22 +107,6 @@
                 {{ end }}
               {{ end }}
               {{ if gt $count 0 }}{{ printf "%.1f items" (div $totalItems (float $count)) }}{{ end }}
-            </dd>
-          {{ end }}
-        {{ end }}
-        {{ if $wc.benchmarks.lit_template }}
-          {{ if $wc.benchmarks.lit_template.scenario_results }}
-            <dt>Template Test Pass Rate</dt>
-            <dd>
-              {{ $totalTests := 0 }}
-              {{ $successfulTests := 0 }}
-              {{ range $wc.benchmarks.lit_template.scenario_results }}
-                {{ if and .total_tests .successful_tests }}
-                  {{ $totalTests = add $totalTests .total_tests }}
-                  {{ $successfulTests = add $successfulTests .successful_tests }}
-                {{ end }}
-              {{ end }}
-              {{ if gt $totalTests 0 }}{{ printf "%.0f%%" (mul (div (float $successfulTests) (float $totalTests)) 100) }} ({{ $successfulTests }}/{{ $totalTests }}){{ end }}
             </dd>
           {{ end }}
         {{ end }}

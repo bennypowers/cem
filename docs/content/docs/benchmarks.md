@@ -297,12 +297,6 @@ Pure LSP protocol timing in `.html` files. Each benchmark measures the time from
 
 {{<lsp-simple-benchmark-chart>}}
 
-#### TypeScript Template Operations
-
-LSP functionality within TypeScript template literals (Lit <code>html`<my-element></my-element>`</code>). Tests parsing, completion, and interpolation awareness in embedded HTML contexts.
-
-{{<lsp-template-benchmark-chart>}}
-
 ---
 
 {{< loadchart.inline >}}

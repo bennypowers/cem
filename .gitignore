@@ -33,3 +33,4 @@ docs/static/*-last-output.*
 docs/**/custom-elements.json
 
 lsp/benchmark/results
+docs/data/lsp-benchmark-results*.json
