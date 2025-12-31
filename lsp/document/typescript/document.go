@@ -114,7 +114,7 @@ func (d *TypeScriptDocument) UpdateContent(content string, version int32) {
 }
 
 // SetTree sets the document's syntax tree
-// Note: Cache invalidation is handled by UpdateContent, which is always called before SetTree
+// Note: Defensively invalidates cache to ensure correctness even if called without UpdateContent
 func (d *TypeScriptDocument) SetTree(tree *ts.Tree) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
