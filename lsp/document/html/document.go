@@ -266,14 +266,22 @@ func (d *HTMLDocument) findCustomElements(handler *Handler) ([]types.CustomEleme
 
 					// Find the value that comes immediately after this attribute name
 					// Look for the closest value that starts after the attribute name ends
+					// BUT only if there's an = sign IMMEDIATELY after the attribute name
 					var closestValue string
 					var closestDistance = ^uint(0) // Max uint value
 					for valuePos, value := range valuesByPosition {
 						if valuePos > attrName.EndByte {
 							distance := valuePos - attrName.EndByte
 							if distance < closestDistance {
-								closestDistance = distance
-								closestValue = value
+								// Extract the text between attribute name end and value start
+								betweenText := string(contentBytes[attrName.EndByte:valuePos])
+								// Only consider this value if the FIRST non-whitespace character is '='
+								// This ensures we're matching attr="value" and not attr value="other"
+								trimmed := strings.TrimLeft(betweenText, " \t\r\n")
+								if len(trimmed) > 0 && trimmed[0] == '=' {
+									closestDistance = distance
+									closestValue = value
+								}
 							}
 						}
 					}
