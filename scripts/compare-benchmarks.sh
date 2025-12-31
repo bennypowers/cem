@@ -38,47 +38,102 @@ EOF
   exit 0
 fi
 
-# Compute output size in KB (rounded)
-pr_size_kb=$(du -k "$PR_JSON" | cut -f1)
-base_size_kb=$(du -k "$BASE_JSON" | cut -f1)
+# Check if base is a placeholder (first run scenario)
+base_missing=false
+if [ "$(cat "$BASE_TIME_FILE")" = "0" ] && [ "$(cat "$BASE_JSON")" = "{}" ]; then
+  base_missing=true
+fi
 
-# Read total times (in seconds, float)
-pr_time=$(cat "$PR_TIME_FILE")
-base_time=$(cat "$BASE_TIME_FILE")
+if [ "$base_missing" = true ]; then
+  # Base is missing - show placeholders
+  pr_size_kb=$(du -k "$PR_JSON" | cut -f1)
+  base_size_kb="---"
 
-# Count number of runs by counting lines matching "Benchmark"
-pr_num_runs=$(grep -c '^Benchmark' "$PR_BENCH_TXT" || echo 1)
-base_num_runs=$(grep -c '^Benchmark' "$BASE_BENCH_TXT" || echo 1)
+  pr_time=$(cat "$PR_TIME_FILE")
+  base_time="---"
 
-# Calculate average time per run
-pr_avg_time=$(awk "BEGIN {print ($pr_num_runs == 0 ? 0 : $pr_time / $pr_num_runs)}")
-base_avg_time=$(awk "BEGIN {print ($base_num_runs == 0 ? 0 : $base_time / $base_num_runs)}")
+  pr_num_runs=$(grep -c '^Benchmark' "$PR_BENCH_TXT" || echo 1)
+  base_num_runs="---"
 
-pr_perf_kb=$(awk "BEGIN {print ($pr_size_kb == 0 ? 0 : $pr_time / $pr_size_kb)}")
-base_perf_kb=$(awk "BEGIN {print ($base_size_kb == 0 ? 0 : $base_time / $base_size_kb)}")
+  pr_avg_time=$(awk "BEGIN {print ($pr_num_runs == 0 ? 0 : $pr_time / $pr_num_runs)}")
+  base_avg_time="---"
 
-# Compute delta
-delta_perf=$(awk "BEGIN {print $pr_perf_kb - $base_perf_kb}")
-delta_ratio=$(awk "BEGIN {if ($pr_perf_kb == 0) print 0; else print $base_perf_kb / $pr_perf_kb}")
+  pr_perf_kb=$(awk "BEGIN {print ($pr_size_kb == 0 ? 0 : $pr_time / $pr_size_kb)}")
+  base_perf_kb="---"
 
-# Choose emoji
-if awk "BEGIN {exit !($delta_ratio > 10)}"; then
-  emoji='🚀'
-elif awk "BEGIN {exit !($delta_ratio > 1)}"; then
-  emoji='👍'
-elif awk "BEGIN {exit !($delta_ratio < 0.1)}"; then
-  emoji='💣'
-elif awk "BEGIN {exit !($delta_ratio < 1)}"; then
-  emoji='🐢'
+  delta_perf="---"
+  delta_ratio="---"
+  emoji="ℹ️"
 else
-  emoji='➖'
+  # Normal comparison
+  pr_size_kb=$(du -k "$PR_JSON" | cut -f1)
+  base_size_kb=$(du -k "$BASE_JSON" | cut -f1)
+
+  pr_time=$(cat "$PR_TIME_FILE")
+  base_time=$(cat "$BASE_TIME_FILE")
+
+  pr_num_runs=$(grep -c '^Benchmark' "$PR_BENCH_TXT" || echo 1)
+  base_num_runs=$(grep -c '^Benchmark' "$BASE_BENCH_TXT" || echo 1)
+
+  pr_avg_time=$(awk "BEGIN {print ($pr_num_runs == 0 ? 0 : $pr_time / $pr_num_runs)}")
+  base_avg_time=$(awk "BEGIN {print ($base_num_runs == 0 ? 0 : $base_time / $base_num_runs)}")
+
+  pr_perf_kb=$(awk "BEGIN {print ($pr_size_kb == 0 ? 0 : $pr_time / $pr_size_kb)}")
+  base_perf_kb=$(awk "BEGIN {print ($base_size_kb == 0 ? 0 : $base_time / $base_size_kb)}")
+
+  delta_perf=$(awk "BEGIN {print $pr_perf_kb - $base_perf_kb}")
+  delta_ratio=$(awk "BEGIN {if ($pr_perf_kb == 0) print 0; else print $base_perf_kb / $pr_perf_kb}")
+
+  # Choose emoji
+  if awk "BEGIN {exit !($delta_ratio > 10)}"; then
+    emoji='🚀'
+  elif awk "BEGIN {exit !($delta_ratio > 1)}"; then
+    emoji='👍'
+  elif awk "BEGIN {exit !($delta_ratio < 0.1)}"; then
+    emoji='💣'
+  elif awk "BEGIN {exit !($delta_ratio < 1)}"; then
+    emoji='🐢'
+  else
+    emoji='➖'
+  fi
 fi
 
 # Get workflow run URL (set by GitHub automatically)
 run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
 
 # Output markdown
-cat << EOF > bench_report.md
+if [ "$base_missing" = true ]; then
+  cat << EOF > bench_report.md
+### Benchmark Summary
+
+|        | Branch    | Total Time (s) | # Runs | Avg Time/run (s) | Output Size (kb) | Perf/kb (s/kb) |
+|--------|-----------|----------------|--------|------------------|------------------|----------------|
+| Base   | \`${GITHUB_BASE_REF}\` | $base_time | $base_num_runs | $base_avg_time | $base_size_kb | $base_perf_kb |
+| PR     | \`${GITHUB_HEAD_REF}\` | $pr_time | $pr_num_runs | $pr_avg_time | $pr_size_kb | $pr_perf_kb |
+| Δ      |           | --- | --- | --- | --- | --- $emoji |
+
+ℹ️ **First Run**: Base branch does not have benchmark infrastructure. Showing PR results only. Future runs will include comparisons.
+
+[View this benchmark run in GitHub Actions]($run_url)
+
+<details>
+<summary>Raw PR output</summary>
+
+\`\`\`json
+$(cat "$PR_JSON")
+\`\`\`
+</details>
+
+<details>
+<summary>Raw base output</summary>
+
+\`\`\`json
+$(cat "$BASE_JSON")
+\`\`\`
+</details>
+EOF
+else
+  cat << EOF > bench_report.md
 ### Benchmark Summary
 
 |        | Branch    | Total Time (s) | # Runs | Avg Time/run (s) | Output Size (kb) | Perf/kb (s/kb) |
@@ -107,3 +162,6 @@ $(cat "$BASE_JSON")
 \`\`\`
 </details>
 EOF
+fi
+
+echo "✅ Benchmark comparison complete"

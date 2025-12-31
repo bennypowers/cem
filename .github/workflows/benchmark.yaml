@@ -101,19 +101,44 @@ jobs:
           clean: false
 
       - name: Prewarm benchmarks on base branch
-        run: make bench
+        run: |
+          if make -n bench >/dev/null 2>&1; then
+            make bench || true
+          else
+            echo "::warning::Base branch does not have 'make bench' target"
+          fi
 
       - name: Run benchmarks on base branch
         id: bench-base
-        run: scripts/benchmark-ci-run.sh base
+        run: |
+          if [ -f "scripts/benchmark-ci-run.sh" ]; then
+            scripts/benchmark-ci-run.sh base
+          else
+            echo "::warning::Base branch does not have benchmark script (first run)"
+            echo '{}' > base_bench.json
+            echo "0" > base_bench_time.txt
+            echo "First run - no base results" > base_bench.txt
+          fi
 
       - name: Build CEM binary for LSP benchmarks (base)
-        run: make build
+        run: |
+          if [ -f "Makefile" ] && make -n build >/dev/null 2>&1; then
+            make build
+          else
+            echo "::warning::Base branch does not have 'make build' target - skipping LSP benchmarks"
+            echo '{"benchmarks":{}, "error": "build_unavailable"}' > base_lsp_bench.json
+          fi
 
       - name: Run LSP benchmarks on base branch
         id: bench-lsp-base
         timeout-minutes: 5
-        run: scripts/lsp-benchmark-ci-run.sh base
+        run: |
+          if [ -f "scripts/lsp-benchmark-ci-run.sh" ] && [ -f "dist/cem" ]; then
+            scripts/lsp-benchmark-ci-run.sh base
+          else
+            echo "::warning::Base branch does not have LSP benchmark infrastructure (first run)"
+            echo '{"benchmarks":{}, "error": "script_not_found", "note": "First benchmark run - base branch does not have benchmark infrastructure"}' > base_lsp_bench.json
+          fi
 
       - name: Restore PR context for comparison
         uses: actions/checkout@v4

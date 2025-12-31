@@ -45,7 +45,20 @@ get_success_rate() {
 }
 
 # Check if benchmarks failed completely
-if jq -e '.error' "$PR_JSON" >/dev/null 2>&1 && jq -e '.error' "$BASE_JSON" >/dev/null 2>&1; then
+pr_failed=false
+base_failed=false
+base_missing=false
+
+jq -e '.error' "$PR_JSON" >/dev/null 2>&1 && pr_failed=true
+jq -e '.error' "$BASE_JSON" >/dev/null 2>&1 && base_failed=true
+
+# Check if base is empty/missing (first run scenario)
+if jq -e '.error == "script_not_found"' "$BASE_JSON" >/dev/null 2>&1; then
+  base_missing=true
+fi
+
+# If both failed and it's not a first run, show error
+if [ "$pr_failed" = true ] && [ "$base_failed" = true ] && [ "$base_missing" = false ]; then
   cat << EOF > lsp_bench_report.md
 ### LSP Benchmark Results
 
@@ -53,12 +66,6 @@ if jq -e '.error' "$PR_JSON" >/dev/null 2>&1 && jq -e '.error' "$BASE_JSON" >/de
 EOF
   exit 0
 fi
-
-# If only one failed, note it but continue with partial results
-pr_failed=false
-base_failed=false
-jq -e '.error' "$PR_JSON" >/dev/null 2>&1 && pr_failed=true
-jq -e '.error' "$BASE_JSON" >/dev/null 2>&1 && base_failed=true
 
 # Extract metrics for each benchmark
 # 1. Startup
@@ -120,13 +127,28 @@ calc_delta() {
   echo "${delta} (${pct}%) ${emoji}"
 }
 
-# Calculate deltas for all benchmarks
-startup_delta=$(calc_delta "$pr_startup" "$base_startup")
-hover_delta=$(calc_delta "$pr_hover" "$base_hover")
-completion_delta=$(calc_delta "$pr_completion" "$base_completion")
-diagnostics_delta=$(calc_delta "$pr_diagnostics" "$base_diagnostics")
-attr_hover_delta=$(calc_delta "$pr_attr_hover" "$base_attr_hover")
-references_delta=$(calc_delta "$pr_references" "$base_references")
+# Calculate deltas for all benchmarks (or use placeholder if base is missing)
+if [ "$base_missing" = true ]; then
+  startup_delta="---"
+  hover_delta="---"
+  completion_delta="---"
+  diagnostics_delta="---"
+  attr_hover_delta="---"
+  references_delta="---"
+  base_startup="---"
+  base_hover="---"
+  base_completion="---"
+  base_diagnostics="---"
+  base_attr_hover="---"
+  base_references="---"
+else
+  startup_delta=$(calc_delta "$pr_startup" "$base_startup")
+  hover_delta=$(calc_delta "$pr_hover" "$base_hover")
+  completion_delta=$(calc_delta "$pr_completion" "$base_completion")
+  diagnostics_delta=$(calc_delta "$pr_diagnostics" "$base_diagnostics")
+  attr_hover_delta=$(calc_delta "$pr_attr_hover" "$base_attr_hover")
+  references_delta=$(calc_delta "$pr_references" "$base_references")
+fi
 
 # Get workflow run URL (or use placeholder for local testing)
 if [ -n "${GITHUB_SERVER_URL:-}" ] && [ -n "${GITHUB_REPOSITORY:-}" ] && [ -n "${GITHUB_RUN_ID:-}" ]; then
@@ -167,12 +189,13 @@ $(cat "$BASE_JSON")
 </details>
 EOF
 
-if [ "$pr_failed" = true ]; then
+if [ "$base_missing" = true ]; then
+  echo "" >> lsp_bench_report.md
+  echo "ℹ️ **First Run**: Base branch does not have benchmark infrastructure. Showing PR results only. Future runs will include comparisons." >> lsp_bench_report.md
+elif [ "$pr_failed" = true ]; then
   echo "" >> lsp_bench_report.md
   echo "⚠️ **Note**: PR branch LSP benchmarks failed. Showing base branch results only." >> lsp_bench_report.md
-fi
-
-if [ "$base_failed" = true ]; then
+elif [ "$base_failed" = true ]; then
   echo "" >> lsp_bench_report.md
   echo "⚠️ **Note**: Base branch LSP benchmarks failed. Showing PR branch results only." >> lsp_bench_report.md
 fi
