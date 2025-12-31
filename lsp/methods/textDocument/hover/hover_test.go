@@ -30,11 +30,10 @@ import (
 
 // Cursor positions for each test fixture
 var cursorPositions = map[string]protocol.Position{
-	"element-hover-html":                  {Line: 6, Character: 5},
-	"element-hover-typescript":            {Line: 5, Character: 10},
-	"attribute-hover-html":                {Line: 6, Character: 20},
-	"multiline-attributes-hover-html":     {Line: 6, Character: 13},
-	"multiline-all-attributes-regression": {Line: 6, Character: 13}, // Tested by TestHover_MultilineAllAttributes
+	"element-hover-html":              {Line: 6, Character: 5},
+	"element-hover-typescript":        {Line: 5, Character: 10},
+	"attribute-hover-html":            {Line: 6, Character: 20},
+	"multiline-attributes-hover-html": {Line: 6, Character: 13},
 }
 
 func TestHover_Fixtures(t *testing.T) {

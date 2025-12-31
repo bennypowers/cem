@@ -18,10 +18,9 @@ package hover_test
 
 import (
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/hover"
 	"bennypowers.dev/cem/lsp/testhelpers"
@@ -38,111 +37,94 @@ import (
 //
 // Root cause: Benchmark test positions were outdated, but this test validates the fix works.
 func TestHover_MultilineAllAttributes(t *testing.T) {
-	fixtureDir := "testdata/multiline-all-attributes-regression"
-
-	// Read input HTML
-	inputHTML, err := os.ReadFile(filepath.Join(fixtureDir, "input.html"))
-	if err != nil {
-		t.Fatalf("Failed to read input.html: %v", err)
-	}
-
-	// Read and parse manifest
-	manifestBytes, err := os.ReadFile(filepath.Join(fixtureDir, "manifest.json"))
-	if err != nil {
-		t.Fatalf("Failed to read manifest.json: %v", err)
-	}
-
-	var pkg M.Package
-	if err := json.Unmarshal(manifestBytes, &pkg); err != nil {
-		t.Fatalf("Failed to parse manifest: %v", err)
-	}
-
-	// Setup context
-	ctx := testhelpers.NewMockServerContext()
-	ctx.AddManifest(&pkg)
-
-	dm, err := document.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create DocumentManager: %v", err)
-	}
-	defer dm.Close()
-	ctx.SetDocumentManager(dm)
-
-	uri := "file:///test.html"
-	doc := dm.OpenDocument(uri, string(inputHTML), 1)
-	ctx.AddDocument(uri, doc)
-
-	// Test each attribute that failed in the benchmark
-	testCases := []struct {
-		name     string
-		position protocol.Position
-	}{
-		{"variant", protocol.Position{Line: 6, Character: 13}},
-		{"size", protocol.Position{Line: 7, Character: 13}},
-		{"disabled", protocol.Position{Line: 8, Character: 13}},
-		{"loading", protocol.Position{Line: 9, Character: 13}},
-		{"icon", protocol.Position{Line: 10, Character: 13}},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			// Load expected result
-			expectedFile := filepath.Join(fixtureDir, "expected-"+tc.name+".json")
-			expectedBytes, err := os.ReadFile(expectedFile)
-			if err != nil {
-				t.Fatalf("Failed to read %s: %v", expectedFile, err)
+	testutil.RunLSPFixtures(t, "testdata-regression", func(t *testing.T, fixture *testutil.LSPFixture) {
+		// Setup context
+		ctx := testhelpers.NewMockServerContext()
+		if fixture.Manifest != nil {
+			var pkg M.Package
+			if err := json.Unmarshal(fixture.Manifest, &pkg); err != nil {
+				t.Fatalf("Failed to parse manifest: %v", err)
 			}
+			ctx.AddManifest(&pkg)
+		}
 
-			var expected protocol.Hover
-			if err := json.Unmarshal(expectedBytes, &expected); err != nil {
-				t.Fatalf("Failed to parse %s: %v", expectedFile, err)
-			}
+		dm, err := document.NewDocumentManager()
+		if err != nil {
+			t.Fatalf("Failed to create DocumentManager: %v", err)
+		}
+		defer dm.Close()
+		ctx.SetDocumentManager(dm)
 
-			// Call hover
-			params := &protocol.HoverParams{
-				TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-					TextDocument: protocol.TextDocumentIdentifier{URI: uri},
-					Position:     tc.position,
-				},
-			}
+		uri := "file:///test.html"
+		doc := dm.OpenDocument(uri, fixture.InputContent, 1)
+		ctx.AddDocument(uri, doc)
 
-			result, err := hover.Hover(ctx, nil, params)
-			if err != nil {
-				t.Fatalf("Hover failed: %v", err)
-			}
+		// Test each attribute that failed in the benchmark
+		testCases := []struct {
+			name     string
+			position protocol.Position
+		}{
+			{"variant", protocol.Position{Line: 6, Character: 13}},
+			{"size", protocol.Position{Line: 7, Character: 13}},
+			{"disabled", protocol.Position{Line: 8, Character: 13}},
+			{"loading", protocol.Position{Line: 9, Character: 13}},
+			{"icon", protocol.Position{Line: 10, Character: 13}},
+		}
 
-			if result == nil {
-				t.Fatal("Expected hover result, got nil")
-			}
-
-			// Structured comparison
-			actualContents, ok := result.Contents.(protocol.MarkupContent)
-			if !ok {
-				t.Fatalf("Expected Contents to be MarkupContent, got %T", result.Contents)
-			}
-
-			expectedContents, ok := expected.Contents.(protocol.MarkupContent)
-			if !ok {
-				t.Fatalf("Expected Contents in expected.json to be MarkupContent, got %T", expected.Contents)
-			}
-
-			if actualContents.Kind != expectedContents.Kind {
-				t.Errorf("Expected kind %s, got %s", expectedContents.Kind, actualContents.Kind)
-			}
-
-			if actualContents.Value != expectedContents.Value {
-				t.Errorf("Expected value:\n%s\n\nGot:\n%s", expectedContents.Value, actualContents.Value)
-			}
-
-			// Verify range
-			if expected.Range != nil && result.Range != nil {
-				if result.Range.Start.Line != expected.Range.Start.Line ||
-					result.Range.Start.Character != expected.Range.Start.Character ||
-					result.Range.End.Line != expected.Range.End.Line ||
-					result.Range.End.Character != expected.Range.End.Character {
-					t.Errorf("Range mismatch.\nExpected: %+v\nGot: %+v", expected.Range, result.Range)
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				// Load expected result from fixture
+				var expected protocol.Hover
+				if err := fixture.GetExpected(tc.name, &expected); err != nil {
+					t.Fatalf("Failed to get expected hover: %v", err)
 				}
-			}
-		})
-	}
+
+				// Call hover
+				params := &protocol.HoverParams{
+					TextDocumentPositionParams: protocol.TextDocumentPositionParams{
+						TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+						Position:     tc.position,
+					},
+				}
+
+				result, err := hover.Hover(ctx, nil, params)
+				if err != nil {
+					t.Fatalf("Hover failed: %v", err)
+				}
+
+				if result == nil {
+					t.Fatal("Expected hover result, got nil")
+				}
+
+				// Structured comparison
+				actualContents, ok := result.Contents.(protocol.MarkupContent)
+				if !ok {
+					t.Fatalf("Expected Contents to be MarkupContent, got %T", result.Contents)
+				}
+
+				expectedContents, ok := expected.Contents.(protocol.MarkupContent)
+				if !ok {
+					t.Fatalf("Expected Contents in expected.json to be MarkupContent, got %T", expected.Contents)
+				}
+
+				if actualContents.Kind != expectedContents.Kind {
+					t.Errorf("Expected kind %s, got %s", expectedContents.Kind, actualContents.Kind)
+				}
+
+				if actualContents.Value != expectedContents.Value {
+					t.Errorf("Expected value:\n%s\n\nGot:\n%s", expectedContents.Value, actualContents.Value)
+				}
+
+				// Verify range
+				if expected.Range != nil && result.Range != nil {
+					if result.Range.Start.Line != expected.Range.Start.Line ||
+						result.Range.Start.Character != expected.Range.Start.Character ||
+						result.Range.End.Line != expected.Range.End.Line ||
+						result.Range.End.Character != expected.Range.End.Character {
+						t.Errorf("Range mismatch.\nExpected: %+v\nGot: %+v", expected.Range, result.Range)
+					}
+				}
+			})
+		}
+	})
 }
