@@ -52,21 +52,13 @@ jobs:
         run: |
           set -e  # Exit on any error
 
-          # Verify tree-sitter CLI is available (prevents silent TSInstall hangs)
+          # Verify tree-sitter CLI is available
           echo "Verifying tree-sitter CLI..."
-          tree-sitter --version || {
-            echo "ERROR: tree-sitter CLI not found!"
-            exit 1
-          }
+          tree-sitter --version
 
-          # Clean up any old nvim config
-          rm -rf ~/.config/nvim
-
-          # Install nvim-treesitter plugin to native package location
+          # Install nvim-treesitter plugin
           NVIM_SITE="$HOME/.local/share/nvim/site/pack/plugins/start"
-
-          # Modern nvim-treesitter installs parsers to ~/.local/share/nvim/site/parser/
-          PARSER_INSTALL_DIR="$HOME/.local/share/nvim/site/parser"
+          PARSER_INSTALL_DIR="$HOME/.local/share/nvim/site"
 
           echo "Installing nvim-treesitter plugin..."
           mkdir -p "$NVIM_SITE"
@@ -75,31 +67,44 @@ jobs:
               "$NVIM_SITE/nvim-treesitter"
           fi
 
-          # Create parser directory where modern nvim-treesitter installs to
-          mkdir -p "$PARSER_INSTALL_DIR"
+          # Create install script using modern nvim-treesitter API
+          cat > /tmp/install_parsers.lua << 'LUA'
+          -- Set packpath to load nvim-treesitter
+          vim.opt.packpath = { vim.fn.expand("~/.local/share/nvim/site") }
+          vim.cmd.packloadall()
 
-          # Install parsers using TSInstall with timeout to prevent hangs
-          echo "Installing HTML and TypeScript parsers with TSInstall..."
-          timeout 120 nvim --headless +'TSInstall! html' +'TSInstall! typescript' +qall || {
-            echo "ERROR: TSInstall timed out or failed"
-            echo "Checking nvim version:"
-            nvim --version | head -3
-            echo "Checking if nvim-treesitter loaded:"
-            nvim --headless +'echo has("nvim-treesitter")' +qall
-            exit 1
+          -- Set up nvim-treesitter with install_dir
+          local ts = require('nvim-treesitter')
+          ts.setup {
+            install_dir = vim.fn.expand("~/.local/share/nvim/site")
           }
 
-          # Wait a moment for any async cleanup
-          sleep 2
+          -- Install parsers programmatically
+          print("Installing HTML and TypeScript parsers...")
+          local ok, err = pcall(function()
+            ts.install({ 'html', 'typescript' }):wait(120000)
+          end)
+
+          if not ok then
+            print("ERROR: Parser installation failed: " .. tostring(err))
+            os.exit(1)
+          end
+
+          print("✅ Parsers installed successfully")
+          LUA
+
+          # Run parser installation
+          echo "Installing HTML and TypeScript parsers..."
+          nvim --headless -u /tmp/install_parsers.lua
 
           # Verify parsers were installed
-          echo "Checking for installed parsers in $PARSER_INSTALL_DIR..."
-          if [ -f "$PARSER_INSTALL_DIR/html.so" ] && [ -f "$PARSER_INSTALL_DIR/typescript.so" ]; then
+          echo "Verifying parsers..."
+          if [ -f "$PARSER_INSTALL_DIR/parser/html.so" ] && [ -f "$PARSER_INSTALL_DIR/parser/typescript.so" ]; then
             echo "✅ Tree-sitter parsers installed successfully:"
-            ls -lh "$PARSER_INSTALL_DIR/html.so" "$PARSER_INSTALL_DIR/typescript.so"
+            ls -lh "$PARSER_INSTALL_DIR/parser/html.so" "$PARSER_INSTALL_DIR/parser/typescript.so"
           else
-            echo "ERROR: Parsers not found in $PARSER_INSTALL_DIR"
-            echo "Searching for all .so files in nvim directories:"
+            echo "ERROR: Parsers not found in $PARSER_INSTALL_DIR/parser/"
+            echo "Searching for all .so files:"
             find "$HOME/.local/share/nvim" -name "*.so" -type f 2>/dev/null || echo "No .so files found"
             exit 1
           fi
