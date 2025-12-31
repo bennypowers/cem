@@ -33,9 +33,10 @@ vim.notify = function(msg, level, opts)
 end
 
 -- Minimal LSP configuration for cem
+-- Use built binary from dist/ directory (relative to benchmark directory)
 local cem_config = {
 	name = "cem-lsp",
-	cmd = { "cem", "lsp" },
+	cmd = { "/../../dist/cem", "lsp" },
 	root_markers = {
 		"custom-elements.json",
 		"package.json",
@@ -48,12 +49,8 @@ local cem_config = {
 	},
 	single_file_support = true,
 	capabilities = vim.lsp.protocol.make_client_capabilities(),
-	on_attach = function(client, bufnr)
-		-- Minimal attach - no keybindings or fancy features
-	end,
-	on_init = function(client, initialize_result)
-		-- Minimal init
-	end,
+	on_attach = function(_, _) end,
+	on_init = function(_, _) end,
 }
 
 -- Auto-start cem LSP for supported filetypes
