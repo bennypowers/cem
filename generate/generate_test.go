@@ -50,7 +50,7 @@ func TestGenerate(t *testing.T) {
 		}
 	}
 
-	projects, err := os.ReadDir("test/fixtures")
+	projects, err := os.ReadDir("testdata/fixtures")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -59,7 +59,7 @@ func TestGenerate(t *testing.T) {
 		if !projectEntry.IsDir() || projectEntry.Name() == ".config" {
 			continue
 		}
-		projectDir := filepath.Join("test/fixtures/", projectEntry.Name())
+		projectDir := filepath.Join("testdata/fixtures/", projectEntry.Name())
 
 		t.Run(projectEntry.Name(), func(t *testing.T) {
 			projectGoldenDir := "golden"

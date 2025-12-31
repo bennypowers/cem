@@ -36,7 +36,7 @@ import (
 //	/home/bennyp/Developer/cem/cmd/generate.go:150 +0xc0e
 func TestGenerateConfigFileNotFoundNoPanic(t *testing.T) {
 	// Change to the test fixture directory to test the exact problematic scenario
-	fixtureDir := filepath.Join("test", "fixtures", "project-source-hrefs")
+	fixtureDir := filepath.Join("testdata", "fixtures", "project-source-hrefs")
 
 	// Use go run from the project root but run the command in the fixture directory
 	// This simulates the exact path resolution issue that caused the original panic
@@ -81,7 +81,7 @@ func TestGenerateConfigFileNotFoundNoPanic(t *testing.T) {
 // cmd/generate.go:150 (pterm.Success.Printf)
 func TestGenerateSuccessCodePathNoPanic(t *testing.T) {
 	// Test successful generation with output file (the code path that was panicking)
-	fixtureDir := filepath.Join("test", "fixtures", "project-source-hrefs")
+	fixtureDir := filepath.Join("testdata", "fixtures", "project-source-hrefs")
 	outputFile := filepath.Join(t.TempDir(), "test-manifest.json")
 
 	// Use go run to test the success code path without hardcoded paths
