@@ -120,21 +120,7 @@ if [ "$base_missing" = true ]; then
 
 [View this benchmark run in GitHub Actions]($run_url)
 
-<details>
-<summary>Raw PR output</summary>
-
-\`\`\`json
-$(cat "$PR_JSON")
-\`\`\`
-</details>
-
-<details>
-<summary>Raw base output</summary>
-
-\`\`\`json
-$(cat "$BASE_JSON")
-\`\`\`
-</details>
+_💡 Tip: Raw JSON outputs are available in [workflow artifacts]($run_url) if needed._
 EOF
 else
   cat << EOF > bench_report.md
@@ -150,21 +136,7 @@ else
 
 [View this benchmark run in GitHub Actions]($run_url)
 
-<details>
-<summary>Raw PR output</summary>
-
-\`\`\`json
-$(cat "$PR_JSON")
-\`\`\`
-</details>
-
-<details>
-<summary>Raw base output</summary>
-
-\`\`\`json
-$(cat "$BASE_JSON")
-\`\`\`
-</details>
+_💡 Tip: Raw JSON outputs are available in [workflow artifacts]($run_url) if needed._
 EOF
 fi
 

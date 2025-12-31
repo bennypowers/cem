@@ -188,21 +188,7 @@ cat << EOF > lsp_bench_report.md
 
 [View this benchmark run in GitHub Actions]($run_url)
 
-<details>
-<summary>Raw PR LSP Results</summary>
-
-\`\`\`json
-$(cat "$PR_JSON")
-\`\`\`
-</details>
-
-<details>
-<summary>Raw Base LSP Results</summary>
-
-\`\`\`json
-$(cat "$BASE_JSON")
-\`\`\`
-</details>
+_💡 Tip: Raw JSON results are available in [workflow artifacts]($run_url) if needed._
 EOF
 
 if [ "$base_missing" = true ]; then
