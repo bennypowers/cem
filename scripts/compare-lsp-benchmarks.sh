@@ -104,24 +104,40 @@ calc_delta() {
   local base=$2
   local delta
   delta=$(awk "BEGIN {printf \"%.2f\", $pr - $base}")
-  local pct=0
-
-  if awk "BEGIN {exit !($base != 0)}"; then
-    pct=$(awk "BEGIN {printf \"%.1f\", ($pr - $base) / $base * 100}")
-  fi
-
-  # Choose emoji based on percentage change
+  local pct
   local emoji=""
-  if awk "BEGIN {exit !($pct < 0)}"; then
-    emoji='✅'
-  elif awk "BEGIN {exit !($pct >= 0 && $pct < 5)}"; then
-    emoji='➖'
-  elif awk "BEGIN {exit !($pct >= 5 && $pct < 10)}"; then
-    emoji='⚠️'
-  elif awk "BEGIN {exit !($pct >= 10 && $pct < 25)}"; then
-    emoji='🐢'
+
+  # Handle base == 0 edge case
+  if awk "BEGIN {exit !($base == 0)}"; then
+    if awk "BEGIN {exit !($pr == 0)}"; then
+      # Both zero: no change
+      pct="0.0"
+      emoji='➖'
+    elif awk "BEGIN {exit !($pr > 0)}"; then
+      # Base zero, PR non-zero positive: infinite regression
+      pct="∞"
+      emoji='❌'
+    else
+      # Base zero, PR negative: infinite improvement (shouldn't happen in practice)
+      pct="∞"
+      emoji='✅'
+    fi
   else
-    emoji='❌'
+    # Normal case: base != 0
+    pct=$(awk "BEGIN {printf \"%.1f\", ($pr - $base) / $base * 100}")
+
+    # Choose emoji based on percentage change
+    if awk "BEGIN {exit !($pct < 0)}"; then
+      emoji='✅'
+    elif awk "BEGIN {exit !($pct >= 0 && $pct < 5)}"; then
+      emoji='➖'
+    elif awk "BEGIN {exit !($pct >= 5 && $pct < 10)}"; then
+      emoji='⚠️'
+    elif awk "BEGIN {exit !($pct >= 10 && $pct < 25)}"; then
+      emoji='🐢'
+    else
+      emoji='❌'
+    fi
   fi
 
   echo "${delta} (${pct}%) ${emoji}"
