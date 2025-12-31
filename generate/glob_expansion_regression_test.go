@@ -73,14 +73,14 @@ export class RhAlert extends LitElement {
 		assert.Contains(t, files, ".config/cem.yaml", "Config file should be listed")
 
 		// Demonstrate instant file operations (vs slow disk I/O)
-		for i := 0; i < 10; i++ {
+		for i := range 10 {
 			filename := fmt.Sprintf("test-files/file-%d.ts", i)
 			content := fmt.Sprintf("// Test file %d\nexport const value = %d;", i, i)
 			mapFS.AddFile(filename, content, 0644)
 		}
 
 		// Verify all files were created instantly
-		for i := 0; i < 10; i++ {
+		for i := range 10 {
 			filename := fmt.Sprintf("test-files/file-%d.ts", i)
 			assert.True(t, mapFS.Exists(filename), "Test file %d should exist", i)
 		}
@@ -219,14 +219,14 @@ func TestErrorConditions(t *testing.T) {
 		assert.Equal(t, "export class Test {}", string(content), "Content should match")
 
 		// Test 4: Multiple file operations (demonstrating speed)
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			filename := fmt.Sprintf("test-%d.ts", i)
 			content := fmt.Sprintf("export const test%d = %d;", i, i)
 			mapFS.AddFile(filename, content, 0644)
 		}
 
 		// Verify all files exist and are readable instantly
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			filename := fmt.Sprintf("test-%d.ts", i)
 			assert.True(t, mapFS.Exists(filename), "Test file %d should exist", i)
 

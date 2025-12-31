@@ -26,9 +26,86 @@ jobs:
           go get .
           go install gotest.tools/gotestsum@latest
           go install github.com/mfridman/tparse@latest
+      - name: Setup Neovim
+        uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: stable
+
+      - name: Install tree-sitter CLI
+        run: |
+          # Pin to v0.26.3 for reproducible builds (latest stable as of 2025-01)
+          # Unpinned installs can cause CI failures when breaking changes are released
+          npm install -g tree-sitter-cli@0.26.3
+
+      - name: Cache Neovim plugins and parsers
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/nvim
+            ~/.config/nvim
+          key: ${{ runner.os }}-neovim-tree-sitter-0.26.3-${{ hashFiles('.github/workflows/benchmark.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-neovim-
+
+      - name: Install nvim-treesitter and parsers
+        run: |
+          # Create minimal init.lua with nvim-treesitter
+          mkdir -p ~/.config/nvim
+          cat > ~/.config/nvim/init.lua << 'EOF'
+          -- Bootstrap lazy.nvim plugin manager
+          local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+          if not vim.loop.fs_stat(lazypath) then
+            vim.fn.system({
+              "git", "clone", "--filter=blob:none",
+              "https://github.com/folke/lazy.nvim.git",
+              "--branch=stable",
+              lazypath,
+            })
+          end
+          vim.opt.rtp:prepend(lazypath)
+
+          require("lazy").setup({
+            {
+              "nvim-treesitter/nvim-treesitter",
+              build = ":TSUpdate",
+              config = function()
+                require("nvim-treesitter.configs").setup({
+                  ensure_installed = { "html", "typescript" },
+                  sync_install = true,
+                })
+              end,
+            },
+          })
+          EOF
+
+          # Install parsers
+          nvim --headless -c "TSInstallSync html typescript" -c "quit"
+
+          # Verify installation
+          echo "Verifying HTML parser installation..."
+          nvim --headless -c "lua print(vim.treesitter.language.get_lang('html'))" -c "quit" || {
+            echo "ERROR: HTML parser not installed"
+            exit 1
+          }
+          echo "Verifying TypeScript parser installation..."
+          nvim --headless -c "lua print(vim.treesitter.language.get_lang('typescript'))" -c "quit" || {
+            echo "ERROR: TypeScript parser not installed"
+            exit 1
+          }
+          echo "✅ Tree-sitter parsers installed successfully"
+
       - name: Run benchmarks on PR branch
         id: bench-pr
         run: scripts/benchmark-ci-run.sh pr
+
+      - name: Build CEM binary for LSP benchmarks
+        run: make build
+
+      - name: Run LSP benchmarks on PR branch
+        id: bench-lsp-pr
+        timeout-minutes: 5
+        run: scripts/lsp-benchmark-ci-run.sh pr
 
       - name: Checkout target branch (base)
         uses: actions/checkout@v4
@@ -37,11 +114,44 @@ jobs:
           clean: false
 
       - name: Prewarm benchmarks on base branch
-        run: make bench
+        run: |
+          if make -n bench >/dev/null 2>&1; then
+            make bench || true
+          else
+            echo "::warning::Base branch does not have 'make bench' target"
+          fi
 
       - name: Run benchmarks on base branch
         id: bench-base
-        run: scripts/benchmark-ci-run.sh base
+        run: |
+          if [ -f "scripts/benchmark-ci-run.sh" ]; then
+            scripts/benchmark-ci-run.sh base
+          else
+            echo "::warning::Base branch does not have benchmark script (first run)"
+            echo '{}' > base_bench.json
+            echo "0" > base_bench_time.txt
+            echo "First run - no base results" > base_bench.txt
+          fi
+
+      - name: Build CEM binary for LSP benchmarks (base)
+        run: |
+          if [ -f "Makefile" ] && make -n build >/dev/null 2>&1; then
+            make build
+          else
+            echo "::warning::Base branch does not have 'make build' target - skipping LSP benchmarks"
+            echo '{"benchmarks":{}, "error": "build_unavailable"}' > base_lsp_bench.json
+          fi
+
+      - name: Run LSP benchmarks on base branch
+        id: bench-lsp-base
+        timeout-minutes: 5
+        run: |
+          if [ -f "scripts/lsp-benchmark-ci-run.sh" ] && [ -f "dist/cem" ]; then
+            scripts/lsp-benchmark-ci-run.sh base
+          else
+            echo "::warning::Base branch does not have LSP benchmark infrastructure (first run)"
+            echo '{"benchmarks":{}, "error": "script_not_found", "note": "First benchmark run - base branch does not have benchmark infrastructure"}' > base_lsp_bench.json
+          fi
 
       - name: Restore PR context for comparison
         uses: actions/checkout@v4
@@ -51,6 +161,12 @@ jobs:
 
       - name: Compare benchmark results
         run: scripts/compare-benchmarks.sh
+
+      - name: Compare LSP benchmark results
+        run: scripts/compare-lsp-benchmarks.sh
+
+      - name: Combine benchmark reports
+        run: scripts/combine-benchmark-reports.sh
 
       - name: Find previous benchmark comment
         id: find-comment
@@ -64,7 +180,7 @@ jobs:
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
-          body-file: bench_report.md
+          body-file: combined_bench_report.md
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           edit-mode: replace
 
@@ -79,3 +195,8 @@ jobs:
             base_bench_time.txt
             pr_bench.json
             base_bench.json
+            pr_lsp_bench.json
+            base_lsp_bench.json
+            bench_report.md
+            lsp_bench_report.md
+            combined_bench_report.md

@@ -33,7 +33,7 @@ tools. Add a description by separating the name of the item with ` - `
 - `@slot` — Named or default slots. See [Slots and Parts](#slots-and-parts)
 - `@summary` — Short summary for documentation
 
-See the [generate test fixtures](https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/) directory for examples
+See the [generate test fixtures](https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/) directory for examples
 
 <a id="html-template-analysis-for-slots-and-parts"></a>
 ## Slots and Parts

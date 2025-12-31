@@ -1,0 +1,319 @@
+#!/usr/bin/env nvim --headless --clean -l
+-- Modular LSP Benchmark Runner
+-- Usage: nvim --headless --clean -u configs/cem-minimal.lua -l run_modular_benchmark.lua
+-- Usage: nvim --headless --clean -u configs/wc-toolkit-minimal.lua -l run_modular_benchmark.lua
+
+-- Ensure the benchmark directory is in the path
+local script_dir = vim.fn.getcwd()
+package.path = script_dir .. "/?.lua;" .. package.path
+
+-- Core protocol benchmark modules (pure LSP timing without editor overhead)
+local startup_benchmark = require("modules.startup_benchmark")
+local hover_benchmark = require("modules.hover_benchmark")
+local completion_benchmark = require("modules.completion_benchmark")
+local diagnostics_benchmark = require("modules.diagnostics_benchmark")
+local hover_attribute_benchmark = require("modules.hover_attribute_benchmark")
+local references_benchmark = require("modules.references_benchmark")
+
+local function run_all_benchmarks()
+	local overall_start_time = vim.fn.reltime()
+	local max_total_time_seconds = 300 -- 5 minutes total limit for CI safety
+
+	local server_name = _G.BENCHMARK_LSP_NAME or "unknown"
+	local config = _G.BENCHMARK_LSP_CONFIG
+
+	if not config then
+		print("ERROR: No LSP configuration found. Make sure to use the appropriate config file:")
+		print("  nvim --headless --clean -u configs/cem-minimal.lua -l run_modular_benchmark.lua")
+		print("  nvim --headless --clean -u configs/wc-toolkit-minimal.lua -l run_modular_benchmark.lua")
+		return
+	end
+
+	print(string.format("[%s]: Running LSP benchmarks (max %ds)", server_name, max_total_time_seconds))
+	print("=" .. string.rep("=", 50) .. "\n")
+
+	-- Use large project fixture for expanded features
+	local fixture_dir = script_dir .. "/fixtures/large_project"
+
+	-- Check if fixture exists
+	if vim.fn.isdirectory(fixture_dir) == 0 then
+		print("ERROR: Fixture directory not found: " .. fixture_dir)
+		return
+	end
+
+	-- Verify tree-sitter parsers are available
+	-- These are required for dynamic position finding in benchmarks
+	local required_parsers = { "html", "typescript" }
+	local missing_parsers = {}
+
+	for _, lang in ipairs(required_parsers) do
+		local ok = pcall(vim.treesitter.language.get_lang, lang)
+		if not ok then
+			table.insert(missing_parsers, lang)
+		end
+	end
+
+	if #missing_parsers > 0 then
+		print(
+			string.format(
+				"ERROR: Required tree-sitter parsers missing: %s",
+				table.concat(missing_parsers, ", ")
+			)
+		)
+		print("Install with: nvim --headless -c 'TSInstallSync html typescript' -c 'quit'")
+		print("Or ensure nvim-treesitter is properly configured in your Neovim setup.")
+		return
+	end
+
+	local all_results = {
+		server_name = server_name,
+		timestamp = os.date("%Y-%m-%d %H:%M:%S"),
+		fixture_dir = fixture_dir,
+		benchmarks = {},
+	}
+
+	-- Core protocol benchmarks (pure LSP timing without editor overhead)
+	local benchmarks = {
+		{ name = "startup", module = startup_benchmark },
+		{ name = "hover", module = hover_benchmark },
+		{ name = "hover_attribute", module = hover_attribute_benchmark },
+		{ name = "completion", module = completion_benchmark },
+		{ name = "diagnostics", module = diagnostics_benchmark },
+		{ name = "references", module = references_benchmark },
+	}
+
+	for _, benchmark in ipairs(benchmarks) do
+		-- Check total time limit
+		local elapsed_time = vim.fn.reltime(overall_start_time)[1]
+		if elapsed_time >= max_total_time_seconds then
+			print(
+				string.format("\n⏰ Time limit reached (%ds), stopping remaining benchmarks", max_total_time_seconds)
+			)
+			break
+		end
+
+		io.write(string.format("Running %s... ", benchmark.name))
+		io.flush()
+
+		local success, result = pcall(function()
+			return benchmark.module["run_" .. benchmark.name .. "_benchmark"](config, fixture_dir)
+		end)
+
+		if success then
+			all_results.benchmarks[benchmark.name] = result
+			if result.success then
+				io.write("✅\n")
+			else
+				-- Show detailed error information
+				local error_msg = result.error or "test criteria not met"
+				io.write(string.format("❌ %s\n", error_msg))
+
+				-- Show additional diagnostic info for debugging
+				if not result.not_supported then
+					if result.errors and #result.errors > 0 then
+						print(string.format("  Errors: %s", table.concat(result.errors, ", ")))
+					end
+					if result.failed_runs and result.failed_runs > 0 then
+						print(string.format("  Failed runs: %d/%d", result.failed_runs, result.iterations or 0))
+					end
+				end
+			end
+		else
+			print(string.format("❌ crashed: %s", result))
+			all_results.benchmarks[benchmark.name] = {
+				success = false,
+				error = "benchmark_crashed: " .. tostring(result),
+			}
+		end
+
+		-- Small delay between benchmarks
+		vim.wait(1000)
+	end
+
+	-- Skip summary table in comparison mode
+	local comparison_mode = os.getenv("BENCHMARK_COMPARISON_MODE")
+
+	if comparison_mode then
+		-- Just save results and exit quietly in comparison mode
+		local temp_results_file = string.format("/tmp/cem-benchmark-%s.json", server_name)
+		local json_content = vim.fn.json_encode(all_results)
+
+		-- Attempt to write results file with error handling
+		local write_ok, write_err = pcall(function()
+			local result = vim.fn.writefile({ json_content }, temp_results_file)
+			if result ~= 0 then
+				error(string.format("writefile returned %d", result))
+			end
+		end)
+
+		if not write_ok then
+			-- Write failed, try fallback with io.open
+			local fallback_ok, fallback_err = pcall(function()
+				local file = io.open(temp_results_file, "w")
+				if not file then
+					error("Failed to open file")
+				end
+				file:write(json_content)
+				file:close()
+			end)
+
+			if not fallback_ok then
+				-- Both methods failed, report error
+				local error_msg = string.format(
+					"Failed to write benchmark results to %s: %s (fallback: %s)",
+					temp_results_file,
+					write_err,
+					fallback_err
+				)
+				io.stderr:write(error_msg .. "\n")
+				vim.notify(error_msg, vim.log.levels.ERROR)
+			end
+		end
+
+		return
+	end
+
+	-- Generate summary report
+	print("\n" .. string.rep("=", 50))
+	print(string.format("BENCHMARK SUMMARY FOR %s", string.upper(server_name)))
+	print(string.rep("=", 50))
+
+	local successful_benchmarks = 0
+	local total_benchmarks = 0
+
+	for benchmark_name, result in pairs(all_results.benchmarks) do
+		total_benchmarks = total_benchmarks + 1
+		if result.success then
+			successful_benchmarks = successful_benchmarks + 1
+			local status = "✅ PASS"
+			local details = ""
+
+			if result.duration_ms then
+				details = details .. string.format(" (%.2fms)", result.duration_ms)
+			end
+			if result.success_rate then
+				details = details .. string.format(" [%.0f%% success]", result.success_rate * 100)
+			end
+
+			-- Add correctness information to summary
+			local correctness = ""
+			if result.scenario_results then
+				-- Lit template benchmark with test correctness
+				local total_tests = 0
+				local successful_tests = 0
+				for _, scenario in ipairs(result.scenario_results) do
+					if scenario.total_tests and scenario.successful_tests then
+						total_tests = total_tests + scenario.total_tests
+						successful_tests = successful_tests + scenario.successful_tests
+					end
+				end
+				if total_tests > 0 then
+					correctness = string.format(" [%.0f%% correct]", (successful_tests / total_tests) * 100)
+				end
+			elseif result.completion_results then
+				-- Completion benchmark - show avg items
+				local total_items = 0
+				local count = 0
+				for _, comp_result in ipairs(result.completion_results) do
+					if comp_result.avg_item_count then
+						total_items = total_items + comp_result.avg_item_count
+						count = count + 1
+					end
+				end
+				if count > 0 then
+					correctness = string.format(" [%.1f items]", total_items / count)
+				end
+			elseif result.hover_results then
+				-- Hover benchmark - show avg content length
+				local total_content = 0
+				local count = 0
+				for _, hover_result in ipairs(result.hover_results) do
+					if hover_result.avg_content_length then
+						total_content = total_content + hover_result.avg_content_length
+						count = count + 1
+					end
+				end
+				if count > 0 then
+					correctness = string.format(" [%.0f chars]", total_content / count)
+				end
+			elseif result.total_references_found ~= nil then
+				-- References benchmark - show total references found (0 = feature not implemented)
+				correctness = string.format(" [%d refs]", result.total_references_found)
+			end
+
+			print(string.format("%-20s %s%s%s", benchmark_name, status, details, correctness))
+		else
+			local status_icon = result.not_supported and "⊘ NOT SUPPORTED" or "❌ FAIL"
+			print(string.format("%-20s %s - %s", benchmark_name, status_icon, result.error or "unknown"))
+		end
+	end
+
+	local overall_success_rate = total_benchmarks > 0 and (successful_benchmarks / total_benchmarks) or 0
+	print(string.rep("-", 50))
+	print(
+		string.format(
+			"Overall Success Rate: %.1f%% (%d/%d)",
+			overall_success_rate * 100,
+			successful_benchmarks,
+			total_benchmarks
+		)
+	)
+
+	if overall_success_rate >= 0.8 then
+		print("🎉 Server performance is GOOD")
+	elseif overall_success_rate >= 0.6 then
+		print("⚠️  Server performance is FAIR")
+	else
+		print("🚨 Server performance is POOR")
+	end
+
+	-- Save individual server results to temporary file for combining later
+	local temp_results_file = string.format("/tmp/cem-benchmark-%s.json", server_name)
+	local json_content = vim.fn.json_encode(all_results)
+
+	-- Attempt to write results file with error handling
+	local write_ok, write_err = pcall(function()
+		local result = vim.fn.writefile({ json_content }, temp_results_file)
+		if result ~= 0 then
+			error(string.format("writefile returned %d", result))
+		end
+	end)
+
+	if not write_ok then
+		-- Write failed, try fallback with io.open
+		local fallback_ok, fallback_err = pcall(function()
+			local file = io.open(temp_results_file, "w")
+			if not file then
+				error("Failed to open file")
+			end
+			file:write(json_content)
+			file:close()
+		end)
+
+		if not fallback_ok then
+			-- Both methods failed, report error
+			local error_msg = string.format(
+				"Failed to write benchmark results to %s: %s (fallback: %s)",
+				temp_results_file,
+				write_err,
+				fallback_err
+			)
+			io.stderr:write(error_msg .. "\n")
+			vim.notify(error_msg, vim.log.levels.ERROR)
+			print(string.format("\n⚠️  WARNING: %s", error_msg))
+		else
+			print(string.format("\nResults saved to: %s (using fallback method)", temp_results_file))
+		end
+	else
+		print(string.format("\nResults saved to: %s", temp_results_file))
+	end
+
+	-- Final timing report
+	local total_elapsed_time = vim.fn.reltime(overall_start_time)[1]
+	print(string.format("Total benchmark time: %.1fs / %.0fs limit", total_elapsed_time, max_total_time_seconds))
+
+	print(string.rep("=", 50) .. "\n")
+end
+
+-- Run benchmarks
+run_all_benchmarks()

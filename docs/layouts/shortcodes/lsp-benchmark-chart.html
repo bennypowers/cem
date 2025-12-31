@@ -1,0 +1,360 @@
+{{/* Data source: lsp-benchmark-results with nested servers structure.
+     NOTE: This uses combined data file (same as lsp-simple-benchmark-chart.html).
+     The build pipeline produces a unified data structure with all servers nested. */}}
+{{ $combined := index .Site.Data "lsp-benchmark-results" | default dict }}
+{{ $cem := index $combined.servers "cem" | default dict }}
+{{ $wc := index $combined.servers "wc-toolkit" | default dict }}
+
+{{ if and $cem.benchmarks $wc.benchmarks }}
+{{/* Benchmark descriptions for tooltips */}}
+{{ $descriptions := dict
+  "startup" "Time to initialize LSP server and load capabilities"
+  "hover" "Response time for hover documentation popups"
+  "completion" "Speed of autocomplete suggestions"
+  "diagnostics" "Time to analyze code and report errors/warnings"
+  "lit_template" "HTML embedded in JavaScript template strings (e.g., html`<div>...</div>`)"
+  "hover_attribute" "Hover info for element attributes in templates"
+  "edit_cycles" "Rapid HTML editing with real-time LSP feedback (adding attributes, inserting elements, modifying content)"
+  "file_lifecycle" "Complete editing workflow from opening an HTML file to closing it, including edits and hover requests"
+  "references" "Speed of finding all references to an element"
+  "incremental_parsing" "How fast the LSP processes your keystrokes as you type (character edits, element insertions, attribute changes, pasting blocks)"
+  "large_project" "Performance in large codebases (file operations, workspace symbols)"
+  "multi_buffer" "Performance with multiple files open (buffer switching, concurrent requests)"
+  "neovim_workflow" "Real-world editor workflow simulation (navigation, buffer operations)"
+  "stress_test" "Performance under heavy load (bulk operations, rapid requests)"
+}}
+
+{{/* Human-readable labels for benchmark names */}}
+{{ $benchmarkLabels := dict
+  "lit_template" "Template String HTML"
+  "hover_attribute" "Attribute Hover"
+  "edit_cycles" "Repeated Edits"
+  "file_lifecycle" "File Editing Session"
+  "references" "Find References"
+  "incremental_parsing" "Typing & Editing"
+  "large_project" "Large Codebase"
+  "multi_buffer" "Multiple Files Open"
+  "neovim_workflow" "Real-World Usage"
+  "stress_test" "Heavy Load"
+}}
+
+{{/* Human-readable labels for nested stats */}}
+{{ $statLabels := dict
+  "character_edit_stats" "Typing single characters"
+  "element_insertion_stats" "Inserting HTML elements"
+  "attribute_edit_stats" "Editing attributes"
+  "large_paste_stats" "Pasting large blocks"
+  "file_open_stats" "Opening files"
+  "symbol_search_stats" "Searching symbols"
+  "workspace_operation_stats" "Workspace operations"
+  "buffer_switch_stats" "Switching between files"
+  "concurrent_request_stats" "Concurrent LSP requests"
+  "navigation_stats" "Code navigation"
+  "buffer_open_stats" "Opening buffers"
+  "bulk_hover" "Bulk hover requests"
+  "rapid_completion" "Rapid completion requests"
+  "document_modifications" "Document modifications"
+}}
+
+{{/* Dynamically get all benchmark names from cem results */}}
+{{ $benchmarks := slice }}
+{{ range $name, $bench := $cem.benchmarks }}
+  {{ $benchmarks = $benchmarks | append $name }}
+{{ end }}
+{{ $benchmarks = sort $benchmarks }}
+{{ $bar_height := 40 }}
+{{ $bar_spacing := 60 }}
+{{ $max_value_label_width := 70 }} {{/* Reserve space for "XXX.XXms" labels */}}
+{{ $chart_width := 530 }} {{/* Reduced to accommodate value labels */}}
+{{ $label_width := 220 }}
+{{ $total_width := add (add $chart_width $label_width) $max_value_label_width }}
+
+<div class="lsp-comparison-chart">
+  <svg viewBox="0 0 {{ $total_width }} {{ add (mul (len $benchmarks) $bar_spacing) 40 }}" style="width: 100%; height: auto;">
+    <defs>
+      <linearGradient id="cem-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" style="stop-color:var(--cem-start);stop-opacity:1" />
+        <stop offset="100%" style="stop-color:var(--cem-end);stop-opacity:1" />
+      </linearGradient>
+      <linearGradient id="wc-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" style="stop-color:var(--wc-start);stop-opacity:1" />
+        <stop offset="100%" style="stop-color:var(--wc-end);stop-opacity:1" />
+      </linearGradient>
+    </defs>
+
+    {{ $y := 20 }}
+    {{ range $i, $benchmarkName := $benchmarks }}
+      {{ $cemBench := index $cem.benchmarks $benchmarkName }}
+      {{ $wcBench := index $wc.benchmarks $benchmarkName }}
+
+      {{ if and $cemBench $wcBench }}
+        {{ $cemTime := 0.0 }}
+        {{ $wcTime := 0.0 }}
+        {{ $hasNestedStats := false }}
+        {{ $nestedStats := slice }}
+
+        {{/* Extract timing values from various data structure patterns.
+             NOTE: This logic is duplicated for CEM (lines 93-124) and WC (lines 126-136).
+             Hugo templates have limited abstraction capabilities, making extraction difficult.
+             Consider creating a partial template if this pattern appears elsewhere. */}}
+        {{ if $cemBench.statistics }}
+          {{ $cemTime = $cemBench.statistics.mean }}
+        {{ else if $cemBench.overall_statistics }}
+          {{ $cemTime = $cemBench.overall_statistics.mean }}
+        {{ else if $cemBench.average_duration_ms }}
+          {{ $cemTime = $cemBench.average_duration_ms }}
+        {{ else if $cemBench.duration_ms }}
+          {{ $cemTime = $cemBench.duration_ms }}
+        {{ else if $cemBench.average_search_time }}
+          {{ $cemTime = $cemBench.average_search_time }}
+        {{ else }}
+          {{/* Check for nested *_stats objects */}}
+          {{ range $key, $val := $cemBench }}
+            {{ if and (reflect.IsMap $val) (strings.HasSuffix $key "_stats") }}
+              {{ if $val.mean }}
+                {{ $hasNestedStats = true }}
+                {{ $nestedStats = $nestedStats | append (dict "name" $key "cemVal" $val "wcVal" (index $wcBench $key)) }}
+              {{ end }}
+            {{ end }}
+          {{ end }}
+
+          {{/* Check for scenario/results arrays (e.g., stress_test) */}}
+          {{ if $cemBench.stress_results }}
+            {{ $hasNestedStats = true }}
+            {{ range $idx, $cemScenario := $cemBench.stress_results }}
+              {{ if $cemScenario.statistics }}
+                {{ $wcScenario := index $wcBench.stress_results $idx }}
+                {{ $nestedStats = $nestedStats | append (dict "name" $cemScenario.test "cemVal" $cemScenario.statistics "wcVal" $wcScenario.statistics) }}
+              {{ end }}
+            {{ end }}
+          {{ end }}
+        {{ end }}
+
+        {{ if $wcBench.statistics }}
+          {{ $wcTime = $wcBench.statistics.mean }}
+        {{ else if $wcBench.overall_statistics }}
+          {{ $wcTime = $wcBench.overall_statistics.mean }}
+        {{ else if $wcBench.average_duration_ms }}
+          {{ $wcTime = $wcBench.average_duration_ms }}
+        {{ else if $wcBench.duration_ms }}
+          {{ $wcTime = $wcBench.duration_ms }}
+        {{ else if $wcBench.average_search_time }}
+          {{ $wcTime = $wcBench.average_search_time }}
+        {{ end }}
+
+        {{ $maxTime := cond (gt $cemTime $wcTime) $cemTime $wcTime }}
+
+        {{ if gt $maxTime 0 }}
+        {{ $cemWidth := div (mul $chart_width $cemTime) $maxTime }}
+        {{ $wcWidth := div (mul $chart_width $wcTime) $maxTime }}
+
+        {{ $cemText := printf "%.2fms" $cemTime }}
+        {{ $wcText := printf "%.2fms" $wcTime }}
+
+        {{/* Get display label from dictionary, fallback to humanized name */}}
+        {{ $displayLabel := index $benchmarkLabels $benchmarkName }}
+        {{ if not $displayLabel }}
+          {{ $displayLabel = humanize $benchmarkName }}
+        {{ end }}
+
+        <!-- Benchmark label -->
+        <text x="0"
+              y="{{ add $y 12 }}"
+              font-size="14"
+              font-weight="600"
+              fill="var(--label-color)">
+          <title>{{ index $descriptions $benchmarkName }}</title>
+          {{ $displayLabel }}
+        </text>
+
+        <!-- CEM bar -->
+        <rect x="{{ $label_width }}"
+              y="{{ $y }}"
+              width="{{ $cemWidth }}"
+              height="16"
+              rx="3"
+              fill="url(#cem-gradient)">
+          <title>CEM: {{ $cemText }}</title>
+        </rect>
+        <text x="{{ add $label_width $chart_width 8 }}"
+              y="{{ add $y 12 }}"
+              font-size="12"
+              fill="var(--value-color)">
+          {{ $cemText }}
+        </text>
+
+        <!-- wc-toolkit bar -->
+        <rect x="{{ $label_width }}"
+              y="{{ add $y 22 }}"
+              width="{{ $wcWidth }}"
+              height="16"
+              rx="3"
+              fill="url(#wc-gradient)">
+          <title>wc-toolkit: {{ $wcText }}</title>
+        </rect>
+        <text x="{{ add $label_width $chart_width 8 }}"
+              y="{{ add $y 34 }}"
+              font-size="12"
+              fill="var(--value-color)">
+          {{ $wcText }}
+        </text>
+
+        {{ $y = add $y $bar_spacing }}
+        {{ else if $hasNestedStats }}
+        {{/* Render nested statistics as grouped sub-bars */}}
+
+        {{/* Get display label from dictionary, fallback to humanized name */}}
+        {{ $displayLabel := index $benchmarkLabels $benchmarkName }}
+        {{ if not $displayLabel }}
+          {{ $displayLabel = humanize $benchmarkName }}
+        {{ end }}
+
+        <!-- Benchmark label (parent category) -->
+        <text x="0"
+              y="{{ add $y 12 }}"
+              font-size="14"
+              font-weight="600"
+              fill="var(--label-color)">
+          <title>{{ index $descriptions $benchmarkName }}</title>
+          {{ $displayLabel }}
+        </text>
+
+        {{ $y = add $y 30 }}
+        {{ range $stat := $nestedStats }}
+          {{ if and $stat.cemVal $stat.wcVal }}
+            {{ $cemStatTime := $stat.cemVal.mean }}
+            {{ $wcStatTime := $stat.wcVal.mean }}
+            {{ $statMaxTime := cond (gt $cemStatTime $wcStatTime) $cemStatTime $wcStatTime }}
+            {{ $statMinTime := cond (lt $cemStatTime $wcStatTime) $cemStatTime $wcStatTime }}
+
+            {{/* Only show sub-metric if there's a meaningful difference (>20% or >5ms) */}}
+            {{ $showSubMetric := false }}
+            {{ if gt $statMaxTime 0 }}
+              {{ $percentDiff := div (sub $statMaxTime $statMinTime) $statMaxTime }}
+              {{ $absDiff := sub $statMaxTime $statMinTime }}
+              {{ if or (gt $percentDiff 0.2) (gt $absDiff 5) }}
+                {{ $showSubMetric = true }}
+              {{ end }}
+            {{ end }}
+
+            {{ if and (gt $statMaxTime 0) $showSubMetric }}
+              {{ $cemStatWidth := div (mul $chart_width $cemStatTime) $statMaxTime }}
+              {{ $wcStatWidth := div (mul $chart_width $wcStatTime) $statMaxTime }}
+
+              {{ $cemStatText := printf "%.2fms" $cemStatTime }}
+              {{ $wcStatText := printf "%.2fms" $wcStatTime }}
+
+              {{/* Get human-readable label from dictionary, fallback to cleaned name */}}
+              {{ $statLabel := index $statLabels $stat.name }}
+              {{ if not $statLabel }}
+                {{ $statLabel = $stat.name }}
+                {{ if strings.HasSuffix $statLabel "_stats" }}
+                  {{ $statLabel = strings.TrimSuffix $statLabel "_stats" }}
+                {{ end }}
+                {{ $statLabel = replace $statLabel "_" " " }}
+                {{ $statLabel = humanize $statLabel }}
+              {{ end }}
+
+              <!-- Stat sublabel -->
+              <text x="20"
+                    y="{{ add $y 12 }}"
+                    font-size="12"
+                    font-style="italic"
+                    fill="var(--value-color)">
+                {{ $statLabel }}
+              </text>
+
+              <!-- CEM sub-bar -->
+              <rect x="{{ $label_width }}"
+                    y="{{ $y }}"
+                    width="{{ $cemStatWidth }}"
+                    height="14"
+                    rx="2"
+                    fill="url(#cem-gradient)"
+                    opacity="0.8">
+                <title>CEM {{ $statLabel }}: {{ $cemStatText }}</title>
+              </rect>
+              <text x="{{ add $label_width $chart_width 8 }}"
+                    y="{{ add $y 10 }}"
+                    font-size="11"
+                    fill="var(--value-color)">
+                {{ $cemStatText }}
+              </text>
+
+              <!-- wc-toolkit sub-bar -->
+              <rect x="{{ $label_width }}"
+                    y="{{ add $y 18 }}"
+                    width="{{ $wcStatWidth }}"
+                    height="14"
+                    rx="2"
+                    fill="url(#wc-gradient)"
+                    opacity="0.8">
+                <title>wc-toolkit {{ $statLabel }}: {{ $wcStatText }}</title>
+              </rect>
+              <text x="{{ add $label_width $chart_width 8 }}"
+                    y="{{ add $y 28 }}"
+                    font-size="11"
+                    fill="var(--value-color)">
+                {{ $wcStatText }}
+              </text>
+
+              {{ $y = add $y 40 }}
+            {{ end }}
+          {{ end }}
+        {{ end }}
+        {{ $y = add $y 20 }}
+        {{ end }}
+      {{ end }}
+    {{ end }}
+
+    <!-- Legend -->
+    {{ $legendY := sub $y 10 }}
+    <rect x="{{ $label_width }}"
+          y="{{ $legendY }}"
+          width="80"
+          height="14"
+          rx="3"
+          fill="url(#cem-gradient)" />
+    <text x="{{ add $label_width 88 }}"
+          y="{{ add $legendY 11 }}"
+          font-size="12"
+          fill="var(--label-color)">CEM LSP</text>
+
+    <rect x="{{ add $label_width 180 }}"
+          y="{{ $legendY }}"
+          width="80"
+          height="14"
+          rx="3"
+          fill="url(#wc-gradient)" />
+    <text x="{{ add $label_width 268 }}"
+          y="{{ add $legendY 11 }}"
+          font-size="12"
+          fill="var(--label-color)">wc-toolkit</text>
+  </svg>
+</div>
+
+<style>
+.lsp-comparison-chart {
+  margin: 2em 0;
+  padding: 1em;
+  background: var(--sl-color-bg-nav);
+  border-radius: 0.5rem;
+
+  /* Gradient colors with light-dark() for proper contrast */
+  --cem-start: light-dark(#3b82f6, #60a5fa);
+  --cem-end: light-dark(#60a5fa, #93c5fd);
+  --wc-start: light-dark(#8b5cf6, #a78bfa);
+  --wc-end: light-dark(#a78bfa, #c4b5fd);
+
+  /* Text colors with light-dark() for readability */
+  --label-color: light-dark(#1f2937, #f3f4f6);
+  --value-color: light-dark(#6b7280, #d1d5db);
+}
+
+.lsp-comparison-chart svg {
+  background: transparent;
+}
+</style>
+{{ else }}
+<p><em>Run <code>make bench-lsp</code> to generate comparison charts.</em></p>
+{{ end }}

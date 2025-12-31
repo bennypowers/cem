@@ -1,15 +1,22 @@
 ---
 title: Benchmarks
-description: Performance benchmarks of analyzers, generated from scripts/benchmark.sh.
+description: Performance benchmarks for CEM generate tool and LSP server implementations.
 weight: 22
 ---
+
+## Overview
+
+CEM provides two types of benchmarks for comprehensive performance analysis:
+
+### **Generate Tool Benchmarks**
+Performance comparison of custom element manifest generation tools.
 
 **Number of runs per tool**: {{<benchmark-runs>}}  
 **Number of files analyzed per run**: {{<benchmark-files>}}
 
 <figure class="benchmarks-bar-chart" role="group" aria-labelledby="bar-caption">
   <figcaption id="bar-caption" style="font-weight:bold;margin-bottom:0.5em;">
-    Benchmark results: lower is better (seconds)
+    Generate tool benchmark results: lower is better (seconds)
   </figcaption>
   {{<benchmark-bar-chart>}}
 </figure>
@@ -280,16 +287,28 @@ json-viewer {
 
 </div>
 
+### LSP Server Benchmarks
+
+{{<lsp-benchmark-summary>}}
+
+#### HTML File Operations
+
+Pure LSP protocol timing in `.html` files. Each benchmark measures the time from LSP request to response completion, using multiple iterations to calculate statistical distributions (mean, median, P95, P99).
+
+{{<lsp-simple-benchmark-chart>}}
+
+---
+
 {{< loadchart.inline >}}
 <script type="module" src="{{ absURL "js/charts.js" }}"></script>
 {{</ loadchart.inline >}}
-<script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/shoelace.js"></script>
-<link id="shoelace-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/themes/light.css">
-<link id="shoelace-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/themes/dark.css" disabled>
-<link id="hljs-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github.min.css">
-<link id="hljs-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github-dark.min.css" disabled>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/shoelace.js"></script>
+<link id="shoelace-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/dist/themes/light.css">
+<link id="shoelace-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/dist/themes/dark.css" disabled>
+<link id="hljs-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.11.1/styles/github.min.css">
+<link id="hljs-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.11.1/styles/github-dark.min.css" disabled>
 
 <script type="module">
 // Import json-viewer for the page
-import 'https://unpkg.com/@alenaksu/json-viewer@2.0.1/dist/json-viewer.bundle.js';
+import 'https://unpkg.com/@alenaksu/json-viewer@2.1.2/dist/json-viewer.bundle.js';
 </script>

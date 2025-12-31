@@ -1,0 +1,12 @@
+{{ $combined := index .Site.Data "lsp-benchmark-results" | default dict }}
+{{ $cem := index $combined.servers "cem" | default dict }}
+{{ $wc := index $combined.servers "wc-toolkit" | default dict }}
+
+
+{{ if $combined.timestamp }}
+
+<small>Last benchmark run: <time datetime="{{ $combined.timestamp }}">{{ $combined.timestamp }}</time></small>
+
+{{ else }}
+<p><em>No LSP benchmark data available. Run <code>make bench-lsp</code> to generate results.</em></p>
+{{ end }}

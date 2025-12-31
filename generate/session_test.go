@@ -44,12 +44,12 @@ func TestNewGenerateSession(t *testing.T) {
 	}{
 		{
 			name:    "valid project with classes",
-			fixture: "test/fixtures/project-classes",
+			fixture: "testdata/fixtures/project-classes",
 			wantErr: false,
 		},
 		{
 			name:    "valid project with CSS",
-			fixture: "test/fixtures/project-css",
+			fixture: "testdata/fixtures/project-css",
 			wantErr: false,
 		},
 	}
@@ -90,21 +90,21 @@ func TestGenerateSession_GenerateFullManifest(t *testing.T) {
 	}{
 		{
 			name:          "generate from class fields",
-			fixture:       "test/fixtures/project-classes",
+			fixture:       "testdata/fixtures/project-classes",
 			files:         []string{"src/class-fields.ts"},
 			expectModules: true,
 			expectErr:     false,
 		},
 		{
 			name:          "generate from multiple files",
-			fixture:       "test/fixtures/project-classes",
+			fixture:       "testdata/fixtures/project-classes",
 			files:         []string{"src/class-fields.ts", "src/class-methods.ts"},
 			expectModules: true,
 			expectErr:     false,
 		},
 		{
 			name:          "generate with cancelled context",
-			fixture:       "test/fixtures/project-classes",
+			fixture:       "testdata/fixtures/project-classes",
 			files:         []string{"src/class-fields.ts"},
 			expectModules: false,
 			expectErr:     true,
@@ -112,7 +112,7 @@ func TestGenerateSession_GenerateFullManifest(t *testing.T) {
 		},
 		{
 			name:          "generate with no files",
-			fixture:       "test/fixtures/project-classes",
+			fixture:       "testdata/fixtures/project-classes",
 			files:         []string{},
 			expectModules: false,
 			expectErr:     false,
@@ -180,20 +180,20 @@ func TestGenerateSession_GetInMemoryManifest(t *testing.T) {
 	}{
 		{
 			name:          "nil before generation",
-			fixture:       "test/fixtures/project-classes",
+			fixture:       "testdata/fixtures/project-classes",
 			generateFirst: false,
 			expectNil:     true,
 		},
 		{
 			name:          "populated after generation",
-			fixture:       "test/fixtures/project-classes",
+			fixture:       "testdata/fixtures/project-classes",
 			files:         []string{"src/class-fields.ts"},
 			generateFirst: true,
 			expectNil:     false,
 		},
 		{
 			name:            "concurrent access safety",
-			fixture:         "test/fixtures/project-classes",
+			fixture:         "testdata/fixtures/project-classes",
 			files:           []string{"src/class-fields.ts"},
 			generateFirst:   false,
 			testConcurrency: true,
@@ -258,7 +258,7 @@ func TestGenerateSession_GetInMemoryManifest(t *testing.T) {
 }
 
 func TestGenerateSession_QueryManagerReuse(t *testing.T) {
-	ctx := setupTestContext(t, "test/fixtures/project-classes")
+	ctx := setupTestContext(t, "testdata/fixtures/project-classes")
 
 	cfg, err := ctx.Config()
 	require.NoError(t, err)
@@ -477,7 +477,7 @@ func TestMergeModulesIntoManifest_WithIndex(t *testing.T) {
 }
 
 func BenchmarkGenerateSession_SingleGeneration(b *testing.B) {
-	ctx := W.NewFileSystemWorkspaceContext("test/fixtures/project-classes")
+	ctx := W.NewFileSystemWorkspaceContext("testdata/fixtures/project-classes")
 	require.NoError(b, ctx.Init())
 
 	cfg, err := ctx.Config()
@@ -496,7 +496,7 @@ func BenchmarkGenerateSession_SingleGeneration(b *testing.B) {
 }
 
 func TestSetMaxWorkers(t *testing.T) {
-	ctx := setupTestContext(t, "test/fixtures/project-classes")
+	ctx := setupTestContext(t, "testdata/fixtures/project-classes")
 
 	session, err := NewGenerateSession(ctx)
 	require.NoError(t, err)
@@ -511,7 +511,7 @@ func TestSetMaxWorkers(t *testing.T) {
 }
 
 func TestSetMaxWorkers_BeforeProcessing(t *testing.T) {
-	ctx := setupTestContext(t, "test/fixtures/project-classes")
+	ctx := setupTestContext(t, "testdata/fixtures/project-classes")
 
 	cfg, err := ctx.Config()
 	require.NoError(t, err)
@@ -534,7 +534,7 @@ func TestSetMaxWorkers_BeforeProcessing(t *testing.T) {
 }
 
 func TestSetMaxWorkers_ConcurrentAccess(t *testing.T) {
-	ctx := setupTestContext(t, "test/fixtures/project-classes")
+	ctx := setupTestContext(t, "testdata/fixtures/project-classes")
 
 	session, err := NewGenerateSession(ctx)
 	require.NoError(t, err)
@@ -567,7 +567,7 @@ func TestSetMaxWorkers_ConcurrentAccess(t *testing.T) {
 }
 
 func TestSetMaxWorkers_ZeroValue(t *testing.T) {
-	ctx := setupTestContext(t, "test/fixtures/project-classes")
+	ctx := setupTestContext(t, "testdata/fixtures/project-classes")
 
 	session, err := NewGenerateSession(ctx)
 	require.NoError(t, err)
@@ -582,7 +582,7 @@ func TestSetMaxWorkers_ZeroValue(t *testing.T) {
 }
 
 func BenchmarkGenerateSession_ReusedSession(b *testing.B) {
-	ctx := W.NewFileSystemWorkspaceContext("test/fixtures/project-classes")
+	ctx := W.NewFileSystemWorkspaceContext("testdata/fixtures/project-classes")
 	require.NoError(b, ctx.Init())
 
 	cfg, err := ctx.Config()

@@ -100,7 +100,7 @@ for i in "${!ids[@]}"; do
         file_size=$(stat -f%z "$resultFile")
       fi
       size=$(awk "BEGIN {printf \"%.1f\", $file_size / 1024 }")
-      
+
       sumTime=$(awk "BEGIN {print $sumTime + $timeSec}")
       sumSize=$(awk "BEGIN {print $sumSize + $size}")
       successful_runs=$((successful_runs+1))
@@ -133,7 +133,7 @@ for i in "${!ids[@]}"; do
     # Run validation and capture output regardless of exit code
     validation_stderr=$(mktemp)
     (cd .. && go run . validate --format json "docs/$resultFile") >"$validation_tmp" 2>"$validation_stderr" || true
-    
+
     # Try to extract valid JSON from output
     if [[ -s "$validation_tmp" ]] && jq . "$validation_tmp" >/dev/null 2>&1; then
       validation_result=$(cat "$validation_tmp")
@@ -141,7 +141,7 @@ for i in "${!ids[@]}"; do
       # Log what we got for debugging
       echo "Validation output:" >&2
       cat "$validation_tmp" >&2
-      echo "Validation stderr:" >&2  
+      echo "Validation stderr:" >&2
       cat "$validation_stderr" >&2
       validation_result='{"valid":false,"errors":[],"warnings":[],"message":"Validation failed"}'
     else

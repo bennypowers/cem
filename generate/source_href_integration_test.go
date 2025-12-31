@@ -31,7 +31,7 @@ import (
 // TestSourceHrefGeneration verifies that source hrefs are generated correctly when configured
 func TestSourceHrefGeneration(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		fixtureDir := filepath.Join("test", "fixtures", "project-source-hrefs")
+		fixtureDir := filepath.Join("testdata", "fixtures", "project-source-hrefs")
 
 		ctx := W.NewFileSystemWorkspaceContext(fixtureDir)
 		if err := ctx.Init(); err != nil {

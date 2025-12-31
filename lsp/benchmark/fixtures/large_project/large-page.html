@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Large HTML Page - Component Showcase</title>
+  <script type="module" src="./components.js"></script>
+  <style>
+    body { margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+    .layout { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
+    .sidebar { background: #f8f9fa; padding: 1rem; }
+    .main { padding: 2rem; }
+    .section { margin-bottom: 3rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <my-nav variant="sidebar" orientation="vertical">
+        <my-nav-item href="#buttons" active>Buttons</my-nav-item>
+        <my-nav-item href="#forms">Forms</my-nav-item>
+        <my-nav-item href="#cards">Cards</my-nav-item>
+        <my-nav-item href="#data">Data</my-nav-item>
+        <my-nav-item href="#feedback">Feedback</my-nav-item>
+        <my-nav-item href="#media">Media</my-nav-item>
+        <my-nav-item href="#overlays">Overlays</my-nav-item>
+        <my-nav-item href="#charts">Charts</my-nav-item>
+      </my-nav>
+
+      <my-divider style="margin: 1rem 0;"></my-divider>
+
+      <my-container-panel>
+        <h4>Quick Actions</h4>
+        <my-button-group orientation="vertical">
+          <my-button-save icon="save">Save Draft</my-button-save>
+          <my-button-share icon="share">Share</my-button-share>
+          <my-button-print icon="print">Print</my-button-print>
+        </my-button-group>
+      </my-container-panel>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main">
+      <!-- Header Section -->
+      <header>
+        <my-container-header>
+          <h1>Component Library Showcase</h1>
+          <p>Comprehensive demonstration of all available UI components</p>
+          
+          <my-button-group>
+            <my-button-primary>Get Started</my-button-primary>
+            <my-button-secondary>Documentation</my-button-secondary>
+            <my-button-outline>View Source</my-button-outline>
+          </my-button-group>
+        </my-container-header>
+
+        <my-alert-info dismissible icon="info">
+          Welcome to our component showcase! This page demonstrates over 200 different UI components.
+        </my-alert-info>
+      </header>
+
+      <!-- Buttons Section -->
+      <section id="buttons" class="section">
+        <h2>Button Components</h2>
+        <my-container-grid gap="medium">
+          <!-- Primary Buttons -->
+          <my-card-basic>
+            <h3 slot="header">Primary Buttons</h3>
+            <my-button-group>
+              <my-button-primary size="small">Small</my-button-primary>
+              <my-button-primary size="medium">Medium</my-button-primary>
+              <my-button-primary size="large">Large</my-button-primary>
+            </my-button-group>
+            <my-button-group>
+              <my-button-secondary disabled>Disabled</my-button-secondary>
+              <my-button-tertiary loading>Loading</my-button-tertiary>
+              <my-button-ghost icon="star">With Icon</my-button-ghost>
+            </my-button-group>
+          </my-card-basic>
+
+          <!-- Action Buttons -->
+          <my-card-elevated>
+            <h3 slot="header">Action Buttons</h3>
+            <my-container-flex gap="small">
+              <my-button-save icon="save">Save</my-button-save>
+              <my-button-edit icon="edit">Edit</my-button-edit>
+              <my-button-delete icon="delete" variant="danger">Delete</my-button-delete>
+              <my-button-copy icon="copy">Copy</my-button-copy>
+            </my-container-flex>
+            <my-container-flex gap="small">
+              <my-button-download icon="download">Download</my-button-download>
+              <my-button-upload icon="upload">Upload</my-button-upload>
+              <my-button-refresh icon="refresh">Refresh</my-button-refresh>
+              <my-button-settings icon="settings">Settings</my-button-settings>
+            </my-container-flex>
+          </my-card-elevated>
+        </my-container-grid>
+      </section>
+
+      <!-- Forms Section -->
+      <section id="forms" class="section">
+        <h2>Form Components</h2>
+        <my-container-grid gap="large">
+          <!-- Basic Inputs -->
+          <my-card-outlined>
+            <h3 slot="header">Basic Inputs</h3>
+            <my-container-stack gap="medium">
+              <my-input-text placeholder="Enter your name" label="Full Name" required></my-input-text>
+              <my-input-email placeholder="user@example.com" label="Email Address" required></my-input-email>
+              <my-input-password placeholder="Enter password" label="Password" required></my-input-password>
+              <my-input-tel placeholder="+1 (555) 123-4567" label="Phone Number"></my-input-tel>
+              <my-input-url placeholder="https://example.com" label="Website"></my-input-url>
+            </my-container-stack>
+          </my-card-outlined>
+
+          <!-- Advanced Inputs -->
+          <my-card-filled>
+            <h3 slot="header">Advanced Inputs</h3>
+            <my-container-stack gap="medium">
+              <my-input-autocomplete placeholder="Start typing..." label="Auto Complete"></my-input-autocomplete>
+              <my-input-combobox label="Combo Box" multiple></my-input-combobox>
+              <my-input-datepicker label="Select Date"></my-input-datepicker>
+              <my-input-timepicker label="Select Time"></my-input-timepicker>
+              <my-input-colorpicker label="Choose Color"></my-input-colorpicker>
+              <my-input-slider min="0" max="100" value="50" label="Range Slider"></my-input-slider>
+            </my-container-stack>
+          </my-card-filled>
+        </my-container-grid>
+      </section>
+
+      <!-- Cards Section -->
+      <section id="cards" class="section">
+        <h2>Card Components</h2>
+        <my-container-grid gap="medium">
+          <my-card-product clickable>
+            <my-image-thumbnail slot="media" src="/api/placeholder/300/200" alt="Product"></my-image-thumbnail>
+            <h3 slot="header">Premium Widget</h3>
+            <p>High-quality widget with advanced features and premium support.</p>
+            <my-container-flex slot="footer" justify="space-between">
+              <span>$99.99</span>
+              <my-button-primary size="small">Add to Cart</my-button-primary>
+            </my-container-flex>
+          </my-card-product>
+
+          <my-card-profile selected>
+            <my-image-avatar slot="media" src="/api/placeholder/80/80" alt="User"></my-image-avatar>
+            <h3 slot="header">John Doe</h3>
+            <p>Senior Software Engineer with 10+ years of experience in web development.</p>
+            <my-container-flex slot="footer" gap="small">
+              <my-button-outline size="small" icon="message">Message</my-button-outline>
+              <my-button-primary size="small" icon="user-plus">Connect</my-button-primary>
+            </my-container-flex>
+          </my-card-profile>
+
+          <my-card-article>
+            <h3 slot="header">Latest Blog Post</h3>
+            <p>Discover the latest trends in web development and how they're shaping the future of digital experiences.</p>
+            <my-container-flex slot="footer" justify="space-between" align="center">
+              <span>Published 2 days ago</span>
+              <my-button-text>Read More</my-button-text>
+            </my-container-flex>
+          </my-card-article>
+        </my-container-grid>
+      </section>
+
+      <!-- Data Display Section -->
+      <section id="data" class="section">
+        <h2>Data Components</h2>
+        <my-container-stack gap="large">
+          <!-- Table Component -->
+          <my-card-basic>
+            <h3 slot="header">Data Table</h3>
+            <my-table-sortable striped>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>John Smith</td>
+                  <td>john@example.com</td>
+                  <td>Admin</td>
+                  <td><my-badge-success>Active</my-badge-success></td>
+                  <td>
+                    <my-button-icon icon="edit" size="small"></my-button-icon>
+                    <my-button-icon icon="delete" size="small" variant="danger"></my-button-icon>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Jane Doe</td>
+                  <td>jane@example.com</td>
+                  <td>User</td>
+                  <td><my-badge-warning>Pending</my-badge-warning></td>
+                  <td>
+                    <my-button-icon icon="edit" size="small"></my-button-icon>
+                    <my-button-icon icon="delete" size="small" variant="danger"></my-button-icon>
+                  </td>
+                </tr>
+              </tbody>
+            </my-table-sortable>
+          </my-card-basic>
+
+          <!-- List Component -->
+          <my-card-elevated>
+            <h3 slot="header">List View</h3>
+            <my-list-basic divided>
+              <my-list-item clickable>
+                <my-image-avatar slot="leading" src="/api/placeholder/40/40"></my-image-avatar>
+                <div>
+                  <h4>Sarah Wilson</h4>
+                  <p>Product Manager</p>
+                </div>
+                <my-button-icon slot="trailing" icon="chevron-right"></my-button-icon>
+              </my-list-item>
+              <my-list-item clickable selected>
+                <my-image-avatar slot="leading" src="/api/placeholder/40/40"></my-image-avatar>
+                <div>
+                  <h4>Mike Johnson</h4>
+                  <p>UX Designer</p>
+                </div>
+                <my-button-icon slot="trailing" icon="chevron-right"></my-button-icon>
+              </my-list-item>
+              <my-list-item clickable>
+                <my-image-avatar slot="leading" src="/api/placeholder/40/40"></my-image-avatar>
+                <div>
+                  <h4>Lisa Chen</h4>
+                  <p>Developer</p>
+                </div>
+                <my-button-icon slot="trailing" icon="chevron-right"></my-button-icon>
+              </my-list-item>
+            </my-list-basic>
+          </my-card-elevated>
+        </my-container-stack>
+      </section>
+
+      <!-- Feedback Section -->
+      <section id="feedback" class="section">
+        <h2>Feedback Components</h2>
+        <my-container-stack gap="medium">
+          <!-- Alerts -->
+          <my-container-flex gap="medium">
+            <my-alert-info icon="info">This is an informational message.</my-alert-info>
+            <my-alert-success icon="check" dismissible>Operation completed successfully!</my-alert-success>
+          </my-container-flex>
+          
+          <my-container-flex gap="medium">
+            <my-alert-warning icon="warning">Please review your settings.</my-alert-warning>
+            <my-alert-error icon="error" dismissible>An error occurred. Please try again.</my-alert-error>
+          </my-container-flex>
+
+          <!-- Progress Indicators -->
+          <my-card-basic>
+            <h3 slot="header">Progress Indicators</h3>
+            <my-container-stack gap="medium">
+              <my-progress-linear value="75" variant="primary"></my-progress-linear>
+              <my-progress-linear value="45" variant="success"></my-progress-linear>
+              <my-progress-linear value="25" variant="warning"></my-progress-linear>
+              
+              <my-container-flex gap="large" align="center">
+                <my-spinner-primary size="small"></my-spinner-primary>
+                <my-spinner-secondary size="medium"></my-spinner-secondary>
+                <my-spinner-success size="large"></my-spinner-success>
+              </my-container-flex>
+            </my-container-stack>
+          </my-card-basic>
+        </my-container-stack>
+      </section>
+
+      <!-- Media Section -->
+      <section id="media" class="section">
+        <h2>Media Components</h2>
+        <my-container-grid gap="medium">
+          <my-card-media>
+            <my-image-responsive slot="media" src="/api/placeholder/400/250" alt="Landscape" loading="lazy"></my-image-responsive>
+            <h3 slot="header">Image Gallery</h3>
+            <p>Responsive images with lazy loading and optimized delivery.</p>
+          </my-card-media>
+
+          <my-card-basic>
+            <h3 slot="header">Avatar Gallery</h3>
+            <my-container-flex gap="small" align="center">
+              <my-image-avatar src="/api/placeholder/50/50" size="small"></my-image-avatar>
+              <my-image-avatar src="/api/placeholder/60/60" size="medium"></my-image-avatar>
+              <my-image-avatar src="/api/placeholder/70/70" size="large"></my-image-avatar>
+              <my-image-avatar src="/api/placeholder/80/80" size="xlarge"></my-image-avatar>
+            </my-container-flex>
+            
+            <my-container-flex gap="small" align="center">
+              <my-image-icon name="star" size="small"></my-image-icon>
+              <my-image-icon name="heart" size="medium"></my-image-icon>
+              <my-image-icon name="bookmark" size="large"></my-image-icon>
+              <my-image-icon name="share" size="xlarge"></my-image-icon>
+            </my-container-flex>
+          </my-card-basic>
+        </my-container-grid>
+      </section>
+
+      <!-- Charts Section -->
+      <section id="charts" class="section">
+        <h2>Chart Components</h2>
+        <my-container-grid gap="medium">
+          <my-card-elevated>
+            <h3 slot="header">Line Chart</h3>
+            <my-chart-line 
+              data='[{"x": 1, "y": 10}, {"x": 2, "y": 15}, {"x": 3, "y": 12}]' 
+              responsive 
+              animated>
+            </my-chart-line>
+          </my-card-elevated>
+
+          <my-card-elevated>
+            <h3 slot="header">Bar Chart</h3>
+            <my-chart-bar 
+              data='[{"label": "Q1", "value": 100}, {"label": "Q2", "value": 150}]' 
+              responsive>
+            </my-chart-bar>
+          </my-card-elevated>
+
+          <my-card-elevated>
+            <h3 slot="header">Pie Chart</h3>
+            <my-chart-pie 
+              data='[{"label": "Desktop", "value": 60}, {"label": "Mobile", "value": 40}]' 
+              responsive>
+            </my-chart-pie>
+          </my-card-elevated>
+        </my-container-grid>
+      </section>
+
+      <!-- Footer -->
+      <footer>
+        <my-divider-horizontal></my-divider-horizontal>
+        
+        <my-container-footer>
+          <my-container-flex justify="space-between" align="center">
+            <div>
+              <p>&copy; 2024 Component Library. All rights reserved.</p>
+            </div>
+            <my-container-flex gap="medium">
+              <my-button-text>Privacy</my-button-text>
+              <my-button-text>Terms</my-button-text>
+              <my-button-text>Support</my-button-text>
+            </my-container-flex>
+          </my-container-flex>
+        </my-container-footer>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Toast Notifications -->
+  <my-toast-success open timeout="5000">Page loaded successfully!</my-toast-success>
+  
+  <!-- Overlays -->
+  <my-modal-dialog id="settingsModal" size="medium">
+    <h2 slot="header">Settings</h2>
+    <my-container-stack gap="medium">
+      <my-input-switch label="Dark Mode" checked></my-input-switch>
+      <my-input-switch label="Notifications"></my-input-switch>
+      <my-input-select label="Language">
+        <option value="en">English</option>
+        <option value="es">Spanish</option>
+        <option value="fr">French</option>
+      </my-input-select>
+    </my-container-stack>
+    <my-container-flex slot="footer" gap="medium" justify="end">
+      <my-button-secondary onclick="document.getElementById('settingsModal').open = false">Cancel</my-button-secondary>
+      <my-button-primary>Save Settings</my-button-primary>
+    </my-container-flex>
+  </my-modal-dialog>
+</body>
+</html>

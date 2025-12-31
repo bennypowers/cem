@@ -218,6 +218,51 @@ When you type an invalid slot name, the language server:
 2. **Suggests corrections** based on available slots from your manifest
 3. **Provides one-click fixes** through your editor's quick fix menu
 
+## Performance Benchmarks
+
+The CEM LSP server undergoes comprehensive performance testing through a statistically rigorous benchmark suite. Results show competitive performance across all LSP operations:
+
+- **Startup Time**: Sub-2ms initialization (mean: 1.96ms)
+- **Hover Performance**: Sub-millisecond response times (mean: 0.40ms)
+- **Completion Speed**: Fast autocomplete suggestions (mean: 1.00ms)
+- **Memory Efficiency**: Low memory footprint (~400KB baseline)
+- **Reliability**: 100% success rates for core LSP operations
+
+{{< lsp-benchmark-summary >}}
+
+### Running Benchmarks
+
+To run LSP benchmarks locally:
+
+```bash
+# Prerequisites: Build CEM and install Neovim 0.9+
+make build
+
+# Run benchmarks for CEM LSP
+make bench-lsp-cem
+
+# Run benchmarks for both CEM and wc-toolkit (requires setup)
+cd lsp/benchmark
+./setup_wc_toolkit.sh  # One-time setup
+cd ../..
+make bench-lsp
+
+# Generate comparison report
+cd lsp/benchmark
+./run_comparison.sh
+```
+
+### Maintaining Benchmarks
+
+The benchmark infrastructure is modular and extensible:
+
+- **Add New Benchmarks**: Create modules in `lsp/benchmark/modules/` for new LSP operations
+- **Update Fixtures**: Modify test projects in `lsp/benchmark/fixtures/` for different scenarios
+- **Statistical Analysis**: Results include P50/P95/P99 percentiles with standard deviation
+- **CI Integration**: Benchmarks can be integrated into CI/CD pipelines for regression detection
+
+For detailed benchmark methodology, statistical analysis, and comparison with other LSP implementations, see the [benchmark documentation](https://github.com/bennypowers/cem/tree/main/lsp/benchmark#readme) and [full benchmark results](/docs/benchmarks/).
+
 ## Architecture
 The server uses tree-sitter for robust parsing and maintains an in-memory index
 of custom elements for fast completion and hover responses. LSP methods are

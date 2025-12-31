@@ -114,7 +114,7 @@ func (d *TypeScriptDocument) UpdateContent(content string, version int32) {
 }
 
 // SetTree sets the document's syntax tree
-// Note: Cache invalidation is handled by UpdateContent, which is always called before SetTree
+// Note: Defensively invalidates cache to ensure correctness even if called without UpdateContent
 func (d *TypeScriptDocument) SetTree(tree *ts.Tree) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -122,6 +122,12 @@ func (d *TypeScriptDocument) SetTree(tree *ts.Tree) {
 		d.tree.Close()
 	}
 	d.tree = tree
+	// Invalidate cache when tree is replaced
+	d.cachedTemplates = nil
+	d.cachedCustomElements = nil
+	d.invalidateHTMLTreeCache()
+	d.cacheVersion = 0
+	helpers.SafeDebugLog("[CACHE] SetTree: cache INVALIDATED (version %d)", d.version)
 }
 
 // Parser returns the document's parser
@@ -522,7 +528,7 @@ func (d *TypeScriptDocument) parseHTMLInTemplate(template TemplateContext, handl
 
 // adjustRangeToTemplate adjusts a range from template content to document coordinates
 func (d *TypeScriptDocument) adjustRangeToTemplate(
-	capture Q.CaptureInfo,
+	_ Q.CaptureInfo,
 	template TemplateContext,
 ) protocol.Range {
 	// This is a simplified version - a full implementation would need to:
@@ -864,7 +870,7 @@ func (d *TypeScriptDocument) FindCustomElements(
 ) ([]types.CustomElementMatch, error) {
 	// Use reflection to call GetLanguageHandler to avoid circular imports
 	dmValue := reflect.ValueOf(dm)
-	if dmValue.Kind() == reflect.Ptr && !dmValue.IsNil() {
+	if dmValue.Kind() == reflect.Pointer && !dmValue.IsNil() {
 		method := dmValue.MethodByName("GetLanguageHandler")
 		if method.IsValid() {
 			results := method.Call([]reflect.Value{reflect.ValueOf("typescript")})

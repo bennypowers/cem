@@ -1,0 +1,35 @@
+{
+  "name": "large-component-library",
+  "version": "1.0.0",
+  "description": "Large component library with 50+ elements for stress testing",
+  "customElements": "./custom-elements.json",
+  "main": "./index.js",
+  "module": "./index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "types": "./index.d.ts",
+  "files": [
+    "index.js",
+    "src/",
+    "custom-elements.json"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "test": "jest",
+    "analyze": "cem analyze --litelement --globs 'src/**/*.ts'"
+  },
+  "keywords": [
+    "web-components",
+    "custom-elements",
+    "lit",
+    "ui-library"
+  ],
+  "dependencies": {
+    "lit": "^3.3.1"
+  },
+  "devDependencies": {
+    "@custom-elements-manifest/analyzer": "^0.9.0",
+    "typescript": "^5.9.2"
+  }
+}

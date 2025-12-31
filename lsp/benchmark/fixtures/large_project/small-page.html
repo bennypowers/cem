@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Small Page - Basic Components</title>
+  <script type="module" src="./components.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 2rem; }
+    .container { max-width: 600px; margin: 0 auto; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <my-header variant="primary" size="medium">
+      <h1>Small Page Example</h1>
+      <p>Basic component usage for testing</p>
+    </my-header>
+
+    <my-card variant="outlined" size="medium">
+      <h2 slot="header">Simple Card</h2>
+      <p>This is a simple card with basic content.</p>
+      
+      <my-button variant="primary" size="medium">Click Me</my-button>
+    </my-card>
+
+    <my-form>
+      <my-form-group>
+        <my-label for="name">Name</my-label>
+        <my-input id="name" type="text" size="medium" placeholder="Enter your name"></my-input>
+      </my-form-group>
+      
+      <my-form-group>
+        <my-label for="email">Email</my-label>
+        <my-input id="email" type="email" size="medium" placeholder="Enter your email"></my-input>
+      </my-form-group>
+      
+      <my-button type="submit" variant="primary" size="medium">Submit</my-button>
+    </my-form>
+
+    <my-divider style="margin: 2rem 0;"></my-divider>
+
+    <my-container-footer>
+      <p>© 2024 Small Page Example</p>
+    </my-container-footer>
+  </div>
+</body>
+</html>

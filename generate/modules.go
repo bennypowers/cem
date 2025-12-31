@@ -242,7 +242,7 @@ func (mp *ModuleProcessor) processImports() error {
 			continue
 		}
 
-		for i := 0; i < minLen; i++ {
+		for i := range minLen {
 			original := nameCaptures[i].Text
 			binding := bindingCaptures[i].Text
 

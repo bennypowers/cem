@@ -47,6 +47,18 @@ Practice TDD. When writing tests, always use the fixture/golden patterns we've e
 
 - **Regression Test Isolation**: Keep regression test fixtures in separate directories (e.g., `testdata-regression/`) to avoid interference with standard test discovery
 
+## LSP
+
+When working on LSP features, refer to `lsp/CLAUDE.md` for LSP-specific guidelines.
+
+## MCP
+
+When working on MCP features, refer to `mcp/CLAUDE.md` for MCP-specific guidelines.
+
+## Docs
+
+When working on the docs site, refer to `docs/CLAUDE.md` for docs-specific guidelines.
+
 ## Git
 
 When commit messages mention AI agents, always use `Assisted-By`, never use `Co-Authored-By`.

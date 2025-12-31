@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complex Page - Advanced Components</title>
+  <script type="module" src="./components.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; }
+    .layout { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 1rem; padding: 1rem; }
+    .nested { margin: 1rem 0; }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- Left Column -->
+    <aside>
+      <my-nav variant="sidebar" orientation="vertical">
+        <my-nav-item href="#section1">Section 1</my-nav-item>
+        <my-nav-item href="#section2">Section 2</my-nav-item>
+        <my-nav-item href="#section3">Section 3</my-nav-item>
+      </my-nav>
+      
+      <my-card variant="filled" size="small" class="nested">
+        <h3 slot="header">Quick Actions</h3>
+        <my-button-group orientation="vertical">
+          <my-button size="small" variant="primary">Save</my-button>
+          <my-button size="small" variant="secondary">Export</my-button>
+          <my-button size="small" variant="danger">Delete</my-button>
+        </my-button-group>
+      </my-card>
+    </aside>
+
+    <!-- Main Content -->
+    <main>
+      <my-header variant="primary" size="large">
+        <h1>Complex Page Layout</h1>
+        <p>Advanced component nesting and interactions</p>
+      </my-header>
+
+      <my-tabs size="large" orientation="horizontal" class="nested">
+        <my-tab-panel label="Dashboard">
+          <my-card variant="elevated" size="large">
+            <h2 slot="header">Dashboard Overview</h2>
+            
+            <my-accordion size="medium">
+              <my-accordion-item>
+                <h3 slot="header">Statistics</h3>
+                <my-chart type="line" data-source="stats.json" size="medium"></my-chart>
+                <my-progress value="85" max="100" size="large"></my-progress>
+              </my-accordion-item>
+              
+              <my-accordion-item>
+                <h3 slot="header">Recent Activity</h3>
+                <my-table size="medium" sortable="true">
+                  <my-table-header>
+                    <my-table-cell type="header">Time</my-table-cell>
+                    <my-table-cell type="header">Action</my-table-cell>
+                    <my-table-cell type="header">User</my-table-cell>
+                  </my-table-header>
+                  <my-table-row>
+                    <my-table-cell>10:30 AM</my-table-cell>
+                    <my-table-cell>Login</my-table-cell>
+                    <my-table-cell>john.doe@example.com</my-table-cell>
+                  </my-table-row>
+                  <my-table-row>
+                    <my-table-cell>10:25 AM</my-table-cell>
+                    <my-table-cell>Update Profile</my-table-cell>
+                    <my-table-cell>jane.smith@example.com</my-table-cell>
+                  </my-table-row>
+                </my-table>
+              </my-accordion-item>
+            </my-accordion>
+          </my-card>
+        </my-tab-panel>
+
+        <my-tab-panel label="Settings">
+          <my-container-panel variant="bordered">
+            <h2>User Settings</h2>
+            
+            <my-form method="post">
+              <my-form-group>
+                <my-label for="username">Username</my-label>
+                <my-input id="username" type="text" size="large" value="current-user"></my-input>
+              </my-form-group>
+              
+              <my-form-group>
+                <my-label for="theme">Theme Preference</my-label>
+                <my-select id="theme" size="large">
+                  <option value="light">Light Theme</option>
+                  <option value="dark">Dark Theme</option>
+                  <option value="auto">Auto (System)</option>
+                </my-select>
+              </my-form-group>
+              
+              <my-form-group>
+                <my-checkbox checked>Enable notifications</my-checkbox>
+                <my-checkbox>Enable analytics</my-checkbox>
+                <my-checkbox checked>Auto-save preferences</my-checkbox>
+              </my-form-group>
+              
+              <my-button-group orientation="horizontal">
+                <my-button type="submit" variant="primary" size="large">Save Changes</my-button>
+                <my-button type="reset" variant="secondary" size="large">Reset</my-button>
+              </my-button-group>
+            </my-form>
+          </my-container-panel>
+        </my-tab-panel>
+
+        <my-tab-panel label="Advanced">
+          <my-card variant="outlined" size="large">
+            <h2 slot="header">Advanced Configuration</h2>
+            
+            <my-alert variant="warning" size="medium">
+              <strong>Warning:</strong> These settings affect system behavior.
+            </my-alert>
+            
+            <my-form class="nested">
+              <my-form-group>
+                <my-label for="api-key">API Key</my-label>
+                <my-input id="api-key" type="password" size="large" placeholder="Enter API key"></my-input>
+              </my-form-group>
+              
+              <my-form-group>
+                <my-label for="webhook-url">Webhook URL</my-label>
+                <my-input id="webhook-url" type="url" size="large" placeholder="https://example.com/webhook"></my-input>
+              </my-form-group>
+              
+              <my-form-group>
+                <my-label for="config-data">Configuration JSON</my-label>
+                <my-textarea id="config-data" rows="6" size="large" placeholder='{"setting": "value"}'></my-textarea>
+              </my-form-group>
+            </my-form>
+          </my-card>
+        </my-tab-panel>
+      </my-tabs>
+
+      <!-- Nested Modal Triggers -->
+      <div class="nested">
+        <my-button variant="primary" onclick="openModal('info-modal')">Open Info Modal</my-button>
+        <my-button variant="secondary" onclick="openDrawer('settings-drawer')">Open Settings</my-button>
+      </div>
+    </main>
+
+    <!-- Right Column -->
+    <aside>
+      <my-card variant="outlined" size="medium">
+        <h3 slot="header">Notifications</h3>
+        <my-notification-center size="medium">
+          <my-notification variant="info" timestamp="2024-01-15T10:30:00">
+            System update available
+          </my-notification>
+          <my-notification variant="success" timestamp="2024-01-15T09:15:00">
+            Backup completed
+          </my-notification>
+          <my-notification variant="warning" timestamp="2024-01-15T08:45:00">
+            Disk space low
+          </my-notification>
+        </my-notification-center>
+      </my-card>
+
+      <my-card variant="filled" size="medium" class="nested">
+        <h3 slot="header">Quick Stats</h3>
+        <my-progress label="CPU Usage" value="45" max="100" size="small"></my-progress>
+        <my-progress label="Memory" value="72" max="100" size="small"></my-progress>
+        <my-progress label="Storage" value="88" max="100" size="small"></my-progress>
+      </my-card>
+
+      <my-card variant="elevated" size="medium" class="nested">
+        <h3 slot="header">Help & Support</h3>
+        <my-link href="/help" size="medium">Help Documentation</my-link>
+        <my-link href="/support" size="medium">Contact Support</my-link>
+        <my-button variant="outline" size="small">Send Feedback</my-button>
+      </my-card>
+    </aside>
+  </div>
+
+  <!-- Overlays -->
+  <my-modal id="info-modal" size="large">
+    <h2 slot="header">System Information</h2>
+    <my-table size="medium">
+      <my-table-header>
+        <my-table-cell type="header">Property</my-table-cell>
+        <my-table-cell type="header">Value</my-table-cell>
+      </my-table-header>
+      <my-table-row>
+        <my-table-cell>Version</my-table-cell>
+        <my-table-cell>2.1.0</my-table-cell>
+      </my-table-row>
+      <my-table-row>
+        <my-table-cell>Build</my-table-cell>
+        <my-table-cell>20240115.1</my-table-cell>
+      </my-table-row>
+    </my-table>
+    <my-button slot="footer" variant="primary">Close</my-button>
+  </my-modal>
+
+  <my-drawer id="settings-drawer" position="right" size="large">
+    <h3 slot="header">System Settings</h3>
+    <my-form>
+      <my-form-group>
+        <my-label for="default-language">Default Language</my-label>
+        <my-select id="default-language" size="medium">
+          <option value="en">English</option>
+          <option value="es">Spanish</option>
+          <option value="fr">French</option>
+        </my-select>
+      </my-form-group>
+      <my-form-group>
+        <my-label for="timezone">Timezone</my-label>
+        <my-select id="timezone" size="medium">
+          <option value="UTC">UTC</option>
+          <option value="EST">Eastern</option>
+          <option value="PST">Pacific</option>
+        </my-select>
+      </my-form-group>
+    </my-form>
+  </my-drawer>
+
+  <my-tooltip id="help-tooltip" content="Click for more information" position="top">
+    <my-button variant="ghost" size="small" style="position: fixed; bottom: 20px; right: 20px;">?</my-button>
+  </my-tooltip>
+</body>
+</html>

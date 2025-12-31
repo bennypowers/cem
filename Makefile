@@ -19,7 +19,7 @@ else
     RACE_LDFLAGS :=
 endif
 
-.PHONY: all build test test-unit test-e2e test-frontend test-frontend-watch test-frontend-update install-frontend update watch bench bench-lookup profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major
+.PHONY: all build test test-unit test-e2e test-frontend test-frontend-watch test-frontend-update install-frontend update watch bench bench-generate bench-lookup bench-lsp bench-lsp-cem bench-lsp-wc setup-wc-toolkit profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major
 
 build: generate
 	@mkdir -p dist
@@ -154,9 +154,13 @@ watch:
 		find . -type f \( -name "*.go" -o -name "*.scm" -o -name "*.ts" \) | entr -d sh -c 'make test || true'; \
 	done
 
-bench:
+bench: bench-generate bench-lsp
+
+# Go performance benchmarks
+bench-generate: generate
 	go test -v -cpuprofile=cpu.out -bench=BenchmarkGenerate -run=^$$ ./generate/
 
+# Manifest lookup benchmarks
 bench-lookup:
 	@echo "=== Running Attribute Lookup Benchmarks ==="
 	go test -bench=BenchmarkAttributeLookup -benchmem -count=5 -run=^$$ ./manifest/
@@ -166,6 +170,37 @@ bench-lookup:
 	@echo ""
 	@echo "=== Running Renderable Creation Benchmarks ==="
 	go test -bench=BenchmarkRenderableCreation -benchmem -count=5 -run=^$$ ./manifest/
+
+# LSP server benchmarks
+# Setup wc-toolkit language server wrapper (isolated, doesn't affect Mason)
+setup-wc-toolkit:
+	@cd lsp/benchmark && ./setup_wc_toolkit.sh
+
+bench-lsp: build setup-wc-toolkit
+	@cd lsp/benchmark && \
+	BENCHMARK_COMPARISON_MODE=1 nvim --headless --clean -u configs/cem-minimal.lua -l run_modular_benchmark.lua && \
+	if [ -f bin/wc-language-server ]; then \
+		BENCHMARK_COMPARISON_MODE=1 nvim --headless --clean -u configs/wc-toolkit-minimal.lua -l run_modular_benchmark.lua; \
+	else \
+		echo "⚠️  Skipping wc-toolkit benchmarks: server not found at lsp/benchmark/bin/wc-language-server" && \
+		echo "   Run 'make setup-wc-toolkit' or './lsp/benchmark/setup_wc_toolkit.sh' to install."; \
+	fi && \
+	nvim --headless --clean -l compare_results.lua
+
+# LSP benchmark for a specific server
+bench-lsp-cem: build
+	@echo "Running benchmarks for cem LSP server only..."
+	@cd lsp/benchmark && nvim --headless --clean -u configs/cem-minimal.lua -l run_modular_benchmark.lua
+
+bench-lsp-wc: build setup-wc-toolkit
+	@echo "Running benchmarks for wc-toolkit LSP server only..."
+	@if [ ! -f lsp/benchmark/bin/wc-language-server ]; then \
+		echo "✗ Error: wc-toolkit server not found at lsp/benchmark/bin/wc-language-server" && \
+		echo "  Run 'make setup-wc-toolkit' or './lsp/benchmark/setup_wc_toolkit.sh' to install." && \
+		exit 1; \
+	fi
+	@cd lsp/benchmark && nvim --headless --clean -u configs/wc-toolkit-minimal.lua -l run_modular_benchmark.lua
+
 
 profile:
 	go test -bench=... -run=^$ -cpuprofile=cpu.out ./generate/
@@ -214,8 +249,12 @@ update-html-attributes:
 
 docs-ci: update-html-attributes
 	make build
-	@echo "Running benchmarks with $(RUNS) runs"
+	@echo "Running generate benchmarks with $(RUNS) runs"
 	./scripts/benchmark.sh $(RUNS)
+	@echo "Running LSP benchmarks..."
+	make bench-lsp
+	@echo "Combining LSP benchmark results..."
+	@cd lsp/benchmark && nvim --headless --clean -l combine_results.lua
 	cp -f "$(CONTRIBUTING_PATH)" /tmp/cem-contributing.md
 	cat CONTRIBUTING.md >> "$(CONTRIBUTING_PATH)"
 	hugo mod clean

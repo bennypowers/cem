@@ -146,8 +146,8 @@ func TestByteOffsetToLineNumberPerformance(t *testing.T) {
 	// Create a large file with many lines to test performance
 	lines := 1000
 	var content []byte
-	for i := 0; i < lines; i++ {
-		content = append(content, []byte(fmt.Sprintf("// Line %d\n", i+1))...)
+	for i := range lines {
+		content = append(content, fmt.Appendf(nil, "// Line %d\n", i+1)...)
 	}
 
 	mp := &ModuleProcessor{
@@ -155,7 +155,7 @@ func TestByteOffsetToLineNumberPerformance(t *testing.T) {
 	}
 
 	// Test multiple lookups - this should be fast with caching
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		offset := uint(len(content) / 2) // Middle of file
 		lineNum := mp.byteOffsetToLineNumber(offset)
 		if lineNum < 400 || lineNum > 600 { // Should be around line 500
