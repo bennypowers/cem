@@ -27,75 +27,162 @@ import (
 )
 
 func TestAttributeValueDiagnostics_BooleanAttributes(t *testing.T) {
-	ctx := testhelpers.NewMockServerContext()
-	content := `<my-element disabled="false" hidden="true" readonly>Content</my-element>`
+	t.Run("boolean attributes with explicit values", func(t *testing.T) {
+		ctx := testhelpers.NewMockServerContext()
+		content := `<my-element disabled="false" hidden="true" readonly>Content</my-element>`
 
-	// Create DocumentManager and document
-	dm, err := document.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create DocumentManager: %v", err)
-	}
-	defer dm.Close()
-	ctx.SetDocumentManager(dm)
-	doc := dm.OpenDocument("test.html", content, 1)
-	ctx.AddDocument("test.html", doc)
+		// Create DocumentManager and document
+		dm, err := document.NewDocumentManager()
+		if err != nil {
+			t.Fatalf("Failed to create DocumentManager: %v", err)
+		}
+		defer dm.Close()
+		ctx.SetDocumentManager(dm)
+		doc := dm.OpenDocument("test.html", content, 1)
+		ctx.AddDocument("test.html", doc)
 
-	// Set up boolean attributes for my-element
-	ctx.AddAttributes("my-element", map[string]*M.Attribute{
-		"disabled": {
-			FullyQualified: M.FullyQualified{Name: "disabled"},
-			Type:           &M.Type{Text: "boolean"},
-		},
-		"hidden": {
-			FullyQualified: M.FullyQualified{Name: "hidden"},
-			Type:           &M.Type{Text: "boolean"},
-		},
-		"readonly": {
-			FullyQualified: M.FullyQualified{Name: "readonly"},
-			Type:           &M.Type{Text: "boolean"},
-		},
+		// Set up boolean attributes for my-element
+		ctx.AddAttributes("my-element", map[string]*M.Attribute{
+			"disabled": {
+				FullyQualified: M.FullyQualified{Name: "disabled"},
+				Type:           &M.Type{Text: "boolean"},
+			},
+			"hidden": {
+				FullyQualified: M.FullyQualified{Name: "hidden"},
+				Type:           &M.Type{Text: "boolean"},
+			},
+			"readonly": {
+				FullyQualified: M.FullyQualified{Name: "readonly"},
+				Type:           &M.Type{Text: "boolean"},
+			},
+		})
+
+		diagnostics := publishDiagnostics.AnalyzeAttributeValueDiagnosticsForTest(ctx, doc)
+
+		// Should have 2 diagnostics: disabled="false" (warning) and hidden="true" (info)
+		if len(diagnostics) != 2 {
+			t.Errorf("Expected 2 diagnostics for boolean attributes, got %d", len(diagnostics))
+			for i, diag := range diagnostics {
+				t.Errorf("Diagnostic %d: %s", i, diag.Message)
+			}
+			return
+		}
+
+		// Check disabled="false" diagnostic (should be warning)
+		found := false
+		for _, diag := range diagnostics {
+			if diag.Message == "Boolean attribute 'disabled' with value 'false' is still true. Remove the attribute entirely to make it false." {
+				if *diag.Severity != protocol.DiagnosticSeverityWarning {
+					t.Errorf("Expected warning severity for disabled='false', got %v", *diag.Severity)
+				}
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("Expected diagnostic for disabled='false' not found")
+		}
+
+		// Check hidden="true" diagnostic (should be info)
+		found = false
+		for _, diag := range diagnostics {
+			if diag.Message == "Boolean attribute 'hidden' with value 'true' is redundant. Use <my-element hidden> instead." {
+				if *diag.Severity != protocol.DiagnosticSeverityInformation {
+					t.Errorf("Expected info severity for hidden='true', got %v", *diag.Severity)
+				}
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("Expected diagnostic for hidden='true' not found")
+		}
 	})
 
-	diagnostics := publishDiagnostics.AnalyzeAttributeValueDiagnosticsForTest(ctx, doc)
+	// Issue #179: Multi-line boolean attributes incorrectly assigned subsequent attribute values
+	t.Run("multiline boolean attributes (issue #179)", func(t *testing.T) {
+		ctx := testhelpers.NewMockServerContext()
+		content := `<my-button variant="primary"
+           size="large"
+           disabled
+           loading
+           icon="star">Click me</my-button>`
 
-	// Should have 2 diagnostics: disabled="false" (warning) and hidden="true" (info)
-	if len(diagnostics) != 2 {
-		t.Errorf("Expected 2 diagnostics for boolean attributes, got %d", len(diagnostics))
-		for i, diag := range diagnostics {
-			t.Errorf("Diagnostic %d: %s", i, diag.Message)
+		dm, err := document.NewDocumentManager()
+		if err != nil {
+			t.Fatalf("Failed to create DocumentManager: %v", err)
 		}
-		return
-	}
+		defer dm.Close()
+		ctx.SetDocumentManager(dm)
+		doc := dm.OpenDocument("test.html", content, 1)
+		ctx.AddDocument("test.html", doc)
 
-	// Check disabled="false" diagnostic (should be warning)
-	found := false
-	for _, diag := range diagnostics {
-		if diag.Message == "Boolean attribute 'disabled' with value 'false' is still true. Remove the attribute entirely to make it false." {
-			if *diag.Severity != protocol.DiagnosticSeverityWarning {
-				t.Errorf("Expected warning severity for disabled='false', got %v", *diag.Severity)
+		ctx.AddAttributes("my-button", map[string]*M.Attribute{
+			"variant":  {FullyQualified: M.FullyQualified{Name: "variant"}, Type: &M.Type{Text: "string"}},
+			"size":     {FullyQualified: M.FullyQualified{Name: "size"}, Type: &M.Type{Text: "string"}},
+			"disabled": {FullyQualified: M.FullyQualified{Name: "disabled"}, Type: &M.Type{Text: "boolean"}},
+			"loading":  {FullyQualified: M.FullyQualified{Name: "loading"}, Type: &M.Type{Text: "boolean"}},
+			"icon":     {FullyQualified: M.FullyQualified{Name: "icon"}, Type: &M.Type{Text: "string"}},
+		})
+
+		diagnostics := publishDiagnostics.AnalyzeAttributeValueDiagnosticsForTest(ctx, doc)
+
+		// Bug: disabled and loading incorrectly reported as having value "star"
+		for _, diag := range diagnostics {
+			if diag.Message == "Boolean attribute 'disabled' should not have value 'star'. Use <my-button disabled> instead." {
+				t.Errorf("REGRESSION #179: disabled attribute incorrectly detected as having value 'star'")
 			}
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Error("Expected diagnostic for disabled='false' not found")
-	}
-
-	// Check hidden="true" diagnostic (should be info)
-	found = false
-	for _, diag := range diagnostics {
-		if diag.Message == "Boolean attribute 'hidden' with value 'true' is redundant. Use <my-element hidden> instead." {
-			if *diag.Severity != protocol.DiagnosticSeverityInformation {
-				t.Errorf("Expected info severity for hidden='true', got %v", *diag.Severity)
+			if diag.Message == "Boolean attribute 'loading' should not have value 'star'. Use <my-button loading> instead." {
+				t.Errorf("REGRESSION #179: loading attribute incorrectly detected as having value 'star'")
 			}
-			found = true
-			break
 		}
-	}
-	if !found {
-		t.Error("Expected diagnostic for hidden='true' not found")
-	}
+
+		// Should have no diagnostics for valid HTML
+		if len(diagnostics) != 0 {
+			t.Errorf("Expected no diagnostics for valid multi-line boolean attributes, got %d:", len(diagnostics))
+			for i, diag := range diagnostics {
+				t.Errorf("  Diagnostic %d: %s", i, diag.Message)
+			}
+		}
+	})
+
+	// Issue #176: Boolean attribute before valued attributes gets next attribute's value
+	t.Run("boolean before valued attributes (issue #176)", func(t *testing.T) {
+		ctx := testhelpers.NewMockServerContext()
+		content := `<mdw-card elevated padding="16" gap="16">Content</mdw-card>`
+
+		dm, err := document.NewDocumentManager()
+		if err != nil {
+			t.Fatalf("Failed to create DocumentManager: %v", err)
+		}
+		defer dm.Close()
+		ctx.SetDocumentManager(dm)
+		doc := dm.OpenDocument("test.html", content, 1)
+		ctx.AddDocument("test.html", doc)
+
+		ctx.AddAttributes("mdw-card", map[string]*M.Attribute{
+			"elevated": {FullyQualified: M.FullyQualified{Name: "elevated"}, Type: &M.Type{Text: "boolean"}},
+			"padding":  {FullyQualified: M.FullyQualified{Name: "padding"}, Type: &M.Type{Text: "number"}},
+			"gap":      {FullyQualified: M.FullyQualified{Name: "gap"}, Type: &M.Type{Text: "number"}},
+		})
+
+		diagnostics := publishDiagnostics.AnalyzeAttributeValueDiagnosticsForTest(ctx, doc)
+
+		// Bug: elevated incorrectly reported as having value "16"
+		for _, diag := range diagnostics {
+			if diag.Message == "Boolean attribute 'elevated' should not have value '16'. Use <mdw-card elevated> instead." {
+				t.Errorf("REGRESSION #176: elevated attribute incorrectly detected as having value '16'")
+			}
+		}
+
+		// Should have no diagnostics for valid HTML
+		if len(diagnostics) != 0 {
+			t.Errorf("Expected no diagnostics for valid boolean attribute, got %d:", len(diagnostics))
+			for i, diag := range diagnostics {
+				t.Errorf("  Diagnostic %d: %s", i, diag.Message)
+			}
+		}
+	})
 }
 
 func TestAttributeValueDiagnostics_UnionTypes(t *testing.T) {
