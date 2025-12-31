@@ -105,11 +105,21 @@ Once connected, AI assistants can access your component information through natu
 }
 ```
 
+### Claude Code
+
+Install the CEM plugin which includes both LSP and MCP support:
+
+```
+/plugin marketplace add bennypowers/cem
+/plugin install cem-lsp
+```
+
+The MCP server activates automatically when the plugin is installed.
+
 ### Other Clients
 
 The CEM MCP server works with any MCP-compatible AI client:
 
-- **Claude Code** - See [Claude Code MCP docs](https://docs.anthropic.com/en/docs/claude-code/mcp)
 - **Cursor** - See [Cursor MCP integration](https://docs.cursor.com/mcp)
 - **Continue.dev** - See [Continue MCP setup](https://docs.continue.dev/mcp)
 - **Custom clients** - See [MCP specification](https://spec.modelcontextprotocol.io/)

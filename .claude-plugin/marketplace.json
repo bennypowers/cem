@@ -1,0 +1,23 @@
+{
+  "name": "cem-plugins",
+  "version": "1.0.0",
+  "description": "Custom Elements Manifest tooling for Claude Code",
+  "owner": {
+    "name": "Benny Powers",
+    "email": "web@bennypowers.com"
+  },
+  "plugins": [
+    {
+      "name": "cem-lsp",
+      "description": "LSP and MCP support for Custom Elements - intelligent autocomplete, validation, and AI-native component understanding",
+      "version": "0.7.5",
+      "author": {
+        "name": "Benny Powers",
+        "email": "web@bennypowers.com"
+      },
+      "source": "./extensions/claude-code",
+      "category": "development",
+      "keywords": ["custom-elements", "web-components", "html", "typescript", "javascript", "lit", "lsp", "mcp"]
+    }
+  ]
+}

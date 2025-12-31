@@ -161,6 +161,27 @@ For **eglot**:
              '((html-mode typescript-mode js-mode) . ("cem" "lsp")))
 ```
 
+### Claude Code
+
+Install CEM first:
+
+```bash
+npm install -g @pwrs/cem
+# or
+go install bennypowers.dev/cem@latest
+```
+
+Then install the plugin:
+
+```
+/plugin marketplace add bennypowers/cem
+/plugin install cem-lsp
+```
+
+The LSP activates automatically for HTML, TypeScript, and JavaScript files.
+
+**Bonus**: The plugin also includes MCP server support, giving Claude AI-native access to your custom elements manifests for intelligent HTML generation. See the [MCP documentation][mcpdocs] for details.
+
 ### Other Editors
 
 Configure your LSP client to run `cem lsp` for file types `html`, `typescript`,
