@@ -33,7 +33,10 @@ jobs:
           version: stable
 
       - name: Install tree-sitter CLI
-        run: npm install -g tree-sitter-cli
+        run: |
+          # Pin to v0.24.4 for reproducible builds (latest stable as of 2025-01)
+          # Unpinned installs can cause CI failures when breaking changes are released
+          npm install -g tree-sitter-cli@0.24.4
 
       - name: Install nvim-treesitter and parsers
         run: |
