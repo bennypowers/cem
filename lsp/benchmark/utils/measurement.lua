@@ -154,12 +154,12 @@ function M.calculate_statistics(times)
 	local p95 = percentile(95)
 	local p99 = percentile(99)
 
-	-- Calculate standard deviation
+	-- Calculate sample standard deviation (using count - 1 for better estimate with small samples)
 	local variance_sum = 0
 	for _, time in ipairs(sorted_times) do
 		variance_sum = variance_sum + (time - mean) ^ 2
 	end
-	local stddev = math.sqrt(variance_sum / count)
+	local stddev = count > 1 and math.sqrt(variance_sum / (count - 1)) or 0
 
 	return {
 		count = count,
@@ -210,6 +210,10 @@ function M.wait_for_client_ready(client, timeout_ms)
 end
 
 -- Create LSP request parameters for current cursor position
+--- @param bufnr number|nil Buffer number (defaults to current)
+--- @param line number|nil Line number (1-based). If provided with col, cursor is moved as side effect.
+--- @param col number|nil Column (0-based). If provided with line, cursor is moved as side effect.
+--- @return table LSP position parameters
 function M.make_position_params(bufnr, line, col)
 	bufnr = bufnr or vim.api.nvim_get_current_buf()
 	if line and col then

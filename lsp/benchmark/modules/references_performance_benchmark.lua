@@ -141,8 +141,9 @@ function M.run_references_performance_benchmark(_, fixture_dir)
 		results.total_search_time = total_search_time
 		results.average_search_time = total_tests > 0 and (total_search_time / total_tests) or 0
 
-		-- Memory usage
-		results.memory_usage = vim.fn.system("ps -o rss= -p " .. vim.fn.getpid()):gsub("%s+", "") or 0
+		-- Memory usage (cross-platform using Lua garbage collector)
+		collectgarbage("collect")
+		results.memory_usage = collectgarbage("count") * 1024 -- Convert KB to bytes
 
 		-- Success requires both completing tests AND finding references
 		results.success = total_references >= 10 and total_tests >= 8
@@ -159,7 +160,7 @@ function M.run_references_performance_benchmark(_, fixture_dir)
 end
 
 -- Function to test references for specific elements
-function test_references_for_elements(elements, _)
+local function test_references_for_elements(elements, _)
 	local results = {
 		tests = {},
 		total_references = 0,
@@ -194,7 +195,7 @@ function test_references_for_elements(elements, _)
 			end
 		end
 
-		local search_time = tonumber(vim.fn.reltimestr(vim.fn.reltime(search_start)))
+		local search_time = tonumber(vim.fn.reltimestr(vim.fn.reltime(search_start))) * 1000 -- Convert to ms
 
 		local test_result = {
 			element = element_test.element,
@@ -216,7 +217,7 @@ function test_references_for_elements(elements, _)
 end
 
 -- Function to test references during active editing
-function test_references_during_editing()
+local function test_references_during_editing()
 	local results = {
 		tests = {},
 		total_references = 0,
@@ -262,7 +263,7 @@ function test_references_during_editing()
 			end
 		end
 
-		local search_time = tonumber(vim.fn.reltimestr(vim.fn.reltime(search_start)))
+		local search_time = tonumber(vim.fn.reltimestr(vim.fn.reltime(search_start))) * 1000 -- Convert to ms
 
 		local test_result = {
 			element = element_test.element,
@@ -292,7 +293,7 @@ function test_references_during_editing()
 end
 
 -- Function to test references in TypeScript template literals
-function test_template_literal_references()
+local function test_template_literal_references()
 	local results = {
 		tests = {},
 		total_references = 0,
@@ -328,7 +329,7 @@ function test_template_literal_references()
 			end
 		end
 
-		local search_time = tonumber(vim.fn.reltimestr(vim.fn.reltime(search_start)))
+		local search_time = tonumber(vim.fn.reltimestr(vim.fn.reltime(search_start))) * 1000 -- Convert to ms
 
 		local test_result = {
 			element = element_test.element,

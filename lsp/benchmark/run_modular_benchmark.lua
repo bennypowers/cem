@@ -168,7 +168,7 @@ local function run_all_benchmarks()
 		end
 	end
 
-	local overall_success_rate = successful_benchmarks / total_benchmarks
+	local overall_success_rate = total_benchmarks > 0 and (successful_benchmarks / total_benchmarks) or 0
 	print(string.rep("-", 50))
 	print(
 		string.format(

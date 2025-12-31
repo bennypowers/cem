@@ -1,8 +1,6 @@
 -- Diagnostics benchmark module
 -- Tests LSP diagnostics performance and functionality
 
-local measurement = require("utils.measurement")
-
 local M = {}
 
 function M.run_diagnostics_benchmark(config, fixture_dir)
@@ -48,13 +46,13 @@ function M.run_diagnostics_benchmark(config, fixture_dir)
 
 	-- Set up diagnostics handler
 	local original_handler = vim.lsp.handlers["textDocument/publishDiagnostics"]
-	vim.lsp.handlers["textDocument/publishDiagnostics"] = function(err, result, ctx, config)
+	vim.lsp.handlers["textDocument/publishDiagnostics"] = function(err, result, ctx, handler_config)
 		if result and result.diagnostics then
 			received_diagnostics = result.diagnostics
 			diagnostics_received = true
 		end
 		if original_handler then
-			original_handler(err, result, ctx, config)
+			original_handler(err, result, ctx, handler_config)
 		end
 	end
 
@@ -80,8 +78,7 @@ function M.run_diagnostics_benchmark(config, fixture_dir)
 		and (client.server_capabilities.diagnosticProvider or client.server_capabilities.textDocumentSync)
 
 	local result = {
-		success = supports_diagnostics and (diagnostics_success and #received_diagnostics >= 0)
-			or not supports_diagnostics,
+		success = supports_diagnostics and diagnostics_success or not supports_diagnostics,
 		server_name = server_name,
 		duration_ms = diagnostics_duration,
 		diagnostics_count = #received_diagnostics,

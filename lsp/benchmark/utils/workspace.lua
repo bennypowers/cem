@@ -4,9 +4,12 @@ Handles test workspace setup, file creation, and cleanup
 ]]
 
 local M = {}
+local original_dir = nil
 
 -- Setup a temporary workspace for testing
 function M.setup_workspace(fixture_name)
+	-- Store original directory for cleanup
+	original_dir = vim.fn.getcwd()
 	-- Get benchmark directory from lua script path
 	local benchmark_dir = vim.fn.fnamemodify(debug.getinfo(1).source:sub(2), ":h:h")
 	local fixture_path = benchmark_dir .. "/fixtures/" .. fixture_name
@@ -42,7 +45,7 @@ function M.open_file(filepath)
 	vim.cmd("edit " .. vim.fn.fnameescape(filepath))
 	local bufnr = vim.api.nvim_get_current_buf()
 
-	-- Wait for buffer to be fully loaded
+	-- Wait for buffer to be fully loaded (necessary for LSP attachment and initial processing)
 	vim.wait(100)
 
 	-- Ensure LSP clients are attached
@@ -130,13 +133,11 @@ function M.wait_for_diagnostics(bufnr, timeout_ms)
 	local diagnostics = nil
 
 	-- Set up temporary diagnostic handler
-	local handler_set = false
 	local original_handler = vim.lsp.handlers["textDocument/publishDiagnostics"]
 
 	vim.lsp.handlers["textDocument/publishDiagnostics"] = function(err, result, ctx, config)
 		if result and result.uri == vim.uri_from_bufnr(bufnr) then
 			diagnostics = result.diagnostics
-			handler_set = true
 		end
 		-- Call original handler
 		if original_handler then
@@ -172,7 +173,10 @@ function M.cleanup()
 	end
 
 	-- Return to original directory
-	vim.cmd("cd -")
+	if original_dir then
+		vim.cmd("cd " .. vim.fn.fnameescape(original_dir))
+		original_dir = nil
+	end
 end
 
 -- Generate test HTML content with custom elements

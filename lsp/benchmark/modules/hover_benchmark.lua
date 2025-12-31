@@ -59,6 +59,8 @@ function M.run_hover_benchmark(config, fixture_dir)
 	end
 
 	-- Test hover on various elements with statistical analysis
+	-- NOTE: These positions are hardcoded for fixtures/medium_project/hover-test.html
+	-- If the fixture file is modified, these positions must be updated accordingly
 	local test_positions = {
 		{ element = "my-button", line = 4, character = 10 },
 		{ element = "my-card", line = 5, character = 10 },

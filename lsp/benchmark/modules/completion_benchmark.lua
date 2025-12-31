@@ -59,6 +59,8 @@ function M.run_completion_benchmark(config, fixture_dir)
 	end
 
 	-- Test completion at various positions with statistical analysis
+	-- NOTE: These positions are hardcoded for fixtures/medium_project/completion-test.html
+	-- If the fixture file is modified, these positions must be updated accordingly
 	local test_positions = {
 		{ context = "tag-name-completion", line = 4, character = 6 }, -- After "my-"
 		{ context = "attribute-completion", line = 5, character = 13 }, -- Inside my-button tag
@@ -66,7 +68,9 @@ function M.run_completion_benchmark(config, fixture_dir)
 	}
 
 	local completion_results = {}
-	local iterations_per_context = 15 -- Multiple iterations per context for statistical confidence
+	-- 15 iterations per context (vs 10 for hover) to capture completion's higher variance
+	-- due to manifest traversal and attribute enumeration complexity
+	local iterations_per_context = 15
 
 	for i, test_pos in ipairs(test_positions) do
 		print(string.format("Testing completion in %s (%d iterations)...", test_pos.context, iterations_per_context))

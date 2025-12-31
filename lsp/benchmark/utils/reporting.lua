@@ -81,14 +81,14 @@ function M.generate_markdown_comparison(cem_results, wc_results)
 	table.insert(report, "## Detailed Results by Scenario")
 	table.insert(report, "")
 
-	local scenarios = { "startup", "completion", "hover", "diagnostics", "code_actions", "add_files", "file_updates" }
+	local scenarios = { "startup", "completion", "hover", "diagnostics", "code-actions", "add-files", "file-updates" }
 
 	for _, scenario in ipairs(scenarios) do
-		local cem_scenario = cem_results.scenarios[scenario:gsub("_", "-")]
-		local wc_scenario = wc_results.scenarios[scenario:gsub("_", "-")]
+		local cem_scenario = cem_results.scenarios[scenario]
+		local wc_scenario = wc_results.scenarios[scenario]
 
 		if cem_scenario or wc_scenario then
-			table.insert(report, string.format("### %s", scenario:gsub("_", " "):gsub("^%l", string.upper)))
+			table.insert(report, string.format("### %s", scenario:gsub("-", " "):gsub("^%l", string.upper)))
 			table.insert(report, "")
 
 			local scenario_comparison = M.create_scenario_comparison(cem_scenario, wc_scenario, scenario)
@@ -349,8 +349,8 @@ function M.generate_recommendations(cem_results, wc_results)
 
 	local scenarios = { "startup", "completion", "hover", "diagnostics", "code-actions", "add-files", "file-updates" }
 	for _, scenario in ipairs(scenarios) do
-		local cem_scenario = cem_results.scenarios[scenario:gsub("_", "-")]
-		local wc_scenario = wc_results.scenarios[scenario:gsub("_", "-")]
+		local cem_scenario = cem_results.scenarios[scenario]
+		local wc_scenario = wc_results.scenarios[scenario]
 
 		if cem_scenario and wc_scenario then
 			local field = "overall_" .. scenario:gsub("-", "_") .. "_score_ms"

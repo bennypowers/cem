@@ -38,7 +38,6 @@ function M.run_attribute_hover_benchmark(config, fixture_dir)
 
 	-- Load HTML content from fixture file
 	local fixture_file = fixture_dir .. "/attribute-hover-test.html"
-	local html_content = table.concat(vim.fn.readfile(fixture_file), "\n")
 
 	-- Copy to test file for LSP processing
 	vim.fn.writefile(vim.fn.readfile(fixture_file), "test-attribute-hover.html")
@@ -60,6 +59,8 @@ function M.run_attribute_hover_benchmark(config, fixture_dir)
 	end
 
 	-- Test positions for different attribute types
+	-- NOTE: These positions are hardcoded for fixtures/large_project/attribute-hover-test.html
+	-- If the fixture file is modified, these positions must be updated accordingly
 	local test_positions = {
 		-- Button attributes
 		{

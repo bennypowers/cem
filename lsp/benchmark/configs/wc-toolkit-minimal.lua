@@ -1,6 +1,6 @@
 -- Minimal Neovim configuration for wc-toolkit LSP benchmarking
--- Assumes wc-language-server installed via Mason: :MasonInstall wc-language-server
--- See: https://wc-toolkit.com/integrations/neovim/
+-- Assumes wc-language-server installed via setup_wc_toolkit.sh
+-- Run: make setup-wc-toolkit
 
 local benchmark_dir = vim.fn.getcwd()
 vim.opt.runtimepath:prepend(benchmark_dir)
@@ -33,7 +33,6 @@ vim.notify = function(msg, level, opts)
 end
 
 -- wc-toolkit LSP configuration (using local npx wrapper)
-local benchmark_dir = vim.fn.getcwd()
 local wc_server_path = benchmark_dir .. '/bin/wc-language-server'
 
 local wc_toolkit_config = {
