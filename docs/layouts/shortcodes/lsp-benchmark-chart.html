@@ -1,5 +1,9 @@
-{{ $cem := index .Site.Data "lsp-benchmark-results-cem" | default dict }}
-{{ $wc := index .Site.Data "lsp-benchmark-results-wc-toolkit" | default dict }}
+{{/* Data source: lsp-benchmark-results with nested servers structure.
+     NOTE: This uses combined data file (same as lsp-simple-benchmark-chart.html).
+     The build pipeline produces a unified data structure with all servers nested. */}}
+{{ $combined := index .Site.Data "lsp-benchmark-results" | default dict }}
+{{ $cem := index $combined.servers "cem" | default dict }}
+{{ $wc := index $combined.servers "wc-toolkit" | default dict }}
 
 {{ if and $cem.benchmarks $wc.benchmarks }}
 {{/* Benchmark descriptions for tooltips */}}
