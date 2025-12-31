@@ -6,6 +6,28 @@ set -euo pipefail
 PR_JSON="pr_lsp_bench.json"
 BASE_JSON="base_lsp_bench.json"
 
+# Check if required files exist (first run case)
+if [ ! -f "$PR_JSON" ] || [ ! -f "$BASE_JSON" ]; then
+  cat << EOF > lsp_bench_report.md
+### LSP Benchmark Results
+
+⚠️ **First Run**: LSP benchmark comparison requires both PR and base branch results.
+
+Missing files:
+$([ ! -f "$PR_JSON" ] && echo "- \`$PR_JSON\`")
+$([ ! -f "$BASE_JSON" ] && echo "- \`$BASE_JSON\`")
+
+To generate LSP benchmarks, run:
+\`\`\`bash
+make bench-lsp-cem
+\`\`\`
+
+The next benchmark run will include a comparison.
+EOF
+  echo "First run: missing LSP benchmark files. Created informational report."
+  exit 0
+fi
+
 # Helper: Extract metric with jq, fallback to 0 if missing
 get_metric() {
   local file=$1

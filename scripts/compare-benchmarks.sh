@@ -10,6 +10,34 @@ BASE_JSON="base_bench.json"
 PR_BENCH_TXT="pr_bench.txt"
 BASE_BENCH_TXT="base_bench.txt"
 
+# Check if all required files exist (first run case)
+missing_files=()
+for file in "$PR_TIME_FILE" "$BASE_TIME_FILE" "$PR_JSON" "$BASE_JSON" "$PR_BENCH_TXT" "$BASE_BENCH_TXT"; do
+  if [ ! -f "$file" ]; then
+    missing_files+=("$file")
+  fi
+done
+
+if [ ${#missing_files[@]} -gt 0 ]; then
+  cat << EOF > bench_report.md
+### Benchmark Summary
+
+⚠️ **First Run**: Benchmark comparison requires both PR and base branch results.
+
+Missing files:
+$(printf '- `%s`\n' "${missing_files[@]}")
+
+To generate benchmarks, run:
+\`\`\`bash
+make bench
+\`\`\`
+
+The next benchmark run will include a comparison.
+EOF
+  echo "First run: missing benchmark files. Created informational report."
+  exit 0
+fi
+
 # Compute output size in KB (rounded)
 pr_size_kb=$(du -k "$PR_JSON" | cut -f1)
 base_size_kb=$(du -k "$BASE_JSON" | cut -f1)
