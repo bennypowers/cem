@@ -26,6 +26,91 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
+
+      - name: Setup Neovim
+        uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: stable
+
+      - name: Install tree-sitter CLI
+        run: |
+          # Pin to v0.26.3 for reproducible builds (latest stable as of 2025-01)
+          # Unpinned installs can cause CI failures when breaking changes are released
+          npm install -g tree-sitter-cli@0.26.3
+
+      - name: Cache Neovim plugins and parsers
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/nvim
+            ~/.config/nvim
+          key: ${{ runner.os }}-neovim-tree-sitter-0.26.3-${{ hashFiles('.github/workflows/docs.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-neovim-
+
+      - name: Install nvim-treesitter and parsers
+        run: |
+          set -e  # Exit on any error
+
+          # Verify tree-sitter CLI is available
+          echo "Verifying tree-sitter CLI..."
+          tree-sitter --version
+
+          # Install nvim-treesitter plugin
+          NVIM_SITE="$HOME/.local/share/nvim/site/pack/plugins/start"
+          PARSER_INSTALL_DIR="$HOME/.local/share/nvim/site"
+
+          echo "Installing nvim-treesitter plugin..."
+          mkdir -p "$NVIM_SITE"
+          if [ ! -d "$NVIM_SITE/nvim-treesitter" ]; then
+            git clone --depth=1 https://github.com/nvim-treesitter/nvim-treesitter.git \
+              "$NVIM_SITE/nvim-treesitter"
+          fi
+
+          # Create install script using modern nvim-treesitter API
+          cat > /tmp/install_parsers.lua << 'LUA'
+          -- Set packpath to load nvim-treesitter
+          vim.opt.packpath = { vim.fn.expand("~/.local/share/nvim/site") }
+          vim.cmd.packloadall()
+
+          -- Set up nvim-treesitter with install_dir
+          local ts = require('nvim-treesitter')
+          ts.setup {
+            install_dir = vim.fn.expand("~/.local/share/nvim/site")
+          }
+
+          -- Install parsers programmatically
+          print("Installing HTML and TypeScript parsers...")
+          local ok, err = pcall(function()
+            ts.install({ 'html', 'typescript' }):wait(120000)
+          end)
+
+          if not ok then
+            print("ERROR: Parser installation failed: " .. tostring(err))
+            os.exit(1)
+          end
+
+          print("✅ Parsers installed successfully")
+          os.exit(0)
+          LUA
+
+          # Run parser installation
+          echo "Installing HTML and TypeScript parsers..."
+          nvim --headless -u /tmp/install_parsers.lua
+
+          # Verify parsers were installed
+          echo "Verifying parsers..."
+          if [ -f "$PARSER_INSTALL_DIR/parser/html.so" ] && [ -f "$PARSER_INSTALL_DIR/parser/typescript.so" ]; then
+            echo "✅ Tree-sitter parsers installed successfully:"
+            ls -lh "$PARSER_INSTALL_DIR/parser/html.so" "$PARSER_INSTALL_DIR/parser/typescript.so"
+          else
+            echo "ERROR: Parsers not found in $PARSER_INSTALL_DIR/parser/"
+            echo "Searching for all .so files:"
+            find "$HOME/.local/share/nvim" -name "*.so" -type f 2>/dev/null || echo "No .so files found"
+            exit 1
+          fi
+
       - run: make docs-ci RUNS=${{ github.event.inputs.runs || 100 }}
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
